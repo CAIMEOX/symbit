@@ -1,0 +1,8 @@
+{
+  "import": [
+    "CAIMEOX/symbit/symnum",
+    "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symprint"
+  ],
+  "test-import": []
+}
