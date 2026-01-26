@@ -12,18 +12,18 @@ fn check_univar_compat(a : Poly, b : Poly) -> Unit raise PolyError {
 /// Helper to build a monomial polynomial for division steps.
 fn poly_from_term(
   mono : Monomial,
-  coeff : @symnum.BigRational,
+  coeff : FieldElem,
   gens : Array[String],
   domain : Domain,
 ) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   add_term(coeffs, mono, coeff, domain)
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }
 
 ///|
-fn leading_data_univar(p : Poly) -> (Int, @symnum.BigRational)? {
-  match p.leading_term() {
+fn leading_data_univar(p : Poly) -> (Int, FieldElem)? {
+  match p.leading_term_with_order(p.order) {
     None => None
     Some((m, c)) => Some((m.exps[0], c))
   }
@@ -31,22 +31,14 @@ fn leading_data_univar(p : Poly) -> (Int, @symnum.BigRational)? {
 
 ///|
 fn invert_in_domain(
-  val : @symnum.BigRational,
+  val : FieldElem,
   domain : Domain,
-) -> @symnum.BigRational raise PolyError {
+) -> FieldElem raise PolyError {
   match domain {
     Domain::ZZ => raise PolyError::DomainNotField
-    Domain::QQ =>
-      val.reciprocal() catch {
-        _ => raise PolyError::DivisionByZero
-      }
-    Domain::GF(_) =>
-      normalize_mod(
-        val.reciprocal() catch {
-          _ => raise PolyError::DivisionByZero
-        },
-        domain,
-      )
+    Domain::QQ => fe_inv(val)
+    Domain::GF(_) | Domain::GFExt(_, _, _) => fe_inv(val)
+    Domain::AlgExt(_, _, _) => fe_inv(val)
   }
 }
 
@@ -64,6 +56,8 @@ fn divmod_univar(
     Domain::ZZ => divmod_univar_int(dividend, divisor)
     Domain::QQ => divmod_univar_rat(dividend, divisor)
     Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
+    Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
+    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-div")
   }
 }
 
@@ -93,7 +87,7 @@ fn divmod_univar_rat(
           break
         }
         let exp_diff = deg_r - deg_b
-        let coeff_ratio = lc_r.mul_r(inv_lc_b)
+        let coeff_ratio = fe_mul(lc_r, inv_lc_b)
         let mono = monomial_one(dividend.gens.length())
         mono.exps.set(0, exp_diff)
         let term_poly = poly_from_term(
@@ -138,12 +132,13 @@ fn lift_to_qq(poly : Poly) -> Poly {
 
 ///|
 fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in poly.coeffs {
-    if !c.is_integral() {
+    let r = fe_expect_rational(c)
+    if !r.is_integral() {
       raise PolyError::DomainNotField
     }
-    coeffs.set(m, c)
+    coeffs.set(m, FieldElem::QQ(r))
   }
   Poly::{ coeffs, gens: poly.gens, domain: Domain::ZZ, order: poly.order }
 }
@@ -158,10 +153,15 @@ pub fn Poly::divmod_univar(
 
 ///|
 /// gcd of integer numerators (content).
-fn coeff_content(poly : Poly) -> @symnum.BigRational {
+fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut content = @symnum.BigRational::zero()
+  match poly.domain {
+    Domain::AlgExt(_, _, _) => return @symnum.BigRational::one()
+    _ => ()
+  }
   for _, c in poly.coeffs {
-    let num = c.numerator()
+    let r = fe_expect_rational(c)
+    let num = r.numerator()
     let abs_num = if num.op_lt(BigInt::from_int(0)) { num.neg() } else { num }
     content = match content.is_zero() {
       true => @symnum.BigRational::from_bigint(abs_num)
@@ -184,8 +184,14 @@ fn primitive_part(poly : Poly) -> Poly raise PolyError {
   if cont.is_zero() {
     return poly
   }
-  let inv = cont.reciprocal() catch { _ => raise PolyError::DivisionByZero }
-  poly.scale_coeff(inv)
+  match poly.domain {
+    Domain::ZZ | Domain::QQ => {
+      let inv = cont.reciprocal() catch { _ => raise PolyError::DivisionByZero }
+      poly.scale_coeff(FieldElem::QQ(inv))
+    }
+    Domain::AlgExt(_, _, _) => poly
+    _ => poly
+  }
 }
 
 ///|
@@ -207,6 +213,8 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
     Domain::QQ => gcd_univar_rat(self, other)
     Domain::ZZ => gcd_univar_int(self, other)
     Domain::GF(_) => gcd_univar_rat(self, other)
+    Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
+    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-gcd")
   }
 }
 
@@ -237,13 +245,13 @@ fn gcd_univar_int(a : Poly, b : Poly) -> Poly raise PolyError {
   let cont_gcd = @symnum.BigRational::from_bigint(
     @symnum.gcd_bigint(cont_a.numerator(), cont_b.numerator()),
   )
-  let g_scaled = g_qq.scale_coeff(cont_gcd)
+  let g_scaled = g_qq.scale_coeff(FieldElem::QQ(cont_gcd))
   try_round_to_int(g_scaled)
 }
 
 ///|
 /// Public helpers for content/primitive parts.
-pub fn Poly::content(self : Poly) -> @symnum.BigRational {
+pub fn Poly::content(self : Poly) -> @symnum.BigRational raise PolyError {
   coeff_content(self)
 }
 
@@ -262,19 +270,7 @@ pub fn Poly::div_exact_univar(
   if r.is_zero() {
     return q
   }
-  // Normalize remainder coefficients under domain to see if they vanish (e.g., GF).
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
-  for m, c in r.coeffs {
-    let norm = ensure_coeff_domain(c, r.domain)
-    if !norm.is_zero() {
-      coeffs.set(m, norm)
-    }
-  }
-  if coeffs.is_empty() {
-    q
-  } else {
-    raise PolyError::NotImplemented("non-exact-division")
-  }
+  raise PolyError::NotImplemented("non-exact-division")
 }
 
 ///|

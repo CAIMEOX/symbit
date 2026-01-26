@@ -5,7 +5,7 @@ pub fn normalize_mod(
   domain : Domain,
 ) -> @symnum.BigRational raise PolyError {
   match domain {
-    Domain::GF(p) => {
+    Domain::GF(p) | Domain::GFExt(p, _, _) => {
       if p <= 1 {
         raise PolyError::BadModulus
       }
@@ -24,6 +24,7 @@ pub fn normalize_mod(
       let inv_den = mod_inv(den, m)
       @symnum.BigRational::from_bigint(num.mul(inv_den))
     }
+    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("algebraic-extension-mod")
     _ => value
   }
 }

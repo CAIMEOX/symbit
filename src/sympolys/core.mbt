@@ -1,6 +1,6 @@
 ///|
 pub struct Poly {
-  coeffs : Map[Monomial, @symnum.BigRational]
+  coeffs : Map[Monomial, FieldElem]
   gens : Array[String]
   domain : Domain
   order : TermOrder
@@ -12,10 +12,10 @@ pub fn Poly::zero(gens : Array[String], domain : Domain) -> Poly {
 }
 
 ///|
-pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly {
+pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError {
   let mono = monomial_one(gens.length())
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
-  coeffs.set(mono, @symnum.BigRational::one())
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  coeffs.set(mono, fe_from_int(1, domain))
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }
 
@@ -33,34 +33,43 @@ pub fn Poly::with_order(self : Poly, order : TermOrder) -> Poly {
 pub fn ensure_coeff_domain(
   coeff : @symnum.BigRational,
   domain : Domain,
-) -> @symnum.BigRational raise PolyError {
+) -> FieldElem raise PolyError {
   match domain {
     Domain::ZZ =>
       if coeff.is_integral() {
-        coeff
+        FieldElem::QQ(coeff)
       } else {
         raise PolyError::CoefficientNotInteger
       }
-    Domain::QQ => coeff
-    Domain::GF(_) => normalize_mod(coeff, domain)
+    Domain::QQ => FieldElem::QQ(coeff)
+    Domain::GF(_) | Domain::GFExt(_, _, _) => {
+      let norm = normalize_mod(coeff, domain)
+      fe_from_int(norm.numerator().to_int(), domain)
+    }
+    Domain::AlgExt(base, gens, rels) => {
+      if !coeff.is_integral() && base is Domain::ZZ {
+        raise PolyError::CoefficientNotInteger
+      }
+      fe_from_int(coeff.numerator().to_int(), Domain::AlgExt(base, gens, rels))
+    }
   }
 }
 
 ///|
 pub fn add_term(
-  coeffs : Map[Monomial, @symnum.BigRational],
+  coeffs : Map[Monomial, FieldElem],
   mono : Monomial,
-  coeff : @symnum.BigRational,
-  domain : Domain,
+  coeff : FieldElem,
+  _domain : Domain,
 ) -> Unit raise PolyError {
-  if coeff.is_zero() {
+  if fe_is_zero(coeff) {
     return
   }
-  let coeff_val = ensure_coeff_domain(coeff, domain)
+  let coeff_val = coeff
   match coeffs.get(mono) {
     Some(existing) => {
-      let updated = ensure_coeff_domain(existing.add_r(coeff_val), domain)
-      if updated.is_zero() {
+      let updated = fe_add(existing, coeff_val)
+      if fe_is_zero(updated) {
         coeffs.remove(mono)
       } else {
         coeffs.set(mono, updated)
@@ -73,11 +82,11 @@ pub fn add_term(
 ///|
 pub fn Poly::scale_coeff(
   self : Poly,
-  factor : @symnum.BigRational,
+  factor : FieldElem,
 ) -> Poly raise PolyError {
   let coeffs = Map::new()
   for m, c in self.coeffs {
-    add_term(coeffs, m, c.mul_r(factor), self.domain)
+    add_term(coeffs, m, fe_mul(c, factor), self.domain)
   }
   Poly::{ coeffs, gens: self.gens, domain: self.domain, order: self.order }
 }
@@ -111,7 +120,7 @@ pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
 pub fn Poly::neg(self : Poly) -> Poly {
   let coeffs = Map::new()
   for m, c in self.coeffs {
-    coeffs.set(m, c.neg_r())
+    coeffs.set(m, fe_neg(c))
   }
   Poly::{ coeffs, gens: self.gens, domain: self.domain, order: self.order }
 }
@@ -126,11 +135,11 @@ pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
   }
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m1, c1 in self.coeffs {
     for m2, c2 in other.coeffs {
       let mono = monomial_mul(m1, m2)
-      add_term(coeffs, mono, c1.mul_r(c2), self.domain)
+      add_term(coeffs, mono, fe_mul(c1, c2), self.domain)
     }
   }
   Poly::{ coeffs, gens: self.gens, domain: self.domain, order: self.order }

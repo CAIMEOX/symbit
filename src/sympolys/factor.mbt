@@ -5,7 +5,7 @@ fn is_one(poly : Poly) -> Bool {
     return false
   }
   for m, c in poly.coeffs {
-    if !c.is_one() {
+    if !fe_is_one(c) {
       return false
     }
     if !m.exps.all(e => e == 0) {
@@ -20,13 +20,13 @@ fn deriv_univar(poly : Poly) -> Poly raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp == 0 {
       continue
     }
-    let coeff = c.mul_r(@symnum.BigRational::from_int(exp))
+    let coeff = fe_mul(c, fe_from_int(exp, poly.domain))
     let mono = monomial_one(poly.gens.length())
     mono.exps.set(0, exp - 1)
     add_term(coeffs, mono, coeff, poly.domain)
@@ -69,22 +69,76 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
 }
 
 ///|
-pub fn Poly::factor(self : Poly) -> Array[(Poly, Int)] raise PolyError {
+pub fn Poly::factor(
+  self : Poly,
+  modulus? : Int,
+  extension? : Array[String],
+  seed? : Int,
+  gens? : Array[String],
+) -> Array[(Poly, Int)] raise PolyError {
   if self.is_zero() {
     return Array::new()
   }
-  check_univar_compat(self, self)
-  let content = self.content()
-  let mut primitive = self
+  let resolved_gens = match gens {
+    Some(g) =>
+      if g.equal(self.gens) {
+        g
+      } else {
+        raise PolyError::DomainMismatch
+      }
+    None => self.gens
+  }
+  let requested_mod = match modulus {
+    Some(m) => {
+      if m <= 1 {
+        raise PolyError::BadModulus
+      }
+      Some(m)
+    }
+    None =>
+      match self.domain {
+        Domain::GF(p) => Some(p)
+        _ => None
+      }
+  }
+  match extension {
+    Some(ext_syms) =>
+      if !ext_syms.is_empty() {
+        raise PolyError::NotImplemented("algebraic-extension")
+      }
+    None => ()
+  }
+  let mut work = self
+  match requested_mod {
+    Some(m) =>
+      match self.domain {
+        Domain::GF(p) =>
+          if p != m {
+            work = map_to_gf(self, m)
+          }
+        _ => work = map_to_gf(self, m)
+      }
+    None => ()
+  }
+  if work.gens.not_equal(resolved_gens) {
+    raise PolyError::DomainMismatch
+  }
+  check_univar_compat(work, work)
+  let content = work.content()
+  let mut primitive = work
   if !content.is_one() {
-    primitive = self.primitive_part()
+    primitive = work.primitive_part()
   }
   let sf_parts = square_free_decompose(primitive)
   let factors : Array[(Poly, Int)] = Array::new()
   for part in sf_parts {
     let (p, mult) = part
     if p.domain is Domain::GF(_) {
-      let gf_parts = factor_gf(p)
+      let seed_val = match seed {
+        Some(s) => s
+        None => 42
+      }
+      let gf_parts = factor_gf_seeded(p, seed_val)
       for lp in gf_parts {
         factors.push((lp, mult))
       }
@@ -97,6 +151,21 @@ pub fn Poly::factor(self : Poly) -> Array[(Poly, Int)] raise PolyError {
       for lp in int_parts {
         factors.push((lp, mult))
       }
+    } else if p.domain is Domain::QQ {
+      let cleared = clear_denominators(p)
+      let int_parts = try factor_integer(cleared) catch {
+        _ => [cleared]
+      } noraise {
+        v => v
+      }
+      for lp in int_parts {
+        // rescale back by dividing leading coeff if needed
+        let scaled = make_monic(lp)
+        factors.push((scaled, mult))
+      }
+    } else if p.domain is Domain::AlgExt(_, _, _) {
+      // Treat as an abstract field: assume irreducible after squarefree split.
+      factors.push((p, mult))
     } else {
       let lin_parts = factor_linear_rationals(p)
       for lp in lin_parts {
@@ -105,9 +174,10 @@ pub fn Poly::factor(self : Poly) -> Array[(Poly, Int)] raise PolyError {
     }
   }
   if !content.is_one() {
+    let const_coeff = ensure_coeff_domain(content, self.domain)
     let const_poly = poly_from_term(
       monomial_one(self.gens.length()),
-      content,
+      const_coeff,
       self.gens,
       self.domain,
     )
@@ -117,9 +187,113 @@ pub fn Poly::factor(self : Poly) -> Array[(Poly, Int)] raise PolyError {
 }
 
 ///|
-fn eval_univar(poly : Poly, val : @symnum.BigRational) -> @symnum.BigRational {
+/// Return (content, [(factor, exp)]) with monic primitive factors.
+pub fn Poly::factor_list(
+  self : Poly,
+) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError {
+  if self.is_zero() {
+    return (@symnum.BigRational::zero(), Array::new())
+  }
+  let mut content = self.content()
+  let mut primitive = self
+  if !content.is_one() {
+    primitive = self.primitive_part()
+  }
+  let raw = primitive.factor()
+  let normalized : Array[(Poly, Int)] = Array::new()
+  for entry in raw {
+    let (f, m) = entry
+    let (monic, lc) = normalize_factor_for_list(f)
+    content = content.mul_r(pow_coeff(lc, m))
+    normalized.push((monic, m))
+  }
+  (content, normalized)
+}
+
+///|
+/// Square-free part and multiplicities (content separated).
+pub fn Poly::sqf_list(
+  self : Poly,
+) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError {
+  if self.is_zero() {
+    return (@symnum.BigRational::zero(), Array::new())
+  }
+  check_univar_compat(self, self)
+  let mut content = self.content()
+  let mut primitive = self
+  if !content.is_one() {
+    primitive = self.primitive_part()
+  }
+  let sf_parts = square_free_decompose(primitive)
+  let normalized : Array[(Poly, Int)] = Array::new()
+  for entry in sf_parts {
+    let (f, m) = entry
+    let (monic, lc) = normalize_factor_for_list(f)
+    content = content.mul_r(pow_coeff(lc, m))
+    normalized.push((monic, m))
+  }
+  (content, normalized)
+}
+
+///|
+/// Square-free part (product of distinct factors with content).
+pub fn Poly::sqf_part(self : Poly) -> Poly raise PolyError {
+  if self.is_zero() {
+    return self
+  }
+  let (content, parts) = self.sqf_list()
+  let const_coeff = ensure_coeff_domain(content, self.domain)
+  let mut acc = poly_from_term(
+    monomial_one(self.gens.length()),
+    const_coeff,
+    self.gens,
+    self.domain,
+  )
+  for entry in parts {
+    let (f, _) = entry
+    acc = acc.mul(f)
+  }
+  acc
+}
+
+///|
+fn normalize_factor_for_list(
+  poly : Poly,
+) -> (Poly, @symnum.BigRational) raise PolyError {
+  match poly.leading_term() {
+    None => (poly, @symnum.BigRational::one())
+    Some((_, lc_fe)) => {
+      let lc = fe_expect_rational(lc_fe)
+      match poly.domain {
+        Domain::ZZ => {
+          if lc.is_one() {
+            (poly, lc)
+          } else if lc.neg_r().is_one() {
+            (poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))), lc)
+          } else {
+            (poly, lc)
+          }
+        }
+        _ => (make_monic(poly), lc)
+      }
+    }
+  }
+}
+
+///|
+fn pow_coeff(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
+  let mut res = @symnum.BigRational::one()
+  for _ in 0..<exp {
+    res = res.mul_r(base)
+  }
+  res
+}
+
+///|
+fn eval_univar(poly : Poly, val : @symnum.BigRational) -> @symnum.BigRational raise PolyError {
   let mut acc = @symnum.BigRational::zero()
   for m, c in poly.coeffs {
+    let coeff = fe_expect_rational(c)
     let exp = m.exps[0]
     let mut pow = @symnum.BigRational::one()
     let mut k = exp
@@ -133,7 +307,7 @@ fn eval_univar(poly : Poly, val : @symnum.BigRational) -> @symnum.BigRational {
         base = base.mul_r(base)
       }
     }
-    acc = acc.add_r(c.mul_r(pow))
+    acc = acc.add_r(coeff.mul_r(pow))
   }
   acc
 }
@@ -146,6 +320,7 @@ fn eval_univar_mod(poly : Poly, val : Int, modulus : Int) -> Int raise PolyError
   let p = BigInt::from_int(modulus)
   let mut acc = BigInt::from_int(0)
   for m, c in poly.coeffs {
+    let coeff = fe_expect_rational(c)
     let exp = m.exps[0]
     let mut pow = BigInt::from_int(1)
     let mut base = BigInt::from_int(val)
@@ -159,8 +334,8 @@ fn eval_univar_mod(poly : Poly, val : Int, modulus : Int) -> Int raise PolyError
         base = base.mul(base).mod(p)
       }
     }
-    let coeff = c.numerator().mod(p)
-    acc = acc.add(coeff.mul(pow)).mod(p)
+    let num = coeff.numerator().mod(p)
+    acc = acc.add(num.mul(pow)).mod(p)
   }
   acc.to_int()
 }
@@ -176,7 +351,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
   let mut ct = BigInt::from_int(0)
   for _, c in remaining.coeffs {
     if ct.is_zero() {
-      ct = c.numerator()
+      ct = fe_expect_rational(c).numerator()
     }
   }
   let abs_ct = if ct.op_lt(BigInt::from_int(0)) { ct.neg() } else { ct }
@@ -221,11 +396,15 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
 ///|
 fn normalize_poly_mod(poly : Poly) -> Poly raise PolyError {
   match poly.domain {
-    Domain::GF(_) => {
-      let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+    Domain::GF(p) => {
+      let coeffs : Map[Monomial, FieldElem] = Map::new()
       for m, c in poly.coeffs {
-        let norm = ensure_coeff_domain(c, poly.domain)
-        if !norm.is_zero() {
+        if fe_is_zero(c) {
+          continue
+        }
+        let val = fe_expect_rational(c).numerator().to_int() % p
+        let norm = fe_from_int(val, poly.domain)
+        if !fe_is_zero(norm) {
           coeffs.set(m, norm)
         }
       }
@@ -267,6 +446,10 @@ fn strip_linear_roots_gf(
 ///|
 /// Complete GF(p) factorization: squarefree -> distinct-degree -> equal-degree (Cantor–Zassenhaus).
 fn factor_gf(poly : Poly) -> Array[Poly] raise PolyError {
+  factor_gf_seeded(poly, 42)
+}
+
+fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
@@ -290,7 +473,7 @@ fn factor_gf(poly : Poly) -> Array[Poly] raise PolyError {
   let g = work.gcd_univar(deriv)
   if !g.is_zero() && !is_one(g) {
     let reduced = work.div_exact_univar(g)
-    let squarefree_parts = factor_gf(reduced)
+    let squarefree_parts = factor_gf_seeded(reduced, seed + 1)
     for f in squarefree_parts {
       factors.push(f)
     }
@@ -302,7 +485,7 @@ fn factor_gf(poly : Poly) -> Array[Poly] raise PolyError {
     if part.degree(0) == 1 {
       factors.push(part)
     } else {
-      let edf_parts = equal_degree_factor(part, part.degree(0), modulus)
+      let edf_parts = equal_degree_factor(part, part.degree(0), modulus, seed + 7)
       for f in edf_parts {
         factors.push(f)
       }
@@ -382,11 +565,17 @@ fn distinct_degree_decompose(poly : Poly, modulus : Int) -> Array[Poly] raise Po
   res
 }
 
-fn equal_degree_factor(poly : Poly, d : Int, modulus : Int) -> Array[Poly] raise PolyError {
+fn equal_degree_factor(
+  poly : Poly,
+  d : Int,
+  modulus : Int,
+  seed : Int,
+) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let stack : Array[Poly] = Array::new()
   stack.push(poly)
   let x_poly = Poly::from_expr(@symcore.symbol(poly.gens[0]), poly.gens, poly.domain)
+  let mut rng = seed
   while true {
     match stack.pop() {
       None => break
@@ -397,8 +586,11 @@ fn equal_degree_factor(poly : Poly, d : Int, modulus : Int) -> Array[Poly] raise
         }
         let exp = (int_pow(modulus, d) - 1) / 2
         let mut split_done = false
-        for a in 1..<modulus {
-          let g = x_poly.add(Poly::from_expr(@symcore.int(a), poly.gens, poly.domain))
+        let mut trials = 0
+        while trials < 32 {
+          trials = trials + 1
+          rng = lcg_next(rng, modulus)
+          let g = x_poly.add(Poly::from_expr(@symcore.int(rng), poly.gens, poly.domain))
           let h = gf_pow_mod(g, exp, f)
           let s = h.sub(Poly::one(poly.gens, poly.domain))
           let factor = f.gcd_univar(s)
@@ -464,7 +656,7 @@ fn poly_to_dense_gf(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   let coeffs : Array[Int] = Array::make(deg + 1, 0)
   for m, c in poly.coeffs {
     let k = m.exps[0]
-    let norm = normalize_mod(c, poly.domain)
+    let norm = fe_expect_rational(c)
     let v = ensure_pos_mod(norm.numerator().to_int(), modulus)
     coeffs.set(k, v)
   }
@@ -476,7 +668,7 @@ fn dense_to_poly(
   gens : Array[String],
   domain : Domain,
 ) -> Poly raise PolyError {
-  let map : Map[Monomial, @symnum.BigRational] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map::new()
   let modulus = match domain {
     Domain::GF(p) => p
     _ => 0
@@ -492,7 +684,7 @@ fn dense_to_poly(
     }
     let mono = monomial_one(gens.length())
     mono.exps.set(0, i)
-    add_term(map, mono, @symnum.BigRational::from_int(raw), domain)
+    add_term(map, mono, fe_from_int(raw, domain), domain)
   }
   Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
 }

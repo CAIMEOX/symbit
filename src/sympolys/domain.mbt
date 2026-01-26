@@ -3,6 +3,8 @@ pub(all) enum Domain {
   ZZ
   QQ
   GF(Int) // prime modulus
+  GFExt(Int, Int, Array[Int]) // GF(p^k) with modulus polynomial coefficients (lowest degree first)
+  AlgExt(Domain, Array[String], Array[@symcore.Expr]) // algebraic extension over base with generators/relations
 }
 
 ///|
@@ -31,6 +33,10 @@ impl Eq for Domain with equal(self, other : Domain) -> Bool {
   match (self, other) {
     (Domain::ZZ, Domain::ZZ) | (Domain::QQ, Domain::QQ) => true
     (Domain::GF(p1), Domain::GF(p2)) => p1 == p2
+    (Domain::GFExt(p1, k1, m1), Domain::GFExt(p2, k2, m2)) =>
+      p1 == p2 && k1 == k2 && m1.equal(m2)
+    (Domain::AlgExt(base1, syms1, rels1), Domain::AlgExt(base2, syms2, rels2)) =>
+      base1.equal(base2) && syms1.equal(syms2) && rels1.length() == rels2.length()
     _ => false
   }
 }

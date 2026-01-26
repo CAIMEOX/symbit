@@ -16,22 +16,23 @@ fn choose_good_prime(poly : Poly) -> Int raise PolyError {
 }
 
 fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in poly.coeffs {
-    let norm = normalize_mod(c, Domain::GF(modulus))
-    if !norm.is_zero() {
-      coeffs.set(m, norm)
+    let r = fe_expect_rational(c)
+    let fe = fe_from_int(r.numerator().to_int(), Domain::GF(modulus))
+    if !fe_is_zero(fe) {
+      coeffs.set(m, fe)
     }
   }
   Poly::{ coeffs, gens: poly.gens, domain: Domain::GF(modulus), order: poly.order }
 }
 
-fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] {
+fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   let deg = poly.degree(0)
   let dense : Array[Int] = Array::make(deg + 1, 0)
   for m, c in poly.coeffs {
     let k = m.exps[0]
-    let mut v = c.numerator().to_int() % modulus
+    let mut v = fe_expect_rational(c).numerator().to_int() % modulus
     if v < 0 {
       v = v + modulus
     }
@@ -41,13 +42,13 @@ fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] {
 }
 
 fn lift_gf_factor_to_int(f : Poly, modulus : Int) -> Poly raise PolyError {
-  let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in f.coeffs {
-    let mut v = ensure_pos_mod(c.numerator().to_int(), modulus)
+    let mut v = ensure_pos_mod(fe_expect_rational(c).numerator().to_int(), modulus)
     if v > modulus / 2 {
       v = v - modulus
     }
-    add_term(coeffs, m, @symnum.BigRational::from_int(v), Domain::ZZ)
+    add_term(coeffs, m, fe_from_int(v, Domain::ZZ), Domain::ZZ)
   }
   Poly::{ coeffs, gens: f.gens, domain: Domain::ZZ, order: f.order }
 }
@@ -115,22 +116,34 @@ fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
   result
 }
 
-fn coeff_bound_est(poly : Poly) -> Int {
-  let mut max_abs = 1
+fn coeff_bound_est(poly : Poly) -> Int raise PolyError {
+  let mut max_abs = BigInt::from_int(1)
   for _, c in poly.coeffs {
-    let n = c.numerator()
+    let n = fe_expect_rational(c).numerator()
     let abs = if n.op_lt(BigInt::from_int(0)) { n.neg() } else { n }
-    let v = abs.to_int()
-    if v > max_abs {
-      max_abs = v
+    if abs.op_gt(max_abs) {
+      max_abs = abs
     }
   }
   let deg = poly.degree(0)
-  let mut bound = max_abs
-  for _ in 0..<deg {
-    bound = bound * 2
+  let bound_big = landau_mignotte_bound(max_abs, deg)
+  bound_big.to_int()
+}
+
+fn landau_mignotte_bound(max_coeff : BigInt, deg : Int) -> BigInt {
+  let n = deg
+  let two = BigInt::from_int(2)
+  let mut pow = BigInt::from_int(1)
+  for _ in 0..<n {
+    pow = pow.mul(two)
   }
-  bound * 2 + 1
+  let mut bound = max_coeff.add(BigInt::from_int(1))
+  let mut i = 0
+  while i < n + 1 {
+    bound = bound.mul(max_coeff.add(BigInt::from_int(1)))
+    i = i + 1
+  }
+  pow.mul(bound)
 }
 
 ///|
@@ -144,41 +157,38 @@ fn hensel_crt_factor(poly : Poly) -> Array[Poly] raise PolyError {
       arr.push(poly)
       return arr
     }
-    let p = choose_good_prime(poly)
-    let f_mod = map_to_gf(poly, p)
-    let factors_mod = factor_gf(f_mod)
-    if factors_mod.length() <= 1 {
+    // gather multiple primes until bound exceeded or reconstruction succeeds
+    let coeff_bound = coeff_bound_est(poly)
+    let primes : Array[Int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+    let images : Array[(Int, Array[Int])] = Array::new()
+    let mut factors_mod : Array[Poly] = Array::new()
+    let mut accumulated = BigInt::from_int(1)
+    for p in primes {
+      let f_mod = map_to_gf(poly, p)
+      let fs = factor_gf(f_mod)
+      if fs.length() <= 1 {
+        continue
+      }
+      factors_mod = fs
+      let dense_f = map_to_mod(poly, p)
+      images.push((p, dense_f))
+      accumulated = accumulated.mul(BigInt::from_int(p))
+      if accumulated.op_gt(BigInt::from_int(coeff_bound)) {
+        break
+      }
+    }
+    if images.is_empty() || factors_mod.length() <= 1 {
       let arr : Array[Poly] = Array::new()
       arr.push(poly)
       return arr
     }
-    let coeff_bound = coeff_bound_est(poly)
-    let mut lift_mod = p
-    while lift_mod < coeff_bound {
-      lift_mod = lift_mod * p
-    }
-    let dense_f = map_to_mod(poly, lift_mod)
-    let lifted_dense : Array[Array[Int]] = Array::new()
+    let dense_reconstructed = reconstruct_coeffs(images, coeff_bound)
+    let lifted_poly = dense_to_poly_int(dense_reconstructed, poly.gens, poly.domain)
+    let lifted_factors : Array[Poly] = Array::new()
     for fm in factors_mod {
-      lifted_dense.push(map_to_mod(lift_gf_factor_to_int(fm, p), lift_mod))
+      lifted_factors.push(lift_gf_factor_to_int(fm, images[0].0))
     }
-    let mut current_mod = p
-    while current_mod < lift_mod {
-      let next_mod = current_mod * p
-      for i in 0..<(lifted_dense.length() - 1) {
-        let g = lifted_dense[i]
-        let h = lifted_dense[i + 1]
-        let pair = hensel_pair(dense_f, g, h, p, next_mod)
-        lifted_dense.set(i, pair.0)
-        lifted_dense.set(i + 1, pair.1)
-      }
-      current_mod = next_mod
-    }
-    let lifted_polys : Array[Poly] = Array::new()
-    for d in lifted_dense {
-      lifted_polys.push(dense_to_poly_int(d, poly.gens, poly.domain))
-    }
-    recombine_lifted(poly, lifted_polys)
+    recombine_lifted(lifted_poly, lifted_factors)
   } catch {
     _ => {
       let arr : Array[Poly] = Array::new()
@@ -193,14 +203,14 @@ fn dense_to_poly_int(
   gens : Array[String],
   domain : Domain,
 ) -> Poly raise PolyError {
-  let map : Map[Monomial, @symnum.BigRational] = Map::new()
+  let map : Map[Monomial, FieldElem] = Map::new()
   for i in 0..<coeffs.length() {
     if coeffs[i] == 0 {
       continue
     }
     let mono = monomial_one(gens.length())
     mono.exps.set(0, i)
-    add_term(map, mono, @symnum.BigRational::from_int(coeffs[i]), domain)
+    add_term(map, mono, fe_from_int(coeffs[i], domain), domain)
   }
   Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
 }
@@ -211,32 +221,30 @@ fn recombine_lifted(poly : Poly, lifted : Array[Poly]) -> Array[Poly] raise Poly
   let mut changed = true
   while changed && pending.length() > 1 {
     changed = false
-    let mut mask = 1
-    let limit = 1 << pending.length()
-    while mask < limit - 1 {
-      let subset : Array[Poly] = Array::new()
-      for i in 0..<pending.length() {
-        if ((mask >> i) & 1) == 1 {
-          subset.push(pending[i])
+    // simple PRSV-style pairwise combination attempt
+    let mut i = 0
+    while i < pending.length() {
+      let mut j = i + 1
+      while j < pending.length() {
+        let prod = pending[i].mul(pending[j])
+        let g = poly.gcd_univar(prod)
+        let deg_g = g.degree(0)
+        if deg_g > 0 && deg_g < poly.degree(0) {
+          let q = poly.div_exact_univar(g)
+          result.push(g.primitive_part())
+          let _ = pending.remove(j)
+          let _ = pending.remove(i)
+          if !q.is_zero() && q.degree(0) > 0 {
+            pending.push(q.primitive_part())
+          }
+          changed = true
+          j = pending.length()
+          i = pending.length()
+        } else {
+          j = j + 1
         }
       }
-      if subset.is_empty() {
-        mask = mask + 1
-        continue
-      }
-      let prod = product_polys(subset)
-      let g = poly.gcd_univar(prod)
-      let deg_g = g.degree(0)
-      if deg_g > 0 && deg_g < poly.degree(0) {
-        let q = poly.div_exact_univar(g)
-        result.push(g.primitive_part())
-        pending = Array::new()
-        pending.push(q.primitive_part())
-        changed = true
-        mask = limit
-        continue
-      }
-      mask = mask + 1
+      i = i + 1
     }
   }
   for p in pending {
@@ -291,6 +299,115 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
     }
   }
   factors
+}
+
+///|
+/// Reconstruct integer coefficients from modular images using CRT + LLL fallback.
+pub fn reconstruct_coeffs(
+  images : Array[(Int, Array[Int])],
+  bound : Int,
+) -> Array[Int] raise PolyError {
+  if images.is_empty() {
+    return Array::new()
+  }
+  let (modulus, residues) = crt_images(images)
+  let centered = center_residues(residues, modulus)
+  let bound_big = BigInt::from_int(bound)
+  if centered.all(v => big_abs(v).op_le(bound_big)) {
+    return centered.map(v => v.to_int())
+  }
+  let lattice = build_reconstruction_lattice(centered, modulus)
+  let reduced = lll_reduce(lattice).0
+  let candidate = reduced[0]
+  let coeffs : Array[Int] = Array::new()
+  for i in 0..<centered.length() {
+    coeffs.push(candidate[i].to_int())
+  }
+  coeffs
+}
+
+fn crt_images(images : Array[(Int, Array[Int])]) -> (BigInt, Array[BigInt]) {
+  let mut modulus = BigInt::from_int(1)
+  let mut residues : Array[BigInt] = Array::new()
+  let degree = images[0].1.length()
+  residues = Array::make(degree, BigInt::from_int(0))
+  for pair in images {
+    let m = BigInt::from_int(pair.0)
+    let vals = pair.1
+    for i in 0..<degree {
+      let current = residues[i]
+      let v = BigInt::from_int(vals[i])
+      let t = v.sub(current.mod(m)).mul(mod_inv_bigint(modulus.mod(m), m)).mod(m)
+      let lifted = current.add(modulus.mul(t))
+      residues.set(i, lifted)
+    }
+    modulus = modulus.mul(m)
+  }
+  (modulus, residues)
+}
+
+fn mod_inv_bigint(a : BigInt, m : BigInt) -> BigInt {
+  let mut t0 = BigInt::from_int(0)
+  let mut t1 = BigInt::from_int(1)
+  let mut r0 = m
+  let mut r1 = a.mod(m)
+  while !r1.is_zero() {
+    let q = r0.div(r1)
+    let r2 = r0.sub(q.mul(r1))
+    r0 = r1
+    r1 = r2
+    let t2 = t0.sub(q.mul(t1))
+    t0 = t1
+    t1 = t2
+  }
+  if !r0.equal_int(1) {
+    BigInt::from_int(0)
+  } else {
+    let mut inv = t0.mod(m)
+    if inv.op_lt(BigInt::from_int(0)) {
+      inv = inv.add(m)
+    }
+    inv
+  }
+}
+
+fn center_residues(residues : Array[BigInt], modulus : BigInt) -> Array[BigInt] {
+  let half = modulus.div(BigInt::from_int(2))
+  residues.map(r => {
+    let mut v = r.mod(modulus)
+    if v.op_gt(half) {
+      v = v.sub(modulus)
+    }
+    v
+  })
+}
+
+fn big_abs(x : BigInt) -> BigInt {
+  if x.op_lt(BigInt::from_int(0)) {
+    x.neg()
+  } else {
+    x
+  }
+}
+
+fn build_reconstruction_lattice(
+  residues : Array[BigInt],
+  modulus : BigInt,
+) -> Matrix {
+  let dim = residues.length()
+  let mat : Matrix = Array::new()
+  for i in 0..<dim {
+    let row : Array[BigInt] = Array::make(dim + 1, BigInt::from_int(0))
+    row.set(i, modulus)
+    mat.push(row)
+  }
+  let last : Array[BigInt] = Array::make(dim + 1, BigInt::from_int(0))
+  for i in 0..<dim {
+    last.set(i, residues[i])
+  }
+  last.set(dim, BigInt::from_int(1))
+  mat.push(last)
+  mat
 }
 
 ///|

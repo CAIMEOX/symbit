@@ -18,6 +18,103 @@ pub fn Poly::resultant(
 }
 
 ///|
+/// Resultant wrapper mirroring SymPy: resultant(f, g, x, gens?, domain?, modulus?, order?).
+pub fn resultant_expr(
+  f_expr : @symcore.Expr,
+  g_expr : @symcore.Expr,
+  var_name : String,
+  gens? : Array[String],
+  domain? : Domain,
+  modulus? : Int,
+  extension? : Array[String],
+  gf_degree? : Int,
+  order? : TermOrder,
+) -> @symnum.BigRational raise PolyError {
+  let resolved_gens = match gens {
+    Some(g) => {
+      if !array_contains_str(g, var_name) {
+        let arr = g.copy()
+        arr.push(var_name)
+        arr.sort()
+        arr
+      } else {
+        g
+      }
+    }
+    None => {
+      let list = infer_gens_union([f_expr, g_expr])
+      if array_contains_str(list, var_name) {
+        list
+      } else {
+        let arr = list
+        arr.push(var_name)
+        arr.sort()
+        arr
+      }
+    }
+  }
+  let resolved_domain = resolve_domain(domain, modulus, extension, gf_degree)
+  let ord = match order {
+    Some(o) => o
+    None => TermOrder::Lex
+  }
+  let mod_opt = match resolved_domain {
+    Domain::GF(p) => Some(p)
+    _ => None
+  }
+  let f = match mod_opt {
+    Some(m) => Poly::from_expr_defaults(
+      f_expr,
+      gens=resolved_gens,
+      domain=resolved_domain,
+      modulus=m,
+      order=ord,
+    )
+    None => Poly::from_expr_defaults(
+      f_expr,
+      gens=resolved_gens,
+      domain=resolved_domain,
+      order=ord,
+    )
+  }
+  let g = match mod_opt {
+    Some(m) => Poly::from_expr_defaults(
+      g_expr,
+      gens=resolved_gens,
+      domain=resolved_domain,
+      modulus=m,
+      order=ord,
+    )
+    None => Poly::from_expr_defaults(
+      g_expr,
+      gens=resolved_gens,
+      domain=resolved_domain,
+      order=ord,
+    )
+  }
+  match find_index(resolved_gens, var_name) {
+    Some(i) => f.resultant(g, i)
+    None => raise PolyError::BadGenerator(var_name)
+  }
+}
+
+///|
+fn find_index(arr : Array[String], target : String) -> Int? {
+  for i in 0..<arr.length() {
+    if arr[i] == target {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn array_contains_str(arr : Array[String], target : String) -> Bool {
+  match find_index(arr, target) {
+    Some(_) => true
+    None => false
+  }
+}
 fn pow_big_rational(
   base : @symnum.BigRational,
   exp : Int,
@@ -54,10 +151,11 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
       Some(v) => v
       None => raise PolyError::DivisionByZero
     }
-    let (deg_q, lc_q) = match leading_data_univar(q) {
+    let (deg_q, lc_q_fe) = match leading_data_univar(q) {
       Some(v) => v
       None => raise PolyError::DivisionByZero
     }
+    let lc_q = fe_expect_rational(lc_q_fe)
     if deg_q == 0 {
       return res.mul_r(pow_big_rational(lc_q, deg_p))
     }
@@ -98,15 +196,15 @@ fn resultant_elim(
       }
     }
     if !depends {
-      // If elimination yields a constant, return it; otherwise not a pure resultant.
-      if p.gens.length() == 1 ||
-        (p.coeffs.length() == 1 && p.degree(gen_index) == 0) {
-        match p.leading_term() {
-          Some((_, c)) => return c
-          None => continue
+          // If elimination yields a constant, return it; otherwise not a pure resultant.
+          if p.gens.length() == 1 ||
+            (p.coeffs.length() == 1 && p.degree(gen_index) == 0) {
+            match p.leading_term() {
+              Some((_, c)) => return fe_expect_rational(c)
+              None => continue
+            }
+          }
         }
       }
-    }
-  }
   raise PolyError::NotImplemented("resultant-elimination")
 }

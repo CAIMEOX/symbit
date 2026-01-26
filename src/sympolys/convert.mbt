@@ -9,8 +9,9 @@ pub fn Poly::to_expr_with_order(
   for term in terms {
     let (m, c) = term
     let factors : Array[@symcore.Expr] = Array::new()
-    if !c.is_one() || is_monomial_zero(m) {
-      factors.push(@symcore.number(c))
+    let coeff_expr = fe_to_expr_const(c)
+    if !fe_is_one(c) || is_monomial_zero(m) {
+      factors.push(coeff_expr)
     }
     for i in 0..<m.exps.length() {
       let exp = m.exps[i]
@@ -58,6 +59,154 @@ pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
 }
 
 ///|
+pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
+  match self.leading_term_with_order(match order {
+    Some(o) => o
+    None => self.order
+  }) {
+    Some((_, c)) => c
+    None => fe_from_int(0, self.domain)
+  }
+}
+
+///|
+pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
+  match self.leading_term_with_order(match order {
+    Some(o) => o
+    None => self.order
+  }) {
+    Some((m, _)) => Some(m)
+    None => None
+  }
+}
+
+///|
+pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
+  let ord = match order {
+    Some(o) => o
+    None => self.order
+  }
+  self.leading_term_with_order(ord)
+}
+
+///|
+fn fe_to_expr_const(c : FieldElem) -> @symcore.Expr {
+  match c {
+    FieldElem::QQ(r) => @symcore.number(r)
+    FieldElem::GFp(_, v) => @symcore.number(@symnum.BigRational::from_int(v))
+    FieldElem::GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
+    FieldElem::AlgExt(base, coeffs, minpoly, gen) =>
+      fe_algext_to_expr(base, coeffs, minpoly, gen)
+  }
+}
+
+///|
+fn fe_ext_to_expr(
+  p : Int,
+  coeffs : Array[Int],
+  mod_poly : Array[Int],
+) -> @symcore.Expr {
+  let alpha = @symcore.symbol(fe_ext_symbol_name(p, mod_poly))
+  let terms : Array[@symcore.Expr] = Array::new()
+  for i in 0..<coeffs.length() {
+    let c = coeffs[i] % p
+    if c == 0 {
+      continue
+    }
+    let coeff_expr = @symcore.number(@symnum.BigRational::from_int(c))
+    let term = if i == 0 {
+      coeff_expr
+    } else if i == 1 {
+      if c == 1 {
+        alpha
+      } else {
+        @symcore.mul([coeff_expr, alpha])
+      }
+    } else {
+      let pow_expr = @symcore.pow(alpha, @symcore.int(i))
+      if c == 1 {
+        pow_expr
+      } else {
+        @symcore.mul([coeff_expr, pow_expr])
+      }
+    }
+    terms.push(term)
+  }
+  if terms.is_empty() {
+    @symcore.number(@symnum.BigRational::zero())
+  } else if terms.length() == 1 {
+    terms[0]
+  } else {
+    @symcore.add(terms)
+  }
+}
+
+///|
+fn fe_ext_symbol_name(p : Int, mod_poly : Array[Int]) -> String {
+  let sb = StringBuilder::new()
+  sb.write_string("alpha_p")
+  sb.write_string(p.to_string())
+  sb.write_string("_m")
+  for i in 0..<mod_poly.length() {
+    if i > 0 {
+      sb.write_char('_')
+    }
+    sb.write_string(mod_poly[i].to_string())
+  }
+  sb.to_string()
+}
+
+///|
+fn fe_algext_to_expr(
+  base : Domain,
+  coeffs : Array[FieldElem],
+  minpoly : Poly,
+  gen : String,
+) -> @symcore.Expr {
+  let alpha = @symcore.symbol(gen)
+  let terms : Array[@symcore.Expr] = Array::new()
+  for i in 0..<coeffs.length() {
+    let c = coeffs[i]
+    if fe_is_zero(c) {
+      continue
+    }
+    let coeff_expr = fe_to_expr_const(fe_cast_to_base(c, base, minpoly, gen))
+    let term = if i == 0 {
+      coeff_expr
+    } else {
+      let pow_expr = @symcore.pow(alpha, @symcore.int(i))
+      if fe_is_one(fe_cast_to_base(c, base, minpoly, gen)) {
+        pow_expr
+      } else {
+        @symcore.mul([coeff_expr, pow_expr])
+      }
+    }
+    terms.push(term)
+  }
+  if terms.is_empty() {
+    @symcore.number(@symnum.BigRational::zero())
+  } else if terms.length() == 1 {
+    terms[0]
+  } else {
+    @symcore.add(terms)
+  }
+}
+
+///|
+fn fe_cast_to_base(
+  c : FieldElem,
+  base : Domain,
+  _minpoly : Poly,
+  _gen : String,
+) -> FieldElem {
+  // Elements in the coeff array should already live in the base domain.
+  match c {
+    FieldElem::AlgExt(_, _, _, _) => c
+    _ => c
+  }
+}
+
+///|
 pub impl Show for Poly with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
@@ -91,18 +240,29 @@ pub fn Poly::total_degree(self : Poly) -> Int {
 }
 
 ///|
-pub fn Poly::leading_term(self : Poly) -> (Monomial, @symnum.BigRational)? {
-  let mut best : (Monomial, @symnum.BigRational)? = None
+pub fn Poly::leading_term(self : Poly) -> (Monomial, FieldElem)? {
+  self.leading_term_with_order(self.order)
+}
+
+///|
+pub fn Poly::leading_term_with_order(
+  self : Poly,
+  order : TermOrder,
+) -> (Monomial, FieldElem)? {
+  let mut best : (Monomial, FieldElem)? = None
   for m, c in self.coeffs {
     match best {
       None => best = Some((m, c))
       Some((bm, _)) =>
-        if compare_monomial_order(m, bm, self.order) > 0 {
+        if compare_monomial_order(m, bm, order) > 0 {
           best = Some((m, c))
         }
     }
   }
-  best
+  match best {
+    Some((m, c)) => Some((m, c))
+    None => None
+  }
 }
 
 ///|
@@ -135,7 +295,7 @@ fn parse_expr(
     @symcore.Expr::Number(n) => {
       let coeff = ensure_coeff_domain(n, domain)
       let mono = monomial_one(gens.length())
-      let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
+      let coeffs : Map[Monomial, FieldElem] = Map::new()
       add_term(coeffs, mono, coeff, domain)
       Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
     }
@@ -144,8 +304,8 @@ fn parse_expr(
         Some(idx) => {
           let mono = monomial_one(gens.length())
           mono.exps.set(idx, 1)
-          let coeffs : Map[Monomial, @symnum.BigRational] = Map::new()
-          add_term(coeffs, mono, @symnum.BigRational::one(), domain)
+          let coeffs : Map[Monomial, FieldElem] = Map::new()
+          add_term(coeffs, mono, fe_from_int(1, domain), domain)
           Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
         }
         None => raise PolyError::BadGenerator(name)

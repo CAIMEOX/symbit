@@ -12,16 +12,9 @@ fn check_compat(polys : Array[Poly]) -> Unit raise PolyError {
 }
 
 ///|
-fn coeff_div(
-  num : @symnum.BigRational,
-  den : @symnum.BigRational,
-  domain : Domain,
-) -> @symnum.BigRational raise PolyError {
-  let ratio = num.div_r(den) catch { _ => raise PolyError::DivisionByZero }
-  if domain is Domain::ZZ && !ratio.is_integral() {
-    raise PolyError::DomainNotField
-  }
-  ratio
+fn coeff_div(num : FieldElem, den : FieldElem, domain : Domain) -> FieldElem raise PolyError {
+  let inv = invert_in_domain(den, domain)
+  fe_mul(num, inv)
 }
 
 ///|
@@ -172,4 +165,165 @@ pub fn Poly::groebner(
     }
   })
   reduced
+}
+
+///|
+/// Groebner wrapper that accepts expressions + optional domain/modulus/order/gens.
+pub fn groebner_expr(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String],
+  domain? : Domain,
+  modulus? : Int,
+  extension? : Array[String],
+  gf_degree? : Int,
+  order? : TermOrder,
+) -> Array[Poly] raise PolyError {
+  if exprs.is_empty() {
+    raise PolyError::NonPolynomial
+  }
+  let resolved_gens = match gens {
+    Some(g) => g
+    None => infer_gens_union(exprs)
+  }
+  let resolved_domain = resolve_domain(domain, modulus, extension, gf_degree)
+  let ord = match order {
+    Some(o) => o
+    None => TermOrder::Lex
+  }
+  let mod_opt = match resolved_domain {
+    Domain::GF(p) => Some(p)
+    _ => None
+  }
+  let polys : Array[Poly] = Array::new()
+  for e in exprs {
+    let poly = match mod_opt {
+      Some(m) => Poly::from_expr_defaults(
+        e,
+        gens=resolved_gens,
+        domain=resolved_domain,
+        modulus=m,
+        order=ord,
+      )
+      None => Poly::from_expr_defaults(
+        e,
+        gens=resolved_gens,
+        domain=resolved_domain,
+        order=ord,
+      )
+    }
+    polys.push(poly)
+  }
+  Poly::groebner(polys, order=ord)
+}
+
+///|
+fn resolve_domain(
+  domain : Domain?,
+  modulus : Int?,
+  extension_syms : Array[String]?,
+  gf_degree : Int?,
+) -> Domain raise PolyError {
+  let base = match (domain, modulus, gf_degree) {
+    (Some(Domain::GFExt(p, k, mod_poly)), Some(m), Some(k2)) =>
+      if p == m && k == k2 {
+        Domain::GFExt(p, k, mod_poly)
+      } else {
+        raise PolyError::BadModulus
+      }
+    (Some(Domain::GFExt(p, k, mod_poly)), Some(m), None) =>
+      if p == m {
+        Domain::GFExt(p, k, mod_poly)
+      } else {
+        raise PolyError::BadModulus
+      }
+    (Some(Domain::GFExt(p, k, mod_poly)), None, Some(k2)) =>
+      if k == k2 {
+        Domain::GFExt(p, k, mod_poly)
+      } else {
+        raise PolyError::BadModulus
+      }
+    (Some(Domain::GFExt(p, k, mod_poly)), None, None) =>
+      Domain::GFExt(p, k, mod_poly)
+    (Some(Domain::GF(p)), Some(m), Some(k)) =>
+      if p == m {
+        Domain::GFExt(p, k, gfext_default_poly(k))
+      } else {
+        raise PolyError::BadModulus
+      }
+    (Some(Domain::GF(p)), Some(m), None) =>
+      if p == m {
+        Domain::GF(p)
+      } else {
+        raise PolyError::BadModulus
+      }
+    (Some(Domain::GF(p)), None, Some(k)) => Domain::GFExt(p, k, gfext_default_poly(k))
+    (Some(Domain::GF(p)), None, None) => Domain::GF(p)
+    (None, Some(m), Some(k)) =>
+      if m <= 1 {
+        raise PolyError::BadModulus
+      } else {
+        Domain::GFExt(m, k, gfext_default_poly(k))
+      }
+    (None, Some(m), None) =>
+      if m <= 1 {
+        raise PolyError::BadModulus
+      } else {
+        Domain::GF(m)
+      }
+    (Some(d), _, Some(_)) => raise PolyError::NotImplemented("gf-degree-non-gf")
+    (Some(d), _, None) => d
+    (None, None, Some(_)) => raise PolyError::BadModulus
+    (None, None, None) => Domain::QQ
+  }
+  match extension_syms {
+    Some(ext) =>
+      if ext.is_empty() {
+        base
+      } else {
+        Domain::AlgExt(base, ext, Array::new())
+      }
+    None => base
+  }
+}
+
+///|
+fn gfext_default_poly(k : Int) -> Array[Int] {
+  let coeffs : Array[Int] = Array::make(k + 1, 0)
+  coeffs.set(0, 1)
+  coeffs.set(k, 1)
+  coeffs
+}
+
+///|
+fn infer_gens_union(exprs : Array[@symcore.Expr]) -> Array[String] {
+  let seen : Map[String, Bool] = Map::new()
+  for e in exprs {
+    collect_symbols_expr(e, seen)
+  }
+  let names : Array[String] = Array::new()
+  for n, _ in seen {
+    names.push(n)
+  }
+  names.sort()
+  names
+}
+
+///|
+fn collect_symbols_expr(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+  match expr {
+    @symcore.Expr::Symbol(name) => seen.set(name, true)
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      for child in args {
+        collect_symbols_expr(child, seen)
+      }
+    @symcore.Expr::Pow(base, exp) => {
+      collect_symbols_expr(base, seen)
+      collect_symbols_expr(exp, seen)
+    }
+    @symcore.Expr::Function(_, args) =>
+      for child in args {
+        collect_symbols_expr(child, seen)
+      }
+    _ => ()
+  }
 }
