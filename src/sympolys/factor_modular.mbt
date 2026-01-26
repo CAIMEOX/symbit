@@ -216,7 +216,7 @@ fn dense_to_poly_int(
 }
 
 fn recombine_lifted(poly : Poly, lifted : Array[Poly]) -> Array[Poly] raise PolyError {
-  let mut pending = lifted
+  let pending = lifted
   let result : Array[Poly] = Array::new()
   let mut changed = true
   while changed && pending.length() > 1 {
