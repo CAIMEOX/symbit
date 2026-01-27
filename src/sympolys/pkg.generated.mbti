@@ -1,0 +1,180 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympolys"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "Kaida-Amethyst/python",
+  "moonbitlang/core/bigint",
+}
+
+// Values
+pub fn add_term(Map[Monomial, FieldElem], Monomial, FieldElem, Domain) -> Unit raise PolyError
+
+pub fn alg_ext_spec(Domain, String, Poly) -> AlgExtSpec
+
+pub fn build_alg_extension(AlgExtSpec) -> Domain raise PolyError
+
+pub fn clear_denominators(Poly) -> Poly raise PolyError
+
+pub fn compare_monomial_order(Monomial, Monomial, TermOrder) -> Int
+
+pub fn ensure_coeff_domain(@symnum.BigRational, Domain) -> FieldElem raise PolyError
+
+pub fn expr_to_sympy(@symcore.Expr) -> @python.PyObject raise PolyError
+
+pub fn fe_add(FieldElem, FieldElem) -> FieldElem raise PolyError
+
+pub fn fe_expect_rational(FieldElem) -> @symnum.BigRational raise PolyError
+
+pub fn fe_from_int(Int, Domain) -> FieldElem raise PolyError
+
+pub fn fe_inv(FieldElem) -> FieldElem raise PolyError
+
+pub fn fe_is_one(FieldElem) -> Bool
+
+pub fn fe_is_zero(FieldElem) -> Bool
+
+pub fn fe_mul(FieldElem, FieldElem) -> FieldElem raise PolyError
+
+pub fn fe_neg(FieldElem) -> FieldElem
+
+pub fn fe_sub(FieldElem, FieldElem) -> FieldElem raise PolyError
+
+pub fn fe_to_string(FieldElem) -> String
+
+pub fn from_dense(Array[FieldElem], Array[String], Domain) -> Poly raise PolyError
+
+pub fn from_dense_multi(Array[FieldElem], Array[String], Domain, Array[Int]) -> Poly raise PolyError
+
+pub fn groebner_expr(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> Array[Poly] raise PolyError
+
+pub fn lll_reduce(Array[Array[@bigint.BigInt]], delta? : @symnum.BigRational) -> (Array[Array[@bigint.BigInt]], Array[Array[@bigint.BigInt]]) raise PolyError
+
+pub fn monomial_div(Monomial, Monomial) -> Monomial? raise PolyError
+
+pub fn monomial_lcm(Monomial, Monomial) -> Monomial raise PolyError
+
+pub fn monomial_mul(Monomial, Monomial) -> Monomial raise PolyError
+
+pub fn monomial_one(Int) -> Monomial
+
+pub fn monomial_pow(Monomial, Int) -> Monomial raise PolyError
+
+pub fn normalize_alg_ext_spec(AlgExtSpec) -> AlgExtSpec raise PolyError
+
+pub fn normalize_mod(@symnum.BigRational, Domain) -> @symnum.BigRational raise PolyError
+
+pub fn reconstruct_coeffs(Array[(Int, Array[Int])], Int) -> Array[Int] raise PolyError
+
+pub fn resultant_expr(@symcore.Expr, @symcore.Expr, String, gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> @symnum.BigRational raise PolyError
+
+pub fn to_dense(Poly, degree? : Int) -> Array[FieldElem] raise PolyError
+
+pub fn to_dense_multi(Poly, Array[Int]) -> Array[FieldElem] raise PolyError
+
+// Errors
+pub(all) suberror PolyError {
+  NonPolynomial
+  BadGenerator(String)
+  BadExponent
+  DomainMismatch
+  CoefficientNotInteger
+  DomainNotField
+  DivisionByZero
+  NotUnivariate
+  NotImplemented(String)
+  BadModulus
+}
+pub impl Show for PolyError
+
+// Types and methods
+pub struct AlgExtSpec {
+  base : Domain
+  gen : String
+  minpoly : Poly
+}
+
+pub(all) enum Domain {
+  ZZ
+  QQ
+  GF(Int)
+  GFExt(Int, Int, Array[Int])
+  AlgExt(Domain, Array[String], Array[@symcore.Expr])
+}
+
+pub enum FieldElem {
+  QQ(@symnum.BigRational)
+  GFp(Int, Int)
+  GFExt(Int, Array[Int], Array[Int])
+  AlgExt(Domain, Array[FieldElem], Poly, String)
+}
+pub impl Show for FieldElem
+
+pub struct Monomial {
+  exps : Array[Int]
+}
+
+pub struct Poly {
+  coeffs : Map[Monomial, FieldElem]
+  gens : Array[String]
+  domain : Domain
+  order : TermOrder
+}
+pub fn Poly::add(Self, Self) -> Self raise PolyError
+pub fn Poly::content(Self) -> @symnum.BigRational raise PolyError
+pub fn Poly::degree(Self, Int) -> Int
+pub fn Poly::div_exact_univar(Self, Self) -> Self raise PolyError
+pub fn Poly::divmod_multivar(Self, Array[Self]) -> (Array[Self], Self) raise PolyError
+pub fn Poly::divmod_univar(Self, Self) -> (Self, Self) raise PolyError
+pub fn Poly::factor(Self, modulus? : Int, extension? : Array[String], seed? : Int, gens? : Array[String]) -> Array[(Self, Int)] raise PolyError
+pub fn Poly::factor_list(Self) -> (@symnum.BigRational, Array[(Self, Int)]) raise PolyError
+pub fn Poly::from_expr(@symcore.Expr, Array[String], Domain) -> Self raise PolyError
+pub fn Poly::from_expr_defaults(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : Int, order? : TermOrder) -> Self raise PolyError
+pub fn Poly::gcd_univar(Self, Self) -> Self raise PolyError
+pub fn Poly::groebner(Array[Self], order? : TermOrder) -> Array[Self] raise PolyError
+pub fn Poly::is_zero(Self) -> Bool
+pub fn Poly::lc(Self, order? : TermOrder) -> FieldElem raise PolyError
+pub fn Poly::leading_term(Self) -> (Monomial, FieldElem)?
+pub fn Poly::leading_term_with_order(Self, TermOrder) -> (Monomial, FieldElem)?
+pub fn Poly::lm(Self, order? : TermOrder) -> Monomial?
+pub fn Poly::lt(Self, order? : TermOrder) -> (Monomial, FieldElem)?
+pub fn Poly::mul(Self, Self) -> Self raise PolyError
+pub fn Poly::neg(Self) -> Self
+pub fn Poly::one(Array[String], Domain) -> Self raise PolyError
+pub fn Poly::pow(Self, Int) -> Self raise PolyError
+pub fn Poly::primitive_part(Self) -> Self raise PolyError
+pub fn Poly::pseudo_div_univar_int(Self, Self) -> (Self, Self, Int) raise PolyError
+pub fn Poly::resultant(Self, Self, Int) -> @symnum.BigRational raise PolyError
+pub fn Poly::scale_coeff(Self, FieldElem) -> Self raise PolyError
+pub fn Poly::sqf_list(Self) -> (@symnum.BigRational, Array[(Self, Int)]) raise PolyError
+pub fn Poly::sqf_part(Self) -> Self raise PolyError
+pub fn Poly::sub(Self, Self) -> Self raise PolyError
+pub fn Poly::to_expr(Self) -> @symcore.Expr
+pub fn Poly::to_expr_with_order(Self, TermOrder) -> @symcore.Expr
+pub fn Poly::to_string(Self, order? : TermOrder) -> String
+pub fn Poly::total_degree(Self) -> Int
+pub fn Poly::with_order(Self, TermOrder) -> Self
+pub fn Poly::zero(Array[String], Domain) -> Self
+pub impl Show for Poly
+
+pub struct PolyBuilder {
+  gens : Array[String]
+  domain : Domain
+  order : TermOrder
+}
+pub fn PolyBuilder::from_expr(Self, @symcore.Expr) -> Poly raise PolyError
+pub fn PolyBuilder::new(Array[String], Domain) -> Self
+pub fn PolyBuilder::order(Self, TermOrder) -> Self
+
+pub(all) enum TermOrder {
+  Lex
+  Grlex
+  Grevlex
+}
+
+// Type aliases
+pub type Matrix = Array[Array[@bigint.BigInt]]
+
+// Traits
+

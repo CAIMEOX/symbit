@@ -185,7 +185,14 @@ pub fn groebner_expr(
     Some(g) => g
     None => infer_gens_union(exprs)
   }
-  let resolved_domain = resolve_domain(domain, modulus, extension, gf_degree)
+  let resolved_domain = resolve_domain(
+    domain=domain,
+    modulus=modulus,
+    extension=extension,
+    gf_degree=gf_degree,
+    expr=None,
+    gaussian=None,
+  )
   let ord = match order {
     Some(o) => o
     None => TermOrder::Lex
@@ -214,84 +221,6 @@ pub fn groebner_expr(
     polys.push(poly)
   }
   Poly::groebner(polys, order=ord)
-}
-
-///|
-fn resolve_domain(
-  domain : Domain?,
-  modulus : Int?,
-  extension_syms : Array[String]?,
-  gf_degree : Int?,
-) -> Domain raise PolyError {
-  let base = match (domain, modulus, gf_degree) {
-    (Some(Domain::GFExt(p, k, mod_poly)), Some(m), Some(k2)) =>
-      if p == m && k == k2 {
-        Domain::GFExt(p, k, mod_poly)
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GFExt(p, k, mod_poly)), Some(m), None) =>
-      if p == m {
-        Domain::GFExt(p, k, mod_poly)
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GFExt(p, k, mod_poly)), None, Some(k2)) =>
-      if k == k2 {
-        Domain::GFExt(p, k, mod_poly)
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GFExt(p, k, mod_poly)), None, None) =>
-      Domain::GFExt(p, k, mod_poly)
-    (Some(Domain::GF(p)), Some(m), Some(k)) =>
-      if p == m {
-        Domain::GFExt(p, k, gfext_default_poly(k))
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GF(p)), Some(m), None) =>
-      if p == m {
-        Domain::GF(p)
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GF(p)), None, Some(k)) => Domain::GFExt(p, k, gfext_default_poly(k))
-    (Some(Domain::GF(p)), None, None) => Domain::GF(p)
-    (None, Some(m), Some(k)) =>
-      if m <= 1 {
-        raise PolyError::BadModulus
-      } else {
-        Domain::GFExt(m, k, gfext_default_poly(k))
-      }
-    (None, Some(m), None) =>
-      if m <= 1 {
-        raise PolyError::BadModulus
-      } else {
-        Domain::GF(m)
-      }
-    (Some(d), _, Some(_)) => raise PolyError::NotImplemented("gf-degree-non-gf")
-    (Some(d), _, None) => d
-    (None, None, Some(_)) => raise PolyError::BadModulus
-    (None, None, None) => Domain::QQ
-  }
-  match extension_syms {
-    Some(ext) =>
-      if ext.is_empty() {
-        base
-      } else {
-        Domain::AlgExt(base, ext, Array::new())
-      }
-    None => base
-  }
-}
-
-///|
-fn gfext_default_poly(k : Int) -> Array[Int] {
-  let coeffs : Array[Int] = Array::make(k + 1, 0)
-  coeffs.set(0, 1)
-  coeffs.set(k, 1)
-  coeffs
 }
 
 ///|

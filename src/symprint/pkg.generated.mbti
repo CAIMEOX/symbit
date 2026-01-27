@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symprint"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn debug_repr(@symcore.Expr) -> String
+
+pub fn to_string(@symcore.Expr) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -53,7 +53,14 @@ pub fn resultant_expr(
       }
     }
   }
-  let resolved_domain = resolve_domain(domain, modulus, extension, gf_degree)
+  let resolved_domain = resolve_domain(
+    domain=domain,
+    modulus=modulus,
+    extension=extension,
+    gf_degree=gf_degree,
+    gaussian=None,
+    expr=None,
+  )
   let ord = match order {
     Some(o) => o
     None => TermOrder::Lex

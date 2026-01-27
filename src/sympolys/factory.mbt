@@ -30,30 +30,22 @@ pub fn Poly::from_expr_defaults(
   gens? : Array[String],
   domain? : Domain,
   modulus? : Int,
+  gaussian? : Bool,
+  extension? : Array[String],
   order? : TermOrder,
 ) -> Poly raise PolyError {
   let resolved_gens = match gens {
     Some(g) => g
     None => infer_gens(expr)
   }
-  let resolved_domain = match (domain, modulus) {
-    (Some(Domain::GF(p)), Some(m)) =>
-      if p == m {
-        Domain::GF(m)
-      } else {
-        raise PolyError::BadModulus
-      }
-    (Some(Domain::GF(p)), None) => Domain::GF(p)
-    (Some(_), Some(_)) => raise PolyError::BadModulus
-    (Some(d), None) => d
-    (None, Some(m)) => {
-      if m <= 1 {
-        raise PolyError::BadModulus
-      }
-      Domain::GF(m)
-    }
-    (None, None) => infer_domain(expr)
-  }
+  let resolved_domain = resolve_domain(
+    domain=domain,
+    modulus=modulus,
+    gaussian=gaussian,
+    extension=extension,
+    gf_degree=None,
+    expr=Some(expr),
+  )
   let resolved_order = match order {
     Some(o) => o
     None => TermOrder::Lex
@@ -103,6 +95,104 @@ fn infer_domain(expr : @symcore.Expr) -> Domain {
   } else {
     Domain::ZZ
   }
+}
+
+///|
+fn resolve_domain(
+  domain~ : Domain?,
+  modulus~ : Int?,
+  gaussian~ : Bool?,
+  extension~ : Array[String]?,
+  gf_degree~ : Int?,
+  expr~ : @symcore.Expr?,
+) -> Domain raise PolyError {
+  // SymPy-style precedence:
+  // 1) explicit domain wins (with modulus consistency checks)
+  // 2) gaussian=True upgrades ZZ/QQ -> CC
+  // 3) modulus selects GF(p); gf_degree lifts to GF(p^k)
+  // 4) extension builds algebraic extension over inferred/base domain
+
+  // Decide base domain, first handling finite-field extension requests.
+  let mut base : Domain = match gf_degree {
+    Some(k) =>
+      match (domain, modulus) {
+        (Some(Domain::GFExt(p, k0, poly)), Some(m)) =>
+          if p == m && k0 == k {
+            Domain::GFExt(p, k, poly)
+          } else {
+            raise PolyError::BadModulus
+          }
+        (Some(Domain::GFExt(p, k0, poly)), None) =>
+          if k0 == k {
+            Domain::GFExt(p, k0, poly)
+          } else {
+            raise PolyError::BadModulus
+          }
+        (Some(Domain::GF(p)), Some(m)) =>
+          if p == m {
+            Domain::GFExt(p, k, gfext_default_poly(k))
+          } else {
+            raise PolyError::BadModulus
+          }
+        (Some(Domain::GF(p)), None) =>
+          Domain::GFExt(p, k, gfext_default_poly(k))
+        (None, Some(m)) =>
+          if m <= 1 {
+            raise PolyError::BadModulus
+          } else {
+            Domain::GFExt(m, k, gfext_default_poly(k))
+          }
+        (Some(_), Some(_)) | (Some(_), None) =>
+          raise PolyError::NotImplemented("gf-degree-non-gf")
+        (None, None) => raise PolyError::BadModulus
+      }
+    None =>
+      match (domain, modulus) {
+        (Some(Domain::GFExt(p, k, poly)), Some(m)) =>
+          if p == m { Domain::GFExt(p, k, poly) } else { raise PolyError::BadModulus }
+        (Some(Domain::GFExt(p, k, poly)), None) => Domain::GFExt(p, k, poly)
+        (Some(Domain::GF(p)), Some(m)) =>
+          if p == m { Domain::GF(p) } else { raise PolyError::BadModulus }
+        (Some(Domain::GF(p)), None) => Domain::GF(p)
+        (None, Some(m)) =>
+          if m <= 1 { raise PolyError::BadModulus } else { Domain::GF(m) }
+        (Some(d), Some(_)) => raise PolyError::BadModulus
+        (Some(d), None) => d
+        (None, None) => match expr {
+          Some(e) => infer_domain(e)
+          None => Domain::QQ
+        }
+      }
+  }
+
+  // gaussian flag upgrades integer/rational domains to Gaussian complex
+  match gaussian {
+    Some(true) =>
+      base = match base {
+        Domain::ZZ | Domain::QQ => Domain::CC
+        _ => base
+      }
+    _ => ()
+  }
+
+  // algebraic extension
+  match extension {
+    Some(exts) if !exts.is_empty() => {
+      let rels = match expr {
+        Some(e) => [e]
+        None => Array::new()
+      }
+      Domain::AlgExt(base, exts, rels)
+    }
+    _ => base
+  }
+}
+
+fn gfext_default_poly(k : Int) -> Array[Int] {
+  let coeffs : Array[Int] = Array::make(k + 1, 0)
+  coeffs.set(0, 1)
+  coeffs.set(k, 1)
+  coeffs
 }
 
 ///|

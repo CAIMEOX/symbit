@@ -2,6 +2,7 @@
 /// Field elements for QQ, GF(p), and GF(p^k) using dense polynomial representation.
 pub enum FieldElem {
   QQ(@symnum.BigRational)
+  CC(@symnum.BigRational, @symnum.BigRational) // a + b*i
   GFp(Int, Int) // (p, value)
   GFExt(Int, Array[Int], Array[Int]) // (p, coeffs low→high, mod_poly)
   AlgExt(Domain, Array[FieldElem], Poly, String) // (base domain, coeffs, minimal poly, generator name)
@@ -131,6 +132,7 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
   }
   let mut result = match base {
     FieldElem::QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
+    FieldElem::CC(_, _) => FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
     FieldElem::GFp(p, _) => FieldElem::GFp(p, 1)
     FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [1], m)
     FieldElem::AlgExt(base, _, minpoly, gen) =>
@@ -154,9 +156,11 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
 pub fn fe_is_zero(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_zero()
+    FieldElem::CC(a, b) => a.is_zero() && b.is_zero()
     FieldElem::GFp(_, v) => v == 0
     FieldElem::GFExt(_, coeffs, _) => coeffs.all(v => v == 0)
     FieldElem::AlgExt(_, coeffs, _, _) => coeffs.all(v => fe_is_zero(v))
+    _ => false
   }
 }
 
@@ -164,6 +168,7 @@ pub fn fe_is_zero(a : FieldElem) -> Bool {
 pub fn fe_is_one(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_one()
+    FieldElem::CC(a, b) => a.is_one() && b.is_zero()
     FieldElem::GFp(_, v) => v == 1
     FieldElem::GFExt(_, coeffs, _) =>
       coeffs.length() == 1 && coeffs[0] == 1
@@ -176,6 +181,8 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
     FieldElem::QQ(x) => x
+    FieldElem::CC(_, _) =>
+      raise PolyError::NotImplemented("complex-as-rational")
     FieldElem::GFp(_, v) => @symnum.BigRational::from_int(v)
     FieldElem::GFExt(_, _, _) =>
       raise PolyError::NotImplemented("gfext-as-rational")
@@ -188,6 +195,12 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
 pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.add_r(y))
+    (FieldElem::CC(a1, b1), FieldElem::CC(a2, b2)) =>
+      FieldElem::CC(a1.add_r(a2), b1.add_r(b2))
+    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) =>
+      FieldElem::CC(a1.add_r(y), b1)
+    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) =>
+      FieldElem::CC(x.add_r(a2), b2)
     (FieldElem::GFp(p1, x), FieldElem::GFp(p2, y)) =>
       if p1 != p2 {
         raise PolyError::DomainMismatch
@@ -208,6 +221,7 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 pub fn fe_neg(a : FieldElem) -> FieldElem {
   match a {
     FieldElem::QQ(x) => FieldElem::QQ(x.neg_r())
+    FieldElem::CC(a, b) => FieldElem::CC(a.neg_r(), b.neg_r())
     FieldElem::GFp(p, x) => FieldElem::GFp(p, fe_pos_mod(-x, p))
     FieldElem::GFExt(p, coeffs, mod_poly) =>
       FieldElem::GFExt(p, coeffs.map(v => fe_pos_mod(-v, p)), mod_poly)
@@ -225,6 +239,15 @@ pub fn fe_sub(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.mul_r(y))
+    (FieldElem::CC(a1, b1), FieldElem::CC(a2, b2)) => {
+      let real = a1.mul_r(a2).add_r(b1.mul_r(b2).neg_r())
+      let imag = a1.mul_r(b2).add_r(b1.mul_r(a2))
+      FieldElem::CC(real, imag)
+    }
+    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) =>
+      FieldElem::CC(a1.mul_r(y), b1.mul_r(y))
+    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) =>
+      FieldElem::CC(x.mul_r(a2), x.mul_r(b2))
     (FieldElem::GFp(p1, x), FieldElem::GFp(p2, y)) =>
       if p1 != p2 {
         raise PolyError::DomainMismatch
@@ -254,6 +277,15 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
   match a {
     FieldElem::QQ(x) =>
       FieldElem::QQ(x.reciprocal() catch { _ => raise PolyError::DivisionByZero })
+    FieldElem::CC(a, b) => {
+      let denom = a.mul_r(a).add_r(b.mul_r(b))
+      if denom.is_zero() {
+        raise PolyError::DivisionByZero
+      }
+      let real = a.div_r(denom) catch { _ => raise PolyError::DivisionByZero }
+      let imag = b.neg_r().div_r(denom) catch { _ => raise PolyError::DivisionByZero }
+      FieldElem::CC(real, imag)
+    }
     FieldElem::GFp(p, x) => {
       if x == 0 {
         raise PolyError::DivisionByZero
@@ -283,6 +315,11 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
   match domain {
     Domain::QQ | Domain::ZZ =>
       FieldElem::QQ(@symnum.BigRational::from_int(val))
+    Domain::CC =>
+      FieldElem::CC(
+        @symnum.BigRational::from_int(val),
+        @symnum.BigRational::zero(),
+      )
     Domain::GF(p) => FieldElem::GFp(p, fe_pos_mod(val, p))
     Domain::GFExt(p, _, m) =>
       FieldElem::GFExt(p, [fe_pos_mod(val, p)], m)
@@ -291,6 +328,10 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
       let base_const = fe_from_int(val, base)
       FieldElem::AlgExt(base, [base_const], minpoly, gen)
     }
+    Domain::RR =>
+      FieldElem::QQ(@symnum.BigRational::from_int(val))
+    Domain::Frac(_) =>
+      raise PolyError::NotImplemented("frac-from-int")
   }
 }
 
@@ -298,6 +339,22 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
 pub fn fe_to_string(a : FieldElem) -> String {
   match a {
     FieldElem::QQ(x) => x.to_string()
+    FieldElem::CC(a, b) => {
+      let sb = StringBuilder::new()
+      sb.write_string(a.to_string())
+      if !b.is_zero() {
+        let neg = b.numerator().op_lt(BigInt::from_int(0))
+        if neg {
+          sb.write_string(" - ")
+          sb.write_string(b.neg_r().to_string())
+        } else {
+          sb.write_string(" + ")
+          sb.write_string(b.to_string())
+        }
+        sb.write_char('i')
+      }
+      sb.to_string()
+    }
     FieldElem::GFp(_, v) => v.to_string()
     FieldElem::GFExt(_, coeffs, _) => coeffs.to_string()
     FieldElem::AlgExt(_, coeffs, minpoly, gen) =>

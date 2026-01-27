@@ -1,0 +1,55 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symcore"
+
+import {
+  "CAIMEOX/symbit/symnum",
+  "moonbitlang/quickcheck",
+}
+
+// Values
+pub fn add(Array[Expr]) -> Expr
+
+pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Array[T]]
+
+pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
+
+pub fn children(Expr) -> ArrayView[Expr]
+
+pub fn compare_expr(Expr, Expr) -> Int
+
+pub fn function(String, Array[Expr]) -> Expr
+
+pub fn int(Int) -> Expr
+
+pub fn map_children(Expr, (Expr) -> Expr) -> Expr
+
+pub fn mul(Array[Expr]) -> Expr
+
+pub fn number(@symnum.BigRational) -> Expr
+
+pub fn pow(Expr, Expr) -> Expr
+
+pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
+
+pub fn sort_exprs_in_place(Array[Expr]) -> Unit
+
+pub fn subst(Expr, Map[String, Expr]) -> Expr
+
+pub fn symbol(String) -> Expr
+
+// Errors
+
+// Types and methods
+pub enum Expr {
+  Number(@symnum.BigRational)
+  Symbol(String)
+  Add(Array[Expr])
+  Mul(Array[Expr])
+  Pow(Expr, Expr)
+  Function(String, Array[Expr])
+}
+
+// Type aliases
+
+// Traits
+

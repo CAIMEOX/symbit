@@ -42,6 +42,9 @@ pub fn ensure_coeff_domain(
         raise PolyError::CoefficientNotInteger
       }
     Domain::QQ => FieldElem::QQ(coeff)
+    Domain::CC => FieldElem::CC(coeff, @symnum.BigRational::zero())
+    Domain::RR => FieldElem::QQ(coeff) // placeholder, treat as QQ for now
+    Domain::Frac(inner) => ensure_coeff_domain(coeff, inner)
     Domain::GF(_) | Domain::GFExt(_, _, _) => {
       let norm = normalize_mod(coeff, domain)
       fe_from_int(norm.numerator().to_int(), domain)

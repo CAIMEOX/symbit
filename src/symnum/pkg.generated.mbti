@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symnum"
+
+import {
+  "moonbitlang/core/bigint",
+}
+
+// Values
+pub fn gcd_bigint(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+// Errors
+pub(all) suberror RationalError {
+  ZeroDenominator
+}
+pub impl Show for RationalError
+
+// Types and methods
+pub struct BigRational {
+  num : @bigint.BigInt
+  den : @bigint.BigInt
+}
+pub fn BigRational::add_r(Self, Self) -> Self
+pub fn BigRational::compare(Self, Self) -> Int
+pub fn BigRational::denominator(Self) -> @bigint.BigInt
+pub fn BigRational::div_r(Self, Self) -> Self raise RationalError
+pub fn BigRational::from_bigint(@bigint.BigInt) -> Self
+pub fn BigRational::from_int(Int) -> Self
+pub fn BigRational::is_integral(Self) -> Bool
+pub fn BigRational::is_one(Self) -> Bool
+pub fn BigRational::is_zero(Self) -> Bool
+pub fn BigRational::mul_r(Self, Self) -> Self
+pub fn BigRational::neg_r(Self) -> Self
+pub fn BigRational::new(@bigint.BigInt, @bigint.BigInt) -> Self raise RationalError
+pub fn BigRational::numerator(Self) -> @bigint.BigInt
+pub fn BigRational::one() -> Self
+pub fn BigRational::reciprocal(Self) -> Self raise RationalError
+pub fn BigRational::zero() -> Self
+pub impl Add for BigRational
+pub impl Eq for BigRational
+pub impl Hash for BigRational
+pub impl Mul for BigRational
+pub impl Neg for BigRational
+pub impl Show for BigRational
+
+// Type aliases
+
+// Traits
+

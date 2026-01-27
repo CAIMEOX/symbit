@@ -93,6 +93,21 @@ pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
 fn fe_to_expr_const(c : FieldElem) -> @symcore.Expr {
   match c {
     FieldElem::QQ(r) => @symcore.number(r)
+    FieldElem::CC(a, b) => {
+      let i_sym = @symcore.symbol("I")
+      let imag = if b.is_zero() {
+        @symcore.number(@symnum.BigRational::zero())
+      } else {
+        @symcore.mul([@symcore.number(b), i_sym])
+      }
+      if a.is_zero() {
+        imag
+      } else if b.is_zero() {
+        @symcore.number(a)
+      } else {
+        @symcore.add([@symcore.number(a), imag])
+      }
+    }
     FieldElem::GFp(_, v) => @symcore.number(@symnum.BigRational::from_int(v))
     FieldElem::GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
     FieldElem::AlgExt(base, coeffs, minpoly, gen) =>

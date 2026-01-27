@@ -10,7 +10,7 @@ test "from_expr to_expr roundtrip" {
   let poly = PolyBuilder::new(["x", "y"], Domain::ZZ).from_expr(expr) catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
-  inspect(poly.to_string(), content="y + 2 * x^2")
+  inspect(poly.to_string(), content="y + 2 * x**2")
 }
 
 ///|
@@ -21,7 +21,7 @@ test "polynomial multiplication and degree" {
     e => fail("unexpected error: \{e.to_string()}")
   }
   let prod = p.mul(p) catch { e => fail("unexpected error: \{e.to_string()}") }
-  inspect(prod.to_string(), content="1 + x^2 + 2 * x")
+  inspect(prod.to_string(), content="1 + x**2 + 2 * x")
   inspect("\{prod.degree(0)}", content="2")
 }
 
@@ -72,7 +72,7 @@ test "gcd univariate over QQ" {
   let g = p.gcd_univar(q) catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
-  inspect(g.to_string(), content="-1 + x^2")
+  inspect(g.to_string(), content="-1 + x**2")
 }
 
 ///|
@@ -86,7 +86,7 @@ test "term order grlex sorts by total degree" {
   ) catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
-  inspect(poly.to_string(), content="y + x^2")
+  inspect(poly.to_string(), content="y + x**2")
 }
 
 ///|
@@ -124,7 +124,7 @@ test "GF(p) arithmetic in factors" {
   ) catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
-  inspect(poly.to_string(), content="1 + x^2")
+  inspect(poly.to_string(), content="1 + x**2")
   let factors = poly.factor() catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
@@ -354,5 +354,5 @@ test "sqf_list and sqf_part" {
   } noraise {
     v => v
   }
-  inspect(sqf.to_string(), content="-2 + x + x^2")
+  inspect(sqf.to_string(), content="-2 + x + x**2")
 }

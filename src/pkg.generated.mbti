@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn add(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn debug_repr(@symcore.Expr) -> String
+
+pub fn integer(Int) -> @symcore.Expr
+
+pub fn mul(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn pow(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn rational(Int, Int) -> @symcore.Expr raise @symnum.RationalError
+
+pub fn symbol(String) -> @symcore.Expr
+
+pub fn to_string(@symcore.Expr) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @symnum {type BigRational}
+
+pub using @symcore {type Expr}
+
+// Traits
+

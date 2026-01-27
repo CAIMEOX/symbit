@@ -37,8 +37,11 @@ fn invert_in_domain(
   match domain {
     Domain::ZZ => raise PolyError::DomainNotField
     Domain::QQ => fe_inv(val)
+    Domain::CC => fe_inv(val)
     Domain::GF(_) | Domain::GFExt(_, _, _) => fe_inv(val)
     Domain::AlgExt(_, _, _) => fe_inv(val)
+    Domain::RR => fe_inv(val)
+    Domain::Frac(_) => fe_inv(val)
   }
 }
 
@@ -55,9 +58,12 @@ fn divmod_univar(
   match dividend.domain {
     Domain::ZZ => divmod_univar_int(dividend, divisor)
     Domain::QQ => divmod_univar_rat(dividend, divisor)
+    Domain::CC => divmod_univar_rat(dividend, divisor)
     Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
     Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
     Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-div")
+    Domain::RR => divmod_univar_rat(dividend, divisor)
+    Domain::Frac(_) => divmod_univar_rat(dividend, divisor)
   }
 }
 
@@ -156,7 +162,7 @@ pub fn Poly::divmod_univar(
 fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut content = @symnum.BigRational::zero()
   match poly.domain {
-    Domain::AlgExt(_, _, _) => return @symnum.BigRational::one()
+    Domain::AlgExt(_, _, _) | Domain::CC => return @symnum.BigRational::one()
     _ => ()
   }
   for _, c in poly.coeffs {
@@ -211,10 +217,13 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
   check_univar_compat(self, other)
   match self.domain {
     Domain::QQ => gcd_univar_rat(self, other)
+    Domain::CC => gcd_univar_rat(self, other)
     Domain::ZZ => gcd_univar_int(self, other)
     Domain::GF(_) => gcd_univar_rat(self, other)
     Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
     Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-gcd")
+    Domain::RR => gcd_univar_rat(self, other)
+    Domain::Frac(_) => gcd_univar_rat(self, other)
   }
 }
 
