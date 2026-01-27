@@ -2,7 +2,15 @@
   "import": [
     "CAIMEOX/symbit/symnum",
     "CAIMEOX/symbit/symcore",
-    "CAIMEOX/symbit/symprint"
-  ],
-  "test-import": []
+    "CAIMEOX/symbit/symprint",
+    {
+      "path": "moonbitlang/quickcheck",
+      "alias": "qc"
+    },
+    {
+      "path": "Kaida-Amethyst/python",
+      "alias": "py"
+    },
+    "CAIMEOX/qc_pyext"
+  ]
 }

@@ -1,6 +1,18 @@
 {
   "import": [
-    "CAIMEOX/symbit/symnum"
+    "CAIMEOX/symbit/symnum",
+    {
+      "path": "moonbitlang/core/quickcheck",
+      "alias": "coreqc"
+    },
+    {
+      "path": "moonbitlang/quickcheck",
+      "alias": "qc"
+    },
+    {
+      "path": "moonbitlang/core/quickcheck/splitmix",
+      "alias": "splitmix"
+    }
   ],
   "test-import": [
     "CAIMEOX/symbit/symprint"

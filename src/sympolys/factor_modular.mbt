@@ -2,7 +2,6 @@
 /// Modular helpers for integer factorization (Hensel lift + subset recombination).
 /// The code aligns with the classic SymPy pipeline: pick a good prime, factor mod p,
 /// Hensel-lift factors to a large modulus, then recombine via gcd over ZZ.
-
 fn choose_good_prime(poly : Poly) -> Int raise PolyError {
   let primes : Array[Int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
   for p in primes {
@@ -15,6 +14,7 @@ fn choose_good_prime(poly : Poly) -> Int raise PolyError {
   raise PolyError::NotImplemented("no_good_prime")
 }
 
+///|
 fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in poly.coeffs {
@@ -24,9 +24,15 @@ fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
       coeffs.set(m, fe)
     }
   }
-  Poly::{ coeffs, gens: poly.gens, domain: Domain::GF(modulus), order: poly.order }
+  Poly::{
+    coeffs,
+    gens: poly.gens,
+    domain: Domain::GF(modulus),
+    order: poly.order,
+  }
 }
 
+///|
 fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   let deg = poly.degree(0)
   let dense : Array[Int] = Array::make(deg + 1, 0)
@@ -41,10 +47,14 @@ fn map_to_mod(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   trim_dense_int(dense, modulus)
 }
 
+///|
 fn lift_gf_factor_to_int(f : Poly, modulus : Int) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in f.coeffs {
-    let mut v = ensure_pos_mod(fe_expect_rational(c).numerator().to_int(), modulus)
+    let mut v = ensure_pos_mod(
+      fe_expect_rational(c).numerator().to_int(),
+      modulus,
+    )
     if v > modulus / 2 {
       v = v - modulus
     }
@@ -53,6 +63,7 @@ fn lift_gf_factor_to_int(f : Poly, modulus : Int) -> Poly raise PolyError {
   Poly::{ coeffs, gens: f.gens, domain: Domain::ZZ, order: f.order }
 }
 
+///|
 fn product_polys(polys : Array[Poly]) -> Poly raise PolyError {
   if polys.is_empty() {
     return Poly::one([], Domain::ZZ)
@@ -64,6 +75,7 @@ fn product_polys(polys : Array[Poly]) -> Poly raise PolyError {
   acc
 }
 
+///|
 fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
   // Assumes: poly in ZZ, primitive, square-free, deg > 1, univariate.
   let deg = poly.degree(0)
@@ -116,6 +128,7 @@ fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
   result
 }
 
+///|
 fn coeff_bound_est(poly : Poly) -> Int raise PolyError {
   let mut max_abs = BigInt::from_int(1)
   for _, c in poly.coeffs {
@@ -130,6 +143,7 @@ fn coeff_bound_est(poly : Poly) -> Int raise PolyError {
   bound_big.to_int()
 }
 
+///|
 fn landau_mignotte_bound(max_coeff : BigInt, deg : Int) -> BigInt {
   let n = deg
   let two = BigInt::from_int(2)
@@ -183,7 +197,11 @@ fn hensel_crt_factor(poly : Poly) -> Array[Poly] raise PolyError {
       return arr
     }
     let dense_reconstructed = reconstruct_coeffs(images, coeff_bound)
-    let lifted_poly = dense_to_poly_int(dense_reconstructed, poly.gens, poly.domain)
+    let lifted_poly = dense_to_poly_int(
+      dense_reconstructed,
+      poly.gens,
+      poly.domain,
+    )
     let lifted_factors : Array[Poly] = Array::new()
     for fm in factors_mod {
       lifted_factors.push(lift_gf_factor_to_int(fm, images[0].0))
@@ -198,6 +216,7 @@ fn hensel_crt_factor(poly : Poly) -> Array[Poly] raise PolyError {
   }
 }
 
+///|
 fn dense_to_poly_int(
   coeffs : Array[Int],
   gens : Array[String],
@@ -215,7 +234,11 @@ fn dense_to_poly_int(
   Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
 }
 
-fn recombine_lifted(poly : Poly, lifted : Array[Poly]) -> Array[Poly] raise PolyError {
+///|
+fn recombine_lifted(
+  poly : Poly,
+  lifted : Array[Poly],
+) -> Array[Poly] raise PolyError {
   let pending = lifted
   let result : Array[Poly] = Array::new()
   let mut changed = true
@@ -273,26 +296,14 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
     }
   }
   if factors.is_empty() {
-    let split = try zassenhaus_factor(remainder) catch {
-      _ => [remainder]
-    } noraise {
-      v => v
-    }
+    let split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     for f in split {
       factors.push(f)
     }
   } else if !remainder.is_zero() && !is_one(remainder) {
-    let mut split = try hensel_crt_factor(remainder) catch {
-      _ => [remainder]
-    } noraise {
-      v => v
-    }
+    let mut split = hensel_crt_factor(remainder) catch { _ => [remainder] }
     if split.length() == 1 && split[0].degree(0) == remainder.degree(0) {
-      split = try zassenhaus_factor(remainder) catch {
-        _ => [remainder]
-      } noraise {
-        v => v
-      }
+      split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     }
     for f in split {
       factors.push(f)
@@ -326,6 +337,7 @@ pub fn reconstruct_coeffs(
   coeffs
 }
 
+///|
 fn crt_images(images : Array[(Int, Array[Int])]) -> (BigInt, Array[BigInt]) {
   let mut modulus = BigInt::from_int(1)
   let mut residues : Array[BigInt] = Array::new()
@@ -337,7 +349,10 @@ fn crt_images(images : Array[(Int, Array[Int])]) -> (BigInt, Array[BigInt]) {
     for i in 0..<degree {
       let current = residues[i]
       let v = BigInt::from_int(vals[i])
-      let t = v.sub(current.mod(m)).mul(mod_inv_bigint(modulus.mod(m), m)).mod(m)
+      let t = v
+        .sub(current.mod(m))
+        .mul(mod_inv_bigint(modulus.mod(m), m))
+        .mod(m)
       let lifted = current.add(modulus.mul(t))
       residues.set(i, lifted)
     }
@@ -346,6 +361,7 @@ fn crt_images(images : Array[(Int, Array[Int])]) -> (BigInt, Array[BigInt]) {
   (modulus, residues)
 }
 
+///|
 fn mod_inv_bigint(a : BigInt, m : BigInt) -> BigInt {
   let mut t0 = BigInt::from_int(0)
   let mut t1 = BigInt::from_int(1)
@@ -371,6 +387,7 @@ fn mod_inv_bigint(a : BigInt, m : BigInt) -> BigInt {
   }
 }
 
+///|
 fn center_residues(residues : Array[BigInt], modulus : BigInt) -> Array[BigInt] {
   let half = modulus.div(BigInt::from_int(2))
   residues.map(r => {
@@ -382,6 +399,7 @@ fn center_residues(residues : Array[BigInt], modulus : BigInt) -> Array[BigInt] 
   })
 }
 
+///|
 fn big_abs(x : BigInt) -> BigInt {
   if x.op_lt(BigInt::from_int(0)) {
     x.neg()
@@ -390,6 +408,7 @@ fn big_abs(x : BigInt) -> BigInt {
   }
 }
 
+///|
 fn build_reconstruction_lattice(
   residues : Array[BigInt],
   modulus : BigInt,
@@ -427,7 +446,7 @@ fn hensel_pair(
   let g_modp = map_dense_mod(g_dense, prime)
   let h_modp = map_dense_mod(h_dense, prime)
   let egcd = poly_ext_gcd_mod(g_modp, h_modp, prime)
-   // ensure gcd == 1 mod p; otherwise bail out to avoid division errors
+  // ensure gcd == 1 mod p; otherwise bail out to avoid division errors
   if !(egcd.0.length() == 1 && ensure_pos_mod(egcd.0[0], prime) == 1) {
     return (g_dense, h_dense)
   }
@@ -440,6 +459,7 @@ fn hensel_pair(
   (trim_dense_int(g_new, new_mod), trim_dense_int(h_new, new_mod))
 }
 
+///|
 fn map_dense_mod(poly : Array[Int], modulus : Int) -> Array[Int] {
   let arr = poly.copy()
   for i in 0..<arr.length() {
@@ -448,6 +468,7 @@ fn map_dense_mod(poly : Array[Int], modulus : Int) -> Array[Int] {
   trim_dense_int(arr, modulus)
 }
 
+///|
 fn dense_div_scalar(vec : Array[Int], k : Int) -> Array[Int] {
   if k == 0 {
     return vec
@@ -459,6 +480,7 @@ fn dense_div_scalar(vec : Array[Int], k : Int) -> Array[Int] {
   trim_dense_plain(res)
 }
 
+///|
 fn poly_add_scaled_mod(
   base : Array[Int],
   delta : Array[Int],
@@ -476,7 +498,8 @@ fn poly_add_scaled_mod(
   trim_dense_int(res, modulus)
 }
 
-///| Dense polynomial arithmetic (mod integer modulus).
+///|
+/// Dense polynomial arithmetic (mod integer modulus).
 fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
   let res = poly
   while res.length() > 1 {
@@ -485,6 +508,7 @@ fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
       Some(v) =>
         if ensure_pos_mod(v, modulus) == 0 {
           let _ = res.pop()
+
         } else {
           break
         }
@@ -497,7 +521,12 @@ fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
   }
 }
 
-fn poly_sub_mod_int(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int] {
+///|
+fn poly_sub_mod_int(
+  a : Array[Int],
+  b : Array[Int],
+  modulus : Int,
+) -> Array[Int] {
   let len = Int::max(a.length(), b.length())
   let res : Array[Int] = Array::make(len, 0)
   for i in 0..<len {
@@ -508,7 +537,12 @@ fn poly_sub_mod_int(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int]
   trim_dense_int(res, modulus)
 }
 
-fn poly_mul_mod_int(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int] {
+///|
+fn poly_mul_mod_int(
+  a : Array[Int],
+  b : Array[Int],
+  modulus : Int,
+) -> Array[Int] {
   let res : Array[Int] = Array::make(a.length() + b.length() - 1, 0)
   for i in 0..<a.length() {
     for j in 0..<b.length() {
@@ -520,7 +554,8 @@ fn poly_mul_mod_int(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int]
   trim_dense_int(res, modulus)
 }
 
-///| Polynomial division a/b mod prime -> (q,r)
+///|
+/// Polynomial division a/b mod prime -> (q,r)
 fn poly_divmod_mod(
   dividend : Array[Int],
   divisor : Array[Int],
@@ -553,7 +588,8 @@ fn poly_divmod_mod(
   (trim_dense_int(q, modulus), r)
 }
 
-///| Extended GCD for polynomials mod prime.
+///|
+/// Extended GCD for polynomials mod prime.
 fn poly_ext_gcd_mod(
   a : Array[Int],
   b : Array[Int],
@@ -586,6 +622,7 @@ fn poly_ext_gcd_mod(
   (old_r, old_s, old_t)
 }
 
+///|
 fn trim_dense_plain(poly : Array[Int]) -> Array[Int] {
   let res = poly
   while res.length() > 1 {
@@ -594,6 +631,7 @@ fn trim_dense_plain(poly : Array[Int]) -> Array[Int] {
       Some(v) =>
         if v == 0 {
           let _ = res.pop()
+
         } else {
           break
         }

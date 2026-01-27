@@ -1,10 +1,16 @@
 {
   "name": "CAIMEOX/symbit",
   "version": "0.1.0",
+  "deps": {
+    "CAIMEOX/qc_pyext": "0.1.1",
+    "Kaida-Amethyst/python": "0.1.7",
+    "moonbitlang/quickcheck": "0.9.10"
+  },
   "readme": "README.mbt.md",
   "repository": "",
   "license": "Apache-2.0",
   "keywords": [],
+  "description": "",
   "source": "src",
-  "description": ""
+  "preferred-target": "native"
 }
