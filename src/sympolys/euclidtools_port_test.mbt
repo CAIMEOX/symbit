@@ -7,10 +7,7 @@ fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
   }
   let ours = @sympy.normalize_spaces(@sympy.sympy_normalize(g.to_string()))
   let oracle = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("gcd_str", [
-      @sympy.OracleArg::Str(p.to_string()),
-      @sympy.OracleArg::Str(q.to_string()),
-    ]),
+    @sympy_polys.gcd(p.to_string(), q.to_string()),
   )
   guard ours == oracle else {
     fail("gcd mismatch: ours=\{ours}, oracle=\{oracle}")
@@ -26,10 +23,7 @@ fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
   }
   let ours = @sympy.normalize_spaces(div_pair_to_string(quo, rem))
   let oracle = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("div_str", [
-      @sympy.OracleArg::Str(p.to_string()),
-      @sympy.OracleArg::Str(q.to_string()),
-    ]),
+    @sympy_polys.div_pair_str(p.to_string(), q.to_string()),
   )
   guard ours == oracle else {
     fail("divmod mismatch: ours=\{ours}, oracle=\{oracle}")
@@ -45,11 +39,7 @@ fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
   }
   let ours = @sympy.normalize_spaces(@sympy.sympy_normalize(res.to_string()))
   let oracle = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("resultant_str", [
-      @sympy.OracleArg::Str(p.to_string()),
-      @sympy.OracleArg::Str(q.to_string()),
-      @sympy.OracleArg::Str("x"),
-    ]),
+    @sympy_polys.resultant(p.to_string(), q.to_string(), var_name="x"),
   )
   guard ours == oracle else {
     fail("resultant mismatch: ours=\{ours}, oracle=\{oracle}")

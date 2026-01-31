@@ -8,6 +8,10 @@
     {
       "path": "CAIMEOX/symbit/sympy",
       "alias": "sympy"
+    },
+    {
+      "path": "CAIMEOX/symbit/sympy/polys",
+      "alias": "sympy_polys"
     }
   ]
 }

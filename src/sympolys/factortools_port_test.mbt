@@ -10,20 +10,14 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
   } noraise {
     v => v
   }
-  let ours = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("sort_factor_repr", [
-      @sympy.OracleArg::Str(ours_raw),
-    ]),
-  )
-  let args : Array[@sympy.OracleArg] = match modulus {
-    Some(p) =>
-      [@sympy.OracleArg::Str(poly.to_string()), @sympy.OracleArg::Int(p)]
-    None => [@sympy.OracleArg::Str(poly.to_string())]
-  }
+  let ours = @sympy.normalize_spaces(@sympy_polys.sort_factor_repr(ours_raw))
   let oracle = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("sort_factor_repr", [
-      @sympy.OracleArg::Str(@sympy.sympy_oracle_call("factor_list_str", args)),
-    ]),
+    @sympy_polys.sort_factor_repr(
+      match modulus {
+        Some(p) => @sympy_polys.factor_list_str(poly.to_string(), modulus=p)
+        None => @sympy_polys.factor_list_str(poly.to_string())
+      },
+    ),
   )
   guard ours == oracle else {
     fail("factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
@@ -93,19 +87,9 @@ test "factortools: sqf_list compares with SymPy" {
   } noraise {
     v => v
   }
-  let ours = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("sort_factor_repr", [
-      @sympy.OracleArg::Str(ours_raw),
-    ]),
-  )
+  let ours = @sympy.normalize_spaces(@sympy_polys.sort_factor_repr(ours_raw))
   let oracle = @sympy.normalize_spaces(
-    @sympy.sympy_oracle_call("sort_factor_repr", [
-      @sympy.OracleArg::Str(
-        @sympy.sympy_oracle_call("sqf_list_str", [
-          @sympy.OracleArg::Str(poly.to_string()),
-        ]),
-      ),
-    ]),
+    @sympy_polys.sort_factor_repr(@sympy_polys.sqf_list_str(poly.to_string())),
   )
   guard ours == oracle else {
     fail("sqf_list mismatch: ours=\{ours}, oracle=\{oracle}")

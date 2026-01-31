@@ -14,7 +14,7 @@ fn normalize_basis_str(s : String) -> String {
   for part in s.split("|") {
     let raw = part.to_string()
     let monic = try
-      @sympy.sympy_oracle_call("monic_expr_str", [@sympy.OracleArg::Str(raw)])
+      @sympy_polys.monic_expr_str(raw)
     catch {
       _ => raw
     } noraise {
@@ -44,14 +44,8 @@ fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
     },
   )
   let exprs = polys.map(p => p.to_string())
-  let kwargs : Map[String, @sympy.OracleArg] = {}
-  kwargs["order"] = @sympy.OracleArg::Str(order_to_sympy(order))
   let oracle = normalize_basis_str(
-    @sympy.sympy_oracle_call(
-      "groebner_str",
-      [@sympy.OracleArg::StrList(exprs)],
-      kwargs~,
-    ),
+    @sympy_polys.groebner_str(exprs, order=order_to_sympy(order)),
   )
   guard ours == oracle else {
     fail("groebner mismatch: ours=\{ours}, oracle=\{oracle}")
