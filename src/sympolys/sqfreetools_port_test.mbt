@@ -2,14 +2,14 @@
 fn expect_sqf_list_same(poly : Poly) -> Unit raise {
   let (content, parts) = try poly.sqf_list() catch { e => fail(e.to_string()) } noraise { v => v }
   let ours_raw = try factor_list_to_string(content.to_string(), parts) catch { e => fail(e.to_string()) } noraise { v => v }
-  let ours = canonical_cmp(sympy_oracle_call("sort_factor_repr", [OracleArg::Str(ours_raw)]))
+  let ours = @sympy.canonical_cmp(@sympy.sympy_oracle_call("sort_factor_repr", [@sympy.OracleArg::Str(ours_raw)]))
   let args = match poly.domain {
-    Domain::GF(p) => [OracleArg::Str(poly.to_string()), OracleArg::Int(p)]
-    _ => [OracleArg::Str(poly.to_string())]
+    Domain::GF(p) => [@sympy.OracleArg::Str(poly.to_string()), @sympy.OracleArg::Int(p)]
+    _ => [@sympy.OracleArg::Str(poly.to_string())]
   }
-  let oracle = canonical_cmp(
-    sympy_oracle_call("sort_factor_repr", [
-      OracleArg::Str(sympy_oracle_call("sqf_list_str", args)),
+  let oracle = @sympy.canonical_cmp(
+    @sympy.sympy_oracle_call("sort_factor_repr", [
+      @sympy.OracleArg::Str(@sympy.sympy_oracle_call("sqf_list_str", args)),
     ]),
   )
   guard ours == oracle else {
@@ -20,8 +20,8 @@ fn expect_sqf_list_same(poly : Poly) -> Unit raise {
 ///|
 fn expect_sqf_part_same(poly : Poly) -> Unit raise {
   let sqf = try poly.sqf_part() catch { e => fail(e.to_string()) } noraise { v => v }
-  let oracle_sqf = sympy_oracle_call("sqf_part_str", [OracleArg::Str(poly.to_string())])
-  let eq = sympy_oracle_call("expr_equal", [OracleArg::Str(sqf.to_string()), OracleArg::Str(oracle_sqf)])
+  let oracle_sqf = @sympy.sympy_oracle_call("sqf_part_str", [@sympy.OracleArg::Str(poly.to_string())])
+  let eq = @sympy.sympy_oracle_call("expr_equal", [@sympy.OracleArg::Str(sqf.to_string()), @sympy.OracleArg::Str(oracle_sqf)])
   guard eq == "True" else {
     fail("sqf_part mismatch: ours=\{sqf.to_string()}, oracle=\{oracle_sqf}")
   }

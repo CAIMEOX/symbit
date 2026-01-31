@@ -13,11 +13,11 @@ fn normalize_basis_str(s : String) -> String {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
     let raw = part.to_string()
-    let monic = try sympy_oracle_call("monic_expr_str", [OracleArg::Str(raw)]) catch { _ => raw } noraise {
+    let monic = try @sympy.sympy_oracle_call("monic_expr_str", [@sympy.OracleArg::Str(raw)]) catch { _ => raw } noraise {
       v => v
     }
-    let normalized = try sympy_normalize(monic) catch { _ => monic } noraise { v => v }
-    parts.push(canonical_cmp(normalized))
+    let normalized = try @sympy.sympy_normalize(monic) catch { _ => monic } noraise { v => v }
+    parts.push(@sympy.canonical_cmp(normalized))
   }
   parts.sort()
   parts.join("|")
@@ -28,11 +28,11 @@ fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let basis = try Poly::groebner(polys, order=order) catch { e => fail(e.to_string()) } noraise { v => v }
   let ours = normalize_basis_str(groebner_to_string(basis) catch { e => fail(e.to_string()) })
   let exprs = polys.map(p => p.to_string())
-  let kwargs : Map[String, OracleArg] = {}
-  kwargs["order"] = OracleArg::Str(order_to_sympy(order))
-  let oracle = normalize_basis_str(sympy_oracle_call(
+  let kwargs : Map[String, @sympy.OracleArg] = {}
+  kwargs["order"] = @sympy.OracleArg::Str(order_to_sympy(order))
+  let oracle = normalize_basis_str(@sympy.sympy_oracle_call(
     "groebner_str",
-    [OracleArg::StrList(exprs)],
+    [@sympy.OracleArg::StrList(exprs)],
     kwargs=kwargs,
   ))
   guard ours == oracle else {

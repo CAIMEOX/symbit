@@ -2,26 +2,12 @@
   "import": [
     "CAIMEOX/symbit/symnum",
     "CAIMEOX/symbit/symcore",
-    "CAIMEOX/symbit/symprint",
-    {
-      "path": "Kaida-Amethyst/python",
-      "alias": "py"
-    },
-    {
-      "path": "Kaida-Amethyst/python/cpython",
-      "alias": "cpython"
-    }
+    "CAIMEOX/symbit/symprint"
   ],
   "test-import": [
     {
-      "path": "moonbitlang/core/json",
-      "alias": "json"
-    },
-    {
-      "path": "moonbitlang/quickcheck",
-      "alias": "qc"
-    },
-    "CAIMEOX/qc_pyext"
-  ],
-  "native-stub": ["oracle_stub.c"]
+      "path": "CAIMEOX/symbit/sympy",
+      "alias": "sympy"
+    }
+  ]
 }

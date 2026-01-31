@@ -4,14 +4,14 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
   let ours_raw = try factor_list_to_string(content.to_string(), factors) catch {
     err => fail(err.to_string())
   } noraise { v => v }
-  let ours = normalize_spaces(sympy_oracle_call("sort_factor_repr", [OracleArg::Str(ours_raw)]))
-  let args : Array[OracleArg] = match modulus {
-    Some(p) => [OracleArg::Str(poly.to_string()), OracleArg::Int(p)]
-    None => [OracleArg::Str(poly.to_string())]
+  let ours = @sympy.normalize_spaces(@sympy.sympy_oracle_call("sort_factor_repr", [@sympy.OracleArg::Str(ours_raw)]))
+  let args : Array[@sympy.OracleArg] = match modulus {
+    Some(p) => [@sympy.OracleArg::Str(poly.to_string()), @sympy.OracleArg::Int(p)]
+    None => [@sympy.OracleArg::Str(poly.to_string())]
   }
-  let oracle = normalize_spaces(
-    sympy_oracle_call("sort_factor_repr", [
-      OracleArg::Str(sympy_oracle_call("factor_list_str", args)),
+  let oracle = @sympy.normalize_spaces(
+    @sympy.sympy_oracle_call("sort_factor_repr", [
+      @sympy.OracleArg::Str(@sympy.sympy_oracle_call("factor_list_str", args)),
     ]),
   )
   guard ours == oracle else {
@@ -58,10 +58,10 @@ test "factortools: sqf_list compares with SymPy" {
   ) catch { e => fail(e.to_string()) }
   let (content, parts) = try poly.sqf_list() catch { e => fail(e.to_string()) } noraise { v => v }
   let ours_raw = try factor_list_to_string(content.to_string(), parts) catch { e => fail(e.to_string()) } noraise { v => v }
-  let ours = normalize_spaces(sympy_oracle_call("sort_factor_repr", [OracleArg::Str(ours_raw)]))
-  let oracle = normalize_spaces(
-    sympy_oracle_call("sort_factor_repr", [
-      OracleArg::Str(sympy_oracle_call("sqf_list_str", [OracleArg::Str(poly.to_string())])),
+  let ours = @sympy.normalize_spaces(@sympy.sympy_oracle_call("sort_factor_repr", [@sympy.OracleArg::Str(ours_raw)]))
+  let oracle = @sympy.normalize_spaces(
+    @sympy.sympy_oracle_call("sort_factor_repr", [
+      @sympy.OracleArg::Str(@sympy.sympy_oracle_call("sqf_list_str", [@sympy.OracleArg::Str(poly.to_string())])),
     ]),
   )
   guard ours == oracle else {

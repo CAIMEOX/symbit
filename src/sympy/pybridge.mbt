@@ -4,8 +4,8 @@
 /// This keeps the conversion logic small while relying on SymPy's
 /// parser for canonical construction (and avoids reproducing its
 /// dispatch rules in MoonBit).
-pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise PolyError {
-  with_py_gil_poly(fn() {
+pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
+  with_py_gil(fn() {
     add_repo_to_syspath()
     let sympy = ensure_sympy_module()
     let sympify = resolve_sympify(sympy)
@@ -26,7 +26,7 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise PolyError {
     let res = py_call_object(sympify, args, print_err=true)
     match res {
       Some(obj) => objenum_to_obj(obj)
-      None => raise PolyError::NotImplemented("sympy-sympify-none")
+      None => fail("sympy-sympify-none")
     }
   })
 }
@@ -47,15 +47,15 @@ fn add_repo_to_syspath() -> Unit {
 }
 
 ///|
-fn ensure_sympy_module() -> @py.PyModule raise PolyError {
+fn ensure_sympy_module() -> @py.PyModule raise {
   match @py.pyimport("sympy") {
     Some(sympy) => sympy
-    None => raise PolyError::NotImplemented("sympy-missing")
+    None => fail("sympy-missing")
   }
 }
 
 ///|
-fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise PolyError {
+fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
   let sympify0 = match sympy.get_attr("sympify", print_err=false) {
     Some(PyCallable(callable)) => Some(callable)
     Some(PyClass(obj)) =>
@@ -77,20 +77,16 @@ fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise PolyError {
               match mod.get_attr("sympify", print_err=false) {
                 Some(PyCallable(callable)) => callable
                 Some(PyClass(obj)) =>
-                  @py.PyCallable::create(obj) catch {
-                    _ => raise PolyError::NotImplemented("sympy-sympify-missing")
-                  }
+                  @py.PyCallable::create(obj) catch { _ => fail("sympy-sympify-missing") }
                 Some(other) =>
-                  @py.PyCallable::create(objenum_to_obj(other)) catch {
-                    _ => raise PolyError::NotImplemented("sympy-sympify-missing")
-                  }
-                None => raise PolyError::NotImplemented("sympy-sympify-missing")
+                  @py.PyCallable::create(objenum_to_obj(other)) catch { _ => fail("sympy-sympify-missing") }
+                None => fail("sympy-sympify-missing")
               }
             }
-            None => raise PolyError::NotImplemented("sympy-sympify-missing")
+            None => fail("sympy-sympify-missing")
           }
         }
-        None => raise PolyError::NotImplemented("sympy-sympify-missing")
+        None => fail("sympy-sympify-missing")
       }
     }
   }
