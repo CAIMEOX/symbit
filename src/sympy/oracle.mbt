@@ -151,32 +151,6 @@ fn strip_trailing_newline(s : String) -> String {
 }
 
 ///|
-let oracle_lock : Ref[Bool] = { val: false }
-
-///|
-let oracle_seq : Ref[Int] = { val: 0 }
-
-///|
-/// Serialize oracle calls to avoid concurrent Python access.
-fn[T] with_oracle_lock(f : () -> T raise) -> T raise {
-  while oracle_lock.val {
-    ()
-  }
-  oracle_lock.val = true
-  try f() catch {
-    e => {
-      oracle_lock.val = false
-      raise e
-    }
-  } noraise {
-    v => {
-      oracle_lock.val = false
-      v
-    }
-  }
-}
-
-///|
 /// Remove all spaces to make string comparison insensitive to formatting.
 pub fn normalize_spaces(s : String) -> String {
   s.replace_all(old=" ", new="")
@@ -210,35 +184,31 @@ pub fn sympy_oracle_call_json(
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> Json raise {
-  with_oracle_lock(fn() raise {
-    oracle_seq.val = oracle_seq.val + 1
-    println("oracle[\{oracle_seq.val}]: \{func}")
-    let payload = oracle_payload_json(func, args, kwargs)
-    let out = strip_trailing_newline(sympy_oracle_exec(payload, ORACLE_PATH))
-    if out.has_prefix("PYERR:") {
-      fail(out)
-    }
-    let parsed = @json.parse(out)
-    match parsed {
-      Object(obj) =>
-        match obj.get("ok") {
-          Some(True) =>
-            match obj.get("value") {
-              Some(value) => value
-              None => fail("oracle JSON missing value")
-            }
-          Some(False) => {
-            let msg = match obj.get("error") {
-              Some(String(s)) => s
-              _ => "oracle error"
-            }
-            fail(msg)
+  let payload = oracle_payload_json(func, args, kwargs)
+  let out = strip_trailing_newline(sympy_oracle_exec(payload, ORACLE_PATH))
+  if out.has_prefix("PYERR:") {
+    fail(out)
+  }
+  let parsed = @json.parse(out)
+  match parsed {
+    Object(obj) =>
+      match obj.get("ok") {
+        Some(True) =>
+          match obj.get("value") {
+            Some(value) => value
+            None => fail("oracle JSON missing value")
           }
-          _ => fail("oracle JSON missing ok flag")
+        Some(False) => {
+          let msg = match obj.get("error") {
+            Some(String(s)) => s
+            _ => "oracle error"
+          }
+          fail(msg)
         }
-      _ => fail("oracle JSON not an object")
-    }
-  })
+        _ => fail("oracle JSON missing ok flag")
+      }
+    _ => fail("oracle JSON not an object")
+  }
 }
 
 ///|
