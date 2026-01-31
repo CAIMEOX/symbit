@@ -1,10 +1,13 @@
 ///|
 pub(all) enum OracleArg {
+  Null
   Str(String)
   Int(Int)
   Bool(Bool)
   StrList(Array[String])
   IntList(Array[Int])
+  List(Array[OracleArg])
+  Dict(Map[String, OracleArg])
 }
 
 ///|
@@ -45,6 +48,7 @@ fn json_string(s : String) -> String {
 ///|
 fn oracle_arg_json(arg : OracleArg) -> String {
   match arg {
+    OracleArg::Null => "null"
     OracleArg::Str(s) => json_string(s)
     OracleArg::Int(n) => n.to_string()
     OracleArg::Bool(b) => if b { "true" } else { "false" }
@@ -70,6 +74,36 @@ fn oracle_arg_json(arg : OracleArg) -> String {
         sb.write_view(list[i].to_string())
       }
       sb.write_char(']')
+      sb.to_string()
+    }
+    OracleArg::List(list) => {
+      let sb = StringBuilder::new()
+      sb.write_char('[')
+      for i in 0..<list.length() {
+        if i > 0 {
+          sb.write_char(',')
+        }
+        sb.write_view(oracle_arg_json(list[i]))
+      }
+      sb.write_char(']')
+      sb.to_string()
+    }
+    OracleArg::Dict(map) => {
+      let sb = StringBuilder::new()
+      sb.write_char('{')
+      let mut first = true
+      for k, v in map {
+        if first {
+          first = false
+        } else {
+          sb.write_char(',')
+        }
+        sb
+        ..write_view(json_string(k))
+        ..write_char(':')
+        ..write_view(oracle_arg_json(v))
+      }
+      sb.write_char('}')
       sb.to_string()
     }
   }
@@ -214,6 +248,33 @@ pub fn sympy_oracle_call(
   kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
   let value = sympy_oracle_call_json(func, args, kwargs~)
+  match value {
+    String(s) => s
+    _ => value.stringify()
+  }
+}
+
+///|
+pub fn sympy_polys_call_json(
+  op : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> Json raise {
+  let full : Array[OracleArg] = Array::new()
+  full.push(OracleArg::Str(op))
+  for arg in args {
+    full.push(arg)
+  }
+  sympy_oracle_call_json("polys_call_json", full, kwargs~)
+}
+
+///|
+pub fn sympy_polys_call(
+  op : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> String raise {
+  let value = sympy_polys_call_json(op, args, kwargs~)
   match value {
     String(s) => s
     _ => value.stringify()

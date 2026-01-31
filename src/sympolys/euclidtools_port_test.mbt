@@ -463,3 +463,82 @@ test "euclidtools: resultant oracle parity (x^3-6*x^2+11*x-6, x^3-15*x^2+74*x-12
     e => fail(e.to_string())
   }
 }
+
+///|
+test "euclidtools: gcd_univar oracle parity (QQ rational linear)" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = expr_sym("x")
+  let p = b.from_expr(
+    expr_add([
+      expr_pow(x, 2),
+      expr_mul([expr_rat(1, 2), x]),
+      expr_rat(1, 4),
+    ]),
+  ) catch {
+    e => fail(e.to_string())
+  }
+  let q = b.from_expr(expr_add([x, expr_rat(1, 2)])) catch {
+    e => fail(e.to_string())
+  }
+  expect_gcd_oracle(p, q) catch {
+    e => fail(e.to_string())
+  }
+}
+
+///|
+test "euclidtools: divmod oracle parity (QQ cubic / linear)" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = expr_sym("x")
+  let p = b.from_expr(
+    expr_add([
+      expr_pow(x, 3),
+      expr_mul([expr_rat(1, 2), expr_pow(x, 2)]),
+      expr_mul([expr_rat(-1, 2), x]),
+      expr_int(1),
+    ]),
+  ) catch {
+    e => fail(e.to_string())
+  }
+  let q = b.from_expr(expr_add([x, expr_rat(1, 2)])) catch {
+    e => fail(e.to_string())
+  }
+  expect_div_oracle(p, q) catch {
+    e => fail(e.to_string())
+  }
+}
+
+///|
+test "euclidtools: resultant oracle parity (x^3-2, x^2-3)" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
+  let p = b.from_expr(expr_add([expr_pow(x, 3), expr_int(-2)])) catch {
+    e => fail(e.to_string())
+  }
+  let q = b.from_expr(expr_add([expr_pow(x, 2), expr_int(-3)])) catch {
+    e => fail(e.to_string())
+  }
+  expect_resultant_oracle(p, q) catch {
+    e => fail(e.to_string())
+  }
+}
+
+///|
+test "euclidtools: resultant oracle parity (QQ quadratic)" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = expr_sym("x")
+  let p = b.from_expr(
+    expr_add([
+      expr_pow(x, 2),
+      expr_mul([expr_rat(1, 2), x]),
+      expr_int(1),
+    ]),
+  ) catch {
+    e => fail(e.to_string())
+  }
+  let q = b.from_expr(expr_add([x, expr_rat(-1, 2)])) catch {
+    e => fail(e.to_string())
+  }
+  expect_resultant_oracle(p, q) catch {
+    e => fail(e.to_string())
+  }
+}

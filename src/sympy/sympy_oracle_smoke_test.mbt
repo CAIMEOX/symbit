@@ -88,3 +88,65 @@ test "sympy oracle JSON: sympify_list_json" {
     _ => fail("expected JSON array")
   }
 }
+
+///|
+test "sympy oracle polys_call_json: gcd/div/factor/sqf/groebner" {
+  let gcd_res = sympy_polys_call_json("gcd", [
+    OracleArg::Str("x**2 - 1"),
+    OracleArg::Str("x - 1"),
+  ])
+  match gcd_res {
+    Object(obj) => {
+      guard obj.get("__sympy__") is Some(True) else { fail("gcd missing __sympy__") }
+      guard obj.get("str") is Some(String(s)) && s == "x - 1" else {
+        fail("unexpected gcd result")
+      }
+    }
+    _ => fail("expected gcd object")
+  }
+
+  let div_res = sympy_polys_call_json("div", [
+    OracleArg::Str("x**2 - 1"),
+    OracleArg::Str("x - 1"),
+  ])
+  match div_res {
+    Array(items) => {
+      guard items.length() == 2 else { fail("expected div [quo, rem]") }
+    }
+    _ => fail("expected div array")
+  }
+
+  let factor_res = sympy_polys_call_json("factor", [
+    OracleArg::Str("x**2 - 1"),
+  ])
+  match factor_res {
+    Array(items) => {
+      guard items.length() == 2 else { fail("expected factor_list [content, factors]") }
+    }
+    _ => fail("expected factor_list array")
+  }
+
+  let sqf_res = sympy_polys_call_json("sqf", [
+    OracleArg::Str("x**2*(x + 1)"),
+  ])
+  match sqf_res {
+    Array(items) => {
+      guard items.length() == 2 else { fail("expected sqf_list [content, factors]") }
+    }
+    _ => fail("expected sqf_list array")
+  }
+
+  let kwargs : Map[String, OracleArg] = {}
+  kwargs["order"] = OracleArg::Str("lex")
+  let gb_res = sympy_polys_call_json(
+    "groebner",
+    [OracleArg::StrList(["x*y - 1", "x - y"])],
+    kwargs~,
+  )
+  match gb_res {
+    Array(items) => {
+      guard items.length() >= 1 else { fail("expected groebner basis list") }
+    }
+    _ => fail("expected groebner basis list")
+  }
+}

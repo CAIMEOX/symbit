@@ -860,3 +860,36 @@ test "densebasic: deflate/inflate helpers" {
   let infl2 = try! dmp_inflate(f3, [2, 3], 1, Domain::ZZ)
   inspect(dense_repr(infl2), content="[[1,0,0,2],[],[3,0,0,4]]")
 }
+
+///|
+test "densebasic: dmp_true_LT sympy cases" {
+  let lt0 = try! dmp_true_LT(poly([poly([])]), 1)
+  inspect(lt0.0.to_string(), content="[0, 0]")
+  inspect(lt0.1.to_string(), content="0")
+  let lt1 = try! dmp_true_LT(poly([poly([coef(7)])]), 1)
+  inspect(lt1.0.to_string(), content="[0, 0]")
+  inspect(lt1.1.to_string(), content="7")
+  let lt2 = try! dmp_true_LT(poly([poly([coef(1), coef(0)])]), 1)
+  inspect(lt2.0.to_string(), content="[0, 1]")
+  inspect(lt2.1.to_string(), content="1")
+  let lt3 = try! dmp_true_LT(poly([poly([coef(1)]), poly([])]), 1)
+  inspect(lt3.0.to_string(), content="[1, 0]")
+  inspect(lt3.1.to_string(), content="1")
+  let lt4 = try! dmp_true_LT(poly([poly([coef(1), coef(0)]), poly([])]), 1)
+  inspect(lt4.0.to_string(), content="[1, 1]")
+  inspect(lt4.1.to_string(), content="1")
+}
+
+///|
+test "densebasic: dup_reverse sympy cases" {
+  let f1 = try! dup_reverse([fez(1), fez(2), fez(0), fez(3)])
+  inspect(f1.map(c => c.to_string()).join(","), content="3,0,2,1")
+  let f2 = try! dup_reverse([fez(1), fez(2), fez(3), fez(0)])
+  inspect(f2.map(c => c.to_string()).join(","), content="3,2,1")
+}
+
+///|
+test "densebasic: dmp_degree_in bad index" {
+  let bad : Result[Int, PolyError] = try? dmp_degree_in(poly([coef(1)]), -1, 0)
+  guard bad is Err(_) else { fail("expected error for negative index") }
+}

@@ -144,6 +144,142 @@ def echo_int(n: int) -> str:
         n = int(n)
     return str(n)
 
+def _coerce_modulus(modulus):
+    if isinstance(modulus, str):
+        return int(modulus)
+    return modulus
+
+def _sympify_expr(expr):
+    return sp.sympify(expr) if isinstance(expr, str) else expr
+
+def _coerce_gens(gens):
+    if gens is None:
+        return None
+    if isinstance(gens, (list, tuple)):
+        out = []
+        for g in gens:
+            if isinstance(g, str):
+                out.append(sp.symbols(g))
+            else:
+                out.append(g)
+        return out
+    if isinstance(gens, str):
+        syms = sp.symbols(gens)
+        if isinstance(syms, tuple):
+            return list(syms)
+        return [syms]
+    return [gens]
+
+def _default_gens(*exprs):
+    syms = set()
+    for e in exprs:
+        if e is None:
+            continue
+        if hasattr(e, "free_symbols"):
+            syms |= set(e.free_symbols)
+    return sorted(syms, key=lambda s: s.name)
+
+def _poly(expr, gens, domain, modulus):
+    if gens is None:
+        return sp.Poly(expr, domain=domain, modulus=modulus)
+    return sp.Poly(expr, *gens, domain=domain, modulus=modulus)
+
+def polys_gcd_json(a, b, gens=None, domain=None, modulus=None):
+    modulus = _coerce_modulus(modulus)
+    a = _sympify_expr(a)
+    b = _sympify_expr(b)
+    gens = _coerce_gens(gens)
+    if gens is None:
+        gens = _default_gens(a, b)
+    if gens and (domain is not None or modulus is not None):
+        pa = _poly(a, gens, domain, modulus)
+        pb = _poly(b, gens, domain, modulus)
+        return pa.gcd(pb)
+    return sp.gcd(a, b)
+
+def polys_resultant_json(p, q, var=None, gens=None, domain=None, modulus=None):
+    modulus = _coerce_modulus(modulus)
+    p = _sympify_expr(p)
+    q = _sympify_expr(q)
+    var = _sympify_expr(var) if var is not None else None
+    gens = _coerce_gens(gens)
+    if gens is None:
+        gens = _default_gens(p, q, var)
+    if gens and (domain is not None or modulus is not None):
+        pa = _poly(p, gens, domain, modulus)
+        pb = _poly(q, gens, domain, modulus)
+        if var is None:
+            return pa.resultant(pb)
+        return pa.resultant(pb, var=var)
+    if var is None:
+        if gens:
+            var = gens[0]
+        else:
+            raise ValueError("resultant requires a variable")
+    if modulus is None:
+        return sp.resultant(p, q, var)
+    return sp.resultant(p, q, var, modulus=modulus)
+
+def polys_groebner_json(exprs, gens=None, order="lex", domain=None, modulus=None):
+    polys = [_sympify_expr(e) for e in exprs]
+    gens = _coerce_gens(gens)
+    if gens is None:
+        gens = _default_gens(*polys)
+    g = sp.groebner(polys, *gens, order=order, domain=domain, modulus=modulus)
+    return list(g.polys)
+
+def polys_factor_json(expr, gens=None, domain=None, modulus=None):
+    modulus = _coerce_modulus(modulus)
+    expr = _sympify_expr(expr)
+    if gens is not None or domain is not None or modulus is not None:
+        gens = _coerce_gens(gens)
+        if gens is None:
+            gens = _default_gens(expr)
+        poly = _poly(expr, gens, domain, modulus)
+        return poly.factor_list()
+    if modulus is None:
+        return sp.factor_list(expr)
+    return sp.factor_list(expr, modulus=modulus)
+
+def polys_sqf_list_json(expr, gens=None, domain=None, modulus=None):
+    modulus = _coerce_modulus(modulus)
+    expr = _sympify_expr(expr)
+    if gens is not None or domain is not None or modulus is not None:
+        gens = _coerce_gens(gens)
+        if gens is None:
+            gens = _default_gens(expr)
+        poly = _poly(expr, gens, domain, modulus)
+        return poly.sqf_list()
+    return sp.sqf_list(expr)
+
+def polys_div_json(p, q, gens=None, domain=None, modulus=None):
+    modulus = _coerce_modulus(modulus)
+    p = _sympify_expr(p)
+    q = _sympify_expr(q)
+    gens = _coerce_gens(gens)
+    if gens is None:
+        gens = _default_gens(p, q)
+    if gens and (domain is not None or modulus is not None):
+        pa = _poly(p, gens, domain, modulus)
+        pb = _poly(q, gens, domain, modulus)
+        return pa.div(pb)
+    return sp.div(p, q)
+
+def polys_call_json(op, *args, **kwargs):
+    op = str(op)
+    if op == "gcd":
+        return polys_gcd_json(*args, **kwargs)
+    if op == "resultant":
+        return polys_resultant_json(*args, **kwargs)
+    if op == "groebner":
+        return polys_groebner_json(*args, **kwargs)
+    if op == "factor":
+        return polys_factor_json(*args, **kwargs)
+    if op == "sqf":
+        return polys_sqf_list_json(*args, **kwargs)
+    if op == "div":
+        return polys_div_json(*args, **kwargs)
+    raise ValueError(f"unknown polys op: {op}")
 
 def _decode_arg(val):
     if isinstance(val, list):
