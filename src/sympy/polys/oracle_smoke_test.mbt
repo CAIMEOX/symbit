@@ -12,18 +12,8 @@ test "sympy polys oracle: gcd/resultant/div" {
 test "sympy polys oracle: groebner/factor/sqf" {
   let basis = groebner_list(["x*y - 1", "x - y"], order="lex")
   guard basis.length() >= 1 else { fail("expected groebner basis") }
-  let fact = factor_list_json("x**2 - 1")
-  match fact {
-    Array(items) => {
-      guard items.length() == 2 else { fail("expected factor_list array") }
-    }
-    _ => fail("expected factor_list array")
-  }
-  let sqf = sqf_list_json("x**2*(x + 1)")
-  match sqf {
-    Array(items) => {
-      guard items.length() == 2 else { fail("expected sqf_list array") }
-    }
-    _ => fail("expected sqf_list array")
-  }
+  let fact = factor_list_str("x**2 - 1")
+  guard fact.contains("x - 1") else { fail("expected factor_list str") }
+  let sqf = sqf_list_str("x**2*(x + 1)")
+  guard sqf.contains("x + 1") else { fail("expected sqf_list str") }
 }

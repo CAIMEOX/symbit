@@ -3,6 +3,14 @@
     {
       "path": "CAIMEOX/symbit/sympy",
       "alias": "sympy"
+    },
+    {
+      "path": "Kaida-Amethyst/python",
+      "alias": "py"
+    },
+    {
+      "path": "Kaida-Amethyst/python/cpython",
+      "alias": "cpython"
     }
   ]
 }
