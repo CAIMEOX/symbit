@@ -168,7 +168,8 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
     }
     let (_, r) = divmod_univar_rat(p, q)
     if r.is_zero() {
-      return res.mul_r(pow_big_rational(lc_q, deg_p))
+      // Common factor detected -> resultant is zero.
+      return @symnum.BigRational::zero()
     }
     let (deg_r, _) = match leading_data_univar(r) {
       Some(v) => v

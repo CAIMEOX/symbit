@@ -178,6 +178,28 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 }
 
 ///|
+pub fn fe_is_negative(a : FieldElem) -> Bool {
+  match a {
+    FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
+    FieldElem::CC(_, _) => false
+    FieldElem::GFp(_, _) => false
+    FieldElem::GFExt(_, _, _) => false
+    FieldElem::AlgExt(_, _, _, _) => false
+  }
+}
+
+///|
+pub fn fe_is_positive(a : FieldElem) -> Bool {
+  match a {
+    FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
+    FieldElem::CC(_, _) => false
+    FieldElem::GFp(_, _) => false
+    FieldElem::GFExt(_, _, _) => false
+    FieldElem::AlgExt(_, _, _, _) => false
+  }
+}
+
+///|
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
     FieldElem::QQ(x) => x

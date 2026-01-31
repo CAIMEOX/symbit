@@ -35,6 +35,27 @@ fn deriv_univar(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
+fn pth_root_univar_gf(poly : Poly, p : Int) -> Poly raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  if poly.is_zero() {
+    return Poly::zero(poly.gens, poly.domain)
+  }
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  for m, c in poly.coeffs {
+    let exp = m.exps[0]
+    if exp % p != 0 {
+      raise PolyError::NotImplemented("gf-pth-root")
+    }
+    let mono = monomial_one(poly.gens.length())
+    mono.exps.set(0, exp / p)
+    add_term(coeffs, mono, c, poly.domain)
+  }
+  Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
+}
+
+///|
 fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -44,10 +65,26 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
     return res
   }
   let f = poly.primitive_part()
+  if is_one(f) {
+    return res
+  }
   let fprime = deriv_univar(f)
   if fprime.is_zero() {
-    res.push((f, 1))
-    return res
+    match poly.domain {
+      Domain::GF(p) => {
+        let root = pth_root_univar_gf(f, p)
+        let parts = square_free_decompose(root)
+        for pair in parts {
+          let (part, mult) = pair
+          res.push((part, mult * p))
+        }
+        return res
+      }
+      _ => {
+        res.push((f, 1))
+        return res
+      }
+    }
   }
   let mut g = f.gcd_univar(fprime)
   let mut w = f.div_exact_univar(g)
@@ -63,7 +100,17 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
     i = i + 1
   }
   if !is_one(g) {
-    res.push((g, i))
+    match poly.domain {
+      Domain::GF(p) => {
+        let root = pth_root_univar_gf(g, p)
+        let parts = square_free_decompose(root)
+        for pair in parts {
+          let (part, mult) = pair
+          res.push((part, mult * p))
+        }
+      }
+      _ => res.push((g, i))
+    }
   }
   res
 }
@@ -180,6 +227,7 @@ pub fn Poly::factor(
       const_coeff,
       self.gens,
       self.domain,
+      self.order,
     )
     factors.push((const_poly, 1))
   }
@@ -241,14 +289,8 @@ pub fn Poly::sqf_part(self : Poly) -> Poly raise PolyError {
   if self.is_zero() {
     return self
   }
-  let (content, parts) = self.sqf_list()
-  let const_coeff = ensure_coeff_domain(content, self.domain)
-  let mut acc = poly_from_term(
-    monomial_one(self.gens.length()),
-    const_coeff,
-    self.gens,
-    self.domain,
-  )
+  let (_, parts) = self.sqf_list()
+  let mut acc = Poly::one(self.gens, self.domain)
   for entry in parts {
     let (f, _) = entry
     acc = acc.mul(f)

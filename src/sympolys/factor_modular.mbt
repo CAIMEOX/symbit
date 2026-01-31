@@ -286,19 +286,23 @@ fn recombine_lifted(
 fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
   let factors : Array[Poly] = Array::new()
   let lin_parts = factor_linear_rationals(poly)
+  let lin_only : Array[Poly] = Array::new()
   let mut remainder = poly
   for f in lin_parts {
     if f.degree(0) == 1 {
       factors.push(f)
+      lin_only.push(f)
       remainder = remainder.div_exact_univar(f)
     } else {
       remainder = f
     }
   }
+  let mut appended_any = false
   if factors.is_empty() {
     let split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     for f in split {
       factors.push(f)
+      appended_any = true
     }
   } else if !remainder.is_zero() && !is_one(remainder) {
     let mut split = hensel_crt_factor(remainder) catch { _ => [remainder] }
@@ -307,9 +311,49 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
     }
     for f in split {
       factors.push(f)
+      appended_any = true
+    }
+  }
+  // Guard: if assembled factors do not reconstruct the original (up to sign), treat as irreducible.
+  let prod = factors_product(factors, poly.gens, poly.domain) catch {
+    _ => return [poly]
+  }
+  let diff = poly.sub(prod) catch { _ => poly } // if domains mismatch, fail
+  let diff_neg = poly.sub(prod.neg()) catch { _ => poly }
+  if !diff.is_zero() && !diff_neg.is_zero() {
+    let fixed : Array[Poly] = Array::new()
+    for f in lin_only {
+      fixed.push(f)
+    }
+    if !remainder.is_zero() && !is_one(remainder) {
+      fixed.push(remainder.primitive_part())
+    }
+    if fixed.is_empty() {
+      let arr : Array[Poly] = Array::new()
+      arr.push(poly)
+      return arr
+    } else {
+      return fixed
     }
   }
   factors
+}
+
+///|
+/// Multiply factor list; used for reconstruction checks.
+fn factors_product(
+  factors : Array[Poly],
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  if factors.is_empty() {
+    return Poly::one(gens, domain)
+  }
+  let mut acc = factors[0]
+  for i in 1..<factors.length() {
+    acc = acc.mul(factors[i])
+  }
+  acc
 }
 
 ///|

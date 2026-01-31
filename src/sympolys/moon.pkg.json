@@ -4,13 +4,24 @@
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symprint",
     {
-      "path": "moonbitlang/quickcheck",
-      "alias": "qc"
-    },
-    {
       "path": "Kaida-Amethyst/python",
       "alias": "py"
     },
+    {
+      "path": "Kaida-Amethyst/python/cpython",
+      "alias": "cpython"
+    }
+  ],
+  "test-import": [
+    {
+      "path": "moonbitlang/core/json",
+      "alias": "json"
+    },
+    {
+      "path": "moonbitlang/quickcheck",
+      "alias": "qc"
+    },
     "CAIMEOX/qc_pyext"
-  ]
+  ],
+  "native-stub": ["oracle_stub.c"]
 }

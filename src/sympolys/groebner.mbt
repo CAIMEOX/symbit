@@ -29,12 +29,12 @@ fn divmod_multivar(
   all_polys.push(dividend)
   check_compat(all_polys)
   let n = divisors.length()
-  let quotients = Array::makei(n, _ => Poly::zero(
-    dividend.gens,
-    dividend.domain,
-  ))
+  let mk_zero = fn () {
+    Poly::{ coeffs: Map::new(), gens: dividend.gens, domain: dividend.domain, order: dividend.order }
+  }
+  let quotients = Array::makei(n, _ => mk_zero())
   let mut p = dividend
-  let mut remainder = Poly::zero(dividend.gens, dividend.domain)
+  let mut remainder = mk_zero()
   while !p.is_zero() {
     let (m_p, c_p) = match p.leading_term() {
       Some(v) => v
@@ -55,6 +55,7 @@ fn divmod_multivar(
             coeff_q,
             dividend.gens,
             dividend.domain,
+            dividend.order,
           )
           quotients.set(i, quotients[i].add(term))
           p = p.sub(divisors[i].mul(term))
@@ -64,7 +65,7 @@ fn divmod_multivar(
       }
     }
     if !reduced {
-      let term = poly_from_term(m_p, c_p, dividend.gens, dividend.domain)
+      let term = poly_from_term(m_p, c_p, dividend.gens, dividend.domain, dividend.order)
       remainder = remainder.add(term)
       p = p.sub(term)
     }
@@ -106,8 +107,8 @@ fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
     Some(m) => m
     None => raise PolyError::DivisionByZero
   }
-  let t1 = poly_from_term(q1, c2, f.gens, f.domain)
-  let t2 = poly_from_term(q2, c1, f.gens, f.domain)
+  let t1 = poly_from_term(q1, c2, f.gens, f.domain, f.order)
+  let t2 = poly_from_term(q2, c1, f.gens, f.domain, f.order)
   t1.mul(f).sub(t2.mul(g))
 }
 

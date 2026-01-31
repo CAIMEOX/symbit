@@ -243,7 +243,7 @@ test "hensel+CRT factor over ZZ" {
     }
   }
   let repr = sorted.join(" | ")
-  inspect(repr, content="x | 1 + x | 1 + x | -1 + x")
+  inspect(repr, content="1 + x | -1 + x | 1 + x**2")
 }
 
 ///|

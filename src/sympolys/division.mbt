@@ -15,10 +15,11 @@ fn poly_from_term(
   coeff : FieldElem,
   gens : Array[String],
   domain : Domain,
+  order : TermOrder,
 ) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   add_term(coeffs, mono, coeff, domain)
-  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+  Poly::{ coeffs, gens, domain, order }
 }
 
 ///|
@@ -73,42 +74,70 @@ fn divmod_univar_rat(
   dividend : Poly,
   divisor : Poly,
 ) -> (Poly, Poly) raise PolyError {
-  let (deg_b, lc_b) = match leading_data_univar(divisor) {
-    Some(data) => data
-    None => raise PolyError::DivisionByZero
+  // Dense long division (ascending coefficient arrays) for stability.
+  let a0 = try to_dense(dividend) catch { e => raise e } noraise { v => v }
+  let b0 = try to_dense(divisor) catch { e => raise e } noraise { v => v }
+  let a = trim_trailing_zeros(a0)
+  let b = trim_trailing_zeros(b0)
+  if b.is_empty() {
+    raise PolyError::DivisionByZero
   }
-  let inv_lc_b = invert_in_domain(lc_b, divisor.domain)
-  let mut q = Poly::zero(dividend.gens, dividend.domain)
-  let mut r = dividend
-  let mut iter = 0
-  while true {
-    iter = iter + 1
-    if iter > 256 {
-      raise PolyError::NotImplemented("divmod_univar_rat_guard")
-    }
-    match leading_data_univar(r) {
-      None => break
-      Some((deg_r, lc_r)) => {
-        if deg_r < deg_b {
-          break
-        }
-        let exp_diff = deg_r - deg_b
-        let coeff_ratio = fe_mul(lc_r, inv_lc_b)
-        let mono = monomial_one(dividend.gens.length())
-        mono.exps.set(0, exp_diff)
-        let term_poly = poly_from_term(
-          mono,
-          coeff_ratio,
-          dividend.gens,
-          dividend.domain,
-        )
-        q = q.add(term_poly)
-        let product = divisor.mul(term_poly)
-        r = r.sub(product)
-      }
-    }
+  if a.is_empty() {
+    let zero = Poly::zero(dividend.gens, dividend.domain).with_order(dividend.order)
+    return (zero, zero)
   }
-  (q, r)
+  let deg_a = a.length() - 1
+  let deg_b = b.length() - 1
+  if deg_a < deg_b {
+    let q0 = Poly::zero(dividend.gens, dividend.domain).with_order(dividend.order)
+    let r0 = from_dense(a, dividend.gens, dividend.domain).with_order(dividend.order)
+    return (q0, r0)
+  }
+  let zero = fe_from_int(0, dividend.domain)
+  let q_len = deg_a - deg_b + 1
+  let q_coeffs : Array[FieldElem] = Array::make(q_len, zero)
+  let r_coeffs = a.copy()
+  let inv_lc_b = invert_in_domain(b[deg_b], divisor.domain)
+  let mut k = deg_a - deg_b
+  while k >= 0 {
+    let idx = deg_b + k
+    let coeff = fe_mul(r_coeffs[idx], inv_lc_b)
+    q_coeffs.set(k, coeff)
+    for j in 0..=deg_b {
+      let pos = j + k
+      let updated = fe_sub(r_coeffs[pos], fe_mul(coeff, b[j]))
+      r_coeffs.set(pos, updated)
+    }
+    if k == 0 {
+      break
+    }
+    k = k - 1
+  }
+  let q_trim = trim_trailing_zeros(q_coeffs)
+  let rem_raw : Array[FieldElem] = Array::new()
+  for i in 0..<deg_b {
+    rem_raw.push(r_coeffs[i])
+  }
+  let r_trim = trim_trailing_zeros(rem_raw)
+  let q_poly = from_dense(q_trim, dividend.gens, dividend.domain).with_order(dividend.order)
+  let r_poly = from_dense(r_trim, dividend.gens, dividend.domain).with_order(dividend.order)
+  (q_poly, r_poly)
+}
+
+///| Trim trailing zeros from ascending coefficient arrays.
+fn trim_trailing_zeros(coeffs : Array[FieldElem]) -> Array[FieldElem] {
+  let mut end = coeffs.length()
+  while end > 0 && fe_is_zero(coeffs[end - 1]) {
+    end = end - 1
+  }
+  if end == coeffs.length() {
+    return coeffs
+  }
+  let out : Array[FieldElem] = Array::new()
+  for i in 0..<end {
+    out.push(coeffs[i])
+  }
+  out
 }
 
 ///|
@@ -310,7 +339,7 @@ pub fn Poly::pseudo_div_univar_int(
         let k = deg_r - deg_b
         let mono = monomial_one(self.gens.length())
         mono.exps.set(0, k)
-        let term = poly_from_term(mono, lc_r, self.gens, self.domain)
+        let term = poly_from_term(mono, lc_r, self.gens, self.domain, self.order)
         q = q.scale_coeff(lc_b).add(term)
         let scaled_r = r.scale_coeff(lc_b)
         let subtrahend = other.mul(term)
