@@ -39,10 +39,10 @@ pub fn Poly::from_expr_defaults(
     None => infer_gens(expr)
   }
   let resolved_domain = resolve_domain(
-    domain=domain,
-    modulus=modulus,
-    gaussian=gaussian,
-    extension=extension,
+    domain~,
+    modulus~,
+    gaussian~,
+    extension~,
     gf_degree=None,
     expr=Some(expr),
   )
@@ -50,8 +50,9 @@ pub fn Poly::from_expr_defaults(
     Some(o) => o
     None => TermOrder::Lex
   }
-  Poly::from_expr(expr, resolved_gens, resolved_domain)
-    .with_order(resolved_order)
+  Poly::from_expr(expr, resolved_gens, resolved_domain).with_order(
+    resolved_order,
+  )
 }
 
 ///|
@@ -69,9 +70,7 @@ fn infer_gens(expr : @symcore.Expr) -> Array[String] {
 ///|
 fn collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => {
-      seen.set(name, true)
-    }
+    @symcore.Expr::Symbol(name) => seen.set(name, true)
     @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
       for child in args {
         collect_symbols(child, seen)
@@ -149,19 +148,32 @@ fn resolve_domain(
     None =>
       match (domain, modulus) {
         (Some(Domain::GFExt(p, k, poly)), Some(m)) =>
-          if p == m { Domain::GFExt(p, k, poly) } else { raise PolyError::BadModulus }
+          if p == m {
+            Domain::GFExt(p, k, poly)
+          } else {
+            raise PolyError::BadModulus
+          }
         (Some(Domain::GFExt(p, k, poly)), None) => Domain::GFExt(p, k, poly)
         (Some(Domain::GF(p)), Some(m)) =>
-          if p == m { Domain::GF(p) } else { raise PolyError::BadModulus }
+          if p == m {
+            Domain::GF(p)
+          } else {
+            raise PolyError::BadModulus
+          }
         (Some(Domain::GF(p)), None) => Domain::GF(p)
         (None, Some(m)) =>
-          if m <= 1 { raise PolyError::BadModulus } else { Domain::GF(m) }
+          if m <= 1 {
+            raise PolyError::BadModulus
+          } else {
+            Domain::GF(m)
+          }
         (Some(d), Some(_)) => raise PolyError::BadModulus
         (Some(d), None) => d
-        (None, None) => match expr {
-          Some(e) => infer_domain(e)
-          None => Domain::QQ
-        }
+        (None, None) =>
+          match expr {
+            Some(e) => infer_domain(e)
+            None => Domain::QQ
+          }
       }
   }
 
@@ -188,6 +200,7 @@ fn resolve_domain(
   }
 }
 
+///|
 fn gfext_default_poly(k : Int) -> Array[Int] {
   let coeffs : Array[Int] = Array::make(k + 1, 0)
   coeffs.set(0, 1)

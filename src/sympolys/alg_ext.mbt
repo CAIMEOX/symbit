@@ -22,11 +22,9 @@ pub fn normalize_alg_ext_spec(spec : AlgExtSpec) -> AlgExtSpec raise PolyError {
 ///|
 pub fn build_alg_extension(spec : AlgExtSpec) -> Domain raise PolyError {
   let normalized = normalize_alg_ext_spec(spec)
-  Domain::AlgExt(
-    normalized.base,
-    [normalized.gen],
-    [normalized.minpoly.to_expr()],
-  )
+  Domain::AlgExt(normalized.base, [normalized.gen], [
+    normalized.minpoly.to_expr(),
+  ])
 }
 
 ///|
@@ -76,7 +74,9 @@ test "normalize algebraic extension spec to monic" {
       ]),
       @symcore.int(1),
     ]),
-  ) catch { e => fail("unexpected: \{e.to_string()}") }
+  ) catch {
+    e => fail("unexpected: \{e.to_string()}")
+  }
   let spec = alg_ext_spec(Domain::QQ, "x", raw)
   let normalized = normalize_alg_ext_spec(spec) catch {
     e => fail("unexpected: \{e.to_string()}")

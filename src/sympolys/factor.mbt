@@ -159,10 +159,7 @@ pub fn Poly::factor(
   match requested_mod {
     Some(m) =>
       match self.domain {
-        Domain::GF(p) =>
-          if p != m {
-            work = map_to_gf(self, m)
-          }
+        Domain::GF(p) => if p != m { work = map_to_gf(self, m) }
         _ => work = map_to_gf(self, m)
       }
     None => ()
@@ -307,15 +304,17 @@ fn normalize_factor_for_list(
     Some((_, lc_fe)) => {
       let lc = fe_expect_rational(lc_fe)
       match poly.domain {
-        Domain::ZZ => {
+        Domain::ZZ =>
           if lc.is_one() {
             (poly, lc)
           } else if lc.neg_r().is_one() {
-            (poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))), lc)
+            (
+              poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
+              lc,
+            )
           } else {
             (poly, lc)
           }
-        }
         _ => (make_monic(poly), lc)
       }
     }
@@ -332,7 +331,10 @@ fn pow_coeff(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
 }
 
 ///|
-fn eval_univar(poly : Poly, val : @symnum.BigRational) -> @symnum.BigRational raise PolyError {
+fn eval_univar(
+  poly : Poly,
+  val : @symnum.BigRational,
+) -> @symnum.BigRational raise PolyError {
   let mut acc = @symnum.BigRational::zero()
   for m, c in poly.coeffs {
     let coeff = fe_expect_rational(c)
@@ -355,7 +357,11 @@ fn eval_univar(poly : Poly, val : @symnum.BigRational) -> @symnum.BigRational ra
 }
 
 ///|
-fn eval_univar_mod(poly : Poly, val : Int, modulus : Int) -> Int raise PolyError {
+fn eval_univar_mod(
+  poly : Poly,
+  val : Int,
+  modulus : Int,
+) -> Int raise PolyError {
   if modulus <= 1 {
     raise PolyError::BadModulus
   }
@@ -399,7 +405,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
   let abs_ct = if ct.op_lt(BigInt::from_int(0)) { ct.neg() } else { ct }
   let abs_ct_int = abs_ct.to_int()
   const_candidates.push(0)
-  for d in 1..=abs_ct_int {
+  for d in 1..<=abs_ct_int {
     if abs_ct_int % d == 0 {
       const_candidates.push(d)
       const_candidates.push(-d)
@@ -491,6 +497,7 @@ fn factor_gf(poly : Poly) -> Array[Poly] raise PolyError {
   factor_gf_seeded(poly, 42)
 }
 
+///|
 fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -527,7 +534,12 @@ fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
     if part.degree(0) == 1 {
       factors.push(part)
     } else {
-      let edf_parts = equal_degree_factor(part, part.degree(0), modulus, seed + 7)
+      let edf_parts = equal_degree_factor(
+        part,
+        part.degree(0),
+        modulus,
+        seed + 7,
+      )
       for f in edf_parts {
         factors.push(f)
       }
@@ -566,8 +578,13 @@ fn try_split_with_nullspace(
   None
 }
 
-///| GF(p) helpers for DDF/EDF
-fn gf_pow_mod(base : Poly, exp : Int, modulus_poly : Poly) -> Poly raise PolyError {
+///|
+/// GF(p) helpers for DDF/EDF
+fn gf_pow_mod(
+  base : Poly,
+  exp : Int,
+  modulus_poly : Poly,
+) -> Poly raise PolyError {
   let mut result = Poly::one(base.gens, base.domain)
   let mut b = base
   let mut e = exp
@@ -585,10 +602,18 @@ fn gf_pow_mod(base : Poly, exp : Int, modulus_poly : Poly) -> Poly raise PolyErr
   make_monic(normalize_poly_mod(result))
 }
 
-fn distinct_degree_decompose(poly : Poly, modulus : Int) -> Array[Poly] raise PolyError {
+///|
+fn distinct_degree_decompose(
+  poly : Poly,
+  modulus : Int,
+) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let mut f = make_monic(poly)
-  let x_poly = Poly::from_expr(@symcore.symbol(poly.gens[0]), poly.gens, poly.domain)
+  let x_poly = Poly::from_expr(
+    @symcore.symbol(poly.gens[0]),
+    poly.gens,
+    poly.domain,
+  )
   let mut pow = x_poly
   let mut i = 1
   while 2 * i <= f.degree(0) {
@@ -607,6 +632,7 @@ fn distinct_degree_decompose(poly : Poly, modulus : Int) -> Array[Poly] raise Po
   res
 }
 
+///|
 fn equal_degree_factor(
   poly : Poly,
   d : Int,
@@ -616,7 +642,11 @@ fn equal_degree_factor(
   let res : Array[Poly] = Array::new()
   let stack : Array[Poly] = Array::new()
   stack.push(poly)
-  let x_poly = Poly::from_expr(@symcore.symbol(poly.gens[0]), poly.gens, poly.domain)
+  let x_poly = Poly::from_expr(
+    @symcore.symbol(poly.gens[0]),
+    poly.gens,
+    poly.domain,
+  )
   let mut rng = seed
   while true {
     match stack.pop() {
@@ -632,7 +662,9 @@ fn equal_degree_factor(
         while trials < 32 {
           trials = trials + 1
           rng = lcg_next(rng, modulus)
-          let g = x_poly.add(Poly::from_expr(@symcore.int(rng), poly.gens, poly.domain))
+          let g = x_poly.add(
+            Poly::from_expr(@symcore.int(rng), poly.gens, poly.domain),
+          )
           let h = gf_pow_mod(g, exp, f)
           let s = h.sub(Poly::one(poly.gens, poly.domain))
           let factor = f.gcd_univar(s)
@@ -653,6 +685,7 @@ fn equal_degree_factor(
   res
 }
 
+///|
 fn int_pow(base : Int, exp : Int) -> Int {
   let mut res = 1
   let mut b = base
@@ -684,7 +717,8 @@ fn dense_shift_constant(
   res
 }
 
-///| Dense helpers for GF(p)
+///|
+/// Dense helpers for GF(p)
 fn ensure_pos_mod(value : Int, modulus : Int) -> Int {
   let mut v = value % modulus
   if v < 0 {
@@ -693,6 +727,7 @@ fn ensure_pos_mod(value : Int, modulus : Int) -> Int {
   v
 }
 
+///|
 fn poly_to_dense_gf(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   let deg = poly.degree(0)
   let coeffs : Array[Int] = Array::make(deg + 1, 0)
@@ -705,6 +740,7 @@ fn poly_to_dense_gf(poly : Poly, modulus : Int) -> Array[Int] raise PolyError {
   coeffs
 }
 
+///|
 fn dense_to_poly(
   coeffs : Array[Int],
   gens : Array[String],
@@ -731,6 +767,7 @@ fn dense_to_poly(
   Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
 }
 
+///|
 fn mod_inv_int(a : Int, m : Int) -> Int {
   let mut t0 = 0
   let mut t1 = 1
@@ -752,6 +789,7 @@ fn mod_inv_int(a : Int, m : Int) -> Int {
   }
 }
 
+///|
 fn poly_mul_mod(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int] {
   let res : Array[Int] = Array::make(a.length() + b.length() - 1, 0)
   for i in 0..<a.length() {
@@ -764,6 +802,7 @@ fn poly_mul_mod(a : Array[Int], b : Array[Int], modulus : Int) -> Array[Int] {
   res
 }
 
+///|
 fn poly_mod_poly(g : Array[Int], f : Array[Int], modulus : Int) -> Array[Int] {
   let mut r = trim_dense(g.copy(), modulus)
   let n = f.length()
@@ -803,6 +842,7 @@ fn poly_mod_poly(g : Array[Int], f : Array[Int], modulus : Int) -> Array[Int] {
   }
 }
 
+///|
 fn trim_dense(poly : Array[Int], modulus : Int) -> Array[Int] {
   let r = poly
   while r.length() > 1 {
@@ -811,6 +851,7 @@ fn trim_dense(poly : Array[Int], modulus : Int) -> Array[Int] {
       Some(v) =>
         if v % modulus == 0 {
           let _ = r.pop()
+
         } else {
           break
         }
@@ -823,6 +864,7 @@ fn trim_dense(poly : Array[Int], modulus : Int) -> Array[Int] {
   }
 }
 
+///|
 fn pow_x_mod(exp : Int, modulus : Int, f : Array[Int]) -> Array[Int] {
   let mut res : Array[Int] = Array::make(1, 1)
   let mut base : Array[Int] = Array::make(2, 0)
@@ -840,7 +882,11 @@ fn pow_x_mod(exp : Int, modulus : Int, f : Array[Int]) -> Array[Int] {
   res
 }
 
-fn berlekamp_nullspace(poly : Poly, modulus : Int) -> Array[Array[Int]] raise PolyError {
+///|
+fn berlekamp_nullspace(
+  poly : Poly,
+  modulus : Int,
+) -> Array[Array[Int]] raise PolyError {
   let f_coeffs = poly_to_dense_gf(poly, modulus)
   let n = f_coeffs.length() - 1
   if n <= 0 {
@@ -860,7 +906,11 @@ fn berlekamp_nullspace(poly : Poly, modulus : Int) -> Array[Array[Int]] raise Po
   row_reduce_nullspace(q_matrix, modulus)
 }
 
-fn row_reduce_nullspace(mat : Array[Array[Int]], modulus : Int) -> Array[Array[Int]] {
+///|
+fn row_reduce_nullspace(
+  mat : Array[Array[Int]],
+  modulus : Int,
+) -> Array[Array[Int]] {
   let rows = mat.length()
   if rows == 0 {
     return Array::new()

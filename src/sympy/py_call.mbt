@@ -4,7 +4,10 @@ pub fn py_call_object(
   args : @py.PyTuple,
   print_err? : Bool = false,
 ) -> @py.PyObjectEnum? {
-  let obj_ref = py_object_call_object_borrowed(callable.obj_ref(), args.obj_ref())
+  let obj_ref = py_object_call_object_borrowed(
+    callable.obj_ref(),
+    args.obj_ref(),
+  )
   if obj_ref.is_null() {
     let e = @cpython.py_err_occurred()
     if !e.is_null() {
@@ -22,7 +25,8 @@ pub fn py_call_object(
   Some(@py.PyObjectEnum::create(obj))
 }
 
-///| Call PyObject_CallObject without transferring ownership of args/callable.
+///|
+/// Call PyObject_CallObject without transferring ownership of args/callable.
 #borrow(callable, args)
 extern "C" fn py_object_call_object_borrowed(
   callable : @cpython.PyObjectRef,

@@ -10,13 +10,14 @@ pub fn monomial_one(len : Int) -> Monomial {
 
 ///|
 pub fn monomial_from_array(exps : Array[Int]) -> Monomial {
-  Monomial::{ exps }
+  Monomial::{ exps, }
 }
 
 ///|
 pub fn Monomial::to_array(self : Monomial) -> Array[Int] {
   self.exps
 }
+
 ///|
 pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
@@ -37,7 +38,8 @@ pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
   Monomial::{ exps, }
 }
 
-///| Check if a divides b (exponent-wise).
+///|
+/// Check if a divides b (exponent-wise).
 pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -84,17 +86,23 @@ pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   Monomial::{ exps, }
 }
 
-///| Element-wise minimum exponents across inputs.
+///|
+/// Element-wise minimum exponents across inputs.
 pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
   }
   let len = a.exps.length()
-  let exps = Array::makei(len, i => if a.exps[i] < b.exps[i] { a.exps[i] } else { b.exps[i] })
+  let exps = Array::makei(len, i => if a.exps[i] < b.exps[i] {
+    a.exps[i]
+  } else {
+    b.exps[i]
+  })
   Monomial::{ exps, }
 }
 
-///| Element-wise maximum exponents across inputs.
+///|
+/// Element-wise maximum exponents across inputs.
 pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
     raise PolyError::NotImplemented("monomial_max empty input")
@@ -115,7 +123,8 @@ pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
   Monomial::{ exps, }
 }
 
-///| Element-wise minimum exponents across inputs.
+///|
+/// Element-wise minimum exponents across inputs.
 pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
     raise PolyError::NotImplemented("monomial_min empty input")
@@ -144,7 +153,7 @@ pub fn monomial_count(vars : Int, degree : Int) -> Int {
   // combinations with repetition: C(vars + degree, degree)
   let mut numer = 1
   let mut denom = 1
-  for k in 1..=degree {
+  for k in 1..<=degree {
     numer = numer * (vars + k)
     denom = denom * k
   }
@@ -216,7 +225,8 @@ fn cmp_int(a : Int, b : Int) -> Int {
   }
 }
 
-///| Compare exponent arrays with lexicographic order.
+///|
+/// Compare exponent arrays with lexicographic order.
 pub fn compare_exps_lex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   if a.length() != b.length() {
     raise PolyError::DomainMismatch
@@ -233,8 +243,12 @@ pub fn compare_exps_lex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   0
 }
 
-///| Graded lex (grlex) comparison on exponent arrays.
-pub fn compare_exps_grlex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
+///|
+/// Graded lex (grlex) comparison on exponent arrays.
+pub fn compare_exps_grlex(
+  a : Array[Int],
+  b : Array[Int],
+) -> Int raise PolyError {
   if a.length() != b.length() {
     raise PolyError::DomainMismatch
   }
@@ -246,8 +260,12 @@ pub fn compare_exps_grlex(a : Array[Int], b : Array[Int]) -> Int raise PolyError
   compare_exps_lex(a, b)
 }
 
-///| Graded reverse lex (grevlex) comparison on exponent arrays.
-pub fn compare_exps_grevlex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
+///|
+/// Graded reverse lex (grevlex) comparison on exponent arrays.
+pub fn compare_exps_grevlex(
+  a : Array[Int],
+  b : Array[Int],
+) -> Int raise PolyError {
   if a.length() != b.length() {
     raise PolyError::DomainMismatch
   }
@@ -269,14 +287,19 @@ pub fn compare_exps_grevlex(a : Array[Int], b : Array[Int]) -> Int raise PolyErr
   0
 }
 
-///| Inverse lex: flip the comparison sign of lex.
+///|
+/// Inverse lex: flip the comparison sign of lex.
 pub fn compare_exps_ilex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
   let c = compare_exps_lex(a, b)
   -c
 }
 
-///| Inverse grlex: flip comparison sign of grlex.
-pub fn compare_exps_igrlex(a : Array[Int], b : Array[Int]) -> Int raise PolyError {
+///|
+/// Inverse grlex: flip comparison sign of grlex.
+pub fn compare_exps_igrlex(
+  a : Array[Int],
+  b : Array[Int],
+) -> Int raise PolyError {
   let c = compare_exps_grlex(a, b)
   -c
 }

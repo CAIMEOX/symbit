@@ -8,14 +8,17 @@ pub(all) enum OracleArg {
 }
 
 ///|
-const ORACLE_PATH : String =
-  "/Users/caimeo/code/learning/sym-workspace/symbit/src/sympy:/Users/caimeo/code/learning/sym-workspace/symbit:/Users/caimeo/code/learning/sym-workspace"
+const ORACLE_PATH : String = "/Users/caimeo/code/learning/sym-workspace/symbit/src/sympy:/Users/caimeo/code/learning/sym-workspace/symbit:/Users/caimeo/code/learning/sym-workspace"
 
 ///|
 #borrow(payload_json, oracle_path)
-extern "C" fn sympy_oracle_exec(payload_json : String, oracle_path : String) -> String = "sympy_oracle_exec"
+extern "C" fn sympy_oracle_exec(
+  payload_json : String,
+  oracle_path : String,
+) -> String = "sympy_oracle_exec"
 
-///| JSON-escape a string (minimal subset needed for test payloads).
+///|
+/// JSON-escape a string (minimal subset needed for test payloads).
 fn json_escape(s : String) -> String {
   let sb = StringBuilder::new()
   for ch in s {
@@ -72,17 +75,19 @@ fn oracle_arg_json(arg : OracleArg) -> String {
   }
 }
 
-///| Build the JSON payload passed to the external SymPy oracle process.
+///|
+/// Build the JSON payload passed to the external SymPy oracle process.
 fn oracle_payload_json(
   func : String,
   args : Array[OracleArg],
   kwargs : Map[String, OracleArg],
 ) -> String {
   let sb = StringBuilder::new()
-  sb..write_char('{')
-    ..write_view("\"func\":")
-    ..write_view(json_string(func))
-    ..write_view(",\"args\":[")
+  sb
+  ..write_char('{')
+  ..write_view("\"func\":")
+  ..write_view(json_string(func))
+  ..write_view(",\"args\":[")
   for i in 0..<args.length() {
     if i > 0 {
       sb.write_char(',')
@@ -97,7 +102,10 @@ fn oracle_payload_json(
     } else {
       sb.write_char(',')
     }
-    sb..write_view(json_string(k))..write_char(':')..write_view(oracle_arg_json(v))
+    sb
+    ..write_view(json_string(k))
+    ..write_char(':')
+    ..write_view(oracle_arg_json(v))
   }
   sb..write_view("}}")
   sb.to_string()
@@ -110,10 +118,13 @@ fn strip_trailing_newline(s : String) -> String {
 
 ///|
 let oracle_lock : Ref[Bool] = { val: false }
+
+///|
 let oracle_seq : Ref[Int] = { val: 0 }
 
-///| Serialize oracle calls to avoid concurrent Python access.
-fn with_oracle_lock[T](f : () -> T raise) -> T raise {
+///|
+/// Serialize oracle calls to avoid concurrent Python access.
+fn[T] with_oracle_lock(f : () -> T raise) -> T raise {
   while oracle_lock.val {
     ()
   }
@@ -165,7 +176,7 @@ pub fn sympy_oracle_call_json(
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> Json raise {
-  with_oracle_lock(fn () raise {
+  with_oracle_lock(fn() raise {
     oracle_seq.val = oracle_seq.val + 1
     println("oracle[\{oracle_seq.val}]: \{func}")
     let payload = oracle_payload_json(func, args, kwargs)
@@ -175,12 +186,13 @@ pub fn sympy_oracle_call_json(
     }
     let parsed = @json.parse(out)
     match parsed {
-      Object(obj) => {
+      Object(obj) =>
         match obj.get("ok") {
-          Some(True) => match obj.get("value") {
-            Some(value) => value
-            None => fail("oracle JSON missing value")
-          }
+          Some(True) =>
+            match obj.get("value") {
+              Some(value) => value
+              None => fail("oracle JSON missing value")
+            }
           Some(False) => {
             let msg = match obj.get("error") {
               Some(String(s)) => s
@@ -190,7 +202,6 @@ pub fn sympy_oracle_call_json(
           }
           _ => fail("oracle JSON missing ok flag")
         }
-      }
       _ => fail("oracle JSON not an object")
     }
   })
@@ -202,7 +213,7 @@ pub fn sympy_oracle_call(
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
-  let value = sympy_oracle_call_json(func, args, kwargs=kwargs)
+  let value = sympy_oracle_call_json(func, args, kwargs~)
   match value {
     String(s) => s
     _ => value.stringify()

@@ -62,7 +62,8 @@ fn divmod_univar(
     Domain::CC => divmod_univar_rat(dividend, divisor)
     Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
     Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
-    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-div")
+    Domain::AlgExt(_, _, _) =>
+      raise PolyError::NotImplemented("alg-extension-div")
     Domain::RR => divmod_univar_rat(dividend, divisor)
     Domain::Frac(_) => divmod_univar_rat(dividend, divisor)
   }
@@ -75,22 +76,36 @@ fn divmod_univar_rat(
   divisor : Poly,
 ) -> (Poly, Poly) raise PolyError {
   // Dense long division (ascending coefficient arrays) for stability.
-  let a0 = try to_dense(dividend) catch { e => raise e } noraise { v => v }
-  let b0 = try to_dense(divisor) catch { e => raise e } noraise { v => v }
+  let a0 = try to_dense(dividend) catch {
+    e => raise e
+  } noraise {
+    v => v
+  }
+  let b0 = try to_dense(divisor) catch {
+    e => raise e
+  } noraise {
+    v => v
+  }
   let a = trim_trailing_zeros(a0)
   let b = trim_trailing_zeros(b0)
   if b.is_empty() {
     raise PolyError::DivisionByZero
   }
   if a.is_empty() {
-    let zero = Poly::zero(dividend.gens, dividend.domain).with_order(dividend.order)
+    let zero = Poly::zero(dividend.gens, dividend.domain).with_order(
+      dividend.order,
+    )
     return (zero, zero)
   }
   let deg_a = a.length() - 1
   let deg_b = b.length() - 1
   if deg_a < deg_b {
-    let q0 = Poly::zero(dividend.gens, dividend.domain).with_order(dividend.order)
-    let r0 = from_dense(a, dividend.gens, dividend.domain).with_order(dividend.order)
+    let q0 = Poly::zero(dividend.gens, dividend.domain).with_order(
+      dividend.order,
+    )
+    let r0 = from_dense(a, dividend.gens, dividend.domain).with_order(
+      dividend.order,
+    )
     return (q0, r0)
   }
   let zero = fe_from_int(0, dividend.domain)
@@ -103,7 +118,7 @@ fn divmod_univar_rat(
     let idx = deg_b + k
     let coeff = fe_mul(r_coeffs[idx], inv_lc_b)
     q_coeffs.set(k, coeff)
-    for j in 0..=deg_b {
+    for j in 0..<=deg_b {
       let pos = j + k
       let updated = fe_sub(r_coeffs[pos], fe_mul(coeff, b[j]))
       r_coeffs.set(pos, updated)
@@ -119,12 +134,17 @@ fn divmod_univar_rat(
     rem_raw.push(r_coeffs[i])
   }
   let r_trim = trim_trailing_zeros(rem_raw)
-  let q_poly = from_dense(q_trim, dividend.gens, dividend.domain).with_order(dividend.order)
-  let r_poly = from_dense(r_trim, dividend.gens, dividend.domain).with_order(dividend.order)
+  let q_poly = from_dense(q_trim, dividend.gens, dividend.domain).with_order(
+    dividend.order,
+  )
+  let r_poly = from_dense(r_trim, dividend.gens, dividend.domain).with_order(
+    dividend.order,
+  )
   (q_poly, r_poly)
 }
 
-///| Trim trailing zeros from ascending coefficient arrays.
+///|
+/// Trim trailing zeros from ascending coefficient arrays.
 fn trim_trailing_zeros(coeffs : Array[FieldElem]) -> Array[FieldElem] {
   let mut end = coeffs.length()
   while end > 0 && fe_is_zero(coeffs[end - 1]) {
@@ -250,7 +270,8 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
     Domain::ZZ => gcd_univar_int(self, other)
     Domain::GF(_) => gcd_univar_rat(self, other)
     Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
-    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("alg-extension-gcd")
+    Domain::AlgExt(_, _, _) =>
+      raise PolyError::NotImplemented("alg-extension-gcd")
     Domain::RR => gcd_univar_rat(self, other)
     Domain::Frac(_) => gcd_univar_rat(self, other)
   }
@@ -339,7 +360,13 @@ pub fn Poly::pseudo_div_univar_int(
         let k = deg_r - deg_b
         let mono = monomial_one(self.gens.length())
         mono.exps.set(0, k)
-        let term = poly_from_term(mono, lc_r, self.gens, self.domain, self.order)
+        let term = poly_from_term(
+          mono,
+          lc_r,
+          self.gens,
+          self.domain,
+          self.order,
+        )
         q = q.scale_coeff(lc_b).add(term)
         let scaled_r = r.scale_coeff(lc_b)
         let subtrahend = other.mul(term)

@@ -98,12 +98,13 @@ pub fn from_dense_multi(
       continue
     }
     let exps = index_to_exps(idx, strides, degrees)
-    let mono = Monomial::{ exps }
+    let mono = Monomial::{ exps, }
     add_term(map, mono, c, domain)
   }
   Poly::{ coeffs: map, gens, domain, order: TermOrder::Lex }
 }
 
+///|
 fn total_size(degrees : Array[Int]) -> Int {
   let mut total = 1
   for d in degrees {
@@ -112,6 +113,7 @@ fn total_size(degrees : Array[Int]) -> Int {
   total
 }
 
+///|
 fn compute_strides(degrees : Array[Int]) -> Array[Int] {
   let n = degrees.length()
   let strides : Array[Int] = Array::make(n, 1)
@@ -123,7 +125,12 @@ fn compute_strides(degrees : Array[Int]) -> Array[Int] {
   strides
 }
 
-fn index_to_exps(idx : Int, strides : Array[Int], degrees : Array[Int]) -> Array[Int] {
+///|
+fn index_to_exps(
+  idx : Int,
+  strides : Array[Int],
+  degrees : Array[Int],
+) -> Array[Int] {
   let exps : Array[Int] = Array::make(degrees.length(), 0)
   let mut rem = idx
   let mut pos = degrees.length()

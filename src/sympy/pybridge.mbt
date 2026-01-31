@@ -39,7 +39,8 @@ fn add_repo_to_syspath() -> Unit {
   match @py.pyimport("sys") {
     Some(sys) =>
       match sys.get_attr("path", print_err=false) {
-        Some(PyList(path_list)) => path_list.append(@py.PyString::from(REPO_ROOT))
+        Some(PyList(path_list)) =>
+          path_list.append(@py.PyString::from(REPO_ROOT))
         _ => ()
       }
     None => ()
@@ -59,14 +60,22 @@ fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
   let sympify0 = match sympy.get_attr("sympify", print_err=false) {
     Some(PyCallable(callable)) => Some(callable)
     Some(PyClass(obj)) =>
-      try @py.PyCallable::create(obj) catch { _ => None } noraise { v => Some(v) }
+      try @py.PyCallable::create(obj) catch {
+        _ => None
+      } noraise {
+        v => Some(v)
+      }
     Some(other) =>
-      try @py.PyCallable::create(objenum_to_obj(other)) catch { _ => None } noraise { v => Some(v) }
+      try @py.PyCallable::create(objenum_to_obj(other)) catch {
+        _ => None
+      } noraise {
+        v => Some(v)
+      }
     _ => None
   }
   match sympify0 {
     Some(callable) => callable
-    None => {
+    None =>
       // Try sympy.core.sympify.sympify via attribute access to avoid dotted import issues.
       match sympy.get_attr("core", print_err=false) {
         Some(core_obj) => {
@@ -77,9 +86,13 @@ fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
               match mod.get_attr("sympify", print_err=false) {
                 Some(PyCallable(callable)) => callable
                 Some(PyClass(obj)) =>
-                  @py.PyCallable::create(obj) catch { _ => fail("sympy-sympify-missing") }
+                  @py.PyCallable::create(obj) catch {
+                    _ => fail("sympy-sympify-missing")
+                  }
                 Some(other) =>
-                  @py.PyCallable::create(objenum_to_obj(other)) catch { _ => fail("sympy-sympify-missing") }
+                  @py.PyCallable::create(objenum_to_obj(other)) catch {
+                    _ => fail("sympy-sympify-missing")
+                  }
                 None => fail("sympy-sympify-missing")
               }
             }
@@ -88,7 +101,6 @@ fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
         }
         None => fail("sympy-sympify-missing")
       }
-    }
   }
 }
 

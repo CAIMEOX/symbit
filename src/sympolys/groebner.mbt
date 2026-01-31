@@ -12,7 +12,11 @@ fn check_compat(polys : Array[Poly]) -> Unit raise PolyError {
 }
 
 ///|
-fn coeff_div(num : FieldElem, den : FieldElem, domain : Domain) -> FieldElem raise PolyError {
+fn coeff_div(
+  num : FieldElem,
+  den : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
   let inv = invert_in_domain(den, domain)
   fe_mul(num, inv)
 }
@@ -29,8 +33,13 @@ fn divmod_multivar(
   all_polys.push(dividend)
   check_compat(all_polys)
   let n = divisors.length()
-  let mk_zero = fn () {
-    Poly::{ coeffs: Map::new(), gens: dividend.gens, domain: dividend.domain, order: dividend.order }
+  let mk_zero = fn() {
+    Poly::{
+      coeffs: Map::new(),
+      gens: dividend.gens,
+      domain: dividend.domain,
+      order: dividend.order,
+    }
   }
   let quotients = Array::makei(n, _ => mk_zero())
   let mut p = dividend
@@ -65,7 +74,13 @@ fn divmod_multivar(
       }
     }
     if !reduced {
-      let term = poly_from_term(m_p, c_p, dividend.gens, dividend.domain, dividend.order)
+      let term = poly_from_term(
+        m_p,
+        c_p,
+        dividend.gens,
+        dividend.domain,
+        dividend.order,
+      )
       remainder = remainder.add(term)
       p = p.sub(term)
     }
@@ -187,10 +202,10 @@ pub fn groebner_expr(
     None => infer_gens_union(exprs)
   }
   let resolved_domain = resolve_domain(
-    domain=domain,
-    modulus=modulus,
-    extension=extension,
-    gf_degree=gf_degree,
+    domain~,
+    modulus~,
+    extension~,
+    gf_degree~,
     expr=None,
     gaussian=None,
   )
@@ -205,19 +220,21 @@ pub fn groebner_expr(
   let polys : Array[Poly] = Array::new()
   for e in exprs {
     let poly = match mod_opt {
-      Some(m) => Poly::from_expr_defaults(
-        e,
-        gens=resolved_gens,
-        domain=resolved_domain,
-        modulus=m,
-        order=ord,
-      )
-      None => Poly::from_expr_defaults(
-        e,
-        gens=resolved_gens,
-        domain=resolved_domain,
-        order=ord,
-      )
+      Some(m) =>
+        Poly::from_expr_defaults(
+          e,
+          gens=resolved_gens,
+          domain=resolved_domain,
+          modulus=m,
+          order=ord,
+        )
+      None =>
+        Poly::from_expr_defaults(
+          e,
+          gens=resolved_gens,
+          domain=resolved_domain,
+          order=ord,
+        )
     }
     polys.push(poly)
   }

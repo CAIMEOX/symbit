@@ -165,7 +165,6 @@ pub fn arbitrary_polys() -> @qc.Gen[Expr] {
   @qc.sized(f)
 }
 
-
 ///|
 pub fn[T] arbitrary_array_use_gen(
   bound : Int,

@@ -248,13 +248,12 @@ test "hensel+CRT factor over ZZ" {
 
 ///|
 test "modular reconstruction with two primes" {
-  let images : Array[(Int, Array[Int])] = [
-    (3, [1, 1, 0]),
-    (5, [2, 0, 1]),
-  ]
+  let images : Array[(Int, Array[Int])] = [(3, [1, 1, 0]), (5, [2, 0, 1])]
   let coeffs = try reconstruct_coeffs(images, 20) catch {
     e => fail("unexpected error: \{e.to_string()}")
-  } noraise { v => v }
+  } noraise {
+    v => v
+  }
   inspect(coeffs.to_string(), content="[7, -5, 6]")
 }
 
@@ -267,10 +266,14 @@ test "dense multivariate conversions" {
       @symcore.mul([@symcore.int(2), @symcore.symbol("y")]),
       @symcore.mul([@symcore.int(3), @symcore.symbol("x"), @symcore.symbol("y")]),
     ]),
-  ) catch { e => fail("unexpected error: \{e.to_string()}") }
-  let dense = try to_dense_multi(poly, [1, 1]) catch { e => fail("unexpected error: \{e.to_string()}") }
+  ) catch {
+    e => fail("unexpected error: \{e.to_string()}")
+  }
+  let dense = to_dense_multi(poly, [1, 1]) catch {
+    e => fail("unexpected error: \{e.to_string()}")
+  }
   inspect(dense.to_string(), content="[0, 1, 2, 3]")
-  let sparse = try from_dense_multi(dense, ["x", "y"], Domain::QQ, [1, 1]) catch {
+  let sparse = from_dense_multi(dense, ["x", "y"], Domain::QQ, [1, 1]) catch {
     e => fail("unexpected error: \{e.to_string()}")
   }
   inspect(sparse.to_string(), content="x + 2 * y + 3 * x * y")
@@ -286,7 +289,10 @@ test "leading data helpers" {
         @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
         @symcore.symbol("y"),
       ]),
-      @symcore.mul([@symcore.int(5), @symcore.pow(@symcore.symbol("y"), @symcore.int(2))]),
+      @symcore.mul([
+        @symcore.int(5),
+        @symcore.pow(@symcore.symbol("y"), @symcore.int(2)),
+      ]),
     ]),
   ) catch {
     e => fail("unexpected error: \{e.to_string()}")
@@ -310,7 +316,10 @@ test "factor_list separates content" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
   let poly = builder.from_expr(
     @symcore.add([
-      @symcore.mul([@symcore.int(6), @symcore.pow(@symcore.symbol("x"), @symcore.int(2))]),
+      @symcore.mul([
+        @symcore.int(6),
+        @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
+      ]),
       @symcore.int(-6),
     ]),
   ) catch {
@@ -333,8 +342,14 @@ test "sqf_list and sqf_part" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
   let poly = builder.from_expr(
     @symcore.mul([
-      @symcore.pow(@symcore.add([@symcore.symbol("x"), @symcore.int(-1)]), @symcore.int(2)),
-      @symcore.pow(@symcore.add([@symcore.symbol("x"), @symcore.int(2)]), @symcore.int(3)),
+      @symcore.pow(
+        @symcore.add([@symcore.symbol("x"), @symcore.int(-1)]),
+        @symcore.int(2),
+      ),
+      @symcore.pow(
+        @symcore.add([@symcore.symbol("x"), @symcore.int(2)]),
+        @symcore.int(3),
+      ),
     ]),
   ) catch {
     e => fail("unexpected error: \{e.to_string()}")

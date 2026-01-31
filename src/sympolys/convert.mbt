@@ -60,10 +60,13 @@ pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
 
 ///|
 pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
-  match self.leading_term_with_order(match order {
-    Some(o) => o
-    None => self.order
-  }) {
+  match
+    self.leading_term_with_order(
+      match order {
+        Some(o) => o
+        None => self.order
+      },
+    ) {
     Some((_, c)) => c
     None => fe_from_int(0, self.domain)
   }
@@ -71,10 +74,13 @@ pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
 
 ///|
 pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
-  match self.leading_term_with_order(match order {
-    Some(o) => o
-    None => self.order
-  }) {
+  match
+    self.leading_term_with_order(
+      match order {
+        Some(o) => o
+        None => self.order
+      },
+    ) {
     Some((m, _)) => Some(m)
     None => None
   }

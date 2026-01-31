@@ -24,7 +24,8 @@ pub fn normalize_mod(
       let inv_den = mod_inv(den, m)
       @symnum.BigRational::from_bigint(num.mul(inv_den))
     }
-    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("algebraic-extension-mod")
+    Domain::AlgExt(_, _, _) =>
+      raise PolyError::NotImplemented("algebraic-extension-mod")
     Domain::Frac(inner) => normalize_mod(value, inner)
     _ => value
   }

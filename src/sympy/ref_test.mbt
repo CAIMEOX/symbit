@@ -33,6 +33,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String raise {
   }
 }
 
+///|
 fn py_str_obj(obj : @py.PyObject) -> String {
   try! @qc_pyext.py_str(obj)
 }

@@ -25,6 +25,7 @@ fn fe_trim(poly : Array[Int], p : Int) -> Array[Int] {
       Some(v) =>
         if fe_pos_mod(v, p) == 0 {
           let _ = res.pop()
+
         } else {
           break
         }
@@ -132,7 +133,8 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
   }
   let mut result = match base {
     FieldElem::QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
-    FieldElem::CC(_, _) => FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
+    FieldElem::CC(_, _) =>
+      FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
     FieldElem::GFp(p, _) => FieldElem::GFp(p, 1)
     FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [1], m)
     FieldElem::AlgExt(base, _, minpoly, gen) =>
@@ -170,8 +172,7 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
     FieldElem::QQ(x) => x.is_one()
     FieldElem::CC(a, b) => a.is_one() && b.is_zero()
     FieldElem::GFp(_, v) => v == 1
-    FieldElem::GFExt(_, coeffs, _) =>
-      coeffs.length() == 1 && coeffs[0] == 1
+    FieldElem::GFExt(_, coeffs, _) => coeffs.length() == 1 && coeffs[0] == 1
     FieldElem::AlgExt(_, coeffs, _, _) =>
       coeffs.length() == 1 && fe_is_one(coeffs[0])
   }
@@ -219,10 +220,8 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.add_r(y))
     (FieldElem::CC(a1, b1), FieldElem::CC(a2, b2)) =>
       FieldElem::CC(a1.add_r(a2), b1.add_r(b2))
-    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) =>
-      FieldElem::CC(a1.add_r(y), b1)
-    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) =>
-      FieldElem::CC(x.add_r(a2), b2)
+    (FieldElem::CC(a1, b1), FieldElem::QQ(y)) => FieldElem::CC(a1.add_r(y), b1)
+    (FieldElem::QQ(x), FieldElem::CC(a2, b2)) => FieldElem::CC(x.add_r(a2), b2)
     (FieldElem::GFp(p1, x), FieldElem::GFp(p2, y)) =>
       if p1 != p2 {
         raise PolyError::DomainMismatch
@@ -298,14 +297,20 @@ pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
   match a {
     FieldElem::QQ(x) =>
-      FieldElem::QQ(x.reciprocal() catch { _ => raise PolyError::DivisionByZero })
+      FieldElem::QQ(
+        x.reciprocal() catch {
+          _ => raise PolyError::DivisionByZero
+        },
+      )
     FieldElem::CC(a, b) => {
       let denom = a.mul_r(a).add_r(b.mul_r(b))
       if denom.is_zero() {
         raise PolyError::DivisionByZero
       }
       let real = a.div_r(denom) catch { _ => raise PolyError::DivisionByZero }
-      let imag = b.neg_r().div_r(denom) catch { _ => raise PolyError::DivisionByZero }
+      let imag = b.neg_r().div_r(denom) catch {
+          _ => raise PolyError::DivisionByZero
+        }
       FieldElem::CC(real, imag)
     }
     FieldElem::GFp(p, x) => {
@@ -335,25 +340,21 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
 ///|
 pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
   match domain {
-    Domain::QQ | Domain::ZZ =>
-      FieldElem::QQ(@symnum.BigRational::from_int(val))
+    Domain::QQ | Domain::ZZ => FieldElem::QQ(@symnum.BigRational::from_int(val))
     Domain::CC =>
       FieldElem::CC(
         @symnum.BigRational::from_int(val),
         @symnum.BigRational::zero(),
       )
     Domain::GF(p) => FieldElem::GFp(p, fe_pos_mod(val, p))
-    Domain::GFExt(p, _, m) =>
-      FieldElem::GFExt(p, [fe_pos_mod(val, p)], m)
+    Domain::GFExt(p, _, m) => FieldElem::GFExt(p, [fe_pos_mod(val, p)], m)
     Domain::AlgExt(base, gens, rels) => {
       let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
       let base_const = fe_from_int(val, base)
       FieldElem::AlgExt(base, [base_const], minpoly, gen)
     }
-    Domain::RR =>
-      FieldElem::QQ(@symnum.BigRational::from_int(val))
-    Domain::Frac(_) =>
-      raise PolyError::NotImplemented("frac-from-int")
+    Domain::RR => FieldElem::QQ(@symnum.BigRational::from_int(val))
+    Domain::Frac(_) => raise PolyError::NotImplemented("frac-from-int")
   }
 }
 
@@ -428,7 +429,8 @@ fn minpoly_equal(a : Poly, b : Poly) -> Bool {
   a.to_string().equal(b.to_string())
 }
 
-///| Dense helpers for algebraic extension arithmetic.
+///|
+/// Dense helpers for algebraic extension arithmetic.
 fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
   let res = coeffs
   while res.length() > 1 {
@@ -436,6 +438,7 @@ fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
       Some(v) =>
         if fe_is_zero(v) {
           let _ = res.pop()
+
         } else {
           break
         }
@@ -448,31 +451,65 @@ fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
   res
 }
 
-fn fe_alg_poly_add(a : Array[FieldElem], b : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
+///|
+fn fe_alg_poly_add(
+  a : Array[FieldElem],
+  b : Array[FieldElem],
+) -> Array[FieldElem] raise PolyError {
   let n = if a.length() > b.length() { a.length() } else { b.length() }
-  let res : Array[FieldElem] = Array::make(n, FieldElem::QQ(@symnum.BigRational::zero()))
+  let res : Array[FieldElem] = Array::make(
+    n,
+    FieldElem::QQ(@symnum.BigRational::zero()),
+  )
   for i in 0..<n {
-    let av = if i < a.length() { a[i] } else { FieldElem::QQ(@symnum.BigRational::zero()) }
-    let bv = if i < b.length() { b[i] } else { FieldElem::QQ(@symnum.BigRational::zero()) }
+    let av = if i < a.length() {
+      a[i]
+    } else {
+      FieldElem::QQ(@symnum.BigRational::zero())
+    }
+    let bv = if i < b.length() {
+      b[i]
+    } else {
+      FieldElem::QQ(@symnum.BigRational::zero())
+    }
     res.set(i, fe_add(av, bv))
   }
   fe_alg_poly_trim(res)
 }
 
-fn fe_alg_poly_sub(a : Array[FieldElem], b : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
+///|
+fn fe_alg_poly_sub(
+  a : Array[FieldElem],
+  b : Array[FieldElem],
+) -> Array[FieldElem] raise PolyError {
   let n = if a.length() > b.length() { a.length() } else { b.length() }
-  let res : Array[FieldElem] = Array::make(n, FieldElem::QQ(@symnum.BigRational::zero()))
+  let res : Array[FieldElem] = Array::make(
+    n,
+    FieldElem::QQ(@symnum.BigRational::zero()),
+  )
   for i in 0..<n {
-    let av = if i < a.length() { a[i] } else { FieldElem::QQ(@symnum.BigRational::zero()) }
-    let bv = if i < b.length() { b[i] } else { FieldElem::QQ(@symnum.BigRational::zero()) }
+    let av = if i < a.length() {
+      a[i]
+    } else {
+      FieldElem::QQ(@symnum.BigRational::zero())
+    }
+    let bv = if i < b.length() {
+      b[i]
+    } else {
+      FieldElem::QQ(@symnum.BigRational::zero())
+    }
     res.set(i, fe_sub(av, bv))
   }
   fe_alg_poly_trim(res)
 }
 
+///|
 fn dense_from_poly(poly : Poly) -> Array[FieldElem] {
   let deg = poly.degree(0)
-  let res : Array[FieldElem] = Array::make(deg + 1, FieldElem::QQ(@symnum.BigRational::zero()))
+  let res : Array[FieldElem] = Array::make(
+    deg + 1,
+    FieldElem::QQ(@symnum.BigRational::zero()),
+  )
   for m, c in poly.coeffs {
     let k = m.exps[0]
     res.set(k, c)
@@ -480,7 +517,11 @@ fn dense_from_poly(poly : Poly) -> Array[FieldElem] {
   res
 }
 
-fn fe_alg_poly_mod(poly : Array[FieldElem], minpoly : Poly) -> Array[FieldElem] raise PolyError {
+///|
+fn fe_alg_poly_mod(
+  poly : Array[FieldElem],
+  minpoly : Poly,
+) -> Array[FieldElem] raise PolyError {
   let mut r = fe_alg_poly_trim(poly)
   let m_deg = minpoly.degree(0)
   let m_dense = dense_from_poly(minpoly)
@@ -495,7 +536,7 @@ fn fe_alg_poly_mod(poly : Array[FieldElem], minpoly : Poly) -> Array[FieldElem] 
       continue
     }
     let shift = deg_r - m_deg
-    for i in 0..=m_deg {
+    for i in 0..<=m_deg {
       let idx = i + shift
       let coeff = fe_mul(lead, m_dense[i])
       let cur = r[idx]
@@ -506,6 +547,7 @@ fn fe_alg_poly_mod(poly : Array[FieldElem], minpoly : Poly) -> Array[FieldElem] 
   r
 }
 
+///|
 fn fe_alg_poly_mul(
   a : Array[FieldElem],
   b : Array[FieldElem],
@@ -525,18 +567,26 @@ fn fe_alg_poly_mul(
   fe_alg_poly_mod(res, minpoly)
 }
 
+///|
 fn fe_alg_poly_divmod(
   dividend : Array[FieldElem],
   divisor : Array[FieldElem],
 ) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
   let div_trim = fe_alg_poly_trim(divisor)
   if div_trim.is_empty() || (div_trim.length() == 1 && fe_is_zero(div_trim[0])) {
-    return (Array::make(1, FieldElem::QQ(@symnum.BigRational::zero())), dividend)
+    return (
+      Array::make(1, FieldElem::QQ(@symnum.BigRational::zero())),
+      dividend,
+    )
   }
   let n = dividend.length()
   let m = div_trim.length()
   let q : Array[FieldElem] = Array::make(
-    if n >= m { n - m + 1 } else { 1 },
+    if n >= m {
+      n - m + 1
+    } else {
+      1
+    },
     FieldElem::QQ(@symnum.BigRational::zero()),
   )
   let mut r = fe_alg_poly_trim(dividend)
@@ -556,7 +606,11 @@ fn fe_alg_poly_divmod(
   (fe_alg_poly_trim(q), r)
 }
 
-fn fe_alg_poly_inv(a : Array[FieldElem], minpoly : Poly) -> Array[FieldElem] raise PolyError {
+///|
+fn fe_alg_poly_inv(
+  a : Array[FieldElem],
+  minpoly : Poly,
+) -> Array[FieldElem] raise PolyError {
   let mut old_r = dense_from_poly(minpoly)
   let mut r = fe_alg_poly_trim(a)
   if r.length() == 1 && fe_is_zero(r[0]) {

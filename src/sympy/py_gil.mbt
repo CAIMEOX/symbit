@@ -1,5 +1,6 @@
-///| Acquire Python's GIL for the duration of a closure, releasing on error.
-pub fn with_py_gil[T](f : () -> T raise) -> T raise {
+///|
+/// Acquire Python's GIL for the duration of a closure, releasing on error.
+pub fn[T] with_py_gil(f : () -> T raise) -> T raise {
   if !@cpython.py_is_initialized() {
     @py.init_py()
     if !@cpython.py_is_initialized() {
@@ -23,8 +24,9 @@ pub fn with_py_gil[T](f : () -> T raise) -> T raise {
   }
 }
 
-///| Backward-compatible alias.
-pub fn with_py_gil_any[T](f : () -> T raise) -> T raise {
+///|
+/// Backward-compatible alias.
+pub fn[T] with_py_gil_any(f : () -> T raise) -> T raise {
   with_py_gil(f)
 }
 

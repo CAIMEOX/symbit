@@ -21,8 +21,7 @@ pub fn lll_reduce(
   let d = match delta {
     Some(v) => v
     None =>
-      @symnum.BigRational::from_int(3)
-        .div_r(@symnum.BigRational::from_int(4)) catch {
+      @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)) catch {
         _ => raise PolyError::DivisionByZero
       }
   }
@@ -43,6 +42,7 @@ pub fn lll_reduce(
   (basis_work, transform)
 }
 
+///|
 fn identity(n : Int) -> Matrix {
   let res : Matrix = Array::new()
   for i in 0..<n {
@@ -53,13 +53,17 @@ fn identity(n : Int) -> Matrix {
   res
 }
 
+///|
 fn swap_rows(mat : Matrix, i : Int, j : Int) -> Unit {
   let tmp = mat[i]
   mat.set(i, mat[j])
   mat.set(j, tmp)
 }
 
-fn gram_schmidt(basis : Matrix) -> (Array[Array[@symnum.BigRational]], Array[@symnum.BigRational]) {
+///|
+fn gram_schmidt(
+  basis : Matrix,
+) -> (Array[Array[@symnum.BigRational]], Array[@symnum.BigRational]) {
   let n = basis.length()
   let m = basis[0].length()
   let bstar : Array[Array[@symnum.BigRational]] = Array::make(
@@ -70,13 +74,18 @@ fn gram_schmidt(basis : Matrix) -> (Array[Array[@symnum.BigRational]], Array[@sy
     n,
     Array::make(n, @symnum.BigRational::zero()),
   )
-  let bnorm : Array[@symnum.BigRational] = Array::make(n, @symnum.BigRational::zero())
+  let bnorm : Array[@symnum.BigRational] = Array::make(
+    n,
+    @symnum.BigRational::zero(),
+  )
   for i in 0..<n {
     bstar.set(i, basis[i].map(v => @symnum.BigRational::from_bigint(v)))
     for j in 0..<i {
       let dot_ib = dot_bigrational(basis[i], bstar[j])
       let dot_bb = dot_bigrational_rational(bstar[j], bstar[j])
-      let coeff = dot_ib.div_r(dot_bb) catch { _ => @symnum.BigRational::zero() }
+      let coeff = dot_ib.div_r(dot_bb) catch {
+        _ => @symnum.BigRational::zero()
+      }
       mu[i].set(j, coeff)
       let proj = bstar[j].map(x => x.mul_r(coeff))
       for k in 0..<m {
@@ -88,6 +97,7 @@ fn gram_schmidt(basis : Matrix) -> (Array[Array[@symnum.BigRational]], Array[@sy
   (mu, bnorm)
 }
 
+///|
 fn size_reduce(
   basis : Matrix,
   transform : Matrix,
@@ -117,6 +127,7 @@ fn size_reduce(
   }
 }
 
+///|
 fn lovasz_ok(
   mu : Array[Array[@symnum.BigRational]],
   bnorm : Array[@symnum.BigRational],
@@ -129,7 +140,11 @@ fn lovasz_ok(
   lhs.compare(rhs) <= 0
 }
 
-fn dot_bigrational(vec : Array[BigInt], vec_r : Array[@symnum.BigRational]) -> @symnum.BigRational {
+///|
+fn dot_bigrational(
+  vec : Array[BigInt],
+  vec_r : Array[@symnum.BigRational],
+) -> @symnum.BigRational {
   let mut acc = @symnum.BigRational::zero()
   for i in 0..<vec.length() {
     let term = vec_r[i].mul_r(@symnum.BigRational::from_bigint(vec[i]))
@@ -138,6 +153,7 @@ fn dot_bigrational(vec : Array[BigInt], vec_r : Array[@symnum.BigRational]) -> @
   acc
 }
 
+///|
 fn dot_bigrational_rational(
   a : Array[@symnum.BigRational],
   b : Array[@symnum.BigRational],
@@ -149,6 +165,7 @@ fn dot_bigrational_rational(
   acc
 }
 
+///|
 fn round_bigrational(x : @symnum.BigRational) -> BigInt {
   let num = x.numerator()
   let den = x.denominator()

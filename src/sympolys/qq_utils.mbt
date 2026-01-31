@@ -8,6 +8,8 @@ pub fn clear_denominators(poly : Poly) -> Poly raise PolyError {
     let g = @symnum.gcd_bigint(lcm_den, den)
     lcm_den = lcm_den.mul(den.div(g))
   }
-  let scaled = poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_bigint(lcm_den)))
+  let scaled = poly.scale_coeff(
+    FieldElem::QQ(@symnum.BigRational::from_bigint(lcm_den)),
+  )
   try_round_to_int(scaled)
 }

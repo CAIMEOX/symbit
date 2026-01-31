@@ -42,14 +42,16 @@ test "resolve_domain modulus and gaussian" {
     Domain::CC => ()
     _ => fail("expected CC")
   }
-  let status = try resolve_domain(
-    domain=Some(Domain::GF(3)),
-    modulus=Some(5),
-    gaussian=None,
-    extension=None,
-    gf_degree=None,
-    expr=None,
-  ) catch {
+  let status = try
+    resolve_domain(
+      domain=Some(Domain::GF(3)),
+      modulus=Some(5),
+      gaussian=None,
+      extension=None,
+      gf_degree=None,
+      expr=None,
+    )
+  catch {
     e => e.to_string()
   } noraise {
     _ => "Ok"
@@ -110,10 +112,14 @@ test "integer polynomial division matches sympy" {
       @symcore.mul([@symcore.int(2), @symcore.symbol("x")]),
       @symcore.int(1),
     ]),
-  ) catch { e => fail("unexpected error: \{e.to_string()}") }
+  ) catch {
+    e => fail("unexpected error: \{e.to_string()}")
+  }
   let d = builder.from_expr(
     @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
-  ) catch { e => fail("unexpected error: \{e.to_string()}") }
+  ) catch {
+    e => fail("unexpected error: \{e.to_string()}")
+  }
   let (q, r) = try p.divmod_univar(d) catch {
     e => fail("unexpected error: \{e.to_string()}")
   } noraise {
@@ -134,7 +140,9 @@ test "total_degree and per-variable degree" {
       ]),
       @symcore.symbol("y"),
     ]),
-  ) catch { e => fail("unexpected error: \{e.to_string()}") }
+  ) catch {
+    e => fail("unexpected error: \{e.to_string()}")
+  }
   inspect("\{poly.degree(0)}", content="2")
   inspect("\{poly.degree(1)}", content="3")
   inspect("\{poly.total_degree()}", content="5")
