@@ -6,14 +6,8 @@ test "factor_list x^4 - 1 over ZZ" {
       @symcore.pow(@symcore.symbol("x"), @symcore.int(4)),
       @symcore.int(-1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let (content, factors) = try poly.factor_list() catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let (content, factors) = poly.factor_list()
   inspect(content.to_string(), content="1")
   let reprs = factors.map(pair => "(\{pair.0.to_string()}, \{pair.1})")
   reprs.sort()
@@ -29,14 +23,8 @@ test "factor over GF(5) splits x^2 + 1" {
       @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
       @symcore.int(1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let factors = try poly.factor() catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let factors = poly.factor()
   let reprs = factors.map(pair => "(\{pair.0.to_string()}, \{pair.1})")
   reprs.sort()
   let joined = reprs.join(" | ")
@@ -51,22 +39,14 @@ test "gcd_univar matches x^2-1 and x^2-x" {
       @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
       @symcore.int(-1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  )
   let q = builder.from_expr(
     @symcore.add([
       @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
       @symcore.mul([@symcore.int(-1), @symcore.symbol("x")]),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let g = try p.gcd_univar(q) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let g = p.gcd_univar(q)
   inspect(g.to_string(), content="-1 + x")
 }
 
@@ -78,19 +58,11 @@ test "divmod_univar gives quotient and remainder in ZZ" {
       @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
       @symcore.int(1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  )
   let d = builder.from_expr(
     @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let (q, r) = try p.divmod_univar(d) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let (q, r) = p.divmod_univar(d)
   inspect(q.to_string(), content="-1 + x")
   inspect(r.to_string(), content="2")
 }
@@ -106,14 +78,8 @@ test "sqf_part removes repeated factors" {
       ),
       @symcore.add([@symcore.symbol("x"), @symcore.int(2)]),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let sqf = try poly.sqf_part() catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let sqf = poly.sqf_part()
   inspect(sqf.to_string(), content="-2 + x + x**2")
 }
 
@@ -125,19 +91,11 @@ test "groebner simple elimination aligns with SymPy expectation" {
       @symcore.mul([@symcore.symbol("x"), @symcore.symbol("y")]),
       @symcore.int(-1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  )
   let f2 = builder.from_expr(
     @symcore.add([@symcore.symbol("x"), @symcore.int(-1)]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let basis = try Poly::groebner([f1, f2], order=TermOrder::Lex) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
   let repr = basis.map(p => p.to_string()).join(" | ")
   inspect(repr, content="-1 + x | -1 + y")
 }

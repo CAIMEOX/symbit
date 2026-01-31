@@ -187,20 +187,20 @@ pub fn Poly::factor(
         factors.push((lp, mult))
       }
     } else if p.domain is Domain::ZZ {
-      let int_parts = try factor_integer(p) catch {
-        _ => [p]
-      } noraise {
-        v => v
+      let int_parts_res = try? factor_integer(p)
+      let int_parts = match int_parts_res {
+        Ok(v) => v
+        Err(_) => [p]
       }
       for lp in int_parts {
         factors.push((lp, mult))
       }
     } else if p.domain is Domain::QQ {
       let cleared = clear_denominators(p)
-      let int_parts = try factor_integer(cleared) catch {
-        _ => [cleared]
-      } noraise {
-        v => v
+      let int_parts_res = try? factor_integer(cleared)
+      let int_parts = match int_parts_res {
+        Ok(v) => v
+        Err(_) => [cleared]
       }
       for lp in int_parts {
         // rescale back by dividing leading coeff if needed

@@ -22,118 +22,34 @@ test "orderings: lex/grlex/grevlex keys and comparisons" {
   // lex
   inspect(
     cmp_to_ord(
-      try compare_exps_lex(a, b) catch {
-        e => fail(e.to_string())
-      } noraise {
-        v => v
-      },
+      compare_exps_lex(a, b),
     ).to_string(),
     content="-1",
   )
   inspect(
     cmp_to_ord(
-      try compare_exps_lex(b, a) catch {
-        e => fail(e.to_string())
-      } noraise {
-        v => v
-      },
+      compare_exps_lex(b, a),
     ).to_string(),
     content="1",
   )
   inspect(
-    cmp_to_ord(
-      try compare_exps_lex(a, a) catch {
-        e => fail(e.to_string())
-      } noraise {
-        v => v
-      },
-    ).to_string(),
+    cmp_to_ord(compare_exps_lex(a, a)).to_string(),
     content="0",
   )
 
   // grlex compares total degree then lex
-  inspect(
-    (try compare_exps_grlex(b, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="1",
-  )
-  inspect(
-    (try compare_exps_grlex(c, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="1",
-  )
-  inspect(
-    (try compare_exps_grlex(d, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="1",
-  )
-  inspect(
-    (try compare_exps_grlex(e, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="-1",
-  )
-  inspect(
-    (try compare_exps_grlex(f, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="-1",
-  )
-  inspect(
-    (try compare_exps_grlex(g, a) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="-1",
-  )
+  inspect(compare_exps_grlex(b, a).to_string(), content="1")
+  inspect(compare_exps_grlex(c, a).to_string(), content="1")
+  inspect(compare_exps_grlex(d, a).to_string(), content="1")
+  inspect(compare_exps_grlex(e, a).to_string(), content="-1")
+  inspect(compare_exps_grlex(f, a).to_string(), content="-1")
+  inspect(compare_exps_grlex(g, a).to_string(), content="-1")
 
   // grevlex reverses tie-breaker
-  inspect(
-    (try compare_exps_grevlex(b, d) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="1",
-  )
-  inspect(
-    (try compare_exps_grevlex(c, d) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="1",
-  )
-  inspect(
-    (try compare_exps_grevlex(e, g) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="-1",
-  )
-  inspect(
-    (try compare_exps_grevlex(f, g) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
-    content="-1",
-  )
+  inspect(compare_exps_grevlex(b, d).to_string(), content="1")
+  inspect(compare_exps_grevlex(c, d).to_string(), content="1")
+  inspect(compare_exps_grevlex(e, g).to_string(), content="-1")
+  inspect(compare_exps_grevlex(f, g).to_string(), content="-1")
 }
 
 ///|
@@ -142,19 +58,11 @@ test "orderings: inverse lex and grlex flip comparisons" {
   let q = [2, 0, 3]
   let r = [0, 2, 3]
   inspect(
-    (try compare_exps_ilex(p, q) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
+    (compare_exps_ilex(p, q)).to_string(),
     content="1",
   )
   inspect(
-    (try compare_exps_igrlex(p, r) catch {
-      e => fail(e.to_string())
-    } noraise {
-      v => v
-    }).to_string(),
+    (compare_exps_igrlex(p, r)).to_string(),
     content="-1",
   )
 }

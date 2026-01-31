@@ -76,16 +76,8 @@ fn divmod_univar_rat(
   divisor : Poly,
 ) -> (Poly, Poly) raise PolyError {
   // Dense long division (ascending coefficient arrays) for stability.
-  let a0 = try to_dense(dividend) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
-  let b0 = try to_dense(divisor) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
+  let a0 = to_dense(dividend)
+  let b0 = to_dense(divisor)
   let a = trim_trailing_zeros(a0)
   let b = trim_trailing_zeros(b0)
   if b.is_empty() {

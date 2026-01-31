@@ -4,9 +4,7 @@ test "from_expr_defaults infers gens and QQ domain" {
     @symcore.mul([@symcore.symbol("x"), @symcore.symbol("y")]),
     @symcore.rational_from_ints(1, 2),
   ])
-  let poly = Poly::from_expr_defaults(expr) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  let poly = Poly::from_expr_defaults(expr)
   inspect(poly.gens.to_string(), content="[\"x\", \"y\"]")
   match poly.domain {
     Domain::QQ => ()
@@ -42,21 +40,17 @@ test "resolve_domain modulus and gaussian" {
     Domain::CC => ()
     _ => fail("expected CC")
   }
-  let status = try
-    resolve_domain(
-      domain=Some(Domain::GF(3)),
-      modulus=Some(5),
-      gaussian=None,
-      extension=None,
-      gf_degree=None,
-      expr=None,
-    )
-  catch {
-    e => e.to_string()
-  } noraise {
-    _ => "Ok"
+  let status : Result[Domain, PolyError] = try? resolve_domain(
+    domain=Some(Domain::GF(3)),
+    modulus=Some(5),
+    gaussian=None,
+    extension=None,
+    gf_degree=None,
+    expr=None,
+  )
+  guard status is Err(PolyError::BadModulus) else {
+    fail("expected BadModulus error")
   }
-  inspect(status, content="BadModulus")
 }
 
 ///|
@@ -112,19 +106,11 @@ test "integer polynomial division matches sympy" {
       @symcore.mul([@symcore.int(2), @symcore.symbol("x")]),
       @symcore.int(1),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  )
   let d = builder.from_expr(
     @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
-  let (q, r) = try p.divmod_univar(d) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  } noraise {
-    v => v
-  }
+  )
+  let (q, r) = p.divmod_univar(d)
   inspect(q.to_string(), content="1 + x")
   inspect(r.to_string(), content="0")
 }
@@ -140,9 +126,7 @@ test "total_degree and per-variable degree" {
       ]),
       @symcore.symbol("y"),
     ]),
-  ) catch {
-    e => fail("unexpected error: \{e.to_string()}")
-  }
+  )
   inspect("\{poly.degree(0)}", content="2")
   inspect("\{poly.degree(1)}", content="3")
   inspect("\{poly.total_degree()}", content="5")

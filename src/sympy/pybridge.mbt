@@ -5,30 +5,28 @@
 /// parser for canonical construction (and avoids reproducing its
 /// dispatch rules in MoonBit).
 pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  with_py_gil(fn() {
-    add_repo_to_syspath()
-    let sympy = ensure_sympy_module()
-    let sympify = resolve_sympify(sympy)
-    let args = @py.PyTuple::new(1)
-    // Prefer explicit Rational() for non-integral numbers to avoid
-    // parser differences in sympify.
-    let rendered = match expr {
-      @symcore.Expr::Number(n) =>
-        if n.is_integral() {
-          n.to_string()
-        } else {
-          "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
-        }
-      _ => @symprint.to_string(expr)
-    }
-    let pystr = @py.PyString::from(rendered)
-    tuple_set_borrowed(args, 0, pystr)
-    let res = py_call_object(sympify, args, print_err=true)
-    match res {
-      Some(obj) => objenum_to_obj(obj)
-      None => fail("sympy-sympify-none")
-    }
-  })
+  add_repo_to_syspath()
+  let sympy = ensure_sympy_module()
+  let sympify = resolve_sympify(sympy)
+  let args = @py.PyTuple::new(1)
+  // Prefer explicit Rational() for non-integral numbers to avoid
+  // parser differences in sympify.
+  let rendered = match expr {
+    @symcore.Expr::Number(n) =>
+      if n.is_integral() {
+        n.to_string()
+      } else {
+        "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
+      }
+    _ => @symprint.to_string(expr)
+  }
+  let pystr = @py.PyString::from(rendered)
+  tuple_set_borrowed(args, 0, pystr)
+  let res = py_call_object(sympify, args, print_err=true)
+  match res {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("sympy-sympify-none")
+  }
 }
 
 ///|
@@ -59,18 +57,20 @@ fn ensure_sympy_module() -> @py.PyModule raise {
 fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
   let sympify0 = match sympy.get_attr("sympify", print_err=false) {
     Some(PyCallable(callable)) => Some(callable)
-    Some(PyClass(obj)) =>
-      try @py.PyCallable::create(obj) catch {
-        _ => None
-      } noraise {
-        v => Some(v)
+    Some(PyClass(obj)) => {
+      let callable_res = try? @py.PyCallable::create(obj)
+      match callable_res {
+        Ok(v) => Some(v)
+        Err(_) => None
       }
-    Some(other) =>
-      try @py.PyCallable::create(objenum_to_obj(other)) catch {
-        _ => None
-      } noraise {
-        v => Some(v)
+    }
+    Some(other) => {
+      let callable_res = try? @py.PyCallable::create(objenum_to_obj(other))
+      match callable_res {
+        Ok(v) => Some(v)
+        Err(_) => None
       }
+    }
     _ => None
   }
   match sympify0 {

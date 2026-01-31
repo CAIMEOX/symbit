@@ -25,7 +25,7 @@ fn expr_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
 
 ///|
 fn poly_canon_str(p : Poly) -> String raise {
-  @sympy.sympy_normalize(p.to_string())
+  @sympy_polys.sympy_normalize(p.to_string())
 }
 
 ///|

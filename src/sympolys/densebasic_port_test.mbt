@@ -68,49 +68,21 @@ fn map_int_repr(map : Map[Int, FieldElem]) -> String {
 ///|
 test "densebasic: LC/TC/degree/strip/reverse" {
   let a : Array[FieldElem] = [fez(2), fez(3), fez(0), fez(0), fez(5)]
-  let lc = try dup_LC(a) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lc = try! dup_LC(a)
   inspect(lc.to_string(), content="2")
-  let tc = try dup_TC(a) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let tc = try! dup_TC(a)
   inspect(tc.to_string(), content="5")
-  let deg = try dup_degree(a) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let deg = try! dup_degree(a)
   inspect(deg.to_string(), content="4")
-  let stripped = try dup_strip(a) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let stripped = try! dup_strip(a)
   inspect(stripped.length().to_string(), content="5")
   inspect(stripped[4].to_string(), content="5")
   let zeros : Array[FieldElem] = [fez(0), fez(0)]
-  let degz = try dup_degree(zeros) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let degz = try! dup_degree(zeros)
   inspect(degz.to_string(), content="-1")
-  let stripped_zero = try dup_strip(zeros) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let stripped_zero = try! dup_strip(zeros)
   inspect(stripped_zero.length().to_string(), content="0")
-  let rev = try dup_reverse(a) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let rev = try! dup_reverse(a)
   inspect(rev[0].to_string(), content="5")
   inspect(rev[4].to_string(), content="2")
 }
@@ -126,27 +98,15 @@ test "densebasic: multivariate LC/TC/degree list and true_LT" {
     },
     content="poly",
   )
-  let glc = try dmp_ground_LC(f, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let glc = try! dmp_ground_LC(f, 1)
   inspect(glc.to_string(), content="2")
-  let gtc = try dmp_ground_TC(f, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let gtc = try! dmp_ground_TC(f, 1)
   inspect(gtc.to_string(), content="5")
   inspect(dmp_degree(f, 1).to_string(), content="1")
   inspect((try! dmp_degree_in(f, 1, 1)).to_string(), content="2")
   let degs = try! dmp_degree_list(f, 1)
   inspect(degs.to_string(), content="[1, 2]")
-  let lt = try dmp_true_LT(f, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt = try! dmp_true_LT(f, 1)
   let (exps, coeff) = lt
   inspect(exps.to_string(), content="[1, 2]")
   inspect(coeff.to_string(), content="2")
@@ -154,11 +114,7 @@ test "densebasic: multivariate LC/TC/degree list and true_LT" {
   // zero polynomial [[[]]]
   let z = poly([poly([poly([])])])
   inspect(dmp_degree(z, 2).to_string(), content="-1")
-  let lt_z = try dmp_true_LT(z, 2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt_z = try! dmp_true_LT(z, 2)
   inspect(lt_z.0.to_string(), content="[0, 0, 0]")
   inspect(lt_z.1.to_string(), content="0")
 }
@@ -166,94 +122,50 @@ test "densebasic: multivariate LC/TC/degree list and true_LT" {
 ///|
 test "densebasic: dmp_strip and dmp_reverse edge cases" {
   let u0 = poly([coef(0)])
-  let u0s = try dmp_strip(u0) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let u0s = try! dmp_strip(u0)
   inspect(dense_repr(u0s), content="[]")
   let u1 = poly([coef(0), coef(0)])
-  let u1s = try dmp_strip(u1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let u1s = try! dmp_strip(u1)
   inspect(dense_repr(u1s), content="[]")
   let u2 = poly([coef(0), coef(1), coef(0)])
-  let u2s = try dmp_strip(u2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let u2s = try! dmp_strip(u2)
   inspect(dense_repr(u2s), content="[1,0]")
   let u3 = poly([coef(0), coef(0), coef(1), coef(2), coef(0)])
-  let u3s = try dmp_strip(u3) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let u3s = try! dmp_strip(u3)
   inspect(dense_repr(u3s), content="[1,2,0]")
   let u4 = poly([coef(0), coef(0), coef(0), coef(1), coef(2), coef(0)])
-  let u4s = try dmp_strip(u4) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let u4s = try! dmp_strip(u4)
   inspect(dense_repr(u4s), content="[1,2,0]")
   let z1 = poly([])
-  let zstrip = try dmp_strip(z1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let zstrip = try! dmp_strip(z1)
   let zlen = match zstrip {
     DensePoly::Poly(items) => items.length().to_string()
     _ => "0"
   }
   inspect(zlen, content="0")
   let f = poly([coef(0), coef(0), coef(1), coef(2)])
-  let fstrip = try dmp_strip(f) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let fstrip = try! dmp_strip(f)
   let flen = match fstrip {
     DensePoly::Poly(items) => items.length().to_string()
     _ => "0"
   }
   inspect(flen, content="2")
-  let rev = try dmp_reverse(f) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let rev = try! dmp_reverse(f)
   let rev_lc = match dmp_LC(rev) {
     DensePoly::Coef(c) => c.to_string()
     _ => "0"
   }
   inspect(rev_lc, content="2")
-  let rev1 = try dmp_reverse(poly([coef(1), coef(2), coef(3), coef(0)])) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let rev1 = try! dmp_reverse(poly([coef(1), coef(2), coef(3), coef(0)]))
   inspect(dense_repr(rev1), content="[3,2,1]")
-  let rev2 = try dmp_reverse(poly([coef(1), coef(2), coef(0), coef(3)])) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let rev2 = try! dmp_reverse(poly([coef(1), coef(2), coef(0), coef(3)]))
   inspect(dense_repr(rev2), content="[3,0,2,1]")
   let mv = poly([
     poly([poly([coef(1), coef(0)]), poly([coef(2)])]),
     poly([poly([coef(3)])]),
     poly([]),
   ])
-  let mv_rev = try dmp_reverse(mv) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let mv_rev = try! dmp_reverse(mv)
   inspect(dense_repr(mv_rev), content="[[[3]],[[2],[1]]]")
 }
 
@@ -270,45 +182,21 @@ test "densebasic: dmp_degree_list deeper cases" {
 ///|
 test "densebasic: dmp_ground_LC/TC nested structures" {
   let z1 = poly([poly([])])
-  let glc1 = try dmp_ground_LC(z1, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
-  let gtc1 = try dmp_ground_TC(z1, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let glc1 = try! dmp_ground_LC(z1, 1)
+  let gtc1 = try! dmp_ground_TC(z1, 1)
   inspect(glc1.to_string(), content="0")
   inspect(gtc1.to_string(), content="0")
   let z2 = poly([poly([poly([])])])
-  let glc2 = try dmp_ground_LC(z2, 2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
-  let gtc2 = try dmp_ground_TC(z2, 2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let glc2 = try! dmp_ground_LC(z2, 2)
+  let gtc2 = try! dmp_ground_TC(z2, 2)
   inspect(glc2.to_string(), content="0")
   inspect(gtc2.to_string(), content="0")
   let f = poly([
     poly([poly([coef(2)]), poly([coef(3), coef(4)])]),
     poly([poly([coef(5)])]),
   ])
-  let glc = try dmp_ground_LC(f, 2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
-  let gtc = try dmp_ground_TC(f, 2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let glc = try! dmp_ground_LC(f, 2)
+  let gtc = try! dmp_ground_TC(f, 2)
   inspect(glc.to_string(), content="2")
   inspect(gtc.to_string(), content="5")
 }
@@ -316,53 +204,25 @@ test "densebasic: dmp_ground_LC/TC nested structures" {
 ///|
 test "densebasic: dmp_strip canonical zero shapes" {
   let z1 = poly([poly([])])
-  let z1s = try dmp_strip(z1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z1s = try! dmp_strip(z1)
   inspect(dense_repr(z1s), content="[[]]")
   let z2 = poly([poly([]), poly([])])
-  let z2s = try dmp_strip(z2) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z2s = try! dmp_strip(z2)
   inspect(dense_repr(z2s), content="[[]]")
   let z3 = poly([poly([poly([])])])
-  let z3s = try dmp_strip(z3) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z3s = try! dmp_strip(z3)
   inspect(dense_repr(z3s), content="[[[]]]")
   let z4 = poly([poly([poly([])]), poly([poly([])])])
-  let z4s = try dmp_strip(z4) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z4s = try! dmp_strip(z4)
   inspect(dense_repr(z4s), content="[[[]]]")
   let z5 = poly([poly([coef(1)])])
-  let z5s = try dmp_strip(z5) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z5s = try! dmp_strip(z5)
   inspect(dense_repr(z5s), content="[[1]]")
   let z6 = poly([poly([poly([])]), poly([coef(1)])])
-  let z6s = try dmp_strip(z6) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z6s = try! dmp_strip(z6)
   inspect(dense_repr(z6s), content="[[1]]")
   let z7 = poly([poly([poly([])]), poly([coef(1)]), poly([poly([])])])
-  let z7s = try dmp_strip(z7) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let z7s = try! dmp_strip(z7)
   inspect(dense_repr(z7s), content="[[1],[[]]]")
 }
 
@@ -452,43 +312,23 @@ test "densebasic: dmp_degree_in bounds" {
 ///|
 test "densebasic: dmp_true_LT examples" {
   let z = poly([poly([])])
-  let lt0 = try dmp_true_LT(z, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt0 = try! dmp_true_LT(z, 1)
   inspect(lt0.0.to_string(), content="[0, 0]")
   inspect(lt0.1.to_string(), content="0")
   let a = poly([poly([coef(7)])])
-  let lt1 = try dmp_true_LT(a, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt1 = try! dmp_true_LT(a, 1)
   inspect(lt1.0.to_string(), content="[0, 0]")
   inspect(lt1.1.to_string(), content="7")
   let b = poly([poly([coef(1), coef(0)])])
-  let lt2 = try dmp_true_LT(b, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt2 = try! dmp_true_LT(b, 1)
   inspect(lt2.0.to_string(), content="[0, 1]")
   inspect(lt2.1.to_string(), content="1")
   let c = poly([poly([coef(1)]), poly([])])
-  let lt3 = try dmp_true_LT(c, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt3 = try! dmp_true_LT(c, 1)
   inspect(lt3.0.to_string(), content="[1, 0]")
   inspect(lt3.1.to_string(), content="1")
   let d = poly([poly([coef(1), coef(0)]), poly([])])
-  let lt4 = try dmp_true_LT(d, 1) catch {
-    e => fail(e.to_string())
-  } noraise {
-    v => v
-  }
+  let lt4 = try! dmp_true_LT(d, 1)
   inspect(lt4.0.to_string(), content="[1, 1]")
   inspect(lt4.1.to_string(), content="1")
 }

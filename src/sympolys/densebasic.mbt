@@ -56,11 +56,7 @@ pub fn dup_strip(coeffs : Array[FieldElem]) -> Array[FieldElem] raise PolyError 
   if start == n {
     return Array::new()
   }
-  let zero = try fe_from_int(0, Domain::QQ) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
+  let zero = fe_from_int(0, Domain::QQ)
   let out_len = n - start
   let out : Array[FieldElem] = Array::make(out_len, zero)
   for i in 0..<out_len {
@@ -244,20 +240,12 @@ fn dense_strip(p : DensePoly) -> DensePoly raise PolyError {
         }
       }
       if all_coef {
-        let stripped = try dup_strip(coeffs) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        let stripped = dup_strip(coeffs)
         return dense_from_coeffs(stripped)
       }
       let stripped : Array[DensePoly] = Array::new()
       for it in items {
-        let child = try dense_strip(it) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        let child = dense_strip(it)
         stripped.push(child)
       }
       let mut start = 0
@@ -310,21 +298,13 @@ pub fn dmp_TC(p : DensePoly) -> DensePoly {
 
 ///|
 pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
-  let stripped = try dmp_strip(p) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
+  let stripped = dmp_strip(p)
   match stripped {
     DensePoly::Coef(c) =>
       if u == 0 {
         c
       } else {
-        try fe_from_int(0, Domain::QQ) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        fe_from_int(0, Domain::QQ)
       }
     DensePoly::Poly(items) => {
       let mut found : DensePoly? = None
@@ -336,11 +316,7 @@ pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
       }
       match found {
         None =>
-          try fe_from_int(0, Domain::QQ) catch {
-            e => raise e
-          } noraise {
-            v => v
-          }
+          fe_from_int(0, Domain::QQ)
         Some(child) =>
           if u == 0 {
             dmp_ground_LC(child, 0)
@@ -354,21 +330,13 @@ pub fn dmp_ground_LC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
 
 ///|
 pub fn dmp_ground_TC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
-  let stripped = try dmp_strip(p) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
+  let stripped = dmp_strip(p)
   match stripped {
     DensePoly::Coef(c) =>
       if u == 0 {
         c
       } else {
-        try fe_from_int(0, Domain::QQ) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        fe_from_int(0, Domain::QQ)
       }
     DensePoly::Poly(items) => {
       let mut found : DensePoly? = None
@@ -382,11 +350,7 @@ pub fn dmp_ground_TC(p : DensePoly, u : Int) -> FieldElem raise PolyError {
       }
       match found {
         None =>
-          try fe_from_int(0, Domain::QQ) catch {
-            e => raise e
-          } noraise {
-            v => v
-          }
+          fe_from_int(0, Domain::QQ)
         Some(child) =>
           if u == 0 {
             dmp_ground_TC(child, 0)
@@ -405,11 +369,7 @@ pub fn dmp_true_LT(
 ) -> (Array[Int], FieldElem) raise PolyError {
   if dense_is_zero(p) {
     let exps = Array::make(u + 1, 0)
-    let z = try fe_from_int(0, Domain::QQ) catch {
-      e => raise e
-    } noraise {
-      v => v
-    }
+    let z = fe_from_int(0, Domain::QQ)
     return (exps, z)
   }
   match p {
@@ -424,11 +384,7 @@ pub fn dmp_true_LT(
         }
         if u == 0 {
           let exps = Array::make(1, items.length() - 1 - i)
-          let zero = try fe_from_int(0, Domain::QQ) catch {
-            e => raise e
-          } noraise {
-            v => v
-          }
+          let zero = fe_from_int(0, Domain::QQ)
           let coeff = match items[i] {
             DensePoly::Coef(c) => c
             DensePoly::Poly(_) => zero
@@ -445,11 +401,7 @@ pub fn dmp_true_LT(
         }
       }
       let exps = Array::make(u + 1, 0)
-      let z = try fe_from_int(0, Domain::QQ) catch {
-        e => raise e
-      } noraise {
-        v => v
-      }
+      let z = fe_from_int(0, Domain::QQ)
       (exps, z)
     }
   }
@@ -513,11 +465,7 @@ pub fn dmp_degree_list(p : DensePoly, u : Int) -> Array[Int] raise PolyError {
 
 ///|
 pub fn dmp_strip(p : DensePoly) -> DensePoly raise PolyError {
-  try dense_strip(p) catch {
-    e => raise e
-  } noraise {
-    v => v
-  }
+  dense_strip(p)
 }
 
 ///|
@@ -537,11 +485,7 @@ pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
         }
       }
       if all_coef {
-        let rev = try dup_reverse(coeffs) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        let rev = dup_reverse(coeffs)
         return dense_from_coeffs(rev)
       }
       let n = items.length()
@@ -550,19 +494,11 @@ pub fn dmp_reverse(p : DensePoly) -> DensePoly raise PolyError {
       }
       let out : Array[DensePoly] = Array::make(n, DensePoly::Poly(Array::new()))
       for i in 0..<n {
-        let child = try dmp_reverse(items[i]) catch {
-          e => raise e
-        } noraise {
-          v => v
-        }
+        let child = dmp_reverse(items[i])
         out.set(n - 1 - i, child)
       }
       let rev = DensePoly::Poly(out)
-      try dmp_strip(rev) catch {
-        e => raise e
-      } noraise {
-        v => v
-      }
+      dmp_strip(rev)
     }
   }
 }
@@ -628,11 +564,7 @@ pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
             DensePoly::Coef(c) => coeffs.push(c)
             DensePoly::Poly(_) =>
               coeffs.push(
-                try fe_from_int(0, Domain::QQ) catch {
-                  e => raise e
-                } noraise {
-                  v => v
-                },
+                fe_from_int(0, Domain::QQ),
               )
           }
         }
@@ -662,11 +594,7 @@ pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
         for i in 0..<items.length() {
           mapped.set(
             i,
-            try dmp_normal(items[i], u - 1) catch {
-              e => raise e
-            } noraise {
-              v => v
-            },
+            dmp_normal(items[i], u - 1),
           )
         }
         dmp_strip(DensePoly::Poly(mapped))
@@ -717,11 +645,7 @@ pub fn dmp_convert(
             DensePoly::Coef(c) => coeffs.push(fe_convert_domain(c, k1))
             DensePoly::Poly(_) =>
               coeffs.push(
-                try fe_from_int(0, k1) catch {
-                  e => raise e
-                } noraise {
-                  v => v
-                },
+                fe_from_int(0, k1),
               )
           }
         }
@@ -751,11 +675,7 @@ pub fn dmp_convert(
         for i in 0..<items.length() {
           mapped.set(
             i,
-            try dmp_convert(items[i], u - 1, k0, k1) catch {
-              e => raise e
-            } noraise {
-              v => v
-            },
+            dmp_convert(items[i], u - 1, k0, k1),
           )
         }
         dmp_strip(DensePoly::Poly(mapped))
