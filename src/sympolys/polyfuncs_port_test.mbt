@@ -158,6 +158,67 @@ test "polyfuncs: symmetrize parity formal mapping" {
 }
 
 ///|
+test "polyfuncs: symmetrize parity x^2 + y^2 + z^2" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  let expr =
+    (x ^ @symcore.int(2)) +
+    (y ^ @symcore.int(2)) +
+    (z ^ @symcore.int(2))
+  let res = symmetrize(expr, gens=["x", "y", "z"])
+  let ours = symmetrize_to_string(res, false).trim().to_string()
+  let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y", "z"])
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polyfuncs: symmetrize parity mixed ordering gens" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  let expr = x + y + z
+  let res = symmetrize(expr, gens=["z", "x", "y"])
+  let ours = symmetrize_to_string(res, false).trim().to_string()
+  let oracle = @sympy_polys.symmetrize(expr, gens=["z", "x", "y"])
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polyfuncs: symmetrize parity mixed ordering formal" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  let expr = (x ^ @symcore.int(2)) + y + z
+  let res = symmetrize(
+    expr,
+    gens=["y", "z", "x"],
+    formal=true,
+    symbols=["t1", "t2", "t3"],
+  )
+  let ours = symmetrize_to_string(res, true).trim().to_string()
+  let oracle = @sympy_polys.symmetrize(
+    expr,
+    gens=["y", "z", "x"],
+    formal=true,
+    symbols=["t1", "t2", "t3"],
+  )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("symmetrize formal mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
 test "polyfuncs: horner parity univariate" {
   let x = @symcore.symbol("x")
   let expr =
@@ -205,6 +266,31 @@ test "polyfuncs: viete parity quadratic" {
     .trim()
     .to_string()
   let oracle = @sympy_polys.viete(expr, roots=["r1", "r2"], gen="x")
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("viete mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polyfuncs: viete parity cubic" {
+  let x = @symcore.symbol("x")
+  let expr =
+    (x ^ @symcore.int(3)) +
+    (@symcore.int(2) * (x ^ @symcore.int(2))) +
+    (@symcore.int(3) * x) +
+    @symcore.int(4)
+  let ours = viete_to_string(
+      viete(expr, roots=["r1", "r2", "r3"], gen="x"),
+    )
+    .trim()
+    .to_string()
+  let oracle = @sympy_polys.viete(
+    expr,
+    roots=["r1", "r2", "r3"],
+    gen="x",
+  )
     .trim()
     .to_string()
   guard ours == oracle else {
