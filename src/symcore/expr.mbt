@@ -25,8 +25,26 @@ impl Show for Expr with to_string(self) {
 }
 
 ///|
+pub impl Add for Expr with add(self, other) {
+  add([self, other])
+}
+
+///|
+pub impl Mul for Expr with mul(self, other) {
+  mul([self, other])
+}
+
+pub impl Sub for Expr with sub(self, other) {
+  add([self, mul([int(-1), other])])
+}
+
+///|
 impl Show for Expr with output(self, logger) {
   logger.write_string(self.to_string())
+}
+
+pub impl BitXOr for Expr with lxor(self, other) {
+  pow(self, other)
 }
 
 ///|
@@ -184,4 +202,11 @@ test "arbitrary array use gen" {
     arr,
     content="[[3, 6], [0], [0, 0], [9, 6, 7], [1, 5], [3], [6], [0], [8, 7], [8, 7]]",
   )
+}
+
+test "symbolized" {
+  let x = symbol("x")
+  let y = symbol("y")
+  let expr = x + (y ^ int(10))
+  inspect(expr, content="(x + (y ** 10))")
 }
