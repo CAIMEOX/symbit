@@ -5,12 +5,8 @@
       "alias": "sympy"
     },
     {
-      "path": "Kaida-Amethyst/python",
-      "alias": "py"
-    },
-    {
-      "path": "Kaida-Amethyst/python/cpython",
-      "alias": "cpython"
+      "path": "moonbitlang/core/json",
+      "alias": "json"
     }
   ]
 }

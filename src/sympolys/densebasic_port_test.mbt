@@ -190,6 +190,43 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   ])
   let mv_rev = dmp_reverse(mv)
   inspect(dense_repr(mv_rev), content="[[[3]],[[2],[1]]]")
+
+  let rz1 = dmp_reverse(poly([poly([]), poly([])]))
+  inspect(dense_repr(rz1), content="[[]]")
+  let rz2 = dmp_reverse(poly([poly([]), poly([coef(1)])]))
+  inspect(dense_repr(rz2), content="[[1],[]]")
+}
+
+///|
+test "densebasic: dmp_strip multivariate sympy cases" {
+  let z1 = poly([poly([])])
+  inspect(dense_repr(dmp_strip(z1)), content="[[]]")
+  let z2 = poly([poly([]), poly([])])
+  inspect(dense_repr(dmp_strip(z2)), content="[[]]")
+  let z3 = poly([poly([]), poly([]), poly([])])
+  inspect(dense_repr(dmp_strip(z3)), content="[[]]")
+
+  let z4 = poly([poly([poly([])])])
+  inspect(dense_repr(dmp_strip(z4)), content="[[[]]]")
+  let z5 = poly([poly([poly([])]), poly([poly([])])])
+  inspect(dense_repr(dmp_strip(z5)), content="[[[]]]")
+  let z6 = poly([
+    poly([poly([])]),
+    poly([poly([])]),
+    poly([poly([])]),
+  ])
+  inspect(dense_repr(dmp_strip(z6)), content="[[[]]]")
+
+  let o1 = poly([poly([poly([coef(1)])])])
+  inspect(dense_repr(dmp_strip(o1)), content="[[[1]]]")
+  let o2 = poly([poly([poly([])]), poly([poly([coef(1)])])])
+  inspect(dense_repr(dmp_strip(o2)), content="[[[1]]]")
+  let o3 = poly([
+    poly([poly([])]),
+    poly([poly([coef(1)])]),
+    poly([poly([])]),
+  ])
+  inspect(dense_repr(dmp_strip(o3)), content="[[[1]],[[]]]")
 }
 
 ///|
@@ -342,6 +379,11 @@ test "densebasic: dmp_degree_in/list coverage" {
   inspect(dmp_degree_in(z3, 0, 2), content="-1")
   inspect(dmp_degree_in(z3, 1, 2), content="-1")
   inspect(dmp_degree_in(z3, 2, 2), content="-1")
+
+  let c1 = poly([poly([poly([coef(1)])])])
+  inspect(dmp_degree_in(c1, 0, 2), content="0")
+  inspect(dmp_degree_in(c1, 1, 2), content="0")
+  inspect(dmp_degree_in(c1, 2, 2), content="0")
 }
 
 ///|

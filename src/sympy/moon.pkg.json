@@ -7,6 +7,10 @@
       "alias": "json"
     },
     {
+      "path": "moonbitlang/core/strconv",
+      "alias": "strconv"
+    },
+    {
       "path": "Kaida-Amethyst/python",
       "alias": "py"
     },

@@ -106,7 +106,7 @@ fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
 
 ///|
 fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
-  match obj {
+  let out = match obj {
     PyBool(v) => v.obj()
     PyCallable(v) => v.obj()
     PyClass(v) => v
@@ -118,4 +118,8 @@ fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
     PyString(v) => v.obj()
     PyTuple(v) => v.obj()
   }
+  let state = py_gil_ensure()
+  @cpython.py_incref(out.obj_ref())
+  py_gil_release(state)
+  out
 }
