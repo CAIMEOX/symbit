@@ -205,3 +205,306 @@ pub fn viete(
 ) -> String raise {
   @sympy.viete(expr, roots~, gen~)
 }
+
+///|
+pub fn dup_add_term(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  k : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_add_term(f, c, k, domain~)
+}
+
+///|
+pub fn dup_sub_term(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  k : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_sub_term(f, c, k, domain~)
+}
+
+///|
+pub fn dup_mul_term(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  k : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_mul_term(f, c, k, domain~)
+}
+
+///|
+pub fn dup_add_ground(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_add_ground(f, c, domain~)
+}
+
+///|
+pub fn dup_sub_ground(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_sub_ground(f, c, domain~)
+}
+
+///|
+pub fn dup_mul_ground(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_mul_ground(f, c, domain~)
+}
+
+///|
+pub fn dup_quo_ground(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_quo_ground(f, c, domain~)
+}
+
+///|
+pub fn dup_exquo_ground(
+  f : Array[@symnum.BigRational],
+  c : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_exquo_ground(f, c, domain~)
+}
+
+///|
+pub fn dup_lshift(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_lshift(f, n, domain~)
+}
+
+///|
+pub fn dup_rshift(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_rshift(f, n, domain~)
+}
+
+///|
+pub fn dup_neg(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_neg(f, domain~)
+}
+
+///|
+pub fn dup_abs(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_abs(f, domain~)
+}
+
+///|
+pub fn dup_add(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_add(f, g, domain~)
+}
+
+///|
+pub fn dup_sub(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_sub(f, g, domain~)
+}
+
+///|
+pub fn dup_mul(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_mul(f, g, domain~)
+}
+
+///|
+pub fn dup_sqr(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_sqr(f, domain~)
+}
+
+///|
+pub fn dup_pow(
+  f : Array[@symnum.BigRational],
+  n : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_pow(f, n, domain~)
+}
+
+///|
+pub fn dmp_add_term(
+  f : @sympy.DenseData,
+  c : @sympy.DenseData,
+  k : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_add_term(f, c, k, u, domain~)
+}
+
+///|
+pub fn dmp_sub_term(
+  f : @sympy.DenseData,
+  c : @sympy.DenseData,
+  k : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_sub_term(f, c, k, u, domain~)
+}
+
+///|
+pub fn dmp_mul_term(
+  f : @sympy.DenseData,
+  c : @sympy.DenseData,
+  k : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_mul_term(f, c, k, u, domain~)
+}
+
+///|
+pub fn dmp_add_ground(
+  f : @sympy.DenseData,
+  c : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_add_ground(f, c, u, domain~)
+}
+
+///|
+pub fn dmp_sub_ground(
+  f : @sympy.DenseData,
+  c : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_sub_ground(f, c, u, domain~)
+}
+
+///|
+pub fn dmp_mul_ground(
+  f : @sympy.DenseData,
+  c : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_mul_ground(f, c, u, domain~)
+}
+
+///|
+pub fn dmp_quo_ground(
+  f : @sympy.DenseData,
+  c : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_quo_ground(f, c, u, domain~)
+}
+
+///|
+pub fn dmp_exquo_ground(
+  f : @sympy.DenseData,
+  c : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_exquo_ground(f, c, u, domain~)
+}
+
+///|
+pub fn dmp_neg(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_neg(f, u, domain~)
+}
+
+///|
+pub fn dmp_abs(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_abs(f, u, domain~)
+}
+
+///|
+pub fn dmp_add(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_add(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_sub(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_sub(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_mul(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_mul(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_sqr(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_sqr(f, u, domain~)
+}
+
+///|
+pub fn dmp_pow(
+  f : @sympy.DenseData,
+  n : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_pow(f, n, u, domain~)
+}
