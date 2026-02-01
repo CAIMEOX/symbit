@@ -167,7 +167,7 @@ fn resolve_domain(
           } else {
             Domain::GF(m)
           }
-        (Some(d), Some(_)) => raise PolyError::BadModulus
+        (Some(_), Some(_)) => raise PolyError::BadModulus
         (Some(d), None) => d
         (None, None) =>
           match expr {

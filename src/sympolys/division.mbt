@@ -201,7 +201,8 @@ pub fn Poly::divmod_univar(
 ///|
 /// gcd of integer numerators (content).
 fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
-  let mut content = @symnum.BigRational::zero()
+  let mut g_num = BigInt::from_int(0)
+  let mut lcm_den = BigInt::from_int(1)
   match poly.domain {
     Domain::AlgExt(_, _, _) | Domain::CC => return @symnum.BigRational::one()
     _ => ()
@@ -209,19 +210,23 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   for _, c in poly.coeffs {
     let r = fe_expect_rational(c)
     let num = r.numerator()
+    let den = r.denominator()
     let abs_num = if num.op_lt(BigInt::from_int(0)) { num.neg() } else { num }
-    content = match content.is_zero() {
-      true => @symnum.BigRational::from_bigint(abs_num)
-      false =>
-        @symnum.BigRational::from_bigint(
-          @symnum.gcd_bigint(content.numerator(), abs_num),
-        )
+    if g_num.is_zero() {
+      g_num = abs_num
+    } else {
+      g_num = @symnum.gcd_bigint(g_num, abs_num)
     }
+    let g = @symnum.gcd_bigint(lcm_den, den)
+    lcm_den = lcm_den.mul(den.div(g))
   }
-  if poly.coeffs.is_empty() {
-    @symnum.BigRational::zero()
-  } else {
-    content
+  if poly.coeffs.is_empty() || g_num.is_zero() {
+    return @symnum.BigRational::zero()
+  }
+  let num_r = @symnum.BigRational::from_bigint(g_num)
+  let den_r = @symnum.BigRational::from_bigint(lcm_den)
+  num_r.div_r(den_r) catch {
+    _ => raise PolyError::DivisionByZero
   }
 }
 

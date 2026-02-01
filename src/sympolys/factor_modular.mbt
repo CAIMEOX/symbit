@@ -162,7 +162,7 @@ fn landau_mignotte_bound(max_coeff : BigInt, deg : Int) -> BigInt {
 
 ///|
 /// Zassenhaus split over GF(p) + lift to ZZ via Hensel.
-fn hensel_crt_factor(poly : Poly) -> Array[Poly] raise PolyError {
+fn hensel_crt_factor(poly : Poly) -> Array[Poly] {
   // Preconditions: primitive, square-free, univariate, ZZ.
   try {
     let deg = poly.degree(0)

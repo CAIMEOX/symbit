@@ -71,9 +71,6 @@ fn py_gil_release(_state : Int) -> Unit {
 extern "C" fn py_gil_state_ensure() -> Int = "PyGILState_Ensure"
 
 ///|
-extern "C" fn py_gil_state_release(state : Int) -> Unit = "PyGILState_Release"
-
-///|
 fn init {
   ignore(py_gil_ensure())
 }

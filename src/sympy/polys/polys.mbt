@@ -83,7 +83,7 @@ pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
 
 ///|
 pub fn normalize_spaces(s : String) -> String {
-  @sympy.normalize_spaces(s)
+  @sympy.remove_spaces(s)
 }
 
 ///|

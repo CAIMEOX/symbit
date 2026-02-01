@@ -116,6 +116,16 @@ fn square_free_decompose(poly : Poly) -> Array[(Poly, Int)] raise PolyError {
 }
 
 ///|
+fn lift_poly_to_qq(poly : Poly) -> Poly {
+  Poly::{
+    coeffs: poly.coeffs,
+    gens: poly.gens,
+    domain: Domain::QQ,
+    order: poly.order,
+  }
+}
+
+///|
 pub fn Poly::factor(
   self : Poly,
   modulus? : Int,
@@ -204,7 +214,7 @@ pub fn Poly::factor(
       }
       for lp in int_parts {
         // rescale back by dividing leading coeff if needed
-        let scaled = make_monic(lp)
+        let scaled = make_monic(lift_poly_to_qq(lp))
         factors.push((scaled, mult))
       }
     } else if p.domain is Domain::AlgExt(_, _, _) {

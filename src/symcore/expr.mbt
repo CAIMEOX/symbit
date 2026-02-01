@@ -150,8 +150,8 @@ pub fn arbitrary_polys() -> @qc.Gen[Expr] {
       @qc.frequency([
         (10, var_gen),
         (5, @qc.int_bound(100).fmap(int)),
-        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(Mul(_))),
-        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(Add(_))),
+        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Mul(x))),
+        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Add(x))),
         (
           5,
           var_gen.bind(base => @qc.int_bound(100).bind(exp => @qc.pure(

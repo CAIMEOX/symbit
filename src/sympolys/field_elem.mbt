@@ -162,7 +162,6 @@ pub fn fe_is_zero(a : FieldElem) -> Bool {
     FieldElem::GFp(_, v) => v == 0
     FieldElem::GFExt(_, coeffs, _) => coeffs.all(v => v == 0)
     FieldElem::AlgExt(_, coeffs, _, _) => coeffs.all(v => fe_is_zero(v))
-    _ => false
   }
 }
 

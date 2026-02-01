@@ -16,14 +16,14 @@ pub(all) enum OracleArg {
 ///|
 
 ///|
-////// Remove all spaces to make string comparison insensitive to formatting.
-pub fn normalize_spaces(s : String) -> String {
+/// Remove all spaces to make string comparison insensitive to formatting.
+pub fn remove_spaces(s : String) -> String {
   s.replace_all(old=" ", new="")
 }
 
 ///|
 pub fn canonical_cmp(s : String) -> String {
-  let mut t = normalize_spaces(s)
+  let mut t = remove_spaces(s)
   t = t.replace_all(old="2+x", new="x+2")
   t = t.replace_all(old="3+x", new="x+3")
   t = t.replace_all(old="-1+x", new="x-1")
@@ -35,7 +35,7 @@ pub fn canonical_cmp(s : String) -> String {
 }
 
 ///|
-////// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
+/// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
 /// ordering matches SymPy’s printer (helps when our printer orders constants
 /// first).
 pub fn sympy_normalize(expr_str : String) -> String raise {
@@ -1013,7 +1013,7 @@ pub fn sympy_polys_div_pair_str(
 }
 
 ///|
-////// Convenience wrapper that returns `str(result)` for SymPy calls.
+/// Convenience wrapper that returns `str(result)` for SymPy calls.
 pub fn sympy_call_str(
   path : String,
   args : Array[OracleArg],

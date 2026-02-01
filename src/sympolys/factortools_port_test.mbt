@@ -73,3 +73,18 @@ test "factortools: sqf_list compares with SymPy" {
     fail("sqf_list mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
+
+///|
+test "factortools: QQ content factors (1/2)*(x^2-1)" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let poly = b.from_expr(
+    @symcore.mul([
+      expr_rat(1, 2),
+      @symcore.add([
+        @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
+        @symcore.int(-1),
+      ]),
+    ]),
+  )
+  expect_factor_list_same(poly, None)
+}

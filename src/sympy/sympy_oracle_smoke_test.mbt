@@ -13,17 +13,17 @@ test "sympy oracle: resultant_str" {
 ///|
 test "sympy oracle: gf2 factor_list_str" {
   let res = sympy_factor_list_str("x**6 + x**3 + 1", modulus=2)
-  guard res.contains("x") else { fail("expected factor_list_str output") }
+  inspect(res, content="(1, [(x**6 + x**3 + 1, 1)])")
 }
 
 ///|
 test "sympy oracle: groebner_str" {
   let res = sympy_groebner_str(["x*y - 1", "x - y"], order="lex")
-  guard res.contains("x") else { fail("expected groebner_str output") }
+  inspect(res, content="x - y | y**2 - 1")
 }
 
 ///|
 test "sympy oracle: expr_equal" {
   let ok = sympy_expr_equal("x**2 - 1", "(x - 1)*(x + 1)")
-  inspect(ok, content="true")
+  assert_true(ok)
 }

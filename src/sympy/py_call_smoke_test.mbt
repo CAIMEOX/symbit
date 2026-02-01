@@ -14,11 +14,6 @@ test "py_call smoke: builtins str" {
 }
 
 ///|
-test "py_call smoke: sympy import" {
-  guard @py.pyimport("sympy") is Some(_sympy) else { fail("sympy missing") }
-}
-
-///|
 test "py_call smoke: sympy version" {
   guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   guard sympy.get_attr("__version__", print_err=true) is Some(PyString(ver)) else {

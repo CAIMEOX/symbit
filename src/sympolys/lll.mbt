@@ -103,7 +103,7 @@ fn size_reduce(
   transform : Matrix,
   mu : Array[Array[@symnum.BigRational]],
   k : Int,
-) -> Unit raise PolyError {
+) -> Unit {
   if k == 0 {
     return
   }

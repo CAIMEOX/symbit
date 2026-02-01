@@ -32,7 +32,7 @@ fn poly_canon_str(p : Poly) -> String raise {
 fn factor_list_to_string(
   content_str : String,
   factors : Array[(Poly, Int)],
-) -> String raise {
+) -> String  {
   let c_norm = content_str
   let triples : Array[(Int, String, Int)] = Array::new()
   for pair in factors {
@@ -63,7 +63,7 @@ fn factor_list_to_string(
 }
 
 ///|
-fn groebner_to_string(basis : Array[Poly]) -> String raise {
+fn groebner_to_string(basis : Array[Poly]) -> String  {
   let parts : Array[String] = {
     let arr = Array::new()
     for p in basis {
