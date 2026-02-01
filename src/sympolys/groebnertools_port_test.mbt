@@ -213,6 +213,68 @@ test "groebnertools: grlex basis for y - x^2, z - x^3" {
 }
 
 ///|
+test "groebnertools: grevlex basis for x*y + z, x - z, y - z" {
+  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ).order(TermOrder::Grevlex)
+  let f1 = b.from_expr(
+    @symcore.add([
+      @symcore.mul([@symcore.symbol("x"), @symcore.symbol("y")]),
+      @symcore.symbol("z"),
+    ]),
+  )
+  let f2 = b.from_expr(
+    @symcore.add([
+      @symcore.symbol("x"),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.symbol("z"),
+      ]),
+    ]),
+  )
+  let f3 = try! b.from_expr(
+    @symcore.add([
+      @symcore.symbol("y"),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.symbol("z"),
+      ]),
+    ]),
+  )
+  expect_groebner_same([f1, f2, f3], TermOrder::Grevlex)
+}
+
+///|
+test "groebnertools: lex basis for sphere constraints" {
+  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ)
+  let f1 = b.from_expr(
+    @symcore.add([
+      @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
+      @symcore.pow(@symcore.symbol("y"), @symcore.int(2)),
+      @symcore.pow(@symcore.symbol("z"), @symcore.int(2)),
+      @symcore.int(-1),
+    ]),
+  )
+  let f2 = b.from_expr(
+    @symcore.add([
+      @symcore.symbol("x"),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.symbol("y"),
+      ]),
+    ]),
+  )
+  let f3 = try! b.from_expr(
+    @symcore.add([
+      @symcore.symbol("y"),
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.symbol("z"),
+      ]),
+    ]),
+  )
+  expect_groebner_same([f1, f2, f3], TermOrder::Lex)
+}
+
+///|
 test "groebnertools: lex basis for z - x^2, y - x^3" {
   let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ)
   let f = b.from_expr(

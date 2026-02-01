@@ -89,6 +89,44 @@ fn map_int_repr(map : Map[Int, FieldElem]) -> String {
 }
 
 ///|
+fn expr_from_coeffs_desc(coeffs : Array[Int]) -> String {
+  let deg = coeffs.length() - 1
+  let parts : Array[String] = Array::new()
+  for i in 0..<coeffs.length() {
+    let c = coeffs[i]
+    if c == 0 {
+      continue
+    }
+    let abs_c = if c < 0 { -c } else { c }
+    let sign = if c < 0 { "-" } else { "" }
+    let power = deg - i
+    let term =
+      if power == 0 {
+        "\{sign}\{abs_c}"
+      } else if power == 1 {
+        if abs_c == 1 {
+          "\{sign}x"
+        } else {
+          "\{sign}\{abs_c}*x"
+        }
+      } else {
+        if abs_c == 1 {
+          "\{sign}x**\{power}"
+        } else {
+          "\{sign}\{abs_c}*x**\{power}"
+        }
+      }
+    parts.push(term)
+  }
+  if parts.is_empty() {
+    "0"
+  } else {
+    let joined = parts.join(" + ")
+    joined.replace_all(old="+ -", new="- ")
+  }
+}
+
+///|
 test "densebasic: LC/TC/degree/strip/reverse" {
   let a : Array[FieldElem] = [fez(2), fez(3), fez(0), fez(0), fez(5)]
   let lc = dup_LC(a)
@@ -108,6 +146,23 @@ test "densebasic: LC/TC/degree/strip/reverse" {
   let rev = dup_reverse(a)
   inspect(rev[0], content="5")
   inspect(rev[4], content="2")
+}
+
+///|
+test "densebasic: univariate LC/TC/degree parity via SymPy" {
+  let coeffs : Array[Int] = [2, 3, 0, 0, 5]
+  let elems : Array[FieldElem] = coeffs.map(n => fez(n))
+  let lc = dup_LC(elems)
+  let tc = dup_TC(elems)
+  let deg = dup_degree(elems)
+  let expr = expr_from_coeffs_desc(coeffs)
+  inspect(expr, content="2*x**4 + 3*x**3 + 5")
+  let lc_oracle = @sympy_polys.poly_lc(expr, gens=["x"])
+  let tc_oracle = @sympy_polys.poly_tc(expr, gens=["x"])
+  let degs = @sympy_polys.poly_degree_list(expr, gens=["x"])
+  inspect(lc, content=lc_oracle)
+  inspect(tc, content=tc_oracle)
+  inspect(deg, content=degs[0].to_string())
 }
 
 ///|

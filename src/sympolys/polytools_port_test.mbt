@@ -1,4 +1,3 @@
-///|
 test "factor_list x^4 - 1 over ZZ" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
   let poly = builder.from_expr(
@@ -98,4 +97,68 @@ test "groebner simple elimination aligns with SymPy expectation" {
   let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
   let repr = basis.map(p => p.to_string()).join(" | ")
   inspect(repr, content="-1 + x | -1 + y")
+}
+
+///|
+test "polytools: gcd/div/resultant parity with SymPy" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr(
+    @symcore.add([
+      @symcore.pow(@symcore.symbol("x"), @symcore.int(3)),
+      @symcore.int(-1),
+    ]),
+  )
+  let q = b.from_expr(
+    @symcore.add([
+      @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
+      @symcore.int(-1),
+    ]),
+  )
+  let g = p.gcd_univar(q)
+  let ours_g = @sympy_polys.normalize_spaces(
+    @sympy_polys.sympy_normalize(g.to_string()),
+  )
+  let oracle_g = @sympy_polys.normalize_spaces(
+    @sympy_polys.gcd(p.to_string(), q.to_string()),
+  )
+  guard ours_g == oracle_g else { fail("gcd mismatch") }
+
+  let (quo, rem) = p.divmod_univar(q)
+  let ours_div = @sympy_polys.normalize_spaces(div_pair_to_string(quo, rem))
+  let oracle_div = @sympy_polys.normalize_spaces(
+    @sympy_polys.div_pair_str(p.to_string(), q.to_string()),
+  )
+  guard ours_div == oracle_div else { fail("div mismatch") }
+
+  let res = p.resultant(q, 0)
+  let ours_res = @sympy_polys.normalize_spaces(
+    @sympy_polys.sympy_normalize(res.to_string()),
+  )
+  let oracle_res = @sympy_polys.normalize_spaces(
+    @sympy_polys.resultant(p.to_string(), q.to_string(), var_name="x"),
+  )
+  guard ours_res == oracle_res else { fail("resultant mismatch") }
+}
+
+///|
+test "polytools: factor_list parity over QQ" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let poly = b.from_expr(
+    @symcore.mul([
+      expr_rat(1, 3),
+      @symcore.add([
+        @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
+        @symcore.int(-1),
+      ]),
+    ]),
+  )
+  let (content, factors) = poly.factor_list()
+  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours = @sympy_polys.normalize_spaces(
+    @sympy_polys.sort_factor_repr(ours_raw),
+  )
+  let oracle = @sympy_polys.normalize_spaces(
+    @sympy_polys.sort_factor_repr(@sympy_polys.factor_list_str(poly.to_string())),
+  )
+  guard ours == oracle else { fail("factor_list mismatch") }
 }
