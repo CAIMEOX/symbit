@@ -21,7 +21,7 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
     _ => @symprint.to_string(expr)
   }
   let pystr = @py.PyString::from(rendered)
-  tuple_set_borrowed(args, 0, pystr)
+  args.set(0, pystr)
   let res = py_call_object(sympify, args, print_err=true)
   match res {
     Some(obj) => objenum_to_obj(obj)

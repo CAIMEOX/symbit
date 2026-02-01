@@ -21,6 +21,5 @@
   ],
   "test-import": [
     "CAIMEOX/qc_pyext"
-  ],
-  "native-stub": ["oracle_stub.c"]
+  ]
 }

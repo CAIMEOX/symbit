@@ -25,7 +25,7 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String raise {
     PyString(v) => v.obj()
     PyTuple(v) => v.obj()
   }
-  tuple_set_borrowed(args, 0, target)
+  args.set(0, target)
   match py_call_object(str_fn, args, print_err=true) {
     Some(PyString(s)) => @cpython.py_unicode_as_moonbit_string(s.obj_ref())
     Some(_) => fail("str() did not return PyString")
@@ -44,7 +44,7 @@ fn ref_symbols_get() -> Unit raise {
   guard sympy.get_attr("symbols") is Some(PyCallable(symbols))
   let args = @py.PyTuple::new(1)
   let pystr = @py.PyString::from("x y z")
-  tuple_set_borrowed(args, 0, pystr)
+  args.set(0, pystr)
   guard py_call_object(symbols, args) is Some(PyTuple(xyz_tuple))
   guard xyz_tuple.get(0) is Some(PyClass(_))
   guard xyz_tuple.get(1) is Some(PyClass(_))
@@ -88,7 +88,7 @@ fn ref_symbol_add_interpretation() -> Unit raise {
   guard sympy.get_attr("sympify") is Some(PyCallable(sympify))
   let args = @py.PyTuple::new(1)
   let pystr = @py.PyString::from("z*(x + y)")
-  tuple_set_borrowed(args, 0, pystr)
+  args.set(0, pystr)
   guard py_call_object(sympify, args) is Some(PyClass(expr))
   inspect(py_str_obj(expr), content="z*(x + y)")
 }
