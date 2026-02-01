@@ -11,10 +11,6 @@ pub(all) enum OracleArg {
   PyObj(@py.PyObject)
 }
 
-///|/// Build the JSON payload passed to the in-process SymPy oracle.
-
-///|
-
 ///|
 /// Remove all spaces to make string comparison insensitive to formatting.
 pub fn remove_spaces(s : String) -> String {
@@ -433,6 +429,21 @@ fn sympy_sympify_str(expr_str : String) -> @py.PyObject raise {
 ///|
 fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
   let res = sympy_call_must("sympy.symbols", [OracleArg::Str(name)])
+  objenum_to_obj(res)
+}
+
+///|
+fn sympy_poly_from_expr(
+  expr : String,
+  gens : Array[String],
+) -> @py.PyObject raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_obj))
+  for g in gens {
+    args.push(OracleArg::PyObj(sympy_symbol_obj(g)))
+  }
+  let res = sympy_call_must("sympy.Poly", args)
   objenum_to_obj(res)
 }
 
@@ -1010,6 +1021,38 @@ pub fn sympy_polys_div_pair_str(
   let quo = py_sympy_expr_str(items[0])
   let rem = py_sympy_expr_str(items[1])
   "\{quo}||\{rem}"
+}
+
+///|
+pub fn sympy_poly_degree_list(
+  expr : String,
+  gens? : Array[String] = [],
+) -> Array[Int] raise {
+  let poly = sympy_poly_from_expr(expr, gens)
+  let degree_list = resolve_method_callable(poly, "degree_list")
+  let res = py_call_noargs(degree_list)
+  let items = py_list_to_pyobjects(res)
+  let out : Array[Int] = Array::new()
+  for item in items {
+    out.push(py_obj_to_int(item))
+  }
+  out
+}
+
+///|
+pub fn sympy_poly_lc(expr : String, gens? : Array[String] = []) -> String raise {
+  let poly = sympy_poly_from_expr(expr, gens)
+  let lc = resolve_method_callable(poly, "LC")
+  let res = py_call_noargs(lc)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn sympy_poly_tc(expr : String, gens? : Array[String] = []) -> String raise {
+  let poly = sympy_poly_from_expr(expr, gens)
+  let tc = resolve_method_callable(poly, "TC")
+  let res = py_call_noargs(tc)
+  py_sympy_enum_str(res)
 }
 
 ///|

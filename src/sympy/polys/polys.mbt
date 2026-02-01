@@ -95,3 +95,21 @@ pub fn sympy_normalize(expr_str : String) -> String raise {
 pub fn canonical_cmp(s : String) -> String {
   @sympy.canonical_cmp(s)
 }
+
+///|
+pub fn poly_degree_list(
+  expr : String,
+  gens? : Array[String] = [],
+) -> Array[Int] raise {
+  @sympy.sympy_poly_degree_list(expr, gens=gens)
+}
+
+///|
+pub fn poly_lc(expr : String, gens? : Array[String] = []) -> String raise {
+  @sympy.sympy_poly_lc(expr, gens=gens)
+}
+
+///|
+pub fn poly_tc(expr : String, gens? : Array[String] = []) -> String raise {
+  @sympy.sympy_poly_tc(expr, gens=gens)
+}
