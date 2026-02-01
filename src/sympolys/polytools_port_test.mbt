@@ -116,22 +116,19 @@ test "polytools: gcd/div/resultant parity with SymPy" {
     ]),
   )
   let g = p.gcd_univar(q)
-  let ours_g = normalize_spaces(sympy_normalize(g.to_string()))
-  let oracle_g = normalize_spaces(
-    @sympy_polys.gcd(p.to_string(), q.to_string()),
-  )
+  let ours_g = sympy_normalize(g.to_string()).trim().to_string()
+  let oracle_g = @sympy_polys.gcd(p.to_expr(), q.to_expr()).trim().to_string()
   guard ours_g == oracle_g else { fail("gcd mismatch") }
   let (quo, rem) = p.divmod_univar(q)
-  let ours_div = normalize_spaces(div_pair_to_string(quo, rem))
-  let oracle_div = normalize_spaces(
-    @sympy_polys.div(p.to_string(), q.to_string()),
-  )
+  let ours_div = div_pair_to_string(quo, rem).trim().to_string()
+  let oracle_div = @sympy_polys.div(p.to_expr(), q.to_expr()).trim().to_string()
   guard ours_div == oracle_div else { fail("div mismatch") }
   let res = p.resultant(q, 0)
-  let ours_res = normalize_spaces(sympy_normalize(res.to_string()))
-  let oracle_res = normalize_spaces(
-    @sympy_polys.resultant(p.to_string(), q.to_string(), x="x"),
-  )
+  let ours_res = sympy_normalize(res.to_string()).trim().to_string()
+  let oracle_res = @sympy_polys
+    .resultant(p.to_expr(), q.to_expr(), x="x")
+    .trim()
+    .to_string()
   guard ours_res == oracle_res else { fail("resultant mismatch") }
 }
 
@@ -149,10 +146,9 @@ test "polytools: factor_list parity over QQ" {
   )
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
-  let ours = normalize_spaces(sort_factor_repr(ours_raw))
-  let oracle = normalize_spaces(
-    sort_factor_repr(@sympy_polys.factor_list(poly.to_string())),
-  )
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle =
+    sort_factor_repr(@sympy_polys.factor_list(poly.to_expr())).trim().to_string()
   guard ours == oracle else { fail("factor_list mismatch") }
 }
 
@@ -173,10 +169,9 @@ test "polytools: sqf_list parity over ZZ" {
   )
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
-  let ours = normalize_spaces(sort_factor_repr(ours_raw))
-  let oracle = normalize_spaces(
-    sort_factor_repr(@sympy_polys.sqf_list(poly.to_string())),
-  )
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle =
+    sort_factor_repr(@sympy_polys.sqf_list(poly.to_expr())).trim().to_string()
   guard ours == oracle else { fail("sqf_list mismatch") }
 }
 
@@ -192,23 +187,24 @@ test "polytools: factor_list parity over GF(2)" {
   )
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
-  let ours = normalize_spaces(sort_factor_repr(ours_raw))
-  let oracle = normalize_spaces(
-    sort_factor_repr(@sympy_polys.factor_list(poly.to_string(), modulus=2)),
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+    @sympy_polys.factor_list(poly.to_expr(), modulus=2),
   )
+  .trim()
+  .to_string()
   guard ours == oracle else {
     fail("factor_list GF mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
 
 ///|
-fn normalize_basis_str_local(s : String) -> String raise {
+fn normalize_basis_str_local(s : String) -> String {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
     let raw = part.to_string()
-    let monic = @sympy_polys.monic(raw)
-    let normalized = sympy_normalize(monic)
-    parts.push(canonical_cmp(normalized))
+    let trimmed = raw.trim().to_string()
+    parts.push(trimmed)
   }
   parts.sort()
   parts.join("|")
@@ -232,7 +228,7 @@ test "polytools: groebner_list parity for multivariate QQ" {
   )
   let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
   let ours = normalize_basis_str_local(groebner_to_string(basis))
-  let exprs = [f1.to_string(), f2.to_string()]
+  let exprs = [f1.to_expr(), f2.to_expr()]
   let oracle = normalize_basis_str_local(
     @sympy_polys.groebner(exprs, order="lex"),
   )

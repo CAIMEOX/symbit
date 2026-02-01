@@ -1,7 +1,7 @@
 ///|
 pub fn gcd(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
@@ -11,8 +11,8 @@ pub fn gcd(
 
 ///|
 pub fn resultant(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   x? : String = "",
   gens? : Array[String] = [],
   domain? : String = "",
@@ -22,14 +22,17 @@ pub fn resultant(
 }
 
 ///|
-pub fn groebner(exprs : Array[String], order? : String = "lex") -> String raise {
+pub fn groebner(
+  exprs : Array[@symcore.Expr],
+  order? : String = "lex",
+) -> String raise {
   @sympy.groebner(exprs, order~)
 }
 
 ///|
 pub fn div(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
@@ -38,21 +41,21 @@ pub fn div(
 }
 
 ///|
-pub fn monic(expr : String, modulus? : Int = 0) -> String raise {
+pub fn monic(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   @sympy.monic(expr, modulus~)
 }
 
 ///|
-pub fn factor_list(expr : String, modulus? : Int = 0) -> String raise {
+pub fn factor_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   @sympy.factor_list(expr, modulus~)
 }
 
 ///|
-pub fn sqf_list(expr : String, modulus? : Int = 0) -> String raise {
+pub fn sqf_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   @sympy.sqf_list(expr, modulus~)
 }
 
 ///|
-pub fn sqf_part(expr : String) -> String raise {
+pub fn sqf_part(expr : @symcore.Expr) -> String raise {
   @sympy.sqf_part(expr)
 }

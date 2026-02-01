@@ -579,9 +579,9 @@ fn sympy_factor_str(
 }
 
 ///|
-pub fn factor_list(expr : String, modulus? : Int = 0) -> String raise {
+pub fn factor_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
-  let expr_obj = sympy_sympify_str(expr)
+  let expr_obj = expr_to_sympy(expr)
   let sympy = ensure_sympy_module_oracle()
   let kwargs_map : Map[String, OracleArg] = {}
   match modulus_opt {
@@ -633,9 +633,9 @@ pub fn factor_list(expr : String, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn monic(expr : String, modulus? : Int = 0) -> String raise {
+pub fn monic(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
-  let expr_obj = sympy_sympify_str(expr)
+  let expr_obj = expr_to_sympy(expr)
   let poly = call_sympy_poly(expr_obj, [], "", modulus_opt)
   let monic = resolve_method_callable(poly, "monic")
   let monic_enum = py_call_noargs(monic)
@@ -646,9 +646,9 @@ pub fn monic(expr : String, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn sqf_list(expr : String, modulus? : Int = 0) -> String raise {
+pub fn sqf_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
-  let expr_obj = sympy_sympify_str(expr)
+  let expr_obj = expr_to_sympy(expr)
   let sympy = ensure_sympy_module_oracle()
   let (content_obj, factors_obj) = match modulus_opt {
     Some(m) => {
@@ -702,10 +702,13 @@ pub fn sqf_list(expr : String, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn groebner(exprs : Array[String], order? : String = "lex") -> String raise {
+pub fn groebner(
+  exprs : Array[@symcore.Expr],
+  order? : String = "lex",
+) -> String raise {
   let expr_objs : Array[@py.PyObject] = Array::new()
   for expr in exprs {
-    expr_objs.push(sympy_sympify_str(expr))
+    expr_objs.push(expr_to_sympy(expr))
   }
   let gens = sympy_default_gens(expr_objs)
   let args0 : Array[OracleArg] = Array::new()
@@ -780,8 +783,8 @@ pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
 }
 
 ///|
-pub fn sqf_part(expr : String) -> String raise {
-  let expr_obj = sympy_sympify_str(expr)
+pub fn sqf_part(expr : @symcore.Expr) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
   let poly = call_sympy_poly(expr_obj, [], "", None)
   let sqf_part = resolve_method_callable(poly, "sqf_part")
   let res = py_call_noargs(sqf_part)
@@ -826,14 +829,14 @@ fn call_sympy_poly(
 
 ///|
 pub fn gcd(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
 ) -> String raise {
-  let a = sympy_sympify_str(p)
-  let b = sympy_sympify_str(q)
+  let a = expr_to_sympy(p)
+  let b = expr_to_sympy(q)
   let gens0 = if gens.is_empty() {
     None
   } else {
@@ -862,15 +865,15 @@ pub fn gcd(
 
 ///|
 pub fn resultant(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   x? : String = "",
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
 ) -> String raise {
-  let p_obj = sympy_sympify_str(p)
-  let q_obj = sympy_sympify_str(q)
+  let p_obj = expr_to_sympy(p)
+  let q_obj = expr_to_sympy(q)
   let mut var_obj : @py.PyObject? = None
   if x != "" {
     var_obj = Some(sympy_sympify_str(x))
@@ -936,14 +939,14 @@ pub fn resultant(
 
 ///|
 pub fn div(
-  p : String,
-  q : String,
+  p : @symcore.Expr,
+  q : @symcore.Expr,
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
 ) -> String raise {
-  let p_obj = sympy_sympify_str(p)
-  let q_obj = sympy_sympify_str(q)
+  let p_obj = expr_to_sympy(p)
+  let q_obj = expr_to_sympy(q)
   let gens0 = if gens.is_empty() {
     None
   } else {

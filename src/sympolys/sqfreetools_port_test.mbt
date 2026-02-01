@@ -6,8 +6,8 @@ fn expect_sqf_list_same(poly : Poly) -> Unit raise {
   let oracle = canonical_cmp(
     sort_factor_repr(
       match poly.domain {
-        Domain::GF(p) => @sympy_polys.sqf_list(poly.to_string(), modulus=p)
-        _ => @sympy_polys.sqf_list(poly.to_string())
+        Domain::GF(p) => @sympy_polys.sqf_list(poly.to_expr(), modulus=p)
+        _ => @sympy_polys.sqf_list(poly.to_expr())
       },
     ),
   )
@@ -19,7 +19,7 @@ fn expect_sqf_list_same(poly : Poly) -> Unit raise {
 ///|
 fn expect_sqf_part_same(poly : Poly) -> Unit raise {
   let sqf = poly.sqf_part()
-  let oracle_sqf = @sympy_polys.sqf_part(poly.to_string())
+  let oracle_sqf = @sympy_polys.sqf_part(poly.to_expr())
   let eq = expr_equal(sqf.to_string(), oracle_sqf)
   guard eq else {
     fail("sqf_part mismatch: ours=\{sqf.to_string()}, oracle=\{oracle_sqf}")

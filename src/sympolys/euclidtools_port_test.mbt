@@ -1,8 +1,8 @@
 ///|
 fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
   let g = try! p.gcd_univar(q)
-  let ours = normalize_spaces(sympy_normalize(g.to_string()))
-  let oracle = normalize_spaces(@sympy_polys.gcd(p.to_string(), q.to_string()))
+  let ours = sympy_normalize(g.to_string()).trim().to_string()
+  let oracle = @sympy_polys.gcd(p.to_expr(), q.to_expr()).trim().to_string()
   guard ours == oracle else {
     fail("gcd mismatch: ours=\{ours}, oracle=\{oracle}")
   }
@@ -11,8 +11,8 @@ fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
 ///|
 fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
   let (quo, rem) = try! p.divmod_univar(q)
-  let ours = normalize_spaces(div_pair_to_string(quo, rem))
-  let oracle = normalize_spaces(@sympy_polys.div(p.to_string(), q.to_string()))
+  let ours = div_pair_to_string(quo, rem).trim().to_string()
+  let oracle = @sympy_polys.div(p.to_expr(), q.to_expr()).trim().to_string()
   guard ours == oracle else {
     fail("divmod mismatch: ours=\{ours}, oracle=\{oracle}")
   }
@@ -21,10 +21,11 @@ fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
 ///|
 fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
   let res = try! p.resultant(q, 0)
-  let ours = normalize_spaces(sympy_normalize(res.to_string()))
-  let oracle = normalize_spaces(
-    @sympy_polys.resultant(p.to_string(), q.to_string(), x="x"),
-  )
+  let ours = sympy_normalize(res.to_string()).trim().to_string()
+  let oracle = @sympy_polys
+    .resultant(p.to_expr(), q.to_expr(), x="x")
+    .trim()
+    .to_string()
   guard ours == oracle else {
     fail("resultant mismatch: ours=\{ours}, oracle=\{oracle}")
   }
@@ -188,7 +189,7 @@ test "euclidtools: divmod dense arrays (x^5+1) / (x+1)" {
   inspect(q_dense.map(c => c.to_string()).join(","), content="1,-1,1,-1,1")
   inspect(r_dense.map(c => c.to_string()).join(","), content="0")
   let pair = div_pair_to_string(q, r)
-  inspect(normalize_spaces(pair), content="x**4-x**3+x**2-x+1||0")
+  inspect(pair.trim().to_string(), content="x**4 - x**3 + x**2 - x + 1||0")
 }
 
 ///|

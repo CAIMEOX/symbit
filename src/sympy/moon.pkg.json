@@ -1,7 +1,7 @@
 {
   "import": [
     "CAIMEOX/symbit/symcore",
-    "CAIMEOX/symbit/symprint",
+    "CAIMEOX/symbit/symnum",
     {
       "path": "moonbitlang/core/strconv",
       "alias": "strconv"

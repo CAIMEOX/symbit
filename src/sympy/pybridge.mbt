@@ -1,47 +1,18 @@
 ///|
-/// Convert a MoonBit `Expr` into a live SymPy object by calling
-/// `sympy.sympify` on the stable human printer from `symprint`.
-/// This keeps the conversion logic small while relying on SymPy's
-/// parser for canonical construction (and avoids reproducing its
-/// dispatch rules in MoonBit).
+/// Convert a MoonBit `Expr` into a live SymPy object by directly
+/// constructing SymPy objects (no expression string parsing).
 pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
-  add_repo_to_syspath()
-  let sympy = ensure_sympy_module()
-  let sympify = resolve_sympify(sympy)
-  let args = @py.PyTuple::new(1)
-  // Prefer explicit Rational() for non-integral numbers to avoid
-  // parser differences in sympify.
-  let rendered = match expr {
-    @symcore.Expr::Number(n) =>
-      if n.is_integral() {
-        n.to_string()
-      } else {
-        "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
-      }
-    _ => @symprint.to_string(expr)
-  }
-  let pystr = @py.PyString::from(rendered)
-  args.set(0, pystr)
-  let res = py_call_object(sympify, args, print_err=true)
-  match res {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("sympy-sympify-none")
-  }
-}
-
-///|
-const REPO_ROOT : String = "/Users/caimeo/code/learning/sym-workspace"
-
-///|
-fn add_repo_to_syspath() -> Unit {
-  match @py.pyimport("sys") {
-    Some(sys) =>
-      match sys.get_attr("path", print_err=false) {
-        Some(PyList(path_list)) =>
-          path_list.append(@py.PyString::from(REPO_ROOT))
-        _ => ()
-      }
-    None => ()
+  match expr {
+    @symcore.Expr::Number(n) => sympy_number_obj(n)
+    @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
+    @symcore.Expr::Add(args) => sympy_nary_obj("sympy.Add", args, "0")
+    @symcore.Expr::Mul(args) => sympy_nary_obj("sympy.Mul", args, "1")
+    @symcore.Expr::Pow(base, exp) => {
+      let base_obj = expr_to_sympy(base)
+      let exp_obj = expr_to_sympy(exp)
+      sympy_call_obj("sympy.Pow", [OracleArg::PyObj(base_obj), OracleArg::PyObj(exp_obj)])
+    }
+    @symcore.Expr::Function(name, args) => sympy_function_obj(name, args)
   }
 }
 
@@ -54,53 +25,129 @@ fn ensure_sympy_module() -> @py.PyModule raise {
 }
 
 ///|
-fn resolve_sympify(sympy : @py.PyModule) -> @py.PyCallable raise {
-  let sympify0 = match sympy.get_attr("sympify", print_err=false) {
-    Some(PyCallable(callable)) => Some(callable)
-    Some(PyClass(obj)) => {
-      let callable_res = try? @py.PyCallable::create(obj)
-      match callable_res {
-        Ok(v) => Some(v)
-        Err(_) => None
-      }
-    }
-    Some(other) => {
-      let callable_res = try? @py.PyCallable::create(objenum_to_obj(other))
-      match callable_res {
-        Ok(v) => Some(v)
-        Err(_) => None
-      }
-    }
-    _ => None
+fn sympy_call_obj(
+  path : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> @py.PyObject raise {
+  match sympy_call(path, args, kwargs~) {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("sympy-call-none:\{path}")
   }
-  match sympify0 {
-    Some(callable) => callable
-    None =>
-      // Try sympy.core.sympify.sympify via attribute access to avoid dotted import issues.
-      match sympy.get_attr("core", print_err=false) {
-        Some(core_obj) => {
-          let core = objenum_to_obj(core_obj)
-          match core.get_attr("sympify", print_err=false) {
-            Some(mod_obj) => {
-              let mod = objenum_to_obj(mod_obj)
-              match mod.get_attr("sympify", print_err=false) {
-                Some(PyCallable(callable)) => callable
-                Some(PyClass(obj)) =>
-                  @py.PyCallable::create(obj) catch {
-                    _ => fail("sympy-sympify-missing")
-                  }
-                Some(other) =>
-                  @py.PyCallable::create(objenum_to_obj(other)) catch {
-                    _ => fail("sympy-sympify-missing")
-                  }
-                None => fail("sympy-sympify-missing")
-              }
-            }
-            None => fail("sympy-sympify-missing")
+}
+
+///|
+fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
+  if n.is_integral() {
+    let num_str = n.numerator().to_string()
+    sympy_call_obj("sympy.Integer", [OracleArg::Str(num_str)])
+  } else {
+    let num_str = n.numerator().to_string()
+    let den_str = n.denominator().to_string()
+    sympy_call_obj("sympy.Rational", [OracleArg::Str(num_str), OracleArg::Str(den_str)])
+  }
+}
+
+///|
+fn sympy_constant_obj(name : String) -> @py.PyObject? {
+  let sympy = try? ensure_sympy_module()
+  match sympy {
+    Ok(mod) =>
+      match mod.get_attr(name, print_err=false) {
+        Some(obj) => Some(objenum_to_obj(obj))
+        None => None
+      }
+    Err(_) => None
+  }
+}
+
+///|
+fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
+  match name {
+    "I" | "E" | "pi" | "oo" | "zoo" | "nan" => {
+      match sympy_constant_obj(name) {
+        Some(obj) => obj
+        None => sympy_symbol_obj(name)
+      }
+    }
+    _ => sympy_symbol_obj(name)
+  }
+}
+
+///|
+fn sympy_nary_obj(
+  path : String,
+  args : Array[@symcore.Expr],
+  identity : String,
+) -> @py.PyObject raise {
+  if args.is_empty() {
+    return sympy_call_obj("sympy.Integer", [OracleArg::Str(identity)])
+  }
+  let packed : Array[OracleArg] = Array::new()
+  for arg in args {
+    packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+  }
+  sympy_call_obj(path, packed)
+}
+
+///|
+fn call_callable(
+  callable : @py.PyCallable,
+  args : Array[@py.PyObject],
+) -> @py.PyObject raise {
+  let tup = py_tuple_from_objects(args)
+  let res = py_call_object(callable, tup, print_err=true)
+  match res {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("sympy-callable-none")
+  }
+}
+
+///|
+fn sympy_attr_callable(name : String) -> @py.PyCallable? {
+  let sympy = try? ensure_sympy_module()
+  match sympy {
+    Ok(mod) =>
+      match mod.get_attr(name, print_err=false) {
+        Some(PyCallable(callable)) => Some(callable)
+        Some(PyClass(obj)) => {
+          let callable_res = try? @py.PyCallable::create(obj)
+          match callable_res {
+            Ok(callable) => Some(callable)
+            Err(_) => None
           }
         }
-        None => fail("sympy-sympify-missing")
+        Some(other) => {
+          let callable_res = try? @py.PyCallable::create(objenum_to_obj(other))
+          match callable_res {
+            Ok(callable) => Some(callable)
+            Err(_) => None
+          }
+        }
+        None => None
       }
+    Err(_) => None
+  }
+}
+
+///|
+fn sympy_function_obj(
+  name : String,
+  args : Array[@symcore.Expr],
+) -> @py.PyObject raise {
+  let arg_objs : Array[@py.PyObject] = Array::new()
+  for arg in args {
+    arg_objs.push(expr_to_sympy(arg))
+  }
+  match sympy_attr_callable(name) {
+    Some(callable) => call_callable(callable, arg_objs)
+    None => {
+      let fn_obj = sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
+      let fn_callable = @py.PyCallable::create(fn_obj) catch {
+        _ => fail("sympy-function-callable")
+      }
+      call_callable(fn_callable, arg_objs)
+    }
   }
 }
 

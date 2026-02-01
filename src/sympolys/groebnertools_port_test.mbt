@@ -8,13 +8,12 @@ fn order_to_sympy(order : TermOrder) -> String {
 }
 
 ///|
-fn normalize_basis_str(s : String) -> String raise {
+fn normalize_basis_str(s : String) -> String {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
     let raw = part.to_string()
-    let monic = @sympy_polys.monic(raw)
-    let normalized = sympy_normalize(monic)
-    parts.push(canonical_cmp(normalized))
+    let trimmed = raw.trim().to_string()
+    parts.push(trimmed)
   }
   parts.sort()
   parts.join("|")
@@ -24,7 +23,7 @@ fn normalize_basis_str(s : String) -> String raise {
 fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let basis = Poly::groebner(polys, order~)
   let ours = normalize_basis_str(groebner_to_string(basis))
-  let exprs = polys.map(p => p.to_string())
+  let exprs = polys.map(p => p.to_expr())
   let oracle = normalize_basis_str(
     @sympy_polys.groebner(exprs, order=order_to_sympy(order)),
   )

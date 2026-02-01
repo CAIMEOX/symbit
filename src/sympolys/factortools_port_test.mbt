@@ -2,15 +2,15 @@
 fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
-  let ours = normalize_spaces(sort_factor_repr(ours_raw))
-  let oracle = normalize_spaces(
-    sort_factor_repr(
-      match modulus {
-        Some(p) => @sympy_polys.factor_list(poly.to_string(), modulus=p)
-        None => @sympy_polys.factor_list(poly.to_string())
-      },
-    ),
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+    match modulus {
+      Some(p) => @sympy_polys.factor_list(poly.to_expr(), modulus=p)
+      None => @sympy_polys.factor_list(poly.to_expr())
+    },
   )
+  .trim()
+  .to_string()
   guard ours == oracle else {
     fail("factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
   }
@@ -61,10 +61,9 @@ test "factortools: sqf_list compares with SymPy" {
   )
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
-  let ours = normalize_spaces(sort_factor_repr(ours_raw))
-  let oracle = normalize_spaces(
-    sort_factor_repr(@sympy_polys.sqf_list(poly.to_string())),
-  )
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle =
+    sort_factor_repr(@sympy_polys.sqf_list(poly.to_expr())).trim().to_string()
   guard ours == oracle else {
     fail("sqf_list mismatch: ours=\{ours}, oracle=\{oracle}")
   }

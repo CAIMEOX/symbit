@@ -24,10 +24,6 @@ fn expr_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-fn normalize_spaces(s : String) -> String {
-  @sympy.remove_spaces(s)
-}
-
 ///|
 fn sympy_normalize(expr_str : String) -> String {
   try! @sympy.sympy_normalize(expr_str)
@@ -92,7 +88,13 @@ fn groebner_to_string(basis : Array[Poly]) -> String {
   let parts : Array[String] = {
     let arr = Array::new()
     for p in basis {
-      arr.push(p.to_string())
+      let monic_res : Result[String, Error] = try? @sympy_polys.monic(
+        p.to_expr(),
+      )
+      match monic_res {
+        Ok(s) => arr.push(s)
+        Err(_) => arr.push(p.to_string())
+      }
     }
     arr
   }
