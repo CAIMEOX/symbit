@@ -1298,6 +1298,60 @@ pub fn subresultants(
 }
 
 ///|
+fn sympy_points_obj(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for pair in points {
+    let (x, y) = pair
+    let x_obj = sympy_number_obj(x)
+    let y_obj = sympy_number_obj(y)
+    let tup = py_tuple_from_objects([x_obj, y_obj])
+    items.push(tup.obj())
+  }
+  let list = py_list_from_objects(items)
+  list.obj()
+}
+
+///|
+pub fn interpolate(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  x? : String = "x",
+) -> String raise {
+  let data_obj = sympy_points_obj(points)
+  let sym = sympy_symbol_obj(x)
+  let res = sympy_call_must(
+    "sympy.interpolate",
+    [OracleArg::PyObj(data_obj), OracleArg::PyObj(sym)],
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn rational_interpolate(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  deg_num : Int,
+  x? : String = "x",
+) -> String raise {
+  let data_obj = sympy_points_obj(points)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(data_obj))
+  args.push(OracleArg::Int(deg_num))
+  let kwargs : Map[String, OracleArg] = {}
+  if x != "" {
+    kwargs["X"] = OracleArg::PyObj(sympy_symbol_obj(x))
+  }
+  let res = sympy_call_must("sympy.rational_interpolate", args, kwargs~)
+  let res_obj = objenum_to_obj(res)
+  let frac = sympy_call_must("sympy.fraction", [OracleArg::PyObj(res_obj)])
+  let items = py_list_to_pyobjects(frac)
+  guard items.length() >= 2 else { fail("rational_interpolate fraction") }
+  let num_str = py_sympy_expr_str(items[0])
+  let den_str = py_sympy_expr_str(items[1])
+  "\{num_str}||\{den_str}"
+}
+
+///|
 pub fn poly_degree_list(
   expr : String,
   gens? : Array[String] = [],

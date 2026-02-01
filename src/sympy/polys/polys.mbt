@@ -160,3 +160,20 @@ pub fn subresultants(
 ) -> String raise {
   @sympy.subresultants(p, q, gens~, domain~, modulus~)
 }
+
+///|
+pub fn interpolate(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  x? : String = "x",
+) -> String raise {
+  @sympy.interpolate(points, x~)
+}
+
+///|
+pub fn rational_interpolate(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  deg_num : Int,
+  x? : String = "x",
+) -> String raise {
+  @sympy.rational_interpolate(points, deg_num, x~)
+}

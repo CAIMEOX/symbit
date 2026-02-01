@@ -1,6 +1,7 @@
 {
   "import": [
     "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symnum",
     {
       "path": "CAIMEOX/symbit/sympy",
       "alias": "sympy"
