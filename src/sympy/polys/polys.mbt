@@ -59,3 +59,104 @@ pub fn sqf_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
 pub fn sqf_part(expr : @symcore.Expr) -> String raise {
   @sympy.sqf_part(expr)
 }
+
+///|
+pub fn gcd_list(
+  polys : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.gcd_list(polys, gens~, domain~, modulus~)
+}
+
+///|
+pub fn lcm_list(
+  polys : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.lcm_list(polys, gens~, domain~, modulus~)
+}
+
+///|
+pub fn terms_gcd(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.terms_gcd(expr, gens~, domain~, modulus~)
+}
+
+///|
+pub fn cancel(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+) -> String raise {
+  @sympy.cancel(p, q)
+}
+
+///|
+pub fn reduced(
+  f : @symcore.Expr,
+  divisors : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.reduced(f, divisors, gens~, domain~, modulus~)
+}
+
+///|
+pub fn compose(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.compose(f, g, gens~, domain~, modulus~)
+}
+
+///|
+pub fn decompose(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.decompose(f, gens~, domain~, modulus~)
+}
+
+///|
+pub fn sturm(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.sturm(f, gens~, domain~, modulus~)
+}
+
+///|
+pub fn discriminant(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.discriminant(f, gens~, domain~, modulus~)
+}
+
+///|
+pub fn subresultants(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.subresultants(p, q, gens~, domain~, modulus~)
+}

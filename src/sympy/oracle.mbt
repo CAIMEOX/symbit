@@ -977,6 +977,327 @@ pub fn div(
 }
 
 ///|
+pub fn gcd_list(
+  polys : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  let list_items : Array[OracleArg] = Array::new()
+  for p in polys {
+    list_items.push(OracleArg::PyObj(expr_to_sympy(p)))
+  }
+  args.push(OracleArg::List(list_items))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for g in gens_list {
+      args.push(OracleArg::PyObj(g))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.gcd_list", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn lcm_list(
+  polys : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  let list_items : Array[OracleArg] = Array::new()
+  for p in polys {
+    list_items.push(OracleArg::PyObj(expr_to_sympy(p)))
+  }
+  args.push(OracleArg::List(list_items))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for g in gens_list {
+      args.push(OracleArg::PyObj(g))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.lcm_list", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn terms_gcd(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let poly = call_sympy_poly(expr_obj, gens_list, domain, modulus_opt)
+  let content_call = resolve_method_callable(poly, "content")
+  let content_enum = py_call_noargs(content_call)
+  let terms_gcd_call = resolve_method_callable(poly, "terms_gcd")
+  let gcd_enum = py_call_noargs(terms_gcd_call)
+  let gcd_items = py_list_to_pyobjects(gcd_enum)
+  guard gcd_items.length() >= 1 else { fail("terms_gcd result tuple") }
+  let exp_items = py_list_to_pyobjects(@py.PyObjectEnum::create(gcd_items[0]))
+  let mut acc = objenum_to_obj(content_enum)
+  for i in 0..<exp_items.length() {
+    let exp = py_obj_to_int(exp_items[i])
+    if exp == 0 {
+      continue
+    }
+    let pow = sympy_call_must(
+      "sympy.Pow",
+      [OracleArg::PyObj(gens_list[i]), OracleArg::Int(exp)],
+    )
+    let mul = resolve_method_callable(acc, "__mul__")
+    let acc_enum = py_call_one(mul, objenum_to_obj(pow))
+    acc = objenum_to_obj(acc_enum)
+  }
+  py_sympy_expr_str(acc)
+}
+
+///|
+pub fn cancel(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+) -> String raise {
+  let p_obj = expr_to_sympy(p)
+  let q_obj = expr_to_sympy(q)
+  let div_call = resolve_method_callable(p_obj, "__truediv__")
+  let div_enum = py_call_one(div_call, q_obj)
+  let cancel_res = sympy_call_must(
+    "sympy.cancel",
+    [OracleArg::PyObj(objenum_to_obj(div_enum))],
+  )
+  let frac = sympy_call_must(
+    "sympy.fraction",
+    [OracleArg::PyObj(objenum_to_obj(cancel_res))],
+  )
+  let items = py_list_to_pyobjects(frac)
+  guard items.length() >= 2 else { fail("cancel fraction tuple") }
+  let num = py_sympy_expr_str(items[0])
+  let den = py_sympy_expr_str(items[1])
+  "\{num}||\{den}"
+}
+
+///|
+pub fn reduced(
+  f : @symcore.Expr,
+  divisors : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(f)))
+  let list_items : Array[OracleArg] = Array::new()
+  for g in divisors {
+    list_items.push(OracleArg::PyObj(expr_to_sympy(g)))
+  }
+  args.push(OracleArg::List(list_items))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for g in gens_list {
+      args.push(OracleArg::PyObj(g))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.reduced", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("reduced result tuple") }
+  let qs = py_list_to_pyobjects(@py.PyObjectEnum::create(items[0]))
+  let parts : Array[String] = Array::new()
+  for q in qs {
+    parts.push(py_sympy_expr_str(q))
+  }
+  let r = py_sympy_expr_str(items[1])
+  let joined = parts.join(" | ")
+  "\{joined}||\{r}"
+}
+
+///|
+pub fn compose(
+  f : @symcore.Expr,
+  g : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(f)))
+  args.push(OracleArg::PyObj(expr_to_sympy(g)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.compose", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn decompose(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(f)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.decompose", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn sturm(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(f)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must("sympy.polys.polytools.sturm", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn discriminant(
+  f : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(f)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must(
+    "sympy.polys.polytools.discriminant",
+    args,
+    kwargs~,
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn subresultants(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if domain != "" {
+    kwargs["domain"] = OracleArg::Str(domain)
+  }
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
+  }
+  let res = sympy_call_must(
+    "sympy.polys.polytools.subresultants",
+    args,
+    kwargs~,
+  )
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
 pub fn poly_degree_list(
   expr : String,
   gens? : Array[String] = [],

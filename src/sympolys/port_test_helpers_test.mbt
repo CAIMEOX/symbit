@@ -89,6 +89,16 @@ fn groebner_to_string(basis : Array[Poly]) -> String {
 }
 
 ///|
+fn poly_list_to_string(polys : Array[Poly]) -> String {
+  polys.map(p => poly_canon_str(p)).join(" | ")
+}
+
+///|
+fn reduced_pair_to_string(qs : Array[Poly], rem : Poly) -> String {
+  "\{poly_list_to_string(qs)}||\{poly_canon_str(rem)}"
+}
+
+///|
 fn div_pair_to_string(quo : Poly, rem : Poly) -> String {
   "\{poly_canon_str(quo)}||\{poly_canon_str(rem)}"
 }
