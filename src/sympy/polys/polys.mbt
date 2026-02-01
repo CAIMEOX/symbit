@@ -177,3 +177,31 @@ pub fn rational_interpolate(
 ) -> String raise {
   @sympy.rational_interpolate(points, deg_num, x~)
 }
+
+///|
+pub fn symmetrize(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  formal? : Bool = false,
+  symbols? : Array[String] = [],
+) -> String raise {
+  @sympy.symmetrize(expr, gens~, formal~, symbols~)
+}
+
+///|
+pub fn horner(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  wrt? : String = "",
+) -> String raise {
+  @sympy.horner(expr, gens~, wrt~)
+}
+
+///|
+pub fn viete(
+  expr : @symcore.Expr,
+  roots? : Array[String] = [],
+  gen? : String = "",
+) -> String raise {
+  @sympy.viete(expr, roots~, gen~)
+}

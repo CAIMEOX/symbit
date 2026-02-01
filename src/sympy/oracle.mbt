@@ -1352,6 +1352,97 @@ pub fn rational_interpolate(
 }
 
 ///|
+pub fn symmetrize(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  formal? : Bool = false,
+  symbols? : Array[String] = [],
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(expr)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if formal {
+    kwargs["formal"] = OracleArg::Bool(true)
+  }
+  if !symbols.is_empty() {
+    let sym_objs = sympy_symbols_from_names(symbols)
+    let list = py_list_from_objects(sym_objs)
+    kwargs["symbols"] = OracleArg::PyObj(list.obj())
+  }
+  let res = sympy_call_must("sympy.symmetrize", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("symmetrize tuple") }
+  let sym_str = py_sympy_expr_str(items[0])
+  let rem_str = py_sympy_expr_str(items[1])
+  if formal {
+    let mapping_enum = @py.PyObjectEnum::create(items[2])
+    let mapping_items = py_list_to_pyobjects(mapping_enum)
+    let parts : Array[String] = Array::new()
+    for pair in mapping_items {
+      let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+      if pair_items.length() >= 2 {
+        let s_str = py_sympy_expr_str(pair_items[0])
+        let e_str = py_sympy_expr_str(pair_items[1])
+        parts.push("(\{s_str}, \{e_str})")
+      }
+    }
+    let joined = parts.join(", ")
+    let mapping_str = "[\{joined}]"
+    "\{sym_str}||\{rem_str}||\{mapping_str}"
+  } else {
+    "\{sym_str}||\{rem_str}"
+  }
+}
+
+///|
+pub fn horner(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  wrt? : String = "",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(expr)))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if wrt != "" {
+    kwargs["wrt"] = OracleArg::PyObj(sympy_symbol_obj(wrt))
+  }
+  let res = sympy_call_must("sympy.horner", args, kwargs~)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn viete(
+  expr : @symcore.Expr,
+  roots? : Array[String] = [],
+  gen? : String = "",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(expr)))
+  if !roots.is_empty() {
+    let root_objs = sympy_symbols_from_names(roots)
+    let list = py_list_from_objects(root_objs)
+    args.push(OracleArg::PyObj(list.obj()))
+  }
+  if gen != "" {
+    args.push(OracleArg::PyObj(sympy_symbol_obj(gen)))
+  }
+  let res = sympy_call_must("sympy.viete", args)
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn poly_degree_list(
   expr : String,
   gens? : Array[String] = [],
