@@ -1,9 +1,8 @@
 ///|
 test "from_expr_defaults infers gens and QQ domain" {
-  let expr = @symcore.add([
-    @symcore.mul([@symcore.symbol("x"), @symcore.symbol("y")]),
-    @symcore.rational_from_ints(1, 2),
-  ])
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
   inspect(poly.gens.to_string(), content="[\"x\", \"y\"]")
   match poly.domain {
@@ -100,16 +99,11 @@ test "resolve_domain builds algebraic extension" {
 ///|
 test "integer polynomial division matches sympy" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = @symcore.symbol("x")
   let p = builder.from_expr(
-    @symcore.add([
-      @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
-      @symcore.mul([@symcore.int(2), @symcore.symbol("x")]),
-      @symcore.int(1),
-    ]),
+    (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
   )
-  let d = builder.from_expr(
-    @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
-  )
+  let d = builder.from_expr(x + @symcore.int(1))
   let (q, r) = p.divmod_univar(d)
   inspect(q.to_string(), content="1 + x")
   inspect(r.to_string(), content="0")
@@ -118,14 +112,10 @@ test "integer polynomial division matches sympy" {
 ///|
 test "total_degree and per-variable degree" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
   let poly = builder.from_expr(
-    @symcore.add([
-      @symcore.mul([
-        @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
-        @symcore.pow(@symcore.symbol("y"), @symcore.int(3)),
-      ]),
-      @symcore.symbol("y"),
-    ]),
+    (x ^ @symcore.int(2)) * (y ^ @symcore.int(3)) + y,
   )
   inspect("\{poly.degree(0)}", content="2")
   inspect("\{poly.degree(1)}", content="3")

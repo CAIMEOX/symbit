@@ -55,15 +55,14 @@ canonicalization; performance tuning comes later.
 ## Example (intended)
 
 ```mbt nocheck
+let x = @symcore.symbol("x")
+let y = @symcore.symbol("y")
 let p = Poly::from_expr(
-  @symcore.add([
-    @symcore.mul([@symcore.int(2), @symcore.pow(@symcore.symbol("x"), @symcore.int(2))]),
-    @symcore.symbol("y")
-  ]),
+  (@symcore.int(2) * (x ^ @symcore.int(2))) + y,
   ["x", "y"],
   Domain::ZZ
 )? // Ok
-let q = Poly::from_expr(@symcore.symbol("x"), ["x", "y"], Domain::ZZ)?
+let q = Poly::from_expr(x, ["x", "y"], Domain::ZZ)?
 let sum = p.add(q) // 2*x^2 + y + x
 ```
 

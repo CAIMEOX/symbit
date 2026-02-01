@@ -21,17 +21,33 @@ pub fn rational(num : Int, den : Int) -> Expr raise @symnum.RationalError {
 
 ///|
 pub fn add(args : Array[Expr]) -> Expr {
-  @symcore.add(args)
+  if args.is_empty() {
+    @symcore.int(0)
+  } else {
+    let mut acc = args[0]
+    for i in 1..<args.length() {
+      acc = acc + args[i]
+    }
+    acc
+  }
 }
 
 ///|
 pub fn mul(args : Array[Expr]) -> Expr {
-  @symcore.mul(args)
+  if args.is_empty() {
+    @symcore.int(1)
+  } else {
+    let mut acc = args[0]
+    for i in 1..<args.length() {
+      acc = acc * args[i]
+    }
+    acc
+  }
 }
 
 ///|
 pub fn pow(base : Expr, exp : Expr) -> Expr {
-  @symcore.pow(base, exp)
+  base ^ exp
 }
 
 ///|

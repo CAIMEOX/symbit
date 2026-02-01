@@ -434,7 +434,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
       let r = @symnum.BigRational::from_int(cand)
       if eval_univar(remaining, r).is_zero() {
         let factor_poly = Poly::from_expr(
-          @symcore.add([@symcore.symbol(remaining.gens[0]), @symcore.int(-cand)]),
+          @symcore.symbol(remaining.gens[0]) - @symcore.int(cand),
           remaining.gens,
           remaining.domain,
         )
@@ -485,7 +485,7 @@ fn strip_linear_roots_gf(
   for r in 0..<modulus {
     while remaining.degree(0) > 0 && eval_univar_mod(remaining, r, modulus) == 0 {
       let factor_poly = Poly::from_expr(
-        @symcore.add([@symcore.symbol(remaining.gens[0]), @symcore.int(-r)]),
+        @symcore.symbol(remaining.gens[0]) - @symcore.int(r),
         remaining.gens,
         remaining.domain,
       )

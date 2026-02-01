@@ -19,11 +19,7 @@ pub fn Poly::to_expr_with_order(
         continue
       }
       let sym = @symcore.symbol(self.gens[i])
-      let factor = if exp == 1 {
-        sym
-      } else {
-        @symcore.pow(sym, @symcore.int(exp))
-      }
+      let factor = if exp == 1 { sym } else { sym ^ @symcore.int(exp) }
       factors.push(factor)
     }
     let term_expr = if factors.is_empty() {
@@ -31,7 +27,7 @@ pub fn Poly::to_expr_with_order(
     } else if factors.length() == 1 {
       factors[0]
     } else {
-      @symcore.mul(factors)
+      expr_mul_all(factors)
     }
     expr_terms.push(term_expr)
   }
@@ -40,7 +36,7 @@ pub fn Poly::to_expr_with_order(
   } else if expr_terms.length() == 1 {
     expr_terms[0]
   } else {
-    @symcore.add(expr_terms)
+    expr_add_all(expr_terms)
   }
 }
 
@@ -104,14 +100,14 @@ fn fe_to_expr_const(c : FieldElem) -> @symcore.Expr {
       let imag = if b.is_zero() {
         @symcore.number(@symnum.BigRational::zero())
       } else {
-        @symcore.mul([@symcore.number(b), i_sym])
+        @symcore.number(b) * i_sym
       }
       if a.is_zero() {
         imag
       } else if b.is_zero() {
         @symcore.number(a)
       } else {
-        @symcore.add([@symcore.number(a), imag])
+        @symcore.number(a) + imag
       }
     }
     FieldElem::GFp(_, v) => @symcore.number(@symnum.BigRational::from_int(v))
@@ -141,14 +137,14 @@ fn fe_ext_to_expr(
       if c == 1 {
         alpha
       } else {
-        @symcore.mul([coeff_expr, alpha])
+        coeff_expr * alpha
       }
     } else {
-      let pow_expr = @symcore.pow(alpha, @symcore.int(i))
+      let pow_expr = alpha ^ @symcore.int(i)
       if c == 1 {
         pow_expr
       } else {
-        @symcore.mul([coeff_expr, pow_expr])
+        coeff_expr * pow_expr
       }
     }
     terms.push(term)
@@ -158,7 +154,7 @@ fn fe_ext_to_expr(
   } else if terms.length() == 1 {
     terms[0]
   } else {
-    @symcore.add(terms)
+    expr_add_all(terms)
   }
 }
 
@@ -195,11 +191,11 @@ fn fe_algext_to_expr(
     let term = if i == 0 {
       coeff_expr
     } else {
-      let pow_expr = @symcore.pow(alpha, @symcore.int(i))
+      let pow_expr = alpha ^ @symcore.int(i)
       if fe_is_one(fe_cast_to_base(c, base, minpoly, gen)) {
         pow_expr
       } else {
-        @symcore.mul([coeff_expr, pow_expr])
+        coeff_expr * pow_expr
       }
     }
     terms.push(term)
@@ -209,8 +205,26 @@ fn fe_algext_to_expr(
   } else if terms.length() == 1 {
     terms[0]
   } else {
-    @symcore.add(terms)
+    expr_add_all(terms)
   }
+}
+
+///|
+fn expr_mul_all(args : Array[@symcore.Expr]) -> @symcore.Expr {
+  let mut acc = args[0]
+  for i in 1..<args.length() {
+    acc = acc * args[i]
+  }
+  acc
+}
+
+///|
+fn expr_add_all(args : Array[@symcore.Expr]) -> @symcore.Expr {
+  let mut acc = args[0]
+  for i in 1..<args.length() {
+    acc = acc + args[i]
+  }
+  acc
 }
 
 ///|

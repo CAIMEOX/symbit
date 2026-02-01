@@ -30,17 +30,14 @@ test "sympy ref: symbols get" {
 
 ///|
 test "sympy ref: expr_to_sympy add/mul" {
-  let expr = @symcore.add([
-    @symcore.mul([@symcore.int(2), @symcore.symbol("x")]),
-    @symcore.symbol("y"),
-  ])
+  let expr = @symcore.int(2) * @symcore.symbol("x") + @symcore.symbol("y")
   let obj = try! expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="2*x + y")
 }
 
 ///|
 test "sympy ref: expr_to_sympy pow" {
-  let expr = @symcore.pow(@symcore.symbol("x"), @symcore.int(3))
+  let expr = @symcore.symbol("x") ^ @symcore.int(3)
   let obj = try! expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="x**3")
 }

@@ -31,11 +31,9 @@ fn expect_sqf_part_same(poly : Poly) -> Unit raise {
 ///|
 test "sqfreetools: sqf_list for repeated linear factors over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_mul([
-      expr_pow(expr_add([expr_sym("x"), expr_int(-1)]), 2),
-      expr_pow(expr_add([expr_sym("x"), expr_int(2)]), 3),
-    ]),
+    ((x - expr_int(1)) ^ expr_int(2)) * ((x + expr_int(2)) ^ expr_int(3)),
   )
   expect_sqf_list_same(poly)
 }
@@ -43,12 +41,11 @@ test "sqfreetools: sqf_list for repeated linear factors over ZZ" {
 ///|
 test "sqfreetools: sqf_part drops multiplicities" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_mul([
-      expr_pow(expr_add([expr_sym("x"), expr_int(-3)]), 2),
-      expr_pow(expr_add([expr_sym("x"), expr_int(1)]), 1),
-      expr_pow(expr_add([expr_sym("x"), expr_int(5)]), 4),
-    ]),
+    ((x - expr_int(3)) ^ expr_int(2)) *
+    ((x + expr_int(1)) ^ expr_int(1)) *
+    ((x + expr_int(5)) ^ expr_int(4)),
   )
   expect_sqf_part_same(poly)
 }
@@ -56,13 +53,9 @@ test "sqfreetools: sqf_part drops multiplicities" {
 ///|
 test "sqfreetools: sqf_list mixed factors over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_add([
-      expr_mul([expr_int(-1), expr_pow(expr_sym("x"), 5)]),
-      expr_pow(expr_sym("x"), 4),
-      expr_sym("x"),
-      expr_int(-1),
-    ]),
+    expr_int(-1) * (x ^ expr_int(5)) + (x ^ expr_int(4)) + x + expr_int(-1),
   )
   expect_sqf_list_same(poly)
 }
@@ -70,13 +63,12 @@ test "sqfreetools: sqf_list mixed factors over ZZ" {
 ///|
 test "sqfreetools: sqf_list composite even powers over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_add([
-      expr_pow(expr_sym("x"), 8),
-      expr_mul([expr_int(6), expr_pow(expr_sym("x"), 6)]),
-      expr_mul([expr_int(12), expr_pow(expr_sym("x"), 4)]),
-      expr_mul([expr_int(8), expr_pow(expr_sym("x"), 2)]),
-    ]),
+    (x ^ expr_int(8)) +
+    expr_int(6) * (x ^ expr_int(6)) +
+    expr_int(12) * (x ^ expr_int(4)) +
+    expr_int(8) * (x ^ expr_int(2)),
   )
   expect_sqf_list_same(poly)
 }
@@ -84,12 +76,9 @@ test "sqfreetools: sqf_list composite even powers over ZZ" {
 ///|
 test "sqfreetools: sqf_list over QQ keeps content" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_add([
-      expr_mul([expr_int(2), expr_pow(expr_sym("x"), 2)]),
-      expr_mul([expr_int(4), expr_sym("x")]),
-      expr_int(2),
-    ]),
+    expr_int(2) * (x ^ expr_int(2)) + expr_int(4) * x + expr_int(2),
   )
   expect_sqf_list_same(poly)
 }
@@ -97,20 +86,20 @@ test "sqfreetools: sqf_list over QQ keeps content" {
 ///|
 test "sqfreetools: sqf_list over GF(2) handles pth powers" {
   let b = PolyBuilder::new(["x"], Domain::GF(2))
-  let poly = b.from_expr(expr_add([expr_pow(expr_sym("x"), 2), expr_int(1)]))
+  let x = expr_sym("x")
+  let poly = b.from_expr((x ^ expr_int(2)) + expr_int(1))
   expect_sqf_list_same(poly)
 }
 
 ///|
 test "sqfreetools: sqf_list over GF(3) splits multiplicities" {
   let b = PolyBuilder::new(["x"], Domain::GF(3))
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_add([
-      expr_pow(expr_sym("x"), 10),
-      expr_mul([expr_int(2), expr_pow(expr_sym("x"), 7)]),
-      expr_mul([expr_int(2), expr_pow(expr_sym("x"), 4)]),
-      expr_sym("x"),
-    ]),
+    (x ^ expr_int(10)) +
+    expr_int(2) * (x ^ expr_int(7)) +
+    expr_int(2) * (x ^ expr_int(4)) +
+    x,
   )
   expect_sqf_list_same(poly)
 }
@@ -118,13 +107,8 @@ test "sqfreetools: sqf_list over GF(3) splits multiplicities" {
 ///|
 test "sqfreetools: sqf_part signs normalize" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let poly = b.from_expr(
-    expr_add([
-      expr_mul([expr_int(-1), expr_pow(expr_sym("x"), 3)]),
-      expr_sym("x"),
-      expr_int(1),
-    ]),
-  )
+  let x = expr_sym("x")
+  let poly = b.from_expr(expr_int(-1) * (x ^ expr_int(3)) + x + expr_int(1))
   expect_sqf_part_same(poly)
 }
 
@@ -140,15 +124,10 @@ test "sqfreetools: sqf_list handles zero and constants" {
 ///|
 test "sqfreetools: sqf_list composite factors over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = expr_sym("x")
   let poly = b.from_expr(
-    expr_mul([
-      expr_pow(expr_add([expr_pow(expr_sym("x"), 2), expr_int(1)]), 2),
-      expr_add([
-        expr_pow(expr_sym("x"), 2),
-        expr_mul([expr_int(2), expr_sym("x")]),
-        expr_int(2),
-      ]),
-    ]),
+    (((x ^ expr_int(2)) + expr_int(1)) ^ expr_int(2)) *
+    ((x ^ expr_int(2)) + expr_int(2) * x + expr_int(2)),
   )
   expect_sqf_list_same(poly)
 }

@@ -10,7 +10,10 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
     @symcore.Expr::Pow(base, exp) => {
       let base_obj = expr_to_sympy(base)
       let exp_obj = expr_to_sympy(exp)
-      sympy_call_obj("sympy.Pow", [OracleArg::PyObj(base_obj), OracleArg::PyObj(exp_obj)])
+      sympy_call_obj("sympy.Pow", [
+        OracleArg::PyObj(base_obj),
+        OracleArg::PyObj(exp_obj),
+      ])
     }
     @symcore.Expr::Function(name, args) => sympy_function_obj(name, args)
   }
@@ -44,7 +47,10 @@ fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
   } else {
     let num_str = n.numerator().to_string()
     let den_str = n.denominator().to_string()
-    sympy_call_obj("sympy.Rational", [OracleArg::Str(num_str), OracleArg::Str(den_str)])
+    sympy_call_obj("sympy.Rational", [
+      OracleArg::Str(num_str),
+      OracleArg::Str(den_str),
+    ])
   }
 }
 
@@ -64,12 +70,11 @@ fn sympy_constant_obj(name : String) -> @py.PyObject? {
 ///|
 fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
   match name {
-    "I" | "E" | "pi" | "oo" | "zoo" | "nan" => {
+    "I" | "E" | "pi" | "oo" | "zoo" | "nan" =>
       match sympy_constant_obj(name) {
         Some(obj) => obj
         None => sympy_symbol_obj(name)
       }
-    }
     _ => sympy_symbol_obj(name)
   }
 }
