@@ -3,10 +3,6 @@
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symprint",
     {
-      "path": "moonbitlang/core/json",
-      "alias": "json"
-    },
-    {
       "path": "moonbitlang/core/strconv",
       "alias": "strconv"
     },

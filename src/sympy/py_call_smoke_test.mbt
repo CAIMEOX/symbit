@@ -15,16 +15,12 @@ test "py_call smoke: builtins str" {
 
 ///|
 test "py_call smoke: sympy import" {
-  guard @py.pyimport("sympy") is Some(_sympy) else {
-    fail("sympy missing")
-  }
+  guard @py.pyimport("sympy") is Some(_sympy) else { fail("sympy missing") }
 }
 
 ///|
 test "py_call smoke: sympy version" {
-  guard @py.pyimport("sympy") is Some(sympy) else {
-    fail("sympy missing")
-  }
+  guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   guard sympy.get_attr("__version__", print_err=true) is Some(PyString(ver)) else {
     fail("sympy.__version__ missing")
   }
@@ -34,16 +30,16 @@ test "py_call smoke: sympy version" {
 
 ///|
 test "py_call smoke: sympy sympify" {
-  guard @py.pyimport("sympy") is Some(sympy) else {
-    fail("sympy missing")
-  }
+  guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   guard sympy.get_attr("sympify", print_err=true) is Some(PyCallable(sympify)) else {
     fail("sympy.sympify missing")
   }
   let args = @py.PyTuple::new(1)
   let pystr = @py.PyString::from("x")
   args.set(0, pystr)
-  let res : Result[@py.PyObjectEnum?, @py.PyRuntimeError] = try? sympify.invoke(args~)
+  let res : Result[@py.PyObjectEnum?, @py.PyRuntimeError] = try? sympify.invoke(
+    args~,
+  )
   match res {
     Ok(Some(_)) => ()
     Ok(None) => fail("sympify returned None")
@@ -53,9 +49,7 @@ test "py_call smoke: sympy sympify" {
 
 ///|
 test "py_call smoke: sympy constructors" {
-  guard @py.pyimport("sympy") is Some(sympy) else {
-    fail("sympy missing")
-  }
+  guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   guard sympy.get_attr("Symbol", print_err=true) is Some(PyCallable(symbol_fn)) else {
     fail("sympy.Symbol missing")
   }
@@ -84,6 +78,7 @@ test "py_call smoke: sympy constructors" {
   add_args.set(0, x2)
   add_args.set(1, @py.PyInteger::from(1))
   let _expr = add_fn.invoke(args=add_args, print_err=true)
+
 }
 
 ///|

@@ -539,10 +539,7 @@ pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
         for it in items {
           match it {
             DensePoly::Coef(c) => coeffs.push(c)
-            DensePoly::Poly(_) =>
-              coeffs.push(
-                fe_from_int(0, Domain::QQ),
-              )
+            DensePoly::Poly(_) => coeffs.push(fe_from_int(0, Domain::QQ))
           }
         }
         let stripped = dup_strip(coeffs)
@@ -569,10 +566,7 @@ pub fn dmp_normal(f : DensePoly, u : Int) -> DensePoly raise PolyError {
           DensePoly::Poly(Array::new()),
         )
         for i in 0..<items.length() {
-          mapped.set(
-            i,
-            dmp_normal(items[i], u - 1),
-          )
+          mapped.set(i, dmp_normal(items[i], u - 1))
         }
         dmp_strip(DensePoly::Poly(mapped))
       }
@@ -620,10 +614,7 @@ pub fn dmp_convert(
         for it in items {
           match it {
             DensePoly::Coef(c) => coeffs.push(fe_convert_domain(c, k1))
-            DensePoly::Poly(_) =>
-              coeffs.push(
-                fe_from_int(0, k1),
-              )
+            DensePoly::Poly(_) => coeffs.push(fe_from_int(0, k1))
           }
         }
         let stripped = dup_strip(coeffs)
@@ -650,10 +641,7 @@ pub fn dmp_convert(
           DensePoly::Poly(Array::new()),
         )
         for i in 0..<items.length() {
-          mapped.set(
-            i,
-            dmp_convert(items[i], u - 1, k0, k1),
-          )
+          mapped.set(i, dmp_convert(items[i], u - 1, k0, k1))
         }
         dmp_strip(DensePoly::Poly(mapped))
       }

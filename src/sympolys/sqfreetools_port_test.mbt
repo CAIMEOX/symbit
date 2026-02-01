@@ -2,9 +2,7 @@
 fn expect_sqf_list_same(poly : Poly) -> Unit raise {
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
-  let ours = @sympy_polys.canonical_cmp(
-    @sympy_polys.sort_factor_repr(ours_raw),
-  )
+  let ours = @sympy_polys.canonical_cmp(@sympy_polys.sort_factor_repr(ours_raw))
   let oracle = @sympy_polys.canonical_cmp(
     @sympy_polys.sort_factor_repr(
       match poly.domain {

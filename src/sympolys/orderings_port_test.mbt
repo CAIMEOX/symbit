@@ -20,22 +20,9 @@ test "orderings: lex/grlex/grevlex keys and comparisons" {
   let g = [1, 2, 2]
 
   // lex
-  inspect(
-    cmp_to_ord(
-      compare_exps_lex(a, b),
-    ).to_string(),
-    content="-1",
-  )
-  inspect(
-    cmp_to_ord(
-      compare_exps_lex(b, a),
-    ).to_string(),
-    content="1",
-  )
-  inspect(
-    cmp_to_ord(compare_exps_lex(a, a)).to_string(),
-    content="0",
-  )
+  inspect(cmp_to_ord(compare_exps_lex(a, b)).to_string(), content="-1")
+  inspect(cmp_to_ord(compare_exps_lex(b, a)).to_string(), content="1")
+  inspect(cmp_to_ord(compare_exps_lex(a, a)).to_string(), content="0")
 
   // grlex compares total degree then lex
   inspect(compare_exps_grlex(b, a).to_string(), content="1")
@@ -57,12 +44,6 @@ test "orderings: inverse lex and grlex flip comparisons" {
   let p = [1, 2, 3]
   let q = [2, 0, 3]
   let r = [0, 2, 3]
-  inspect(
-    (compare_exps_ilex(p, q)).to_string(),
-    content="1",
-  )
-  inspect(
-    (compare_exps_igrlex(p, r)).to_string(),
-    content="-1",
-  )
+  inspect(compare_exps_ilex(p, q).to_string(), content="1")
+  inspect(compare_exps_igrlex(p, r).to_string(), content="-1")
 }

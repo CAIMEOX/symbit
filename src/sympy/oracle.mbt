@@ -8,138 +8,15 @@ pub(all) enum OracleArg {
   IntList(Array[Int])
   List(Array[OracleArg])
   Dict(Map[String, OracleArg])
-}
-
-///|/// JSON-escape a string (minimal subset needed for test payloads).
-fn json_escape(s : String) -> String {
-  let sb = StringBuilder::new()
-  for ch in s {
-    match ch {
-      '"' => sb.write_view("\\\"")
-      '\\' => sb.write_view("\\\\")
-      '\n' => sb.write_view("\\n")
-      '\r' => sb.write_view("\\r")
-      '\t' => sb.write_view("\\t")
-      _ => sb.write_char(ch)
-    }
-  }
-  sb.to_string()
-}
-
-///|
-fn json_string(s : String) -> String {
-  let escaped = json_escape(s)
-  let sb = StringBuilder::new()
-  sb..write_char('"')..write_view(escaped)..write_char('"')
-  sb.to_string()
-}
-
-///|
-fn oracle_arg_json(arg : OracleArg) -> String {
-  match arg {
-    OracleArg::Null => "null"
-    OracleArg::Str(s) => json_string(s)
-    OracleArg::Int(n) => n.to_string()
-    OracleArg::Bool(b) => if b { "true" } else { "false" }
-    OracleArg::StrList(list) => {
-      let sb = StringBuilder::new()
-      sb.write_char('[')
-      for i in 0..<list.length() {
-        if i > 0 {
-          sb.write_char(',')
-        }
-        sb.write_view(json_string(list[i]))
-      }
-      sb.write_char(']')
-      sb.to_string()
-    }
-    OracleArg::IntList(list) => {
-      let sb = StringBuilder::new()
-      sb.write_char('[')
-      for i in 0..<list.length() {
-        if i > 0 {
-          sb.write_char(',')
-        }
-        sb.write_view(list[i].to_string())
-      }
-      sb.write_char(']')
-      sb.to_string()
-    }
-    OracleArg::List(list) => {
-      let sb = StringBuilder::new()
-      sb.write_char('[')
-      for i in 0..<list.length() {
-        if i > 0 {
-          sb.write_char(',')
-        }
-        sb.write_view(oracle_arg_json(list[i]))
-      }
-      sb.write_char(']')
-      sb.to_string()
-    }
-    OracleArg::Dict(map) => {
-      let sb = StringBuilder::new()
-      sb.write_char('{')
-      let mut first = true
-      for k, v in map {
-        if first {
-          first = false
-        } else {
-          sb.write_char(',')
-        }
-        sb
-        ..write_view(json_string(k))
-        ..write_char(':')
-        ..write_view(oracle_arg_json(v))
-      }
-      sb.write_char('}')
-      sb.to_string()
-    }
-  }
+  PyObj(@py.PyObject)
 }
 
 ///|/// Build the JSON payload passed to the in-process SymPy oracle.
-fn oracle_payload_json(
-  func : String,
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> String {
-  let sb = StringBuilder::new()
-  sb
-  ..write_char('{')
-  ..write_view("\"func\":")
-  ..write_view(json_string(func))
-  ..write_view(",\"args\":[")
-  for i in 0..<args.length() {
-    if i > 0 {
-      sb.write_char(',')
-    }
-    sb.write_view(oracle_arg_json(args[i]))
-  }
-  sb..write_view("],\"kwargs\":{")
-  let mut first = true
-  for k, v in kwargs {
-    if first {
-      first = false
-    } else {
-      sb.write_char(',')
-    }
-    sb
-    ..write_view(json_string(k))
-    ..write_char(':')
-    ..write_view(oracle_arg_json(v))
-  }
-  sb..write_view("}}")
-  sb.to_string()
-}
 
 ///|
-fn strip_trailing_newline(s : String) -> String {
-  s.trim_end(chars="\r\n").to_string()
-}
 
 ///|
-///|/// Remove all spaces to make string comparison insensitive to formatting.
+////// Remove all spaces to make string comparison insensitive to formatting.
 pub fn normalize_spaces(s : String) -> String {
   s.replace_all(old=" ", new="")
 }
@@ -157,15 +34,19 @@ pub fn canonical_cmp(s : String) -> String {
   t
 }
 
-///|/// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
+///|
+////// Canonicalise an expression string via `str(sympy.sympify(expr))` so that
 /// ordering matches SymPy’s printer (helps when our printer orders constants
 /// first).
 pub fn sympy_normalize(expr_str : String) -> String raise {
-  sympy_oracle_call("normalize_expr_str", [OracleArg::Str(expr_str)])
+  let expr = sympy_sympify_str(expr_str)
+  py_str_obj(expr)
 }
 
 ///|
+
 ///|
+
 ///|
 let builtins_cache : Ref[@py.PyModule?] = { val: None }
 
@@ -176,7 +57,6 @@ let sympy_cache : Ref[@py.PyModule?] = { val: None }
 let operator_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
-let oracle_globals_cache : Ref[@py.PyDict?] = { val: None }
 
 ///|
 fn init {
@@ -247,71 +127,6 @@ fn ensure_operator_module() -> @py.PyModule raise {
 }
 
 ///|
-fn ensure_oracle_globals() -> @py.PyDict raise {
-  ensure_python()
-  match oracle_globals_cache.val {
-    Some(globals) => globals
-    None => {
-      let builtins = ensure_builtins_module()
-      let globals = py_dict_new()
-      py_dict_set_obj(globals, "__builtins__", builtins.obj())
-      let exec_fn = resolve_callable(builtins, "exec")
-      let args = py_tuple_from_objects([
-        py_string_obj(sympy_oracle_code),
-        globals.obj(),
-      ])
-      let _ = py_call_object_allow_none(exec_fn, args, print_err=true)
-      oracle_globals_cache.val = Some(globals)
-      globals
-    }
-  }
-}
-
-///|
-fn ensure_oracle_dispatch() -> @py.PyCallable raise {
-  let globals = ensure_oracle_globals()
-  let dispatch_enum = match globals.get("dispatch_json") {
-    Some(v) => v
-    None => fail("oracle-dispatch-missing")
-  }
-  match dispatch_enum {
-    PyCallable(callable) => callable
-    PyClass(obj) =>
-      @py.PyCallable::create(obj) catch { _ => fail("oracle-dispatch") }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(dispatch_enum)) catch {
-        _ => fail("oracle-dispatch")
-      }
-  }
-}
-
-///|
-fn ensure_oracle_callable(name : String) -> @py.PyCallable raise {
-  let globals = ensure_oracle_globals()
-  let value_enum = match globals.get(name) {
-    Some(v) => v
-    None => fail("oracle-callable-missing:\{name}")
-  }
-  match value_enum {
-    PyCallable(callable) => callable
-    PyClass(obj) =>
-      @py.PyCallable::create(obj) catch { _ => fail("oracle-callable") }
-    _ =>
-      @py.PyCallable::create(objenum_to_obj(value_enum)) catch {
-        _ => fail("oracle-callable")
-      }
-  }
-}
-
-///|
-fn oracle_dispatch_json(payload_json : String) -> String raise {
-  let dispatch = ensure_oracle_dispatch()
-  let res = py_call_one(dispatch, py_string_obj(payload_json))
-  match res {
-    PyString(s) => s.to_string()
-    _ => py_str_enum(res)
-  }
-}
 
 ///|
 fn resolve_callable(mod : @py.PyModule, name : String) -> @py.PyCallable raise {
@@ -320,7 +135,9 @@ fn resolve_callable(mod : @py.PyModule, name : String) -> @py.PyCallable raise {
     match mod.get_attr(name, print_err=false) {
       Some(PyCallable(callable)) => callable
       Some(PyClass(obj)) =>
-        @py.PyCallable::create(obj) catch { _ => fail("sympy-oracle-callable") }
+        @py.PyCallable::create(obj) catch {
+          _ => fail("sympy-oracle-callable")
+        }
       Some(other) =>
         @py.PyCallable::create(objenum_to_obj(other)) catch {
           _ => fail("sympy-oracle-callable")
@@ -348,7 +165,9 @@ fn resolve_method_callable(
     match obj.get_attr(name, print_err=false) {
       Some(PyCallable(callable)) => callable
       Some(PyClass(obj0)) =>
-        @py.PyCallable::create(obj0) catch { _ => fail("sympy-oracle-callable") }
+        @py.PyCallable::create(obj0) catch {
+          _ => fail("sympy-oracle-callable")
+        }
       Some(other) =>
         @py.PyCallable::create(objenum_to_obj(other)) catch {
           _ => fail("sympy-oracle-callable")
@@ -422,7 +241,11 @@ fn py_int_obj(n : Int) -> @py.PyObject {
 }
 
 ///|
-fn py_dict_set_obj(dict : @py.PyDict, key : String, value : @py.PyObject) -> Unit {
+fn py_dict_set_obj(
+  dict : @py.PyDict,
+  key : String,
+  value : @py.PyObject,
+) -> Unit {
   let state = py_gil_ensure()
   dict.set(key, value)
   py_gil_release(state)
@@ -443,17 +266,11 @@ fn py_call_with_args(
   kwargs : @py.PyDict,
 ) -> @py.PyObjectEnum raise {
   let tup = py_tuple_from_objects(args)
-  let res =
-    if py_dict_len(kwargs) == 0 {
-      py_call_object(callable, tup, print_err=true)
-    } else {
-      py_call_object_kwargs(
-        callable,
-        tup,
-        kwargs=kwargs,
-        print_err=true,
-      )
-    }
+  let res = if py_dict_len(kwargs) == 0 {
+    py_call_object(callable, tup, print_err=true)
+  } else {
+    py_call_object_kwargs(callable, tup, kwargs~, print_err=true)
+  }
   match res {
     Some(obj) => obj
     None => fail("sympy-oracle-call-none")
@@ -492,6 +309,18 @@ fn py_call_one_kwargs(
 }
 
 ///|
+fn sympy_call_must(
+  path : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> @py.PyObjectEnum raise {
+  match sympy_call(path, args, kwargs~) {
+    Some(obj) => obj
+    None => fail("sympy-call-none:\{path}")
+  }
+}
+
+///|
 fn py_str_obj(obj : @py.PyObject) -> String {
   let state = py_gil_ensure()
   let s = obj.to_string()
@@ -505,6 +334,30 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 }
 
 ///|
+fn py_sympy_expr_str(obj : @py.PyObject) -> String raise {
+  let sympy = ensure_sympy_module_oracle()
+  let poly_cls = match sympy.get_attr("Poly", print_err=false) {
+    Some(v) => Some(objenum_to_obj(v))
+    None => None
+  }
+  match poly_cls {
+    Some(cls) =>
+      if py_isinstance(obj, cls) {
+        let as_expr = resolve_method_callable(obj, "as_expr")
+        let expr_enum = py_call_noargs(as_expr)
+        return py_str_enum(expr_enum)
+      }
+    None => ()
+  }
+  py_str_obj(obj)
+}
+
+///|
+fn py_sympy_enum_str(obj : @py.PyObjectEnum) -> String raise {
+  py_sympy_expr_str(objenum_to_obj(obj))
+}
+
+///|
 fn py_obj_to_int(obj : @py.PyObject) -> Int raise {
   match @py.PyObjectEnum::create(obj) {
     PyInteger(v) => v.to_int64().to_int()
@@ -513,25 +366,8 @@ fn py_obj_to_int(obj : @py.PyObject) -> Int raise {
 }
 
 ///|
-fn py_repr_obj(obj : @py.PyObject) -> String {
-  let state = py_gil_ensure()
-  let s = @cpython.py_object_moonbit_repr(obj.obj_ref())
-  py_gil_release(state)
-  s
-}
 
 ///|
-fn py_repr_enum(obj : @py.PyObjectEnum) -> String {
-  py_repr_obj(objenum_to_obj(obj))
-}
-
-///|
-fn py_is_none(obj : @py.PyObject) -> Bool {
-  let state = py_gil_ensure()
-  let ok = @cpython.py_none_check(obj.obj_ref())
-  py_gil_release(state)
-  ok
-}
 
 ///|
 fn py_isinstance(obj : @py.PyObject, cls : @py.PyObject) -> Bool {
@@ -587,41 +423,16 @@ fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
 }
 
 ///|
-fn sympy_srepr(expr : @py.PyObject) -> String raise {
-  let sympy = ensure_sympy_module_oracle()
-  let srepr = resolve_callable(sympy, "srepr")
-  let res = py_call_one(srepr, expr)
-  py_str_enum(res)
-}
 
 ///|
 fn sympy_sympify_str(expr_str : String) -> @py.PyObject raise {
-  let sympy = ensure_sympy_module_oracle()
-  let sympify = match sympy.get_attr("sympify", print_err=false) {
-    Some(PyCallable(callable)) => callable
-    Some(PyClass(obj)) =>
-      @py.PyCallable::create(obj) catch { _ => fail("sympy-sympify-missing") }
-    Some(other) =>
-      @py.PyCallable::create(objenum_to_obj(other)) catch {
-        _ => fail("sympy-sympify-missing")
-      }
-    None => fail("sympy-sympify-missing")
-  }
-  let args = @py.PyTuple::new(1)
-  let pystr = @py.PyString::from(expr_str)
-  args.set(0, pystr)
-  let res = sympify.invoke(args~) catch { _ => fail("sympy-sympify") }
-  match res {
-    Some(obj) => objenum_to_obj(obj)
-    None => fail("sympy-sympify-none")
-  }
+  let res = sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  objenum_to_obj(res)
 }
 
 ///|
 fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
-  let sympy = ensure_sympy_module_oracle()
-  let symbols = resolve_callable(sympy, "symbols")
-  let res = py_call_one(symbols, py_string_obj(name))
+  let res = sympy_call_must("sympy.symbols", [OracleArg::Str(name)])
   objenum_to_obj(res)
 }
 
@@ -635,16 +446,6 @@ fn sympy_symbols_from_names(names : Array[String]) -> Array[@py.PyObject] raise 
 }
 
 ///|
-fn sympy_symbols_from_string(spec : String) -> Array[@py.PyObject] raise {
-  let obj = sympy_symbol_obj(spec)
-  let state = py_gil_ensure()
-  let kind = @py.PyObjectEnum::create(obj)
-  py_gil_release(state)
-  match kind {
-    PyList(_) | PyTuple(_) => py_list_to_pyobjects(kind)
-    _ => [obj]
-  }
-}
 
 ///|
 fn sympy_default_gens(exprs : Array[@py.PyObject]) -> Array[@py.PyObject] raise {
@@ -659,6 +460,7 @@ fn sympy_default_gens(exprs : Array[@py.PyObject]) -> Array[@py.PyObject] raise 
         let fs_obj = objenum_to_obj(fs)
         let tup = py_tuple_from_objects([fs_obj])
         let _ = py_call_object_allow_none(update, tup, print_err=true)
+
       }
       None => ()
     }
@@ -675,154 +477,8 @@ fn sympy_default_gens(exprs : Array[@py.PyObject]) -> Array[@py.PyObject] raise 
 }
 
 ///|
-fn oracle_arg_as_str(arg : OracleArg) -> String raise {
-  match arg {
-    OracleArg::Str(s) => s
-    OracleArg::Int(n) => n.to_string()
-    OracleArg::Bool(b) => if b { "True" } else { "False" }
-    OracleArg::Null => "None"
-    _ => fail("expected string")
-  }
-}
 
 ///|
-fn oracle_arg_as_int(arg : OracleArg) -> Int raise {
-  match arg {
-    OracleArg::Int(n) => n
-    OracleArg::Str(s) => @strconv.parse_int(s)
-    _ => fail("expected int")
-  }
-}
-
-///|
-fn oracle_arg_as_str_list(arg : OracleArg) -> Array[String] raise {
-  match arg {
-    OracleArg::StrList(list) => list
-    OracleArg::Str(s) => [s]
-    OracleArg::List(list) => {
-      let out : Array[String] = Array::new()
-      for item in list {
-        out.push(oracle_arg_as_str(item))
-      }
-      out
-    }
-    _ => fail("expected string list")
-  }
-}
-
-///|
-fn kwargs_get_str(
-  kwargs : Map[String, OracleArg],
-  key : String,
-) -> String? {
-  match kwargs.get(key) {
-    Some(OracleArg::Str(s)) => Some(s)
-    Some(OracleArg::Int(n)) => Some(n.to_string())
-    Some(OracleArg::Bool(b)) => Some(if b { "True" } else { "False" })
-    _ => None
-  }
-}
-
-///|
-fn kwargs_get_int(
-  kwargs : Map[String, OracleArg],
-  key : String,
-) -> Int? raise {
-  match kwargs.get(key) {
-    Some(OracleArg::Int(n)) => Some(n)
-    Some(OracleArg::Str(s)) => Some(@strconv.parse_int(s))
-    _ => None
-  }
-}
-
-///|
-fn kwargs_get_str_list(
-  kwargs : Map[String, OracleArg],
-  key : String,
-) -> Array[String]? raise {
-  match kwargs.get(key) {
-    Some(OracleArg::StrList(list)) => Some(list)
-    Some(OracleArg::Str(s)) => Some([s])
-    Some(OracleArg::List(list)) => {
-      let out : Array[String] = Array::new()
-      for item in list {
-        out.push(oracle_arg_as_str(item))
-      }
-      Some(out)
-    }
-    _ => None
-  }
-}
-
-///|
-fn kwargs_get_gens(
-  kwargs : Map[String, OracleArg],
-) -> Array[@py.PyObject]? raise {
-  match kwargs.get("gens") {
-    Some(OracleArg::StrList(list)) => Some(sympy_symbols_from_names(list))
-    Some(OracleArg::Str(s)) => Some(sympy_symbols_from_string(s))
-    Some(OracleArg::List(list)) => {
-      let names : Array[String] = Array::new()
-      for item in list {
-        names.push(oracle_arg_as_str(item))
-      }
-      Some(sympy_symbols_from_names(names))
-    }
-    _ => None
-  }
-}
-
-///|
-fn sympy_sympify_arg(arg : OracleArg) -> @py.PyObject raise {
-  let s = oracle_arg_as_str(arg)
-  sympy_sympify_str(s)
-}
-
-///|
-fn call_sympy_echo_args(args : Array[OracleArg]) -> Json {
-  let out : Array[String] = Array::new()
-  for arg in args {
-    match arg {
-      OracleArg::Str(s) => out.push(s)
-      OracleArg::Int(n) => out.push(n.to_string())
-      OracleArg::Bool(b) => out.push(if b { "True" } else { "False" })
-      OracleArg::Null => out.push("None")
-      _ => out.push(oracle_arg_json(arg))
-    }
-  }
-  Json::string(out.join("|"))
-}
-
-///|
-fn call_sympy_echo_int(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("echo_int args") }
-  let n = match args[0] {
-    OracleArg::Int(v) => v
-    OracleArg::Str(s) => @strconv.parse_int(s)
-    _ => fail("echo_int expects int")
-  }
-  Json::string(n.to_string())
-}
-
-///|
-fn call_sympy_normalize_expr_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("normalize_expr_str args") }
-  let expr = sympy_sympify_arg(args[0])
-  let s = py_str_obj(expr)
-  Json::string(s)
-}
-
-///|
-fn call_sympy_resultant_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 3 else { fail("resultant_str args") }
-  let p = sympy_sympify_arg(args[0])
-  let q = sympy_sympify_arg(args[1])
-  let v = sympy_sympify_arg(args[2])
-  let sympy = ensure_sympy_module_oracle()
-  let resultant = resolve_callable(sympy, "resultant")
-  let res = py_call_with_args(resultant, [p, q, v], py_dict_new())
-  Json::string(py_str_enum(res))
-}
 
 ///|
 fn sympy_fmt_mod(expr : @py.PyObject, modulus : Int) -> String raise {
@@ -852,17 +508,20 @@ fn sympy_fmt_mod(expr : @py.PyObject, modulus : Int) -> String raise {
       }
       let mut term_expr = py_int_obj(coeff_mod)
       let exps = py_list_to_pyobjects(@py.PyObjectEnum::create(monom_obj))
-      let limit =
-        if exps.length() < gens.length() {
-          exps.length()
-        } else {
-          gens.length()
-        }
+      let limit = if exps.length() < gens.length() {
+        exps.length()
+      } else {
+        gens.length()
+      }
       for i in 0..<limit {
         let exp_val = py_obj_to_int(exps[i])
         if exp_val != 0 {
           let pow_res = py_call_two(pow_fn, gens[i], py_int_obj(exp_val))
-          let term_enum = py_call_two(mul_fn, term_expr, objenum_to_obj(pow_res))
+          let term_enum = py_call_two(
+            mul_fn,
+            term_expr,
+            objenum_to_obj(pow_res),
+          )
           term_expr = objenum_to_obj(term_enum)
         }
       }
@@ -870,9 +529,7 @@ fn sympy_fmt_mod(expr : @py.PyObject, modulus : Int) -> String raise {
       acc = objenum_to_obj(acc_enum)
     }
   }
-  let sympy = ensure_sympy_module_oracle()
-  let expand = resolve_callable(sympy, "expand")
-  let res = py_call_one(expand, acc)
+  let res = sympy_call_must("sympy.expand", [OracleArg::PyObj(acc)])
   py_str_enum(res)
 }
 
@@ -911,26 +568,20 @@ fn sympy_factor_str(
 }
 
 ///|
-fn call_sympy_factor_list_str(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("factor_list_str args") }
-  let modulus =
-    if args.length() >= 2 {
-      Some(oracle_arg_as_int(args[1]))
-    } else {
-      kwargs_get_int(kwargs, "modulus")
-    }
-  let expr = sympy_sympify_arg(args[0])
+pub fn sympy_factor_list_str(expr : String, modulus? : Int = 0) -> String raise {
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let expr_obj = sympy_sympify_str(expr)
   let sympy = ensure_sympy_module_oracle()
-  let factor_list = resolve_callable(sympy, "factor_list")
-  let kwargs_dict = py_dict_new()
-  match modulus {
-    Some(m) => py_dict_set_obj(kwargs_dict, "modulus", py_int_obj(m))
+  let kwargs_map : Map[String, OracleArg] = {}
+  match modulus_opt {
+    Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
     None => ()
   }
-  let res = py_call_with_args(factor_list, [expr], kwargs_dict)
+  let res = sympy_call_must(
+    "sympy.factor_list",
+    [OracleArg::PyObj(expr_obj)],
+    kwargs=kwargs_map,
+  )
   let items = py_list_to_pyobjects(res)
   guard items.length() >= 2 else { fail("factor_list tuple") }
   let content_obj = items[0]
@@ -946,7 +597,7 @@ fn call_sympy_factor_list_str(
     if pair_items.length() >= 2 {
       let factor_obj = pair_items[0]
       let exp_obj = pair_items[1]
-      let factor_str = sympy_factor_str(factor_obj, poly_cls, modulus)
+      let factor_str = sympy_factor_str(factor_obj, poly_cls, modulus_opt)
       if factor_str != "1" {
         let exp_val = py_obj_to_int(exp_obj)
         entries.push((factor_str, exp_val, factor_str))
@@ -967,42 +618,30 @@ fn call_sympy_factor_list_str(
   }
   let factors_str = parts.join(",")
   let content_str = py_str_obj(content_obj)
-  Json::string("(\{content_str}, [\{factors_str}])")
+  "(\{content_str}, [\{factors_str}])"
 }
 
 ///|
-fn call_sympy_monic_expr_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("monic_expr_str args") }
-  let expr = sympy_sympify_arg(args[0])
-  let modulus =
-    if args.length() >= 2 {
-      Some(oracle_arg_as_int(args[1]))
-    } else {
-      None
-    }
-  let poly = call_sympy_poly(expr, [], "", modulus)
+pub fn sympy_monic_expr_str(expr : String, modulus? : Int = 0) -> String raise {
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let expr_obj = sympy_sympify_str(expr)
+  let poly = call_sympy_poly(expr_obj, [], "", modulus_opt)
   let monic = resolve_method_callable(poly, "monic")
   let monic_enum = py_call_noargs(monic)
   let monic_obj = objenum_to_obj(monic_enum)
   let as_expr = resolve_method_callable(monic_obj, "as_expr")
   let expr_enum = py_call_noargs(as_expr)
-  Json::string(py_str_enum(expr_enum))
+  py_str_enum(expr_enum)
 }
 
 ///|
-fn call_sympy_sqf_list_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("sqf_list_str args") }
-  let modulus =
-    if args.length() >= 2 {
-      Some(oracle_arg_as_int(args[1]))
-    } else {
-      None
-    }
-  let expr = sympy_sympify_arg(args[0])
+pub fn sympy_sqf_list_str(expr : String, modulus? : Int = 0) -> String raise {
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let expr_obj = sympy_sympify_str(expr)
   let sympy = ensure_sympy_module_oracle()
-  let (content_obj, factors_obj) = match modulus {
+  let (content_obj, factors_obj) = match modulus_opt {
     Some(m) => {
-      let poly = call_sympy_poly(expr, [], "", Some(m))
+      let poly = call_sympy_poly(expr_obj, [], "", Some(m))
       let sqf_list = resolve_method_callable(poly, "sqf_list")
       let res = py_call_noargs(sqf_list)
       let items = py_list_to_pyobjects(res)
@@ -1010,8 +649,7 @@ fn call_sympy_sqf_list_str(args : Array[OracleArg]) -> Json raise {
       (items[0], items[1])
     }
     None => {
-      let sqf_list = resolve_callable(sympy, "sqf_list")
-      let res = py_call_one(sqf_list, expr)
+      let res = sympy_call_must("sympy.sqf_list", [OracleArg::PyObj(expr_obj)])
       let items = py_list_to_pyobjects(res)
       guard items.length() >= 2 else { fail("sqf_list tuple") }
       (items[0], items[1])
@@ -1028,7 +666,7 @@ fn call_sympy_sqf_list_str(args : Array[OracleArg]) -> Json raise {
     if pair_items.length() >= 2 {
       let factor_obj = pair_items[0]
       let exp_obj = pair_items[1]
-      let factor_str = sympy_factor_str(factor_obj, poly_cls, modulus)
+      let factor_str = sympy_factor_str(factor_obj, poly_cls, modulus_opt)
       if factor_str != "1" {
         let exp_val = py_obj_to_int(exp_obj)
         entries.push((factor_str, exp_val, factor_str))
@@ -1049,32 +687,30 @@ fn call_sympy_sqf_list_str(args : Array[OracleArg]) -> Json raise {
   }
   let factors_str = parts.join(",")
   let content_str = py_str_obj(content_obj)
-  Json::string("(\{content_str}, [\{factors_str}])")
+  "(\{content_str}, [\{factors_str}])"
 }
 
 ///|
-fn call_sympy_groebner_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 2 else { fail("groebner_str args") }
-  let exprs = oracle_arg_as_str_list(args[0])
-  let order = oracle_arg_as_str(args[1])
-  let sympy = ensure_sympy_module_oracle()
+pub fn sympy_groebner_str(
+  exprs : Array[String],
+  order? : String = "lex",
+) -> String raise {
   let expr_objs : Array[@py.PyObject] = Array::new()
   for expr in exprs {
     expr_objs.push(sympy_sympify_str(expr))
   }
   let gens = sympy_default_gens(expr_objs)
-  let groebner = resolve_callable(sympy, "groebner")
-  let args0 : Array[@py.PyObject] = Array::new()
+  let args0 : Array[OracleArg] = Array::new()
   let py_polys = py_list_from_objects(expr_objs)
-  args0.push(py_polys.obj())
+  args0.push(OracleArg::PyObj(py_polys.obj()))
   for g in gens {
-    args0.push(g)
+    args0.push(OracleArg::PyObj(g))
   }
-  let kwargs = py_dict_new()
+  let kwargs : Map[String, OracleArg] = {}
   if order != "" {
-    py_dict_set_obj(kwargs, "order", py_string_obj(order))
+    kwargs["order"] = OracleArg::Str(order)
   }
-  let res = py_call_with_args(groebner, args0, kwargs)
+  let res = sympy_call_must("sympy.groebner", args0, kwargs~)
   let res_obj = objenum_to_obj(res)
   let polys_enum = match py_get_attr(res_obj, "polys") {
     Some(v) => v
@@ -1091,13 +727,11 @@ fn call_sympy_groebner_str(args : Array[OracleArg]) -> Json raise {
     basis.push(py_str_enum(expr_enum))
   }
   basis.sort()
-  Json::string(basis.join(" | "))
+  basis.join(" | ")
 }
 
 ///|
-fn call_sympy_sort_factor_repr(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("sort_factor_repr args") }
-  let repr_str = oracle_arg_as_str(args[0])
+pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
   let parsed = sympy_sympify_str(repr_str)
   let parsed_enum = @py.PyObjectEnum::create(parsed)
   let items = py_list_to_pyobjects(parsed_enum)
@@ -1134,287 +768,29 @@ fn call_sympy_sort_factor_repr(args : Array[OracleArg]) -> Json raise {
   }
   let factors_str = parts.join(",")
   let content_str = py_str_obj(content_obj)
-  Json::string("(\{content_str}, [\{factors_str}])")
+  "(\{content_str}, [\{factors_str}])"
 }
 
 ///|
-fn call_sympy_sqf_part_str(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 1 else { fail("sqf_part_str args") }
-  let expr = sympy_sympify_arg(args[0])
-  let poly = call_sympy_poly(expr, [], "", None)
+pub fn sympy_sqf_part_str(expr : String) -> String raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let poly = call_sympy_poly(expr_obj, [], "", None)
   let sqf_part = resolve_method_callable(poly, "sqf_part")
   let res = py_call_noargs(sqf_part)
   let res_obj = objenum_to_obj(res)
   let as_expr = resolve_method_callable(res_obj, "as_expr")
   let expr_enum = py_call_noargs(as_expr)
-  Json::string(py_str_enum(expr_enum))
+  py_str_enum(expr_enum)
 }
 
 ///|
-fn call_sympy_expr_equal(args : Array[OracleArg]) -> Json raise {
-  guard args.length() >= 2 else { fail("expr_equal args") }
-  let lhs = oracle_arg_as_str(args[0])
-  let rhs = oracle_arg_as_str(args[1])
+pub fn sympy_expr_equal(lhs : String, rhs : String) -> Bool raise {
   let diff_expr = sympy_sympify_str("(\{lhs}) - (\{rhs})")
-  let sympy = ensure_sympy_module_oracle()
-  let simplify = resolve_callable(sympy, "simplify")
-  let res = py_call_one(simplify, diff_expr)
-  let ok = py_str_enum(res) == "0"
-  Json::string(if ok { "True" } else { "False" })
+  let res = sympy_call_must("sympy.simplify", [OracleArg::PyObj(diff_expr)])
+  py_str_enum(res) == "0"
 }
 
 ///|
-fn py_encode_object(obj : @py.PyObject) -> Json raise {
-  if py_is_none(obj) {
-    return Json::null()
-  }
-  let sympy = ensure_sympy_module_oracle()
-  let poly_cls = match sympy.get_attr("Poly", print_err=false) {
-    Some(v) => Some(objenum_to_obj(v))
-    None => None
-  }
-  match poly_cls {
-    Some(cls) =>
-      if py_isinstance(obj, cls) {
-        let as_expr = resolve_method_callable(obj, "as_expr")
-        let expr_enum = py_call_noargs(as_expr)
-        let expr_obj = objenum_to_obj(expr_enum)
-        let s = py_str_obj(expr_obj)
-        let out : Map[String, Json] = {}
-        out["__sympy__"] = Json::boolean(true)
-        out["str"] = Json::string(s)
-        out["srepr"] = Json::string(s)
-        return Json::object(out)
-      }
-    None => ()
-  }
-  let basic_cls = match sympy.get_attr("Basic", print_err=false) {
-    Some(v) => Some(objenum_to_obj(v))
-    None => None
-  }
-  match basic_cls {
-    Some(cls) =>
-      if py_isinstance(obj, cls) {
-        let s = py_str_obj(obj)
-        let out : Map[String, Json] = {}
-        out["__sympy__"] = Json::boolean(true)
-        out["str"] = Json::string(s)
-        out["srepr"] = Json::string(s)
-        return Json::object(out)
-      }
-    None => ()
-  }
-  let repr = py_repr_obj(obj)
-  let out : Map[String, Json] = {}
-  out["__repr__"] = Json::string(repr)
-  Json::object(out)
-}
-
-///|
-fn py_encode_result_inner(value : @py.PyObjectEnum) -> Json raise {
-  match value {
-    PyBool(v) => Json::boolean(v.to_bool())
-    PyInteger(v) => {
-      let i = v.to_int64()
-      Json::number(i.to_double(), repr=i.to_string())
-    }
-    PyFloat(v) => Json::number(v.to_double())
-    PyString(v) => Json::string(v.to_string())
-    PyList(list) => {
-      let len = list.len()
-      let out : Array[Json] = Array::new()
-      for i in 0..<len {
-        match list.get(i) {
-          Some(item) => out.push(py_encode_result_inner(item))
-          None => ()
-        }
-      }
-      Json::array(out)
-    }
-    PyTuple(tup) => {
-      let len = tup.len().to_int()
-      let out : Array[Json] = Array::new()
-      for i in 0..<len {
-        match tup.get(i) {
-          Some(item) => out.push(py_encode_result_inner(item))
-          None => ()
-        }
-      }
-      Json::array(out)
-    }
-    PyDict(dict) => {
-      let items = dict.items()
-      let out : Map[String, Json] = {}
-      let len = items.len()
-      for i in 0..<len {
-        match items.get(i) {
-          Some(PyTuple(tup)) => {
-            if tup.len().to_int() == 2 {
-              match (tup.get(0), tup.get(1)) {
-                (Some(k0), Some(v0)) => {
-                  let key : String = py_str_enum(k0)
-                  out[key] = py_encode_result_inner(v0)
-                }
-                _ => ()
-              }
-            }
-          }
-          Some(other) => {
-            let key : String = py_str_enum(other)
-            out[key] = Json::null()
-          }
-          None => ()
-        }
-      }
-      Json::object(out)
-    }
-    PyModule(v) => {
-      let obj = v.obj()
-      @cpython.py_incref(obj.obj_ref())
-      py_encode_object(obj)
-    }
-    PyCallable(v) => {
-      let obj = v.obj()
-      @cpython.py_incref(obj.obj_ref())
-      py_encode_object(obj)
-    }
-    PyClass(obj) => {
-      @cpython.py_incref(obj.obj_ref())
-      py_encode_object(obj)
-    }
-  }
-}
-
-///|
-fn py_encode_result(value : @py.PyObjectEnum) -> Json raise {
-  let state = py_gil_ensure()
-  let res = try py_encode_result_inner(value) catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
-  res
-}
-
-///|
-fn call_sympy_factor_list_json(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("factor_list_json args") }
-  let expr = sympy_sympify_arg(args[0])
-  let modulus0 = kwargs_get_int(kwargs, "modulus")
-  let modulus = match modulus0 {
-    Some(m) => Some(m)
-    None =>
-      if args.length() > 1 {
-        match args[1] {
-          OracleArg::Int(n) => Some(n)
-          OracleArg::Str(s) => Some(@strconv.parse_int(s))
-          _ => None
-        }
-      } else {
-        None
-      }
-  }
-  let sympy = ensure_sympy_module_oracle()
-  let factor_list = resolve_callable(sympy, "factor_list")
-  let kwargs_dict = py_dict_new()
-  match modulus {
-    Some(m) => py_dict_set_obj(kwargs_dict, "modulus", py_int_obj(m))
-    None => ()
-  }
-  let res = py_call_with_args(factor_list, [expr], kwargs_dict)
-  match res {
-    PyTuple(tup) => {
-      let content_json = match tup.get(0) {
-        Some(item) => Json::string(py_str_enum(item))
-        None => Json::string("None")
-      }
-      let factors_json = match tup.get(1) {
-        Some(PyList(list)) => encode_factor_list_items(list)
-        Some(PyTuple(list)) => encode_factor_list_tuple_items(list)
-        Some(other) => Json::string(py_str_enum(other))
-        None => Json::array([])
-      }
-      Json::array([content_json, factors_json])
-    }
-    _ => Json::string(py_str_enum(res))
-  }
-}
-
-///|
-fn call_sympy_factor_list_json_stub(
-  args : Array[OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("factor_list_json args") }
-  let content = Json::string(oracle_arg_as_str(args[0]))
-  let factors = Json::array([Json::array([])])
-  Json::array([content, factors])
-}
-
-///|
-fn encode_factor_list_items(list : @py.PyList) -> Json {
-  let out : Array[Json] = Array::new()
-  let len = list.len()
-  for i in 0..<len {
-    match list.get(i) {
-      Some(PyTuple(tup)) => out.push(encode_factor_list_pair(tup))
-      Some(other) => out.push(Json::string(py_str_enum(other)))
-      None => ()
-    }
-  }
-  Json::array(out)
-}
-
-///|
-fn encode_factor_list_tuple_items(tup : @py.PyTuple) -> Json {
-  let out : Array[Json] = Array::new()
-  let len = tup.len().to_int()
-  for i in 0..<len {
-    match tup.get(i) {
-      Some(PyTuple(inner)) => out.push(encode_factor_list_pair(inner))
-      Some(other) => out.push(Json::string(py_str_enum(other)))
-      None => ()
-    }
-  }
-  Json::array(out)
-}
-
-///|
-fn encode_factor_list_pair(tup : @py.PyTuple) -> Json {
-  if tup.len().to_int() != 2 {
-    return Json::string(tup.to_string())
-  }
-  let factor_str = match tup.get(0) {
-    Some(item) => py_str_enum(item)
-    None => "None"
-  }
-  let exp_str = match tup.get(1) {
-    Some(PyInteger(i)) => i.to_int64().to_string()
-    Some(item) => py_str_enum(item)
-    None => "0"
-  }
-  Json::array([Json::string(factor_str), Json::string(exp_str)])
-}
-
-///|
-fn call_sympy_sympify_list_json(
-  args : Array[OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("sympify_list_json args") }
-  let exprs = oracle_arg_as_str_list(args[0])
-  let out : Array[Json] = Array::new()
-  for expr in exprs {
-    let obj : Map[String, Json] = {}
-    obj["__sympy__"] = Json::boolean(true)
-    obj["str"] = Json::string(expr)
-    out.push(Json::object(obj))
-  }
-  Json::array(out)
-}
 
 ///|
 fn call_sympy_poly(
@@ -1423,86 +799,86 @@ fn call_sympy_poly(
   domain : String,
   modulus : Int?,
 ) -> @py.PyObject raise {
-  let sympy = ensure_sympy_module_oracle()
-  let poly = resolve_callable(sympy, "Poly")
-  let args : Array[@py.PyObject] = Array::new()
-  args.push(expr)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr))
   for g in gens {
-    args.push(g)
+    args.push(OracleArg::PyObj(g))
   }
-  let kwargs = py_dict_new()
+  let kwargs : Map[String, OracleArg] = {}
   if domain != "" {
-    py_dict_set_obj(kwargs, "domain", py_string_obj(domain))
+    kwargs["domain"] = OracleArg::Str(domain)
   }
   match modulus {
-    Some(m) => py_dict_set_obj(kwargs, "modulus", py_int_obj(m))
+    Some(m) => kwargs["modulus"] = OracleArg::Int(m)
     None => ()
   }
-  let res = py_call_with_args(poly, args, kwargs)
+  let res = sympy_call_must("sympy.Poly", args, kwargs~)
   objenum_to_obj(res)
 }
 
 ///|
-fn call_sympy_polys_gcd(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 2 else { fail("polys gcd args") }
-  let a = sympy_sympify_arg(args[0])
-  let b = sympy_sympify_arg(args[1])
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
+pub fn sympy_polys_gcd_str(
+  p : String,
+  q : String,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let a = sympy_sympify_str(p)
+  let b = sympy_sympify_str(q)
+  let gens0 = if gens.is_empty() {
+    None
+  } else {
+    Some(sympy_symbols_from_names(gens))
   }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  let gens0 = kwargs_get_gens(kwargs)
-  let use_poly = gens0 is Some(_) || domain != "" || modulus is Some(_)
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let use_poly = gens0 is Some(_) || domain != "" || modulus_opt is Some(_)
   if use_poly {
-    let gens = match gens0 {
+    let gens_list = match gens0 {
       Some(list) => list
       None => sympy_default_gens([a, b])
     }
-    let pa = call_sympy_poly(a, gens, domain, modulus)
-    let pb = call_sympy_poly(b, gens, domain, modulus)
+    let pa = call_sympy_poly(a, gens_list, domain, modulus_opt)
+    let pb = call_sympy_poly(b, gens_list, domain, modulus_opt)
     let gcd = resolve_method_callable(pa, "gcd")
     let res = py_call_one(gcd, pb)
-    py_encode_result(res)
+    py_sympy_enum_str(res)
   } else {
-    let sympy = ensure_sympy_module_oracle()
-    let gcd = resolve_callable(sympy, "gcd")
-    let res = py_call_two(gcd, a, b)
-    py_encode_result(res)
+    let res = sympy_call_must("sympy.gcd", [
+      OracleArg::PyObj(a),
+      OracleArg::PyObj(b),
+    ])
+    py_sympy_enum_str(res)
   }
 }
 
 ///|
-fn call_sympy_polys_resultant(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 2 else { fail("polys resultant args") }
-  let p = sympy_sympify_arg(args[0])
-  let q = sympy_sympify_arg(args[1])
-  let var_name = match kwargs_get_str(kwargs, "var") {
-    Some(s) => s
-    None => ""
-  }
+pub fn sympy_polys_resultant_str(
+  p : String,
+  q : String,
+  var_name? : String = "",
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let p_obj = sympy_sympify_str(p)
+  let q_obj = sympy_sympify_str(q)
   let mut var_obj : @py.PyObject? = None
   if var_name != "" {
     var_obj = Some(sympy_sympify_str(var_name))
   }
-  let gens0 = kwargs_get_gens(kwargs)
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
+  let gens0 = if gens.is_empty() {
+    None
+  } else {
+    Some(sympy_symbols_from_names(gens))
   }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  let gens = match gens0 {
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let gens_list = match gens0 {
     Some(list) => list
     None => {
       let seed : Array[@py.PyObject] = Array::new()
-      seed.push(p)
-      seed.push(q)
+      seed.push(p_obj)
+      seed.push(q_obj)
       match var_obj {
         Some(v) => seed.push(v)
         None => ()
@@ -1510,9 +886,9 @@ fn call_sympy_polys_resultant(
       sympy_default_gens(seed)
     }
   }
-  if gens.length() > 0 && (domain != "" || modulus is Some(_)) {
-    let pa = call_sympy_poly(p, gens, domain, modulus)
-    let pb = call_sympy_poly(q, gens, domain, modulus)
+  if gens_list.length() > 0 && (domain != "" || modulus_opt is Some(_)) {
+    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt)
+    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt)
     let resultant = resolve_method_callable(pa, "resultant")
     let res = match var_obj {
       Some(v) => {
@@ -1522,309 +898,141 @@ fn call_sympy_polys_resultant(
       }
       None => py_call_one(resultant, pb)
     }
-    py_encode_result(res)
+    py_sympy_enum_str(res)
   } else {
     if var_obj is None {
-      if gens.length() > 0 {
-        var_obj = Some(gens[0])
+      if gens_list.length() > 0 {
+        var_obj = Some(gens_list[0])
       } else {
         fail("resultant requires a variable")
       }
     }
-    let sympy = ensure_sympy_module_oracle()
-    let resultant = resolve_callable(sympy, "resultant")
-    let args0 : Array[@py.PyObject] = Array::new()
-    args0.push(p)
-    args0.push(q)
+    let args0 : Array[OracleArg] = Array::new()
+    args0.push(OracleArg::PyObj(p_obj))
+    args0.push(OracleArg::PyObj(q_obj))
     match var_obj {
-      Some(v) => args0.push(v)
+      Some(v) => args0.push(OracleArg::PyObj(v))
       None => ()
     }
-    let kwargs_dict = py_dict_new()
-    match modulus {
-      Some(m) => py_dict_set_obj(kwargs_dict, "modulus", py_int_obj(m))
+    let kwargs_map : Map[String, OracleArg] = {}
+    match modulus_opt {
+      Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
       None => ()
     }
-    let res = py_call_with_args(resultant, args0, kwargs_dict)
-    py_encode_result(res)
+    let res = sympy_call_must("sympy.resultant", args0, kwargs=kwargs_map)
+    py_sympy_enum_str(res)
   }
 }
 
 ///|
-fn call_sympy_polys_groebner(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("polys groebner args") }
-  let exprs = oracle_arg_as_str_list(args[0])
+pub fn sympy_polys_groebner_list(
+  exprs : Array[String],
+  gens? : Array[String] = [],
+  order? : String = "",
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> Array[String] raise {
   let polys : Array[@py.PyObject] = Array::new()
   for expr in exprs {
     polys.push(sympy_sympify_str(expr))
   }
-  let gens0 = kwargs_get_gens(kwargs)
-  let gens = match gens0 {
-    Some(list) => list
-    None => sympy_default_gens(polys)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens(polys)
+  } else {
+    sympy_symbols_from_names(gens)
   }
-  let order = match kwargs_get_str(kwargs, "order") {
-    Some(s) => s
-    None => ""
-  }
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
-  }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  let sympy = ensure_sympy_module_oracle()
-  let groebner = resolve_callable(sympy, "groebner")
-  let args0 : Array[@py.PyObject] = Array::new()
+  let args0 : Array[OracleArg] = Array::new()
   let py_polys = py_list_from_objects(polys)
-  let py_polys_obj = py_polys.obj()
-  @cpython.py_incref(py_polys_obj.obj_ref())
-  args0.push(py_polys_obj)
-  for g in gens {
-    args0.push(g)
+  args0.push(OracleArg::PyObj(py_polys.obj()))
+  for g in gens_list {
+    args0.push(OracleArg::PyObj(g))
   }
-  let kwargs_dict = py_dict_new()
+  let kwargs : Map[String, OracleArg] = {}
   if order != "" {
-    py_dict_set_obj(kwargs_dict, "order", py_string_obj(order))
+    kwargs["order"] = OracleArg::Str(order)
   }
   if domain != "" {
-    py_dict_set_obj(kwargs_dict, "domain", py_string_obj(domain))
+    kwargs["domain"] = OracleArg::Str(domain)
   }
-  match modulus {
-    Some(m) => py_dict_set_obj(kwargs_dict, "modulus", py_int_obj(m))
-    None => ()
+  if modulus != 0 {
+    kwargs["modulus"] = OracleArg::Int(modulus)
   }
-  let res = py_call_with_args(groebner, args0, kwargs_dict)
+  let res = sympy_call_must("sympy.groebner", args0, kwargs~)
   let res_obj = objenum_to_obj(res)
-  match py_get_attr(res_obj, "polys") {
-    Some(polys_enum) => py_encode_result(polys_enum)
+  let polys_enum = match py_get_attr(res_obj, "polys") {
+    Some(v) => v
     None => fail("groebner.polys missing")
   }
+  let polys_list = py_list_to_pyobjects(polys_enum)
+  let basis : Array[String] = Array::new()
+  for poly in polys_list {
+    basis.push(py_sympy_expr_str(poly))
+  }
+  basis
 }
 
 ///|
-fn call_sympy_polys_factor(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("polys factor args") }
-  let expr = sympy_sympify_arg(args[0])
-  let gens0 = kwargs_get_gens(kwargs)
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
-  }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  if gens0 is Some(_) || domain != "" || modulus is Some(_) {
-    let gens = match gens0 {
-      Some(list) => list
-      None => sympy_default_gens([expr])
-    }
-    let poly = call_sympy_poly(expr, gens, domain, modulus)
-    let factor_list = resolve_method_callable(poly, "factor_list")
-    let res = py_call_noargs(factor_list)
-    py_encode_result(res)
+
+///|
+pub fn sympy_polys_div_pair_str(
+  p : String,
+  q : String,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let p_obj = sympy_sympify_str(p)
+  let q_obj = sympy_sympify_str(q)
+  let gens0 = if gens.is_empty() {
+    None
   } else {
-    let sympy = ensure_sympy_module_oracle()
-    let factor_list = resolve_callable(sympy, "factor_list")
-    let kwargs_dict = py_dict_new()
-    match modulus {
-      Some(m) => py_dict_set_obj(kwargs_dict, "modulus", py_int_obj(m))
-      None => ()
-    }
-    let res = py_call_with_args(factor_list, [expr], kwargs_dict)
-    py_encode_result(res)
+    Some(sympy_symbols_from_names(gens))
   }
-}
-
-///|
-fn call_sympy_polys_sqf(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("polys sqf args") }
-  let expr = sympy_sympify_arg(args[0])
-  let gens0 = kwargs_get_gens(kwargs)
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
-  }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  if gens0 is Some(_) || domain != "" || modulus is Some(_) {
-    let gens = match gens0 {
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let use_poly = gens0 is Some(_) || domain != "" || modulus_opt is Some(_)
+  let res = if use_poly {
+    let gens_list = match gens0 {
       Some(list) => list
-      None => sympy_default_gens([expr])
+      None => sympy_default_gens([p_obj, q_obj])
     }
-    let poly = call_sympy_poly(expr, gens, domain, modulus)
-    let sqf_list = resolve_method_callable(poly, "sqf_list")
-    let res = py_call_noargs(sqf_list)
-    py_encode_result(res)
-  } else {
-    let sympy = ensure_sympy_module_oracle()
-    let sqf_list = resolve_callable(sympy, "sqf_list")
-    let res = py_call_one(sqf_list, expr)
-    py_encode_result(res)
-  }
-}
-
-///|
-fn call_sympy_polys_div(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 2 else { fail("polys div args") }
-  let p = sympy_sympify_arg(args[0])
-  let q = sympy_sympify_arg(args[1])
-  let domain = match kwargs_get_str(kwargs, "domain") {
-    Some(s) => s
-    None => ""
-  }
-  let modulus = kwargs_get_int(kwargs, "modulus")
-  let gens0 = kwargs_get_gens(kwargs)
-  let use_poly = gens0 is Some(_) || domain != "" || modulus is Some(_)
-  if use_poly {
-    let gens = match gens0 {
-      Some(list) => list
-      None => sympy_default_gens([p, q])
-    }
-    let pa = call_sympy_poly(p, gens, domain, modulus)
-    let pb = call_sympy_poly(q, gens, domain, modulus)
+    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt)
+    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt)
     let div = resolve_method_callable(pa, "div")
-    let res = py_call_one(div, pb)
-    py_encode_result(res)
+    py_call_one(div, pb)
   } else {
-    let sympy = ensure_sympy_module_oracle()
-    let div = resolve_callable(sympy, "div")
-    let res = py_call_two(div, p, q)
-    py_encode_result(res)
+    sympy_call_must("sympy.div", [
+      OracleArg::PyObj(p_obj),
+      OracleArg::PyObj(q_obj),
+    ])
   }
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("div result tuple") }
+  let quo = py_sympy_expr_str(items[0])
+  let rem = py_sympy_expr_str(items[1])
+  "\{quo}||\{rem}"
 }
 
 ///|
-fn call_sympy_polys_json(
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  guard args.length() >= 1 else { fail("polys_call_json args") }
-  let op = oracle_arg_as_str(args[0])
-  let rest : Array[OracleArg] = Array::new()
-  for i in 1..<args.length() {
-    rest.push(args[i])
-  }
-  match op {
-    "gcd" => call_sympy_polys_gcd(rest, kwargs)
-    "resultant" => call_sympy_polys_resultant(rest, kwargs)
-    "groebner" => call_sympy_polys_groebner(rest, kwargs)
-    "factor" => call_sympy_polys_factor(rest, kwargs)
-    "sqf" => call_sympy_polys_sqf(rest, kwargs)
-    "div" => call_sympy_polys_div(rest, kwargs)
-    _ => fail("unknown polys op: \{op}")
-  }
-}
-
-///|
-fn sympy_oracle_call_json_inprocess(
-  func : String,
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  ensure_python()
-  match func {
-    "echo_args" => call_sympy_echo_args(args)
-    "echo_int" => call_sympy_echo_int(args)
-    "normalize_expr_str" => call_sympy_normalize_expr_str(args)
-    "resultant_str" => call_sympy_resultant_str(args)
-    "factor_list_str" => call_sympy_factor_list_str(args, kwargs)
-    "monic_expr_str" => call_sympy_monic_expr_str(args)
-    "sqf_list_str" => call_sympy_sqf_list_str(args)
-    "groebner_str" => call_sympy_groebner_str(args)
-    "sort_factor_repr" => call_sympy_sort_factor_repr(args)
-    "sqf_part_str" => call_sympy_sqf_part_str(args)
-    "expr_equal" => call_sympy_expr_equal(args)
-    "factor_list_json" => call_sympy_factor_list_json_stub(args)
-    "sympify_list_json" => call_sympy_sympify_list_json(args)
-    "polys_call_json" => call_sympy_polys_json(args, kwargs)
-    _ => oracle_dispatch_json_call(func, args, kwargs)
-  }
-}
-
-///|
-fn oracle_dispatch_json_call(
-  func : String,
-  args : Array[OracleArg],
-  kwargs : Map[String, OracleArg],
-) -> Json raise {
-  let payload = oracle_payload_json(func, args, kwargs)
-  let out = strip_trailing_newline(oracle_dispatch_json(payload))
-  let parsed = @json.parse(out)
-  match parsed {
-    Object(obj) =>
-      match obj.get("ok") {
-        Some(True) =>
-          match obj.get("value") {
-            Some(value) => value
-            None => fail("oracle JSON missing value")
-          }
-        Some(False) => {
-          let msg = match obj.get("error") {
-            Some(String(s)) => s
-            _ => "oracle error"
-          }
-          fail(msg)
-        }
-        _ => fail("oracle JSON missing ok flag")
-      }
-    _ => fail("oracle JSON not an object")
-  }
-}
-
-///|/// Call into SymPy and return the decoded JSON value.
-pub fn sympy_oracle_call_json(
-  func : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> Json raise {
-  sympy_oracle_call_json_inprocess(func, args, kwargs)
-}
-
-///|
-pub fn sympy_oracle_call(
-  func : String,
+////// Convenience wrapper that returns `str(result)` for SymPy calls.
+pub fn sympy_call_str(
+  path : String,
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
-  let value = sympy_oracle_call_json(func, args, kwargs~)
-  match value {
-    String(s) => s
-    _ => value.stringify()
-  }
+  let res = sympy_call_must(path, args, kwargs~)
+  py_sympy_enum_str(res)
 }
 
 ///|
-pub fn sympy_polys_call_json(
-  op : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> Json raise {
-  let full : Array[OracleArg] = Array::new()
-  full.push(OracleArg::Str(op))
-  for arg in args {
-    full.push(arg)
-  }
-  sympy_oracle_call_json("polys_call_json", full, kwargs~)
-}
-
-///|
-pub fn sympy_polys_call(
-  op : String,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
+pub fn sympy_resultant_str(
+  p : String,
+  q : String,
+  var_name : String,
 ) -> String raise {
-  let value = sympy_polys_call_json(op, args, kwargs~)
-  match value {
-    String(s) => s
-    _ => value.stringify()
-  }
+  let res = sympy_call_must("sympy.resultant", [
+    OracleArg::PyObj(sympy_sympify_str(p)),
+    OracleArg::PyObj(sympy_sympify_str(q)),
+    OracleArg::PyObj(sympy_sympify_str(var_name)),
+  ])
+  py_sympy_enum_str(res)
 }

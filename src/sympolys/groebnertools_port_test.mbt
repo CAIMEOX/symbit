@@ -24,9 +24,7 @@ fn normalize_basis_str(s : String) -> String raise {
 ///|
 fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let basis = Poly::groebner(polys, order~)
-  let ours = normalize_basis_str(
-    groebner_to_string(basis),
-  )
+  let ours = normalize_basis_str(groebner_to_string(basis))
   let exprs = polys.map(p => p.to_string())
   let oracle = normalize_basis_str(
     @sympy_polys.groebner_str(exprs, ord=order_to_sympy(order)),
@@ -58,7 +56,9 @@ test "groebnertools: grevlex ordering changes basis" {
       @symcore.symbol("y"),
     ]),
   )
-  let f2 = try! b.from_expr(@symcore.add([@symcore.symbol("x"), @symcore.int(-1)]))
+  let f2 = try! b.from_expr(
+    @symcore.add([@symcore.symbol("x"), @symcore.int(-1)]),
+  )
   expect_groebner_same([f1, f2], TermOrder::Grevlex)
 }
 

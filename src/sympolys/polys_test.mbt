@@ -27,8 +27,10 @@ test "reject non-integer exponent" {
     @symcore.symbol("x"),
     @symcore.rational_from_ints(1, 2),
   )
-  let status : Result[Poly, PolyError] =
-    try? PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  let status : Result[Poly, PolyError] = try? PolyBuilder::new(
+    ["x"],
+    Domain::ZZ,
+  ).from_expr(expr)
   guard status is Err(PolyError::BadExponent) else {
     fail("expected BadExponent")
   }
@@ -37,8 +39,10 @@ test "reject non-integer exponent" {
 ///|
 test "reject rational coefficient in ZZ domain" {
   let expr = @symcore.rational_from_ints(1, 2)
-  let status : Result[Poly, PolyError] =
-    try? PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
+  let status : Result[Poly, PolyError] = try? PolyBuilder::new(
+    ["x"],
+    Domain::ZZ,
+  ).from_expr(expr)
   guard status is Err(PolyError::CoefficientNotInteger) else {
     fail("expected CoefficientNotInteger")
   }

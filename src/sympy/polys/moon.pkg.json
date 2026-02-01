@@ -3,10 +3,6 @@
     {
       "path": "CAIMEOX/symbit/sympy",
       "alias": "sympy"
-    },
-    {
-      "path": "moonbitlang/core/json",
-      "alias": "json"
     }
   ]
 }

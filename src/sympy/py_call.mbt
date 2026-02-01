@@ -5,7 +5,9 @@ pub fn py_call_object(
   print_err? : Bool = false,
 ) -> @py.PyObjectEnum? {
   ensure_python()
-  try callable.invoke(args=args, print_err=print_err) catch { _ => None }
+  callable.invoke(args~, print_err~) catch {
+    _ => None
+  }
 }
 
 ///|
@@ -15,7 +17,7 @@ pub fn py_call_object_allow_none(
   args : @py.PyTuple,
   print_err? : Bool = false,
 ) -> @py.PyObjectEnum? {
-  py_call_object(callable, args, print_err=print_err)
+  py_call_object(callable, args, print_err~)
 }
 
 ///|
@@ -26,7 +28,7 @@ pub fn py_call_object_kwargs(
   print_err? : Bool = false,
 ) -> @py.PyObjectEnum? {
   ensure_python()
-  try callable.invoke(args=args, kwargs=kwargs, print_err=print_err) catch {
+  callable.invoke(args~, kwargs~, print_err~) catch {
     _ => None
   }
 }
@@ -75,7 +77,6 @@ extern "C" fn py_gil_state_release(state : Int) -> Unit = "PyGILState_Release"
 fn init {
   ignore(py_gil_ensure())
 }
-
 
 ///|
 /// Placeholder: low-level call helpers kept for reference.
