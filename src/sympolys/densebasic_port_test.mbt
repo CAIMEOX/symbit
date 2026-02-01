@@ -100,22 +100,19 @@ fn expr_from_coeffs_desc(coeffs : Array[Int]) -> String {
     let abs_c = if c < 0 { -c } else { c }
     let sign = if c < 0 { "-" } else { "" }
     let power = deg - i
-    let term =
-      if power == 0 {
-        "\{sign}\{abs_c}"
-      } else if power == 1 {
-        if abs_c == 1 {
-          "\{sign}x"
-        } else {
-          "\{sign}\{abs_c}*x"
-        }
+    let term = if power == 0 {
+      "\{sign}\{abs_c}"
+    } else if power == 1 {
+      if abs_c == 1 {
+        "\{sign}x"
       } else {
-        if abs_c == 1 {
-          "\{sign}x**\{power}"
-        } else {
-          "\{sign}\{abs_c}*x**\{power}"
-        }
+        "\{sign}\{abs_c}*x"
       }
+    } else if abs_c == 1 {
+      "\{sign}x**\{power}"
+    } else {
+      "\{sign}\{abs_c}*x**\{power}"
+    }
     parts.push(term)
   }
   if parts.is_empty() {
@@ -157,12 +154,31 @@ test "densebasic: univariate LC/TC/degree parity via SymPy" {
   let deg = dup_degree(elems)
   let expr = expr_from_coeffs_desc(coeffs)
   inspect(expr, content="2*x**4 + 3*x**3 + 5")
-  let lc_oracle = @sympy_polys.poly_lc(expr, gens=["x"])
-  let tc_oracle = @sympy_polys.poly_tc(expr, gens=["x"])
-  let degs = @sympy_polys.poly_degree_list(expr, gens=["x"])
+  let lc_oracle = @sympy.poly_lc(expr, gens=["x"])
+  let tc_oracle = @sympy.poly_tc(expr, gens=["x"])
+  let degs = @sympy.poly_degree_list(expr, gens=["x"])
   inspect(lc, content=lc_oracle)
   inspect(tc, content=tc_oracle)
   inspect(deg, content=degs[0].to_string())
+}
+
+///|
+test "densebasic: dmp_LC/TC zero and nested shapes" {
+  let z1 = poly([poly([])])
+  inspect(dense_repr(dmp_LC(z1)), content="[]")
+  inspect(dense_repr(dmp_TC(z1)), content="[]")
+  let f = poly([poly([coef(2), coef(3), coef(4)]), poly([coef(5)])])
+  inspect(dense_repr(dmp_LC(f)), content="[2,3,4]")
+  inspect(dense_repr(dmp_TC(f)), content="[5]")
+  let z2 = poly([poly([poly([])])])
+  inspect(dense_repr(dmp_LC(z2)), content="[[]]")
+  inspect(dense_repr(dmp_TC(z2)), content="[[]]")
+  let g = poly([
+    poly([poly([coef(2)]), poly([coef(3), coef(4)])]),
+    poly([poly([coef(5)])]),
+  ])
+  inspect(dense_repr(dmp_LC(g)), content="[[2],[3,4]]")
+  inspect(dense_repr(dmp_TC(g)), content="[[5]]")
 }
 
 ///|

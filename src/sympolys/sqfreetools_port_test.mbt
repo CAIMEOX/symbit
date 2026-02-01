@@ -2,12 +2,12 @@
 fn expect_sqf_list_same(poly : Poly) -> Unit raise {
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
-  let ours = @sympy_polys.canonical_cmp(@sympy_polys.sort_factor_repr(ours_raw))
-  let oracle = @sympy_polys.canonical_cmp(
-    @sympy_polys.sort_factor_repr(
+  let ours = canonical_cmp(sort_factor_repr(ours_raw))
+  let oracle = canonical_cmp(
+    sort_factor_repr(
       match poly.domain {
-        Domain::GF(p) => @sympy_polys.sqf_list_str(poly.to_string(), modulus=p)
-        _ => @sympy_polys.sqf_list_str(poly.to_string())
+        Domain::GF(p) => @sympy_polys.sqf_list(poly.to_string(), modulus=p)
+        _ => @sympy_polys.sqf_list(poly.to_string())
       },
     ),
   )
@@ -19,8 +19,8 @@ fn expect_sqf_list_same(poly : Poly) -> Unit raise {
 ///|
 fn expect_sqf_part_same(poly : Poly) -> Unit raise {
   let sqf = poly.sqf_part()
-  let oracle_sqf = @sympy_polys.sqf_part_str(poly.to_string())
-  let eq = @sympy_polys.expr_equal(sqf.to_string(), oracle_sqf)
+  let oracle_sqf = @sympy_polys.sqf_part(poly.to_string())
+  let eq = expr_equal(sqf.to_string(), oracle_sqf)
   guard eq else {
     fail("sqf_part mismatch: ours=\{sqf.to_string()}, oracle=\{oracle_sqf}")
   }

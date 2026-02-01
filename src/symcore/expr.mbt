@@ -34,6 +34,7 @@ pub impl Mul for Expr with mul(self, other) {
   mul([self, other])
 }
 
+///|
 pub impl Sub for Expr with sub(self, other) {
   add([self, mul([int(-1), other])])
 }
@@ -43,6 +44,7 @@ impl Show for Expr with output(self, logger) {
   logger.write_string(self.to_string())
 }
 
+///|
 pub impl BitXOr for Expr with lxor(self, other) {
   pow(self, other)
 }
@@ -204,6 +206,7 @@ test "arbitrary array use gen" {
   )
 }
 
+///|
 test "symbolized" {
   let x = symbol("x")
   let y = symbol("y")

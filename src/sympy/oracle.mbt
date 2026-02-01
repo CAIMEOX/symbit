@@ -579,7 +579,7 @@ fn sympy_factor_str(
 }
 
 ///|
-pub fn sympy_factor_list_str(expr : String, modulus? : Int = 0) -> String raise {
+pub fn factor_list(expr : String, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let expr_obj = sympy_sympify_str(expr)
   let sympy = ensure_sympy_module_oracle()
@@ -633,7 +633,7 @@ pub fn sympy_factor_list_str(expr : String, modulus? : Int = 0) -> String raise 
 }
 
 ///|
-pub fn sympy_monic_expr_str(expr : String, modulus? : Int = 0) -> String raise {
+pub fn monic(expr : String, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let expr_obj = sympy_sympify_str(expr)
   let poly = call_sympy_poly(expr_obj, [], "", modulus_opt)
@@ -646,7 +646,7 @@ pub fn sympy_monic_expr_str(expr : String, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn sympy_sqf_list_str(expr : String, modulus? : Int = 0) -> String raise {
+pub fn sqf_list(expr : String, modulus? : Int = 0) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let expr_obj = sympy_sympify_str(expr)
   let sympy = ensure_sympy_module_oracle()
@@ -702,10 +702,7 @@ pub fn sympy_sqf_list_str(expr : String, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn sympy_groebner_str(
-  exprs : Array[String],
-  order? : String = "lex",
-) -> String raise {
+pub fn groebner(exprs : Array[String], order? : String = "lex") -> String raise {
   let expr_objs : Array[@py.PyObject] = Array::new()
   for expr in exprs {
     expr_objs.push(sympy_sympify_str(expr))
@@ -783,7 +780,7 @@ pub fn sympy_sort_factor_repr(repr_str : String) -> String raise {
 }
 
 ///|
-pub fn sympy_sqf_part_str(expr : String) -> String raise {
+pub fn sqf_part(expr : String) -> String raise {
   let expr_obj = sympy_sympify_str(expr)
   let poly = call_sympy_poly(expr_obj, [], "", None)
   let sqf_part = resolve_method_callable(poly, "sqf_part")
@@ -795,7 +792,7 @@ pub fn sympy_sqf_part_str(expr : String) -> String raise {
 }
 
 ///|
-pub fn sympy_expr_equal(lhs : String, rhs : String) -> Bool raise {
+pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
   let diff_expr = sympy_sympify_str("(\{lhs}) - (\{rhs})")
   let res = sympy_call_must("sympy.simplify", [OracleArg::PyObj(diff_expr)])
   py_str_enum(res) == "0"
@@ -828,7 +825,7 @@ fn call_sympy_poly(
 }
 
 ///|
-pub fn sympy_polys_gcd_str(
+pub fn gcd(
   p : String,
   q : String,
   gens? : Array[String] = [],
@@ -864,10 +861,10 @@ pub fn sympy_polys_gcd_str(
 }
 
 ///|
-pub fn sympy_polys_resultant_str(
+pub fn resultant(
   p : String,
   q : String,
-  var_name? : String = "",
+  x? : String = "",
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
@@ -875,8 +872,8 @@ pub fn sympy_polys_resultant_str(
   let p_obj = sympy_sympify_str(p)
   let q_obj = sympy_sympify_str(q)
   let mut var_obj : @py.PyObject? = None
-  if var_name != "" {
-    var_obj = Some(sympy_sympify_str(var_name))
+  if x != "" {
+    var_obj = Some(sympy_sympify_str(x))
   }
   let gens0 = if gens.is_empty() {
     None
@@ -936,56 +933,9 @@ pub fn sympy_polys_resultant_str(
 }
 
 ///|
-pub fn sympy_polys_groebner_list(
-  exprs : Array[String],
-  gens? : Array[String] = [],
-  order? : String = "",
-  domain? : String = "",
-  modulus? : Int = 0,
-) -> Array[String] raise {
-  let polys : Array[@py.PyObject] = Array::new()
-  for expr in exprs {
-    polys.push(sympy_sympify_str(expr))
-  }
-  let gens_list = if gens.is_empty() {
-    sympy_default_gens(polys)
-  } else {
-    sympy_symbols_from_names(gens)
-  }
-  let args0 : Array[OracleArg] = Array::new()
-  let py_polys = py_list_from_objects(polys)
-  args0.push(OracleArg::PyObj(py_polys.obj()))
-  for g in gens_list {
-    args0.push(OracleArg::PyObj(g))
-  }
-  let kwargs : Map[String, OracleArg] = {}
-  if order != "" {
-    kwargs["order"] = OracleArg::Str(order)
-  }
-  if domain != "" {
-    kwargs["domain"] = OracleArg::Str(domain)
-  }
-  if modulus != 0 {
-    kwargs["modulus"] = OracleArg::Int(modulus)
-  }
-  let res = sympy_call_must("sympy.groebner", args0, kwargs~)
-  let res_obj = objenum_to_obj(res)
-  let polys_enum = match py_get_attr(res_obj, "polys") {
-    Some(v) => v
-    None => fail("groebner.polys missing")
-  }
-  let polys_list = py_list_to_pyobjects(polys_enum)
-  let basis : Array[String] = Array::new()
-  for poly in polys_list {
-    basis.push(py_sympy_expr_str(poly))
-  }
-  basis
-}
 
 ///|
-
-///|
-pub fn sympy_polys_div_pair_str(
+pub fn div(
   p : String,
   q : String,
   gens? : Array[String] = [],
@@ -1024,7 +974,7 @@ pub fn sympy_polys_div_pair_str(
 }
 
 ///|
-pub fn sympy_poly_degree_list(
+pub fn poly_degree_list(
   expr : String,
   gens? : Array[String] = [],
 ) -> Array[Int] raise {
@@ -1040,7 +990,7 @@ pub fn sympy_poly_degree_list(
 }
 
 ///|
-pub fn sympy_poly_lc(expr : String, gens? : Array[String] = []) -> String raise {
+pub fn poly_lc(expr : String, gens? : Array[String] = []) -> String raise {
   let poly = sympy_poly_from_expr(expr, gens)
   let lc = resolve_method_callable(poly, "LC")
   let res = py_call_noargs(lc)
@@ -1048,7 +998,7 @@ pub fn sympy_poly_lc(expr : String, gens? : Array[String] = []) -> String raise 
 }
 
 ///|
-pub fn sympy_poly_tc(expr : String, gens? : Array[String] = []) -> String raise {
+pub fn poly_tc(expr : String, gens? : Array[String] = []) -> String raise {
   let poly = sympy_poly_from_expr(expr, gens)
   let tc = resolve_method_callable(poly, "TC")
   let res = py_call_noargs(tc)
@@ -1057,25 +1007,11 @@ pub fn sympy_poly_tc(expr : String, gens? : Array[String] = []) -> String raise 
 
 ///|
 /// Convenience wrapper that returns `str(result)` for SymPy calls.
-pub fn sympy_call_str(
+pub fn sympy_call_string(
   path : String,
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> String raise {
   let res = sympy_call_must(path, args, kwargs~)
-  py_sympy_enum_str(res)
-}
-
-///|
-pub fn sympy_resultant_str(
-  p : String,
-  q : String,
-  var_name : String,
-) -> String raise {
-  let res = sympy_call_must("sympy.resultant", [
-    OracleArg::PyObj(sympy_sympify_str(p)),
-    OracleArg::PyObj(sympy_sympify_str(q)),
-    OracleArg::PyObj(sympy_sympify_str(var_name)),
-  ])
   py_sympy_enum_str(res)
 }

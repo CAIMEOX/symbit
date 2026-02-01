@@ -24,15 +24,40 @@ fn expr_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-fn poly_canon_str(p : Poly) -> String raise {
-  @sympy_polys.sympy_normalize(p.to_string())
+fn normalize_spaces(s : String) -> String {
+  @sympy.remove_spaces(s)
+}
+
+///|
+fn sympy_normalize(expr_str : String) -> String {
+  try! @sympy.sympy_normalize(expr_str)
+}
+
+///|
+fn canonical_cmp(s : String) -> String {
+  @sympy.canonical_cmp(s)
+}
+
+///|
+fn sort_factor_repr(repr_str : String) -> String {
+  try! @sympy.sympy_sort_factor_repr(repr_str)
+}
+
+///|
+fn expr_equal(lhs : String, rhs : String) -> Bool {
+  try! @sympy.expr_equal(lhs, rhs)
+}
+
+///|
+fn poly_canon_str(p : Poly) -> String {
+  sympy_normalize(p.to_string())
 }
 
 ///|
 fn factor_list_to_string(
   content_str : String,
   factors : Array[(Poly, Int)],
-) -> String  {
+) -> String {
   let c_norm = content_str
   let triples : Array[(Int, String, Int)] = Array::new()
   for pair in factors {
@@ -63,7 +88,7 @@ fn factor_list_to_string(
 }
 
 ///|
-fn groebner_to_string(basis : Array[Poly]) -> String  {
+fn groebner_to_string(basis : Array[Poly]) -> String {
   let parts : Array[String] = {
     let arr = Array::new()
     for p in basis {
@@ -76,6 +101,6 @@ fn groebner_to_string(basis : Array[Poly]) -> String  {
 }
 
 ///|
-fn div_pair_to_string(quo : Poly, rem : Poly) -> String raise {
+fn div_pair_to_string(quo : Poly, rem : Poly) -> String {
   "\{poly_canon_str(quo)}||\{poly_canon_str(rem)}"
 }

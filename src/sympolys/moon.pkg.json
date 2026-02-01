@@ -5,6 +5,7 @@
     "CAIMEOX/symbit/symprint"
   ],
   "test-import": [
+    "CAIMEOX/symbit/sympy",
     {
       "path": "CAIMEOX/symbit/sympy/polys",
       "alias": "sympy_polys"

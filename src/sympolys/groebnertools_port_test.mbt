@@ -12,9 +12,9 @@ fn normalize_basis_str(s : String) -> String raise {
   let parts : Array[String] = Array::new()
   for part in s.split("|") {
     let raw = part.to_string()
-    let monic = @sympy_polys.monic_expr_str(raw)
-    let normalized = @sympy_polys.sympy_normalize(monic)
-    parts.push(@sympy_polys.canonical_cmp(normalized))
+    let monic = @sympy_polys.monic(raw)
+    let normalized = sympy_normalize(monic)
+    parts.push(canonical_cmp(normalized))
   }
   parts.sort()
   parts.join("|")
@@ -26,7 +26,7 @@ fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let ours = normalize_basis_str(groebner_to_string(basis))
   let exprs = polys.map(p => p.to_string())
   let oracle = normalize_basis_str(
-    @sympy_polys.groebner_str(exprs, ord=order_to_sympy(order)),
+    @sympy_polys.groebner(exprs, order=order_to_sympy(order)),
   )
   guard ours == oracle else {
     fail("groebner mismatch: ours=\{ours}, oracle=\{oracle}")
@@ -214,7 +214,9 @@ test "groebnertools: grlex basis for y - x^2, z - x^3" {
 
 ///|
 test "groebnertools: grevlex basis for x*y + z, x - z, y - z" {
-  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ).order(TermOrder::Grevlex)
+  let b = PolyBuilder::new(["x", "y", "z"], Domain::QQ).order(
+    TermOrder::Grevlex,
+  )
   let f1 = b.from_expr(
     @symcore.add([
       @symcore.mul([@symcore.symbol("x"), @symcore.symbol("y")]),
@@ -224,19 +226,13 @@ test "groebnertools: grevlex basis for x*y + z, x - z, y - z" {
   let f2 = b.from_expr(
     @symcore.add([
       @symcore.symbol("x"),
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.symbol("z"),
-      ]),
+      @symcore.mul([@symcore.int(-1), @symcore.symbol("z")]),
     ]),
   )
   let f3 = try! b.from_expr(
     @symcore.add([
       @symcore.symbol("y"),
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.symbol("z"),
-      ]),
+      @symcore.mul([@symcore.int(-1), @symcore.symbol("z")]),
     ]),
   )
   expect_groebner_same([f1, f2, f3], TermOrder::Grevlex)
@@ -256,19 +252,13 @@ test "groebnertools: lex basis for sphere constraints" {
   let f2 = b.from_expr(
     @symcore.add([
       @symcore.symbol("x"),
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.symbol("y"),
-      ]),
+      @symcore.mul([@symcore.int(-1), @symcore.symbol("y")]),
     ]),
   )
   let f3 = try! b.from_expr(
     @symcore.add([
       @symcore.symbol("y"),
-      @symcore.mul([
-        @symcore.int(-1),
-        @symcore.symbol("z"),
-      ]),
+      @symcore.mul([@symcore.int(-1), @symcore.symbol("z")]),
     ]),
   )
   expect_groebner_same([f1, f2, f3], TermOrder::Lex)
