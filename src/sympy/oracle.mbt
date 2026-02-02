@@ -2948,14 +2948,55 @@ pub fn roots_quadratic(
 }
 
 ///|
+pub fn roots_cubic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(poly))
+  let res = sympy_call_must("sympy.polys.polyroots.roots_cubic", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn roots_quartic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens_list = if gens.is_empty() {
+    sympy_default_gens([expr_obj])
+  } else {
+    sympy_symbols_from_names(gens)
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, "", None)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(poly))
+  let res = sympy_call_must("sympy.polys.polyroots.roots_quartic", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn rootof(
   expr : @symcore.Expr,
   index : Int,
+  radicals? : Bool = true,
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(expr_to_sympy(expr)))
   args.push(OracleArg::Int(index))
-  let res = sympy_call_must("sympy.polys.rootoftools.rootof", args)
+  let kwargs : Map[String, OracleArg] = {}
+  if !radicals {
+    kwargs["radicals"] = OracleArg::Bool(false)
+  }
+  let res = sympy_call_must("sympy.polys.rootoftools.rootof", args, kwargs~)
   py_sympy_enum_str(res)
 }
 
@@ -2992,6 +3033,62 @@ pub fn dup_mignotte_sep_bound_squared(
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.rootisolation.dup_mignotte_sep_bound_squared", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_sturm(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_sturm", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_refine_real_root(
+  coeffs : Array[@symnum.BigRational],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain? : String = "QQ",
+  steps? : Int,
+  eps? : @symnum.BigRational,
+  disjoint? : @symnum.BigRational,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(s, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(t, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let kwargs : Map[String, OracleArg] = {}
+  match steps {
+    Some(k) => kwargs["steps"] = OracleArg::Int(k)
+    None => ()
+  }
+  match eps {
+    Some(e) => kwargs["eps"] = OracleArg::PyObj(sympy_domain_elem(e, domain))
+    None => ()
+  }
+  match disjoint {
+    Some(d) => kwargs["disjoint"] = OracleArg::PyObj(sympy_domain_elem(d, domain))
+    None => ()
+  }
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_refine_real_root", args, kwargs~)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_isolate_real_roots_sqf(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_isolate_real_roots_sqf", args)
   remove_spaces(py_dense_str(res))
 }
 

@@ -7,102 +7,129 @@ fn ensure_univar(poly : Poly) -> Unit raise PolyError {
 }
 
 ///|
-pub fn roots_linear(poly : Poly) -> Array[FieldElem] raise PolyError {
+fn coeff_expr(poly : Poly, exp : Int) -> @symcore.Expr raise PolyError {
+  let mono = monomial_one(1)
+  mono.exps.set(0, exp)
+  match poly.coeffs.get(mono) {
+    Some(c) => field_elem_to_expr(c, poly.domain)
+    None => @symcore.int(0)
+  }
+}
+
+///|
+pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
-  let dense = to_dense(poly)
-  if dense.length() != 2 {
+  let deg = poly.degree(0)
+  if deg != 1 {
     raise PolyError::BadExponent
   }
-  let b = dense[0]
-  let a = dense[1]
-  if fe_is_zero(a) {
-    raise PolyError::DivisionByZero
-  }
-  let root = fe_mul(fe_neg(b), fe_inv(a))
+  let a = coeff_expr(poly, 1)
+  let b = coeff_expr(poly, 0)
+  let neg_b = @symcore.mul([@symcore.int(-1), b])
+  let denom = a
+  let inv = @symcore.pow(denom, @symcore.int(-1))
+  let root = @symcore.mul([neg_b, inv])
   [root]
 }
 
 ///|
-fn int_sqrt(n : Int) -> Int {
-  if n <= 0 {
-    return 0
-  }
-  let mut lo = 1
-  let mut hi = n
-  let mut ans = 0
-  while lo <= hi {
-    let mid = (lo + hi) / 2
-    let sq = mid * mid
-    if sq == n {
-      return mid
-    } else if sq < n {
-      ans = mid
-      lo = mid + 1
-    } else {
-      hi = mid - 1
-    }
-  }
-  ans
-}
-
-///|
-fn sqrt_bigint_opt(n : BigInt) -> BigInt? {
-  if n.op_lt(BigInt::from_int(0)) {
-    return None
-  }
-  let v = n.to_int()
-  if v < 0 {
-    return None
-  }
-  let r = int_sqrt(v)
-  if r * r == v {
-    Some(BigInt::from_int(r))
-  } else {
-    None
-  }
-}
-
-///|
-fn sqrt_rational_opt(
-  r : @symnum.BigRational,
-) -> @symnum.BigRational? {
-  if r.compare(@symnum.BigRational::zero()) < 0 {
-    return None
-  }
-  let num = r.numerator()
-  let den = r.denominator()
-  match (sqrt_bigint_opt(num), sqrt_bigint_opt(den)) {
-    (Some(n), Some(d)) =>
-      Some(try! @symnum.BigRational::new(n, d))
-    _ => None
-  }
-}
-
-///|
-pub fn roots_quadratic(poly : Poly) -> Array[FieldElem] raise PolyError {
+pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
-  let dense = to_dense(poly)
-  if dense.length() != 3 {
+  let deg = poly.degree(0)
+  if deg != 2 {
     raise PolyError::BadExponent
   }
-  let c = dense[0]
-  let b = dense[1]
-  let a = dense[2]
-  if fe_is_zero(a) {
-    raise PolyError::DivisionByZero
+  let a = coeff_expr(poly, 2)
+  let b = coeff_expr(poly, 1)
+  let c = coeff_expr(poly, 0)
+  let four = @symcore.int(4)
+  let two = @symcore.int(2)
+  let b2 = b ^ @symcore.int(2)
+  let ac4 = @symcore.mul([four, a, c])
+  let disc = @symcore.add([b2, @symcore.mul([@symcore.int(-1), ac4])])
+  let half = try @symcore.rational_from_ints(1, 2) catch {
+    _ => raise PolyError::NotImplemented("quadratic: half")
   }
-  let four = fe_from_int(4, poly.domain)
-  let two = fe_from_int(2, poly.domain)
-  let disc = fe_sub(fe_mul(b, b), fe_mul(four, fe_mul(a, c)))
-  let disc_rat = fe_expect_rational(disc)
-  let sqrt_disc = match sqrt_rational_opt(disc_rat) {
-    Some(v) => v
-    None => raise PolyError::NotImplemented("quadratic: non-square disc")
-  }
-  let sqrt_fe = fe_from_rational(sqrt_disc, poly.domain)
-  let neg_b = fe_neg(b)
-  let denom = fe_mul(two, a)
-  let r1 = fe_mul(fe_sub(neg_b, sqrt_fe), fe_inv(denom))
-  let r2 = fe_mul(fe_add(neg_b, sqrt_fe), fe_inv(denom))
+  let sqrt_disc = @symcore.pow(disc, half)
+  let neg_b = @symcore.mul([@symcore.int(-1), b])
+  let denom = @symcore.mul([two, a])
+  let inv = @symcore.pow(denom, @symcore.int(-1))
+  let r1 = @symcore.mul([@symcore.add([neg_b, @symcore.mul([@symcore.int(-1), sqrt_disc])]), inv])
+  let r2 = @symcore.mul([@symcore.add([neg_b, sqrt_disc]), inv])
   [r1, r2]
+}
+
+///|
+fn append_roots(
+  out : Array[@symcore.Expr],
+  roots : Array[@symcore.Expr],
+  mult : Int,
+) -> Unit {
+  for _ in 0..<mult {
+    for r in roots {
+      out.push(r)
+    }
+  }
+}
+
+///|
+fn rootof_expr(poly : Poly, index : Int) -> @symcore.Expr {
+  @symcore.function(
+    "CRootOf",
+    [poly.to_expr(), @symcore.int(index)],
+  )
+}
+
+///|
+pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+  ensure_univar(poly)
+  let deg = poly.degree(0)
+  if deg != 3 {
+    raise PolyError::BadExponent
+  }
+  let (_, factors) = poly.factor_list()
+  let roots : Array[@symcore.Expr] = Array::new()
+  for pair in factors {
+    let (f, mult) = pair
+    let fdeg = f.degree(0)
+    if fdeg == 1 {
+      append_roots(roots, roots_linear(f), mult)
+    } else if fdeg == 2 {
+      append_roots(roots, roots_quadratic(f), mult)
+    } else {
+      let ros : Array[@symcore.Expr] = Array::new()
+      for i in 0..<fdeg {
+        ros.push(rootof_expr(f, i))
+      }
+      append_roots(roots, ros, mult)
+    }
+  }
+  roots
+}
+
+///|
+pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+  ensure_univar(poly)
+  let deg = poly.degree(0)
+  if deg != 4 {
+    raise PolyError::BadExponent
+  }
+  let (_, factors) = poly.factor_list()
+  let roots : Array[@symcore.Expr] = Array::new()
+  for pair in factors {
+    let (f, mult) = pair
+    let fdeg = f.degree(0)
+    if fdeg == 1 {
+      append_roots(roots, roots_linear(f), mult)
+    } else if fdeg == 2 {
+      append_roots(roots, roots_quadratic(f), mult)
+    } else {
+      let ros : Array[@symcore.Expr] = Array::new()
+      for i in 0..<fdeg {
+        ros.push(rootof_expr(f, i))
+      }
+      append_roots(roots, ros, mult)
+    }
+  }
+  roots
 }

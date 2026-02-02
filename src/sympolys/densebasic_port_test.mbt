@@ -318,6 +318,9 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   let u1 = poly([coef(0), coef(0)])
   let u1s = dmp_strip(u1)
   inspect(dense_repr(u1s), content="[]")
+  let u1b = poly([coef(0), coef(0), coef(0)])
+  let u1bs = dmp_strip(u1b)
+  inspect(dense_repr(u1bs), content="[]")
   let u2 = poly([coef(0), coef(1), coef(0)])
   let u2s = dmp_strip(u2)
   inspect(dense_repr(u2s), content="[1,0]")
@@ -329,6 +332,7 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   inspect(dense_repr(u4s), content="[1,2,0]")
   let z1 = poly([])
   let zstrip = dmp_strip(z1)
+  inspect(dense_repr(zstrip), content="[]")
   let zlen = match zstrip {
     DensePoly::Poly(items) => items.length().to_string()
     _ => "0"
@@ -351,6 +355,10 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   inspect(dense_repr(rev1), content="[3,2,1]")
   let rev2 = dmp_reverse(poly([coef(1), coef(2), coef(0), coef(3)]))
   inspect(dense_repr(rev2), content="[3,0,2,1]")
+  let revz = dmp_reverse(poly([]))
+  inspect(dense_repr(revz), content="[]")
+  let revc = dmp_reverse(coef(3))
+  inspect(dense_repr(revc), content="3")
   let mv = poly([
     poly([poly([coef(1), coef(0)]), poly([coef(2)])]),
     poly([poly([coef(3)])]),
@@ -360,6 +368,8 @@ test "densebasic: dmp_strip and dmp_reverse edge cases" {
   inspect(dense_repr(mv_rev), content="[[[3]],[[2],[1]]]")
   let rz1 = dmp_reverse(poly([poly([]), poly([])]))
   inspect(dense_repr(rz1), content="[[]]")
+  let rz0 = dmp_reverse(poly([poly([]), poly([]), poly([])]))
+  inspect(dense_repr(rz0), content="[[]]")
   let rz2 = dmp_reverse(poly([poly([]), poly([coef(1)])]))
   inspect(dense_repr(rz2), content="[[1],[]]")
 }
@@ -506,6 +516,16 @@ test "densebasic: dmp_validate" {
 
 ///|
 test "densebasic: dmp_degree_in/list coverage" {
+  let z1 = poly([poly([])])
+  inspect(dmp_degree(z1, 1), content="-1")
+  inspect(dmp_degree_in(z1, 0, 1), content="-1")
+  inspect(dmp_degree_in(z1, 1, 1), content="-1")
+  let c0 = poly([poly([coef(1)])])
+  inspect(dmp_degree(c0, 1), content="0")
+  inspect(dmp_degree_in(c0, 0, 1), content="0")
+  inspect(dmp_degree_in(c0, 1, 1), content="0")
+  let f0 = poly([poly([coef(2)]), poly([coef(1)])])
+  inspect(dmp_degree(f0, 1), content="1")
   let f = poly([poly([coef(1)]), poly([coef(0)]), poly([coef(2), coef(0)])])
   inspect(dmp_degree(f, 1), content="2")
   inspect(dmp_degree_in(f, 1, 1), content="1")

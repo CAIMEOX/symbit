@@ -356,8 +356,28 @@ pub fn roots_quadratic(
 }
 
 ///|
-pub fn rootof(expr : @symcore.Expr, index : Int) -> String raise {
-  @sympy.rootof(expr, index)
+pub fn roots_cubic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  @sympy.roots_cubic(expr, gens~)
+}
+
+///|
+pub fn roots_quartic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  @sympy.roots_quartic(expr, gens~)
+}
+
+///|
+pub fn rootof(
+  expr : @symcore.Expr,
+  index : Int,
+  radicals? : Bool = true,
+) -> String raise {
+  @sympy.rootof(expr, index, radicals~)
 }
 
 ///|
@@ -382,6 +402,81 @@ pub fn dup_mignotte_sep_bound_squared(
   domain? : String = "QQ",
 ) -> String raise {
   @sympy.dup_mignotte_sep_bound_squared(coeffs, domain~)
+}
+
+///|
+pub fn dup_sturm(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_sturm(coeffs, domain~)
+}
+
+///|
+pub fn dup_refine_real_root(
+  coeffs : Array[@symnum.BigRational],
+  s : @symnum.BigRational,
+  t : @symnum.BigRational,
+  domain? : String = "QQ",
+  steps? : Int,
+  eps? : @symnum.BigRational,
+  disjoint? : @symnum.BigRational,
+) -> String raise {
+  match (steps, eps, disjoint) {
+    (None, None, None) =>
+      @sympy.dup_refine_real_root(coeffs, s, t, domain=domain)
+    (Some(k), None, None) =>
+      @sympy.dup_refine_real_root(coeffs, s, t, domain=domain, steps=k)
+    (None, Some(e), None) =>
+      @sympy.dup_refine_real_root(coeffs, s, t, domain=domain, eps=e)
+    (None, None, Some(d)) =>
+      @sympy.dup_refine_real_root(coeffs, s, t, domain=domain, disjoint=d)
+    (Some(k), Some(e), None) =>
+      @sympy.dup_refine_real_root(
+        coeffs,
+        s,
+        t,
+        domain=domain,
+        steps=k,
+        eps=e,
+      )
+    (Some(k), None, Some(d)) =>
+      @sympy.dup_refine_real_root(
+        coeffs,
+        s,
+        t,
+        domain=domain,
+        steps=k,
+        disjoint=d,
+      )
+    (None, Some(e), Some(d)) =>
+      @sympy.dup_refine_real_root(
+        coeffs,
+        s,
+        t,
+        domain=domain,
+        eps=e,
+        disjoint=d,
+      )
+    (Some(k), Some(e), Some(d)) =>
+      @sympy.dup_refine_real_root(
+        coeffs,
+        s,
+        t,
+        domain=domain,
+        steps=k,
+        eps=e,
+        disjoint=d,
+      )
+  }
+}
+
+///|
+pub fn dup_isolate_real_roots_sqf(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_isolate_real_roots_sqf(coeffs, domain~)
 }
 
 ///|

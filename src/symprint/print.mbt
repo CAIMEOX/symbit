@@ -47,7 +47,16 @@ fn format_expr(expr : @symcore.Expr, parent_prec : Int) -> String {
     @symcore.Expr::Pow(base, exp) => {
       let base_str = format_expr(base, prec)
       let exp_str = format_expr(exp, prec)
-      "\{base_str}**\{exp_str}"
+      let wrapped_base = match base {
+        @symcore.Expr::Number(n) if !n.is_integral() ||
+            n.numerator().op_lt(BigInt::from_int(0)) => "(\{base_str})"
+        _ => base_str
+      }
+      let wrapped_exp = match exp {
+        @symcore.Expr::Number(n) if !n.is_integral() => "(\{exp_str})"
+        _ => exp_str
+      }
+      "\{wrapped_base}**\{wrapped_exp}"
     }
     @symcore.Expr::Function(name, args) => {
       let rendered = args.map(child => format_expr(child, prec)).join(", ")
