@@ -46,6 +46,49 @@ pub fn sympy_normalize(expr_str : String) -> String raise {
 }
 
 ///|
+pub fn poly_expr(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let gens0 = if gens.is_empty() {
+    None
+  } else {
+    Some(sympy_symbols_from_names(gens))
+  }
+  let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let gens_list = match gens0 {
+    Some(list) => list
+    None => sympy_default_gens([expr_obj])
+  }
+  let poly = call_sympy_poly(expr_obj, gens_list, domain, modulus_opt)
+  let as_expr = resolve_method_callable(poly, "as_expr")
+  let expr_enum = py_call_noargs(as_expr)
+  py_str_enum(expr_enum)
+}
+
+///|
+pub fn mod_rational(num : Int, den : Int, p : Int) -> String raise {
+  let inv = sympy_call_must("sympy.mod_inverse", [
+    OracleArg::Int(den),
+    OracleArg::Int(p),
+  ])
+  let inv_obj = objenum_to_obj(inv)
+  let num_obj = sympy_call_must("sympy.Integer", [OracleArg::Int(num)])
+  let mul = sympy_call_must("sympy.Mul", [
+    OracleArg::PyObj(objenum_to_obj(num_obj)),
+    OracleArg::PyObj(inv_obj),
+  ])
+  let mod_res = sympy_call_must("sympy.Mod", [
+    OracleArg::PyObj(objenum_to_obj(mul)),
+    OracleArg::Int(p),
+  ])
+  py_str_enum(mod_res)
+}
+
+///|
 
 ///|
 
@@ -949,14 +992,8 @@ pub fn resultant(
     let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt)
     let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt)
     let resultant = resolve_method_callable(pa, "resultant")
-    let res = match var_obj {
-      Some(v) => {
-        let kwargs_dict = py_dict_new()
-        py_dict_set_obj(kwargs_dict, "var", v)
-        py_call_one_kwargs(resultant, pb, kwargs_dict)
-      }
-      None => py_call_one(resultant, pb)
-    }
+    // Poly.resultant does not accept a 'var' kwarg; gens ordering handles it.
+    let res = py_call_one(resultant, pb)
     py_sympy_enum_str(res)
   } else {
     if var_obj is None {

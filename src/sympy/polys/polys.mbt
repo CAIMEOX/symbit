@@ -131,6 +131,16 @@ pub fn decompose(
 }
 
 ///|
+pub fn poly_expr(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+  domain? : String = "",
+  modulus? : Int = 0,
+) -> String raise {
+  @sympy.poly_expr(expr, gens~, domain~, modulus~)
+}
+
+///|
 pub fn sturm(
   f : @symcore.Expr,
   gens? : Array[String] = [],

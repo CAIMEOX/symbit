@@ -22,7 +22,11 @@ pub fn normalize_mod(
         raise PolyError::DivisionByZero
       }
       let inv_den = mod_inv(den, m)
-      @symnum.BigRational::from_bigint(num.mul(inv_den))
+      let mut reduced = num.mul(inv_den).mod(m)
+      if reduced.op_lt(BigInt::from_int(0)) {
+        reduced = reduced.add(m)
+      }
+      @symnum.BigRational::from_bigint(reduced)
     }
     Domain::AlgExt(_, _, _) =>
       raise PolyError::NotImplemented("algebraic-extension-mod")

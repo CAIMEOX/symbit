@@ -84,48 +84,149 @@ fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
     arr.push(poly)
     return arr
   }
-  let p = choose_good_prime(poly)
-  let f_mod = map_to_gf(poly, p)
-  let factors_mod = factor_gf(f_mod)
-  if factors_mod.length() <= 1 {
-    let arr : Array[Poly] = Array::new()
-    arr.push(poly)
-    return arr
-  }
-  let lifted : Array[Poly] = Array::new()
-  for f in factors_mod {
-    lifted.push(lift_gf_factor_to_int(f, p))
-  }
-  let result : Array[Poly] = Array::new()
-  let mut remaining = poly
-  let n = lifted.length()
-  let limit = 1 << n
-  for mask in 1..<limit {
-    if mask == limit - 1 {
+  let primes : Array[Int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+  for p in primes {
+    let f_mod = map_to_gf(poly, p)
+    let deriv = deriv_univar(f_mod)
+    if !is_one(f_mod.gcd_univar(deriv)) {
       continue
     }
-    let subset : Array[Poly] = Array::new()
-    for i in 0..<n {
-      if ((mask >> i) & 1) == 1 {
-        subset.push(lifted[i])
+    let factors_mod = factor_gf(f_mod)
+    if factors_mod.length() <= 1 {
+      continue
+    }
+    let lifted : Array[Poly] = Array::new()
+    for f in factors_mod {
+      lifted.push(lift_gf_factor_to_int(f, p))
+    }
+    let result : Array[Poly] = Array::new()
+    let mut remaining = poly
+    let n = lifted.length()
+    let limit = 1 << n
+    for mask in 1..<limit {
+      if mask == limit - 1 {
+        continue
+      }
+      let subset : Array[Poly] = Array::new()
+      for i in 0..<n {
+        if ((mask >> i) & 1) == 1 {
+          subset.push(lifted[i])
+        }
+      }
+      if subset.is_empty() {
+        continue
+      }
+      let a = product_polys(subset)
+      let g = remaining.gcd_univar(a)
+      let deg_g = g.degree(0)
+      if deg_g > 0 && deg_g < remaining.degree(0) {
+        let q = remaining.div_exact_univar(g)
+        result.push(g.primitive_part())
+        remaining = q.primitive_part()
       }
     }
-    if subset.is_empty() {
-      continue
+    if !remaining.is_zero() && !is_one(remaining) {
+      result.push(remaining)
     }
-    let a = product_polys(subset)
-    let g = remaining.gcd_univar(a)
-    let deg_g = g.degree(0)
-    if deg_g > 0 && deg_g < remaining.degree(0) {
-      let q = remaining.div_exact_univar(g)
-      result.push(g.primitive_part())
-      remaining = q.primitive_part()
+    let prod = factors_product(result, poly.gens, poly.domain) catch { _ => poly }
+    let diff = poly.sub(prod) catch { _ => poly }
+    let diff_neg = poly.sub(prod.neg()) catch { _ => poly }
+    if diff.is_zero() || diff_neg.is_zero() {
+      return result
     }
   }
-  if !remaining.is_zero() && !is_one(remaining) {
-    result.push(remaining)
+  let arr : Array[Poly] = Array::new()
+  arr.push(poly)
+  arr
+}
+
+///|
+/// Detect and factor biquadratic form x^4 + a*x^2 + b over ZZ.
+fn biquadratic_factor(poly : Poly) -> Array[Poly] raise PolyError {
+  if poly.gens.length() != 1 {
+    return Array::new()
   }
-  result
+  if poly.domain.not_equal(Domain::ZZ) {
+    return Array::new()
+  }
+  if poly.degree(0) != 4 {
+    return Array::new()
+  }
+  for m, _ in poly.coeffs {
+    if m.exps[0] % 2 != 0 || m.exps[0] > 4 {
+      return Array::new()
+    }
+  }
+  let mut a = 0
+  let mut b = 0
+  let mut lc = 0
+  for m, c in poly.coeffs {
+    let r = fe_expect_rational(c)
+    if !r.is_integral() {
+      return Array::new()
+    }
+    let val = r.numerator().to_int()
+    match m.exps[0] {
+      4 => lc = val
+      2 => a = val
+      0 => b = val
+      _ => ()
+    }
+  }
+  if lc != 1 {
+    return Array::new()
+  }
+  let mut s1_opt : Int? = None
+  let mut s2_opt : Int? = None
+  if b == 0 {
+    s1_opt = Some(0)
+    s2_opt = Some(a)
+  } else {
+    let abs_b = if b < 0 { -b } else { b }
+    let mut d = 1
+    while d <= abs_b {
+      if abs_b % d == 0 {
+        let candidates : Array[Int] = [d, -d]
+        for s1 in candidates {
+          let s2 = b / s1
+          if s1 + s2 == a {
+            s1_opt = Some(s1)
+            s2_opt = Some(s2)
+            d = abs_b + 1
+            break
+          }
+        }
+      }
+      d = d + 1
+    }
+  }
+  match (s1_opt, s2_opt) {
+    (Some(s1), Some(s2)) => {
+      let f1 = quadratic_factor(s1, poly.gens, poly.domain, poly.order)
+      let f2 = quadratic_factor(s2, poly.gens, poly.domain, poly.order)
+      let arr : Array[Poly] = Array::new()
+      arr.push(f1)
+      arr.push(f2)
+      arr
+    }
+    _ => Array::new()
+  }
+}
+
+///|
+fn quadratic_factor(
+  s : Int,
+  gens : Array[String],
+  domain : Domain,
+  order : TermOrder,
+) -> Poly raise PolyError {
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  let mono0 = monomial_one(gens.length())
+  add_term(coeffs, mono0, fe_from_int(s, domain), domain)
+  let mono2 = monomial_one(gens.length())
+  mono2.exps.set(0, 2)
+  add_term(coeffs, mono2, fe_from_int(1, domain), domain)
+  Poly::{ coeffs, gens, domain, order }
 }
 
 ///|
@@ -299,12 +400,26 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
   }
   let mut appended_any = false
   if factors.is_empty() {
+    let bi_parts = biquadratic_factor(remainder)
+    if bi_parts.length() > 1 {
+      for f in bi_parts {
+        factors.push(f)
+      }
+      return factors
+    }
     let split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     for f in split {
       factors.push(f)
       appended_any = true
     }
   } else if !remainder.is_zero() && !is_one(remainder) {
+    let bi_parts = biquadratic_factor(remainder)
+    if bi_parts.length() > 1 {
+      for f in bi_parts {
+        factors.push(f)
+      }
+      return factors
+    }
     let mut split = hensel_crt_factor(remainder) catch { _ => [remainder] }
     if split.length() == 1 && split[0].degree(0) == remainder.degree(0) {
       split = zassenhaus_factor(remainder) catch { _ => [remainder] }
