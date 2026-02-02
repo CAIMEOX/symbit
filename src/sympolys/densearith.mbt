@@ -80,7 +80,7 @@ pub fn dup_sub_ground(
 pub fn dup_mul_ground(
   f : Array[FieldElem],
   c : FieldElem,
-  domain : Domain,
+  _domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   if f.is_empty() || fe_is_zero(c) {
     return Array::new()
@@ -191,7 +191,7 @@ pub fn dup_lshift(
 pub fn dup_rshift(
   f : Array[FieldElem],
   n : Int,
-  domain : Domain,
+  _domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   if f.is_empty() {
     return Array::new()
@@ -221,7 +221,7 @@ pub fn dup_neg(
 ///|
 pub fn dup_abs(
   f : Array[FieldElem],
-  domain : Domain,
+  _domain : Domain,
 ) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for c in f {
@@ -1262,4 +1262,172 @@ pub fn dmp_exquo(
   } else {
     raise PolyError::NotImplemented("ExactQuotientFailed")
   }
+}
+
+///|
+fn fe_abs_rational(c : FieldElem) -> @symnum.BigRational raise PolyError {
+  let r = fe_expect_rational(c)
+  if r.compare(@symnum.BigRational::zero()) < 0 {
+    r.neg_r()
+  } else {
+    r
+  }
+}
+
+///|
+pub fn dup_max_norm(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if f.is_empty() {
+    return fe_from_int(0, domain)
+  }
+  let abs_vals = dup_abs(f, domain)
+  let mut max_elem = abs_vals[0]
+  let mut max_val = fe_abs_rational(max_elem)
+  for i in 1..<abs_vals.length() {
+    let v = fe_abs_rational(abs_vals[i])
+    if v.compare(max_val) > 0 {
+      max_val = v
+      max_elem = abs_vals[i]
+    }
+  }
+  max_elem
+}
+
+///|
+pub fn dmp_max_norm(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if u == 0 {
+    let coeffs = dense_to_coeffs(f)
+    return dup_max_norm(coeffs, domain)
+  }
+  match f {
+    DensePoly::Coef(c) => dup_max_norm([c], domain)
+    DensePoly::Poly(items) => {
+      if items.is_empty() {
+        return fe_from_int(0, domain)
+      }
+      let v = u - 1
+      let mut max_elem = dmp_max_norm(items[0], v, domain)
+      let mut max_val = fe_abs_rational(max_elem)
+      for i in 1..<items.length() {
+        let cur = dmp_max_norm(items[i], v, domain)
+        let cur_val = fe_abs_rational(cur)
+        if cur_val.compare(max_val) > 0 {
+          max_val = cur_val
+          max_elem = cur
+        }
+      }
+      max_elem
+    }
+  }
+}
+
+///|
+pub fn dup_l1_norm(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if f.is_empty() {
+    return fe_from_int(0, domain)
+  }
+  let abs_vals = dup_abs(f, domain)
+  let mut sum = fe_from_int(0, domain)
+  for c in abs_vals {
+    sum = fe_add(sum, c)
+  }
+  sum
+}
+
+///|
+pub fn dmp_l1_norm(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if u == 0 {
+    let coeffs = dense_to_coeffs(f)
+    return dup_l1_norm(coeffs, domain)
+  }
+  match f {
+    DensePoly::Coef(c) => dup_l1_norm([c], domain)
+    DensePoly::Poly(items) => {
+      let v = u - 1
+      let mut sum = fe_from_int(0, domain)
+      for it in items {
+        sum = fe_add(sum, dmp_l1_norm(it, v, domain))
+      }
+      sum
+    }
+  }
+}
+
+///|
+pub fn dup_l2_norm_squared(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let mut sum = fe_from_int(0, domain)
+  for c in f {
+    sum = fe_add(sum, fe_mul(c, c))
+  }
+  sum
+}
+
+///|
+pub fn dmp_l2_norm_squared(
+  f : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if u == 0 {
+    let coeffs = dense_to_coeffs(f)
+    return dup_l2_norm_squared(coeffs, domain)
+  }
+  match f {
+    DensePoly::Coef(c) => dup_l2_norm_squared([c], domain)
+    DensePoly::Poly(items) => {
+      let v = u - 1
+      let mut sum = fe_from_int(0, domain)
+      for it in items {
+        sum = fe_add(sum, dmp_l2_norm_squared(it, v, domain))
+      }
+      sum
+    }
+  }
+}
+
+///|
+pub fn dup_expand(
+  polys : Array[Array[FieldElem]],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  if polys.is_empty() {
+    return [fe_from_int(1, domain)]
+  }
+  let mut f = polys[0]
+  for i in 1..<polys.length() {
+    f = dup_mul(f, polys[i], domain)
+  }
+  f
+}
+
+///|
+pub fn dmp_expand(
+  polys : Array[DensePoly],
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  if polys.is_empty() {
+    return dmp_one(u, domain)
+  }
+  let mut f = polys[0]
+  for i in 1..<polys.length() {
+    f = dmp_mul(f, polys[i], u, domain)
+  }
+  f
 }

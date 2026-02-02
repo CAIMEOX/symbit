@@ -360,6 +360,60 @@ pub fn dup_pow(
 }
 
 ///|
+pub fn dup_rr_div(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_rr_div(f, g, domain~)
+}
+
+///|
+pub fn dup_ff_div(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_ff_div(f, g, domain~)
+}
+
+///|
+pub fn dup_div(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_div(f, g, domain~)
+}
+
+///|
+pub fn dup_rem(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_rem(f, g, domain~)
+}
+
+///|
+pub fn dup_quo(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_quo(f, g, domain~)
+}
+
+///|
+pub fn dup_exquo(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_exquo(f, g, domain~)
+}
+
+///|
 pub fn dmp_add_term(
   f : @sympy.DenseData,
   c : @sympy.DenseData,
@@ -629,4 +683,72 @@ pub fn dmp_exquo(
   domain? : String = "ZZ",
 ) -> String raise {
   @sympy.dmp_exquo(f, g, u, domain~)
+}
+
+///|
+pub fn dup_max_norm(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_max_norm(f, domain~)
+}
+
+///|
+pub fn dmp_max_norm(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_max_norm(f, u, domain~)
+}
+
+///|
+pub fn dup_l1_norm(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_l1_norm(f, domain~)
+}
+
+///|
+pub fn dmp_l1_norm(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_l1_norm(f, u, domain~)
+}
+
+///|
+pub fn dup_l2_norm_squared(
+  f : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_l2_norm_squared(f, domain~)
+}
+
+///|
+pub fn dmp_l2_norm_squared(
+  f : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_l2_norm_squared(f, u, domain~)
+}
+
+///|
+pub fn dup_expand(
+  polys : Array[Array[@symnum.BigRational]],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_expand(polys, domain~)
+}
+
+///|
+pub fn dmp_expand(
+  polys : Array[@sympy.DenseData],
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_expand(polys, u, domain~)
 }

@@ -4,11 +4,6 @@ fn fezz(n : Int) -> FieldElem {
 }
 
 ///|
-fn br_int(n : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(n)
-}
-
-///|
 fn feqq(num : Int, den : Int) -> FieldElem {
   let br = try! @symnum.BigRational::new(
     BigInt::from_int(num),
@@ -18,18 +13,11 @@ fn feqq(num : Int, den : Int) -> FieldElem {
 }
 
 ///|
-fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
-}
-
-///|
-fn dup_repr(coeffs : Array[FieldElem]) -> String {
-  if coeffs.is_empty() {
-    return "[]"
-  }
-  let parts = coeffs.map(c => c.to_string())
-  let joined = parts.join(",")
-  "[\{joined}]"
+fn dup_repr_tuple(pair : (Array[FieldElem], Array[FieldElem])) -> String {
+  let (a, b) = pair
+  let left = dup_repr(a)
+  let right = dup_repr(b)
+  "(\{left},\{right})"
 }
 
 ///|
@@ -37,6 +25,17 @@ fn dup_to_rats(coeffs : Array[FieldElem]) -> Array[@symnum.BigRational] {
   let out : Array[@symnum.BigRational] = Array::new()
   for c in coeffs {
     out.push(try! fe_expect_rational(c))
+  }
+  out
+}
+
+///|
+fn dup_list_to_rats(
+  polys : Array[Array[FieldElem]],
+) -> Array[Array[@symnum.BigRational]] {
+  let out : Array[Array[@symnum.BigRational]] = Array::new()
+  for f in polys {
+    out.push(dup_to_rats(f))
   }
   out
 }
@@ -85,19 +84,14 @@ fn dmp_pair_repr(pair : (DensePoly, DensePoly)) -> String {
 }
 
 ///|
-fn dense_data_of(p : DensePoly) -> @sympy.DenseData {
-  match p {
-    DensePoly::Coef(c) => {
-      @sympy.DenseData::Coef(try! fe_expect_rational(c))
-    }
-    DensePoly::Poly(items) => {
-      let out : Array[@sympy.DenseData] = Array::new()
-      for it in items {
-        out.push(dense_data_of(it))
-      }
-      @sympy.DenseData::Poly(out)
-    }
+
+///|
+fn dense_data_list(polys : Array[DensePoly]) -> Array[@sympy.DenseData] {
+  let out : Array[@sympy.DenseData] = Array::new()
+  for p in polys {
+    out.push(dense_data_of(p))
   }
+  out
 }
 
 ///|
@@ -199,6 +193,56 @@ test "densearith: dup_add/sub/mul/sqr/pow parity" {
     3,
   )
   guard ours_pow == oracle_pow else { fail("dup_pow mismatch") }
+}
+
+///|
+test "densearith: dup_div family parity" {
+  let f = [fezz(1), fezz(0), fezz(1)]
+  let g = [fezz(1), fezz(-1)]
+  let ours_rr = dup_repr_tuple(dup_rr_div(f, g, Domain::ZZ))
+  let oracle_rr = @sympy_polys.dup_rr_div(dup_to_rats(f), dup_to_rats(g))
+  guard ours_rr == oracle_rr else { fail("dup_rr_div mismatch") }
+
+  let f_ex = [fezz(1), fezz(0), fezz(-1)]
+  let g_ex = [fezz(1), fezz(-1)]
+  let ours_ex = dup_repr(dup_exquo(f_ex, g_ex, Domain::ZZ))
+  let oracle_ex = @sympy_polys.dup_exquo(
+    dup_to_rats(f_ex),
+    dup_to_rats(g_ex),
+  )
+  guard ours_ex == oracle_ex else { fail("dup_exquo mismatch") }
+
+  let fq = [feqq(1, 1), feqq(0, 1), feqq(1, 1)]
+  let gq = [feqq(2, 1), feqq(-4, 1)]
+  let ours_ff = dup_repr_tuple(dup_ff_div(fq, gq, Domain::QQ))
+  let oracle_ff = @sympy_polys.dup_ff_div(
+    dup_to_rats(fq),
+    dup_to_rats(gq),
+    domain="QQ",
+  )
+  guard ours_ff == oracle_ff else { fail("dup_ff_div mismatch") }
+
+  let ours_div = dup_repr_tuple(dup_div(fq, gq, Domain::QQ))
+  let oracle_div = @sympy_polys.dup_div(
+    dup_to_rats(fq),
+    dup_to_rats(gq),
+    domain="QQ",
+  )
+  guard ours_div == oracle_div else { fail("dup_div mismatch") }
+  let ours_rem = dup_repr(dup_rem(fq, gq, Domain::QQ))
+  let oracle_rem = @sympy_polys.dup_rem(
+    dup_to_rats(fq),
+    dup_to_rats(gq),
+    domain="QQ",
+  )
+  guard ours_rem == oracle_rem else { fail("dup_rem mismatch") }
+  let ours_quo = dup_repr(dup_quo(fq, gq, Domain::QQ))
+  let oracle_quo = @sympy_polys.dup_quo(
+    dup_to_rats(fq),
+    dup_to_rats(gq),
+    domain="QQ",
+  )
+  guard ours_quo == oracle_quo else { fail("dup_quo mismatch") }
 }
 
 ///|
@@ -473,4 +517,75 @@ test "densearith: dmp_rr/ff/div family parity" {
     domain="QQ",
   )
   guard ours_ex == oracle_ex else { fail("dmp_exquo mismatch") }
+}
+
+///|
+test "densearith: dmp_ff_div QQ multivariate u=1" {
+  let g = dense_poly([poly_fe([feqq(1, 1)]), poly_fe([feqq(1, 1), feqq(0, 1)])])
+  let f = dense_poly([
+    poly_fe([feqq(1, 1)]),
+    poly_fe([feqq(2, 1), feqq(0, 1)]),
+    poly_fe([feqq(1, 1), feqq(0, 1), feqq(0, 1)]),
+  ])
+  let ours = dmp_pair_repr(dmp_ff_div(f, g, 1, Domain::QQ))
+  let oracle = @sympy_polys.dmp_ff_div(
+    dense_data_of(f),
+    dense_data_of(g),
+    1,
+    domain="QQ",
+  )
+  guard ours == oracle else { fail("dmp_ff_div QQ u=1 mismatch") }
+}
+
+///|
+test "densearith: dup/dmp norms parity" {
+  let f = [fezz(1), fezz(-4), fezz(2), fezz(3)]
+  let max_ours = dup_max_norm(f, Domain::ZZ)
+  let max_oracle = @sympy_polys.dup_max_norm(dup_to_rats(f))
+  inspect(max_ours, content=max_oracle)
+  let l1_ours = dup_l1_norm(f, Domain::ZZ)
+  let l1_oracle = @sympy_polys.dup_l1_norm(dup_to_rats(f))
+  inspect(l1_ours, content=l1_oracle)
+  let l2_ours = dup_l2_norm_squared(f, Domain::ZZ)
+  let l2_oracle = @sympy_polys.dup_l2_norm_squared(dup_to_rats(f))
+  inspect(l2_ours, content=l2_oracle)
+
+  let f2 = poly([
+    poly([coef(1), coef(-2)]),
+    poly([coef(3), coef(4)]),
+  ])
+  let max2_ours = dmp_max_norm(f2, 1, Domain::ZZ)
+  let max2_oracle = @sympy_polys.dmp_max_norm(dense_data_of(f2), 1)
+  inspect(max2_ours, content=max2_oracle)
+  let l1_ours2 = dmp_l1_norm(f2, 1, Domain::ZZ)
+  let l1_oracle2 = @sympy_polys.dmp_l1_norm(dense_data_of(f2), 1)
+  inspect(l1_ours2, content=l1_oracle2)
+  let l2_ours2 = dmp_l2_norm_squared(f2, 1, Domain::ZZ)
+  let l2_oracle2 = @sympy_polys.dmp_l2_norm_squared(dense_data_of(f2), 1)
+  inspect(l2_ours2, content=l2_oracle2)
+}
+
+///|
+test "densearith: dup/dmp expand parity" {
+  let polys : Array[Array[FieldElem]] = [
+    [fezz(1), fezz(2), fezz(3)],
+    [fezz(1), fezz(2)],
+    [fezz(7), fezz(5), fezz(4), fezz(3)],
+  ]
+  let ours = dup_repr(dup_expand(polys, Domain::ZZ))
+  let oracle = @sympy_polys.dup_expand(dup_list_to_rats(polys))
+  guard ours == oracle else { fail("dup_expand mismatch") }
+
+  let p1 = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
+  let p2 = poly([poly([coef(1)]), poly([coef(2)])])
+  let p3 = poly([
+    poly([coef(7)]),
+    poly([coef(5)]),
+    poly([coef(4)]),
+    poly([coef(3)]),
+  ])
+  let polys2 = [p1, p2, p3]
+  let ours2 = dmp_repr(dmp_expand(polys2, 1, Domain::ZZ))
+  let oracle2 = @sympy_polys.dmp_expand(dense_data_list(polys2), 1)
+  guard ours2 == oracle2 else { fail("dmp_expand mismatch") }
 }
