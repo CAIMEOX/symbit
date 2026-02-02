@@ -140,6 +140,8 @@ pub fn dup_from_sympy(Array[@symnum.BigRational], domain? : String) -> String ra
 
 pub fn dup_integrate(Array[@symnum.BigRational], Int, domain? : String) -> String raise
 
+pub fn dup_isolate_real_roots_sqf(Array[@symnum.BigRational], domain? : String) -> String raise
+
 pub fn dup_l1_norm(Array[@symnum.BigRational], domain? : String) -> String raise
 
 pub fn dup_l2_norm_squared(Array[@symnum.BigRational], domain? : String) -> String raise
@@ -166,6 +168,8 @@ pub fn dup_quo(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? :
 
 pub fn dup_quo_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
 
+pub fn dup_refine_real_root(Array[@symnum.BigRational], @symnum.BigRational, @symnum.BigRational, domain? : String, steps? : Int, eps? : @symnum.BigRational, disjoint? : @symnum.BigRational) -> String raise
+
 pub fn dup_rem(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
 
 pub fn dup_rr_div(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
@@ -175,6 +179,8 @@ pub fn dup_rshift(Array[@symnum.BigRational], Int, domain? : String) -> String r
 pub fn dup_slice(Array[@symnum.BigRational], Int, Int, domain? : String) -> String raise
 
 pub fn dup_sqr(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_sturm(Array[@symnum.BigRational], domain? : String) -> String raise
 
 pub fn dup_sub(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
 
@@ -216,9 +222,13 @@ pub fn interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], x? : Strin
 
 pub fn lcm_list(Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
+pub fn mod_rational(Int, Int, Int) -> String raise
+
 pub fn monic(@symcore.Expr, modulus? : Int) -> String raise
 
 pub fn poly_degree_list(String, gens? : Array[String]) -> Array[Int] raise
+
+pub fn poly_expr(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
 pub fn poly_lc(String, gens? : Array[String]) -> String raise
 
@@ -258,11 +268,15 @@ pub fn res_z_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
 
 pub fn resultant(@symcore.Expr, @symcore.Expr, x? : String, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
-pub fn rootof(@symcore.Expr, Int) -> String raise
+pub fn rootof(@symcore.Expr, Int, radicals? : Bool) -> String raise
+
+pub fn roots_cubic(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn roots_linear(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn roots_quadratic(@symcore.Expr, gens? : Array[String]) -> String raise
+
+pub fn roots_quartic(@symcore.Expr, gens? : Array[String]) -> String raise
 
 pub fn sqf_list(@symcore.Expr, modulus? : Int) -> String raise
 

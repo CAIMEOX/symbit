@@ -89,6 +89,241 @@ pub fn mod_rational(num : Int, den : Int, p : Int) -> String raise {
 }
 
 ///|
+pub fn dict_from_expr(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  let expr_obj = expr_to_sympy(expr)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_obj))
+  let kwargs : Map[String, OracleArg] = {}
+  if !gens.is_empty() {
+    let gens_objs = sympy_symbols_from_names(gens)
+    let list = py_list_from_objects(gens_objs)
+    kwargs["gens"] = OracleArg::PyObj(list.obj())
+  }
+  let res = sympy_call_must("sympy.polys.polyutils.dict_from_expr", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  guard items.length() >= 2 else { fail("dict_from_expr tuple") }
+  let dict_obj = items[0]
+  let gens_obj = items[1]
+  let items_call = resolve_method_callable(dict_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list_enum = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  let kvs = py_list_to_pyobjects(items_list_enum)
+  let entries : Array[(Array[Int], String)] = Array::new()
+  for pair in kvs {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 {
+      let key_obj = pair_items[0]
+      let val_obj = pair_items[1]
+      let exps_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(key_obj))
+      let exps : Array[Int] = Array::new()
+      for e in exps_objs {
+        exps.push(py_obj_to_int(e))
+      }
+      let coeff_str = py_str_obj(val_obj)
+      entries.push((exps, coeff_str))
+    }
+  }
+  entries.sort_by((a, b) => cmp_exps(a.0, b.0))
+  let dict_str = dict_repr(entries)
+  let gens_list = py_list_to_pyobjects(@py.PyObjectEnum::create(gens_obj))
+  let gen_names : Array[String] = Array::new()
+  for g in gens_list {
+    gen_names.push(py_str_obj(g))
+  }
+  let gens_str = gen_names.map(n => "\"\{n}\"").join(",")
+  "\{dict_str}||[\{gens_str}]"
+}
+
+///|
+pub fn sort_gens(
+  gens : Array[String],
+  wrt? : Array[String] = [],
+  sort? : String = "",
+) -> Array[String] raise {
+  let gens_objs = sympy_symbols_from_names(gens)
+  let args : Array[OracleArg] = Array::new()
+  let gens_list = py_list_from_objects(gens_objs)
+  args.push(OracleArg::PyObj(gens_list.obj()))
+  let kwargs : Map[String, OracleArg] = {}
+  if !wrt.is_empty() {
+    let wrt_objs = sympy_symbols_from_names(wrt)
+    let wrt_list = py_list_from_objects(wrt_objs)
+    kwargs["wrt"] = OracleArg::PyObj(wrt_list.obj())
+  }
+  if sort != "" {
+    kwargs["sort"] = OracleArg::Str(sort)
+  }
+  let res = sympy_call_must("sympy.polys.polyutils._sort_gens", args, kwargs~)
+  let items = py_list_to_pyobjects(res)
+  let names : Array[String] = Array::new()
+  for obj in items {
+    names.push(py_str_obj(obj))
+  }
+  names
+}
+
+///|
+pub fn unify_gens(a : Array[String], b : Array[String]) -> Array[String] raise {
+  let a_objs = sympy_symbols_from_names(a)
+  let b_objs = sympy_symbols_from_names(b)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(a_objs).obj()),
+    OracleArg::PyObj(py_list_from_objects(b_objs).obj()),
+  ]
+  let res = sympy_call_must("sympy.polys.polyutils._unify_gens", args)
+  let items = py_list_to_pyobjects(res)
+  let names : Array[String] = Array::new()
+  for obj in items {
+    names.push(py_str_obj(obj))
+  }
+  names
+}
+
+///|
+pub fn analyze_gens(gens : Array[String]) -> Array[String] raise {
+  let gens_objs = sympy_symbols_from_names(gens)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(gens_objs).obj()),
+  ]
+  let res = sympy_call_must("sympy.polys.polyutils._analyze_gens", args)
+  let items = py_list_to_pyobjects(res)
+  let names : Array[String] = Array::new()
+  for obj in items {
+    names.push(py_str_obj(obj))
+  }
+  names
+}
+
+///|
+pub fn analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] raise {
+  let outer : Array[@py.PyObject] = Array::new()
+  for group in gens {
+    let group_objs = sympy_symbols_from_names(group)
+    let group_list = py_list_from_objects(group_objs)
+    outer.push(group_list.obj())
+  }
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(outer).obj()),
+  ]
+  let res = sympy_call_must("sympy.polys.polyutils._analyze_gens", args)
+  let items = py_list_to_pyobjects(res)
+  let names : Array[String] = Array::new()
+  for obj in items {
+    names.push(py_str_obj(obj))
+  }
+  names
+}
+
+///|
+pub fn sort_factors(factors : Array[Array[Int]]) -> String raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for f in factors {
+    let inner : Array[@py.PyObject] = Array::new()
+    for v in f {
+      inner.push(py_int_obj(v))
+    }
+    let inner_list = py_list_from_objects(inner)
+    items.push(inner_list.obj())
+  }
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(items).obj()),
+  ]
+  let kwargs : Map[String, OracleArg] = { "multiple": OracleArg::Bool(false) }
+  let res = sympy_call_must("sympy.polys.polyutils._sort_factors", args, kwargs~)
+  let lists = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in lists {
+    let seq_items = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
+    let seq : Array[String] = Array::new()
+    for v in seq_items {
+      seq.push(py_obj_to_int(v).to_string())
+    }
+    let joined = seq.join(",")
+    parts.push("[\{joined}]")
+  }
+  let joined = parts.join(",")
+  "[\{joined}]"
+}
+
+///|
+pub fn sort_factors_multiple(
+  factors : Array[(Array[Int], Int)],
+) -> String raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for f in factors {
+    let inner : Array[@py.PyObject] = Array::new()
+    for v in f.0 {
+      inner.push(py_int_obj(v))
+    }
+    let inner_list = py_list_from_objects(inner)
+    let pair = py_tuple_from_objects([inner_list.obj(), py_int_obj(f.1)])
+    items.push(pair.obj())
+  }
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(py_list_from_objects(items).obj()),
+  ]
+  let kwargs : Map[String, OracleArg] = { "multiple": OracleArg::Bool(true) }
+  let res = sympy_call_must("sympy.polys.polyutils._sort_factors", args, kwargs~)
+  let pairs = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for pair in pairs {
+    let items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if items.length() >= 2 {
+      let seq_items = py_list_to_pyobjects(@py.PyObjectEnum::create(items[0]))
+      let seq : Array[String] = Array::new()
+      for item in seq_items {
+        seq.push(py_obj_to_int(item).to_string())
+      }
+      let seq_joined = seq.join(",")
+      let list_str = "[\{seq_joined}]"
+      let exp = py_obj_to_int(items[1])
+      parts.push("(\{list_str},\{exp})")
+    }
+  }
+  let joined = parts.join(",")
+  "[\{joined}]"
+}
+
+///|
+fn cmp_exps(a : Array[Int], b : Array[Int]) -> Int {
+  let n = if a.length() < b.length() { a.length() } else { b.length() }
+  for i in 0..<n {
+    if a[i] < b[i] {
+      return -1
+    }
+    if a[i] > b[i] {
+      return 1
+    }
+  }
+  a.length() - b.length()
+}
+
+///|
+fn tuple_repr(exps : Array[Int]) -> String {
+  if exps.length() == 1 {
+    return "(\{exps[0]},)"
+  }
+  let parts = exps.map(e => e.to_string()).join(",")
+  "(\{parts})"
+}
+
+///|
+fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
+  let parts : Array[String] = Array::new()
+  for entry in entries {
+    let (exps, coeff) = entry
+    parts.push("\{tuple_repr(exps)}:\{coeff}")
+  }
+  let joined = parts.join(",")
+  "{\{joined}}"
+}
+
+///|
 
 ///|
 

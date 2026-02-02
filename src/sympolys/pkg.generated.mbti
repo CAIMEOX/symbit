@@ -270,6 +270,8 @@ pub fn dup_inflate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise Poly
 
 pub fn dup_integrate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_isolate_real_roots_sqf(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
+
 pub fn dup_l1_norm(Array[FieldElem], Domain) -> FieldElem raise PolyError
 
 pub fn dup_l2_norm_squared(Array[FieldElem], Domain) -> FieldElem raise PolyError
@@ -312,6 +314,8 @@ pub fn dup_quo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] r
 
 pub fn dup_random(Int, Int, Int, Domain) -> Array[FieldElem] raise PolyError
 
+pub fn dup_refine_real_root(Array[FieldElem], @symnum.BigRational, @symnum.BigRational, Domain, steps? : Int, eps? : @symnum.BigRational, disjoint? : @symnum.BigRational) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError
+
 pub fn dup_rem(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_reverse(Array[FieldElem]) -> Array[FieldElem] raise PolyError
@@ -325,6 +329,8 @@ pub fn dup_slice(Array[FieldElem], Int, Int, Domain) -> Array[FieldElem] raise P
 pub fn dup_sqr(Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_strip(Array[FieldElem]) -> Array[FieldElem] raise PolyError
+
+pub fn dup_sturm(Array[FieldElem], Domain) -> Array[Array[FieldElem]] raise PolyError
 
 pub fn dup_sub(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
@@ -454,9 +460,13 @@ pub fn resultant_expr(@symcore.Expr, @symcore.Expr, String, gens? : Array[String
 
 pub fn rootof(Poly, Int) -> RootOf
 
-pub fn roots_linear(Poly) -> Array[FieldElem] raise PolyError
+pub fn roots_cubic(Poly) -> Array[@symcore.Expr] raise PolyError
 
-pub fn roots_quadratic(Poly) -> Array[FieldElem] raise PolyError
+pub fn roots_linear(Poly) -> Array[@symcore.Expr] raise PolyError
+
+pub fn roots_quadratic(Poly) -> Array[@symcore.Expr] raise PolyError
+
+pub fn roots_quartic(Poly) -> Array[@symcore.Expr] raise PolyError
 
 pub fn sturm_sequence(Poly) -> Array[Poly] raise PolyError
 
