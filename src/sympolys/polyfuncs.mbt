@@ -6,6 +6,12 @@ pub struct SymmetrizeResult {
 }
 
 ///|
+pub struct SymmetrizeListResult {
+  items : Array[SymmetrizeResult]
+  mapping : Array[(@symcore.Expr, @symcore.Expr)]
+}
+
+///|
 pub fn interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   gen : String,
@@ -35,6 +41,33 @@ pub fn interpolate(
     result = result.add(basis)
   }
   result
+}
+
+///|
+pub fn interpolate_values(
+  values : Array[@symnum.BigRational],
+  gen : String,
+  domain : Domain,
+) -> Poly raise PolyError {
+  let points : Array[(@symnum.BigRational, @symnum.BigRational)] = Array::new()
+  for i in 0..<values.length() {
+    let x = @symnum.BigRational::from_int(i + 1)
+    points.push((x, values[i]))
+  }
+  interpolate(points, gen, domain)
+}
+
+///|
+pub fn interpolate_dict(
+  points : Map[@symnum.BigRational, @symnum.BigRational],
+  gen : String,
+  domain : Domain,
+) -> Poly raise PolyError {
+  let pairs : Array[(@symnum.BigRational, @symnum.BigRational)] = Array::new()
+  for k, v in points {
+    pairs.push((k, v))
+  }
+  interpolate(pairs, gen, domain)
 }
 
 ///|
@@ -138,6 +171,36 @@ pub fn symmetrize(
     sym_expr = @symcore.subst(sym_expr, env)
   }
   SymmetrizeResult::{ sym: sym_expr, rem: rem_expr, mapping }
+}
+
+///|
+pub fn symmetrize_list(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  formal? : Bool = false,
+  symbols? : Array[String] = [],
+) -> SymmetrizeListResult raise PolyError {
+  let gens_final = if gens.is_empty() {
+    let seen : Map[String, Bool] = Map::new()
+    for expr in exprs {
+      collect_symbols(expr, seen)
+    }
+    let names : Array[String] = Array::new()
+    for name, _ in seen {
+      names.push(name)
+    }
+    names.sort()
+    names
+  } else {
+    gens
+  }
+  let items : Array[SymmetrizeResult] = Array::new()
+  for expr in exprs {
+    items.push(symmetrize(expr, gens=gens_final, formal=formal, symbols=symbols))
+  }
+  let mapping =
+    if formal && !items.is_empty() { items[0].mapping } else { [] }
+  SymmetrizeListResult::{ items, mapping }
 }
 
 ///|

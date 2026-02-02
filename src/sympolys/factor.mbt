@@ -249,6 +249,9 @@ pub fn Poly::factor_list(
   if self.is_zero() {
     return (@symnum.BigRational::zero(), Array::new())
   }
+  if self.domain is Domain::GFExt(_, _, _) {
+    raise PolyError::NotImplemented("factor_list-gfext")
+  }
   let mut content = self.content()
   let mut primitive = self
   if !content.is_one() {
@@ -312,20 +315,26 @@ fn normalize_factor_for_list(
   match poly.leading_term() {
     None => (poly, @symnum.BigRational::one())
     Some((_, lc_fe)) => {
-      let lc = fe_expect_rational(lc_fe)
       match poly.domain {
+        Domain::GFExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
         Domain::ZZ =>
-          if lc.is_one() {
-            (poly, lc)
-          } else if lc.neg_r().is_one() {
-            (
-              poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
-              lc,
-            )
-          } else {
-            (poly, lc)
+          {
+            let lc = fe_expect_rational(lc_fe)
+            if lc.is_one() {
+              (poly, lc)
+            } else if lc.neg_r().is_one() {
+              (
+                poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
+                lc,
+              )
+            } else {
+              (poly, lc)
+            }
           }
-        _ => (make_monic(poly), lc)
+        _ => {
+          let lc = fe_expect_rational(lc_fe)
+          (make_monic(poly), lc)
+        }
       }
     }
   }

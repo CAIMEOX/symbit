@@ -204,7 +204,9 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut g_num = BigInt::from_int(0)
   let mut lcm_den = BigInt::from_int(1)
   match poly.domain {
-    Domain::AlgExt(_, _, _) | Domain::CC => return @symnum.BigRational::one()
+    Domain::AlgExt(_, _, _)
+    | Domain::CC
+    | Domain::GFExt(_, _, _) => return @symnum.BigRational::one()
     _ => ()
   }
   for _, c in poly.coeffs {

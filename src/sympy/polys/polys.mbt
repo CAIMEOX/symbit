@@ -5,8 +5,10 @@ pub fn gcd(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
-  @sympy.gcd(p, q, gens~, domain~, modulus~)
+  @sympy.gcd(p, q, gens~, domain~, modulus~, gfext_modulus~, gfext_gen~)
 }
 
 ///|
@@ -17,8 +19,19 @@ pub fn resultant(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
-  @sympy.resultant(p, q, x~, gens~, domain~, modulus~)
+  @sympy.resultant(
+    p,
+    q,
+    x~,
+    gens~,
+    domain~,
+    modulus~,
+    gfext_modulus~,
+    gfext_gen~,
+  )
 }
 
 ///|
@@ -36,8 +49,10 @@ pub fn div(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
-  @sympy.div(p, q, gens~, domain~, modulus~)
+  @sympy.div(p, q, gens~, domain~, modulus~, gfext_modulus~, gfext_gen~)
 }
 
 ///|
@@ -46,13 +61,23 @@ pub fn monic(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn factor_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
-  @sympy.factor_list(expr, modulus~)
+pub fn factor_list(
+  expr : @symcore.Expr,
+  modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
+) -> String raise {
+  @sympy.factor_list(expr, modulus~, gfext_modulus~, gfext_gen~)
 }
 
 ///|
-pub fn sqf_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
-  @sympy.sqf_list(expr, modulus~)
+pub fn sqf_list(
+  expr : @symcore.Expr,
+  modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
+) -> String raise {
+  @sympy.sqf_list(expr, modulus~, gfext_modulus~, gfext_gen~)
 }
 
 ///|
@@ -180,6 +205,22 @@ pub fn interpolate(
 }
 
 ///|
+pub fn interpolate_values(
+  values : Array[@symnum.BigRational],
+  x? : String = "x",
+) -> String raise {
+  @sympy.interpolate_values(values, x~)
+}
+
+///|
+pub fn interpolate_dict(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  x? : String = "x",
+) -> String raise {
+  @sympy.interpolate_dict(points, x~)
+}
+
+///|
 pub fn rational_interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   deg_num : Int,
@@ -196,6 +237,16 @@ pub fn symmetrize(
   symbols? : Array[String] = [],
 ) -> String raise {
   @sympy.symmetrize(expr, gens~, formal~, symbols~)
+}
+
+///|
+pub fn symmetrize_list(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  formal? : Bool = false,
+  symbols? : Array[String] = [],
+) -> String raise {
+  @sympy.symmetrize_list(exprs, gens~, formal~, symbols~)
 }
 
 ///|

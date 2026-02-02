@@ -155,6 +155,140 @@ fn normalize_basis_str_local(s : String) -> String {
 }
 
 ///|
+test "polytools: factor_list parity over GF(5) simple" {
+  let b = PolyBuilder::new(["x"], Domain::GF(5))
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  let (content, factors) = poly.factor_list()
+  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.factor_list(poly.to_expr(), modulus=5),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("factor_list GF(5) mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: factor_list parity over GF(7) simple" {
+  let b = PolyBuilder::new(["x"], Domain::GF(7))
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(2))
+  let (content, factors) = poly.factor_list()
+  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.factor_list(poly.to_expr(), modulus=7),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("factor_list GF(7) mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: gcd/div parity over GFExt(5^2)" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let p = b.from_expr((x ^ @symcore.int(2)) + x + @symcore.int(1))
+  let q = b.from_expr(x + @symcore.int(1))
+  let g = p.gcd_univar(q)
+  let ours_g = sympy_normalize(g.to_string()).trim().to_string()
+  let oracle_g = @sympy_polys.gcd(
+      p.to_expr(),
+      q.to_expr(),
+      modulus=5,
+      gfext_modulus=[1, 0, 1],
+      gfext_gen="a",
+    )
+    .trim()
+    .to_string()
+  guard ours_g == oracle_g else {
+    fail("gcd GFExt mismatch: ours=\{ours_g}, oracle=\{oracle_g}")
+  }
+  let (quo, rem) = p.divmod_univar(q)
+  let ours_div = div_pair_to_string(quo, rem).trim().to_string()
+  let oracle_div = @sympy_polys.div(
+      p.to_expr(),
+      q.to_expr(),
+      modulus=5,
+      gfext_modulus=[1, 0, 1],
+      gfext_gen="a",
+    )
+    .trim()
+    .to_string()
+  guard ours_div == oracle_div else {
+    fail("div GFExt mismatch: ours=\{ours_div}, oracle=\{oracle_div}")
+  }
+}
+
+///|
+test "polytools: sqf_list parity over GFExt(5^2)" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    ((x + @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
+  )
+  let (content, parts) = poly.sqf_list()
+  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.sqf_list(
+        poly.to_expr(),
+        modulus=5,
+        gfext_modulus=[1, 0, 1],
+        gfext_gen="a",
+      ),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("sqf_list GFExt mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: factor_list GFExt not implemented in SymPy" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(x + @symcore.int(1))
+  let ours : Result[(@symnum.BigRational, Array[(Poly, Int)]), _] =
+    try? poly.factor_list()
+  let oracle : Result[String, _] = try? @sympy_polys.factor_list(
+    poly.to_expr(),
+    modulus=5,
+    gfext_modulus=[1, 0, 1],
+    gfext_gen="a",
+  )
+  guard ours is Err(_) && oracle is Err(_) else {
+    fail("factor_list GFExt should error in both implementations")
+  }
+}
+
+///|
+test "polytools: factor_list parity over QQ with repeated factor" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    expr_rat(1, 6) * ((x ^ @symcore.int(2)) - (@symcore.int(2) * x) + @symcore.int(1)),
+  )
+  let (content, factors) = poly.factor_list()
+  let ours_raw = factor_list_to_string(content.to_string(), factors)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
+    .trim()
+    .to_string()
+  guard ours == oracle else { fail("factor_list QQ repeated mismatch") }
+}
+
+///|
 test "polytools: groebner_list parity for multivariate QQ" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ)
   let x = @symcore.symbol("x")
@@ -221,6 +355,46 @@ test "polytools: terms_gcd parity over ZZ" {
 }
 
 ///|
+test "polytools: sqf_list parity over GF(5)" {
+  let b = PolyBuilder::new(["x"], Domain::GF(5))
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    ((x + @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
+  )
+  let (content, parts) = poly.sqf_list()
+  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.sqf_list(poly.to_expr(), modulus=5),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("sqf_list GF(5) mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: sqf_list parity over GF(7)" {
+  let b = PolyBuilder::new(["x"], Domain::GF(7))
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    ((x + @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
+  )
+  let (content, parts) = poly.sqf_list()
+  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.sqf_list(poly.to_expr(), modulus=7),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("sqf_list GF(7) mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
 test "polytools: cancel parity over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let x = @symcore.symbol("x")
@@ -231,6 +405,40 @@ test "polytools: cancel parity over ZZ" {
   let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr()).trim().to_string()
   guard ours == oracle else {
     fail("cancel mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: cancel parity multivariate (no common factor)" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let num = b.from_expr((x * y) + x + @symcore.int(1))
+  let den = b.from_expr((x + y) + @symcore.int(1))
+  let (n2, d2) = cancel(num, den)
+  let ours = div_pair_to_string(n2, d2).trim().to_string()
+  let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr())
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("cancel multivariate mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: cancel parity multivariate with common x+y factor" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let num = b.from_expr((x + y) * (x + @symcore.int(1)))
+  let den = b.from_expr(x + y)
+  let (n2, d2) = cancel(num, den)
+  let ours = div_pair_to_string(n2, d2).trim().to_string()
+  let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr())
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("cancel multivariate common factor mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
 
@@ -249,6 +457,82 @@ test "polytools: reduced parity over ZZ" {
 }
 
 ///|
+test "polytools: reduced parity multivariate over ZZ" {
+  let b = PolyBuilder::new(["x", "y"], Domain::ZZ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let f = b.from_expr((x ^ @symcore.int(2)) * y + x * y + y)
+  let g1 = b.from_expr((x * y) - @symcore.int(1))
+  let g2 = b.from_expr(y - @symcore.int(1))
+  let (qs, r) = reduced(f, [g1, g2])
+  let ours = reduced_pair_to_string(qs, r).trim().to_string()
+  let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("reduced multivariate ZZ mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: reduced parity multivariate over QQ" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let f = b.from_expr((x ^ @symcore.int(2)) * y + x * y + y)
+  let g1 = b.from_expr((x * y) - @symcore.int(1))
+  let g2 = b.from_expr(y - @symcore.int(1))
+  let (qs, r) = reduced(f, [g1, g2])
+  let ours = reduced_pair_to_string(qs, r).trim().to_string()
+  let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("reduced multivariate mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: compose parity multivariate should error" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let f = b.from_expr((x * y) + @symcore.int(1))
+  let g = b.from_expr(x + y)
+  let ours : Result[Poly, _] = try? compose(f, g)
+  guard ours is Err(_) else { fail("compose multivariate should error") }
+}
+
+///|
+test "polytools: decompose parity for cubic" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = @symcore.symbol("x")
+  let f = b.from_expr((x ^ @symcore.int(6)) - @symcore.int(1))
+  let parts = decompose(f)
+  let ours = parts.map(p => sympy_normalize(p.to_string())).join(" | ")
+  let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
+  guard ours == oracle else {
+    fail("decompose cubic mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+///|
+test "polytools: reduced parity with two divisors" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = @symcore.symbol("x")
+  let f = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
+  let g1 = b.from_expr(x - @symcore.int(1))
+  let g2 = b.from_expr(x + @symcore.int(1))
+  let (qs, r) = reduced(f, [g1, g2])
+  let ours = reduced_pair_to_string(qs, r).trim().to_string()
+  let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("reduced two divisors mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
 test "polytools: compose parity over QQ" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let x = @symcore.symbol("x")
@@ -263,6 +547,20 @@ test "polytools: compose parity over QQ" {
 }
 
 ///|
+test "polytools: compose parity higher degree" {
+  let b = PolyBuilder::new(["x"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let f = b.from_expr((x ^ @symcore.int(4)) + x)
+  let g = b.from_expr((x ^ @symcore.int(2)) + x)
+  let h = compose(f, g)
+  let ours = sympy_normalize(h.to_string()).trim().to_string()
+  let oracle = @sympy_polys.compose(f.to_expr(), g.to_expr()).trim().to_string()
+  guard ours == oracle else {
+    fail("compose higher mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
 test "polytools: decompose parity over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let x = @symcore.symbol("x")
@@ -272,6 +570,19 @@ test "polytools: decompose parity over ZZ" {
   let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
   guard ours == oracle else {
     fail("decompose mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: decompose parity for nondecomposable" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = @symcore.symbol("x")
+  let f = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  let parts = decompose(f)
+  let ours = parts.map(p => sympy_normalize(p.to_string())).join(" | ")
+  let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
+  guard ours == oracle else {
+    fail("decompose nondecomposable mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
 

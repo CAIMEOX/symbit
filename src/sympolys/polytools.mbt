@@ -85,10 +85,45 @@ pub fn cancel(
   num : Poly,
   den : Poly,
 ) -> (Poly, Poly) raise PolyError {
+  if num.gens.length() != 1 || den.gens.length() != 1 {
+    let g = gcd_multivar_simple(num, den)
+    if g.is_zero() {
+      return (num, den)
+    }
+    let (q_num, r_num) = num.divmod_multivar([g])
+    let (q_den, r_den) = den.divmod_multivar([g])
+    if !r_num.is_zero() || !r_den.is_zero() {
+      return (num, den)
+    }
+    return (q_num[0], q_den[0])
+  }
   let g = num.gcd_univar(den)
   let num_s = num.div_exact_univar(g)
   let den_s = den.div_exact_univar(g)
   (num_s, den_s)
+}
+
+///|
+/// Minimal multivariate gcd: detect exact divisibility and fall back to 1.
+fn gcd_multivar_simple(a : Poly, b : Poly) -> Poly raise PolyError {
+  if a.domain.not_equal(b.domain) || a.gens.not_equal(b.gens) {
+    raise PolyError::DomainMismatch
+  }
+  if a.is_zero() {
+    return b
+  }
+  if b.is_zero() {
+    return a
+  }
+  let (_, r1) = a.divmod_multivar([b])
+  if r1.is_zero() {
+    return make_monic(b)
+  }
+  let (_, r2) = b.divmod_multivar([a])
+  if r2.is_zero() {
+    return make_monic(a)
+  }
+  Poly::one(a.gens, a.domain)
 }
 
 ///|

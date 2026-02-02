@@ -905,14 +905,29 @@ fn sympy_factor_str(
 }
 
 ///|
-pub fn factor_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
+pub fn factor_list(
+  expr : @symcore.Expr,
+  modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
+) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let expr_obj = expr_to_sympy(expr)
   let sympy = ensure_sympy_module_oracle()
+  let use_gfext = !gfext_modulus.is_empty()
   let kwargs_map : Map[String, OracleArg] = {}
-  match modulus_opt {
-    Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
-    None => ()
+  if use_gfext {
+    match modulus_opt {
+      Some(m) =>
+        kwargs_map["domain"] =
+          OracleArg::PyObj(sympy_domain_gfext(m, gfext_modulus, gfext_gen))
+      None => fail("gfext-modulus-missing")
+    }
+  } else {
+    match modulus_opt {
+      Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
+      None => ()
+    }
   }
   let res = sympy_call_must(
     "sympy.factor_list",
@@ -972,24 +987,44 @@ pub fn monic(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
 }
 
 ///|
-pub fn sqf_list(expr : @symcore.Expr, modulus? : Int = 0) -> String raise {
+pub fn sqf_list(
+  expr : @symcore.Expr,
+  modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
+) -> String raise {
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let expr_obj = expr_to_sympy(expr)
   let sympy = ensure_sympy_module_oracle()
-  let (content_obj, factors_obj) = match modulus_opt {
-    Some(m) => {
-      let poly = call_sympy_poly(expr_obj, [], "", Some(m))
-      let sqf_list = resolve_method_callable(poly, "sqf_list")
-      let res = py_call_noargs(sqf_list)
-      let items = py_list_to_pyobjects(res)
-      guard items.length() >= 2 else { fail("sqf_list tuple") }
-      (items[0], items[1])
+  let use_gfext = !gfext_modulus.is_empty()
+  let (content_obj, factors_obj) = if use_gfext {
+    let domain_obj = match modulus_opt {
+      Some(m) => sympy_domain_gfext(m, gfext_modulus, gfext_gen)
+      None => fail("gfext-modulus-missing")
     }
-    None => {
-      let res = sympy_call_must("sympy.sqf_list", [OracleArg::PyObj(expr_obj)])
-      let items = py_list_to_pyobjects(res)
-      guard items.length() >= 2 else { fail("sqf_list tuple") }
-      (items[0], items[1])
+    let poly = call_sympy_poly(expr_obj, [], "", None, domain_obj=Some(domain_obj))
+    let sqf_list = resolve_method_callable(poly, "sqf_list")
+    let res = py_call_noargs(sqf_list)
+    let items = py_list_to_pyobjects(res)
+    guard items.length() >= 2 else { fail("sqf_list tuple") }
+    (items[0], items[1])
+  } else {
+    match modulus_opt {
+      Some(m) => {
+        let poly = call_sympy_poly(expr_obj, [], "", Some(m))
+        let sqf_list = resolve_method_callable(poly, "sqf_list")
+        let res = py_call_noargs(sqf_list)
+        let items = py_list_to_pyobjects(res)
+        guard items.length() >= 2 else { fail("sqf_list tuple") }
+        (items[0], items[1])
+      }
+      None => {
+        let res =
+          sympy_call_must("sympy.sqf_list", [OracleArg::PyObj(expr_obj)])
+        let items = py_list_to_pyobjects(res)
+        guard items.length() >= 2 else { fail("sqf_list tuple") }
+        (items[0], items[1])
+      }
     }
   }
   let poly_cls = match sympy.get_attr("Poly", print_err=false) {
@@ -1135,6 +1170,7 @@ fn call_sympy_poly(
   gens : Array[@py.PyObject],
   domain : String,
   modulus : Int?,
+  domain_obj? : @py.PyObject? = None,
 ) -> @py.PyObject raise {
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(expr))
@@ -1142,12 +1178,18 @@ fn call_sympy_poly(
     args.push(OracleArg::PyObj(g))
   }
   let kwargs : Map[String, OracleArg] = {}
-  if domain != "" {
-    kwargs["domain"] = OracleArg::Str(domain)
+  match domain_obj {
+    Some(obj) => kwargs["domain"] = OracleArg::PyObj(obj)
+    None =>
+      if domain != "" {
+        kwargs["domain"] = OracleArg::Str(domain)
+      }
   }
-  match modulus {
-    Some(m) => kwargs["modulus"] = OracleArg::Int(m)
-    None => ()
+  if domain_obj is None {
+    match modulus {
+      Some(m) => kwargs["modulus"] = OracleArg::Int(m)
+      None => ()
+    }
   }
   let res = sympy_call_must("sympy.Poly", args, kwargs~)
   objenum_to_obj(res)
@@ -1160,6 +1202,8 @@ pub fn gcd(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
   let a = expr_to_sympy(p)
   let b = expr_to_sympy(q)
@@ -1169,14 +1213,27 @@ pub fn gcd(
     Some(sympy_symbols_from_names(gens))
   }
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
-  let use_poly = gens0 is Some(_) || domain != "" || modulus_opt is Some(_)
+  let use_gfext = !gfext_modulus.is_empty()
+  let use_poly =
+    gens0 is Some(_) ||
+    domain != "" ||
+    modulus_opt is Some(_) ||
+    use_gfext
   if use_poly {
     let gens_list = match gens0 {
       Some(list) => list
       None => sympy_default_gens([a, b])
     }
-    let pa = call_sympy_poly(a, gens_list, domain, modulus_opt)
-    let pb = call_sympy_poly(b, gens_list, domain, modulus_opt)
+    let domain_obj = if use_gfext {
+      match modulus_opt {
+        Some(m) => Some(sympy_domain_gfext(m, gfext_modulus, gfext_gen))
+        None => fail("gfext-modulus-missing")
+      }
+    } else {
+      None
+    }
+    let pa = call_sympy_poly(a, gens_list, domain, modulus_opt, domain_obj~)
+    let pb = call_sympy_poly(b, gens_list, domain, modulus_opt, domain_obj~)
     let gcd = resolve_method_callable(pa, "gcd")
     let res = py_call_one(gcd, pb)
     py_sympy_enum_str(res)
@@ -1197,6 +1254,8 @@ pub fn resultant(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
   let p_obj = expr_to_sympy(p)
   let q_obj = expr_to_sympy(q)
@@ -1210,6 +1269,7 @@ pub fn resultant(
     Some(sympy_symbols_from_names(gens))
   }
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
+  let use_gfext = !gfext_modulus.is_empty()
   let gens_list = match gens0 {
     Some(list) => list
     None => {
@@ -1223,9 +1283,17 @@ pub fn resultant(
       sympy_default_gens(seed)
     }
   }
-  if gens_list.length() > 0 && (domain != "" || modulus_opt is Some(_)) {
-    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt)
-    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt)
+  if gens_list.length() > 0 && (domain != "" || modulus_opt is Some(_) || use_gfext) {
+    let domain_obj = if use_gfext {
+      match modulus_opt {
+        Some(m) => Some(sympy_domain_gfext(m, gfext_modulus, gfext_gen))
+        None => fail("gfext-modulus-missing")
+      }
+    } else {
+      None
+    }
+    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt, domain_obj~)
+    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt, domain_obj~)
     let resultant = resolve_method_callable(pa, "resultant")
     // Poly.resultant does not accept a 'var' kwarg; gens ordering handles it.
     let res = py_call_one(resultant, pb)
@@ -1264,6 +1332,8 @@ pub fn div(
   gens? : Array[String] = [],
   domain? : String = "",
   modulus? : Int = 0,
+  gfext_modulus? : Array[Int] = [],
+  gfext_gen? : String = "a",
 ) -> String raise {
   let p_obj = expr_to_sympy(p)
   let q_obj = expr_to_sympy(q)
@@ -1273,14 +1343,27 @@ pub fn div(
     Some(sympy_symbols_from_names(gens))
   }
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
-  let use_poly = gens0 is Some(_) || domain != "" || modulus_opt is Some(_)
+  let use_gfext = !gfext_modulus.is_empty()
+  let use_poly =
+    gens0 is Some(_) ||
+    domain != "" ||
+    modulus_opt is Some(_) ||
+    use_gfext
   let res = if use_poly {
     let gens_list = match gens0 {
       Some(list) => list
       None => sympy_default_gens([p_obj, q_obj])
     }
-    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt)
-    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt)
+    let domain_obj = if use_gfext {
+      match modulus_opt {
+        Some(m) => Some(sympy_domain_gfext(m, gfext_modulus, gfext_gen))
+        None => fail("gfext-modulus-missing")
+      }
+    } else {
+      None
+    }
+    let pa = call_sympy_poly(p_obj, gens_list, domain, modulus_opt, domain_obj~)
+    let pb = call_sympy_poly(q_obj, gens_list, domain, modulus_opt, domain_obj~)
     let div = resolve_method_callable(pa, "div")
     py_call_one(div, pb)
   } else {
@@ -1648,6 +1731,42 @@ pub fn interpolate(
 }
 
 ///|
+pub fn interpolate_values(
+  values : Array[@symnum.BigRational],
+  x? : String = "x",
+) -> String raise {
+  let data_obj = py_list_from_rationals(values)
+  let sym = sympy_symbol_obj(x)
+  let res = sympy_call_must(
+    "sympy.interpolate",
+    [OracleArg::PyObj(data_obj), OracleArg::PyObj(sym)],
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn interpolate_dict(
+  points : Array[(@symnum.BigRational, @symnum.BigRational)],
+  x? : String = "x",
+) -> String raise {
+  let dict = py_dict_new()
+  let dict_obj = dict.obj()
+  let setitem = resolve_method_callable(dict_obj, "__setitem__")
+  for pair in points {
+    let x_obj = sympy_number_obj_oracle(pair.0)
+    let y_obj = sympy_number_obj_oracle(pair.1)
+    let tup = py_tuple_from_objects([x_obj, y_obj])
+    let _ = py_call_object_allow_none(setitem, tup, print_err=true)
+  }
+  let sym = sympy_symbol_obj(x)
+  let res = sympy_call_must(
+    "sympy.interpolate",
+    [OracleArg::PyObj(dict_obj), OracleArg::PyObj(sym)],
+  )
+  py_sympy_enum_str(res)
+}
+
+///|
 pub fn rational_interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   deg_num : Int,
@@ -1678,6 +1797,57 @@ fn sympy_domain_obj(name : String) -> @py.PyObject raise {
     Some(obj) => objenum_to_obj(obj)
     None => fail("sympy-domain-missing:\{name}")
   }
+}
+
+///|
+fn gfext_mod_poly_str(coeffs : Array[Int], gen : String) -> String {
+  let terms : Array[String] = Array::new()
+  for i in 0..<coeffs.length() {
+    let c = coeffs[i]
+    if c == 0 {
+      continue
+    }
+    let term = if i == 0 {
+      "\{c}"
+    } else if i == 1 {
+      if c == 1 { gen } else { "\{c}*\{gen}" }
+    } else {
+      let base = "\{gen}**\{i}"
+      if c == 1 { base } else { "\{c}*\{base}" }
+    }
+    terms.push(term)
+  }
+  if terms.is_empty() {
+    "0"
+  } else {
+    terms.join(" + ")
+  }
+}
+
+///|
+fn sympy_domain_gfext(
+  modulus : Int,
+  mod_poly : Array[Int],
+  gen : String,
+) -> @py.PyObject raise {
+  if modulus <= 1 {
+    fail("gfext-modulus")
+  }
+  let expr_str = gfext_mod_poly_str(mod_poly, gen)
+  let expr_obj = sympy_sympify_str(expr_str)
+  let gen_obj = sympy_symbol_obj(gen)
+  let poly_args : Array[OracleArg] = [
+    OracleArg::PyObj(expr_obj),
+    OracleArg::PyObj(gen_obj),
+  ]
+  let poly_kwargs : Map[String, OracleArg] = { "modulus": OracleArg::Int(modulus) }
+  let poly_enum = sympy_call_must("sympy.Poly", poly_args, kwargs=poly_kwargs)
+  let poly_obj = objenum_to_obj(poly_enum)
+  let ext_enum = sympy_call_must(
+    "sympy.polys.agca.extensions.FiniteExtension",
+    [OracleArg::PyObj(poly_obj)],
+  )
+  objenum_to_obj(ext_enum)
 }
 
 ///|
@@ -2844,6 +3014,82 @@ pub fn symmetrize(
     "\{sym_str}||\{rem_str}||\{mapping_str}"
   } else {
     "\{sym_str}||\{rem_str}"
+  }
+}
+
+///|
+pub fn symmetrize_list(
+  exprs : Array[@symcore.Expr],
+  gens? : Array[String] = [],
+  formal? : Bool = false,
+  symbols? : Array[String] = [],
+) -> String raise {
+  let expr_objs : Array[@py.PyObject] = Array::new()
+  for expr in exprs {
+    expr_objs.push(expr_to_sympy(expr))
+  }
+  let expr_list = py_list_from_objects(expr_objs)
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_list.obj()))
+  if !gens.is_empty() {
+    let gens_list = sympy_symbols_from_names(gens)
+    for gen in gens_list {
+      args.push(OracleArg::PyObj(gen))
+    }
+  }
+  let kwargs : Map[String, OracleArg] = {}
+  if formal {
+    kwargs["formal"] = OracleArg::Bool(true)
+  }
+  if !symbols.is_empty() {
+    let sym_objs = sympy_symbols_from_names(symbols)
+    let list = py_list_from_objects(sym_objs)
+    kwargs["symbols"] = OracleArg::PyObj(list.obj())
+  }
+  let res = sympy_call_must("sympy.symmetrize", args, kwargs~)
+  if formal {
+    let items = py_list_to_pyobjects(res)
+    guard items.length() >= 2 else { fail("symmetrize list tuple") }
+    let list_enum = @py.PyObjectEnum::create(items[0])
+    let list_items = py_list_to_pyobjects(list_enum)
+    let pair_parts : Array[String] = Array::new()
+    for pair in list_items {
+      let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+      if pair_items.length() >= 2 {
+        let s_str = py_sympy_expr_str(pair_items[0])
+        let r_str = py_sympy_expr_str(pair_items[1])
+        pair_parts.push("(\{s_str}, \{r_str})")
+      }
+    }
+    let pairs_joined = pair_parts.join(", ")
+    let list_str = "[\{pairs_joined}]"
+    let mapping_enum = @py.PyObjectEnum::create(items[1])
+    let mapping_items = py_list_to_pyobjects(mapping_enum)
+    let mapping_parts : Array[String] = Array::new()
+    for pair in mapping_items {
+      let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+      if pair_items.length() >= 2 {
+        let s_str = py_sympy_expr_str(pair_items[0])
+        let e_str = py_sympy_expr_str(pair_items[1])
+        mapping_parts.push("(\{s_str}, \{e_str})")
+      }
+    }
+    let mapping_joined = mapping_parts.join(", ")
+    let mapping_str = "[\{mapping_joined}]"
+    "\{list_str}||\{mapping_str}"
+  } else {
+    let items = py_list_to_pyobjects(res)
+    let parts : Array[String] = Array::new()
+    for pair in items {
+      let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+      if pair_items.length() >= 2 {
+        let s_str = py_sympy_expr_str(pair_items[0])
+        let r_str = py_sympy_expr_str(pair_items[1])
+        parts.push("(\{s_str}, \{r_str})")
+      }
+    }
+    let joined = parts.join(", ")
+    "[\{joined}]"
   }
 }
 
