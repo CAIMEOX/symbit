@@ -1,0 +1,236 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/polys"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn cancel(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn compose(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn decompose(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn discriminant(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn div(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn dmp_abs(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_add(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_add_ground(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_add_mul(@sympy.DenseData, @sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_add_term(@sympy.DenseData, @sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_diff(@sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_diff_in(@sympy.DenseData, Int, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_div(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_eval(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_eval_in(@sympy.DenseData, @symnum.BigRational, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_expand(Array[@sympy.DenseData], Int, domain? : String) -> String raise
+
+pub fn dmp_exquo(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_exquo_ground(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_ff_div(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_ground_monic(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_integrate(@sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_integrate_in(@sympy.DenseData, Int, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_l1_norm(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_l2_norm_squared(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_max_norm(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_mul(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_mul_ground(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_mul_term(@sympy.DenseData, @sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_neg(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_pdiv(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_pexquo(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_pow(@sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dmp_pquo(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_prem(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_quo(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_quo_ground(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_rem(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_rr_div(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_sqr(@sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_sub(@sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_sub_ground(@sympy.DenseData, @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dmp_sub_mul(@sympy.DenseData, @sympy.DenseData, @sympy.DenseData, Int, domain? : String) -> String raise
+
+pub fn dmp_sub_term(@sympy.DenseData, @sympy.DenseData, Int, Int, domain? : String) -> String raise
+
+pub fn dup_abs(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_add(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_add_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_add_term(Array[@symnum.BigRational], @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dup_cauchy_lower_bound(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_cauchy_upper_bound(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_diff(Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
+pub fn dup_div(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_eval(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_expand(Array[Array[@symnum.BigRational]], domain? : String) -> String raise
+
+pub fn dup_exquo(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_exquo_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_ff_div(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_integrate(Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
+pub fn dup_l1_norm(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_l2_norm_squared(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_lshift(Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
+pub fn dup_max_norm(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_mignotte_sep_bound_squared(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_monic(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_mul(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_mul_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_mul_term(Array[@symnum.BigRational], @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn dup_neg(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_pow(Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
+pub fn dup_quo(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_quo_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_rem(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_rr_div(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_rshift(Array[@symnum.BigRational], Int, domain? : String) -> String raise
+
+pub fn dup_sqr(Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_sub(Array[@symnum.BigRational], Array[@symnum.BigRational], domain? : String) -> String raise
+
+pub fn dup_sub_ground(Array[@symnum.BigRational], @symnum.BigRational, domain? : String) -> String raise
+
+pub fn dup_sub_term(Array[@symnum.BigRational], @symnum.BigRational, Int, domain? : String) -> String raise
+
+pub fn factor_list(@symcore.Expr, modulus? : Int) -> String raise
+
+pub fn gcd(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn gcd_list(Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn gf_add(Array[Int], Array[Int], Int) -> String raise
+
+pub fn gf_div(Array[Int], Array[Int], Int) -> String raise
+
+pub fn gf_gcd(Array[Int], Array[Int], Int) -> String raise
+
+pub fn gf_mul(Array[Int], Array[Int], Int) -> String raise
+
+pub fn gf_strip(Array[Int]) -> String raise
+
+pub fn gf_sub(Array[Int], Array[Int], Int) -> String raise
+
+pub fn gf_trunc(Array[Int], Int) -> String raise
+
+pub fn groebner(Array[@symcore.Expr], order? : String) -> String raise
+
+pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> String raise
+
+pub fn interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], x? : String) -> String raise
+
+pub fn lcm_list(Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn monic(@symcore.Expr, modulus? : Int) -> String raise
+
+pub fn rational_interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], Int, x? : String) -> String raise
+
+pub fn reduced(@symcore.Expr, Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn res_q_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
+
+pub fn res_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
+
+pub fn res_z_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
+
+pub fn resultant(@symcore.Expr, @symcore.Expr, x? : String, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn rootof(@symcore.Expr, Int) -> String raise
+
+pub fn roots_linear(@symcore.Expr, gens? : Array[String]) -> String raise
+
+pub fn roots_quadratic(@symcore.Expr, gens? : Array[String]) -> String raise
+
+pub fn sqf_list(@symcore.Expr, modulus? : Int) -> String raise
+
+pub fn sqf_part(@symcore.Expr) -> String raise
+
+pub fn sturm(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn subresultants(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn subresultants_rem_qq_zz(@symcore.Expr, @symcore.Expr, x? : String) -> String raise
+
+pub fn symmetrize(@symcore.Expr, gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> String raise
+
+pub fn terms_gcd(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
+
+pub fn viete(@symcore.Expr, roots? : Array[String], gen? : String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

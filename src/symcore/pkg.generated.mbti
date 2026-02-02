@@ -48,6 +48,10 @@ pub enum Expr {
   Pow(Expr, Expr)
   Function(String, Array[Expr])
 }
+pub impl Add for Expr
+pub impl BitXOr for Expr
+pub impl Mul for Expr
+pub impl Sub for Expr
 
 // Type aliases
 

@@ -198,6 +198,228 @@ pub fn horner(
 }
 
 ///|
+pub fn dup_integrate(
+  coeffs : Array[@symnum.BigRational],
+  m : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_integrate(coeffs, m, domain~)
+}
+
+///|
+pub fn dmp_integrate(
+  data : @sympy.DenseData,
+  m : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_integrate(data, m, u, domain~)
+}
+
+///|
+pub fn dmp_integrate_in(
+  data : @sympy.DenseData,
+  m : Int,
+  j : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_integrate_in(data, m, j, u, domain~)
+}
+
+///|
+pub fn dup_diff(
+  coeffs : Array[@symnum.BigRational],
+  m : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_diff(coeffs, m, domain~)
+}
+
+///|
+pub fn dmp_diff(
+  data : @sympy.DenseData,
+  m : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_diff(data, m, u, domain~)
+}
+
+///|
+pub fn dmp_diff_in(
+  data : @sympy.DenseData,
+  m : Int,
+  j : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_diff_in(data, m, j, u, domain~)
+}
+
+///|
+pub fn dup_eval(
+  coeffs : Array[@symnum.BigRational],
+  a : @symnum.BigRational,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_eval(coeffs, a, domain~)
+}
+
+///|
+pub fn dmp_eval(
+  data : @sympy.DenseData,
+  a : @symnum.BigRational,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_eval(data, a, u, domain~)
+}
+
+///|
+pub fn dmp_eval_in(
+  data : @sympy.DenseData,
+  a : @symnum.BigRational,
+  j : Int,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_eval_in(data, a, j, u, domain~)
+}
+
+///|
+pub fn dup_monic(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_monic(coeffs, domain~)
+}
+
+///|
+pub fn dmp_ground_monic(
+  data : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_ground_monic(data, u, domain~)
+}
+
+///|
+pub fn gf_strip(f : Array[Int]) -> String raise {
+  @sympy.gf_strip(f)
+}
+
+///|
+pub fn gf_trunc(f : Array[Int], p : Int) -> String raise {
+  @sympy.gf_trunc(f, p)
+}
+
+///|
+pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  @sympy.gf_add(f, g, p)
+}
+
+///|
+pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  @sympy.gf_sub(f, g, p)
+}
+
+///|
+pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  @sympy.gf_mul(f, g, p)
+}
+
+///|
+pub fn gf_div(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  @sympy.gf_div(f, g, p)
+}
+
+///|
+pub fn gf_gcd(f : Array[Int], g : Array[Int], p : Int) -> String raise {
+  @sympy.gf_gcd(f, g, p)
+}
+
+///|
+pub fn roots_linear(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  @sympy.roots_linear(expr, gens~)
+}
+
+///|
+pub fn roots_quadratic(
+  expr : @symcore.Expr,
+  gens? : Array[String] = [],
+) -> String raise {
+  @sympy.roots_quadratic(expr, gens~)
+}
+
+///|
+pub fn rootof(expr : @symcore.Expr, index : Int) -> String raise {
+  @sympy.rootof(expr, index)
+}
+
+///|
+pub fn dup_cauchy_upper_bound(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_cauchy_upper_bound(coeffs, domain~)
+}
+
+///|
+pub fn dup_cauchy_lower_bound(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_cauchy_lower_bound(coeffs, domain~)
+}
+
+///|
+pub fn dup_mignotte_sep_bound_squared(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  @sympy.dup_mignotte_sep_bound_squared(coeffs, domain~)
+}
+
+///|
+pub fn res_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  @sympy.res_qq_zz(p, q, x~)
+}
+
+///|
+pub fn res_q_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  @sympy.res_q_qq_zz(p, q, x~)
+}
+
+///|
+pub fn res_z_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  @sympy.res_z_qq_zz(p, q, x~)
+}
+
+///|
+pub fn subresultants_rem_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  @sympy.subresultants_rem_qq_zz(p, q, x~)
+}
+///|
 pub fn viete(
   expr : @symcore.Expr,
   roots? : Array[String] = [],
