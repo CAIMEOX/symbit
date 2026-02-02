@@ -9,6 +9,20 @@ fn br_int(n : Int) -> @symnum.BigRational {
 }
 
 ///|
+fn feqq(num : Int, den : Int) -> FieldElem {
+  let br = try! @symnum.BigRational::new(
+    BigInt::from_int(num),
+    BigInt::from_int(den),
+  )
+  try! fe_from_rational(br, Domain::QQ)
+}
+
+///|
+fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
+  try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+}
+
+///|
 fn dup_repr(coeffs : Array[FieldElem]) -> String {
   if coeffs.is_empty() {
     return "[]"
@@ -38,6 +52,15 @@ fn poly_int(vals : Array[Int]) -> DensePoly {
 }
 
 ///|
+fn poly_fe(vals : Array[FieldElem]) -> DensePoly {
+  let items : Array[DensePoly] = Array::new()
+  for v in vals {
+    items.push(dense_coef(v))
+  }
+  dense_poly(items)
+}
+
+///|
 ///|
 fn dmp_repr(p : DensePoly) -> String {
   match p {
@@ -51,6 +74,14 @@ fn dmp_repr(p : DensePoly) -> String {
       "[\{joined}]"
     }
   }
+}
+
+///|
+fn dmp_pair_repr(pair : (DensePoly, DensePoly)) -> String {
+  let (a, b) = pair
+  let left = dmp_repr(a)
+  let right = dmp_repr(b)
+  "(\{left},\{right})"
 }
 
 ///|
@@ -245,7 +276,18 @@ test "densearith: dmp_ground ops parity" {
     1,
   )
   guard ours_mul == oracle_mul else { fail("dmp_mul_ground mismatch") }
-
+  let fqq = dense_poly([
+    poly_fe([feqq(1, 5), feqq(2, 5)]),
+    poly_fe([feqq(3, 5)]),
+  ])
+  let ours_mul_q = dmp_repr(dmp_mul_ground(fqq, feqq(2, 3), 1, Domain::QQ))
+  let oracle_mul_q = @sympy_polys.dmp_mul_ground(
+    dense_data_of(fqq),
+    br_rat(2, 3),
+    1,
+    domain="QQ",
+  )
+  guard ours_mul_q == oracle_mul_q else { fail("dmp_mul_ground QQ mismatch") }
 }
 
 ///|
@@ -277,6 +319,14 @@ test "densearith: dmp_neg/abs parity" {
   let ours_neg = dmp_repr(dmp_neg(f2, 2, Domain::ZZ))
   let oracle_neg = @sympy_polys.dmp_neg(dense_data_of(f2), 2)
   guard ours_neg == oracle_neg else { fail("dmp_neg mismatch") }
+  let fq = dmp_ground(feqq(-7, 9), 2)
+  let ours_abs_q = dmp_repr(dmp_abs(fq, 2, Domain::QQ))
+  let oracle_abs_q = @sympy_polys.dmp_abs(
+    dense_data_of(fq),
+    2,
+    domain="QQ",
+  )
+  guard ours_abs_q == oracle_abs_q else { fail("dmp_abs QQ mismatch") }
 }
 
 ///|
@@ -311,4 +361,116 @@ test "densearith: dmp_add/sub/mul/sqr/pow parity" {
   let ours_pow = dmp_repr(dmp_pow(h, 2, 1, Domain::ZZ))
   let oracle_pow = @sympy_polys.dmp_pow(dense_data_of(h), 2, 1)
   guard ours_pow == oracle_pow else { fail("dmp_pow mismatch") }
+  let fq = dense_poly([poly_fe([feqq(1, 2)]), poly_fe([feqq(1, 3)])])
+  let gq = dense_poly([poly_fe([feqq(2, 5)])])
+  let ours_add_q = dmp_repr(dmp_add(fq, gq, 1, Domain::QQ))
+  let oracle_add_q = @sympy_polys.dmp_add(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    1,
+    domain="QQ",
+  )
+  guard ours_add_q == oracle_add_q else { fail("dmp_add QQ mismatch") }
+  let ours_mul_q = dmp_repr(dmp_mul(fq, gq, 1, Domain::QQ))
+  let oracle_mul_q = @sympy_polys.dmp_mul(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    1,
+    domain="QQ",
+  )
+  guard ours_mul_q == oracle_mul_q else { fail("dmp_mul QQ mismatch") }
+}
+
+///|
+test "densearith: dmp_add_mul/sub_mul parity" {
+  let f = dense_poly([poly_int([1, 0]), poly_int([2])])
+  let g = dense_poly([poly_int([1])])
+  let h = dense_poly([poly_int([2, 1])])
+  let ours_add = dmp_repr(dmp_add_mul(f, g, h, 1, Domain::ZZ))
+  let oracle_add = @sympy_polys.dmp_add_mul(
+    dense_data_of(f),
+    dense_data_of(g),
+    dense_data_of(h),
+    1,
+  )
+  guard ours_add == oracle_add else { fail("dmp_add_mul mismatch") }
+  let ours_sub = dmp_repr(dmp_sub_mul(f, g, h, 1, Domain::ZZ))
+  let oracle_sub = @sympy_polys.dmp_sub_mul(
+    dense_data_of(f),
+    dense_data_of(g),
+    dense_data_of(h),
+    1,
+  )
+  guard ours_sub == oracle_sub else { fail("dmp_sub_mul mismatch") }
+}
+
+///|
+test "densearith: dmp_pdiv/prem/pquo/pexquo parity" {
+  let f = dense_poly([poly_int([1, 0]), poly_int([0])])
+  let g = dense_poly([poly_int([1]), poly_int([0])])
+  let ours_pair = dmp_pair_repr(dmp_pdiv(f, g, 1, Domain::ZZ))
+  let oracle_pair = @sympy_polys.dmp_pdiv(dense_data_of(f), dense_data_of(g), 1)
+  guard ours_pair == oracle_pair else { fail("dmp_pdiv mismatch") }
+  let ours_prem = dmp_repr(dmp_prem(f, g, 1, Domain::ZZ))
+  let oracle_prem = @sympy_polys.dmp_prem(dense_data_of(f), dense_data_of(g), 1)
+  guard ours_prem == oracle_prem else { fail("dmp_prem mismatch") }
+  let ours_pquo = dmp_repr(dmp_pquo(f, g, 1, Domain::ZZ))
+  let oracle_pquo = @sympy_polys.dmp_pquo(dense_data_of(f), dense_data_of(g), 1)
+  guard ours_pquo == oracle_pquo else { fail("dmp_pquo mismatch") }
+  let ours_pex = dmp_repr(dmp_pexquo(f, g, 1, Domain::ZZ))
+  let oracle_pex = @sympy_polys.dmp_pexquo(dense_data_of(f), dense_data_of(g), 1)
+  guard ours_pex == oracle_pex else { fail("dmp_pexquo mismatch") }
+}
+
+///|
+test "densearith: dmp_rr/ff/div family parity" {
+  let f = dense_poly([poly_int([1, 0, 0]), poly_int([0]), poly_int([1])])
+  let g = dense_poly([poly_int([1, 0]), poly_int([-1])])
+  let ours_rr = dmp_pair_repr(dmp_rr_div(f, g, 1, Domain::ZZ))
+  let oracle_rr = @sympy_polys.dmp_rr_div(dense_data_of(f), dense_data_of(g), 1)
+  guard ours_rr == oracle_rr else { fail("dmp_rr_div mismatch") }
+
+  let fq = poly_fe([feqq(1, 1), feqq(0, 1), feqq(-1, 1)])
+  let gq = poly_fe([feqq(1, 1), feqq(-1, 1)])
+  let ours_ff = dmp_pair_repr(dmp_ff_div(fq, gq, 0, Domain::QQ))
+  let oracle_ff = @sympy_polys.dmp_ff_div(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    0,
+    domain="QQ",
+  )
+  guard ours_ff == oracle_ff else { fail("dmp_ff_div mismatch") }
+
+  let ours_div = dmp_pair_repr(dmp_div(fq, gq, 0, Domain::QQ))
+  let oracle_div = @sympy_polys.dmp_div(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    0,
+    domain="QQ",
+  )
+  guard ours_div == oracle_div else { fail("dmp_div mismatch") }
+  let ours_rem = dmp_repr(dmp_rem(fq, gq, 0, Domain::QQ))
+  let oracle_rem = @sympy_polys.dmp_rem(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    0,
+    domain="QQ",
+  )
+  guard ours_rem == oracle_rem else { fail("dmp_rem mismatch") }
+  let ours_quo = dmp_repr(dmp_quo(fq, gq, 0, Domain::QQ))
+  let oracle_quo = @sympy_polys.dmp_quo(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    0,
+    domain="QQ",
+  )
+  guard ours_quo == oracle_quo else { fail("dmp_quo mismatch") }
+  let ours_ex = dmp_repr(dmp_exquo(fq, gq, 0, Domain::QQ))
+  let oracle_ex = @sympy_polys.dmp_exquo(
+    dense_data_of(fq),
+    dense_data_of(gq),
+    0,
+    domain="QQ",
+  )
+  guard ours_ex == oracle_ex else { fail("dmp_exquo mismatch") }
 }

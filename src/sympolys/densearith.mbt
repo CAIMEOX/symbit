@@ -726,3 +726,540 @@ pub fn dmp_pow(
   }
   result
 }
+
+///|
+fn domain_is_field(domain : Domain) -> Bool {
+  match domain {
+    Domain::ZZ => false
+    Domain::QQ | Domain::CC | Domain::RR => true
+    Domain::GF(_) | Domain::GFExt(_, _, _) => true
+    Domain::Frac(_) => true
+    Domain::AlgExt(base, _, _) => domain_is_field(base)
+  }
+}
+
+///|
+fn fe_pow_local(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
+  if exp < 0 {
+    return fe_inv(fe_pow_local(base, -exp))
+  }
+  let mut result = match base {
+    FieldElem::QQ(_) => FieldElem::QQ(@symnum.BigRational::one())
+    FieldElem::CC(_, _) =>
+      FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::zero())
+    FieldElem::GFp(p, _) => FieldElem::GFp(p, 1)
+    FieldElem::GFExt(p, _, m) => FieldElem::GFExt(p, [1], m)
+    FieldElem::AlgExt(base_d, _, minpoly, gen) =>
+      FieldElem::AlgExt(base_d, [fe_from_int(1, base_d)], minpoly, gen)
+  }
+  let mut b = base
+  let mut e = exp
+  while e > 0 {
+    if e % 2 == 1 {
+      result = fe_mul(result, b)
+    }
+    e = e / 2
+    if e > 0 {
+      b = fe_mul(b, b)
+    }
+  }
+  result
+}
+
+///|
+fn fe_divides(
+  a : FieldElem,
+  b : FieldElem,
+  domain : Domain,
+) -> (Bool, FieldElem) raise PolyError {
+  if fe_is_zero(b) {
+    raise PolyError::DivisionByZero
+  }
+  if domain_is_field(domain) {
+    return (true, fe_mul(a, fe_inv(b)))
+  }
+  match domain {
+    Domain::ZZ => {
+      let ar = fe_expect_rational(a)
+      let br = fe_expect_rational(b)
+      if !ar.is_integral() || !br.is_integral() {
+        return (false, fe_from_int(0, domain))
+      }
+      let num = ar.numerator()
+      let den = br.numerator()
+      if den.is_zero() {
+        raise PolyError::DivisionByZero
+      }
+      if !num.mod(den).is_zero() {
+        return (false, fe_from_int(0, domain))
+      }
+      let q = num.div(den)
+      let rat = @symnum.BigRational::from_bigint(q)
+      (true, FieldElem::QQ(rat))
+    }
+    _ => (false, fe_from_int(0, domain))
+  }
+}
+
+///|
+pub fn dup_add_mul(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  h : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_add(f, dup_mul(g, h, domain), domain)
+}
+
+///|
+pub fn dup_sub_mul(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  h : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_sub(f, dup_mul(g, h, domain), domain)
+}
+
+///|
+pub fn dmp_add_mul(
+  f : DensePoly,
+  g : DensePoly,
+  h : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_add(f, dmp_mul(g, h, u, domain), u, domain)
+}
+
+///|
+pub fn dmp_sub_mul(
+  f : DensePoly,
+  g : DensePoly,
+  h : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_sub(f, dmp_mul(g, h, u, domain), u, domain)
+}
+
+///|
+pub fn dup_pdiv(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let df = dup_degree(f)
+  let dg = dup_degree(g)
+  if g.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let mut q : Array[FieldElem] = Array::new()
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let mut n = df - dg + 1
+  let lc_g = dup_LC(g)
+  while true {
+    let lc_r = dup_LC(r)
+    let j = dr - dg
+    n = n - 1
+    let q_scaled = dup_mul_term(q, lc_g, 0, domain)
+    q = dup_add_term(q_scaled, lc_r, j, domain)
+    let r_scaled = dup_mul_term(r, lc_g, 0, domain)
+    let g_scaled = dup_mul_term(g, lc_r, j, domain)
+    r = dup_sub(r_scaled, g_scaled, domain)
+    let prev_dr = dr
+    dr = dup_degree(r)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  let c = fe_pow_local(lc_g, n)
+  q = dup_mul_term(q, c, 0, domain)
+  r = dup_mul_term(r, c, 0, domain)
+  (q, r)
+}
+
+///|
+pub fn dup_prem(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_pdiv(f, g, domain).1
+}
+
+///|
+pub fn dup_pquo(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_pdiv(f, g, domain).0
+}
+
+///|
+pub fn dup_pexquo(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let (q, r) = dup_pdiv(f, g, domain)
+  if r.is_empty() {
+    q
+  } else {
+    raise PolyError::NotImplemented("ExactQuotientFailed")
+  }
+}
+
+///|
+pub fn dmp_pdiv(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if u == 0 {
+    let fc = dmp_to_coeffs(f)
+    let gc = dmp_to_coeffs(g)
+    let (q, r) = dup_pdiv(fc, gc, domain)
+    return (dmp_from_coeffs(q), dmp_from_coeffs(r))
+  }
+  let df = dmp_degree(f, u)
+  let dg = dmp_degree(g, u)
+  if dg < 0 {
+    raise PolyError::DivisionByZero
+  }
+  let mut q = dmp_zero(u)
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let mut n = df - dg + 1
+  let lc_g = dmp_LC(g)
+  while true {
+    let lc_r = dmp_LC(r)
+    let j = dr - dg
+    n = n - 1
+    let q_scaled = dmp_mul_term(q, lc_g, 0, u, domain)
+    q = dmp_add_term(q_scaled, lc_r, j, u, domain)
+    let r_scaled = dmp_mul_term(r, lc_g, 0, u, domain)
+    let g_scaled = dmp_mul_term(g, lc_r, j, u, domain)
+    r = dmp_sub(r_scaled, g_scaled, u, domain)
+    let prev_dr = dr
+    dr = dmp_degree(r, u)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  let c = dmp_pow(lc_g, n, u - 1, domain)
+  q = dmp_mul_term(q, c, 0, u, domain)
+  r = dmp_mul_term(r, c, 0, u, domain)
+  (q, r)
+}
+
+///|
+pub fn dmp_prem(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_pdiv(f, g, u, domain).1
+}
+
+///|
+pub fn dmp_pquo(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_pdiv(f, g, u, domain).0
+}
+
+///|
+pub fn dmp_pexquo(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  let (q, r) = dmp_pdiv(f, g, u, domain)
+  if dmp_zero_p(r, u) {
+    q
+  } else {
+    raise PolyError::NotImplemented("ExactQuotientFailed")
+  }
+}
+
+///|
+pub fn dup_rr_div(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let df = dup_degree(f)
+  let dg = dup_degree(g)
+  if g.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let mut q : Array[FieldElem] = Array::new()
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let lc_g = dup_LC(g)
+  while true {
+    let lc_r = dup_LC(r)
+    let (ok, c) = fe_divides(lc_r, lc_g, domain)
+    if !ok {
+      break
+    }
+    let j = dr - dg
+    q = dup_add_term(q, c, j, domain)
+    let h = dup_mul_term(g, c, j, domain)
+    r = dup_sub(r, h, domain)
+    let prev_dr = dr
+    dr = dup_degree(r)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  (q, r)
+}
+
+///|
+pub fn dmp_rr_div(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if u == 0 {
+    let fc = dmp_to_coeffs(f)
+    let gc = dmp_to_coeffs(g)
+    let (q, r) = dup_rr_div(fc, gc, domain)
+    return (dmp_from_coeffs(q), dmp_from_coeffs(r))
+  }
+  let df = dmp_degree(f, u)
+  let dg = dmp_degree(g, u)
+  if dg < 0 {
+    raise PolyError::DivisionByZero
+  }
+  let mut q = dmp_zero(u)
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let lc_g = dmp_LC(g)
+  let v = u - 1
+  while true {
+    let lc_r = dmp_LC(r)
+    let (c, rem) = dmp_rr_div(lc_r, lc_g, v, domain)
+    if !dmp_zero_p(rem, v) {
+      break
+    }
+    let j = dr - dg
+    q = dmp_add_term(q, c, j, u, domain)
+    let h = dmp_mul_term(g, c, j, u, domain)
+    r = dmp_sub(r, h, u, domain)
+    let prev_dr = dr
+    dr = dmp_degree(r, u)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  (q, r)
+}
+
+///|
+pub fn dup_ff_div(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
+  let df = dup_degree(f)
+  let dg = dup_degree(g)
+  if g.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let mut q : Array[FieldElem] = Array::new()
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let lc_g = dup_LC(g)
+  while true {
+    let lc_r = dup_LC(r)
+    let c = fe_mul(lc_r, fe_inv(lc_g))
+    let j = dr - dg
+    q = dup_add_term(q, c, j, domain)
+    let h = dup_mul_term(g, c, j, domain)
+    r = dup_sub(r, h, domain)
+    let prev_dr = dr
+    dr = dup_degree(r)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  (q, r)
+}
+
+///|
+pub fn dmp_ff_div(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if u == 0 {
+    let fc = dmp_to_coeffs(f)
+    let gc = dmp_to_coeffs(g)
+    let (q, r) = dup_ff_div(fc, gc, domain)
+    return (dmp_from_coeffs(q), dmp_from_coeffs(r))
+  }
+  let df = dmp_degree(f, u)
+  let dg = dmp_degree(g, u)
+  if dg < 0 {
+    raise PolyError::DivisionByZero
+  }
+  let mut q = dmp_zero(u)
+  let mut r = f
+  let mut dr = df
+  if df < dg {
+    return (q, r)
+  }
+  let lc_g = dmp_LC(g)
+  let v = u - 1
+  while true {
+    let lc_r = dmp_LC(r)
+    let (c, rem) = dmp_ff_div(lc_r, lc_g, v, domain)
+    if !dmp_zero_p(rem, v) {
+      break
+    }
+    let j = dr - dg
+    q = dmp_add_term(q, c, j, u, domain)
+    let h = dmp_mul_term(g, c, j, u, domain)
+    r = dmp_sub(r, h, u, domain)
+    let prev_dr = dr
+    dr = dmp_degree(r, u)
+    if dr < dg {
+      break
+    } else if !(dr < prev_dr) {
+      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+    }
+  }
+  (q, r)
+}
+
+///|
+pub fn dup_div(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> (Array[FieldElem], Array[FieldElem]) raise PolyError {
+  if domain_is_field(domain) {
+    dup_ff_div(f, g, domain)
+  } else {
+    dup_rr_div(f, g, domain)
+  }
+}
+
+///|
+pub fn dup_rem(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_div(f, g, domain).1
+}
+
+///|
+pub fn dup_quo(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  dup_div(f, g, domain).0
+}
+
+///|
+pub fn dup_exquo(
+  f : Array[FieldElem],
+  g : Array[FieldElem],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let (q, r) = dup_div(f, g, domain)
+  if r.is_empty() {
+    q
+  } else {
+    raise PolyError::NotImplemented("ExactQuotientFailed")
+  }
+}
+
+///|
+pub fn dmp_div(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> (DensePoly, DensePoly) raise PolyError {
+  if domain_is_field(domain) {
+    dmp_ff_div(f, g, u, domain)
+  } else {
+    dmp_rr_div(f, g, u, domain)
+  }
+}
+
+///|
+pub fn dmp_rem(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_div(f, g, u, domain).1
+}
+
+///|
+pub fn dmp_quo(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  dmp_div(f, g, u, domain).0
+}
+
+///|
+pub fn dmp_exquo(
+  f : DensePoly,
+  g : DensePoly,
+  u : Int,
+  domain : Domain,
+) -> DensePoly raise PolyError {
+  let (q, r) = dmp_div(f, g, u, domain)
+  if dmp_zero_p(r, u) {
+    q
+  } else {
+    raise PolyError::NotImplemented("ExactQuotientFailed")
+  }
+}

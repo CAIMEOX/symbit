@@ -358,6 +358,34 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
 }
 
 ///|
+pub fn fe_from_rational(
+  val : @symnum.BigRational,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  match domain {
+    Domain::QQ => FieldElem::QQ(val)
+    Domain::ZZ =>
+      if val.is_integral() {
+        FieldElem::QQ(val)
+      } else {
+        raise PolyError::CoefficientNotInteger
+      }
+    Domain::CC => FieldElem::CC(val, @symnum.BigRational::zero())
+    Domain::RR => FieldElem::QQ(val)
+    Domain::GF(p) => {
+      let norm = normalize_mod(val, Domain::GF(p))
+      FieldElem::GFp(p, fe_pos_mod(norm.numerator().to_int(), p))
+    }
+    Domain::GFExt(p, _, m) => {
+      let norm = normalize_mod(val, Domain::GFExt(p, 1, m))
+      FieldElem::GFExt(p, [fe_pos_mod(norm.numerator().to_int(), p)], m)
+    }
+    Domain::Frac(inner) => fe_from_rational(val, inner)
+    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("algext-from-rational")
+  }
+}
+
+///|
 pub fn fe_to_string(a : FieldElem) -> String {
   match a {
     FieldElem::QQ(x) => x.to_string()

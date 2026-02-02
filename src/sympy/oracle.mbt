@@ -336,6 +336,48 @@ fn py_str_enum(obj : @py.PyObjectEnum) -> String {
 }
 
 ///|
+fn py_str_value(obj : @py.PyObject) -> String raise {
+  let builtins = ensure_builtins_module()
+  let str_enum = match builtins.get_attr("str", print_err=false) {
+    Some(v) => v
+    None => fail("builtins-str-missing")
+  }
+  let callable = @py.PyCallable::create(objenum_to_obj(str_enum)) catch {
+      _ => fail("builtins-str-callable")
+    }
+  let res = py_call_one(callable, obj)
+  match res {
+    PyString(s) => @py.PyString::to_string(s)
+    _ => py_str_enum(res)
+  }
+}
+
+///|
+fn py_dense_str(obj : @py.PyObjectEnum) -> String raise {
+  match obj {
+    PyList(_) => {
+      let items = py_list_to_pyobjects(obj)
+      let parts : Array[String] = Array::new()
+      for it in items {
+        parts.push(py_dense_str(@py.PyObjectEnum::create(it)))
+      }
+      let joined = parts.join(",")
+      "[\{joined}]"
+    }
+    PyTuple(_) => {
+      let items = py_list_to_pyobjects(obj)
+      let parts : Array[String] = Array::new()
+      for it in items {
+        parts.push(py_dense_str(@py.PyObjectEnum::create(it)))
+      }
+      let joined = parts.join(",")
+      "(\{joined})"
+    }
+    _ => py_str_value(objenum_to_obj(obj))
+  }
+}
+
+///|
 fn py_sympy_expr_str(obj : @py.PyObject) -> String raise {
   let sympy = ensure_sympy_module_oracle()
   let poly_cls = match sympy.get_attr("Poly", print_err=false) {
@@ -1382,6 +1424,24 @@ fn sympy_number_obj_oracle(n : @symnum.BigRational) -> @py.PyObject raise {
 }
 
 ///|
+fn sympy_domain_elem(
+  n : @symnum.BigRational,
+  domain : String,
+) -> @py.PyObject raise {
+  let dom = sympy_domain_obj(domain)
+  let convert_enum = match py_get_attr(dom, "convert") {
+    Some(v) => v
+    None => fail("sympy-domain-convert-missing")
+  }
+  let convert = @py.PyCallable::create(objenum_to_obj(convert_enum)) catch {
+      _ => fail("sympy-domain-convert-callable")
+    }
+  let num_obj = sympy_number_obj_oracle(n)
+  let res = py_call_one(convert, num_obj)
+  objenum_to_obj(res)
+}
+
+///|
 fn py_list_from_rationals(
   coeffs : Array[@symnum.BigRational],
 ) -> @py.PyObject raise {
@@ -1394,13 +1454,29 @@ fn py_list_from_rationals(
 }
 
 ///|
-fn dense_data_to_pyobj(data : DenseData) -> @py.PyObject raise {
+fn py_list_from_rationals_domain(
+  coeffs : Array[@symnum.BigRational],
+  domain : String,
+) -> @py.PyObject raise {
+  let items : Array[@py.PyObject] = Array::new()
+  for c in coeffs {
+    items.push(sympy_domain_elem(c, domain))
+  }
+  let list = py_list_from_objects(items)
+  list.obj()
+}
+
+///|
+fn dense_data_to_pyobj_domain(
+  data : DenseData,
+  domain : String,
+) -> @py.PyObject raise {
   match data {
-    DenseData::Coef(c) => sympy_number_obj_oracle(c)
+    DenseData::Coef(c) => sympy_domain_elem(c, domain)
     DenseData::Poly(items) => {
       let out : Array[@py.PyObject] = Array::new()
       for it in items {
-        out.push(dense_data_to_pyobj(it))
+        out.push(dense_data_to_pyobj_domain(it, domain))
       }
       let list = py_list_from_objects(out)
       list.obj()
@@ -1416,12 +1492,12 @@ pub fn dup_add_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_add_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1432,12 +1508,12 @@ pub fn dup_sub_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_sub_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1448,12 +1524,12 @@ pub fn dup_mul_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_mul_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1463,11 +1539,11 @@ pub fn dup_add_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_add_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1477,11 +1553,11 @@ pub fn dup_sub_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_sub_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1491,11 +1567,11 @@ pub fn dup_mul_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_mul_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1505,11 +1581,11 @@ pub fn dup_quo_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_quo_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1519,11 +1595,11 @@ pub fn dup_exquo_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_exquo_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1533,11 +1609,11 @@ pub fn dup_lshift(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::Int(n))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_lshift", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1547,11 +1623,11 @@ pub fn dup_rshift(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::Int(n))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_rshift", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1560,10 +1636,10 @@ pub fn dup_neg(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_neg", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1575,7 +1651,7 @@ pub fn dup_abs(
   args.push(OracleArg::PyObj(py_list_from_rationals(f)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_abs", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1585,11 +1661,11 @@ pub fn dup_add(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(py_list_from_rationals(g)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_add", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1599,11 +1675,11 @@ pub fn dup_sub(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(py_list_from_rationals(g)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_sub", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1613,11 +1689,11 @@ pub fn dup_mul(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
-  args.push(OracleArg::PyObj(py_list_from_rationals(g)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_mul", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1626,10 +1702,10 @@ pub fn dup_sqr(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_sqr", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1639,11 +1715,11 @@ pub fn dup_pow(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(py_list_from_rationals(f)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
   args.push(OracleArg::Int(n))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_pow", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1655,13 +1731,13 @@ pub fn dmp_add_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_add_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1673,13 +1749,13 @@ pub fn dmp_sub_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_sub_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1691,13 +1767,13 @@ pub fn dmp_mul_term(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(c, domain)))
   args.push(OracleArg::Int(k))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_mul_term", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1708,12 +1784,12 @@ pub fn dmp_add_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_add_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1724,12 +1800,12 @@ pub fn dmp_sub_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_sub_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1740,12 +1816,12 @@ pub fn dmp_mul_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_mul_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1756,12 +1832,12 @@ pub fn dmp_quo_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_quo_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1772,12 +1848,12 @@ pub fn dmp_exquo_ground(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(sympy_number_obj_oracle(c)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_elem(c, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_exquo_ground", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1787,11 +1863,11 @@ pub fn dmp_abs(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_abs", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1801,11 +1877,11 @@ pub fn dmp_neg(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_neg", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1816,12 +1892,12 @@ pub fn dmp_add(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(g)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_add", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1832,12 +1908,12 @@ pub fn dmp_sub(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(g)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_sub", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1848,12 +1924,12 @@ pub fn dmp_mul(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(g)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_mul", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1863,11 +1939,11 @@ pub fn dmp_sqr(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_sqr", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
 }
 
 ///|
@@ -1878,12 +1954,208 @@ pub fn dmp_pow(
   domain? : String = "ZZ",
 ) -> String raise {
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(dense_data_to_pyobj(f)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
   args.push(OracleArg::Int(n))
   args.push(OracleArg::Int(u))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dmp_pow", args)
-  remove_spaces(py_str_enum(res))
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_add_mul(
+  f : DenseData,
+  g : DenseData,
+  h : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(h, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_add_mul", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_sub_mul(
+  f : DenseData,
+  g : DenseData,
+  h : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(h, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_sub_mul", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_pdiv(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_pdiv", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_prem(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_prem", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_pquo(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_pquo", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_pexquo(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_pexquo", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_rr_div(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_rr_div", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_ff_div(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_ff_div", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_div(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_div", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_rem(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_rem", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_quo(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_quo", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dmp_exquo(
+  f : DenseData,
+  g : DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(f, domain)))
+  args.push(OracleArg::PyObj(dense_data_to_pyobj_domain(g, domain)))
+  args.push(OracleArg::Int(u))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dmp_exquo", args)
+  remove_spaces(py_dense_str(res))
 }
 
 ///|

@@ -508,3 +508,125 @@ pub fn dmp_pow(
 ) -> String raise {
   @sympy.dmp_pow(f, n, u, domain~)
 }
+
+///|
+pub fn dmp_add_mul(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  h : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_add_mul(f, g, h, u, domain~)
+}
+
+///|
+pub fn dmp_sub_mul(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  h : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_sub_mul(f, g, h, u, domain~)
+}
+
+///|
+pub fn dmp_pdiv(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_pdiv(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_prem(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_prem(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_pquo(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_pquo(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_pexquo(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_pexquo(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_rr_div(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_rr_div(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_ff_div(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_ff_div(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_div(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_div(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_rem(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_rem(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_quo(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_quo(f, g, u, domain~)
+}
+
+///|
+pub fn dmp_exquo(
+  f : @sympy.DenseData,
+  g : @sympy.DenseData,
+  u : Int,
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dmp_exquo(f, g, u, domain~)
+}
