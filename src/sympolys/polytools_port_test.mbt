@@ -250,6 +250,43 @@ test "polytools: gcd/div parity over GFExt(5^2)" {
 }
 
 ///|
+test "polytools: gcd/div parity over GFExt(5^2) extra" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let p = b.from_expr((x ^ @symcore.int(3)) + (@symcore.int(2) * x) + @symcore.int(1))
+  let q = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
+  let g = p.gcd_univar(q)
+  let ours_g = sympy_normalize(g.to_string()).trim().to_string()
+  let oracle_g = @sympy_polys.gcd(
+      p.to_expr(),
+      q.to_expr(),
+      modulus=5,
+      gfext_modulus=[1, 0, 1],
+      gfext_gen="a",
+    )
+    .trim()
+    .to_string()
+  guard ours_g == oracle_g else {
+    fail("gcd GFExt extra mismatch: ours=\{ours_g}, oracle=\{oracle_g}")
+  }
+  let (quo, rem) = p.divmod_univar(q)
+  let ours_div = div_pair_to_string(quo, rem).trim().to_string()
+  let oracle_div = @sympy_polys.div(
+      p.to_expr(),
+      q.to_expr(),
+      modulus=5,
+      gfext_modulus=[1, 0, 1],
+      gfext_gen="a",
+    )
+    .trim()
+    .to_string()
+  guard ours_div == oracle_div else {
+    fail("div GFExt extra mismatch: ours=\{ours_div}, oracle=\{oracle_div}")
+  }
+}
+
+///|
 test "polytools: sqf_list parity over GFExt(5^2)" {
   let domain = Domain::GFExt(5, 2, [1, 0, 1])
   let b = PolyBuilder::new(["x"], domain)
@@ -272,6 +309,32 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
     .to_string()
   guard ours == oracle else {
     fail("sqf_list GFExt mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polytools: sqf_list parity over GFExt(5^2) extra" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    ((x + @symcore.int(2)) ^ @symcore.int(3)) * ((x ^ @symcore.int(2)) + x + @symcore.int(1)),
+  )
+  let (content, parts) = poly.sqf_list()
+  let ours_raw = factor_list_to_string(content.to_string(), parts)
+  let ours = sort_factor_repr(ours_raw).trim().to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.sqf_list(
+        poly.to_expr(),
+        modulus=5,
+        gfext_modulus=[1, 0, 1],
+        gfext_gen="a",
+      ),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("sqf_list GFExt extra mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
 

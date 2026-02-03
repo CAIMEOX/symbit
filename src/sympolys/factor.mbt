@@ -221,8 +221,10 @@ pub fn Poly::factor(
       // Treat as abstract finite field: return squarefree parts as-is.
       factors.push((p, mult))
     } else if p.domain is Domain::AlgExt(_, _, _) {
-      // Treat as an abstract field: assume irreducible after squarefree split.
-      factors.push((p, mult))
+      let alg_parts = factor_algext(p)
+      for ap in alg_parts {
+        factors.push((ap, mult))
+      }
     } else {
       let lin_parts = factor_linear_rationals(p)
       for lp in lin_parts {
@@ -757,6 +759,259 @@ fn poly_const_from_fe(
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   add_term(coeffs, mono, coeff, domain)
   Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+}
+
+///|
+fn factor_algext(poly : Poly) -> Array[Poly] raise PolyError {
+  if poly.gens.length() != 1 {
+    raise PolyError::NotUnivariate
+  }
+  let (base, gens, rels) = match poly.domain {
+    Domain::AlgExt(b, g, r) => (b, g, r)
+    _ => raise PolyError::DomainMismatch
+  }
+  let (minpoly, _) = load_algext_minpoly(base, gens, rels)
+  let work = poly
+  if work.is_zero() || is_one(work) {
+    return Array::new()
+  }
+  let sf_parts = square_free_decompose(work)
+  let factors : Array[Poly] = Array::new()
+  for entry in sf_parts {
+    let (part, mult) = entry
+    let split = factor_algext_squarefree(part, base, minpoly)
+    for f in split {
+      for _ in 0..<mult {
+        factors.push(f)
+      }
+    }
+  }
+  factors
+}
+
+///|
+fn factor_algext_squarefree(
+  poly : Poly,
+  base : Domain,
+  minpoly : Poly,
+) -> Array[Poly] raise PolyError {
+  if poly.is_zero() || is_one(poly) {
+    return Array::new()
+  }
+  let degree = poly.degree(0)
+  if degree <= 1 {
+    return [poly]
+  }
+  let norm = algext_norm(poly, base, minpoly)
+  let (_, factors) = norm.factor_list()
+  let mut remaining = poly
+  let out : Array[Poly] = Array::new()
+  let lifted_factors : Array[Poly] = Array::new()
+  for entry in factors {
+    let (f_base, _) = entry
+    let lifted = lift_base_poly_to_algext(f_base, poly.domain)
+    lifted_factors.push(lifted)
+  }
+  for lf in lifted_factors {
+    if remaining.is_zero() || is_one(remaining) {
+      break
+    }
+    let g = remaining.gcd_univar(lf)
+    if !g.is_zero() && !is_one(g) && g.degree(0) > 0 {
+      out.push(g)
+      remaining = remaining.div_exact_univar(g)
+    }
+  }
+  if !remaining.is_zero() && !is_one(remaining) {
+    out.push(remaining)
+  }
+  if out.is_empty() {
+    [poly]
+  } else {
+    out
+  }
+}
+
+///| resultants-based norm for K[x] where K=base(α) with minpoly(α)=0
+fn algext_norm(
+  poly : Poly,
+  base : Domain,
+  minpoly : Poly,
+) -> Poly raise PolyError {
+  let x_gen = poly.gens[0]
+  let t_coeffs = algext_poly_to_t_coeffs(poly, base, x_gen)
+  let m_coeffs = minpoly_to_t_coeffs(minpoly, base, x_gen)
+  resultant_poly_coeffs(t_coeffs, m_coeffs, base, x_gen)
+}
+
+///|
+fn algext_poly_to_t_coeffs(
+  poly : Poly,
+  base : Domain,
+  x_gen : String,
+) -> Array[Poly] raise PolyError {
+  let mut max_j = 0
+  for _, c in poly.coeffs {
+    match c {
+      FieldElem::AlgExt(_, coeffs, _, _) =>
+        if coeffs.length() - 1 > max_j {
+          max_j = coeffs.length() - 1
+        }
+      _ => ()
+    }
+  }
+  let buckets : Array[Map[Monomial, FieldElem]] = Array::new()
+  for _ in 0..=max_j {
+    buckets.push(Map::new())
+  }
+  for m, c in poly.coeffs {
+    let exp_x = m.exps[0]
+    let coeffs = match c {
+      FieldElem::AlgExt(_, arr, _, _) => arr
+      _ => [c]
+    }
+    for j in 0..<coeffs.length() {
+      let mono = monomial_one(1)
+      mono.exps.set(0, exp_x)
+      add_term(buckets[j], mono, coeffs[j], base)
+    }
+  }
+  let out : Array[Poly] = Array::new()
+  for bucket in buckets {
+    out.push(Poly::{ coeffs: bucket, gens: [x_gen], domain: base, order: TermOrder::Lex })
+  }
+  out
+}
+
+///|
+fn minpoly_to_t_coeffs(
+  minpoly : Poly,
+  base : Domain,
+  x_gen : String,
+) -> Array[Poly] raise PolyError {
+  let deg = minpoly.degree(0)
+  let coeffs : Array[Poly] = Array::new()
+  for _ in 0..=deg {
+    coeffs.push(Poly::zero([x_gen], base))
+  }
+  for m, c in minpoly.coeffs {
+    let exp_t = m.exps[0]
+    let mono = monomial_one(1)
+    mono.exps.set(0, 0)
+    let coeffs_map : Map[Monomial, FieldElem] = Map::new()
+    add_term(coeffs_map, mono, c, base)
+    coeffs.set(exp_t, Poly::{ coeffs: coeffs_map, gens: [x_gen], domain: base, order: TermOrder::Lex })
+  }
+  coeffs
+}
+
+///|
+fn resultant_poly_coeffs(
+  f : Array[Poly],
+  g : Array[Poly],
+  base : Domain,
+  x_gen : String,
+) -> Poly raise PolyError {
+  let m = f.length() - 1
+  let n = g.length() - 1
+  let size = m + n
+  if size <= 0 {
+    return Poly::zero([x_gen], base)
+  }
+  let zero = Poly::zero([x_gen], base)
+  let mat : Array[Array[Poly]] = Array::new()
+  for _ in 0..<size {
+    let row : Array[Poly] = Array::make(size, zero)
+    mat.push(row)
+  }
+  for i in 0..<n {
+    for j in 0..=m {
+      mat[i].set(i + j, f[j])
+    }
+  }
+  for i in 0..<m {
+    for j in 0..=n {
+      mat[n + i].set(i + j, g[j])
+    }
+  }
+  poly_det(mat, base, x_gen)
+}
+
+///|
+fn poly_det(
+  mat : Array[Array[Poly]],
+  base : Domain,
+  x_gen : String,
+) -> Poly raise PolyError {
+  let n = mat.length()
+  if n == 0 {
+    return Poly::one([x_gen], base)
+  }
+  if n == 1 {
+    return mat[0][0]
+  }
+  let a : Array[Array[Poly]] = Array::new()
+  for i in 0..<n {
+    let row : Array[Poly] = Array::new()
+    for j in 0..<n {
+      row.push(mat[i][j])
+    }
+    a.push(row)
+  }
+  let mut det_sign = 1
+  let mut pivot_prev = Poly::one([x_gen], base)
+  for k in 0..<(n - 1) {
+    if a[k][k].is_zero() {
+      let mut swap_row : Int? = None
+      for r in (k + 1)..<n {
+        if !a[r][k].is_zero() {
+          swap_row = Some(r)
+          break
+        }
+      }
+      match swap_row {
+        None => return Poly::zero([x_gen], base)
+        Some(r) => {
+          let tmp = a[k]
+          a.set(k, a[r])
+          a.set(r, tmp)
+          det_sign = -det_sign
+        }
+      }
+    }
+    let pivot = a[k][k]
+    for i in (k + 1)..<n {
+      for j in (k + 1)..<n {
+        let num = a[i][j].mul(pivot).sub(a[i][k].mul(a[k][j]))
+        if k == 0 {
+          a[i].set(j, num)
+        } else {
+          a[i].set(j, num.div_exact_univar(pivot_prev))
+        }
+      }
+      a[i].set(k, Poly::zero([x_gen], base))
+    }
+    pivot_prev = pivot
+  }
+  let mut det = a[n - 1][n - 1]
+  if det_sign < 0 {
+    det = det.neg()
+  }
+  det
+}
+
+///|
+fn lift_base_poly_to_algext(
+  poly : Poly,
+  domain : Domain,
+) -> Poly raise PolyError {
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  for m, c in poly.coeffs {
+    let r = fe_expect_rational(c)
+    let lifted = fe_from_rational(r, domain)
+    add_term(coeffs, m, lifted, domain)
+  }
+  Poly::{ coeffs, gens: poly.gens, domain, order: poly.order }
 }
 
 ///|
