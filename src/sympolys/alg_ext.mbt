@@ -76,7 +76,7 @@ test "normalize algebraic extension spec to monic" {
     Domain::AlgExt(_, gens, rels) => {
       inspect(gens.to_string(), content="[\"x\"]")
       // Leading coefficient should be 1 after normalization.
-      inspect(@symprint.to_string(rels[0]), content="1/2 + x**2")
+      inspect(@symprint.to_string(rels[0]), content="x**2 + 1/2")
     }
     _ => fail("expected AlgExt domain")
   }

@@ -1,7 +1,7 @@
 ///|
 test "add flattens and folds constants" {
   let expr = add([int(1), symbol("x"), add([int(2), symbol("y")])])
-  inspect(@symprint.debug_repr(expr), content="(+ 3 sym:x sym:y)")
+  inspect(@symprint.debug_repr(expr), content="(+ sym:x sym:y 3)")
 }
 
 ///|
@@ -24,5 +24,5 @@ test "subst replaces symbols" {
   let env : Map[String, Expr] = { "x": int(2) }
   let expr = add([symbol("x"), symbol("y")])
   let replaced = subst(expr, env)
-  inspect(@symprint.debug_repr(replaced), content="(+ 2 sym:y)")
+  inspect(@symprint.debug_repr(replaced), content="(+ sym:y 2)")
 }

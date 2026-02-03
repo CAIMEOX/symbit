@@ -1,0 +1,16 @@
+{
+  "import": [
+    "CAIMEOX/symbit/symcore",
+    { "path": "CAIMEOX/symbit/symstrategies/core", "alias": "strategies_core" },
+    { "path": "CAIMEOX/symbit/symstrategies/rl", "alias": "strategies_rl" },
+    { "path": "CAIMEOX/symbit/symstrategies/tools", "alias": "strategies_tools" },
+    { "path": "CAIMEOX/symbit/symstrategies/util", "alias": "strategies_util" }
+  ],
+  "test-import": [
+    "CAIMEOX/symbit/symprint",
+    { "path": "CAIMEOX/symbit/symstrategies/traverse", "alias": "strategies_traverse" },
+    { "path": "CAIMEOX/symbit/symstrategies/tree", "alias": "strategies_tree" },
+    { "path": "CAIMEOX/symbit/symstrategies/branch", "alias": "strategies_branch" },
+    { "path": "CAIMEOX/symbit/sympy/strategies", "alias": "sympy_strategies" }
+  ]
+}

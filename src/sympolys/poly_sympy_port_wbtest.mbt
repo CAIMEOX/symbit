@@ -9,7 +9,7 @@ test "from_expr_defaults infers gens and QQ domain" {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
   }
-  inspect(poly.to_string(), content="1/2 + x * y")
+  inspect(poly.to_string(), content="x*y + 1/2")
 }
 
 ///|
@@ -105,7 +105,7 @@ test "integer polynomial division matches sympy" {
   )
   let d = builder.from_expr(x + @symcore.int(1))
   let (q, r) = p.divmod_univar(d)
-  inspect(q.to_string(), content="1 + x")
+  inspect(q.to_string(), content="x + 1")
   inspect(r.to_string(), content="0")
 }
 

@@ -43,7 +43,7 @@ fn format_expr(expr : @symcore.Expr, parent_prec : Int) -> String {
     @symcore.Expr::Add(args) =>
       args.map(child => format_expr(child, prec)).join(" + ")
     @symcore.Expr::Mul(args) =>
-      args.map(child => format_expr(child, prec)).join(" * ")
+      args.map(child => format_expr(child, prec)).join("*")
     @symcore.Expr::Pow(base, exp) => {
       let base_str = format_expr(base, prec)
       let exp_str = format_expr(exp, prec)

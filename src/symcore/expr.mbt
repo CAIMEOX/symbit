@@ -91,10 +91,10 @@ pub fn add(args : Array[Expr]) -> Expr {
       _ => flat.push(arg)
     }
   }
+  sort_exprs_in_place(flat)
   if !const_sum.is_zero() {
     flat.push(Expr::Number(const_sum))
   }
-  sort_exprs_in_place(flat)
   match flat.length() {
     0 => Expr::Number(@symnum.BigRational::zero())
     1 => flat[0]
@@ -129,14 +129,28 @@ pub fn mul(args : Array[Expr]) -> Expr {
       _ => flat.push(arg)
     }
   }
-  if !const_prod.is_one() {
-    flat.push(Expr::Number(const_prod))
-  }
   sort_exprs_in_place(flat)
-  match flat.length() {
-    0 => Expr::Number(@symnum.BigRational::one())
-    1 => flat[0]
-    _ => Expr::Mul(flat)
+  if flat.is_empty() {
+    if const_prod.is_one() {
+      Expr::Number(@symnum.BigRational::one())
+    } else {
+      Expr::Number(const_prod)
+    }
+  } else if const_prod.is_one() {
+    match flat.length() {
+      1 => flat[0]
+      _ => Expr::Mul(flat)
+    }
+  } else {
+    let out : Array[Expr] = Array::new()
+    out.push(Expr::Number(const_prod))
+    for v in flat {
+      out.push(v)
+    }
+    match out.length() {
+      1 => out[0]
+      _ => Expr::Mul(out)
+    }
   }
 }
 
@@ -156,6 +170,27 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
+  Expr::Function(name, args.map(child => child))
+}
+
+///|
+/// Raw constructors without canonicalization (used by strategies).
+pub fn raw_add(args : Array[Expr]) -> Expr {
+  Expr::Add(args.map(child => child))
+}
+
+///|
+pub fn raw_mul(args : Array[Expr]) -> Expr {
+  Expr::Mul(args.map(child => child))
+}
+
+///|
+pub fn raw_pow(base : Expr, exp : Expr) -> Expr {
+  Expr::Pow(base, exp)
+}
+
+///|
+pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
   Expr::Function(name, args.map(child => child))
 }
 

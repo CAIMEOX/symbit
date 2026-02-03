@@ -1,17 +1,34 @@
 ///|
 fn variant_rank(expr : Expr) -> Int {
   match expr {
-    Expr::Number(_) => 0
-    Expr::Symbol(_) => 1
-    Expr::Pow(_, _) => 2
-    Expr::Mul(_) => 3
+    Expr::Pow(_, _) => 0
+    Expr::Mul(_) => 1
+    Expr::Symbol(_) => 2
+    Expr::Function(_, _) => 3
     Expr::Add(_) => 4
-    Expr::Function(_, _) => 5
+    Expr::Number(_) => 5
   }
 }
 
 ///|
 pub fn compare_expr(a : Expr, b : Expr) -> Int {
+  match (a, b) {
+    (Expr::Pow(base_a, _), Expr::Symbol(sb)) => {
+      let base_cmp = compare_expr(base_a, Expr::Symbol(sb))
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return -1
+    }
+    (Expr::Symbol(sa), Expr::Pow(base_b, _)) => {
+      let base_cmp = compare_symbol_base(sa, base_b)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return 1
+    }
+    _ => ()
+  }
   let rank_diff = cmp_int(variant_rank(a), variant_rank(b))
   if rank_diff != 0 {
     return rank_diff
@@ -65,6 +82,15 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
 }
 
 ///|
+fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
+  match expr {
+    Expr::Symbol(sb) => sym_name.compare(sb)
+    Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
+    _ => compare_expr(Expr::Symbol(sym_name), expr)
+  }
+}
+
+///|
 fn compare_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
   let len_x = xs.length()
   let len_y = ys.length()
@@ -95,29 +121,29 @@ pub fn sort_exprs_in_place(args : Array[Expr]) -> Unit {
 }
 
 ///|
-impl Compare for Expr with compare(self, other : Expr) -> Int {
+pub impl Compare for Expr with compare(self, other : Expr) -> Int {
   compare_expr(self, other)
 }
 
 ///|
-impl Eq for Expr with equal(self, other : Expr) -> Bool {
+pub impl Eq for Expr with equal(self, other : Expr) -> Bool {
   compare_expr(self, other) == 0
 }
 
 ///|
-impl Eq for Expr with not_equal(self, other : Expr) -> Bool {
+pub impl Eq for Expr with not_equal(self, other : Expr) -> Bool {
   !self.equal(other)
 }
 
 ///|
-impl Hash for Expr with hash(self) -> Int {
+pub impl Hash for Expr with hash(self) -> Int {
   let hasher = Hasher::new()
   self.hash_combine(hasher)
   hasher.finalize()
 }
 
 ///|
-impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
+pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
     Expr::Number(n) => n.hash_combine(hasher)

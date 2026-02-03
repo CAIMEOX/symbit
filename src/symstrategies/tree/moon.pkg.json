@@ -1,0 +1,6 @@
+{
+  "import": [
+    { "path": "CAIMEOX/symbit/symstrategies/core", "alias": "strategies_core" },
+    { "path": "CAIMEOX/symbit/symstrategies/branch", "alias": "strategies_branch" }
+  ]
+}
