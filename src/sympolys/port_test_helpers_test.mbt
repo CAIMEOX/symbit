@@ -12,22 +12,22 @@ fn expr_int(n : Int) -> @symcore.Expr {
 
 ///|
 fn sympy_normalize(expr_str : String) -> String {
-  try! @sympy.sympy_normalize(expr_str)
+  try! @sympy_polys.sympy_normalize(expr_str)
 }
 
 ///|
 fn canonical_cmp(s : String) -> String {
-  @sympy.canonical_cmp(s)
+  @sympy_polys.canonical_cmp(s)
 }
 
 ///|
 fn sort_factor_repr(repr_str : String) -> String {
-  try! @sympy.sympy_sort_factor_repr(repr_str)
+  try! @sympy_polys.sympy_sort_factor_repr(repr_str)
 }
 
 ///|
 fn expr_equal(lhs : String, rhs : String) -> Bool {
-  try! @sympy.expr_equal(lhs, rhs)
+  try! @sympy_polys.expr_equal(lhs, rhs)
 }
 
 ///|

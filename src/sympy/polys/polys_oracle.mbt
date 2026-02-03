@@ -1,14 +1,71 @@
 ///|
-pub(all) enum OracleArg {
-  Null
-  Str(String)
-  Int(Int)
-  Bool(Bool)
-  StrList(Array[String])
-  IntList(Array[Int])
-  List(Array[OracleArg])
-  Dict(Map[String, OracleArg])
-  PyObj(@py.PyObject)
+pub type OracleArg = @sympy.OracleArg
+
+///|
+fn py_call_object(
+  callable : @py.PyCallable,
+  args : @py.PyTuple,
+  print_err? : Bool = false,
+) -> @py.PyObjectEnum? {
+  @sympy.py_call_object(callable, args, print_err~)
+}
+
+///|
+fn py_call_object_allow_none(
+  callable : @py.PyCallable,
+  args : @py.PyTuple,
+  print_err? : Bool = false,
+) -> @py.PyObjectEnum? {
+  @sympy.py_call_object_allow_none(callable, args, print_err~)
+}
+
+///|
+fn py_call_object_kwargs(
+  callable : @py.PyCallable,
+  args : @py.PyTuple,
+  kwargs? : @py.PyDict = @py.PyDict::new(),
+  print_err? : Bool = false,
+) -> @py.PyObjectEnum? {
+  @sympy.py_call_object_kwargs(callable, args, kwargs~, print_err~)
+}
+
+///|
+fn py_gil_ensure() -> Int {
+  @sympy.py_gil_ensure()
+}
+
+///|
+fn py_gil_release(state : Int) -> Unit {
+  @sympy.py_gil_release(state)
+}
+
+///|
+fn sympy_call(
+  path : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> @py.PyObjectEnum? raise {
+  @sympy.sympy_call(path, args, kwargs~)
+}
+
+///|
+fn ensure_python() -> Unit {
+  @sympy.ensure_python()
+}
+
+///|
+fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
+  @sympy.sympy_number_obj(n)
+}
+
+///|
+fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
+  @sympy.expr_to_sympy(expr)
+}
+
+///|
+fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
+  @sympy.objenum_to_obj(obj)
 }
 
 ///|

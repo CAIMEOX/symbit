@@ -40,7 +40,7 @@ fn sympy_call_obj(
 }
 
 ///|
-fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
+pub fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
   if n.is_integral() {
     let num_str = n.numerator().to_string()
     sympy_call_obj("sympy.Integer", [OracleArg::Str(num_str)])
@@ -77,6 +77,11 @@ fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
       }
     _ => sympy_symbol_obj(name)
   }
+}
+
+///|
+fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
+  sympy_call_obj("sympy.symbols", [OracleArg::Str(name)])
 }
 
 ///|
@@ -157,7 +162,7 @@ fn sympy_function_obj(
 }
 
 ///|
-fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
+pub fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
   let out = match obj {
     PyBool(v) => v.obj()
     PyCallable(v) => v.obj()

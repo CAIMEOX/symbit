@@ -86,8 +86,8 @@ fn dmp_pair_repr(pair : (DensePoly, DensePoly)) -> String {
 ///|
 
 ///|
-fn dense_data_list(polys : Array[DensePoly]) -> Array[@sympy.DenseData] {
-  let out : Array[@sympy.DenseData] = Array::new()
+fn dense_data_list(polys : Array[DensePoly]) -> Array[@sympy_polys.DenseData] {
+  let out : Array[@sympy_polys.DenseData] = Array::new()
   for p in polys {
     out.push(dense_data_of(p))
   }

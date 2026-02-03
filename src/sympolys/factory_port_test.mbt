@@ -1,6 +1,6 @@
 ///|
 fn factory_sympy_norm(s : String) -> String {
-  try! @sympy.sympy_normalize(s).trim().to_string()
+  try! @sympy_polys.sympy_normalize(s).trim().to_string()
 }
 
 ///|

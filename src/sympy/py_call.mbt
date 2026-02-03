@@ -35,7 +35,7 @@ pub fn py_call_object_kwargs(
 
 ///|
 /// Ensure the embedded Python runtime is initialized.
-fn ensure_python() -> Unit {
+pub fn ensure_python() -> Unit {
   if !@cpython.py_is_initialized() {
     @py.init_py()
   }
@@ -49,7 +49,7 @@ let gil_state_cache : Ref[Int?] = { val: None }
 
 ///|
 /// Keep the GIL held for the process to avoid missed guards in call sites.
-fn py_gil_ensure() -> Int {
+pub fn py_gil_ensure() -> Int {
   ensure_python()
   match gil_state_cache.val {
     Some(state) => state
@@ -63,7 +63,7 @@ fn py_gil_ensure() -> Int {
 
 ///|
 /// No-op release: we keep the GIL for the duration of the process.
-fn py_gil_release(_state : Int) -> Unit {
+pub fn py_gil_release(_state : Int) -> Unit {
   ()
 }
 

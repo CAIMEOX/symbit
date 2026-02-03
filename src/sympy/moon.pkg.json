@@ -3,10 +3,6 @@
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symnum",
     {
-      "path": "moonbitlang/core/strconv",
-      "alias": "strconv"
-    },
-    {
       "path": "Kaida-Amethyst/python",
       "alias": "py"
     },

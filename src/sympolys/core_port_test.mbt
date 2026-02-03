@@ -7,15 +7,15 @@ test "core: add/mul/pow parity over ZZ" {
   let mul = p.mul(q)
   let pow = q.pow(2)
   let add_ours = add.to_string()
-  guard @sympy.expr_equal(add_ours, "x**2 + 2*x + 1 + x + 3") else {
+  guard @sympy_polys.expr_equal(add_ours, "x**2 + 2*x + 1 + x + 3") else {
     fail("add mismatch: ours=\{add_ours}")
   }
   let mul_ours = mul.to_string()
-  guard @sympy.expr_equal(mul_ours, "(x**2 + 2*x + 1)*(x + 3)") else {
+  guard @sympy_polys.expr_equal(mul_ours, "(x**2 + 2*x + 1)*(x + 3)") else {
     fail("mul mismatch: ours=\{mul_ours}")
   }
   let pow_ours = pow.to_string()
-  guard @sympy.expr_equal(pow_ours, "(x + 3)**2") else {
+  guard @sympy_polys.expr_equal(pow_ours, "(x + 3)**2") else {
     fail("pow mismatch: ours=\{pow_ours}")
   }
 }
@@ -43,7 +43,7 @@ test "core: ensure_coeff_domain parity in GF" {
   let c = try! @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let fe = ensure_coeff_domain(c, Domain::GF(5))
   let ours = fe.to_string()
-  let oracle = @sympy.mod_rational(3, 2, 5).trim().to_string()
+  let oracle = @sympy_polys.mod_rational(3, 2, 5).trim().to_string()
   guard ours == oracle else { fail("GF coeff mismatch: ours=\{ours}, oracle=\{oracle}") }
 }
 
