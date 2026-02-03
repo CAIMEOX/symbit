@@ -1,0 +1,5 @@
+{
+  "test-import": [
+    { "path": "CAIMEOX/symbit/sympy/logic", "alias": "sympy_logic" }
+  ]
+}
