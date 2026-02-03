@@ -233,6 +233,12 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
       } else {
         FieldElem::GFExt(p, fe_poly_add(coeffs, c2, p), mod_poly)
       }
+    (FieldElem::AlgExt(base, c1, m1, g1), FieldElem::AlgExt(base2, c2, m2, g2)) =>
+      if base.not_equal(base2) || !minpoly_equal(m1, m2) || g1 != g2 {
+        raise PolyError::DomainMismatch
+      } else {
+        FieldElem::AlgExt(base, fe_alg_poly_add(c1, c2), m1, g1)
+      }
     _ => raise PolyError::DomainMismatch
   }
 }
@@ -381,7 +387,11 @@ pub fn fe_from_rational(
       FieldElem::GFExt(p, [fe_pos_mod(norm.numerator().to_int(), p)], m)
     }
     Domain::Frac(inner) => fe_from_rational(val, inner)
-    Domain::AlgExt(_, _, _) => raise PolyError::NotImplemented("algext-from-rational")
+    Domain::AlgExt(base, gens, rels) => {
+      let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
+      let base_const = fe_from_rational(val, base)
+      FieldElem::AlgExt(base, [base_const], minpoly, gen)
+    }
   }
 }
 

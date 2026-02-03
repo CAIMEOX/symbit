@@ -792,6 +792,15 @@ pub fn dup_exquo(
 }
 
 ///|
+pub fn dup_pexquo(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  @sympy.dup_pexquo(f, g, domain~)
+}
+
+///|
 pub fn dmp_add_term(
   f : @sympy.DenseData,
   c : @sympy.DenseData,

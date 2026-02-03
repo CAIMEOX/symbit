@@ -246,6 +246,15 @@ test "densearith: dup_div family parity" {
 }
 
 ///|
+test "densearith: dup_pexquo parity" {
+  let f = [fezz(1), fezz(0), fezz(-1)]
+  let g = [fezz(1), fezz(-1)]
+  let ours = dup_repr(dup_pexquo(f, g, Domain::ZZ))
+  let oracle = @sympy_polys.dup_pexquo(dup_to_rats(f), dup_to_rats(g))
+  guard ours == oracle else { fail("dup_pexquo mismatch") }
+}
+
+///|
 test "densearith: dmp_add_term parity" {
   let f = dense_poly([poly_int([1, 2]), poly_int([3])])
   let c = poly_int([1])

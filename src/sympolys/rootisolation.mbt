@@ -254,31 +254,41 @@ fn isolate_sturm(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
   intervals : Array[(@symnum.BigRational, @symnum.BigRational)],
+  include_left : Bool,
+  include_right : Bool,
 ) -> Unit raise PolyError {
   let var_a = sturm_variations(seq, a)
   let var_b = sturm_variations(seq, b)
-  let count = var_a - var_b
+  let mut count = var_a - var_b
+  let fa = eval_dup_rational(f, a)
+  let fb = eval_dup_rational(f, b)
+  if include_left && rat_sign(fa) == 0 {
+    intervals.push((a, a))
+  }
+  if rat_sign(fb) == 0 {
+    if include_right {
+      intervals.push((b, b))
+    }
+    count = count - 1
+  }
   if count <= 0 {
     return
   }
-  if count == 1 {
-    let fb = eval_dup_rational(f, b)
-    if rat_sign(fb) == 0 {
-      intervals.push((b, b))
-      return
-    }
-    if interval_small(a, b) {
-      intervals.push((a, b))
-      return
-    }
+  if count == 1 && interval_small(a, b) {
+    intervals.push((a, b))
+    return
   }
   let mid = rat_mid(a, b)
   if mid.compare(a) == 0 || mid.compare(b) == 0 {
     intervals.push((a, b))
     return
   }
-  isolate_sturm(f, seq, a, mid, intervals)
-  isolate_sturm(f, seq, mid, b, intervals)
+  let fm = eval_dup_rational(f, mid)
+  if rat_sign(fm) == 0 {
+    intervals.push((mid, mid))
+  }
+  isolate_sturm(f, seq, a, mid, intervals, include_left, false)
+  isolate_sturm(f, seq, mid, b, intervals, false, include_right)
 }
 
 ///|
@@ -320,16 +330,18 @@ pub fn dup_refine_real_root(
   }
   let mut fa = eval_dup_rational(f, a)
   let mut fb = eval_dup_rational(f, b)
-  let sa = rat_sign(fa)
-  let sb = rat_sign(fb)
+  let mut sa = rat_sign(fa)
+  let mut sb = rat_sign(fb)
   if sa == 0 {
     return (a, a)
   }
   if sb == 0 {
     return (b, b)
   }
-  if sa == sb {
-    raise PolyError::NotImplemented("refine interval")
+  let seq = dup_sturm(f, domain)
+  let mut count = sturm_variations(seq, a) - sturm_variations(seq, b)
+  if count <= 0 {
+    return (a, b)
   }
   match disjoint {
     Some(d) =>
@@ -368,9 +380,30 @@ pub fn dup_refine_real_root(
     if sa * sm < 0 {
       b = m
       fb = fm
-    } else {
+      sb = sm
+      count = sturm_variations(seq, a) - sturm_variations(seq, b)
+    } else if sa * sm > 0 {
       a = m
       fa = fm
+      sa = sm
+      count = sturm_variations(seq, a) - sturm_variations(seq, b)
+    } else {
+      let left = sturm_variations(seq, a) - sturm_variations(seq, m)
+      if left > 0 {
+        b = m
+        fb = fm
+        sb = sm
+      } else {
+        a = m
+        fa = fm
+        sa = sm
+      }
+      count = sturm_variations(seq, a) - sturm_variations(seq, b)
+    }
+    if steps is None && eps is None && disjoint is None {
+      if count <= 1 && interval_small(a, b) {
+        break
+      }
     }
     match disjoint {
       Some(d) =>
@@ -402,11 +435,17 @@ pub fn dup_isolate_real_roots_sqf(
   let a = @symnum.BigRational::from_int(-bound_int)
   let b = @symnum.BigRational::from_int(bound_int)
   let intervals : Array[(@symnum.BigRational, @symnum.BigRational)] = Array::new()
-  let fa = eval_dup_rational(f, a)
-  if rat_sign(fa) == 0 {
-    intervals.push((a, a))
-  }
   let seq = dup_sturm(f, domain)
-  isolate_sturm(f, seq, a, b, intervals)
+  isolate_sturm(f, seq, a, b, intervals, true, true)
+  intervals.sort_by((left, right) => {
+    let (a1, b1) = left
+    let (a2, b2) = right
+    let cmp = a1.compare(a2)
+    if cmp != 0 {
+      cmp
+    } else {
+      b1.compare(b2)
+    }
+  })
   intervals
 }

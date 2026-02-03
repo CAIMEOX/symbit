@@ -1270,7 +1270,7 @@ pub fn resultant(
   }
   let modulus_opt = if modulus == 0 { None } else { Some(modulus) }
   let use_gfext = !gfext_modulus.is_empty()
-  let gens_list = match gens0 {
+  let mut gens_list = match gens0 {
     Some(list) => list
     None => {
       let seed : Array[@py.PyObject] = Array::new()
@@ -1281,6 +1281,30 @@ pub fn resultant(
         None => ()
       }
       sympy_default_gens(seed)
+    }
+  }
+  if var_obj is Some(var_sym) && gens_list.length() > 0 {
+    let var_name = py_str_obj(var_sym)
+    let mut idx_opt : Int? = None
+    for i in 0..<gens_list.length() {
+      if py_str_obj(gens_list[i]) == var_name {
+        idx_opt = Some(i)
+        break
+      }
+    }
+    match idx_opt {
+      Some(i) =>
+        if i != 0 {
+          let reordered : Array[@py.PyObject] = Array::new()
+          reordered.push(gens_list[i])
+          for j in 0..<gens_list.length() {
+            if j != i {
+              reordered.push(gens_list[j])
+            }
+          }
+          gens_list = reordered
+        }
+      None => ()
     }
   }
   if gens_list.length() > 0 && (domain != "" || modulus_opt is Some(_) || use_gfext) {
@@ -2260,6 +2284,20 @@ pub fn dup_exquo(
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
   let res = sympy_call_must("sympy.polys.densearith.dup_exquo", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_pexquo(
+  f : Array[@symnum.BigRational],
+  g : Array[@symnum.BigRational],
+  domain? : String = "ZZ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(f, domain)))
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(g, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.densearith.dup_pexquo", args)
   remove_spaces(py_dense_str(res))
 }
 

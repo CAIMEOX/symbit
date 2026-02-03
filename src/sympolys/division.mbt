@@ -62,8 +62,7 @@ fn divmod_univar(
     Domain::CC => divmod_univar_rat(dividend, divisor)
     Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
     Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
-    Domain::AlgExt(_, _, _) =>
-      raise PolyError::NotImplemented("alg-extension-div")
+    Domain::AlgExt(_, _, _) => divmod_univar_rat(dividend, divisor)
     Domain::RR => divmod_univar_rat(dividend, divisor)
     Domain::Frac(_) => divmod_univar_rat(dividend, divisor)
   }
@@ -269,10 +268,29 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
     Domain::ZZ => gcd_univar_int(self, other)
     Domain::GF(_) => gcd_univar_rat(self, other)
     Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
-    Domain::AlgExt(_, _, _) =>
-      raise PolyError::NotImplemented("alg-extension-gcd")
+    Domain::AlgExt(_, _, _) => gcd_univar_rat(self, other)
     Domain::RR => gcd_univar_rat(self, other)
     Domain::Frac(_) => gcd_univar_rat(self, other)
+  }
+}
+
+///|
+pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
+  if self.gens.length() == 1 {
+    return self.gcd_univar(other)
+  }
+  if self.domain.not_equal(other.domain) || self.gens.not_equal(other.gens) {
+    raise PolyError::DomainMismatch
+  }
+  match self.domain {
+    Domain::ZZ => {
+      let gq = gcd_multivar_field(lift_to_qq(self), lift_to_qq(other))
+      try_round_to_int(gq)
+    }
+    Domain::QQ | Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::AlgExt(_, _, _) => {
+      gcd_multivar_field(self, other)
+    }
+    _ => raise PolyError::NotImplemented("gcd-multivar-domain")
   }
 }
 
@@ -305,6 +323,326 @@ fn gcd_univar_int(a : Poly, b : Poly) -> Poly raise PolyError {
   )
   let g_scaled = g_qq.scale_coeff(FieldElem::QQ(cont_gcd))
   try_round_to_int(g_scaled)
+}
+
+///|
+fn remove_gen(gens : Array[String], idx : Int) -> Array[String] {
+  let out : Array[String] = Array::new()
+  for i in 0..<gens.length() {
+    if i != idx {
+      out.push(gens[i])
+    }
+  }
+  out
+}
+
+///|
+fn poly_is_const(poly : Poly) -> Bool {
+  if poly.coeffs.length() != 1 {
+    return false
+  }
+  for m, _ in poly.coeffs {
+    if !m.exps.all(e => e == 0) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn poly_const_coeff(poly : Poly) -> FieldElem? {
+  if !poly_is_const(poly) {
+    return None
+  }
+  for _, c in poly.coeffs {
+    return Some(c)
+  }
+  None
+}
+
+///|
+fn poly_zero(gens : Array[String], domain : Domain) -> Poly {
+  Poly::{ coeffs: Map::new(), gens, domain, order: TermOrder::Lex }
+}
+
+///|
+fn poly_to_univar_coeffs(
+  poly : Poly,
+  var_index : Int,
+) -> Array[Poly] raise PolyError {
+  let rest_gens = remove_gen(poly.gens, var_index)
+  let mut max_exp = 0
+  let by_exp : Map[Int, Poly] = Map::new()
+  for m, c in poly.coeffs {
+    let exp = m.exps[var_index]
+    if exp > max_exp {
+      max_exp = exp
+    }
+    let rest_m = monomial_one(rest_gens.length())
+    let mut k = 0
+    for i in 0..<m.exps.length() {
+      if i == var_index {
+        continue
+      }
+      rest_m.exps.set(k, m.exps[i])
+      k = k + 1
+    }
+    let coeff_poly = match by_exp.get(exp) {
+      Some(p) => p
+      None => Poly::{ coeffs: Map::new(), gens: rest_gens, domain: poly.domain, order: poly.order }
+    }
+    add_term(coeff_poly.coeffs, rest_m, c, poly.domain)
+    by_exp.set(exp, coeff_poly)
+  }
+  let coeffs : Array[Poly] = Array::new()
+  for i in 0..=max_exp {
+    match by_exp.get(i) {
+      Some(p) => coeffs.push(p)
+      None => coeffs.push(poly_zero(rest_gens, poly.domain))
+    }
+  }
+  coeffs
+}
+
+///|
+fn univar_coeffs_to_poly(
+  coeffs : Array[Poly],
+  var_index : Int,
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  let out_coeffs : Map[Monomial, FieldElem] = Map::new()
+  for exp in 0..<coeffs.length() {
+    let coeff_poly = coeffs[exp]
+    for m, c in coeff_poly.coeffs {
+      let full = monomial_one(gens.length())
+      let mut k = 0
+      for i in 0..<gens.length() {
+        if i == var_index {
+          full.exps.set(i, exp)
+        } else {
+          full.exps.set(i, m.exps[k])
+          k = k + 1
+        }
+      }
+      add_term(out_coeffs, full, c, domain)
+    }
+  }
+  Poly::{ coeffs: out_coeffs, gens, domain, order: TermOrder::Lex }
+}
+
+///|
+fn trim_univar_coeffs(coeffs : Array[Poly]) -> Array[Poly] {
+  let mut end = coeffs.length()
+  while end > 0 && coeffs[end - 1].is_zero() {
+    end = end - 1
+  }
+  if end == coeffs.length() {
+    return coeffs
+  }
+  let out : Array[Poly] = Array::new()
+  for i in 0..<end {
+    out.push(coeffs[i])
+  }
+  out
+}
+
+///|
+fn poly_div_exact(a : Poly, b : Poly) -> Poly raise PolyError {
+  let (qs, r) = a.divmod_multivar([b])
+  if r.is_zero() {
+    return qs[0]
+  }
+  raise PolyError::NotImplemented("poly-div-exact")
+}
+
+///|
+fn coeffs_content(
+  coeffs : Array[Poly],
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  if coeffs.is_empty() {
+    return poly_zero(gens, domain)
+  }
+  let mut g : Poly? = None
+  for c in coeffs {
+    if c.is_zero() {
+      continue
+    }
+    g = match g {
+      None => Some(c)
+      Some(curr) => Some(curr.gcd_multivar(c))
+    }
+  }
+  match g {
+    None => poly_zero(gens, domain)
+    Some(v) => v
+  }
+}
+
+///|
+fn coeffs_primitive_part(
+  coeffs : Array[Poly],
+  gens : Array[String],
+  domain : Domain,
+) -> (Array[Poly], Poly) raise PolyError {
+  if coeffs.is_empty() {
+    return (coeffs, poly_zero(gens, domain))
+  }
+  let content = coeffs_content(coeffs, gens, domain)
+  if content.is_zero() {
+    return (coeffs, content)
+  }
+  let out : Array[Poly] = Array::new()
+  for c in coeffs {
+    if c.is_zero() {
+      out.push(c)
+    } else {
+      out.push(poly_div_exact(c, content))
+    }
+  }
+  (out, content)
+}
+
+///|
+fn coeffs_mul_poly(coeffs : Array[Poly], k : Poly) -> Array[Poly] raise PolyError {
+  let out : Array[Poly] = Array::new()
+  for c in coeffs {
+    out.push(c.mul(k))
+  }
+  out
+}
+
+///|
+fn coeffs_shift_mul(
+  coeffs : Array[Poly],
+  k : Poly,
+  shift : Int,
+) -> Array[Poly] raise PolyError {
+  let out : Array[Poly] = Array::new()
+  for _ in 0..<shift {
+    out.push(poly_zero(k.gens, k.domain))
+  }
+  for c in coeffs {
+    out.push(c.mul(k))
+  }
+  out
+}
+
+///|
+fn coeffs_sub(a : Array[Poly], b : Array[Poly]) -> Array[Poly] raise PolyError {
+  let len = if a.length() > b.length() { a.length() } else { b.length() }
+  let gens = if a.is_empty() { b[0].gens } else { a[0].gens }
+  let dom = if a.is_empty() { b[0].domain } else { a[0].domain }
+  let out : Array[Poly] = Array::new()
+  for i in 0..<len {
+    let pa = if i < a.length() { a[i] } else { poly_zero(gens, dom) }
+    let pb = if i < b.length() { b[i] } else { poly_zero(gens, dom) }
+    out.push(pa.sub(pb))
+  }
+  trim_univar_coeffs(out)
+}
+
+///|
+fn coeffs_prem(
+  f : Array[Poly],
+  g : Array[Poly],
+) -> Array[Poly] raise PolyError {
+  let mut r = trim_univar_coeffs(f)
+  let g_trim = trim_univar_coeffs(g)
+  if g_trim.is_empty() {
+    raise PolyError::DivisionByZero
+  }
+  let deg_g = g_trim.length() - 1
+  let lc_g = g_trim[deg_g]
+  while !r.is_empty() && r.length() - 1 >= deg_g {
+    let deg_r = r.length() - 1
+    let d = deg_r - deg_g
+    let lc_r = r[deg_r]
+    let left = coeffs_mul_poly(r, lc_g)
+    let right = coeffs_shift_mul(g_trim, lc_r, d)
+    r = coeffs_sub(left, right)
+  }
+  r
+}
+
+///|
+fn coeffs_make_monic(
+  coeffs : Array[Poly],
+) -> Array[Poly] raise PolyError {
+  let trimmed = trim_univar_coeffs(coeffs)
+  if trimmed.is_empty() {
+    return trimmed
+  }
+  let lc = trimmed[trimmed.length() - 1]
+  match poly_const_coeff(lc) {
+    Some(c) => {
+      let inv = invert_in_domain(c, lc.domain)
+      let inv_rat : @symnum.BigRational? = match inv {
+        FieldElem::QQ(r) => Some(r)
+        FieldElem::GFp(_, v) => Some(@symnum.BigRational::from_int(v))
+        _ => None
+      }
+      match inv_rat {
+        Some(r) => {
+          let scalar_poly = Poly::from_expr(
+            @symcore.number(r),
+            lc.gens,
+            lc.domain,
+          )
+          let out : Array[Poly] = Array::new()
+          for poly in trimmed {
+            out.push(poly.mul(scalar_poly))
+          }
+          out
+        }
+        None => trimmed
+      }
+    }
+    None => trimmed
+  }
+}
+
+///|
+fn gcd_multivar_field(a : Poly, b : Poly) -> Poly raise PolyError {
+  if a.is_zero() {
+    return b
+  }
+  if b.is_zero() {
+    return a
+  }
+  let var_index = 0
+  let coeff_gens = remove_gen(a.gens, var_index)
+  let fa = poly_to_univar_coeffs(a, var_index)
+  let fb = poly_to_univar_coeffs(b, var_index)
+  let (pa, ca) = coeffs_primitive_part(fa, coeff_gens, a.domain)
+  let (pb, cb) = coeffs_primitive_part(fb, coeff_gens, a.domain)
+  let content_gcd = if ca.is_zero() {
+    cb
+  } else if cb.is_zero() {
+    ca
+  } else {
+    ca.gcd_multivar(cb)
+  }
+  let mut f = coeffs_make_monic(pa)
+  let mut g = coeffs_make_monic(pb)
+  while !g.is_empty() {
+    let r = coeffs_prem(f, g)
+    let (rp, _) = coeffs_primitive_part(r, coeff_gens, a.domain)
+    f = g
+    g = coeffs_make_monic(rp)
+  }
+  let gcd_prim = if f.is_empty() {
+    poly_zero(remove_gen(a.gens, var_index), a.domain)
+  } else {
+    univar_coeffs_to_poly(f, var_index, a.gens, a.domain)
+  }
+  if content_gcd.is_zero() {
+    return gcd_prim
+  }
+  let content_full = univar_coeffs_to_poly([content_gcd], var_index, a.gens, a.domain)
+  gcd_prim.mul(content_full)
 }
 
 ///|

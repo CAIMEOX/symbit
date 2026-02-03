@@ -199,6 +199,11 @@ fn resultant_elim(
   if a.gens.length() <= gen_index || b.gens.length() <= gen_index {
     raise PolyError::BadGenerator("\{gen_index}".to_string())
   }
+  if poly_depends_only_on_var(a, gen_index) && poly_depends_only_on_var(b, gen_index) {
+    let au = poly_project_univar(a, gen_index)
+    let bu = poly_project_univar(b, gen_index)
+    return resultant_univar(au, bu)
+  }
   let basis = Poly::groebner([a, b], order=TermOrder::Lex)
   for p in basis {
     let mut depends = false
@@ -220,4 +225,28 @@ fn resultant_elim(
     }
   }
   raise PolyError::NotImplemented("resultant-elimination")
+}
+
+///|
+fn poly_depends_only_on_var(poly : Poly, var_index : Int) -> Bool {
+  for m, _ in poly.coeffs {
+    for i in 0..<m.exps.length() {
+      if i != var_index && m.exps[i] != 0 {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+fn poly_project_univar(poly : Poly, var_index : Int) -> Poly raise PolyError {
+  let gens = [poly.gens[var_index]]
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  for m, c in poly.coeffs {
+    let mono = monomial_one(1)
+    mono.exps.set(0, m.exps[var_index])
+    add_term(coeffs, mono, c, poly.domain)
+  }
+  Poly::{ coeffs, gens, domain: poly.domain, order: TermOrder::Lex }
 }

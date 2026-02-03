@@ -217,6 +217,9 @@ pub fn Poly::factor(
         let scaled = make_monic(lift_poly_to_qq(lp))
         factors.push((scaled, mult))
       }
+    } else if p.domain is Domain::GFExt(_, _, _) {
+      // Treat as abstract finite field: return squarefree parts as-is.
+      factors.push((p, mult))
     } else if p.domain is Domain::AlgExt(_, _, _) {
       // Treat as an abstract field: assume irreducible after squarefree split.
       factors.push((p, mult))
@@ -248,9 +251,6 @@ pub fn Poly::factor_list(
 ) -> (@symnum.BigRational, Array[(Poly, Int)]) raise PolyError {
   if self.is_zero() {
     return (@symnum.BigRational::zero(), Array::new())
-  }
-  if self.domain is Domain::GFExt(_, _, _) {
-    raise PolyError::NotImplemented("factor_list-gfext")
   }
   let mut content = self.content()
   let mut primitive = self
@@ -317,6 +317,7 @@ fn normalize_factor_for_list(
     Some((_, lc_fe)) => {
       match poly.domain {
         Domain::GFExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
+        Domain::AlgExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
         Domain::ZZ =>
           {
             let lc = fe_expect_rational(lc_fe)

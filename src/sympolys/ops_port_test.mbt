@@ -50,3 +50,29 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
   ).trim().to_string()
   guard ours == oracle else { fail("resultant_expr mismatch: ours=\{ours}, oracle=\{oracle}") }
 }
+
+///|
+test "ops: resultant_expr parity for multivar with univariate support" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let f = (y ^ @symcore.int(2)) - @symcore.int(2)
+  let g = y - @symcore.int(1)
+  let res = resultant_expr(
+    f,
+    g,
+    "y",
+    gens=["x", "y"],
+    domain=Domain::ZZ,
+  )
+  let ours = sympy_normalize(res.to_string()).trim().to_string()
+  let oracle = @sympy_polys.resultant(
+    f,
+    g,
+    x="y",
+    gens=["x", "y"],
+    domain="ZZ",
+  ).trim().to_string()
+  guard ours == oracle else {
+    fail("resultant_expr multivar mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}

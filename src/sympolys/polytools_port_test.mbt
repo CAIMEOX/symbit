@@ -90,6 +90,28 @@ test "polytools: gcd/div/resultant parity with SymPy" {
 }
 
 ///|
+test "polytools: gcd_multivar parity over QQ" {
+  let b = PolyBuilder::new(["x", "y"], Domain::QQ)
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let p = b.from_expr(x * (x + y))
+  let q = b.from_expr(x * (x + @symcore.int(2)))
+  let g = p.gcd_multivar(q)
+  let ours = sympy_normalize(g.to_string()).trim().to_string()
+  let oracle = @sympy_polys.gcd(
+      p.to_expr(),
+      q.to_expr(),
+      gens=["x", "y"],
+      domain="QQ",
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("gcd_multivar mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
 test "polytools: factor_list parity over QQ" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let x = @symcore.symbol("x")
@@ -254,24 +276,6 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
 }
 
 ///|
-test "polytools: factor_list GFExt not implemented in SymPy" {
-  let domain = Domain::GFExt(5, 2, [1, 0, 1])
-  let b = PolyBuilder::new(["x"], domain)
-  let x = @symcore.symbol("x")
-  let poly = b.from_expr(x + @symcore.int(1))
-  let ours : Result[(@symnum.BigRational, Array[(Poly, Int)]), _] =
-    try? poly.factor_list()
-  let oracle : Result[String, _] = try? @sympy_polys.factor_list(
-    poly.to_expr(),
-    modulus=5,
-    gfext_modulus=[1, 0, 1],
-    gfext_gen="a",
-  )
-  guard ours is Err(_) && oracle is Err(_) else {
-    fail("factor_list GFExt should error in both implementations")
-  }
-}
-
 ///|
 test "polytools: factor_list parity over QQ with repeated factor" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
