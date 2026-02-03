@@ -276,6 +276,28 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
 }
 
 ///|
+test "polytools: factor_list GFExt self-consistent" {
+  let domain = Domain::GFExt(5, 2, [1, 0, 1])
+  let b = PolyBuilder::new(["x"], domain)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr(
+    ((x + @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
+  )
+  let (content, factors) = poly.factor_list()
+  guard content.is_one() else { fail("GFExt factor_list content not one") }
+  let mut acc = Poly::one(poly.gens, poly.domain)
+  for entry in factors {
+    let (f, m) = entry
+    for _ in 0..<m {
+      acc = acc.mul(f)
+    }
+  }
+  let lhs = acc.to_string()
+  let rhs = poly.to_string()
+  guard lhs == rhs else { fail("GFExt factor_list product mismatch") }
+}
+
+///|
 ///|
 test "polytools: factor_list parity over QQ with repeated factor" {
   let b = PolyBuilder::new(["x"], Domain::QQ)

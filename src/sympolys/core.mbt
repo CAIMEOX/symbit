@@ -50,10 +50,7 @@ pub fn ensure_coeff_domain(
       fe_from_int(norm.numerator().to_int(), domain)
     }
     Domain::AlgExt(base, gens, rels) => {
-      if !coeff.is_integral() && base is Domain::ZZ {
-        raise PolyError::CoefficientNotInteger
-      }
-      fe_from_int(coeff.numerator().to_int(), Domain::AlgExt(base, gens, rels))
+      fe_from_rational(coeff, Domain::AlgExt(base, gens, rels))
     }
   }
 }

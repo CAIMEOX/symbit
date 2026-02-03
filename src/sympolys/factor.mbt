@@ -478,6 +478,7 @@ fn normalize_poly_mod(poly : Poly) -> Poly raise PolyError {
       }
       Poly::{ coeffs, gens: poly.gens, domain: poly.domain, order: poly.order }
     }
+    Domain::GFExt(_, _, _) => poly
     _ => poly
   }
 }
@@ -522,17 +523,20 @@ fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  let modulus = match poly.domain {
-    Domain::GF(p) => p
+  let (p, k, field_size, mod_poly) = match poly.domain {
+    Domain::GF(p) => (p, 1, p, None)
+    Domain::GFExt(p, k, m) => (p, k, int_pow(p, k), Some(m))
     _ => raise PolyError::NotUnivariate
   }
   let mut work = make_monic(normalize_poly_mod(poly))
   let factors : Array[Poly] = Array::new()
-  // 1) strip linear roots
-  let stripped = strip_linear_roots_gf(work, modulus)
-  work = stripped.0
-  for lf in stripped.1 {
-    factors.push(lf)
+  // 1) strip linear roots (only for prime fields)
+  if work.domain is Domain::GF(_) {
+    let stripped = strip_linear_roots_gf(work, p)
+    work = stripped.0
+    for lf in stripped.1 {
+      factors.push(lf)
+    }
   }
   if work.is_zero() || is_one(work) {
     return factors
@@ -549,7 +553,7 @@ fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
     return factors
   }
   // 3) distinct-degree decomposition
-  let ddf_parts = distinct_degree_decompose(work, modulus)
+  let ddf_parts = distinct_degree_decompose(work, field_size)
   for part in ddf_parts {
     if part.degree(0) == 1 {
       factors.push(part)
@@ -557,8 +561,11 @@ fn factor_gf_seeded(poly : Poly, seed : Int) -> Array[Poly] raise PolyError {
       let edf_parts = equal_degree_factor(
         part,
         part.degree(0),
-        modulus,
+        field_size,
+        p,
+        k,
         seed + 7,
+        mod_poly,
       )
       for f in edf_parts {
         factors.push(f)
@@ -625,7 +632,7 @@ fn gf_pow_mod(
 ///|
 fn distinct_degree_decompose(
   poly : Poly,
-  modulus : Int,
+  field_size : Int,
 ) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let mut f = make_monic(poly)
@@ -637,7 +644,7 @@ fn distinct_degree_decompose(
   let mut pow = x_poly
   let mut i = 1
   while 2 * i <= f.degree(0) {
-    pow = gf_pow_mod(pow, modulus, f)
+    pow = gf_pow_mod(pow, field_size, f)
     let g = pow.sub(x_poly)
     let d = f.gcd_univar(g)
     if !is_one(d) {
@@ -656,8 +663,11 @@ fn distinct_degree_decompose(
 fn equal_degree_factor(
   poly : Poly,
   d : Int,
-  modulus : Int,
+  field_size : Int,
+  p : Int,
+  k : Int,
   seed : Int,
+  mod_poly : Array[Int]?,
 ) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let stack : Array[Poly] = Array::new()
@@ -676,14 +686,16 @@ fn equal_degree_factor(
           res.push(f)
           continue
         }
-        let exp = (int_pow(modulus, d) - 1) / 2
+        let exp = (int_pow(field_size, d) - 1) / 2
         let mut split_done = false
         let mut trials = 0
         while trials < 32 {
           trials = trials + 1
-          rng = lcg_next(rng, modulus)
+          rng = lcg_next(rng, field_size)
+          let const_elem =
+            field_elem_from_seed(rng, p, k, mod_poly, poly.domain)
           let g = x_poly.add(
-            Poly::from_expr(@symcore.int(rng), poly.gens, poly.domain),
+            poly_const_from_fe(const_elem, poly.gens, poly.domain),
           )
           let h = gf_pow_mod(g, exp, f)
           let s = h.sub(Poly::one(poly.gens, poly.domain))
@@ -703,6 +715,48 @@ fn equal_degree_factor(
     }
   }
   res
+}
+
+///|
+fn field_elem_from_seed(
+  value : Int,
+  p : Int,
+  k : Int,
+  mod_poly : Array[Int]?,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  match domain {
+    Domain::GF(_) => fe_from_int(value, domain)
+    Domain::GFExt(_, _, _) => {
+      let mut v = value
+      let coeffs : Array[Int] = Array::new()
+      for _ in 0..<k {
+        coeffs.push(v % p)
+        v = v / p
+      }
+      let m = match mod_poly {
+        Some(mp) => mp
+        None => []
+      }
+      FieldElem::GFExt(p, coeffs, m)
+    }
+    _ => fe_from_int(value, domain)
+  }
+}
+
+///|
+fn poly_const_from_fe(
+  coeff : FieldElem,
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  if fe_is_zero(coeff) {
+    return Poly::zero(gens, domain)
+  }
+  let mono = monomial_one(gens.length())
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  add_term(coeffs, mono, coeff, domain)
+  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
 }
 
 ///|
