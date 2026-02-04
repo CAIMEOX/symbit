@@ -23,13 +23,37 @@ fn constraint_to_sympy_str(constraint : LinearConstraint) -> String {
 }
 
 ///|
+fn constraint_eq_parts(constraint : LinearConstraint) -> (String, String)? {
+  if constraint.op != RelOp::Eq {
+    return None
+  }
+  let raw = linear_constraint_to_string(constraint)
+  let parts : Array[String] = Array::new()
+  for part in raw.split(" == ") {
+    parts.push(part.to_string())
+  }
+  if parts.length() == 2 {
+    return Some((parts[0], parts[1]))
+  }
+  None
+}
+
+///|
 fn expr_to_sympy_str(expr : BoolExpr) -> String {
   match expr {
     BoolExpr::True => "True"
     BoolExpr::False => "False"
     BoolExpr::Symbol(name) => name
     BoolExpr::LRA(constraint) => constraint_to_sympy_str(constraint)
-    BoolExpr::Not(inner) => "~(\{expr_to_sympy_str(inner)})"
+    BoolExpr::Not(inner) =>
+      match inner {
+        BoolExpr::LRA(constraint) =>
+          match constraint_eq_parts(constraint) {
+            Some((lhs, rhs)) => "((\{lhs} < \{rhs}) | (\{lhs} > \{rhs}))"
+            None => "~(\{expr_to_sympy_str(inner)})"
+          }
+        _ => "~(\{expr_to_sympy_str(inner)})"
+      }
     BoolExpr::And(args) => {
       if args.is_empty() {
         return "True"
@@ -100,4 +124,42 @@ test "lra theory satisfiable parity" {
   let ours5 = satresult_to_bool_string(satisfiable(expr5, use_lra_theory=true))
   let oracle5 = oracle_lra_sat(expr5)
   assert_eq(ours5, oracle5)
+}
+
+///|
+test "lra theory negated equality and or/not parity" {
+  let eq0 = linear_constraint_from_ints([("x", 1)], 0, RelOp::Eq)
+  let ge1 = linear_constraint_from_ints([("x", 1)], 1, RelOp::Ge)
+  let expr1 = bool_and([bool_not(BoolExpr::LRA(eq0)), BoolExpr::LRA(ge1)])
+  let ours1 = satresult_to_bool_string(satisfiable(expr1, use_lra_theory=true))
+  let oracle1 = oracle_lra_sat(expr1)
+  assert_eq(ours1, oracle1)
+
+  let le0 = linear_constraint_from_ints([("x", 1)], 0, RelOp::Le)
+  let ge0 = linear_constraint_from_ints([("x", 1)], 0, RelOp::Ge)
+  let expr2 = bool_and([
+    bool_not(BoolExpr::LRA(eq0)),
+    BoolExpr::LRA(le0),
+    BoolExpr::LRA(ge0),
+  ])
+  let ours2 = satresult_to_bool_string(satisfiable(expr2, use_lra_theory=true))
+  let oracle2 = oracle_lra_sat(expr2)
+  assert_eq(ours2, oracle2)
+
+  let le_neg = linear_constraint_from_ints([("x", 1)], -1, RelOp::Le)
+  let ge_pos = linear_constraint_from_ints([("x", 1)], 1, RelOp::Ge)
+  let expr3 = bool_or([BoolExpr::LRA(le_neg), BoolExpr::LRA(ge_pos)])
+  let ours3 = satresult_to_bool_string(satisfiable(expr3, use_lra_theory=true))
+  let oracle3 = oracle_lra_sat(expr3)
+  assert_eq(ours3, oracle3)
+
+  let lt0 = linear_constraint_from_ints([("x", 1)], 0, RelOp::Lt)
+  let expr4 = bool_and([
+    bool_or([bool_not(BoolExpr::LRA(eq0)), BoolExpr::LRA(lt0)]),
+    BoolExpr::LRA(le0),
+    BoolExpr::LRA(ge0),
+  ])
+  let ours4 = satresult_to_bool_string(satisfiable(expr4, use_lra_theory=true))
+  let oracle4 = oracle_lra_sat(expr4)
+  assert_eq(ours4, oracle4)
 }

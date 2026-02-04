@@ -18,6 +18,19 @@ pub struct LinearConstraint {
 }
 
 ///|
+pub struct LraConflictLit {
+  key : String
+  negated : Bool
+} derive(Eq, Show)
+
+///|
+pub(all) struct LraAssumption {
+  constraint : LinearConstraint
+  key : String
+  negated : Bool
+}
+
+///|
 priv struct LinearExpr {
   coeffs : Map[String, @symnum.BigRational]
   constant : @symnum.BigRational
@@ -28,6 +41,13 @@ priv struct Ineq {
   coeffs : Map[String, @symnum.BigRational]
   rhs : @symnum.BigRational
   strict : Bool
+  origin : Array[LraConflictLit]
+}
+
+///|
+priv enum LraCheck {
+  Sat(Array[Ineq])
+  Unsat(Array[LraConflictLit])
 }
 
 ///|
@@ -73,6 +93,35 @@ fn add_coeff(
 }
 
 ///|
+fn origin_key(lit : LraConflictLit) -> String {
+  if lit.negated { "!\{lit.key}" } else { lit.key }
+}
+
+///|
+fn origin_single(key : String, negated : Bool) -> Array[LraConflictLit] {
+  [LraConflictLit::{ key: key, negated: negated }]
+}
+
+///|
+fn origin_union(
+  a : Array[LraConflictLit],
+  b : Array[LraConflictLit],
+) -> Array[LraConflictLit] {
+  let seen : Map[String, LraConflictLit] = Map::new()
+  for lit in a {
+    seen[origin_key(lit)] = lit
+  }
+  for lit in b {
+    seen[origin_key(lit)] = lit
+  }
+  let out : Array[LraConflictLit] = Array::new()
+  for _, lit in seen {
+    out.push(lit)
+  }
+  out
+}
+
+///|
 fn expr_from_rhs(rhs : @symnum.BigRational) -> LinearExpr {
   { coeffs: Map::new(), constant: rhs }
 }
@@ -115,8 +164,17 @@ fn expr_div_scalar(a : LinearExpr, k : @symnum.BigRational) -> LinearExpr {
 }
 
 ///|
-fn ineq_from_expr(expr : LinearExpr, strict : Bool) -> Ineq {
-  Ineq::{ coeffs: expr.coeffs, rhs: br_neg(expr.constant), strict: strict }
+fn ineq_from_expr(
+  expr : LinearExpr,
+  strict : Bool,
+  origin : Array[LraConflictLit],
+) -> Ineq {
+  Ineq::{
+    coeffs: expr.coeffs,
+    rhs: br_neg(expr.constant),
+    strict: strict,
+    origin: origin,
+  }
 }
 
 ///|
@@ -130,18 +188,18 @@ fn ineq_satisfied(rhs : @symnum.BigRational, strict : Bool) -> Bool {
 }
 
 ///|
-fn prune_ineqs(ineqs : Array[Ineq]) -> Array[Ineq]? {
+fn prune_ineqs(ineqs : Array[Ineq]) -> LraCheck {
   let out : Array[Ineq] = Array::new()
   for ineq in ineqs {
     if ineq.coeffs.is_empty() {
       if !ineq_satisfied(ineq.rhs, ineq.strict) {
-        return None
+        return LraCheck::Unsat(ineq.origin)
       }
       continue
     }
     out.push(ineq)
   }
-  Some(out)
+  LraCheck::Sat(out)
 }
 
 ///|
@@ -158,7 +216,7 @@ fn bound_from_ineq(ineq : Ineq, var_name : String, coeff : @symnum.BigRational) 
 }
 
 ///|
-fn eliminate_var(ineqs : Array[Ineq], var_name : String) -> Array[Ineq]? {
+fn eliminate_var(ineqs : Array[Ineq], var_name : String) -> LraCheck {
   let pos : Array[(Ineq, @symnum.BigRational)] = Array::new()
   let neg : Array[(Ineq, @symnum.BigRational)] = Array::new()
   let zero : Array[Ineq] = Array::new()
@@ -190,7 +248,8 @@ fn eliminate_var(ineqs : Array[Ineq], var_name : String) -> Array[Ineq]? {
       let lower = bound_from_ineq(n.0, var_name, n.1)
       let expr = expr_sub(lower, upper)
       let strict = p.0.strict || n.0.strict
-      out.push(ineq_from_expr(expr, strict))
+      let origin = origin_union(p.0.origin, n.0.origin)
+      out.push(ineq_from_expr(expr, strict, origin))
     }
   }
   prune_ineqs(out)
@@ -215,24 +274,43 @@ fn clone_coeffs(coeffs : Map[String, @symnum.BigRational]) -> Map[String, @symnu
 }
 
 ///|
-fn ineqs_from_constraint(constraint : LinearConstraint) -> Array[Ineq] {
+fn ineqs_from_constraint(
+  constraint : LinearConstraint,
+  origin : Array[LraConflictLit],
+) -> Array[Ineq] {
   let coeffs = normalize_coeffs(constraint.coeffs)
   match constraint.op {
-    RelOp::Le => [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false }]
-    RelOp::Lt => [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: true }]
+    RelOp::Le =>
+      [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false, origin: origin }]
+    RelOp::Lt =>
+      [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: true, origin: origin }]
     RelOp::Ge => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
-      [Ineq::{ coeffs: neg_coeffs, rhs: br_neg(constraint.rhs), strict: false }]
+      [
+        Ineq::{
+          coeffs: neg_coeffs,
+          rhs: br_neg(constraint.rhs),
+          strict: false,
+          origin: origin,
+        },
+      ]
     }
     RelOp::Gt => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
       for name, value in coeffs {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
-      [Ineq::{ coeffs: neg_coeffs, rhs: br_neg(constraint.rhs), strict: true }]
+      [
+        Ineq::{
+          coeffs: neg_coeffs,
+          rhs: br_neg(constraint.rhs),
+          strict: true,
+          origin: origin,
+        },
+      ]
     }
     RelOp::Eq => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
@@ -240,8 +318,13 @@ fn ineqs_from_constraint(constraint : LinearConstraint) -> Array[Ineq] {
         add_coeff(neg_coeffs, name, br_neg(value))
       }
       [
-        Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false },
-        Ineq::{ coeffs: neg_coeffs, rhs: br_neg(constraint.rhs), strict: false },
+        Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false, origin: origin },
+        Ineq::{
+          coeffs: neg_coeffs,
+          rhs: br_neg(constraint.rhs),
+          strict: false,
+          origin: origin,
+        },
       ]
     }
   }
@@ -353,19 +436,23 @@ pub fn linear_constraint_key(constraint : LinearConstraint) -> String {
 }
 
 ///|
-pub fn lra_satisfiable(constraints : Array[LinearConstraint]) -> Bool {
-  let mut ineqs : Array[Ineq] = Array::new()
-  for constraint in constraints {
-    for ineq in ineqs_from_constraint(constraint) {
+pub fn lra_check_with_conflict(
+  assumptions : Array[LraAssumption],
+) -> Array[LraConflictLit]? {
+  let ineqs : Array[Ineq] = Array::new()
+  for assumption in assumptions {
+    let origin = origin_single(assumption.key, assumption.negated)
+    for ineq in ineqs_from_constraint(assumption.constraint, origin) {
       ineqs.push(ineq)
     }
   }
+  let mut current : Array[Ineq] = Array::new()
   match prune_ineqs(ineqs) {
-    None => return false
-    Some(filtered) => ineqs = filtered
+    LraCheck::Unsat(conflict) => return Some(conflict)
+    LraCheck::Sat(filtered) => current = filtered
   }
   let vars : Map[String, Bool] = Map::new()
-  for ineq in ineqs {
+  for ineq in current {
     for name, _ in ineq.coeffs {
       vars[name] = true
     }
@@ -375,19 +462,36 @@ pub fn lra_satisfiable(constraints : Array[LinearConstraint]) -> Bool {
     var_list.push(name)
   }
   var_list.sort()
-  let mut current = ineqs
   for name in var_list {
     match eliminate_var(current, name) {
-      None => return false
-      Some(next) => current = next
+      LraCheck::Unsat(conflict) => return Some(conflict)
+      LraCheck::Sat(next) => current = next
     }
   }
   for ineq in current {
     if ineq.coeffs.is_empty() {
       if !ineq_satisfied(ineq.rhs, ineq.strict) {
-        return false
+        return Some(ineq.origin)
       }
     }
   }
-  true
+  None
+}
+
+///|
+pub fn lra_satisfiable(constraints : Array[LinearConstraint]) -> Bool {
+  let assumptions : Array[LraAssumption] = Array::new()
+  for constraint in constraints {
+    assumptions.push(
+      LraAssumption::{
+        constraint: constraint,
+        key: linear_constraint_key(constraint),
+        negated: false,
+      },
+    )
+  }
+  match lra_check_with_conflict(assumptions) {
+    None => true
+    Some(_) => false
+  }
 }

@@ -13,36 +13,62 @@ fn remove_int_local(xs : Array[Int], value : Int) -> Array[Int] {
 }
 
 ///|
-fn lra_branch_satisfiable(
-  base : Array[LinearConstraint],
-  branches : Array[Array[LinearConstraint]],
-  idx : Int,
-) -> Bool {
-  if idx >= branches.length() {
-    return lra_satisfiable(base)
-  }
-  let choices = branches[idx]
-  for choice in choices {
-    let next = base.copy()
-    next.push(choice)
-    if lra_branch_satisfiable(next, branches, idx + 1) {
-      return true
-    }
-  }
-  false
+fn conflict_key(lit : LraConflictLit) -> String {
+  if lit.negated { "!\{lit.key}" } else { lit.key }
 }
 
 ///|
-fn lra_model_satisfiable(
+fn conflict_union(
+  a : Array[LraConflictLit],
+  b : Array[LraConflictLit],
+) -> Array[LraConflictLit] {
+  let seen : Map[String, LraConflictLit] = Map::new()
+  for lit in a {
+    seen[conflict_key(lit)] = lit
+  }
+  for lit in b {
+    seen[conflict_key(lit)] = lit
+  }
+  let out : Array[LraConflictLit] = Array::new()
+  for _, lit in seen {
+    out.push(lit)
+  }
+  out
+}
+
+///|
+fn lra_branch_conflict(
+  base : Array[LraAssumption],
+  branches : Array[Array[LraAssumption]],
+  idx : Int,
+) -> Array[LraConflictLit]? {
+  if idx >= branches.length() {
+    return lra_check_with_conflict(base)
+  }
+  let choices = branches[idx]
+  let mut combined : Array[LraConflictLit] = Array::new()
+  for choice in choices {
+    let next = base.copy()
+    next.push(choice)
+    match lra_branch_conflict(next, branches, idx + 1) {
+      None => return None
+      Some(conflict) => combined = conflict_union(combined, conflict)
+    }
+  }
+  Some(combined)
+}
+
+///|
+fn lra_model_conflict(
   model : Map[Int, Bool],
   symbol_names : Array[String],
   lra_map : Map[String, LinearConstraint],
-) -> Bool {
+) -> Array[LraConflictLit]? {
   if lra_map.is_empty() {
-    return true
+    return None
   }
-  let base : Array[LinearConstraint] = Array::new()
-  let branches : Array[Array[LinearConstraint]] = Array::new()
+  let base : Array[LraAssumption] = Array::new()
+  let branches : Array[Array[LraAssumption]] = Array::new()
   for key, val in model {
     let idx = key - 1
     if idx < 0 || idx >= symbol_names.length() {
@@ -52,18 +78,46 @@ fn lra_model_satisfiable(
     match lra_map.get(name) {
       Some(constraint) => {
         if val {
-          base.push(constraint)
+          base.push(
+            LraAssumption::{ constraint: constraint, key: name, negated: false },
+          )
         } else {
-          branches.push(linear_constraint_negate(constraint))
+          let negated = linear_constraint_negate(constraint)
+          if negated.length() == 1 {
+            base.push(
+              LraAssumption::{
+                constraint: negated[0],
+                key: name,
+                negated: true,
+              },
+            )
+          } else {
+            let options : Array[LraAssumption] = Array::new()
+            for neg in negated {
+              options.push(
+                LraAssumption::{ constraint: neg, key: name, negated: true },
+              )
+            }
+            branches.push(options)
+          }
         }
       }
       None => ()
     }
   }
-  if branches.is_empty() {
-    return lra_satisfiable(base)
+  lra_branch_conflict(base, branches, 0)
+}
+
+///|
+fn lra_model_satisfiable(
+  model : Map[Int, Bool],
+  symbol_names : Array[String],
+  lra_map : Map[String, LinearConstraint],
+) -> Bool {
+  match lra_model_conflict(model, symbol_names, lra_map) {
+    None => true
+    Some(_) => false
   }
-  lra_branch_satisfiable(base, branches, 0)
 }
 
 ///|
@@ -170,19 +224,20 @@ pub fn dpll2_satisfiable(
     }
   }
   let indices : Array[Int] = Array::new()
+  let sym_index : Map[String, Int] = Map::new()
   for i in 0..<symbol_names.length() {
-    indices.push(i + 1)
+    let idx = i + 1
+    indices.push(idx)
+    sym_index[symbol_names[i]] = idx
   }
   let clauses_int = to_int_repr(clauses, symbols)
-  let models = dpll_int_repr_all_models(clauses_int, indices, Map::new())
-  if models.is_empty() {
-    return None
-  }
   let use_lra = use_lra_theory && !lra_map.is_empty()
-  for model in models {
-    if use_lra && !lra_model_satisfiable(model, symbol_names, lra_map) {
-      continue
+  if !use_lra {
+    let models = dpll_int_repr_all_models(clauses_int, indices, Map::new())
+    if models.is_empty() {
+      return None
     }
+    let model = models[0]
     let out : Map[String, Bool] = Map::new()
     for key, val in model {
       let idx = key - 1
@@ -192,7 +247,54 @@ pub fn dpll2_satisfiable(
     }
     return Some(out)
   }
-  None
+  fn conflict_clause_int(
+    conflict : Array[LraConflictLit],
+    sym_index : Map[String, Int],
+  ) -> Array[Int] {
+    let set : Map[Int, Bool] = Map::new()
+    for lit in conflict {
+      match sym_index.get(lit.key) {
+        Some(idx) => {
+          let signed = if lit.negated { idx } else { -idx }
+          set[signed] = true
+        }
+        None => ()
+      }
+    }
+    let out : Array[Int] = Array::new()
+    for key, _ in set {
+      out.push(key)
+    }
+    out.sort()
+    out
+  }
+  while true {
+    let model_opt = dpll_int_repr(clauses_int, indices, Map::new())
+    match model_opt {
+      None => return None
+      Some(model) =>
+        match lra_model_conflict(model, symbol_names, lra_map) {
+          None => {
+            let out : Map[String, Bool] = Map::new()
+            for key, val in model {
+              let idx = key - 1
+              if idx >= 0 && idx < symbol_names.length() {
+                out[symbol_names[idx]] = val
+              }
+            }
+            return Some(out)
+          }
+          Some(conflict) => {
+            let clause = conflict_clause_int(conflict, sym_index)
+            if clause.is_empty() {
+              return None
+            }
+            clauses_int.push(clause)
+          }
+        }
+    }
+  }
+  return None
 }
 
 ///|
