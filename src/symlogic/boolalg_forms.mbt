@@ -7,6 +7,7 @@ pub fn is_literal(expr : BoolExpr) -> Bool {
     BoolExpr::True => true
     BoolExpr::False => true
     BoolExpr::Symbol(_) => true
+    BoolExpr::LRA(_) => true
     BoolExpr::Not(inner) => is_literal(inner)
     _ => false
   }
@@ -440,6 +441,7 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
     BoolExpr::True => BoolExpr::True
     BoolExpr::False => BoolExpr::False
     BoolExpr::Symbol(_) => expr
+    BoolExpr::LRA(_) => expr
     BoolExpr::Not(inner) => {
       let term = maybe_to_anf(inner, deep)
       xor_keep_true([BoolExpr::True, term])
@@ -502,11 +504,13 @@ pub fn is_anf(expr : BoolExpr) -> Bool {
     BoolExpr::True => true
     BoolExpr::False => true
     BoolExpr::Symbol(_) => true
+    BoolExpr::LRA(_) => true
     BoolExpr::Not(_) => false
     BoolExpr::And(args) => {
       for arg in args {
         match arg {
           BoolExpr::Symbol(_) => ()
+          BoolExpr::LRA(_) => ()
           _ => return false
         }
       }
@@ -519,11 +523,13 @@ pub fn is_anf(expr : BoolExpr) -> Bool {
             for t in terms {
               match t {
                 BoolExpr::Symbol(_) => ()
+                BoolExpr::LRA(_) => ()
                 _ => return false
               }
             }
           }
           BoolExpr::Symbol(_) => ()
+          BoolExpr::LRA(_) => ()
           BoolExpr::True => ()
           BoolExpr::False => ()
           _ => return false

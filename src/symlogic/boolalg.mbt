@@ -6,6 +6,7 @@ pub(all) enum BoolExpr {
   True
   False
   Symbol(String)
+  LRA(LinearConstraint)
   Not(BoolExpr)
   And(Array[BoolExpr])
   Or(Array[BoolExpr])
@@ -330,6 +331,7 @@ fn variant_rank(expr : BoolExpr) -> Int {
     BoolExpr::ITE(_, _, _) => 7
     BoolExpr::True => 8
     BoolExpr::False => 9
+    BoolExpr::LRA(_) => 10
   }
 }
 
@@ -371,6 +373,12 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
     BoolExpr::Symbol(sa) =>
       match b {
         BoolExpr::Symbol(sb) => sa.compare(sb)
+        _ => 0
+      }
+    BoolExpr::LRA(ca) =>
+      match b {
+        BoolExpr::LRA(cb) =>
+          linear_constraint_key(ca).compare(linear_constraint_key(cb))
         _ => 0
       }
     BoolExpr::Not(ia) =>
@@ -448,6 +456,8 @@ pub impl Hash for BoolExpr with hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
     BoolExpr::Symbol(name) => hasher.combine_string(name)
+    BoolExpr::LRA(constraint) =>
+      hasher.combine_string(linear_constraint_key(constraint))
     BoolExpr::Not(inner) => inner.hash_combine(hasher)
     BoolExpr::And(args) | BoolExpr::Or(args) | BoolExpr::Xor(args) |
     BoolExpr::Equivalent(args) =>
@@ -486,6 +496,7 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
     BoolExpr::True => "True"
     BoolExpr::False => "False"
     BoolExpr::Symbol(name) => name
+    BoolExpr::LRA(constraint) => linear_constraint_to_string(constraint)
     BoolExpr::Not(inner) => {
       let inner_str = format_expr(inner, 0)
       let wrapped = if precedence(inner) < prec { "(\{inner_str})" } else { inner_str }

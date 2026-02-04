@@ -164,6 +164,7 @@ pub fn gateinputcount(expr : BoolExpr) -> Int {
     BoolExpr::True => 0
     BoolExpr::False => 0
     BoolExpr::Symbol(_) => 0
+    BoolExpr::LRA(_) => 0
     BoolExpr::Not(inner) => 1 + gateinputcount(inner)
     BoolExpr::And(args)
     | BoolExpr::Or(args)

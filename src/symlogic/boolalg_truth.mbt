@@ -99,6 +99,13 @@ pub fn to_int_repr(
             Some(idx) => set[idx] = true
             None => ()
           }
+        BoolExpr::LRA(constraint) => {
+          let key = linear_constraint_key(constraint)
+          match sym_map.get(key) {
+            Some(idx) => set[idx] = true
+            None => ()
+          }
+        }
         BoolExpr::Not(inner) =>
           match inner {
             BoolExpr::Symbol(name) =>
@@ -106,6 +113,13 @@ pub fn to_int_repr(
                 Some(idx) => set[-idx] = true
                 None => ()
               }
+            BoolExpr::LRA(constraint) => {
+              let key = linear_constraint_key(constraint)
+              match sym_map.get(key) {
+                Some(idx) => set[-idx] = true
+                None => ()
+              }
+            }
             _ => ()
           }
         _ => ()
