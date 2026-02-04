@@ -128,7 +128,9 @@ fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
     if !remaining.is_zero() && !is_one(remaining) {
       result.push(remaining)
     }
-    let prod = factors_product(result, poly.gens, poly.domain) catch { _ => poly }
+    let prod = factors_product(result, poly.gens, poly.domain) catch {
+      _ => poly
+    }
     let diff = poly.sub(prod) catch { _ => poly }
     let diff_neg = poly.sub(prod.neg()) catch { _ => poly }
     if diff.is_zero() || diff_neg.is_zero() {

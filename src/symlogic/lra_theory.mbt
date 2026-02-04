@@ -66,7 +66,10 @@ fn br_neg(value : @symnum.BigRational) -> @symnum.BigRational {
 }
 
 ///|
-fn br_div(a : @symnum.BigRational, b : @symnum.BigRational) -> @symnum.BigRational {
+fn br_div(
+  a : @symnum.BigRational,
+  b : @symnum.BigRational,
+) -> @symnum.BigRational {
   try! a.div_r(b)
 }
 
@@ -94,12 +97,16 @@ fn add_coeff(
 
 ///|
 fn origin_key(lit : LraConflictLit) -> String {
-  if lit.negated { "!\{lit.key}" } else { lit.key }
+  if lit.negated {
+    "!\{lit.key}"
+  } else {
+    lit.key
+  }
 }
 
 ///|
 fn origin_single(key : String, negated : Bool) -> Array[LraConflictLit] {
-  [LraConflictLit::{ key: key, negated: negated }]
+  [LraConflictLit::{ key, negated }]
 }
 
 ///|
@@ -131,7 +138,7 @@ fn expr_from_coeffs(
   coeffs : Map[String, @symnum.BigRational],
   constant : @symnum.BigRational,
 ) -> LinearExpr {
-  { coeffs: coeffs, constant: constant }
+  { coeffs, constant }
 }
 
 ///|
@@ -169,12 +176,7 @@ fn ineq_from_expr(
   strict : Bool,
   origin : Array[LraConflictLit],
 ) -> Ineq {
-  Ineq::{
-    coeffs: expr.coeffs,
-    rhs: br_neg(expr.constant),
-    strict: strict,
-    origin: origin,
-  }
+  Ineq::{ coeffs: expr.coeffs, rhs: br_neg(expr.constant), strict, origin }
 }
 
 ///|
@@ -203,7 +205,11 @@ fn prune_ineqs(ineqs : Array[Ineq]) -> LraCheck {
 }
 
 ///|
-fn bound_from_ineq(ineq : Ineq, var_name : String, coeff : @symnum.BigRational) -> LinearExpr {
+fn bound_from_ineq(
+  ineq : Ineq,
+  var_name : String,
+  coeff : @symnum.BigRational,
+) -> LinearExpr {
   let rest_coeffs : Map[String, @symnum.BigRational] = Map::new()
   for name, value in ineq.coeffs {
     if name != var_name {
@@ -256,7 +262,9 @@ fn eliminate_var(ineqs : Array[Ineq], var_name : String) -> LraCheck {
 }
 
 ///|
-fn normalize_coeffs(coeffs : Map[String, @symnum.BigRational]) -> Map[String, @symnum.BigRational] {
+fn normalize_coeffs(
+  coeffs : Map[String, @symnum.BigRational],
+) -> Map[String, @symnum.BigRational] {
   let out : Map[String, @symnum.BigRational] = Map::new()
   for name, value in coeffs {
     add_coeff(out, name, value)
@@ -265,7 +273,9 @@ fn normalize_coeffs(coeffs : Map[String, @symnum.BigRational]) -> Map[String, @s
 }
 
 ///|
-fn clone_coeffs(coeffs : Map[String, @symnum.BigRational]) -> Map[String, @symnum.BigRational] {
+fn clone_coeffs(
+  coeffs : Map[String, @symnum.BigRational],
+) -> Map[String, @symnum.BigRational] {
   let out : Map[String, @symnum.BigRational] = Map::new()
   for name, value in coeffs {
     out[name] = value
@@ -280,10 +290,8 @@ fn ineqs_from_constraint(
 ) -> Array[Ineq] {
   let coeffs = normalize_coeffs(constraint.coeffs)
   match constraint.op {
-    RelOp::Le =>
-      [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false, origin: origin }]
-    RelOp::Lt =>
-      [Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: true, origin: origin }]
+    RelOp::Le => [Ineq::{ coeffs, rhs: constraint.rhs, strict: false, origin }]
+    RelOp::Lt => [Ineq::{ coeffs, rhs: constraint.rhs, strict: true, origin }]
     RelOp::Ge => {
       let neg_coeffs : Map[String, @symnum.BigRational] = Map::new()
       for name, value in coeffs {
@@ -294,7 +302,7 @@ fn ineqs_from_constraint(
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: false,
-          origin: origin,
+          origin,
         },
       ]
     }
@@ -308,7 +316,7 @@ fn ineqs_from_constraint(
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: true,
-          origin: origin,
+          origin,
         },
       ]
     }
@@ -318,12 +326,12 @@ fn ineqs_from_constraint(
         add_coeff(neg_coeffs, name, br_neg(value))
       }
       [
-        Ineq::{ coeffs: coeffs, rhs: constraint.rhs, strict: false, origin: origin },
+        Ineq::{ coeffs, rhs: constraint.rhs, strict: false, origin },
         Ineq::{
           coeffs: neg_coeffs,
           rhs: br_neg(constraint.rhs),
           strict: false,
-          origin: origin,
+          origin,
         },
       ]
     }
@@ -342,33 +350,68 @@ pub fn linear_constraint_from_ints(
     let value = pair.1
     add_coeff(out, name, @symnum.BigRational::from_int(value))
   }
-  { coeffs: out, rhs: @symnum.BigRational::from_int(rhs), op: op }
+  { coeffs: out, rhs: @symnum.BigRational::from_int(rhs), op }
 }
 
 ///|
-pub fn linear_constraint_negate(constraint : LinearConstraint) -> Array[LinearConstraint] {
+pub fn linear_constraint_negate(
+  constraint : LinearConstraint,
+) -> Array[LinearConstraint] {
   match constraint.op {
-    RelOp::Le => [
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Gt },
-    ]
-    RelOp::Lt => [
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Ge },
-    ]
-    RelOp::Ge => [
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Lt },
-    ]
-    RelOp::Gt => [
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Le },
-    ]
-    RelOp::Eq => [
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Lt },
-      { coeffs: clone_coeffs(constraint.coeffs), rhs: constraint.rhs, op: RelOp::Gt },
-    ]
+    RelOp::Le =>
+      [
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Gt,
+        },
+      ]
+    RelOp::Lt =>
+      [
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Ge,
+        },
+      ]
+    RelOp::Ge =>
+      [
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Lt,
+        },
+      ]
+    RelOp::Gt =>
+      [
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Le,
+        },
+      ]
+    RelOp::Eq =>
+      [
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Lt,
+        },
+        {
+          coeffs: clone_coeffs(constraint.coeffs),
+          rhs: constraint.rhs,
+          op: RelOp::Gt,
+        },
+      ]
   }
 }
 
 ///|
-fn format_coeff(coeff : @symnum.BigRational, name : String, first : Bool) -> String {
+fn format_coeff(
+  coeff : @symnum.BigRational,
+  name : String,
+  first : Bool,
+) -> String {
   let zero = br_zero()
   let cmp = coeff.compare(zero)
   let mut sign = ""
@@ -380,12 +423,7 @@ fn format_coeff(coeff : @symnum.BigRational, name : String, first : Bool) -> Str
     sign = "+ "
   }
   let coeff_str = abs_coeff.to_string()
-  let term =
-    if coeff_str == "1" {
-      name
-    } else {
-      "\{coeff_str}*\{name}"
-    }
+  let term = if coeff_str == "1" { name } else { "\{coeff_str}*\{name}" }
   if sign == "" {
     term
   } else if sign == "+ " {
@@ -419,14 +457,13 @@ fn linear_lhs_to_string(coeffs : Map[String, @symnum.BigRational]) -> String {
 pub fn linear_constraint_to_string(constraint : LinearConstraint) -> String {
   let lhs = linear_lhs_to_string(constraint.coeffs)
   let rhs = constraint.rhs.to_string()
-  let op =
-    match constraint.op {
-      RelOp::Le => "<="
-      RelOp::Ge => ">="
-      RelOp::Lt => "<"
-      RelOp::Gt => ">"
-      RelOp::Eq => "=="
-    }
+  let op = match constraint.op {
+    RelOp::Le => "<="
+    RelOp::Ge => ">="
+    RelOp::Lt => "<"
+    RelOp::Gt => ">"
+    RelOp::Eq => "=="
+  }
   "\{lhs} \{op} \{rhs}"
 }
 
@@ -482,13 +519,11 @@ pub fn lra_check_with_conflict(
 pub fn lra_satisfiable(constraints : Array[LinearConstraint]) -> Bool {
   let assumptions : Array[LraAssumption] = Array::new()
   for constraint in constraints {
-    assumptions.push(
-      LraAssumption::{
-        constraint: constraint,
-        key: linear_constraint_key(constraint),
-        negated: false,
-      },
-    )
+    assumptions.push(LraAssumption::{
+      constraint,
+      key: linear_constraint_key(constraint),
+      negated: false,
+    })
   }
   match lra_check_with_conflict(assumptions) {
     None => true

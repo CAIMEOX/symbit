@@ -148,8 +148,14 @@ pub fn _sort_gens(
       idx = idx + 1
     }
     remaining.sort_by((a, b) => {
-      let ra = match sort_rank.get(a) { Some(v) => v; None => 1_000_000 }
-      let rb = match sort_rank.get(b) { Some(v) => v; None => 1_000_000 }
+      let ra = match sort_rank.get(a) {
+        Some(v) => v
+        None => 1_000_000
+      }
+      let rb = match sort_rank.get(b) {
+        Some(v) => v
+        None => 1_000_000
+      }
       if ra != rb {
         ra - rb
       } else {
@@ -173,7 +179,7 @@ pub fn _sort_gens_wrt(
   sort? : String = "",
 ) -> Array[String] {
   let wrt_list = parse_wrt_string(wrt)
-  _sort_gens(gens, wrt=wrt_list, sort=sort)
+  _sort_gens(gens, wrt=wrt_list, sort~)
 }
 
 ///|
@@ -213,11 +219,17 @@ pub fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
     for i in 0..<(lst.length() - 1) {
       let u = lst[i]
       let v = lst[i + 1]
-      let neighbors = match adj.get(u) { Some(xs) => xs; None => Array::new() }
+      let neighbors = match adj.get(u) {
+        Some(xs) => xs
+        None => Array::new()
+      }
       if !neighbors.contains(v) {
         neighbors.push(v)
         adj.set(u, neighbors)
-        let cur = match indeg.get(v) { Some(x) => x; None => 0 }
+        let cur = match indeg.get(v) {
+          Some(x) => x
+          None => 0
+        }
         indeg.set(v, cur + 1)
       }
     }
@@ -255,7 +267,10 @@ pub fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
     match adj.get(pick) {
       Some(neighbors) =>
         for v in neighbors {
-          let cur = match indeg.get(v) { Some(x) => x; None => 0 }
+          let cur = match indeg.get(v) {
+            Some(x) => x
+            None => 0
+          }
           indeg.set(v, cur - 1)
         }
       None => ()
@@ -337,7 +352,10 @@ fn infer_gens_expr_local(expr : @symcore.Expr) -> Array[String] {
 }
 
 ///|
-fn collect_symbols_local(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+fn collect_symbols_local(
+  expr : @symcore.Expr,
+  seen : Map[String, Bool],
+) -> Unit {
   match expr {
     @symcore.Expr::Symbol(name) => seen.set(name, true)
     @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
@@ -381,7 +399,11 @@ pub fn dict_from_expr(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
 ) -> String raise PolyError {
-  let gens_list = if gens.is_empty() { infer_gens_expr_local(expr) } else { gens }
+  let gens_list = if gens.is_empty() {
+    infer_gens_expr_local(expr)
+  } else {
+    gens
+  }
   let poly = Poly::from_expr_defaults(expr, gens=gens_list)
   let entries : Array[(Array[Int], String)] = Array::new()
   for m, c in poly.coeffs {

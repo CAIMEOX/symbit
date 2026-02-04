@@ -102,13 +102,16 @@ fn diff_pow(base : Expr, exp : Expr, wrt : Expr) -> Expr {
       let pow_expr = @symcore.pow(base, @symcore.number(n_minus_one))
       @symcore.mul([coeff, pow_expr, dbase])
     }
-    None => {
+    None =>
       if expr_depends_on(exp, wrt) {
         derivative_expr(@symcore.pow(base, exp), [wrt])
       } else {
-        @symcore.mul([exp, @symcore.pow(base, @symcore.add([exp, @symcore.int(-1)])), dbase])
+        @symcore.mul([
+          exp,
+          @symcore.pow(base, @symcore.add([exp, @symcore.int(-1)])),
+          dbase,
+        ])
       }
-    }
   }
 }
 
@@ -124,11 +127,8 @@ fn diff_function(name : String, args : Array[Expr], wrt : Expr) -> Expr {
   }
   match name {
     "sin" => @symcore.mul([@symcore.function("cos", [arg]), darg])
-    "cos" => @symcore.mul([
-      @symcore.int(-1),
-      @symcore.function("sin", [arg]),
-      darg,
-    ])
+    "cos" =>
+      @symcore.mul([@symcore.int(-1), @symcore.function("sin", [arg]), darg])
     "exp" => @symcore.mul([@symcore.function("exp", [arg]), darg])
     "log" => @symcore.mul([darg, @symcore.pow(arg, @symcore.int(-1))])
     _ =>
@@ -153,7 +153,11 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     Expr::Pow(base, exp) => diff_pow(base, exp, wrt)
     Expr::Function(name, args) =>
       if name == "Derivative" {
-        if expr_is_symbol(wrt) { derivative_expr(expr, [wrt]) } else { @symcore.int(0) }
+        if expr_is_symbol(wrt) {
+          derivative_expr(expr, [wrt])
+        } else {
+          @symcore.int(0)
+        }
       } else {
         diff_function(name, args, wrt)
       }
@@ -191,7 +195,11 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
     Expr::Pow(base, exp) => {
       let m1 = max_derivative_order(base, target)
       let m2 = max_derivative_order(exp, target)
-      if m1 > m2 { m1 } else { m2 }
+      if m1 > m2 {
+        m1
+      } else {
+        m2
+      }
     }
     Expr::Function(_, args) => {
       let mut max = 0
@@ -229,6 +237,7 @@ fn combinations_with_replacement(
       ignore(cur.pop())
     }
   }
+
   rec(0, 0)
   out
 }
@@ -252,7 +261,7 @@ pub fn euler_equations(
   for f in funcs {
     let mut eq = diff(lagrangian, f)
     let order = max_derivative_order(lagrangian, f)
-    for i in 1..=order {
+    for i in 1..<=order {
       let combos = combinations_with_replacement(vars, i)
       for p in combos {
         let df = derivative_expr(f, p)

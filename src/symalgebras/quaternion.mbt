@@ -17,7 +17,8 @@ pub(all) suberror QuaternionError {
 ///|
 pub impl Show for QuaternionError with output(self, logger : &Logger) -> Unit {
   match self {
-    QuaternionError::InvalidSeq(msg) => logger.write_string("InvalidSeq(\{msg})")
+    QuaternionError::InvalidSeq(msg) =>
+      logger.write_string("InvalidSeq(\{msg})")
     QuaternionError::InvalidMatrix(msg) =>
       logger.write_string("InvalidMatrix(\{msg})")
     QuaternionError::InvalidAxis(msg) =>
@@ -165,7 +166,11 @@ fn fuzzy_or(values : Array[Bool?]) -> Bool? {
       None => any_unknown = true
     }
   }
-  if any_unknown { None } else { Some(false) }
+  if any_unknown {
+    None
+  } else {
+    Some(false)
+  }
 }
 
 ///|
@@ -189,12 +194,16 @@ fn matrix_det3(m : Matrix) -> Expr raise QuaternionError {
 }
 
 ///|
-fn check_norm(elements : Array[Expr], norm : Expr?) -> Unit raise QuaternionError {
+fn check_norm(
+  elements : Array[Expr],
+  norm : Expr?,
+) -> Unit raise QuaternionError {
   match norm {
     None => ()
     Some(n) => {
       match expr_is_positive(n) {
-        Some(false) => raise QuaternionError::InvalidNorm("norm must be positive")
+        Some(false) =>
+          raise QuaternionError::InvalidNorm("norm must be positive")
         _ => ()
       }
       let mut numeric = true
@@ -239,14 +248,7 @@ fn quat_unchecked(
   real_field : Bool,
   norm_override : Expr?,
 ) -> Quaternion {
-  Quaternion::{
-    a: a,
-    b: b,
-    c: c,
-    d: d,
-    real_field: real_field,
-    norm_override: norm_override,
-  }
+  Quaternion::{ a, b, c, d, real_field, norm_override }
 }
 
 ///|
@@ -263,7 +265,10 @@ pub fn Quaternion::new(
 }
 
 ///|
-pub fn Quaternion::with_norm(self : Quaternion, norm : Expr?) -> Quaternion raise QuaternionError {
+pub fn Quaternion::with_norm(
+  self : Quaternion,
+  norm : Expr?,
+) -> Quaternion raise QuaternionError {
   check_norm([self.a, self.b, self.c, self.d], norm)
   quat_unchecked(self.a, self.b, self.c, self.d, self.real_field, norm)
 }
@@ -391,11 +396,21 @@ pub fn Quaternion::mul(self : Quaternion, other : Quaternion) -> Quaternion {
 
 ///|
 pub fn Quaternion::mul_scalar(self : Quaternion, other : Expr) -> Quaternion {
-  quat_unchecked(other * self.a, other * self.b, other * self.c, other * self.d, self.real_field, None)
+  quat_unchecked(
+    other * self.a,
+    other * self.b,
+    other * self.c,
+    other * self.d,
+    self.real_field,
+    None,
+  )
 }
 
 ///|
-pub fn Quaternion::div(self : Quaternion, other : Quaternion) -> Quaternion raise QuaternionError {
+pub fn Quaternion::div(
+  self : Quaternion,
+  other : Quaternion,
+) -> Quaternion raise QuaternionError {
   self.mul(other.inverse())
 }
 
@@ -441,12 +456,13 @@ fn vector_is_zero_numeric(b : Expr, c : Expr, d : Expr) -> Bool? {
 
 ///|
 fn quat_is_zero_numeric(q : Quaternion) -> Bool? {
-  match (
-    expr_number_value(q.a),
-    expr_number_value(q.b),
-    expr_number_value(q.c),
-    expr_number_value(q.d),
-  ) {
+  match
+    (
+      expr_number_value(q.a),
+      expr_number_value(q.b),
+      expr_number_value(q.c),
+      expr_number_value(q.d),
+    ) {
     (Some(a), Some(b), Some(c), Some(d)) =>
       Some(a.is_zero() && b.is_zero() && c.is_zero() && d.is_zero())
     _ => None
@@ -459,7 +475,9 @@ pub fn Quaternion::normalize(self : Quaternion) -> Quaternion {
 }
 
 ///|
-pub fn Quaternion::inverse(self : Quaternion) -> Quaternion raise QuaternionError {
+pub fn Quaternion::inverse(
+  self : Quaternion,
+) -> Quaternion raise QuaternionError {
   match quat_is_zero_numeric(self) {
     Some(true) => raise QuaternionError::ZeroNorm
     _ => ()
@@ -468,7 +486,10 @@ pub fn Quaternion::inverse(self : Quaternion) -> Quaternion raise QuaternionErro
 }
 
 ///|
-pub fn Quaternion::pow(self : Quaternion, p : Int) -> Quaternion raise QuaternionError {
+pub fn Quaternion::pow(
+  self : Quaternion,
+  p : Int,
+) -> Quaternion raise QuaternionError {
   let mut q = self
   let mut pow = p
   if pow < 0 {
@@ -478,7 +499,14 @@ pub fn Quaternion::pow(self : Quaternion, p : Int) -> Quaternion raise Quaternio
   if pow == 1 {
     return q
   }
-  let mut res = quat_unchecked(expr_one(), expr_zero(), expr_zero(), expr_zero(), true, None)
+  let mut res = quat_unchecked(
+    expr_one(),
+    expr_zero(),
+    expr_zero(),
+    expr_zero(),
+    true,
+    None,
+  )
   let mut n = pow
   while n > 0 {
     if (n & 1) == 1 {
@@ -497,15 +525,24 @@ pub fn Quaternion::exp(self : Quaternion) -> Quaternion {
   )
   let ev = expr_exp(self.a)
   match vector_is_zero_numeric(self.b, self.c, self.d) {
-    Some(true) => quat_unchecked(ev, expr_zero(), expr_zero(), expr_zero(), self.real_field, None)
-    _ => quat_unchecked(
-      ev * expr_cos(vnorm),
-      expr_div(ev * expr_sin(vnorm) * self.b, vnorm),
-      expr_div(ev * expr_sin(vnorm) * self.c, vnorm),
-      expr_div(ev * expr_sin(vnorm) * self.d, vnorm),
-      self.real_field,
-      None,
-    )
+    Some(true) =>
+      quat_unchecked(
+        ev,
+        expr_zero(),
+        expr_zero(),
+        expr_zero(),
+        self.real_field,
+        None,
+      )
+    _ =>
+      quat_unchecked(
+        ev * expr_cos(vnorm),
+        expr_div(ev * expr_sin(vnorm) * self.b, vnorm),
+        expr_div(ev * expr_sin(vnorm) * self.c, vnorm),
+        expr_div(ev * expr_sin(vnorm) * self.d, vnorm),
+        self.real_field,
+        None,
+      )
   }
 }
 
@@ -521,16 +558,34 @@ pub fn Quaternion::log(self : Quaternion) -> Quaternion raise QuaternionError {
   }
   let a = expr_log(qnorm)
   match vector_is_zero_numeric(self.b, self.c, self.d) {
-    Some(true) => quat_unchecked(a, expr_zero(), expr_zero(), expr_zero(), self.real_field, None)
+    Some(true) =>
+      quat_unchecked(
+        a,
+        expr_zero(),
+        expr_zero(),
+        expr_zero(),
+        self.real_field,
+        None,
+      )
     _ => {
       let angle = expr_div(expr_acos(expr_div(self.a, qnorm)), vnorm)
-      quat_unchecked(a, self.b * angle, self.c * angle, self.d * angle, self.real_field, None)
+      quat_unchecked(
+        a,
+        self.b * angle,
+        self.c * angle,
+        self.d * angle,
+        self.real_field,
+        None,
+      )
     }
   }
 }
 
 ///|
-pub fn Quaternion::pow_cos_sin(self : Quaternion, p : Int) -> Quaternion raise QuaternionError {
+pub fn Quaternion::pow_cos_sin(
+  self : Quaternion,
+  p : Int,
+) -> Quaternion raise QuaternionError {
   let (axis, angle) = self.to_axis_angle()
   let q2 = Quaternion::from_axis_angle(axis, expr_int(p) * angle)
   q2.mul_scalar(self.norm() ^ expr_int(p))
@@ -557,7 +612,10 @@ pub fn Quaternion::product_matrix_right(self : Quaternion) -> Matrix {
 }
 
 ///|
-pub fn Quaternion::to_matrix(self : Quaternion, vector_only? : Bool = false) -> Matrix {
+pub fn Quaternion::to_matrix(
+  self : Quaternion,
+  vector_only? : Bool = false,
+) -> Matrix {
   if vector_only {
     [[self.b], [self.c], [self.d]]
   } else {
@@ -566,7 +624,9 @@ pub fn Quaternion::to_matrix(self : Quaternion, vector_only? : Bool = false) -> 
 }
 
 ///|
-pub fn Quaternion::from_elements(elements : Array[Expr]) -> Quaternion raise QuaternionError {
+pub fn Quaternion::from_elements(
+  elements : Array[Expr],
+) -> Quaternion raise QuaternionError {
   let n = elements.length()
   if n == 3 {
     Quaternion::new(expr_zero(), elements[0], elements[1], elements[2])
@@ -578,7 +638,9 @@ pub fn Quaternion::from_elements(elements : Array[Expr]) -> Quaternion raise Qua
 }
 
 ///|
-pub fn Quaternion::from_matrix(elements : Matrix) -> Quaternion raise QuaternionError {
+pub fn Quaternion::from_matrix(
+  elements : Matrix,
+) -> Quaternion raise QuaternionError {
   let rows = elements.length()
   if rows == 3 || rows == 4 {
     if elements[0].length() == 1 {
@@ -627,7 +689,12 @@ fn is_extrinsic(seq : String) -> Bool raise QuaternionError {
     raise QuaternionError::InvalidSeq("consecutive axes must be different")
   }
   for ch in chars {
-    if ch != 'x' && ch != 'y' && ch != 'z' && ch != 'X' && ch != 'Y' && ch != 'Z' {
+    if ch != 'x' &&
+      ch != 'y' &&
+      ch != 'z' &&
+      ch != 'X' &&
+      ch != 'Y' &&
+      ch != 'Z' {
       raise QuaternionError::InvalidSeq("axes must be x,y,z")
     }
   }
@@ -651,7 +718,10 @@ pub fn Quaternion::from_axis_angle(
 }
 
 ///|
-pub fn Quaternion::from_euler(angles : Array[Expr], seq : String) -> Quaternion raise QuaternionError {
+pub fn Quaternion::from_euler(
+  angles : Array[Expr],
+  seq : String,
+) -> Quaternion raise QuaternionError {
   if angles.length() != 3 {
     raise QuaternionError::InvalidSeq("expected 3 angles")
   }
@@ -736,19 +806,26 @@ pub fn Quaternion::to_euler(
     if symmetric {
       let n2 = expr_pow(self.norm(), 2)
       angles1 = expr_acos(
-        expr_div(expr_pow(a, 2) + expr_pow(b, 2) - expr_pow(c, 2) - expr_pow(d, 2), n2),
+        expr_div(
+          expr_pow(a, 2) + expr_pow(b, 2) - expr_pow(c, 2) - expr_pow(d, 2),
+          n2,
+        ),
       )
     } else {
       let n2 = expr_int(2) * expr_pow(self.norm(), 2)
       angles1 = expr_asin(
-        expr_div(expr_pow(c, 2) + expr_pow(d, 2) - expr_pow(a, 2) - expr_pow(b, 2), n2),
+        expr_div(
+          expr_pow(c, 2) + expr_pow(d, 2) - expr_pow(a, 2) - expr_pow(b, 2),
+          n2,
+        ),
       )
     }
   } else {
-    angles1 = expr_int(2) * expr_atan2(
-      expr_sqrt(expr_pow(c, 2) + expr_pow(d, 2)),
-      expr_sqrt(expr_pow(a, 2) + expr_pow(b, 2)),
-    )
+    angles1 = expr_int(2) *
+      expr_atan2(
+        expr_sqrt(expr_pow(c, 2) + expr_pow(d, 2)),
+        expr_sqrt(expr_pow(a, 2) + expr_pow(b, 2)),
+      )
     if !symmetric {
       angles1 = angles1 - expr_pi() * expr_rational(1, 2)
     }
@@ -778,14 +855,12 @@ pub fn Quaternion::to_euler(
       angles0 = expr_int(2) * expr_atan2(b, a)
       angles2 = expr_zero()
     }
+  } else if extrinsic {
+    angles0 = expr_zero()
+    angles2 = expr_int(-2) * expr_atan2(d, c)
   } else {
-    if extrinsic {
-      angles0 = expr_zero()
-      angles2 = expr_int(-2) * expr_atan2(d, c)
-    } else {
-      angles0 = expr_int(2) * expr_atan2(d, c)
-      angles2 = expr_zero()
-    }
+    angles0 = expr_int(2) * expr_atan2(d, c)
+    angles2 = expr_zero()
   }
   if !symmetric {
     angles0 = angles0 * expr_int(sign)
@@ -798,7 +873,9 @@ pub fn Quaternion::to_euler(
 }
 
 ///|
-pub fn Quaternion::to_axis_angle(self : Quaternion) -> ((Expr, Expr, Expr), Expr) raise QuaternionError {
+pub fn Quaternion::to_axis_angle(
+  self : Quaternion,
+) -> ((Expr, Expr, Expr), Expr) raise QuaternionError {
   let mut q = self
   match expr_is_negative(q.a) {
     Some(true) => q = q.neg()
@@ -823,7 +900,8 @@ pub fn Quaternion::rotate_point(
   r : RotationArg,
 ) -> (Expr, Expr, Expr) {
   let q = match r {
-    RotationArg::AxisAngle(axis, angle) => Quaternion::from_axis_angle(axis, angle)
+    RotationArg::AxisAngle(axis, angle) =>
+      Quaternion::from_axis_angle(axis, angle)
     RotationArg::Quat(q) => q.normalize()
   }
   let p = quat_unchecked(expr_zero(), pin.0, pin.1, pin.2, true, None)
@@ -840,9 +918,12 @@ pub fn Quaternion::to_rotation_matrix(
   let s = self.norm() ^ expr_int(-2)
   let (m00, m11, m22) = if homogeneous {
     (
-      s * (self.a * self.a + self.b * self.b - self.c * self.c - self.d * self.d),
-      s * (self.a * self.a - self.b * self.b + self.c * self.c - self.d * self.d),
-      s * (self.a * self.a - self.b * self.b - self.c * self.c + self.d * self.d),
+      s *
+      (self.a * self.a + self.b * self.b - self.c * self.c - self.d * self.d),
+      s *
+      (self.a * self.a - self.b * self.b + self.c * self.c - self.d * self.d),
+      s *
+      (self.a * self.a - self.b * self.b - self.c * self.c + self.d * self.d),
     )
   } else {
     (
@@ -858,11 +939,7 @@ pub fn Quaternion::to_rotation_matrix(
   let m20 = expr_int(2) * s * (self.b * self.d - self.c * self.a)
   let m21 = expr_int(2) * s * (self.c * self.d + self.b * self.a)
   match v {
-    None => [
-      [m00, m01, m02],
-      [m10, m11, m12],
-      [m20, m21, m22],
-    ]
+    None => [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]]
     Some((x, y, z)) => {
       let m03 = x - x * m00 - y * m01 - z * m02
       let m13 = y - x * m10 - y * m11 - z * m12
@@ -882,7 +959,9 @@ pub fn Quaternion::to_rotation_matrix(
 }
 
 ///|
-pub fn Quaternion::from_rotation_matrix(m : Matrix) -> Quaternion raise QuaternionError {
+pub fn Quaternion::from_rotation_matrix(
+  m : Matrix,
+) -> Quaternion raise QuaternionError {
   if m.length() != 3 {
     raise QuaternionError::InvalidMatrix("expected 3x3")
   }
@@ -933,8 +1012,12 @@ pub fn Quaternion::angle(self : Quaternion) -> Expr {
 }
 
 ///|
-pub fn Quaternion::arc_coplanar(self : Quaternion, other : Quaternion) -> Bool? raise QuaternionError {
-  if self.is_zero_quaternion() == Some(true) || other.is_zero_quaternion() == Some(true) {
+pub fn Quaternion::arc_coplanar(
+  self : Quaternion,
+  other : Quaternion,
+) -> Bool? raise QuaternionError {
+  if self.is_zero_quaternion() == Some(true) ||
+    other.is_zero_quaternion() == Some(true) {
     raise QuaternionError::ZeroNorm
   }
   let axis1 = self.axis()
@@ -952,8 +1035,8 @@ pub fn Quaternion::vector_coplanar(
   q3 : Quaternion,
 ) -> Bool? raise QuaternionError {
   if fuzzy_not(q1.is_pure()) == Some(true) ||
-     fuzzy_not(q2.is_pure()) == Some(true) ||
-     fuzzy_not(q3.is_pure()) == Some(true) {
+    fuzzy_not(q2.is_pure()) == Some(true) ||
+    fuzzy_not(q3.is_pure()) == Some(true) {
     raise QuaternionError::NotPure
   }
   let det = matrix_det3([
@@ -965,21 +1048,27 @@ pub fn Quaternion::vector_coplanar(
 }
 
 ///|
-pub fn Quaternion::parallel(self : Quaternion, other : Quaternion) -> Bool? raise QuaternionError {
+pub fn Quaternion::parallel(
+  self : Quaternion,
+  other : Quaternion,
+) -> Bool? raise QuaternionError {
   if fuzzy_not(self.is_pure()) == Some(true) ||
-     fuzzy_not(other.is_pure()) == Some(true) {
+    fuzzy_not(other.is_pure()) == Some(true) {
     raise QuaternionError::NotPure
   }
-  (self.mul(other).sub(other.mul(self))).is_zero_quaternion()
+  self.mul(other).sub(other.mul(self)).is_zero_quaternion()
 }
 
 ///|
-pub fn Quaternion::orthogonal(self : Quaternion, other : Quaternion) -> Bool? raise QuaternionError {
+pub fn Quaternion::orthogonal(
+  self : Quaternion,
+  other : Quaternion,
+) -> Bool? raise QuaternionError {
   if fuzzy_not(self.is_pure()) == Some(true) ||
-     fuzzy_not(other.is_pure()) == Some(true) {
+    fuzzy_not(other.is_pure()) == Some(true) {
     raise QuaternionError::NotPure
   }
-  (self.mul(other).add(other.mul(self))).is_zero_quaternion()
+  self.mul(other).add(other.mul(self)).is_zero_quaternion()
 }
 
 ///|

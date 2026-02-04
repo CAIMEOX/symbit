@@ -561,9 +561,7 @@ pub fn dmp_copy(f : DensePoly, u : Int) -> DensePoly {
 
 ///|
 /// Convert univariate coefficients to a tuple-like immutable copy.
-pub fn dup_to_tuple(
-  f : Array[FieldElem],
-) -> Array[FieldElem] raise PolyError {
+pub fn dup_to_tuple(f : Array[FieldElem]) -> Array[FieldElem] raise PolyError {
   dup_copy(f)
 }
 
@@ -1883,6 +1881,7 @@ pub fn dmp_exclude(
       idx = idx - 1
       let j = jlist[idx]
       let _ = exps.remove(j)
+
     }
     out.set(Monomial::{ exps, }, coeff)
   }
@@ -2279,7 +2278,7 @@ pub fn dmp_slice_in(
     if k < m || k >= n {
       exps.set(j, 0)
     }
-    add_term(out, Monomial::{ exps }, coeff, domain)
+    add_term(out, Monomial::{ exps, }, coeff, domain)
   }
   dmp_from_dict(out, u, domain)
 }
@@ -2296,7 +2295,7 @@ pub fn dup_random(
   let coeffs : Array[FieldElem] = Array::make(n + 1, fe_from_int(0, domain))
   for i in 0..<=n {
     seed = lcg_next(seed, 2147483647)
-    let mut val = a + (seed % span)
+    let mut val = a + seed % span
     if i == 0 && val == 0 {
       val = if a != 0 { a } else if b != 0 { b } else { 1 }
     }

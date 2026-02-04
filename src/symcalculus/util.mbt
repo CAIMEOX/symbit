@@ -15,7 +15,11 @@ fn util_rat_add(a : BigRational, b : BigRational) -> BigRational {
 
 ///|
 fn util_rat_abs(a : BigRational) -> BigRational {
-  if a.compare(util_rat_zero()) < 0 { a.neg_r() } else { a }
+  if a.compare(util_rat_zero()) < 0 {
+    a.neg_r()
+  } else {
+    a
+  }
 }
 
 ///|
@@ -38,8 +42,10 @@ fn util_depends_on(expr : Expr, sym : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) => args.any(arg => util_depends_on(arg, sym))
-    Expr::Pow(base, exp) => util_depends_on(base, sym) || util_depends_on(exp, sym)
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.any(arg => util_depends_on(arg, sym))
+    Expr::Pow(base, exp) =>
+      util_depends_on(base, sym) || util_depends_on(exp, sym)
     Expr::Function(_, args) => args.any(arg => util_depends_on(arg, sym))
     _ => false
   }
@@ -51,7 +57,8 @@ fn util_extract_linear_coeff(expr : Expr, sym : Expr) -> BigRational? {
     Expr::Symbol(_) if util_expr_is_symbol(expr, sym) => Some(util_rat_one())
     Expr::Mul(args) if args.length() == 2 =>
       match (args[0], args[1]) {
-        (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(args[1], sym) => Some(c)
+        (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(args[1], sym) =>
+          Some(c)
         _ => None
       }
     Expr::Add(args) => {
@@ -63,8 +70,10 @@ fn util_extract_linear_coeff(expr : Expr, sym : Expr) -> BigRational? {
             coeff = util_rat_add(coeff, util_rat_one())
           Expr::Mul(margs) if margs.length() == 2 =>
             match (margs[0], margs[1]) {
-              (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(margs[1], sym) =>
-                coeff = util_rat_add(coeff, c)
+              (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(
+                  margs[1],
+                  sym,
+                ) => coeff = util_rat_add(coeff, c)
               _ => return None
             }
           _ => return None

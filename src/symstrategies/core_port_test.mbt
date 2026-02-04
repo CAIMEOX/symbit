@@ -1,13 +1,22 @@
-///|\
+///|
+///\
 fn posdec(x : Int) -> Int {
-  if x > 0 { x - 1 } else { x }
+  if x > 0 {
+    x - 1
+  } else {
+    x
+  }
 }
 
 ///|
-fn inc(x : Int) -> Int { x + 1 }
+fn inc(x : Int) -> Int {
+  x + 1
+}
 
 ///|
-fn dec(x : Int) -> Int { x - 1 }
+fn dec(x : Int) -> Int {
+  x - 1
+}
 
 ///|
 test "core null_safe" {
@@ -60,7 +69,6 @@ test "core tryit" {
 test "core do_one" {
   let rl = @strategies_core.do_one([posdec, posdec])
   assert_eq(rl(5), try! @sympy_strategies.core_do_one_posdec(5))
-
   let rl1 = (x : Int) => if x == 1 { 2 } else { x }
   let rl2 = (x : Int) => if x == 2 { 3 } else { x }
   let rule = @strategies_core.do_one([rl1, rl2])
@@ -72,7 +80,7 @@ test "core do_one" {
 test "core debug" {
   let sb = StringBuilder::new()
   let write = (s : String) => sb.write_string(s)
-  let rl = @strategies_core.debug(posdec, name="posdec", write=write)
+  let rl = @strategies_core.debug(posdec, name="posdec", write~)
   ignore(rl(5))
   let log = sb.to_string()
   let oracle = try! @sympy_strategies.core_debug_log_posdec(5)
@@ -95,6 +103,6 @@ test "core switch" {
 test "core minimize" {
   let rl = @strategies_core.minimize([inc, dec])
   assert_eq(rl(4), try! @sympy_strategies.core_minimize(4))
-  let rl_max = @strategies_core.minimize([inc, dec], objective=(x => -x))
+  let rl_max = @strategies_core.minimize([inc, dec], objective=x => -x)
   assert_eq(rl_max(4), try! @sympy_strategies.core_minimize(4, maximize=true))
 }

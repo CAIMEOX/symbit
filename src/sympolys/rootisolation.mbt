@@ -9,10 +9,7 @@ fn abs_rational(r : @symnum.BigRational) -> @symnum.BigRational {
 }
 
 ///|
-fn pow_rational(
-  base : @symnum.BigRational,
-  exp : Int,
-) -> @symnum.BigRational {
+fn pow_rational(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
   let mut result = @symnum.BigRational::one()
   let mut b = base
   let mut e = exp
@@ -40,7 +37,10 @@ fn reverse_coeffs(coeffs : Array[FieldElem]) -> Array[FieldElem] {
 }
 
 ///|
-fn dup_to_poly(coeffs : Array[FieldElem], domain : Domain) -> Poly raise PolyError {
+fn dup_to_poly(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Poly raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
     raise PolyError::NotImplemented("dup_to_poly empty")
@@ -72,7 +72,7 @@ pub fn dup_cauchy_upper_bound(
   let mut max_ratio = @symnum.BigRational::zero()
   for i in 1..<f.length() {
     let ai = abs_rational(fe_expect_rational(f[i]))
-    let ratio = try ai.div_r(abs_rational(lc)) catch {
+    let ratio = ai.div_r(abs_rational(lc)) catch {
       _ => raise PolyError::NotImplemented("cauchy-upper-div")
     }
     if ratio.compare(max_ratio) > 0 {
@@ -94,7 +94,7 @@ pub fn dup_cauchy_lower_bound(
   }
   let upper = dup_cauchy_upper_bound(g, domain)
   let upper_rat = fe_expect_rational(upper)
-  let inv = try upper_rat.reciprocal() catch {
+  let inv = upper_rat.reciprocal() catch {
     _ => raise PolyError::NotImplemented("cauchy-lower-div")
   }
   fe_from_rational(inv, Domain::QQ)
@@ -123,10 +123,8 @@ pub fn dup_mignotte_sep_bound_squared(
   let l2sq = fe_expect_rational(l2sq_fe)
   let n_rat = @symnum.BigRational::from_int(n)
   let num = @symnum.BigRational::from_int(3).mul(disc_rat)
-  let denom = pow_rational(n_rat, n + 1).mul(
-    pow_rational(l2sq, n - 1),
-  )
-  let bound = try num.div_r(denom) catch {
+  let denom = pow_rational(n_rat, n + 1).mul(pow_rational(l2sq, n - 1))
+  let bound = num.div_r(denom) catch {
     _ => raise PolyError::NotImplemented("mignotte-div")
   }
   fe_from_rational(bound, Domain::QQ)
@@ -173,7 +171,7 @@ fn rat_mediant(
 ) -> @symnum.BigRational raise PolyError {
   let num = a.numerator().add(b.numerator())
   let den = a.denominator().add(b.denominator())
-  try @symnum.BigRational::new(num, den) catch {
+  @symnum.BigRational::new(num, den) catch {
     _ => raise PolyError::NotImplemented("mediant")
   }
 }
@@ -193,20 +191,17 @@ fn rat_mid(
   }
   let two = @symnum.BigRational::from_int(2)
   let sum = a.add_r(b)
-  try sum.div_r(two) catch {
+  sum.div_r(two) catch {
     _ => raise PolyError::NotImplemented("midpoint")
   }
 }
 
 ///|
-fn interval_small(
-  a : @symnum.BigRational,
-  b : @symnum.BigRational,
-) -> Bool {
+fn interval_small(a : @symnum.BigRational, b : @symnum.BigRational) -> Bool {
   if a.is_integral() && b.is_integral() {
     let ai = a.numerator().to_int()
     let bi = b.numerator().to_int()
-    (bi - ai) <= 1
+    bi - ai <= 1
   } else {
     let width = rat_sub(b, a)
     width.compare(@symnum.BigRational::from_int(1)) <= 0
@@ -344,10 +339,7 @@ pub fn dup_refine_real_root(
     return (a, b)
   }
   match disjoint {
-    Some(d) =>
-      if d.compare(a) <= 0 || d.compare(b) >= 0 {
-        return (a, b)
-      }
+    Some(d) => if d.compare(a) <= 0 || d.compare(b) >= 0 { return (a, b) }
     None => ()
   }
   let mut iter = 0
@@ -406,10 +398,7 @@ pub fn dup_refine_real_root(
       }
     }
     match disjoint {
-      Some(d) =>
-        if d.compare(a) <= 0 || d.compare(b) >= 0 {
-          break
-        }
+      Some(d) => if d.compare(a) <= 0 || d.compare(b) >= 0 { break }
       None => ()
     }
     iter = iter + 1

@@ -57,12 +57,12 @@ pub fn[T : Eq] onaction(
 pub fn[T : Eq + Show] debug(
   brule : BRule[T],
   name? : String = "rule",
-  write? : (String) -> Unit = (s) => println(s),
+  write? : (String) -> Unit = s => println(s),
 ) -> BRule[T] {
   let logger = (rule : BRule[T], expr : T, result : T) => {
     ignore(rule)
-    write("Rule: "+name+"\n")
-    write("In: "+expr.to_string()+"\nOut: "+result.to_string()+"\n\n")
+    write("Rule: " + name + "\n")
+    write("In: " + expr.to_string() + "\nOut: " + result.to_string() + "\n\n")
   }
   onaction(brule, logger)
 }
@@ -110,7 +110,11 @@ pub fn[T] sfilter(pred : (T) -> Bool, brule : BRule[T]) -> BRule[T] {
 pub fn[T] notempty(brule : BRule[T]) -> BRule[T] {
   (expr : T) => {
     let res = brule(expr)
-    if res.is_empty() { [expr] } else { res }
+    if res.is_empty() {
+      [expr]
+    } else {
+      res
+    }
   }
 }
 

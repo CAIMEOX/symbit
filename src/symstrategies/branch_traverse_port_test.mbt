@@ -1,4 +1,5 @@
-///|\
+///|
+///\
 fn br_inc_if_int(expr : @symcore.Expr) -> Array[@symcore.Expr] {
   match expr {
     @symcore.Expr::Number(_) => [expr + @symcore.int(1)]
@@ -9,10 +10,8 @@ fn br_inc_if_int(expr : @symcore.Expr) -> Array[@symcore.Expr] {
 ///|
 fn br_split5(expr : @symcore.Expr) -> Array[@symcore.Expr] {
   match expr {
-    _ if expr == @symcore.int(5) => [
-      expr + @symcore.int(-1),
-      expr + @symcore.int(1),
-    ]
+    _ if expr == @symcore.int(5) =>
+      [expr + @symcore.int(-1), expr + @symcore.int(1)]
     _ => []
   }
 }
@@ -24,7 +23,6 @@ test "branch traverse top_down" {
   let ours = brl(expr).map(expr_str)
   let oracle = try! @sympy_strategies.branch_traverse_top_down_inc(expr)
   assert_set_str_eq(ours, oracle, "top_down easy")
-
   let expr2 = basic([
     @symcore.int(1),
     basic([@symcore.int(2)]),
@@ -51,8 +49,11 @@ test "branch traverse sall" {
   let ours = brl(expr).map(expr_str)
   let oracle = try! @sympy_strategies.branch_traverse_sall_inc(expr)
   assert_set_str_eq(ours, oracle, "sall inc")
-
-  let expr2 = basic([@symcore.int(1), @symcore.int(2), basic([@symcore.int(3), @symcore.int(4)])])
+  let expr2 = basic([
+    @symcore.int(1),
+    @symcore.int(2),
+    basic([@symcore.int(3), @symcore.int(4)]),
+  ])
   let brl2 = @strategies_branch.sall(
     @strategies_branch.do_one([br_inc_if_int, @strategies_branch.identity]),
   )

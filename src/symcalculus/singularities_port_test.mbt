@@ -13,7 +13,9 @@ fn sing_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(
     @symprint.to_string(ours),
   )
-  let oracle_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(oracle_str)
+  let oracle_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(
+    oracle_str,
+  )
   match (ours_norm, oracle_norm) {
     (Ok(a), Ok(b)) => {
       guard a == b else {
@@ -29,7 +31,10 @@ fn sing_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
 ///|
 test "singularities: simple pole" {
   let x = sing_expr_symbol("x")
-  let expr = @symcore.pow(@symcore.add([x, sing_expr_int(1)]), sing_expr_int(-1))
+  let expr = @symcore.pow(
+    @symcore.add([x, sing_expr_int(1)]),
+    sing_expr_int(-1),
+  )
   let ours = singularities(expr, x)
   let oracle = try! @sympy_calculus.singularities_str(expr, x)
   try! sing_expr_equal(ours, oracle)
@@ -47,10 +52,7 @@ test "singularities: log" {
 ///|
 test "singularities: none" {
   let x = sing_expr_symbol("x")
-  let expr = @symcore.add([
-    @symcore.pow(x, sing_expr_int(2)),
-    sing_expr_int(1),
-  ])
+  let expr = @symcore.add([@symcore.pow(x, sing_expr_int(2)), sing_expr_int(1)])
   let ours = singularities(expr, x)
   let oracle = try! @sympy_calculus.singularities_str(expr, x)
   try! sing_expr_equal(ours, oracle)

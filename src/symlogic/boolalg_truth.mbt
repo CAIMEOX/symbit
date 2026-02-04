@@ -8,10 +8,7 @@ pub(all) enum TruthTableRow {
 } derive(Show, Eq)
 
 ///|
-fn env_from_bits(
-  names : Array[String],
-  bits : Array[Int],
-) -> Map[String, Bool] {
+fn env_from_bits(names : Array[String], bits : Array[Int]) -> Map[String, Bool] {
   let env : Map[String, Bool] = Map::new()
   for i in 0..<names.length() {
     env[names[i]] = bits[i] == 1
@@ -41,7 +38,10 @@ pub fn truth_table(
 }
 
 ///|
-fn true_terms(expr : BoolExpr, variables : Array[BoolExpr]) -> Array[Array[Int]] {
+fn true_terms(
+  expr : BoolExpr,
+  variables : Array[BoolExpr],
+) -> Array[Array[Int]] {
   let names = symbol_names_from_exprs(variables)
   let bits_list = all_bit_vectors(names.length())
   let out : Array[Array[Int]] = Array::new()
@@ -142,31 +142,37 @@ pub(all) enum BitPattern {
 }
 
 ///|
-pub fn bool_minterm(pattern : BitPattern, variables : Array[BoolExpr]) -> BoolExpr {
-  let bits =
-    match pattern {
-      BitPattern::Index(k) => ibin(k, variables.length())
-      BitPattern::Bits(b) => b
-    }
+pub fn bool_minterm(
+  pattern : BitPattern,
+  variables : Array[BoolExpr],
+) -> BoolExpr {
+  let bits = match pattern {
+    BitPattern::Index(k) => ibin(k, variables.length())
+    BitPattern::Bits(b) => b
+  }
   _convert_to_varsSOP(bits, variables)
 }
 
 ///|
-pub fn bool_maxterm(pattern : BitPattern, variables : Array[BoolExpr]) -> BoolExpr {
-  let bits =
-    match pattern {
-      BitPattern::Index(k) => ibin(k, variables.length())
-      BitPattern::Bits(b) => b
-    }
+pub fn bool_maxterm(
+  pattern : BitPattern,
+  variables : Array[BoolExpr],
+) -> BoolExpr {
+  let bits = match pattern {
+    BitPattern::Index(k) => ibin(k, variables.length())
+    BitPattern::Bits(b) => b
+  }
   _convert_to_varsPOS(bits, variables)
 }
 
 ///|
-pub fn bool_monomial(pattern : BitPattern, variables : Array[BoolExpr]) -> BoolExpr {
-  let bits =
-    match pattern {
-      BitPattern::Index(k) => ibin(k, variables.length())
-      BitPattern::Bits(b) => b
-    }
+pub fn bool_monomial(
+  pattern : BitPattern,
+  variables : Array[BoolExpr],
+) -> BoolExpr {
+  let bits = match pattern {
+    BitPattern::Index(k) => ibin(k, variables.length())
+    BitPattern::Bits(b) => b
+  }
   _convert_to_varsANF(bits, variables)
 }

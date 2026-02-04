@@ -56,7 +56,11 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
           None => has_unknown = true
         }
       }
-      if has_unknown { None } else { Some(true) }
+      if has_unknown {
+        None
+      } else {
+        Some(true)
+      }
     }
     BoolExpr::Or(args) => {
       let mut has_unknown = false
@@ -67,7 +71,11 @@ fn pl_true_eval(expr : BoolExpr, model : Map[String, Bool?]) -> Bool? {
           None => has_unknown = true
         }
       }
-      if has_unknown { None } else { Some(false) }
+      if has_unknown {
+        None
+      } else {
+        Some(false)
+      }
     }
     BoolExpr::Xor(args) => {
       let mut count = 0
@@ -166,15 +174,14 @@ pub fn satisfiable(
     algo = "dpll2"
   }
   if all_models {
-    let models = dpll2_all_models(expr, use_lra_theory=use_lra_theory)
+    let models = dpll2_all_models(expr, use_lra_theory~)
     return SatResult::All(models)
   }
-  let model =
-    if algo == "dpll" {
-      dpll_satisfiable(expr)
-    } else {
-      dpll2_satisfiable(expr, use_lra_theory=use_lra_theory)
-    }
+  let model = if algo == "dpll" {
+    dpll_satisfiable(expr)
+  } else {
+    dpll2_satisfiable(expr, use_lra_theory~)
+  }
   SatResult::Single(model)
 }
 

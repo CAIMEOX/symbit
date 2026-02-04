@@ -48,7 +48,7 @@ pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
   if poly.is_zero() {
     return poly
   }
-  let mut min_exps : Option[Array[Int]] = None
+  let mut min_exps : Array[Int]? = None
   for m, _ in poly.coeffs {
     let exps = m.exps
     min_exps = match min_exps {
@@ -81,10 +81,7 @@ pub fn terms_gcd(poly : Poly) -> Poly raise PolyError {
 
 ///|
 /// Cancel common univariate factors between numerator and denominator.
-pub fn cancel(
-  num : Poly,
-  den : Poly,
-) -> (Poly, Poly) raise PolyError {
+pub fn cancel(num : Poly, den : Poly) -> (Poly, Poly) raise PolyError {
   if num.gens.length() != 1 || den.gens.length() != 1 {
     let g = gcd_multivar_simple(num, den)
     if g.is_zero() {
@@ -152,7 +149,7 @@ pub fn compose(f : Poly, g : Poly) -> Poly raise PolyError {
   let deg_f = f.degree(0)
   let pow_cache : Array[Poly] = Array::new()
   pow_cache.push(Poly::one(g.gens, g.domain))
-  for k in 1..=deg_f {
+  for k in 1..<=deg_f {
     let next = pow_cache[k - 1].mul(g)
     pow_cache.push(next)
   }
@@ -197,7 +194,12 @@ pub fn decompose(f : Poly) -> Array[Poly] raise PolyError {
     mono_h.exps.set(0, e)
     add_term(coeffs_h, mono_h, c, f.domain)
   }
-  let h = Poly::{ coeffs: coeffs_h, gens: f.gens, domain: f.domain, order: f.order }
+  let h = Poly::{
+    coeffs: coeffs_h,
+    gens: f.gens,
+    domain: f.domain,
+    order: f.order,
+  }
   let parts = decompose(h)
   parts.push(g)
   parts
@@ -297,7 +299,7 @@ pub fn discriminant(poly : Poly) -> FieldElem raise PolyError {
     None => fe_from_int(0, poly.domain)
     Some((_, c)) => c
   }
-  let sign = if (n * (n - 1) / 2) % 2 == 0 { 1 } else { -1 }
+  let sign = if n * (n - 1) / 2 % 2 == 0 { 1 } else { -1 }
   let res_fe = ensure_coeff_domain(res, poly.domain)
   let inv_lc = fe_inv(lc)
   fe_mul(fe_from_int(sign, poly.domain), fe_mul(res_fe, inv_lc))

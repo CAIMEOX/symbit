@@ -23,7 +23,6 @@ pub fn sall(
   let new = fns.new
   let children = fns.children
   let leaf = fns.leaf
-
   (expr : @symcore.Expr) => {
     if leaf(expr) {
       return [expr]
@@ -53,7 +52,9 @@ fn[T] product(lists : Array[Array[T]]) -> Array[Array[T]] {
     for prefix in res {
       for item in items {
         let merged : Array[T] = Array::new()
-        for v in prefix { merged.push(v) }
+        for v in prefix {
+          merged.push(v)
+        }
         merged.push(item)
         next.push(merged)
       }

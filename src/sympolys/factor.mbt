@@ -316,30 +316,29 @@ fn normalize_factor_for_list(
 ) -> (Poly, @symnum.BigRational) raise PolyError {
   match poly.leading_term() {
     None => (poly, @symnum.BigRational::one())
-    Some((_, lc_fe)) => {
+    Some((_, lc_fe)) =>
       match poly.domain {
         Domain::GFExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
-        Domain::AlgExt(_, _, _) => (make_monic(poly), @symnum.BigRational::one())
-        Domain::ZZ =>
-          {
-            let lc = fe_expect_rational(lc_fe)
-            if lc.is_one() {
-              (poly, lc)
-            } else if lc.neg_r().is_one() {
-              (
-                poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
-                lc,
-              )
-            } else {
-              (poly, lc)
-            }
+        Domain::AlgExt(_, _, _) =>
+          (make_monic(poly), @symnum.BigRational::one())
+        Domain::ZZ => {
+          let lc = fe_expect_rational(lc_fe)
+          if lc.is_one() {
+            (poly, lc)
+          } else if lc.neg_r().is_one() {
+            (
+              poly.scale_coeff(FieldElem::QQ(@symnum.BigRational::from_int(-1))),
+              lc,
+            )
+          } else {
+            (poly, lc)
           }
+        }
         _ => {
           let lc = fe_expect_rational(lc_fe)
           (make_monic(poly), lc)
         }
       }
-    }
   }
 }
 
@@ -694,8 +693,13 @@ fn equal_degree_factor(
         while trials < 32 {
           trials = trials + 1
           rng = lcg_next(rng, field_size)
-          let const_elem =
-            field_elem_from_seed(rng, p, k, mod_poly, poly.domain)
+          let const_elem = field_elem_from_seed(
+            rng,
+            p,
+            k,
+            mod_poly,
+            poly.domain,
+          )
           let g = x_poly.add(
             poly_const_from_fe(const_elem, poly.gens, poly.domain),
           )
@@ -832,7 +836,8 @@ fn factor_algext_squarefree(
   }
 }
 
-///| resultants-based norm for K[x] where K=base(α) with minpoly(α)=0
+///|
+/// resultants-based norm for K[x] where K=base(α) with minpoly(α)=0
 fn algext_norm(
   poly : Poly,
   base : Domain,
@@ -861,7 +866,7 @@ fn algext_poly_to_t_coeffs(
     }
   }
   let buckets : Array[Map[Monomial, FieldElem]] = Array::new()
-  for _ in 0..=max_j {
+  for _ in 0..<=max_j {
     buckets.push(Map::new())
   }
   for m, c in poly.coeffs {
@@ -878,7 +883,12 @@ fn algext_poly_to_t_coeffs(
   }
   let out : Array[Poly] = Array::new()
   for bucket in buckets {
-    out.push(Poly::{ coeffs: bucket, gens: [x_gen], domain: base, order: TermOrder::Lex })
+    out.push(Poly::{
+      coeffs: bucket,
+      gens: [x_gen],
+      domain: base,
+      order: TermOrder::Lex,
+    })
   }
   out
 }
@@ -891,7 +901,7 @@ fn minpoly_to_t_coeffs(
 ) -> Array[Poly] raise PolyError {
   let deg = minpoly.degree(0)
   let coeffs : Array[Poly] = Array::new()
-  for _ in 0..=deg {
+  for _ in 0..<=deg {
     coeffs.push(Poly::zero([x_gen], base))
   }
   for m, c in minpoly.coeffs {
@@ -900,7 +910,12 @@ fn minpoly_to_t_coeffs(
     mono.exps.set(0, 0)
     let coeffs_map : Map[Monomial, FieldElem] = Map::new()
     add_term(coeffs_map, mono, c, base)
-    coeffs.set(exp_t, Poly::{ coeffs: coeffs_map, gens: [x_gen], domain: base, order: TermOrder::Lex })
+    coeffs.set(exp_t, Poly::{
+      coeffs: coeffs_map,
+      gens: [x_gen],
+      domain: base,
+      order: TermOrder::Lex,
+    })
   }
   coeffs
 }
@@ -925,12 +940,12 @@ fn resultant_poly_coeffs(
     mat.push(row)
   }
   for i in 0..<n {
-    for j in 0..=m {
+    for j in 0..<=m {
       mat[i].set(i + j, f[j])
     }
   }
   for i in 0..<m {
-    for j in 0..=n {
+    for j in 0..<=n {
       mat[n + i].set(i + j, g[j])
     }
   }

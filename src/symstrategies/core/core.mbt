@@ -24,15 +24,14 @@ pub fn[T : Eq] exhaust(rule : (T) -> T) -> (T) -> T {
 /// Memoized version of a rule.
 pub fn[T : Eq + Hash, U] memoize(rule : (T) -> U) -> (T) -> U {
   let cache : Map[T, U] = Map::new()
-  (expr : T) =>
-    match cache.get(expr) {
-      Some(v) => v
-      None => {
-        let res = rule(expr)
-        cache[expr] = res
-        res
-      }
+  (expr : T) => match cache.get(expr) {
+    Some(v) => v
+    None => {
+      let res = rule(expr)
+      cache[expr] = res
+      res
     }
+  }
 }
 
 ///|
@@ -60,14 +59,14 @@ pub fn[T] chain(rules : Array[(T) -> T]) -> (T) -> T {
 pub fn[T : Eq + Show] debug(
   rule : (T) -> T,
   name? : String = "rule",
-  write? : (String) -> Unit = (s) => println(s),
+  write? : (String) -> Unit = s => println(s),
 ) -> (T) -> T {
   (expr : T) => {
     let result = rule(expr)
     if result != expr {
-      write("Rule: "+name+"\n")
-      write("In:   "+expr.to_string()+"\n")
-      write("Out:  "+result.to_string()+"\n\n")
+      write("Rule: " + name + "\n")
+      write("In:   " + expr.to_string() + "\n")
+      write("Out:  " + result.to_string() + "\n\n")
     }
     result
   }
@@ -76,17 +75,16 @@ pub fn[T : Eq + Show] debug(
 ///|
 /// Return original expr if rule returns None.
 pub fn[T] null_safe(rule : (T) -> T?) -> (T) -> T {
-  (expr : T) =>
-    match rule(expr) {
-      Some(res) => res
-      None => expr
-    }
+  (expr : T) => match rule(expr) {
+    Some(res) => res
+    None => expr
+  }
 }
 
 ///|
 /// Return original expr if rule raises an error.
 pub fn[T] tryit(rule : (T) -> T raise, _exception? : String = "") -> (T) -> T {
-  (expr : T) => try rule(expr) catch { _ => expr }
+  (expr : T) => rule(expr) catch { _ => expr }
 }
 
 ///|
@@ -109,11 +107,10 @@ pub fn[T, K : Eq + Hash] switch(
   key : (T) -> K,
   ruledict : Map[K, (T) -> T],
 ) -> (T) -> T {
-  (expr : T) =>
-    match ruledict.get(key(expr)) {
-      Some(rule) => rule(expr)
-      None => identity(expr)
-    }
+  (expr : T) => match ruledict.get(key(expr)) {
+    Some(rule) => rule(expr)
+    None => identity(expr)
+  }
 }
 
 ///|

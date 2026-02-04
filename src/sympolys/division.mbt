@@ -203,9 +203,8 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut g_num = BigInt::from_int(0)
   let mut lcm_den = BigInt::from_int(1)
   match poly.domain {
-    Domain::AlgExt(_, _, _)
-    | Domain::CC
-    | Domain::GFExt(_, _, _) => return @symnum.BigRational::one()
+    Domain::AlgExt(_, _, _) | Domain::CC | Domain::GFExt(_, _, _) =>
+      return @symnum.BigRational::one()
     _ => ()
   }
   for _, c in poly.coeffs {
@@ -287,9 +286,10 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
       let gq = gcd_multivar_field(lift_to_qq(self), lift_to_qq(other))
       try_round_to_int(gq)
     }
-    Domain::QQ | Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::AlgExt(_, _, _) => {
-      gcd_multivar_field(self, other)
-    }
+    Domain::QQ
+    | Domain::GF(_)
+    | Domain::GFExt(_, _, _)
+    | Domain::AlgExt(_, _, _) => gcd_multivar_field(self, other)
     _ => raise PolyError::NotImplemented("gcd-multivar-domain")
   }
 }
@@ -389,13 +389,19 @@ fn poly_to_univar_coeffs(
     }
     let coeff_poly = match by_exp.get(exp) {
       Some(p) => p
-      None => Poly::{ coeffs: Map::new(), gens: rest_gens, domain: poly.domain, order: poly.order }
+      None =>
+        Poly::{
+          coeffs: Map::new(),
+          gens: rest_gens,
+          domain: poly.domain,
+          order: poly.order,
+        }
     }
     add_term(coeff_poly.coeffs, rest_m, c, poly.domain)
     by_exp.set(exp, coeff_poly)
   }
   let coeffs : Array[Poly] = Array::new()
-  for i in 0..=max_exp {
+  for i in 0..<=max_exp {
     match by_exp.get(i) {
       Some(p) => coeffs.push(p)
       None => coeffs.push(poly_zero(rest_gens, poly.domain))
@@ -506,7 +512,10 @@ fn coeffs_primitive_part(
 }
 
 ///|
-fn coeffs_mul_poly(coeffs : Array[Poly], k : Poly) -> Array[Poly] raise PolyError {
+fn coeffs_mul_poly(
+  coeffs : Array[Poly],
+  k : Poly,
+) -> Array[Poly] raise PolyError {
   let out : Array[Poly] = Array::new()
   for c in coeffs {
     out.push(c.mul(k))
@@ -545,10 +554,7 @@ fn coeffs_sub(a : Array[Poly], b : Array[Poly]) -> Array[Poly] raise PolyError {
 }
 
 ///|
-fn coeffs_prem(
-  f : Array[Poly],
-  g : Array[Poly],
-) -> Array[Poly] raise PolyError {
+fn coeffs_prem(f : Array[Poly], g : Array[Poly]) -> Array[Poly] raise PolyError {
   let mut r = trim_univar_coeffs(f)
   let g_trim = trim_univar_coeffs(g)
   if g_trim.is_empty() {
@@ -568,9 +574,7 @@ fn coeffs_prem(
 }
 
 ///|
-fn coeffs_make_monic(
-  coeffs : Array[Poly],
-) -> Array[Poly] raise PolyError {
+fn coeffs_make_monic(coeffs : Array[Poly]) -> Array[Poly] raise PolyError {
   let trimmed = trim_univar_coeffs(coeffs)
   if trimmed.is_empty() {
     return trimmed
@@ -641,7 +645,12 @@ fn gcd_multivar_field(a : Poly, b : Poly) -> Poly raise PolyError {
   if content_gcd.is_zero() {
     return gcd_prim
   }
-  let content_full = univar_coeffs_to_poly([content_gcd], var_index, a.gens, a.domain)
+  let content_full = univar_coeffs_to_poly(
+    [content_gcd],
+    var_index,
+    a.gens,
+    a.domain,
+  )
   gcd_prim.mul(content_full)
 }
 

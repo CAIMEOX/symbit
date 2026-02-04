@@ -26,7 +26,7 @@ pub fn[T : Eq] onaction(
 pub fn[T : Eq + Show] debug(
   brule : BRule[T],
   name? : String = "rule",
-  write? : (String) -> Unit = (s) => println(s),
+  write? : (String) -> Unit = s => println(s),
 ) -> BRule[T] {
   @branch_core.debug(brule, name~, write~)
 }
@@ -83,8 +83,6 @@ pub fn sall(
 }
 
 ///|
-pub fn canon(
-  rules : Array[BRule[@symcore.Expr]],
-) -> BRule[@symcore.Expr] {
+pub fn canon(rules : Array[BRule[@symcore.Expr]]) -> BRule[@symcore.Expr] {
   @branch_tools.canon(rules)
 }

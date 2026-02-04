@@ -1,0 +1,10 @@
+{
+  "import": [
+    "moonbitlang/core/bigint",
+    "moonbitlang/core/strconv",
+    "CAIMEOX/symbit/symnum"
+  ],
+  "test-import": [
+    { "path": "CAIMEOX/symbit/sympy/liealgebras", "alias": "sympy_lie" }
+  ]
+}

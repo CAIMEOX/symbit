@@ -14,7 +14,11 @@ fn remove_int_local(xs : Array[Int], value : Int) -> Array[Int] {
 
 ///|
 fn conflict_key(lit : LraConflictLit) -> String {
-  if lit.negated { "!\{lit.key}" } else { lit.key }
+  if lit.negated {
+    "!\{lit.key}"
+  } else {
+    lit.key
+  }
 }
 
 ///|
@@ -76,32 +80,29 @@ fn lra_model_conflict(
     }
     let name = symbol_names[idx]
     match lra_map.get(name) {
-      Some(constraint) => {
+      Some(constraint) =>
         if val {
-          base.push(
-            LraAssumption::{ constraint: constraint, key: name, negated: false },
-          )
+          base.push(LraAssumption::{ constraint, key: name, negated: false })
         } else {
           let negated = linear_constraint_negate(constraint)
           if negated.length() == 1 {
-            base.push(
-              LraAssumption::{
-                constraint: negated[0],
-                key: name,
-                negated: true,
-              },
-            )
+            base.push(LraAssumption::{
+              constraint: negated[0],
+              key: name,
+              negated: true,
+            })
           } else {
             let options : Array[LraAssumption] = Array::new()
             for neg in negated {
-              options.push(
-                LraAssumption::{ constraint: neg, key: name, negated: true },
-              )
+              options.push(LraAssumption::{
+                constraint: neg,
+                key: name,
+                negated: true,
+              })
             }
             branches.push(options)
           }
         }
-      }
       None => ()
     }
   }
@@ -268,6 +269,7 @@ pub fn dpll2_satisfiable(
     out.sort()
     out
   }
+
   while true {
     let model_opt = dpll_int_repr(clauses_int, indices, Map::new())
     match model_opt {

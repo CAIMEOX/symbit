@@ -39,12 +39,20 @@ pub fn gf_degree(f : Array[Int]) -> Int {
 
 ///|
 pub fn gf_LC(f : Array[Int]) -> Int {
-  if f.is_empty() { 0 } else { f[0] }
+  if f.is_empty() {
+    0
+  } else {
+    f[0]
+  }
 }
 
 ///|
 pub fn gf_TC(f : Array[Int]) -> Int {
-  if f.is_empty() { 0 } else { f[f.length() - 1] }
+  if f.is_empty() {
+    0
+  } else {
+    f[f.length() - 1]
+  }
 }
 
 ///|
@@ -80,8 +88,12 @@ pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
 
 ///|
 pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
-  if f.is_empty() { return gf_trunc(g, p) }
-  if g.is_empty() { return gf_trunc(f, p) }
+  if f.is_empty() {
+    return gf_trunc(g, p)
+  }
+  if g.is_empty() {
+    return gf_trunc(f, p)
+  }
   let len = if f.length() > g.length() { f.length() } else { g.length() }
   let out : Array[Int] = Array::make(len, 0)
   for i in 0..<len {
@@ -103,7 +115,9 @@ pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
     }
     return gf_strip(out)
   }
-  if g.is_empty() { return gf_trunc(f, p) }
+  if g.is_empty() {
+    return gf_trunc(f, p)
+  }
   let len = if f.length() > g.length() { f.length() } else { g.length() }
   let out : Array[Int] = Array::make(len, 0)
   for i in 0..<len {
@@ -190,13 +204,21 @@ pub fn gf_div(
 }
 
 ///|
-pub fn gf_quo(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] raise PolyError {
+pub fn gf_quo(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
   let (q, _) = gf_div(f, g, p)
   q
 }
 
 ///|
-pub fn gf_rem(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] raise PolyError {
+pub fn gf_rem(
+  f : Array[Int],
+  g : Array[Int],
+  p : Int,
+) -> Array[Int] raise PolyError {
   let (_, r) = gf_div(f, g, p)
   r
 }

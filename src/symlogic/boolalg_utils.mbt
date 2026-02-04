@@ -139,8 +139,7 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       }
       count % 2 == 1
     }
-    BoolExpr::Implies(a, b) =>
-      (!bool_eval(a, env)) || bool_eval(b, env)
+    BoolExpr::Implies(a, b) => !bool_eval(a, env) || bool_eval(b, env)
     BoolExpr::Equivalent(args) => {
       if args.is_empty() {
         return true
@@ -154,7 +153,11 @@ pub fn bool_eval(expr : BoolExpr, env : Map[String, Bool]) -> Bool {
       true
     }
     BoolExpr::ITE(c, t, e) =>
-      if bool_eval(c, env) { bool_eval(t, env) } else { bool_eval(e, env) }
+      if bool_eval(c, env) {
+        bool_eval(t, env)
+      } else {
+        bool_eval(e, env)
+      }
   }
 }
 
@@ -192,7 +195,10 @@ fn all_bit_vectors(bits : Int) -> Array[Array[Int]] {
 }
 
 ///|
-fn combinations_bool(items : Array[BoolExpr], k : Int) -> Array[Array[BoolExpr]] {
+fn combinations_bool(
+  items : Array[BoolExpr],
+  k : Int,
+) -> Array[Array[BoolExpr]] {
   let out : Array[Array[BoolExpr]] = Array::new()
   if k <= 0 {
     out.push([])
@@ -220,6 +226,7 @@ fn combinations_bool(items : Array[BoolExpr], k : Int) -> Array[Array[BoolExpr]]
       rec(items, i + 1, k - 1, next, out)
     }
   }
+
   rec(items, 0, k, [], out)
   out
 }
@@ -250,6 +257,7 @@ fn permutations_strings(items : Array[String]) -> Array[Array[String]] {
       }
     }
   }
+
   rec(items, used, current, out)
   out
 }

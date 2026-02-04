@@ -50,7 +50,7 @@ fn format_expr(expr : @symcore.Expr, parent_prec : Int) -> String {
       let wrapped_base = match base {
         @symcore.Expr::Pow(_, _) => "(\{base_str})"
         @symcore.Expr::Number(n) if !n.is_integral() ||
-            n.numerator().op_lt(BigInt::from_int(0)) => "(\{base_str})"
+          n.numerator().op_lt(BigInt::from_int(0)) => "(\{base_str})"
         _ => base_str
       }
       let wrapped_exp = match exp {

@@ -23,9 +23,6 @@ pub fn res_z(p : Poly, q : Poly) -> @symnum.BigRational raise PolyError {
 }
 
 ///|
-pub fn subresultants_rem(
-  p : Poly,
-  q : Poly,
-) -> Array[Poly] raise PolyError {
+pub fn subresultants_rem(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
   subresultants(p, q)
 }

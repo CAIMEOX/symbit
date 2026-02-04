@@ -33,7 +33,10 @@ fn sing_rat_div(a : BigRational, b : BigRational) -> BigRational? {
 }
 
 ///|
-fn sing_linear_coeff_const(expr : Expr, sym : Expr) -> (BigRational, BigRational)? {
+fn sing_linear_coeff_const(
+  expr : Expr,
+  sym : Expr,
+) -> (BigRational, BigRational)? {
   match expr {
     Expr::Symbol(_) if sing_expr_is_symbol(expr, sym) =>
       Some((BigRational::one(), BigRational::zero()))
@@ -53,8 +56,10 @@ fn sing_linear_coeff_const(expr : Expr, sym : Expr) -> (BigRational, BigRational
             coeff = sing_rat_add(coeff, BigRational::one())
           Expr::Mul(margs) if margs.length() == 2 =>
             match (margs[0], margs[1]) {
-              (Expr::Number(c), Expr::Symbol(_)) if sing_expr_is_symbol(margs[1], sym) =>
-                coeff = sing_rat_add(coeff, c)
+              (Expr::Number(c), Expr::Symbol(_)) if sing_expr_is_symbol(
+                  margs[1],
+                  sym,
+                ) => coeff = sing_rat_add(coeff, c)
               _ => return None
             }
           _ => return None
@@ -107,10 +112,7 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
     Expr::Pow(base, exp) => {
       if sing_is_negative_integer(exp) {
         match sing_solve_linear(base, sym) {
-          Some(sol) =>
-            if !sing_contains_expr(out, sol) {
-              out.push(sol)
-            }
+          Some(sol) => if !sing_contains_expr(out, sol) { out.push(sol) }
           None => ()
         }
       }
@@ -120,10 +122,7 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
     Expr::Function(name, args) => {
       if name == "log" && args.length() >= 1 {
         match sing_solve_linear(args[0], sym) {
-          Some(sol) =>
-            if !sing_contains_expr(out, sol) {
-              out.push(sol)
-            }
+          Some(sol) => if !sing_contains_expr(out, sol) { out.push(sol) }
           None => ()
         }
       }

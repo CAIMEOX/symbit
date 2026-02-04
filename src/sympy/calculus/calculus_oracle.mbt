@@ -157,7 +157,10 @@ fn py_call_noargs(callable : @py.PyCallable) -> @py.PyObjectEnum raise {
 }
 
 ///|
-fn accum_bounds_obj(min : @symcore.Expr, max : @symcore.Expr) -> @py.PyObject raise {
+fn accum_bounds_obj(
+  min : @symcore.Expr,
+  max : @symcore.Expr,
+) -> @py.PyObject raise {
   let res = sympy_call_must("sympy.AccumBounds", [
     OracleArg::PyObj(expr_to_sympy(min)),
     OracleArg::PyObj(expr_to_sympy(max)),

@@ -35,13 +35,13 @@ pub fn finite_diff_weights(
   x0? : BigRational = BigRational::zero(),
 ) -> Array[Array[Array[BigRational]]] raise {
   let n_max = x_list.length() - 1
-  let delta : Array[Array[Array[BigRational]]] = Array::makei(
-    order + 1,
-    _ => Array::makei(n_max + 1, _ => Array::makei(n_max + 1, _ => fd_rat_zero())),
-  )
+  let delta : Array[Array[Array[BigRational]]] = Array::makei(order + 1, _ => Array::makei(
+    n_max + 1,
+    _ => Array::makei(n_max + 1, _ => fd_rat_zero()),
+  ))
   delta[0][0].set(0, fd_rat_one())
   let mut c1 = fd_rat_one()
-  for n in 1..=n_max {
+  for n in 1..<=n_max {
     let mut c2 = fd_rat_one()
     for nu in 0..<n {
       let c3 = fd_rat_sub(x_list[n], x_list[nu])
@@ -50,7 +50,7 @@ pub fn finite_diff_weights(
         delta[n][n - 1].set(nu, fd_rat_zero())
       }
       let m_limit = if n < order { n } else { order }
-      for m in 0..=m_limit {
+      for m in 0..<=m_limit {
         let t1 = fd_rat_sub(x_list[n], x0)
         let a = fd_rat_mul(t1, delta[m][n - 1][nu])
         let b = if m == 0 {
@@ -64,7 +64,7 @@ pub fn finite_diff_weights(
       }
     }
     let m_limit = if n < order { n } else { order }
-    for m in 0..=m_limit {
+    for m in 0..<=m_limit {
       let t1 = fd_rat_sub(x_list[n - 1], x0)
       let a = if m == 0 {
         fd_rat_zero()
@@ -91,7 +91,7 @@ pub fn apply_finite_diff(
   guard x_list.length() == y_list.length() else {
     fail("x_list and y_list length mismatch")
   }
-  let delta = finite_diff_weights(order, x_list, x0=x0)
+  let delta = finite_diff_weights(order, x_list, x0~)
   let n_max = x_list.length() - 1
   let mut out = @symcore.int(0)
   for nu in 0..<x_list.length() {

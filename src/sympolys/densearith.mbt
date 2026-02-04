@@ -614,7 +614,11 @@ pub fn dmp_add(
   }
   let fi = dmp_items(f)
   let gi = dmp_items(g)
-  let max_len = if fi.length() > gi.length() { fi.length() } else { gi.length() }
+  let max_len = if fi.length() > gi.length() {
+    fi.length()
+  } else {
+    gi.length()
+  }
   let zero = dmp_zero(u - 1)
   let out : Array[DensePoly] = Array::make(max_len, zero)
   for i in 0..<max_len {
@@ -647,7 +651,11 @@ pub fn dmp_sub(
   }
   let fi = dmp_items(f)
   let gi = dmp_items(g)
-  let max_len = if fi.length() > gi.length() { fi.length() } else { gi.length() }
+  let max_len = if fi.length() > gi.length() {
+    fi.length()
+  } else {
+    gi.length()
+  }
   let zero = dmp_zero(u - 1)
   let out : Array[DensePoly] = Array::make(max_len, zero)
   for i in 0..<max_len {

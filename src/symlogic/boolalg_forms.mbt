@@ -328,11 +328,7 @@ pub fn is_nnf(expr : BoolExpr, simplified? : Bool = true) -> Bool {
           stack.push(arg)
         }
       }
-      _ => {
-        if !is_literal(current) {
-          return false
-        }
-      }
+      _ => if !is_literal(current) { return false }
     }
   }
   true
@@ -389,7 +385,7 @@ pub fn to_cnf(
     if !force && vars.length() > 8 {
       return expr
     }
-    return simplify_logic(expr, form="cnf", deep=true, force=force)
+    return simplify_logic(expr, form="cnf", deep=true, force~)
   }
   if is_cnf(expr) {
     return expr
@@ -409,7 +405,7 @@ pub fn to_dnf(
     if !force && vars.length() > 8 {
       return expr
     }
-    return simplify_logic(expr, form="dnf", deep=true, force=force)
+    return simplify_logic(expr, form="dnf", deep=true, force~)
   }
   if is_dnf(expr) {
     return expr
@@ -424,10 +420,10 @@ fn maybe_to_anf(arg : BoolExpr, deep : Bool) -> BoolExpr {
     return arg
   }
   if !is_literal(arg) {
-    return to_anf(arg, deep=deep)
+    return to_anf(arg, deep~)
   }
   match arg {
-    BoolExpr::Not(_) => to_anf(arg, deep=deep)
+    BoolExpr::Not(_) => to_anf(arg, deep~)
     _ => arg
   }
 }
@@ -455,11 +451,11 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
     }
     BoolExpr::Or(args) => {
       let terms : Array[BoolExpr] = Array::new()
-      for size in 1..=args.length() {
+      for size in 1..<=args.length() {
         let combos = combinations_bool(args, size)
         for combo in combos {
           let term = bool_and(combo)
-          terms.push(if deep { to_anf(term, deep=deep) } else { term })
+          terms.push(if deep { to_anf(term, deep~) } else { term })
         }
       }
       xor_keep_true(terms)
@@ -489,11 +485,7 @@ pub fn to_anf(expr : BoolExpr, deep? : Bool = true) -> BoolExpr {
       if !deep {
         return expr
       }
-      BoolExpr::ITE(
-        to_anf(c, deep=deep),
-        to_anf(t, deep=deep),
-        to_anf(e, deep=deep),
-      )
+      BoolExpr::ITE(to_anf(c, deep~), to_anf(t, deep~), to_anf(e, deep~))
     }
   }
 }
@@ -519,7 +511,7 @@ pub fn is_anf(expr : BoolExpr) -> Bool {
     BoolExpr::Xor(args) => {
       for arg in args {
         match arg {
-          BoolExpr::And(terms) => {
+          BoolExpr::And(terms) =>
             for t in terms {
               match t {
                 BoolExpr::Symbol(_) => ()
@@ -527,7 +519,6 @@ pub fn is_anf(expr : BoolExpr) -> Bool {
                 _ => return false
               }
             }
-          }
           BoolExpr::Symbol(_) => ()
           BoolExpr::LRA(_) => ()
           BoolExpr::True => ()

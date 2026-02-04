@@ -44,7 +44,9 @@ fn fd_assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(
     @symprint.to_string(ours),
   )
-  let oracle_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(oracle_str)
+  let oracle_norm : Result[String, Error] = try? @sympy_calculus.sympy_normalize(
+    oracle_str,
+  )
   match (ours_norm, oracle_norm) {
     (Ok(a), Ok(b)) => {
       guard a == b else {
@@ -62,11 +64,9 @@ test "finite_diff_weights: small grid" {
   let x_list = [fd_br(-1, 2), fd_br(1, 2), fd_br(3, 2), fd_br(5, 2)]
   let weights = try! finite_diff_weights(1, x_list, x0=fd_br_int(0))
   let ours = fd_strip_spaces(fd_weights_repr(weights))
-  let oracle = fd_strip_spaces(try! @sympy_calculus.finite_diff_weights_str(
-    1,
-    x_list,
-    x0=fd_br_int(0),
-  ))
+  let oracle = fd_strip_spaces(
+    try! @sympy_calculus.finite_diff_weights_str(1, x_list, x0=fd_br_int(0)),
+  )
   guard ours == oracle else {
     println("weights mismatch: ours=\{ours} oracle=\{oracle}")
     fail("weights mismatch")
@@ -78,6 +78,11 @@ test "apply_finite_diff: quadratic" {
   let x_list = [fd_br_int(-1), fd_br_int(0), fd_br_int(1)]
   let y_list = [fd_expr_int(1), fd_expr_int(0), fd_expr_int(1)]
   let ours = try! apply_finite_diff(2, x_list, y_list, x0=fd_br_int(0))
-  let oracle = try! @sympy_calculus.apply_finite_diff_str(2, x_list, y_list, x0=fd_br_int(0))
+  let oracle = try! @sympy_calculus.apply_finite_diff_str(
+    2,
+    x_list,
+    y_list,
+    x0=fd_br_int(0),
+  )
   try! fd_assert_expr_equal(ours, oracle)
 }

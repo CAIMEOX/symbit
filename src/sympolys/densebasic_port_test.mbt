@@ -51,7 +51,8 @@ fn term_list_repr(terms : Array[(Array[Int], FieldElem)]) -> String {
 ///|
 fn dense_data_of(p : DensePoly) -> @sympy_polys.DenseData {
   match p {
-    DensePoly::Coef(c) => @sympy_polys.DenseData::Coef(try! fe_expect_rational(c))
+    DensePoly::Coef(c) =>
+      @sympy_polys.DenseData::Coef(try! fe_expect_rational(c))
     DensePoly::Poly(items) => {
       let out : Array[@sympy_polys.DenseData] = Array::new()
       for it in items {
@@ -976,25 +977,30 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
   let ours1 = dup_repr(dup_from_sympy(f1, Domain::ZZ))
   let oracle1 = @sympy_polys.dup_from_sympy(f1, domain="ZZ")
   guard ours1 == oracle1 else { fail("dup_from_sympy ZZ mismatch") }
-
   let f2 = [br_rat(1, 2), br_int(3)]
   let ours2 = dup_repr(dup_from_sympy(f2, Domain::QQ))
   let oracle2 = @sympy_polys.dup_from_sympy(f2, domain="QQ")
   guard ours2 == oracle2 else { fail("dup_from_sympy QQ mismatch") }
-
   let d1 = dense_rat_poly([
     dense_rat_poly([dense_rat_coef(br_int(1)), dense_rat_coef(br_int(2))]),
     dense_rat_poly([dense_rat_coef(br_int(0))]),
   ])
   let ours3 = dense_repr(dmp_from_sympy(d1, 1, Domain::ZZ))
-  let oracle3 = @sympy_polys.dmp_from_sympy(dense_data_of_rat(d1), 1, domain="ZZ")
+  let oracle3 = @sympy_polys.dmp_from_sympy(
+    dense_data_of_rat(d1),
+    1,
+    domain="ZZ",
+  )
   guard ours3 == oracle3 else { fail("dmp_from_sympy ZZ mismatch") }
-
   let d2 = dense_rat_poly([
     dense_rat_poly([dense_rat_coef(br_rat(1, 2)), dense_rat_coef(br_int(2))]),
   ])
   let ours4 = dense_repr(dmp_from_sympy(d2, 1, Domain::QQ))
-  let oracle4 = @sympy_polys.dmp_from_sympy(dense_data_of_rat(d2), 1, domain="QQ")
+  let oracle4 = @sympy_polys.dmp_from_sympy(
+    dense_data_of_rat(d2),
+    1,
+    domain="QQ",
+  )
   guard ours4 == oracle4 else { fail("dmp_from_sympy QQ mismatch") }
 }
 
@@ -1010,22 +1016,18 @@ test "densebasic: dmp_exclude/include parity" {
   let ours0 = exclude_repr(dmp_exclude(f0, 2, Domain::ZZ))
   let oracle0 = @sympy_polys.dmp_exclude(dense_data_of(f0), 2, domain="ZZ")
   guard ours0 == oracle0 else { fail("dmp_exclude zero mismatch") }
-
   let f1 = poly([poly([poly([coef(7)])])])
   let ours1 = exclude_repr(dmp_exclude(f1, 2, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_exclude(dense_data_of(f1), 2, domain="ZZ")
   guard ours1 == oracle1 else { fail("dmp_exclude const mismatch") }
-
   let f2 = poly([coef(1), coef(2), coef(3)])
   let ours2 = exclude_repr(dmp_exclude(f2, 0, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_exclude(dense_data_of(f2), 0, domain="ZZ")
   guard ours2 == oracle2 else { fail("dmp_exclude u=0 mismatch") }
-
   let f3 = poly([poly([coef(1), coef(2), coef(3)])])
   let ours3 = exclude_repr(dmp_exclude(f3, 1, Domain::ZZ))
   let oracle3 = @sympy_polys.dmp_exclude(dense_data_of(f3), 1, domain="ZZ")
   guard ours3 == oracle3 else { fail("dmp_exclude leading level mismatch") }
-
   let include_base = poly([coef(1), coef(2), coef(3)])
   let inc0 = dmp_include(include_base, [], 0, Domain::ZZ)
   inspect(dense_repr(inc0), content="[1,2,3]")
@@ -1043,7 +1045,9 @@ test "densebasic: dmp_inject/dmp_eject roundtrip" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let poly1 = b.from_expr(@symcore.int(1))
-  let poly2 = b.from_expr(@symcore.int(2) * x + @symcore.int(3) * y + @symcore.int(4))
+  let poly2 = b.from_expr(
+    @symcore.int(2) * x + @symcore.int(3) * y + @symcore.int(4),
+  )
   let f = dpp_from_polys([poly1, poly2])
   let (inj, u2) = dmp_inject(f, 0, ["x", "y"], Domain::ZZ)
   inspect(u2, content="2")
@@ -1070,12 +1074,10 @@ test "densebasic: terms_gcd parity" {
   let ours1 = terms_gcd_repr(dup_terms_gcd(f1, Domain::ZZ))
   let oracle1 = @sympy_polys.dup_terms_gcd([])
   guard ours1 == oracle1 else { fail("dup_terms_gcd empty mismatch") }
-
   let f2 : Array[FieldElem] = [fez(1), fez(0), fez(1)]
   let ours2 = terms_gcd_repr(dup_terms_gcd(f2, Domain::ZZ))
   let oracle2 = @sympy_polys.dup_terms_gcd([br_int(1), br_int(0), br_int(1)])
   guard ours2 == oracle2 else { fail("dup_terms_gcd mismatch") }
-
   let f3 = poly([poly([coef(1)]), poly([]), poly([coef(1)]), poly([])])
   let ours3 = dmp_terms_gcd_repr(dmp_terms_gcd(f3, 1, Domain::ZZ))
   let oracle3 = @sympy_polys.dmp_terms_gcd(dense_data_of(f3), 1, domain="ZZ")
@@ -1088,20 +1090,31 @@ test "densebasic: dmp_list_terms parity" {
   let ours0 = term_list_repr(dmp_list_terms(f0, 2, Domain::ZZ))
   let oracle0 = @sympy_polys.dmp_list_terms(dense_data_of(f0), 2, domain="ZZ")
   guard ours0 == oracle0 else { fail("dmp_list_terms zero mismatch") }
-
   let f1 = poly([coef(1), coef(2), coef(4), coef(3), coef(5)])
   let ours1 = term_list_repr(dmp_list_terms(f1, 0, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_list_terms(dense_data_of(f1), 0, domain="ZZ")
   guard ours1 == oracle1 else { fail("dmp_list_terms u=0 mismatch") }
-
-  let f2 = poly([poly([coef(1)]), poly([coef(2), coef(4)]), poly([coef(3), coef(5), coef(0)])])
+  let f2 = poly([
+    poly([coef(1)]),
+    poly([coef(2), coef(4)]),
+    poly([coef(3), coef(5), coef(0)]),
+  ])
   let ours2 = term_list_repr(dmp_list_terms(f2, 1, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_list_terms(dense_data_of(f2), 1, domain="ZZ")
   guard ours2 == oracle2 else { fail("dmp_list_terms u=1 mismatch") }
-
-  let f3 = poly([poly([coef(2), coef(0), coef(0), coef(0)]), poly([coef(1), coef(0), coef(0), coef(0), coef(0), coef(0)])])
-  let ours3 = term_list_repr(dmp_list_terms(f3, 1, Domain::ZZ, order=TermOrder::Lex))
-  let oracle3 = @sympy_polys.dmp_list_terms(dense_data_of(f3), 1, order="lex", domain="ZZ")
+  let f3 = poly([
+    poly([coef(2), coef(0), coef(0), coef(0)]),
+    poly([coef(1), coef(0), coef(0), coef(0), coef(0), coef(0)]),
+  ])
+  let ours3 = term_list_repr(
+    dmp_list_terms(f3, 1, Domain::ZZ, order=TermOrder::Lex),
+  )
+  let oracle3 = @sympy_polys.dmp_list_terms(
+    dense_data_of(f3),
+    1,
+    order="lex",
+    domain="ZZ",
+  )
   guard ours3 == oracle3 else { fail("dmp_list_terms lex mismatch") }
 }
 
@@ -1126,16 +1139,25 @@ test "densebasic: apply_pairs" {
 test "densebasic: dup_slice/dmp_slice parity" {
   let f = [fez(1), fez(2), fez(3), fez(4)]
   let ours0 = dup_repr(dup_slice(f, 0, 2, Domain::ZZ))
-  let oracle0 = @sympy_polys.dup_slice([br_int(1), br_int(2), br_int(3), br_int(4)], 0, 2)
+  let oracle0 = @sympy_polys.dup_slice(
+    [br_int(1), br_int(2), br_int(3), br_int(4)],
+    0,
+    2,
+  )
   guard ours0 == oracle0 else { fail("dup_slice mismatch") }
-
   let g = poly([poly([coef(1)]), poly([coef(2), coef(3)]), poly([coef(4)])])
   let ours1 = dense_repr(dmp_slice(g, 0, 2, 1, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_slice(dense_data_of(g), 0, 2, 1, domain="ZZ")
   guard ours1 == oracle1 else { fail("dmp_slice mismatch") }
-
   let ours2 = dense_repr(dmp_slice_in(g, 1, 2, 1, 1, Domain::ZZ))
-  let oracle2 = @sympy_polys.dmp_slice_in(dense_data_of(g), 1, 2, 1, 1, domain="ZZ")
+  let oracle2 = @sympy_polys.dmp_slice_in(
+    dense_data_of(g),
+    1,
+    2,
+    1,
+    1,
+    domain="ZZ",
+  )
   guard ours2 == oracle2 else { fail("dmp_slice_in mismatch") }
 }
 

@@ -45,12 +45,11 @@ pub fn simplify_logic(
     }
     mins = filtered
   }
-  let big =
-    if vars.is_empty() {
-      false
-    } else {
-      mins.length() >= (1 << (vars.length() - 1))
-    }
+  let big = if vars.is_empty() {
+    false
+  } else {
+    mins.length() >= 1 << (vars.length() - 1)
+  }
   if form_str == "dnf" || (form_str == "" && big) {
     return _sop_form(vars, mins, dcs)
   }
@@ -166,9 +165,7 @@ pub fn gateinputcount(expr : BoolExpr) -> Int {
     BoolExpr::Symbol(_) => 0
     BoolExpr::LRA(_) => 0
     BoolExpr::Not(inner) => 1 + gateinputcount(inner)
-    BoolExpr::And(args)
-    | BoolExpr::Or(args)
-    | BoolExpr::Xor(args) => {
+    BoolExpr::And(args) | BoolExpr::Or(args) | BoolExpr::Xor(args) => {
       let mut count = args.length()
       for arg in args {
         count += gateinputcount(arg)

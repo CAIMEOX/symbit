@@ -3,7 +3,11 @@
 
 ///|
 fn abs_int(x : Int) -> Int {
-  if x < 0 { -x } else { x }
+  if x < 0 {
+    -x
+  } else {
+    x
+  }
 }
 
 ///|
@@ -33,15 +37,15 @@ pub fn pl_true_int_repr(clause : Array[Int], model : Map[Int, Bool]) -> Bool? {
   for lit in clause {
     let lit_var = abs_int(lit)
     match model.get(lit_var) {
-      Some(v) => {
-        if (lit > 0 && v) || (lit < 0 && !v) {
-          return Some(true)
-        }
-      }
+      Some(v) => if (lit > 0 && v) || (lit < 0 && !v) { return Some(true) }
       None => has_unknown = true
     }
   }
-  if has_unknown { None } else { Some(false) }
+  if has_unknown {
+    None
+  } else {
+    Some(false)
+  }
 }
 
 ///|
@@ -108,11 +112,10 @@ pub fn find_pure_symbol_int_repr(
   for clause in clauses {
     for lit in clause {
       let lit_var = abs_int(lit)
-      let mask =
-        match polarity.get(lit_var) {
-          Some(m) => m
-          None => 0
-        }
+      let mask = match polarity.get(lit_var) {
+        Some(m) => m
+        None => 0
+      }
       let new_mask = if lit > 0 { mask | 1 } else { mask | 2 }
       polarity[lit_var] = new_mask
     }
@@ -180,7 +183,12 @@ fn dpll_int_repr(
   let rest = remove_int(current_symbols, p_sym)
   let model_true = current_model.copy()
   model_true[p_sym] = true
-  match dpll_int_repr(unit_propagate_int_repr(unknown, p_sym), rest.copy(), model_true) {
+  match
+    dpll_int_repr(
+      unit_propagate_int_repr(unknown, p_sym),
+      rest.copy(),
+      model_true,
+    ) {
     Some(res) => Some(res)
     None => {
       let model_false = current_model.copy()
@@ -201,7 +209,10 @@ fn contains_expr(xs : Array[BoolExpr], value : BoolExpr) -> Bool {
 }
 
 ///|
-pub fn unit_propagate(clauses : Array[BoolExpr], symbol : BoolExpr) -> Array[BoolExpr] {
+pub fn unit_propagate(
+  clauses : Array[BoolExpr],
+  symbol : BoolExpr,
+) -> Array[BoolExpr] {
   let out : Array[BoolExpr] = Array::new()
   let neg = bool_not(symbol)
   for clause in clauses {
@@ -239,11 +250,10 @@ pub fn find_unit_clause(
     let mut value : Bool? = None
     for literal in disjuncts(clause) {
       let sym = literal_symbol(literal)
-      let in_model =
-        match sym {
-          BoolExpr::Symbol(name) => model.contains(name)
-          _ => false
-        }
+      let in_model = match sym {
+        BoolExpr::Symbol(name) => model.contains(name)
+        _ => false
+      }
       if !in_model {
         num_not_in_model += 1
         p = Some(sym)

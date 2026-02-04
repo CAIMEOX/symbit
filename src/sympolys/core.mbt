@@ -49,9 +49,8 @@ pub fn ensure_coeff_domain(
       let norm = normalize_mod(coeff, domain)
       fe_from_int(norm.numerator().to_int(), domain)
     }
-    Domain::AlgExt(base, gens, rels) => {
+    Domain::AlgExt(base, gens, rels) =>
       fe_from_rational(coeff, Domain::AlgExt(base, gens, rels))
-    }
   }
 }
 

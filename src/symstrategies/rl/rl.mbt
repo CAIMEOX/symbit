@@ -21,7 +21,9 @@ pub fn rm_id(
     let ids : Array[Bool] = args.map(isid)
     let mut count = 0
     for flag in ids {
-      if flag { count += 1 }
+      if flag {
+        count += 1
+      }
     }
     if count == 0 {
       expr
@@ -104,9 +106,13 @@ pub fn distribute(
         let out : Array[@symcore.Expr] = Array::new()
         for barg in b_args {
           let inner : Array[@symcore.Expr] = Array::new()
-          for v in first { inner.push(v) }
+          for v in first {
+            inner.push(v)
+          }
           inner.push(barg)
-          for v in tail { inner.push(v) }
+          for v in tail {
+            inner.push(v)
+          }
           out.push(@strategies_util.expr_new_eval(opA, inner))
         }
         return @strategies_util.expr_new_eval(opB, out)
@@ -118,7 +124,10 @@ pub fn distribute(
 
 ///|
 /// Replace expressions exactly.
-pub fn subs(a : @symcore.Expr, b : @symcore.Expr) -> (@symcore.Expr) -> @symcore.Expr {
+pub fn subs(
+  a : @symcore.Expr,
+  b : @symcore.Expr,
+) -> (@symcore.Expr) -> @symcore.Expr {
   (expr : @symcore.Expr) => if expr == a { b } else { expr }
 }
 
@@ -126,7 +135,11 @@ pub fn subs(a : @symcore.Expr, b : @symcore.Expr) -> (@symcore.Expr) -> @symcore
 /// Rule to unpack singleton args.
 pub fn unpack(expr : @symcore.Expr) -> @symcore.Expr {
   let args = expr_args(expr)
-  if args.length() == 1 { args[0] } else { expr }
+  if args.length() == 1 {
+    args[0]
+  } else {
+    expr
+  }
 }
 
 ///|
@@ -164,7 +177,10 @@ pub fn rebuild(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 /// Group values by key.
-fn[T, K : Eq + Hash] sift(values : Array[T], key : (T) -> K) -> Map[K, Array[T]] {
+fn[T, K : Eq + Hash] sift(
+  values : Array[T],
+  key : (T) -> K,
+) -> Map[K, Array[T]] {
   let out : Map[K, Array[T]] = Map::new()
   for v in values {
     let k = key(v)

@@ -8,12 +8,10 @@ pub type ExprOp = @strategies_util.ExprOp
 pub type Fns[T, Op] = @strategies_util.Fns[T, Op]
 
 ///|
-pub let basic_fns : @strategies_util.Fns[@symcore.Expr, ExprOp] =
-  @strategies_util.basic_fns
+pub let basic_fns : @strategies_util.Fns[@symcore.Expr, ExprOp] = @strategies_util.basic_fns
 
 ///|
-pub let expr_fns : @strategies_util.Fns[@symcore.Expr, ExprOp] =
-  @strategies_util.expr_fns
+pub let expr_fns : @strategies_util.Fns[@symcore.Expr, ExprOp] = @strategies_util.expr_fns
 
 ///|
 pub fn new(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
@@ -29,7 +27,7 @@ pub fn[T] condition(cond : (T) -> Bool, rule : (T) -> T) -> (T) -> T {
 pub fn[T : Eq + Show] debug(
   rule : (T) -> T,
   name? : String = "rule",
-  write? : (String) -> Unit = (s) => println(s),
+  write? : (String) -> Unit = s => println(s),
 ) -> (T) -> T {
   @strategies_core.debug(rule, name~, write~)
 }

@@ -51,8 +51,8 @@ pub fn[T : Compare] greedy(
   objective? : (T) -> T = @strategies_core.identity,
 ) -> (T) -> T {
   let join : TreeJoin[(T) -> T] = {
-    choice: (rules) => @strategies_core.minimize(rules, objective~),
-    seq: (rules) => @strategies_core.chain(rules),
+    choice: rules => @strategies_core.minimize(rules, objective~),
+    seq: rules => @strategies_core.chain(rules),
   }
   treeapply(tree, join)
 }
@@ -64,8 +64,8 @@ pub fn[T : Eq + Hash] allresults(
   leaf? : ((T) -> T) -> (T) -> Array[T] = @strategies_branch.yieldify,
 ) -> (T) -> Array[T] {
   let join : TreeJoin[(T) -> Array[T]] = {
-    choice: (rules) => @strategies_branch.multiplex(rules),
-    seq: (rules) => @strategies_branch.chain(rules),
+    choice: rules => @strategies_branch.multiplex(rules),
+    seq: rules => @strategies_branch.chain(rules),
   }
   treeapply_map(tree, join, leaf)
 }

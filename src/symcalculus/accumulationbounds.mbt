@@ -67,13 +67,12 @@ fn simple_endpoint(expr : Expr) -> SimpleEndpoint {
     Expr::Number(n) => SimpleEndpoint::Finite(n)
     Expr::Symbol(s) if s == "oo" => SimpleEndpoint::PosInf
     Expr::Symbol(s) if s == "nan" => SimpleEndpoint::Nan
-    Expr::Mul(args) if args.length() == 2 => {
+    Expr::Mul(args) if args.length() == 2 =>
       match (args[0], args[1]) {
-        (Expr::Number(n), Expr::Symbol(s)) if s == "oo" && n.compare(BigRational::from_int(-1)) == 0 =>
-          SimpleEndpoint::NegInf
+        (Expr::Number(n), Expr::Symbol(s)) if s == "oo" &&
+          n.compare(BigRational::from_int(-1)) == 0 => SimpleEndpoint::NegInf
         _ => SimpleEndpoint::Other(expr)
       }
-    }
     _ => SimpleEndpoint::Other(expr)
   }
 }
@@ -129,12 +128,20 @@ fn rat_abs(x : BigRational) -> BigRational {
 
 ///|
 fn rat_min(a : BigRational, b : BigRational) -> BigRational {
-  if a.compare(b) <= 0 { a } else { b }
+  if a.compare(b) <= 0 {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
 fn rat_max(a : BigRational, b : BigRational) -> BigRational {
-  if a.compare(b) >= 0 { a } else { b }
+  if a.compare(b) >= 0 {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
@@ -222,7 +229,8 @@ pub fn accum_max(expr : Expr) -> Expr? {
 ///|
 pub fn accum_delta(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
-    Some((min, max)) => Some(@symcore.add([max, @symcore.mul([expr_neg_one(), min])]))
+    Some((min, max)) =>
+      Some(@symcore.add([max, @symcore.mul([expr_neg_one(), min])]))
     None => None
   }
 }
@@ -231,7 +239,9 @@ pub fn accum_delta(expr : Expr) -> Expr? {
 pub fn accum_mid(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) => {
-      let half = @symcore.number(try! BigRational::new(BigInt::from_int(1), BigInt::from_int(2)))
+      let half = @symcore.number(
+        try! BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
+      )
       Some(@symcore.mul([half, @symcore.add([min, max])]))
     }
     None => None
@@ -242,7 +252,10 @@ pub fn accum_mid(expr : Expr) -> Expr? {
 pub fn accum_neg(expr : Expr) -> Expr {
   match accum_unpack(expr) {
     Some((min, max)) =>
-      try! accum_bounds(@symcore.mul([expr_neg_one(), max]), @symcore.mul([expr_neg_one(), min]))
+      try! accum_bounds(
+        @symcore.mul([expr_neg_one(), max]),
+        @symcore.mul([expr_neg_one(), min]),
+      )
     None => @symcore.mul([expr_neg_one(), expr])
   }
 }
@@ -293,8 +306,10 @@ pub fn accum_mul(lhs : Expr, rhs : Expr) -> Expr {
       let sa2 = simple_endpoint(a2)
       let sb1 = simple_endpoint(b1)
       let sb2 = simple_endpoint(b2)
-      if simple_is_finite(sa1) && simple_is_finite(sa2) &&
-         simple_is_finite(sb1) && simple_is_finite(sb2) {
+      if simple_is_finite(sa1) &&
+        simple_is_finite(sa2) &&
+        simple_is_finite(sb1) &&
+        simple_is_finite(sb2) {
         let a1v = finite_value(sa1)
         let a2v = finite_value(sa2)
         let b1v = finite_value(sb1)
@@ -349,8 +364,10 @@ pub fn accum_div(lhs : Expr, rhs : Expr) -> Expr {
       let sa2 = simple_endpoint(a2)
       let sb1 = simple_endpoint(b1)
       let sb2 = simple_endpoint(b2)
-      if simple_is_finite(sa1) && simple_is_finite(sa2) &&
-         simple_is_finite(sb1) && simple_is_finite(sb2) {
+      if simple_is_finite(sa1) &&
+        simple_is_finite(sa2) &&
+        simple_is_finite(sb1) &&
+        simple_is_finite(sb2) {
         let a1v = finite_value(sa1)
         let a2v = finite_value(sa2)
         let b1v = finite_value(sb1)
@@ -451,7 +468,10 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
               None => rat_zero()
             }
             if lo.compare(rat_zero()) <= 0 && hi.compare(rat_zero()) >= 0 {
-              return try! accum_bounds(expr_finite(rat_zero()), expr_finite(hi_pow))
+              return try! accum_bounds(
+                expr_finite(rat_zero()),
+                expr_finite(hi_pow),
+              )
             }
             let lo_pow = match pow_rational(lo_abs, n_int) {
               Some(v) => v
@@ -506,7 +526,10 @@ pub fn accum_abs(expr : Expr) -> Expr {
         let lo = finite_value(smin)
         let hi = finite_value(smax)
         if hi.compare(rat_zero()) <= 0 {
-          return try! accum_bounds(expr_finite(rat_abs(hi)), expr_finite(rat_abs(lo)))
+          return try! accum_bounds(
+            expr_finite(rat_abs(hi)),
+            expr_finite(rat_abs(lo)),
+          )
         }
         if lo.compare(rat_zero()) >= 0 {
           return expr
@@ -528,8 +551,10 @@ pub fn accum_union(lhs : Expr, rhs : Expr) -> Expr {
       let sa2 = simple_endpoint(a2)
       let sb1 = simple_endpoint(b1)
       let sb2 = simple_endpoint(b2)
-      if simple_is_finite(sa1) && simple_is_finite(sa2) &&
-         simple_is_finite(sb1) && simple_is_finite(sb2) {
+      if simple_is_finite(sa1) &&
+        simple_is_finite(sa2) &&
+        simple_is_finite(sb1) &&
+        simple_is_finite(sb2) {
         let lo = rat_min(finite_value(sa1), finite_value(sb1))
         let hi = rat_max(finite_value(sa2), finite_value(sb2))
         return try! accum_bounds(expr_finite(lo), expr_finite(hi))

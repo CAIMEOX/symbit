@@ -50,7 +50,7 @@ fn _simplified_pairs(terms : Array[Array[Int]]) -> Array[Array[Int]] {
     match termdict.get(k) {
       Some(list1) =>
         match termdict.get(k + 1) {
-          Some(list2) => {
+          Some(list2) =>
             for i in list1 {
               for j in list2 {
                 let index = _check_pair(terms[i], terms[j])
@@ -65,7 +65,6 @@ fn _simplified_pairs(terms : Array[Array[Int]]) -> Array[Array[Int]] {
                 }
               }
             }
-          }
           None => ()
         }
       None => ()
@@ -99,7 +98,6 @@ fn _rem_redundancy(
   }
   let colcount : Array[Int] = Array::make(nl1, 0)
   let rowcount : Array[Int] = Array::make(nterms, 0)
-
   fn covers(prime : Array[Int], term : Array[Int]) -> Bool {
     for i in 0..<prime.length() {
       let p = prime[i]
@@ -120,11 +118,9 @@ fn _rem_redundancy(
       }
     }
   }
-
   let mut anythingchanged = true
   while anythingchanged {
     anythingchanged = false
-
     for rowi in 0..<nterms {
       if rowcount[rowi] == 0 {
         continue
@@ -156,7 +152,6 @@ fn _rem_redundancy(
         }
       }
     }
-
     let colcache : Map[Int, Array[Int]] = Map::new()
     for coli in 0..<nl1 {
       if colcount[coli] == 0 {
@@ -209,7 +204,6 @@ fn _rem_redundancy(
         }
       }
     }
-
     if !anythingchanged {
       let mut maxterms = 0
       let mut bestcolidx = -1
@@ -247,7 +241,6 @@ fn _rem_redundancy(
       }
     }
   }
-
   let out : Array[Array[Int]] = Array::new()
   for i in 0..<nl1 {
     if colcount[i] != 0 {
@@ -258,7 +251,10 @@ fn _rem_redundancy(
 }
 
 ///|
-fn _convert_to_varsSOP(term : Array[Int], variables : Array[BoolExpr]) -> BoolExpr {
+fn _convert_to_varsSOP(
+  term : Array[Int],
+  variables : Array[BoolExpr],
+) -> BoolExpr {
   let args : Array[BoolExpr] = Array::new()
   for i in 0..<term.length() {
     match term[i] {
@@ -271,7 +267,10 @@ fn _convert_to_varsSOP(term : Array[Int], variables : Array[BoolExpr]) -> BoolEx
 }
 
 ///|
-fn _convert_to_varsPOS(term : Array[Int], variables : Array[BoolExpr]) -> BoolExpr {
+fn _convert_to_varsPOS(
+  term : Array[Int],
+  variables : Array[BoolExpr],
+) -> BoolExpr {
   let args : Array[BoolExpr] = Array::new()
   for i in 0..<term.length() {
     match term[i] {
@@ -284,7 +283,10 @@ fn _convert_to_varsPOS(term : Array[Int], variables : Array[BoolExpr]) -> BoolEx
 }
 
 ///|
-fn _convert_to_varsANF(term : Array[Int], variables : Array[BoolExpr]) -> BoolExpr {
+fn _convert_to_varsANF(
+  term : Array[Int],
+  variables : Array[BoolExpr],
+) -> BoolExpr {
   let args : Array[BoolExpr] = Array::new()
   for i in 0..<term.length() {
     if term[i] == 1 {
@@ -434,7 +436,7 @@ pub fn anf_form(
 ) -> BoolExpr {
   let n_vars = variables.length()
   let n_values = truthvalues.length()
-  if n_values != (1 << n_vars) {
+  if n_values != 1 << n_vars {
     return BoolExpr::False
   }
   let coeffs = anf_coeffs(truthvalues)

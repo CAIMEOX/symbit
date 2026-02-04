@@ -174,12 +174,7 @@ fn xor_internal(args : Array[BoolExpr], keep_true : Bool) -> BoolExpr {
     }
     return BoolExpr::Xor(uniq)
   }
-  let base =
-    if uniq.length() == 1 {
-      uniq[0]
-    } else {
-      BoolExpr::Xor(uniq)
-    }
+  let base = if uniq.length() == 1 { uniq[0] } else { BoolExpr::Xor(uniq) }
   if true_count % 2 == 0 {
     base
   } else {
@@ -254,7 +249,11 @@ pub fn bool_equivalent(args : Array[BoolExpr]) -> BoolExpr {
 }
 
 ///|
-pub fn bool_ite(cond : BoolExpr, then_ : BoolExpr, else_ : BoolExpr) -> BoolExpr {
+pub fn bool_ite(
+  cond : BoolExpr,
+  then_ : BoolExpr,
+  else_ : BoolExpr,
+) -> BoolExpr {
   if cond == BoolExpr::True {
     return then_
   }
@@ -405,7 +404,11 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
       match b {
         BoolExpr::Implies(a2, b2) => {
           let first = compare_bool(a1, a2)
-          if first != 0 { first } else { compare_bool(b1, b2) }
+          if first != 0 {
+            first
+          } else {
+            compare_bool(b1, b2)
+          }
         }
         _ => 0
       }
@@ -418,9 +421,15 @@ fn compare_bool(a : BoolExpr, b : BoolExpr) -> Int {
       match b {
         BoolExpr::ITE(c2, t2, e2) => {
           let first = compare_bool(c1, c2)
-          if first != 0 { first } else {
+          if first != 0 {
+            first
+          } else {
             let second = compare_bool(t1, t2)
-            if second != 0 { second } else { compare_bool(e1, e2) }
+            if second != 0 {
+              second
+            } else {
+              compare_bool(e1, e2)
+            }
           }
         }
         _ => 0
@@ -459,8 +468,10 @@ pub impl Hash for BoolExpr with hash_combine(self, hasher : Hasher) -> Unit {
     BoolExpr::LRA(constraint) =>
       hasher.combine_string(linear_constraint_key(constraint))
     BoolExpr::Not(inner) => inner.hash_combine(hasher)
-    BoolExpr::And(args) | BoolExpr::Or(args) | BoolExpr::Xor(args) |
-    BoolExpr::Equivalent(args) =>
+    BoolExpr::And(args)
+    | BoolExpr::Or(args)
+    | BoolExpr::Xor(args)
+    | BoolExpr::Equivalent(args) =>
       for child in args {
         child.hash_combine(hasher)
       }
@@ -499,7 +510,11 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
     BoolExpr::LRA(constraint) => linear_constraint_to_string(constraint)
     BoolExpr::Not(inner) => {
       let inner_str = format_expr(inner, 0)
-      let wrapped = if precedence(inner) < prec { "(\{inner_str})" } else { inner_str }
+      let wrapped = if precedence(inner) < prec {
+        "(\{inner_str})"
+      } else {
+        inner_str
+      }
       "~\{wrapped}"
     }
     BoolExpr::And(args) =>
@@ -508,8 +523,11 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
       let rendered : Array[String] = Array::new()
       for child in args {
         match child {
-          BoolExpr::And(_) | BoolExpr::Xor(_) | BoolExpr::Implies(_, _) |
-          BoolExpr::Equivalent(_) => rendered.push("(\{format_expr(child, 0)})")
+          BoolExpr::And(_)
+          | BoolExpr::Xor(_)
+          | BoolExpr::Implies(_, _)
+          | BoolExpr::Equivalent(_) =>
+            rendered.push("(\{format_expr(child, 0)})")
           _ => rendered.push(format_expr(child, prec))
         }
       }
@@ -519,8 +537,11 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
       let rendered : Array[String] = Array::new()
       for child in args {
         match child {
-          BoolExpr::And(_) | BoolExpr::Or(_) | BoolExpr::Implies(_, _) |
-          BoolExpr::Equivalent(_) => rendered.push("(\{format_expr(child, 0)})")
+          BoolExpr::And(_)
+          | BoolExpr::Or(_)
+          | BoolExpr::Implies(_, _)
+          | BoolExpr::Equivalent(_) =>
+            rendered.push("(\{format_expr(child, 0)})")
           _ => rendered.push(format_expr(child, prec))
         }
       }

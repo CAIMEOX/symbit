@@ -156,7 +156,12 @@ pub fn dmp_diff(
   if m == 1 {
     let mut k = n
     for i in 0..<(items.length() - m) {
-      let coeff = dmp_mul_ground(items[i], fe_from_int(k, domain), u - 1, domain)
+      let coeff = dmp_mul_ground(
+        items[i],
+        fe_from_int(k, domain),
+        u - 1,
+        domain,
+      )
       out.push(coeff)
       k = k - 1
     }
@@ -171,7 +176,12 @@ pub fn dmp_diff(
         t = t - 1
         left = left - 1
       }
-      let coeff = dmp_mul_ground(items[i], fe_from_int(scale, domain), u - 1, domain)
+      let coeff = dmp_mul_ground(
+        items[i],
+        fe_from_int(scale, domain),
+        u - 1,
+        domain,
+      )
       out.push(coeff)
       k = k - 1
     }

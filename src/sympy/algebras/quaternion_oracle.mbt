@@ -196,8 +196,12 @@ fn quat_components(obj : @py.PyObject) -> Array[String] raise {
 
 ///|
 pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
-  let diff = sympy_call_must("sympy.sympify", [OracleArg::Str("(\{lhs}) - (\{rhs})")])
-  let res = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(diff))])
+  let diff = sympy_call_must("sympy.sympify", [
+    OracleArg::Str("(\{lhs}) - (\{rhs})"),
+  ])
+  let res = sympy_call_must("sympy.simplify", [
+    OracleArg::PyObj(objenum_to_obj(diff)),
+  ])
   py_str_enum(res) == "0"
 }
 
@@ -325,11 +329,13 @@ pub fn quat_from_axis_angle(
 ) -> Array[String] raise {
   let qcls = sympy_attr_obj("Quaternion")
   let from_axis = resolve_method_callable(qcls, "from_axis_angle")
-  let vec = @sympy.py_pack(OracleArg::List([
-    OracleArg::PyObj(expr_to_sympy(x)),
-    OracleArg::PyObj(expr_to_sympy(y)),
-    OracleArg::PyObj(expr_to_sympy(z)),
-  ]))
+  let vec = @sympy.py_pack(
+    OracleArg::List([
+      OracleArg::PyObj(expr_to_sympy(x)),
+      OracleArg::PyObj(expr_to_sympy(y)),
+      OracleArg::PyObj(expr_to_sympy(z)),
+    ]),
+  )
   let res = py_call_with_args(from_axis, [
     OracleArg::PyObj(vec),
     OracleArg::PyObj(expr_to_sympy(angle)),

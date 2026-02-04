@@ -1,4 +1,5 @@
-///|\
+///|
+///\
 fn basic(args : Array[@symcore.Expr]) -> @symcore.Expr {
   @symcore.function("Basic", args)
 }
@@ -16,9 +17,9 @@ fn raw_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
 ///|
 fn coeff_mul(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   match expr {
-    @symcore.Expr::Mul(args) if args.length() > 0 => {
+    @symcore.Expr::Mul(args) if args.length() > 0 =>
       match args[0] {
-        @symcore.Expr::Number(_) => {
+        @symcore.Expr::Number(_) =>
           if args.length() == 2 {
             (args[0], args[1])
           } else {
@@ -28,10 +29,8 @@ fn coeff_mul(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
             }
             (args[0], raw_mul(rest_args))
           }
-        }
         _ => (@symcore.int(1), expr)
       }
-    }
     @symcore.Expr::Number(_) => (expr, @symcore.int(1))
     _ => (@symcore.int(1), expr)
   }
@@ -58,9 +57,21 @@ test "rl rm_id" {
   let expr1 = basic([@symcore.int(0), @symcore.int(1)])
   let expr2 = basic([@symcore.int(0), @symcore.int(0)])
   let expr3 = basic([@symcore.int(2), @symcore.int(1)])
-  assert_expr_str_eq(rmzeros(expr1), try! @sympy_strategies.rl_rm_id(expr1), "rm_id 01")
-  assert_expr_str_eq(rmzeros(expr2), try! @sympy_strategies.rl_rm_id(expr2), "rm_id 00")
-  assert_expr_str_eq(rmzeros(expr3), try! @sympy_strategies.rl_rm_id(expr3), "rm_id 21")
+  assert_expr_str_eq(
+    rmzeros(expr1),
+    try! @sympy_strategies.rl_rm_id(expr1),
+    "rm_id 01",
+  )
+  assert_expr_str_eq(
+    rmzeros(expr2),
+    try! @sympy_strategies.rl_rm_id(expr2),
+    "rm_id 00",
+  )
+  assert_expr_str_eq(
+    rmzeros(expr3),
+    try! @sympy_strategies.rl_rm_id(expr3),
+    "rm_id 21",
+  )
 }
 
 ///|
@@ -93,8 +104,16 @@ test "rl flatten" {
 test "rl unpack" {
   let expr1 = basic([@symcore.int(2)])
   let expr2 = basic([@symcore.int(2), @symcore.int(3)])
-  assert_expr_str_eq(@strategies_rl.unpack(expr1), try! @sympy_strategies.rl_unpack(expr1), "unpack1")
-  assert_expr_str_eq(@strategies_rl.unpack(expr2), try! @sympy_strategies.rl_unpack(expr2), "unpack2")
+  assert_expr_str_eq(
+    @strategies_rl.unpack(expr1),
+    try! @sympy_strategies.rl_unpack(expr1),
+    "unpack1",
+  )
+  assert_expr_str_eq(
+    @strategies_rl.unpack(expr2),
+    try! @sympy_strategies.rl_unpack(expr2),
+    "unpack2",
+  )
 }
 
 ///|
@@ -118,7 +137,11 @@ test "rl distribute custom" {
     @strategies_util.ExprOp::Function("T2"),
   )
   let result = rl(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_distribute_custom(), "distribute custom")
+  assert_expr_str_eq(
+    result,
+    try! @sympy_strategies.rl_distribute_custom(),
+    "distribute custom",
+  )
 }
 
 ///|
@@ -131,7 +154,11 @@ test "rl distribute add/mul" {
     @strategies_util.ExprOp::Add,
   )
   let result = rl(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_distribute_add_mul(expr), "distribute add/mul")
+  assert_expr_str_eq(
+    result,
+    try! @sympy_strategies.rl_distribute_add_mul(expr),
+    "distribute add/mul",
+  )
 }
 
 ///|
@@ -139,16 +166,24 @@ test "rl subs" {
   let rl = @strategies_rl.subs(@symcore.int(1), @symcore.int(2))
   let expr1 = @symcore.int(1)
   let expr2 = @symcore.int(3)
-  assert_expr_str_eq(rl(expr1), try! @sympy_strategies.rl_subs(expr1, @symcore.int(1), @symcore.int(2)), "subs1")
-  assert_expr_str_eq(rl(expr2), try! @sympy_strategies.rl_subs(expr2, @symcore.int(1), @symcore.int(2)), "subs2")
+  assert_expr_str_eq(
+    rl(expr1),
+    try! @sympy_strategies.rl_subs(expr1, @symcore.int(1), @symcore.int(2)),
+    "subs1",
+  )
+  assert_expr_str_eq(
+    rl(expr2),
+    try! @sympy_strategies.rl_subs(expr2, @symcore.int(1), @symcore.int(2)),
+    "subs2",
+  )
 }
 
 ///|
 test "rl rebuild" {
-  let expr = @strategies_util.expr_new_raw(
-    @strategies_util.ExprOp::Add,
-    [@symcore.int(1), @symcore.int(2)],
-  )
+  let expr = @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, [
+    @symcore.int(1),
+    @symcore.int(2),
+  ])
   let result = @strategies_rl.rebuild(expr)
   assert_expr_str_eq(result, try! @sympy_strategies.rl_rebuild(expr), "rebuild")
 }

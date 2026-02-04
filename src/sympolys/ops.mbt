@@ -199,7 +199,8 @@ fn resultant_elim(
   if a.gens.length() <= gen_index || b.gens.length() <= gen_index {
     raise PolyError::BadGenerator("\{gen_index}".to_string())
   }
-  if poly_depends_only_on_var(a, gen_index) && poly_depends_only_on_var(b, gen_index) {
+  if poly_depends_only_on_var(a, gen_index) &&
+    poly_depends_only_on_var(b, gen_index) {
     let au = poly_project_univar(a, gen_index)
     let bu = poly_project_univar(b, gen_index)
     return resultant_univar(au, bu)

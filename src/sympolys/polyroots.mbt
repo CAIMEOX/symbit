@@ -47,14 +47,17 @@ pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   let b2 = b ^ @symcore.int(2)
   let ac4 = @symcore.mul([four, a, c])
   let disc = @symcore.add([b2, @symcore.mul([@symcore.int(-1), ac4])])
-  let half = try @symcore.rational_from_ints(1, 2) catch {
+  let half = @symcore.rational_from_ints(1, 2) catch {
     _ => raise PolyError::NotImplemented("quadratic: half")
   }
   let sqrt_disc = @symcore.pow(disc, half)
   let neg_b = @symcore.mul([@symcore.int(-1), b])
   let denom = @symcore.mul([two, a])
   let inv = @symcore.pow(denom, @symcore.int(-1))
-  let r1 = @symcore.mul([@symcore.add([neg_b, @symcore.mul([@symcore.int(-1), sqrt_disc])]), inv])
+  let r1 = @symcore.mul([
+    @symcore.add([neg_b, @symcore.mul([@symcore.int(-1), sqrt_disc])]),
+    inv,
+  ])
   let r2 = @symcore.mul([@symcore.add([neg_b, sqrt_disc]), inv])
   [r1, r2]
 }
@@ -74,10 +77,7 @@ fn append_roots(
 
 ///|
 fn rootof_expr(poly : Poly, index : Int) -> @symcore.Expr {
-  @symcore.function(
-    "CRootOf",
-    [poly.to_expr(), @symcore.int(index)],
-  )
+  @symcore.function("CRootOf", [poly.to_expr(), @symcore.int(index)])
 }
 
 ///|

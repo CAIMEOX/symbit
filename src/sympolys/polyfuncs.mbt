@@ -109,11 +109,11 @@ pub fn rational_interpolate(
     coeffs.set(i, coeffs[i].mul_r(inv_lead))
   }
   let num_coeffs : Array[@symnum.BigRational] = Array::new()
-  for i in 0..=deg_num {
+  for i in 0..<=deg_num {
     num_coeffs.push(coeffs[i])
   }
   let den_coeffs : Array[@symnum.BigRational] = Array::new()
-  for i in 0..=den_deg {
+  for i in 0..<=den_deg {
     den_coeffs.push(coeffs[den_start + i])
   }
   let num = poly_from_coeffs(num_coeffs, gen, domain)
@@ -149,8 +149,7 @@ pub fn symmetrize(
   } else {
     default_sym_names(n)
   }
-  let (sym_poly, rem_poly, elem_polys) =
-    symmetrize_poly(poly, sym_names)
+  let (sym_poly, rem_poly, elem_polys) = symmetrize_poly(poly, sym_names)
   let mut sym_expr = sym_poly.to_expr()
   let rem_expr = rem_poly.to_expr()
   let mapping : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
@@ -196,10 +195,9 @@ pub fn symmetrize_list(
   }
   let items : Array[SymmetrizeResult] = Array::new()
   for expr in exprs {
-    items.push(symmetrize(expr, gens=gens_final, formal=formal, symbols=symbols))
+    items.push(symmetrize(expr, gens=gens_final, formal~, symbols~))
   }
-  let mapping =
-    if formal && !items.is_empty() { items[0].mapping } else { [] }
+  let mapping = if formal && !items.is_empty() { items[0].mapping } else { [] }
   SymmetrizeListResult::{ items, mapping }
 }
 
@@ -238,12 +236,7 @@ pub fn viete(
   roots? : Array[String] = [],
   gen? : String = "",
 ) -> Array[(@symcore.Expr, @symcore.Expr)] raise PolyError {
-  let gens_final =
-    if gen != "" {
-      [gen]
-    } else {
-      infer_gens_expr(expr)
-    }
+  let gens_final = if gen != "" { [gen] } else { infer_gens_expr(expr) }
   let poly = if gen == "" {
     Poly::from_expr_defaults(expr)
   } else {
@@ -268,7 +261,7 @@ pub fn viete(
   let lc = coeffs[deg]
   let inv_lc = fe_inv(lc)
   let result : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
-  for i in 1..=deg {
+  for i in 1..<=deg {
     let coeff = coeffs[deg - i]
     let scaled = fe_mul(coeff, inv_lc)
     let mut expr_coeff = field_elem_to_expr(scaled, poly.domain)
@@ -292,12 +285,12 @@ fn build_rational_matrix(
     let (xi, yi) = points[i]
     let row : Array[@symnum.BigRational] = Array::new()
     let mut pow = @symnum.BigRational::one()
-    for _ in 0..=deg_num {
+    for _ in 0..<=deg_num {
       row.push(pow)
       pow = pow.mul_r(xi)
     }
     let mut pow_den = @symnum.BigRational::one()
-    for _ in 0..=k {
+    for _ in 0..<=k {
       row.push(yi.neg_r().mul_r(pow_den))
       pow_den = pow_den.mul_r(xi)
     }
@@ -338,9 +331,12 @@ fn nullspace_vector(
     let pivot_val = r[row][col]
     for j in col..<cols {
       let v = r[row][j]
-      r[row].set(j, v.div_r(pivot_val) catch {
-        _ => raise PolyError::DivisionByZero
-      })
+      r[row].set(
+        j,
+        v.div_r(pivot_val) catch {
+          _ => raise PolyError::DivisionByZero
+        },
+      )
     }
     for i in 0..<rows {
       if i == row {
@@ -447,7 +443,7 @@ fn collect_symbols_expr_pf(
 ///|
 fn default_sym_names(n : Int) -> Array[String] {
   let names : Array[String] = Array::new()
-  for i in 1..=n {
+  for i in 1..<=n {
     names.push("s\{i}")
   }
   names
@@ -456,7 +452,7 @@ fn default_sym_names(n : Int) -> Array[String] {
 ///|
 fn default_root_names(n : Int) -> Array[String] {
   let names : Array[String] = Array::new()
-  for i in 1..=n {
+  for i in 1..<=n {
     names.push("r\{i}")
   }
   names
@@ -469,7 +465,7 @@ fn elementary_symmetric_polys(
 ) -> Array[Poly] raise PolyError {
   let n = gens.length()
   let out : Array[Poly] = Array::new()
-  for k in 1..=n {
+  for k in 1..<=n {
     let coeffs : Map[Monomial, FieldElem] = Map::new()
     build_sym_terms(coeffs, n, k, 0, [], domain)
     out.push(Poly::{ coeffs, gens, domain, order: TermOrder::Lex })
@@ -576,7 +572,10 @@ fn symmetrize_poly(
 }
 
 ///|
-fn horner_poly(poly : Poly, gens : Array[String]) -> @symcore.Expr raise PolyError {
+fn horner_poly(
+  poly : Poly,
+  gens : Array[String],
+) -> @symcore.Expr raise PolyError {
   if poly.is_zero() {
     return @symcore.number(@symnum.BigRational::zero())
   }
@@ -591,7 +590,7 @@ fn horner_poly(poly : Poly, gens : Array[String]) -> @symcore.Expr raise PolyErr
     let mut d = deg - 1
     while d >= 0 {
       let term_expr = coeff_polys[d].to_expr()
-      form = (form * sym) + term_expr
+      form = form * sym + term_expr
       d = d - 1
     }
     return form
@@ -607,7 +606,7 @@ fn horner_poly(poly : Poly, gens : Array[String]) -> @symcore.Expr raise PolyErr
   let mut d = deg - 1
   while d >= 0 {
     let term_expr = horner_poly(coeff_polys[d], rest_gens)
-    form = (form * sym) + term_expr
+    form = form * sym + term_expr
     d = d - 1
   }
   form
@@ -620,7 +619,7 @@ fn univar_coeff_polys(
 ) -> Array[Poly] raise PolyError {
   let deg = poly.degree(0)
   let coeffs : Array[Poly] = Array::new()
-  for _ in 0..=deg {
+  for _ in 0..<=deg {
     coeffs.push(Poly::zero(rest_gens, poly.domain))
   }
   for m, c in poly.coeffs {
@@ -639,7 +638,7 @@ fn univar_coeff_polys(
 fn univar_coeffs(poly : Poly) -> Array[FieldElem] raise PolyError {
   let deg = poly.degree(0)
   let coeffs : Array[FieldElem] = Array::new()
-  for _ in 0..=deg {
+  for _ in 0..<=deg {
     coeffs.push(fe_from_int(0, poly.domain))
   }
   for m, c in poly.coeffs {
