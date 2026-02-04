@@ -1,0 +1,10 @@
+{
+  "import": [
+    "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symnum"
+  ],
+  "test-import": [
+    "CAIMEOX/symbit/symprint",
+    { "path": "CAIMEOX/symbit/sympy/series", "alias": "sympy_series" }
+  ]
+}
