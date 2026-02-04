@@ -75,6 +75,13 @@ fn sympy_call_obj(
 }
 
 ///|
+fn bool_expr_to_sympy(expr : @symlogic.BoolExpr) -> @py.PyObject raise {
+  let s = @symlogic.to_string(expr)
+  let res = sympy_call_must("sympy.sympify", [OracleArg::Str(s)])
+  objenum_to_obj(res)
+}
+
+///|
 fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
   match set {
     @symsets.Set::EmptySet => sympy_const("EmptySet")
@@ -91,7 +98,7 @@ fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
       }
       sympy_call_obj("sympy.FiniteSet", args)
     }
-    @symsets.Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) => {
+    @symsets.Set::Interval(left~, right~, left_open~, right_open~) => {
       let args : Array[OracleArg] = Array::new()
       args.push(OracleArg::PyObj(expr_to_sympy(left)))
       args.push(OracleArg::PyObj(expr_to_sympy(right)))
@@ -99,7 +106,33 @@ fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
       args.push(OracleArg::Bool(right_open))
       sympy_call_obj("sympy.Interval", args)
     }
-    @symsets.Set::Union(items) => {
+    @symsets.Set::ConditionSet(symbol~, condition~, base~) => {
+      let args : Array[OracleArg] = [
+        OracleArg::PyObj(expr_to_sympy(symbol)),
+        OracleArg::PyObj(bool_expr_to_sympy(condition)),
+        OracleArg::PyObj(set_to_sympy(base)),
+      ]
+      sympy_call_obj("sympy.ConditionSet", args)
+    }
+    @symsets.Set::ImageSet(symbol~, expr~, base~) => {
+      let lambda_obj = sympy_call_obj("sympy.Lambda", [
+        OracleArg::PyObj(expr_to_sympy(symbol)),
+        OracleArg::PyObj(expr_to_sympy(expr)),
+      ])
+      let args : Array[OracleArg] = [
+        OracleArg::PyObj(lambda_obj),
+        OracleArg::PyObj(set_to_sympy(base)),
+      ]
+      sympy_call_obj("sympy.ImageSet", args)
+    }
+    @symsets.Set::ProductSet(items) => {
+      let args : Array[OracleArg] = Array::new()
+      for item in items {
+        args.push(OracleArg::PyObj(set_to_sympy(item)))
+      }
+      sympy_call_obj("sympy.ProductSet", args)
+    }
+    @symsets.Set::Union(items) =>
       if items.is_empty() {
         sympy_const("EmptySet")
       } else {
@@ -109,8 +142,7 @@ fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
         }
         sympy_call_obj("sympy.Union", args)
       }
-    }
-    @symsets.Set::Intersection(items) => {
+    @symsets.Set::Intersection(items) =>
       if items.is_empty() {
         sympy_const("UniversalSet")
       } else {
@@ -120,7 +152,6 @@ fn set_to_sympy(set : @symsets.Set) -> @py.PyObject raise {
         }
         sympy_call_obj("sympy.Intersection", args)
       }
-    }
     @symsets.Set::Complement(a, b) => {
       let args : Array[OracleArg] = [
         OracleArg::PyObj(set_to_sympy(a)),
@@ -173,10 +204,7 @@ pub fn complement_str(a : @symsets.Set, b : @symsets.Set) -> String raise {
 }
 
 ///|
-pub fn contains_str(
-  set : @symsets.Set,
-  elem : @symcore.Expr,
-) -> String raise {
+pub fn contains_str(set : @symsets.Set, elem : @symcore.Expr) -> String raise {
   let args : Array[OracleArg] = [
     OracleArg::PyObj(expr_to_sympy(elem)),
     OracleArg::PyObj(set_to_sympy(set)),

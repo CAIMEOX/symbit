@@ -3,6 +3,7 @@
     { "path": "CAIMEOX/symbit/sympy", "alias": "sympy" },
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symsets",
+    "CAIMEOX/symbit/symlogic",
     { "path": "Kaida-Amethyst/python", "alias": "py" }
   ]
 }

@@ -3,7 +3,18 @@
 
 ///|
 fn expr_str(expr : @symcore.Expr) -> String {
-  @symprint.to_string(expr)
+  match expr {
+    @symcore.Expr::Function(name, args) if name == "Tuple" =>
+      if args.is_empty() {
+        "()"
+      } else if args.length() == 1 {
+        "(\{expr_str(args[0])},)"
+      } else {
+        let rendered = args.map(expr_str).join(", ")
+        "(\{rendered})"
+      }
+    _ => @symprint.to_string(expr)
+  }
 }
 
 ///|
@@ -29,7 +40,7 @@ pub fn to_string(set : Set) -> String {
       let rendered = items.map(expr_str).join(", ")
       "{" + rendered + "}"
     }
-    Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) => {
+    Set::Interval(left~, right~, left_open~, right_open~) => {
       let l = expr_str(left)
       let r = expr_str(right)
       if left_open && right_open {
@@ -42,22 +53,35 @@ pub fn to_string(set : Set) -> String {
         "Interval(" + l + ", " + r + ")"
       }
     }
-    Set::Union(items) => {
+    Set::ConditionSet(symbol~, condition~, base~) => {
+      let sym = expr_str(symbol)
+      let cond = @symlogic.to_string(condition)
+      "ConditionSet(" + sym + ", " + cond + ", " + to_string(base) + ")"
+    }
+    Set::ImageSet(symbol~, expr~, base~) => {
+      let sym = expr_str(symbol)
+      let body = expr_str(expr)
+      let lambda = "Lambda(" + sym + ", " + body + ")"
+      "ImageSet(" + lambda + ", " + to_string(base) + ")"
+    }
+    Set::ProductSet(items) => {
+      let rendered = items.map(to_string).join(", ")
+      "ProductSet(" + rendered + ")"
+    }
+    Set::Union(items) =>
       if items.is_empty() {
         "EmptySet"
       } else {
         let rendered = items.map(to_string).join(", ")
         "Union(" + rendered + ")"
       }
-    }
-    Set::Intersection(items) => {
+    Set::Intersection(items) =>
       if items.is_empty() {
         "UniversalSet"
       } else {
         let rendered = items.map(to_string).join(", ")
         "Intersection(" + rendered + ")"
       }
-    }
     Set::Complement(a, b) =>
       "Complement(" + to_string(a) + ", " + to_string(b) + ")"
   }

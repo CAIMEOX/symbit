@@ -10,8 +10,15 @@ pub(all) enum Set {
     left~ : @symcore.Expr,
     right~ : @symcore.Expr,
     left_open~ : Bool,
-    right_open~ : Bool,
+    right_open~ : Bool
   )
+  ConditionSet(
+    symbol~ : @symcore.Expr,
+    condition~ : @symlogic.BoolExpr,
+    base~ : Set
+  )
+  ImageSet(symbol~ : @symcore.Expr, expr~ : @symcore.Expr, base~ : Set)
+  ProductSet(Array[Set])
   Union(Array[Set])
   Intersection(Array[Set])
   Complement(Set, Set)
@@ -99,6 +106,73 @@ pub fn finite_set(items : Array[@symcore.Expr]) -> Set {
 }
 
 ///|
+pub fn condition_set(
+  symbol : @symcore.Expr,
+  condition : @symlogic.BoolExpr,
+  base? : Set = Set::UniversalSet,
+) -> Set {
+  match base {
+    Set::EmptySet => Set::EmptySet
+    _ =>
+      match condition {
+        @symlogic.BoolExpr::True => base
+        @symlogic.BoolExpr::False => Set::EmptySet
+        _ => Set::ConditionSet(symbol~, condition~, base~)
+      }
+  }
+}
+
+///|
+pub fn image_set(
+  symbol : @symcore.Expr,
+  expr : @symcore.Expr,
+  base? : Set = Set::UniversalSet,
+) -> Set {
+  let var_name = match symbol {
+    @symcore.Expr::Symbol(name) => name
+    _ => ""
+  }
+  if expr_equal(expr, symbol) {
+    return base
+  }
+  if var_name != "" && !expr_depends_on(expr, var_name) {
+    match set_is_empty(base) {
+      SetBool::True => return Set::EmptySet
+      SetBool::False => return finite_set([expr])
+      SetBool::Unknown => ()
+    }
+  }
+  match base {
+    Set::EmptySet => Set::EmptySet
+    _ => Set::ImageSet(symbol~, expr~, base~)
+  }
+}
+
+///|
+pub fn product_set(sets : Array[Set]) -> Set {
+  if sets.is_empty() {
+    return finite_set([@symcore.function("Tuple", [])])
+  }
+  let flat : Array[Set] = Array::new()
+  for set in sets {
+    match set {
+      Set::ProductSet(inner) =>
+        for item in inner {
+          flat.push(item)
+        }
+      _ => flat.push(set)
+    }
+  }
+  for item in flat {
+    match set_is_empty(item) {
+      SetBool::True => return Set::EmptySet
+      _ => ()
+    }
+  }
+  Set::ProductSet(flat)
+}
+
+///|
 fn expr_number_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
     @symcore.Expr::Number(n) => Some(n)
@@ -136,10 +210,10 @@ pub fn interval(
           finite_set([left])
         }
       } else {
-        Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open)
+        Set::Interval(left~, right~, left_open~, right_open~)
       }
     }
-    _ => Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open)
+    _ => Set::Interval(left~, right~, left_open~, right_open~)
   }
 }
 
@@ -150,14 +224,17 @@ fn variant_rank(set : Set) -> Int {
     Set::UniversalSet => 1
     Set::Interval(..) => 2
     Set::FiniteSet(_) => 3
-    Set::Naturals => 4
-    Set::Naturals0 => 5
-    Set::Integers => 6
-    Set::Rationals => 7
-    Set::Reals => 8
-    Set::Union(_) => 9
-    Set::Intersection(_) => 10
-    Set::Complement(_, _) => 11
+    Set::ConditionSet(..) => 4
+    Set::ImageSet(..) => 5
+    Set::ProductSet(_) => 6
+    Set::Naturals => 7
+    Set::Naturals0 => 8
+    Set::Integers => 9
+    Set::Rationals => 10
+    Set::Reals => 11
+    Set::Union(_) => 12
+    Set::Intersection(_) => 13
+    Set::Complement(_, _) => 14
   }
 }
 
@@ -180,7 +257,13 @@ fn compare_expr_arrays(
       return cmp
     }
   }
-  if len_x < len_y { -1 } else if len_x > len_y { 1 } else { 0 }
+  if len_x < len_y {
+    -1
+  } else if len_x > len_y {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -194,7 +277,13 @@ fn compare_set_arrays(xs : Array[Set], ys : Array[Set]) -> Int {
       return cmp
     }
   }
-  if len_x < len_y { -1 } else if len_x > len_y { 1 } else { 0 }
+  if len_x < len_y {
+    -1
+  } else if len_x > len_y {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -205,8 +294,10 @@ pub fn compare_set(a : Set, b : Set) -> Int {
     return if ra < rb { -1 } else { 1 }
   }
   match (a, b) {
-    (Set::Interval(left=al, right=ar, left_open=alo, right_open=aro),
-     Set::Interval(left=bl, right=br, left_open=blo, right_open=bro)) => {
+    (
+      Set::Interval(left=al, right=ar, left_open=alo, right_open=aro),
+      Set::Interval(left=bl, right=br, left_open=blo, right_open=bro),
+    ) => {
       let cmp_l = compare_exprs(al, bl)
       if cmp_l != 0 {
         return cmp_l
@@ -224,11 +315,50 @@ pub fn compare_set(a : Set, b : Set) -> Int {
       0
     }
     (Set::FiniteSet(xs), Set::FiniteSet(ys)) => compare_expr_arrays(xs, ys)
+    (
+      Set::ConditionSet(symbol=sym_a, condition=cond_a, base=base_a),
+      Set::ConditionSet(symbol=sym_b, condition=cond_b, base=base_b),
+    ) => {
+      let c0 = compare_exprs(sym_a, sym_b)
+      if c0 != 0 {
+        c0
+      } else {
+        let s0 = @symlogic.to_string(cond_a)
+        let s1 = @symlogic.to_string(cond_b)
+        let c1 = s0.compare(s1)
+        if c1 != 0 {
+          c1
+        } else {
+          compare_set(base_a, base_b)
+        }
+      }
+    }
+    (
+      Set::ImageSet(symbol=sym_a, expr=expr_a, base=base_a),
+      Set::ImageSet(symbol=sym_b, expr=expr_b, base=base_b),
+    ) => {
+      let c0 = compare_exprs(sym_a, sym_b)
+      if c0 != 0 {
+        c0
+      } else {
+        let c1 = compare_exprs(expr_a, expr_b)
+        if c1 != 0 {
+          c1
+        } else {
+          compare_set(base_a, base_b)
+        }
+      }
+    }
+    (Set::ProductSet(xs), Set::ProductSet(ys)) => compare_set_arrays(xs, ys)
     (Set::Union(xs), Set::Union(ys)) => compare_set_arrays(xs, ys)
     (Set::Intersection(xs), Set::Intersection(ys)) => compare_set_arrays(xs, ys)
     (Set::Complement(a0, a1), Set::Complement(b0, b1)) => {
       let c0 = compare_set(a0, b0)
-      if c0 != 0 { c0 } else { compare_set(a1, b1) }
+      if c0 != 0 {
+        c0
+      } else {
+        compare_set(a1, b1)
+      }
     }
     _ => 0
   }
@@ -269,12 +399,26 @@ pub impl Hash for Set with hash_combine(self, hasher : Hasher) -> Unit {
       for item in items {
         item.hash_combine(hasher)
       }
-    Set::Interval(left=left, right=right, left_open=left_open, right_open=right_open) => {
+    Set::Interval(left~, right~, left_open~, right_open~) => {
       left.hash_combine(hasher)
       right.hash_combine(hasher)
       hasher.combine_int(if left_open { 1 } else { 0 })
       hasher.combine_int(if right_open { 1 } else { 0 })
     }
+    Set::ConditionSet(symbol~, condition~, base~) => {
+      symbol.hash_combine(hasher)
+      condition.hash_combine(hasher)
+      base.hash_combine(hasher)
+    }
+    Set::ImageSet(symbol~, expr~, base~) => {
+      symbol.hash_combine(hasher)
+      expr.hash_combine(hasher)
+      base.hash_combine(hasher)
+    }
+    Set::ProductSet(items) =>
+      for item in items {
+        item.hash_combine(hasher)
+      }
     Set::Union(items) | Set::Intersection(items) =>
       for item in items {
         item.hash_combine(hasher)

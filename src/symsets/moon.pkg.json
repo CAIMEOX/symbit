@@ -2,7 +2,8 @@
   "import": [
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symnum",
-    "CAIMEOX/symbit/symprint"
+    "CAIMEOX/symbit/symprint",
+    "CAIMEOX/symbit/symlogic"
   ],
   "test-import": [
     { "path": "CAIMEOX/symbit/sympy/sets", "alias": "sympy_sets" }

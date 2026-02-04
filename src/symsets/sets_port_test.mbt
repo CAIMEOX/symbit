@@ -39,19 +39,14 @@ test "symsets interval parity" {
   let one = @symcore.int(1)
   let closed = interval(zero, one)
   assert_eq(set_str(closed), sympy_set_str(closed))
-
   let lopen = interval(zero, one, left_open=true)
   assert_eq(set_str(lopen), sympy_set_str(lopen))
-
   let ropen = interval(zero, one, right_open=true)
   assert_eq(set_str(ropen), sympy_set_str(ropen))
-
   let open = interval(zero, one, left_open=true, right_open=true)
   assert_eq(set_str(open), sympy_set_str(open))
-
   let point = interval(zero, zero)
   assert_eq(set_str(point), sympy_set_str(point))
-
   let empty = interval(zero, zero, left_open=true)
   assert_eq(set_str(empty), sympy_set_str(empty))
 }
@@ -69,7 +64,6 @@ test "symsets union parity" {
   let ours = union([a, b])
   let sympy = sympy_union_str([a, b])
   assert_eq(set_str(ours), sympy)
-
   let f1 = finite_set([@symcore.int(2), @symcore.int(3)])
   let f2 = finite_set([@symcore.int(3), @symcore.int(4)])
   let ours2 = union([f1, f2])
@@ -84,7 +78,6 @@ test "symsets intersection parity" {
   let ours = intersection([a, b])
   let sympy = sympy_intersection_str([a, b])
   assert_eq(set_str(ours), sympy)
-
   let f1 = finite_set([@symcore.int(1), @symcore.int(2)])
   let f2 = finite_set([@symcore.int(2), @symcore.int(3)])
   let ours2 = intersection([f1, f2])
@@ -99,7 +92,6 @@ test "symsets complement parity" {
   let ours = complement(a, b)
   let sympy = sympy_complement_str(a, b)
   assert_eq(set_str(ours), sympy)
-
   let f1 = finite_set([@symcore.int(1), @symcore.int(2), @symcore.int(3)])
   let f2 = finite_set([@symcore.int(2)])
   let ours2 = complement(f1, f2)
@@ -113,7 +105,6 @@ test "symsets contains parity" {
   let res = contains(set, @symcore.int(0))
   let sympy = sympy_contains_str(set, @symcore.int(0))
   assert_eq(setbool_str(res), sympy)
-
   let res2 = contains(set, @symcore.int(2))
   let sympy2 = sympy_contains_str(set, @symcore.int(2))
   assert_eq(setbool_str(res2), sympy2)
