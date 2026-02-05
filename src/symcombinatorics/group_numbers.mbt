@@ -34,7 +34,7 @@ fn is_nilpotent_number_from_factors(factors : Map[Int, Int]) -> Bool {
     for q, e in factors {
       let mut m = 1
       for _ in 0..<e {
-        m = (m * q) % p
+        m = m * q % p
         if m == 1 {
           return false
         }
@@ -93,7 +93,7 @@ fn contains_int(values : Array[Int], target : Int) -> Bool {
 
 ///|
 fn powerset(values : Array[Int]) -> Array[Array[Int]] {
-  let out : Array[Array[Int]] = [ [] ]
+  let out : Array[Array[Int]] = [[]]
   for v in values {
     let current = out.length()
     for i in 0..<current {
@@ -217,12 +217,18 @@ pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
       return @symntheory.bi(15)
     }
     if exp == 5 {
-      return @symntheory.bi(61) + @symntheory.bi(2 * prime) +
-        @symntheory.bi(2 * gcd_int(prime - 1, 3)) + @symntheory.bi(gcd_int(prime - 1, 4))
+      return @symntheory.bi(61) +
+        @symntheory.bi(2 * prime) +
+        @symntheory.bi(2 * gcd_int(prime - 1, 3)) +
+        @symntheory.bi(gcd_int(prime - 1, 4))
     }
     if exp == 6 {
       return @symntheory.bi(3 * prime * prime + 39 * prime + 344) +
-        @symntheory.bi(24 * gcd_int(prime - 1, 3) + 11 * gcd_int(prime - 1, 4) + 2 * gcd_int(prime - 1, 5))
+        @symntheory.bi(
+          24 * gcd_int(prime - 1, 3) +
+          11 * gcd_int(prime - 1, 4) +
+          2 * gcd_int(prime - 1, 5),
+        )
     }
     if exp == 7 {
       if prime == 5 {
@@ -232,10 +238,16 @@ pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
         @symntheory.bi(12) * pow_bigint(prime, 4) +
         @symntheory.bi(44) * pow_bigint(prime, 3) +
         @symntheory.bi(170 * prime * prime + 707 * prime + 2455) +
-        @symntheory.bi(4 * prime * prime + 44 * prime + 291) * @symntheory.bi(gcd_int(prime - 1, 3)) +
-        @symntheory.bi(prime * prime + 19 * prime + 135) * @symntheory.bi(gcd_int(prime - 1, 4)) +
+        @symntheory.bi(4 * prime * prime + 44 * prime + 291) *
+        @symntheory.bi(gcd_int(prime - 1, 3)) +
+        @symntheory.bi(prime * prime + 19 * prime + 135) *
+        @symntheory.bi(gcd_int(prime - 1, 4)) +
         @symntheory.bi(3 * prime + 31) * @symntheory.bi(gcd_int(prime - 1, 5)) +
-        @symntheory.bi(4 * gcd_int(prime - 1, 7) + 5 * gcd_int(prime - 1, 8) + gcd_int(prime - 1, 9))
+        @symntheory.bi(
+          4 * gcd_int(prime - 1, 7) +
+          5 * gcd_int(prime - 1, 8) +
+          gcd_int(prime - 1, 9),
+        )
     }
   }
   let mut has_non_squarefree = false
@@ -247,13 +259,38 @@ pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
   }
   if has_non_squarefree {
     let small : Map[Int, Int] = {
-      12: 5, 18: 5, 20: 5, 24: 15, 28: 4, 36: 14, 40: 14, 44: 4, 45: 2, 48: 52,
-      50: 5, 52: 5, 54: 15, 56: 13, 60: 13, 63: 4, 68: 5, 72: 50, 75: 3, 76: 4,
-      80: 52, 84: 15, 88: 12, 90: 10, 92: 4,
+      12: 5,
+      18: 5,
+      20: 5,
+      24: 15,
+      28: 4,
+      36: 14,
+      40: 14,
+      44: 4,
+      45: 2,
+      48: 52,
+      50: 5,
+      52: 5,
+      54: 15,
+      56: 13,
+      60: 13,
+      63: 4,
+      68: 5,
+      72: 50,
+      75: 3,
+      76: 4,
+      80: 52,
+      84: 15,
+      88: 12,
+      90: 10,
+      92: 4,
     }
     match small.get(n) {
       Some(v) => return @symntheory.bi(v)
-      None => raise CombinatoricsError::ValueError("Number of groups of order n is unknown for this n")
+      None =>
+        raise CombinatoricsError::ValueError(
+          "Number of groups of order n is unknown for this n",
+        )
     }
   }
   if count == 2 {

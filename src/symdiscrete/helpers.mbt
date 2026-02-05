@@ -76,6 +76,7 @@ fn expr_pi() -> Expr {
 }
 
 ///|
+
 ///|
 fn is_const_symbol(name : String) -> Bool {
   name == "I" || name == "pi" || name == "E"
@@ -118,7 +119,10 @@ fn bigint_to_int_checked(
 }
 
 ///|
-fn expr_to_int_checked(expr : Expr, context : String) -> Int raise DiscreteError {
+fn expr_to_int_checked(
+  expr : Expr,
+  context : String,
+) -> Int raise DiscreteError {
   match expr_number_value(expr) {
     Some(n) if n.is_integral() =>
       bigint_to_int_checked(n.numerator(), 62, context)
@@ -128,8 +132,9 @@ fn expr_to_int_checked(expr : Expr, context : String) -> Int raise DiscreteError
 
 ///|
 fn mul_mod_int(a : Int, b : Int, modulus : Int) -> Int {
-  let res =
-    (@bigint.BigInt::from_int(a) * @bigint.BigInt::from_int(b)) % @bigint.BigInt::from_int(modulus)
+  let res = @bigint.BigInt::from_int(a) *
+    @bigint.BigInt::from_int(b) %
+    @bigint.BigInt::from_int(modulus)
   res.to_int()
 }
 
@@ -164,11 +169,10 @@ fn expand_mul_args(args : Array[Expr]) -> Expr {
         }
         terms = next_terms
       }
-      _ => {
+      _ =>
         for i in 0..<terms.length() {
           terms[i] = @symcore.mul([terms[i], expanded])
         }
-      }
     }
   }
   if terms.length() == 1 {

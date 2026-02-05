@@ -31,7 +31,9 @@ pub fn GrayCode::new(
     current_str = start_str
   } else if rank is Some(r) {
     if r < 0 {
-      raise CombinatoricsError::ValueError("Gray code rank must be non-negative")
+      raise CombinatoricsError::ValueError(
+        "Gray code rank must be non-negative",
+      )
     }
     let selections = pow_int(2, n)
     let rr = if selections == 0 { 0 } else { r % selections }
@@ -65,11 +67,14 @@ pub fn GrayCode::rank(self : GrayCode) -> Int {
 }
 
 ///|
-pub fn GrayCode::next(self : GrayCode, delta? : Int = 1) -> GrayCode raise CombinatoricsError {
+pub fn GrayCode::next(
+  self : GrayCode,
+  delta? : Int = 1,
+) -> GrayCode raise CombinatoricsError {
   let selections = self.selections()
   let mut next_rank = self.rank() + delta
   if selections > 0 {
-    next_rank = ((next_rank % selections) + selections) % selections
+    next_rank = (next_rank % selections + selections) % selections
   }
   GrayCode::new(self.n, rank=next_rank)
 }
@@ -132,8 +137,9 @@ pub fn GrayCode::unrank(n : Int, rank : Int) -> String {
     if k < m {
       return "0" + rec(k, n - 1)
     }
-    "1" + rec(m - (k % m) - 1, n - 1)
+    "1" + rec(m - k % m - 1, n - 1)
   }
+
   rec(rank, n)
 }
 

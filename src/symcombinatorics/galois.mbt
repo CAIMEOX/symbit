@@ -2,12 +2,19 @@
 /// Galois-related transitive subgroup constructors.
 
 ///|
-fn perm(cycles : Array[Array[Int]], size~ : Int) -> Permutation raise CombinatoricsError {
-  Permutation::from_cycles(cycles, size=size)
+fn perm(
+  cycles : Array[Array[Int]],
+  size~ : Int,
+) -> Permutation raise CombinatoricsError {
+  Permutation::from_cycles(cycles, size~)
 }
 
 ///|
-fn set_alternating_group_properties(g : PermutationGroup, n : Int, degree : Int) -> Unit {
+fn set_alternating_group_properties(
+  g : PermutationGroup,
+  n : Int,
+  degree : Int,
+) -> Unit {
   if n < 3 {
     g.order_cache = Some(1)
   }
@@ -33,7 +40,11 @@ fn set_alternating_group_properties(g : PermutationGroup, n : Int, degree : Int)
 }
 
 ///|
-fn set_symmetric_group_properties(g : PermutationGroup, n : Int, degree : Int) -> Unit {
+fn set_symmetric_group_properties(
+  g : PermutationGroup,
+  n : Int,
+  degree : Int,
+) -> Unit {
   if n < 3 {
     g.is_abelian_cache = Some(true)
     g.is_nilpotent_cache = Some(true)
@@ -57,7 +68,9 @@ pub(all) enum S1TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S1TransitiveSubgroups::get_perm_group(self : S1TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S1TransitiveSubgroups::get_perm_group(
+  self : S1TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     S1 => symmetric_group(1)
   }
@@ -69,7 +82,9 @@ pub(all) enum S2TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S2TransitiveSubgroups::get_perm_group(self : S2TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S2TransitiveSubgroups::get_perm_group(
+  self : S2TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     S2 => symmetric_group(2)
   }
@@ -82,7 +97,9 @@ pub(all) enum S3TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S3TransitiveSubgroups::get_perm_group(self : S3TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S3TransitiveSubgroups::get_perm_group(
+  self : S3TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     A3 => alternating_group(3)
     S3 => symmetric_group(3)
@@ -99,7 +116,9 @@ pub(all) enum S4TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S4TransitiveSubgroups::get_perm_group(self : S4TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S4TransitiveSubgroups::get_perm_group(
+  self : S4TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     C4 => cyclic_group(4)
     V => four_group()
@@ -119,7 +138,9 @@ pub(all) enum S5TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S5TransitiveSubgroups::get_perm_group(self : S5TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S5TransitiveSubgroups::get_perm_group(
+  self : S5TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     C5 => cyclic_group(5)
     D5 => dihedral_group(5)
@@ -150,7 +171,9 @@ pub(all) enum S6TransitiveSubgroups {
 } derive(Eq)
 
 ///|
-pub fn S6TransitiveSubgroups::get_perm_group(self : S6TransitiveSubgroups) -> PermutationGroup raise CombinatoricsError {
+pub fn S6TransitiveSubgroups::get_perm_group(
+  self : S6TransitiveSubgroups,
+) -> PermutationGroup raise CombinatoricsError {
   match self {
     C6 => cyclic_group(6)
     S3 => s3_in_s6()

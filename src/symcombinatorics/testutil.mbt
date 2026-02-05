@@ -7,11 +7,18 @@ fn perm_key(p : Permutation) -> String {
 }
 
 ///|
-pub fn _cmp_perm_lists(first : Array[Permutation], second : Array[Permutation]) -> Bool {
+pub fn _cmp_perm_lists(
+  first : Array[Permutation],
+  second : Array[Permutation],
+) -> Bool {
   let a : Array[String] = Array::new()
   let b : Array[String] = Array::new()
-  for p in first { a.push(perm_key(p)) }
-  for p in second { b.push(perm_key(p)) }
+  for p in first {
+    a.push(perm_key(p))
+  }
+  for p in second {
+    b.push(perm_key(p))
+  }
   let n = a.length()
   if b.length() != n {
     return false

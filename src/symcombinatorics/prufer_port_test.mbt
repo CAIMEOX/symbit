@@ -5,7 +5,6 @@ test "combinatorics prufer parity" {
   let tree = p.tree_repr()
   assert_oracle(try? @sympy_combinatorics.prufer_equiv_tree(seq, tree))
   assert_oracle(try? @sympy_combinatorics.prufer_rank_equiv(seq, p.rank()))
-
   let edges = [[0, 3], [1, 3], [2, 3], [3, 4], [4, 5]]
   let p2 = Prufer::from_edges(edges)
   let seq2 = p2.prufer_repr()

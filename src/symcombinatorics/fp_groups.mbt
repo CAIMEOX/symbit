@@ -14,11 +14,14 @@ fn gcd_int_local(a0 : Int, b0 : Int) -> Int {
 }
 
 ///|
-fn fp_group_name(free_group : FreeGroup, generators : Array[FreeGroupElement]) -> String {
+fn fp_group_name(
+  free_group : FreeGroup,
+  generators : Array[FreeGroupElement],
+) -> String {
   if free_group.rank > 30 {
     "<fp group with \{free_group.rank} generators>"
   } else {
-    let gens = generators.map((g) => g.to_string()).join(", ")
+    let gens = generators.map(g => g.to_string()).join(", ")
     "<fp group on the generators (\{gens})>"
   }
 }
@@ -36,7 +39,10 @@ pub struct FpGroup {
 }
 
 ///|
-pub fn FpGroup::new(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> FpGroup {
+pub fn FpGroup::new(
+  fr_grp : FreeGroup,
+  relators : Array[FreeGroupElement],
+) -> FpGroup {
   let gens = fr_grp.generators()
   let name = fp_group_name(fr_grp, gens)
   let rs = RewritingSystem::new(fr_grp, relators, gens, name)
@@ -53,18 +59,27 @@ pub fn FpGroup::new(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> F
 }
 
 ///|
-pub fn fp_group(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> (FpGroup, Array[FreeGroupElement]) {
+pub fn fp_group(
+  fr_grp : FreeGroup,
+  relators : Array[FreeGroupElement],
+) -> (FpGroup, Array[FreeGroupElement]) {
   let grp = FpGroup::new(fr_grp, relators)
   (grp, grp.generators)
 }
 
 ///|
-pub fn xfp_group(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> (FpGroup, Array[FreeGroupElement]) {
+pub fn xfp_group(
+  fr_grp : FreeGroup,
+  relators : Array[FreeGroupElement],
+) -> (FpGroup, Array[FreeGroupElement]) {
   fp_group(fr_grp, relators)
 }
 
 ///|
-pub fn vfp_group(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> FpGroup {
+pub fn vfp_group(
+  fr_grp : FreeGroup,
+  relators : Array[FreeGroupElement],
+) -> FpGroup {
   let (g, _) = fp_group(fr_grp, relators)
   g
 }
@@ -72,10 +87,14 @@ pub fn vfp_group(fr_grp : FreeGroup, relators : Array[FreeGroupElement]) -> FpGr
 ///|
 pub fn FpGroup::make_confluent(self : FpGroup) -> Unit raise CombinatoricsError {
   let _ = self.rewriting_system.make_confluent()
+
 }
 
 ///|
-pub fn FpGroup::reduce(self : FpGroup, word : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError {
+pub fn FpGroup::reduce(
+  self : FpGroup,
+  word : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
   self.rewriting_system.reduce(word)
 }
 
@@ -116,39 +135,51 @@ pub fn FpGroup::coset_enumeration(
 ) -> CosetTable raise CombinatoricsError {
   if strategy == "relator_based" {
     match max_cosets {
-      Some(v) => {
+      Some(v) =>
         match draft {
-          Some(d) => coset_enumeration_r(self, subgroup, max_cosets=v, draft=d, incomplete=incomplete)
-          None => coset_enumeration_r(self, subgroup, max_cosets=v, incomplete=incomplete)
+          Some(d) =>
+            coset_enumeration_r(
+              self,
+              subgroup,
+              max_cosets=v,
+              draft=d,
+              incomplete~,
+            )
+          None => coset_enumeration_r(self, subgroup, max_cosets=v, incomplete~)
         }
-      }
-      None => {
+      None =>
         match draft {
-          Some(d) => coset_enumeration_r(self, subgroup, draft=d, incomplete=incomplete)
-          None => coset_enumeration_r(self, subgroup, incomplete=incomplete)
+          Some(d) => coset_enumeration_r(self, subgroup, draft=d, incomplete~)
+          None => coset_enumeration_r(self, subgroup, incomplete~)
         }
-      }
     }
   } else {
     match max_cosets {
-      Some(v) => {
+      Some(v) =>
         match draft {
-          Some(d) => coset_enumeration_c(self, subgroup, max_cosets=v, draft=d, incomplete=incomplete)
-          None => coset_enumeration_c(self, subgroup, max_cosets=v, incomplete=incomplete)
+          Some(d) =>
+            coset_enumeration_c(
+              self,
+              subgroup,
+              max_cosets=v,
+              draft=d,
+              incomplete~,
+            )
+          None => coset_enumeration_c(self, subgroup, max_cosets=v, incomplete~)
         }
-      }
-      None => {
+      None =>
         match draft {
-          Some(d) => coset_enumeration_c(self, subgroup, draft=d, incomplete=incomplete)
-          None => coset_enumeration_c(self, subgroup, incomplete=incomplete)
+          Some(d) => coset_enumeration_c(self, subgroup, draft=d, incomplete~)
+          None => coset_enumeration_c(self, subgroup, incomplete~)
         }
-      }
     }
   }
 }
 
 ///|
-pub fn FpGroup::standardize_coset_table(self : FpGroup) -> Unit raise CombinatoricsError {
+pub fn FpGroup::standardize_coset_table(
+  self : FpGroup,
+) -> Unit raise CombinatoricsError {
   match self.coset_table_cache {
     Some(ct) => {
       ct.standardize()
@@ -178,34 +209,25 @@ pub fn FpGroup::coset_table(
       }
       None => {
         let coset_table = match max_cosets {
-          Some(v) => {
+          Some(v) =>
             match draft {
-              Some(d) => self.coset_enumeration(
-                [],
-                strategy=strategy,
-                max_cosets=v,
-                draft=d,
-                incomplete=incomplete,
-              )
-              None => self.coset_enumeration(
-                [],
-                strategy=strategy,
-                max_cosets=v,
-                incomplete=incomplete,
-              )
+              Some(d) =>
+                self.coset_enumeration(
+                  [],
+                  strategy~,
+                  max_cosets=v,
+                  draft=d,
+                  incomplete~,
+                )
+              None =>
+                self.coset_enumeration([], strategy~, max_cosets=v, incomplete~)
             }
-          }
-          None => {
+          None =>
             match draft {
-              Some(d) => self.coset_enumeration(
-                [],
-                strategy=strategy,
-                draft=d,
-                incomplete=incomplete,
-              )
-              None => self.coset_enumeration([], strategy=strategy, incomplete=incomplete)
+              Some(d) =>
+                self.coset_enumeration([], strategy~, draft=d, incomplete~)
+              None => self.coset_enumeration([], strategy~, incomplete~)
             }
-          }
         }
         self.coset_table_cache = Some(coset_table)
         self.standardize_coset_table()
@@ -214,34 +236,30 @@ pub fn FpGroup::coset_table(
     }
   } else {
     let coset_table = match max_cosets {
-      Some(v) => {
+      Some(v) =>
         match draft {
-          Some(d) => self.coset_enumeration(
-            subgroup,
-            strategy=strategy,
-            max_cosets=v,
-            draft=d,
-            incomplete=incomplete,
-          )
-          None => self.coset_enumeration(
-            subgroup,
-            strategy=strategy,
-            max_cosets=v,
-            incomplete=incomplete,
-          )
+          Some(d) =>
+            self.coset_enumeration(
+              subgroup,
+              strategy~,
+              max_cosets=v,
+              draft=d,
+              incomplete~,
+            )
+          None =>
+            self.coset_enumeration(
+              subgroup,
+              strategy~,
+              max_cosets=v,
+              incomplete~,
+            )
         }
-      }
-      None => {
+      None =>
         match draft {
-          Some(d) => self.coset_enumeration(
-            subgroup,
-            strategy=strategy,
-            draft=d,
-            incomplete=incomplete,
-          )
-          None => self.coset_enumeration(subgroup, strategy=strategy, incomplete=incomplete)
+          Some(d) =>
+            self.coset_enumeration(subgroup, strategy~, draft=d, incomplete~)
+          None => self.coset_enumeration(subgroup, strategy~, incomplete~)
         }
-      }
     }
     coset_table.standardize()
     coset_table.table
@@ -249,7 +267,9 @@ pub fn FpGroup::coset_table(
 }
 
 ///|
-fn used_generators(relators : Array[FreeGroupElement]) -> Array[FreeGroupElement] {
+fn used_generators(
+  relators : Array[FreeGroupElement],
+) -> Array[FreeGroupElement] {
   let seen : Map[FreeGroupElement, Bool] = {}
   let out : Array[FreeGroupElement] = Array::new()
   for r in relators {
@@ -279,7 +299,10 @@ pub fn FpGroup::_is_infinite(self : FpGroup) -> Bool? {
 }
 
 ///|
-pub fn FpGroup::order(self : FpGroup, strategy? : String = "relator_based") -> GroupOrder raise CombinatoricsError {
+pub fn FpGroup::order(
+  self : FpGroup,
+  strategy? : String = "relator_based",
+) -> GroupOrder raise CombinatoricsError {
   match self.order_cache {
     Some(o) => o
     None => {
@@ -307,7 +330,7 @@ pub fn FpGroup::order(self : FpGroup, strategy? : String = "relator_based") -> G
               Some(ct) => {
                 let ind = ct.table.length()
                 let sub = self.subgroup(gens, draft=ct)
-                match sub.order(strategy=strategy) {
+                match sub.order(strategy~) {
                   GroupOrder::Finite(n) => GroupOrder::Finite(ind * n)
                   GroupOrder::Infinite => GroupOrder::Infinite
                 }
@@ -330,7 +353,9 @@ pub fn FpGroup::order(self : FpGroup, strategy? : String = "relator_based") -> G
 }
 
 ///|
-pub fn FpGroup::most_frequent_generator(self : FpGroup) -> FreeGroupElement raise CombinatoricsError {
+pub fn FpGroup::most_frequent_generator(
+  self : FpGroup,
+) -> FreeGroupElement raise CombinatoricsError {
   let gens = self.generators
   let rels = self.relators
   let mut max_idx = 0
@@ -349,7 +374,9 @@ pub fn FpGroup::most_frequent_generator(self : FpGroup) -> FreeGroupElement rais
 }
 
 ///|
-pub fn FpGroup::random(self : FpGroup) -> FreeGroupElement raise CombinatoricsError {
+pub fn FpGroup::random(
+  self : FpGroup,
+) -> FreeGroupElement raise CombinatoricsError {
   let mut r = self.free_group.identity()
   let rand = @random.Rand::new()
   let len = 2 + rand.int(limit=2)
@@ -363,8 +390,10 @@ pub fn FpGroup::random(self : FpGroup) -> FreeGroupElement raise CombinatoricsEr
 }
 
 ///|
-pub fn FpGroup::_finite_index_subgroup(self : FpGroup, s? : Array[FreeGroupElement])
-  -> (Array[FreeGroupElement], CosetTable?) raise CombinatoricsError {
+pub fn FpGroup::_finite_index_subgroup(
+  self : FpGroup,
+  s? : Array[FreeGroupElement],
+) -> (Array[FreeGroupElement], CosetTable?) raise CombinatoricsError {
   let gen = self.most_frequent_generator()
   let rels : Array[FreeGroupElement] = Array::new()
   for g in self.generators {
@@ -375,7 +404,7 @@ pub fn FpGroup::_finite_index_subgroup(self : FpGroup, s? : Array[FreeGroupEleme
   }
   let s_local = match s {
     Some(v) => v
-    None => {
+    None =>
       if self.generators.length() == 2 {
         let out : Array[FreeGroupElement] = Array::new()
         out.push(gen)
@@ -388,7 +417,10 @@ pub fn FpGroup::_finite_index_subgroup(self : FpGroup, s? : Array[FreeGroupEleme
       } else {
         let mut rand = self.free_group.identity()
         let mut i = 0
-        while (rels.any(r => r == rand || r == rand.inverse() || rand.is_identity()) && i < 10) {
+        while rels.any(r => r == rand ||
+                r == rand.inverse() ||
+                rand.is_identity()) &&
+              i < 10 {
           rand = self.random()
           i = i + 1
         }
@@ -402,7 +434,6 @@ pub fn FpGroup::_finite_index_subgroup(self : FpGroup, s? : Array[FreeGroupEleme
         }
         out
       }
-    }
   }
   let mid = (s_local.length() + 1) / 2
   let half1 = s_local[:mid].to_array()
@@ -412,20 +443,33 @@ pub fn FpGroup::_finite_index_subgroup(self : FpGroup, s? : Array[FreeGroupEleme
   let mut m = 200
   let mut table_opt : CosetTable? = None
   let mut half : Array[FreeGroupElement] = half1
-  while table_opt is None && (m / 2 < coset_table_max_limit) {
-    if m > coset_table_max_limit { m = coset_table_max_limit }
-    draft1 = Some(match draft1 {
-      Some(d) => self.coset_enumeration(half1, max_cosets=m, draft=d, incomplete=true)
-      None => self.coset_enumeration(half1, max_cosets=m, incomplete=true)
-    })
+  while table_opt is None && m / 2 < coset_table_max_limit {
+    if m > coset_table_max_limit {
+      m = coset_table_max_limit
+    }
+    draft1 = Some(
+      match draft1 {
+        Some(d) =>
+          self.coset_enumeration(half1, max_cosets=m, draft=d, incomplete=true)
+        None => self.coset_enumeration(half1, max_cosets=m, incomplete=true)
+      },
+    )
     if draft1.unwrap().is_complete() {
       table_opt = draft1
       half = half1
     } else {
-      draft2 = Some(match draft2 {
-        Some(d) => self.coset_enumeration(half2, max_cosets=m, draft=d, incomplete=true)
-        None => self.coset_enumeration(half2, max_cosets=m, incomplete=true)
-      })
+      draft2 = Some(
+        match draft2 {
+          Some(d) =>
+            self.coset_enumeration(
+              half2,
+              max_cosets=m,
+              draft=d,
+              incomplete=true,
+            )
+          None => self.coset_enumeration(half2, max_cosets=m, incomplete=true)
+        },
+      )
       if draft2.unwrap().is_complete() {
         table_opt = draft2
         half = half2
@@ -449,12 +493,11 @@ pub fn FpGroup::index(
   self : FpGroup,
   subgroup : Array[FreeGroupElement],
   strategy? : String = "relator_based",
-)
-  -> GroupOrder raise CombinatoricsError {
+) -> GroupOrder raise CombinatoricsError {
   if subgroup.is_empty() {
-    return self.order(strategy=strategy)
+    return self.order(strategy~)
   }
-  let coset_table = self.coset_enumeration(subgroup, strategy=strategy)
+  let coset_table = self.coset_enumeration(subgroup, strategy~)
   GroupOrder::Finite(coset_table.table.length())
 }
 

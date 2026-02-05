@@ -2,7 +2,9 @@
 /// Group constructions.
 
 ///|
-pub fn direct_product(groups : Array[PermutationGroup]) -> PermutationGroup raise CombinatoricsError {
+pub fn direct_product(
+  groups : Array[PermutationGroup],
+) -> PermutationGroup raise CombinatoricsError {
   let degrees : Array[Int] = Array::new()
   let gens_count : Array[Int] = Array::new()
   let mut total_degree = 0

@@ -13,7 +13,12 @@ fn sum_stride_expr(values : Array[Expr], start : Int, step : Int) -> Expr {
 }
 
 ///|
-fn sum_stride_int(values : Array[Int], start : Int, step : Int, prime : Int) -> Int {
+fn sum_stride_int(
+  values : Array[Int],
+  start : Int,
+  step : Int,
+  prime : Int,
+) -> Int {
   let mut acc = 0
   let mut i = start
   while i < values.length() {
@@ -85,7 +90,10 @@ pub fn convolution_fwht(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 }
 
 ///|
-pub fn convolution_subset(a : Array[Expr], b : Array[Expr]) -> Array[Expr] raise DiscreteError {
+pub fn convolution_subset(
+  a : Array[Expr],
+  b : Array[Expr],
+) -> Array[Expr] raise DiscreteError {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -109,16 +117,25 @@ pub fn convolution_subset(a : Array[Expr], b : Array[Expr]) -> Array[Expr] raise
   for mask in 0..<n2 {
     let mut smask = mask
     while smask > 0 {
-      c[mask] = expr_add2(c[mask], expand_mul(expr_mul2(aa[smask], bb[mask ^ smask])))
+      c[mask] = expr_add2(
+        c[mask],
+        expand_mul(expr_mul2(aa[smask], bb[mask ^ smask])),
+      )
       smask = (smask - 1) & mask
     }
-    c[mask] = expr_add2(c[mask], expand_mul(expr_mul2(aa[smask], bb[mask ^ smask])))
+    c[mask] = expr_add2(
+      c[mask],
+      expand_mul(expr_mul2(aa[smask], bb[mask ^ smask])),
+    )
   }
   c
 }
 
 ///|
-pub fn covering_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] raise DiscreteError {
+pub fn covering_product(
+  a : Array[Expr],
+  b : Array[Expr],
+) -> Array[Expr] raise DiscreteError {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -148,7 +165,10 @@ pub fn covering_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] raise D
 }
 
 ///|
-pub fn intersecting_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] raise DiscreteError {
+pub fn intersecting_product(
+  a : Array[Expr],
+  b : Array[Expr],
+) -> Array[Expr] raise DiscreteError {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -246,8 +266,12 @@ pub fn convolution(
     Some(_) => hint_count = hint_count + 1
     None => ()
   }
-  if dyadic_hint { hint_count = hint_count + 1 }
-  if subset_hint { hint_count = hint_count + 1 }
+  if dyadic_hint {
+    hint_count = hint_count + 1
+  }
+  if subset_hint {
+    hint_count = hint_count + 1
+  }
   if hint_count > 1 {
     raise DiscreteError::TypeError("ambiguous convolution hints")
   }

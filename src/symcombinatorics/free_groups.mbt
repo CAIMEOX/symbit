@@ -86,7 +86,7 @@ pub fn FreeGroup::symbols(self : FreeGroup) -> Array[String] {
 pub fn FreeGroup::generators(self : FreeGroup) -> Array[FreeGroupElement] {
   let out : Array[FreeGroupElement] = Array::new()
   for i in 0..<self.symbols.length() {
-    out.push(free_group_element(self, [ (i, 1) ]))
+    out.push(free_group_element(self, [(i, 1)]))
   }
   out
 }
@@ -97,13 +97,18 @@ pub fn FreeGroup::identity(self : FreeGroup) -> FreeGroupElement {
 }
 
 ///|
-pub fn FreeGroup::index(self : FreeGroup, gen : FreeGroupElement) -> Int raise CombinatoricsError {
+pub fn FreeGroup::index(
+  self : FreeGroup,
+  gen : FreeGroupElement,
+) -> Int raise CombinatoricsError {
   if !free_group_same(self, gen.group) {
     raise CombinatoricsError::ValueError("generator not in free group")
   }
   let arr = gen.array_form
   if arr.length() != 1 || arr[0].1 != 1 {
-    raise CombinatoricsError::ValueError("expected a generator of the free group")
+    raise CombinatoricsError::ValueError(
+      "expected a generator of the free group",
+    )
   }
   arr[0].0
 }
@@ -118,11 +123,15 @@ pub fn FreeGroup::order(self : FreeGroup) -> GroupOrder {
 }
 
 ///|
-pub fn FreeGroup::elements(self : FreeGroup) -> Array[FreeGroupElement] raise CombinatoricsError {
+pub fn FreeGroup::elements(
+  self : FreeGroup,
+) -> Array[FreeGroupElement] raise CombinatoricsError {
   if self.rank == 0 {
-    [ self.identity() ]
+    [self.identity()]
   } else {
-    raise CombinatoricsError::ValueError("group contains infinitely many elements")
+    raise CombinatoricsError::ValueError(
+      "group contains infinitely many elements",
+    )
   }
 }
 
@@ -138,7 +147,7 @@ pub fn FreeGroup::contains(self : FreeGroup, g : FreeGroupElement) -> Bool {
 
 ///|
 pub fn FreeGroup::center(self : FreeGroup) -> Array[FreeGroupElement] {
-  [ self.identity() ]
+  [self.identity()]
 }
 
 ///|
@@ -146,7 +155,7 @@ pub fn FreeGroup::to_string(self : FreeGroup) -> String {
   if self.rank > 30 {
     "<free group with \{self.rank} generators>"
   } else {
-    let gens = self.generators().map((g) => g.to_string()).join(", ")
+    let gens = self.generators().map(g => g.to_string()).join(", ")
     "<free group on the generators (\{gens})>"
   }
 }
@@ -169,7 +178,9 @@ pub fn free_group(symbols : String) -> (FreeGroup, Array[FreeGroupElement]) {
 }
 
 ///|
-pub fn free_group_from_array(symbols : Array[String]) -> (FreeGroup, Array[FreeGroupElement]) {
+pub fn free_group_from_array(
+  symbols : Array[String],
+) -> (FreeGroup, Array[FreeGroupElement]) {
   let group = FreeGroup::new(symbols)
   (group, group.generators())
 }
@@ -228,7 +239,10 @@ fn normalize_array_form(array : Array[(Int, Int)]) -> Array[(Int, Int)] {
 }
 
 ///|
-fn free_group_element(group : FreeGroup, array : Array[(Int, Int)]) -> FreeGroupElement {
+fn free_group_element(
+  group : FreeGroup,
+  array : Array[(Int, Int)],
+) -> FreeGroupElement {
   { group, array_form: normalize_array_form(array) }
 }
 
@@ -255,7 +269,9 @@ pub fn FreeGroupElement::is_identity(self : FreeGroupElement) -> Bool {
 }
 
 ///|
-pub fn FreeGroupElement::array_form(self : FreeGroupElement) -> Array[(Int, Int)] {
+pub fn FreeGroupElement::array_form(
+  self : FreeGroupElement,
+) -> Array[(Int, Int)] {
   let out : Array[(Int, Int)] = Array::new()
   for pair in self.array_form {
     out.push(pair)
@@ -289,7 +305,9 @@ pub fn FreeGroupElement::letter_form(self : FreeGroupElement) -> Array[Int] {
 }
 
 ///|
-pub fn FreeGroupElement::letter_form_elm(self : FreeGroupElement) -> Array[FreeGroupElement] {
+pub fn FreeGroupElement::letter_form_elm(
+  self : FreeGroupElement,
+) -> Array[FreeGroupElement] {
   let out : Array[FreeGroupElement] = Array::new()
   let letters = self.letter_form()
   for l in letters {
@@ -302,7 +320,7 @@ pub fn FreeGroupElement::letter_form_elm(self : FreeGroupElement) -> Array[FreeG
 fn letter_to_element(group : FreeGroup, letter : Int) -> FreeGroupElement {
   let idx = if letter < 0 { -letter - 1 } else { letter }
   let exp = if letter < 0 { -1 } else { 1 }
-  free_group_element(group, [ (idx, exp) ])
+  free_group_element(group, [(idx, exp)])
 }
 
 ///|
@@ -335,11 +353,7 @@ pub fn FreeGroupElement::to_string(self : FreeGroupElement) -> String {
     let pair = self.array_form[i]
     let name = self.group.symbols[pair.0]
     let exp = pair.1
-    let part = if exp == 1 {
-      name
-    } else {
-      "\{name}**\{exp}"
-    }
+    let part = if exp == 1 { name } else { "\{name}**\{exp}" }
     if i == 0 {
       s = part
     } else {
@@ -355,9 +369,14 @@ pub impl Show for FreeGroupElement with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
-pub fn FreeGroupElement::mul(self : FreeGroupElement, other : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::mul(
+  self : FreeGroupElement,
+  other : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
   if !free_group_same(self.group, other.group) {
-    raise CombinatoricsError::ValueError("elements are from different free groups")
+    raise CombinatoricsError::ValueError(
+      "elements are from different free groups",
+    )
   }
   if self.is_identity() {
     return other
@@ -376,7 +395,10 @@ pub fn FreeGroupElement::mul(self : FreeGroupElement, other : FreeGroupElement) 
 }
 
 ///|
-pub fn FreeGroupElement::pow(self : FreeGroupElement, n : Int) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::pow(
+  self : FreeGroupElement,
+  n : Int,
+) -> FreeGroupElement raise CombinatoricsError {
   if n == 0 {
     return self.group.identity()
   }
@@ -418,7 +440,10 @@ pub fn FreeGroupElement::inverse(self : FreeGroupElement) -> FreeGroupElement {
 }
 
 ///|
-pub fn FreeGroupElement::div(self : FreeGroupElement, other : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::div(
+  self : FreeGroupElement,
+  other : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
   self.mul(other.inverse())
 }
 
@@ -432,15 +457,23 @@ pub fn FreeGroupElement::order(self : FreeGroupElement) -> GroupOrder {
 }
 
 ///|
-pub fn FreeGroupElement::commutator(self : FreeGroupElement, other : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::commutator(
+  self : FreeGroupElement,
+  other : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
   if !free_group_same(self.group, other.group) {
-    raise CombinatoricsError::ValueError("commutator requires elements from same group")
+    raise CombinatoricsError::ValueError(
+      "commutator requires elements from same group",
+    )
   }
   self.inverse().mul(other.inverse()).mul(self).mul(other)
 }
 
 ///|
-pub fn FreeGroupElement::contains(self : FreeGroupElement, gen : FreeGroupElement) -> Bool {
+pub fn FreeGroupElement::contains(
+  self : FreeGroupElement,
+  gen : FreeGroupElement,
+) -> Bool {
   let arr = gen.array_form
   if arr.length() != 1 {
     return false
@@ -455,7 +488,10 @@ pub fn FreeGroupElement::contains(self : FreeGroupElement, gen : FreeGroupElemen
 }
 
 ///|
-pub fn FreeGroupElement::index(self : FreeGroupElement, gen : FreeGroupElement) -> Int raise CombinatoricsError {
+pub fn FreeGroupElement::index(
+  self : FreeGroupElement,
+  gen : FreeGroupElement,
+) -> Int raise CombinatoricsError {
   if gen.length() != 1 {
     raise CombinatoricsError::ValueError("expected generator or inverse")
   }
@@ -474,7 +510,10 @@ pub fn FreeGroupElement::index(self : FreeGroupElement, gen : FreeGroupElement) 
 }
 
 ///|
-pub fn FreeGroupElement::letter_at(self : FreeGroupElement, index : Int) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::letter_at(
+  self : FreeGroupElement,
+  index : Int,
+) -> FreeGroupElement raise CombinatoricsError {
   let letters = self.letter_form()
   let mut idx = index
   if idx < 0 {
@@ -487,7 +526,10 @@ pub fn FreeGroupElement::letter_at(self : FreeGroupElement, index : Int) -> Free
 }
 
 ///|
-pub fn FreeGroupElement::exponent_sum(self : FreeGroupElement, gen : FreeGroupElement) -> Int raise CombinatoricsError {
+pub fn FreeGroupElement::exponent_sum(
+  self : FreeGroupElement,
+  gen : FreeGroupElement,
+) -> Int raise CombinatoricsError {
   if gen.length() != 1 {
     raise CombinatoricsError::ValueError("gen must be a generator or inverse")
   }
@@ -504,7 +546,10 @@ pub fn FreeGroupElement::exponent_sum(self : FreeGroupElement, gen : FreeGroupEl
 }
 
 ///|
-pub fn FreeGroupElement::generator_count(self : FreeGroupElement, gen : FreeGroupElement) -> Int raise CombinatoricsError {
+pub fn FreeGroupElement::generator_count(
+  self : FreeGroupElement,
+  gen : FreeGroupElement,
+) -> Int raise CombinatoricsError {
   if gen.length() != 1 || gen.array_form[0].1 < 0 {
     raise CombinatoricsError::ValueError("gen must be a generator")
   }
@@ -530,8 +575,12 @@ pub fn FreeGroupElement::subword(
   let mut start = from_i
   let mut end = to_j
   if !strict {
-    if start < 0 { start = 0 }
-    if end > len { end = len }
+    if start < 0 {
+      start = 0
+    }
+    if end > len {
+      end = len
+    }
   }
   if start < 0 || end > len {
     raise CombinatoricsError::ValueError("subword indices out of range")
@@ -575,7 +624,10 @@ pub fn FreeGroupElement::subword_index(
 }
 
 ///|
-pub fn FreeGroupElement::is_dependent(self : FreeGroupElement, word : FreeGroupElement) -> Bool {
+pub fn FreeGroupElement::is_dependent(
+  self : FreeGroupElement,
+  word : FreeGroupElement,
+) -> Bool {
   let res = try? self.subword_index(word)
   match res {
     Ok(_) => true
@@ -590,12 +642,17 @@ pub fn FreeGroupElement::is_dependent(self : FreeGroupElement, word : FreeGroupE
 }
 
 ///|
-pub fn FreeGroupElement::is_independent(self : FreeGroupElement, word : FreeGroupElement) -> Bool {
+pub fn FreeGroupElement::is_independent(
+  self : FreeGroupElement,
+  word : FreeGroupElement,
+) -> Bool {
   !self.is_dependent(word)
 }
 
 ///|
-pub fn FreeGroupElement::contains_generators(self : FreeGroupElement) -> Array[FreeGroupElement] {
+pub fn FreeGroupElement::contains_generators(
+  self : FreeGroupElement,
+) -> Array[FreeGroupElement] {
   let seen : Array[Bool] = Array::make(self.group.rank, false)
   let out : Array[FreeGroupElement] = Array::new()
   for pair in self.array_form {
@@ -614,7 +671,10 @@ pub fn FreeGroupElement::number_syllables(self : FreeGroupElement) -> Int {
 }
 
 ///|
-pub fn FreeGroupElement::exponent_syllable(self : FreeGroupElement, i : Int) -> Int raise CombinatoricsError {
+pub fn FreeGroupElement::exponent_syllable(
+  self : FreeGroupElement,
+  i : Int,
+) -> Int raise CombinatoricsError {
   let mut idx = i
   let n = self.array_form.length()
   if idx < 0 {
@@ -627,7 +687,10 @@ pub fn FreeGroupElement::exponent_syllable(self : FreeGroupElement, i : Int) -> 
 }
 
 ///|
-pub fn FreeGroupElement::generator_syllable(self : FreeGroupElement, i : Int) -> Int raise CombinatoricsError {
+pub fn FreeGroupElement::generator_syllable(
+  self : FreeGroupElement,
+  i : Int,
+) -> Int raise CombinatoricsError {
   let mut idx = i
   let n = self.array_form.length()
   if idx < 0 {
@@ -728,7 +791,7 @@ pub fn FreeGroupElement::eliminate_word(
   let reduced_right = right.eliminate_word(gen, by=by_word)
   let mut out = left.mul(repl).mul(reduced_right)
   if local_all {
-    out = out.eliminate_word(gen, by=by_word, all=true, inverse=inverse)
+    out = out.eliminate_word(gen, by=by_word, all=true, inverse~)
   }
   out
 }
@@ -746,7 +809,7 @@ pub fn FreeGroupElement::eliminate_words(
     again = false
     for sub in words {
       let prev = new_word
-      new_word = new_word.eliminate_word(sub, all=all, inverse=inverse)
+      new_word = new_word.eliminate_word(sub, all~, inverse~)
       if new_word != prev {
         again = true
       }
@@ -768,7 +831,7 @@ pub fn FreeGroupElement::eliminate_words_map(
     again = false
     for sub, rep in words {
       let prev = new_word
-      new_word = new_word.eliminate_word(sub, by=rep, all=all, inverse=inverse)
+      new_word = new_word.eliminate_word(sub, by=rep, all~, inverse~)
       if new_word != prev {
         again = true
       }
@@ -778,7 +841,11 @@ pub fn FreeGroupElement::eliminate_words_map(
 }
 
 ///|
-pub fn FreeGroupElement::cyclic_subword(self : FreeGroupElement, from_i : Int, to_j : Int) -> FreeGroupElement {
+pub fn FreeGroupElement::cyclic_subword(
+  self : FreeGroupElement,
+  from_i : Int,
+  to_j : Int,
+) -> FreeGroupElement {
   let l = self.length()
   let letters = self.letter_form()
   if l == 0 {
@@ -798,7 +865,7 @@ pub fn FreeGroupElement::cyclic_subword(self : FreeGroupElement, from_i : Int, t
       word.push(letters[i])
     }
   }
-  let period2 = (end / l) - 1
+  let period2 = end / l - 1
   for _ in 0..<period2 {
     for ltr in letters {
       word.push(ltr)
@@ -818,7 +885,9 @@ pub fn FreeGroupElement::cyclic_subword(self : FreeGroupElement, from_i : Int, t
 }
 
 ///|
-pub fn FreeGroupElement::cyclic_conjugates(self : FreeGroupElement) -> Array[FreeGroupElement] {
+pub fn FreeGroupElement::cyclic_conjugates(
+  self : FreeGroupElement,
+) -> Array[FreeGroupElement] {
   let out : Array[FreeGroupElement] = Array::new()
   let seen : Map[String, Bool] = {}
   let l = self.length()
@@ -834,7 +903,10 @@ pub fn FreeGroupElement::cyclic_conjugates(self : FreeGroupElement) -> Array[Fre
 }
 
 ///|
-pub fn FreeGroupElement::is_cyclic_conjugate(self : FreeGroupElement, w : FreeGroupElement) -> Bool {
+pub fn FreeGroupElement::is_cyclic_conjugate(
+  self : FreeGroupElement,
+  w : FreeGroupElement,
+) -> Bool {
   if self.length() != w.length() {
     return false
   }
@@ -884,7 +956,9 @@ pub fn FreeGroupElement::is_cyclically_reduced(self : FreeGroupElement) -> Bool 
 }
 
 ///|
-pub fn FreeGroupElement::identity_cyclic_reduction(self : FreeGroupElement) -> FreeGroupElement {
+pub fn FreeGroupElement::identity_cyclic_reduction(
+  self : FreeGroupElement,
+) -> FreeGroupElement {
   let mut word = self.copy()
   while !word.is_cyclically_reduced() {
     let exp1 = word.exponent_syllable(0) catch { _ => 0 }
@@ -913,7 +987,9 @@ pub fn FreeGroupElement::identity_cyclic_reduction(self : FreeGroupElement) -> F
 }
 
 ///|
-pub fn FreeGroupElement::cyclic_reduction(self : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError {
+pub fn FreeGroupElement::cyclic_reduction(
+  self : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
   let (w, _) = self.cyclic_reduction_removed()
   w
 }
@@ -968,7 +1044,7 @@ pub fn FreeGroupElement::power_of(
     }
     return false
   }
-  if self.length() < l || (self.length() % l) != 0 {
+  if self.length() < l || self.length() % l != 0 {
     return false
   }
   let prefix = self.subword(0, l) catch { _ => return false }
@@ -1020,7 +1096,10 @@ pub fn zero_mul_simp(values : Array[(Int, Int)]) -> Array[(Int, Int)] {
 }
 
 ///|
-pub impl Compare for FreeGroupElement with compare(self, other : FreeGroupElement) -> Int {
+pub impl Compare for FreeGroupElement with compare(
+  self,
+  other : FreeGroupElement,
+) -> Int {
   if !free_group_same(self.group, other.group) {
     return self.group.symbols.join(",").compare(other.group.symbols.join(","))
   }

@@ -38,8 +38,11 @@ pub fn linrec(
 ///|
 pub fn linrec_coeffs(c : Array[Expr], n : Int) -> Array[Expr] {
   let k = c.length()
-
-  fn square_and_reduce(u : Array[Expr], offset : Int, c : Array[Expr]) -> Array[Expr] {
+  fn square_and_reduce(
+    u : Array[Expr],
+    offset : Int,
+    c : Array[Expr],
+  ) -> Array[Expr] {
     let wlen = 2 * u.length() - 1 + offset
     let w : Array[Expr] = Array::make(wlen, expr_zero())
     for i in 0..<u.length() {

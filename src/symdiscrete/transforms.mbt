@@ -152,6 +152,7 @@ fn fourier_transform(
       a[i] = expr_div_int(a[i], n2)
     }
     let _ = dps
+
   }
   a
 }
@@ -241,7 +242,7 @@ fn number_theoretic_transform_int(
     return a_int
   }
   let (n2, bits) = next_pow2(a_int.length())
-  if ((prime - 1) % n2) != 0 {
+  if (prime - 1) % n2 != 0 {
     raise DiscreteError::ValueError("expected modulus of form (m*2**k + 1)")
   }
   for _ in a_int.length()..<n2 {
@@ -388,10 +389,8 @@ fn mobius_transform_core(
         if (j & i) != 0 {
           a[j] = expr_add2(a[j], expr_mul2(expr_int(sgn), a[j ^ i]))
         }
-      } else {
-        if (j & i) == 0 {
-          a[j] = expr_add2(a[j], expr_mul2(expr_int(sgn), a[j ^ i]))
-        }
+      } else if (j & i) == 0 {
+        a[j] = expr_add2(a[j], expr_mul2(expr_int(sgn), a[j ^ i]))
       }
     }
     i = i * 2
@@ -400,7 +399,10 @@ fn mobius_transform_core(
 }
 
 ///|
-pub fn mobius_transform(seq : Array[Expr], subset? : Bool = true) -> Array[Expr] raise DiscreteError {
+pub fn mobius_transform(
+  seq : Array[Expr],
+  subset? : Bool = true,
+) -> Array[Expr] raise DiscreteError {
   mobius_transform_core(seq, 1, subset)
 }
 

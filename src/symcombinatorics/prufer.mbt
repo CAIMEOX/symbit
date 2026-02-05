@@ -41,23 +41,13 @@ pub fn Prufer::from_edges(
       raise CombinatoricsError::ValueError("Missing node in edge list")
     }
   }
-  {
-    prufer_repr: None,
-    tree_repr: Some(edges),
-    nodes: nnodes,
-    rank_cache: None,
-  }
+  { prufer_repr: None, tree_repr: Some(edges), nodes: nnodes, rank_cache: None }
 }
 
 ///|
 pub fn Prufer::from_sequence(seq : Array[Int]) -> Prufer {
   let nnodes = seq.length() + 2
-  {
-    prufer_repr: Some(seq),
-    tree_repr: None,
-    nodes: nnodes,
-    rank_cache: None,
-  }
+  { prufer_repr: Some(seq), tree_repr: None, nodes: nnodes, rank_cache: None }
 }
 
 ///|
@@ -177,12 +167,15 @@ pub fn to_tree(prufer : Array[Int]) -> Array[Array[Int]] {
 }
 
 ///|
-pub fn prufer_edges(runs : Array[Array[Int]]) -> (Array[Array[Int]], Int) raise CombinatoricsError {
+pub fn prufer_edges(
+  runs : Array[Array[Int]],
+) -> (Array[Array[Int]], Int) raise CombinatoricsError {
   fn parse_key(view : StringView) -> Int raise CombinatoricsError {
-    try @strconv.parse_int(view) catch {
+    @strconv.parse_int(view) catch {
       _ => raise CombinatoricsError::ValueError("Invalid edge label")
     }
   }
+
   let edge_map : Map[String, Bool] = Map::new()
   let mut nmin : Int? = None
   let mut nmax : Int? = None

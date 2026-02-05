@@ -49,7 +49,10 @@ fn arrays_equal_as_sets(a : Array[Int], b : Array[Int]) -> Bool {
 }
 
 ///|
-fn remove_perm_once(values : Array[Permutation], target : Permutation) -> Array[Permutation] {
+fn remove_perm_once(
+  values : Array[Permutation],
+  target : Permutation,
+) -> Array[Permutation] {
   let out : Array[Permutation] = Array::new()
   let mut removed = false
   for v in values {
@@ -63,7 +66,11 @@ fn remove_perm_once(values : Array[Permutation], target : Permutation) -> Array[
 }
 
 ///|
-fn orbit_points(degree : Int, generators : Array[Permutation], alpha : Int) -> Array[Int] raise CombinatoricsError {
+fn orbit_points(
+  degree : Int,
+  generators : Array[Permutation],
+  alpha : Int,
+) -> Array[Int] raise CombinatoricsError {
   let gens_af : Array[Array[Int]] = Array::new()
   for g in generators {
     gens_af.push(g.array_form())
@@ -211,7 +218,7 @@ pub fn _distribute_gens_by_base(
     if j > max_stab_index {
       max_stab_index = j
     }
-    for k in 0..=j {
+    for k in 0..<=j {
       stabs[k].push(gen)
     }
   }
@@ -244,7 +251,11 @@ pub fn _orbits_transversals_from_bsgs(
   }
   let degree = strong_gens_distr[0][0].size()
   for i in 0..<base_len {
-    let (pairs, slp_dict) = orbit_transversal_af(degree, strong_gens_distr[i], base[i])
+    let (pairs, slp_dict) = orbit_transversal_af(
+      degree,
+      strong_gens_distr[i],
+      base[i],
+    )
     let trans_map : Map[Int, Permutation] = {}
     let orbit : Array[Int] = Array::new()
     for pair in pairs {
@@ -267,7 +278,11 @@ pub fn _handle_precomputed_bsgs(
   transversals? : Array[Map[Int, Permutation]],
   basic_orbits? : Array[Array[Int]],
   strong_gens_distr? : Array[Array[Permutation]],
-) -> (Array[Map[Int, Permutation]], Array[Array[Int]], Array[Array[Permutation]]) raise CombinatoricsError {
+) -> (
+  Array[Map[Int, Permutation]],
+  Array[Array[Int]],
+  Array[Array[Permutation]],
+) raise CombinatoricsError {
   let sg_distr = match strong_gens_distr {
     Some(v) => v
     None => _distribute_gens_by_base(base, strong_gens)
@@ -278,19 +293,17 @@ pub fn _handle_precomputed_bsgs(
     let result = _orbits_transversals_from_bsgs(base, sg_distr)
     trans = Some(result.transversals)
     orbits = Some(result.basic_orbits)
-  } else {
-    if orbits is None {
-      let base_len = base.length()
-      let out : Array[Array[Int]] = Array::new()
-      for i in 0..<base_len {
-        let keys : Array[Int] = Array::new()
-        for k, _ in trans.unwrap()[i] {
-          keys.push(k)
-        }
-        out.push(sort_int_array(keys))
+  } else if orbits is None {
+    let base_len = base.length()
+    let out : Array[Array[Int]] = Array::new()
+    for i in 0..<base_len {
+      let keys : Array[Int] = Array::new()
+      for k, _ in trans.unwrap()[i] {
+        keys.push(k)
       }
-      orbits = Some(out)
+      out.push(sort_int_array(keys))
     }
+    orbits = Some(out)
   }
   (trans.unwrap(), orbits.unwrap(), sg_distr)
 }

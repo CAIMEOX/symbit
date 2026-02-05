@@ -5,7 +5,6 @@ test "pc groups basic collector" {
   let pc = try! PolycyclicGroup::new([gen], [g], [3])
   assert_true(pc.is_prime_order())
   assert_eq(pc.length(), 1)
-
   let coll = pc.collector
   let x0 = coll.free_group.generators()[0]
   let word = try! x0.pow(5)

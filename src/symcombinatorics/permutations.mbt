@@ -18,7 +18,7 @@ fn lcm_int(a : Int, b : Int) -> Int {
   if a == 0 || b == 0 {
     0
   } else {
-    (a / gcd_int(a, b)) * b
+    a / gcd_int(a, b) * b
   }
 }
 
@@ -28,14 +28,17 @@ fn factorial_int(n : Int) -> Int {
     return 0
   }
   let mut acc = 1
-  for i in 2..=n {
+  for i in 2..<=n {
     acc = acc * i
   }
   acc
 }
 
 ///|
-fn af_rmul(a : Array[Int], b : Array[Int]) -> Array[Int] raise CombinatoricsError {
+fn af_rmul(
+  a : Array[Int],
+  b : Array[Int],
+) -> Array[Int] raise CombinatoricsError {
   if a.length() != b.length() {
     raise CombinatoricsError::ValueError("array length mismatch")
   }
@@ -208,15 +211,19 @@ pub struct Cycle {
 pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
   let mapping : Map[Int, Int] = {}
   if items.is_empty() {
-    return Cycle::{ mapping }
+    return Cycle::{ mapping, }
   }
   let seen : Array[Int] = Array::new()
   for item in items {
     if item < 0 {
-      raise CombinatoricsError::ValueError("negative integers are not allowed in a cycle")
+      raise CombinatoricsError::ValueError(
+        "negative integers are not allowed in a cycle",
+      )
     }
     if seen.any(v => v == item) {
-      raise CombinatoricsError::ValueError("all elements must be unique in a cycle")
+      raise CombinatoricsError::ValueError(
+        "all elements must be unique in a cycle",
+      )
     }
     seen.push(item)
   }
@@ -226,7 +233,7 @@ pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
     let next = items[(i + 1) % n]
     mapping[curr] = next
   }
-  Cycle::{ mapping }
+  Cycle::{ mapping, }
 }
 
 ///|
@@ -241,7 +248,7 @@ pub fn Cycle::from_permutation(p : Permutation) -> Cycle {
       }
     }
   }
-  Cycle::{ mapping }
+  Cycle::{ mapping, }
 }
 
 ///|
@@ -265,7 +272,10 @@ pub fn Cycle::compose(self : Cycle, other : Cycle) -> Cycle {
 }
 
 ///|
-pub fn Cycle::list(self : Cycle, size? : Int) -> Array[Int] raise CombinatoricsError {
+pub fn Cycle::list(
+  self : Cycle,
+  size? : Int,
+) -> Array[Int] raise CombinatoricsError {
   if self.mapping.is_empty() && size is None {
     raise CombinatoricsError::ValueError("must give size for empty Cycle")
   }
@@ -320,7 +330,7 @@ pub impl Show for Cycle with output(self, logger : &Logger) -> Unit {
   let cycles = p.cyclic_form()
   let mut s = ""
   for cycle in cycles {
-    s = s + "(" + cycle.map((x) => "\{x}").join(" ") + ")"
+    s = s + "(" + cycle.map(x => "\{x}").join(" ") + ")"
   }
   let big = self.size() - 1
   let mut has_big = false
@@ -368,7 +378,10 @@ pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) 
 }
 
 ///|
-pub impl Eq for Permutation with not_equal(self : Permutation, other : Permutation) -> Bool {
+pub impl Eq for Permutation with not_equal(
+  self : Permutation,
+  other : Permutation,
+) -> Bool {
   !self.equal(other)
 }
 
@@ -413,7 +426,9 @@ fn make_perm(array : Array[Int]) -> Permutation {
 }
 
 ///|
-pub fn Permutation::new(array : Array[Int]) -> Permutation raise CombinatoricsError {
+pub fn Permutation::new(
+  array : Array[Int],
+) -> Permutation raise CombinatoricsError {
   if !validate_array_form(array) {
     raise CombinatoricsError::ValueError("invalid permutation array form")
   }
@@ -425,7 +440,10 @@ pub fn Permutation::new(array : Array[Int]) -> Permutation raise CombinatoricsEr
 }
 
 ///|
-pub fn Permutation::from_array(array : Array[Int], size? : Int) -> Permutation raise CombinatoricsError {
+pub fn Permutation::from_array(
+  array : Array[Int],
+  size? : Int,
+) -> Permutation raise CombinatoricsError {
   let arr : Array[Int] = Array::new()
   for v in array {
     arr.push(v)
@@ -437,7 +455,9 @@ pub fn Permutation::from_array(array : Array[Int], size? : Int) -> Permutation r
       }
       for v in arr {
         if v < 0 || v >= n {
-          raise CombinatoricsError::ValueError("array contains element outside size")
+          raise CombinatoricsError::ValueError(
+            "array contains element outside size",
+          )
         }
       }
       if n > arr.length() {
@@ -465,7 +485,10 @@ pub fn Permutation::identity(size : Int) -> Permutation {
 }
 
 ///|
-pub fn Permutation::from_cycle(cycle : Cycle, size? : Int) -> Permutation raise CombinatoricsError {
+pub fn Permutation::from_cycle(
+  cycle : Cycle,
+  size? : Int,
+) -> Permutation raise CombinatoricsError {
   let arr = match size {
     Some(s) => cycle.list(size=s)
     None => cycle.list()
@@ -493,7 +516,13 @@ pub fn Permutation::from_cycles(
     Some(s) => s
     None => max_val + 1
   }
-  let mut perm = Permutation::identity(if base_size < 0 { 0 } else { base_size })
+  let mut perm = Permutation::identity(
+    if base_size < 0 {
+      0
+    } else {
+      base_size
+    },
+  )
   for cycle in cycles {
     let c = Cycle::new(cycle)
     let p = Permutation::from_cycle(c, size=perm.size())
@@ -547,7 +576,10 @@ pub fn Permutation::size(self : Permutation) -> Int {
 }
 
 ///|
-pub fn Permutation::apply_index(self : Permutation, i : Int) -> Int raise CombinatoricsError {
+pub fn Permutation::apply_index(
+  self : Permutation,
+  i : Int,
+) -> Int raise CombinatoricsError {
   if i < 0 || i >= self.size {
     raise CombinatoricsError::ValueError("index out of range")
   }
@@ -555,7 +587,10 @@ pub fn Permutation::apply_index(self : Permutation, i : Int) -> Int raise Combin
 }
 
 ///|
-pub fn[T] Permutation::apply_array(self : Permutation, values : Array[T]) -> Array[T] raise CombinatoricsError {
+pub fn[T] Permutation::apply_array(
+  self : Permutation,
+  values : Array[T],
+) -> Array[T] raise CombinatoricsError {
   if values.length() != self.size {
     raise CombinatoricsError::ValueError("sequence length mismatch")
   }
@@ -567,13 +602,19 @@ pub fn[T] Permutation::apply_array(self : Permutation, values : Array[T]) -> Arr
 }
 
 ///|
-pub fn Permutation::apply_string(self : Permutation, value : String) -> Array[Char] raise CombinatoricsError {
+pub fn Permutation::apply_string(
+  self : Permutation,
+  value : String,
+) -> Array[Char] raise CombinatoricsError {
   let chars = string_to_chars(value)
   self.apply_array(chars)
 }
 
 ///|
-pub fn Permutation::mul(self : Permutation, other : Permutation) -> Permutation raise CombinatoricsError {
+pub fn Permutation::mul(
+  self : Permutation,
+  other : Permutation,
+) -> Permutation raise CombinatoricsError {
   if self.size != other.size {
     raise CombinatoricsError::ValueError("permutation sizes differ")
   }
@@ -608,7 +649,11 @@ pub fn Permutation::is_odd(self : Permutation) -> Bool {
 
 ///|
 pub fn Permutation::signature(self : Permutation) -> Int {
-  if self.parity() == 0 { 1 } else { -1 }
+  if self.parity() == 0 {
+    1
+  } else {
+    -1
+  }
 }
 
 ///|
@@ -740,10 +785,12 @@ pub fn Permutation::inversion_vector(self : Permutation) -> Array[Int] {
 }
 
 ///|
-pub fn Permutation::from_inversion_vector(inversion : Array[Int]) -> Permutation raise CombinatoricsError {
+pub fn Permutation::from_inversion_vector(
+  inversion : Array[Int],
+) -> Permutation raise CombinatoricsError {
   let size = inversion.length()
   let pool : Array[Int] = Array::new()
-  for i in 0..=size {
+  for i in 0..<=size {
     pool.push(i)
   }
   let perm : Array[Int] = Array::new()
@@ -754,6 +801,7 @@ pub fn Permutation::from_inversion_vector(inversion : Array[Int]) -> Permutation
     let val = pool[inversion[k]]
     perm.push(val)
     let _ = pool.remove(inversion[k])
+
   }
   for v in pool {
     perm.push(v)
@@ -762,7 +810,10 @@ pub fn Permutation::from_inversion_vector(inversion : Array[Int]) -> Permutation
 }
 
 ///|
-fn build_cycles(array : Array[Int], include_singletons : Bool) -> Array[Array[Int]] {
+fn build_cycles(
+  array : Array[Int],
+  include_singletons : Bool,
+) -> Array[Array[Int]] {
   let n = array.length()
   let visited : Array[Bool] = Array::make(n, false)
   let cycles : Array[Array[Int]] = Array::new()
@@ -810,7 +861,9 @@ pub fn Permutation::full_cyclic_form(self : Permutation) -> Array[Array[Int]] {
 }
 
 ///|
-pub fn Permutation::cycle_structure_pairs(self : Permutation) -> Array[(Int, Int)] {
+pub fn Permutation::cycle_structure_pairs(
+  self : Permutation,
+) -> Array[(Int, Int)] {
   match self.cycle_structure_cache {
     Some(map) => {
       let pairs : Array[(Int, Int)] = Array::new()
@@ -880,7 +933,11 @@ pub fn Permutation::order(self : Permutation) -> Int {
   for cycle in self.cyclic_form() {
     ord = lcm_int(ord, cycle.length())
   }
-  if ord == 0 { 1 } else { ord }
+  if ord == 0 {
+    1
+  } else {
+    ord
+  }
 }
 
 ///|
@@ -965,7 +1022,7 @@ pub fn Permutation::unrank_lex(size : Int, rank0 : Int) -> Permutation {
   let mut rank = rank0
   for i in 0..<size {
     let new_psize = psize * (i + 1)
-    let d = (rank % new_psize) / psize
+    let d = rank % new_psize / psize
     rank = rank - d * psize
     perm[size - i - 1] = d
     for j in (size - i)..<size {
@@ -1000,6 +1057,7 @@ pub fn Permutation::rank_nonlex(self : Permutation) -> Int {
     inv0[s] = tmp2
     s + n0 * rank1(n0 - 1, perm0, inv0)
   }
+
   rank1(n, perm, inv)
 }
 
@@ -1020,9 +1078,10 @@ pub fn Permutation::unrank_nonlex(size : Int, r0 : Int) -> Permutation {
       unrank1(n0 - 1, r1 / n0, a)
     }
   }
+
   let card = factorial_int(n)
   if card > 0 {
-    r = ((r % card) + card) % card
+    r = (r % card + card) % card
   }
   unrank1(n, r, perm)
   make_perm(perm)
@@ -1043,7 +1102,9 @@ pub fn Permutation::rank_trotterjohnson(self : Permutation) -> Int {
   if self.array_form.is_empty() || self.is_identity() {
     return 0
   }
-  if self.array_form.length() == 2 && self.array_form[0] == 1 && self.array_form[1] == 0 {
+  if self.array_form.length() == 2 &&
+    self.array_form[0] == 1 &&
+    self.array_form[1] == 0 {
     return 1
   }
   let perm = self.array_form
@@ -1069,14 +1130,17 @@ pub fn Permutation::rank_trotterjohnson(self : Permutation) -> Int {
 }
 
 ///|
-pub fn Permutation::unrank_trotterjohnson(size : Int, rank0 : Int) -> Permutation {
+pub fn Permutation::unrank_trotterjohnson(
+  size : Int,
+  rank0 : Int,
+) -> Permutation {
   let perm : Array[Int] = Array::make(size, 0)
   let mut r2 = 0
   let n = factorial_int(size)
   let mut pj = 1
-  for j in 2..=size {
+  for j in 2..<=size {
     pj = pj * j
-    let r1 = (rank0 * pj) / n
+    let r1 = rank0 * pj / n
     let k = r1 - j * r2
     if r2 % 2 == 0 {
       let pos = j - k - 1
@@ -1135,16 +1199,14 @@ pub fn Permutation::next_trotterjohnson(self : Permutation) -> Permutation? {
         pi[st + d + 1] = tmp
         done = true
       }
+    } else if d == 0 {
+      m = m - 1
+      st = st + 1
     } else {
-      if d == 0 {
-        m = m - 1
-        st = st + 1
-      } else {
-        let tmp = pi[st + d]
-        pi[st + d] = pi[st + d - 1]
-        pi[st + d - 1] = tmp
-        done = true
-      }
+      let tmp = pi[st + d]
+      pi[st + d] = pi[st + d - 1]
+      pi[st + d - 1] = tmp
+      done = true
     }
   }
   if m == 0 {
@@ -1158,7 +1220,7 @@ pub fn Permutation::add(self : Permutation, other : Int) -> Permutation {
   let card = self.cardinality()
   let mut rank = self.rank() + other
   if card > 0 {
-    rank = ((rank % card) + card) % card
+    rank = (rank % card + card) % card
   }
   Permutation::unrank_lex(self.size, rank)
 }
@@ -1169,12 +1231,18 @@ pub fn Permutation::sub(self : Permutation, other : Int) -> Permutation {
 }
 
 ///|
-pub fn Permutation::commutes_with(self : Permutation, other : Permutation) -> Bool {
+pub fn Permutation::commutes_with(
+  self : Permutation,
+  other : Permutation,
+) -> Bool {
   af_commutes_with(self.array_form, other.array_form)
 }
 
 ///|
-pub fn Permutation::commutator(self : Permutation, other : Permutation) -> Permutation raise CombinatoricsError {
+pub fn Permutation::commutator(
+  self : Permutation,
+  other : Permutation,
+) -> Permutation raise CombinatoricsError {
   let inv_other = other.invert()
   let inv_self = self.invert()
   let t1 = inv_other.mul(inv_self)
@@ -1196,7 +1264,10 @@ pub fn Permutation::is_identity(self : Permutation) -> Bool {
 }
 
 ///|
-pub fn Permutation::resize(self : Permutation, n : Int) -> Permutation raise CombinatoricsError {
+pub fn Permutation::resize(
+  self : Permutation,
+  n : Int,
+) -> Permutation raise CombinatoricsError {
   let aform = self.array_form()
   let l = aform.length()
   if n > l {
@@ -1257,7 +1328,10 @@ pub fn Permutation::cycle_structure(self : Permutation) -> Map[Int, Int] {
 }
 
 ///|
-pub fn Permutation::is_disjoint(self : Permutation, other : Permutation) -> Bool {
+pub fn Permutation::is_disjoint(
+  self : Permutation,
+  other : Permutation,
+) -> Bool {
   let sup = self.support()
   for v in other.support() {
     if sup.any(x => x == v) {

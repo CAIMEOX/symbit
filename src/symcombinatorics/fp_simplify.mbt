@@ -2,7 +2,9 @@
 /// Simplify presentations and eliminate redundant generators.
 
 ///|
-fn set_unique_words(values : Array[FreeGroupElement]) -> Array[FreeGroupElement] {
+fn set_unique_words(
+  values : Array[FreeGroupElement],
+) -> Array[FreeGroupElement] {
   let seen : Map[FreeGroupElement, Bool] = {}
   let out : Array[FreeGroupElement] = Array::new()
   for v in values {
@@ -21,9 +23,13 @@ pub fn elimination_technique_1(
   identity : FreeGroupElement,
 ) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError {
   let rels_mut : Array[FreeGroupElement] = Array::new()
-  for r in rels { rels_mut.push(r) }
+  for r in rels {
+    rels_mut.push(r)
+  }
   let gens_mut : Array[FreeGroupElement] = Array::new()
-  for g in gens { gens_mut.push(g) }
+  for g in gens {
+    gens_mut.push(g)
+  }
   // shorter relators first (short-lex)
   let n = rels_mut.length()
   for i in 0..<n {
@@ -47,7 +53,9 @@ pub fn elimination_technique_1(
         break
       }
     }
-    if skip { continue }
+    if skip {
+      continue
+    }
     let contained_sorted : Array[FreeGroupElement] = contained
     let m = contained_sorted.length()
     for i in 0..<m {
@@ -67,7 +75,9 @@ pub fn elimination_technique_1(
         let fw = rel.subword(0, gen_index)
         let chi = bk.mul(fw)
         redundant_gens[gen] = chi.pow(-k)
-        for g in chi.contains_generators() { used_gens[g] = true }
+        for g in chi.contains_generators() {
+          used_gens[g] = true
+        }
         redundant_rels.push(rel)
         break
       }
@@ -81,7 +91,11 @@ pub fn elimination_technique_1(
   }
   let mut rels3 : Array[FreeGroupElement] = Array::new()
   for r in rels2 {
-    rels3.push(r.eliminate_words_map(redundant_gens, all=true).identity_cyclic_reduction())
+    rels3.push(
+      r
+      .eliminate_words_map(redundant_gens, all=true)
+      .identity_cyclic_reduction(),
+    )
   }
   rels3 = set_unique_words(rels3)
   let cleaned : Array[FreeGroupElement] = Array::new()
@@ -100,9 +114,13 @@ pub fn elimination_technique_1(
 }
 
 ///|
-pub fn _simplify_relators(rels : Array[FreeGroupElement]) -> Array[FreeGroupElement] raise CombinatoricsError {
+pub fn _simplify_relators(
+  rels : Array[FreeGroupElement],
+) -> Array[FreeGroupElement] raise CombinatoricsError {
   let rels_mut : Array[FreeGroupElement] = Array::new()
-  for r in rels { rels_mut.push(r) }
+  for r in rels {
+    rels_mut.push(r)
+  }
   if rels_mut.is_empty() {
     return []
   }
@@ -125,7 +143,9 @@ pub fn _simplify_relators(rels : Array[FreeGroupElement]) -> Array[FreeGroupElem
     }
   }
   let one_syllable : Array[FreeGroupElement] = Array::new()
-  for _, v in exps { one_syllable.push(v) }
+  for _, v in exps {
+    one_syllable.push(v)
+  }
   let out : Array[FreeGroupElement] = Array::new()
   for rel in rels_mut {
     if one_syllable.any(w => w == rel) {
@@ -138,7 +158,11 @@ pub fn _simplify_relators(rels : Array[FreeGroupElement]) -> Array[FreeGroupElem
         let exp = exps[g].array_form()[0].1
         let max_exp = (exp + 1) / 2
         w = w.eliminate_word(g.pow(max_exp), by=g.pow(max_exp - exp), all=true)
-        w = w.eliminate_word(g.pow(-max_exp), by=g.pow(-(max_exp - exp)), all=true)
+        w = w.eliminate_word(
+          g.pow(-max_exp),
+          by=g.pow(-(max_exp - exp)),
+          all=true,
+        )
       }
     }
     out.push(w)
@@ -182,14 +206,19 @@ pub fn simplify_presentation(
   }
   let identity = gens[0].group.identity()
   let mut gens_mut : Array[FreeGroupElement] = Array::new()
-  for g in gens { gens_mut.push(g) }
+  for g in gens {
+    gens_mut.push(g)
+  }
   let mut rels_mut : Array[FreeGroupElement] = Array::new()
-  for r in rels { rels_mut.push(r) }
+  for r in rels {
+    rels_mut.push(r)
+  }
   let mut prev_gens : Array[FreeGroupElement] = Array::new()
   let mut prev_rels : Array[FreeGroupElement] = Array::new()
   while set_unique_words(prev_rels) != set_unique_words(rels_mut) {
     prev_rels = rels_mut
-    while change_gens && set_unique_words(prev_gens) != set_unique_words(gens_mut) {
+    while change_gens &&
+          set_unique_words(prev_gens) != set_unique_words(gens_mut) {
       prev_gens = gens_mut
       let res = elimination_technique_1(gens_mut, rels_mut, identity)
       gens_mut = res.0

@@ -13,9 +13,24 @@ test "util check_cycles_alt_sym" {
   let res1 = _check_cycles_alt_sym(perm1)
   let res2 = _check_cycles_alt_sym(perm2)
   let res3 = _check_cycles_alt_sym(perm3)
-  assert_true(@sympy_combinatorics.util_check_cycles_alt_sym_equiv(perm1.array_form(), res1))
-  assert_true(@sympy_combinatorics.util_check_cycles_alt_sym_equiv(perm2.array_form(), res2))
-  assert_true(@sympy_combinatorics.util_check_cycles_alt_sym_equiv(perm3.array_form(), res3))
+  assert_true(
+    @sympy_combinatorics.util_check_cycles_alt_sym_equiv(
+      perm1.array_form(),
+      res1,
+    ),
+  )
+  assert_true(
+    @sympy_combinatorics.util_check_cycles_alt_sym_equiv(
+      perm2.array_form(),
+      res2,
+    ),
+  )
+  assert_true(
+    @sympy_combinatorics.util_check_cycles_alt_sym_equiv(
+      perm3.array_form(),
+      res3,
+    ),
+  )
 }
 
 ///|
@@ -40,7 +55,11 @@ test "util distribute_gens_by_base" {
     }
     res_arrays.push(inner)
   }
-  assert_true(@sympy_combinatorics.util_distribute_gens_by_base_equiv(base, gens_arrays, res_arrays))
+  assert_true(
+    @sympy_combinatorics.util_distribute_gens_by_base_equiv(
+      base, gens_arrays, res_arrays,
+    ),
+  )
 }
 
 ///|
@@ -62,5 +81,9 @@ test "util strong_gens_from_distr" {
   for g in res {
     res_arrays.push(g.array_form())
   }
-  assert_true(@sympy_combinatorics.util_strong_gens_from_distr_equiv(distr_arrays, res_arrays))
+  assert_true(
+    @sympy_combinatorics.util_strong_gens_from_distr_equiv(
+      distr_arrays, res_arrays,
+    ),
+  )
 }

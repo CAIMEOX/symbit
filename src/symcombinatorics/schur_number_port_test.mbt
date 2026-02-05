@@ -7,7 +7,6 @@ test "combinatorics schur_number values parity" {
     None =>
       assert_oracle(try? @sympy_combinatorics.schur_number_equiv(k0, false, 0))
   }
-
   let k3 = 3
   match schur_number(k3) {
     Some(v) =>
@@ -15,7 +14,6 @@ test "combinatorics schur_number values parity" {
     None =>
       assert_oracle(try? @sympy_combinatorics.schur_number_equiv(k3, false, 0))
   }
-
   let k6 = 6
   match schur_number(k6) {
     Some(v) =>
@@ -27,8 +25,18 @@ test "combinatorics schur_number values parity" {
 
 ///|
 test "combinatorics schur_number lower_bound parity" {
-  assert_oracle(try? @sympy_combinatorics.schur_number_lower_bound_equiv(6, schur_number_lower_bound(6)))
-  assert_oracle(try? @sympy_combinatorics.schur_number_lower_bound_equiv(7, schur_number_lower_bound(7)))
+  assert_oracle(
+    try? @sympy_combinatorics.schur_number_lower_bound_equiv(
+      6,
+      schur_number_lower_bound(6),
+    ),
+  )
+  assert_oracle(
+    try? @sympy_combinatorics.schur_number_lower_bound_equiv(
+      7,
+      schur_number_lower_bound(7),
+    ),
+  )
 }
 
 ///|

@@ -14,7 +14,9 @@ test "free group vs abelian fp group not isomorphic" {
   let free_fp = vfp_group(f, [])
   let comm = a.mul(b).mul(a.inverse()).mul(b.inverse())
   let abelian_fp = vfp_group(f, [comm])
-  assert_true(!is_isomorphic(HomGroup::FpGroup(free_fp), HomGroup::FpGroup(abelian_fp)))
+  assert_true(
+    !is_isomorphic(HomGroup::FpGroup(free_fp), HomGroup::FpGroup(abelian_fp)),
+  )
 }
 
 ///|
@@ -24,13 +26,11 @@ test "abelian fp group isomorphism via invariants" {
   let b = gens1[1]
   let comm1 = a.mul(b).mul(a.inverse()).mul(b.inverse())
   let g1 = vfp_group(f1, [comm1])
-
   let (f2, gens2) = free_group("x, y")
   let x = gens2[0]
   let y = gens2[1]
   let comm2 = x.mul(y).mul(x.inverse()).mul(y.inverse())
   let g2 = vfp_group(f2, [comm2])
-
   let (ok, _) = group_isomorphism(HomGroup::FpGroup(g1), HomGroup::FpGroup(g2))
   assert_true(ok)
 }

@@ -30,12 +30,7 @@ pub fn PolycyclicGroup::new(
     Some(c) => c
     None => Collector::new(pc_sequence, pc_series, relative_order)
   }
-  {
-    pcgs: pc_sequence,
-    pc_series,
-    relative_order,
-    collector: coll,
-  }
+  { pcgs: pc_sequence, pc_series, relative_order, collector: coll }
 }
 
 ///|
@@ -108,7 +103,7 @@ pub fn Collector::minimal_uncollected_subword(
     let idx = index[s1]
     let rel = re[idx]
     if rel != 0 && (e1 < 0 || e1 > rel - 1) {
-      return Some([ (s1, e1) ])
+      return Some([(s1, e1)])
     }
   }
   for i in 0..<(array.length() - 1) {
@@ -118,7 +113,7 @@ pub fn Collector::minimal_uncollected_subword(
     let e2 = array[i + 1].1
     if index[s1] > index[s2] {
       let e = if e2 > 0 { 1 } else { -1 }
-      return Some([ (s1, e1), (s2, e) ])
+      return Some([(s1, e1), (s2, e)])
     }
   }
   None
@@ -127,7 +122,10 @@ pub fn Collector::minimal_uncollected_subword(
 ///|
 pub fn Collector::relations(
   self : Collector,
-) -> (Map[FreeGroupElement, FreeGroupElement], Map[FreeGroupElement, FreeGroupElement]) {
+) -> (
+  Map[FreeGroupElement, FreeGroupElement],
+  Map[FreeGroupElement, FreeGroupElement],
+) {
   let power_relators : Map[FreeGroupElement, FreeGroupElement] = {}
   let conjugate_relators : Map[FreeGroupElement, FreeGroupElement] = {}
   for key, value in self.pc_presentation {
@@ -170,7 +168,11 @@ pub fn Collector::map_relation(
   let array = w.array_form()
   let s1 = array[0].0
   let s2 = array[1].0
-  let key = free_group_element_from_form(self.free_group, [ (s2, -1), (s1, 1), (s2, 1) ])
+  let key = free_group_element_from_form(self.free_group, [
+    (s2, -1),
+    (s1, 1),
+    (s2, 1),
+  ])
   match self.pc_presentation.get(key) {
     Some(v) => v
     None => self.free_group.identity()
@@ -204,14 +206,14 @@ pub fn Collector::collected_word(
           }
           let q = e1 / re
           let r = e1 - q * re
-          let key = free_group_element_from_form(free_group, [ (s1, re) ])
+          let key = free_group_element_from_form(free_group, [(s1, re)])
           let pres = match self.pc_presentation.get(key) {
             Some(v) => v
             None => free_group.identity()
           }
           let word_ = if pres.is_identity() {
             if r != 0 {
-              free_group_element_from_form(free_group, [ (s1, r) ])
+              free_group_element_from_form(free_group, [(s1, r)])
             } else {
               free_group.identity()
             }
@@ -219,22 +221,19 @@ pub fn Collector::collected_word(
             let pres_arr = pres.array_form()
             let sym = pres_arr[0].0
             let exp = pres_arr[0].1
-            free_group_element_from_form(
-              free_group,
-              [ (s1, r), (sym, q * exp) ],
-            )
+            free_group_element_from_form(free_group, [(s1, r), (sym, q * exp)])
           }
           word = word.eliminate_word(w_word, by=word_)
         }
         if w.length() == 2 && w[1].1 > 0 {
           let s2 = w[1].0
-          let s2_word = free_group_element_from_form(free_group, [ (s2, 1) ])
+          let s2_word = free_group_element_from_form(free_group, [(s2, 1)])
           let mut word_ = self.map_relation(w_word)
           word_ = s2_word.mul(word_.pow(e1))
           word = word.substituted_word(low, high, word_)
         } else if w.length() == 2 && w[1].1 < 0 {
           let s2 = w[1].0
-          let s2_word = free_group_element_from_form(free_group, [ (s2, 1) ])
+          let s2_word = free_group_element_from_form(free_group, [(s2, 1)])
           let mut word_ = self.map_relation(w_word)
           word_ = s2_word.inverse().mul(word_.pow(e1))
           word = word.substituted_word(low, high, word_)
@@ -246,7 +245,9 @@ pub fn Collector::collected_word(
 }
 
 ///|
-pub fn Collector::pc_relators(self : Collector) -> Map[FreeGroupElement, FreeGroupElement] raise CombinatoricsError {
+pub fn Collector::pc_relators(
+  self : Collector,
+) -> Map[FreeGroupElement, FreeGroupElement] raise CombinatoricsError {
   let free_group = self.free_group
   let rel_order = self.relative_order
   let pc_relators : Map[FreeGroupElement, FreeGroupElement] = {}
@@ -286,7 +287,11 @@ pub fn Collector::pc_relators(self : Collector) -> Map[FreeGroupElement, FreeGro
       word = word.mul(perm_to_free[gg])
     }
     word = self.collected_word(word)
-    pc_relators[relation] = if word.is_identity() { free_group.identity() } else { word }
+    pc_relators[relation] = if word.is_identity() {
+      free_group.identity()
+    } else {
+      word
+    }
     self.pc_presentation = pc_relators
     collected_gens.push(gen)
     if collected_gens.length() > 1 {
@@ -309,7 +314,11 @@ pub fn Collector::pc_relators(self : Collector) -> Map[FreeGroupElement, FreeGro
           word2 = word2.mul(perm_to_free[gg])
         }
         word2 = self.collected_word(word2)
-        pc_relators[relation] = if word2.is_identity() { free_group.identity() } else { word2 }
+        pc_relators[relation] = if word2.is_identity() {
+          free_group.identity()
+        } else {
+          word2
+        }
         self.pc_presentation = pc_relators
         j = j + 1
       }
@@ -353,7 +362,10 @@ pub fn Collector::exponent_vector(
 }
 
 ///|
-pub fn Collector::depth(self : Collector, element : Permutation) -> Int raise CombinatoricsError {
+pub fn Collector::depth(
+  self : Collector,
+  element : Permutation,
+) -> Int raise CombinatoricsError {
   let exp = self.exponent_vector(element)
   for i in 0..<exp.length() {
     if exp[i] != 0 {
@@ -364,7 +376,10 @@ pub fn Collector::depth(self : Collector, element : Permutation) -> Int raise Co
 }
 
 ///|
-pub fn Collector::leading_exponent(self : Collector, element : Permutation) -> Int? raise CombinatoricsError {
+pub fn Collector::leading_exponent(
+  self : Collector,
+  element : Permutation,
+) -> Int? raise CombinatoricsError {
   let exp = self.exponent_vector(element)
   let depth = self.depth(element)
   if depth != self.pcgs.length() + 1 {
@@ -432,7 +447,9 @@ pub fn Collector::induced_pcgs(
 ) -> Array[Permutation] raise CombinatoricsError {
   let z : Array[Permutation?] = Array::make(self.pcgs.length(), None)
   let gens : Array[Permutation] = Array::new()
-  for g in gens0 { gens.push(g) }
+  for g in gens0 {
+    gens.push(g)
+  }
   while !gens.is_empty() {
     let g = gens.remove(0)
     let h = self.sift_z(z, g)

@@ -159,7 +159,10 @@ fn sympy_call_obj(
 
 ///|
 fn sympy_sub_obj(a : @py.PyObject, b : @py.PyObject) -> @py.PyObject raise {
-  let neg = sympy_call_obj("sympy.Mul", [OracleArg::Int(-1), OracleArg::PyObj(b)])
+  let neg = sympy_call_obj("sympy.Mul", [
+    OracleArg::Int(-1),
+    OracleArg::PyObj(b),
+  ])
   sympy_call_obj("sympy.Add", [OracleArg::PyObj(a), OracleArg::PyObj(neg)])
 }
 
@@ -227,20 +230,18 @@ fn list_equiv(
     return false
   }
   match dps {
-    Some(v) => {
+    Some(v) =>
       for i in 0..<ours.length() {
         if !expr_equiv_pyobj(ours[i], sympy_items[i], dps=v) {
           return false
         }
       }
-    }
-    None => {
+    None =>
       for i in 0..<ours.length() {
         if !expr_equiv_pyobj(ours[i], sympy_items[i]) {
           return false
         }
       }
-    }
   }
   true
 }
@@ -366,7 +367,11 @@ pub fn mobius_transform_equiv(
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map::new()
   kwargs["subset"] = OracleArg::Bool(subset)
-  let items = sympy_list_call("sympy.discrete.transforms.mobius_transform", args, kwargs~)
+  let items = sympy_list_call(
+    "sympy.discrete.transforms.mobius_transform",
+    args,
+    kwargs~,
+  )
   list_equiv(ours, items)
 }
 
@@ -380,7 +385,11 @@ pub fn inverse_mobius_transform_equiv(
   let args : Array[OracleArg] = [OracleArg::PyObj(list_obj.obj())]
   let kwargs : Map[String, OracleArg] = Map::new()
   kwargs["subset"] = OracleArg::Bool(subset)
-  let items = sympy_list_call("sympy.discrete.transforms.inverse_mobius_transform", args, kwargs~)
+  let items = sympy_list_call(
+    "sympy.discrete.transforms.inverse_mobius_transform",
+    args,
+    kwargs~,
+  )
   list_equiv(ours, items)
 }
 
@@ -393,13 +402,20 @@ pub fn convolution_fft_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
   let kwargs : Map[String, OracleArg] = Map::new()
   match dps {
     Some(v) => kwargs["dps"] = OracleArg::Int(v)
     None => ()
   }
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution_fft", args, kwargs~)
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution_fft",
+    args,
+    kwargs~,
+  )
   match dps {
     Some(v) => list_equiv(ours, items, dps=v)
     None => list_equiv(ours, items)
@@ -420,7 +436,9 @@ pub fn convolution_ntt_equiv(
     OracleArg::PyObj(b_obj.obj()),
     OracleArg::Int(prime),
   ]
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution_ntt", args)
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution_ntt", args,
+  )
   list_equiv(ours, items)
 }
 
@@ -432,8 +450,13 @@ pub fn convolution_fwht_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution_fwht", args)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution_fwht", args,
+  )
   list_equiv(ours, items)
 }
 
@@ -445,8 +468,13 @@ pub fn convolution_subset_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution_subset", args)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution_subset", args,
+  )
   list_equiv(ours, items)
 }
 
@@ -458,8 +486,13 @@ pub fn covering_product_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.convolutions.covering_product", args)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.covering_product", args,
+  )
   list_equiv(ours, items)
 }
 
@@ -471,8 +504,13 @@ pub fn intersecting_product_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
-  let items = sympy_list_call("sympy.discrete.convolutions.intersecting_product", args)
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.intersecting_product", args,
+  )
   list_equiv(ours, items)
 }
 
@@ -489,7 +527,10 @@ pub fn convolution_equiv(
 ) -> Bool raise {
   let a_obj = py_list_from_exprs(a)
   let b_obj = py_list_from_exprs(b)
-  let args : Array[OracleArg] = [OracleArg::PyObj(a_obj.obj()), OracleArg::PyObj(b_obj.obj())]
+  let args : Array[OracleArg] = [
+    OracleArg::PyObj(a_obj.obj()),
+    OracleArg::PyObj(b_obj.obj()),
+  ]
   let kwargs : Map[String, OracleArg] = Map::new()
   if cycle != 0 {
     kwargs["cycle"] = OracleArg::Int(cycle)
@@ -510,7 +551,11 @@ pub fn convolution_equiv(
     Some(v) => kwargs["subset"] = OracleArg::Bool(v)
     None => ()
   }
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution", args, kwargs~)
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution",
+    args,
+    kwargs~,
+  )
   match dps {
     Some(v) => list_equiv(ours, items, dps=v)
     None => list_equiv(ours, items)
@@ -524,7 +569,9 @@ pub fn convolution_int_equiv(
   ours : Array[Int],
 ) -> Bool raise {
   let args : Array[OracleArg] = [OracleArg::IntList(a), OracleArg::IntList(b)]
-  let items = sympy_list_call("sympy.discrete.convolutions.convolution_int", args)
+  let items = sympy_list_call(
+    "sympy.discrete.convolutions.convolution_int", args,
+  )
   let strs : Array[String] = Array::new()
   for item in items {
     strs.push(py_str_obj(item))

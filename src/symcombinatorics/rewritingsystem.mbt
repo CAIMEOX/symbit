@@ -27,7 +27,9 @@ fn rules_cache_push(
 }
 
 ///|
-fn map_keys_sorted(map : Map[FreeGroupElement, FreeGroupElement]) -> Array[FreeGroupElement] {
+fn map_keys_sorted(
+  map : Map[FreeGroupElement, FreeGroupElement],
+) -> Array[FreeGroupElement] {
   let out : Array[FreeGroupElement] = Array::new()
   for k, _ in map {
     out.push(k)
@@ -106,7 +108,9 @@ pub fn RewritingSystem::set_max(self : RewritingSystem, n : Int) -> Unit {
 }
 
 ///|
-pub fn RewritingSystem::is_confluent(self : RewritingSystem) -> Bool raise CombinatoricsError {
+pub fn RewritingSystem::is_confluent(
+  self : RewritingSystem,
+) -> Bool raise CombinatoricsError {
   match self.is_confluent_cache {
     Some(v) => v
     None => {
@@ -118,7 +122,9 @@ pub fn RewritingSystem::is_confluent(self : RewritingSystem) -> Bool raise Combi
 }
 
 ///|
-fn RewritingSystem::_init_rules(self : RewritingSystem) -> Unit raise CombinatoricsError {
+fn RewritingSystem::_init_rules(
+  self : RewritingSystem,
+) -> Unit raise CombinatoricsError {
   let identity = self.free_group.identity()
   for r in self.relators {
     ignore(self.add_rule(r, identity))
@@ -167,7 +173,6 @@ pub fn RewritingSystem::add_rule(
     return new_keys
   }
   rules_cache_push(self.rules_cache, pair, 50)
-
   if s1.length() - s2.length() < 3 {
     if !self.rules.contains(s1) {
       new_keys.push(s1)
@@ -200,7 +205,7 @@ pub fn RewritingSystem::add_rule(
         new_keys.push(right_s2)
       }
     } else if right_s1.length() - right_s2.length() < 3 {
-      let more = self.add_rule(right_s1, right_s2, check=check)
+      let more = self.add_rule(right_s1, right_s2, check~)
       for v in more {
         new_keys.push(v)
       }
@@ -222,7 +227,7 @@ pub fn RewritingSystem::add_rule(
         new_keys.push(left_w2)
       }
     } else if left_w1.length() - left_w2.length() < 3 {
-      let more = self.add_rule(left_w1, left_w2, check=check)
+      let more = self.add_rule(left_w1, left_w2, check~)
       for v in more {
         new_keys.push(v)
       }
@@ -232,8 +237,10 @@ pub fn RewritingSystem::add_rule(
 }
 
 ///|
-fn RewritingSystem::_remove_redundancies(self : RewritingSystem, changes? : Bool = false)
-  -> (Array[FreeGroupElement], Array[FreeGroupElement])? raise CombinatoricsError {
+fn RewritingSystem::_remove_redundancies(
+  self : RewritingSystem,
+  changes? : Bool = false,
+) -> (Array[FreeGroupElement], Array[FreeGroupElement])? raise CombinatoricsError {
   let removed : Array[FreeGroupElement] = Array::new()
   let added : Array[FreeGroupElement] = Array::new()
   let rules_copy : Array[(FreeGroupElement, FreeGroupElement)] = Array::new()
@@ -266,7 +273,10 @@ fn RewritingSystem::_remove_redundancies(self : RewritingSystem, changes? : Bool
 }
 
 ///|
-fn overlaps(r1 : FreeGroupElement, r2 : FreeGroupElement) -> Array[FreeGroupElement] raise CombinatoricsError {
+fn overlaps(
+  r1 : FreeGroupElement,
+  r2 : FreeGroupElement,
+) -> Array[FreeGroupElement] raise CombinatoricsError {
   let len1 = r1.length()
   let len2 = r2.length()
   let result : Array[FreeGroupElement] = Array::new()
@@ -297,16 +307,19 @@ fn process_overlap(
   let t = rs.reduce(w.eliminate_word(r2, by=rs.rules[r2]))
   if s != t {
     if check {
-      return Some([ rs.free_group.identity() ])
+      return Some([rs.free_group.identity()])
     }
-    let new_keys = rs.add_rule(t, s, check=check)
+    let new_keys = rs.add_rule(t, s, check~)
     return Some(new_keys)
   }
   None
 }
 
 ///|
-pub fn RewritingSystem::make_confluent(self : RewritingSystem, check? : Bool = false) -> Bool raise CombinatoricsError {
+pub fn RewritingSystem::make_confluent(
+  self : RewritingSystem,
+  check? : Bool = false,
+) -> Bool raise CombinatoricsError {
   if self.max_exceeded {
     return self.is_confluent_cache.unwrap_or(false)
   }
@@ -376,7 +389,7 @@ pub fn RewritingSystem::make_confluent(self : RewritingSystem, check? : Bool = f
             for a in added_keys {
               lhs.push(a)
             }
-            if removed.any((x) => x == r1) {
+            if removed.any(x => x == r1) {
               break
             }
           }
@@ -393,7 +406,9 @@ pub fn RewritingSystem::make_confluent(self : RewritingSystem, check? : Bool = f
 }
 
 ///|
-fn RewritingSystem::_check_confluence(self : RewritingSystem) -> Bool raise CombinatoricsError {
+fn RewritingSystem::_check_confluence(
+  self : RewritingSystem,
+) -> Bool raise CombinatoricsError {
   self.make_confluent(check=true)
 }
 
@@ -406,11 +421,7 @@ pub fn RewritingSystem::reduce(
   let rules_filtered : Array[(FreeGroupElement, FreeGroupElement)] = Array::new()
   for r, v in self.rules {
     match exclude {
-      Some(ex) => {
-        if r != ex {
-          rules_filtered.push((r, v))
-        }
-      }
+      Some(ex) => if r != ex { rules_filtered.push((r, v)) }
       None => rules_filtered.push((r, v))
     }
   }
@@ -454,7 +465,9 @@ fn RewritingSystem::_compute_inverse_rules(
 }
 
 ///|
-pub fn RewritingSystem::construct_automaton(self : RewritingSystem) -> Unit raise CombinatoricsError {
+pub fn RewritingSystem::construct_automaton(
+  self : RewritingSystem,
+) -> Unit raise CombinatoricsError {
   self._add_to_automaton(self.rules)
 }
 
@@ -473,7 +486,6 @@ fn RewritingSystem::_add_to_automaton(
     all_rules[r] = v
   }
   let mut accept_states : Array[StateName] = Array::new()
-
   for rule, rhs in all_rules {
     for letter in rule.letter_form_elm() {
       automaton_alphabet.push(letter)
@@ -487,19 +499,18 @@ fn RewritingSystem::_add_to_automaton(
       let elem = prev
       let name = StateName::Word(elem)
       match self.reduction_automaton {
-        Some(machine) => {
+        Some(machine) =>
           if !machine.has_state(name) {
             machine.add_state(name, StateType::Accept)
             accept_states.push(name)
           }
-        }
         None => ()
       }
     }
     let rule_state = StateName::Word(rule)
     match self.reduction_automaton {
       Some(machine) => {
-        if accept_states.any((s) => s == rule_state) {
+        if accept_states.any(s => s == rule_state) {
           machine.set_dead_rule(rule_state, rhs)
           let filtered : Array[StateName] = Array::new()
           for s in accept_states {
@@ -520,20 +531,19 @@ fn RewritingSystem::_add_to_automaton(
   // unique alphabet
   let uniq : Array[FreeGroupElement] = Array::new()
   for letter in automaton_alphabet {
-    if !uniq.any((x) => x == letter) {
+    if !uniq.any(x => x == letter) {
       uniq.push(letter)
     }
   }
-
   match self.reduction_automaton {
     Some(machine) => {
       let state_names = machine.state_names()
       for name in state_names {
         let state = machine.get_state(name)
         match state {
-          Some(st) => {
+          Some(st) =>
             match st.state_type {
-              StateType::Start => {
+              StateType::Start =>
                 for letter in uniq {
                   let to_state = if machine.has_state(StateName::Word(letter)) {
                     StateName::Word(letter)
@@ -542,14 +552,14 @@ fn RewritingSystem::_add_to_automaton(
                   }
                   machine.add_transition(name, letter, to_state)
                 }
-              }
-              StateType::Accept => {
+              StateType::Accept =>
                 for letter in uniq {
                   let mut next = match name {
                     StateName::Word(w) => w.mul(letter)
                     StateName::Start => letter
                   }
-                  while next.length() > 0 && !machine.has_state(StateName::Word(next)) {
+                  while next.length() > 0 &&
+                        !machine.has_state(StateName::Word(next)) {
                     next = next.subword(1, next.length())
                   }
                   let to_state = if next.length() == 0 {
@@ -559,10 +569,8 @@ fn RewritingSystem::_add_to_automaton(
                   }
                   machine.add_transition(name, letter, to_state)
                 }
-              }
               StateType::Dead => ()
             }
-          }
           None => ()
         }
       }
@@ -599,7 +607,7 @@ pub fn RewritingSystem::reduce_using_automaton(
           }
           let next_state = machine.get_state(next_name)
           match next_state {
-            Some(st) => {
+            Some(st) =>
               if st.state_type == StateType::Dead {
                 let subst = st.rh_rule.unwrap_or(self.free_group.identity())
                 let offset = match next_name {
@@ -607,11 +615,14 @@ pub fn RewritingSystem::reduce_using_automaton(
                   StateName::Start => 0
                 }
                 let start = i - offset
-                current_word = current_word.substituted_word(start, i + 1, subst)
+                current_word = current_word.substituted_word(
+                  start,
+                  i + 1,
+                  subst,
+                )
                 flag = true
                 break
               }
-            }
             None => ()
           }
           current_state = next_name

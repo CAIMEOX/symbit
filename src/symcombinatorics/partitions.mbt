@@ -10,13 +10,13 @@ fn bell_number(n : Int) -> Int {
     return 1
   }
   let triangle : Array[Array[Int]] = Array::new()
-  for _ in 0..=n {
+  for _ in 0..<=n {
     triangle.push(Array::make(n + 1, 0))
   }
   triangle[0].set(0, 1)
-  for i in 1..=n {
+  for i in 1..<=n {
     triangle[i].set(0, triangle[i - 1][i - 1])
-    for j in 1..=i {
+    for j in 1..<=i {
       triangle[i].set(j, triangle[i - 1][j - 1] + triangle[i][j - 1])
     }
   }
@@ -57,7 +57,13 @@ fn[T : Show] block_compare(a : Array[T], b : Array[T]) -> Int {
     }
     i = i + 1
   }
-  if a.length() < b.length() { -1 } else if a.length() > b.length() { 1 } else { 0 }
+  if a.length() < b.length() {
+    -1
+  } else if a.length() > b.length() {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -90,7 +96,13 @@ fn array_compare_int(a : Array[Int], b : Array[Int]) -> Int {
       return 1
     }
   }
-  if a.length() < b.length() { -1 } else if a.length() > b.length() { 1 } else { 0 }
+  if a.length() < b.length() {
+    -1
+  } else if a.length() > b.length() {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -102,13 +114,17 @@ pub struct Partition[T] {
 }
 
 ///|
-pub fn[T : Eq + Show] Partition::new(blocks : Array[Array[T]]) -> Partition[T] raise CombinatoricsError {
+pub fn[T : Eq + Show] Partition::new(
+  blocks : Array[Array[T]],
+) -> Partition[T] raise CombinatoricsError {
   let all_items : Array[T] = Array::new()
   for block in blocks {
     let seen : Array[T] = Array::new()
     for item in block {
       if seen.any(v => v == item) {
-        raise CombinatoricsError::ValueError("Partition contained duplicate elements")
+        raise CombinatoricsError::ValueError(
+          "Partition contained duplicate elements",
+        )
       }
       seen.push(item)
       all_items.push(item)
@@ -119,7 +135,9 @@ pub fn[T : Eq + Show] Partition::new(blocks : Array[Array[T]]) -> Partition[T] r
     if !unique.any(v => v == item) {
       unique.push(item)
     } else {
-      raise CombinatoricsError::ValueError("Partition contained duplicate elements")
+      raise CombinatoricsError::ValueError(
+        "Partition contained duplicate elements",
+      )
     }
   }
   let members = sort_by_string(unique)
@@ -175,19 +193,25 @@ pub fn[T : Show] Partition::rank(self : Partition[T]) -> Int {
 }
 
 ///|
-pub fn[T : Eq + Show] Partition::add(self : Partition[T], other : Int) -> Partition[T] raise CombinatoricsError {
+pub fn[T : Eq + Show] Partition::add(
+  self : Partition[T],
+  other : Int,
+) -> Partition[T] raise CombinatoricsError {
   let offset = self.rank() + other
   let total = rgs_enum(self.members.length())
   let mut rank = offset
   if total > 0 {
-    rank = ((rank % total) + total) % total
+    rank = (rank % total + total) % total
   }
   let rgs = rgs_unrank(rank, self.members.length())
   Partition::from_rgs(rgs, self.members)
 }
 
 ///|
-pub fn[T : Eq + Show] Partition::sub(self : Partition[T], other : Int) -> Partition[T] raise CombinatoricsError {
+pub fn[T : Eq + Show] Partition::sub(
+  self : Partition[T],
+  other : Int,
+) -> Partition[T] raise CombinatoricsError {
   self.add(-other)
 }
 
@@ -206,7 +230,7 @@ pub fn[T : Eq + Show] Partition::from_rgs(
     }
   }
   let blocks : Array[Array[T]] = Array::new()
-  for _ in 0..=max_elem {
+  for _ in 0..<=max_elem {
     blocks.push(Array::new())
   }
   for i in 0..<rgs.length() {
@@ -215,7 +239,9 @@ pub fn[T : Eq + Show] Partition::from_rgs(
   }
   for b in blocks {
     if b.is_empty() {
-      raise CombinatoricsError::ValueError("some blocks of the partition were empty")
+      raise CombinatoricsError::ValueError(
+        "some blocks of the partition were empty",
+      )
     }
   }
   Partition::new(blocks)
@@ -237,7 +263,9 @@ pub fn IntegerPartition::new(
   let parts : Array[Int] = Array::new()
   for p in partition {
     if p < 1 {
-      raise CombinatoricsError::ValueError("All integer summands must be greater than one")
+      raise CombinatoricsError::ValueError(
+        "All integer summands must be greater than one",
+      )
     }
     parts.push(p)
   }
@@ -268,7 +296,7 @@ pub fn IntegerPartition::from_dict(
       parts.push(key)
     }
   }
-  IntegerPartition::new(parts, integer=integer)
+  IntegerPartition::new(parts, integer~)
 }
 
 ///|
@@ -298,7 +326,9 @@ pub fn IntegerPartition::as_dict(self : IntegerPartition) -> Map[Int, Int] {
 }
 
 ///|
-pub fn IntegerPartition::prev_lex(self : IntegerPartition) -> IntegerPartition raise CombinatoricsError {
+pub fn IntegerPartition::prev_lex(
+  self : IntegerPartition,
+) -> IntegerPartition raise CombinatoricsError {
   let d : Map[Int, Int] = Map::new()
   for k, v in self.as_dict() {
     d[k] = v
@@ -345,7 +375,9 @@ pub fn IntegerPartition::prev_lex(self : IntegerPartition) -> IntegerPartition r
 }
 
 ///|
-pub fn IntegerPartition::next_lex(self : IntegerPartition) -> IntegerPartition raise CombinatoricsError {
+pub fn IntegerPartition::next_lex(
+  self : IntegerPartition,
+) -> IntegerPartition raise CombinatoricsError {
   let mut d : Map[Int, Int] = Map::new()
   for k, v in self.as_dict() {
     d[k] = v
@@ -374,36 +406,34 @@ pub fn IntegerPartition::next_lex(self : IntegerPartition) -> IntegerPartition r
       d[1] = (d[b] - 1) * b
       d[b] = 0
     }
-  } else {
-    if d[a] > 1 {
-      if keys.length() == 1 {
-        let fresh : Map[Int, Int] = Map::new()
-        fresh[a + 1] = 1
-        fresh[1] = self.integer - a - 1
-        d = fresh
-      } else {
-        let a1 = a + 1
-        let base = match d.get(a1) {
-          Some(v) => v
-          None => 0
-        }
-        d[a1] = base + 1
-        d[1] = d[a] * a - a1
-        d[a] = 0
-      }
+  } else if d[a] > 1 {
+    if keys.length() == 1 {
+      let fresh : Map[Int, Int] = Map::new()
+      fresh[a + 1] = 1
+      fresh[1] = self.integer - a - 1
+      d = fresh
     } else {
-      let b = keys[keys.length() - 2]
-      let b1 = b + 1
-      let base = match d.get(b1) {
+      let a1 = a + 1
+      let base = match d.get(a1) {
         Some(v) => v
         None => 0
       }
-      d[b1] = base + 1
-      let need = d[b] * b + d[a] * a - b1
+      d[a1] = base + 1
+      d[1] = d[a] * a - a1
       d[a] = 0
-      d[b] = 0
-      d[1] = need
     }
+  } else {
+    let b = keys[keys.length() - 2]
+    let b1 = b + 1
+    let base = match d.get(b1) {
+      Some(v) => v
+      None => 0
+    }
+    d[b1] = base + 1
+    let need = d[b] * b + d[a] * a - b1
+    d[a] = 0
+    d[b] = 0
+    d[1] = need
   }
   IntegerPartition::from_dict(self.integer, d)
 }
@@ -429,7 +459,10 @@ pub fn IntegerPartition::conjugate(self : IntegerPartition) -> Array[Int] {
 }
 
 ///|
-pub fn IntegerPartition::as_ferrers(self : IntegerPartition, char? : Char = '#') -> String {
+pub fn IntegerPartition::as_ferrers(
+  self : IntegerPartition,
+  char? : Char = '#',
+) -> String {
   let lines : Array[String] = Array::new()
   for p in self.partition {
     let chars : Array[Char] = Array::make(p, char)
@@ -439,7 +472,10 @@ pub fn IntegerPartition::as_ferrers(self : IntegerPartition, char? : Char = '#')
 }
 
 ///|
-pub fn IntegerPartition::lt(self : IntegerPartition, other : IntegerPartition) -> Bool {
+pub fn IntegerPartition::lt(
+  self : IntegerPartition,
+  other : IntegerPartition,
+) -> Bool {
   let a = Array::new()
   let b = Array::new()
   for v in self.partition {
@@ -454,7 +490,10 @@ pub fn IntegerPartition::lt(self : IntegerPartition, other : IntegerPartition) -
 }
 
 ///|
-pub fn IntegerPartition::le(self : IntegerPartition, other : IntegerPartition) -> Bool {
+pub fn IntegerPartition::le(
+  self : IntegerPartition,
+  other : IntegerPartition,
+) -> Bool {
   let a = Array::new()
   let b = Array::new()
   for v in self.partition {
@@ -474,7 +513,10 @@ pub fn IntegerPartition::to_string(self : IntegerPartition) -> String {
 }
 
 ///|
-pub fn random_integer_partition(n : Int, seed? : Array[Int]) -> Array[Int] raise CombinatoricsError {
+pub fn random_integer_partition(
+  n : Int,
+  seed? : Array[Int],
+) -> Array[Int] raise CombinatoricsError {
   if n < 1 {
     raise CombinatoricsError::ValueError("n must be a positive integer")
   }
@@ -494,7 +536,7 @@ pub fn random_integer_partition(n : Int, seed? : Array[Int]) -> Array[Int] raise
         state
       }
     }
-    let k = (rand % remaining) + 1
+    let k = rand % remaining + 1
     let rand2 = match seed {
       Some(values) => {
         let val = values[seed_idx % values.length()]
@@ -506,7 +548,7 @@ pub fn random_integer_partition(n : Int, seed? : Array[Int]) -> Array[Int] raise
         state
       }
     }
-    let mult = (rand2 % (remaining / k)) + 1
+    let mult = rand2 % (remaining / k) + 1
     partition.push((k, mult))
     remaining = remaining - k * mult
   }
@@ -537,13 +579,13 @@ pub fn random_integer_partition(n : Int, seed? : Array[Int]) -> Array[Int] raise
 ///|
 pub fn rgs_generalized(m : Int) -> Array[Array[Int]] {
   let d : Array[Array[Int]] = Array::new()
-  for _ in 0..=m {
+  for _ in 0..<=m {
     d.push(Array::make(m + 1, 0))
   }
-  for i in 0..=m {
+  for i in 0..<=m {
     d[0].set(i, 1)
   }
-  for i in 1..=m {
+  for i in 1..<=m {
     for j in 0..<m {
       if j <= m - i {
         d[i].set(j, j * d[i - 1][j] + d[i - 1][j + 1])
@@ -579,7 +621,7 @@ pub fn rgs_unrank(rank : Int, m : Int) -> Array[Int] raise CombinatoricsError {
   let levels : Array[Int] = Array::make(m + 1, 1)
   let mut j = 1
   let d_table = rgs_generalized(m)
-  for i in 2..=m {
+  for i in 2..<=m {
     let v = d_table[m - i][j]
     let cr = j * v
     if cr <= r {
@@ -587,12 +629,12 @@ pub fn rgs_unrank(rank : Int, m : Int) -> Array[Int] raise CombinatoricsError {
       r = r - cr
       j = j + 1
     } else {
-      levels[i] = (r / v) + 1
+      levels[i] = r / v + 1
       r = r % v
     }
   }
   let out : Array[Int] = Array::new()
-  for i in 1..=m {
+  for i in 1..<=m {
     out.push(levels[i] - 1)
   }
   out

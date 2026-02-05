@@ -2,7 +2,9 @@
 /// Named permutation groups.
 
 ///|
-pub fn abelian_group(cyclic_orders : Array[Int]) -> PermutationGroup raise CombinatoricsError {
+pub fn abelian_group(
+  cyclic_orders : Array[Int],
+) -> PermutationGroup raise CombinatoricsError {
   let groups : Array[PermutationGroup] = Array::new()
   let mut order = 1
   for size in cyclic_orders {
@@ -181,7 +183,9 @@ pub fn symmetric_group(n : Int) -> PermutationGroup raise CombinatoricsError {
 ///|
 pub fn rubik_group(n : Int) -> PermutationGroup raise CombinatoricsError {
   if n <= 1 {
-    raise CombinatoricsError::ValueError("Invalid cube. n has to be greater than 1")
+    raise CombinatoricsError::ValueError(
+      "Invalid cube. n has to be greater than 1",
+    )
   }
   PermutationGroup::new(rubik(n))
 }

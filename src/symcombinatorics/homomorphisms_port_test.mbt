@@ -10,7 +10,6 @@ test "homomorphism trivial and isomorphism" {
     check=true,
   )
   assert_true(hom_triv.is_trivial())
-
   let image = gens[0].pow(2)
   let hom_auto = homomorphism(
     HomGroup::PermGroup(c3),

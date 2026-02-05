@@ -3,11 +3,18 @@
 
 ///|
 fn abs_int(n : Int) -> Int {
-  if n < 0 { -n } else { n }
+  if n < 0 {
+    -n
+  } else {
+    n
+  }
 }
 
 ///|
-pub fn convolution_int(a : Array[Int], b : Array[Int]) -> Array[Int] raise DiscreteError {
+pub fn convolution_int(
+  a : Array[Int],
+  b : Array[Int],
+) -> Array[Int] raise DiscreteError {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -25,15 +32,20 @@ pub fn convolution_int(a : Array[Int], b : Array[Int]) -> Array[Int] raise Discr
       max_b = bv
     }
   }
-  let min_deg = if a.length() < b.length() { a.length() - 1 } else { b.length() - 1 }
-  let bound = @bigint.BigInt::from_int(max_a) * @bigint.BigInt::from_int(max_b) * @bigint.BigInt::from_int(1 + min_deg)
+  let min_deg = if a.length() < b.length() {
+    a.length() - 1
+  } else {
+    b.length() - 1
+  }
+  let bound = @bigint.BigInt::from_int(max_a) *
+    @bigint.BigInt::from_int(max_b) *
+    @bigint.BigInt::from_int(1 + min_deg)
   let mut x = @bigint.BigInt::from_int(1)
   let mut power = 0
   while x <= bound * @bigint.BigInt::from_int(2) {
     x = x << 1
     power = power + 1
   }
-
   fn to_integer(poly : Array[Int], power : Int) -> (Int, BigInt) {
     let mut n = @bigint.BigInt::from_int(0)
     let mut mul = 0
@@ -54,7 +66,6 @@ pub fn convolution_int(a : Array[Int], b : Array[Int]) -> Array[Int] raise Discr
   let (a_mul, a_packed) = to_integer(a, power)
   let (b_mul, b_packed) = to_integer(b, power)
   let mut result = a_packed * b_packed
-
   let mul = a_mul * b_mul
   let mask = x - @bigint.BigInt::from_int(1)
   let half = x >> 1
@@ -63,7 +74,11 @@ pub fn convolution_int(a : Array[Int], b : Array[Int]) -> Array[Int] raise Discr
   while !result.is_zero() || !borrow.is_zero() {
     let coeff = (result & mask) + borrow
     result = result >> power
-    borrow = if coeff >= half { @bigint.BigInt::from_int(1) } else { @bigint.BigInt::from_int(0) }
+    borrow = if coeff >= half {
+      @bigint.BigInt::from_int(1)
+    } else {
+      @bigint.BigInt::from_int(0)
+    }
     let raw = if coeff < half { coeff } else { coeff - x }
     let signed = if mul < 0 { raw.neg() } else { raw }
     let value = bigint_to_int_checked(signed, 62, "convolution_int")

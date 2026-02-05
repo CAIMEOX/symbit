@@ -35,7 +35,9 @@ fn copy_table_int_opt(values : Array[Array[Int?]]) -> Array[Array[Int?]] {
 }
 
 ///|
-fn copy_deduction_stack(values : Array[(Int, FreeGroupElement)]) -> Array[(Int, FreeGroupElement)] {
+fn copy_deduction_stack(
+  values : Array[(Int, FreeGroupElement)],
+) -> Array[(Int, FreeGroupElement)] {
   let out : Array[(Int, FreeGroupElement)] = Array::new()
   for v in values {
     out.push(v)
@@ -235,7 +237,11 @@ pub fn CosetTable::define(
 }
 
 ///|
-pub fn CosetTable::define_c(self : CosetTable, alpha : Int, x : FreeGroupElement) -> Unit raise CombinatoricsError {
+pub fn CosetTable::define_c(
+  self : CosetTable,
+  alpha : Int,
+  x : FreeGroupElement,
+) -> Unit raise CombinatoricsError {
   let len_table = self.table.length()
   if len_table >= self.coset_table_limit {
     raise CombinatoricsError::ValueError("coset enumeration exceeded limit")
@@ -304,8 +310,11 @@ pub fn CosetTable::scan_c(
 }
 
 ///|
-pub fn CosetTable::coincidence_c(self : CosetTable, alpha : Int, beta : Int)
-  -> Unit raise CombinatoricsError {
+pub fn CosetTable::coincidence_c(
+  self : CosetTable,
+  alpha : Int,
+  beta : Int,
+) -> Unit raise CombinatoricsError {
   let alphabet_index = self.alphabet_index
   let alphabet_inv_index = self.alphabet_inv_index
   let table = self.table
@@ -323,7 +332,7 @@ pub fn CosetTable::coincidence_c(self : CosetTable, alpha : Int, beta : Int)
           let nu = self.rep(delta)
           match table[mu][idx] {
             Some(val) => self.merge(nu, val, q)
-            None => {
+            None =>
               match table[nu][alphabet_inv_index[x]] {
                 Some(val2) => self.merge(mu, val2, q)
                 None => {
@@ -331,7 +340,6 @@ pub fn CosetTable::coincidence_c(self : CosetTable, alpha : Int, beta : Int)
                   table[nu][alphabet_inv_index[x]] = Some(mu)
                 }
               }
-            }
           }
         }
         None => ()
@@ -425,13 +433,17 @@ pub fn CosetTable::scan(
       }
       return
     } else if fill {
-      self.define(f, letters[i], modified=modified)
+      self.define(f, letters[i], modified~)
     }
   }
 }
 
 ///|
-pub fn CosetTable::scan_check(self : CosetTable, alpha : Int, word : FreeGroupElement) -> Bool {
+pub fn CosetTable::scan_check(
+  self : CosetTable,
+  alpha : Int,
+  word : FreeGroupElement,
+) -> Bool {
   let letters = word.letter_form_elm()
   let alphabet_index = self.alphabet_index
   let alphabet_inv_index = self.alphabet_inv_index
@@ -484,21 +496,23 @@ pub fn CosetTable::merge(
   w? : FreeGroupElement,
   modified? : Bool = false,
 ) -> Unit raise CombinatoricsError {
-  let phi = self.rep(k, modified=modified)
-  let psi = self.rep(lamda, modified=modified)
+  let phi = self.rep(k, modified~)
+  let psi = self.rep(lamda, modified~)
   if phi != psi {
     let mu = if phi < psi { phi } else { psi }
     let v = if phi < psi { psi } else { phi }
     self.p[v] = mu
     if modified {
       match w {
-        Some(word) => {
+        Some(word) =>
           if v == phi {
             self.p_p[phi] = self.p_p[k].inverse().mul(word).mul(self.p_p[lamda])
           } else {
-            self.p_p[psi] = self.p_p[lamda].inverse().mul(word.inverse()).mul(self.p_p[k])
+            self.p_p[psi] = self.p_p[lamda]
+              .inverse()
+              .mul(word.inverse())
+              .mul(self.p_p[k])
           }
-        }
         None => ()
       }
     }
@@ -507,8 +521,11 @@ pub fn CosetTable::merge(
 }
 
 ///|
-pub fn CosetTable::rep(self : CosetTable, k : Int, modified? : Bool = false)
-  -> Int raise CombinatoricsError {
+pub fn CosetTable::rep(
+  self : CosetTable,
+  k : Int,
+  modified? : Bool = false,
+) -> Int raise CombinatoricsError {
   let p = self.p
   let mut lamda = k
   let mut rho = p[lamda]
@@ -568,49 +585,64 @@ pub fn CosetTable::coincidence(
       match table[gamma][idx] {
         Some(delta) => {
           table[delta][alphabet_inv_index[x]] = None
-          let mu = self.rep(gamma, modified=modified)
-          let nu = self.rep(delta, modified=modified)
+          let mu = self.rep(gamma, modified~)
+          let nu = self.rep(delta, modified~)
           match table[mu][idx] {
-            Some(val) => {
+            Some(val) =>
               if modified {
                 let v = self.p_p[delta]
                   .inverse()
-                  .mul(self.word_table[gamma][idx].unwrap_or(self._grp.identity()).inverse())
+                  .mul(
+                    self.word_table[gamma][idx]
+                    .unwrap_or(self._grp.identity())
+                    .inverse(),
+                  )
                   .mul(self.p_p[gamma])
                   .mul(self.word_table[mu][idx].unwrap_or(self._grp.identity()))
                 self.modified_merge(nu, val, v, q)
               } else {
                 self.merge(nu, val, q)
               }
-            }
-            None => {
+            None =>
               match table[nu][alphabet_inv_index[x]] {
-                Some(val2) => {
+                Some(val2) =>
                   if modified {
                     let v = self.p_p[gamma]
                       .inverse()
-                      .mul(self.word_table[gamma][idx].unwrap_or(self._grp.identity()))
+                      .mul(
+                        self.word_table[gamma][idx].unwrap_or(
+                          self._grp.identity(),
+                        ),
+                      )
                       .mul(self.p_p[delta])
-                      .mul(self.word_table[mu][alphabet_inv_index[x]].unwrap_or(self._grp.identity()))
+                      .mul(
+                        self.word_table[mu][alphabet_inv_index[x]].unwrap_or(
+                          self._grp.identity(),
+                        ),
+                      )
                     self.modified_merge(mu, val2, v, q)
                   } else {
                     self.merge(mu, val2, q)
                   }
-                }
                 None => {
                   table[mu][idx] = Some(nu)
                   table[nu][alphabet_inv_index[x]] = Some(mu)
                   if modified {
                     let v = self.p_p[gamma]
                       .inverse()
-                      .mul(self.word_table[gamma][idx].unwrap_or(self._grp.identity()))
+                      .mul(
+                        self.word_table[gamma][idx].unwrap_or(
+                          self._grp.identity(),
+                        ),
+                      )
                       .mul(self.p_p[delta])
                     self.word_table[mu][idx] = Some(v)
-                    self.word_table[nu][alphabet_inv_index[x]] = Some(v.inverse())
+                    self.word_table[nu][alphabet_inv_index[x]] = Some(
+                      v.inverse(),
+                    )
                   }
                 }
               }
-            }
           }
         }
         None => ()
@@ -620,7 +652,11 @@ pub fn CosetTable::coincidence(
 }
 
 ///|
-pub fn CosetTable::scan_and_fill(self : CosetTable, alpha : Int, word : FreeGroupElement) -> Unit raise CombinatoricsError {
+pub fn CosetTable::scan_and_fill(
+  self : CosetTable,
+  alpha : Int,
+  word : FreeGroupElement,
+) -> Unit raise CombinatoricsError {
   self.scan(alpha, word, fill=true)
 }
 
@@ -681,7 +717,9 @@ pub fn CosetTable::scan_and_fill_c(
 }
 
 ///|
-pub fn CosetTable::look_ahead(self : CosetTable) -> Unit raise CombinatoricsError {
+pub fn CosetTable::look_ahead(
+  self : CosetTable,
+) -> Unit raise CombinatoricsError {
   let relators = self.relators
   for beta in self.omega() {
     for w in relators {
@@ -717,7 +755,7 @@ pub fn CosetTable::process_deductions(
     }
     let idx = self.alphabet_index[x]
     match table[alpha][idx] {
-      Some(beta) => {
+      Some(beta) =>
         if self.p[beta] == beta {
           for w in relators_by_x_inv {
             self.scan_c(beta, w)
@@ -726,7 +764,6 @@ pub fn CosetTable::process_deductions(
             }
           }
         }
-      }
       None => ()
     }
   }
@@ -748,13 +785,12 @@ pub fn CosetTable::process_deductions_check(
     }
     let idx = self.alphabet_index[x]
     match table[alpha][idx] {
-      Some(beta) => {
+      Some(beta) =>
         for w in relators_by_x_inv {
           if !self.scan_check(beta, w) {
             return false
           }
         }
-      }
       None => ()
     }
   }
@@ -831,12 +867,13 @@ pub fn CosetTable::compress(self : CosetTable) -> Unit {
     }
   }
   let new_p : Array[Int] = Array::new()
-  for i in 0..=gamma {
+  for i in 0..<=gamma {
     new_p.push(i)
   }
   self.p = new_p
   while table.length() > self.p.length() {
     let _ = table.pop()
+
   }
   for row in table {
     for j in 0..<self.alphabet.length() {
@@ -880,8 +917,10 @@ pub fn CosetTable::conjugates(
 }
 
 ///|
-pub fn CosetTable::coset_representative(self : CosetTable, coset : Int)
-  -> FreeGroupElement raise CombinatoricsError {
+pub fn CosetTable::coset_representative(
+  self : CosetTable,
+  coset : Int,
+) -> FreeGroupElement raise CombinatoricsError {
   for x in self.alphabet {
     let gamma = self.table[coset][self.alphabet_index[x]].unwrap_or(-1)
     if coset == 0 {
@@ -895,7 +934,11 @@ pub fn CosetTable::coset_representative(self : CosetTable, coset : Int)
 }
 
 ///|
-pub fn CosetTable::modified_define(self : CosetTable, alpha : Int, x : FreeGroupElement) -> Unit raise CombinatoricsError {
+pub fn CosetTable::modified_define(
+  self : CosetTable,
+  alpha : Int,
+  x : FreeGroupElement,
+) -> Unit raise CombinatoricsError {
   self.define(alpha, x, modified=true)
 }
 
@@ -907,7 +950,7 @@ pub fn CosetTable::modified_scan(
   y : FreeGroupElement,
   fill? : Bool = false,
 ) -> Unit raise CombinatoricsError {
-  self.scan(alpha, w, y=y, fill=fill, modified=true)
+  self.scan(alpha, w, y~, fill~, modified=true)
 }
 
 ///|
@@ -928,11 +971,14 @@ pub fn CosetTable::modified_merge(
   w : FreeGroupElement,
   q : Array[Int],
 ) -> Unit raise CombinatoricsError {
-  self.merge(k, lamda, q, w=w, modified=true)
+  self.merge(k, lamda, q, w~, modified=true)
 }
 
 ///|
-pub fn CosetTable::modified_rep(self : CosetTable, k : Int) -> Int raise CombinatoricsError {
+pub fn CosetTable::modified_rep(
+  self : CosetTable,
+  k : Int,
+) -> Int raise CombinatoricsError {
   self.rep(k, modified=true)
 }
 
@@ -943,7 +989,7 @@ pub fn CosetTable::modified_coincidence(
   beta : Int,
   w : FreeGroupElement,
 ) -> Unit raise CombinatoricsError {
-  self.coincidence(alpha, beta, w=w, modified=true)
+  self.coincidence(alpha, beta, w~, modified=true)
 }
 
 ///|
@@ -956,21 +1002,23 @@ pub fn coset_enumeration_r(
   modified? : Bool = false,
 ) -> CosetTable raise CombinatoricsError {
   let coset_table = match max_cosets {
-    Some(v) => CosetTable::new(
-      fp_grp.free_group,
-      fp_grp.relators,
-      fp_grp.generators,
-      fp_grp.to_string(),
-      subgroup,
-      max_cosets=v,
-    )
-    None => CosetTable::new(
-      fp_grp.free_group,
-      fp_grp.relators,
-      fp_grp.generators,
-      fp_grp.to_string(),
-      subgroup,
-    )
+    Some(v) =>
+      CosetTable::new(
+        fp_grp.free_group,
+        fp_grp.relators,
+        fp_grp.generators,
+        fp_grp.to_string(),
+        subgroup,
+        max_cosets=v,
+      )
+    None =>
+      CosetTable::new(
+        fp_grp.free_group,
+        fp_grp.relators,
+        fp_grp.generators,
+        fp_grp.to_string(),
+        subgroup,
+      )
   }
   let scan_and_fill = fn(
     alpha : Int,
@@ -987,7 +1035,10 @@ pub fn coset_enumeration_r(
       coset_table.scan_and_fill(alpha, w)
     }
   }
-  let define_fn = fn(alpha : Int, x : FreeGroupElement) -> Unit raise CombinatoricsError {
+  let define_fn = fn(
+    alpha : Int,
+    x : FreeGroupElement,
+  ) -> Unit raise CombinatoricsError {
     if modified {
       coset_table.modified_define(alpha, x)
     } else {
@@ -1055,42 +1106,39 @@ pub fn modified_coset_enumeration_r(
   incomplete? : Bool = false,
 ) -> CosetTable raise CombinatoricsError {
   match max_cosets {
-    Some(v) => {
+    Some(v) =>
       match draft {
-        Some(d) => coset_enumeration_r(
-          fp_grp,
-          subgroup,
-          max_cosets=v,
-          draft=d,
-          incomplete=incomplete,
-          modified=true,
-        )
-        None => coset_enumeration_r(
-          fp_grp,
-          subgroup,
-          max_cosets=v,
-          incomplete=incomplete,
-          modified=true,
-        )
+        Some(d) =>
+          coset_enumeration_r(
+            fp_grp,
+            subgroup,
+            max_cosets=v,
+            draft=d,
+            incomplete~,
+            modified=true,
+          )
+        None =>
+          coset_enumeration_r(
+            fp_grp,
+            subgroup,
+            max_cosets=v,
+            incomplete~,
+            modified=true,
+          )
       }
-    }
-    None => {
+    None =>
       match draft {
-        Some(d) => coset_enumeration_r(
-          fp_grp,
-          subgroup,
-          draft=d,
-          incomplete=incomplete,
-          modified=true,
-        )
-        None => coset_enumeration_r(
-          fp_grp,
-          subgroup,
-          incomplete=incomplete,
-          modified=true,
-        )
+        Some(d) =>
+          coset_enumeration_r(
+            fp_grp,
+            subgroup,
+            draft=d,
+            incomplete~,
+            modified=true,
+          )
+        None =>
+          coset_enumeration_r(fp_grp, subgroup, incomplete~, modified=true)
       }
-    }
   }
 }
 
@@ -1105,21 +1153,23 @@ pub fn coset_enumeration_c(
   let gens = fp_grp.generators
   let relators = fp_grp.relators
   let coset_table = match max_cosets {
-    Some(v) => CosetTable::new(
-      fp_grp.free_group,
-      fp_grp.relators,
-      fp_grp.generators,
-      fp_grp.to_string(),
-      subgroup,
-      max_cosets=v,
-    )
-    None => CosetTable::new(
-      fp_grp.free_group,
-      fp_grp.relators,
-      fp_grp.generators,
-      fp_grp.to_string(),
-      subgroup,
-    )
+    Some(v) =>
+      CosetTable::new(
+        fp_grp.free_group,
+        fp_grp.relators,
+        fp_grp.generators,
+        fp_grp.to_string(),
+        subgroup,
+        max_cosets=v,
+      )
+    None =>
+      CosetTable::new(
+        fp_grp.free_group,
+        fp_grp.relators,
+        fp_grp.generators,
+        fp_grp.to_string(),
+        subgroup,
+      )
   }
   match draft {
     Some(d) => {

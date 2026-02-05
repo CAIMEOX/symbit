@@ -7,7 +7,7 @@ fn rotate_left_ints(values : Array[Int], k : Int) -> Array[Int] {
     return values
   }
   let n = values.length()
-  let shift = ((k % n) + n) % n
+  let shift = (k % n + n) % n
   let out : Array[Int] = Array::new()
   for i in 0..<n {
     out.push(values[(i + shift) % n])
@@ -50,12 +50,12 @@ fn insert_at(values : Array[Int], idx : Int, value : Int) -> Array[Int] {
 ///|
 fn permutations_of_range(n : Int) -> Array[Array[Int]] {
   if n <= 0 {
-    return [ [] ]
+    return [[]]
   }
   let prev = permutations_of_range(n - 1)
   let out : Array[Array[Int]] = Array::new()
   for perm in prev {
-    for pos in 0..=perm.length() {
+    for pos in 0..<=perm.length() {
       out.push(insert_at(perm, pos, n - 1))
     }
   }
@@ -132,28 +132,46 @@ pub fn dihedral(n : Int) -> Array[Permutation] raise CombinatoricsError {
 pub fn rubik_cube_generators() -> Array[Permutation] raise CombinatoricsError {
   let raw : Array[Array[Array[Int]]] = [
     [
-      [1, 3, 8, 6], [2, 5, 7, 4], [9, 33, 25, 17], [10, 34, 26, 18],
+      [1, 3, 8, 6],
+      [2, 5, 7, 4],
+      [9, 33, 25, 17],
+      [10, 34, 26, 18],
       [11, 35, 27, 19],
     ],
     [
-      [9, 11, 16, 14], [10, 13, 15, 12], [1, 17, 41, 40], [4, 20, 44, 37],
+      [9, 11, 16, 14],
+      [10, 13, 15, 12],
+      [1, 17, 41, 40],
+      [4, 20, 44, 37],
       [6, 22, 46, 35],
     ],
     [
-      [17, 19, 24, 22], [18, 21, 23, 20], [6, 25, 43, 16], [7, 28, 42, 13],
+      [17, 19, 24, 22],
+      [18, 21, 23, 20],
+      [6, 25, 43, 16],
+      [7, 28, 42, 13],
       [8, 30, 41, 11],
     ],
     [
-      [25, 27, 32, 30], [26, 29, 31, 28], [3, 38, 43, 19], [5, 36, 45, 21],
+      [25, 27, 32, 30],
+      [26, 29, 31, 28],
+      [3, 38, 43, 19],
+      [5, 36, 45, 21],
       [8, 33, 48, 24],
     ],
     [
-      [33, 35, 40, 38], [34, 37, 39, 36], [3, 9, 46, 32], [2, 12, 47, 29],
+      [33, 35, 40, 38],
+      [34, 37, 39, 36],
+      [3, 9, 46, 32],
+      [2, 12, 47, 29],
       [1, 14, 48, 27],
     ],
     [
-      [41, 43, 48, 46], [42, 45, 47, 44], [14, 22, 30, 38],
-      [15, 23, 31, 39], [16, 24, 32, 40],
+      [41, 43, 48, 46],
+      [42, 45, 47, 44],
+      [14, 22, 30, 38],
+      [15, 23, 31, 39],
+      [16, 24, 32, 40],
     ],
   ]
   let out : Array[Permutation] = Array::new()
@@ -193,7 +211,6 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   let b = 3
   let l = 4
   let d = 5
-
   fn idx(n0 : Int, r : Int, c : Int) -> Int {
     r * n0 + c
   }
@@ -214,13 +231,23 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
     out
   }
 
-  fn set_row(face : Array[Int], n0 : Int, r : Int, values : Array[Int]) -> Unit {
+  fn set_row(
+    face : Array[Int],
+    n0 : Int,
+    r : Int,
+    values : Array[Int],
+  ) -> Unit {
     for c in 0..<n0 {
       face[idx(n0, r, c)] = values[c]
     }
   }
 
-  fn set_col(face : Array[Int], n0 : Int, c : Int, values : Array[Int]) -> Unit {
+  fn set_col(
+    face : Array[Int],
+    n0 : Int,
+    c : Int,
+    values : Array[Int],
+  ) -> Unit {
     for r in 0..<n0 {
       face[idx(n0, r, c)] = values[r]
     }
@@ -254,12 +281,7 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   }
 
   // plane rotations
-  fn fcw(
-    faces0 : Array[Array[Int]],
-    n0 : Int,
-    i0 : Int,
-    r : Int,
-  ) -> Unit {
+  fn fcw(faces0 : Array[Array[Int]], n0 : Int, i0 : Int, r : Int) -> Unit {
     for _ in 0..<r {
       if i0 == 0 {
         faces0[f] = cw(faces0[f], n0, 1)
@@ -320,8 +342,10 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   for i in 0..<total {
     identity.push(i)
   }
-
-  fn perm(faces0 : Array[Array[Int]], show : Bool) -> Array[Int]? raise CombinatoricsError {
+  fn perm(
+    faces0 : Array[Array[Int]],
+    show : Bool,
+  ) -> Array[Int]? raise CombinatoricsError {
     let p : Array[Int] = Array::new()
     for face in [u, f, r, b, l, d] {
       for v in faces0[face] {
@@ -383,6 +407,5 @@ pub fn rubik(n : Int) -> Array[Permutation] raise CombinatoricsError {
   if check3 is Some(p3) && p3 != identity {
     raise CombinatoricsError::ValueError("rubik identity check failed")
   }
-
   g
 }

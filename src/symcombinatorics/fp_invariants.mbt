@@ -3,7 +3,11 @@
 
 ///|
 fn abs_int(x : Int) -> Int {
-  if x < 0 { -x } else { x }
+  if x < 0 {
+    -x
+  } else {
+    x
+  }
 }
 
 ///|
@@ -34,7 +38,9 @@ fn copy_matrix(mat : Array[Array[Int]]) -> Array[Array[Int]] {
   let out : Array[Array[Int]] = Array::new()
   for row in mat {
     let r : Array[Int] = Array::new()
-    for v in row { r.push(v) }
+    for v in row {
+      r.push(v)
+    }
     out.push(r)
   }
   out
@@ -42,7 +48,9 @@ fn copy_matrix(mat : Array[Array[Int]]) -> Array[Array[Int]] {
 
 ///|
 fn swap_rows(mat : Array[Array[Int]], i : Int, k : Int) -> Unit {
-  if i == k { return }
+  if i == k {
+    return
+  }
   let tmp = mat[i]
   mat[i] = mat[k]
   mat[k] = tmp
@@ -50,7 +58,9 @@ fn swap_rows(mat : Array[Array[Int]], i : Int, k : Int) -> Unit {
 
 ///|
 fn swap_cols(mat : Array[Array[Int]], j : Int, k : Int) -> Unit {
-  if j == k { return }
+  if j == k {
+    return
+  }
   for row in mat {
     let tmp = row[j]
     row[j] = row[k]
@@ -60,7 +70,9 @@ fn swap_cols(mat : Array[Array[Int]], j : Int, k : Int) -> Unit {
 
 ///|
 fn mul_row(mat : Array[Array[Int]], i : Int, k : Int) -> Unit {
-  if k == 1 { return }
+  if k == 1 {
+    return
+  }
   for j in 0..<mat[i].length() {
     mat[i][j] = mat[i][j] * k
   }
@@ -68,7 +80,9 @@ fn mul_row(mat : Array[Array[Int]], i : Int, k : Int) -> Unit {
 
 ///|
 fn add_row(mat : Array[Array[Int]], src : Int, dst : Int, k : Int) -> Unit {
-  if k == 0 { return }
+  if k == 0 {
+    return
+  }
   let row_src = mat[src]
   let row_dst = mat[dst]
   for j in 0..<row_dst.length() {
@@ -78,7 +92,9 @@ fn add_row(mat : Array[Array[Int]], src : Int, dst : Int, k : Int) -> Unit {
 
 ///|
 fn add_col(mat : Array[Array[Int]], src : Int, dst : Int, k : Int) -> Unit {
-  if k == 0 { return }
+  if k == 0 {
+    return
+  }
   for i in 0..<mat.length() {
     mat[i][dst] = mat[i][dst] + k * mat[i][src]
   }
@@ -115,7 +131,9 @@ fn smith_normal_form_with_transform(
         }
       }
     }
-    if pivot_i < 0 { break }
+    if pivot_i < 0 {
+      break
+    }
     swap_rows(mat, i, pivot_i)
     swap_cols(mat, j, pivot_j)
     swap_cols(v, j, pivot_j)
@@ -129,7 +147,9 @@ fn smith_normal_form_with_transform(
       changed = false
       // reduce column entries
       for r in 0..<m {
-        if r == i { continue }
+        if r == i {
+          continue
+        }
         if mat[r][j] != 0 {
           let a = mat[i][j]
           let b = mat[r][j]
@@ -143,7 +163,9 @@ fn smith_normal_form_with_transform(
       }
       // reduce row entries
       for c in 0..<n {
-        if c == j { continue }
+        if c == j {
+          continue
+        }
         if mat[i][c] != 0 {
           let a = mat[i][j]
           let b = mat[i][c]
@@ -168,21 +190,27 @@ fn smith_normal_form_with_transform(
               break
             }
           }
-          if changed { break }
+          if changed {
+            break
+          }
         }
       }
     }
 
     // clear column and row
     for r in 0..<m {
-      if r == i { continue }
+      if r == i {
+        continue
+      }
       if mat[r][j] != 0 {
         let q = mat[r][j] / mat[i][j]
         add_row(mat, i, r, -q)
       }
     }
     for c in 0..<n {
-      if c == j { continue }
+      if c == j {
+        continue
+      }
       if mat[i][c] != 0 {
         let q = mat[i][c] / mat[i][j]
         add_col(mat, j, c, -q)
@@ -192,7 +220,6 @@ fn smith_normal_form_with_transform(
     i = i + 1
     j = j + 1
   }
-
   let diag : Array[Int] = Array::new()
   let r = if m < n { m } else { n }
   for k in 0..<r {

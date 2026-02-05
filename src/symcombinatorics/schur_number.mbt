@@ -43,7 +43,9 @@ pub fn schur_number_lower_bound(k : Int) -> Int raise CombinatoricsError {
 ///|
 fn schur_subsets_number(n : Int) -> Int raise CombinatoricsError {
   if n <= 0 {
-    raise CombinatoricsError::ValueError("n must be a non-zero positive integer.")
+    raise CombinatoricsError::ValueError(
+      "n must be a non-zero positive integer.",
+    )
   }
   if n <= 3 {
     return 1
@@ -59,7 +61,10 @@ fn schur_subsets_number(n : Int) -> Int raise CombinatoricsError {
 }
 
 ///|
-fn generate_next_list(current_list : Array[Array[Int]], n : Int) -> Array[Array[Int]] {
+fn generate_next_list(
+  current_list : Array[Array[Int]],
+  n : Int,
+) -> Array[Array[Int]] {
   let new_list : Array[Array[Int]] = Array::new()
   for item in current_list {
     let temp1 : Array[Int] = Array::new()
@@ -95,16 +100,15 @@ fn generate_next_list(current_list : Array[Array[Int]], n : Int) -> Array[Array[
 ///|
 pub fn schur_partition(n : Int) -> Array[Array[Int]] raise CombinatoricsError {
   let number_of_subsets = schur_subsets_number(n)
-  let sum_free_subsets : Array[Array[Int]] =
-    if n == 1 {
-      [[1]]
-    } else if n == 2 {
-      [[1, 2]]
-    } else if n == 3 {
-      [[1, 2, 3]]
-    } else {
-      [[1, 4], [2, 3]]
-    }
+  let sum_free_subsets : Array[Array[Int]] = if n == 1 {
+    [[1]]
+  } else if n == 2 {
+    [[1, 2]]
+  } else if n == 3 {
+    [[1, 2, 3]]
+  } else {
+    [[1, 4], [2, 3]]
+  }
   let mut subsets = sum_free_subsets
   while subsets.length() < number_of_subsets {
     subsets = generate_next_list(subsets, n)
@@ -112,7 +116,7 @@ pub fn schur_partition(n : Int) -> Array[Array[Int]] raise CombinatoricsError {
     let start = subsets.length()
     let end = (n - 1) / 3
     if start <= end {
-      for k in start..=end {
+      for k in start..<=end {
         missed.push(3 * k + 1)
       }
     }

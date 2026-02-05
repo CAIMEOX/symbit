@@ -203,7 +203,11 @@ fn remove_int_once(values : Array[Int], target : Int) -> Array[Int] {
 }
 
 ///|
-pub fn dummy_sgs(dummies : Array[Int], sym : Int?, n : Int) -> Array[Array[Int]] raise CombinatoricsError {
+pub fn dummy_sgs(
+  dummies : Array[Int],
+  sym : Int?,
+  n : Int,
+) -> Array[Array[Int]] raise CombinatoricsError {
   if dummies.length() > n {
     raise CombinatoricsError::ValueError("List too large")
   }
@@ -377,7 +381,7 @@ fn transversal2coset(
     []
   } else {
     let out : Array[Array[Array[Int]]] = Array::new()
-    for i in 0..=k {
+    for i in 0..<=k {
       out.push(a[i])
     }
     out
@@ -550,9 +554,7 @@ pub fn double_coset_can_rep(
       if array_contains_int(dumx[ii], p_i) {
         found = true
         match sym[ii] {
-          Some(_) => {
-            deltap = copy_int_array(dumx[ii])
-          }
+          Some(_) => deltap = copy_int_array(dumx[ii])
           None => {
             let idx_opt = index_of_int(dumx[ii], p_i)
             let idx_val = match idx_opt {
@@ -629,12 +631,10 @@ pub fn double_coset_can_rep(
         }
         let d1 = if dxtrav is Some(trav) {
           trace_D(dg[j], p_i, trav)
+        } else if p_i != dg[j] {
+          None
         } else {
-          if p_i != dg[j] {
-            None
-          } else {
-            Some(copy_int_array(idn))
-          }
+          Some(copy_int_array(idn))
         }
         let d1 = match d1 {
           Some(v) => v
@@ -734,9 +734,7 @@ pub fn canonical_free(
       }
     }
     match best {
-      Some(s) => {
-        h = af_rmul(h, s)
-      }
+      Some(s) => h = af_rmul(h, s)
       None => ()
     }
   }
@@ -814,7 +812,9 @@ pub fn canonicalize(
   components : Array[TensorComponent],
 ) -> Array[Int]? raise CombinatoricsError {
   if msym.length() != dummies.length() {
-    raise CombinatoricsError::ValueError("dummies and msym must have the same number of elements")
+    raise CombinatoricsError::ValueError(
+      "dummies and msym must have the same number of elements",
+    )
   }
   for s in msym {
     if !sym_valid(s) {
@@ -832,16 +832,19 @@ pub fn canonicalize(
           base_i = b
           gens_i = gs
         }
-        None => {
-          return canonicalize_naive(g, dummies, msym, components)
-        }
+        None => return canonicalize_naive(g, dummies, msym, components)
       }
     }
     let free_list : Array[Array[Int]] = Array::new()
     for _ in 0..<comp.count {
       free_list.push([])
     }
-    v1.push(TensorComponentFree::{ base: base_i, gens: gens_i, free: free_list, sym: comp.sym })
+    v1.push(TensorComponentFree::{
+      base: base_i,
+      gens: gens_i,
+      free: free_list,
+      sym: comp.sym,
+    })
   }
   let flat_dummies : Array[Int] = Array::new()
   for dumx in dummies {
@@ -892,7 +895,12 @@ pub fn canonicalize(
       free_i.push(fr)
       start = start + len_tens
     }
-    v2.push(TensorComponentFree::{ base: comp.base, gens: comp.gens, free: free_i, sym: comp.sym })
+    v2.push(TensorComponentFree::{
+      base: comp.base,
+      gens: comp.gens,
+      free: free_i,
+      sym: comp.sym,
+    })
   }
   let (size2, sbase2, sgens2) = gens_products(v2)
   let pos_free : Array[Int] = Array::new()
@@ -944,12 +952,7 @@ pub fn canonicalize(
   let transv_red = get_transversals(sbase_red, sgens_red)
   let g1_red_perm = Permutation::from_array(g1_red)
   let g2 = double_coset_can_rep(
-    dummies_red,
-    msym,
-    sbase_red,
-    sgens_red,
-    transv_red,
-    g1_red_perm,
+    dummies_red, msym, sbase_red, sgens_red, transv_red, g1_red_perm,
   )
   match g2 {
     None => None
@@ -984,7 +987,10 @@ pub fn perm_af_direct_product(
   if signed {
     for gen in gens1 {
       let head = slice_int_array(gen, 0, n1)
-      let tail = concat_int_arrays(end, [gen[gen.length() - 2] + n2, gen[gen.length() - 1] + n2])
+      let tail = concat_int_arrays(end, [
+        gen[gen.length() - 2] + n2,
+        gen[gen.length() - 1] + n2,
+      ])
       res.push(concat_int_arrays(head, tail))
     }
     for gen in gens2 {
@@ -1031,7 +1037,7 @@ pub fn bsgs_direct_product(
   for h in gens2 {
     gens2_af.push(h.array_form())
   }
-  let gens_af = perm_af_direct_product(gens1_af, gens2_af, signed=signed)
+  let gens_af = perm_af_direct_product(gens1_af, gens2_af, signed~)
   let size = gens_af[0].length()
   let id_af = range_array(0, size)
   let gens : Array[Permutation] = Array::new()
@@ -1178,6 +1184,7 @@ pub fn tensor_gens(
       None => (copy_int_array(base0), gens0)
     }
   }
+
   let mut empty_count = 0
   for fr in list_free_indices {
     if fr.is_empty() {
@@ -1206,8 +1213,19 @@ pub fn tensor_gens(
   let mut res_base = res0.0
   let mut res_gens = res0.1
   for i in 1..<list_free_indices.length() {
-    let (base1, gens1) = get_bsgs_with_stabilizer(group, base, gens, list_free_indices[i])
-    let (new_base, new_gens) = bsgs_direct_product(res_base, res_gens, base1, gens1, signed=true)
+    let (base1, gens1) = get_bsgs_with_stabilizer(
+      group,
+      base,
+      gens,
+      list_free_indices[i],
+    )
+    let (new_base, new_gens) = bsgs_direct_product(
+      res_base,
+      res_gens,
+      base1,
+      gens1,
+      signed=true,
+    )
     res_base = new_base
     res_gens = new_gens
     if list_free_indices[i].is_empty() {
@@ -1273,14 +1291,28 @@ pub fn tensor_gens(
 pub fn gens_products(
   components : Array[TensorComponentFree],
 ) -> (Int, Array[Int], Array[Permutation]) raise CombinatoricsError {
-  let res0 =
-    tensor_gens(components[0].base, components[0].gens, components[0].free, sym=components[0].sym)
+  let res0 = tensor_gens(
+    components[0].base,
+    components[0].gens,
+    components[0].free,
+    sym=components[0].sym,
+  )
   let mut res_base = res0.1
   let mut res_gens = res0.2
   for i in 1..<components.length() {
-    let (size, base, gens) =
-      tensor_gens(components[i].base, components[i].gens, components[i].free, sym=components[i].sym)
-    let (new_base, new_gens) = bsgs_direct_product(res_base, res_gens, base, gens, signed=true)
+    let (size, base, gens) = tensor_gens(
+      components[i].base,
+      components[i].gens,
+      components[i].free,
+      sym=components[i].sym,
+    )
+    let (new_base, new_gens) = bsgs_direct_product(
+      res_base,
+      res_gens,
+      base,
+      gens,
+      signed=true,
+    )
     res_base = new_base
     res_gens = new_gens
     ignore(size)
@@ -1313,7 +1345,12 @@ pub fn canonicalize_naive(
     for _ in 0..<comp.count {
       free_list.push([])
     }
-    v1.push(TensorComponentFree::{ base: comp.base, gens: comp.gens, free: free_list, sym: comp.sym })
+    v1.push(TensorComponentFree::{
+      base: comp.base,
+      gens: comp.gens,
+      free: free_list,
+      sym: comp.sym,
+    })
   }
   let (size, _, sgens) = gens_products(v1)
   let dgens : Array[Array[Int]] = Array::new()

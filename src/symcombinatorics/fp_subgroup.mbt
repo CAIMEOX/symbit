@@ -100,34 +100,35 @@ pub fn FpSubgroup::new(
       }
     }
   }
-  {
-    parent,
-    generators: out,
-    normal,
-    min_words: None,
-    coset_table: None,
-  }
+  { parent, generators: out, normal, min_words: None, coset_table: None }
 }
 
 ///|
-fn minword_process(w : FreeGroupElement) -> Array[MinWord] raise CombinatoricsError {
+fn minword_process(
+  w : FreeGroupElement,
+) -> Array[MinWord] raise CombinatoricsError {
   let (p, r) = w.cyclic_reduction_removed()
   if !r.is_identity() {
-    [ MinWord::Family(r, p) ]
+    [MinWord::Family(r, p)]
   } else {
-    [ MinWord::Word(w), MinWord::Word(w.inverse()) ]
+    [MinWord::Word(w), MinWord::Word(w.inverse())]
   }
 }
 
 ///|
-pub fn FpSubgroup::contains(self : FpSubgroup, g0 : FreeGroupElement) -> Bool raise CombinatoricsError {
+pub fn FpSubgroup::contains(
+  self : FpSubgroup,
+  g0 : FreeGroupElement,
+) -> Bool raise CombinatoricsError {
   match self.parent {
     SubgroupParent::Free(_) => {
       if self.min_words is None {
         let gens_list : Array[MinWord] = Array::new()
         for w0 in self.generators {
           let w = if self.normal { w0.cyclic_reduction() } else { w0 }
-          for m in minword_process(w) { gens_list.push(m) }
+          for m in minword_process(w) {
+            gens_list.push(m)
+          }
         }
         // expand due to cancellations
         let mut i = 0
@@ -141,11 +142,13 @@ pub fn FpSubgroup::contains(self : FpSubgroup, g0 : FreeGroupElement) -> Bool ra
               continue
             }
             let (s1, s2) = match w1 {
-              MinWord::Family(r, _) => (r.letter_at(0), r.letter_at(0).inverse())
+              MinWord::Family(r, _) =>
+                (r.letter_at(0), r.letter_at(0).inverse())
               MinWord::Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
             }
             let (r1, r2) = match w2 {
-              MinWord::Family(r, _) => (r.letter_at(0), r.letter_at(0).inverse())
+              MinWord::Family(r, _) =>
+                (r.letter_at(0), r.letter_at(0).inverse())
               MinWord::Word(w) => (w.letter_at(0), w.letter_at(w.length() - 1))
             }
             let p1 = match w1 {
@@ -179,7 +182,6 @@ pub fn FpSubgroup::contains(self : FpSubgroup, g0 : FreeGroupElement) -> Bool ra
         self.min_words = Some(gens_list)
       }
       let min_words = self.min_words.unwrap()
-
       let known : Map[FreeGroupElement, Bool] = {}
       let g = if self.normal { g0.cyclic_reduction() } else { g0 }
       return minword_break(min_words, known, g, self.normal)
@@ -205,7 +207,9 @@ pub fn FpSubgroup::contains(self : FpSubgroup, g0 : FreeGroupElement) -> Bool ra
 }
 
 ///|
-pub fn FpSubgroup::order(self : FpSubgroup) -> GroupOrder raise CombinatoricsError {
+pub fn FpSubgroup::order(
+  self : FpSubgroup,
+) -> GroupOrder raise CombinatoricsError {
   if self.generators.is_empty() {
     return GroupOrder::Finite(1)
   }
@@ -218,7 +222,8 @@ pub fn FpSubgroup::order(self : FpSubgroup) -> GroupOrder raise CombinatoricsErr
       }
       let coset_table = self.coset_table.unwrap()
       match parent.order() {
-        GroupOrder::Finite(n) => GroupOrder::Finite(n / coset_table.table.length())
+        GroupOrder::Finite(n) =>
+          GroupOrder::Finite(n / coset_table.table.length())
         GroupOrder::Infinite => GroupOrder::Infinite
       }
     }
@@ -226,7 +231,9 @@ pub fn FpSubgroup::order(self : FpSubgroup) -> GroupOrder raise CombinatoricsErr
 }
 
 ///|
-pub fn FpSubgroup::to_fp_group(self : FpSubgroup) -> FpGroup raise CombinatoricsError {
+pub fn FpSubgroup::to_fp_group(
+  self : FpSubgroup,
+) -> FpGroup raise CombinatoricsError {
   match self.parent {
     SubgroupParent::Free(_) => {
       let names : Array[String] = Array::new()
@@ -236,10 +243,11 @@ pub fn FpSubgroup::to_fp_group(self : FpSubgroup) -> FpGroup raise Combinatorics
       let (free_group, _) = free_group_from_array(names)
       FpGroup::new(free_group, [])
     }
-    SubgroupParent::Fp(parent) => match self.coset_table {
-      Some(ct) => parent.subgroup(self.generators, draft=ct)
-      None => parent.subgroup(self.generators)
-    }
+    SubgroupParent::Fp(parent) =>
+      match self.coset_table {
+        Some(ct) => parent.subgroup(self.generators, draft=ct)
+        None => parent.subgroup(self.generators)
+      }
   }
 }
 

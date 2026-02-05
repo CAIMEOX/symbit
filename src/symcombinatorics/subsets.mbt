@@ -30,7 +30,10 @@ fn array_remove_first(values : Array[Int], value : Int) -> Array[Int] {
 }
 
 ///|
-pub fn[T : Eq] Subset::new(subset : Array[T], superset : Array[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::new(
+  subset : Array[T],
+  superset : Array[T],
+) -> Subset[T] raise CombinatoricsError {
   if subset.length() > superset.length() {
     raise CombinatoricsError::ValueError(
       "The superset must be larger than the subset",
@@ -38,39 +41,52 @@ pub fn[T : Eq] Subset::new(subset : Array[T], superset : Array[T]) -> Subset[T] 
   }
   for elem in subset {
     if !superset.any(v => v == elem) {
-      raise CombinatoricsError::ValueError(
-        "Superset does not contain element",
-      )
+      raise CombinatoricsError::ValueError("Superset does not contain element")
     }
   }
-  { subset, superset, rank_binary_cache: None, rank_lex_cache: None, rank_gray_cache: None }
+  {
+    subset,
+    superset,
+    rank_binary_cache: None,
+    rank_lex_cache: None,
+    rank_gray_cache: None,
+  }
 }
 
 ///|
-pub fn[T : Eq] Subset::iterate_binary(self : Subset[T], k : Int) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::iterate_binary(
+  self : Subset[T],
+  k : Int,
+) -> Subset[T] raise CombinatoricsError {
   let bin_list = Subset::bitlist_from_subset(self.subset, self.superset)
   let n = bin_to_int(bin_list)
   let total = pow_int(2, self.superset.length())
   let mut next_rank = n + k
   if total > 0 {
-    next_rank = ((next_rank % total) + total) % total
+    next_rank = (next_rank % total + total) % total
   }
   let bits = int_to_bin(next_rank, self.superset.length())
   Subset::subset_from_bitlist(self.superset, bits)
 }
 
 ///|
-pub fn[T : Eq] Subset::next_binary(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::next_binary(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   self.iterate_binary(1)
 }
 
 ///|
-pub fn[T : Eq] Subset::prev_binary(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::prev_binary(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   self.iterate_binary(-1)
 }
 
 ///|
-pub fn[T : Eq] Subset::next_lexicographic(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::next_lexicographic(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   let mut i = self.superset.length() - 1
   let indices = Subset::subset_indices(self.subset, self.superset)
   let mut idx = indices
@@ -102,7 +118,9 @@ pub fn[T : Eq] Subset::next_lexicographic(self : Subset[T]) -> Subset[T] raise C
 }
 
 ///|
-pub fn[T : Eq] Subset::prev_lexicographic(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::prev_lexicographic(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   let mut i = self.superset.length() - 1
   let mut idx = Subset::subset_indices(self.subset, self.superset)
   while i >= 0 && !array_contains(idx, i) {
@@ -127,24 +145,31 @@ pub fn[T : Eq] Subset::prev_lexicographic(self : Subset[T]) -> Subset[T] raise C
 }
 
 ///|
-pub fn[T : Eq] Subset::iterate_graycode(self : Subset[T], k : Int) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::iterate_graycode(
+  self : Subset[T],
+  k : Int,
+) -> Subset[T] raise CombinatoricsError {
   let rank = self.rank_gray()
   let total = self.cardinality()
   let mut next_rank = rank + k
   if total > 0 {
-    next_rank = ((next_rank % total) + total) % total
+    next_rank = (next_rank % total + total) % total
   }
   let code = GrayCode::unrank(self.superset.length(), next_rank)
   Subset::subset_from_bitlist(self.superset, code)
 }
 
 ///|
-pub fn[T : Eq] Subset::next_gray(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::next_gray(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   self.iterate_graycode(1)
 }
 
 ///|
-pub fn[T : Eq] Subset::prev_gray(self : Subset[T]) -> Subset[T] raise CombinatoricsError {
+pub fn[T : Eq] Subset::prev_gray(
+  self : Subset[T],
+) -> Subset[T] raise CombinatoricsError {
   self.iterate_graycode(-1)
 }
 
@@ -171,6 +196,7 @@ pub fn[T : Eq] Subset::rank_lexicographic(self : Subset[T]) -> Int {
         }
         pow_int(2, n - i - 1) + ranklex(indices, i + 1, n)
       }
+
       let idx = Subset::subset_indices(self.subset, self.superset)
       ranklex(idx, 0, self.superset.length())
     }
@@ -298,13 +324,18 @@ pub fn[T] ksubsets(superset : Array[T], k : Int) -> Array[Array[T]] {
     indices.push(i)
   }
   let out : Array[Array[T]] = Array::new()
-  fn add_subset(superset : Array[T], idx : Array[Int], out : Array[Array[T]]) -> Unit {
+  fn add_subset(
+    superset : Array[T],
+    idx : Array[Int],
+    out : Array[Array[T]],
+  ) -> Unit {
     let subset : Array[T] = Array::new()
     for i in idx {
       subset.push(superset[i])
     }
     out.push(subset)
   }
+
   add_subset(superset, indices, out)
   let idx = indices
   while true {

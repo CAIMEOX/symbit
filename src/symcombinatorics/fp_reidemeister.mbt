@@ -23,7 +23,7 @@ pub fn define_schreier_generators(
     for x in table.alphabet {
       let idx = table.alphabet_index[x]
       match table.table[alpha][idx] {
-        Some(beta) => {
+        Some(beta) =>
           if beta == gamma {
             labels[alpha][idx] = Some("<identity>")
             labels[beta][table.alphabet_inv_index[x]] = Some("<identity>")
@@ -32,19 +32,16 @@ pub fn define_schreier_generators(
               let curr = tau[alpha]
               tau[beta] = curr.mul(x)
             }
-          } else {
-            if gens.any(g => g == x) && labels[alpha][idx] is None {
-              let name = "\{x.to_string()}_\{alpha}"
-              y.push(name)
-              labels[alpha][idx] = Some(name)
-              if homomorphism {
-                let curr = tau[alpha]
-                let beta_word = tau[beta]
-                gens_map[name] = curr.mul(x).mul(beta_word.inverse())
-              }
+          } else if gens.any(g => g == x) && labels[alpha][idx] is None {
+            let name = "\{x.to_string()}_\{alpha}"
+            y.push(name)
+            labels[alpha][idx] = Some(name)
+            if homomorphism {
+              let curr = tau[alpha]
+              let beta_word = tau[beta]
+              gens_map[name] = curr.mul(x).mul(beta_word.inverse())
             }
           }
-        }
         None => ()
       }
     }
@@ -63,7 +60,7 @@ pub fn define_schreier_generators(
   for i in 0..<labels.length() {
     for j in 0..<labels[i].length() {
       match labels[i][j] {
-        Some(label) => {
+        Some(label) =>
           if label == "<identity>" {
             word_table_new[i][j] = Some(schreier_free.identity())
           } else {
@@ -79,12 +76,13 @@ pub fn define_schreier_generators(
               word_table_new[i][j] = Some(r)
               let beta = table.table[i][j].unwrap_or(-1)
               let inv_idx = j + 1
-              if beta >= 0 && beta < labels.length() && inv_idx < labels[i].length() {
+              if beta >= 0 &&
+                beta < labels.length() &&
+                inv_idx < labels[i].length() {
                 word_table_new[beta][inv_idx] = Some(r.inverse())
               }
             }
           }
-        }
         None => ()
       }
     }
@@ -109,7 +107,9 @@ pub fn rewrite(
   for i in 0..<letters.length() {
     let x_i = letters[i]
     let idx = table.alphabet_index[x_i]
-    let part = table.word_table[alpha][idx].unwrap_or(table.schreier_free_group.unwrap().identity())
+    let part = table.word_table[alpha][idx].unwrap_or(
+      table.schreier_free_group.unwrap().identity(),
+    )
     v = v.mul(part)
     alpha = table.table[alpha][idx].unwrap()
   }
@@ -117,7 +117,9 @@ pub fn rewrite(
 }
 
 ///|
-pub fn reidemeister_relators(table : CosetTable) -> Unit raise CombinatoricsError {
+pub fn reidemeister_relators(
+  table : CosetTable,
+) -> Unit raise CombinatoricsError {
   let rels : Array[FreeGroupElement] = Array::new()
   for w in table.relators {
     for coset in 0..<table.n() {
@@ -143,7 +145,7 @@ pub fn reidemeister_relators(table : CosetTable) -> Unit raise CombinatoricsErro
   }
   let gens_filtered : Array[FreeGroupElement] = Array::new()
   for g in table.schreier_generators {
-    if !(order_1.any(o => o == g || o == g.inverse())) {
+    if !order_1.any(o => o == g || o == g.inverse()) {
       gens_filtered.push(g)
     }
   }
@@ -229,7 +231,7 @@ pub fn reidemeister_presentation(
   }
   table.compress()
   table.standardize()
-  let _ = define_schreier_generators(table, homomorphism=homomorphism)
+  let _ = define_schreier_generators(table, homomorphism~)
   reidemeister_relators(table)
   let mut gens = table.schreier_generators
   let mut rels = table.reidemeister_relators

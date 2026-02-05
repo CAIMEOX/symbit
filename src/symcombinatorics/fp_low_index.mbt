@@ -27,7 +27,9 @@ pub fn low_index_subgroups(
   }
   let short_relator_buckets = table.conjugates(short_relators)
   let tables : Array[CosetTable] = Array::new()
-  descendant_subgroups(tables, table, short_relator_buckets, long_relators, max_index, subgroup)
+  descendant_subgroups(
+    tables, table, short_relator_buckets, long_relators, max_index, subgroup,
+  )
   tables
 }
 
@@ -67,23 +69,19 @@ fn descendant_subgroups(
           break
         }
       }
-      if found { break }
+      if found {
+        break
+      }
     }
     let reach : Array[Int] = table.omega()
     reach.push(table.n())
     for beta in reach {
       if beta < max_index {
-        if beta == table.n() || table.table[beta][table.alphabet_inv_index[undefined_gen]] is None {
+        if beta == table.n() ||
+          table.table[beta][table.alphabet_inv_index[undefined_gen]] is None {
           try_descendant(
-            tables,
-            table,
-            short_relator_buckets,
-            long_relators,
-            max_index,
-            undefined_coset,
-            undefined_gen,
-            beta,
-            subgroup,
+            tables, table, short_relator_buckets, long_relators, max_index, undefined_coset,
+            undefined_gen, beta, subgroup,
           )
         }
       }
@@ -112,9 +110,9 @@ fn try_descendant(
   draft.table[beta][draft.alphabet_inv_index[x]] = Some(alpha)
   draft.deduction_stack.push((alpha, x))
   if !draft.process_deductions_check(
-    short_relator_buckets[draft.alphabet_index[x]],
-    short_relator_buckets[draft.alphabet_inv_index[x]],
-  ) {
+      short_relator_buckets[draft.alphabet_index[x]],
+      short_relator_buckets[draft.alphabet_inv_index[x]],
+    ) {
     return
   }
   for w in subgroup {
@@ -123,19 +121,24 @@ fn try_descendant(
     }
   }
   if first_in_class(draft, subgroup) {
-    descendant_subgroups(tables, draft, short_relator_buckets, long_relators, max_index, subgroup)
+    descendant_subgroups(
+      tables, draft, short_relator_buckets, long_relators, max_index, subgroup,
+    )
   }
 }
 
 ///|
-fn first_in_class(table : CosetTable, subgroup : Array[FreeGroupElement]) -> Bool raise CombinatoricsError {
+fn first_in_class(
+  table : CosetTable,
+  subgroup : Array[FreeGroupElement],
+) -> Bool raise CombinatoricsError {
   let n = table.n()
   let mut lamda = -1
   let nu : Array[Int?] = Array::make(n, None)
   let mu : Array[Int?] = Array::make(n, None)
   let mut next_alpha = false
   for alpha in 1..<n {
-    for beta in 0..=lamda {
+    for beta in 0..<=lamda {
       match mu[beta] {
         Some(m) => nu[m] = None
         None => ()

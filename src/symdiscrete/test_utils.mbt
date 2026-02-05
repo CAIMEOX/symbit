@@ -23,7 +23,10 @@ pub fn assert_oracle(result : Result[Bool, Error]) -> Unit raise {
 }
 
 ///|
-pub fn assert_oracle_named(name : String, result : Result[Bool, Error]) -> Unit raise {
+pub fn assert_oracle_named(
+  name : String,
+  result : Result[Bool, Error],
+) -> Unit raise {
   match result {
     Ok(true) => ()
     Ok(false) => fail("oracle mismatch: \{name}")

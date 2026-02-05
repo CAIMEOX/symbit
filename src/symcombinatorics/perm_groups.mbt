@@ -3,7 +3,7 @@
 
 ///|
 fn array_key(values : Array[Int]) -> String {
-  values.map((x) => "\{x}").join(",")
+  values.map(x => "\{x}").join(",")
 }
 
 ///|
@@ -44,7 +44,10 @@ fn perm_eq(a : Permutation, b : Permutation) -> Bool {
 }
 
 ///|
-fn perm_array_contains(values : Array[Permutation], target : Permutation) -> Bool {
+fn perm_array_contains(
+  values : Array[Permutation],
+  target : Permutation,
+) -> Bool {
   for v in values {
     if perm_eq(v, target) {
       return true
@@ -54,7 +57,10 @@ fn perm_array_contains(values : Array[Permutation], target : Permutation) -> Boo
 }
 
 ///|
-fn normalize_generators(gens : Array[Permutation], degree : Int) -> Array[Permutation] raise CombinatoricsError {
+fn normalize_generators(
+  gens : Array[Permutation],
+  degree : Int,
+) -> Array[Permutation] raise CombinatoricsError {
   let out : Array[Permutation] = Array::new()
   for g in gens {
     let gg = if g.size() == degree { g } else { g.resize(degree) }
@@ -64,7 +70,10 @@ fn normalize_generators(gens : Array[Permutation], degree : Int) -> Array[Permut
 }
 
 ///|
-fn closure_from_gens(gens : Array[Permutation], degree : Int) -> Array[Permutation] raise CombinatoricsError {
+fn closure_from_gens(
+  gens : Array[Permutation],
+  degree : Int,
+) -> Array[Permutation] raise CombinatoricsError {
   let identity = Permutation::identity(degree)
   let elements : Array[Permutation] = Array::new()
   elements.push(identity)
@@ -147,7 +156,9 @@ pub fn PermutationGroup::new(
 }
 
 ///|
-pub fn PermutationGroup::generators(self : PermutationGroup) -> Array[Permutation] {
+pub fn PermutationGroup::generators(
+  self : PermutationGroup,
+) -> Array[Permutation] {
   let out : Array[Permutation] = Array::new()
   for g in self.generators {
     out.push(g)
@@ -166,7 +177,9 @@ pub fn PermutationGroup::identity(self : PermutationGroup) -> Permutation {
 }
 
 ///|
-pub fn PermutationGroup::elements(self : PermutationGroup) -> Array[Permutation] raise CombinatoricsError {
+pub fn PermutationGroup::elements(
+  self : PermutationGroup,
+) -> Array[Permutation] raise CombinatoricsError {
   match self.elements_cache {
     Some(elems) => elems
     None => {
@@ -178,7 +191,9 @@ pub fn PermutationGroup::elements(self : PermutationGroup) -> Array[Permutation]
 }
 
 ///|
-pub fn PermutationGroup::order(self : PermutationGroup) -> Int raise CombinatoricsError {
+pub fn PermutationGroup::order(
+  self : PermutationGroup,
+) -> Int raise CombinatoricsError {
   match self.order_cache {
     Some(o) => o
     None => {
@@ -212,7 +227,10 @@ pub fn PermutationGroup::contains(
 }
 
 ///|
-pub fn PermutationGroup::equals(self : PermutationGroup, other : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::equals(
+  self : PermutationGroup,
+  other : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   let a = self.elements()
   let b = other.elements()
   if a.length() != b.length() {
@@ -237,7 +255,10 @@ pub fn PermutationGroup::equals(self : PermutationGroup, other : PermutationGrou
 }
 
 ///|
-pub fn PermutationGroup::mul(self : PermutationGroup, other : PermutationGroup) -> PermutationGroup raise CombinatoricsError {
+pub fn PermutationGroup::mul(
+  self : PermutationGroup,
+  other : PermutationGroup,
+) -> PermutationGroup raise CombinatoricsError {
   let m = self.degree
   let n = other.degree
   let gens : Array[Permutation] = Array::new()
@@ -267,12 +288,16 @@ pub fn PermutationGroup::mul(self : PermutationGroup, other : PermutationGroup) 
 }
 
 ///|
-pub fn PermutationGroup::generate_dimino(self : PermutationGroup) -> Array[Permutation] raise CombinatoricsError {
+pub fn PermutationGroup::generate_dimino(
+  self : PermutationGroup,
+) -> Array[Permutation] raise CombinatoricsError {
   self.elements()
 }
 
 ///|
-pub fn PermutationGroup::generate_dimino_af(self : PermutationGroup) -> Array[Array[Int]] raise CombinatoricsError {
+pub fn PermutationGroup::generate_dimino_af(
+  self : PermutationGroup,
+) -> Array[Array[Int]] raise CombinatoricsError {
   let elems = self.elements()
   let out : Array[Array[Int]] = Array::new()
   for p in elems {
@@ -282,17 +307,24 @@ pub fn PermutationGroup::generate_dimino_af(self : PermutationGroup) -> Array[Ar
 }
 
 ///|
-pub fn PermutationGroup::generate_schreier_sims(self : PermutationGroup) -> Array[Permutation] raise CombinatoricsError {
+pub fn PermutationGroup::generate_schreier_sims(
+  self : PermutationGroup,
+) -> Array[Permutation] raise CombinatoricsError {
   self.elements()
 }
 
 ///|
-pub fn PermutationGroup::generate(self : PermutationGroup) -> Array[Permutation] raise CombinatoricsError {
+pub fn PermutationGroup::generate(
+  self : PermutationGroup,
+) -> Array[Permutation] raise CombinatoricsError {
   self.elements()
 }
 
 ///|
-pub fn PermutationGroup::orbit(self : PermutationGroup, alpha : Int) -> Array[Int] raise CombinatoricsError {
+pub fn PermutationGroup::orbit(
+  self : PermutationGroup,
+  alpha : Int,
+) -> Array[Int] raise CombinatoricsError {
   let seen : Array[Bool] = Array::make(self.degree, false)
   let queue : Array[Int] = Array::new()
   queue.push(alpha)
@@ -319,7 +351,9 @@ pub fn PermutationGroup::orbit(self : PermutationGroup, alpha : Int) -> Array[In
 }
 
 ///|
-pub fn PermutationGroup::is_transitive(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_transitive(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_transitive_cache {
     Some(v) => v
     None => {
@@ -332,7 +366,9 @@ pub fn PermutationGroup::is_transitive(self : PermutationGroup) -> Bool raise Co
 }
 
 ///|
-pub fn PermutationGroup::is_abelian(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_abelian(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_abelian_cache {
     Some(v) => v
     None => {
@@ -352,7 +388,9 @@ pub fn PermutationGroup::is_abelian(self : PermutationGroup) -> Bool raise Combi
 }
 
 ///|
-pub fn PermutationGroup::is_symmetric(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_symmetric(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_symmetric_cache {
     Some(v) => v
     None => {
@@ -364,7 +402,9 @@ pub fn PermutationGroup::is_symmetric(self : PermutationGroup) -> Bool raise Com
 }
 
 ///|
-pub fn PermutationGroup::is_alternating(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_alternating(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_alternating_cache {
     Some(v) => v
     None => {
@@ -386,7 +426,9 @@ pub fn PermutationGroup::is_alternating(self : PermutationGroup) -> Bool raise C
 }
 
 ///|
-pub fn PermutationGroup::is_cyclic(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_cyclic(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_cyclic_cache {
     Some(v) => v
     None => {
@@ -404,7 +446,9 @@ pub fn PermutationGroup::is_cyclic(self : PermutationGroup) -> Bool raise Combin
 }
 
 ///|
-pub fn PermutationGroup::is_dihedral(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_dihedral(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_dihedral_cache {
     Some(v) => v
     None => {
@@ -432,7 +476,10 @@ pub fn PermutationGroup::is_dihedral(self : PermutationGroup) -> Bool raise Comb
 }
 
 ///|
-pub fn PermutationGroup::make_perm(self : PermutationGroup, word : Array[Int]) -> Permutation raise CombinatoricsError {
+pub fn PermutationGroup::make_perm(
+  self : PermutationGroup,
+  word : Array[Int],
+) -> Permutation raise CombinatoricsError {
   let mut p = self.identity()
   for idx in word {
     if idx < 0 || idx >= self.generators.length() {
@@ -444,7 +491,9 @@ pub fn PermutationGroup::make_perm(self : PermutationGroup, word : Array[Int]) -
 }
 
 ///|
-pub fn PermutationGroup::random(self : PermutationGroup) -> Permutation raise CombinatoricsError {
+pub fn PermutationGroup::random(
+  self : PermutationGroup,
+) -> Permutation raise CombinatoricsError {
   let elems = self.elements()
   if elems.is_empty() {
     return self.identity()
@@ -545,7 +594,8 @@ pub fn PermutationGroup::generator_product(
   while cur != identity {
     let entry = match parent.get(cur) {
       Some(v) => v
-      None => raise CombinatoricsError::ValueError("generator decomposition failed")
+      None =>
+        raise CombinatoricsError::ValueError("generator decomposition failed")
     }
     prod.push(entry.1)
     cur = entry.0
@@ -618,7 +668,9 @@ pub fn PermutationGroup::normal_closure(
 }
 
 ///|
-pub fn PermutationGroup::derived_subgroup(self : PermutationGroup) -> PermutationGroup raise CombinatoricsError {
+pub fn PermutationGroup::derived_subgroup(
+  self : PermutationGroup,
+) -> PermutationGroup raise CombinatoricsError {
   let gens = self.generators
   let comms : Array[Permutation] = Array::new()
   for g in gens {
@@ -633,7 +685,9 @@ pub fn PermutationGroup::derived_subgroup(self : PermutationGroup) -> Permutatio
 }
 
 ///|
-pub fn PermutationGroup::derived_series(self : PermutationGroup) -> Array[PermutationGroup] raise CombinatoricsError {
+pub fn PermutationGroup::derived_series(
+  self : PermutationGroup,
+) -> Array[PermutationGroup] raise CombinatoricsError {
   let series : Array[PermutationGroup] = Array::new()
   series.push(self)
   let mut current = self
@@ -648,7 +702,9 @@ pub fn PermutationGroup::derived_series(self : PermutationGroup) -> Array[Permut
 }
 
 ///|
-pub fn PermutationGroup::is_solvable(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_solvable(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   match self.is_solvable_cache {
     Some(v) => v
     None => {
@@ -662,12 +718,16 @@ pub fn PermutationGroup::is_solvable(self : PermutationGroup) -> Bool raise Comb
 }
 
 ///|
-pub fn PermutationGroup::is_polycyclic(self : PermutationGroup) -> Bool raise CombinatoricsError {
+pub fn PermutationGroup::is_polycyclic(
+  self : PermutationGroup,
+) -> Bool raise CombinatoricsError {
   self.is_solvable()
 }
 
 ///|
-pub fn PermutationGroup::polycyclic_group(self : PermutationGroup) -> PolycyclicGroup raise CombinatoricsError {
+pub fn PermutationGroup::polycyclic_group(
+  self : PermutationGroup,
+) -> PolycyclicGroup raise CombinatoricsError {
   if !self.is_polycyclic() {
     raise CombinatoricsError::ValueError("The group must be solvable")
   }
@@ -742,7 +802,9 @@ pub fn PermutationGroup::pointwise_stabilizer(
 ) -> PermutationGroup raise CombinatoricsError {
   for pt in points {
     if pt < 0 || pt >= self.degree {
-      raise CombinatoricsError::ValueError("pointwise_stabilizer index out of range")
+      raise CombinatoricsError::ValueError(
+        "pointwise_stabilizer index out of range",
+      )
     }
   }
   let elems = self.elements()
@@ -804,12 +866,16 @@ pub fn SymmetricPermutationGroup::new(deg : Int) -> SymmetricPermutationGroup {
 }
 
 ///|
-pub fn SymmetricPermutationGroup::degree(self : SymmetricPermutationGroup) -> Int {
+pub fn SymmetricPermutationGroup::degree(
+  self : SymmetricPermutationGroup,
+) -> Int {
   self.degree
 }
 
 ///|
-pub fn SymmetricPermutationGroup::order(self : SymmetricPermutationGroup) -> Int {
+pub fn SymmetricPermutationGroup::order(
+  self : SymmetricPermutationGroup,
+) -> Int {
   match self.order_cache {
     Some(o) => o
     None => {
@@ -821,12 +887,17 @@ pub fn SymmetricPermutationGroup::order(self : SymmetricPermutationGroup) -> Int
 }
 
 ///|
-pub fn SymmetricPermutationGroup::contains(self : SymmetricPermutationGroup, p : Permutation) -> Bool {
+pub fn SymmetricPermutationGroup::contains(
+  self : SymmetricPermutationGroup,
+  p : Permutation,
+) -> Bool {
   p.size() == self.degree
 }
 
 ///|
-pub fn SymmetricPermutationGroup::identity(self : SymmetricPermutationGroup) -> Permutation {
+pub fn SymmetricPermutationGroup::identity(
+  self : SymmetricPermutationGroup,
+) -> Permutation {
   Permutation::identity(self.degree)
 }
 
@@ -838,7 +909,11 @@ pub struct Coset {
 }
 
 ///|
-pub fn Coset::new(g : Permutation, h : PermutationGroup, dir? : String = "+") -> Coset raise CombinatoricsError {
+pub fn Coset::new(
+  g : Permutation,
+  h : PermutationGroup,
+  dir? : String = "+",
+) -> Coset raise CombinatoricsError {
   if g.size() != h.degree() {
     raise CombinatoricsError::ValueError("coset size mismatch")
   }
@@ -856,7 +931,9 @@ pub fn Coset::is_right(self : Coset) -> Bool {
 }
 
 ///|
-pub fn Coset::as_list(self : Coset) -> Array[Permutation] raise CombinatoricsError {
+pub fn Coset::as_list(
+  self : Coset,
+) -> Array[Permutation] raise CombinatoricsError {
   let elems = self.h.elements()
   let out : Array[Permutation] = Array::new()
   if self.is_right() {

@@ -131,6 +131,15 @@ fn diff_function(name : String, args : Array[Expr], wrt : Expr) -> Expr {
       @symcore.mul([@symcore.int(-1), @symcore.function("sin", [arg]), darg])
     "exp" => @symcore.mul([@symcore.function("exp", [arg]), darg])
     "log" => @symcore.mul([darg, @symcore.pow(arg, @symcore.int(-1))])
+    "tan" => {
+      let sec2 = @symcore.pow(@symcore.function("sec", [arg]), @symcore.int(2))
+      @symcore.mul([sec2, darg])
+    }
+    "gamma" => {
+      let g = @symcore.function("gamma", [arg])
+      let dg = @symcore.function("digamma", [arg])
+      @symcore.mul([g, dg, darg])
+    }
     _ =>
       if expr_depends_on(@symcore.function(name, args), wrt) {
         derivative_expr(@symcore.function(name, args), [wrt])

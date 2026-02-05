@@ -49,7 +49,10 @@ pub struct StateMachine {
 }
 
 ///|
-pub fn StateMachine::new(name : String, alphabet : Array[FreeGroupElement]) -> StateMachine {
+pub fn StateMachine::new(
+  name : String,
+  alphabet : Array[FreeGroupElement],
+) -> StateMachine {
   let machine : StateMachine = {
     name,
     automaton_alphabet: alphabet,
@@ -76,12 +79,7 @@ pub fn StateMachine::add_state(
     return
   }
   let idx = self.states.length()
-  let state : State = {
-    name,
-    transitions: {},
-    state_type,
-    rh_rule,
-  }
+  let state : State = { name, transitions: {}, state_type, rh_rule }
   self.states.push(state)
   self.state_index[name] = idx
 }
@@ -112,7 +110,11 @@ pub fn StateMachine::state_names(self : StateMachine) -> Array[StateName] {
 }
 
 ///|
-pub fn StateMachine::set_state_type(self : StateMachine, name : StateName, state_type : StateType) -> Unit {
+pub fn StateMachine::set_state_type(
+  self : StateMachine,
+  name : StateName,
+  state_type : StateType,
+) -> Unit {
   match self.state_index.get(name) {
     Some(idx) => {
       let st = self.states[idx]
