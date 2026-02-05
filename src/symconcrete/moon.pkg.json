@@ -1,0 +1,12 @@
+{
+  "import": [
+    "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symnum",
+    { "path": "CAIMEOX/symbit/symfunctions/combinatorial", "alias": "symcomb" },
+    { "path": "CAIMEOX/symbit/symfunctions/special", "alias": "symspec" }
+  ],
+  "test-import": [
+    "CAIMEOX/symbit/symprint",
+    { "path": "CAIMEOX/symbit/sympy/concrete", "alias": "sympy_concrete" }
+  ]
+}
