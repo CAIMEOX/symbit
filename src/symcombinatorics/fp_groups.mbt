@@ -271,6 +271,10 @@ pub fn FpGroup::_is_infinite(self : FpGroup) -> Bool? {
       return Some(true)
     }
   }
+  let inv = fp_group_abelian_invariants(self)
+  if inv.rank > 0 {
+    return Some(true)
+  }
   None
 }
 

@@ -132,11 +132,15 @@ fn hom_group_is_abelian(group : HomGroup) -> Bool raise CombinatoricsError {
     HomGroup::FreeGroup(g) => g.is_abelian()
     HomGroup::FpGroup(g) => {
       match g.order() {
-        GroupOrder::Infinite =>
-          raise CombinatoricsError::ValueError("abelian check not implemented for infinite FpGroup")
         GroupOrder::Finite(_) => {
           let (pg, _) = fp_group_to_perm_group(g)
           pg.is_abelian()
+        }
+        GroupOrder::Infinite => {
+          match fp_group_is_abelian_status(g) {
+            Some(v) => v
+            None => true
+          }
         }
       }
     }
@@ -241,6 +245,233 @@ fn fp_group_elements(fp : FpGroup) -> Array[FreeGroupElement] raise Combinatoric
       queue
     }
   }
+}
+
+///|
+fn fp_group_commutator(
+  a : FreeGroupElement,
+  b : FreeGroupElement,
+) -> FreeGroupElement raise CombinatoricsError {
+  a.mul(b).mul(a.inverse()).mul(b.inverse())
+}
+
+///|
+fn fp_group_is_abelian_status(fp : FpGroup) -> Bool? raise CombinatoricsError {
+  let gens = fp.generators
+  if gens.length() <= 1 {
+    return Some(true)
+  }
+  if fp.relators.is_empty() {
+    return Some(false)
+  }
+  // fast path: explicit commutator relators
+  let rel_set : Map[FreeGroupElement, Bool] = {}
+  for r in fp.relators {
+    rel_set[r] = true
+    rel_set[r.inverse()] = true
+  }
+  let mut all_comm_rel = true
+  for i in 0..<gens.length() {
+    for j in (i + 1)..<gens.length() {
+      let comm = fp_group_commutator(gens[i], gens[j])
+      if !rel_set.contains(comm) {
+        all_comm_rel = false
+        break
+      }
+    }
+    if !all_comm_rel { break }
+  }
+  if all_comm_rel {
+    return Some(true)
+  }
+  let identity = fp.identity()
+  let mut unknown = false
+  for i in 0..<gens.length() {
+    for j in (i + 1)..<gens.length() {
+      let comm = fp_group_commutator(gens[i], gens[j])
+      match fp.equals(comm, identity) {
+        Some(true) => ()
+        Some(false) => return Some(false)
+        None => unknown = true
+      }
+    }
+  }
+  if !unknown {
+    return Some(true)
+  }
+  None
+}
+
+///|
+fn perm_group_from_coset_table(
+  fp : FpGroup,
+  ct : CosetTable,
+) -> (PermutationGroup, GroupHomomorphism) raise CombinatoricsError {
+  ct.standardize()
+  let table = ct.table
+  let gens = fp.generators
+  let images : Array[Permutation] = Array::new()
+  for g in gens {
+    let idx = ct.alphabet_index[g]
+    let arr : Array[Int] = Array::new()
+    for i in 0..<table.length() {
+      let v = table[i][idx].unwrap()
+      arr.push(v)
+    }
+    images.push(Permutation::from_array(arr))
+  }
+  let pg = PermutationGroup::new(images)
+  let hom = homomorphism(
+    HomGroup::FpGroup(fp),
+    HomGroup::PermGroup(pg),
+    gens.map(g => Word(g)),
+    images=images.map(p => HomElement::Perm(p)),
+    check=false,
+  )
+  (pg, hom)
+}
+
+///|
+fn fp_group_best_low_index_quotient(
+  fp : FpGroup,
+  max_index : Int,
+) -> (PermutationGroup, GroupHomomorphism)? raise CombinatoricsError {
+  let tables = low_index_subgroups(fp, max_index)
+  if tables.is_empty() {
+    return None
+  }
+  let mut best : (PermutationGroup, GroupHomomorphism)? = None
+  let mut best_deg = -1
+  for ct in tables {
+    let deg = ct.table.length()
+    if deg <= 1 {
+      continue
+    }
+    let (pg, hom) = perm_group_from_coset_table(fp, ct)
+    if deg > best_deg {
+      best_deg = deg
+      best = Some((pg, hom))
+    }
+  }
+  best
+}
+
+///|
+fn clamp_moduli(moduli : Array[Int], max_size : Int) -> Array[Int] {
+  let out : Array[Int] = Array::new()
+  for m in moduli { out.push(m) }
+  fn prod_mods(ms : Array[Int]) -> Int {
+    let mut prod = 1
+    for m in ms {
+      if m <= 0 { return 0 }
+      if prod > max_size / m { return max_size + 1 }
+      prod = prod * m
+    }
+    prod
+  }
+  while prod_mods(out) > max_size {
+    let mut idx = -1
+    let mut maxv = 1
+    for i in 0..<out.length() {
+      if out[i] > maxv {
+        maxv = out[i]
+        idx = i
+      }
+    }
+    if idx < 0 { break }
+    let v = out[idx]
+    if v % 2 == 0 {
+      out[idx] = 2
+    } else if v % 3 == 0 {
+      out[idx] = 3
+    } else {
+      out[idx] = 1
+    }
+  }
+  out
+}
+
+///|
+fn perm_from_vector(
+  vec : Array[Int],
+  moduli_in : Array[Int],
+) -> Permutation raise CombinatoricsError {
+  let moduli = clamp_moduli(moduli_in, 4096)
+  let n = moduli.length()
+  let strides : Array[Int] = Array::make(n, 1)
+  let mut size = 1
+  for i in 0..<n {
+    strides[i] = size
+    size = size * moduli[i]
+  }
+  if size <= 1 {
+    return Permutation::identity(1)
+  }
+  let arr : Array[Int] = Array::make(size, 0)
+  for idx in 0..<size {
+    let coords : Array[Int] = Array::make(n, 0)
+    let mut x = idx
+    for i in 0..<n {
+      let m = moduli[i]
+      coords[i] = x % m
+      x = x / m
+    }
+    for i in 0..<n {
+      let m = moduli[i]
+      if m != 0 {
+        let mut delta = vec[i] % m
+        if delta < 0 { delta = delta + m }
+        coords[i] = (coords[i] + delta) % m
+      }
+    }
+    let mut out = 0
+    for i in 0..<n {
+      out = out + coords[i] * strides[i]
+    }
+    arr[idx] = out
+  }
+  Permutation::from_array(arr)
+}
+
+///|
+fn fp_group_abelian_quotient_perm_group(
+  fp : FpGroup,
+  free_mod? : Int = 2,
+) -> (PermutationGroup, GroupHomomorphism) raise CombinatoricsError {
+  let (moduli, basis) = fp_group_abelian_quotient_moduli(fp, free_mod=free_mod)
+  let n = fp.generators.length()
+  let images : Array[Permutation] = Array::new()
+  for j in 0..<n {
+    let col : Array[Int] = Array::new()
+    for i in 0..<n {
+      col.push(basis[i][j])
+    }
+    images.push(perm_from_vector(col, moduli))
+  }
+  let pg = PermutationGroup::new(images)
+  let hom = homomorphism(
+    HomGroup::FpGroup(fp),
+    HomGroup::PermGroup(pg),
+    fp.generators.map(g => Word(g)),
+    images=images.map(p => HomElement::Perm(p)),
+    check=false,
+  )
+  (pg, hom)
+}
+
+///|
+fn fp_group_has_nonabelian_quotient(
+  fp : FpGroup,
+  max_index : Int,
+) -> Bool raise CombinatoricsError {
+  let tables = low_index_subgroups(fp, max_index)
+  for ct in tables {
+    let (pg, _) = perm_group_from_coset_table(fp, ct)
+    if !pg.is_abelian() {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -763,33 +994,18 @@ pub fn homomorphism(
 ///|
 fn fp_group_to_perm_group(fp : FpGroup) -> (PermutationGroup, GroupHomomorphism) raise CombinatoricsError {
   match fp.order() {
-    GroupOrder::Infinite =>
-      raise CombinatoricsError::ValueError("Permutation presentation of infinite groups not implemented")
-    GroupOrder::Finite(_) => ()
-  }
-  let ct = fp.coset_enumeration([])
-  ct.standardize()
-  let table = ct.table
-  let gens = fp.generators
-  let images : Array[Permutation] = Array::new()
-  for g in gens {
-    let idx = ct.alphabet_index[g]
-    let arr : Array[Int] = Array::new()
-    for i in 0..<table.length() {
-      let v = table[i][idx].unwrap()
-      arr.push(v)
+    GroupOrder::Finite(_) => {
+      let ct = fp.coset_enumeration([])
+      let (pg, hom) = perm_group_from_coset_table(fp, ct)
+      (pg, hom)
     }
-    images.push(Permutation::from_array(arr))
+    GroupOrder::Infinite => {
+      match fp_group_best_low_index_quotient(fp, 8) {
+        Some((pg, hom)) => (pg, hom)
+        None => fp_group_abelian_quotient_perm_group(fp, free_mod=2)
+      }
+    }
   }
-  let pg = PermutationGroup::new(images)
-  let hom = homomorphism(
-    HomGroup::FpGroup(fp),
-    HomGroup::PermGroup(pg),
-    gens.map(g => Word(g)),
-    images=images.map(p => HomElement::Perm(p)),
-    check=false,
-  )
-  (pg, hom)
 }
 
 ///|
@@ -977,9 +1193,56 @@ pub fn group_isomorphism(
 ) -> (Bool, GroupHomomorphism?) raise CombinatoricsError {
   let g = g_in
   let h = h_in
+  // handle free groups explicitly
   match (g, h) {
-    (HomGroup::FreeGroup(_), _) | (_, HomGroup::FreeGroup(_)) =>
-      raise CombinatoricsError::ValueError("group must be a PermutationGroup or FpGroup")
+    (HomGroup::FreeGroup(gf), HomGroup::FreeGroup(hf)) => {
+      if gf.rank != hf.rank {
+        return (false, None)
+      }
+      if !isomorphism {
+        return (true, None)
+      }
+      let hom = homomorphism(
+        HomGroup::FreeGroup(gf),
+        HomGroup::FreeGroup(hf),
+        gf.generators().map(x => Word(x)),
+        images=hf.generators().map(x => Word(x)),
+        check=false,
+      )
+      return (true, Some(hom))
+    }
+    (HomGroup::FreeGroup(gf), HomGroup::FpGroup(hfp)) => {
+      if hfp.relators.is_empty() && gf.rank == hfp.generators.length() {
+        if !isomorphism {
+          return (true, None)
+        }
+        let hom = homomorphism(
+          HomGroup::FreeGroup(gf),
+          HomGroup::FpGroup(hfp),
+          gf.generators().map(x => Word(x)),
+          images=hfp.generators.map(x => Word(x)),
+          check=false,
+        )
+        return (true, Some(hom))
+      }
+      return (false, None)
+    }
+    (HomGroup::FpGroup(gfp), HomGroup::FreeGroup(hf)) => {
+      if gfp.relators.is_empty() && hf.rank == gfp.generators.length() {
+        if !isomorphism {
+          return (true, None)
+        }
+        let hom = homomorphism(
+          HomGroup::FpGroup(gfp),
+          HomGroup::FreeGroup(hf),
+          gfp.generators.map(x => Word(x)),
+          images=hf.generators().map(x => Word(x)),
+          check=false,
+        )
+        return (true, Some(hom))
+      }
+      return (false, None)
+    }
     _ => ()
   }
   // shortcut for identical fp presentations
@@ -1043,6 +1306,79 @@ pub fn group_isomorphism(
     _ => ()
   }
 
+  let g_order = hom_group_order(g)
+  let h_order = hom_group_order(h)
+  let g_ord = group_order_int(g_order)
+  let h_ord = group_order_int(h_order)
+  match (g_ord, h_ord) {
+    (Some(gn), Some(hn)) => {
+      if gn != hn {
+        return (false, None)
+      }
+    }
+    (Some(_), None) | (None, Some(_)) => return (false, None)
+    (None, None) => ()
+  }
+
+  // infinite groups: best-effort classification
+  if g_ord is None && h_ord is None {
+    match (g, h) {
+      (HomGroup::FpGroup(gfp), HomGroup::FpGroup(hfp)) => {
+        let g_ab = fp_group_is_abelian_status(gfp)
+        let h_ab = fp_group_is_abelian_status(hfp)
+        match (g_ab, h_ab) {
+          (Some(true), Some(true)) => {
+            let g_inv = fp_group_abelian_invariants(gfp)
+            let h_inv = fp_group_abelian_invariants(hfp)
+            if g_inv.rank != h_inv.rank {
+              return (false, None)
+            }
+            let g_torsion : Array[Int] = Array::new()
+            let h_torsion : Array[Int] = Array::new()
+            for v in g_inv.torsion { g_torsion.push(v) }
+            for v in h_inv.torsion { h_torsion.push(v) }
+            let n_t = g_torsion.length()
+            for i in 0..<n_t {
+              for j in (i + 1)..<n_t {
+                if g_torsion[j] < g_torsion[i] {
+                  let tmp = g_torsion[i]
+                  g_torsion[i] = g_torsion[j]
+                  g_torsion[j] = tmp
+                }
+              }
+            }
+            let m_t = h_torsion.length()
+            for i in 0..<m_t {
+              for j in (i + 1)..<m_t {
+                if h_torsion[j] < h_torsion[i] {
+                  let tmp = h_torsion[i]
+                  h_torsion[i] = h_torsion[j]
+                  h_torsion[j] = tmp
+                }
+              }
+            }
+            if g_torsion.length() != h_torsion.length() {
+              return (false, None)
+            }
+            for i in 0..<g_torsion.length() {
+              if g_torsion[i] != h_torsion[i] {
+                return (false, None)
+              }
+            }
+            if !isomorphism {
+              return (true, None)
+            }
+            return (true, None)
+          }
+          (Some(false), Some(true)) | (Some(true), Some(false)) => return (false, None)
+          _ => ()
+        }
+      }
+      _ => ()
+    }
+    return (false, None)
+  }
+
   let mut g_perm = None
   let mut h_perm = None
   let mut g_iso : GroupHomomorphism? = None
@@ -1067,19 +1403,6 @@ pub fn group_isomorphism(
   }
   let pg = g_perm.unwrap()
   let ph = h_perm.unwrap()
-
-  let g_order = hom_group_order(g)
-  let h_order = hom_group_order(h)
-  let g_ord = group_order_int(g_order)
-  let h_ord = group_order_int(h_order)
-  match (g_ord, h_ord) {
-    (Some(gn), Some(hn)) => {
-      if gn != hn {
-        return (false, None)
-      }
-    }
-    _ => raise CombinatoricsError::ValueError("isomorphism not implemented for infinite groups")
-  }
   let g_ab = hom_group_is_abelian(g)
   let h_ab = hom_group_is_abelian(h)
   if g_ab != h_ab {

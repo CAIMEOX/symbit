@@ -253,7 +253,7 @@ pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
     }
     match small.get(n) {
       Some(v) => return @symntheory.bi(v)
-      None => raise CombinatoricsError::ValueError("Number of groups of order n is unknown or not implemented")
+      None => raise CombinatoricsError::ValueError("Number of groups of order n is unknown for this n")
     }
   }
   if count == 2 {
