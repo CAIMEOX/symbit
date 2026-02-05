@@ -350,6 +350,41 @@ pub struct Permutation {
 }
 
 ///|
+pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) -> Bool {
+  if self.size != other.size {
+    return false
+  }
+  let a = self.array_form
+  let b = other.array_form
+  if a.length() != b.length() {
+    return false
+  }
+  for i in 0..<a.length() {
+    if a[i] != b[i] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub impl Eq for Permutation with not_equal(self : Permutation, other : Permutation) -> Bool {
+  !self.equal(other)
+}
+
+///|
+pub impl Hash for Permutation with hash(self) -> Int {
+  let hasher = Hasher::new()
+  self.hash_combine(hasher)
+  hasher.finalize()
+}
+
+///|
+pub impl Hash for Permutation with hash_combine(self, hasher : Hasher) -> Unit {
+  self.array_form.hash_combine(hasher)
+}
+
+///|
 fn validate_array_form(array : Array[Int]) -> Bool {
   let n = array.length()
   let seen : Array[Bool] = Array::make(n, false)
