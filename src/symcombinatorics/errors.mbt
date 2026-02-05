@@ -1,0 +1,4 @@
+///|
+suberror CombinatoricsError {
+  ValueError(String)
+}

@@ -1,0 +1,13 @@
+{
+  "import": [
+    "moonbitlang/core/strconv",
+    "moonbitlang/core/random",
+    "moonbitlang/core/bigint",
+    "CAIMEOX/symbit/symntheory",
+    "CAIMEOX/symbit/symcore"
+  ],
+  "test-import": [
+    { "path": "CAIMEOX/symbit/sympy/combinatorics", "alias": "sympy_combinatorics" },
+    { "path": "CAIMEOX/symbit/symprint", "alias": "symprint" }
+  ]
+}

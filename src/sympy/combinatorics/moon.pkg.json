@@ -1,0 +1,7 @@
+{
+  "import": [
+    { "path": "CAIMEOX/symbit/sympy", "alias": "sympy" },
+    { "path": "Kaida-Amethyst/python", "alias": "py" },
+    "moonbitlang/core/strconv"
+  ]
+}
