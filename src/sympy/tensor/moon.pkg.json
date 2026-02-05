@@ -1,0 +1,11 @@
+{
+  "import": [
+    { "path": "CAIMEOX/symbit/sympy", "alias": "sympy" },
+    "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symtensor",
+    { "path": "CAIMEOX/symbit/symtensor/indexed", "alias": "symtensor_indexed" },
+    { "path": "CAIMEOX/symbit/symtensor/array", "alias": "symtensor_array" },
+    { "path": "CAIMEOX/symbit/symtensor/tensor", "alias": "symtensor_tensor" },
+    { "path": "Kaida-Amethyst/python", "alias": "py" }
+  ]
+}
