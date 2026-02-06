@@ -89,6 +89,40 @@ test "compat mgf and characteristic function parity" {
 }
 
 ///|
+test "compat symbolic mgf cf quantile entropy parity" {
+  let b = beta("B", params=[@symcore.int(2), @symcore.int(5)])
+  let sb = @symcore.symbol("B")
+  let t = @symcore.symbol("t")
+  let b_mgf = moment_generating_function(sb, t, rvs=[b])
+  let b_mgf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda B, t: moment_generating_function(B)(t))(stats.Beta('B', 2, 5), t)",
+  )
+  assert_true(expr_equiv_to(b_mgf, b_mgf_oracle))
+  assert_true(!@symprint.to_string(b_mgf).contains("moment_generating_function("))
+  let b_cf = characteristic_function(sb, t, rvs=[b])
+  let b_cf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda B, t: characteristic_function(B)(t))(stats.Beta('B', 2, 5), t)",
+  )
+  assert_true(expr_equiv_to(b_cf, b_cf_oracle))
+  assert_true(!@symprint.to_string(b_cf).contains("characteristic_function("))
+
+  let l = logistic("L", params=[@symcore.int(0), @symcore.int(2)])
+  let sl = @symcore.symbol("L")
+  let q = quantile(sl, try! @symcore.rational_from_ints(1, 4), rvs=[l])
+  assert_true(expr_equiv_to(q, "-2*log(3)"))
+  assert_true(!@symprint.to_string(q).contains("quantile("))
+
+  let u = uniform("Ue", params=[@symcore.int(1), @symcore.int(3)])
+  let su = @symcore.symbol("Ue")
+  let ue = entropy(su, rvs=[u])
+  let ue_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Ue: entropy(Ue))(stats.Uniform('Ue', 1, 3))",
+  )
+  assert_true(expr_equiv_to(ue, ue_oracle))
+  assert_true(!@symprint.to_string(ue).contains("entropy("))
+}
+
+///|
 test "compat special constructors keep concrete behavior" {
   let g = gamma("G", @symcore.int(3), @symcore.int(2))
   let ge = expectation(@symcore.symbol("G"), rvs=[g])
@@ -138,14 +172,16 @@ test "compat matrix helpers shape smoke" {
 ///|
 test "compat non-fallback symbolic families" {
   let bb = beta_binomial("BB", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
-  assert_eq(
-    @symprint.to_string(density(bb, @symcore.int(2))),
-    "BetaBinomialPMF(2, 10, 2, 3)",
+  let bb_pmf = density(bb, @symcore.int(2))
+  let bb_pmf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda BB: density(BB)(2))(stats.BetaBinomial('BB', 10, 2, 3))",
   )
-  assert_eq(
-    @symprint.to_string(cdf(bb, @symcore.int(2))),
-    "BetaBinomialCDF(2, 10, 2, 3)",
+  assert_true(expr_equiv_to(bb_pmf, bb_pmf_oracle))
+  let bb_cdf = cdf(bb, @symcore.int(2))
+  let bb_cdf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda BB: P(BB <= 2))(stats.BetaBinomial('BB', 10, 2, 3))",
   )
+  assert_true(expr_equiv_to(bb_cdf, bb_cdf_oracle))
 
   let d = dirichlet("D", params=[@symcore.int(2), @symcore.int(3)])
   let sd = @symcore.symbol("D")

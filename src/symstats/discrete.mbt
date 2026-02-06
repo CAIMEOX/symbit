@@ -35,16 +35,6 @@ fn discrete_one_minus(x : @symcore.Expr) -> @symcore.Expr {
   discrete_expr_sub(@symcore.int(1), x)
 }
 
-///|
-fn factorial_bigint(n : Int) -> BigInt {
-  let mut out = BigInt::from_int(1)
-  for i in 2..=n {
-    out = out.mul(BigInt::from_int(i))
-  }
-  out
-}
-
-///|
 fn binomial_bigint(n : Int, k : Int) -> BigInt {
   if k < 0 || k > n {
     return BigInt::from_int(0)
@@ -225,6 +215,43 @@ fn symbolic_discrete_expr(
 }
 
 ///|
+fn symbolic_discrete_cdf_by_pmf_sum(
+  name : String,
+  params : Array[@symcore.Expr],
+  k : @symcore.Expr,
+) -> @symcore.Expr? {
+  match expr_as_int(k) {
+    Some(ki) => {
+      if ki < 0 {
+        return Some(@symcore.int(0))
+      }
+      let upper =
+        match name {
+          "BetaBinomial" if params.length() == 3 =>
+            match expr_as_int(params[0]) {
+              Some(n) => if ki > n { n } else { ki }
+              None => ki
+            }
+          _ => ki
+        }
+      let terms : Array[@symcore.Expr] = Array::new()
+      for i in 0..=upper {
+        match generated_pmf(name, params, @symcore.int(i)) {
+          Some(v) => terms.push(v)
+          None => return None
+        }
+      }
+      if terms.is_empty() {
+        Some(@symcore.int(0))
+      } else {
+        Some(eval_arith(@symcore.add(terms)))
+      }
+    }
+    None => None
+  }
+}
+
+///|
 pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(_) => finite_pmf(rv, k)
@@ -232,12 +259,17 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
     RVKind::Poisson(rate~) => Some(poisson_pmf_expr(rate, k))
     RVKind::Geometric(p~) => Some(geometric_pmf_expr(p, k))
     RVKind::NegativeBinomial(r~, p~) => Some(negative_binomial_pmf_expr(r, p, k))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) == "D" {
-        Some(symbolic_discrete_expr(symbolic_tag_name(tag), "PMF", params, k=k))
-      } else {
+    RVKind::Symbolic(tag~, params~) => {
+      if symbolic_tag_family(tag) != "D" {
         None
+      } else {
+        let name = symbolic_tag_name(tag)
+        match generated_pmf(name, params, k) {
+          Some(v) => Some(v)
+          None => Some(symbolic_discrete_expr(name, "PMF", params, k=k))
+        }
       }
+    }
     _ => None
   }
 }
@@ -261,12 +293,21 @@ pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
     RVKind::Geometric(p~) => Some(geometric_cdf_expr(p, k))
     RVKind::NegativeBinomial(r~, p~) =>
       Some(negative_binomial_cdf_expr(r, p, k))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) == "D" {
-        Some(symbolic_discrete_expr(symbolic_tag_name(tag), "CDF", params, k=k))
-      } else {
+    RVKind::Symbolic(tag~, params~) => {
+      if symbolic_tag_family(tag) != "D" {
         None
+      } else {
+        let name = symbolic_tag_name(tag)
+        match generated_cdf(name, params, k) {
+          Some(v) => Some(v)
+          None =>
+            match symbolic_discrete_cdf_by_pmf_sum(name, params, k) {
+              Some(v) => Some(v)
+              None => Some(symbolic_discrete_expr(name, "CDF", params, k=k))
+            }
+        }
       }
+    }
     _ => None
   }
 }
@@ -335,12 +376,17 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
           @symcore.mul([r, discrete_one_minus(p), @symcore.pow(p, @symcore.int(-1))]),
         ),
       )
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) == "D" {
-        Some(symbolic_discrete_expr(symbolic_tag_name(tag), "Mean", params))
-      } else {
+    RVKind::Symbolic(tag~, params~) => {
+      if symbolic_tag_family(tag) != "D" {
         None
+      } else {
+        let name = symbolic_tag_name(tag)
+        match generated_mean(name, params) {
+          Some(v) => Some(v)
+          None => Some(symbolic_discrete_expr(name, "Mean", params))
+        }
       }
+    }
     _ => None
   }
 }
@@ -363,12 +409,17 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
         discrete_one_minus(p),
         @symcore.pow(p, @symcore.int(-2)),
       ])))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) == "D" {
-        Some(symbolic_discrete_expr(symbolic_tag_name(tag), "Variance", params))
-      } else {
+    RVKind::Symbolic(tag~, params~) => {
+      if symbolic_tag_family(tag) != "D" {
         None
+      } else {
+        let name = symbolic_tag_name(tag)
+        match generated_variance(name, params) {
+          Some(v) => Some(v)
+          None => Some(symbolic_discrete_expr(name, "Variance", params))
+        }
       }
+    }
     _ => None
   }
 }

@@ -137,6 +137,29 @@ fn resolve_rv(expr : @symcore.Expr, rvs : Array[RandomVar]) -> RandomVar? {
 }
 
 ///|
+fn symbolic_metric_with_head(
+  name : String,
+  suffix : String,
+  head : @symcore.Expr,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  let args : Array[@symcore.Expr] = [head]
+  for p in params {
+    args.push(p)
+  }
+  @symcore.function("\{name}\{suffix}", args)
+}
+
+///|
+fn symbolic_metric_no_head(
+  name : String,
+  suffix : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  @symcore.function("\{name}\{suffix}", params)
+}
+
+///|
 fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(items) => {
@@ -181,29 +204,33 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
     }
     RVKind::Symbolic(tag~, params~) => {
       let name = symbolic_tag_name(tag)
-      match name {
-        "Uniform" if params.length() == 2 => {
-          let a = params[0]
-          let b = params[1]
-          let numer = eval_arith(@symcore.add([
-            @symcore.function("exp", [eval_arith(@symcore.mul([t, b]))]),
-            @symcore.mul([@symcore.int(-1), @symcore.function("exp", [eval_arith(@symcore.mul([t, a]))])]),
-          ]))
-          let denom = eval_arith(@symcore.mul([t, eval_arith(@symcore.add([b, @symcore.mul([@symcore.int(-1), a])]))]))
-          Some(eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])))
-        }
-        "Laplace" if params.length() == 2 => {
-          let mu = params[0]
-          let b = params[1]
-          let num = @symcore.function("exp", [eval_arith(@symcore.mul([mu, t]))])
-          let den = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([@symcore.pow(b, @symcore.int(2)), @symcore.pow(t, @symcore.int(2))])])]))
-          Some(eval_arith(@symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])))
-        }
-        "LogNormal" if params.length() == 2 => {
-          // No closed form in elementary functions; keep symbolic.
-          None
-        }
-        _ => None
+      match generated_mgf(name, params, t) {
+        Some(v) => Some(v)
+        None =>
+          match name {
+            "Uniform" if params.length() == 2 => {
+              let a = params[0]
+              let b = params[1]
+              let numer = eval_arith(@symcore.add([
+                @symcore.function("exp", [eval_arith(@symcore.mul([t, b]))]),
+                @symcore.mul([@symcore.int(-1), @symcore.function("exp", [eval_arith(@symcore.mul([t, a]))])]),
+              ]))
+              let denom = eval_arith(@symcore.mul([t, eval_arith(@symcore.add([b, @symcore.mul([@symcore.int(-1), a])]))]))
+              Some(eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])))
+            }
+            "Laplace" if params.length() == 2 => {
+              let mu = params[0]
+              let b = params[1]
+              let num = @symcore.function("exp", [eval_arith(@symcore.mul([mu, t]))])
+              let den = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([@symcore.pow(b, @symcore.int(2)), @symcore.pow(t, @symcore.int(2))])])]))
+              Some(eval_arith(@symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])))
+            }
+            "LogNormal" if params.length() == 2 => {
+              // LogNormal has no elementary closed form MGF.
+              Some(symbolic_metric_with_head(name, "MGF", t, params))
+            }
+            _ => Some(symbolic_metric_with_head(name, "MGF", t, params))
+          }
       }
     }
     _ => None
@@ -218,9 +245,23 @@ pub fn characteristic_function(
 ) -> @symcore.Expr {
   match resolve_rv(expr, rvs) {
     Some(rv) =>
-      match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
-        Some(v) => v
-        None => @symcore.function("characteristic_function", [expr, t])
+      match rv.kind {
+        RVKind::Symbolic(tag~, params~) => {
+          let name = symbolic_tag_name(tag)
+          match generated_cf(name, params, t) {
+            Some(v) => v
+            None =>
+              match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+                Some(v) => v
+                None => symbolic_metric_with_head(name, "CF", t, params)
+              }
+          }
+        }
+        _ =>
+          match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+            Some(v) => v
+            None => @symcore.function("characteristic_function", [expr, t])
+          }
       }
     None => @symcore.function("characteristic_function", [expr, t])
   }
@@ -260,6 +301,48 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
             }
           }
           eval_arith(@symcore.add(terms))
+        }
+        RVKind::Normal(mu~, sigma~) => {
+          ignore(mu)
+          eval_arith(@symcore.function("log", [
+            eval_arith(@symcore.mul([
+              sigma,
+              @symcore.function("sqrt", [eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi"), @symcore.symbol("E")]))]),
+            ])),
+          ]))
+        }
+        RVKind::Exponential(rate~) =>
+          eval_arith(@symcore.add([
+            @symcore.int(1),
+            @symcore.mul([@symcore.int(-1), @symcore.function("log", [rate])]),
+          ]))
+        RVKind::Gamma(shape~, scale~) =>
+          eval_arith(@symcore.add([
+            shape,
+            @symcore.function("log", [eval_arith(@symcore.mul([scale, @symcore.function("gamma", [shape])]))]),
+            @symcore.mul([@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), shape])]), @symcore.function("digamma", [shape])]),
+          ]))
+        RVKind::Symbolic(tag~, params~) => {
+          let name = symbolic_tag_name(tag)
+          match generated_entropy(name, params) {
+            Some(v) => v
+            None =>
+              match name {
+                "Uniform" if params.length() == 2 =>
+                  eval_arith(@symcore.function("log", [eval_arith(@symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])]))]))
+                "Exponential" if params.length() == 1 =>
+                  eval_arith(@symcore.add([
+                    @symcore.int(1),
+                    @symcore.mul([@symcore.int(-1), @symcore.function("log", [params[0]])]),
+                  ]))
+                "Laplace" if params.length() == 2 =>
+                  eval_arith(@symcore.add([
+                    @symcore.int(1),
+                    @symcore.function("log", [eval_arith(@symcore.mul([@symcore.int(2), params[1]]))]),
+                  ]))
+                _ => symbolic_metric_no_head(name, "Entropy", params)
+              }
+          }
         }
         _ => @symcore.function("entropy", [expr])
       }
@@ -402,59 +485,57 @@ pub fn quantile(
           ]))
         RVKind::Symbolic(tag~, params~) => {
           let name = symbolic_tag_name(tag)
-          match name {
-            "Uniform" if params.length() == 2 =>
-              eval_arith(@symcore.add([
-                params[0],
-                eval_arith(@symcore.mul([
-                  q,
-                  eval_arith(
-                    @symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])]),
-                  ),
-                ])),
-              ]))
-            "Rayleigh" if params.length() == 1 =>
-              eval_arith(@symcore.mul([
-                params[0],
-                @symcore.function("sqrt", [eval_arith(@symcore.mul([
-                  @symcore.int(-2),
-                  @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
-                ]))]),
-              ]))
-            "Weibull" if params.length() == 2 =>
-              eval_arith(@symcore.mul([
-                params[1],
-                @symcore.pow(
+          match generated_quantile(name, params, q) {
+            Some(v) => v
+            None =>
+              match name {
+                "Uniform" if params.length() == 2 =>
+                  eval_arith(@symcore.add([
+                    params[0],
+                    eval_arith(@symcore.mul([
+                      q,
+                      eval_arith(
+                        @symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])]),
+                      ),
+                    ])),
+                  ]))
+                "Rayleigh" if params.length() == 1 =>
                   eval_arith(@symcore.mul([
-                    @symcore.int(-1),
-                    @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
-                  ])),
-                  @symcore.pow(params[0], @symcore.int(-1)),
-                ),
-              ]))
-            "Pareto" if params.length() == 2 =>
-              eval_arith(@symcore.mul([
-                params[0],
-                @symcore.pow(eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])])), @symcore.mul([@symcore.int(-1), @symcore.pow(params[1], @symcore.int(-1))])),
-              ]))
-            "LogNormal" if params.length() == 2 =>
-              eval_arith(@symcore.function("exp", [
-                eval_arith(@symcore.add([
-                  params[0],
+                    params[0],
+                    @symcore.function("sqrt", [eval_arith(@symcore.mul([
+                      @symcore.int(-2),
+                      @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
+                    ]))]),
+                  ]))
+                "Weibull" if params.length() == 2 =>
                   eval_arith(@symcore.mul([
                     params[1],
-                    @symcore.function("sqrt", [@symcore.int(2)]),
-                    @symcore.function("erfinv", [eval_arith(@symcore.add([eval_arith(@symcore.mul([@symcore.int(2), q])), @symcore.int(-1)]))]),
-                  ])),
-                ])),
-              ]))
-            _ => {
-              let args : Array[@symcore.Expr] = [q]
-              for p in params {
-                args.push(p)
+                    @symcore.pow(
+                      eval_arith(@symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
+                      ])),
+                      @symcore.pow(params[0], @symcore.int(-1)),
+                    ),
+                  ]))
+                "Pareto" if params.length() == 2 =>
+                  eval_arith(@symcore.mul([
+                    params[0],
+                    @symcore.pow(eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])])), @symcore.mul([@symcore.int(-1), @symcore.pow(params[1], @symcore.int(-1))])),
+                  ]))
+                "LogNormal" if params.length() == 2 =>
+                  eval_arith(@symcore.function("exp", [
+                    eval_arith(@symcore.add([
+                      params[0],
+                      eval_arith(@symcore.mul([
+                        params[1],
+                        @symcore.function("sqrt", [@symcore.int(2)]),
+                        @symcore.function("erfinv", [eval_arith(@symcore.add([eval_arith(@symcore.mul([@symcore.int(2), q])), @symcore.int(-1)]))]),
+                      ])),
+                    ])),
+                  ]))
+                _ => symbolic_metric_with_head(name, "Quantile", q, params)
               }
-              @symcore.function("\{name}Quantile", args)
-            }
           }
         }
         _ => @symcore.function("quantile", [expr, q])
