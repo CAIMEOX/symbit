@@ -1,0 +1,1071 @@
+///|
+/// Compatibility API for broader SymPy stats coverage.
+
+///|
+fn symbolic_family(dist : String) -> String {
+  match dist {
+    "BetaBinomial" |
+    "Hypergeometric" |
+    "IdealSoliton" |
+    "RobustSoliton" |
+    "FiniteDistributionHandmade" |
+    "FlorySchulz" |
+    "Hermite" |
+    "Logarithmic" |
+    "Skellam" |
+    "YuleSimon" |
+    "Zeta" |
+    "DiscreteRV" |
+    "DiscreteDistributionHandmade" |
+    "Multinomial" |
+    "NegativeMultinomial" => "D"
+    "JointRV" |
+    "Dirichlet" |
+    "GeneralizedMultivariateLogGamma" |
+    "GeneralizedMultivariateLogGammaOmega" |
+    "MultivariateBeta" |
+    "MultivariateEwens" |
+    "MultivariateT" |
+    "NormalGamma" |
+    "MultivariateNormal" |
+    "MultivariateLaplace" => "J"
+    "StochasticProcess" |
+    "DiscreteTimeStochasticProcess" |
+    "DiscreteMarkovChain" |
+    "ContinuousMarkovChain" |
+    "BernoulliProcess" |
+    "GammaProcess" => "P"
+    "JointEigenDistribution" |
+    "level_spacing_distribution" |
+    "MatrixGamma" |
+    "MatrixStudentT" |
+    "CircularEnsemble" |
+    "CircularUnitaryEnsemble" |
+    "CircularOrthogonalEnsemble" |
+    "CircularSymplecticEnsemble" |
+    "GaussianEnsemble" |
+    "GaussianUnitaryEnsemble" |
+    "GaussianOrthogonalEnsemble" |
+    "GaussianSymplecticEnsemble" => "M"
+    _ => "C"
+  }
+}
+
+///|
+fn symbolic_rv(name : String, dist : String, params : Array[@symcore.Expr]) -> RandomVar {
+  let tag = "\{symbolic_family(dist)}:\{dist}"
+  random_var(name, RVKind::Symbolic(tag~, params~))
+}
+
+///|
+pub fn p(event : Event, rv? : RandomVar) -> @symcore.Expr {
+  match rv {
+    Some(v) => probability(event, rv=v)
+    None => probability(event)
+  }
+}
+
+///|
+pub fn e(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  expectation(expr, rvs~)
+}
+
+///|
+pub fn h(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  entropy(expr, rvs~)
+}
+
+///|
+pub fn given(expr : @symcore.Expr, condition : Event) -> @symcore.Expr {
+  @symcore.function("given", [expr, event_to_expr(condition)])
+}
+
+///|
+pub fn where_(condition : Event) -> @symcore.Expr {
+  @symcore.function("where", [event_to_expr(condition)])
+}
+
+///|
+pub fn sample(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("sample", [expr])
+}
+
+///|
+pub fn sample_iter(expr : @symcore.Expr, n? : Int = 1) -> Array[@symcore.Expr] {
+  if n <= 0 {
+    return []
+  }
+  Array::make(n, expr)
+}
+
+///|
+pub fn sample_stochastic_process(
+  proc : RandomVar,
+  t0 : @symcore.Expr,
+  t1 : @symcore.Expr,
+  n? : Int = 2,
+) -> @symcore.Expr {
+  @symcore.function("sample_stochastic_process", [
+    @symcore.symbol(proc.name),
+    t0,
+    t1,
+    @symcore.int(n),
+  ])
+}
+
+///|
+pub fn median(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  quantile(expr, try! @symcore.rational_from_ints(1, 2), rvs~)
+}
+
+///|
+fn resolve_rv(expr : @symcore.Expr, rvs : Array[RandomVar]) -> RandomVar? {
+  if rvs.length() == 1 {
+    return Some(rvs[0])
+  }
+  match expr {
+    @symcore.Expr::Symbol(name) => {
+      for rv in rvs {
+        if rv.name == name {
+          return Some(rv)
+        }
+      }
+      None
+    }
+    _ => None
+  }
+}
+
+///|
+fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
+  match rv.kind {
+    RVKind::Finite(items) => {
+      let terms : Array[@symcore.Expr] = Array::new()
+      for item in items {
+        let (value, p) = item
+        terms.push(eval_arith(@symcore.mul([expr_from_big_rational(p), @symcore.function("exp", [eval_arith(@symcore.mul([t, value]))])])))
+      }
+      Some(eval_arith(@symcore.add(terms)))
+    }
+    RVKind::Binomial(n~, p~) => {
+      let inside = eval_arith(@symcore.add([@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]), @symcore.mul([p, @symcore.function("exp", [t])])]))
+      Some(eval_arith(@symcore.pow(inside, n)))
+    }
+    RVKind::Poisson(rate~) => {
+      let inner = eval_arith(@symcore.add([@symcore.function("exp", [t]), @symcore.int(-1)]))
+      Some(eval_arith(@symcore.function("exp", [eval_arith(@symcore.mul([rate, inner]))])))
+    }
+    RVKind::Geometric(p~) => {
+      let et = @symcore.function("exp", [t])
+      let numer = eval_arith(@symcore.mul([p, et]))
+      let denom = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])), et])])]))
+      Some(eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])))
+    }
+    RVKind::NegativeBinomial(r~, p~) => {
+      let et = @symcore.function("exp", [t])
+      let denom = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])), et])])]))
+      Some(eval_arith(@symcore.pow(eval_arith(@symcore.mul([p, @symcore.pow(denom, @symcore.int(-1))])), r)))
+    }
+    RVKind::Normal(mu~, sigma~) => {
+      let t2 = @symcore.pow(t, @symcore.int(2))
+      let quad = eval_arith(@symcore.mul([@symcore.int(1), @symcore.pow(@symcore.int(2), @symcore.int(-1)), @symcore.pow(sigma, @symcore.int(2)), t2]))
+      Some(eval_arith(@symcore.function("exp", [eval_arith(@symcore.add([eval_arith(@symcore.mul([mu, t])), quad]))])))
+    }
+    RVKind::Exponential(rate~) => {
+      let denom = eval_arith(@symcore.add([rate, @symcore.mul([@symcore.int(-1), t])]))
+      Some(eval_arith(@symcore.mul([rate, @symcore.pow(denom, @symcore.int(-1))])))
+    }
+    RVKind::Gamma(shape~, scale~) => {
+      let inner = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([scale, t])])]))
+      Some(eval_arith(@symcore.pow(inner, @symcore.mul([@symcore.int(-1), shape]))))
+    }
+    RVKind::Symbolic(tag~, params~) => {
+      let name = symbolic_tag_name(tag)
+      match name {
+        "Uniform" if params.length() == 2 => {
+          let a = params[0]
+          let b = params[1]
+          let numer = eval_arith(@symcore.add([
+            @symcore.function("exp", [eval_arith(@symcore.mul([t, b]))]),
+            @symcore.mul([@symcore.int(-1), @symcore.function("exp", [eval_arith(@symcore.mul([t, a]))])]),
+          ]))
+          let denom = eval_arith(@symcore.mul([t, eval_arith(@symcore.add([b, @symcore.mul([@symcore.int(-1), a])]))]))
+          Some(eval_arith(@symcore.mul([numer, @symcore.pow(denom, @symcore.int(-1))])))
+        }
+        "Laplace" if params.length() == 2 => {
+          let mu = params[0]
+          let b = params[1]
+          let num = @symcore.function("exp", [eval_arith(@symcore.mul([mu, t]))])
+          let den = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), @symcore.mul([@symcore.pow(b, @symcore.int(2)), @symcore.pow(t, @symcore.int(2))])])]))
+          Some(eval_arith(@symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])))
+        }
+        "LogNormal" if params.length() == 2 => {
+          // No closed form in elementary functions; keep symbolic.
+          None
+        }
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+pub fn characteristic_function(
+  expr : @symcore.Expr,
+  t : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  match resolve_rv(expr, rvs) {
+    Some(rv) =>
+      match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+        Some(v) => v
+        None => @symcore.function("characteristic_function", [expr, t])
+      }
+    None => @symcore.function("characteristic_function", [expr, t])
+  }
+}
+
+///|
+pub fn pspace(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("pspace", [expr])
+}
+
+///|
+pub fn skewness(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  let c3 = central_moment(expr, 3, rvs~)
+  let s = std(expr, rvs~)
+  eval_arith(@symcore.mul([c3, @symcore.pow(s, @symcore.int(-3))]))
+}
+
+///|
+pub fn kurtosis(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  let c4 = central_moment(expr, 4, rvs~)
+  let v = variance(expr, rvs~)
+  eval_arith(@symcore.mul([c4, @symcore.pow(v, @symcore.int(-2))]))
+}
+
+///|
+pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  match resolve_rv(expr, rvs) {
+    Some(rv) =>
+      match rv.kind {
+        RVKind::Finite(items) => {
+          let terms : Array[@symcore.Expr] = Array::new()
+          for item in items {
+            let (_, p) = item
+            let pe = expr_from_big_rational(p)
+            if @symcore.compare_expr(pe, @symcore.int(0)) != 0 {
+              terms.push(eval_arith(@symcore.mul([@symcore.int(-1), pe, @symcore.function("log", [pe])])))
+            }
+          }
+          eval_arith(@symcore.add(terms))
+        }
+        _ => @symcore.function("entropy", [expr])
+      }
+    None => @symcore.function("entropy", [expr])
+  }
+}
+
+///|
+pub fn dependent(a : RandomVar, b : RandomVar) -> Bool {
+  !assume_independent(a, b)
+}
+
+///|
+pub fn independent(a : RandomVar, b : RandomVar) -> Bool {
+  assume_independent(a, b)
+}
+
+///|
+fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
+  match expr {
+    @symcore.Expr::Symbol(name) => out[name] = true
+    _ =>
+      for child in @symcore.children(expr) {
+        collect_symbols(child, out)
+      }
+  }
+}
+
+///|
+pub fn random_symbols(expr : @symcore.Expr) -> Array[String] {
+  let seen : Map[String, Bool] = {}
+  collect_symbols(expr, seen)
+  let out : Array[String] = Array::new()
+  for key, _ in seen {
+    out.push(key)
+  }
+  out.sort()
+  out
+}
+
+///|
+pub fn correlation(
+  a : @symcore.Expr,
+  b : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  let cov = covariance(a, b, rvs~)
+  let sa = std(a, rvs~)
+  let sb = std(b, rvs~)
+  eval_arith(@symcore.mul([cov, @symcore.pow(sa, @symcore.int(-1)), @symcore.pow(sb, @symcore.int(-1))]))
+}
+
+///|
+pub fn factorial_moment(
+  expr : @symcore.Expr,
+  n : Int,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  let factors : Array[@symcore.Expr] = Array::new()
+  for i in 0..<n {
+    factors.push(eval_arith(@symcore.add([expr, @symcore.int(-i)])))
+  }
+  let falling =
+    if factors.is_empty() {
+      @symcore.int(1)
+    } else {
+      eval_arith(@symcore.mul(factors))
+    }
+  if !rvs.is_empty() {
+    expectation(falling, rvs~)
+  } else {
+    @symcore.function("factorial_moment", [expr, @symcore.int(n)])
+  }
+}
+
+///|
+pub fn cmoment(
+  expr : @symcore.Expr,
+  n : Int,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  central_moment(expr, n, rvs~)
+}
+
+///|
+pub fn sampling_density(expr : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("sampling_density", [expr])
+}
+
+///|
+pub fn moment_generating_function(
+  expr : @symcore.Expr,
+  t : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  match resolve_rv(expr, rvs) {
+    Some(rv) =>
+      match mgf_of_rv(rv, t) {
+        Some(v) => v
+        None => @symcore.function("moment_generating_function", [expr, t])
+      }
+    None => @symcore.function("moment_generating_function", [expr, t])
+  }
+}
+
+///|
+pub fn smoment(
+  expr : @symcore.Expr,
+  n : Int,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  if !rvs.is_empty() {
+    let c = central_moment(expr, n, rvs~)
+    let s = std(expr, rvs~)
+    eval_arith(@symcore.mul([c, @symcore.pow(s, @symcore.int(-n))]))
+  } else {
+    @symcore.function("smoment", [expr, @symcore.int(n)])
+  }
+}
+
+///|
+pub fn quantile(
+  expr : @symcore.Expr,
+  q : @symcore.Expr,
+  rvs? : Array[RandomVar] = [],
+) -> @symcore.Expr {
+  match resolve_rv(expr, rvs) {
+    Some(rv) =>
+      match rv.kind {
+        RVKind::Exponential(rate~) =>
+          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]), @symcore.pow(rate, @symcore.int(-1))]))
+        RVKind::Normal(mu~, sigma~) =>
+          eval_arith(@symcore.add([
+            mu,
+            eval_arith(@symcore.mul([
+              sigma,
+              @symcore.function("sqrt", [@symcore.int(2)]),
+              @symcore.function("erfinv", [eval_arith(@symcore.add([eval_arith(@symcore.mul([@symcore.int(2), q])), @symcore.int(-1)]))]),
+            ])),
+          ]))
+        RVKind::Symbolic(tag~, params~) => {
+          let name = symbolic_tag_name(tag)
+          match name {
+            "Uniform" if params.length() == 2 =>
+              eval_arith(@symcore.add([
+                params[0],
+                eval_arith(@symcore.mul([
+                  q,
+                  eval_arith(
+                    @symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])]),
+                  ),
+                ])),
+              ]))
+            "Rayleigh" if params.length() == 1 =>
+              eval_arith(@symcore.mul([
+                params[0],
+                @symcore.function("sqrt", [eval_arith(@symcore.mul([
+                  @symcore.int(-2),
+                  @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
+                ]))]),
+              ]))
+            "Weibull" if params.length() == 2 =>
+              eval_arith(@symcore.mul([
+                params[1],
+                @symcore.pow(
+                  eval_arith(@symcore.mul([
+                    @symcore.int(-1),
+                    @symcore.function("log", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])]))]),
+                  ])),
+                  @symcore.pow(params[0], @symcore.int(-1)),
+                ),
+              ]))
+            "Pareto" if params.length() == 2 =>
+              eval_arith(@symcore.mul([
+                params[0],
+                @symcore.pow(eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), q])])), @symcore.mul([@symcore.int(-1), @symcore.pow(params[1], @symcore.int(-1))])),
+              ]))
+            "LogNormal" if params.length() == 2 =>
+              eval_arith(@symcore.function("exp", [
+                eval_arith(@symcore.add([
+                  params[0],
+                  eval_arith(@symcore.mul([
+                    params[1],
+                    @symcore.function("sqrt", [@symcore.int(2)]),
+                    @symcore.function("erfinv", [eval_arith(@symcore.add([eval_arith(@symcore.mul([@symcore.int(2), q])), @symcore.int(-1)]))]),
+                  ])),
+                ])),
+              ]))
+            _ => {
+              let args : Array[@symcore.Expr] = [q]
+              for p in params {
+                args.push(p)
+              }
+              @symcore.function("\{name}Quantile", args)
+            }
+          }
+        }
+        _ => @symcore.function("quantile", [expr, q])
+      }
+    None => @symcore.function("quantile", [expr, q])
+  }
+}
+
+///|
+pub fn coskewness(a : @symcore.Expr, b : @symcore.Expr, c : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("coskewness", [a, b, c])
+}
+
+///|
+pub fn marginal_distribution(expr : @symcore.Expr, vars : Array[@symcore.Expr]) -> @symcore.Expr {
+  let args : Array[@symcore.Expr] = [expr]
+  for v in vars {
+    args.push(v)
+  }
+  @symcore.function("marginal_distribution", args)
+}
+
+///|
+pub fn generator_matrix_of(obj : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("GeneratorMatrixOf", [obj])
+}
+
+///|
+pub fn transition_matrix_of(obj : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("TransitionMatrixOf", [obj])
+}
+
+///|
+pub fn stochastic_state_space_of(obj : @symcore.Expr) -> @symcore.Expr {
+  @symcore.function("StochasticStateSpaceOf", [obj])
+}
+
+///|
+fn finite_central_moment(rv : RandomVar, n : Int) -> @symcore.Expr? {
+  match rv.kind {
+    RVKind::Finite(items) =>
+      match finite_expectation(rv) {
+        Some(mu) => {
+          let terms : Array[@symcore.Expr] = Array::new()
+          for item in items {
+            let (value, p) = item
+            let centered = eval_arith(@symcore.add([value, @symcore.mul([@symcore.int(-1), mu])]))
+            terms.push(eval_arith(@symcore.mul([expr_from_big_rational(p), @symcore.pow(centered, @symcore.int(n))])))
+          }
+          Some(eval_arith(@symcore.add(terms)))
+        }
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn central_moment(expr : @symcore.Expr, n : Int, rvs? : Array[RandomVar] = []) -> @symcore.Expr {
+  match resolve_rv(expr, rvs) {
+    Some(rv) =>
+      match finite_central_moment(rv, n) {
+        Some(v) => return v
+        None => ()
+      }
+    None => ()
+  }
+  let mu = expectation(expr, rvs~)
+  let centered = eval_arith(@symcore.add([expr, @symcore.mul([@symcore.int(-1), mu])]))
+  expectation(@symcore.pow(centered, @symcore.int(n)), rvs~)
+}
+
+///|
+pub fn expectation_matrix(exprs : Array[@symcore.Expr], rvs? : Array[RandomVar] = []) -> Array[@symcore.Expr] {
+  exprs.map(e0 => expectation(e0, rvs~))
+}
+
+///|
+pub fn variance_matrix(exprs : Array[@symcore.Expr], rvs? : Array[RandomVar] = []) -> Array[Array[@symcore.Expr]] {
+  let out : Array[Array[@symcore.Expr]] = Array::new()
+  for i in 0..<exprs.length() {
+    let row : Array[@symcore.Expr] = Array::new()
+    for j in 0..<exprs.length() {
+      row.push(covariance(exprs[i], exprs[j], rvs~))
+    }
+    out.push(row)
+  }
+  out
+}
+
+///|
+pub fn cross_covariance_matrix(
+  xs : Array[@symcore.Expr],
+  ys : Array[@symcore.Expr],
+  rvs? : Array[RandomVar] = [],
+) -> Array[Array[@symcore.Expr]] {
+  let out : Array[Array[@symcore.Expr]] = Array::new()
+  for i in 0..<xs.length() {
+    let row : Array[@symcore.Expr] = Array::new()
+    for j in 0..<ys.length() {
+      row.push(covariance(xs[i], ys[j], rvs~))
+    }
+    out.push(row)
+  }
+  out
+}
+
+///|
+pub fn joint_eigen_distribution(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "JointEigenDistribution", params)
+}
+
+///|
+pub fn level_spacing_distribution(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "level_spacing_distribution", params)
+}
+
+///|
+pub fn matrix_gamma(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MatrixGamma", params)
+}
+
+///|
+pub fn matrix_student_t(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MatrixStudentT", params)
+}
+
+///|
+pub fn gamma(name : String, shape : @symcore.Expr, scale : @symcore.Expr) -> RandomVar {
+  gamma_dist(name, shape, scale)
+}
+
+///|
+pub fn wishart(name : String, df : @symcore.Expr, scale : @symcore.Expr) -> RandomVar {
+  wishart_rv(name, df, scale)
+}
+
+///|
+pub fn matrix_normal(
+  name : String,
+  mean : @symcore.Expr,
+  rowcov : @symcore.Expr,
+  colcov : @symcore.Expr,
+) -> RandomVar {
+  matrix_normal_rv(name, mean, rowcov, colcov)
+}
+
+///|
+pub fn beta_binomial(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "BetaBinomial", params)
+}
+
+///|
+pub fn hypergeometric(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Hypergeometric", params)
+}
+
+///|
+pub fn rademacher(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  ignore(params)
+  let half = try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
+  finite_rv(
+    name,
+    [
+      (@symcore.int(-1), half),
+      (@symcore.int(1), half),
+    ],
+  )
+}
+
+///|
+pub fn ideal_soliton(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "IdealSoliton", params)
+}
+
+///|
+pub fn robust_soliton(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "RobustSoliton", params)
+}
+
+///|
+pub fn finite_distribution_handmade(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "FiniteDistributionHandmade", params)
+}
+
+///|
+pub fn continuous_rv(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ContinuousRV", params)
+}
+
+///|
+pub fn arcsin(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Arcsin", params)
+}
+
+///|
+pub fn benini(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Benini", params)
+}
+
+///|
+pub fn beta(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Beta", params)
+}
+
+///|
+pub fn beta_noncentral(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "BetaNoncentral", params)
+}
+
+///|
+pub fn beta_prime(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "BetaPrime", params)
+}
+
+///|
+pub fn bounded_pareto(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "BoundedPareto", params)
+}
+
+///|
+pub fn cauchy(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Cauchy", params)
+}
+
+///|
+pub fn chi(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Chi", params)
+}
+
+///|
+pub fn chi_noncentral(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ChiNoncentral", params)
+}
+
+///|
+pub fn chi_squared(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ChiSquared", params)
+}
+
+///|
+pub fn dagum(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Dagum", params)
+}
+
+///|
+pub fn davis(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Davis", params)
+}
+
+///|
+pub fn erlang(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Erlang", params)
+}
+
+///|
+pub fn ex_gaussian(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ExGaussian", params)
+}
+
+///|
+pub fn exponential_power(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ExponentialPower", params)
+}
+
+///|
+pub fn f_distribution(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "FDistribution", params)
+}
+
+///|
+pub fn fisher_z(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "FisherZ", params)
+}
+
+///|
+pub fn frechet(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Frechet", params)
+}
+
+///|
+pub fn gamma_inverse(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GammaInverse", params)
+}
+
+///|
+pub fn gompertz(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Gompertz", params)
+}
+
+///|
+pub fn gumbel(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Gumbel", params)
+}
+
+///|
+pub fn kumaraswamy(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Kumaraswamy", params)
+}
+
+///|
+pub fn laplace(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Laplace", params)
+}
+
+///|
+pub fn levy(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Levy", params)
+}
+
+///|
+pub fn logistic(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Logistic", params)
+}
+
+///|
+pub fn log_cauchy(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "LogCauchy", params)
+}
+
+///|
+pub fn log_logistic(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "LogLogistic", params)
+}
+
+///|
+pub fn logit_normal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "LogitNormal", params)
+}
+
+///|
+pub fn log_normal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "LogNormal", params)
+}
+
+///|
+pub fn lomax(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Lomax", params)
+}
+
+///|
+pub fn moyal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Moyal", params)
+}
+
+///|
+pub fn maxwell(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Maxwell", params)
+}
+
+///|
+pub fn nakagami(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Nakagami", params)
+}
+
+///|
+pub fn gaussian_inverse(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GaussianInverse", params)
+}
+
+///|
+pub fn pareto(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Pareto", params)
+}
+
+///|
+pub fn power_function(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "PowerFunction", params)
+}
+
+///|
+pub fn quadratic_u(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "QuadraticU", params)
+}
+
+///|
+pub fn raised_cosine(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "RaisedCosine", params)
+}
+
+///|
+pub fn rayleigh(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Rayleigh", params)
+}
+
+///|
+pub fn reciprocal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Reciprocal", params)
+}
+
+///|
+pub fn student_t(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "StudentT", params)
+}
+
+///|
+pub fn shifted_gompertz(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ShiftedGompertz", params)
+}
+
+///|
+pub fn trapezoidal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Trapezoidal", params)
+}
+
+///|
+pub fn triangular(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Triangular", params)
+}
+
+///|
+pub fn uniform(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Uniform", params)
+}
+
+///|
+pub fn uniform_sum(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "UniformSum", params)
+}
+
+///|
+pub fn von_mises(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "VonMises", params)
+}
+
+///|
+pub fn wald(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Wald", params)
+}
+
+///|
+pub fn weibull(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Weibull", params)
+}
+
+///|
+pub fn wigner_semicircle(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "WignerSemicircle", params)
+}
+
+///|
+pub fn continuous_distribution_handmade(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ContinuousDistributionHandmade", params)
+}
+
+///|
+pub fn flory_schulz(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "FlorySchulz", params)
+}
+
+///|
+pub fn hermite(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Hermite", params)
+}
+
+///|
+pub fn logarithmic(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Logarithmic", params)
+}
+
+///|
+pub fn skellam(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Skellam", params)
+}
+
+///|
+pub fn yule_simon(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "YuleSimon", params)
+}
+
+///|
+pub fn zeta(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Zeta", params)
+}
+
+///|
+pub fn discrete_rv(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "DiscreteRV", params)
+}
+
+///|
+pub fn discrete_distribution_handmade(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "DiscreteDistributionHandmade", params)
+}
+
+///|
+pub fn joint_rv(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "JointRV", params)
+}
+
+///|
+pub fn dirichlet(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Dirichlet", params)
+}
+
+///|
+pub fn generalized_multivariate_log_gamma(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GeneralizedMultivariateLogGamma", params)
+}
+
+///|
+pub fn generalized_multivariate_log_gamma_omega(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GeneralizedMultivariateLogGammaOmega", params)
+}
+
+///|
+pub fn multinomial(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "Multinomial", params)
+}
+
+///|
+pub fn multivariate_beta(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MultivariateBeta", params)
+}
+
+///|
+pub fn multivariate_ewens(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MultivariateEwens", params)
+}
+
+///|
+pub fn multivariate_t(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MultivariateT", params)
+}
+
+///|
+pub fn negative_multinomial(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "NegativeMultinomial", params)
+}
+
+///|
+pub fn normal_gamma(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "NormalGamma", params)
+}
+
+///|
+pub fn multivariate_normal(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MultivariateNormal", params)
+}
+
+///|
+pub fn multivariate_laplace(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "MultivariateLaplace", params)
+}
+
+///|
+pub fn stochastic_process(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "StochasticProcess", params)
+}
+
+///|
+pub fn discrete_time_stochastic_process(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "DiscreteTimeStochasticProcess", params)
+}
+
+///|
+pub fn discrete_markov_chain(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "DiscreteMarkovChain", params)
+}
+
+///|
+pub fn continuous_markov_chain(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "ContinuousMarkovChain", params)
+}
+
+///|
+pub fn bernoulli_process(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "BernoulliProcess", params)
+}
+
+///|
+pub fn gamma_process(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GammaProcess", params)
+}
+
+///|
+pub fn circular_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "CircularEnsemble", params)
+}
+
+///|
+pub fn circular_unitary_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "CircularUnitaryEnsemble", params)
+}
+
+///|
+pub fn circular_orthogonal_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "CircularOrthogonalEnsemble", params)
+}
+
+///|
+pub fn circular_symplectic_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "CircularSymplecticEnsemble", params)
+}
+
+///|
+pub fn gaussian_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GaussianEnsemble", params)
+}
+
+///|
+pub fn gaussian_unitary_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GaussianUnitaryEnsemble", params)
+}
+
+///|
+pub fn gaussian_orthogonal_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GaussianOrthogonalEnsemble", params)
+}
+
+///|
+pub fn gaussian_symplectic_ensemble(name : String, params? : Array[@symcore.Expr] = []) -> RandomVar {
+  symbolic_rv(name, "GaussianSymplecticEnsemble", params)
+}

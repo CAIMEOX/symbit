@@ -1,0 +1,526 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstats"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn and_event(Array[Event]) -> Event
+
+pub fn arcsin(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn assume_independent(RandomVar, RandomVar) -> Bool
+
+pub fn benini(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn bernoulli(String, @symnum.BigRational) -> RandomVar
+
+pub fn bernoulli_process(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn beta(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn beta_binomial(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn beta_noncentral(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn beta_prime(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn binomial(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn bounded_pareto(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn cauchy(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn cdf(RandomVar, @symcore.Expr) -> @symcore.Expr
+
+pub fn central_moment(@symcore.Expr, Int, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn characteristic_function(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn chi(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn chi_noncentral(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn chi_squared(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn circular_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn circular_orthogonal_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn circular_symplectic_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn circular_unitary_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn cmoment(@symcore.Expr, Int, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn coin(String, p_head? : @symnum.BigRational) -> RandomVar
+
+pub fn compound_components(RandomVar) -> Array[(@symnum.BigRational, RandomVar)]?
+
+pub fn compound_rv(String, Array[(@symnum.BigRational, RandomVar)]) -> RandomVar
+
+pub fn continuous_cdf(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn continuous_density(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn continuous_distribution_handmade(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn continuous_markov_chain(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn continuous_mean(RandomVar) -> @symcore.Expr?
+
+pub fn continuous_probability(RandomVar, Event) -> @symcore.Expr?
+
+pub fn continuous_rv(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn continuous_variance(RandomVar) -> @symcore.Expr?
+
+pub fn correlation(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn coskewness(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn cov_key(String, String) -> String
+
+pub fn covariance(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn covariance_expr(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn cross_covariance_matrix(Array[@symcore.Expr], Array[@symcore.Expr], rvs? : Array[RandomVar]) -> Array[Array[@symcore.Expr]]
+
+pub fn dagum(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn davis(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn density(RandomVar, @symcore.Expr) -> @symcore.Expr
+
+pub fn dependent(RandomVar, RandomVar) -> Bool
+
+pub fn die(String, sides? : Int) -> RandomVar
+
+pub fn dirichlet(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_cdf(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn discrete_distribution_handmade(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_markov_chain(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_mean(RandomVar) -> @symcore.Expr?
+
+pub fn discrete_pmf(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn discrete_probability(RandomVar, Event) -> @symcore.Expr?
+
+pub fn discrete_rv(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_time_stochastic_process(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_uniform(String, Array[@symcore.Expr]) -> RandomVar
+
+pub fn discrete_variance(RandomVar) -> @symcore.Expr?
+
+pub fn e(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn entropy(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn eq(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn erlang(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn eval_arith(@symcore.Expr) -> @symcore.Expr
+
+pub fn evaluate_event(Event, Map[String, @symcore.Expr]) -> TriBool
+
+pub fn event_depends_only_on(Event, String) -> Bool
+
+pub fn event_symbols(Event) -> Array[String]
+
+pub fn event_to_expr(Event) -> @symcore.Expr
+
+pub fn ex_gaussian(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn expectation(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn expectation_expr(@symcore.Expr, RandomVar?) -> @symcore.Expr
+
+pub fn expectation_matrix(Array[@symcore.Expr], rvs? : Array[RandomVar]) -> Array[@symcore.Expr]
+
+pub fn exponential(String, @symcore.Expr) -> RandomVar
+
+pub fn exponential_power(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn expr_as_int(@symcore.Expr) -> Int?
+
+pub fn expr_as_number(@symcore.Expr) -> @symnum.BigRational?
+
+pub fn expr_from_big_rational(@symnum.BigRational) -> @symcore.Expr
+
+pub fn expr_from_int(Int) -> @symcore.Expr
+
+pub fn expr_one() -> @symcore.Expr
+
+pub fn expr_two() -> @symcore.Expr
+
+pub fn expr_zero() -> @symcore.Expr
+
+pub fn f_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn factorial_moment(@symcore.Expr, Int, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn finite_atoms(RandomVar) -> Array[(@symcore.Expr, @symnum.BigRational)]?
+
+pub fn finite_distribution_handmade(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn finite_expectation(RandomVar, expr? : @symcore.Expr) -> @symcore.Expr?
+
+pub fn finite_pmf(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn finite_probability(RandomVar, Event) -> @symcore.Expr?
+
+pub fn finite_rv(String, Array[(@symcore.Expr, @symnum.BigRational)]) -> RandomVar
+
+pub fn finite_variance(RandomVar) -> @symcore.Expr?
+
+pub fn fisher_z(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn flory_schulz(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn frechet(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gamma(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn gamma_dist(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn gamma_inverse(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gamma_process(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gaussian_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gaussian_inverse(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gaussian_orthogonal_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gaussian_symplectic_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gaussian_unitary_ensemble(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn ge(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn generalized_multivariate_log_gamma(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn generalized_multivariate_log_gamma_omega(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn generator_matrix_of(@symcore.Expr) -> @symcore.Expr
+
+pub fn geometric(String, @symcore.Expr) -> RandomVar
+
+pub fn given(@symcore.Expr, Event) -> @symcore.Expr
+
+pub fn goe_matrix(String, @symcore.Expr) -> RandomVar
+
+pub fn gompertz(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn gt(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn gue_matrix(String, @symcore.Expr) -> RandomVar
+
+pub fn gumbel(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn h(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn hermite(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn hypergeometric(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn ideal_soliton(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn independent(RandomVar, RandomVar) -> Bool
+
+pub fn invert_relop(RelOp) -> RelOp
+
+pub fn joint_components(RandomVar) -> Array[RandomVar]?
+
+pub fn joint_eigen_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn joint_independent(String, Array[RandomVar]) -> RandomVar
+
+pub fn joint_rv(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn kumaraswamy(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn kurtosis(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn laplace(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn le(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn level_spacing_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn levy(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn log_cauchy(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn log_logistic(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn log_normal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn logarithmic(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn logistic(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn logit_normal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn lomax(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn lt(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn marginal(RandomVar, Int) -> RandomVar?
+
+pub fn marginal_distribution(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn matrix_density(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn matrix_gamma(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn matrix_normal(String, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn matrix_normal_rv(String, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn matrix_student_t(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn maxwell(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn median(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn moment(RandomVar, Int) -> @symcore.Expr
+
+pub fn moment_generating_function(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn moyal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multinomial(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multivariate_beta(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multivariate_ewens(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multivariate_laplace(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multivariate_normal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn multivariate_t(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn nakagami(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn ne(@symcore.Expr, @symcore.Expr) -> Event
+
+pub fn negative_binomial(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn negative_multinomial(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn normal(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn normal_gamma(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn not_event(Event) -> Event
+
+pub fn or_event(Array[Event]) -> Event
+
+pub fn p(Event, rv? : RandomVar) -> @symcore.Expr
+
+pub fn pareto(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn poisson(String, @symcore.Expr) -> RandomVar
+
+pub fn poisson_process(String, @symcore.Expr, time_symbol? : String) -> RandomVar
+
+pub fn power_function(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn probability(Event, rv? : RandomVar) -> @symcore.Expr
+
+pub fn probability_expr(Event) -> @symcore.Expr
+
+pub fn process_increment_mean(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn process_increment_variance(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn process_mean_at(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn process_transition_probability(RandomVar, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn process_value(RandomVar, @symcore.Expr) -> @symcore.Expr
+
+pub fn process_variance_at(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn pspace(@symcore.Expr) -> @symcore.Expr
+
+pub fn quadratic_u(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn quantile(@symcore.Expr, @symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn rademacher(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn raised_cosine(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn random_symbol(RandomVar) -> @symcore.Expr
+
+pub fn random_symbols(@symcore.Expr) -> Array[String]
+
+pub fn random_var(String, RVKind) -> RandomVar
+
+pub fn rat_from_int(Int) -> @symnum.BigRational
+
+pub fn rayleigh(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn reciprocal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn rel(RelOp, @symcore.Expr, @symcore.Expr) -> Event
+
+pub fn relop_to_name(RelOp) -> String
+
+pub fn rename_random_var(RandomVar, String) -> RandomVar
+
+pub fn robust_soliton(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn sample(@symcore.Expr) -> @symcore.Expr
+
+pub fn sample_iter(@symcore.Expr, n? : Int) -> Array[@symcore.Expr]
+
+pub fn sample_stochastic_process(RandomVar, @symcore.Expr, @symcore.Expr, n? : Int) -> @symcore.Expr
+
+pub fn sampling_density(@symcore.Expr) -> @symcore.Expr
+
+pub fn shifted_gompertz(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn skellam(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn skewness(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn smoment(@symcore.Expr, Int, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn std(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn stochastic_process(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn stochastic_state_space_of(@symcore.Expr) -> @symcore.Expr
+
+pub fn student_t(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn substitute_symbol(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn symbolic_rv_data(RandomVar) -> (String, Array[@symcore.Expr])?
+
+pub fn symbolic_tag_family(String) -> String
+
+pub fn symbolic_tag_name(String) -> String
+
+pub fn transition_matrix_of(@symcore.Expr) -> @symcore.Expr
+
+pub fn trapezoidal(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn tri_and(TriBool, TriBool) -> TriBool
+
+pub fn tri_not(TriBool) -> TriBool
+
+pub fn tri_or(TriBool, TriBool) -> TriBool
+
+pub fn triangular(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn uniform(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn uniform_sum(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn variance(@symcore.Expr, rvs? : Array[RandomVar]) -> @symcore.Expr
+
+pub fn variance_expr(@symcore.Expr) -> @symcore.Expr
+
+pub fn variance_matrix(Array[@symcore.Expr], rvs? : Array[RandomVar]) -> Array[Array[@symcore.Expr]]
+
+pub fn variance_prop(@symcore.Expr, Map[String, @symcore.Expr], covariances? : Map[String, @symcore.Expr]) -> @symcore.Expr
+
+pub fn von_mises(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn wald(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn weibull(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn where_(Event) -> @symcore.Expr
+
+pub fn wiener_process(String, time_symbol? : String) -> RandomVar
+
+pub fn wigner_semicircle(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn wishart(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn wishart_rv(String, @symcore.Expr, @symcore.Expr) -> RandomVar
+
+pub fn yule_simon(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn zeta(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+// Errors
+
+// Types and methods
+pub(all) enum Event {
+  Bool(Bool)
+  Rel(op~ : RelOp, lhs~ : @symcore.Expr, rhs~ : @symcore.Expr)
+  Not(Event)
+  And(Array[Event])
+  Or(Array[Event])
+}
+
+pub(all) enum MatrixKind {
+  Wishart(df~ : @symcore.Expr, scale~ : @symcore.Expr)
+  MatrixNormal(mean~ : @symcore.Expr, rowcov~ : @symcore.Expr, colcov~ : @symcore.Expr)
+  GOE(size~ : @symcore.Expr)
+  GUE(size~ : @symcore.Expr)
+}
+
+pub(all) enum ProcessKind {
+  PoissonProcess(rate~ : @symcore.Expr, time_symbol~ : String)
+  WienerProcess(time_symbol~ : String)
+}
+
+pub(all) enum RVKind {
+  Finite(Array[(@symcore.Expr, @symnum.BigRational)])
+  Binomial(n~ : @symcore.Expr, p~ : @symcore.Expr)
+  Poisson(rate~ : @symcore.Expr)
+  Geometric(p~ : @symcore.Expr)
+  NegativeBinomial(r~ : @symcore.Expr, p~ : @symcore.Expr)
+  Normal(mu~ : @symcore.Expr, sigma~ : @symcore.Expr)
+  Exponential(rate~ : @symcore.Expr)
+  Gamma(shape~ : @symcore.Expr, scale~ : @symcore.Expr)
+  JointIndependent(Array[RandomVar])
+  Compound(Array[(@symnum.BigRational, RandomVar)])
+  StochasticProcess(ProcessKind)
+  Matrix(MatrixKind)
+  Symbolic(tag~ : String, params~ : Array[@symcore.Expr])
+}
+
+pub struct RandomVar {
+  name : String
+  kind : RVKind
+}
+
+pub(all) enum RelOp {
+  Eq
+  Ne
+  Lt
+  Le
+  Gt
+  Ge
+}
+
+pub enum TriBool {
+  True
+  False
+  Unknown
+}
+
+// Type aliases
+
+// Traits
+
