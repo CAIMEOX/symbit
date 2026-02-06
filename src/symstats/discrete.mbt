@@ -215,6 +215,18 @@ fn symbolic_discrete_expr(
 }
 
 ///|
+fn symbolic_discrete_generated_pmf(
+  name : String,
+  params : Array[@symcore.Expr],
+  k : @symcore.Expr,
+) -> @symcore.Expr? {
+  match generated_pmf(name, params, k) {
+    Some(v) => Some(v)
+    None => generated_density(name, params, k)
+  }
+}
+
+///|
 fn symbolic_discrete_cdf_by_pmf_sum(
   name : String,
   params : Array[@symcore.Expr],
@@ -236,7 +248,7 @@ fn symbolic_discrete_cdf_by_pmf_sum(
         }
       let terms : Array[@symcore.Expr] = Array::new()
       for i in 0..=upper {
-        match generated_pmf(name, params, @symcore.int(i)) {
+        match symbolic_discrete_generated_pmf(name, params, @symcore.int(i)) {
           Some(v) => terms.push(v)
           None => return None
         }
@@ -264,7 +276,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
         None
       } else {
         let name = symbolic_tag_name(tag)
-        match generated_pmf(name, params, k) {
+        match symbolic_discrete_generated_pmf(name, params, k) {
           Some(v) => Some(v)
           None => Some(symbolic_discrete_expr(name, "PMF", params, k=k))
         }

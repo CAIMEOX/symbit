@@ -1,6 +1,6 @@
 {
   "name": "CAIMEOX/symbit",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "deps": {
     "CAIMEOX/qc_pyext": "0.1.1",
     "Kaida-Amethyst/python": "0.1.7",

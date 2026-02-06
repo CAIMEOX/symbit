@@ -45,8 +45,22 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       let name = symbolic_tag_name(tag)
       let family = symbolic_tag_family(tag)
       match name {
+        "MatrixStudentT" if params.length() == 4 => {
+          let args : Array[@symcore.Expr] = [x]
+          for p in params {
+            args.push(p)
+          }
+          Some(@symcore.function("MatrixStudentTDensity", args))
+        }
         "MatrixStudentT" =>
           Some(@symcore.function("MatrixStudentTDensity", [x, @symcore.symbol(rv.name)]))
+        "MatrixGamma" if params.length() == 3 => {
+          let args : Array[@symcore.Expr] = [x]
+          for p in params {
+            args.push(p)
+          }
+          Some(@symcore.function("MatrixGammaDensity", args))
+        }
         "MatrixGamma" =>
           Some(@symcore.function("MatrixGammaDensity", [x, @symcore.symbol(rv.name)]))
         _ =>

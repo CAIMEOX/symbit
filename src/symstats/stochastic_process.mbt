@@ -36,11 +36,44 @@ pub fn process_mean_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
     RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) => Some(@symcore.int(0))
     RVKind::Symbolic(tag~, params~) =>
       if symbolic_tag_family(tag) == "P" {
-        let args : Array[@symcore.Expr] = [t]
-        for p in params {
-          args.push(p)
+        let name = symbolic_tag_name(tag)
+        match name {
+          "BernoulliProcess" if params.length() >= 1 => {
+            let p = params[0]
+            let success =
+              if params.length() >= 2 {
+                params[1]
+              } else {
+                @symcore.int(1)
+              }
+            let failure =
+              if params.length() >= 3 {
+                params[2]
+              } else {
+                @symcore.int(0)
+              }
+            Some(eval_arith(@symcore.add([
+              @symcore.mul([p, success]),
+              @symcore.mul([eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])), failure]),
+            ])))
+          }
+          "GammaProcess" if params.length() >= 2 => {
+            let lamda = params[0]
+            let gamma = params[1]
+            Some(eval_arith(@symcore.mul([
+              gamma,
+              t,
+              @symcore.pow(lamda, @symcore.int(-1)),
+            ])))
+          }
+          _ => {
+            let args : Array[@symcore.Expr] = [t]
+            for p in params {
+              args.push(p)
+            }
+            Some(@symcore.function("\{name}MeanAt", args))
+          }
         }
-        Some(@symcore.function("\{symbolic_tag_name(tag)}MeanAt", args))
       } else {
         None
       }
@@ -56,11 +89,45 @@ pub fn process_variance_at(proc : RandomVar, t : @symcore.Expr) -> @symcore.Expr
     RVKind::StochasticProcess(ProcessKind::WienerProcess(..)) => Some(t)
     RVKind::Symbolic(tag~, params~) =>
       if symbolic_tag_family(tag) == "P" {
-        let args : Array[@symcore.Expr] = [t]
-        for p in params {
-          args.push(p)
+        let name = symbolic_tag_name(tag)
+        match name {
+          "BernoulliProcess" if params.length() >= 1 => {
+            let p = params[0]
+            let success =
+              if params.length() >= 2 {
+                params[1]
+              } else {
+                @symcore.int(1)
+              }
+            let failure =
+              if params.length() >= 3 {
+                params[2]
+              } else {
+                @symcore.int(0)
+              }
+            Some(eval_arith(@symcore.mul([
+              p,
+              eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])),
+              @symcore.pow(eval_arith(@symcore.add([success, @symcore.mul([@symcore.int(-1), failure])])), @symcore.int(2)),
+            ])))
+          }
+          "GammaProcess" if params.length() >= 2 => {
+            let lamda = params[0]
+            let gamma = params[1]
+            Some(eval_arith(@symcore.mul([
+              gamma,
+              t,
+              @symcore.pow(lamda, @symcore.int(-2)),
+            ])))
+          }
+          _ => {
+            let args : Array[@symcore.Expr] = [t]
+            for p in params {
+              args.push(p)
+            }
+            Some(@symcore.function("\{name}VarianceAt", args))
+          }
         }
-        Some(@symcore.function("\{symbolic_tag_name(tag)}VarianceAt", args))
       } else {
         None
       }
@@ -107,11 +174,51 @@ pub fn process_transition_probability(
       Some(@symcore.function("NormalTransitionProb", [from, to, delta_t]))
     RVKind::Symbolic(tag~, params~) =>
       if symbolic_tag_family(tag) == "P" {
-        let args : Array[@symcore.Expr] = [from, to, t0, t1]
-        for p in params {
-          args.push(p)
+        let name = symbolic_tag_name(tag)
+        match name {
+          "BernoulliProcess" if params.length() >= 1 => {
+            let p = params[0]
+            let success =
+              if params.length() >= 2 {
+                params[1]
+              } else {
+                @symcore.int(1)
+              }
+            let failure =
+              if params.length() >= 3 {
+                params[2]
+              } else {
+                @symcore.int(0)
+              }
+            Some(eval_arith(@symcore.function("Piecewise", [
+              @symcore.function("Tuple", [p, @symcore.function("Eq", [to, success])]),
+              @symcore.function("Tuple", [eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])), @symcore.function("Eq", [to, failure])]),
+              @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+            ])))
+          }
+          "GammaProcess" if params.length() >= 2 => {
+            let lamda = params[0]
+            let gamma = params[1]
+            let delta = eval_arith(process_expr_sub(to, from))
+            let k = eval_arith(@symcore.mul([gamma, process_expr_sub(t1, t0)]))
+            Some(@symcore.function("Piecewise", [
+              @symcore.function("Tuple", [eval_arith(@symcore.mul([
+                @symcore.pow(lamda, k),
+                @symcore.pow(delta, eval_arith(@symcore.add([k, @symcore.int(-1)]))),
+                @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), lamda, delta]))]),
+                @symcore.pow(@symcore.function("gamma", [k]), @symcore.int(-1)),
+              ])), @symcore.function("Ge", [delta, @symcore.int(0)])]),
+              @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+            ]))
+          }
+          _ => {
+            let args : Array[@symcore.Expr] = [from, to, t0, t1]
+            for p in params {
+              args.push(p)
+            }
+            Some(@symcore.function("\{name}TransitionProb", args))
+          }
         }
-        Some(@symcore.function("\{symbolic_tag_name(tag)}TransitionProb", args))
       } else {
         None
       }

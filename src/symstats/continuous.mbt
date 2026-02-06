@@ -296,8 +296,8 @@ fn symbolic_continuous_density(
       )
     }
     "Weibull" if params.length() == 2 => {
-      let k = params[0]
-      let lam = params[1]
+      let lam = params[0]
+      let k = params[1]
       let ratio = eval_arith(@symcore.mul([x, @symcore.pow(lam, @symcore.int(-1))]))
       let body = eval_arith(@symcore.mul([
         k,
@@ -466,8 +466,8 @@ fn symbolic_continuous_cdf(
       )
     }
     "Weibull" if params.length() == 2 => {
-      let k = params[0]
-      let lam = params[1]
+      let lam = params[0]
+      let k = params[1]
       let ratio_pow = @symcore.pow(eval_arith(@symcore.mul([x, @symcore.pow(lam, @symcore.int(-1))])), k)
       Some(
         cont_piecewise([
@@ -746,11 +746,11 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                   ]))
                 "Weibull" if params.length() == 2 =>
                   eval_arith(@symcore.mul([
-                    params[1],
+                    params[0],
                     @symcore.function("gamma", [
                       eval_arith(@symcore.add([
                         @symcore.int(1),
-                        @symcore.pow(params[0], @symcore.int(-1)),
+                        @symcore.pow(params[1], @symcore.int(-1)),
                       ])),
                     ]),
                   ]))
@@ -838,8 +838,8 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                   ]))
                 }
                 "Weibull" if params.length() == 2 => {
-                  let k = params[0]
-                  let lam = params[1]
+                  let lam = params[0]
+                  let k = params[1]
                   let g1 = @symcore.function("gamma", [eval_arith(@symcore.add([@symcore.int(1), @symcore.pow(k, @symcore.int(-1))]))])
                   let g2 = @symcore.function("gamma", [eval_arith(@symcore.add([@symcore.int(1), eval_arith(@symcore.mul([@symcore.int(2), @symcore.pow(k, @symcore.int(-1))]))]))])
                   eval_arith(@symcore.mul([
