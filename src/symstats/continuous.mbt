@@ -394,6 +394,41 @@ fn symbolic_continuous_density(
       ]))
       Some(body)
     }
+    "BetaNoncentral" if params.length() == 3 => {
+      let alpha = params[0]
+      let beta = params[1]
+      let lamda = params[2]
+      let kk = @symcore.symbol("_k")
+      let half = try! @symcore.rational_from_ints(1, 2)
+      let summand = eval_arith(@symcore.mul([
+        @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), lamda, half]))]),
+        @symcore.pow(eval_arith(@symcore.mul([lamda, half])), kk),
+        @symcore.pow(x, eval_arith(@symcore.add([alpha, kk, @symcore.int(-1)]))),
+        @symcore.pow(eval_arith(cont_expr_sub(@symcore.int(1), x)), eval_arith(@symcore.add([beta, @symcore.int(-1)]))),
+        @symcore.pow(@symcore.function("factorial", [kk]), @symcore.int(-1)),
+        @symcore.pow(@symcore.function("beta", [eval_arith(@symcore.add([alpha, kk])), beta]), @symcore.int(-1)),
+      ]))
+      Some(@symcore.function("Sum", [
+        summand,
+        @symcore.function("Tuple", [kk, @symcore.int(0), @symcore.symbol("oo")]),
+      ]))
+    }
+    "UniformSum" if params.length() == 1 => {
+      let n = params[0]
+      let kk = @symcore.symbol("_k")
+      let summand = eval_arith(@symcore.mul([
+        @symcore.pow(@symcore.int(-1), kk),
+        @symcore.function("binomial", [n, kk]),
+        @symcore.pow(eval_arith(cont_expr_sub(x, kk)), eval_arith(cont_expr_sub(n, @symcore.int(1)))),
+      ]))
+      Some(eval_arith(@symcore.mul([
+        @symcore.pow(@symcore.function("factorial", [eval_arith(cont_expr_sub(n, @symcore.int(1)))]), @symcore.int(-1)),
+        @symcore.function("Sum", [
+          summand,
+          @symcore.function("Tuple", [kk, @symcore.int(0), @symcore.function("floor", [x])]),
+        ]),
+      ])))
+    }
     _ => None
   }
 }
@@ -409,6 +444,38 @@ fn symbolic_density_expr(
     args.push(p)
   }
   @symcore.function("\{name}Density", args)
+}
+
+///|
+fn symbolic_continuous_integral_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+  lower : @symcore.Expr,
+  guard_lower? : Bool = true,
+) -> @symcore.Expr {
+  let dummy = @symcore.symbol("_x")
+  let density_expr =
+    match symbolic_continuous_density(name, params, dummy) {
+      Some(v) => v
+      None =>
+        match generated_density(name, params, dummy) {
+          Some(v) => v
+          None => symbolic_density_expr(name, params, dummy)
+        }
+    }
+  let integral = eval_arith(@symcore.function("Integral", [
+    density_expr,
+    @symcore.function("Tuple", [dummy, lower, x]),
+  ]))
+  if guard_lower {
+    cont_piecewise([
+      (integral, cont_rel("Ge", x, lower)),
+      (@symcore.int(0), @symcore.symbol("True")),
+    ])
+  } else {
+    integral
+  }
 }
 
 ///|
@@ -659,6 +726,79 @@ fn symbolic_continuous_cdf(
         (@symcore.int(1), @symcore.symbol("True")),
       ]))
     }
+    "BetaNoncentral" if params.length() == 3 =>
+      Some(symbolic_continuous_integral_cdf(
+        "BetaNoncentral",
+        params,
+        x,
+        @symcore.int(0),
+      ))
+    "ChiNoncentral" if params.length() == 2 =>
+      Some(symbolic_continuous_integral_cdf(
+        "ChiNoncentral",
+        params,
+        x,
+        @symcore.int(0),
+      ))
+    "Davis" if params.length() == 3 =>
+      Some(symbolic_continuous_integral_cdf(
+        "Davis",
+        params,
+        x,
+        @symcore.int(0),
+      ))
+    "FDistribution" if params.length() == 2 =>
+      Some(symbolic_continuous_integral_cdf(
+        "FDistribution",
+        params,
+        x,
+        @symcore.int(0),
+      ))
+    "FisherZ" if params.length() == 2 =>
+      Some(symbolic_continuous_integral_cdf(
+        "FisherZ",
+        params,
+        x,
+        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
+        guard_lower=false,
+      ))
+    "UniformSum" if params.length() == 1 => {
+      let n = params[0]
+      let kk = @symcore.symbol("_k")
+      let summand = eval_arith(@symcore.mul([
+        @symcore.pow(@symcore.int(-1), kk),
+        @symcore.function("binomial", [n, kk]),
+        @symcore.pow(cont_expr_sub(x, kk), n),
+      ]))
+      Some(cont_piecewise([
+        (@symcore.int(0), cont_rel("Lt", x, @symcore.int(0))),
+        (
+          eval_arith(@symcore.mul([
+            @symcore.pow(@symcore.function("factorial", [n]), @symcore.int(-1)),
+            @symcore.function("Sum", [
+              summand,
+              @symcore.function("Tuple", [kk, @symcore.int(0), @symcore.function("floor", [x])]),
+            ]),
+          ])),
+          cont_rel("Le", x, n),
+        ),
+        (@symcore.int(1), @symcore.symbol("True")),
+      ]))
+    }
+    "VonMises" if params.length() == 2 =>
+      Some(symbolic_continuous_integral_cdf(
+        "VonMises",
+        params,
+        x,
+        @symcore.int(0),
+      ))
+    "WignerSemicircle" if params.length() == 1 =>
+      Some(symbolic_continuous_integral_cdf(
+        "WignerSemicircle",
+        params,
+        x,
+        eval_arith(@symcore.mul([@symcore.int(-1), params[0]])),
+      ))
     _ => None
   }
 }

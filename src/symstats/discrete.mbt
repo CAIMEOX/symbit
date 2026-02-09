@@ -282,6 +282,235 @@ fn symbolic_discrete_cdf_by_pmf_sum(
 }
 
 ///|
+fn symbolic_discrete_pmf_for(
+  name : String,
+  params : Array[@symcore.Expr],
+  k : @symcore.Expr,
+) -> @symcore.Expr? {
+  let tag = "D:\{name}"
+  let rv = random_var("_X", RVKind::Symbolic(tag~, params~))
+  discrete_pmf(rv, k)
+}
+
+///|
+fn symbolic_discrete_joint_box_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  k : @symcore.Expr,
+) -> @symcore.Expr? {
+  match discrete_tuple_items(k) {
+    Some(bounds) if !bounds.is_empty() => {
+      let indices : Array[@symcore.Expr] = Array::new()
+      let uppers : Array[@symcore.Expr] = Array::new()
+      let guard_terms : Array[@symcore.Expr] = Array::new()
+      for i in 0..<bounds.length() {
+        indices.push(@symcore.symbol("_k\{i + 1}"))
+        uppers.push(@symcore.function("floor", [bounds[i]]))
+        guard_terms.push(@symcore.function("Ge", [bounds[i], @symcore.int(0)]))
+      }
+      let cond =
+        if guard_terms.is_empty() {
+          @symcore.symbol("True")
+        } else {
+          @symcore.function("And", guard_terms)
+        }
+      let point = discrete_tuple_expr(indices)
+      match symbolic_discrete_pmf_for(name, params, point) {
+        Some(pmf) => {
+          let mut sum_expr = pmf
+          for i in 0..<indices.length() {
+            sum_expr = @symcore.function("Sum", [
+              sum_expr,
+              discrete_tuple_expr([
+                indices[i],
+                @symcore.int(0),
+                uppers[i],
+              ]),
+            ])
+          }
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([sum_expr, cond]),
+            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+          ]))
+        }
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_discrete_cdf_formula(
+  name : String,
+  params : Array[@symcore.Expr],
+  k : @symcore.Expr,
+) -> @symcore.Expr? {
+  let kk = @symcore.symbol("_k")
+  let fk = @symcore.function("floor", [k])
+  match name {
+    "BetaBinomial" if params.length() == 3 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) => {
+          let n = params[0]
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(0)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([
+                  kk,
+                  @symcore.int(0),
+                  @symcore.function("Min", [n, fk]),
+                ]),
+              ]),
+              @symcore.function("Le", [k, n]),
+            ]),
+            discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+          ]))
+        }
+        None => None
+      }
+    "Hypergeometric" if params.length() == 3 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) => {
+          let pop = params[0]
+          let succ = params[1]
+          let draws = params[2]
+          let low = @symcore.function("Max", [
+            @symcore.int(0),
+            eval_arith(discrete_expr_sub(@symcore.add([draws, succ]), pop)),
+          ])
+          let high = @symcore.function("Min", [draws, succ])
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [fk, low])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([
+                  kk,
+                  low,
+                  @symcore.function("Min", [high, fk]),
+                ]),
+              ]),
+              @symcore.function("Le", [k, high]),
+            ]),
+            discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+          ]))
+        }
+        None => None
+      }
+    "IdealSoliton" if params.length() == 1 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) => {
+          let n = params[0]
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([
+                  kk,
+                  @symcore.int(1),
+                  @symcore.function("Min", [n, fk]),
+                ]),
+              ]),
+              @symcore.function("Le", [k, n]),
+            ]),
+            discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+          ]))
+        }
+        None => None
+      }
+    "RobustSoliton" if params.length() == 3 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) => {
+          let n = params[0]
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([
+                  kk,
+                  @symcore.int(1),
+                  @symcore.function("Min", [n, fk]),
+                ]),
+              ]),
+              @symcore.function("Le", [k, n]),
+            ]),
+            discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+          ]))
+        }
+        None => None
+      }
+    "Hermite" if params.length() == 2 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) =>
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(0)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([kk, @symcore.int(0), fk]),
+              ]),
+              @symcore.symbol("True"),
+            ]),
+          ]))
+        None => None
+      }
+    "Logarithmic" if params.length() == 1 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) =>
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([kk, @symcore.int(1), fk]),
+              ]),
+              @symcore.symbol("True"),
+            ]),
+          ]))
+        None => None
+      }
+    "Skellam" if params.length() == 2 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) =>
+          Some(@symcore.function("Sum", [
+            pmf,
+            discrete_tuple_expr([
+              kk,
+              eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
+              fk,
+            ]),
+          ]))
+        None => None
+      }
+    "Zeta" if params.length() == 1 =>
+      match symbolic_discrete_pmf_for(name, params, kk) {
+        Some(pmf) =>
+          Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([@symcore.int(0), @symcore.function("Lt", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              @symcore.function("Sum", [
+                pmf,
+                discrete_tuple_expr([kk, @symcore.int(1), fk]),
+              ]),
+              @symcore.symbol("True"),
+            ]),
+          ]))
+        None => None
+      }
+    "Multinomial" if params.length() >= 2 =>
+      symbolic_discrete_joint_box_cdf(name, params, k)
+    "NegativeMultinomial" if params.length() >= 2 =>
+      symbolic_discrete_joint_box_cdf(name, params, k)
+    _ => None
+  }
+}
+
+///|
 pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(_) => finite_pmf(rv, k)
@@ -296,6 +525,106 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
         let name = symbolic_tag_name(tag)
         if name == "DiscreteRV" || name == "DiscreteDistributionHandmade" || name == "FiniteDistributionHandmade" {
           return None
+        }
+        if name == "Hermite" && params.length() == 2 {
+          let a1 = params[0]
+          let a2 = params[1]
+          let jj = @symcore.symbol("_j")
+          let summand = eval_arith(@symcore.mul([
+            @symcore.pow(a1, eval_arith(discrete_expr_sub(k, eval_arith(@symcore.mul([@symcore.int(2), jj]))))),
+            @symcore.pow(a2, jj),
+            @symcore.pow(@symcore.function("factorial", [eval_arith(discrete_expr_sub(k, eval_arith(@symcore.mul([@symcore.int(2), jj]))))]), @symcore.int(-1)),
+            @symcore.pow(@symcore.function("factorial", [jj]), @symcore.int(-1)),
+          ]))
+          let sum_expr = @symcore.function("Sum", [
+            summand,
+            discrete_tuple_expr([
+              jj,
+              @symcore.int(0),
+              @symcore.function("floor", [eval_arith(@symcore.mul([try! @symcore.rational_from_ints(1, 2), k]))]),
+            ]),
+          ])
+          return Some(eval_arith(@symcore.mul([
+            @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), eval_arith(@symcore.add([a1, a2]))]))]),
+            sum_expr,
+          ])))
+        }
+        if name == "IdealSoliton" && params.length() == 1 {
+          let kk = params[0]
+          return Some(@symcore.function("Piecewise", [
+            discrete_tuple_expr([eval_arith(@symcore.pow(kk, @symcore.int(-1))), @symcore.function("Eq", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              eval_arith(@symcore.pow(eval_arith(@symcore.mul([k, eval_arith(discrete_expr_sub(k, @symcore.int(1)))])), @symcore.int(-1))),
+              @symcore.function("And", [
+                @symcore.function("Ge", [k, @symcore.int(1)]),
+                @symcore.function("Le", [k, kk]),
+              ]),
+            ]),
+            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+          ]))
+        }
+        if name == "RobustSoliton" && params.length() == 3 {
+          let kk = params[0]
+          let delta = params[1]
+          let c = params[2]
+          let r = eval_arith(@symcore.mul([
+            c,
+            @symcore.function("log", [eval_arith(@symcore.mul([kk, @symcore.pow(delta, @symcore.int(-1))]))]),
+            @symcore.function("sqrt", [kk]),
+          ]))
+          let rho = @symcore.function("Piecewise", [
+            discrete_tuple_expr([eval_arith(@symcore.pow(kk, @symcore.int(-1))), @symcore.function("Eq", [k, @symcore.int(1)])]),
+            discrete_tuple_expr([
+              eval_arith(@symcore.pow(eval_arith(@symcore.mul([k, eval_arith(discrete_expr_sub(k, @symcore.int(1)))])), @symcore.int(-1))),
+              @symcore.function("And", [
+                @symcore.function("Ge", [k, @symcore.int(1)]),
+                @symcore.function("Le", [k, kk]),
+              ]),
+            ]),
+            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+          ])
+          let tau = @symcore.function("Piecewise", [
+            discrete_tuple_expr([
+              eval_arith(@symcore.mul([r, @symcore.pow(eval_arith(@symcore.mul([kk, k])), @symcore.int(-1))])),
+              @symcore.function("And", [
+                @symcore.function("Ge", [k, @symcore.int(1)]),
+                @symcore.function("Le", [k, eval_arith(discrete_expr_sub(@symcore.function("round", [eval_arith(@symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]))]), @symcore.int(1)))]),
+              ]),
+            ]),
+            discrete_tuple_expr([
+              eval_arith(@symcore.mul([
+                r,
+                @symcore.function("log", [eval_arith(@symcore.mul([r, @symcore.pow(delta, @symcore.int(-1))]))]),
+                @symcore.pow(kk, @symcore.int(-1)),
+              ])),
+              @symcore.function("Eq", [k, @symcore.function("round", [eval_arith(@symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]))])]),
+            ]),
+            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+          ])
+          let ii = @symcore.symbol("_i")
+          let harmonic = @symcore.function("Sum", [
+            @symcore.pow(ii, @symcore.int(-1)),
+            discrete_tuple_expr([
+              ii,
+              @symcore.int(1),
+              eval_arith(discrete_expr_sub(@symcore.function("round", [eval_arith(@symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]))]), @symcore.int(1))),
+            ]),
+          ])
+          let z = eval_arith(@symcore.add([
+            @symcore.int(1),
+            eval_arith(@symcore.mul([
+              r,
+              @symcore.pow(kk, @symcore.int(-1)),
+              eval_arith(@symcore.add([
+                harmonic,
+                @symcore.function("log", [eval_arith(@symcore.mul([r, @symcore.pow(delta, @symcore.int(-1))]))]),
+              ])),
+            ])),
+          ]))
+          return Some(eval_arith(@symcore.mul([
+            eval_arith(@symcore.add([rho, tau])),
+            @symcore.pow(z, @symcore.int(-1)),
+          ])))
         }
         if name == "Multinomial" && params.length() >= 2 {
           match discrete_tuple_items(k) {
@@ -408,7 +737,11 @@ pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
           None =>
             match symbolic_discrete_cdf_by_pmf_sum(name, params, k) {
               Some(v) => Some(v)
-              None => Some(symbolic_discrete_expr(name, "CDF", params, k=k))
+              None =>
+                match symbolic_discrete_cdf_formula(name, params, k) {
+                  Some(v) => Some(v)
+                  None => Some(symbolic_discrete_expr(name, "CDF", params, k=k))
+                }
             }
         }
       }

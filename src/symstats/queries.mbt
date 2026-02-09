@@ -1132,6 +1132,140 @@ fn symbolic_opaque_density(
 }
 
 ///|
+fn symbolic_process_density(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match name {
+    "BernoulliProcess" if params.length() >= 1 => {
+      let p = params[0]
+      let success =
+        if params.length() >= 2 {
+          params[1]
+        } else {
+          @symcore.int(1)
+        }
+      let failure =
+        if params.length() >= 3 {
+          params[2]
+        } else {
+          @symcore.int(0)
+        }
+      Some(@symcore.function("Piecewise", [
+        tuple_expr([p, @symcore.function("Eq", [x, success])]),
+        tuple_expr([eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])), @symcore.function("Eq", [x, failure])]),
+        tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+      ]))
+    }
+    "GammaProcess" if params.length() >= 2 => {
+      let lamda = params[0]
+      let gamma = params[1]
+      let t = @symcore.symbol("t")
+      let shape = eval_arith(@symcore.mul([gamma, t]))
+      let body = eval_arith(@symcore.mul([
+        @symcore.pow(lamda, shape),
+        @symcore.pow(x, eval_arith(query_expr_sub(shape, @symcore.int(1)))),
+        @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), lamda, x]))]),
+        @symcore.pow(@symcore.function("gamma", [shape]), @symcore.int(-1)),
+      ]))
+      Some(@symcore.function("Piecewise", [
+        tuple_expr([body, @symcore.function("Ge", [x, @symcore.int(0)])]),
+        tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+      ]))
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_process_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match name {
+    "BernoulliProcess" if params.length() >= 1 => {
+      let p = params[0]
+      let one_minus_p = eval_arith(@symcore.add([
+        @symcore.int(1),
+        @symcore.mul([@symcore.int(-1), p]),
+      ]))
+      let success =
+        if params.length() >= 2 {
+          params[1]
+        } else {
+          @symcore.int(1)
+        }
+      let failure =
+        if params.length() >= 3 {
+          params[2]
+        } else {
+          @symcore.int(0)
+        }
+      let between_value = @symcore.function("Piecewise", [
+        tuple_expr([p, @symcore.function("Lt", [success, failure])]),
+        tuple_expr([one_minus_p, @symcore.symbol("True")]),
+      ])
+      Some(@symcore.function("Piecewise", [
+        tuple_expr([
+          @symcore.int(0),
+          @symcore.function("Lt", [x, @symcore.function("Min", [success, failure])]),
+        ]),
+        tuple_expr([
+          between_value,
+          @symcore.function("Lt", [x, @symcore.function("Max", [success, failure])]),
+        ]),
+        tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+      ]))
+    }
+    "GammaProcess" if params.length() >= 2 => {
+      let lamda = params[0]
+      let gamma = params[1]
+      let t = @symcore.symbol("t")
+      let shape = eval_arith(@symcore.mul([gamma, t]))
+      Some(@symcore.function("Piecewise", [
+        tuple_expr([@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])]),
+        tuple_expr([
+          eval_arith(@symcore.mul([
+            @symcore.function("lowergamma", [
+              shape,
+              eval_arith(@symcore.mul([lamda, x])),
+            ]),
+            @symcore.pow(@symcore.function("gamma", [shape]), @symcore.int(-1)),
+          ])),
+          @symcore.symbol("True"),
+        ]),
+      ]))
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_matrix_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  let tag = "M:\{name}"
+  let rv = random_var("_M", RVKind::Symbolic(tag~, params~))
+  let dummy = @symcore.symbol("_x")
+  match matrix_density(rv, dummy) {
+    Some(pdf) =>
+      Some(eval_arith(@symcore.function("Integral", [
+        pdf,
+        tuple_expr([
+          dummy,
+          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
+          x,
+        ]),
+      ])))
+    None => None
+  }
+}
+
+///|
 fn query_lambda_tuple_signature(
   template : @symcore.Expr,
 ) -> (Array[@symcore.Expr], @symcore.Expr)? {
@@ -1183,6 +1317,37 @@ fn symbolic_joint_integration_vars(
       } else {
         None
       }
+    "Dirichlet" | "MultivariateBeta" if params.length() >= 2 => {
+      let vars : Array[@symcore.Expr] = Array::new()
+      for i in 0..<params.length() {
+        vars.push(@symcore.symbol("_x\{i + 1}"))
+      }
+      Some(vars)
+    }
+    "MultivariateNormal" | "MultivariateLaplace" if params.length() >= 1 =>
+      match query_tuple_items(params[0]) {
+        Some(mu) if !mu.is_empty() => {
+          let vars : Array[@symcore.Expr] = Array::new()
+          for i in 0..<mu.length() {
+            vars.push(@symcore.symbol("_x\{i + 1}"))
+          }
+          Some(vars)
+        }
+        _ => None
+      }
+    "MultivariateT" if params.length() == 3 =>
+      match query_tuple_items(params[0]) {
+        Some(mu) if !mu.is_empty() => {
+          let vars : Array[@symcore.Expr] = Array::new()
+          for i in 0..<mu.length() {
+            vars.push(@symcore.symbol("_x\{i + 1}"))
+          }
+          Some(vars)
+        }
+        _ => None
+      }
+    "NormalGamma" if params.length() == 4 =>
+      Some([@symcore.symbol("_x"), @symcore.symbol("_tau")])
     _ => None
   }
 }
@@ -1202,7 +1367,48 @@ fn symbolic_joint_integrand(
       }
     "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
       symbolic_joint_gmlg_density(name, params, tuple_expr(vars))
+    "Dirichlet" |
+    "MultivariateBeta" |
+    "MultivariateNormal" |
+    "MultivariateLaplace" |
+    "MultivariateT" |
+    "NormalGamma" =>
+      symbolic_joint_density(name, params, tuple_expr(vars))
     _ => None
+  }
+}
+
+///|
+fn symbolic_joint_cdf_lowers(
+  name : String,
+  vars : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
+  let neg_oo = eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]))
+  match name {
+    "Dirichlet" | "MultivariateBeta" => {
+      let lowers : Array[@symcore.Expr] = Array::new()
+      for _ in 0..<vars.length() {
+        lowers.push(@symcore.int(0))
+      }
+      lowers
+    }
+    "NormalGamma" =>
+      if vars.length() == 2 {
+        [neg_oo, @symcore.int(0)]
+      } else {
+        let lowers : Array[@symcore.Expr] = Array::new()
+        for _ in 0..<vars.length() {
+          lowers.push(neg_oo)
+        }
+        lowers
+      }
+    _ => {
+      let lowers : Array[@symcore.Expr] = Array::new()
+      for _ in 0..<vars.length() {
+        lowers.push(neg_oo)
+      }
+      lowers
+    }
   }
 }
 
@@ -1240,11 +1446,7 @@ fn symbolic_joint_cdf(
     Some(vars) =>
       match query_tuple_items(x) {
         Some(bounds) if bounds.length() == vars.length() => {
-          let neg_oo = eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]))
-          let lowers : Array[@symcore.Expr] = Array::new()
-          for _ in 0..<vars.length() {
-            lowers.push(neg_oo)
-          }
+          let lowers = symbolic_joint_cdf_lowers(name, vars)
           symbolic_joint_box_integral(name, params, lowers, bounds)
         }
         _ => None
@@ -1815,6 +2017,11 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
                   Some(v) => v
                   None => @symcore.function("density", [@symcore.symbol(rv.name), x])
                 }
+              } else if symbolic_tag_family(tag) == "P" {
+                match symbolic_process_density(name, params, x) {
+                  Some(v) => v
+                  None => symbolic_query_expr(name, "Density", x, params)
+                }
               } else if symbolic_tag_family(tag) == "J" {
                 match symbolic_joint_density(name, params, x) {
                   Some(v) => v
@@ -1841,8 +2048,42 @@ pub fn cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
           match rv.kind {
             RVKind::Symbolic(tag~, params~) => {
               let name = symbolic_tag_name(tag)
+              let family = symbolic_tag_family(tag)
               if symbolic_opaque_stats_name(name) {
                 match symbolic_opaque_cdf(name, params, rv.name, x) {
+                  Some(v) => v
+                  None =>
+                    match family {
+                      "P" =>
+                        match symbolic_process_cdf(name, params, x) {
+                          Some(v) => v
+                          None => symbolic_query_expr(name, "CDF", x, params)
+                        }
+                      "J" =>
+                        match symbolic_joint_cdf(name, params, x) {
+                          Some(v) => v
+                          None => symbolic_query_expr(name, "CDF", x, params)
+                        }
+                      "M" =>
+                        match symbolic_matrix_cdf(name, params, x) {
+                          Some(v) => v
+                          None => symbolic_query_expr(name, "CDF", x, params)
+                        }
+                      _ => symbolic_query_expr(name, "CDF", x, params)
+                    }
+                }
+              } else if family == "P" {
+                match symbolic_process_cdf(name, params, x) {
+                  Some(v) => v
+                  None => symbolic_query_expr(name, "CDF", x, params)
+                }
+              } else if family == "J" {
+                match symbolic_joint_cdf(name, params, x) {
+                  Some(v) => v
+                  None => symbolic_query_expr(name, "CDF", x, params)
+                }
+              } else if family == "M" {
+                match symbolic_matrix_cdf(name, params, x) {
                   Some(v) => v
                   None => symbolic_query_expr(name, "CDF", x, params)
                 }

@@ -529,6 +529,89 @@ test "compat generated discrete parity batch" {
 }
 
 ///|
+test "compat density parity for nine residual families" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let quarter = try! @symcore.rational_from_ints(1, 4)
+  let fifth = try! @symcore.rational_from_ints(1, 5)
+
+  let bnc = beta_noncentral("BNC", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  let bnc_d = density(bnc, half)
+  let bnc_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda BNC: density(BNC)(Rational(1, 2)))(stats.BetaNoncentral('BNC', 2, 3, 4))",
+  )
+  assert_true(expr_equiv_to(bnc_d, bnc_oracle))
+  assert_true(!@symprint.to_string(bnc_d).contains("BetaNoncentralDensity("))
+
+  let us = uniform_sum("US", params=[@symcore.int(3)])
+  let us_d = density(us, try! @symcore.rational_from_ints(3, 2))
+  let us_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda US: density(US)(Rational(3, 2)))(stats.UniformSum('US', 3))",
+  )
+  assert_true(expr_equiv_to(us_d, us_oracle))
+  assert_true(!@symprint.to_string(us_d).contains("UniformSumDensity("))
+
+  let he = hermite("HE", params=[@symcore.int(2), @symcore.int(3)])
+  let he_d = density(he, @symcore.int(4))
+  let he_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda HE: density(HE)(4))(stats.Hermite('HE', 2, 3))",
+  )
+  assert_true(expr_equiv_to(he_d, he_oracle))
+  assert_true(!@symprint.to_string(he_d).contains("HermitePMF("))
+
+  let iso = ideal_soliton("ISO", params=[@symcore.int(6)])
+  let iso_d = density(iso, @symcore.int(2))
+  let iso_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda ISO: density(ISO)(2))(stats.IdealSoliton('ISO', 6))",
+  )
+  assert_true(expr_equiv_to(iso_d, iso_oracle))
+  assert_true(!@symprint.to_string(iso_d).contains("IdealSolitonPMF("))
+
+  let rso = robust_soliton("RSO", params=[@symcore.int(6), @symcore.int(1), fifth])
+  let rso_d = density(rso, @symcore.int(2))
+  let rso_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda RSO: density(RSO)(2))(stats.RobustSoliton('RSO', 6, 1, Rational(1, 5)))",
+  )
+  let rso_num_close = try! @sympy_stats.stats_eval_str(
+    "abs(sympy.N(\{@symprint.to_string(rso_d)}, 50) - sympy.N(\{rso_oracle}, 50)) < 1e-15",
+  )
+  assert_eq(rso_num_close, "True")
+  assert_true(!@symprint.to_string(rso_d).contains("RobustSolitonPMF("))
+
+  let two_thirds = try! @symcore.rational_from_ints(2, 3)
+  let mn = multinomial("MN", params=[@symcore.int(3), third, two_thirds])
+  let mn_d = density(mn, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))
+  let mn_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda MN: density(MN)(1, 2))(stats.Multinomial('MN', 3, Rational(1, 3), Rational(2, 3)))",
+  )
+  assert_true(expr_equiv_to(mn_d, mn_oracle))
+  assert_true(!@symprint.to_string(mn_d).contains("MultinomialPMF("))
+
+  let nm = negative_multinomial("NM", params=[@symcore.int(2), quarter, third])
+  let nm_d = density(nm, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))
+  let nm_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda NM: density(NM)(1, 2))(stats.NegativeMultinomial('NM', 2, Rational(1, 4), Rational(1, 3)))",
+  )
+  assert_true(expr_equiv_to(nm_d, nm_oracle))
+  assert_true(!@symprint.to_string(nm_d).contains("NegativeMultinomialPMF("))
+
+  let bp = bernoulli_process("BPD", params=[third])
+  let bp_d1 = density(bp, @symcore.int(1))
+  let bp_d0 = density(bp, @symcore.int(0))
+  assert_true(expr_equiv_to(bp_d1, "1/3"))
+  assert_true(expr_equiv_to(bp_d0, "2/3"))
+  assert_true(!@symprint.to_string(bp_d1).contains("BernoulliProcessDensity("))
+
+  let gp = gamma_process("GPD", params=[@symcore.int(2), @symcore.int(3)])
+  let gp_d = density(gp, @symcore.int(1))
+  let gp_s = @symprint.to_string(gp_d)
+  assert_true(gp_s.contains("Piecewise"))
+  assert_true(gp_s.contains("gamma(") && gp_s.contains("t"))
+  assert_true(gp_s.contains("exp(-2)"))
+  assert_true(!gp_s.contains("GammaProcessDensity("))
+}
+
+///|
 test "compat weibull parity ordering" {
   let w = weibull("W0", params=[@symcore.int(3), @symcore.int(5)])
   let x = @symcore.symbol("x")
@@ -1270,6 +1353,163 @@ test "compat handmade and joint families concrete density paths" {
     rv=gmlgo,
   )
   assert_eq(@symcore.compare_expr(gmlgo_p_le, gmlgo_c), 0)
+}
+
+///|
+test "compat cdf coverage for residual families" {
+  let x = @symcore.symbol("x")
+
+  let bnc = beta_noncentral("BNC", params=[@symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(bnc, x)).contains("BetaNoncentralCDF("))
+
+  let chn = chi_noncentral("CHN", params=[@symcore.int(3), @symcore.int(2)])
+  assert_true(!@symprint.to_string(cdf(chn, x)).contains("ChiNoncentralCDF("))
+
+  let dav = davis("DAV", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_true(!@symprint.to_string(cdf(dav, x)).contains("DavisCDF("))
+
+  let fd = f_distribution("FD", params=[@symcore.int(5), @symcore.int(7)])
+  assert_true(!@symprint.to_string(cdf(fd, x)).contains("FDistributionCDF("))
+
+  let fz = fisher_z("FZ", params=[@symcore.int(5), @symcore.int(7)])
+  assert_true(!@symprint.to_string(cdf(fz, x)).contains("FisherZCDF("))
+
+  let us = uniform_sum("US", params=[@symcore.int(5)])
+  let us_c = cdf(us, @symcore.int(2))
+  assert_true(expr_equiv_to(us_c, "9/40"))
+  assert_true(!@symprint.to_string(us_c).contains("UniformSumCDF("))
+
+  let vm = von_mises("VM", params=[@symcore.int(0), @symcore.int(2)])
+  assert_true(!@symprint.to_string(cdf(vm, x)).contains("VonMisesCDF("))
+
+  let ws = wigner_semicircle("WS", params=[@symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(ws, x)).contains("WignerSemicircleCDF("))
+
+  let bb = beta_binomial("BBc", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(bb, x)).contains("BetaBinomialCDF("))
+
+  let hg = hypergeometric("HGc", params=[@symcore.int(20), @symcore.int(7), @symcore.int(12)])
+  assert_true(!@symprint.to_string(cdf(hg, x)).contains("HypergeometricCDF("))
+
+  let he = hermite("HEc", params=[@symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(he, x)).contains("HermiteCDF("))
+
+  let isol = ideal_soliton("ISc", params=[@symcore.int(10)])
+  assert_true(!@symprint.to_string(cdf(isol, x)).contains("IdealSolitonCDF("))
+
+  let rs = robust_soliton(
+    "RSc",
+    params=[
+      @symcore.int(10),
+      try! @symcore.rational_from_ints(1, 10),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(rs, x)).contains("RobustSolitonCDF("))
+
+  let lg = logarithmic("LGc", params=[try! @symcore.rational_from_ints(1, 3)])
+  assert_true(!@symprint.to_string(cdf(lg, x)).contains("LogarithmicCDF("))
+
+  let sk = skellam("SKc", params=[@symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(sk, x)).contains("SkellamCDF("))
+
+  let zz = zeta("ZZc", params=[@symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(zz, x)).contains("ZetaCDF("))
+
+  let mn = multinomial(
+    "MNc",
+    params=[
+      @symcore.int(5),
+      try! @symcore.rational_from_ints(1, 3),
+      try! @symcore.rational_from_ints(2, 3),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(mn, @symcore.function("Tuple", [@symcore.int(2), @symcore.int(4)]))).contains("MultinomialCDF("))
+
+  let nmn = negative_multinomial(
+    "NMNc",
+    params=[
+      @symcore.int(2),
+      try! @symcore.rational_from_ints(1, 4),
+      try! @symcore.rational_from_ints(1, 4),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(nmn, @symcore.function("Tuple", [@symcore.int(2), @symcore.int(3)]))).contains("NegativeMultinomialCDF("))
+
+  let bp = bernoulli_process("BPc", params=[try! @symcore.rational_from_ints(1, 3)])
+  let bp_c0 = cdf(bp, @symcore.int(0))
+  assert_true(expr_equiv_to(bp_c0, "2/3"))
+  assert_true(!@symprint.to_string(bp_c0).contains("BernoulliProcessCDF("))
+
+  let gp = gamma_process("GPc", params=[@symcore.int(2), @symcore.int(3)])
+  let gp_c = cdf(gp, x)
+  let gp_s = @symprint.to_string(gp_c)
+  assert_true(!gp_s.contains("GammaProcessCDF("))
+  assert_true(gp_s.contains("lowergamma"))
+
+  let d = dirichlet("Dc", params=[@symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(d, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(1)]))).contains("DirichletCDF("))
+
+  let mb = multivariate_beta("MBc", params=[@symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(mb, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(1)]))).contains("MultivariateBetaCDF("))
+
+  let ml = multivariate_laplace(
+    "MLc",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(ml, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))).contains("MultivariateLaplaceCDF("))
+
+  let mvn = multivariate_normal(
+    "MVNc",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(mvn, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))).contains("MultivariateNormalCDF("))
+
+  let mvt = multivariate_t(
+    "MVTc",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+      @symcore.int(5),
+    ],
+  )
+  assert_true(!@symprint.to_string(cdf(mvt, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))).contains("MultivariateTCDF("))
+
+  let ng = normal_gamma("NGc", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_true(!@symprint.to_string(cdf(ng, @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]))).contains("NormalGammaCDF("))
+
+  let goe = gaussian_orthogonal_ensemble("GOEc", params=[@symcore.int(2)])
+  assert_true(!@symprint.to_string(cdf(goe, x)).contains("GaussianOrthogonalEnsembleCDF("))
+
+  let gue = gaussian_unitary_ensemble("GUEc", params=[@symcore.int(2)])
+  assert_true(!@symprint.to_string(cdf(gue, x)).contains("GaussianUnitaryEnsembleCDF("))
+
+  let gse = gaussian_symplectic_ensemble("GSEc", params=[@symcore.int(2)])
+  assert_true(!@symprint.to_string(cdf(gse, x)).contains("GaussianSymplecticEnsembleCDF("))
+
+  let mg = matrix_gamma("MGc", params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")])
+  assert_true(!@symprint.to_string(cdf(mg, x)).contains("MatrixGammaCDF("))
+
+  let mst = matrix_student_t(
+    "MSTc",
+    params=[@symcore.int(3), @symcore.symbol("M"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_true(!@symprint.to_string(cdf(mst, x)).contains("MatrixStudentTCDF("))
 }
 
 ///|
