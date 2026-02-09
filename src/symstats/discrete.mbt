@@ -294,6 +294,9 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
         None
       } else {
         let name = symbolic_tag_name(tag)
+        if name == "DiscreteRV" || name == "DiscreteDistributionHandmade" || name == "FiniteDistributionHandmade" {
+          return None
+        }
         if name == "Multinomial" && params.length() >= 2 {
           match discrete_tuple_items(k) {
             Some(ks) if ks.length() == params.length() - 1 => {
@@ -397,6 +400,9 @@ pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
         None
       } else {
         let name = symbolic_tag_name(tag)
+        if name == "DiscreteRV" || name == "DiscreteDistributionHandmade" || name == "FiniteDistributionHandmade" {
+          return None
+        }
         match generated_cdf(name, params, k) {
           Some(v) => Some(v)
           None =>

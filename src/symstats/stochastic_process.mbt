@@ -182,6 +182,22 @@ pub fn process_transition_probability(
       if symbolic_tag_family(tag) == "P" {
         let name = symbolic_tag_name(tag)
         match name {
+          "DiscreteMarkovChain" if params.length() >= 1 => {
+            let tmat = params[0]
+            Some(@symcore.function("MatrixElement", [
+              @symcore.pow(tmat, delta_t),
+              from,
+              to,
+            ]))
+          }
+          "ContinuousMarkovChain" if params.length() >= 1 => {
+            let qmat = params[0]
+            Some(@symcore.function("MatrixElement", [
+              @symcore.function("MatrixExp", [eval_arith(@symcore.mul([delta_t, qmat]))]),
+              from,
+              to,
+            ]))
+          }
           "BernoulliProcess" if params.length() >= 1 => {
             let p = params[0]
             let success =

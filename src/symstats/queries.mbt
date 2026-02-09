@@ -226,11 +226,263 @@ fn query_matrix2x2(
 }
 
 ///|
+fn query_lambda_apply(
+  template : @symcore.Expr,
+  args : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match template {
+    @symcore.Expr::Function("Lambda", lambda_args) if lambda_args.length() == 2 => {
+      let vars = lambda_args[0]
+      let body = lambda_args[1]
+      match vars {
+        @symcore.Expr::Symbol(v) =>
+          if args.length() == 1 {
+            let env : Map[String, @symcore.Expr] = {}
+            env[v] = args[0]
+            Some(eval_arith(@symcore.subst(body, env)))
+          } else {
+            None
+          }
+        @symcore.Expr::Function("Tuple", vs) =>
+          if vs.length() == args.length() {
+            let env : Map[String, @symcore.Expr] = {}
+            for i in 0..<vs.length() {
+              match vs[i] {
+                @symcore.Expr::Symbol(v) => env[v] = args[i]
+                _ => return None
+              }
+            }
+            Some(eval_arith(@symcore.subst(body, env)))
+          } else {
+            None
+          }
+        _ => None
+      }
+    }
+    @symcore.Expr::Symbol(name) => Some(@symcore.function(name, args))
+    _ => None
+  }
+}
+
+///|
+fn query_tuple_pairs(
+  expr : @symcore.Expr,
+) -> Array[(@symcore.Expr, @symcore.Expr)]? {
+  match query_tuple_items(expr) {
+    Some(items) => {
+      let out : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
+      for item in items {
+        match query_tuple_items(item) {
+          Some(pair) if pair.length() == 2 => out.push((pair[0], pair[1]))
+          _ => return None
+        }
+      }
+      Some(out)
+    }
+    None => None
+  }
+}
+
+///|
 fn query_product_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
   if items.is_empty() {
     @symcore.int(1)
   } else {
     eval_arith(@symcore.mul(items))
+  }
+}
+
+///|
+fn symbolic_finite_handmade_pairs(
+  params : Array[@symcore.Expr],
+) -> Array[(@symcore.Expr, @symcore.Expr)]? {
+  if params.length() < 1 {
+    return None
+  }
+  query_tuple_pairs(params[0])
+}
+
+///|
+fn symbolic_finite_handmade_mean(
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match symbolic_finite_handmade_pairs(params) {
+    Some(pairs) => {
+      let terms : Array[@symcore.Expr] = Array::new()
+      for pair in pairs {
+        let (value, prob) = pair
+        terms.push(eval_arith(@symcore.mul([value, prob])))
+      }
+      Some(eval_arith(@symcore.add(terms)))
+    }
+    None => None
+  }
+}
+
+///|
+fn symbolic_finite_handmade_variance(
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match (symbolic_finite_handmade_pairs(params), symbolic_finite_handmade_mean(params)) {
+    (Some(pairs), Some(mean)) => {
+      let terms : Array[@symcore.Expr] = Array::new()
+      for pair in pairs {
+        let (value, prob) = pair
+        let delta = eval_arith(@symcore.add([value, @symcore.mul([@symcore.int(-1), mean])]))
+        terms.push(eval_arith(@symcore.mul([
+          prob,
+          @symcore.pow(delta, @symcore.int(2)),
+        ])))
+      }
+      Some(eval_arith(@symcore.add(terms)))
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_multivariate_ewens_density(
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  if params.length() != 2 {
+    return None
+  }
+  match query_tuple_items(x) {
+    Some(xs) if !xs.is_empty() => {
+      let n = params[0]
+      let theta = params[1]
+      let term2_items : Array[@symcore.Expr] = Array::new()
+      let cond_terms : Array[@symcore.Expr] = Array::new()
+      for i in 0..<xs.length() {
+        let xi = xs[i]
+        let j = @symcore.int(i + 1)
+        term2_items.push(eval_arith(@symcore.mul([
+          @symcore.pow(theta, xi),
+          @symcore.pow(j, eval_arith(@symcore.mul([@symcore.int(-1), xi]))),
+          @symcore.pow(@symcore.function("factorial", [xi]), @symcore.int(-1)),
+        ])))
+        cond_terms.push(eval_arith(@symcore.mul([j, xi])))
+      }
+      let term1 = eval_arith(@symcore.mul([
+        @symcore.function("factorial", [n]),
+        @symcore.function("gamma", [theta]),
+        @symcore.pow(@symcore.function("gamma", [eval_arith(@symcore.add([theta, n]))]), @symcore.int(-1)),
+      ]))
+      let cond_sum =
+        if cond_terms.is_empty() {
+          @symcore.int(0)
+        } else {
+          eval_arith(@symcore.add(cond_terms))
+        }
+      let body = eval_arith(@symcore.mul([term1, query_product_expr(term2_items)]))
+      Some(@symcore.function("Piecewise", [
+        tuple_expr([body, @symcore.function("Eq", [cond_sum, n])]),
+        tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+      ]))
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_generalized_multivariate_log_gamma_density(
+  delta : @symcore.Expr,
+  v : @symcore.Expr,
+  lamda_expr : @symcore.Expr,
+  mu_expr : @symcore.Expr,
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match (query_tuple_items(lamda_expr), query_tuple_items(mu_expr), query_tuple_items(x)) {
+    (Some(lamdas), Some(mus), Some(xs)) if lamdas.length() == mus.length() && mus.length() == xs.length() && xs.length() > 1 => {
+        let k = lamdas.length()
+        let n_var = @symcore.symbol("_k")
+        let v_plus_n = eval_arith(@symcore.add([v, n_var]))
+        let one_minus_delta = eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), delta])]))
+        let gamma_vn = @symcore.function("gamma", [v_plus_n])
+        let gamma_pow =
+          if k == 1 {
+            @symcore.int(1)
+          } else {
+            @symcore.pow(gamma_vn, @symcore.int(-(k - 1)))
+          }
+        let sum_term1 = eval_arith(@symcore.mul([
+          @symcore.pow(one_minus_delta, n_var),
+          gamma_pow,
+          @symcore.pow(@symcore.function("gamma", [v]), @symcore.int(-1)),
+          @symcore.pow(@symcore.function("gamma", [eval_arith(@symcore.add([n_var, @symcore.int(1)]))]), @symcore.int(-1)),
+        ]))
+
+        let lamda_mu_terms : Array[@symcore.Expr] = Array::new()
+        let mu_y_terms : Array[@symcore.Expr] = Array::new()
+        let exp_terms : Array[@symcore.Expr] = Array::new()
+        for i in 0..<k {
+          let lam = lamdas[i]
+          let mu = mus[i]
+          let y = xs[i]
+          lamda_mu_terms.push(eval_arith(@symcore.mul([
+            mu,
+            @symcore.pow(lam, eval_arith(@symcore.mul([@symcore.int(-1), v_plus_n]))),
+          ])))
+          mu_y_terms.push(eval_arith(@symcore.mul([mu, y])))
+          exp_terms.push(eval_arith(@symcore.mul([
+            @symcore.function("exp", [eval_arith(@symcore.mul([mu, y]))]),
+            @symcore.pow(lam, @symcore.int(-1)),
+          ])))
+        }
+        let term2 = @symcore.function("exp", [eval_arith(@symcore.add([
+          eval_arith(@symcore.mul([v_plus_n, eval_arith(@symcore.add(mu_y_terms))])),
+          @symcore.mul([@symcore.int(-1), eval_arith(@symcore.add(exp_terms))]),
+        ]))])
+        let summand = eval_arith(@symcore.mul([
+          sum_term1,
+          query_product_expr(lamda_mu_terms),
+          term2,
+        ]))
+        let sum_expr = @symcore.function("Sum", [
+          summand,
+          tuple_expr([n_var, @symcore.int(0), @symcore.symbol("oo")]),
+        ])
+        Some(eval_arith(@symcore.mul([
+          @symcore.pow(delta, v),
+          sum_expr,
+        ])))
+      }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_gmlg_density(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match name {
+    "GeneralizedMultivariateLogGamma" if params.length() == 4 =>
+      symbolic_generalized_multivariate_log_gamma_density(
+        params[0], params[1], params[2], params[3], x,
+      )
+    "GeneralizedMultivariateLogGammaOmega" if params.length() == 4 =>
+      match query_tuple_items(params[2]) {
+        Some(lamdas) if lamdas.length() > 1 =>
+          {
+            let delta =
+              match query_matrix2x2(params[0]) {
+                Some((a00, a01, a10, a11)) if lamdas.length() == 2 =>
+                  eval_arith(@symcore.add([
+                    eval_arith(@symcore.mul([a00, a11])),
+                    @symcore.mul([@symcore.int(-1), a01, a10]),
+                  ]))
+                _ => params[0]
+              }
+            symbolic_generalized_multivariate_log_gamma_density(
+              delta, params[1], params[2], params[3], x,
+            )
+          }
+        _ => None
+      }
+    _ => None
   }
 }
 
@@ -241,6 +493,15 @@ fn symbolic_joint_density(
   x : @symcore.Expr,
 ) -> @symcore.Expr? {
   match name {
+    "JointRV" if params.length() >= 1 =>
+      match query_tuple_items(x) {
+        Some(xs) => query_lambda_apply(params[0], xs)
+        None => query_lambda_apply(params[0], [x])
+      }
+    "MultivariateEwens" if params.length() == 2 =>
+      symbolic_multivariate_ewens_density(params, x)
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      symbolic_joint_gmlg_density(name, params, x)
     "Dirichlet" | "MultivariateBeta" if params.length() >= 2 =>
       match query_tuple_items(x) {
         Some(xs) if xs.length() == params.length() => {
@@ -492,10 +753,20 @@ fn probability_of_rv(rv : RandomVar, event : Event) -> @symcore.Expr? {
     RVKind::Exponential(..) |
     RVKind::Gamma(..) => continuous_probability(rv, event)
     RVKind::Symbolic(tag~, params~) =>
-      match (discrete_probability(rv, event), continuous_probability(rv, event)) {
-        (Some(v), _) => Some(v)
-        (_, Some(v)) => Some(v)
-        _ => Some(symbolic_query_expr(symbolic_tag_name(tag), "Probability", event_to_expr(event), params))
+      {
+        let name = symbolic_tag_name(tag)
+        if symbolic_opaque_stats_name(name) {
+          match symbolic_opaque_probability(name, params, rv.name, event) {
+            Some(v) => Some(v)
+            None => Some(symbolic_query_expr(name, "Probability", event_to_expr(event), params))
+          }
+        } else {
+          match (discrete_probability(rv, event), continuous_probability(rv, event)) {
+            (Some(v), _) => Some(v)
+            (_, Some(v)) => Some(v)
+            _ => Some(symbolic_query_expr(name, "Probability", event_to_expr(event), params))
+          }
+        }
       }
     RVKind::JointIndependent(items) => probability_joint_independent(items, event)
     RVKind::Compound(items) => probability_compound(items, rv.name, event)
@@ -527,6 +798,13 @@ fn expectation_symbolic_or_value(
 fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(_) => finite_expectation(rv, expr=expr)
+    RVKind::StochasticProcess(_) =>
+      match expr {
+        @symcore.Expr::Symbol(name) if name == rv.name => Some(@symcore.symbol(rv.name))
+        @symcore.Expr::Function(name, args) if name == rv.name && args.length() == 1 =>
+          process_mean_at(rv, args[0])
+        _ => None
+      }
     RVKind::Binomial(..) |
     RVKind::Poisson(..) |
     RVKind::Geometric(..) |
@@ -544,9 +822,24 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
       } else {
         None
       }
-    RVKind::Symbolic(tag~, params~) =>
-      if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
-        let name = symbolic_tag_name(tag)
+    RVKind::Symbolic(tag~, params~) => {
+      let name = symbolic_tag_name(tag)
+      if symbolic_opaque_stats_name(name) {
+        match expr {
+          @symcore.Expr::Symbol(sym) if sym == rv.name =>
+            match name {
+              "FiniteDistributionHandmade" =>
+                match symbolic_finite_handmade_mean(params) {
+                  Some(v) => Some(v)
+                  None => Some(@symcore.symbol(rv.name))
+                }
+              _ => Some(@symcore.symbol(rv.name))
+            }
+          @symcore.Expr::Function(fname, args) if fname == rv.name && args.length() == 1 && symbolic_tag_family(tag) == "P" =>
+            process_mean_at(rv, args[0])
+          _ => None
+        }
+      } else if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
         if symbolic_tag_family(tag) == "J" {
           match symbolic_joint_mean(name, params) {
             Some(v) => Some(v)
@@ -563,6 +856,7 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
       } else {
         None
       }
+    }
     RVKind::Compound(items) => {
       let terms : Array[@symcore.Expr] = Array::new()
       for pair in items {
@@ -663,6 +957,7 @@ pub fn expectation(
 fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(_) => finite_variance(rv)
+    RVKind::StochasticProcess(_) => Some(variance_expr(@symcore.symbol(rv.name)))
     RVKind::Binomial(..) |
     RVKind::Poisson(..) |
     RVKind::Geometric(..) |
@@ -673,6 +968,16 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
     RVKind::Symbolic(tag~, params~) =>
       {
         let name = symbolic_tag_name(tag)
+        if symbolic_opaque_stats_name(name) {
+          return match name {
+            "FiniteDistributionHandmade" =>
+              match symbolic_finite_handmade_variance(params) {
+                Some(v) => Some(v)
+                None => Some(variance_expr(@symcore.symbol(rv.name)))
+              }
+            _ => Some(variance_expr(@symcore.symbol(rv.name)))
+          }
+        }
         if symbolic_tag_family(tag) == "J" {
           match symbolic_joint_variance(name, params) {
             Some(v) => Some(v)
@@ -724,10 +1029,20 @@ pub fn variance(
   expr : @symcore.Expr,
   rvs? : Array[RandomVar] = [],
 ) -> @symcore.Expr {
-  if rvs.length() == 1 && @symcore.compare_expr(expr, @symcore.symbol(rvs[0].name)) == 0 {
-    match variance_of_rv(rvs[0]) {
-      Some(v) => return v
-      None => ()
+  if rvs.length() == 1 {
+    match expr {
+      @symcore.Expr::Function(name, args) if name == rvs[0].name && args.length() == 1 =>
+        match process_variance_at(rvs[0], args[0]) {
+          Some(v) => return v
+          None => ()
+        }
+      _ => ()
+    }
+    if @symcore.compare_expr(expr, @symcore.symbol(rvs[0].name)) == 0 {
+      match variance_of_rv(rvs[0]) {
+        Some(v) => return v
+        None => ()
+      }
     }
   }
   if !rvs.is_empty() {
@@ -775,6 +1090,716 @@ pub fn covariance(
 }
 
 ///|
+fn symbolic_opaque_density(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match name {
+    "ContinuousRV" | "ContinuousDistributionHandmade" |
+    "DiscreteRV" | "DiscreteDistributionHandmade" =>
+      if params.length() >= 1 {
+        query_lambda_apply(params[0], [x])
+      } else {
+        None
+      }
+    "FiniteDistributionHandmade" =>
+      match symbolic_finite_handmade_pairs(params) {
+        Some(pairs) => {
+          let piecewise_args : Array[@symcore.Expr] = Array::new()
+          for pair in pairs {
+            let (value, prob) = pair
+            piecewise_args.push(tuple_expr([
+              prob,
+              @symcore.function("Eq", [x, value]),
+            ]))
+          }
+          piecewise_args.push(tuple_expr([@symcore.int(0), @symcore.symbol("True")]))
+          Some(@symcore.function("Piecewise", piecewise_args))
+        }
+        None =>
+          if params.length() >= 1 {
+            query_lambda_apply(params[0], [x])
+          } else {
+            None
+          }
+      }
+    "JointRV" | "MultivariateEwens" |
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      symbolic_joint_density(name, params, x)
+    _ => None
+  }
+}
+
+///|
+fn query_lambda_tuple_signature(
+  template : @symcore.Expr,
+) -> (Array[@symcore.Expr], @symcore.Expr)? {
+  match template {
+    @symcore.Expr::Function("Lambda", lambda_args) if lambda_args.length() == 2 =>
+      match lambda_args[0] {
+        @symcore.Expr::Function("Tuple", vars) => {
+          for v in vars {
+            match v {
+              @symcore.Expr::Symbol(_) => ()
+              _ => return None
+            }
+          }
+          Some((vars, lambda_args[1]))
+        }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_integration_vars(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> Array[@symcore.Expr]? {
+  match name {
+    "JointRV" =>
+      if params.length() >= 1 {
+        match query_lambda_tuple_signature(params[0]) {
+          Some((vars, _)) => Some(vars)
+          None => None
+        }
+      } else {
+        None
+      }
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      if params.length() == 4 {
+        match query_tuple_items(params[2]) {
+          Some(lamdas) if !lamdas.is_empty() => {
+            let vars : Array[@symcore.Expr] = Array::new()
+            for i in 0..<lamdas.length() {
+              vars.push(@symcore.symbol("_y\{i + 1}"))
+            }
+            Some(vars)
+          }
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_integrand(
+  name : String,
+  params : Array[@symcore.Expr],
+  vars : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match name {
+    "JointRV" =>
+      if params.length() >= 1 {
+        query_lambda_apply(params[0], vars)
+      } else {
+        None
+      }
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      symbolic_joint_gmlg_density(name, params, tuple_expr(vars))
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_box_integral(
+  name : String,
+  params : Array[@symcore.Expr],
+  lowers : Array[@symcore.Expr],
+  uppers : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match symbolic_joint_integration_vars(name, params) {
+    Some(vars) if vars.length() == lowers.length() && vars.length() == uppers.length() => {
+      match symbolic_joint_integrand(name, params, vars) {
+        Some(integrand) => {
+          let args : Array[@symcore.Expr] = [integrand]
+          for i in 0..<vars.length() {
+            args.push(tuple_expr([vars[i], lowers[i], uppers[i]]))
+          }
+          Some(eval_arith(@symcore.function("Integral", args)))
+        }
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match symbolic_joint_integration_vars(name, params) {
+    Some(vars) =>
+      match query_tuple_items(x) {
+        Some(bounds) if bounds.length() == vars.length() => {
+          let neg_oo = eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]))
+          let lowers : Array[@symcore.Expr] = Array::new()
+          for _ in 0..<vars.length() {
+            lowers.push(neg_oo)
+          }
+          symbolic_joint_box_integral(name, params, lowers, bounds)
+        }
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+fn symbolic_joint_survival(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match symbolic_joint_integration_vars(name, params) {
+    Some(vars) =>
+      match query_tuple_items(x) {
+        Some(bounds) if bounds.length() == vars.length() => {
+          let uppers : Array[@symcore.Expr] = Array::new()
+          for _ in 0..<vars.length() {
+            uppers.push(@symcore.symbol("oo"))
+          }
+          symbolic_joint_box_integral(name, params, bounds, uppers)
+        }
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+fn symbolic_joint_interval_probability(
+  name : String,
+  params : Array[@symcore.Expr],
+  lower : @symcore.Expr,
+  upper : @symcore.Expr,
+) -> @symcore.Expr? {
+  match symbolic_joint_integration_vars(name, params) {
+    Some(vars) =>
+      match (query_tuple_items(lower), query_tuple_items(upper)) {
+        (Some(low), Some(up)) if low.length() == vars.length() && up.length() == vars.length() =>
+          symbolic_joint_box_integral(name, params, low, up)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+fn symbolic_joint_probability_continuous(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+  event : Event,
+) -> @symcore.Expr? {
+  if !event_depends_only_on(event, rv_name) {
+    return None
+  }
+  match event {
+    Event::Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+    Event::Not(inner) =>
+      match symbolic_joint_probability_continuous(name, params, rv_name, inner) {
+        Some(p) => Some(eval_arith(query_expr_sub(@symcore.int(1), p)))
+        None => None
+      }
+    Event::Rel(..) =>
+      match query_extract_rel_to_var(event, rv_name) {
+        Some((op, bound)) =>
+          match op {
+            RelOp::Eq => Some(@symcore.int(0))
+            RelOp::Ne => Some(@symcore.int(1))
+            RelOp::Le | RelOp::Lt => symbolic_joint_cdf(name, params, bound)
+            RelOp::Ge | RelOp::Gt => symbolic_joint_survival(name, params, bound)
+          }
+        None => None
+      }
+    Event::And(items) =>
+      if items.length() == 2 {
+        let r1 = query_extract_rel_to_var(items[0], rv_name)
+        let r2 = query_extract_rel_to_var(items[1], rv_name)
+        match (r1, r2) {
+          (Some((op1, b1)), Some((op2, b2))) => {
+            let lower1 : @symcore.Expr? =
+              match op1 {
+                RelOp::Gt | RelOp::Ge => Some(b1)
+                _ => None
+              }
+            let lower2 : @symcore.Expr? =
+              match op2 {
+                RelOp::Gt | RelOp::Ge => Some(b2)
+                _ => None
+              }
+            let upper1 : @symcore.Expr? =
+              match op1 {
+                RelOp::Lt | RelOp::Le => Some(b1)
+                _ => None
+              }
+            let upper2 : @symcore.Expr? =
+              match op2 {
+                RelOp::Lt | RelOp::Le => Some(b2)
+                _ => None
+              }
+            let lower =
+              match lower1 {
+                Some(v) => Some(v)
+                None => lower2
+              }
+            let upper =
+              match upper1 {
+                Some(v) => Some(v)
+                None => upper2
+              }
+            match (lower, upper) {
+              (Some(lo), Some(hi)) =>
+                symbolic_joint_interval_probability(name, params, lo, hi)
+              _ => None
+            }
+          }
+          _ => None
+        }
+      } else {
+        None
+      }
+    Event::Or(items) =>
+      if items.length() == 2 {
+        let a = items[0]
+        let b = items[1]
+        match (
+          symbolic_joint_probability_continuous(name, params, rv_name, a),
+          symbolic_joint_probability_continuous(name, params, rv_name, b),
+          symbolic_joint_probability_continuous(name, params, rv_name, and_event([a, b])),
+        ) {
+          (Some(pa), Some(pb), Some(pab)) =>
+            Some(eval_arith(@symcore.add([pa, pb, @symcore.mul([@symcore.int(-1), pab])])))
+          _ => None
+        }
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn symbolic_opaque_cdf(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  ignore(rv_name)
+  match name {
+    "ContinuousRV" | "ContinuousDistributionHandmade" =>
+      if params.length() >= 1 {
+        let dummy = @symcore.symbol("_x")
+        let neg_oo = eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]))
+        match query_lambda_apply(params[0], [dummy]) {
+          Some(pdf) =>
+            Some(
+              eval_arith(@symcore.function("Integral", [
+                pdf,
+                tuple_expr([dummy, neg_oo, x]),
+              ])),
+            )
+          None => None
+        }
+      } else {
+        None
+      }
+    "DiscreteRV" | "DiscreteDistributionHandmade" =>
+      if params.length() >= 1 {
+        let dummy = @symcore.symbol("_k")
+        let neg_oo = eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]))
+        let upper = @symcore.function("floor", [x])
+        match query_lambda_apply(params[0], [dummy]) {
+          Some(pmf) =>
+            Some(
+              eval_arith(@symcore.function("Sum", [
+                pmf,
+                tuple_expr([dummy, neg_oo, upper]),
+              ])),
+            )
+          None => None
+        }
+      } else {
+        None
+      }
+    "FiniteDistributionHandmade" =>
+      match symbolic_finite_handmade_pairs(params) {
+        Some(pairs) => {
+          let sorted_pairs = pairs
+          sorted_pairs.sort_by((a, b) => @symcore.compare_expr(a.0, b.0))
+          let piecewise_args : Array[@symcore.Expr] = Array::new()
+          let mut acc = @symcore.int(0)
+          for pair in sorted_pairs {
+            let (value, prob) = pair
+            piecewise_args.push(tuple_expr([
+              acc,
+              @symcore.function("Lt", [x, value]),
+            ]))
+            acc = eval_arith(@symcore.add([acc, prob]))
+          }
+          piecewise_args.push(tuple_expr([acc, @symcore.symbol("True")]))
+          Some(@symcore.function("Piecewise", piecewise_args))
+        }
+        None => None
+      }
+    "JointRV" |
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      symbolic_joint_cdf(name, params, x)
+    "MultivariateEwens" =>
+      Some(symbolic_query_expr(name, "CDF", x, params))
+    _ => None
+  }
+}
+
+///|
+fn query_extract_rel_to_var(
+  event : Event,
+  rv_name : String,
+) -> (RelOp, @symcore.Expr)? {
+  match event {
+    Event::Rel(op~, lhs~, rhs~) =>
+      match lhs {
+        @symcore.Expr::Symbol(name) if name == rv_name => Some((op, rhs))
+        _ =>
+          match rhs {
+            @symcore.Expr::Symbol(name) if name == rv_name =>
+              Some((invert_relop(op), lhs))
+            _ => None
+          }
+      }
+    _ => None
+  }
+}
+
+///|
+fn symbolic_opaque_probability_continuous(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+  event : Event,
+) -> @symcore.Expr? {
+  if !event_depends_only_on(event, rv_name) {
+    return None
+  }
+  match event {
+    Event::Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+    Event::Not(inner) =>
+      match symbolic_opaque_probability_continuous(name, params, rv_name, inner) {
+        Some(p) => Some(eval_arith(query_expr_sub(@symcore.int(1), p)))
+        None => None
+      }
+    Event::Rel(..) =>
+      match query_extract_rel_to_var(event, rv_name) {
+        Some((op, bound)) =>
+          match op {
+            RelOp::Eq => Some(@symcore.int(0))
+            RelOp::Ne => Some(@symcore.int(1))
+            RelOp::Le | RelOp::Lt => symbolic_opaque_cdf(name, params, rv_name, bound)
+            RelOp::Ge | RelOp::Gt =>
+              match symbolic_opaque_cdf(name, params, rv_name, bound) {
+                Some(cdf_expr) =>
+                  Some(eval_arith(query_expr_sub(@symcore.int(1), cdf_expr)))
+                None => None
+              }
+          }
+        None => None
+      }
+    Event::And(items) =>
+      if items.length() == 2 {
+        let r1 = query_extract_rel_to_var(items[0], rv_name)
+        let r2 = query_extract_rel_to_var(items[1], rv_name)
+        match (r1, r2) {
+          (Some((op1, b1)), Some((op2, b2))) => {
+            let lower1 : @symcore.Expr? =
+              match op1 {
+                RelOp::Gt | RelOp::Ge => Some(b1)
+                _ => None
+              }
+            let lower2 : @symcore.Expr? =
+              match op2 {
+                RelOp::Gt | RelOp::Ge => Some(b2)
+                _ => None
+              }
+            let upper1 : @symcore.Expr? =
+              match op1 {
+                RelOp::Lt | RelOp::Le => Some(b1)
+                _ => None
+              }
+            let upper2 : @symcore.Expr? =
+              match op2 {
+                RelOp::Lt | RelOp::Le => Some(b2)
+                _ => None
+              }
+            let lower =
+              match lower1 {
+                Some(v) => Some(v)
+                None => lower2
+              }
+            let upper =
+              match upper1 {
+                Some(v) => Some(v)
+                None => upper2
+              }
+            match (lower, upper) {
+              (Some(lo), Some(hi)) =>
+                match (
+                  symbolic_opaque_cdf(name, params, rv_name, lo),
+                  symbolic_opaque_cdf(name, params, rv_name, hi),
+                ) {
+                  (Some(cl), Some(cu)) => Some(eval_arith(query_expr_sub(cu, cl)))
+                  _ => None
+                }
+              _ => None
+            }
+          }
+          _ => None
+        }
+      } else {
+        None
+      }
+    Event::Or(items) =>
+      if items.length() == 2 {
+        let a = items[0]
+        let b = items[1]
+        match (
+          symbolic_opaque_probability_continuous(name, params, rv_name, a),
+          symbolic_opaque_probability_continuous(name, params, rv_name, b),
+          symbolic_opaque_probability_continuous(name, params, rv_name, and_event([a, b])),
+        ) {
+          (Some(pa), Some(pb), Some(pab)) =>
+            Some(eval_arith(@symcore.add([pa, pb, @symcore.mul([@symcore.int(-1), pab])])))
+          _ => None
+        }
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn symbolic_opaque_probability_discrete(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+  event : Event,
+) -> @symcore.Expr? {
+  if !event_depends_only_on(event, rv_name) {
+    return None
+  }
+  match event {
+    Event::Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+    Event::Not(inner) =>
+      match symbolic_opaque_probability_discrete(name, params, rv_name, inner) {
+        Some(p) => Some(eval_arith(query_expr_sub(@symcore.int(1), p)))
+        None => None
+      }
+    Event::Rel(..) =>
+      match query_extract_rel_to_var(event, rv_name) {
+        Some((op, bound)) =>
+          match op {
+            RelOp::Eq => symbolic_opaque_density(name, params, bound)
+            RelOp::Ne =>
+              match symbolic_opaque_density(name, params, bound) {
+                Some(pmf) => Some(eval_arith(query_expr_sub(@symcore.int(1), pmf)))
+                None => None
+              }
+            RelOp::Le => symbolic_opaque_cdf(name, params, rv_name, bound)
+            RelOp::Lt =>
+              symbolic_opaque_cdf(
+                name,
+                params,
+                rv_name,
+                eval_arith(query_expr_sub(bound, @symcore.int(1))),
+              )
+            RelOp::Ge =>
+              match symbolic_opaque_cdf(
+                name,
+                params,
+                rv_name,
+                eval_arith(query_expr_sub(bound, @symcore.int(1))),
+              ) {
+                Some(cdf_expr) =>
+                  Some(eval_arith(query_expr_sub(@symcore.int(1), cdf_expr)))
+                None => None
+              }
+            RelOp::Gt =>
+              match symbolic_opaque_cdf(name, params, rv_name, bound) {
+                Some(cdf_expr) =>
+                  Some(eval_arith(query_expr_sub(@symcore.int(1), cdf_expr)))
+                None => None
+              }
+          }
+        None => None
+      }
+    Event::And(items) =>
+      if items.length() == 2 {
+        let r1 = query_extract_rel_to_var(items[0], rv_name)
+        let r2 = query_extract_rel_to_var(items[1], rv_name)
+        match (r1, r2) {
+          (Some((op1, b1)), Some((op2, b2))) => {
+            let lower1 : (@symcore.Expr, Bool)? =
+              match op1 {
+                RelOp::Gt => Some((b1, true))
+                RelOp::Ge => Some((b1, false))
+                _ => None
+              }
+            let lower2 : (@symcore.Expr, Bool)? =
+              match op2 {
+                RelOp::Gt => Some((b2, true))
+                RelOp::Ge => Some((b2, false))
+                _ => None
+              }
+            let upper1 : (@symcore.Expr, Bool)? =
+              match op1 {
+                RelOp::Lt => Some((b1, true))
+                RelOp::Le => Some((b1, false))
+                _ => None
+              }
+            let upper2 : (@symcore.Expr, Bool)? =
+              match op2 {
+                RelOp::Lt => Some((b2, true))
+                RelOp::Le => Some((b2, false))
+                _ => None
+              }
+            let lower =
+              match lower1 {
+                Some(v) => Some(v)
+                None => lower2
+              }
+            let upper =
+              match upper1 {
+                Some(v) => Some(v)
+                None => upper2
+              }
+            match (lower, upper) {
+              (Some((lo, lo_strict)), Some((hi, hi_strict))) => {
+                let lo_arg =
+                  if lo_strict {
+                    lo
+                  } else {
+                    eval_arith(query_expr_sub(lo, @symcore.int(1)))
+                  }
+                let hi_arg =
+                  if hi_strict {
+                    eval_arith(query_expr_sub(hi, @symcore.int(1)))
+                  } else {
+                    hi
+                  }
+                match (
+                  symbolic_opaque_cdf(name, params, rv_name, lo_arg),
+                  symbolic_opaque_cdf(name, params, rv_name, hi_arg),
+                ) {
+                  (Some(cl), Some(cu)) => Some(eval_arith(query_expr_sub(cu, cl)))
+                  _ => None
+                }
+              }
+              _ => None
+            }
+          }
+          _ => None
+        }
+      } else {
+        None
+      }
+    Event::Or(items) =>
+      if items.length() == 2 {
+        let a = items[0]
+        let b = items[1]
+        match (
+          symbolic_opaque_probability_discrete(name, params, rv_name, a),
+          symbolic_opaque_probability_discrete(name, params, rv_name, b),
+          symbolic_opaque_probability_discrete(name, params, rv_name, and_event([a, b])),
+        ) {
+          (Some(pa), Some(pb), Some(pab)) =>
+            Some(eval_arith(@symcore.add([pa, pb, @symcore.mul([@symcore.int(-1), pab])])))
+          _ => None
+        }
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn symbolic_opaque_probability(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+  event : Event,
+) -> @symcore.Expr? {
+  match name {
+    "ContinuousRV" | "ContinuousDistributionHandmade" =>
+      symbolic_opaque_probability_continuous(name, params, rv_name, event)
+    "DiscreteRV" | "DiscreteDistributionHandmade" |
+    "FiniteDistributionHandmade" =>
+      symbolic_opaque_probability_discrete(name, params, rv_name, event)
+    "JointRV" |
+    "GeneralizedMultivariateLogGamma" | "GeneralizedMultivariateLogGammaOmega" =>
+      symbolic_joint_probability_continuous(name, params, rv_name, event)
+    "MultivariateEwens" =>
+      if !event_depends_only_on(event, rv_name) {
+        None
+      } else {
+        match event {
+          Event::Bool(v) => Some(if v { @symcore.int(1) } else { @symcore.int(0) })
+          Event::Not(inner) =>
+            match symbolic_opaque_probability(name, params, rv_name, inner) {
+              Some(p) => Some(eval_arith(query_expr_sub(@symcore.int(1), p)))
+              None => None
+            }
+          Event::Rel(..) =>
+            match query_extract_rel_to_var(event, rv_name) {
+              Some((RelOp::Eq, point)) =>
+                symbolic_opaque_density(name, params, point)
+              Some((RelOp::Ne, point)) =>
+                match symbolic_opaque_density(name, params, point) {
+                  Some(d) =>
+                    Some(eval_arith(query_expr_sub(@symcore.int(1), d)))
+                  None => None
+                }
+              Some((RelOp::Le, point)) | Some((RelOp::Lt, point)) =>
+                symbolic_opaque_cdf(name, params, rv_name, point)
+              Some((RelOp::Ge, point)) | Some((RelOp::Gt, point)) =>
+                match symbolic_opaque_cdf(name, params, rv_name, point) {
+                  Some(cdf_expr) =>
+                    Some(eval_arith(query_expr_sub(@symcore.int(1), cdf_expr)))
+                  None => None
+                }
+              None => None
+            }
+          Event::Or(items) =>
+            if items.length() == 2 {
+              let a = items[0]
+              let b = items[1]
+              match (
+                symbolic_opaque_probability(name, params, rv_name, a),
+                symbolic_opaque_probability(name, params, rv_name, b),
+                symbolic_opaque_probability(name, params, rv_name, and_event([a, b])),
+              ) {
+                (Some(pa), Some(pb), Some(pab)) =>
+                  Some(eval_arith(@symcore.add([pa, pb, @symcore.mul([@symcore.int(-1), pab])])))
+                _ => None
+              }
+            } else {
+              None
+            }
+          _ => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
 pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
   match discrete_pmf(rv, x) {
     Some(v) => v
@@ -785,7 +1810,12 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
           match rv.kind {
             RVKind::Symbolic(tag~, params~) => {
               let name = symbolic_tag_name(tag)
-              if symbolic_tag_family(tag) == "J" {
+              if symbolic_opaque_stats_name(name) {
+                match symbolic_opaque_density(name, params, x) {
+                  Some(v) => v
+                  None => @symcore.function("density", [@symcore.symbol(rv.name), x])
+                }
+              } else if symbolic_tag_family(tag) == "J" {
                 match symbolic_joint_density(name, params, x) {
                   Some(v) => v
                   None => symbolic_query_expr(name, "Density", x, params)
@@ -809,8 +1839,17 @@ pub fn cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
         Some(v) => v
         None =>
           match rv.kind {
-            RVKind::Symbolic(tag~, params~) =>
-              symbolic_query_expr(symbolic_tag_name(tag), "CDF", x, params)
+            RVKind::Symbolic(tag~, params~) => {
+              let name = symbolic_tag_name(tag)
+              if symbolic_opaque_stats_name(name) {
+                match symbolic_opaque_cdf(name, params, rv.name, x) {
+                  Some(v) => v
+                  None => symbolic_query_expr(name, "CDF", x, params)
+                }
+              } else {
+                symbolic_query_expr(name, "CDF", x, params)
+              }
+            }
             _ => @symcore.function("cdf", [@symcore.symbol(rv.name), x])
           }
       }

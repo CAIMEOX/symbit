@@ -252,6 +252,11 @@ fn compat_piecewise3(
 }
 
 ///|
+fn compat_use_generic_unevaluated(name : String) -> Bool {
+  symbolic_opaque_stats_name(name)
+}
+
+///|
 fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(items) => {
@@ -296,6 +301,9 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
     }
     RVKind::Symbolic(tag~, params~) => {
       let name = symbolic_tag_name(tag)
+      if compat_use_generic_unevaluated(name) {
+        return Some(@symcore.function("moment_generating_function", [@symcore.symbol(rv.name), t]))
+      }
       match generated_mgf(name, params, t) {
         Some(v) => Some(v)
         None =>
@@ -372,6 +380,9 @@ pub fn characteristic_function(
       match rv.kind {
         RVKind::Symbolic(tag~, params~) => {
           let name = symbolic_tag_name(tag)
+          if compat_use_generic_unevaluated(name) {
+            return @symcore.function("characteristic_function", [@symcore.symbol(rv.name), t])
+          }
           let special =
             match name {
               "Cauchy" if params.length() == 2 =>
@@ -524,6 +535,9 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
           ]))
         RVKind::Symbolic(tag~, params~) => {
           let name = symbolic_tag_name(tag)
+          if compat_use_generic_unevaluated(name) {
+            return @symcore.function("entropy", [@symcore.symbol(rv.name)])
+          }
           match generated_entropy(name, params) {
             Some(v) => v
             None =>
@@ -1002,6 +1016,9 @@ pub fn quantile(
           ]))
         RVKind::Symbolic(tag~, params~) => {
           let name = symbolic_tag_name(tag)
+          if compat_use_generic_unevaluated(name) {
+            return @symcore.function("quantile", [@symcore.symbol(rv.name), q])
+          }
           match generated_quantile(name, params, q) {
             Some(v) => v
             None =>
@@ -1318,6 +1335,46 @@ pub fn quantile(
                     compat_tuple_expr(right, @symcore.function("Le", [q, @symcore.int(1)])),
                     compat_tuple_expr(@symcore.symbol("nan"), @symcore.symbol("True")),
                   ])
+                }
+                "VonMises" if params.length() == 2 => {
+                  let mu = params[0]
+                  let kappa = params[1]
+                  let x_var = @symcore.symbol("_x")
+                  let integral_term = @symcore.function("Integral", [
+                    @symcore.function("exp", [eval_arith(@symcore.mul([
+                      kappa,
+                      @symcore.function("cos", [eval_arith(@symcore.add([
+                        x_var,
+                        @symcore.mul([@symcore.int(-1), mu]),
+                      ]))]),
+                    ]))]),
+                    @symcore.function("Tuple", [x_var, @symcore.int(0), x_var]),
+                  ])
+                  let target = eval_arith(@symcore.mul([
+                    @symcore.int(2),
+                    @symcore.symbol("pi"),
+                    q,
+                    @symcore.function("besseli", [@symcore.int(0), kappa]),
+                  ]))
+                  let condset = @symcore.function("ConditionSet", [
+                    x_var,
+                    @symcore.function("Eq", [eval_arith(@symcore.add([
+                      integral_term,
+                      @symcore.mul([@symcore.int(-1), target]),
+                    ])), @symcore.int(0)]),
+                    @symcore.function("Interval", [
+                      @symcore.int(0),
+                      eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")])),
+                    ]),
+                  ])
+                  compat_piecewise2(
+                    condset,
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
                 }
                 "StudentT" if params.length() == 1 => {
                   let nu = params[0]

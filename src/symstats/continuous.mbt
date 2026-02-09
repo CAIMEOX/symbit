@@ -736,6 +736,9 @@ pub fn continuous_density(
         None
       } else {
         let name = symbolic_tag_name(tag)
+        if name == "ContinuousRV" || name == "ContinuousDistributionHandmade" {
+          return None
+        }
         // Prefer curated formulas that already encode support as Piecewise.
         match symbolic_continuous_density(name, params, x) {
           Some(v) => Some(cont_guard_params(name, params, v))
@@ -795,6 +798,9 @@ pub fn continuous_cdf(
         None
       } else {
         let name = symbolic_tag_name(tag)
+        if name == "ContinuousRV" || name == "ContinuousDistributionHandmade" {
+          return None
+        }
         // Prefer curated formulas that preserve expected branch structure.
         match symbolic_continuous_cdf(name, params, x) {
           Some(v) => Some(cont_guard_params(name, params, v))

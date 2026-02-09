@@ -102,6 +102,36 @@ pub fn symbolic_tag_name(tag : String) -> String {
 }
 
 ///|
+pub fn symbolic_opaque_stats_name(name : String) -> Bool {
+  match name {
+    "StochasticProcess" |
+    "DiscreteTimeStochasticProcess" |
+    "DiscreteMarkovChain" |
+    "ContinuousMarkovChain" |
+    "CircularEnsemble" |
+    "CircularUnitaryEnsemble" |
+    "CircularOrthogonalEnsemble" |
+    "CircularSymplecticEnsemble" |
+    "GaussianEnsemble" |
+    "GaussianUnitaryEnsemble" |
+    "GaussianOrthogonalEnsemble" |
+    "GaussianSymplecticEnsemble" |
+    "JointEigenDistribution" |
+    "level_spacing_distribution" |
+    "JointRV" |
+    "GeneralizedMultivariateLogGamma" |
+    "GeneralizedMultivariateLogGammaOmega" |
+    "MultivariateEwens" |
+    "ContinuousRV" |
+    "DiscreteRV" |
+    "FiniteDistributionHandmade" |
+    "ContinuousDistributionHandmade" |
+    "DiscreteDistributionHandmade" => true
+    _ => false
+  }
+}
+
+///|
 pub fn random_symbol(rv : RandomVar) -> @symcore.Expr {
   @symcore.symbol(rv.name)
 }
