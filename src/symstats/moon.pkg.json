@@ -3,6 +3,11 @@
     "CAIMEOX/symbit/symcore",
     "CAIMEOX/symbit/symnum"
   ],
+  "link": {
+    "native": {
+      "cc-link-flags": "-lm"
+    }
+  },
   "test-import": [
     "CAIMEOX/symbit/symprint",
     { "path": "CAIMEOX/symbit/sympy/stats", "alias": "sympy_stats" }

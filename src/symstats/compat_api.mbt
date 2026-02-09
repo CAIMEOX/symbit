@@ -165,6 +165,66 @@ fn compat_tuple_expr(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn compat_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+  match expr {
+    @symcore.Expr::Function("Tuple", items) => Some(items)
+    _ => None
+  }
+}
+
+///|
+fn compat_tuple2(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)? {
+  match compat_tuple_items(expr) {
+    Some(items) if items.length() == 2 => Some((items[0], items[1]))
+    _ => None
+  }
+}
+
+///|
+fn compat_matrix2x2(
+  expr : @symcore.Expr,
+) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)? {
+  match compat_tuple_items(expr) {
+    Some(rows) if rows.length() == 2 =>
+      match (compat_tuple_items(rows[0]), compat_tuple_items(rows[1])) {
+        (Some(r0), Some(r1)) if r0.length() == 2 && r1.length() == 2 =>
+          Some((r0[0], r0[1], r1[0], r1[1]))
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn compat_dot2(
+  a1 : @symcore.Expr,
+  a2 : @symcore.Expr,
+  b1 : @symcore.Expr,
+  b2 : @symcore.Expr,
+) -> @symcore.Expr {
+  eval_arith(@symcore.add([
+    eval_arith(@symcore.mul([a1, b1])),
+    eval_arith(@symcore.mul([a2, b2])),
+  ]))
+}
+
+///|
+fn compat_quad2(
+  s00 : @symcore.Expr,
+  s01 : @symcore.Expr,
+  s10 : @symcore.Expr,
+  s11 : @symcore.Expr,
+  t1 : @symcore.Expr,
+  t2 : @symcore.Expr,
+) -> @symcore.Expr {
+  eval_arith(@symcore.add([
+    eval_arith(@symcore.mul([s00, @symcore.pow(t1, @symcore.int(2))])),
+    eval_arith(@symcore.mul([eval_arith(@symcore.add([s01, s10])), t1, t2])),
+    eval_arith(@symcore.mul([s11, @symcore.pow(t2, @symcore.int(2))])),
+  ]))
+}
+
+///|
 fn compat_piecewise2(
   v1 : @symcore.Expr,
   c1 : @symcore.Expr,
@@ -240,6 +300,38 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
         Some(v) => Some(v)
         None =>
           match name {
+            "MultivariateNormal" if params.length() >= 2 =>
+              match (compat_tuple2(params[0]), compat_matrix2x2(params[1]), compat_tuple2(t)) {
+                (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
+                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let lin = compat_dot2(t1, t2, mu1, mu2)
+                  let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
+                  Some(eval_arith(@symcore.function("exp", [
+                    eval_arith(@symcore.add([
+                      lin,
+                      eval_arith(@symcore.mul([half, quad])),
+                    ])),
+                  ])))
+                }
+                _ => Some(symbolic_metric_with_head(name, "MGF", t, params))
+              }
+            "MultivariateLaplace" if params.length() >= 2 =>
+              match (compat_tuple2(params[0]), compat_matrix2x2(params[1]), compat_tuple2(t)) {
+                (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
+                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let lin = compat_dot2(t1, t2, mu1, mu2)
+                  let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
+                  let denom = eval_arith(@symcore.add([
+                    @symcore.int(1),
+                    @symcore.mul([@symcore.int(-1), eval_arith(@symcore.mul([half, quad]))]),
+                  ]))
+                  Some(eval_arith(@symcore.mul([
+                    @symcore.function("exp", [lin]),
+                    @symcore.pow(denom, @symcore.int(-1)),
+                  ])))
+                }
+                _ => Some(symbolic_metric_with_head(name, "MGF", t, params))
+              }
             "Uniform" if params.length() == 2 => {
               let a = params[0]
               let b = params[1]
@@ -280,12 +372,88 @@ pub fn characteristic_function(
       match rv.kind {
         RVKind::Symbolic(tag~, params~) => {
           let name = symbolic_tag_name(tag)
-          match generated_cf(name, params, t) {
+          let special =
+            match name {
+              "Cauchy" if params.length() == 2 =>
+                Some(eval_arith(@symcore.function("exp", [
+                  eval_arith(@symcore.add([
+                    eval_arith(@symcore.mul([@symcore.symbol("I"), params[0], t])),
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      params[1],
+                      @symcore.function("Abs", [t]),
+                    ]),
+                  ])),
+                ])))
+              "StudentT" if params.length() == 1 => {
+                let nu = params[0]
+                let half = try! @symcore.rational_from_ints(1, 2)
+                let nu_half = eval_arith(@symcore.mul([half, nu]))
+                let arg = eval_arith(@symcore.mul([
+                  @symcore.function("sqrt", [nu]),
+                  @symcore.function("Abs", [t]),
+                ]))
+                let core = eval_arith(@symcore.mul([
+                  @symcore.pow(
+                    @symcore.int(2),
+                    eval_arith(@symcore.add([
+                      @symcore.int(1),
+                      @symcore.mul([@symcore.int(-1), nu_half]),
+                    ])),
+                  ),
+                  @symcore.pow(arg, nu_half),
+                  @symcore.function("besselk", [nu_half, arg]),
+                  @symcore.pow(@symcore.function("gamma", [nu_half]), @symcore.int(-1)),
+                ]))
+                Some(@symcore.function("Piecewise", [
+                  compat_tuple_expr(@symcore.int(1), @symcore.function("Eq", [t, @symcore.int(0)])),
+                  compat_tuple_expr(core, @symcore.symbol("True")),
+                ]))
+              }
+              "MultivariateNormal" if params.length() >= 2 =>
+                match (compat_tuple2(params[0]), compat_matrix2x2(params[1]), compat_tuple2(t)) {
+                  (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
+                    let half = try! @symcore.rational_from_ints(1, 2)
+                    let lin = compat_dot2(t1, t2, mu1, mu2)
+                    let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
+                    Some(eval_arith(@symcore.function("exp", [
+                      eval_arith(@symcore.add([
+                        eval_arith(@symcore.mul([@symcore.symbol("I"), lin])),
+                        @symcore.mul([@symcore.int(-1), half, quad]),
+                      ])),
+                    ])))
+                  }
+                  _ => None
+                }
+              "MultivariateLaplace" if params.length() >= 2 =>
+                match (compat_tuple2(params[0]), compat_matrix2x2(params[1]), compat_tuple2(t)) {
+                  (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
+                    let half = try! @symcore.rational_from_ints(1, 2)
+                    let lin = compat_dot2(t1, t2, mu1, mu2)
+                    let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
+                    let denom = eval_arith(@symcore.add([
+                      @symcore.int(1),
+                      eval_arith(@symcore.mul([half, quad])),
+                    ]))
+                    Some(eval_arith(@symcore.mul([
+                      @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.symbol("I"), lin]))]),
+                      @symcore.pow(denom, @symcore.int(-1)),
+                    ])))
+                  }
+                  _ => None
+                }
+              _ => None
+            }
+          match special {
             Some(v) => v
             None =>
-              match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+              match generated_cf(name, params, t) {
                 Some(v) => v
-                None => symbolic_metric_with_head(name, "CF", t, params)
+                None =>
+                  match mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+                    Some(v) => v
+                    None => symbolic_metric_with_head(name, "CF", t, params)
+                  }
               }
           }
         }
@@ -360,6 +528,60 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
             Some(v) => v
             None =>
               match name {
+                "Dirichlet" | "MultivariateBeta" if params.length() >= 2 => {
+                  let alpha_sum = eval_arith(@symcore.add(params))
+                  let log_beta_terms : Array[@symcore.Expr] = Array::new()
+                  let sum_terms : Array[@symcore.Expr] = Array::new()
+                  for a in params {
+                    log_beta_terms.push(@symcore.function("log", [@symcore.function("gamma", [a])]))
+                    sum_terms.push(eval_arith(@symcore.mul([
+                      eval_arith(@symcore.add([a, @symcore.int(-1)])),
+                      @symcore.function("digamma", [a]),
+                    ])))
+                  }
+                  let log_beta = eval_arith(@symcore.add([
+                    eval_arith(@symcore.add(log_beta_terms)),
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      @symcore.function("log", [@symcore.function("gamma", [alpha_sum])]),
+                    ]),
+                  ]))
+                  let dim = @symcore.int(params.length())
+                  eval_arith(@symcore.add([
+                    log_beta,
+                    eval_arith(@symcore.mul([
+                      eval_arith(@symcore.add([alpha_sum, @symcore.mul([@symcore.int(-1), dim])])),
+                      @symcore.function("digamma", [alpha_sum]),
+                    ])),
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      eval_arith(@symcore.add(sum_terms)),
+                    ]),
+                  ]))
+                }
+                "MultivariateNormal" if params.length() >= 2 =>
+                  match compat_matrix2x2(params[1]) {
+                    Some((s00, s01, s10, s11)) => {
+                      let half = try! @symcore.rational_from_ints(1, 2)
+                      let det = eval_arith(@symcore.add([
+                        eval_arith(@symcore.mul([s00, s11])),
+                        eval_arith(@symcore.mul([@symcore.int(-1), s01, s10])),
+                      ]))
+                      let base = eval_arith(@symcore.pow(
+                        eval_arith(@symcore.mul([
+                          @symcore.int(2),
+                          @symcore.symbol("pi"),
+                          @symcore.symbol("E"),
+                        ])),
+                        @symcore.int(2),
+                      ))
+                      eval_arith(@symcore.mul([
+                        half,
+                        @symcore.function("log", [eval_arith(@symcore.mul([base, det]))]),
+                      ]))
+                    }
+                    None => symbolic_metric_no_head(name, "Entropy", params)
+                  }
                 "Uniform" if params.length() == 2 =>
                   eval_arith(@symcore.function("log", [eval_arith(@symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])]))]))
                 "Exponential" if params.length() == 1 =>
@@ -367,6 +589,54 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
                     @symcore.int(1),
                     @symcore.mul([@symcore.int(-1), @symcore.function("log", [params[0]])]),
                   ]))
+                "ChiSquared" if params.length() == 1 => {
+                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let shape = eval_arith(@symcore.mul([half, params[0]]))
+                  eval_arith(@symcore.add([
+                    shape,
+                    @symcore.function("log", [eval_arith(@symcore.mul([
+                      @symcore.int(2),
+                      @symcore.function("gamma", [shape]),
+                    ]))]),
+                    @symcore.mul([
+                      eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), shape])])),
+                      @symcore.function("digamma", [shape]),
+                    ]),
+                  ]))
+                }
+                "Chi" if params.length() == 1 => {
+                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let shape = eval_arith(@symcore.mul([half, params[0]]))
+                  eval_arith(@symcore.add([
+                    @symcore.function("log", [@symcore.function("gamma", [shape])]),
+                    shape,
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      half,
+                      eval_arith(@symcore.add([params[0], @symcore.int(-1)])),
+                      @symcore.function("digamma", [shape]),
+                    ]),
+                    @symcore.mul([
+                      try! @symcore.rational_from_ints(-1, 2),
+                      @symcore.function("log", [@symcore.int(2)]),
+                    ]),
+                  ]))
+                }
+                "Erlang" if params.length() == 2 => {
+                  let k = params[0]
+                  let lamda = params[1]
+                  eval_arith(@symcore.add([
+                    k,
+                    @symcore.function("log", [eval_arith(@symcore.mul([
+                      @symcore.function("gamma", [k]),
+                      @symcore.pow(lamda, @symcore.int(-1)),
+                    ]))]),
+                    @symcore.mul([
+                      @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), k])]),
+                      @symcore.function("digamma", [k]),
+                    ]),
+                  ]))
+                }
                 "Laplace" if params.length() == 2 =>
                   eval_arith(@symcore.add([
                     @symcore.int(1),
@@ -515,6 +785,17 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
                       @symcore.pow(params[0], @symcore.int(-1)),
                     ]))]),
                   ]))
+                "Arcsin" if params.length() == 0 =>
+                  @symcore.function("log", [eval_arith(@symcore.mul([
+                    @symcore.symbol("pi"),
+                    try! @symcore.rational_from_ints(1, 4),
+                  ]))])
+                "Arcsin" if params.length() == 2 =>
+                  @symcore.function("log", [eval_arith(@symcore.mul([
+                    @symcore.symbol("pi"),
+                    try! @symcore.rational_from_ints(1, 4),
+                    eval_arith(@symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])])),
+                  ]))])
                 "StudentT" if params.length() == 1 => {
                   let nu = params[0]
                   let half = try! @symcore.rational_from_ints(1, 2)
@@ -575,6 +856,7 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
                     ])),
                   ]))
                 }
+                "Moyal" if params.length() == 2 => @symcore.symbol("oo")
                 _ => symbolic_metric_no_head(name, "Entropy", params)
               }
           }
@@ -724,6 +1006,125 @@ pub fn quantile(
             Some(v) => v
             None =>
               match name {
+                "Arcsin" if params.length() == 0 =>
+                  compat_piecewise2(
+                    @symcore.pow(
+                      @symcore.function("sin", [eval_arith(@symcore.mul([
+                        @symcore.symbol("pi"),
+                        q,
+                        try! @symcore.rational_from_ints(1, 2),
+                      ]))]),
+                      @symcore.int(2),
+                    ),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Arcsin" if params.length() == 2 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.add([
+                      params[0],
+                      @symcore.mul([
+                        eval_arith(@symcore.add([params[1], @symcore.mul([@symcore.int(-1), params[0]])])),
+                        @symcore.pow(
+                          @symcore.function("sin", [eval_arith(@symcore.mul([
+                            @symcore.symbol("pi"),
+                            q,
+                            try! @symcore.rational_from_ints(1, 2),
+                          ]))]),
+                          @symcore.int(2),
+                        ),
+                      ]),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Beta" if params.length() == 2 =>
+                  compat_piecewise2(
+                    @symcore.function("betaincinv", [params[0], params[1], q]),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Kumaraswamy" if params.length() == 2 =>
+                  compat_piecewise2(
+                    @symcore.pow(
+                      eval_arith(@symcore.add([
+                        @symcore.int(1),
+                        @symcore.mul([
+                          @symcore.int(-1),
+                          @symcore.pow(
+                            eval_arith(@symcore.add([
+                              @symcore.int(1),
+                              @symcore.mul([@symcore.int(-1), q]),
+                            ])),
+                            @symcore.pow(params[1], @symcore.int(-1)),
+                          ),
+                        ]),
+                      ])),
+                      @symcore.pow(params[0], @symcore.int(-1)),
+                    ),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Chi" if params.length() == 1 =>
+                  compat_piecewise2(
+                    @symcore.function("sqrt", [eval_arith(@symcore.mul([
+                      @symcore.int(2),
+                      @symcore.function("gammaincinv", [
+                        eval_arith(@symcore.mul([
+                          try! @symcore.rational_from_ints(1, 2),
+                          params[0],
+                        ])),
+                        q,
+                      ]),
+                    ]))]),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "ChiSquared" if params.length() == 1 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.mul([
+                      @symcore.int(2),
+                      @symcore.function("gammaincinv", [
+                        eval_arith(@symcore.mul([
+                          try! @symcore.rational_from_ints(1, 2),
+                          params[0],
+                        ])),
+                        q,
+                      ]),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Erlang" if params.length() == 2 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.mul([
+                      @symcore.function("gammaincinv", [params[0], q]),
+                      @symcore.pow(params[1], @symcore.int(-1)),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
                 "Uniform" if params.length() == 2 =>
                   eval_arith(@symcore.add([
                     params[0],
@@ -734,6 +1135,24 @@ pub fn quantile(
                       ),
                     ])),
                   ]))
+                "Cauchy" if params.length() == 2 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.add([
+                      params[0],
+                      @symcore.mul([
+                        params[1],
+                        @symcore.function("tan", [eval_arith(@symcore.mul([
+                          @symcore.symbol("pi"),
+                          eval_arith(@symcore.add([q, try! @symcore.rational_from_ints(-1, 2)])),
+                        ]))]),
+                      ]),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
                 "Rayleigh" if params.length() == 1 =>
                   eval_arith(@symcore.mul([
                     params[0],
@@ -794,6 +1213,18 @@ pub fn quantile(
                           @symcore.function("log", [q]),
                         ])),
                       ]),
+                    ]),
+                  ]))
+                "Moyal" if params.length() == 2 =>
+                  eval_arith(@symcore.add([
+                    params[0],
+                    @symcore.mul([
+                      @symcore.int(-2),
+                      params[1],
+                      @symcore.function("log", [eval_arith(@symcore.mul([
+                        @symcore.function("sqrt", [@symcore.int(2)]),
+                        @symcore.function("erfcinv", [q]),
+                      ]))]),
                     ]),
                   ]))
                 "PowerFunction" if params.length() == 3 =>
@@ -921,6 +1352,43 @@ pub fn quantile(
                     compat_tuple_expr(@symcore.symbol("nan"), @symcore.symbol("True")),
                   ])
                 }
+                "BoundedPareto" if params.length() == 3 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.mul([
+                      params[1],
+                      @symcore.pow(
+                        eval_arith(@symcore.add([
+                          @symcore.int(1),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            q,
+                            eval_arith(@symcore.add([
+                              @symcore.int(1),
+                              @symcore.mul([
+                                @symcore.int(-1),
+                                @symcore.pow(
+                                  eval_arith(@symcore.mul([
+                                    params[1],
+                                    @symcore.pow(params[2], @symcore.int(-1)),
+                                  ])),
+                                  params[0],
+                                ),
+                              ]),
+                            ])),
+                          ]),
+                        ])),
+                        eval_arith(@symcore.mul([
+                          @symcore.int(-1),
+                          @symcore.pow(params[0], @symcore.int(-1)),
+                        ])),
+                      ),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
                 "Pareto" if params.length() == 2 =>
                   eval_arith(@symcore.mul([
                     params[0],

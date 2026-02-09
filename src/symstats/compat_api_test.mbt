@@ -133,11 +133,90 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(b_cf, b_cf_oracle))
   assert_true(!@symprint.to_string(b_cf).contains("characteristic_function("))
 
+  let ccf = cauchy("CCF", params=[@symcore.int(0), @symcore.int(2)])
+  let sccf = @symcore.symbol("CCF")
+  let ccf_expr = characteristic_function(sccf, t, rvs=[ccf])
+  let ccf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda CCF, t: characteristic_function(CCF)(t))(stats.Cauchy('CCF', 0, 2), t)",
+  )
+  assert_true(expr_equiv_to(ccf_expr, ccf_oracle))
+  assert_true(!@symprint.to_string(ccf_expr).contains("CauchyCF("))
+
   let l = logistic("L", params=[@symcore.int(0), @symcore.int(2)])
   let sl = @symcore.symbol("L")
   let q = quantile(sl, try! @symcore.rational_from_ints(1, 4), rvs=[l])
   assert_true(expr_equiv_to(q, "-2*log(3)"))
   assert_true(!@symprint.to_string(q).contains("quantile("))
+
+  let aq = arcsin("Aq", params=[@symcore.int(1), @symcore.int(5)])
+  let x = @symcore.symbol("x")
+  let aq_d = density(aq, @symcore.int(2))
+  assert_true(expr_equiv_to(aq_d, "sqrt(3)/(3*pi)"))
+  let aq_c = cdf(aq, x)
+  let aq_c_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Aq, x: cdf(Aq)(x))(stats.Arcsin('Aq', 1, 5), x)",
+  )
+  assert_true(expr_equiv_to(aq_c, aq_c_oracle))
+  let saq = @symcore.symbol("Aq")
+  let aq_m = expectation(saq, rvs=[aq])
+  assert_true(expr_equiv_to(aq_m, "3"))
+  let aq_v = variance(saq, rvs=[aq])
+  assert_true(expr_equiv_to(aq_v, "2"))
+  let aq_q = quantile(saq, try! @symcore.rational_from_ints(1, 4), rvs=[aq])
+  assert_true(expr_equiv_to(aq_q, "3 - sqrt(2)"))
+  assert_true(!@symprint.to_string(aq_q).contains("ArcsinQuantile("))
+  let aq_e = entropy(saq, rvs=[aq])
+  assert_true(expr_equiv_to(aq_e, "log(pi)"))
+  assert_true(!@symprint.to_string(aq_e).contains("ArcsinEntropy("))
+
+  let kq = kumaraswamy("Kq", params=[@symcore.int(2), @symcore.int(3)])
+  let skq = @symcore.symbol("Kq")
+  let kq_m = expectation(skq, rvs=[kq])
+  assert_true(expr_equiv_to(kq_m, "3*beta(3/2, 3)"))
+  let kq_v = variance(skq, rvs=[kq])
+  assert_true(expr_equiv_to(kq_v, "3*beta(2, 3) - 9*beta(3/2, 3)**2"))
+  let kq_q = quantile(skq, try! @symcore.rational_from_ints(1, 4), rvs=[kq])
+  assert_true(expr_equiv_to(kq_q, "sqrt(1 - (3/4)**(1/3))"))
+  assert_true(!@symprint.to_string(kq_q).contains("KumaraswamyQuantile("))
+
+  let bq = beta("Bq", params=[@symcore.int(2), @symcore.int(5)])
+  let sbq = @symcore.symbol("Bq")
+  let bq_expr = quantile(sbq, try! @symcore.rational_from_ints(1, 4), rvs=[bq])
+  assert_true(expr_equiv_to(bq_expr, "betaincinv(2, 5, 1/4)"))
+  assert_true(!@symprint.to_string(bq_expr).contains("BetaQuantile("))
+
+  let ch = chi("Ch", params=[@symcore.int(5)])
+  let ch_cdf = cdf(ch, @symcore.int(2))
+  let ch_cdf_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Ch: cdf(Ch)(2))(stats.Chi('Ch', 5))",
+  )
+  assert_true(expr_equiv_to(ch_cdf, ch_cdf_oracle))
+  assert_true(!@symprint.to_string(ch_cdf).contains("ChiCDF("))
+  let sch = @symcore.symbol("Ch")
+  let ch_q = quantile(sch, try! @symcore.rational_from_ints(1, 4), rvs=[ch])
+  assert_true(expr_equiv_to(ch_q, "sqrt(2*gammaincinv(5/2, 1/4))"))
+  assert_true(!@symprint.to_string(ch_q).contains("ChiQuantile("))
+  let ch_e = entropy(sch, rvs=[ch])
+  assert_true(expr_equiv_to(ch_e, "log(gamma(5/2)) + 5/2 - 2*digamma(5/2) - log(2)/2"))
+  assert_true(!@symprint.to_string(ch_e).contains("ChiEntropy("))
+
+  let csq = chi_squared("Csq", params=[@symcore.int(5)])
+  let scsq = @symcore.symbol("Csq")
+  let csq_q = quantile(scsq, try! @symcore.rational_from_ints(1, 4), rvs=[csq])
+  assert_true(expr_equiv_to(csq_q, "2*gammaincinv(5/2, 1/4)"))
+  assert_true(!@symprint.to_string(csq_q).contains("ChiSquaredQuantile("))
+  let csq_e = entropy(scsq, rvs=[csq])
+  assert_true(expr_equiv_to(csq_e, "5/2 + log(2*gamma(5/2)) - 3*digamma(5/2)/2"))
+  assert_true(!@symprint.to_string(csq_e).contains("ChiSquaredEntropy("))
+
+  let erq = erlang("Erq", params=[@symcore.int(3), @symcore.int(2)])
+  let serq = @symcore.symbol("Erq")
+  let erq_q = quantile(serq, try! @symcore.rational_from_ints(1, 4), rvs=[erq])
+  assert_true(expr_equiv_to(erq_q, "gammaincinv(3, 1/4)/2"))
+  assert_true(!@symprint.to_string(erq_q).contains("ErlangQuantile("))
+  let erq_e = entropy(serq, rvs=[erq])
+  assert_true(expr_equiv_to(erq_e, "3 + log(gamma(3)/2) - 2*digamma(3)"))
+  assert_true(!@symprint.to_string(erq_e).contains("ErlangEntropy("))
 
   let u = uniform("Ue", params=[@symcore.int(1), @symcore.int(3)])
   let su = @symcore.symbol("Ue")
@@ -153,6 +232,18 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let gwe_q = quantile(sgwe, try! @symcore.rational_from_ints(1, 4), rvs=[gwe])
   assert_true(expr_equiv_to(gwe_q, "-2*log(log(4))"))
   assert_true(!@symprint.to_string(gwe_q).contains("quantile("))
+
+  let moq = moyal("Moq", params=[@symcore.int(0), @symcore.int(1)])
+  let smoq = @symcore.symbol("Moq")
+  let moq_c = cdf(moq, try! @symcore.rational_from_ints(1, 2))
+  let moq_c_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Moq: cdf(Moq)(Rational(1, 2)))(stats.Moyal('Moq', 0, 1))",
+  )
+  assert_true(expr_equiv_to(moq_c, moq_c_oracle))
+  assert_true(!@symprint.to_string(moq_c).contains("MoyalCDF("))
+  let moq_q = quantile(smoq, try! @symcore.rational_from_ints(1, 4), rvs=[moq])
+  assert_true(expr_equiv_to(moq_q, "-2*log(sqrt(2)*erfcinv(1/4))"))
+  assert_true(!@symprint.to_string(moq_q).contains("MoyalQuantile("))
 
   let goq = gompertz("Goq", params=[@symcore.int(2), @symcore.int(3)])
   let sgoq = @symcore.symbol("Goq")
@@ -205,6 +296,13 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let lmq_q = quantile(slmq, try! @symcore.rational_from_ints(1, 4), rvs=[lmq])
   assert_true(expr_equiv_to(lmq_q, "-3 + 2*sqrt(3)"))
   assert_true(!@symprint.to_string(lmq_q).contains("LomaxQuantile("))
+
+  let bpq = bounded_pareto("Bpq", params=[@symcore.int(2), @symcore.int(3), @symcore.int(9)])
+  let sbpq = @symcore.symbol("Bpq")
+  let bpq_q = quantile(sbpq, try! @symcore.rational_from_ints(1, 4), rvs=[bpq])
+  // SymPy returns a singleton set for bounded Pareto quantile.
+  assert_true(expr_equiv_to(bpq_q, "9*sqrt(7)/7"))
+  assert_true(!@symprint.to_string(bpq_q).contains("BoundedParetoQuantile("))
 
   let bwe = beta("Bwe", params=[@symcore.int(2), @symcore.int(5)])
   let sbwe = @symcore.symbol("Bwe")
@@ -275,8 +373,21 @@ test "compat symbolic mgf cf quantile entropy parity" {
     params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(4)],
   )
   let strwe = @symcore.symbol("Trwe")
+  let trwe_cdf = cdf(trwe, try! @symcore.rational_from_ints(3, 2))
+  assert_true(expr_equiv_to(trwe_cdf, "2/5"))
+  assert_true(!@symprint.to_string(trwe_cdf).contains("TrapezoidalCDF("))
+  let trwe_m = expectation(strwe, rvs=[trwe])
+  assert_true(expr_equiv_to(trwe_m, "9/5"))
+  let trwe_v = variance(strwe, rvs=[trwe])
+  assert_true(expr_equiv_to(trwe_v, "109/150"))
   let trwe_e = entropy(strwe, rvs=[trwe])
   assert_true(expr_equiv_to(trwe_e, "3/10 + log(5/2)"))
+
+  let mowe = moyal("Mowe", params=[@symcore.int(0), @symcore.int(1)])
+  let smowe = @symcore.symbol("Mowe")
+  let mowe_e = entropy(smowe, rvs=[mowe])
+  assert_true(expr_equiv_to(mowe_e, "oo"))
+  assert_true(!@symprint.to_string(mowe_e).contains("MoyalEntropy("))
 
   let goe = gompertz("Goe", params=[@symcore.int(2), @symcore.int(3)])
   let sgoe = @symcore.symbol("Goe")
@@ -304,6 +415,13 @@ test "compat symbolic mgf cf quantile entropy parity" {
   )
   assert_true(expr_equiv_to(lmwe_e, lmwe_oracle))
   assert_true(!@symprint.to_string(lmwe_e).contains("LomaxEntropy("))
+
+  let bpe = entropy(sbpq, rvs=[bpq])
+  let bpe_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Bpq: entropy(Bpq))(stats.BoundedPareto('Bpq', 2, 3, 9))",
+  )
+  assert_true(expr_equiv_to(bpe, bpe_oracle))
+  assert_true(!@symprint.to_string(bpe).contains("BoundedParetoEntropy("))
 }
 
 ///|
@@ -320,6 +438,10 @@ test "compat generated discrete parity batch" {
     "(lambda H: P(H <= 3))(stats.Hypergeometric('H', 20, 7, 12))",
   )
   assert_true(expr_equiv_to(h_cdf, h_cdf_oracle))
+  let h_mean = expectation(sh, rvs=[h])
+  assert_true(expr_equiv_to(h_mean, "21/5"))
+  let h_var = variance(sh, rvs=[h])
+  assert_true(expr_equiv_to(h_var, "546/475"))
 
   let f = flory_schulz("F", params=[try! @symcore.rational_from_ints(1, 3)])
   let sf = @symcore.symbol("F")
@@ -464,6 +586,11 @@ test "compat non-fallback symbolic families" {
     "(lambda BB: P(BB <= 2))(stats.BetaBinomial('BB', 10, 2, 3))",
   )
   assert_true(expr_equiv_to(bb_cdf, bb_cdf_oracle))
+  let sbb = @symcore.symbol("BB")
+  let bb_mean = expectation(sbb, rvs=[bb])
+  assert_true(expr_equiv_to(bb_mean, "4"))
+  let bb_var = variance(sbb, rvs=[bb])
+  assert_true(expr_equiv_to(bb_var, "6"))
 
   let d = dirichlet("D", params=[@symcore.int(2), @symcore.int(3)])
   let sd = @symcore.symbol("D")
@@ -473,6 +600,14 @@ test "compat non-fallback symbolic families" {
   let d_var = variance(sd, rvs=[d])
   assert_true(expr_equiv_to(d_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"))
   assert_true(!@symprint.to_string(d_var).contains("DirichletVariance("))
+  let d_entropy = entropy(sd, rvs=[d])
+  assert_true(
+    expr_equiv_to(
+      d_entropy,
+      "log(gamma(2)*gamma(3)/gamma(5)) + 3*digamma(5) - digamma(2) - 2*digamma(3)",
+    ),
+  )
+  assert_true(!@symprint.to_string(d_entropy).contains("DirichletEntropy("))
   let d_density = density(
     d,
     @symcore.function("Tuple", [
@@ -544,6 +679,25 @@ test "compat non-fallback symbolic families" {
   let mvn_var = variance(smvn, rvs=[mvn])
   assert_true(expr_equiv_to(mvn_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
   assert_true(!@symprint.to_string(mvn_var).contains("MultivariateNormalVariance("))
+  let t1 = @symcore.symbol("t1")
+  let t2 = @symcore.symbol("t2")
+  let tvec = @symcore.function("Tuple", [t1, t2])
+  let mvn_mgf = moment_generating_function(smvn, tvec, rvs=[mvn])
+  assert_true(
+    expr_equiv_to(
+      mvn_mgf,
+      "exp(t1 + 2*t2 + t1**2 + t1*t2 + 3*t2**2/2)",
+    ),
+  )
+  assert_true(!@symprint.to_string(mvn_mgf).contains("MultivariateNormalMGF("))
+  let mvn_cf = characteristic_function(smvn, tvec, rvs=[mvn])
+  assert_true(
+    expr_equiv_to(
+      mvn_cf,
+      "exp(I*(t1 + 2*t2) - t1**2 - t1*t2 - 3*t2**2/2)",
+    ),
+  )
+  assert_true(!@symprint.to_string(mvn_cf).contains("MultivariateNormalCF("))
   let mvn_density = density(
     mvn,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
@@ -580,6 +734,31 @@ test "compat non-fallback symbolic families" {
   let mvl_var = variance(smvl, rvs=[mvl])
   assert_true(expr_equiv_to(mvl_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
   assert_true(!@symprint.to_string(mvl_var).contains("MultivariateLaplaceVariance("))
+  let mvl_mgf = moment_generating_function(smvl, tvec, rvs=[mvl])
+  assert_true(
+    expr_equiv_to(
+      mvl_mgf,
+      "exp(t1 + 2*t2)/(1 - t1**2 - t1*t2 - 3*t2**2/2)",
+    ),
+  )
+  assert_true(!@symprint.to_string(mvl_mgf).contains("MultivariateLaplaceMGF("))
+  let mvl_cf = characteristic_function(smvl, tvec, rvs=[mvl])
+  assert_true(
+    expr_equiv_to(
+      mvl_cf,
+      "exp(I*(t1 + 2*t2))/(1 + t1**2 + t1*t2 + 3*t2**2/2)",
+    ),
+  )
+  assert_true(!@symprint.to_string(mvl_cf).contains("MultivariateLaplaceCF("))
+  let mvl_density = density(
+    mvl,
+    @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
+  )
+  let mvl_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda MVL: density(MVL)(1, 2))(stats.MultivariateLaplace('MVL', [1, 2], [[2, 1], [1, 3]]))",
+  )
+  assert_true(expr_equiv_to(mvl_density, mvl_density_oracle))
+  assert_true(!@symprint.to_string(mvl_density).contains("MultivariateLaplaceDensity("))
 
   let ng = normal_gamma(
     "NG",

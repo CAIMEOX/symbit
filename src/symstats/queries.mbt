@@ -324,6 +324,52 @@ fn symbolic_joint_density(
         }
         _ => None
       }
+    "MultivariateLaplace" if params.length() >= 2 =>
+      match (query_tuple2(params[0]), query_matrix2x2(params[1]), query_tuple2(x)) {
+        (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((x1, x2))) => {
+          let det = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s00, s11])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, s10])),
+          ]))
+          let x_quad_num = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s11, @symcore.pow(mu1, @symcore.int(2))])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, mu1, mu2])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s10, mu1, mu2])),
+            eval_arith(@symcore.mul([s00, @symcore.pow(mu2, @symcore.int(2))])),
+          ]))
+          let y_quad_num = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s11, @symcore.pow(x1, @symcore.int(2))])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, x1, x2])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s10, x1, x2])),
+            eval_arith(@symcore.mul([s00, @symcore.pow(x2, @symcore.int(2))])),
+          ]))
+          let linear_num = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s11, x1, mu1])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, x1, mu2])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s10, x2, mu1])),
+            eval_arith(@symcore.mul([s00, x2, mu2])),
+          ]))
+          let x_quad = eval_arith(@symcore.mul([x_quad_num, @symcore.pow(det, @symcore.int(-1))]))
+          let y_quad = eval_arith(@symcore.mul([y_quad_num, @symcore.pow(det, @symcore.int(-1))]))
+          let linear = eval_arith(@symcore.mul([linear_num, @symcore.pow(det, @symcore.int(-1))]))
+          let denom = eval_arith(@symcore.mul([
+            @symcore.symbol("pi"),
+            @symcore.function("sqrt", [det]),
+          ]))
+          Some(eval_arith(@symcore.mul([
+            @symcore.function("exp", [linear]),
+            @symcore.function("besselk", [
+              @symcore.int(0),
+              @symcore.function("sqrt", [eval_arith(@symcore.mul([
+                eval_arith(@symcore.add([@symcore.int(2), x_quad])),
+                y_quad,
+              ]))]),
+            ]),
+            @symcore.pow(denom, @symcore.int(-1)),
+          ])))
+        }
+        _ => None
+      }
     "MultivariateT" if params.length() == 3 =>
       match (query_tuple2(params[0]), query_matrix2x2(params[1]), query_tuple2(x)) {
         (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((x1, x2))) => {

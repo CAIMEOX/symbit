@@ -45,6 +45,14 @@ fn discrete_tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
   discrete_tuple_expr(rows.map(row => discrete_tuple_expr(row)))
 }
 
+///|
+fn discrete_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+  match expr {
+    @symcore.Expr::Function("Tuple", items) => Some(items)
+    _ => None
+  }
+}
+
 fn binomial_bigint(n : Int, k : Int) -> BigInt {
   if k < 0 || k > n {
     return BigInt::from_int(0)
@@ -286,6 +294,75 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
         None
       } else {
         let name = symbolic_tag_name(tag)
+        if name == "Multinomial" && params.length() >= 2 {
+          match discrete_tuple_items(k) {
+            Some(ks) if ks.length() == params.length() - 1 => {
+              let n = params[0]
+              let body_terms : Array[@symcore.Expr] = [@symcore.function("factorial", [n])]
+              let sum_terms : Array[@symcore.Expr] = Array::new()
+              for i in 0..<ks.length() {
+                let ki = ks[i]
+                sum_terms.push(ki)
+                body_terms.push(@symcore.pow(@symcore.function("factorial", [ki]), @symcore.int(-1)))
+                body_terms.push(@symcore.pow(params[i + 1], ki))
+              }
+              let sum_k =
+                if sum_terms.is_empty() {
+                  @symcore.int(0)
+                } else {
+                  eval_arith(@symcore.add(sum_terms))
+                }
+              let body = eval_arith(@symcore.mul(body_terms))
+              return Some(@symcore.function("Piecewise", [
+                discrete_tuple_expr([body, @symcore.function("Eq", [sum_k, n])]),
+                discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+              ]))
+            }
+            _ => ()
+          }
+        }
+        if name == "NegativeMultinomial" && params.length() >= 2 {
+          match discrete_tuple_items(k) {
+            Some(ks) if ks.length() == params.length() - 1 => {
+              let k0 = params[0]
+              let sum_k =
+                if ks.is_empty() {
+                  @symcore.int(0)
+                } else {
+                  eval_arith(@symcore.add(ks))
+                }
+              let ps : Array[@symcore.Expr] = Array::new()
+              for i in 1..<params.length() {
+                ps.push(params[i])
+              }
+              let q = eval_arith(@symcore.add([
+                @symcore.int(1),
+                @symcore.mul([@symcore.int(-1), eval_arith(@symcore.add(ps))]),
+              ]))
+              let term_1 = eval_arith(@symcore.mul([
+                @symcore.function("gamma", [eval_arith(@symcore.add([k0, sum_k]))]),
+                @symcore.pow(@symcore.function("gamma", [k0]), @symcore.int(-1)),
+                @symcore.pow(q, k0),
+              ]))
+              let term_2_factors : Array[@symcore.Expr] = Array::new()
+              for i in 0..<ks.length() {
+                let ki = ks[i]
+                term_2_factors.push(eval_arith(@symcore.mul([
+                  @symcore.pow(params[i + 1], ki),
+                  @symcore.pow(@symcore.function("factorial", [ki]), @symcore.int(-1)),
+                ])))
+              }
+              let term_2 =
+                if term_2_factors.is_empty() {
+                  @symcore.int(1)
+                } else {
+                  eval_arith(@symcore.mul(term_2_factors))
+                }
+              return Some(eval_arith(@symcore.mul([term_1, term_2])))
+            }
+            _ => ()
+          }
+        }
         match symbolic_discrete_generated_pmf(name, params, k) {
           Some(v) => Some(v)
           None => Some(symbolic_discrete_expr(name, "PMF", params, k=k))
@@ -434,6 +511,18 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                 )
                 Some(discrete_tuple_expr(means))
               }
+              "BetaBinomial" if params.length() == 3 =>
+                Some(eval_arith(@symcore.mul([
+                  params[0],
+                  params[1],
+                  @symcore.pow(eval_arith(@symcore.add([params[1], params[2]])), @symcore.int(-1)),
+                ])))
+              "Hypergeometric" if params.length() == 3 =>
+                Some(eval_arith(@symcore.mul([
+                  params[2],
+                  params[1],
+                  @symcore.pow(params[0], @symcore.int(-1)),
+                ])))
               _ => Some(symbolic_discrete_expr(name, "Mean", params))
             }
         }
@@ -536,6 +625,36 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
                   rows.push(row)
                 }
                 Some(discrete_tuple_matrix(rows))
+              }
+              "BetaBinomial" if params.length() == 3 => {
+                let n = params[0]
+                let alpha = params[1]
+                let beta = params[2]
+                let ab = eval_arith(@symcore.add([alpha, beta]))
+                Some(eval_arith(@symcore.mul([
+                  n,
+                  alpha,
+                  beta,
+                  eval_arith(@symcore.add([ab, n])),
+                  @symcore.pow(ab, @symcore.int(-2)),
+                  @symcore.pow(eval_arith(@symcore.add([ab, @symcore.int(1)])), @symcore.int(-1)),
+                ])))
+              }
+              "Hypergeometric" if params.length() == 3 => {
+                let population = params[0]
+                let success = params[1]
+                let draws = params[2]
+                let p = eval_arith(@symcore.mul([
+                  success,
+                  @symcore.pow(population, @symcore.int(-1)),
+                ]))
+                Some(eval_arith(@symcore.mul([
+                  draws,
+                  p,
+                  eval_arith(@symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])])),
+                  eval_arith(@symcore.add([population, @symcore.mul([@symcore.int(-1), draws])])),
+                  @symcore.pow(eval_arith(@symcore.add([population, @symcore.int(-1)])), @symcore.int(-1)),
+                ])))
               }
               _ => Some(symbolic_discrete_expr(name, "Variance", params))
             }
