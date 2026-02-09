@@ -456,6 +456,39 @@ pub fn entropy(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.E
                       @symcore.pow(params[1], @symcore.int(-1)),
                     ]))]),
                   ]))
+                "Levy" if params.length() == 2 => {
+                  let c = params[1]
+                  eval_arith(@symcore.add([
+                    try! @symcore.rational_from_ints(1, 2),
+                    @symcore.mul([
+                      try! @symcore.rational_from_ints(3, 2),
+                      @symcore.symbol("EulerGamma"),
+                    ]),
+                    @symcore.mul([
+                      try! @symcore.rational_from_ints(1, 2),
+                      @symcore.function("log", [eval_arith(@symcore.mul([
+                        @symcore.int(16),
+                        @symcore.symbol("pi"),
+                        @symcore.pow(c, @symcore.int(2)),
+                      ]))]),
+                    ]),
+                  ]))
+                }
+                "Gompertz" if params.length() == 2 => {
+                  let b = params[0]
+                  let eta = params[1]
+                  eval_arith(@symcore.add([
+                    @symcore.int(1),
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      @symcore.function("log", [eval_arith(@symcore.mul([b, eta]))]),
+                    ]),
+                    @symcore.mul([
+                      @symcore.function("exp", [eta]),
+                      @symcore.function("Ei", [eval_arith(@symcore.mul([@symcore.int(-1), eta]))]),
+                    ]),
+                  ]))
+                }
                 "Lomax" if params.length() == 2 =>
                   eval_arith(@symcore.add([
                     @symcore.int(1),
@@ -928,6 +961,46 @@ pub fn quantile(
                         ])),
                         q,
                       ),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Gompertz" if params.length() == 2 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.mul([
+                      @symcore.pow(params[0], @symcore.int(-1)),
+                      @symcore.function("log", [eval_arith(@symcore.add([
+                        @symcore.int(1),
+                        @symcore.mul([
+                          @symcore.int(-1),
+                          @symcore.function("log", [eval_arith(@symcore.add([
+                            @symcore.int(1),
+                            @symcore.mul([@symcore.int(-1), q]),
+                          ]))]),
+                          @symcore.pow(params[1], @symcore.int(-1)),
+                        ]),
+                      ]))]),
+                    ])),
+                    @symcore.function("And", [
+                      @symcore.function("Ge", [q, @symcore.int(0)]),
+                      @symcore.function("Le", [q, @symcore.int(1)]),
+                    ]),
+                    @symcore.symbol("nan"),
+                  )
+                "Levy" if params.length() == 2 =>
+                  compat_piecewise2(
+                    eval_arith(@symcore.add([
+                      params[0],
+                      @symcore.mul([
+                        params[1],
+                        @symcore.pow(eval_arith(@symcore.mul([
+                          @symcore.int(2),
+                          @symcore.pow(@symcore.function("erfcinv", [q]), @symcore.int(2)),
+                        ])), @symcore.int(-1)),
+                      ]),
                     ])),
                     @symcore.function("And", [
                       @symcore.function("Ge", [q, @symcore.int(0)]),

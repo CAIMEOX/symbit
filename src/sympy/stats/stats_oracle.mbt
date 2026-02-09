@@ -112,7 +112,13 @@ fn sympy_names() -> Array[String] {
     "exp",
     "log",
     "sqrt",
+    "Lambda",
+    "Product",
+    "Sum",
+    "Indexed",
+    "IndexedBase",
     "pi",
+    "I",
     "E",
     "erf",
     "erfinv",
@@ -128,6 +134,9 @@ fn sympy_names() -> Array[String] {
     "oo",
     "S",
     "Matrix",
+    "MatrixSymbol",
+    "Trace",
+    "Integral",
     "Piecewise",
     "Tuple",
   ]
@@ -201,6 +210,7 @@ fn stats_globals() -> @py.PyDict raise {
     "y",
     "z",
     "t",
+    "l",
     "k",
     "n",
     "m",
@@ -230,6 +240,11 @@ fn stats_globals() -> @py.PyDict raise {
     "X",
     "Y",
     "Z",
+    "_H",
+    "_i",
+    "_j",
+    "_k",
+    "_s",
   ] {
     ignore(try? bind_symbol(globals, sym_name))
   }

@@ -161,6 +161,12 @@ pub fn process_transition_probability(
   t0 : @symcore.Expr,
   t1 : @symcore.Expr,
 ) -> @symcore.Expr? {
+  if @symcore.compare_expr(t0, t1) == 0 {
+    return Some(@symcore.function("Piecewise", [
+      @symcore.function("Tuple", [@symcore.int(1), @symcore.function("Eq", [to, from])]),
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+    ]))
+  }
   let delta_t = process_expr_sub(t1, t0)
   let k = eval_arith(process_expr_sub(to, from))
   match proc.kind {

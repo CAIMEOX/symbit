@@ -35,6 +35,16 @@ fn discrete_one_minus(x : @symcore.Expr) -> @symcore.Expr {
   discrete_expr_sub(@symcore.int(1), x)
 }
 
+///|
+fn discrete_tuple_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  @symcore.function("Tuple", items)
+}
+
+///|
+fn discrete_tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
+  discrete_tuple_expr(rows.map(row => discrete_tuple_expr(row)))
+}
+
 fn binomial_bigint(n : Int, k : Int) -> BigInt {
   if k < 0 || k > n {
     return BigInt::from_int(0)
@@ -395,7 +405,37 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
         let name = symbolic_tag_name(tag)
         match generated_mean(name, params) {
           Some(v) => Some(v)
-          None => Some(symbolic_discrete_expr(name, "Mean", params))
+          None =>
+            match name {
+              "Multinomial" if params.length() >= 2 => {
+                let n = params[0]
+                let means : Array[@symcore.Expr] = Array::new()
+                for i in 1..<params.length() {
+                  means.push(eval_arith(@symcore.mul([n, params[i]])))
+                }
+                Some(discrete_tuple_expr(means))
+              }
+              "NegativeMultinomial" if params.length() >= 2 => {
+                let k0 = params[0]
+                let probs : Array[@symcore.Expr] = Array::new()
+                for i in 1..<params.length() {
+                  probs.push(params[i])
+                }
+                let q = eval_arith(@symcore.add([
+                  @symcore.int(1),
+                  @symcore.mul([@symcore.int(-1), eval_arith(@symcore.add(probs))]),
+                ]))
+                let means = probs.map(pi =>
+                  eval_arith(@symcore.mul([
+                    k0,
+                    pi,
+                    @symcore.pow(q, @symcore.int(-1)),
+                  ]))
+                )
+                Some(discrete_tuple_expr(means))
+              }
+              _ => Some(symbolic_discrete_expr(name, "Mean", params))
+            }
         }
       }
     }
@@ -428,7 +468,77 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
         let name = symbolic_tag_name(tag)
         match generated_variance(name, params) {
           Some(v) => Some(v)
-          None => Some(symbolic_discrete_expr(name, "Variance", params))
+          None =>
+            match name {
+              "Multinomial" if params.length() >= 2 => {
+                let n = params[0]
+                let ps : Array[@symcore.Expr] = Array::new()
+                for i in 1..<params.length() {
+                  ps.push(params[i])
+                }
+                let rows : Array[Array[@symcore.Expr]] = Array::new()
+                for i in 0..<ps.length() {
+                  let row : Array[@symcore.Expr] = Array::new()
+                  let pi = ps[i]
+                  for j in 0..<ps.length() {
+                    let pj = ps[j]
+                    if i == j {
+                      row.push(eval_arith(@symcore.mul([
+                        n,
+                        pi,
+                        discrete_one_minus(pi),
+                      ])))
+                    } else {
+                      row.push(eval_arith(@symcore.mul([
+                        @symcore.int(-1),
+                        n,
+                        pi,
+                        pj,
+                      ])))
+                    }
+                  }
+                  rows.push(row)
+                }
+                Some(discrete_tuple_matrix(rows))
+              }
+              "NegativeMultinomial" if params.length() >= 2 => {
+                let k0 = params[0]
+                let ps : Array[@symcore.Expr] = Array::new()
+                for i in 1..<params.length() {
+                  ps.push(params[i])
+                }
+                let q = eval_arith(@symcore.add([
+                  @symcore.int(1),
+                  @symcore.mul([@symcore.int(-1), eval_arith(@symcore.add(ps))]),
+                ]))
+                let rows : Array[Array[@symcore.Expr]] = Array::new()
+                for i in 0..<ps.length() {
+                  let row : Array[@symcore.Expr] = Array::new()
+                  let pi = ps[i]
+                  for j in 0..<ps.length() {
+                    let pj = ps[j]
+                    if i == j {
+                      row.push(eval_arith(@symcore.mul([
+                        k0,
+                        pi,
+                        eval_arith(@symcore.add([q, pi])),
+                        @symcore.pow(q, @symcore.int(-2)),
+                      ])))
+                    } else {
+                      row.push(eval_arith(@symcore.mul([
+                        k0,
+                        pi,
+                        pj,
+                        @symcore.pow(q, @symcore.int(-2)),
+                      ])))
+                    }
+                  }
+                  rows.push(row)
+                }
+                Some(discrete_tuple_matrix(rows))
+              }
+              _ => Some(symbolic_discrete_expr(name, "Variance", params))
+            }
         }
       }
     }

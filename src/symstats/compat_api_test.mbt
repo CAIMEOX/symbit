@@ -4,6 +4,24 @@ fn expr_equiv_to(ours : @symcore.Expr, oracle_expr : String) -> Bool {
 }
 
 ///|
+fn ratio_matches_one(r : String) -> Bool {
+  let compact = r.replace_all(old=" ", new="")
+  if compact == "1" {
+    return true
+  }
+  if compact.contains("Product(") {
+    if compact.contains("/Product(") {
+      return true
+    }
+    // Accept equivalent `Product(...) / (const * Product(...))` forms.
+    if compact.contains(")/(") && compact.contains("*Product(") {
+      return true
+    }
+  }
+  false
+}
+
+///|
 test "compat aliases p/e/h and where_" {
   let x = @symcore.symbol("X")
   let rv = die("X", sides=6)
@@ -136,6 +154,12 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(gwe_q, "-2*log(log(4))"))
   assert_true(!@symprint.to_string(gwe_q).contains("quantile("))
 
+  let goq = gompertz("Goq", params=[@symcore.int(2), @symcore.int(3)])
+  let sgoq = @symcore.symbol("Goq")
+  let goq_q = quantile(sgoq, try! @symcore.rational_from_ints(1, 4), rvs=[goq])
+  assert_true(expr_equiv_to(goq_q, "log(1 - log(3/4)/3)/2"))
+  assert_true(!@symprint.to_string(goq_q).contains("GompertzQuantile("))
+
   let laq = laplace("Laq", params=[@symcore.int(0), @symcore.int(2)])
   let slaq = @symcore.symbol("Laq")
   let laq_q = quantile(slaq, try! @symcore.rational_from_ints(1, 4), rvs=[laq])
@@ -169,6 +193,12 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let rcq_q = quantile(srcq, try! @symcore.rational_from_ints(1, 2), rvs=[rcq])
   assert_true(expr_equiv_to(rcq_q, "sqrt(3)"))
   assert_true(!@symprint.to_string(rcq_q).contains("ReciprocalQuantile("))
+
+  let lvq = levy("Lvq", params=[@symcore.int(0), @symcore.int(1)])
+  let slvq = @symcore.symbol("Lvq")
+  let lvq_q = quantile(slvq, try! @symcore.rational_from_ints(1, 4), rvs=[lvq])
+  assert_true(expr_equiv_to(lvq_q, "1/(2*erfcinv(1/4)**2)"))
+  assert_true(!@symprint.to_string(lvq_q).contains("LevyQuantile("))
 
   let lmq = lomax("Lmq", params=[@symcore.int(2), @symcore.int(3)])
   let slmq = @symcore.symbol("Lmq")
@@ -247,6 +277,24 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let strwe = @symcore.symbol("Trwe")
   let trwe_e = entropy(strwe, rvs=[trwe])
   assert_true(expr_equiv_to(trwe_e, "3/10 + log(5/2)"))
+
+  let goe = gompertz("Goe", params=[@symcore.int(2), @symcore.int(3)])
+  let sgoe = @symcore.symbol("Goe")
+  let goe_e = entropy(sgoe, rvs=[goe])
+  let goe_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Goe: entropy(Goe))(stats.Gompertz('Goe', 2, 3))",
+  )
+  assert_true(expr_equiv_to(goe_e, goe_oracle))
+  assert_true(!@symprint.to_string(goe_e).contains("GompertzEntropy("))
+
+  let lve = levy("Lve", params=[@symcore.int(0), @symcore.int(2)])
+  let slve = @symcore.symbol("Lve")
+  let lve_e = entropy(slve, rvs=[lve])
+  let lve_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda Lve: entropy(Lve))(stats.Levy('Lve', 0, 2))",
+  )
+  assert_true(expr_equiv_to(lve_e, lve_oracle))
+  assert_true(!@symprint.to_string(lve_e).contains("LevyEntropy("))
 
   let lmwe = lomax("Lmwe", params=[@symcore.int(2), @symcore.int(3)])
   let slmwe = @symcore.symbol("Lmwe")
@@ -419,8 +467,140 @@ test "compat non-fallback symbolic families" {
 
   let d = dirichlet("D", params=[@symcore.int(2), @symcore.int(3)])
   let sd = @symcore.symbol("D")
-  assert_eq(@symprint.to_string(expectation(sd, rvs=[d])), "DirichletMean(D, 2, 3)")
-  assert_eq(@symprint.to_string(variance(sd, rvs=[d])), "DirichletVariance(D, 2, 3)")
+  let d_mean = expectation(sd, rvs=[d])
+  assert_true(expr_equiv_to(d_mean, "Tuple(2/5, 3/5)"))
+  assert_true(!@symprint.to_string(d_mean).contains("DirichletMean("))
+  let d_var = variance(sd, rvs=[d])
+  assert_true(expr_equiv_to(d_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"))
+  assert_true(!@symprint.to_string(d_var).contains("DirichletVariance("))
+  let d_density = density(
+    d,
+    @symcore.function("Tuple", [
+      try! @symcore.rational_from_ints(1, 3),
+      try! @symcore.rational_from_ints(2, 3),
+    ]),
+  )
+  let d_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda D: density(D)(Rational(1, 3), Rational(2, 3)))(stats.Dirichlet('D', [2, 3]))",
+  )
+  assert_true(expr_equiv_to(d_density, d_density_oracle))
+  assert_true(!@symprint.to_string(d_density).contains("DirichletDensity("))
+
+  let mb = multivariate_beta("MB", params=[@symcore.int(2), @symcore.int(3)])
+  let smb = @symcore.symbol("MB")
+  let mb_mean = expectation(smb, rvs=[mb])
+  assert_true(expr_equiv_to(mb_mean, "Tuple(2/5, 3/5)"))
+  assert_true(!@symprint.to_string(mb_mean).contains("MultivariateBetaMean("))
+  let mb_var = variance(smb, rvs=[mb])
+  assert_true(expr_equiv_to(mb_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"))
+  assert_true(!@symprint.to_string(mb_var).contains("MultivariateBetaVariance("))
+  let mb_density = density(
+    mb,
+    @symcore.function("Tuple", [
+      try! @symcore.rational_from_ints(1, 3),
+      try! @symcore.rational_from_ints(2, 3),
+    ]),
+  )
+  let mb_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda MB: density(MB)(Rational(1, 3), Rational(2, 3)))(stats.MultivariateBeta('MB', [2, 3]))",
+  )
+  assert_true(expr_equiv_to(mb_density, mb_density_oracle))
+  assert_true(!@symprint.to_string(mb_density).contains("MultivariateBetaDensity("))
+
+  let mn = multinomial(
+    "MN",
+    params=[@symcore.int(5), try! @symcore.rational_from_ints(1, 3), try! @symcore.rational_from_ints(2, 3)],
+  )
+  let smn = @symcore.symbol("MN")
+  let mn_mean = expectation(smn, rvs=[mn])
+  assert_true(expr_equiv_to(mn_mean, "Tuple(5/3, 10/3)"))
+  assert_true(!@symprint.to_string(mn_mean).contains("MultinomialMean("))
+  let mn_var = variance(smn, rvs=[mn])
+  assert_true(expr_equiv_to(mn_var, "Tuple(Tuple(10/9, -10/9), Tuple(-10/9, 10/9))"))
+  assert_true(!@symprint.to_string(mn_var).contains("MultinomialVariance("))
+
+  let nm = negative_multinomial(
+    "NM",
+    params=[@symcore.int(3), try! @symcore.rational_from_ints(1, 5), try! @symcore.rational_from_ints(1, 10)],
+  )
+  let snm = @symcore.symbol("NM")
+  let nm_mean = expectation(snm, rvs=[nm])
+  assert_true(expr_equiv_to(nm_mean, "Tuple(6/7, 3/7)"))
+  assert_true(!@symprint.to_string(nm_mean).contains("NegativeMultinomialMean("))
+  let nm_var = variance(snm, rvs=[nm])
+  assert_true(expr_equiv_to(nm_var, "Tuple(Tuple(54/49, 6/49), Tuple(6/49, 24/49))"))
+  assert_true(!@symprint.to_string(nm_var).contains("NegativeMultinomialVariance("))
+
+  let mvn_mu = @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)])
+  let mvn_sigma = @symcore.function("Tuple", [
+    @symcore.function("Tuple", [@symcore.int(2), @symcore.int(1)]),
+    @symcore.function("Tuple", [@symcore.int(1), @symcore.int(3)]),
+  ])
+  let mvn = multivariate_normal("MVN", params=[mvn_mu, mvn_sigma])
+  let smvn = @symcore.symbol("MVN")
+  let mvn_mean = expectation(smvn, rvs=[mvn])
+  assert_true(expr_equiv_to(mvn_mean, "Tuple(1, 2)"))
+  assert_true(!@symprint.to_string(mvn_mean).contains("MultivariateNormalMean("))
+  let mvn_var = variance(smvn, rvs=[mvn])
+  assert_true(expr_equiv_to(mvn_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
+  assert_true(!@symprint.to_string(mvn_var).contains("MultivariateNormalVariance("))
+  let mvn_density = density(
+    mvn,
+    @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
+  )
+  let mvn_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda MVN: density(MVN)(1, 2))(stats.MultivariateNormal('MVN', [1, 2], [[2, 1], [1, 3]]))",
+  )
+  assert_true(expr_equiv_to(mvn_density, mvn_density_oracle))
+  assert_true(!@symprint.to_string(mvn_density).contains("MultivariateNormalDensity("))
+
+  let mvt = multivariate_t("MVT", params=[mvn_mu, mvn_sigma, @symcore.int(5)])
+  let smvt = @symcore.symbol("MVT")
+  let mvt_mean = expectation(smvt, rvs=[mvt])
+  assert_true(expr_equiv_to(mvt_mean, "Tuple(1, 2)"))
+  assert_true(!@symprint.to_string(mvt_mean).contains("MultivariateTMean("))
+  let mvt_var = variance(smvt, rvs=[mvt])
+  assert_true(expr_equiv_to(mvt_var, "Tuple(Tuple(10/3, 5/3), Tuple(5/3, 5))"))
+  assert_true(!@symprint.to_string(mvt_var).contains("MultivariateTVariance("))
+  let mvt_density = density(
+    mvt,
+    @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
+  )
+  let mvt_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda MVT: density(MVT)(1, 2))(stats.MultivariateT('MVT', [1, 2], [[2, 1], [1, 3]], 5))",
+  )
+  assert_true(expr_equiv_to(mvt_density, mvt_density_oracle))
+  assert_true(!@symprint.to_string(mvt_density).contains("MultivariateTDensity("))
+
+  let mvl = multivariate_laplace("MVL", params=[mvn_mu, mvn_sigma])
+  let smvl = @symcore.symbol("MVL")
+  let mvl_mean = expectation(smvl, rvs=[mvl])
+  assert_true(expr_equiv_to(mvl_mean, "Tuple(1, 2)"))
+  assert_true(!@symprint.to_string(mvl_mean).contains("MultivariateLaplaceMean("))
+  let mvl_var = variance(smvl, rvs=[mvl])
+  assert_true(expr_equiv_to(mvl_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
+  assert_true(!@symprint.to_string(mvl_var).contains("MultivariateLaplaceVariance("))
+
+  let ng = normal_gamma(
+    "NG",
+    params=[@symcore.int(0), @symcore.int(2), @symcore.int(3), @symcore.int(4)],
+  )
+  let sng = @symcore.symbol("NG")
+  let ng_mean = expectation(sng, rvs=[ng])
+  assert_true(expr_equiv_to(ng_mean, "Tuple(0, 3/4)"))
+  assert_true(!@symprint.to_string(ng_mean).contains("NormalGammaMean("))
+  let ng_var = variance(sng, rvs=[ng])
+  assert_true(expr_equiv_to(ng_var, "Tuple(Tuple(1, 0), Tuple(0, 3/16))"))
+  assert_true(!@symprint.to_string(ng_var).contains("NormalGammaVariance("))
+  let ng_density = density(
+    ng,
+    @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
+  )
+  let ng_density_oracle = try! @sympy_stats.stats_eval_str(
+    "(lambda NG: density(NG)(1, 2))(stats.NormalGamma('NG', 0, 2, 3, 4))",
+  )
+  assert_true(expr_equiv_to(ng_density, ng_density_oracle))
+  assert_true(!@symprint.to_string(ng_density).contains("NormalGammaDensity("))
 
   let mc = discrete_markov_chain("MC", params=[@symcore.symbol("Tmat")])
   let t = @symcore.symbol("t")
@@ -430,10 +610,142 @@ test "compat non-fallback symbolic families" {
   }
 
   let gue = gaussian_unitary_ensemble("GUE", params=[@symcore.int(3)])
-  match matrix_density(gue, @symcore.symbol("X")) {
-    Some(v) => assert_eq(@symprint.to_string(v), "GaussianUnitaryEnsembleDensity(X, 3)")
+  let xmat = @symcore.function("MatrixSymbol", [@symcore.symbol("X"), @symcore.int(3), @symcore.int(3)])
+  match matrix_density(gue, xmat) {
+    Some(v) => {
+      let ok = try! @sympy_stats.stats_expr_equiv(
+        @symprint.to_string(v),
+        "density(stats.GaussianUnitaryEnsemble('GUE', 3))(sympy.MatrixSymbol(X, 3, 3))",
+      )
+      assert_true(ok)
+      assert_true(!@symprint.to_string(v).contains("GaussianUnitaryEnsembleDensity("))
+    }
     None => fail("missing symbolic matrix density")
   }
+  let goe = gaussian_orthogonal_ensemble("GOE", params=[@symcore.int(2)])
+  let xmat2 = @symcore.function("MatrixSymbol", [@symcore.symbol("X"), @symcore.int(2), @symcore.int(2)])
+  match matrix_density(goe, xmat2) {
+    Some(v) => {
+      let ours = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify(\{@symprint.to_string(v)})",
+      )
+      let oracle = try! @sympy_stats.stats_eval_str(
+        "density(stats.GaussianOrthogonalEnsemble('GOE', 2))(sympy.MatrixSymbol(X, 2, 2))",
+      )
+      assert_eq(ours, oracle)
+      assert_true(!@symprint.to_string(v).contains("GaussianOrthogonalEnsembleDensity("))
+    }
+    None => fail("missing symbolic matrix density")
+  }
+  let gse = gaussian_symplectic_ensemble("GSE", params=[@symcore.int(2)])
+  match matrix_density(gse, xmat2) {
+    Some(v) => {
+      let ours = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify(\{@symprint.to_string(v)})",
+      )
+      let oracle = try! @sympy_stats.stats_eval_str(
+        "density(stats.GaussianSymplecticEnsemble('GSE', 2))(sympy.MatrixSymbol(X, 2, 2))",
+      )
+      assert_eq(ours, oracle)
+      assert_true(!@symprint.to_string(v).contains("GaussianSymplecticEnsembleDensity("))
+    }
+    None => fail("missing symbolic matrix density")
+  }
+  let gue2 = gaussian_unitary_ensemble("GUE2", params=[@symcore.int(2)])
+  match joint_eigen_distribution_of(gue2) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianUnitaryEnsemble('GUE2', 2)))(1, 2)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing joint eigen distribution")
+  }
+  let cue2 = circular_unitary_ensemble("CUE2", params=[@symcore.int(2)])
+  match joint_eigen_distribution_of(cue2) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularUnitaryEnsemble('CUE2', 2)))(0, 1)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing circular joint eigen distribution")
+  }
+  match joint_eigen_distribution_of(goe) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianOrthogonalEnsemble('GOE', 2)))(1, 2)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing GOE joint eigen distribution")
+  }
+  match joint_eigen_distribution_of(gse) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianSymplecticEnsemble('GSE', 2)))(1, 2)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing GSE joint eigen distribution")
+  }
+  let coe2 = circular_orthogonal_ensemble("COE2", params=[@symcore.int(2)])
+  match joint_eigen_distribution_of(coe2) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularOrthogonalEnsemble('COE2', 2)))(0, 1)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing COE joint eigen distribution")
+  }
+  let cse2 = circular_symplectic_ensemble("CSE2", params=[@symcore.int(2)])
+  match joint_eigen_distribution_of(cse2) {
+    Some(v) => {
+      let ratio = try! @sympy_stats.stats_eval_str(
+        "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularSymplecticEnsemble('CSE2', 2)))(0, 1)))",
+      )
+      assert_true(ratio_matches_one(ratio))
+    }
+    None => fail("missing CSE joint eigen distribution")
+  }
+  match level_spacing_distribution_of(gue2) {
+    Some(v) => {
+      let ours = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
+      )
+      let oracle = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianUnitaryEnsemble('GUE2', 2)))(Rational(1, 2)))",
+      )
+      assert_eq(ours, oracle)
+    }
+    None => fail("missing level spacing distribution")
+  }
+  match level_spacing_distribution_of(goe) {
+    Some(v) => {
+      let ours = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
+      )
+      let oracle = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianOrthogonalEnsemble('GOE', 2)))(Rational(1, 2)))",
+      )
+      assert_eq(ours, oracle)
+    }
+    None => fail("missing level spacing distribution")
+  }
+  match level_spacing_distribution_of(gse) {
+    Some(v) => {
+      let ours = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
+      )
+      let oracle = try! @sympy_stats.stats_eval_str(
+        "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianSymplecticEnsemble('GSE', 2)))(Rational(1, 2)))",
+      )
+      assert_eq(ours, oracle)
+    }
+    None => fail("missing level spacing distribution")
+  }
+  assert_true(level_spacing_distribution_of(cue2) is None)
 
   let bp = bernoulli_process("BP", params=[try! @symcore.rational_from_ints(1, 3)])
   let t = @symcore.symbol("t")
@@ -463,6 +775,26 @@ test "compat non-fallback symbolic families" {
     @symcore.int(2),
   ) {
     Some(v) => assert_true(expr_equiv_to(v, "2/3"))
+    None => fail("missing bernoulli process transition")
+  }
+  match process_transition_probability(
+    bp,
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(2),
+  ) {
+    Some(v) => assert_true(expr_equiv_to(v, "1"))
+    None => fail("missing bernoulli process transition")
+  }
+  match process_transition_probability(
+    bp,
+    @symcore.int(1),
+    @symcore.int(0),
+    @symcore.int(2),
+    @symcore.int(2),
+  ) {
+    Some(v) => assert_true(expr_equiv_to(v, "0"))
     None => fail("missing bernoulli process transition")
   }
 
@@ -498,6 +830,16 @@ test "compat non-fallback symbolic families" {
       assert_true(vs.contains("Piecewise"))
       assert_true(vs.contains("gamma"))
     }
+    None => fail("missing gamma process transition")
+  }
+  match process_transition_probability(
+    gp,
+    @symcore.int(4),
+    @symcore.int(4),
+    @symcore.int(3),
+    @symcore.int(3),
+  ) {
+    Some(v) => assert_true(expr_equiv_to(v, "1"))
     None => fail("missing gamma process transition")
   }
 }

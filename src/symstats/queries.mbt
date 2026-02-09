@@ -30,6 +30,350 @@ fn symbolic_query_expr(
 }
 
 ///|
+fn tuple_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  @symcore.function("Tuple", items)
+}
+
+///|
+fn tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
+  tuple_expr(rows.map(row => tuple_expr(row)))
+}
+
+///|
+fn scale_tuple_matrix(
+  mat : @symcore.Expr,
+  scale : @symcore.Expr,
+) -> @symcore.Expr {
+  match mat {
+    @symcore.Expr::Function("Tuple", rows) =>
+      tuple_expr(rows.map(row =>
+        match row {
+          @symcore.Expr::Function("Tuple", cols) =>
+            tuple_expr(cols.map(col => eval_arith(@symcore.mul([scale, col]))))
+          _ => eval_arith(@symcore.mul([scale, row]))
+        }
+      ))
+    _ => eval_arith(@symcore.mul([scale, mat]))
+  }
+}
+
+///|
+fn symbolic_joint_mean(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match name {
+    "Dirichlet" | "MultivariateBeta" if params.length() >= 2 => {
+      let total = eval_arith(@symcore.add(params))
+      let means = params.map(a =>
+        eval_arith(@symcore.mul([a, @symcore.pow(total, @symcore.int(-1))]))
+      )
+      Some(tuple_expr(means))
+    }
+    "Multinomial" if params.length() >= 2 => {
+      let n = params[0]
+      let ps : Array[@symcore.Expr] = Array::new()
+      for i in 1..<params.length() {
+        ps.push(params[i])
+      }
+      Some(tuple_expr(ps.map(p => eval_arith(@symcore.mul([n, p])))))
+    }
+    "MultivariateT" if params.length() == 3 => Some(params[0])
+    "MultivariateLaplace" if params.length() >= 2 => Some(params[0])
+    "MultivariateNormal" if params.length() >= 1 => Some(params[0])
+    "NormalGamma" if params.length() == 4 =>
+      Some(tuple_expr([
+        params[0],
+        eval_arith(@symcore.mul([
+          params[2],
+          @symcore.pow(params[3], @symcore.int(-1)),
+        ])),
+      ]))
+    _ => None
+  }
+}
+
+///|
+fn symbolic_joint_variance(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match name {
+    "Dirichlet" | "MultivariateBeta" if params.length() >= 2 => {
+      let total = eval_arith(@symcore.add(params))
+      let denom = eval_arith(@symcore.mul([
+        @symcore.pow(total, @symcore.int(2)),
+        @symcore.add([total, @symcore.int(1)]),
+      ]))
+      let rows : Array[Array[@symcore.Expr]] = Array::new()
+      for i in 0..<params.length() {
+        let ai = params[i]
+        let row : Array[@symcore.Expr] = Array::new()
+        for j in 0..<params.length() {
+          let aj = params[j]
+          if i == j {
+            row.push(eval_arith(@symcore.mul([
+              ai,
+              @symcore.add([total, @symcore.mul([@symcore.int(-1), ai])]),
+              @symcore.pow(denom, @symcore.int(-1)),
+            ])))
+          } else {
+            row.push(eval_arith(@symcore.mul([
+              @symcore.int(-1),
+              ai,
+              aj,
+              @symcore.pow(denom, @symcore.int(-1)),
+            ])))
+          }
+        }
+        rows.push(row)
+      }
+      Some(tuple_matrix(rows))
+    }
+    "Multinomial" if params.length() >= 2 => {
+      let n = params[0]
+      let ps : Array[@symcore.Expr] = Array::new()
+      for i in 1..<params.length() {
+        ps.push(params[i])
+      }
+      let rows : Array[Array[@symcore.Expr]] = Array::new()
+      for i in 0..<ps.length() {
+        let pi = ps[i]
+        let row : Array[@symcore.Expr] = Array::new()
+        for j in 0..<ps.length() {
+          let pj = ps[j]
+          if i == j {
+            row.push(eval_arith(@symcore.mul([
+              n,
+              pi,
+              @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), pi])]),
+            ])))
+          } else {
+            row.push(eval_arith(@symcore.mul([
+              @symcore.int(-1),
+              n,
+              pi,
+              pj,
+            ])))
+          }
+        }
+        rows.push(row)
+      }
+      Some(tuple_matrix(rows))
+    }
+    "MultivariateT" if params.length() == 3 => {
+      let sigma = params[1]
+      let nu = params[2]
+      let scale = eval_arith(@symcore.mul([
+        nu,
+        @symcore.pow(@symcore.add([nu, @symcore.int(-2)]), @symcore.int(-1)),
+      ]))
+      Some(scale_tuple_matrix(sigma, scale))
+    }
+    "MultivariateLaplace" if params.length() >= 2 => Some(params[1])
+    "MultivariateNormal" if params.length() >= 2 => Some(params[1])
+    "NormalGamma" if params.length() == 4 => {
+      let lamda = params[1]
+      let alpha = params[2]
+      let beta = params[3]
+      let var_x = eval_arith(@symcore.mul([
+        beta,
+        @symcore.pow(lamda, @symcore.int(-1)),
+        @symcore.pow(@symcore.add([alpha, @symcore.int(-1)]), @symcore.int(-1)),
+      ]))
+      let var_tau = eval_arith(@symcore.mul([
+        alpha,
+        @symcore.pow(beta, @symcore.int(-2)),
+      ]))
+      Some(tuple_matrix([
+        [var_x, @symcore.int(0)],
+        [@symcore.int(0), var_tau],
+      ]))
+    }
+    _ => None
+  }
+}
+
+///|
+fn query_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+  match expr {
+    @symcore.Expr::Function("Tuple", items) => Some(items)
+    _ => None
+  }
+}
+
+///|
+fn query_tuple2(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)? {
+  match query_tuple_items(expr) {
+    Some(items) if items.length() == 2 => Some((items[0], items[1]))
+    _ => None
+  }
+}
+
+///|
+fn query_matrix2x2(
+  expr : @symcore.Expr,
+) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)? {
+  match query_tuple_items(expr) {
+    Some(rows) if rows.length() == 2 =>
+      match (query_tuple_items(rows[0]), query_tuple_items(rows[1])) {
+        (Some(r0), Some(r1)) if r0.length() == 2 && r1.length() == 2 =>
+          Some((r0[0], r0[1], r1[0], r1[1]))
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn query_product_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  if items.is_empty() {
+    @symcore.int(1)
+  } else {
+    eval_arith(@symcore.mul(items))
+  }
+}
+
+///|
+fn symbolic_joint_density(
+  name : String,
+  params : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr? {
+  match name {
+    "Dirichlet" | "MultivariateBeta" if params.length() >= 2 =>
+      match query_tuple_items(x) {
+        Some(xs) if xs.length() == params.length() => {
+          let alpha_sum = eval_arith(@symcore.add(params))
+          let denom = query_product_expr(params.map(a => @symcore.function("gamma", [a])))
+          let power_terms : Array[@symcore.Expr] = Array::new()
+          for i in 0..<params.length() {
+            power_terms.push(eval_arith(@symcore.pow(
+              xs[i],
+              eval_arith(@symcore.add([params[i], @symcore.int(-1)])),
+            )))
+          }
+          Some(eval_arith(@symcore.mul([
+            @symcore.function("gamma", [alpha_sum]),
+            @symcore.pow(denom, @symcore.int(-1)),
+            query_product_expr(power_terms),
+          ])))
+        }
+        _ => None
+      }
+    "NormalGamma" if params.length() == 4 =>
+      match query_tuple2(x) {
+        Some((xv, tau)) => {
+          let mu = params[0]
+          let lamda = params[1]
+          let alpha = params[2]
+          let beta = params[3]
+          let half = try! @symcore.rational_from_ints(1, 2)
+          let tau_power = eval_arith(@symcore.pow(
+            tau,
+            eval_arith(@symcore.add([alpha, @symcore.mul([@symcore.int(-1), half])])),
+          ))
+          let norm = eval_arith(@symcore.mul([
+            @symcore.function("sqrt", [eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")]))]),
+            @symcore.function("gamma", [alpha]),
+          ]))
+          let quad = eval_arith(@symcore.mul([
+            @symcore.int(-1),
+            half,
+            lamda,
+            tau,
+            @symcore.pow(eval_arith(query_expr_sub(xv, mu)), @symcore.int(2)),
+          ]))
+          Some(eval_arith(@symcore.mul([
+            @symcore.pow(beta, alpha),
+            @symcore.function("sqrt", [lamda]),
+            @symcore.pow(norm, @symcore.int(-1)),
+            tau_power,
+            @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), beta, tau]))]),
+            @symcore.function("exp", [quad]),
+          ])))
+        }
+        _ => None
+      }
+    "MultivariateNormal" if params.length() >= 2 =>
+      match (query_tuple2(params[0]), query_matrix2x2(params[1]), query_tuple2(x)) {
+        (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((x1, x2))) => {
+          let det = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s00, s11])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, s10])),
+          ]))
+          let dx1 = eval_arith(query_expr_sub(x1, mu1))
+          let dx2 = eval_arith(query_expr_sub(x2, mu2))
+          let quad_num = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s11, @symcore.pow(dx1, @symcore.int(2))])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, dx1, dx2])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s10, dx1, dx2])),
+            eval_arith(@symcore.mul([s00, @symcore.pow(dx2, @symcore.int(2))])),
+          ]))
+          let half = try! @symcore.rational_from_ints(1, 2)
+          let quad = eval_arith(@symcore.mul([quad_num, @symcore.pow(det, @symcore.int(-1))]))
+          let norm = eval_arith(@symcore.mul([
+            @symcore.int(2),
+            @symcore.symbol("pi"),
+            @symcore.function("sqrt", [det]),
+          ]))
+          Some(eval_arith(@symcore.mul([
+            @symcore.function("exp", [eval_arith(@symcore.mul([@symcore.int(-1), half, quad]))]),
+            @symcore.pow(norm, @symcore.int(-1)),
+          ])))
+        }
+        _ => None
+      }
+    "MultivariateT" if params.length() == 3 =>
+      match (query_tuple2(params[0]), query_matrix2x2(params[1]), query_tuple2(x)) {
+        (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((x1, x2))) => {
+          let nu = params[2]
+          let det = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s00, s11])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, s10])),
+          ]))
+          let dx1 = eval_arith(query_expr_sub(x1, mu1))
+          let dx2 = eval_arith(query_expr_sub(x2, mu2))
+          let quad_num = eval_arith(@symcore.add([
+            eval_arith(@symcore.mul([s11, @symcore.pow(dx1, @symcore.int(2))])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s01, dx1, dx2])),
+            eval_arith(@symcore.mul([@symcore.int(-1), s10, dx1, dx2])),
+            eval_arith(@symcore.mul([s00, @symcore.pow(dx2, @symcore.int(2))])),
+          ]))
+          let half = try! @symcore.rational_from_ints(1, 2)
+          let nu_half = eval_arith(@symcore.mul([half, nu]))
+          let shape = eval_arith(@symcore.add([nu_half, @symcore.int(1)]))
+          let quad = eval_arith(@symcore.mul([quad_num, @symcore.pow(det, @symcore.int(-1))]))
+          let coeff = eval_arith(@symcore.mul([
+            @symcore.function("gamma", [shape]),
+            @symcore.pow(
+              eval_arith(@symcore.mul([
+                @symcore.function("gamma", [nu_half]),
+                nu,
+                @symcore.symbol("pi"),
+                @symcore.function("sqrt", [det]),
+              ])),
+              @symcore.int(-1),
+            ),
+          ]))
+          Some(eval_arith(@symcore.mul([
+            coeff,
+            @symcore.pow(
+              eval_arith(@symcore.add([
+                @symcore.int(1),
+                eval_arith(@symcore.mul([quad, @symcore.pow(nu, @symcore.int(-1))])),
+              ])),
+              eval_arith(@symcore.mul([@symcore.int(-1), shape])),
+            ),
+          ])))
+        }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
 fn probability_joint_independent(
   vars : Array[RandomVar],
   event : Event,
@@ -156,10 +500,19 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
       }
     RVKind::Symbolic(tag~, params~) =>
       if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
-        match (discrete_mean(rv), continuous_mean(rv)) {
-          (Some(v), _) => Some(v)
-          (_, Some(v)) => Some(v)
-          _ => Some(symbolic_query_expr(symbolic_tag_name(tag), "Mean", @symcore.symbol(rv.name), params))
+        let name = symbolic_tag_name(tag)
+        if symbolic_tag_family(tag) == "J" {
+          match symbolic_joint_mean(name, params) {
+            Some(v) => Some(v)
+            None =>
+              Some(symbolic_query_expr(name, "Mean", @symcore.symbol(rv.name), params))
+          }
+        } else {
+          match (discrete_mean(rv), continuous_mean(rv)) {
+            (Some(v), _) => Some(v)
+            (_, Some(v)) => Some(v)
+            _ => Some(symbolic_query_expr(name, "Mean", @symcore.symbol(rv.name), params))
+          }
         }
       } else {
         None
@@ -272,10 +625,21 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
     RVKind::Exponential(..) |
     RVKind::Gamma(..) => continuous_variance(rv)
     RVKind::Symbolic(tag~, params~) =>
-      match (discrete_variance(rv), continuous_variance(rv)) {
-        (Some(v), _) => Some(v)
-        (_, Some(v)) => Some(v)
-        _ => Some(symbolic_query_expr(symbolic_tag_name(tag), "Variance", @symcore.symbol(rv.name), params))
+      {
+        let name = symbolic_tag_name(tag)
+        if symbolic_tag_family(tag) == "J" {
+          match symbolic_joint_variance(name, params) {
+            Some(v) => Some(v)
+            None =>
+              Some(symbolic_query_expr(name, "Variance", @symcore.symbol(rv.name), params))
+          }
+        } else {
+          match (discrete_variance(rv), continuous_variance(rv)) {
+            (Some(v), _) => Some(v)
+            (_, Some(v)) => Some(v)
+            _ => Some(symbolic_query_expr(name, "Variance", @symcore.symbol(rv.name), params))
+          }
+        }
       }
     RVKind::Compound(items) => {
       let terms : Array[@symcore.Expr] = Array::new()
@@ -373,8 +737,17 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
         Some(v) => v
         None =>
           match rv.kind {
-            RVKind::Symbolic(tag~, params~) =>
-              symbolic_query_expr(symbolic_tag_name(tag), "Density", x, params)
+            RVKind::Symbolic(tag~, params~) => {
+              let name = symbolic_tag_name(tag)
+              if symbolic_tag_family(tag) == "J" {
+                match symbolic_joint_density(name, params, x) {
+                  Some(v) => v
+                  None => symbolic_query_expr(name, "Density", x, params)
+                }
+              } else {
+                symbolic_query_expr(name, "Density", x, params)
+              }
+            }
             _ => @symcore.function("density", [@symcore.symbol(rv.name), x])
           }
       }
