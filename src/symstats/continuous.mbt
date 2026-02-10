@@ -817,6 +817,106 @@ fn symbolic_cdf_expr(
 }
 
 ///|
+fn symbolic_continuous_mean_bounds(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> (@symcore.Expr, @symcore.Expr)? {
+  match name {
+    "Benini" if params.length() == 3 => Some((params[2], @symcore.symbol("oo")))
+    "BetaNoncentral" if params.length() == 3 => Some((@symcore.int(0), @symcore.int(1)))
+    "BetaPrime" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "ChiNoncentral" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "Dagum" if params.length() == 3 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "Davis" if params.length() == 3 => Some((params[2], @symcore.symbol("oo")))
+    "ExponentialPower" if params.length() == 3 =>
+      Some((eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])), @symcore.symbol("oo")))
+    "FDistribution" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "FisherZ" if params.length() == 2 =>
+      Some((eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])), @symcore.symbol("oo")))
+    "Frechet" if params.length() == 1 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "GammaInverse" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "Levy" if params.length() == 2 => Some((params[0], @symcore.symbol("oo")))
+    "LogCauchy" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "LogitNormal" if params.length() == 2 => Some((@symcore.int(0), @symcore.int(1)))
+    "Lomax" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "Maxwell" if params.length() == 1 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "Nakagami" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "PowerFunction" if params.length() == 3 => Some((params[1], params[2]))
+    "QuadraticU" if params.length() == 2 => Some((params[0], params[1]))
+    "ShiftedGompertz" if params.length() == 2 => Some((@symcore.int(0), @symcore.symbol("oo")))
+    "VonMises" if params.length() == 2 =>
+      Some((@symcore.int(0), eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")]))))
+    _ => None
+  }
+}
+
+///|
+fn symbolic_continuous_mean_via_integral(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match symbolic_continuous_mean_bounds(name, params) {
+    Some((lower, upper)) => {
+      let dummy = @symcore.symbol("_x")
+      let density_expr =
+        match symbolic_continuous_density(name, params, dummy) {
+          Some(v) => v
+          None =>
+            match generated_density(name, params, dummy) {
+              Some(v) => v
+              None => symbolic_density_expr(name, params, dummy)
+            }
+        }
+      Some(eval_arith(@symcore.function("Integral", [
+        eval_arith(@symcore.mul([dummy, density_expr])),
+        @symcore.function("Tuple", [dummy, lower, upper]),
+      ])))
+    }
+    None => None
+  }
+}
+
+///|
+fn symbolic_continuous_variance_via_integral(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match symbolic_continuous_mean_bounds(name, params) {
+    Some((lower, upper)) => {
+      let tag = "C:\{name}"
+      let rv = random_var("_X", RVKind::Symbolic(tag~, params~))
+      let mean_expr =
+        match continuous_mean(rv) {
+          Some(v) => v
+          None => symbolic_stat_expr(name, "Mean", params)
+        }
+      let dummy = @symcore.symbol("_x")
+      let density_expr =
+        match continuous_density(rv, dummy) {
+          Some(v) => v
+          None =>
+            match symbolic_continuous_density(name, params, dummy) {
+              Some(v) => v
+              None =>
+                match generated_density(name, params, dummy) {
+                  Some(v) => v
+                  None => symbolic_density_expr(name, params, dummy)
+                }
+            }
+        }
+      Some(eval_arith(@symcore.function("Integral", [
+        eval_arith(@symcore.mul([
+          @symcore.pow(cont_expr_sub(dummy, mean_expr), @symcore.int(2)),
+          density_expr,
+        ])),
+        @symcore.function("Tuple", [dummy, lower, upper]),
+      ])))
+    }
+    None => None
+  }
+}
+
+///|
 fn symbolic_stat_expr(
   name : String,
   suffix : String,
@@ -1036,85 +1136,89 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
           Some(v) => Some(cont_guard_params(name, params, v))
           None => {
             let raw =
-              match name {
-                "Arcsin" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    try! @symcore.rational_from_ints(1, 2),
-                    @symcore.add([params[0], params[1]]),
-                  ]))
-                "Uniform" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    try! @symcore.rational_from_ints(1, 2),
-                    @symcore.add([params[0], params[1]]),
-                  ]))
-                "Beta" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    params[0],
-                    @symcore.pow(@symcore.add([params[0], params[1]]), @symcore.int(-1)),
-                  ]))
-                "Kumaraswamy" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    params[1],
-                    @symcore.function("beta", [
-                      eval_arith(@symcore.add([
-                        @symcore.int(1),
-                        @symcore.pow(params[0], @symcore.int(-1)),
-                      ])),
-                      params[1],
-                    ]),
-                  ]))
-                "Laplace" if params.length() == 2 => params[0]
-                "Cauchy" if params.length() == 2 => @symcore.symbol("nan")
-                "Pareto" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    params[1],
-                    params[0],
-                    @symcore.pow(@symcore.add([params[1], @symcore.int(-1)]), @symcore.int(-1)),
-                  ]))
-                "Rayleigh" if params.length() == 1 =>
-                  eval_arith(@symcore.mul([
-                    params[0],
-                    @symcore.function("sqrt", [@symcore.mul([@symcore.symbol("pi"), try! @symcore.rational_from_ints(1, 2)])]),
-                  ]))
-                "LogNormal" if params.length() == 2 =>
-                  eval_arith(@symcore.function("exp", [
-                    eval_arith(@symcore.add([
-                      params[0],
-                      @symcore.mul([try! @symcore.rational_from_ints(1, 2), @symcore.pow(params[1], @symcore.int(2))]),
-                    ])),
-                  ]))
-                "Weibull" if params.length() == 2 =>
-                  eval_arith(@symcore.mul([
-                    params[0],
-                    @symcore.function("gamma", [
-                      eval_arith(@symcore.add([
-                        @symcore.int(1),
-                        @symcore.pow(params[1], @symcore.int(-1)),
-                      ])),
-                    ]),
-                  ]))
-                "StudentT" if params.length() == 1 => @symcore.int(0)
-                "Trapezoidal" if params.length() == 4 => {
-                  let a = params[0]
-                  let b = params[1]
-                  let c = params[2]
-                  let d = params[3]
-                  eval_arith(@symcore.mul([
-                    try! @symcore.rational_from_ints(1, 3),
-                    eval_arith(@symcore.add([
-                      @symcore.pow(eval_arith(@symcore.add([a, b, @symcore.mul([@symcore.int(-1), c]), @symcore.mul([@symcore.int(-1), d])])), @symcore.int(-1)),
-                    ])),
-                    eval_arith(@symcore.add([
-                      @symcore.pow(a, @symcore.int(2)),
-                      @symcore.mul([a, b]),
-                      @symcore.pow(b, @symcore.int(2)),
-                      @symcore.mul([@symcore.int(-1), @symcore.pow(c, @symcore.int(2))]),
-                      @symcore.mul([@symcore.int(-1), c, d]),
-                      @symcore.mul([@symcore.int(-1), @symcore.pow(d, @symcore.int(2))]),
-                    ])),
-                  ]))
-                }
-                _ => symbolic_stat_expr(name, "Mean", params)
+              match symbolic_continuous_mean_via_integral(name, params) {
+                Some(v) => v
+                None =>
+                  match name {
+                    "Arcsin" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        try! @symcore.rational_from_ints(1, 2),
+                        @symcore.add([params[0], params[1]]),
+                      ]))
+                    "Uniform" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        try! @symcore.rational_from_ints(1, 2),
+                        @symcore.add([params[0], params[1]]),
+                      ]))
+                    "Beta" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        params[0],
+                        @symcore.pow(@symcore.add([params[0], params[1]]), @symcore.int(-1)),
+                      ]))
+                    "Kumaraswamy" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        params[1],
+                        @symcore.function("beta", [
+                          eval_arith(@symcore.add([
+                            @symcore.int(1),
+                            @symcore.pow(params[0], @symcore.int(-1)),
+                          ])),
+                          params[1],
+                        ]),
+                      ]))
+                    "Laplace" if params.length() == 2 => params[0]
+                    "Cauchy" if params.length() == 2 => @symcore.symbol("nan")
+                    "Pareto" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        params[1],
+                        params[0],
+                        @symcore.pow(@symcore.add([params[1], @symcore.int(-1)]), @symcore.int(-1)),
+                      ]))
+                    "Rayleigh" if params.length() == 1 =>
+                      eval_arith(@symcore.mul([
+                        params[0],
+                        @symcore.function("sqrt", [@symcore.mul([@symcore.symbol("pi"), try! @symcore.rational_from_ints(1, 2)])]),
+                      ]))
+                    "LogNormal" if params.length() == 2 =>
+                      eval_arith(@symcore.function("exp", [
+                        eval_arith(@symcore.add([
+                          params[0],
+                          @symcore.mul([try! @symcore.rational_from_ints(1, 2), @symcore.pow(params[1], @symcore.int(2))]),
+                        ])),
+                      ]))
+                    "Weibull" if params.length() == 2 =>
+                      eval_arith(@symcore.mul([
+                        params[0],
+                        @symcore.function("gamma", [
+                          eval_arith(@symcore.add([
+                            @symcore.int(1),
+                            @symcore.pow(params[1], @symcore.int(-1)),
+                          ])),
+                        ]),
+                      ]))
+                    "StudentT" if params.length() == 1 => @symcore.int(0)
+                    "Trapezoidal" if params.length() == 4 => {
+                      let a = params[0]
+                      let b = params[1]
+                      let c = params[2]
+                      let d = params[3]
+                      eval_arith(@symcore.mul([
+                        try! @symcore.rational_from_ints(1, 3),
+                        eval_arith(@symcore.add([
+                          @symcore.pow(eval_arith(@symcore.add([a, b, @symcore.mul([@symcore.int(-1), c]), @symcore.mul([@symcore.int(-1), d])])), @symcore.int(-1)),
+                        ])),
+                        eval_arith(@symcore.add([
+                          @symcore.pow(a, @symcore.int(2)),
+                          @symcore.mul([a, b]),
+                          @symcore.pow(b, @symcore.int(2)),
+                          @symcore.mul([@symcore.int(-1), @symcore.pow(c, @symcore.int(2))]),
+                          @symcore.mul([@symcore.int(-1), c, d]),
+                          @symcore.mul([@symcore.int(-1), @symcore.pow(d, @symcore.int(2))]),
+                        ])),
+                      ]))
+                    }
+                    _ => symbolic_stat_expr(name, "Mean", params)
+                  }
               }
             Some(cont_guard_params(name, params, raw))
           }
@@ -1324,7 +1428,11 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     @symcore.mul([@symcore.int(-1), @symcore.pow(e1, @symcore.int(2))]),
                   ]))
                 }
-                _ => symbolic_stat_expr(name, "Variance", params)
+                _ =>
+                  match symbolic_continuous_variance_via_integral(name, params) {
+                    Some(v) => v
+                    None => symbolic_stat_expr(name, "Variance", params)
+                  }
               }
             Some(cont_guard_params(name, params, raw))
           }

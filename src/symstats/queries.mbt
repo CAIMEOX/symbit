@@ -341,6 +341,51 @@ fn symbolic_finite_handmade_variance(
 }
 
 ///|
+fn symbolic_opaque_mean(
+  name : String,
+  params : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  match name {
+    "GaussianOrthogonalEnsemble" | "GaussianUnitaryEnsemble" |
+    "GaussianSymplecticEnsemble" if params.length() == 1 =>
+      Some(@symcore.function("ZeroMatrix", [params[0], params[0]]))
+    "MatrixGamma" if params.length() == 3 =>
+      Some(eval_arith(@symcore.mul([params[0], params[1], params[2]])))
+    "MatrixStudentT" if params.length() == 4 => Some(params[1])
+    _ => None
+  }
+}
+
+///|
+fn symbolic_special_variance(
+  name : String,
+  params : Array[@symcore.Expr],
+  rv_name : String,
+) -> @symcore.Expr? {
+  match name {
+    "GaussianOrthogonalEnsemble" | "GaussianUnitaryEnsemble" |
+    "GaussianSymplecticEnsemble" if params.length() == 1 => {
+      let x = @symcore.symbol(rv_name)
+      let mean = @symcore.function("ZeroMatrix", [params[0], params[0]])
+      Some(@symcore.function("Expectation", [
+        eval_arith(@symcore.pow(query_expr_sub(x, mean), @symcore.int(2))),
+      ]))
+    }
+    "MatrixGamma" if params.length() == 3 =>
+      Some(eval_arith(@symcore.mul([
+        params[0],
+        params[1],
+        @symcore.pow(params[2], @symcore.int(2)),
+      ])))
+    "MatrixStudentT" if params.length() == 4 =>
+      Some(@symcore.function("Expectation", [
+        eval_arith(@symcore.pow(query_expr_sub(@symcore.symbol(rv_name), params[1]), @symcore.int(2))),
+      ]))
+    _ => None
+  }
+}
+
+///|
 fn symbolic_multivariate_ewens_density(
   params : Array[@symcore.Expr],
   x : @symcore.Expr,
@@ -833,7 +878,11 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
                   Some(v) => Some(v)
                   None => Some(@symcore.symbol(rv.name))
                 }
-              _ => Some(@symcore.symbol(rv.name))
+              _ =>
+                match symbolic_opaque_mean(name, params) {
+                  Some(v) => Some(v)
+                  None => Some(@symcore.symbol(rv.name))
+                }
             }
           @symcore.Expr::Function(fname, args) if fname == rv.name && args.length() == 1 && symbolic_tag_family(tag) == "P" =>
             process_mean_at(rv, args[0])
@@ -847,10 +896,14 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
               Some(symbolic_query_expr(name, "Mean", @symcore.symbol(rv.name), params))
           }
         } else {
-          match (discrete_mean(rv), continuous_mean(rv)) {
-            (Some(v), _) => Some(v)
-            (_, Some(v)) => Some(v)
-            _ => Some(symbolic_query_expr(name, "Mean", @symcore.symbol(rv.name), params))
+          match symbolic_opaque_mean(name, params) {
+            Some(v) => Some(v)
+            None =>
+              match (discrete_mean(rv), continuous_mean(rv)) {
+                (Some(v), _) => Some(v)
+                (_, Some(v)) => Some(v)
+                _ => Some(symbolic_query_expr(name, "Mean", @symcore.symbol(rv.name), params))
+              }
           }
         }
       } else {
@@ -975,7 +1028,11 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
                 Some(v) => Some(v)
                 None => Some(variance_expr(@symcore.symbol(rv.name)))
               }
-            _ => Some(variance_expr(@symcore.symbol(rv.name)))
+            _ =>
+              match symbolic_special_variance(name, params, rv.name) {
+                Some(v) => Some(v)
+                None => Some(variance_expr(@symcore.symbol(rv.name)))
+              }
           }
         }
         if symbolic_tag_family(tag) == "J" {
@@ -985,10 +1042,14 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
               Some(symbolic_query_expr(name, "Variance", @symcore.symbol(rv.name), params))
           }
         } else {
-          match (discrete_variance(rv), continuous_variance(rv)) {
-            (Some(v), _) => Some(v)
-            (_, Some(v)) => Some(v)
-            _ => Some(symbolic_query_expr(name, "Variance", @symcore.symbol(rv.name), params))
+          match symbolic_special_variance(name, params, rv.name) {
+            Some(v) => Some(v)
+            None =>
+              match (discrete_variance(rv), continuous_variance(rv)) {
+                (Some(v), _) => Some(v)
+                (_, Some(v)) => Some(v)
+                _ => Some(symbolic_query_expr(name, "Variance", @symcore.symbol(rv.name), params))
+              }
           }
         }
       }

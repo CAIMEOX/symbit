@@ -254,6 +254,9 @@ fn stats_globals() -> @py.PyDict raise {
     "_i",
     "_j",
     "_k",
+    "_x",
+    "_y",
+    "_z",
     "_s",
   ] {
     ignore(try? bind_symbol(globals, sym_name))
@@ -294,8 +297,45 @@ fn py_eval_stats(expr : String) -> @py.PyObjectEnum raise {
 }
 
 ///|
+fn py_eval_stats_silent(expr : String) -> @py.PyObjectEnum? {
+  let state = py_gil_ensure()
+  let result : @py.PyObjectEnum? = try {
+    let builtins = import_module("builtins")
+    let eval_obj = match builtins.get_attr("eval", print_err=false) {
+      Some(obj) => obj
+      None => fail("py-eval-missing")
+    }
+    let eval_callable = py_callable_from_enum(eval_obj)
+    let globals = stats_globals()
+    let args = @sympy.py_pack_args([
+      OracleArg::Str(expr),
+      OracleArg::PyObj(globals.obj()),
+      OracleArg::PyObj(globals.obj()),
+    ])
+    py_call_object(eval_callable, args, print_err=false)
+  } catch {
+    _ => {
+      py_gil_release(state)
+      return None
+    }
+  } noraise {
+    v => v
+  }
+  py_gil_release(state)
+  result
+}
+
+///|
 pub fn stats_eval_str(expr : String) -> String raise {
   py_str_enum(py_eval_stats(expr))
+}
+
+///|
+pub fn stats_try_eval_str(expr : String) -> String? {
+  match py_eval_stats_silent(expr) {
+    Some(v) => Some(py_str_enum(v))
+    None => None
+  }
 }
 
 ///|

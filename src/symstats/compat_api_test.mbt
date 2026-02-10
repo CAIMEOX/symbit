@@ -4,6 +4,21 @@ fn expr_equiv_to(ours : @symcore.Expr, oracle_expr : String) -> Bool {
 }
 
 ///|
+fn expr_equiv_safe(ours : @symcore.Expr, oracle_expr : String) -> Bool {
+  let ours_s = @symprint.to_string(ours).replace_all(old=" ", new="")
+  let oracle_s = oracle_expr.replace_all(old=" ", new="")
+  ours_s == oracle_s
+}
+
+///|
+fn try_oracle_parity(ours : @symcore.Expr, query : String) -> Bool {
+  match @sympy_stats.stats_try_eval_str(query) {
+    Some(oracle) => expr_equiv_safe(ours, oracle)
+    None => false
+  }
+}
+
+///|
 fn ratio_matches_one(r : String) -> Bool {
   let compact = r.replace_all(old=" ", new="")
   if compact == "1" {
@@ -38,6 +53,288 @@ fn assert_opaque_symbolic_metrics(rv : RandomVar) -> Unit raise {
   )
   assert_eq(@symprint.to_string(quantile(s, q, rvs=[rv])), "quantile(\{rv.name}, 1/4)")
   assert_eq(@symprint.to_string(entropy(s, rvs=[rv])), "entropy(\{rv.name})")
+}
+
+///|
+fn assert_mean_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
+  let ours = expectation(@symcore.symbol(rv.name), rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if mean_oracle_supported(name) => {
+      if try_oracle_parity(ours, "(lambda R: E(R))(\{ctor})") {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}Mean("))
+}
+
+///|
+fn assert_variance_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
+  let ours = variance(@symcore.symbol(rv.name), rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if variance_oracle_supported(name) => {
+      if try_oracle_parity(ours, "(lambda R: variance(R))(\{ctor})") {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}Variance("))
+}
+
+///|
+fn assert_mgf_not_placeholder(
+  rv : RandomVar,
+  head : String,
+  t : @symcore.Expr,
+) -> Unit raise {
+  let ours = moment_generating_function(@symcore.symbol(rv.name), t, rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if mgf_oracle_supported(name) => {
+      let query =
+        "(lambda R, t: moment_generating_function(R)(t))(\{ctor}, \{@symprint.to_string(t)})"
+      if try_oracle_parity(ours, query) {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}MGF("))
+}
+
+///|
+fn assert_cf_not_placeholder(
+  rv : RandomVar,
+  head : String,
+  t : @symcore.Expr,
+) -> Unit raise {
+  let ours = characteristic_function(@symcore.symbol(rv.name), t, rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if cf_oracle_supported(name) => {
+      let query = "(lambda R, t: characteristic_function(R)(t))(\{ctor}, \{@symprint.to_string(t)})"
+      if try_oracle_parity(ours, query) {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}CF("))
+  assert_true(!s.contains("characteristic_function("))
+}
+
+///|
+fn rv_symbolic_name(rv : RandomVar) -> String? {
+  match rv.kind {
+    RVKind::Symbolic(tag~, ..) => Some(symbolic_tag_name(tag))
+    _ => None
+  }
+}
+
+///|
+fn rv_symbolic_ctor(rv : RandomVar) -> String? {
+  match rv.kind {
+    RVKind::Symbolic(tag~, params~) => {
+      let name = symbolic_tag_name(tag)
+      let args : Array[String] = ["'\{rv.name}'"]
+      for p in params {
+        args.push(@symprint.to_string(p))
+      }
+      let args_joined = args.join(", ")
+      Some("stats.\{name}(\{args_joined})")
+    }
+    _ => None
+  }
+}
+
+///|
+fn mean_oracle_supported(name : String) -> Bool {
+  match name {
+    "BetaNoncentral" |
+    "BetaPrime" |
+    "ChiNoncentral" |
+    "Dagum" |
+    "Davis" |
+    "ExponentialPower" |
+    "Frechet" |
+    "Lomax" |
+    "Maxwell" |
+    "Nakagami" |
+    "ShiftedGompertz" |
+    "IdealSoliton" |
+    "RobustSoliton" => true
+    _ => false
+  }
+}
+
+///|
+fn variance_oracle_supported(name : String) -> Bool {
+  match name {
+    "BetaPrime" |
+    "ChiNoncentral" |
+    "ExponentialPower" |
+    "Frechet" |
+    "Lomax" |
+    "Maxwell" |
+    "Nakagami" |
+    "PowerFunction" |
+    "QuadraticU" |
+    "IdealSoliton" |
+    "RobustSoliton" |
+    "YuleSimon" => true
+    _ => false
+  }
+}
+
+///|
+fn mgf_oracle_supported(name : String) -> Bool {
+  match name {
+    "Arcsin" |
+    "BetaBinomial" |
+    "BetaPrime" |
+    "Dagum" |
+    "ExponentialPower" |
+    "FisherZ" |
+    "Frechet" |
+    "Hypergeometric" |
+    "IdealSoliton" |
+    "Kumaraswamy" |
+    "LogLogistic" |
+    "Lomax" |
+    "Maxwell" |
+    "Nakagami" |
+    "PowerFunction" |
+    "RobustSoliton" |
+    "ShiftedGompertz" |
+    "Trapezoidal" |
+    "Weibull" => true
+    _ => false
+  }
+}
+
+///|
+fn cf_oracle_supported(name : String) -> Bool {
+  match name {
+    "Arcsin" |
+    "BetaBinomial" |
+    "BetaPrime" |
+    "Cauchy" |
+    "Dagum" |
+    "ExponentialPower" |
+    "FDistribution" |
+    "FisherZ" |
+    "Frechet" |
+    "GammaInverse" |
+    "Hypergeometric" |
+    "IdealSoliton" |
+    "Kumaraswamy" |
+    "LogLogistic" |
+    "Levy" |
+    "Lomax" |
+    "Maxwell" |
+    "Nakagami" |
+    "PowerFunction" |
+    "RobustSoliton" |
+    "ShiftedGompertz" |
+    "StudentT" |
+    "Trapezoidal" |
+    "Weibull" => true
+    _ => false
+  }
+}
+
+///|
+fn quantile_oracle_supported(name : String) -> Bool {
+  match name {
+    "Benini" |
+    "BetaBinomial" |
+    "BetaNoncentral" |
+    "BetaPrime" |
+    "Dagum" |
+    "ExponentialPower" |
+    "FisherZ" |
+    "FlorySchulz" |
+    "Frechet" |
+    "GammaInverse" |
+    "Hermite" |
+    "Hypergeometric" |
+    "IdealSoliton" |
+    "LogCauchy" |
+    "Logarithmic" |
+    "Maxwell" |
+    "Nakagami" |
+    "QuadraticU" |
+    "RaisedCosine" |
+    "RobustSoliton" |
+    "ShiftedGompertz" |
+    "Skellam" |
+    "UniformSum" |
+    "WignerSemicircle" |
+    "YuleSimon" |
+    "Zeta" => true
+    _ => false
+  }
+}
+
+///|
+fn entropy_oracle_supported(name : String) -> Bool {
+  match name {
+    "BetaBinomial" |
+    "Dagum" |
+    "ExponentialPower" |
+    "FlorySchulz" |
+    "Frechet" |
+    "Hermite" |
+    "Hypergeometric" |
+    "Maxwell" |
+    "Nakagami" |
+    "QuadraticU" |
+    "YuleSimon" |
+    "Zeta" => true
+    _ => false
+  }
+}
+
+///|
+fn assert_quantile_not_placeholder(
+  rv : RandomVar,
+  head : String,
+  q : @symcore.Expr,
+) -> Unit raise {
+  let ours = quantile(@symcore.symbol(rv.name), q, rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if quantile_oracle_supported(name) => {
+      let query = "(lambda R: quantile(R)(\{@symprint.to_string(q)}))(\{ctor})"
+      if try_oracle_parity(ours, query) {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}Quantile("))
+  assert_true(!s.contains("quantile("))
+}
+
+///|
+fn assert_entropy_not_placeholder(rv : RandomVar, head : String) -> Unit raise {
+  let ours = entropy(@symcore.symbol(rv.name), rvs=[rv])
+  match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
+    (Some(name), Some(ctor)) if entropy_oracle_supported(name) => {
+      let query = "(lambda R: entropy(R))(\{ctor})"
+      if try_oracle_parity(ours, query) {
+        return
+      }
+    }
+    _ => ()
+  }
+  let s = @symprint.to_string(ours)
+  assert_true(!s.contains("\{head}Entropy("))
+  assert_true(!s.contains("entropy("))
 }
 
 ///|
@@ -1510,6 +1807,945 @@ test "compat cdf coverage for residual families" {
     params=[@symcore.int(3), @symcore.symbol("M"), @symcore.symbol("U"), @symcore.symbol("V")],
   )
   assert_true(!@symprint.to_string(cdf(mst, x)).contains("MatrixStudentTCDF("))
+}
+
+///|
+test "compat mean coverage for residual families" {
+  let ben = benini("BENm", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_mean_not_placeholder(ben, "Benini")
+
+  let bnc = beta_noncentral("BNCm", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_mean_not_placeholder(bnc, "BetaNoncentral")
+
+  let bp = beta_prime("BPm", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mean_not_placeholder(bp, "BetaPrime")
+
+  let chn = chi_noncentral("CHNm", params=[@symcore.int(4), @symcore.int(2)])
+  assert_mean_not_placeholder(chn, "ChiNoncentral")
+
+  let dag = dagum("DAGm", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_mean_not_placeholder(dag, "Dagum")
+
+  let dav = davis("DAVm", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_mean_not_placeholder(dav, "Davis")
+
+  let ep = exponential_power("EPm", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_mean_not_placeholder(ep, "ExponentialPower")
+
+  let fd = f_distribution("FDm", params=[@symcore.int(5), @symcore.int(7)])
+  assert_mean_not_placeholder(fd, "FDistribution")
+
+  let fz = fisher_z("FZm", params=[@symcore.int(5), @symcore.int(7)])
+  assert_mean_not_placeholder(fz, "FisherZ")
+
+  let fr = frechet("FRm", params=[@symcore.int(3)])
+  assert_mean_not_placeholder(fr, "Frechet")
+
+  let gi = gamma_inverse("GIm", params=[@symcore.int(3), @symcore.int(2)])
+  assert_mean_not_placeholder(gi, "GammaInverse")
+
+  let lev = levy("LEVm", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mean_not_placeholder(lev, "Levy")
+
+  let lc = log_cauchy("LCm", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mean_not_placeholder(lc, "LogCauchy")
+
+  let ln = logit_normal("LNm", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mean_not_placeholder(ln, "LogitNormal")
+
+  let lom = lomax("LOMm", params=[@symcore.int(3), @symcore.int(2)])
+  assert_mean_not_placeholder(lom, "Lomax")
+
+  let mx = maxwell("MXm", params=[@symcore.int(2)])
+  assert_mean_not_placeholder(mx, "Maxwell")
+
+  let nak = nakagami("NAKm", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mean_not_placeholder(nak, "Nakagami")
+
+  let sg = shifted_gompertz("SGm", params=[@symcore.int(1), @symcore.int(2)])
+  assert_mean_not_placeholder(sg, "ShiftedGompertz")
+
+  let vm = von_mises("VMm", params=[@symcore.int(0), @symcore.int(2)])
+  assert_mean_not_placeholder(vm, "VonMises")
+
+  let iso = ideal_soliton("ISm", params=[@symcore.int(10)])
+  assert_mean_not_placeholder(iso, "IdealSoliton")
+
+  let rso = robust_soliton(
+    "RSm",
+    params=[
+      @symcore.int(10),
+      try! @symcore.rational_from_ints(1, 10),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+  )
+  assert_mean_not_placeholder(rso, "RobustSoliton")
+
+  let goe = gaussian_orthogonal_ensemble("GOEm", params=[@symcore.int(2)])
+  assert_eq(
+    @symprint.to_string(expectation(@symcore.symbol("GOEm"), rvs=[goe])),
+    "ZeroMatrix(2, 2)",
+  )
+  assert_mean_not_placeholder(goe, "GaussianOrthogonalEnsemble")
+
+  let gue = gaussian_unitary_ensemble("GUEm", params=[@symcore.int(2)])
+  assert_eq(
+    @symprint.to_string(expectation(@symcore.symbol("GUEm"), rvs=[gue])),
+    "ZeroMatrix(2, 2)",
+  )
+  assert_mean_not_placeholder(gue, "GaussianUnitaryEnsemble")
+
+  let gse = gaussian_symplectic_ensemble("GSEm", params=[@symcore.int(2)])
+  assert_eq(
+    @symprint.to_string(expectation(@symcore.symbol("GSEm"), rvs=[gse])),
+    "ZeroMatrix(2, 2)",
+  )
+  assert_mean_not_placeholder(gse, "GaussianSymplecticEnsemble")
+
+  let mg = matrix_gamma(
+    "MGm",
+    params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")],
+  )
+  let mg_mean = expectation(@symcore.symbol("MGm"), rvs=[mg])
+  let mg_s = @symprint.to_string(mg_mean)
+  assert_true(!mg_s.contains("MatrixGammaMean("))
+  assert_true(mg_s != "MGm")
+  assert_mean_not_placeholder(mg, "MatrixGamma")
+
+  let mst = matrix_student_t(
+    "MSTm",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_eq(
+    @symprint.to_string(expectation(@symcore.symbol("MSTm"), rvs=[mst])),
+    "MeanM",
+  )
+  assert_mean_not_placeholder(mst, "MatrixStudentT")
+}
+
+///|
+test "compat variance coverage for residual families" {
+  let ben = benini("BENv", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_variance_not_placeholder(ben, "Benini")
+
+  let bnc = beta_noncentral("BNCv", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_variance_not_placeholder(bnc, "BetaNoncentral")
+
+  let bp = beta_prime("BPv", params=[@symcore.int(2), @symcore.int(5)])
+  assert_variance_not_placeholder(bp, "BetaPrime")
+
+  let chn = chi_noncentral("CHNv", params=[@symcore.int(4), @symcore.int(2)])
+  assert_variance_not_placeholder(chn, "ChiNoncentral")
+
+  let dag = dagum("DAGv", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_variance_not_placeholder(dag, "Dagum")
+
+  let dav = davis("DAVv", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_variance_not_placeholder(dav, "Davis")
+
+  let ep = exponential_power("EPv", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_variance_not_placeholder(ep, "ExponentialPower")
+
+  let fd = f_distribution("FDv", params=[@symcore.int(5), @symcore.int(7)])
+  assert_variance_not_placeholder(fd, "FDistribution")
+
+  let fz = fisher_z("FZv", params=[@symcore.int(5), @symcore.int(7)])
+  assert_variance_not_placeholder(fz, "FisherZ")
+
+  let fr = frechet("FRv", params=[@symcore.int(3)])
+  assert_variance_not_placeholder(fr, "Frechet")
+
+  let gi = gamma_inverse("GIv", params=[@symcore.int(3), @symcore.int(2)])
+  assert_variance_not_placeholder(gi, "GammaInverse")
+
+  let lev = levy("LEVv", params=[@symcore.int(0), @symcore.int(1)])
+  assert_variance_not_placeholder(lev, "Levy")
+
+  let lc = log_cauchy("LCv", params=[@symcore.int(0), @symcore.int(1)])
+  assert_variance_not_placeholder(lc, "LogCauchy")
+
+  let ln = logit_normal("LNv", params=[@symcore.int(0), @symcore.int(1)])
+  assert_variance_not_placeholder(ln, "LogitNormal")
+
+  let lom = lomax("LOMv", params=[@symcore.int(3), @symcore.int(2)])
+  assert_variance_not_placeholder(lom, "Lomax")
+
+  let mx = maxwell("MXv", params=[@symcore.int(2)])
+  assert_variance_not_placeholder(mx, "Maxwell")
+
+  let nak = nakagami("NAKv", params=[@symcore.int(2), @symcore.int(3)])
+  assert_variance_not_placeholder(nak, "Nakagami")
+
+  let pf = power_function("PFv", params=[@symcore.int(2), @symcore.int(0), @symcore.int(3)])
+  assert_variance_not_placeholder(pf, "PowerFunction")
+
+  let qu = quadratic_u("QUv", params=[@symcore.int(0), @symcore.int(2)])
+  assert_variance_not_placeholder(qu, "QuadraticU")
+
+  let sg = shifted_gompertz("SGv", params=[@symcore.int(1), @symcore.int(2)])
+  assert_variance_not_placeholder(sg, "ShiftedGompertz")
+
+  let vm = von_mises("VMv", params=[@symcore.int(0), @symcore.int(2)])
+  assert_variance_not_placeholder(vm, "VonMises")
+
+  let iso = ideal_soliton("ISv", params=[@symcore.int(10)])
+  assert_variance_not_placeholder(iso, "IdealSoliton")
+
+  let rso = robust_soliton(
+    "RSv",
+    params=[
+      @symcore.int(10),
+      try! @symcore.rational_from_ints(1, 10),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+  )
+  assert_variance_not_placeholder(rso, "RobustSoliton")
+
+  let ys = yule_simon("YSv", params=[@symcore.int(3)])
+  assert_variance_not_placeholder(ys, "YuleSimon")
+
+  let goe = gaussian_orthogonal_ensemble("GOEv", params=[@symcore.int(2)])
+  let goe_v = @symprint.to_string(variance(@symcore.symbol("GOEv"), rvs=[goe]))
+  assert_true(goe_v.contains("Expectation("))
+  assert_true(goe_v != "Variance(GOEv)")
+
+  let gue = gaussian_unitary_ensemble("GUEv", params=[@symcore.int(2)])
+  let gue_v = @symprint.to_string(variance(@symcore.symbol("GUEv"), rvs=[gue]))
+  assert_true(gue_v.contains("Expectation("))
+  assert_true(gue_v != "Variance(GUEv)")
+
+  let gse = gaussian_symplectic_ensemble("GSEv", params=[@symcore.int(2)])
+  let gse_v = @symprint.to_string(variance(@symcore.symbol("GSEv"), rvs=[gse]))
+  assert_true(gse_v.contains("Expectation("))
+  assert_true(gse_v != "Variance(GSEv)")
+
+  let mg = matrix_gamma(
+    "MGv",
+    params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")],
+  )
+  assert_variance_not_placeholder(mg, "MatrixGamma")
+  assert_true(@symprint.to_string(variance(@symcore.symbol("MGv"), rvs=[mg])) != "Variance(MGv)")
+
+  let mst = matrix_student_t(
+    "MSTv",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_variance_not_placeholder(mst, "MatrixStudentT")
+  let mst_v = @symprint.to_string(variance(@symcore.symbol("MSTv"), rvs=[mst]))
+  assert_true(mst_v.contains("Expectation("))
+  assert_true(mst_v != "Variance(MSTv)")
+}
+
+///|
+test "compat mgf coverage for residual families" {
+  let t = @symcore.symbol("t")
+  let tvec = @symcore.function("Tuple", [@symcore.symbol("t1"), @symcore.symbol("t2")])
+
+  let a = arcsin("Am", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mgf_not_placeholder(a, "Arcsin", t)
+
+  let ben = benini("BENg", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_mgf_not_placeholder(ben, "Benini", t)
+
+  let bp = bernoulli_process("BPg", params=[try! @symcore.rational_from_ints(1, 3)])
+  let bp_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("BPg"), t, rvs=[bp]))
+  assert_true(!bp_mgf.contains("moment_generating_function("))
+  assert_true(!bp_mgf.contains("BernoulliProcessMGF("))
+
+  let bb = beta_binomial("BBg", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(bb, "BetaBinomial", t)
+
+  let bnc = beta_noncentral("BNCg", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_mgf_not_placeholder(bnc, "BetaNoncentral", t)
+
+  let bpr = beta_prime("BPG", params=[@symcore.int(2), @symcore.int(5)])
+  assert_mgf_not_placeholder(bpr, "BetaPrime", t)
+
+  let c = cauchy("CG", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mgf_not_placeholder(c, "Cauchy", t)
+
+  let chn = chi_noncentral("CHNg", params=[@symcore.int(4), @symcore.int(2)])
+  assert_mgf_not_placeholder(chn, "ChiNoncentral", t)
+
+  let dag = dagum("DAGg", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_mgf_not_placeholder(dag, "Dagum", t)
+
+  let dav = davis("DAVg", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_mgf_not_placeholder(dav, "Davis", t)
+
+  let d = dirichlet("Dg", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(d, "Dirichlet", tvec)
+
+  let ep = exponential_power("EPg", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_mgf_not_placeholder(ep, "ExponentialPower", t)
+
+  let fd = f_distribution("FDg", params=[@symcore.int(5), @symcore.int(7)])
+  assert_mgf_not_placeholder(fd, "FDistribution", t)
+
+  let fz = fisher_z("FZg", params=[@symcore.int(5), @symcore.int(7)])
+  assert_mgf_not_placeholder(fz, "FisherZ", t)
+
+  let fr = frechet("FRg", params=[@symcore.int(3)])
+  assert_mgf_not_placeholder(fr, "Frechet", t)
+
+  let gi = gamma_inverse("GIg", params=[@symcore.int(3), @symcore.int(2)])
+  assert_mgf_not_placeholder(gi, "GammaInverse", t)
+
+  let gp = gamma_process("GPg", params=[@symcore.int(2), @symcore.int(3)])
+  let gp_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("GPg"), t, rvs=[gp]))
+  assert_true(!gp_mgf.contains("moment_generating_function("))
+  assert_true(!gp_mgf.contains("GammaProcessMGF("))
+
+  let goe = gaussian_orthogonal_ensemble("GOEg", params=[@symcore.int(2)])
+  let goe_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("GOEg"), t, rvs=[goe]))
+  assert_true(goe_mgf.contains("Expectation("))
+  assert_true(!goe_mgf.contains("moment_generating_function("))
+
+  let gse = gaussian_symplectic_ensemble("GSEg", params=[@symcore.int(2)])
+  let gse_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("GSEg"), t, rvs=[gse]))
+  assert_true(gse_mgf.contains("Expectation("))
+  assert_true(!gse_mgf.contains("moment_generating_function("))
+
+  let gue = gaussian_unitary_ensemble("GUEg", params=[@symcore.int(2)])
+  let gue_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("GUEg"), t, rvs=[gue]))
+  assert_true(gue_mgf.contains("Expectation("))
+  assert_true(!gue_mgf.contains("moment_generating_function("))
+
+  let hg = hypergeometric("HGg", params=[@symcore.int(20), @symcore.int(7), @symcore.int(12)])
+  assert_mgf_not_placeholder(hg, "Hypergeometric", t)
+
+  let iso = ideal_soliton("ISg", params=[@symcore.int(10)])
+  assert_mgf_not_placeholder(iso, "IdealSoliton", t)
+
+  let k = kumaraswamy("Kg", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(k, "Kumaraswamy", t)
+
+  let lev = levy("LEVg", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mgf_not_placeholder(lev, "Levy", t)
+
+  let lc = log_cauchy("LCg", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mgf_not_placeholder(lc, "LogCauchy", t)
+
+  let ll = log_logistic("LLg", params=[@symcore.int(1), @symcore.int(2)])
+  assert_mgf_not_placeholder(ll, "LogLogistic", t)
+
+  let ln = logit_normal("LNg", params=[@symcore.int(0), @symcore.int(1)])
+  assert_mgf_not_placeholder(ln, "LogitNormal", t)
+
+  let lom = lomax("LOMg", params=[@symcore.int(3), @symcore.int(2)])
+  assert_mgf_not_placeholder(lom, "Lomax", t)
+
+  let mg = matrix_gamma("MGg", params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")])
+  let mg_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("MGg"), t, rvs=[mg]))
+  assert_true(mg_mgf.contains("Expectation("))
+  assert_true(!mg_mgf.contains("moment_generating_function("))
+
+  let mst = matrix_student_t(
+    "MSTg",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  let mst_mgf = @symprint.to_string(moment_generating_function(@symcore.symbol("MSTg"), t, rvs=[mst]))
+  assert_true(mst_mgf.contains("Expectation("))
+  assert_true(!mst_mgf.contains("moment_generating_function("))
+
+  let mx = maxwell("MXg", params=[@symcore.int(2)])
+  assert_mgf_not_placeholder(mx, "Maxwell", t)
+
+  let mn = multinomial(
+    "MNg",
+    params=[
+      @symcore.int(5),
+      try! @symcore.rational_from_ints(1, 3),
+      try! @symcore.rational_from_ints(2, 3),
+    ],
+  )
+  assert_mgf_not_placeholder(mn, "Multinomial", tvec)
+
+  let mb = multivariate_beta("MBg", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(mb, "MultivariateBeta", tvec)
+
+  let mvt = multivariate_t(
+    "MVTg",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+      @symcore.int(5),
+    ],
+  )
+  assert_mgf_not_placeholder(mvt, "MultivariateT", tvec)
+
+  let nak = nakagami("NAKg", params=[@symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(nak, "Nakagami", t)
+
+  let nmn = negative_multinomial(
+    "NMNg",
+    params=[
+      @symcore.int(2),
+      try! @symcore.rational_from_ints(1, 4),
+      try! @symcore.rational_from_ints(1, 4),
+    ],
+  )
+  assert_mgf_not_placeholder(nmn, "NegativeMultinomial", tvec)
+
+  let ng = normal_gamma("NGg", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(ng, "NormalGamma", tvec)
+
+  let pf = power_function("PFg", params=[@symcore.int(2), @symcore.int(0), @symcore.int(3)])
+  assert_mgf_not_placeholder(pf, "PowerFunction", t)
+
+  let rs = robust_soliton(
+    "RSg",
+    params=[
+      @symcore.int(10),
+      try! @symcore.rational_from_ints(1, 10),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+  )
+  assert_mgf_not_placeholder(rs, "RobustSoliton", t)
+
+  let sg = shifted_gompertz("SGg", params=[@symcore.int(1), @symcore.int(2)])
+  assert_mgf_not_placeholder(sg, "ShiftedGompertz", t)
+
+  let st = student_t("STg", params=[@symcore.int(5)])
+  assert_mgf_not_placeholder(st, "StudentT", t)
+
+  let tr = trapezoidal("TRg", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_mgf_not_placeholder(tr, "Trapezoidal", t)
+
+  let vm = von_mises("VMg", params=[@symcore.int(0), @symcore.int(2)])
+  assert_mgf_not_placeholder(vm, "VonMises", t)
+
+  let w = weibull("WG", params=[@symcore.int(3), @symcore.int(5)])
+  assert_mgf_not_placeholder(w, "Weibull", t)
+}
+
+///|
+test "compat cf coverage for residual families" {
+  let t = @symcore.symbol("t")
+  let tvec = @symcore.function("Tuple", [@symcore.symbol("t1"), @symcore.symbol("t2")])
+
+  let a = arcsin("Acf", params=[@symcore.int(0), @symcore.int(1)])
+  assert_cf_not_placeholder(a, "Arcsin", t)
+
+  let ben = benini("BENcf", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_cf_not_placeholder(ben, "Benini", t)
+
+  let bp = bernoulli_process("BPcf", params=[try! @symcore.rational_from_ints(1, 3)])
+  assert_cf_not_placeholder(bp, "BernoulliProcess", t)
+
+  let bb = beta_binomial("BBcf", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(bb, "BetaBinomial", t)
+
+  let bnc = beta_noncentral("BNCcf", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_cf_not_placeholder(bnc, "BetaNoncentral", t)
+
+  let bpr = beta_prime("BPcf", params=[@symcore.int(2), @symcore.int(5)])
+  assert_cf_not_placeholder(bpr, "BetaPrime", t)
+
+  let chn = chi_noncentral("CHNcf", params=[@symcore.int(4), @symcore.int(2)])
+  assert_cf_not_placeholder(chn, "ChiNoncentral", t)
+
+  let dag = dagum("DAGcf", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_cf_not_placeholder(dag, "Dagum", t)
+
+  let dav = davis("DAVcf", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_cf_not_placeholder(dav, "Davis", t)
+
+  let d = dirichlet("Dcf", params=[@symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(d, "Dirichlet", tvec)
+
+  let ep = exponential_power("EPcf", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_cf_not_placeholder(ep, "ExponentialPower", t)
+
+  let fd = f_distribution("FDcf", params=[@symcore.int(5), @symcore.int(7)])
+  assert_cf_not_placeholder(fd, "FDistribution", t)
+
+  let fz = fisher_z("FZcf", params=[@symcore.int(5), @symcore.int(7)])
+  assert_cf_not_placeholder(fz, "FisherZ", t)
+
+  let fr = frechet("FRcf", params=[@symcore.int(3)])
+  assert_cf_not_placeholder(fr, "Frechet", t)
+
+  let gp = gamma_process("GPcf", params=[@symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(gp, "GammaProcess", t)
+
+  let goe = gaussian_orthogonal_ensemble("GOEcf", params=[@symcore.int(2)])
+  assert_cf_not_placeholder(goe, "GaussianOrthogonalEnsemble", t)
+
+  let gse = gaussian_symplectic_ensemble("GSEcf", params=[@symcore.int(2)])
+  assert_cf_not_placeholder(gse, "GaussianSymplecticEnsemble", t)
+
+  let gue = gaussian_unitary_ensemble("GUEcf", params=[@symcore.int(2)])
+  assert_cf_not_placeholder(gue, "GaussianUnitaryEnsemble", t)
+
+  let hg = hypergeometric("HGcf", params=[@symcore.int(20), @symcore.int(7), @symcore.int(12)])
+  assert_cf_not_placeholder(hg, "Hypergeometric", t)
+
+  let iso = ideal_soliton("IScf", params=[@symcore.int(10)])
+  assert_cf_not_placeholder(iso, "IdealSoliton", t)
+
+  let k = kumaraswamy("Kcf", params=[@symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(k, "Kumaraswamy", t)
+
+  let lc = log_cauchy("LCcf", params=[@symcore.int(0), @symcore.int(1)])
+  assert_cf_not_placeholder(lc, "LogCauchy", t)
+
+  let ll = log_logistic("LLcf", params=[@symcore.int(1), @symcore.int(2)])
+  assert_cf_not_placeholder(ll, "LogLogistic", t)
+
+  let ln = logit_normal("LNcf", params=[@symcore.int(0), @symcore.int(1)])
+  assert_cf_not_placeholder(ln, "LogitNormal", t)
+
+  let lom = lomax("LOMcf", params=[@symcore.int(3), @symcore.int(2)])
+  assert_cf_not_placeholder(lom, "Lomax", t)
+
+  let mg = matrix_gamma("MGcf", params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")])
+  assert_cf_not_placeholder(mg, "MatrixGamma", t)
+
+  let mst = matrix_student_t(
+    "MSTcf",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_cf_not_placeholder(mst, "MatrixStudentT", t)
+
+  let mx = maxwell("MXcf", params=[@symcore.int(2)])
+  assert_cf_not_placeholder(mx, "Maxwell", t)
+
+  let mn = multinomial(
+    "MNcf",
+    params=[
+      @symcore.int(5),
+      try! @symcore.rational_from_ints(1, 3),
+      try! @symcore.rational_from_ints(2, 3),
+    ],
+  )
+  assert_cf_not_placeholder(mn, "Multinomial", tvec)
+
+  let mb = multivariate_beta("MBcf", params=[@symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(mb, "MultivariateBeta", tvec)
+
+  let mvt = multivariate_t(
+    "MVTcf",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+      @symcore.int(5),
+    ],
+  )
+  assert_cf_not_placeholder(mvt, "MultivariateT", tvec)
+
+  let nak = nakagami("NAKcf", params=[@symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(nak, "Nakagami", t)
+
+  let nmn = negative_multinomial(
+    "NMNcf",
+    params=[
+      @symcore.int(2),
+      try! @symcore.rational_from_ints(1, 4),
+      try! @symcore.rational_from_ints(1, 4),
+    ],
+  )
+  assert_cf_not_placeholder(nmn, "NegativeMultinomial", tvec)
+
+  let ng = normal_gamma("NGcf", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(ng, "NormalGamma", tvec)
+
+  let pf = power_function("PFcf", params=[@symcore.int(2), @symcore.int(0), @symcore.int(3)])
+  assert_cf_not_placeholder(pf, "PowerFunction", t)
+
+  let rs = robust_soliton(
+    "RScf",
+    params=[
+      @symcore.int(10),
+      try! @symcore.rational_from_ints(1, 10),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+  )
+  assert_cf_not_placeholder(rs, "RobustSoliton", t)
+
+  let sg = shifted_gompertz("SGcf", params=[@symcore.int(1), @symcore.int(2)])
+  assert_cf_not_placeholder(sg, "ShiftedGompertz", t)
+
+  let tr = trapezoidal("TRcf", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_cf_not_placeholder(tr, "Trapezoidal", t)
+
+  let vm = von_mises("VMcf", params=[@symcore.int(0), @symcore.int(2)])
+  assert_cf_not_placeholder(vm, "VonMises", t)
+
+  let w = weibull("Wcf", params=[@symcore.int(3), @symcore.int(5)])
+  assert_cf_not_placeholder(w, "Weibull", t)
+}
+
+///|
+test "compat quantile coverage for residual families" {
+  let q = try! @symcore.rational_from_ints(1, 4)
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let fifth = try! @symcore.rational_from_ints(1, 5)
+
+  let ben = benini("BENq", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_quantile_not_placeholder(ben, "Benini", q)
+
+  let bp = bernoulli_process("BPq", params=[third])
+  assert_quantile_not_placeholder(bp, "BernoulliProcess", q)
+
+  let bb = beta_binomial("BBq", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(bb, "BetaBinomial", q)
+
+  let bnc = beta_noncentral("BNCq", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_quantile_not_placeholder(bnc, "BetaNoncentral", q)
+
+  let bpr = beta_prime("BPRq", params=[@symcore.int(2), @symcore.int(5)])
+  assert_quantile_not_placeholder(bpr, "BetaPrime", q)
+
+  let chn = chi_noncentral("CHNq", params=[@symcore.int(4), @symcore.int(2)])
+  assert_quantile_not_placeholder(chn, "ChiNoncentral", q)
+
+  let dag = dagum("DAGq", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_quantile_not_placeholder(dag, "Dagum", q)
+
+  let dav = davis("DAVq", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_quantile_not_placeholder(dav, "Davis", q)
+
+  let d = dirichlet("Dq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(d, "Dirichlet", q)
+
+  let exg = ex_gaussian("EXGq", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_quantile_not_placeholder(exg, "ExGaussian", q)
+
+  let ep = exponential_power("EPq", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_quantile_not_placeholder(ep, "ExponentialPower", q)
+
+  let fd = f_distribution("FDq", params=[@symcore.int(5), @symcore.int(7)])
+  assert_quantile_not_placeholder(fd, "FDistribution", q)
+
+  let fz = fisher_z("FZq", params=[@symcore.int(5), @symcore.int(7)])
+  assert_quantile_not_placeholder(fz, "FisherZ", q)
+
+  let fl = flory_schulz("FLq", params=[third])
+  assert_quantile_not_placeholder(fl, "FlorySchulz", q)
+
+  let fr = frechet("FRq", params=[@symcore.int(3)])
+  assert_quantile_not_placeholder(fr, "Frechet", q)
+
+  let gi = gamma_inverse("GIq", params=[@symcore.int(3), @symcore.int(2)])
+  assert_quantile_not_placeholder(gi, "GammaInverse", q)
+
+  let gp = gamma_process("GPq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(gp, "GammaProcess", q)
+
+  let gai = gaussian_inverse("GAIq", params=[@symcore.int(3), @symcore.int(2)])
+  assert_quantile_not_placeholder(gai, "GaussianInverse", q)
+
+  let goe = gaussian_orthogonal_ensemble("GOEq", params=[@symcore.int(2)])
+  assert_quantile_not_placeholder(goe, "GaussianOrthogonalEnsemble", q)
+
+  let gse = gaussian_symplectic_ensemble("GSEq", params=[@symcore.int(2)])
+  assert_quantile_not_placeholder(gse, "GaussianSymplecticEnsemble", q)
+
+  let gue = gaussian_unitary_ensemble("GUEq", params=[@symcore.int(2)])
+  assert_quantile_not_placeholder(gue, "GaussianUnitaryEnsemble", q)
+
+  let he = hermite("HEq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(he, "Hermite", q)
+
+  let hg = hypergeometric("HGq", params=[@symcore.int(20), @symcore.int(7), @symcore.int(12)])
+  assert_quantile_not_placeholder(hg, "Hypergeometric", q)
+
+  let iso = ideal_soliton("ISq", params=[@symcore.int(10)])
+  assert_quantile_not_placeholder(iso, "IdealSoliton", q)
+
+  let lc = log_cauchy("LCq", params=[@symcore.int(0), @symcore.int(1)])
+  assert_quantile_not_placeholder(lc, "LogCauchy", q)
+
+  let lg = logarithmic("LGq", params=[third])
+  assert_quantile_not_placeholder(lg, "Logarithmic", q)
+
+  let lgn = logit_normal("LNq", params=[@symcore.int(0), @symcore.int(1)])
+  assert_quantile_not_placeholder(lgn, "LogitNormal", q)
+
+  let mg = matrix_gamma("MGq", params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")])
+  assert_quantile_not_placeholder(mg, "MatrixGamma", q)
+
+  let mst = matrix_student_t(
+    "MSTq",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_quantile_not_placeholder(mst, "MatrixStudentT", q)
+
+  let mx = maxwell("MXq", params=[@symcore.int(2)])
+  assert_quantile_not_placeholder(mx, "Maxwell", q)
+
+  let mn = multinomial(
+    "MNq",
+    params=[@symcore.int(5), third, try! @symcore.rational_from_ints(2, 3)],
+  )
+  assert_quantile_not_placeholder(mn, "Multinomial", q)
+
+  let mb = multivariate_beta("MBq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(mb, "MultivariateBeta", q)
+
+  let mvl = multivariate_laplace(
+    "MVLq",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_quantile_not_placeholder(mvl, "MultivariateLaplace", q)
+
+  let mvn = multivariate_normal(
+    "MVNq",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_quantile_not_placeholder(mvn, "MultivariateNormal", q)
+
+  let mvt = multivariate_t(
+    "MVTq",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+      @symcore.int(5),
+    ],
+  )
+  assert_quantile_not_placeholder(mvt, "MultivariateT", q)
+
+  let nak = nakagami("NAKq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(nak, "Nakagami", q)
+
+  let nmn = negative_multinomial(
+    "NMNq",
+    params=[@symcore.int(2), try! @symcore.rational_from_ints(1, 4), try! @symcore.rational_from_ints(1, 4)],
+  )
+  assert_quantile_not_placeholder(nmn, "NegativeMultinomial", q)
+
+  let ng = normal_gamma("NGq", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(ng, "NormalGamma", q)
+
+  let qu = quadratic_u("QUq", params=[@symcore.int(0), @symcore.int(2)])
+  assert_quantile_not_placeholder(qu, "QuadraticU", q)
+
+  let rc = raised_cosine("RCq", params=[@symcore.int(0), @symcore.int(2)])
+  assert_quantile_not_placeholder(rc, "RaisedCosine", q)
+
+  let rs = robust_soliton(
+    "RSq",
+    params=[@symcore.int(10), try! @symcore.rational_from_ints(1, 10), fifth],
+  )
+  assert_quantile_not_placeholder(rs, "RobustSoliton", q)
+
+  let sg = shifted_gompertz("SGq", params=[@symcore.int(1), @symcore.int(2)])
+  assert_quantile_not_placeholder(sg, "ShiftedGompertz", q)
+
+  let sk = skellam("SKq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(sk, "Skellam", q)
+
+  let us = uniform_sum("USq", params=[@symcore.int(4)])
+  assert_quantile_not_placeholder(us, "UniformSum", q)
+
+  let wd = wald("WDq", params=[@symcore.int(2), @symcore.int(3)])
+  assert_quantile_not_placeholder(wd, "Wald", q)
+
+  let ws = wigner_semicircle("WSq", params=[@symcore.int(3)])
+  assert_quantile_not_placeholder(ws, "WignerSemicircle", q)
+
+  let ys = yule_simon("YSq", params=[@symcore.int(3)])
+  assert_quantile_not_placeholder(ys, "YuleSimon", q)
+
+  let zz = zeta("ZZq", params=[@symcore.int(3)])
+  assert_quantile_not_placeholder(zz, "Zeta", q)
+}
+
+///|
+test "compat entropy coverage residual A" {
+  let third = try! @symcore.rational_from_ints(1, 3)
+
+  let ben = benini("BENe", params=[@symcore.int(2), @symcore.int(3), @symcore.int(1)])
+  assert_entropy_not_placeholder(ben, "Benini")
+  let bp = bernoulli_process("BPe", params=[third])
+  assert_entropy_not_placeholder(bp, "BernoulliProcess")
+  let bb = beta_binomial("BBe", params=[@symcore.int(10), @symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(bb, "BetaBinomial")
+  let bnc = beta_noncentral("BNCe", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_entropy_not_placeholder(bnc, "BetaNoncentral")
+  let bpr = beta_prime("BPRe", params=[@symcore.int(2), @symcore.int(5)])
+  assert_entropy_not_placeholder(bpr, "BetaPrime")
+  let chn = chi_noncentral("CHNe", params=[@symcore.int(4), @symcore.int(2)])
+  assert_entropy_not_placeholder(chn, "ChiNoncentral")
+  let dag = dagum("DAGe", params=[@symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  assert_entropy_not_placeholder(dag, "Dagum")
+  let dav = davis("DAVe", params=[@symcore.int(1), @symcore.int(2), @symcore.int(1)])
+  assert_entropy_not_placeholder(dav, "Davis")
+  let d = dirichlet("De", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(d, "Dirichlet")
+  let exg = ex_gaussian("EXGe", params=[@symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(exg, "ExGaussian")
+  let ep = exponential_power("EPe", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2)])
+  assert_entropy_not_placeholder(ep, "ExponentialPower")
+  let fd = f_distribution("FDe", params=[@symcore.int(5), @symcore.int(7)])
+  assert_entropy_not_placeholder(fd, "FDistribution")
+  let fz = fisher_z("FZe", params=[@symcore.int(5), @symcore.int(7)])
+  assert_entropy_not_placeholder(fz, "FisherZ")
+  let fl = flory_schulz("FLe", params=[third])
+  assert_entropy_not_placeholder(fl, "FlorySchulz")
+}
+
+///|
+test "compat entropy coverage residual B1" {
+  let fr = frechet("FRe", params=[@symcore.int(3)])
+  assert_entropy_not_placeholder(fr, "Frechet")
+  let gi = gamma_inverse("GIe", params=[@symcore.int(3), @symcore.int(2)])
+  assert_entropy_not_placeholder(gi, "GammaInverse")
+  let gp = gamma_process("GPe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(gp, "GammaProcess")
+  let gai = gaussian_inverse("GAIe", params=[@symcore.int(3), @symcore.int(2)])
+  assert_entropy_not_placeholder(gai, "GaussianInverse")
+  let goe = gaussian_orthogonal_ensemble("GOEe", params=[@symcore.int(2)])
+  assert_entropy_not_placeholder(goe, "GaussianOrthogonalEnsemble")
+  let gse = gaussian_symplectic_ensemble("GSEe", params=[@symcore.int(2)])
+  assert_entropy_not_placeholder(gse, "GaussianSymplecticEnsemble")
+}
+
+///|
+test "compat entropy coverage residual B2a" {
+  let gue = gaussian_unitary_ensemble("GUEe", params=[@symcore.int(2)])
+  assert_entropy_not_placeholder(gue, "GaussianUnitaryEnsemble")
+  let he = hermite("HEe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(he, "Hermite")
+  let hg = hypergeometric("HGe", params=[@symcore.int(20), @symcore.int(7), @symcore.int(12)])
+  assert_entropy_not_placeholder(hg, "Hypergeometric")
+}
+
+///|
+test "compat entropy coverage residual B2b iso" {
+  let iso = ideal_soliton("ISe", params=[@symcore.int(10)])
+  assert_entropy_not_placeholder(iso, "IdealSoliton")
+}
+
+///|
+test "compat entropy coverage residual B2b log_cauchy" {
+  let lc = log_cauchy("LCe", params=[@symcore.int(0), @symcore.int(1)])
+  assert_entropy_not_placeholder(lc, "LogCauchy")
+}
+
+///|
+test "compat entropy coverage residual B2b logarithmic" {
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let lgr = logarithmic("LGe", params=[third])
+  assert_entropy_not_placeholder(lgr, "Logarithmic")
+}
+
+///|
+test "compat entropy coverage residual C" {
+  let third = try! @symcore.rational_from_ints(1, 3)
+
+  let lgn = logit_normal("LNe", params=[@symcore.int(0), @symcore.int(1)])
+  assert_entropy_not_placeholder(lgn, "LogitNormal")
+  let mg = matrix_gamma("MGe", params=[@symcore.int(2), @symcore.int(3), @symcore.symbol("Scale")])
+  assert_entropy_not_placeholder(mg, "MatrixGamma")
+  let mst = matrix_student_t(
+    "MSTe",
+    params=[@symcore.int(3), @symcore.symbol("MeanM"), @symcore.symbol("U"), @symcore.symbol("V")],
+  )
+  assert_entropy_not_placeholder(mst, "MatrixStudentT")
+  let mx = maxwell("MXe", params=[@symcore.int(2)])
+  assert_entropy_not_placeholder(mx, "Maxwell")
+  let mn = multinomial(
+    "MNe",
+    params=[@symcore.int(5), third, try! @symcore.rational_from_ints(2, 3)],
+  )
+  assert_entropy_not_placeholder(mn, "Multinomial")
+  let mb = multivariate_beta("MBe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(mb, "MultivariateBeta")
+  let mvl = multivariate_laplace(
+    "MVLe",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_entropy_not_placeholder(mvl, "MultivariateLaplace")
+  let mvn = multivariate_normal(
+    "MVNe",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+    ],
+  )
+  assert_entropy_not_placeholder(mvn, "MultivariateNormal")
+}
+
+///|
+test "compat entropy coverage residual D" {
+  let fifth = try! @symcore.rational_from_ints(1, 5)
+
+  let mvt = multivariate_t(
+    "MVTe",
+    params=[
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
+      @symcore.function("Tuple", [
+        @symcore.function("Tuple", [@symcore.int(1), @symcore.int(0)]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.int(1)]),
+      ]),
+      @symcore.int(5),
+    ],
+  )
+  assert_entropy_not_placeholder(mvt, "MultivariateT")
+  let nak = nakagami("NAKe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(nak, "Nakagami")
+  let nmn = negative_multinomial(
+    "NMNe",
+    params=[@symcore.int(2), try! @symcore.rational_from_ints(1, 4), try! @symcore.rational_from_ints(1, 4)],
+  )
+  assert_entropy_not_placeholder(nmn, "NegativeMultinomial")
+  let ng = normal_gamma("NGe", params=[@symcore.int(0), @symcore.int(1), @symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(ng, "NormalGamma")
+  let qu = quadratic_u("QUe", params=[@symcore.int(0), @symcore.int(2)])
+  assert_entropy_not_placeholder(qu, "QuadraticU")
+  let rc = raised_cosine("RCe", params=[@symcore.int(0), @symcore.int(2)])
+  assert_entropy_not_placeholder(rc, "RaisedCosine")
+  let rs = robust_soliton(
+    "RSe",
+    params=[@symcore.int(10), try! @symcore.rational_from_ints(1, 10), fifth],
+  )
+  assert_entropy_not_placeholder(rs, "RobustSoliton")
+  let sg = shifted_gompertz("SGe", params=[@symcore.int(1), @symcore.int(2)])
+  assert_entropy_not_placeholder(sg, "ShiftedGompertz")
+  let sk = skellam("SKe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(sk, "Skellam")
+  let us = uniform_sum("USe", params=[@symcore.int(4)])
+  assert_entropy_not_placeholder(us, "UniformSum")
+  let wd = wald("WDe", params=[@symcore.int(2), @symcore.int(3)])
+  assert_entropy_not_placeholder(wd, "Wald")
+  let ws = wigner_semicircle("WSe", params=[@symcore.int(3)])
+  assert_entropy_not_placeholder(ws, "WignerSemicircle")
+  let ys = yule_simon("YSe", params=[@symcore.int(3)])
+  assert_entropy_not_placeholder(ys, "YuleSimon")
+  let zz = zeta("ZZe", params=[@symcore.int(3)])
+  assert_entropy_not_placeholder(zz, "Zeta")
 }
 
 ///|
