@@ -90,7 +90,10 @@ pub fn setitem(
         data.push(item)
       }
       data[linear_index(d.shape, index)] = value
-      NDimArray::Dense(DenseArray::{ shape: @symtensor.clone_int_array(d.shape), data })
+      NDimArray::Dense(DenseArray::{
+        shape: @symtensor.clone_int_array(d.shape),
+        data,
+      })
     }
     NDimArray::Sparse(s) => {
       if !index_in_bounds(s.shape, index) {
@@ -103,7 +106,10 @@ pub fn setitem(
       } else {
         data[key] = value
       }
-      NDimArray::Sparse(SparseArray::{ shape: @symtensor.clone_int_array(s.shape), data })
+      NDimArray::Sparse(SparseArray::{
+        shape: @symtensor.clone_int_array(s.shape),
+        data,
+      })
     }
   }
 }
@@ -115,7 +121,10 @@ pub fn reshape(arr : NDimArray, new_shape : Array[Int]) -> NDimArray raise {
     fail("reshape size mismatch")
   }
   let dense = dense_data(arr)
-  NDimArray::Dense(DenseArray::{ shape: @symtensor.clone_int_array(new_shape), data: dense.data })
+  NDimArray::Dense(DenseArray::{
+    shape: @symtensor.clone_int_array(new_shape),
+    data: dense.data,
+  })
 }
 
 ///|
@@ -172,7 +181,11 @@ pub fn tensorproduct(arrays : Array[NDimArray]) -> NDimArray raise {
 }
 
 ///|
-fn contract_once(dense : DenseArray, axis1 : Int, axis2 : Int) -> DenseArray raise {
+fn contract_once(
+  dense : DenseArray,
+  axis1 : Int,
+  axis2 : Int,
+) -> DenseArray raise {
   if axis1 == axis2 {
     fail("contract axes must be distinct")
   }

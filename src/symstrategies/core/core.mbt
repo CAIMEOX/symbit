@@ -24,12 +24,14 @@ pub fn[T : Eq] exhaust(rule : (T) -> T) -> (T) -> T {
 /// Memoized version of a rule.
 pub fn[T : Eq + Hash, U] memoize(rule : (T) -> U) -> (T) -> U {
   let cache : Map[T, U] = Map::new()
-  (expr : T) => match cache.get(expr) {
-    Some(v) => v
-    None => {
-      let res = rule(expr)
-      cache[expr] = res
-      res
+  (expr : T) => {
+    match cache.get(expr) {
+      Some(v) => v
+      None => {
+        let res = rule(expr)
+        cache[expr] = res
+        res
+      }
     }
   }
 }
@@ -75,9 +77,11 @@ pub fn[T : Eq + Show] debug(
 ///|
 /// Return original expr if rule returns None.
 pub fn[T] null_safe(rule : (T) -> T?) -> (T) -> T {
-  (expr : T) => match rule(expr) {
-    Some(res) => res
-    None => expr
+  (expr : T) => {
+    match rule(expr) {
+      Some(res) => res
+      None => expr
+    }
   }
 }
 
@@ -107,9 +111,11 @@ pub fn[T, K : Eq + Hash] switch(
   key : (T) -> K,
   ruledict : Map[K, (T) -> T],
 ) -> (T) -> T {
-  (expr : T) => match ruledict.get(key(expr)) {
-    Some(rule) => rule(expr)
-    None => identity(expr)
+  (expr : T) => {
+    match ruledict.get(key(expr)) {
+      Some(rule) => rule(expr)
+      None => identity(expr)
+    }
   }
 }
 

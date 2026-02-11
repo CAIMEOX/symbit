@@ -12,8 +12,7 @@ fn event_str(event : Event) -> String {
 fn expr_equiv(ours : @symcore.Expr, oracle_expr : String) -> Bool {
   let ours_str = expr_str(ours)
   let res : Result[Bool, Error] = try? @sympy_stats.stats_expr_equiv(
-    ours_str,
-    oracle_expr,
+    ours_str, oracle_expr,
   )
   match res {
     Ok(ok) => ok
@@ -22,7 +21,11 @@ fn expr_equiv(ours : @symcore.Expr, oracle_expr : String) -> Bool {
 }
 
 ///|
-fn oracle_prob_unary(rv_name : String, rv_decl : String, event : Event) -> String {
+fn oracle_prob_unary(
+  rv_name : String,
+  rv_decl : String,
+  event : Event,
+) -> String {
   let query = "(lambda \{rv_name}: P(\{event_str(event)}))(\{rv_decl})"
   let res : Result[String, Error] = try? @sympy_stats.stats_eval_str(query)
   match res {
@@ -32,7 +35,11 @@ fn oracle_prob_unary(rv_name : String, rv_decl : String, event : Event) -> Strin
 }
 
 ///|
-fn oracle_expect_unary(rv_name : String, rv_decl : String, expr : @symcore.Expr) -> String {
+fn oracle_expect_unary(
+  rv_name : String,
+  rv_decl : String,
+  expr : @symcore.Expr,
+) -> String {
   let query = "(lambda \{rv_name}: E(\{expr_str(expr)}))(\{rv_decl})"
   let res : Result[String, Error] = try? @sympy_stats.stats_eval_str(query)
   match res {
@@ -58,7 +65,10 @@ test "stage1 wrappers smoke" {
   inspect(expr_str(probability(e)), content="Probability(Eq(X, 1))")
   inspect(expr_str(expectation(x)), content="Expectation(X)")
   inspect(expr_str(variance(x)), content="Variance(X)")
-  inspect(expr_str(covariance(x, @symcore.symbol("Y"))), content="Covariance(X, Y)")
+  inspect(
+    expr_str(covariance(x, @symcore.symbol("Y"))),
+    content="Covariance(X, Y)",
+  )
 }
 
 ///|
@@ -76,7 +86,10 @@ test "stage2 finite die parity" {
 
 ///|
 test "stage2 finite bernoulli mean variance parity" {
-  let p = try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(3))
+  let p = try! @symnum.BigRational::new(
+    BigInt::from_int(1),
+    BigInt::from_int(3),
+  )
   let x = bernoulli("X", p)
   let sx = @symcore.symbol("X")
   let ours_e = expectation(sx, rvs=[x])
@@ -89,7 +102,11 @@ test "stage2 finite bernoulli mean variance parity" {
 
 ///|
 test "stage2 discrete uniform expectation" {
-  let x = discrete_uniform("X", [@symcore.int(1), @symcore.int(3), @symcore.int(5)])
+  let x = discrete_uniform("X", [
+    @symcore.int(1),
+    @symcore.int(3),
+    @symcore.int(5),
+  ])
   let ours = expectation(@symcore.symbol("X"), rvs=[x])
   let oracle = oracle_expect_unary(
     "X",
@@ -108,7 +125,10 @@ test "stage3 symbolic wrappers keep canonical form" {
     expr_str(probability(event)),
     content="Probability(And(Ge(X, 0), Le(X, 2)))",
   )
-  inspect(expr_str(expectation(@symcore.add([x, y]))), content="Expectation((X + Y))")
+  inspect(
+    expr_str(expectation(@symcore.add([x, y]))),
+    content="Expectation((X + Y))",
+  )
 }
 
 ///|
@@ -118,14 +138,20 @@ test "stage4 binomial parity" {
   let x = binomial("X", n, p)
   let sx = @symcore.symbol("X")
   let ours_mean = expectation(sx, rvs=[x])
-  let oracle_mean = oracle_expect_unary("X", "Binomial('X', 5, Rational(1, 3))", sx)
+  let oracle_mean = oracle_expect_unary(
+    "X", "Binomial('X', 5, Rational(1, 3))", sx,
+  )
   assert_true(expr_equiv(ours_mean, oracle_mean))
   let ours_var = variance(sx, rvs=[x])
-  let oracle_var = oracle_variance_unary("X", "Binomial('X', 5, Rational(1, 3))")
+  let oracle_var = oracle_variance_unary(
+    "X", "Binomial('X', 5, Rational(1, 3))",
+  )
   assert_true(expr_equiv(ours_var, oracle_var))
   let event = eq(sx, @symcore.int(2))
   let ours_prob = probability(event, rv=x)
-  let oracle_prob = oracle_prob_unary("X", "Binomial('X', 5, Rational(1, 3))", event)
+  let oracle_prob = oracle_prob_unary(
+    "X", "Binomial('X', 5, Rational(1, 3))", event,
+  )
   assert_true(expr_equiv(ours_prob, oracle_prob))
 }
 
@@ -141,9 +167,7 @@ test "stage4 geometric and negbin parity" {
   let event2 = eq(@symcore.symbol("K"), @symcore.int(2))
   let ours2 = probability(event2, rv=nb)
   let oracle2 = oracle_prob_unary(
-    "K",
-    "NegativeBinomial('K', 3, Rational(1, 2))",
-    event2,
+    "K", "NegativeBinomial('K', 3, Rational(1, 2))", event2,
   )
   assert_true(expr_equiv(ours2, oracle2))
 }
@@ -203,7 +227,10 @@ test "stage6 joint independent parity" {
 
 ///|
 test "stage7 compound and variance_prop" {
-  let half = try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
+  let half = try! @symnum.BigRational::new(
+    BigInt::from_int(1),
+    BigInt::from_int(2),
+  )
   let d = die("A", sides=6)
   let b = bernoulli("B", half)
   let z = compound_rv("Z", [(half, d), (half, b)])

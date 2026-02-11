@@ -44,7 +44,9 @@ pub fn DifferentialOperatorAlgebra::generator(
 }
 
 ///|
-pub fn DifferentialOperator::coefficients(self : DifferentialOperator) -> Array[@symcore.Expr] {
+pub fn DifferentialOperator::coefficients(
+  self : DifferentialOperator,
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = Array::new()
   for c in self.coeffs {
     out.push(c)
@@ -102,7 +104,7 @@ fn differential_mul(
   }
   let max_order = a.order() + b.order()
   let out : Array[@symcore.Expr] = Array::new()
-  for _ in 0..=max_order {
+  for _ in 0..<=max_order {
     out.push(holo_zero())
   }
   let x = a.parent.symbol_var
@@ -116,7 +118,7 @@ fn differential_mul(
       if expr_is_zero(bj) {
         continue
       }
-      for r in 0..=i {
+      for r in 0..<=i {
         let diff_b = diff_n(bj, x, r)
         if expr_is_zero(diff_b) {
           continue
@@ -158,7 +160,9 @@ pub fn DifferentialOperator::pow(
 }
 
 ///|
-pub fn DifferentialOperator::to_sympy_str(self : DifferentialOperator) -> String {
+pub fn DifferentialOperator::to_sympy_str(
+  self : DifferentialOperator,
+) -> String {
   let parts : Array[String] = Array::new()
   for i, c in self.coeffs {
     if expr_is_zero(c) {

@@ -31,38 +31,38 @@ fn assert_all_predicates(
 ) -> Unit raise {
   assert_predicate_parity(
     "\{label}.is_zero",
-    is_zero(expr, env=env),
-    try? @sympy_assumptions.is_zero(expr, env=env),
+    is_zero(expr, env~),
+    try? @sympy_assumptions.is_zero(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_nonzero",
-    is_nonzero(expr, env=env),
-    try? @sympy_assumptions.is_nonzero(expr, env=env),
+    is_nonzero(expr, env~),
+    try? @sympy_assumptions.is_nonzero(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_integer",
-    is_integer(expr, env=env),
-    try? @sympy_assumptions.is_integer(expr, env=env),
+    is_integer(expr, env~),
+    try? @sympy_assumptions.is_integer(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_rational",
-    is_rational(expr, env=env),
-    try? @sympy_assumptions.is_rational(expr, env=env),
+    is_rational(expr, env~),
+    try? @sympy_assumptions.is_rational(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_real",
-    is_real(expr, env=env),
-    try? @sympy_assumptions.is_real(expr, env=env),
+    is_real(expr, env~),
+    try? @sympy_assumptions.is_real(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_positive",
-    is_positive(expr, env=env),
-    try? @sympy_assumptions.is_positive(expr, env=env),
+    is_positive(expr, env~),
+    try? @sympy_assumptions.is_positive(expr, env~),
   )
   assert_predicate_parity(
     "\{label}.is_nonnegative",
-    is_nonnegative(expr, env=env),
-    try? @sympy_assumptions.is_nonnegative(expr, env=env),
+    is_nonnegative(expr, env~),
+    try? @sympy_assumptions.is_nonnegative(expr, env~),
   )
 }
 
@@ -112,7 +112,11 @@ test "symassume symbolic parity basic algebra" {
   let nz = @symcore.symbol("nz")
 
   try! assert_all_predicates(x, env, "x")
-  try! assert_all_predicates(@symcore.add([x, @symcore.int(1)]), env, "x_plus_1")
+  try! assert_all_predicates(
+    @symcore.add([x, @symcore.int(1)]),
+    env,
+    "x_plus_1",
+  )
   try! assert_all_predicates(@symcore.pow(p, @symcore.int(2)), env, "p_sq")
   try! assert_all_predicates(@symcore.pow(n, @symcore.int(2)), env, "n_sq")
   try! assert_all_predicates(@symcore.pow(nz, @symcore.int(-1)), env, "inv_nz")

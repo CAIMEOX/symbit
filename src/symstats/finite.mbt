@@ -55,14 +55,17 @@ pub fn die(name : String, sides? : Int = 6) -> RandomVar {
   }
   let p = one_over(sides)
   let atoms : Array[(@symcore.Expr, @symnum.BigRational)] = Array::new()
-  for i in 1..=sides {
+  for i in 1..<=sides {
     atoms.push((@symcore.int(i), p))
   }
   finite_rv(name, atoms)
 }
 
 ///|
-pub fn coin(name : String, p_head? : @symnum.BigRational = half_rational()) -> RandomVar {
+pub fn coin(
+  name : String,
+  p_head? : @symnum.BigRational = half_rational(),
+) -> RandomVar {
   let one = @symnum.BigRational::one()
   let p_tail = one.add_r(p_head.neg_r())
   finite_rv(name, [(@symcore.int(1), p_head), (@symcore.int(0), p_tail)])
@@ -74,7 +77,10 @@ pub fn bernoulli(name : String, p : @symnum.BigRational) -> RandomVar {
 }
 
 ///|
-pub fn discrete_uniform(name : String, values : Array[@symcore.Expr]) -> RandomVar {
+pub fn discrete_uniform(
+  name : String,
+  values : Array[@symcore.Expr],
+) -> RandomVar {
   if values.is_empty() {
     return finite_rv(name, [])
   }
@@ -163,20 +169,23 @@ pub fn finite_expectation(
 pub fn finite_variance(rv : RandomVar) -> @symcore.Expr? {
   match finite_expectation(rv) {
     None => None
-    Some(mean) => {
+    Some(mean) =>
       match finite_atoms(rv) {
         None => None
         Some(items) => {
           let terms : Array[@symcore.Expr] = Array::new()
           for item in items {
             let (value, p) = item
-            let diff = eval_arith(@symcore.add([value, @symcore.mul([@symcore.int(-1), mean])]))
+            let diff = eval_arith(
+              @symcore.add([value, @symcore.mul([@symcore.int(-1), mean])]),
+            )
             let sq = eval_arith(@symcore.pow(diff, @symcore.int(2)))
-            terms.push(eval_arith(@symcore.mul([expr_from_big_rational(p), sq])))
+            terms.push(
+              eval_arith(@symcore.mul([expr_from_big_rational(p), sq])),
+            )
           }
           Some(eval_arith(@symcore.add(terms)))
         }
       }
-    }
   }
 }

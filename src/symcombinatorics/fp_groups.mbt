@@ -87,7 +87,6 @@ pub fn vfp_group(
 ///|
 pub fn FpGroup::make_confluent(self : FpGroup) -> Unit raise CombinatoricsError {
   let _ = self.rewriting_system.make_confluent()
-
 }
 
 ///|
@@ -417,9 +416,9 @@ pub fn FpGroup::_finite_index_subgroup(
       } else {
         let mut rand = self.free_group.identity()
         let mut i = 0
-        while rels.any(r => r == rand ||
-                r == rand.inverse() ||
-                rand.is_identity()) &&
+        while rels.any(r => {
+                r == rand || r == rand.inverse() || rand.is_identity()
+              }) &&
               i < 10 {
           rand = self.random()
           i = i + 1

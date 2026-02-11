@@ -1,0 +1,4 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "moonbitlang/quickcheck",
+}

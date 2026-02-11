@@ -47,10 +47,14 @@ fn assert_ask_global_parity(
   for q in context {
     add_global_assumption(q)
   }
-  let ours = ask_result_to_string(try? ask_global(proposition, assumptions~, env~))
+  let ours = ask_result_to_string(
+    try? ask_global(proposition, assumptions~, env~),
+  )
   let oracle = @sympy_assumptions.ask_query_str(
     query_to_sympy(proposition),
-    assumptions=query_to_sympy(and_q([assumptions, and_q(context), env_to_query(env)])),
+    assumptions=query_to_sympy(
+      and_q([assumptions, and_q(context), env_to_query(env)]),
+    ),
   )
   clear_global_assumptions()
   guard ours == oracle else {
@@ -116,10 +120,7 @@ test "symassume ask: logical combinations parity" {
 ///|
 test "symassume ask: inconsistent assumptions parity" {
   let x = @symcore.symbol("x")
-  try! assert_ask_parity(
-    q_integer(x),
-    assumptions=and_q([q_even(x), q_odd(x)]),
-  )
+  try! assert_ask_parity(q_integer(x), assumptions=and_q([q_even(x), q_odd(x)]))
 }
 
 ///|
@@ -130,10 +131,10 @@ test "symassume ask: env parity" {
   ])
   let x = @symcore.symbol("x")
   let n = @symcore.symbol("n")
-  try! assert_ask_parity(q_positive(x), env=env)
-  try! assert_ask_parity(q_nonzero(x), env=env)
-  try! assert_ask_parity(q_integer(n), env=env)
-  try! assert_ask_parity(q_nonnegative(n), env=env)
+  try! assert_ask_parity(q_positive(x), env~)
+  try! assert_ask_parity(q_nonzero(x), env~)
+  try! assert_ask_parity(q_integer(n), env~)
+  try! assert_ask_parity(q_nonnegative(n), env~)
 }
 
 ///|
@@ -164,18 +165,9 @@ test "symassume ask: relation chain parity" {
 ///|
 test "symassume ask: global assumptions parity" {
   let x = @symcore.symbol("x")
-  try! assert_ask_global_parity(
-    q_nonzero(x),
-    [q_positive(x)],
-  )
-  try! assert_ask_global_parity(
-    q_nonnegative(x),
-    [q_positive(x)],
-  )
-  try! assert_ask_global_parity(
-    q_integer(x),
-    [or_q([q_even(x), q_odd(x)])],
-  )
+  try! assert_ask_global_parity(q_nonzero(x), [q_positive(x)])
+  try! assert_ask_global_parity(q_nonnegative(x), [q_positive(x)])
+  try! assert_ask_global_parity(q_integer(x), [or_q([q_even(x), q_odd(x)])])
 }
 
 ///|
@@ -329,7 +321,10 @@ test "symassume ask: matrix and tensor implication parity" {
   try! assert_ask_parity(q_fullrank(x), assumptions=q_invertible(x))
   try! assert_ask_parity(q_real_elements(x), assumptions=q_integer_elements(x))
   try! assert_ask_parity(q_complex_elements(x), assumptions=q_real_elements(x))
-  try! assert_ask_parity(q_complex_elements(x), assumptions=q_integer_elements(x))
+  try! assert_ask_parity(
+    q_complex_elements(x),
+    assumptions=q_integer_elements(x),
+  )
   try! assert_ask_parity(q_singular(x), assumptions=q_invertible(x))
   try! assert_ask_parity(q_invertible(x), assumptions=q_singular(x))
 }

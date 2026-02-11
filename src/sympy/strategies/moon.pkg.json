@@ -1,7 +1,0 @@
-{
-  "import": [
-    "CAIMEOX/symbit/symcore",
-    { "path": "CAIMEOX/symbit/sympy", "alias": "sympy" },
-    { "path": "Kaida-Amethyst/python", "alias": "py" }
-  ]
-}

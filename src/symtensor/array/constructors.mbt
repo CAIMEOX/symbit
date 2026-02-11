@@ -11,13 +11,20 @@ fn zeros_data(size : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
+
 ///|
-pub fn dense(shape : Array[Int], data : Array[@symcore.Expr]) -> NDimArray raise {
+pub fn dense(
+  shape : Array[Int],
+  data : Array[@symcore.Expr],
+) -> NDimArray raise {
   let expected = @symtensor.product_ints(shape)
   if data.length() != expected {
     fail("dense data length mismatch")
   }
-  NDimArray::Dense(DenseArray::{ shape: @symtensor.clone_int_array(shape), data })
+  NDimArray::Dense(DenseArray::{
+    shape: @symtensor.clone_int_array(shape),
+    data,
+  })
 }
 
 ///|
@@ -32,13 +39,19 @@ pub fn sparse(
       map[index_key(idx)] = value
     }
   }
-  NDimArray::Sparse(SparseArray::{ shape: @symtensor.clone_int_array(shape), data: map })
+  NDimArray::Sparse(SparseArray::{
+    shape: @symtensor.clone_int_array(shape),
+    data: map,
+  })
 }
 
 ///|
 pub fn zeros(shape : Array[Int]) -> NDimArray {
   let size = @symtensor.product_ints(shape)
-  NDimArray::Dense(DenseArray::{ shape: @symtensor.clone_int_array(shape), data: zeros_data(size) })
+  NDimArray::Dense(DenseArray::{
+    shape: @symtensor.clone_int_array(shape),
+    data: zeros_data(size),
+  })
 }
 
 ///|

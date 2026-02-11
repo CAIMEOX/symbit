@@ -2,15 +2,12 @@
 test "holonomic sequence: repr parity" {
   let n = @symcore.symbol("n")
   let (r, _) = recurrence_operators(symbol_var=n)
-  let rec = recurrence_operator([
-    @symcore.int(-1),
-    @symcore.add([n, @symcore.int(1)]),
-  ], r)
-  let seq = holonomic_sequence(rec, u0=[@symcore.int(1)])
-  let oracle = @sympy_holo.sequence_str(
-    ["-1", "n + 1"],
-    u0=["1"],
+  let rec = recurrence_operator(
+    [@symcore.int(-1), @symcore.add([n, @symcore.int(1)])],
+    r,
   )
+  let seq = holonomic_sequence(rec, u0=[@symcore.int(1)])
+  let oracle = @sympy_holo.sequence_str(["-1", "n + 1"], u0=["1"])
   assert_eq(seq.to_sympy_str(), oracle)
 }
 

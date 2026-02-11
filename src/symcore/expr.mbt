@@ -198,22 +198,24 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
 pub fn arbitrary_polys() -> @qc.Gen[Expr] {
   let available_symbols = ["x", "y", "z", "w", "a", "b", "c"]
   let var_gen = @qc.one_of_array(available_symbols).fmap(symbol)
-  letrec f = (size : Int) => match size.abs() {
-    n if n <= 0 => var_gen
-    n => {
-      let sub = f(n / 2)
-      @qc.frequency([
-        (10, var_gen),
-        (5, @qc.int_bound(100).fmap(int)),
-        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Mul(x))),
-        (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Add(x))),
-        (
-          5,
-          var_gen.bind(base => @qc.int_bound(100).bind(exp => @qc.pure(
-            pow(base, int(exp)),
-          ))),
-        ),
-      ])
+  letrec f = (size : Int) => {
+    match size.abs() {
+      n if n <= 0 => var_gen
+      n => {
+        let sub = f(n / 2)
+        @qc.frequency([
+          (10, var_gen),
+          (5, @qc.int_bound(100).fmap(int)),
+          (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Mul(x))),
+          (10, arbitrary_array_use_gen(n / 2 + 2, sub).fmap(x => Add(x))),
+          (
+            5,
+            var_gen.bind(base => {
+              @qc.int_bound(100).bind(exp => @qc.pure(pow(base, int(exp))))
+            }),
+          ),
+        ])
+      }
     }
   }
 

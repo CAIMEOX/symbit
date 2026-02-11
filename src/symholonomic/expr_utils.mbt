@@ -127,7 +127,7 @@ fn binom_int(n : Int, k : Int) -> @symnum.BigRational {
   let kk = if k > n - k { n - k } else { k }
   let mut num = BigInt::from_int(1)
   let mut den = BigInt::from_int(1)
-  for i in 1..=kk {
+  for i in 1..<=kk {
     num = num.mul(BigInt::from_int(n - kk + i))
     den = den.mul(BigInt::from_int(i))
   }
@@ -146,7 +146,11 @@ fn diff_n(expr : @symcore.Expr, sym : @symcore.Expr, n : Int) -> @symcore.Expr {
 }
 
 ///|
-fn shift_symbol(expr : @symcore.Expr, sym : @symcore.Expr, by : Int) -> @symcore.Expr {
+fn shift_symbol(
+  expr : @symcore.Expr,
+  sym : @symcore.Expr,
+  by : Int,
+) -> @symcore.Expr {
   let name = require_symbol_name(sym)
   let env : Map[String, @symcore.Expr] = {}
   env[name] = @symcore.add([sym, @symcore.int(by)])

@@ -1192,13 +1192,7 @@ fn trim_dense(poly : Array[Int], modulus : Int) -> Array[Int] {
   while r.length() > 1 {
     match r.last() {
       None => break
-      Some(v) =>
-        if v % modulus == 0 {
-          let _ = r.pop()
-
-        } else {
-          break
-        }
+      Some(v) => if v % modulus == 0 { let _ = r.pop() } else { break }
     }
   }
   if r.is_empty() {

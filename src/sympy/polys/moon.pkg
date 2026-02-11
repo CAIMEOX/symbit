@@ -1,0 +1,8 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/sympy" @sympy,
+  "moonbitlang/core/strconv" @strconv,
+  "Kaida-Amethyst/python" @py,
+  "Kaida-Amethyst/python/cpython" @cpython,
+}

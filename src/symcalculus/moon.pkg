@@ -1,0 +1,9 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/calculus" @sympy_calculus,
+} for "test"

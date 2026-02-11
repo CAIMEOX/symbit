@@ -152,7 +152,6 @@ fn fourier_transform(
       a[i] = expr_div_int(a[i], n2)
     }
     let _ = dps
-
   }
   a
 }

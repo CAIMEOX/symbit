@@ -1,0 +1,9 @@
+import {
+  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symtensor",
+  "CAIMEOX/symbit/symtensor/indexed" @symtensor_indexed,
+  "CAIMEOX/symbit/symtensor/array" @symtensor_array,
+  "CAIMEOX/symbit/symtensor/tensor" @symtensor_tensor,
+  "Kaida-Amethyst/python" @py,
+}

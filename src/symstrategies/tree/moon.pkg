@@ -1,0 +1,4 @@
+import {
+  "CAIMEOX/symbit/symstrategies/core" @strategies_core,
+  "CAIMEOX/symbit/symstrategies/branch" @strategies_branch,
+}

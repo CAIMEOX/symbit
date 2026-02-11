@@ -29,4 +29,3 @@ pub fn assume_independent(a : RandomVar, b : RandomVar) -> Bool {
   }
   true
 }
-

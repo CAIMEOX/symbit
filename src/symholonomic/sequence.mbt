@@ -17,12 +17,16 @@ pub fn holonomic_sequence(
 }
 
 ///|
-pub fn HolonomicSequence::recurrence(self : HolonomicSequence) -> RecurrenceOperator {
+pub fn HolonomicSequence::recurrence(
+  self : HolonomicSequence,
+) -> RecurrenceOperator {
   self.recurrence
 }
 
 ///|
-pub fn HolonomicSequence::initial_values(self : HolonomicSequence) -> Array[@symcore.Expr] {
+pub fn HolonomicSequence::initial_values(
+  self : HolonomicSequence,
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = Array::new()
   for v in self.u0 {
     out.push(v)
@@ -51,7 +55,10 @@ pub impl Eq for HolonomicSequence with equal(self, other : HolonomicSequence) ->
 }
 
 ///|
-pub impl Eq for HolonomicSequence with not_equal(self, other : HolonomicSequence) -> Bool {
+pub impl Eq for HolonomicSequence with not_equal(
+  self,
+  other : HolonomicSequence,
+) -> Bool {
   !self.equal(other)
 }
 

@@ -35,10 +35,9 @@ pub fn finite_diff_weights(
   x0? : BigRational = BigRational::zero(),
 ) -> Array[Array[Array[BigRational]]] raise {
   let n_max = x_list.length() - 1
-  let delta : Array[Array[Array[BigRational]]] = Array::makei(order + 1, _ => Array::makei(
-    n_max + 1,
-    _ => Array::makei(n_max + 1, _ => fd_rat_zero()),
-  ))
+  let delta : Array[Array[Array[BigRational]]] = Array::makei(order + 1, _ => {
+    Array::makei(n_max + 1, _ => Array::makei(n_max + 1, _ => fd_rat_zero()))
+  })
   delta[0][0].set(0, fd_rat_one())
   let mut c1 = fd_rat_one()
   for n in 1..<=n_max {

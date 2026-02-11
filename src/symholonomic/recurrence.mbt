@@ -30,17 +30,23 @@ pub fn recurrence_operators(
 }
 
 ///|
-pub fn RecurrenceOperatorAlgebra::variable(self : RecurrenceOperatorAlgebra) -> @symcore.Expr {
+pub fn RecurrenceOperatorAlgebra::variable(
+  self : RecurrenceOperatorAlgebra,
+) -> @symcore.Expr {
   self.symbol_var
 }
 
 ///|
-pub fn RecurrenceOperatorAlgebra::generator(self : RecurrenceOperatorAlgebra) -> String {
+pub fn RecurrenceOperatorAlgebra::generator(
+  self : RecurrenceOperatorAlgebra,
+) -> String {
   self.generator
 }
 
 ///|
-pub fn RecurrenceOperator::coefficients(self : RecurrenceOperator) -> Array[@symcore.Expr] {
+pub fn RecurrenceOperator::coefficients(
+  self : RecurrenceOperator,
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = Array::new()
   for c in self.coeffs {
     out.push(c)
@@ -54,7 +60,9 @@ pub fn RecurrenceOperator::order(self : RecurrenceOperator) -> Int {
 }
 
 ///|
-pub fn RecurrenceOperator::algebra(self : RecurrenceOperator) -> RecurrenceOperatorAlgebra {
+pub fn RecurrenceOperator::algebra(
+  self : RecurrenceOperator,
+) -> RecurrenceOperatorAlgebra {
   self.parent
 }
 
@@ -192,10 +200,7 @@ pub impl Eq for RecurrenceOperatorAlgebra with not_equal(
 }
 
 ///|
-pub impl Eq for RecurrenceOperator with equal(
-  self,
-  other : RecurrenceOperator,
-) -> Bool {
+pub impl Eq for RecurrenceOperator with equal(self, other : RecurrenceOperator) -> Bool {
   self.parent == other.parent && self.coeffs == other.coeffs
 }
 

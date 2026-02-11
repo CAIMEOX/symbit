@@ -2,9 +2,12 @@
 /// Canonicalization for tensor expressions using tensor_can where possible.
 
 ///|
+
 ///|
 fn index_eq(a : TensorIndex, b : TensorIndex) -> Bool {
-  a.name == b.name && a.is_up == b.is_up && a.index_type.name == b.index_type.name
+  a.name == b.name &&
+  a.is_up == b.is_up &&
+  a.index_type.name == b.index_type.name
 }
 
 ///|
@@ -27,7 +30,10 @@ fn sort_indices(indices : Array[TensorIndex]) -> Array[TensorIndex] {
 }
 
 ///|
-fn permutation_from_order(sorted : Array[TensorIndex], current : Array[TensorIndex]) -> Array[Int] {
+fn permutation_from_order(
+  sorted : Array[TensorIndex],
+  current : Array[TensorIndex],
+) -> Array[Int] {
   let used : Array[Bool] = Array::make(current.length(), false)
   let perm : Array[Int] = Array::new()
   for item in sorted {
@@ -69,7 +75,10 @@ fn extend_perm(
 }
 
 ///|
-fn canonicalize_tensor(head : TensorHead, indices : Array[TensorIndex]) -> TensorExpr raise {
+fn canonicalize_tensor(
+  head : TensorHead,
+  indices : Array[TensorIndex],
+) -> TensorExpr raise {
   match head.symmetry {
     None => TensorExpr::Tensor(head, indices)
     Some(sym) => {

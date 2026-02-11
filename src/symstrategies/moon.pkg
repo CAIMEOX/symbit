@@ -1,0 +1,15 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/core" @strategies_core,
+  "CAIMEOX/symbit/symstrategies/rl" @strategies_rl,
+  "CAIMEOX/symbit/symstrategies/tools" @strategies_tools,
+  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symstrategies/traverse" @strategies_traverse,
+  "CAIMEOX/symbit/symstrategies/tree" @strategies_tree,
+  "CAIMEOX/symbit/symstrategies/branch" @strategies_branch,
+  "CAIMEOX/symbit/sympy/strategies" @sympy_strategies,
+} for "test"

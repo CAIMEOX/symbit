@@ -62,6 +62,9 @@ pub fn scalar_expr(expr : @symcore.Expr) -> IndexedExpr {
 }
 
 ///|
-pub fn IndexedBase::at(self : IndexedBase, indices : Array[Index]) -> Indexed raise {
+pub fn IndexedBase::at(
+  self : IndexedBase,
+  indices : Array[Index],
+) -> Indexed raise {
   indexed(self, indices)
 }

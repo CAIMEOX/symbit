@@ -1,5 +1,8 @@
 ///|
-fn assert_oracle(result : Result[String, Error], expected : String) -> Unit raise {
+fn assert_oracle(
+  result : Result[String, Error],
+  expected : String,
+) -> Unit raise {
   match result {
     Ok(value) => assert_eq(value, expected)
     Err(e) => raise e

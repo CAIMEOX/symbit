@@ -1,7 +1,0 @@
-{
-  "import": [
-    "CAIMEOX/symbit/symcore",
-    { "path": "CAIMEOX/symbit/symstrategies/core", "alias": "strategies_core" },
-    { "path": "CAIMEOX/symbit/symstrategies/util", "alias": "strategies_util" }
-  ]
-}

@@ -1,0 +1,13 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/stats" @sympy_stats,
+} for "test"
+
+options(
+  link: { "native": { "cc-link-flags": "-lm" } },
+)

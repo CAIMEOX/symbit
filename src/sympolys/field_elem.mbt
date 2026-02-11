@@ -22,13 +22,7 @@ fn fe_trim(poly : Array[Int], p : Int) -> Array[Int] {
   let res = poly
   while res.length() > 1 {
     match res.last() {
-      Some(v) =>
-        if fe_pos_mod(v, p) == 0 {
-          let _ = res.pop()
-
-        } else {
-          break
-        }
+      Some(v) => if fe_pos_mod(v, p) == 0 { let _ = res.pop() } else { break }
       None => break
     }
   }
@@ -472,13 +466,7 @@ fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
   let res = coeffs
   while res.length() > 1 {
     match res.last() {
-      Some(v) =>
-        if fe_is_zero(v) {
-          let _ = res.pop()
-
-        } else {
-          break
-        }
+      Some(v) => if fe_is_zero(v) { let _ = res.pop() } else { break }
       None => break
     }
   }

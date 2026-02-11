@@ -73,7 +73,6 @@ test "py_call smoke: sympy constructors" {
   add_args.set(0, x2)
   add_args.set(1, @py.PyInteger::from(1))
   let _expr = add_fn.invoke(args=add_args, print_err=true)
-
 }
 
 ///|

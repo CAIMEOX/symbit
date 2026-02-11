@@ -6,7 +6,7 @@ fn index_key(index : Array[Int]) -> String {
   if index.is_empty() {
     return ""
   }
-  let parts = index.map((v) => "\{v}")
+  let parts = index.map(v => "\{v}")
   parts.join(",")
 }
 
@@ -86,7 +86,12 @@ fn all_indices(shape : Array[Int]) -> Array[Array[Int]] {
     out.push([])
     return out
   }
-  fn go(shape : Array[Int], dim : Int, prefix : Array[Int], out : Array[Array[Int]]) -> Unit {
+  fn go(
+    shape : Array[Int],
+    dim : Int,
+    prefix : Array[Int],
+    out : Array[Array[Int]],
+  ) -> Unit {
     if dim == shape.length() {
       out.push(prefix)
       return

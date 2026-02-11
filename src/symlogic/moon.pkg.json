@@ -1,9 +1,0 @@
-{
-  "import": [
-    "moonbitlang/core/strconv",
-    "CAIMEOX/symbit/symnum"
-  ],
-  "test-import": [
-    { "path": "CAIMEOX/symbit/sympy/logic", "alias": "sympy_logic" }
-  ]
-}

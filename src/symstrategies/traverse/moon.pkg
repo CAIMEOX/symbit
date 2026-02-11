@@ -1,0 +1,5 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/core" @strategies_core,
+  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
+}

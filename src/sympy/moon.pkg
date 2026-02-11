@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "Kaida-Amethyst/python" @py,
+  "Kaida-Amethyst/python/cpython" @cpython,
+}
+
+import {
+  "CAIMEOX/qc_pyext",
+} for "test"

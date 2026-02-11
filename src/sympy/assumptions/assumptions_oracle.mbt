@@ -66,7 +66,11 @@ fn py_callable_from_enum(obj : @py.PyObjectEnum) -> @py.PyCallable raise {
 }
 
 ///|
-fn put_tri_kw(kwargs : Map[String, OracleArg], key : String, value : @symassume.Tri) -> Unit {
+fn put_tri_kw(
+  kwargs : Map[String, OracleArg],
+  key : String,
+  value : @symassume.Tri,
+) -> Unit {
   match @symassume.tri_to_bool_option(value) {
     Some(v) => kwargs[key] = OracleArg::Bool(v)
     None => ()
@@ -86,7 +90,9 @@ fn symbol_obj_with_facts(
   put_tri_kw(kwargs, "real", facts.is_real)
   put_tri_kw(kwargs, "positive", facts.is_positive)
   put_tri_kw(kwargs, "nonnegative", facts.is_nonnegative)
-  objenum_to_obj(sympy_call_must("sympy.Symbol", [OracleArg::Str(name)], kwargs~))
+  objenum_to_obj(
+    sympy_call_must("sympy.Symbol", [OracleArg::Str(name)], kwargs~),
+  )
 }
 
 ///|
@@ -194,22 +200,11 @@ fn assumptions_globals() -> @py.PyDict raise {
   let globals = @py.PyDict::new()
   globals.set("__builtins__", builtins.obj())
   globals.set("sympy", sympy_mod.obj())
-  for name in [
-    "Q",
-    "ask",
-    "Implies",
-    "Equivalent",
-    "And",
-    "Or",
-    "Not",
-    "Eq",
-    "Ne",
-    "Gt",
-    "Ge",
-    "Lt",
-    "Le",
-    "MatrixSymbol",
-  ] {
+  for
+    name in [
+      "Q", "ask", "Implies", "Equivalent", "And", "Or", "Not", "Eq", "Ne", "Gt",
+      "Ge", "Lt", "Le", "MatrixSymbol",
+    ] {
     match sympy_mod.get_attr(name, print_err=false) {
       Some(obj) => globals.set(name, objenum_to_obj(obj))
       None => ()
@@ -277,7 +272,8 @@ pub fn ask_query_str(
     Err(err) => {
       let msg = "\{err}"
       @cpython.py_err_clear()
-      if msg.contains("inconsistent assumptions") || msg.contains("py-eval-none") {
+      if msg.contains("inconsistent assumptions") ||
+        msg.contains("py-eval-none") {
         "InconsistentAssumptions"
       } else {
         "OracleError:\{msg}"

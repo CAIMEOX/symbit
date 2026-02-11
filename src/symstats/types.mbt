@@ -104,29 +104,29 @@ pub fn symbolic_tag_name(tag : String) -> String {
 ///|
 pub fn symbolic_opaque_stats_name(name : String) -> Bool {
   match name {
-    "StochasticProcess" |
-    "DiscreteTimeStochasticProcess" |
-    "DiscreteMarkovChain" |
-    "ContinuousMarkovChain" |
-    "CircularEnsemble" |
-    "CircularUnitaryEnsemble" |
-    "CircularOrthogonalEnsemble" |
-    "CircularSymplecticEnsemble" |
-    "GaussianEnsemble" |
-    "GaussianUnitaryEnsemble" |
-    "GaussianOrthogonalEnsemble" |
-    "GaussianSymplecticEnsemble" |
-    "JointEigenDistribution" |
-    "level_spacing_distribution" |
-    "JointRV" |
-    "GeneralizedMultivariateLogGamma" |
-    "GeneralizedMultivariateLogGammaOmega" |
-    "MultivariateEwens" |
-    "ContinuousRV" |
-    "DiscreteRV" |
-    "FiniteDistributionHandmade" |
-    "ContinuousDistributionHandmade" |
-    "DiscreteDistributionHandmade" => true
+    "StochasticProcess"
+    | "DiscreteTimeStochasticProcess"
+    | "DiscreteMarkovChain"
+    | "ContinuousMarkovChain"
+    | "CircularEnsemble"
+    | "CircularUnitaryEnsemble"
+    | "CircularOrthogonalEnsemble"
+    | "CircularSymplecticEnsemble"
+    | "GaussianEnsemble"
+    | "GaussianUnitaryEnsemble"
+    | "GaussianOrthogonalEnsemble"
+    | "GaussianSymplecticEnsemble"
+    | "JointEigenDistribution"
+    | "level_spacing_distribution"
+    | "JointRV"
+    | "GeneralizedMultivariateLogGamma"
+    | "GeneralizedMultivariateLogGammaOmega"
+    | "MultivariateEwens"
+    | "ContinuousRV"
+    | "DiscreteRV"
+    | "FiniteDistributionHandmade"
+    | "ContinuousDistributionHandmade"
+    | "DiscreteDistributionHandmade" => true
     _ => false
   }
 }
@@ -487,7 +487,11 @@ fn eval_relation(
         RelOp::Gt => cmp > 0
         RelOp::Ge => cmp >= 0
       }
-      if ok { TriBool::True } else { TriBool::False }
+      if ok {
+        TriBool::True
+      } else {
+        TriBool::False
+      }
     }
     _ =>
       match op {

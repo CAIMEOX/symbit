@@ -1,0 +1,4 @@
+import {
+  "CAIMEOX/symbit/sympy" @sympy,
+  "Kaida-Amethyst/python" @py,
+}

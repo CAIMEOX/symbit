@@ -111,8 +111,14 @@ pub fn Product::change_index(
     match limit {
       LimitSpec::Range(sym, lower, upper) =>
         if symbol_name(sym) == Some(var_name) {
-          let mut new_lower = expr_add(expr_mul(@symcore.int(a), lower), @symcore.int(b))
-          let mut new_upper = expr_add(expr_mul(@symcore.int(a), upper), @symcore.int(b))
+          let mut new_lower = expr_add(
+            expr_mul(@symcore.int(a), lower),
+            @symcore.int(b),
+          )
+          let mut new_upper = expr_add(
+            expr_mul(@symcore.int(a), upper),
+            @symcore.int(b),
+          )
           if a < 0 {
             let tmp = new_lower
             new_lower = new_upper
@@ -124,7 +130,10 @@ pub fn Product::change_index(
         }
       LimitSpec::Lower(sym, lower) =>
         if symbol_name(sym) == Some(var_name) {
-          let new_lower = expr_add(expr_mul(@symcore.int(a), lower), @symcore.int(b))
+          let new_lower = expr_add(
+            expr_mul(@symcore.int(a), lower),
+            @symcore.int(b),
+          )
           out_limits.push(LimitSpec::Lower(new_sym, new_lower))
         } else {
           out_limits.push(limit)
@@ -198,7 +207,7 @@ fn eval_finite_product(
       if hi < lo {
         return acc
       }
-      for k in lo..=hi {
+      for k in lo..<=hi {
         let env : Map[String, @symcore.Expr] = {}
         env[name] = @symcore.int(k)
         let term = @symcore.subst(expr, env)
@@ -345,7 +354,10 @@ fn geometric_product(
   match split_geometric(expr, name) {
     Some((coeff, base)) => {
       let count = expr_add(expr_sub(upper, lower), @symcore.int(1))
-      let sum_exp = expr_mul(expr_add(lower, upper), expr_mul(count, try! @symcore.rational_from_ints(1, 2)))
+      let sum_exp = expr_mul(
+        expr_add(lower, upper),
+        expr_mul(count, try! @symcore.rational_from_ints(1, 2)),
+      )
       let base_pow = @symcore.pow(base, sum_exp)
       let coeff_pow = @symcore.pow(coeff, count)
       Some(expr_mul(coeff_pow, base_pow))

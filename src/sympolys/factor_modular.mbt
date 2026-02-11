@@ -669,7 +669,6 @@ fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
       Some(v) =>
         if ensure_pos_mod(v, modulus) == 0 {
           let _ = res.pop()
-
         } else {
           break
         }
@@ -789,13 +788,7 @@ fn trim_dense_plain(poly : Array[Int]) -> Array[Int] {
   while res.length() > 1 {
     match res.last() {
       None => break
-      Some(v) =>
-        if v == 0 {
-          let _ = res.pop()
-
-        } else {
-          break
-        }
+      Some(v) => if v == 0 { let _ = res.pop() } else { break }
     }
   }
   res

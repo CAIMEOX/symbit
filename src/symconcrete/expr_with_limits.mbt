@@ -69,13 +69,12 @@ fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
       let a = args[0]
       let b = args[1]
       match (a, b) {
-        (@symcore.Expr::Number(n), @symcore.Expr::Symbol(name)) => {
+        (@symcore.Expr::Number(n), @symcore.Expr::Symbol(name)) =>
           if n.is_integral() && n.numerator().to_int() == -1 && name == "oo" {
             true
           } else {
             false
           }
-        }
         _ => false
       }
     }
@@ -87,14 +86,19 @@ fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
 pub fn limit_is_finite_int(spec : LimitSpec) -> Bool {
   match spec {
     LimitSpec::Range(_, lower, upper) =>
-      is_integer_expr(lower) && is_integer_expr(upper) &&
-        !is_infinite_expr(lower) && !is_infinite_expr(upper)
+      is_integer_expr(lower) &&
+      is_integer_expr(upper) &&
+      !is_infinite_expr(lower) &&
+      !is_infinite_expr(upper)
     _ => false
   }
 }
 
 ///|
-pub fn ExprWithLimits::to_expr(self : ExprWithLimits, func_name : String) -> @symcore.Expr {
+pub fn ExprWithLimits::to_expr(
+  self : ExprWithLimits,
+  func_name : String,
+) -> @symcore.Expr {
   let args : Array[@symcore.Expr] = Array::new()
   args.push(self.expr)
   for limit in self.limits {
@@ -113,7 +117,9 @@ pub fn ExprWithLimits::variables(self : ExprWithLimits) -> Array[@symcore.Expr] 
 }
 
 ///|
-pub fn ExprWithLimits::bound_symbol_names(self : ExprWithLimits) -> Array[String] {
+pub fn ExprWithLimits::bound_symbol_names(
+  self : ExprWithLimits,
+) -> Array[String] {
   let out : Array[String] = Array::new()
   for limit in self.limits {
     match symbol_name(limit_symbol(limit)) {

@@ -24,6 +24,6 @@ pub fn shape_key(values : Array[Int]) -> String {
   if values.is_empty() {
     return ""
   }
-  let parts = values.map((v) => "\{v}")
+  let parts = values.map(v => "\{v}")
   parts.join(",")
 }

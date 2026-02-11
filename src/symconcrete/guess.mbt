@@ -54,11 +54,7 @@ pub fn find_simple_recurrence(
   let len = coeffs.length()
   for i in 0..<len {
     let coeff = coeffs[len - 1 - i]
-    let arg = if i == 0 {
-      n
-    } else {
-      expr_add(n, @symcore.int(i))
-    }
+    let arg = if i == 0 { n } else { expr_add(n, @symcore.int(i)) }
     let fn_call = @symcore.function(name, [arg])
     terms.push(expr_mul(coeff, fn_call))
   }
@@ -70,7 +66,11 @@ pub fn find_simple_recurrence_vector_expr(
   seq : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr]? {
   let coeffs = find_simple_recurrence_vector(seq)
-  if coeffs.length() <= 1 { None } else { Some(coeffs) }
+  if coeffs.length() <= 1 {
+    None
+  } else {
+    Some(coeffs)
+  }
 }
 
 ///|
@@ -115,13 +115,13 @@ pub fn rinterp(
     let row : Array[@symnum.BigRational] = Array::new()
     // p coefficients
     let mut pow = @symnum.BigRational::one()
-    for _ in 0..=degnum {
+    for _ in 0..<=degnum {
       row.push(pow)
       pow = pow.mul_r(x)
     }
     // q coefficients (excluding q0)
     let mut qpow = x
-    for _ in 1..=degden {
+    for _ in 1..<=degden {
       row.push(values[i].neg().mul_r(qpow))
       qpow = qpow.mul_r(x)
     }
@@ -134,7 +134,7 @@ pub fn rinterp(
   }
   let p_coeffs : Array[@symnum.BigRational] = Array::new()
   let q_coeffs : Array[@symnum.BigRational] = Array::new()
-  for i in 0..=degnum {
+  for i in 0..<=degnum {
     p_coeffs.push(sol[i])
   }
   q_coeffs.push(@symnum.BigRational::one())
@@ -173,7 +173,7 @@ pub fn guess_generating_function_rational(
         p_coeffs.push(acc)
       }
       let q_coeffs : Array[@symnum.BigRational] = Array::new()
-      for i in 0..=l {
+      for i in 0..<=l {
         q_coeffs.push(coeffs[i])
       }
       let num_expr = poly_from_rational(p_coeffs, x)
@@ -190,7 +190,7 @@ pub fn guess_generating_function_rational(
       while deg < m {
         let degden = m - deg - 1
         if degden >= 0 {
-          match rinterp(seq, deg, x=x) {
+          match rinterp(seq, deg, x~) {
             Some(expr) => return Some(expr)
             None => ()
           }
@@ -207,7 +207,7 @@ pub fn guess_generating_function(
   seq : Array[@symcore.Expr],
   x? : @symcore.Expr = @symcore.symbol("x"),
 ) -> @symcore.Expr? {
-  guess_generating_function_rational(seq, x=x)
+  guess_generating_function_rational(seq, x~)
 }
 
 ///|
@@ -240,10 +240,7 @@ pub fn guess(
 }
 
 ///|
-pub fn rationalize(
-  x : @symcore.Expr,
-  maxcoeff? : Int = 10000,
-) -> @symcore.Expr {
+pub fn rationalize(x : @symcore.Expr, maxcoeff? : Int = 10000) -> @symcore.Expr {
   let _ = maxcoeff
   match x {
     @symcore.Expr::Number(_) => x
@@ -252,7 +249,9 @@ pub fn rationalize(
 }
 
 ///|
-fn berlekamp_massey(seq : Array[@symnum.BigRational]) -> Array[@symnum.BigRational] {
+fn berlekamp_massey(
+  seq : Array[@symnum.BigRational],
+) -> Array[@symnum.BigRational] {
   let n = seq.length()
   let c : Array[@symnum.BigRational] = [@symnum.BigRational::one()]
   let b : Array[@symnum.BigRational] = [@symnum.BigRational::one()]
@@ -299,9 +298,7 @@ fn berlekamp_massey(seq : Array[@symnum.BigRational]) -> Array[@symnum.BigRation
 }
 
 ///|
-fn unwrap_rationals(
-  seq : Array[@symcore.Expr],
-) -> Array[@symnum.BigRational] {
+fn unwrap_rationals(seq : Array[@symcore.Expr]) -> Array[@symnum.BigRational] {
   let out : Array[@symnum.BigRational] = Array::new()
   for v in seq {
     match to_rational(v) {
@@ -313,9 +310,7 @@ fn unwrap_rationals(
 }
 
 ///|
-fn bm_coeffs(
-  seq : Array[@symcore.Expr],
-) -> Array[@symnum.BigRational]? {
+fn bm_coeffs(seq : Array[@symcore.Expr]) -> Array[@symnum.BigRational]? {
   let values : Array[@symnum.BigRational] = Array::new()
   for v in seq {
     match to_rational(v) {
@@ -407,7 +402,10 @@ fn poly_from_rational(
 }
 
 ///|
-fn lagrange_poly(data : Array[@symcore.Expr], x : @symcore.Expr) -> @symcore.Expr {
+fn lagrange_poly(
+  data : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let m = data.length()
   let terms : Array[@symcore.Expr] = Array::new()
   for i in 0..<m {

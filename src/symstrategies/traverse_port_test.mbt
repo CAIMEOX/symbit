@@ -102,10 +102,12 @@ test "traverse expr_fns" {
     fns=@strategies_util.expr_fns,
   )(expr)
   let b = @strategies_traverse.bottom_up(
-    v => @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, [
-      v,
-      @symcore.int(1),
-    ]),
+    v => {
+      @strategies_util.expr_new_raw(@strategies_util.ExprOp::Add, [
+        v,
+        @symcore.int(1),
+      ])
+    },
     fns=@strategies_util.basic_fns,
   )(expr)
   let rebuilt = @strategies_rl.rebuild(b)

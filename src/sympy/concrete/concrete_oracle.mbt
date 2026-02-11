@@ -67,7 +67,9 @@ pub fn sympy_str(expr_str : String) -> String raise {
 ///|
 pub fn sympy_srepr(expr_str : String) -> String raise {
   let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(objenum_to_obj(expr))])
+  let srepr = sympy_call_must("sympy.srepr", [
+    OracleArg::PyObj(objenum_to_obj(expr)),
+  ])
   py_str_enum(srepr)
 }
 

@@ -35,17 +35,15 @@ pub fn symbol_facts(
   is_positive? : Tri = Tri::Unknown,
   is_nonnegative? : Tri = Tri::Unknown,
 ) -> SymbolFacts {
-  normalize_facts(
-    SymbolFacts::{
-      is_zero,
-      is_nonzero,
-      is_integer,
-      is_rational,
-      is_real,
-      is_positive,
-      is_nonnegative,
-    },
-  )
+  normalize_facts(SymbolFacts::{
+    is_zero,
+    is_nonzero,
+    is_integer,
+    is_rational,
+    is_real,
+    is_positive,
+    is_nonnegative,
+  })
 }
 
 ///|

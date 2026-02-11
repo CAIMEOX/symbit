@@ -4,7 +4,7 @@ pub fn from_hyper(
   x? : @symcore.Expr = @symcore.symbol("x"),
   x0? : @symcore.Expr = @symcore.int(0),
 ) -> HolonomicFunction {
-  expr_to_holonomic(expr, x=x, x0~)
+  expr_to_holonomic(expr, x~, x0~)
 }
 
 ///|
@@ -13,7 +13,7 @@ pub fn from_meijerg(
   x? : @symcore.Expr = @symcore.symbol("x"),
   x0? : @symcore.Expr = @symcore.int(0),
 ) -> HolonomicFunction {
-  expr_to_holonomic(expr, x=x, x0~)
+  expr_to_holonomic(expr, x~, x0~)
 }
 
 ///|

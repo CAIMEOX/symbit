@@ -21,7 +21,9 @@ pub fn ExprWithIntLimits::to_expr(
 }
 
 ///|
-pub fn ExprWithIntLimits::variables(self : ExprWithIntLimits) -> Array[@symcore.Expr] {
+pub fn ExprWithIntLimits::variables(
+  self : ExprWithIntLimits,
+) -> Array[@symcore.Expr] {
   self.as_limits().variables()
 }
 

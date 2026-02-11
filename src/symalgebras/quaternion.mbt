@@ -734,10 +734,12 @@ pub fn Quaternion::from_euler(
   let i = lower[0]
   let j = lower[1]
   let k = lower[2]
-  let e = (axis : Char) => match axis {
-    'x' => (expr_one(), expr_zero(), expr_zero())
-    'y' => (expr_zero(), expr_one(), expr_zero())
-    _ => (expr_zero(), expr_zero(), expr_one())
+  let e = (axis : Char) => {
+    match axis {
+      'x' => (expr_one(), expr_zero(), expr_zero())
+      'y' => (expr_zero(), expr_one(), expr_zero())
+      _ => (expr_zero(), expr_zero(), expr_one())
+    }
   }
   let qi = Quaternion::from_axis_angle(e(i), angles[0])
   let qj = Quaternion::from_axis_angle(e(j), angles[1])
@@ -768,10 +770,12 @@ pub fn Quaternion::to_euler(
   let i1 = chars[0]
   let j1 = chars[1]
   let k1 = chars[2]
-  let idx = (ch : Char) => match ch {
-    'x' => 1
-    'y' => 2
-    _ => 3
+  let idx = (ch : Char) => {
+    match ch {
+      'x' => 1
+      'y' => 2
+      _ => 3
+    }
   }
   let mut i = idx(i1)
   let j = idx(j1)

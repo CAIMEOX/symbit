@@ -51,8 +51,7 @@ test "symconcrete deltasummation symbolic bounds piecewise" {
   let limits = [limit_range(i, a, b)]
   let ours = deltasummation(expr, limits)
   let ours_str = @symprint.to_string(ours)
-  let expected =
-    "Piecewise(Tuple(k + 1, And(Le(a, k), Le(k, b))), Tuple(0, True))"
+  let expected = "Piecewise(Tuple(k + 1, And(Le(a, k), Le(k, b))), Tuple(0, True))"
   assert_eq(normalize_srepr(ours_str), normalize_srepr(expected))
 }
 
@@ -67,7 +66,6 @@ test "symconcrete deltaproduct symbolic bounds piecewise" {
   let limits = [limit_range(i, a, b)]
   let ours = deltaproduct(expr, limits)
   let ours_str = @symprint.to_string(ours)
-  let expected =
-    "Piecewise(Tuple(k + 1, And(Eq(a, b), Eq(k, a))), Tuple(0, True))"
+  let expected = "Piecewise(Tuple(k + 1, And(Eq(a, b), Eq(k, a))), Tuple(0, True))"
   assert_eq(normalize_srepr(ours_str), normalize_srepr(expected))
 }

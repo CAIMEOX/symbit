@@ -78,10 +78,12 @@ pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
     raise PolyError::DomainMismatch
   }
   let len = a.exps.length()
-  let exps = Array::makei(len, i => if a.exps[i] > b.exps[i] {
-    a.exps[i]
-  } else {
-    b.exps[i]
+  let exps = Array::makei(len, i => {
+    if a.exps[i] > b.exps[i] {
+      a.exps[i]
+    } else {
+      b.exps[i]
+    }
   })
   Monomial::{ exps, }
 }
@@ -93,10 +95,12 @@ pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
     raise PolyError::DomainMismatch
   }
   let len = a.exps.length()
-  let exps = Array::makei(len, i => if a.exps[i] < b.exps[i] {
-    a.exps[i]
-  } else {
-    b.exps[i]
+  let exps = Array::makei(len, i => {
+    if a.exps[i] < b.exps[i] {
+      a.exps[i]
+    } else {
+      b.exps[i]
+    }
   })
   Monomial::{ exps, }
 }

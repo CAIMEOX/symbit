@@ -59,13 +59,15 @@ pub fn sall(
   let new = fns.new
   let children = fns.children
   let leaf = fns.leaf
-  (expr : @symcore.Expr) => if leaf(expr) {
-    expr
-  } else {
-    let args : Array[@symcore.Expr] = Array::new()
-    for child in children(expr) {
-      args.push(rule(child))
+  (expr : @symcore.Expr) => {
+    if leaf(expr) {
+      expr
+    } else {
+      let args : Array[@symcore.Expr] = Array::new()
+      for child in children(expr) {
+        args.push(rule(child))
+      }
+      new(op(expr), args)
     }
-    new(op(expr), args)
   }
 }

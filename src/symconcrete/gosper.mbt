@@ -2,10 +2,7 @@
 /// Gosper-style indefinite summation helpers.
 
 ///|
-pub fn gosper_term(
-  expr : @symcore.Expr,
-  sym : @symcore.Expr,
-) -> @symcore.Expr? {
+pub fn gosper_term(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr? {
   gosper_sum(expr, sym)
 }
 

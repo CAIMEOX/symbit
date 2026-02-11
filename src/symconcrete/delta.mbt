@@ -7,24 +7,24 @@ pub fn deltasummation(
   limits : Array[LimitSpec],
 ) -> @symcore.Expr {
   if limits.length() != 1 {
-    return summation(expr, limits=limits)
+    return summation(expr, limits~)
   }
   match limits[0] {
     LimitSpec::Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
-        None => return summation(expr, limits=limits)
+        None => return summation(expr, limits~)
       }
       match extract_delta(expr, name) {
         Some((delta_arg, rest)) =>
           match eval_delta_sum(delta_arg, rest, name, lower, upper) {
             Some(res) => res
-            None => summation(expr, limits=limits)
+            None => summation(expr, limits~)
           }
-        None => summation(expr, limits=limits)
+        None => summation(expr, limits~)
       }
     }
-    _ => summation(expr, limits=limits)
+    _ => summation(expr, limits~)
   }
 }
 
@@ -34,24 +34,24 @@ pub fn deltaproduct(
   limits : Array[LimitSpec],
 ) -> @symcore.Expr {
   if limits.length() != 1 {
-    return product(expr, limits=limits)
+    return product(expr, limits~)
   }
   match limits[0] {
     LimitSpec::Range(sym, lower, upper) => {
       let name = match symbol_name(sym) {
         Some(n) => n
-        None => return product(expr, limits=limits)
+        None => return product(expr, limits~)
       }
       match extract_delta(expr, name) {
         Some((delta_arg, rest)) =>
           match eval_delta_product(delta_arg, rest, name, lower, upper) {
             Some(res) => res
-            None => product(expr, limits=limits)
+            None => product(expr, limits~)
           }
-        None => product(expr, limits=limits)
+        None => product(expr, limits~)
       }
     }
-    _ => product(expr, limits=limits)
+    _ => product(expr, limits~)
   }
 }
 
@@ -74,7 +74,8 @@ fn extract_delta(
       let rest_args : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Function("KroneckerDelta", dargs) if dargs.length() == 2 =>
+          @symcore.Expr::Function("KroneckerDelta", dargs) if dargs.length() ==
+            2 =>
             match (dargs[0], dargs[1]) {
               (@symcore.Expr::Symbol(sym), other) if sym == name =>
                 if delta_arg is None {
@@ -189,12 +190,12 @@ fn eval_delta_product(
 }
 
 ///|
-fn piecewise_expr(
-  expr : @symcore.Expr,
-  cond : @symcore.Expr,
-) -> @symcore.Expr {
+fn piecewise_expr(expr : @symcore.Expr, cond : @symcore.Expr) -> @symcore.Expr {
   let pair1 = @symcore.function("Tuple", [expr, cond])
-  let pair2 = @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")])
+  let pair2 = @symcore.function("Tuple", [
+    @symcore.int(0),
+    @symcore.symbol("True"),
+  ])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 

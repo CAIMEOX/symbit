@@ -23,7 +23,10 @@ test "symconcrete ExprWithLimits free_symbols" {
 ///|
 test "symconcrete ExprWithLimits finite limits check" {
   let x = @symcore.symbol("x")
-  let finite = ExprWithLimits::{ expr: x, limits: [limit_range(x, @symcore.int(1), @symcore.int(2))] }
+  let finite = ExprWithLimits::{
+    expr: x,
+    limits: [limit_range(x, @symcore.int(1), @symcore.int(2))],
+  }
   let infinite = ExprWithLimits::{ expr: x, limits: [limit_var(x)] }
   assert_eq(finite.has_finite_limits(), true)
   assert_eq(finite.has_infinite_limits(), false)

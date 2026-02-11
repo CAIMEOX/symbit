@@ -95,7 +95,9 @@ pub fn get_indices(expr : IndexedExpr) -> IndexInfo {
 }
 
 ///|
-pub fn get_contraction_structure(expr : IndexedExpr) -> Map[String, Array[Indexed]] {
+pub fn get_contraction_structure(
+  expr : IndexedExpr,
+) -> Map[String, Array[Indexed]] {
   let out : Map[String, Array[Indexed]] = {}
   fn add_entry(key : String, items : Array[Indexed]) -> Unit {
     if out.contains(key) {

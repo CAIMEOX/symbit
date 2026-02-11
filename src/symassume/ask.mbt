@@ -84,7 +84,9 @@ pub fn ask(
   }
 
   let can_be_true = cnf_satisfiable(with_unit_clause(base_cnf, proposition_var))
-  let can_be_false = cnf_satisfiable(with_unit_clause(base_cnf, -proposition_var))
+  let can_be_false = cnf_satisfiable(
+    with_unit_clause(base_cnf, -proposition_var),
+  )
   if can_be_true && can_be_false {
     Tri::Unknown
   } else if can_be_true {
@@ -116,7 +118,8 @@ fn collect_conjunct_literals(query : Query, env : AssumeEnv) -> Unit {
     Query::Atom(key, args) => absorb_symbol_literal(env, key, args, Tri::True)
     Query::Not(inner) =>
       match inner {
-        Query::Atom(key, args) => absorb_symbol_literal(env, key, args, Tri::False)
+        Query::Atom(key, args) =>
+          absorb_symbol_literal(env, key, args, Tri::False)
         _ => ()
       }
     _ => ()
@@ -136,9 +139,13 @@ fn absorb_symbol_literal(
   match args[0] {
     @symcore.Expr::Symbol(name) =>
       match key {
-        PredicateKey::Zero | PredicateKey::Nonzero | PredicateKey::Integer |
-        PredicateKey::Rational | PredicateKey::Real | PredicateKey::Positive |
-        PredicateKey::Nonnegative => {
+        PredicateKey::Zero
+        | PredicateKey::Nonzero
+        | PredicateKey::Integer
+        | PredicateKey::Rational
+        | PredicateKey::Real
+        | PredicateKey::Positive
+        | PredicateKey::Nonnegative => {
           let facts = env_get(env, name)
           env[name] = with_symbol_fact(facts, key, value)
         }
@@ -149,7 +156,11 @@ fn absorb_symbol_literal(
 }
 
 ///|
-fn with_symbol_fact(facts : SymbolFacts, key : PredicateKey, value : Tri) -> SymbolFacts {
+fn with_symbol_fact(
+  facts : SymbolFacts,
+  key : PredicateKey,
+  value : Tri,
+) -> SymbolFacts {
   match key {
     PredicateKey::Zero =>
       symbol_facts(
@@ -235,12 +246,7 @@ priv struct SatBuilder {
 
 ///|
 fn SatBuilder::new() -> SatBuilder {
-  SatBuilder::{
-    next_var: 1,
-    clauses: [],
-    atom_vars: {},
-    atom_infos: {},
-  }
+  SatBuilder::{ next_var: 1, clauses: [], atom_vars: {}, atom_infos: {} }
 }
 
 ///|
@@ -379,7 +385,10 @@ fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn SatBuilder::apply_direct_atom_truth(self : SatBuilder, env : AssumeEnv) -> Unit {
+fn SatBuilder::apply_direct_atom_truth(
+  self : SatBuilder,
+  env : AssumeEnv,
+) -> Unit {
   for var_id, info in self.atom_infos {
     let (key, args) = info
     match eval_atom(key, args, env) {
@@ -591,7 +600,8 @@ fn push_exclusive_pairs(out : Array[Query], atoms : Array[Query]) -> Unit {
 ///|
 fn is_matrix_symbol_expr(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(name, args) => name == "MatrixSymbol" && args.length() == 3
+    @symcore.Expr::Function(name, args) =>
+      name == "MatrixSymbol" && args.length() == 3
     _ => false
   }
 }
@@ -611,8 +621,12 @@ fn eval_atom(
   env : AssumeEnv,
 ) -> Tri {
   match key {
-    PredicateKey::Eq | PredicateKey::Ne | PredicateKey::Gt | PredicateKey::Ge |
-    PredicateKey::Lt | PredicateKey::Le => eval_relation_atom(key, args, env)
+    PredicateKey::Eq
+    | PredicateKey::Ne
+    | PredicateKey::Gt
+    | PredicateKey::Ge
+    | PredicateKey::Lt
+    | PredicateKey::Le => eval_relation_atom(key, args, env)
     _ => eval_unary_atom(key, args, env)
   }
 }
@@ -637,7 +651,13 @@ fn eval_relation_atom(
     Some(v) => return v
     None => ()
   }
-  match relation_from_linear_symbol_constant(flip_relation_key(key), args[1], args[0], env) {
+  match
+    relation_from_linear_symbol_constant(
+      flip_relation_key(key),
+      args[1],
+      args[0],
+      env,
+    ) {
     Some(v) => return v
     None => ()
   }
@@ -720,30 +740,10 @@ fn eval_symbol_constant_relation(
     let v = match key {
       PredicateKey::Eq => tri_of_bool(cmp == 0)
       PredicateKey::Ne => tri_of_bool(cmp != 0)
-      PredicateKey::Gt =>
-        if cmp >= 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Ge =>
-        if cmp <= 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Lt =>
-        if cmp <= 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Le =>
-        if cmp >= 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
+      PredicateKey::Gt => if cmp >= 0 { Tri::False } else { Tri::Unknown }
+      PredicateKey::Ge => if cmp <= 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Lt => if cmp <= 0 { Tri::False } else { Tri::Unknown }
+      PredicateKey::Le => if cmp >= 0 { Tri::True } else { Tri::Unknown }
       _ => Tri::Unknown
     }
     out = tri_merge(out, v)
@@ -760,42 +760,12 @@ fn eval_symbol_constant_relation(
 
   if facts.is_positive == Tri::True {
     let v = match key {
-      PredicateKey::Eq =>
-        if cmp <= 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Ne =>
-        if cmp <= 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Gt =>
-        if cmp == 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Ge =>
-        if cmp <= 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Lt =>
-        if cmp <= 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Le =>
-        if cmp == 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
+      PredicateKey::Eq => if cmp <= 0 { Tri::False } else { Tri::Unknown }
+      PredicateKey::Ne => if cmp <= 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Gt => if cmp == 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Ge => if cmp <= 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Lt => if cmp <= 0 { Tri::False } else { Tri::Unknown }
+      PredicateKey::Le => if cmp == 0 { Tri::False } else { Tri::Unknown }
       _ => Tri::Unknown
     }
     out = tri_merge(out, v)
@@ -803,30 +773,10 @@ fn eval_symbol_constant_relation(
 
   if facts.is_nonnegative == Tri::True {
     let v = match key {
-      PredicateKey::Eq =>
-        if cmp < 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Ne =>
-        if cmp < 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Ge =>
-        if cmp <= 0 {
-          Tri::True
-        } else {
-          Tri::Unknown
-        }
-      PredicateKey::Lt =>
-        if cmp <= 0 {
-          Tri::False
-        } else {
-          Tri::Unknown
-        }
+      PredicateKey::Eq => if cmp < 0 { Tri::False } else { Tri::Unknown }
+      PredicateKey::Ne => if cmp < 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Ge => if cmp <= 0 { Tri::True } else { Tri::Unknown }
+      PredicateKey::Lt => if cmp <= 0 { Tri::False } else { Tri::Unknown }
       _ => Tri::Unknown
     }
     out = tri_merge(out, v)
@@ -884,7 +834,8 @@ fn eval_unary_atom(
         }
       }
     }
-    PredicateKey::Infinite => tri_not(eval_unary_atom(PredicateKey::Finite, args, env))
+    PredicateKey::Infinite =>
+      tri_not(eval_unary_atom(PredicateKey::Finite, args, env))
     PredicateKey::ExtendedReal => {
       let real = eval_from_expr(PredicateKey::Real, expr, env)
       if real == Tri::True {
@@ -961,20 +912,24 @@ fn eval_unary_atom(
 }
 
 ///|
-fn eval_from_expr(key : PredicateKey, expr : @symcore.Expr, env : AssumeEnv) -> Tri {
+fn eval_from_expr(
+  key : PredicateKey,
+  expr : @symcore.Expr,
+  env : AssumeEnv,
+) -> Tri {
   match expr {
     @symcore.Expr::Number(_) => eval_number_predicate(key, expr)
     @symcore.Expr::Symbol(name) => eval_symbol_predicate(key, name, env)
     _ =>
       match key {
         PredicateKey::Imaginary => expr_is_imaginary(expr, env)
-        PredicateKey::Zero => is_zero(expr, env=env)
-        PredicateKey::Nonzero => is_nonzero(expr, env=env)
-        PredicateKey::Integer => is_integer(expr, env=env)
-        PredicateKey::Rational => is_rational(expr, env=env)
-        PredicateKey::Real => is_real(expr, env=env)
-        PredicateKey::Positive => is_positive(expr, env=env)
-        PredicateKey::Nonnegative => is_nonnegative(expr, env=env)
+        PredicateKey::Zero => is_zero(expr, env~)
+        PredicateKey::Nonzero => is_nonzero(expr, env~)
+        PredicateKey::Integer => is_integer(expr, env~)
+        PredicateKey::Rational => is_rational(expr, env~)
+        PredicateKey::Real => is_real(expr, env~)
+        PredicateKey::Positive => is_positive(expr, env~)
+        PredicateKey::Nonnegative => is_nonnegative(expr, env~)
         PredicateKey::Commutative => Tri::True
         _ => Tri::Unknown
       }
@@ -1025,7 +980,11 @@ fn expr_is_imaginary(expr : @symcore.Expr, env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn eval_symbol_predicate(key : PredicateKey, name : String, env : AssumeEnv) -> Tri {
+fn eval_symbol_predicate(
+  key : PredicateKey,
+  name : String,
+  env : AssumeEnv,
+) -> Tri {
   match eval_named_constant_predicate(key, name) {
     Some(v) => return v
     None => ()
@@ -1322,7 +1281,8 @@ fn cnf_satisfiable(cnf : Array[Array[Int]]) -> Bool {
 
 ///|
 fn dpll(input_cnf : Array[Array[Int]]) -> Bool {
-  let cnf = match propagate_all_units(input_cnf.map(clause => clause.map(v => v))) {
+  let cnf = match
+    propagate_all_units(input_cnf.map(clause => clause.map(v => v))) {
     Some(v) => v
     None => return false
   }

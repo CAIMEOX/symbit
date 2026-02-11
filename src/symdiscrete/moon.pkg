@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symntheory",
+  "moonbitlang/core/bigint",
+}
+
+import {
+  "CAIMEOX/symbit/sympy/discrete" @sympy_discrete,
+} for "test"

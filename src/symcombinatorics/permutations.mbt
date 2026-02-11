@@ -801,7 +801,6 @@ pub fn Permutation::from_inversion_vector(
     let val = pool[inversion[k]]
     perm.push(val)
     let _ = pool.remove(inversion[k])
-
   }
   for v in pool {
     perm.push(v)

@@ -1,0 +1,7 @@
+import {
+  "CAIMEOX/symbit/sympy" @sympy,
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symsets",
+  "CAIMEOX/symbit/symlogic",
+  "Kaida-Amethyst/python" @py,
+}

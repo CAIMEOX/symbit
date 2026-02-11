@@ -1,5 +1,8 @@
 ///|
-fn assert_oracle(result : Result[String, Error], expected : String) -> Unit raise {
+fn assert_oracle(
+  result : Result[String, Error],
+  expected : String,
+) -> Unit raise {
   match result {
     Ok(value) => assert_eq(value, expected)
     Err(e) => raise e
@@ -8,7 +11,12 @@ fn assert_oracle(result : Result[String, Error], expected : String) -> Unit rais
 
 ///|
 test "array basic printing and oracle" {
-  let data = [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(4)]
+  let data = [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+    @symcore.int(4),
+  ]
   let arr = dense([2, 2], data)
   let s = to_string(arr)
   assert_eq(s, "[[1, 2], [3, 4]]")
@@ -26,7 +34,12 @@ test "array tensorproduct" {
 
 ///|
 test "array contraction" {
-  let arr = dense([2, 2], [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  let arr = dense([2, 2], [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+    @symcore.int(4),
+  ])
   let contracted = tensorcontraction(arr, [(0, 1)])
   let s = to_string(contracted)
   assert_eq(s, "5")
@@ -35,8 +48,12 @@ test "array contraction" {
 ///|
 test "array permutedims" {
   let arr = dense([2, 3], [
-    @symcore.int(1), @symcore.int(2), @symcore.int(3),
-    @symcore.int(4), @symcore.int(5), @symcore.int(6),
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+    @symcore.int(4),
+    @symcore.int(5),
+    @symcore.int(6),
   ])
   let perm = permutedims(arr, [1, 0])
   let s = to_string(perm)
@@ -45,7 +62,12 @@ test "array permutedims" {
 
 ///|
 test "array reshape and eye" {
-  let arr = dense([2, 2], [@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(4)])
+  let arr = dense([2, 2], [
+    @symcore.int(1),
+    @symcore.int(2),
+    @symcore.int(3),
+    @symcore.int(4),
+  ])
   let reshaped = reshape(arr, [4])
   assert_eq(to_string(reshaped), "[1, 2, 3, 4]")
   let ident = eye(3)

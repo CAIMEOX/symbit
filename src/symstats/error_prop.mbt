@@ -120,10 +120,11 @@ pub fn variance_prop(
           Some(v) => v
           None => @symcore.function("Variance", [@symcore.symbol(name)])
         }
-        terms.push(eval_arith(@symcore.mul([
-          @symcore.pow(coeff_expr, @symcore.int(2)),
-          var_expr,
-        ])))
+        terms.push(
+          eval_arith(
+            @symcore.mul([@symcore.pow(coeff_expr, @symcore.int(2)), var_expr]),
+          ),
+        )
       }
       for i in 0..<names.length() {
         for j in (i + 1)..<names.length() {
@@ -133,14 +134,17 @@ pub fn variance_prop(
           let cj = form.coeffs[nj]
           let key = cov_key(ni, nj)
           match covariances.get(key) {
-            Some(cov) => {
-              terms.push(eval_arith(@symcore.mul([
-                @symcore.int(2),
-                expr_from_big_rational(ci),
-                expr_from_big_rational(cj),
-                cov,
-              ])))
-            }
+            Some(cov) =>
+              terms.push(
+                eval_arith(
+                  @symcore.mul([
+                    @symcore.int(2),
+                    expr_from_big_rational(ci),
+                    expr_from_big_rational(cj),
+                    cov,
+                  ]),
+                ),
+              )
             None => ()
           }
         }

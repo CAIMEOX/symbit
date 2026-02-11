@@ -8,7 +8,10 @@ pub struct PartialDerivative {
 }
 
 ///|
-pub fn partial_derivative(expr : TensorExpr, variables : Array[TensorExpr]) -> PartialDerivative {
+pub fn partial_derivative(
+  expr : TensorExpr,
+  variables : Array[TensorExpr],
+) -> PartialDerivative {
   PartialDerivative::{ expr, variables }
 }
 

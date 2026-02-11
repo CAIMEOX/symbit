@@ -35,7 +35,8 @@ test "holonomic recurrence: multiplication and power parity" {
   let n = @symcore.symbol("n")
   let (r, sn) = recurrence_operators(symbol_var=n)
   let n2 = @symcore.pow(n, @symcore.int(2))
-  let p = (sn.pow(3) * recurrence_operator([n2], r) + sn * recurrence_operator([n], r)).pow(2)
+  let p = (sn.pow(3) * recurrence_operator([n2], r) +
+  sn * recurrence_operator([n], r)).pow(2)
   let oracle = @sympy_holo.recurrence_expr_srepr("(Sn**3*n**2 + Sn*n)**2")
   assert_eq(recurrence_srepr_local(p), oracle)
 }
@@ -44,7 +45,10 @@ test "holonomic recurrence: multiplication and power parity" {
 test "holonomic recurrence: pow parity on scalar operator" {
   let n = @symcore.symbol("n")
   let (r, _) = recurrence_operators(symbol_var=n)
-  let rr = recurrence_operator([@symcore.pow(n, @symcore.int(2)), @symcore.int(0), @symcore.int(0)], r)
+  let rr = recurrence_operator(
+    [@symcore.pow(n, @symcore.int(2)), @symcore.int(0), @symcore.int(0)],
+    r,
+  )
   for m in 0..<6 {
     let ours = rr.pow(m)
     let oracle = @sympy_holo.recurrence_pow_srepr(["n**2"], m)

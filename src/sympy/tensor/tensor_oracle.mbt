@@ -72,7 +72,9 @@ pub fn sympy_str(expr_str : String) -> String raise {
 ///|
 pub fn sympy_srepr(expr_str : String) -> String raise {
   let expr = sympy_sympify_str(expr_str)
-  let srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(objenum_to_obj(expr))])
+  let srepr = sympy_call_must("sympy.srepr", [
+    OracleArg::PyObj(objenum_to_obj(expr)),
+  ])
   py_str_enum(srepr)
 }
 
@@ -89,19 +91,23 @@ fn idx_to_sympy(item : @symtensor_indexed.Idx) -> @py.PyObject raise {
     Some(upper) => {
       let lower = item.lower
       if lower == @symcore.int(0) {
-        objenum_to_obj(sympy_call_must("sympy.Idx", [
-          name_arg,
-          OracleArg::PyObj(expr_to_sympy(upper)),
-        ]))
+        objenum_to_obj(
+          sympy_call_must("sympy.Idx", [
+            name_arg,
+            OracleArg::PyObj(expr_to_sympy(upper)),
+          ]),
+        )
       } else {
         let range_tuple = sympy_call_must("sympy.Tuple", [
           OracleArg::PyObj(expr_to_sympy(lower)),
           OracleArg::PyObj(expr_to_sympy(upper)),
         ])
-        objenum_to_obj(sympy_call_must("sympy.Idx", [
-          name_arg,
-          OracleArg::PyObj(objenum_to_obj(range_tuple)),
-        ]))
+        objenum_to_obj(
+          sympy_call_must("sympy.Idx", [
+            name_arg,
+            OracleArg::PyObj(objenum_to_obj(range_tuple)),
+          ]),
+        )
       }
     }
   }
@@ -116,7 +122,9 @@ fn index_to_sympy(index : @symtensor_indexed.Index) -> @py.PyObject raise {
 }
 
 ///|
-fn indexed_base_to_sympy(base : @symtensor_indexed.IndexedBase) -> @py.PyObject raise {
+fn indexed_base_to_sympy(
+  base : @symtensor_indexed.IndexedBase,
+) -> @py.PyObject raise {
   let name_arg = OracleArg::Str(base.name)
   match base.shape {
     None => objenum_to_obj(sympy_call_must("sympy.IndexedBase", [name_arg]))
@@ -126,7 +134,9 @@ fn indexed_base_to_sympy(base : @symtensor_indexed.IndexedBase) -> @py.PyObject 
         shape_items.push(OracleArg::PyObj(expr_to_sympy(item)))
       }
       let shape_tuple = sympy_call_must("sympy.Tuple", shape_items)
-      let kwargs : Map[String, OracleArg] = { "shape": OracleArg::PyObj(objenum_to_obj(shape_tuple)) }
+      let kwargs : Map[String, OracleArg] = {
+        "shape": OracleArg::PyObj(objenum_to_obj(shape_tuple)),
+      }
       objenum_to_obj(sympy_call_must("sympy.IndexedBase", [name_arg], kwargs~))
     }
   }
@@ -175,7 +185,10 @@ pub fn array_srepr(arr : @symtensor_array.NDimArray) -> String raise {
 }
 
 ///|
-fn call_obj(obj : @py.PyObject, args : Array[@py.PyObject]) -> @py.PyObject raise {
+fn call_obj(
+  obj : @py.PyObject,
+  args : Array[@py.PyObject],
+) -> @py.PyObject raise {
   let callable = @py.PyCallable::create(obj) catch {
     _ => fail("py-callable-create")
   }
@@ -203,7 +216,9 @@ fn tensor_index_type_to_sympy(
     Some(d) => kwargs["dim"] = OracleArg::PyObj(expr_to_sympy(d))
     None => ()
   }
-  let obj = objenum_to_obj(sympy_call_must("sympy.tensor.tensor.TensorIndexType", args, kwargs~))
+  let obj = objenum_to_obj(
+    sympy_call_must("sympy.tensor.tensor.TensorIndexType", args, kwargs~),
+  )
   cache[typ.name] = obj
   obj
 }
@@ -240,7 +255,9 @@ fn tensor_head_to_sympy(
     OracleArg::Str(head.name),
     OracleArg::List(type_args),
   ]
-  let obj = objenum_to_obj(sympy_call_must("sympy.tensor.tensor.TensorHead", args))
+  let obj = objenum_to_obj(
+    sympy_call_must("sympy.tensor.tensor.TensorHead", args),
+  )
   head_cache[head.name] = obj
   obj
 }
@@ -303,14 +320,20 @@ fn partial_derivative_to_sympy(
   let type_cache : Map[String, @py.PyObject] = {}
   let head_cache : Map[String, @py.PyObject] = {}
   let args : Array[OracleArg] = Array::new()
-  args.push(OracleArg::PyObj(tensor_expr_to_sympy(pd.expr, type_cache, head_cache)))
+  args.push(
+    OracleArg::PyObj(tensor_expr_to_sympy(pd.expr, type_cache, head_cache)),
+  )
   for v in pd.variables {
     args.push(OracleArg::PyObj(tensor_expr_to_sympy(v, type_cache, head_cache)))
   }
-  objenum_to_obj(sympy_call_must("sympy.tensor.toperators.PartialDerivative", args))
+  objenum_to_obj(
+    sympy_call_must("sympy.tensor.toperators.PartialDerivative", args),
+  )
 }
 
 ///|
-pub fn partial_derivative_str(pd : @symtensor_tensor.PartialDerivative) -> String raise {
+pub fn partial_derivative_str(
+  pd : @symtensor_tensor.PartialDerivative,
+) -> String raise {
   py_str_obj(partial_derivative_to_sympy(pd))
 }

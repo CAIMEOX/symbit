@@ -64,7 +64,6 @@ fn py_call_with_args_allow_none(
 ) -> Unit raise {
   let tup = @sympy.py_pack_args(args)
   let _ = @sympy.py_call_object(callable, tup, print_err=true)
-
 }
 
 ///|

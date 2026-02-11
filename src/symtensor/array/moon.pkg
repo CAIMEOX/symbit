@@ -1,0 +1,12 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symtensor",
+  "CAIMEOX/symbit/symtensor/indexed",
+  "CAIMEOX/symbit/symprint",
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/tensor" @sympy_tensor,
+} for "test"

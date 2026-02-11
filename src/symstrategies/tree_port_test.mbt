@@ -151,10 +151,9 @@ test "treeapply strategies" {
 
 ///|
 test "treeapply maximize" {
-  let maximize = (rules : Array[(Int) -> Int]) => @strategies_core.minimize(
-    rules,
-    objective=x => -x,
-  )
+  let maximize = (rules : Array[(Int) -> Int]) => {
+    @strategies_core.minimize(rules, objective=x => -x)
+  }
   let join : @strategies_tree.TreeJoin[(Int) -> Int] = {
     choice: rules => @strategies_core.chain(rules),
     seq: rules => maximize(rules),

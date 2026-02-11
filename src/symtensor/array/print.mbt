@@ -22,7 +22,9 @@ fn render_nested(
   let parts : Array[String] = Array::new()
   let stride = strides[dim]
   for i in 0..<shape[dim] {
-    parts.push(render_nested(data, shape, strides, dim + 1, offset + i * stride))
+    parts.push(
+      render_nested(data, shape, strides, dim + 1, offset + i * stride),
+    )
   }
   "[" + parts.join(", ") + "]"
 }
@@ -37,7 +39,11 @@ pub fn to_string(arr : NDimArray) -> String {
     }
   }
   if dense.shape.is_empty() {
-    return if dense.data.is_empty() { "[]" } else { @symprint.to_string(dense.data[0]) }
+    return if dense.data.is_empty() {
+      "[]"
+    } else {
+      @symprint.to_string(dense.data[0])
+    }
   }
   let strides = compute_strides(dense.shape)
   render_nested(dense.data, dense.shape, strides, 0, 0)

@@ -331,12 +331,18 @@ pub fn sequence_str(
 }
 
 ///|
-pub fn expr_to_holonomic_str(expr_str : String, var_name? : String = "x") -> String raise {
+pub fn expr_to_holonomic_str(
+  expr_str : String,
+  var_name? : String = "x",
+) -> String raise {
   let fn_expr = py_eval_callable(
     "lambda expr, var: str((lambda sp, hol: hol.expr_to_holonomic(sp.sympify(expr), sp.symbols(var)))(__import__('sympy'), __import__('sympy.holonomic.holonomic', fromlist=['expr_to_holonomic'])))",
   )
   py_str_enum(
-    py_call_with_args(fn_expr, [OracleArg::Str(expr_str), OracleArg::Str(var_name)]),
+    py_call_with_args(fn_expr, [
+      OracleArg::Str(expr_str),
+      OracleArg::Str(var_name),
+    ]),
   )
 }
 
@@ -345,5 +351,6 @@ pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
   let fn_eq = py_eval_callable(
     "lambda a, b: str(__import__('sympy').simplify(__import__('sympy').sympify(a) - __import__('sympy').sympify(b)) == 0)",
   )
-  py_str_enum(py_call_with_args(fn_eq, [OracleArg::Str(a), OracleArg::Str(b)])) == "True"
+  py_str_enum(py_call_with_args(fn_eq, [OracleArg::Str(a), OracleArg::Str(b)])) ==
+  "True"
 }

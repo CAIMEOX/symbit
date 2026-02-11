@@ -1,0 +1,7 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/branch/core" @branch_core,
+  "CAIMEOX/symbit/symstrategies/branch/traverse" @branch_traverse,
+  "CAIMEOX/symbit/symstrategies/branch/tools" @branch_tools,
+  "CAIMEOX/symbit/symstrategies/util" @strategies_util,
+}

@@ -873,7 +873,6 @@ pub fn CosetTable::compress(self : CosetTable) -> Unit {
   self.p = new_p
   while table.length() > self.p.length() {
     let _ = table.pop()
-
   }
   for row in table {
     for j in 0..<self.alphabet.length() {

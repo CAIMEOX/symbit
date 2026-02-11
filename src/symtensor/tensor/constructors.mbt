@@ -22,11 +22,18 @@ pub fn tensor_index(
 
 ///|
 pub fn neg_index(index : TensorIndex) -> TensorIndex {
-  TensorIndex::{ name: index.name, index_type: index.index_type, is_up: !index.is_up }
+  TensorIndex::{
+    name: index.name,
+    index_type: index.index_type,
+    is_up: !index.is_up,
+  }
 }
 
 ///|
-pub fn tensor_indices(names : Array[String], index_type : TensorIndexType) -> Array[TensorIndex] {
+pub fn tensor_indices(
+  names : Array[String],
+  index_type : TensorIndexType,
+) -> Array[TensorIndex] {
   let out : Array[TensorIndex] = Array::new()
   for name in names {
     out.push(tensor_index(name, index_type))
@@ -53,7 +60,10 @@ pub fn tensor_head(
 }
 
 ///|
-pub fn apply_head(head : TensorHead, indices : Array[TensorIndex]) -> TensorExpr raise {
+pub fn apply_head(
+  head : TensorHead,
+  indices : Array[TensorIndex],
+) -> TensorExpr raise {
   if indices.length() != head.index_types.length() {
     fail("tensor head indices length mismatch")
   }
@@ -66,11 +76,17 @@ pub fn scalar_expr(expr : @symcore.Expr) -> TensorExpr {
 }
 
 ///|
-pub fn tensor_expr(head : TensorHead, indices : Array[TensorIndex]) -> TensorExpr raise {
+pub fn tensor_expr(
+  head : TensorHead,
+  indices : Array[TensorIndex],
+) -> TensorExpr raise {
   apply_head(head, indices)
 }
 
 ///|
-pub fn TensorHead::call(self : TensorHead, indices : Array[TensorIndex]) -> TensorExpr raise {
+pub fn TensorHead::call(
+  self : TensorHead,
+  indices : Array[TensorIndex],
+) -> TensorExpr raise {
   apply_head(self, indices)
 }

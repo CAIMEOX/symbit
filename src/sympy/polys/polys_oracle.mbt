@@ -866,7 +866,6 @@ fn sympy_default_gens(exprs : Array[@py.PyObject]) -> Array[@py.PyObject] raise 
         let fs_obj = objenum_to_obj(fs)
         let tup = py_tuple_from_objects([fs_obj])
         let _ = py_call_object_allow_none(update, tup, print_err=true)
-
       }
       None => ()
     }
@@ -1843,7 +1842,6 @@ pub fn interpolate_dict(
     let y_obj = sympy_number_obj_oracle(pair.1)
     let tup = py_tuple_from_objects([x_obj, y_obj])
     let _ = py_call_object_allow_none(setitem, tup, print_err=true)
-
   }
   let sym = sympy_symbol_obj(x)
   let res = sympy_call_must("sympy.interpolate", [

@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symlogic",
+}
+
+import {
+  "CAIMEOX/symbit/sympy/sets" @sympy_sets,
+} for "test"

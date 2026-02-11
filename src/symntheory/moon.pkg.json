@@ -1,8 +1,0 @@
-{
-  "import": [
-    "moonbitlang/core/bigint"
-  ],
-  "test-import": [
-    { "path": "CAIMEOX/symbit/sympy/ntheory", "alias": "sympy_nt" }
-  ]
-}

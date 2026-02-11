@@ -1,7 +1,0 @@
-{
-  "import": [
-    { "path": "CAIMEOX/symbit/symstrategies/branch/core", "alias": "branch_core" },
-    { "path": "CAIMEOX/symbit/symstrategies/branch/traverse", "alias": "branch_traverse" },
-    { "path": "CAIMEOX/symbit/symcore", "alias": "symcore" }
-  ]
-}

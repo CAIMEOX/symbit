@@ -547,9 +547,9 @@ fn series_poly(
               )
               match poly_series_div(num_poly, den_poly, n) {
                 Some(div) => {
-                  let simplified = div.map(coeff => simplify_tan_coeff(
-                    coeff, tan_c0,
-                  ))
+                  let simplified = div.map(coeff => {
+                    simplify_tan_coeff(coeff, tan_c0)
+                  })
                   Some((simplified, true))
                 }
                 None => None

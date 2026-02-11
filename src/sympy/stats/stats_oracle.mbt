@@ -86,7 +86,11 @@ fn import_module(name : String) -> @py.PyModule raise {
 }
 
 ///|
-fn try_bind_name(globals : @py.PyDict, mod : @py.PyModule, name : String) -> Unit {
+fn try_bind_name(
+  globals : @py.PyDict,
+  mod : @py.PyModule,
+  name : String,
+) -> Unit {
   match mod.get_attr(name, print_err=false) {
     Some(obj) => globals.set(name, objenum_to_obj(obj))
     None => ()
@@ -96,101 +100,24 @@ fn try_bind_name(globals : @py.PyDict, mod : @py.PyModule, name : String) -> Uni
 ///|
 fn sympy_names() -> Array[String] {
   [
-    "symbols",
-    "Symbol",
-    "Integer",
-    "Rational",
-    "Eq",
-    "Ne",
-    "Lt",
-    "Le",
-    "Gt",
-    "Ge",
-    "And",
-    "Or",
-    "Not",
-    "exp",
-    "log",
-    "sqrt",
-    "sin",
-    "cos",
-    "tan",
-    "Lambda",
-    "Product",
-    "Sum",
-    "Indexed",
-    "IndexedBase",
-    "pi",
-    "I",
-    "E",
-    "erf",
-    "erfc",
-    "erfinv",
-    "erfcinv",
-    "atan",
-    "Abs",
-    "besseli",
-    "besselk",
-    "betaincinv",
-    "gammaincinv",
-    "gamma",
-    "beta",
-    "lowergamma",
-    "EulerGamma",
-    "factorial",
-    "binomial",
-    "simplify",
-    "srepr",
-    "oo",
-    "S",
-    "Matrix",
-    "MatrixSymbol",
-    "Trace",
-    "Integral",
-    "Piecewise",
-    "Tuple",
+    "symbols", "Symbol", "Integer", "Rational", "Eq", "Ne", "Lt", "Le", "Gt", "Ge",
+    "And", "Or", "Not", "exp", "log", "sqrt", "sin", "cos", "tan", "Lambda", "Product",
+    "Sum", "Indexed", "IndexedBase", "pi", "I", "E", "erf", "erfc", "erfinv", "erfcinv",
+    "atan", "Abs", "besseli", "besselk", "betaincinv", "gammaincinv", "gamma", "beta",
+    "lowergamma", "EulerGamma", "factorial", "binomial", "simplify", "srepr", "oo",
+    "S", "Matrix", "MatrixSymbol", "Trace", "Integral", "Piecewise", "Tuple",
   ]
 }
 
 ///|
 fn sympy_stats_names() -> Array[String] {
   [
-    "P",
-    "E",
-    "H",
-    "Probability",
-    "Expectation",
-    "Variance",
-    "Covariance",
-    "variance",
-    "covariance",
-    "density",
-    "cdf",
-    "characteristic_function",
-    "moment_generating_function",
-    "quantile",
-    "median",
-    "skewness",
-    "kurtosis",
-    "entropy",
-    "factorial_moment",
-    "cmoment",
-    "smoment",
-    "Die",
-    "Coin",
-    "Bernoulli",
-    "DiscreteUniform",
-    "Binomial",
-    "Poisson",
-    "Geometric",
-    "NegativeBinomial",
-    "Normal",
-    "Exponential",
-    "Gamma",
-    "PoissonProcess",
-    "WienerProcess",
-    "Wishart",
-    "MatrixNormal",
+    "P", "E", "H", "Probability", "Expectation", "Variance", "Covariance", "variance",
+    "covariance", "density", "cdf", "characteristic_function", "moment_generating_function",
+    "quantile", "median", "skewness", "kurtosis", "entropy", "factorial_moment",
+    "cmoment", "smoment", "Die", "Coin", "Bernoulli", "DiscreteUniform", "Binomial",
+    "Poisson", "Geometric", "NegativeBinomial", "Normal", "Exponential", "Gamma",
+    "PoissonProcess", "WienerProcess", "Wishart", "MatrixNormal",
   ]
 }
 
@@ -215,50 +142,12 @@ fn stats_globals() -> @py.PyDict raise {
   for name in sympy_stats_names() {
     try_bind_name(globals, stats_mod, name)
   }
-  for sym_name in [
-    "x",
-    "y",
-    "z",
-    "t",
-    "l",
-    "k",
-    "n",
-    "m",
-    "A",
-    "B",
-    "C",
-    "D",
-    "E0",
-    "F",
-    "G",
-    "H0",
-    "I0",
-    "J",
-    "K",
-    "L",
-    "M",
-    "N",
-    "O",
-    "P0",
-    "Q",
-    "R",
-    "S",
-    "T",
-    "U",
-    "V",
-    "W",
-    "X",
-    "Y",
-    "Z",
-    "_H",
-    "_i",
-    "_j",
-    "_k",
-    "_x",
-    "_y",
-    "_z",
-    "_s",
-  ] {
+  for
+    sym_name in [
+      "x", "y", "z", "t", "l", "k", "n", "m", "A", "B", "C", "D", "E0", "F", "G",
+      "H0", "I0", "J", "K", "L", "M", "N", "O", "P0", "Q", "R", "S", "T", "U", "V",
+      "W", "X", "Y", "Z", "_H", "_i", "_j", "_k", "_x", "_y", "_z", "_s",
+    ] {
     ignore(try? bind_symbol(globals, sym_name))
   }
   globals
@@ -351,11 +240,18 @@ pub fn stats_expr_equiv(a : String, b : String) -> Bool raise {
   let kwargs : Map[String, OracleArg] = {
     "locals": OracleArg::PyObj(locals.obj()),
   }
-  let a_obj = objenum_to_obj(sympy_call_must("sympy.sympify", [OracleArg::Str(a)], kwargs~))
-  let b_obj = objenum_to_obj(sympy_call_must("sympy.sympify", [OracleArg::Str(b)], kwargs~))
-  match sympy_call("sympy.Eq", [OracleArg::PyObj(a_obj), OracleArg::PyObj(b_obj)]) {
+  let a_obj = objenum_to_obj(
+    sympy_call_must("sympy.sympify", [OracleArg::Str(a)], kwargs~),
+  )
+  let b_obj = objenum_to_obj(
+    sympy_call_must("sympy.sympify", [OracleArg::Str(b)], kwargs~),
+  )
+  match
+    sympy_call("sympy.Eq", [OracleArg::PyObj(a_obj), OracleArg::PyObj(b_obj)]) {
     Some(eq_obj) => {
-      let simp = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(eq_obj))])
+      let simp = sympy_call_must("sympy.simplify", [
+        OracleArg::PyObj(objenum_to_obj(eq_obj)),
+      ])
       let txt = py_str_enum(simp)
       if txt == "True" {
         return true

@@ -1881,7 +1881,6 @@ pub fn dmp_exclude(
       idx = idx - 1
       let j = jlist[idx]
       let _ = exps.remove(j)
-
     }
     out.set(Monomial::{ exps, }, coeff)
   }

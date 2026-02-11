@@ -10,5 +10,8 @@ test "array expression strings" {
   let tp = array_tensor_product([a, b])
   assert_eq(array_expr_to_string(tp), "ArrayTensorProduct(A(n, n), B)")
   let cn = array_contraction(tp, [(0, 1)])
-  assert_eq(array_expr_to_string(cn), "ArrayContraction(ArrayTensorProduct(A(n, n), B), [(0, 1)])")
+  assert_eq(
+    array_expr_to_string(cn),
+    "ArrayContraction(ArrayTensorProduct(A(n, n), B), [(0, 1)])",
+  )
 }

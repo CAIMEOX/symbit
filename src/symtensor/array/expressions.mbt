@@ -17,7 +17,10 @@ pub fn array_symbol(name : String, shape? : Array[@symcore.Expr]) -> ArrayExpr {
 }
 
 ///|
-pub fn array_element(base : ArrayExpr, indices : Array[@symcore.Expr]) -> ArrayExpr {
+pub fn array_element(
+  base : ArrayExpr,
+  indices : Array[@symcore.Expr],
+) -> ArrayExpr {
   ArrayExpr::Element(base, indices)
 }
 
@@ -27,7 +30,10 @@ pub fn array_tensor_product(items : Array[ArrayExpr]) -> ArrayExpr {
 }
 
 ///|
-pub fn array_contraction(base : ArrayExpr, axes : Array[(Int, Int)]) -> ArrayExpr {
+pub fn array_contraction(
+  base : ArrayExpr,
+  axes : Array[(Int, Int)],
+) -> ArrayExpr {
   ArrayExpr::Contraction(base, axes)
 }
 
@@ -59,12 +65,18 @@ pub fn array_expr_to_string(expr : ArrayExpr) -> String {
     ArrayExpr::TensorProduct(items) =>
       "ArrayTensorProduct(" + items.map(array_expr_to_string).join(", ") + ")"
     ArrayExpr::Contraction(base, axes) => {
-      let pairs = axes.map(pair => "(" + pair.0.to_string() + ", " + pair.1.to_string() + ")")
-      "ArrayContraction(" + array_expr_to_string(base) + ", " + "[" + pairs.join(", ") + "]" + ")"
+      let pairs = axes.map(pair => {
+        "(" + pair.0.to_string() + ", " + pair.1.to_string() + ")"
+      })
+      "ArrayContraction(" +
+      array_expr_to_string(base) +
+      ", " +
+      "[" +
+      pairs.join(", ") +
+      "]" +
+      ")"
     }
-    ArrayExpr::Add(items) =>
-      items.map(array_expr_to_string).join(" + ")
-    ArrayExpr::Mul(items) =>
-      items.map(array_expr_to_string).join("*")
+    ArrayExpr::Add(items) => items.map(array_expr_to_string).join(" + ")
+    ArrayExpr::Mul(items) => items.map(array_expr_to_string).join("*")
   }
 }

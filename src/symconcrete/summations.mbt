@@ -108,8 +108,14 @@ pub fn Sum::change_index(
     match limit {
       LimitSpec::Range(sym, lower, upper) =>
         if symbol_name(sym) == Some(var_name) {
-          let mut new_lower = expr_add(expr_mul(@symcore.int(a), lower), @symcore.int(b))
-          let mut new_upper = expr_add(expr_mul(@symcore.int(a), upper), @symcore.int(b))
+          let mut new_lower = expr_add(
+            expr_mul(@symcore.int(a), lower),
+            @symcore.int(b),
+          )
+          let mut new_upper = expr_add(
+            expr_mul(@symcore.int(a), upper),
+            @symcore.int(b),
+          )
           if a < 0 {
             let tmp = new_lower
             new_lower = new_upper
@@ -121,7 +127,10 @@ pub fn Sum::change_index(
         }
       LimitSpec::Lower(sym, lower) =>
         if symbol_name(sym) == Some(var_name) {
-          let new_lower = expr_add(expr_mul(@symcore.int(a), lower), @symcore.int(b))
+          let new_lower = expr_add(
+            expr_mul(@symcore.int(a), lower),
+            @symcore.int(b),
+          )
           out_limits.push(LimitSpec::Lower(new_sym, new_lower))
         } else {
           out_limits.push(limit)
@@ -198,7 +207,7 @@ fn eval_finite_sum(
       if hi < lo {
         return acc
       }
-      for k in lo..=hi {
+      for k in lo..<=hi {
         let env : Map[String, @symcore.Expr] = {}
         env[name] = @symcore.int(k)
         let term = @symcore.subst(expr, env)
@@ -296,10 +305,7 @@ pub fn eval_sum_residue(
 }
 
 ///|
-pub fn telescopic(
-  expr : @symcore.Expr,
-  sym : @symcore.Expr,
-) -> @symcore.Expr? {
+pub fn telescopic(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr? {
   let name = match symbol_name(sym) {
     Some(n) => n
     None => return None
@@ -329,12 +335,11 @@ pub fn gosper_sum(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr? {
   }
   match telescoping_antiderivative(expr, name) {
     Some(g) => Some(g)
-    None => {
+    None =>
       match gosper_geometric(expr, name, sym) {
         Some(g) => Some(g)
         None => None
       }
-    }
   }
 }
 
@@ -405,13 +410,12 @@ fn split_geometric_weighted(
         }
         if contains_symbol(arg, name) {
           match arg {
-            @symcore.Expr::Pow(b, exp) if exp == sym => {
+            @symcore.Expr::Pow(b, exp) if exp == sym =>
               if base is None {
                 base = Some(b)
               } else {
                 return None
               }
-            }
             _ => return None
           }
         } else {
@@ -667,7 +671,11 @@ fn telescoping_antiderivative_pair(
 }
 
 ///|
-fn shift_expr(expr : @symcore.Expr, name : String, shift : Int) -> @symcore.Expr {
+fn shift_expr(
+  expr : @symcore.Expr,
+  name : String,
+  shift : Int,
+) -> @symcore.Expr {
   let env : Map[String, @symcore.Expr] = {}
   let sym = @symcore.symbol(name)
   env[name] = expr_add(sym, @symcore.int(shift))
@@ -682,8 +690,9 @@ fn strip_neg(expr : @symcore.Expr) -> (@symcore.Expr, Bool) {
       let rest : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() == -1 && !neg =>
-            neg = true
+          @symcore.Expr::Number(n) if n.is_integral() &&
+            n.numerator().to_int() == -1 &&
+            !neg => neg = true
           _ => rest.push(arg)
         }
       }
@@ -809,7 +818,11 @@ fn exp_shift(exp : @symcore.Expr, name : String) -> Int? {
             }
         }
       }
-      if seen { Some(shift) } else { None }
+      if seen {
+        Some(shift)
+      } else {
+        None
+      }
     }
     _ => None
   }
@@ -890,7 +903,8 @@ fn analyze_hyper(
   let rest_args : Array[@symcore.Expr] = Array::new()
   for factor in factors {
     match factor {
-      @symcore.Expr::Function(namef, args) if namef == "binomial" && args.length() == 2 => {
+      @symcore.Expr::Function(namef, args) if namef == "binomial" &&
+        args.length() == 2 => {
         let n = args[0]
         let k = args[1]
         if k == sym && binom is None {
@@ -934,10 +948,7 @@ fn analyze_hyper(
 }
 
 ///|
-fn poly_sum_to(
-  n : @symcore.Expr,
-  poly : Array[@symcore.Expr],
-) -> @symcore.Expr {
+fn poly_sum_to(n : @symcore.Expr, poly : Array[@symcore.Expr]) -> @symcore.Expr {
   let terms : Array[@symcore.Expr] = Array::new()
   for p in 0..<poly.length() {
     let coeff = poly[p]
@@ -961,7 +972,7 @@ fn sum_powers(n : @symcore.Expr, p : Int) -> @symcore.Expr {
   }
   let acc : Array[@symcore.Expr] = Array::new()
   let n1 = expr_add(n, @symcore.int(1))
-  for j in 0..=p {
+  for j in 0..<=p {
     let bin = binomial_int(p + 1, j)
     let coeff = @symcore.int(bin)
     let bern = @symcomb.bernoulli(@symcore.int(j))

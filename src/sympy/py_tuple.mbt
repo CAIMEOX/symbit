@@ -11,7 +11,6 @@ pub fn[T : @py.IsPyObject] tuple_set_borrowed(
     idx.to_uint64(),
     item.obj_ref(),
   )
-
 }
 
 ///|

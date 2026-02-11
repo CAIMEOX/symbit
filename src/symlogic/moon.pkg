@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/core/strconv",
+  "CAIMEOX/symbit/symnum",
+}
+
+import {
+  "CAIMEOX/symbit/sympy/logic" @sympy_logic,
+} for "test"

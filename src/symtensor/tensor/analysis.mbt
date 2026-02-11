@@ -65,7 +65,11 @@ pub fn get_indices(expr : TensorExpr) -> TensorIndexInfo {
   for key in keys {
     let ups = up_map.get_or_default(key, [])
     let downs = down_map.get_or_default(key, [])
-    let pair_count = if ups.length() < downs.length() { ups.length() } else { downs.length() }
+    let pair_count = if ups.length() < downs.length() {
+      ups.length()
+    } else {
+      downs.length()
+    }
     let mut i = 0
     while i < pair_count {
       dummy.push((ups[i], downs[i]))

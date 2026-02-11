@@ -560,7 +560,10 @@ pub fn query_to_sympy(expr : Query) -> String {
 }
 
 ///|
-pub fn query_atom_key(key : PredicateKey, args : Array[@symcore.Expr]) -> String {
+pub fn query_atom_key(
+  key : PredicateKey,
+  args : Array[@symcore.Expr],
+) -> String {
   let rendered = args.map(arg => @symprint.to_string(arg)).join(",")
   "\{predicate_name(key)}:\{rendered}"
 }
