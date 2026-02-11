@@ -1,0 +1,22 @@
+{
+  "import": [
+    "CAIMEOX/symbit/symcore",
+    "CAIMEOX/symbit/symprint",
+    {
+      "path": "CAIMEOX/symbit/symassume",
+      "alias": "symassume"
+    },
+    {
+      "path": "CAIMEOX/symbit/sympy",
+      "alias": "sympy"
+    },
+    {
+      "path": "Kaida-Amethyst/python",
+      "alias": "py"
+    },
+    {
+      "path": "Kaida-Amethyst/python/cpython",
+      "alias": "cpython"
+    }
+  ]
+}
