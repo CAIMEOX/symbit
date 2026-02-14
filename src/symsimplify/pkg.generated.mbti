@@ -1,0 +1,72 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symsimplify"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn apply_pattern(SimplifyPattern, @symcore.Expr) -> @symcore.Expr
+
+pub fn apply_patterns_once(@symcore.Expr, Array[SimplifyPattern]) -> @symcore.Expr
+
+pub fn combsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn cse(Array[@symcore.Expr], min_nodes? : Int) -> CseResult
+
+pub fn cse_reconstruct(CseResult) -> Array[@symcore.Expr]
+
+pub fn hyperexpand(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn plan_patterns(SimplifyPlan) -> Array[SimplifyPattern]
+
+pub fn powsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn radsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn ratsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn signsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn simplify(@symcore.Expr, plan? : SimplifyPlan, max_passes? : Int) -> @symcore.Expr
+
+pub fn simplify_with_patterns(@symcore.Expr, Array[SimplifyPattern], max_passes? : Int) -> @symcore.Expr
+
+pub fn sqrtdenest(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn trigsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+pub(all) struct CseResult {
+  replacements : Array[(String, @symcore.Expr)]
+  reduced_exprs : Array[@symcore.Expr]
+}
+pub fn CseResult::reduced_exprs_copy(Self) -> Array[@symcore.Expr]
+pub fn CseResult::replacement_count(Self) -> Int
+pub fn CseResult::replacements_copy(Self) -> Array[(String, @symcore.Expr)]
+
+pub(all) enum SimplifyPattern {
+  FoldConstants
+  AddLikeTerms
+  MulLikeBases
+  PowDenest
+  TrigPythagorean
+  FunctionIdentities
+}
+pub impl Eq for SimplifyPattern
+pub impl Show for SimplifyPattern
+
+pub(all) enum SimplifyPlan {
+  Default
+  Aggressive
+  Custom(Array[SimplifyPattern])
+}
+pub impl Eq for SimplifyPlan
+pub impl Show for SimplifyPlan
+
+// Type aliases
+
+// Traits
+

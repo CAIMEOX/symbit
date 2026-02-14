@@ -1,0 +1,10 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+  "moonbitlang/core/strconv" @strconv,
+}
+
+import {
+  "CAIMEOX/symbit/sympy/simplify" @sympy_simplify,
+} for "test"
