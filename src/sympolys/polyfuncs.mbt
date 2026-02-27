@@ -83,7 +83,9 @@ pub fn rational_interpolate(
   let n = points.length()
   let k = n - deg_num - 1
   if k < 0 {
-    raise PolyError::NotImplemented("rational_interpolate: too few points")
+    // SymPy reference: sympy/polys/polyfuncs.py rational_interpolate.
+    // SymPy raises an option error when the requested numerator degree is too high.
+    raise PolyError::BadExponent
   }
   let matrix = build_rational_matrix(points, deg_num, k)
   let coeffs = nullspace_vector(matrix)
@@ -99,7 +101,7 @@ pub fn rational_interpolate(
     idx = idx - 1
   }
   if den_deg < 0 {
-    raise PolyError::NotImplemented("rational_interpolate: zero denominator")
+    raise PolyError::DivisionByZero
   }
   let lead = coeffs[den_start + den_deg]
   let inv_lead = lead.reciprocal() catch {
@@ -247,7 +249,7 @@ pub fn viete(
   }
   let deg = poly.degree(0)
   if deg < 1 {
-    raise PolyError::NotImplemented("viete: constant polynomial")
+    raise PolyError::BadExponent
   }
   let roots_names = if roots.is_empty() {
     default_root_names(deg)
@@ -255,8 +257,10 @@ pub fn viete(
     roots
   }
   if roots_names.length() != deg {
-    raise PolyError::NotImplemented("viete: roots length mismatch")
+    raise PolyError::BadGenerator("roots")
   }
+  // SymPy reference: sympy/polys/polyfuncs.py viete.
+  // e_k(r_1, ..., r_n) = (-1)^k * a_{n-k} / a_n.
   let coeffs = univar_coeffs(poly)
   let lc = coeffs[deg]
   let inv_lc = fe_inv(lc)
@@ -368,9 +372,7 @@ fn nullspace_vector(
       free_cols.push(c)
     }
   }
-  guard !free_cols.is_empty() else {
-    raise PolyError::NotImplemented("rational_interpolate: no free column")
-  }
+  guard !free_cols.is_empty() else { raise PolyError::BadExponent }
   let free_col = free_cols[0]
   let sol : Array[@symnum.BigRational] = Array::new()
   for _ in 0..<cols {
