@@ -258,6 +258,8 @@ pub fn dup_convert(Array[FieldElem], Domain, Domain) -> Array[FieldElem] raise P
 
 pub fn dup_copy(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
+pub fn dup_count_real_roots(Array[FieldElem], Domain, inf? : @symnum.BigRational, sup? : @symnum.BigRational) -> Int raise PolyError
+
 pub fn dup_deflate(Array[FieldElem], Domain) -> (Int, Array[FieldElem]) raise PolyError
 
 pub fn dup_degree(Array[FieldElem]) -> Int raise PolyError
@@ -285,6 +287,8 @@ pub fn dup_from_sympy(Array[@symnum.BigRational], Domain) -> Array[FieldElem] ra
 pub fn dup_inflate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_integrate(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_isolate_real_roots(Array[FieldElem], Domain) -> Array[((@symnum.BigRational, @symnum.BigRational), Int)] raise PolyError
 
 pub fn dup_isolate_real_roots_sqf(Array[FieldElem], Domain) -> Array[(@symnum.BigRational, @symnum.BigRational)] raise PolyError
 
@@ -336,6 +340,10 @@ pub fn dup_rem(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] r
 
 pub fn dup_reverse(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
+pub fn dup_root_lower_bound(Array[FieldElem], Domain) -> FieldElem raise PolyError
+
+pub fn dup_root_upper_bound(Array[FieldElem], Domain) -> FieldElem raise PolyError
+
 pub fn dup_rr_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
 pub fn dup_rshift(Array[FieldElem], Int, Domain) -> Array[FieldElem] raise PolyError
@@ -365,6 +373,8 @@ pub fn dup_to_raw_dict(Array[FieldElem], Domain) -> Map[Int, FieldElem]
 pub fn dup_to_tuple(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
 pub fn ensure_coeff_domain(@symnum.BigRational, Domain) -> FieldElem raise PolyError
+
+pub fn euclid_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn fe_add(FieldElem, FieldElem) -> FieldElem raise PolyError
 
@@ -438,6 +448,8 @@ pub fn lcm_list(Array[Poly]) -> Poly raise PolyError
 
 pub fn lll_reduce(Array[Array[@bigint.BigInt]], delta? : @symnum.BigRational) -> (Array[Array[@bigint.BigInt]], Array[Array[@bigint.BigInt]]) raise PolyError
 
+pub fn modified_subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn monomial_count(Int, Int) -> Int
 
 pub fn monomial_div(Monomial, Monomial) -> Monomial? raise PolyError
@@ -464,11 +476,15 @@ pub fn normalize_alg_ext_spec(AlgExtSpec) -> AlgExtSpec raise PolyError
 
 pub fn normalize_mod(@symnum.BigRational, Domain) -> @symnum.BigRational raise PolyError
 
+pub fn quo_z(Poly, Poly) -> Poly raise PolyError
+
 pub fn rational_interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], Int, String, Domain) -> (Poly, Poly) raise PolyError
 
 pub fn reconstruct_coeffs(Array[(Int, Array[Int])], Int) -> Array[Int] raise PolyError
 
 pub fn reduced(Poly, Array[Poly]) -> (Array[Poly], Poly) raise PolyError
+
+pub fn rem_z(Poly, Poly) -> Poly raise PolyError
 
 pub fn res(Poly, Poly) -> @symnum.BigRational raise PolyError
 
@@ -476,9 +492,13 @@ pub fn res_q(Poly, Poly) -> @symnum.BigRational raise PolyError
 
 pub fn res_z(Poly, Poly) -> @symnum.BigRational raise PolyError
 
-pub fn resultant_expr(@symcore.Expr, @symcore.Expr, String, gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> @symnum.BigRational raise PolyError
+pub fn resultant_expr(@symcore.Expr, @symcore.Expr, String, gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> @symcore.Expr raise PolyError
+
+pub fn resultant_expr_scalar(@symcore.Expr, @symcore.Expr, String, gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> @symnum.BigRational raise PolyError
 
 pub fn rootof(Poly, Int) -> RootOf
+
+pub fn roots(Poly, radicals? : Bool) -> Array[@symcore.Expr] raise PolyError
 
 pub fn roots_cubic(Poly) -> Array[@symcore.Expr] raise PolyError
 
@@ -488,9 +508,13 @@ pub fn roots_quadratic(Poly) -> Array[@symcore.Expr] raise PolyError
 
 pub fn roots_quartic(Poly) -> Array[@symcore.Expr] raise PolyError
 
+pub fn sturm_q(Poly, Poly) -> Array[Poly] raise PolyError
+
 pub fn sturm_sequence(Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants(Poly, Poly) -> Array[Poly] raise PolyError
+
+pub fn subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants_rem(Poly, Poly) -> Array[Poly] raise PolyError
 
@@ -603,6 +627,7 @@ pub fn Poly::pow(Self, Int) -> Self raise PolyError
 pub fn Poly::primitive_part(Self) -> Self raise PolyError
 pub fn Poly::pseudo_div_univar_int(Self, Self) -> (Self, Self, Int) raise PolyError
 pub fn Poly::resultant(Self, Self, Int) -> @symnum.BigRational raise PolyError
+pub fn Poly::resultant_poly(Self, Self, Int) -> Self raise PolyError
 pub fn Poly::scale_coeff(Self, FieldElem) -> Self raise PolyError
 pub fn Poly::sqf_list(Self) -> (@symnum.BigRational, Array[(Self, Int)]) raise PolyError
 pub fn Poly::sqf_part(Self) -> Self raise PolyError

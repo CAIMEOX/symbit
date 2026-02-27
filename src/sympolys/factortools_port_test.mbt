@@ -62,3 +62,22 @@ test "factortools: QQ content factors (1/2)*(x^2-1)" {
   )
   expect_factor_list_same(poly, None)
 }
+
+///|
+test "factortools: extension argument no longer rejected" {
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let x = @symcore.symbol("x")
+  let poly = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
+  let factors = poly.factor(extension=["sqrt(2)"])
+  let ours = sort_factor_repr(factor_list_to_string("1", factors))
+    .trim()
+    .to_string()
+  let oracle = sort_factor_repr(
+      @sympy_polys.factor_list(poly.to_expr(), extension=["sqrt(2)"]),
+    )
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("factor extension mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}

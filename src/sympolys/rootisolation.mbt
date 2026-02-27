@@ -1,5 +1,6 @@
 ///|
-/// Root isolation helpers (subset): Cauchy and Mignotte bounds.
+/// Root isolation helpers for univariate dense polynomials over QQ/ZZ-like
+/// rational coefficient domains.
 fn abs_rational(r : @symnum.BigRational) -> @symnum.BigRational {
   if r.compare(@symnum.BigRational::zero()) < 0 {
     r.neg()
@@ -435,4 +436,84 @@ pub fn dup_isolate_real_roots_sqf(
     }
   })
   intervals
+}
+
+///|
+/// SymPy compatibility entry point (LMQ in SymPy; Cauchy fallback here).
+pub fn dup_root_upper_bound(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  dup_cauchy_upper_bound(coeffs, domain)
+}
+
+///|
+/// SymPy compatibility entry point (LMQ in SymPy; Cauchy fallback here).
+pub fn dup_root_lower_bound(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  dup_cauchy_lower_bound(coeffs, domain)
+}
+
+///|
+/// Isolate real roots (with multiplicities) by combining square-free isolation
+/// results for each square-free factor.
+pub fn dup_isolate_real_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+) -> Array[((@symnum.BigRational, @symnum.BigRational), Int)] raise PolyError {
+  let f = dup_strip(coeffs)
+  if f.is_empty() || f.length() == 1 {
+    return []
+  }
+  let poly = dup_to_poly(f, domain)
+  let (_, parts) = poly.sqf_list()
+  let out : Array[((@symnum.BigRational, @symnum.BigRational), Int)] = Array::new()
+  for entry in parts {
+    let (factor, mult) = entry
+    let dense = poly_to_dup(factor)
+    let intervals = dup_isolate_real_roots_sqf(dense, domain)
+    for iv in intervals {
+      out.push((iv, mult))
+    }
+  }
+  out.sort_by((lhs, rhs) => {
+    let ((a1, b1), _) = lhs
+    let ((a2, b2), _) = rhs
+    let cmp = a1.compare(a2)
+    if cmp != 0 {
+      cmp
+    } else {
+      b1.compare(b2)
+    }
+  })
+  out
+}
+
+///|
+/// Count real roots, optionally restricted to an interval.
+pub fn dup_count_real_roots(
+  coeffs : Array[FieldElem],
+  domain : Domain,
+  inf? : @symnum.BigRational,
+  sup? : @symnum.BigRational,
+) -> Int raise PolyError {
+  let roots = dup_isolate_real_roots(coeffs, domain)
+  let mut total = 0
+  for entry in roots {
+    let ((a, b), _) = entry
+    let include_lower = match inf {
+      Some(v) => b.compare(v) >= 0
+      None => true
+    }
+    let include_upper = match sup {
+      Some(v) => a.compare(v) <= 0
+      None => true
+    }
+    if include_lower && include_upper {
+      total = total + 1
+    }
+  }
+  total
 }

@@ -175,7 +175,8 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 pub fn fe_is_negative(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
-    FieldElem::CC(_, _) => false
+    FieldElem::CC(real, imag) =>
+      imag.is_zero() && real.compare(@symnum.BigRational::zero()) < 0
     FieldElem::GFp(_, _) => false
     FieldElem::GFExt(_, _, _) => false
     FieldElem::AlgExt(_, _, _, _) => false
@@ -186,7 +187,8 @@ pub fn fe_is_negative(a : FieldElem) -> Bool {
 pub fn fe_is_positive(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
-    FieldElem::CC(_, _) => false
+    FieldElem::CC(real, imag) =>
+      imag.is_zero() && real.compare(@symnum.BigRational::zero()) > 0
     FieldElem::GFp(_, _) => false
     FieldElem::GFExt(_, _, _) => false
     FieldElem::AlgExt(_, _, _, _) => false
@@ -376,7 +378,11 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
       let base_const = fe_from_int(val, base)
       FieldElem::AlgExt(base, [base_const], minpoly, gen)
     }
-    Domain::RR => FieldElem::QQ(@symnum.BigRational::from_int(val))
+    Domain::RR =>
+      FieldElem::CC(
+        @symnum.BigRational::from_int(val),
+        @symnum.BigRational::zero(),
+      )
     // SymPy reference: sympy/polys/domains/fractionfield.py FractionField.convert.
     // Ground integers are embedded into the base domain and viewed in Frac(base).
     Domain::Frac(inner) => fe_from_int(val, inner)
@@ -397,7 +403,7 @@ pub fn fe_from_rational(
         raise PolyError::CoefficientNotInteger
       }
     Domain::CC => FieldElem::CC(val, @symnum.BigRational::zero())
-    Domain::RR => FieldElem::QQ(val)
+    Domain::RR => FieldElem::CC(val, @symnum.BigRational::zero())
     Domain::GF(p) => {
       let norm = normalize_mod(val, Domain::GF(p))
       FieldElem::GFp(p, fe_pos_mod(norm.numerator().to_int(), p))

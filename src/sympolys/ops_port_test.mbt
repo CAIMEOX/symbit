@@ -46,7 +46,7 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
   let f = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
   let g = (x ^ @symcore.int(2)) + @symcore.int(1)
   let res = resultant_expr(f, g, "x", gens=["x"], domain=Domain::ZZ)
-  let ours = sympy_normalize(res.to_string()).trim().to_string()
+  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
   let oracle = @sympy_polys.resultant(f, g, x="x", gens=["x"], domain="ZZ")
     .trim()
     .to_string()
@@ -57,16 +57,42 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
 
 ///|
 test "ops: resultant_expr parity for multivar with univariate support" {
-  let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let f = (y ^ @symcore.int(2)) - @symcore.int(2)
   let g = y - @symcore.int(1)
   let res = resultant_expr(f, g, "y", gens=["x", "y"], domain=Domain::ZZ)
-  let ours = sympy_normalize(res.to_string()).trim().to_string()
+  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
   let oracle = @sympy_polys.resultant(f, g, x="y", gens=["x", "y"], domain="ZZ")
     .trim()
     .to_string()
   guard ours == oracle else {
     fail("resultant_expr multivar mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "ops: resultant_expr parity for non-constant multivar elimination" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let f = x * y + @symcore.int(1)
+  let g = x + y
+  let res = resultant_expr(f, g, "x", gens=["x", "y"], domain=Domain::ZZ)
+  let ours = sympy_normalize(@symprint.to_string(res)).trim().to_string()
+  let oracle = @sympy_polys.resultant(f, g, x="x", gens=["x", "y"], domain="ZZ")
+    .trim()
+    .to_string()
+  guard ours == oracle else {
+    fail("resultant_expr polynomial mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+  let scalar_res : Result[@symnum.BigRational, PolyError] = try? resultant_expr_scalar(
+    f,
+    g,
+    "x",
+    gens=["x", "y"],
+    domain=Domain::ZZ,
+  )
+  match scalar_res {
+    Err(PolyError::DomainMismatch) => ()
+    _ => fail("expected scalar resultant_expr to reject non-constant output")
   }
 }

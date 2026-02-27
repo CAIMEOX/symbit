@@ -1,25 +1,36 @@
 ///|
-/// Scalar resultant over one generator; multivariate elimination falls back to
-/// scalar-only cases compatible with this return type.
-pub fn Poly::resultant(
+/// Full resultant over one eliminated generator. The result is a polynomial in
+/// the remaining generators (or a constant when no generators remain).
+pub fn Poly::resultant_poly(
   self : Poly,
   other : Poly,
   gen_index : Int,
-) -> @symnum.BigRational raise PolyError {
+) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || self.gens.not_equal(other.gens) {
     raise PolyError::DomainMismatch
   }
   if gen_index < 0 || gen_index >= self.gens.length() {
     raise PolyError::BadGenerator("\{gen_index}".to_string())
   }
-  if gen_index != 0 {
-    return resultant_elim(self, other, gen_index)
-  }
-  resultant_univar(self, other)
+  let poly = resultant_elim_poly(self, other, gen_index)
+  poly.with_order(self.order)
+}
+
+///|
+/// Scalar resultant compatibility helper. This matches the old behavior and
+/// raises DomainMismatch when elimination yields a non-constant polynomial.
+pub fn Poly::resultant(
+  self : Poly,
+  other : Poly,
+  gen_index : Int,
+) -> @symnum.BigRational raise PolyError {
+  let res_poly = self.resultant_poly(other, gen_index)
+  poly_const_rational(res_poly)
 }
 
 ///|
 /// Resultant wrapper mirroring SymPy: resultant(f, g, x, gens?, domain?, modulus?, order?).
+/// Returns a symbolic expression, so multivariate elimination is represented.
 pub fn resultant_expr(
   f_expr : @symcore.Expr,
   g_expr : @symcore.Expr,
@@ -30,7 +41,66 @@ pub fn resultant_expr(
   extension? : Array[String],
   gf_degree? : Int,
   order? : TermOrder,
+) -> @symcore.Expr raise PolyError {
+  let (f, g, resolved_gens) = build_resultant_inputs(
+    f_expr,
+    g_expr,
+    var_name,
+    gens~,
+    domain~,
+    modulus~,
+    extension~,
+    gf_degree~,
+    order~,
+  )
+  match find_index(resolved_gens, var_name) {
+    Some(i) => f.resultant_poly(g, i).to_expr()
+    None => raise PolyError::BadGenerator(var_name)
+  }
+}
+
+///|
+/// Scalar compatibility wrapper for callers that require a rational resultant.
+pub fn resultant_expr_scalar(
+  f_expr : @symcore.Expr,
+  g_expr : @symcore.Expr,
+  var_name : String,
+  gens? : Array[String],
+  domain? : Domain,
+  modulus? : Int,
+  extension? : Array[String],
+  gf_degree? : Int,
+  order? : TermOrder,
 ) -> @symnum.BigRational raise PolyError {
+  let (f, g, resolved_gens) = build_resultant_inputs(
+    f_expr,
+    g_expr,
+    var_name,
+    gens~,
+    domain~,
+    modulus~,
+    extension~,
+    gf_degree~,
+    order~,
+  )
+  match find_index(resolved_gens, var_name) {
+    Some(i) => f.resultant(g, i)
+    None => raise PolyError::BadGenerator(var_name)
+  }
+}
+
+///|
+fn build_resultant_inputs(
+  f_expr : @symcore.Expr,
+  g_expr : @symcore.Expr,
+  var_name : String,
+  gens~ : Array[String]?,
+  domain~ : Domain?,
+  modulus~ : Int?,
+  extension~ : Array[String]?,
+  gf_degree~ : Int?,
+  order~ : TermOrder?,
+) -> (Poly, Poly, Array[String]) raise PolyError {
   let resolved_gens = match gens {
     Some(g) =>
       if !array_contains_str(g, var_name) {
@@ -104,7 +174,7 @@ pub fn resultant_expr(
       )
   }
   match find_index(resolved_gens, var_name) {
-    Some(i) => f.resultant(g, i)
+    Some(_) => (f, g, resolved_gens)
     None => raise PolyError::BadGenerator(var_name)
   }
 }
@@ -192,65 +262,215 @@ fn resultant_univar(a : Poly, b : Poly) -> @symnum.BigRational raise PolyError {
 }
 
 ///|
-fn resultant_elim(
+fn resultant_elim_poly(
   a : Poly,
   b : Poly,
   gen_index : Int,
-) -> @symnum.BigRational raise PolyError {
+) -> Poly raise PolyError {
   if a.gens.length() <= gen_index || b.gens.length() <= gen_index {
     raise PolyError::BadGenerator("\{gen_index}".to_string())
   }
-  if poly_depends_only_on_var(a, gen_index) &&
-    poly_depends_only_on_var(b, gen_index) {
-    let au = poly_project_univar(a, gen_index)
-    let bu = poly_project_univar(b, gen_index)
-    return resultant_univar(au, bu)
-  }
-  let basis = Poly::groebner([a, b], order=TermOrder::Lex)
-  for p in basis {
-    let mut depends = false
-    for m, _ in p.coeffs {
-      if m.exps[gen_index] != 0 {
-        depends = true
-        break
-      }
+  let use_qq_lift = a.domain is Domain::ZZ
+  let work_a = if use_qq_lift { lift_to_qq(a) } else { a }
+  let work_b = if use_qq_lift { lift_to_qq(b) } else { b }
+  let out_gens = remove_gen(work_a.gens, gen_index)
+  let out_domain = work_a.domain
+  if work_a.is_zero() || work_b.is_zero() {
+    let zero = Poly::zero(out_gens, out_domain)
+    if use_qq_lift {
+      return try_round_to_int(zero) catch { _ => zero }
     }
-    if !depends {
-      // If elimination yields a constant, return it; otherwise not a pure resultant.
-      if p.gens.length() == 1 ||
-        (p.coeffs.length() == 1 && p.degree(gen_index) == 0) {
-        match p.leading_term() {
-          Some((_, c)) => return fe_expect_rational(c)
-          None => continue
+    return zero
+  }
+  if work_a.gens.length() == 1 {
+    let rat = resultant_univar(work_a, work_b)
+    let coeff = fe_from_rational(rat, out_domain)
+    let const_poly = poly_from_const_coeff(coeff, out_gens, out_domain)
+    if use_qq_lift {
+      return try_round_to_int(const_poly) catch { _ => const_poly }
+    }
+    return const_poly
+  }
+  let fa = trim_poly_coeffs(poly_to_univar_coeffs(work_a, gen_index))
+  let fb = trim_poly_coeffs(poly_to_univar_coeffs(work_b, gen_index))
+  if fa.is_empty() || fb.is_empty() {
+    let zero = Poly::zero(out_gens, out_domain)
+    if use_qq_lift {
+      return try_round_to_int(zero) catch { _ => zero }
+    }
+    return zero
+  }
+  let deg_a = fa.length() - 1
+  let deg_b = fb.length() - 1
+  if deg_a == 0 && deg_b == 0 {
+    let one = Poly::one(out_gens, out_domain)
+    if use_qq_lift {
+      return try_round_to_int(one) catch { _ => one }
+    }
+    return one
+  }
+  if deg_a == 0 {
+    let pow = fa[0].pow(deg_b)
+    if use_qq_lift {
+      return try_round_to_int(pow) catch { _ => pow }
+    }
+    return pow
+  }
+  if deg_b == 0 {
+    let pow = fb[0].pow(deg_a)
+    if use_qq_lift {
+      return try_round_to_int(pow) catch { _ => pow }
+    }
+    return pow
+  }
+  let mat = sylvester_matrix(fa, fb, out_gens, out_domain)
+  let det = det_poly_bareiss(mat, out_gens, out_domain)
+  if use_qq_lift {
+    try_round_to_int(det) catch { _ => det }
+  } else {
+    det
+  }
+}
+
+///|
+fn trim_poly_coeffs(coeffs : Array[Poly]) -> Array[Poly] {
+  let mut end = coeffs.length()
+  while end > 0 && coeffs[end - 1].is_zero() {
+    end = end - 1
+  }
+  if end == coeffs.length() {
+    return coeffs
+  }
+  let out : Array[Poly] = Array::new()
+  for i in 0..<end {
+    out.push(coeffs[i])
+  }
+  out
+}
+
+///|
+fn poly_from_const_coeff(
+  coeff : FieldElem,
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  if fe_is_zero(coeff) {
+    return Poly::zero(gens, domain)
+  }
+  let mono = monomial_one(gens.length())
+  let coeffs : Map[Monomial, FieldElem] = Map::new()
+  add_term(coeffs, mono, coeff, domain)
+  Poly::{ coeffs, gens, domain, order: TermOrder::Lex }
+}
+
+///|
+fn poly_const_rational(poly : Poly) -> @symnum.BigRational raise PolyError {
+  if poly.is_zero() {
+    return @symnum.BigRational::zero()
+  }
+  let mut value : @symnum.BigRational? = None
+  for m, c in poly.coeffs {
+    if !m.exps.all(e => e == 0) {
+      raise PolyError::DomainMismatch
+    }
+    value = match value {
+      None => Some(fe_expect_rational(c))
+      Some(v) => Some(v.add_r(fe_expect_rational(c)))
+    }
+  }
+  match value {
+    Some(v) => v
+    None => @symnum.BigRational::zero()
+  }
+}
+
+///|
+fn sylvester_matrix(
+  f_coeffs_asc : Array[Poly],
+  g_coeffs_asc : Array[Poly],
+  gens : Array[String],
+  domain : Domain,
+) -> Array[Array[Poly]] {
+  let m = f_coeffs_asc.length() - 1
+  let n = g_coeffs_asc.length() - 1
+  let size = m + n
+  let zero = Poly::zero(gens, domain)
+  let mat : Array[Array[Poly]] = Array::new()
+  for _ in 0..<size {
+    mat.push(Array::make(size, zero))
+  }
+  for i in 0..<n {
+    for j in 0..<=m {
+      mat[i].set(i + j, f_coeffs_asc[m - j])
+    }
+  }
+  for i in 0..<m {
+    for j in 0..<=n {
+      mat[n + i].set(i + j, g_coeffs_asc[n - j])
+    }
+  }
+  mat
+}
+
+///|
+fn det_poly_bareiss(
+  mat : Array[Array[Poly]],
+  gens : Array[String],
+  domain : Domain,
+) -> Poly raise PolyError {
+  let n = mat.length()
+  if n == 0 {
+    return Poly::one(gens, domain)
+  }
+  if n == 1 {
+    return mat[0][0]
+  }
+  let a : Array[Array[Poly]] = Array::new()
+  for i in 0..<n {
+    let row : Array[Poly] = Array::new()
+    for j in 0..<n {
+      row.push(mat[i][j])
+    }
+    a.push(row)
+  }
+  let mut det_sign = 1
+  let mut pivot_prev = Poly::one(gens, domain)
+  for k in 0..<(n - 1) {
+    if a[k][k].is_zero() {
+      let mut swap_row : Int? = None
+      for r in (k + 1)..<n {
+        if !a[r][k].is_zero() {
+          swap_row = Some(r)
+          break
+        }
+      }
+      match swap_row {
+        None => return Poly::zero(gens, domain)
+        Some(r) => {
+          let tmp = a[k]
+          a.set(k, a[r])
+          a.set(r, tmp)
+          det_sign = -det_sign
         }
       }
     }
-  }
-  // Current API returns a scalar. If elimination leaves a non-constant polynomial
-  // in remaining generators, it cannot be represented in this scalar result type.
-  raise PolyError::DomainMismatch
-}
-
-///|
-fn poly_depends_only_on_var(poly : Poly, var_index : Int) -> Bool {
-  for m, _ in poly.coeffs {
-    for i in 0..<m.exps.length() {
-      if i != var_index && m.exps[i] != 0 {
-        return false
+    let pivot = a[k][k]
+    for i in (k + 1)..<n {
+      for j in (k + 1)..<n {
+        let num = a[i][j].mul(pivot).sub(a[i][k].mul(a[k][j]))
+        if k == 0 {
+          a[i].set(j, num)
+        } else {
+          a[i].set(j, poly_div_exact(num, pivot_prev))
+        }
       }
+      a[i].set(k, Poly::zero(gens, domain))
     }
+    pivot_prev = pivot
   }
-  true
-}
-
-///|
-fn poly_project_univar(poly : Poly, var_index : Int) -> Poly raise PolyError {
-  let gens = [poly.gens[var_index]]
-  let coeffs : Map[Monomial, FieldElem] = Map::new()
-  for m, c in poly.coeffs {
-    let mono = monomial_one(1)
-    mono.exps.set(0, m.exps[var_index])
-    add_term(coeffs, mono, c, poly.domain)
+  let mut det = a[n - 1][n - 1]
+  if det_sign < 0 {
+    det = det.neg()
   }
-  Poly::{ coeffs, gens, domain: poly.domain, order: TermOrder::Lex }
+  det
 }

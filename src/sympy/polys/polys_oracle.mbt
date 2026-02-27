@@ -976,6 +976,7 @@ fn sympy_factor_str(
 pub fn factor_list(
   expr : @symcore.Expr,
   modulus? : Int = 0,
+  extension? : Array[String] = [],
   gfext_modulus? : Array[Int] = [],
   gfext_gen? : String = "a",
 ) -> String raise {
@@ -997,6 +998,15 @@ pub fn factor_list(
       Some(m) => kwargs_map["modulus"] = OracleArg::Int(m)
       None => ()
     }
+  }
+  if !extension.is_empty() {
+    let ext_objs : Array[@py.PyObject] = Array::new()
+    for item in extension {
+      ext_objs.push(sympy_sympify_str(item))
+    }
+    kwargs_map["extension"] = OracleArg::PyObj(
+      py_list_from_objects(ext_objs).obj(),
+    )
   }
   let res = sympy_call_must(
     "sympy.factor_list",
@@ -3656,6 +3666,30 @@ pub fn dup_sturm(
 }
 
 ///|
+pub fn dup_root_upper_bound(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_root_upper_bound", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_root_lower_bound(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_root_lower_bound", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
 pub fn dup_refine_real_root(
   coeffs : Array[@symnum.BigRational],
   s : @symnum.BigRational,
@@ -3704,6 +3738,45 @@ pub fn dup_isolate_real_roots_sqf(
     "sympy.polys.rootisolation.dup_isolate_real_roots_sqf", args,
   )
   remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_isolate_real_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let res = sympy_call_must("sympy.polys.rootisolation.dup_isolate_real_roots", args)
+  remove_spaces(py_dense_str(res))
+}
+
+///|
+pub fn dup_count_real_roots(
+  coeffs : Array[@symnum.BigRational],
+  domain? : String = "QQ",
+  inf? : @symnum.BigRational,
+  sup? : @symnum.BigRational,
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
+  args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
+  let kwargs : Map[String, OracleArg] = {}
+  match inf {
+    Some(v) => kwargs["inf"] = OracleArg::PyObj(sympy_domain_elem(v, domain))
+    None => ()
+  }
+  match sup {
+    Some(v) => kwargs["sup"] = OracleArg::PyObj(sympy_domain_elem(v, domain))
+    None => ()
+  }
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_count_real_roots",
+    args,
+    kwargs~,
+  )
+  py_sympy_enum_str(res)
 }
 
 ///|
@@ -3767,6 +3840,72 @@ pub fn subresultants_rem_qq_zz(
     parts.push(py_sympy_expr_str(item))
   }
   parts.join(" | ")
+}
+
+///|
+pub fn euclid_q_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.euclid_q", args)
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn sturm_q_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.sturm_q", args)
+  let items = py_list_to_pyobjects(res)
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push(py_sympy_expr_str(item))
+  }
+  parts.join(" | ")
+}
+
+///|
+pub fn rem_z_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.rem_z", args)
+  py_sympy_enum_str(res)
+}
+
+///|
+pub fn quo_z_qq_zz(
+  p : @symcore.Expr,
+  q : @symcore.Expr,
+  x? : String = "x",
+) -> String raise {
+  let args : Array[OracleArg] = Array::new()
+  args.push(OracleArg::PyObj(expr_to_sympy(p)))
+  args.push(OracleArg::PyObj(expr_to_sympy(q)))
+  args.push(OracleArg::PyObj(sympy_symbol_obj(x)))
+  let res = sympy_call_must("sympy.polys.subresultants_qq_zz.quo_z", args)
+  py_sympy_enum_str(res)
 }
 
 ///|

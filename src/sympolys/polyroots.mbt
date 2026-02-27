@@ -1,5 +1,6 @@
 ///|
-/// Symbolic roots for low-degree univariate polynomials (subset).
+/// Symbolic roots for univariate polynomials with explicit low-degree formulas
+/// and `CRootOf` fallback for higher-degree irreducibles.
 fn ensure_univar(poly : Poly) -> Unit raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate
@@ -134,6 +135,56 @@ pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
       }
       append_roots(roots, ros, mult)
     }
+  }
+  roots
+}
+
+///|
+fn roots_for_factor(
+  poly : Poly,
+  radicals : Bool,
+) -> Array[@symcore.Expr] raise PolyError {
+  let deg = poly.degree(0)
+  if deg <= 0 {
+    return []
+  }
+  if deg == 1 {
+    return roots_linear(poly)
+  }
+  if deg == 2 {
+    return roots_quadratic(poly)
+  }
+  if radicals && deg == 3 {
+    return roots_cubic(poly)
+  }
+  if radicals && deg == 4 {
+    return roots_quartic(poly)
+  }
+  let roots : Array[@symcore.Expr] = Array::new()
+  for i in 0..<deg {
+    roots.push(rootof_expr(poly, i))
+  }
+  roots
+}
+
+///|
+/// SymPy-like root extraction over all degrees:
+/// - uses factorization and closed forms for degrees <= 4 when enabled,
+/// - otherwise falls back to symbolic `CRootOf`.
+pub fn roots(
+  poly : Poly,
+  radicals? : Bool = true,
+) -> Array[@symcore.Expr] raise PolyError {
+  ensure_univar(poly)
+  if poly.is_zero() {
+    return []
+  }
+  let (_, factors) = poly.factor_list()
+  let roots : Array[@symcore.Expr] = Array::new()
+  for pair in factors {
+    let (f, mult) = pair
+    let f_roots = roots_for_factor(f, radicals)
+    append_roots(roots, f_roots, mult)
   }
   roots
 }

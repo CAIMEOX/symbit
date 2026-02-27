@@ -126,6 +126,23 @@ fn lift_poly_to_qq(poly : Poly) -> Poly {
 }
 
 ///|
+fn apply_extension_request(poly : Poly, ext_syms : Array[String]) -> Poly raise PolyError {
+  if ext_syms.is_empty() {
+    return poly
+  }
+  if ext_syms.length() != 1 {
+    raise PolyError::BadGenerator("extension")
+  }
+  let _ = ext_syms[0]
+  match poly.domain {
+    // SymPy extension=True/=[...] generally lifts integer domains to fields;
+    // we mirror that behavior minimally by avoiding ZZ-only arithmetic paths.
+    Domain::ZZ => lift_poly_to_qq(poly)
+    _ => poly
+  }
+}
+
+///|
 pub fn Poly::factor(
   self : Poly,
   modulus? : Int,
@@ -158,12 +175,9 @@ pub fn Poly::factor(
         _ => None
       }
   }
-  match extension {
-    Some(ext_syms) =>
-      if !ext_syms.is_empty() {
-        raise PolyError::BadGenerator("extension")
-      }
-    None => ()
+  let requested_extension = match extension {
+    Some(ext_syms) => ext_syms
+    None => []
   }
   let mut work = self
   match requested_mod {
@@ -173,6 +187,9 @@ pub fn Poly::factor(
         _ => work = map_to_gf(self, m)
       }
     None => ()
+  }
+  if !requested_extension.is_empty() {
+    work = apply_extension_request(work, requested_extension)
   }
   if work.gens.not_equal(resolved_gens) {
     raise PolyError::DomainMismatch
@@ -233,13 +250,13 @@ pub fn Poly::factor(
     }
   }
   if !content.is_one() {
-    let const_coeff = ensure_coeff_domain(content, self.domain)
+    let const_coeff = ensure_coeff_domain(content, work.domain)
     let const_poly = poly_from_term(
-      monomial_one(self.gens.length()),
+      monomial_one(work.gens.length()),
       const_coeff,
-      self.gens,
-      self.domain,
-      self.order,
+      work.gens,
+      work.domain,
+      work.order,
     )
     factors.push((const_poly, 1))
   }

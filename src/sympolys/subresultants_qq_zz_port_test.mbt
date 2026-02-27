@@ -57,3 +57,39 @@ test "subresultants_qq_zz: subresultants_rem parity (extra)" {
   )
   guard ours == oracle else { fail("subresultants_rem extra mismatch") }
 }
+
+///|
+test "subresultants_qq_zz: euclid_q/sturm_q parity" {
+  let x = @symcore.symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
+  let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
+  let ours_e = poly_list_to_string(euclid_q(p, q))
+  let oracle_e = @sympy_polys.euclid_q_qq_zz(p.to_expr(), q.to_expr(), x="x")
+  guard ours_e == oracle_e else {
+    fail("euclid_q mismatch: ours=\{ours_e}, oracle=\{oracle_e}")
+  }
+  let ours_s = poly_list_to_string(sturm_q(p, q))
+  let oracle_s = @sympy_polys.sturm_q_qq_zz(p.to_expr(), q.to_expr(), x="x")
+  guard ours_s == oracle_s else {
+    fail("sturm_q mismatch: ours=\{ours_s}, oracle=\{oracle_s}")
+  }
+}
+
+///|
+test "subresultants_qq_zz: rem_z/quo_z parity" {
+  let x = @symcore.symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let p = b.from_expr((x ^ @symcore.int(5)) + @symcore.int(1))
+  let q = b.from_expr(x + @symcore.int(1))
+  let ours_rem = sympy_normalize(rem_z(p, q).to_string())
+  let oracle_rem = @sympy_polys.rem_z_qq_zz(p.to_expr(), q.to_expr(), x="x")
+  guard ours_rem == oracle_rem else {
+    fail("rem_z mismatch: ours=\{ours_rem}, oracle=\{oracle_rem}")
+  }
+  let ours_quo = sympy_normalize(quo_z(p, q).to_string())
+  let oracle_quo = @sympy_polys.quo_z_qq_zz(p.to_expr(), q.to_expr(), x="x")
+  guard ours_quo == oracle_quo else {
+    fail("quo_z mismatch: ours=\{ours_quo}, oracle=\{oracle_quo}")
+  }
+}

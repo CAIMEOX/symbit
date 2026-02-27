@@ -88,3 +88,30 @@ test "polyroots: cubic/quartic parity (rootof fallback)" {
     )
   }
 }
+
+///|
+test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
+  let x = @symcore.symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let f = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
+  let ours = roots_repr(roots(f))
+  let oracle = rootof_list(f.to_expr(), 5)
+  guard ours == oracle else {
+    fail("roots generic degree-5 mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "polyroots: generic roots keeps multiplicities" {
+  let x = @symcore.symbol("x")
+  let b = PolyBuilder::new(["x"], Domain::ZZ)
+  let f = b.from_expr(
+    ((x - @symcore.int(1)) ^ @symcore.int(2)) *
+    ((x - @symcore.int(2)) ^ @symcore.int(3)),
+  )
+  let ours = roots_repr(roots(f))
+  let expected = sympy_normalize("[1,1,2,2,2]")
+  guard ours == expected else {
+    fail("roots multiplicity mismatch: ours=\{ours}, expected=\{expected}")
+  }
+}
