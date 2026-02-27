@@ -381,6 +381,19 @@ fn integrate_expr(
 }
 
 ///|
+fn symbolic_integral(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  a : @symcore.Expr,
+  b : @symcore.Expr,
+) -> @symcore.Expr {
+  @symcore.function("Integral", [
+    expr,
+    @symcore.function("Tuple", [x, a, b]),
+  ])
+}
+
+///|
 pub fn fourier_series(
   expr : @symcore.Expr,
   limits? : Array[@symcore.Expr] = [],
@@ -450,7 +463,11 @@ pub fn FourierSeries::a0(self : FourierSeries) -> @symcore.Expr raise {
   }
   match integrate_expr(self.expr, self.x, var_name, self.a, self.b) {
     Some(v) => expr_mul(self.norm_factor(), v)
-    None => fail("fourier a0 not implemented for expression")
+    None =>
+      expr_mul(
+        self.norm_factor(),
+        symbolic_integral(self.expr, self.x, self.a, self.b),
+      )
   }
 }
 
@@ -467,7 +484,11 @@ pub fn FourierSeries::an(self : FourierSeries, n : Int) -> @symcore.Expr raise {
   let integrand = expr_mul(self.expr, basis)
   match integrate_expr(integrand, self.x, var_name, self.a, self.b) {
     Some(v) => expr_mul(self.norm_factor(), v)
-    None => fail("fourier an not implemented for expression")
+    None =>
+      expr_mul(
+        self.norm_factor(),
+        symbolic_integral(integrand, self.x, self.a, self.b),
+      )
   }
 }
 
@@ -484,7 +505,11 @@ pub fn FourierSeries::bn(self : FourierSeries, n : Int) -> @symcore.Expr raise {
   let integrand = expr_mul(self.expr, basis)
   match integrate_expr(integrand, self.x, var_name, self.a, self.b) {
     Some(v) => expr_mul(self.norm_factor(), v)
-    None => fail("fourier bn not implemented for expression")
+    None =>
+      expr_mul(
+        self.norm_factor(),
+        symbolic_integral(integrand, self.x, self.a, self.b),
+      )
   }
 }
 

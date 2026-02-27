@@ -54,7 +54,7 @@ pub fn limit(
                 return @symcore.int(0)
               }
               if ord_den >= den_local.length() {
-                fail("limit unsupported denominator")
+                return gruntz(expr, x, x0, dir~)
               }
               let lead_num = num_local[ord_num]
               let lead_den = den_local[ord_den]
@@ -123,18 +123,18 @@ pub fn limit(
             }
           }
         }
-        None => fail("limit unsupported expression")
+        None => gruntz(expr, x, x0, dir~)
       }
     }
     @symcore.Expr::Symbol(name) if name == "oo" => {
       let (num_expr, den_expr) = split_num_den(expr)
       let num_poly = match poly_from_expr(num_expr, x) {
         Some(v) => v
-        None => fail("limit unsupported expression")
+        None => return gruntz(expr, x, x0, dir~)
       }
       let den_poly = match poly_from_expr(den_expr, x) {
         Some(v) => v
-        None => fail("limit unsupported expression")
+        None => return gruntz(expr, x, x0, dir~)
       }
       let num_deg = if num_poly.is_empty() { -1 } else { num_poly.length() - 1 }
       let den_deg = if den_poly.is_empty() { -1 } else { den_poly.length() - 1 }
@@ -169,7 +169,7 @@ pub fn limit(
         None => @symcore.symbol("oo")
       }
     }
-    _ => fail("limit unsupported point")
+    _ => gruntz(expr, x, x0, dir~)
   }
 }
 

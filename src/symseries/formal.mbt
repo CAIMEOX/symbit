@@ -83,6 +83,30 @@ fn poly_expr_with_shift(
 }
 
 ///|
+fn fps_strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function(name, _) if name == "O" => @symcore.int(0)
+    @symcore.Expr::Add(args) => {
+      let kept : Array[@symcore.Expr] = Array::new()
+      for arg in args {
+        match arg {
+          @symcore.Expr::Function(name, _) if name == "O" => ()
+          _ => kept.push(arg)
+        }
+      }
+      if kept.is_empty() {
+        @symcore.int(0)
+      } else if kept.length() == 1 {
+        kept[0]
+      } else {
+        @symcore.add(kept)
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
 pub fn fps(
   expr : @symcore.Expr,
   x? : @symcore.Expr,
@@ -130,7 +154,7 @@ pub fn FormalPowerSeries::truncate(
   }
   match series_poly_shift(self.expr, self.x, self.x0, n) {
     Some((poly, _)) => poly_expr_with_shift(poly, self.x, self.x0, n, true)
-    None => fail("fps-truncate-not-implemented")
+    None => series(self.expr, x=self.x, x0=self.x0, n=n)
   }
 }
 
@@ -144,7 +168,8 @@ pub fn FormalPowerSeries::polynomial(
   }
   match series_poly_shift(self.expr, self.x, self.x0, n) {
     Some((poly, _)) => poly_expr_with_shift(poly, self.x, self.x0, n, false)
-    None => fail("fps-polynomial-not-implemented")
+    None =>
+      fps_strip_order_expr(series(self.expr, x=self.x, x0=self.x0, n=n))
   }
 }
 
@@ -172,7 +197,49 @@ pub fn FormalPowerSeries::coeff(
       } else {
         zero_expr()
       }
-    None => fail("fps-coeff-not-implemented")
+    None => {
+      let var_name = match self.x {
+        @symcore.Expr::Symbol(name) => name
+        _ => ""
+      }
+      if var_name == "" {
+        return @symcore.function("fps_coeff", [
+          self.expr,
+          self.x,
+          self.x0,
+          @symcore.int(n),
+        ])
+      }
+      let trunc = fps_strip_order_expr(self.truncate(n=need))
+      let t = @symcore.symbol("__fps_coeff_t")
+      let env : Map[String, @symcore.Expr] = {}
+      env[var_name] = @symcore.add([self.x0, t])
+      let shifted = @symcore.subst(trunc, env)
+      match poly_from_expr(shifted, t) {
+        Some(poly) =>
+          if n < poly.length() {
+            if n == 0 {
+              poly[n]
+            } else {
+              expr_mul(
+                poly[n],
+                @symcore.pow(
+                  @symcore.add([self.x, expr_neg(self.x0)]),
+                  @symcore.int(n),
+                ),
+              )
+            }
+          } else {
+            zero_expr()
+          }
+        None => @symcore.function("fps_coeff", [
+          self.expr,
+          self.x,
+          self.x0,
+          @symcore.int(n),
+        ])
+      }
+    }
   }
 }
 
@@ -208,7 +275,15 @@ pub fn FormalPowerSeries::slice(
       }
       out
     }
-    None => fail("fps-slice-not-implemented")
+    None => {
+      let out : Array[@symcore.Expr] = Array::new()
+      let mut i = start
+      while i < stop {
+        out.push(self.coeff(i))
+        i += step
+      }
+      out
+    }
   }
 }
 
@@ -240,6 +315,13 @@ pub fn FormalPowerSeries::as_leading_term(
       }
       zero_expr()
     }
-    None => fail("fps-leading-term-not-implemented")
+    None => {
+      let poly = fps_strip_order_expr(self.polynomial(n=n))
+      if poly == @symcore.int(0) {
+        @symcore.int(0)
+      } else {
+        poly
+      }
+    }
   }
 }

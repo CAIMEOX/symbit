@@ -1,5 +1,5 @@
 ///|
-/// Padé approximants (limited to numeric coefficients, x0=0).
+/// Padé approximants (numeric coefficients, general center x0).
 
 ///|
 fn strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
@@ -225,6 +225,23 @@ fn pade_from_coeffs(
 }
 
 ///|
+fn symbolic_pade(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x0 : @symcore.Expr,
+  m : Int,
+  n : Int,
+) -> @symcore.Expr {
+  @symcore.function("pade_approximant", [
+    expr,
+    x,
+    x0,
+    @symcore.int(m),
+    @symcore.int(n),
+  ])
+}
+
+///|
 pub fn pade_approximant(
   expr : @symcore.Expr,
   x : @symcore.Expr,
@@ -236,35 +253,50 @@ pub fn pade_approximant(
   if m < 0 || n0 < 0 {
     fail("pade m and n must be non-negative")
   }
-  match x {
-    @symcore.Expr::Symbol(_) => ()
+  let var_name = match x {
+    @symcore.Expr::Symbol(name) => name
     _ => fail("pade variable must be a Symbol")
   }
-  match x0 {
-    @symcore.Expr::Number(n0v) if n0v.is_zero() => ()
-    _ => fail("pade only supports x0 = 0 in this stage")
+  let around_zero = match x0 {
+    @symcore.Expr::Number(n0v) => n0v.is_zero()
+    _ => false
+  }
+  let work_x = if around_zero { x } else { @symcore.symbol("__pade_t") }
+  let work_expr = if around_zero {
+    expr
+  } else {
+    let env : Map[String, @symcore.Expr] = {}
+    env[var_name] = @symcore.add([x0, work_x])
+    @symcore.subst(expr, env)
   }
   let order = m + n0 + 1
-  let ser = series(expr, x~, x0~, n=order)
+  let ser = series(work_expr, x=work_x, x0=@symcore.int(0), n=order)
   let poly_expr = strip_order_expr(ser)
-  let poly = match poly_from_expr(poly_expr, x) {
+  let poly = match poly_from_expr(poly_expr, work_x) {
     Some(p) => p
-    None => fail("pade requires a polynomial series")
+    None => return symbolic_pade(expr, x, x0, m, n0)
   }
   let coeffs = match rationals_from_poly(poly, order) {
     Some(v) => v
-    None => fail("pade requires numeric coefficients")
+    None => return symbolic_pade(expr, x, x0, m, n0)
   }
   let (p_coeffs, q_coeffs) = match pade_from_coeffs(coeffs, m, n0) {
     Some(v) => v
-    None => fail("pade solve failed")
+    None => return symbolic_pade(expr, x, x0, m, n0)
   }
-  let num_expr = poly_from_rationals(p_coeffs, x)
-  let den_expr = poly_from_rationals(q_coeffs, x)
-  if q_coeffs.length() == 1 {
+  let num_expr = poly_from_rationals(p_coeffs, work_x)
+  let den_expr = poly_from_rationals(q_coeffs, work_x)
+  let approx_work = if q_coeffs.length() == 1 {
     num_expr
   } else {
     @symcore.mul([num_expr, @symcore.pow(den_expr, @symcore.int(-1))])
+  }
+  if around_zero {
+    approx_work
+  } else {
+    let back : Map[String, @symcore.Expr] = {}
+    back["__pade_t"] = @symcore.add([x, expr_neg(x0)])
+    @symcore.subst(approx_work, back)
   }
 }
 

@@ -162,7 +162,18 @@ pub fn series(
         @symcore.subst(poly_expr, back)
       }
     }
-    None => fail("series-not-implemented")
+    None => {
+      let order_shift = @symcore.add([x, expr_neg(x0)])
+      let order_term = match x0 {
+        @symcore.Expr::Number(n0) if !n0.is_zero() =>
+          @symcore.function("O", [
+            @symcore.pow(order_shift, @symcore.int(n)),
+            @symcore.function("Tuple", [x, x0]),
+          ])
+        _ => big_o(@symcore.pow(order_shift, @symcore.int(n)))
+      }
+      @symcore.add([expr, order_term])
+    }
   }
 }
 

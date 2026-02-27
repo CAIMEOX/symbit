@@ -39,6 +39,16 @@ fn infinity_from_sign(sign : Int) -> @symcore.Expr {
 }
 
 ///|
+fn symbolic_limit(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x0 : @symcore.Expr,
+  dir : String,
+) -> @symcore.Expr {
+  @symcore.function("Limit", [expr, x, x0, @symcore.symbol(dir)])
+}
+
+///|
 fn leading_rational_near_zero(
   expr : @symcore.Expr,
   t : @symcore.Expr,
@@ -60,7 +70,7 @@ fn leading_rational_near_zero(
         return Some(@symcore.int(0))
       }
       if ord_den >= den_local.length() {
-        fail("gruntz unsupported denominator")
+        return Some(symbolic_limit(expr, t, @symcore.int(0), dir))
       }
       let lead_num = num_local[ord_num]
       let lead_den = den_local[ord_den]
@@ -199,10 +209,10 @@ fn gruntz_near_zero(
       let arg_lead = gruntz_near_zero(args[0], t, dir)
       match eval_elementary_from_leading(name, arg_lead) {
         Some(v) => v
-        None => fail("gruntz unsupported function growth")
+        None => symbolic_limit(expr, t, @symcore.int(0), dir)
       }
     }
-    _ => fail("gruntz unsupported expression")
+    _ => symbolic_limit(expr, t, @symcore.int(0), dir)
   }
 }
 

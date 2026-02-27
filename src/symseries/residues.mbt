@@ -40,6 +40,31 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
+fn symbolic_residue(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x0 : @symcore.Expr,
+) -> @symcore.Expr {
+  @symcore.function("Residue", [expr, x, x0])
+}
+
+///|
+fn residue_fallback(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x0 : @symcore.Expr,
+) -> @symcore.Expr raise {
+  let scaled = expr_mul(@symcore.add([x, expr_neg(x0)]), expr)
+  let v = limit(scaled, x, x0)
+  if v == @symcore.symbol("oo") || v == @symcore.symbol("zoo") ||
+    v == @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]) {
+    symbolic_residue(expr, x, x0)
+  } else {
+    v
+  }
+}
+
+///|
 pub fn residue(
   expr : @symcore.Expr,
   x : @symcore.Expr,
@@ -59,7 +84,7 @@ pub fn residue(
   ) {
     (Some(num_poly), Some(den_poly)) => {
       if den_poly.is_empty() {
-        fail("residue unsupported denominator")
+        return residue_fallback(expr, x, x0)
       }
       let ord_num = first_nonzero_order(num_poly)
       let ord_den = first_nonzero_order(den_poly)
@@ -70,11 +95,11 @@ pub fn residue(
       let num_reg = drop_terms(num_poly, ord_num)
       let den_reg = drop_terms(den_poly, ord_den)
       if den_reg.is_empty() || is_zero_expr(den_reg[0]) {
-        fail("residue unsupported pole")
+        return residue_fallback(expr, x, x0)
       }
       let coeffs = match poly_series_div(num_reg, den_reg, pole_order) {
         Some(v) => v
-        None => fail("residue unsupported division")
+        None => return residue_fallback(expr, x, x0)
       }
       let idx = pole_order - 1
       if idx < coeffs.length() {
@@ -83,6 +108,6 @@ pub fn residue(
         @symcore.int(0)
       }
     }
-    _ => fail("residue unsupported expression")
+    _ => residue_fallback(expr, x, x0)
   }
 }

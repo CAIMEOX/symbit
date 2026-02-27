@@ -72,3 +72,17 @@ test "symseries approximants list parity" {
     assert_true(sympy_equiv_expr_str(ours[i], items[i]))
   }
 }
+
+///|
+test "symseries pade approximant nonzero center parity" {
+  let x = @symcore.symbol("x")
+  let denom = @symcore.add([
+    @symcore.int(1),
+    @symcore.mul([@symcore.int(-1), x]),
+  ])
+  let expr = @symcore.pow(denom, @symcore.int(-1))
+  let ours = try! pade_approximant(expr, x, x0=@symcore.int(2), m=1, n=1)
+  let ours_ser = try! series(ours, x~, x0=@symcore.int(2), n=3)
+  let expr_ser = try! series(expr, x~, x0=@symcore.int(2), n=3)
+  assert_eq(normalize_appr(ours_ser), normalize_appr(expr_ser))
+}
