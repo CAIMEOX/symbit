@@ -43,33 +43,57 @@ pub fn limit(
             }
             return expr_mul(num_val, inv)
           }
-          // Simple pole handling
-          let den_deriv = poly_derivative(den_poly)
-          let den_prime = poly_eval(den_deriv, x0)
-          if is_zero_expr(den_prime) {
-            fail("limit higher-order pole not implemented")
-          }
-          let inv = match expr_inv(den_prime) {
-            Some(v) => v
-            None => fail("limit division by zero")
-          }
-          let coeff = expr_mul(num_val, inv)
-          let sign = sign_of_expr(coeff)
-          return match sign {
-            Some(0) => @symcore.int(0)
-            Some(1) =>
-              if dir == "-" {
-                @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
-              } else {
-                @symcore.symbol("oo")
+          match (
+            local_series_poly(num_expr, var_name, x0),
+            local_series_poly(den_expr, var_name, x0),
+          ) {
+            (Some(num_local), Some(den_local)) => {
+              let ord_num = first_nonzero_order(num_local)
+              let ord_den = first_nonzero_order(den_local)
+              if ord_num >= num_local.length() {
+                return @symcore.int(0)
               }
-            Some(-1) =>
-              if dir == "-" {
-                @symcore.symbol("oo")
-              } else {
-                @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
+              if ord_den >= den_local.length() {
+                fail("limit unsupported denominator")
               }
-            _ => @symcore.symbol("oo")
+              let lead_num = num_local[ord_num]
+              let lead_den = den_local[ord_den]
+              let inv_lead_den = match expr_inv(lead_den) {
+                Some(v) => v
+                None => fail("limit division by zero")
+              }
+              let lead_coeff = expr_mul(lead_num, inv_lead_den)
+              if ord_num >= ord_den {
+                if ord_num == ord_den {
+                  return lead_coeff
+                }
+                return @symcore.int(0)
+              }
+              let pole_order = ord_den - ord_num
+              if dir == "+-" && pole_order % 2 == 1 {
+                return @symcore.symbol("zoo")
+              }
+              let side_sign =
+                if dir == "-" && pole_order % 2 == 1 {
+                  -1
+                } else {
+                  1
+                }
+              let sign = sign_of_expr(lead_coeff)
+              return match sign {
+                Some(0) => @symcore.int(0)
+                Some(s) => {
+                  let final_sign = s * side_sign
+                  if final_sign < 0 {
+                    @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
+                  } else {
+                    @symcore.symbol("oo")
+                  }
+                }
+                None => @symcore.symbol("oo")
+              }
+            }
+            _ => ()
           }
         }
         _ => ()
@@ -158,19 +182,6 @@ fn poly_eval(poly : Array[@symcore.Expr], x0 : @symcore.Expr) -> @symcore.Expr {
     acc = expr_add(poly[i], expr_mul(acc, x0))
   }
   acc
-}
-
-///|
-fn poly_derivative(poly : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  if poly.length() <= 1 {
-    return []
-  }
-  let out : Array[@symcore.Expr] = Array::new()
-  for i in 1..<poly.length() {
-    let coeff = poly[i]
-    out.push(expr_mul(coeff, @symcore.int(i)))
-  }
-  poly_trim(out)
 }
 
 ///|

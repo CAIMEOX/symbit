@@ -60,3 +60,40 @@ test "symseries limit direction parity" {
   let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.int(1), dir="-")
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
+
+///|
+test "symseries limit higher-order pole parity" {
+  let x = @symcore.symbol("x")
+
+  let even_pole = @symcore.pow(x, @symcore.int(-2))
+  let even_left = try! limit(even_pole, x, @symcore.int(0), dir="-")
+  let even_left_sympy = try! @sympy_series.limit_str(
+    even_pole,
+    "x",
+    @symcore.int(0),
+    dir="-",
+  )
+  assert_eq(normalize_limit_expr(even_left), normalize_limit_str(even_left_sympy))
+
+  let odd_pole = @symcore.pow(x, @symcore.int(-3))
+  let odd_left = try! limit(odd_pole, x, @symcore.int(0), dir="-")
+  let odd_left_sympy = try! @sympy_series.limit_str(
+    odd_pole,
+    "x",
+    @symcore.int(0),
+    dir="-",
+  )
+  assert_eq(normalize_limit_expr(odd_left), normalize_limit_str(odd_left_sympy))
+
+  let odd_two_sided = try! limit(odd_pole, x, @symcore.int(0), dir="+-")
+  let odd_two_sided_sympy = try! @sympy_series.limit_str(
+    odd_pole,
+    "x",
+    @symcore.int(0),
+    dir="+-",
+  )
+  assert_eq(
+    normalize_limit_expr(odd_two_sided),
+    normalize_limit_str(odd_two_sided_sympy),
+  )
+}

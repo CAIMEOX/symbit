@@ -125,9 +125,12 @@ pub fn series(
   }
   env[var_name] = forward_shift
   let shifted = @symcore.subst(expr, env)
-  match series_poly(shifted, t, n) {
-    Some((poly, needs_order)) => {
-      let poly_expr = poly_to_expr(poly, t, n)
+  let expanded = match series_poly(shifted, t, n) {
+    Some((poly, needs_order)) => Some((poly_to_expr(poly, t, n), needs_order))
+    None => series_rational(shifted, t, n)
+  }
+  match expanded {
+    Some((poly_expr, needs_order)) => {
       // Substitute back t -> (x - x0)
       let back : Map[String, @symcore.Expr] = {}
       let back_shift = if dir == "-" {
@@ -287,6 +290,30 @@ fn const_exp(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+fn const_sinh(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    _ => @symcore.function("sinh", [expr])
+  }
+}
+
+///|
+fn const_cosh(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(1)
+    _ => @symcore.function("cosh", [expr])
+  }
+}
+
+///|
+fn const_tanh(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    _ => @symcore.function("tanh", [expr])
+  }
+}
+
+///|
 fn const_log(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Number(n) if n.is_one() => @symcore.int(0)
@@ -345,6 +372,112 @@ fn series_cos_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
     }
     let denom = factorial_bigint(power)
     let coeff = @symcore.number(safe_rational(BigInt::from_int(sign), denom))
+    out = poly_add(out, poly_scale(term, coeff))
+    term = poly_mul_trunc(term, u2, n)
+    sign = -sign
+    k = k + 1
+  }
+  poly_truncate(out, n)
+}
+
+///|
+fn series_sinh_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+  let u2 = poly_mul_trunc(u, u, n)
+  let mut out : Array[@symcore.Expr] = []
+  let mut term = u
+  let mut k = 0
+  while true {
+    let power = 2 * k + 1
+    if power >= n {
+      break
+    }
+    let denom = factorial_bigint(power)
+    let coeff = @symcore.number(safe_rational(BigInt::from_int(1), denom))
+    out = poly_add(out, poly_scale(term, coeff))
+    term = poly_mul_trunc(term, u2, n)
+    k = k + 1
+  }
+  poly_truncate(out, n)
+}
+
+///|
+fn series_cosh_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+  let u2 = poly_mul_trunc(u, u, n)
+  let mut out : Array[@symcore.Expr] = []
+  let mut term : Array[@symcore.Expr] = [one_expr()]
+  let mut k = 0
+  while true {
+    let power = 2 * k
+    if power >= n {
+      break
+    }
+    let denom = factorial_bigint(power)
+    let coeff = @symcore.number(safe_rational(BigInt::from_int(1), denom))
+    out = poly_add(out, poly_scale(term, coeff))
+    term = poly_mul_trunc(term, u2, n)
+    k = k + 1
+  }
+  poly_truncate(out, n)
+}
+
+///|
+fn binomial_coeff(alpha : @symnum.BigRational, k : Int) -> @symnum.BigRational {
+  if k == 0 {
+    return @symnum.BigRational::one()
+  }
+  let mut coeff = @symnum.BigRational::one()
+  let mut i = 0
+  while i < k {
+    let shift = alpha.add_r(@symnum.BigRational::from_int(-i))
+    coeff = coeff.mul_r(shift)
+    coeff = try coeff.div_r(@symnum.BigRational::from_int(i + 1)) catch {
+      _ => @symnum.BigRational::zero()
+    } noraise {
+      v => v
+    }
+    i = i + 1
+  }
+  coeff
+}
+
+///|
+fn series_pow_general(
+  poly : Array[@symcore.Expr],
+  alpha : @symnum.BigRational,
+  alpha_expr : @symcore.Expr,
+  n : Int,
+) -> (Array[@symcore.Expr], Bool)? {
+  let (c0, rest) = split_const(poly)
+  let c0_inv = match expr_inv(c0) {
+    Some(v) => v
+    None => return None
+  }
+  let scaled = poly_scale(rest, c0_inv)
+  let mut out : Array[@symcore.Expr] = [one_expr()]
+  let mut term : Array[@symcore.Expr] = [one_expr()]
+  let mut k = 1
+  while k < n {
+    term = poly_mul_trunc(term, scaled, n)
+    let coeff = @symcore.number(binomial_coeff(alpha, k))
+    out = poly_add(out, poly_scale(term, coeff))
+    k = k + 1
+  }
+  Some((poly_scale(out, @symcore.pow(c0, alpha_expr)), true))
+}
+
+///|
+fn series_atan_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+  let u2 = poly_mul_trunc(u, u, n)
+  let mut out : Array[@symcore.Expr] = []
+  let mut term = u
+  let mut k = 0
+  let mut sign = 1
+  while true {
+    let power = 2 * k + 1
+    if power >= n {
+      break
+    }
+    let coeff = rational_expr(sign, power)
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     sign = -sign
@@ -491,7 +624,15 @@ fn series_poly(
             }
             None => None
           }
-        _ => None
+        _ =>
+          match exp {
+            @symcore.Expr::Number(alpha) =>
+              match series_poly(base, x, n) {
+                Some((poly, _)) => series_pow_general(poly, alpha, exp, n)
+                None => None
+              }
+            _ => None
+          }
       }
     @symcore.Expr::Function(name, args) => {
       if args.length() != 1 {
@@ -533,6 +674,30 @@ fn series_poly(
             }
             None => None
           }
+        "sinh" | "cosh" =>
+          match series_poly(arg, x, n) {
+            Some((poly, _)) => {
+              let (c0, rest) = split_const(poly)
+              let sinh_rest = series_sinh_zero(rest, n)
+              let cosh_rest = series_cosh_zero(rest, n)
+              let sinh_c0 = const_sinh(c0)
+              let cosh_c0 = const_cosh(c0)
+              let sinh_poly = poly_add(
+                poly_scale(cosh_rest, sinh_c0),
+                poly_scale(sinh_rest, cosh_c0),
+              )
+              let cosh_poly = poly_add(
+                poly_scale(cosh_rest, cosh_c0),
+                poly_scale(sinh_rest, sinh_c0),
+              )
+              if name == "sinh" {
+                Some((poly_truncate(sinh_poly, n), true))
+              } else {
+                Some((poly_truncate(cosh_poly, n), true))
+              }
+            }
+            None => None
+          }
         "tan" =>
           match series_poly(arg, x, n) {
             Some((poly, _)) => {
@@ -557,6 +722,35 @@ fn series_poly(
             }
             None => None
           }
+        "tanh" =>
+          match series_poly(arg, x, n) {
+            Some((poly, _)) => {
+              let (c0, rest) = split_const(poly)
+              let sinh_rest = series_sinh_zero(rest, n)
+              let cosh_rest = series_cosh_zero(rest, n)
+              match poly_series_div(sinh_rest, cosh_rest, n) {
+                Some(tanh_rest) => {
+                  let tanh_c0 = const_tanh(c0)
+                  let num_poly = poly_add([tanh_c0], tanh_rest)
+                  let den_poly = poly_add(
+                    [one_expr()],
+                    poly_scale(tanh_rest, tanh_c0),
+                  )
+                  match poly_series_div(num_poly, den_poly, n) {
+                    Some(div) => {
+                      let simplified = div.map(coeff => {
+                        simplify_tan_coeff(coeff, tanh_c0)
+                      })
+                      Some((poly_truncate(simplified, n), true))
+                    }
+                    None => None
+                  }
+                }
+                None => None
+              }
+            }
+            None => None
+          }
         "log" =>
           match series_poly(arg, x, n) {
             Some((poly, _)) => {
@@ -573,9 +767,33 @@ fn series_poly(
             }
             None => None
           }
+        "atan" =>
+          match series_poly(arg, x, n) {
+            Some((poly, _)) => {
+              let (c0, rest) = split_const(poly)
+              if is_zero_expr(c0) {
+                Some((series_atan_zero(rest, n), true))
+              } else {
+                None
+              }
+            }
+            None => None
+          }
+        "sqrt" => {
+          let half = @symcore.number(
+            try @symnum.BigRational::new(
+              BigInt::from_int(1),
+              BigInt::from_int(2),
+            ) catch {
+              _ => @symnum.BigRational::zero()
+            } noraise {
+              v => v
+            },
+          )
+          series_poly(@symcore.pow(arg, half), x, n)
+        }
         _ => None
       }
     }
-    _ => None
   }
 }
