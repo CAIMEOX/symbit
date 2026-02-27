@@ -381,7 +381,7 @@ fn integrate_expr(
 }
 
 ///|
-fn symbolic_integral(
+fn definite_integral_expr(
   expr : @symcore.Expr,
   x : @symcore.Expr,
   a : @symcore.Expr,
@@ -466,7 +466,7 @@ pub fn FourierSeries::a0(self : FourierSeries) -> @symcore.Expr raise {
     None =>
       expr_mul(
         self.norm_factor(),
-        symbolic_integral(self.expr, self.x, self.a, self.b),
+        definite_integral_expr(self.expr, self.x, self.a, self.b),
       )
   }
 }
@@ -487,7 +487,7 @@ pub fn FourierSeries::an(self : FourierSeries, n : Int) -> @symcore.Expr raise {
     None =>
       expr_mul(
         self.norm_factor(),
-        symbolic_integral(integrand, self.x, self.a, self.b),
+        definite_integral_expr(integrand, self.x, self.a, self.b),
       )
   }
 }
@@ -508,7 +508,7 @@ pub fn FourierSeries::bn(self : FourierSeries, n : Int) -> @symcore.Expr raise {
     None =>
       expr_mul(
         self.norm_factor(),
-        symbolic_integral(integrand, self.x, self.a, self.b),
+        definite_integral_expr(integrand, self.x, self.a, self.b),
       )
   }
 }

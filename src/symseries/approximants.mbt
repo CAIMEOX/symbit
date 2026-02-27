@@ -38,6 +38,14 @@ fn poly_from_rationals(
 }
 
 ///|
+fn poly_from_expr_coeffs(
+  coeffs : Array[@symcore.Expr],
+  x : @symcore.Expr,
+) -> @symcore.Expr {
+  poly_to_expr(coeffs, x, coeffs.length())
+}
+
+///|
 fn expr_to_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
     @symcore.Expr::Number(n) => Some(n)
@@ -225,20 +233,127 @@ fn pade_from_coeffs(
 }
 
 ///|
-fn symbolic_pade(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-  x0 : @symcore.Expr,
+fn solve_linear_expr(
+  mat_in : Array[Array[@symcore.Expr]],
+  rhs_in : Array[@symcore.Expr],
+) -> Array[@symcore.Expr]? {
+  let n = rhs_in.length()
+  let mat : Array[Array[@symcore.Expr]] = Array::new()
+  for row in mat_in {
+    let new_row : Array[@symcore.Expr] = Array::new()
+    for v in row {
+      new_row.push(v)
+    }
+    mat.push(new_row)
+  }
+  let rhs : Array[@symcore.Expr] = Array::new()
+  for v in rhs_in {
+    rhs.push(v)
+  }
+  let mut i = 0
+  while i < n {
+    let mut pivot = i
+    while pivot < n && is_zero_expr(mat[pivot][i]) {
+      pivot += 1
+    }
+    if pivot == n {
+      return None
+    }
+    if pivot != i {
+      let tmp_row = mat[i]
+      mat[i] = mat[pivot]
+      mat[pivot] = tmp_row
+      let tmp_rhs = rhs[i]
+      rhs[i] = rhs[pivot]
+      rhs[pivot] = tmp_rhs
+    }
+    let pivot_val = mat[i][i]
+    let inv_pivot = match expr_inv(pivot_val) {
+      Some(v) => v
+      None => return None
+    }
+    let mut j = i + 1
+    while j < n {
+      if !is_zero_expr(mat[j][i]) {
+        let factor = expr_mul(mat[j][i], inv_pivot)
+        let mut k = i
+        while k < n {
+          mat[j][k] = expr_sub(mat[j][k], expr_mul(factor, mat[i][k]))
+          k += 1
+        }
+        rhs[j] = expr_sub(rhs[j], expr_mul(factor, rhs[i]))
+      }
+      j += 1
+    }
+    i += 1
+  }
+  let sol : Array[@symcore.Expr] = Array::new()
+  for _ in 0..<n {
+    sol.push(zero_expr())
+  }
+  let mut r = n - 1
+  while true {
+    let mut acc = rhs[r]
+    let mut c = r + 1
+    while c < n {
+      acc = expr_sub(acc, expr_mul(mat[r][c], sol[c]))
+      c += 1
+    }
+    let inv = match expr_inv(mat[r][r]) {
+      Some(v) => v
+      None => return None
+    }
+    sol[r] = expr_mul(acc, inv)
+    if r == 0 {
+      break
+    }
+    r -= 1
+  }
+  Some(sol)
+}
+
+///|
+fn pade_from_expr_coeffs(
+  coeffs : Array[@symcore.Expr],
   m : Int,
   n : Int,
-) -> @symcore.Expr {
-  @symcore.function("pade_approximant", [
-    expr,
-    x,
-    x0,
-    @symcore.int(m),
-    @symcore.int(n),
-  ])
+) -> (Array[@symcore.Expr], Array[@symcore.Expr])? {
+  if n == 0 {
+    let p : Array[@symcore.Expr] = Array::new()
+    for i in 0..<=m {
+      p.push(coeffs[i])
+    }
+    return Some((p, [one_expr()]))
+  }
+  let mat : Array[Array[@symcore.Expr]] = Array::new()
+  let rhs : Array[@symcore.Expr] = Array::new()
+  for k in 1..<=n {
+    let row : Array[@symcore.Expr] = Array::new()
+    for j in 1..<=n {
+      row.push(coeffs[m + k - j])
+    }
+    mat.push(row)
+    rhs.push(expr_neg(coeffs[m + k]))
+  }
+  let q_tail = match solve_linear_expr(mat, rhs) {
+    Some(v) => v
+    None => return None
+  }
+  let q : Array[@symcore.Expr] = [one_expr()]
+  for v in q_tail {
+    q.push(v)
+  }
+  let p : Array[@symcore.Expr] = Array::new()
+  for k in 0..<=m {
+    let mut acc = zero_expr()
+    let max_j = if k < n { k } else { n }
+    for j in 0..<=max_j {
+      let qj = q[j]
+      acc = expr_add(acc, expr_mul(coeffs[k - j], qj))
+    }
+    p.push(acc)
+  }
+  Some((p, q))
 }
 
 ///|
@@ -274,19 +389,31 @@ pub fn pade_approximant(
   let poly_expr = strip_order_expr(ser)
   let poly = match poly_from_expr(poly_expr, work_x) {
     Some(p) => p
-    None => return symbolic_pade(expr, x, x0, m, n0)
+    None => fail("pade series extraction failed")
   }
-  let coeffs = match rationals_from_poly(poly, order) {
-    Some(v) => v
-    None => return symbolic_pade(expr, x, x0, m, n0)
+  let coeffs_expr : Array[@symcore.Expr] = Array::new()
+  for i in 0..<order {
+    if i < poly.length() {
+      coeffs_expr.push(poly[i])
+    } else {
+      coeffs_expr.push(zero_expr())
+    }
   }
-  let (p_coeffs, q_coeffs) = match pade_from_coeffs(coeffs, m, n0) {
-    Some(v) => v
-    None => return symbolic_pade(expr, x, x0, m, n0)
+  let (num_expr, den_expr) = match rationals_from_poly(poly, order) {
+    Some(coeffs_num) =>
+      match pade_from_coeffs(coeffs_num, m, n0) {
+        Some((p_coeffs, q_coeffs)) =>
+          (poly_from_rationals(p_coeffs, work_x), poly_from_rationals(q_coeffs, work_x))
+        None => fail("pade singular linear system")
+      }
+    None =>
+      match pade_from_expr_coeffs(coeffs_expr, m, n0) {
+        Some((p_coeffs, q_coeffs)) =>
+          (poly_from_expr_coeffs(p_coeffs, work_x), poly_from_expr_coeffs(q_coeffs, work_x))
+        None => fail("pade singular linear system")
+      }
   }
-  let num_expr = poly_from_rationals(p_coeffs, work_x)
-  let den_expr = poly_from_rationals(q_coeffs, work_x)
-  let approx_work = if q_coeffs.length() == 1 {
+  let approx_work = if den_expr == one_expr() {
     num_expr
   } else {
     @symcore.mul([num_expr, @symcore.pow(den_expr, @symcore.int(-1))])

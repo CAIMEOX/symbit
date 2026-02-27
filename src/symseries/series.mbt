@@ -164,6 +164,10 @@ pub fn series(
     }
     None => {
       let order_shift = @symcore.add([x, expr_neg(x0)])
+      let taylor = taylor_series_expr(shifted, t, n)
+      let back : Map[String, @symcore.Expr] = {}
+      back["__series_t"] = order_shift
+      let poly_sub = @symcore.subst(taylor, back)
       let order_term = match x0 {
         @symcore.Expr::Number(n0) if !n0.is_zero() =>
           @symcore.function("O", [
@@ -172,7 +176,7 @@ pub fn series(
           ])
         _ => big_o(@symcore.pow(order_shift, @symcore.int(n)))
       }
-      @symcore.add([expr, order_term])
+      @symcore.add([poly_sub, order_term])
     }
   }
 }
@@ -265,6 +269,55 @@ fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
     _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   } noraise {
     v => v
+  }
+}
+
+///|
+fn inv_factorial_expr(n : Int) -> @symcore.Expr {
+  let den = factorial_bigint(n)
+  @symcore.number(safe_rational(BigInt::from_int(1), den))
+}
+
+///|
+fn series_substitute_symbol(
+  expr : @symcore.Expr,
+  symbol_name : String,
+  value : @symcore.Expr,
+) -> @symcore.Expr {
+  let env : Map[String, @symcore.Expr] = {}
+  env[symbol_name] = value
+  @symcore.subst(expr, env)
+}
+
+///|
+fn taylor_series_expr(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  n : Int,
+) -> @symcore.Expr {
+  let x_name = match x {
+    @symcore.Expr::Symbol(name) => name
+    _ => return expr
+  }
+  let mut current = expr
+  let terms : Array[@symcore.Expr] = Array::new()
+  for k in 0..<n {
+    let value_at_zero = series_substitute_symbol(current, x_name, @symcore.int(0))
+    if !is_zero_expr(value_at_zero) {
+      let coeff = expr_mul(value_at_zero, inv_factorial_expr(k))
+      let term = if k == 0 {
+        coeff
+      } else {
+        expr_mul(coeff, @symcore.pow(x, @symcore.int(k)))
+      }
+      terms.push(term)
+    }
+    current = @symcalculus.diff(current, x)
+  }
+  if terms.is_empty() {
+    @symcore.int(0)
+  } else {
+    @symcore.add(terms)
   }
 }
 

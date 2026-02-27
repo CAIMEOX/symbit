@@ -39,16 +39,6 @@ fn infinity_from_sign(sign : Int) -> @symcore.Expr {
 }
 
 ///|
-fn symbolic_limit(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-  x0 : @symcore.Expr,
-  dir : String,
-) -> @symcore.Expr {
-  @symcore.function("Limit", [expr, x, x0, @symcore.symbol(dir)])
-}
-
-///|
 fn leading_rational_near_zero(
   expr : @symcore.Expr,
   t : @symcore.Expr,
@@ -70,7 +60,7 @@ fn leading_rational_near_zero(
         return Some(@symcore.int(0))
       }
       if ord_den >= den_local.length() {
-        return Some(symbolic_limit(expr, t, @symcore.int(0), dir))
+        return None
       }
       let lead_num = num_local[ord_num]
       let lead_den = den_local[ord_den]
@@ -150,6 +140,37 @@ fn leading_series_near_zero(
 }
 
 ///|
+fn strip_order_terms(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function(name, _) if name == "O" => @symcore.int(0)
+    @symcore.Expr::Add(args) => {
+      let kept : Array[@symcore.Expr] = Array::new()
+      for arg in args {
+        match arg {
+          @symcore.Expr::Function(name, _) if name == "O" => ()
+          _ => kept.push(arg)
+        }
+      }
+      if kept.is_empty() {
+        @symcore.int(0)
+      } else if kept.length() == 1 {
+        kept[0]
+      } else {
+        @symcore.add(kept)
+      }
+    }
+    _ => expr
+  }
+}
+
+///|
+fn subst_symbol(expr : @symcore.Expr, name : String, value : @symcore.Expr) -> @symcore.Expr {
+  let env : Map[String, @symcore.Expr] = {}
+  env[name] = value
+  @symcore.subst(expr, env)
+}
+
+///|
 fn eval_elementary_from_leading(
   name : String,
   arg_lead : @symcore.Expr,
@@ -209,10 +230,38 @@ fn gruntz_near_zero(
       let arg_lead = gruntz_near_zero(args[0], t, dir)
       match eval_elementary_from_leading(name, arg_lead) {
         Some(v) => v
-        None => symbolic_limit(expr, t, @symcore.int(0), dir)
+        None => {
+          let at_zero = subst_symbol(expr, t_name, @symcore.int(0))
+          if !contains_symbol(at_zero, t_name) {
+            at_zero
+          } else {
+            let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
+            let no_o = strip_order_terms(ser)
+            let v = subst_symbol(no_o, t_name, @symcore.int(0))
+            if !contains_symbol(v, t_name) {
+              v
+            } else {
+              fail("gruntz could not determine limit")
+            }
+          }
+        }
       }
     }
-    _ => symbolic_limit(expr, t, @symcore.int(0), dir)
+    _ => {
+      let at_zero = subst_symbol(expr, t_name, @symcore.int(0))
+      if !contains_symbol(at_zero, t_name) {
+        at_zero
+      } else {
+        let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
+        let no_o = strip_order_terms(ser)
+        let v = subst_symbol(no_o, t_name, @symcore.int(0))
+        if !contains_symbol(v, t_name) {
+          v
+        } else {
+          fail("gruntz could not determine limit")
+        }
+      }
+    }
   }
 }
 

@@ -40,28 +40,53 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn symbolic_residue(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-  x0 : @symcore.Expr,
-) -> @symcore.Expr {
-  @symcore.function("Residue", [expr, x, x0])
+fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
+  expr == @symcore.symbol("oo") || expr == @symcore.symbol("zoo") ||
+  expr == @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
 }
 
 ///|
-fn residue_fallback(
+fn factorial_rational_expr(n : Int) -> @symcore.Expr {
+  let mut fact = BigInt::from_int(1)
+  let mut i = 2
+  while i <= n {
+    fact = fact.mul(BigInt::from_int(i))
+    i = i + 1
+  }
+  @symcore.number(safe_rational(BigInt::from_int(1), fact))
+}
+
+///|
+fn residue_via_pole_order(
   expr : @symcore.Expr,
   x : @symcore.Expr,
   x0 : @symcore.Expr,
 ) -> @symcore.Expr raise {
-  let scaled = expr_mul(@symcore.add([x, expr_neg(x0)]), expr)
-  let v = limit(scaled, x, x0)
-  if v == @symcore.symbol("oo") || v == @symcore.symbol("zoo") ||
-    v == @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]) {
-    symbolic_residue(expr, x, x0)
-  } else {
-    v
+  let var_name = match x {
+    @symcore.Expr::Symbol(name) => name
+    _ => ""
   }
+  let shift = @symcore.add([x, expr_neg(x0)])
+  let mut m = 1
+  while m <= 8 {
+    let gm = expr_mul(@symcore.pow(shift, @symcore.int(m)), expr)
+    let lm = limit(gm, x, x0)
+    if !is_infinite_expr(lm) && !contains_symbol(lm, var_name) {
+      if m == 1 {
+        return lm
+      }
+      let mut deriv = gm
+      let mut k = 0
+      while k < m - 1 {
+        deriv = @symcalculus.diff(deriv, x)
+        k = k + 1
+      }
+      let val = limit(deriv, x, x0)
+      return expr_mul(val, factorial_rational_expr(m - 1))
+    }
+    m = m + 1
+  }
+  fail("residue pole order not found")
 }
 
 ///|
@@ -84,7 +109,7 @@ pub fn residue(
   ) {
     (Some(num_poly), Some(den_poly)) => {
       if den_poly.is_empty() {
-        return residue_fallback(expr, x, x0)
+        return residue_via_pole_order(expr, x, x0)
       }
       let ord_num = first_nonzero_order(num_poly)
       let ord_den = first_nonzero_order(den_poly)
@@ -95,11 +120,11 @@ pub fn residue(
       let num_reg = drop_terms(num_poly, ord_num)
       let den_reg = drop_terms(den_poly, ord_den)
       if den_reg.is_empty() || is_zero_expr(den_reg[0]) {
-        return residue_fallback(expr, x, x0)
+        return residue_via_pole_order(expr, x, x0)
       }
       let coeffs = match poly_series_div(num_reg, den_reg, pole_order) {
         Some(v) => v
-        None => return residue_fallback(expr, x, x0)
+        None => return residue_via_pole_order(expr, x, x0)
       }
       let idx = pole_order - 1
       if idx < coeffs.length() {
@@ -108,6 +133,6 @@ pub fn residue(
         @symcore.int(0)
       }
     }
-    _ => residue_fallback(expr, x, x0)
+    _ => residue_via_pole_order(expr, x, x0)
   }
 }
