@@ -203,7 +203,7 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
       if imag.is_zero() {
         real
       } else {
-        raise PolyError::NotImplemented("complex-as-rational")
+        raise PolyError::DomainMismatch
       }
     FieldElem::GFp(_, v) => @symnum.BigRational::from_int(v)
     FieldElem::GFExt(_, coeffs, _) => {
@@ -212,7 +212,7 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
       }
       for i in 1..<coeffs.length() {
         if coeffs[i] != 0 {
-          raise PolyError::NotImplemented("gfext-as-rational")
+          raise PolyError::DomainMismatch
         }
       }
       @symnum.BigRational::from_int(coeffs[0])
@@ -223,7 +223,7 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
       }
       for i in 1..<coeffs.length() {
         if !fe_is_zero(coeffs[i]) {
-          raise PolyError::NotImplemented("algext-as-rational")
+          raise PolyError::DomainMismatch
         }
       }
       fe_expect_rational(coeffs[0])

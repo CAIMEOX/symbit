@@ -225,7 +225,9 @@ fn resultant_elim(
       }
     }
   }
-  raise PolyError::NotImplemented("resultant-elimination")
+  // Current API returns a scalar. If elimination leaves a non-constant polynomial
+  // in remaining generators, it cannot be represented in this scalar result type.
+  raise PolyError::DomainMismatch
 }
 
 ///|

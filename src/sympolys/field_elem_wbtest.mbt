@@ -28,10 +28,8 @@ test "field_elem: expect_rational rejects non-constant extensions" {
   let gf_res : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
     gf_non_const,
   )
-  match gf_res {
-    Err(PolyError::NotImplemented(tag)) =>
-      inspect(tag, content="gfext-as-rational")
-    _ => fail("expected gfext-as-rational")
+  guard gf_res is Err(PolyError::DomainMismatch) else {
+    fail("expected DomainMismatch")
   }
 
   let a = @symcore.symbol("a")
@@ -50,10 +48,8 @@ test "field_elem: expect_rational rejects non-constant extensions" {
   let alg_res : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
     alg_non_const,
   )
-  match alg_res {
-    Err(PolyError::NotImplemented(tag)) =>
-      inspect(tag, content="algext-as-rational")
-    _ => fail("expected algext-as-rational")
+  guard alg_res is Err(PolyError::DomainMismatch) else {
+    fail("expected DomainMismatch")
   }
 }
 
