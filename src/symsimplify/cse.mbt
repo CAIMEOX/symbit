@@ -17,17 +17,12 @@ pub fn CseResult::replacements_copy(
 }
 
 ///|
-pub fn CseResult::reduced_exprs_copy(
-  self : CseResult,
-) -> Array[@symcore.Expr] {
+pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[@symcore.Expr] {
   self.reduced_exprs.map(item => item)
 }
 
 ///|
-pub fn cse(
-  exprs : Array[@symcore.Expr],
-  min_nodes? : Int = 2,
-) -> CseResult {
+pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
   let counts : Map[String, Int] = {}
   let key_expr : Map[String, @symcore.Expr] = {}
   for expr in exprs {
@@ -180,8 +175,5 @@ fn replace_exact(
   if @symprint.debug_repr(expr) == key {
     return replacement
   }
-  @symcore.map_children(
-    expr,
-    child => replace_exact(child, key, replacement),
-  )
+  @symcore.map_children(expr, child => replace_exact(child, key, replacement))
 }

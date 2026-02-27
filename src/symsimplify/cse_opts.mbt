@@ -13,10 +13,9 @@ fn rewrite_bottom_up_cseopts(
   expr : @symcore.Expr,
   rule : (@symcore.Expr) -> @symcore.Expr,
 ) -> @symcore.Expr {
-  let rewritten = @symcore.map_children(
-    expr,
-    child => rewrite_bottom_up_cseopts(child, rule),
-  )
+  let rewritten = @symcore.map_children(expr, child => {
+    rewrite_bottom_up_cseopts(child, rule)
+  })
   rule(rewritten)
 }
 
@@ -56,8 +55,10 @@ fn rewrite_sub_post(expr : @symcore.Expr) -> @symcore.Expr {
       for arg in args {
         match arg {
           @symcore.Expr::Number(n) if n.is_one() => ()
-          @symcore.Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
-            neg_count = neg_count + 1
+          @symcore.Expr::Number(n) if n.compare(
+              @symnum.BigRational::from_int(-1),
+            ) ==
+            0 => neg_count = neg_count + 1
           _ => filtered.push(arg)
         }
       }

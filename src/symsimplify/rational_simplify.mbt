@@ -1,16 +1,10 @@
 ///|
-pub fn radsimp(
-  expr : @symcore.Expr,
-  max_passes? : Int = 6,
-) -> @symcore.Expr {
+pub fn radsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_radsimp, max_passes~)
 }
 
 ///|
-pub fn ratsimp(
-  expr : @symcore.Expr,
-  max_passes? : Int = 6,
-) -> @symcore.Expr {
+pub fn ratsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_ratsimp, max_passes~)
 }
 
@@ -124,17 +118,16 @@ pub fn split_surds(
       let inner = @symcore.int(rad / g)
       a_terms.push(@symcore.mul([coeff, @symcore.function("sqrt", [inner])]))
     } else {
-      b_terms.push(@symcore.mul([coeff, @symcore.function("sqrt", [@symcore.int(rad)])]))
+      b_terms.push(
+        @symcore.mul([coeff, @symcore.function("sqrt", [@symcore.int(rad)])]),
+      )
     }
   }
   (@symcore.int(g), @symcore.add(a_terms), @symcore.add(b_terms))
 }
 
 ///|
-pub fn sqrtdenest(
-  expr : @symcore.Expr,
-  max_passes? : Int = 6,
-) -> @symcore.Expr {
+pub fn sqrtdenest(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_sqrtdenest, max_passes~)
 }
 
@@ -161,10 +154,9 @@ fn rewrite_bottom_up_rational(
   expr : @symcore.Expr,
   rule : (@symcore.Expr) -> @symcore.Expr,
 ) -> @symcore.Expr {
-  let rewritten = @symcore.map_children(
-    expr,
-    child => rewrite_bottom_up_rational(child, rule),
-  )
+  let rewritten = @symcore.map_children(expr, child => {
+    rewrite_bottom_up_rational(child, rule)
+  })
   rule(rewritten)
 }
 
@@ -176,11 +168,7 @@ fn rewrite_radsimp(expr : @symcore.Expr) -> @symcore.Expr {
     _ =>
       match rationalized_denominator(den) {
         Some((mul_num, new_den)) =>
-          @symcore.mul([
-            num,
-            mul_num,
-            @symcore.pow(new_den, @symcore.int(-1)),
-          ])
+          @symcore.mul([num, mul_num, @symcore.pow(new_den, @symcore.int(-1))])
         None => expr
       }
   }
@@ -199,18 +187,28 @@ fn rationalized_denominator(
     @symcore.Expr::Add([a, b]) =>
       match (parse_signed_radical(a), parse_signed_radical(b)) {
         (Some((sa, ra)), Some((sb, rb))) => {
-          let a_term = if sa > 0 { ra } else { @symcore.mul([@symcore.int(-1), ra]) }
-          let b_term = if sb > 0 { rb } else { @symcore.mul([@symcore.int(-1), rb]) }
+          let a_term = if sa > 0 {
+            ra
+          } else {
+            @symcore.mul([@symcore.int(-1), ra])
+          }
+          let b_term = if sb > 0 {
+            rb
+          } else {
+            @symcore.mul([@symcore.int(-1), rb])
+          }
           let conj = @symcore.add([
             a_term,
             @symcore.mul([@symcore.int(-1), b_term]),
           ])
           match (radical_square(ra), radical_square(rb)) {
             (Some(a_sq), Some(b_sq)) =>
-              Some((
-                conj,
-                @symcore.add([a_sq, @symcore.mul([@symcore.int(-1), b_sq])]),
-              ))
+              Some(
+                (
+                  conj,
+                  @symcore.add([a_sq, @symcore.mul([@symcore.int(-1), b_sq])]),
+                ),
+              )
             _ => None
           }
         }
@@ -283,10 +281,12 @@ fn try_denest_quadratic_surds(arg : @symcore.Expr) -> @symcore.Expr? {
         n.compare(@symnum.BigRational::zero()) < 0 {
         return None
       }
-      Some(@symcore.add([
-        @symcore.function("sqrt", [@symcore.number(m)]),
-        @symcore.function("sqrt", [@symcore.number(n)]),
-      ]))
+      Some(
+        @symcore.add([
+          @symcore.function("sqrt", [@symcore.number(m)]),
+          @symcore.function("sqrt", [@symcore.number(n)]),
+        ]),
+      )
     }
     None => None
   }
@@ -334,7 +334,8 @@ fn parse_two_sqrt_term(term : @symcore.Expr) -> @symnum.BigRational? {
 ///|
 fn radical_radicand_as_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Function(name, [@symcore.Expr::Number(b)]) if name == "sqrt" => Some(b)
+    @symcore.Expr::Function(name, [@symcore.Expr::Number(b)]) if name == "sqrt" =>
+      Some(b)
     @symcore.Expr::Pow(@symcore.Expr::Number(b), @symcore.Expr::Number(e)) =>
       if is_half(e) {
         Some(b)
@@ -348,14 +349,13 @@ fn radical_radicand_as_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
 ///|
 fn split_fraction(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   match expr {
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(exp)) => {
+    @symcore.Expr::Pow(base, @symcore.Expr::Number(exp)) =>
       if exp.is_integral() && exp.numerator().to_int() < 0 {
         let den_exp = @symcore.int(-exp.numerator().to_int())
         (@symcore.int(1), @symcore.pow(base, den_exp))
       } else {
         (expr, @symcore.int(1))
       }
-    }
     @symcore.Expr::Mul(args) => {
       let num_factors : Array[@symcore.Expr] = Array::new()
       let den_factors : Array[@symcore.Expr] = Array::new()
@@ -459,12 +459,7 @@ fn collect_function_terms(
       for key, coeffs in grouped {
         let coeff_sum = @symcore.add(coeffs)
         let inner = grouped_arg[key]
-        let name =
-          if target_name == "Abs" {
-            "Abs"
-          } else {
-            target_name
-          }
+        let name = if target_name == "Abs" { "Abs" } else { target_name }
         rest.push(@symcore.mul([coeff_sum, @symcore.function(name, [inner])]))
       }
       @symcore.add(rest)
@@ -478,7 +473,7 @@ fn parse_coeff_times_named_unary(
   expr : @symcore.Expr,
   target_name : String,
 ) -> (@symcore.Expr, @symcore.Expr)? {
-  let matches_target = fn (name : String) -> Bool {
+  let matches_target = fn(name : String) -> Bool {
     if target_name == "Abs" {
       name == "Abs" || name == "abs"
     } else {
@@ -494,7 +489,8 @@ fn parse_coeff_times_named_unary(
       let coeff_factors : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Function(name, [inner]) if matches_target(name) && !seen => {
+          @symcore.Expr::Function(name, [inner]) if matches_target(name) &&
+            !seen => {
             seen = true
             inner_expr = inner
           }
@@ -514,9 +510,12 @@ fn parse_coeff_times_named_unary(
 ///|
 fn expand_mul_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args.map(term => expand_mul_expr(term)))
-    @symcore.Expr::Mul(args) => expand_mul_sequence(args.map(f => expand_mul_expr(f)))
-    @symcore.Expr::Pow(base, exp) => @symcore.pow(expand_mul_expr(base), expand_mul_expr(exp))
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(term => expand_mul_expr(term)))
+    @symcore.Expr::Mul(args) =>
+      expand_mul_sequence(args.map(f => expand_mul_expr(f)))
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(expand_mul_expr(base), expand_mul_expr(exp))
     @symcore.Expr::Function(name, args) =>
       @symcore.function(name, args.map(a => expand_mul_expr(a)))
     _ => expr
@@ -537,11 +536,10 @@ fn expand_mul_sequence(factors : Array[@symcore.Expr]) -> @symcore.Expr {
         }
         terms = next_terms
       }
-      _ => {
+      _ =>
         for i in 0..<terms.length() {
           terms[i] = @symcore.mul([terms[i], factor])
         }
-      }
     }
   }
   if terms.length() == 1 {
@@ -554,27 +552,27 @@ fn expand_mul_sequence(factors : Array[@symcore.Expr]) -> @symcore.Expr {
 ///|
 fn parse_coeff_sqrt_int(expr : @symcore.Expr) -> (@symcore.Expr, Int)? {
   match expr {
-    @symcore.Expr::Function(name, [@symcore.Expr::Number(n)]) if name == "sqrt" => {
+    @symcore.Expr::Function(name, [@symcore.Expr::Number(n)]) if name == "sqrt" =>
       if n.is_integral() && n.numerator().to_int() > 0 {
         Some((@symcore.int(1), n.numerator().to_int()))
       } else {
         None
       }
-    }
     @symcore.Expr::Mul(args) => {
       let mut found = false
       let mut rad = 0
       let coeff_factors : Array[@symcore.Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Function(name, [@symcore.Expr::Number(n)]) if name == "sqrt" && !found => {
+          @symcore.Expr::Function(name, [@symcore.Expr::Number(n)]) if name ==
+            "sqrt" &&
+            !found =>
             if n.is_integral() && n.numerator().to_int() > 0 {
               found = true
               rad = n.numerator().to_int()
             } else {
               return None
             }
-          }
           _ => coeff_factors.push(arg)
         }
       }
@@ -600,7 +598,11 @@ fn int_gcd(a : Int, b : Int) -> Int {
     x = y
     y = r
   }
-  if x == 0 { 1 } else { x }
+  if x == 0 {
+    1
+  } else {
+    x
+  }
 }
 
 ///|
@@ -672,7 +674,12 @@ fn rational_sqrt(v : @symnum.BigRational) -> @symnum.BigRational? {
     let den = v.denominator().to_int()
     match (int_sqrt_if_square(num), int_sqrt_if_square(den)) {
       (Some(sn), Some(sd)) =>
-        Some(try! @symnum.BigRational::new(BigInt::from_int(sn), BigInt::from_int(sd)))
+        Some(
+          try! @symnum.BigRational::new(
+            BigInt::from_int(sn),
+            BigInt::from_int(sd),
+          ),
+        )
       _ => None
     }
   } else {

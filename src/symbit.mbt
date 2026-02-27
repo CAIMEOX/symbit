@@ -288,20 +288,12 @@ pub fn epath(path : String, expr : Expr) -> Array[Expr] {
 }
 
 ///|
-pub fn epath_apply(
-  path : String,
-  expr : Expr,
-  f : (Expr) -> Expr,
-) -> Expr {
+pub fn epath_apply(path : String, expr : Expr, f : (Expr) -> Expr) -> Expr {
   @symsimplify.epath_apply(path, expr, f)
 }
 
 ///|
-pub fn use(
-  expr : Expr,
-  f : (Expr) -> Expr,
-  level? : Int = 0,
-) -> Expr {
+pub fn use(expr : Expr, f : (Expr) -> Expr, level? : Int = 0) -> Expr {
   @symsimplify.use(expr, f, level~)
 }
 

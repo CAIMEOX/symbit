@@ -14,9 +14,9 @@ test "symsimplify epath select/apply basics" {
     selected.map(@symprint.debug_repr),
     content="[\"sym:x\", \"sym:y\", \"sym:z\", \"sym:x\"]",
   )
-  let doubled = path.apply(
-    expr,
-    item => @symcore.mul([@symcore.int(2), item]),
+  let doubled = path.apply(expr, item => @symcore.mul([@symcore.int(2), item]))
+  inspect(
+    @symprint.to_string(doubled),
+    content="x + cos((2*x + 2*y + 2*z)) + sin((2*x + 1))",
   )
-  inspect(@symprint.to_string(doubled), content="x + cos((2*x + 2*y + 2*z)) + sin((2*x + 1))")
 }

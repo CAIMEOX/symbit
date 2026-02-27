@@ -121,14 +121,10 @@ pub fn ratsimpmodprime_srepr(
   for gen in gens {
     args.push(OracleArg::PyObj(expr_to_sympy(gen)))
   }
-  let out = sympy_call_must(
-    "sympy.ratsimpmodprime",
-    args,
-    kwargs={
-      "quick": OracleArg::Bool(quick),
-      "polynomial": OracleArg::Bool(polynomial),
-    },
-  )
+  let out = sympy_call_must("sympy.ratsimpmodprime", args, kwargs={
+    "quick": OracleArg::Bool(quick),
+    "polynomial": OracleArg::Bool(polynomial),
+  })
   srepr_obj(objenum_to_obj(out))
 }
 
@@ -153,7 +149,9 @@ fn unary_equivalent(
   input_expr : @symcore.Expr,
   candidate : @symcore.Expr,
 ) -> Bool raise {
-  let oracle_enum = sympy_call_must(path, [OracleArg::PyObj(expr_to_sympy(input_expr))])
+  let oracle_enum = sympy_call_must(path, [
+    OracleArg::PyObj(expr_to_sympy(input_expr)),
+  ])
   let oracle_obj = objenum_to_obj(oracle_enum)
   let cand_obj = expr_to_sympy(candidate)
   let neg_oracle = sympy_call_must("sympy.Mul", [
@@ -164,7 +162,9 @@ fn unary_equivalent(
     OracleArg::PyObj(cand_obj),
     OracleArg::PyObj(objenum_to_obj(neg_oracle)),
   ])
-  let simp = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(diff))])
+  let simp = sympy_call_must("sympy.simplify", [
+    OracleArg::PyObj(objenum_to_obj(diff)),
+  ])
   srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
 }
 
@@ -200,14 +200,10 @@ pub fn ratsimpmodprime_equivalent(
   for gen in gens {
     args.push(OracleArg::PyObj(expr_to_sympy(gen)))
   }
-  let oracle_enum = sympy_call_must(
-    "sympy.ratsimpmodprime",
-    args,
-    kwargs={
-      "quick": OracleArg::Bool(quick),
-      "polynomial": OracleArg::Bool(polynomial),
-    },
-  )
+  let oracle_enum = sympy_call_must("sympy.ratsimpmodprime", args, kwargs={
+    "quick": OracleArg::Bool(quick),
+    "polynomial": OracleArg::Bool(polynomial),
+  })
   let oracle_obj = objenum_to_obj(oracle_enum)
   let cand_obj = expr_to_sympy(candidate)
   let neg_oracle = sympy_call_must("sympy.Mul", [
@@ -218,7 +214,9 @@ pub fn ratsimpmodprime_equivalent(
     OracleArg::PyObj(cand_obj),
     OracleArg::PyObj(objenum_to_obj(neg_oracle)),
   ])
-  let simp = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(diff))])
+  let simp = sympy_call_must("sympy.simplify", [
+    OracleArg::PyObj(objenum_to_obj(diff)),
+  ])
   srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
 }
 
@@ -383,7 +381,9 @@ pub fn fraction_expand_equivalent(
   input_expr : @symcore.Expr,
   candidate : @symcore.Expr,
 ) -> Bool raise {
-  unary_equivalent("sympy.simplify.radsimp.fraction_expand", input_expr, candidate)
+  unary_equivalent(
+    "sympy.simplify.radsimp.fraction_expand", input_expr, candidate,
+  )
 }
 
 ///|
@@ -416,10 +416,7 @@ pub fn separatevars_srepr(
 }
 
 ///|
-pub fn hypersimp_srepr(
-  f : @symcore.Expr,
-  k : @symcore.Expr,
-) -> String raise {
+pub fn hypersimp_srepr(f : @symcore.Expr, k : @symcore.Expr) -> String raise {
   let out = sympy_call_must("sympy.hypersimp", [
     OracleArg::PyObj(expr_to_sympy(f)),
     OracleArg::PyObj(expr_to_sympy(k)),

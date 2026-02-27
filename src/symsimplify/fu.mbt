@@ -14,10 +14,7 @@ pub fn tr2(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn tr2i(
-  expr : @symcore.Expr,
-  half? : Bool = false,
-) -> @symcore.Expr {
+pub fn tr2i(expr : @symcore.Expr, half? : Bool = false) -> @symcore.Expr {
   fixpoint_fu(
     expr,
     node => rewrite_bottom_up_fu(node, x => rewrite_tr2i(x, half~)),
@@ -41,10 +38,9 @@ pub fn tr5(
   max? : Int = 4,
   pow? : Bool = false,
 ) -> @symcore.Expr {
-  rewrite_bottom_up_fu(
-    expr,
-    node => rewrite_tr56(node, "sin", "cos", max=max, pow=pow, plus=false),
-  )
+  rewrite_bottom_up_fu(expr, node => {
+    rewrite_tr56(node, "sin", "cos", max~, pow~, plus=false)
+  })
 }
 
 ///|
@@ -53,10 +49,9 @@ pub fn tr6(
   max? : Int = 4,
   pow? : Bool = false,
 ) -> @symcore.Expr {
-  rewrite_bottom_up_fu(
-    expr,
-    node => rewrite_tr56(node, "cos", "sin", max=max, pow=pow, plus=false),
-  )
+  rewrite_bottom_up_fu(expr, node => {
+    rewrite_tr56(node, "cos", "sin", max~, pow~, plus=false)
+  })
 }
 
 ///|
@@ -172,18 +167,12 @@ pub fn trmorrie(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn futrig(
-  expr : @symcore.Expr,
-  max_passes? : Int = 8,
-) -> @symcore.Expr {
+pub fn futrig(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_fu(expr, futrig_once, max_passes~)
 }
 
 ///|
-pub fn fu(
-  expr : @symcore.Expr,
-  max_passes? : Int = 8,
-) -> @symcore.Expr {
+pub fn fu(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   simplify(futrig(expr, max_passes~))
 }
 
@@ -197,25 +186,7 @@ fn futrig_once(expr : @symcore.Expr) -> @symcore.Expr {
             tr15(
               tr8(
                 tr10i(
-                  tr6(
-                    tr11(
-                      tr10(
-                        tr5(
-                          tr14(
-                            tr2i(
-                              tr2(
-                                tr12(
-                                  tr1(
-                                    tr3(expr),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  tr6(tr11(tr10(tr5(tr14(tr2i(tr2(tr12(tr1(tr3(expr)))))))))),
                 ),
               ),
             ),
@@ -231,10 +202,9 @@ fn rewrite_bottom_up_fu(
   expr : @symcore.Expr,
   rule : (@symcore.Expr) -> @symcore.Expr,
 ) -> @symcore.Expr {
-  let rewritten = @symcore.map_children(
-    expr,
-    child => rewrite_bottom_up_fu(child, rule),
-  )
+  let rewritten = @symcore.map_children(expr, child => {
+    rewrite_bottom_up_fu(child, rule)
+  })
   rule(rewritten)
 }
 
@@ -285,10 +255,7 @@ fn rewrite_tr2(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn rewrite_tr2i(
-  expr : @symcore.Expr,
-  half? : Bool = false,
-) -> @symcore.Expr {
+fn rewrite_tr2i(expr : @symcore.Expr, half? : Bool = false) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Mul(args) => {
       let sin_exp : Map[String, Int] = {}
@@ -321,28 +288,24 @@ fn rewrite_tr2i(
         let mut p = map_get_int(plus_exp, key)
         if s > 0 && c < 0 {
           let take = min_int(s, -c)
-          tan_terms.push(make_pow(
-            @symcore.function("tan", [arg_expr]),
-            take,
-          ))
+          tan_terms.push(make_pow(@symcore.function("tan", [arg_expr]), take))
           s = s - take
           c = c + take
         }
         if c > 0 && s < 0 {
           let take = min_int(c, -s)
-          tan_terms.push(make_pow(
-            @symcore.function("tan", [arg_expr]),
-            -take,
-          ))
+          tan_terms.push(make_pow(@symcore.function("tan", [arg_expr]), -take))
           c = c - take
           s = s + take
         }
         if half && s > 0 && p < 0 {
           let take = min_int(s, -p)
-          tan_terms.push(make_pow(
-            @symcore.function("tan", [@symcore.mul([half_const(), arg_expr])]),
-            take,
-          ))
+          tan_terms.push(
+            make_pow(
+              @symcore.function("tan", [@symcore.mul([half_const(), arg_expr])]),
+              take,
+            ),
+          )
           s = s - take
           p = p + take
         }
@@ -353,10 +316,15 @@ fn rewrite_tr2i(
           tan_terms.push(make_pow(@symcore.function("cos", [arg_expr]), c))
         }
         if p != 0 {
-          tan_terms.push(make_pow(
-            @symcore.add([@symcore.int(1), @symcore.function("cos", [arg_expr])]),
-            p,
-          ))
+          tan_terms.push(
+            make_pow(
+              @symcore.add([
+                @symcore.int(1),
+                @symcore.function("cos", [arg_expr]),
+              ]),
+              p,
+            ),
+          )
         }
       }
       @symcore.mul(others + tan_terms)
@@ -370,13 +338,12 @@ fn rewrite_tr3(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Function(name, [arg]) if is_trig_name(name) =>
       match extract_minus(arg) {
-        Some(positive) => {
+        Some(positive) =>
           if trig_is_odd(name) {
             @symcore.mul([@symcore.int(-1), @symcore.function(name, [positive])])
           } else {
             @symcore.function(name, [positive])
           }
-        }
         None => expr
       }
     _ => expr
@@ -409,18 +376,25 @@ fn rewrite_tr56(
   plus? : Bool = false,
 ) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == src =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      src =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
           if pow && !is_power_of_two(e) {
             return expr
           }
           if e == 2 {
-            let base = @symcore.pow(@symcore.function(dst, [arg]), @symcore.int(2))
+            let base = @symcore.pow(
+              @symcore.function(dst, [arg]),
+              @symcore.int(2),
+            )
             if plus {
               @symcore.add([@symcore.int(1), base])
             } else {
-              @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), base])])
+              @symcore.add([
+                @symcore.int(1),
+                @symcore.mul([@symcore.int(-1), base]),
+              ])
             }
           } else if e % 2 == 0 {
             let inner = rewrite_tr56(
@@ -456,7 +430,9 @@ fn rewrite_tr56(
 ///|
 fn rewrite_tr7(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == "cos" && parse_int(exp_expr) == Some(2) =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      "cos" &&
+      parse_int(exp_expr) == Some(2) =>
       @symcore.mul([
         half_const(),
         @symcore.add([
@@ -516,28 +492,44 @@ fn rewrite_tr9(expr : @symcore.Expr) -> @symcore.Expr {
             if coeff_eq(c1, c2) {
               @symcore.mul([
                 @symcore.number(c1.mul_r(@symnum.BigRational::from_int(2))),
-                @symcore.function("cos", [@symcore.mul([half_const(), @symcore.add([x1, x2])])]),
-                @symcore.function("cos", [@symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])])]),
+                @symcore.function("cos", [
+                  @symcore.mul([half_const(), @symcore.add([x1, x2])]),
+                ]),
+                @symcore.function("cos", [
+                  @symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])]),
+                ]),
               ])
             } else {
               @symcore.mul([
                 @symcore.number(c1.mul_r(@symnum.BigRational::from_int(-2))),
-                @symcore.function("sin", [@symcore.mul([half_const(), @symcore.add([x1, x2])])]),
-                @symcore.function("sin", [@symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])])]),
+                @symcore.function("sin", [
+                  @symcore.mul([half_const(), @symcore.add([x1, x2])]),
+                ]),
+                @symcore.function("sin", [
+                  @symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])]),
+                ]),
               ])
             }
           } else if t1 == "sin" && t2 == "sin" {
             if coeff_eq(c1, c2) {
               @symcore.mul([
                 @symcore.number(c1.mul_r(@symnum.BigRational::from_int(2))),
-                @symcore.function("sin", [@symcore.mul([half_const(), @symcore.add([x1, x2])])]),
-                @symcore.function("cos", [@symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])])]),
+                @symcore.function("sin", [
+                  @symcore.mul([half_const(), @symcore.add([x1, x2])]),
+                ]),
+                @symcore.function("cos", [
+                  @symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])]),
+                ]),
               ])
             } else {
               @symcore.mul([
                 @symcore.number(c1.mul_r(@symnum.BigRational::from_int(2))),
-                @symcore.function("cos", [@symcore.mul([half_const(), @symcore.add([x1, x2])])]),
-                @symcore.function("sin", [@symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])])]),
+                @symcore.function("cos", [
+                  @symcore.mul([half_const(), @symcore.add([x1, x2])]),
+                ]),
+                @symcore.function("sin", [
+                  @symcore.mul([half_const(), @symcore.add([x1, neg_expr(x2)])]),
+                ]),
               ])
             }
           } else {
@@ -553,7 +545,7 @@ fn rewrite_tr9(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn rewrite_tr10(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, [arg]) if (name == "sin" || name == "cos") =>
+    @symcore.Expr::Function(name, [arg]) if name == "sin" || name == "cos" =>
       match arg {
         @symcore.Expr::Add(args) if args.length() >= 2 =>
           expand_trig_sum(name, args)
@@ -619,19 +611,23 @@ fn rewrite_tr11(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Function(name, [arg]) if name == "sin" =>
       match extract_mul_coeff(arg, 2) {
-        Some(inner) => @symcore.mul([
-          @symcore.int(2),
-          @symcore.function("sin", [inner]),
-          @symcore.function("cos", [inner]),
-        ])
+        Some(inner) =>
+          @symcore.mul([
+            @symcore.int(2),
+            @symcore.function("sin", [inner]),
+            @symcore.function("cos", [inner]),
+          ])
         None => expr
       }
     @symcore.Expr::Function(name, [arg]) if name == "cos" =>
       match extract_mul_coeff(arg, 2) {
-        Some(inner) => @symcore.add([
-          @symcore.pow(@symcore.function("cos", [inner]), @symcore.int(2)),
-          neg_expr(@symcore.pow(@symcore.function("sin", [inner]), @symcore.int(2))),
-        ])
+        Some(inner) =>
+          @symcore.add([
+            @symcore.pow(@symcore.function("cos", [inner]), @symcore.int(2)),
+            neg_expr(
+              @symcore.pow(@symcore.function("sin", [inner]), @symcore.int(2)),
+            ),
+          ])
         None => expr
       }
     _ => expr
@@ -643,8 +639,7 @@ fn rewrite_tr12(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Function(name, [arg]) if name == "tan" =>
       match arg {
-        @symcore.Expr::Add(args) if args.length() >= 2 =>
-          expand_tan_sum(args)
+        @symcore.Expr::Add(args) if args.length() >= 2 => expand_tan_sum(args)
         _ => expr
       }
     _ => expr
@@ -687,17 +682,29 @@ fn rewrite_tr13(expr : @symcore.Expr) -> @symcore.Expr {
       if tans.length() >= 2 {
         let a = tans[0]
         let b = tans[1]
-        others.push(@symcore.add([
-          @symcore.int(1),
-          neg_expr(@symcore.mul([
-            @symcore.function("tan", [a]),
-            @symcore.pow(@symcore.function("tan", [@symcore.add([a, b])]), @symcore.int(-1)),
-          ])),
-          neg_expr(@symcore.mul([
-            @symcore.function("tan", [b]),
-            @symcore.pow(@symcore.function("tan", [@symcore.add([a, b])]), @symcore.int(-1)),
-          ])),
-        ]))
+        others.push(
+          @symcore.add([
+            @symcore.int(1),
+            neg_expr(
+              @symcore.mul([
+                @symcore.function("tan", [a]),
+                @symcore.pow(
+                  @symcore.function("tan", [@symcore.add([a, b])]),
+                  @symcore.int(-1),
+                ),
+              ]),
+            ),
+            neg_expr(
+              @symcore.mul([
+                @symcore.function("tan", [b]),
+                @symcore.pow(
+                  @symcore.function("tan", [@symcore.add([a, b])]),
+                  @symcore.int(-1),
+                ),
+              ]),
+            ),
+          ]),
+        )
         for i in 2..<tans.length() {
           others.push(@symcore.function("tan", [tans[i]]))
         }
@@ -708,17 +715,19 @@ fn rewrite_tr13(expr : @symcore.Expr) -> @symcore.Expr {
       } else if cots.length() >= 2 {
         let a = cots[0]
         let b = cots[1]
-        others.push(@symcore.add([
-          @symcore.int(1),
-          @symcore.mul([
-            @symcore.function("cot", [a]),
-            @symcore.function("cot", [@symcore.add([a, b])]),
+        others.push(
+          @symcore.add([
+            @symcore.int(1),
+            @symcore.mul([
+              @symcore.function("cot", [a]),
+              @symcore.function("cot", [@symcore.add([a, b])]),
+            ]),
+            @symcore.mul([
+              @symcore.function("cot", [b]),
+              @symcore.function("cot", [@symcore.add([a, b])]),
+            ]),
           ]),
-          @symcore.mul([
-            @symcore.function("cot", [b]),
-            @symcore.function("cot", [@symcore.add([a, b])]),
-          ]),
-        ]))
+        )
         for i in 2..<cots.length() {
           others.push(@symcore.function("cot", [cots[i]]))
         }
@@ -748,28 +757,43 @@ fn rewrite_tr14(expr : @symcore.Expr) -> @symcore.Expr {
         let ai = args[i]
         let mut matched = false
         match parse_trig_pm_one(ai) {
-          Some((name_i, arg_i, sign_i)) => {
+          Some((name_i, arg_i, sign_i)) =>
             for j in (i + 1)..<args.length() {
               if used[j] {
                 continue
               }
               match parse_trig_pm_one(args[j]) {
-                Some((name_j, arg_j, sign_j)) if name_i == name_j && arg_i == arg_j && sign_i != sign_j => {
+                Some((name_j, arg_j, sign_j)) if name_i == name_j &&
+                  arg_i == arg_j &&
+                  sign_i != sign_j => {
                   used[j] = true
                   used[i] = true
                   changed = true
                   matched = true
                   if name_i == "cos" {
-                    out.push(neg_expr(@symcore.pow(@symcore.function("sin", [arg_i]), @symcore.int(2))))
+                    out.push(
+                      neg_expr(
+                        @symcore.pow(
+                          @symcore.function("sin", [arg_i]),
+                          @symcore.int(2),
+                        ),
+                      ),
+                    )
                   } else {
-                    out.push(neg_expr(@symcore.pow(@symcore.function("cos", [arg_i]), @symcore.int(2))))
+                    out.push(
+                      neg_expr(
+                        @symcore.pow(
+                          @symcore.function("cos", [arg_i]),
+                          @symcore.int(2),
+                        ),
+                      ),
+                    )
                   }
                   break
                 }
                 _ => ()
               }
             }
-          }
           None => ()
         }
         if !matched {
@@ -777,7 +801,11 @@ fn rewrite_tr14(expr : @symcore.Expr) -> @symcore.Expr {
           used[i] = true
         }
       }
-      if changed { @symcore.mul(out) } else { expr }
+      if changed {
+        @symcore.mul(out)
+      } else {
+        expr
+      }
     }
     _ => expr
   }
@@ -790,7 +818,8 @@ fn rewrite_tr15(
   pow? : Bool = false,
 ) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == "sin" =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      "sin" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -811,7 +840,10 @@ fn rewrite_tr15(
           } else if pe % 2 == 1 {
             @symcore.mul([
               rewrite_tr15(
-                @symcore.pow(@symcore.function("sin", [arg]), @symcore.int(e + 1)),
+                @symcore.pow(
+                  @symcore.function("sin", [arg]),
+                  @symcore.int(e + 1),
+                ),
                 max~,
                 pow~,
               ),
@@ -834,7 +866,8 @@ fn rewrite_tr16(
   pow? : Bool = false,
 ) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      "cos" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -855,7 +888,10 @@ fn rewrite_tr16(
           } else if pe % 2 == 1 {
             @symcore.mul([
               rewrite_tr16(
-                @symcore.pow(@symcore.function("cos", [arg]), @symcore.int(e + 1)),
+                @symcore.pow(
+                  @symcore.function("cos", [arg]),
+                  @symcore.int(e + 1),
+                ),
                 max~,
                 pow~,
               ),
@@ -896,7 +932,9 @@ fn rewrite_tr22(
   pow? : Bool = false,
 ) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == "tan" || name == "cot" =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      "tan" ||
+      name == "cot" =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
           if pow && !is_power_of_two(e) {
@@ -927,10 +965,11 @@ fn rewrite_tr22(
 ///|
 fn rewrite_trpower(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [x]), exp_expr) if name == "sin" || name == "cos" =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [x]), exp_expr) if name ==
+      "sin" ||
+      name == "cos" =>
       match parse_int(exp_expr) {
-        Some(n) if n > 1 =>
-          trpower_expand(name, x, n)
+        Some(n) if n > 1 => trpower_expand(name, x, n)
         _ => expr
       }
     _ => expr
@@ -938,11 +977,7 @@ fn rewrite_trpower(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn trpower_expand(
-  trig : String,
-  x : @symcore.Expr,
-  n : Int,
-) -> @symcore.Expr {
+fn trpower_expand(trig : String, x : @symcore.Expr, n : Int) -> @symcore.Expr {
   let terms : Array[@symcore.Expr] = Array::new()
   let odd = n % 2 == 1
   let denom = pow2_bigint(n - 1)
@@ -1004,7 +1039,11 @@ fn rewrite_trmorrie(expr : @symcore.Expr) -> @symcore.Expr {
           out.push(term)
         }
       }
-      if changed { @symcore.mul(out) } else { expr }
+      if changed {
+        @symcore.mul(out)
+      } else {
+        expr
+      }
     }
     _ => expr
   }
@@ -1015,7 +1054,8 @@ fn parse_morrie_factor(expr : @symcore.Expr) -> MorrieFactor? {
   match expr {
     @symcore.Expr::Function(name, [arg]) if name == "cos" =>
       make_morrie_factor(arg, 1)
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
+    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), exp_expr) if name ==
+      "cos" =>
       match parse_int(exp_expr) {
         Some(e) if e > 0 => make_morrie_factor(arg, e)
         _ => None
@@ -1025,28 +1065,23 @@ fn parse_morrie_factor(expr : @symcore.Expr) -> MorrieFactor? {
 }
 
 ///|
-fn make_morrie_factor(
-  arg : @symcore.Expr,
-  exp : Int,
-) -> MorrieFactor? {
+fn make_morrie_factor(arg : @symcore.Expr, exp : Int) -> MorrieFactor? {
   let (coeff_raw, factors) = split_numeric_coeff(arg)
   if coeff_raw.is_zero() {
     return None
   }
-  let coeff =
-    if coeff_raw.compare(@symnum.BigRational::zero()) < 0 {
-      coeff_raw.neg_r()
-    } else {
-      coeff_raw
-    }
-  let core =
-    if factors.is_empty() {
-      @symcore.int(1)
-    } else if factors.length() == 1 {
-      factors[0]
-    } else {
-      @symcore.mul(factors)
-    }
+  let coeff = if coeff_raw.compare(@symnum.BigRational::zero()) < 0 {
+    coeff_raw.neg_r()
+  } else {
+    coeff_raw
+  }
+  let core = if factors.is_empty() {
+    @symcore.int(1)
+  } else if factors.length() == 1 {
+    factors[0]
+  } else {
+    @symcore.mul(factors)
+  }
   let core_key = @symprint.debug_repr(core)
   Some(MorrieFactor::{ core_key, core, coeff, exp })
 }
@@ -1065,7 +1100,8 @@ fn rewrite_morrie_bucket(
           coeff: cur.coeff,
           exp: cur.exp + factor.exp,
         }
-      None => powers[key] = MorrieCoeff::{ coeff: factor.coeff, exp: factor.exp }
+      None =>
+        powers[key] = MorrieCoeff::{ coeff: factor.coeff, exp: factor.exp }
     }
   }
 
@@ -1170,11 +1206,7 @@ fn morrie_chain_take(
   for i in 0..<chain_len {
     let key = rational_key(coeff)
     match powers.get(key) {
-      Some(cur) => {
-        if i == 0 || cur.exp < take {
-          take = cur.exp
-        }
-      }
+      Some(cur) => if i == 0 || cur.exp < take { take = cur.exp }
       None => return 0
     }
     coeff = coeff.mul_r(two)
@@ -1231,7 +1263,9 @@ fn pow2_inv_expr(pow : Int) -> @symcore.Expr {
   if pow <= 0 {
     return @symcore.int(1)
   }
-  @symcore.number(make_signed_rational(BigInt::from_int(1), pow2_bigint(pow), 1))
+  @symcore.number(
+    make_signed_rational(BigInt::from_int(1), pow2_bigint(pow), 1),
+  )
 }
 
 ///|
@@ -1240,12 +1274,7 @@ fn make_signed_rational(
   denom : BigInt,
   sign : Int,
 ) -> @symnum.BigRational {
-  let signed =
-    if sign < 0 {
-      numer.neg()
-    } else {
-      numer
-    }
+  let signed = if sign < 0 { numer.neg() } else { numer }
   try! @symnum.BigRational::new(signed, denom)
 }
 
@@ -1266,10 +1295,7 @@ fn scale_expr_rational(
 }
 
 ///|
-fn scaled_angle(
-  arg : @symcore.Expr,
-  k : Int,
-) -> @symcore.Expr {
+fn scaled_angle(arg : @symcore.Expr, k : Int) -> @symcore.Expr {
   if k == 1 {
     arg
   } else {
@@ -1282,12 +1308,7 @@ fn binomial_bigint(n : Int, k : Int) -> BigInt {
   if k < 0 || k > n {
     return BigInt::from_int(0)
   }
-  let kk =
-    if k < (n - k) {
-      k
-    } else {
-      n - k
-    }
+  let kk = if k < n - k { k } else { n - k }
   let mut out = BigInt::from_int(1)
   for i in 1..<(kk + 1) {
     out = out.mul(BigInt::from_int(n - kk + i))
@@ -1307,7 +1328,11 @@ fn pow2_bigint(n : Int) -> BigInt {
 
 ///|
 fn minus_one_pow(n : Int) -> Int {
-  if n % 2 == 0 { 1 } else { -1 }
+  if n % 2 == 0 {
+    1
+  } else {
+    -1
+  }
 }
 
 ///|
@@ -1320,7 +1345,8 @@ fn split_fraction_fu(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   match expr {
     @symcore.Expr::Pow(base, exp_expr) =>
       match parse_int(exp_expr) {
-        Some(e) if e < 0 => (@symcore.int(1), @symcore.pow(base, @symcore.int(-e)))
+        Some(e) if e < 0 =>
+          (@symcore.int(1), @symcore.pow(base, @symcore.int(-e)))
         _ => (expr, @symcore.int(1))
       }
     @symcore.Expr::Mul(args) => {
@@ -1364,10 +1390,7 @@ fn expand_trig_sum(name : String, args : Array[@symcore.Expr]) -> @symcore.Expr 
     _ => @symcore.function("cos", [b_expr])
   }
   if name == "sin" {
-    @symcore.add([
-      @symcore.mul([sin_a, cos_b]),
-      @symcore.mul([cos_a, sin_b]),
-    ])
+    @symcore.add([@symcore.mul([sin_a, cos_b]), @symcore.mul([cos_a, sin_b])])
   } else {
     @symcore.add([
       @symcore.mul([cos_a, cos_b]),
@@ -1395,10 +1418,7 @@ fn expand_tan_sum(args : Array[@symcore.Expr]) -> @symcore.Expr {
   @symcore.mul([
     @symcore.add([tan_a, tan_b]),
     @symcore.pow(
-      @symcore.add([
-        @symcore.int(1),
-        neg_expr(@symcore.mul([tan_a, tan_b])),
-      ]),
+      @symcore.add([@symcore.int(1), neg_expr(@symcore.mul([tan_a, tan_b]))]),
       @symcore.int(-1),
     ),
   ])
@@ -1408,37 +1428,45 @@ fn expand_tan_sum(args : Array[@symcore.Expr]) -> @symcore.Expr {
 fn tr8_pair(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr? {
   match (as_sin_or_cos(a), as_sin_or_cos(b)) {
     (Some(("cos", x)), Some(("cos", y))) =>
-      Some(@symcore.mul([
-        half_const(),
-        @symcore.add([
-          @symcore.function("cos", [@symcore.add([x, y])]),
-          @symcore.function("cos", [@symcore.add([x, neg_expr(y)])]),
+      Some(
+        @symcore.mul([
+          half_const(),
+          @symcore.add([
+            @symcore.function("cos", [@symcore.add([x, y])]),
+            @symcore.function("cos", [@symcore.add([x, neg_expr(y)])]),
+          ]),
         ]),
-      ]))
+      )
     (Some(("sin", x)), Some(("sin", y))) =>
-      Some(@symcore.mul([
-        half_const(),
-        @symcore.add([
-          neg_expr(@symcore.function("cos", [@symcore.add([x, y])])),
-          @symcore.function("cos", [@symcore.add([x, neg_expr(y)])]),
+      Some(
+        @symcore.mul([
+          half_const(),
+          @symcore.add([
+            neg_expr(@symcore.function("cos", [@symcore.add([x, y])])),
+            @symcore.function("cos", [@symcore.add([x, neg_expr(y)])]),
+          ]),
         ]),
-      ]))
+      )
     (Some(("sin", x)), Some(("cos", y))) =>
-      Some(@symcore.mul([
-        half_const(),
-        @symcore.add([
-          @symcore.function("sin", [@symcore.add([x, y])]),
-          @symcore.function("sin", [@symcore.add([x, neg_expr(y)])]),
+      Some(
+        @symcore.mul([
+          half_const(),
+          @symcore.add([
+            @symcore.function("sin", [@symcore.add([x, y])]),
+            @symcore.function("sin", [@symcore.add([x, neg_expr(y)])]),
+          ]),
         ]),
-      ]))
+      )
     (Some(("cos", x)), Some(("sin", y))) =>
-      Some(@symcore.mul([
-        half_const(),
-        @symcore.add([
-          @symcore.function("sin", [@symcore.add([x, y])]),
-          neg_expr(@symcore.function("sin", [@symcore.add([x, neg_expr(y)])])),
+      Some(
+        @symcore.mul([
+          half_const(),
+          @symcore.add([
+            @symcore.function("sin", [@symcore.add([x, y])]),
+            neg_expr(@symcore.function("sin", [@symcore.add([x, neg_expr(y)])])),
+          ]),
         ]),
-      ]))
+      )
     _ => None
   }
 }
@@ -1494,8 +1522,10 @@ fn parse_tan_den(expr : @symcore.Expr) -> (Int, @symcore.Expr, @symcore.Expr)? {
 ///|
 fn parse_neg_tan_mul(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Mul([@symcore.Expr::Number(n), m]) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
-      parse_pos_tan_mul(m)
+    @symcore.Expr::Mul([@symcore.Expr::Number(n), m]) if n.compare(
+        @symnum.BigRational::from_int(-1),
+      ) ==
+      0 => parse_pos_tan_mul(m)
     _ => None
   }
 }
@@ -1541,7 +1571,9 @@ fn split_num_coeff_trig(
 }
 
 ///|
-fn split_numeric_coeff(expr : @symcore.Expr) -> (@symnum.BigRational, Array[@symcore.Expr]) {
+fn split_numeric_coeff(
+  expr : @symcore.Expr,
+) -> (@symnum.BigRational, Array[@symcore.Expr]) {
   match expr {
     @symcore.Expr::Number(n) => (n, [])
     @symcore.Expr::Mul(args) => {
@@ -1569,13 +1601,17 @@ fn parse_trig_pm_one(expr : @symcore.Expr) -> (String, @symcore.Expr, Int)? {
       let mut sign = 0
       for arg in args {
         match arg {
-          @symcore.Expr::Function(name, [inner]) if (name == "sin" || name == "cos") => {
+          @symcore.Expr::Function(name, [inner]) if name == "sin" ||
+            name == "cos" => {
             trig_name = name
             trig_arg = inner
             has_trig = true
           }
           @symcore.Expr::Number(n) if n.is_one() => sign = 1
-          @symcore.Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 => sign = -1
+          @symcore.Expr::Number(n) if n.compare(
+              @symnum.BigRational::from_int(-1),
+            ) ==
+            0 => sign = -1
           _ => ()
         }
       }
@@ -1606,7 +1642,10 @@ fn parse_tr2i_factor(expr : @symcore.Expr) -> Tr2iFactor? {
               Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
             _ =>
               match parse_one_plus_cos(base) {
-                Some(arg) => Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, e))
+                Some(arg) =>
+                  Some(
+                    Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, e),
+                  )
                 None => None
               }
           }
@@ -1614,7 +1653,8 @@ fn parse_tr2i_factor(expr : @symcore.Expr) -> Tr2iFactor? {
       }
     _ =>
       match parse_one_plus_cos(expr) {
-        Some(arg) => Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, 1))
+        Some(arg) =>
+          Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, 1))
         None => None
       }
   }
@@ -1672,11 +1712,7 @@ fn parse_pi_fraction(expr : @symcore.Expr) -> (Int, Int)? {
 }
 
 ///|
-fn special_trig_value(
-  name : String,
-  p_raw : Int,
-  q : Int,
-) -> @symcore.Expr? {
+fn special_trig_value(name : String, p_raw : Int, q : Int) -> @symcore.Expr? {
   let period = if name == "tan" || name == "cot" { q } else { 2 * q }
   let p = mod_pos(p_raw, period)
   if name == "sin" {
@@ -1687,12 +1723,14 @@ fn special_trig_value(
   }
   if name == "tan" {
     match (special_sin(p, q), special_cos(p, q)) {
-      (Some(s), Some(c)) if !is_zero_expr(c) => Some(@symcore.mul([s, @symcore.pow(c, @symcore.int(-1))]))
+      (Some(s), Some(c)) if !is_zero_expr(c) =>
+        Some(@symcore.mul([s, @symcore.pow(c, @symcore.int(-1))]))
       _ => None
     }
   } else if name == "cot" {
     match (special_sin(p, q), special_cos(p, q)) {
-      (Some(s), Some(c)) if !is_zero_expr(s) => Some(@symcore.mul([c, @symcore.pow(s, @symcore.int(-1))]))
+      (Some(s), Some(c)) if !is_zero_expr(s) =>
+        Some(@symcore.mul([c, @symcore.pow(s, @symcore.int(-1))]))
       _ => None
     }
   } else if name == "sec" {
@@ -1713,7 +1751,11 @@ fn special_trig_value(
 ///|
 fn special_sin(p : Int, q : Int) -> @symcore.Expr? {
   if q == 1 {
-    return if p % 2 == 0 { Some(@symcore.int(0)) } else { Some(@symcore.int(0)) }
+    return if p % 2 == 0 {
+      Some(@symcore.int(0))
+    } else {
+      Some(@symcore.int(0))
+    }
   }
   if q == 2 {
     return match p {
@@ -1771,7 +1813,11 @@ fn special_sin(p : Int, q : Int) -> @symcore.Expr? {
 ///|
 fn special_cos(p : Int, q : Int) -> @symcore.Expr? {
   if q == 1 {
-    return if p % 2 == 0 { Some(@symcore.int(1)) } else { Some(@symcore.int(-1)) }
+    return if p % 2 == 0 {
+      Some(@symcore.int(1))
+    } else {
+      Some(@symcore.int(-1))
+    }
   }
   if q == 2 {
     return match p {
@@ -1829,7 +1875,8 @@ fn special_cos(p : Int, q : Int) -> @symcore.Expr? {
 ///|
 fn as_sin_or_cos(expr : @symcore.Expr) -> (String, @symcore.Expr)? {
   match expr {
-    @symcore.Expr::Function(name, [arg]) if (name == "sin" || name == "cos") => Some((name, arg))
+    @symcore.Expr::Function(name, [arg]) if name == "sin" || name == "cos" =>
+      Some((name, arg))
     _ => None
   }
 }
@@ -1844,7 +1891,12 @@ fn as_tan(expr : @symcore.Expr) -> @symcore.Expr? {
 
 ///|
 fn is_trig_name(name : String) -> Bool {
-  name == "sin" || name == "cos" || name == "tan" || name == "cot" || name == "sec" || name == "csc"
+  name == "sin" ||
+  name == "cos" ||
+  name == "tan" ||
+  name == "cot" ||
+  name == "sec" ||
+  name == "csc"
 }
 
 ///|
@@ -1938,7 +1990,10 @@ fn neg_expr(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn neg_term(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Mul([@symcore.Expr::Number(n), rest]) if n.compare(@symnum.BigRational::from_int(-1)) == 0 => rest
+    @symcore.Expr::Mul([@symcore.Expr::Number(n), rest]) if n.compare(
+        @symnum.BigRational::from_int(-1),
+      ) ==
+      0 => rest
     _ => neg_expr(expr)
   }
 }
@@ -1962,12 +2017,20 @@ fn is_one_expr(expr : @symcore.Expr) -> Bool {
 ///|
 fn mod_pos(x : Int, m : Int) -> Int {
   let r = x % m
-  if r < 0 { r + m } else { r }
+  if r < 0 {
+    r + m
+  } else {
+    r
+  }
 }
 
 ///|
 fn min_int(a : Int, b : Int) -> Int {
-  if a < b { a } else { b }
+  if a < b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
@@ -1994,18 +2057,12 @@ fn half_const() -> @symcore.Expr {
 
 ///|
 fn sqrt2_over_2() -> @symcore.Expr {
-  @symcore.mul([
-    half_const(),
-    @symcore.function("sqrt", [@symcore.int(2)]),
-  ])
+  @symcore.mul([half_const(), @symcore.function("sqrt", [@symcore.int(2)])])
 }
 
 ///|
 fn sqrt3_over_2() -> @symcore.Expr {
-  @symcore.mul([
-    half_const(),
-    @symcore.function("sqrt", [@symcore.int(3)]),
-  ])
+  @symcore.mul([half_const(), @symcore.function("sqrt", [@symcore.int(3)])])
 }
 
 ///|
@@ -2038,11 +2095,10 @@ fn expand_mul_fu(expr : @symcore.Expr) -> @symcore.Expr {
             }
             terms = next
           }
-          _ => {
+          _ =>
             for i in 0..<terms.length() {
               terms[i] = @symcore.mul([terms[i], arg])
             }
-          }
         }
       }
       if terms.length() == 1 {

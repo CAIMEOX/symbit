@@ -39,7 +39,10 @@ test "symsimplify powsimp parity" {
   let y = @symcore.symbol("y")
   let exprs = [
     @symcore.mul([x, x, y]),
-    @symcore.mul([@symcore.pow(x, @symcore.int(2)), @symcore.pow(x, @symcore.int(3))]),
+    @symcore.mul([
+      @symcore.pow(x, @symcore.int(2)),
+      @symcore.pow(x, @symcore.int(3)),
+    ]),
     @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)),
   ]
   for expr in exprs {
@@ -73,9 +76,7 @@ test "symsimplify signsimp parity" {
 ///|
 test "symsimplify radsimp parity" {
   let x = @symcore.symbol("x")
-  let exprs = [
-    @symcore.pow(@symcore.function("sqrt", [x]), @symcore.int(-1)),
-  ]
+  let exprs = [@symcore.pow(@symcore.function("sqrt", [x]), @symcore.int(-1))]
   for expr in exprs {
     let ours = radsimp(expr)
     assert_true(try! @sympy_simplify.radsimp_equivalent(expr, ours))
@@ -135,7 +136,10 @@ test "symsimplify combsimp parity" {
   let exprs = [
     @symcore.mul([
       @symcore.function("factorial", [@symcore.int(6)]),
-      @symcore.pow(@symcore.function("factorial", [@symcore.int(5)]), @symcore.int(-1)),
+      @symcore.pow(
+        @symcore.function("factorial", [@symcore.int(5)]),
+        @symcore.int(-1),
+      ),
     ]),
     @symcore.function("binomial", [@symcore.int(6), @symcore.int(2)]),
     @symcore.function("gamma", [@symcore.int(6)]),
@@ -188,7 +192,9 @@ test "symsimplify exptrigsimp parity" {
   let exprs = [
     @symcore.add([
       @symcore.function("exp", [@symcore.mul([@symcore.symbol("I"), x])]),
-      @symcore.function("exp", [@symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x])]),
+      @symcore.function("exp", [
+        @symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x]),
+      ]),
     ]),
     @symcore.add([
       @symcore.function("cos", [x]),
@@ -272,15 +278,14 @@ test "symsimplify compat simplify parity" {
   assert_true(try! @sympy_simplify.nsimplify_equivalent(ns_expr, ns_ours))
 
   let rm_expr = x
-  let basis = [@symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])]
+  let basis = [
+    @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)]),
+  ]
   let gens = [x]
   let rm_ours = ratsimpmodprime(rm_expr, basis~, gens~)
   assert_true(
     try! @sympy_simplify.ratsimpmodprime_equivalent(
-      rm_expr,
-      basis,
-      gens,
-      rm_ours,
+      rm_expr, basis, gens, rm_ours,
     ),
   )
 }
@@ -324,7 +329,9 @@ test "symsimplify radsimp extras parity" {
     @symcore.pow(@symcore.add([x, @symcore.int(2)]), @symcore.int(-1)),
   ])
   let fe_ours = fraction_expand(frac_expr)
-  assert_true(try! @sympy_simplify.fraction_expand_equivalent(frac_expr, fe_ours))
+  assert_true(
+    try! @sympy_simplify.fraction_expand_equivalent(frac_expr, fe_ours),
+  )
 
   let ne_ours = numer_expand(frac_expr)
   assert_true(try! @sympy_simplify.numer_expand_equivalent(frac_expr, ne_ours))
@@ -365,10 +372,14 @@ test "symsimplify fu rules parity" {
     @symcore.function("sin", [x]),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-1)),
   ])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR2i", tr2i_expr, tr2i(tr2i_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR2i", tr2i_expr, tr2i(tr2i_expr)),
+  )
 
   let tr3_expr = @symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR3", tr3_expr, tr3(tr3_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR3", tr3_expr, tr3(tr3_expr)),
+  )
   assert_true(
     try! @sympy_simplify.tr_rule_equivalent(
       "TR4",
@@ -379,22 +390,46 @@ test "symsimplify fu rules parity" {
 
   let tr5_expr = @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2))
   let tr6_expr = @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR5", tr5_expr, tr5(tr5_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR6", tr6_expr, tr6(tr6_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR7", tr6_expr, tr7(tr6_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR5", tr5_expr, tr5(tr5_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR6", tr6_expr, tr6(tr6_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR7", tr6_expr, tr7(tr6_expr)),
+  )
 
-  let tr8_expr = @symcore.mul([@symcore.function("sin", [x]), @symcore.function("cos", [y])])
-  let tr9_expr = @symcore.add([@symcore.function("cos", [x]), @symcore.function("cos", [y])])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR8", tr8_expr, tr8(tr8_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR9", tr9_expr, tr9(tr9_expr)))
+  let tr8_expr = @symcore.mul([
+    @symcore.function("sin", [x]),
+    @symcore.function("cos", [y]),
+  ])
+  let tr9_expr = @symcore.add([
+    @symcore.function("cos", [x]),
+    @symcore.function("cos", [y]),
+  ])
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR8", tr8_expr, tr8(tr8_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR9", tr9_expr, tr9(tr9_expr)),
+  )
 
   let tr10_expr = @symcore.function("sin", [@symcore.add([x, y])])
   let tr10i_expr = @symcore.add([
     @symcore.mul([@symcore.function("cos", [x]), @symcore.function("cos", [y])]),
     @symcore.mul([@symcore.function("sin", [x]), @symcore.function("sin", [y])]),
   ])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR10", tr10_expr, tr10(tr10_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR10i", tr10i_expr, tr10i(tr10i_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR10", tr10_expr, tr10(tr10_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent(
+      "TR10i",
+      tr10i_expr,
+      tr10i(tr10i_expr),
+    ),
+  )
 
   let tr11_expr = @symcore.function("sin", [@symcore.mul([@symcore.int(2), x])])
   let tr12_expr = @symcore.function("tan", [@symcore.add([x, y])])
@@ -412,38 +447,84 @@ test "symsimplify fu rules parity" {
       @symcore.int(-1),
     ),
   ])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR11", tr11_expr, tr11(tr11_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR12", tr12_expr, tr12(tr12_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR12i", tr12i_expr, tr12i(tr12i_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR11", tr11_expr, tr11(tr11_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR12", tr12_expr, tr12(tr12_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent(
+      "TR12i",
+      tr12i_expr,
+      tr12i(tr12i_expr),
+    ),
+  )
 
-  let tr13_expr = @symcore.mul([@symcore.function("tan", [x]), @symcore.function("tan", [y])])
+  let tr13_expr = @symcore.mul([
+    @symcore.function("tan", [x]),
+    @symcore.function("tan", [y]),
+  ])
   let tr14_expr = @symcore.mul([
     @symcore.add([@symcore.function("cos", [x]), @symcore.int(1)]),
     @symcore.add([@symcore.function("cos", [x]), @symcore.int(-1)]),
   ])
   let tr15_expr = @symcore.pow(@symcore.function("sin", [x]), @symcore.int(-2))
   let tr16_expr = @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-2))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR13", tr13_expr, tr13(tr13_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR14", tr14_expr, tr14(tr14_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR15", tr15_expr, tr15(tr15_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR16", tr16_expr, tr16(tr16_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR13", tr13_expr, tr13(tr13_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR14", tr14_expr, tr14(tr14_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR15", tr15_expr, tr15(tr15_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR16", tr16_expr, tr16(tr16_expr)),
+  )
 
   let tr111_expr = @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2))
   let tr22_expr = @symcore.pow(@symcore.function("tan", [x]), @symcore.int(2))
-  let trpower_expr = @symcore.pow(@symcore.function("sin", [x]), @symcore.int(4))
+  let trpower_expr = @symcore.pow(
+    @symcore.function("sin", [x]),
+    @symcore.int(4),
+  )
   let trmorrie_expr = @symcore.mul([
     @symcore.function("cos", [x]),
     @symcore.function("cos", [@symcore.mul([@symcore.int(2), x])]),
     @symcore.function("cos", [@symcore.mul([@symcore.int(4), x])]),
   ])
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR111", tr111_expr, tr111(tr111_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TR22", tr22_expr, tr22(tr22_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TRpower", trpower_expr, trpower(trpower_expr)))
-  assert_true(try! @sympy_simplify.tr_rule_equivalent("TRmorrie", trmorrie_expr, trmorrie(trmorrie_expr)))
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent(
+      "TR111",
+      tr111_expr,
+      tr111(tr111_expr),
+    ),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent("TR22", tr22_expr, tr22(tr22_expr)),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent(
+      "TRpower",
+      trpower_expr,
+      trpower(trpower_expr),
+    ),
+  )
+  assert_true(
+    try! @sympy_simplify.tr_rule_equivalent(
+      "TRmorrie",
+      trmorrie_expr,
+      trmorrie(trmorrie_expr),
+    ),
+  )
 
   let futrig_expr = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
   ])
-  assert_true(try! @sympy_simplify.futrig_equivalent(futrig_expr, futrig(futrig_expr)))
+  assert_true(
+    try! @sympy_simplify.futrig_equivalent(futrig_expr, futrig(futrig_expr)),
+  )
 }

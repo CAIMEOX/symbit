@@ -7,7 +7,9 @@ test "symsimplify basic algebra rules" {
     content="(* 2 sym:x)",
   )
   inspect(
-    @symprint.debug_repr(simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])]))),
+    @symprint.debug_repr(
+      simplify(@symcore.add([x, @symcore.mul([@symcore.int(2), x])])),
+    ),
     content="(* 3 sym:x)",
   )
   inspect(
@@ -47,7 +49,11 @@ test "symsimplify numeric power denest" {
 test "symsimplify fraction numer denom collect basics" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let expr = @symcore.mul([@symcore.int(2), @symcore.pow(x, @symcore.int(-1)), y])
+  let expr = @symcore.mul([
+    @symcore.int(2),
+    @symcore.pow(x, @symcore.int(-1)),
+    y,
+  ])
   let (n, d) = fraction(expr)
   inspect(@symprint.debug_repr(n), content="(* 2 sym:y)")
   inspect(@symprint.debug_repr(d), content="sym:x")
@@ -61,19 +67,26 @@ test "symsimplify fraction numer denom collect basics" {
     ]),
     x,
   )
-  inspect(@symprint.debug_repr(collected), content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)")
+  inspect(
+    @symprint.debug_repr(collected),
+    content="(+ (* 2 sym:x) (* 3 (^ sym:x 2)) sym:y)",
+  )
 }
 
 ///|
 test "symsimplify advanced rewrites basics" {
   let x = @symcore.symbol("x")
   let k = @symcore.symbol("k")
-  let pd = powdenest(@symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)))
+  let pd = powdenest(
+    @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)),
+  )
   inspect(@symprint.debug_repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
       @symcore.function("exp", [@symcore.mul([@symcore.symbol("I"), x])]),
-      @symcore.function("exp", [@symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x])]),
+      @symcore.function("exp", [
+        @symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x]),
+      ]),
     ]),
   )
   inspect(@symprint.debug_repr(ee), content="(* 2 (call cos sym:x))")
@@ -93,14 +106,20 @@ test "symsimplify advanced rewrites basics" {
 ///|
 test "symsimplify compat api basics" {
   let x = @symcore.symbol("x")
-  let k0 = kroneckersimp(@symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]))
+  let k0 = kroneckersimp(
+    @symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]),
+  )
   inspect(@symprint.debug_repr(k0), content="0")
   let k1 = kroneckersimp(@symcore.function("KroneckerDelta", [x, x]))
   inspect(@symprint.debug_repr(k1), content="1")
 
-  let j0 = besselsimp(@symcore.function("besselj", [@symcore.int(0), @symcore.int(0)]))
+  let j0 = besselsimp(
+    @symcore.function("besselj", [@symcore.int(0), @symcore.int(0)]),
+  )
   inspect(@symprint.debug_repr(j0), content="1")
-  let j2 = besselsimp(@symcore.function("besselj", [@symcore.int(2), @symcore.int(0)]))
+  let j2 = besselsimp(
+    @symcore.function("besselj", [@symcore.int(2), @symcore.int(0)]),
+  )
   inspect(@symprint.debug_repr(j2), content="0")
 
   let n = nsimplify(
@@ -134,10 +153,12 @@ test "symsimplify compat api basics" {
   let fe = fraction_expand(frac_expr)
   assert_true(fe == frac_expr || simplify(fe) == simplify(frac_expr))
 
-  let split = split_surds(@symcore.add([
-    @symcore.function("sqrt", [@symcore.int(2)]),
-    @symcore.function("sqrt", [@symcore.int(8)]),
-  ]))
+  let split = split_surds(
+    @symcore.add([
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.function("sqrt", [@symcore.int(8)]),
+    ]),
+  )
   inspect(@symprint.debug_repr(split.0), content="2")
 }
 
@@ -159,51 +180,87 @@ test "symsimplify fu rules smoke" {
   let y = @symcore.symbol("y")
   let pi = @symcore.symbol("pi")
 
-  inspect(@symprint.debug_repr(tr1(@symcore.function("sec", [x]))), content="(^ (call cos sym:x) -1)")
+  inspect(
+    @symprint.debug_repr(tr1(@symcore.function("sec", [x]))),
+    content="(^ (call cos sym:x) -1)",
+  )
   inspect(
     @symprint.debug_repr(tr2(@symcore.function("tan", [x]))),
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
   inspect(
-    @symprint.debug_repr(tr2i(@symcore.mul([
-      @symcore.function("sin", [x]),
-      @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-1)),
-    ]))),
+    @symprint.debug_repr(
+      tr2i(
+        @symcore.mul([
+          @symcore.function("sin", [x]),
+          @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-1)),
+        ]),
+      ),
+    ),
     content="(call tan sym:x)",
   )
   inspect(
-    @symprint.debug_repr(tr3(@symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])]))),
+    @symprint.debug_repr(
+      tr3(@symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])])),
+    ),
     content="(* -1 (call sin sym:x))",
   )
   inspect(
-    @symprint.debug_repr(tr4(@symcore.function("sin", [@symcore.mul([try! @symcore.rational_from_ints(1, 6), pi])]))),
+    @symprint.debug_repr(
+      tr4(
+        @symcore.function("sin", [
+          @symcore.mul([try! @symcore.rational_from_ints(1, 6), pi]),
+        ]),
+      ),
+    ),
     content="1/2",
   )
   inspect(
-    @symprint.debug_repr(tr8(@symcore.mul([@symcore.function("sin", [x]), @symcore.function("cos", [y])]))),
+    @symprint.debug_repr(
+      tr8(
+        @symcore.mul([
+          @symcore.function("sin", [x]),
+          @symcore.function("cos", [y]),
+        ]),
+      ),
+    ),
     content="(+ (* -1/2 (call sin (+ (* -1 sym:x) sym:y))) (* 1/2 (call sin (+ sym:x sym:y))))",
   )
   inspect(
     @symprint.debug_repr(tr10(@symcore.function("sin", [@symcore.add([x, y])]))),
     content="(+ (* (call cos sym:x) (call sin sym:y)) (* (call cos sym:y) (call sin sym:x)))",
   )
-  assert_true(tr111(@symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2))) != @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2)))
-  assert_true(tr22(@symcore.pow(@symcore.function("cot", [x]), @symcore.int(2))) != @symcore.pow(@symcore.function("cot", [x]), @symcore.int(2)))
-  assert_true(trpower(@symcore.pow(@symcore.function("sin", [x]), @symcore.int(4))) != @symcore.pow(@symcore.function("sin", [x]), @symcore.int(4)))
   assert_true(
-    trmorrie(@symcore.mul([
-      @symcore.function("cos", [x]),
-      @symcore.function("cos", [@symcore.mul([@symcore.int(2), x])]),
-      @symcore.function("cos", [@symcore.mul([@symcore.int(4), x])]),
-    ])) != @symcore.mul([
+    tr111(@symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2))) !=
+    @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2)),
+  )
+  assert_true(
+    tr22(@symcore.pow(@symcore.function("cot", [x]), @symcore.int(2))) !=
+    @symcore.pow(@symcore.function("cot", [x]), @symcore.int(2)),
+  )
+  assert_true(
+    trpower(@symcore.pow(@symcore.function("sin", [x]), @symcore.int(4))) !=
+    @symcore.pow(@symcore.function("sin", [x]), @symcore.int(4)),
+  )
+  assert_true(
+    trmorrie(
+      @symcore.mul([
+        @symcore.function("cos", [x]),
+        @symcore.function("cos", [@symcore.mul([@symcore.int(2), x])]),
+        @symcore.function("cos", [@symcore.mul([@symcore.int(4), x])]),
+      ]),
+    ) !=
+    @symcore.mul([
       @symcore.function("cos", [x]),
       @symcore.function("cos", [@symcore.mul([@symcore.int(2), x])]),
       @symcore.function("cos", [@symcore.mul([@symcore.int(4), x])]),
     ]),
   )
-  let ft = futrig(@symcore.add([
-    @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
-    @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
-  ]))
+  let ft = futrig(
+    @symcore.add([
+      @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
+      @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
+    ]),
+  )
   assert_true(ft != @symcore.int(0))
 }

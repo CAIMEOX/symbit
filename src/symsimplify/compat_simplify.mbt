@@ -1,8 +1,5 @@
 ///|
-pub fn besselsimp(
-  expr : @symcore.Expr,
-  max_passes? : Int = 8,
-) -> @symcore.Expr {
+pub fn besselsimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_compat(expr, rewrite_besselsimp, max_passes~)
 }
 
@@ -51,10 +48,9 @@ fn rewrite_bottom_up_compat(
   expr : @symcore.Expr,
   rule : (@symcore.Expr) -> @symcore.Expr,
 ) -> @symcore.Expr {
-  let rewritten = @symcore.map_children(
-    expr,
-    child => rewrite_bottom_up_compat(child, rule),
-  )
+  let rewritten = @symcore.map_children(expr, child => {
+    rewrite_bottom_up_compat(child, rule)
+  })
   rule(rewritten)
 }
 
@@ -70,18 +66,8 @@ fn rewrite_besselsimp(expr : @symcore.Expr) -> @symcore.Expr {
       }
       let n = integer_expr_value(nu)
       match name {
-        "besselj" =>
-          if n == 0 {
-            @symcore.int(1)
-          } else {
-            @symcore.int(0)
-          }
-        "besseli" =>
-          if n == 0 {
-            @symcore.int(1)
-          } else {
-            @symcore.int(0)
-          }
+        "besselj" => if n == 0 { @symcore.int(1) } else { @symcore.int(0) }
+        "besseli" => if n == 0 { @symcore.int(1) } else { @symcore.int(0) }
         _ => expr
       }
     }
@@ -103,13 +89,12 @@ fn rewrite_kroneckersimp(expr : @symcore.Expr) -> @symcore.Expr {
             match simplify_delta(a, b) {
               @symcore.Expr::Number(n) if n.is_zero() => return @symcore.int(0)
               @symcore.Expr::Number(n) if n.is_one() => ()
-              @symcore.Expr::Function(_, _) => {
+              @symcore.Expr::Function(_, _) =>
                 if try_bind_delta(env, a, b) {
                   ()
                 } else {
                   kept.push(arg)
                 }
-              }
               other => kept.push(other)
             }
           _ => kept.push(arg)

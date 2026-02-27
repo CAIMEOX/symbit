@@ -24,7 +24,10 @@ pub fn EPath::new(path : String) -> EPath {
 }
 
 ///|
-pub fn EPath::select(self : EPath, expr : @symcore.Expr) -> Array[@symcore.Expr] {
+pub fn EPath::select(
+  self : EPath,
+  expr : @symcore.Expr,
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = Array::new()
   select_at(self.selectors, 0, expr, out)
   out
@@ -72,7 +75,11 @@ fn parse_path(path : String) -> Array[ESelector] {
 
 ///|
 fn is_selector_head_char(c : Char) -> Bool {
-  c.is_ascii_alphabetic() || c.is_ascii_digit() || c == '_' || c == '|' || c == '?'
+  c.is_ascii_alphabetic() ||
+  c.is_ascii_digit() ||
+  c == '_' ||
+  c == '|' ||
+  c == '?'
 }
 
 ///|
@@ -131,7 +138,9 @@ fn parse_selector_span(tail : String) -> ESpan {
 
 ///|
 fn parse_int_opt(text : String) -> Int? {
-  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(text)
+  let parsed : Result[Int, @strconv.StrConvError] = try? @strconv.parse_int(
+    text,
+  )
   match parsed {
     Ok(value) => Some(value)
     Err(_) => None
@@ -295,15 +304,19 @@ fn epath_is_atom(expr : @symcore.Expr) -> Bool {
 ///|
 fn ordered_children(expr : @symcore.Expr) -> Array[@symcore.Expr] {
   match expr {
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) | @symcore.Expr::Function(_, args) =>
-      args.map(x => x)
+    @symcore.Expr::Add(args)
+    | @symcore.Expr::Mul(args)
+    | @symcore.Expr::Function(_, args) => args.map(x => x)
     @symcore.Expr::Pow(a, b) => [a, b]
     _ => []
   }
 }
 
 ///|
-fn rebuild_expr(expr : @symcore.Expr, args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn rebuild_expr(
+  expr : @symcore.Expr,
+  args : Array[@symcore.Expr],
+) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Add(_) => @symcore.raw_add(args)
     @symcore.Expr::Mul(_) => @symcore.raw_mul(args)

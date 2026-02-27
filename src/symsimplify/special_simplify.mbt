@@ -1,8 +1,5 @@
 ///|
-pub fn combsimp(
-  expr : @symcore.Expr,
-  max_passes? : Int = 6,
-) -> @symcore.Expr {
+pub fn combsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_special(expr, rewrite_combsimp, max_passes~)
 }
 
@@ -37,17 +34,17 @@ fn rewrite_bottom_up_special(
   expr : @symcore.Expr,
   rule : (@symcore.Expr) -> @symcore.Expr,
 ) -> @symcore.Expr {
-  let rewritten = @symcore.map_children(
-    expr,
-    child => rewrite_bottom_up_special(child, rule),
-  )
+  let rewritten = @symcore.map_children(expr, child => {
+    rewrite_bottom_up_special(child, rule)
+  })
   rule(rewritten)
 }
 
 ///|
 fn rewrite_combsimp(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, args) => rewrite_combinatorial_call(name, args, expr)
+    @symcore.Expr::Function(name, args) =>
+      rewrite_combinatorial_call(name, args, expr)
     @symcore.Expr::Mul(args) => reduce_factorial_ratios(args)
     _ => expr
   }
@@ -149,8 +146,13 @@ fn factorial_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 ///|
 fn inverse_factorial_arg(expr : @symcore.Expr) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Function(name, [arg]), @symcore.Expr::Number(exp)) =>
-      if name == "factorial" && exp.is_integral() && exp.numerator().to_int() == -1 {
+    @symcore.Expr::Pow(
+      @symcore.Expr::Function(name, [arg]),
+      @symcore.Expr::Number(exp)
+    ) =>
+      if name == "factorial" &&
+        exp.is_integral() &&
+        exp.numerator().to_int() == -1 {
         Some(arg)
       } else {
         None
@@ -170,7 +172,10 @@ fn rewrite_hyperexpand(expr : @symcore.Expr) -> @symcore.Expr {
             (1, 1) if a[0] == b[0] => @symcore.function("exp", [z])
             (1, 0) if a[0] == @symcore.int(1) =>
               @symcore.pow(
-                @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), z])]),
+                @symcore.add([
+                  @symcore.int(1),
+                  @symcore.mul([@symcore.int(-1), z]),
+                ]),
                 @symcore.int(-1),
               )
             _ => expr
@@ -184,7 +189,8 @@ fn rewrite_hyperexpand(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn parse_tuple(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
   match expr {
-    @symcore.Expr::Function(name, args) if name == "Tuple" => Some(args.map(x => x))
+    @symcore.Expr::Function(name, args) if name == "Tuple" =>
+      Some(args.map(x => x))
     _ => None
   }
 }
@@ -213,7 +219,7 @@ fn to_positive_int(n : @symnum.BigRational) -> Int? {
 ///|
 fn int_factorial_bigint(n : Int) -> BigInt {
   let mut out = BigInt::from_int(1)
-  for i in 2..=n {
+  for i in 2..<=n {
     out = out.mul(BigInt::from_int(i))
   }
   out
@@ -229,7 +235,7 @@ fn int_binomial_rational(n : Int, k : Int) -> @symnum.BigRational {
   let kk = if k < n - k { k } else { n - k }
   let mut num = BigInt::from_int(1)
   let mut den = BigInt::from_int(1)
-  for i in 1..=kk {
+  for i in 1..<=kk {
     num = num.mul(BigInt::from_int(n - kk + i))
     den = den.mul(BigInt::from_int(i))
   }
