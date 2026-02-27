@@ -46,7 +46,7 @@ fn pth_root_univar_gf(poly : Poly, p : Int) -> Poly raise PolyError {
   for m, c in poly.coeffs {
     let exp = m.exps[0]
     if exp % p != 0 {
-      raise PolyError::NotImplemented("gf-pth-root")
+      raise PolyError::BadExponent
     }
     let mono = monomial_one(poly.gens.length())
     mono.exps.set(0, exp / p)
@@ -161,7 +161,7 @@ pub fn Poly::factor(
   match extension {
     Some(ext_syms) =>
       if !ext_syms.is_empty() {
-        raise PolyError::NotImplemented("algebraic-extension")
+        raise PolyError::BadGenerator("extension")
       }
     None => ()
   }

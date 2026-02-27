@@ -11,7 +11,39 @@ fn choose_good_prime(poly : Poly) -> Int raise PolyError {
       return p
     }
   }
-  raise PolyError::NotImplemented("no_good_prime")
+  let mut p = 31
+  while p <= 199 {
+    if is_prime_small(p) {
+      let f_mod = map_to_gf(poly, p)
+      let deriv = deriv_univar(f_mod)
+      if is_one(f_mod.gcd_univar(deriv)) {
+        return p
+      }
+    }
+    p = p + 2
+  }
+  raise PolyError::BadModulus
+}
+
+///|
+fn is_prime_small(n : Int) -> Bool {
+  if n < 2 {
+    return false
+  }
+  if n == 2 {
+    return true
+  }
+  if n % 2 == 0 {
+    return false
+  }
+  let mut d = 3
+  while d * d <= n {
+    if n % d == 0 {
+      return false
+    }
+    d = d + 2
+  }
+  true
 }
 
 ///|

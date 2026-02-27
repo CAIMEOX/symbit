@@ -28,8 +28,8 @@ pub fn normalize_mod(
       }
       @symnum.BigRational::from_bigint(reduced)
     }
-    Domain::AlgExt(_, _, _) =>
-      raise PolyError::NotImplemented("algebraic-extension-mod")
+    // Constant rationals in algebraic extensions are reduced in the base field.
+    Domain::AlgExt(base, _, _) => normalize_mod(value, base)
     Domain::Frac(inner) => normalize_mod(value, inner)
     _ => value
   }

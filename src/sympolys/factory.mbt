@@ -141,8 +141,7 @@ fn resolve_domain(
           } else {
             Domain::GFExt(m, k, gfext_default_poly(k))
           }
-        (Some(_), Some(_)) | (Some(_), None) =>
-          raise PolyError::NotImplemented("gf-degree-non-gf")
+        (Some(_), Some(_)) | (Some(_), None) => raise PolyError::BadModulus
         (None, None) => raise PolyError::BadModulus
       }
     None =>

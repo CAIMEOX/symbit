@@ -130,7 +130,7 @@ fn fe_exquo_ground(
       let num = ar.numerator().to_int()
       let den = br.numerator().to_int()
       if num % den != 0 {
-        raise PolyError::NotImplemented("ExactQuotientFailed")
+        raise PolyError::ExactQuotientFailed
       }
       fe_from_int(num / den, Domain::ZZ)
     }
@@ -884,7 +884,7 @@ pub fn dup_pdiv(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   let c = fe_pow_local(lc_g, n)
@@ -921,7 +921,7 @@ pub fn dup_pexquo(
   if r.is_empty() {
     q
   } else {
-    raise PolyError::NotImplemented("ExactQuotientFailed")
+    raise PolyError::ExactQuotientFailed
   }
 }
 
@@ -965,7 +965,7 @@ pub fn dmp_pdiv(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   let c = dmp_pow(lc_g, n, u - 1, domain)
@@ -1005,7 +1005,7 @@ pub fn dmp_pexquo(
   if dmp_zero_p(r, u) {
     q
   } else {
-    raise PolyError::NotImplemented("ExactQuotientFailed")
+    raise PolyError::ExactQuotientFailed
   }
 }
 
@@ -1042,7 +1042,7 @@ pub fn dup_rr_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1089,7 +1089,7 @@ pub fn dmp_rr_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1125,7 +1125,7 @@ pub fn dup_ff_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1172,7 +1172,7 @@ pub fn dmp_ff_div(
     if dr < dg {
       break
     } else if !(dr < prev_dr) {
-      raise PolyError::NotImplemented("PolynomialDivisionFailed")
+      raise PolyError::PolynomialDivisionFailed
     }
   }
   (q, r)
@@ -1219,7 +1219,7 @@ pub fn dup_exquo(
   if r.is_empty() {
     q
   } else {
-    raise PolyError::NotImplemented("ExactQuotientFailed")
+    raise PolyError::ExactQuotientFailed
   }
 }
 
@@ -1268,7 +1268,7 @@ pub fn dmp_exquo(
   if dmp_zero_p(r, u) {
     q
   } else {
-    raise PolyError::NotImplemented("ExactQuotientFailed")
+    raise PolyError::ExactQuotientFailed
   }
 }
 

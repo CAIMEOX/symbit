@@ -26,6 +26,8 @@ pub(all) suberror PolyError {
   CoefficientNotInteger
   DomainNotField
   DivisionByZero
+  ExactQuotientFailed
+  PolynomialDivisionFailed
   NotUnivariate
   NotImplemented(String)
   BadModulus
@@ -82,6 +84,9 @@ pub impl Show for PolyError with output(self, logger : &Logger) -> Unit {
       logger.write_string("CoefficientNotInteger")
     PolyError::DomainNotField => logger.write_string("DomainNotField")
     PolyError::DivisionByZero => logger.write_string("DivisionByZero")
+    PolyError::ExactQuotientFailed => logger.write_string("ExactQuotientFailed")
+    PolyError::PolynomialDivisionFailed =>
+      logger.write_string("PolynomialDivisionFailed")
     PolyError::NotUnivariate => logger.write_string("NotUnivariate")
     PolyError::NotImplemented(name) =>
       logger.write_string("NotImplemented(\{name})")

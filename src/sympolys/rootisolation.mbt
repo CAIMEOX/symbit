@@ -43,7 +43,7 @@ fn dup_to_poly(
 ) -> Poly raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NotImplemented("dup_to_poly empty")
+    raise PolyError::NonPolynomial
   }
   let asc = reverse_coeffs(f)
   from_dense(asc, ["x"], domain)
@@ -63,7 +63,7 @@ pub fn dup_cauchy_upper_bound(
 ) -> FieldElem raise PolyError {
   let f = dup_strip(coeffs)
   if f.length() < 2 {
-    raise PolyError::NotImplemented("cauchy-upper")
+    raise PolyError::BadExponent
   }
   let lc = fe_expect_rational(f[0])
   if lc.is_zero() {
@@ -73,7 +73,7 @@ pub fn dup_cauchy_upper_bound(
   for i in 1..<f.length() {
     let ai = abs_rational(fe_expect_rational(f[i]))
     let ratio = ai.div_r(abs_rational(lc)) catch {
-      _ => raise PolyError::NotImplemented("cauchy-upper-div")
+      _ => raise PolyError::DivisionByZero
     }
     if ratio.compare(max_ratio) > 0 {
       max_ratio = ratio
@@ -90,12 +90,12 @@ pub fn dup_cauchy_lower_bound(
 ) -> FieldElem raise PolyError {
   let g = dup_strip(reverse_coeffs(coeffs))
   if g.length() < 2 {
-    raise PolyError::NotImplemented("cauchy-lower")
+    raise PolyError::BadExponent
   }
   let upper = dup_cauchy_upper_bound(g, domain)
   let upper_rat = fe_expect_rational(upper)
   let inv = upper_rat.reciprocal() catch {
-    _ => raise PolyError::NotImplemented("cauchy-lower-div")
+    _ => raise PolyError::DivisionByZero
   }
   fe_from_rational(inv, Domain::QQ)
 }
@@ -108,7 +108,7 @@ pub fn dup_mignotte_sep_bound_squared(
   let f = dup_strip(coeffs)
   let n = dup_degree(f)
   if n < 2 {
-    raise PolyError::NotImplemented("mignotte-sep")
+    raise PolyError::BadExponent
   }
   let asc : Array[FieldElem] = Array::new()
   let mut i = f.length()
@@ -124,9 +124,7 @@ pub fn dup_mignotte_sep_bound_squared(
   let n_rat = @symnum.BigRational::from_int(n)
   let num = @symnum.BigRational::from_int(3).mul(disc_rat)
   let denom = pow_rational(n_rat, n + 1).mul(pow_rational(l2sq, n - 1))
-  let bound = num.div_r(denom) catch {
-    _ => raise PolyError::NotImplemented("mignotte-div")
-  }
+  let bound = num.div_r(denom) catch { _ => raise PolyError::DivisionByZero }
   fe_from_rational(bound, Domain::QQ)
 }
 
@@ -137,7 +135,7 @@ pub fn dup_sturm(
 ) -> Array[Array[FieldElem]] raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NotImplemented("dup_sturm empty")
+    raise PolyError::NonPolynomial
   }
   if f.length() == 1 {
     return [[fe_from_int(1, domain)]]
@@ -172,7 +170,7 @@ fn rat_mediant(
   let num = a.numerator().add(b.numerator())
   let den = a.denominator().add(b.denominator())
   @symnum.BigRational::new(num, den) catch {
-    _ => raise PolyError::NotImplemented("mediant")
+    _ => raise PolyError::DivisionByZero
   }
 }
 
@@ -192,7 +190,7 @@ fn rat_mid(
   let two = @symnum.BigRational::from_int(2)
   let sum = a.add_r(b)
   sum.div_r(two) catch {
-    _ => raise PolyError::NotImplemented("midpoint")
+    _ => raise PolyError::DivisionByZero
   }
 }
 
@@ -311,7 +309,7 @@ pub fn dup_refine_real_root(
 ) -> (@symnum.BigRational, @symnum.BigRational) raise PolyError {
   let f = dup_strip(coeffs)
   if f.is_empty() {
-    raise PolyError::NotImplemented("refine empty")
+    raise PolyError::NonPolynomial
   }
   if s.compare(t) == 0 {
     return (s, t)

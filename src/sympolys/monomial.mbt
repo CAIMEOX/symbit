@@ -109,7 +109,7 @@ pub fn monomial_gcd(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 /// Element-wise maximum exponents across inputs.
 pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
-    raise PolyError::NotImplemented("monomial_max empty input")
+    raise PolyError::NonPolynomial
   }
   let len = monoms[0].exps.length()
   let exps = Array::makei(len, i => monoms[0].exps[i])
@@ -131,7 +131,7 @@ pub fn monomial_max(monoms : Array[Monomial]) -> Monomial raise PolyError {
 /// Element-wise minimum exponents across inputs.
 pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
   if monoms.is_empty() {
-    raise PolyError::NotImplemented("monomial_min empty input")
+    raise PolyError::NonPolynomial
   }
   let len = monoms[0].exps.length()
   let exps = Array::makei(len, i => monoms[0].exps[i])

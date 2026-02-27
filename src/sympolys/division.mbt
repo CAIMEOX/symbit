@@ -287,10 +287,12 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
       try_round_to_int(gq)
     }
     Domain::QQ
+    | Domain::CC
+    | Domain::RR
+    | Domain::Frac(_)
     | Domain::GF(_)
     | Domain::GFExt(_, _, _)
     | Domain::AlgExt(_, _, _) => gcd_multivar_field(self, other)
-    _ => raise PolyError::NotImplemented("gcd-multivar-domain")
   }
 }
 
@@ -298,13 +300,21 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
 fn gcd_univar_rat(a : Poly, b : Poly) -> Poly raise PolyError {
   let mut p = a
   let mut q = b
-  let mut iter = 0
   while !q.is_zero() {
-    iter = iter + 1
-    if iter > 64 {
-      raise PolyError::NotImplemented("gcd_univar_rat_guard")
+    let (deg_q, _) = match leading_data_univar(q) {
+      Some(v) => v
+      None => raise PolyError::DivisionByZero
     }
     let (_, r) = divmod_univar_rat(p, q)
+    if !r.is_zero() {
+      let (deg_r, _) = match leading_data_univar(r) {
+        Some(v) => v
+        None => raise PolyError::DivisionByZero
+      }
+      if !(deg_r < deg_q) {
+        raise PolyError::PolynomialDivisionFailed
+      }
+    }
     p = q
     q = r
   }
@@ -459,7 +469,7 @@ fn poly_div_exact(a : Poly, b : Poly) -> Poly raise PolyError {
   if r.is_zero() {
     return qs[0]
   }
-  raise PolyError::NotImplemented("poly-div-exact")
+  raise PolyError::ExactQuotientFailed
 }
 
 ///|
@@ -677,7 +687,7 @@ pub fn Poly::div_exact_univar(
   if r.is_zero() {
     return q
   }
-  raise PolyError::NotImplemented("non-exact-division")
+  raise PolyError::ExactQuotientFailed
 }
 
 ///|
