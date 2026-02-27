@@ -29,7 +29,6 @@ pub(all) suberror PolyError {
   ExactQuotientFailed
   PolynomialDivisionFailed
   NotUnivariate
-  NotImplemented(String)
   BadModulus
 }
 
@@ -88,8 +87,6 @@ pub impl Show for PolyError with output(self, logger : &Logger) -> Unit {
     PolyError::PolynomialDivisionFailed =>
       logger.write_string("PolynomialDivisionFailed")
     PolyError::NotUnivariate => logger.write_string("NotUnivariate")
-    PolyError::NotImplemented(name) =>
-      logger.write_string("NotImplemented(\{name})")
     PolyError::BadModulus => logger.write_string("BadModulus")
   }
 }

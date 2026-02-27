@@ -8,6 +8,20 @@ import {
 }
 
 // Values
+pub fn _analyze_gens(Array[String]) -> Array[String]
+
+pub fn _analyze_gens_nested(Array[Array[String]]) -> Array[String]
+
+pub fn _sort_factors(Array[Array[Int]]) -> Array[Array[Int]]
+
+pub fn _sort_factors_multiple(Array[(Array[Int], Int)]) -> Array[(Array[Int], Int)]
+
+pub fn _sort_gens(Array[String], wrt? : Array[String], sort? : String) -> Array[String]
+
+pub fn _sort_gens_wrt(Array[String], String, sort? : String) -> Array[String]
+
+pub fn _unify_gens(Array[String], Array[String]) -> Array[String]
+
 pub fn add_term(Map[Monomial, FieldElem], Monomial, FieldElem, Domain) -> Unit raise PolyError
 
 pub fn alg_ext_spec(Domain, String, Poly) -> AlgExtSpec
@@ -45,6 +59,8 @@ pub fn dense_poly_poly_coef(Poly) -> DensePolyPoly
 pub fn dense_rat_coef(@symnum.BigRational) -> DenseRat
 
 pub fn dense_rat_poly(Array[DenseRat]) -> DenseRat
+
+pub fn dict_from_expr(@symcore.Expr, gens? : Array[String]) -> String raise PolyError
 
 pub fn discriminant(Poly) -> FieldElem raise PolyError
 
@@ -414,6 +430,10 @@ pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> @symcore.E
 
 pub fn interpolate(Array[(@symnum.BigRational, @symnum.BigRational)], String, Domain) -> Poly raise PolyError
 
+pub fn interpolate_dict(Map[@symnum.BigRational, @symnum.BigRational], String, Domain) -> Poly raise PolyError
+
+pub fn interpolate_values(Array[@symnum.BigRational], String, Domain) -> Poly raise PolyError
+
 pub fn lcm_list(Array[Poly]) -> Poly raise PolyError
 
 pub fn lll_reduce(Array[Array[@bigint.BigInt]], delta? : @symnum.BigRational) -> (Array[Array[@bigint.BigInt]], Array[Array[@bigint.BigInt]]) raise PolyError
@@ -476,6 +496,8 @@ pub fn subresultants_rem(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn symmetrize(@symcore.Expr, gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeResult raise PolyError
 
+pub fn symmetrize_list(Array[@symcore.Expr], gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeListResult raise PolyError
+
 pub fn terms_gcd(Poly) -> Poly raise PolyError
 
 pub fn to_dense(Poly, degree? : Int) -> Array[FieldElem] raise PolyError
@@ -493,8 +515,9 @@ pub(all) suberror PolyError {
   CoefficientNotInteger
   DomainNotField
   DivisionByZero
+  ExactQuotientFailed
+  PolynomialDivisionFailed
   NotUnivariate
-  NotImplemented(String)
   BadModulus
 }
 pub impl Show for PolyError
@@ -564,6 +587,7 @@ pub fn Poly::factor(Self, modulus? : Int, extension? : Array[String], seed? : In
 pub fn Poly::factor_list(Self) -> (@symnum.BigRational, Array[(Self, Int)]) raise PolyError
 pub fn Poly::from_expr(@symcore.Expr, Array[String], Domain) -> Self raise PolyError
 pub fn Poly::from_expr_defaults(@symcore.Expr, gens? : Array[String], domain? : Domain, modulus? : Int, gaussian? : Bool, extension? : Array[String], order? : TermOrder) -> Self raise PolyError
+pub fn Poly::gcd_multivar(Self, Self) -> Self raise PolyError
 pub fn Poly::gcd_univar(Self, Self) -> Self raise PolyError
 pub fn Poly::groebner(Array[Self], order? : TermOrder) -> Array[Self] raise PolyError
 pub fn Poly::is_zero(Self) -> Bool
@@ -605,6 +629,11 @@ pub struct RootOf {
   index : Int
 }
 pub fn RootOf::to_string(Self) -> String
+
+pub struct SymmetrizeListResult {
+  items : Array[SymmetrizeResult]
+  mapping : Array[(@symcore.Expr, @symcore.Expr)]
+}
 
 pub struct SymmetrizeResult {
   sym : @symcore.Expr
