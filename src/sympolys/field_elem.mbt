@@ -197,13 +197,37 @@ pub fn fe_is_positive(a : FieldElem) -> Bool {
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
     FieldElem::QQ(x) => x
-    FieldElem::CC(_, _) =>
-      raise PolyError::NotImplemented("complex-as-rational")
+    // SymPy reference: sympy/polys/domains/domain.py Domain.convert.
+    // Only extension constants can be projected back to QQ.
+    FieldElem::CC(real, imag) =>
+      if imag.is_zero() {
+        real
+      } else {
+        raise PolyError::NotImplemented("complex-as-rational")
+      }
     FieldElem::GFp(_, v) => @symnum.BigRational::from_int(v)
-    FieldElem::GFExt(_, _, _) =>
-      raise PolyError::NotImplemented("gfext-as-rational")
-    FieldElem::AlgExt(_, _, _, _) =>
-      raise PolyError::NotImplemented("algext-as-rational")
+    FieldElem::GFExt(_, coeffs, _) => {
+      if coeffs.is_empty() {
+        return @symnum.BigRational::zero()
+      }
+      for i in 1..<coeffs.length() {
+        if coeffs[i] != 0 {
+          raise PolyError::NotImplemented("gfext-as-rational")
+        }
+      }
+      @symnum.BigRational::from_int(coeffs[0])
+    }
+    FieldElem::AlgExt(_, coeffs, _, _) => {
+      if coeffs.is_empty() {
+        return @symnum.BigRational::zero()
+      }
+      for i in 1..<coeffs.length() {
+        if !fe_is_zero(coeffs[i]) {
+          raise PolyError::NotImplemented("algext-as-rational")
+        }
+      }
+      fe_expect_rational(coeffs[0])
+    }
   }
 }
 
@@ -353,7 +377,9 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
       FieldElem::AlgExt(base, [base_const], minpoly, gen)
     }
     Domain::RR => FieldElem::QQ(@symnum.BigRational::from_int(val))
-    Domain::Frac(_) => raise PolyError::NotImplemented("frac-from-int")
+    // SymPy reference: sympy/polys/domains/fractionfield.py FractionField.convert.
+    // Ground integers are embedded into the base domain and viewed in Frac(base).
+    Domain::Frac(inner) => fe_from_int(val, inner)
   }
 }
 

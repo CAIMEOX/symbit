@@ -616,6 +616,8 @@ fn gcd_multivar_field(a : Poly, b : Poly) -> Poly raise PolyError {
   if b.is_zero() {
     return a
   }
+  // SymPy reference: sympy/polys/euclidtools.py recursive multivariate GCD.
+  // View f,g as univariate in the first generator with polynomial coefficients.
   let var_index = 0
   let coeff_gens = remove_gen(a.gens, var_index)
   let fa = poly_to_univar_coeffs(a, var_index)
