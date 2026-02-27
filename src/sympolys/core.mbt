@@ -43,7 +43,8 @@ pub fn ensure_coeff_domain(
       }
     Domain::QQ => FieldElem::QQ(coeff)
     Domain::CC => FieldElem::CC(coeff, @symnum.BigRational::zero())
-    Domain::RR => FieldElem::QQ(coeff) // placeholder, treat as QQ for now
+    // RR currently shares the QQ-backed coefficient representation.
+    Domain::RR => FieldElem::QQ(coeff)
     Domain::Frac(inner) => ensure_coeff_domain(coeff, inner)
     Domain::GF(_) | Domain::GFExt(_, _, _) => {
       let norm = normalize_mod(coeff, domain)

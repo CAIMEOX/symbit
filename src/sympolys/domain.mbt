@@ -3,7 +3,7 @@ pub(all) enum Domain {
   ZZ
   QQ
   CC // Gaussian rationals a + b*i
-  RR // real algebraic closure placeholder
+  RR // real-rational coercion target (currently represented via QQ coefficients)
   Frac(Domain) // fraction field over an integral domain
   GF(Int) // prime modulus
   GFExt(Int, Int, Array[Int]) // GF(p^k) with modulus polynomial coefficients (lowest degree first)

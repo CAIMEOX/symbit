@@ -1,5 +1,6 @@
 ///|
-/// Resultant placeholder; keeps API visible while algorithms are built.
+/// Scalar resultant over one generator; multivariate elimination falls back to
+/// scalar-only cases compatible with this return type.
 pub fn Poly::resultant(
   self : Poly,
   other : Poly,
