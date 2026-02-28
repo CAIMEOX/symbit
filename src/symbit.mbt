@@ -293,8 +293,8 @@ pub fn epath_apply(path : String, expr : Expr, f : (Expr) -> Expr) -> Expr {
 }
 
 ///|
-pub fn use(expr : Expr, f : (Expr) -> Expr, level? : Int = 0) -> Expr {
-  @symsimplify.use(expr, f, level~)
+pub fn apply_at_level(expr : Expr, f : (Expr) -> Expr, level? : Int = 0) -> Expr {
+  @symsimplify.apply_at_level(expr, f, level~)
 }
 
 ///|

@@ -1,5 +1,5 @@
 ///|
-pub fn use(
+pub fn apply_at_level(
   expr : @symcore.Expr,
   func : (@symcore.Expr) -> @symcore.Expr,
   level? : Int = 0,

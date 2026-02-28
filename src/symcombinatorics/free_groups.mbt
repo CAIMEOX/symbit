@@ -769,21 +769,23 @@ pub fn FreeGroupElement::eliminate_word(
   let word = self
   let l = gen.length()
   let mut k = 1
-  let i = match (try? word.subword_index(gen)) {
-    Ok(v) => v
-    Err(_) => {
+  let i = try word.subword_index(gen) catch {
+    _ => {
       if !inverse {
         return word
       }
       let inv = gen.inverse()
-      match (try? word.subword_index(inv)) {
-        Ok(v2) => {
+      try word.subword_index(inv) catch {
+        _ => return word
+      } noraise {
+        v2 => {
           k = -1
           v2
         }
-        Err(_) => return word
       }
     }
+  } noraise {
+    v => v
   }
   let left = word.subword(0, i)
   let right = word.subword(i + l, word.length())

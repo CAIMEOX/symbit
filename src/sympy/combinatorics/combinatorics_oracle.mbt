@@ -1565,14 +1565,15 @@ fn free_group_array_form_named(
     let values = py_list_to_pyobjects(list_pair)
     if values.length() == 2 {
       let name_str = py_str_obj(values[0])
-      let name = match (try? @strconv.parse_int(name_str)) {
-        Ok(idx) =>
+      let name = try @strconv.parse_int(name_str) catch {
+        _ => name_str
+      } noraise {
+        idx =>
           if idx >= 0 && idx < symbols.length() {
             symbols[idx]
           } else {
             name_str
           }
-        Err(_) => name_str
       }
       let exp = @strconv.parse_int(py_str_obj(values[1]))
       out.push((name, exp))

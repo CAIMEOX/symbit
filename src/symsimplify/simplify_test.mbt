@@ -170,7 +170,7 @@ test "symsimplify traversal/cse_opts basics" {
   ignore(sub_post(sub_pre(expr)))
 
   let nested = @symcore.function("sin", [@symcore.add([x, x])])
-  let used = use(nested, node => simplify(node), level=1)
+  let used = apply_at_level(nested, node => simplify(node), level=1)
   inspect(@symprint.debug_repr(used), content="(call sin (* 2 sym:x))")
 }
 

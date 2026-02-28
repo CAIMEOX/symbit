@@ -210,7 +210,7 @@ pub fn CosetTable::is_complete(self : CosetTable) -> Bool {
 }
 
 ///|
-pub fn CosetTable::define(
+pub fn CosetTable::define_coset(
   self : CosetTable,
   alpha : Int,
   x : FreeGroupElement,
@@ -433,7 +433,7 @@ pub fn CosetTable::scan(
       }
       return
     } else if fill {
-      self.define(f, letters[i], modified~)
+      self.define_coset(f, letters[i], modified~)
     }
   }
 }
@@ -938,7 +938,7 @@ pub fn CosetTable::modified_define(
   alpha : Int,
   x : FreeGroupElement,
 ) -> Unit raise CombinatoricsError {
-  self.define(alpha, x, modified=true)
+  self.define_coset(alpha, x, modified=true)
 }
 
 ///|
@@ -1041,7 +1041,7 @@ pub fn coset_enumeration_r(
     if modified {
       coset_table.modified_define(alpha, x)
     } else {
-      coset_table.define(alpha, x)
+      coset_table.define_coset(alpha, x)
     }
   }
   match draft {
