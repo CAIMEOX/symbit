@@ -1,5 +1,5 @@
 ///|
-/// Expression-tree traversal helper used by rewrite pipelines.
+/// Apply `func` to nodes at a fixed depth in the expression tree.
 pub fn apply_at_level(
   expr : @symcore.Expr,
   func : (@symcore.Expr) -> @symcore.Expr,
