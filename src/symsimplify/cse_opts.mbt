@@ -1,11 +1,11 @@
 ///|
-/// SymPy-compatible simplify helper `sub_pre`.
+/// Run the CSE pre-pass that prepares subtree structure.
 pub fn sub_pre(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_pre)
 }
 
 ///|
-/// SymPy-compatible simplify helper `sub_post`.
+/// Run the CSE post-pass cleanup transformation.
 pub fn sub_post(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_post)
 }

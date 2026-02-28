@@ -58,7 +58,7 @@ fn poly_to_dup(poly : Poly) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_cauchy_upper_bound(
   coeffs : Array[FieldElem],
   _domain : Domain,
@@ -84,7 +84,7 @@ pub fn dup_cauchy_upper_bound(
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_cauchy_lower_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -102,7 +102,7 @@ pub fn dup_cauchy_lower_bound(
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_mignotte_sep_bound_squared(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -134,7 +134,7 @@ pub fn dup_mignotte_sep_bound_squared(
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_sturm(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -302,7 +302,7 @@ fn ceil_pos_rational(r : @symnum.BigRational) -> Int {
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_refine_real_root(
   coeffs : Array[FieldElem],
   s : @symnum.BigRational,
@@ -410,7 +410,7 @@ pub fn dup_refine_real_root(
 }
 
 ///|
-/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
+/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
 pub fn dup_isolate_real_roots_sqf(
   coeffs : Array[FieldElem],
   domain : Domain,

@@ -297,7 +297,7 @@ pub fn compare_exps_igrlex(
 }
 
 ///|
-/// SymPy-compatible polynomial helper `compare_monomial_order`.
+/// Compare monomials under the selected term order.
 pub fn compare_monomial_order(
   a : Monomial,
   b : Monomial,

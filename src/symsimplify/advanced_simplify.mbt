@@ -71,13 +71,13 @@ pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `powdenest`.
+/// Denest nested powers when exponent rules allow.
 pub fn powdenest(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_powdenest, max_passes~)
 }
 
 ///|
-/// SymPy-compatible simplify helper `exptrigsimp`.
+/// Switch between exp/trig forms to simplify expressions.
 pub fn exptrigsimp(
   expr : @symcore.Expr,
   max_passes? : Int = 8,
@@ -86,19 +86,19 @@ pub fn exptrigsimp(
 }
 
 ///|
-/// SymPy-compatible simplify helper `gammasimp`.
+/// Simplify Gamma-function identities.
 pub fn gammasimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_gammasimp, max_passes~)
 }
 
 ///|
-/// SymPy-compatible simplify helper `logcombine`.
+/// Combine additive/multiplicative log terms into compact logarithmic form.
 pub fn logcombine(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_logcombine, max_passes~)
 }
 
 ///|
-/// SymPy-compatible `separatevars` utility.
+/// Separate multiplicative factors by symbolic variable sets.
 pub fn separatevars(
   expr : @symcore.Expr,
   force? : Bool = false,
@@ -107,7 +107,7 @@ pub fn separatevars(
 }
 
 ///|
-/// SymPy-compatible `posify` utility.
+/// Replace symbols with positivity-assumed dummies and return a restoration map.
 pub fn posify(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, Map[String, @symcore.Expr]) {
@@ -124,7 +124,7 @@ pub fn posify(
 }
 
 ///|
-/// SymPy-compatible `hypersimp` utility.
+/// Return the hypergeometric term ratio `f(k+1)/f(k)` when it exists.
 pub fn hypersimp(f : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
   match k {
     @symcore.Expr::Symbol(name) => {
@@ -138,7 +138,7 @@ pub fn hypersimp(f : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible `hypersimilar` utility.
+/// Check whether two sequences are hyper-similar in index `k`.
 pub fn hypersimilar(
   f : @symcore.Expr,
   g : @symcore.Expr,

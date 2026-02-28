@@ -3,7 +3,7 @@
 pub type Matrix = Array[Array[BigInt]]
 
 ///|
-/// SymPy-compatible polynomial helper `lll_reduce`.
+/// Perform LLL basis reduction on integer lattices.
 pub fn lll_reduce(
   basis : Matrix,
   delta? : @symnum.BigRational,

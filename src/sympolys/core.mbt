@@ -34,7 +34,7 @@ pub fn Poly::with_order(self : Poly, order : TermOrder) -> Poly {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `ensure_coeff_domain`.
+/// Coerce/validate coefficients against a target polynomial domain.
 pub fn ensure_coeff_domain(
   coeff : @symnum.BigRational,
   domain : Domain,
@@ -61,7 +61,7 @@ pub fn ensure_coeff_domain(
 }
 
 ///|
-/// SymPy-compatible polynomial helper `add_term`.
+/// Insert a term into sparse polynomial storage with term merging.
 pub fn add_term(
   coeffs : Map[Monomial, FieldElem],
   mono : Monomial,

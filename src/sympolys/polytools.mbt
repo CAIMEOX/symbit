@@ -285,7 +285,7 @@ pub fn sturm_sequence(poly : Poly) -> Array[Poly] raise PolyError {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `discriminant`.
+/// Compute polynomial discriminant.
 pub fn discriminant(poly : Poly) -> FieldElem raise PolyError {
   if poly.gens.length() != 1 {
     raise PolyError::NotUnivariate

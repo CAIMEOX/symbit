@@ -11,7 +11,7 @@ pub fn ratsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `ratsimpmodprime`.
+/// Simplify rational expressions using modular-image techniques.
 pub fn ratsimpmodprime(
   expr : @symcore.Expr,
   basis? : Array[@symcore.Expr] = [],
@@ -44,7 +44,7 @@ pub fn collect_abs(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `rad_rationalize`.
+/// Rationalize radicals in denominators and return transformed numerator/denominator.
 pub fn rad_rationalize(
   num : @symcore.Expr,
   den : @symcore.Expr,
@@ -56,7 +56,7 @@ pub fn rad_rationalize(
 }
 
 ///|
-/// SymPy-compatible simplify helper `fraction_expand`.
+/// Expand numerator and denominator parts of a rational expression.
 pub fn fraction_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -69,7 +69,7 @@ pub fn fraction_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `numer_expand`.
+/// Expand only the numerator.
 pub fn numer_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -81,7 +81,7 @@ pub fn numer_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `denom_expand`.
+/// Expand only the denominator.
 pub fn denom_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let d = expand_mul_expr(den)
@@ -93,7 +93,7 @@ pub fn denom_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible simplify helper `split_surds`.
+/// Split surd expressions into canonical components for denesting.
 pub fn split_surds(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {

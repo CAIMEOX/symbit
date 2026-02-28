@@ -20,26 +20,26 @@ fn lift_pair_to_qq(p : Poly, q : Poly) -> (Poly, Poly) raise PolyError {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `res`.
+/// Compute resultant over a generic coefficient domain.
 pub fn res(p : Poly, q : Poly) -> @symnum.BigRational raise PolyError {
   ensure_univar_pair(p, q)
   p.resultant(q, 0)
 }
 
 ///|
-/// SymPy-compatible polynomial helper `res_q`.
+/// Compute resultant specialized for `QQ`.
 pub fn res_q(p : Poly, q : Poly) -> @symnum.BigRational raise PolyError {
   res(p, q)
 }
 
 ///|
-/// SymPy-compatible polynomial helper `res_z`.
+/// Compute resultant specialized for `ZZ`.
 pub fn res_z(p : Poly, q : Poly) -> @symnum.BigRational raise PolyError {
   res(p, q)
 }
 
 ///|
-/// SymPy-compatible polynomial helper `subresultants_rem`.
+/// Compute remainder used by subresultant sequences.
 pub fn subresultants_rem(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
   subresultants(p, q)
 }

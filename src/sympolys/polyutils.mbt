@@ -280,13 +280,13 @@ pub fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `_analyze_gens`.
+/// Normalize and validate generator arguments.
 pub fn _analyze_gens(gens : Array[String]) -> Array[String] {
   gens
 }
 
 ///|
-/// SymPy-compatible polynomial helper `_analyze_gens_nested`.
+/// Normalize nested generator specifications.
 pub fn _analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] {
   if gens.length() == 1 {
     return gens[0]
@@ -317,7 +317,7 @@ fn compare_int_lists(a : Array[Int], b : Array[Int]) -> Int {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `_sort_factors`.
+/// Sort factors in deterministic polynomial order.
 pub fn _sort_factors(factors : Array[Array[Int]]) -> Array[Array[Int]] {
   let out = factors.copy()
   out.sort_by((a, b) => compare_int_lists(a, b))
@@ -325,7 +325,7 @@ pub fn _sort_factors(factors : Array[Array[Int]]) -> Array[Array[Int]] {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `_sort_factors_multiple`.
+/// Sort grouped factors in deterministic order.
 pub fn _sort_factors_multiple(
   factors : Array[(Array[Int], Int)],
 ) -> Array[(Array[Int], Int)] {
@@ -399,7 +399,7 @@ fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
 }
 
 ///|
-/// SymPy-compatible polynomial helper `dict_from_expr`.
+/// Convert an expression into polynomial dict form under chosen generators.
 pub fn dict_from_expr(
   expr : @symcore.Expr,
   gens? : Array[String] = [],

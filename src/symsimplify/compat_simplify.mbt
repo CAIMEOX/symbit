@@ -1,11 +1,11 @@
 ///|
-/// SymPy-compatible simplify helper `besselsimp`.
+/// Simplify Bessel-function expressions.
 pub fn besselsimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_compat(expr, rewrite_besselsimp, max_passes~)
 }
 
 ///|
-/// SymPy-compatible simplify helper `kroneckersimp`.
+/// Simplify Kronecker-delta expressions.
 pub fn kroneckersimp(
   expr : @symcore.Expr,
   max_passes? : Int = 8,
@@ -14,7 +14,7 @@ pub fn kroneckersimp(
 }
 
 ///|
-/// SymPy-compatible `nsimplify` utility.
+/// Convert numeric expressions to exact symbolic forms when recognized.
 pub fn nsimplify(
   expr : @symcore.Expr,
   constants? : Array[@symcore.Expr] = [],

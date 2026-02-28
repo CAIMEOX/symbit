@@ -22,7 +22,7 @@ pub fn to_dense(poly : Poly, degree? : Int) -> Array[FieldElem] raise PolyError 
 }
 
 ///|
-/// SymPy-compatible polynomial helper `from_dense`.
+/// Build a sparse `Poly` from dense univariate coefficients.
 pub fn from_dense(
   coeffs : Array[FieldElem],
   gens : Array[String],
@@ -78,7 +78,7 @@ pub fn to_dense_multi(
 }
 
 ///|
-/// SymPy-compatible polynomial helper `from_dense_multi`.
+/// Build a sparse `Poly` from dense multivariate coefficients.
 pub fn from_dense_multi(
   coeffs : Array[FieldElem],
   gens : Array[String],
