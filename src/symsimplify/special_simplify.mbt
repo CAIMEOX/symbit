@@ -1,11 +1,11 @@
 ///|
-/// SymPy-compatible `combsimp` simplification entry point.
+/// Simplify combinatorial expressions.
 pub fn combsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_special(expr, rewrite_combsimp, max_passes~)
 }
 
 ///|
-/// SymPy-compatible `hyperexpand` simplification entry point.
+/// Expand hypergeometric functions into equivalent closed forms when known.
 pub fn hyperexpand(
   expr : @symcore.Expr,
   max_passes? : Int = 6,

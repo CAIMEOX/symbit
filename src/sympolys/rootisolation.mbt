@@ -58,7 +58,7 @@ fn poly_to_dup(poly : Poly) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Compute the Cauchy upper bound on the absolute value of all roots of `f`.
 pub fn dup_cauchy_upper_bound(
   coeffs : Array[FieldElem],
   _domain : Domain,
@@ -84,7 +84,7 @@ pub fn dup_cauchy_upper_bound(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Compute the Cauchy lower bound on the absolute value of all non-zero roots of `f`.
 pub fn dup_cauchy_lower_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -102,7 +102,7 @@ pub fn dup_cauchy_lower_bound(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Return the square of the Mignotte lower bound on separation between distinct roots.
 pub fn dup_mignotte_sep_bound_squared(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -134,7 +134,7 @@ pub fn dup_mignotte_sep_bound_squared(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Computes the Sturm sequence of ``f`` in ``F[x]``.
 pub fn dup_sturm(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -302,7 +302,7 @@ fn ceil_pos_rational(r : @symnum.BigRational) -> Int {
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Refine real root's approximating interval to the given precision.
 pub fn dup_refine_real_root(
   coeffs : Array[FieldElem],
   s : @symnum.BigRational,
@@ -410,7 +410,7 @@ pub fn dup_refine_real_root(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for the corresponding operation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
+/// Isolate real roots of a square-free polynomial using the Vincent-Akritas-Strzebonski (VAS) CF approach.
 pub fn dup_isolate_real_roots_sqf(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -444,7 +444,7 @@ pub fn dup_isolate_real_roots_sqf(
 }
 
 ///|
-/// SymPy compatibility entry point (LMQ in SymPy; Cauchy fallback here).
+/// Compute the LMQ upper bound for positive roots of `f`.
 pub fn dup_root_upper_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -453,7 +453,7 @@ pub fn dup_root_upper_bound(
 }
 
 ///|
-/// SymPy compatibility entry point (LMQ in SymPy; Cauchy fallback here).
+/// Compute the LMQ lower bound for positive roots of `f`.
 pub fn dup_root_lower_bound(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -462,8 +462,7 @@ pub fn dup_root_lower_bound(
 }
 
 ///|
-/// Isolate real roots (with multiplicities) by combining square-free isolation
-/// results for each square-free factor.
+/// Isolate real roots using Vincent-Akritas-Strzebonski (VAS) continued fractions approach.
 pub fn dup_isolate_real_roots(
   coeffs : Array[FieldElem],
   domain : Domain,
@@ -497,7 +496,7 @@ pub fn dup_isolate_real_roots(
 }
 
 ///|
-/// Count real roots, optionally restricted to an interval.
+/// Returns the number of distinct real roots of ``f`` in ``[inf, sup]``.
 pub fn dup_count_real_roots(
   coeffs : Array[FieldElem],
   domain : Domain,

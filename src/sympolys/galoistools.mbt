@@ -33,13 +33,13 @@ fn inv_mod(a : Int, p : Int) -> Int raise PolyError {
 }
 
 ///|
-/// Finite-field (`gf`) helper for degree over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Return the leading degree of ``f``.
 pub fn gf_degree(f : Array[Int]) -> Int {
   f.length() - 1
 }
 
 ///|
-/// Finite-field (`gf`) helper for leading coefficient over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Return the leading coefficient of ``f``.
 pub fn gf_LC(f : Array[Int]) -> Int {
   if f.is_empty() {
     0
@@ -49,7 +49,7 @@ pub fn gf_LC(f : Array[Int]) -> Int {
 }
 
 ///|
-/// Finite-field (`gf`) helper for trailing coefficient over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Return the trailing coefficient of ``f``.
 pub fn gf_TC(f : Array[Int]) -> Int {
   if f.is_empty() {
     0
@@ -59,7 +59,7 @@ pub fn gf_TC(f : Array[Int]) -> Int {
 }
 
 ///|
-/// Finite-field (`gf`) helper for normalization by stripping leading zeros over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Remove leading zeros from ``f``.
 pub fn gf_strip(f : Array[Int]) -> Array[Int] {
   if f.is_empty() || f[0] != 0 {
     return f
@@ -82,7 +82,7 @@ pub fn gf_strip(f : Array[Int]) -> Array[Int] {
 }
 
 ///|
-/// Finite-field (`gf`) helper for the corresponding operation over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Reduce all coefficients modulo ``p``.
 pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for c in f {
@@ -92,7 +92,7 @@ pub fn gf_trunc(f : Array[Int], p : Int) -> Array[Int] {
 }
 
 ///|
-/// Finite-field (`gf`) helper for addition over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Add polynomials in ``GF(p)[x]``.
 pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() {
     return gf_trunc(g, p)
@@ -113,7 +113,7 @@ pub fn gf_add(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 }
 
 ///|
-/// Finite-field (`gf`) helper for subtraction over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Subtract polynomials in ``GF(p)[x]``.
 pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() {
     let out : Array[Int] = Array::new()
@@ -138,7 +138,7 @@ pub fn gf_sub(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 }
 
 ///|
-/// Finite-field (`gf`) helper for multiplication over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Multiply polynomials in ``GF(p)[x]``.
 pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
   if f.is_empty() || g.is_empty() {
     return Array::new()
@@ -155,7 +155,7 @@ pub fn gf_mul(f : Array[Int], g : Array[Int], p : Int) -> Array[Int] {
 }
 
 ///|
-/// Finite-field (`gf`) helper for monic normalization over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Compute LC and a monic polynomial in ``GF(p)[x]``.
 pub fn gf_monic(f : Array[Int], p : Int) -> Array[Int] raise PolyError {
   if f.is_empty() {
     return f
@@ -173,7 +173,7 @@ pub fn gf_monic(f : Array[Int], p : Int) -> Array[Int] raise PolyError {
 }
 
 ///|
-/// Finite-field (`gf`) helper for division over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Division with remainder in ``GF(p)[x]``.
 pub fn gf_div(
   f : Array[Int],
   g : Array[Int],
@@ -214,7 +214,7 @@ pub fn gf_div(
 }
 
 ///|
-/// Finite-field (`gf`) helper for quotient computation over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Compute exact quotient in ``GF(p)[x]``.
 pub fn gf_quo(
   f : Array[Int],
   g : Array[Int],
@@ -225,7 +225,7 @@ pub fn gf_quo(
 }
 
 ///|
-/// Finite-field (`gf`) helper for remainder computation over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Compute polynomial remainder in ``GF(p)[x]``.
 pub fn gf_rem(
   f : Array[Int],
   g : Array[Int],
@@ -236,7 +236,7 @@ pub fn gf_rem(
 }
 
 ///|
-/// Finite-field (`gf`) helper for gcd computation over coefficients reduced modulo `p`.; coefficients are reduced modulo `p` and stored in canonical residue classes.
+/// Euclidean Algorithm in ``GF(p)[x]``.
 pub fn gf_gcd(
   f : Array[Int],
   g : Array[Int],

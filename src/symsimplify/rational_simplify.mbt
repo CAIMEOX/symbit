@@ -1,17 +1,17 @@
 ///|
-/// SymPy-compatible `radsimp` simplification entry point.
+/// Rationalize the denominator by removing square roots.
 pub fn radsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_radsimp, max_passes~)
 }
 
 ///|
-/// SymPy-compatible `ratsimp` simplification entry point.
+/// Put an expression over a common denominator, cancel and reduce.
 pub fn ratsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_ratsimp, max_passes~)
 }
 
 ///|
-/// Simplify rational expressions using modular-image techniques.
+/// Simplify a rational expression modulo a prime ideal basis.
 pub fn ratsimpmodprime(
   expr : @symcore.Expr,
   basis? : Array[@symcore.Expr] = [],
@@ -28,7 +28,7 @@ pub fn ratsimpmodprime(
 }
 
 ///|
-/// Symbolic expression transformation helper `collect_sqrt` used by simplify routines.
+/// Return `expr` with terms having common square roots collected together.
 pub fn collect_sqrt(
   expr : @symcore.Expr,
   evaluate? : Bool = true,
@@ -38,13 +38,13 @@ pub fn collect_sqrt(
 }
 
 ///|
-/// Symbolic expression transformation helper `collect_abs` used by simplify routines.
+/// Return `expr` with product arguments of multiple `Abs` factors collected.
 pub fn collect_abs(expr : @symcore.Expr) -> @symcore.Expr {
   collect_function_terms(expr, "Abs")
 }
 
 ///|
-/// Rationalize radicals in denominators and return transformed numerator/denominator.
+/// Rationalize `num/den` by removing square roots in the denominator.
 pub fn rad_rationalize(
   num : @symcore.Expr,
   den : @symcore.Expr,
@@ -93,7 +93,7 @@ pub fn denom_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// Split surd expressions into canonical components for denesting.
+/// Split surd terms by a shared square-free rational factor for denesting.
 pub fn split_surds(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
@@ -137,7 +137,7 @@ pub fn split_surds(
 }
 
 ///|
-/// SymPy-compatible `sqrtdenest` simplification entry point.
+/// Denest nested square roots when algebraic identities permit.
 pub fn sqrtdenest(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_sqrtdenest, max_passes~)
 }

@@ -1,5 +1,5 @@
 ///|
-/// SymPy-compatible `simplify` simplification entry point.
+/// Simplifies the given expression.
 pub fn simplify(
   expr : @symcore.Expr,
   plan? : SimplifyPlan = SimplifyPlan::Default,
@@ -9,7 +9,7 @@ pub fn simplify(
 }
 
 ///|
-/// SymPy-compatible `powsimp` simplification entry point.
+/// Reduce expression by combining powers with similar bases and exponents.
 pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,
@@ -24,7 +24,7 @@ pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
-/// SymPy-compatible `trigsimp` simplification entry point.
+/// Return a reduced expression by using known trig identities.
 pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,
@@ -39,7 +39,7 @@ pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
-/// Normalize signs in sums/products.
+/// Normalize signs in sums/products by pulling minus factors to canonical form.
 pub fn signsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,

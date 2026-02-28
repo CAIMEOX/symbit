@@ -5,13 +5,13 @@ pub(all) struct CseResult {
 }
 
 ///|
-/// Method `replacement_count` on `CseResult` used by simplify pipelines.
+/// Return the number of extracted substitutions.
 pub fn CseResult::replacement_count(self : CseResult) -> Int {
   self.replacements.length()
 }
 
 ///|
-/// Method `replacements_copy` on `CseResult` used by simplify pipelines.
+/// Return a copy of the extracted substitution list.
 pub fn CseResult::replacements_copy(
   self : CseResult,
 ) -> Array[(String, @symcore.Expr)] {
@@ -19,13 +19,13 @@ pub fn CseResult::replacements_copy(
 }
 
 ///|
-/// Method `reduced_exprs_copy` on `CseResult` used by simplify pipelines.
+/// Return a copy of reduced expressions after extraction.
 pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[@symcore.Expr] {
   self.reduced_exprs.map(item => item)
 }
 
 ///|
-/// Common-subexpression elimination helper compatible with SymPy `cse` behavior.
+/// Perform common subexpression elimination on a list of expressions.
 pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
   let counts : Map[String, Int] = {}
   let key_expr : Map[String, @symcore.Expr] = {}
@@ -72,7 +72,7 @@ pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
 }
 
 ///|
-/// Common-subexpression elimination helper compatible with SymPy `cse` behavior.
+/// Reconstruct original expressions by substituting CSE replacements back.
 pub fn cse_reconstruct(result : CseResult) -> Array[@symcore.Expr] {
   let mut out = result.reduced_exprs.map(e => e)
   for i in 0..<result.replacements.length() {
