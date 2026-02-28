@@ -1,7 +1,17 @@
 ///|
 fn py_none_obj() -> @py.PyObject {
-  @py.PyObject::create(@cpython.py_none())
+  @py.PyObject::create(coerce(py_none()))
 }
+
+///|
+#external
+priv type PyObjectRef
+
+///|
+extern "C" fn py_none() -> PyObjectRef = "py_none"
+
+///|
+fn[T, U] coerce(x : T) -> U = "%identity"
 
 ///|
 pub fn py_pack(arg : OracleArg) -> @py.PyObject {
