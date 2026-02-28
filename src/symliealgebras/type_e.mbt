@@ -80,7 +80,8 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
                 if e == 1 {
                   root[4] = neghalf
                 }
-                posroots[k] = vec_copy(root)
+                // Keep SymPy parity: these entries share the same mutable root object.
+                posroots[k] = root
               }
             }
           }
@@ -134,7 +135,8 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
                   if f == 1 {
                     root[5] = poshalf
                   }
-                  posroots[k] = vec_copy(root)
+                  // Keep SymPy parity: these entries share the same mutable root object.
+                  posroots[k] = root
                 }
               }
             }
@@ -190,7 +192,8 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
                   if g == 1 {
                     root[6] = poshalf
                   }
-                  posroots[k] = vec_copy(root)
+                  // Keep SymPy parity: these entries share the same mutable root object.
+                  posroots[k] = root
                 }
               }
             }
