@@ -1,7 +1,7 @@
 ///|
 pub struct Monomial {
   exps : Array[Int]
-}
+} derive(Eq, Hash)
 
 ///|
 pub fn monomial_one(len : Int) -> Monomial {
@@ -162,26 +162,6 @@ pub fn monomial_count(vars : Int, degree : Int) -> Int {
     denom = denom * k
   }
   numer / denom
-}
-
-///|
-pub impl Eq for Monomial with equal(self, other : Monomial) -> Bool {
-  self.exps.equal(other.exps)
-}
-
-///|
-pub impl Eq for Monomial with not_equal(self, other : Monomial) -> Bool {
-  !self.equal(other)
-}
-
-///|
-pub impl Hash for Monomial with hash(self) -> Int {
-  self.exps.hash()
-}
-
-///|
-pub impl Hash for Monomial with hash_combine(self, hasher : Hasher) -> Unit {
-  self.exps.hash_combine(hasher)
 }
 
 ///|

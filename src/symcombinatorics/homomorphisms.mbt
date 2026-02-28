@@ -12,28 +12,7 @@ pub(all) enum HomGroup {
 pub(all) enum HomElement {
   Perm(Permutation)
   Word(FreeGroupElement)
-} derive(Eq)
-
-///|
-pub impl Hash for HomElement with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for HomElement with hash_combine(self, hasher : Hasher) -> Unit {
-  match self {
-    HomElement::Perm(p) => {
-      hasher.combine_int(0)
-      p.hash_combine(hasher)
-    }
-    Word(w) => {
-      hasher.combine_int(1)
-      w.hash_combine(hasher)
-    }
-  }
-}
+} derive(Eq, Hash)
 
 ///|
 pub(all) enum HomSubgroup {

@@ -1,20 +1,13 @@
 ///|
 pub(all) suberror RationalError {
   ZeroDenominator
-}
-
-///|
-pub impl Show for RationalError with output(self, logger : &Logger) -> Unit {
-  match self {
-    RationalError::ZeroDenominator => logger.write_string("ZeroDenominator")
-  }
-}
+} derive(Show)
 
 ///|
 pub struct BigRational {
   num : BigInt
   den : BigInt
-}
+} derive(Eq, Hash)
 
 ///|
 pub fn gcd_bigint(a : BigInt, b : BigInt) -> BigInt {
@@ -155,29 +148,6 @@ fn format_rational(value : BigRational) -> String {
   } else {
     "\{value.num.to_string()}/\{value.den.to_string()}"
   }
-}
-
-///|
-pub impl Eq for BigRational with equal(self, other : BigRational) -> Bool {
-  self.num.equal(other.num) && self.den.equal(other.den)
-}
-
-///|
-pub impl Eq for BigRational with not_equal(self, other : BigRational) -> Bool {
-  !self.equal(other)
-}
-
-///|
-pub impl Hash for BigRational with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for BigRational with hash_combine(self, hasher : Hasher) -> Unit {
-  self.num.hash_combine(hasher)
-  self.den.hash_combine(hasher)
 }
 
 ///|

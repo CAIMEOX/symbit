@@ -34,7 +34,7 @@ pub enum SetBool {
   True
   False
   Unknown
-}
+} derive(Eq)
 
 ///|
 pub fn empty_set() -> Set {
@@ -429,19 +429,4 @@ pub impl Hash for Set with hash_combine(self, hasher : Hasher) -> Unit {
     }
     _ => ()
   }
-}
-
-///|
-pub impl Eq for SetBool with equal(self, other : SetBool) -> Bool {
-  match (self, other) {
-    (SetBool::True, SetBool::True) => true
-    (SetBool::False, SetBool::False) => true
-    (SetBool::Unknown, SetBool::Unknown) => true
-    _ => false
-  }
-}
-
-///|
-pub impl Eq for SetBool with not_equal(self, other : SetBool) -> Bool {
-  !self.equal(other)
 }

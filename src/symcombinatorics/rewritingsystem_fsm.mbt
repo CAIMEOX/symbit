@@ -12,25 +12,7 @@ pub enum StateType {
 pub enum StateName {
   Start
   Word(FreeGroupElement)
-} derive(Eq)
-
-///|
-pub impl Hash for StateName with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for StateName with hash_combine(self, hasher : Hasher) -> Unit {
-  match self {
-    StateName::Start => hasher.combine_int(0)
-    StateName::Word(w) => {
-      hasher.combine_int(1)
-      w.hash_combine(hasher)
-    }
-  }
-}
+} derive(Eq, Hash)
 
 ///|
 pub struct State {

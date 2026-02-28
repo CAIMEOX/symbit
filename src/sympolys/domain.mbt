@@ -15,7 +15,7 @@ pub(all) enum TermOrder {
   Lex
   Grlex
   Grevlex
-}
+} derive(Eq)
 
 ///|
 pub(all) suberror PolyError {
@@ -53,21 +53,6 @@ impl Eq for Domain with equal(self, other : Domain) -> Bool {
 
 ///|
 impl Eq for Domain with not_equal(self, other : Domain) -> Bool {
-  !self.equal(other)
-}
-
-///|
-impl Eq for TermOrder with equal(self, other : TermOrder) -> Bool {
-  match (self, other) {
-    (TermOrder::Lex, TermOrder::Lex)
-    | (TermOrder::Grlex, TermOrder::Grlex)
-    | (TermOrder::Grevlex, TermOrder::Grevlex) => true
-    _ => false
-  }
-}
-
-///|
-impl Eq for TermOrder with not_equal(self, other : TermOrder) -> Bool {
   !self.equal(other)
 }
 

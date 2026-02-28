@@ -24,20 +24,7 @@ pub impl Show for GroupOrder with output(self, logger : &Logger) -> Unit {
 pub struct FreeGroup {
   symbols : Array[String]
   rank : Int
-} derive(Eq)
-
-///|
-pub impl Hash for FreeGroup with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for FreeGroup with hash_combine(self, hasher : Hasher) -> Unit {
-  hasher.combine_int(self.rank)
-  self.symbols.hash_combine(hasher)
-}
+} derive(Eq, Hash)
 
 ///|
 fn copy_strings(values : Array[String]) -> Array[String] {
@@ -200,20 +187,7 @@ pub fn vfree_group(symbols : String) -> FreeGroup {
 pub struct FreeGroupElement {
   group : FreeGroup
   array_form : Array[(Int, Int)]
-} derive(Eq)
-
-///|
-pub impl Hash for FreeGroupElement with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for FreeGroupElement with hash_combine(self, hasher : Hasher) -> Unit {
-  self.group.hash_combine(hasher)
-  self.array_form.hash_combine(hasher)
-}
+} derive(Eq, Hash)
 
 ///|
 fn normalize_array_form(array : Array[(Int, Int)]) -> Array[(Int, Int)] {

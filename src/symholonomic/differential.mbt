@@ -2,13 +2,13 @@
 pub struct DifferentialOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
-}
+} derive(Eq)
 
 ///|
 pub struct DifferentialOperator {
   coeffs : Array[@symcore.Expr]
   parent : DifferentialOperatorAlgebra
-}
+} derive(Eq)
 
 ///|
 pub fn differential_operator(
@@ -192,38 +192,6 @@ pub impl Add for DifferentialOperator with add(self, other) {
 ///|
 pub impl Mul for DifferentialOperator with mul(self, other) {
   differential_mul(self, other)
-}
-
-///|
-pub impl Eq for DifferentialOperatorAlgebra with equal(
-  self,
-  other : DifferentialOperatorAlgebra,
-) -> Bool {
-  self.symbol_var == other.symbol_var && self.generator == other.generator
-}
-
-///|
-pub impl Eq for DifferentialOperatorAlgebra with not_equal(
-  self,
-  other : DifferentialOperatorAlgebra,
-) -> Bool {
-  !self.equal(other)
-}
-
-///|
-pub impl Eq for DifferentialOperator with equal(
-  self,
-  other : DifferentialOperator,
-) -> Bool {
-  self.parent == other.parent && self.coeffs == other.coeffs
-}
-
-///|
-pub impl Eq for DifferentialOperator with not_equal(
-  self,
-  other : DifferentialOperator,
-) -> Bool {
-  !self.equal(other)
 }
 
 ///|

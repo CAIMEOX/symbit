@@ -11,53 +11,7 @@ pub(all) enum ExprOp {
   Mul
   Pow
   Function(String)
-}
-
-///|
-fn expr_op_rank(op : ExprOp) -> Int {
-  match op {
-    ExprOp::Number => 0
-    ExprOp::Symbol => 1
-    ExprOp::Add => 2
-    ExprOp::Mul => 3
-    ExprOp::Pow => 4
-    ExprOp::Function(_) => 5
-  }
-}
-
-///|
-pub impl Eq for ExprOp with equal(self, other : ExprOp) -> Bool {
-  match (self, other) {
-    (ExprOp::Number, ExprOp::Number) => true
-    (ExprOp::Symbol, ExprOp::Symbol) => true
-    (ExprOp::Add, ExprOp::Add) => true
-    (ExprOp::Mul, ExprOp::Mul) => true
-    (ExprOp::Pow, ExprOp::Pow) => true
-    (ExprOp::Function(a), ExprOp::Function(b)) => a == b
-    _ => false
-  }
-}
-
-///|
-pub impl Eq for ExprOp with not_equal(self, other : ExprOp) -> Bool {
-  !self.equal(other)
-}
-
-///|
-pub impl Hash for ExprOp with hash(self) -> Int {
-  let hasher = Hasher::new()
-  self.hash_combine(hasher)
-  hasher.finalize()
-}
-
-///|
-pub impl Hash for ExprOp with hash_combine(self, hasher : Hasher) -> Unit {
-  hasher.combine_int(expr_op_rank(self))
-  match self {
-    ExprOp::Function(name) => hasher.combine_string(name)
-    _ => ()
-  }
-}
+} derive(Eq, Hash)
 
 ///|
 /// Function bundle used by traversal strategies.

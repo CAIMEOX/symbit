@@ -4,7 +4,7 @@
 ///|
 pub struct Matrix {
   rows : Array[Array[@symnum.BigRational]]
-}
+} derive(Eq)
 
 ///|
 pub fn matrix_from_rows(rows : Array[Array[@symnum.BigRational]]) -> Matrix {
@@ -86,26 +86,6 @@ pub fn matrix_mul(a : Matrix, b : Matrix) -> Matrix {
 ///|
 pub fn Matrix::mul(self : Matrix, other : Matrix) -> Matrix {
   matrix_mul(self, other)
-}
-
-///|
-pub impl Eq for Matrix with equal(self, other : Matrix) -> Bool {
-  if self.height() != other.height() || self.width() != other.width() {
-    return false
-  }
-  for i in 0..<self.height() {
-    for j in 0..<self.width() {
-      if self.get(i, j) != other.get(i, j) {
-        return false
-      }
-    }
-  }
-  true
-}
-
-///|
-pub impl Eq for Matrix with not_equal(self, other : Matrix) -> Bool {
-  !self.equal(other)
 }
 
 ///|

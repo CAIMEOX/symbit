@@ -2,7 +2,7 @@
 pub struct HolonomicSequence {
   recurrence : RecurrenceOperator
   u0 : Array[@symcore.Expr]
-}
+} derive(Eq)
 
 ///|
 pub fn holonomic_sequence(
@@ -47,19 +47,6 @@ pub fn HolonomicSequence::to_sympy_str(self : HolonomicSequence) -> String {
     }
     base + suffix
   }
-}
-
-///|
-pub impl Eq for HolonomicSequence with equal(self, other : HolonomicSequence) -> Bool {
-  self.recurrence == other.recurrence && self.u0 == other.u0
-}
-
-///|
-pub impl Eq for HolonomicSequence with not_equal(
-  self,
-  other : HolonomicSequence,
-) -> Bool {
-  !self.equal(other)
 }
 
 ///|

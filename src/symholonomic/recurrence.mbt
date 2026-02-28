@@ -2,13 +2,13 @@
 pub struct RecurrenceOperatorAlgebra {
   symbol_var : @symcore.Expr
   generator : String
-}
+} derive(Eq)
 
 ///|
 pub struct RecurrenceOperator {
   coeffs : Array[@symcore.Expr]
   parent : RecurrenceOperatorAlgebra
-}
+} derive(Eq)
 
 ///|
 pub fn recurrence_operator(
@@ -181,35 +181,6 @@ pub impl Add for RecurrenceOperator with add(self, other) {
 ///|
 pub impl Mul for RecurrenceOperator with mul(self, other) {
   recurrence_mul(self, other)
-}
-
-///|
-pub impl Eq for RecurrenceOperatorAlgebra with equal(
-  self,
-  other : RecurrenceOperatorAlgebra,
-) -> Bool {
-  self.symbol_var == other.symbol_var && self.generator == other.generator
-}
-
-///|
-pub impl Eq for RecurrenceOperatorAlgebra with not_equal(
-  self,
-  other : RecurrenceOperatorAlgebra,
-) -> Bool {
-  !self.equal(other)
-}
-
-///|
-pub impl Eq for RecurrenceOperator with equal(self, other : RecurrenceOperator) -> Bool {
-  self.parent == other.parent && self.coeffs == other.coeffs
-}
-
-///|
-pub impl Eq for RecurrenceOperator with not_equal(
-  self,
-  other : RecurrenceOperator,
-) -> Bool {
-  !self.equal(other)
 }
 
 ///|
