@@ -73,6 +73,20 @@ fn rationals_from_poly(
 }
 
 ///|
+fn rationals_from_expr_coeffs(
+  coeffs : Array[@symcore.Expr],
+) -> Array[@symnum.BigRational]? {
+  let out : Array[@symnum.BigRational] = Array::new()
+  for coeff in coeffs {
+    match expr_to_rational(coeff) {
+      Some(v) => out.push(v)
+      None => return None
+    }
+  }
+  Some(out)
+}
+
+///|
 fn br_add(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
@@ -357,6 +371,74 @@ fn pade_from_expr_coeffs(
 }
 
 ///|
+fn pade_numeric_best(
+  coeffs : Array[@symnum.BigRational],
+  m : Int,
+  n : Int,
+) -> (Array[@symnum.BigRational], Array[@symnum.BigRational]) {
+  letrec solve = (dn : Int) => {
+    let dm = m + (n - dn)
+    match pade_from_coeffs(coeffs, dm, dn) {
+      Some(v) => v
+      None =>
+        if dn == 0 {
+          ([coeffs[0]], [@symnum.BigRational::one()])
+        } else {
+          solve(dn - 1)
+        }
+    }
+  }
+  solve(n)
+}
+
+///|
+fn pade_expr_best(
+  coeffs : Array[@symcore.Expr],
+  m : Int,
+  n : Int,
+) -> (Array[@symcore.Expr], Array[@symcore.Expr]) {
+  letrec solve = (dn : Int) => {
+    let dm = m + (n - dn)
+    match pade_from_expr_coeffs(coeffs, dm, dn) {
+      Some(v) => v
+      None =>
+        if dn == 0 {
+          ([coeffs[0]], [one_expr()])
+        } else {
+          solve(dn - 1)
+        }
+    }
+  }
+  solve(n)
+}
+
+///|
+fn pade_inv_factorial_expr(n : Int) -> @symcore.Expr {
+  let den = factorial_bigint(n)
+  @symcore.number(safe_rational(BigInt::from_int(1), den))
+}
+
+///|
+fn coeffs_via_derivatives(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x_name : String,
+  x0 : @symcore.Expr,
+  count : Int,
+) -> Array[@symcore.Expr] {
+  let coeffs : Array[@symcore.Expr] = Array::new()
+  let mut current = expr
+  for k in 0..<count {
+    let env : Map[String, @symcore.Expr] = {}
+    env[x_name] = x0
+    let value = @symcore.subst(current, env)
+    coeffs.push(expr_mul(value, pade_inv_factorial_expr(k)))
+    current = @symcalculus.diff(current, x)
+  }
+  coeffs
+}
+
+///|
 pub fn pade_approximant(
   expr : @symcore.Expr,
   x : @symcore.Expr,
@@ -384,34 +466,36 @@ pub fn pade_approximant(
     env[var_name] = @symcore.add([x0, work_x])
     @symcore.subst(expr, env)
   }
+  let work_name = match work_x {
+    @symcore.Expr::Symbol(name) => name
+    _ => "__pade_t"
+  }
   let order = m + n0 + 1
   let ser = series(work_expr, x=work_x, x0=@symcore.int(0), n=order)
   let poly_expr = strip_order_expr(ser)
-  let poly = match poly_from_expr(poly_expr, work_x) {
-    Some(p) => p
-    None => fail("pade series extraction failed")
-  }
-  let coeffs_expr : Array[@symcore.Expr] = Array::new()
-  for i in 0..<order {
-    if i < poly.length() {
-      coeffs_expr.push(poly[i])
-    } else {
-      coeffs_expr.push(zero_expr())
+  let coeffs_expr = match poly_from_expr(poly_expr, work_x) {
+    Some(poly) => {
+      let out : Array[@symcore.Expr] = Array::new()
+      for i in 0..<order {
+        if i < poly.length() {
+          out.push(poly[i])
+        } else {
+          out.push(zero_expr())
+        }
+      }
+      out
     }
+    None => coeffs_via_derivatives(work_expr, work_x, work_name, @symcore.int(0), order)
   }
-  let (num_expr, den_expr) = match rationals_from_poly(poly, order) {
-    Some(coeffs_num) =>
-      match pade_from_coeffs(coeffs_num, m, n0) {
-        Some((p_coeffs, q_coeffs)) =>
-          (poly_from_rationals(p_coeffs, work_x), poly_from_rationals(q_coeffs, work_x))
-        None => fail("pade singular linear system")
-      }
-    None =>
-      match pade_from_expr_coeffs(coeffs_expr, m, n0) {
-        Some((p_coeffs, q_coeffs)) =>
-          (poly_from_expr_coeffs(p_coeffs, work_x), poly_from_expr_coeffs(q_coeffs, work_x))
-        None => fail("pade singular linear system")
-      }
+  let (num_expr, den_expr) = match rationals_from_expr_coeffs(coeffs_expr) {
+    Some(coeffs_num) => {
+      let (p_coeffs, q_coeffs) = pade_numeric_best(coeffs_num, m, n0)
+      (poly_from_rationals(p_coeffs, work_x), poly_from_rationals(q_coeffs, work_x))
+    }
+    None => {
+      let (p_coeffs, q_coeffs) = pade_expr_best(coeffs_expr, m, n0)
+      (poly_from_expr_coeffs(p_coeffs, work_x), poly_from_expr_coeffs(q_coeffs, work_x))
+    }
   }
   let approx_work = if den_expr == one_expr() {
     num_expr

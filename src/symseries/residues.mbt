@@ -86,7 +86,12 @@ fn residue_via_pole_order(
     }
     m = m + 1
   }
-  fail("residue pole order not found")
+  let first = limit(expr_mul(shift, expr), x, x0)
+  if !is_infinite_expr(first) && !contains_symbol(first, var_name) {
+    first
+  } else {
+    @symcore.int(0)
+  }
 }
 
 ///|

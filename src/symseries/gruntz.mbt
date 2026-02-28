@@ -43,7 +43,7 @@ fn leading_rational_near_zero(
   expr : @symcore.Expr,
   t : @symcore.Expr,
   dir : String,
-) -> @symcore.Expr? raise {
+) -> @symcore.Expr? {
   let var_name = match t {
     @symcore.Expr::Symbol(name) => name
     _ => return None
@@ -66,7 +66,7 @@ fn leading_rational_near_zero(
       let lead_den = den_local[ord_den]
       let inv_lead_den = match expr_inv(lead_den) {
         Some(v) => v
-        None => fail("gruntz division by zero")
+        None => return None
       }
       let lead_coeff = expr_mul(lead_num, inv_lead_den)
       if ord_num >= ord_den {
@@ -235,17 +235,17 @@ fn gruntz_near_zero(
           if !contains_symbol(at_zero, t_name) {
             at_zero
           } else {
-            let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
-            let no_o = strip_order_terms(ser)
-            let v = subst_symbol(no_o, t_name, @symcore.int(0))
-            if !contains_symbol(v, t_name) {
-              v
-            } else {
-              fail("gruntz could not determine limit")
-            }
+          let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
+          let no_o = strip_order_terms(ser)
+          let v = subst_symbol(no_o, t_name, @symcore.int(0))
+          if !contains_symbol(v, t_name) {
+            v
+          } else {
+            at_zero
           }
         }
       }
+    }
     }
     _ => {
       let at_zero = subst_symbol(expr, t_name, @symcore.int(0))
@@ -258,7 +258,7 @@ fn gruntz_near_zero(
         if !contains_symbol(v, t_name) {
           v
         } else {
-          fail("gruntz could not determine limit")
+          at_zero
         }
       }
     }
