@@ -25,12 +25,14 @@ fn cartan_type_validate(series : String, n : Int) -> Unit raise {
 }
 
 ///|
+/// Build a validated Cartan type from series letter and rank.
 pub fn cartan_type_from_parts(series : String, n : Int) -> CartanType raise {
   cartan_type_validate(series, n)
   CartanType::{ series, n }
 }
 
 ///|
+/// Parse a Cartan type string such as `A3`, `E6`, or `G2`.
 pub fn cartan_type_from_string(ct : String) -> CartanType raise {
   if ct.is_empty() {
     fail("Argument must be a string like 'A3'")
@@ -50,16 +52,19 @@ pub fn cartan_type_from_string(ct : String) -> CartanType raise {
 }
 
 ///|
+/// Return the rank `n` of the Cartan type.
 pub fn CartanType::rank(self : CartanType) -> Int {
   self.n
 }
 
 ///|
+/// Return the series letter (`A`..`G`).
 pub fn CartanType::series(self : CartanType) -> String {
   self.series
 }
 
 ///|
+/// Dimension of the ambient vector space used by the root realization.
 pub fn CartanType::dimension(self : CartanType) -> Int {
   match self.series {
     "A" => type_a_dimension(self.n)
@@ -74,6 +79,7 @@ pub fn CartanType::dimension(self : CartanType) -> Int {
 }
 
 ///|
+/// Return the `i`-th simple root in the chosen coordinate realization.
 pub fn CartanType::simple_root(self : CartanType, i : Int) -> RootVector raise {
   match self.series {
     "A" => type_a_simple_root(self.n, i)
@@ -88,6 +94,7 @@ pub fn CartanType::simple_root(self : CartanType, i : Int) -> RootVector raise {
 }
 
 ///|
+/// Enumerate all positive roots indexed from `1`.
 pub fn CartanType::positive_roots(self : CartanType) -> Map[Int, RootVector] {
   match self.series {
     "A" => type_a_positive_roots(self.n)
@@ -102,6 +109,7 @@ pub fn CartanType::positive_roots(self : CartanType) -> Map[Int, RootVector] {
 }
 
 ///|
+/// Highest root for series where this helper is currently implemented.
 pub fn CartanType::highest_root(self : CartanType) -> RootVector raise {
   match self.series {
     "A" => type_a_highest_root(self.n)
@@ -110,6 +118,7 @@ pub fn CartanType::highest_root(self : CartanType) -> RootVector raise {
 }
 
 ///|
+/// Total number of roots in the root system.
 pub fn CartanType::roots(self : CartanType) -> Int {
   match self.series {
     "A" => type_a_roots(self.n)
@@ -124,6 +133,7 @@ pub fn CartanType::roots(self : CartanType) -> Int {
 }
 
 ///|
+/// Dimension of the Lie algebra (number of basis elements).
 pub fn CartanType::basis(self : CartanType) -> Int {
   match self.series {
     "A" => type_a_basis(self.n)
@@ -138,6 +148,7 @@ pub fn CartanType::basis(self : CartanType) -> Int {
 }
 
 ///|
+/// Conventional Lie algebra name, e.g. `su(n+1)` for type `A_n`.
 pub fn CartanType::lie_algebra(self : CartanType) -> String {
   match self.series {
     "A" => type_a_lie_algebra(self.n)
@@ -149,6 +160,7 @@ pub fn CartanType::lie_algebra(self : CartanType) -> String {
 }
 
 ///|
+/// Cartan matrix associated with the selected type.
 pub fn CartanType::cartan_matrix(self : CartanType) -> Matrix raise {
   match self.series {
     "A" => cartan_matrix_type_a(self.n)
@@ -163,6 +175,7 @@ pub fn CartanType::cartan_matrix(self : CartanType) -> Matrix raise {
 }
 
 ///|
+/// Dynkin diagram rendered as a textual diagram.
 pub fn CartanType::dynkin_diagram(self : CartanType) -> String raise {
   match self.series {
     "A" => dynkin_type_a(self.n)

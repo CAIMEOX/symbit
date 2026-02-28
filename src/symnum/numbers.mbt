@@ -1,15 +1,18 @@
 ///|
+/// Error raised when constructing or inverting a rational with zero denominator.
 pub(all) suberror RationalError {
   ZeroDenominator
 } derive(Show)
 
 ///|
+/// Canonical exact rational number `num/den` with gcd normalization.
 pub struct BigRational {
   num : BigInt
   den : BigInt
 } derive(Eq, Hash)
 
 ///|
+/// Greatest common divisor for arbitrary-precision integers.
 pub fn gcd_bigint(a : BigInt, b : BigInt) -> BigInt {
   loop (abs_bigint(a), abs_bigint(b)) {
     (x, y) if x.is_zero() => y
@@ -41,6 +44,7 @@ fn normalize(num : BigInt, den : BigInt) -> BigRational {
 }
 
 ///|
+/// Construct a normalized rational and validate that `den != 0`.
 pub fn BigRational::new(num : BigInt, den : BigInt) -> Self raise RationalError {
   if den.is_zero() {
     raise RationalError::ZeroDenominator
@@ -49,11 +53,13 @@ pub fn BigRational::new(num : BigInt, den : BigInt) -> Self raise RationalError 
 }
 
 ///|
+/// Construct an exact rational from an `Int`.
 pub fn BigRational::from_int(n : Int) -> Self {
   normalize(BigInt::from_int(n), BigInt::from_int(1))
 }
 
 ///|
+/// Construct an exact rational from a `BigInt`.
 pub fn BigRational::from_bigint(n : BigInt) -> Self {
   normalize(n, BigInt::from_int(1))
 }
@@ -69,6 +75,7 @@ pub fn BigRational::one() -> Self {
 }
 
 ///|
+/// Add two exact rationals.
 pub fn BigRational::add_r(
   self : BigRational,
   other : BigRational,
@@ -79,6 +86,7 @@ pub fn BigRational::add_r(
 }
 
 ///|
+/// Multiply two exact rationals.
 pub fn BigRational::mul_r(
   self : BigRational,
   other : BigRational,
@@ -89,11 +97,13 @@ pub fn BigRational::mul_r(
 }
 
 ///|
+/// Negate a rational.
 pub fn BigRational::neg_r(self : BigRational) -> BigRational {
   BigRational::{ num: self.num.neg(), den: self.den }
 }
 
 ///|
+/// Three-way comparison: negative, zero, or positive.
 pub fn BigRational::compare(self : BigRational, other : BigRational) -> Int {
   self.num.mul(other.den).compare(other.num.mul(self.den))
 }
@@ -124,6 +134,7 @@ pub fn BigRational::denominator(self : BigRational) -> BigInt {
 }
 
 ///|
+/// Return the multiplicative inverse.
 pub fn BigRational::reciprocal(
   self : BigRational,
 ) -> BigRational raise RationalError {
@@ -134,6 +145,7 @@ pub fn BigRational::reciprocal(
 }
 
 ///|
+/// Divide by another rational (`self * other.reciprocal()`).
 pub fn BigRational::div_r(
   self : BigRational,
   other : BigRational,
@@ -151,6 +163,7 @@ fn format_rational(value : BigRational) -> String {
 }
 
 ///|
+/// Print as `n` or `n/d` in normalized form.
 pub impl Show for BigRational with output(self, logger : &Logger) -> Unit {
   logger.write_string(format_rational(self))
 }

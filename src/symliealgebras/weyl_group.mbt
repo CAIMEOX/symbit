@@ -7,12 +7,14 @@ pub struct WeylGroup {
 }
 
 ///|
+/// Build a Weyl group from a Cartan type string.
 pub fn weyl_group_from_string(ct : String) -> WeylGroup raise {
   let cartan = cartan_type_from_string(ct)
   WeylGroup::{ cartan_type: cartan }
 }
 
 ///|
+/// Return the associated Cartan type.
 pub fn WeylGroup::cartan_type(self : WeylGroup) -> CartanType {
   self.cartan_type
 }
@@ -35,6 +37,7 @@ fn parse_reflections(weylelt : String) -> Array[Int] {
 }
 
 ///|
+/// Return simple-reflection generator names.
 pub fn WeylGroup::generators(self : WeylGroup) -> Array[String] {
   let n = self.cartan_type.rank()
   let gens : Array[String] = Array::new()
@@ -66,6 +69,7 @@ fn pow2(n : Int) -> @symnum.BigRational {
 }
 
 ///|
+/// Return the finite Weyl group order when known.
 pub fn WeylGroup::group_order(self : WeylGroup) -> @symnum.BigRational {
   let n = self.cartan_type.rank()
   match self.cartan_type.series() {
@@ -88,6 +92,7 @@ pub fn WeylGroup::group_order(self : WeylGroup) -> @symnum.BigRational {
 }
 
 ///|
+/// Return conventional group-name text.
 pub fn WeylGroup::group_name(self : WeylGroup) -> String {
   let n = self.cartan_type.rank()
   match self.cartan_type.series() {
@@ -150,6 +155,7 @@ fn delete_doubles(reflections : Array[Int]) -> Array[Int] {
 }
 
 ///|
+/// Compute the order of a group element expression.
 pub fn WeylGroup::element_order(self : WeylGroup, weylelt : String) -> Int {
   let n = self.cartan_type.rank()
   match self.cartan_type.series() {
@@ -207,6 +213,7 @@ fn igcd(a : Int, b : Int) -> Int {
 }
 
 ///|
+/// Return matrix form of a Weyl group element expression.
 pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
   let reflections = parse_reflections(weylelt)
   let n = self.cartan_type.rank()
@@ -377,6 +384,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
 }
 
 ///|
+/// Return the Coxeter diagram for this Weyl group.
 pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String raise {
   let n = self.cartan_type.rank()
   match self.cartan_type.series() {

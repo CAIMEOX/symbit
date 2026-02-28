@@ -2,11 +2,13 @@
 /// Type F simple Lie algebra data.
 
 ///|
+/// Dimension of the ambient Euclidean realization for this Cartan family.
 pub fn type_f_dimension(_n : Int) -> Int {
   4
 }
 
 ///|
+/// Internal helper that builds a basic coordinate root vector.
 pub fn type_f_basic_root(n : Int, i : Int, j : Int) -> RootVector {
   let root = vec_zero(n)
   root[i] = br_int(1)
@@ -15,6 +17,7 @@ pub fn type_f_basic_root(n : Int, i : Int, j : Int) -> RootVector {
 }
 
 ///|
+/// Return the `i`-th simple root in the family-specific realization.
 pub fn type_f_simple_root(_n : Int, i : Int) -> RootVector raise {
   if i < 1 || i > 4 {
     fail("simple root index out of range")
@@ -31,6 +34,7 @@ pub fn type_f_simple_root(_n : Int, i : Int) -> RootVector raise {
 }
 
 ///|
+/// Enumerate positive roots indexed from `1`.
 pub fn type_f_positive_roots(n : Int) -> Map[Int, RootVector] {
   let posroots : Map[Int, RootVector] = {}
   let mut k = 0
@@ -69,16 +73,19 @@ pub fn type_f_positive_roots(n : Int) -> Map[Int, RootVector] {
 }
 
 ///|
+/// Total number of roots in the root system.
 pub fn type_f_roots(_n : Int) -> Int {
   48
 }
 
 ///|
+/// Dimension of the corresponding Lie algebra.
 pub fn type_f_basis(_n : Int) -> Int {
   52
 }
 
 ///|
+/// Text form of the family Dynkin diagram.
 pub fn type_f_dynkin_diagram(_n : Int) -> String {
   dynkin_type_f()
 }

@@ -7,23 +7,27 @@ pub struct RootSystem {
 }
 
 ///|
+/// Build a root-system object from a Cartan type string.
 pub fn root_system_from_string(ct : String) -> RootSystem raise {
   let cartan = cartan_type_from_string(ct)
   RootSystem::{ cartan_type: cartan }
 }
 
 ///|
+/// Build a root-system object from `(series, rank)`.
 pub fn root_system_from_parts(series : String, n : Int) -> RootSystem raise {
   let cartan = cartan_type_from_parts(series, n)
   RootSystem::{ cartan_type: cartan }
 }
 
 ///|
+/// Return the underlying Cartan type.
 pub fn RootSystem::cartan_type(self : RootSystem) -> CartanType {
   self.cartan_type
 }
 
 ///|
+/// Return indexed simple roots.
 pub fn RootSystem::simple_roots(self : RootSystem) -> Map[Int, RootVector] {
   let n = self.cartan_type.rank()
   let roots : Map[Int, RootVector] = {}
@@ -34,6 +38,7 @@ pub fn RootSystem::simple_roots(self : RootSystem) -> Map[Int, RootVector] {
 }
 
 ///|
+/// Return all roots (negative then positive) in index order.
 pub fn RootSystem::all_roots(self : RootSystem) -> Map[Int, RootVector] {
   let alpha = self.cartan_type.positive_roots()
   let mut k = 0
@@ -53,6 +58,7 @@ pub fn RootSystem::all_roots(self : RootSystem) -> Map[Int, RootVector] {
 }
 
 ///|
+/// Describe the ambient root-space dimension.
 pub fn RootSystem::root_space(self : RootSystem) -> String {
   let n = self.cartan_type.rank()
   let parts : Array[String] = Array::new()
@@ -63,6 +69,7 @@ pub fn RootSystem::root_space(self : RootSystem) -> String {
 }
 
 ///|
+/// Add two simple roots by index.
 pub fn RootSystem::add_simple_roots(
   self : RootSystem,
   root1 : Int,
@@ -89,6 +96,7 @@ fn roots_contains(roots : Map[Int, RootVector], target : RootVector) -> Bool {
 }
 
 ///|
+/// Add two roots and validate that the sum is a root.
 pub fn RootSystem::add_as_roots(
   self : RootSystem,
   root1 : RootVector,
@@ -104,11 +112,13 @@ pub fn RootSystem::add_as_roots(
 }
 
 ///|
+/// Return the Cartan matrix of this root system.
 pub fn RootSystem::cartan_matrix(self : RootSystem) -> Matrix raise {
   self.cartan_type.cartan_matrix()
 }
 
 ///|
+/// Return the Dynkin diagram of this root system.
 pub fn RootSystem::dynkin_diagram(self : RootSystem) -> String raise {
   self.cartan_type.dynkin_diagram()
 }

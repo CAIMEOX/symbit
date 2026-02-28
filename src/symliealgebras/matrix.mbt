@@ -7,11 +7,13 @@ pub struct Matrix {
 } derive(Eq)
 
 ///|
+/// Create a matrix from rational rows.
 pub fn matrix_from_rows(rows : Array[Array[@symnum.BigRational]]) -> Matrix {
   Matrix::{ rows, }
 }
 
 ///|
+/// Create a matrix from integer rows.
 pub fn matrix_from_ints(rows : Array[Array[Int]]) -> Matrix {
   let out : Array[Array[@symnum.BigRational]] = Array::new()
   for row in rows {
@@ -25,6 +27,7 @@ pub fn matrix_from_ints(rows : Array[Array[Int]]) -> Matrix {
 }
 
 ///|
+/// Create an `n x n` identity matrix.
 pub fn matrix_eye(n : Int) -> Matrix {
   let rows : Array[Array[@symnum.BigRational]] = Array::new()
   for i in 0..<n {
@@ -36,11 +39,13 @@ pub fn matrix_eye(n : Int) -> Matrix {
 }
 
 ///|
+/// Number of rows in the matrix.
 pub fn Matrix::height(self : Matrix) -> Int {
   self.rows.length()
 }
 
 ///|
+/// Number of columns in the matrix.
 pub fn Matrix::width(self : Matrix) -> Int {
   if self.rows.is_empty() {
     return 0
@@ -49,11 +54,13 @@ pub fn Matrix::width(self : Matrix) -> Int {
 }
 
 ///|
+/// Read element `(r, c)`.
 pub fn Matrix::get(self : Matrix, r : Int, c : Int) -> @symnum.BigRational {
   self.rows[r][c]
 }
 
 ///|
+/// Mutate element `(r, c)`.
 pub fn Matrix::set(
   self : Matrix,
   r : Int,
@@ -64,6 +71,7 @@ pub fn Matrix::set(
 }
 
 ///|
+/// Multiply two matrices.
 pub fn matrix_mul(a : Matrix, b : Matrix) -> Matrix {
   let h = a.height()
   let w = b.width()
@@ -84,11 +92,13 @@ pub fn matrix_mul(a : Matrix, b : Matrix) -> Matrix {
 }
 
 ///|
+/// Method form of matrix multiplication.
 pub fn Matrix::mul(self : Matrix, other : Matrix) -> Matrix {
   matrix_mul(self, other)
 }
 
 ///|
+/// Serialize matrix rows to a deterministic string.
 pub fn matrix_rows_string(m : Matrix) -> String {
   let rows : Array[String] = Array::new()
   for row in m.rows {
