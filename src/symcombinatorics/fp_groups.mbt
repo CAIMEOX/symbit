@@ -178,7 +178,7 @@ pub fn FpGroup::coset_enumeration(
 ///|
 pub fn FpGroup::standardize_coset_table(
   self : FpGroup,
-) -> Unit raise CombinatoricsError {
+) -> Unit {
   match self.coset_table_cache {
     Some(ct) => {
       ct.standardize()

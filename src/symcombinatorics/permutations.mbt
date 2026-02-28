@@ -50,24 +50,6 @@ fn af_rmul(
 }
 
 ///|
-fn af_rmuln(arrays : Array[Array[Int]]) -> Array[Int] raise CombinatoricsError {
-  if arrays.is_empty() {
-    raise CombinatoricsError::ValueError("array list must not be empty")
-  }
-  let mut res : Array[Int] = Array::new()
-  for v in arrays[0] {
-    res.push(v)
-  }
-  if arrays.length() == 1 {
-    return res
-  }
-  for i in 1..<arrays.length() {
-    res = af_rmul(res, arrays[i])
-  }
-  res
-}
-
-///|
 fn af_parity(pi : Array[Int]) -> Int {
   let n = pi.length()
   let visited : Array[Bool] = Array::make(n, false)

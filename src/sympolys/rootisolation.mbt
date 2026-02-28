@@ -60,7 +60,7 @@ fn poly_to_dup(poly : Poly) -> Array[FieldElem] raise PolyError {
 ///|
 pub fn dup_cauchy_upper_bound(
   coeffs : Array[FieldElem],
-  domain : Domain,
+  _domain : Domain,
 ) -> FieldElem raise PolyError {
   let f = dup_strip(coeffs)
   if f.length() < 2 {
@@ -73,9 +73,7 @@ pub fn dup_cauchy_upper_bound(
   let mut max_ratio = @symnum.BigRational::zero()
   for i in 1..<f.length() {
     let ai = abs_rational(fe_expect_rational(f[i]))
-    let ratio = ai.div_r(abs_rational(lc)) catch {
-      _ => raise PolyError::DivisionByZero
-    }
+    let ratio = ai.div_r(abs_rational(lc))
     if ratio.compare(max_ratio) > 0 {
       max_ratio = ratio
     }
@@ -125,7 +123,10 @@ pub fn dup_mignotte_sep_bound_squared(
   let n_rat = @symnum.BigRational::from_int(n)
   let num = @symnum.BigRational::from_int(3).mul(disc_rat)
   let denom = pow_rational(n_rat, n + 1).mul(pow_rational(l2sq, n - 1))
-  let bound = num.div_r(denom) catch { _ => raise PolyError::DivisionByZero }
+  if denom.is_zero() {
+    raise PolyError::DivisionByZero
+  }
+  let bound = num.div_r(denom)
   fe_from_rational(bound, Domain::QQ)
 }
 
@@ -179,7 +180,7 @@ fn rat_mediant(
 fn rat_mid(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
-) -> @symnum.BigRational raise PolyError {
+) -> @symnum.BigRational {
   if a.is_integral() && b.is_integral() {
     let ai = a.numerator().to_int()
     let bi = b.numerator().to_int()
@@ -190,9 +191,7 @@ fn rat_mid(
   }
   let two = @symnum.BigRational::from_int(2)
   let sum = a.add_r(b)
-  sum.div_r(two) catch {
-    _ => raise PolyError::DivisionByZero
-  }
+  sum.div_r(two)
 }
 
 ///|

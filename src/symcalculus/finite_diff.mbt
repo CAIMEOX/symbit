@@ -25,7 +25,7 @@ fn fd_rat_mul(a : BigRational, b : BigRational) -> BigRational {
 
 ///|
 fn fd_rat_div(a : BigRational, b : BigRational) -> BigRational {
-  try! a.div_r(b)
+  a.div_r(b)
 }
 
 ///|
@@ -33,7 +33,7 @@ pub fn finite_diff_weights(
   order : Int,
   x_list : Array[BigRational],
   x0? : BigRational = BigRational::zero(),
-) -> Array[Array[Array[BigRational]]] raise {
+) -> Array[Array[Array[BigRational]]] {
   let n_max = x_list.length() - 1
   let delta : Array[Array[Array[BigRational]]] = Array::makei(order + 1, _ => {
     Array::makei(n_max + 1, _ => Array::makei(n_max + 1, _ => fd_rat_zero()))

@@ -18,7 +18,7 @@ pub fn dup_TC(coeffs : Array[FieldElem]) -> FieldElem raise PolyError {
 }
 
 ///|
-pub fn dup_degree(coeffs : Array[FieldElem]) -> Int raise PolyError {
+pub fn dup_degree(coeffs : Array[FieldElem]) -> Int {
   if coeffs.is_empty() {
     -1
   } else {
@@ -160,21 +160,6 @@ fn dense_to_coeffs(p : DensePoly) -> Array[FieldElem] raise PolyError {
         }
       }
       dup_strip(coeffs)
-    }
-  }
-}
-
-///|
-fn dense_is_zero(p : DensePoly) -> Bool {
-  match p {
-    DensePoly::Coef(c) => fe_is_zero(c)
-    DensePoly::Poly(items) => {
-      for it in items {
-        if !dense_is_zero(it) {
-          return false
-        }
-      }
-      true
     }
   }
 }
@@ -1320,7 +1305,7 @@ pub fn dmp_nest(
   f : DensePoly,
   l : Int,
   _domain : Domain,
-) -> DensePoly raise PolyError {
+) -> DensePoly {
   if l <= 0 {
     return f
   }
@@ -1386,7 +1371,7 @@ pub fn dmp_raise(
 pub fn dup_deflate(
   f : Array[FieldElem],
   _domain : Domain,
-) -> (Int, Array[FieldElem]) raise PolyError {
+) -> (Int, Array[FieldElem]) {
   if dup_degree(f) <= 0 {
     return (1, f)
   }
@@ -1461,8 +1446,8 @@ pub fn dmp_deflate(
 ///|
 pub fn dup_multi_deflate(
   polys : Array[Array[FieldElem]],
-  domain : Domain,
-) -> (Int, Array[Array[FieldElem]]) raise PolyError {
+  _domain : Domain,
+) -> (Int, Array[Array[FieldElem]]) {
   if polys.is_empty() {
     return (1, polys)
   }

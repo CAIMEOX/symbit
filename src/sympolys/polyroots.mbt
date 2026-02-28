@@ -51,9 +51,7 @@ pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   // SymPy reference: sympy/polys/polyroots.py::roots_quadratic.
   // Keep discriminant under symbolic square root (disc**(1/2)).
   let half = @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)) catch {
-      _ => raise PolyError::DivisionByZero
-    },
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
   )
   let sqrt_disc = @symcore.pow(disc, half)
   let neg_b = @symcore.mul([@symcore.int(-1), b])

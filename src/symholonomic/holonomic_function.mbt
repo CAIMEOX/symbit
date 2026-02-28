@@ -203,11 +203,11 @@ fn solve_constant_ode_coefficients(
   }
   let a : Array[@symcore.Expr] = Array::new()
   for k in 0..<r {
-    let yk = init_derivs[k]
-    let fk = factorial_rat(k)
-    match to_number(yk) {
+      let yk = init_derivs[k]
+      let fk = factorial_rat(k)
+      match to_number(yk) {
       Some(nk) => {
-        let ak = nk.div_r(fk) catch { _ => return None }
+        let ak = nk.div_r(fk)
         a.push(@symcore.number(ak))
       }
       None => a.push(expr_mul(yk, @symcore.number(try! fk.reciprocal())))
@@ -224,7 +224,7 @@ fn solve_constant_ode_coefficients(
       let num = factorial_bigint(n + k)
       let den = factorial_bigint(n + r)
       let ratio = @symnum.BigRational::new(num, den) catch { _ => return None }
-      let scale = ck.mul_r(ratio).div_r(cr) catch { _ => return None }
+      let scale = ck.mul_r(ratio).div_r(cr)
       let term = expr_mul(@symcore.number(scale), a[n + k])
       sum = expr_add(sum, term)
     }
@@ -267,7 +267,7 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
             let fk = factorial_rat(k)
             match to_number(hf.y0[k]) {
               Some(v) => {
-                let ak = v.div_r(fk) catch { _ => return None }
+                let ak = v.div_r(fk)
                 init.push(@symcore.number(ak))
               }
               None =>

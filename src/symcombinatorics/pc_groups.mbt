@@ -140,7 +140,7 @@ pub fn Collector::relations(
 
 ///|
 pub fn Collector::subword_index(
-  self : Collector,
+  _self : Collector,
   word : FreeGroupElement,
   w : FreeGroupElement,
 ) -> (Int, Int) raise CombinatoricsError {
@@ -164,7 +164,7 @@ pub fn Collector::subword_index(
 pub fn Collector::map_relation(
   self : Collector,
   w : FreeGroupElement,
-) -> FreeGroupElement raise CombinatoricsError {
+) -> FreeGroupElement {
   let array = w.array_form()
   let s1 = array[0].0
   let s2 = array[1].0

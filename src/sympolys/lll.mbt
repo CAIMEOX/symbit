@@ -20,10 +20,7 @@ pub fn lll_reduce(
   let transform = identity(basis_work.length())
   let d = match delta {
     Some(v) => v
-    None =>
-      @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)) catch {
-        _ => raise PolyError::DivisionByZero
-      }
+    None => @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4))
   }
   let mut k = 1
   while k < basis_work.length() {
@@ -83,8 +80,10 @@ fn gram_schmidt(
     for j in 0..<i {
       let dot_ib = dot_bigrational(basis[i], bstar[j])
       let dot_bb = dot_bigrational_rational(bstar[j], bstar[j])
-      let coeff = dot_ib.div_r(dot_bb) catch {
-        _ => @symnum.BigRational::zero()
+      let coeff = if dot_bb.is_zero() {
+        @symnum.BigRational::zero()
+      } else {
+        dot_ib.div_r(dot_bb)
       }
       mu[i].set(j, coeff)
       let proj = bstar[j].map(x => x.mul_r(coeff))

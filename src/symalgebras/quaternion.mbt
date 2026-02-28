@@ -328,12 +328,7 @@ pub fn Quaternion::to_string(self : Quaternion) -> String {
 }
 
 ///|
-impl Show for Quaternion with to_string(self) {
-  self.to_string()
-}
-
-///|
-impl Show for Quaternion with output(self, logger) {
+pub impl Show for Quaternion with output(self, logger) {
   logger.write_string(self.to_string())
 }
 
@@ -1086,7 +1081,7 @@ pub fn Quaternion::mensor(self : Quaternion) -> Expr {
 }
 
 ///|
-pub enum RotationArg {
+pub(all) enum RotationArg {
   Quat(Quaternion)
   AxisAngle((Expr, Expr, Expr), Expr)
 }

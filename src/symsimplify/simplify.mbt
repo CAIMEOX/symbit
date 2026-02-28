@@ -295,7 +295,7 @@ fn eval_numeric_pow(
   if n >= 0 {
     Some(out)
   } else {
-    Some(try! @symnum.BigRational::one().div_r(out))
+    Some(@symnum.BigRational::one().div_r(out))
   }
 }
 

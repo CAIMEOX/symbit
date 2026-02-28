@@ -131,7 +131,7 @@ fn try_descendant(
 fn first_in_class(
   table : CosetTable,
   subgroup : Array[FreeGroupElement],
-) -> Bool raise CombinatoricsError {
+) -> Bool {
   let n = table.n()
   let mut lamda = -1
   let nu : Array[Int?] = Array::make(n, None)

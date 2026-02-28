@@ -59,11 +59,6 @@ fn expr_neg(a : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn expr_sub(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
-  expr_add(a, expr_neg(b))
-}
-
-///|
 fn expr_pow_int(base : @symcore.Expr, exp : Int) -> @symcore.Expr {
   @symcore.pow(base, @symcore.int(exp))
 }
@@ -160,13 +155,4 @@ fn shift_symbol(
 ///|
 fn expr_to_sympy_string(expr : @symcore.Expr) -> String {
   @symprint.to_string(expr)
-}
-
-///|
-fn expr_array_to_sympy_strings(exprs : Array[@symcore.Expr]) -> Array[String] {
-  let out : Array[String] = Array::new()
-  for expr in exprs {
-    out.push(expr_to_sympy_string(expr))
-  }
-  out
 }

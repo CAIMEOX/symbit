@@ -61,7 +61,7 @@ fn py_call_with_args(
 fn py_call_with_args_allow_none(
   callable : @py.PyCallable,
   args : Array[OracleArg],
-) -> Unit raise {
+) -> Unit {
   let tup = @sympy.py_pack_args(args)
   let _ = @sympy.py_call_object(callable, tup, print_err=true)
 }
@@ -1270,17 +1270,13 @@ pub fn group_numbers_groups_count_equiv(
   ours_ok : Bool,
   ours_value : String,
 ) -> Bool raise {
-  let res : Result[@py.PyObjectEnum?, Error] = try? sympy_call(
+  let res = sympy_call(
     "sympy.combinatorics.group_numbers.groups_count",
     [OracleArg::Int(n)],
   )
   match res {
-    Ok(opt) =>
-      match opt {
-        Some(obj) => ours_ok && py_str_enum(obj) == ours_value
-        None => !ours_ok
-      }
-    Err(_) => !ours_ok
+    Some(obj) => ours_ok && py_str_enum(obj) == ours_value
+    None => !ours_ok
   }
 }
 

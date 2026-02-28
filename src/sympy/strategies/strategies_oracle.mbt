@@ -32,16 +32,6 @@ fn py_call_object(
 }
 
 ///|
-fn py_call_object_kwargs(
-  callable : @py.PyCallable,
-  args : @py.PyTuple,
-  kwargs? : @py.PyDict = @py.PyDict::new(),
-  print_err? : Bool = false,
-) -> @py.PyObjectEnum? {
-  @sympy.py_call_object_kwargs(callable, args, kwargs~, print_err~)
-}
-
-///|
 fn py_gil_ensure() -> Int {
   @sympy.py_gil_ensure()
 }
@@ -80,17 +70,6 @@ fn py_int_enum(obj : @py.PyObjectEnum) -> Int raise {
     PyInteger(v) => v.to_int64().to_int()
     _ => fail("py-int-expected")
   }
-}
-
-///|
-fn py_list_from_objects(values : Array[@py.PyObject]) -> @py.PyList {
-  let state = py_gil_ensure()
-  let list = @py.PyList::new()
-  for v in values {
-    list.append(v)
-  }
-  py_gil_release(state)
-  list
 }
 
 ///|

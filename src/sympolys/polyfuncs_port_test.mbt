@@ -227,8 +227,6 @@ test "polyfuncs: rational_interpolate parity (degnum=2, y)" {
 ///|
 test "polyfuncs: symmetrize parity constants and simple cases" {
   let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
   let zero = @symcore.int(0)
   let one = @symcore.int(1)
   let res0 = symmetrize(zero, gens=["x", "y", "z"])
@@ -300,8 +298,6 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
 ///|
 test "polyfuncs: symmetrize formal mapping u0/u1/u2" {
   let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
   let expr = x + @symcore.int(1)
   let res = symmetrize(expr, gens=["x", "y", "z"], formal=true, symbols=[
     "u0", "u1", "u2",

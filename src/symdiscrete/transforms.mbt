@@ -369,7 +369,7 @@ fn mobius_transform_core(
   seq : Array[Expr],
   sgn : Int,
   subset : Bool,
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   let a : Array[Expr] = Array::new()
   for v in seq {
     a.push(v)
@@ -401,7 +401,7 @@ fn mobius_transform_core(
 pub fn mobius_transform(
   seq : Array[Expr],
   subset? : Bool = true,
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   mobius_transform_core(seq, 1, subset)
 }
 
@@ -409,6 +409,6 @@ pub fn mobius_transform(
 pub fn inverse_mobius_transform(
   seq : Array[Expr],
   subset? : Bool = true,
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   mobius_transform_core(seq, -1, subset)
 }

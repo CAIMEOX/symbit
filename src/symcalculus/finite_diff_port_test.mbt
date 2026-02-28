@@ -62,7 +62,7 @@ fn fd_assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
 ///|
 test "finite_diff_weights: small grid" {
   let x_list = [fd_br(-1, 2), fd_br(1, 2), fd_br(3, 2), fd_br(5, 2)]
-  let weights = try! finite_diff_weights(1, x_list, x0=fd_br_int(0))
+  let weights = finite_diff_weights(1, x_list, x0=fd_br_int(0))
   let ours = fd_strip_spaces(fd_weights_repr(weights))
   let oracle = fd_strip_spaces(
     try! @sympy_calculus.finite_diff_weights_str(1, x_list, x0=fd_br_int(0)),

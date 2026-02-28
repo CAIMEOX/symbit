@@ -144,7 +144,7 @@ pub fn BigRational::reciprocal(
 pub fn BigRational::div_r(
   self : BigRational,
   other : BigRational,
-) -> BigRational raise RationalError {
+) -> BigRational {
   self.mul_r(try! other.reciprocal())
 }
 

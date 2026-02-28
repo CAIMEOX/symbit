@@ -17,13 +17,13 @@ fn normalize_mixture(
   if kept.is_empty() {
     return kept
   }
-  if total.is_one() {
+  if total.is_one() || total.is_zero() {
     return kept
   }
   let out : Array[(@symnum.BigRational, RandomVar)] = Array::new()
   for pair in kept {
     let (w, rv) = pair
-    out.push((try! w.div_r(total), rv))
+    out.push((w.div_r(total), rv))
   }
   out
 }

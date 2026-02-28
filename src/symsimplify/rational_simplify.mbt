@@ -275,8 +275,8 @@ fn try_denest_quadratic_surds(arg : @symcore.Expr) -> @symcore.Expr? {
   let disc = a.mul_r(a).add_r(b.mul_r(four).neg_r())
   match rational_sqrt(disc) {
     Some(sdisc) => {
-      let m = try! a.add_r(sdisc).div_r(two)
-      let n = try! a.add_r(sdisc.neg_r()).div_r(two)
+      let m = a.add_r(sdisc).div_r(two)
+      let n = a.add_r(sdisc.neg_r()).div_r(two)
       if m.compare(@symnum.BigRational::zero()) < 0 ||
         n.compare(@symnum.BigRational::zero()) < 0 {
         return None

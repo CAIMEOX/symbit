@@ -70,7 +70,7 @@ fn br_div(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
 ) -> @symnum.BigRational {
-  try! a.div_r(b)
+  a.div_r(b)
 }
 
 ///|

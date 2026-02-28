@@ -230,7 +230,7 @@ fn expr_add_all(args : Array[@symcore.Expr]) -> @symcore.Expr {
 ///|
 fn fe_cast_to_base(
   c : FieldElem,
-  base : Domain,
+  _base : Domain,
   _minpoly : Poly,
   _gen : String,
 ) -> FieldElem {

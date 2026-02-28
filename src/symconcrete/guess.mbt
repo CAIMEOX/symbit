@@ -273,7 +273,7 @@ fn berlekamp_massey(
     for v in c {
       t.push(v)
     }
-    let coef = try! d.div_r(bb)
+    let coef = d.div_r(bb)
     let need = b.length() + m
     while c.length() < need {
       c.push(@symnum.BigRational::zero())

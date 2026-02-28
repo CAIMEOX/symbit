@@ -29,13 +29,13 @@ fn normalize_atoms(
   }
   let out = nonzero
   out.sort_by((a, b) => @symcore.compare_expr(a.0, b.0))
-  if total.is_one() {
+  if total.is_one() || total.is_zero() {
     return out
   }
   let normalized : Array[(@symcore.Expr, @symnum.BigRational)] = Array::new()
   for item in out {
     let (value, p) = item
-    normalized.push((value, try! p.div_r(total)))
+    normalized.push((value, p.div_r(total)))
   }
   normalized
 }

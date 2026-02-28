@@ -16,6 +16,6 @@ pub fn RootOf::to_string(self : RootOf) -> String {
 }
 
 ///|
-impl Show for RootOf with output(self, logger : &Logger) -> Unit {
+pub impl Show for RootOf with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

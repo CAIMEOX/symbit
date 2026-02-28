@@ -314,7 +314,7 @@ pub fn _remove_gens(
   strong_gens : Array[Permutation],
   basic_orbits? : Array[Array[Int]],
   strong_gens_distr? : Array[Array[Permutation]],
-) -> Array[Permutation] raise CombinatoricsError {
+) -> Array[Permutation] {
   let base_len = base.length()
   if base_len == 0 || strong_gens.is_empty() {
     return strong_gens

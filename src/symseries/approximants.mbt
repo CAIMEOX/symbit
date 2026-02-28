@@ -54,25 +54,6 @@ fn expr_to_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
 }
 
 ///|
-fn rationals_from_poly(
-  poly : Array[@symcore.Expr],
-  count : Int,
-) -> Array[@symnum.BigRational]? {
-  let out : Array[@symnum.BigRational] = Array::new()
-  for i in 0..<count {
-    if i < poly.length() {
-      match expr_to_rational(poly[i]) {
-        Some(v) => out.push(v)
-        None => return None
-      }
-    } else {
-      out.push(@symnum.BigRational::zero())
-    }
-  }
-  Some(out)
-}
-
-///|
 fn rationals_from_expr_coeffs(
   coeffs : Array[@symcore.Expr],
 ) -> Array[@symnum.BigRational]? {
@@ -115,10 +96,10 @@ fn br_div(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
 ) -> @symnum.BigRational? {
-  try a.div_r(b) catch {
-    _ => None
-  } noraise {
-    v => Some(v)
+  if b.is_zero() {
+    None
+  } else {
+    Some(a.div_r(b))
   }
 }
 

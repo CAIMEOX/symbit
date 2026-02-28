@@ -48,7 +48,7 @@ pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
       for pair in terms {
         let coeff = pair.0
         let rest = pair.1
-        let new_coeff = try! coeff.div_r(g)
+        let new_coeff = coeff.div_r(g)
         let scaled_term = if rest == @symcore.int(1) {
           @symcore.number(new_coeff)
         } else if new_coeff.is_one() {

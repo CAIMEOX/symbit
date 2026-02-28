@@ -448,7 +448,7 @@ pub fn RewritingSystem::reduce(
 
 ///|
 fn RewritingSystem::_compute_inverse_rules(
-  self : RewritingSystem,
+  _self : RewritingSystem,
   rules : Map[FreeGroupElement, FreeGroupElement],
 ) -> Map[FreeGroupElement, FreeGroupElement] {
   let inv_rules : Map[FreeGroupElement, FreeGroupElement] = {}

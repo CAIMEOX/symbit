@@ -373,7 +373,7 @@ fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
     return pow_int_nonneg(base, exp)
   }
   let pos = pow_int_nonneg(base, -exp)
-  try! @symnum.BigRational::one().div_r(pos)
+  @symnum.BigRational::one().div_r(pos)
 }
 
 ///|

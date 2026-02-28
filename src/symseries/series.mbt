@@ -494,11 +494,7 @@ fn binomial_coeff(alpha : @symnum.BigRational, k : Int) -> @symnum.BigRational {
   while i < k {
     let shift = alpha.add_r(@symnum.BigRational::from_int(-i))
     coeff = coeff.mul_r(shift)
-    coeff = try coeff.div_r(@symnum.BigRational::from_int(i + 1)) catch {
-      _ => @symnum.BigRational::zero()
-    } noraise {
-      v => v
-    }
+    coeff = coeff.div_r(@symnum.BigRational::from_int(i + 1))
     i = i + 1
   }
   coeff

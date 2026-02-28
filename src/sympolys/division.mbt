@@ -225,9 +225,7 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   }
   let num_r = @symnum.BigRational::from_bigint(g_num)
   let den_r = @symnum.BigRational::from_bigint(lcm_den)
-  num_r.div_r(den_r) catch {
-    _ => raise PolyError::DivisionByZero
-  }
+  num_r.div_r(den_r)
 }
 
 ///|

@@ -24,10 +24,10 @@ fn util_rat_abs(a : BigRational) -> BigRational {
 
 ///|
 fn util_rat_div(a : BigRational, b : BigRational) -> BigRational? {
-  let res : Result[BigRational, Error] = try? a.div_r(b)
-  match res {
-    Ok(v) => Some(v)
-    Err(_) => None
+  if b.is_zero() {
+    None
+  } else {
+    Some(a.div_r(b))
   }
 }
 

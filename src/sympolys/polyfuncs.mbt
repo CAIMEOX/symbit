@@ -337,9 +337,7 @@ fn nullspace_vector(
       let v = r[row][j]
       r[row].set(
         j,
-        v.div_r(pivot_val) catch {
-          _ => raise PolyError::DivisionByZero
-        },
+        v.div_r(pivot_val),
       )
     }
     for i in 0..<rows {

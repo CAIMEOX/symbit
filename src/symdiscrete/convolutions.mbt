@@ -93,7 +93,7 @@ pub fn convolution_fwht(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
 pub fn convolution_subset(
   a : Array[Expr],
   b : Array[Expr],
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -135,7 +135,7 @@ pub fn convolution_subset(
 pub fn covering_product(
   a : Array[Expr],
   b : Array[Expr],
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -168,7 +168,7 @@ pub fn covering_product(
 pub fn intersecting_product(
   a : Array[Expr],
   b : Array[Expr],
-) -> Array[Expr] raise DiscreteError {
+) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
   }

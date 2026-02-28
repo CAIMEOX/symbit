@@ -332,10 +332,8 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
       if denom.is_zero() {
         raise PolyError::DivisionByZero
       }
-      let real = a.div_r(denom) catch { _ => raise PolyError::DivisionByZero }
-      let imag = b.neg_r().div_r(denom) catch {
-          _ => raise PolyError::DivisionByZero
-        }
+      let real = a.div_r(denom)
+      let imag = b.neg_r().div_r(denom)
       FieldElem::CC(real, imag)
     }
     FieldElem::GFp(p, x) => {

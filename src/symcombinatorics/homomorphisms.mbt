@@ -50,7 +50,7 @@ fn elem_is_identity(e : HomElement) -> Bool {
 }
 
 ///|
-fn elem_inverse(e : HomElement) -> HomElement raise CombinatoricsError {
+fn elem_inverse(e : HomElement) -> HomElement {
   match e {
     HomElement::Perm(p) => HomElement::Perm(p.invert())
     Word(w) => Word(w.inverse())
@@ -1571,6 +1571,17 @@ pub fn is_isomorphic(
   g : HomGroup,
   h : HomGroup,
 ) -> Bool raise CombinatoricsError {
+  // A quick low-index witness check catches some fp-group non-isomorphisms early.
+  match (g, h) {
+    (HomGroup::FpGroup(gf), HomGroup::FpGroup(hf)) => {
+      let g_nonab = fp_group_has_nonabelian_quotient(gf, 6)
+      let h_nonab = fp_group_has_nonabelian_quotient(hf, 6)
+      if g_nonab != h_nonab {
+        return false
+      }
+    }
+    _ => ()
+  }
   let (ok, _) = group_isomorphism(g, h, isomorphism=false)
   ok
 }

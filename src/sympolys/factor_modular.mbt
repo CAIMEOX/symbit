@@ -47,6 +47,15 @@ fn is_prime_small(n : Int) -> Bool {
 }
 
 ///|
+fn ensure_pos_mod(value : Int, modulus : Int) -> Int {
+  let mut v = value % modulus
+  if v < 0 {
+    v = v + modulus
+  }
+  v
+}
+
+///|
 fn map_to_gf(poly : Poly, modulus : Int) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   for m, c in poly.coeffs {
@@ -116,7 +125,15 @@ fn zassenhaus_factor(poly : Poly) -> Array[Poly] raise PolyError {
     arr.push(poly)
     return arr
   }
-  let primes : Array[Int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+  let base_primes : Array[Int] = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]
+  let first_prime = choose_good_prime(poly) catch { _ => base_primes[0] }
+  let primes : Array[Int] = Array::new()
+  primes.push(first_prime)
+  for p in base_primes {
+    if p != first_prime {
+      primes.push(p)
+    }
+  }
   for p in primes {
     let f_mod = map_to_gf(poly, p)
     let deriv = deriv_univar(f_mod)
@@ -432,7 +449,6 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
       remainder = f
     }
   }
-  let mut appended_any = false
   if factors.is_empty() {
     let bi_parts = biquadratic_factor(remainder)
     if bi_parts.length() > 1 {
@@ -444,7 +460,6 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
     let split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     for f in split {
       factors.push(f)
-      appended_any = true
     }
   } else if !remainder.is_zero() && !is_one(remainder) {
     let bi_parts = biquadratic_factor(remainder)
@@ -454,13 +469,12 @@ fn factor_integer(poly : Poly) -> Array[Poly] raise PolyError {
       }
       return factors
     }
-    let mut split = hensel_crt_factor(remainder) catch { _ => [remainder] }
+    let mut split = hensel_crt_factor(remainder)
     if split.length() == 1 && split[0].degree(0) == remainder.degree(0) {
       split = zassenhaus_factor(remainder) catch { _ => [remainder] }
     }
     for f in split {
       factors.push(f)
-      appended_any = true
     }
   }
   // Guard: if assembled factors do not reconstruct the original (up to sign), treat as irreducible.
@@ -623,75 +637,6 @@ fn build_reconstruction_lattice(
 }
 
 ///|
-/// Hensel lift a pair g,h so that g*h ≡ f (mod new_mod).
-fn hensel_pair(
-  f_dense : Array[Int],
-  g_dense : Array[Int],
-  h_dense : Array[Int],
-  prime : Int,
-  new_mod : Int,
-) -> (Array[Int], Array[Int]) {
-  let m = new_mod / prime
-  let f_mod = map_dense_mod(f_dense, new_mod)
-  let prod = poly_mul_mod_int(g_dense, h_dense, new_mod)
-  let c = poly_sub_mod_int(f_mod, prod, new_mod)
-  let e = dense_div_scalar(c, m)
-  let g_modp = map_dense_mod(g_dense, prime)
-  let h_modp = map_dense_mod(h_dense, prime)
-  let egcd = poly_ext_gcd_mod(g_modp, h_modp, prime)
-  // ensure gcd == 1 mod p; otherwise bail out to avoid division errors
-  if !(egcd.0.length() == 1 && ensure_pos_mod(egcd.0[0], prime) == 1) {
-    return (g_dense, h_dense)
-  }
-  let s = egcd.1
-  let t = egcd.2
-  let delta_g = poly_mul_mod_int(e, t, prime)
-  let delta_h = poly_mul_mod_int(e, s, prime)
-  let g_new = poly_add_scaled_mod(g_dense, delta_g, m, new_mod)
-  let h_new = poly_add_scaled_mod(h_dense, delta_h, m, new_mod)
-  (trim_dense_int(g_new, new_mod), trim_dense_int(h_new, new_mod))
-}
-
-///|
-fn map_dense_mod(poly : Array[Int], modulus : Int) -> Array[Int] {
-  let arr = poly.copy()
-  for i in 0..<arr.length() {
-    arr.set(i, ensure_pos_mod(arr[i], modulus))
-  }
-  trim_dense_int(arr, modulus)
-}
-
-///|
-fn dense_div_scalar(vec : Array[Int], k : Int) -> Array[Int] {
-  if k == 0 {
-    return vec
-  }
-  let res : Array[Int] = Array::new()
-  for v in vec {
-    res.push(v / k)
-  }
-  trim_dense_plain(res)
-}
-
-///|
-fn poly_add_scaled_mod(
-  base : Array[Int],
-  delta : Array[Int],
-  scale : Int,
-  modulus : Int,
-) -> Array[Int] {
-  let len = Int::max(base.length(), delta.length())
-  let res : Array[Int] = Array::make(len, 0)
-  for i in 0..<len {
-    let b = if i < base.length() { base[i] } else { 0 }
-    let d = if i < delta.length() { delta[i] } else { 0 }
-    let v = ensure_pos_mod(b + d * scale, modulus)
-    res.set(i, v)
-  }
-  trim_dense_int(res, modulus)
-}
-
-///|
 /// Dense polynomial arithmetic (mod integer modulus).
 fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
   let res = poly
@@ -711,117 +656,4 @@ fn trim_dense_int(poly : Array[Int], modulus : Int) -> Array[Int] {
   } else {
     res
   }
-}
-
-///|
-fn poly_sub_mod_int(
-  a : Array[Int],
-  b : Array[Int],
-  modulus : Int,
-) -> Array[Int] {
-  let len = Int::max(a.length(), b.length())
-  let res : Array[Int] = Array::make(len, 0)
-  for i in 0..<len {
-    let av = if i < a.length() { a[i] } else { 0 }
-    let bv = if i < b.length() { b[i] } else { 0 }
-    res.set(i, ensure_pos_mod(av - bv, modulus))
-  }
-  trim_dense_int(res, modulus)
-}
-
-///|
-fn poly_mul_mod_int(
-  a : Array[Int],
-  b : Array[Int],
-  modulus : Int,
-) -> Array[Int] {
-  let res : Array[Int] = Array::make(a.length() + b.length() - 1, 0)
-  for i in 0..<a.length() {
-    for j in 0..<b.length() {
-      let idx = i + j
-      let v = ensure_pos_mod(res[idx] + a[i] * b[j], modulus)
-      res.set(idx, v)
-    }
-  }
-  trim_dense_int(res, modulus)
-}
-
-///|
-/// Polynomial division a/b mod prime -> (q,r)
-fn poly_divmod_mod(
-  dividend : Array[Int],
-  divisor : Array[Int],
-  modulus : Int,
-) -> (Array[Int], Array[Int]) {
-  let div_trim = trim_dense_int(divisor, modulus)
-  if div_trim.is_empty() || (div_trim.length() == 1 && div_trim[0] == 0) {
-    return (Array::make(1, 0), dividend)
-  }
-  let n = dividend.length()
-  let m = div_trim.length()
-  let q : Array[Int] = Array::make(Int::max(n - m + 1, 1), 0)
-  let mut r = trim_dense_int(dividend, modulus)
-  let lc_div = div_trim[m - 1]
-  let lc_inv = mod_inv_int(lc_div, modulus)
-  if lc_inv == 0 {
-    return (Array::make(1, 0), dividend)
-  }
-  while r.length() >= m && !(r.length() == 1 && r[0] == 0) {
-    let deg_diff = r.length() - m
-    let coeff = ensure_pos_mod(r[r.length() - 1] * lc_inv, modulus)
-    q.set(deg_diff, coeff)
-    for i in 0..<m {
-      let idx = i + deg_diff
-      let v = ensure_pos_mod(r[idx] - coeff * div_trim[i], modulus)
-      r.set(idx, v)
-    }
-    r = trim_dense_int(r, modulus)
-  }
-  (trim_dense_int(q, modulus), r)
-}
-
-///|
-/// Extended GCD for polynomials mod prime.
-fn poly_ext_gcd_mod(
-  a : Array[Int],
-  b : Array[Int],
-  modulus : Int,
-) -> (Array[Int], Array[Int], Array[Int]) {
-  let mut old_r = trim_dense_int(a, modulus)
-  let mut r = trim_dense_int(b, modulus)
-  if r.length() == 1 && r[0] == 0 {
-    return (old_r, [1], [0])
-  }
-  let mut old_s : Array[Int] = [1]
-  let mut s : Array[Int] = [0]
-  let mut old_t : Array[Int] = [0]
-  let mut t : Array[Int] = [1]
-  while !(r.length() == 1 && r[0] == 0) {
-    let divres = poly_divmod_mod(old_r, r, modulus)
-    let q = divres.0
-    let rem = divres.1
-    old_r = r
-    r = rem
-    let qs = poly_mul_mod_int(q, s, modulus)
-    let qt = poly_mul_mod_int(q, t, modulus)
-    let new_s = poly_sub_mod_int(old_s, qs, modulus)
-    let new_t = poly_sub_mod_int(old_t, qt, modulus)
-    old_s = s
-    s = new_s
-    old_t = t
-    t = new_t
-  }
-  (old_r, old_s, old_t)
-}
-
-///|
-fn trim_dense_plain(poly : Array[Int]) -> Array[Int] {
-  let res = poly
-  while res.length() > 1 {
-    match res.last() {
-      None => break
-      Some(v) => if v == 0 { let _ = res.pop() } else { break }
-    }
-  }
-  res
 }
