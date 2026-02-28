@@ -182,7 +182,7 @@ fn eval_elementary_from_leading(
       } else if is_neg_oo(arg_lead) {
         Some(@symcore.int(0))
       } else {
-        Some(@symcore.function("exp", [arg_lead]))
+        Some(const_exp(arg_lead))
       }
     "log" =>
       if is_pos_oo(arg_lead) {
@@ -190,7 +190,7 @@ fn eval_elementary_from_leading(
       } else {
         match arg_lead {
           @symcore.Expr::Number(n) if n.is_zero() => Some(neg_oo_expr())
-          @symcore.Expr::Number(_) => Some(@symcore.function("log", [arg_lead]))
+          @symcore.Expr::Number(_) => Some(const_log(arg_lead))
           _ => None
         }
       }
@@ -198,10 +198,143 @@ fn eval_elementary_from_leading(
       if is_pos_oo(arg_lead) || is_neg_oo(arg_lead) {
         None
       } else {
-        Some(@symcore.function(name, [arg_lead]))
+        Some(match name {
+          "sin" => const_sin(arg_lead)
+          "cos" => const_cos(arg_lead)
+          _ => const_tan(arg_lead)
+        })
       }
     _ => None
   }
+}
+
+///|
+priv struct ExpTerm {
+  coeff : @symcore.Expr
+  arg : @symcore.Expr
+}
+
+///|
+fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
+  match term {
+    @symcore.Expr::Function(name, args) if name == "exp" && args.length() == 1 =>
+      Some(ExpTerm::{ coeff: @symcore.int(1), arg: args[0] })
+    @symcore.Expr::Mul(args) => {
+      let mut exp_arg : @symcore.Expr? = None
+      let rest : Array[@symcore.Expr] = Array::new()
+      for factor in args {
+        match factor {
+          @symcore.Expr::Function(name, fargs) if name == "exp" && fargs.length() == 1 =>
+            match exp_arg {
+              Some(_) => return None
+              None => exp_arg = Some(fargs[0])
+            }
+          _ => rest.push(factor)
+        }
+      }
+      match exp_arg {
+        Some(arg) => {
+          let coeff = if rest.is_empty() { @symcore.int(1) } else { @symcore.mul(rest) }
+          Some(ExpTerm::{ coeff, arg })
+        }
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn finite_limit_hint(
+  expr : @symcore.Expr,
+  t : @symcore.Expr,
+  dir : String,
+) -> @symcore.Expr? raise {
+  let t_name = match t {
+    @symcore.Expr::Symbol(name) => name
+    _ => return None
+  }
+  if !contains_symbol(expr, t_name) {
+    return Some(expr)
+  }
+  match leading_rational_near_zero(expr, t, dir) {
+    Some(v) if !contains_symbol(v, t_name) => return Some(v)
+    _ => ()
+  }
+  match leading_series_near_zero(expr, t, dir) {
+    Some(v) if !contains_symbol(v, t_name) => return Some(v)
+    _ => ()
+  }
+  let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
+  let no_o = strip_order_terms(ser)
+  let v = subst_symbol(no_o, t_name, @symcore.int(0))
+  if !contains_symbol(v, t_name) {
+    return Some(v)
+  }
+  let at_zero = subst_symbol(expr, t_name, @symcore.int(0))
+  if !contains_symbol(at_zero, t_name) {
+    Some(at_zero)
+  } else {
+    None
+  }
+}
+
+///|
+fn dominant_exp_add(
+  expr : @symcore.Expr,
+  t : @symcore.Expr,
+  dir : String,
+) -> @symcore.Expr? raise {
+  let args = match expr {
+    @symcore.Expr::Add(a) => a
+    _ => return None
+  }
+  if args.length() != 2 {
+    return None
+  }
+  let left = match parse_exp_term(args[0]) {
+    Some(v) => v
+    None => return None
+  }
+  let right = match parse_exp_term(args[1]) {
+    Some(v) => v
+    None => return None
+  }
+  let diff = expr_sub(left.arg, right.arg)
+  let diff_lim = match finite_limit_hint(diff, t, dir) {
+    Some(v) => v
+    None => return None
+  }
+  if is_pos_oo(diff_lim) {
+    return Some(gruntz_near_zero(args[0], t, dir))
+  }
+  if is_neg_oo(diff_lim) {
+    return Some(gruntz_near_zero(args[1], t, dir))
+  }
+  if diff_lim == zoo_expr() {
+    return None
+  }
+  let dom_lim = gruntz_near_zero(@symcore.function("exp", [left.arg]), t, dir)
+  let balance = expr_add(
+    left.coeff,
+    expr_mul(right.coeff, @symcore.function("exp", [expr_neg(diff_lim)])),
+  )
+  let balance_lim = match finite_limit_hint(balance, t, dir) {
+    Some(v) => v
+    None => return None
+  }
+  if is_zero_expr(balance_lim) {
+    return Some(@symcore.int(0))
+  }
+  if is_pos_oo(dom_lim) || is_neg_oo(dom_lim) {
+    let sign = sign_of_expr(balance_lim)
+    return Some(match sign {
+      Some(0) => @symcore.int(0)
+      Some(s) => infinity_from_sign(s)
+      None => oo_expr()
+    })
+  }
+  Some(expr_mul(balance_lim, dom_lim))
 }
 
 ///|
@@ -217,13 +350,22 @@ fn gruntz_near_zero(
   if !contains_symbol(expr, t_name) {
     return expr
   }
-  match leading_rational_near_zero(expr, t, dir) {
+  match dominant_exp_add(expr, t, dir) {
     Some(v) => return v
     None => ()
   }
-  match leading_series_near_zero(expr, t, dir) {
-    Some(v) => return v
-    None => ()
+  match expr {
+    @symcore.Expr::Function(_, _) => ()
+    _ => {
+      match leading_rational_near_zero(expr, t, dir) {
+        Some(v) => return v
+        None => ()
+      }
+      match leading_series_near_zero(expr, t, dir) {
+        Some(v) => return v
+        None => ()
+      }
+    }
   }
   match expr {
     @symcore.Expr::Function(name, args) if args.length() == 1 => {

@@ -113,9 +113,17 @@ pub fn sympy_normalize_str(expr_str : String) -> String raise {
 }
 
 ///|
+pub fn sympy_simplify_str(expr_str : String) -> String raise {
+  let obj = sympy_call_must("sympy.sympify", [OracleArg::Str(expr_str)])
+  let res = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(obj))])
+  py_str_enum(res)
+}
+
+///|
 pub fn sympy_equiv_str(a : String, b : String) -> Bool raise {
   let diff = "(\{a})- (\{b})"
-  let res = sympy_call_must("sympy.simplify", [OracleArg::Str(diff)])
+  let diff_obj = sympy_call_must("sympy.sympify", [OracleArg::Str(diff)])
+  let res = sympy_call_must("sympy.simplify", [OracleArg::PyObj(objenum_to_obj(diff_obj))])
   py_str_enum(res) == "0"
 }
 

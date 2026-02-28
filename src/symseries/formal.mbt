@@ -15,6 +15,13 @@ pub struct FormalPowerSeries {
 }
 
 ///|
+pub struct FormalPowerSeriesMulti {
+  expr : @symcore.Expr
+  vars : Array[@symcore.Expr]
+  x0s : Array[@symcore.Expr]
+}
+
+///|
 fn fps_depends_on(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
     @symcore.Expr::Symbol(s) => s == name
@@ -103,6 +110,56 @@ fn fps_strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
       }
     }
     _ => expr
+  }
+}
+
+///|
+fn fps_factorial_expr(n : Int) -> @symcore.Expr {
+  let mut fact = BigInt::from_int(1)
+  let mut i = 2
+  while i <= n {
+    fact = fact.mul(BigInt::from_int(i))
+    i = i + 1
+  }
+  @symcore.number(safe_rational(BigInt::from_int(1), fact))
+}
+
+///|
+fn fps_eval_at(expr : @symcore.Expr, name : String, value : @symcore.Expr) -> @symcore.Expr {
+  let env : Map[String, @symcore.Expr] = {}
+  env[name] = value
+  @symcore.subst(expr, env)
+}
+
+///|
+fn fps_derivative_term(
+  expr : @symcore.Expr,
+  x : @symcore.Expr,
+  x0 : @symcore.Expr,
+  n : Int,
+) -> @symcore.Expr {
+  let name = match x {
+    @symcore.Expr::Symbol(s) => s
+    _ => ""
+  }
+  if name == "" {
+    return @symcore.int(0)
+  }
+  let mut deriv = expr
+  let mut i = 0
+  while i < n {
+    deriv = @symcalculus.diff(deriv, x)
+    i += 1
+  }
+  let value = fps_eval_at(deriv, name, x0)
+  let coeff = expr_mul(value, fps_factorial_expr(n))
+  if n == 0 {
+    coeff
+  } else {
+    expr_mul(
+      coeff,
+      @symcore.pow(@symcore.add([x, expr_neg(x0)]), @symcore.int(n)),
+    )
   }
 }
 
@@ -197,49 +254,7 @@ pub fn FormalPowerSeries::coeff(
       } else {
         zero_expr()
       }
-    None => {
-      let var_name = match self.x {
-        @symcore.Expr::Symbol(name) => name
-        _ => ""
-      }
-      if var_name == "" {
-        return @symcore.function("fps_coeff", [
-          self.expr,
-          self.x,
-          self.x0,
-          @symcore.int(n),
-        ])
-      }
-      let trunc = fps_strip_order_expr(self.truncate(n=need))
-      let t = @symcore.symbol("__fps_coeff_t")
-      let env : Map[String, @symcore.Expr] = {}
-      env[var_name] = @symcore.add([self.x0, t])
-      let shifted = @symcore.subst(trunc, env)
-      match poly_from_expr(shifted, t) {
-        Some(poly) =>
-          if n < poly.length() {
-            if n == 0 {
-              poly[n]
-            } else {
-              expr_mul(
-                poly[n],
-                @symcore.pow(
-                  @symcore.add([self.x, expr_neg(self.x0)]),
-                  @symcore.int(n),
-                ),
-              )
-            }
-          } else {
-            zero_expr()
-          }
-        None => @symcore.function("fps_coeff", [
-          self.expr,
-          self.x,
-          self.x0,
-          @symcore.int(n),
-        ])
-      }
-    }
+    None => fps_derivative_term(self.expr, self.x, self.x0, n)
   }
 }
 
@@ -284,6 +299,99 @@ pub fn FormalPowerSeries::slice(
       }
       out
     }
+  }
+}
+
+///|
+pub fn fps_multivariate(
+  expr : @symcore.Expr,
+  vars : Array[@symcore.Expr],
+  x0s? : Array[@symcore.Expr] = [],
+) -> FormalPowerSeriesMulti raise {
+  guard !vars.is_empty() else {
+    fail("fps_multivariate requires variables")
+  }
+  let centers : Array[@symcore.Expr] = Array::new()
+  if x0s.is_empty() {
+    for _ in vars {
+      centers.push(@symcore.int(0))
+    }
+  } else {
+    guard x0s.length() == vars.length() else {
+      fail("fps_multivariate centers length mismatch")
+    }
+    for c in x0s {
+      centers.push(c)
+    }
+  }
+  for v in vars {
+    match v {
+      @symcore.Expr::Symbol(_) => ()
+      _ => fail("fps_multivariate variable must be a Symbol")
+    }
+  }
+  FormalPowerSeriesMulti::{ expr, vars, x0s: centers }
+}
+
+///|
+pub fn FormalPowerSeriesMulti::truncate(
+  self : FormalPowerSeriesMulti,
+  order? : Int = 4,
+) -> @symcore.Expr raise {
+  if order < 0 {
+    fail("fps_multivariate truncate requires non-negative order")
+  }
+  let mut out = self.expr
+  for i in 0..<self.vars.length() {
+    out = series(out, x=self.vars[i], x0=self.x0s[i], n=order)
+    out = fps_strip_order_expr(out)
+  }
+  out
+}
+
+///|
+pub fn FormalPowerSeriesMulti::coeff(
+  self : FormalPowerSeriesMulti,
+  orders : Array[Int],
+) -> @symcore.Expr raise {
+  guard orders.length() == self.vars.length() else {
+    fail("fps_multivariate coeff rank mismatch")
+  }
+  let mut deriv = self.expr
+  let mut scale = @symcore.int(1)
+  for i in 0..<orders.length() {
+    let k = orders[i]
+    if k < 0 {
+      fail("fps_multivariate coeff requires non-negative orders")
+    }
+    let mut j = 0
+    while j < k {
+      deriv = @symcalculus.diff(deriv, self.vars[i])
+      j += 1
+    }
+    scale = expr_mul(scale, fps_factorial_expr(k))
+  }
+  for i in 0..<self.vars.length() {
+    let name = match self.vars[i] {
+      @symcore.Expr::Symbol(s) => s
+      _ => ""
+    }
+    deriv = fps_eval_at(deriv, name, self.x0s[i])
+  }
+  let coeff = expr_mul(deriv, scale)
+  let terms : Array[@symcore.Expr] = [coeff]
+  for i in 0..<orders.length() {
+    let k = orders[i]
+    if k == 0 {
+      continue
+    }
+    let shift = @symcore.add([self.vars[i], expr_neg(self.x0s[i])])
+    terms.push(@symcore.pow(shift, @symcore.int(k)))
+  }
+  if terms.length() == 1 {
+    terms[0]
+  } else {
+    @symcore.mul(terms)
   }
 }
 
