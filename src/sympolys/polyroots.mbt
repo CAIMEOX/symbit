@@ -18,6 +18,7 @@ fn coeff_expr(poly : Poly, exp : Int) -> @symcore.Expr raise PolyError {
 }
 
 ///|
+/// Root-related helper aligned with SymPy polys root APIs.
 pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -34,6 +35,7 @@ pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 }
 
 ///|
+/// Root-related helper aligned with SymPy polys root APIs.
 pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -84,6 +86,7 @@ fn rootof_expr(poly : Poly, index : Int) -> @symcore.Expr {
 }
 
 ///|
+/// Root-related helper aligned with SymPy polys root APIs.
 pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -111,6 +114,7 @@ pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 }
 
 ///|
+/// Root-related helper aligned with SymPy polys root APIs.
 pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)

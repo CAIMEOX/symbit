@@ -19,11 +19,13 @@ pub(all) struct EPath {
 }
 
 ///|
+/// Method `new` on `EPath` used by simplify pipelines.
 pub fn EPath::new(path : String) -> EPath {
   EPath::{ raw: path, selectors: parse_path(path) }
 }
 
 ///|
+/// Method `select` on `EPath` used by simplify pipelines.
 pub fn EPath::select(
   self : EPath,
   expr : @symcore.Expr,
@@ -34,6 +36,7 @@ pub fn EPath::select(
 }
 
 ///|
+/// Method `apply` on `EPath` used by simplify pipelines.
 pub fn EPath::apply(
   self : EPath,
   expr : @symcore.Expr,
@@ -43,11 +46,13 @@ pub fn EPath::apply(
 }
 
 ///|
+/// Expression-tree traversal helper used by rewrite pipelines.
 pub fn epath(path : String, expr : @symcore.Expr) -> Array[@symcore.Expr] {
   EPath::new(path).select(expr)
 }
 
 ///|
+/// Expression-tree traversal helper used by rewrite pipelines.
 pub fn epath_apply(
   path : String,
   expr : @symcore.Expr,

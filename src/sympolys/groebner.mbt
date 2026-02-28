@@ -89,6 +89,7 @@ fn divmod_multivar(
 }
 
 ///|
+/// `Poly` method `divmod_multivar` with SymPy-compatible polynomial semantics.
 pub fn Poly::divmod_multivar(
   self : Poly,
   divisors : Array[Poly],
@@ -128,6 +129,7 @@ fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
 }
 
 ///|
+/// `Poly` method `groebner` with SymPy-compatible polynomial semantics.
 pub fn Poly::groebner(
   polys : Array[Poly],
   order? : TermOrder,

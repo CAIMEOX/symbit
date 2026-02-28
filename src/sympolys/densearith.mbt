@@ -1,4 +1,5 @@
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_add_term(
   f : Array[FieldElem],
   c : FieldElem,
@@ -31,6 +32,7 @@ pub fn dup_add_term(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_sub_term(
   f : Array[FieldElem],
   c : FieldElem,
@@ -41,6 +43,7 @@ pub fn dup_sub_term(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_mul_term(
   f : Array[FieldElem],
   c : FieldElem,
@@ -59,6 +62,7 @@ pub fn dup_mul_term(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_add_ground(
   f : Array[FieldElem],
   c : FieldElem,
@@ -68,6 +72,7 @@ pub fn dup_add_ground(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_sub_ground(
   f : Array[FieldElem],
   c : FieldElem,
@@ -77,6 +82,7 @@ pub fn dup_sub_ground(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_mul_ground(
   f : Array[FieldElem],
   c : FieldElem,
@@ -139,6 +145,7 @@ fn fe_exquo_ground(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_quo_ground(
   f : Array[FieldElem],
   c : FieldElem,
@@ -155,6 +162,7 @@ pub fn dup_quo_ground(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_exquo_ground(
   f : Array[FieldElem],
   c : FieldElem,
@@ -171,6 +179,7 @@ pub fn dup_exquo_ground(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_lshift(
   f : Array[FieldElem],
   n : Int,
@@ -188,6 +197,7 @@ pub fn dup_lshift(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_rshift(
   f : Array[FieldElem],
   n : Int,
@@ -207,6 +217,7 @@ pub fn dup_rshift(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_neg(
   f : Array[FieldElem],
   _domain : Domain,
@@ -219,6 +230,7 @@ pub fn dup_neg(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_abs(
   f : Array[FieldElem],
   _domain : Domain,
@@ -237,6 +249,7 @@ pub fn dup_abs(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_add(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -262,6 +275,7 @@ pub fn dup_add(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_sub(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -287,6 +301,7 @@ pub fn dup_sub(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_mul(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -309,6 +324,7 @@ pub fn dup_mul(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_sqr(
   f : Array[FieldElem],
   domain : Domain,
@@ -317,6 +333,7 @@ pub fn dup_sqr(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_pow(
   f : Array[FieldElem],
   n : Int,
@@ -388,6 +405,7 @@ fn dmp_items(f : DensePoly) -> Array[DensePoly] {
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_add_term(
   f : DensePoly,
   c : DensePoly,
@@ -430,6 +448,7 @@ pub fn dmp_add_term(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_sub_term(
   f : DensePoly,
   c : DensePoly,
@@ -441,6 +460,7 @@ pub fn dmp_sub_term(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_mul_term(
   f : DensePoly,
   c : DensePoly,
@@ -469,6 +489,7 @@ pub fn dmp_mul_term(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_add_ground(
   f : DensePoly,
   c : FieldElem,
@@ -484,6 +505,7 @@ pub fn dmp_add_ground(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_sub_ground(
   f : DensePoly,
   c : FieldElem,
@@ -499,6 +521,7 @@ pub fn dmp_sub_ground(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_mul_ground(
   f : DensePoly,
   c : FieldElem,
@@ -521,6 +544,7 @@ pub fn dmp_mul_ground(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_quo_ground(
   f : DensePoly,
   c : FieldElem,
@@ -540,6 +564,7 @@ pub fn dmp_quo_ground(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_exquo_ground(
   f : DensePoly,
   c : FieldElem,
@@ -559,6 +584,7 @@ pub fn dmp_exquo_ground(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_neg(
   f : DensePoly,
   u : Int,
@@ -577,6 +603,7 @@ pub fn dmp_neg(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_abs(
   f : DensePoly,
   u : Int,
@@ -595,6 +622,7 @@ pub fn dmp_abs(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_add(
   f : DensePoly,
   g : DensePoly,
@@ -632,6 +660,7 @@ pub fn dmp_add(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_sub(
   f : DensePoly,
   g : DensePoly,
@@ -669,6 +698,7 @@ pub fn dmp_sub(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_mul(
   f : DensePoly,
   g : DensePoly,
@@ -699,6 +729,7 @@ pub fn dmp_mul(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_sqr(
   f : DensePoly,
   u : Int,
@@ -708,6 +739,7 @@ pub fn dmp_sqr(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_pow(
   f : DensePoly,
   n : Int,
@@ -810,6 +842,7 @@ fn fe_divides(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_add_mul(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -820,6 +853,7 @@ pub fn dup_add_mul(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_sub_mul(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -830,6 +864,7 @@ pub fn dup_sub_mul(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_add_mul(
   f : DensePoly,
   g : DensePoly,
@@ -841,6 +876,7 @@ pub fn dmp_add_mul(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_sub_mul(
   f : DensePoly,
   g : DensePoly,
@@ -852,6 +888,7 @@ pub fn dmp_sub_mul(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_pdiv(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -894,6 +931,7 @@ pub fn dup_pdiv(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_prem(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -903,6 +941,7 @@ pub fn dup_prem(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_pquo(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -912,6 +951,7 @@ pub fn dup_pquo(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_pexquo(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -926,6 +966,7 @@ pub fn dup_pexquo(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_pdiv(
   f : DensePoly,
   g : DensePoly,
@@ -975,6 +1016,7 @@ pub fn dmp_pdiv(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_prem(
   f : DensePoly,
   g : DensePoly,
@@ -985,6 +1027,7 @@ pub fn dmp_prem(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_pquo(
   f : DensePoly,
   g : DensePoly,
@@ -995,6 +1038,7 @@ pub fn dmp_pquo(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_pexquo(
   f : DensePoly,
   g : DensePoly,
@@ -1010,6 +1054,7 @@ pub fn dmp_pexquo(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_rr_div(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1049,6 +1094,7 @@ pub fn dup_rr_div(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_rr_div(
   f : DensePoly,
   g : DensePoly,
@@ -1096,6 +1142,7 @@ pub fn dmp_rr_div(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_ff_div(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1132,6 +1179,7 @@ pub fn dup_ff_div(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_ff_div(
   f : DensePoly,
   g : DensePoly,
@@ -1179,6 +1227,7 @@ pub fn dmp_ff_div(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_div(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1192,6 +1241,7 @@ pub fn dup_div(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_rem(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1201,6 +1251,7 @@ pub fn dup_rem(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_quo(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1210,6 +1261,7 @@ pub fn dup_quo(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_exquo(
   f : Array[FieldElem],
   g : Array[FieldElem],
@@ -1224,6 +1276,7 @@ pub fn dup_exquo(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_div(
   f : DensePoly,
   g : DensePoly,
@@ -1238,6 +1291,7 @@ pub fn dmp_div(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_rem(
   f : DensePoly,
   g : DensePoly,
@@ -1248,6 +1302,7 @@ pub fn dmp_rem(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_quo(
   f : DensePoly,
   g : DensePoly,
@@ -1258,6 +1313,7 @@ pub fn dmp_quo(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_exquo(
   f : DensePoly,
   g : DensePoly,
@@ -1283,6 +1339,7 @@ fn fe_abs_rational(c : FieldElem) -> @symnum.BigRational raise PolyError {
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_max_norm(
   f : Array[FieldElem],
   domain : Domain,
@@ -1304,6 +1361,7 @@ pub fn dup_max_norm(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_max_norm(
   f : DensePoly,
   u : Int,
@@ -1336,6 +1394,7 @@ pub fn dmp_max_norm(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_l1_norm(
   f : Array[FieldElem],
   domain : Domain,
@@ -1352,6 +1411,7 @@ pub fn dup_l1_norm(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_l1_norm(
   f : DensePoly,
   u : Int,
@@ -1375,6 +1435,7 @@ pub fn dmp_l1_norm(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_l2_norm_squared(
   f : Array[FieldElem],
   domain : Domain,
@@ -1387,6 +1448,7 @@ pub fn dup_l2_norm_squared(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_l2_norm_squared(
   f : DensePoly,
   u : Int,
@@ -1410,6 +1472,7 @@ pub fn dmp_l2_norm_squared(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_expand(
   polys : Array[Array[FieldElem]],
   domain : Domain,
@@ -1425,6 +1488,7 @@ pub fn dup_expand(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_expand(
   polys : Array[DensePoly],
   u : Int,

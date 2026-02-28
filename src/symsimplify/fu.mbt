@@ -1,19 +1,23 @@
 ///|
+/// Apply Fu trigonometric rewrite rule `TR0`.
 pub fn tr0(expr : @symcore.Expr) -> @symcore.Expr {
   simplify(expr)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR1`.
 pub fn tr1(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr1)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR2`.
 pub fn tr2(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr2)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR2I`.
 pub fn tr2i(expr : @symcore.Expr, half? : Bool = false) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -23,16 +27,19 @@ pub fn tr2i(expr : @symcore.Expr, half? : Bool = false) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR3`.
 pub fn tr3(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr3)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR4`.
 pub fn tr4(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr4)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR5`.
 pub fn tr5(
   expr : @symcore.Expr,
   max? : Int = 4,
@@ -44,6 +51,7 @@ pub fn tr5(
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR6`.
 pub fn tr6(
   expr : @symcore.Expr,
   max? : Int = 4,
@@ -55,11 +63,13 @@ pub fn tr6(
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR7`.
 pub fn tr7(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr7)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR8`.
 pub fn tr8(expr : @symcore.Expr) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -69,6 +79,7 @@ pub fn tr8(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR9`.
 pub fn tr9(expr : @symcore.Expr) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -78,11 +89,13 @@ pub fn tr9(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR10`.
 pub fn tr10(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr10)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR10I`.
 pub fn tr10i(expr : @symcore.Expr) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -92,6 +105,7 @@ pub fn tr10i(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR11`.
 pub fn tr11(expr : @symcore.Expr) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -101,11 +115,13 @@ pub fn tr11(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR12`.
 pub fn tr12(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr12)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR12I`.
 pub fn tr12i(expr : @symcore.Expr) -> @symcore.Expr {
   fixpoint_fu(
     expr,
@@ -115,16 +131,19 @@ pub fn tr12i(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR13`.
 pub fn tr13(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr13)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR14`.
 pub fn tr14(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr14)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR15`.
 pub fn tr15(
   expr : @symcore.Expr,
   max? : Int = 4,
@@ -134,6 +153,7 @@ pub fn tr15(
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR16`.
 pub fn tr16(
   expr : @symcore.Expr,
   max? : Int = 4,
@@ -143,11 +163,13 @@ pub fn tr16(
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR111`.
 pub fn tr111(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_tr111)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TR22`.
 pub fn tr22(
   expr : @symcore.Expr,
   max? : Int = 4,
@@ -157,21 +179,25 @@ pub fn tr22(
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TRPOWER`.
 pub fn trpower(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_trpower)
 }
 
 ///|
+/// Apply Fu trigonometric rewrite rule `TRMORRIE`.
 pub fn trmorrie(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_fu(expr, rewrite_trmorrie)
 }
 
 ///|
+/// Run Fu trigonometric simplification strategy.
 pub fn futrig(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_fu(expr, futrig_once, max_passes~)
 }
 
 ///|
+/// Run Fu trigonometric simplification strategy.
 pub fn fu(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   simplify(futrig(expr, max_passes~))
 }

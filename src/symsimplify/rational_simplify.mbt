@@ -1,14 +1,17 @@
 ///|
+/// SymPy-compatible `radsimp` simplification entry point.
 pub fn radsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_radsimp, max_passes~)
 }
 
 ///|
+/// SymPy-compatible `ratsimp` simplification entry point.
 pub fn ratsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_ratsimp, max_passes~)
 }
 
 ///|
+/// SymPy-compatible simplify helper `ratsimpmodprime`.
 pub fn ratsimpmodprime(
   expr : @symcore.Expr,
   basis? : Array[@symcore.Expr] = [],
@@ -25,6 +28,7 @@ pub fn ratsimpmodprime(
 }
 
 ///|
+/// Symbolic expression transformation helper `collect_sqrt` used by simplify routines.
 pub fn collect_sqrt(
   expr : @symcore.Expr,
   evaluate? : Bool = true,
@@ -34,11 +38,13 @@ pub fn collect_sqrt(
 }
 
 ///|
+/// Symbolic expression transformation helper `collect_abs` used by simplify routines.
 pub fn collect_abs(expr : @symcore.Expr) -> @symcore.Expr {
   collect_function_terms(expr, "Abs")
 }
 
 ///|
+/// SymPy-compatible simplify helper `rad_rationalize`.
 pub fn rad_rationalize(
   num : @symcore.Expr,
   den : @symcore.Expr,
@@ -50,6 +56,7 @@ pub fn rad_rationalize(
 }
 
 ///|
+/// SymPy-compatible simplify helper `fraction_expand`.
 pub fn fraction_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -62,6 +69,7 @@ pub fn fraction_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `numer_expand`.
 pub fn numer_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let n = expand_mul_expr(num)
@@ -73,6 +81,7 @@ pub fn numer_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `denom_expand`.
 pub fn denom_expand(expr : @symcore.Expr) -> @symcore.Expr {
   let (num, den) = split_fraction(expr)
   let d = expand_mul_expr(den)
@@ -84,6 +93,7 @@ pub fn denom_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `split_surds`.
 pub fn split_surds(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
@@ -127,6 +137,7 @@ pub fn split_surds(
 }
 
 ///|
+/// SymPy-compatible `sqrtdenest` simplification entry point.
 pub fn sqrtdenest(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_rewrite(expr, rewrite_sqrtdenest, max_passes~)
 }

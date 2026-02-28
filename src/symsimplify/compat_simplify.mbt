@@ -1,9 +1,11 @@
 ///|
+/// SymPy-compatible simplify helper `besselsimp`.
 pub fn besselsimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_compat(expr, rewrite_besselsimp, max_passes~)
 }
 
 ///|
+/// SymPy-compatible simplify helper `kroneckersimp`.
 pub fn kroneckersimp(
   expr : @symcore.Expr,
   max_passes? : Int = 8,
@@ -12,6 +14,7 @@ pub fn kroneckersimp(
 }
 
 ///|
+/// SymPy-compatible `nsimplify` utility.
 pub fn nsimplify(
   expr : @symcore.Expr,
   constants? : Array[@symcore.Expr] = [],

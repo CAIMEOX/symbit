@@ -12,6 +12,7 @@ pub struct SymmetrizeListResult {
 }
 
 ///|
+/// SymPy-compatible polynomial helper `interpolate`.
 pub fn interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   gen : String,
@@ -44,6 +45,7 @@ pub fn interpolate(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `interpolate_values`.
 pub fn interpolate_values(
   values : Array[@symnum.BigRational],
   gen : String,
@@ -58,6 +60,7 @@ pub fn interpolate_values(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `interpolate_dict`.
 pub fn interpolate_dict(
   points : Map[@symnum.BigRational, @symnum.BigRational],
   gen : String,
@@ -71,6 +74,7 @@ pub fn interpolate_dict(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `rational_interpolate`.
 pub fn rational_interpolate(
   points : Array[(@symnum.BigRational, @symnum.BigRational)],
   deg_num : Int,
@@ -124,6 +128,7 @@ pub fn rational_interpolate(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `symmetrize`.
 pub fn symmetrize(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
@@ -175,6 +180,7 @@ pub fn symmetrize(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `symmetrize_list`.
 pub fn symmetrize_list(
   exprs : Array[@symcore.Expr],
   gens? : Array[String] = [],
@@ -204,6 +210,7 @@ pub fn symmetrize_list(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `horner`.
 pub fn horner(
   expr : @symcore.Expr,
   gens? : Array[String] = [],
@@ -233,6 +240,7 @@ pub fn horner(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `viete`.
 pub fn viete(
   expr : @symcore.Expr,
   roots? : Array[String] = [],

@@ -1,4 +1,5 @@
 ///|
+/// SymPy-compatible `simplify` simplification entry point.
 pub fn simplify(
   expr : @symcore.Expr,
   plan? : SimplifyPlan = SimplifyPlan::Default,
@@ -8,6 +9,7 @@ pub fn simplify(
 }
 
 ///|
+/// SymPy-compatible `powsimp` simplification entry point.
 pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,
@@ -22,6 +24,7 @@ pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible `trigsimp` simplification entry point.
 pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,
@@ -36,6 +39,7 @@ pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `signsimp`.
 pub fn signsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   simplify_with_patterns(
     expr,
@@ -49,6 +53,7 @@ pub fn signsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `simplify_with_patterns`.
 pub fn simplify_with_patterns(
   expr : @symcore.Expr,
   patterns : Array[SimplifyPattern],
@@ -67,6 +72,7 @@ pub fn simplify_with_patterns(
 }
 
 ///|
+/// SymPy-compatible simplify helper `apply_patterns_once`.
 pub fn apply_patterns_once(
   expr : @symcore.Expr,
   patterns : Array[SimplifyPattern],
@@ -90,6 +96,7 @@ fn rewrite_bottom_up(
 }
 
 ///|
+/// SymPy-compatible simplify helper `apply_pattern`.
 pub fn apply_pattern(
   pattern : SimplifyPattern,
   expr : @symcore.Expr,

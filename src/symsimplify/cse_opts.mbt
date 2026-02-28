@@ -1,9 +1,11 @@
 ///|
+/// SymPy-compatible simplify helper `sub_pre`.
 pub fn sub_pre(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_pre)
 }
 
 ///|
+/// SymPy-compatible simplify helper `sub_post`.
 pub fn sub_post(expr : @symcore.Expr) -> @symcore.Expr {
   rewrite_bottom_up_cseopts(expr, rewrite_sub_post)
 }

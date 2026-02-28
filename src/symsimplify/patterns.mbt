@@ -16,6 +16,7 @@ pub(all) enum SimplifyPlan {
 } derive(Eq, Show)
 
 ///|
+/// SymPy-compatible simplify helper `plan_patterns`.
 pub fn plan_patterns(plan : SimplifyPlan) -> Array[SimplifyPattern] {
   match plan {
     SimplifyPlan::Default => default_patterns()

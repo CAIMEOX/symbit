@@ -4,21 +4,25 @@ pub struct Monomial {
 } derive(Eq, Hash)
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_one(len : Int) -> Monomial {
   Monomial::{ exps: Array::make(len, 0) }
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_from_array(exps : Array[Int]) -> Monomial {
   Monomial::{ exps, }
 }
 
 ///|
+/// Method `to_array` on `Monomial` for polynomial-domain operations.
 pub fn Monomial::to_array(self : Monomial) -> Array[Int] {
   self.exps
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -29,6 +33,7 @@ pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
   if k < 0 {
     raise PolyError::BadExponent
@@ -54,6 +59,7 @@ pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_div(
   numer : Monomial,
   denom : Monomial,
@@ -73,6 +79,7 @@ pub fn monomial_div(
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -150,6 +157,7 @@ pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
 }
 
 ///|
+/// Monomial operation used by term ordering and polynomial arithmetic.
 pub fn monomial_count(vars : Int, degree : Int) -> Int {
   if vars < 0 || degree < 0 {
     return 0
@@ -289,6 +297,7 @@ pub fn compare_exps_igrlex(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `compare_monomial_order`.
 pub fn compare_monomial_order(
   a : Monomial,
   b : Monomial,

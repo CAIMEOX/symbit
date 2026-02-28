@@ -1,4 +1,5 @@
 ///|
+/// Expression-tree traversal helper used by rewrite pipelines.
 pub fn apply_at_level(
   expr : @symcore.Expr,
   func : (@symcore.Expr) -> @symcore.Expr,

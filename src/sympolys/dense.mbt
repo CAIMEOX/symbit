@@ -22,6 +22,7 @@ pub fn to_dense(poly : Poly, degree? : Int) -> Array[FieldElem] raise PolyError 
 }
 
 ///|
+/// SymPy-compatible polynomial helper `from_dense`.
 pub fn from_dense(
   coeffs : Array[FieldElem],
   gens : Array[String],
@@ -77,6 +78,7 @@ pub fn to_dense_multi(
 }
 
 ///|
+/// SymPy-compatible polynomial helper `from_dense_multi`.
 pub fn from_dense_multi(
   coeffs : Array[FieldElem],
   gens : Array[String],

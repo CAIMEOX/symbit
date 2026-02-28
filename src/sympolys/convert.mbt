@@ -1,4 +1,5 @@
 ///|
+/// `Poly` method `to_expr_with_order` with SymPy-compatible polynomial semantics.
 pub fn Poly::to_expr_with_order(
   self : Poly,
   order : TermOrder,
@@ -41,11 +42,13 @@ pub fn Poly::to_expr_with_order(
 }
 
 ///|
+/// `Poly` method `to_expr` with SymPy-compatible polynomial semantics.
 pub fn Poly::to_expr(self : Poly) -> @symcore.Expr {
   Poly::to_expr_with_order(self, self.order)
 }
 
 ///|
+/// `Poly` method `to_string` with SymPy-compatible polynomial semantics.
 pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
   let ord = match order {
     Some(o) => o
@@ -55,6 +58,7 @@ pub fn Poly::to_string(self : Poly, order? : TermOrder) -> String {
 }
 
 ///|
+/// `Poly` method `lc` with SymPy-compatible polynomial semantics.
 pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
   match
     self.leading_term_with_order(
@@ -69,6 +73,7 @@ pub fn Poly::lc(self : Poly, order? : TermOrder) -> FieldElem raise PolyError {
 }
 
 ///|
+/// `Poly` method `lm` with SymPy-compatible polynomial semantics.
 pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
   match
     self.leading_term_with_order(
@@ -83,6 +88,7 @@ pub fn Poly::lm(self : Poly, order? : TermOrder) -> Monomial? {
 }
 
 ///|
+/// `Poly` method `lt` with SymPy-compatible polynomial semantics.
 pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
   let ord = match order {
     Some(o) => o
@@ -252,6 +258,7 @@ fn is_monomial_zero(m : Monomial) -> Bool {
 }
 
 ///|
+/// `Poly` method `degree` with SymPy-compatible polynomial semantics.
 pub fn Poly::degree(self : Poly, gen_index : Int) -> Int {
   let mut max_deg = 0
   for m, _ in self.coeffs {
@@ -263,6 +270,7 @@ pub fn Poly::degree(self : Poly, gen_index : Int) -> Int {
 }
 
 ///|
+/// `Poly` method `total_degree` with SymPy-compatible polynomial semantics.
 pub fn Poly::total_degree(self : Poly) -> Int {
   let mut max_deg = 0
   for m, _ in self.coeffs {
@@ -275,11 +283,13 @@ pub fn Poly::total_degree(self : Poly) -> Int {
 }
 
 ///|
+/// `Poly` method `leading_term` with SymPy-compatible polynomial semantics.
 pub fn Poly::leading_term(self : Poly) -> (Monomial, FieldElem)? {
   self.leading_term_with_order(self.order)
 }
 
 ///|
+/// `Poly` method `leading_term_with_order` with SymPy-compatible polynomial semantics.
 pub fn Poly::leading_term_with_order(
   self : Poly,
   order : TermOrder,
@@ -301,6 +311,7 @@ pub fn Poly::leading_term_with_order(
 }
 
 ///|
+/// `Poly` method `from_expr` with SymPy-compatible polynomial semantics.
 pub fn Poly::from_expr(
   expr : @symcore.Expr,
   gens : Array[String],

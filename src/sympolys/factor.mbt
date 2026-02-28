@@ -143,6 +143,7 @@ fn apply_extension_request(poly : Poly, ext_syms : Array[String]) -> Poly raise 
 }
 
 ///|
+/// `Poly` method `factor` with SymPy-compatible polynomial semantics.
 pub fn Poly::factor(
   self : Poly,
   modulus? : Int,

@@ -1,9 +1,11 @@
 ///|
+/// SymPy-compatible `combsimp` simplification entry point.
 pub fn combsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
   fixpoint_special(expr, rewrite_combsimp, max_passes~)
 }
 
 ///|
+/// SymPy-compatible `hyperexpand` simplification entry point.
 pub fn hyperexpand(
   expr : @symcore.Expr,
   max_passes? : Int = 6,

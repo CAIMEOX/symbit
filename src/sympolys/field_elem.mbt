@@ -149,6 +149,7 @@ fn fe_pow(base : FieldElem, exp : Int) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_is_zero(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_zero()
@@ -160,6 +161,7 @@ pub fn fe_is_zero(a : FieldElem) -> Bool {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_is_one(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.is_one()
@@ -172,6 +174,7 @@ pub fn fe_is_one(a : FieldElem) -> Bool {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_is_negative(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) < 0
@@ -184,6 +187,7 @@ pub fn fe_is_negative(a : FieldElem) -> Bool {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_is_positive(a : FieldElem) -> Bool {
   match a {
     FieldElem::QQ(x) => x.compare(@symnum.BigRational::zero()) > 0
@@ -196,6 +200,7 @@ pub fn fe_is_positive(a : FieldElem) -> Bool {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError {
   match a {
     FieldElem::QQ(x) => x
@@ -234,6 +239,7 @@ pub fn fe_expect_rational(a : FieldElem) -> @symnum.BigRational raise PolyError 
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.add_r(y))
@@ -264,6 +270,7 @@ pub fn fe_add(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_neg(a : FieldElem) -> FieldElem {
   match a {
     FieldElem::QQ(x) => FieldElem::QQ(x.neg_r())
@@ -277,11 +284,13 @@ pub fn fe_neg(a : FieldElem) -> FieldElem {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_sub(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   fe_add(a, fe_neg(b))
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
   match (a, b) {
     (FieldElem::QQ(x), FieldElem::QQ(y)) => FieldElem::QQ(x.mul_r(y))
@@ -319,6 +328,7 @@ pub fn fe_mul(a : FieldElem, b : FieldElem) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
   match a {
     FieldElem::QQ(x) =>
@@ -361,6 +371,7 @@ pub fn fe_inv(a : FieldElem) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
   match domain {
     Domain::QQ | Domain::ZZ => FieldElem::QQ(@symnum.BigRational::from_int(val))
@@ -388,6 +399,7 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_from_rational(
   val : @symnum.BigRational,
   domain : Domain,
@@ -420,6 +432,7 @@ pub fn fe_from_rational(
 }
 
 ///|
+/// Field-element operation used by polynomial domain arithmetic.
 pub fn fe_to_string(a : FieldElem) -> String {
   match a {
     FieldElem::QQ(x) => x.to_string()

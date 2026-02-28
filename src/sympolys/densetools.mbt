@@ -27,6 +27,7 @@ pub fn dup_integrate(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_integrate(
   f : DensePoly,
   m : Int,
@@ -80,6 +81,7 @@ fn rec_integrate_in(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_integrate_in(
   f : DensePoly,
   m : Int,
@@ -94,6 +96,7 @@ pub fn dmp_integrate_in(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_diff(
   f : Array[FieldElem],
   m : Int,
@@ -134,6 +137,7 @@ pub fn dup_diff(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_diff(
   f : DensePoly,
   m : Int,
@@ -211,6 +215,7 @@ fn rec_diff_in(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_diff_in(
   f : DensePoly,
   m : Int,
@@ -225,6 +230,7 @@ pub fn dmp_diff_in(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_eval(
   f : Array[FieldElem],
   a : FieldElem,
@@ -241,6 +247,7 @@ pub fn dup_eval(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_eval(
   f : DensePoly,
   a : FieldElem,
@@ -286,6 +293,7 @@ fn rec_eval_in(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_eval_in(
   f : DensePoly,
   a : FieldElem,
@@ -300,6 +308,7 @@ pub fn dmp_eval_in(
 }
 
 ///|
+/// Dense univariate polynomial (`dup`) routine aligned with SymPy polys semantics.
 pub fn dup_monic(
   f : Array[FieldElem],
   domain : Domain,
@@ -316,6 +325,7 @@ pub fn dup_monic(
 }
 
 ///|
+/// Dense multivariate polynomial (`dmp`) routine aligned with SymPy polys semantics.
 pub fn dmp_ground_monic(
   f : DensePoly,
   u : Int,

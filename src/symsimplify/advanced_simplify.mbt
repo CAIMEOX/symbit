@@ -1,21 +1,25 @@
 ///|
+/// Symbolic expression transformation helper `fraction` used by simplify routines.
 pub fn fraction(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   split_fraction_simple(expr)
 }
 
 ///|
+/// Symbolic expression transformation helper `numer` used by simplify routines.
 pub fn numer(expr : @symcore.Expr) -> @symcore.Expr {
   let (n, _) = fraction(expr)
   n
 }
 
 ///|
+/// Symbolic expression transformation helper `denom` used by simplify routines.
 pub fn denom(expr : @symcore.Expr) -> @symcore.Expr {
   let (_, d) = fraction(expr)
   d
 }
 
 ///|
+/// Symbolic expression transformation helper `collect` used by simplify routines.
 pub fn collect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
   match sym {
     @symcore.Expr::Symbol(_) => collect_one_symbol(expr, sym)
@@ -24,12 +28,14 @@ pub fn collect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// Symbolic expression transformation helper `rcollect` used by simplify routines.
 pub fn rcollect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
   let rewritten = @symcore.map_children(expr, child => rcollect(child, sym))
   collect(rewritten, sym)
 }
 
 ///|
+/// Symbolic expression transformation helper `collect_const` used by simplify routines.
 pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Add(args) => {
@@ -65,11 +71,13 @@ pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible simplify helper `powdenest`.
 pub fn powdenest(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_powdenest, max_passes~)
 }
 
 ///|
+/// SymPy-compatible simplify helper `exptrigsimp`.
 pub fn exptrigsimp(
   expr : @symcore.Expr,
   max_passes? : Int = 8,
@@ -78,16 +86,19 @@ pub fn exptrigsimp(
 }
 
 ///|
+/// SymPy-compatible simplify helper `gammasimp`.
 pub fn gammasimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_gammasimp, max_passes~)
 }
 
 ///|
+/// SymPy-compatible simplify helper `logcombine`.
 pub fn logcombine(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
   fixpoint_advanced(expr, rewrite_logcombine, max_passes~)
 }
 
 ///|
+/// SymPy-compatible `separatevars` utility.
 pub fn separatevars(
   expr : @symcore.Expr,
   force? : Bool = false,
@@ -96,6 +107,7 @@ pub fn separatevars(
 }
 
 ///|
+/// SymPy-compatible `posify` utility.
 pub fn posify(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, Map[String, @symcore.Expr]) {
@@ -112,6 +124,7 @@ pub fn posify(
 }
 
 ///|
+/// SymPy-compatible `hypersimp` utility.
 pub fn hypersimp(f : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
   match k {
     @symcore.Expr::Symbol(name) => {
@@ -125,6 +138,7 @@ pub fn hypersimp(f : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
+/// SymPy-compatible `hypersimilar` utility.
 pub fn hypersimilar(
   f : @symcore.Expr,
   g : @symcore.Expr,
