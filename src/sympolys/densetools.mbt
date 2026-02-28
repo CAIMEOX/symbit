@@ -27,7 +27,7 @@ pub fn dup_integrate(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for integration on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for integration on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_integrate(
   f : DensePoly,
   m : Int,
@@ -81,7 +81,7 @@ fn rec_integrate_in(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for integration on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for integration on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_integrate_in(
   f : DensePoly,
   m : Int,
@@ -96,7 +96,7 @@ pub fn dmp_integrate_in(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for differentiation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
+/// Dense univariate (`dup`) helper for differentiation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
 pub fn dup_diff(
   f : Array[FieldElem],
   m : Int,
@@ -137,7 +137,7 @@ pub fn dup_diff(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for differentiation on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for differentiation on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_diff(
   f : DensePoly,
   m : Int,
@@ -215,7 +215,7 @@ fn rec_diff_in(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for differentiation on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for differentiation on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_diff_in(
   f : DensePoly,
   m : Int,
@@ -230,7 +230,7 @@ pub fn dmp_diff_in(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for evaluation on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
+/// Dense univariate (`dup`) helper for evaluation on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
 pub fn dup_eval(
   f : Array[FieldElem],
   a : FieldElem,
@@ -247,7 +247,7 @@ pub fn dup_eval(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for evaluation on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for evaluation on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_eval(
   f : DensePoly,
   a : FieldElem,
@@ -293,7 +293,7 @@ fn rec_eval_in(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for evaluation on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for evaluation on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_eval_in(
   f : DensePoly,
   a : FieldElem,
@@ -308,7 +308,7 @@ pub fn dmp_eval_in(
 }
 
 ///|
-/// Dense univariate (`dup`) helper for monic normalization on descending-degree coefficient arrays. Follows SymPy dense-polys zero/normalization conventions.
+/// Dense univariate (`dup`) helper for monic normalization on descending-degree coefficient arrays.; coefficient arrays are descending-degree and leading zeros are canonicalized by strip-style normalization.
 pub fn dup_monic(
   f : Array[FieldElem],
   domain : Domain,
@@ -325,7 +325,7 @@ pub fn dup_monic(
 }
 
 ///|
-/// Dense multivariate (`dmp`) helper for monic normalization on recursive coefficient arrays by level `u`. Mirrors SymPy's dense multivariate representation rules.
+/// Dense multivariate (`dmp`) helper for monic normalization on recursive coefficient arrays by level `u`.; coefficients are nested recursively by variable level `u` in dense-array form.
 pub fn dmp_ground_monic(
   f : DensePoly,
   u : Int,
