@@ -4,25 +4,25 @@ pub struct Monomial {
 } derive(Eq, Hash)
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Return the multiplicative-identity monomial `(0, ..., 0)`.
 pub fn monomial_one(len : Int) -> Monomial {
   Monomial::{ exps: Array::make(len, 0) }
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Build a monomial from an exponent vector.
 pub fn monomial_from_array(exps : Array[Int]) -> Monomial {
   Monomial::{ exps, }
 }
 
 ///|
-/// Method `to_array` on `Monomial` for polynomial-domain operations.
+/// Return the exponent vector.
 pub fn Monomial::to_array(self : Monomial) -> Array[Int] {
   self.exps
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Multiply monomials by adding exponents component-wise.
 pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch
@@ -33,7 +33,7 @@ pub fn monomial_mul(a : Monomial, b : Monomial) -> Monomial raise PolyError {
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Raise a monomial to the non-negative integer power `k`.
 pub fn monomial_pow(m : Monomial, k : Int) -> Monomial raise PolyError {
   if k < 0 {
     raise PolyError::BadExponent
@@ -59,7 +59,7 @@ pub fn monomial_divides(a : Monomial, b : Monomial) -> Bool raise PolyError {
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Divide monomials when possible; return `None` if exponents do not divide.
 pub fn monomial_div(
   numer : Monomial,
   denom : Monomial,
@@ -79,7 +79,7 @@ pub fn monomial_div(
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Return the least common multiple monomial of `a` and `b`.
 pub fn monomial_lcm(a : Monomial, b : Monomial) -> Monomial raise PolyError {
   if a.exps.length() != b.exps.length() {
     raise PolyError::DomainMismatch

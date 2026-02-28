@@ -11,7 +11,7 @@ pub fn rootof(poly : Poly, index : Int) -> RootOf {
 }
 
 ///|
-/// Method `to_string` on `RootOf` for polynomial-domain operations.
+/// Render this symbolic root in `CRootOf(poly, index)` form.
 pub fn RootOf::to_string(self : RootOf) -> String {
   let expr_str = @symprint.to_string(self.poly.to_expr())
   "CRootOf(\{expr_str}, \{self.index})"

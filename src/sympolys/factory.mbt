@@ -6,19 +6,19 @@ pub struct PolyBuilder {
 }
 
 ///|
-/// Method `new` on `PolyBuilder` for polynomial-domain operations.
+/// Create a polynomial builder with default `Lex` order.
 pub fn PolyBuilder::new(gens : Array[String], domain : Domain) -> PolyBuilder {
   PolyBuilder::{ gens, domain, order: TermOrder::Lex }
 }
 
 ///|
-/// Method `order` on `PolyBuilder` for polynomial-domain operations.
+/// Return a builder with the same generators/domain and a new term order.
 pub fn PolyBuilder::order(self : PolyBuilder, order : TermOrder) -> PolyBuilder {
   PolyBuilder::{ gens: self.gens, domain: self.domain, order }
 }
 
 ///|
-/// Method `from_expr` on `PolyBuilder` for polynomial-domain operations.
+/// Parse an expression into a polynomial using this builder configuration.
 pub fn PolyBuilder::from_expr(
   self : PolyBuilder,
   expr : @symcore.Expr,
