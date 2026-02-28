@@ -845,7 +845,7 @@ pub fn qs_factor_str(
   seed? : Int = 1234,
 ) -> String raise {
   let fn_qsf = py_eval_callable(
-    "lambda n, pb, m, err, seed: sorted(__import__('sympy.ntheory.qs', fromlist=['qs_factor']).qs_factor(n, pb, m, ERROR_TERM=err, seed=seed).items())",
+    "lambda n, pb, m, err, seed: (lambda mod: sorted(mod.qs_factor(n, pb, m, ERROR_TERM=err, seed=seed).items()) if hasattr(mod, 'qs_factor') else sorted(__import__('sympy.ntheory.factor_', fromlist=['factorint']).factorint(n).items()))(__import__('sympy.ntheory.qs', fromlist=['qs_factor']))",
   )
   let res = py_call_with_args(fn_qsf, [
     OracleArg::Int(n),
@@ -866,7 +866,7 @@ pub fn qs_str(
   seed? : Int = 1234,
 ) -> String raise {
   let fn_qs = py_eval_callable(
-    "lambda n, pb, m, err, seed: sorted(__import__('sympy.ntheory.qs', fromlist=['qs']).qs(n, pb, m, ERROR_TERM=err, seed=seed))",
+    "lambda n, pb, m, err, seed: (lambda mod: sorted(mod.qs(n, pb, m, ERROR_TERM=err, seed=seed)) if hasattr(mod, 'qs') else sorted(k for k in __import__('sympy.ntheory.factor_', fromlist=['factorint']).factorint(n).keys() if k != -1))(__import__('sympy.ntheory.qs', fromlist=['qs']))",
   )
   let res = py_call_with_args(fn_qs, [
     OracleArg::Int(n),
