@@ -174,7 +174,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
-/// Raw constructors without canonicalization (used by strategies).
+/// Build `Add` directly without flattening, sorting, or constant folding.
 pub fn raw_add(args : Array[Expr]) -> Expr {
   Expr::Add(args.map(child => child))
 }

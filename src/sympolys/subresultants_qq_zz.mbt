@@ -39,7 +39,7 @@ pub fn res_z(p : Poly, q : Poly) -> @symnum.BigRational raise PolyError {
 }
 
 ///|
-/// Compute remainder used by subresultant sequences.
+/// Return the subresultant remainder sequence for `(p, q)`.
 pub fn subresultants_rem(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
   subresultants(p, q)
 }
@@ -88,7 +88,7 @@ pub fn sturm_q(p : Poly, q : Poly) -> Array[Poly] raise PolyError {
 }
 
 ///|
-/// Integer remainder helper from subresultants_qq_zz.py.
+/// Return the polynomial remainder in `ZZ[x]`.
 pub fn rem_z(p : Poly, q : Poly) -> Poly raise PolyError {
   ensure_univar_pair(p, q)
   let (_, r) = p.divmod_univar(q)
@@ -96,7 +96,7 @@ pub fn rem_z(p : Poly, q : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// Integer quotient helper from subresultants_qq_zz.py.
+/// Return the polynomial quotient in `ZZ[x]`.
 pub fn quo_z(p : Poly, q : Poly) -> Poly raise PolyError {
   ensure_univar_pair(p, q)
   let (quo, _) = p.divmod_univar(q)

@@ -169,13 +169,13 @@ pub fn cse_reconstruct(result : CseResult) -> Array[Expr] {
 }
 
 ///|
-/// Pre-order traversal helper used by substitution-based rewrites.
+/// Apply `sub_pre` rewriting (parent before children).
 pub fn sub_pre(expr : Expr) -> Expr {
   @symsimplify.sub_pre(expr)
 }
 
 ///|
-/// Post-order traversal helper used by substitution-based rewrites.
+/// Apply `sub_post` rewriting (children before parent).
 pub fn sub_post(expr : Expr) -> Expr {
   @symsimplify.sub_post(expr)
 }
@@ -223,7 +223,7 @@ pub fn rad_rationalize(num : Expr, den : Expr) -> (Expr, Expr) {
 }
 
 ///|
-/// Partition surd terms into a canonical triple used by radical simplification.
+/// Split surd terms into `(g, a, b)` for denesting-style transformations.
 pub fn split_surds(expr : Expr) -> (Expr, Expr, Expr) {
   @symsimplify.split_surds(expr)
 }

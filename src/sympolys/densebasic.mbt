@@ -85,7 +85,7 @@ pub enum DensePoly {
 }
 
 ///|
-/// Dense polynomial with rational coefficients used by oracle-conversion helpers.
+/// Dense polynomial with rational coefficients.
 pub enum DenseRat {
   Coef(@symnum.BigRational)
   Poly(Array[DenseRat])

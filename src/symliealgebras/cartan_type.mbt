@@ -64,7 +64,7 @@ pub fn CartanType::series(self : CartanType) -> String {
 }
 
 ///|
-/// Dimension of the ambient vector space used by the root realization.
+/// Dimension of the ambient vector space for this root realization.
 pub fn CartanType::dimension(self : CartanType) -> Int {
   match self.series {
     "A" => type_a_dimension(self.n)

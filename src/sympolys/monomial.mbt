@@ -157,7 +157,7 @@ pub fn monomial_min(monoms : Array[Monomial]) -> Monomial raise PolyError {
 }
 
 ///|
-/// Monomial operation used by term ordering and polynomial arithmetic.
+/// Return the number of monomials of total degree `degree` in `vars` variables.
 pub fn monomial_count(vars : Int, degree : Int) -> Int {
   if vars < 0 || degree < 0 {
     return 0

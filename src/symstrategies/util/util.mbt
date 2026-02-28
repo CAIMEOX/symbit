@@ -3,7 +3,7 @@
 pub type Basic = @symcore.Expr
 
 ///|
-/// Operations used by strategy builders for Expr trees.
+/// Operator tags for `Expr` nodes in generic strategy combinators.
 pub(all) enum ExprOp {
   Number
   Symbol
@@ -14,7 +14,7 @@ pub(all) enum ExprOp {
 } derive(Eq, Hash)
 
 ///|
-/// Function bundle used by traversal strategies.
+/// Generic traversal adapter: inspect node op, rebuild, and enumerate children.
 pub struct Fns[T, Op] {
   op : (T) -> Op
   new : (Op, Array[T]) -> T
@@ -135,7 +135,7 @@ pub let expr_fns : Fns[@symcore.Expr, ExprOp] = {
 }
 
 ///|
-/// Alias for raw constructor used by rl.
+/// Alias for the raw constructor expected by rewrite-library helpers.
 pub fn new(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
   expr_new_raw(op, args)
 }

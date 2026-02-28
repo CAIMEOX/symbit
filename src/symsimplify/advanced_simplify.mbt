@@ -1,25 +1,25 @@
 ///|
-/// Symbolic expression transformation helper `fraction` used by simplify routines.
+/// Return `(num, den)` so `expr = num/den` in symbolic form.
 pub fn fraction(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
   split_fraction_simple(expr)
 }
 
 ///|
-/// Symbolic expression transformation helper `numer` used by simplify routines.
+/// Return the numerator of `expr`.
 pub fn numer(expr : @symcore.Expr) -> @symcore.Expr {
   let (n, _) = fraction(expr)
   n
 }
 
 ///|
-/// Symbolic expression transformation helper `denom` used by simplify routines.
+/// Return the denominator of `expr`.
 pub fn denom(expr : @symcore.Expr) -> @symcore.Expr {
   let (_, d) = fraction(expr)
   d
 }
 
 ///|
-/// Symbolic expression transformation helper `collect` used by simplify routines.
+/// Collect additive terms by powers of `sym`.
 pub fn collect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
   match sym {
     @symcore.Expr::Symbol(_) => collect_one_symbol(expr, sym)
@@ -28,14 +28,14 @@ pub fn collect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-/// Symbolic expression transformation helper `rcollect` used by simplify routines.
+/// Recursively apply `collect` to `expr` and its children.
 pub fn rcollect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
   let rewritten = @symcore.map_children(expr, child => rcollect(child, sym))
   collect(rewritten, sym)
 }
 
 ///|
-/// Symbolic expression transformation helper `collect_const` used by simplify routines.
+/// Factor a shared rational constant out of additive terms.
 pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Add(args) => {
