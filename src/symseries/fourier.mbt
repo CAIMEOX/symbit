@@ -16,12 +16,6 @@ pub struct FourierSeries {
 }
 
 ///|
-priv enum TrigKind {
-  Sin
-  Cos
-}
-
-///|
 priv enum AtomKind {
   Sin
   Cos
@@ -216,65 +210,6 @@ fn form_neg(a : LinearForm) -> LinearForm {
 }
 
 ///|
-fn split_linear_coeff(
-  arg : @symcore.Expr,
-  x : @symcore.Expr,
-  var_name : String,
-) -> @symcore.Expr? {
-  if arg == x {
-    return Some(@symcore.int(1))
-  }
-  match arg {
-    @symcore.Expr::Mul(args) => {
-      let mut seen_x = false
-      let coeff_args : Array[@symcore.Expr] = Array::new()
-      for factor in args {
-        if factor == x {
-          if seen_x {
-            return None
-          }
-          seen_x = true
-        } else if contains_symbol(factor, var_name) {
-          return None
-        } else {
-          coeff_args.push(factor)
-        }
-      }
-      if !seen_x {
-        return None
-      }
-      if coeff_args.is_empty() {
-        Some(@symcore.int(1))
-      } else {
-        Some(@symcore.mul(coeff_args))
-      }
-    }
-    _ => None
-  }
-}
-
-///|
-fn parse_linear_trig(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-  var_name : String,
-) -> (TrigKind, @symcore.Expr)? {
-  match parse_linear_atom(expr, x, var_name) {
-    Some(atom) =>
-      if atom.form.shift == @symcore.int(0) {
-        match atom.kind {
-          AtomKind::Sin => Some((TrigKind::Sin, atom.form.coeff))
-          AtomKind::Cos => Some((TrigKind::Cos, atom.form.coeff))
-          _ => None
-        }
-      } else {
-        None
-      }
-    None => None
-  }
-}
-
-///|
 fn eval_at(
   expr : @symcore.Expr,
   var_name : String,
@@ -291,31 +226,6 @@ fn definite_integral_expr(
   b : @symcore.Expr,
 ) -> @symcore.Expr {
   @symcore.function("Integral", [expr, @symcore.function("Tuple", [x, a, b])])
-}
-
-///|
-fn integrate_linear_trig(
-  kind : TrigKind,
-  freq : @symcore.Expr,
-  x : @symcore.Expr,
-  var_name : String,
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-) -> @symcore.Expr {
-  if is_zero_expr(freq) {
-    return match kind {
-      TrigKind::Sin => @symcore.int(0)
-      TrigKind::Cos => expr_sub(b, a)
-    }
-  }
-  let arg_x = expr_mul(freq, x)
-  let anti = match kind {
-    TrigKind::Sin => expr_neg(expr_div(@symcore.function("cos", [arg_x]), freq))
-    TrigKind::Cos => expr_div(@symcore.function("sin", [arg_x]), freq)
-  }
-  let at_b = eval_at(anti, var_name, b)
-  let at_a = eval_at(anti, var_name, a)
-  expr_sub(at_b, at_a)
 }
 
 ///|
@@ -337,77 +247,6 @@ fn integral_poly(
       expr_mul(coeff, expr_div(@symcore.pow(x, @symcore.int(p)), @symcore.int(p)))
     let at_b = eval_at(anti_term, var_name, b)
     let at_a = eval_at(anti_term, var_name, a)
-    acc = expr_add(acc, expr_sub(at_b, at_a))
-  }
-  acc
-}
-
-///|
-fn int_pow_sin(
-  m : Int,
-  freq : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
-  if is_zero_expr(freq) {
-    return @symcore.int(0)
-  }
-  if m == 0 {
-    return expr_neg(expr_div(@symcore.function("cos", [expr_mul(freq, x)]), freq))
-  }
-  let xm = @symcore.pow(x, @symcore.int(m))
-  let head = expr_neg(expr_div(expr_mul(xm, @symcore.function("cos", [expr_mul(freq, x)])), freq))
-  let tail = expr_mul(
-    expr_div(@symcore.int(m), freq),
-    int_pow_cos(m - 1, freq, x),
-  )
-  expr_add(head, tail)
-}
-
-///|
-fn int_pow_cos(
-  m : Int,
-  freq : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
-  if is_zero_expr(freq) {
-    let p = m + 1
-    return expr_div(@symcore.pow(x, @symcore.int(p)), @symcore.int(p))
-  }
-  if m == 0 {
-    return expr_div(@symcore.function("sin", [expr_mul(freq, x)]), freq)
-  }
-  let xm = @symcore.pow(x, @symcore.int(m))
-  let head = expr_div(expr_mul(xm, @symcore.function("sin", [expr_mul(freq, x)])), freq)
-  let tail = expr_mul(
-    expr_div(@symcore.int(m), freq),
-    int_pow_sin(m - 1, freq, x),
-  )
-  expr_sub(head, tail)
-}
-
-///|
-fn integral_poly_trig(
-  poly : Array[@symcore.Expr],
-  kind : TrigKind,
-  freq : @symcore.Expr,
-  x : @symcore.Expr,
-  var_name : String,
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-) -> @symcore.Expr {
-  let mut acc = @symcore.int(0)
-  for i in 0..<poly.length() {
-    let coeff = poly[i]
-    if is_zero_expr(coeff) {
-      continue
-    }
-    let anti = match kind {
-      TrigKind::Sin => int_pow_sin(i, freq, x)
-      TrigKind::Cos => int_pow_cos(i, freq, x)
-    }
-    let scaled = expr_mul(coeff, anti)
-    let at_b = eval_at(scaled, var_name, b)
-    let at_a = eval_at(scaled, var_name, a)
     acc = expr_add(acc, expr_sub(at_b, at_a))
   }
   acc

@@ -1,8 +1,6 @@
 import {
   "CAIMEOX/symbit/symnum",
-  "moonbitlang/core/quickcheck" @coreqc,
   "moonbitlang/quickcheck" @qc,
-  "moonbitlang/core/quickcheck/splitmix" @splitmix,
 }
 
 import {

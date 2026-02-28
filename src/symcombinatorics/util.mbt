@@ -70,7 +70,7 @@ fn orbit_points(
   degree : Int,
   generators : Array[Permutation],
   alpha : Int,
-) -> Array[Int] raise CombinatoricsError {
+) -> Array[Int] {
   let gens_af : Array[Array[Int]] = Array::new()
   for g in generators {
     gens_af.push(g.array_form())
@@ -198,7 +198,7 @@ pub fn _check_cycles_alt_sym(perm : Permutation) -> Bool {
 pub fn _distribute_gens_by_base(
   base : Array[Int],
   gens : Array[Permutation],
-) -> Array[Array[Permutation]] raise CombinatoricsError {
+) -> Array[Array[Permutation]] {
   let base_len = base.length()
   let stabs : Array[Array[Permutation]] = Array::new()
   for _ in 0..<base_len {
@@ -239,8 +239,8 @@ pub struct OrbitsTransversals {
 pub fn _orbits_transversals_from_bsgs(
   base : Array[Int],
   strong_gens_distr : Array[Array[Permutation]],
-  transversals_only? : Bool = false,
-  slp? : Bool = false,
+  _transversals_only? : Bool = false,
+  _slp? : Bool = false,
 ) -> OrbitsTransversals raise CombinatoricsError {
   let base_len = base.length()
   let basic_orbits : Array[Array[Int]] = Array::new()

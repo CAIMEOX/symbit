@@ -1,8 +1,6 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/symtensor",
-  "CAIMEOX/symbit/symtensor/indexed",
   "CAIMEOX/symbit/symcombinatorics",
   "CAIMEOX/symbit/symprint",
 }

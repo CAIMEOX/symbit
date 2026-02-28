@@ -347,13 +347,13 @@ fn polyhedron_from_ints(
 
 ///|
 // tetrahedron
-let tetrahedron_corners = [0, 1, 2, 3]
+let tetrahedron_corners : Array[Int] = [0, 1, 2, 3]
 
 ///|
-let tetrahedron_faces = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]]
+let tetrahedron_faces : Array[Array[Int]] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]]
 
 ///|
-let tetrahedron_pgroup = [
+let tetrahedron_pgroup : Array[Array[Int]] = [
   [0, 2, 3, 1],
   [1, 2, 0, 3],
   [3, 1, 0, 2],
@@ -365,10 +365,10 @@ let tetrahedron_pgroup = [
 
 ///|
 // cube
-let cube_corners = [0, 1, 2, 3, 4, 5, 6, 7]
+let cube_corners : Array[Int] = [0, 1, 2, 3, 4, 5, 6, 7]
 
 ///|
-let cube_faces = [
+let cube_faces : Array[Array[Int]] = [
   [0, 1, 2, 3],
   [0, 1, 5, 4],
   [0, 3, 7, 4],
@@ -378,7 +378,7 @@ let cube_faces = [
 ]
 
 ///|
-let cube_pgroup = [
+let cube_pgroup : Array[Array[Int]] = [
   [1, 2, 3, 0, 5, 6, 7, 4],
   [4, 0, 3, 7, 5, 1, 2, 6],
   [4, 5, 1, 0, 7, 6, 2, 3],
@@ -396,10 +396,10 @@ let cube_pgroup = [
 
 ///|
 // octahedron
-let octahedron_corners = [0, 1, 2, 3, 4, 5]
+let octahedron_corners : Array[Int] = [0, 1, 2, 3, 4, 5]
 
 ///|
-let octahedron_faces = [
+let octahedron_faces : Array[Array[Int]] = [
   [0, 1, 2],
   [0, 1, 4],
   [0, 2, 3],
@@ -411,7 +411,7 @@ let octahedron_faces = [
 ]
 
 ///|
-let octahedron_pgroup = [
+let octahedron_pgroup : Array[Array[Int]] = [
   [0, 2, 3, 4, 1, 5],
   [4, 1, 0, 3, 5, 2],
   [1, 5, 2, 0, 4, 3],
@@ -429,12 +429,12 @@ let octahedron_pgroup = [
 
 ///|
 // dodecahedron
-let dodecahedron_corners = [
+let dodecahedron_corners : Array[Int] = [
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
 ]
 
 ///|
-let dodecahedron_faces = [
+let dodecahedron_faces : Array[Array[Int]] = [
   [0, 1, 2, 3, 4],
   [0, 1, 6, 10, 5],
   [0, 4, 9, 14, 5],
@@ -450,7 +450,7 @@ let dodecahedron_faces = [
 ]
 
 ///|
-let dodecahedron_pgroup = [
+let dodecahedron_pgroup : Array[Array[Int]] = [
   [1, 2, 3, 4, 0, 6, 7, 8, 9, 5, 11, 12, 13, 14, 10, 16, 17, 18, 19, 15],
   [5, 0, 4, 9, 14, 10, 1, 3, 13, 15, 6, 2, 8, 19, 16, 17, 11, 7, 12, 18],
   [10, 6, 1, 0, 5, 16, 11, 2, 4, 14, 17, 7, 3, 9, 15, 19, 18, 12, 8, 13],
@@ -486,10 +486,10 @@ let dodecahedron_pgroup = [
 
 ///|
 // icosahedron
-let icosahedron_corners = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+let icosahedron_corners : Array[Int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
 ///|
-let icosahedron_faces = [
+let icosahedron_faces : Array[Array[Int]] = [
   [0, 1, 2],
   [0, 1, 5],
   [0, 2, 3],
@@ -513,7 +513,7 @@ let icosahedron_faces = [
 ]
 
 ///|
-let icosahedron_pgroup = [
+let icosahedron_pgroup : Array[Array[Int]] = [
   [0, 2, 3, 4, 5, 1, 7, 8, 9, 10, 6, 11],
   [5, 1, 0, 4, 10, 6, 7, 2, 3, 9, 11, 8],
   [1, 7, 2, 0, 5, 6, 11, 8, 3, 4, 10, 9],
