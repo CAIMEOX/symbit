@@ -190,7 +190,7 @@ fn try_round_to_int(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `divmod_univar` with SymPy-compatible polynomial semantics.
+/// Divide two univariate polynomials and return `(quotient, remainder)`.
 pub fn Poly::divmod_univar(
   self : Poly,
   other : Poly,
@@ -258,7 +258,7 @@ fn make_monic(poly : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `gcd_univar` with SymPy-compatible polynomial semantics.
+/// Return the polynomial GCD of two univariate polynomials.
 pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
   check_univar_compat(self, other)
   match self.domain {
@@ -274,7 +274,7 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `gcd_multivar` with SymPy-compatible polynomial semantics.
+/// Return the polynomial GCD of two multivariate polynomials.
 pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.gens.length() == 1 {
     return self.gcd_univar(other)
@@ -674,7 +674,7 @@ pub fn Poly::content(self : Poly) -> @symnum.BigRational raise PolyError {
 }
 
 ///|
-/// `Poly` method `primitive_part` with SymPy-compatible polynomial semantics.
+/// Remove coefficient content and return the primitive part.
 pub fn Poly::primitive_part(self : Poly) -> Poly raise PolyError {
   primitive_part(self)
 }

@@ -10,19 +10,19 @@ pub struct AlgExtSpec {
 }
 
 ///|
-/// Algebraic-extension helper aligned with SymPy polys behavior.
+/// Construct an algebraic-extension specification tuple.
 pub fn alg_ext_spec(base : Domain, gen : String, minpoly : Poly) -> AlgExtSpec {
   AlgExtSpec::{ base, gen, minpoly }
 }
 
 ///|
-/// Algebraic-extension helper aligned with SymPy polys behavior.
+/// Validate and normalize an algebraic-extension specification.
 pub fn normalize_alg_ext_spec(spec : AlgExtSpec) -> AlgExtSpec raise PolyError {
   validate_minpoly(spec)
 }
 
 ///|
-/// Algebraic-extension helper aligned with SymPy polys behavior.
+/// Build `Domain::AlgExt` from a validated extension specification.
 pub fn build_alg_extension(spec : AlgExtSpec) -> Domain raise PolyError {
   let normalized = normalize_alg_ext_spec(spec)
   Domain::AlgExt(normalized.base, [normalized.gen], [

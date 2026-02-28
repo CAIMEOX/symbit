@@ -29,8 +29,8 @@ pub fn Poly::resultant(
 }
 
 ///|
-/// Resultant wrapper mirroring SymPy: resultant(f, g, x, gens?, domain?, modulus?, order?).
-/// Returns a symbolic expression, so multivariate elimination is represented.
+/// Compute `resultant(f, g, var_name)` from expressions with optional domain/options.
+/// Returns an expression so multivariate elimination results stay symbolic.
 pub fn resultant_expr(
   f_expr : @symcore.Expr,
   g_expr : @symcore.Expr,

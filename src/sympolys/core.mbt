@@ -7,13 +7,13 @@ pub struct Poly {
 }
 
 ///|
-/// `Poly` method `zero` with SymPy-compatible polynomial semantics.
+/// Return the zero polynomial over `gens` and `domain`.
 pub fn Poly::zero(gens : Array[String], domain : Domain) -> Poly {
   Poly::{ coeffs: Map::new(), gens, domain, order: TermOrder::Lex }
 }
 
 ///|
-/// `Poly` method `one` with SymPy-compatible polynomial semantics.
+/// Return the unit polynomial `1` over `gens` and `domain`.
 pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError {
   let mono = monomial_one(gens.length())
   let coeffs : Map[Monomial, FieldElem] = Map::new()
@@ -22,13 +22,13 @@ pub fn Poly::one(gens : Array[String], domain : Domain) -> Poly raise PolyError 
 }
 
 ///|
-/// `Poly` method `is_zero` with SymPy-compatible polynomial semantics.
+/// Return `true` iff the polynomial has no non-zero terms.
 pub fn Poly::is_zero(self : Poly) -> Bool {
   self.coeffs.is_empty()
 }
 
 ///|
-/// `Poly` method `with_order` with SymPy-compatible polynomial semantics.
+/// Return the same polynomial data with a different term order.
 pub fn Poly::with_order(self : Poly, order : TermOrder) -> Poly {
   Poly::{ coeffs: self.coeffs, gens: self.gens, domain: self.domain, order }
 }
@@ -86,7 +86,7 @@ pub fn add_term(
 }
 
 ///|
-/// `Poly` method `scale_coeff` with SymPy-compatible polynomial semantics.
+/// Multiply all coefficients by `factor`.
 pub fn Poly::scale_coeff(
   self : Poly,
   factor : FieldElem,
@@ -112,7 +112,7 @@ fn same_gens(a : Array[String], b : Array[String]) -> Bool {
 }
 
 ///|
-/// `Poly` method `add` with SymPy-compatible polynomial semantics.
+/// Add two polynomials with matching generators and domain.
 pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
@@ -125,7 +125,7 @@ pub fn Poly::add(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `neg` with SymPy-compatible polynomial semantics.
+/// Negate all coefficients.
 pub fn Poly::neg(self : Poly) -> Poly {
   let coeffs = Map::new()
   for m, c in self.coeffs {
@@ -135,13 +135,13 @@ pub fn Poly::neg(self : Poly) -> Poly {
 }
 
 ///|
-/// `Poly` method `sub` with SymPy-compatible polynomial semantics.
+/// Subtract `other` from `self`.
 pub fn Poly::sub(self : Poly, other : Poly) -> Poly raise PolyError {
   self.add(other.neg())
 }
 
 ///|
-/// `Poly` method `mul` with SymPy-compatible polynomial semantics.
+/// Multiply two polynomials by distributive term expansion.
 pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
   if self.domain.not_equal(other.domain) || !same_gens(self.gens, other.gens) {
     raise PolyError::DomainMismatch
@@ -157,7 +157,7 @@ pub fn Poly::mul(self : Poly, other : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `pow` with SymPy-compatible polynomial semantics.
+/// Raise `self` to a non-negative integer power.
 pub fn Poly::pow(self : Poly, k : Int) -> Poly raise PolyError {
   if k < 0 {
     raise PolyError::BadExponent

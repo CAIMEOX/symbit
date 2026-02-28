@@ -5,7 +5,7 @@ pub struct RootOf {
 }
 
 ///|
-/// Root-related helper aligned with SymPy polys root APIs.
+/// Construct a symbolic complex root object `CRootOf(poly, index)`.
 pub fn rootof(poly : Poly, index : Int) -> RootOf {
   RootOf::{ poly, index }
 }

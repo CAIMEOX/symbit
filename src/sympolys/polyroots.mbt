@@ -18,7 +18,7 @@ fn coeff_expr(poly : Poly, exp : Int) -> @symcore.Expr raise PolyError {
 }
 
 ///|
-/// Root-related helper aligned with SymPy polys root APIs.
+/// Return the unique root of a linear polynomial `a*x + b`.
 pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -35,7 +35,7 @@ pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 }
 
 ///|
-/// Root-related helper aligned with SymPy polys root APIs.
+/// Return roots of a quadratic polynomial via the quadratic formula.
 pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -86,7 +86,7 @@ fn rootof_expr(poly : Poly, index : Int) -> @symcore.Expr {
 }
 
 ///|
-/// Root-related helper aligned with SymPy polys root APIs.
+/// Return roots of a cubic polynomial, using `CRootOf` for irreducible factors.
 pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -114,7 +114,7 @@ pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 }
 
 ///|
-/// Root-related helper aligned with SymPy polys root APIs.
+/// Return roots of a quartic polynomial, using `CRootOf` for irreducible factors.
 pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
@@ -170,7 +170,7 @@ fn roots_for_factor(
 }
 
 ///|
-/// SymPy-like root extraction over all degrees:
+/// Root extraction over all degrees:
 /// - uses factorization and closed forms for degrees <= 4 when enabled,
 /// - otherwise falls back to symbolic `CRootOf`.
 pub fn roots(

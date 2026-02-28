@@ -89,7 +89,7 @@ fn divmod_multivar(
 }
 
 ///|
-/// `Poly` method `divmod_multivar` with SymPy-compatible polynomial semantics.
+/// Multivariate division by a divisor list; returns `(quotients, remainder)`.
 pub fn Poly::divmod_multivar(
   self : Poly,
   divisors : Array[Poly],
@@ -129,7 +129,7 @@ fn spoly(f : Poly, g : Poly) -> Poly raise PolyError {
 }
 
 ///|
-/// `Poly` method `groebner` with SymPy-compatible polynomial semantics.
+/// Compute a reduced Groebner basis for `polys` in the chosen order.
 pub fn Poly::groebner(
   polys : Array[Poly],
   order? : TermOrder,
