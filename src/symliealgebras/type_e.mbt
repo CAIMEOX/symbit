@@ -2,13 +2,13 @@
 /// Type E simple Lie algebra data.
 
 ///|
-/// Dimension of the ambient Euclidean realization for this Cartan family.
+/// Ambient-space dimension for the exceptional `E_n` realizations.
 pub fn type_e_dimension(_n : Int) -> Int {
   8
 }
 
 ///|
-/// Internal helper that builds a basic coordinate root vector.
+/// Build a basic coordinate root `-e_i + e_j` in the `E` realization.
 pub fn type_e_basic_root(i : Int, j : Int) -> RootVector {
   let root = vec_zero(8)
   root[i] = br_int(-1)
@@ -17,7 +17,7 @@ pub fn type_e_basic_root(i : Int, j : Int) -> RootVector {
 }
 
 ///|
-/// Return the `i`-th simple root in the family-specific realization.
+/// Return the `i`-th simple root of `E_n`.
 pub fn type_e_simple_root(n : Int, i : Int) -> RootVector raise {
   if i == 1 {
     let root = Array::make(8, br_rat(-1, 2))
@@ -41,7 +41,7 @@ pub fn type_e_simple_root(n : Int, i : Int) -> RootVector raise {
 }
 
 ///|
-/// Enumerate positive roots indexed from `1`.
+/// Enumerate positive roots of `E_n`, indexed from `1`.
 pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
   let poshalf = br_rat(1, 2)
   let neghalf = br_rat(-1, 2)
@@ -210,7 +210,7 @@ pub fn type_e_positive_roots(n : Int) -> Map[Int, RootVector] {
 }
 
 ///|
-/// Total number of roots in the root system.
+/// Return the total number of roots in `E_n`.
 pub fn type_e_roots(n : Int) -> Int {
   if n == 6 {
     return 72
@@ -222,7 +222,7 @@ pub fn type_e_roots(n : Int) -> Int {
 }
 
 ///|
-/// Dimension of the corresponding Lie algebra.
+/// Return the Lie algebra dimension for `E_n`.
 pub fn type_e_basis(n : Int) -> Int {
   if n == 6 {
     return 78
@@ -234,7 +234,7 @@ pub fn type_e_basis(n : Int) -> Int {
 }
 
 ///|
-/// Text form of the family Dynkin diagram.
+/// Return the Dynkin diagram text for `E_n`.
 pub fn type_e_dynkin_diagram(n : Int) -> String {
   dynkin_type_e(n)
 }

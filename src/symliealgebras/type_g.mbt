@@ -2,13 +2,13 @@
 /// Type G simple Lie algebra data.
 
 ///|
-/// Dimension of the ambient Euclidean realization for this Cartan family.
+/// Ambient-space dimension for the exceptional `G_2` realization.
 pub fn type_g_dimension(_n : Int) -> Int {
   3
 }
 
 ///|
-/// Return the `i`-th simple root in the family-specific realization.
+/// Return the `i`-th simple root of `G_2`.
 pub fn type_g_simple_root(_n : Int, i : Int) -> RootVector raise {
   if i < 1 || i > 2 {
     fail("simple root index out of range")
@@ -20,7 +20,7 @@ pub fn type_g_simple_root(_n : Int, i : Int) -> RootVector raise {
 }
 
 ///|
-/// Enumerate positive roots indexed from `1`.
+/// Enumerate positive roots of `G_2`, indexed from `1`.
 pub fn type_g_positive_roots(_n : Int) -> Map[Int, RootVector] {
   let roots : Map[Int, RootVector] = {}
   roots[1] = vec_from_ints([0, 1, -1])
@@ -33,19 +33,19 @@ pub fn type_g_positive_roots(_n : Int) -> Map[Int, RootVector] {
 }
 
 ///|
-/// Total number of roots in the root system.
+/// Return the total number of roots in `G_2`.
 pub fn type_g_roots(_n : Int) -> Int {
   12
 }
 
 ///|
-/// Dimension of the corresponding Lie algebra.
+/// Return `dim(G_2)`.
 pub fn type_g_basis(_n : Int) -> Int {
   14
 }
 
 ///|
-/// Text form of the family Dynkin diagram.
+/// Return the Dynkin diagram text for `G_2`.
 pub fn type_g_dynkin_diagram(_n : Int) -> String {
   dynkin_type_g()
 }

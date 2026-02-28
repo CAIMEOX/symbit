@@ -2,13 +2,13 @@
 /// Type C simple Lie algebra data.
 
 ///|
-/// Dimension of the ambient Euclidean realization for this Cartan family.
+/// Ambient-space dimension for the `C_n` root realization.
 pub fn type_c_dimension(n : Int) -> Int {
   n
 }
 
 ///|
-/// Internal helper that builds a basic coordinate root vector.
+/// Build the coordinate root `e_i - e_j` in `C_n`.
 pub fn type_c_basic_root(n : Int, i : Int, j : Int) -> RootVector {
   let root = vec_zero(n)
   root[i] = br_int(1)
@@ -17,7 +17,7 @@ pub fn type_c_basic_root(n : Int, i : Int, j : Int) -> RootVector {
 }
 
 ///|
-/// Return the `i`-th simple root in the family-specific realization.
+/// Return the `i`-th simple root of `C_n`.
 pub fn type_c_simple_root(n : Int, i : Int) -> RootVector raise {
   if i < 1 || i > n {
     fail("simple root index out of range")
@@ -32,7 +32,7 @@ pub fn type_c_simple_root(n : Int, i : Int) -> RootVector raise {
 }
 
 ///|
-/// Enumerate positive roots indexed from `1`.
+/// Enumerate positive roots of `C_n`, indexed from `1`.
 pub fn type_c_positive_roots(n : Int) -> Map[Int, RootVector] {
   let posroots : Map[Int, RootVector] = {}
   let mut k = 0
@@ -57,26 +57,26 @@ pub fn type_c_positive_roots(n : Int) -> Map[Int, RootVector] {
 }
 
 ///|
-/// Total number of roots in the root system.
+/// Return the total number of roots in `C_n`.
 pub fn type_c_roots(n : Int) -> Int {
   2 * (n * n)
 }
 
 ///|
-/// Dimension of the corresponding Lie algebra.
+/// Return `dim(sp_{2n})`.
 pub fn type_c_basis(n : Int) -> Int {
   n * (2 * n + 1)
 }
 
 ///|
-/// Conventional Lie algebra name for this Cartan family.
+/// Return the compact real-form label used for `C_n`.
 pub fn type_c_lie_algebra(n : Int) -> String {
   let dim = 2 * n
   "sp(\{dim.to_string()})"
 }
 
 ///|
-/// Text form of the family Dynkin diagram.
+/// Return the Dynkin diagram text for `C_n`.
 pub fn type_c_dynkin_diagram(n : Int) -> String {
   dynkin_type_c(n)
 }
