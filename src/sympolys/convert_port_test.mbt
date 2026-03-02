@@ -40,3 +40,78 @@ test "convert: to_string matches SymPy poly_expr over GF" {
     fail("GF to_string mismatch: ours=\{ours}, oracle=\{oracle}")
   }
 }
+
+///|
+test "convert: explicit order and leading helpers cover option branches" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let poly = PolyBuilder::new(["x", "y"], Domain::QQ)
+    .order(TermOrder::Grlex)
+    .from_expr((x ^ @symcore.int(2)) + y + @symcore.int(1))
+
+  let as_lex = sympy_normalize(poly.to_string(order=TermOrder::Lex))
+  let as_default = sympy_normalize(poly.to_string())
+  guard as_lex == as_default else {
+    fail("explicit to_string(order=...) should stay expression-equivalent")
+  }
+
+  let lc = try! poly.lc(order=TermOrder::Lex)
+  guard lc.to_string() == "1" else { fail("lc(order=...) mismatch") }
+  guard poly.lm(order=TermOrder::Lex) is Some(_) else {
+    fail("lm(order=...) should be present")
+  }
+  guard poly.lt(order=TermOrder::Lex) is Some(_) else {
+    fail("lt(order=...) should be present")
+  }
+
+  let z = Poly::zero(["x"], Domain::QQ)
+  guard (try! z.lc()).to_string() == "0" else { fail("zero lc should be 0") }
+  guard z.lm() is None else { fail("zero lm should be None") }
+  guard z.lt() is None else { fail("zero lt should be None") }
+
+  // Cover `impl Show for Poly`.
+  let shown = "\{poly}"
+  guard shown.length() > 0 else { fail("Show(Poly) should not be empty") }
+}
+
+///|
+test "convert: parse_expr failure branches are typed" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+
+  let bad_gen : Result[Poly, PolyError] = try? Poly::from_expr(
+    y,
+    ["x"],
+    Domain::QQ,
+  )
+  guard bad_gen is Err(PolyError::BadGenerator(_)) else {
+    fail("expected BadGenerator for symbol not in gens")
+  }
+
+  let bad_pow_kind : Result[Poly, PolyError] = try? Poly::from_expr(
+    x ^ y,
+    ["x"],
+    Domain::QQ,
+  )
+  guard bad_pow_kind is Err(PolyError::BadExponent) else {
+    fail("expected BadExponent for non-numeric exponent")
+  }
+
+  let bad_pow_neg : Result[Poly, PolyError] = try? Poly::from_expr(
+    x ^ @symcore.int(-1),
+    ["x"],
+    Domain::QQ,
+  )
+  guard bad_pow_neg is Err(PolyError::BadExponent) else {
+    fail("expected BadExponent for negative exponent")
+  }
+
+  let bad_expr_kind : Result[Poly, PolyError] = try? Poly::from_expr(
+    @symcore.function("sin", [x]),
+    ["x"],
+    Domain::QQ,
+  )
+  guard bad_expr_kind is Err(PolyError::NonPolynomial) else {
+    fail("expected NonPolynomial for Function expression")
+  }
+}

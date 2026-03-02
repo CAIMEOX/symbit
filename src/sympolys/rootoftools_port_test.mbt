@@ -10,4 +10,10 @@ test "rootoftools: rootof parity (degree 5)" {
   guard ours_norm == oracle_norm else {
     fail("rootof mismatch: ours=\{ours_norm}, oracle=\{oracle_norm}")
   }
+
+  // Cover `impl Show for RootOf`.
+  let shown = "\{rootof(poly, 0)}"
+  guard shown.contains("CRootOf(") && shown.contains(", 0)") else {
+    fail("unexpected RootOf show output: \{shown}")
+  }
 }
