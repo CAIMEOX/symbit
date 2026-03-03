@@ -306,3 +306,152 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
   let algext_empty = try! fe_expect_rational(FieldElem::AlgExt(Domain::QQ, [], minpoly, "a"))
   inspect(algext_empty.to_string(), content="0")
 }
+
+///|
+test "field_elem wb: remaining branch sweep" {
+  let poly_add = fe_poly_add([1, 2], [3], 5)
+  guard poly_add.length() == 2 else {
+    fail("fe_poly_add should keep max input length")
+  }
+
+  let qpow = try! fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
+  inspect(fe_to_string(qpow), content="8")
+  let gpow = try! fe_pow(FieldElem::GFp(5, 3), 4)
+  inspect(fe_to_string(gpow), content="1")
+
+  let a = @symcore.symbol("a")
+  let minpoly = try! fe_wb_minpoly("a", (a ^ @symcore.int(2)) + @symcore.int(1), Domain::QQ)
+  let alg = FieldElem::AlgExt(
+    Domain::QQ,
+    [FieldElem::QQ(@symnum.BigRational::one()), FieldElem::QQ(@symnum.BigRational::one())],
+    minpoly,
+    "a",
+  )
+  let apow = try! fe_pow(alg, 2)
+  guard apow is FieldElem::AlgExt(_, _, _, _) else {
+    fail("fe_pow should preserve AlgExt shape")
+  }
+
+  guard fe_is_negative(
+    FieldElem::CC(@symnum.BigRational::from_int(-2), @symnum.BigRational::zero()),
+  ) else {
+    fail("fe_is_negative should detect negative real CC")
+  }
+  guard fe_is_positive(
+    FieldElem::CC(@symnum.BigRational::from_int(3), @symnum.BigRational::zero()),
+  ) else {
+    fail("fe_is_positive should detect positive real CC")
+  }
+  guard !fe_is_negative(FieldElem::GFp(5, 4)) else {
+    fail("fe_is_negative should be false on finite-field elements")
+  }
+  guard !fe_is_positive(FieldElem::GFp(5, 4)) else {
+    fail("fe_is_positive should be false on finite-field elements")
+  }
+
+  inspect(
+    fe_to_string(
+      try! fe_add(
+        FieldElem::CC(@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(1)),
+        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+      ),
+    ),
+    content="5 + 1i",
+  )
+  inspect(
+    fe_to_string(
+      try! fe_add(
+        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+        FieldElem::CC(@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(1)),
+      ),
+    ),
+    content="5 + 1i",
+  )
+  let add_default_bad : Result[FieldElem, PolyError] = try? fe_add(
+    FieldElem::QQ(@symnum.BigRational::one()),
+    FieldElem::GFp(5, 1),
+  )
+  guard add_default_bad is Err(PolyError::DomainMismatch) else {
+    fail("fe_add mismatched domains should raise DomainMismatch")
+  }
+
+  inspect(
+    fe_to_string(
+      try! fe_mul(
+        FieldElem::CC(@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(1)),
+        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+      ),
+    ),
+    content="6 + 3i",
+  )
+  inspect(
+    fe_to_string(
+      try! fe_mul(
+        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+        FieldElem::CC(@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(1)),
+      ),
+    ),
+    content="6 + 3i",
+  )
+  let mul_gfp_bad : Result[FieldElem, PolyError] = try? fe_mul(FieldElem::GFp(5, 2), FieldElem::GFp(7, 3))
+  guard mul_gfp_bad is Err(PolyError::DomainMismatch) else {
+    fail("fe_mul GFp mismatch should raise DomainMismatch")
+  }
+  let mul_gfext_bad : Result[FieldElem, PolyError] = try? fe_mul(
+    FieldElem::GFExt(5, [1], [1, 0, 1]),
+    FieldElem::GFExt(5, [1], [1, 1, 1]),
+  )
+  guard mul_gfext_bad is Err(PolyError::DomainMismatch) else {
+    fail("fe_mul GFExt mismatch should raise DomainMismatch")
+  }
+  let mul_default_bad : Result[FieldElem, PolyError] = try? fe_mul(
+    FieldElem::QQ(@symnum.BigRational::one()),
+    FieldElem::GFp(5, 2),
+  )
+  guard mul_default_bad is Err(PolyError::DomainMismatch) else {
+    fail("fe_mul default mismatch should raise DomainMismatch")
+  }
+
+  let inv_alg_zero : Result[FieldElem, PolyError] = try? fe_inv(
+    FieldElem::AlgExt(
+      Domain::QQ,
+      [FieldElem::QQ(@symnum.BigRational::zero())],
+      minpoly,
+      "a",
+    ),
+  )
+  guard inv_alg_zero is Err(PolyError::DivisionByZero) else {
+    fail("fe_inv should reject zero AlgExt elements")
+  }
+
+  let cc_from_rat = try! fe_from_rational(fe_wb_rat(7, 2), Domain::CC)
+  inspect(fe_to_string(cc_from_rat), content="7/2")
+  let gfext_from_rat = try! fe_from_rational(fe_wb_rat(8, 3), Domain::GFExt(7, 2, [1, 0, 1]))
+  guard gfext_from_rat is FieldElem::GFExt(_, coeffs, _) && coeffs.length() == 1 else {
+    fail("fe_from_rational over GFExt should produce constant coeff vector")
+  }
+
+  inspect(
+    fe_to_string(
+      FieldElem::CC(@symnum.BigRational::from_int(2), @symnum.BigRational::from_int(3)),
+    ),
+    content="2 + 3i",
+  )
+  let alg_str = fe_to_string(
+    FieldElem::AlgExt(
+      Domain::QQ,
+      [FieldElem::QQ(@symnum.BigRational::one()), FieldElem::QQ(@symnum.BigRational::one())],
+      minpoly,
+      "a",
+    ),
+  )
+  inspect(alg_str, content="1 + a")
+
+  guard fe_alg_poly_trim([]).length() == 1 else {
+    fail("fe_alg_poly_trim([]) should canonicalize to [0]")
+  }
+  let padded = try! fe_alg_poly_add([fe_wb_qq(1, 1)], [fe_wb_qq(2, 1), fe_wb_qq(3, 1)])
+  guard padded.length() == 2 && padded[1].to_string() == "3" else {
+    fail("fe_alg_poly_add should pad shorter input with zeros")
+  }
+}
