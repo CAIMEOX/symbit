@@ -2,6 +2,7 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
+  "moonbitlang/core/strconv" @strconv,
 }
 
 import {

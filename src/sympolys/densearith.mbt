@@ -771,9 +771,15 @@ pub fn dmp_pow(
 fn domain_is_field(domain : Domain) -> Bool {
   match domain {
     Domain::ZZ => false
-    Domain::QQ | Domain::CC | Domain::RR => true
+    Domain::QQ | Domain::CC | Domain::RR | Domain::QQ_I => true
+    Domain::ZZ_I => false
+    Domain::EX | Domain::EXRAW => true
     Domain::GF(_) | Domain::GFExt(_, _, _) => true
     Domain::Frac(_) => true
+    Domain::PolyRing(_, _) => false
+    Domain::RationalFunctionField(_, _) => true
+    Domain::QuotientRing(_, _, _) => false
+    Domain::PowerSeries(_, _, _) => false
     Domain::AlgExt(base, _, _) => domain_is_field(base)
   }
 }

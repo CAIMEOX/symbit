@@ -380,6 +380,13 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
         @symnum.BigRational::from_int(val),
         @symnum.BigRational::zero(),
       )
+    Domain::ZZ_I | Domain::QQ_I =>
+      FieldElem::CC(
+        @symnum.BigRational::from_int(val),
+        @symnum.BigRational::zero(),
+      )
+    Domain::EX | Domain::EXRAW =>
+      FieldElem::QQ(@symnum.BigRational::from_int(val))
     Domain::GF(p) => FieldElem::GFp(p, fe_pos_mod(val, p))
     Domain::GFExt(p, _, m) => FieldElem::GFExt(p, [fe_pos_mod(val, p)], m)
     Domain::AlgExt(base, gens, rels) => {
@@ -395,6 +402,10 @@ pub fn fe_from_int(val : Int, domain : Domain) -> FieldElem raise PolyError {
     // SymPy reference: sympy/polys/domains/fractionfield.py FractionField.convert.
     // Ground integers are embedded into the base domain and viewed in Frac(base).
     Domain::Frac(inner) => fe_from_int(val, inner)
+    Domain::PolyRing(base, _) => fe_from_int(val, base)
+    Domain::RationalFunctionField(base, _) => fe_from_int(val, base)
+    Domain::QuotientRing(base, _, _) => fe_from_int(val, base)
+    Domain::PowerSeries(base, _, _) => fe_from_int(val, base)
   }
 }
 
@@ -414,6 +425,9 @@ pub fn fe_from_rational(
       }
     Domain::CC => FieldElem::CC(val, @symnum.BigRational::zero())
     Domain::RR => FieldElem::CC(val, @symnum.BigRational::zero())
+    Domain::ZZ_I | Domain::QQ_I =>
+      FieldElem::CC(val, @symnum.BigRational::zero())
+    Domain::EX | Domain::EXRAW => FieldElem::QQ(val)
     Domain::GF(p) => {
       let norm = normalize_mod(val, Domain::GF(p))
       FieldElem::GFp(p, fe_pos_mod(norm.numerator().to_int(), p))
@@ -423,6 +437,10 @@ pub fn fe_from_rational(
       FieldElem::GFExt(p, [fe_pos_mod(norm.numerator().to_int(), p)], m)
     }
     Domain::Frac(inner) => fe_from_rational(val, inner)
+    Domain::PolyRing(base, _) => fe_from_rational(val, base)
+    Domain::RationalFunctionField(base, _) => fe_from_rational(val, base)
+    Domain::QuotientRing(base, _, _) => fe_from_rational(val, base)
+    Domain::PowerSeries(base, _, _) => fe_from_rational(val, base)
     Domain::AlgExt(base, gens, rels) => {
       let (minpoly, gen) = load_algext_minpoly(base, gens, rels)
       let base_const = fe_from_rational(val, base)

@@ -38,11 +38,16 @@ fn invert_in_domain(
   match domain {
     Domain::ZZ => raise PolyError::DomainNotField
     Domain::QQ => fe_inv(val)
-    Domain::CC => fe_inv(val)
+    Domain::CC | Domain::ZZ_I | Domain::QQ_I => fe_inv(val)
     Domain::GF(_) | Domain::GFExt(_, _, _) => fe_inv(val)
     Domain::AlgExt(_, _, _) => fe_inv(val)
     Domain::RR => fe_inv(val)
     Domain::Frac(_) => fe_inv(val)
+    Domain::EX | Domain::EXRAW => fe_inv(val)
+    Domain::PolyRing(_, _) => raise PolyError::DomainNotField
+    Domain::RationalFunctionField(_, _) => fe_inv(val)
+    Domain::QuotientRing(_, _, _) => raise PolyError::DomainNotField
+    Domain::PowerSeries(_, _, _) => raise PolyError::DomainNotField
   }
 }
 
@@ -59,12 +64,18 @@ fn divmod_univar(
   match dividend.domain {
     Domain::ZZ => divmod_univar_int(dividend, divisor)
     Domain::QQ => divmod_univar_rat(dividend, divisor)
-    Domain::CC => divmod_univar_rat(dividend, divisor)
+    Domain::CC | Domain::ZZ_I | Domain::QQ_I =>
+      divmod_univar_rat(dividend, divisor)
     Domain::GF(_) => divmod_univar_rat(dividend, divisor) // GF(p) behaves like a field
     Domain::GFExt(_, _, _) => divmod_univar_rat(dividend, divisor)
     Domain::AlgExt(_, _, _) => divmod_univar_rat(dividend, divisor)
     Domain::RR => divmod_univar_rat(dividend, divisor)
     Domain::Frac(_) => divmod_univar_rat(dividend, divisor)
+    Domain::EX | Domain::EXRAW => divmod_univar_rat(dividend, divisor)
+    Domain::RationalFunctionField(_, _) => divmod_univar_rat(dividend, divisor)
+    Domain::PolyRing(_, _)
+    | Domain::QuotientRing(_, _, _)
+    | Domain::PowerSeries(_, _, _) => divmod_univar_int(dividend, divisor)
   }
 }
 
@@ -204,8 +215,11 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   let mut g_num = BigInt::from_int(0)
   let mut lcm_den = BigInt::from_int(1)
   match poly.domain {
-    Domain::AlgExt(_, _, _) | Domain::CC | Domain::GFExt(_, _, _) =>
-      return @symnum.BigRational::one()
+    Domain::AlgExt(_, _, _)
+    | Domain::CC
+    | Domain::GFExt(_, _, _)
+    | Domain::ZZ_I
+    | Domain::QQ_I => return @symnum.BigRational::one()
     _ => ()
   }
   for _, c in poly.coeffs {
@@ -264,12 +278,19 @@ pub fn Poly::gcd_univar(self : Poly, other : Poly) -> Poly raise PolyError {
   match self.domain {
     Domain::QQ => gcd_univar_rat(self, other)
     Domain::CC => gcd_univar_rat(self, other)
+    Domain::QQ_I => gcd_univar_rat(self, other)
     Domain::ZZ => gcd_univar_int(self, other)
+    Domain::ZZ_I => gcd_univar_int(self, other)
     Domain::GF(_) => gcd_univar_rat(self, other)
     Domain::GFExt(_, _, _) => gcd_univar_rat(self, other)
     Domain::AlgExt(_, _, _) => gcd_univar_rat(self, other)
     Domain::RR => gcd_univar_rat(self, other)
     Domain::Frac(_) => gcd_univar_rat(self, other)
+    Domain::EX | Domain::EXRAW => gcd_univar_rat(self, other)
+    Domain::RationalFunctionField(_, _) => gcd_univar_rat(self, other)
+    Domain::PolyRing(_, _)
+    | Domain::QuotientRing(_, _, _)
+    | Domain::PowerSeries(_, _, _) => gcd_univar_int(self, other)
   }
 }
 
@@ -289,11 +310,22 @@ pub fn Poly::gcd_multivar(self : Poly, other : Poly) -> Poly raise PolyError {
     }
     Domain::QQ
     | Domain::CC
+    | Domain::QQ_I
     | Domain::RR
     | Domain::Frac(_)
     | Domain::GF(_)
     | Domain::GFExt(_, _, _)
-    | Domain::AlgExt(_, _, _) => gcd_multivar_field(self, other)
+    | Domain::AlgExt(_, _, _)
+    | Domain::EX
+    | Domain::EXRAW
+    | Domain::RationalFunctionField(_, _) => gcd_multivar_field(self, other)
+    Domain::ZZ_I
+    | Domain::PolyRing(_, _)
+    | Domain::QuotientRing(_, _, _)
+    | Domain::PowerSeries(_, _, _) => {
+      let gq = gcd_multivar_field(lift_to_qq(self), lift_to_qq(other))
+      try_round_to_int(gq)
+    }
   }
 }
 

@@ -31,6 +31,10 @@ pub fn normalize_mod(
     // Constant rationals in algebraic extensions are reduced in the base field.
     Domain::AlgExt(base, _, _) => normalize_mod(value, base)
     Domain::Frac(inner) => normalize_mod(value, inner)
+    Domain::PolyRing(base, _) => normalize_mod(value, base)
+    Domain::RationalFunctionField(base, _) => normalize_mod(value, base)
+    Domain::QuotientRing(base, _, _) => normalize_mod(value, base)
+    Domain::PowerSeries(base, _, _) => normalize_mod(value, base)
     _ => value
   }
 }

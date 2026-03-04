@@ -281,6 +281,198 @@ pub fn analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] raise {
 }
 
 ///|
+pub fn domain_repr(spec : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  py_str_obj(domain_obj)
+}
+
+///|
+pub fn domain_characteristic(spec : String) -> Int raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let char_call = resolve_method_callable(domain_obj, "characteristic")
+  let char_enum = py_call_noargs(char_call)
+  py_obj_to_int(objenum_to_obj(char_enum))
+}
+
+///|
+pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
+  let lhs = oracle_domain_from_spec(lhs_spec)
+  let rhs = oracle_domain_from_spec(rhs_spec)
+  let unify = resolve_method_callable(lhs, "unify")
+  let unified = py_call_one(unify, rhs)
+  py_str_enum(unified)
+}
+
+///|
+pub fn domainmatrix_add(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
+  let add = resolve_method_callable(dm_a, "__add__")
+  let res = py_call_one(add, dm_b)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_mul(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
+  let mul = resolve_method_callable(dm_a, "__mul__")
+  let res = py_call_one(mul, dm_b)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_det(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let det = resolve_method_callable(dm, "det")
+  let res = py_call_noargs(det)
+  py_str_enum(res)
+}
+
+///|
+pub fn domainmatrix_rref(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let rref = resolve_method_callable(dm, "rref")
+  let res = py_call_noargs(rref)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-rref-tuple") }
+  let matrix_part = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let pivots = py_list_to_pyobjects(@py.PyObjectEnum::create(tuple_items[1]))
+  let pivot_vals : Array[String] = Array::new()
+  for p in pivots {
+    pivot_vals.push(py_obj_to_int(p).to_string())
+  }
+  let joined = pivot_vals.join(",")
+  let pivot_str = "[\{joined}]"
+  "\{matrix_part}||\{pivot_str}"
+}
+
+///|
+fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
+  let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
+  let mat_enum = py_call_noargs(to_matrix)
+  py_str_enum(mat_enum)
+}
+
+///|
+fn oracle_domainmatrix_from_ints(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> @py.PyObject raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("domainmatrix-ragged")
+    }
+  }
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    let py_row : Array[@py.PyObject] = Array::new()
+    for v in row {
+      py_row.push(py_int_obj(v))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let data_obj = py_list_from_objects(py_rows).obj()
+  let shape_obj = py_tuple_from_objects([
+    py_int_obj(row_count),
+    py_int_obj(col_count),
+  ]).obj()
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let dm_enum = sympy_call_must("sympy.polys.matrices.DomainMatrix", [
+    OracleArg::PyObj(data_obj),
+    OracleArg::PyObj(shape_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  objenum_to_obj(dm_enum)
+}
+
+///|
+fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
+  let text = spec.trim().to_string()
+  if text.has_prefix("GF(") && text.has_suffix(")") {
+    let p_text = (try! text[3:text.length() - 1]).to_string()
+    let p = @strconv.parse_int(p_text) catch {
+      _ => fail("domain-spec-gf:\{spec}")
+    }
+    let gf = sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(p)])
+    return objenum_to_obj(gf)
+  }
+  if text.contains("[") && text.has_suffix("]") {
+    let left = match find_char_oracle(text, '[') {
+      Some(i) => i
+      None => fail("domain-spec-poly")
+    }
+    let base = (try! text[:left]).to_string()
+    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base_obj = oracle_domain_from_spec(base)
+    let symbols = sympy_symbols_from_names(split_names(gens))
+    let ring_method = resolve_method_callable(base_obj, "poly_ring")
+    let ring = py_call_with_args(ring_method, symbols, py_dict_new())
+    return objenum_to_obj(ring)
+  }
+  if text.contains("(") && text.has_suffix(")") {
+    let left = match find_char_oracle(text, '(') {
+      Some(i) => i
+      None => fail("domain-spec-frac")
+    }
+    let base = (try! text[:left]).to_string()
+    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base_obj = oracle_domain_from_spec(base)
+    let symbols = sympy_symbols_from_names(split_names(gens))
+    let frac_method = resolve_method_callable(base_obj, "frac_field")
+    let field = py_call_with_args(frac_method, symbols, py_dict_new())
+    return objenum_to_obj(field)
+  }
+  let domains = ensure_domains_module_oracle()
+  let state = py_gil_ensure()
+  let attr = domains.get_attr(text, print_err=false)
+  py_gil_release(state)
+  match attr {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("domain-spec-unknown:\{text}")
+  }
+}
+
+///|
+fn find_char_oracle(text : String, needle : UInt16) -> Int? {
+  for i in 0..<text.length() {
+    if text[i] == needle {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn split_names(text : String) -> Array[String] {
+  let raw = text.trim().to_string()
+  if raw == "" {
+    return []
+  }
+  let out : Array[String] = Array::new()
+  for name in raw.split(",") {
+    out.push(name.trim().to_string())
+  }
+  out
+}
+
+///|
 pub fn sort_factors(factors : Array[Array[Int]]) -> String raise {
   let items : Array[@py.PyObject] = Array::new()
   for f in factors {
@@ -406,6 +598,9 @@ let sympy_cache : Ref[@py.PyModule?] = { val: None }
 let operator_cache : Ref[@py.PyModule?] = { val: None }
 
 ///|
+let domains_cache : Ref[@py.PyModule?] = { val: None }
+
+///|
 
 ///|
 fn init {
@@ -470,6 +665,27 @@ fn ensure_operator_module() -> @py.PyModule raise {
       }
       py_gil_release(state)
       operator_cache.val = Some(mod)
+      mod
+    }
+  }
+}
+
+///|
+fn ensure_domains_module_oracle() -> @py.PyModule raise {
+  ensure_python()
+  match domains_cache.val {
+    Some(mod) => mod
+    None => {
+      let state = py_gil_ensure()
+      let mod = match @py.pyimport("sympy.polys.domains") {
+        Some(m) => m
+        None => {
+          py_gil_release(state)
+          fail("sympy-polys-domains-missing")
+        }
+      }
+      py_gil_release(state)
+      domains_cache.val = Some(mod)
       mod
     }
   }
@@ -3673,7 +3889,9 @@ pub fn dup_root_upper_bound(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.rootisolation.dup_root_upper_bound", args)
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_root_upper_bound", args,
+  )
   remove_spaces(py_dense_str(res))
 }
 
@@ -3685,7 +3903,9 @@ pub fn dup_root_lower_bound(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.rootisolation.dup_root_lower_bound", args)
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_root_lower_bound", args,
+  )
   remove_spaces(py_dense_str(res))
 }
 
@@ -3748,7 +3968,9 @@ pub fn dup_isolate_real_roots(
   let args : Array[OracleArg] = Array::new()
   args.push(OracleArg::PyObj(py_list_from_rationals_domain(coeffs, domain)))
   args.push(OracleArg::PyObj(sympy_domain_obj(domain)))
-  let res = sympy_call_must("sympy.polys.rootisolation.dup_isolate_real_roots", args)
+  let res = sympy_call_must(
+    "sympy.polys.rootisolation.dup_isolate_real_roots", args,
+  )
   remove_spaces(py_dense_str(res))
 }
 

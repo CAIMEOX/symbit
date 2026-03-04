@@ -50,7 +50,14 @@ pub fn ensure_coeff_domain(
     Domain::CC => FieldElem::CC(coeff, @symnum.BigRational::zero())
     // Keep RR distinct from QQ by using real-valued complex elements (imag=0).
     Domain::RR => FieldElem::CC(coeff, @symnum.BigRational::zero())
+    Domain::ZZ_I | Domain::QQ_I =>
+      FieldElem::CC(coeff, @symnum.BigRational::zero())
+    Domain::EX | Domain::EXRAW => FieldElem::QQ(coeff)
     Domain::Frac(inner) => ensure_coeff_domain(coeff, inner)
+    Domain::PolyRing(base, _) => ensure_coeff_domain(coeff, base)
+    Domain::RationalFunctionField(base, _) => ensure_coeff_domain(coeff, base)
+    Domain::QuotientRing(base, _, _) => ensure_coeff_domain(coeff, base)
+    Domain::PowerSeries(base, _, _) => ensure_coeff_domain(coeff, base)
     Domain::GF(_) | Domain::GFExt(_, _, _) => {
       let norm = normalize_mod(coeff, domain)
       fe_from_int(norm.numerator().to_int(), domain)
