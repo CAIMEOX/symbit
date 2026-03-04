@@ -304,6 +304,17 @@ pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
 }
 
 ///|
+pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
+  let expr_obj = sympy_sympify_str(expr)
+  let gen_obj = sympy_symbol_obj(gen)
+  let minpoly = sympy_call_must("sympy.polys.numberfields.minpoly", [
+    OracleArg::PyObj(expr_obj),
+    OracleArg::PyObj(gen_obj),
+  ])
+  py_str_enum(minpoly)
+}
+
+///|
 pub fn domainmatrix_add(
   a : Array[Array[Int]],
   b : Array[Array[Int]],
