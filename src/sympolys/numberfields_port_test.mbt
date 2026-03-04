@@ -71,6 +71,38 @@ test "numberfields: affine radical minpoly parity" {
 }
 
 ///|
+test "numberfields: perfect-power radicals reduce to true minpoly" {
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let quarter = try! @symcore.rational_from_ints(1, 4)
+
+  let cbrt8 = @symcore.int(8) ^ third
+  let mp_cbrt8 = nf_norm(minpoly(cbrt8, gen="x").to_expr())
+  let oracle_cbrt8 = nf_oracle_minpoly("8**(1/3)", gen="x")
+  guard mp_cbrt8 == oracle_cbrt8 else {
+    fail("minpoly(8**(1/3)) mismatch: ours=\{mp_cbrt8}, oracle=\{oracle_cbrt8}")
+  }
+
+  let fourth4 = @symcore.int(4) ^ quarter
+  let mp_fourth4 = nf_norm(minpoly(fourth4, gen="x").to_expr())
+  let oracle_fourth4 = nf_oracle_minpoly("4**(1/4)", gen="x")
+  guard mp_fourth4 == oracle_fourth4 else {
+    fail(
+      "minpoly(4**(1/4)) mismatch: ours=\{mp_fourth4}, oracle=\{oracle_fourth4}",
+    )
+  }
+
+  let one_sixteenth = try! @symcore.rational_from_ints(1, 16)
+  let fourth_small = one_sixteenth ^ quarter
+  let mp_small = nf_norm(minpoly(fourth_small, gen="x").to_expr())
+  let oracle_small = nf_oracle_minpoly("(1/16)**(1/4)", gen="x")
+  guard mp_small == oracle_small else {
+    fail(
+      "minpoly((1/16)**(1/4)) mismatch: ours=\{mp_small}, oracle=\{oracle_small}",
+    )
+  }
+}
+
+///|
 test "numberfields: to_number_field and primitive_element parity" {
   let half = try! @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
@@ -149,6 +181,7 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
       "1 + 2*sqrt(2)",
       "-3 + 4*sqrt(8)",
     ),
+    (sqrt2, @symcore.int(4) ^ (try! @symcore.rational_from_ints(1, 4)), "sqrt(2)", "4**(1/4)"),
     (try! @symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
     (sqrt2, try! @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
     (sqrt2, sqrt3, "sqrt(2)", "sqrt(3)"),

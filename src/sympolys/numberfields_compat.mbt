@@ -23,8 +23,8 @@ pub fn minimal_polynomial(
   gen? : String = "x",
 ) -> Poly raise PolyError {
   let x = @symcore.symbol(gen)
-  match expr {
-    @symcore.Expr::Number(q) => {
+  match expr_rational_constant(expr) {
+    Some(q) => {
       // Match SymPy's primitive-content convention for rationals:
       // minpoly(a/b) = b*x - a.
       let a = q.numerator()
@@ -33,7 +33,7 @@ pub fn minimal_polynomial(
       let a_expr = @symcore.number(@symnum.BigRational::from_bigint(a))
       PolyBuilder::new([gen], Domain::QQ).from_expr(bx - a_expr)
     }
-    _ =>
+    None =>
       match parse_affine_radical(expr) {
         Some(aff) => {
           let shift_expr = if aff.shift.is_zero() {
@@ -59,9 +59,9 @@ fn parse_affine_radical(expr : @symcore.Expr) -> AffineRadical? {
       let mut shift = @symnum.BigRational::zero()
       let mut term : (@symnum.BigRational, RadicalAtom)? = None
       for arg in args {
-        match arg {
-          @symcore.Expr::Number(c) => shift = shift.add_r(c)
-          _ =>
+        match expr_rational_constant(arg) {
+          Some(c) => shift = shift.add_r(c)
+          None =>
             match parse_linear_radical(arg) {
               Some(parsed) =>
                 if term is None {
@@ -104,9 +104,9 @@ fn parse_linear_radical(
           let mut coeff = @symnum.BigRational::one()
           let mut atom : RadicalAtom? = None
           for arg in args {
-            match arg {
-              @symcore.Expr::Number(c) => coeff = coeff.mul_r(c)
-              _ =>
+            match expr_rational_constant(arg) {
+              Some(c) => coeff = coeff.mul_r(c)
+              None =>
                 match parse_radical_atom(arg) {
                   Some(parsed) =>
                     if atom is None {
@@ -137,7 +137,12 @@ fn parse_radical_atom(expr : @symcore.Expr) -> RadicalAtom? {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
-            Some(RadicalAtom::{ rad, n: den.to_int() })
+            let (reduced_rad, reduced_n) = reduce_radical_power(rad, den.to_int())
+            if reduced_n > 1 {
+              Some(RadicalAtom::{ rad: reduced_rad, n: reduced_n })
+            } else {
+              None
+            }
           } else {
             None
           }
@@ -160,6 +165,84 @@ fn rat_pow_nonnegative(
     i = i + 1
   }
   result
+}
+
+///|
+fn reduce_radical_power(
+  rad : @symnum.BigRational,
+  n : Int,
+) -> (@symnum.BigRational, Int) {
+  if n <= 1 {
+    return (rad, 1)
+  }
+  let mut base = rad
+  let mut degree = n
+  let mut changed = true
+  while changed && degree > 1 {
+    changed = false
+    let mut d = degree
+    while d >= 2 {
+      if degree % d == 0 {
+        match rational_exact_nth_root(base, d) {
+          Some(root) => {
+            base = root
+            degree = degree / d
+            changed = true
+            break
+          }
+          None => ()
+        }
+      }
+      d = d - 1
+    }
+  }
+  (base, degree)
+}
+
+///|
+fn expr_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
+  match expr {
+    @symcore.Expr::Number(q) => Some(q)
+    @symcore.Expr::Add(args) => {
+      let mut sum = @symnum.BigRational::zero()
+      for arg in args {
+        match expr_rational_constant(arg) {
+          Some(c) => sum = sum.add_r(c)
+          None => return None
+        }
+      }
+      Some(sum)
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut prod = @symnum.BigRational::one()
+      for arg in args {
+        match expr_rational_constant(arg) {
+          Some(c) => prod = prod.mul_r(c)
+          None => return None
+        }
+      }
+      Some(prod)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match (base, exp) {
+        (@symcore.Expr::Number(rad), @symcore.Expr::Number(e)) => {
+          let num = e.numerator()
+          let den = e.denominator()
+          if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
+            let (r, n) = reduce_radical_power(rad, den.to_int())
+            if n == 1 {
+              Some(r)
+            } else {
+              None
+            }
+          } else {
+            None
+          }
+        }
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|
@@ -225,19 +308,7 @@ pub fn primitive_element(
 
 ///|
 fn as_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
-  match expr {
-    @symcore.Expr::Number(q) => Some(q)
-    _ =>
-      match parse_affine_radical(expr) {
-        Some(aff) =>
-          if aff.scale.is_zero() || aff.atom.rad.is_zero() {
-            Some(aff.shift)
-          } else {
-            None
-          }
-        None => None
-      }
-  }
+  expr_rational_constant(expr)
 }
 
 ///|
