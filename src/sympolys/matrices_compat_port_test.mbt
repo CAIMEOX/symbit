@@ -28,6 +28,24 @@ fn basis_to_sympy_text(basis : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
+  let rows = ddm.to_list()
+  let out : Array[Array[Int]] = Array::new()
+  for row in rows {
+    let out_row : Array[Int] = Array::new()
+    for v in row {
+      let q = fe_expect_rational(v)
+      if !q.denominator().equal_int(1) {
+        raise PolyError::DomainMismatch
+      }
+      out_row.push(q.numerator().to_int())
+    }
+    out.push(out_row)
+  }
+  out
+}
+
+///|
 test "matrices: DDM add/mul/det/rref parity" {
   let a = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
@@ -77,6 +95,29 @@ test "matrices: DDM rank/inv/nullspace parity" {
   let oracle_ns = @sympy_polys.ddm_nullspace([[1, 2, 3], [2, 4, 6]], "QQ")
   guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
     fail("ddm nullspace mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
+  }
+}
+
+///|
+test "matrices: DomainMatrix LLL and transform parity" {
+  let rows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+  let a = ddm_from_ints(rows, Domain::ZZ)
+
+  let reduced = a.lll()
+  let hnf_orig = @sympy_polys.matrix_hnf_code(rows)
+  let hnf_reduced = @sympy_polys.matrix_hnf_code(try! ddm_to_int_rows(reduced))
+  guard hnf_orig == hnf_reduced else {
+    fail("lll lattice mismatch: hnf(orig)=\{hnf_orig}, hnf(reduced)=\{hnf_reduced}")
+  }
+
+  let (reduced2, transform) = a.lll_transform()
+  let recomposed = transform.mul(a).to_string()
+  guard mx_trim(recomposed) == mx_trim(reduced2.to_string()) else {
+    fail("lll transform reconstruction mismatch")
+  }
+  let hnf_reduced2 = @sympy_polys.matrix_hnf_code(try! ddm_to_int_rows(reduced2))
+  guard hnf_orig == hnf_reduced2 else {
+    fail("lll transform lattice mismatch")
   }
 }
 

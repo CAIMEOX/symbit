@@ -448,10 +448,56 @@ pub fn ddm_nullspace(a : Array[Array[Int]], _domain_spec : String) -> String rai
 }
 
 ///|
+pub fn domainmatrix_lll(a : Array[Array[Int]]) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, "ZZ")
+  let lll = resolve_method_callable(dm, "lll")
+  let reduced = py_call_noargs(lll)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(reduced))
+}
+
+///|
+pub fn domainmatrix_lll_transform(a : Array[Array[Int]]) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, "ZZ")
+  let lll_transform = resolve_method_callable(dm, "lll_transform")
+  let res = py_call_noargs(lll_transform)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-lll-transform") }
+  let reduced = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let transform = oracle_domainmatrix_to_matrix_str(tuple_items[1])
+  "\{reduced}||\{transform}"
+}
+
+///|
+pub fn matrix_hnf_code(rows : Array[Array[Int]]) -> String raise {
+  let mat = oracle_matrix_from_ints(rows)
+  let hnf = sympy_call_must("sympy.matrices.normalforms.hermite_normal_form", [
+    OracleArg::PyObj(mat),
+  ])
+  matrix_obj_to_int_code(objenum_to_obj(hnf))
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)
   py_str_enum(mat_enum)
+}
+
+///|
+fn matrix_obj_to_int_code(mat_obj : @py.PyObject) -> String raise {
+  let tolist = resolve_method_callable(mat_obj, "tolist")
+  let list_enum = py_call_noargs(tolist)
+  let row_objs = py_list_to_pyobjects(list_enum)
+  let row_codes : Array[String] = Array::new()
+  for row_obj in row_objs {
+    let cell_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(row_obj))
+    let cells : Array[String] = Array::new()
+    for cell in cell_objs {
+      cells.push(py_obj_to_int(cell).to_string())
+    }
+    row_codes.push(cells.join(","))
+  }
+  row_codes.join(";")
 }
 
 ///|
