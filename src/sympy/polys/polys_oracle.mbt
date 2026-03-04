@@ -295,6 +295,54 @@ pub fn domain_characteristic(spec : String) -> Int raise {
 }
 
 ///|
+fn domain_attr_bool(spec : String, attr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  match py_get_attr(domain_obj, attr) {
+    Some(value) => py_str_enum(value).trim().to_string() == "True"
+    None => fail("domain-attr:\{attr}")
+  }
+}
+
+///|
+pub fn domain_is_field(spec : String) -> Bool raise {
+  domain_attr_bool(spec, "is_Field")
+}
+
+///|
+pub fn domain_is_ring(spec : String) -> Bool raise {
+  domain_attr_bool(spec, "is_Ring")
+}
+
+///|
+pub fn domain_is_exact(spec : String) -> Bool raise {
+  domain_attr_bool(spec, "is_Exact")
+}
+
+///|
+pub fn domain_is_finite_field(spec : String) -> Bool raise {
+  domain_attr_bool(spec, "is_FiniteField")
+}
+
+///|
+pub fn domain_get_field(spec : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let get_field = resolve_method_callable(domain_obj, "get_field")
+  let res = py_call_noargs(get_field)
+  py_str_enum(res)
+}
+
+///|
+pub fn domain_get_ring(spec : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let get_ring = resolve_method_callable(domain_obj, "get_ring")
+  let no_args = py_tuple_from_objects([])
+  match py_call_object(get_ring, no_args, print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
 pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
   let lhs = oracle_domain_from_spec(lhs_spec)
   let rhs = oracle_domain_from_spec(rhs_spec)
@@ -312,6 +360,47 @@ pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
     OracleArg::PyObj(gen_obj),
   ])
   py_str_enum(minpoly)
+}
+
+///|
+pub fn numberfield_primitive_coeffs(
+  exprs : Array[String],
+  gen? : String = "x",
+) -> Array[Int] raise {
+  let expr_objs : Array[@py.PyObject] = Array::new()
+  for expr in exprs {
+    expr_objs.push(sympy_sympify_str(expr))
+  }
+  let list_obj = py_list_from_objects(expr_objs).obj()
+  let gen_obj = sympy_symbol_obj(gen)
+  let res = sympy_call_must("sympy.polys.numberfields.primitive_element", [
+    OracleArg::PyObj(list_obj),
+    OracleArg::PyObj(gen_obj),
+  ])
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else {
+    fail("primitive-element-result-shape")
+  }
+  let coeff_items = py_list_to_pyobjects(@py.PyObjectEnum::create(tuple_items[1]))
+  let coeffs : Array[Int] = Array::new()
+  for item in coeff_items {
+    coeffs.push(py_obj_to_int(item))
+  }
+  coeffs
+}
+
+///|
+pub fn numberfield_field_isomorphic(lhs : String, rhs : String) -> Bool raise {
+  let lhs_obj = sympy_sympify_str(lhs)
+  let rhs_obj = sympy_sympify_str(rhs)
+  let res = sympy_call("sympy.polys.numberfields.field_isomorphism", [
+    OracleArg::PyObj(lhs_obj),
+    OracleArg::PyObj(rhs_obj),
+  ])
+  match res {
+    Some(_) => true
+    None => false
+  }
 }
 
 ///|

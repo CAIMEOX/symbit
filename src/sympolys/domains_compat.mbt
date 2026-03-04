@@ -29,13 +29,37 @@ fn find_char(s : String, needle : UInt16) -> Int? {
 fn parse_composite_domain(s : String) -> Domain raise PolyError {
   if s.has_prefix("GF(") && s.has_suffix(")") {
     let inner = (try! s[3:s.length() - 1]).to_string()
-    let p = @strconv.parse_int(inner) catch {
-      _ => raise PolyError::BadGenerator(s)
+    if inner.contains("**") {
+      let parts : Array[String] = Array::new()
+      for p in inner.split("**") {
+        parts.push(p.trim().to_string())
+      }
+      if parts.length() != 2 {
+        raise PolyError::BadGenerator(s)
+      }
+      let p = @strconv.parse_int(parts[0]) catch {
+        _ => raise PolyError::BadGenerator(s)
+      }
+      let k = @strconv.parse_int(parts[1]) catch {
+        _ => raise PolyError::BadGenerator(s)
+      }
+      if p <= 1 || k <= 1 {
+        raise PolyError::BadModulus
+      }
+      return Domain::GFExt(p, k, gfext_default_modulus(k))
+    } else {
+      let p = @strconv.parse_int(inner) catch {
+        _ => raise PolyError::BadGenerator(s)
+      }
+      if p <= 1 {
+        raise PolyError::BadModulus
+      }
+      return Domain::GF(p)
     }
-    if p <= 1 {
-      raise PolyError::BadModulus
-    }
-    return Domain::GF(p)
+  }
+  if s.has_prefix("Frac(") && s.has_suffix(")") {
+    let inner = (try! s[5:s.length() - 1]).to_string()
+    return Domain::Frac(domain_from_string(inner))
   }
   if s.contains("[") && s.has_suffix("]") {
     let left = match find_char(s, '[') {
@@ -61,6 +85,14 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
 }
 
 ///|
+fn gfext_default_modulus(k : Int) -> Array[Int] {
+  let coeffs : Array[Int] = Array::make(k + 1, 0)
+  coeffs.set(0, 1)
+  coeffs.set(k, 1)
+  coeffs
+}
+
+///|
 fn split_gens(text : String) -> Array[String] raise PolyError {
   let raw = text.trim().to_string()
   if raw == "" {
@@ -81,6 +113,18 @@ fn split_gens(text : String) -> Array[String] raise PolyError {
     raise PolyError::BadGenerator(text)
   }
   normalized
+}
+
+///|
+fn merge_gens(lhs : Array[String], rhs : Array[String]) -> Array[String] {
+  let merged = lhs.copy()
+  for g in rhs {
+    if merged.contains(g) {
+      continue
+    }
+    merged.push(g)
+  }
+  merged
 }
 
 ///|
@@ -205,18 +249,15 @@ pub fn domain_is_field_pred(domain : Domain) -> Bool {
 
 ///|
 /// True when the domain supports additive/multiplicative ring operations.
-pub fn domain_is_ring_pred(domain : Domain) -> Bool {
-  match domain {
-    Domain::RationalFunctionField(_, _) => false
-    _ => true
-  }
+pub fn domain_is_ring_pred(_domain : Domain) -> Bool {
+  true
 }
 
 ///|
 /// True when coefficients are exact (no floating approximation semantics).
 pub fn domain_is_exact_pred(domain : Domain) -> Bool {
   match domain {
-    Domain::RR | Domain::CC | Domain::EX | Domain::EXRAW => false
+    Domain::RR | Domain::CC => false
     Domain::AlgExt(base, _, _) => domain_is_exact_pred(base)
     Domain::PolyRing(base, _)
     | Domain::RationalFunctionField(base, _)
@@ -259,13 +300,13 @@ pub fn domain_get_field(domain : Domain) -> Domain raise PolyError {
   match domain {
     Domain::ZZ => Domain::QQ
     Domain::ZZ_I => Domain::QQ_I
-    Domain::PolyRing(base, gens) =>
-      Domain::RationalFunctionField(domain_get_field(base), gens)
+    Domain::PolyRing(base, gens) => Domain::RationalFunctionField(base, gens)
+    Domain::RationalFunctionField(_, _) => domain
+    Domain::Frac(_) => domain
     Domain::QuotientRing(base, gens, rels) =>
       Domain::QuotientRing(domain_get_field(base), gens, rels)
     Domain::PowerSeries(base, gens, prec) =>
       Domain::PowerSeries(domain_get_field(base), gens, prec)
-    Domain::Frac(inner) => Domain::Frac(domain_get_field(inner))
     _ =>
       if domain_is_field_pred(domain) {
         domain
@@ -281,19 +322,16 @@ pub fn domain_get_ring(domain : Domain) -> Domain raise PolyError {
   match domain {
     Domain::QQ => Domain::ZZ
     Domain::QQ_I => Domain::ZZ_I
+    Domain::ZZ | Domain::ZZ_I | Domain::RR | Domain::EX => domain
     Domain::Frac(inner) => inner
     Domain::RationalFunctionField(base, gens) =>
-      Domain::PolyRing(domain_get_ring(base), gens)
-    Domain::PolyRing(base, gens) =>
-      Domain::PolyRing(domain_get_ring(base), gens)
+      Domain::PolyRing(base, gens)
+    Domain::PolyRing(_, _) => domain
     Domain::QuotientRing(base, gens, rels) =>
       Domain::QuotientRing(domain_get_ring(base), gens, rels)
-    _ =>
-      if domain_is_ring_pred(domain) {
-        domain
-      } else {
-        raise PolyError::DomainMismatch
-      }
+    Domain::PowerSeries(base, gens, prec) =>
+      Domain::PowerSeries(domain_get_ring(base), gens, prec)
+    _ => raise PolyError::DomainMismatch
   }
 }
 
@@ -303,14 +341,43 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
   if a.equal(b) {
     return a
   }
+  if domain_is_composite_like(a) || domain_is_composite_like(b) {
+    return unify_composite_domains(a, b)
+  }
+  let char_a = domain_characteristic(a)
+  let char_b = domain_characteristic(b)
+  if char_a != char_b {
+    raise PolyError::DomainMismatch
+  }
   match (a, b) {
     (Domain::EXRAW, _) | (_, Domain::EXRAW) => Domain::EXRAW
     (Domain::EX, _) | (_, Domain::EX) => Domain::EX
+    (Domain::CC, _) | (_, Domain::CC) => Domain::CC
+    (Domain::RR, Domain::QQ_I)
+    | (Domain::QQ_I, Domain::RR)
+    | (Domain::RR, Domain::ZZ_I)
+    | (Domain::ZZ_I, Domain::RR) => Domain::CC
+    (Domain::RR, _) | (_, Domain::RR) => Domain::RR
     (Domain::QQ, Domain::ZZ) | (Domain::ZZ, Domain::QQ) => Domain::QQ
-    (Domain::QQ_I, Domain::ZZ_I) | (Domain::ZZ_I, Domain::QQ_I) => Domain::QQ_I
+    (Domain::QQ_I, Domain::QQ)
+    | (Domain::QQ, Domain::QQ_I)
+    | (Domain::QQ_I, Domain::ZZ)
+    | (Domain::ZZ, Domain::QQ_I)
+    | (Domain::QQ_I, Domain::ZZ_I)
+    | (Domain::ZZ_I, Domain::QQ_I)
+    | (Domain::ZZ_I, Domain::QQ)
+    | (Domain::QQ, Domain::ZZ_I) => Domain::QQ_I
+    (Domain::ZZ_I, Domain::ZZ) | (Domain::ZZ, Domain::ZZ_I) => Domain::ZZ_I
     (Domain::GF(p1), Domain::GF(p2)) =>
       if p1 == p2 {
         Domain::GF(p1)
+      } else {
+        raise PolyError::DomainMismatch
+      }
+    (Domain::GF(p), Domain::GFExt(q, k, m))
+    | (Domain::GFExt(q, k, m), Domain::GF(p)) =>
+      if p == q {
+        Domain::GFExt(q, k, m)
       } else {
         raise PolyError::DomainMismatch
       }
@@ -320,17 +387,8 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
       } else {
         raise PolyError::DomainMismatch
       }
-    (Domain::PolyRing(base, gens), rhs) =>
-      Domain::PolyRing(domain_unify_pair(base, rhs), gens)
-    (lhs, Domain::PolyRing(base, gens)) =>
-      Domain::PolyRing(domain_unify_pair(lhs, base), gens)
-    (Domain::RationalFunctionField(base, gens), rhs) =>
-      Domain::RationalFunctionField(domain_unify_pair(base, rhs), gens)
-    (lhs, Domain::RationalFunctionField(base, gens)) =>
-      Domain::RationalFunctionField(domain_unify_pair(lhs, base), gens)
     (Domain::Frac(inner), rhs) => Domain::Frac(domain_unify_pair(inner, rhs))
     (lhs, Domain::Frac(inner)) => Domain::Frac(domain_unify_pair(lhs, inner))
-    (Domain::RR, Domain::CC) | (Domain::CC, Domain::RR) => Domain::CC
     _ => {
       if domain_is_field_pred(a) && domain_is_ring_pred(b) {
         return a
@@ -341,4 +399,94 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
       raise PolyError::DomainMismatch
     }
   }
+}
+
+///|
+fn domain_is_poly_ring(domain : Domain) -> Bool {
+  match domain {
+    Domain::PolyRing(_, _) => true
+    _ => false
+  }
+}
+
+///|
+fn domain_is_fraction_field_like(domain : Domain) -> Bool {
+  match domain {
+    Domain::RationalFunctionField(_, _) => true
+    _ => false
+  }
+}
+
+///|
+fn domain_is_composite_like(domain : Domain) -> Bool {
+  domain_is_poly_ring(domain) || domain_is_fraction_field_like(domain)
+}
+
+///|
+fn domain_ground(domain : Domain) -> Domain {
+  match domain {
+    Domain::PolyRing(base, _) | Domain::RationalFunctionField(base, _) => base
+    _ => domain
+  }
+}
+
+///|
+fn domain_symbols(domain : Domain) -> Array[String] {
+  match domain {
+    Domain::PolyRing(_, gens) | Domain::RationalFunctionField(_, gens) => gens
+    _ => []
+  }
+}
+
+///|
+fn domain_has_assoc_ring(domain : Domain) -> Bool {
+  match domain {
+    Domain::CC
+    | Domain::GF(_)
+    | Domain::GFExt(_, _, _)
+    | Domain::EXRAW
+    | Domain::AlgExt(_, _, _) => false
+    _ => true
+  }
+}
+
+///|
+fn lift_composite_domain(
+  template : Domain,
+  base : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  match template {
+    Domain::PolyRing(_, _) => Domain::PolyRing(base, gens)
+    Domain::RationalFunctionField(_, _) => Domain::RationalFunctionField(base, gens)
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+fn unify_composite_domains(a : Domain, b : Domain) -> Domain raise PolyError {
+  let ground_a = domain_ground(a)
+  let ground_b = domain_ground(b)
+  let mut ground = domain_unify_pair(ground_a, ground_b)
+  let gens = merge_gens(domain_symbols(a), domain_symbols(b))
+
+  // Match SymPy's composite coercion rule for PolyRing+FracField mixes.
+  if (
+    (
+      (domain_is_fraction_field_like(a) && domain_is_poly_ring(b)) ||
+      (domain_is_fraction_field_like(b) && domain_is_poly_ring(a))
+    ) &&
+    (!domain_is_field_pred(ground_a) || !domain_is_field_pred(ground_b)) &&
+    domain_is_field_pred(ground) &&
+    domain_has_assoc_ring(ground)
+  ) {
+    ground = domain_get_ring(ground)
+  }
+
+  let use_a = domain_is_composite_like(a) &&
+    (!domain_is_composite_like(b) ||
+      domain_is_fraction_field_like(a) ||
+      domain_is_poly_ring(b))
+  let template = if use_a { a } else { b }
+  lift_composite_domain(template, ground, gens)
 }
