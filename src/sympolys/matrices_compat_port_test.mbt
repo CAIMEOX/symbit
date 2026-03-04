@@ -122,6 +122,22 @@ test "matrices: DomainMatrix LLL and transform parity" {
 }
 
 ///|
+test "matrices: HNF parity on integer cases" {
+  let cases = [
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+  ]
+  for rows in cases {
+    let a = ddm_from_ints(rows, Domain::ZZ)
+    let ours_rows = try! ddm_to_int_rows(a.hermite_normal_form())
+    let oracle_code = @sympy_polys.matrix_hnf_code(rows)
+    let ours_code = @sympy_polys.matrix_hnf_code(ours_rows)
+    guard ours_code == oracle_code else {
+      fail("hnf lattice mismatch: ours=\{ours_code}, oracle=\{oracle_code}")
+    }
+  }
+}
+
+///|
 test "matrices: SDM add/mul and dense conversion" {
   let two = try! fe_from_int(2, Domain::ZZ)
   let one = try! fe_from_int(1, Domain::ZZ)
