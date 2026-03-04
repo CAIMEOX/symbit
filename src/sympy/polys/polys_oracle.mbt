@@ -390,6 +390,65 @@ pub fn numberfield_primitive_coeffs(
 }
 
 ///|
+pub fn numberfield_primitive_reps(
+  exprs : Array[String],
+  gen? : String = "x",
+) -> String raise {
+  let expr_objs : Array[@py.PyObject] = Array::new()
+  for expr in exprs {
+    expr_objs.push(sympy_sympify_str(expr))
+  }
+  let list_obj = py_list_from_objects(expr_objs).obj()
+  let gen_obj = sympy_symbol_obj(gen)
+  let kwargs : Map[String, OracleArg] = { "ex": OracleArg::Bool(true) }
+  let res = sympy_call_must(
+    "sympy.polys.numberfields.primitive_element",
+    [
+      OracleArg::PyObj(list_obj),
+      OracleArg::PyObj(gen_obj),
+    ],
+    kwargs~,
+  )
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 3 else {
+    fail("primitive-element-ex-result-shape")
+  }
+  let reps_obj = @py.PyObjectEnum::create(tuple_items[2])
+  let rows = py_list_to_pyobjects(reps_obj)
+  let row_parts : Array[String] = Array::new()
+  for row in rows {
+    let coeff_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(row))
+    let coeff_parts : Array[String] = Array::new()
+    for coeff in coeff_objs {
+      let q = sympy_call_must("sympy.Rational", [OracleArg::PyObj(coeff)])
+      coeff_parts.push(py_str_enum(q))
+    }
+    let coeff_joined = coeff_parts.join(",")
+    row_parts.push("[\{coeff_joined}]")
+  }
+  let row_joined = row_parts.join(",")
+  "[\{row_joined}]"
+}
+
+///|
+pub fn numberfield_to_number_field_coeffs(lhs : String, rhs : String) -> String raise {
+  let lhs_obj = sympy_sympify_str(lhs)
+  let rhs_obj = sympy_sympify_str(rhs)
+  let res = sympy_call("sympy.polys.numberfields.to_number_field", [
+    OracleArg::PyObj(lhs_obj),
+    OracleArg::PyObj(rhs_obj),
+  ])
+  match res {
+    Some(obj) => {
+      let coeffs = resolve_method_callable(objenum_to_obj(obj), "coeffs")
+      let coeff_obj = py_call_noargs(coeffs)
+      py_str_enum(coeff_obj).replace_all(old=" ", new="")
+    }
+    None => "None"
+  }
+}
+
+///|
 pub fn numberfield_field_isomorphism_coeffs(
   lhs : String,
   rhs : String,

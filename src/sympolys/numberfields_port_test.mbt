@@ -26,6 +26,16 @@ fn nf_coeffs_norm(coeffs : Array[@symnum.BigRational]?) -> String {
 }
 
 ///|
+fn nf_reps_norm(reps : Array[Array[@symnum.BigRational]]) -> String {
+  let outer = reps.map(rep => {
+    let body = rep.map(c => c.to_string()).join(",")
+    "[\{body}]"
+  })
+  let joined = outer.join(",")
+  "[\{joined}]"
+}
+
+///|
 test "numberfields: minpoly parity for rationals and radicals" {
   let q = try! @symcore.rational_from_ints(3, 2)
   let q_mp = minpoly(q, gen="x")
@@ -103,6 +113,44 @@ test "numberfields: perfect-power radicals reduce to true minpoly" {
 }
 
 ///|
+test "numberfields: to_number_field(expr, theta) coeff parity" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+  let sqrt5 = @symcore.int(5) ^ half
+  let theta = sqrt2 + sqrt3
+
+  let ours_s2 = nf_coeffs_norm(Some(to_number_field_coeffs(sqrt2, theta)))
+  let oracle_s2 = @sympy_polys.numberfield_to_number_field_coeffs(
+    "sqrt(2)",
+    "sqrt(2) + sqrt(3)",
+  )
+    .replace_all(old=" ", new="")
+  guard ours_s2 == oracle_s2 else {
+    fail("to_number_field coeff mismatch sqrt2/theta: ours=\{ours_s2}, oracle=\{oracle_s2}")
+  }
+
+  let ours_s3 = nf_coeffs_norm(Some(to_number_field_coeffs(sqrt3, theta)))
+  let oracle_s3 = @sympy_polys.numberfield_to_number_field_coeffs(
+    "sqrt(3)",
+    "sqrt(2) + sqrt(3)",
+  )
+    .replace_all(old=" ", new="")
+  guard ours_s3 == oracle_s3 else {
+    fail("to_number_field coeff mismatch sqrt3/theta: ours=\{ours_s3}, oracle=\{oracle_s3}")
+  }
+
+  let fail_case : Result[Array[@symnum.BigRational], PolyError] = try? to_number_field_coeffs(
+    sqrt5,
+    theta,
+  )
+  match fail_case {
+    Ok(value) => fail("expected embedding failure for sqrt(5), got \{value}")
+    Err(_) => ()
+  }
+}
+
+///|
 test "numberfields: to_number_field and primitive_element parity" {
   let half = try! @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
@@ -137,6 +185,43 @@ test "numberfields: to_number_field and primitive_element parity" {
   }
   guard prim_norm == nf_norm(sqrt2 + sqrt3) else {
     fail("primitive_element expression mismatch")
+  }
+}
+
+///|
+test "numberfields: primitive_element ex reps parity" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+
+  let (prim, coeffs, reps) = primitive_element_ex([sqrt2, sqrt3])
+  guard coeffs == [1, 1] else {
+    fail("primitive_element_ex coefficients mismatch: \{coeffs}")
+  }
+  guard nf_norm(prim) == nf_norm(sqrt2 + sqrt3) else {
+    fail("primitive_element_ex primitive mismatch")
+  }
+
+  let oracle_coeffs = @sympy_polys.numberfield_primitive_coeffs(
+    ["sqrt(2)", "sqrt(3)"],
+    gen="x",
+  )
+  guard coeffs == oracle_coeffs else {
+    fail(
+      "primitive_element_ex coeff parity mismatch: ours=\{coeffs}, oracle=\{oracle_coeffs}",
+    )
+  }
+
+  let ours_reps = nf_reps_norm(reps)
+  let oracle_reps = @sympy_polys.numberfield_primitive_reps(
+    ["sqrt(2)", "sqrt(3)"],
+    gen="x",
+  )
+    .replace_all(old=" ", new="")
+  guard ours_reps == oracle_reps else {
+    fail(
+      "primitive_element_ex reps mismatch: ours=\{ours_reps}, oracle=\{oracle_reps}",
+    )
   }
 }
 
@@ -181,6 +266,8 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
       "1 + 2*sqrt(2)",
       "-3 + 4*sqrt(8)",
     ),
+    (sqrt2, sqrt2 + sqrt3, "sqrt(2)", "sqrt(2) + sqrt(3)"),
+    (sqrt3, sqrt2 + sqrt3, "sqrt(3)", "sqrt(2) + sqrt(3)"),
     (sqrt2, @symcore.int(4) ^ (try! @symcore.rational_from_ints(1, 4)), "sqrt(2)", "4**(1/4)"),
     (try! @symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
     (sqrt2, try! @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
@@ -212,12 +299,16 @@ test "numberfields: is_isomorphism_possible basic sanity" {
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
   let sqrt8 = @symcore.int(8) ^ half
+  let theta = sqrt2 + sqrt3
 
   guard is_isomorphism_possible(sqrt2, sqrt8) else {
     fail("sqrt2 -> sqrt8 should pass degree pre-check")
   }
   guard is_isomorphism_possible(sqrt2, sqrt3) else {
     fail("sqrt2 -> sqrt3 should pass degree pre-check")
+  }
+  guard is_isomorphism_possible(sqrt2, theta) else {
+    fail("sqrt2 -> sqrt2+sqrt3 should pass multiquadratic degree pre-check")
   }
   guard is_isomorphism_possible(try! @symcore.rational_from_ints(3, 2), sqrt2) else {
     fail("rationals should pass degree pre-check")
