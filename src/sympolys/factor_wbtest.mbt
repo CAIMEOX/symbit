@@ -423,6 +423,10 @@ test "factor wb: residual reachable branch sweep" {
   guard qq_norm.domain == Domain::QQ else {
     fail("normalize_poly_mod should pass through non-GF domains")
   }
+  let qq_mod_parts = try! (PolyBuilder::new(["x"], Domain::QQ).from_expr((x ^ @symcore.int(2)) + @symcore.int(1))).factor(modulus=5)
+  guard qq_mod_parts.length() >= 1 else {
+    fail("factor(modulus=...) on non-GF domain should map into GF path")
+  }
   let bad_seeded : Result[Array[Poly], PolyError] = try? factor_gf_seeded(qq_poly, 13)
   guard bad_seeded is Err(PolyError::NotUnivariate) else {
     fail("factor_gf_seeded should reject non-GF domains")
@@ -455,6 +459,13 @@ test "factor wb: residual reachable branch sweep" {
   let gfext_mix_parts = try! factor_gf_seeded(gfext_mix, 9)
   guard gfext_mix_parts.length() >= 1 else {
     fail("factor_gf_seeded on GFExt should return at least one factor")
+  }
+  let gfext_linear_parts = try! factor_gf_seeded(
+    PolyBuilder::new(["x"], gfext_domain).from_expr(x + @symcore.int(1)),
+    15,
+  )
+  guard gfext_linear_parts.length() == 1 else {
+    fail("factor_gf_seeded should keep linear GFExt factors directly")
   }
 
   let edf_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(

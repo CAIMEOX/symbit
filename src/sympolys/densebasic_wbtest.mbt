@@ -553,6 +553,20 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
   guard gfext_keep.length() == 1 else {
     fail("dup_convert should handle GFExt sample zero-like initialization")
   }
+  let a_alg = @symcore.symbol("a")
+  let minpoly_alg = PolyBuilder::new(["a"], Domain::QQ).from_expr(
+    (a_alg ^ @symcore.int(2)) + @symcore.int(1),
+  )
+  let alg_sample = FieldElem::AlgExt(
+    Domain::QQ,
+    [FieldElem::QQ(@symnum.BigRational::one())],
+    minpoly_alg,
+    "a",
+  )
+  let alg_keep = try! dup_convert([alg_sample], Domain::QQ, Domain::QQ)
+  guard alg_keep.length() == 1 else {
+    fail("dup_convert should initialize zero-like output for AlgExt samples")
+  }
 
   let copy_coef_u1 = dmp_copy(DensePoly::Coef(db_wb_fe(7)), 1)
   guard copy_coef_u1 is DensePoly::Coef(_) else {
@@ -623,6 +637,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     try! dmp_ground_nth(DensePoly::Poly([DensePoly::Coef(db_wb_fe(9))]), [], 0, Domain::ZZ),
     content="9",
   )
+  inspect(try! dmp_ground_nth(DensePoly::Poly([DensePoly::Poly([])]), [], 0, Domain::ZZ), content="0")
 
   guard dmp_nest(DensePoly::Coef(db_wb_fe(5)), 2, Domain::ZZ) is DensePoly::Poly(_) else {
     fail("dmp_nest should wrap Coef when l>0")

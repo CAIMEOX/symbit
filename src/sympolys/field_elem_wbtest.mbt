@@ -348,6 +348,34 @@ test "field_elem wb: remaining branch sweep" {
   guard !fe_is_positive(FieldElem::GFp(5, 4)) else {
     fail("fe_is_positive should be false on finite-field elements")
   }
+  guard !fe_is_negative(FieldElem::GFExt(5, [1], [1, 0, 1])) else {
+    fail("fe_is_negative should be false on GFExt elements")
+  }
+  guard !fe_is_positive(FieldElem::GFExt(5, [1], [1, 0, 1])) else {
+    fail("fe_is_positive should be false on GFExt elements")
+  }
+  let alg_sign_probe = FieldElem::AlgExt(
+    Domain::QQ,
+    [FieldElem::QQ(@symnum.BigRational::one())],
+    minpoly,
+    "a",
+  )
+  guard !fe_is_negative(alg_sign_probe) else {
+    fail("fe_is_negative should be false on AlgExt elements")
+  }
+  guard !fe_is_positive(alg_sign_probe) else {
+    fail("fe_is_positive should be false on AlgExt elements")
+  }
+
+  let pm_edge = fe_poly_mod([1, 0], [1], 1)
+  guard pm_edge.length() == 0 else {
+    fail("fe_poly_mod should pop zero-leading residue in degenerate modulus case")
+  }
+  let mp_const = try! fe_wb_minpoly("a", @symcore.int(1), Domain::QQ)
+  let alg_mod_edge = try! fe_alg_poly_mod([FieldElem::QQ(@symnum.BigRational::zero())], mp_const)
+  guard alg_mod_edge.length() == 0 else {
+    fail("fe_alg_poly_mod should pop zero-leading residue for constant minpoly edge")
+  }
 
   inspect(
     fe_to_string(
