@@ -373,6 +373,57 @@ pub fn domainmatrix_rref(
 }
 
 ///|
+pub fn ddm_add(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
+  let ddm_b = oracle_ddm_from_ints(b, domain_spec)
+  let add = resolve_method_callable(ddm_a, "__add__")
+  let res = py_call_one(add, ddm_b)
+  py_str_enum(res)
+}
+
+///|
+pub fn ddm_mul(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
+  let ddm_b = oracle_ddm_from_ints(b, domain_spec)
+  let mul = resolve_method_callable(ddm_a, "__matmul__")
+  let res = py_call_one(mul, ddm_b)
+  py_str_enum(res)
+}
+
+///|
+pub fn ddm_det(a : Array[Array[Int]], domain_spec : String) -> String raise {
+  let ddm = oracle_ddm_from_ints(a, domain_spec)
+  let det = resolve_method_callable(ddm, "det")
+  let res = py_call_noargs(det)
+  py_str_enum(res)
+}
+
+///|
+pub fn ddm_rref(a : Array[Array[Int]], domain_spec : String) -> String raise {
+  let ddm = oracle_ddm_from_ints(a, domain_spec)
+  let rref = resolve_method_callable(ddm, "rref")
+  let res = py_call_noargs(rref)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("ddm-rref-tuple") }
+  let mat = py_str_obj(tuple_items[0])
+  let pivots = py_list_to_pyobjects(@py.PyObjectEnum::create(tuple_items[1]))
+  let pivot_vals : Array[String] = Array::new()
+  for p in pivots {
+    pivot_vals.push(py_obj_to_int(p).to_string())
+  }
+  let joined = pivot_vals.join(",")
+  "\{mat}||[\{joined}]"
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)
@@ -411,6 +462,37 @@ fn oracle_domainmatrix_from_ints(
     OracleArg::PyObj(domain_obj),
   ])
   objenum_to_obj(dm_enum)
+}
+
+///|
+fn oracle_ddm_from_ints(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> @py.PyObject raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("ddm-ragged")
+    }
+  }
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    let py_row : Array[@py.PyObject] = Array::new()
+    for v in row {
+      py_row.push(py_int_obj(v))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let data_obj = py_list_from_objects(py_rows).obj()
+  let shape_obj = py_tuple_from_objects([py_int_obj(row_count), py_int_obj(col_count)]).obj()
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let ddm_enum = sympy_call_must("sympy.polys.matrices.ddm.DDM", [
+    OracleArg::PyObj(data_obj),
+    OracleArg::PyObj(shape_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  objenum_to_obj(ddm_enum)
 }
 
 ///|
