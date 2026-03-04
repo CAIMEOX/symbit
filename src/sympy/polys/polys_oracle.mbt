@@ -390,6 +390,23 @@ pub fn numberfield_primitive_coeffs(
 }
 
 ///|
+pub fn numberfield_field_isomorphism_coeffs(
+  lhs : String,
+  rhs : String,
+) -> String raise {
+  let lhs_obj = sympy_sympify_str(lhs)
+  let rhs_obj = sympy_sympify_str(rhs)
+  let res = sympy_call("sympy.polys.numberfields.field_isomorphism", [
+    OracleArg::PyObj(lhs_obj),
+    OracleArg::PyObj(rhs_obj),
+  ])
+  match res {
+    Some(obj) => py_str_enum(obj).replace_all(old=" ", new="")
+    None => "None"
+  }
+}
+
+///|
 pub fn numberfield_field_isomorphic(lhs : String, rhs : String) -> Bool raise {
   let lhs_obj = sympy_sympify_str(lhs)
   let rhs_obj = sympy_sympify_str(rhs)

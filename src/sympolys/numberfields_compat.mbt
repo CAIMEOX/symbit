@@ -224,6 +224,190 @@ pub fn primitive_element(
 }
 
 ///|
+fn as_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
+  match expr {
+    @symcore.Expr::Number(q) => Some(q)
+    _ =>
+      match parse_affine_radical(expr) {
+        Some(aff) =>
+          if aff.scale.is_zero() || aff.atom.rad.is_zero() {
+            Some(aff.shift)
+          } else {
+            None
+          }
+        None => None
+      }
+  }
+}
+
+///|
+fn nonconstant_affine(expr : @symcore.Expr) -> AffineRadical? {
+  match parse_affine_radical(expr) {
+    Some(aff) =>
+      if aff.scale.is_zero() || aff.atom.rad.is_zero() {
+        None
+      } else {
+        Some(aff)
+      }
+    None => None
+  }
+}
+
+///|
+fn bigint_pow_nonnegative(base : BigInt, exp : Int) -> BigInt {
+  let mut result = BigInt::from_int(1)
+  let mut cur = base
+  let mut k = exp
+  while k > 0 {
+    if k % 2 == 1 {
+      result = result.mul(cur)
+    }
+    k = k / 2
+    if k > 0 {
+      cur = cur.mul(cur)
+    }
+  }
+  result
+}
+
+///|
+fn bigint_exact_nth_root_nonnegative(value : BigInt, n : Int) -> BigInt? {
+  if n <= 0 {
+    return None
+  }
+  let zero = BigInt::from_int(0)
+  let one = BigInt::from_int(1)
+  if value.op_lt(zero) {
+    return None
+  }
+  if value.is_zero() {
+    return Some(zero)
+  }
+  let mut lo = zero
+  let mut hi = value.add(one)
+  let two = BigInt::from_int(2)
+  while lo.add(one).op_lt(hi) {
+    let mid = lo.add(hi).div(two)
+    let p = bigint_pow_nonnegative(mid, n)
+    if p.equal(value) {
+      return Some(mid)
+    }
+    if p.op_lt(value) {
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  None
+}
+
+///|
+fn bigint_exact_nth_root_signed(value : BigInt, n : Int) -> BigInt? {
+  let zero = BigInt::from_int(0)
+  if value.op_lt(zero) {
+    if n <= 0 || n % 2 == 0 {
+      return None
+    }
+    match bigint_exact_nth_root_nonnegative(value.neg(), n) {
+      Some(root) => Some(root.neg())
+      None => None
+    }
+  } else {
+    bigint_exact_nth_root_nonnegative(value, n)
+  }
+}
+
+///|
+fn rational_exact_nth_root(
+  value : @symnum.BigRational,
+  n : Int,
+) -> @symnum.BigRational? {
+  if n <= 0 {
+    return None
+  }
+  match (
+    bigint_exact_nth_root_signed(value.numerator(), n),
+    bigint_exact_nth_root_nonnegative(value.denominator(), n),
+  ) {
+    (Some(num), Some(den)) => {
+      let q_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+        num,
+        den,
+      )
+      match q_res {
+        Ok(q) => Some(q)
+        Err(_) => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+/// Necessary degree-based filter mirroring SymPy's subfield pre-check shape.
+pub fn is_isomorphism_possible(a : @symcore.Expr, b : @symcore.Expr) -> Bool {
+  let ma_res : Result[Poly, PolyError] = try? minimal_polynomial(a)
+  let mb_res : Result[Poly, PolyError] = try? minimal_polynomial(b)
+  match (ma_res, mb_res) {
+    (Ok(ma), Ok(mb)) => {
+      let n = ma.degree(0)
+      let m = mb.degree(0)
+      if n <= 0 || m <= 0 {
+        false
+      } else if n == 1 {
+        // Q(a) = Q for rational constants, always embeddable into Q(b).
+        true
+      } else {
+        m % n == 0
+      }
+    }
+    _ => false
+  }
+}
+
+///|
+/// Return coefficients of a polynomial in `b` representing `a` in `Q(b)`.
+///
+/// This subfield stage currently handles:
+/// - rational constants (`[a]`)
+/// - affine radical embeddings between `a + b*q**(1/n)` forms (`[k, c]`).
+pub fn field_isomorphism(
+  a : @symcore.Expr,
+  b : @symcore.Expr,
+) -> Array[@symnum.BigRational]? {
+  match as_rational_constant(a) {
+    Some(q) => return Some([q])
+    None => ()
+  }
+  if a == b {
+    return Some([@symnum.BigRational::one(), @symnum.BigRational::zero()])
+  }
+  match as_rational_constant(b) {
+    Some(_) => return None
+    None => ()
+  }
+  if !is_isomorphism_possible(a, b) {
+    return None
+  }
+  match (nonconstant_affine(a), nonconstant_affine(b)) {
+    (Some(aff_a), Some(aff_b)) => {
+      if aff_a.atom.n != aff_b.atom.n {
+        return None
+      }
+      let ratio = aff_a.atom.rad.div_r(aff_b.atom.rad)
+      let t = match rational_exact_nth_root(ratio, aff_a.atom.n) {
+        Some(root) => root
+        None => return None
+      }
+      let k = aff_a.scale.mul_r(t).div_r(aff_b.scale)
+      let c = aff_a.shift.add_r(k.mul_r(aff_b.shift).neg_r())
+      Some([k, c])
+    }
+    _ => None
+  }
+}
+
+///|
 fn algext_relation_coeffs(domain : Domain) -> Array[@symnum.BigRational]? {
   match domain {
     Domain::AlgExt(base, gens, rels) => {

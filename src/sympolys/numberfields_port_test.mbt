@@ -15,6 +15,17 @@ fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String {
 }
 
 ///|
+fn nf_coeffs_norm(coeffs : Array[@symnum.BigRational]?) -> String {
+  match coeffs {
+    Some(items) => {
+      let body = items.map(c => c.to_string()).join(",")
+      "[\{body}]"
+    }
+    None => "None"
+  }
+}
+
+///|
 test "numberfields: minpoly parity for rationals and radicals" {
   let q = try! @symcore.rational_from_ints(3, 2)
   let q_mp = minpoly(q, gen="x")
@@ -118,5 +129,64 @@ test "numberfields: field_isomorphic parity for simple algebraic fields" {
   }
   guard ours_diff == oracle_diff else {
     fail("field_isomorphic(sqrt2,sqrt3) mismatch")
+  }
+}
+
+///|
+test "numberfields: subfield field_isomorphism coefficient parity" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt8 = @symcore.int(8) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+
+  let cases = [
+    (sqrt2, @symcore.int(-1) * sqrt2, "sqrt(2)", "-sqrt(2)"),
+    (sqrt2, sqrt8, "sqrt(2)", "sqrt(8)"),
+    (@symcore.int(1) + sqrt2, sqrt2, "1 + sqrt(2)", "sqrt(2)"),
+    (
+      @symcore.int(1) + @symcore.int(2) * sqrt2,
+      @symcore.int(-3) + @symcore.int(4) * sqrt8,
+      "1 + 2*sqrt(2)",
+      "-3 + 4*sqrt(8)",
+    ),
+    (try! @symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
+    (sqrt2, try! @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
+    (sqrt2, sqrt3, "sqrt(2)", "sqrt(3)"),
+  ]
+
+  for item in cases {
+    let lhs = item.0
+    let rhs = item.1
+    let lhs_str = item.2
+    let rhs_str = item.3
+    let ours = nf_coeffs_norm(field_isomorphism(lhs, rhs))
+    let oracle = @sympy_polys.numberfield_field_isomorphism_coeffs(
+      lhs_str,
+      rhs_str,
+    )
+      .replace_all(old=" ", new="")
+    guard ours == oracle else {
+      fail(
+        "field_isomorphism mismatch for \{lhs_str} in Q(\{rhs_str}): ours=\{ours}, oracle=\{oracle}",
+      )
+    }
+  }
+}
+
+///|
+test "numberfields: is_isomorphism_possible basic sanity" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+  let sqrt8 = @symcore.int(8) ^ half
+
+  guard is_isomorphism_possible(sqrt2, sqrt8) else {
+    fail("sqrt2 -> sqrt8 should pass degree pre-check")
+  }
+  guard is_isomorphism_possible(sqrt2, sqrt3) else {
+    fail("sqrt2 -> sqrt3 should pass degree pre-check")
+  }
+  guard is_isomorphism_possible(try! @symcore.rational_from_ints(3, 2), sqrt2) else {
+    fail("rationals should pass degree pre-check")
   }
 }
