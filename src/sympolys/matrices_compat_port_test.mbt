@@ -1,12 +1,30 @@
 ///|
 fn mx_trim(s : String) -> String {
-  s.replace_all(old=" ", new="").replace_all(old=".0", new="")
+  s
+  .replace_all(old=" ", new="")
+  .replace_all(old="\n", new="")
+  .replace_all(old=".0", new="")
 }
 
 ///|
 fn mx_expr_norm(e : @symcore.Expr) -> String {
   (try! @sympy_polys.sympy_normalize(@symprint.to_string(e)).trim().to_string())
     .replace_all(old=" ", new="")
+}
+
+///|
+fn basis_to_sympy_text(basis : Array[Array[FieldElem]]) -> String {
+  let cols : Array[String] = Array::new()
+  for vec in basis {
+    let rows : Array[String] = Array::new()
+    for v in vec {
+      rows.push("[\{fe_to_string(v)}]")
+    }
+    let rows_joined = rows.join(",")
+    cols.push("Matrix([\{rows_joined}])")
+  }
+  let cols_joined = cols.join(",")
+  "[\{cols_joined}]"
 }
 
 ///|
@@ -37,6 +55,28 @@ test "matrices: DDM add/mul/det/rref parity" {
   }
   guard mx_trim(ours_rref) == mx_trim(oracle_rref) else {
     fail("ddm rref mismatch: ours=\{ours_rref}, oracle=\{oracle_rref}")
+  }
+}
+
+///|
+test "matrices: DDM rank/inv/nullspace parity" {
+  let rank_case = ddm_from_ints([[1, 2], [2, 4]], Domain::QQ)
+  guard rank_case.rank() == @sympy_polys.ddm_rank([[1, 2], [2, 4]], "QQ") else {
+    fail("ddm rank mismatch")
+  }
+
+  let inv_case = ddm_from_ints([[1, 2], [3, 5]], Domain::QQ)
+  let ours_inv = "Matrix(\{inv_case.inv().to_string()})"
+  let oracle_inv = @sympy_polys.ddm_inv([[1, 2], [3, 5]], "QQ")
+  guard mx_trim(ours_inv) == mx_trim(oracle_inv) else {
+    fail("ddm inv mismatch: ours=\{ours_inv}, oracle=\{oracle_inv}")
+  }
+
+  let ns_case = ddm_from_ints([[1, 2, 3], [2, 4, 6]], Domain::QQ)
+  let ours_ns = basis_to_sympy_text(ns_case.nullspace())
+  let oracle_ns = @sympy_polys.ddm_nullspace([[1, 2, 3], [2, 4, 6]], "QQ")
+  guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
+    fail("ddm nullspace mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
   }
 }
 

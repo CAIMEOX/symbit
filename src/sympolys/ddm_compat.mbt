@@ -89,6 +89,90 @@ pub fn DDM::rref(self : DDM) -> (DDM, Array[Int]) raise PolyError {
 }
 
 ///|
+pub fn DDM::rank(self : DDM) -> Int raise PolyError {
+  let (_, pivots) = self.rref()
+  pivots.length()
+}
+
+///|
+pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
+  let (m, n) = self.shape()
+  if m != n {
+    raise PolyError::DomainMismatch
+  }
+  let one = fe_from_int(1, self.dm.domain)
+  let zero = fe_from_int(0, self.dm.domain)
+  let left = self.dm.to_dense()
+  let aug_rows : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<m {
+    let row = left[i].copy()
+    for j in 0..<n {
+      row.push(if i == j { one } else { zero })
+    }
+    aug_rows.push(row)
+  }
+  let aug = domain_matrix_from_dense(aug_rows, self.dm.domain)
+  let (rref_aug, pivots) = aug.rref()
+  if pivots.length() < n {
+    raise PolyError::ExactQuotientFailed
+  }
+  for i in 0..<n {
+    if pivots[i] != i {
+      raise PolyError::ExactQuotientFailed
+    }
+  }
+  let rows = rref_aug.to_dense()
+  let inv_rows : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<n {
+    let row : Array[FieldElem] = Array::new()
+    for j in 0..<n {
+      let expected = if i == j { one } else { zero }
+      if !fe_is_zero(fe_sub(rows[i][j], expected)) {
+        raise PolyError::ExactQuotientFailed
+      }
+      row.push(rows[i][n + j])
+    }
+    inv_rows.push(row)
+  }
+  ddm_from_dense(inv_rows, self.dm.domain)
+}
+
+///|
+pub fn DDM::nullspace(self : DDM) -> Array[Array[FieldElem]] raise PolyError {
+  let (m, n) = self.shape()
+  let (r, pivots) = self.rref()
+  let rows = r.to_list()
+  let pivot_set : Map[Int, Bool] = {}
+  for p in pivots {
+    pivot_set[p] = true
+  }
+  let free_cols : Array[Int] = Array::new()
+  for j in 0..<n {
+    if pivot_set.get(j) is None {
+      free_cols.push(j)
+    }
+  }
+  if free_cols.is_empty() {
+    return []
+  }
+  let one = fe_from_int(1, self.dm.domain)
+  let zero = fe_from_int(0, self.dm.domain)
+  let basis : Array[Array[FieldElem]] = Array::new()
+  for free in free_cols {
+    let vec : Array[FieldElem] = Array::make(n, zero)
+    vec.set(free, one)
+    for i in 0..<pivots.length() {
+      let p = pivots[i]
+      if i < m {
+        vec.set(p, fe_neg(rows[i][free]))
+      }
+    }
+    basis.push(vec)
+  }
+  basis
+}
+
+///|
 pub fn DDM::to_string(self : DDM) -> String raise PolyError {
   let rows = self.to_list()
   let row_parts : Array[String] = Array::new()

@@ -424,10 +424,57 @@ pub fn ddm_rref(a : Array[Array[Int]], domain_spec : String) -> String raise {
 }
 
 ///|
+pub fn ddm_rank(a : Array[Array[Int]], _domain_spec : String) -> Int raise {
+  let mat = oracle_matrix_from_ints(a)
+  let rank_call = resolve_method_callable(mat, "rank")
+  let rank = py_call_noargs(rank_call)
+  py_obj_to_int(objenum_to_obj(rank))
+}
+
+///|
+pub fn ddm_inv(a : Array[Array[Int]], _domain_spec : String) -> String raise {
+  let mat = oracle_matrix_from_ints(a)
+  let inv_call = resolve_method_callable(mat, "inv")
+  let inv = py_call_noargs(inv_call)
+  py_str_enum(inv)
+}
+
+///|
+pub fn ddm_nullspace(a : Array[Array[Int]], _domain_spec : String) -> String raise {
+  let mat = oracle_matrix_from_ints(a)
+  let nullspace_call = resolve_method_callable(mat, "nullspace")
+  let nullspace = py_call_noargs(nullspace_call)
+  py_str_enum(nullspace)
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)
   py_str_enum(mat_enum)
+}
+
+///|
+fn oracle_matrix_from_ints(rows : Array[Array[Int]]) -> @py.PyObject raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("matrix-ragged")
+    }
+  }
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    let py_row : Array[@py.PyObject] = Array::new()
+    for v in row {
+      py_row.push(py_int_obj(v))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let matrix_enum = sympy_call_must("sympy.Matrix", [
+    OracleArg::PyObj(py_list_from_objects(py_rows).obj()),
+  ])
+  objenum_to_obj(matrix_enum)
 }
 
 ///|
