@@ -5,7 +5,18 @@ fn trim_ws(s : String) -> String {
 
 ///|
 test "domains: basic constructor/repr parity" {
-  let specs = ["ZZ", "QQ", "RR", "CC", "ZZ_I", "QQ_I", "EX", "EXRAW", "GF(7)"]
+  let specs = [
+    "ZZ",
+    "QQ",
+    "RR",
+    "CC",
+    "ZZ_I",
+    "QQ_I",
+    "EX",
+    "EXRAW",
+    "GF(7)",
+    "QQ<sqrt(2)>",
+  ]
   for spec in specs {
     let domain = domain_from_string(spec)
     let ours = domain_to_sympy_string(domain)
@@ -85,6 +96,7 @@ test "domains: get_field/get_ring parity" {
     "ZZ_I",
     "QQ_I",
     "EX",
+    "QQ<sqrt(2)>",
   ]
   for spec in field_specs {
     let ours = domain_to_sympy_string(domain_get_field(domain_from_string(spec)))
@@ -106,6 +118,7 @@ test "domains: get_field/get_ring parity" {
     "CC",
     "GF(7)",
     "EXRAW",
+    "QQ<sqrt(2)>",
   ]
   for spec in ring_specs {
     let ours_try : Result[Domain, PolyError] = try? domain_get_ring(
@@ -133,6 +146,8 @@ test "domains: unify parity for key coercion paths" {
     ("ZZ[x]", "ZZ[y]"),
     ("QQ(x)", "QQ(y)"),
     ("ZZ_I", "QQ_I"),
+    ("QQ<sqrt(2)>", "QQ"),
+    ("QQ<sqrt(2)>", "QQ<sqrt(3)>"),
   ]
   for pair in pairs {
     let lhs = pair.0
@@ -145,6 +160,172 @@ test "domains: unify parity for key coercion paths" {
         "unify mismatch for \{lhs} + \{rhs}: ours=\{ours_text}, oracle=\{oracle}",
       )
     }
+  }
+}
+
+///|
+test "domains: extended predicate parity (module-level tags)" {
+  let specs = [
+    "ZZ",
+    "QQ",
+    "RR",
+    "CC",
+    "ZZ_I",
+    "QQ_I",
+    "EX",
+    "EXRAW",
+    "GF(7)",
+    "ZZ[x]",
+    "QQ(x)",
+    "QQ<sqrt(2)>",
+  ]
+  for spec in specs {
+    let domain = domain_from_string(spec)
+    guard
+      domain_is_composite_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_Composite")
+    else {
+      fail("is_Composite mismatch for \{spec}")
+    }
+    guard
+      domain_is_simple_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_Simple")
+    else {
+      fail("is_Simple mismatch for \{spec}")
+    }
+    guard
+      domain_is_numerical_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_Numerical")
+    else {
+      fail("is_Numerical mismatch for \{spec}")
+    }
+    guard
+      domain_has_assoc_ring_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Ring")
+    else {
+      fail("has_assoc_Ring mismatch for \{spec}")
+    }
+    guard
+      domain_is_pid_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_PID")
+    else {
+      fail("is_PID mismatch for \{spec}")
+    }
+    guard
+      domain_is_integer_ring_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_IntegerRing")
+    else {
+      fail("is_IntegerRing mismatch for \{spec}")
+    }
+    guard
+      domain_is_rational_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_RationalField")
+    else {
+      fail("is_RationalField mismatch for \{spec}")
+    }
+    guard
+      domain_is_real_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_RealField")
+    else {
+      fail("is_RealField mismatch for \{spec}")
+    }
+    guard
+      domain_is_complex_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_ComplexField")
+    else {
+      fail("is_ComplexField mismatch for \{spec}")
+    }
+    guard
+      domain_is_gaussian_ring_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_GaussianRing")
+    else {
+      fail("is_GaussianRing mismatch for \{spec}")
+    }
+    guard
+      domain_is_gaussian_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_GaussianField")
+    else {
+      fail("is_GaussianField mismatch for \{spec}")
+    }
+    guard
+      domain_is_expression_domain_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_EX")
+    else {
+      fail("is_EX mismatch for \{spec}")
+    }
+    guard
+      domain_is_expression_raw_domain_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_EXRAW")
+    else {
+      fail("is_EXRAW mismatch for \{spec}")
+    }
+  }
+}
+
+///|
+test "domains: alias constructors and parser coverage" {
+  guard
+    domain_to_sympy_string(domain_from_string("IntegerRing")) == domain_to_sympy_string(
+      integer_ring_domain(),
+    )
+  else {
+    fail("IntegerRing alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("RationalField")) == domain_to_sympy_string(
+      rational_field_domain(),
+    )
+  else {
+    fail("RationalField alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("RealField")) == domain_to_sympy_string(
+      real_field_domain(),
+    )
+  else {
+    fail("RealField alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("ComplexField")) == domain_to_sympy_string(
+      complex_field_domain(),
+    )
+  else {
+    fail("ComplexField alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("GaussianIntegerRing")) ==
+    domain_to_sympy_string(gaussian_integer_ring_domain())
+  else {
+    fail("GaussianIntegerRing alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("GaussianRationalField")) ==
+    domain_to_sympy_string(gaussian_rational_field_domain())
+  else {
+    fail("GaussianRationalField alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("ExpressionDomain")) ==
+    domain_to_sympy_string(expression_domain())
+  else {
+    fail("ExpressionDomain alias mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("ExpressionRawDomain")) ==
+    domain_to_sympy_string(expression_raw_domain())
+  else {
+    fail("ExpressionRawDomain alias mismatch")
+  }
+  let ff7 = try! ff_domain(7)
+  guard domain_to_sympy_string(domain_from_string("FF(7)")) == domain_to_sympy_string(ff7) else {
+    fail("FF alias mismatch")
+  }
+  let ff11 = try! finite_field_domain(11)
+  guard
+    domain_to_sympy_string(domain_from_string("FiniteField(11)")) ==
+    domain_to_sympy_string(ff11)
+  else {
+    fail("FiniteField alias mismatch")
   }
 }
 

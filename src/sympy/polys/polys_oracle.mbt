@@ -304,6 +304,11 @@ fn domain_attr_bool(spec : String, attr : String) -> Bool raise {
 }
 
 ///|
+pub fn domain_attr_bool_query(spec : String, attr : String) -> Bool raise {
+  domain_attr_bool(spec, attr)
+}
+
+///|
 pub fn domain_is_field(spec : String) -> Bool raise {
   domain_attr_bool(spec, "is_Field")
 }
@@ -756,13 +761,39 @@ fn oracle_ddm_from_ints(
 ///|
 fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
   let text = spec.trim().to_string()
-  if text.has_prefix("GF(") && text.has_suffix(")") {
-    let p_text = (try! text[3:text.length() - 1]).to_string()
+  if (
+    text.has_prefix("GF(") ||
+    text.has_prefix("FF(") ||
+    text.has_prefix("FiniteField(")
+  ) &&
+    text.has_suffix(")") {
+    let left = match find_char_oracle(text, '(') {
+      Some(i) => i
+      None => fail("domain-spec-gf:\{spec}")
+    }
+    let p_text = (try! text[left + 1:text.length() - 1]).to_string()
     let p = @strconv.parse_int(p_text) catch {
       _ => fail("domain-spec-gf:\{spec}")
     }
     let gf = sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(p)])
     return objenum_to_obj(gf)
+  }
+  if text.contains("<") && text.has_suffix(">") {
+    let left = match find_char_oracle(text, '<') {
+      Some(i) => i
+      None => fail("domain-spec-alg")
+    }
+    let base = (try! text[:left]).to_string()
+    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base_obj = oracle_domain_from_spec(base)
+    let ext_items = split_names(gens)
+    let ext_objs : Array[@py.PyObject] = Array::new()
+    for item in ext_items {
+      ext_objs.push(sympy_sympify_str(item))
+    }
+    let alg_field = resolve_method_callable(base_obj, "algebraic_field")
+    let ext_domain = py_call_with_args(alg_field, ext_objs, py_dict_new())
+    return objenum_to_obj(ext_domain)
   }
   if text.contains("[") && text.has_suffix("]") {
     let left = match find_char_oracle(text, '[') {
