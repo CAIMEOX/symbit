@@ -139,6 +139,11 @@ test "domains: get_field/get_ring parity" {
 test "domains: unify parity for key coercion paths" {
   let pairs = [
     ("ZZ", "QQ"),
+    ("QQ", "RR"),
+    ("QQ", "CC"),
+    ("ZZ", "CC"),
+    ("EX", "QQ"),
+    ("EXRAW", "QQ"),
     ("ZZ[x]", "QQ"),
     ("ZZ[x]", "QQ(y)"),
     ("QQ(x)", "ZZ[y]"),
@@ -147,6 +152,14 @@ test "domains: unify parity for key coercion paths" {
     ("QQ(x)", "QQ(y)"),
     ("ZZ_I", "QQ_I"),
     ("QQ<sqrt(2)>", "QQ"),
+    ("QQ<sqrt(2)>", "RR"),
+    ("QQ<sqrt(2)>", "CC"),
+    ("QQ<sqrt(2)>", "EX"),
+    ("QQ<sqrt(2)>", "EXRAW"),
+    ("QQ<sqrt(2)>", "QQ[x]"),
+    ("QQ<sqrt(2)>", "QQ(x)"),
+    ("QQ<sqrt(2)>", "RR[x]"),
+    ("QQ<sqrt(2)>", "RR(x)"),
     ("QQ<sqrt(2)>", "QQ<sqrt(3)>"),
   ]
   for pair in pairs {

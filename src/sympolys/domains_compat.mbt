@@ -738,6 +738,28 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
         raise PolyError::DomainMismatch
       }
     (Domain::AlgExt(base, gens, rels), other) | (other, Domain::AlgExt(base, gens, rels)) => {
+      match other {
+        Domain::RR | Domain::CC | Domain::EX | Domain::EXRAW => return other
+        Domain::PolyRing(other_base, syms) => {
+          let merged_base = domain_unify_pair(
+            Domain::AlgExt(base, gens, rels),
+            other_base,
+          )
+          return Domain::PolyRing(merged_base, syms)
+        }
+        Domain::RationalFunctionField(other_base, syms) => {
+          let merged_base = domain_unify_pair(
+            Domain::AlgExt(base, gens, rels),
+            other_base,
+          )
+          return Domain::RationalFunctionField(merged_base, syms)
+        }
+        Domain::Frac(other_inner) =>
+          return Domain::Frac(
+            domain_unify_pair(Domain::AlgExt(base, gens, rels), other_inner),
+          )
+        _ => ()
+      }
       let unified = domain_unify_pair(base, other)
       if domain_is_field_pred(unified) {
         return Domain::AlgExt(unified, gens, rels)
