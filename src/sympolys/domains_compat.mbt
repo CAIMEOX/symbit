@@ -740,6 +740,16 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
     (Domain::AlgExt(base, gens, rels), other) | (other, Domain::AlgExt(base, gens, rels)) => {
       match other {
         Domain::RR | Domain::CC | Domain::EX | Domain::EXRAW => return other
+        Domain::ZZ_I | Domain::QQ_I => {
+          let lifted_base = domain_unify_pair(base, Domain::QQ)
+          let merged_gen = if gens.is_empty() {
+            "I"
+          } else {
+            let joined = gens.join("+")
+            "\{joined}+I"
+          }
+          return Domain::AlgExt(lifted_base, [merged_gen], [])
+        }
         Domain::PolyRing(other_base, syms) => {
           let merged_base = domain_unify_pair(
             Domain::AlgExt(base, gens, rels),

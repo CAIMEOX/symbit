@@ -156,10 +156,16 @@ test "domains: unify parity for key coercion paths" {
     ("QQ<sqrt(2)>", "CC"),
     ("QQ<sqrt(2)>", "EX"),
     ("QQ<sqrt(2)>", "EXRAW"),
+    ("QQ<sqrt(2)>", "ZZ_I"),
+    ("QQ<sqrt(2)>", "QQ_I"),
     ("QQ<sqrt(2)>", "QQ[x]"),
     ("QQ<sqrt(2)>", "QQ(x)"),
     ("QQ<sqrt(2)>", "RR[x]"),
     ("QQ<sqrt(2)>", "RR(x)"),
+    ("QQ<sqrt(2)>", "ZZ_I[x]"),
+    ("QQ<sqrt(2)>", "QQ_I[x]"),
+    ("QQ<sqrt(2)>", "ZZ_I(x)"),
+    ("QQ<sqrt(2)>", "QQ_I(x)"),
     ("QQ<sqrt(2)>", "QQ<sqrt(3)>"),
   ]
   for pair in pairs {
