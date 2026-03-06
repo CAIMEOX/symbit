@@ -793,11 +793,10 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     let p = parsed.0
     let ext_opt = parsed.1
     let gf = match ext_opt {
-      Some(k) =>
-        sympy_call_must(
-          "sympy.polys.domains.GF",
-          [OracleArg::Int(p), OracleArg::Int(k)],
-        )
+      Some(k) => {
+        let q = int_pow_oracle(p, k)
+        sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(q)])
+      }
       None => sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(p)])
     }
     return objenum_to_obj(gf)
@@ -904,6 +903,23 @@ fn parse_gf_descriptor_oracle(raw : String, spec : String) -> (Int, Int?) raise 
     _ => fail("domain-spec-gf:\{spec}")
   }
   (p, None)
+}
+
+///|
+fn int_pow_oracle(base : Int, exp : Int) -> Int {
+  let mut result = 1
+  let mut b = base
+  let mut e = exp
+  while e > 0 {
+    if e % 2 == 1 {
+      result = result * b
+    }
+    e = e / 2
+    if e > 0 {
+      b = b * b
+    }
+  }
+  result
 }
 
 ///|

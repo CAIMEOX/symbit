@@ -529,3 +529,18 @@ test "domains: extended parser handles Frac/GFExt/PowerSeries syntax" {
     fail("PowerSeries precision parser mismatch")
   }
 }
+
+///|
+test "domains: oracle GF descriptor parser handles extension forms" {
+  let gf_pow = @sympy_polys.domain_repr("GF(5**2)")
+  let gf_flat = @sympy_polys.domain_repr("GF(25)")
+  guard trim_ws(gf_pow) == trim_ws(gf_flat) else {
+    fail("oracle GF power descriptor mismatch: \{gf_pow} vs \{gf_flat}")
+  }
+
+  let ff_pair = @sympy_polys.domain_repr("FF(7,3)")
+  let ff_flat = @sympy_polys.domain_repr("GF(343)")
+  guard trim_ws(ff_pair) == trim_ws(ff_flat) else {
+    fail("oracle FF pair descriptor mismatch: \{ff_pair} vs \{ff_flat}")
+  }
+}
