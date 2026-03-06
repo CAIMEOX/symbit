@@ -276,6 +276,11 @@ test "domains: advanced predicate parity (meta/family tags)" {
     "GF(7)",
     "ZZ[x]",
     "QQ(x)",
+    "RR[x]",
+    "CC[x]",
+    "RR(x)",
+    "CC(x)",
+    "EX(x)",
     "QQ<sqrt(2)>",
   ]
   for spec in specs {
@@ -336,6 +341,55 @@ test "domains: advanced predicate parity (meta/family tags)" {
     else {
       fail("is_QQ_I mismatch for \{spec}")
     }
+    guard
+      domain_is_cc_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_CC")
+    else {
+      fail("is_CC mismatch for \{spec}")
+    }
+    guard
+      domain_is_rr_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_RR")
+    else {
+      fail("is_RR mismatch for \{spec}")
+    }
+    guard
+      domain_is_ff_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_FF")
+    else {
+      fail("is_FF mismatch for \{spec}")
+    }
+    guard
+      domain_is_frac_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_Frac")
+    else {
+      fail("is_Frac mismatch for \{spec}")
+    }
+    guard
+      domain_is_fraction_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_FractionField")
+    else {
+      fail("is_FractionField mismatch for \{spec}")
+    }
+    guard
+      domain_is_poly_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_Poly")
+    else {
+      fail("is_Poly mismatch for \{spec}")
+    }
+    guard
+      domain_is_polynomial_ring_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_PolynomialRing")
+    else {
+      fail("is_PolynomialRing mismatch for \{spec}")
+    }
+    guard
+      domain_is_symbolic_raw_domain_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicRawDomain")
+    else {
+      fail("is_SymbolicRawDomain mismatch for \{spec}")
+    }
+    guard
+      domain_has_default_precision_pred(domain) ==
+      @sympy_polys.domain_attr_bool_or_false(spec, "has_default_precision")
+    else {
+      fail("has_default_precision mismatch for \{spec}")
+    }
   }
 }
 
@@ -353,8 +407,10 @@ test "domains: get_exact parity across core/coercion domains" {
     "GF(7)",
     "ZZ[x]",
     "RR[x]",
+    "CC[x]",
     "QQ(x)",
     "RR(x)",
+    "CC(x)",
     "QQ<sqrt(2)>",
   ]
   for spec in specs {

@@ -309,6 +309,15 @@ pub fn domain_attr_bool_query(spec : String, attr : String) -> Bool raise {
 }
 
 ///|
+pub fn domain_attr_bool_or_false(spec : String, attr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  match py_get_attr(domain_obj, attr) {
+    Some(value) => py_str_enum(value).trim().to_string() == "True"
+    None => false
+  }
+}
+
+///|
 pub fn domain_is_field(spec : String) -> Bool raise {
   domain_attr_bool(spec, "is_Field")
 }

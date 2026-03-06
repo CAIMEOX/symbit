@@ -548,6 +548,16 @@ pub fn domain_is_expression_raw_domain_pred(domain : Domain) -> Bool {
 }
 
 ///|
+pub fn domain_is_cc_pred(domain : Domain) -> Bool {
+  domain is Domain::CC
+}
+
+///|
+pub fn domain_is_rr_pred(domain : Domain) -> Bool {
+  domain is Domain::RR
+}
+
+///|
 pub fn domain_is_zz_pred(domain : Domain) -> Bool {
   domain is Domain::ZZ
 }
@@ -573,6 +583,42 @@ pub fn domain_is_symbolic_domain_pred(domain : Domain) -> Bool {
 }
 
 ///|
+pub fn domain_is_symbolic_raw_domain_pred(domain : Domain) -> Bool {
+  domain is Domain::EXRAW
+}
+
+///|
+pub fn domain_is_ff_pred(domain : Domain) -> Bool {
+  match domain {
+    Domain::GF(_) | Domain::GFExt(_, _, _) => true
+    _ => false
+  }
+}
+
+///|
+pub fn domain_is_frac_pred(domain : Domain) -> Bool {
+  match domain {
+    Domain::Frac(_) | Domain::RationalFunctionField(_, _) => true
+    _ => false
+  }
+}
+
+///|
+pub fn domain_is_fraction_field_pred(domain : Domain) -> Bool {
+  domain_is_frac_pred(domain)
+}
+
+///|
+pub fn domain_is_poly_pred(domain : Domain) -> Bool {
+  domain is Domain::PolyRing(_, _)
+}
+
+///|
+pub fn domain_is_polynomial_ring_pred(domain : Domain) -> Bool {
+  domain_is_poly_pred(domain)
+}
+
+///|
 pub fn domain_is_finite_extension_pred(_domain : Domain) -> Bool {
   // SymPy finite fields and algebraic fields are not flagged as "FiniteExtension".
   false
@@ -581,6 +627,14 @@ pub fn domain_is_finite_extension_pred(_domain : Domain) -> Bool {
 ///|
 pub fn domain_has_assoc_field_pred(_domain : Domain) -> Bool {
   true
+}
+
+///|
+pub fn domain_has_default_precision_pred(domain : Domain) -> Bool {
+  match domain {
+    Domain::RR | Domain::CC => true
+    _ => false
+  }
 }
 
 ///|
