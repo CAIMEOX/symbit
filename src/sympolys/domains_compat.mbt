@@ -26,6 +26,64 @@ fn find_char(s : String, needle : UInt16) -> Int? {
 }
 
 ///|
+fn find_substring_from(s : String, needle : String, start : Int) -> Int? {
+  let n = needle.length()
+  if n == 0 || start < 0 || start >= s.length() {
+    return None
+  }
+  if n > s.length() - start {
+    return None
+  }
+  for i in start..<(s.length() - n + 1) {
+    if (try! s[i:i + n]).to_string() == needle {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn split_gf_descriptor(raw : String, spec : String) -> (Int, Int?) raise PolyError {
+  let body = raw.trim().to_string()
+  if body.contains("**") {
+    let parts : Array[String] = Array::new()
+    for p in body.split("**") {
+      parts.push(p.trim().to_string())
+    }
+    if parts.length() != 2 {
+      raise PolyError::BadGenerator(spec)
+    }
+    let p = @strconv.parse_int(parts[0]) catch {
+      _ => raise PolyError::BadGenerator(spec)
+    }
+    let k = @strconv.parse_int(parts[1]) catch {
+      _ => raise PolyError::BadGenerator(spec)
+    }
+    return (p, Some(k))
+  }
+  if body.contains(",") {
+    let parts : Array[String] = Array::new()
+    for p in body.split(",") {
+      parts.push(p.trim().to_string())
+    }
+    if parts.length() != 2 {
+      raise PolyError::BadGenerator(spec)
+    }
+    let p = @strconv.parse_int(parts[0]) catch {
+      _ => raise PolyError::BadGenerator(spec)
+    }
+    let k = @strconv.parse_int(parts[1]) catch {
+      _ => raise PolyError::BadGenerator(spec)
+    }
+    return (p, Some(k))
+  }
+  let p = @strconv.parse_int(body) catch {
+    _ => raise PolyError::BadGenerator(spec)
+  }
+  (p, None)
+}
+
+///|
 fn parse_composite_domain(s : String) -> Domain raise PolyError {
   if (
     s.has_prefix("GF(") ||
@@ -38,33 +96,50 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       None => raise PolyError::BadGenerator(s)
     }
     let inner = (try! s[left + 1:s.length() - 1]).to_string()
-    if inner.contains("**") {
-      let parts : Array[String] = Array::new()
-      for p in inner.split("**") {
-        parts.push(p.trim().to_string())
+    let parsed = split_gf_descriptor(inner, s)
+    let p = parsed.0
+    let ext_opt = parsed.1
+    match ext_opt {
+      Some(k) => {
+        if p <= 1 || k <= 1 {
+          raise PolyError::BadModulus
+        }
+        return Domain::GFExt(p, k, gfext_default_modulus(k))
       }
-      if parts.length() != 2 {
-        raise PolyError::BadGenerator(s)
+      None => {
+        if p <= 1 {
+          raise PolyError::BadModulus
+        }
+        return Domain::GF(p)
       }
-      let p = @strconv.parse_int(parts[0]) catch {
-        _ => raise PolyError::BadGenerator(s)
-      }
-      let k = @strconv.parse_int(parts[1]) catch {
-        _ => raise PolyError::BadGenerator(s)
-      }
-      if p <= 1 || k <= 1 {
-        raise PolyError::BadModulus
-      }
-      return Domain::GFExt(p, k, gfext_default_modulus(k))
-    } else {
-      let p = @strconv.parse_int(inner) catch {
-        _ => raise PolyError::BadGenerator(s)
-      }
-      if p <= 1 {
-        raise PolyError::BadModulus
-      }
-      return Domain::GF(p)
     }
+  }
+  if s.contains("[[") {
+    let left = match find_substring_from(s, "[[", 0) {
+      Some(pos) => pos
+      None => raise PolyError::BadGenerator(s)
+    }
+    let right = match find_substring_from(s, "]]", left + 2) {
+      Some(pos) => pos
+      None => raise PolyError::BadGenerator(s)
+    }
+    let base = domain_from_string((try! s[:left]).to_string())
+    let gens_str = (try! s[left + 2:right]).to_string()
+    let gens = split_gens(gens_str)
+    if right + 2 == s.length() {
+      return Domain::PowerSeries(base, gens, -1)
+    }
+    if
+      s.has_suffix(")") &&
+      right + 8 <= s.length() - 1 &&
+      (try! s[right + 2:right + 8]).to_string() == "(prec=" {
+      let prec_text = (try! s[right + 8:s.length() - 1]).to_string()
+      let precision = @strconv.parse_int(prec_text.trim().to_string()) catch {
+        _ => raise PolyError::BadGenerator(s)
+      }
+      return Domain::PowerSeries(base, gens, precision)
+    }
+    raise PolyError::BadGenerator(s)
   }
   if s.contains("<") && s.has_suffix(">") {
     let left = match find_char(s, '<') {
@@ -473,6 +548,47 @@ pub fn domain_is_expression_raw_domain_pred(domain : Domain) -> Bool {
 }
 
 ///|
+pub fn domain_is_zz_pred(domain : Domain) -> Bool {
+  domain is Domain::ZZ
+}
+
+///|
+pub fn domain_is_qq_pred(domain : Domain) -> Bool {
+  domain is Domain::QQ
+}
+
+///|
+pub fn domain_is_zz_i_pred(domain : Domain) -> Bool {
+  domain is Domain::ZZ_I
+}
+
+///|
+pub fn domain_is_qq_i_pred(domain : Domain) -> Bool {
+  domain is Domain::QQ_I
+}
+
+///|
+pub fn domain_is_symbolic_domain_pred(domain : Domain) -> Bool {
+  domain is Domain::EX
+}
+
+///|
+pub fn domain_is_finite_extension_pred(_domain : Domain) -> Bool {
+  // SymPy finite fields and algebraic fields are not flagged as "FiniteExtension".
+  false
+}
+
+///|
+pub fn domain_has_assoc_field_pred(_domain : Domain) -> Bool {
+  true
+}
+
+///|
+pub fn domain_has_characteristic_zero_pred(domain : Domain) -> Bool {
+  domain_characteristic(domain) == 0
+}
+
+///|
 /// Return the domain characteristic (`0` for characteristic-zero domains).
 pub fn domain_characteristic(domain : Domain) -> Int {
   match domain {
@@ -485,6 +601,26 @@ pub fn domain_characteristic(domain : Domain) -> Int {
     | Domain::PowerSeries(base, _, _)
     | Domain::Frac(base) => domain_characteristic(base)
     _ => 0
+  }
+}
+
+///|
+/// Return an exact companion domain (`RR -> QQ`, `CC -> QQ_I`) recursively.
+pub fn domain_get_exact(domain : Domain) -> Domain {
+  match domain {
+    Domain::RR => Domain::QQ
+    Domain::CC => Domain::QQ_I
+    Domain::Frac(inner) => Domain::Frac(domain_get_exact(inner))
+    Domain::PolyRing(base, gens) => Domain::PolyRing(domain_get_exact(base), gens)
+    Domain::RationalFunctionField(base, gens) =>
+      Domain::RationalFunctionField(domain_get_exact(base), gens)
+    Domain::QuotientRing(base, gens, rels) =>
+      Domain::QuotientRing(domain_get_exact(base), gens, rels)
+    Domain::PowerSeries(base, gens, prec) =>
+      Domain::PowerSeries(domain_get_exact(base), gens, prec)
+    Domain::AlgExt(base, gens, rels) =>
+      Domain::AlgExt(domain_get_exact(base), gens, rels)
+    _ => domain
   }
 }
 

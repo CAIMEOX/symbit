@@ -263,6 +263,110 @@ test "domains: extended predicate parity (module-level tags)" {
 }
 
 ///|
+test "domains: advanced predicate parity (meta/family tags)" {
+  let specs = [
+    "ZZ",
+    "QQ",
+    "RR",
+    "CC",
+    "ZZ_I",
+    "QQ_I",
+    "EX",
+    "EXRAW",
+    "GF(7)",
+    "ZZ[x]",
+    "QQ(x)",
+    "QQ<sqrt(2)>",
+  ]
+  for spec in specs {
+    let domain = domain_from_string(spec)
+    guard
+      domain_is_algebraic_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_Algebraic")
+    else {
+      fail("is_Algebraic mismatch for \{spec}")
+    }
+    guard
+      domain_is_algebraic_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_AlgebraicField")
+    else {
+      fail("is_AlgebraicField mismatch for \{spec}")
+    }
+    guard
+      domain_is_symbolic_domain_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicDomain")
+    else {
+      fail("is_SymbolicDomain mismatch for \{spec}")
+    }
+    guard
+      domain_has_assoc_field_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Field")
+    else {
+      fail("has_assoc_Field mismatch for \{spec}")
+    }
+    guard
+      domain_has_characteristic_zero_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "has_CharacteristicZero")
+    else {
+      fail("has_CharacteristicZero mismatch for \{spec}")
+    }
+    guard
+      domain_is_finite_extension_pred(domain) ==
+      @sympy_polys.domain_attr_bool_query(spec, "is_FiniteExtension")
+    else {
+      fail("is_FiniteExtension mismatch for \{spec}")
+    }
+    guard
+      domain_is_zz_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_ZZ")
+    else {
+      fail("is_ZZ mismatch for \{spec}")
+    }
+    guard
+      domain_is_qq_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_QQ")
+    else {
+      fail("is_QQ mismatch for \{spec}")
+    }
+    guard
+      domain_is_zz_i_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_ZZ_I")
+    else {
+      fail("is_ZZ_I mismatch for \{spec}")
+    }
+    guard
+      domain_is_qq_i_pred(domain) == @sympy_polys.domain_attr_bool_query(spec, "is_QQ_I")
+    else {
+      fail("is_QQ_I mismatch for \{spec}")
+    }
+  }
+}
+
+///|
+test "domains: get_exact parity across core/coercion domains" {
+  let specs = [
+    "ZZ",
+    "QQ",
+    "RR",
+    "CC",
+    "ZZ_I",
+    "QQ_I",
+    "EX",
+    "EXRAW",
+    "GF(7)",
+    "ZZ[x]",
+    "RR[x]",
+    "QQ(x)",
+    "RR(x)",
+    "QQ<sqrt(2)>",
+  ]
+  for spec in specs {
+    let ours = domain_to_sympy_string(domain_get_exact(domain_from_string(spec)))
+    let oracle = @sympy_polys.domain_get_exact(spec)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("get_exact mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
 test "domains: alias constructors and parser coverage" {
   guard
     domain_to_sympy_string(domain_from_string("IntegerRing")) == domain_to_sympy_string(
@@ -327,16 +431,32 @@ test "domains: alias constructors and parser coverage" {
   else {
     fail("FiniteField alias mismatch")
   }
+  let gfext = domain_from_string("GF(5,2)")
+  guard domain_to_sympy_string(gfext) == "GF(5**2)" else {
+    fail("GF comma extension parser mismatch")
+  }
+  let gfext_ff = domain_from_string("FF(7,3)")
+  guard domain_to_sympy_string(gfext_ff) == "GF(7**3)" else {
+    fail("FF comma extension parser mismatch")
+  }
 }
 
 ///|
-test "domains: extended parser handles Frac and GFExt syntax" {
+test "domains: extended parser handles Frac/GFExt/PowerSeries syntax" {
   let frac = domain_from_string("Frac(ZZ[x])")
   guard domain_to_sympy_string(frac) == "Frac(ZZ[x])" else {
     fail("Frac parser mismatch")
   }
-  let gfext = domain_from_string("GF(5**2)")
-  guard domain_to_sympy_string(gfext) == "GF(5**2)" else {
+  let gfext_pow = domain_from_string("GF(5**2)")
+  guard domain_to_sympy_string(gfext_pow) == "GF(5**2)" else {
     fail("GFExt parser mismatch")
+  }
+  let ps = domain_from_string("QQ[[x,y]]")
+  guard domain_to_sympy_string(ps) == "QQ[[x,y]]" else {
+    fail("PowerSeries parser mismatch")
+  }
+  let ps_prec = domain_from_string("RR[[t]](prec=7)")
+  guard domain_to_sympy_string(ps_prec) == "RR[[t]](prec=7)" else {
+    fail("PowerSeries precision parser mismatch")
   }
 }

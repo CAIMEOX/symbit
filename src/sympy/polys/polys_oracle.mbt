@@ -337,6 +337,14 @@ pub fn domain_get_field(spec : String) -> String raise {
 }
 
 ///|
+pub fn domain_get_exact(spec : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let get_exact = resolve_method_callable(domain_obj, "get_exact")
+  let res = py_call_noargs(get_exact)
+  py_str_enum(res)
+}
+
+///|
 pub fn domain_get_ring(spec : String) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let get_ring = resolve_method_callable(domain_obj, "get_ring")
@@ -771,11 +779,18 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-gf:\{spec}")
     }
-    let p_text = (try! text[left + 1:text.length() - 1]).to_string()
-    let p = @strconv.parse_int(p_text) catch {
-      _ => fail("domain-spec-gf:\{spec}")
+    let raw = (try! text[left + 1:text.length() - 1]).to_string()
+    let parsed = parse_gf_descriptor_oracle(raw, spec)
+    let p = parsed.0
+    let ext_opt = parsed.1
+    let gf = match ext_opt {
+      Some(k) =>
+        sympy_call_must(
+          "sympy.polys.domains.GF",
+          [OracleArg::Int(p), OracleArg::Int(k)],
+        )
+      None => sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(p)])
     }
-    let gf = sympy_call_must("sympy.polys.domains.GF", [OracleArg::Int(p)])
     return objenum_to_obj(gf)
   }
   if text.contains("<") && text.has_suffix(">") {
@@ -839,6 +854,47 @@ fn find_char_oracle(text : String, needle : UInt16) -> Int? {
     }
   }
   None
+}
+
+///|
+fn parse_gf_descriptor_oracle(raw : String, spec : String) -> (Int, Int?) raise {
+  let body = raw.trim().to_string()
+  if body.contains("**") {
+    let parts : Array[String] = Array::new()
+    for p in body.split("**") {
+      parts.push(p.trim().to_string())
+    }
+    if parts.length() != 2 {
+      fail("domain-spec-gf:\{spec}")
+    }
+    let p = @strconv.parse_int(parts[0]) catch {
+      _ => fail("domain-spec-gf:\{spec}")
+    }
+    let k = @strconv.parse_int(parts[1]) catch {
+      _ => fail("domain-spec-gf:\{spec}")
+    }
+    return (p, Some(k))
+  }
+  if body.contains(",") {
+    let parts : Array[String] = Array::new()
+    for p in body.split(",") {
+      parts.push(p.trim().to_string())
+    }
+    if parts.length() != 2 {
+      fail("domain-spec-gf:\{spec}")
+    }
+    let p = @strconv.parse_int(parts[0]) catch {
+      _ => fail("domain-spec-gf:\{spec}")
+    }
+    let k = @strconv.parse_int(parts[1]) catch {
+      _ => fail("domain-spec-gf:\{spec}")
+    }
+    return (p, Some(k))
+  }
+  let p = @strconv.parse_int(body) catch {
+    _ => fail("domain-spec-gf:\{spec}")
+  }
+  (p, None)
 }
 
 ///|
