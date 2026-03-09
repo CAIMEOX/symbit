@@ -22,11 +22,11 @@ pub fn minimal_polynomial(
   expr : @symcore.Expr,
   gen? : String = "x",
 ) -> Poly raise PolyError {
-  let x = @symcore.symbol(gen)
   match expr_rational_constant(expr) {
     Some(q) => {
       // Match SymPy's primitive-content convention for rationals:
       // minpoly(a/b) = b*x - a.
+      let x = @symcore.symbol(gen)
       let a = q.numerator()
       let b = q.denominator()
       let bx = @symcore.number(@symnum.BigRational::from_bigint(b)) * x
@@ -36,6 +36,7 @@ pub fn minimal_polynomial(
     None =>
       match parse_affine_radical(expr) {
         Some(aff) => {
+          let x = @symcore.symbol(gen)
           let shift_expr = if aff.shift.is_zero() {
             x
           } else {
@@ -47,9 +48,84 @@ pub fn minimal_polynomial(
           let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(lhs - rhs)
           normalize_minpoly_qq(raw)
         }
-        None => raise PolyError::NonPolynomial
+        None =>
+          match mq_minpoly(expr, gen) {
+            Some(poly) => poly
+            None => raise PolyError::NonPolynomial
+          }
       }
   }
+}
+
+///|
+/// Minimal polynomial for multiquadratic expressions built from rational
+/// combinations of square roots.
+fn mq_minpoly(expr : @symcore.Expr, gen : String) -> Poly? raise PolyError {
+  let atoms : Array[@symnum.BigRational] = Array::new()
+  if !mq_collect_atoms(expr, atoms) || atoms.is_empty() {
+    return None
+  }
+  match mq_parse_expr(expr, atoms) {
+    Some(alpha) => mq_minpoly_from_vector(alpha, atoms, gen)
+    None => None
+  }
+}
+
+///|
+fn mq_minpoly_from_vector(
+  alpha : Array[@symnum.BigRational],
+  atoms : Array[@symnum.BigRational],
+  gen : String,
+) -> Poly? raise PolyError {
+  let dim = mq_dimension(atoms.length())
+  if alpha.length() != dim {
+    return None
+  }
+  let powers : Array[Array[@symnum.BigRational]] = [mq_const(dim, @symnum.BigRational::one())]
+  let mut current = mq_const(dim, @symnum.BigRational::one())
+  for degree in 1..=dim {
+    current = mq_mul(current, alpha, atoms)
+    let cols : Array[Array[@symnum.BigRational]] = Array::new()
+    for i in 0..<degree {
+      cols.push(powers[i])
+    }
+    match mq_solver_matrix(cols, dim) {
+      Some(matrix) =>
+        match mq_solve_linear(matrix, current) {
+          Some(coeffs) => return Some(mq_relation_to_poly(coeffs, degree, gen))
+          None => powers.push(current)
+        }
+      None => return None
+    }
+  }
+  None
+}
+
+///|
+fn mq_relation_to_poly(
+  coeffs : Array[@symnum.BigRational],
+  degree : Int,
+  gen : String,
+) -> Poly raise PolyError {
+  let x = @symcore.symbol(gen)
+  let terms : Array[@symcore.Expr] = [x ^ @symcore.int(degree)]
+  for i in 0..<coeffs.length() {
+    let c = coeffs[i]
+    if c.is_zero() {
+      continue
+    }
+    let coeff_expr = @symcore.number(c.neg_r())
+    let term = if i == 0 {
+      coeff_expr
+    } else if i == 1 {
+      coeff_expr * x
+    } else {
+      coeff_expr * (x ^ @symcore.int(i))
+    }
+    terms.push(term)
+  }
+  let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(@symcore.add(terms))
+  normalize_minpoly_qq(raw)
 }
 
 ///|
@@ -571,6 +647,37 @@ fn mq_find_equivalent_atom(
 }
 
 ///|
+fn mq_find_atom_mask(
+  atoms : Array[@symnum.BigRational],
+  rad : @symnum.BigRational,
+) -> (Int, @symnum.BigRational)? {
+  match mq_find_equivalent_atom(atoms, rad) {
+    Some((idx, scale)) => Some((1 << idx, scale))
+    None => {
+      if atoms.is_empty() {
+        return None
+      }
+      let mut mask = 1
+      let limit = 1 << atoms.length()
+      while mask < limit {
+        let mut prod = @symnum.BigRational::one()
+        for i in 0..<atoms.length() {
+          if ((mask >> i) & 1) == 1 {
+            prod = prod.mul_r(atoms[i])
+          }
+        }
+        match rational_exact_nth_root(rad.div_r(prod), 2) {
+          Some(scale) => return Some((mask, scale))
+          None => ()
+        }
+        mask = mask + 1
+      }
+      None
+    }
+  }
+}
+
+///|
 fn mq_collect_atoms(
   expr : @symcore.Expr,
   atoms : Array[@symnum.BigRational],
@@ -609,7 +716,7 @@ fn mq_collect_atoms(
                     if n == 1 {
                       true
                     } else if n == 2 {
-                      match mq_find_equivalent_atom(atoms, reduced) {
+                      match mq_find_atom_mask(atoms, reduced) {
                         Some(_) => true
                         None => {
                           atoms.push(reduced)
@@ -680,10 +787,10 @@ fn mq_parse_expr(
                     if n == 1 {
                       Some(mq_const(dim, reduced))
                     } else if n == 2 {
-                      match mq_find_equivalent_atom(atoms, reduced) {
-                        Some((idx, scale)) => {
+                      match mq_find_atom_mask(atoms, reduced) {
+                        Some((mask, scale)) => {
                           let out = mq_const(dim, @symnum.BigRational::zero())
-                          out.set(1 << idx, scale)
+                          out.set(mask, scale)
                           Some(out)
                         }
                         None => None

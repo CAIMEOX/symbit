@@ -81,6 +81,30 @@ test "numberfields: affine radical minpoly parity" {
 }
 
 ///|
+test "numberfields: multiquadratic minpoly parity" {
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let sqrt2 = @symcore.int(2) ^ half
+  let sqrt3 = @symcore.int(3) ^ half
+  let sqrt6 = @symcore.int(6) ^ half
+
+  let cases = [
+    (sqrt2 + sqrt3, "sqrt(2) + sqrt(3)"),
+    (sqrt2 * sqrt3, "sqrt(2)*sqrt(3)"),
+    (@symcore.int(1) + sqrt2 + sqrt3, "1 + sqrt(2) + sqrt(3)"),
+    (sqrt2 + sqrt3 + sqrt6, "sqrt(2) + sqrt(3) + sqrt(6)"),
+  ]
+
+  for item in cases {
+    let (expr, oracle_expr) = item
+    let ours = nf_norm(minpoly(expr, gen="x").to_expr())
+    let oracle = nf_oracle_minpoly(oracle_expr, gen="x")
+    guard ours == oracle else {
+      fail("multiquadratic minpoly mismatch for \{oracle_expr}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
 test "numberfields: perfect-power radicals reduce to true minpoly" {
   let third = try! @symcore.rational_from_ints(1, 3)
   let quarter = try! @symcore.rational_from_ints(1, 4)
