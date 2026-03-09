@@ -26,6 +26,23 @@ fn make_dense(
   out
 }
 
+fn clone_dense_rows(rows : Array[Array[FieldElem]]) -> Array[Array[FieldElem]] {
+  let out : Array[Array[FieldElem]] = Array::new()
+  for row in rows {
+    let cloned : Array[FieldElem] = Array::new()
+    for v in row {
+      cloned.push(v)
+    }
+    out.push(cloned)
+  }
+  out
+}
+
+fn convert_matrix_elem(v : FieldElem, domain : Domain) -> FieldElem raise PolyError {
+  let q = fe_expect_rational(v)
+  fe_from_rational(q, domain)
+}
+
 ///|
 /// Build a dense domain matrix from explicit entries.
 pub fn domain_matrix_from_dense(
@@ -141,6 +158,11 @@ pub fn DomainMatrix::shape(self : DomainMatrix) -> (Int, Int) {
 }
 
 ///|
+pub fn DomainMatrix::copy(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain)
+}
+
+///|
 pub fn domain_matrix_zeros(
   rows : Int,
   cols : Int,
@@ -161,6 +183,51 @@ pub fn domain_matrix_eye(
     dense[i].set(i, fe_from_int(1, domain))
   }
   domain_matrix_from_dense(dense, domain)
+}
+
+///|
+pub fn domain_matrix_ones(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  let one = fe_from_int(1, domain)
+  let data : Array[Array[FieldElem]] = make_dense(rows, cols, one)
+  domain_matrix_from_dense(data, domain)
+}
+
+///|
+pub fn DomainMatrix::convert_to(
+  self : DomainMatrix,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  if self.domain == domain {
+    return self.copy()
+  }
+  let dense = self.to_dense()
+  let out : Array[Array[FieldElem]] = Array::new()
+  for row in dense {
+    let out_row : Array[FieldElem] = Array::new()
+    for v in row {
+      out_row.push(convert_matrix_elem(v, domain))
+    }
+    out.push(out_row)
+  }
+  domain_matrix_from_dense(out, domain)
+}
+
+///|
+pub fn DomainMatrix::to_field(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  self.convert_to(domain_get_field(self.domain))
+}
+
+///|
+pub fn DomainMatrix::unify(
+  self : DomainMatrix,
+  other : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  let domain = domain_unify_pair(self.domain, other.domain)
+  (self.convert_to(domain), other.convert_to(domain))
 }
 
 ///|
@@ -257,6 +324,30 @@ pub fn DomainMatrix::transpose(
 }
 
 ///|
+pub fn DomainMatrix::extract(
+  self : DomainMatrix,
+  row_ids : Array[Int],
+  col_ids : Array[Int],
+) -> DomainMatrix raise PolyError {
+  let dense = self.to_dense()
+  let out : Array[Array[FieldElem]] = Array::new()
+  for r in row_ids {
+    if r < 0 || r >= self.rows {
+      raise PolyError::DomainMismatch
+    }
+    let row : Array[FieldElem] = Array::new()
+    for c in col_ids {
+      if c < 0 || c >= self.cols {
+        raise PolyError::DomainMismatch
+      }
+      row.push(dense[r][c])
+    }
+    out.push(row)
+  }
+  domain_matrix_from_dense(out, self.domain)
+}
+
+///|
 fn swap_rows_in_place(data : Array[Array[FieldElem]], i : Int, j : Int) -> Unit {
   let tmp = data[i]
   data.set(i, data[j])
@@ -297,7 +388,7 @@ pub fn DomainMatrix::det(self : DomainMatrix) -> FieldElem raise PolyError {
     return fe_from_int(1, self.domain)
   }
   let n = self.rows
-  let a = self.to_dense()
+  let a = clone_dense_rows(self.to_dense())
   let mut sign = 1
   let mut denom = fe_from_int(1, self.domain)
   for k in 0..<(n - 1) {
@@ -343,7 +434,7 @@ pub fn DomainMatrix::rref(
   if !domain_is_field_pred(self.domain) {
     raise PolyError::DomainNotField
   }
-  let data = self.to_dense()
+  let data = clone_dense_rows(self.to_dense())
   let mut lead = 0
   let pivots : Array[Int] = Array::new()
   for r in 0..<self.rows {
@@ -388,6 +479,122 @@ pub fn DomainMatrix::rref(
     lead = lead + 1
   }
   (domain_matrix_from_dense(data, self.domain), pivots)
+}
+
+///|
+pub fn DomainMatrix::rank(self : DomainMatrix) -> Int raise PolyError {
+  self.rref().1.length()
+}
+
+///|
+pub fn DomainMatrix::columnspace(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let pivots = self.rref().1
+  let rows : Array[Int] = Array::new()
+  for i in 0..<self.rows {
+    rows.push(i)
+  }
+  self.extract(rows, pivots)
+}
+
+///|
+pub fn DomainMatrix::rowspace(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let pivots = self.rref().1
+  let rows : Array[Int] = Array::new()
+  for i in 0..<pivots.length() {
+    rows.push(i)
+  }
+  let cols : Array[Int] = Array::new()
+  for j in 0..<self.cols {
+    cols.push(j)
+  }
+  self.extract(rows, cols)
+}
+
+///|
+pub fn DomainMatrix::nullspace(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let (rref, pivots) = self.rref()
+  let rows = rref.to_dense()
+  let pivot_set : Map[Int, Bool] = {}
+  for p in pivots {
+    pivot_set[p] = true
+  }
+  let free_cols : Array[Int] = Array::new()
+  for j in 0..<self.cols {
+    if pivot_set.get(j) is None {
+      free_cols.push(j)
+    }
+  }
+  if free_cols.is_empty() {
+    return domain_matrix_zeros(0, self.cols, self.domain)
+  }
+  let one = fe_from_int(1, self.domain)
+  let zero = fe_from_int(0, self.domain)
+  let basis : Array[Array[FieldElem]] = Array::new()
+  for free in free_cols {
+    let vec : Array[FieldElem] = Array::make(self.cols, zero)
+    vec.set(free, one)
+    for i in 0..<pivots.length() {
+      let p = pivots[i]
+      vec.set(p, fe_neg(rows[i][free]))
+    }
+    basis.push(vec)
+  }
+  domain_matrix_from_dense(basis, self.domain)
+}
+
+///|
+pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  if self.rows != self.cols {
+    raise PolyError::DomainMismatch
+  }
+  let n = self.rows
+  let one = fe_from_int(1, self.domain)
+  let zero = fe_from_int(0, self.domain)
+  let left = clone_dense_rows(self.to_dense())
+  let aug_rows : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<n {
+    let row = left[i].copy()
+    for j in 0..<n {
+      row.push(if i == j { one } else { zero })
+    }
+    aug_rows.push(row)
+  }
+  let aug = domain_matrix_from_dense(aug_rows, self.domain)
+  let (rref_aug, pivots) = aug.rref()
+  if pivots.length() < n {
+    raise PolyError::ExactQuotientFailed
+  }
+  for i in 0..<n {
+    if pivots[i] != i {
+      raise PolyError::ExactQuotientFailed
+    }
+  }
+  let rows = rref_aug.to_dense()
+  let inv_rows : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<n {
+    let row : Array[FieldElem] = Array::new()
+    for j in 0..<n {
+      let expected = if i == j { one } else { zero }
+      if !fe_is_zero(fe_sub(rows[i][j], expected)) {
+        raise PolyError::ExactQuotientFailed
+      }
+      row.push(rows[i][n + j])
+    }
+    inv_rows.push(row)
+  }
+  domain_matrix_from_dense(inv_rows, self.domain)
 }
 
 ///|

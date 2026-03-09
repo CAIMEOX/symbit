@@ -560,6 +560,74 @@ pub fn domainmatrix_rref(
 }
 
 ///|
+pub fn domainmatrix_convert_to(
+  a : Array[Array[Int]],
+  from_domain_spec : String,
+  to_domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, from_domain_spec)
+  let convert = resolve_method_callable(dm, "convert_to")
+  let target = oracle_domain_from_spec(to_domain_spec)
+  let res = py_call_one(convert, target)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_to_field(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let to_field = resolve_method_callable(dm, "to_field")
+  let res = py_call_noargs(to_field)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_inv(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let inv = resolve_method_callable(dm, "inv")
+  let res = py_call_noargs(inv)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_rowspace(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let rowspace = resolve_method_callable(dm, "rowspace")
+  let res = py_call_noargs(rowspace)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_columnspace(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let columnspace = resolve_method_callable(dm, "columnspace")
+  let res = py_call_noargs(columnspace)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_nullspace(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let nullspace = resolve_method_callable(dm, "nullspace")
+  let res = py_call_noargs(nullspace)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
 pub fn ddm_add(
   a : Array[Array[Int]],
   b : Array[Array[Int]],
@@ -722,11 +790,13 @@ fn oracle_domainmatrix_from_ints(
       fail("domainmatrix-ragged")
     }
   }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
   let py_rows : Array[@py.PyObject] = Array::new()
   for row in rows {
     let py_row : Array[@py.PyObject] = Array::new()
     for v in row {
-      py_row.push(py_int_obj(v))
+      py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
     }
     py_rows.push(py_list_from_objects(py_row).obj())
   }
@@ -735,7 +805,6 @@ fn oracle_domainmatrix_from_ints(
     py_int_obj(row_count),
     py_int_obj(col_count),
   ]).obj()
-  let domain_obj = oracle_domain_from_spec(domain_spec)
   let dm_enum = sympy_call_must("sympy.polys.matrices.DomainMatrix", [
     OracleArg::PyObj(data_obj),
     OracleArg::PyObj(shape_obj),
@@ -756,17 +825,18 @@ fn oracle_ddm_from_ints(
       fail("ddm-ragged")
     }
   }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
   let py_rows : Array[@py.PyObject] = Array::new()
   for row in rows {
     let py_row : Array[@py.PyObject] = Array::new()
     for v in row {
-      py_row.push(py_int_obj(v))
+      py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
     }
     py_rows.push(py_list_from_objects(py_row).obj())
   }
   let data_obj = py_list_from_objects(py_rows).obj()
   let shape_obj = py_tuple_from_objects([py_int_obj(row_count), py_int_obj(col_count)]).obj()
-  let domain_obj = oracle_domain_from_spec(domain_spec)
   let ddm_enum = sympy_call_must("sympy.polys.matrices.ddm.DDM", [
     OracleArg::PyObj(data_obj),
     OracleArg::PyObj(shape_obj),
