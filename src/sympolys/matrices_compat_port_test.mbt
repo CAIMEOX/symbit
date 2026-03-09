@@ -13,6 +13,57 @@ fn mx_expr_norm(e : @symcore.Expr) -> String {
 }
 
 ///|
+fn mx_linear_row_summary(
+  coeffs : Map[String, @symcore.Expr],
+  ind : @symcore.Expr,
+  syms : Array[String],
+) -> String {
+  let parts : Array[String] = Array::new()
+  for sym in syms {
+    match coeffs.get(sym) {
+      Some(value) => parts.push("\{sym}:\{mx_expr_norm(value)}")
+      None => ()
+    }
+  }
+  let joined = parts.join(",")
+  "\{joined}||\{mx_expr_norm(ind)}"
+}
+
+///|
+fn mx_linear_eq_to_dict_summary(
+  coeffs : Array[Map[String, @symcore.Expr]],
+  ind : Array[@symcore.Expr],
+  syms : Array[String],
+) -> String {
+  let rows : Array[String] = Array::new()
+  for i in 0..<coeffs.length() {
+    rows.push(mx_linear_row_summary(coeffs[i], ind[i], syms))
+  }
+  rows.join("|")
+}
+
+///|
+fn mx_linsolve_summary(
+  sol : Map[String, @symcore.Expr]?,
+  syms : Array[String],
+) -> String {
+  match sol {
+    None => "None"
+    Some(values) => {
+      let parts : Array[String] = Array::new()
+      for sym in syms {
+        let value = match values.get(sym) {
+          Some(expr) => expr
+          None => @symcore.int(0)
+        }
+        parts.push("\{sym}:\{mx_expr_norm(value)}")
+      }
+      parts.join("|")
+    }
+  }
+}
+
+///|
 fn basis_to_sympy_text(basis : Array[Array[FieldElem]]) -> String {
   let cols : Array[String] = Array::new()
   for vec in basis {
@@ -917,6 +968,85 @@ test "matrices: sympy_dict_to_dm parity" {
   guard mx_trim(sdm_summary_like_oracle(ours)) == mx_trim(oracle) else {
     fail(
       "sympy_dict_to_dm mismatch: ours=\{sdm_summary_like_oracle(ours)}, oracle=\{oracle}",
+    )
+  }
+}
+
+///|
+test "matrices: _linear_eq_to_dict parity" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let eqs = [
+    @symcore.function("Eq", [x + y, @symcore.int(1)]),
+    (@symcore.int(2) * (x + @symcore.int(1))) + (@symcore.int(3) * y),
+  ]
+  let syms = ["x", "y"]
+  let (coeffs, ind) = try! _linear_eq_to_dict(eqs, syms)
+  let ours = mx_linear_eq_to_dict_summary(coeffs, ind, syms)
+  let oracle = @sympy_polys.linsolve_linear_eq_to_dict_summary(
+    ["Eq(x + y, 1)", "2*(x + 1) + 3*y"],
+    syms,
+  ).replace_all(old=" ", new="")
+  guard ours == oracle else {
+    fail("_linear_eq_to_dict mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "matrices: _linear_eq_to_dict rejects nonlinear terms" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let nonlinear : Result[(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr]), PolyError] =
+    try? _linear_eq_to_dict([x * y], ["x", "y"])
+  guard nonlinear is Err(PolyError::NonPolynomial) else {
+    fail("expected nonlinear linsolve input to raise NonPolynomial")
+  }
+}
+
+///|
+test "matrices: _linsolve parity" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let unique = [
+    @symcore.function("Eq", [x + y, @symcore.int(1)]),
+    @symcore.function("Eq", [x - y, @symcore.int(2)]),
+  ]
+  let under = [@symcore.function("Eq", [x + y, @symcore.int(0)])]
+  let inconsistent = [
+    @symcore.function("Eq", [x + y, @symcore.int(1)]),
+    @symcore.function("Eq", [x + y, @symcore.int(2)]),
+  ]
+  let syms = ["x", "y"]
+
+  let ours_unique = mx_linsolve_summary(try! _linsolve(unique, syms), syms)
+  let oracle_unique = @sympy_polys.linsolve_internal_summary(
+    ["Eq(x + y, 1)", "Eq(x - y, 2)"],
+    syms,
+  ).replace_all(old=" ", new="")
+  guard ours_unique == oracle_unique else {
+    fail("_linsolve unique mismatch: ours=\{ours_unique}, oracle=\{oracle_unique}")
+  }
+
+  let ours_under = mx_linsolve_summary(try! _linsolve(under, syms), syms)
+  let oracle_under = @sympy_polys.linsolve_internal_summary(
+    ["Eq(x + y, 0)"],
+    syms,
+  ).replace_all(old=" ", new="")
+  guard ours_under == oracle_under else {
+    fail("_linsolve under mismatch: ours=\{ours_under}, oracle=\{oracle_under}")
+  }
+  guard ours_under == "x:-y|y:y" else {
+    fail("_linsolve should preserve original free symbol names")
+  }
+
+  let ours_inconsistent = mx_linsolve_summary(try! _linsolve(inconsistent, syms), syms)
+  let oracle_inconsistent = @sympy_polys.linsolve_internal_summary(
+    ["Eq(x + y, 1)", "Eq(x + y, 2)"],
+    syms,
+  )
+  guard ours_inconsistent == oracle_inconsistent else {
+    fail(
+      "_linsolve inconsistent mismatch: ours=\{ours_inconsistent}, oracle=\{oracle_inconsistent}",
     )
   }
 }

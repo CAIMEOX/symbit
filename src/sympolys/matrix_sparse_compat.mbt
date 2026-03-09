@@ -43,10 +43,30 @@ pub fn sdm_nullspace_from_rref(
 ) -> (SDM, Array[Int]) raise PolyError {
   let _ = one
   let _ = nonzero_cols
-  if a.shape().1 != ncols {
+  let (rows, cols) = a.shape()
+  if cols < ncols {
     raise PolyError::DomainMismatch
   }
-  a.nullspace_from_rref(pivots~)
+  let work = if cols == ncols {
+    a
+  } else {
+    let row_ids : Array[Int] = Array::new()
+    for i in 0..<rows {
+      row_ids.push(i)
+    }
+    let col_ids : Array[Int] = Array::new()
+    for j in 0..<ncols {
+      col_ids.push(j)
+    }
+    a.extract(row_ids, col_ids)
+  }
+  let left_pivots : Array[Int] = Array::new()
+  for pivot in pivots {
+    if pivot < ncols {
+      left_pivots.push(pivot)
+    }
+  }
+  work.nullspace_from_rref(pivots=left_pivots)
 }
 
 ///|

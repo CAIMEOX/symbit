@@ -1609,6 +1609,105 @@ pub fn linsolve_sympy_dict_to_dm_summary(
 }
 
 ///|
+fn oracle_linsolve_dict_summary(
+  dict_obj : @py.PyObject,
+  syms : Array[String],
+) -> String raise {
+  let items_call = resolve_method_callable(dict_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  let coeff_map : Map[String, String] = Map::new()
+  for pair in py_list_to_pyobjects(items_list) {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 {
+      coeff_map[py_str_obj(pair_items[0])] = py_str_obj(pair_items[1])
+    }
+  }
+  let parts : Array[String] = Array::new()
+  for sym in syms {
+    match coeff_map.get(sym) {
+      Some(value) => parts.push("\{sym}:\{value}")
+      None => ()
+    }
+  }
+  parts.join(",")
+}
+
+///|
+pub fn linsolve_linear_eq_to_dict_summary(
+  eqs : Array[String],
+  syms : Array[String],
+) -> String raise {
+  let py_eqs : Array[@py.PyObject] = Array::new()
+  for eq in eqs {
+    py_eqs.push(sympy_sympify_str(eq))
+  }
+  let py_syms = sympy_symbols_from_names(syms)
+  let res = sympy_call_must("sympy.polys.matrices.linsolve._linear_eq_to_dict", [
+    OracleArg::PyObj(py_list_from_objects(py_eqs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+  ])
+  let parts = py_list_to_pyobjects(res)
+  guard parts.length() >= 2 else { fail("linsolve-linear-eq-to-dict") }
+  let coeffs = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[0]))
+  let ind = py_list_to_pyobjects(@py.PyObjectEnum::create(parts[1]))
+  let rows : Array[String] = Array::new()
+  for i in 0..<coeffs.length() {
+    rows.push("\{oracle_linsolve_dict_summary(coeffs[i], syms)}||\{py_str_obj(ind[i])}")
+  }
+  rows.join("|")
+}
+
+///|
+pub fn linsolve_internal_summary(
+  eqs : Array[String],
+  syms : Array[String],
+) -> String raise {
+  let py_eqs : Array[@py.PyObject] = Array::new()
+  for eq in eqs {
+    py_eqs.push(sympy_sympify_str(eq))
+  }
+  let py_syms = sympy_symbols_from_names(syms)
+  let res = sympy_call("sympy.polys.matrices.linsolve._linsolve", [
+    OracleArg::PyObj(py_list_from_objects(py_eqs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+  ])
+  let res_obj = match res {
+    Some(obj) => objenum_to_obj(obj)
+    None => return "None"
+  }
+  let parts : Array[String] = Array::new()
+  let dict_summary = oracle_linsolve_dict_summary(res_obj, syms)
+  if dict_summary == "" {
+    for sym in syms {
+      parts.push("\{sym}:0")
+    }
+    return parts.join("|")
+  }
+  let sol_map : Map[String, String] = Map::new()
+  let items_call = resolve_method_callable(res_obj, "items")
+  let items_enum = py_call_noargs(items_call)
+  let builtins = ensure_builtins_module()
+  let list_ctor = resolve_callable(builtins, "list")
+  let items_list = py_call_one(list_ctor, objenum_to_obj(items_enum))
+  for pair in py_list_to_pyobjects(items_list) {
+    let pair_items = py_list_to_pyobjects(@py.PyObjectEnum::create(pair))
+    if pair_items.length() >= 2 {
+      sol_map[py_str_obj(pair_items[0])] = py_str_obj(pair_items[1])
+    }
+  }
+  for sym in syms {
+    match sol_map.get(sym) {
+      Some(value) => parts.push("\{sym}:\{value}")
+      None => parts.push("\{sym}:0")
+    }
+  }
+  parts.join("|")
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)

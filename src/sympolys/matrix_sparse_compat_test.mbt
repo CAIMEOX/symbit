@@ -62,3 +62,21 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
     fail("sdm_particular_from_rref mismatch")
   }
 }
+
+///|
+test "matrix sparse wrappers: sdm_nullspace_from_rref accepts augmented RREF" {
+  let aug = ddm_from_ints([[1, 1, 0], [0, 0, 1]], Domain::QQ).to_sdm()
+  let (basis, nonpivots) = sdm_nullspace_from_rref(
+    aug,
+    fe_from_int(1, Domain::QQ),
+    2,
+    [0, 2],
+    { 1: [0] },
+  )
+  guard nonpivots == [1] else {
+    fail("augmented nonpivots mismatch")
+  }
+  guard ms_trim(basis.to_dense().to_string()) == ms_trim("[[-1, 1]]") else {
+    fail("augmented nullspace basis mismatch: \{basis.to_dense().to_string()}")
+  }
+}
