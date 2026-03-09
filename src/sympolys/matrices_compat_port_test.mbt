@@ -39,6 +39,22 @@ fn basis_rows_to_matrix_text(basis : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn swap_text(swaps : Array[(Int, Int)]) -> String {
+  let parts : Array[String] = Array::new()
+  for swap in swaps {
+    parts.push("(\{swap.0}, \{swap.1})")
+  }
+  let joined = parts.join(", ")
+  "[\{joined}]"
+}
+
+///|
+fn coeffs_text(coeffs : Array[FieldElem]) -> String {
+  let joined = coeffs.map(fe_to_string).join(", ")
+  "[\{joined}]"
+}
+
+///|
 fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
   let rows = ddm.to_list()
   let out : Array[Array[Int]] = Array::new()
@@ -229,6 +245,63 @@ test "matrices: DDM rref_den/nullspace/solve_den_rref parity" {
 }
 
 ///|
+test "matrices: DDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
+  let lu_case = ddm_from_ints([[0, 1], [1, 1]], Domain::QQ)
+  let lu = lu_case.lu()
+  let ours_lu =
+    "\{lu.0.to_domain_matrix().to_matrix_string()}||\{lu.1.to_domain_matrix().to_matrix_string()}||\{swap_text(lu.2)}"
+  let oracle_lu = @sympy_polys.domainmatrix_lu([[0, 1], [1, 1]], "QQ")
+  guard mx_trim(ours_lu) == mx_trim(oracle_lu) else {
+    fail("ddm lu mismatch: ours=\{ours_lu}, oracle=\{oracle_lu}")
+  }
+
+  let qr_case = ddm_from_ints([[1, 2], [3, 4], [5, 6]], Domain::QQ)
+  let qr = qr_case.qr()
+  let qr_left = qr.0.to_domain_matrix()
+  let qr_right = qr.1.to_domain_matrix()
+  let recomposed = qr_left.mul(qr_right).to_matrix_string()
+  guard mx_trim(recomposed) == mx_trim(qr_case.to_domain_matrix().to_matrix_string()) else {
+    fail("ddm qr reconstruction mismatch")
+  }
+  guard dm_is_diagonal(qr_left.transpose().mul(qr_left)) else {
+    fail("ddm qr should give orthogonal columns")
+  }
+  guard dm_is_upper(qr_right) else {
+    fail("ddm qr should give upper-triangular R")
+  }
+
+  let solve_case = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let rhs = ddm_from_ints([[1], [0]], Domain::QQ)
+  let ours_lu_solve = solve_case.lu_solve(rhs).to_domain_matrix().to_matrix_string()
+  let oracle_lu_solve = @sympy_polys.domainmatrix_lu_solve([[1, 2], [3, 4]], [[1], [0]], "QQ")
+  guard mx_trim(ours_lu_solve) == mx_trim(oracle_lu_solve) else {
+    fail("ddm lu_solve mismatch: ours=\{ours_lu_solve}, oracle=\{oracle_lu_solve}")
+  }
+
+  let zz = ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let fflu = zz.fflu()
+  let fflu_left = fflu.1.to_domain_matrix().to_field().mul(
+    fflu.2.to_domain_matrix().to_field().inv(),
+  ).mul(fflu.3.to_domain_matrix().to_field())
+  let fflu_right = fflu.0.to_domain_matrix().to_field().mul(zz.to_domain_matrix().to_field())
+  guard mx_trim(fflu_left.to_matrix_string()) == mx_trim(fflu_right.to_matrix_string()) else {
+    fail("ddm fflu invariant mismatch")
+  }
+  guard dm_is_diagonal(fflu.2.to_domain_matrix()) else {
+    fail("ddm fflu should return diagonal D")
+  }
+  guard dm_is_upper(fflu.3.to_domain_matrix()) else {
+    fail("ddm fflu should return upper-triangular U")
+  }
+
+  let ours_charpoly = coeffs_text(zz.charpoly())
+  let oracle_charpoly = @sympy_polys.domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
+  guard mx_trim(ours_charpoly) == mx_trim(oracle_charpoly) else {
+    fail("ddm charpoly mismatch: ours=\{ours_charpoly}, oracle=\{oracle_charpoly}")
+  }
+}
+
+///|
 test "matrices: DomainMatrix LLL and transform parity" {
   let rows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
   let a = ddm_from_ints(rows, Domain::ZZ)
@@ -323,6 +396,69 @@ test "matrices: SDM rref_den and nullspace_from_rref parity" {
   let oracle_ns = @sympy_polys.domainmatrix_nullspace([[6, -3], [4, -2]], "ZZ")
   guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
     fail("sdm nullspace_from_rref mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
+  }
+}
+
+///|
+test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
+  let zero = try! fe_from_int(0, Domain::QQ)
+  let oneq = try! fe_from_int(1, Domain::QQ)
+  let a = sdm_from_entries(2, 2, [(0, 1, oneq), (1, 0, oneq), (1, 1, oneq)], Domain::QQ)
+  let lu = a.lu()
+  let ours_lu =
+    "\{lu.0.to_dense().to_domain_matrix().to_matrix_string()}||\{lu.1.to_dense().to_domain_matrix().to_matrix_string()}||\{swap_text(lu.2)}"
+  let oracle_lu = @sympy_polys.domainmatrix_lu([[0, 1], [1, 1]], "QQ")
+  guard mx_trim(ours_lu) == mx_trim(oracle_lu) else {
+    fail("sdm lu mismatch: ours=\{ours_lu}, oracle=\{oracle_lu}")
+  }
+
+  let qr = (sdm_from_entries(
+    3,
+    2,
+    [(0, 0, oneq), (0, 1, try! fe_from_int(2, Domain::QQ)), (1, 0, try! fe_from_int(3, Domain::QQ)), (1, 1, try! fe_from_int(4, Domain::QQ)), (2, 0, try! fe_from_int(5, Domain::QQ)), (2, 1, try! fe_from_int(6, Domain::QQ))],
+    Domain::QQ,
+  )).qr()
+  let q_left = qr.0.to_dense().to_domain_matrix()
+  let q_right = qr.1.to_dense().to_domain_matrix()
+  let orig_qr = domain_matrix_from_ints([[1, 2], [3, 4], [5, 6]], Domain::QQ)
+  guard mx_trim(q_left.mul(q_right).to_matrix_string()) == mx_trim(orig_qr.to_matrix_string()) else {
+    fail("sdm qr reconstruction mismatch")
+  }
+  guard dm_is_diagonal(q_left.transpose().mul(q_left)) else {
+    fail("sdm qr should give orthogonal columns")
+  }
+  guard dm_is_upper(q_right) else {
+    fail("sdm qr should give upper-triangular R")
+  }
+
+  let solve_a = sdm_from_entries(2, 2, [(0, 0, oneq), (0, 1, try! fe_from_int(2, Domain::QQ)), (1, 0, try! fe_from_int(3, Domain::QQ)), (1, 1, try! fe_from_int(4, Domain::QQ))], Domain::QQ)
+  let solve_rhs = sdm_from_entries(2, 1, [(0, 0, oneq), (1, 0, zero)], Domain::QQ)
+  let ours_lu_solve = solve_a.lu_solve(solve_rhs).to_dense().to_domain_matrix().to_matrix_string()
+  let oracle_lu_solve = @sympy_polys.domainmatrix_lu_solve([[1, 2], [3, 4]], [[1], [0]], "QQ")
+  guard mx_trim(ours_lu_solve) == mx_trim(oracle_lu_solve) else {
+    fail("sdm lu_solve mismatch: ours=\{ours_lu_solve}, oracle=\{oracle_lu_solve}")
+  }
+
+  let zz = sdm_from_entries(2, 2, [(0, 0, try! fe_from_int(1, Domain::ZZ)), (0, 1, try! fe_from_int(2, Domain::ZZ)), (1, 0, try! fe_from_int(3, Domain::ZZ)), (1, 1, try! fe_from_int(4, Domain::ZZ))], Domain::ZZ)
+  let fflu = zz.fflu()
+  let left = fflu.1.to_dense().to_domain_matrix().to_field().mul(
+    fflu.2.to_dense().to_domain_matrix().to_field().inv(),
+  ).mul(fflu.3.to_dense().to_domain_matrix().to_field())
+  let right = fflu.0.to_dense().to_domain_matrix().to_field().mul(zz.to_dense().to_domain_matrix().to_field())
+  guard mx_trim(left.to_matrix_string()) == mx_trim(right.to_matrix_string()) else {
+    fail("sdm fflu invariant mismatch")
+  }
+  guard dm_is_diagonal(fflu.2.to_dense().to_domain_matrix()) else {
+    fail("sdm fflu should return diagonal D")
+  }
+  guard dm_is_upper(fflu.3.to_dense().to_domain_matrix()) else {
+    fail("sdm fflu should return upper-triangular U")
+  }
+
+  let ours_charpoly = coeffs_text(zz.charpoly())
+  let oracle_charpoly = @sympy_polys.domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
+  guard mx_trim(ours_charpoly) == mx_trim(oracle_charpoly) else {
+    fail("sdm charpoly mismatch: ours=\{ours_charpoly}, oracle=\{oracle_charpoly}")
   }
 }
 

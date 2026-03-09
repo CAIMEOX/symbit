@@ -558,6 +558,265 @@ fn fe_exact_div_in_domain(
   }
 }
 
+fn dense_lu_in_place(
+  rows : Array[Array[FieldElem]],
+  _domain : Domain,
+) -> Array[(Int, Int)] raise PolyError {
+  let m = rows.length()
+  if m == 0 {
+    return []
+  }
+  let n = rows[0].length()
+  let swaps : Array[(Int, Int)] = Array::new()
+  let limit = if m < n { m } else { n }
+  for i in 0..<limit {
+    if fe_is_zero(rows[i][i]) {
+      let mut ip = i + 1
+      while ip < m && fe_is_zero(rows[ip][i]) {
+        ip += 1
+      }
+      if ip == m {
+        continue
+      }
+      swaps.push((i, ip))
+      swap_rows_in_place(rows, i, ip)
+    }
+    for j in (i + 1)..<m {
+      let lji = fe_mul(rows[j][i], fe_inv(rows[i][i]))
+      rows[j].set(i, lji)
+      for k in (i + 1)..<n {
+        rows[j].set(k, fe_sub(rows[j][k], fe_mul(lji, rows[i][k])))
+      }
+    }
+  }
+  swaps
+}
+
+fn dense_lu_split(
+  rows : Array[Array[FieldElem]],
+  domain : Domain,
+) -> (Array[Array[FieldElem]], Array[Array[FieldElem]], Array[(Int, Int)]) raise PolyError {
+  let m = rows.length()
+  if m == 0 {
+    return ([], [], [])
+  }
+  let n = rows[0].length()
+  let lu = clone_dense_rows(rows)
+  let swaps = dense_lu_in_place(lu, domain)
+  let zero = fe_from_int(0, domain)
+  let one = fe_from_int(1, domain)
+  let l = make_dense(m, m, zero)
+  let u = clone_dense_rows(lu)
+  let minmn = if m < n { m } else { n }
+  for i in 0..<m {
+    l[i].set(i, one)
+    let upto = if i < minmn { i } else { minmn }
+    for j in 0..<upto {
+      l[i].set(j, lu[i][j])
+      u[i].set(j, zero)
+    }
+  }
+  (l, u, swaps)
+}
+
+fn dense_lu_solve(
+  l : Array[Array[FieldElem]],
+  u : Array[Array[FieldElem]],
+  swaps : Array[(Int, Int)],
+  rhs : Array[Array[FieldElem]],
+  domain : Domain,
+) -> Array[Array[FieldElem]] raise PolyError {
+  let m = u.length()
+  if m == 0 {
+    return []
+  }
+  let n = u[0].length()
+  let m2 = rhs.length()
+  if m != m2 || rhs.is_empty() {
+    raise PolyError::DomainMismatch
+  }
+  if m < n {
+    raise PolyError::DomainMismatch
+  }
+  let o = rhs[0].length()
+  let b = clone_dense_rows(rhs)
+  for swap in swaps {
+    let (i1, i2) = swap
+    swap_rows_in_place(b, i1, i2)
+  }
+  let zero = fe_from_int(0, domain)
+  let y = make_dense(m, o, zero)
+  for k in 0..<o {
+    for i in 0..<m {
+      let mut rhsik = b[i][k]
+      for j in 0..<i {
+        rhsik = fe_sub(rhsik, fe_mul(l[i][j], y[j][k]))
+      }
+      y[i].set(k, rhsik)
+    }
+  }
+  for i in n..<m {
+    for j in 0..<o {
+      if !fe_is_zero(y[i][j]) {
+        raise PolyError::ExactQuotientFailed
+      }
+    }
+  }
+  let x = make_dense(n, o, zero)
+  for k in 0..<o {
+    for ii in 0..<n {
+      let i = n - 1 - ii
+      if fe_is_zero(u[i][i]) {
+        raise PolyError::ExactQuotientFailed
+      }
+      let mut rhsik = y[i][k]
+      for j in (i + 1)..<n {
+        rhsik = fe_sub(rhsik, fe_mul(u[i][j], x[j][k]))
+      }
+      x[i].set(k, fe_mul(rhsik, fe_inv(u[i][i])))
+    }
+  }
+  x
+}
+
+fn dense_fflu_phase1(
+  rows : Array[Array[FieldElem]],
+  domain : Domain,
+) -> (Array[Array[FieldElem]], Array[Int]) raise PolyError {
+  let lu = clone_dense_rows(rows)
+  let row_count = lu.length()
+  if row_count == 0 {
+    return (lu, [])
+  }
+  let col_count = lu[0].length()
+  let perm : Array[Int] = Array::new()
+  for i in 0..<row_count {
+    perm.push(i)
+  }
+  let mut rank = 0
+  let limit = if row_count < col_count { row_count } else { col_count }
+  for j in 0..<limit {
+    let mut all_zero = true
+    for i in 0..<row_count {
+      if !fe_is_zero(lu[i][j]) {
+        all_zero = false
+        break
+      }
+    }
+    if all_zero {
+      continue
+    }
+    let mut pivot_row = -1
+    for i in rank..<row_count {
+      if !fe_is_zero(lu[i][j]) {
+        pivot_row = i
+        break
+      }
+    }
+    if pivot_row == -1 {
+      continue
+    }
+    if pivot_row != rank {
+      swap_rows_in_place(lu, rank, pivot_row)
+      let tmp = perm[rank]
+      perm.set(rank, perm[pivot_row])
+      perm.set(pivot_row, tmp)
+    }
+    let pivot = lu[rank][j]
+    for i in (rank + 1)..<row_count {
+      let multiplier = lu[i][j]
+      let denominator = if rank > 0 { lu[rank - 1][rank - 1] } else { fe_from_int(1, domain) }
+      for k in (j + 1)..<col_count {
+        let num = fe_sub(fe_mul(pivot, lu[i][k]), fe_mul(lu[rank][k], multiplier))
+        lu[i].set(k, fe_exact_div_in_domain(num, denominator, domain))
+      }
+      lu[i].set(j, multiplier)
+    }
+    rank += 1
+  }
+  (lu, perm)
+}
+
+fn dense_dot_cols(
+  rows : Array[Array[FieldElem]],
+  left : Int,
+  right : Int,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let mut total = fe_from_int(0, domain)
+  for row in rows {
+    total = fe_add(total, fe_mul(row[left], row[right]))
+  }
+  total
+}
+
+fn tail_slice(row : Array[FieldElem], start : Int) -> Array[FieldElem] {
+  let out : Array[FieldElem] = Array::new()
+  for i in start..<row.length() {
+    out.push(row[i])
+  }
+  out
+}
+
+fn dense_berk(
+  rows : Array[Array[FieldElem]],
+  domain : Domain,
+) -> Array[FieldElem] raise PolyError {
+  let m = rows.length()
+  if m == 0 {
+    return [fe_from_int(1, domain)]
+  }
+  let n = rows[0].length()
+  if m != n {
+    raise PolyError::DomainMismatch
+  }
+  if n == 1 {
+    return [fe_from_int(1, domain), fe_neg(rows[0][0])]
+  }
+
+  let a = rows[0][0]
+  let r : Array[Array[FieldElem]] = [tail_slice(rows[0], 1)]
+  let c : Array[Array[FieldElem]] = Array::new()
+  let a_minor : Array[Array[FieldElem]] = Array::new()
+  for i in 1..<n {
+    c.push([rows[i][0]])
+    a_minor.push(tail_slice(rows[i], 1))
+  }
+
+  let q = dense_berk(a_minor, domain)
+  let zero = fe_from_int(0, domain)
+  let t = make_dense(n + 1, n, zero)
+  for i in 0..<n {
+    t[i].set(i, fe_from_int(1, domain))
+    t[i + 1].set(i, fe_neg(a))
+  }
+
+  let mut cur_c = c
+  for i in 2..=n {
+    let an_c = if i == 2 {
+      cur_c
+    } else {
+      domain_matrix_from_dense(a_minor, domain).mul(domain_matrix_from_dense(cur_c, domain)).to_dense()
+    }
+    let ran_c = domain_matrix_from_dense(r, domain).mul(domain_matrix_from_dense(an_c, domain)).to_dense()
+    for j in 0..<(n + 1 - i) {
+      t[i + j].set(j, fe_neg(ran_c[0][0]))
+    }
+    cur_c = an_c
+  }
+
+  let q_col : Array[Array[FieldElem]] = Array::new()
+  for coeff in q {
+    q_col.push([coeff])
+  }
+  let out = domain_matrix_from_dense(t, domain).mul(domain_matrix_from_dense(q_col, domain)).to_dense()
+  let coeffs : Array[FieldElem] = Array::new()
+  for row in out {
+    coeffs.push(row[0])
+  }
+  coeffs
+}
+
 ///|
 /// Determinant with Bareiss elimination for exact rings/fields.
 pub fn DomainMatrix::det(self : DomainMatrix) -> FieldElem raise PolyError {
@@ -1125,6 +1384,135 @@ pub fn DomainMatrix::solve_den(
     }
     _ => raise PolyError::DomainMismatch
   }
+}
+
+///|
+pub fn DomainMatrix::lu(
+  self : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix, Array[(Int, Int)]) raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let (l_rows, u_rows, swaps) = dense_lu_split(self.to_dense(), self.domain)
+  let l = restore_rep_like(domain_matrix_from_dense(l_rows, self.domain), self)
+  let u = restore_rep_like(domain_matrix_from_dense(u_rows, self.domain), self)
+  (l, u, swaps)
+}
+
+///|
+pub fn DomainMatrix::qr(
+  self : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  if !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let row_count = self.rows
+  let col_count = self.cols
+  let q_rows = clone_dense_rows(self.to_dense())
+  let zero = fe_from_int(0, self.domain)
+  let rank_bound = if row_count < col_count { row_count } else { col_count }
+  let r_rows = make_dense(rank_bound, col_count, zero)
+  for j in 0..<col_count {
+    let bound = if j < row_count { j } else { row_count }
+    for i in 0..<bound {
+      let dot_ii = dense_dot_cols(q_rows, i, i, self.domain)
+      if !fe_is_zero(dot_ii) {
+        let rij = fe_mul(dense_dot_cols(q_rows, i, j, self.domain), fe_inv(dot_ii))
+        r_rows[i].set(j, rij)
+        for k in 0..<row_count {
+          q_rows[k].set(j, fe_sub(q_rows[k][j], fe_mul(rij, q_rows[k][i])))
+        }
+      }
+    }
+    if j < row_count {
+      let dot_jj = dense_dot_cols(q_rows, j, j, self.domain)
+      if !fe_is_zero(dot_jj) {
+        r_rows[j].set(j, fe_from_int(1, self.domain))
+      }
+    }
+  }
+  let q = restore_rep_like(
+    domain_matrix_from_dense(q_rows, self.domain).extract(
+      all_indices(0, row_count),
+      all_indices(0, rank_bound),
+    ),
+    self,
+  )
+  let r = restore_rep_like(domain_matrix_from_dense(r_rows, self.domain), self)
+  (q, r)
+}
+
+///|
+pub fn DomainMatrix::lu_solve(
+  self : DomainMatrix,
+  rhs : DomainMatrix,
+) -> DomainMatrix raise PolyError {
+  let (a, b) = self.unify(rhs)
+  if a.rows != b.rows {
+    raise PolyError::DomainMismatch
+  }
+  if !domain_is_field_pred(a.domain) {
+    raise PolyError::DomainNotField
+  }
+  let (l, u, swaps) = a.lu()
+  let sol_rows = dense_lu_solve(l.to_dense(), u.to_dense(), swaps, b.to_dense(), a.domain)
+  restore_rep_like(domain_matrix_from_dense(sol_rows, a.domain), self)
+}
+
+///|
+pub fn DomainMatrix::fflu(
+  self : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {
+  let row_count = self.rows
+  let col_count = self.cols
+  let (u_rows, perm) = dense_fflu_phase1(self.to_dense(), self.domain)
+  let zero = fe_from_int(0, self.domain)
+  let one = fe_from_int(1, self.domain)
+
+  let p_rows = make_dense(row_count, row_count, zero)
+  for i in 0..<perm.length() {
+    p_rows[i].set(perm[i], one)
+  }
+
+  let l_rows = make_dense(row_count, row_count, zero)
+  let u = clone_dense_rows(u_rows)
+  let mut i = 0
+  let mut j = 0
+  while i < row_count && j < col_count {
+    if !fe_is_zero(u[i][j]) {
+      l_rows[i].set(i, u[i][j])
+      for k in (i + 1)..<row_count {
+        l_rows[k].set(i, u[k][j])
+        u[k].set(j, zero)
+      }
+      i += 1
+    }
+    j += 1
+  }
+  for k in i..<row_count {
+    l_rows[k].set(k, one)
+  }
+
+  let d_rows = make_dense(row_count, row_count, zero)
+  if row_count >= 1 {
+    d_rows[0].set(0, l_rows[0][0])
+  }
+  let mut di = one
+  for idx in 1..<row_count {
+    di = fe_mul(l_rows[idx - 1][idx - 1], l_rows[idx][idx])
+    d_rows[idx].set(idx, di)
+  }
+
+  let p = restore_rep_like(domain_matrix_from_dense(p_rows, self.domain), self)
+  let l = restore_rep_like(domain_matrix_from_dense(l_rows, self.domain), self)
+  let d = restore_rep_like(domain_matrix_from_dense(d_rows, self.domain), self)
+  let u_dm = restore_rep_like(domain_matrix_from_dense(u, self.domain), self)
+  (p, l, d, u_dm)
+}
+
+///|
+pub fn DomainMatrix::charpoly(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+  dense_berk(self.to_dense(), self.domain)
 }
 
 ///|

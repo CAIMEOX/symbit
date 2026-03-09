@@ -20,6 +20,48 @@ fn dm_clear_denoms_rowwise_repr(
 }
 
 ///|
+fn dm_swaps_text(swaps : Array[(Int, Int)]) -> String {
+  let parts : Array[String] = Array::new()
+  for swap in swaps {
+    parts.push("(\{swap.0}, \{swap.1})")
+  }
+  let joined = parts.join(", ")
+  "[\{joined}]"
+}
+
+///|
+fn dm_coeffs_text(coeffs : Array[FieldElem]) -> String {
+  let parts = coeffs.map(fe_to_string).join(", ")
+  "[\{parts}]"
+}
+
+///|
+fn dm_is_diagonal(dm : DomainMatrix) -> Bool raise PolyError {
+  let rows = dm.to_dense()
+  for i in 0..<dm.rows {
+    for j in 0..<dm.cols {
+      if i != j && !fe_is_zero(rows[i][j]) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+fn dm_is_upper(dm : DomainMatrix) -> Bool raise PolyError {
+  let rows = dm.to_dense()
+  for i in 0..<dm.rows {
+    for j in 0..<dm.cols {
+      if i > j && !fe_is_zero(rows[i][j]) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
 fn dm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
   fe_from_rational(
     try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
@@ -194,6 +236,77 @@ test "domainmatrix: inverse parity over QQ" {
   let oracle = @sympy_polys.domainmatrix_inv([[1, 2], [3, 5]], "QQ")
   guard dm_trim(ours) == dm_trim(oracle) else {
     fail("domainmatrix inv mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "domainmatrix: lu and lu_solve parity over QQ" {
+  let lu_rows = [[0, 1], [1, 1]]
+  let a = domain_matrix_from_ints(lu_rows, Domain::QQ)
+  let lu = a.lu()
+  let ours_lu =
+    "\{lu.0.to_matrix_string()}||\{lu.1.to_matrix_string()}||\{dm_swaps_text(lu.2)}"
+  let oracle_lu = @sympy_polys.domainmatrix_lu(lu_rows, "QQ")
+  guard dm_trim(ours_lu) == dm_trim(oracle_lu) else {
+    fail("domainmatrix lu mismatch: ours=\{ours_lu}, oracle=\{oracle_lu}")
+  }
+
+  let rhs = domain_matrix_from_ints([[1], [0]], Domain::QQ)
+  let ours_lu_solve = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  .lu_solve(rhs)
+  .to_matrix_string()
+  let oracle_lu_solve = @sympy_polys.domainmatrix_lu_solve(
+    [[1, 2], [3, 4]],
+    [[1], [0]],
+    "QQ",
+  )
+  guard dm_trim(ours_lu_solve) == dm_trim(oracle_lu_solve) else {
+    fail(
+      "domainmatrix lu_solve mismatch: ours=\{ours_lu_solve}, oracle=\{oracle_lu_solve}",
+    )
+  }
+}
+
+///|
+test "domainmatrix: qr invariants over QQ" {
+  let rows = [[1, 2], [3, 4], [5, 6]]
+  let a = domain_matrix_from_ints(rows, Domain::QQ)
+  let qr = a.qr()
+  let recomposed = qr.0.mul(qr.1).to_matrix_string()
+  guard dm_trim(recomposed) == dm_trim(a.to_matrix_string()) else {
+    fail("domainmatrix qr reconstruction mismatch: \{recomposed}")
+  }
+  guard dm_is_diagonal(qr.0.transpose().mul(qr.0)) else {
+    fail("domainmatrix qr should give orthogonal columns")
+  }
+  guard dm_is_upper(qr.1) else {
+    fail("domainmatrix qr should give upper-triangular R")
+  }
+}
+
+///|
+test "domainmatrix: fflu invariants and charpoly parity over ZZ" {
+  let rows = [[1, 2], [3, 4]]
+  let a = domain_matrix_from_ints(rows, Domain::ZZ)
+  let fflu = a.fflu()
+  let lhs = fflu.1.to_field().mul(fflu.2.to_field().inv()).mul(fflu.3.to_field())
+  let rhs = fflu.0.to_field().mul(a.to_field())
+  guard dm_trim(lhs.to_matrix_string()) == dm_trim(rhs.to_matrix_string()) else {
+    fail("domainmatrix fflu invariant mismatch")
+  }
+  guard dm_is_diagonal(fflu.2) else {
+    fail("domainmatrix fflu should return diagonal D")
+  }
+  guard dm_is_upper(fflu.3) else {
+    fail("domainmatrix fflu should return upper-triangular U")
+  }
+
+  let ours_charpoly = dm_coeffs_text(a.charpoly())
+  let oracle_charpoly = @sympy_polys.domainmatrix_charpoly(rows, "ZZ")
+  guard dm_trim(ours_charpoly) == dm_trim(oracle_charpoly) else {
+    fail(
+      "domainmatrix charpoly mismatch: ours=\{ours_charpoly}, oracle=\{oracle_charpoly}",
+    )
   }
 }
 

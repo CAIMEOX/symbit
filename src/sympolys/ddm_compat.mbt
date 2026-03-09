@@ -164,6 +164,34 @@ pub fn DDM::solve_den_rref(
 }
 
 ///|
+pub fn DDM::lu(self : DDM) -> (DDM, DDM, Array[(Int, Int)]) raise PolyError {
+  let (l, u, swaps) = self.dm.lu()
+  (DDM::{ dm: l }, DDM::{ dm: u }, swaps)
+}
+
+///|
+pub fn DDM::qr(self : DDM) -> (DDM, DDM) raise PolyError {
+  let (q, r) = self.dm.qr()
+  (DDM::{ dm: q }, DDM::{ dm: r })
+}
+
+///|
+pub fn DDM::lu_solve(self : DDM, rhs : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.lu_solve(rhs.dm) }
+}
+
+///|
+pub fn DDM::fflu(self : DDM) -> (DDM, DDM, DDM, DDM) raise PolyError {
+  let (p, l, d, u) = self.dm.fflu()
+  (DDM::{ dm: p }, DDM::{ dm: l }, DDM::{ dm: d }, DDM::{ dm: u })
+}
+
+///|
+pub fn DDM::charpoly(self : DDM) -> Array[FieldElem] raise PolyError {
+  self.dm.charpoly()
+}
+
+///|
 pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let (m, n) = self.shape()
   if m != n {

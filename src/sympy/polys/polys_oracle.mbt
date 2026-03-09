@@ -610,6 +610,78 @@ pub fn domainmatrix_to_field(
 }
 
 ///|
+pub fn domainmatrix_lu(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let lu = resolve_method_callable(dm, "lu")
+  let res = py_call_noargs(lu)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 3 else { fail("domainmatrix-lu-tuple") }
+  let l = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let u = oracle_domainmatrix_to_matrix_str(tuple_items[1])
+  let swaps = py_str_value(tuple_items[2])
+  "\{l}||\{u}||\{swaps}"
+}
+
+///|
+pub fn domainmatrix_qr(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let qr = resolve_method_callable(dm, "qr")
+  let res = py_call_noargs(qr)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-qr-tuple") }
+  let q = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let r = oracle_domainmatrix_to_matrix_str(tuple_items[1])
+  "\{q}||\{r}"
+}
+
+///|
+pub fn domainmatrix_lu_solve(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
+  let lu_solve = resolve_method_callable(dm_a, "lu_solve")
+  let res = py_call_one(lu_solve, dm_b)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_fflu(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let fflu = resolve_method_callable(dm, "fflu")
+  let res = py_call_noargs(fflu)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 4 else { fail("domainmatrix-fflu-tuple") }
+  let p = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let l = oracle_domainmatrix_to_matrix_str(tuple_items[1])
+  let d = oracle_domainmatrix_to_matrix_str(tuple_items[2])
+  let u = oracle_domainmatrix_to_matrix_str(tuple_items[3])
+  "\{p}||\{l}||\{d}||\{u}"
+}
+
+///|
+pub fn domainmatrix_charpoly(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let charpoly = resolve_method_callable(dm, "charpoly")
+  let res = py_call_noargs(charpoly)
+  py_str_enum(res)
+}
+
+///|
 pub fn domainmatrix_inv(
   a : Array[Array[Int]],
   domain_spec : String,

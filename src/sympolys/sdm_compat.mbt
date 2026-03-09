@@ -88,6 +88,39 @@ pub fn SDM::nullspace_from_rref(
 }
 
 ///|
+pub fn SDM::lu(self : SDM) -> (SDM, SDM, Array[(Int, Int)]) raise PolyError {
+  let (l, u, swaps) = self.dm.lu()
+  (SDM::{ dm: l.to_sparse() }, SDM::{ dm: u.to_sparse() }, swaps)
+}
+
+///|
+pub fn SDM::qr(self : SDM) -> (SDM, SDM) raise PolyError {
+  let (q, r) = self.dm.qr()
+  (SDM::{ dm: q.to_sparse() }, SDM::{ dm: r.to_sparse() })
+}
+
+///|
+pub fn SDM::lu_solve(self : SDM, rhs : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.lu_solve(rhs.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::fflu(self : SDM) -> (SDM, SDM, SDM, SDM) raise PolyError {
+  let (p, l, d, u) = self.dm.fflu()
+  (
+    SDM::{ dm: p.to_sparse() },
+    SDM::{ dm: l.to_sparse() },
+    SDM::{ dm: d.to_sparse() },
+    SDM::{ dm: u.to_sparse() },
+  )
+}
+
+///|
+pub fn SDM::charpoly(self : SDM) -> Array[FieldElem] raise PolyError {
+  self.dm.charpoly()
+}
+
+///|
 pub fn SDM::particular(
   self : SDM,
   pivots? : Array[Int] = [],
