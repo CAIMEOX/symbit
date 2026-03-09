@@ -36,6 +36,18 @@ fn dm_coeffs_text(coeffs : Array[FieldElem]) -> String {
 }
 
 ///|
+fn dm_field_tuple_text(values : Array[FieldElem]) -> String {
+  if values.is_empty() {
+    return "()"
+  }
+  if values.length() == 1 {
+    return "(\{fe_to_string(values[0])},)"
+  }
+  let joined = values.map(fe_to_string).join(", ")
+  "(\{joined})"
+}
+
+///|
 fn dm_dod_text(dod : DomainMatrixDOD) -> String {
   let row_keys : Array[Int] = Array::new()
   for r, _ in dod {
@@ -148,29 +160,35 @@ fn dm_to_int_rows(dm : DomainMatrix) -> Array[Array[Int]] raise PolyError {
 }
 
 ///|
-test "domainmatrix: add/mul parity over QQ" {
+test "domainmatrix: add/matmul/scalarmul parity over QQ" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = domain_matrix_from_ints([[5, 6], [7, 8]], Domain::QQ)
+  let two = try! fe_from_int(2, Domain::QQ)
 
   let ours_add = a.add(b).to_matrix_string()
-  let ours_mul = a.mul(b).to_matrix_string()
+  let ours_matmul = a.matmul(b).to_matrix_string()
+  let ours_mul = a.mul(two).to_matrix_string()
 
   let oracle_add = @sympy_polys.domainmatrix_add(
     [[1, 2], [3, 4]],
     [[5, 6], [7, 8]],
     "QQ",
   )
-  let oracle_mul = @sympy_polys.domainmatrix_mul(
+  let oracle_matmul = @sympy_polys.domainmatrix_matmul(
     [[1, 2], [3, 4]],
     [[5, 6], [7, 8]],
     "QQ",
   )
+  let oracle_mul = @sympy_polys.domainmatrix_mul([[1, 2], [3, 4]], 2, "QQ")
 
   guard dm_trim(ours_add) == dm_trim(oracle_add) else {
     fail("domainmatrix add mismatch: ours=\{ours_add}, oracle=\{oracle_add}")
   }
+  guard dm_trim(ours_matmul) == dm_trim(oracle_matmul) else {
+    fail("domainmatrix matmul mismatch: ours=\{ours_matmul}, oracle=\{oracle_matmul}")
+  }
   guard dm_trim(ours_mul) == dm_trim(oracle_mul) else {
-    fail("domainmatrix mul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}")
+    fail("domainmatrix scalarmul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}")
   }
 }
 
@@ -350,11 +368,11 @@ test "domainmatrix: qr invariants over QQ" {
   let rows = [[1, 2], [3, 4], [5, 6]]
   let a = domain_matrix_from_ints(rows, Domain::QQ)
   let qr = a.qr()
-  let recomposed = qr.0.mul(qr.1).to_matrix_string()
+  let recomposed = qr.0.matmul(qr.1).to_matrix_string()
   guard dm_trim(recomposed) == dm_trim(a.to_matrix_string()) else {
     fail("domainmatrix qr reconstruction mismatch: \{recomposed}")
   }
-  guard dm_is_diagonal(qr.0.transpose().mul(qr.0)) else {
+  guard dm_is_diagonal(qr.0.transpose().matmul(qr.0)) else {
     fail("domainmatrix qr should give orthogonal columns")
   }
   guard dm_is_upper(qr.1) else {
@@ -367,8 +385,8 @@ test "domainmatrix: fflu invariants and charpoly parity over ZZ" {
   let rows = [[1, 2], [3, 4]]
   let a = domain_matrix_from_ints(rows, Domain::ZZ)
   let fflu = a.fflu()
-  let lhs = fflu.1.to_field().mul(fflu.2.to_field().inv()).mul(fflu.3.to_field())
-  let rhs = fflu.0.to_field().mul(a.to_field())
+  let lhs = fflu.1.to_field().matmul(fflu.2.to_field().inv()).matmul(fflu.3.to_field())
+  let rhs = fflu.0.to_field().matmul(a.to_field())
   guard dm_trim(lhs.to_matrix_string()) == dm_trim(rhs.to_matrix_string()) else {
     fail("domainmatrix fflu invariant mismatch")
   }
@@ -633,6 +651,34 @@ test "domainmatrix: adjugate, adj_det, inv_den, solve_den parity over ZZ" {
   }
   guard dm_trim(ours_solve_den) == dm_trim(oracle_solve_den) else {
     fail("domainmatrix solve_den mismatch: ours=\{ours_solve_den}, oracle=\{oracle_solve_den}")
+  }
+}
+
+///|
+test "domainmatrix: smith normal form parity over ZZ" {
+  let rows = [[12, 6, 4], [3, 9, 6], [2, 16, 14]]
+  let a = domain_matrix_from_ints(rows, Domain::ZZ)
+  let smf = a.smith_normal_form()
+  let decomp = a.smith_normal_decomp()
+  let ours_invs = dm_field_tuple_text(a.invariant_factors())
+  let ours_smf = smf.to_matrix_string()
+  let oracle_invs = @sympy_polys.domainmatrix_invariant_factors(rows, "ZZ")
+  let oracle_smf = @sympy_polys.domainmatrix_smith_normal_form(rows, "ZZ")
+  guard ours_invs == oracle_invs else {
+    fail("domainmatrix invariant_factors mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}")
+  }
+  guard dm_trim(ours_smf) == dm_trim(oracle_smf) else {
+    fail("domainmatrix smith_normal_form mismatch: ours=\{ours_smf}, oracle=\{oracle_smf}")
+  }
+  guard smf.is_smith_normal_form() else {
+    fail("domainmatrix smith_normal_form should satisfy smith predicate")
+  }
+  guard @sympy_polys.domainmatrix_is_smith_normal_form(try! dm_to_int_rows(smf), "ZZ") else {
+    fail("oracle smith predicate should accept smith normal form")
+  }
+  let recomposed = decomp.1.matmul(a).matmul(decomp.2).to_matrix_string()
+  guard dm_trim(recomposed) == dm_trim(ours_smf) else {
+    fail("domainmatrix smith decomposition reconstruction mismatch")
   }
 }
 

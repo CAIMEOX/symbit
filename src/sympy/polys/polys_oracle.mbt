@@ -517,13 +517,26 @@ pub fn domainmatrix_add(
 ///|
 pub fn domainmatrix_mul(
   a : Array[Array[Int]],
+  scalar : Int,
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let mul = resolve_method_callable(dm_a, "mul")
+  let scalar_obj = oracle_domain_element_from_int(scalar, domain_spec)
+  let res = py_call_one(mul, scalar_obj)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_matmul(
+  a : Array[Array[Int]],
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
   let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
   let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
-  let mul = resolve_method_callable(dm_a, "__mul__")
-  let res = py_call_one(mul, dm_b)
+  let matmul = resolve_method_callable(dm_a, "matmul")
+  let res = py_call_one(matmul, dm_b)
   oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
 }
 
@@ -1194,13 +1207,26 @@ pub fn ddm_add(
 ///|
 pub fn ddm_mul(
   a : Array[Array[Int]],
+  scalar : Int,
+  domain_spec : String,
+) -> String raise {
+  let ddm_a = oracle_ddm_from_ints(a, domain_spec)
+  let mul = resolve_method_callable(ddm_a, "mul")
+  let scalar_obj = oracle_domain_element_from_int(scalar, domain_spec)
+  let res = py_call_one(mul, scalar_obj)
+  py_str_enum(res)
+}
+
+///|
+pub fn ddm_matmul(
+  a : Array[Array[Int]],
   b : Array[Array[Int]],
   domain_spec : String,
 ) -> String raise {
   let ddm_a = oracle_ddm_from_ints(a, domain_spec)
   let ddm_b = oracle_ddm_from_ints(b, domain_spec)
-  let mul = resolve_method_callable(ddm_a, "__matmul__")
-  let res = py_call_one(mul, ddm_b)
+  let matmul = resolve_method_callable(ddm_a, "matmul")
+  let res = py_call_one(matmul, ddm_b)
   py_str_enum(res)
 }
 
@@ -1283,6 +1309,63 @@ pub fn matrix_hnf_code(rows : Array[Array[Int]]) -> String raise {
 }
 
 ///|
+pub fn domainmatrix_invariant_factors(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  let smf = sympy_call_must("sympy.polys.matrices.normalforms.smith_normal_form", [
+    OracleArg::PyObj(dm),
+  ])
+  let smf_rows = normalize_smith_int_rows(oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)))
+  int_tuple_text(diagonal_ints(smf_rows))
+}
+
+///|
+pub fn domainmatrix_is_smith_normal_form(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> Bool raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  let smf = sympy_call_must("sympy.polys.matrices.normalforms.smith_normal_form", [
+    OracleArg::PyObj(dm),
+  ])
+  let lhs = normalize_smith_int_rows(oracle_domainmatrix_to_int_rows(dm))
+  let rhs = normalize_smith_int_rows(oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)))
+  lhs == rhs
+}
+
+///|
+pub fn domainmatrix_smith_normal_form(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  let smf = sympy_call_must("sympy.polys.matrices.normalforms.smith_normal_form", [
+    OracleArg::PyObj(dm),
+  ])
+  let normalized = normalize_smith_int_rows(oracle_domainmatrix_to_int_rows(objenum_to_obj(smf)))
+  py_str_obj(oracle_matrix_from_ints(normalized))
+}
+
+///|
+pub fn domainmatrix_smith_normal_decomp(
+  rows : Array[Array[Int]],
+  _domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(rows, "ZZ")
+  let decomp = sympy_call_must("sympy.matrices.normalforms._snd", [
+    OracleArg::PyObj(dm),
+  ])
+  let tuple_items = py_list_to_pyobjects(decomp)
+  guard tuple_items.length() >= 3 else { fail("domainmatrix-smith-normal-decomp") }
+  let smf = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let s = oracle_domainmatrix_to_matrix_str(tuple_items[1])
+  let t = oracle_domainmatrix_to_matrix_str(tuple_items[2])
+  "\{smf}||\{s}||\{t}"
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)
@@ -1304,6 +1387,75 @@ fn matrix_obj_to_int_code(mat_obj : @py.PyObject) -> String raise {
     row_codes.push(cells.join(","))
   }
   row_codes.join(";")
+}
+
+///|
+fn oracle_domainmatrix_to_int_rows(dm_obj : @py.PyObject) -> Array[Array[Int]] raise {
+  let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
+  let mat_enum = py_call_noargs(to_matrix)
+  matrix_obj_to_int_rows(objenum_to_obj(mat_enum))
+}
+
+///|
+fn matrix_obj_to_int_rows(mat_obj : @py.PyObject) -> Array[Array[Int]] raise {
+  let tolist = resolve_method_callable(mat_obj, "tolist")
+  let list_enum = py_call_noargs(tolist)
+  let row_objs = py_list_to_pyobjects(list_enum)
+  let rows : Array[Array[Int]] = Array::new()
+  for row_obj in row_objs {
+    let cell_objs = py_list_to_pyobjects(@py.PyObjectEnum::create(row_obj))
+    let cols : Array[Int] = Array::new()
+    for cell in cell_objs {
+      cols.push(py_obj_to_int(cell))
+    }
+    rows.push(cols)
+  }
+  rows
+}
+
+///|
+fn diagonal_ints(rows : Array[Array[Int]]) -> Array[Int] {
+  let out : Array[Int] = Array::new()
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  let limit = if row_count < col_count { row_count } else { col_count }
+  for i in 0..<limit {
+    out.push(rows[i][i])
+  }
+  out
+}
+
+///|
+fn normalize_smith_int_rows(rows : Array[Array[Int]]) -> Array[Array[Int]] {
+  let out : Array[Array[Int]] = Array::new()
+  for row in rows {
+    let row_copy : Array[Int] = Array::new()
+    for value in row {
+      row_copy.push(value)
+    }
+    out.push(row_copy)
+  }
+  let row_count = out.length()
+  let col_count = if row_count == 0 { 0 } else { out[0].length() }
+  let limit = if row_count < col_count { row_count } else { col_count }
+  for i in 0..<limit {
+    if out[i][i] < 0 {
+      out[i].set(i, -out[i][i])
+    }
+  }
+  out
+}
+
+///|
+fn int_tuple_text(values : Array[Int]) -> String {
+  if values.is_empty() {
+    return "()"
+  }
+  if values.length() == 1 {
+    return "(\{values[0]},)"
+  }
+  let joined = values.map(v => v.to_string()).join(", ")
+  "(\{joined})"
 }
 
 ///|
@@ -1509,6 +1661,13 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     Some(obj) => objenum_to_obj(obj)
     None => fail("domain-spec-unknown:\{text}")
   }
+}
+
+///|
+fn oracle_domain_element_from_int(value : Int, domain_spec : String) -> @py.PyObject raise {
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
+  objenum_to_obj(py_call_one(convert, py_int_obj(value)))
 }
 
 ///|

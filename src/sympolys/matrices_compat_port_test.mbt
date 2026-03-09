@@ -55,6 +55,18 @@ fn coeffs_text(coeffs : Array[FieldElem]) -> String {
 }
 
 ///|
+fn field_tuple_text(values : Array[FieldElem]) -> String {
+  if values.is_empty() {
+    return "()"
+  }
+  if values.length() == 1 {
+    return "(\{fe_to_string(values[0])},)"
+  }
+  let joined = values.map(fe_to_string).join(", ")
+  "(\{joined})"
+}
+
+///|
 fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
   let rows = ddm.to_list()
   let out : Array[Array[Int]] = Array::new()
@@ -91,27 +103,33 @@ fn ddm_clear_denoms_rowwise_repr(den : DDM, num : DDM) -> String raise PolyError
 }
 
 ///|
-test "matrices: DDM add/mul/det/rref parity" {
+test "matrices: DDM add/matmul/scalarmul/det/rref parity" {
   let a = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
+  let two = try! fe_from_int(2, Domain::QQ)
 
   let ours_add = a.add(b).to_string()
-  let ours_mul = a.mul(b).to_string()
+  let ours_matmul = a.matmul(b).to_string()
+  let ours_mul = a.mul(two).to_string()
   let ours_det = fe_to_string(a.det())
   let (r, pivots) = a.rref()
   let pivot_text = pivots.map(i => i.to_string()).join(",")
   let ours_rref = "\{r.to_string()}||[\{pivot_text}]"
 
   let oracle_add = @sympy_polys.ddm_add([[1, 2], [3, 4]], [[5, 6], [7, 8]], "QQ")
-  let oracle_mul = @sympy_polys.ddm_mul([[1, 2], [3, 4]], [[5, 6], [7, 8]], "QQ")
+  let oracle_matmul = @sympy_polys.ddm_matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]], "QQ")
+  let oracle_mul = @sympy_polys.ddm_mul([[1, 2], [3, 4]], 2, "QQ")
   let oracle_det = @sympy_polys.ddm_det([[1, 2], [3, 4]], "QQ")
   let oracle_rref = @sympy_polys.ddm_rref([[1, 2], [3, 4]], "QQ")
 
   guard mx_trim(ours_add) == mx_trim(oracle_add) else {
     fail("ddm add mismatch: ours=\{ours_add}, oracle=\{oracle_add}")
   }
+  guard mx_trim(ours_matmul) == mx_trim(oracle_matmul) else {
+    fail("ddm matmul mismatch: ours=\{ours_matmul}, oracle=\{oracle_matmul}")
+  }
   guard mx_trim(ours_mul) == mx_trim(oracle_mul) else {
-    fail("ddm mul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}")
+    fail("ddm scalarmul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}")
   }
   guard mx_trim(ours_det) == mx_trim(oracle_det) else {
     fail("ddm det mismatch: ours=\{ours_det}, oracle=\{oracle_det}")
@@ -259,11 +277,11 @@ test "matrices: DDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   let qr = qr_case.qr()
   let qr_left = qr.0.to_domain_matrix()
   let qr_right = qr.1.to_domain_matrix()
-  let recomposed = qr_left.mul(qr_right).to_matrix_string()
+  let recomposed = qr_left.matmul(qr_right).to_matrix_string()
   guard mx_trim(recomposed) == mx_trim(qr_case.to_domain_matrix().to_matrix_string()) else {
     fail("ddm qr reconstruction mismatch")
   }
-  guard dm_is_diagonal(qr_left.transpose().mul(qr_left)) else {
+  guard dm_is_diagonal(qr_left.transpose().matmul(qr_left)) else {
     fail("ddm qr should give orthogonal columns")
   }
   guard dm_is_upper(qr_right) else {
@@ -280,10 +298,10 @@ test "matrices: DDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
 
   let zz = ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
   let fflu = zz.fflu()
-  let fflu_left = fflu.1.to_domain_matrix().to_field().mul(
+  let fflu_left = fflu.1.to_domain_matrix().to_field().matmul(
     fflu.2.to_domain_matrix().to_field().inv(),
-  ).mul(fflu.3.to_domain_matrix().to_field())
-  let fflu_right = fflu.0.to_domain_matrix().to_field().mul(zz.to_domain_matrix().to_field())
+  ).matmul(fflu.3.to_domain_matrix().to_field())
+  let fflu_right = fflu.0.to_domain_matrix().to_field().matmul(zz.to_domain_matrix().to_field())
   guard mx_trim(fflu_left.to_matrix_string()) == mx_trim(fflu_right.to_matrix_string()) else {
     fail("ddm fflu invariant mismatch")
   }
@@ -314,7 +332,7 @@ test "matrices: DomainMatrix LLL and transform parity" {
   }
 
   let (reduced2, transform) = a.lll_transform()
-  let recomposed = transform.mul(a).to_string()
+  let recomposed = transform.matmul(a).to_string()
   guard mx_trim(recomposed) == mx_trim(reduced2.to_string()) else {
     fail("lll transform reconstruction mismatch")
   }
@@ -341,7 +359,32 @@ test "matrices: HNF parity on integer cases" {
 }
 
 ///|
-test "matrices: SDM add/mul and dense conversion" {
+test "matrices: Smith normal form parity on integer cases" {
+  let rows = [[12, 6, 4], [3, 9, 6], [2, 16, 14]]
+  let a = ddm_from_ints(rows, Domain::ZZ)
+  let smf = a.smith_normal_form()
+  let decomp = a.smith_normal_decomp()
+  let ours_invs = field_tuple_text(a.invariant_factors())
+  let ours_smf = smf.to_domain_matrix().to_matrix_string()
+  let oracle_invs = @sympy_polys.domainmatrix_invariant_factors(rows, "ZZ")
+  let oracle_smf = @sympy_polys.domainmatrix_smith_normal_form(rows, "ZZ")
+  guard ours_invs == oracle_invs else {
+    fail("ddm invariant_factors mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}")
+  }
+  guard mx_trim(ours_smf) == mx_trim(oracle_smf) else {
+    fail("ddm smith_normal_form mismatch: ours=\{ours_smf}, oracle=\{oracle_smf}")
+  }
+  guard smf.is_smith_normal_form() else {
+    fail("ddm smith_normal_form should satisfy smith predicate")
+  }
+  let recomposed = decomp.1.matmul(a).matmul(decomp.2).to_domain_matrix().to_matrix_string()
+  guard mx_trim(recomposed) == mx_trim(ours_smf) else {
+    fail("ddm smith decomposition reconstruction mismatch")
+  }
+}
+
+///|
+test "matrices: SDM add/matmul/scalarmul and dense conversion" {
   let two = try! fe_from_int(2, Domain::ZZ)
   let one = try! fe_from_int(1, Domain::ZZ)
   let three = try! fe_from_int(3, Domain::ZZ)
@@ -351,15 +394,20 @@ test "matrices: SDM add/mul and dense conversion" {
   let t = sdm_from_entries(2, 2, [(0, 0, three), (1, 1, four)], Domain::ZZ)
 
   let add = s.add(t)
-  let mul = s.mul(t)
+  let scaled = s.mul(two)
+  let mul = s.matmul(t)
   let add_dense = add.to_dense().to_string()
+  let scaled_dense = scaled.to_dense().to_string()
   let mul_dense = mul.to_dense().to_string()
 
   guard mx_trim(add_dense) == "[[3,2],[1,4]]" else {
     fail("sdm add mismatch: \{add_dense}")
   }
+  guard mx_trim(scaled_dense) == "[[0,4],[2,0]]" else {
+    fail("sdm scalarmul mismatch: \{scaled_dense}")
+  }
   guard mx_trim(mul_dense) == "[[0,8],[3,0]]" else {
-    fail("sdm mul mismatch: \{mul_dense}")
+    fail("sdm matmul mismatch: \{mul_dense}")
   }
 }
 
@@ -421,10 +469,10 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   let q_left = qr.0.to_dense().to_domain_matrix()
   let q_right = qr.1.to_dense().to_domain_matrix()
   let orig_qr = domain_matrix_from_ints([[1, 2], [3, 4], [5, 6]], Domain::QQ)
-  guard mx_trim(q_left.mul(q_right).to_matrix_string()) == mx_trim(orig_qr.to_matrix_string()) else {
+  guard mx_trim(q_left.matmul(q_right).to_matrix_string()) == mx_trim(orig_qr.to_matrix_string()) else {
     fail("sdm qr reconstruction mismatch")
   }
-  guard dm_is_diagonal(q_left.transpose().mul(q_left)) else {
+  guard dm_is_diagonal(q_left.transpose().matmul(q_left)) else {
     fail("sdm qr should give orthogonal columns")
   }
   guard dm_is_upper(q_right) else {
@@ -441,10 +489,10 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
 
   let zz = sdm_from_entries(2, 2, [(0, 0, try! fe_from_int(1, Domain::ZZ)), (0, 1, try! fe_from_int(2, Domain::ZZ)), (1, 0, try! fe_from_int(3, Domain::ZZ)), (1, 1, try! fe_from_int(4, Domain::ZZ))], Domain::ZZ)
   let fflu = zz.fflu()
-  let left = fflu.1.to_dense().to_domain_matrix().to_field().mul(
+  let left = fflu.1.to_dense().to_domain_matrix().to_field().matmul(
     fflu.2.to_dense().to_domain_matrix().to_field().inv(),
-  ).mul(fflu.3.to_dense().to_domain_matrix().to_field())
-  let right = fflu.0.to_dense().to_domain_matrix().to_field().mul(zz.to_dense().to_domain_matrix().to_field())
+  ).matmul(fflu.3.to_dense().to_domain_matrix().to_field())
+  let right = fflu.0.to_dense().to_domain_matrix().to_field().matmul(zz.to_dense().to_domain_matrix().to_field())
   guard mx_trim(left.to_matrix_string()) == mx_trim(right.to_matrix_string()) else {
     fail("sdm fflu invariant mismatch")
   }
@@ -619,7 +667,7 @@ test "matrices: DDM and SDM structural wrappers" {
     fail("sdm lll lattice mismatch")
   }
   let sparse_lll_transform = zz_sparse.lll_transform()
-  let sparse_recomposed = sparse_lll_transform.1.to_dense().mul(zz_sparse.to_dense()).to_string()
+  let sparse_recomposed = sparse_lll_transform.1.to_dense().matmul(zz_sparse.to_dense()).to_string()
   guard mx_trim(sparse_recomposed) == mx_trim(sparse_lll_transform.0.to_dense().to_string()) else {
     fail("sdm lll_transform reconstruction mismatch")
   }
