@@ -77,6 +77,14 @@ fn convert_matrix_elem(v : FieldElem, domain : Domain) -> FieldElem raise PolyEr
   fe_from_rational(q, domain)
 }
 
+fn same_format(lhs : DomainMatrix, rhs : DomainMatrix) -> Bool {
+  match (lhs.rep, rhs.rep) {
+    (DomainMatrixRep::Dense(_), DomainMatrixRep::Dense(_))
+    | (DomainMatrixRep::Sparse(_), DomainMatrixRep::Sparse(_)) => true
+    _ => false
+  }
+}
+
 fn all_indices_except(size : Int, skip : Int) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for i in 0..<size {
@@ -466,7 +474,7 @@ fn dfs_collect_component(
   }
 }
 
-fn collect_charpoly_factors(
+fn _collect_factors(
   factors : Array[(Array[FieldElem], Int)],
 ) -> Array[(Array[FieldElem], Int)] {
   let keys : Array[String] = Array::new()
@@ -891,7 +899,7 @@ pub fn DomainMatrix::shape(self : DomainMatrix) -> (Int, Int) {
 
 ///|
 pub fn DomainMatrix::copy(self : DomainMatrix) -> DomainMatrix raise PolyError {
-  domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain)
+  DomainMatrix::from_rep(self.rep, self.shape(), self.domain)
 }
 
 ///|
@@ -965,7 +973,7 @@ pub fn DomainMatrix::convert_to(
     }
     out.push(out_row)
   }
-  domain_matrix_from_dense(out, domain)
+  restore_rep_like(domain_matrix_from_dense(out, domain), self)
 }
 
 ///|
@@ -974,12 +982,65 @@ pub fn DomainMatrix::to_field(self : DomainMatrix) -> DomainMatrix raise PolyErr
 }
 
 ///|
-pub fn DomainMatrix::unify(
+pub fn DomainMatrix::_unify_domain(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> (DomainMatrix, DomainMatrix) raise PolyError {
   let domain = domain_unify_pair(self.domain, other.domain)
   (self.convert_to(domain), other.convert_to(domain))
+}
+
+///|
+pub fn DomainMatrix::_unify_fmt(
+  self : DomainMatrix,
+  other : DomainMatrix,
+  fmt : String,
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  if same_format(self, other) {
+    return (self, other)
+  }
+  match fmt {
+    "dense" => (
+      domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain),
+      domain_matrix_from_dense(clone_dense_rows(other.to_dense()), other.domain),
+    )
+    "sparse" => (self.to_sparse(), other.to_sparse())
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+pub fn DomainMatrix::unify(
+  self : DomainMatrix,
+  other : DomainMatrix,
+  fmt? : String = "",
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  let (a, b) = self._unify_domain(other)
+  if fmt == "" {
+    return (a, b)
+  }
+  a._unify_fmt(b, fmt)
+}
+
+///|
+pub fn DomainMatrix::_check(
+  self : DomainMatrix,
+  op : String,
+  other : DomainMatrix,
+  ashape : (Int, Int),
+  bshape : (Int, Int),
+  require_format? : Bool = true,
+) -> Unit raise PolyError {
+  let _ = op
+  if self.domain != other.domain {
+    raise PolyError::DomainMismatch
+  }
+  if ashape != bshape {
+    raise PolyError::DomainMismatch
+  }
+  if require_format && !same_format(self, other) {
+    raise PolyError::DomainMismatch
+  }
 }
 
 ///|
@@ -1088,16 +1149,6 @@ pub fn DomainMatrix::clear_denoms_rowwise(
 }
 
 ///|
-fn ensure_same_shape(
-  a : DomainMatrix,
-  b : DomainMatrix,
-) -> Unit raise PolyError {
-  if a.rows != b.rows || a.cols != b.cols || a.domain.not_equal(b.domain) {
-    raise PolyError::DomainMismatch
-  }
-}
-
-///|
 fn ensure_mul_shape(a : DomainMatrix, b : DomainMatrix) -> Unit raise PolyError {
   if a.cols != b.rows || a.domain.not_equal(b.domain) {
     raise PolyError::DomainMismatch
@@ -1109,7 +1160,7 @@ pub fn DomainMatrix::add(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  ensure_same_shape(self, other)
+  self._check("+", other, self.shape(), other.shape())
   let a = self.to_dense()
   let b = other.to_dense()
   let out : Array[Array[FieldElem]] = Array::new()
@@ -1120,7 +1171,7 @@ pub fn DomainMatrix::add(
     }
     out.push(row)
   }
-  domain_matrix_from_dense(out, self.domain)
+  restore_rep_like(domain_matrix_from_dense(out, self.domain), self)
 }
 
 ///|
@@ -1128,7 +1179,7 @@ pub fn DomainMatrix::sub(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  ensure_same_shape(self, other)
+  self._check("-", other, self.shape(), other.shape())
   let a = self.to_dense()
   let b = other.to_dense()
   let out : Array[Array[FieldElem]] = Array::new()
@@ -1139,7 +1190,7 @@ pub fn DomainMatrix::sub(
     }
     out.push(row)
   }
-  domain_matrix_from_dense(out, self.domain)
+  restore_rep_like(domain_matrix_from_dense(out, self.domain), self)
 }
 
 ///|
@@ -1163,7 +1214,7 @@ pub fn DomainMatrix::transpose(
     }
     out.push(row)
   }
-  domain_matrix_from_dense(out, self.domain)
+  restore_rep_like(domain_matrix_from_dense(out, self.domain), self)
 }
 
 ///|
@@ -1183,7 +1234,7 @@ pub fn DomainMatrix::extract(
     }
     out.push(row)
   }
-  domain_matrix_from_dense(out, self.domain)
+  restore_rep_like(domain_matrix_from_dense(out, self.domain), self)
 }
 
 ///|
@@ -1233,13 +1284,18 @@ pub fn DomainMatrix::hstack(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  if self.rows != other.rows || self.domain.not_equal(other.domain) {
+  let fmt = match self.rep {
+    DomainMatrixRep::Dense(_) => "dense"
+    DomainMatrixRep::Sparse(_) => "sparse"
+  }
+  let (left_dm, right_dm) = self.unify(other, fmt=fmt)
+  if left_dm.rows != right_dm.rows {
     raise PolyError::DomainMismatch
   }
-  let left = self.to_dense()
-  let right = other.to_dense()
+  let left = left_dm.to_dense()
+  let right = right_dm.to_dense()
   let out : Array[Array[FieldElem]] = Array::new()
-  for i in 0..<self.rows {
+  for i in 0..<left_dm.rows {
     let row : Array[FieldElem] = Array::new()
     for value in left[i] {
       row.push(value)
@@ -1249,7 +1305,7 @@ pub fn DomainMatrix::hstack(
     }
     out.push(row)
   }
-  domain_matrix_from_dense(out, self.domain)
+  restore_rep_like(domain_matrix_from_dense(out, left_dm.domain), left_dm)
 }
 
 ///|
@@ -1257,7 +1313,7 @@ pub fn DomainMatrix::vstack(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  let (top, bottom) = self.unify(other)
+  let (top, bottom) = self.unify(other, fmt="dense")
   if top.cols != bottom.cols {
     raise PolyError::DomainMismatch
   }
@@ -1265,7 +1321,7 @@ pub fn DomainMatrix::vstack(
   for row in bottom.to_dense() {
     out.push(row)
   }
-  restore_rep_like(domain_matrix_from_dense(out, top.domain), self)
+  restore_rep_like(domain_matrix_from_dense(out, top.domain), top)
 }
 
 ///|
@@ -1286,7 +1342,7 @@ pub fn DomainMatrix::mul_elementwise(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  ensure_same_shape(self, other)
+  self._check(".*", other, self.shape(), other.shape())
   let a = self.to_dense()
   let b = other.to_dense()
   let out : Array[Array[FieldElem]] = Array::new()
@@ -1305,6 +1361,22 @@ pub fn DomainMatrix::scalarmul(
   self : DomainMatrix,
   scalar : FieldElem,
 ) -> DomainMatrix raise PolyError {
+  self._scalarmul(scalar)
+}
+
+///|
+pub fn DomainMatrix::_scalarmul(
+  self : DomainMatrix,
+  scalar : FieldElem,
+  reverse? : Bool = false,
+) -> DomainMatrix raise PolyError {
+  let _ = reverse
+  if fe_is_zero(scalar) && self.domain != Domain::EXRAW {
+    return restore_rep_like(domain_matrix_zeros(self.rows, self.cols, self.domain), self)
+  }
+  if fe_is_one(scalar) {
+    return self.copy()
+  }
   restore_rep_like(domain_matrix_scale(self, scalar), self)
 }
 
@@ -1313,7 +1385,7 @@ pub fn DomainMatrix::rscalarmul(
   self : DomainMatrix,
   scalar : FieldElem,
 ) -> DomainMatrix raise PolyError {
-  self.scalarmul(scalar)
+  self._scalarmul(scalar, reverse=true)
 }
 
 ///|
@@ -1321,7 +1393,23 @@ pub fn DomainMatrix::rmul(
   self : DomainMatrix,
   scalar : FieldElem,
 ) -> DomainMatrix raise PolyError {
-  self.scalarmul(scalar)
+  self._scalarmul(scalar, reverse=true)
+}
+
+///|
+pub fn DomainMatrix::truediv(
+  self : DomainMatrix,
+  scalar : DomainScalar,
+) -> DomainMatrix raise PolyError {
+  let field_matrix = self.to_field()
+  let field_scalar = scalar.convert_to(field_matrix.domain)
+  if field_scalar.is_zero() {
+    raise PolyError::DivisionByZero
+  }
+  if field_scalar.is_one() {
+    return field_matrix
+  }
+  field_matrix.mul(fe_inv(field_scalar.element))
 }
 
 ///|
@@ -2724,7 +2812,7 @@ pub fn DomainMatrix::charpoly_factor_list(
       irreducible.push((poly_to_dense_desc(factor_pair.0), block.1 * factor_pair.1))
     }
   }
-  collect_charpoly_factors(irreducible)
+  _collect_factors(irreducible)
 }
 
 ///|
@@ -2882,7 +2970,7 @@ pub fn DomainMatrix::charpoly_factor_blocks(
   for indices in self.scc() {
     factors.push((self.extract(indices, indices).charpoly_base(), 1))
   }
-  collect_charpoly_factors(factors)
+  _collect_factors(factors)
 }
 
 ///|

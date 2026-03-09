@@ -628,6 +628,157 @@ test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
 }
 
 ///|
+test "domainmatrix: format-preserving copy convert_to and unify parity" {
+  let sparse = domain_matrix_from_ints([[0, 1], [2, 0]], Domain::ZZ).to_sparse()
+  let copied = sparse.copy()
+  guard dm_trim(dm_summary(copied)) == dm_trim("Matrix([[0, 1], [2, 0]])@ZZ|sparse") else {
+    fail("domainmatrix copy should preserve sparse format: \{dm_summary(copied)}")
+  }
+
+  let ours_convert = dm_summary(sparse.convert_to(Domain::QQ))
+  let oracle_convert = @sympy_polys.domainmatrix_convert_to_summary(
+    [[0, 1], [2, 0]],
+    "ZZ",
+    "QQ",
+    fmt="sparse",
+  )
+  guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
+    fail("domainmatrix sparse convert_to mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}")
+  }
+
+  let dense_q = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let unified = sparse.unify(dense_q)
+  let ours_unify = "\{dm_summary(unified.0)}||\{dm_summary(unified.1)}"
+  let oracle_unify = @sympy_polys.domainmatrix_unify_summary(
+    [[0, 1], [2, 0]],
+    "ZZ",
+    "sparse",
+    [[1, 2], [3, 4]],
+    "QQ",
+    "dense",
+  )
+  guard dm_trim(ours_unify) == dm_trim(oracle_unify) else {
+    fail("domainmatrix unify mismatch: ours=\{ours_unify}, oracle=\{oracle_unify}")
+  }
+
+  let unified_dense = sparse.unify(dense_q, fmt="dense")
+  let ours_unify_dense = "\{dm_summary(unified_dense.0)}||\{dm_summary(unified_dense.1)}"
+  let oracle_unify_dense = @sympy_polys.domainmatrix_unify_summary(
+    [[0, 1], [2, 0]],
+    "ZZ",
+    "sparse",
+    [[1, 2], [3, 4]],
+    "QQ",
+    "dense",
+    fmt="dense",
+  )
+  guard dm_trim(ours_unify_dense) == dm_trim(oracle_unify_dense) else {
+    fail(
+      "domainmatrix unify(fmt='dense') mismatch: ours=\{ours_unify_dense}, oracle=\{oracle_unify_dense}",
+    )
+  }
+}
+
+///|
+test "domainmatrix: direct format checks and stack semantics" {
+  let sparse = domain_matrix_from_ints([[0, 1], [2, 0]], Domain::ZZ).to_sparse()
+  let dense = domain_matrix_from_ints([[1, 0], [0, 3]], Domain::ZZ)
+
+  guard (try? sparse.add(dense)) is Err(PolyError::DomainMismatch) else {
+    fail("domainmatrix add should reject mixed direct formats")
+  }
+  guard (try? sparse.sub(dense)) is Err(PolyError::DomainMismatch) else {
+    fail("domainmatrix sub should reject mixed direct formats")
+  }
+  guard (try? sparse.mul_elementwise(dense)) is Err(PolyError::DomainMismatch) else {
+    fail("domainmatrix mul_elementwise should reject mixed direct formats")
+  }
+
+  let sparse_sum = sparse.add(dense.to_sparse())
+  guard dm_trim(dm_summary(sparse_sum)) == dm_trim("Matrix([[1, 1], [2, 3]])@ZZ|sparse") else {
+    fail("domainmatrix sparse add should preserve sparse format: \{dm_summary(sparse_sum)}")
+  }
+  guard dm_fmt(sparse.transpose()) == "sparse" else {
+    fail("domainmatrix transpose should preserve sparse format")
+  }
+  guard dm_fmt(sparse.extract([0, 1], [0])) == "sparse" else {
+    fail("domainmatrix extract should preserve sparse format")
+  }
+
+  let dense_q = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let ours_hstack = dm_summary(sparse.hstack(dense_q))
+  let oracle_hstack = @sympy_polys.domainmatrix_hstack_summary(
+    [[0, 1], [2, 0]],
+    "ZZ",
+    "sparse",
+    [[1, 2], [3, 4]],
+    "QQ",
+    "dense",
+  )
+  guard dm_trim(ours_hstack) == dm_trim(oracle_hstack) else {
+    fail("domainmatrix hstack mismatch: ours=\{ours_hstack}, oracle=\{oracle_hstack}")
+  }
+
+  let ours_vstack = dm_summary(sparse.vstack(dense_q))
+  let oracle_vstack = @sympy_polys.domainmatrix_vstack_summary(
+    [[0, 1], [2, 0]],
+    "ZZ",
+    "sparse",
+    [[1, 2], [3, 4]],
+    "QQ",
+    "dense",
+  )
+  guard dm_trim(ours_vstack) == dm_trim(oracle_vstack) else {
+    fail("domainmatrix vstack mismatch: ours=\{ours_vstack}, oracle=\{oracle_vstack}")
+  }
+}
+
+///|
+test "domainmatrix: truediv parity and scalar fast paths" {
+  let sparse_zz = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ).to_sparse()
+
+  let ours_half = dm_summary(sparse_zz.truediv(domain_scalar_from_int(2, Domain::ZZ)))
+  let oracle_half = @sympy_polys.domainmatrix_truediv_summary(
+    [[1, 2], [3, 4]],
+    "ZZ",
+    "2",
+    fmt="sparse",
+  )
+  guard dm_trim(ours_half) == dm_trim(oracle_half) else {
+    fail("domainmatrix truediv(2) mismatch: ours=\{ours_half}, oracle=\{oracle_half}")
+  }
+
+  let sparse_qq = sparse_zz.to_field()
+  let two_thirds = domain_scalar_new(dm_rat(2, 3), Domain::QQ)
+  let ours_two_thirds = dm_summary(sparse_qq.truediv(two_thirds))
+  let oracle_two_thirds = @sympy_polys.domainmatrix_truediv_summary(
+    [[1, 2], [3, 4]],
+    "QQ",
+    "2/3",
+    fmt="sparse",
+  )
+  guard dm_trim(ours_two_thirds) == dm_trim(oracle_two_thirds) else {
+    fail(
+      "domainmatrix truediv(2/3) mismatch: ours=\{ours_two_thirds}, oracle=\{oracle_two_thirds}",
+    )
+  }
+
+  guard dm_trim(dm_summary(sparse_zz._scalarmul(try! fe_from_int(1, Domain::ZZ)))) ==
+    dm_trim(dm_summary(sparse_zz)) else {
+    fail("domainmatrix _scalarmul(1) should return an unchanged copy")
+  }
+  guard dm_trim(dm_summary(sparse_zz._scalarmul(try! fe_from_int(0, Domain::ZZ)))) ==
+    dm_trim("Matrix([[0, 0], [0, 0]])@ZZ|sparse") else {
+    fail("domainmatrix _scalarmul(0) should preserve sparse zero format")
+  }
+  guard (try? sparse_zz.truediv(domain_scalar_from_int(0, Domain::ZZ))) is Err(
+    PolyError::DivisionByZero,
+  ) else {
+    fail("domainmatrix truediv should reject zero divisors")
+  }
+}
+
+///|
 test "domainmatrix: sympy-style constructor and conversion parity" {
   let expr_rows : MatrixExpr = [
     [try! @symcore.rational_from_ints(1, 2), @symcore.int(2)],

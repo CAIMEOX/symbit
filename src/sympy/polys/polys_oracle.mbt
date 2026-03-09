@@ -528,6 +528,24 @@ pub fn domainmatrix_mul(
 }
 
 ///|
+pub fn domainmatrix_truediv_summary(
+  a : Array[Array[Int]],
+  domain_spec : String,
+  scalar_expr : String,
+  fmt? : String = "dense",
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints_fmt(a, domain_spec, fmt)
+  let div = resolve_method_callable(dm_a, "__truediv__")
+  let scalar = try @strconv.parse_int(scalar_expr.trim()) catch {
+    _ => sympy_sympify_str(scalar_expr)
+  } noraise {
+    value => py_int_obj(value)
+  }
+  let res = py_call_one(div, scalar)
+  oracle_domainmatrix_summary(objenum_to_obj(res))
+}
+
+///|
 pub fn domainmatrix_matmul(
   a : Array[Array[Int]],
   b : Array[Array[Int]],
@@ -609,6 +627,20 @@ pub fn domainmatrix_convert_to(
   let target = oracle_domain_from_spec(to_domain_spec)
   let res = py_call_one(convert, target)
   oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_convert_to_summary(
+  a : Array[Array[Int]],
+  from_domain_spec : String,
+  to_domain_spec : String,
+  fmt? : String = "dense",
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints_fmt(a, from_domain_spec, fmt)
+  let convert = resolve_method_callable(dm, "convert_to")
+  let target = oracle_domain_from_spec(to_domain_spec)
+  let res = py_call_one(convert, target)
+  oracle_domainmatrix_summary(objenum_to_obj(res))
 }
 
 ///|
@@ -1557,6 +1589,65 @@ pub fn domainmatrix_internal_solve_summary(
 }
 
 ///|
+pub fn domainmatrix_hstack_summary(
+  a_rows : Array[Array[Int]],
+  a_domain_spec : String,
+  a_fmt : String,
+  b_rows : Array[Array[Int]],
+  b_domain_spec : String,
+  b_fmt : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
+  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
+  let hstack = resolve_method_callable(dm_a, "hstack")
+  let result = py_call_one(hstack, dm_b)
+  oracle_domainmatrix_summary(objenum_to_obj(result))
+}
+
+///|
+pub fn domainmatrix_vstack_summary(
+  a_rows : Array[Array[Int]],
+  a_domain_spec : String,
+  a_fmt : String,
+  b_rows : Array[Array[Int]],
+  b_domain_spec : String,
+  b_fmt : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
+  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
+  let vstack = resolve_method_callable(dm_a, "vstack")
+  let result = py_call_one(vstack, dm_b)
+  oracle_domainmatrix_summary(objenum_to_obj(result))
+}
+
+///|
+pub fn domainmatrix_unify_summary(
+  a_rows : Array[Array[Int]],
+  a_domain_spec : String,
+  a_fmt : String,
+  b_rows : Array[Array[Int]],
+  b_domain_spec : String,
+  b_fmt : String,
+  fmt? : String = "",
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints_fmt(a_rows, a_domain_spec, a_fmt)
+  let dm_b = oracle_domainmatrix_from_ints_fmt(b_rows, b_domain_spec, b_fmt)
+  let unify = resolve_method_callable(dm_a, "unify")
+  let result = if fmt != "" {
+      let kwargs = py_dict_new()
+      py_dict_set_obj(kwargs, "fmt", py_string_obj(fmt))
+      py_call_with_args(unify, [dm_b], kwargs)
+    } else {
+      py_call_one(unify, dm_b)
+    }
+  let parts = py_list_to_pyobjects(result)
+  guard parts.length() >= 2 else { fail("domainmatrix-unify") }
+  let lhs = oracle_domainmatrix_summary(parts[0])
+  let rhs = oracle_domainmatrix_summary(parts[1])
+  "\{lhs}||\{rhs}"
+}
+
+///|
 pub fn domainscalar_from_expr(expr : String) -> String raise {
   let args = py_list_from_objects([sympy_sympify_str(expr)]).obj()
   let res = sympy_call_must(
@@ -1862,6 +1953,23 @@ fn oracle_domainmatrix_from_ints(
     OracleArg::PyObj(domain_obj),
   ])
   objenum_to_obj(dm_enum)
+}
+
+///|
+fn oracle_domainmatrix_from_ints_fmt(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+  fmt : String,
+) -> @py.PyObject raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  match fmt {
+    "dense" => dm
+    "sparse" => {
+      let to_sparse = resolve_method_callable(dm, "to_sparse")
+      objenum_to_obj(py_call_noargs(to_sparse))
+    }
+    _ => fail("domainmatrix-fmt")
+  }
 }
 
 ///|
