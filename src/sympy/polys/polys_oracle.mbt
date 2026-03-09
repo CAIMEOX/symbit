@@ -1366,6 +1366,57 @@ pub fn domainmatrix_smith_normal_decomp(
 }
 
 ///|
+pub fn domainmatrix_dom_eigenvects_summary(
+  rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(rows, domain_spec)
+  let res = sympy_call_must("sympy.polys.matrices.eigen.dom_eigenvects", [
+    OracleArg::PyObj(dm),
+  ])
+  let groups = py_list_to_pyobjects(res)
+  guard groups.length() >= 2 else { fail("domainmatrix-dom-eigenvects") }
+  let parts : Array[String] = Array::new()
+  let rational = py_list_to_pyobjects(@py.PyObjectEnum::create(groups[0]))
+  for item in rational {
+    let tup = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
+    guard tup.length() >= 4 else { fail("domainmatrix-dom-eigenvects-rational") }
+    let eigenval = py_str_obj(tup[1])
+    let multiplicity = py_obj_to_int(tup[2]).to_string()
+    let basis = oracle_domainmatrix_to_matrix_str(tup[3])
+    parts.push("r:\{eigenval}:\{multiplicity}:\{basis}")
+  }
+  let algebraic = py_list_to_pyobjects(@py.PyObjectEnum::create(groups[1]))
+  for item in algebraic {
+    let tup = py_list_to_pyobjects(@py.PyObjectEnum::create(item))
+    guard tup.length() >= 4 else { fail("domainmatrix-dom-eigenvects-algebraic") }
+    let coeffs = poly_obj_expr_text(tup[1])
+    let multiplicity = py_obj_to_int(tup[2]).to_string()
+    let basis = oracle_domainmatrix_to_matrix_str(tup[3])
+    parts.push("a:\{coeffs}:\{multiplicity}:\{basis}")
+  }
+  parts.sort()
+  parts.join("||")
+}
+
+///|
+pub fn domainmatrix_internal_solve_summary(
+  a_rows : Array[Array[Int]],
+  b_rows : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a_rows, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b_rows, domain_spec)
+  let solve = resolve_method_callable(dm_a, "_solve")
+  let result = py_call_one(solve, dm_b)
+  let parts = py_list_to_pyobjects(result)
+  guard parts.length() >= 2 else { fail("domainmatrix-_solve") }
+  let particular = oracle_domainmatrix_to_matrix_str(parts[0])
+  let nullspace = oracle_domainmatrix_to_matrix_str(parts[1])
+  "\{particular}||\{nullspace}"
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)
@@ -1456,6 +1507,12 @@ fn int_tuple_text(values : Array[Int]) -> String {
   }
   let joined = values.map(v => v.to_string()).join(", ")
   "(\{joined})"
+}
+
+///|
+fn poly_obj_expr_text(poly_obj : @py.PyObject) -> String raise {
+  let as_expr = resolve_method_callable(poly_obj, "as_expr")
+  py_str_enum(py_call_noargs(as_expr))
 }
 
 ///|

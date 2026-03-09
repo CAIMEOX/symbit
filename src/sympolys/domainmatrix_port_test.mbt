@@ -48,6 +48,33 @@ fn dm_field_tuple_text(values : Array[FieldElem]) -> String {
 }
 
 ///|
+fn dm_normalize_expr_text(text : String) -> String {
+  text.replace_all(old=" + -", new=" - ")
+}
+
+///|
+fn dm_dom_eigenvects_text(
+  values : (DomainMatrixRationalEigenvects, DomainMatrixAlgebraicEigenvects),
+) -> String raise PolyError {
+  let parts : Array[String] = Array::new()
+  for item in values.0 {
+    parts.push("r:\{fe_to_string(item.1)}:\{item.2}:\{item.3.to_matrix_string()}")
+  }
+  for item in values.1 {
+    parts.push(
+      "a:\{dm_normalize_expr_text(item.1.to_string())}:\{item.2}:\{item.3.to_matrix_string()}",
+    )
+  }
+  parts.sort()
+  parts.join("||")
+}
+
+///|
+fn dm_solve_summary(value : (DomainMatrix, DomainMatrix)) -> String raise PolyError {
+  "\{value.0.to_matrix_string()}||\{value.1.to_matrix_string()}"
+}
+
+///|
 fn dm_dod_text(dod : DomainMatrixDOD) -> String {
   let row_keys : Array[Int] = Array::new()
   for r, _ in dod {
@@ -679,6 +706,49 @@ test "domainmatrix: smith normal form parity over ZZ" {
   let recomposed = decomp.1.matmul(a).matmul(decomp.2).to_matrix_string()
   guard dm_trim(recomposed) == dm_trim(ours_smf) else {
     fail("domainmatrix smith decomposition reconstruction mismatch")
+  }
+}
+
+///|
+test "domainmatrix: rational dom_eigenvects parity over QQ" {
+  let rational = domain_matrix_from_ints([[1, 0], [0, 2]], Domain::QQ)
+  let rational_text = dm_dom_eigenvects_text(rational.dom_eigenvects())
+  let oracle_rational = @sympy_polys.domainmatrix_dom_eigenvects_summary([[1, 0], [0, 2]], "QQ")
+  guard dm_trim(rational_text) == dm_trim(oracle_rational) else {
+    fail("domainmatrix rational dom_eigenvects mismatch: ours=\{rational_text}, oracle=\{oracle_rational}")
+  }
+}
+
+///|
+test "domainmatrix: algebraic dom_eigenvects parity over QQ" {
+  let algebraic = domain_matrix_from_ints([[0, 2], [1, 0]], Domain::QQ)
+  let algebraic_text = dm_dom_eigenvects_text(algebraic.dom_eigenvects())
+  let oracle_algebraic = @sympy_polys.domainmatrix_dom_eigenvects_summary([[0, 2], [1, 0]], "QQ")
+  guard dm_trim(algebraic_text) == dm_trim(oracle_algebraic) else {
+    fail(
+      "domainmatrix algebraic dom_eigenvects mismatch: ours=\{algebraic_text}, oracle=\{oracle_algebraic}",
+    )
+  }
+}
+
+///|
+test "domainmatrix: _solve and particular parity over QQ" {
+  let a = domain_matrix_from_ints([[1, 2], [2, 4]], Domain::QQ)
+  let b = domain_matrix_from_ints([[1], [2]], Domain::QQ)
+  let ours = dm_solve_summary(a._solve(b))
+  let oracle = @sympy_polys.domainmatrix_internal_solve_summary(
+    [[1, 2], [2, 4]],
+    [[1], [2]],
+    "QQ",
+  )
+  guard dm_trim(ours) == dm_trim(oracle) else {
+    fail("domainmatrix _solve mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+
+  let (rref_aug, pivots) = a.hstack(b).rref()
+  let particular = rref_aug.particular(pivots=pivots).to_matrix_string()
+  guard particular == "Matrix([[1, 0]])" else {
+    fail("domainmatrix particular mismatch: \{particular}")
   }
 }
 

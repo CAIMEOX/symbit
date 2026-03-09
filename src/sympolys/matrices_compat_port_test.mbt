@@ -448,6 +448,30 @@ test "matrices: SDM rref_den and nullspace_from_rref parity" {
 }
 
 ///|
+test "matrices: DDM and SDM particular wrappers" {
+  let ddm_aug = ddm_from_ints([[1, 2, 1], [2, 4, 2]], Domain::QQ)
+  let (ddm_rref, ddm_pivots) = ddm_aug.rref()
+  let ddm_particular = ddm_rref.particular(pivots=ddm_pivots).to_domain_matrix().to_matrix_string()
+  guard ddm_particular == "Matrix([[1, 0]])" else {
+    fail("ddm particular mismatch: \{ddm_particular}")
+  }
+
+  let one = try! fe_from_int(1, Domain::QQ)
+  let two = try! fe_from_int(2, Domain::QQ)
+  let sdm_aug = sdm_from_entries(
+    2,
+    3,
+    [(0, 0, one), (0, 1, two), (0, 2, one), (1, 0, two), (1, 1, try! fe_from_int(4, Domain::QQ)), (1, 2, two)],
+    Domain::QQ,
+  )
+  let (sdm_rref, sdm_pivots) = sdm_aug.rref()
+  let sdm_particular = sdm_rref.particular(pivots=sdm_pivots).to_dense().to_domain_matrix().to_matrix_string()
+  guard sdm_particular == "Matrix([[1, 0]])" else {
+    fail("sdm particular mismatch: \{sdm_particular}")
+  }
+}
+
+///|
 test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   let zero = try! fe_from_int(0, Domain::QQ)
   let oneq = try! fe_from_int(1, Domain::QQ)

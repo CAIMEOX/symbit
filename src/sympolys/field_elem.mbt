@@ -524,7 +524,10 @@ fn minpoly_equal(a : Poly, b : Poly) -> Bool {
 ///|
 /// Dense helpers for algebraic extension arithmetic.
 fn fe_alg_poly_trim(coeffs : Array[FieldElem]) -> Array[FieldElem] {
-  let res = coeffs
+  let res : Array[FieldElem] = Array::new()
+  for coeff in coeffs {
+    res.push(coeff)
+  }
   while res.length() > 1 {
     match res.last() {
       Some(v) => if fe_is_zero(v) { let _ = res.pop() } else { break }
@@ -721,10 +724,15 @@ fn fe_alg_poly_inv(
     old_t = t
     t = new_t
   }
-  if !(old_r.length() == 1 && fe_is_one(old_r[0])) {
+  if old_r.length() != 1 || fe_is_zero(old_r[0]) {
     raise PolyError::DomainNotField
   }
-  s
+  let gcd_inv = fe_inv(old_r[0])
+  let normalized : Array[FieldElem] = Array::new()
+  for coeff in old_t {
+    normalized.push(fe_mul(coeff, gcd_inv))
+  }
+  fe_alg_poly_trim(normalized)
 }
 
 ///|

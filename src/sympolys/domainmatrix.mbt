@@ -2027,6 +2027,39 @@ pub fn DomainMatrix::nullspace_from_rref(
 }
 
 ///|
+pub fn DomainMatrix::particular(
+  self : DomainMatrix,
+  pivots? : Array[Int] = [],
+) -> DomainMatrix raise PolyError {
+  particular_from_rref(self, pivots~)
+}
+
+///|
+pub fn DomainMatrix::_solve(
+  self : DomainMatrix,
+  rhs : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  if self.rows != rhs.rows || rhs.cols != 1 {
+    raise PolyError::DomainMismatch
+  }
+  if self.domain.not_equal(rhs.domain) || !domain_is_field_pred(self.domain) {
+    raise PolyError::DomainNotField
+  }
+  let aug = self.hstack(rhs)
+  let (rref_aug, pivots) = aug.rref()
+  let particular = rref_aug.particular(pivots=pivots)
+  let left_rref = rref_aug.extract(all_indices(0, rref_aug.rows), all_indices(0, self.cols))
+  let left_pivots : Array[Int] = Array::new()
+  for pivot in pivots {
+    if pivot < self.cols {
+      left_pivots.push(pivot)
+    }
+  }
+  let nullspace = left_rref.nullspace_from_rref(pivots=left_pivots)
+  (particular, nullspace)
+}
+
+///|
 pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
     raise PolyError::DomainNotField
