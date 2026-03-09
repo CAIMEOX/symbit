@@ -46,6 +46,24 @@ fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
 }
 
 ///|
+fn ddm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
+  fe_from_rational(
+    try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
+    Domain::QQ,
+  )
+}
+
+///|
+fn ddm_clear_denoms_repr(den : DomainScalar, num : DDM) -> String raise PolyError {
+  "\{den.to_string()}@\{domain_to_sympy_string(den.domain)}||Matrix(\{num.to_string()})@\{domain_to_sympy_string(num.domain())}"
+}
+
+///|
+fn ddm_clear_denoms_rowwise_repr(den : DDM, num : DDM) -> String raise PolyError {
+  "\{den.to_domain_matrix().to_matrix_string()}@\{domain_to_sympy_string(den.domain())}||Matrix(\{num.to_string()})@\{domain_to_sympy_string(num.domain())}"
+}
+
+///|
 test "matrices: DDM add/mul/det/rref parity" {
   let a = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
@@ -95,6 +113,69 @@ test "matrices: DDM rank/inv/nullspace parity" {
   let oracle_ns = @sympy_polys.ddm_nullspace([[1, 2, 3], [2, 4, 6]], "QQ")
   guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
     fail("ddm nullspace mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
+  }
+}
+
+///|
+test "matrices: DDM exact denominator parity" {
+  let qq_rows = [
+    [ddm_rat(1, 2), ddm_rat(1, 3), ddm_rat(1, 4)],
+    [ddm_rat(1, 5), ddm_rat(1, 6), ddm_rat(1, 7)],
+  ]
+  let qq = ddm_from_dense(qq_rows, Domain::QQ)
+  let clear = qq.clear_denoms()
+  let clear_rowwise = qq.clear_denoms_rowwise()
+
+  let ours_clear = ddm_clear_denoms_repr(clear.0, clear.1)
+  let ours_clear_rowwise = ddm_clear_denoms_rowwise_repr(clear_rowwise.0, clear_rowwise.1)
+
+  let expr_rows = [["1/2", "1/3", "1/4"], ["1/5", "1/6", "1/7"]]
+  let oracle_clear = @sympy_polys.domainmatrix_clear_denoms_expr(expr_rows, "QQ")
+  let oracle_clear_rowwise = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(
+    expr_rows,
+    "QQ",
+  )
+
+  guard mx_trim(ours_clear) == mx_trim(oracle_clear) else {
+    fail("ddm clear_denoms mismatch: ours=\{ours_clear}, oracle=\{oracle_clear}")
+  }
+  guard mx_trim(ours_clear_rowwise) == mx_trim(oracle_clear_rowwise) else {
+    fail(
+      "ddm clear_denoms_rowwise mismatch: ours=\{ours_clear_rowwise}, oracle=\{oracle_clear_rowwise}",
+    )
+  }
+
+  let zz = ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let rhs = ddm_from_ints([[5], [6]], Domain::ZZ)
+  let adj_det = zz.adj_det()
+  let inv_den = zz.inv_den()
+  let solve_den = zz.solve_den(rhs)
+
+  let ours_adjugate = "Matrix(\{zz.adjugate().to_string()})"
+  let ours_adj_det = "Matrix(\{adj_det.0.to_string()})||\{fe_to_string(adj_det.1)}"
+  let ours_inv_den = "Matrix(\{inv_den.0.to_string()})||\{fe_to_string(inv_den.1)}"
+  let ours_solve_den = "Matrix(\{solve_den.0.to_string()})||\{fe_to_string(solve_den.1)}"
+
+  let oracle_adjugate = @sympy_polys.domainmatrix_adjugate([[1, 2], [3, 4]], "ZZ")
+  let oracle_adj_det = @sympy_polys.domainmatrix_adj_det([[1, 2], [3, 4]], "ZZ")
+  let oracle_inv_den = @sympy_polys.domainmatrix_inv_den([[1, 2], [3, 4]], "ZZ")
+  let oracle_solve_den = @sympy_polys.domainmatrix_solve_den(
+    [[1, 2], [3, 4]],
+    [[5], [6]],
+    "ZZ",
+  )
+
+  guard mx_trim(ours_adjugate) == mx_trim(oracle_adjugate) else {
+    fail("ddm adjugate mismatch: ours=\{ours_adjugate}, oracle=\{oracle_adjugate}")
+  }
+  guard mx_trim(ours_adj_det) == mx_trim(oracle_adj_det) else {
+    fail("ddm adj_det mismatch: ours=\{ours_adj_det}, oracle=\{oracle_adj_det}")
+  }
+  guard mx_trim(ours_inv_den) == mx_trim(oracle_inv_den) else {
+    fail("ddm inv_den mismatch: ours=\{ours_inv_den}, oracle=\{oracle_inv_den}")
+  }
+  guard mx_trim(ours_solve_den) == mx_trim(oracle_solve_den) else {
+    fail("ddm solve_den mismatch: ours=\{ours_solve_den}, oracle=\{oracle_solve_den}")
   }
 }
 

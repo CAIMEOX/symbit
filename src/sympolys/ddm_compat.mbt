@@ -95,6 +95,54 @@ pub fn DDM::rank(self : DDM) -> Int raise PolyError {
 }
 
 ///|
+pub fn DDM::clear_denoms(
+  self : DDM,
+  convert? : Bool = false,
+) -> (DomainScalar, DDM) raise PolyError {
+  let (den, num) = self.dm.clear_denoms(convert~)
+  (den, DDM::{ dm: num })
+}
+
+///|
+pub fn DDM::clear_denoms_rowwise(
+  self : DDM,
+  convert? : Bool = false,
+) -> (DDM, DDM) raise PolyError {
+  let (den, num) = self.dm.clear_denoms_rowwise(convert~)
+  (DDM::{ dm: den }, DDM::{ dm: num })
+}
+
+///|
+pub fn DDM::adj_det(self : DDM) -> (DDM, FieldElem) raise PolyError {
+  let (adj, det) = self.dm.adj_det()
+  (DDM::{ dm: adj }, det)
+}
+
+///|
+pub fn DDM::adjugate(self : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.adjugate() }
+}
+
+///|
+pub fn DDM::inv_den(
+  self : DDM,
+  solve_method? : String = "",
+) -> (DDM, FieldElem) raise PolyError {
+  let (num, den) = self.dm.inv_den(solve_method=solve_method)
+  (DDM::{ dm: num }, den)
+}
+
+///|
+pub fn DDM::solve_den(
+  self : DDM,
+  rhs : DDM,
+  solve_method? : String = "",
+) -> (DDM, FieldElem) raise PolyError {
+  let (num, den) = self.dm.solve_den(rhs.dm, solve_method=solve_method)
+  (DDM::{ dm: num }, den)
+}
+
+///|
 pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let (m, n) = self.shape()
   if m != n {
