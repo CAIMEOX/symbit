@@ -70,6 +70,24 @@ fn dm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
 }
 
 ///|
+fn dm_to_int_rows(dm : DomainMatrix) -> Array[Array[Int]] raise PolyError {
+  let rows = dm.to_dense()
+  let out : Array[Array[Int]] = Array::new()
+  for row in rows {
+    let out_row : Array[Int] = Array::new()
+    for value in row {
+      let q = fe_expect_rational(value)
+      if !q.denominator().equal_int(1) {
+        raise PolyError::DomainMismatch
+      }
+      out_row.push(q.numerator().to_int())
+    }
+    out.push(out_row)
+  }
+  out
+}
+
+///|
 test "domainmatrix: add/mul parity over QQ" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = domain_matrix_from_ints([[5, 6], [7, 8]], Domain::QQ)
@@ -350,6 +368,24 @@ test "domainmatrix: structural helper parity" {
     fail(
       "domainmatrix charpoly_factor_blocks mismatch: ours=\{ours_blocks}, oracle=\{oracle_blocks}",
     )
+  }
+
+  let lattice_rows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+  let lattice = domain_matrix_from_ints(lattice_rows, Domain::ZZ)
+  let reduced = lattice.lll()
+  let hnf_orig = @sympy_polys.matrix_hnf_code(lattice_rows)
+  let hnf_reduced = @sympy_polys.matrix_hnf_code(try! dm_to_int_rows(reduced))
+  guard hnf_orig == hnf_reduced else {
+    fail("domainmatrix lll lattice mismatch")
+  }
+  let lll_transform = lattice.lll_transform()
+  let recomposed = lll_transform.1.matmul(lattice).to_matrix_string()
+  guard dm_trim(recomposed) == dm_trim(lll_transform.0.to_matrix_string()) else {
+    fail("domainmatrix lll_transform reconstruction mismatch")
+  }
+  let hnf_transformed = @sympy_polys.matrix_hnf_code(try! dm_to_int_rows(lll_transform.0))
+  guard hnf_orig == hnf_transformed else {
+    fail("domainmatrix lll_transform lattice mismatch")
   }
 }
 

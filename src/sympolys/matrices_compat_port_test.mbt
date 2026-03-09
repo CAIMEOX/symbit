@@ -491,6 +491,9 @@ test "matrices: DDM and SDM structural wrappers" {
   guard ddm.scc().to_string() == "[[0], [1]]" else {
     fail("ddm scc mismatch")
   }
+  guard mx_trim(ddm.to_sdm().to_dense().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("ddm to_sdm roundtrip mismatch")
+  }
 
   let one = try! fe_from_int(1, Domain::QQ)
   let four = try! fe_from_int(4, Domain::QQ)
@@ -526,6 +529,37 @@ test "matrices: DDM and SDM structural wrappers" {
   }
   guard sdm.scc().to_string() == "[[0], [1]]" else {
     fail("sdm scc mismatch")
+  }
+  guard mx_trim(sdm.to_ddm().to_string()) == "[[1,0],[0,4]]" else {
+    fail("sdm to_ddm mismatch")
+  }
+
+  let zz_sparse = sdm_from_entries(
+    3,
+    3,
+    [
+      (0, 0, try! fe_from_int(1, Domain::ZZ)),
+      (1, 1, try! fe_from_int(1, Domain::ZZ)),
+      (2, 2, try! fe_from_int(1, Domain::ZZ)),
+    ],
+    Domain::ZZ,
+  )
+  let sparse_reduced = zz_sparse.lll()
+  let sparse_hnf_orig = @sympy_polys.matrix_hnf_code([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+  let sparse_hnf_reduced = @sympy_polys.matrix_hnf_code(try! ddm_to_int_rows(sparse_reduced.to_dense()))
+  guard sparse_hnf_orig == sparse_hnf_reduced else {
+    fail("sdm lll lattice mismatch")
+  }
+  let sparse_lll_transform = zz_sparse.lll_transform()
+  let sparse_recomposed = sparse_lll_transform.1.to_dense().mul(zz_sparse.to_dense()).to_string()
+  guard mx_trim(sparse_recomposed) == mx_trim(sparse_lll_transform.0.to_dense().to_string()) else {
+    fail("sdm lll_transform reconstruction mismatch")
+  }
+  let sparse_hnf_transformed = @sympy_polys.matrix_hnf_code(
+    try! ddm_to_int_rows(sparse_lll_transform.0.to_dense()),
+  )
+  guard sparse_hnf_orig == sparse_hnf_transformed else {
+    fail("sdm lll_transform lattice mismatch")
   }
 }
 

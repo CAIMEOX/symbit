@@ -46,6 +46,11 @@ pub fn SDM::to_dense(self : SDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn SDM::to_ddm(self : SDM) -> DDM raise PolyError {
+  self.to_dense()
+}
+
+///|
 pub fn SDM::to_list(self : SDM) -> Array[Array[FieldElem]] raise PolyError {
   self.dm.to_list()
 }
@@ -264,6 +269,30 @@ pub fn SDM::particular(
 ///|
 pub fn SDM::scc(self : SDM) -> Array[Array[Int]] raise PolyError {
   self.dm.scc()
+}
+
+///|
+pub fn SDM::lll(self : SDM, delta? : @symnum.BigRational) -> SDM raise PolyError {
+  let reduced = match delta {
+    Some(d) => self.to_dense().lll(delta=d)
+    None => self.to_dense().lll()
+  }
+  SDM::{ dm: reduced.to_domain_matrix().to_sparse() }
+}
+
+///|
+pub fn SDM::lll_transform(
+  self : SDM,
+  delta? : @symnum.BigRational,
+) -> (SDM, SDM) raise PolyError {
+  let (reduced, transform) = match delta {
+    Some(d) => self.to_dense().lll_transform(delta=d)
+    None => self.to_dense().lll_transform()
+  }
+  (
+    SDM::{ dm: reduced.to_domain_matrix().to_sparse() },
+    SDM::{ dm: transform.to_domain_matrix().to_sparse() },
+  )
 }
 
 ///|

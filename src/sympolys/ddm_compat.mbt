@@ -68,6 +68,11 @@ pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
 }
 
 ///|
+pub fn DDM::to_sdm(self : DDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.to_sparse() }
+}
+
+///|
 pub fn DDM::transpose(self : DDM) -> DDM raise PolyError {
   DDM::{ dm: self.dm.transpose() }
 }

@@ -839,6 +839,16 @@ pub fn DomainMatrix::flat(self : DomainMatrix) -> Array[FieldElem] raise PolyErr
 }
 
 ///|
+pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
+  DDM::{ dm: self.copy() }
+}
+
+///|
+pub fn DomainMatrix::to_sdm(self : DomainMatrix) -> SDM raise PolyError {
+  SDM::{ dm: self.to_sparse() }
+}
+
+///|
 pub fn DomainMatrix::content(self : DomainMatrix) -> FieldElem raise PolyError {
   field_elems_content(self.iter_values(), self.domain)
 }
@@ -2116,6 +2126,33 @@ pub fn DomainMatrix::charpoly_factor_blocks(
     factors.push((self.extract(indices, indices).charpoly_base(), 1))
   }
   collect_charpoly_factors(factors)
+}
+
+///|
+pub fn DomainMatrix::lll(
+  self : DomainMatrix,
+  delta? : @symnum.BigRational,
+) -> DomainMatrix raise PolyError {
+  let reduced = match delta {
+    Some(d) => self.to_ddm().lll(delta=d)
+    None => self.to_ddm().lll()
+  }
+  restore_rep_like(reduced.to_domain_matrix(), self)
+}
+
+///|
+pub fn DomainMatrix::lll_transform(
+  self : DomainMatrix,
+  delta? : @symnum.BigRational,
+) -> (DomainMatrix, DomainMatrix) raise PolyError {
+  let (reduced, transform) = match delta {
+    Some(d) => self.to_ddm().lll_transform(delta=d)
+    None => self.to_ddm().lll_transform()
+  }
+  (
+    restore_rep_like(reduced.to_domain_matrix(), self),
+    restore_rep_like(transform.to_domain_matrix(), self),
+  )
 }
 
 ///|
