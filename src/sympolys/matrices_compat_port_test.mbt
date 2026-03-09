@@ -704,6 +704,87 @@ test "matrices: DDM and SDM structural wrappers" {
 }
 
 ///|
+test "matrices: DDM and SDM constructor/accessor helpers" {
+  let rows = [
+    [
+      try! fe_from_int(1, Domain::ZZ),
+      try! fe_from_int(2, Domain::ZZ),
+      try! fe_from_int(3, Domain::ZZ),
+    ],
+    [
+      try! fe_from_int(4, Domain::ZZ),
+      try! fe_from_int(5, Domain::ZZ),
+      try! fe_from_int(6, Domain::ZZ),
+    ],
+    [
+      try! fe_from_int(7, Domain::ZZ),
+      try! fe_from_int(8, Domain::ZZ),
+      try! fe_from_int(9, Domain::ZZ),
+    ],
+  ]
+  let ddm = DDM::from_list(rows, (3, 3), Domain::ZZ)
+  guard fe_to_string(ddm.getitem(1, -2)) == "5" else {
+    fail("ddm getitem mismatch")
+  }
+  let ddm_set = ddm.setitem(-1, -1, try! fe_from_int(10, Domain::ZZ))
+  guard ddm_set.to_domain_matrix().getitem(-1, -1).to_string() == "10" else {
+    fail("ddm setitem mismatch")
+  }
+  let ddm_slice = ddm.extract_slice(
+    row_start=Some(1),
+    row_stop=Some(3),
+    col_stop=Some(-2),
+  )
+  guard ddm_slice.to_domain_matrix().to_matrix_string() == "Matrix([[4], [7]])" else {
+    fail(
+      "ddm extract_slice mismatch: \{ddm_slice.to_domain_matrix().to_matrix_string()}",
+    )
+  }
+  let ddm_flat = Array::from_iter(ddm.flatiter()).map(fe_to_string).join(",")
+  guard ddm_flat == "1,2,3,4,5,6,7,8,9" else {
+    fail("ddm flatiter mismatch: \{ddm_flat}")
+  }
+  let ddm_copy = DDM::from_ddm(ddm)
+  guard ddm_copy.to_string() == ddm.to_string() else {
+    fail("ddm from_ddm mismatch")
+  }
+
+  let dod : DomainMatrixDOD = Map::new()
+  let row0 : Map[Int, FieldElem] = Map::new()
+  row0[1] = try! fe_from_int(1, Domain::ZZ)
+  dod[0] = row0
+  let sdm = SDM::new(dod, (2, 2), Domain::ZZ)
+  guard fe_to_string(sdm.getitem(-2, -1)) == "1" else {
+    fail("sdm getitem mismatch")
+  }
+  let sdm_set = sdm.setitem(1, 0, try! fe_from_int(2, Domain::ZZ))
+  guard sdm_set
+    .extract_slice(
+      row_start=Some(1),
+      row_stop=Some(2),
+      col_start=Some(0),
+      col_stop=Some(1),
+    )
+    .to_dense()
+    .to_domain_matrix()
+    .to_matrix_string() == "Matrix([[2]])" else {
+    fail("sdm extract_slice/setitem mismatch")
+  }
+  let sdm_from_list = SDM::from_list(
+    [
+      [try! fe_from_int(1, Domain::ZZ), try! fe_from_int(0, Domain::ZZ)],
+      [try! fe_from_int(0, Domain::ZZ), try! fe_from_int(1, Domain::ZZ)],
+    ],
+    (2, 2),
+    Domain::ZZ,
+  )
+  guard mx_trim(sdm_from_list.to_dense().to_domain_matrix().to_matrix_string()) ==
+    mx_trim("Matrix([[1, 0], [0, 1]])") else {
+    fail("sdm from_list mismatch")
+  }
+}
+
+///|
 test "matrices: DomainScalar coercion and arithmetic" {
   let a = domain_scalar_from_int(2, Domain::ZZ)
   let b = domain_scalar_from_int(1, Domain::QQ)

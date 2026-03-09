@@ -90,6 +90,78 @@ fn all_indices(start : Int, stop : Int) -> Array[Int] {
   out
 }
 
+fn normalize_matrix_index(index : Int, size : Int) -> Int raise PolyError {
+  let normalized = if index < 0 { size + index } else { index }
+  if normalized < 0 || normalized >= size {
+    raise PolyError::DomainMismatch
+  }
+  normalized
+}
+
+fn normalize_slice_bound_positive(bound : Int, size : Int) -> Int {
+  let shifted = if bound < 0 { size + bound } else { bound }
+  if shifted < 0 {
+    return 0
+  }
+  if shifted > size {
+    return size
+  }
+  shifted
+}
+
+fn normalize_slice_bound_negative(bound : Int, size : Int) -> Int {
+  let shifted = if bound < 0 { size + bound } else { bound }
+  if shifted < -1 {
+    return -1
+  }
+  if shifted >= size {
+    return size - 1
+  }
+  shifted
+}
+
+fn slice_index_range(
+  size : Int,
+  start? : Int? = None,
+  stop? : Int? = None,
+  step? : Int = 1,
+) -> Array[Int] raise PolyError {
+  if step == 0 {
+    raise PolyError::DomainMismatch
+  }
+  let out : Array[Int] = Array::new()
+  if step > 0 {
+    let start_idx = match start {
+      Some(v) => normalize_slice_bound_positive(v, size)
+      None => 0
+    }
+    let stop_idx = match stop {
+      Some(v) => normalize_slice_bound_positive(v, size)
+      None => size
+    }
+    let mut i = start_idx
+    while i < stop_idx {
+      out.push(i)
+      i += step
+    }
+  } else {
+    let start_idx = match start {
+      Some(v) => normalize_slice_bound_negative(v, size)
+      None => size - 1
+    }
+    let stop_idx = match stop {
+      Some(v) => normalize_slice_bound_negative(v, size)
+      None => -1
+    }
+    let mut i = start_idx
+    while i > stop_idx {
+      out.push(i)
+      i += step
+    }
+  }
+  out
+}
+
 fn restore_rep_like(
   dm : DomainMatrix,
   like : DomainMatrix,
@@ -421,6 +493,14 @@ pub fn domain_matrix_from_ints(
 }
 
 ///|
+pub fn DomainMatrix::from_list(
+  rows : Array[Array[FieldElem]],
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  domain_matrix_from_dense(rows, domain)
+}
+
+///|
 /// Build a dense domain matrix from a flat row-major list of entries.
 pub fn DomainMatrix::from_list_flat(
   elements : Array[FieldElem],
@@ -680,6 +760,28 @@ pub fn DomainMatrix::unify(
 }
 
 ///|
+pub fn DomainMatrix::unify_eq(self : DomainMatrix, other : DomainMatrix) -> Bool raise PolyError {
+  if self.shape() != other.shape() {
+    return false
+  }
+  let (a, b) = if self.domain == other.domain {
+    (self, other)
+  } else {
+    self.unify(other)
+  }
+  let left = a.to_dense()
+  let right = b.to_dense()
+  for i in 0..<a.rows {
+    for j in 0..<a.cols {
+      if !fe_is_zero(fe_sub(left[i][j], right[i][j])) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
 pub fn DomainMatrix::clear_denoms(
   self : DomainMatrix,
   convert? : Bool = false,
@@ -850,19 +952,57 @@ pub fn DomainMatrix::extract(
   let dense = self.to_dense()
   let out : Array[Array[FieldElem]] = Array::new()
   for r in row_ids {
-    if r < 0 || r >= self.rows {
-      raise PolyError::DomainMismatch
-    }
+    let row_idx = normalize_matrix_index(r, self.rows)
     let row : Array[FieldElem] = Array::new()
     for c in col_ids {
-      if c < 0 || c >= self.cols {
-        raise PolyError::DomainMismatch
-      }
-      row.push(dense[r][c])
+      let col_idx = normalize_matrix_index(c, self.cols)
+      row.push(dense[row_idx][col_idx])
     }
     out.push(row)
   }
   domain_matrix_from_dense(out, self.domain)
+}
+
+///|
+pub fn DomainMatrix::extract_slice(
+  self : DomainMatrix,
+  row_start? : Int? = None,
+  row_stop? : Int? = None,
+  row_step? : Int = 1,
+  col_start? : Int? = None,
+  col_stop? : Int? = None,
+  col_step? : Int = 1,
+) -> DomainMatrix raise PolyError {
+  let rows = slice_index_range(self.rows, start=row_start, stop=row_stop, step=row_step)
+  let cols = slice_index_range(self.cols, start=col_start, stop=col_stop, step=col_step)
+  self.extract(rows, cols)
+}
+
+///|
+pub fn DomainMatrix::getitem(
+  self : DomainMatrix,
+  row : Int,
+  col : Int,
+) -> DomainScalar raise PolyError {
+  let dense = self.to_dense()
+  let row_idx = normalize_matrix_index(row, self.rows)
+  let col_idx = normalize_matrix_index(col, self.cols)
+  domain_scalar_new(dense[row_idx][col_idx], self.domain)
+}
+
+///|
+pub fn DomainMatrix::setitem(
+  self : DomainMatrix,
+  row : Int,
+  col : Int,
+  value : FieldElem,
+) -> DomainMatrix raise PolyError {
+  let _ = fe_add(value, fe_from_int(0, self.domain))
+  let row_idx = normalize_matrix_index(row, self.rows)
+  let col_idx = normalize_matrix_index(col, self.cols)
+  let dense = clone_dense_rows(self.to_dense())
+  dense[row_idx].set(col_idx, value)
+  restore_rep_like(domain_matrix_from_dense(dense, self.domain), self)
 }
 
 ///|

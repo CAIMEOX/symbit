@@ -18,6 +18,29 @@ pub fn ddm_from_ints(rows : Array[Array[Int]], domain : Domain) -> DDM raise Pol
 }
 
 ///|
+pub fn DDM::from_list(
+  rows : Array[Array[FieldElem]],
+  shape : (Int, Int),
+  domain : Domain,
+) -> DDM raise PolyError {
+  let (nrows, ncols) = shape
+  if rows.length() != nrows {
+    raise PolyError::DomainMismatch
+  }
+  for row in rows {
+    if row.length() != ncols {
+      raise PolyError::DomainMismatch
+    }
+  }
+  DDM::{ dm: DomainMatrix::from_list(rows, domain) }
+}
+
+///|
+pub fn DDM::from_ddm(other : DDM) -> DDM raise PolyError {
+  other.copy()
+}
+
+///|
 pub fn DDM::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),
@@ -107,6 +130,11 @@ pub fn DDM::flat(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+pub fn DDM::flatiter(self : DDM) -> Iter[FieldElem] raise PolyError {
+  self.flat().iter()
+}
+
+///|
 pub fn DDM::to_flat_nz(
   self : DDM,
 ) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
@@ -157,6 +185,43 @@ pub fn DDM::applyfunc(
 ///|
 pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
   self.dm
+}
+
+///|
+pub fn DDM::getitem(self : DDM, row : Int, col : Int) -> FieldElem raise PolyError {
+  self.dm.getitem(row, col).element
+}
+
+///|
+pub fn DDM::setitem(
+  self : DDM,
+  row : Int,
+  col : Int,
+  value : FieldElem,
+) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.setitem(row, col, value) }
+}
+
+///|
+pub fn DDM::extract_slice(
+  self : DDM,
+  row_start? : Int? = None,
+  row_stop? : Int? = None,
+  row_step? : Int = 1,
+  col_start? : Int? = None,
+  col_stop? : Int? = None,
+  col_step? : Int = 1,
+) -> DDM raise PolyError {
+  DDM::{
+    dm: self.dm.extract_slice(
+      row_start=row_start,
+      row_stop=row_stop,
+      row_step=row_step,
+      col_start=col_start,
+      col_stop=col_stop,
+      col_step=col_step,
+    ),
+  }
 }
 
 ///|

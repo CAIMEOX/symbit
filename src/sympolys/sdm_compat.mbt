@@ -20,6 +20,33 @@ pub fn sdm_from_dense(rows : Array[Array[FieldElem]], domain : Domain) -> SDM ra
 }
 
 ///|
+pub fn SDM::new(
+  dod : DomainMatrixDOD,
+  shape : (Int, Int),
+  domain : Domain,
+) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::from_list(
+  rows : Array[Array[FieldElem]],
+  shape : (Int, Int),
+  domain : Domain,
+) -> SDM raise PolyError {
+  let (nrows, ncols) = shape
+  if rows.length() != nrows {
+    raise PolyError::DomainMismatch
+  }
+  for row in rows {
+    if row.length() != ncols {
+      raise PolyError::DomainMismatch
+    }
+  }
+  SDM::{ dm: DomainMatrix::from_list(rows, domain).to_sparse() }
+}
+
+///|
 pub fn SDM::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),
@@ -172,6 +199,43 @@ pub fn SDM::to_sparse_entries(self : SDM) -> Array[(Int, Int, FieldElem)] raise 
     }
   }
   entries
+}
+
+///|
+pub fn SDM::getitem(self : SDM, row : Int, col : Int) -> FieldElem raise PolyError {
+  self.dm.getitem(row, col).element
+}
+
+///|
+pub fn SDM::setitem(
+  self : SDM,
+  row : Int,
+  col : Int,
+  value : FieldElem,
+) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.setitem(row, col, value).to_sparse() }
+}
+
+///|
+pub fn SDM::extract_slice(
+  self : SDM,
+  row_start? : Int? = None,
+  row_stop? : Int? = None,
+  row_step? : Int = 1,
+  col_start? : Int? = None,
+  col_stop? : Int? = None,
+  col_step? : Int = 1,
+) -> SDM raise PolyError {
+  SDM::{
+    dm: self.dm.extract_slice(
+      row_start=row_start,
+      row_stop=row_stop,
+      row_step=row_step,
+      col_start=col_start,
+      col_stop=col_stop,
+      col_step=col_step,
+    ).to_sparse(),
+  }
 }
 
 ///|

@@ -551,6 +551,59 @@ test "domainmatrix: structural helper parity" {
 }
 
 ///|
+test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
+  let rows = [
+    [
+      try! fe_from_int(1, Domain::ZZ),
+      try! fe_from_int(2, Domain::ZZ),
+      try! fe_from_int(3, Domain::ZZ),
+    ],
+    [
+      try! fe_from_int(4, Domain::ZZ),
+      try! fe_from_int(5, Domain::ZZ),
+      try! fe_from_int(6, Domain::ZZ),
+    ],
+    [
+      try! fe_from_int(7, Domain::ZZ),
+      try! fe_from_int(8, Domain::ZZ),
+      try! fe_from_int(9, Domain::ZZ),
+    ],
+  ]
+  let a = DomainMatrix::from_list(rows, Domain::ZZ)
+  guard a.getitem(1, -2).to_string() == "5" else {
+    fail("domainmatrix getitem mismatch")
+  }
+  guard a.extract([-1], [0]).to_matrix_string() == "Matrix([[7]])" else {
+    fail("domainmatrix extract should accept negative indices")
+  }
+  let slice = a.extract_slice(
+    row_start=Some(1),
+    row_stop=Some(3),
+    col_stop=Some(-2),
+  )
+  guard slice.to_matrix_string() == "Matrix([[4], [7]])" else {
+    fail("domainmatrix extract_slice mismatch: \{slice.to_matrix_string()}")
+  }
+  let reversed = a.extract_slice(row_step=-1)
+  guard reversed.to_matrix_string() == "Matrix([[7, 8, 9], [4, 5, 6], [1, 2, 3]])" else {
+    fail("domainmatrix reverse slice mismatch: \{reversed.to_matrix_string()}")
+  }
+  let updated = a.setitem(-1, -1, try! fe_from_int(10, Domain::ZZ))
+  guard updated.getitem(-1, -1).to_string() == "10" else {
+    fail("domainmatrix setitem mismatch")
+  }
+  guard a.getitem(-1, -1).to_string() == "9" else {
+    fail("domainmatrix setitem should not mutate the source matrix")
+  }
+  guard a.unify_eq(a.convert_to(Domain::QQ)) else {
+    fail("domainmatrix unify_eq should compare after coercion")
+  }
+  guard !a.unify_eq(domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)) else {
+    fail("domainmatrix unify_eq should reject shape mismatch")
+  }
+}
+
+///|
 test "domainmatrix: content primitive cancel and charpoly-solve parity" {
   let qq_rows = [["1/2", "3/4"]]
   let qq = domain_matrix_from_dense([[dm_rat(1, 2), dm_rat(3, 4)]], Domain::QQ)
