@@ -1245,6 +1245,238 @@ pub fn domain_drop(
 }
 
 ///|
+fn expr_key(expr : @symcore.Expr) -> String {
+  @symprint.to_string(expr).replace_all(old=" ", new="")
+}
+
+///|
+fn normalized_gen_keys(gens : Array[String]) -> Array[String] {
+  gens.map(g => g.replace_all(old=" ", new=""))
+}
+
+///|
+fn gen_symbol_name(gen : String) -> String? {
+  let text = gen.trim().to_string()
+  if text == "" {
+    return None
+  }
+  if !text.contains("/") {
+    if text.contains("(") || text.contains("[") || text.contains("<") {
+      return None
+    }
+    return Some(text)
+  }
+  if text.has_prefix("1/") {
+    let rest = (try! text[2:text.length()]).to_string().trim().to_string()
+    if rest != "" && !rest.contains("/") && !rest.contains("(") && !rest.contains("[") &&
+      !rest.contains("<") {
+      return Some(rest)
+    }
+  }
+  None
+}
+
+///|
+fn generator_symbol_names(gens : Array[String]) -> Array[String] {
+  let names : Array[String] = Array::new()
+  for gen in gens {
+    match gen_symbol_name(gen) {
+      Some(name) if !names.contains(name) => names.push(name)
+      _ => ()
+    }
+  }
+  names
+}
+
+///|
+fn expr_is_integer(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Number(n) => n.is_integral()
+    _ => false
+  }
+}
+
+///|
+fn expr_is_nonnegative_integer(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Number(n) =>
+      n.is_integral() && n.compare(@symnum.BigRational::zero()) >= 0
+    _ => false
+  }
+}
+
+fn expr_has_forbidden_symbol(expr : @symcore.Expr, allow_i : Bool) -> Bool {
+  match expr {
+    @symcore.Expr::Number(_) => false
+    @symcore.Expr::Symbol(name) => if allow_i { name != "I" } else { true }
+    @symcore.Expr::Add(args)
+    | @symcore.Expr::Mul(args)
+    | @symcore.Expr::Function(_, args) => args.any(item =>
+      expr_has_forbidden_symbol(item, allow_i)
+    )
+    @symcore.Expr::Pow(base, exp) =>
+      expr_has_forbidden_symbol(base, allow_i) || expr_has_forbidden_symbol(exp, allow_i)
+  }
+}
+
+///|
+fn expr_is_imaginary_unit(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Symbol(name) => name == "I"
+    _ => false
+  }
+}
+
+///|
+fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
+  if expr_is_imaginary_unit(expr) {
+    return true
+  }
+  if domain_contains_expr(coeff_dom, expr) {
+    return true
+  }
+  match expr {
+    @symcore.Expr::Mul(args) => {
+      let mut imag_count = 0
+      let coeffs : Array[@symcore.Expr] = Array::new()
+      for arg in args {
+        if expr_is_imaginary_unit(arg) {
+          imag_count += 1
+        } else {
+          coeffs.push(arg)
+        }
+      }
+      imag_count == 1 && domain_contains_expr(
+        coeff_dom,
+        if coeffs.is_empty() { @symcore.int(1) } else { @symcore.mul(coeffs) },
+      )
+    }
+    _ => false
+  }
+}
+
+///|
+fn expr_in_algext(
+  base : Domain,
+  gens : Array[String],
+  rels : Array[@symcore.Expr],
+  expr : @symcore.Expr,
+) -> Bool {
+  if domain_contains_expr(base, expr) {
+    return true
+  }
+  let allowed = normalized_gen_keys(gens)
+  let rel_keys = rels.map(expr_key)
+  let all_allowed = allowed.copy()
+  for key in rel_keys {
+    if !all_allowed.contains(key) {
+      all_allowed.push(key)
+    }
+  }
+  match expr {
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => args.all(item =>
+      expr_in_algext(base, gens, rels, item)
+    )
+    @symcore.Expr::Pow(inner, exp) =>
+      expr_is_integer(exp) && expr_in_algext(base, gens, rels, inner)
+    _ => all_allowed.contains(expr_key(expr))
+  }
+}
+
+///|
+fn expr_in_polynomial_domain(
+  base : Domain,
+  gens : Array[String],
+  expr : @symcore.Expr,
+) -> Bool {
+  if domain_contains_expr(base, expr) {
+    return true
+  }
+  let symbols = generator_symbol_names(gens)
+  match expr {
+    @symcore.Expr::Number(_) => domain_contains_expr(base, expr)
+    @symcore.Expr::Symbol(name) => symbols.contains(name)
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.all(item => expr_in_polynomial_domain(base, gens, item))
+    @symcore.Expr::Pow(inner, exp) =>
+      expr_is_nonnegative_integer(exp) && expr_in_polynomial_domain(base, gens, inner)
+    @symcore.Expr::Function(_, _) => false
+  }
+}
+
+///|
+fn expr_in_fraction_domain(
+  base : Domain,
+  gens : Array[String],
+  expr : @symcore.Expr,
+) -> Bool {
+  if domain_contains_expr(base, expr) {
+    return true
+  }
+  let symbols = generator_symbol_names(gens)
+  match expr {
+    @symcore.Expr::Number(_) => domain_contains_expr(base, expr)
+    @symcore.Expr::Symbol(name) => symbols.contains(name)
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.all(item => expr_in_fraction_domain(base, gens, item))
+    @symcore.Expr::Pow(inner, exp) =>
+      expr_is_integer(exp) && expr_in_fraction_domain(base, gens, inner)
+    @symcore.Expr::Function(_, _) => false
+  }
+}
+
+///|
+/// Check whether an expression belongs to the given domain.
+pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  match domain {
+    Domain::EX | Domain::EXRAW => true
+    Domain::ZZ => {
+      match expr {
+        @symcore.Expr::Number(n) => n.is_integral()
+        _ => false
+      }
+    }
+    Domain::QQ => expr is @symcore.Expr::Number(_)
+    Domain::RR => !expr_has_forbidden_symbol(expr, false)
+    Domain::CC => !expr_has_forbidden_symbol(expr, true)
+    Domain::ZZ_I => {
+      match expr {
+        @symcore.Expr::Add(args) => args.all(item => gaussian_term_in_domain(item, Domain::ZZ))
+        _ => gaussian_term_in_domain(expr, Domain::ZZ)
+      }
+    }
+    Domain::QQ_I => {
+      match expr {
+        @symcore.Expr::Add(args) => args.all(item => gaussian_term_in_domain(item, Domain::QQ))
+        _ => gaussian_term_in_domain(expr, Domain::QQ)
+      }
+    }
+    Domain::GF(_) | Domain::GFExt(_, _, _) => {
+      match expr {
+        @symcore.Expr::Number(n) => n.is_integral()
+        _ => false
+      }
+    }
+    Domain::AlgExt(base, gens, rels) => expr_in_algext(base, gens, rels, expr)
+    Domain::PolyRing(base, gens)
+    | Domain::QuotientRing(base, gens, _)
+    | Domain::PowerSeries(base, gens, _) => expr_in_polynomial_domain(base, gens, expr)
+    Domain::RationalFunctionField(base, gens) => expr_in_fraction_domain(base, gens, expr)
+    Domain::Frac(base) =>
+      match base {
+        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+          expr_in_fraction_domain(inner, gens, expr)
+        _ => domain_contains_expr(base, expr)
+      }
+  }
+}
+
+///|
+pub fn Domain::contains_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_contains_expr(self, expr)
+}
+
+///|
 pub fn Domain::characteristic(self : Domain) -> Int {
   domain_characteristic(self)
 }

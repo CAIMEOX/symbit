@@ -763,3 +763,45 @@ test "domains: algebraic_field parity and Domain methods" {
     fail("Domain::unify mismatch")
   }
 }
+
+///|
+test "domains: contains_expr parity for constants polynomials and rational functions" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let sin1 = @symcore.function("sin", [@symcore.int(1)])
+  let inv_x = @symcore.pow(x, @symcore.int(-1))
+
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(3), "3"),
+    ("ZZ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+    ("QQ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+    ("RR", sqrt2, "sqrt(2)"),
+    ("CC", i, "I"),
+    ("QQ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("QQ<sqrt(2)>", @symcore.add([@symcore.int(1), @symcore.int(2) * sqrt2]), "1 + 2*sqrt(2)"),
+    ("QQ<sqrt(2)>", @symcore.function("sqrt", [@symcore.int(3)]), "sqrt(3)"),
+    ("ZZ[x]", (x ^ @symcore.int(2)) + @symcore.int(1), "x**2 + 1"),
+    ("ZZ[x]", (x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), "x**2 + y**2"),
+    ("QQ(x)", inv_x, "1/x"),
+    ("QQ(1/x,y)", x + y, "x + y"),
+    ("QQ(1/x)", (try! @symcore.rational_from_ints(2, 3)) * x, "2*x/3"),
+    ("QQ[x]", inv_x, "1/x"),
+    ("QQ[x][y]", x + y, "x + y"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = domain_from_string(spec).contains_expr(expr)
+    let oracle = @sympy_polys.domain_contains_expr(spec, expr_text)
+    guard ours == oracle else {
+      fail("contains_expr mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  guard domain_from_string("RR").contains_expr(sin1) else {
+    fail("contains_expr RR constant function mismatch")
+  }
+}

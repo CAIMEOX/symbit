@@ -377,7 +377,7 @@ pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
 pub fn domain_poly_ring(spec : String, gens : Array[String]) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let call = resolve_method_callable(domain_obj, "poly_ring")
-  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+  match py_call_object(call, py_tuple_from_objects(sympy_exprs_from_texts(gens)), print_err=false) {
     Some(res) => py_str_enum(res)
     None => "ERROR"
   }
@@ -387,7 +387,7 @@ pub fn domain_poly_ring(spec : String, gens : Array[String]) -> String raise {
 pub fn domain_frac_field(spec : String, gens : Array[String]) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let call = resolve_method_callable(domain_obj, "frac_field")
-  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+  match py_call_object(call, py_tuple_from_objects(sympy_exprs_from_texts(gens)), print_err=false) {
     Some(res) => py_str_enum(res)
     None => "ERROR"
   }
@@ -397,7 +397,7 @@ pub fn domain_frac_field(spec : String, gens : Array[String]) -> String raise {
 pub fn domain_old_poly_ring(spec : String, gens : Array[String]) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let call = resolve_method_callable(domain_obj, "old_poly_ring")
-  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+  match py_call_object(call, py_tuple_from_objects(sympy_exprs_from_texts(gens)), print_err=false) {
     Some(res) => py_str_enum(res)
     None => "ERROR"
   }
@@ -407,7 +407,7 @@ pub fn domain_old_poly_ring(spec : String, gens : Array[String]) -> String raise
 pub fn domain_old_frac_field(spec : String, gens : Array[String]) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let call = resolve_method_callable(domain_obj, "old_frac_field")
-  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+  match py_call_object(call, py_tuple_from_objects(sympy_exprs_from_texts(gens)), print_err=false) {
     Some(res) => py_str_enum(res)
     None => "ERROR"
   }
@@ -474,6 +474,17 @@ pub fn domain_drop(spec : String, gens : Array[String]) -> String raise {
   match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
     Some(res) => py_str_enum(res)
     None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_contains_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let contains = resolve_method_callable(domain_obj, "__contains__")
+  match py_call_object(contains, py_tuple_from_objects([expr_obj]), print_err=false) {
+    Some(res) => py_str_enum(res).trim().to_string() == "True"
+    None => false
   }
 }
 
@@ -2195,7 +2206,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     let base = (try! text[:left]).to_string()
     let gens = (try! text[left + 1:text.length() - 1]).to_string()
     let base_obj = oracle_domain_from_spec(base)
-    let symbols = sympy_symbols_from_names(split_names(gens))
+    let symbols = sympy_exprs_from_texts(split_names(gens))
     let ring_method = resolve_method_callable(base_obj, "poly_ring")
     let ring = py_call_with_args(ring_method, symbols, py_dict_new())
     return objenum_to_obj(ring)
@@ -2208,7 +2219,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     let base = (try! text[:left]).to_string()
     let gens = (try! text[left + 1:text.length() - 1]).to_string()
     let base_obj = oracle_domain_from_spec(base)
-    let symbols = sympy_symbols_from_names(split_names(gens))
+    let symbols = sympy_exprs_from_texts(split_names(gens))
     let frac_method = resolve_method_callable(base_obj, "frac_field")
     let field = py_call_with_args(frac_method, symbols, py_dict_new())
     return objenum_to_obj(field)
@@ -2305,6 +2316,15 @@ fn parse_gf_descriptor_oracle(raw : String, spec : String) -> (Int, Int?) raise 
     _ => fail("domain-spec-gf:\{spec}")
   }
   (p, None)
+}
+
+///|
+fn sympy_exprs_from_texts(items : Array[String]) -> Array[@py.PyObject] raise {
+  let exprs : Array[@py.PyObject] = Array::new()
+  for item in items {
+    exprs.push(sympy_sympify_str(item))
+  }
+  exprs
 }
 
 ///|
