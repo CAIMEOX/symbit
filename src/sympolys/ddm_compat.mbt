@@ -115,6 +115,17 @@ pub fn DDM::copy(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn DDM::_check(
+  self : DDM,
+  op : String,
+  other : DDM,
+  ashape : (Int, Int),
+  bshape : (Int, Int),
+) -> Unit raise PolyError {
+  self.dm._check(op, other.dm, ashape, bshape, require_format=false)
+}
+
+///|
 pub fn DDM::domain(self : DDM) -> Domain {
   self.dm.domain
 }
@@ -445,6 +456,12 @@ pub fn DDM::lu_solve(self : DDM, rhs : DDM) -> DDM raise PolyError {
 pub fn DDM::fflu(self : DDM) -> (DDM, DDM, DDM, DDM) raise PolyError {
   let (p, l, d, u) = self.dm.fflu()
   (DDM::{ dm: p }, DDM::{ dm: l }, DDM::{ dm: d }, DDM::{ dm: u })
+}
+
+///|
+pub fn DDM::_fflu(self : DDM) -> (DDM, Array[Int]) raise PolyError {
+  let (lu_rows, perm) = dense_fflu_phase1(self.dm.to_dense(), self.dm.domain)
+  (ddm_from_dense(lu_rows, self.dm.domain), perm)
 }
 
 ///|

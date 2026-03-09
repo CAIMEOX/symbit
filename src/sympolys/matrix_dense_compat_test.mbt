@@ -144,3 +144,37 @@ test "matrix dense wrappers: LU, inverse, and berkowitz helpers line up" {
     fail("ddm_berk oracle mismatch")
   }
 }
+
+///|
+test "matrix dense wrappers: internal DDM helpers stay aligned" {
+  let zz = ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let phase1 = zz._fflu()
+  guard md_trim(phase1.0.to_string()) == md_trim("[[1, 2], [3, -2]]") else {
+    fail("ddm _fflu LU mismatch: \{phase1.0.to_string()}")
+  }
+  guard phase1.1 == [0, 1] else {
+    fail("ddm _fflu permutation mismatch: \{phase1.1.to_string()}")
+  }
+
+  let swapped = ddm_from_ints([[0, 1], [2, 3]], Domain::ZZ)._fflu()
+  guard md_trim(swapped.0.to_string()) == md_trim("[[2, 3], [0, 2]]") else {
+    fail("ddm _fflu swapped LU mismatch: \{swapped.0.to_string()}")
+  }
+  guard swapped.1 == [1, 0] else {
+    fail("ddm _fflu swapped permutation mismatch: \{swapped.1.to_string()}")
+  }
+
+  let other_domain = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  guard (try? zz._check("+", other_domain, zz.shape(), other_domain.shape())) is Err(
+    PolyError::DomainMismatch,
+  ) else {
+    fail("ddm _check should reject domain mismatch")
+  }
+
+  let wrong_shape = ddm_from_ints([[1, 2]], Domain::ZZ)
+  guard (try? zz._check("+", wrong_shape, zz.shape(), wrong_shape.shape())) is Err(
+    PolyError::DomainMismatch,
+  ) else {
+    fail("ddm _check should reject shape mismatch")
+  }
+}
