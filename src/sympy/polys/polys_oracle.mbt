@@ -374,6 +374,110 @@ pub fn domain_unify(lhs_spec : String, rhs_spec : String) -> String raise {
 }
 
 ///|
+pub fn domain_poly_ring(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "poly_ring")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_frac_field(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "frac_field")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_old_poly_ring(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "old_poly_ring")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_old_frac_field(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "old_frac_field")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_set_domain(spec : String, ground_spec : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let ground = oracle_domain_from_spec(ground_spec)
+  let call = resolve_method_callable(domain_obj, "set_domain")
+  match py_call_object(call, py_tuple_from_objects([ground]), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_unify_with_symbols(
+  lhs_spec : String,
+  rhs_spec : String,
+  symbols : Array[String],
+) -> String raise {
+  let lhs = oracle_domain_from_spec(lhs_spec)
+  let rhs = oracle_domain_from_spec(rhs_spec)
+  let unify = resolve_method_callable(lhs, "unify_with_symbols")
+  let symbol_tuple = py_tuple_from_objects(sympy_symbols_from_names(symbols))
+  match py_call_object(unify, py_tuple_from_objects([rhs, symbol_tuple.obj()]), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_algebraic_field(
+  spec : String,
+  extension : Array[String],
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "algebraic_field")
+  let args : Array[@py.PyObject] = Array::new()
+  for expr in extension {
+    args.push(sympy_sympify_str(expr))
+  }
+  match py_call_object(call, py_tuple_from_objects(args), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_inject(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "inject")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_drop(spec : String, gens : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "drop")
+  match py_call_object(call, py_tuple_from_objects(sympy_symbols_from_names(gens)), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
 pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
   let expr_obj = sympy_sympify_str(expr)
   let gen_obj = sympy_symbol_obj(gen)
@@ -2067,7 +2171,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     return objenum_to_obj(gf)
   }
   if text.contains("<") && text.has_suffix(">") {
-    let left = match find_char_oracle(text, '<') {
+    let left = match find_matching_open_oracle(text, '<', '>') {
       Some(i) => i
       None => fail("domain-spec-alg")
     }
@@ -2083,8 +2187,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     let ext_domain = py_call_with_args(alg_field, ext_objs, py_dict_new())
     return objenum_to_obj(ext_domain)
   }
-  if text.contains("[") && text.has_suffix("]") {
-    let left = match find_char_oracle(text, '[') {
+  if text.has_suffix("]") && !text.has_suffix("]]") {
+    let left = match find_matching_open_oracle(text, '[', ']') {
       Some(i) => i
       None => fail("domain-spec-poly")
     }
@@ -2097,7 +2201,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     return objenum_to_obj(ring)
   }
   if text.contains("(") && text.has_suffix(")") {
-    let left = match find_char_oracle(text, '(') {
+    let left = match find_matching_open_oracle(text, '(', ')') {
       Some(i) => i
       None => fail("domain-spec-frac")
     }
@@ -2131,6 +2235,32 @@ fn find_char_oracle(text : String, needle : UInt16) -> Int? {
   for i in 0..<text.length() {
     if text[i] == needle {
       return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn find_matching_open_oracle(
+  text : String,
+  open_char : UInt16,
+  close_char : UInt16,
+) -> Int? {
+  if text.is_empty() || text[text.length() - 1] != close_char {
+    return None
+  }
+  let mut depth = 0
+  let mut i = text.length()
+  while i > 0 {
+    i -= 1
+    let ch = text[i]
+    if ch == close_char {
+      depth += 1
+    } else if ch == open_char {
+      depth -= 1
+      if depth == 0 {
+        return Some(i)
+      }
     }
   }
   None

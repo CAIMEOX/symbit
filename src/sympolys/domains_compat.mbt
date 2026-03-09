@@ -25,16 +25,75 @@ fn find_char(s : String, needle : UInt16) -> Int? {
   None
 }
 
+fn find_matching_open_from_end(
+  s : String,
+  open_char : UInt16,
+  close_char : UInt16,
+) -> Int? {
+  if s.is_empty() || s[s.length() - 1] != close_char {
+    return None
+  }
+  let mut depth = 0
+  let mut i = s.length()
+  while i > 0 {
+    i -= 1
+    let ch = s[i]
+    if ch == close_char {
+      depth += 1
+    } else if ch == open_char {
+      depth -= 1
+      if depth == 0 {
+        return Some(i)
+      }
+    }
+  }
+  None
+}
+
 ///|
-fn find_substring_from(s : String, needle : String, start : Int) -> Int? {
+fn find_matching_double_open_from_end(s : String) -> Int? {
+  if s.length() < 4 || (try! s[s.length() - 2:s.length()]).to_string() != "]]" {
+    return None
+  }
+  let mut depth = 0
+  let mut i = s.length() - 2
+  while i >= 0 {
+    if i + 2 <= s.length() && (try! s[i:i + 2]).to_string() == "]]" {
+      depth += 1
+      if i == 0 {
+        break
+      }
+      i -= 1
+      continue
+    }
+    if i + 2 <= s.length() && (try! s[i:i + 2]).to_string() == "[[" {
+      depth -= 1
+      if depth == 0 {
+        return Some(i)
+      }
+      if i == 0 {
+        break
+      }
+      i -= 1
+      continue
+    }
+    if i == 0 {
+      break
+    }
+    i -= 1
+  }
+  None
+}
+
+///|
+fn find_last_substring(s : String, needle : String) -> Int? {
   let n = needle.length()
-  if n == 0 || start < 0 || start >= s.length() {
+  if n == 0 || n > s.length() {
     return None
   }
-  if n > s.length() - start {
-    return None
-  }
-  for i in start..<(s.length() - n + 1) {
+  let mut i = s.length() - n + 1
+  while i > 0 {
+    i -= 1
     if (try! s[i:i + n]).to_string() == needle {
       return Some(i)
     }
@@ -115,11 +174,12 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
     }
   }
   if s.contains("[[") {
-    let left = match find_substring_from(s, "[[", 0) {
+    let right = match find_last_substring(s, "]]") {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let right = match find_substring_from(s, "]]", left + 2) {
+    let ps_head = (try! s[:right + 2]).to_string()
+    let left = match find_matching_double_open_from_end(ps_head) {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
@@ -142,7 +202,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
     raise PolyError::BadGenerator(s)
   }
   if s.contains("<") && s.has_suffix(">") {
-    let left = match find_char(s, '<') {
+    let left = match find_matching_open_from_end(s, '<', '>') {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
@@ -155,8 +215,8 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
     let inner = (try! s[5:s.length() - 1]).to_string()
     return Domain::Frac(domain_from_string(inner))
   }
-  if s.contains("[") && s.has_suffix("]") {
-    let left = match find_char(s, '[') {
+  if s.has_suffix("]") && !s.has_suffix("]]") {
+    let left = match find_matching_open_from_end(s, '[', ']') {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
@@ -166,7 +226,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
     return Domain::PolyRing(base, gens)
   }
   if s.contains("(") && s.has_suffix(")") {
-    let left = match find_char(s, '(') {
+    let left = match find_matching_open_from_end(s, '(', ')') {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
@@ -952,4 +1012,323 @@ fn unify_composite_domains(a : Domain, b : Domain) -> Domain raise PolyError {
       domain_is_poly_ring(b))
   let template = if use_a { a } else { b }
   lift_composite_domain(template, ground, gens)
+}
+
+///|
+/// Construct a polynomial ring over `domain`. Empty generators return `domain`.
+pub fn domain_poly_ring(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  if gens.is_empty() {
+    return domain
+  }
+  match domain {
+    Domain::QuotientRing(_, _, _) => raise PolyError::DomainMismatch
+    _ => poly_ring_domain(domain, gens)
+  }
+}
+
+///|
+/// Construct a fraction field over `domain`. Empty generators return `domain`.
+pub fn domain_frac_field(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  if gens.is_empty() {
+    return domain
+  }
+  match domain {
+    Domain::QuotientRing(_, _, _) => raise PolyError::DomainMismatch
+    _ => rational_function_field_domain(domain, gens)
+  }
+}
+
+///|
+/// Old polynomial ring compatibility alias.
+pub fn domain_old_poly_ring(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_poly_ring(domain, gens)
+}
+
+///|
+/// Old fraction field compatibility alias.
+pub fn domain_old_frac_field(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_frac_field(domain, gens)
+}
+
+///|
+/// Rebase a composite domain onto `ground`.
+pub fn domain_set_domain(domain : Domain, ground : Domain) -> Domain {
+  match domain {
+    Domain::PolyRing(_, gens) => Domain::PolyRing(ground, gens)
+    Domain::RationalFunctionField(_, gens) =>
+      Domain::RationalFunctionField(ground, gens)
+    Domain::QuotientRing(_, gens, rels) => Domain::QuotientRing(ground, gens, rels)
+    Domain::PowerSeries(_, gens, prec) => Domain::PowerSeries(ground, gens, prec)
+    Domain::Frac(_) => Domain::Frac(ground)
+    Domain::AlgExt(_, gens, rels) => Domain::AlgExt(ground, gens, rels)
+    _ => ground
+  }
+}
+
+///|
+/// Unify two domains while reserving `symbols` as external generators.
+pub fn domain_unify_with_symbols(
+  lhs : Domain,
+  rhs : Domain,
+  symbols : Array[String],
+) -> Domain raise PolyError {
+  if domain_is_composite_pred(lhs) && domain_symbols(lhs).any(s => symbols.contains(s)) {
+    raise PolyError::BadGenerator(symbols.join(","))
+  }
+  if domain_is_composite_pred(rhs) && domain_symbols(rhs).any(s => symbols.contains(s)) {
+    raise PolyError::BadGenerator(symbols.join(","))
+  }
+  domain_unify_pair(lhs, rhs)
+}
+
+///|
+fn extension_names(extension : Array[@symcore.Expr]) -> Array[String] {
+  let names : Array[String] = Array::new()
+  for expr in extension {
+    let name = @symprint.to_string(expr)
+    if !names.contains(name) {
+      names.push(name)
+    }
+  }
+  names
+}
+
+///|
+fn append_unique_exprs(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
+  let out = lhs.copy()
+  for expr in rhs {
+    if !out.contains(expr) {
+      out.push(expr)
+    }
+  }
+  out
+}
+
+///|
+/// Construct an algebraic extension over `QQ` or extend an existing one.
+pub fn domain_algebraic_field(
+  domain : Domain,
+  extension : Array[@symcore.Expr],
+) -> Domain raise PolyError {
+  if extension.is_empty() {
+    raise PolyError::BadGenerator("algebraic_field")
+  }
+  let ext_names = extension_names(extension)
+  let merged_ext = [ext_names.join("+")]
+  match domain {
+    Domain::ZZ => domain_algebraic_field(Domain::QQ, extension)
+    Domain::QQ => Domain::AlgExt(Domain::QQ, merged_ext, extension.copy())
+    Domain::AlgExt(base, gens, rels) =>
+      Domain::AlgExt(
+        base,
+        [merge_gens(gens, ext_names).join("+")],
+        append_unique_exprs(rels, extension),
+      )
+    _ => raise PolyError::DomainMismatch
+  }
+}
+
+///|
+/// Inject fresh generators into `domain`.
+pub fn domain_inject(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  if gens.is_empty() {
+    return domain
+  }
+  match domain {
+    Domain::PolyRing(base, existing) => {
+      if existing.any(g => gens.contains(g)) {
+        raise PolyError::BadGenerator(gens.join(","))
+      }
+      Domain::PolyRing(base, merge_gens(existing, gens))
+    }
+    Domain::RationalFunctionField(base, existing) => {
+      if existing.any(g => gens.contains(g)) {
+        raise PolyError::BadGenerator(gens.join(","))
+      }
+      Domain::RationalFunctionField(base, merge_gens(existing, gens))
+    }
+    Domain::PowerSeries(base, existing, prec) => {
+      if existing.any(g => gens.contains(g)) {
+        raise PolyError::BadGenerator(gens.join(","))
+      }
+      Domain::PowerSeries(base, merge_gens(existing, gens), prec)
+    }
+    Domain::QuotientRing(_, _, _) => raise PolyError::DomainMismatch
+    _ => domain_poly_ring(domain, gens)
+  }
+}
+
+///|
+/// Drop generators from a domain, recursively through nested composites.
+pub fn domain_drop(
+  domain : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  if gens.is_empty() {
+    return domain
+  }
+  match domain {
+    Domain::PolyRing(base, symbols) => {
+      let kept = symbols.filter(s => !gens.contains(s))
+      let rebased = domain_drop(base, gens)
+      if kept.is_empty() {
+        rebased
+      } else {
+        Domain::PolyRing(rebased, kept)
+      }
+    }
+    Domain::RationalFunctionField(base, symbols) => {
+      let kept = symbols.filter(s => !gens.contains(s))
+      let rebased = domain_drop(base, gens)
+      if kept.is_empty() {
+        rebased
+      } else {
+        Domain::RationalFunctionField(rebased, kept)
+      }
+    }
+    Domain::PowerSeries(base, symbols, prec) => {
+      let kept = symbols.filter(s => !gens.contains(s))
+      let rebased = domain_drop(base, gens)
+      if kept.is_empty() {
+        rebased
+      } else {
+        Domain::PowerSeries(rebased, kept, prec)
+      }
+    }
+    Domain::QuotientRing(base, symbols, rels) => {
+      let kept = symbols.filter(s => !gens.contains(s))
+      let rebased = domain_drop(base, gens)
+      if kept.is_empty() {
+        rebased
+      } else {
+        Domain::QuotientRing(rebased, kept, rels)
+      }
+    }
+    Domain::Frac(base) => {
+      let rebased = domain_drop(base, gens)
+      match rebased {
+        Domain::PolyRing(_, _) | Domain::RationalFunctionField(_, _) => Domain::Frac(rebased)
+        _ => rebased
+      }
+    }
+    Domain::AlgExt(base, symbols, rels) => {
+      if symbols.any(s => gens.contains(s)) {
+        raise PolyError::BadGenerator(gens.join(","))
+      }
+      let rebased = domain_drop(base, gens)
+      if rebased.equal(base) {
+        domain
+      } else {
+        Domain::AlgExt(rebased, symbols, rels)
+      }
+    }
+    _ => domain
+  }
+}
+
+///|
+pub fn Domain::characteristic(self : Domain) -> Int {
+  domain_characteristic(self)
+}
+
+///|
+pub fn Domain::get_exact(self : Domain) -> Domain {
+  domain_get_exact(self)
+}
+
+///|
+pub fn Domain::get_field(self : Domain) -> Domain raise PolyError {
+  domain_get_field(self)
+}
+
+///|
+pub fn Domain::get_ring(self : Domain) -> Domain raise PolyError {
+  domain_get_ring(self)
+}
+
+///|
+pub fn Domain::unify(self : Domain, other : Domain) -> Domain raise PolyError {
+  domain_unify_pair(self, other)
+}
+
+///|
+pub fn Domain::unify_with_symbols(
+  self : Domain,
+  other : Domain,
+  symbols : Array[String],
+) -> Domain raise PolyError {
+  domain_unify_with_symbols(self, other, symbols)
+}
+
+///|
+pub fn Domain::poly_ring(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_poly_ring(self, gens)
+}
+
+///|
+pub fn Domain::frac_field(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_frac_field(self, gens)
+}
+
+///|
+pub fn Domain::old_poly_ring(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_old_poly_ring(self, gens)
+}
+
+///|
+pub fn Domain::old_frac_field(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
+  domain_old_frac_field(self, gens)
+}
+
+///|
+pub fn Domain::set_domain(self : Domain, ground : Domain) -> Domain {
+  domain_set_domain(self, ground)
+}
+
+///|
+pub fn Domain::algebraic_field(
+  self : Domain,
+  extension : Array[@symcore.Expr],
+) -> Domain raise PolyError {
+  domain_algebraic_field(self, extension)
+}
+
+///|
+pub fn Domain::inject(self : Domain, gens : Array[String]) -> Domain raise PolyError {
+  domain_inject(self, gens)
+}
+
+///|
+pub fn Domain::drop(self : Domain, gens : Array[String]) -> Domain raise PolyError {
+  domain_drop(self, gens)
 }

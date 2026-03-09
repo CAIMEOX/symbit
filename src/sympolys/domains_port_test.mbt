@@ -4,6 +4,14 @@ fn trim_ws(s : String) -> String {
 }
 
 ///|
+fn render_domain_result(result : Result[Domain, PolyError]) -> String {
+  match result {
+    Ok(domain) => domain_to_sympy_string(domain)
+    Err(_) => "ERROR"
+  }
+}
+
+///|
 test "domains: basic constructor/repr parity" {
   let specs = [
     "ZZ",
@@ -548,5 +556,210 @@ test "domains: oracle GF descriptor parser handles extension forms" {
   let ff_flat = @sympy_polys.domain_repr("GF(343)")
   guard trim_ws(ff_pair) == trim_ws(ff_flat) else {
     fail("oracle FF pair descriptor mismatch: \{ff_pair} vs \{ff_flat}")
+  }
+}
+
+///|
+test "domains: nested composite parser handles recursive suffix forms" {
+  let cases = [
+    "ZZ[x][y]",
+    "QQ(x)[y]",
+    "ZZ[x](y)",
+    "QQ(x)(y)",
+  ]
+  for spec in cases {
+    let ours = domain_to_sympy_string(domain_from_string(spec))
+    let oracle = @sympy_polys.domain_repr(spec)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("nested parser mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
+test "domains: method constructor parity for poly/frac old/new rings" {
+  let cases = [
+    ("ZZ", ["x"]),
+    ("QQ", ["x", "y"]),
+    ("ZZ[x]", ["y"]),
+    ("QQ(x)", ["y"]),
+    ("ZZ[x][y]", ["z"]),
+  ]
+  for item in cases {
+    let spec = item.0
+    let gens = item.1
+    let domain = domain_from_string(spec)
+
+    let poly_ours = domain_to_sympy_string(try! domain.poly_ring(gens))
+    let poly_oracle = @sympy_polys.domain_poly_ring(spec, gens)
+    guard trim_ws(poly_ours) == trim_ws(poly_oracle) else {
+      fail("poly_ring mismatch for \{spec}: ours=\{poly_ours}, oracle=\{poly_oracle}")
+    }
+
+    let frac_ours = domain_to_sympy_string(try! domain.frac_field(gens))
+    let frac_oracle = @sympy_polys.domain_frac_field(spec, gens)
+    guard trim_ws(frac_ours) == trim_ws(frac_oracle) else {
+      fail("frac_field mismatch for \{spec}: ours=\{frac_ours}, oracle=\{frac_oracle}")
+    }
+
+    let old_poly_ours = domain_to_sympy_string(try! domain.old_poly_ring(gens))
+    let old_poly_oracle = @sympy_polys.domain_old_poly_ring(spec, gens)
+    guard trim_ws(old_poly_ours) == trim_ws(old_poly_oracle) else {
+      fail(
+        "old_poly_ring mismatch for \{spec}: ours=\{old_poly_ours}, oracle=\{old_poly_oracle}",
+      )
+    }
+
+    let old_frac_ours = domain_to_sympy_string(try! domain.old_frac_field(gens))
+    let old_frac_oracle = @sympy_polys.domain_old_frac_field(spec, gens)
+    guard trim_ws(old_frac_ours) == trim_ws(old_frac_oracle) else {
+      fail(
+        "old_frac_field mismatch for \{spec}: ours=\{old_frac_ours}, oracle=\{old_frac_oracle}",
+      )
+    }
+  }
+
+  let quotient = try! quotient_ring_domain(
+    Domain::QQ,
+    ["x"],
+    [@symcore.add([@symcore.pow(@symcore.symbol("x"), @symcore.int(2)), @symcore.int(1)])],
+  )
+  let quotient_try : Result[Domain, PolyError] = try? quotient.poly_ring(["y"])
+  guard render_domain_result(quotient_try) == "ERROR" else {
+    fail("quotient poly_ring should reject nested domains")
+  }
+}
+
+///|
+test "domains: set_domain and unify_with_symbols parity" {
+  let set_cases = [
+    ("ZZ[x]", "QQ"),
+    ("RR[x,y]", "ZZ_I"),
+    ("QQ(x)", "CC"),
+    ("ZZ[x][y]", "QQ"),
+  ]
+  for item in set_cases {
+    let spec = item.0
+    let ground = item.1
+    let ours = domain_to_sympy_string(domain_from_string(spec).set_domain(domain_from_string(ground)))
+    let oracle = @sympy_polys.domain_set_domain(spec, ground)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("set_domain mismatch for \{spec} -> \{ground}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let unify_cases = [
+    ("ZZ[x]", "QQ", ["y", "z"]),
+    ("ZZ[x][y]", "QQ(z)", ["t"]),
+    ("ZZ[x,y]", "ZZ", ["y", "z"]),
+  ]
+  for item in unify_cases {
+    let lhs = item.0
+    let rhs = item.1
+    let symbols = item.2
+    let symbols_text = symbols.join(",")
+    let ours_try : Result[Domain, PolyError] = try? domain_from_string(lhs).unify_with_symbols(
+      domain_from_string(rhs),
+      symbols,
+    )
+    let ours = render_domain_result(ours_try)
+    let oracle = @sympy_polys.domain_unify_with_symbols(lhs, rhs, symbols)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail(
+        "unify_with_symbols mismatch for \{lhs}, \{rhs}, \{symbols_text}: ours=\{ours}, oracle=\{oracle}",
+      )
+    }
+  }
+}
+
+///|
+test "domains: inject and drop parity across simple and nested composites" {
+  let inject_cases = [
+    ("ZZ", ["x", "y"]),
+    ("ZZ[x]", ["y", "z"]),
+    ("QQ(x)", ["y"]),
+  ]
+  for item in inject_cases {
+    let spec = item.0
+    let gens = item.1
+    let ours = domain_to_sympy_string(try! domain_from_string(spec).inject(gens))
+    let oracle = @sympy_polys.domain_inject(spec, gens)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("inject mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let overlap_try : Result[Domain, PolyError] = try? domain_from_string("ZZ[x]").inject([
+    "x",
+  ])
+  guard render_domain_result(overlap_try) == "ERROR" else {
+    fail("inject overlap should fail")
+  }
+
+  let drop_cases = [
+    ("ZZ", ["x"]),
+    ("ZZ[x]", ["x"]),
+    ("ZZ[x,y]", ["x"]),
+    ("ZZ(x)", ["x"]),
+    ("ZZ(x,y)", ["x"]),
+    ("ZZ[x][y]", ["x"]),
+    ("ZZ(x)[y]", ["x"]),
+    ("QQ<sqrt(2)>", ["x"]),
+  ]
+  for item in drop_cases {
+    let spec = item.0
+    let gens = item.1
+    let ours_try : Result[Domain, PolyError] = try? domain_from_string(spec).drop(gens)
+    let ours = render_domain_result(ours_try)
+    let oracle = @sympy_polys.domain_drop(spec, gens)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("drop mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
+test "domains: algebraic_field parity and Domain methods" {
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let sqrt3 = @symcore.function("sqrt", [@symcore.int(3)])
+  let cases = [
+    ("QQ", [sqrt2], ["sqrt(2)"]),
+    ("ZZ", [sqrt2], ["sqrt(2)"]),
+    ("QQ<sqrt(2)>", [sqrt3], ["sqrt(3)"]),
+  ]
+  for item in cases {
+    let spec = item.0
+    let ext_exprs = item.1
+    let ext_specs = item.2
+    let ours = domain_to_sympy_string(try! domain_from_string(spec).algebraic_field(ext_exprs))
+    let oracle = @sympy_polys.domain_algebraic_field(spec, ext_specs)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("algebraic_field mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  guard domain_from_string("GF(5)").characteristic() == 5 else {
+    fail("Domain::characteristic mismatch")
+  }
+  guard
+    domain_to_sympy_string(domain_from_string("RR[x]").get_exact()) == "QQ[x]"
+  else {
+    fail("Domain::get_exact mismatch")
+  }
+  guard
+    domain_to_sympy_string(try! domain_from_string("ZZ[x]").get_field()) == "ZZ(x)"
+  else {
+    fail("Domain::get_field mismatch")
+  }
+  guard
+    domain_to_sympy_string(try! domain_from_string("QQ(x)").get_ring()) == "QQ[x]"
+  else {
+    fail("Domain::get_ring mismatch")
+  }
+  guard
+    domain_to_sympy_string(try! domain_from_string("ZZ").unify(domain_from_string("QQ"))) ==
+    "QQ"
+  else {
+    fail("Domain::unify mismatch")
   }
 }
