@@ -85,3 +85,43 @@ pub fn is_smith_normal_form(a : DomainMatrix) -> Bool raise PolyError {
 pub fn smith_normal_decomp(a : DomainMatrix) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {
   a.smith_normal_decomp()
 }
+
+///|
+/// Pure wrapper for the column operation helper used by SymPy normal forms.
+pub fn add_columns(
+  m : DDM,
+  i : Int,
+  j : Int,
+  a : FieldElem,
+  b : FieldElem,
+  c : FieldElem,
+  d : FieldElem,
+) -> DDM raise PolyError {
+  let rows = m.to_list()
+  if rows.is_empty() {
+    return m.copy()
+  }
+  let cols = rows[0].length()
+  let left = normalize_matrix_index(i, cols)
+  let right = normalize_matrix_index(j, cols)
+  let out = clone_dense_rows(rows)
+  for k in 0..<out.length() {
+    let value = out[k][left]
+    let other = out[k][right]
+    out[k].set(left, fe_add(fe_mul(a, value), fe_mul(b, other)))
+    out[k].set(right, fe_add(fe_mul(c, value), fe_mul(d, other)))
+  }
+  ddm_from_dense(out, m.domain())
+}
+
+///|
+/// Re-export the balanced modular representative helper used by SymPy HNF code.
+pub fn symmetric_residue(a : BigInt, m : BigInt) -> BigInt {
+  let reduced = a.mod(m)
+  let half = m.div(BigInt::from_int(2))
+  if reduced.op_gt(half) {
+    reduced.sub(m)
+  } else {
+    reduced
+  }
+}

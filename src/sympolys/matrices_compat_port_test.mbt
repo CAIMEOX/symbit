@@ -67,6 +67,11 @@ fn field_tuple_text(values : Array[FieldElem]) -> String {
 }
 
 ///|
+fn sdm_summary_like_oracle(sdm : SDM) -> String raise PolyError {
+  "\{sdm.to_ddm().to_string()}@\{domain_to_sympy_string(sdm.domain())}|sparse"
+}
+
+///|
 fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
   let rows = ddm.to_list()
   let out : Array[Array[Int]] = Array::new()
@@ -889,5 +894,29 @@ test "matrices: linsolve unique/no-solution/parametric" {
       }
     }
     _ => fail("expected parametric solution")
+  }
+}
+
+///|
+test "matrices: sympy_dict_to_dm parity" {
+  let coeffs : Array[Map[String, @symcore.Expr]] = [
+    { "x": @symcore.int(1), "y": @symcore.int(2) },
+    { "y": @symcore.int(1) },
+  ]
+  let rhs = [@symcore.int(3), @symcore.int(1)]
+  let syms = ["x", "y"]
+  let ours = sympy_dict_to_dm(coeffs, rhs, syms)
+  let oracle = @sympy_polys.linsolve_sympy_dict_to_dm_summary(
+    [
+      { "x": "1", "y": "2" },
+      { "y": "1" },
+    ],
+    ["3", "1"],
+    syms,
+  )
+  guard mx_trim(sdm_summary_like_oracle(ours)) == mx_trim(oracle) else {
+    fail(
+      "sympy_dict_to_dm mismatch: ours=\{sdm_summary_like_oracle(ours)}, oracle=\{oracle}",
+    )
   }
 }

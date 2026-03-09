@@ -6,6 +6,67 @@ pub enum LinearSolveResult {
 }
 
 ///|
+/// Build the sparse augmented matrix used by SymPy's matrix-based linsolve path.
+pub fn sympy_dict_to_dm(
+  eqs_coeffs : Array[Map[String, @symcore.Expr]],
+  eqs_rhs : Array[@symcore.Expr],
+  syms : Array[String],
+) -> SDM raise PolyError {
+  if eqs_coeffs.length() != eqs_rhs.length() {
+    raise PolyError::DomainMismatch
+  }
+  let sym2index : Map[String, Int] = Map::new()
+  for i in 0..<syms.length() {
+    sym2index[syms[i]] = i
+  }
+  let expr_rows : Array[Array[(Int, @symcore.Expr)]] = Array::new()
+  let flat_exprs : Array[@symcore.Expr] = Array::new()
+  for i in 0..<eqs_coeffs.length() {
+    let row_items : Array[(Int, @symcore.Expr)] = Array::new()
+    for sym, coeff in eqs_coeffs[i] {
+      match sym2index.get(sym) {
+        Some(col) => {
+          row_items.push((col, coeff))
+          flat_exprs.push(coeff)
+        }
+        None => raise PolyError::DomainMismatch
+      }
+    }
+    let neg_rhs = @symcore.int(0) - eqs_rhs[i]
+    row_items.push((syms.length(), neg_rhs))
+    flat_exprs.push(neg_rhs)
+    expr_rows.push(row_items)
+  }
+  let (domain, values) = DomainMatrix::get_domain(flat_exprs, field=true)
+  let value_rows : Array[Array[(Int, FieldElem)]] = Array::new()
+  let mut offset = 0
+  for row_items in expr_rows {
+    let converted : Array[(Int, FieldElem)] = Array::new()
+    for item in row_items {
+      converted.push((item.0, values[offset]))
+      offset += 1
+    }
+    value_rows.push(converted)
+  }
+  let dod : DomainMatrixDOD = Map::new()
+  let mut next_row = 0
+  for row_items in value_rows {
+    let row : Map[Int, FieldElem] = Map::new()
+    for item in row_items {
+      if !fe_is_zero(item.1) {
+        row[item.0] = item.1
+      }
+    }
+    if row.is_empty() {
+      continue
+    }
+    dod[next_row] = row
+    next_row += 1
+  }
+  SDM::from_dod(dod, (eqs_coeffs.length(), syms.length() + 1), domain)
+}
+
+///|
 fn lift_matrix_to_field(dm : DomainMatrix) -> DomainMatrix raise PolyError {
   if domain_is_field_pred(dm.domain) {
     return dm

@@ -1572,6 +1572,43 @@ pub fn domainscalar_from_expr(expr : String) -> String raise {
 }
 
 ///|
+pub fn linsolve_sympy_dict_to_dm_summary(
+  eqs_coeffs : Array[Map[String, String]],
+  eqs_rhs : Array[String],
+  syms : Array[String],
+) -> String raise {
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in eqs_coeffs {
+    let py_row = py_dict_new()
+    for sym, coeff in row {
+      py_dict_set_obj(py_row, sym, sympy_sympify_str(coeff))
+    }
+    py_rows.push(py_row.obj())
+  }
+  let py_rhs : Array[@py.PyObject] = Array::new()
+  for rhs in eqs_rhs {
+    py_rhs.push(sympy_sympify_str(rhs))
+  }
+  let py_syms : Array[@py.PyObject] = Array::new()
+  for sym in syms {
+    py_syms.push(py_string_obj(sym))
+  }
+  let sdm = sympy_call_must("sympy.polys.matrices.linsolve.sympy_dict_to_dm", [
+    OracleArg::PyObj(py_list_from_objects(py_rows).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_rhs).obj()),
+    OracleArg::PyObj(py_list_from_objects(py_syms).obj()),
+  ])
+  let sdm_obj = objenum_to_obj(sdm)
+  let domain = match py_get_attr(sdm_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("linsolve-sympy-dict-to-dm-domain")
+  }
+  let to_ddm = resolve_method_callable(sdm_obj, "to_ddm")
+  let dense = py_str_enum(py_call_noargs(to_ddm))
+  "\{dense}@\{domain}|sparse"
+}
+
+///|
 fn oracle_domainmatrix_to_matrix_str(dm_obj : @py.PyObject) -> String raise {
   let to_matrix = resolve_method_callable(dm_obj, "to_Matrix")
   let mat_enum = py_call_noargs(to_matrix)

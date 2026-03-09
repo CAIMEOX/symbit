@@ -94,3 +94,23 @@ test "matrix module wrappers: eigen wrappers preserve method data" {
     fail("dom_eigenvects_to_sympy mismatch: \{mm_sympy_eigen_text(sympy_view)}")
   }
 }
+
+///|
+test "matrix module wrappers: add_columns and symmetric_residue helpers" {
+  let m = ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let out = add_columns(
+    m,
+    0,
+    1,
+    fe_from_int(1, Domain::ZZ),
+    fe_from_int(1, Domain::ZZ),
+    fe_from_int(0, Domain::ZZ),
+    fe_from_int(1, Domain::ZZ),
+  )
+  guard mm_trim(out.to_string()) == mm_trim("[[3, 2], [7, 4]]") else {
+    fail("add_columns mismatch")
+  }
+  guard symmetric_residue(BigInt::from_int(4), BigInt::from_int(5)).to_int() == -1 else {
+    fail("symmetric_residue mismatch")
+  }
+}
