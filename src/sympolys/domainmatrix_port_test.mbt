@@ -311,6 +311,144 @@ test "domainmatrix: fflu invariants and charpoly parity over ZZ" {
 }
 
 ///|
+test "domainmatrix: structural helper parity" {
+  let diag_case = domain_matrix_from_ints([[1, 0], [0, 4]], Domain::ZZ)
+  let ours_diag = dm_coeffs_text(diag_case.diagonal())
+  let oracle_diag = @sympy_polys.domainmatrix_diagonal([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(ours_diag) == dm_trim(oracle_diag) else {
+    fail("domainmatrix diagonal mismatch: ours=\{ours_diag}, oracle=\{oracle_diag}")
+  }
+
+  let ours_flat = dm_coeffs_text(diag_case.to_list_flat())
+  let oracle_flat = @sympy_polys.domainmatrix_to_list_flat([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(ours_flat) == dm_trim(oracle_flat) else {
+    fail("domainmatrix to_list_flat mismatch: ours=\{ours_flat}, oracle=\{oracle_flat}")
+  }
+
+  guard diag_case.nnz() == @sympy_polys.domainmatrix_nnz([[1, 0], [0, 4]], "ZZ") else {
+    fail("domainmatrix nnz mismatch")
+  }
+
+  let pow_case = domain_matrix_from_ints([[1, 1], [0, 1]], Domain::ZZ)
+  let ours_pow = pow_case.pow(3).to_matrix_string()
+  let oracle_pow = @sympy_polys.domainmatrix_pow([[1, 1], [0, 1]], "ZZ", 3)
+  guard dm_trim(ours_pow) == dm_trim(oracle_pow) else {
+    fail("domainmatrix pow mismatch: ours=\{ours_pow}, oracle=\{oracle_pow}")
+  }
+
+  let block_rows = [[6, -1, 0, 0], [9, 12, 0, 0], [0, 0, 1, 2], [0, 0, 5, 6]]
+  let block = domain_matrix_from_ints(block_rows, Domain::ZZ)
+  let ours_scc = block.scc().to_string()
+  let oracle_scc = @sympy_polys.domainmatrix_scc(block_rows, "ZZ")
+  guard dm_trim(ours_scc) == dm_trim(oracle_scc) else {
+    fail("domainmatrix scc mismatch: ours=\{ours_scc}, oracle=\{oracle_scc}")
+  }
+
+  let ours_blocks = block.charpoly_factor_blocks().to_string()
+  let oracle_blocks = @sympy_polys.domainmatrix_charpoly_factor_blocks(block_rows, "ZZ")
+  guard dm_trim(ours_blocks) == dm_trim(oracle_blocks) else {
+    fail(
+      "domainmatrix charpoly_factor_blocks mismatch: ours=\{ours_blocks}, oracle=\{oracle_blocks}",
+    )
+  }
+}
+
+///|
+test "domainmatrix: content primitive cancel and charpoly-solve parity" {
+  let qq_rows = [["1/2", "3/4"]]
+  let qq = domain_matrix_from_dense([[dm_rat(1, 2), dm_rat(3, 4)]], Domain::QQ)
+  let ours_content = fe_to_string(qq.content())
+  let oracle_content = @sympy_polys.domainmatrix_content_expr(qq_rows, "QQ")
+  guard dm_trim(ours_content) == dm_trim(oracle_content) else {
+    fail("domainmatrix content mismatch: ours=\{ours_content}, oracle=\{oracle_content}")
+  }
+
+  let primitive = qq.primitive()
+  let ours_primitive = "\{fe_to_string(primitive.0)}||\{primitive.1.to_matrix_string()}"
+  let oracle_primitive = @sympy_polys.domainmatrix_primitive_expr(qq_rows, "QQ")
+  guard dm_trim(ours_primitive) == dm_trim(oracle_primitive) else {
+    fail(
+      "domainmatrix primitive mismatch: ours=\{ours_primitive}, oracle=\{oracle_primitive}",
+    )
+  }
+
+  let zz_rows = [["4", "6"]]
+  let zz = domain_matrix_from_ints([[4, 6]], Domain::ZZ)
+  let ours_cancel = zz.cancel_denom(try! fe_from_int(12, Domain::ZZ))
+  let ours_cancel_text = "\{ours_cancel.0.to_matrix_string()}||\{fe_to_string(ours_cancel.1)}"
+  let oracle_cancel = @sympy_polys.domainmatrix_cancel_denom_expr(zz_rows, "12", "ZZ")
+  guard dm_trim(ours_cancel_text) == dm_trim(oracle_cancel) else {
+    fail("domainmatrix cancel_denom mismatch: ours=\{ours_cancel_text}, oracle=\{oracle_cancel}")
+  }
+
+  let ours_cancel_elt = zz.cancel_denom_elementwise(try! fe_from_int(12, Domain::ZZ))
+  let ours_cancel_elt_text =
+    "\{ours_cancel_elt.0.to_matrix_string()}||\{ours_cancel_elt.1.to_matrix_string()}"
+  let oracle_cancel_elt = @sympy_polys.domainmatrix_cancel_denom_elementwise_expr(
+    zz_rows,
+    "12",
+    "ZZ",
+  )
+  guard dm_trim(ours_cancel_elt_text) == dm_trim(oracle_cancel_elt) else {
+    fail(
+      "domainmatrix cancel_denom_elementwise mismatch: ours=\{ours_cancel_elt_text}, oracle=\{oracle_cancel_elt}",
+    )
+  }
+
+  let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)
+  let b = domain_matrix_from_ints([[5], [6]], Domain::ZZ)
+  let adj_poly_det = a.adj_poly_det()
+  let ours_adj_poly_det =
+    "\{dm_coeffs_text(adj_poly_det.0)}||\{fe_to_string(adj_poly_det.1)}"
+  let oracle_adj_poly_det = @sympy_polys.domainmatrix_adj_poly_det([[1, 2], [3, 4]], "ZZ")
+  guard dm_trim(ours_adj_poly_det) == dm_trim(oracle_adj_poly_det) else {
+    fail(
+      "domainmatrix adj_poly_det mismatch: ours=\{ours_adj_poly_det}, oracle=\{oracle_adj_poly_det}",
+    )
+  }
+
+  let coeffs = [fe_from_int(1, Domain::ZZ), fe_from_int(2, Domain::ZZ), fe_from_int(3, Domain::ZZ)]
+  let ours_eval_poly = a.eval_poly(coeffs).to_matrix_string()
+  let oracle_eval_poly = @sympy_polys.domainmatrix_eval_poly(
+    [[1, 2], [3, 4]],
+    ["1", "2", "3"],
+    "ZZ",
+  )
+  guard dm_trim(ours_eval_poly) == dm_trim(oracle_eval_poly) else {
+    fail(
+      "domainmatrix eval_poly mismatch: ours=\{ours_eval_poly}, oracle=\{oracle_eval_poly}",
+    )
+  }
+
+  let ours_eval_poly_mul = a.eval_poly_mul(coeffs, b).to_matrix_string()
+  let oracle_eval_poly_mul = @sympy_polys.domainmatrix_eval_poly_mul(
+    [[1, 2], [3, 4]],
+    ["1", "2", "3"],
+    [[5], [6]],
+    "ZZ",
+  )
+  guard dm_trim(ours_eval_poly_mul) == dm_trim(oracle_eval_poly_mul) else {
+    fail(
+      "domainmatrix eval_poly_mul mismatch: ours=\{ours_eval_poly_mul}, oracle=\{oracle_eval_poly_mul}",
+    )
+  }
+
+  let ours_solve_charpoly = a.solve_den_charpoly(b)
+  let ours_solve_charpoly_text =
+    "\{ours_solve_charpoly.0.to_matrix_string()}||\{fe_to_string(ours_solve_charpoly.1)}"
+  let oracle_solve_charpoly = @sympy_polys.domainmatrix_solve_den_charpoly(
+    [[1, 2], [3, 4]],
+    [[5], [6]],
+    "ZZ",
+  )
+  guard dm_trim(ours_solve_charpoly_text) == dm_trim(oracle_solve_charpoly) else {
+    fail(
+      "domainmatrix solve_den_charpoly mismatch: ours=\{ours_solve_charpoly_text}, oracle=\{oracle_solve_charpoly}",
+    )
+  }
+}
+
+///|
 test "domainmatrix: adjugate, adj_det, inv_den, solve_den parity over ZZ" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)
   let b = domain_matrix_from_ints([[5], [6]], Domain::ZZ)

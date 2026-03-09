@@ -463,6 +463,73 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
 }
 
 ///|
+test "matrices: DDM and SDM structural wrappers" {
+  let ddm = ddm_from_ints([[1, 0], [0, 4]], Domain::ZZ)
+  guard coeffs_text(ddm.diagonal()) == "[1, 4]" else {
+    fail("ddm diagonal mismatch")
+  }
+  guard coeffs_text(ddm.to_list_flat()) == "[1, 0, 0, 4]" else {
+    fail("ddm flat mismatch")
+  }
+  guard ddm.nnz() == 2 else { fail("ddm nnz mismatch") }
+  guard ddm.is_diagonal() && ddm.is_upper() && ddm.is_lower() else {
+    fail("ddm triangular predicates mismatch")
+  }
+  guard !ddm.is_zero_matrix() else { fail("ddm zero predicate mismatch") }
+  guard mx_trim(ddm.hstack(ddm).to_string()) == "[[1,0,1,0],[0,4,0,4]]" else {
+    fail("ddm hstack mismatch")
+  }
+  guard mx_trim(ddm.vstack(ddm).to_string()) == "[[1,0],[0,4],[1,0],[0,4]]" else {
+    fail("ddm vstack mismatch")
+  }
+  guard mx_trim(ddm.mul_elementwise(ddm).to_string()) == "[[1,0],[0,16]]" else {
+    fail("ddm mul_elementwise mismatch")
+  }
+  guard mx_trim(ddm.rmul(try! fe_from_int(2, Domain::ZZ)).to_string()) == "[[2,0],[0,8]]" else {
+    fail("ddm rmul mismatch")
+  }
+  guard ddm.scc().to_string() == "[[0], [1]]" else {
+    fail("ddm scc mismatch")
+  }
+
+  let one = try! fe_from_int(1, Domain::QQ)
+  let four = try! fe_from_int(4, Domain::QQ)
+  let sdm = sdm_from_entries(2, 2, [(0, 0, one), (1, 1, four)], Domain::QQ)
+  guard coeffs_text(sdm.diagonal()) == "[1, 4]" else {
+    fail("sdm diagonal mismatch")
+  }
+  guard coeffs_text(sdm.to_list_flat()) == "[1, 0, 0, 4]" else {
+    fail("sdm flat mismatch")
+  }
+  guard sdm.nnz() == 2 else { fail("sdm nnz mismatch") }
+  guard sdm.is_diagonal() && sdm.is_upper() && sdm.is_lower() else {
+    fail("sdm triangular predicates mismatch")
+  }
+  guard mx_trim(sdm.transpose().to_dense().to_string()) == "[[1,0],[0,4]]" else {
+    fail("sdm transpose mismatch")
+  }
+  guard mx_trim(sdm.hstack(sdm).to_dense().to_string()) == "[[1,0,1,0],[0,4,0,4]]" else {
+    fail("sdm hstack mismatch")
+  }
+  guard mx_trim(sdm.vstack(sdm).to_dense().to_string()) == "[[1,0],[0,4],[1,0],[0,4]]" else {
+    fail("sdm vstack mismatch")
+  }
+  guard mx_trim(sdm.mul_elementwise(sdm).to_dense().to_string()) == "[[1,0],[0,16]]" else {
+    fail("sdm mul_elementwise mismatch")
+  }
+  guard mx_trim(sdm.rmul(try! fe_from_int(2, Domain::QQ)).to_dense().to_string()) == "[[2,0],[0,8]]" else {
+    fail("sdm rmul mismatch")
+  }
+  guard fe_to_string(sdm.det()) == "4" else { fail("sdm det mismatch") }
+  guard mx_trim(sdm.inv().to_dense().to_string()) == "[[1,0],[0,1/4]]" else {
+    fail("sdm inv mismatch")
+  }
+  guard sdm.scc().to_string() == "[[0], [1]]" else {
+    fail("sdm scc mismatch")
+  }
+}
+
+///|
 test "matrices: DomainScalar coercion and arithmetic" {
   let a = domain_scalar_from_int(2, Domain::ZZ)
   let b = domain_scalar_from_int(1, Domain::QQ)

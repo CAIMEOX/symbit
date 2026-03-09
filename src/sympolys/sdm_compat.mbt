@@ -20,6 +20,11 @@ pub fn sdm_from_dense(rows : Array[Array[FieldElem]], domain : Domain) -> SDM ra
 }
 
 ///|
+pub fn SDM::copy(self : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.copy().to_sparse() }
+}
+
+///|
 pub fn SDM::shape(self : SDM) -> (Int, Int) {
   self.dm.shape()
 }
@@ -30,9 +35,39 @@ pub fn SDM::domain(self : SDM) -> Domain {
 }
 
 ///|
+pub fn SDM::convert_to(self : SDM, domain : Domain) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.convert_to(domain).to_sparse() }
+}
+
+///|
 pub fn SDM::to_dense(self : SDM) -> DDM raise PolyError {
   let rows = self.dm.to_dense()
   DDM::{ dm: domain_matrix_from_dense(rows, self.dm.domain) }
+}
+
+///|
+pub fn SDM::to_list(self : SDM) -> Array[Array[FieldElem]] raise PolyError {
+  self.dm.to_list()
+}
+
+///|
+pub fn SDM::to_list_flat(self : SDM) -> Array[FieldElem] raise PolyError {
+  self.dm.to_list_flat()
+}
+
+///|
+pub fn SDM::flat(self : SDM) -> Array[FieldElem] raise PolyError {
+  self.dm.flat()
+}
+
+///|
+pub fn SDM::iter_values(self : SDM) -> Array[FieldElem] raise PolyError {
+  self.dm.iter_values()
+}
+
+///|
+pub fn SDM::iter_items(self : SDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
+  self.dm.iter_items()
 }
 
 ///|
@@ -51,6 +86,11 @@ pub fn SDM::to_sparse_entries(self : SDM) -> Array[(Int, Int, FieldElem)] raise 
 }
 
 ///|
+pub fn SDM::transpose(self : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.transpose().to_sparse() }
+}
+
+///|
 pub fn SDM::add(self : SDM, other : SDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.add(other.dm).to_sparse() }
 }
@@ -61,8 +101,88 @@ pub fn SDM::sub(self : SDM, other : SDM) -> SDM raise PolyError {
 }
 
 ///|
+pub fn SDM::neg(self : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.neg().to_sparse() }
+}
+
+///|
 pub fn SDM::mul(self : SDM, other : SDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.mul(other.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::matmul(self : SDM, other : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.matmul(other.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::mul_elementwise(self : SDM, other : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.mul_elementwise(other.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::rmul(self : SDM, scalar : FieldElem) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.rmul(scalar).to_sparse() }
+}
+
+///|
+pub fn SDM::diagonal(self : SDM) -> Array[FieldElem] raise PolyError {
+  self.dm.diagonal()
+}
+
+///|
+pub fn SDM::extract(
+  self : SDM,
+  row_ids : Array[Int],
+  col_ids : Array[Int],
+) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.extract(row_ids, col_ids).to_sparse() }
+}
+
+///|
+pub fn SDM::hstack(self : SDM, other : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.hstack(other.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::vstack(self : SDM, other : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.vstack(other.dm).to_sparse() }
+}
+
+///|
+pub fn SDM::nnz(self : SDM) -> Int raise PolyError {
+  self.dm.nnz()
+}
+
+///|
+pub fn SDM::is_diagonal(self : SDM) -> Bool raise PolyError {
+  self.dm.is_diagonal()
+}
+
+///|
+pub fn SDM::is_upper(self : SDM) -> Bool raise PolyError {
+  self.dm.is_upper()
+}
+
+///|
+pub fn SDM::is_lower(self : SDM) -> Bool raise PolyError {
+  self.dm.is_lower()
+}
+
+///|
+pub fn SDM::is_zero_matrix(self : SDM) -> Bool raise PolyError {
+  self.dm.is_zero_matrix()
+}
+
+///|
+pub fn SDM::det(self : SDM) -> FieldElem raise PolyError {
+  self.dm.det()
+}
+
+///|
+pub fn SDM::rref(self : SDM) -> (SDM, Array[Int]) raise PolyError {
+  let (r, pivots) = self.dm.rref()
+  (SDM::{ dm: r.to_sparse() }, pivots)
 }
 
 ///|
@@ -85,6 +205,14 @@ pub fn SDM::nullspace_from_rref(
 ) -> (SDM, Array[Int]) raise PolyError {
   let (basis, nonpivots) = nullspace_from_rref_with_nonpivots(self.dm, pivots~)
   (SDM::{ dm: basis.to_sparse() }, nonpivots)
+}
+
+///|
+pub fn SDM::nullspace(
+  self : SDM,
+  divide_last? : Bool = false,
+) -> Array[Array[FieldElem]] raise PolyError {
+  self.dm.nullspace(divide_last=divide_last).to_dense()
 }
 
 ///|
@@ -121,11 +249,21 @@ pub fn SDM::charpoly(self : SDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+pub fn SDM::inv(self : SDM) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.inv().to_sparse() }
+}
+
+///|
 pub fn SDM::particular(
   self : SDM,
   pivots? : Array[Int] = [],
 ) -> SDM raise PolyError {
   SDM::{ dm: particular_from_rref(self.dm, pivots~).to_sparse() }
+}
+
+///|
+pub fn SDM::scc(self : SDM) -> Array[Array[Int]] raise PolyError {
+  self.dm.scc()
 }
 
 ///|

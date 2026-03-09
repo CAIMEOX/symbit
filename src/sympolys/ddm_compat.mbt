@@ -23,13 +23,43 @@ pub fn DDM::shape(self : DDM) -> (Int, Int) {
 }
 
 ///|
+pub fn DDM::copy(self : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.copy() }
+}
+
+///|
 pub fn DDM::domain(self : DDM) -> Domain {
   self.dm.domain
 }
 
 ///|
+pub fn DDM::convert_to(self : DDM, domain : Domain) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.convert_to(domain) }
+}
+
+///|
 pub fn DDM::to_list(self : DDM) -> Array[Array[FieldElem]] raise PolyError {
   self.dm.to_dense()
+}
+
+///|
+pub fn DDM::to_list_flat(self : DDM) -> Array[FieldElem] raise PolyError {
+  self.dm.to_list_flat()
+}
+
+///|
+pub fn DDM::flat(self : DDM) -> Array[FieldElem] raise PolyError {
+  self.dm.flat()
+}
+
+///|
+pub fn DDM::iter_values(self : DDM) -> Array[FieldElem] raise PolyError {
+  self.dm.iter_values()
+}
+
+///|
+pub fn DDM::iter_items(self : DDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
+  self.dm.iter_items()
 }
 
 ///|
@@ -54,12 +84,7 @@ pub fn DDM::sub(self : DDM, other : DDM) -> DDM raise PolyError {
 
 ///|
 pub fn DDM::neg(self : DDM) -> DDM raise PolyError {
-  let rows = self.dm.to_dense()
-  let out : Array[Array[FieldElem]] = Array::new()
-  for row in rows {
-    out.push(row.map(x => fe_neg(x)))
-  }
-  ddm_from_dense(out, self.dm.domain)
+  DDM::{ dm: self.dm.neg() }
 }
 
 ///|
@@ -68,13 +93,72 @@ pub fn DDM::mul(self : DDM, other : DDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn DDM::matmul(self : DDM, other : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.matmul(other.dm) }
+}
+
+///|
+pub fn DDM::mul_elementwise(self : DDM, other : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.mul_elementwise(other.dm) }
+}
+
+///|
 pub fn DDM::mul_scalar(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
-  let rows = self.dm.to_dense()
-  let out : Array[Array[FieldElem]] = Array::new()
-  for row in rows {
-    out.push(row.map(x => fe_mul(x, scalar)))
-  }
-  ddm_from_dense(out, self.dm.domain)
+  DDM::{ dm: self.dm.scalarmul(scalar) }
+}
+
+///|
+pub fn DDM::rmul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.rmul(scalar) }
+}
+
+///|
+pub fn DDM::diagonal(self : DDM) -> Array[FieldElem] raise PolyError {
+  self.dm.diagonal()
+}
+
+///|
+pub fn DDM::extract(
+  self : DDM,
+  row_ids : Array[Int],
+  col_ids : Array[Int],
+) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.extract(row_ids, col_ids) }
+}
+
+///|
+pub fn DDM::hstack(self : DDM, other : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.hstack(other.dm) }
+}
+
+///|
+pub fn DDM::vstack(self : DDM, other : DDM) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.vstack(other.dm) }
+}
+
+///|
+pub fn DDM::nnz(self : DDM) -> Int raise PolyError {
+  self.dm.nnz()
+}
+
+///|
+pub fn DDM::is_diagonal(self : DDM) -> Bool raise PolyError {
+  self.dm.is_diagonal()
+}
+
+///|
+pub fn DDM::is_upper(self : DDM) -> Bool raise PolyError {
+  self.dm.is_upper()
+}
+
+///|
+pub fn DDM::is_lower(self : DDM) -> Bool raise PolyError {
+  self.dm.is_lower()
+}
+
+///|
+pub fn DDM::is_zero_matrix(self : DDM) -> Bool raise PolyError {
+  self.dm.is_zero_matrix()
 }
 
 ///|
@@ -257,6 +341,11 @@ pub fn DDM::particular(
   pivots? : Array[Int] = [],
 ) -> DDM raise PolyError {
   DDM::{ dm: particular_from_rref(self.dm, pivots~) }
+}
+
+///|
+pub fn DDM::scc(self : DDM) -> Array[Array[Int]] raise PolyError {
+  self.dm.scc()
 }
 
 ///|
