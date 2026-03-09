@@ -66,6 +66,36 @@ pub fn SDM::mul(self : SDM, other : SDM) -> SDM raise PolyError {
 }
 
 ///|
+pub fn SDM::rref_den(
+  self : SDM,
+  rref_method? : String = "auto",
+  keep_domain? : Bool = true,
+) -> (SDM, FieldElem, Array[Int]) raise PolyError {
+  let (r, den, pivots) = self.dm.rref_den(
+    rref_method=rref_method,
+    keep_domain=keep_domain,
+  )
+  (SDM::{ dm: r.to_sparse() }, den, pivots)
+}
+
+///|
+pub fn SDM::nullspace_from_rref(
+  self : SDM,
+  pivots? : Array[Int] = [],
+) -> (SDM, Array[Int]) raise PolyError {
+  let (basis, nonpivots) = nullspace_from_rref_with_nonpivots(self.dm, pivots~)
+  (SDM::{ dm: basis.to_sparse() }, nonpivots)
+}
+
+///|
+pub fn SDM::particular(
+  self : SDM,
+  pivots? : Array[Int] = [],
+) -> SDM raise PolyError {
+  SDM::{ dm: particular_from_rref(self.dm, pivots~).to_sparse() }
+}
+
+///|
 pub fn SDM::to_string(self : SDM) -> String raise PolyError {
   let entries = self.to_sparse_entries()
   let by_row : Map[Int, Array[(Int, FieldElem)]] = Map::new()

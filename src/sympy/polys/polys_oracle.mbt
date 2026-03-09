@@ -560,6 +560,32 @@ pub fn domainmatrix_rref(
 }
 
 ///|
+pub fn domainmatrix_rref_den(
+  a : Array[Array[Int]],
+  domain_spec : String,
+  rref_method? : String = "auto",
+  keep_domain? : Bool = true,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let rref_den = resolve_method_callable(dm, "rref_den")
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "method", py_string_obj(rref_method))
+  py_dict_set_obj(kwargs, "keep_domain", py_bool_obj(keep_domain))
+  let res = py_call_with_args(rref_den, [], kwargs)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 3 else { fail("domainmatrix-rref-den-tuple") }
+  let matrix_part = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let den = py_str_value(tuple_items[1])
+  let pivots = py_list_to_pyobjects(@py.PyObjectEnum::create(tuple_items[2]))
+  let pivot_vals : Array[String] = Array::new()
+  for p in pivots {
+    pivot_vals.push(py_obj_to_int(p).to_string())
+  }
+  let joined = pivot_vals.join(",")
+  "\{matrix_part}||\{den}||[\{joined}]"
+}
+
+///|
 pub fn domainmatrix_convert_to(
   a : Array[Array[Int]],
   from_domain_spec : String,
@@ -620,10 +646,13 @@ pub fn domainmatrix_columnspace(
 pub fn domainmatrix_nullspace(
   a : Array[Array[Int]],
   domain_spec : String,
+  divide_last? : Bool = false,
 ) -> String raise {
   let dm = oracle_domainmatrix_from_ints(a, domain_spec)
   let nullspace = resolve_method_callable(dm, "nullspace")
-  let res = py_call_noargs(nullspace)
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "divide_last", py_bool_obj(divide_last))
+  let res = py_call_with_args(nullspace, [], kwargs)
   oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
 }
 
@@ -652,6 +681,61 @@ pub fn domainmatrix_clear_denoms(
   }
   let matrix = oracle_domainmatrix_to_matrix_str(num_obj)
   "\{py_str_value(den_obj)}@\{den_domain}||\{matrix}@\{num_domain}"
+}
+
+///|
+pub fn domainmatrix_clear_denoms_expr(
+  a : Array[Array[String]],
+  domain_spec : String,
+  convert? : Bool = false,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
+  let clear_denoms = resolve_method_callable(dm, "clear_denoms")
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
+  let res = py_call_with_args(clear_denoms, [], kwargs)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-clear-denoms-expr-tuple") }
+  let den_obj = tuple_items[0]
+  let num_obj = tuple_items[1]
+  let den_domain = match py_get_attr(den_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-expr-domain")
+  }
+  let num_domain = match py_get_attr(num_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-expr-num-domain")
+  }
+  let matrix = oracle_domainmatrix_to_matrix_str(num_obj)
+  "\{py_str_value(den_obj)}@\{den_domain}||\{matrix}@\{num_domain}"
+}
+
+///|
+pub fn domainmatrix_clear_denoms_rowwise_expr(
+  a : Array[Array[String]],
+  domain_spec : String,
+  convert? : Bool = false,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_exprs(a, domain_spec)
+  let clear_denoms_rowwise = resolve_method_callable(dm, "clear_denoms_rowwise")
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
+  let res = py_call_with_args(clear_denoms_rowwise, [], kwargs)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-clear-denoms-rowwise-tuple") }
+  let den_obj = tuple_items[0]
+  let num_obj = tuple_items[1]
+  let den_domain = match py_get_attr(den_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-rowwise-domain")
+  }
+  let num_domain = match py_get_attr(num_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-rowwise-num-domain")
+  }
+  let den_matrix = oracle_domainmatrix_to_matrix_str(den_obj)
+  let num_matrix = oracle_domainmatrix_to_matrix_str(num_obj)
+  "\{den_matrix}@\{den_domain}||\{num_matrix}@\{num_domain}"
 }
 
 ///|
@@ -707,6 +791,23 @@ pub fn domainmatrix_solve_den(
   let res = py_call_one(solve_den, dm_b)
   let tuple_items = py_list_to_pyobjects(res)
   guard tuple_items.length() >= 2 else { fail("domainmatrix-solve-den-tuple") }
+  let num = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let den = py_str_value(tuple_items[1])
+  "\{num}||\{den}"
+}
+
+///|
+pub fn domainmatrix_solve_den_rref(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
+  let solve_den_rref = resolve_method_callable(dm_a, "solve_den_rref")
+  let res = py_call_one(solve_den_rref, dm_b)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-solve-den-rref-tuple") }
   let num = oracle_domainmatrix_to_matrix_str(tuple_items[0])
   let den = py_str_value(tuple_items[1])
   "\{num}||\{den}"
@@ -882,6 +983,42 @@ fn oracle_domainmatrix_from_ints(
     let py_row : Array[@py.PyObject] = Array::new()
     for v in row {
       py_row.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let data_obj = py_list_from_objects(py_rows).obj()
+  let shape_obj = py_tuple_from_objects([
+    py_int_obj(row_count),
+    py_int_obj(col_count),
+  ]).obj()
+  let dm_enum = sympy_call_must("sympy.polys.matrices.DomainMatrix", [
+    OracleArg::PyObj(data_obj),
+    OracleArg::PyObj(shape_obj),
+    OracleArg::PyObj(domain_obj),
+  ])
+  objenum_to_obj(dm_enum)
+}
+
+///|
+fn oracle_domainmatrix_from_exprs(
+  rows : Array[Array[String]],
+  domain_spec : String,
+) -> @py.PyObject raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("domainmatrix-expr-ragged")
+    }
+  }
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let convert = resolve_method_callable(domain_obj, "convert")
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    let py_row : Array[@py.PyObject] = Array::new()
+    for value in row {
+      let expr_obj = sympy_sympify_str(value)
+      py_row.push(objenum_to_obj(py_call_one(convert, expr_obj)))
     }
     py_rows.push(py_list_from_objects(py_row).obj())
   }

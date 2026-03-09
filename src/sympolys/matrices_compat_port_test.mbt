@@ -28,6 +28,17 @@ fn basis_to_sympy_text(basis : Array[Array[FieldElem]]) -> String {
 }
 
 ///|
+fn basis_rows_to_matrix_text(basis : Array[Array[FieldElem]]) -> String {
+  let rows : Array[String] = Array::new()
+  for vec in basis {
+    let cells = vec.map(fe_to_string).join(", ")
+    rows.push("[\{cells}]")
+  }
+  let joined = rows.join(", ")
+  "Matrix([\{joined}])"
+}
+
+///|
 fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
   let rows = ddm.to_list()
   let out : Array[Array[Int]] = Array::new()
@@ -180,6 +191,44 @@ test "matrices: DDM exact denominator parity" {
 }
 
 ///|
+test "matrices: DDM rref_den/nullspace/solve_den_rref parity" {
+  let rows = [[1, 2, 3], [4, 5, 6]]
+  let a = ddm_from_ints(rows, Domain::ZZ)
+  let rref_den = a.rref_den(rref_method="FF")
+  let pivots = rref_den.2.map(i => i.to_string()).join(",")
+  let ours_rref_den =
+    "Matrix(\{rref_den.0.to_string()})||\{fe_to_string(rref_den.1)}||[\{pivots}]"
+  let oracle_rref_den = @sympy_polys.domainmatrix_rref_den(
+    rows,
+    "ZZ",
+    rref_method="FF",
+  )
+  guard mx_trim(ours_rref_den) == mx_trim(oracle_rref_den) else {
+    fail("ddm rref_den mismatch: ours=\{ours_rref_den}, oracle=\{oracle_rref_den}")
+  }
+
+  let zz_ns = ddm_from_ints([[6, -3], [4, -2]], Domain::ZZ)
+  let ours_ns = basis_rows_to_matrix_text(zz_ns.nullspace())
+  let oracle_ns = @sympy_polys.domainmatrix_nullspace([[6, -3], [4, -2]], "ZZ")
+  guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
+    fail("ddm ZZ nullspace mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
+  }
+
+  let sys_a = ddm_from_ints([[2, 0], [0, 3], [2, 3]], Domain::ZZ)
+  let sys_b = ddm_from_ints([[1], [1], [2]], Domain::ZZ)
+  let ours_solve = sys_a.solve_den_rref(sys_b)
+  let ours_solve_text = "Matrix(\{ours_solve.0.to_string()})||\{fe_to_string(ours_solve.1)}"
+  let oracle_solve = @sympy_polys.domainmatrix_solve_den_rref(
+    [[2, 0], [0, 3], [2, 3]],
+    [[1], [1], [2]],
+    "ZZ",
+  )
+  guard mx_trim(ours_solve_text) == mx_trim(oracle_solve) else {
+    fail("ddm solve_den_rref mismatch: ours=\{ours_solve_text}, oracle=\{oracle_solve}")
+  }
+}
+
+///|
 test "matrices: DomainMatrix LLL and transform parity" {
   let rows = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
   let a = ddm_from_ints(rows, Domain::ZZ)
@@ -238,6 +287,42 @@ test "matrices: SDM add/mul and dense conversion" {
   }
   guard mx_trim(mul_dense) == "[[0,8],[3,0]]" else {
     fail("sdm mul mismatch: \{mul_dense}")
+  }
+}
+
+///|
+test "matrices: SDM rref_den and nullspace_from_rref parity" {
+  let one = try! fe_from_int(1, Domain::ZZ)
+  let two = try! fe_from_int(2, Domain::ZZ)
+  let three = try! fe_from_int(3, Domain::ZZ)
+  let four = try! fe_from_int(4, Domain::ZZ)
+  let five = try! fe_from_int(5, Domain::ZZ)
+  let six = try! fe_from_int(6, Domain::ZZ)
+  let a = sdm_from_entries(
+    2,
+    3,
+    [(0, 0, one), (0, 1, two), (0, 2, three), (1, 0, four), (1, 1, five), (1, 2, six)],
+    Domain::ZZ,
+  )
+  let rref_den = a.rref_den(rref_method="FF")
+  let pivots = rref_den.2.map(i => i.to_string()).join(",")
+  let ours_rref_den =
+    "\{rref_den.0.to_dense().to_domain_matrix().to_matrix_string()}||\{fe_to_string(rref_den.1)}||[\{pivots}]"
+  let oracle_rref_den = @sympy_polys.domainmatrix_rref_den(
+    [[1, 2, 3], [4, 5, 6]],
+    "ZZ",
+    rref_method="FF",
+  )
+  guard mx_trim(ours_rref_den) == mx_trim(oracle_rref_den) else {
+    fail("sdm rref_den mismatch: ours=\{ours_rref_den}, oracle=\{oracle_rref_den}")
+  }
+
+  let ns_source = sdm_from_entries(2, 2, [(0, 0, six), (0, 1, try! fe_from_int(-3, Domain::ZZ)), (1, 0, four), (1, 1, try! fe_from_int(-2, Domain::ZZ))], Domain::ZZ)
+  let (ns_basis, _) = ns_source.rref_den(rref_method="FF").0.nullspace_from_rref()
+  let ours_ns = ns_basis.to_dense().to_domain_matrix().to_matrix_string()
+  let oracle_ns = @sympy_polys.domainmatrix_nullspace([[6, -3], [4, -2]], "ZZ")
+  guard mx_trim(ours_ns) == mx_trim(oracle_ns) else {
+    fail("sdm nullspace_from_rref mismatch: ours=\{ours_ns}, oracle=\{oracle_ns}")
   }
 }
 

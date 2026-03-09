@@ -12,6 +12,22 @@ fn dm_clear_denoms_repr(
 }
 
 ///|
+fn dm_clear_denoms_rowwise_repr(
+  den : DomainMatrix,
+  num : DomainMatrix,
+) -> String raise PolyError {
+  "\{den.to_matrix_string()}@\{domain_to_sympy_string(den.domain)}||\{num.to_matrix_string()}@\{domain_to_sympy_string(num.domain)}"
+}
+
+///|
+fn dm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
+  fe_from_rational(
+    try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
+    Domain::QQ,
+  )
+}
+
+///|
 test "domainmatrix: add/mul parity over QQ" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = domain_matrix_from_ints([[5, 6], [7, 8]], Domain::QQ)
@@ -61,6 +77,29 @@ test "domainmatrix: rref parity over QQ" {
 }
 
 ///|
+test "domainmatrix: rref_den parity over ZZ" {
+  let rows = [[1, 2, 3], [4, 5, 6]]
+  let a = domain_matrix_from_ints(rows, Domain::ZZ)
+
+  let ff = a.rref_den(rref_method="FF")
+  let ff_pivots = ff.2.map(i => i.to_string()).join(",")
+  let ours_ff = "\{ff.0.to_matrix_string()}||\{fe_to_string(ff.1)}||[\{ff_pivots}]"
+  let oracle_ff = @sympy_polys.domainmatrix_rref_den(rows, "ZZ", rref_method="FF")
+
+  let gj = a.rref_den(rref_method="GJ")
+  let gj_pivots = gj.2.map(i => i.to_string()).join(",")
+  let ours_gj = "\{gj.0.to_matrix_string()}||\{fe_to_string(gj.1)}||[\{gj_pivots}]"
+  let oracle_gj = @sympy_polys.domainmatrix_rref_den(rows, "ZZ", rref_method="GJ")
+
+  guard dm_trim(ours_ff) == dm_trim(oracle_ff) else {
+    fail("domainmatrix rref_den FF mismatch: ours=\{ours_ff}, oracle=\{oracle_ff}")
+  }
+  guard dm_trim(ours_gj) == dm_trim(oracle_gj) else {
+    fail("domainmatrix rref_den GJ mismatch: ours=\{ours_gj}, oracle=\{oracle_gj}")
+  }
+}
+
+///|
 test "domainmatrix: convert_to and to_field parity" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)
 
@@ -84,16 +123,23 @@ test "domainmatrix: convert_to and to_field parity" {
 
 ///|
 test "domainmatrix: clear_denoms parity over QQ" {
-  let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  let a = domain_matrix_from_dense(
+    [
+      [dm_rat(1, 2), dm_rat(1, 3), dm_rat(1, 4)],
+      [dm_rat(1, 5), dm_rat(1, 6), dm_rat(1, 7)],
+    ],
+    Domain::QQ,
+  )
   let keep = a.clear_denoms()
   let convert = a.clear_denoms(convert=true)
 
   let ours_keep = dm_clear_denoms_repr(keep.0, keep.1)
   let ours_convert = dm_clear_denoms_repr(convert.0, convert.1)
 
-  let oracle_keep = @sympy_polys.domainmatrix_clear_denoms([[1, 2], [3, 4]], "QQ")
-  let oracle_convert = @sympy_polys.domainmatrix_clear_denoms(
-    [[1, 2], [3, 4]],
+  let rows = [["1/2", "1/3", "1/4"], ["1/5", "1/6", "1/7"]]
+  let oracle_keep = @sympy_polys.domainmatrix_clear_denoms_expr(rows, "QQ")
+  let oracle_convert = @sympy_polys.domainmatrix_clear_denoms_expr(
+    rows,
     "QQ",
     convert=true,
   )
@@ -104,6 +150,39 @@ test "domainmatrix: clear_denoms parity over QQ" {
   guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
     fail(
       "domainmatrix clear_denoms(convert=True) mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}",
+    )
+  }
+}
+
+///|
+test "domainmatrix: clear_denoms_rowwise parity over QQ" {
+  let a = domain_matrix_from_dense(
+    [
+      [dm_rat(1, 2), dm_rat(1, 3), dm_rat(1, 4)],
+      [dm_rat(1, 5), dm_rat(1, 6), dm_rat(1, 7)],
+    ],
+    Domain::QQ,
+  )
+  let keep = a.clear_denoms_rowwise()
+  let convert = a.clear_denoms_rowwise(convert=true)
+
+  let ours_keep = dm_clear_denoms_rowwise_repr(keep.0, keep.1)
+  let ours_convert = dm_clear_denoms_rowwise_repr(convert.0, convert.1)
+
+  let rows = [["1/2", "1/3", "1/4"], ["1/5", "1/6", "1/7"]]
+  let oracle_keep = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(rows, "QQ")
+  let oracle_convert = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(
+    rows,
+    "QQ",
+    convert=true,
+  )
+
+  guard dm_trim(ours_keep) == dm_trim(oracle_keep) else {
+    fail("domainmatrix clear_denoms_rowwise mismatch: ours=\{ours_keep}, oracle=\{oracle_keep}")
+  }
+  guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
+    fail(
+      "domainmatrix clear_denoms_rowwise(convert=True) mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}",
     )
   }
 }
@@ -181,10 +260,51 @@ test "domainmatrix: row/column/nullspace parity over QQ" {
 }
 
 ///|
+test "domainmatrix: non-field nullspace parity over ZZ" {
+  let rows = [[6, -3], [4, -2]]
+  let a = domain_matrix_from_ints(rows, Domain::ZZ)
+  let ours = a.nullspace().to_matrix_string()
+  let oracle = @sympy_polys.domainmatrix_nullspace(rows, "ZZ")
+  guard dm_trim(ours) == dm_trim(oracle) else {
+    fail("domainmatrix ZZ nullspace mismatch: ours=\{ours}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "domainmatrix: solve_den_rref parity on rectangular ZZ system" {
+  let a_rows = [[2, 0], [0, 3], [2, 3]]
+  let b_rows = [[1], [1], [2]]
+  let a = domain_matrix_from_ints(a_rows, Domain::ZZ)
+  let b = domain_matrix_from_ints(b_rows, Domain::ZZ)
+  let ours = a.solve_den_rref(b)
+  let ours_text = "\{ours.0.to_matrix_string()}||\{fe_to_string(ours.1)}"
+  let oracle = @sympy_polys.domainmatrix_solve_den_rref(a_rows, b_rows, "ZZ")
+  guard dm_trim(ours_text) == dm_trim(oracle) else {
+    fail("domainmatrix solve_den_rref mismatch: ours=\{ours_text}, oracle=\{oracle}")
+  }
+}
+
+///|
+test "domainmatrix: solve_den_rref rejects non-unique systems" {
+  let under = domain_matrix_from_ints([[1, 1]], Domain::ZZ)
+  let under_rhs = domain_matrix_from_ints([[1]], Domain::ZZ)
+  guard (try? under.solve_den_rref(under_rhs)) is Err(_) else {
+    fail("solve_den_rref should reject underdetermined systems")
+  }
+
+  let inconsistent = domain_matrix_from_ints([[1, 1], [1, 1]], Domain::ZZ)
+  let inconsistent_rhs = domain_matrix_from_ints([[1], [2]], Domain::ZZ)
+  guard (try? inconsistent.solve_den_rref(inconsistent_rhs)) is Err(_) else {
+    fail("solve_den_rref should reject inconsistent systems")
+  }
+}
+
+///|
 test "domainmatrix: elimination does not mutate the input matrix" {
   let a = domain_matrix_from_ints([[1, 2], [3, 5]], Domain::QQ)
   let _ = a.det()
   let _ = a.rref()
+  let _ = a.rref_den()
   let _ = a.inv()
   guard dm_trim(a.to_matrix_string()) == dm_trim("Matrix([[1, 2], [3, 5]])") else {
     fail("domainmatrix operations should not mutate the receiver")

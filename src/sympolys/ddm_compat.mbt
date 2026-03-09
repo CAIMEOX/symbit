@@ -89,9 +89,21 @@ pub fn DDM::rref(self : DDM) -> (DDM, Array[Int]) raise PolyError {
 }
 
 ///|
+pub fn DDM::rref_den(
+  self : DDM,
+  rref_method? : String = "auto",
+  keep_domain? : Bool = true,
+) -> (DDM, FieldElem, Array[Int]) raise PolyError {
+  let (r, den, pivots) = self.dm.rref_den(
+    rref_method=rref_method,
+    keep_domain=keep_domain,
+  )
+  (DDM::{ dm: r }, den, pivots)
+}
+
+///|
 pub fn DDM::rank(self : DDM) -> Int raise PolyError {
-  let (_, pivots) = self.rref()
-  pivots.length()
+  self.dm.rank()
 }
 
 ///|
@@ -143,6 +155,15 @@ pub fn DDM::solve_den(
 }
 
 ///|
+pub fn DDM::solve_den_rref(
+  self : DDM,
+  rhs : DDM,
+) -> (DDM, FieldElem) raise PolyError {
+  let (num, den) = self.dm.solve_den_rref(rhs.dm)
+  (DDM::{ dm: num }, den)
+}
+
+///|
 pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
   let (m, n) = self.shape()
   if m != n {
@@ -186,38 +207,28 @@ pub fn DDM::inv(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
-pub fn DDM::nullspace(self : DDM) -> Array[Array[FieldElem]] raise PolyError {
-  let (m, n) = self.shape()
-  let (r, pivots) = self.rref()
-  let rows = r.to_list()
-  let pivot_set : Map[Int, Bool] = {}
-  for p in pivots {
-    pivot_set[p] = true
-  }
-  let free_cols : Array[Int] = Array::new()
-  for j in 0..<n {
-    if pivot_set.get(j) is None {
-      free_cols.push(j)
-    }
-  }
-  if free_cols.is_empty() {
-    return []
-  }
-  let one = fe_from_int(1, self.dm.domain)
-  let zero = fe_from_int(0, self.dm.domain)
-  let basis : Array[Array[FieldElem]] = Array::new()
-  for free in free_cols {
-    let vec : Array[FieldElem] = Array::make(n, zero)
-    vec.set(free, one)
-    for i in 0..<pivots.length() {
-      let p = pivots[i]
-      if i < m {
-        vec.set(p, fe_neg(rows[i][free]))
-      }
-    }
-    basis.push(vec)
-  }
-  basis
+pub fn DDM::nullspace(
+  self : DDM,
+  divide_last? : Bool = false,
+) -> Array[Array[FieldElem]] raise PolyError {
+  self.dm.nullspace(divide_last=divide_last).to_dense()
+}
+
+///|
+pub fn DDM::nullspace_from_rref(
+  self : DDM,
+  pivots? : Array[Int] = [],
+) -> (DDM, Array[Int]) raise PolyError {
+  let (basis, nonpivots) = nullspace_from_rref_with_nonpivots(self.dm, pivots~)
+  (DDM::{ dm: basis }, nonpivots)
+}
+
+///|
+pub fn DDM::particular(
+  self : DDM,
+  pivots? : Array[Int] = [],
+) -> DDM raise PolyError {
+  DDM::{ dm: particular_from_rref(self.dm, pivots~) }
 }
 
 ///|
