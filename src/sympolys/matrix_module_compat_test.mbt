@@ -114,3 +114,26 @@ test "matrix module wrappers: add_columns and symmetric_residue helpers" {
     fail("symmetric_residue mismatch")
   }
 }
+
+///|
+test "matrix module wrappers: dup_factor_list exposes dense factors for charpoly data" {
+  let f = [
+    fe_from_int(1, Domain::ZZ),
+    fe_from_int(-1, Domain::ZZ),
+    fe_from_int(-2, Domain::ZZ),
+  ]
+  let (content, factors) = dup_factor_list(f, Domain::ZZ)
+  guard fe_to_string(content) == "1" else {
+    fail("dup_factor_list content mismatch")
+  }
+  let parts : Array[String] = Array::new()
+  for factor in factors {
+    let coeffs = factor.0.map(fe_to_string).join(", ")
+    parts.push("[\{coeffs}]^\{factor.1}")
+  }
+  parts.sort()
+  let factors_text = parts.join("||")
+  guard mm_trim(factors_text) == mm_trim("[1, 1]^1||[1, -2]^1") else {
+    fail("dup_factor_list factors mismatch: \{factors_text}")
+  }
+}

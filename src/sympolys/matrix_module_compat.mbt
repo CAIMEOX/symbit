@@ -51,6 +51,21 @@ pub fn dom_eigenvects_to_sympy(
 }
 
 ///|
+/// Dense univariate factorization helper used by SymPy's matrix eigen routines.
+pub fn dup_factor_list(
+  f : Array[FieldElem],
+  domain : Domain,
+) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError {
+  let poly = poly_from_dense_desc(f, "x", domain)
+  let (content_q, factors) = poly.factor_list()
+  let dense_factors : Array[(Array[FieldElem], Int)] = Array::new()
+  for factor in factors {
+    dense_factors.push((poly_to_dense_desc(factor.0), factor.1))
+  }
+  (fe_from_rational(content_q, domain), dense_factors)
+}
+
+///|
 /// Wrapper for SymPy `polys.matrices.normalforms.hermite_normal_form`.
 pub fn hermite_normal_form(
   a : DomainMatrix,
