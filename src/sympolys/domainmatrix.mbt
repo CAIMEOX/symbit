@@ -5,6 +5,23 @@ pub(all) enum DomainMatrixRep {
 }
 
 ///|
+/// DOD/DOK helpers exposed by the matrix compatibility layer.
+pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
+
+///|
+pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
+
+///|
+/// Layout token used by `to_flat_nz`/`from_flat_nz`.
+pub enum DomainMatrixFlatNZData {
+  Dense(Int, Int)
+  Sparse(Int, Int, Array[(Int, Int)])
+}
+
+///|
+pub type FieldElemMapper = (FieldElem) -> FieldElem raise PolyError
+
+///|
 /// Matrix over a polys domain, aligned with SymPy `DomainMatrix` core shape.
 pub struct DomainMatrix {
   rep : DomainMatrixRep
@@ -34,6 +51,18 @@ fn clone_dense_rows(rows : Array[Array[FieldElem]]) -> Array[Array[FieldElem]] {
       cloned.push(v)
     }
     out.push(cloned)
+  }
+  out
+}
+
+fn clone_dod(dod : DomainMatrixDOD) -> DomainMatrixDOD {
+  let out : DomainMatrixDOD = Map::new()
+  for r, row in dod {
+    let row_copy : Map[Int, FieldElem] = Map::new()
+    for c, value in row {
+      row_copy[c] = value
+    }
+    out[r] = row_copy
   }
   out
 }
@@ -304,6 +333,34 @@ fn collect_charpoly_factors(
   out
 }
 
+fn poly_from_dense_desc(
+  coeffs : Array[FieldElem],
+  gen : String,
+  domain : Domain,
+) -> Poly raise PolyError {
+  let map : Map[Monomial, FieldElem] = Map::new()
+  let degree = coeffs.length() - 1
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    if fe_is_zero(coeff) {
+      continue
+    }
+    let mono = monomial_one(1)
+    mono.exps.set(0, degree - i)
+    add_term(map, mono, coeff, domain)
+  }
+  Poly::{ coeffs: map, gens: [gen], domain, order: TermOrder::Lex }
+}
+
+fn poly_to_dense_desc(poly : Poly) -> Array[FieldElem] raise PolyError {
+  let degree = poly.degree(0)
+  let coeffs : Array[FieldElem] = Array::make(degree + 1, fe_from_int(0, poly.domain))
+  for mono, coeff in poly.coeffs {
+    coeffs[degree - mono.exps[0]] = coeff
+  }
+  coeffs
+}
+
 ///|
 /// Build a dense domain matrix from explicit entries.
 pub fn domain_matrix_from_dense(
@@ -343,6 +400,28 @@ pub fn domain_matrix_from_ints(
 }
 
 ///|
+/// Build a dense domain matrix from a flat row-major list of entries.
+pub fn DomainMatrix::from_list_flat(
+  elements : Array[FieldElem],
+  shape : (Int, Int),
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  let (rows, cols) = shape
+  if rows < 0 || cols < 0 || elements.length() != rows * cols {
+    raise PolyError::DomainMismatch
+  }
+  let dense : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<rows {
+    let row : Array[FieldElem] = Array::new()
+    for j in 0..<cols {
+      row.push(elements[i * cols + j])
+    }
+    dense.push(row)
+  }
+  domain_matrix_from_dense(dense, domain)
+}
+
+///|
 /// Build a sparse domain matrix from non-zero entries only.
 pub fn domain_matrix_from_sparse(
   rows : Int,
@@ -369,6 +448,94 @@ pub fn domain_matrix_from_sparse(
     }
   }
   DomainMatrix::{ rep: DomainMatrixRep::Sparse(sparse), rows, cols, domain }
+}
+
+///|
+/// Build a sparse domain matrix from dictionary-of-dictionaries form.
+pub fn DomainMatrix::from_dod(
+  dod : DomainMatrixDOD,
+  shape : (Int, Int),
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  let (rows, cols) = shape
+  let entries : Array[(Int, Int, FieldElem)] = Array::new()
+  for r, row in dod {
+    for c, value in row {
+      entries.push((r, c, value))
+    }
+  }
+  domain_matrix_from_sparse(rows, cols, entries, domain)
+}
+
+///|
+/// Build a sparse domain matrix from dictionary-of-keys form.
+pub fn DomainMatrix::from_dok(
+  dok : DomainMatrixDOK,
+  shape : (Int, Int),
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  let (rows, cols) = shape
+  let entries : Array[(Int, Int, FieldElem)] = Array::new()
+  for key, value in dok {
+    entries.push((key.0, key.1, value))
+  }
+  domain_matrix_from_sparse(rows, cols, entries, domain)
+}
+
+///|
+pub fn DomainMatrix::zeros(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  domain_matrix_zeros(rows, cols, domain)
+}
+
+///|
+pub fn DomainMatrix::ones(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  domain_matrix_ones(rows, cols, domain)
+}
+
+///|
+pub fn DomainMatrix::eye(n : Int, domain : Domain) -> DomainMatrix raise PolyError {
+  domain_matrix_eye(n, domain)
+}
+
+///|
+pub fn DomainMatrix::diag(
+  values : Array[FieldElem],
+  domain : Domain,
+  rows? : Int? = None,
+  cols? : Int? = None,
+) -> DomainMatrix raise PolyError {
+  let rows = match rows {
+    Some(v) => v
+    None => values.length()
+  }
+  let cols = match cols {
+    Some(v) => v
+    None => values.length()
+  }
+  if rows < 0 || cols < 0 {
+    raise PolyError::DomainMismatch
+  }
+  let zero = fe_from_int(0, domain)
+  let dense = make_dense(rows, cols, zero)
+  let mut limit = rows
+  if cols < limit {
+    limit = cols
+  }
+  if values.length() < limit {
+    limit = values.length()
+  }
+  for i in 0..<limit {
+    dense[i].set(i, values[i])
+  }
+  domain_matrix_from_dense(dense, domain)
 }
 
 ///|
@@ -839,6 +1006,94 @@ pub fn DomainMatrix::flat(self : DomainMatrix) -> Array[FieldElem] raise PolyErr
 }
 
 ///|
+pub fn DomainMatrix::to_flat_nz(
+  self : DomainMatrix,
+) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
+  match self.rep {
+    DomainMatrixRep::Dense(_) =>
+      (self.to_list_flat(), DomainMatrixFlatNZData::Dense(self.rows, self.cols))
+    DomainMatrixRep::Sparse(_) => {
+      let elements : Array[FieldElem] = Array::new()
+      let positions : Array[(Int, Int)] = Array::new()
+      for entry in dense_matrix_nonzero_entries(self.to_dense()) {
+        elements.push(entry.2)
+        positions.push((entry.0, entry.1))
+      }
+      (elements, DomainMatrixFlatNZData::Sparse(self.rows, self.cols, positions))
+    }
+  }
+}
+
+///|
+pub fn DomainMatrix::from_flat_nz(
+  self : DomainMatrix,
+  elements : Array[FieldElem],
+  data : DomainMatrixFlatNZData,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  match data {
+    DomainMatrixFlatNZData::Dense(rows, cols) => {
+      if rows != self.rows || cols != self.cols {
+        raise PolyError::DomainMismatch
+      }
+      DomainMatrix::from_list_flat(elements, (rows, cols), domain)
+    }
+    DomainMatrixFlatNZData::Sparse(rows, cols, positions) => {
+      if rows != self.rows || cols != self.cols {
+        raise PolyError::DomainMismatch
+      }
+      if elements.length() != positions.length() {
+        raise PolyError::DomainMismatch
+      }
+      let entries : Array[(Int, Int, FieldElem)] = Array::new()
+      for i in 0..<elements.length() {
+        let pos = positions[i]
+        entries.push((pos.0, pos.1, elements[i]))
+      }
+      domain_matrix_from_sparse(rows, cols, entries, domain)
+    }
+  }
+}
+
+///|
+pub fn DomainMatrix::to_dod(self : DomainMatrix) -> DomainMatrixDOD raise PolyError {
+  let dod : DomainMatrixDOD = Map::new()
+  for entry in dense_matrix_nonzero_entries(self.to_dense()) {
+    match dod.get(entry.0) {
+      Some(row) => row[entry.1] = entry.2
+      None => {
+        let row : Map[Int, FieldElem] = Map::new()
+        row[entry.1] = entry.2
+        dod[entry.0] = row
+      }
+    }
+  }
+  dod
+}
+
+///|
+pub fn DomainMatrix::from_dod_like(
+  self : DomainMatrix,
+  dod : DomainMatrixDOD,
+  domain? : Domain? = None,
+) -> DomainMatrix raise PolyError {
+  let out_domain = match domain {
+    Some(v) => v
+    None => self.domain
+  }
+  restore_rep_like(DomainMatrix::from_dod(clone_dod(dod), self.shape(), out_domain), self)
+}
+
+///|
+pub fn DomainMatrix::to_dok(self : DomainMatrix) -> DomainMatrixDOK raise PolyError {
+  let dok : DomainMatrixDOK = Map::new()
+  for entry in dense_matrix_nonzero_entries(self.to_dense()) {
+    dok[(entry.0, entry.1)] = entry.2
+  }
+  dok
+}
+
+///|
 pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
   DDM::{ dm: self.copy() }
 }
@@ -979,6 +1234,61 @@ pub fn DomainMatrix::pow(self : DomainMatrix, n : Int) -> DomainMatrix raise Pol
     }
   }
   restore_rep_like(acc, self)
+}
+
+///|
+pub fn DomainMatrix::is_square(self : DomainMatrix) -> Bool {
+  self.rows == self.cols
+}
+
+///|
+pub fn DomainMatrix::applyfunc(
+  self : DomainMatrix,
+  func : FieldElemMapper,
+  domain? : Domain? = None,
+) -> DomainMatrix raise PolyError {
+  let out_domain = match domain {
+    Some(v) => v
+    None => self.domain
+  }
+  match self.rep {
+    DomainMatrixRep::Dense(rows) => {
+      let out : Array[Array[FieldElem]] = Array::new()
+      for row in rows {
+        let out_row : Array[FieldElem] = Array::new()
+        for value in row {
+          out_row.push(func(value))
+        }
+        out.push(out_row)
+      }
+      domain_matrix_from_dense(out, out_domain)
+    }
+    DomainMatrixRep::Sparse(entries) => {
+      let sparse : Map[Int, Map[Int, FieldElem]] = Map::new()
+      for r, row in entries {
+        for c, value in row {
+          let mapped = func(value)
+          if fe_is_zero(mapped) {
+            continue
+          }
+          match sparse.get(r) {
+            Some(row_out) => row_out[c] = mapped
+            None => {
+              let row_out : Map[Int, FieldElem] = Map::new()
+              row_out[c] = mapped
+              sparse[r] = row_out
+            }
+          }
+        }
+      }
+      DomainMatrix::{
+        rep: DomainMatrixRep::Sparse(sparse),
+        rows: self.rows,
+        cols: self.cols,
+        domain: out_domain,
+      }
+    }
+  }
 }
 
 fn domain_matrix_minor(
@@ -1968,6 +2278,21 @@ pub fn DomainMatrix::fflu(
 ///|
 pub fn DomainMatrix::charpoly(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
   dense_berk(self.to_dense(), self.domain)
+}
+
+///|
+pub fn DomainMatrix::charpoly_factor_list(
+  self : DomainMatrix,
+) -> Array[(Array[FieldElem], Int)] raise PolyError {
+  let irreducible : Array[(Array[FieldElem], Int)] = Array::new()
+  for block in self.charpoly_factor_blocks() {
+    let poly = poly_from_dense_desc(block.0, "lambda", self.domain)
+    let (_, factors) = poly.factor_list()
+    for factor_pair in factors {
+      irreducible.push((poly_to_dense_desc(factor_pair.0), block.1 * factor_pair.1))
+    }
+  }
+  collect_charpoly_factors(irreducible)
 }
 
 ///|

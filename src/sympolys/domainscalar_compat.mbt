@@ -11,6 +11,44 @@ fn coerce_scalar(elem : FieldElem, to_domain : Domain) -> FieldElem raise PolyEr
   fe_from_rational(q, to_domain)
 }
 
+fn scalar_quo(
+  a : FieldElem,
+  b : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if fe_is_zero(b) {
+    raise PolyError::DivisionByZero
+  }
+  match domain {
+    Domain::ZZ => {
+      let aq = fe_expect_rational(a)
+      let bq = fe_expect_rational(b)
+      let q = aq.numerator().div(bq.numerator())
+      fe_from_rational(@symnum.BigRational::from_bigint(q), Domain::ZZ)
+    }
+    _ => fe_mul(a, fe_inv(b))
+  }
+}
+
+fn scalar_rem(
+  a : FieldElem,
+  b : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  if fe_is_zero(b) {
+    raise PolyError::DivisionByZero
+  }
+  match domain {
+    Domain::ZZ => {
+      let aq = fe_expect_rational(a)
+      let bq = fe_expect_rational(b)
+      let r = aq.numerator().mod(bq.numerator())
+      fe_from_rational(@symnum.BigRational::from_bigint(r), Domain::ZZ)
+    }
+    _ => fe_from_int(0, domain)
+  }
+}
+
 ///|
 pub fn domain_scalar_new(
   element : FieldElem,
@@ -29,6 +67,14 @@ pub fn domain_scalar_from_int(n : Int, domain : Domain) -> DomainScalar raise Po
 ///|
 pub fn DomainScalar::to_domain(self : DomainScalar, domain : Domain) -> DomainScalar raise PolyError {
   domain_scalar_new(coerce_scalar(self.element, domain), domain)
+}
+
+///|
+pub fn DomainScalar::convert_to(
+  self : DomainScalar,
+  domain : Domain,
+) -> DomainScalar raise PolyError {
+  self.to_domain(domain)
 }
 
 ///|
@@ -76,6 +122,46 @@ pub fn DomainScalar::pow(self : DomainScalar, n : Int) -> DomainScalar raise Pol
     }
   }
   domain_scalar_new(acc, self.domain)
+}
+
+///|
+pub fn DomainScalar::floordiv(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> DomainScalar raise PolyError {
+  let (a, b) = self.unify(other)
+  domain_scalar_new(scalar_quo(a.element, b.element, a.domain), a.domain)
+}
+
+///|
+pub fn DomainScalar::mod(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> DomainScalar raise PolyError {
+  let (a, b) = self.unify(other)
+  domain_scalar_new(scalar_rem(a.element, b.element, a.domain), a.domain)
+}
+
+///|
+pub fn DomainScalar::divmod(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> (DomainScalar, DomainScalar) raise PolyError {
+  let (a, b) = self.unify(other)
+  (
+    domain_scalar_new(scalar_quo(a.element, b.element, a.domain), a.domain),
+    domain_scalar_new(scalar_rem(a.element, b.element, a.domain), a.domain),
+  )
+}
+
+///|
+pub fn DomainScalar::pos(self : DomainScalar) -> DomainScalar raise PolyError {
+  domain_scalar_new(self.element, self.domain)
+}
+
+///|
+pub fn DomainScalar::neg(self : DomainScalar) -> DomainScalar raise PolyError {
+  domain_scalar_new(fe_neg(self.element), self.domain)
 }
 
 ///|

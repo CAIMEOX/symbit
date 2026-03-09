@@ -630,6 +630,108 @@ pub fn domainmatrix_to_list_flat(
 }
 
 ///|
+pub fn domainmatrix_from_list_flat(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let domain_obj = oracle_domain_from_spec(domain_spec)
+  let elements : Array[@py.PyObject] = Array::new()
+  let convert = resolve_method_callable(domain_obj, "convert")
+  let rows = a.length()
+  let cols = if rows == 0 { 0 } else { a[0].length() }
+  for row in a {
+    for v in row {
+      elements.push(objenum_to_obj(py_call_one(convert, py_int_obj(v))))
+    }
+  }
+  let shape = py_tuple_from_objects([py_int_obj(rows), py_int_obj(cols)]).obj()
+  let ctor = resolve_method_callable(dm, "from_list_flat")
+  let res = py_call_with_args(
+    ctor,
+    [
+      py_list_from_objects(elements).obj(),
+      shape,
+      domain_obj,
+    ],
+    py_dict_new(),
+  )
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_to_flat_nz(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let flat_nz = resolve_method_callable(dm, "to_flat_nz")
+  py_str_enum(py_call_noargs(flat_nz))
+}
+
+///|
+pub fn domainmatrix_to_dod(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let to_dod = resolve_method_callable(dm, "to_dod")
+  py_str_enum(py_call_noargs(to_dod))
+}
+
+///|
+pub fn domainmatrix_from_dod_roundtrip(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let to_dod = resolve_method_callable(dm, "to_dod")
+  let dod = objenum_to_obj(py_call_noargs(to_dod))
+  let shape = py_tuple_from_objects([
+    py_int_obj(a.length()),
+    py_int_obj(if a.is_empty() { 0 } else { a[0].length() }),
+  ]).obj()
+  let ctor = resolve_method_callable(dm, "from_dod")
+  let res = py_call_with_args(
+    ctor,
+    [dod, shape, oracle_domain_from_spec(domain_spec)],
+    py_dict_new(),
+  )
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_to_dok(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let to_dok = resolve_method_callable(dm, "to_dok")
+  py_str_enum(py_call_noargs(to_dok))
+}
+
+///|
+pub fn domainmatrix_from_dok_roundtrip(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let to_dok = resolve_method_callable(dm, "to_dok")
+  let dok = objenum_to_obj(py_call_noargs(to_dok))
+  let shape = py_tuple_from_objects([
+    py_int_obj(a.length()),
+    py_int_obj(if a.is_empty() { 0 } else { a[0].length() }),
+  ]).obj()
+  let ctor = resolve_method_callable(dm, "from_dok")
+  let res = py_call_with_args(
+    ctor,
+    [dok, shape, oracle_domain_from_spec(domain_spec)],
+    py_dict_new(),
+  )
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
 pub fn domainmatrix_nnz(
   a : Array[Array[Int]],
   domain_spec : String,
@@ -731,6 +833,16 @@ pub fn domainmatrix_charpoly_factor_blocks(
   let dm = oracle_domainmatrix_from_ints(a, domain_spec)
   let factor_blocks = resolve_method_callable(dm, "charpoly_factor_blocks")
   py_str_enum(py_call_noargs(factor_blocks))
+}
+
+///|
+pub fn domainmatrix_charpoly_factor_list(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let factor_list = resolve_method_callable(dm, "charpoly_factor_list")
+  py_str_enum(py_call_noargs(factor_list))
 }
 
 ///|

@@ -465,11 +465,44 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
 ///|
 test "matrices: DDM and SDM structural wrappers" {
   let ddm = ddm_from_ints([[1, 0], [0, 4]], Domain::ZZ)
+  guard mx_trim(DDM::from_list_flat(ddm.to_list_flat(), (2, 2), Domain::ZZ).to_string()) ==
+    mx_trim(ddm.to_string()) else {
+    fail("ddm from_list_flat mismatch")
+  }
+  guard mx_trim(DDM::zeros(2, 2, Domain::ZZ).to_string()) == "[[0,0],[0,0]]" else {
+    fail("ddm zeros mismatch")
+  }
+  guard mx_trim(DDM::ones(2, 2, Domain::ZZ).to_string()) == "[[1,1],[1,1]]" else {
+    fail("ddm ones mismatch")
+  }
+  guard mx_trim(DDM::eye(2, Domain::ZZ).to_string()) == "[[1,0],[0,1]]" else {
+    fail("ddm eye mismatch")
+  }
+  guard mx_trim(DDM::diag([try! fe_from_int(1, Domain::ZZ), try! fe_from_int(4, Domain::ZZ)], Domain::ZZ).to_string()) ==
+    mx_trim(ddm.to_string()) else {
+    fail("ddm diag mismatch")
+  }
   guard coeffs_text(ddm.diagonal()) == "[1, 4]" else {
     fail("ddm diagonal mismatch")
   }
   guard coeffs_text(ddm.to_list_flat()) == "[1, 0, 0, 4]" else {
     fail("ddm flat mismatch")
+  }
+  let ddm_flat_nz = ddm.to_flat_nz()
+  guard mx_trim(ddm.from_flat_nz(ddm_flat_nz.0, ddm_flat_nz.1, Domain::ZZ).to_string()) ==
+    mx_trim(ddm.to_string()) else {
+    fail("ddm from_flat_nz mismatch")
+  }
+  guard ddm.to_dod().length() == 2 && ddm.to_dok().length() == 2 else {
+    fail("ddm dod/dok mismatch")
+  }
+  let ddm_two = try! fe_from_int(2, Domain::ZZ)
+  guard mx_trim(ddm.applyfunc(fn(value : FieldElem) raise PolyError { fe_mul(value, ddm_two) }).to_string()) ==
+    "[[2,0],[0,8]]" else {
+    fail("ddm applyfunc mismatch")
+  }
+  guard mx_trim(ddm.to_ddm().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("ddm to_ddm mismatch")
   }
   guard ddm.nnz() == 2 else { fail("ddm nnz mismatch") }
   guard ddm.is_diagonal() && ddm.is_upper() && ddm.is_lower() else {
@@ -498,11 +531,46 @@ test "matrices: DDM and SDM structural wrappers" {
   let one = try! fe_from_int(1, Domain::QQ)
   let four = try! fe_from_int(4, Domain::QQ)
   let sdm = sdm_from_entries(2, 2, [(0, 0, one), (1, 1, four)], Domain::QQ)
+  guard mx_trim(SDM::from_list_flat(sdm.to_list_flat(), (2, 2), Domain::QQ).to_dense().to_string()) ==
+    mx_trim(sdm.to_dense().to_string()) else {
+    fail("sdm from_list_flat mismatch")
+  }
+  guard mx_trim(SDM::zeros(2, 2, Domain::QQ).to_dense().to_string()) == "[[0,0],[0,0]]" else {
+    fail("sdm zeros mismatch")
+  }
+  guard mx_trim(SDM::ones(2, 2, Domain::QQ).to_dense().to_string()) == "[[1,1],[1,1]]" else {
+    fail("sdm ones mismatch")
+  }
+  guard mx_trim(SDM::eye(2, Domain::QQ).to_dense().to_string()) == "[[1,0],[0,1]]" else {
+    fail("sdm eye mismatch")
+  }
+  guard mx_trim(
+    SDM::diag([one, four], Domain::QQ).to_dense().to_string(),
+  ) == mx_trim(sdm.to_dense().to_string()) else {
+    fail("sdm diag mismatch")
+  }
   guard coeffs_text(sdm.diagonal()) == "[1, 4]" else {
     fail("sdm diagonal mismatch")
   }
   guard coeffs_text(sdm.to_list_flat()) == "[1, 0, 0, 4]" else {
     fail("sdm flat mismatch")
+  }
+  let sdm_flat_nz = sdm.to_flat_nz()
+  guard mx_trim(sdm.from_flat_nz(sdm_flat_nz.0, sdm_flat_nz.1, Domain::QQ).to_dense().to_string()) ==
+    mx_trim(sdm.to_dense().to_string()) else {
+    fail("sdm from_flat_nz mismatch")
+  }
+  guard sdm.to_dod().length() == 2 && sdm.to_dok().length() == 2 else {
+    fail("sdm dod/dok mismatch")
+  }
+  let sdm_two = try! fe_from_int(2, Domain::QQ)
+  guard mx_trim(
+    sdm.applyfunc(fn(value : FieldElem) raise PolyError { fe_mul(value, sdm_two) }).to_dense().to_string(),
+  ) == "[[2,0],[0,8]]" else {
+    fail("sdm applyfunc mismatch")
+  }
+  guard mx_trim(sdm.to_sdm().to_dense().to_string()) == mx_trim(sdm.to_dense().to_string()) else {
+    fail("sdm to_sdm mismatch")
   }
   guard sdm.nnz() == 2 else { fail("sdm nnz mismatch") }
   guard sdm.is_diagonal() && sdm.is_upper() && sdm.is_lower() else {
@@ -578,6 +646,25 @@ test "matrices: DomainScalar coercion and arithmetic" {
   let d = c.mul(domain_scalar_from_int(2, Domain::QQ))
   guard d.to_string() == "6" else {
     fail("domain scalar mul mismatch")
+  }
+
+  guard c.convert_to(Domain::QQ).to_string() == "3" else {
+    fail("domain scalar convert_to mismatch")
+  }
+  let q = domain_scalar_from_int(7, Domain::ZZ).floordiv(domain_scalar_from_int(3, Domain::ZZ))
+  let r = domain_scalar_from_int(7, Domain::ZZ).mod(domain_scalar_from_int(3, Domain::ZZ))
+  guard q.to_string() == "2" && r.to_string() == "1" else {
+    fail("domain scalar floordiv/mod mismatch")
+  }
+  let qr = domain_scalar_from_int(7, Domain::ZZ).divmod(domain_scalar_from_int(3, Domain::ZZ))
+  guard qr.0.to_string() == "2" && qr.1.to_string() == "1" else {
+    fail("domain scalar divmod mismatch")
+  }
+  guard domain_scalar_from_int(2, Domain::ZZ).pos().to_string() == "2" else {
+    fail("domain scalar pos mismatch")
+  }
+  guard domain_scalar_from_int(2, Domain::ZZ).neg().to_string() == "-2" else {
+    fail("domain scalar neg mismatch")
   }
 }
 

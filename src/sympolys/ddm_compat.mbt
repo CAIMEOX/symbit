@@ -18,6 +18,60 @@ pub fn ddm_from_ints(rows : Array[Array[Int]], domain : Domain) -> DDM raise Pol
 }
 
 ///|
+pub fn DDM::from_list_flat(
+  elements : Array[FieldElem],
+  shape : (Int, Int),
+  domain : Domain,
+) -> DDM raise PolyError {
+  DDM::{ dm: DomainMatrix::from_list_flat(elements, shape, domain) }
+}
+
+///|
+pub fn DDM::from_dod(
+  dod : DomainMatrixDOD,
+  shape : (Int, Int),
+  domain : Domain,
+) -> DDM raise PolyError {
+  let dm = DomainMatrix::from_dod(dod, shape, domain)
+  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+}
+
+///|
+pub fn DDM::from_dok(
+  dok : DomainMatrixDOK,
+  shape : (Int, Int),
+  domain : Domain,
+) -> DDM raise PolyError {
+  let dm = DomainMatrix::from_dok(dok, shape, domain)
+  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+}
+
+///|
+pub fn DDM::zeros(rows : Int, cols : Int, domain : Domain) -> DDM raise PolyError {
+  DDM::{ dm: DomainMatrix::zeros(rows, cols, domain) }
+}
+
+///|
+pub fn DDM::ones(rows : Int, cols : Int, domain : Domain) -> DDM raise PolyError {
+  DDM::{ dm: DomainMatrix::ones(rows, cols, domain) }
+}
+
+///|
+pub fn DDM::eye(n : Int, domain : Domain) -> DDM raise PolyError {
+  DDM::{ dm: DomainMatrix::eye(n, domain) }
+}
+
+///|
+pub fn DDM::diag(
+  values : Array[FieldElem],
+  domain : Domain,
+  rows? : Int? = None,
+  cols? : Int? = None,
+) -> DDM raise PolyError {
+  DDM::{ dm: DomainMatrix::diag(values, domain, rows=rows, cols=cols) }
+}
+
+///|
 pub fn DDM::shape(self : DDM) -> (Int, Int) {
   self.dm.shape()
 }
@@ -53,6 +107,24 @@ pub fn DDM::flat(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+pub fn DDM::to_flat_nz(
+  self : DDM,
+) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
+  self.dm.to_flat_nz()
+}
+
+///|
+pub fn DDM::from_flat_nz(
+  self : DDM,
+  elements : Array[FieldElem],
+  data : DomainMatrixFlatNZData,
+  domain : Domain,
+) -> DDM raise PolyError {
+  let dm = self.dm.from_flat_nz(elements, data, domain)
+  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+}
+
+///|
 pub fn DDM::iter_values(self : DDM) -> Array[FieldElem] raise PolyError {
   self.dm.iter_values()
 }
@@ -63,8 +135,33 @@ pub fn DDM::iter_items(self : DDM) -> Array[(Int, Int, FieldElem)] raise PolyErr
 }
 
 ///|
+pub fn DDM::to_dod(self : DDM) -> DomainMatrixDOD raise PolyError {
+  self.dm.to_dod()
+}
+
+///|
+pub fn DDM::to_dok(self : DDM) -> DomainMatrixDOK raise PolyError {
+  self.dm.to_dok()
+}
+
+///|
+pub fn DDM::applyfunc(
+  self : DDM,
+  func : FieldElemMapper,
+  domain? : Domain? = None,
+) -> DDM raise PolyError {
+  let dm = self.dm.applyfunc(func, domain=domain)
+  DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
+}
+
+///|
 pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
   self.dm
+}
+
+///|
+pub fn DDM::to_ddm(self : DDM) -> DDM raise PolyError {
+  self.copy()
 }
 
 ///|

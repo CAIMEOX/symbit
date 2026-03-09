@@ -20,6 +20,58 @@ pub fn sdm_from_dense(rows : Array[Array[FieldElem]], domain : Domain) -> SDM ra
 }
 
 ///|
+pub fn SDM::from_list_flat(
+  elements : Array[FieldElem],
+  shape : (Int, Int),
+  domain : Domain,
+) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::from_list_flat(elements, shape, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::from_dod(
+  dod : DomainMatrixDOD,
+  shape : (Int, Int),
+  domain : Domain,
+) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::from_dod(dod, shape, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::from_dok(
+  dok : DomainMatrixDOK,
+  shape : (Int, Int),
+  domain : Domain,
+) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::from_dok(dok, shape, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::zeros(rows : Int, cols : Int, domain : Domain) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::zeros(rows, cols, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::ones(rows : Int, cols : Int, domain : Domain) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::ones(rows, cols, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::eye(n : Int, domain : Domain) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::eye(n, domain).to_sparse() }
+}
+
+///|
+pub fn SDM::diag(
+  values : Array[FieldElem],
+  domain : Domain,
+  rows? : Int? = None,
+  cols? : Int? = None,
+) -> SDM raise PolyError {
+  SDM::{ dm: DomainMatrix::diag(values, domain, rows=rows, cols=cols).to_sparse() }
+}
+
+///|
 pub fn SDM::copy(self : SDM) -> SDM raise PolyError {
   SDM::{ dm: self.dm.copy().to_sparse() }
 }
@@ -51,6 +103,11 @@ pub fn SDM::to_ddm(self : SDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn SDM::to_sdm(self : SDM) -> SDM raise PolyError {
+  self.copy()
+}
+
+///|
 pub fn SDM::to_list(self : SDM) -> Array[Array[FieldElem]] raise PolyError {
   self.dm.to_list()
 }
@@ -66,6 +123,23 @@ pub fn SDM::flat(self : SDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
+pub fn SDM::to_flat_nz(
+  self : SDM,
+) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError {
+  self.dm.to_flat_nz()
+}
+
+///|
+pub fn SDM::from_flat_nz(
+  self : SDM,
+  elements : Array[FieldElem],
+  data : DomainMatrixFlatNZData,
+  domain : Domain,
+) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.from_flat_nz(elements, data, domain).to_sparse() }
+}
+
+///|
 pub fn SDM::iter_values(self : SDM) -> Array[FieldElem] raise PolyError {
   self.dm.iter_values()
 }
@@ -73,6 +147,16 @@ pub fn SDM::iter_values(self : SDM) -> Array[FieldElem] raise PolyError {
 ///|
 pub fn SDM::iter_items(self : SDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
   self.dm.iter_items()
+}
+
+///|
+pub fn SDM::to_dod(self : SDM) -> DomainMatrixDOD raise PolyError {
+  self.dm.to_dod()
+}
+
+///|
+pub fn SDM::to_dok(self : SDM) -> DomainMatrixDOK raise PolyError {
+  self.dm.to_dok()
 }
 
 ///|
@@ -88,6 +172,15 @@ pub fn SDM::to_sparse_entries(self : SDM) -> Array[(Int, Int, FieldElem)] raise 
     }
   }
   entries
+}
+
+///|
+pub fn SDM::applyfunc(
+  self : SDM,
+  func : FieldElemMapper,
+  domain? : Domain? = None,
+) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.applyfunc(func, domain=domain).to_sparse() }
 }
 
 ///|

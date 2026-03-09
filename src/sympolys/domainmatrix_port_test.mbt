@@ -36,6 +36,66 @@ fn dm_coeffs_text(coeffs : Array[FieldElem]) -> String {
 }
 
 ///|
+fn dm_dod_text(dod : DomainMatrixDOD) -> String {
+  let row_keys : Array[Int] = Array::new()
+  for r, _ in dod {
+    row_keys.push(r)
+  }
+  row_keys.sort()
+  let rows : Array[String] = Array::new()
+  for r in row_keys {
+    let row = match dod.get(r) {
+      Some(v) => v
+      None => {}
+    }
+    let col_keys : Array[Int] = Array::new()
+    for c, _ in row {
+      col_keys.push(c)
+    }
+    col_keys.sort()
+    let cols : Array[String] = Array::new()
+    for c in col_keys {
+      cols.push("\{c}: \{fe_to_string(row[c])}")
+    }
+    let joined_cols = cols.join(", ")
+    rows.push("\{r}: {\{joined_cols}}")
+  }
+  let joined_rows = rows.join(", ")
+  "{\{joined_rows}}"
+}
+
+///|
+fn dm_dok_text(dok : DomainMatrixDOK) -> String {
+  let items : Array[(Int, Int, String)] = Array::new()
+  for key, value in dok {
+    items.push((key.0, key.1, fe_to_string(value)))
+  }
+  items.sort_by(fn(lhs, rhs) {
+    if lhs.0 == rhs.0 {
+      lhs.1.compare(rhs.1)
+    } else {
+      lhs.0.compare(rhs.0)
+    }
+  })
+  let parts : Array[String] = Array::new()
+  for item in items {
+    parts.push("(\{item.0}, \{item.1}): \{item.2}")
+  }
+  let joined = parts.join(", ")
+  "{\{joined}}"
+}
+
+///|
+fn dm_factor_list_text(factors : Array[(Array[FieldElem], Int)]) -> String {
+  let parts : Array[String] = Array::new()
+  for factor in factors {
+    parts.push("(\{dm_coeffs_text(factor.0)}, \{factor.1})")
+  }
+  let joined = parts.join(", ")
+  "[\{joined}]"
+}
+
+///|
 fn dm_is_diagonal(dm : DomainMatrix) -> Bool raise PolyError {
   let rows = dm.to_dense()
   for i in 0..<dm.rows {
@@ -343,6 +403,54 @@ test "domainmatrix: structural helper parity" {
     fail("domainmatrix to_list_flat mismatch: ours=\{ours_flat}, oracle=\{oracle_flat}")
   }
 
+  let ours_from_flat = DomainMatrix::from_list_flat(diag_case.to_list_flat(), (2, 2), Domain::ZZ)
+  let oracle_from_flat = @sympy_polys.domainmatrix_from_list_flat([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(ours_from_flat.to_matrix_string()) == dm_trim(oracle_from_flat) else {
+    fail(
+      "domainmatrix from_list_flat mismatch: ours=\{ours_from_flat.to_matrix_string()}, oracle=\{oracle_from_flat}",
+    )
+  }
+
+  let flat_nz = diag_case.to_flat_nz()
+  let roundtrip_flat_nz = diag_case.from_flat_nz(flat_nz.0, flat_nz.1, Domain::ZZ)
+  guard dm_trim(roundtrip_flat_nz.to_matrix_string()) == dm_trim(diag_case.to_matrix_string()) else {
+    fail("domainmatrix from_flat_nz roundtrip mismatch")
+  }
+  guard dm_coeffs_text(flat_nz.0) == "[1, 0, 0, 4]" else {
+    fail("domainmatrix to_flat_nz elements mismatch")
+  }
+
+  let ours_dod = dm_dod_text(diag_case.to_dod())
+  let oracle_dod = @sympy_polys.domainmatrix_to_dod([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(ours_dod) == dm_trim(oracle_dod) else {
+    fail("domainmatrix to_dod mismatch: ours=\{ours_dod}, oracle=\{oracle_dod}")
+  }
+  let from_dod = diag_case.from_dod_like(diag_case.to_dod())
+  let oracle_from_dod = @sympy_polys.domainmatrix_from_dod_roundtrip([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(from_dod.to_matrix_string()) == dm_trim(oracle_from_dod) else {
+    fail("domainmatrix from_dod mismatch: ours=\{from_dod.to_matrix_string()}, oracle=\{oracle_from_dod}")
+  }
+
+  let ours_dok = dm_dok_text(diag_case.to_dok())
+  let oracle_dok = @sympy_polys.domainmatrix_to_dok([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(ours_dok) == dm_trim(oracle_dok) else {
+    fail("domainmatrix to_dok mismatch: ours=\{ours_dok}, oracle=\{oracle_dok}")
+  }
+  let from_dok = DomainMatrix::from_dok(diag_case.to_dok(), (2, 2), Domain::ZZ)
+  let oracle_from_dok = @sympy_polys.domainmatrix_from_dok_roundtrip([[1, 0], [0, 4]], "ZZ")
+  guard dm_trim(from_dok.to_matrix_string()) == dm_trim(oracle_from_dok) else {
+    fail("domainmatrix from_dok mismatch: ours=\{from_dok.to_matrix_string()}, oracle=\{oracle_from_dok}")
+  }
+
+  let two_zz = try! fe_from_int(2, Domain::ZZ)
+  let applied = diag_case.applyfunc(fn(value : FieldElem) raise PolyError { fe_mul(value, two_zz) })
+  guard dm_trim(applied.to_matrix_string()) == dm_trim("Matrix([[2, 0], [0, 8]])") else {
+    fail("domainmatrix applyfunc mismatch: ours=\{applied.to_matrix_string()}")
+  }
+  guard diag_case.is_square() else {
+    fail("domainmatrix is_square should hold")
+  }
+
   guard diag_case.nnz() == @sympy_polys.domainmatrix_nnz([[1, 0], [0, 4]], "ZZ") else {
     fail("domainmatrix nnz mismatch")
   }
@@ -367,6 +475,14 @@ test "domainmatrix: structural helper parity" {
   guard dm_trim(ours_blocks) == dm_trim(oracle_blocks) else {
     fail(
       "domainmatrix charpoly_factor_blocks mismatch: ours=\{ours_blocks}, oracle=\{oracle_blocks}",
+    )
+  }
+
+  let ours_factor_list = dm_factor_list_text(block.charpoly_factor_list())
+  let oracle_factor_list = @sympy_polys.domainmatrix_charpoly_factor_list(block_rows, "ZZ")
+  guard dm_trim(ours_factor_list) == dm_trim(oracle_factor_list) else {
+    fail(
+      "domainmatrix charpoly_factor_list mismatch: ours=\{ours_factor_list}, oracle=\{oracle_factor_list}",
     )
   }
 
