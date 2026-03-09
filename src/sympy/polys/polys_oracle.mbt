@@ -869,6 +869,146 @@ pub fn domainmatrix_scc(
 }
 
 ///|
+fn oracle_domainmatrix_summary(dm_obj : @py.PyObject) -> String raise {
+  let domain = match py_get_attr(dm_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-summary-domain")
+  }
+  let fmt = match py_get_attr(dm_obj, "rep") {
+    Some(rep) =>
+      match py_get_attr(objenum_to_obj(rep), "fmt") {
+        Some(fmt_obj) => py_str_enum(fmt_obj)
+        None => fail("domainmatrix-summary-fmt")
+      }
+    None => fail("domainmatrix-summary-rep")
+  }
+  "\{oracle_domainmatrix_to_matrix_str(dm_obj)}@\{domain}|\{fmt}"
+}
+
+///|
+pub fn domainmatrix_from_list_sympy_expr(
+  rows : Array[Array[String]],
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> String raise {
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  let py_rows : Array[@py.PyObject] = Array::new()
+  for row in rows {
+    if row.length() != col_count {
+      fail("domainmatrix-from-list-sympy-ragged")
+    }
+    let py_row : Array[@py.PyObject] = Array::new()
+    for value in row {
+      py_row.push(sympy_sympify_str(value))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let dummy = oracle_domainmatrix_from_ints([[0]], "ZZ")
+  let klass = match py_get_attr(dummy, "__class__") {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("domainmatrix-class")
+  }
+  let kwargs = py_dict_new()
+  if field {
+    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
+  }
+  if gaussian {
+    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
+  }
+  match modulus {
+    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
+    None => ()
+  }
+  let dm = py_call_with_args(
+    resolve_method_callable(klass, "from_list_sympy"),
+    [
+      py_int_obj(row_count),
+      py_int_obj(col_count),
+      py_list_from_objects(py_rows).obj(),
+    ],
+    kwargs,
+  )
+  oracle_domainmatrix_summary(objenum_to_obj(dm))
+}
+
+///|
+pub fn domainmatrix_from_matrix_expr(
+  rows : Array[Array[String]],
+  fmt? : String = "sparse",
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> String raise {
+  let py_rows : Array[@py.PyObject] = Array::new()
+  let row_count = rows.length()
+  let col_count = if row_count == 0 { 0 } else { rows[0].length() }
+  for row in rows {
+    if row.length() != col_count {
+      fail("domainmatrix-from-matrix-ragged")
+    }
+    let py_row : Array[@py.PyObject] = Array::new()
+    for value in row {
+      py_row.push(sympy_sympify_str(value))
+    }
+    py_rows.push(py_list_from_objects(py_row).obj())
+  }
+  let mat = sympy_call_must(
+    "sympy.Matrix",
+    [OracleArg::PyObj(py_list_from_objects(py_rows).obj())],
+  )
+  let dummy = oracle_domainmatrix_from_ints([[0]], "ZZ")
+  let klass = match py_get_attr(dummy, "__class__") {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("domainmatrix-class")
+  }
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "fmt", py_string_obj(fmt))
+  if field {
+    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
+  }
+  if gaussian {
+    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
+  }
+  match modulus {
+    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
+    None => ()
+  }
+  let dm = py_call_with_args(
+    resolve_method_callable(klass, "from_Matrix"),
+    [objenum_to_obj(mat)],
+    kwargs,
+  )
+  oracle_domainmatrix_summary(objenum_to_obj(dm))
+}
+
+///|
+pub fn domainmatrix_choose_domain(
+  a : Array[Array[Int]],
+  domain_spec : String,
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let choose_domain = resolve_method_callable(dm, "choose_domain")
+  let kwargs = py_dict_new()
+  if field {
+    py_dict_set_obj(kwargs, "field", py_bool_obj(true))
+  }
+  if gaussian {
+    py_dict_set_obj(kwargs, "gaussian", py_bool_obj(true))
+  }
+  match modulus {
+    Some(p) => py_dict_set_obj(kwargs, "modulus", py_int_obj(p))
+    None => ()
+  }
+  let res = py_call_with_args(choose_domain, [], kwargs)
+  oracle_domainmatrix_summary(objenum_to_obj(res))
+}
+
+///|
 pub fn domainmatrix_inv(
   a : Array[Array[Int]],
   domain_spec : String,
@@ -1414,6 +1554,21 @@ pub fn domainmatrix_internal_solve_summary(
   let particular = oracle_domainmatrix_to_matrix_str(parts[0])
   let nullspace = oracle_domainmatrix_to_matrix_str(parts[1])
   "\{particular}||\{nullspace}"
+}
+
+///|
+pub fn domainscalar_from_expr(expr : String) -> String raise {
+  let args = py_list_from_objects([sympy_sympify_str(expr)]).obj()
+  let res = sympy_call_must(
+    "sympy.polys.constructor.construct_domain",
+    [OracleArg::PyObj(args)],
+  )
+  let tup = py_list_to_pyobjects(res)
+  guard tup.length() >= 2 else { fail("domainscalar-construct-domain") }
+  let domain = py_str_obj(tup[0])
+  let items = py_list_to_pyobjects(@py.PyObjectEnum::create(tup[1]))
+  guard items.length() >= 1 else { fail("domainscalar-construct-items") }
+  "\{py_str_obj(items[0])}@\{domain}"
 }
 
 ///|

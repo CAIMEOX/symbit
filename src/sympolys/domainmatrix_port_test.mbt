@@ -135,6 +135,30 @@ fn dm_factor_list_text(factors : Array[(Array[FieldElem], Int)]) -> String {
 }
 
 ///|
+fn dm_expr_matrix_text(rows : MatrixExpr) -> String {
+  let row_text : Array[String] = Array::new()
+  for row in rows {
+    let cells = row.map(@symprint.to_string).join(", ")
+    row_text.push("[\{cells}]")
+  }
+  let joined = row_text.join(", ")
+  "Matrix([\{joined}])"
+}
+
+///|
+fn dm_fmt(dm : DomainMatrix) -> String {
+  match dm.rep {
+    DomainMatrixRep::Dense(_) => "dense"
+    DomainMatrixRep::Sparse(_) => "sparse"
+  }
+}
+
+///|
+fn dm_summary(dm : DomainMatrix) -> String raise PolyError {
+  "\{dm.to_matrix_string()}@\{domain_to_sympy_string(dm.domain)}|\{dm_fmt(dm)}"
+}
+
+///|
 fn dm_is_diagonal(dm : DomainMatrix) -> Bool raise PolyError {
   let rows = dm.to_dense()
   for i in 0..<dm.rows {
@@ -600,6 +624,72 @@ test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
   }
   guard !a.unify_eq(domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)) else {
     fail("domainmatrix unify_eq should reject shape mismatch")
+  }
+}
+
+///|
+test "domainmatrix: sympy-style constructor and conversion parity" {
+  let expr_rows : MatrixExpr = [
+    [try! @symcore.rational_from_ints(1, 2), @symcore.int(2)],
+    [@symcore.int(3), @symcore.int(4)],
+  ]
+  let ours_from_list = DomainMatrix::from_list_sympy(2, 2, expr_rows)
+  let oracle_from_list = @sympy_polys.domainmatrix_from_list_sympy_expr(
+    [["1/2", "2"], ["3", "4"]],
+  )
+  guard dm_trim(dm_summary(ours_from_list)) == dm_trim(oracle_from_list) else {
+    fail(
+      "domainmatrix from_list_sympy mismatch: ours=\{dm_summary(ours_from_list)}, oracle=\{oracle_from_list}",
+    )
+  }
+
+  let ours_from_matrix = DomainMatrix::from_Matrix(expr_rows)
+  let oracle_from_matrix = @sympy_polys.domainmatrix_from_matrix_expr(
+    [["1/2", "2"], ["3", "4"]],
+    fmt="sparse",
+  )
+  guard dm_trim(dm_summary(ours_from_matrix)) == dm_trim(oracle_from_matrix) else {
+    fail(
+      "domainmatrix from_Matrix mismatch: ours=\{dm_summary(ours_from_matrix)}, oracle=\{oracle_from_matrix}",
+    )
+  }
+
+  let choose = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ).choose_domain(field=true)
+  let oracle_choose = @sympy_polys.domainmatrix_choose_domain(
+    [[1, 2], [3, 4]],
+    "ZZ",
+    field=true,
+  )
+  guard dm_trim(dm_summary(choose)) == dm_trim(oracle_choose) else {
+    fail(
+      "domainmatrix choose_domain mismatch: ours=\{dm_summary(choose)}, oracle=\{oracle_choose}",
+    )
+  }
+
+  guard dm_trim(dm_expr_matrix_text(ours_from_list.to_Matrix())) ==
+    dm_trim("Matrix([[1/2, 2], [3, 4]])") else {
+    fail("domainmatrix to_Matrix mismatch: \{dm_expr_matrix_text(ours_from_list.to_Matrix())}")
+  }
+  guard dm_trim(dm_expr_matrix_text(ours_from_list.to_sympy())) ==
+    dm_trim("Matrix([[1/2, 2], [3, 4]])") else {
+    fail("domainmatrix to_sympy mismatch")
+  }
+  guard @symprint.to_string(ours_from_list.getitem_sympy(0, 0)) == "1/2" else {
+    fail("domainmatrix getitem_sympy mismatch")
+  }
+
+  let ddm_dm = ours_from_list.to_ddm().to_domain_matrix()
+  let ddm_rep = DomainMatrix::from_rep(ddm_dm.rep, ddm_dm.shape(), ddm_dm.domain)
+  guard dm_trim(ddm_rep.to_matrix_string()) == dm_trim(ours_from_list.to_matrix_string()) else {
+    fail("domainmatrix from_rep(DDM) mismatch")
+  }
+  let sdm_dm = ours_from_matrix.to_sdm().to_domain_matrix()
+  let sdm_rep = DomainMatrix::from_rep(sdm_dm.rep, sdm_dm.shape(), sdm_dm.domain)
+  guard dm_trim(sdm_rep.to_matrix_string()) == dm_trim(ours_from_matrix.to_matrix_string()) else {
+    fail("domainmatrix from_rep(SDM) mismatch")
+  }
+  guard dm_trim(ours_from_matrix.to_dfm().to_string()) == "[[1/2,2],[3,4]]" else {
+    fail("domainmatrix to_dfm fallback mismatch")
   }
 }
 

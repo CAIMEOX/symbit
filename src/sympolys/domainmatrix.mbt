@@ -12,6 +12,11 @@ pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
 pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
 
 ///|
+pub type MatrixExpr = Array[Array[@symcore.Expr]]
+
+///|
+pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
+
 /// Layout token used by `to_flat_nz`/`from_flat_nz`.
 pub enum DomainMatrixFlatNZData {
   Dense(Int, Int)
@@ -158,6 +163,66 @@ fn slice_index_range(
       out.push(i)
       i += step
     }
+  }
+  out
+}
+
+fn infer_expr_items_domain(
+  items : Array[@symcore.Expr],
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> Domain raise PolyError {
+  let mut domain = match modulus {
+    Some(p) =>
+      if p <= 1 {
+        raise PolyError::BadModulus
+      } else {
+        Domain::GF(p)
+      }
+    None =>
+      if items.any(expr => has_fractional_coeff(expr)) {
+        Domain::QQ
+      } else {
+        Domain::ZZ
+      }
+  }
+  if gaussian {
+    domain = match domain {
+      Domain::ZZ | Domain::QQ => Domain::CC
+      _ => domain
+    }
+  }
+  if field {
+    domain = domain_get_field(domain)
+  }
+  domain
+}
+
+fn field_elem_from_scalar_expr(
+  expr : @symcore.Expr,
+  domain : Domain,
+) -> FieldElem raise PolyError {
+  let poly = Poly::from_expr(expr, [], domain) catch {
+    _ => raise PolyError::DomainMismatch
+  }
+  if poly.is_zero() {
+    return fe_from_int(0, domain)
+  }
+  let mono = monomial_one(0)
+  if poly.coeffs.length() != 1 {
+    raise PolyError::DomainMismatch
+  }
+  match poly.coeffs.get(mono) {
+    Some(coeff) => coeff
+    None => raise PolyError::DomainMismatch
+  }
+}
+
+fn expr_matrix_from_field_rows(rows : Array[Array[FieldElem]]) -> MatrixExpr {
+  let out : MatrixExpr = Array::new()
+  for row in rows {
+    out.push(row.map(fe_to_expr_const))
   }
   out
 }
@@ -501,6 +566,21 @@ pub fn DomainMatrix::from_list(
 }
 
 ///|
+pub fn DomainMatrix::from_rep(
+  rep : DomainMatrixRep,
+  shape : (Int, Int),
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
+  let (rows, cols) = shape
+  match rep {
+    DomainMatrixRep::Dense(values) =>
+      domain_matrix_from_dense(clone_dense_rows(values), domain)
+    DomainMatrixRep::Sparse(dod) =>
+      DomainMatrix::from_dod(clone_dod(dod), (rows, cols), domain)
+  }
+}
+
+///|
 /// Build a dense domain matrix from a flat row-major list of entries.
 pub fn DomainMatrix::from_list_flat(
   elements : Array[FieldElem],
@@ -581,6 +661,129 @@ pub fn DomainMatrix::from_dok(
     entries.push((key.0, key.1, value))
   }
   domain_matrix_from_sparse(rows, cols, entries, domain)
+}
+
+///|
+pub fn DomainMatrix::get_domain(
+  items_sympy : Array[@symcore.Expr],
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> (Domain, Array[FieldElem]) raise PolyError {
+  let domain = infer_expr_items_domain(
+    items_sympy,
+    field=field,
+    gaussian=gaussian,
+    modulus=modulus,
+  )
+  let values : Array[FieldElem] = Array::new()
+  for item in items_sympy {
+    values.push(field_elem_from_scalar_expr(item, domain))
+  }
+  (domain, values)
+}
+
+///|
+pub fn DomainMatrix::from_list_sympy(
+  nrows : Int,
+  ncols : Int,
+  rows : MatrixExpr,
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> DomainMatrix raise PolyError {
+  if rows.length() != nrows {
+    raise PolyError::DomainMismatch
+  }
+  let flat : Array[@symcore.Expr] = Array::new()
+  for row in rows {
+    if row.length() != ncols {
+      raise PolyError::DomainMismatch
+    }
+    for value in row {
+      flat.push(value)
+    }
+  }
+  let (domain, values) = DomainMatrix::get_domain(
+    flat,
+    field=field,
+    gaussian=gaussian,
+    modulus=modulus,
+  )
+  DomainMatrix::from_list_flat(values, (nrows, ncols), domain)
+}
+
+///|
+pub fn DomainMatrix::from_dict_sympy(
+  nrows : Int,
+  ncols : Int,
+  elemsdict : MatrixExprDOD,
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> DomainMatrix raise PolyError {
+  let exprs : Array[@symcore.Expr] = Array::new()
+  let positions : Array[(Int, Int)] = Array::new()
+  for r, row in elemsdict {
+    if r < 0 || r >= nrows {
+      raise PolyError::DomainMismatch
+    }
+    for c, value in row {
+      if c < 0 || c >= ncols {
+        raise PolyError::DomainMismatch
+      }
+      positions.push((r, c))
+      exprs.push(value)
+    }
+  }
+  let (domain, values) = DomainMatrix::get_domain(
+    exprs,
+    field=field,
+    gaussian=gaussian,
+    modulus=modulus,
+  )
+  let dod : DomainMatrixDOD = Map::new()
+  for i in 0..<positions.length() {
+    let (r, c) = positions[i]
+    let value = values[i]
+    if fe_is_zero(value) {
+      continue
+    }
+    match dod.get(r) {
+      Some(row) => row[c] = value
+      None => {
+        let row : Map[Int, FieldElem] = Map::new()
+        row[c] = value
+        dod[r] = row
+      }
+    }
+  }
+  DomainMatrix::from_dod(dod, (nrows, ncols), domain)
+}
+
+///|
+pub fn DomainMatrix::from_Matrix(
+  rows : MatrixExpr,
+  fmt? : String = "sparse",
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> DomainMatrix raise PolyError {
+  let nrows = rows.length()
+  let ncols = if nrows == 0 { 0 } else { rows[0].length() }
+  let dm = DomainMatrix::from_list_sympy(
+    nrows,
+    ncols,
+    rows,
+    field=field,
+    gaussian=gaussian,
+    modulus=modulus,
+  )
+  match fmt {
+    "dense" => dm
+    "sparse" => dm.to_sparse()
+    _ => raise PolyError::DomainMismatch
+  }
 }
 
 ///|
@@ -689,6 +892,26 @@ pub fn DomainMatrix::shape(self : DomainMatrix) -> (Int, Int) {
 ///|
 pub fn DomainMatrix::copy(self : DomainMatrix) -> DomainMatrix raise PolyError {
   domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain)
+}
+
+///|
+pub fn DomainMatrix::choose_domain(
+  self : DomainMatrix,
+  field? : Bool = false,
+  gaussian? : Bool = false,
+  modulus? : Int? = None,
+) -> DomainMatrix raise PolyError {
+  let chosen = DomainMatrix::from_Matrix(
+    self.to_Matrix(),
+    fmt=match self.rep {
+      DomainMatrixRep::Dense(_) => "dense"
+      DomainMatrixRep::Sparse(_) => "sparse"
+    },
+    field=field,
+    gaussian=gaussian,
+    modulus=modulus,
+  )
+  restore_rep_like(chosen, self)
 }
 
 ///|
@@ -1241,6 +1464,25 @@ pub fn DomainMatrix::to_dok(self : DomainMatrix) -> DomainMatrixDOK raise PolyEr
 }
 
 ///|
+pub fn DomainMatrix::to_sympy(self : DomainMatrix) -> MatrixExpr raise PolyError {
+  expr_matrix_from_field_rows(self.to_dense())
+}
+
+///|
+pub fn DomainMatrix::to_Matrix(self : DomainMatrix) -> MatrixExpr raise PolyError {
+  self.to_sympy()
+}
+
+///|
+pub fn DomainMatrix::getitem_sympy(
+  self : DomainMatrix,
+  row : Int,
+  col : Int,
+) -> @symcore.Expr raise PolyError {
+  fe_to_expr_const(self.getitem(row, col).element)
+}
+
+///|
 pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
   DDM::{ dm: self.copy() }
 }
@@ -1248,6 +1490,16 @@ pub fn DomainMatrix::to_ddm(self : DomainMatrix) -> DDM raise PolyError {
 ///|
 pub fn DomainMatrix::to_sdm(self : DomainMatrix) -> SDM raise PolyError {
   SDM::{ dm: self.to_sparse() }
+}
+
+///|
+pub fn DomainMatrix::to_dfm(self : DomainMatrix) -> DDM raise PolyError {
+  self.to_ddm()
+}
+
+///|
+pub fn DomainMatrix::to_dfm_or_ddm(self : DomainMatrix) -> DDM raise PolyError {
+  self.to_ddm()
 }
 
 ///|

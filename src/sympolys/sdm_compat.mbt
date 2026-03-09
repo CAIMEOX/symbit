@@ -47,6 +47,11 @@ pub fn SDM::from_list(
 }
 
 ///|
+pub fn SDM::from_ddm(other : DDM) -> SDM raise PolyError {
+  SDM::{ dm: other.to_domain_matrix().to_sparse() }
+}
+
+///|
 pub fn SDM::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),
@@ -130,8 +135,23 @@ pub fn SDM::to_ddm(self : SDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn SDM::to_dfm(self : SDM) -> DDM raise PolyError {
+  self.to_ddm()
+}
+
+///|
+pub fn SDM::to_dfm_or_ddm(self : SDM) -> DDM raise PolyError {
+  self.to_ddm()
+}
+
+///|
 pub fn SDM::to_sdm(self : SDM) -> SDM raise PolyError {
   self.copy()
+}
+
+///|
+pub fn SDM::to_domain_matrix(self : SDM) -> DomainMatrix {
+  self.dm
 }
 
 ///|

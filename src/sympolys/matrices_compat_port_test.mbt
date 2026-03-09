@@ -785,6 +785,42 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
 }
 
 ///|
+test "matrices: DFM fallback and scalar sympy helpers" {
+  let ddm = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
+  guard mx_trim(ddm.to_dfm().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("ddm to_dfm fallback mismatch")
+  }
+  guard mx_trim(ddm.to_dfm_or_ddm().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("ddm to_dfm_or_ddm fallback mismatch")
+  }
+
+  let sdm = SDM::from_ddm(ddm)
+  guard mx_trim(sdm.to_domain_matrix().to_matrix_string()) == mx_trim("Matrix([[1, 2], [3, 4]])") else {
+    fail("sdm from_ddm/to_domain_matrix mismatch")
+  }
+  guard mx_trim(sdm.to_dfm().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("sdm to_dfm fallback mismatch")
+  }
+  guard mx_trim(sdm.to_dfm_or_ddm().to_string()) == mx_trim(ddm.to_string()) else {
+    fail("sdm to_dfm_or_ddm fallback mismatch")
+  }
+
+  let scalar = DomainScalar::from_sympy(try! @symcore.rational_from_ints(1, 2))
+  let oracle_scalar = @sympy_polys.domainscalar_from_expr("1/2")
+  let ours_scalar = "\{scalar.to_string()}@\{domain_to_sympy_string(scalar.domain)}"
+  guard mx_trim(ours_scalar) == mx_trim(oracle_scalar) else {
+    fail("domainscalar from_sympy mismatch: ours=\{ours_scalar}, oracle=\{oracle_scalar}")
+  }
+  guard @symprint.to_string(scalar.to_sympy()) == "1/2" else {
+    fail("domainscalar to_sympy mismatch")
+  }
+  let scalar_new = DomainScalar::new(try! fe_from_int(3, Domain::ZZ), Domain::ZZ)
+  guard scalar_new.to_string() == "3" else {
+    fail("domainscalar new mismatch")
+  }
+}
+
+///|
 test "matrices: DomainScalar coercion and arithmetic" {
   let a = domain_scalar_from_int(2, Domain::ZZ)
   let b = domain_scalar_from_int(1, Domain::QQ)

@@ -41,6 +41,16 @@ pub fn DDM::from_ddm(other : DDM) -> DDM raise PolyError {
 }
 
 ///|
+pub fn DDM::to_dfm(self : DDM) -> DDM raise PolyError {
+  self.copy()
+}
+
+///|
+pub fn DDM::to_dfm_or_ddm(self : DDM) -> DDM raise PolyError {
+  self.copy()
+}
+
+///|
 pub fn DDM::from_list_flat(
   elements : Array[FieldElem],
   shape : (Int, Int),

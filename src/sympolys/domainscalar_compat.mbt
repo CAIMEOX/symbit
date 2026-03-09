@@ -60,8 +60,23 @@ pub fn domain_scalar_new(
 }
 
 ///|
+pub fn DomainScalar::new(
+  element : FieldElem,
+  domain : Domain,
+) -> DomainScalar raise PolyError {
+  domain_scalar_new(element, domain)
+}
+
+///|
 pub fn domain_scalar_from_int(n : Int, domain : Domain) -> DomainScalar raise PolyError {
   domain_scalar_new(fe_from_int(n, domain), domain)
+}
+
+///|
+pub fn DomainScalar::from_sympy(expr : @symcore.Expr) -> DomainScalar raise PolyError {
+  let domain = infer_expr_items_domain([expr])
+  let element = field_elem_from_scalar_expr(expr, domain)
+  domain_scalar_new(element, domain)
 }
 
 ///|
@@ -177,4 +192,9 @@ pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
 ///|
 pub fn DomainScalar::to_string(self : DomainScalar) -> String {
   fe_to_string(self.element)
+}
+
+///|
+pub fn DomainScalar::to_sympy(self : DomainScalar) -> @symcore.Expr {
+  fe_to_expr_const(self.element)
 }
