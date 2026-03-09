@@ -204,8 +204,8 @@ pub fn SDM::neg(self : SDM) -> SDM raise PolyError {
 }
 
 ///|
-pub fn SDM::mul(self : SDM, other : SDM) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.mul(other.dm).to_sparse() }
+pub fn SDM::mul(self : SDM, scalar : FieldElem) -> SDM raise PolyError {
+  SDM::{ dm: self.dm.mul(scalar).to_sparse() }
 }
 
 ///|

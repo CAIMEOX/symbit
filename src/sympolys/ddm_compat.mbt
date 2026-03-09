@@ -190,8 +190,8 @@ pub fn DDM::neg(self : DDM) -> DDM raise PolyError {
 }
 
 ///|
-pub fn DDM::mul(self : DDM, other : DDM) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.mul(other.dm) }
+pub fn DDM::mul(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
+  DDM::{ dm: self.dm.mul(scalar) }
 }
 
 ///|
@@ -206,7 +206,7 @@ pub fn DDM::mul_elementwise(self : DDM, other : DDM) -> DDM raise PolyError {
 
 ///|
 pub fn DDM::mul_scalar(self : DDM, scalar : FieldElem) -> DDM raise PolyError {
-  DDM::{ dm: self.dm.scalarmul(scalar) }
+  self.mul(scalar)
 }
 
 ///|

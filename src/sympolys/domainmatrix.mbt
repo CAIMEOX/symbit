@@ -123,6 +123,27 @@ fn domain_matrix_div_scalar(
   domain_matrix_scale(dm, fe_inv(scalar))
 }
 
+fn domain_matrix_matmul(
+  left : DomainMatrix,
+  right : DomainMatrix,
+) -> DomainMatrix raise PolyError {
+  ensure_mul_shape(left, right)
+  let a = left.to_dense()
+  let b = right.to_dense()
+  let zero = fe_from_int(0, left.domain)
+  let out : Array[Array[FieldElem]] = make_dense(left.rows, right.cols, zero)
+  for i in 0..<left.rows {
+    for j in 0..<right.cols {
+      let mut acc = fe_from_int(0, left.domain)
+      for k in 0..<left.cols {
+        acc = fe_add(acc, fe_mul(a[i][k], b[k][j]))
+      }
+      out[i].set(j, acc)
+    }
+  }
+  domain_matrix_from_dense(out, left.domain)
+}
+
 fn canonical_unit_in_domain(
   value : FieldElem,
   domain : Domain,
@@ -799,23 +820,9 @@ pub fn DomainMatrix::sub(
 ///|
 pub fn DomainMatrix::mul(
   self : DomainMatrix,
-  other : DomainMatrix,
+  scalar : FieldElem,
 ) -> DomainMatrix raise PolyError {
-  ensure_mul_shape(self, other)
-  let a = self.to_dense()
-  let b = other.to_dense()
-  let zero = fe_from_int(0, self.domain)
-  let out : Array[Array[FieldElem]] = make_dense(self.rows, other.cols, zero)
-  for i in 0..<self.rows {
-    for j in 0..<other.cols {
-      let mut acc = fe_from_int(0, self.domain)
-      for k in 0..<self.cols {
-        acc = fe_add(acc, fe_mul(a[i][k], b[k][j]))
-      }
-      out[i].set(j, acc)
-    }
-  }
-  domain_matrix_from_dense(out, self.domain)
+  self.scalarmul(scalar)
 }
 
 ///|
@@ -908,7 +915,7 @@ pub fn DomainMatrix::matmul(
   self : DomainMatrix,
   other : DomainMatrix,
 ) -> DomainMatrix raise PolyError {
-  self.mul(other)
+  restore_rep_like(domain_matrix_matmul(self, other), self)
 }
 
 ///|
@@ -1226,11 +1233,11 @@ pub fn DomainMatrix::pow(self : DomainMatrix, n : Int) -> DomainMatrix raise Pol
   let mut exp = n
   while exp > 0 {
     if exp % 2 == 1 {
-      acc = acc.mul(base)
+      acc = acc.matmul(base)
     }
     exp = exp / 2
     if exp > 0 {
-      base = base.mul(base)
+      base = base.matmul(base)
     }
   }
   restore_rep_like(acc, self)
@@ -1571,9 +1578,9 @@ fn dense_berk(
     let an_c = if i == 2 {
       cur_c
     } else {
-      domain_matrix_from_dense(a_minor, domain).mul(domain_matrix_from_dense(cur_c, domain)).to_dense()
+      domain_matrix_from_dense(a_minor, domain).matmul(domain_matrix_from_dense(cur_c, domain)).to_dense()
     }
-    let ran_c = domain_matrix_from_dense(r, domain).mul(domain_matrix_from_dense(an_c, domain)).to_dense()
+    let ran_c = domain_matrix_from_dense(r, domain).matmul(domain_matrix_from_dense(an_c, domain)).to_dense()
     for j in 0..<(n + 1 - i) {
       t[i + j].set(j, fe_neg(ran_c[0][0]))
     }
@@ -1584,7 +1591,7 @@ fn dense_berk(
   for coeff in q {
     q_col.push([coeff])
   }
-  let out = domain_matrix_from_dense(t, domain).mul(domain_matrix_from_dense(q_col, domain)).to_dense()
+  let out = domain_matrix_from_dense(t, domain).matmul(domain_matrix_from_dense(q_col, domain)).to_dense()
   let coeffs : Array[FieldElem] = Array::new()
   for row in out {
     coeffs.push(row[0])
@@ -2339,7 +2346,7 @@ pub fn DomainMatrix::eval_poly(
   let ident = domain_matrix_eye(self.rows, self.domain)
   let mut acc = ident.scalarmul(p[0])
   for i in 1..<p.length() {
-    acc = self.mul(acc).add(ident.scalarmul(p[i]))
+    acc = self.matmul(acc).add(ident.scalarmul(p[i]))
   }
   restore_rep_like(acc, self)
 }
@@ -2359,7 +2366,7 @@ pub fn DomainMatrix::eval_poly_mul(
   }
   let mut acc = b.scalarmul(convert_matrix_elem(p[0], b.domain))
   for i in 1..<p.length() {
-    acc = a.mul(acc).add(b.scalarmul(convert_matrix_elem(p[i], b.domain)))
+    acc = a.matmul(acc).add(b.scalarmul(convert_matrix_elem(p[i], b.domain)))
   }
   restore_rep_like(acc, rhs)
 }
