@@ -43,6 +43,16 @@ fn convert_matrix_elem(v : FieldElem, domain : Domain) -> FieldElem raise PolyEr
   fe_from_rational(q, domain)
 }
 
+fn all_indices_except(size : Int, skip : Int) -> Array[Int] {
+  let out : Array[Int] = Array::new()
+  for i in 0..<size {
+    if i != skip {
+      out.push(i)
+    }
+  }
+  out
+}
+
 ///|
 /// Build a dense domain matrix from explicit entries.
 pub fn domain_matrix_from_dense(
@@ -231,6 +241,45 @@ pub fn DomainMatrix::unify(
 }
 
 ///|
+pub fn DomainMatrix::clear_denoms(
+  self : DomainMatrix,
+  convert? : Bool = false,
+) -> (DomainScalar, DomainMatrix) raise PolyError {
+  let base = self.domain
+  let ring = if domain_has_assoc_ring_pred(base) {
+    domain_get_ring(base)
+  } else {
+    base
+  }
+  let dense = self.to_dense()
+  let mut lcm_den = BigInt::from_int(1)
+  for row in dense {
+    for value in row {
+      let q = fe_expect_rational(value)
+      let den = q.denominator()
+      let g = @symnum.gcd_bigint(lcm_den, den)
+      lcm_den = lcm_den.mul(den.div(g))
+    }
+  }
+  let scale_rat = @symnum.BigRational::from_bigint(lcm_den)
+  let scale = fe_from_rational(scale_rat, base)
+  let out_domain = if convert { ring } else { base }
+  let out : Array[Array[FieldElem]] = Array::new()
+  for row in dense {
+    let out_row : Array[FieldElem] = Array::new()
+    for value in row {
+      let scaled = fe_mul(value, scale)
+      out_row.push(if convert { convert_matrix_elem(scaled, out_domain) } else { scaled })
+    }
+    out.push(out_row)
+  }
+  (
+    domain_scalar_new(fe_from_rational(scale_rat, ring), ring),
+    domain_matrix_from_dense(out, out_domain),
+  )
+}
+
+///|
 fn ensure_same_shape(
   a : DomainMatrix,
   b : DomainMatrix,
@@ -345,6 +394,17 @@ pub fn DomainMatrix::extract(
     out.push(row)
   }
   domain_matrix_from_dense(out, self.domain)
+}
+
+fn domain_matrix_minor(
+  matrix : DomainMatrix,
+  skip_row : Int,
+  skip_col : Int,
+) -> DomainMatrix raise PolyError {
+  matrix.extract(
+    all_indices_except(matrix.rows, skip_row),
+    all_indices_except(matrix.cols, skip_col),
+  )
 }
 
 ///|
@@ -595,6 +655,71 @@ pub fn DomainMatrix::inv(self : DomainMatrix) -> DomainMatrix raise PolyError {
     inv_rows.push(row)
   }
   domain_matrix_from_dense(inv_rows, self.domain)
+}
+
+///|
+pub fn DomainMatrix::adj_det(
+  self : DomainMatrix,
+) -> (DomainMatrix, FieldElem) raise PolyError {
+  if self.rows != self.cols {
+    raise PolyError::DomainMismatch
+  }
+  let det = self.det()
+  if self.rows == 0 {
+    return (domain_matrix_zeros(0, 0, self.domain), det)
+  }
+  if self.rows == 1 {
+    return (domain_matrix_eye(1, self.domain), det)
+  }
+  let n = self.rows
+  let out : Array[Array[FieldElem]] = Array::new()
+  for i in 0..<n {
+    let row : Array[FieldElem] = Array::new()
+    for j in 0..<n {
+      let minor = domain_matrix_minor(self, j, i)
+      let mut cofactor = minor.det()
+      if (i + j) % 2 == 1 {
+        cofactor = fe_neg(cofactor)
+      }
+      row.push(cofactor)
+    }
+    out.push(row)
+  }
+  (domain_matrix_from_dense(out, self.domain), det)
+}
+
+///|
+pub fn DomainMatrix::adjugate(self : DomainMatrix) -> DomainMatrix raise PolyError {
+  self.adj_det().0
+}
+
+///|
+pub fn DomainMatrix::inv_den(
+  self : DomainMatrix,
+  solve_method? : String = "",
+) -> (DomainMatrix, FieldElem) raise PolyError {
+  if solve_method != "" && solve_method != "rref" && solve_method != "charpoly" {
+    raise PolyError::DomainMismatch
+  }
+  let (adj, det) = self.adj_det()
+  if fe_is_zero(det) {
+    raise PolyError::ExactQuotientFailed
+  }
+  (adj, det)
+}
+
+///|
+pub fn DomainMatrix::solve_den(
+  self : DomainMatrix,
+  rhs : DomainMatrix,
+  solve_method? : String = "",
+) -> (DomainMatrix, FieldElem) raise PolyError {
+  let (a, b) = self.unify(rhs)
+  if a.rows != b.rows || a.rows != a.cols {
+    raise PolyError::DomainMismatch
+  }
+  let (num_inv, den) = a.inv_den(solve_method=solve_method)
+  (num_inv.mul(b), den)
 }
 
 ///|

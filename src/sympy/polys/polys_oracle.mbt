@@ -628,6 +628,91 @@ pub fn domainmatrix_nullspace(
 }
 
 ///|
+pub fn domainmatrix_clear_denoms(
+  a : Array[Array[Int]],
+  domain_spec : String,
+  convert? : Bool = false,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let clear_denoms = resolve_method_callable(dm, "clear_denoms")
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "convert", py_bool_obj(convert))
+  let res = py_call_with_args(clear_denoms, [], kwargs)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-clear-denoms-tuple") }
+  let den_obj = tuple_items[0]
+  let num_obj = tuple_items[1]
+  let den_domain = match py_get_attr(den_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-domain")
+  }
+  let num_domain = match py_get_attr(num_obj, "domain") {
+    Some(obj) => py_str_enum(obj)
+    None => fail("domainmatrix-clear-denoms-num-domain")
+  }
+  let matrix = oracle_domainmatrix_to_matrix_str(num_obj)
+  "\{py_str_value(den_obj)}@\{den_domain}||\{matrix}@\{num_domain}"
+}
+
+///|
+pub fn domainmatrix_adj_det(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let adj_det = resolve_method_callable(dm, "adj_det")
+  let res = py_call_noargs(adj_det)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-adj-det-tuple") }
+  let adj = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let det = py_str_value(tuple_items[1])
+  "\{adj}||\{det}"
+}
+
+///|
+pub fn domainmatrix_adjugate(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let adjugate = resolve_method_callable(dm, "adjugate")
+  let res = py_call_noargs(adjugate)
+  oracle_domainmatrix_to_matrix_str(objenum_to_obj(res))
+}
+
+///|
+pub fn domainmatrix_inv_den(
+  a : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm = oracle_domainmatrix_from_ints(a, domain_spec)
+  let inv_den = resolve_method_callable(dm, "inv_den")
+  let res = py_call_noargs(inv_den)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-inv-den-tuple") }
+  let inv = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let den = py_str_value(tuple_items[1])
+  "\{inv}||\{den}"
+}
+
+///|
+pub fn domainmatrix_solve_den(
+  a : Array[Array[Int]],
+  b : Array[Array[Int]],
+  domain_spec : String,
+) -> String raise {
+  let dm_a = oracle_domainmatrix_from_ints(a, domain_spec)
+  let dm_b = oracle_domainmatrix_from_ints(b, domain_spec)
+  let solve_den = resolve_method_callable(dm_a, "solve_den")
+  let res = py_call_one(solve_den, dm_b)
+  let tuple_items = py_list_to_pyobjects(res)
+  guard tuple_items.length() >= 2 else { fail("domainmatrix-solve-den-tuple") }
+  let num = oracle_domainmatrix_to_matrix_str(tuple_items[0])
+  let den = py_str_value(tuple_items[1])
+  "\{num}||\{den}"
+}
+
+///|
 pub fn ddm_add(
   a : Array[Array[Int]],
   b : Array[Array[Int]],
@@ -1334,6 +1419,14 @@ fn py_string_obj(s : String) -> @py.PyObject {
 fn py_int_obj(n : Int) -> @py.PyObject {
   let state = py_gil_ensure()
   let obj = @py.PyInteger::from(n.to_int64()).obj()
+  py_gil_release(state)
+  obj
+}
+
+///|
+fn py_bool_obj(value : Bool) -> @py.PyObject {
+  let state = py_gil_ensure()
+  let obj = @py.PyBool::from(value).obj()
   py_gil_release(state)
   obj
 }
