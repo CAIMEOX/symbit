@@ -98,6 +98,16 @@ fn render_optional_expr_result(
   }
 }
 
+fn small_univar_poly_expr(poly_expr : String, gen : String) -> @symcore.Expr raise PolyError {
+  let x = @symcore.symbol(gen)
+  match trim_ws(poly_expr) {
+    "x-2" => x - @symcore.int(2)
+    "x**2-2" => (x ^ @symcore.int(2)) - @symcore.int(2)
+    "x**2+1" => (x ^ @symcore.int(2)) + @symcore.int(1)
+    _ => raise PolyError::BadGenerator(poly_expr)
+  }
+}
+
 ///|
 test "domains: basic constructor/repr parity" {
   let specs = [
@@ -826,6 +836,7 @@ test "domains: inject and drop parity across simple and nested composites" {
 test "domains: algebraic_field parity and Domain methods" {
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let sqrt3 = @symcore.function("sqrt", [@symcore.int(3)])
+  let x = @symcore.symbol("x")
   let cases = [
     ("QQ", [sqrt2], ["sqrt(2)"]),
     ("ZZ", [sqrt2], ["sqrt(2)"]),
@@ -840,6 +851,125 @@ test "domains: algebraic_field parity and Domain methods" {
     guard trim_ws(ours) == trim_ws(oracle) else {
       fail("algebraic_field mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
     }
+  }
+
+  let poly_cases : Array[(String, String, String, String)] = [
+    ("QQ", "x**2 - 2", "x", "a"),
+    ("ZZ", "x**2 + 1", "x", "i"),
+  ]
+  for item in poly_cases {
+    let spec = item.0
+    let poly_expr = item.1
+    let gen = item.2
+    let ext_alias = item.3
+    let poly = Poly::from_expr(
+      try! small_univar_poly_expr(poly_expr, gen),
+      [gen],
+      domain_from_string(spec),
+    )
+    let ours = domain_to_sympy_string(
+      try! domain_from_string(spec).alg_field_from_poly(poly, alias=Some(ext_alias)),
+    )
+    let oracle = @sympy_polys.domain_alg_field_from_poly(
+      spec,
+      poly_expr,
+      gen,
+      alias=Some(ext_alias),
+    )
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("alg_field_from_poly mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let poly_root_cases : Array[(String, String, String, Int)] = [
+    ("QQ", "x**2 - 2", "x", -1),
+    ("QQ", "x**2 - 2", "x", 0),
+    ("QQ", "x**2 - 2", "x", -2),
+    ("QQ", "x - 2", "x", -1),
+  ]
+  for item in poly_root_cases {
+    let spec = item.0
+    let poly_expr = item.1
+    let gen = item.2
+    let root_index = item.3
+    let poly = Poly::from_expr(
+      try! small_univar_poly_expr(poly_expr, gen),
+      [gen],
+      domain_from_string(spec),
+    )
+    let ours = domain_to_sympy_string(
+      try! domain_from_string(spec).alg_field_from_poly(poly, root_index=root_index),
+    )
+    let oracle = @sympy_polys.domain_alg_field_from_poly(
+      spec,
+      poly_expr,
+      gen,
+      root_index=root_index,
+    )
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail(
+        "alg_field_from_poly root mismatch for \{spec}, \{poly_expr}, root_index=\{root_index}: ours=\{ours}, oracle=\{oracle}",
+      )
+    }
+  }
+
+  let direct_alg_field = try! (
+    domain_from_string("QQ").alg_field_from_poly(
+    Poly::from_expr((x ^ @symcore.int(2)) - @symcore.int(2), ["x"], Domain::QQ),
+    alias=Some("a"),
+    )
+  )
+  match direct_alg_field {
+    Domain::AlgExt(_, gens, rels) => {
+      guard gens.equal(["a"]) else {
+        fail("alg_field_from_poly should use the requested alias")
+      }
+      guard normalize_expr_text(@symprint.to_string(rels[0])) == "a**2-2" else {
+        fail("alg_field_from_poly should rewrite the minimal polynomial to the alias generator")
+      }
+    }
+    _ => fail("expected AlgExt from alg_field_from_poly")
+  }
+
+  let cyclo_cases = [
+    ("QQ", 5, false, "zeta", Some("t")),
+    ("QQ", 7, true, "zeta", None),
+    ("ZZ", 3, false, "w", None),
+  ]
+  for item in cyclo_cases {
+    let spec = item.0
+    let n = item.1
+    let ss = item.2
+    let ext_alias = item.3
+    let gen_opt = item.4
+    let ours = domain_to_sympy_string(
+      try! domain_from_string(spec).cyclotomic_field(n, ss=ss, alias=ext_alias, gen=gen_opt),
+    )
+    let oracle = @sympy_polys.domain_cyclotomic_field(
+      spec,
+      n,
+      ss=ss,
+      alias=ext_alias,
+      gen=gen_opt,
+    )
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("cyclotomic_field mismatch for \{spec}, n=\{n}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let direct_cyclo = try! (
+    domain_from_string("QQ").cyclotomic_field(5, alias="a", gen=Some("t"))
+  )
+  match direct_cyclo {
+    Domain::AlgExt(_, gens, rels) => {
+      guard gens.equal(["a"]) else {
+        fail("cyclotomic_field should expose the requested alias")
+      }
+      guard normalize_expr_text(@symprint.to_string(rels[0])) == "a**4+a**3+a**2+a+1" else {
+        fail("cyclotomic_field should build the correct cyclotomic polynomial")
+      }
+    }
+    _ => fail("expected AlgExt from cyclotomic_field")
   }
 
   guard domain_from_string("GF(5)").characteristic() == 5 else {

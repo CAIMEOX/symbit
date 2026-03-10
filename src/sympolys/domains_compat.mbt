@@ -1149,6 +1149,133 @@ pub fn domain_algebraic_field(
   }
 }
 
+fn expr_replace_symbol(
+  expr : @symcore.Expr,
+  old_name : String,
+  new_name : String,
+) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Number(_) => expr
+    @symcore.Expr::Symbol(name) =>
+      if name == old_name {
+        @symcore.symbol(new_name)
+      } else {
+        expr
+      }
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+    @symcore.Expr::Mul(args) =>
+      @symcore.mul(args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+    @symcore.Expr::Pow(base, exp) =>
+      expr_replace_symbol(base, old_name, new_name) ^
+      expr_replace_symbol(exp, old_name, new_name)
+    @symcore.Expr::Function(name, args) =>
+      @symcore.function(name, args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+  }
+}
+
+fn poly_with_generator(poly : Poly, gen : String, domain : Domain) -> Poly raise PolyError {
+  guard poly.gens.length() == 1 else { raise PolyError::NotUnivariate }
+  let raw = if poly.gens[0] == gen {
+    poly.to_expr()
+  } else {
+    expr_replace_symbol(poly.to_expr(), poly.gens[0], gen)
+  }
+  Poly::from_expr(raw, [gen], domain)
+}
+
+fn poly_univar_coeff(poly : Poly, exp : Int) -> FieldElem raise PolyError {
+  guard poly.gens.length() == 1 else { raise PolyError::NotUnivariate }
+  let mono = monomial_from_array([exp])
+  match poly.coeffs.get(mono) {
+    Some(coeff) => coeff
+    None => fe_from_int(0, poly.domain)
+  }
+}
+
+fn normalize_root_index(poly : Poly, root_index : Int) -> Int raise PolyError {
+  let degree = poly.degree(0)
+  guard degree >= 1 else { raise PolyError::NonPolynomial }
+  if root_index >= degree {
+    raise PolyError::BadExponent
+  }
+  if root_index >= 0 {
+    return root_index
+  }
+  let wrapped = root_index % degree
+  if wrapped < 0 {
+    wrapped + degree
+  } else {
+    wrapped
+  }
+}
+
+fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
+  let degree = poly.degree(0)
+  if degree == 1 {
+    let lead = poly_univar_coeff(poly, 1)
+    let const_term = poly_univar_coeff(poly, 0)
+    let root = fe_to_expr_const(fe_mul(fe_neg(const_term), fe_inv(lead)))
+    return @symprint.to_string(root)
+  }
+  let idx = normalize_root_index(poly, root_index)
+  let poly_text = @symprint.to_string(poly.to_expr()).replace_all(old="+ -", new="- ")
+  return "CRootOf(\{poly_text}, \{idx})"
+}
+
+///|
+pub fn domain_alg_field_from_poly(
+  domain : Domain,
+  poly : Poly,
+  alias? : String? = None,
+  root_index? : Int = -1,
+) -> Domain raise PolyError {
+  ignore(root_index)
+  let base = match domain {
+    Domain::ZZ => Domain::QQ
+    _ => domain
+  }
+  let gen = match alias {
+    Some(name) if name != "" => name
+    _ => default_algext_gen(poly, root_index)
+  }
+  let lifted = poly_with_generator(poly, gen, base)
+  build_alg_extension(alg_ext_spec(base, gen, lifted))
+}
+
+fn cyclotomic_poly_domain(
+  n : Int,
+  gen : String,
+) -> Poly raise PolyError {
+  guard n > 0 else { raise PolyError::BadExponent }
+  let x = @symcore.symbol(gen)
+  let mut poly = Poly::from_expr((x ^ @symcore.int(n)) - @symcore.int(1), [gen], Domain::QQ)
+  for d in 1..<n {
+    if n % d == 0 {
+      poly = poly.div_exact_univar(cyclotomic_poly_domain(d, gen))
+    }
+  }
+  poly
+}
+
+///|
+pub fn domain_cyclotomic_field(
+  domain : Domain,
+  n : Int,
+  ss? : Bool = false,
+  alias? : String = "zeta",
+  gen? : String? = None,
+  root_index? : Int = -1,
+) -> Domain raise PolyError {
+  let ext_alias = if ss { "\{alias}\{n}" } else { alias }
+  let poly_gen = match gen {
+    Some(name) => name
+    None => ext_alias
+  }
+  let poly = cyclotomic_poly_domain(n, poly_gen)
+  domain_alg_field_from_poly(domain, poly, alias=Some(ext_alias), root_index=root_index)
+}
+
 ///|
 /// Inject fresh generators into `domain`.
 pub fn domain_inject(
@@ -4759,6 +4886,35 @@ pub fn Domain::algebraic_field(
   extension : Array[@symcore.Expr],
 ) -> Domain raise PolyError {
   domain_algebraic_field(self, extension)
+}
+
+///|
+pub fn Domain::alg_field_from_poly(
+  self : Domain,
+  poly : Poly,
+  alias? : String? = None,
+  root_index? : Int = -1,
+) -> Domain raise PolyError {
+  domain_alg_field_from_poly(self, poly, alias=alias, root_index=root_index)
+}
+
+///|
+pub fn Domain::cyclotomic_field(
+  self : Domain,
+  n : Int,
+  ss? : Bool = false,
+  alias? : String = "zeta",
+  gen? : String? = None,
+  root_index? : Int = -1,
+) -> Domain raise PolyError {
+  domain_cyclotomic_field(
+    self,
+    n,
+    ss=ss,
+    alias=alias,
+    gen=gen,
+    root_index=root_index,
+  )
 }
 
 ///|

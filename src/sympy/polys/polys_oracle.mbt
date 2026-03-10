@@ -469,6 +469,54 @@ pub fn domain_algebraic_field(
 }
 
 ///|
+pub fn domain_alg_field_from_poly(
+  spec : String,
+  poly_expr : String,
+  gen : String,
+  alias? : String? = None,
+  root_index? : Int = -1,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let poly_obj = sympy_poly_from_expr(poly_expr, [gen])
+  let call = resolve_method_callable(domain_obj, "alg_field_from_poly")
+  let kwargs = py_dict_new()
+  match alias {
+    Some(name) if name != "" => py_dict_set_obj(kwargs, "alias", py_string_obj(name))
+    _ => ()
+  }
+  if root_index != -1 {
+    py_dict_set_obj(kwargs, "root_index", py_int_obj(root_index))
+  }
+  let res = py_call_with_args(call, [poly_obj], kwargs)
+  py_str_enum(res)
+}
+
+///|
+pub fn domain_cyclotomic_field(
+  spec : String,
+  n : Int,
+  ss? : Bool = false,
+  alias? : String = "zeta",
+  gen? : String? = None,
+  root_index? : Int = -1,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "cyclotomic_field")
+  let kwargs = py_dict_new()
+  py_dict_set_obj(kwargs, "ss", py_bool_obj(ss))
+  py_dict_set_obj(kwargs, "alias", py_string_obj(alias))
+  match gen {
+    Some(name) if name != "" => py_dict_set_obj(kwargs, "gen", sympy_symbol_obj(name))
+    _ => ()
+  }
+  if root_index != -1 {
+    py_dict_set_obj(kwargs, "root_index", py_int_obj(root_index))
+  }
+  let res = py_call_with_args(call, [py_int_obj(n)], kwargs)
+  py_str_enum(res)
+}
+
+///|
 pub fn domain_inject(spec : String, gens : Array[String]) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let call = resolve_method_callable(domain_obj, "inject")
