@@ -848,3 +848,69 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
     fail("is_one_expr false positive")
   }
 }
+
+test "domains: sign predicate parity on ordered and composite domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let neg_x = @symcore.mul([@symcore.int(-1), x])
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(-2), "-2"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("CC", @symcore.int(2), "2"),
+    ("GF(5)", @symcore.int(2), "2"),
+    ("ZZ_I", i, "I"),
+    ("QQ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("ZZ[x]", x, "x"),
+    ("ZZ[x]", neg_x, "-x"),
+    ("QQ(x)", x, "x"),
+    ("QQ(1/x,y)", x, "x"),
+    ("QQ<sqrt(2)>", @symcore.add([@symcore.int(1), sqrt2]), "1 + sqrt(2)"),
+    ("EX", @symcore.add([x, @symcore.int(1)]), "x + 1"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_positive = domain.is_positive_expr(expr)
+    let ours_negative = domain.is_negative_expr(expr)
+    let ours_nonpositive = domain.is_nonpositive_expr(expr)
+    let ours_nonnegative = domain.is_nonnegative_expr(expr)
+    let oracle_positive = @sympy_polys.domain_is_positive_expr(spec, expr_text)
+    let oracle_negative = @sympy_polys.domain_is_negative_expr(spec, expr_text)
+    let oracle_nonpositive = @sympy_polys.domain_is_nonpositive_expr(spec, expr_text)
+    let oracle_nonnegative = @sympy_polys.domain_is_nonnegative_expr(spec, expr_text)
+    guard ours_positive == oracle_positive else {
+      fail(
+        "is_positive mismatch for \{spec} and \{expr_text}: ours=\{ours_positive}, oracle=\{oracle_positive}",
+      )
+    }
+    guard ours_negative == oracle_negative else {
+      fail(
+        "is_negative mismatch for \{spec} and \{expr_text}: ours=\{ours_negative}, oracle=\{oracle_negative}",
+      )
+    }
+    guard ours_nonpositive == oracle_nonpositive else {
+      fail(
+        "is_nonpositive mismatch for \{spec} and \{expr_text}: ours=\{ours_nonpositive}, oracle=\{oracle_nonpositive}",
+      )
+    }
+    guard ours_nonnegative == oracle_nonnegative else {
+      fail(
+        "is_nonnegative mismatch for \{spec} and \{expr_text}: ours=\{ours_nonnegative}, oracle=\{oracle_nonnegative}",
+      )
+    }
+  }
+
+  let minus_one = @symcore.int(-1)
+  guard domain_from_string("ZZ").is_negative_one_expr(minus_one) else {
+    fail("is_negative_one_expr mismatch")
+  }
+
+  let zz_series = domain_from_string("ZZ[[x]](prec=5)")
+  guard !zz_series.is_positive_expr(x) && !zz_series.is_negative_expr(x) &&
+    zz_series.is_nonpositive_expr(x) && zz_series.is_nonnegative_expr(x) else {
+    fail("power-series sign semantics mismatch")
+  }
+}

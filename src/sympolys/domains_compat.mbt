@@ -1572,6 +1572,434 @@ fn expr_constant_term(expr : @symcore.Expr, symbols : Array[String]) -> @symcore
 }
 
 ///|
+fn expr_terms_one(var_count : Int) -> Map[Monomial, @symcore.Expr] {
+  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  out.set(monomial_one(var_count), @symcore.int(1))
+  out
+}
+
+///|
+fn expr_terms_from_coeff(
+  coeff_domain : Domain,
+  coeff : @symcore.Expr,
+  var_count : Int,
+) -> Map[Monomial, @symcore.Expr] {
+  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  if !domain_is_zero_expr(coeff_domain, coeff) {
+    out.set(monomial_one(var_count), coeff)
+  }
+  out
+}
+
+///|
+fn expr_terms_add(
+  coeff_domain : Domain,
+  left : Map[Monomial, @symcore.Expr],
+  right : Map[Monomial, @symcore.Expr],
+) -> Map[Monomial, @symcore.Expr] {
+  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  for mono, coeff in left {
+    if !domain_is_zero_expr(coeff_domain, coeff) {
+      out.set(mono, coeff)
+    }
+  }
+  for mono, coeff in right {
+    if domain_is_zero_expr(coeff_domain, coeff) {
+      continue
+    }
+    match out.get(mono) {
+      Some(prev) => {
+        let merged = @symcore.add([prev, coeff])
+        if domain_is_zero_expr(coeff_domain, merged) {
+          ignore(out.remove(mono))
+        } else {
+          out.set(mono, merged)
+        }
+      }
+      None => out.set(mono, coeff)
+    }
+  }
+  out
+}
+
+///|
+fn expr_terms_mul(
+  coeff_domain : Domain,
+  left : Map[Monomial, @symcore.Expr],
+  right : Map[Monomial, @symcore.Expr],
+) -> Map[Monomial, @symcore.Expr] {
+  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  if left.is_empty() || right.is_empty() {
+    return out
+  }
+  for lmono, lcoeff in left {
+    if domain_is_zero_expr(coeff_domain, lcoeff) {
+      continue
+    }
+    for rmono, rcoeff in right {
+      if domain_is_zero_expr(coeff_domain, rcoeff) {
+        continue
+      }
+      let mono = try! monomial_mul(lmono, rmono)
+      let coeff = @symcore.mul([lcoeff, rcoeff])
+      if domain_is_zero_expr(coeff_domain, coeff) {
+        continue
+      }
+      match out.get(mono) {
+        Some(prev) => {
+          let merged = @symcore.add([prev, coeff])
+          if domain_is_zero_expr(coeff_domain, merged) {
+            ignore(out.remove(mono))
+          } else {
+            out.set(mono, merged)
+          }
+        }
+        None => out.set(mono, coeff)
+      }
+    }
+  }
+  out
+}
+
+///|
+fn expr_terms_pow(
+  coeff_domain : Domain,
+  terms : Map[Monomial, @symcore.Expr],
+  exp : Int,
+  var_count : Int,
+) -> Map[Monomial, @symcore.Expr] {
+  if exp == 0 {
+    return expr_terms_one(var_count)
+  }
+  let mut out = expr_terms_one(var_count)
+  for _ in 0..<exp {
+    out = expr_terms_mul(coeff_domain, out, terms)
+  }
+  out
+}
+
+///|
+fn reciprocal_gen_symbol_name(gen : String) -> String? {
+  let text = gen.trim().to_string()
+  if !text.has_prefix("1/") {
+    return None
+  }
+  let rest = (try! text[2:text.length()]).to_string().trim().to_string()
+  if rest == "" || rest.contains("/") || rest.contains("(") || rest.contains("[") ||
+    rest.contains("<") {
+    None
+  } else {
+    Some(rest)
+  }
+}
+
+///|
+fn expr_generator_rational(
+  gens : Array[String],
+  expr : @symcore.Expr,
+) -> (Map[Monomial, @symcore.Expr], Map[Monomial, @symcore.Expr])? {
+  let expr_text = expr_key(expr)
+  for i in 0..<gens.length() {
+    let gen = gens[i]
+    if expr_text == gen.replace_all(old=" ", new="") {
+      let numer : Map[Monomial, @symcore.Expr] = Map::new()
+      let mono = monomial_one(gens.length())
+      mono.exps.set(i, 1)
+      numer.set(mono, @symcore.int(1))
+      return Some((numer, expr_terms_one(gens.length())))
+    }
+    match reciprocal_gen_symbol_name(gen) {
+      Some(name) =>
+        match expr {
+          @symcore.Expr::Symbol(expr_name) if expr_name == name => {
+            let denom : Map[Monomial, @symcore.Expr] = Map::new()
+            let mono = monomial_one(gens.length())
+            mono.exps.set(i, 1)
+            denom.set(mono, @symcore.int(1))
+            return Some((expr_terms_one(gens.length()), denom))
+          }
+          _ => ()
+        }
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+fn expr_collect_rational_terms(
+  coeff_domain : Domain,
+  gens : Array[String],
+  expr : @symcore.Expr,
+) -> (Map[Monomial, @symcore.Expr], Map[Monomial, @symcore.Expr])? {
+  let var_count = gens.length()
+  if domain_contains_expr(coeff_domain, expr) {
+    return Some((expr_terms_from_coeff(coeff_domain, expr, var_count), expr_terms_one(var_count)))
+  }
+  match expr_generator_rational(gens, expr) {
+    Some(res) => return Some(res)
+    None => ()
+  }
+  match expr {
+    @symcore.Expr::Add(args) => {
+      let mut numer : Map[Monomial, @symcore.Expr] = Map::new()
+      let mut denom = expr_terms_one(var_count)
+      let mut first = true
+      for arg in args {
+        match expr_collect_rational_terms(coeff_domain, gens, arg) {
+          Some((arg_num, arg_den)) =>
+            if first {
+              numer = arg_num
+              denom = arg_den
+              first = false
+            } else {
+              let left = expr_terms_mul(coeff_domain, numer, arg_den)
+              let right = expr_terms_mul(coeff_domain, arg_num, denom)
+              numer = expr_terms_add(coeff_domain, left, right)
+              denom = expr_terms_mul(coeff_domain, denom, arg_den)
+            }
+          None => return None
+        }
+      }
+      Some((numer, denom))
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut numer = expr_terms_one(var_count)
+      let mut denom = expr_terms_one(var_count)
+      for arg in args {
+        match expr_collect_rational_terms(coeff_domain, gens, arg) {
+          Some((arg_num, arg_den)) => {
+            numer = expr_terms_mul(coeff_domain, numer, arg_num)
+            denom = expr_terms_mul(coeff_domain, denom, arg_den)
+          }
+          None => return None
+        }
+      }
+      Some((numer, denom))
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      if !expr_is_integer(exp) {
+        None
+      } else {
+        let k = match exp {
+          @symcore.Expr::Number(n) => n.numerator().to_int()
+          _ => 0
+        }
+        match expr_collect_rational_terms(coeff_domain, gens, base) {
+          Some((num, den)) =>
+            if k >= 0 {
+              Some((
+                expr_terms_pow(coeff_domain, num, k, var_count),
+                expr_terms_pow(coeff_domain, den, k, var_count),
+              ))
+            } else {
+              Some((
+                expr_terms_pow(coeff_domain, den, -k, var_count),
+                expr_terms_pow(coeff_domain, num, -k, var_count),
+              ))
+            }
+          None => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn expr_terms_is_one(
+  coeff_domain : Domain,
+  terms : Map[Monomial, @symcore.Expr],
+  var_count : Int,
+) -> Bool {
+  if terms.length() != 1 {
+    return false
+  }
+  match terms.get(monomial_one(var_count)) {
+    Some(coeff) => domain_is_one_expr(coeff_domain, coeff)
+    None => false
+  }
+}
+
+///|
+fn expr_terms_leading_coeff(
+  coeff_domain : Domain,
+  terms : Map[Monomial, @symcore.Expr],
+) -> @symcore.Expr? {
+  let mut best : (Monomial, @symcore.Expr)? = None
+  for mono, coeff in terms {
+    if domain_is_zero_expr(coeff_domain, coeff) {
+      continue
+    }
+    best = match best {
+      None => Some((mono, coeff))
+      Some((best_mono, best_coeff)) =>
+        if compare_monomial_order(mono, best_mono, TermOrder::Lex) > 0 {
+          Some((mono, coeff))
+        } else {
+          Some((best_mono, best_coeff))
+        }
+    }
+  }
+  match best {
+    Some((_, coeff)) => Some(coeff)
+    None => None
+  }
+}
+
+///|
+fn expr_terms_constant_coeff(
+  coeff_domain : Domain,
+  terms : Map[Monomial, @symcore.Expr],
+  var_count : Int,
+) -> @symcore.Expr {
+  match terms.get(monomial_one(var_count)) {
+    Some(coeff) if !domain_is_zero_expr(coeff_domain, coeff) => coeff
+    _ => @symcore.int(0)
+  }
+}
+
+///|
+fn expr_numeric_sign(expr : @symcore.Expr) -> Int? {
+  match expr {
+    @symcore.Expr::Number(n) => Some(n.compare(@symnum.BigRational::zero()))
+    @symcore.Expr::Mul(args) => {
+      let mut sign = 1
+      for arg in args {
+        match expr_numeric_sign(arg) {
+          Some(0) => return Some(0)
+          Some(v) => sign = sign * v
+          None => return None
+        }
+      }
+      Some(sign)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      if !expr_is_integer(exp) {
+        None
+      } else {
+        let k = match exp {
+          @symcore.Expr::Number(n) => n.numerator().to_int()
+          _ => 0
+        }
+        match expr_numeric_sign(base) {
+          Some(0) => if k == 0 { Some(1) } else { Some(0) }
+          Some(v) =>
+            if k % 2 == 0 {
+              Some(1)
+            } else {
+              Some(v)
+            }
+          None => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn expr_coeff_sign_like(expr : @symcore.Expr) -> Int {
+  match expr {
+    @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero())
+    @symcore.Expr::Mul(args) => {
+      let mut sign = 1
+      for arg in args {
+        match arg {
+          @symcore.Expr::Number(n) =>
+            if n.compare(@symnum.BigRational::zero()) < 0 {
+              sign = -sign
+            }
+          _ => ()
+        }
+      }
+      sign
+    }
+    _ => 1
+  }
+}
+
+///|
+fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
+  if !domain_contains_expr(domain, expr) {
+    return None
+  }
+  match domain {
+    Domain::ZZ | Domain::QQ | Domain::RR =>
+      expr_numeric_sign(expr)
+    Domain::EX | Domain::EXRAW =>
+      if domain_is_zero_expr(domain, expr) {
+        Some(0)
+      } else {
+        Some(expr_coeff_sign_like(expr))
+      }
+    Domain::GF(_) | Domain::GFExt(_, _, _) =>
+      if domain_is_zero_expr(domain, expr) {
+        Some(0)
+      } else {
+        Some(1)
+      }
+    Domain::CC | Domain::ZZ_I | Domain::QQ_I =>
+      None
+    Domain::PolyRing(base, gens) | Domain::QuotientRing(base, gens, _) =>
+      match expr_collect_rational_terms(base, gens, expr) {
+        Some((numer, denom)) =>
+          if !expr_terms_is_one(base, denom, gens.length()) {
+            None
+          } else if numer.is_empty() {
+            Some(0)
+          } else {
+            match expr_terms_leading_coeff(base, numer) {
+              Some(coeff) => domain_expr_sign(base, coeff)
+              None => Some(0)
+            }
+          }
+        None => None
+      }
+    Domain::RationalFunctionField(base, gens) =>
+      match expr_collect_rational_terms(base, gens, expr) {
+        Some((numer, _)) =>
+          if numer.is_empty() {
+            Some(0)
+          } else {
+            match expr_terms_leading_coeff(base, numer) {
+              Some(coeff) => domain_expr_sign(base, coeff)
+              None => Some(0)
+            }
+          }
+        None => None
+      }
+    Domain::Frac(base) =>
+      match base {
+        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+          domain_expr_sign(Domain::RationalFunctionField(inner, gens), expr)
+        _ => domain_expr_sign(base, expr)
+      }
+    Domain::PowerSeries(base, gens, _) =>
+      match expr_collect_rational_terms(base, gens, expr) {
+        Some((numer, denom)) =>
+          if !expr_terms_is_one(base, denom, gens.length()) {
+            None
+          } else {
+            domain_expr_sign(base, expr_terms_constant_coeff(base, numer, gens.length()))
+          }
+        None => None
+      }
+    Domain::AlgExt(base, gens, _) =>
+      match expr_collect_rational_terms(base, gens, expr) {
+        Some((numer, _)) =>
+          if numer.is_empty() {
+            Some(0)
+          } else {
+            match expr_terms_leading_coeff(base, numer) {
+              Some(coeff) => domain_expr_sign(base, coeff)
+              None => Some(0)
+            }
+          }
+        None => None
+      }
+  }
+}
+
+///|
 pub fn domain_is_zero_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_zero(expr)
 }
@@ -1579,6 +2007,11 @@ pub fn domain_is_zero_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 ///|
 pub fn domain_is_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_one(expr)
+}
+
+///|
+pub fn domain_is_negative_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  domain_contains_expr(domain, expr) && domain_expr_is_minus_one(expr)
 }
 
 ///|
@@ -1611,7 +2044,39 @@ pub fn domain_is_unit_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
         Some(c0) => domain_is_unit_expr(base, c0)
         None => false
       }
-    }
+      }
+  }
+}
+
+///|
+pub fn domain_is_positive_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  match domain_expr_sign(domain, expr) {
+    Some(1) => true
+    _ => false
+  }
+}
+
+///|
+pub fn domain_is_negative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  match domain_expr_sign(domain, expr) {
+    Some(v) => v < 0
+    None => false
+  }
+}
+
+///|
+pub fn domain_is_nonpositive_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  match domain_expr_sign(domain, expr) {
+    Some(v) => v <= 0
+    None => false
+  }
+}
+
+///|
+pub fn domain_is_nonnegative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  match domain_expr_sign(domain, expr) {
+    Some(v) => v >= 0
+    None => false
   }
 }
 
@@ -1626,8 +2091,33 @@ pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
+pub fn Domain::is_negative_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_negative_one_expr(self, expr)
+}
+
+///|
 pub fn Domain::is_unit_expr(self : Domain, expr : @symcore.Expr) -> Bool {
   domain_is_unit_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_positive_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_positive_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_negative_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_negative_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_nonpositive_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_nonpositive_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_nonnegative_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_nonnegative_expr(self, expr)
 }
 
 ///|
