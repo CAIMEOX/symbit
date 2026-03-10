@@ -63,3 +63,42 @@ test "physics: simple wavefunction and energy behaviors" {
     fail("pring energy should reject non-literal integer n in current core model")
   }
 }
+
+///|
+test "physics: hydrogen formulas and quantum-number guards" {
+  let r = @symcore.symbol("r")
+  let phi = @symcore.symbol("phi")
+  let theta = @symcore.symbol("theta")
+
+  try! physics_assert_expr_equal(
+    try! hydrogen_e_nl(@symcore.int(1)),
+    "-1/2",
+    "hydrogen ground-state energy",
+  )
+  try! physics_assert_expr_equal(
+    hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r),
+    "2*exp(-r)",
+    "hydrogen radial ground state",
+  )
+
+  let psi_err : Result[@symcore.Expr, PhysicsError] = try? hydrogen_psi_nlm(
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(0),
+    r,
+    phi,
+    theta,
+  )
+  guard psi_err is Err(_) else {
+    fail("hydrogen Psi_nlm should reject n <= l")
+  }
+
+  let dirac_err : Result[@symcore.Expr, PhysicsError] = try? hydrogen_e_nl_dirac(
+    @symcore.int(1),
+    @symcore.int(0),
+    spin_up=false,
+  )
+  guard dirac_err is Err(_) else {
+    fail("hydrogen E_nl_dirac should reject spin_down for l == 0")
+  }
+}

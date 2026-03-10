@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/bigint",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",

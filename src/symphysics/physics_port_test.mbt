@@ -32,6 +32,15 @@ fn physics_assert_matrix_equiv(
   }
 }
 
+fn physics_dirac_c() -> @symcore.Expr {
+  @symcore.number(
+    try! @symnum.BigRational::new(
+      @bigint.BigInt::from_string("137035999037"),
+      @bigint.BigInt::from_int(1000000000),
+    ),
+  )
+}
+
 ///|
 test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
   for i in [1, 2, 3] {
@@ -100,5 +109,55 @@ test "physics: qho, sho, and pring parity" {
     try! energy(@symcore.int(2), m, r),
     try! @sympy_physics.energy(@symcore.int(2), m, r),
     "pring.energy",
+  )
+}
+
+///|
+test "physics: hydrogen parity" {
+  let r = @symcore.symbol("r")
+  let zsym = @symcore.symbol("Z")
+  let phi = @symcore.symbol("phi")
+  let theta = @symcore.symbol("theta")
+
+  physics_assert_expr_equal(
+    hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r, z=zsym),
+    try! @sympy_physics.hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r, z=zsym),
+    "hydrogen.R_nl(1,0)",
+  )
+  physics_assert_expr_equal(
+    hydrogen_r_nl(@symcore.int(2), @symcore.int(1), r, z=zsym),
+    try! @sympy_physics.hydrogen_r_nl(@symcore.int(2), @symcore.int(1), r, z=zsym),
+    "hydrogen.R_nl(2,1)",
+  )
+  physics_assert_expr_equal(
+    hydrogen_y_lm(@symcore.int(1), @symcore.int(0), phi, theta),
+    try! @sympy_physics.hydrogen_y_lm(@symcore.int(1), @symcore.int(0), phi, theta),
+    "hydrogen.Y_lm(1,0)",
+  )
+  physics_assert_expr_equal(
+    hydrogen_y_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
+    try! @sympy_physics.hydrogen_y_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
+    "hydrogen.Y_lm(2,-1)",
+  )
+  physics_assert_expr_equal(
+    hydrogen_z_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
+    try! @sympy_physics.hydrogen_z_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
+    "hydrogen.Z_lm(2,-1)",
+  )
+  physics_assert_expr_equal(
+    try! hydrogen_psi_nlm(@symcore.int(2), @symcore.int(1), @symcore.int(1), r, phi, theta, z=zsym),
+    try! @sympy_physics.hydrogen_psi_nlm(@symcore.int(2), @symcore.int(1), @symcore.int(1), r, phi, theta, z=zsym),
+    "hydrogen.Psi_nlm(2,1,1)",
+  )
+  physics_assert_expr_equal(
+    try! hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
+    try! @sympy_physics.hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
+    "hydrogen.E_nl",
+  )
+  let c = physics_dirac_c()
+  physics_assert_expr_equal(
+    try! hydrogen_e_nl_dirac(@symcore.int(2), @symcore.int(1), spin_up=false, z=zsym, c=c),
+    try! @sympy_physics.hydrogen_e_nl_dirac(@symcore.int(2), @symcore.int(1), spin_up=false, z=zsym, c=c),
+    "hydrogen.E_nl_dirac",
   )
 }

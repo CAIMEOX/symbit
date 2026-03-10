@@ -146,12 +146,19 @@ fn physics_globals() -> @py.PyDict raise {
   for name in [
     "Abs",
     "I",
+    "Ynm",
+    "Ynm_c",
+    "Znm",
     "assoc_laguerre",
+    "assoc_legendre",
+    "conjugate",
+    "cos",
     "exp",
     "factorial",
     "factorial2",
     "hermite",
     "pi",
+    "sin",
     "sqrt",
   ] {
     try_bind_name(globals, sympy_mod, name)
@@ -213,8 +220,17 @@ pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
   let rhs_obj = objenum_to_obj(
     sympy_call_must("sympy.sympify", [OracleArg::Str(rhs)], kwargs~),
   )
+  let lhs_expanded = objenum_to_obj(
+    sympy_call_must("sympy.expand_func", [OracleArg::PyObj(lhs_obj)]),
+  )
+  let rhs_expanded = objenum_to_obj(
+    sympy_call_must("sympy.expand_func", [OracleArg::PyObj(rhs_obj)]),
+  )
   match
-    @sympy.sympy_call("sympy.Eq", [OracleArg::PyObj(lhs_obj), OracleArg::PyObj(rhs_obj)]) {
+    @sympy.sympy_call("sympy.Eq", [
+      OracleArg::PyObj(lhs_expanded),
+      OracleArg::PyObj(rhs_expanded),
+    ]) {
     Some(eq_obj) => {
       let simp = sympy_call_must("sympy.simplify", [
         OracleArg::PyObj(objenum_to_obj(eq_obj)),
@@ -229,8 +245,8 @@ pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
     }
     None => ()
   }
-  let lhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(lhs_obj)])
-  let rhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(rhs_obj)])
+  let lhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(lhs_expanded)])
+  let rhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(rhs_expanded)])
   py_str_obj(objenum_to_obj(lhs_srepr)) == py_str_obj(objenum_to_obj(rhs_srepr))
 }
 
@@ -340,6 +356,102 @@ pub fn e_nl(
     OracleArg::PyObj(expr_to_sympy(n)),
     OracleArg::PyObj(expr_to_sympy(l)),
     OracleArg::PyObj(expr_to_sympy(hw)),
+  ])))
+}
+
+///|
+pub fn hydrogen_r_nl(
+  n : @symcore.Expr,
+  l : @symcore.Expr,
+  r : @symcore.Expr,
+  z? : @symcore.Expr = @symcore.int(1),
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.hydrogen.R_nl", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(r)),
+    OracleArg::PyObj(expr_to_sympy(z)),
+  ])))
+}
+
+///|
+pub fn hydrogen_y_lm(
+  l : @symcore.Expr,
+  m : @symcore.Expr,
+  phi : @symcore.Expr,
+  theta : @symcore.Expr,
+) -> String raise {
+  let obj = sympy_call_must("sympy.Ynm", [
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(theta)),
+    OracleArg::PyObj(expr_to_sympy(phi)),
+  ])
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.expand_func", [OracleArg::PyObj(objenum_to_obj(obj))])))
+}
+
+///|
+pub fn hydrogen_z_lm(
+  l : @symcore.Expr,
+  m : @symcore.Expr,
+  phi : @symcore.Expr,
+  theta : @symcore.Expr,
+) -> String raise {
+  let obj = sympy_call_must("sympy.Znm", [
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(theta)),
+    OracleArg::PyObj(expr_to_sympy(phi)),
+  ])
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.expand_func", [OracleArg::PyObj(objenum_to_obj(obj))])))
+}
+
+///|
+pub fn hydrogen_psi_nlm(
+  n : @symcore.Expr,
+  l : @symcore.Expr,
+  m : @symcore.Expr,
+  r : @symcore.Expr,
+  phi : @symcore.Expr,
+  theta : @symcore.Expr,
+  z? : @symcore.Expr = @symcore.int(1),
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.hydrogen.Psi_nlm", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(r)),
+    OracleArg::PyObj(expr_to_sympy(phi)),
+    OracleArg::PyObj(expr_to_sympy(theta)),
+    OracleArg::PyObj(expr_to_sympy(z)),
+  ])))
+}
+
+///|
+pub fn hydrogen_e_nl(
+  n : @symcore.Expr,
+  z? : @symcore.Expr = @symcore.int(1),
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.hydrogen.E_nl", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(z)),
+  ])))
+}
+
+///|
+pub fn hydrogen_e_nl_dirac(
+  n : @symcore.Expr,
+  l : @symcore.Expr,
+  spin_up? : Bool = true,
+  z? : @symcore.Expr = @symcore.int(1),
+  c~ : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.hydrogen.E_nl_dirac", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::Bool(spin_up),
+    OracleArg::PyObj(expr_to_sympy(z)),
+    OracleArg::PyObj(expr_to_sympy(c)),
   ])))
 }
 
