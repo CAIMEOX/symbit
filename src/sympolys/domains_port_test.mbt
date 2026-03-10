@@ -884,6 +884,62 @@ test "domains: contains_expr parity for constants polynomials and rational funct
 }
 
 ///|
+test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let conversion_cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(7), "7"),
+    ("QQ", try! @symcore.rational_from_ints(6, 8), "6/8"),
+    ("GF(5)", @symcore.int(7), "7"),
+    ("QQ_I", @symcore.add([try! @symcore.rational_from_ints(1, 2), (try! @symcore.rational_from_ints(1, 3)) * i]), "1/2 + I/3"),
+    ("QQ<sqrt(2)>", @symcore.add([@symcore.int(1), sqrt2]), "1 + sqrt(2)"),
+    ("ZZ[x]", (x ^ @symcore.int(2)) + (@symcore.int(2) * x) + @symcore.int(1), "x**2 + 2*x + 1"),
+    ("QQ(x)", ((x ^ @symcore.int(2)) - @symcore.int(1)) * ((x - @symcore.int(1)) ^ @symcore.int(-1)), "(x**2 - 1)/(x - 1)"),
+  ]
+  for item in conversion_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_from = render_expr_result(try? domain.from_sympy_expr(expr))
+    let oracle_from = normalize_expr_text(@sympy_polys.domain_from_sympy_expr(spec, expr_text))
+    guard ours_from == oracle_from else {
+      fail("from_sympy parity mismatch for \{spec} and \{expr_text}: ours=\{ours_from}, oracle=\{oracle_from}")
+    }
+    let ours_to = render_expr_result(try? domain.to_sympy_expr(expr))
+    let oracle_to = normalize_expr_text(@sympy_polys.domain_to_sympy_expr(spec, expr_text))
+    guard ours_to == oracle_to else {
+      fail("to_sympy parity mismatch for \{spec} and \{expr_text}: ours=\{ours_to}, oracle=\{oracle_to}")
+    }
+  }
+
+  let convert_cases : Array[(String, String, @symcore.Expr, String)] = [
+    ("QQ", "ZZ", @symcore.int(7), "7"),
+    ("ZZ", "QQ", @symcore.int(4), "4"),
+    ("ZZ", "QQ", try! @symcore.rational_from_ints(1, 2), "1/2"),
+    ("QQ_I", "ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("QQ[x]", "ZZ[x]", x + @symcore.int(1), "x + 1"),
+    ("ZZ[x]", "QQ[x]", (@symcore.int(2) * x) + @symcore.int(1), "2*x + 1"),
+    ("ZZ[x]", "QQ[x]", (try! @symcore.rational_from_ints(1, 2)) * x, "x/2"),
+    ("QQ(x)", "ZZ[x]", (x ^ @symcore.int(2)) + @symcore.int(1), "x**2 + 1"),
+    ("QQ[x]", "QQ(x)", x + @symcore.int(1), "x + 1"),
+    ("QQ<sqrt(2)>", "QQ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+  ]
+  for item in convert_cases {
+    let target = item.0
+    let base = item.1
+    let expr = item.2
+    let expr_text = item.3
+    let ours = render_expr_result(try? domain_from_string(target).convert_from_expr(expr, domain_from_string(base)))
+    let oracle = normalize_expr_text(@sympy_polys.domain_convert_from_expr(target, expr_text, base))
+    guard ours == oracle else {
+      fail("convert_from parity mismatch for \{target} <- \{base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
 test "domains: is_unit/is_zero/is_one parity on core domains" {
   let x = @symcore.symbol("x")
   let i = @symcore.symbol("I")
@@ -923,6 +979,98 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
   }
   guard !domain_from_string("QQ").is_one_expr(@symcore.int(2)) else {
     fail("is_one_expr false positive")
+  }
+}
+
+///|
+test "domains: zero/one and arithmetic wrapper parity" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let zero_one_specs = ["ZZ", "QQ", "GF(5)", "QQ_I", "ZZ[x]", "QQ(x)", "QQ<sqrt(2)>"]
+  for spec in zero_one_specs {
+    let domain = domain_from_string(spec)
+    let ours_zero = render_expr_result(try? domain.zero_expr())
+    let oracle_zero = normalize_expr_text(@sympy_polys.domain_zero_expr(spec))
+    guard ours_zero == oracle_zero else {
+      fail("zero parity mismatch for \{spec}: ours=\{ours_zero}, oracle=\{oracle_zero}")
+    }
+    let ours_one = render_expr_result(try? domain.one_expr())
+    let oracle_one = normalize_expr_text(@sympy_polys.domain_one_expr(spec))
+    guard ours_one == oracle_one else {
+      fail("one parity mismatch for \{spec}: ours=\{ours_one}, oracle=\{oracle_one}")
+    }
+  }
+
+  let unary_cases : Array[(String, @symcore.Expr, String)] = [
+    ("GF(5)", @symcore.int(7), "7"),
+    ("QQ_I", @symcore.add([@symcore.int(1), i]), "1 + I"),
+    ("QQ(x)", (x + @symcore.int(1)) * (x ^ @symcore.int(-1)), "(x + 1)/x"),
+  ]
+  for item in unary_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_pos = render_expr_result(try? domain.pos_expr(expr))
+    let oracle_pos = normalize_expr_text(@sympy_polys.domain_pos_expr(spec, expr_text))
+    guard ours_pos == oracle_pos else {
+      fail("pos parity mismatch for \{spec} and \{expr_text}: ours=\{ours_pos}, oracle=\{oracle_pos}")
+    }
+    let ours_neg = render_expr_result(try? domain.neg_expr(expr))
+    let oracle_neg = normalize_expr_text(@sympy_polys.domain_neg_expr(spec, expr_text))
+    guard ours_neg == oracle_neg else {
+      fail("neg parity mismatch for \{spec} and \{expr_text}: ours=\{ours_neg}, oracle=\{oracle_neg}")
+    }
+  }
+
+  let binary_cases : Array[(String, @symcore.Expr, @symcore.Expr, String, String)] = [
+    ("QQ", try! @symcore.rational_from_ints(1, 2), try! @symcore.rational_from_ints(1, 3), "1/2", "1/3"),
+    ("ZZ_I", @symcore.add([@symcore.int(2), i]), @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "2 + I", "1 - I"),
+    ("QQ(x)", (x + @symcore.int(1)) * ((x - @symcore.int(1)) ^ @symcore.int(-1)), x - @symcore.int(1), "(x + 1)/(x - 1)", "x - 1"),
+    ("ZZ[x]", x + @symcore.int(1), x - @symcore.int(1), "x + 1", "x - 1"),
+  ]
+  for item in binary_cases {
+    let spec = item.0
+    let left = item.1
+    let right = item.2
+    let left_text = item.3
+    let right_text = item.4
+    let domain = domain_from_string(spec)
+    let ours_add = render_expr_result(try? domain.add_expr(left, right))
+    let oracle_add = normalize_expr_text(@sympy_polys.domain_add_expr(spec, left_text, right_text))
+    guard ours_add == oracle_add else {
+      fail("add parity mismatch for \{spec}: ours=\{ours_add}, oracle=\{oracle_add}")
+    }
+    let ours_sub = render_expr_result(try? domain.sub_expr(left, right))
+    let oracle_sub = normalize_expr_text(@sympy_polys.domain_sub_expr(spec, left_text, right_text))
+    guard ours_sub == oracle_sub else {
+      fail("sub parity mismatch for \{spec}: ours=\{ours_sub}, oracle=\{oracle_sub}")
+    }
+    let ours_mul = render_expr_result(try? domain.mul_expr(left, right))
+    let oracle_mul = normalize_expr_text(@sympy_polys.domain_mul_expr(spec, left_text, right_text))
+    guard ours_mul == oracle_mul else {
+      fail("mul parity mismatch for \{spec}: ours=\{ours_mul}, oracle=\{oracle_mul}")
+    }
+  }
+
+  let pow_cases : Array[(String, @symcore.Expr, Int, String)] = [
+    ("QQ", try! @symcore.rational_from_ints(2, 3), 3, "2/3"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), -2, "2/3"),
+    ("GF(5)", @symcore.int(2), -1, "2"),
+    ("QQ_I", @symcore.add([@symcore.int(1), i]), 2, "1 + I"),
+    ("QQ(x)", (x + @symcore.int(1)) * (x ^ @symcore.int(-1)), -1, "(x + 1)/x"),
+    ("ZZ[x]", x + @symcore.int(1), 2, "x + 1"),
+  ]
+  for item in pow_cases {
+    let spec = item.0
+    let expr = item.1
+    let exp = item.2
+    let expr_text = item.3
+    let ours = render_expr_result(try? domain_from_string(spec).pow_expr(expr, exp))
+    let oracle = normalize_expr_text(@sympy_polys.domain_pow_expr(spec, expr_text, exp))
+    guard ours == oracle else {
+      fail("pow parity mismatch for \{spec}, exp=\{exp}: ours=\{ours}, oracle=\{oracle}")
+    }
   }
 }
 
