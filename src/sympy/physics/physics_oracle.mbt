@@ -513,6 +513,69 @@ pub fn gaunt(
 }
 
 ///|
+pub fn wigner_6j(
+  j_1 : @symcore.Expr,
+  j_2 : @symcore.Expr,
+  j_3 : @symcore.Expr,
+  j_4 : @symcore.Expr,
+  j_5 : @symcore.Expr,
+  j_6 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.wigner_6j", [
+    OracleArg::PyObj(expr_to_sympy(j_1)),
+    OracleArg::PyObj(expr_to_sympy(j_2)),
+    OracleArg::PyObj(expr_to_sympy(j_3)),
+    OracleArg::PyObj(expr_to_sympy(j_4)),
+    OracleArg::PyObj(expr_to_sympy(j_5)),
+    OracleArg::PyObj(expr_to_sympy(j_6)),
+  ])))
+}
+
+///|
+pub fn racah(
+  aa : @symcore.Expr,
+  bb : @symcore.Expr,
+  cc : @symcore.Expr,
+  dd : @symcore.Expr,
+  ee : @symcore.Expr,
+  ff : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.racah", [
+    OracleArg::PyObj(expr_to_sympy(aa)),
+    OracleArg::PyObj(expr_to_sympy(bb)),
+    OracleArg::PyObj(expr_to_sympy(cc)),
+    OracleArg::PyObj(expr_to_sympy(dd)),
+    OracleArg::PyObj(expr_to_sympy(ee)),
+    OracleArg::PyObj(expr_to_sympy(ff)),
+  ])))
+}
+
+///|
+pub fn wigner_9j(
+  j_1 : @symcore.Expr,
+  j_2 : @symcore.Expr,
+  j_3 : @symcore.Expr,
+  j_4 : @symcore.Expr,
+  j_5 : @symcore.Expr,
+  j_6 : @symcore.Expr,
+  j_7 : @symcore.Expr,
+  j_8 : @symcore.Expr,
+  j_9 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.wigner_9j", [
+    OracleArg::PyObj(expr_to_sympy(j_1)),
+    OracleArg::PyObj(expr_to_sympy(j_2)),
+    OracleArg::PyObj(expr_to_sympy(j_3)),
+    OracleArg::PyObj(expr_to_sympy(j_4)),
+    OracleArg::PyObj(expr_to_sympy(j_5)),
+    OracleArg::PyObj(expr_to_sympy(j_6)),
+    OracleArg::PyObj(expr_to_sympy(j_7)),
+    OracleArg::PyObj(expr_to_sympy(j_8)),
+    OracleArg::PyObj(expr_to_sympy(j_9)),
+  ])))
+}
+
+///|
 pub fn wavefunction(n : @symcore.Expr, x : @symcore.Expr) -> String raise {
   py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.pring.wavefunction", [
     OracleArg::PyObj(expr_to_sympy(n)),

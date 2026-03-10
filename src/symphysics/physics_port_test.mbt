@@ -281,3 +281,67 @@ test "physics: gaunt parity" {
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 }
+
+///|
+test "physics: higher wigner parity" {
+  let half = physics_frac(1, 2)
+  for case in [
+    (
+      @symcore.int(5),
+      @symcore.int(5),
+      @symcore.int(5),
+      @symcore.int(5),
+      @symcore.int(5),
+      @symcore.int(5),
+      "wigner_6j(5,...,5)",
+    ),
+    (
+      @symcore.int(2),
+      @symcore.int(2),
+      @symcore.int(2),
+      physics_frac(3, 2),
+      physics_frac(3, 2),
+      physics_frac(3, 2),
+      "wigner_6j zero mixed half",
+    ),
+  ] {
+    let ours = try! wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = try! @sympy_physics.wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
+    physics_assert_expr_equal(ours, oracle, case.6)
+  }
+  physics_assert_expr_equal(
+    try! racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    try! @sympy_physics.racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    "racah(3,...,3)",
+  )
+  for case in [
+    (
+      @symcore.int(0),
+      @symcore.int(0),
+      @symcore.int(0),
+      @symcore.int(0),
+      half,
+      half,
+      @symcore.int(0),
+      half,
+      half,
+      "wigner_9j half",
+    ),
+    (
+      @symcore.int(1),
+      @symcore.int(2),
+      @symcore.int(3),
+      @symcore.int(3),
+      @symcore.int(2),
+      @symcore.int(1),
+      @symcore.int(2),
+      @symcore.int(1),
+      @symcore.int(3),
+      "wigner_9j exact",
+    ),
+  ] {
+    let ours = try! wigner_9j(case.0, case.1, case.2, case.3, case.4, case.5, case.6, case.7, case.8)
+    let oracle = try! @sympy_physics.wigner_9j(case.0, case.1, case.2, case.3, case.4, case.5, case.6, case.7, case.8)
+    physics_assert_expr_equal(ours, oracle, case.9)
+  }
+}

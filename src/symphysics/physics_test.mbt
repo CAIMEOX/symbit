@@ -162,3 +162,38 @@ test "physics: gaunt examples and guards" {
     fail("gaunt should reject half-integer l values")
   }
 }
+
+///|
+test "physics: higher wigner examples and guards" {
+  let half = physics_frac(1, 2)
+  try! physics_assert_expr_equal(
+    try! wigner_6j(@symcore.int(5), @symcore.int(5), @symcore.int(5), @symcore.int(5), @symcore.int(5), @symcore.int(5)),
+    "1/52",
+    "wigner_6j example",
+  )
+  try! physics_assert_expr_equal(
+    try! wigner_6j(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    "-1/14",
+    "wigner_6j 3",
+  )
+  try! physics_assert_expr_equal(
+    try! racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    "-1/14",
+    "racah example",
+  )
+  try! physics_assert_expr_equal(
+    try! wigner_9j(@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(0), half, half, @symcore.int(0), half, half),
+    "1/2",
+    "wigner_9j half example",
+  )
+  try! physics_assert_expr_equal(
+    try! wigner_9j(@symcore.int(1), @symcore.int(2), @symcore.int(3), @symcore.int(3), @symcore.int(2), @symcore.int(1), @symcore.int(2), @symcore.int(1), @symcore.int(3)),
+    "-4*sqrt(70)/11025",
+    "wigner_9j exact example",
+  )
+  try! physics_assert_expr_equal(
+    try! wigner_9j(half, half, @symcore.int(1), half, half, @symcore.int(1), @symcore.int(1), half, half),
+    "0",
+    "wigner_9j zero",
+  )
+}
