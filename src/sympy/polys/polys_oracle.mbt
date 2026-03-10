@@ -727,6 +727,109 @@ pub fn domain_cofactors_expr(
 }
 
 ///|
+pub fn domain_numer_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "numer")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_denom_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "denom")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_quo_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "quo")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_rem_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "rem")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_div_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "div")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => {
+          let items = py_list_to_pyobjects(res)
+          if items.length() < 2 {
+            "ERROR"
+          } else {
+            let q = oracle_domain_element_to_string(domain_obj, @py.PyObjectEnum::create(items[0]))
+            let r = oracle_domain_element_to_string(domain_obj, @py.PyObjectEnum::create(items[1]))
+            "(\{q},\{r})"
+          }
+        }
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_exquo_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "exquo")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
 pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
   let expr_obj = sympy_sympify_str(expr)
   let gen_obj = sympy_symbol_obj(gen)

@@ -40,6 +40,23 @@ fn normalize_expr_tuple3_text(text : String) -> String {
   }
 }
 
+fn normalize_expr_tuple2_text(text : String) -> String {
+  let compact = trim_ws(text)
+  if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
+    return compact
+  }
+  let inner = (try! compact[1:compact.length() - 1]).to_string()
+  let parts : Array[String] = Array::new()
+  for part in inner.split(",") {
+    parts.push(normalize_expr_text(part.trim().to_string()))
+  }
+  if parts.length() != 2 {
+    compact
+  } else {
+    "(\{parts[0]},\{parts[1]})"
+  }
+}
+
 fn render_expr_result(result : Result[@symcore.Expr, PolyError]) -> String {
   match result {
     Ok(expr) => normalize_expr_text(@symprint.to_string(expr))
@@ -54,6 +71,18 @@ fn render_expr_triple_result(
     Ok(items) =>
       normalize_expr_tuple3_text(
         "(\{@symprint.to_string(items.0)},\{@symprint.to_string(items.1)},\{@symprint.to_string(items.2)})",
+      )
+    Err(_) => "ERROR"
+  }
+}
+
+fn render_expr_pair_result(
+  result : Result[(@symcore.Expr, @symcore.Expr), PolyError],
+) -> String {
+  match result {
+    Ok(items) =>
+      normalize_expr_tuple2_text(
+        "(\{@symprint.to_string(items.0)},\{@symprint.to_string(items.1)})",
       )
     Err(_) => "ERROR"
   }
@@ -1060,5 +1089,86 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
     guard ours_cof == oracle_cof else {
       fail("cofactors mismatch for \{spec}: ours=\{ours_cof}, oracle=\{oracle_cof}")
     }
+  }
+}
+
+test "domains: numer/denom parity on scalar and fraction-like domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(7), "7"),
+    ("QQ", try! @symcore.rational_from_ints(7, 3), "7/3"),
+    ("ZZ_I", @symcore.add([@symcore.int(3), i]), "3 + I"),
+    ("QQ_I", try! @symcore.rational_from_ints(1, 2) + (try! @symcore.rational_from_ints(1, 3) * i), "1/2 + I/3"),
+    ("EX", x, "x"),
+    ("GF(5)", @symcore.int(3), "3"),
+    ("QQ(x)", (x + @symcore.int(1)) * ((x - @symcore.int(1)) ^ @symcore.int(-1)), "(x + 1)/(x - 1)"),
+    ("QQ<sqrt(2)>", @symcore.int(1) + sqrt2, "1 + sqrt(2)"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_num = render_expr_result(try? domain.numer_expr(expr))
+    let ours_den = render_expr_result(try? domain.denom_expr(expr))
+    let oracle_num = normalize_expr_text(@sympy_polys.domain_numer_expr(spec, expr_text))
+    let oracle_den = normalize_expr_text(@sympy_polys.domain_denom_expr(spec, expr_text))
+    guard ours_num == oracle_num else {
+      fail("numer mismatch for \{spec}: ours=\{ours_num}, oracle=\{oracle_num}")
+    }
+    guard ours_den == oracle_den else {
+      fail("denom mismatch for \{spec}: ours=\{ours_den}, oracle=\{oracle_den}")
+    }
+  }
+}
+
+test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(7), "7", @symcore.int(3), "3"),
+    ("QQ", try! @symcore.rational_from_ints(7, 3), "7/3", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("ZZ_I", @symcore.add([@symcore.int(3), i]), "3 + I", @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "1 - I"),
+    ("QQ_I", @symcore.int(2), "2", @symcore.int(4), "4"),
+    ("ZZ[x]", (x ^ @symcore.int(2)) - @symcore.int(1), "x**2 - 1", x - @symcore.int(1), "x - 1"),
+    ("QQ[x]", x, "x", @symcore.int(2), "2"),
+    ("QQ(x)", try! @symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1)), "2/x", try! @symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2)), "4/x**2"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let left = item.1
+    let left_text = item.2
+    let right = item.3
+    let right_text = item.4
+    let domain = domain_from_string(spec)
+    let ours_quo = render_expr_result(try? domain.quo_expr(left, right))
+    let ours_rem = render_expr_result(try? domain.rem_expr(left, right))
+    let ours_div = render_expr_pair_result(try? domain.div_expr(left, right))
+    let ours_exquo = render_expr_result(try? domain.exquo_expr(left, right))
+    let oracle_quo = normalize_expr_text(@sympy_polys.domain_quo_expr(spec, left_text, right_text))
+    let oracle_rem = normalize_expr_text(@sympy_polys.domain_rem_expr(spec, left_text, right_text))
+    let oracle_div = normalize_expr_tuple2_text(@sympy_polys.domain_div_expr(spec, left_text, right_text))
+    let oracle_exquo = normalize_expr_text(@sympy_polys.domain_exquo_expr(spec, left_text, right_text))
+    guard ours_quo == oracle_quo else {
+      fail("quo mismatch for \{spec}: ours=\{ours_quo}, oracle=\{oracle_quo}")
+    }
+    guard ours_rem == oracle_rem else {
+      fail("rem mismatch for \{spec}: ours=\{ours_rem}, oracle=\{oracle_rem}")
+    }
+    guard ours_div == oracle_div else {
+      fail("div mismatch for \{spec}: ours=\{ours_div}, oracle=\{oracle_div}")
+    }
+    guard ours_exquo == oracle_exquo else {
+      fail("exquo mismatch for \{spec}: ours=\{ours_exquo}, oracle=\{oracle_exquo}")
+    }
+  }
+
+  let exact_fail = render_expr_result(
+    try? domain_from_string("ZZ").exquo_expr(@symcore.int(7), @symcore.int(3)),
+  )
+  guard exact_fail == "ERROR" else {
+    fail("ZZ exquo should reject non-exact quotient")
   }
 }
