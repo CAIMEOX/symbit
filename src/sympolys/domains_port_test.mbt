@@ -11,6 +11,54 @@ fn render_domain_result(result : Result[Domain, PolyError]) -> String {
   }
 }
 
+fn normalize_expr_text(text : String) -> String {
+  let compact = trim_ws(text)
+  if compact == "ERROR" {
+    return compact
+  }
+  try @sympy_polys.sympy_normalize(compact) catch {
+    _ => compact
+  } noraise {
+    normalized => trim_ws(normalized)
+  }
+}
+
+fn normalize_expr_tuple3_text(text : String) -> String {
+  let compact = trim_ws(text)
+  if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
+    return compact
+  }
+  let inner = (try! compact[1:compact.length() - 1]).to_string()
+  let parts : Array[String] = Array::new()
+  for part in inner.split(",") {
+    parts.push(normalize_expr_text(part.trim().to_string()))
+  }
+  if parts.length() != 3 {
+    compact
+  } else {
+    "(\{parts[0]},\{parts[1]},\{parts[2]})"
+  }
+}
+
+fn render_expr_result(result : Result[@symcore.Expr, PolyError]) -> String {
+  match result {
+    Ok(expr) => normalize_expr_text(@symprint.to_string(expr))
+    Err(_) => "ERROR"
+  }
+}
+
+fn render_expr_triple_result(
+  result : Result[(@symcore.Expr, @symcore.Expr, @symcore.Expr), PolyError],
+) -> String {
+  match result {
+    Ok(items) =>
+      normalize_expr_tuple3_text(
+        "(\{@symprint.to_string(items.0)},\{@symprint.to_string(items.1)},\{@symprint.to_string(items.2)})",
+      )
+    Err(_) => "ERROR"
+  }
+}
+
 ///|
 test "domains: basic constructor/repr parity" {
   let specs = [
@@ -912,5 +960,105 @@ test "domains: sign predicate parity on ordered and composite domains" {
   guard !zz_series.is_positive_expr(x) && !zz_series.is_negative_expr(x) &&
     zz_series.is_nonpositive_expr(x) && zz_series.is_nonnegative_expr(x) else {
     fail("power-series sign semantics mismatch")
+  }
+}
+
+test "domains: canonical_unit parity on scalar and composite domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(-2), "-2"),
+    ("QQ", try! @symcore.rational_from_ints(-2, 3), "-2/3"),
+    ("ZZ_I", i, "I"),
+    ("ZZ_I", @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "1 - I"),
+    ("QQ_I", @symcore.int(2), "2"),
+    ("ZZ[x]", @symcore.int(-1) * x, "-x"),
+    ("QQ(x)", x, "x"),
+    ("QQ(1/x)", (x ^ @symcore.int(2)) - @symcore.int(1), "x**2 - 1"),
+    ("QQ<sqrt(2)>", @symcore.int(-1) * sqrt2, "-sqrt(2)"),
+    ("EX", @symcore.int(-1) * x, "-x"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = render_expr_result(try? domain_from_string(spec).canonical_unit_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_canonical_unit_expr(spec, expr_text))
+    guard ours == oracle else {
+      fail(
+        "canonical_unit mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}",
+      )
+    }
+  }
+
+  let zz_series = domain_from_string("ZZ[[x]](prec=5)")
+  guard
+    trim_ws(@symprint.to_string(try! zz_series.canonical_unit_expr(@symcore.int(-1) + x))) ==
+    "-1"
+  else {
+    fail("power-series canonical_unit should follow constant coefficient")
+  }
+}
+
+test "domains: abs parity on supported/error domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(-2), "-2"),
+    ("QQ", try! @symcore.rational_from_ints(-2, 3), "-2/3"),
+    ("EX", @symcore.int(-1) * x, "-x"),
+    ("EX", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = render_expr_result(try? domain_from_string(spec).abs_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_abs_expr(spec, expr_text))
+    guard ours == oracle else {
+      fail("abs mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(6), "6", @symcore.int(4), "4"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3", try! @symcore.rational_from_ints(4, 9), "4/9"),
+    ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I", @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "1 - I"),
+    ("QQ_I", @symcore.int(2), "2", @symcore.int(4), "4"),
+    ("EX", x, "x", @symcore.int(2), "2"),
+    ("ZZ[x]", (x ^ @symcore.int(2)) - @symcore.int(1), "x**2 - 1", x - @symcore.int(1), "x - 1"),
+    ("QQ[x]", x, "x", @symcore.int(2), "2"),
+    ("QQ(x)", try! @symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1)), "2/x", try! @symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2)), "4/x**2"),
+    ("QQ<sqrt(2)>", @symcore.int(1) + sqrt2, "1 + sqrt(2)", @symcore.int(2), "2"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let left = item.1
+    let left_text = item.2
+    let right = item.3
+    let right_text = item.4
+    let domain = domain_from_string(spec)
+    let ours_gcd = render_expr_result(try? domain.gcd_expr(left, right))
+    let ours_lcm = render_expr_result(try? domain.lcm_expr(left, right))
+    let ours_cof = render_expr_triple_result(try? domain.cofactors_expr(left, right))
+    let oracle_gcd = normalize_expr_text(@sympy_polys.domain_gcd_expr(spec, left_text, right_text))
+    let oracle_lcm = normalize_expr_text(@sympy_polys.domain_lcm_expr(spec, left_text, right_text))
+    let oracle_cof = normalize_expr_tuple3_text(@sympy_polys.domain_cofactors_expr(spec, left_text, right_text))
+    guard ours_gcd == oracle_gcd else {
+      fail("gcd mismatch for \{spec}: ours=\{ours_gcd}, oracle=\{oracle_gcd}")
+    }
+    guard ours_lcm == oracle_lcm else {
+      fail("lcm mismatch for \{spec}: ours=\{ours_lcm}, oracle=\{oracle_lcm}")
+    }
+    guard ours_cof == oracle_cof else {
+      fail("cofactors mismatch for \{spec}: ours=\{ours_cof}, oracle=\{oracle_cof}")
+    }
   }
 }

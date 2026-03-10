@@ -497,6 +497,17 @@ fn oracle_domain_element_from_expr(
   py_call_object(call, py_tuple_from_objects([expr_obj]), print_err=false)
 }
 
+fn oracle_domain_element_to_string(
+  domain_obj : @py.PyObject,
+  elem : @py.PyObjectEnum,
+) -> String raise {
+  let call = resolve_method_callable(domain_obj, "to_sympy")
+  match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => py_str_enum(elem)
+  }
+}
+
 ///|
 pub fn domain_is_unit_expr(spec : String, expr : String) -> Bool raise {
   let domain_obj = oracle_domain_from_spec(spec)
@@ -626,7 +637,22 @@ pub fn domain_abs_expr(spec : String, expr : String) -> String raise {
     None => "ERROR"
     Some(elem) =>
       match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
-        Some(res) => py_str_enum(res)
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_canonical_unit_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "canonical_unit")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
         None => "ERROR"
       }
   }
@@ -641,7 +667,59 @@ pub fn domain_gcd_expr(spec : String, left : String, right : String) -> String r
   match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
     (Some(lhs), Some(rhs)) =>
       match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
-        Some(res) => py_str_enum(res)
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_lcm_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "lcm")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_cofactors_expr(
+  spec : String,
+  left : String,
+  right : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "cofactors")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => {
+          let items = py_list_to_pyobjects(res)
+          if items.length() < 3 {
+            "ERROR"
+          } else {
+            let rendered : Array[String] = Array::new()
+            for item in items {
+              rendered.push(
+                oracle_domain_element_to_string(
+                  domain_obj,
+                  @py.PyObjectEnum::create(item),
+                ),
+              )
+            }
+            "(\{rendered[0]},\{rendered[1]},\{rendered[2]})"
+          }
+        }
         None => "ERROR"
       }
     _ => "ERROR"
