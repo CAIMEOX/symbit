@@ -667,3 +667,183 @@ pub fn energy(
     OracleArg::PyObj(expr_to_sympy(r)),
   ])))
 }
+
+///|
+fn quantum_cg_obj(
+  name : String,
+  args : Array[OracleArg],
+) -> @py.PyObject raise {
+  objenum_to_obj(sympy_call_must("sympy.physics.quantum.cg.\{name}", args))
+}
+
+///|
+pub fn quantum_wigner3j_expr(
+  j1 : @symcore.Expr,
+  m1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  m2 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  m3 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(quantum_cg_obj("Wigner3j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(m1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(m2)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(m3)),
+  ]))
+}
+
+///|
+pub fn quantum_wigner3j_doit(
+  j1 : @symcore.Expr,
+  m1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  m2 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  m3 : @symcore.Expr,
+) -> String raise {
+  let obj = quantum_cg_obj("Wigner3j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(m1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(m2)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(m3)),
+  ])
+  let doit = resolve_method_callable(obj, "doit")
+  py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}
+
+///|
+pub fn quantum_cg_expr(
+  j1 : @symcore.Expr,
+  m1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  m2 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  m3 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(quantum_cg_obj("CG", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(m1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(m2)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(m3)),
+  ]))
+}
+
+///|
+pub fn quantum_cg_doit(
+  j1 : @symcore.Expr,
+  m1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  m2 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  m3 : @symcore.Expr,
+) -> String raise {
+  let obj = quantum_cg_obj("CG", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(m1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(m2)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(m3)),
+  ])
+  let doit = resolve_method_callable(obj, "doit")
+  py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}
+
+///|
+pub fn quantum_wigner6j_expr(
+  j1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  j12 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  j : @symcore.Expr,
+  j23 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(quantum_cg_obj("Wigner6j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(j12)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(j)),
+    OracleArg::PyObj(expr_to_sympy(j23)),
+  ]))
+}
+
+///|
+pub fn quantum_wigner6j_doit(
+  j1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  j12 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  j : @symcore.Expr,
+  j23 : @symcore.Expr,
+) -> String raise {
+  let obj = quantum_cg_obj("Wigner6j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(j12)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(j)),
+    OracleArg::PyObj(expr_to_sympy(j23)),
+  ])
+  let doit = resolve_method_callable(obj, "doit")
+  py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}
+
+///|
+pub fn quantum_wigner9j_expr(
+  j1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  j12 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  j4 : @symcore.Expr,
+  j34 : @symcore.Expr,
+  j13 : @symcore.Expr,
+  j24 : @symcore.Expr,
+  j : @symcore.Expr,
+) -> String raise {
+  py_str_obj(quantum_cg_obj("Wigner9j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(j12)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(j4)),
+    OracleArg::PyObj(expr_to_sympy(j34)),
+    OracleArg::PyObj(expr_to_sympy(j13)),
+    OracleArg::PyObj(expr_to_sympy(j24)),
+    OracleArg::PyObj(expr_to_sympy(j)),
+  ]))
+}
+
+///|
+pub fn quantum_wigner9j_doit(
+  j1 : @symcore.Expr,
+  j2 : @symcore.Expr,
+  j12 : @symcore.Expr,
+  j3 : @symcore.Expr,
+  j4 : @symcore.Expr,
+  j34 : @symcore.Expr,
+  j13 : @symcore.Expr,
+  j24 : @symcore.Expr,
+  j : @symcore.Expr,
+) -> String raise {
+  let obj = quantum_cg_obj("Wigner9j", [
+    OracleArg::PyObj(expr_to_sympy(j1)),
+    OracleArg::PyObj(expr_to_sympy(j2)),
+    OracleArg::PyObj(expr_to_sympy(j12)),
+    OracleArg::PyObj(expr_to_sympy(j3)),
+    OracleArg::PyObj(expr_to_sympy(j4)),
+    OracleArg::PyObj(expr_to_sympy(j34)),
+    OracleArg::PyObj(expr_to_sympy(j13)),
+    OracleArg::PyObj(expr_to_sympy(j24)),
+    OracleArg::PyObj(expr_to_sympy(j)),
+  ])
+  let doit = resolve_method_callable(obj, "doit")
+  py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}

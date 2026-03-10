@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/core/bigint",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
+} for "test"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics" @symphysics,
+}
