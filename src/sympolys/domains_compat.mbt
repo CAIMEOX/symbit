@@ -1552,6 +1552,19 @@ pub fn domain_convert_from_expr(
 }
 
 ///|
+/// Convert an expression into `domain`, optionally using an explicit source domain.
+pub fn domain_convert_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base? : Domain? = None,
+) -> @symcore.Expr raise PolyError {
+  match base {
+    Some(source) => domain_convert_from_expr(domain, expr, source)
+    None => domain_from_sympy_expr(domain, expr)
+  }
+}
+
+///|
 fn expr_depends_on_symbols(expr : @symcore.Expr, symbols : Array[String]) -> Bool {
   match expr {
     @symcore.Expr::Number(_) => false
@@ -3827,6 +3840,75 @@ pub fn domain_is_square_expr(
   }
 }
 
+///|
+pub fn domain_real_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+) -> @symcore.Expr raise PolyError {
+  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  domain_from_sympy_expr(domain, expr)
+}
+
+///|
+pub fn domain_imag_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+) -> @symcore.Expr raise PolyError {
+  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  domain_zero_like_expr(domain)
+}
+
+fn gaussian_rat_almosteq(
+  left : GaussianRatCompat,
+  right : GaussianRatCompat,
+  tolerance : @symnum.BigRational,
+) -> Bool {
+  rational_abs(left.re.add_r(right.re.neg_r())).compare(tolerance) <= 0 &&
+  rational_abs(left.im.add_r(right.im.neg_r())).compare(tolerance) <= 0
+}
+
+///|
+pub fn domain_almosteq_expr(
+  domain : Domain,
+  left : @symcore.Expr,
+  right : @symcore.Expr,
+  tolerance? : @symnum.BigRational? = None,
+) -> Bool {
+  if !domain_contains_expr(domain, left) || !domain_contains_expr(domain, right) {
+    return false
+  }
+  let tol = match tolerance {
+    Some(value) => value
+    None => @symnum.BigRational::zero()
+  }
+  match (expr_rational_value(left), expr_rational_value(right)) {
+    (Some(lhs), Some(rhs)) =>
+      if tol.is_zero() {
+        lhs.compare(rhs) == 0
+      } else {
+        rational_abs(lhs.add_r(rhs.neg_r())).compare(tol) <= 0
+      }
+    _ => {
+      let lhs_gauss = gaussian_rat_from_expr(domain, left) catch { _ => {
+        let lhs = domain_from_sympy_expr(domain, left) catch { _ => return false }
+        let rhs = domain_from_sympy_expr(domain, right) catch { _ => return false }
+        return expr_key(lhs) == expr_key(rhs)
+      } }
+      let rhs_gauss = gaussian_rat_from_expr(domain, right) catch { _ => {
+        let lhs = domain_from_sympy_expr(domain, left) catch { _ => return false }
+        let rhs = domain_from_sympy_expr(domain, right) catch { _ => return false }
+        return expr_key(lhs) == expr_key(rhs)
+      } }
+      if tol.is_zero() {
+        lhs_gauss.re.compare(rhs_gauss.re) == 0 &&
+        lhs_gauss.im.compare(rhs_gauss.im) == 0
+      } else {
+        gaussian_rat_almosteq(lhs_gauss, rhs_gauss, tol)
+      }
+    }
+  }
+}
+
 fn domain_zero_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
   match domain {
     Domain::GF(_)
@@ -4269,6 +4351,15 @@ pub fn Domain::convert_from_expr(
 }
 
 ///|
+pub fn Domain::convert_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base? : Domain? = None,
+) -> @symcore.Expr raise PolyError {
+  domain_convert_expr(self, expr, base=base)
+}
+
+///|
 pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
   domain_is_one_expr(self, expr)
 }
@@ -4472,6 +4563,32 @@ pub fn Domain::exsqrt_expr(
   expr : @symcore.Expr,
 ) -> @symcore.Expr? raise PolyError {
   domain_exsqrt_expr(self, expr)
+}
+
+///|
+pub fn Domain::real_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+) -> @symcore.Expr raise PolyError {
+  domain_real_expr(self, expr)
+}
+
+///|
+pub fn Domain::imag_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+) -> @symcore.Expr raise PolyError {
+  domain_imag_expr(self, expr)
+}
+
+///|
+pub fn Domain::almosteq_expr(
+  self : Domain,
+  left : @symcore.Expr,
+  right : @symcore.Expr,
+  tolerance? : @symnum.BigRational? = None,
+) -> Bool {
+  domain_almosteq_expr(self, left, right, tolerance=tolerance)
 }
 
 ///|

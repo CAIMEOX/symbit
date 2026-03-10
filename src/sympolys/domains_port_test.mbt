@@ -947,6 +947,24 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
       fail("convert_from parity mismatch for \{target} <- \{base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
     }
   }
+
+  let direct_cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("GF(5)", @symcore.int(7), "7"),
+    ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("QQ[x]", x + @symcore.int(1), "x + 1"),
+  ]
+  for item in direct_cases {
+    let target = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = render_expr_result(try? domain_from_string(target).convert_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_convert_expr(target, expr_text))
+    guard ours == oracle else {
+      fail("convert parity mismatch for \{target} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
 }
 
 ///|
@@ -1585,5 +1603,77 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     normalize_expr_text("sqrt(2 + I)")
   else {
     fail("CC exsqrt should produce the principal symbolic square root")
+  }
+}
+
+test "domains: real/imag/almosteq parity and tolerance semantics" {
+  let i = @symcore.symbol("I")
+  let x = @symcore.symbol("x")
+  let component_cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("GF(5)", @symcore.int(3), "3"),
+    ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I"),
+    ("QQ_I", (try! @symcore.rational_from_ints(1, 2)) + ((try! @symcore.rational_from_ints(1, 3)) * i), "1/2 + I/3"),
+    ("QQ[x]", x + @symcore.int(1), "x + 1"),
+  ]
+  for item in component_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_real = render_expr_result(try? domain.real_expr(expr))
+    let ours_imag = render_expr_result(try? domain.imag_expr(expr))
+    let oracle_real = normalize_expr_text(@sympy_polys.domain_real_expr(spec, expr_text))
+    let oracle_imag = normalize_expr_text(@sympy_polys.domain_imag_expr(spec, expr_text))
+    guard ours_real == oracle_real else {
+      fail("real mismatch for \{spec}, \{expr_text}: ours=\{ours_real}, oracle=\{oracle_real}")
+    }
+    guard ours_imag == oracle_imag else {
+      fail("imag mismatch for \{spec}, \{expr_text}: ours=\{ours_imag}, oracle=\{oracle_imag}")
+    }
+  }
+
+  let almosteq_cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(2), "2", @symcore.int(2), "2"),
+    ("ZZ", @symcore.int(2), "2", @symcore.int(3), "3"),
+    ("QQ", try! @symcore.rational_from_ints(1, 2), "1/2", try! @symcore.rational_from_ints(2, 4), "2/4"),
+    ("QQ", try! @symcore.rational_from_ints(1, 2), "1/2", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I", @symcore.add([@symcore.int(1), i]), "1 + I"),
+    ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I", @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "1 - I"),
+    ("RR", @symcore.int(1), "1", @symcore.int(1), "1"),
+    ("RR", @symcore.int(1), "1", @symcore.int(2), "2"),
+    ("CC", @symcore.add([@symcore.int(1), i]), "1 + I", @symcore.add([@symcore.int(1), i]), "1 + I"),
+    ("CC", @symcore.add([@symcore.int(1), i]), "1 + I", i, "I"),
+  ]
+  for item in almosteq_cases {
+    let spec = item.0
+    let left = item.1
+    let left_text = item.2
+    let right = item.3
+    let right_text = item.4
+    let ours = domain_from_string(spec).almosteq_expr(left, right)
+    let oracle = @sympy_polys.domain_almosteq_expr(spec, left_text, right_text)
+    guard ours == oracle else {
+      fail("almosteq mismatch for \{spec}: left=\{left_text}, right=\{right_text}")
+    }
+  }
+
+  let qq = domain_from_string("QQ")
+  guard qq.almosteq_expr(
+    try! @symcore.rational_from_ints(1, 2),
+    try! @symcore.rational_from_ints(2, 3),
+    tolerance=Some(try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4))),
+  ) else {
+    fail("QQ almosteq should honor explicit tolerance")
+  }
+
+  let qq_i = domain_from_string("QQ_I")
+  guard qq_i.almosteq_expr(
+    @symcore.add([@symcore.int(1), i]),
+    @symcore.add([@symcore.int(1), (try! @symcore.rational_from_ints(1, 2)) * i]),
+    tolerance=Some(try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))),
+  ) else {
+    fail("QQ_I almosteq should compare component-wise within tolerance")
   }
 }

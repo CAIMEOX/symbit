@@ -550,6 +550,17 @@ pub fn domain_convert_from_expr(
 }
 
 ///|
+pub fn domain_convert_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let convert = resolve_method_callable(domain_obj, "convert")
+  match py_call_object(convert, py_tuple_from_objects([expr_obj]), print_err=false) {
+    Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
+    None => "ERROR"
+  }
+}
+
+///|
 pub fn domain_zero_expr(spec : String) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   match py_get_attr(domain_obj, "zero") {
@@ -1241,6 +1252,56 @@ pub fn domain_exsqrt_expr(spec : String, expr : String) -> String raise {
         }
         None => "ERROR"
       }
+  }
+}
+
+///|
+pub fn domain_real_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "real")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_imag_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "imag")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_almosteq_expr(
+  spec : String,
+  left : String,
+  right : String,
+) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "almosteq")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+    _ => false
   }
 }
 
