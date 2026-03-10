@@ -1094,6 +1094,12 @@ pub fn domain_unify_with_symbols(
 }
 
 ///|
+/// Unify two domains where at least one side is composite.
+pub fn domain_unify_composite(lhs : Domain, rhs : Domain) -> Domain raise PolyError {
+  domain_unify_pair(lhs, rhs)
+}
+
+///|
 fn extension_names(extension : Array[@symcore.Expr]) -> Array[String] {
   let names : Array[String] = Array::new()
   for expr in extension {
@@ -1478,6 +1484,11 @@ pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 
 ///|
 pub fn Domain::contains_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_contains_expr(self, expr)
+}
+
+///|
+pub fn Domain::of_type_expr(self : Domain, expr : @symcore.Expr) -> Bool {
   domain_contains_expr(self, expr)
 }
 
@@ -3909,6 +3920,17 @@ pub fn domain_almosteq_expr(
   }
 }
 
+///|
+pub fn domain_evalf_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  prec? : Int? = None,
+) -> @symcore.Expr raise PolyError {
+  ignore(prec)
+  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  domain_to_sympy_expr(domain, expr)
+}
+
 fn domain_zero_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
   match domain {
     Domain::GF(_)
@@ -4360,6 +4382,14 @@ pub fn Domain::convert_expr(
 }
 
 ///|
+pub fn Domain::unify_composite(
+  self : Domain,
+  other : Domain,
+) -> Domain raise PolyError {
+  domain_unify_composite(self, other)
+}
+
+///|
 pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
   domain_is_one_expr(self, expr)
 }
@@ -4589,6 +4619,15 @@ pub fn Domain::almosteq_expr(
   tolerance? : @symnum.BigRational? = None,
 ) -> Bool {
   domain_almosteq_expr(self, left, right, tolerance=tolerance)
+}
+
+///|
+pub fn Domain::evalf_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  prec? : Int? = None,
+) -> @symcore.Expr raise PolyError {
+  domain_evalf_expr(self, expr, prec=prec)
 }
 
 ///|

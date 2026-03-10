@@ -757,6 +757,23 @@ test "domains: set_domain and unify_with_symbols parity" {
       )
     }
   }
+
+  let composite_cases = [
+    ("ZZ[x]", "QQ"),
+    ("ZZ[x]", "QQ(y)"),
+    ("ZZ(x)", "QQ[x]"),
+  ]
+  for item in composite_cases {
+    let lhs = item.0
+    let rhs = item.1
+    let ours = domain_to_sympy_string(
+      try! domain_from_string(lhs).unify_composite(domain_from_string(rhs)),
+    )
+    let oracle = @sympy_polys.domain_unify_composite(lhs, rhs)
+    guard trim_ws(ours) == trim_ws(oracle) else {
+      fail("unify_composite mismatch for \{lhs}, \{rhs}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
 }
 
 ///|
@@ -1675,5 +1692,22 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     tolerance=Some(try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))),
   ) else {
     fail("QQ_I almosteq should compare component-wise within tolerance")
+  }
+
+  let evalf_cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I"),
+    ("QQ[x]", x + @symcore.int(1), "x + 1"),
+  ]
+  for item in evalf_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = render_expr_result(try? domain_from_string(spec).evalf_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_evalf_expr(spec, expr_text))
+    guard ours == oracle else {
+      fail("evalf mismatch for \{spec}, \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
   }
 }

@@ -441,6 +441,17 @@ pub fn domain_unify_with_symbols(
 }
 
 ///|
+pub fn domain_unify_composite(lhs_spec : String, rhs_spec : String) -> String raise {
+  let lhs = oracle_domain_from_spec(lhs_spec)
+  let rhs = oracle_domain_from_spec(rhs_spec)
+  let unify = resolve_method_callable(lhs, "unify_composite")
+  match py_call_object(unify, py_tuple_from_objects([rhs]), print_err=false) {
+    Some(res) => py_str_enum(res)
+    None => "ERROR"
+  }
+}
+
+///|
 pub fn domain_algebraic_field(
   spec : String,
   extension : Array[String],
@@ -1302,6 +1313,24 @@ pub fn domain_almosteq_expr(
         None => false
       }
     _ => false
+  }
+}
+
+///|
+pub fn domain_evalf_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "evalf")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => {
+          let simplified = sympy_call_must("sympy.nsimplify", [OracleArg::PyObj(objenum_to_obj(res))])
+          py_str_enum(simplified)
+        }
+        None => "ERROR"
+      }
   }
 }
 
