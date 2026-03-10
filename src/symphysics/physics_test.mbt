@@ -136,3 +136,29 @@ test "physics: wigner coefficients obey core examples and guards" {
     fail("wigner_3j should reject non half-integer input")
   }
 }
+
+///|
+test "physics: gaunt examples and guards" {
+  try! physics_assert_expr_equal(
+    try! gaunt(@symcore.int(1), @symcore.int(0), @symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(-1)),
+    "-1/(2*sqrt(pi))",
+    "gaunt example",
+  )
+  try! physics_assert_expr_equal(
+    try! gaunt(@symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(2), @symcore.int(-2)),
+    "0",
+    "gaunt zero",
+  )
+
+  let bad : Result[@symcore.Expr, PhysicsError] = try? gaunt(
+    physics_frac(1, 2),
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(0),
+    @symcore.int(0),
+    @symcore.int(0),
+  )
+  guard bad is Err(_) else {
+    fail("gaunt should reject half-integer l values")
+  }
+}

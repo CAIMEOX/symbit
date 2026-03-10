@@ -244,3 +244,40 @@ test "physics: wigner parity" {
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 }
+
+///|
+test "physics: gaunt parity" {
+  for case in [
+    (
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(-1),
+      "gaunt(1,0,1,1,0,-1)",
+    ),
+    (
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(-1),
+      @symcore.int(1),
+      @symcore.int(0),
+      "gaunt(1,1,0,-1,1,0)",
+    ),
+    (
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(0),
+      @symcore.int(2),
+      @symcore.int(-2),
+      "gaunt zero",
+    ),
+  ] {
+    let ours = try! gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = try! @sympy_physics.gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    physics_assert_expr_equal(ours, oracle, case.6)
+  }
+}
