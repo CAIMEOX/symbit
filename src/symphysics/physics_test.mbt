@@ -216,3 +216,50 @@ test "physics: real gaunt examples and zeros" {
     "real_gaunt zero",
   )
 }
+
+///|
+test "physics: rotational harmonic examples" {
+  let theta = @symcore.symbol("theta")
+  let phi = @symcore.symbol("phi")
+  let half = physics_frac(1, 2)
+  let alpha = @symcore.symbol("alpha")
+  let beta = @symcore.symbol("beta")
+  let gamma = @symcore.symbol("gamma")
+
+  try! physics_assert_expr_equal(
+    try! dot_rot_grad_ynm(@symcore.int(3), @symcore.int(2), @symcore.int(2), @symcore.int(0), theta, phi),
+    "3*sqrt(55)*Ynm(5, 2, theta, phi)/(11*sqrt(pi))",
+    "dot_rot_grad example",
+  )
+  try! physics_assert_expr_equal(
+    try! dot_rot_grad_ynm(@symcore.int(1), @symcore.int(5), @symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(2)),
+    "0",
+    "dot_rot_grad zero",
+  )
+
+  guard physics_matrix_expr_equal(try! wigner_d_small(half, @symcore.int(0)), explicit_matrix_eye(2)) else {
+    fail("wigner_d_small(1/2, 0) should be identity")
+  }
+
+  let d = try! wigner_d(half, alpha, beta, gamma)
+  try! physics_assert_expr_equal(
+    d.rows[0][0],
+    "exp(I*alpha/2)*exp(I*gamma/2)*cos(beta/2)",
+    "wigner_d(0,0)",
+  )
+  try! physics_assert_expr_equal(
+    d.rows[0][1],
+    "exp(I*alpha/2)*exp(-I*gamma/2)*sin(beta/2)",
+    "wigner_d(0,1)",
+  )
+  try! physics_assert_expr_equal(
+    d.rows[1][0],
+    "-exp(-I*alpha/2)*exp(I*gamma/2)*sin(beta/2)",
+    "wigner_d(1,0)",
+  )
+  try! physics_assert_expr_equal(
+    d.rows[1][1],
+    "exp(-I*alpha/2)*exp(-I*gamma/2)*cos(beta/2)",
+    "wigner_d(1,1)",
+    )
+}

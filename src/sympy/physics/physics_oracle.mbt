@@ -163,6 +163,10 @@ fn physics_globals() -> @py.PyDict raise {
   ] {
     try_bind_name(globals, sympy_mod, name)
   }
+  for name in ["alpha", "beta", "gamma", "theta", "phi", "r", "x", "m", "n", "omega", "nu", "Z"] {
+    let symbol = objenum_to_obj(sympy_call_must("sympy.Symbol", [OracleArg::Str(name)]))
+    globals.set(name, symbol)
+  }
   try_bind_name(globals, constants_mod, "hbar")
   globals
 }
@@ -592,6 +596,55 @@ pub fn real_gaunt(
     OracleArg::PyObj(expr_to_sympy(mu_2)),
     OracleArg::PyObj(expr_to_sympy(mu_3)),
   ])))
+}
+
+///|
+pub fn dot_rot_grad_ynm(
+  j : @symcore.Expr,
+  p : @symcore.Expr,
+  l : @symcore.Expr,
+  m : @symcore.Expr,
+  theta : @symcore.Expr,
+  phi : @symcore.Expr,
+) -> String raise {
+  let obj = sympy_call_must("sympy.physics.wigner.dot_rot_grad_Ynm", [
+    OracleArg::PyObj(expr_to_sympy(j)),
+    OracleArg::PyObj(expr_to_sympy(p)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(theta)),
+    OracleArg::PyObj(expr_to_sympy(phi)),
+  ])
+  let doit = resolve_method_callable(objenum_to_obj(obj), "doit")
+  py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}
+
+///|
+pub fn wigner_d_small(
+  j_tot : @symcore.Expr,
+  beta : @symcore.Expr,
+) -> Array[String] raise {
+  let obj = sympy_call_must("sympy.physics.wigner.wigner_d_small", [
+    OracleArg::PyObj(expr_to_sympy(j_tot)),
+    OracleArg::PyObj(expr_to_sympy(beta)),
+  ])
+  matrix_flatten_to_strings(objenum_to_obj(obj))
+}
+
+///|
+pub fn wigner_d(
+  j_tot : @symcore.Expr,
+  alpha : @symcore.Expr,
+  beta : @symcore.Expr,
+  gamma : @symcore.Expr,
+) -> Array[String] raise {
+  let obj = sympy_call_must("sympy.physics.wigner.wigner_d", [
+    OracleArg::PyObj(expr_to_sympy(j_tot)),
+    OracleArg::PyObj(expr_to_sympy(alpha)),
+    OracleArg::PyObj(expr_to_sympy(beta)),
+    OracleArg::PyObj(expr_to_sympy(gamma)),
+  ])
+  matrix_flatten_to_strings(objenum_to_obj(obj))
 }
 
 ///|

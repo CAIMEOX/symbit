@@ -382,3 +382,40 @@ test "physics: real gaunt parity" {
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 }
+
+///|
+test "physics: rotational harmonic parity" {
+  let theta = @symcore.symbol("theta")
+  let phi = @symcore.symbol("phi")
+  let half = physics_frac(1, 2)
+  let alpha = @symcore.symbol("alpha")
+  let beta = @symcore.symbol("beta")
+  let gamma = @symcore.symbol("gamma")
+
+  physics_assert_expr_equal(
+    try! dot_rot_grad_ynm(@symcore.int(3), @symcore.int(2), @symcore.int(2), @symcore.int(0), theta, phi),
+    try! @sympy_physics.dot_rot_grad_ynm(@symcore.int(3), @symcore.int(2), @symcore.int(2), @symcore.int(0), theta, phi),
+    "dot_rot_grad_ynm(3,2,2,0)",
+  )
+  physics_assert_expr_equal(
+    try! dot_rot_grad_ynm(@symcore.int(1), @symcore.int(5), @symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(2)),
+    try! @sympy_physics.dot_rot_grad_ynm(@symcore.int(1), @symcore.int(5), @symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(2)),
+    "dot_rot_grad_ynm zero",
+  )
+
+  physics_assert_matrix_equiv(
+    try! wigner_d_small(half, beta),
+    try! @sympy_physics.wigner_d_small(half, beta),
+    "wigner_d_small(1/2,beta)",
+  )
+  physics_assert_matrix_equiv(
+    try! wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
+    try! @sympy_physics.wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
+    "wigner_d_small(1/2,pi/2)",
+  )
+  physics_assert_matrix_equiv(
+    try! wigner_d(half, alpha, beta, gamma),
+    try! @sympy_physics.wigner_d(half, alpha, beta, gamma),
+    "wigner_d(1/2,alpha,beta,gamma)",
+  )
+}

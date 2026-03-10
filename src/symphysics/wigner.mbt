@@ -54,6 +54,15 @@ fn wigner_binomial_bigint(n : Int, k : Int) -> BigInt {
 }
 
 ///|
+fn wigner_expr_from_doubled_int(value : Int) -> @symcore.Expr {
+  if value % 2 == 0 {
+    @symcore.int(value / 2)
+  } else {
+    rational_expr(value, 2)
+  }
+}
+
+///|
 fn wigner_doubled_int(value : @symcore.Expr) -> Int raise PhysicsError {
   match expr_number_value(value) {
     Some(q) => {
@@ -364,4 +373,117 @@ pub fn wigner_9j(
     wigner_binomial_bigint(j369 + 1, dj9 + 1) *
     wigner_binomial_bigint(dj9, (dj6 + dj9 - dj3) / 2)
   wigner_expr_from_bigint(sumres) * @symelem.sqrt(wigner_rational_expr(BigInt::from_int(1), res_den))
+}
+
+///|
+pub fn dot_rot_grad_ynm(
+  j : @symcore.Expr,
+  p : @symcore.Expr,
+  l : @symcore.Expr,
+  m : @symcore.Expr,
+  theta : @symcore.Expr,
+  phi : @symcore.Expr,
+) -> @symcore.Expr raise PhysicsError {
+  let dj = wigner_doubled_int(j)
+  let dp = wigner_doubled_int(p)
+  let dl = wigner_doubled_int(l)
+  let dm = wigner_doubled_int(m)
+  if dj % 2 != 0 || dp % 2 != 0 || dl % 2 != 0 || dm % 2 != 0 {
+    return @symcore.function("dot_rot_grad_Ynm", [j, p, l, m, theta, phi])
+  }
+  let ji = dj / 2
+  let pi = dp / 2
+  let li = dl / 2
+  let mi = dm / 2
+  let mut acc = @symcore.int(0)
+  let lower = (li - ji).abs()
+  let upper = li + ji
+  for k in lower..<(upper + 1) {
+    let k_expr = @symcore.int(k)
+    let alpha = @symelem.sqrt(
+      expr_div(
+        ((@symcore.int(2) * l) + @symcore.int(1)) *
+          ((@symcore.int(2) * j) + @symcore.int(1)) *
+          ((@symcore.int(2) * k_expr) + @symcore.int(1)),
+        @symcore.int(4) * pi_expr(),
+      ),
+    ) *
+      (try! wigner_3j(j, l, k_expr, @symcore.int(0), @symcore.int(0), @symcore.int(0))) *
+      (try! wigner_3j(j, l, k_expr, p, m, @symcore.int(-1) * (m + p)))
+    let coeff = alpha *
+      rational_expr(1, 2) *
+      ((k_expr ^ @symcore.int(2)) - (j ^ @symcore.int(2)) - (l ^ @symcore.int(2)) + k_expr - j - l)
+    acc = acc + wigner_phase_expr(mi + pi) * @symspec.ynm(k_expr, m + p, theta, phi) * coeff
+  }
+  acc
+}
+
+///|
+pub fn wigner_d_small(
+  j_tot : @symcore.Expr,
+  beta : @symcore.Expr,
+) -> ExplicitMatrix raise PhysicsError {
+  let dJ = wigner_doubled_int(j_tot)
+  guard dJ >= 0 else {
+    raise PhysicsError::ValueError("J must be nonnegative")
+  }
+  let size = dJ + 1
+  let half_beta = beta * rational_expr(1, 2)
+  let cos_half = @symelem.cos(half_beta)
+  let sin_half = @symelem.sin(half_beta)
+  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  for i in 0..<size {
+    let row : Array[@symcore.Expr] = Array::new()
+    for j in 0..<size {
+      let sigmamax = wigner_int_min(i, j)
+      let sigmamin = wigner_int_max(0, i + j - dJ)
+      let numer = wigner_binomial_bigint(dJ, j)
+      let denom = wigner_binomial_bigint(dJ, i)
+      let dij = @symelem.sqrt(wigner_rational_expr(numer, denom))
+      let mut terms = @symcore.int(0)
+      for s in sigmamin..<(sigmamax + 1) {
+        let phase = wigner_phase_expr(i - s)
+        let coeff = wigner_expr_from_bigint(
+          wigner_binomial_bigint(dJ - j, i - s) *
+            wigner_binomial_bigint(j, s),
+        )
+        let cos_exp = 2 * s + dJ - i - j
+        let sin_exp = i + j - 2 * s
+        terms = terms + phase *
+          coeff *
+          (cos_half ^ @symcore.int(cos_exp)) *
+          (sin_half ^ @symcore.int(sin_exp))
+      }
+      row.push(dij * terms)
+    }
+    rows.push(row)
+  }
+  explicit_matrix_from_rows(rows)
+}
+
+///|
+pub fn wigner_d(
+  j_tot : @symcore.Expr,
+  alpha : @symcore.Expr,
+  beta : @symcore.Expr,
+  gamma : @symcore.Expr,
+) -> ExplicitMatrix raise PhysicsError {
+  let d_small = try! wigner_d_small(j_tot, beta)
+  let dJ = wigner_doubled_int(j_tot)
+  let size = dJ + 1
+  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  for i in 0..<size {
+    let mi = wigner_expr_from_doubled_int(dJ - 2 * i)
+    let row : Array[@symcore.Expr] = Array::new()
+    for j in 0..<size {
+      let mj = wigner_expr_from_doubled_int(dJ - 2 * j)
+      row.push(
+        @symelem.exp(i_expr() * mi * alpha) *
+          d_small.rows[i][j] *
+          @symelem.exp(i_expr() * mj * gamma),
+      )
+    }
+    rows.push(row)
+  }
+  explicit_matrix_from_rows(rows)
 }
