@@ -41,6 +41,15 @@ fn physics_dirac_c() -> @symcore.Expr {
   )
 }
 
+fn physics_frac(num : Int, den : Int) -> @symcore.Expr {
+  @symcore.number(
+    try! @symnum.BigRational::new(
+      @bigint.BigInt::from_int(num),
+      @bigint.BigInt::from_int(den),
+    ),
+  )
+}
+
 ///|
 test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
   for i in [1, 2, 3] {
@@ -160,4 +169,78 @@ test "physics: hydrogen parity" {
     try! @sympy_physics.hydrogen_e_nl_dirac(@symcore.int(2), @symcore.int(1), spin_up=false, z=zsym, c=c),
     "hydrogen.E_nl_dirac",
   )
+}
+
+///|
+test "physics: wigner parity" {
+  let half = physics_frac(1, 2)
+  let three_half = physics_frac(3, 2)
+
+  for case in [
+    (
+      @symcore.int(2),
+      @symcore.int(6),
+      @symcore.int(4),
+      @symcore.int(0),
+      @symcore.int(0),
+      @symcore.int(0),
+      "wigner_3j(2,6,4,0,0,0)",
+    ),
+    (
+      @symcore.int(0),
+      half,
+      half,
+      @symcore.int(0),
+      half,
+      @symcore.int(-1) * half,
+      "wigner_3j(0,1/2,1/2,0,1/2,-1/2)",
+    ),
+    (
+      @symcore.int(1),
+      @symcore.int(2),
+      @symcore.int(10),
+      @symcore.int(0),
+      @symcore.int(0),
+      @symcore.int(0),
+      "wigner_3j zero triangle",
+    ),
+  ] {
+    let ours = try! wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = try! @sympy_physics.wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
+    physics_assert_expr_equal(ours, oracle, case.6)
+  }
+
+  for case in [
+    (
+      three_half,
+      half,
+      @symcore.int(2),
+      three_half,
+      half,
+      @symcore.int(2),
+      "cg docs 1",
+    ),
+    (
+      three_half,
+      half,
+      @symcore.int(1),
+      three_half,
+      @symcore.int(-1) * half,
+      @symcore.int(1),
+      "cg docs 2",
+    ),
+    (
+      half,
+      half,
+      @symcore.int(1),
+      half,
+      half,
+      @symcore.int(0),
+      "cg zero",
+    ),
+  ] {
+    let ours = try! clebsch_gordan(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = try! @sympy_physics.clebsch_gordan(case.0, case.1, case.2, case.3, case.4, case.5)
+    physics_assert_expr_equal(ours, oracle, case.6)
+  }
 }

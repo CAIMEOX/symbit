@@ -456,6 +456,44 @@ pub fn hydrogen_e_nl_dirac(
 }
 
 ///|
+pub fn wigner_3j(
+  j_1 : @symcore.Expr,
+  j_2 : @symcore.Expr,
+  j_3 : @symcore.Expr,
+  m_1 : @symcore.Expr,
+  m_2 : @symcore.Expr,
+  m_3 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.wigner_3j", [
+    OracleArg::PyObj(expr_to_sympy(j_1)),
+    OracleArg::PyObj(expr_to_sympy(j_2)),
+    OracleArg::PyObj(expr_to_sympy(j_3)),
+    OracleArg::PyObj(expr_to_sympy(m_1)),
+    OracleArg::PyObj(expr_to_sympy(m_2)),
+    OracleArg::PyObj(expr_to_sympy(m_3)),
+  ])))
+}
+
+///|
+pub fn clebsch_gordan(
+  j_1 : @symcore.Expr,
+  j_2 : @symcore.Expr,
+  j_3 : @symcore.Expr,
+  m_1 : @symcore.Expr,
+  m_2 : @symcore.Expr,
+  m_3 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.clebsch_gordan", [
+    OracleArg::PyObj(expr_to_sympy(j_1)),
+    OracleArg::PyObj(expr_to_sympy(j_2)),
+    OracleArg::PyObj(expr_to_sympy(j_3)),
+    OracleArg::PyObj(expr_to_sympy(m_1)),
+    OracleArg::PyObj(expr_to_sympy(m_2)),
+    OracleArg::PyObj(expr_to_sympy(m_3)),
+  ])))
+}
+
+///|
 pub fn wavefunction(n : @symcore.Expr, x : @symcore.Expr) -> String raise {
   py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.pring.wavefunction", [
     OracleArg::PyObj(expr_to_sympy(n)),

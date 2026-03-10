@@ -102,3 +102,37 @@ test "physics: hydrogen formulas and quantum-number guards" {
     fail("hydrogen E_nl_dirac should reject spin_down for l == 0")
   }
 }
+
+///|
+test "physics: wigner coefficients obey core examples and guards" {
+  let half = physics_frac(1, 2)
+  let three_half = physics_frac(3, 2)
+
+  try! physics_assert_expr_equal(
+    try! wigner_3j(@symcore.int(2), @symcore.int(6), @symcore.int(4), @symcore.int(0), @symcore.int(0), @symcore.int(0)),
+    "sqrt(715)/143",
+    "wigner_3j docs",
+  )
+  try! physics_assert_expr_equal(
+    try! clebsch_gordan(three_half, half, @symcore.int(2), three_half, half, @symcore.int(2)),
+    "1",
+    "clebsch_gordan docs",
+  )
+  try! physics_assert_expr_equal(
+    try! clebsch_gordan(half, half, @symcore.int(1), half, half, @symcore.int(0)),
+    "0",
+    "clebsch_gordan zero",
+  )
+
+  let bad : Result[@symcore.Expr, PhysicsError] = try? wigner_3j(
+    physics_frac(1, 3),
+    half,
+    half,
+    @symcore.int(0),
+    half,
+    @symcore.int(-1) * half,
+  )
+  guard bad is Err(_) else {
+    fail("wigner_3j should reject non half-integer input")
+  }
+}
