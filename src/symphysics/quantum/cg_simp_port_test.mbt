@@ -71,3 +71,33 @@ test "physics.quantum.cg_simp: square-sum parity" {
     "cg_simp square",
   )
 }
+
+///|
+test "physics.quantum.cg_simp: additive parity" {
+  let j = @symcore.symbol("j")
+  let half = quantum_test_frac(1, 2)
+
+  let eq1 = @symcore.add([
+    @symcore.mul([@symcore.int(2), cg(half, half, j, @symcore.int(0), half, half).as_expr()]),
+    cg(half, @symcore.int(-1) * half, j, @symcore.int(0), half, @symcore.int(-1) * half).as_expr(),
+  ])
+  try! quantum_test_assert_expr_equal(
+    cg_simp(eq1),
+    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
+    "cg_simp additive eq1",
+  )
+
+  let eq2 = @symcore.add([
+    cg(@symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(-1), @symcore.int(0), @symcore.int(0)).as_expr(),
+    @symcore.mul([
+      @symcore.int(-1),
+      cg(@symcore.int(1), @symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
+    ]),
+    cg(@symcore.int(1), @symcore.int(-1), @symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(0)).as_expr(),
+  ])
+  try! quantum_test_assert_expr_equal(
+    cg_simp(eq2),
+    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq2)),
+    "cg_simp additive eq2",
+  )
+}
