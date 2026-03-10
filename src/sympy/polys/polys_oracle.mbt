@@ -489,6 +489,166 @@ pub fn domain_contains_expr(spec : String, expr : String) -> Bool raise {
 }
 
 ///|
+fn oracle_domain_element_from_expr(
+  domain_obj : @py.PyObject,
+  expr_obj : @py.PyObject
+) -> @py.PyObjectEnum? raise {
+  let call = resolve_method_callable(domain_obj, "from_sympy")
+  py_call_object(call, py_tuple_from_objects([expr_obj]), print_err=false)
+}
+
+///|
+pub fn domain_is_unit_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_unit")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_zero_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_zero")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_one_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_one")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_negative_one_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_negative_one")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_positive_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_positive")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_negative_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_negative")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_nonpositive_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_nonpositive")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_is_nonnegative_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_nonnegative")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_abs_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "abs")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_gcd_expr(spec : String, left : String, right : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "gcd")
+  match (oracle_domain_element_from_expr(domain_obj, left_obj), oracle_domain_element_from_expr(domain_obj, right_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => py_str_enum(res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
 pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
   let expr_obj = sympy_sympify_str(expr)
   let gen_obj = sympy_symbol_obj(gen)

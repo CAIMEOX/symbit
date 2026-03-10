@@ -1467,13 +1467,167 @@ pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
         Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
           expr_in_fraction_domain(inner, gens, expr)
         _ => domain_contains_expr(base, expr)
-      }
+    }
   }
 }
 
 ///|
 pub fn Domain::contains_expr(self : Domain, expr : @symcore.Expr) -> Bool {
   domain_contains_expr(self, expr)
+}
+
+///|
+fn expr_depends_on_symbols(expr : @symcore.Expr, symbols : Array[String]) -> Bool {
+  match expr {
+    @symcore.Expr::Number(_) => false
+    @symcore.Expr::Symbol(name) => symbols.contains(name)
+    @symcore.Expr::Add(args)
+    | @symcore.Expr::Mul(args)
+    | @symcore.Expr::Function(_, args) => args.any(item =>
+      expr_depends_on_symbols(item, symbols)
+    )
+    @symcore.Expr::Pow(base, exp) =>
+      expr_depends_on_symbols(base, symbols) || expr_depends_on_symbols(exp, symbols)
+  }
+}
+
+///|
+fn expr_zero() -> @symcore.Expr {
+  @symcore.int(0)
+}
+
+///|
+fn domain_expr_is_zero(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Number(n) => n.is_zero()
+    _ => false
+  }
+}
+
+///|
+fn domain_expr_is_one(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Number(n) => n.is_one()
+    _ => false
+  }
+}
+
+///|
+fn domain_expr_is_minus_one(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Number(n) =>
+      n.compare(@symnum.BigRational::from_int(-1)) == 0
+    _ => false
+  }
+}
+
+fn expr_constant_term(expr : @symcore.Expr, symbols : Array[String]) -> @symcore.Expr? {
+  if !expr_depends_on_symbols(expr, symbols) {
+    return Some(expr)
+  }
+  match expr {
+    @symcore.Expr::Number(_) => Some(expr)
+    @symcore.Expr::Symbol(name) =>
+      if symbols.contains(name) {
+        Some(expr_zero())
+      } else {
+        Some(expr)
+      }
+    @symcore.Expr::Add(args) => {
+      let parts : Array[@symcore.Expr] = Array::new()
+      for arg in args {
+        match expr_constant_term(arg, symbols) {
+          Some(part) => parts.push(part)
+          None => return None
+        }
+      }
+      Some(@symcore.add(parts))
+    }
+    @symcore.Expr::Mul(args) => {
+      let parts : Array[@symcore.Expr] = Array::new()
+      for arg in args {
+        match expr_constant_term(arg, symbols) {
+          Some(part) => parts.push(part)
+          None => return None
+        }
+      }
+      Some(@symcore.mul(parts))
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      if expr_is_nonnegative_integer(exp) {
+        match expr_constant_term(base, symbols) {
+          Some(term) => Some(@symcore.pow(term, exp))
+          None => None
+        }
+      } else {
+        None
+      }
+    @symcore.Expr::Function(_, args) =>
+      if args.any(arg => expr_depends_on_symbols(arg, symbols)) {
+        None
+      } else {
+        Some(expr)
+      }
+  }
+}
+
+///|
+pub fn domain_is_zero_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  domain_contains_expr(domain, expr) && domain_expr_is_zero(expr)
+}
+
+///|
+pub fn domain_is_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  domain_contains_expr(domain, expr) && domain_expr_is_one(expr)
+}
+
+///|
+pub fn domain_is_unit_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+  if !domain_contains_expr(domain, expr) {
+    return false
+  }
+  match domain {
+    Domain::ZZ => domain_expr_is_one(expr) || domain_expr_is_minus_one(expr)
+    Domain::QQ
+    | Domain::RR
+    | Domain::CC
+    | Domain::QQ_I
+    | Domain::EX
+    | Domain::EXRAW
+    | Domain::GF(_)
+    | Domain::GFExt(_, _, _)
+    | Domain::RationalFunctionField(_, _)
+    | Domain::Frac(_)
+    | Domain::AlgExt(_, _, _) => !domain_expr_is_zero(expr)
+    Domain::ZZ_I => domain_expr_is_one(expr) || domain_expr_is_minus_one(expr)
+    Domain::PolyRing(base, gens) =>
+      !expr_depends_on_symbols(expr, generator_symbol_names(gens)) &&
+      domain_is_unit_expr(base, expr)
+    Domain::QuotientRing(base, gens, _) =>
+      !expr_depends_on_symbols(expr, generator_symbol_names(gens)) &&
+      domain_is_unit_expr(base, expr)
+    Domain::PowerSeries(base, gens, _) => {
+      match expr_constant_term(expr, generator_symbol_names(gens)) {
+        Some(c0) => domain_is_unit_expr(base, c0)
+        None => false
+      }
+    }
+  }
+}
+
+///|
+pub fn Domain::is_zero_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_zero_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_one_expr(self, expr)
+}
+
+///|
+pub fn Domain::is_unit_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+  domain_is_unit_expr(self, expr)
 }
 
 ///|

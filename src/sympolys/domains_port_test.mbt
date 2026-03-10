@@ -805,3 +805,46 @@ test "domains: contains_expr parity for constants polynomials and rational funct
     fail("contains_expr RR constant function mismatch")
   }
 }
+
+///|
+test "domains: is_unit/is_zero/is_one parity on core domains" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(-1), "-1"),
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.int(0), "0"),
+    ("ZZ[x]", @symcore.int(1), "1"),
+    ("ZZ[x]", x, "x"),
+    ("QQ[x]", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ[x]", x, "x"),
+    ("QQ(x)", x, "x"),
+    ("QQ(x)", @symcore.int(0), "0"),
+    ("ZZ_I", i, "I"),
+    ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("QQ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
+    ("QQ<sqrt(2)>", @symcore.add([@symcore.int(1), sqrt2]), "1 + sqrt(2)"),
+  ]
+  for item in cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = domain_from_string(spec).is_unit_expr(expr)
+    let oracle = @sympy_polys.domain_is_unit_expr(spec, expr_text)
+    guard ours == oracle else {
+      fail("is_unit mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  guard domain_from_string("QQ").is_zero_expr(@symcore.int(0)) else {
+    fail("is_zero_expr mismatch")
+  }
+  guard domain_from_string("QQ").is_one_expr(@symcore.int(1)) else {
+    fail("is_one_expr mismatch")
+  }
+  guard !domain_from_string("QQ").is_one_expr(@symcore.int(2)) else {
+    fail("is_one_expr false positive")
+  }
+}
