@@ -576,6 +576,25 @@ pub fn wigner_9j(
 }
 
 ///|
+pub fn real_gaunt(
+  l_1 : @symcore.Expr,
+  l_2 : @symcore.Expr,
+  l_3 : @symcore.Expr,
+  mu_1 : @symcore.Expr,
+  mu_2 : @symcore.Expr,
+  mu_3 : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.wigner.real_gaunt", [
+    OracleArg::PyObj(expr_to_sympy(l_1)),
+    OracleArg::PyObj(expr_to_sympy(l_2)),
+    OracleArg::PyObj(expr_to_sympy(l_3)),
+    OracleArg::PyObj(expr_to_sympy(mu_1)),
+    OracleArg::PyObj(expr_to_sympy(mu_2)),
+    OracleArg::PyObj(expr_to_sympy(mu_3)),
+  ])))
+}
+
+///|
 pub fn wavefunction(n : @symcore.Expr, x : @symcore.Expr) -> String raise {
   py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.pring.wavefunction", [
     OracleArg::PyObj(expr_to_sympy(n)),

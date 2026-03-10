@@ -310,7 +310,7 @@ test "physics: higher wigner parity" {
     physics_assert_expr_equal(ours, oracle, case.6)
   }
   physics_assert_expr_equal(
-    try! racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
     try! @sympy_physics.racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
     "racah(3,...,3)",
   )
@@ -343,5 +343,42 @@ test "physics: higher wigner parity" {
     let ours = try! wigner_9j(case.0, case.1, case.2, case.3, case.4, case.5, case.6, case.7, case.8)
     let oracle = try! @sympy_physics.wigner_9j(case.0, case.1, case.2, case.3, case.4, case.5, case.6, case.7, case.8)
     physics_assert_expr_equal(ours, oracle, case.9)
+  }
+}
+
+///|
+test "physics: real gaunt parity" {
+  for case in [
+    (
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(2),
+      @symcore.int(-1),
+      @symcore.int(1),
+      @symcore.int(-2),
+      "real_gaunt(1,1,2,-1,1,-2)",
+    ),
+    (
+      @symcore.int(2),
+      @symcore.int(2),
+      @symcore.int(2),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(2),
+      "real_gaunt(2,2,2,1,1,2)",
+    ),
+    (
+      @symcore.int(-2),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(1),
+      "real_gaunt zero",
+    ),
+  ] {
+    let ours = try! real_gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = try! @sympy_physics.real_gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    physics_assert_expr_equal(ours, oracle, case.6)
   }
 }

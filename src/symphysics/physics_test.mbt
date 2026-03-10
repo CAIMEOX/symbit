@@ -177,7 +177,7 @@ test "physics: higher wigner examples and guards" {
     "wigner_6j 3",
   )
   try! physics_assert_expr_equal(
-    try! racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
+    racah(@symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3), @symcore.int(3)),
     "-1/14",
     "racah example",
   )
@@ -195,5 +195,24 @@ test "physics: higher wigner examples and guards" {
     try! wigner_9j(half, half, @symcore.int(1), half, half, @symcore.int(1), @symcore.int(1), half, half),
     "0",
     "wigner_9j zero",
+  )
+}
+
+///|
+test "physics: real gaunt examples and zeros" {
+  try! physics_assert_expr_equal(
+    try! real_gaunt(@symcore.int(1), @symcore.int(1), @symcore.int(2), @symcore.int(-1), @symcore.int(1), @symcore.int(-2)),
+    "-sqrt(15)/(10*sqrt(pi))",
+    "real_gaunt example",
+  )
+  try! physics_assert_expr_equal(
+    try! real_gaunt(@symcore.int(2), @symcore.int(2), @symcore.int(2), @symcore.int(1), @symcore.int(1), @symcore.int(2)),
+    "sqrt(15)/(14*sqrt(pi))",
+    "real_gaunt 222",
+  )
+  try! physics_assert_expr_equal(
+    try! real_gaunt(@symcore.int(-2), @symcore.int(1), @symcore.int(0), @symcore.int(1), @symcore.int(1), @symcore.int(1)),
+    "0",
+    "real_gaunt zero",
   )
 }

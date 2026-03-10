@@ -236,7 +236,7 @@ pub fn racah(
   dd : @symcore.Expr,
   ee : @symcore.Expr,
   ff : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+) -> @symcore.Expr {
   let res = try! wigner_6j(aa, bb, ee, dd, cc, ff)
   match expr_number_value(res) {
     Some(n) if n.is_zero() => @symcore.int(0)
