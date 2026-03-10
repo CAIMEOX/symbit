@@ -136,6 +136,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy")
   }
+  let quantum_cg_mod = match @py.pyimport("sympy.physics.quantum.cg") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.cg")
+  }
   let constants_mod = match @py.pyimport("sympy.physics.quantum.constants") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.constants")
@@ -145,7 +149,10 @@ fn physics_globals() -> @py.PyDict raise {
   globals.set("sympy", sympy_mod.obj())
   for name in [
     "Abs",
+    "KroneckerDelta",
     "I",
+    "Sum",
+    "Tuple",
     "Ynm",
     "Ynm_c",
     "Znm",
@@ -163,7 +170,37 @@ fn physics_globals() -> @py.PyDict raise {
   ] {
     try_bind_name(globals, sympy_mod, name)
   }
-  for name in ["alpha", "beta", "gamma", "theta", "phi", "r", "x", "m", "n", "omega", "nu", "Z"] {
+  for name in ["CG", "Wigner3j", "Wigner6j", "Wigner9j"] {
+    try_bind_name(globals, quantum_cg_mod, name)
+  }
+  for name in [
+    "a",
+    "b",
+    "c",
+    "cp",
+    "alpha",
+    "beta",
+    "gamma",
+    "gammap",
+    "theta",
+    "phi",
+    "r",
+    "x",
+    "m",
+    "n",
+    "omega",
+    "nu",
+    "j",
+    "j1",
+    "j2",
+    "j3",
+    "j12",
+    "j13",
+    "j23",
+    "j24",
+    "j34",
+    "Z",
+  ] {
     let symbol = objenum_to_obj(sympy_call_must("sympy.Symbol", [OracleArg::Str(name)]))
     globals.set(name, symbol)
   }
@@ -252,6 +289,15 @@ pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
   let lhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(lhs_expanded)])
   let rhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(rhs_expanded)])
   py_str_obj(objenum_to_obj(lhs_srepr)) == py_str_obj(objenum_to_obj(rhs_srepr))
+}
+
+///|
+fn physics_sympify(expr : String) -> @py.PyObject raise {
+  let locals = physics_globals()
+  let kwargs : Map[String, OracleArg] = {
+    "locals": OracleArg::PyObj(locals.obj()),
+  }
+  objenum_to_obj(sympy_call_must("sympy.sympify", [OracleArg::Str(expr)], kwargs~))
 }
 
 ///|
@@ -846,4 +892,12 @@ pub fn quantum_wigner9j_doit(
   ])
   let doit = resolve_method_callable(obj, "doit")
   py_str_obj(objenum_to_obj(py_call_noargs(doit)))
+}
+
+///|
+pub fn quantum_cg_simp(expr : String) -> String raise {
+  let obj = physics_sympify(expr)
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.quantum.cg.cg_simp", [
+    OracleArg::PyObj(obj),
+  ])))
 }

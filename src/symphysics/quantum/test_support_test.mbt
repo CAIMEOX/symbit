@@ -27,3 +27,31 @@ fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
     ),
   )
 }
+
+fn quantum_sum1(
+  expr : @symcore.Expr,
+  sym : @symcore.Expr,
+  lower : @symcore.Expr,
+  upper : @symcore.Expr,
+) -> @symcore.Expr {
+  @symcore.function("Sum", [expr, @symcore.function("Tuple", [sym, lower, upper])])
+}
+
+fn quantum_sum2(
+  expr : @symcore.Expr,
+  sym1 : @symcore.Expr,
+  lower1 : @symcore.Expr,
+  upper1 : @symcore.Expr,
+  sym2 : @symcore.Expr,
+  lower2 : @symcore.Expr,
+  upper2 : @symcore.Expr,
+) -> @symcore.Expr {
+  @symcore.function(
+    "Sum",
+    [
+      expr,
+      @symcore.function("Tuple", [sym1, lower1, upper1]),
+      @symcore.function("Tuple", [sym2, lower2, upper2]),
+    ],
+  )
+}
