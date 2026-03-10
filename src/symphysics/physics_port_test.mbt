@@ -1,0 +1,104 @@
+fn physics_expr_equal(lhs : @symcore.Expr, rhs : String) -> Bool {
+  try! @sympy_physics.expr_equal(@symprint.to_string(lhs), rhs)
+}
+
+fn physics_assert_expr_equal(
+  lhs : @symcore.Expr,
+  rhs : String,
+  context : String,
+) -> Unit raise {
+  let ours = @symprint.to_string(lhs)
+  guard (try! @sympy_physics.expr_equal(ours, rhs)) else {
+    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
+  }
+}
+
+fn physics_assert_matrix_equiv(
+  lhs : ExplicitMatrix,
+  rhs : Array[String],
+  context : String,
+) -> Unit raise {
+  let entries : Array[@symcore.Expr] = Array::new()
+  for row in lhs.rows {
+    for item in row {
+      entries.push(item)
+    }
+  }
+  guard entries.length() == rhs.length() else {
+    fail("\{context}: size mismatch \{entries.length()} vs \{rhs.length()}")
+  }
+  for i in 0..<entries.length() {
+    physics_assert_expr_equal(entries[i], rhs[i], "\{context}[\{i}]")
+  }
+}
+
+///|
+test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
+  for i in [1, 2, 3] {
+    physics_assert_matrix_equiv(try! msigma(i), try! @sympy_physics.msigma(i), "msigma(\{i})")
+  }
+  for mu in [0, 1, 2, 3, 5] {
+    physics_assert_matrix_equiv(try! mgamma(mu), try! @sympy_physics.mgamma(mu), "mgamma(\{mu})")
+    physics_assert_matrix_equiv(
+      try! mgamma(mu, lower=true),
+      try! @sympy_physics.mgamma(mu, lower=true),
+      "mgamma(\{mu}, lower=true)",
+    )
+  }
+
+  let two = @symcore.int(2)
+  physics_assert_matrix_equiv(
+    pat_matrix(two, @symcore.int(1), @symcore.int(0), @symcore.int(0)),
+    try! @sympy_physics.pat_matrix(two, @symcore.int(1), @symcore.int(0), @symcore.int(0)),
+    "pat_matrix",
+  )
+  physics_assert_matrix_equiv(minkowski_tensor, try! @sympy_physics.minkowski_tensor(), "minkowski_tensor")
+  for n in [1, 2, 4] {
+    physics_assert_matrix_equiv(try! mdft(n), try! @sympy_physics.mdft(n), "mdft(\{n})")
+  }
+}
+
+///|
+test "physics: qho, sho, and pring parity" {
+  let x = @symcore.symbol("x")
+  let m = @symcore.symbol("m")
+  let omega = @symcore.symbol("omega")
+  let alpha = @symcore.symbol("alpha")
+  for n in 0..<4 {
+    physics_assert_expr_equal(
+      psi_n(@symcore.int(n), x, m, omega),
+      try! @sympy_physics.psi_n(@symcore.int(n), x, m, omega),
+      "psi_n(\{n})",
+    )
+  }
+  physics_assert_expr_equal(e_n(@symcore.symbol("n"), omega), try! @sympy_physics.e_n(@symcore.symbol("n"), omega), "E_n")
+  physics_assert_expr_equal(
+    coherent_state(@symcore.int(3), alpha),
+    try! @sympy_physics.coherent_state(@symcore.int(3), alpha),
+    "coherent_state",
+  )
+
+  let r = @symcore.symbol("r")
+  let nu = @symcore.symbol("nu")
+  physics_assert_expr_equal(
+    r_nl(@symcore.int(0), @symcore.int(0), nu, r),
+    try! @sympy_physics.r_nl(@symcore.int(0), @symcore.int(0), nu, r),
+    "R_nl",
+  )
+  physics_assert_expr_equal(
+    e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
+    try! @sympy_physics.e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
+    "E_nl",
+  )
+
+  physics_assert_expr_equal(
+    wavefunction(@symcore.int(2), x),
+    try! @sympy_physics.wavefunction(@symcore.int(2), x),
+    "pring.wavefunction",
+  )
+  physics_assert_expr_equal(
+    try! energy(@symcore.int(2), m, r),
+    try! @sympy_physics.energy(@symcore.int(2), m, r),
+    "pring.energy",
+  )
+}

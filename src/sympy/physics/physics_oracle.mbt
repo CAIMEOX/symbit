@@ -1,0 +1,365 @@
+///|
+pub type OracleArg = @sympy.OracleArg
+
+///|
+fn objenum_to_obj(obj : @py.PyObjectEnum) -> @py.PyObject {
+  @sympy.objenum_to_obj(obj)
+}
+
+///|
+fn py_gil_ensure() -> Int {
+  @sympy.py_gil_ensure()
+}
+
+///|
+fn py_gil_release(state : Int) -> Unit {
+  @sympy.py_gil_release(state)
+}
+
+///|
+fn py_str_obj(obj : @py.PyObject) -> String {
+  let state = py_gil_ensure()
+  let s = obj.to_string()
+  py_gil_release(state)
+  s
+}
+
+///|
+fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
+  @sympy.expr_to_sympy(expr)
+}
+
+///|
+fn sympy_call_must(
+  path : String,
+  args : Array[OracleArg],
+  kwargs? : Map[String, OracleArg] = {},
+) -> @py.PyObjectEnum raise {
+  match @sympy.sympy_call(path, args, kwargs~) {
+    Some(obj) => obj
+    None => fail("sympy-call-none:\{path}")
+  }
+}
+
+///|
+fn resolve_method_callable(
+  obj : @py.PyObject,
+  name : String,
+) -> @py.PyCallable raise {
+  let state = py_gil_ensure()
+  let res = try {
+    match obj.get_attr(name, print_err=false) {
+      Some(PyCallable(callable)) => callable
+      Some(other) =>
+        @py.PyCallable::create(objenum_to_obj(other)) catch {
+          _ => fail("sympy-oracle-callable")
+        }
+      None => fail("sympy-oracle-missing:\{name}")
+    }
+  } catch {
+    e => {
+      py_gil_release(state)
+      raise e
+    }
+  }
+  @cpython.py_incref(res.obj_ref())
+  py_gil_release(state)
+  res
+}
+
+///|
+fn py_call_noargs(callable : @py.PyCallable) -> @py.PyObjectEnum raise {
+  let tup = @sympy.py_pack_args([])
+  match @sympy.py_call_object(callable, tup, print_err=true) {
+    Some(obj) => obj
+    None => fail("sympy-oracle-call-none")
+  }
+}
+
+///|
+fn py_list_to_pyobjects(value : @py.PyObjectEnum) -> Array[@py.PyObject] raise {
+  let state = py_gil_ensure()
+  let out : Array[@py.PyObject] = Array::new()
+  let res = try {
+    match value {
+      PyList(list) => {
+        let len = list.len()
+        for i in 0..<len {
+          match list.get(i) {
+            Some(item) => out.push(objenum_to_obj(item))
+            None => ()
+          }
+        }
+        out
+      }
+      PyTuple(tup) => {
+        let len = tup.len().to_int()
+        for i in 0..<len {
+          match tup.get(i) {
+            Some(item) => out.push(objenum_to_obj(item))
+            None => ()
+          }
+        }
+        out
+      }
+      _ => fail("expected list/tuple")
+    }
+  } catch {
+    e => {
+      py_gil_release(state)
+      raise e
+    }
+  }
+  py_gil_release(state)
+  res
+}
+
+///|
+fn try_bind_name(
+  globals : @py.PyDict,
+  mod : @py.PyModule,
+  name : String,
+) -> Unit {
+  match mod.get_attr(name, print_err=false) {
+    Some(obj) => globals.set(name, objenum_to_obj(obj))
+    None => ()
+  }
+}
+
+///|
+fn physics_globals() -> @py.PyDict raise {
+  let builtins = match @py.pyimport("builtins") {
+    Some(v) => v
+    None => fail("python-missing:builtins")
+  }
+  let sympy_mod = match @py.pyimport("sympy") {
+    Some(v) => v
+    None => fail("python-missing:sympy")
+  }
+  let constants_mod = match @py.pyimport("sympy.physics.quantum.constants") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.constants")
+  }
+  let globals = @py.PyDict::new()
+  globals.set("__builtins__", builtins.obj())
+  globals.set("sympy", sympy_mod.obj())
+  for name in [
+    "Abs",
+    "I",
+    "assoc_laguerre",
+    "exp",
+    "factorial",
+    "factorial2",
+    "hermite",
+    "pi",
+    "sqrt",
+  ] {
+    try_bind_name(globals, sympy_mod, name)
+  }
+  try_bind_name(globals, constants_mod, "hbar")
+  globals
+}
+
+///|
+fn matrix_flatten_to_strings(matrix_obj : @py.PyObject) -> Array[String] raise {
+  let tolist = resolve_method_callable(matrix_obj, "tolist")
+  let out : Array[String] = Array::new()
+  match py_call_noargs(tolist) {
+    PyList(rows) => {
+      let row_count = rows.len()
+      for i in 0..<row_count {
+        match rows.get(i) {
+          Some(PyList(cols)) => {
+            let col_count = cols.len()
+            for j in 0..<col_count {
+              match cols.get(j) {
+                Some(item) => out.push(py_str_obj(objenum_to_obj(item)))
+                None => ()
+              }
+            }
+          }
+          Some(PyTuple(cols)) => {
+            let col_count = cols.len().to_int()
+            for j in 0..<col_count {
+              match cols.get(j) {
+                Some(item) => out.push(py_str_obj(objenum_to_obj(item)))
+                None => ()
+              }
+            }
+          }
+          Some(item) => out.push(py_str_obj(objenum_to_obj(item)))
+          None => ()
+        }
+      }
+    }
+    other => {
+      for item in py_list_to_pyobjects(other) {
+        out.push(py_str_obj(item))
+      }
+    }
+  }
+  out
+}
+
+///|
+pub fn expr_equal(lhs : String, rhs : String) -> Bool raise {
+  let locals = physics_globals()
+  let kwargs : Map[String, OracleArg] = {
+    "locals": OracleArg::PyObj(locals.obj()),
+  }
+  let lhs_obj = objenum_to_obj(
+    sympy_call_must("sympy.sympify", [OracleArg::Str(lhs)], kwargs~),
+  )
+  let rhs_obj = objenum_to_obj(
+    sympy_call_must("sympy.sympify", [OracleArg::Str(rhs)], kwargs~),
+  )
+  match
+    @sympy.sympy_call("sympy.Eq", [OracleArg::PyObj(lhs_obj), OracleArg::PyObj(rhs_obj)]) {
+    Some(eq_obj) => {
+      let simp = sympy_call_must("sympy.simplify", [
+        OracleArg::PyObj(objenum_to_obj(eq_obj)),
+      ])
+      let txt = py_str_obj(objenum_to_obj(simp))
+      if txt == "True" {
+        return true
+      }
+      if txt == "False" {
+        return false
+      }
+    }
+    None => ()
+  }
+  let lhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(lhs_obj)])
+  let rhs_srepr = sympy_call_must("sympy.srepr", [OracleArg::PyObj(rhs_obj)])
+  py_str_obj(objenum_to_obj(lhs_srepr)) == py_str_obj(objenum_to_obj(rhs_srepr))
+}
+
+///|
+pub fn msigma(index : Int) -> Array[String] raise {
+  let obj = sympy_call_must("sympy.physics.matrices.msigma", [OracleArg::Int(index)])
+  matrix_flatten_to_strings(objenum_to_obj(obj))
+}
+
+///|
+pub fn mgamma(index : Int, lower? : Bool = false) -> Array[String] raise {
+  let obj = sympy_call_must(
+    "sympy.physics.matrices.mgamma",
+    [OracleArg::Int(index), OracleArg::Bool(lower)],
+  )
+  matrix_flatten_to_strings(objenum_to_obj(obj))
+}
+
+///|
+pub fn pat_matrix(
+  m : @symcore.Expr,
+  dx : @symcore.Expr,
+  dy : @symcore.Expr,
+  dz : @symcore.Expr,
+) -> Array[String] raise {
+  let obj = sympy_call_must("sympy.physics.matrices.pat_matrix", [
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(dx)),
+    OracleArg::PyObj(expr_to_sympy(dy)),
+    OracleArg::PyObj(expr_to_sympy(dz)),
+  ])
+  matrix_flatten_to_strings(objenum_to_obj(obj))
+}
+
+///|
+pub fn minkowski_tensor() -> Array[String] raise {
+  let mod = match @py.pyimport("sympy.physics.matrices") {
+    Some(value) => value
+    None => fail("sympy-missing:physics.matrices")
+  }
+  match mod.get_attr("minkowski_tensor", print_err=false) {
+    Some(obj) => matrix_flatten_to_strings(objenum_to_obj(obj))
+    None => fail("sympy-missing:minkowski_tensor")
+  }
+}
+
+///|
+pub fn mdft(n : Int) -> Array[String] raise {
+  let dft = sympy_call_must("sympy.matrices.expressions.fourier.DFT", [OracleArg::Int(n)])
+  let as_explicit = resolve_method_callable(objenum_to_obj(dft), "as_explicit")
+  matrix_flatten_to_strings(objenum_to_obj(py_call_noargs(as_explicit)))
+}
+
+///|
+pub fn psi_n(
+  n : @symcore.Expr,
+  x : @symcore.Expr,
+  m : @symcore.Expr,
+  omega : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.qho_1d.psi_n", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(x)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(omega)),
+  ])))
+}
+
+///|
+pub fn e_n(n : @symcore.Expr, omega : @symcore.Expr) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.qho_1d.E_n", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(omega)),
+  ])))
+}
+
+///|
+pub fn coherent_state(n : @symcore.Expr, alpha : @symcore.Expr) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.qho_1d.coherent_state", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(alpha)),
+  ])))
+}
+
+///|
+pub fn r_nl(
+  n : @symcore.Expr,
+  l : @symcore.Expr,
+  nu : @symcore.Expr,
+  r : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.sho.R_nl", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(nu)),
+    OracleArg::PyObj(expr_to_sympy(r)),
+  ])))
+}
+
+///|
+pub fn e_nl(
+  n : @symcore.Expr,
+  l : @symcore.Expr,
+  hw : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.sho.E_nl", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(l)),
+    OracleArg::PyObj(expr_to_sympy(hw)),
+  ])))
+}
+
+///|
+pub fn wavefunction(n : @symcore.Expr, x : @symcore.Expr) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.pring.wavefunction", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(x)),
+  ])))
+}
+
+///|
+pub fn energy(
+  n : @symcore.Expr,
+  m : @symcore.Expr,
+  r : @symcore.Expr,
+) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.pring.energy", [
+    OracleArg::PyObj(expr_to_sympy(n)),
+    OracleArg::PyObj(expr_to_sympy(m)),
+    OracleArg::PyObj(expr_to_sympy(r)),
+  ])))
+}
