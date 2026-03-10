@@ -98,6 +98,18 @@ fn render_optional_expr_result(
   }
 }
 
+fn render_expr_tree_item(item : DomainExprTree) -> String {
+  match item {
+    DomainExprTree::Elem(expr) => normalize_expr_text(@symprint.to_string(expr))
+    DomainExprTree::List(items) => render_expr_tree(items)
+  }
+}
+
+fn render_expr_tree(items : Array[DomainExprTree]) -> String {
+  let body = items.map(render_expr_tree_item).join(",")
+  "[\{body}]"
+}
+
 fn small_univar_poly_expr(poly_expr : String, gen : String) -> @symcore.Expr raise PolyError {
   let x = @symcore.symbol(gen)
   match trim_ws(poly_expr) {
@@ -1117,6 +1129,27 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
 }
 
 ///|
+test "domains: sum_expr parity on scalar and gaussian domains" {
+  let i = @symcore.symbol("I")
+  let cases : Array[(String, Array[@symcore.Expr], Array[String])] = [
+    ("ZZ", [@symcore.int(1), @symcore.int(2), @symcore.int(3)], ["1", "2", "3"]),
+    ("QQ", [try! @symcore.rational_from_ints(1, 2), try! @symcore.rational_from_ints(1, 3), try! @symcore.rational_from_ints(1, 6)], ["1/2", "1/3", "1/6"]),
+    ("QQ_I", [@symcore.int(1) + i, @symcore.int(2) + (@symcore.int(-1) * i)], ["1 + I", "2 - I"]),
+    ("GF(5)", [@symcore.int(4), @symcore.int(4)], ["4", "4"]),
+  ]
+  for item in cases {
+    let spec = item.0
+    let exprs = item.1
+    let expr_texts = item.2
+    let ours = render_expr_result(try? domain_from_string(spec).sum_expr(exprs))
+    let oracle = normalize_expr_text(@sympy_polys.domain_sum_expr(spec, expr_texts))
+    guard ours == oracle else {
+      fail("sum_expr mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
+///|
 test "domains: from_* conversion hook parity on representative base families" {
   let x = @symcore.symbol("x")
   let i = @symcore.symbol("I")
@@ -1185,6 +1218,134 @@ test "domains: from_* conversion hook parity on representative base families" {
     fail("from_fraction_field should reject constant rational functions for scalar targets")
   }
   ignore(sqrt2)
+}
+
+///|
+test "domains: extended conversion hook parity for ground, gaussian, and legacy-ring families" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let i = @symcore.symbol("I")
+  let half = try! @symcore.rational_from_ints(1, 2)
+  let cases : Array[(String, String, @symcore.Expr, String, String, String)] = [
+    ("from_zz", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
+    ("from_zz_python", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
+    ("from_zz_gmpy", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
+    ("from_qq", "QQ_I", half, "QQ", "QQ", "1/2"),
+    ("from_qq_python", "QQ_I", half, "QQ", "QQ", "1/2"),
+    ("from_qq_gmpy", "QQ_I", half, "QQ", "QQ", "1/2"),
+    ("from_ff_python", "ZZ", @symcore.int(3), "GF(5)", "GF(5)", "3"),
+    ("from_ff_gmpy", "ZZ", @symcore.int(3), "GF(5)", "GF(5)", "3"),
+    ("from_gaussian_integer_ring", "QQ_I", @symcore.add([@symcore.int(1), @symcore.int(2) * i]), "ZZ_I", "ZZ_I", "1 + 2*I"),
+    ("from_gaussian_rational_field", "QQ", @symcore.int(2), "QQ_I", "QQ_I", "2"),
+    ("from_global_polynomial_ring", "QQ", @symcore.int(2), "QQ[x]", "QQ.old_poly_ring(x)", "2"),
+    ("from_generalized_polynomial_ring", "EX", x * (y ^ @symcore.int(-1)), "QQ(x,y)", "QQ.old_frac_field(x,y)", "x/y"),
+  ]
+  for item in cases {
+    let family = item.0
+    let target = item.1
+    let expr = item.2
+    let local_base = item.3
+    let oracle_base = item.4
+    let expr_text = item.5
+    let target_domain = domain_from_string(target)
+    let base_domain = domain_from_string(local_base)
+    let ours = match family {
+      "from_zz" => render_optional_expr_result(Ok(target_domain.from_zz_expr(expr, base_domain)))
+      "from_zz_python" =>
+        render_optional_expr_result(Ok(target_domain.from_zz_python_expr(expr, base_domain)))
+      "from_zz_gmpy" =>
+        render_optional_expr_result(Ok(target_domain.from_zz_gmpy_expr(expr, base_domain)))
+      "from_qq" => render_optional_expr_result(Ok(target_domain.from_qq_expr(expr, base_domain)))
+      "from_qq_python" =>
+        render_optional_expr_result(Ok(target_domain.from_qq_python_expr(expr, base_domain)))
+      "from_qq_gmpy" =>
+        render_optional_expr_result(Ok(target_domain.from_qq_gmpy_expr(expr, base_domain)))
+      "from_ff_python" =>
+        render_optional_expr_result(Ok(target_domain.from_ff_python_expr(expr, base_domain)))
+      "from_ff_gmpy" =>
+        render_optional_expr_result(Ok(target_domain.from_ff_gmpy_expr(expr, base_domain)))
+      "from_gaussian_integer_ring" =>
+        render_optional_expr_result(Ok(target_domain.from_gaussian_integer_ring_expr(expr, base_domain)))
+      "from_gaussian_rational_field" =>
+        render_optional_expr_result(Ok(target_domain.from_gaussian_rational_field_expr(expr, base_domain)))
+      "from_global_polynomial_ring" =>
+        render_optional_expr_result(Ok(target_domain.from_global_polynomial_ring_expr(expr, base_domain)))
+      "from_generalized_polynomial_ring" =>
+        render_optional_expr_result(Ok(target_domain.from_generalized_polynomial_ring_expr(expr, base_domain)))
+      _ => "ERROR"
+    }
+    let oracle = match family {
+      "from_zz" => normalize_expr_text(@sympy_polys.domain_from_zz_expr(target, expr_text, oracle_base))
+      "from_zz_python" =>
+        normalize_expr_text(@sympy_polys.domain_from_zz_python_expr(target, expr_text, oracle_base))
+      "from_zz_gmpy" =>
+        normalize_expr_text(@sympy_polys.domain_from_zz_gmpy_expr(target, expr_text, oracle_base))
+      "from_qq" => normalize_expr_text(@sympy_polys.domain_from_qq_expr(target, expr_text, oracle_base))
+      "from_qq_python" =>
+        normalize_expr_text(@sympy_polys.domain_from_qq_python_expr(target, expr_text, oracle_base))
+      "from_qq_gmpy" =>
+        normalize_expr_text(@sympy_polys.domain_from_qq_gmpy_expr(target, expr_text, oracle_base))
+      "from_ff_python" =>
+        normalize_expr_text(@sympy_polys.domain_from_ff_python_expr(target, expr_text, oracle_base))
+      "from_ff_gmpy" =>
+        normalize_expr_text(@sympy_polys.domain_from_ff_gmpy_expr(target, expr_text, oracle_base))
+      "from_gaussian_integer_ring" =>
+        normalize_expr_text(@sympy_polys.domain_from_gaussian_integer_ring_expr(target, expr_text, oracle_base))
+      "from_gaussian_rational_field" =>
+        normalize_expr_text(@sympy_polys.domain_from_gaussian_rational_field_expr(target, expr_text, oracle_base))
+      "from_global_polynomial_ring" =>
+        normalize_expr_text(@sympy_polys.domain_from_global_polynomial_ring_expr(target, expr_text, oracle_base))
+      "from_generalized_polynomial_ring" =>
+        normalize_expr_text(@sympy_polys.domain_from_generalized_polynomial_ring_expr(target, expr_text, oracle_base))
+      _ => "ERROR"
+    }
+    guard ours == oracle else {
+      fail("\{family} mismatch for \{target} <- \{oracle_base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  guard render_optional_expr_result(Ok(domain_from_string("QQ").from_global_polynomial_ring_expr(x + @symcore.int(1), domain_from_string("QQ[x]")))) == "NONE" else {
+    fail("from_global_polynomial_ring should reject non-constant scalar polynomials")
+  }
+  guard render_optional_expr_result(Ok(domain_from_string("QQ").from_monogenic_finite_extension_expr(@symcore.int(2), domain_from_string("QQ<sqrt(2)>")))) == "2" else {
+    fail("from_monogenic_finite_extension should reuse algebraic-field conversion for constant elements")
+  }
+}
+
+///|
+test "domains: new/normal constructors and recursive map stay normalized" {
+  let x = @symcore.symbol("x")
+  let gf = domain_from_string("GF(5)")
+  guard render_expr_result(try? gf.new_expr(@symcore.int(7))) == "2" else {
+    fail("GF new_expr should reduce modulo the characteristic")
+  }
+  guard render_expr_result(try? gf.normal_expr(@symcore.int(12))) == "2" else {
+    fail("GF normal_expr should normalize via the domain constructor")
+  }
+  guard render_expr_result(try? domain_from_string("QQ[x]").new_expr(x + @symcore.int(1))) == "x+1" else {
+    fail("poly new_expr should preserve the polynomial expression")
+  }
+
+  let mapped = try! gf.map_expr_tree([
+    domain_expr_tree_elem(@symcore.int(6)),
+    domain_expr_tree_list([
+      domain_expr_tree_elem(@symcore.int(7)),
+      domain_expr_tree_elem(@symcore.int(10)),
+    ]),
+  ])
+  guard render_expr_tree(mapped) == "[1,[2,0]]" else {
+    fail("map_expr_tree should recurse and normalize each leaf")
+  }
+
+  let zz_mapped = try! domain_from_string("ZZ").map_expr_tree([
+    domain_expr_tree_list([
+      domain_expr_tree_elem(@symcore.int(1)),
+      domain_expr_tree_elem(@symcore.int(2)),
+    ]),
+  ])
+  guard render_expr_tree(zz_mapped) == "[[1,2]]" else {
+    fail("map_expr_tree should preserve nested list structure")
+  }
 }
 
 ///|

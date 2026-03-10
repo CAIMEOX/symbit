@@ -619,16 +619,34 @@ pub fn domain_convert_expr(spec : String, expr : String) -> String raise {
   }
 }
 
+///|
+pub fn domain_sum_expr(spec : String, exprs : Array[String]) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let call = resolve_method_callable(domain_obj, "sum")
+  let elems : Array[@py.PyObject] = Array::new()
+  for expr in exprs {
+    match oracle_domain_element_from_expr(domain_obj, sympy_sympify_str(expr)) {
+      Some(elem) => elems.push(objenum_to_obj(elem))
+      None => return "ERROR"
+    }
+  }
+  let args_list = py_list_from_objects(elems)
+  match py_call_object(call, py_tuple_from_objects([args_list.obj()]), print_err=false) {
+    Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
+    None => "ERROR"
+  }
+}
+
 fn domain_try_method_from_base_expr(
   spec : String,
   expr : String,
   base_spec : String,
-  method : String,
+  method_name : String,
 ) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let base_obj = oracle_domain_from_spec(base_spec)
   let expr_obj = sympy_sympify_str(expr)
-  let call = resolve_method_callable(domain_obj, method)
+  let call = resolve_method_callable(domain_obj, method_name)
   match oracle_domain_element_from_expr(base_obj, expr_obj) {
     Some(elem) => {
       let res = py_call_object_allow_none(
@@ -652,6 +670,78 @@ pub fn domain_from_ff_expr(
   base_spec : String,
 ) -> String raise {
   domain_try_method_from_base_expr(spec, expr, base_spec, "from_FF")
+}
+
+///|
+pub fn domain_from_ff_python_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_FF_python")
+}
+
+///|
+pub fn domain_from_zz_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ZZ")
+}
+
+///|
+pub fn domain_from_zz_python_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ZZ_python")
+}
+
+///|
+pub fn domain_from_qq_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_QQ")
+}
+
+///|
+pub fn domain_from_qq_python_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_QQ_python")
+}
+
+///|
+pub fn domain_from_ff_gmpy_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_FF_gmpy")
+}
+
+///|
+pub fn domain_from_zz_gmpy_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ZZ_gmpy")
+}
+
+///|
+pub fn domain_from_qq_gmpy_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_QQ_gmpy")
 }
 
 ///|
@@ -682,6 +772,24 @@ pub fn domain_from_algebraic_field_expr(
 }
 
 ///|
+pub fn domain_from_gaussian_integer_ring_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_GaussianIntegerRing")
+}
+
+///|
+pub fn domain_from_gaussian_rational_field_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_GaussianRationalField")
+}
+
+///|
 pub fn domain_from_polynomial_ring_expr(
   spec : String,
   expr : String,
@@ -697,6 +805,33 @@ pub fn domain_from_fraction_field_expr(
   base_spec : String,
 ) -> String raise {
   domain_try_method_from_base_expr(spec, expr, base_spec, "from_FractionField")
+}
+
+///|
+pub fn domain_from_global_polynomial_ring_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_GlobalPolynomialRing")
+}
+
+///|
+pub fn domain_from_generalized_polynomial_ring_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_GeneralizedPolynomialRing")
+}
+
+///|
+pub fn domain_from_monogenic_finite_extension_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_MonogenicFiniteExtension")
 }
 
 ///|
@@ -3190,6 +3325,32 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
     let ext_domain = py_call_with_args(alg_field, ext_objs, py_dict_new())
     return objenum_to_obj(ext_domain)
   }
+  if text.contains(".old_poly_ring(") && text.has_suffix(")") {
+    let left = match find_substring_oracle(text, ".old_poly_ring(") {
+      Some(i) => i
+      None => fail("domain-spec-old-poly")
+    }
+    let base = (try! text[:left]).to_string()
+    let gens = (try! text[left + 15:text.length() - 1]).to_string()
+    let base_obj = oracle_domain_from_spec(base)
+    let symbols = sympy_exprs_from_texts(split_names(gens))
+    let ring_method = resolve_method_callable(base_obj, "old_poly_ring")
+    let ring = py_call_with_args(ring_method, symbols, py_dict_new())
+    return objenum_to_obj(ring)
+  }
+  if text.contains(".old_frac_field(") && text.has_suffix(")") {
+    let left = match find_substring_oracle(text, ".old_frac_field(") {
+      Some(i) => i
+      None => fail("domain-spec-old-frac")
+    }
+    let base = (try! text[:left]).to_string()
+    let gens = (try! text[left + 16:text.length() - 1]).to_string()
+    let base_obj = oracle_domain_from_spec(base)
+    let symbols = sympy_exprs_from_texts(split_names(gens))
+    let frac_method = resolve_method_callable(base_obj, "old_frac_field")
+    let field = py_call_with_args(frac_method, symbols, py_dict_new())
+    return objenum_to_obj(field)
+  }
   if text.has_suffix("]") && !text.has_suffix("]]") {
     let left = match find_matching_open_oracle(text, '[', ']') {
       Some(i) => i
@@ -3239,6 +3400,22 @@ fn find_char_oracle(text : String, needle : UInt16) -> Int? {
     if text[i] == needle {
       return Some(i)
     }
+  }
+  None
+}
+
+///|
+fn find_substring_oracle(text : String, needle : String) -> Int? {
+  let width = needle.length()
+  if width == 0 || width > text.length() {
+    return None
+  }
+  let mut i = 0
+  while i + width <= text.length() {
+    if (try! text[i:i + width]).to_string() == needle {
+      return Some(i)
+    }
+    i += 1
   }
   None
 }
