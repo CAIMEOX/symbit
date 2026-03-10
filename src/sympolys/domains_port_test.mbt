@@ -1074,6 +1074,123 @@ test "domains: zero/one and arithmetic wrapper parity" {
   }
 }
 
+///|
+test "domains: gcdex/invert/revert wrapper parity" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let gcdex_cases : Array[(String, @symcore.Expr, @symcore.Expr, String, String)] = [
+    ("ZZ", @symcore.int(6), @symcore.int(15), "6", "15"),
+  ]
+  for item in gcdex_cases {
+    let spec = item.0
+    let left = item.1
+    let right = item.2
+    let left_text = item.3
+    let right_text = item.4
+    let domain = domain_from_string(spec)
+    let ours_half = render_expr_pair_result(try? domain.half_gcdex_expr(left, right))
+    let oracle_half = normalize_expr_tuple2_text(@sympy_polys.domain_half_gcdex_expr(spec, left_text, right_text))
+    guard ours_half == oracle_half else {
+      fail("half_gcdex parity mismatch for \{spec}: ours=\{ours_half}, oracle=\{oracle_half}")
+    }
+    let ours_full = render_expr_triple_result(try? domain.gcdex_expr(left, right))
+    let oracle_full = normalize_expr_tuple3_text(@sympy_polys.domain_gcdex_expr(spec, left_text, right_text))
+    guard ours_full == oracle_full else {
+      fail("gcdex parity mismatch for \{spec}: ours=\{ours_full}, oracle=\{oracle_full}")
+    }
+  }
+
+  let qq_left = try! @symcore.rational_from_ints(2, 3)
+  let qq_right = try! @symcore.rational_from_ints(4, 9)
+  guard
+    render_expr_pair_result(try? domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right)) ==
+    "(1/3,2/9)"
+  else {
+    fail("QQ half_gcdex local behavior mismatch")
+  }
+  guard
+    render_expr_triple_result(try? domain_from_string("QQ").gcdex_expr(qq_left, qq_right)) ==
+    "(1/3,0,2/9)"
+  else {
+    fail("QQ gcdex local behavior mismatch")
+  }
+
+  let zzi_left = @symcore.add([@symcore.int(2), i])
+  let zzi_right = @symcore.add([@symcore.int(1), @symcore.int(-1) * i])
+  let zzi = domain_from_string("ZZ_I")
+  let zzi_half = try! zzi.half_gcdex_expr(zzi_left, zzi_right)
+  guard render_expr_result(Ok(zzi_half.1)) == "1" else {
+    fail("ZZ_I half_gcdex gcd mismatch")
+  }
+  let zzi_full = try! zzi.gcdex_expr(zzi_left, zzi_right)
+  guard render_expr_result(Ok(zzi_full.2)) == "1" else {
+    fail("ZZ_I gcdex gcd mismatch")
+  }
+  let zzi_bezout = try! zzi.add_expr(
+    try! zzi.mul_expr(zzi_left, zzi_full.0),
+    try! zzi.mul_expr(zzi_right, zzi_full.1),
+  )
+  guard render_expr_result(Ok(zzi_bezout)) == "1" else {
+    fail("ZZ_I gcdex Bezout mismatch")
+  }
+
+  let qqx_left = (x ^ @symcore.int(2)) - @symcore.int(1)
+  let qqx_right = x - @symcore.int(1)
+  let qqx = domain_from_string("QQ[x]")
+  let qqx_half = try! qqx.half_gcdex_expr(qqx_left, qqx_right)
+  guard render_expr_result(Ok(qqx_half.1)) == "x-1" else {
+    fail("QQ[x] half_gcdex gcd mismatch")
+  }
+  let qqx_full = try! qqx.gcdex_expr(qqx_left, qqx_right)
+  guard render_expr_result(Ok(qqx_full.2)) == "x-1" else {
+    fail("QQ[x] gcdex gcd mismatch")
+  }
+  let qqx_bezout = try! qqx.add_expr(
+    try! qqx.mul_expr(qqx_left, qqx_full.0),
+    try! qqx.mul_expr(qqx_right, qqx_full.1),
+  )
+  guard render_expr_result(Ok(qqx_bezout)) == "x-1" else {
+    fail("QQ[x] gcdex Bezout mismatch")
+  }
+
+  let invert_cases : Array[(String, @symcore.Expr, @symcore.Expr, String, String)] = [
+    ("ZZ", @symcore.int(3), @symcore.int(7), "3", "7"),
+    ("ZZ", @symcore.int(2), @symcore.int(4), "2", "4"),
+    ("QQ[x]", x + @symcore.int(1), (x ^ @symcore.int(2)) + @symcore.int(1), "x + 1", "x**2 + 1"),
+  ]
+  for item in invert_cases {
+    let spec = item.0
+    let left = item.1
+    let right = item.2
+    let left_text = item.3
+    let right_text = item.4
+    let ours = render_expr_result(try? domain_from_string(spec).invert_expr(left, right))
+    let oracle = normalize_expr_text(@sympy_polys.domain_invert_expr(spec, left_text, right_text))
+    guard ours == oracle else {
+      fail("invert parity mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let revert_cases : Array[(String, @symcore.Expr, String)] = [
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("GF(5)", @symcore.int(2), "2"),
+    ("QQ(x)", (x + @symcore.int(1)) * (x ^ @symcore.int(-1)), "(x + 1)/x"),
+    ("ZZ", @symcore.int(1), "1"),
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ[x]", @symcore.int(1), "1"),
+  ]
+  for item in revert_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let ours = render_expr_result(try? domain_from_string(spec).revert_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_revert_expr(spec, expr_text))
+    guard ours == oracle else {
+      fail("revert parity mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+}
+
 test "domains: sign predicate parity on ordered and composite domains" {
   let x = @symcore.symbol("x")
   let i = @symcore.symbol("I")

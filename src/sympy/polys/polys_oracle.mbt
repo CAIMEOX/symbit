@@ -695,6 +695,152 @@ pub fn domain_pow_expr(spec : String, expr : String, exp : Int) -> String raise 
 }
 
 ///|
+pub fn domain_half_gcdex_expr(
+  spec : String,
+  left : String,
+  right : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let direct_call = resolve_method_callable(domain_obj, "half_gcdex")
+  let lhs = oracle_domain_element_from_expr(domain_obj, left_obj)
+  let rhs = oracle_domain_element_from_expr(domain_obj, right_obj)
+  match (lhs, rhs) {
+    (Some(lobj), Some(robj)) => {
+      let direct_res = py_call_object(
+        direct_call,
+        py_tuple_from_objects([objenum_to_obj(lobj), objenum_to_obj(robj)]),
+        print_err=false,
+      )
+      match direct_res {
+        Some(PyTuple(items)) =>
+          if items.len().to_int() == 2 {
+            match items.get(0) {
+              Some(a) =>
+                match items.get(1) {
+                  Some(b) =>
+                    return "(\{oracle_domain_element_to_string(domain_obj, a)},\{oracle_domain_element_to_string(domain_obj, b)})"
+                  None => ()
+                }
+              None => ()
+            }
+          }
+        _ => ()
+      }
+      let gcdex_call = resolve_method_callable(domain_obj, "gcdex")
+      let gcdex_res = py_call_object(
+        gcdex_call,
+        py_tuple_from_objects([objenum_to_obj(lobj), objenum_to_obj(robj)]),
+        print_err=false,
+      )
+      match gcdex_res {
+        Some(PyTuple(items)) =>
+          if items.len().to_int() == 3 {
+            match items.get(0) {
+              Some(a) =>
+                match items.get(2) {
+                  Some(c) =>
+                    return "(\{oracle_domain_element_to_string(domain_obj, a)},\{oracle_domain_element_to_string(domain_obj, c)})"
+                  None => ()
+                }
+              None => ()
+            }
+          }
+        _ => ()
+      }
+      "ERROR"
+    }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_gcdex_expr(
+  spec : String,
+  left : String,
+  right : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "gcdex")
+  let lhs = oracle_domain_element_from_expr(domain_obj, left_obj)
+  let rhs = oracle_domain_element_from_expr(domain_obj, right_obj)
+  match (lhs, rhs) {
+    (Some(lobj), Some(robj)) => {
+      let res = py_call_object(
+        call,
+        py_tuple_from_objects([objenum_to_obj(lobj), objenum_to_obj(robj)]),
+        print_err=false,
+      )
+      match res {
+        Some(PyTuple(items)) =>
+          if items.len().to_int() == 3 {
+            let first = items.get(0)
+            let second = items.get(1)
+            let third = items.get(2)
+            match (first, second, third) {
+              (Some(a), Some(b), Some(c)) =>
+                "(\{oracle_domain_element_to_string(domain_obj, a)},\{oracle_domain_element_to_string(domain_obj, b)},\{oracle_domain_element_to_string(domain_obj, c)})"
+              _ => "ERROR"
+            }
+          } else {
+            "ERROR"
+          }
+        _ => "ERROR"
+      }
+    }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_invert_expr(
+  spec : String,
+  left : String,
+  right : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let left_obj = sympy_sympify_str(left)
+  let right_obj = sympy_sympify_str(right)
+  let call = resolve_method_callable(domain_obj, "invert")
+  let lhs = oracle_domain_element_from_expr(domain_obj, left_obj)
+  let rhs = oracle_domain_element_from_expr(domain_obj, right_obj)
+  match (lhs, rhs) {
+    (Some(lobj), Some(robj)) => {
+      let res = py_call_object(
+        call,
+        py_tuple_from_objects([objenum_to_obj(lobj), objenum_to_obj(robj)]),
+        print_err=false,
+      )
+      match res {
+        Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
+        None => "ERROR"
+      }
+    }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_revert_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "revert")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    Some(elem) => {
+      let res = py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false)
+      match res {
+        Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
+        None => "ERROR"
+      }
+    }
+    None => "ERROR"
+  }
+}
+
+///|
 pub fn domain_is_unit_expr(spec : String, expr : String) -> Bool raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let expr_obj = sympy_sympify_str(expr)
