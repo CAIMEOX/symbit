@@ -1685,8 +1685,151 @@ pub fn domain_convert_from_expr(
   expr : @symcore.Expr,
   base : Domain,
 ) -> @symcore.Expr raise PolyError {
-  let lifted = domain_to_sympy_expr(base, expr)
+  let scalar_target = match domain {
+    Domain::PolyRing(_, _)
+    | Domain::RationalFunctionField(_, _)
+    | Domain::QuotientRing(_, _, _)
+    | Domain::PowerSeries(_, _, _)
+    | Domain::Frac(_) => false
+    _ => true
+  }
+  if scalar_target {
+    match base {
+      Domain::PolyRing(inner, gens)
+      | Domain::QuotientRing(inner, gens, _)
+      | Domain::PowerSeries(inner, gens, _) => {
+        guard !expr_depends_on_symbols(expr, gens) else { raise PolyError::DomainMismatch }
+        return domain_convert_from_expr(domain, expr, inner)
+      }
+      Domain::RationalFunctionField(_, _) => raise PolyError::DomainMismatch
+      Domain::Frac(inner) =>
+        match inner {
+          Domain::PolyRing(_, _) | Domain::RationalFunctionField(_, _) =>
+            raise PolyError::DomainMismatch
+          _ => ()
+        }
+      Domain::AlgExt(inner, gens, _) => {
+        guard !expr_depends_on_symbols(expr, gens) else { raise PolyError::DomainMismatch }
+        return domain_convert_from_expr(domain, expr, inner)
+      }
+      _ => ()
+    }
+  }
+  let lifted = match base {
+    Domain::RR | Domain::CC | Domain::EX | Domain::EXRAW => expr
+    _ => domain_to_sympy_expr(base, expr)
+  }
   domain_from_sympy_expr(domain, lifted)
+}
+
+fn domain_try_convert_from_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  try domain_convert_from_expr(domain, expr, base) catch {
+    _ => None
+  } noraise {
+    value => Some(value)
+  }
+}
+
+///|
+pub fn domain_from_ff_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::GF(_) | Domain::GFExt(_, _, _) => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_real_field_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::RR => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_complex_field_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::CC => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_algebraic_field_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::AlgExt(_, _, _) => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_polynomial_ring_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::PolyRing(_, _) | Domain::QuotientRing(_, _, _) | Domain::PowerSeries(_, _, _) =>
+      domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_fraction_field_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::RationalFunctionField(_, _) | Domain::Frac(_) =>
+      domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_expression_domain_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::EX => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
+}
+
+///|
+pub fn domain_from_expression_raw_domain_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  match base {
+    Domain::EXRAW => domain_try_convert_from_expr(domain, expr, base)
+    _ => None
+  }
 }
 
 ///|
@@ -4506,6 +4649,78 @@ pub fn Domain::convert_expr(
   base? : Domain? = None,
 ) -> @symcore.Expr raise PolyError {
   domain_convert_expr(self, expr, base=base)
+}
+
+///|
+pub fn Domain::from_ff_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_ff_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_real_field_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_real_field_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_complex_field_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_complex_field_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_algebraic_field_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_algebraic_field_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_polynomial_ring_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_polynomial_ring_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_fraction_field_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_fraction_field_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_expression_domain_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_expression_domain_expr(self, expr, base)
+}
+
+///|
+pub fn Domain::from_expression_raw_domain_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+  base : Domain,
+) -> @symcore.Expr? {
+  domain_from_expression_raw_domain_expr(self, expr, base)
 }
 
 ///|

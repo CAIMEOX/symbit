@@ -1082,6 +1082,8 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     ("QQ(x)", "ZZ[x]", (x ^ @symcore.int(2)) + @symcore.int(1), "x**2 + 1"),
     ("QQ[x]", "QQ(x)", x + @symcore.int(1), "x + 1"),
     ("QQ<sqrt(2)>", "QQ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+    ("QQ", "QQ(x)", @symcore.int(2), "2"),
+    ("QQ<sqrt(2)>", "QQ(x)", @symcore.int(2), "2"),
   ]
   for item in convert_cases {
     let target = item.0
@@ -1112,6 +1114,77 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
       fail("convert parity mismatch for \{target} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
     }
   }
+}
+
+///|
+test "domains: from_* conversion hook parity on representative base families" {
+  let x = @symcore.symbol("x")
+  let i = @symcore.symbol("I")
+  let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
+  let cases : Array[(String, String, @symcore.Expr, String, String)] = [
+    ("from_ff", "ZZ", @symcore.int(3), "GF(5)", "3"),
+    ("from_real_field", "QQ", @symcore.int(2), "RR", "2"),
+    ("from_complex_field", "QQ_I", @symcore.add([@symcore.int(1), @symcore.int(2) * i]), "CC", "1 + 2*I"),
+    ("from_algebraic_field", "QQ", try! @symcore.rational_from_ints(3, 2), "QQ<sqrt(2)>", "3/2"),
+    ("from_polynomial_ring", "QQ", @symcore.int(2), "QQ[x]", "2"),
+    ("from_polynomial_ring", "QQ", x + @symcore.int(1), "QQ[x]", "x + 1"),
+    ("from_fraction_field", "QQ", @symcore.int(2), "QQ(x)", "2"),
+    ("from_expression_domain", "QQ", try! @symcore.rational_from_ints(1, 2), "EX", "1/2"),
+    ("from_expression_raw_domain", "QQ", try! @symcore.rational_from_ints(1, 2), "EXRAW", "1/2"),
+  ]
+  for item in cases {
+    let family = item.0
+    let target = item.1
+    let expr = item.2
+    let base = item.3
+    let expr_text = item.4
+    let target_domain = domain_from_string(target)
+    let base_domain = domain_from_string(base)
+    let ours = match family {
+      "from_ff" => render_optional_expr_result(Ok(target_domain.from_ff_expr(expr, base_domain)))
+      "from_real_field" =>
+        render_optional_expr_result(Ok(target_domain.from_real_field_expr(expr, base_domain)))
+      "from_complex_field" =>
+        render_optional_expr_result(Ok(target_domain.from_complex_field_expr(expr, base_domain)))
+      "from_algebraic_field" =>
+        render_optional_expr_result(Ok(target_domain.from_algebraic_field_expr(expr, base_domain)))
+      "from_polynomial_ring" =>
+        render_optional_expr_result(Ok(target_domain.from_polynomial_ring_expr(expr, base_domain)))
+      "from_fraction_field" =>
+        render_optional_expr_result(Ok(target_domain.from_fraction_field_expr(expr, base_domain)))
+      "from_expression_domain" =>
+        render_optional_expr_result(Ok(target_domain.from_expression_domain_expr(expr, base_domain)))
+      "from_expression_raw_domain" =>
+        render_optional_expr_result(Ok(target_domain.from_expression_raw_domain_expr(expr, base_domain)))
+      _ => "ERROR"
+    }
+    let oracle = match family {
+      "from_ff" => normalize_expr_text(@sympy_polys.domain_from_ff_expr(target, expr_text, base))
+      "from_real_field" =>
+        normalize_expr_text(@sympy_polys.domain_from_real_field_expr(target, expr_text, base))
+      "from_complex_field" =>
+        normalize_expr_text(@sympy_polys.domain_from_complex_field_expr(target, expr_text, base))
+      "from_algebraic_field" =>
+        normalize_expr_text(@sympy_polys.domain_from_algebraic_field_expr(target, expr_text, base))
+      "from_polynomial_ring" =>
+        normalize_expr_text(@sympy_polys.domain_from_polynomial_ring_expr(target, expr_text, base))
+      "from_fraction_field" =>
+        normalize_expr_text(@sympy_polys.domain_from_fraction_field_expr(target, expr_text, base))
+      "from_expression_domain" =>
+        normalize_expr_text(@sympy_polys.domain_from_expression_domain_expr(target, expr_text, base))
+      "from_expression_raw_domain" =>
+        normalize_expr_text(@sympy_polys.domain_from_expression_raw_domain_expr(target, expr_text, base))
+      _ => "ERROR"
+    }
+    guard ours == oracle else {
+      fail("\{family} mismatch for \{target} <- \{base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  guard render_optional_expr_result(Ok(domain_from_string("QQ").from_fraction_field_expr(@symcore.int(2), domain_from_string("QQ(x)")))) == "NONE" else {
+    fail("from_fraction_field should reject constant rational functions for scalar targets")
+  }
+  ignore(sqrt2)
 }
 
 ///|

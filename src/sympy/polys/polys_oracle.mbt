@@ -619,6 +619,104 @@ pub fn domain_convert_expr(spec : String, expr : String) -> String raise {
   }
 }
 
+fn domain_try_method_from_base_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+  method : String,
+) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let base_obj = oracle_domain_from_spec(base_spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, method)
+  match oracle_domain_element_from_expr(base_obj, expr_obj) {
+    Some(elem) => {
+      let res = py_call_object_allow_none(
+        call,
+        py_tuple_from_objects([objenum_to_obj(elem), base_obj]),
+        print_err=false,
+      )
+      match res {
+        Some(obj) => oracle_domain_element_to_string(domain_obj, obj)
+        None => "NONE"
+      }
+    }
+    None => "ERROR"
+  }
+}
+
+///|
+pub fn domain_from_ff_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_FF")
+}
+
+///|
+pub fn domain_from_real_field_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_RealField")
+}
+
+///|
+pub fn domain_from_complex_field_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ComplexField")
+}
+
+///|
+pub fn domain_from_algebraic_field_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_AlgebraicField")
+}
+
+///|
+pub fn domain_from_polynomial_ring_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_PolynomialRing")
+}
+
+///|
+pub fn domain_from_fraction_field_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_FractionField")
+}
+
+///|
+pub fn domain_from_expression_domain_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ExpressionDomain")
+}
+
+///|
+pub fn domain_from_expression_raw_domain_expr(
+  spec : String,
+  expr : String,
+  base_spec : String,
+) -> String raise {
+  domain_try_method_from_base_expr(spec, expr, base_spec, "from_ExpressionRawDomain")
+}
+
 ///|
 pub fn domain_zero_expr(spec : String) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
