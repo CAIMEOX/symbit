@@ -88,6 +88,16 @@ fn render_expr_pair_result(
   }
 }
 
+fn render_optional_expr_result(
+  result : Result[@symcore.Expr?, PolyError],
+) -> String {
+  match result {
+    Ok(Some(expr)) => normalize_expr_text(@symprint.to_string(expr))
+    Ok(None) => "NONE"
+    Err(_) => "ERROR"
+  }
+}
+
 ///|
 test "domains: basic constructor/repr parity" {
   let specs = [
@@ -1435,5 +1445,145 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
   )
   guard exact_fail == "ERROR" else {
     fail("ZZ exquo should reject non-exact quotient")
+  }
+}
+
+test "domains: factorial/log/sqrt parity on integer-like domains" {
+  let factorial_cases : Array[(@symcore.Expr, String)] = [
+    (@symcore.int(0), "0"),
+    (@symcore.int(5), "5"),
+  ]
+  for item in factorial_cases {
+    let expr = item.0
+    let expr_text = item.1
+    let ours = render_expr_result(try? domain_from_string("ZZ").factorial_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_factorial_expr("ZZ", expr_text))
+    guard ours == oracle else {
+      fail("factorial mismatch for \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let log_cases : Array[(@symcore.Expr, String, @symcore.Expr, String)] = [
+    (@symcore.int(8), "8", @symcore.int(2), "2"),
+    (@symcore.int(9), "9", @symcore.int(2), "2"),
+    (@symcore.int(1), "1", @symcore.int(2), "2"),
+  ]
+  for item in log_cases {
+    let value = item.0
+    let value_text = item.1
+    let base = item.2
+    let base_text = item.3
+    let ours = render_expr_result(try? domain_from_string("ZZ").log_expr(value, base))
+    let oracle = normalize_expr_text(@sympy_polys.domain_log_expr("ZZ", value_text, base_text))
+    guard ours == oracle else {
+      fail("log mismatch for \{value_text}, \{base_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let sqrt_cases : Array[(@symcore.Expr, String)] = [
+    (@symcore.int(2), "2"),
+    (@symcore.int(8), "8"),
+    (@symcore.int(9), "9"),
+  ]
+  for item in sqrt_cases {
+    let expr = item.0
+    let expr_text = item.1
+    let ours = render_expr_result(try? domain_from_string("ZZ").sqrt_expr(expr))
+    let oracle = normalize_expr_text(@sympy_polys.domain_sqrt_expr("ZZ", expr_text))
+    guard ours == oracle else {
+      fail("sqrt mismatch for \{expr_text}: ours=\{ours}, oracle=\{oracle}")
+    }
+  }
+
+  let zzx = domain_from_string("ZZ[x]")
+  guard render_expr_result(try? zzx.factorial_expr(@symcore.int(5))) == "120" else {
+    fail("ZZ[x] factorial should delegate to the ground domain")
+  }
+  guard render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))) == "3" else {
+    fail("ZZ[x] log should delegate to the ground domain")
+  }
+  guard render_expr_result(try? zzx.sqrt_expr(@symcore.int(8))) == "2" else {
+    fail("ZZ[x] sqrt should delegate to the ground domain")
+  }
+}
+
+test "domains: is_square/exsqrt parity and exact root coverage" {
+  let i = @symcore.symbol("I")
+  let parity_cases : Array[(String, @symcore.Expr, String)] = [
+    ("ZZ", @symcore.int(4), "4"),
+    ("ZZ", @symcore.int(2), "2"),
+    ("QQ", try! @symcore.rational_from_ints(4, 9), "4/9"),
+    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("GF(7)", @symcore.int(4), "4"),
+    ("GF(7)", @symcore.int(3), "3"),
+  ]
+  for item in parity_cases {
+    let spec = item.0
+    let expr = item.1
+    let expr_text = item.2
+    let domain = domain_from_string(spec)
+    let ours_square = try domain.is_square_expr(expr) catch {
+      _ => false
+    } noraise {
+      value => value
+    }
+    let oracle_square = @sympy_polys.domain_is_square_expr(spec, expr_text)
+    guard ours_square == oracle_square else {
+      fail("is_square mismatch for \{spec}, \{expr_text}")
+    }
+    let ours_root = render_optional_expr_result(try? domain.exsqrt_expr(expr))
+    let oracle_root = @sympy_polys.domain_exsqrt_expr(spec, expr_text)
+    let oracle_root_expected = if oracle_root == "ERROR" && !oracle_square {
+      "NONE"
+    } else {
+      normalize_expr_text(oracle_root)
+    }
+    guard ours_root == oracle_root_expected else {
+      fail("exsqrt mismatch for \{spec}, \{expr_text}: ours=\{ours_root}, oracle=\{oracle_root}")
+    }
+  }
+
+  let zz_i = domain_from_string("ZZ_I")
+  let zz_i_square = @symcore.add([@symcore.int(3), @symcore.int(4) * i])
+  guard (try! zz_i.is_square_expr(zz_i_square)) else {
+    fail("3 + 4*I should be a square in ZZ_I")
+  }
+  guard
+    render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)) ==
+    normalize_expr_text("2 + I")
+  else {
+    fail("ZZ_I exsqrt should recover the principal Gaussian root")
+  }
+
+  let qq_i = domain_from_string("QQ_I")
+  let qq_i_square = (try! @symcore.rational_from_ints(-3, 4)) + i
+  guard (try! qq_i.is_square_expr(qq_i_square)) else {
+    fail("-3/4 + I should be a square in QQ_I")
+  }
+  guard
+    render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)) ==
+    normalize_expr_text("1/2 + I")
+  else {
+    fail("QQ_I exsqrt should recover the principal Gaussian rational root")
+  }
+
+  let rr = domain_from_string("RR")
+  guard render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))) == normalize_expr_text("sqrt(2)") else {
+    fail("RR exsqrt should stay symbolic for non-rational roots")
+  }
+  guard !(try! rr.is_square_expr(@symcore.int(-1))) else {
+    fail("negative reals are not squares in RR")
+  }
+
+  let cc = domain_from_string("CC")
+  let cc_expr = @symcore.add([@symcore.int(2), i])
+  guard (try! cc.is_square_expr(cc_expr)) else {
+    fail("all complex numbers should be squares in CC")
+  }
+  guard
+    render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)) ==
+    normalize_expr_text("sqrt(2 + I)")
+  else {
+    fail("CC exsqrt should produce the principal symbolic square root")
   }
 }

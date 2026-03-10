@@ -1162,6 +1162,89 @@ pub fn domain_exquo_expr(spec : String, left : String, right : String) -> String
 }
 
 ///|
+pub fn domain_factorial_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "factorial")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_log_expr(spec : String, value : String, base : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let value_obj = sympy_sympify_str(value)
+  let base_obj = sympy_sympify_str(base)
+  let call = resolve_method_callable(domain_obj, "log")
+  match (oracle_domain_element_from_expr(domain_obj, value_obj), oracle_domain_element_from_expr(domain_obj, base_obj)) {
+    (Some(lhs), Some(rhs)) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(lhs), objenum_to_obj(rhs)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+    _ => "ERROR"
+  }
+}
+
+///|
+pub fn domain_sqrt_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "sqrt")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => oracle_domain_element_to_string(domain_obj, res)
+        None => "ERROR"
+      }
+  }
+}
+
+///|
+pub fn domain_is_square_expr(spec : String, expr : String) -> Bool raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "is_square")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => false
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => py_str_enum(res).trim().to_string() == "True"
+        None => false
+      }
+  }
+}
+
+///|
+pub fn domain_exsqrt_expr(spec : String, expr : String) -> String raise {
+  let domain_obj = oracle_domain_from_spec(spec)
+  let expr_obj = sympy_sympify_str(expr)
+  let call = resolve_method_callable(domain_obj, "exsqrt")
+  match oracle_domain_element_from_expr(domain_obj, expr_obj) {
+    None => "ERROR"
+    Some(elem) =>
+      match py_call_object(call, py_tuple_from_objects([objenum_to_obj(elem)]), print_err=false) {
+        Some(res) => {
+          let rendered = py_str_enum(res).trim().to_string()
+          if rendered == "None" {
+            "NONE"
+          } else {
+            oracle_domain_element_to_string(domain_obj, res)
+          }
+        }
+        None => "ERROR"
+      }
+  }
+}
+
+///|
 pub fn numberfield_minpoly(expr : String, gen? : String = "x") -> String raise {
   let expr_obj = sympy_sympify_str(expr)
   let gen_obj = sympy_symbol_obj(gen)
