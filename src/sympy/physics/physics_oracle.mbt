@@ -136,6 +136,14 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy")
   }
+  let units_mod = match @py.pyimport("sympy.physics.units") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.units")
+  }
+  let units_prefixes_mod = match @py.pyimport("sympy.physics.units.prefixes") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.units.prefixes")
+  }
   let quantum_mod = match @py.pyimport("sympy.physics.quantum") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum")
@@ -151,6 +159,10 @@ fn physics_globals() -> @py.PyDict raise {
   let constants_mod = match @py.pyimport("sympy.physics.quantum.constants") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.constants")
+  }
+  let optics_mod = match @py.pyimport("sympy.physics.optics") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.optics")
   }
   let globals = @py.PyDict::new()
   globals.set("__builtins__", builtins.obj())
@@ -179,6 +191,36 @@ fn physics_globals() -> @py.PyDict raise {
   ] {
     try_bind_name(globals, sympy_mod, name)
   }
+  for name in [
+    "meter",
+    "second",
+    "kilogram",
+    "ampere",
+    "watt",
+    "m",
+    "s",
+    "kg",
+    "A",
+    "W",
+    "speed_of_light",
+    "u0",
+    "e0",
+  ] {
+    try_bind_name(globals, units_mod, name)
+  }
+  for name in [
+    "Prefix",
+    "PREFIXES",
+    "BIN_PREFIXES",
+    "kilo",
+    "mega",
+    "milli",
+    "centi",
+    "deci",
+    "kibi",
+  ] {
+    try_bind_name(globals, units_prefixes_mod, name)
+  }
   for name in ["CG", "Wigner3j", "Wigner6j", "Wigner9j"] {
     try_bind_name(globals, quantum_cg_mod, name)
   }
@@ -186,6 +228,7 @@ fn physics_globals() -> @py.PyDict raise {
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
   }
+  try_bind_name(globals, optics_mod, "Medium")
   for name in [
     "a",
     "b",
@@ -200,11 +243,13 @@ fn physics_globals() -> @py.PyDict raise {
     "r",
     "x",
     "m",
+    "mu",
     "m1",
     "m1p",
     "m2",
     "m2p",
     "n",
+    "epsilon",
     "omega",
     "nu",
     "j",
@@ -981,6 +1026,11 @@ pub fn physics_srepr(expr : String) -> String raise {
 }
 
 ///|
+pub fn physics_eval_str(expr : String) -> String raise {
+  py_str_obj(physics_sympify(expr))
+}
+
+///|
 pub fn paulialgebra_evaluate_srepr(expr : String) -> String raise {
   let obj = physics_sympify(expr)
   let res = objenum_to_obj(sympy_call_must(
@@ -988,4 +1038,29 @@ pub fn paulialgebra_evaluate_srepr(expr : String) -> String raise {
     [OracleArg::PyObj(obj)],
   ))
   py_str_obj(objenum_to_obj(sympy_call_must("sympy.srepr", [OracleArg::PyObj(res)])))
+}
+
+///|
+pub fn optics_medium_property(
+  property : String,
+  name : String,
+  permittivity? : @symcore.Expr? = None,
+  permeability? : @symcore.Expr? = None,
+  n? : @symcore.Expr? = None,
+) -> String raise {
+  let args : Array[String] = ["'\{name}'"]
+  match permittivity {
+    Some(value) => args.push("permittivity=\{@symprint.to_string(value)}")
+    None => ()
+  }
+  match permeability {
+    Some(value) => args.push("permeability=\{@symprint.to_string(value)}")
+    None => ()
+  }
+  match n {
+    Some(value) => args.push("n=\{@symprint.to_string(value)}")
+    None => ()
+  }
+  let rendered_args = args.join(", ")
+  physics_eval_str("Medium(\{rendered_args}).\{property}")
 }

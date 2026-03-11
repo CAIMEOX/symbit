@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/strconv",
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/sympy" @sympy,
   "Kaida-Amethyst/python" @py,
   "Kaida-Amethyst/python/cpython" @cpython,
