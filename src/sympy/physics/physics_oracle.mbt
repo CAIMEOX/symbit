@@ -1368,6 +1368,18 @@ pub fn quantum_represent_matrix(
 }
 
 ///|
+pub fn quantum_kind_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).kind)\n",
+    ].join(""),
+  )
+}
+
+///|
 pub fn quantum_expand_commutator_str(expr : String) -> String raise {
   python_subprocess_stdout(
     [
