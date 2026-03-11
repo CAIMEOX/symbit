@@ -255,6 +255,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.matrixutils")
   }
+  let quantum_qft_mod = match @py.pyimport("sympy.physics.quantum.qft") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.qft")
+  }
   let quantum_density_mod = match @py.pyimport("sympy.physics.quantum.density") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.density")
@@ -352,6 +356,9 @@ fn physics_globals() -> @py.PyDict raise {
   }
   for name in ["SigmaX", "SigmaY", "SigmaZ", "SigmaMinus", "SigmaPlus", "SigmaZKet", "SigmaZBra", "qsimplify_pauli"] {
     try_bind_name(globals, quantum_pauli_mod, name)
+  }
+  for name in ["QFT", "IQFT", "RkGate", "Rk"] {
+    try_bind_name(globals, quantum_qft_mod, name)
   }
   for name in ["Density", "entropy", "fidelity"] {
     try_bind_name(globals, quantum_density_mod, name)
@@ -1260,6 +1267,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
+    "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n",
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
@@ -1303,6 +1311,18 @@ pub fn quantum_doit_str(expr : String) -> String raise {
       "print(sympify(",
       python_string_literal(expr),
       ", locals=locals()).doit())\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_decompose_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).decompose())\n",
     ].join(""),
   )
 }

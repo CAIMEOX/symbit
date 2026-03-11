@@ -12,7 +12,7 @@ fn quantum_reserved_operator_name(name : String) -> Bool {
     "Ket" | "OuterProduct" | "OrthogonalBra" | "OrthogonalKet" |
     "Operator" | "PhaseGate" | "PIABBra" | "PIABHamiltonian" | "PIABKet" |
     "PositionBra3D" | "PositionKet3D" | "PxBra" | "PxKet" | "PxOp" |
-    "Qubit" | "QubitBra" | "RaisingOp" | "SHOBra" | "SHOKet" |
+    "IQFT" | "QFT" | "Qubit" | "QubitBra" | "RaisingOp" | "RkGate" | "SHOBra" | "SHOKet" |
     "SigmaMinus" | "SigmaPlus" | "SigmaX" | "SigmaY" | "SigmaZ" |
     "SigmaZBra" | "SigmaZKet" | "SwapGate" | "TensorProduct" | "TGate" |
     "TimeDepBra" | "TimeDepKet" | "Tr" | "UGate" | "UnitaryOperator" |

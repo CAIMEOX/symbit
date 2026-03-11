@@ -45,6 +45,9 @@ fn quantum_apply_operator_pair(
               match cartesian_apply_operator_to_ket(lhs, rhs) {
                 Some(applied) => Some(applied)
                 None =>
+                  match (try? qft_apply_operator_to_ket(lhs, rhs)) {
+                    Ok(Some(applied)) => Some(applied)
+                    _ =>
                   match pauli_apply_operator_to_ket(lhs, rhs) {
                 Some(applied) => Some(applied)
                 None =>
@@ -61,6 +64,7 @@ fn quantum_apply_operator_pair(
                         Some(applied) => Some(applied)
                         None => None
                       }
+                  }
                   }
                       }
                   }

@@ -355,7 +355,10 @@ pub fn gate_apply_to_qubit_expr(
                     active = active && (try! q.bit(control) == 1)
                   }
                   if active {
-                    gate_apply_to_qubit_expr(args[1], qubit_expr)
+                    match gate_apply_to_qubit_expr(args[1], qubit_expr) {
+                      Some(applied) => Some(applied)
+                      None => try! qft_apply_operator_to_ket(args[1], qubit_expr)
+                    }
                   } else {
                     Some(qubit_expr)
                   }

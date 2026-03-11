@@ -117,6 +117,9 @@ pub fn represent(
       match sho_represent(expr, basis=basis, ndim=ndim) {
         Some(value) => value
         None =>
+      match qft_represent(expr, nqubits) {
+        Some(value) => value
+        None =>
       match density_from_expr(expr) {
         Some(d) => try! density_matrix(d, basis, nqubits, spin_j, ndim)
         None =>
@@ -152,6 +155,7 @@ pub fn represent(
                   }
               }
           }
+      }
       }
       }
       }
