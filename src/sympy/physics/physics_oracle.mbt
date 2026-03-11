@@ -265,6 +265,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.circuitutils")
   }
+  let quantum_grover_mod = match @py.pyimport("sympy.physics.quantum.grover") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.grover")
+  }
   let quantum_qft_mod = match @py.pyimport("sympy.physics.quantum.qft") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.qft")
@@ -396,6 +400,9 @@ fn physics_globals() -> @py.PyDict raise {
       "convert_to_real_indices", "random_reduce", "random_insert",
     ] {
     try_bind_name(globals, quantum_circuitutils_mod, name)
+  }
+  for name in ["OracleGate", "WGate", "superposition_basis", "grover_iteration", "apply_grover"] {
+    try_bind_name(globals, quantum_grover_mod, name)
   }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
@@ -1289,6 +1296,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
     "from sympy.physics.quantum.matrixcache import matrix_cache\n",
     "from sympy.physics.quantum.circuitutils import kmp_table, find_subcircuit, replace_subcircuit, convert_to_symbolic_indices, convert_to_real_indices, random_reduce, random_insert\n",
+    "from sympy.physics.quantum.grover import OracleGate, WGate, superposition_basis, grover_iteration, apply_grover\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
@@ -1296,6 +1304,8 @@ fn quantum_subprocess_prelude() -> String {
     "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
     "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n",
     "wf = Function('wf')\n",
+    "def grover_oracle_from_marks(nqubits, marks):\n",
+    "    return OracleGate(nqubits, lambda qubits: any(qubits == IntQubit(idx, nqubits=nqubits) for idx in marks))\n",
   ].join("")
 }
 
@@ -1539,6 +1549,164 @@ pub fn quantum_circuitutils_convert_to_real(
       "print(srepr(Mul(*out)))\n",
     ].join(""),
   )
+}
+
+///|
+fn grover_marks_literal(marks : Array[Int]) -> String {
+  "[" + marks.map(value => value.to_string()).join(", ") + "]"
+}
+
+///|
+pub fn quantum_grover_superposition_matrix(nqubits : Int) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "mat = represent(superposition_basis(",
+      nqubits.to_string(),
+      "), nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_grover_oracle_matrix(
+  nqubits : Int,
+  marks : Array[Int],
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "mat = represent(grover_oracle_from_marks(",
+      nqubits.to_string(),
+      ", ",
+      grover_marks_literal(marks),
+      "), nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_grover_w_matrix(nqubits : Int) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "from sympy import Matrix\n",
+      "cols = []\n",
+      "for idx in range(2**",
+      nqubits.to_string(),
+      "):\n",
+      "    state = IntQubit(idx, nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "    cols.append(represent(qapply(WGate(",
+      nqubits.to_string(),
+      ")*state), nqubits=",
+      nqubits.to_string(),
+      "))\n",
+      "mat = Matrix.hstack(*cols)\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_grover_oracle_state_matrix(
+  nqubits : Int,
+  marks : Array[Int],
+  state : Int,
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "op = grover_oracle_from_marks(",
+      nqubits.to_string(),
+      ", ",
+      grover_marks_literal(marks),
+      ")\n",
+      "state = IntQubit(",
+      state.to_string(),
+      ", nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "mat = represent(qapply(op*state), nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_grover_w_state_matrix(
+  nqubits : Int,
+  state : Int,
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "state = IntQubit(",
+      state.to_string(),
+      ", nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "mat = represent(qapply(WGate(",
+      nqubits.to_string(),
+      ")*state), nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_grover_apply_matrix(
+  nqubits : Int,
+  marks : Array[Int],
+  iterations : Int,
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "oracle = lambda qubits: any(qubits == IntQubit(idx, nqubits=",
+      nqubits.to_string(),
+      ") for idx in ",
+      grover_marks_literal(marks),
+      ")\n",
+      "mat = represent(qapply(apply_grover(oracle, ",
+      nqubits.to_string(),
+      ", iterations=",
+      iterations.to_string(),
+      ")), nqubits=",
+      nqubits.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
 }
 
 ///|

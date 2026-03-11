@@ -117,6 +117,9 @@ pub fn represent(
       match sho_represent(expr, basis=basis, ndim=ndim) {
         Some(value) => value
         None =>
+      match grover_represent(expr, nqubits) {
+        Some(value) => value
+        None =>
       match qft_represent(expr, nqubits) {
         Some(value) => value
         None =>
@@ -155,6 +158,7 @@ pub fn represent(
                   }
               }
           }
+      }
       }
       }
       }

@@ -10,6 +10,7 @@ import {
 
 import {
   "moonbitlang/core/bigint",
+  "moonbitlang/core/math",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symphysics" @symphysics,

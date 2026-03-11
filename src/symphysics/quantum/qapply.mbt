@@ -15,6 +15,12 @@ fn quantum_pair_to_factors(expr : @symcore.Expr) -> Array[@symcore.Expr] {
 }
 
 ///|
+fn quantum_has_nontrivial_scalar_factor(expr : @symcore.Expr) -> Bool {
+  let (scalar, body) = quantum_split_scalar_factors(expr)
+  scalar != @symcore.int(1) && body is Some(_)
+}
+
+///|
 fn quantum_apply_operator_pair(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
@@ -23,6 +29,25 @@ fn quantum_apply_operator_pair(
 ) -> @symcore.Expr? {
   match (lhs, rhs) {
     (@symcore.Expr::Function("IdentityOperator", _), _) if quantum_is_state_expr(rhs) => Some(rhs)
+    _ if quantum_is_operator_expr(lhs) && quantum_is_scalar_like(rhs) =>
+      Some(quantum_mul_from_args_preserve([rhs, lhs]))
+    (_, @symcore.Expr::Mul(_)) if quantum_is_operator_expr(lhs) && quantum_has_nontrivial_scalar_factor(rhs) => {
+      let (scalar, body) = quantum_split_scalar_factors(rhs)
+      match body {
+        Some(body_expr) =>
+          match quantum_apply_operator_pair(lhs, body_expr, dagger_mode, ip_doit) {
+            Some(applied) => Some(quantum_mul_from_args_preserve([scalar, applied]))
+            None => None
+          }
+        None => None
+      }
+    }
+    (_, @symcore.Expr::Add(args)) if quantum_is_operator_expr(lhs) =>
+      Some(
+        quantum_add_from_args_preserve(
+          args.map(term => qapply(quantum_mul_from_args_preserve([lhs, term]), dagger=dagger_mode, ip_doit=ip_doit)),
+        ),
+      )
     _ if quantum_expr_has_name(lhs, "DifferentialOperator") && quantum_expr_has_name(rhs, "Wavefunction") =>
       differential_operator_apply_to_wavefunction(lhs, rhs)
     (@symcore.Expr::Function("OuterProduct", args), _) if args.length() == 2 && quantum_is_ket_expr(args[0]) && quantum_is_bra_expr(args[1]) && quantum_is_ket_expr(rhs) => {
@@ -45,6 +70,9 @@ fn quantum_apply_operator_pair(
               match cartesian_apply_operator_to_ket(lhs, rhs) {
                 Some(applied) => Some(applied)
                 None =>
+                  match (try? grover_apply_operator_to_ket(lhs, rhs)) {
+                    Ok(Some(applied)) => Some(applied)
+                    _ =>
                   match (try? qft_apply_operator_to_ket(lhs, rhs)) {
                     Ok(Some(applied)) => Some(applied)
                     _ =>
@@ -67,6 +95,7 @@ fn quantum_apply_operator_pair(
                   }
                   }
                       }
+                  }
                   }
               }
           }

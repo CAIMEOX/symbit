@@ -169,6 +169,8 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
         "Gate",
         "CGate",
         "UGate",
+        "OracleGate",
+        "WGate",
         "QFT",
         "IQFT",
         "RkGate",
