@@ -117,6 +117,9 @@ pub fn represent(
       match sho_represent(expr, basis=basis, ndim=ndim) {
         Some(value) => value
         None =>
+      match density_from_expr(expr) {
+        Some(d) => try! density_matrix(d, basis, nqubits, spin_j, ndim)
+        None =>
       match wavefunction_from_expr(expr) {
         Some(wf) => MatrixScalarValue::Scalar(wf.as_expr())
         None =>
@@ -149,6 +152,7 @@ pub fn represent(
                   }
               }
           }
+      }
       }
       }
       }
