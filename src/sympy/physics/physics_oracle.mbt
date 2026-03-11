@@ -29,20 +29,8 @@ fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
   @sympy.expr_to_sympy(expr)
 }
 
-///|
-fn repo_sympy_path_script() -> String {
-  "import sys; p='/Users/caimeo/code/learning/sym-workspace/sympy'; sys.path.insert(0, p) if p not in sys.path else None"
-}
-
-///|
-fn ensure_repo_sympy_path() -> Unit raise {
-  match
-    @sympy.sympy_call("builtins.exec", [
-      OracleArg::Str(repo_sympy_path_script()),
-    ]) {
-    Some(_) => ()
-    None => fail("sympy-call-none:builtins.exec")
-  }
+fn ensure_repo_sympy_path() -> Unit {
+  ()
 }
 
 ///|
@@ -51,18 +39,6 @@ fn sympy_call_must(
   args : Array[OracleArg],
   kwargs? : Map[String, OracleArg] = {},
 ) -> @py.PyObjectEnum raise {
-  let state = py_gil_ensure()
-  ignore(
-    @sympy.sympy_call("builtins.exec", [
-      OracleArg::Str(repo_sympy_path_script()),
-    ]),
-  ) catch {
-    e => {
-      py_gil_release(state)
-      raise e
-    }
-  }
-  py_gil_release(state)
   match @sympy.sympy_call(path, args, kwargs~) {
     Some(obj) => obj
     None => fail("sympy-call-none:\{path}")
@@ -181,12 +157,13 @@ fn control_routh_ctor() -> @py.PyCallable raise {
   }
   let globals = @py.PyDict::new()
   globals.set("__builtins__", builtins.obj())
-  ignore(
-    sympy_call_must("builtins.exec", [
-      OracleArg::Str(control_routh_loader_script()),
-      OracleArg::PyObj(globals.obj()),
-    ]),
-  )
+  let exec_fn = resolve_method_callable(builtins.obj(), "exec")
+  let exec_args = @sympy.py_pack_args([
+    OracleArg::Str(control_routh_loader_script()),
+    OracleArg::PyObj(globals.obj()),
+  ])
+  let exec_kwargs = @sympy.py_pack_kwargs({})
+  ignore(exec_fn.invoke(args=exec_args, kwargs=exec_kwargs, print_err=true))
   match globals.get("__symbit_routh_ctor__") {
     Some(PyCallable(callable)) => callable
     Some(other) =>
@@ -1169,6 +1146,71 @@ pub fn quantum_cg_simp(expr : String) -> String raise {
         OracleArg::PyObj(obj),
       ]),
     ),
+  )
+}
+
+///|
+fn quantum_subprocess_prelude() -> String {
+  [
+    "import sys\n",
+    "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n",
+    "from sympy.physics.quantum import *\n",
+    "from sympy.physics.quantum.trace import Tr\n",
+    "from sympy.physics.quantum.commutator import Commutator\n",
+    "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
+    "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
+    "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n",
+  ].join("")
+}
+
+///|
+pub fn quantum_eval_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_doit_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).doit())\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_expand_commutator_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).expand(commutator=True))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_trace_permute_str(expr : String, pos : Int) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).permute(",
+      pos.to_string(),
+      "))\n",
+    ].join(""),
   )
 }
 

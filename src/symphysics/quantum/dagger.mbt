@@ -40,6 +40,11 @@ pub fn dagger(
     @symcore.Expr::Pow(base, exp) => @symcore.raw_pow(dagger(base), exp)
     @symcore.Expr::Function(name, args) if name == "TensorProduct" =>
       @symcore.raw_function("TensorProduct", args.map(arg => dagger(arg)))
+    @symcore.Expr::Function(name, args) if name == "Commutator" && args.length() == 2 =>
+      @symcore.int(-1) *
+        @symcore.raw_function("Commutator", [dagger(args[1]), dagger(args[0])])
+    @symcore.Expr::Function(name, args) if name == "AntiCommutator" && args.length() == 2 =>
+      @symcore.raw_function("AntiCommutator", [dagger(args[0]), dagger(args[1])])
     _ => expr_conjugate(expr)
   }
 }
