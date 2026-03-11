@@ -1527,3 +1527,18 @@ pub fn optics_utils_eval(expr : String) -> String raise {
     ].join(""),
   )
 }
+
+///|
+pub fn optics_waves_eval(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      "from sympy import *\n",
+      "from sympy.physics.optics.waves import TWave\n",
+      "from sympy.physics.units import meter, second, speed_of_light\n",
+      "A, A1, A2, phi, phi1, phi2, f, n = symbols('A A1 A2 phi phi1 phi2 f n')\n",
+      "print(",
+      expr,
+      ")\n",
+    ].join(""),
+  )
+}
