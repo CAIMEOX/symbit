@@ -46,19 +46,27 @@ fn quantum_apply_operator_pair(
                 Some(applied) => Some(applied)
                 None =>
                   match pauli_apply_operator_to_ket(lhs, rhs) {
+                Some(applied) => Some(applied)
+                None =>
+                  match piab_apply_operator_to_ket(lhs, rhs) {
                     Some(applied) => Some(applied)
                     None =>
-                      match boson_apply_operator_to_ket(lhs, rhs) {
+                      match sho_apply_operator_to_ket(lhs, rhs) {
                         Some(applied) => Some(applied)
                         None =>
-                          match fermion_apply_operator_to_ket(lhs, rhs) {
-                            Some(applied) => Some(applied)
-                            None => None
-                          }
+                  match boson_apply_operator_to_ket(lhs, rhs) {
+                    Some(applied) => Some(applied)
+                    None =>
+                      match fermion_apply_operator_to_ket(lhs, rhs) {
+                        Some(applied) => Some(applied)
+                        None => None
+                      }
+                  }
                       }
                   }
               }
           }
+      }
       }
     }
     _ if dagger_mode && quantum_is_bra_expr(lhs) && quantum_is_operator_expr(rhs) =>

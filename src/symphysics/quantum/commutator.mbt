@@ -103,6 +103,22 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
           return @symcore.symbol("I") * hbar
         (@symcore.Expr::Function("PxOp", _), @symcore.Expr::Function("XOp", _)) =>
           return @symcore.int(-1) * @symcore.symbol("I") * hbar
+        (@symcore.Expr::Function("RaisingOp", _), @symcore.Expr::Function("LoweringOp", _)) =>
+          return @symcore.int(-1)
+        (@symcore.Expr::Function("LoweringOp", _), @symcore.Expr::Function("RaisingOp", _)) =>
+          return @symcore.int(1)
+        (@symcore.Expr::Function("RaisingOp", _), @symcore.Expr::Function("NumberOp", _)) =>
+          return @symcore.int(-1) * nlhs
+        (@symcore.Expr::Function("LoweringOp", _), @symcore.Expr::Function("NumberOp", _)) =>
+          return nlhs
+        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("RaisingOp", _)) =>
+          return nrhs
+        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("LoweringOp", _)) =>
+          return @symcore.int(-1) * nrhs
+        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("Hamiltonian", _)) =>
+          return @symcore.int(0)
+        (@symcore.Expr::Function("Hamiltonian", _), @symcore.Expr::Function("NumberOp", _)) =>
+          return @symcore.int(0)
         _ => ()
       }
       if lhs.compare(rhs) > 0 {

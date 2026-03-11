@@ -1247,7 +1247,9 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
     "from sympy.physics.quantum.cartesian import XOp, YOp, ZOp, PxOp, XKet, XBra, PxKet, PxBra, PositionKet3D, PositionBra3D\n",
     "from sympy.physics.quantum.operatorset import operators_to_state, state_to_operators\n",
+    "from sympy.physics.quantum.piab import PIABHamiltonian, PIABKet, PIABBra, m, L\n",
     "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
+    "from sympy.physics.quantum.sho1d import RaisingOp, LoweringOp, NumberOp, Hamiltonian, SHOKet, SHOBra\n",
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
@@ -1336,6 +1338,33 @@ pub fn quantum_represent_str(
       "))\n",
     ].join(""),
   )
+}
+
+///|
+pub fn quantum_represent_matrix(
+  expr : String,
+  basis : String,
+  ndim : Int,
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "mat = represent(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), basis=sympify(",
+      python_string_literal(basis),
+      ", locals=locals()), ndim=",
+      ndim.to_string(),
+      ")\n",
+      "for row in mat.tolist():\n",
+      "    if isinstance(row, (list, tuple)):\n",
+      "        for item in row:\n",
+      "            print(item)\n",
+      "    else:\n",
+      "        print(row)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
 }
 
 ///|
