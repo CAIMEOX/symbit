@@ -113,7 +113,12 @@ pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
     "JxKet",
     "JyKet",
     "JzKet",
+    "PxKet",
+    "PositionKet3D",
+    "SHOKet",
+    "PIABKet",
     "SigmaZKet",
+    "XKet",
   ])
 }
 
@@ -131,7 +136,12 @@ pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
     "JxBra",
     "JyBra",
     "JzBra",
+    "PxBra",
+    "PositionBra3D",
+    "SHOBra",
+    "PIABBra",
     "SigmaZBra",
+    "XBra",
   ])
 }
 
@@ -176,6 +186,15 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
         "Rotation",
         "WignerD",
         "Density",
+        "Hamiltonian",
+        "LoweringOp",
+        "NumberOp",
+        "PIABHamiltonian",
+        "PxOp",
+        "RaisingOp",
+        "XOp",
+        "YOp",
+        "ZOp",
       ])
   }
 }

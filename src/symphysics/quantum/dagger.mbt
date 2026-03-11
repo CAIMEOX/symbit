@@ -54,6 +54,22 @@ pub fn dagger(
     @symcore.Expr::Function(name, args) if name == "JyBra" => @symcore.raw_function("JyKet", args)
     @symcore.Expr::Function(name, args) if name == "JzKet" => @symcore.raw_function("JzBra", args)
     @symcore.Expr::Function(name, args) if name == "JzBra" => @symcore.raw_function("JzKet", args)
+    @symcore.Expr::Function(name, args) if name == "XKet" => @symcore.raw_function("XBra", args)
+    @symcore.Expr::Function(name, args) if name == "XBra" => @symcore.raw_function("XKet", args)
+    @symcore.Expr::Function(name, args) if name == "PxKet" => @symcore.raw_function("PxBra", args)
+    @symcore.Expr::Function(name, args) if name == "PxBra" => @symcore.raw_function("PxKet", args)
+    @symcore.Expr::Function(name, args) if name == "PositionKet3D" =>
+      @symcore.raw_function("PositionBra3D", args)
+    @symcore.Expr::Function(name, args) if name == "PositionBra3D" =>
+      @symcore.raw_function("PositionKet3D", args)
+    @symcore.Expr::Function(name, args) if name == "PIABKet" =>
+      @symcore.raw_function("PIABBra", args)
+    @symcore.Expr::Function(name, args) if name == "PIABBra" =>
+      @symcore.raw_function("PIABKet", args)
+    @symcore.Expr::Function(name, args) if name == "SHOKet" =>
+      @symcore.raw_function("SHOBra", args)
+    @symcore.Expr::Function(name, args) if name == "SHOBra" =>
+      @symcore.raw_function("SHOKet", args)
     @symcore.Expr::Function(name, args) if name == "SigmaZKet" => @symcore.raw_function("SigmaZBra", args)
     @symcore.Expr::Function(name, args) if name == "SigmaZBra" => @symcore.raw_function("SigmaZKet", args)
     @symcore.Expr::Function(name, args) if name == "Wavefunction" && args.length() >= 2 => {
@@ -72,6 +88,12 @@ pub fn dagger(
       @symcore.raw_function("SigmaPlus", args)
     @symcore.Expr::Function(name, _) if name == "HermitianOperator" => expr
     @symcore.Expr::Function(name, _) if name == "IdentityOperator" => expr
+    @symcore.Expr::Function(name, _) if name == "XOp" || name == "YOp" || name == "ZOp" || name == "PxOp" => expr
+    @symcore.Expr::Function(name, _) if name == "PIABHamiltonian" || name == "NumberOp" || name == "Hamiltonian" => expr
+    @symcore.Expr::Function(name, args) if name == "RaisingOp" =>
+      @symcore.raw_function("LoweringOp", args)
+    @symcore.Expr::Function(name, args) if name == "LoweringOp" =>
+      @symcore.raw_function("RaisingOp", args)
     @symcore.Expr::Function(name, _) if name == "UnitaryOperator" => @symcore.raw_pow(expr, @symcore.int(-1))
     @symcore.Expr::Function(name, _) if name == "DifferentialOperator" =>
       @symcore.raw_function("Dagger", [expr])

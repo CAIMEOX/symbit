@@ -99,6 +99,10 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
           return @symcore.int(0)
         (@symcore.Expr::Function("BosonOp", _), @symcore.Expr::Function("FermionOp", _)) =>
           return @symcore.int(0)
+        (@symcore.Expr::Function("XOp", _), @symcore.Expr::Function("PxOp", _)) =>
+          return @symcore.symbol("I") * hbar
+        (@symcore.Expr::Function("PxOp", _), @symcore.Expr::Function("XOp", _)) =>
+          return @symcore.int(-1) * @symcore.symbol("I") * hbar
         _ => ()
       }
       if lhs.compare(rhs) > 0 {

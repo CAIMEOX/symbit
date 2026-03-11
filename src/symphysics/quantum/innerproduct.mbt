@@ -183,13 +183,21 @@ pub fn inner_product(
       } else {
         @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
+    (@symcore.Expr::Function("PIABBra", bargs), @symcore.Expr::Function("PIABKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+      @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
+    (@symcore.Expr::Function("SHOBra", bargs), @symcore.Expr::Function("SHOKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+      @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
     (@symcore.Expr::Function("SigmaZBra", bargs), @symcore.Expr::Function("SigmaZKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
       if bargs[0] == kargs[0] {
         @symcore.int(1)
       } else {
         @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
       }
-    _ => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
+    _ =>
+      match cartesian_inner_product(bra_expr, ket_expr) {
+        Some(value) => value
+        None => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
+      }
   }
 }
 

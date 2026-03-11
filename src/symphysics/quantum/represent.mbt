@@ -47,28 +47,29 @@ fn default_spin_j() -> @symcore.Expr {
 ///|
 pub fn represent(
   expr : @symcore.Expr,
+  basis? : @symcore.Expr? = None,
   nqubits? : Int = 0,
   spin_j? : @symcore.Expr = default_spin_j(),
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   match expr {
     @symcore.Expr::Add(args) => {
       guard !args.is_empty() else { return MatrixScalarValue::Scalar(@symcore.int(0)) }
-      let mut acc = represent(args[0], nqubits=nqubits, spin_j=spin_j)
+      let mut acc = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j)
       for idx in 1..<args.length() {
-        acc = represent_add(acc, represent(args[idx], nqubits=nqubits, spin_j=spin_j))
+        acc = represent_add(acc, represent(args[idx], basis=basis, nqubits=nqubits, spin_j=spin_j))
       }
       acc
     }
     @symcore.Expr::Mul(args) => {
       guard !args.is_empty() else { return MatrixScalarValue::Scalar(@symcore.int(1)) }
-      let mut acc = represent(args[0], nqubits=nqubits, spin_j=spin_j)
+      let mut acc = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j)
       for idx in 1..<args.length() {
-        acc = represent_mul(acc, represent(args[idx], nqubits=nqubits, spin_j=spin_j))
+        acc = represent_mul(acc, represent(args[idx], basis=basis, nqubits=nqubits, spin_j=spin_j))
       }
       acc
     }
     @symcore.Expr::Function("Dagger", args) if args.length() == 1 => {
-      let represented = represent(args[0], nqubits=nqubits, spin_j=spin_j)
+      let represented = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j)
       match represented {
         MatrixScalarValue::Scalar(value) => MatrixScalarValue::Scalar(expr_conjugate(value))
         MatrixScalarValue::Matrix(matrix) => MatrixScalarValue::Matrix(matrix_dagger(matrix))
@@ -81,7 +82,7 @@ pub fn represent(
       let matrices : Array[@symphysics.ExplicitMatrix] = []
       let mut scalar = @symcore.int(1)
       for arg in args {
-        let represented = represent(arg, nqubits=nqubits, spin_j=spin_j)
+        let represented = represent(arg, basis=basis, nqubits=nqubits, spin_j=spin_j)
         match represented {
           MatrixScalarValue::Scalar(value) => scalar = scalar * value
           MatrixScalarValue::Matrix(matrix) => matrices.push(matrix)
@@ -100,12 +101,15 @@ pub fn represent(
     }
     @symcore.Expr::Function(name, args) if name == "OuterProduct" && args.length() == 2 =>
       represent_mul(
-        represent(args[0], nqubits=nqubits, spin_j=spin_j),
-        represent(args[1], nqubits=nqubits, spin_j=spin_j),
+        represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j),
+        represent(args[1], basis=basis, nqubits=nqubits, spin_j=spin_j),
       )
     @symcore.Expr::Function(name, _) if name == "InnerProduct" =>
       MatrixScalarValue::Scalar(inner_product_doit(expr))
     _ =>
+      match cartesian_represent(expr, basis=basis) {
+        Some(value) => MatrixScalarValue::Scalar(value)
+        None =>
       match wavefunction_from_expr(expr) {
         Some(wf) => MatrixScalarValue::Scalar(wf.as_expr())
         None =>
@@ -141,14 +145,16 @@ pub fn represent(
       }
   }
 }
+}
 
 ///|
 pub fn represent_matrix(
   expr : @symcore.Expr,
+  basis? : @symcore.Expr? = None,
   nqubits? : Int = 0,
   spin_j? : @symcore.Expr = default_spin_j(),
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  let represented = represent(expr, nqubits=nqubits, spin_j=spin_j)
+  let represented = represent(expr, basis=basis, nqubits=nqubits, spin_j=spin_j)
   match represented {
     MatrixScalarValue::Matrix(matrix) => matrix
     MatrixScalarValue::Scalar(value) => @symphysics.explicit_matrix_from_rows([[value]])

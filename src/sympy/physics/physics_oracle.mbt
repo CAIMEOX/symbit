@@ -1245,6 +1245,8 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
     "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
+    "from sympy.physics.quantum.cartesian import XOp, YOp, ZOp, PxOp, XKet, XBra, PxKet, PxBra, PositionKet3D, PositionBra3D\n",
+    "from sympy.physics.quantum.operatorset import operators_to_state, state_to_operators\n",
     "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
@@ -1310,6 +1312,27 @@ pub fn quantum_qapply_str(
       if dagger { "True" } else { "False" },
       ", ip_doit=",
       if ip_doit { "True" } else { "False" },
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_represent_str(
+  expr : String,
+  basis? : String? = None,
+) -> String raise {
+  let basis_code = match basis {
+    Some(value) => ", basis=" + value
+    None => ""
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(represent(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())",
+      basis_code,
       "))\n",
     ].join(""),
   )

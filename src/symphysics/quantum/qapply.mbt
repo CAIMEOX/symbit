@@ -42,15 +42,19 @@ fn quantum_apply_operator_pair(
           match spin_apply_operator_to_ket(lhs, rhs) {
             Some(applied) => Some(applied)
             None =>
-              match pauli_apply_operator_to_ket(lhs, rhs) {
+              match cartesian_apply_operator_to_ket(lhs, rhs) {
                 Some(applied) => Some(applied)
                 None =>
-                  match boson_apply_operator_to_ket(lhs, rhs) {
+                  match pauli_apply_operator_to_ket(lhs, rhs) {
                     Some(applied) => Some(applied)
                     None =>
-                      match fermion_apply_operator_to_ket(lhs, rhs) {
+                      match boson_apply_operator_to_ket(lhs, rhs) {
                         Some(applied) => Some(applied)
-                        None => None
+                        None =>
+                          match fermion_apply_operator_to_ket(lhs, rhs) {
+                            Some(applied) => Some(applied)
+                            None => None
+                          }
                       }
                   }
               }
