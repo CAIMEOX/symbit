@@ -255,6 +255,11 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.matrixutils")
   }
+  let quantum_matrixcache_mod = match
+    @py.pyimport("sympy.physics.quantum.matrixcache") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.matrixcache")
+  }
   let quantum_qft_mod = match @py.pyimport("sympy.physics.quantum.qft") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.qft")
@@ -379,6 +384,7 @@ fn physics_globals() -> @py.PyDict raise {
     ] {
     try_bind_name(globals, quantum_matrixutils_mod, name)
   }
+  try_bind_name(globals, quantum_matrixcache_mod, "matrix_cache")
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
   }
@@ -1269,6 +1275,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
     "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n",
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
+    "from sympy.physics.quantum.matrixcache import matrix_cache\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
@@ -1390,6 +1397,22 @@ pub fn quantum_represent_matrix(
       "            print(item)\n",
       "    else:\n",
       "        print(row)\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "mat = matrix_cache.get_matrix(",
+      python_string_literal(name),
+      ", 'sympy')\n",
+      "for row in mat.tolist():\n",
+      "    for item in row:\n",
+      "        print(item)\n",
     ].join(""),
   )
   txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
