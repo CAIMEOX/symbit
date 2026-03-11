@@ -38,6 +38,27 @@ pub fn dagger(
       @symcore.raw_mul(reversed)
     }
     @symcore.Expr::Pow(base, exp) => @symcore.raw_pow(dagger(base), exp)
+    @symcore.Expr::Function(name, args) if name == "Ket" => @symcore.raw_function("Bra", args)
+    @symcore.Expr::Function(name, args) if name == "Bra" => @symcore.raw_function("Ket", args)
+    @symcore.Expr::Function(name, args) if name == "TimeDepKet" => @symcore.raw_function("TimeDepBra", args)
+    @symcore.Expr::Function(name, args) if name == "TimeDepBra" => @symcore.raw_function("TimeDepKet", args)
+    @symcore.Expr::Function(name, _) if name == "HermitianOperator" => expr
+    @symcore.Expr::Function(name, _) if name == "IdentityOperator" => expr
+    @symcore.Expr::Function(name, _) if name == "UnitaryOperator" => @symcore.raw_pow(expr, @symcore.int(-1))
+    @symcore.Expr::Function(name, args) if name == "BosonOp" && args.length() == 2 =>
+      @symcore.raw_function("BosonOp", [
+        args[0],
+        if args[1] == @symcore.int(0) { @symcore.int(1) } else { @symcore.int(0) },
+      ])
+    @symcore.Expr::Function(name, args) if name == "FermionOp" && args.length() == 2 =>
+      @symcore.raw_function("FermionOp", [
+        args[0],
+        if args[1] == @symcore.int(0) { @symcore.int(1) } else { @symcore.int(0) },
+      ])
+    @symcore.Expr::Function(name, args) if name == "OuterProduct" && args.length() == 2 =>
+      @symcore.raw_function("OuterProduct", [dagger(args[1]), dagger(args[0])])
+    @symcore.Expr::Function(name, args) if name == "InnerProduct" && args.length() == 2 =>
+      inner_product(dagger(args[1]), dagger(args[0]), evaluate=false)
     @symcore.Expr::Function(name, args) if name == "TensorProduct" =>
       @symcore.raw_function("TensorProduct", args.map(arg => dagger(arg)))
     @symcore.Expr::Function(name, args) if name == "Commutator" && args.length() == 2 =>

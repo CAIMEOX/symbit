@@ -205,6 +205,26 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.dagger")
   }
+  let quantum_qexpr_mod = match @py.pyimport("sympy.physics.quantum.qexpr") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.qexpr")
+  }
+  let quantum_operator_mod = match @py.pyimport("sympy.physics.quantum.operator") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.operator")
+  }
+  let quantum_state_mod = match @py.pyimport("sympy.physics.quantum.state") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.state")
+  }
+  let quantum_boson_mod = match @py.pyimport("sympy.physics.quantum.boson") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.boson")
+  }
+  let quantum_fermion_mod = match @py.pyimport("sympy.physics.quantum.fermion") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.fermion")
+  }
   let quantum_hilbert_mod = match
     @py.pyimport("sympy.physics.quantum.hilbert") {
     Some(v) => v
@@ -266,8 +286,27 @@ fn physics_globals() -> @py.PyDict raise {
   for name in ["CG", "Wigner3j", "Wigner6j", "Wigner9j"] {
     try_bind_name(globals, quantum_cg_mod, name)
   }
+  try_bind_name(globals, quantum_qexpr_mod, "QExpr")
   try_bind_name(globals, quantum_mod, "TensorProduct")
   try_bind_name(globals, quantum_dagger_mod, "Dagger")
+  for
+    name in [
+      "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "OuterProduct",
+    ] {
+    try_bind_name(globals, quantum_operator_mod, name)
+  }
+  for name in ["Ket", "Bra", "TimeDepKet", "TimeDepBra"] {
+    try_bind_name(globals, quantum_state_mod, name)
+  }
+  for
+    name in [
+      "BosonOp", "BosonFockKet", "BosonFockBra", "BosonCoherentKet", "BosonCoherentBra",
+    ] {
+    try_bind_name(globals, quantum_boson_mod, name)
+  }
+  for name in ["FermionOp", "FermionFockKet", "FermionFockBra"] {
+    try_bind_name(globals, quantum_fermion_mod, name)
+  }
   for
     name in [
       "HilbertSpace", "ComplexSpace", "L2", "FockSpace", "TensorProductHilbertSpace",
@@ -1156,6 +1195,11 @@ fn quantum_subprocess_prelude() -> String {
     "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
     "from sympy import *\n",
     "from sympy.physics.quantum import *\n",
+    "from sympy.physics.quantum.qexpr import QExpr\n",
+    "from sympy.physics.quantum.state import Ket, Bra, TimeDepKet, TimeDepBra\n",
+    "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct\n",
+    "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
+    "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
     "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
@@ -1177,6 +1221,18 @@ pub fn quantum_eval_str(expr : String) -> String raise {
 }
 
 ///|
+pub fn quantum_srepr_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(srepr(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+    ].join(""),
+  )
+}
+
+///|
 pub fn quantum_doit_str(expr : String) -> String raise {
   python_subprocess_stdout(
     [
@@ -1189,6 +1245,26 @@ pub fn quantum_doit_str(expr : String) -> String raise {
 }
 
 ///|
+pub fn quantum_qapply_str(
+  expr : String,
+  dagger? : Bool = false,
+  ip_doit? : Bool = true,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(qapply(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), dagger=",
+      if dagger { "True" } else { "False" },
+      ", ip_doit=",
+      if ip_doit { "True" } else { "False" },
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
 pub fn quantum_expand_commutator_str(expr : String) -> String raise {
   python_subprocess_stdout(
     [
@@ -1196,6 +1272,32 @@ pub fn quantum_expand_commutator_str(expr : String) -> String raise {
       "print(sympify(",
       python_string_literal(expr),
       ", locals=locals()).expand(commutator=True))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_normal_order_str(
+  expr : String,
+  ordered_form? : Bool = true,
+  independent? : Bool = false,
+) -> String raise {
+  let fn_name = if ordered_form {
+    "normal_ordered_form"
+  } else {
+    "normal_order"
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "from sympy.physics.quantum.operatorordering import normal_order, normal_ordered_form\n",
+      "print(",
+      fn_name,
+      "(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), independent=",
+      if independent { "True" } else { "False" },
+      "))\n",
     ].join(""),
   )
 }

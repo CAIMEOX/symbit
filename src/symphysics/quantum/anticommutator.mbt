@@ -25,6 +25,22 @@ fn quantum_make_anticommutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @sym
       if lhs_scalar != @symcore.int(1) || rhs_scalar != @symcore.int(1) {
         return lhs_scalar * rhs_scalar * quantum_make_anticommutator(nlhs, nrhs)
       }
+      match (nlhs, nrhs) {
+        (@symcore.Expr::Function("FermionOp", largs), @symcore.Expr::Function("FermionOp", rargs)) => {
+          if largs.length() == 2 &&
+            rargs.length() == 2 &&
+            largs[0] == rargs[0] &&
+            largs[1] == @symcore.int(0) &&
+            rargs[1] != @symcore.int(0) {
+            return @symcore.int(1)
+          }
+        }
+        (@symcore.Expr::Function("FermionOp", _), @symcore.Expr::Function("BosonOp", _)) =>
+          return @symcore.int(2) * nlhs * nrhs
+        (@symcore.Expr::Function("BosonOp", _), @symcore.Expr::Function("FermionOp", _)) =>
+          return @symcore.int(2) * nlhs * nrhs
+        _ => ()
+      }
       if lhs.compare(rhs) > 0 {
         return quantum_make_anticommutator(rhs, lhs)
       }
