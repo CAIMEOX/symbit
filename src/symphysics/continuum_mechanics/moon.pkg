@@ -1,0 +1,9 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symsimplify" @symsimplify,
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+} for "test"
