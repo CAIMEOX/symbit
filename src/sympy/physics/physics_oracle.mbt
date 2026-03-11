@@ -136,9 +136,17 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy")
   }
+  let quantum_mod = match @py.pyimport("sympy.physics.quantum") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum")
+  }
   let quantum_cg_mod = match @py.pyimport("sympy.physics.quantum.cg") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.cg")
+  }
+  let paulialgebra_mod = match @py.pyimport("sympy.physics.paulialgebra") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.paulialgebra")
   }
   let constants_mod = match @py.pyimport("sympy.physics.quantum.constants") {
     Some(v) => v
@@ -152,6 +160,7 @@ fn physics_globals() -> @py.PyDict raise {
     "KroneckerDelta",
     "I",
     "Sum",
+    "TensorProduct",
     "Tuple",
     "Ynm",
     "Ynm_c",
@@ -172,6 +181,10 @@ fn physics_globals() -> @py.PyDict raise {
   }
   for name in ["CG", "Wigner3j", "Wigner6j", "Wigner9j"] {
     try_bind_name(globals, quantum_cg_mod, name)
+  }
+  try_bind_name(globals, quantum_mod, "TensorProduct")
+  for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
+    try_bind_name(globals, paulialgebra_mod, name)
   }
   for name in [
     "a",
@@ -203,10 +216,35 @@ fn physics_globals() -> @py.PyDict raise {
     "j23",
     "j24",
     "j34",
+    "sigma",
+    "tau",
     "Z",
   ] {
     let symbol = objenum_to_obj(sympy_call_must("sympy.Symbol", [OracleArg::Str(name)]))
     globals.set(name, symbol)
+  }
+  let q_nc = objenum_to_obj(
+    sympy_call_must("sympy.Symbol", [
+      OracleArg::Str("q"),
+    ], kwargs={ "commutative": OracleArg::Bool(false) }),
+  )
+  globals.set("q", q_nc)
+  for pair in [
+    ("sigma1", 1, "sigma"),
+    ("sigma2", 2, "sigma"),
+    ("sigma3", 3, "sigma"),
+    ("tau1", 1, "tau"),
+    ("tau2", 2, "tau"),
+    ("tau3", 3, "tau"),
+  ] {
+    let obj = objenum_to_obj(sympy_call_must(
+      "sympy.physics.paulialgebra.Pauli",
+      [
+        OracleArg::Int(pair.1),
+        OracleArg::PyObj(objenum_to_obj(sympy_call_must("sympy.Symbol", [OracleArg::Str(pair.2)]))),
+      ],
+    ))
+    globals.set(pair.0, obj)
   }
   try_bind_name(globals, constants_mod, "hbar")
   globals
@@ -904,4 +942,50 @@ pub fn quantum_cg_simp(expr : String) -> String raise {
   py_str_obj(objenum_to_obj(sympy_call_must("sympy.physics.quantum.cg.cg_simp", [
     OracleArg::PyObj(obj),
   ])))
+}
+
+///|
+pub fn paulialgebra_delta(i : Int, j : Int) -> Int raise {
+  let out = sympy_call_must("sympy.physics.paulialgebra.delta", [OracleArg::Int(i), OracleArg::Int(j)])
+  @strconv.parse_int(py_str_obj(objenum_to_obj(out))) catch {
+    _ => fail("parse-int")
+  }
+}
+
+///|
+pub fn paulialgebra_epsilon(i : Int, j : Int, k : Int) -> Int raise {
+  let out = sympy_call_must(
+    "sympy.physics.paulialgebra.epsilon",
+    [OracleArg::Int(i), OracleArg::Int(j), OracleArg::Int(k)],
+  )
+  @strconv.parse_int(py_str_obj(objenum_to_obj(out))) catch {
+    _ => fail("parse-int")
+  }
+}
+
+///|
+pub fn paulialgebra_evaluate(expr : String) -> String raise {
+  let obj = physics_sympify(expr)
+  py_str_obj(objenum_to_obj(sympy_call_must(
+    "sympy.physics.paulialgebra.evaluate_pauli_product",
+    [OracleArg::PyObj(obj)],
+  )))
+}
+
+///|
+pub fn physics_srepr(expr : String) -> String raise {
+  py_str_obj(objenum_to_obj(sympy_call_must(
+    "sympy.srepr",
+    [OracleArg::PyObj(physics_sympify(expr))],
+  )))
+}
+
+///|
+pub fn paulialgebra_evaluate_srepr(expr : String) -> String raise {
+  let obj = physics_sympify(expr)
+  let res = objenum_to_obj(sympy_call_must(
+    "sympy.physics.paulialgebra.evaluate_pauli_product",
+    [OracleArg::PyObj(obj)],
+  ))
+  py_str_obj(objenum_to_obj(sympy_call_must("sympy.srepr", [OracleArg::PyObj(res)])))
 }
