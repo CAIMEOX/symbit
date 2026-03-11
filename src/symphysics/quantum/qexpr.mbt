@@ -110,6 +110,9 @@ pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
     "FermionFockKet",
     "Qubit",
     "IntQubit",
+    "JxKet",
+    "JyKet",
+    "JzKet",
   ])
 }
 
@@ -124,6 +127,9 @@ pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
     "FermionFockBra",
     "QubitBra",
     "IntQubitBra",
+    "JxBra",
+    "JyBra",
+    "JzBra",
   ])
 }
 
@@ -134,36 +140,35 @@ pub fn quantum_is_state_expr(expr : @symcore.Expr) -> Bool {
 
 ///|
 pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
-  quantum_expr_has_any_name(expr, [
-    "Operator",
-    "HermitianOperator",
-    "UnitaryOperator",
-    "IdentityOperator",
-    "OuterProduct",
-    "BosonOp",
-    "FermionOp",
-    "Gate",
-    "CGate",
-    "UGate",
-    "IdentityGate",
-    "HadamardGate",
-    "XGate",
-    "YGate",
-    "ZGate",
-    "TGate",
-    "PhaseGate",
-    "SwapGate",
-    "CNotGate",
-    "Jplus",
-    "Jminus",
-    "Jx",
-    "Jy",
-    "Jz",
-    "J2",
-    "Rotation",
-    "WignerD",
-    "Density",
-  ])
+  match expr {
+    @symcore.Expr::Symbol(name) =>
+      ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name)
+    _ =>
+      quantum_expr_has_any_name(expr, [
+        "Operator",
+        "HermitianOperator",
+        "UnitaryOperator",
+        "IdentityOperator",
+        "OuterProduct",
+        "BosonOp",
+        "FermionOp",
+        "Gate",
+        "CGate",
+        "UGate",
+        "IdentityGate",
+        "HadamardGate",
+        "XGate",
+        "YGate",
+        "ZGate",
+        "TGate",
+        "PhaseGate",
+        "SwapGate",
+        "CNotGate",
+        "Rotation",
+        "WignerD",
+        "Density",
+      ])
+  }
 }
 
 ///|

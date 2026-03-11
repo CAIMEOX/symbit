@@ -26,6 +26,17 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
         return lhs_scalar * rhs_scalar * quantum_make_commutator(nlhs, nrhs)
       }
       match (nlhs, nrhs) {
+        (@symcore.Expr::Symbol(lhs_name), @symcore.Expr::Symbol(rhs_name)) => {
+          match (lhs_name, rhs_name) {
+            ("Jx", "Jy") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jz")
+            ("Jy", "Jz") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jx")
+            ("Jz", "Jx") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jy")
+            ("Jplus", "Jminus") => return @symcore.int(2) * hbar * @symcore.symbol("Jz")
+            ("Jz", "Jplus") => return hbar * @symcore.symbol("Jplus")
+            ("Jz", "Jminus") => return @symcore.int(-1) * hbar * @symcore.symbol("Jminus")
+            _ => ()
+          }
+        }
         (@symcore.Expr::Function("BosonOp", largs), @symcore.Expr::Function("BosonOp", rargs)) => {
           if largs.length() == 2 &&
             rargs.length() == 2 &&

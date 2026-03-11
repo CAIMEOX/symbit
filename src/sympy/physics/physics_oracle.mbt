@@ -225,6 +225,22 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.fermion")
   }
+  let quantum_qubit_mod = match @py.pyimport("sympy.physics.quantum.qubit") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.qubit")
+  }
+  let quantum_gate_mod = match @py.pyimport("sympy.physics.quantum.gate") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.gate")
+  }
+  let quantum_spin_mod = match @py.pyimport("sympy.physics.quantum.spin") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.spin")
+  }
+  let quantum_represent_mod = match @py.pyimport("sympy.physics.quantum.represent") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.represent")
+  }
   let quantum_hilbert_mod = match
     @py.pyimport("sympy.physics.quantum.hilbert") {
     Some(v) => v
@@ -306,6 +322,23 @@ fn physics_globals() -> @py.PyDict raise {
   }
   for name in ["FermionOp", "FermionFockKet", "FermionFockBra"] {
     try_bind_name(globals, quantum_fermion_mod, name)
+  }
+  for name in ["Qubit", "QubitBra", "IntQubit", "IntQubitBra"] {
+    try_bind_name(globals, quantum_qubit_mod, name)
+  }
+  for
+    name in [
+      "Gate", "CGate", "UGate", "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate",
+      "TGate", "PhaseGate", "SwapGate", "CNotGate", "CNOT", "SWAP", "H", "X", "Y", "Z",
+      "T", "S",
+    ] {
+    try_bind_name(globals, quantum_gate_mod, name)
+  }
+  for name in ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2", "JxKet", "JxBra", "JyKet", "JyBra", "JzKet", "JzBra", "Rotation", "WignerD"] {
+    try_bind_name(globals, quantum_spin_mod, name)
+  }
+  for name in ["represent"] {
+    try_bind_name(globals, quantum_represent_mod, name)
   }
   for
     name in [
@@ -1200,6 +1233,10 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
     "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
+    "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra\n",
+    "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S\n",
+    "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
+    "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
     "from sympy.physics.quantum.anticommutator import AntiCommutator\n",

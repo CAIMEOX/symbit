@@ -6,12 +6,13 @@ fn quantum_reserved_operator_name(name : String) -> Bool {
   match name {
     "AntiCommutator" | "BosonCoherentBra" | "BosonCoherentKet" | "BosonFockBra" |
     "BosonFockKet" | "BosonOp" | "Bra" | "CGate" | "Commutator" | "Dagger" |
-    "Density" | "FermionFockBra" | "FermionFockKet" | "FermionOp" | "Gate" |
-    "HadamardGate" | "HermitianOperator" | "IdentityGate" | "IdentityOperator" |
-    "InnerProduct" | "Ket" | "OuterProduct" | "Operator" | "PhaseGate" |
-    "Qubit" | "QubitBra" | "SwapGate" | "TensorProduct" | "TGate" | "TimeDepBra" |
-    "TimeDepKet" | "Tr" | "UGate" | "UnitaryOperator" | "XGate" | "YGate" |
-    "ZGate" => true
+    "Density" | "FermionFockBra" | "FermionFockKet" | "FermionOp" | "Gate" | "HadamardGate" |
+    "HermitianOperator" | "IdentityGate" | "IdentityOperator" | "InnerProduct" |
+    "JxBra" | "JxKet" | "JyBra" | "JyKet" | "JzBra" | "JzKet" |
+    "Ket" | "OuterProduct" | "OrthogonalBra" | "OrthogonalKet" |
+    "Operator" | "PhaseGate" | "Qubit" | "QubitBra" | "SwapGate" |
+    "TensorProduct" | "TGate" | "TimeDepBra" | "TimeDepKet" | "Tr" |
+    "UGate" | "UnitaryOperator" | "Wavefunction" | "XGate" | "YGate" | "ZGate" => true
     _ => false
   }
 }
