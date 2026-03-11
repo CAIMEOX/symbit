@@ -104,6 +104,10 @@ pub fn dagger(
     @symcore.Expr::Function(name, _) if name == "ZGate" => expr
     @symcore.Expr::Function(name, _) if name == "SwapGate" => expr
     @symcore.Expr::Function(name, _) if name == "CNotGate" => expr
+    @symcore.Expr::Function("QFT", args) => @symcore.raw_function("IQFT", args)
+    @symcore.Expr::Function("IQFT", args) => @symcore.raw_function("QFT", args)
+    @symcore.Expr::Function("RkGate", args) if args.length() == 2 =>
+      @symcore.raw_function("RkGate", [args[0], @symcore.int(-1) * args[1]])
     @symcore.Expr::Function(name, _) if name == "Gate" || name == "CGate" || name == "UGate" || name == "PhaseGate" || name == "TGate" || name == "Rotation" =>
       @symcore.raw_pow(expr, @symcore.int(-1))
     @symcore.Expr::Function(name, args) if name == "BosonOp" && args.length() == 2 =>
