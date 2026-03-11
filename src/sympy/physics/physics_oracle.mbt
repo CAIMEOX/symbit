@@ -255,6 +255,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.matrixutils")
   }
+  let quantum_density_mod = match @py.pyimport("sympy.physics.quantum.density") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.density")
+  }
   let paulialgebra_mod = match @py.pyimport("sympy.physics.paulialgebra") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.paulialgebra")
@@ -349,6 +353,9 @@ fn physics_globals() -> @py.PyDict raise {
   for name in ["SigmaX", "SigmaY", "SigmaZ", "SigmaMinus", "SigmaPlus", "SigmaZKet", "SigmaZBra", "qsimplify_pauli"] {
     try_bind_name(globals, quantum_pauli_mod, name)
   }
+  for name in ["Density", "entropy", "fidelity"] {
+    try_bind_name(globals, quantum_density_mod, name)
+  }
   for name in ["represent"] {
     try_bind_name(globals, quantum_represent_mod, name)
   }
@@ -364,6 +371,9 @@ fn physics_globals() -> @py.PyDict raise {
       "matrix_dagger", "matrix_tensor_product", "matrix_to_zero", "flatten_scalar",
     ] {
     try_bind_name(globals, quantum_matrixutils_mod, name)
+  }
+  for name in ["Density", "entropy", "fidelity"] {
+    try_bind_name(globals, quantum_density_mod, name)
   }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
@@ -1253,6 +1263,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
+    "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
@@ -1375,6 +1386,99 @@ pub fn quantum_kind_str(expr : String) -> String raise {
       "print(sympify(",
       python_string_literal(expr),
       ", locals=locals()).kind)\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_density_states_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).states())\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_density_probs_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).probs())\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_density_get_state_str(expr : String, index : Int) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).get_state(",
+      index.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_density_get_prob_str(expr : String, index : Int) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()).get_prob(",
+      index.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_density_apply_op_str(expr : String, op : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "obj = sympify(",
+      python_string_literal(expr),
+      ", locals=locals())\n",
+      "print(obj.apply_op(sympify(",
+      python_string_literal(op),
+      ", locals=locals())))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_entropy_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(entropy(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_fidelity_str(lhs : String, rhs : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(fidelity(sympify(",
+      python_string_literal(lhs),
+      ", locals=locals()), sympify(",
+      python_string_literal(rhs),
+      ", locals=locals())))\n",
     ].join(""),
   )
 }
