@@ -25,6 +25,55 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
       if lhs_scalar != @symcore.int(1) || rhs_scalar != @symcore.int(1) {
         return lhs_scalar * rhs_scalar * quantum_make_commutator(nlhs, nrhs)
       }
+      match (pauli_from_expr(nlhs), pauli_from_expr(nrhs)) {
+        (Some(lhs_pauli), Some(rhs_pauli)) if !pauli_name_equal(lhs_pauli.name, rhs_pauli.name) =>
+          return @symcore.int(0)
+        (Some(lhs_pauli), Some(rhs_pauli)) =>
+          match (lhs_pauli.kind, rhs_pauli.kind) {
+            (PauliKind::X, PauliKind::Y) =>
+              return @symcore.int(2) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Y, PauliKind::X) =>
+              return @symcore.int(-2) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Y, PauliKind::Z) =>
+              return @symcore.int(2) * @symcore.symbol("I") * sigma_x(name=lhs_pauli.name).as_expr()
+            (PauliKind::Z, PauliKind::Y) =>
+              return @symcore.int(-2) * @symcore.symbol("I") * sigma_x(name=lhs_pauli.name).as_expr()
+            (PauliKind::Z, PauliKind::X) =>
+              return @symcore.int(2) * @symcore.symbol("I") * sigma_y(name=lhs_pauli.name).as_expr()
+            (PauliKind::X, PauliKind::Z) =>
+              return @symcore.int(-2) * @symcore.symbol("I") * sigma_y(name=lhs_pauli.name).as_expr()
+            (PauliKind::Minus, PauliKind::X) =>
+              return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::X, PauliKind::Minus) =>
+              return sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Minus, PauliKind::Y) =>
+              return @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Y, PauliKind::Minus) =>
+              return @symcore.int(-1) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Minus, PauliKind::Z) =>
+              return @symcore.int(2) * sigma_minus(name=lhs_pauli.name).as_expr()
+            (PauliKind::Z, PauliKind::Minus) =>
+              return @symcore.int(-2) * sigma_minus(name=lhs_pauli.name).as_expr()
+            (PauliKind::Plus, PauliKind::X) =>
+              return sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::X, PauliKind::Plus) =>
+              return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Plus, PauliKind::Y) =>
+              return @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Y, PauliKind::Plus) =>
+              return @symcore.int(-1) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Plus, PauliKind::Z) =>
+              return @symcore.int(-2) * sigma_plus(name=lhs_pauli.name).as_expr()
+            (PauliKind::Z, PauliKind::Plus) =>
+              return @symcore.int(2) * sigma_plus(name=lhs_pauli.name).as_expr()
+            (PauliKind::Plus, PauliKind::Minus) =>
+              return sigma_z(name=lhs_pauli.name).as_expr()
+            (PauliKind::Minus, PauliKind::Plus) =>
+              return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
+            _ => ()
+          }
+        _ => ()
+      }
       match (nlhs, nrhs) {
         (@symcore.Expr::Symbol(lhs_name), @symcore.Expr::Symbol(rhs_name)) => {
           match (lhs_name, rhs_name) {

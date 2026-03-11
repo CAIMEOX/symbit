@@ -183,6 +183,12 @@ pub fn inner_product(
       } else {
         @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
+    (@symcore.Expr::Function("SigmaZBra", bargs), @symcore.Expr::Function("SigmaZKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+      if bargs[0] == kargs[0] {
+        @symcore.int(1)
+      } else {
+        @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
+      }
     _ => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
   }
 }

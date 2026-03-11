@@ -10,7 +10,8 @@ fn quantum_reserved_operator_name(name : String) -> Bool {
     "HermitianOperator" | "IdentityGate" | "IdentityOperator" | "InnerProduct" |
     "JxBra" | "JxKet" | "JyBra" | "JyKet" | "JzBra" | "JzKet" |
     "Ket" | "OuterProduct" | "OrthogonalBra" | "OrthogonalKet" |
-    "Operator" | "PhaseGate" | "Qubit" | "QubitBra" | "SwapGate" |
+    "Operator" | "PhaseGate" | "Qubit" | "QubitBra" | "SigmaMinus" |
+    "SigmaPlus" | "SigmaX" | "SigmaY" | "SigmaZ" | "SigmaZBra" | "SigmaZKet" | "SwapGate" |
     "TensorProduct" | "TGate" | "TimeDepBra" | "TimeDepKet" | "Tr" |
     "UGate" | "UnitaryOperator" | "Wavefunction" | "XGate" | "YGate" | "ZGate" => true
     _ => false

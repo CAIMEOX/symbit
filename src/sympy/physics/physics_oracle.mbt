@@ -237,6 +237,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.spin")
   }
+  let quantum_pauli_mod = match @py.pyimport("sympy.physics.quantum.pauli") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.pauli")
+  }
   let quantum_represent_mod = match @py.pyimport("sympy.physics.quantum.represent") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.represent")
@@ -341,6 +345,9 @@ fn physics_globals() -> @py.PyDict raise {
   }
   for name in ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2", "JxKet", "JxBra", "JyKet", "JyBra", "JzKet", "JzBra", "Rotation", "WignerD"] {
     try_bind_name(globals, quantum_spin_mod, name)
+  }
+  for name in ["SigmaX", "SigmaY", "SigmaZ", "SigmaMinus", "SigmaPlus", "SigmaZKet", "SigmaZBra", "qsimplify_pauli"] {
+    try_bind_name(globals, quantum_pauli_mod, name)
   }
   for name in ["represent"] {
     try_bind_name(globals, quantum_represent_mod, name)
@@ -1241,6 +1248,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
+    "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",

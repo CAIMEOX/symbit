@@ -442,7 +442,6 @@ fn qubit_probability_terms(
   out
 }
 
-///|
 pub fn measure_all(
   expr : @symcore.Expr,
   nqubits? : Int = 0,
