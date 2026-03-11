@@ -106,23 +106,27 @@ pub fn represent(
     @symcore.Expr::Function(name, _) if name == "InnerProduct" =>
       MatrixScalarValue::Scalar(inner_product_doit(expr))
     _ =>
-      match qubit_from_expr(expr) {
-        Some(_) => MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits=nqubits))
+      match wavefunction_from_expr(expr) {
+        Some(wf) => MatrixScalarValue::Scalar(wf.as_expr())
         None =>
-          match jz_state_from_expr(expr) {
-            Some(_) => MatrixScalarValue::Matrix(try! represent_spin_jz_state(expr))
+          match qubit_from_expr(expr) {
+            Some(_) => MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits=nqubits))
             None =>
-              match gate_from_expr(expr) {
-                Some(gate) => MatrixScalarValue::Matrix(gate.represent_zbasis(nqubits))
+              match jz_state_from_expr(expr) {
+                Some(_) => MatrixScalarValue::Matrix(try! represent_spin_jz_state(expr))
                 None =>
-                  match expr {
-                    @symcore.Expr::Symbol(name) =>
-                      if ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name) {
-                        MatrixScalarValue::Matrix(try! represent_spin_jz_operator(expr, spin_j))
-                      } else {
-                        MatrixScalarValue::Scalar(expr)
+                  match gate_support(expr) {
+                    Some(_) => MatrixScalarValue::Matrix(try! represent_gate_expr_zbasis(expr, nqubits))
+                    None =>
+                      match expr {
+                        @symcore.Expr::Symbol(name) =>
+                          if ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name) {
+                            MatrixScalarValue::Matrix(try! represent_spin_jz_operator(expr, spin_j))
+                          } else {
+                            MatrixScalarValue::Scalar(expr)
+                          }
+                        _ => MatrixScalarValue::Scalar(expr)
                       }
-                    _ => MatrixScalarValue::Scalar(expr)
                   }
               }
           }

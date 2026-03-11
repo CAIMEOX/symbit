@@ -135,7 +135,8 @@ pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
 
 ///|
 pub fn quantum_is_state_expr(expr : @symcore.Expr) -> Bool {
-  quantum_is_ket_expr(expr) || quantum_is_bra_expr(expr)
+  quantum_is_ket_expr(expr) || quantum_is_bra_expr(expr) ||
+    quantum_expr_has_name(expr, "Wavefunction")
 }
 
 ///|
@@ -149,6 +150,7 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
         "HermitianOperator",
         "UnitaryOperator",
         "IdentityOperator",
+        "DifferentialOperator",
         "OuterProduct",
         "BosonOp",
         "FermionOp",

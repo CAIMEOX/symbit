@@ -12,6 +12,8 @@ pub enum StateFlavor {
   Bra
   TimeDepKet
   TimeDepBra
+  OrthogonalKet
+  OrthogonalBra
 } derive(Eq)
 
 ///|
@@ -29,6 +31,8 @@ fn state_class_name(flavor : StateFlavor) -> String {
     StateFlavor::Bra => "Bra"
     StateFlavor::TimeDepKet => "TimeDepKet"
     StateFlavor::TimeDepBra => "TimeDepBra"
+    StateFlavor::OrthogonalKet => "OrthogonalKet"
+    StateFlavor::OrthogonalBra => "OrthogonalBra"
   }
 }
 
@@ -39,6 +43,8 @@ fn state_brackets(flavor : StateFlavor) -> (String, String, String) {
     StateFlavor::Bra => ("<", "|", ", ")
     StateFlavor::TimeDepKet => ("|", ">", ";")
     StateFlavor::TimeDepBra => ("<", "|", ";")
+    StateFlavor::OrthogonalKet => ("|", ">", ", ")
+    StateFlavor::OrthogonalBra => ("<", "|", ", ")
   }
 }
 
@@ -77,6 +83,22 @@ pub fn time_dep_bra(
 }
 
 ///|
+pub fn orthogonal_ket(
+  label : Array[@symcore.Expr],
+  hilbert_space? : HilbertSpace = hilbert_space(),
+) -> StateExpr {
+  StateExpr::{ flavor: StateFlavor::OrthogonalKet, label, time: None, hilbert_space }
+}
+
+///|
+pub fn orthogonal_bra(
+  label : Array[@symcore.Expr],
+  hilbert_space? : HilbertSpace = hilbert_space(),
+) -> StateExpr {
+  StateExpr::{ flavor: StateFlavor::OrthogonalBra, label, time: None, hilbert_space }
+}
+
+///|
 pub fn StateExpr::as_expr(self : StateExpr) -> @symcore.Expr {
   let args = self.label.copy()
   match self.time {
@@ -98,6 +120,10 @@ pub fn StateExpr::dual(self : StateExpr) -> StateExpr {
       time_dep_bra(self.label, time, hilbert_space=self.hilbert_space)
     StateFlavor::TimeDepBra =>
       time_dep_ket(self.label, time, hilbert_space=self.hilbert_space)
+    StateFlavor::OrthogonalKet =>
+      orthogonal_bra(self.label, hilbert_space=self.hilbert_space)
+    StateFlavor::OrthogonalBra =>
+      orthogonal_ket(self.label, hilbert_space=self.hilbert_space)
   }
 }
 
@@ -149,6 +175,8 @@ pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
           }
           Some(time_dep_bra(label, args[args.length() - 1]))
         }
+        "OrthogonalKet" => Some(orthogonal_ket(args))
+        "OrthogonalBra" => Some(orthogonal_bra(args))
         _ => None
       }
     _ => None

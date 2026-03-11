@@ -308,10 +308,11 @@ fn physics_globals() -> @py.PyDict raise {
   for
     name in [
       "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "OuterProduct",
+      "DifferentialOperator",
     ] {
     try_bind_name(globals, quantum_operator_mod, name)
   }
-  for name in ["Ket", "Bra", "TimeDepKet", "TimeDepBra"] {
+  for name in ["Ket", "Bra", "TimeDepKet", "TimeDepBra", "OrthogonalKet", "OrthogonalBra", "Wavefunction"] {
     try_bind_name(globals, quantum_state_mod, name)
   }
   for
@@ -1233,8 +1234,8 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy import *\n",
     "from sympy.physics.quantum import *\n",
     "from sympy.physics.quantum.qexpr import QExpr\n",
-    "from sympy.physics.quantum.state import Ket, Bra, TimeDepKet, TimeDepBra\n",
-    "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct\n",
+    "from sympy.physics.quantum.state import Ket, Bra, TimeDepKet, TimeDepBra, OrthogonalKet, OrthogonalBra, Wavefunction\n",
+    "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
     "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
     "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
@@ -1246,6 +1247,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
     "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
     "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n",
+    "wf = Function('wf')\n",
   ].join("")
 }
 

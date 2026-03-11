@@ -6,7 +6,7 @@ fn quantum_reserved_operator_name(name : String) -> Bool {
   match name {
     "AntiCommutator" | "BosonCoherentBra" | "BosonCoherentKet" | "BosonFockBra" |
     "BosonFockKet" | "BosonOp" | "Bra" | "CGate" | "Commutator" | "Dagger" |
-    "Density" | "FermionFockBra" | "FermionFockKet" | "FermionOp" | "Gate" | "HadamardGate" |
+    "Density" | "DifferentialOperator" | "FermionFockBra" | "FermionFockKet" | "FermionOp" | "Gate" | "HadamardGate" |
     "HermitianOperator" | "IdentityGate" | "IdentityOperator" | "InnerProduct" |
     "JxBra" | "JxKet" | "JyBra" | "JyKet" | "JzBra" | "JzKet" |
     "Ket" | "OuterProduct" | "OrthogonalBra" | "OrthogonalKet" |

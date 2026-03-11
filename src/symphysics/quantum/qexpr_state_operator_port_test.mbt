@@ -45,6 +45,11 @@ test "physics.quantum.qexpr/state/operator: parity" {
     "Hermitian dagger",
   )
   try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(dagger(a.as_expr()))),
+    try! @sympy_physics.quantum_eval_str("Dagger(Operator(A))"),
+    "Operator dagger",
+  )
+  try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(dagger(u.as_expr()))),
     "Uu**(-1)",
     "Unitary dagger",

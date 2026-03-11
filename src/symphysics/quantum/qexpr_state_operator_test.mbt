@@ -17,10 +17,13 @@ test "physics.quantum.qexpr/state/operator: local core forms" {
   let h = hermitian_operator([@symcore.symbol("Hh")])
   let u = unitary_operator([@symcore.symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
+  let ok = orthogonal_ket([@symcore.symbol("n")])
   inspect(a.to_string(), content="A")
   inspect(h.repr(), content="HermitianOperator(Symbol('Hh'))")
   inspect(@symprint.to_string(u.inverse()), content="UnitaryOperator(Uu)**-1")
   inspect(id.to_string(), content="I")
+  inspect(ok.dual().to_string(), content="<n|")
+  inspect(@symprint.to_string(dagger(a.as_expr())), content="Dagger(A)")
 }
 
 ///|

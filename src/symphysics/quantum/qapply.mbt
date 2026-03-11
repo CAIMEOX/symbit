@@ -23,6 +23,8 @@ fn quantum_apply_operator_pair(
 ) -> @symcore.Expr? {
   match (lhs, rhs) {
     (@symcore.Expr::Function("IdentityOperator", _), _) if quantum_is_state_expr(rhs) => Some(rhs)
+    _ if quantum_expr_has_name(lhs, "DifferentialOperator") && quantum_expr_has_name(rhs, "Wavefunction") =>
+      differential_operator_apply_to_wavefunction(lhs, rhs)
     (@symcore.Expr::Function("OuterProduct", args), _) if args.length() == 2 && quantum_is_ket_expr(args[0]) && quantum_is_bra_expr(args[1]) && quantum_is_ket_expr(rhs) => {
       let ip = inner_product(args[1], rhs, evaluate=ip_doit)
       Some(quantum_mul_from_args_preserve([ip, args[0]]))

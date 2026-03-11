@@ -54,9 +54,20 @@ pub fn dagger(
     @symcore.Expr::Function(name, args) if name == "JyBra" => @symcore.raw_function("JyKet", args)
     @symcore.Expr::Function(name, args) if name == "JzKet" => @symcore.raw_function("JzBra", args)
     @symcore.Expr::Function(name, args) if name == "JzBra" => @symcore.raw_function("JzKet", args)
+    @symcore.Expr::Function(name, args) if name == "Wavefunction" && args.length() >= 2 => {
+      let out = [expr_conjugate(args[0])]
+      for idx in 1..<args.length() {
+        out.push(args[idx])
+      }
+      @symcore.raw_function("Wavefunction", out)
+    }
+    @symcore.Expr::Function(name, args) if name == "Operator" && args.length() == 1 =>
+      @symcore.raw_function("Dagger", [args[0]])
     @symcore.Expr::Function(name, _) if name == "HermitianOperator" => expr
     @symcore.Expr::Function(name, _) if name == "IdentityOperator" => expr
     @symcore.Expr::Function(name, _) if name == "UnitaryOperator" => @symcore.raw_pow(expr, @symcore.int(-1))
+    @symcore.Expr::Function(name, _) if name == "DifferentialOperator" =>
+      @symcore.raw_function("Dagger", [expr])
     @symcore.Expr::Function(name, _) if name == "IdentityGate" => expr
     @symcore.Expr::Function(name, _) if name == "HadamardGate" => expr
     @symcore.Expr::Function(name, _) if name == "XGate" => expr
