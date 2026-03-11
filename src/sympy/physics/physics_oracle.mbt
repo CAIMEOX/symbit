@@ -1378,6 +1378,87 @@ pub fn quantum_qapply_str(
 }
 
 ///|
+fn python_int_tuple(items : Array[Int]) -> String {
+  if items.length() == 1 {
+    "(" + items[0].to_string() + ",)"
+  } else {
+    "(" + items.map(item => item.to_string()).join(", ") + ")"
+  }
+}
+
+///|
+pub fn quantum_measure_all_oneshot_str(
+  expr : String,
+  sample : Double,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "import random\n",
+      "_old_random = random.random\n",
+      "random.random = lambda: ",
+      sample.to_string(),
+      "\n",
+      "try:\n",
+      "    print(measure_all_oneshot(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+      "finally:\n",
+      "    random.random = _old_random\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_measure_partial_oneshot_str(
+  expr : String,
+  bits : Array[Int],
+  sample : Double,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "import random\n",
+      "_old_random = random.random\n",
+      "random.random = lambda: ",
+      sample.to_string(),
+      "\n",
+      "try:\n",
+      "    print(measure_partial_oneshot(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), ",
+      python_int_tuple(bits),
+      "))\n",
+      "finally:\n",
+      "    random.random = _old_random\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_hadamard_normalized_qapply(
+  normalize : Bool,
+  expr : String,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "from sympy.physics.quantum.gate import normalized\n",
+      "_old = True\n",
+      "normalized(",
+      if normalize { "True" } else { "False" },
+      ")\n",
+      "try:\n",
+      "    print(qapply(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+      "finally:\n",
+      "    normalized(True)\n",
+    ].join(""),
+  )
+}
+
+///|
 pub fn quantum_represent_str(
   expr : String,
   basis? : String? = None,

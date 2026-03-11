@@ -168,7 +168,7 @@ pub fn GateExpr::target_matrix(self : GateExpr) -> @symphysics.ExplicitMatrix ra
       [@symcore.int(0), @symcore.int(1)],
     ])
     GateKind::Hadamard => {
-      let s = sqrt2_over_2()
+      let s = gate_hadamard_factor()
       @symphysics.explicit_matrix_from_rows([
         [s, s],
         [s, @symcore.int(-1) * s],

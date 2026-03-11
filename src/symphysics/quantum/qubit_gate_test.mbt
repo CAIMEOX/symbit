@@ -96,4 +96,61 @@ test "physics.quantum.qubit: measurement helpers" {
 
   let partial_results = try! measure_partial((try! qubit("10")).as_expr(), [0])
   inspect(quantum_measurements_to_expr_string(partial_results), content="[(Qubit(1, 0), 1)]")
+
+  let h_state = qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()]))
+  inspect(
+    @symprint.to_string(try! measure_all_oneshot(h_state, sample=0.1)),
+    content="Qubit(0)",
+  )
+  inspect(
+    @symprint.to_string(try! measure_all_oneshot(h_state, sample=0.9)),
+    content="Qubit(1)",
+  )
+
+  let partial_state = qapply(@symcore.raw_mul([hadamard_gate(1).as_expr(), (try! qubit("00")).as_expr()]))
+  try! quantum_test_assert_expr_equal(
+    try! measure_partial_oneshot(partial_state, [1], sample=0.1),
+    "Qubit(0, 0)",
+    "measure_partial_oneshot low sample",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! measure_partial_oneshot(partial_state, [1], sample=0.9),
+    "Qubit(1, 0)",
+    "measure_partial_oneshot high sample",
+  )
+}
+
+///|
+test "physics.quantum.gate: normalization and basis transforms" {
+  normalized(false)
+  inspect(
+    @symprint.to_string(qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()]))),
+    content="Qubit(0) + Qubit(1)",
+  )
+  normalized(true)
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()])),
+    "sqrt(2)/2*Qubit(0) + sqrt(2)/2*Qubit(1)",
+    "normalized(true)",
+  )
+
+  try! quantum_test_assert_matrix_expr_equal(
+    try! zx_basis_transform(),
+    ["sqrt(2)/2", "sqrt(2)/2", "sqrt(2)/2", "-sqrt(2)/2"],
+    2,
+    2,
+    "ZX basis transform",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! zy_basis_transform(),
+    ["I", "0", "0", "-1*I"],
+    2,
+    2,
+    "ZY basis transform",
+  )
+
+  inspect(
+    @symprint.to_string(try! random_circuit(4, 2, seed=7)),
+    content="PhaseGate(1)*ZGate(0)*HadamardGate(1)*TGate(1)",
+  )
 }

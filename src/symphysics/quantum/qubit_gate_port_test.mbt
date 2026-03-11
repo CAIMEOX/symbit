@@ -101,4 +101,61 @@ test "physics.quantum.qubit: measurement parity" {
     try! @sympy_physics.quantum_eval_str("measure_partial(Qubit(1, 0), (0,))"),
     "measure_partial parity",
   )
+
+  let h_state = @symprint.to_string(
+    qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()])),
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(try! measure_all_oneshot(
+        qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()])),
+        sample=0.1,
+      )),
+    ),
+    try! @sympy_physics.quantum_measure_all_oneshot_str(h_state, 0.1),
+    "measure_all_oneshot parity",
+  )
+
+  let partial_state = @symprint.to_string(
+    qapply(@symcore.raw_mul([hadamard_gate(1).as_expr(), (try! qubit("00")).as_expr()])),
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(try! measure_partial_oneshot(
+        qapply(@symcore.raw_mul([hadamard_gate(1).as_expr(), (try! qubit("00")).as_expr()])),
+        [1],
+        sample=0.9,
+      )),
+    ),
+    try! @sympy_physics.quantum_measure_partial_oneshot_str(partial_state, [1], 0.9),
+    "measure_partial_oneshot parity",
+  )
+}
+
+///|
+test "physics.quantum.gate: normalization and basis-transform parity" {
+  normalized(false)
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([hadamard_gate(0).as_expr(), (try! qubit("0")).as_expr()]))),
+    ),
+    try! @sympy_physics.quantum_hadamard_normalized_qapply(false, "HadamardGate(0)*Qubit(0)"),
+    "normalized(false) parity",
+  )
+  normalized(true)
+
+  try! quantum_test_assert_matrix_expr_equal(
+    try! zx_basis_transform(),
+    try! @sympy_physics.quantum_matrixcache_matrix("ZX"),
+    2,
+    2,
+    "ZX basis transform parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! zy_basis_transform(),
+    try! @sympy_physics.quantum_matrixcache_matrix("ZY"),
+    2,
+    2,
+    "ZY basis transform parity",
+  )
 }
