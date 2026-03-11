@@ -31,8 +31,8 @@ test "physics.quantum.qexpr/state/operator: parity" {
   )
 
   let a = operator([@symcore.symbol("A")])
-  let h = hermitian_operator([@symcore.symbol("H")])
-  let u = unitary_operator([@symcore.symbol("U")])
+  let h = hermitian_operator([@symcore.symbol("Hh")])
+  let u = unitary_operator([@symcore.symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(a.as_expr())),
@@ -41,12 +41,12 @@ test "physics.quantum.qexpr/state/operator: parity" {
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(dagger(h.as_expr()))),
-    "H",
+    "Hh",
     "Hermitian dagger",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(dagger(u.as_expr()))),
-    "U**(-1)",
+    "Uu**(-1)",
     "Unitary dagger",
   )
   try! quantum_test_assert_string_equal(

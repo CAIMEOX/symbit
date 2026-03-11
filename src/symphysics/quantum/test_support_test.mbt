@@ -69,6 +69,17 @@ fn quantum_test_assert_matrix_expr_equal(
   }
 }
 
+fn quantum_measurements_to_expr_string(
+  results : Array[(@symcore.Expr, @symcore.Expr)],
+) -> String {
+  let items : Array[String] = []
+  for item in results {
+    items.push("(\{@symprint.to_string(item.0)}, \{@symprint.to_string(item.1)})")
+  }
+  let joined = items.join(", ")
+  "[\{joined}]"
+}
+
 fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
   @symcore.number(
     try! @symnum.BigRational::new(

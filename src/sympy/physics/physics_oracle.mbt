@@ -323,14 +323,18 @@ fn physics_globals() -> @py.PyDict raise {
   for name in ["FermionOp", "FermionFockKet", "FermionFockBra"] {
     try_bind_name(globals, quantum_fermion_mod, name)
   }
-  for name in ["Qubit", "QubitBra", "IntQubit", "IntQubitBra"] {
+  for
+    name in [
+      "Qubit", "QubitBra", "IntQubit", "IntQubitBra", "measure_all", "measure_partial",
+      "measure_all_oneshot", "measure_partial_oneshot",
+    ] {
     try_bind_name(globals, quantum_qubit_mod, name)
   }
   for
     name in [
       "Gate", "CGate", "UGate", "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate",
       "TGate", "PhaseGate", "SwapGate", "CNotGate", "CNOT", "SWAP", "H", "X", "Y", "Z",
-      "T", "S",
+      "T", "S", "CPHASE", "gate_simp", "gate_sort",
     ] {
     try_bind_name(globals, quantum_gate_mod, name)
   }
@@ -1233,8 +1237,8 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
     "from sympy.physics.quantum.fermion import FermionOp, FermionFockKet, FermionFockBra\n",
-    "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra\n",
-    "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S\n",
+    "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
+    "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",

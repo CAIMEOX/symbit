@@ -49,6 +49,14 @@ pub fn inner_product(
         @symcore.raw_function("exp", [exponent])
       }
     }
+    (@symcore.Expr::Function("JzBra", bargs), @symcore.Expr::Function("JzKet", kargs)) if bargs.length() == 2 && kargs.length() == 2 =>
+      if bargs[0] == kargs[0] && bargs[1] == kargs[1] {
+        @symcore.int(1)
+      } else if bargs[0] == kargs[0] {
+        @symcore.raw_function("KroneckerDelta", [bargs[1], kargs[1]])
+      } else {
+        @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
+      }
     _ => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
   }
 }

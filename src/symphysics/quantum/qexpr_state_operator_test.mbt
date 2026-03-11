@@ -14,12 +14,12 @@ test "physics.quantum.qexpr/state/operator: local core forms" {
   inspect(t.dual().to_string(), content="<0;t|")
 
   let a = operator([@symcore.symbol("A")])
-  let h = hermitian_operator([@symcore.symbol("H")])
-  let u = unitary_operator([@symcore.symbol("U")])
+  let h = hermitian_operator([@symcore.symbol("Hh")])
+  let u = unitary_operator([@symcore.symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
   inspect(a.to_string(), content="A")
-  inspect(h.repr(), content="HermitianOperator(Symbol('H'))")
-  inspect(@symprint.to_string(u.inverse()), content="UnitaryOperator(U)**-1")
+  inspect(h.repr(), content="HermitianOperator(Symbol('Hh'))")
+  inspect(@symprint.to_string(u.inverse()), content="UnitaryOperator(Uu)**-1")
   inspect(id.to_string(), content="I")
 }
 

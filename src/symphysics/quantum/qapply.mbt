@@ -32,15 +32,25 @@ fn quantum_apply_operator_pair(
       Some(quantum_mul_from_args_preserve([ip, args[1]]))
     }
     _ if quantum_is_bra_expr(lhs) && quantum_is_ket_expr(rhs) => Some(inner_product(lhs, rhs, evaluate=ip_doit))
-    _ if quantum_is_operator_expr(lhs) && quantum_is_ket_expr(rhs) =>
-      match boson_apply_operator_to_ket(lhs, rhs) {
-        Some(applied) => Some(applied)
-        None =>
-          match fermion_apply_operator_to_ket(lhs, rhs) {
+    _ if quantum_is_operator_expr(lhs) && quantum_is_ket_expr(rhs) => {
+      let gate_applied : Result[@symcore.Expr?, @symphysics.PhysicsError] = try? gate_apply_to_qubit_expr(lhs, rhs)
+      match gate_applied {
+        Ok(Some(applied)) => Some(applied)
+        _ =>
+          match spin_apply_operator_to_ket(lhs, rhs) {
             Some(applied) => Some(applied)
-            None => None
+            None =>
+              match boson_apply_operator_to_ket(lhs, rhs) {
+                Some(applied) => Some(applied)
+                None =>
+                  match fermion_apply_operator_to_ket(lhs, rhs) {
+                    Some(applied) => Some(applied)
+                    None => None
+                  }
+              }
           }
       }
+    }
     _ if dagger_mode && quantum_is_bra_expr(lhs) && quantum_is_operator_expr(rhs) =>
       boson_apply_operator_to_bra(lhs, rhs)
     _ => None

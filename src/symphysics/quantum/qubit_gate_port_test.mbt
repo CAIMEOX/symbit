@@ -1,0 +1,104 @@
+///|
+test "physics.quantum.qubit/gate/represent: base parity" {
+  let zero_zero = (try! qubit("00")).as_expr()
+  let h0 = hadamard_gate(0).as_expr()
+  let x0 = x_gate(0).as_expr()
+  let cnot = cnot_gate(1, 0).as_expr()
+
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_srepr_str(@symprint.to_string((try! qubit("01")).as_expr())),
+    try! @sympy_physics.quantum_srepr_str("Qubit(0, 1)"),
+    "Qubit srepr parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_srepr_str(@symprint.to_string((try! int_qubit(5, 3)).as_expr())),
+    try! @sympy_physics.quantum_srepr_str("IntQubit(5)"),
+    "IntQubit srepr parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([x0, zero_zero]))),
+    ),
+    try! @sympy_physics.quantum_qapply_str("XGate(0)*Qubit(0, 0)"),
+    "X gate qapply parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([h0, (try! qubit("0")).as_expr()]))),
+    ),
+    try! @sympy_physics.quantum_qapply_str("HadamardGate(0)*Qubit(0)"),
+    "H gate qapply parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([cnot, (try! qubit("10")).as_expr()]))),
+    ),
+    try! @sympy_physics.quantum_qapply_str("CNotGate(1,0)*Qubit(1, 0)"),
+    "CNOT qapply parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! qubit_to_matrix((try! qubit("01")).as_expr(), nqubits=2),
+    try! @sympy_physics.physics_eval_matrix("represent(Qubit(0, 1), nqubits=2)"),
+    4,
+    1,
+    "Qubit matrix parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(x0, nqubits=1),
+    try! @sympy_physics.physics_eval_matrix("represent(XGate(0), nqubits=1)"),
+    2,
+    2,
+    "X matrix parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(cnot, nqubits=2),
+    try! @sympy_physics.physics_eval_matrix("represent(CNotGate(1,0), nqubits=2)"),
+    4,
+    4,
+    "CNOT matrix parity",
+  )
+}
+
+///|
+test "physics.quantum.qubit/gate: controlled parity" {
+  let cgx = cgate([1], x_gate(0).as_expr())
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(cphase(1, 0), nqubits=2),
+    try! @sympy_physics.physics_eval_matrix("represent(CPHASE(1,0), nqubits=2)"),
+    4,
+    4,
+    "CPHASE matrix parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(gate_simp(@symcore.raw_mul([hadamard_gate(0).as_expr(), hadamard_gate(0).as_expr()]))),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(H(0)*H(0))"),
+    "gate_simp parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([cgx, (try! qubit("10")).as_expr()]))),
+    ),
+    try! @sympy_physics.quantum_qapply_str("CGate((1,), XGate(0))*Qubit(1, 0)"),
+    "CGate qapply parity",
+  )
+}
+
+///|
+test "physics.quantum.qubit: measurement parity" {
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      quantum_measurements_to_expr_string(try! measure_all((try! qubit("1")).as_expr())),
+    ),
+    try! @sympy_physics.quantum_eval_str("measure_all(Qubit(1))"),
+    "measure_all parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      quantum_measurements_to_expr_string(try! measure_partial((try! qubit("10")).as_expr(), [0])),
+    ),
+    try! @sympy_physics.quantum_eval_str("measure_partial(Qubit(1, 0), (0,))"),
+    "measure_partial parity",
+  )
+}
