@@ -260,6 +260,11 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.matrixcache")
   }
+  let quantum_circuitutils_mod = match
+    @py.pyimport("sympy.physics.quantum.circuitutils") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.circuitutils")
+  }
   let quantum_qft_mod = match @py.pyimport("sympy.physics.quantum.qft") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.qft")
@@ -385,6 +390,13 @@ fn physics_globals() -> @py.PyDict raise {
     try_bind_name(globals, quantum_matrixutils_mod, name)
   }
   try_bind_name(globals, quantum_matrixcache_mod, "matrix_cache")
+  for
+    name in [
+      "kmp_table", "find_subcircuit", "replace_subcircuit", "convert_to_symbolic_indices",
+      "convert_to_real_indices", "random_reduce", "random_insert",
+    ] {
+    try_bind_name(globals, quantum_circuitutils_mod, name)
+  }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
   }
@@ -1276,6 +1288,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n",
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
     "from sympy.physics.quantum.matrixcache import matrix_cache\n",
+    "from sympy.physics.quantum.circuitutils import kmp_table, find_subcircuit, replace_subcircuit, convert_to_symbolic_indices, convert_to_real_indices, random_reduce, random_insert\n",
     "from sympy.physics.quantum.represent import represent\n",
     "from sympy.physics.quantum.trace import Tr\n",
     "from sympy.physics.quantum.commutator import Commutator\n",
@@ -1416,6 +1429,116 @@ pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
     ].join(""),
   )
   txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_circuitutils_kmp_table(expr : String) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "word = sympify(",
+      python_string_literal(expr),
+      ", locals=locals())\n",
+      "if isinstance(word, Mul):\n",
+      "    word = word.args\n",
+      "elif word == 1:\n",
+      "    word = ()\n",
+      "else:\n",
+      "    word = (word,)\n",
+      "print(chr(31).join(str(v) for v in kmp_table(word)))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
+}
+
+///|
+pub fn quantum_circuitutils_find_subcircuit(
+  circuit : String,
+  subcircuit : String,
+  start? : Int = 0,
+  end? : Int = 0,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(find_subcircuit(sympify(",
+      python_string_literal(circuit),
+      ", locals=locals()), sympify(",
+      python_string_literal(subcircuit),
+      ", locals=locals()), start=",
+      start.to_string(),
+      ", end=",
+      end.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_circuitutils_replace_subcircuit(
+  circuit : String,
+  subcircuit : String,
+  replace? : String? = None,
+  pos? : Int = 0,
+) -> String raise {
+  let replace_code = match replace {
+    Some(expr) => "sympify(" + python_string_literal(expr) + ", locals=locals())"
+    None => "None"
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "out = replace_subcircuit(sympify(",
+      python_string_literal(circuit),
+      ", locals=locals()), sympify(",
+      python_string_literal(subcircuit),
+      ", locals=locals()), replace=",
+      replace_code,
+      ", pos=",
+      pos.to_string(),
+      ")\n",
+      "print(srepr(Mul(*out)))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_circuitutils_convert_to_symbolic(expr : String) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "seq = sympify(",
+      python_string_literal(expr),
+      ", locals=locals())\n",
+      "out, mapping, _, _ = convert_to_symbolic_indices(seq)\n",
+      "print(srepr(Mul(*out)))\n",
+      "for key in sorted(mapping, key=str):\n",
+      "    print(f\"{key}={mapping[key]}\")\n",
+    ].join(""),
+  )
+  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+}
+
+///|
+pub fn quantum_circuitutils_convert_to_real(
+  expr : String,
+  mapping_code : String,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "out = convert_to_real_indices(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), sympify(",
+      python_string_literal(mapping_code),
+      ", locals=locals()))\n",
+      "print(srepr(Mul(*out)))\n",
+    ].join(""),
+  )
 }
 
 ///|
