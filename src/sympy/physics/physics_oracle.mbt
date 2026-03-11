@@ -169,27 +169,6 @@ fn try_bind_name(
 }
 
 ///|
-fn pyimport_with_repo_fallback(module_path : String) -> @py.PyModule raise {
-  ensure_repo_sympy_path()
-  match @py.pyimport(module_path) {
-    Some(v) => v
-    None => {
-      ignore(
-        sympy_call_must("builtins.exec", [
-          OracleArg::Str(
-            "import sys; sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')",
-          ),
-        ]),
-      )
-      match @py.pyimport(module_path) {
-        Some(v) => v
-        None => fail("python-missing:\{module_path}")
-      }
-    }
-  }
-}
-
-///|
 fn control_routh_loader_script() -> String {
   "import importlib.util as _iu\n_path = '/Users/caimeo/code/learning/sym-workspace/sympy/sympy/physics/control/routh_table.py'\n_spec = _iu.spec_from_file_location('_symbit_repo_routh_table', _path)\n_mod = _iu.module_from_spec(_spec)\n_spec.loader.exec_module(_mod)\n__symbit_routh_ctor__ = _mod.RouthHurwitz"
 }
@@ -271,6 +250,10 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.optics.medium")
   }
+  let optics_utils_mod = match @py.pyimport("sympy.physics.optics.utils") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.optics.utils")
+  }
   let optics_polarization_mod = match
     @py.pyimport("sympy.physics.optics.polarization") {
     Some(v) => v
@@ -325,6 +308,14 @@ fn physics_globals() -> @py.PyDict raise {
     try_bind_name(globals, paulialgebra_mod, name)
   }
   try_bind_name(globals, optics_medium_mod, "Medium")
+  for
+    name in [
+      "refraction_angle", "deviation", "fresnel_coefficients", "brewster_angle",
+      "critical_angle", "lens_makers_formula", "mirror_formula", "lens_formula",
+      "hyperfocal_distance", "transverse_magnification",
+    ] {
+    try_bind_name(globals, optics_utils_mod, name)
+  }
   for
     name in [
       "jones_vector", "stokes_vector", "jones_2_stokes", "linear_polarizer", "phase_retarder",
@@ -1308,7 +1299,7 @@ fn control_routh_script(
   polynomial : @symcore.Expr,
   variable : @symcore.Expr,
   command : String,
-) -> String raise {
+) -> String {
   let poly_txt = @symprint.to_string(polynomial)
   let var_txt = @symprint.to_string(variable)
   [
@@ -1388,8 +1379,8 @@ pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise 
     [
       "import sys\n",
       "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-      "from sympy import Symbol, simplify, sympify\n",
-      "names = ['z', 'b0', 'b1', 'b2', 'b3', 'b4']\n",
+      "from sympy import N, Symbol, simplify, sympify\n",
+      "names = ['z', 'b0', 'b1', 'b2', 'b3', 'b4', 'f', 'u', 'v', 'N', 'c', 'x', 'y', 'n']\n",
       "locals_map = {name: Symbol(name) for name in names}\n",
       "lhs = sympify(",
       python_string_literal(lhs_txt),
@@ -1397,7 +1388,45 @@ pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise 
       "rhs = sympify(",
       python_string_literal(rhs),
       ", locals=locals_map)\n",
-      "print(simplify(lhs - rhs) == 0)\n",
+      "diff = simplify(lhs - rhs)\n",
+      "if diff == 0:\n",
+      "    print(True)\n",
+      "elif lhs.free_symbols or rhs.free_symbols:\n",
+      "    print(False)\n",
+      "else:\n",
+      "    try:\n",
+      "        print(abs(complex(N(diff, 50))) < 1e-12)\n",
+      "    except Exception:\n",
+      "        print(False)\n",
+    ].join(""),
+  )
+  txt == "True"
+}
+
+///|
+pub fn physics_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise {
+  let lhs_txt = @symprint.to_string(lhs)
+  let txt = python_subprocess_stdout(
+    [
+      "import sys\n",
+      "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+      "from sympy import N, simplify, sympify\n",
+      "lhs = sympify(",
+      python_string_literal(lhs_txt),
+      ")\n",
+      "rhs = sympify(",
+      python_string_literal(rhs),
+      ")\n",
+      "diff = simplify(lhs - rhs)\n",
+      "if diff == 0:\n",
+      "    print(True)\n",
+      "elif lhs.free_symbols or rhs.free_symbols:\n",
+      "    print(False)\n",
+      "else:\n",
+      "    try:\n",
+      "        print(abs(complex(N(diff, 50))) < 1e-12)\n",
+      "    except Exception:\n",
+      "        print(False)\n",
     ].join(""),
   )
   txt == "True"
@@ -1439,4 +1468,20 @@ pub fn optics_medium_property(
   }
   let rendered_args = args.join(", ")
   physics_eval_str("Medium(\{rendered_args}).\{property}")
+}
+
+///|
+pub fn optics_utils_eval(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      "from sympy import *\n",
+      "from sympy.physics.optics.utils import *\n",
+      "from sympy.physics.optics.medium import Medium\n",
+      "from sympy.physics.units import e0\n",
+      "f, u, v, N, c, n = symbols('f u v N c n')\n",
+      "print(",
+      expr,
+      ")\n",
+    ].join(""),
+  )
 }
