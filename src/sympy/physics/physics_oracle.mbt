@@ -372,9 +372,6 @@ fn physics_globals() -> @py.PyDict raise {
     ] {
     try_bind_name(globals, quantum_matrixutils_mod, name)
   }
-  for name in ["Density", "entropy", "fidelity"] {
-    try_bind_name(globals, quantum_density_mod, name)
-  }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
   }

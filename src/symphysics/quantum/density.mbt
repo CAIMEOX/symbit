@@ -151,7 +151,8 @@ fn density_generate_outer_prod(
       "Density.doit() expects each term to contain a noncommutative state factor",
     ),
   )
-  let op = try? quantum_canonical_mul(@symcore.raw_mul([left_core, dagger(right_core)]))
+  let op : Result[@symcore.Expr, @symphysics.PhysicsError] =
+    try? quantum_canonical_mul(@symcore.raw_mul([left_core, dagger(right_core)]))
   let core = match op {
     Ok(expr) => expr
     Err(_) => @symcore.raw_mul([left_core, dagger(right_core)])
