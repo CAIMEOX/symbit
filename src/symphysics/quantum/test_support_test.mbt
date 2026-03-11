@@ -19,6 +19,56 @@ fn quantum_test_assert_expr_equal(
   }
 }
 
+fn quantum_test_assert_array_equal(
+  lhs : Array[String],
+  rhs : Array[String],
+  context : String,
+) -> Unit raise {
+  guard lhs == rhs else {
+    fail("\{context}: ours=\{lhs}; oracle=\{rhs}")
+  }
+}
+
+fn quantum_test_assert_matrix_equal(
+  lhs : @symphysics.ExplicitMatrix,
+  rhs : Array[String],
+  rows : Int,
+  cols : Int,
+  context : String,
+) -> Unit raise {
+  guard lhs.height() == rows else {
+    fail("\{context}: row mismatch ours=\{lhs.height()} oracle=\{rows}")
+  }
+  guard lhs.width() == cols else {
+    fail("\{context}: col mismatch ours=\{lhs.width()} oracle=\{cols}")
+  }
+  quantum_test_assert_array_equal(try! matrix_flat_strings(lhs), rhs, context)
+}
+
+fn quantum_test_assert_matrix_expr_equal(
+  lhs : @symphysics.ExplicitMatrix,
+  rhs : Array[String],
+  rows : Int,
+  cols : Int,
+  context : String,
+) -> Unit raise {
+  guard lhs.height() == rows else {
+    fail("\{context}: row mismatch ours=\{lhs.height()} oracle=\{rows}")
+  }
+  guard lhs.width() == cols else {
+    fail("\{context}: col mismatch ours=\{lhs.width()} oracle=\{cols}")
+  }
+  let flat = try! matrix_flat_strings(lhs)
+  guard flat.length() == rhs.length() else {
+    fail("\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}")
+  }
+  for idx in 0..<flat.length() {
+    guard (try! @sympy_physics.expr_equal(flat[idx], rhs[idx])) else {
+      fail("\{context}[\{idx}]: ours=\{flat[idx]}; oracle=\{rhs[idx]}")
+    }
+  }
+}
+
 fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
   @symcore.number(
     try! @symnum.BigRational::new(

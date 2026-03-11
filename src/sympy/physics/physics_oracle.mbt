@@ -152,6 +152,18 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.cg")
   }
+  let quantum_dagger_mod = match @py.pyimport("sympy.physics.quantum.dagger") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.dagger")
+  }
+  let quantum_hilbert_mod = match @py.pyimport("sympy.physics.quantum.hilbert") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.hilbert")
+  }
+  let quantum_matrixutils_mod = match @py.pyimport("sympy.physics.quantum.matrixutils") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.matrixutils")
+  }
   let paulialgebra_mod = match @py.pyimport("sympy.physics.paulialgebra") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.paulialgebra")
@@ -185,9 +197,14 @@ fn physics_globals() -> @py.PyDict raise {
     "factorial",
     "factorial2",
     "hermite",
+    "Matrix",
+    "Interval",
     "pi",
     "sin",
     "sqrt",
+    "eye",
+    "zeros",
+    "oo",
   ] {
     try_bind_name(globals, sympy_mod, name)
   }
@@ -225,6 +242,26 @@ fn physics_globals() -> @py.PyDict raise {
     try_bind_name(globals, quantum_cg_mod, name)
   }
   try_bind_name(globals, quantum_mod, "TensorProduct")
+  try_bind_name(globals, quantum_dagger_mod, "Dagger")
+  for name in [
+    "HilbertSpace",
+    "ComplexSpace",
+    "L2",
+    "FockSpace",
+    "TensorProductHilbertSpace",
+    "DirectSumHilbertSpace",
+    "TensorPowerHilbertSpace",
+  ] {
+    try_bind_name(globals, quantum_hilbert_mod, name)
+  }
+  for name in [
+    "matrix_dagger",
+    "matrix_tensor_product",
+    "matrix_to_zero",
+    "flatten_scalar",
+  ] {
+    try_bind_name(globals, quantum_matrixutils_mod, name)
+  }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
     try_bind_name(globals, paulialgebra_mod, name)
   }
@@ -274,6 +311,14 @@ fn physics_globals() -> @py.PyDict raise {
     ], kwargs={ "commutative": OracleArg::Bool(false) }),
   )
   globals.set("q", q_nc)
+  for name in ["Aop", "Bop", "Cop", "Dop"] {
+    let sym = objenum_to_obj(
+      sympy_call_must("sympy.Symbol", [
+        OracleArg::Str(name),
+      ], kwargs={ "commutative": OracleArg::Bool(false) }),
+    )
+    globals.set(name, sym)
+  }
   for pair in [
     ("sigma1", 1, "sigma"),
     ("sigma2", 2, "sigma"),
@@ -1028,6 +1073,11 @@ pub fn physics_srepr(expr : String) -> String raise {
 ///|
 pub fn physics_eval_str(expr : String) -> String raise {
   py_str_obj(physics_sympify(expr))
+}
+
+///|
+pub fn physics_eval_matrix(expr : String) -> Array[String] raise {
+  matrix_flatten_to_strings(physics_sympify(expr))
 }
 
 ///|

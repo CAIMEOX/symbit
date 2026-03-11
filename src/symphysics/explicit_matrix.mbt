@@ -45,6 +45,15 @@ pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
 }
 
 ///|
+pub fn explicit_matrix_zeros(rows : Int, cols : Int) -> ExplicitMatrix {
+  let out : Array[Array[@symcore.Expr]] = Array::new()
+  for _ in 0..<rows {
+    out.push(Array::make(cols, @symcore.int(0)))
+  }
+  ExplicitMatrix::{ rows: out }
+}
+
+///|
 pub fn ExplicitMatrix::height(self : ExplicitMatrix) -> Int {
   self.rows.length()
 }
@@ -89,6 +98,33 @@ pub fn ExplicitMatrix::scale(
 ///|
 pub fn ExplicitMatrix::neg(self : ExplicitMatrix) -> ExplicitMatrix {
   self.scale(@symcore.int(-1))
+}
+
+///|
+pub fn ExplicitMatrix::map(
+  self : ExplicitMatrix,
+  f : (@symcore.Expr) -> @symcore.Expr,
+) -> ExplicitMatrix {
+  let out : Array[Array[@symcore.Expr]] = Array::new()
+  for row in self.rows {
+    let next : Array[@symcore.Expr] = Array::new()
+    for value in row {
+      next.push(f(value))
+    }
+    out.push(next)
+  }
+  ExplicitMatrix::{ rows: out }
+}
+
+///|
+pub fn ExplicitMatrix::transpose(self : ExplicitMatrix) -> ExplicitMatrix {
+  let out = explicit_matrix_zeros(self.width(), self.height())
+  for i in 0..<self.height() {
+    for j in 0..<self.width() {
+      out.rows[j][i] = self.rows[i][j]
+    }
+  }
+  out
 }
 
 ///|

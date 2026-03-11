@@ -12,4 +12,5 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symphysics" @symphysics,
   "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
 }
