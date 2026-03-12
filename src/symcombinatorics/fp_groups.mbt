@@ -176,9 +176,7 @@ pub fn FpGroup::coset_enumeration(
 }
 
 ///|
-pub fn FpGroup::standardize_coset_table(
-  self : FpGroup,
-) -> Unit {
+pub fn FpGroup::standardize_coset_table(self : FpGroup) -> Unit {
   match self.coset_table_cache {
     Some(ct) => {
       ct.standardize()

@@ -350,7 +350,12 @@ fn polyhedron_from_ints(
 let tetrahedron_corners : Array[Int] = [0, 1, 2, 3]
 
 ///|
-let tetrahedron_faces : Array[Array[Int]] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]]
+let tetrahedron_faces : Array[Array[Int]] = [
+  [0, 1, 2],
+  [0, 1, 3],
+  [0, 2, 3],
+  [1, 2, 3],
+]
 
 ///|
 let tetrahedron_pgroup : Array[Array[Int]] = [

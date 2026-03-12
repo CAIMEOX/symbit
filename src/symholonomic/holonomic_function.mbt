@@ -203,9 +203,9 @@ fn solve_constant_ode_coefficients(
   }
   let a : Array[@symcore.Expr] = Array::new()
   for k in 0..<r {
-      let yk = init_derivs[k]
-      let fk = factorial_rat(k)
-      match to_number(yk) {
+    let yk = init_derivs[k]
+    let fk = factorial_rat(k)
+    match to_number(yk) {
       Some(nk) => {
         let ak = nk.div_r(fk)
         a.push(@symcore.number(ak))
