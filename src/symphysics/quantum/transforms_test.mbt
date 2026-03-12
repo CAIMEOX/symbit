@@ -6,6 +6,7 @@ test "physics.quantum.transforms: local canonicalization" {
   let b2 = bra([@symcore.symbol("k2")]).as_expr()
   let a = operator([@symcore.symbol("A")]).as_expr()
   let b = operator([@symcore.symbol("B")]).as_expr()
+  let c = operator([@symcore.symbol("C")]).as_expr()
 
   try! quantum_test_assert_expr_equal(
     try! quantum_canonical_mul(@symcore.raw_mul([b1, k1])),
@@ -23,14 +24,28 @@ test "physics.quantum.transforms: local canonicalization" {
     "outer product times ket",
   )
   try! quantum_test_assert_expr_equal(
-    try! quantum_canonical_mul(@symcore.raw_mul([
-      @symcore.raw_function("TensorProduct", [a, b]),
-      @symcore.raw_function("TensorProduct", [k1, k2]),
-    ])),
+    try! quantum_canonical_mul(
+      @symcore.raw_mul([
+        @symcore.raw_function("TensorProduct", [a, b]),
+        @symcore.raw_function("TensorProduct", [k1, k2]),
+      ]),
+    ),
     "TensorProduct(Operator(A)*Ket(k1), Operator(B)*Ket(k2))",
     "tensor product action",
   )
-  let bad : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(@symcore.raw_mul([k1, k2]))
+  let bad : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
+    @symcore.raw_mul([k1, k2]),
+  )
   guard bad is Err(_) else { fail("ket*ket should fail") }
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),
+    "Operator(A)*Operator(B) + Operator(A)*Operator(C)",
+    "operator left distribution",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(@symcore.raw_add([a, b]), @symcore.int(2)),
+    "Operator(A)**2 + Operator(A)*Operator(B) + Operator(B)*Operator(A) + Operator(B)**2",
+    "operator square expansion",
+  )
   ignore(b2)
 }

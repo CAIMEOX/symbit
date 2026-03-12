@@ -15,6 +15,29 @@ fn tensor_product_args(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
 }
 
 ///|
+fn quantum_distribute_mul(
+  factors : Array[@symcore.Expr],
+) -> @symcore.Expr? raise @symphysics.PhysicsError {
+  for idx in 0..<factors.length() {
+    match factors[idx] {
+      @symcore.Expr::Add(terms) => {
+        let expanded : Array[@symcore.Expr] = []
+        for term in terms {
+          let rebuilt : Array[@symcore.Expr] = []
+          for jdx in 0..<factors.length() {
+            rebuilt.push(if idx == jdx { term } else { factors[jdx] })
+          }
+          expanded.push(quantum_canonical_mul(@symcore.raw_mul(rebuilt)))
+        }
+        return Some(quantum_add_from_args_preserve(expanded))
+      }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 pub fn quantum_transform_state_pair(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
@@ -112,6 +135,14 @@ pub fn quantum_transform_state_pair(
 pub fn quantum_canonical_mul(
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
+  let factors = match expr {
+    @symcore.Expr::Mul(items) => items
+    _ => [expr]
+  }
+  match quantum_distribute_mul(factors) {
+    Some(expanded) => return expanded
+    None => ()
+  }
   let work = match expr {
     @symcore.Expr::Mul(items) => items.copy()
     _ => [expr]
@@ -166,5 +197,20 @@ pub fn quantum_canonical_pow(
       "A bra or ket to a power is invalid, use TensorProduct instead.",
     )
   }
-  @symcore.raw_pow(base, exp)
+  match quantum_integer_value(exp) {
+    Some(0) => @symcore.int(1)
+    Some(1) => base
+    Some(power) if power > 1 =>
+      match base {
+        @symcore.Expr::Add(_) => {
+          let mut acc = base
+          for _ in 1..<power {
+            acc = quantum_canonical_mul(@symcore.raw_mul([acc, base]))
+          }
+          acc
+        }
+        _ => @symcore.raw_pow(base, exp)
+      }
+    _ => @symcore.raw_pow(base, exp)
+  }
 }
