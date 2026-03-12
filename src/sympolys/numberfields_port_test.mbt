@@ -1,7 +1,8 @@
 ///|
 fn nf_norm(expr : @symcore.Expr) -> String {
-  (try! @sympy_polys.sympy_normalize(@symprint.to_string(expr)).trim().to_string())
-    .replace_all(old=" ", new="")
+  (try! @sympy_polys.sympy_normalize(@symprint.to_string(expr))
+  .trim()
+  .to_string()).replace_all(old=" ", new="")
 }
 
 ///|
@@ -9,9 +10,8 @@ fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String {
   (try! @sympy_polys.sympy_normalize(
     @sympy_polys.numberfield_minpoly(expr, gen~),
   )
-    .trim()
-    .to_string())
-    .replace_all(old=" ", new="")
+  .trim()
+  .to_string()).replace_all(old=" ", new="")
 }
 
 ///|
@@ -99,7 +99,9 @@ test "numberfields: multiquadratic minpoly parity" {
     let ours = nf_norm(minpoly(expr, gen="x").to_expr())
     let oracle = nf_oracle_minpoly(oracle_expr, gen="x")
     guard ours == oracle else {
-      fail("multiquadratic minpoly mismatch for \{oracle_expr}: ours=\{ours}, oracle=\{oracle}")
+      fail(
+        "multiquadratic minpoly mismatch for \{oracle_expr}: ours=\{ours}, oracle=\{oracle}",
+      )
     }
   }
 }
@@ -146,27 +148,26 @@ test "numberfields: to_number_field(expr, theta) coeff parity" {
 
   let ours_s2 = nf_coeffs_norm(Some(to_number_field_coeffs(sqrt2, theta)))
   let oracle_s2 = @sympy_polys.numberfield_to_number_field_coeffs(
-    "sqrt(2)",
-    "sqrt(2) + sqrt(3)",
-  )
-    .replace_all(old=" ", new="")
+    "sqrt(2)", "sqrt(2) + sqrt(3)",
+  ).replace_all(old=" ", new="")
   guard ours_s2 == oracle_s2 else {
-    fail("to_number_field coeff mismatch sqrt2/theta: ours=\{ours_s2}, oracle=\{oracle_s2}")
+    fail(
+      "to_number_field coeff mismatch sqrt2/theta: ours=\{ours_s2}, oracle=\{oracle_s2}",
+    )
   }
 
   let ours_s3 = nf_coeffs_norm(Some(to_number_field_coeffs(sqrt3, theta)))
   let oracle_s3 = @sympy_polys.numberfield_to_number_field_coeffs(
-    "sqrt(3)",
-    "sqrt(2) + sqrt(3)",
-  )
-    .replace_all(old=" ", new="")
+    "sqrt(3)", "sqrt(2) + sqrt(3)",
+  ).replace_all(old=" ", new="")
   guard ours_s3 == oracle_s3 else {
-    fail("to_number_field coeff mismatch sqrt3/theta: ours=\{ours_s3}, oracle=\{oracle_s3}")
+    fail(
+      "to_number_field coeff mismatch sqrt3/theta: ours=\{ours_s3}, oracle=\{oracle_s3}",
+    )
   }
 
   let fail_case : Result[Array[@symnum.BigRational], PolyError] = try? to_number_field_coeffs(
-    sqrt5,
-    theta,
+    sqrt5, theta,
   )
   match fail_case {
     Ok(value) => fail("expected embedding failure for sqrt(5), got \{value}")
@@ -240,8 +241,7 @@ test "numberfields: primitive_element ex reps parity" {
   let oracle_reps = @sympy_polys.numberfield_primitive_reps(
     ["sqrt(2)", "sqrt(3)"],
     gen="x",
-  )
-    .replace_all(old=" ", new="")
+  ).replace_all(old=" ", new="")
   guard ours_reps == oracle_reps else {
     fail(
       "primitive_element_ex reps mismatch: ours=\{ours_reps}, oracle=\{oracle_reps}",
@@ -262,8 +262,12 @@ test "numberfields: field_isomorphic parity for simple algebraic fields" {
   let ours_same = field_isomorphic(qa, qb)
   let ours_diff = field_isomorphic(qa, qc)
 
-  let oracle_same = @sympy_polys.numberfield_field_isomorphic("sqrt(2)", "sqrt(2)")
-  let oracle_diff = @sympy_polys.numberfield_field_isomorphic("sqrt(2)", "sqrt(3)")
+  let oracle_same = @sympy_polys.numberfield_field_isomorphic(
+    "sqrt(2)", "sqrt(2)",
+  )
+  let oracle_diff = @sympy_polys.numberfield_field_isomorphic(
+    "sqrt(2)", "sqrt(3)",
+  )
 
   guard ours_same == oracle_same else {
     fail("field_isomorphic(sqrt2,sqrt2) mismatch")
@@ -292,7 +296,12 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
     ),
     (sqrt2, sqrt2 + sqrt3, "sqrt(2)", "sqrt(2) + sqrt(3)"),
     (sqrt3, sqrt2 + sqrt3, "sqrt(3)", "sqrt(2) + sqrt(3)"),
-    (sqrt2, @symcore.int(4) ^ (try! @symcore.rational_from_ints(1, 4)), "sqrt(2)", "4**(1/4)"),
+    (
+      sqrt2,
+      @symcore.int(4) ^ (try! @symcore.rational_from_ints(1, 4)),
+      "sqrt(2)",
+      "4**(1/4)",
+    ),
     (try! @symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
     (sqrt2, try! @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
     (sqrt2, sqrt3, "sqrt(2)", "sqrt(3)"),
@@ -305,10 +314,8 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
     let rhs_str = item.3
     let ours = nf_coeffs_norm(field_isomorphism(lhs, rhs))
     let oracle = @sympy_polys.numberfield_field_isomorphism_coeffs(
-      lhs_str,
-      rhs_str,
-    )
-      .replace_all(old=" ", new="")
+      lhs_str, rhs_str,
+    ).replace_all(old=" ", new="")
     guard ours == oracle else {
       fail(
         "field_isomorphism mismatch for \{lhs_str} in Q(\{rhs_str}): ours=\{ours}, oracle=\{oracle}",

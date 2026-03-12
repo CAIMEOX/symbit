@@ -12,7 +12,7 @@ pub fn ddm_lll(
   x : DDM,
   delta? : @symnum.BigRational = try! default_lll_delta(),
 ) -> DDM raise PolyError {
-  x.lll(delta=delta)
+  x.lll(delta~)
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn ddm_lll_transform(
   x : DDM,
   delta? : @symnum.BigRational = try! default_lll_delta(),
 ) -> (DDM, DDM) raise PolyError {
-  x.lll_transform(delta=delta)
+  x.lll_transform(delta~)
 }
 
 ///|
@@ -97,7 +97,9 @@ pub fn is_smith_normal_form(a : DomainMatrix) -> Bool raise PolyError {
 
 ///|
 /// Wrapper for SymPy `polys.matrices.normalforms.smith_normal_decomp`.
-pub fn smith_normal_decomp(a : DomainMatrix) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {
+pub fn smith_normal_decomp(
+  a : DomainMatrix,
+) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError {
   a.smith_normal_decomp()
 }
 

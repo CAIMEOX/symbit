@@ -45,6 +45,7 @@ fn normalize_series_coeffs(
   out
 }
 
+///|
 fn series_coeffs_equal(lhs : Array[FieldElem], rhs : Array[FieldElem]) -> Bool {
   if lhs.length() != rhs.length() {
     return false
@@ -57,6 +58,7 @@ fn series_coeffs_equal(lhs : Array[FieldElem], rhs : Array[FieldElem]) -> Bool {
   true
 }
 
+///|
 fn series_shift_right(coeffs : Array[FieldElem], k : Int) -> Array[FieldElem] {
   if k <= 0 {
     return coeffs.copy()
@@ -71,6 +73,7 @@ fn series_shift_right(coeffs : Array[FieldElem], k : Int) -> Array[FieldElem] {
   out
 }
 
+///|
 fn series_shift_left(
   coeffs : Array[FieldElem],
   k : Int,
@@ -95,6 +98,7 @@ fn series_shift_left(
   out
 }
 
+///|
 fn fe_series_exact_div(
   a : FieldElem,
   b : FieldElem,
@@ -127,7 +131,11 @@ fn fe_series_exact_div(
   }
 }
 
-fn series_require_zero_constant(s : SeriesElem, op : String) -> Unit raise PolyError {
+///|
+fn series_require_zero_constant(
+  s : SeriesElem,
+  op : String,
+) -> Unit raise PolyError {
   if !domain_is_field_pred(s.ring.domain) {
     raise PolyError::DomainNotField
   }
@@ -136,14 +144,16 @@ fn series_require_zero_constant(s : SeriesElem, op : String) -> Unit raise PolyE
   }
 }
 
+///|
 fn series_factorial(n : Int) -> @symnum.BigRational {
   let mut acc = BigInt::from_int(1)
-  for i in 2..=n {
+  for i in 2..<=n {
     acc = acc.mul(BigInt::from_int(i))
   }
   @symnum.BigRational::from_bigint(acc)
 }
 
+///|
 fn series_inv_factorial_with_sign(
   n : Int,
   negate : Bool,
@@ -156,6 +166,7 @@ fn series_inv_factorial_with_sign(
   fe_from_rational(q, domain)
 }
 
+///|
 fn series_bigint_square_root_nonnegative(value : BigInt) -> BigInt? {
   if value.op_lt(BigInt::from_int(0)) {
     return None
@@ -182,14 +193,18 @@ fn series_bigint_square_root_nonnegative(value : BigInt) -> BigInt? {
   None
 }
 
-fn series_rational_square_root(value : @symnum.BigRational) -> @symnum.BigRational raise PolyError {
+///|
+fn series_rational_square_root(
+  value : @symnum.BigRational,
+) -> @symnum.BigRational raise PolyError {
   if value.compare(@symnum.BigRational::zero()) < 0 {
     raise PolyError::BadExponent
   }
-  match (
-    series_bigint_square_root_nonnegative(value.numerator()),
-    series_bigint_square_root_nonnegative(value.denominator()),
-  ) {
+  match
+    (
+      series_bigint_square_root_nonnegative(value.numerator()),
+      series_bigint_square_root_nonnegative(value.denominator()),
+    ) {
     (Some(num), Some(den)) =>
       @symnum.BigRational::new(num, den) catch {
         _ => raise PolyError::BadExponent
@@ -217,12 +232,18 @@ pub fn SeriesRing::gen(self : SeriesRing) -> SeriesElem raise PolyError {
 }
 
 ///|
-pub fn SeriesRing::from_coeffs(self : SeriesRing, coeffs : Array[FieldElem]) -> SeriesElem {
+pub fn SeriesRing::from_coeffs(
+  self : SeriesRing,
+  coeffs : Array[FieldElem],
+) -> SeriesElem {
   SeriesElem::{ ring: self, coeffs: normalize_series_coeffs(self, coeffs) }
 }
 
 ///|
-pub fn SeriesRing::from_int_coeffs(self : SeriesRing, coeffs : Array[Int]) -> SeriesElem raise PolyError {
+pub fn SeriesRing::from_int_coeffs(
+  self : SeriesRing,
+  coeffs : Array[Int],
+) -> SeriesElem raise PolyError {
   let lifted : Array[FieldElem] = Array::new()
   for c in coeffs {
     lifted.push(fe_from_int(c, self.domain))
@@ -231,8 +252,13 @@ pub fn SeriesRing::from_int_coeffs(self : SeriesRing, coeffs : Array[Int]) -> Se
 }
 
 ///|
-pub fn SeriesRing::from_poly(self : SeriesRing, poly : Poly) -> SeriesElem raise PolyError {
-  if poly.gens.length() != 1 || poly.gens[0] != self.sym || poly.domain.not_equal(self.domain) {
+pub fn SeriesRing::from_poly(
+  self : SeriesRing,
+  poly : Poly,
+) -> SeriesElem raise PolyError {
+  if poly.gens.length() != 1 ||
+    poly.gens[0] != self.sym ||
+    poly.domain.not_equal(self.domain) {
     raise PolyError::DomainMismatch
   }
   let degree = poly.degree(0)
@@ -241,7 +267,10 @@ pub fn SeriesRing::from_poly(self : SeriesRing, poly : Poly) -> SeriesElem raise
 }
 
 ///|
-pub fn SeriesElem::coeff(self : SeriesElem, n : Int) -> FieldElem raise PolyError {
+pub fn SeriesElem::coeff(
+  self : SeriesElem,
+  n : Int,
+) -> FieldElem raise PolyError {
   if n < 0 || n >= self.ring.precision {
     raise PolyError::BadExponent
   }
@@ -271,11 +300,17 @@ pub fn SeriesElem::equal_repr(self : SeriesElem, other : SeriesElem) -> Bool {
 ///|
 /// Unary plus keeps the same truncated coefficients.
 pub fn SeriesElem::positive(self : SeriesElem) -> SeriesElem {
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, self.coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, self.coeffs),
+  }
 }
 
 ///|
-pub fn SeriesElem::add(self : SeriesElem, other : SeriesElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::add(
+  self : SeriesElem,
+  other : SeriesElem,
+) -> SeriesElem raise PolyError {
   if self.ring != other.ring {
     raise PolyError::DomainMismatch
   }
@@ -298,7 +333,10 @@ pub fn SeriesElem::add(self : SeriesElem, other : SeriesElem) -> SeriesElem rais
     }
     coeffs.push(fe_add(a, b))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
@@ -307,37 +345,55 @@ pub fn SeriesElem::neg(self : SeriesElem) -> SeriesElem {
 }
 
 ///|
-pub fn SeriesElem::sub(self : SeriesElem, other : SeriesElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::sub(
+  self : SeriesElem,
+  other : SeriesElem,
+) -> SeriesElem raise PolyError {
   self.add(other.neg())
 }
 
 ///|
 /// Add a ground-domain scalar to the constant coefficient.
-pub fn SeriesElem::add_ground(self : SeriesElem, scalar : FieldElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::add_ground(
+  self : SeriesElem,
+  scalar : FieldElem,
+) -> SeriesElem raise PolyError {
   let coeffs = self.coeffs.copy()
   if coeffs.is_empty() {
     coeffs.push(scalar)
   } else {
     coeffs.set(0, fe_add(coeffs[0], scalar))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
 /// Subtract a ground-domain scalar from the constant coefficient.
-pub fn SeriesElem::sub_ground(self : SeriesElem, scalar : FieldElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::sub_ground(
+  self : SeriesElem,
+  scalar : FieldElem,
+) -> SeriesElem raise PolyError {
   self.add_ground(fe_neg(scalar))
 }
 
 ///|
 /// Compute `scalar - self`.
-pub fn SeriesElem::rsub_ground(self : SeriesElem, scalar : FieldElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::rsub_ground(
+  self : SeriesElem,
+  scalar : FieldElem,
+) -> SeriesElem raise PolyError {
   self.neg().add_ground(scalar)
 }
 
 ///|
 /// Multiply every coefficient by a ground-domain scalar.
-pub fn SeriesElem::mul_ground(self : SeriesElem, scalar : FieldElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::mul_ground(
+  self : SeriesElem,
+  scalar : FieldElem,
+) -> SeriesElem raise PolyError {
   if fe_is_zero(scalar) {
     return self.ring.zero()
   }
@@ -345,11 +401,17 @@ pub fn SeriesElem::mul_ground(self : SeriesElem, scalar : FieldElem) -> SeriesEl
   for c in self.coeffs {
     coeffs.push(fe_mul(c, scalar))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
-pub fn SeriesElem::mul(self : SeriesElem, other : SeriesElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::mul(
+  self : SeriesElem,
+  other : SeriesElem,
+) -> SeriesElem raise PolyError {
   if self.ring != other.ring {
     raise PolyError::DomainMismatch
   }
@@ -366,7 +428,10 @@ pub fn SeriesElem::mul(self : SeriesElem, other : SeriesElem) -> SeriesElem rais
       coeffs.set(k, fe_add(coeffs[k], term))
     }
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
@@ -377,7 +442,10 @@ pub fn SeriesElem::square(self : SeriesElem) -> SeriesElem raise PolyError {
 
 ///|
 /// Raise a series to a non-negative integer power.
-pub fn SeriesElem::pow_int(self : SeriesElem, exp : Int) -> SeriesElem raise PolyError {
+pub fn SeriesElem::pow_int(
+  self : SeriesElem,
+  exp : Int,
+) -> SeriesElem raise PolyError {
   if exp < 0 {
     raise PolyError::BadExponent
   }
@@ -409,11 +477,18 @@ pub fn SeriesElem::truncate(self : SeriesElem, n : Int) -> SeriesElem {
     self.ring.precision
   }
   let coeffs : Array[FieldElem] = Array::new()
-  let end = if self.coeffs.length() < limit { self.coeffs.length() } else { limit }
+  let end = if self.coeffs.length() < limit {
+    self.coeffs.length()
+  } else {
+    limit
+  }
   for i in 0..<end {
     coeffs.push(self.coeffs[i])
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
@@ -425,7 +500,10 @@ pub fn SeriesElem::diff(self : SeriesElem) -> SeriesElem raise PolyError {
   for i in 1..<self.coeffs.length() {
     coeffs.push(fe_mul(fe_from_int(i, self.ring.domain), self.coeffs[i]))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
@@ -438,7 +516,10 @@ pub fn SeriesElem::integrate(self : SeriesElem) -> SeriesElem raise PolyError {
     let den = fe_from_int(i + 1, self.ring.domain)
     coeffs.push(fe_mul(self.coeffs[i], fe_inv(den)))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
@@ -459,10 +540,7 @@ pub fn SeriesElem::inverse(self : SeriesElem) -> SeriesElem raise PolyError {
     raise PolyError::DivisionByZero
   }
   match self.valuation() {
-    Some(v) =>
-      if v != 0 {
-        raise PolyError::BadExponent
-      }
+    Some(v) => if v != 0 { raise PolyError::BadExponent }
     None => raise PolyError::DivisionByZero
   }
   let n = self.ring.precision
@@ -473,22 +551,29 @@ pub fn SeriesElem::inverse(self : SeriesElem) -> SeriesElem raise PolyError {
   coeffs.set(0, fe_series_exact_div(one, a0, self.ring.domain))
   for k in 1..<n {
     let mut acc = zero
-    let upper = if k < self.coeffs.length() { k } else { self.coeffs.length() - 1 }
-    for i in 1..=upper {
+    let upper = if k < self.coeffs.length() {
+      k
+    } else {
+      self.coeffs.length() - 1
+    }
+    for i in 1..<=upper {
       let term = fe_mul(self.coeffs[i], coeffs[k - i])
       acc = fe_add(acc, term)
     }
-    coeffs.set(
-      k,
-      fe_series_exact_div(fe_neg(acc), a0, self.ring.domain),
-    )
+    coeffs.set(k, fe_series_exact_div(fe_neg(acc), a0, self.ring.domain))
   }
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
 /// Divide one truncated series by another when the quotient stays inside the ring.
-pub fn SeriesElem::divide(self : SeriesElem, other : SeriesElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::divide(
+  self : SeriesElem,
+  other : SeriesElem,
+) -> SeriesElem raise PolyError {
   if self.ring != other.ring {
     raise PolyError::DomainMismatch
   }
@@ -523,19 +608,30 @@ pub fn SeriesElem::divide(self : SeriesElem, other : SeriesElem) -> SeriesElem r
   for k in 0..<q_len {
     let mut acc = if k < num.length() { num[k] } else { zero }
     let upper = if k < den.length() { k } else { den.length() - 1 }
-    for i in 1..=upper {
+    for i in 1..<=upper {
       let term = fe_mul(den[i], q_coeffs[k - i])
       acc = fe_sub(acc, term)
     }
     q_coeffs.set(k, fe_series_exact_div(acc, d0, self.ring.domain))
   }
-  let coeffs = series_shift_left(q_coeffs, shift, self.ring.precision, self.ring.domain)
-  SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, coeffs) }
+  let coeffs = series_shift_left(
+    q_coeffs,
+    shift,
+    self.ring.precision,
+    self.ring.domain,
+  )
+  SeriesElem::{
+    ring: self.ring,
+    coeffs: normalize_series_coeffs(self.ring, coeffs),
+  }
 }
 
 ///|
 /// Compose `self(other)`, requiring `other(0) = 0`.
-pub fn SeriesElem::compose(self : SeriesElem, other : SeriesElem) -> SeriesElem raise PolyError {
+pub fn SeriesElem::compose(
+  self : SeriesElem,
+  other : SeriesElem,
+) -> SeriesElem raise PolyError {
   if self.ring != other.ring {
     raise PolyError::DomainMismatch
   }
@@ -614,27 +710,44 @@ pub fn SeriesElem::sqrt(self : SeriesElem) -> SeriesElem raise PolyError {
       let shift = v / 2
       let core = SeriesElem::{
         ring: self.ring,
-        coeffs: normalize_series_coeffs(self.ring, series_shift_right(self.coeffs, v)),
+        coeffs: normalize_series_coeffs(
+          self.ring,
+          series_shift_right(self.coeffs, v),
+        ),
       }
       if core.coeffs.is_empty() {
         return self.ring.zero()
       }
-      let root0 = series_rational_square_root(fe_expect_rational(core.coeffs[0]))
+      let root0 = series_rational_square_root(
+        fe_expect_rational(core.coeffs[0]),
+      )
       let n = self.ring.precision - shift
       let zero = fe_from_int(0, self.ring.domain)
       let coeffs : Array[FieldElem] = Array::make(n, zero)
       coeffs.set(0, fe_from_rational(root0, self.ring.domain))
       let two = fe_from_int(2, self.ring.domain)
       for k in 1..<n {
-        let mut acc = if k < core.coeffs.length() { core.coeffs[k] } else { zero }
+        let mut acc = if k < core.coeffs.length() {
+          core.coeffs[k]
+        } else {
+          zero
+        }
         for i in 1..<k {
           acc = fe_sub(acc, fe_mul(coeffs[i], coeffs[k - i]))
         }
         let denom = fe_mul(two, coeffs[0])
         coeffs.set(k, fe_series_exact_div(acc, denom, self.ring.domain))
       }
-      let shifted = series_shift_left(coeffs, shift, self.ring.precision, self.ring.domain)
-      SeriesElem::{ ring: self.ring, coeffs: normalize_series_coeffs(self.ring, shifted) }
+      let shifted = series_shift_left(
+        coeffs,
+        shift,
+        self.ring.precision,
+        self.ring.domain,
+      )
+      SeriesElem::{
+        ring: self.ring,
+        coeffs: normalize_series_coeffs(self.ring, shifted),
+      }
     }
   }
 }
@@ -647,7 +760,11 @@ pub fn SeriesElem::sin(self : SeriesElem) -> SeriesElem raise PolyError {
   let mut k = 0
   while 2 * k + 1 < self.ring.precision * 2 {
     let exp = 2 * k + 1
-    let term = self.pow_int(exp).mul_ground(series_inv_factorial_with_sign(exp, k % 2 == 1, self.ring.domain))
+    let term = self
+      .pow_int(exp)
+      .mul_ground(
+        series_inv_factorial_with_sign(exp, k % 2 == 1, self.ring.domain),
+      )
     out = out.add(term)
     k = k + 1
   }
@@ -662,7 +779,9 @@ pub fn SeriesElem::sinh(self : SeriesElem) -> SeriesElem raise PolyError {
   let mut k = 0
   while 2 * k + 1 < self.ring.precision * 2 {
     let exp = 2 * k + 1
-    let term = self.pow_int(exp).mul_ground(series_inv_factorial_with_sign(exp, false, self.ring.domain))
+    let term = self
+      .pow_int(exp)
+      .mul_ground(series_inv_factorial_with_sign(exp, false, self.ring.domain))
     out = out.add(term)
     k = k + 1
   }
@@ -677,7 +796,11 @@ pub fn SeriesElem::cos(self : SeriesElem) -> SeriesElem raise PolyError {
   let mut k = 1
   while 2 * k < self.ring.precision * 2 {
     let exp = 2 * k
-    let term = self.pow_int(exp).mul_ground(series_inv_factorial_with_sign(exp, k % 2 == 1, self.ring.domain))
+    let term = self
+      .pow_int(exp)
+      .mul_ground(
+        series_inv_factorial_with_sign(exp, k % 2 == 1, self.ring.domain),
+      )
     out = out.add(term)
     k = k + 1
   }
@@ -692,7 +815,9 @@ pub fn SeriesElem::cosh(self : SeriesElem) -> SeriesElem raise PolyError {
   let mut k = 1
   while 2 * k < self.ring.precision * 2 {
     let exp = 2 * k
-    let term = self.pow_int(exp).mul_ground(series_inv_factorial_with_sign(exp, false, self.ring.domain))
+    let term = self
+      .pow_int(exp)
+      .mul_ground(series_inv_factorial_with_sign(exp, false, self.ring.domain))
     out = out.add(term)
     k = k + 1
   }

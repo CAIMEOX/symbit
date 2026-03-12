@@ -290,17 +290,21 @@ test "rootisolation: dup_isolate_real_roots parity with multiplicities" {
 test "rootisolation: dup_count_real_roots parity" {
   let f = [feqq(1, 1), feqq(0, 1), feqq(-3, 1), feqq(2, 1)] // (x-1)^2*(x+2)
   let ours_all = dup_count_real_roots(f, Domain::QQ).to_string()
-  let oracle_all = @sympy_polys.dup_count_real_roots(dup_to_rats(f), domain="QQ")
+  let oracle_all = @sympy_polys.dup_count_real_roots(
+    dup_to_rats(f),
+    domain="QQ",
+  )
   guard ours_all == oracle_all else {
-    fail("dup_count_real_roots all mismatch: ours=\{ours_all}, oracle=\{oracle_all}")
+    fail(
+      "dup_count_real_roots all mismatch: ours=\{ours_all}, oracle=\{oracle_all}",
+    )
   }
   let ours_range = dup_count_real_roots(
     f,
     Domain::QQ,
     inf=br_int(0),
     sup=br_int(2),
-  )
-    .to_string()
+  ).to_string()
   let oracle_range = @sympy_polys.dup_count_real_roots(
     dup_to_rats(f),
     domain="QQ",

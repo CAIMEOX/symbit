@@ -15,11 +15,14 @@ test "galoistools wb: edge-case branches" {
   }
 
   let add_empty_left = gf_add([], [6, 7], 5)
-  guard add_empty_left.length() == 2 && add_empty_left[0] == 1 && add_empty_left[1] == 2 else {
+  guard add_empty_left.length() == 2 &&
+    add_empty_left[0] == 1 &&
+    add_empty_left[1] == 2 else {
     fail("gf_add empty-left branch mismatch")
   }
   let add_empty_right = gf_add([6, 7], [], 5)
-  guard add_empty_right.length() == 2 && add_empty_right[0] == 1 &&
+  guard add_empty_right.length() == 2 &&
+    add_empty_right[0] == 1 &&
     add_empty_right[1] == 2 else {
     fail("gf_add empty-right branch mismatch")
   }
@@ -28,18 +31,21 @@ test "galoistools wb: edge-case branches" {
     fail("gf_add mixed-length branch mismatch")
   }
   let add_mixed_rev = gf_add([1, 2], [1], 5)
-  guard add_mixed_rev.length() == 2 && add_mixed_rev[0] == 1 &&
+  guard add_mixed_rev.length() == 2 &&
+    add_mixed_rev[0] == 1 &&
     add_mixed_rev[1] == 3 else {
     fail("gf_add mixed-length (reversed) branch mismatch")
   }
 
   let sub_empty_left = gf_sub([], [1, 2], 5)
-  guard sub_empty_left.length() == 2 && sub_empty_left[0] == 4 &&
+  guard sub_empty_left.length() == 2 &&
+    sub_empty_left[0] == 4 &&
     sub_empty_left[1] == 3 else {
     fail("gf_sub empty-left branch mismatch")
   }
   let sub_empty_right = gf_sub([6, 7], [], 5)
-  guard sub_empty_right.length() == 2 && sub_empty_right[0] == 1 &&
+  guard sub_empty_right.length() == 2 &&
+    sub_empty_right[0] == 1 &&
     sub_empty_right[1] == 2 else {
     fail("gf_sub empty-right branch mismatch")
   }
@@ -48,7 +54,8 @@ test "galoistools wb: edge-case branches" {
     fail("gf_sub mixed-length branch mismatch")
   }
   let sub_mixed_rev = gf_sub([1, 2], [1], 5)
-  guard sub_mixed_rev.length() == 2 && sub_mixed_rev[0] == 1 &&
+  guard sub_mixed_rev.length() == 2 &&
+    sub_mixed_rev[0] == 1 &&
     sub_mixed_rev[1] == 1 else {
     fail("gf_sub mixed-length (reversed) branch mismatch")
   }
@@ -154,7 +161,9 @@ test "monomial wb: mismatch/error/order branches" {
   guard (try! compare_exps_grlex([1, 0], [0, 1])) == 1 else {
     fail("compare_exps_grlex equal-degree lex-fallback mismatch")
   }
-  let grlex_mismatch : Result[Int, PolyError] = try? compare_exps_grlex([1], [1, 0])
+  let grlex_mismatch : Result[Int, PolyError] = try? compare_exps_grlex([1], [
+    1, 0,
+  ])
   guard grlex_mismatch is Err(PolyError::DomainMismatch) else {
     fail("compare_exps_grlex mismatch should raise DomainMismatch")
   }

@@ -15,7 +15,7 @@ pub fn ideal(gens : Array[Poly]) -> Ideal raise PolyError {
       raise PolyError::DomainMismatch
     }
   }
-  Ideal::{ gens }
+  Ideal::{ gens, }
 }
 
 ///|
@@ -28,6 +28,7 @@ pub fn Ideal::ring_gens(self : Ideal) -> Array[String] {
   self.gens[0].gens
 }
 
+///|
 fn ideal_check_compatible(lhs : Ideal, rhs : Ideal) -> Unit raise PolyError {
   if lhs.ring_domain().not_equal(rhs.ring_domain()) ||
     lhs.ring_gens().not_equal(rhs.ring_gens()) {
@@ -35,6 +36,7 @@ fn ideal_check_compatible(lhs : Ideal, rhs : Ideal) -> Unit raise PolyError {
   }
 }
 
+///|
 fn ideal_groebner_basis(idl : Ideal) -> Array[Poly] raise PolyError {
   let nonzero = idl.gens.filter(g => !g.is_zero())
   if nonzero.is_empty() {
@@ -156,6 +158,7 @@ pub fn Ideal::is_whole_ring(self : Ideal) -> Bool raise PolyError {
   self.contains(Poly::one(self.ring_gens(), self.ring_domain()))
 }
 
+///|
 fn agca_free_of_aux(poly : Poly) -> Bool {
   for m, _ in poly.coeffs {
     if !m.exps.is_empty() && m.exps[0] != 0 {
@@ -190,7 +193,10 @@ pub fn ring_homomorphism(
 }
 
 ///|
-pub fn RingHomomorphism::apply_expr(self : RingHomomorphism, expr : @symcore.Expr) -> @symcore.Expr {
+pub fn RingHomomorphism::apply_expr(
+  self : RingHomomorphism,
+  expr : @symcore.Expr,
+) -> @symcore.Expr {
   @symcore.subst(expr, self.image)
 }
 

@@ -3,6 +3,7 @@ fn cov_fezz(n : Int) -> FieldElem {
   try! fe_from_int(n, Domain::ZZ)
 }
 
+///|
 fn cov_brat(num : Int, den : Int) -> @symnum.BigRational {
   try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
 }
@@ -21,6 +22,7 @@ fn cov_dup_from_ints(xs : Array[Int]) -> Array[FieldElem] {
   out
 }
 
+///|
 fn cov_dup_repr(coeffs : Array[FieldElem]) -> String {
   let parts = coeffs.map(c => c.to_string()).join(",")
   "[\{parts}]"
@@ -103,7 +105,9 @@ fn cov_fe_pow(base : FieldElem, exp : Int) -> FieldElem {
 test "coverage: core helpers and leading-term API" {
   let x = @symcore.symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1))
+  let p = b.from_expr(
+    (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
+  )
   guard !p.is_zero() else { fail("is_zero false positive") }
 
   let p_scaled = try! p.scale_coeff(cov_fezz(3))
@@ -120,10 +124,14 @@ test "coverage: core helpers and leading-term API" {
 
   let lt1 = p.leading_term()
   let lt2 = p.leading_term_with_order(TermOrder::Lex)
-  guard cov_lt_repr(lt1) == cov_lt_repr(lt2) else { fail("leading_term mismatch") }
+  guard cov_lt_repr(lt1) == cov_lt_repr(lt2) else {
+    fail("leading_term mismatch")
+  }
 
   let as_expr = p.to_expr_with_order(TermOrder::Lex)
-  let expr_norm = (try! @sympy_polys.sympy_normalize(@symprint.to_string(as_expr)))
+  let expr_norm = (try! @sympy_polys.sympy_normalize(
+      @symprint.to_string(as_expr),
+    ))
     .trim()
     .to_string()
   let poly_norm = cov_poly_norm(p)
@@ -216,7 +224,9 @@ test "coverage: qq_utils clear_denominators" {
     _ => fail("clear_denominators should lift to ZZ")
   }
   let ours = cov_poly_norm(lifted)
-  let expected = (try! @sympy_polys.sympy_normalize("3*x + 2")).trim().to_string()
+  let expected = (try! @sympy_polys.sympy_normalize("3*x + 2"))
+    .trim()
+    .to_string()
   guard ours == expected else {
     fail("clear_denominators mismatch: ours=\{ours}, expected=\{expected}")
   }
@@ -230,7 +240,9 @@ test "coverage: lll_reduce transform reconstructs reduced basis" {
     [BigInt::from_int(3), BigInt::from_int(5), BigInt::from_int(6)],
   ]
   let (reduced, transform) = try! lll_reduce(basis)
-  guard reduced.length() == basis.length() else { fail("lll row count mismatch") }
+  guard reduced.length() == basis.length() else {
+    fail("lll row count mismatch")
+  }
   guard transform.length() == basis.length() else {
     fail("lll transform row count mismatch")
   }
@@ -288,7 +300,9 @@ test "coverage: resultant_poly multivariate output parity" {
     ))
     .trim()
     .to_string()
-  let oracle_norm = (try! @sympy_polys.sympy_normalize(oracle)).trim().to_string()
+  let oracle_norm = (try! @sympy_polys.sympy_normalize(oracle))
+    .trim()
+    .to_string()
   guard ours == oracle_norm else {
     fail("resultant_poly mismatch: ours=\{ours}, oracle=\{oracle_norm}")
   }
@@ -327,19 +341,17 @@ test "coverage: dense conversions and raw dict helpers" {
   let raw = dmp_to_raw_dict(dmp, 1, Domain::ZZ)
   guard raw.length() == 2 else { fail("dmp_to_raw_dict length mismatch") }
   match raw.get(1) {
-    Some(v) => {
+    Some(v) =>
       if cov_dense_repr(v) != cov_dense_repr(child_hi) {
         fail("dmp_to_raw_dict high coeff mismatch")
       }
-    }
     None => fail("missing x^1 coefficient")
   }
   match raw.get(0) {
-    Some(v) => {
+    Some(v) =>
       if cov_dense_repr(v) != cov_dense_repr(child_lo) {
         fail("dmp_to_raw_dict low coeff mismatch")
       }
-    }
     None => fail("missing x^0 coefficient")
   }
 }
@@ -352,9 +364,7 @@ test "coverage: monomial and field-element helper APIs" {
   let div12 = try! monomial_divides(m1, m2)
   let div21 = try! monomial_divides(m2, m1)
   guard div12 else { fail("monomial_divides true failed") }
-  guard !div21 else {
-    fail("monomial_divides false failed")
-  }
+  guard !div21 else { fail("monomial_divides false failed") }
   guard compare_monomial_order(m1, m3, TermOrder::Lex) > 0 else {
     fail("compare_monomial_order lex mismatch")
   }
@@ -405,7 +415,9 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
   let x = @symcore.symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr(
-    @symcore.int(6) * (x ^ @symcore.int(2)) + @symcore.int(9) * x + @symcore.int(3),
+    @symcore.int(6) * (x ^ @symcore.int(2)) +
+    @symcore.int(9) * x +
+    @symcore.int(3),
   )
   let content = try! f.content()
   guard content.to_string() == "3" else {
@@ -458,7 +470,9 @@ test "coverage: algebraic-extension public helpers" {
       let rel = (try! @sympy_polys.sympy_normalize(@symprint.to_string(rels[0])))
         .trim()
         .to_string()
-      guard rel == expect_minpoly else { fail("build_alg_extension rel mismatch") }
+      guard rel == expect_minpoly else {
+        fail("build_alg_extension rel mismatch")
+      }
     }
     _ => fail("expected Domain::AlgExt")
   }

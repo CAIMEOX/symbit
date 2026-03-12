@@ -23,7 +23,9 @@ fn bigint_rows_to_ddm(rows : Array[Array[BigInt]]) -> DDM raise PolyError {
   for row in rows {
     let out_row : Array[FieldElem] = Array::new()
     for v in row {
-      out_row.push(fe_from_rational(@symnum.BigRational::from_bigint(v), Domain::ZZ))
+      out_row.push(
+        fe_from_rational(@symnum.BigRational::from_bigint(v), Domain::ZZ),
+      )
     }
     out.push(out_row)
   }
@@ -40,7 +42,10 @@ fn require_zz(ddm : DDM) -> Unit raise PolyError {
 
 ///|
 /// SymPy-style LLL reduction on integer domain matrices.
-pub fn DDM::lll(self : DDM, delta? : @symnum.BigRational) -> DDM raise PolyError {
+pub fn DDM::lll(
+  self : DDM,
+  delta? : @symnum.BigRational,
+) -> DDM raise PolyError {
   require_zz(self)
   let basis = ddm_to_bigint_rows(self)
   let (reduced, _) = match delta {

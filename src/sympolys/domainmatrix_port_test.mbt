@@ -58,7 +58,9 @@ fn dm_dom_eigenvects_text(
 ) -> String raise PolyError {
   let parts : Array[String] = Array::new()
   for item in values.0 {
-    parts.push("r:\{fe_to_string(item.1)}:\{item.2}:\{item.3.to_matrix_string()}")
+    parts.push(
+      "r:\{fe_to_string(item.1)}:\{item.2}:\{item.3.to_matrix_string()}",
+    )
   }
   for item in values.1 {
     parts.push(
@@ -70,7 +72,9 @@ fn dm_dom_eigenvects_text(
 }
 
 ///|
-fn dm_solve_summary(value : (DomainMatrix, DomainMatrix)) -> String raise PolyError {
+fn dm_solve_summary(
+  value : (DomainMatrix, DomainMatrix),
+) -> String raise PolyError {
   "\{value.0.to_matrix_string()}||\{value.1.to_matrix_string()}"
 }
 
@@ -236,10 +240,14 @@ test "domainmatrix: add/matmul/scalarmul parity over QQ" {
     fail("domainmatrix add mismatch: ours=\{ours_add}, oracle=\{oracle_add}")
   }
   guard dm_trim(ours_matmul) == dm_trim(oracle_matmul) else {
-    fail("domainmatrix matmul mismatch: ours=\{ours_matmul}, oracle=\{oracle_matmul}")
+    fail(
+      "domainmatrix matmul mismatch: ours=\{ours_matmul}, oracle=\{oracle_matmul}",
+    )
   }
   guard dm_trim(ours_mul) == dm_trim(oracle_mul) else {
-    fail("domainmatrix scalarmul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}")
+    fail(
+      "domainmatrix scalarmul mismatch: ours=\{ours_mul}, oracle=\{oracle_mul}",
+    )
   }
 }
 
@@ -273,18 +281,30 @@ test "domainmatrix: rref_den parity over ZZ" {
   let ff = a.rref_den(rref_method="FF")
   let ff_pivots = ff.2.map(i => i.to_string()).join(",")
   let ours_ff = "\{ff.0.to_matrix_string()}||\{fe_to_string(ff.1)}||[\{ff_pivots}]"
-  let oracle_ff = @sympy_polys.domainmatrix_rref_den(rows, "ZZ", rref_method="FF")
+  let oracle_ff = @sympy_polys.domainmatrix_rref_den(
+    rows,
+    "ZZ",
+    rref_method="FF",
+  )
 
   let gj = a.rref_den(rref_method="GJ")
   let gj_pivots = gj.2.map(i => i.to_string()).join(",")
   let ours_gj = "\{gj.0.to_matrix_string()}||\{fe_to_string(gj.1)}||[\{gj_pivots}]"
-  let oracle_gj = @sympy_polys.domainmatrix_rref_den(rows, "ZZ", rref_method="GJ")
+  let oracle_gj = @sympy_polys.domainmatrix_rref_den(
+    rows,
+    "ZZ",
+    rref_method="GJ",
+  )
 
   guard dm_trim(ours_ff) == dm_trim(oracle_ff) else {
-    fail("domainmatrix rref_den FF mismatch: ours=\{ours_ff}, oracle=\{oracle_ff}")
+    fail(
+      "domainmatrix rref_den FF mismatch: ours=\{ours_ff}, oracle=\{oracle_ff}",
+    )
   }
   guard dm_trim(ours_gj) == dm_trim(oracle_gj) else {
-    fail("domainmatrix rref_den GJ mismatch: ours=\{ours_gj}, oracle=\{oracle_gj}")
+    fail(
+      "domainmatrix rref_den GJ mismatch: ours=\{ours_gj}, oracle=\{oracle_gj}",
+    )
   }
 }
 
@@ -303,10 +323,14 @@ test "domainmatrix: convert_to and to_field parity" {
   let oracle_field = @sympy_polys.domainmatrix_to_field([[1, 2], [3, 4]], "ZZ")
 
   guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
-    fail("domainmatrix convert_to mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}")
+    fail(
+      "domainmatrix convert_to mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}",
+    )
   }
   guard dm_trim(ours_field) == dm_trim(oracle_field) else {
-    fail("domainmatrix to_field mismatch: ours=\{ours_field}, oracle=\{oracle_field}")
+    fail(
+      "domainmatrix to_field mismatch: ours=\{ours_field}, oracle=\{oracle_field}",
+    )
   }
 }
 
@@ -334,7 +358,9 @@ test "domainmatrix: clear_denoms parity over QQ" {
   )
 
   guard dm_trim(ours_keep) == dm_trim(oracle_keep) else {
-    fail("domainmatrix clear_denoms mismatch: ours=\{ours_keep}, oracle=\{oracle_keep}")
+    fail(
+      "domainmatrix clear_denoms mismatch: ours=\{ours_keep}, oracle=\{oracle_keep}",
+    )
   }
   guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
     fail(
@@ -359,7 +385,9 @@ test "domainmatrix: clear_denoms_rowwise parity over QQ" {
   let ours_convert = dm_clear_denoms_rowwise_repr(convert.0, convert.1)
 
   let rows = [["1/2", "1/3", "1/4"], ["1/5", "1/6", "1/7"]]
-  let oracle_keep = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(rows, "QQ")
+  let oracle_keep = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(
+    rows, "QQ",
+  )
   let oracle_convert = @sympy_polys.domainmatrix_clear_denoms_rowwise_expr(
     rows,
     "QQ",
@@ -367,7 +395,9 @@ test "domainmatrix: clear_denoms_rowwise parity over QQ" {
   )
 
   guard dm_trim(ours_keep) == dm_trim(oracle_keep) else {
-    fail("domainmatrix clear_denoms_rowwise mismatch: ours=\{ours_keep}, oracle=\{oracle_keep}")
+    fail(
+      "domainmatrix clear_denoms_rowwise mismatch: ours=\{ours_keep}, oracle=\{oracle_keep}",
+    )
   }
   guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
     fail(
@@ -391,8 +421,7 @@ test "domainmatrix: lu and lu_solve parity over QQ" {
   let lu_rows = [[0, 1], [1, 1]]
   let a = domain_matrix_from_ints(lu_rows, Domain::QQ)
   let lu = a.lu()
-  let ours_lu =
-    "\{lu.0.to_matrix_string()}||\{lu.1.to_matrix_string()}||\{dm_swaps_text(lu.2)}"
+  let ours_lu = "\{lu.0.to_matrix_string()}||\{lu.1.to_matrix_string()}||\{dm_swaps_text(lu.2)}"
   let oracle_lu = @sympy_polys.domainmatrix_lu(lu_rows, "QQ")
   guard dm_trim(ours_lu) == dm_trim(oracle_lu) else {
     fail("domainmatrix lu mismatch: ours=\{ours_lu}, oracle=\{oracle_lu}")
@@ -400,8 +429,8 @@ test "domainmatrix: lu and lu_solve parity over QQ" {
 
   let rhs = domain_matrix_from_ints([[1], [0]], Domain::QQ)
   let ours_lu_solve = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
-  .lu_solve(rhs)
-  .to_matrix_string()
+    .lu_solve(rhs)
+    .to_matrix_string()
   let oracle_lu_solve = @sympy_polys.domainmatrix_lu_solve(
     [[1, 2], [3, 4]],
     [[1], [0]],
@@ -436,7 +465,10 @@ test "domainmatrix: fflu invariants and charpoly parity over ZZ" {
   let rows = [[1, 2], [3, 4]]
   let a = domain_matrix_from_ints(rows, Domain::ZZ)
   let fflu = a.fflu()
-  let lhs = fflu.1.to_field().matmul(fflu.2.to_field().inv()).matmul(fflu.3.to_field())
+  let lhs = fflu.1
+    .to_field()
+    .matmul(fflu.2.to_field().inv())
+    .matmul(fflu.3.to_field())
   let rhs = fflu.0.to_field().matmul(a.to_field())
   guard dm_trim(lhs.to_matrix_string()) == dm_trim(rhs.to_matrix_string()) else {
     fail("domainmatrix fflu invariant mismatch")
@@ -463,17 +495,31 @@ test "domainmatrix: structural helper parity" {
   let ours_diag = dm_coeffs_text(diag_case.diagonal())
   let oracle_diag = @sympy_polys.domainmatrix_diagonal([[1, 0], [0, 4]], "ZZ")
   guard dm_trim(ours_diag) == dm_trim(oracle_diag) else {
-    fail("domainmatrix diagonal mismatch: ours=\{ours_diag}, oracle=\{oracle_diag}")
+    fail(
+      "domainmatrix diagonal mismatch: ours=\{ours_diag}, oracle=\{oracle_diag}",
+    )
   }
 
   let ours_flat = dm_coeffs_text(diag_case.to_list_flat())
-  let oracle_flat = @sympy_polys.domainmatrix_to_list_flat([[1, 0], [0, 4]], "ZZ")
+  let oracle_flat = @sympy_polys.domainmatrix_to_list_flat(
+    [[1, 0], [0, 4]],
+    "ZZ",
+  )
   guard dm_trim(ours_flat) == dm_trim(oracle_flat) else {
-    fail("domainmatrix to_list_flat mismatch: ours=\{ours_flat}, oracle=\{oracle_flat}")
+    fail(
+      "domainmatrix to_list_flat mismatch: ours=\{ours_flat}, oracle=\{oracle_flat}",
+    )
   }
 
-  let ours_from_flat = DomainMatrix::from_list_flat(diag_case.to_list_flat(), (2, 2), Domain::ZZ)
-  let oracle_from_flat = @sympy_polys.domainmatrix_from_list_flat([[1, 0], [0, 4]], "ZZ")
+  let ours_from_flat = DomainMatrix::from_list_flat(
+    diag_case.to_list_flat(),
+    (2, 2),
+    Domain::ZZ,
+  )
+  let oracle_from_flat = @sympy_polys.domainmatrix_from_list_flat(
+    [[1, 0], [0, 4]],
+    "ZZ",
+  )
   guard dm_trim(ours_from_flat.to_matrix_string()) == dm_trim(oracle_from_flat) else {
     fail(
       "domainmatrix from_list_flat mismatch: ours=\{ours_from_flat.to_matrix_string()}, oracle=\{oracle_from_flat}",
@@ -481,8 +527,13 @@ test "domainmatrix: structural helper parity" {
   }
 
   let flat_nz = diag_case.to_flat_nz()
-  let roundtrip_flat_nz = diag_case.from_flat_nz(flat_nz.0, flat_nz.1, Domain::ZZ)
-  guard dm_trim(roundtrip_flat_nz.to_matrix_string()) == dm_trim(diag_case.to_matrix_string()) else {
+  let roundtrip_flat_nz = diag_case.from_flat_nz(
+    flat_nz.0,
+    flat_nz.1,
+    Domain::ZZ,
+  )
+  guard dm_trim(roundtrip_flat_nz.to_matrix_string()) ==
+    dm_trim(diag_case.to_matrix_string()) else {
     fail("domainmatrix from_flat_nz roundtrip mismatch")
   }
   guard dm_coeffs_text(flat_nz.0) == "[1, 0, 0, 4]" else {
@@ -495,9 +546,14 @@ test "domainmatrix: structural helper parity" {
     fail("domainmatrix to_dod mismatch: ours=\{ours_dod}, oracle=\{oracle_dod}")
   }
   let from_dod = diag_case.from_dod_like(diag_case.to_dod())
-  let oracle_from_dod = @sympy_polys.domainmatrix_from_dod_roundtrip([[1, 0], [0, 4]], "ZZ")
+  let oracle_from_dod = @sympy_polys.domainmatrix_from_dod_roundtrip(
+    [[1, 0], [0, 4]],
+    "ZZ",
+  )
   guard dm_trim(from_dod.to_matrix_string()) == dm_trim(oracle_from_dod) else {
-    fail("domainmatrix from_dod mismatch: ours=\{from_dod.to_matrix_string()}, oracle=\{oracle_from_dod}")
+    fail(
+      "domainmatrix from_dod mismatch: ours=\{from_dod.to_matrix_string()}, oracle=\{oracle_from_dod}",
+    )
   }
 
   let ours_dok = dm_dok_text(diag_case.to_dok())
@@ -506,14 +562,22 @@ test "domainmatrix: structural helper parity" {
     fail("domainmatrix to_dok mismatch: ours=\{ours_dok}, oracle=\{oracle_dok}")
   }
   let from_dok = DomainMatrix::from_dok(diag_case.to_dok(), (2, 2), Domain::ZZ)
-  let oracle_from_dok = @sympy_polys.domainmatrix_from_dok_roundtrip([[1, 0], [0, 4]], "ZZ")
+  let oracle_from_dok = @sympy_polys.domainmatrix_from_dok_roundtrip(
+    [[1, 0], [0, 4]],
+    "ZZ",
+  )
   guard dm_trim(from_dok.to_matrix_string()) == dm_trim(oracle_from_dok) else {
-    fail("domainmatrix from_dok mismatch: ours=\{from_dok.to_matrix_string()}, oracle=\{oracle_from_dok}")
+    fail(
+      "domainmatrix from_dok mismatch: ours=\{from_dok.to_matrix_string()}, oracle=\{oracle_from_dok}",
+    )
   }
 
   let two_zz = try! fe_from_int(2, Domain::ZZ)
-  let applied = diag_case.applyfunc(fn(value : FieldElem) raise PolyError { fe_mul(value, two_zz) })
-  guard dm_trim(applied.to_matrix_string()) == dm_trim("Matrix([[2, 0], [0, 8]])") else {
+  let applied = diag_case.applyfunc(fn(value : FieldElem) raise PolyError {
+    fe_mul(value, two_zz)
+  })
+  guard dm_trim(applied.to_matrix_string()) ==
+    dm_trim("Matrix([[2, 0], [0, 8]])") else {
     fail("domainmatrix applyfunc mismatch: ours=\{applied.to_matrix_string()}")
   }
   guard diag_case.is_square() else {
@@ -540,7 +604,9 @@ test "domainmatrix: structural helper parity" {
   }
 
   let ours_blocks = block.charpoly_factor_blocks().to_string()
-  let oracle_blocks = @sympy_polys.domainmatrix_charpoly_factor_blocks(block_rows, "ZZ")
+  let oracle_blocks = @sympy_polys.domainmatrix_charpoly_factor_blocks(
+    block_rows, "ZZ",
+  )
   guard dm_trim(ours_blocks) == dm_trim(oracle_blocks) else {
     fail(
       "domainmatrix charpoly_factor_blocks mismatch: ours=\{ours_blocks}, oracle=\{oracle_blocks}",
@@ -548,7 +614,9 @@ test "domainmatrix: structural helper parity" {
   }
 
   let ours_factor_list = dm_factor_list_text(block.charpoly_factor_list())
-  let oracle_factor_list = @sympy_polys.domainmatrix_charpoly_factor_list(block_rows, "ZZ")
+  let oracle_factor_list = @sympy_polys.domainmatrix_charpoly_factor_list(
+    block_rows, "ZZ",
+  )
   guard dm_trim(ours_factor_list) == dm_trim(oracle_factor_list) else {
     fail(
       "domainmatrix charpoly_factor_list mismatch: ours=\{ours_factor_list}, oracle=\{oracle_factor_list}",
@@ -568,7 +636,9 @@ test "domainmatrix: structural helper parity" {
   guard dm_trim(recomposed) == dm_trim(lll_transform.0.to_matrix_string()) else {
     fail("domainmatrix lll_transform reconstruction mismatch")
   }
-  let hnf_transformed = @sympy_polys.matrix_hnf_code(try! dm_to_int_rows(lll_transform.0))
+  let hnf_transformed = @sympy_polys.matrix_hnf_code(
+    try! dm_to_int_rows(lll_transform.0),
+  )
   guard hnf_orig == hnf_transformed else {
     fail("domainmatrix lll_transform lattice mismatch")
   }
@@ -609,7 +679,8 @@ test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
     fail("domainmatrix extract_slice mismatch: \{slice.to_matrix_string()}")
   }
   let reversed = a.extract_slice(row_step=-1)
-  guard reversed.to_matrix_string() == "Matrix([[7, 8, 9], [4, 5, 6], [1, 2, 3]])" else {
+  guard reversed.to_matrix_string() ==
+    "Matrix([[7, 8, 9], [4, 5, 6], [1, 2, 3]])" else {
     fail("domainmatrix reverse slice mismatch: \{reversed.to_matrix_string()}")
   }
   let updated = a.setitem(-1, -1, try! fe_from_int(10, Domain::ZZ))
@@ -631,8 +702,11 @@ test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
 test "domainmatrix: format-preserving copy convert_to and unify parity" {
   let sparse = domain_matrix_from_ints([[0, 1], [2, 0]], Domain::ZZ).to_sparse()
   let copied = sparse.copy()
-  guard dm_trim(dm_summary(copied)) == dm_trim("Matrix([[0, 1], [2, 0]])@ZZ|sparse") else {
-    fail("domainmatrix copy should preserve sparse format: \{dm_summary(copied)}")
+  guard dm_trim(dm_summary(copied)) ==
+    dm_trim("Matrix([[0, 1], [2, 0]])@ZZ|sparse") else {
+    fail(
+      "domainmatrix copy should preserve sparse format: \{dm_summary(copied)}",
+    )
   }
 
   let ours_convert = dm_summary(sparse.convert_to(Domain::QQ))
@@ -643,7 +717,9 @@ test "domainmatrix: format-preserving copy convert_to and unify parity" {
     fmt="sparse",
   )
   guard dm_trim(ours_convert) == dm_trim(oracle_convert) else {
-    fail("domainmatrix sparse convert_to mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}")
+    fail(
+      "domainmatrix sparse convert_to mismatch: ours=\{ours_convert}, oracle=\{oracle_convert}",
+    )
   }
 
   let dense_q = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
@@ -658,7 +734,9 @@ test "domainmatrix: format-preserving copy convert_to and unify parity" {
     "dense",
   )
   guard dm_trim(ours_unify) == dm_trim(oracle_unify) else {
-    fail("domainmatrix unify mismatch: ours=\{ours_unify}, oracle=\{oracle_unify}")
+    fail(
+      "domainmatrix unify mismatch: ours=\{ours_unify}, oracle=\{oracle_unify}",
+    )
   }
 
   let unified_dense = sparse.unify(dense_q, fmt="dense")
@@ -695,8 +773,11 @@ test "domainmatrix: direct format checks and stack semantics" {
   }
 
   let sparse_sum = sparse.add(dense.to_sparse())
-  guard dm_trim(dm_summary(sparse_sum)) == dm_trim("Matrix([[1, 1], [2, 3]])@ZZ|sparse") else {
-    fail("domainmatrix sparse add should preserve sparse format: \{dm_summary(sparse_sum)}")
+  guard dm_trim(dm_summary(sparse_sum)) ==
+    dm_trim("Matrix([[1, 1], [2, 3]])@ZZ|sparse") else {
+    fail(
+      "domainmatrix sparse add should preserve sparse format: \{dm_summary(sparse_sum)}",
+    )
   }
   guard dm_fmt(sparse.transpose()) == "sparse" else {
     fail("domainmatrix transpose should preserve sparse format")
@@ -716,7 +797,9 @@ test "domainmatrix: direct format checks and stack semantics" {
     "dense",
   )
   guard dm_trim(ours_hstack) == dm_trim(oracle_hstack) else {
-    fail("domainmatrix hstack mismatch: ours=\{ours_hstack}, oracle=\{oracle_hstack}")
+    fail(
+      "domainmatrix hstack mismatch: ours=\{ours_hstack}, oracle=\{oracle_hstack}",
+    )
   }
 
   let ours_vstack = dm_summary(sparse.vstack(dense_q))
@@ -729,7 +812,9 @@ test "domainmatrix: direct format checks and stack semantics" {
     "dense",
   )
   guard dm_trim(ours_vstack) == dm_trim(oracle_vstack) else {
-    fail("domainmatrix vstack mismatch: ours=\{ours_vstack}, oracle=\{oracle_vstack}")
+    fail(
+      "domainmatrix vstack mismatch: ours=\{ours_vstack}, oracle=\{oracle_vstack}",
+    )
   }
 }
 
@@ -737,7 +822,9 @@ test "domainmatrix: direct format checks and stack semantics" {
 test "domainmatrix: truediv parity and scalar fast paths" {
   let sparse_zz = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ).to_sparse()
 
-  let ours_half = dm_summary(sparse_zz.truediv(domain_scalar_from_int(2, Domain::ZZ)))
+  let ours_half = dm_summary(
+    sparse_zz.truediv(domain_scalar_from_int(2, Domain::ZZ)),
+  )
   let oracle_half = @sympy_polys.domainmatrix_truediv_summary(
     [[1, 2], [3, 4]],
     "ZZ",
@@ -745,7 +832,9 @@ test "domainmatrix: truediv parity and scalar fast paths" {
     fmt="sparse",
   )
   guard dm_trim(ours_half) == dm_trim(oracle_half) else {
-    fail("domainmatrix truediv(2) mismatch: ours=\{ours_half}, oracle=\{oracle_half}")
+    fail(
+      "domainmatrix truediv(2) mismatch: ours=\{ours_half}, oracle=\{oracle_half}",
+    )
   }
 
   let sparse_qq = sparse_zz.to_field()
@@ -763,17 +852,20 @@ test "domainmatrix: truediv parity and scalar fast paths" {
     )
   }
 
-  guard dm_trim(dm_summary(sparse_zz._scalarmul(try! fe_from_int(1, Domain::ZZ)))) ==
+  guard dm_trim(
+      dm_summary(sparse_zz._scalarmul(try! fe_from_int(1, Domain::ZZ))),
+    ) ==
     dm_trim(dm_summary(sparse_zz)) else {
     fail("domainmatrix _scalarmul(1) should return an unchanged copy")
   }
-  guard dm_trim(dm_summary(sparse_zz._scalarmul(try! fe_from_int(0, Domain::ZZ)))) ==
+  guard dm_trim(
+      dm_summary(sparse_zz._scalarmul(try! fe_from_int(0, Domain::ZZ))),
+    ) ==
     dm_trim("Matrix([[0, 0], [0, 0]])@ZZ|sparse") else {
     fail("domainmatrix _scalarmul(0) should preserve sparse zero format")
   }
-  guard (try? sparse_zz.truediv(domain_scalar_from_int(0, Domain::ZZ))) is Err(
-    PolyError::DivisionByZero,
-  ) else {
+  guard (try? sparse_zz.truediv(domain_scalar_from_int(0, Domain::ZZ)))
+    is Err(PolyError::DivisionByZero) else {
     fail("domainmatrix truediv should reject zero divisors")
   }
 }
@@ -785,9 +877,10 @@ test "domainmatrix: sympy-style constructor and conversion parity" {
     [@symcore.int(3), @symcore.int(4)],
   ]
   let ours_from_list = DomainMatrix::from_list_sympy(2, 2, expr_rows)
-  let oracle_from_list = @sympy_polys.domainmatrix_from_list_sympy_expr(
-    [["1/2", "2"], ["3", "4"]],
-  )
+  let oracle_from_list = @sympy_polys.domainmatrix_from_list_sympy_expr([
+    ["1/2", "2"],
+    ["3", "4"],
+  ])
   guard dm_trim(dm_summary(ours_from_list)) == dm_trim(oracle_from_list) else {
     fail(
       "domainmatrix from_list_sympy mismatch: ours=\{dm_summary(ours_from_list)}, oracle=\{oracle_from_list}",
@@ -805,7 +898,9 @@ test "domainmatrix: sympy-style constructor and conversion parity" {
     )
   }
 
-  let choose = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ).choose_domain(field=true)
+  let choose = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ).choose_domain(
+    field=true,
+  )
   let oracle_choose = @sympy_polys.domainmatrix_choose_domain(
     [[1, 2], [3, 4]],
     "ZZ",
@@ -819,7 +914,9 @@ test "domainmatrix: sympy-style constructor and conversion parity" {
 
   guard dm_trim(dm_expr_matrix_text(ours_from_list.to_Matrix())) ==
     dm_trim("Matrix([[1/2, 2], [3, 4]])") else {
-    fail("domainmatrix to_Matrix mismatch: \{dm_expr_matrix_text(ours_from_list.to_Matrix())}")
+    fail(
+      "domainmatrix to_Matrix mismatch: \{dm_expr_matrix_text(ours_from_list.to_Matrix())}",
+    )
   }
   guard dm_trim(dm_expr_matrix_text(ours_from_list.to_sympy())) ==
     dm_trim("Matrix([[1/2, 2], [3, 4]])") else {
@@ -830,13 +927,23 @@ test "domainmatrix: sympy-style constructor and conversion parity" {
   }
 
   let ddm_dm = ours_from_list.to_ddm().to_domain_matrix()
-  let ddm_rep = DomainMatrix::from_rep(ddm_dm.rep, ddm_dm.shape(), ddm_dm.domain)
-  guard dm_trim(ddm_rep.to_matrix_string()) == dm_trim(ours_from_list.to_matrix_string()) else {
+  let ddm_rep = DomainMatrix::from_rep(
+    ddm_dm.rep,
+    ddm_dm.shape(),
+    ddm_dm.domain,
+  )
+  guard dm_trim(ddm_rep.to_matrix_string()) ==
+    dm_trim(ours_from_list.to_matrix_string()) else {
     fail("domainmatrix from_rep(DDM) mismatch")
   }
   let sdm_dm = ours_from_matrix.to_sdm().to_domain_matrix()
-  let sdm_rep = DomainMatrix::from_rep(sdm_dm.rep, sdm_dm.shape(), sdm_dm.domain)
-  guard dm_trim(sdm_rep.to_matrix_string()) == dm_trim(ours_from_matrix.to_matrix_string()) else {
+  let sdm_rep = DomainMatrix::from_rep(
+    sdm_dm.rep,
+    sdm_dm.shape(),
+    sdm_dm.domain,
+  )
+  guard dm_trim(sdm_rep.to_matrix_string()) ==
+    dm_trim(ours_from_matrix.to_matrix_string()) else {
     fail("domainmatrix from_rep(SDM) mismatch")
   }
   guard dm_trim(ours_from_matrix.to_dfm().to_string()) == "[[1/2,2],[3,4]]" else {
@@ -851,7 +958,9 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
   let ours_content = fe_to_string(qq.content())
   let oracle_content = @sympy_polys.domainmatrix_content_expr(qq_rows, "QQ")
   guard dm_trim(ours_content) == dm_trim(oracle_content) else {
-    fail("domainmatrix content mismatch: ours=\{ours_content}, oracle=\{oracle_content}")
+    fail(
+      "domainmatrix content mismatch: ours=\{ours_content}, oracle=\{oracle_content}",
+    )
   }
 
   let primitive = qq.primitive()
@@ -867,18 +976,21 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
   let zz = domain_matrix_from_ints([[4, 6]], Domain::ZZ)
   let ours_cancel = zz.cancel_denom(try! fe_from_int(12, Domain::ZZ))
   let ours_cancel_text = "\{ours_cancel.0.to_matrix_string()}||\{fe_to_string(ours_cancel.1)}"
-  let oracle_cancel = @sympy_polys.domainmatrix_cancel_denom_expr(zz_rows, "12", "ZZ")
+  let oracle_cancel = @sympy_polys.domainmatrix_cancel_denom_expr(
+    zz_rows, "12", "ZZ",
+  )
   guard dm_trim(ours_cancel_text) == dm_trim(oracle_cancel) else {
-    fail("domainmatrix cancel_denom mismatch: ours=\{ours_cancel_text}, oracle=\{oracle_cancel}")
+    fail(
+      "domainmatrix cancel_denom mismatch: ours=\{ours_cancel_text}, oracle=\{oracle_cancel}",
+    )
   }
 
-  let ours_cancel_elt = zz.cancel_denom_elementwise(try! fe_from_int(12, Domain::ZZ))
-  let ours_cancel_elt_text =
-    "\{ours_cancel_elt.0.to_matrix_string()}||\{ours_cancel_elt.1.to_matrix_string()}"
+  let ours_cancel_elt = zz.cancel_denom_elementwise(
+    try! fe_from_int(12, Domain::ZZ),
+  )
+  let ours_cancel_elt_text = "\{ours_cancel_elt.0.to_matrix_string()}||\{ours_cancel_elt.1.to_matrix_string()}"
   let oracle_cancel_elt = @sympy_polys.domainmatrix_cancel_denom_elementwise_expr(
-    zz_rows,
-    "12",
-    "ZZ",
+    zz_rows, "12", "ZZ",
   )
   guard dm_trim(ours_cancel_elt_text) == dm_trim(oracle_cancel_elt) else {
     fail(
@@ -889,16 +1001,22 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::ZZ)
   let b = domain_matrix_from_ints([[5], [6]], Domain::ZZ)
   let adj_poly_det = a.adj_poly_det()
-  let ours_adj_poly_det =
-    "\{dm_coeffs_text(adj_poly_det.0)}||\{fe_to_string(adj_poly_det.1)}"
-  let oracle_adj_poly_det = @sympy_polys.domainmatrix_adj_poly_det([[1, 2], [3, 4]], "ZZ")
+  let ours_adj_poly_det = "\{dm_coeffs_text(adj_poly_det.0)}||\{fe_to_string(adj_poly_det.1)}"
+  let oracle_adj_poly_det = @sympy_polys.domainmatrix_adj_poly_det(
+    [[1, 2], [3, 4]],
+    "ZZ",
+  )
   guard dm_trim(ours_adj_poly_det) == dm_trim(oracle_adj_poly_det) else {
     fail(
       "domainmatrix adj_poly_det mismatch: ours=\{ours_adj_poly_det}, oracle=\{oracle_adj_poly_det}",
     )
   }
 
-  let coeffs = [fe_from_int(1, Domain::ZZ), fe_from_int(2, Domain::ZZ), fe_from_int(3, Domain::ZZ)]
+  let coeffs = [
+    fe_from_int(1, Domain::ZZ),
+    fe_from_int(2, Domain::ZZ),
+    fe_from_int(3, Domain::ZZ),
+  ]
   let ours_eval_poly = a.eval_poly(coeffs).to_matrix_string()
   let oracle_eval_poly = @sympy_polys.domainmatrix_eval_poly(
     [[1, 2], [3, 4]],
@@ -925,8 +1043,7 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
   }
 
   let ours_solve_charpoly = a.solve_den_charpoly(b)
-  let ours_solve_charpoly_text =
-    "\{ours_solve_charpoly.0.to_matrix_string()}||\{fe_to_string(ours_solve_charpoly.1)}"
+  let ours_solve_charpoly_text = "\{ours_solve_charpoly.0.to_matrix_string()}||\{fe_to_string(ours_solve_charpoly.1)}"
   let oracle_solve_charpoly = @sympy_polys.domainmatrix_solve_den_charpoly(
     [[1, 2], [3, 4]],
     [[5], [6]],
@@ -952,7 +1069,10 @@ test "domainmatrix: adjugate, adj_det, inv_den, solve_den parity over ZZ" {
   let ours_inv_den = "\{inv_den.0.to_matrix_string()}||\{fe_to_string(inv_den.1)}"
   let ours_solve_den = "\{solve_den.0.to_matrix_string()}||\{fe_to_string(solve_den.1)}"
 
-  let oracle_adjugate = @sympy_polys.domainmatrix_adjugate([[1, 2], [3, 4]], "ZZ")
+  let oracle_adjugate = @sympy_polys.domainmatrix_adjugate(
+    [[1, 2], [3, 4]],
+    "ZZ",
+  )
   let oracle_adj_det = @sympy_polys.domainmatrix_adj_det([[1, 2], [3, 4]], "ZZ")
   let oracle_inv_den = @sympy_polys.domainmatrix_inv_den([[1, 2], [3, 4]], "ZZ")
   let oracle_solve_den = @sympy_polys.domainmatrix_solve_den(
@@ -962,16 +1082,24 @@ test "domainmatrix: adjugate, adj_det, inv_den, solve_den parity over ZZ" {
   )
 
   guard dm_trim(ours_adjugate) == dm_trim(oracle_adjugate) else {
-    fail("domainmatrix adjugate mismatch: ours=\{ours_adjugate}, oracle=\{oracle_adjugate}")
+    fail(
+      "domainmatrix adjugate mismatch: ours=\{ours_adjugate}, oracle=\{oracle_adjugate}",
+    )
   }
   guard dm_trim(ours_adj_det) == dm_trim(oracle_adj_det) else {
-    fail("domainmatrix adj_det mismatch: ours=\{ours_adj_det}, oracle=\{oracle_adj_det}")
+    fail(
+      "domainmatrix adj_det mismatch: ours=\{ours_adj_det}, oracle=\{oracle_adj_det}",
+    )
   }
   guard dm_trim(ours_inv_den) == dm_trim(oracle_inv_den) else {
-    fail("domainmatrix inv_den mismatch: ours=\{ours_inv_den}, oracle=\{oracle_inv_den}")
+    fail(
+      "domainmatrix inv_den mismatch: ours=\{ours_inv_den}, oracle=\{oracle_inv_den}",
+    )
   }
   guard dm_trim(ours_solve_den) == dm_trim(oracle_solve_den) else {
-    fail("domainmatrix solve_den mismatch: ours=\{ours_solve_den}, oracle=\{oracle_solve_den}")
+    fail(
+      "domainmatrix solve_den mismatch: ours=\{ours_solve_den}, oracle=\{oracle_solve_den}",
+    )
   }
 }
 
@@ -986,15 +1114,22 @@ test "domainmatrix: smith normal form parity over ZZ" {
   let oracle_invs = @sympy_polys.domainmatrix_invariant_factors(rows, "ZZ")
   let oracle_smf = @sympy_polys.domainmatrix_smith_normal_form(rows, "ZZ")
   guard ours_invs == oracle_invs else {
-    fail("domainmatrix invariant_factors mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}")
+    fail(
+      "domainmatrix invariant_factors mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}",
+    )
   }
   guard dm_trim(ours_smf) == dm_trim(oracle_smf) else {
-    fail("domainmatrix smith_normal_form mismatch: ours=\{ours_smf}, oracle=\{oracle_smf}")
+    fail(
+      "domainmatrix smith_normal_form mismatch: ours=\{ours_smf}, oracle=\{oracle_smf}",
+    )
   }
   guard smf.is_smith_normal_form() else {
     fail("domainmatrix smith_normal_form should satisfy smith predicate")
   }
-  guard @sympy_polys.domainmatrix_is_smith_normal_form(try! dm_to_int_rows(smf), "ZZ") else {
+  guard @sympy_polys.domainmatrix_is_smith_normal_form(
+    try! dm_to_int_rows(smf),
+    "ZZ",
+  ) else {
     fail("oracle smith predicate should accept smith normal form")
   }
   let recomposed = decomp.1.matmul(a).matmul(decomp.2).to_matrix_string()
@@ -1007,9 +1142,14 @@ test "domainmatrix: smith normal form parity over ZZ" {
 test "domainmatrix: rational dom_eigenvects parity over QQ" {
   let rational = domain_matrix_from_ints([[1, 0], [0, 2]], Domain::QQ)
   let rational_text = dm_dom_eigenvects_text(rational.dom_eigenvects())
-  let oracle_rational = @sympy_polys.domainmatrix_dom_eigenvects_summary([[1, 0], [0, 2]], "QQ")
+  let oracle_rational = @sympy_polys.domainmatrix_dom_eigenvects_summary(
+    [[1, 0], [0, 2]],
+    "QQ",
+  )
   guard dm_trim(rational_text) == dm_trim(oracle_rational) else {
-    fail("domainmatrix rational dom_eigenvects mismatch: ours=\{rational_text}, oracle=\{oracle_rational}")
+    fail(
+      "domainmatrix rational dom_eigenvects mismatch: ours=\{rational_text}, oracle=\{oracle_rational}",
+    )
   }
 }
 
@@ -1017,7 +1157,10 @@ test "domainmatrix: rational dom_eigenvects parity over QQ" {
 test "domainmatrix: algebraic dom_eigenvects parity over QQ" {
   let algebraic = domain_matrix_from_ints([[0, 2], [1, 0]], Domain::QQ)
   let algebraic_text = dm_dom_eigenvects_text(algebraic.dom_eigenvects())
-  let oracle_algebraic = @sympy_polys.domainmatrix_dom_eigenvects_summary([[0, 2], [1, 0]], "QQ")
+  let oracle_algebraic = @sympy_polys.domainmatrix_dom_eigenvects_summary(
+    [[0, 2], [1, 0]],
+    "QQ",
+  )
   guard dm_trim(algebraic_text) == dm_trim(oracle_algebraic) else {
     fail(
       "domainmatrix algebraic dom_eigenvects mismatch: ours=\{algebraic_text}, oracle=\{oracle_algebraic}",
@@ -1040,7 +1183,7 @@ test "domainmatrix: _solve and particular parity over QQ" {
   }
 
   let (rref_aug, pivots) = a.hstack(b).rref()
-  let particular = rref_aug.particular(pivots=pivots).to_matrix_string()
+  let particular = rref_aug.particular(pivots~).to_matrix_string()
   guard particular == "Matrix([[1, 0]])" else {
     fail("domainmatrix particular mismatch: \{particular}")
   }
@@ -1060,7 +1203,9 @@ test "domainmatrix: row/column/nullspace parity over QQ" {
   let oracle_nullspace = @sympy_polys.domainmatrix_nullspace(rows, "QQ")
 
   guard dm_trim(ours_rowspace) == dm_trim(oracle_rowspace) else {
-    fail("domainmatrix rowspace mismatch: ours=\{ours_rowspace}, oracle=\{oracle_rowspace}")
+    fail(
+      "domainmatrix rowspace mismatch: ours=\{ours_rowspace}, oracle=\{oracle_rowspace}",
+    )
   }
   guard dm_trim(ours_columnspace) == dm_trim(oracle_columnspace) else {
     fail(
@@ -1068,7 +1213,9 @@ test "domainmatrix: row/column/nullspace parity over QQ" {
     )
   }
   guard dm_trim(ours_nullspace) == dm_trim(oracle_nullspace) else {
-    fail("domainmatrix nullspace mismatch: ours=\{ours_nullspace}, oracle=\{oracle_nullspace}")
+    fail(
+      "domainmatrix nullspace mismatch: ours=\{ours_nullspace}, oracle=\{oracle_nullspace}",
+    )
   }
 }
 
@@ -1093,7 +1240,9 @@ test "domainmatrix: solve_den_rref parity on rectangular ZZ system" {
   let ours_text = "\{ours.0.to_matrix_string()}||\{fe_to_string(ours.1)}"
   let oracle = @sympy_polys.domainmatrix_solve_den_rref(a_rows, b_rows, "ZZ")
   guard dm_trim(ours_text) == dm_trim(oracle) else {
-    fail("domainmatrix solve_den_rref mismatch: ours=\{ours_text}, oracle=\{oracle}")
+    fail(
+      "domainmatrix solve_den_rref mismatch: ours=\{ours_text}, oracle=\{oracle}",
+    )
   }
 }
 

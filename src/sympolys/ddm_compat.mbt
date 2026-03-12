@@ -13,7 +13,10 @@ pub fn ddm_from_dense(
 }
 
 ///|
-pub fn ddm_from_ints(rows : Array[Array[Int]], domain : Domain) -> DDM raise PolyError {
+pub fn ddm_from_ints(
+  rows : Array[Array[Int]],
+  domain : Domain,
+) -> DDM raise PolyError {
   DDM::{ dm: domain_matrix_from_ints(rows, domain) }
 }
 
@@ -80,12 +83,20 @@ pub fn DDM::from_dok(
 }
 
 ///|
-pub fn DDM::zeros(rows : Int, cols : Int, domain : Domain) -> DDM raise PolyError {
+pub fn DDM::zeros(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> DDM raise PolyError {
   DDM::{ dm: DomainMatrix::zeros(rows, cols, domain) }
 }
 
 ///|
-pub fn DDM::ones(rows : Int, cols : Int, domain : Domain) -> DDM raise PolyError {
+pub fn DDM::ones(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> DDM raise PolyError {
   DDM::{ dm: DomainMatrix::ones(rows, cols, domain) }
 }
 
@@ -101,7 +112,7 @@ pub fn DDM::diag(
   rows? : Int? = None,
   cols? : Int? = None,
 ) -> DDM raise PolyError {
-  DDM::{ dm: DomainMatrix::diag(values, domain, rows=rows, cols=cols) }
+  DDM::{ dm: DomainMatrix::diag(values, domain, rows~, cols~) }
 }
 
 ///|
@@ -179,7 +190,9 @@ pub fn DDM::iter_values(self : DDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-pub fn DDM::iter_items(self : DDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
+pub fn DDM::iter_items(
+  self : DDM,
+) -> Array[(Int, Int, FieldElem)] raise PolyError {
   self.dm.iter_items()
 }
 
@@ -199,7 +212,7 @@ pub fn DDM::applyfunc(
   func : FieldElemMapper,
   domain? : Domain? = None,
 ) -> DDM raise PolyError {
-  let dm = self.dm.applyfunc(func, domain=domain)
+  let dm = self.dm.applyfunc(func, domain~)
   DDM::{ dm: domain_matrix_from_dense(dm.to_dense(), dm.domain) }
 }
 
@@ -209,7 +222,11 @@ pub fn DDM::to_domain_matrix(self : DDM) -> DomainMatrix {
 }
 
 ///|
-pub fn DDM::getitem(self : DDM, row : Int, col : Int) -> FieldElem raise PolyError {
+pub fn DDM::getitem(
+  self : DDM,
+  row : Int,
+  col : Int,
+) -> FieldElem raise PolyError {
   self.dm.getitem(row, col).element
 }
 
@@ -235,12 +252,12 @@ pub fn DDM::extract_slice(
 ) -> DDM raise PolyError {
   DDM::{
     dm: self.dm.extract_slice(
-      row_start=row_start,
-      row_stop=row_stop,
-      row_step=row_step,
-      col_start=col_start,
-      col_stop=col_stop,
-      col_step=col_step,
+      row_start~,
+      row_stop~,
+      row_step~,
+      col_start~,
+      col_stop~,
+      col_step~,
     ),
   }
 }
@@ -366,10 +383,7 @@ pub fn DDM::rref_den(
   rref_method? : String = "auto",
   keep_domain? : Bool = true,
 ) -> (DDM, FieldElem, Array[Int]) raise PolyError {
-  let (r, den, pivots) = self.dm.rref_den(
-    rref_method=rref_method,
-    keep_domain=keep_domain,
-  )
+  let (r, den, pivots) = self.dm.rref_den(rref_method~, keep_domain~)
   (DDM::{ dm: r }, den, pivots)
 }
 
@@ -412,7 +426,7 @@ pub fn DDM::inv_den(
   self : DDM,
   solve_method? : String = "",
 ) -> (DDM, FieldElem) raise PolyError {
-  let (num, den) = self.dm.inv_den(solve_method=solve_method)
+  let (num, den) = self.dm.inv_den(solve_method~)
   (DDM::{ dm: num }, den)
 }
 
@@ -422,7 +436,7 @@ pub fn DDM::solve_den(
   rhs : DDM,
   solve_method? : String = "",
 ) -> (DDM, FieldElem) raise PolyError {
-  let (num, den) = self.dm.solve_den(rhs.dm, solve_method=solve_method)
+  let (num, den) = self.dm.solve_den(rhs.dm, solve_method~)
   (DDM::{ dm: num }, den)
 }
 
@@ -517,7 +531,7 @@ pub fn DDM::nullspace(
   self : DDM,
   divide_last? : Bool = false,
 ) -> Array[Array[FieldElem]] raise PolyError {
-  self.dm.nullspace(divide_last=divide_last).to_dense()
+  self.dm.nullspace(divide_last~).to_dense()
 }
 
 ///|

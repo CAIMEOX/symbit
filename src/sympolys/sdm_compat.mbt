@@ -15,7 +15,10 @@ pub fn sdm_from_entries(
 }
 
 ///|
-pub fn sdm_from_dense(rows : Array[Array[FieldElem]], domain : Domain) -> SDM raise PolyError {
+pub fn sdm_from_dense(
+  rows : Array[Array[FieldElem]],
+  domain : Domain,
+) -> SDM raise PolyError {
   SDM::{ dm: domain_matrix_from_dense(rows, domain).to_sparse() }
 }
 
@@ -79,12 +82,20 @@ pub fn SDM::from_dok(
 }
 
 ///|
-pub fn SDM::zeros(rows : Int, cols : Int, domain : Domain) -> SDM raise PolyError {
+pub fn SDM::zeros(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> SDM raise PolyError {
   SDM::{ dm: DomainMatrix::zeros(rows, cols, domain).to_sparse() }
 }
 
 ///|
-pub fn SDM::ones(rows : Int, cols : Int, domain : Domain) -> SDM raise PolyError {
+pub fn SDM::ones(
+  rows : Int,
+  cols : Int,
+  domain : Domain,
+) -> SDM raise PolyError {
   SDM::{ dm: DomainMatrix::ones(rows, cols, domain).to_sparse() }
 }
 
@@ -100,7 +111,7 @@ pub fn SDM::diag(
   rows? : Int? = None,
   cols? : Int? = None,
 ) -> SDM raise PolyError {
-  SDM::{ dm: DomainMatrix::diag(values, domain, rows=rows, cols=cols).to_sparse() }
+  SDM::{ dm: DomainMatrix::diag(values, domain, rows~, cols~).to_sparse() }
 }
 
 ///|
@@ -192,7 +203,9 @@ pub fn SDM::iter_values(self : SDM) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-pub fn SDM::iter_items(self : SDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
+pub fn SDM::iter_items(
+  self : SDM,
+) -> Array[(Int, Int, FieldElem)] raise PolyError {
   self.dm.iter_items()
 }
 
@@ -207,7 +220,9 @@ pub fn SDM::to_dok(self : SDM) -> DomainMatrixDOK raise PolyError {
 }
 
 ///|
-pub fn SDM::to_sparse_entries(self : SDM) -> Array[(Int, Int, FieldElem)] raise PolyError {
+pub fn SDM::to_sparse_entries(
+  self : SDM,
+) -> Array[(Int, Int, FieldElem)] raise PolyError {
   let rows = self.dm.to_dense()
   let entries : Array[(Int, Int, FieldElem)] = Array::new()
   for i in 0..<self.dm.rows {
@@ -222,7 +237,11 @@ pub fn SDM::to_sparse_entries(self : SDM) -> Array[(Int, Int, FieldElem)] raise 
 }
 
 ///|
-pub fn SDM::getitem(self : SDM, row : Int, col : Int) -> FieldElem raise PolyError {
+pub fn SDM::getitem(
+  self : SDM,
+  row : Int,
+  col : Int,
+) -> FieldElem raise PolyError {
   self.dm.getitem(row, col).element
 }
 
@@ -247,14 +266,16 @@ pub fn SDM::extract_slice(
   col_step? : Int = 1,
 ) -> SDM raise PolyError {
   SDM::{
-    dm: self.dm.extract_slice(
-      row_start=row_start,
-      row_stop=row_stop,
-      row_step=row_step,
-      col_start=col_start,
-      col_stop=col_stop,
-      col_step=col_step,
-    ).to_sparse(),
+    dm: self.dm
+    .extract_slice(
+      row_start~,
+      row_stop~,
+      row_step~,
+      col_start~,
+      col_stop~,
+      col_step~,
+    )
+    .to_sparse(),
   }
 }
 
@@ -264,7 +285,7 @@ pub fn SDM::applyfunc(
   func : FieldElemMapper,
   domain? : Domain? = None,
 ) -> SDM raise PolyError {
-  SDM::{ dm: self.dm.applyfunc(func, domain=domain).to_sparse() }
+  SDM::{ dm: self.dm.applyfunc(func, domain~).to_sparse() }
 }
 
 ///|
@@ -373,10 +394,7 @@ pub fn SDM::rref_den(
   rref_method? : String = "auto",
   keep_domain? : Bool = true,
 ) -> (SDM, FieldElem, Array[Int]) raise PolyError {
-  let (r, den, pivots) = self.dm.rref_den(
-    rref_method=rref_method,
-    keep_domain=keep_domain,
-  )
+  let (r, den, pivots) = self.dm.rref_den(rref_method~, keep_domain~)
   (SDM::{ dm: r.to_sparse() }, den, pivots)
 }
 
@@ -394,7 +412,7 @@ pub fn SDM::nullspace(
   self : SDM,
   divide_last? : Bool = false,
 ) -> Array[Array[FieldElem]] raise PolyError {
-  self.dm.nullspace(divide_last=divide_last).to_dense()
+  self.dm.nullspace(divide_last~).to_dense()
 }
 
 ///|
@@ -449,7 +467,10 @@ pub fn SDM::scc(self : SDM) -> Array[Array[Int]] raise PolyError {
 }
 
 ///|
-pub fn SDM::lll(self : SDM, delta? : @symnum.BigRational) -> SDM raise PolyError {
+pub fn SDM::lll(
+  self : SDM,
+  delta? : @symnum.BigRational,
+) -> SDM raise PolyError {
   let reduced = match delta {
     Some(d) => self.to_dense().lll(delta=d)
     None => self.to_dense().lll()

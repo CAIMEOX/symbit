@@ -25,6 +25,7 @@ fn find_char(s : String, needle : UInt16) -> Int? {
   None
 }
 
+///|
 fn find_matching_open_from_end(
   s : String,
   open_char : UInt16,
@@ -102,7 +103,10 @@ fn find_last_substring(s : String, needle : String) -> Int? {
 }
 
 ///|
-fn split_gf_descriptor(raw : String, spec : String) -> (Int, Int?) raise PolyError {
+fn split_gf_descriptor(
+  raw : String,
+  spec : String,
+) -> (Int, Int?) raise PolyError {
   let body = raw.trim().to_string()
   if body.contains("**") {
     let parts : Array[String] = Array::new()
@@ -145,10 +149,8 @@ fn split_gf_descriptor(raw : String, spec : String) -> (Int, Int?) raise PolyErr
 ///|
 fn parse_composite_domain(s : String) -> Domain raise PolyError {
   if (
-    s.has_prefix("GF(") ||
-    s.has_prefix("FF(") ||
-    s.has_prefix("FiniteField(")
-  ) &&
+      s.has_prefix("GF(") || s.has_prefix("FF(") || s.has_prefix("FiniteField(")
+    ) &&
     s.has_suffix(")") {
     let left = match find_char(s, '(') {
       Some(pos) => pos
@@ -189,8 +191,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
     if right + 2 == s.length() {
       return Domain::PowerSeries(base, gens, -1)
     }
-    if
-      s.has_suffix(")") &&
+    if s.has_suffix(")") &&
       right + 8 <= s.length() - 1 &&
       (try! s[right + 2:right + 8]).to_string() == "(prec=" {
       let prec_text = (try! s[right + 8:s.length() - 1]).to_string()
@@ -577,7 +578,10 @@ pub fn domain_has_assoc_ring_pred(domain : Domain) -> Bool {
 /// Principal-ideal-domain predicate for migrated domain families.
 pub fn domain_is_pid_pred(domain : Domain) -> Bool {
   match domain {
-    Domain::RR | Domain::ZZ_I | Domain::PolyRing(_, _) | Domain::PowerSeries(_, _, _) => false
+    Domain::RR
+    | Domain::ZZ_I
+    | Domain::PolyRing(_, _)
+    | Domain::PowerSeries(_, _, _) => false
     Domain::QuotientRing(_, _, _) => false
     _ => true
   }
@@ -741,7 +745,8 @@ pub fn domain_get_exact(domain : Domain) -> Domain {
     Domain::RR => Domain::QQ
     Domain::CC => Domain::QQ_I
     Domain::Frac(inner) => Domain::Frac(domain_get_exact(inner))
-    Domain::PolyRing(base, gens) => Domain::PolyRing(domain_get_exact(base), gens)
+    Domain::PolyRing(base, gens) =>
+      Domain::PolyRing(domain_get_exact(base), gens)
     Domain::RationalFunctionField(base, gens) =>
       Domain::RationalFunctionField(domain_get_exact(base), gens)
     Domain::QuotientRing(base, gens, rels) =>
@@ -784,8 +789,7 @@ pub fn domain_get_ring(domain : Domain) -> Domain raise PolyError {
     Domain::QQ_I => Domain::ZZ_I
     Domain::ZZ | Domain::ZZ_I | Domain::RR | Domain::EX => domain
     Domain::Frac(inner) => inner
-    Domain::RationalFunctionField(base, gens) =>
-      Domain::PolyRing(base, gens)
+    Domain::RationalFunctionField(base, gens) => Domain::PolyRing(base, gens)
     Domain::PolyRing(_, _) => domain
     Domain::QuotientRing(base, gens, rels) =>
       Domain::QuotientRing(domain_get_ring(base), gens, rels)
@@ -805,7 +809,9 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
     (Domain::AlgExt(base1, gens1, rels1), Domain::AlgExt(base2, gens2, rels2)) =>
       if gens1.equal(gens2) && rels1.equal(rels2) {
         return Domain::AlgExt(domain_unify_pair(base1, base2), gens1, rels1)
-      } else if rels1.is_empty() && rels2.is_empty() && gens1.length() == 1 &&
+      } else if rels1.is_empty() &&
+        rels2.is_empty() &&
+        gens1.length() == 1 &&
         gens2.length() == 1 {
         // SymPy often produces a primitive element for the combined extension.
         let unified_base = domain_unify_pair(base1, base2)
@@ -813,7 +819,8 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
       } else {
         raise PolyError::DomainMismatch
       }
-    (Domain::AlgExt(base, gens, rels), other) | (other, Domain::AlgExt(base, gens, rels)) => {
+    (Domain::AlgExt(base, gens, rels), other)
+    | (other, Domain::AlgExt(base, gens, rels)) => {
       match other {
         Domain::RR | Domain::CC | Domain::EX | Domain::EXRAW => return other
         Domain::ZZ_I | Domain::QQ_I => {
@@ -853,15 +860,29 @@ pub fn domain_unify_pair(a : Domain, b : Domain) -> Domain raise PolyError {
         raise PolyError::DomainMismatch
       }
     }
-    (Domain::QuotientRing(base1, gens1, rels1), Domain::QuotientRing(base2, gens2, rels2)) =>
+    (
+      Domain::QuotientRing(base1, gens1, rels1),
+      Domain::QuotientRing(base2, gens2, rels2),
+    ) =>
       if gens1.equal(gens2) && rels1.equal(rels2) {
-        return Domain::QuotientRing(domain_unify_pair(base1, base2), gens1, rels1)
+        return Domain::QuotientRing(
+          domain_unify_pair(base1, base2),
+          gens1,
+          rels1,
+        )
       } else {
         raise PolyError::DomainMismatch
       }
-    (Domain::PowerSeries(base1, gens1, prec1), Domain::PowerSeries(base2, gens2, prec2)) =>
+    (
+      Domain::PowerSeries(base1, gens1, prec1),
+      Domain::PowerSeries(base2, gens2, prec2),
+    ) =>
       if gens1.equal(gens2) && prec1 == prec2 {
-        return Domain::PowerSeries(domain_unify_pair(base1, base2), gens1, prec1)
+        return Domain::PowerSeries(
+          domain_unify_pair(base1, base2),
+          gens1,
+          prec1,
+        )
       } else {
         raise PolyError::DomainMismatch
       }
@@ -995,7 +1016,8 @@ fn lift_composite_domain(
 ) -> Domain raise PolyError {
   match template {
     Domain::PolyRing(_, _) => Domain::PolyRing(base, gens)
-    Domain::RationalFunctionField(_, _) => Domain::RationalFunctionField(base, gens)
+    Domain::RationalFunctionField(_, _) =>
+      Domain::RationalFunctionField(base, gens)
     Domain::QuotientRing(_, _, rels) => Domain::QuotientRing(base, gens, rels)
     Domain::PowerSeries(_, _, prec) => Domain::PowerSeries(base, gens, prec)
     _ => raise PolyError::DomainMismatch
@@ -1011,21 +1033,21 @@ fn unify_composite_domains(a : Domain, b : Domain) -> Domain raise PolyError {
 
   // Match SymPy's composite coercion rule for PolyRing+FracField mixes.
   if (
-    (
       (domain_is_fraction_field_like(a) && domain_is_poly_ring(b)) ||
       (domain_is_fraction_field_like(b) && domain_is_poly_ring(a))
     ) &&
     (!domain_is_field_pred(ground_a) || !domain_is_field_pred(ground_b)) &&
     domain_is_field_pred(ground) &&
-    domain_has_assoc_ring(ground)
-  ) {
+    domain_has_assoc_ring(ground) {
     ground = domain_get_ring(ground)
   }
 
   let use_a = domain_is_composite_like(a) &&
-    (!domain_is_composite_like(b) ||
+    (
+      !domain_is_composite_like(b) ||
       domain_is_fraction_field_like(a) ||
-      domain_is_poly_ring(b))
+      domain_is_poly_ring(b)
+    )
   let template = if use_a { a } else { b }
   lift_composite_domain(template, ground, gens)
 }
@@ -1085,8 +1107,10 @@ pub fn domain_set_domain(domain : Domain, ground : Domain) -> Domain {
     Domain::PolyRing(_, gens) => Domain::PolyRing(ground, gens)
     Domain::RationalFunctionField(_, gens) =>
       Domain::RationalFunctionField(ground, gens)
-    Domain::QuotientRing(_, gens, rels) => Domain::QuotientRing(ground, gens, rels)
-    Domain::PowerSeries(_, gens, prec) => Domain::PowerSeries(ground, gens, prec)
+    Domain::QuotientRing(_, gens, rels) =>
+      Domain::QuotientRing(ground, gens, rels)
+    Domain::PowerSeries(_, gens, prec) =>
+      Domain::PowerSeries(ground, gens, prec)
     Domain::Frac(_) => Domain::Frac(ground)
     Domain::AlgExt(_, gens, rels) => Domain::AlgExt(ground, gens, rels)
     _ => ground
@@ -1100,10 +1124,12 @@ pub fn domain_unify_with_symbols(
   rhs : Domain,
   symbols : Array[String],
 ) -> Domain raise PolyError {
-  if domain_is_composite_pred(lhs) && domain_symbols(lhs).any(s => symbols.contains(s)) {
+  if domain_is_composite_pred(lhs) &&
+    domain_symbols(lhs).any(s => symbols.contains(s)) {
     raise PolyError::BadGenerator(symbols.join(","))
   }
-  if domain_is_composite_pred(rhs) && domain_symbols(rhs).any(s => symbols.contains(s)) {
+  if domain_is_composite_pred(rhs) &&
+    domain_symbols(rhs).any(s => symbols.contains(s)) {
     raise PolyError::BadGenerator(symbols.join(","))
   }
   domain_unify_pair(lhs, rhs)
@@ -1111,7 +1137,10 @@ pub fn domain_unify_with_symbols(
 
 ///|
 /// Unify two domains where at least one side is composite.
-pub fn domain_unify_composite(lhs : Domain, rhs : Domain) -> Domain raise PolyError {
+pub fn domain_unify_composite(
+  lhs : Domain,
+  rhs : Domain,
+) -> Domain raise PolyError {
   domain_unify_pair(lhs, rhs)
 }
 
@@ -1165,6 +1194,7 @@ pub fn domain_algebraic_field(
   }
 }
 
+///|
 fn expr_replace_symbol(
   expr : @symcore.Expr,
   old_name : String,
@@ -1179,18 +1209,30 @@ fn expr_replace_symbol(
         expr
       }
     @symcore.Expr::Add(args) =>
-      @symcore.add(args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+      @symcore.add(
+        args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+      )
     @symcore.Expr::Mul(args) =>
-      @symcore.mul(args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+      @symcore.mul(
+        args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+      )
     @symcore.Expr::Pow(base, exp) =>
       expr_replace_symbol(base, old_name, new_name) ^
       expr_replace_symbol(exp, old_name, new_name)
     @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(arg => expr_replace_symbol(arg, old_name, new_name)))
+      @symcore.function(
+        name,
+        args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+      )
   }
 }
 
-fn poly_with_generator(poly : Poly, gen : String, domain : Domain) -> Poly raise PolyError {
+///|
+fn poly_with_generator(
+  poly : Poly,
+  gen : String,
+  domain : Domain,
+) -> Poly raise PolyError {
   guard poly.gens.length() == 1 else { raise PolyError::NotUnivariate }
   let raw = if poly.gens[0] == gen {
     poly.to_expr()
@@ -1200,6 +1242,7 @@ fn poly_with_generator(poly : Poly, gen : String, domain : Domain) -> Poly raise
   Poly::from_expr(raw, [gen], domain)
 }
 
+///|
 fn poly_univar_coeff(poly : Poly, exp : Int) -> FieldElem raise PolyError {
   guard poly.gens.length() == 1 else { raise PolyError::NotUnivariate }
   let mono = monomial_from_array([exp])
@@ -1209,6 +1252,7 @@ fn poly_univar_coeff(poly : Poly, exp : Int) -> FieldElem raise PolyError {
   }
 }
 
+///|
 fn normalize_root_index(poly : Poly, root_index : Int) -> Int raise PolyError {
   let degree = poly.degree(0)
   guard degree >= 1 else { raise PolyError::NonPolynomial }
@@ -1226,6 +1270,7 @@ fn normalize_root_index(poly : Poly, root_index : Int) -> Int raise PolyError {
   }
 }
 
+///|
 fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
   let degree = poly.degree(0)
   if degree == 1 {
@@ -1235,7 +1280,10 @@ fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
     return @symprint.to_string(root)
   }
   let idx = normalize_root_index(poly, root_index)
-  let poly_text = @symprint.to_string(poly.to_expr()).replace_all(old="+ -", new="- ")
+  let poly_text = @symprint.to_string(poly.to_expr()).replace_all(
+    old="+ -",
+    new="- ",
+  )
   return "CRootOf(\{poly_text}, \{idx})"
 }
 
@@ -1259,13 +1307,15 @@ pub fn domain_alg_field_from_poly(
   build_alg_extension(alg_ext_spec(base, gen, lifted))
 }
 
-fn cyclotomic_poly_domain(
-  n : Int,
-  gen : String,
-) -> Poly raise PolyError {
+///|
+fn cyclotomic_poly_domain(n : Int, gen : String) -> Poly raise PolyError {
   guard n > 0 else { raise PolyError::BadExponent }
   let x = @symcore.symbol(gen)
-  let mut poly = Poly::from_expr((x ^ @symcore.int(n)) - @symcore.int(1), [gen], Domain::QQ)
+  let mut poly = Poly::from_expr(
+    (x ^ @symcore.int(n)) - @symcore.int(1),
+    [gen],
+    Domain::QQ,
+  )
   for d in 1..<n {
     if n % d == 0 {
       poly = poly.div_exact_univar(cyclotomic_poly_domain(d, gen))
@@ -1289,7 +1339,7 @@ pub fn domain_cyclotomic_field(
     None => ext_alias
   }
   let poly = cyclotomic_poly_domain(n, poly_gen)
-  domain_alg_field_from_poly(domain, poly, alias=Some(ext_alias), root_index=root_index)
+  domain_alg_field_from_poly(domain, poly, alias=Some(ext_alias), root_index~)
 }
 
 ///|
@@ -1374,7 +1424,8 @@ pub fn domain_drop(
     Domain::Frac(base) => {
       let rebased = domain_drop(base, gens)
       match rebased {
-        Domain::PolyRing(_, _) | Domain::RationalFunctionField(_, _) => Domain::Frac(rebased)
+        Domain::PolyRing(_, _) | Domain::RationalFunctionField(_, _) =>
+          Domain::Frac(rebased)
         _ => rebased
       }
     }
@@ -1417,7 +1468,10 @@ fn gen_symbol_name(gen : String) -> String? {
   }
   if text.has_prefix("1/") {
     let rest = (try! text[2:text.length()]).to_string().trim().to_string()
-    if rest != "" && !rest.contains("/") && !rest.contains("(") && !rest.contains("[") &&
+    if rest != "" &&
+      !rest.contains("/") &&
+      !rest.contains("(") &&
+      !rest.contains("[") &&
       !rest.contains("<") {
       return Some(rest)
     }
@@ -1454,17 +1508,18 @@ fn expr_is_nonnegative_integer(expr : @symcore.Expr) -> Bool {
   }
 }
 
+///|
 fn expr_has_forbidden_symbol(expr : @symcore.Expr, allow_i : Bool) -> Bool {
   match expr {
     @symcore.Expr::Number(_) => false
     @symcore.Expr::Symbol(name) => if allow_i { name != "I" } else { true }
     @symcore.Expr::Add(args)
     | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) => args.any(item =>
-      expr_has_forbidden_symbol(item, allow_i)
-    )
+    | @symcore.Expr::Function(_, args) =>
+      args.any(item => expr_has_forbidden_symbol(item, allow_i))
     @symcore.Expr::Pow(base, exp) =>
-      expr_has_forbidden_symbol(base, allow_i) || expr_has_forbidden_symbol(exp, allow_i)
+      expr_has_forbidden_symbol(base, allow_i) ||
+      expr_has_forbidden_symbol(exp, allow_i)
   }
 }
 
@@ -1495,9 +1550,14 @@ fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
           coeffs.push(arg)
         }
       }
-      imag_count == 1 && domain_contains_expr(
+      imag_count == 1 &&
+      domain_contains_expr(
         coeff_dom,
-        if coeffs.is_empty() { @symcore.int(1) } else { @symcore.mul(coeffs) },
+        if coeffs.is_empty() {
+          @symcore.int(1)
+        } else {
+          @symcore.mul(coeffs)
+        },
       )
     }
     _ => false
@@ -1523,9 +1583,8 @@ fn expr_in_algext(
     }
   }
   match expr {
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => args.all(item =>
-      expr_in_algext(base, gens, rels, item)
-    )
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.all(item => expr_in_algext(base, gens, rels, item))
     @symcore.Expr::Pow(inner, exp) =>
       expr_is_integer(exp) && expr_in_algext(base, gens, rels, inner)
     _ => all_allowed.contains(expr_key(expr))
@@ -1548,7 +1607,8 @@ fn expr_in_polynomial_domain(
     @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
       args.all(item => expr_in_polynomial_domain(base, gens, item))
     @symcore.Expr::Pow(inner, exp) =>
-      expr_is_nonnegative_integer(exp) && expr_in_polynomial_domain(base, gens, inner)
+      expr_is_nonnegative_integer(exp) &&
+      expr_in_polynomial_domain(base, gens, inner)
     @symcore.Expr::Function(_, _) => false
   }
 }
@@ -1579,41 +1639,42 @@ fn expr_in_fraction_domain(
 pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
   match domain {
     Domain::EX | Domain::EXRAW => true
-    Domain::ZZ => {
+    Domain::ZZ =>
       match expr {
         @symcore.Expr::Number(n) => n.is_integral()
         _ => false
       }
-    }
     Domain::QQ => expr is @symcore.Expr::Number(_)
     Domain::RR => !expr_has_forbidden_symbol(expr, false)
     Domain::CC => !expr_has_forbidden_symbol(expr, true)
-    Domain::ZZ_I => {
+    Domain::ZZ_I =>
       match expr {
-        @symcore.Expr::Add(args) => args.all(item => gaussian_term_in_domain(item, Domain::ZZ))
+        @symcore.Expr::Add(args) =>
+          args.all(item => gaussian_term_in_domain(item, Domain::ZZ))
         _ => gaussian_term_in_domain(expr, Domain::ZZ)
       }
-    }
-    Domain::QQ_I => {
+    Domain::QQ_I =>
       match expr {
-        @symcore.Expr::Add(args) => args.all(item => gaussian_term_in_domain(item, Domain::QQ))
+        @symcore.Expr::Add(args) =>
+          args.all(item => gaussian_term_in_domain(item, Domain::QQ))
         _ => gaussian_term_in_domain(expr, Domain::QQ)
       }
-    }
-    Domain::GF(_) | Domain::GFExt(_, _, _) => {
+    Domain::GF(_) | Domain::GFExt(_, _, _) =>
       match expr {
         @symcore.Expr::Number(n) => n.is_integral()
         _ => false
       }
-    }
     Domain::AlgExt(base, gens, rels) => expr_in_algext(base, gens, rels, expr)
     Domain::PolyRing(base, gens)
     | Domain::QuotientRing(base, gens, _)
-    | Domain::PowerSeries(base, gens, _) => expr_in_polynomial_domain(base, gens, expr)
-    Domain::RationalFunctionField(base, gens) => expr_in_fraction_domain(base, gens, expr)
+    | Domain::PowerSeries(base, gens, _) =>
+      expr_in_polynomial_domain(base, gens, expr)
+    Domain::RationalFunctionField(base, gens) =>
+      expr_in_fraction_domain(base, gens, expr)
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
           expr_in_fraction_domain(inner, gens, expr)
         _ =>
           try domain_get_field(base) catch {
@@ -1644,7 +1705,8 @@ pub fn domain_from_sympy_expr(
   match domain {
     Domain::ZZ =>
       match expr_rational_value(expr) {
-        Some(value) if value.is_integral() => expr_from_bigint(value.numerator())
+        Some(value) if value.is_integral() =>
+          expr_from_bigint(value.numerator())
         _ => raise PolyError::DomainMismatch
       }
     Domain::QQ =>
@@ -1654,29 +1716,38 @@ pub fn domain_from_sympy_expr(
       }
     Domain::ZZ_I => gaussian_int_to_expr(gaussian_int_from_expr(domain, expr))
     Domain::QQ_I => gaussian_rat_to_expr(gaussian_rat_from_expr(domain, expr))
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::RR
-    | Domain::CC =>
-      domain_field_elem_to_expr(domain, field_elem_from_scalar_expr(expr, domain))
+    Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
+      domain_field_elem_to_expr(
+        domain,
+        field_elem_from_scalar_expr(expr, domain),
+      )
     Domain::AlgExt(base, gens, rels) =>
       if rels.is_empty() {
-        guard expr_in_algext(base, gens, rels, expr) else { raise PolyError::DomainMismatch }
+        guard expr_in_algext(base, gens, rels, expr) else {
+          raise PolyError::DomainMismatch
+        }
         expr
       } else {
-        domain_field_elem_to_expr(domain, field_elem_from_scalar_expr(expr, domain))
+        domain_field_elem_to_expr(
+          domain,
+          field_elem_from_scalar_expr(expr, domain),
+        )
       }
     Domain::PolyRing(base, gens)
     | Domain::QuotientRing(base, gens, _)
-    | Domain::PowerSeries(base, gens, _) => Poly::from_expr(expr, gens, base).to_expr()
+    | Domain::PowerSeries(base, gens, _) =>
+      Poly::from_expr(expr, gens, base).to_expr()
     Domain::RationalFunctionField(base, gens) => {
       let (numer, denom) = rational_function_pair_from_expr(base, gens, expr)
       rational_function_expr_from_pair(numer, denom, base)
     }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) => {
-          let (numer, denom) = rational_function_pair_from_expr(inner, gens, expr)
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) => {
+          let (numer, denom) = rational_function_pair_from_expr(
+            inner, gens, expr,
+          )
           rational_function_expr_from_pair(numer, denom, inner)
         }
         _ => domain_from_sympy_expr(domain_get_field(base), expr)
@@ -1730,7 +1801,9 @@ pub fn domain_convert_from_expr(
       Domain::PolyRing(inner, gens)
       | Domain::QuotientRing(inner, gens, _)
       | Domain::PowerSeries(inner, gens, _) => {
-        guard !expr_depends_on_symbols(expr, gens) else { raise PolyError::DomainMismatch }
+        guard !expr_depends_on_symbols(expr, gens) else {
+          raise PolyError::DomainMismatch
+        }
         return domain_convert_from_expr(domain, expr, inner)
       }
       Domain::RationalFunctionField(_, _) => raise PolyError::DomainMismatch
@@ -1741,7 +1814,9 @@ pub fn domain_convert_from_expr(
           _ => ()
         }
       Domain::AlgExt(inner, gens, _) => {
-        guard !expr_depends_on_symbols(expr, gens) else { raise PolyError::DomainMismatch }
+        guard !expr_depends_on_symbols(expr, gens) else {
+          raise PolyError::DomainMismatch
+        }
         return domain_convert_from_expr(domain, expr, inner)
       }
       _ => ()
@@ -1754,6 +1829,7 @@ pub fn domain_convert_from_expr(
   domain_from_sympy_expr(domain, lifted)
 }
 
+///|
 fn domain_try_convert_from_expr(
   domain : Domain,
   expr : @symcore.Expr,
@@ -1773,7 +1849,8 @@ pub fn domain_from_ff_expr(
   base : Domain,
 ) -> @symcore.Expr? {
   match base {
-    Domain::GF(_) | Domain::GFExt(_, _, _) => domain_try_convert_from_expr(domain, expr, base)
+    Domain::GF(_) | Domain::GFExt(_, _, _) =>
+      domain_try_convert_from_expr(domain, expr, base)
     _ => None
   }
 }
@@ -1923,7 +2000,9 @@ pub fn domain_from_polynomial_ring_expr(
   base : Domain,
 ) -> @symcore.Expr? {
   match base {
-    Domain::PolyRing(_, _) | Domain::QuotientRing(_, _, _) | Domain::PowerSeries(_, _, _) =>
+    Domain::PolyRing(_, _)
+    | Domain::QuotientRing(_, _, _)
+    | Domain::PowerSeries(_, _, _) =>
       domain_try_convert_from_expr(domain, expr, base)
     _ => None
   }
@@ -1961,7 +2040,9 @@ pub fn domain_from_generalized_polynomial_ring_expr(
     Domain::RationalFunctionField(_, _) | Domain::Frac(_) =>
       match domain {
         Domain::EX | Domain::EXRAW =>
-          try domain_from_sympy_expr(domain, domain_to_sympy_expr(base, expr)) catch {
+          try
+            domain_from_sympy_expr(domain, domain_to_sympy_expr(base, expr))
+          catch {
             _ => None
           } noraise {
             value => Some(value)
@@ -2048,17 +2129,20 @@ pub fn domain_map_expr_tree(
 }
 
 ///|
-fn expr_depends_on_symbols(expr : @symcore.Expr, symbols : Array[String]) -> Bool {
+fn expr_depends_on_symbols(
+  expr : @symcore.Expr,
+  symbols : Array[String],
+) -> Bool {
   match expr {
     @symcore.Expr::Number(_) => false
     @symcore.Expr::Symbol(name) => symbols.contains(name)
     @symcore.Expr::Add(args)
     | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) => args.any(item =>
-      expr_depends_on_symbols(item, symbols)
-    )
+    | @symcore.Expr::Function(_, args) =>
+      args.any(item => expr_depends_on_symbols(item, symbols))
     @symcore.Expr::Pow(base, exp) =>
-      expr_depends_on_symbols(base, symbols) || expr_depends_on_symbols(exp, symbols)
+      expr_depends_on_symbols(base, symbols) ||
+      expr_depends_on_symbols(exp, symbols)
   }
 }
 
@@ -2092,7 +2176,11 @@ fn domain_expr_is_minus_one(expr : @symcore.Expr) -> Bool {
   }
 }
 
-fn expr_constant_term(expr : @symcore.Expr, symbols : Array[String]) -> @symcore.Expr? {
+///|
+fn expr_constant_term(
+  expr : @symcore.Expr,
+  symbols : Array[String],
+) -> @symcore.Expr? {
   if !expr_depends_on_symbols(expr, symbols) {
     return Some(expr)
   }
@@ -2256,7 +2344,10 @@ fn reciprocal_gen_symbol_name(gen : String) -> String? {
     return None
   }
   let rest = (try! text[2:text.length()]).to_string().trim().to_string()
-  if rest == "" || rest.contains("/") || rest.contains("(") || rest.contains("[") ||
+  if rest == "" ||
+    rest.contains("/") ||
+    rest.contains("(") ||
+    rest.contains("[") ||
     rest.contains("<") {
     None
   } else {
@@ -2305,7 +2396,12 @@ fn expr_collect_rational_terms(
 ) -> (Map[Monomial, @symcore.Expr], Map[Monomial, @symcore.Expr])? {
   let var_count = gens.length()
   if domain_contains_expr(coeff_domain, expr) {
-    return Some((expr_terms_from_coeff(coeff_domain, expr, var_count), expr_terms_one(var_count)))
+    return Some(
+      (
+        expr_terms_from_coeff(coeff_domain, expr, var_count),
+        expr_terms_one(var_count),
+      ),
+    )
   }
   match expr_generator_rational(gens, expr) {
     Some(res) => return Some(res)
@@ -2359,15 +2455,19 @@ fn expr_collect_rational_terms(
         match expr_collect_rational_terms(coeff_domain, gens, base) {
           Some((num, den)) =>
             if k >= 0 {
-              Some((
-                expr_terms_pow(coeff_domain, num, k, var_count),
-                expr_terms_pow(coeff_domain, den, k, var_count),
-              ))
+              Some(
+                (
+                  expr_terms_pow(coeff_domain, num, k, var_count),
+                  expr_terms_pow(coeff_domain, den, k, var_count),
+                ),
+              )
             } else {
-              Some((
-                expr_terms_pow(coeff_domain, den, -k, var_count),
-                expr_terms_pow(coeff_domain, num, -k, var_count),
-              ))
+              Some(
+                (
+                  expr_terms_pow(coeff_domain, den, -k, var_count),
+                  expr_terms_pow(coeff_domain, num, -k, var_count),
+                ),
+              )
             }
           None => None
         }
@@ -2454,12 +2554,7 @@ fn expr_numeric_sign(expr : @symcore.Expr) -> Int? {
         }
         match expr_numeric_sign(base) {
           Some(0) => if k == 0 { Some(1) } else { Some(0) }
-          Some(v) =>
-            if k % 2 == 0 {
-              Some(1)
-            } else {
-              Some(v)
-            }
+          Some(v) => if k % 2 == 0 { Some(1) } else { Some(v) }
           None => None
         }
       }
@@ -2494,8 +2589,7 @@ fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
     return None
   }
   match domain {
-    Domain::ZZ | Domain::QQ | Domain::RR =>
-      expr_numeric_sign(expr)
+    Domain::ZZ | Domain::QQ | Domain::RR => expr_numeric_sign(expr)
     Domain::EX | Domain::EXRAW =>
       if domain_is_zero_expr(domain, expr) {
         Some(0)
@@ -2508,8 +2602,7 @@ fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
       } else {
         Some(1)
       }
-    Domain::CC | Domain::ZZ_I | Domain::QQ_I =>
-      None
+    Domain::CC | Domain::ZZ_I | Domain::QQ_I => None
     Domain::PolyRing(base, gens) | Domain::QuotientRing(base, gens, _) =>
       match expr_collect_rational_terms(base, gens, expr) {
         Some((numer, denom)) =>
@@ -2540,7 +2633,8 @@ fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
       }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
           domain_expr_sign(Domain::RationalFunctionField(inner, gens), expr)
         _ => domain_expr_sign(base, expr)
       }
@@ -2550,7 +2644,10 @@ fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
           if !expr_terms_is_one(base, denom, gens.length()) {
             None
           } else {
-            domain_expr_sign(base, expr_terms_constant_coeff(base, numer, gens.length()))
+            domain_expr_sign(
+              base,
+              expr_terms_constant_coeff(base, numer, gens.length()),
+            )
           }
         None => None
       }
@@ -2581,7 +2678,10 @@ pub fn domain_is_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_negative_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_negative_one_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_minus_one(expr)
 }
 
@@ -2610,11 +2710,10 @@ pub fn domain_is_unit_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
     Domain::QuotientRing(base, gens, _) =>
       !expr_depends_on_symbols(expr, generator_symbol_names(gens)) &&
       domain_is_unit_expr(base, expr)
-    Domain::PowerSeries(base, gens, _) => {
+    Domain::PowerSeries(base, gens, _) =>
       match expr_constant_term(expr, generator_symbol_names(gens)) {
         Some(c0) => domain_is_unit_expr(base, c0)
         None => false
-      }
       }
   }
 }
@@ -2636,7 +2735,10 @@ pub fn domain_is_negative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_nonpositive_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_nonpositive_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v <= 0
     None => false
@@ -2644,7 +2746,10 @@ pub fn domain_is_nonpositive_expr(domain : Domain, expr : @symcore.Expr) -> Bool
 }
 
 ///|
-pub fn domain_is_nonnegative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_nonnegative_expr(
+  domain : Domain,
+  expr : @symcore.Expr,
+) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v >= 0
     None => false
@@ -2663,6 +2768,7 @@ priv struct GaussianRatCompat {
   im : @symnum.BigRational
 }
 
+///|
 fn domain_bigint_abs(x : BigInt) -> BigInt {
   if x.op_lt(BigInt::from_int(0)) {
     x.neg()
@@ -2671,6 +2777,7 @@ fn domain_bigint_abs(x : BigInt) -> BigInt {
   }
 }
 
+///|
 fn domain_bigint_lcm(a : BigInt, b : BigInt) -> BigInt {
   if a.is_zero() || b.is_zero() {
     return BigInt::from_int(0)
@@ -2679,15 +2786,21 @@ fn domain_bigint_lcm(a : BigInt, b : BigInt) -> BigInt {
   domain_bigint_abs(a.div(g).mul(b))
 }
 
+///|
 fn domain_bigint_round_div(num : BigInt, den : BigInt) -> BigInt {
   if num.is_zero() {
     return BigInt::from_int(0)
   }
   let two = BigInt::from_int(2)
   let q = domain_bigint_abs(num).mul(two).add(den).div(den.mul(two))
-  if num.op_lt(BigInt::from_int(0)) { q.neg() } else { q }
+  if num.op_lt(BigInt::from_int(0)) {
+    q.neg()
+  } else {
+    q
+  }
 }
 
+///|
 fn domain_bigint_euclid_mod(num : BigInt, den : BigInt) -> BigInt {
   let r = num.mod(den)
   if r.op_lt(BigInt::from_int(0)) {
@@ -2701,10 +2814,8 @@ fn domain_bigint_euclid_mod(num : BigInt, den : BigInt) -> BigInt {
   }
 }
 
-fn domain_bigint_gcdex(
-  a0 : BigInt,
-  b0 : BigInt,
-) -> (BigInt, BigInt, BigInt) {
+///|
+fn domain_bigint_gcdex(a0 : BigInt, b0 : BigInt) -> (BigInt, BigInt, BigInt) {
   let mut old_r = a0
   let mut r = b0
   let mut old_s = BigInt::from_int(1)
@@ -2730,6 +2841,7 @@ fn domain_bigint_gcdex(
   }
 }
 
+///|
 fn domain_bigint_factorial(n : BigInt) -> BigInt raise PolyError {
   guard !n.op_lt(BigInt::from_int(0)) else { raise PolyError::DomainMismatch }
   let one = BigInt::from_int(1)
@@ -2742,11 +2854,11 @@ fn domain_bigint_factorial(n : BigInt) -> BigInt raise PolyError {
   acc
 }
 
-fn domain_bigint_log_floor(
-  a : BigInt,
-  b : BigInt,
-) -> BigInt raise PolyError {
-  guard a.compare(BigInt::from_int(0)) > 0 else { raise PolyError::DomainMismatch }
+///|
+fn domain_bigint_log_floor(a : BigInt, b : BigInt) -> BigInt raise PolyError {
+  guard a.compare(BigInt::from_int(0)) > 0 else {
+    raise PolyError::DomainMismatch
+  }
   guard b.compare(BigInt::from_int(0)) > 0 && !b.equal_int(1) else {
     raise PolyError::DomainMismatch
   }
@@ -2760,6 +2872,7 @@ fn domain_bigint_log_floor(
   count
 }
 
+///|
 fn domain_bigint_sqrt_floor(n : BigInt) -> BigInt raise PolyError {
   guard !n.op_lt(BigInt::from_int(0)) else { raise PolyError::DomainMismatch }
   let zero = BigInt::from_int(0)
@@ -2779,13 +2892,12 @@ fn domain_bigint_sqrt_floor(n : BigInt) -> BigInt raise PolyError {
   low
 }
 
+///|
 fn domain_bigint_exsqrt(n : BigInt) -> BigInt? {
   if n.op_lt(BigInt::from_int(0)) {
     return None
   }
-  let root = domain_bigint_sqrt_floor(n) catch {
-    _ => return None
-  }
+  let root = domain_bigint_sqrt_floor(n) catch { _ => return None }
   if root.mul(root).compare(n) == 0 {
     Some(root)
   } else {
@@ -2793,6 +2905,7 @@ fn domain_bigint_exsqrt(n : BigInt) -> BigInt? {
   }
 }
 
+///|
 fn rational_abs(r : @symnum.BigRational) -> @symnum.BigRational {
   if r.compare(@symnum.BigRational::zero()) < 0 {
     r.neg_r()
@@ -2801,9 +2914,8 @@ fn rational_abs(r : @symnum.BigRational) -> @symnum.BigRational {
   }
 }
 
-fn domain_rational_exsqrt(
-  value : @symnum.BigRational,
-) -> @symnum.BigRational? {
+///|
+fn domain_rational_exsqrt(value : @symnum.BigRational) -> @symnum.BigRational? {
   if value.compare(@symnum.BigRational::zero()) < 0 {
     return None
   }
@@ -2815,14 +2927,17 @@ fn domain_rational_exsqrt(
   }
 }
 
+///|
 fn expr_from_bigint(n : BigInt) -> @symcore.Expr {
   @symcore.number(@symnum.BigRational::from_bigint(n))
 }
 
+///|
 fn expr_from_rational(n : @symnum.BigRational) -> @symcore.Expr {
   @symcore.number(n)
 }
 
+///|
 fn expr_exact_sqrt_or_symbolic(expr : @symcore.Expr) -> @symcore.Expr {
   match expr_rational_value(expr) {
     Some(value) =>
@@ -2834,6 +2949,7 @@ fn expr_exact_sqrt_or_symbolic(expr : @symcore.Expr) -> @symcore.Expr {
   }
 }
 
+///|
 fn expr_rational_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
     @symcore.Expr::Number(n) => Some(n)
@@ -2841,6 +2957,7 @@ fn expr_rational_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   }
 }
 
+///|
 fn expr_gaussian_coeffs(
   coeff_domain : Domain,
   expr : @symcore.Expr,
@@ -2874,6 +2991,7 @@ fn expr_gaussian_coeffs(
   }
 }
 
+///|
 fn gaussian_rat_to_expr(value : GaussianRatCompat) -> @symcore.Expr {
   let i_sym = @symcore.symbol("I")
   let terms : Array[@symcore.Expr] = Array::new()
@@ -2901,20 +3019,20 @@ fn gaussian_rat_to_expr(value : GaussianRatCompat) -> @symcore.Expr {
   }
 }
 
+///|
 fn gaussian_int_is_zero(value : GaussianIntCompat) -> Bool {
   value.re.is_zero() && value.im.is_zero()
 }
 
+///|
 fn gaussian_int_sub(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
 ) -> GaussianIntCompat {
-  GaussianIntCompat::{
-    re: left.re.sub(right.re),
-    im: left.im.sub(right.im),
-  }
+  GaussianIntCompat::{ re: left.re.sub(right.re), im: left.im.sub(right.im) }
 }
 
+///|
 fn gaussian_int_mul(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
@@ -2925,6 +3043,7 @@ fn gaussian_int_mul(
   }
 }
 
+///|
 fn gaussian_int_unit_candidates() -> Array[GaussianIntCompat] {
   [
     GaussianIntCompat::{ re: BigInt::from_int(1), im: BigInt::from_int(0) },
@@ -2934,9 +3053,13 @@ fn gaussian_int_unit_candidates() -> Array[GaussianIntCompat] {
   ]
 }
 
+///|
 fn gaussian_int_canonical_unit(value : GaussianIntCompat) -> GaussianIntCompat {
   if gaussian_int_is_zero(value) {
-    return GaussianIntCompat::{ re: BigInt::from_int(1), im: BigInt::from_int(0) }
+    return GaussianIntCompat::{
+      re: BigInt::from_int(1),
+      im: BigInt::from_int(0),
+    }
   }
   let mut fallback : GaussianIntCompat? = None
   for unit in gaussian_int_unit_candidates() {
@@ -2956,10 +3079,12 @@ fn gaussian_int_canonical_unit(value : GaussianIntCompat) -> GaussianIntCompat {
   }
   match fallback {
     Some(unit) => unit
-    None => GaussianIntCompat::{ re: BigInt::from_int(1), im: BigInt::from_int(0) }
+    None =>
+      GaussianIntCompat::{ re: BigInt::from_int(1), im: BigInt::from_int(0) }
   }
 }
 
+///|
 fn gaussian_rat_canonical_unit(value : GaussianRatCompat) -> GaussianRatCompat {
   if value.re.is_zero() && value.im.is_zero() {
     return GaussianRatCompat::{
@@ -2968,10 +3093,22 @@ fn gaussian_rat_canonical_unit(value : GaussianRatCompat) -> GaussianRatCompat {
     }
   }
   let units = [
-    GaussianRatCompat::{ re: @symnum.BigRational::one(), im: @symnum.BigRational::zero() },
-    GaussianRatCompat::{ re: @symnum.BigRational::zero(), im: @symnum.BigRational::one() },
-    GaussianRatCompat::{ re: @symnum.BigRational::from_int(-1), im: @symnum.BigRational::zero() },
-    GaussianRatCompat::{ re: @symnum.BigRational::zero(), im: @symnum.BigRational::from_int(-1) },
+    GaussianRatCompat::{
+      re: @symnum.BigRational::one(),
+      im: @symnum.BigRational::zero(),
+    },
+    GaussianRatCompat::{
+      re: @symnum.BigRational::zero(),
+      im: @symnum.BigRational::one(),
+    },
+    GaussianRatCompat::{
+      re: @symnum.BigRational::from_int(-1),
+      im: @symnum.BigRational::zero(),
+    },
+    GaussianRatCompat::{
+      re: @symnum.BigRational::zero(),
+      im: @symnum.BigRational::from_int(-1),
+    },
   ]
   let mut fallback : GaussianRatCompat? = None
   for unit in units {
@@ -2994,10 +3131,15 @@ fn gaussian_rat_canonical_unit(value : GaussianRatCompat) -> GaussianRatCompat {
   }
   match fallback {
     Some(unit) => unit
-    None => GaussianRatCompat::{ re: @symnum.BigRational::one(), im: @symnum.BigRational::zero() }
+    None =>
+      GaussianRatCompat::{
+        re: @symnum.BigRational::one(),
+        im: @symnum.BigRational::zero(),
+      }
   }
 }
 
+///|
 fn gaussian_int_from_expr(
   domain : Domain,
   expr : @symcore.Expr,
@@ -3010,7 +3152,10 @@ fn gaussian_int_from_expr(
   match expr_gaussian_coeffs(coeff_domain, expr) {
     Some(value) =>
       if value.re.is_integral() && value.im.is_integral() {
-        GaussianIntCompat::{ re: value.re.numerator(), im: value.im.numerator() }
+        GaussianIntCompat::{
+          re: value.re.numerator(),
+          im: value.im.numerator(),
+        }
       } else {
         raise PolyError::DomainMismatch
       }
@@ -3018,6 +3163,7 @@ fn gaussian_int_from_expr(
   }
 }
 
+///|
 fn gaussian_rat_from_expr(
   domain : Domain,
   expr : @symcore.Expr,
@@ -3033,10 +3179,12 @@ fn gaussian_rat_from_expr(
   }
 }
 
+///|
 fn gaussian_int_norm(value : GaussianIntCompat) -> BigInt {
   value.re.mul(value.re).add(value.im.mul(value.im))
 }
 
+///|
 fn gaussian_int_quo_round(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
@@ -3053,6 +3201,7 @@ fn gaussian_int_quo_round(
   }
 }
 
+///|
 fn gaussian_int_rem(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
@@ -3061,6 +3210,7 @@ fn gaussian_int_rem(
   gaussian_int_sub(left, gaussian_int_mul(right, q))
 }
 
+///|
 fn gaussian_int_div_exact(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
@@ -3074,12 +3224,10 @@ fn gaussian_int_div_exact(
   if !real_num.mod(denom).is_zero() || !imag_num.mod(denom).is_zero() {
     raise PolyError::ExactQuotientFailed
   }
-  GaussianIntCompat::{
-    re: real_num.div(denom),
-    im: imag_num.div(denom),
-  }
+  GaussianIntCompat::{ re: real_num.div(denom), im: imag_num.div(denom) }
 }
 
+///|
 fn gaussian_int_gcd(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
@@ -3094,25 +3242,32 @@ fn gaussian_int_gcd(
   gaussian_int_mul(a, gaussian_int_canonical_unit(a))
 }
 
+///|
 fn gaussian_int_lcm(
   left : GaussianIntCompat,
   right : GaussianIntCompat,
 ) -> GaussianIntCompat raise PolyError {
   if gaussian_int_is_zero(left) || gaussian_int_is_zero(right) {
-    return GaussianIntCompat::{ re: BigInt::from_int(0), im: BigInt::from_int(0) }
+    return GaussianIntCompat::{
+      re: BigInt::from_int(0),
+      im: BigInt::from_int(0),
+    }
   }
-  gaussian_int_div_exact(gaussian_int_mul(left, right), gaussian_int_gcd(left, right))
-}
-
-fn gaussian_int_to_expr(value : GaussianIntCompat) -> @symcore.Expr {
-  gaussian_rat_to_expr(
-    GaussianRatCompat::{
-      re: @symnum.BigRational::from_bigint(value.re),
-      im: @symnum.BigRational::from_bigint(value.im),
-    },
+  gaussian_int_div_exact(
+    gaussian_int_mul(left, right),
+    gaussian_int_gcd(left, right),
   )
 }
 
+///|
+fn gaussian_int_to_expr(value : GaussianIntCompat) -> @symcore.Expr {
+  gaussian_rat_to_expr(GaussianRatCompat::{
+    re: @symnum.BigRational::from_bigint(value.re),
+    im: @symnum.BigRational::from_bigint(value.im),
+  })
+}
+
+///|
 fn gaussian_rat_numer_denom(
   value : GaussianRatCompat,
 ) -> (GaussianIntCompat, BigInt) {
@@ -3122,6 +3277,7 @@ fn gaussian_rat_numer_denom(
   (GaussianIntCompat::{ re: re_num, im: im_num }, den)
 }
 
+///|
 fn gaussian_rat_from_numer_denom(
   numer : GaussianIntCompat,
   den : BigInt,
@@ -3133,6 +3289,7 @@ fn gaussian_rat_from_numer_denom(
   }
 }
 
+///|
 fn gaussian_rat_mul(
   left : GaussianRatCompat,
   right : GaussianRatCompat,
@@ -3143,7 +3300,10 @@ fn gaussian_rat_mul(
   }
 }
 
-fn gaussian_rat_inv(value : GaussianRatCompat) -> GaussianRatCompat raise PolyError {
+///|
+fn gaussian_rat_inv(
+  value : GaussianRatCompat,
+) -> GaussianRatCompat raise PolyError {
   let norm = value.re.mul_r(value.re).add_r(value.im.mul_r(value.im))
   if norm.is_zero() {
     raise PolyError::DivisionByZero
@@ -3154,6 +3314,7 @@ fn gaussian_rat_inv(value : GaussianRatCompat) -> GaussianRatCompat raise PolyEr
   }
 }
 
+///|
 fn gaussian_rat_div(
   left : GaussianRatCompat,
   right : GaussianRatCompat,
@@ -3161,9 +3322,13 @@ fn gaussian_rat_div(
   gaussian_rat_mul(left, gaussian_rat_inv(right))
 }
 
+///|
 fn gaussian_int_exsqrt(value : GaussianIntCompat) -> GaussianIntCompat? {
   if gaussian_int_is_zero(value) {
-    return Some(GaussianIntCompat::{ re: BigInt::from_int(0), im: BigInt::from_int(0) })
+    return Some(GaussianIntCompat::{
+      re: BigInt::from_int(0),
+      im: BigInt::from_int(0),
+    })
   }
   let norm = value.re.mul(value.re).add(value.im.mul(value.im))
   let t = domain_bigint_exsqrt(norm)
@@ -3180,7 +3345,11 @@ fn gaussian_int_exsqrt(value : GaussianIntCompat) -> GaussianIntCompat? {
       let v = v_num.div(two)
       match (domain_bigint_exsqrt(u), domain_bigint_exsqrt(v)) {
         (Some(a), Some(b0)) => {
-          let b = if value.im.op_lt(BigInt::from_int(0)) { b0.neg() } else { b0 }
+          let b = if value.im.op_lt(BigInt::from_int(0)) {
+            b0.neg()
+          } else {
+            b0
+          }
           let out = GaussianIntCompat::{ re: a, im: b }
           if out.re.is_zero() && out.im.op_lt(BigInt::from_int(0)) {
             Some(GaussianIntCompat::{ re: out.re.neg(), im: out.im.neg() })
@@ -3194,11 +3363,13 @@ fn gaussian_int_exsqrt(value : GaussianIntCompat) -> GaussianIntCompat? {
   }
 }
 
+///|
 fn gaussian_rat_exsqrt(value : GaussianRatCompat) -> GaussianRatCompat? {
   if value.re.is_zero() && value.im.is_zero() {
-    return Some(
-      GaussianRatCompat::{ re: @symnum.BigRational::zero(), im: @symnum.BigRational::zero() },
-    )
+    return Some(GaussianRatCompat::{
+      re: @symnum.BigRational::zero(),
+      im: @symnum.BigRational::zero(),
+    })
   }
   let norm = value.re.mul_r(value.re).add_r(value.im.mul_r(value.im))
   let t = domain_rational_exsqrt(norm)
@@ -3210,7 +3381,11 @@ fn gaussian_rat_exsqrt(value : GaussianRatCompat) -> GaussianRatCompat? {
       let v = total.add_r(value.re.neg_r()).div_r(half)
       match (domain_rational_exsqrt(u), domain_rational_exsqrt(v)) {
         (Some(a), Some(b0)) => {
-          let b = if value.im.compare(@symnum.BigRational::zero()) < 0 { b0.neg_r() } else { b0 }
+          let b = if value.im.compare(@symnum.BigRational::zero()) < 0 {
+            b0.neg_r()
+          } else {
+            b0
+          }
           let out = GaussianRatCompat::{ re: a, im: b }
           if out.re.is_zero() && out.im.compare(@symnum.BigRational::zero()) < 0 {
             Some(GaussianRatCompat::{ re: out.re.neg_r(), im: out.im.neg_r() })
@@ -3224,6 +3399,7 @@ fn gaussian_rat_exsqrt(value : GaussianRatCompat) -> GaussianRatCompat? {
   }
 }
 
+///|
 fn finite_field_order(domain : Domain) -> Int raise PolyError {
   match domain {
     Domain::GF(p) => p
@@ -3232,11 +3408,14 @@ fn finite_field_order(domain : Domain) -> Int raise PolyError {
   }
 }
 
+///|
 fn finite_field_exsqrt(
   domain : Domain,
   value : FieldElem,
 ) -> FieldElem? raise PolyError {
-  guard fe_is_zero(value) || domain_is_field_pred(domain) else { raise PolyError::DomainMismatch }
+  guard fe_is_zero(value) || domain_is_field_pred(domain) else {
+    raise PolyError::DomainMismatch
+  }
   if fe_is_zero(value) {
     return Some(value)
   }
@@ -3247,7 +3426,7 @@ fn finite_field_exsqrt(
       }
       match value {
         FieldElem::GFp(_, target) => {
-          for candidate in 0..=(p / 2) {
+          for candidate in 0..<=(p / 2) {
             if fe_pos_mod(candidate * candidate, p) == target {
               return Some(FieldElem::GFp(p, candidate))
             }
@@ -3280,6 +3459,7 @@ fn finite_field_exsqrt(
   }
 }
 
+///|
 fn expr_has_leading_minus(expr : @symcore.Expr) -> Bool {
   match expr {
     @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
@@ -3288,20 +3468,22 @@ fn expr_has_leading_minus(expr : @symcore.Expr) -> Bool {
         false
       } else {
         match args[0] {
-          @symcore.Expr::Number(n) =>
-            n.compare(@symnum.BigRational::zero()) < 0
+          @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
           _ => expr_key(expr).has_prefix("-")
         }
       }
     @symcore.Expr::Mul(args) =>
-      args.any(arg => match arg {
-        @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
-        _ => false
+      args.any(arg => {
+        match arg {
+          @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
+          _ => false
+        }
       })
     _ => expr_key(expr).has_prefix("-")
   }
 }
 
+///|
 fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
   match expr {
     @symcore.Expr::Mul(args) => {
@@ -3313,14 +3495,20 @@ fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
             n.compare(@symnum.BigRational::from_int(-1)) == 0 => removed = true
           @symcore.Expr::Number(n) if !removed &&
             n.compare(@symnum.BigRational::zero()) < 0 => {
-              updated.push(@symcore.number(n.neg_r()))
-              removed = true
-            }
+            updated.push(@symcore.number(n.neg_r()))
+            removed = true
+          }
           _ => updated.push(arg)
         }
       }
       if removed {
-        Some(if updated.is_empty() { @symcore.int(1) } else { @symcore.mul(updated) })
+        Some(
+          if updated.is_empty() {
+            @symcore.int(1)
+          } else {
+            @symcore.mul(updated)
+          },
+        )
       } else {
         None
       }
@@ -3331,6 +3519,7 @@ fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
   }
 }
 
+///|
 fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> @symcore.Expr {
   if value.is_zero() || value.is_one() {
     @symcore.number(value)
@@ -3339,6 +3528,7 @@ fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> @symcore.Expr {
   }
 }
 
+///|
 fn poly_from_expr_terms(
   coeff_domain : Domain,
   gens : Array[String],
@@ -3354,6 +3544,7 @@ fn poly_from_expr_terms(
   Poly::{ coeffs, gens, domain: coeff_domain, order: TermOrder::Lex }
 }
 
+///|
 fn poly_is_ground(poly : Poly) -> Bool {
   for mono, _ in poly.coeffs {
     if !is_monomial_zero(mono) {
@@ -3363,6 +3554,7 @@ fn poly_is_ground(poly : Poly) -> Bool {
   true
 }
 
+///|
 fn poly_ground_expr(poly : Poly) -> @symcore.Expr raise PolyError {
   if !poly_is_ground(poly) {
     raise PolyError::DomainMismatch
@@ -3373,6 +3565,7 @@ fn poly_ground_expr(poly : Poly) -> @symcore.Expr raise PolyError {
   }
 }
 
+///|
 fn poly_from_ground_expr(
   coeff_domain : Domain,
   gens : Array[String],
@@ -3384,6 +3577,7 @@ fn poly_from_ground_expr(
   Poly::{ coeffs, gens, domain: coeff_domain, order: TermOrder::Lex }
 }
 
+///|
 fn poly_exact_quo(left : Poly, right : Poly) -> Poly raise PolyError {
   if right.is_zero() {
     raise PolyError::DivisionByZero
@@ -3398,6 +3592,7 @@ fn poly_exact_quo(left : Poly, right : Poly) -> Poly raise PolyError {
   qs[0]
 }
 
+///|
 fn poly_gcd_compat(left : Poly, right : Poly) -> Poly raise PolyError {
   if left.gens.length() == 1 {
     left.gcd_univar(right)
@@ -3406,29 +3601,37 @@ fn poly_gcd_compat(left : Poly, right : Poly) -> Poly raise PolyError {
   }
 }
 
+///|
 fn poly_lcm_compat(left : Poly, right : Poly) -> Poly raise PolyError {
   if left.is_zero() || right.is_zero() {
     return Poly::zero(left.gens, left.domain).with_order(left.order)
   }
   let gcd = poly_gcd_compat(left, right)
   let raw = poly_exact_quo(left.mul(right), gcd)
-  if domain_is_field_pred(left.domain) { make_monic(raw) } else { raw }
+  if domain_is_field_pred(left.domain) {
+    make_monic(raw)
+  } else {
+    raw
+  }
 }
 
+///|
 fn rational_function_pair_from_expr(
   coeff_domain : Domain,
   gens : Array[String],
   expr : @symcore.Expr,
 ) -> (Poly, Poly) raise PolyError {
   match expr_collect_rational_terms(coeff_domain, gens, expr) {
-    Some((numer, denom)) => (
-      poly_from_expr_terms(coeff_domain, gens, numer),
-      poly_from_expr_terms(coeff_domain, gens, denom),
-    )
+    Some((numer, denom)) =>
+      (
+        poly_from_expr_terms(coeff_domain, gens, numer),
+        poly_from_expr_terms(coeff_domain, gens, denom),
+      )
     None => raise PolyError::DomainMismatch
   }
 }
 
+///|
 fn rational_function_expr_from_pair(
   numer : Poly,
   denom : Poly,
@@ -3443,12 +3646,14 @@ fn rational_function_expr_from_pair(
   }
 }
 
+///|
 fn domain_scalar_gcd_expr(
   domain : Domain,
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
@@ -3474,7 +3679,11 @@ fn domain_scalar_gcd_expr(
       }
       let num = @symnum.gcd_bigint(lhs.numerator(), rhs.numerator())
       let den = domain_bigint_lcm(lhs.denominator(), rhs.denominator())
-      @symcore.number(@symnum.BigRational::from_bigint(num).div_r(@symnum.BigRational::from_bigint(den)))
+      @symcore.number(
+        @symnum.BigRational::from_bigint(num).div_r(
+          @symnum.BigRational::from_bigint(den),
+        ),
+      )
     }
     Domain::ZZ_I => {
       let lhs = gaussian_int_from_expr(domain, left)
@@ -3490,8 +3699,7 @@ fn domain_scalar_gcd_expr(
       let denom = domain_bigint_lcm(den_l, den_r)
       gaussian_rat_to_expr(gaussian_rat_from_numer_denom(numer, denom))
     }
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _) => {
+    Domain::GF(_) | Domain::GFExt(_, _, _) => {
       let lhs = field_elem_from_scalar_expr(left, domain)
       let rhs = field_elem_from_scalar_expr(right, domain)
       if fe_is_zero(lhs) && fe_is_zero(rhs) {
@@ -3500,13 +3708,12 @@ fn domain_scalar_gcd_expr(
         fe_to_expr_const(fe_from_int(1, domain))
       }
     }
-    Domain::RR | Domain::CC => {
+    Domain::RR | Domain::CC =>
       if domain_is_zero_expr(domain, left) && domain_is_zero_expr(domain, right) {
         @symcore.int(1)
       } else {
         fe_to_expr_const(fe_from_int(1, domain))
       }
-    }
     Domain::EX | Domain::EXRAW | Domain::AlgExt(_, _, _) =>
       if domain_is_zero_expr(domain, left) && domain_is_zero_expr(domain, right) {
         @symcore.int(1)
@@ -3517,12 +3724,14 @@ fn domain_scalar_gcd_expr(
   }
 }
 
+///|
 fn domain_scalar_lcm_expr(
   domain : Domain,
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
@@ -3555,7 +3764,11 @@ fn domain_scalar_lcm_expr(
       } else {
         let num = domain_bigint_lcm(lhs.numerator(), rhs.numerator())
         let den = @symnum.gcd_bigint(lhs.denominator(), rhs.denominator())
-        @symcore.number(@symnum.BigRational::from_bigint(num).div_r(@symnum.BigRational::from_bigint(den)))
+        @symcore.number(
+          @symnum.BigRational::from_bigint(num).div_r(
+            @symnum.BigRational::from_bigint(den),
+          ),
+        )
       }
     }
     Domain::ZZ_I => {
@@ -3572,26 +3785,26 @@ fn domain_scalar_lcm_expr(
       let denom = @symnum.gcd_bigint(den_l, den_r)
       gaussian_rat_to_expr(gaussian_rat_from_numer_denom(numer, denom))
     }
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _) => {
+    Domain::GF(_) | Domain::GFExt(_, _, _) => {
       let lhs = field_elem_from_scalar_expr(left, domain)
       let rhs = field_elem_from_scalar_expr(right, domain)
       fe_to_expr_const(fe_mul(lhs, rhs))
     }
-    Domain::RR | Domain::CC => {
-      match (
-        try? field_elem_from_scalar_expr(left, domain),
-        try? field_elem_from_scalar_expr(right, domain),
-      ) {
+    Domain::RR | Domain::CC =>
+      match
+        (
+          try? field_elem_from_scalar_expr(left, domain),
+          try? field_elem_from_scalar_expr(right, domain),
+        ) {
         (Ok(lhs), Ok(rhs)) => fe_to_expr_const(fe_mul(lhs, rhs))
         _ =>
-          if domain_is_zero_expr(domain, left) || domain_is_zero_expr(domain, right) {
+          if domain_is_zero_expr(domain, left) ||
+            domain_is_zero_expr(domain, right) {
             @symcore.int(0)
           } else {
             left * right
           }
       }
-    }
     Domain::EX | Domain::EXRAW | Domain::AlgExt(_, _, _) =>
       if domain_is_zero_expr(domain, left) || domain_is_zero_expr(domain, right) {
         @symcore.int(0)
@@ -3602,6 +3815,7 @@ fn domain_scalar_lcm_expr(
   }
 }
 
+///|
 fn domain_poly_gcd_expr(
   coeff_domain : Domain,
   gens : Array[String],
@@ -3613,6 +3827,7 @@ fn domain_poly_gcd_expr(
   poly_gcd_compat(lhs, rhs).to_expr()
 }
 
+///|
 fn domain_poly_lcm_expr(
   coeff_domain : Domain,
   gens : Array[String],
@@ -3624,19 +3839,28 @@ fn domain_poly_lcm_expr(
   poly_lcm_compat(lhs, rhs).to_expr()
 }
 
+///|
 fn domain_rational_function_gcd_expr(
   coeff_domain : Domain,
   gens : Array[String],
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  let (left_num, left_den) = rational_function_pair_from_expr(coeff_domain, gens, left)
-  let (right_num, right_den) = rational_function_pair_from_expr(coeff_domain, gens, right)
+  let (left_num, left_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, left,
+  )
+  let (right_num, right_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, right,
+  )
   let numer = if poly_is_ground(left_num) && poly_is_ground(right_num) {
     poly_from_ground_expr(
       coeff_domain,
       gens,
-      domain_scalar_gcd_expr(coeff_domain, poly_ground_expr(left_num), poly_ground_expr(right_num)),
+      domain_scalar_gcd_expr(
+        coeff_domain,
+        poly_ground_expr(left_num),
+        poly_ground_expr(right_num),
+      ),
     )
   } else {
     poly_gcd_compat(left_num, right_num)
@@ -3645,7 +3869,11 @@ fn domain_rational_function_gcd_expr(
     poly_from_ground_expr(
       coeff_domain,
       gens,
-      domain_scalar_lcm_expr(coeff_domain, poly_ground_expr(left_den), poly_ground_expr(right_den)),
+      domain_scalar_lcm_expr(
+        coeff_domain,
+        poly_ground_expr(left_den),
+        poly_ground_expr(right_den),
+      ),
     )
   } else {
     poly_lcm_compat(left_den, right_den)
@@ -3653,14 +3881,19 @@ fn domain_rational_function_gcd_expr(
   rational_function_expr_from_pair(numer, denom, coeff_domain)
 }
 
+///|
 fn domain_rational_function_lcm_expr(
   coeff_domain : Domain,
   gens : Array[String],
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  let (left_num, left_den) = rational_function_pair_from_expr(coeff_domain, gens, left)
-  let (right_num, right_den) = rational_function_pair_from_expr(coeff_domain, gens, right)
+  let (left_num, left_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, left,
+  )
+  let (right_num, right_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, right,
+  )
   let numer = if poly_is_ground(left_num) && poly_is_ground(right_num) {
     let scalar_lcm = domain_scalar_lcm_expr(
       coeff_domain,
@@ -3680,7 +3913,11 @@ fn domain_rational_function_lcm_expr(
     poly_from_ground_expr(
       coeff_domain,
       gens,
-      domain_scalar_gcd_expr(coeff_domain, poly_ground_expr(left_den), poly_ground_expr(right_den)),
+      domain_scalar_gcd_expr(
+        coeff_domain,
+        poly_ground_expr(left_den),
+        poly_ground_expr(right_den),
+      ),
     )
   } else {
     poly_gcd_compat(left_den, right_den)
@@ -3693,7 +3930,9 @@ pub fn domain_canonical_unit_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ
     | Domain::QQ
@@ -3711,9 +3950,13 @@ pub fn domain_canonical_unit_expr(
         @symcore.int(1)
       }
     Domain::ZZ_I =>
-      gaussian_int_to_expr(gaussian_int_canonical_unit(gaussian_int_from_expr(domain, expr)))
+      gaussian_int_to_expr(
+        gaussian_int_canonical_unit(gaussian_int_from_expr(domain, expr)),
+      )
     Domain::QQ_I =>
-      gaussian_rat_to_expr(gaussian_rat_canonical_unit(gaussian_rat_from_expr(domain, expr)))
+      gaussian_rat_to_expr(
+        gaussian_rat_canonical_unit(gaussian_rat_from_expr(domain, expr)),
+      )
     Domain::EX | Domain::EXRAW =>
       if domain_is_zero_expr(domain, expr) {
         @symcore.int(1)
@@ -3746,8 +3989,12 @@ pub fn domain_canonical_unit_expr(
       }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
-          domain_canonical_unit_expr(Domain::RationalFunctionField(inner, gens), expr)
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
+          domain_canonical_unit_expr(
+            Domain::RationalFunctionField(inner, gens),
+            expr,
+          )
         _ => domain_canonical_unit_expr(base, expr)
       }
     Domain::PowerSeries(base, gens, _) =>
@@ -3777,7 +4024,9 @@ pub fn domain_abs_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ | Domain::QQ =>
       match expr_rational_value(expr) {
@@ -3794,7 +4043,7 @@ pub fn domain_abs_expr(
       let norm = value.re.mul_r(value.re).add_r(value.im.mul_r(value.im))
       sqrt_of_nonnegative_rational(norm)
     }
-    Domain::EX | Domain::EXRAW => {
+    Domain::EX | Domain::EXRAW =>
       match expr_numeric_sign(expr) {
         Some(v) =>
           if v < 0 {
@@ -3808,7 +4057,9 @@ pub fn domain_abs_expr(
         None =>
           match expr_gaussian_coeffs(Domain::QQ, expr) {
             Some(value) => {
-              let norm = value.re.mul_r(value.re).add_r(value.im.mul_r(value.im))
+              let norm = value.re
+                .mul_r(value.re)
+                .add_r(value.im.mul_r(value.im))
               sqrt_of_nonnegative_rational(norm)
             }
             None =>
@@ -3818,7 +4069,6 @@ pub fn domain_abs_expr(
               }
           }
       }
-    }
     _ => raise PolyError::DomainMismatch
   }
 }
@@ -3830,12 +4080,14 @@ pub fn domain_gcd_expr(
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
   match domain {
-    Domain::PolyRing(base, gens) => domain_poly_gcd_expr(base, gens, left, right)
+    Domain::PolyRing(base, gens) =>
+      domain_poly_gcd_expr(base, gens, left, right)
     Domain::RationalFunctionField(base, gens) =>
       domain_rational_function_gcd_expr(base, gens, left, right)
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
           domain_rational_function_gcd_expr(inner, gens, left, right)
         _ => domain_scalar_gcd_expr(base, left, right)
       }
@@ -3850,12 +4102,14 @@ pub fn domain_lcm_expr(
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
   match domain {
-    Domain::PolyRing(base, gens) => domain_poly_lcm_expr(base, gens, left, right)
+    Domain::PolyRing(base, gens) =>
+      domain_poly_lcm_expr(base, gens, left, right)
     Domain::RationalFunctionField(base, gens) =>
       domain_rational_function_lcm_expr(base, gens, left, right)
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
           domain_rational_function_lcm_expr(inner, gens, left, right)
         _ => domain_scalar_lcm_expr(base, left, right)
       }
@@ -3873,8 +4127,9 @@ pub fn domain_cofactors_expr(
   let cfa = match domain {
     Domain::ZZ =>
       match (expr_rational_value(left), expr_rational_value(gcd)) {
-        (Some(lhs), Some(g)) if lhs.is_integral() && g.is_integral() && !g.is_zero() =>
-          expr_from_bigint(lhs.numerator().div(g.numerator()))
+        (Some(lhs), Some(g)) if lhs.is_integral() &&
+          g.is_integral() &&
+          !g.is_zero() => expr_from_bigint(lhs.numerator().div(g.numerator()))
         _ => raise PolyError::ExactQuotientFailed
       }
     Domain::QQ =>
@@ -3902,16 +4157,33 @@ pub fn domain_cofactors_expr(
       poly_exact_quo(lhs, g).to_expr()
     }
     Domain::RationalFunctionField(coeff_domain, gens) => {
-      let (left_num, left_den) = rational_function_pair_from_expr(coeff_domain, gens, left)
-      let (g_num, g_den) = rational_function_pair_from_expr(coeff_domain, gens, gcd)
-      rational_function_expr_from_pair(left_num.mul(g_den), left_den.mul(g_num), coeff_domain)
+      let (left_num, left_den) = rational_function_pair_from_expr(
+        coeff_domain, gens, left,
+      )
+      let (g_num, g_den) = rational_function_pair_from_expr(
+        coeff_domain, gens, gcd,
+      )
+      rational_function_expr_from_pair(
+        left_num.mul(g_den),
+        left_den.mul(g_num),
+        coeff_domain,
+      )
     }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(coeff_domain, gens) | Domain::RationalFunctionField(coeff_domain, gens) => {
-          let (left_num, left_den) = rational_function_pair_from_expr(coeff_domain, gens, left)
-          let (g_num, g_den) = rational_function_pair_from_expr(coeff_domain, gens, gcd)
-          rational_function_expr_from_pair(left_num.mul(g_den), left_den.mul(g_num), coeff_domain)
+        Domain::PolyRing(coeff_domain, gens)
+        | Domain::RationalFunctionField(coeff_domain, gens) => {
+          let (left_num, left_den) = rational_function_pair_from_expr(
+            coeff_domain, gens, left,
+          )
+          let (g_num, g_den) = rational_function_pair_from_expr(
+            coeff_domain, gens, gcd,
+          )
+          rational_function_expr_from_pair(
+            left_num.mul(g_den),
+            left_den.mul(g_num),
+            coeff_domain,
+          )
         }
         _ =>
           if domain_is_one_expr(base, gcd) {
@@ -3930,8 +4202,9 @@ pub fn domain_cofactors_expr(
   let cfb = match domain {
     Domain::ZZ =>
       match (expr_rational_value(right), expr_rational_value(gcd)) {
-        (Some(rhs), Some(g)) if rhs.is_integral() && g.is_integral() && !g.is_zero() =>
-          expr_from_bigint(rhs.numerator().div(g.numerator()))
+        (Some(rhs), Some(g)) if rhs.is_integral() &&
+          g.is_integral() &&
+          !g.is_zero() => expr_from_bigint(rhs.numerator().div(g.numerator()))
         _ => raise PolyError::ExactQuotientFailed
       }
     Domain::QQ =>
@@ -3959,16 +4232,33 @@ pub fn domain_cofactors_expr(
       poly_exact_quo(rhs, g).to_expr()
     }
     Domain::RationalFunctionField(coeff_domain, gens) => {
-      let (right_num, right_den) = rational_function_pair_from_expr(coeff_domain, gens, right)
-      let (g_num, g_den) = rational_function_pair_from_expr(coeff_domain, gens, gcd)
-      rational_function_expr_from_pair(right_num.mul(g_den), right_den.mul(g_num), coeff_domain)
+      let (right_num, right_den) = rational_function_pair_from_expr(
+        coeff_domain, gens, right,
+      )
+      let (g_num, g_den) = rational_function_pair_from_expr(
+        coeff_domain, gens, gcd,
+      )
+      rational_function_expr_from_pair(
+        right_num.mul(g_den),
+        right_den.mul(g_num),
+        coeff_domain,
+      )
     }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(coeff_domain, gens) | Domain::RationalFunctionField(coeff_domain, gens) => {
-          let (right_num, right_den) = rational_function_pair_from_expr(coeff_domain, gens, right)
-          let (g_num, g_den) = rational_function_pair_from_expr(coeff_domain, gens, gcd)
-          rational_function_expr_from_pair(right_num.mul(g_den), right_den.mul(g_num), coeff_domain)
+        Domain::PolyRing(coeff_domain, gens)
+        | Domain::RationalFunctionField(coeff_domain, gens) => {
+          let (right_num, right_den) = rational_function_pair_from_expr(
+            coeff_domain, gens, right,
+          )
+          let (g_num, g_den) = rational_function_pair_from_expr(
+            coeff_domain, gens, gcd,
+          )
+          rational_function_expr_from_pair(
+            right_num.mul(g_den),
+            right_den.mul(g_num),
+            coeff_domain,
+          )
         }
         _ =>
           if domain_is_one_expr(base, gcd) {
@@ -3987,6 +4277,7 @@ pub fn domain_cofactors_expr(
   (gcd, cfa, cfb)
 }
 
+///|
 fn domain_poly_gcdex_expr(
   coeff_domain : Domain,
   gens : Array[String],
@@ -3996,7 +4287,9 @@ fn domain_poly_gcdex_expr(
   if gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
-  guard domain_is_field_pred(coeff_domain) else { raise PolyError::DomainNotField }
+  guard domain_is_field_pred(coeff_domain) else {
+    raise PolyError::DomainNotField
+  }
   let a = Poly::from_expr(left, gens, coeff_domain)
   let b = Poly::from_expr(right, gens, coeff_domain)
   let zero = Poly::zero(gens, coeff_domain)
@@ -4039,14 +4332,19 @@ pub fn domain_gcdex_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   if domain_is_field_pred(domain) {
     let gcd = domain_gcd_expr(domain, left, right)
     if domain_is_zero_expr(domain, left) {
       if domain_is_zero_expr(domain, right) {
-        return (domain_zero_like_expr(domain), domain_one_like_expr(domain), domain_zero_like_expr(domain))
+        return (
+          domain_zero_like_expr(domain),
+          domain_one_like_expr(domain),
+          domain_zero_like_expr(domain),
+        )
       } else {
         return (
           domain_zero_like_expr(domain),
@@ -4072,12 +4370,22 @@ pub fn domain_gcdex_expr(
         _ => raise PolyError::DomainMismatch
       }
     Domain::ZZ_I => {
-      let zero = GaussianIntCompat::{ re: BigInt::from_int(0), im: BigInt::from_int(0) }
-      let one = GaussianIntCompat::{ re: BigInt::from_int(1), im: BigInt::from_int(0) }
+      let zero = GaussianIntCompat::{
+        re: BigInt::from_int(0),
+        im: BigInt::from_int(0),
+      }
+      let one = GaussianIntCompat::{
+        re: BigInt::from_int(1),
+        im: BigInt::from_int(0),
+      }
       let mut old_r = gaussian_int_from_expr(domain, left)
       let mut r = gaussian_int_from_expr(domain, right)
       if gaussian_int_is_zero(old_r) && gaussian_int_is_zero(r) {
-        return (gaussian_int_to_expr(zero), gaussian_int_to_expr(one), gaussian_int_to_expr(zero))
+        return (
+          gaussian_int_to_expr(zero),
+          gaussian_int_to_expr(one),
+          gaussian_int_to_expr(zero),
+        )
       }
       let mut old_s = one
       let mut s = zero
@@ -4099,7 +4407,11 @@ pub fn domain_gcdex_expr(
       old_r = gaussian_int_mul(old_r, unit)
       old_s = gaussian_int_mul(old_s, unit)
       old_t = gaussian_int_mul(old_t, unit)
-      (gaussian_int_to_expr(old_s), gaussian_int_to_expr(old_t), gaussian_int_to_expr(old_r))
+      (
+        gaussian_int_to_expr(old_s),
+        gaussian_int_to_expr(old_t),
+        gaussian_int_to_expr(old_r),
+      )
     }
     Domain::PolyRing(coeff_domain, gens) =>
       domain_poly_gcdex_expr(coeff_domain, gens, left, right)
@@ -4124,7 +4436,9 @@ pub fn domain_invert_expr(
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
   let (s, _, h) = domain_gcdex_expr(domain, left, right)
-  guard domain_is_one_expr(domain, h) else { raise PolyError::ExactQuotientFailed }
+  guard domain_is_one_expr(domain, h) else {
+    raise PolyError::ExactQuotientFailed
+  }
   domain_rem_expr(domain, s, right)
 }
 
@@ -4134,10 +4448,13 @@ pub fn domain_revert_expr(
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
   if domain_is_field_pred(domain) {
-    guard !domain_is_zero_expr(domain, expr) else { raise PolyError::DivisionByZero }
+    guard !domain_is_zero_expr(domain, expr) else {
+      raise PolyError::DivisionByZero
+    }
     return domain_quo_expr(domain, domain_one_like_expr(domain), expr)
   }
-  if domain_is_one_expr(domain, expr) || domain_is_negative_one_expr(domain, expr) {
+  if domain_is_one_expr(domain, expr) ||
+    domain_is_negative_one_expr(domain, expr) {
     expr
   } else {
     raise PolyError::ExactQuotientFailed
@@ -4149,11 +4466,14 @@ pub fn domain_factorial_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ | Domain::QQ =>
       match expr_rational_value(expr) {
-        Some(value) if value.is_integral() && value.compare(@symnum.BigRational::zero()) >= 0 =>
+        Some(value) if value.is_integral() &&
+          value.compare(@symnum.BigRational::zero()) >= 0 =>
           expr_from_bigint(domain_bigint_factorial(value.numerator()))
         _ => raise PolyError::DomainMismatch
       }
@@ -4166,7 +4486,8 @@ pub fn domain_factorial_expr(
     }
     Domain::RationalFunctionField(base, gens) => {
       let (numer, denom) = rational_function_pair_from_expr(base, gens, expr)
-      guard poly_is_ground(denom) && domain_is_one_expr(base, poly_ground_expr(denom)) else {
+      guard poly_is_ground(denom) &&
+        domain_is_one_expr(base, poly_ground_expr(denom)) else {
         raise PolyError::DomainMismatch
       }
       let ground = poly_ground_expr(numer)
@@ -4174,8 +4495,12 @@ pub fn domain_factorial_expr(
     }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) =>
-          domain_factorial_expr(Domain::RationalFunctionField(inner, gens), expr)
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) =>
+          domain_factorial_expr(
+            Domain::RationalFunctionField(inner, gens),
+            expr,
+          )
         _ => domain_factorial_expr(base, expr)
       }
     _ => raise PolyError::DomainMismatch
@@ -4188,14 +4513,17 @@ pub fn domain_log_expr(
   value : @symcore.Expr,
   base : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, value) && domain_contains_expr(domain, base) else {
+  guard domain_contains_expr(domain, value) &&
+    domain_contains_expr(domain, base) else {
     raise PolyError::DomainMismatch
   }
   match domain {
     Domain::ZZ =>
       match (expr_rational_value(value), expr_rational_value(base)) {
         (Some(lhs), Some(rhs)) if lhs.is_integral() && rhs.is_integral() =>
-          expr_from_bigint(domain_bigint_log_floor(lhs.numerator(), rhs.numerator()))
+          expr_from_bigint(
+            domain_bigint_log_floor(lhs.numerator(), rhs.numerator()),
+          )
         _ => raise PolyError::DomainMismatch
       }
     Domain::PolyRing(inner, gens)
@@ -4214,7 +4542,9 @@ pub fn domain_sqrt_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ =>
       match expr_rational_value(expr) {
@@ -4238,27 +4568,36 @@ pub fn domain_exsqrt_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr? raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ =>
       match expr_rational_value(expr) {
         Some(value) if value.is_integral() =>
-          domain_bigint_exsqrt(value.numerator()).map(root => expr_from_bigint(root))
+          domain_bigint_exsqrt(value.numerator()).map(root => {
+            expr_from_bigint(root)
+          })
         _ => raise PolyError::DomainMismatch
       }
     Domain::QQ =>
       match expr_rational_value(expr) {
-        Some(value) => domain_rational_exsqrt(value).map(root => expr_from_rational(root))
+        Some(value) =>
+          domain_rational_exsqrt(value).map(root => expr_from_rational(root))
         None => raise PolyError::DomainMismatch
       }
     Domain::ZZ_I =>
-      gaussian_int_exsqrt(gaussian_int_from_expr(domain, expr)).map(root => gaussian_int_to_expr(root))
+      gaussian_int_exsqrt(gaussian_int_from_expr(domain, expr)).map(root => {
+        gaussian_int_to_expr(root)
+      })
     Domain::QQ_I =>
-      gaussian_rat_exsqrt(gaussian_rat_from_expr(domain, expr)).map(root => gaussian_rat_to_expr(root))
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _) =>
-      finite_field_exsqrt(domain, field_elem_from_scalar_expr(expr, domain)).map(
-        root => domain_field_elem_to_expr(domain, root),
+      gaussian_rat_exsqrt(gaussian_rat_from_expr(domain, expr)).map(root => {
+        gaussian_rat_to_expr(root)
+      })
+    Domain::GF(_) | Domain::GFExt(_, _, _) =>
+      finite_field_exsqrt(domain, field_elem_from_scalar_expr(expr, domain)).map(root => {
+          domain_field_elem_to_expr(domain, root)
+        },
       )
     Domain::RR =>
       match domain_expr_sign(domain, expr) {
@@ -4278,9 +4617,16 @@ pub fn domain_exsqrt_expr(
     }
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(inner, gens) | Domain::RationalFunctionField(inner, gens) => {
-          let (numer, denom) = rational_function_pair_from_expr(inner, gens, expr)
-          match (domain_exsqrt_expr(Domain::PolyRing(inner, gens), numer.to_expr()), domain_exsqrt_expr(Domain::PolyRing(inner, gens), denom.to_expr())) {
+        Domain::PolyRing(inner, gens)
+        | Domain::RationalFunctionField(inner, gens) => {
+          let (numer, denom) = rational_function_pair_from_expr(
+            inner, gens, expr,
+          )
+          match
+            (
+              domain_exsqrt_expr(Domain::PolyRing(inner, gens), numer.to_expr()),
+              domain_exsqrt_expr(Domain::PolyRing(inner, gens), denom.to_expr()),
+            ) {
             (Some(num_root), Some(den_root)) =>
               Some(num_root * (den_root ^ @symcore.int(-1)))
             _ => None
@@ -4304,9 +4650,10 @@ pub fn domain_is_square_expr(
         None => false
       }
     Domain::CC => domain_contains_expr(domain, expr)
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _) => {
-      guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+    Domain::GF(_) | Domain::GFExt(_, _, _) => {
+      guard domain_contains_expr(domain, expr) else {
+        raise PolyError::DomainMismatch
+      }
       let value = field_elem_from_scalar_expr(expr, domain)
       if fe_is_zero(value) {
         true
@@ -4328,7 +4675,9 @@ pub fn domain_real_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   domain_from_sympy_expr(domain, expr)
 }
 
@@ -4337,10 +4686,13 @@ pub fn domain_imag_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   domain_zero_like_expr(domain)
 }
 
+///|
 fn gaussian_rat_almosteq(
   left : GaussianRatCompat,
   right : GaussianRatCompat,
@@ -4372,16 +4724,28 @@ pub fn domain_almosteq_expr(
         rational_abs(lhs.add_r(rhs.neg_r())).compare(tol) <= 0
       }
     _ => {
-      let lhs_gauss = gaussian_rat_from_expr(domain, left) catch { _ => {
-        let lhs = domain_from_sympy_expr(domain, left) catch { _ => return false }
-        let rhs = domain_from_sympy_expr(domain, right) catch { _ => return false }
-        return expr_key(lhs) == expr_key(rhs)
-      } }
-      let rhs_gauss = gaussian_rat_from_expr(domain, right) catch { _ => {
-        let lhs = domain_from_sympy_expr(domain, left) catch { _ => return false }
-        let rhs = domain_from_sympy_expr(domain, right) catch { _ => return false }
-        return expr_key(lhs) == expr_key(rhs)
-      } }
+      let lhs_gauss = gaussian_rat_from_expr(domain, left) catch {
+        _ => {
+          let lhs = domain_from_sympy_expr(domain, left) catch {
+            _ => return false
+          }
+          let rhs = domain_from_sympy_expr(domain, right) catch {
+            _ => return false
+          }
+          return expr_key(lhs) == expr_key(rhs)
+        }
+      }
+      let rhs_gauss = gaussian_rat_from_expr(domain, right) catch {
+        _ => {
+          let lhs = domain_from_sympy_expr(domain, left) catch {
+            _ => return false
+          }
+          let rhs = domain_from_sympy_expr(domain, right) catch {
+            _ => return false
+          }
+          return expr_key(lhs) == expr_key(rhs)
+        }
+      }
       if tol.is_zero() {
         lhs_gauss.re.compare(rhs_gauss.re) == 0 &&
         lhs_gauss.im.compare(rhs_gauss.im) == 0
@@ -4399,26 +4763,26 @@ pub fn domain_evalf_expr(
   prec? : Int? = None,
 ) -> @symcore.Expr raise PolyError {
   ignore(prec)
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   domain_to_sympy_expr(domain, expr)
 }
 
+///|
 fn domain_zero_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
   match domain {
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::RR
-    | Domain::CC => domain_field_elem_to_expr(domain, fe_from_int(0, domain))
+    Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
+      domain_field_elem_to_expr(domain, fe_from_int(0, domain))
     _ => @symcore.int(0)
   }
 }
 
+///|
 fn domain_one_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
   match domain {
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::RR
-    | Domain::CC => domain_field_elem_to_expr(domain, fe_from_int(1, domain))
+    Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
+      domain_field_elem_to_expr(domain, fe_from_int(1, domain))
     _ => @symcore.int(1)
   }
 }
@@ -4450,7 +4814,9 @@ pub fn domain_neg_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   domain_from_sympy_expr(domain, @symcore.int(-1) * expr)
 }
 
@@ -4461,7 +4827,8 @@ pub fn domain_add_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   domain_from_sympy_expr(domain, left + right)
@@ -4474,10 +4841,11 @@ pub fn domain_sub_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
-  domain_from_sympy_expr(domain, left + (@symcore.int(-1) * right))
+  domain_from_sympy_expr(domain, left + @symcore.int(-1) * right)
 }
 
 ///|
@@ -4487,7 +4855,8 @@ pub fn domain_mul_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
@@ -4516,19 +4885,25 @@ pub fn domain_pow_expr(
   expr : @symcore.Expr,
   exp : Int,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   if exp == 0 {
     return domain_one_like_expr(domain)
   }
   if exp < 0 {
     guard domain_is_field_pred(domain) else { raise PolyError::DomainNotField }
-    return domain_quo_expr(domain, domain_one_like_expr(domain), domain_pow_expr(domain, expr, -exp))
+    return domain_quo_expr(
+      domain,
+      domain_one_like_expr(domain),
+      domain_pow_expr(domain, expr, -exp),
+    )
   }
   let mut n = exp
   let mut base = domain_from_sympy_expr(domain, expr)
   let mut acc = domain_one_like_expr(domain)
   while n > 0 {
-    if n.land(1) == 1 {
+    if (n & 1) == 1 {
       acc = domain_mul_expr(domain, acc, base)
     }
     n = n / 2
@@ -4539,6 +4914,7 @@ pub fn domain_pow_expr(
   acc
 }
 
+///|
 fn domain_field_elem_to_expr(
   domain : Domain,
   elem : FieldElem,
@@ -4552,20 +4928,30 @@ fn domain_field_elem_to_expr(
   }
 }
 
+///|
 fn domain_rational_function_quo_expr(
   coeff_domain : Domain,
   gens : Array[String],
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  let (left_num, left_den) = rational_function_pair_from_expr(coeff_domain, gens, left)
-  let (right_num, right_den) = rational_function_pair_from_expr(coeff_domain, gens, right)
+  let (left_num, left_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, left,
+  )
+  let (right_num, right_den) = rational_function_pair_from_expr(
+    coeff_domain, gens, right,
+  )
   if right_num.is_zero() {
     raise PolyError::DivisionByZero
   }
-  rational_function_expr_from_pair(left_num.mul(right_den), left_den.mul(right_num), coeff_domain)
+  rational_function_expr_from_pair(
+    left_num.mul(right_den),
+    left_den.mul(right_num),
+    coeff_domain,
+  )
 }
 
+///|
 fn domain_poly_div_expr(
   coeff_domain : Domain,
   gens : Array[String],
@@ -4591,7 +4977,9 @@ pub fn domain_numer_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::ZZ => expr
     Domain::QQ =>
@@ -4605,11 +4993,11 @@ pub fn domain_numer_expr(
       let (numer, _) = gaussian_rat_numer_denom(value)
       gaussian_int_to_expr(numer)
     }
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::RR
-    | Domain::CC =>
-      domain_field_elem_to_expr(domain, field_elem_from_scalar_expr(expr, domain))
+    Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
+      domain_field_elem_to_expr(
+        domain,
+        field_elem_from_scalar_expr(expr, domain),
+      )
     Domain::PolyRing(_, _)
     | Domain::QuotientRing(_, _, _)
     | Domain::PowerSeries(_, _, _)
@@ -4620,7 +5008,8 @@ pub fn domain_numer_expr(
       rational_function_pair_from_expr(coeff_domain, gens, expr).0.to_expr()
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(coeff_domain, gens) | Domain::RationalFunctionField(coeff_domain, gens) =>
+        Domain::PolyRing(coeff_domain, gens)
+        | Domain::RationalFunctionField(coeff_domain, gens) =>
           rational_function_pair_from_expr(coeff_domain, gens, expr).0.to_expr()
         _ => domain_numer_expr(base, expr)
       }
@@ -4632,7 +5021,9 @@ pub fn domain_denom_expr(
   domain : Domain,
   expr : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, expr) else { raise PolyError::DomainMismatch }
+  guard domain_contains_expr(domain, expr) else {
+    raise PolyError::DomainMismatch
+  }
   match domain {
     Domain::QQ =>
       match expr_rational_value(expr) {
@@ -4648,7 +5039,8 @@ pub fn domain_denom_expr(
       rational_function_pair_from_expr(coeff_domain, gens, expr).1.to_expr()
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(coeff_domain, gens) | Domain::RationalFunctionField(coeff_domain, gens) =>
+        Domain::PolyRing(coeff_domain, gens)
+        | Domain::RationalFunctionField(coeff_domain, gens) =>
           rational_function_pair_from_expr(coeff_domain, gens, expr).1.to_expr()
         _ => domain_denom_expr(base, expr)
       }
@@ -4662,19 +5054,23 @@ pub fn domain_quo_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
     Domain::ZZ =>
       match (expr_rational_value(left), expr_rational_value(right)) {
-        (Some(lhs), Some(rhs)) if lhs.is_integral() && rhs.is_integral() && !rhs.is_zero() =>
+        (Some(lhs), Some(rhs)) if lhs.is_integral() &&
+          rhs.is_integral() &&
+          !rhs.is_zero() =>
           expr_from_bigint(lhs.numerator().div(rhs.numerator()))
         _ => raise PolyError::DomainMismatch
       }
     Domain::QQ =>
       match (expr_rational_value(left), expr_rational_value(right)) {
-        (Some(lhs), Some(rhs)) if !rhs.is_zero() => expr_from_rational(lhs.div_r(rhs))
+        (Some(lhs), Some(rhs)) if !rhs.is_zero() =>
+          expr_from_rational(lhs.div_r(rhs))
         _ => raise PolyError::DomainMismatch
       }
     Domain::ZZ_I =>
@@ -4691,10 +5087,7 @@ pub fn domain_quo_expr(
           gaussian_rat_from_expr(domain, right),
         ),
       )
-    Domain::GF(_)
-    | Domain::GFExt(_, _, _)
-    | Domain::RR
-    | Domain::CC => {
+    Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC => {
       let lhs = field_elem_from_scalar_expr(left, domain)
       let rhs = field_elem_from_scalar_expr(right, domain)
       domain_field_elem_to_expr(domain, fe_mul(lhs, fe_inv(rhs)))
@@ -4705,13 +5098,15 @@ pub fn domain_quo_expr(
       } else {
         left * (right ^ @symcore.int(-1))
       }
-    Domain::PolyRing(coeff_domain, gens) | Domain::QuotientRing(coeff_domain, gens, _) =>
+    Domain::PolyRing(coeff_domain, gens)
+    | Domain::QuotientRing(coeff_domain, gens, _) =>
       domain_poly_div_expr(coeff_domain, gens, left, right).0
     Domain::RationalFunctionField(coeff_domain, gens) =>
       domain_rational_function_quo_expr(coeff_domain, gens, left, right)
     Domain::Frac(base) =>
       match base {
-        Domain::PolyRing(coeff_domain, gens) | Domain::RationalFunctionField(coeff_domain, gens) =>
+        Domain::PolyRing(coeff_domain, gens)
+        | Domain::RationalFunctionField(coeff_domain, gens) =>
           domain_rational_function_quo_expr(coeff_domain, gens, left, right)
         _ => domain_quo_expr(base, left, right)
       }
@@ -4725,14 +5120,19 @@ pub fn domain_rem_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
     Domain::ZZ =>
       match (expr_rational_value(left), expr_rational_value(right)) {
-        (Some(lhs), Some(rhs)) if lhs.is_integral() && rhs.is_integral() && !rhs.is_zero() =>
-          expr_from_bigint(domain_bigint_euclid_mod(lhs.numerator(), rhs.numerator()))
+        (Some(lhs), Some(rhs)) if lhs.is_integral() &&
+          rhs.is_integral() &&
+          !rhs.is_zero() =>
+          expr_from_bigint(
+            domain_bigint_euclid_mod(lhs.numerator(), rhs.numerator()),
+          )
         _ => raise PolyError::DomainMismatch
       }
     Domain::ZZ_I =>
@@ -4742,7 +5142,8 @@ pub fn domain_rem_expr(
           gaussian_int_from_expr(domain, right),
         ),
       )
-    Domain::PolyRing(coeff_domain, gens) | Domain::QuotientRing(coeff_domain, gens, _) =>
+    Domain::PolyRing(coeff_domain, gens)
+    | Domain::QuotientRing(coeff_domain, gens, _) =>
       domain_poly_div_expr(coeff_domain, gens, left, right).1
     Domain::GF(_)
     | Domain::GFExt(_, _, _)
@@ -4754,8 +5155,7 @@ pub fn domain_rem_expr(
     | Domain::EXRAW
     | Domain::RationalFunctionField(_, _)
     | Domain::Frac(_)
-    | Domain::AlgExt(_, _, _) =>
-      domain_zero_like_expr(domain)
+    | Domain::AlgExt(_, _, _) => domain_zero_like_expr(domain)
     Domain::PowerSeries(_, _, _) => raise PolyError::DomainMismatch
   }
 }
@@ -4775,7 +5175,8 @@ pub fn domain_exquo_expr(
   left : @symcore.Expr,
   right : @symcore.Expr,
 ) -> @symcore.Expr raise PolyError {
-  guard domain_contains_expr(domain, left) && domain_contains_expr(domain, right) else {
+  guard domain_contains_expr(domain, left) &&
+    domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
   match domain {
@@ -4793,7 +5194,8 @@ pub fn domain_exquo_expr(
           gaussian_int_from_expr(domain, right),
         ),
       )
-    Domain::PolyRing(coeff_domain, gens) | Domain::QuotientRing(coeff_domain, gens, _) => {
+    Domain::PolyRing(coeff_domain, gens)
+    | Domain::QuotientRing(coeff_domain, gens, _) => {
       let (q, r) = domain_poly_div_expr(coeff_domain, gens, left, right)
       guard domain_is_zero_expr(Domain::PolyRing(coeff_domain, gens), r) else {
         raise PolyError::ExactQuotientFailed
@@ -4866,7 +5268,7 @@ pub fn Domain::convert_expr(
   expr : @symcore.Expr,
   base? : Domain? = None,
 ) -> @symcore.Expr raise PolyError {
-  domain_convert_expr(self, expr, base=base)
+  domain_convert_expr(self, expr, base~)
 }
 
 ///|
@@ -5088,7 +5490,10 @@ pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn Domain::is_negative_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_negative_one_expr(
+  self : Domain,
+  expr : @symcore.Expr,
+) -> Bool {
   domain_is_negative_one_expr(self, expr)
 }
 
@@ -5311,7 +5716,7 @@ pub fn Domain::almosteq_expr(
   right : @symcore.Expr,
   tolerance? : @symnum.BigRational? = None,
 ) -> Bool {
-  domain_almosteq_expr(self, left, right, tolerance=tolerance)
+  domain_almosteq_expr(self, left, right, tolerance~)
 }
 
 ///|
@@ -5320,7 +5725,7 @@ pub fn Domain::evalf_expr(
   expr : @symcore.Expr,
   prec? : Int? = None,
 ) -> @symcore.Expr raise PolyError {
-  domain_evalf_expr(self, expr, prec=prec)
+  domain_evalf_expr(self, expr, prec~)
 }
 
 ///|
@@ -5461,7 +5866,7 @@ pub fn Domain::alg_field_from_poly(
   alias? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
-  domain_alg_field_from_poly(self, poly, alias=alias, root_index=root_index)
+  domain_alg_field_from_poly(self, poly, alias~, root_index~)
 }
 
 ///|
@@ -5473,22 +5878,21 @@ pub fn Domain::cyclotomic_field(
   gen? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
-  domain_cyclotomic_field(
-    self,
-    n,
-    ss=ss,
-    alias=alias,
-    gen=gen,
-    root_index=root_index,
-  )
+  domain_cyclotomic_field(self, n, ss~, alias~, gen~, root_index~)
 }
 
 ///|
-pub fn Domain::inject(self : Domain, gens : Array[String]) -> Domain raise PolyError {
+pub fn Domain::inject(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
   domain_inject(self, gens)
 }
 
 ///|
-pub fn Domain::drop(self : Domain, gens : Array[String]) -> Domain raise PolyError {
+pub fn Domain::drop(
+  self : Domain,
+  gens : Array[String],
+) -> Domain raise PolyError {
   domain_drop(self, gens)
 }

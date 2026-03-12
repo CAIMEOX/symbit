@@ -326,7 +326,9 @@ fn resultant_elim_poly(
   let mat = sylvester_matrix(fa, fb, out_gens, out_domain)
   let det = det_poly_bareiss(mat, out_gens, out_domain)
   if use_qq_lift {
-    try_round_to_int(det) catch { _ => det }
+    try_round_to_int(det) catch {
+      _ => det
+    }
   } else {
     det
   }

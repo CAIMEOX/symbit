@@ -26,7 +26,9 @@ fn bigint_rows_to_zz_ddm(rows : Array[Array[BigInt]]) -> DDM raise PolyError {
   for row in rows {
     let out_row : Array[FieldElem] = Array::new()
     for v in row {
-      out_row.push(fe_from_rational(@symnum.BigRational::from_bigint(v), Domain::ZZ))
+      out_row.push(
+        fe_from_rational(@symnum.BigRational::from_bigint(v), Domain::ZZ),
+      )
     }
     out.push(out_row)
   }
@@ -145,7 +147,10 @@ fn swap_columns_bigint(matrix : Array[Array[BigInt]], i : Int, j : Int) -> Unit 
 }
 
 ///|
-fn smith_bigint_zero_shape(rows : Int, cols : Int) -> (Array[BigInt], Array[Array[BigInt]], Array[Array[BigInt]]) {
+fn smith_bigint_zero_shape(
+  rows : Int,
+  cols : Int,
+) -> (Array[BigInt], Array[Array[BigInt]], Array[Array[BigInt]]) {
   ([], bigint_eye(rows), bigint_eye(cols))
 }
 
@@ -380,10 +385,14 @@ fn smith_bigint_decomp(
 }
 
 ///|
-fn bigint_invariants_to_zz_elems(invs : Array[BigInt]) -> Array[FieldElem] raise PolyError {
+fn bigint_invariants_to_zz_elems(
+  invs : Array[BigInt],
+) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for value in invs {
-    out.push(fe_from_rational(@symnum.BigRational::from_bigint(value), Domain::ZZ))
+    out.push(
+      fe_from_rational(@symnum.BigRational::from_bigint(value), Domain::ZZ),
+    )
   }
   out
 }
@@ -394,7 +403,12 @@ fn smith_diag_from_invariants(
   rows : Int,
   cols : Int,
 ) -> DDM raise PolyError {
-  DDM::diag(bigint_invariants_to_zz_elems(invs), Domain::ZZ, rows=Some(rows), cols=Some(cols))
+  DDM::diag(
+    bigint_invariants_to_zz_elems(invs),
+    Domain::ZZ,
+    rows=Some(rows),
+    cols=Some(cols),
+  )
 }
 
 ///|
@@ -606,7 +620,9 @@ pub fn DDM::hermite_normal_form(self : DDM) -> DDM raise PolyError {
 pub fn DDM::invariant_factors(self : DDM) -> Array[FieldElem] raise PolyError {
   let rows = zz_ddm_to_bigint_rows(self)
   let (invs, _, _) = smith_bigint_decomp(rows, false)
-  bigint_invariants_to_zz_elems(smith_adjust_invariants_for_det_sign(self, invs))
+  bigint_invariants_to_zz_elems(
+    smith_adjust_invariants_for_det_sign(self, invs),
+  )
 }
 
 ///|
@@ -667,17 +683,23 @@ pub fn DDM::smith_normal_decomp(self : DDM) -> (DDM, DDM, DDM) raise PolyError {
 }
 
 ///|
-pub fn DomainMatrix::invariant_factors(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::invariant_factors(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   self.to_ddm().invariant_factors()
 }
 
 ///|
-pub fn DomainMatrix::smith_normal_form(self : DomainMatrix) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::smith_normal_form(
+  self : DomainMatrix,
+) -> DomainMatrix raise PolyError {
   restore_rep_like(self.to_ddm().smith_normal_form().to_domain_matrix(), self)
 }
 
 ///|
-pub fn DomainMatrix::is_smith_normal_form(self : DomainMatrix) -> Bool raise PolyError {
+pub fn DomainMatrix::is_smith_normal_form(
+  self : DomainMatrix,
+) -> Bool raise PolyError {
   self.to_ddm().is_smith_normal_form()
 }
 

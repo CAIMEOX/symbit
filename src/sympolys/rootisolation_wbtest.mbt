@@ -58,8 +58,15 @@ test "rootisolation wb: helper/error branches" {
 test "rootisolation wb: refine edge branches" {
   let f = [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-2, 1)] // x^2 - 2
 
-  let empty_refine : Result[(@symnum.BigRational, @symnum.BigRational), PolyError] =
-    try? dup_refine_real_root([], ri_wb_rat(1, 1), ri_wb_rat(2, 1), Domain::QQ)
+  let empty_refine : Result[
+    (@symnum.BigRational, @symnum.BigRational),
+    PolyError,
+  ] = try? dup_refine_real_root(
+    [],
+    ri_wb_rat(1, 1),
+    ri_wb_rat(2, 1),
+    Domain::QQ,
+  )
   guard empty_refine is Err(PolyError::NonPolynomial) else {
     fail("refine([]) should raise NonPolynomial")
   }
@@ -79,7 +86,9 @@ test "rootisolation wb: refine edge branches" {
     Domain::QQ,
     steps=0,
   )
-  guard swapped.0.compare(swapped.1) <= 0 else { fail("refine should reorder bounds") }
+  guard swapped.0.compare(swapped.1) <= 0 else {
+    fail("refine should reorder bounds")
+  }
 
   let with_root_left = try! dup_refine_real_root(
     [ri_wb_feqq(1, 1), ri_wb_feqq(0, 1), ri_wb_feqq(-1, 1)], // x^2 - 1
@@ -152,7 +161,10 @@ test "rootisolation wb: isolate_sturm endpoint handling and empty isolates" {
     fail("isolate_sturm should keep endpoint roots when included")
   }
 
-  let sqf_empty = try! dup_isolate_real_roots_sqf([ri_wb_feqq(3, 1)], Domain::QQ)
+  let sqf_empty = try! dup_isolate_real_roots_sqf(
+    [ri_wb_feqq(3, 1)],
+    Domain::QQ,
+  )
   guard sqf_empty.length() == 0 else {
     fail("dup_isolate_real_roots_sqf(constant) should be empty")
   }

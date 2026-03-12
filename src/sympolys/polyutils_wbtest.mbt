@@ -68,7 +68,9 @@ test "polyutils wb: symbol collection and inferred gens" {
 
   let inferred = infer_gens_expr_local(composite)
   guard pu_wb_repr_strs(inferred) == "[\"x1\",\"y2\"]" else {
-    fail("infer_gens_expr_local should collect symbols from add/mul/pow/function")
+    fail(
+      "infer_gens_expr_local should collect symbols from add/mul/pow/function",
+    )
   }
 
   let auto_dict = try! dict_from_expr(x + y * @symcore.int(2))

@@ -26,20 +26,22 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
   let a = ddm_from_ints([[1, 2, 3], [0, 1, 1]], Domain::QQ).to_sdm()
   let (rref, pivots, nonzero_cols) = sdm_irref(a)
   let (expected_rref, expected_pivots) = a.rref()
-  guard pivots == expected_pivots else {
-    fail("sdm_irref pivot mismatch")
-  }
-  guard ms_trim(rref.to_dense().to_string()) == ms_trim(expected_rref.to_dense().to_string()) else {
+  guard pivots == expected_pivots else { fail("sdm_irref pivot mismatch") }
+  guard ms_trim(rref.to_dense().to_string()) ==
+    ms_trim(expected_rref.to_dense().to_string()) else {
     fail("sdm_irref matrix mismatch")
   }
   let oracle_rref = @sympy_polys.domainmatrix_rref([[1, 2, 3], [0, 1, 1]], "QQ")
   guard ms_trim(
-    "\{rref.to_domain_matrix().to_matrix_string()}||\{pivots.to_string()}",
-  ) == ms_trim(oracle_rref) else {
+      "\{rref.to_domain_matrix().to_matrix_string()}||\{pivots.to_string()}",
+    ) ==
+    ms_trim(oracle_rref) else {
     fail("sdm_irref oracle mismatch")
   }
   guard ms_trim(ms_nonzero_cols_text(nonzero_cols)) == ms_trim("{2: [0, 1]}") else {
-    fail("sdm_irref nonzero_cols mismatch: \{ms_nonzero_cols_text(nonzero_cols)}")
+    fail(
+      "sdm_irref nonzero_cols mismatch: \{ms_nonzero_cols_text(nonzero_cols)}",
+    )
   }
 
   let (nullspace, nonpivots) = sdm_nullspace_from_rref(
@@ -49,16 +51,20 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
     pivots,
     nonzero_cols,
   )
-  let (expected_nullspace, expected_nonpivots) = rref.nullspace_from_rref(pivots~)
+  let (expected_nullspace, expected_nonpivots) = rref.nullspace_from_rref(
+    pivots~,
+  )
   guard nonpivots == expected_nonpivots else {
     fail("sdm_nullspace_from_rref nonpivots mismatch")
   }
-  guard ms_trim(nullspace.to_dense().to_string()) == ms_trim(expected_nullspace.to_dense().to_string()) else {
+  guard ms_trim(nullspace.to_dense().to_string()) ==
+    ms_trim(expected_nullspace.to_dense().to_string()) else {
     fail("sdm_nullspace_from_rref basis mismatch")
   }
 
   let particular = sdm_particular_from_rref(rref, 3, pivots)
-  guard ms_trim(particular.to_dense().to_string()) == ms_trim(rref.particular(pivots~).to_dense().to_string()) else {
+  guard ms_trim(particular.to_dense().to_string()) ==
+    ms_trim(rref.particular(pivots~).to_dense().to_string()) else {
     fail("sdm_particular_from_rref mismatch")
   }
 }
@@ -73,9 +79,7 @@ test "matrix sparse wrappers: sdm_nullspace_from_rref accepts augmented RREF" {
     [0, 2],
     { 1: [0] },
   )
-  guard nonpivots == [1] else {
-    fail("augmented nonpivots mismatch")
-  }
+  guard nonpivots == [1] else { fail("augmented nonpivots mismatch") }
   guard ms_trim(basis.to_dense().to_string()) == ms_trim("[[-1, 1]]") else {
     fail("augmented nullspace basis mismatch: \{basis.to_dense().to_string()}")
   }

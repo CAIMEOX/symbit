@@ -35,12 +35,20 @@ test "convert wb: fe_to_expr_const covers CC branch variants" {
 ///|
 test "convert wb: fe_ext_to_expr handles empty/sparse/mixed terms" {
   let mod_poly = [1, 0, 2]
-  inspect(@symprint.to_string(fe_ext_to_expr(5, [0, 0, 0], mod_poly)), content="0")
-  inspect(@symprint.to_string(fe_ext_to_expr(5, [0, 2], mod_poly)), content="2*alpha_p5_m1_0_2")
-  inspect(@symprint.to_string(fe_ext_to_expr(5, [0, 0, 1], mod_poly)), content="alpha_p5_m1_0_2**2")
+  inspect(
+    @symprint.to_string(fe_ext_to_expr(5, [0, 0, 0], mod_poly)),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(fe_ext_to_expr(5, [0, 2], mod_poly)),
+    content="2*alpha_p5_m1_0_2",
+  )
+  inspect(
+    @symprint.to_string(fe_ext_to_expr(5, [0, 0, 1], mod_poly)),
+    content="alpha_p5_m1_0_2**2",
+  )
   let mix = @symprint.to_string(fe_ext_to_expr(5, [0, 1, 3, 0], mod_poly))
-  guard mix.contains("alpha_p5_m1_0_2") &&
-    mix.contains("3*alpha_p5_m1_0_2**2") else {
+  guard mix.contains("alpha_p5_m1_0_2") && mix.contains("3*alpha_p5_m1_0_2**2") else {
     fail("GFExt mixed rendering mismatch: \{mix}")
   }
 }
@@ -76,27 +84,28 @@ test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
     minpoly,
     "a",
   )
-  inspect(@symprint.to_string(fe_to_expr_const(coeff)), content="2*a**2 + a + 1")
+  inspect(
+    @symprint.to_string(fe_to_expr_const(coeff)),
+    content="2*a**2 + a + 1",
+  )
 
   // Single non-zero term exercises the `terms.length() == 1` return path.
   inspect(
     @symprint.to_string(
-      fe_algext_to_expr(Domain::QQ, [conv_wb_qq(0, 1), conv_wb_qq(1, 1)], minpoly, "a"),
+      fe_algext_to_expr(
+        Domain::QQ,
+        [conv_wb_qq(0, 1), conv_wb_qq(1, 1)],
+        minpoly,
+        "a",
+      ),
     ),
     content="a",
   )
 
   // Nested AlgExt coefficient exercises `fe_cast_to_base` AlgExt arm.
-  let nested = FieldElem::AlgExt(
-    Domain::QQ,
-    [conv_wb_qq(2, 1)],
-    minpoly,
-    "a",
-  )
+  let nested = FieldElem::AlgExt(Domain::QQ, [conv_wb_qq(2, 1)], minpoly, "a")
   inspect(
-    @symprint.to_string(
-      fe_algext_to_expr(Domain::QQ, [nested], minpoly, "a"),
-    ),
+    @symprint.to_string(fe_algext_to_expr(Domain::QQ, [nested], minpoly, "a")),
     content="2",
   )
 }

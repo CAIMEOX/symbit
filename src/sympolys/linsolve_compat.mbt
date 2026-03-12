@@ -288,8 +288,7 @@ pub fn _linsolve(
   let nsyms = syms.length()
   let (eqsdict, const_terms) = _linear_eq_to_dict(eqs, syms)
   let aaug = sympy_dict_to_dm(eqsdict, const_terms, syms)
-  let (arref, pivots, nzcols) = if
-    domain_is_real_field_pred(aaug.domain()) ||
+  let (arref, pivots, nzcols) = if domain_is_real_field_pred(aaug.domain()) ||
     domain_is_complex_field_pred(aaug.domain()) {
     let (dense_rref, dense_pivots) = aaug.to_dense().rref()
     let sparse_rref = dense_rref.to_sdm()
@@ -309,11 +308,7 @@ pub fn _linsolve(
   let particular = sdm_particular_from_rref(arref, nsyms + 1, pivots)
   let one = fe_from_int(1, arref.domain())
   let (nullspace, nonpivots) = sdm_nullspace_from_rref(
-    arref,
-    one,
-    nsyms,
-    pivots,
-    nzcols,
+    arref, one, nsyms, pivots, nzcols,
   )
 
   let sol : Map[String, @symcore.Expr] = Map::new()
@@ -384,6 +379,7 @@ fn lift_vector_to_field(
 }
 
 ///|
+
 ///|
 /// Solve linear system `A * x = b` using RREF.
 pub fn linear_solve(
@@ -470,7 +466,7 @@ pub fn linear_solve(
       if fe_is_zero(coeff) {
         continue
       }
-      rhs = rhs - (fe_to_expr_const(coeff) * exprs[fv])
+      rhs = rhs - fe_to_expr_const(coeff) * exprs[fv]
     }
     exprs.set(p, rhs)
   }

@@ -22,11 +22,9 @@ test "small branches: core/domain paths" {
   }
 
   let a = @symcore.symbol("a")
-  let alg_domain = Domain::AlgExt(
-    Domain::QQ,
-    ["a"],
-    [(a ^ @symcore.int(2)) + @symcore.int(1)],
-  )
+  let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [
+    (a ^ @symcore.int(2)) + @symcore.int(1),
+  ])
   let alg_coeff = try! ensure_coeff_domain(half, alg_domain)
   guard alg_coeff is FieldElem::AlgExt(_, _, _, _) else {
     fail("AlgExt ensure_coeff_domain should produce AlgExt coefficient")
@@ -62,13 +60,13 @@ test "small branches: core/domain paths" {
   inspect("\{PolyError::NonPolynomial}", content="NonPolynomial")
   inspect("\{PolyError::BadExponent}", content="BadExponent")
   inspect("\{PolyError::DomainMismatch}", content="DomainMismatch")
-  inspect("\{PolyError::CoefficientNotInteger}", content="CoefficientNotInteger")
+  inspect(
+    "\{PolyError::CoefficientNotInteger}",
+    content="CoefficientNotInteger",
+  )
   inspect("\{PolyError::DomainNotField}", content="DomainNotField")
   inspect("\{PolyError::DivisionByZero}", content="DivisionByZero")
-  inspect(
-    "\{PolyError::ExactQuotientFailed}",
-    content="ExactQuotientFailed",
-  )
+  inspect("\{PolyError::ExactQuotientFailed}", content="ExactQuotientFailed")
   inspect(
     "\{PolyError::PolynomialDivisionFailed}",
     content="PolynomialDivisionFailed",
@@ -225,7 +223,9 @@ test "small branches: lll helper branches" {
 
   let k0_basis : Matrix = [[sb_bi(2), sb_bi(1)]]
   let k0_transform : Matrix = [[sb_bi(1)]]
-  let k0_mu : Array[Array[@symnum.BigRational]] = [[@symnum.BigRational::zero()]]
+  let k0_mu : Array[Array[@symnum.BigRational]] = [
+    [@symnum.BigRational::zero()],
+  ]
   size_reduce(k0_basis, k0_transform, k0_mu, 0)
   guard k0_basis[0][0].to_string() == "2" else {
     fail("size_reduce(k=0) should be a no-op")

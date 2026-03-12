@@ -6,11 +6,15 @@ pub struct DomainScalar {
 }
 
 ///|
-fn coerce_scalar(elem : FieldElem, to_domain : Domain) -> FieldElem raise PolyError {
+fn coerce_scalar(
+  elem : FieldElem,
+  to_domain : Domain,
+) -> FieldElem raise PolyError {
   let q = fe_expect_rational(elem)
   fe_from_rational(q, to_domain)
 }
 
+///|
 fn scalar_quo(
   a : FieldElem,
   b : FieldElem,
@@ -30,6 +34,7 @@ fn scalar_quo(
   }
 }
 
+///|
 fn scalar_rem(
   a : FieldElem,
   b : FieldElem,
@@ -68,19 +73,27 @@ pub fn DomainScalar::new(
 }
 
 ///|
-pub fn domain_scalar_from_int(n : Int, domain : Domain) -> DomainScalar raise PolyError {
+pub fn domain_scalar_from_int(
+  n : Int,
+  domain : Domain,
+) -> DomainScalar raise PolyError {
   domain_scalar_new(fe_from_int(n, domain), domain)
 }
 
 ///|
-pub fn DomainScalar::from_sympy(expr : @symcore.Expr) -> DomainScalar raise PolyError {
+pub fn DomainScalar::from_sympy(
+  expr : @symcore.Expr,
+) -> DomainScalar raise PolyError {
   let domain = infer_expr_items_domain([expr])
   let element = field_elem_from_scalar_expr(expr, domain)
   domain_scalar_new(element, domain)
 }
 
 ///|
-pub fn DomainScalar::to_domain(self : DomainScalar, domain : Domain) -> DomainScalar raise PolyError {
+pub fn DomainScalar::to_domain(
+  self : DomainScalar,
+  domain : Domain,
+) -> DomainScalar raise PolyError {
   domain_scalar_new(coerce_scalar(self.element, domain), domain)
 }
 
@@ -102,25 +115,37 @@ pub fn DomainScalar::unify(
 }
 
 ///|
-pub fn DomainScalar::add(self : DomainScalar, other : DomainScalar) -> DomainScalar raise PolyError {
+pub fn DomainScalar::add(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> DomainScalar raise PolyError {
   let (a, b) = self.unify(other)
   domain_scalar_new(fe_add(a.element, b.element), a.domain)
 }
 
 ///|
-pub fn DomainScalar::sub(self : DomainScalar, other : DomainScalar) -> DomainScalar raise PolyError {
+pub fn DomainScalar::sub(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> DomainScalar raise PolyError {
   let (a, b) = self.unify(other)
   domain_scalar_new(fe_sub(a.element, b.element), a.domain)
 }
 
 ///|
-pub fn DomainScalar::mul(self : DomainScalar, other : DomainScalar) -> DomainScalar raise PolyError {
+pub fn DomainScalar::mul(
+  self : DomainScalar,
+  other : DomainScalar,
+) -> DomainScalar raise PolyError {
   let (a, b) = self.unify(other)
   domain_scalar_new(fe_mul(a.element, b.element), a.domain)
 }
 
 ///|
-pub fn DomainScalar::pow(self : DomainScalar, n : Int) -> DomainScalar raise PolyError {
+pub fn DomainScalar::pow(
+  self : DomainScalar,
+  n : Int,
+) -> DomainScalar raise PolyError {
   if n < 0 {
     raise PolyError::BadExponent
   }

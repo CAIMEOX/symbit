@@ -1,7 +1,8 @@
 ///|
 fn sp_norm(expr : @symcore.Expr) -> String {
-  (try! @sympy_polys.sympy_normalize(@symprint.to_string(expr)).trim().to_string())
-    .replace_all(old=" ", new="")
+  (try! @sympy_polys.sympy_normalize(@symprint.to_string(expr))
+  .trim()
+  .to_string()).replace_all(old=" ", new="")
 }
 
 ///|
@@ -33,9 +34,7 @@ test "series: differentiation and integration" {
   let f = ring.from_int_coeffs([2, -3, 4]) // 2 - 3x + 4x^2
 
   let df = f.diff()
-  guard sp_norm(df.to_expr()) == "8*x-3" else {
-    fail("series diff mismatch")
-  }
+  guard sp_norm(df.to_expr()) == "8*x-3" else { fail("series diff mismatch") }
 
   let intf = f.integrate()
   // integral with zero constant: 2x - 3/2 x^2 + 4/3 x^3
@@ -50,9 +49,7 @@ test "series: generator, scalar ops, inverse, divide, compose" {
   let x = ring.gen()
   let one = ring.one()
 
-  guard sp_norm(x.to_expr()) == "x" else {
-    fail("series generator mismatch")
-  }
+  guard sp_norm(x.to_expr()) == "x" else { fail("series generator mismatch") }
 
   let lifted = x.add_ground(fe_from_int(2, Domain::ZZ))
   guard sp_norm(lifted.to_expr()) == "x+2" else {
@@ -105,7 +102,8 @@ test "series: powers and analytic functions over QQ" {
   }
 
   let sqrt1mx = one.sub(x).sqrt()
-  guard sp_norm(sqrt1mx.to_expr()) == "-7*x**5/256-5*x**4/128-x**3/16-x**2/8-x/2+1" else {
+  guard sp_norm(sqrt1mx.to_expr()) ==
+    "-7*x**5/256-5*x**4/128-x**3/16-x**2/8-x/2+1" else {
     fail("series sqrt mismatch: \{sp_norm(sqrt1mx.to_expr())}")
   }
 
@@ -135,19 +133,15 @@ test "series: invalid inverse and analytic preconditions fail" {
   let zz = power_series_ring(Domain::ZZ, "x", 5)
   let x_zz = zz.gen()
   let bad_inv : Result[SeriesElem, PolyError] = try? x_zz.inverse()
-  guard bad_inv is Err(_) else {
-    fail("inverse(x) should fail")
-  }
+  guard bad_inv is Err(_) else { fail("inverse(x) should fail") }
 
   let qq = power_series_ring(Domain::QQ, "x", 5)
   let x = qq.gen()
-  let bad_exp : Result[SeriesElem, PolyError] = try? x.add_ground(fe_from_int(1, Domain::QQ)).exp()
-  guard bad_exp is Err(_) else {
-    fail("exp(1 + x) should fail")
-  }
+  let bad_exp : Result[SeriesElem, PolyError] = try? x
+    .add_ground(fe_from_int(1, Domain::QQ))
+    .exp()
+  guard bad_exp is Err(_) else { fail("exp(1 + x) should fail") }
 
   let bad_sqrt : Result[SeriesElem, PolyError] = try? x.sqrt()
-  guard bad_sqrt is Err(_) else {
-    fail("sqrt(x) should fail")
-  }
+  guard bad_sqrt is Err(_) else { fail("sqrt(x) should fail") }
 }

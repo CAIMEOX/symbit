@@ -17,6 +17,7 @@ pub type MatrixExpr = Array[Array[@symcore.Expr]]
 ///|
 pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
 
+///|
 /// Layout token used by `to_flat_nz`/`from_flat_nz`.
 pub enum DomainMatrixFlatNZData {
   Dense(Int, Int)
@@ -48,6 +49,7 @@ fn make_dense(
   out
 }
 
+///|
 fn clone_dense_rows(rows : Array[Array[FieldElem]]) -> Array[Array[FieldElem]] {
   let out : Array[Array[FieldElem]] = Array::new()
   for row in rows {
@@ -60,6 +62,7 @@ fn clone_dense_rows(rows : Array[Array[FieldElem]]) -> Array[Array[FieldElem]] {
   out
 }
 
+///|
 fn clone_dod(dod : DomainMatrixDOD) -> DomainMatrixDOD {
   let out : DomainMatrixDOD = Map::new()
   for r, row in dod {
@@ -72,11 +75,16 @@ fn clone_dod(dod : DomainMatrixDOD) -> DomainMatrixDOD {
   out
 }
 
-fn convert_matrix_elem(v : FieldElem, domain : Domain) -> FieldElem raise PolyError {
+///|
+fn convert_matrix_elem(
+  v : FieldElem,
+  domain : Domain,
+) -> FieldElem raise PolyError {
   let q = fe_expect_rational(v)
   fe_from_rational(q, domain)
 }
 
+///|
 fn same_format(lhs : DomainMatrix, rhs : DomainMatrix) -> Bool {
   match (lhs.rep, rhs.rep) {
     (DomainMatrixRep::Dense(_), DomainMatrixRep::Dense(_))
@@ -85,6 +93,7 @@ fn same_format(lhs : DomainMatrix, rhs : DomainMatrix) -> Bool {
   }
 }
 
+///|
 fn all_indices_except(size : Int, skip : Int) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for i in 0..<size {
@@ -95,6 +104,7 @@ fn all_indices_except(size : Int, skip : Int) -> Array[Int] {
   out
 }
 
+///|
 fn all_indices(start : Int, stop : Int) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for i in start..<stop {
@@ -103,6 +113,7 @@ fn all_indices(start : Int, stop : Int) -> Array[Int] {
   out
 }
 
+///|
 fn normalize_matrix_index(index : Int, size : Int) -> Int raise PolyError {
   let normalized = if index < 0 { size + index } else { index }
   if normalized < 0 || normalized >= size {
@@ -111,6 +122,7 @@ fn normalize_matrix_index(index : Int, size : Int) -> Int raise PolyError {
   normalized
 }
 
+///|
 fn normalize_slice_bound_positive(bound : Int, size : Int) -> Int {
   let shifted = if bound < 0 { size + bound } else { bound }
   if shifted < 0 {
@@ -122,6 +134,7 @@ fn normalize_slice_bound_positive(bound : Int, size : Int) -> Int {
   shifted
 }
 
+///|
 fn normalize_slice_bound_negative(bound : Int, size : Int) -> Int {
   let shifted = if bound < 0 { size + bound } else { bound }
   if shifted < -1 {
@@ -133,6 +146,7 @@ fn normalize_slice_bound_negative(bound : Int, size : Int) -> Int {
   shifted
 }
 
+///|
 fn slice_index_range(
   size : Int,
   start? : Int? = None,
@@ -175,6 +189,7 @@ fn slice_index_range(
   out
 }
 
+///|
 fn infer_expr_items_domain(
   items : Array[@symcore.Expr],
   field? : Bool = false,
@@ -182,12 +197,7 @@ fn infer_expr_items_domain(
   modulus? : Int? = None,
 ) -> Domain raise PolyError {
   let mut domain = match modulus {
-    Some(p) =>
-      if p <= 1 {
-        raise PolyError::BadModulus
-      } else {
-        Domain::GF(p)
-      }
+    Some(p) => if p <= 1 { raise PolyError::BadModulus } else { Domain::GF(p) }
     None =>
       if items.any(expr => has_fractional_coeff(expr)) {
         Domain::QQ
@@ -207,6 +217,7 @@ fn infer_expr_items_domain(
   domain
 }
 
+///|
 fn field_elem_from_scalar_expr(
   expr : @symcore.Expr,
   domain : Domain,
@@ -227,6 +238,7 @@ fn field_elem_from_scalar_expr(
   }
 }
 
+///|
 fn expr_matrix_from_field_rows(rows : Array[Array[FieldElem]]) -> MatrixExpr {
   let out : MatrixExpr = Array::new()
   for row in rows {
@@ -235,6 +247,7 @@ fn expr_matrix_from_field_rows(rows : Array[Array[FieldElem]]) -> MatrixExpr {
   out
 }
 
+///|
 fn restore_rep_like(
   dm : DomainMatrix,
   like : DomainMatrix,
@@ -245,6 +258,7 @@ fn restore_rep_like(
   }
 }
 
+///|
 fn domain_matrix_scale(
   dm : DomainMatrix,
   scalar : FieldElem,
@@ -261,6 +275,7 @@ fn domain_matrix_scale(
   domain_matrix_from_dense(out, dm.domain)
 }
 
+///|
 fn domain_matrix_div_scalar(
   dm : DomainMatrix,
   scalar : FieldElem,
@@ -268,6 +283,7 @@ fn domain_matrix_div_scalar(
   domain_matrix_scale(dm, fe_inv(scalar))
 }
 
+///|
 fn domain_matrix_matmul(
   left : DomainMatrix,
   right : DomainMatrix,
@@ -289,6 +305,7 @@ fn domain_matrix_matmul(
   domain_matrix_from_dense(out, left.domain)
 }
 
+///|
 fn canonical_unit_in_domain(
   value : FieldElem,
   domain : Domain,
@@ -300,6 +317,7 @@ fn canonical_unit_in_domain(
   }
 }
 
+///|
 fn bigint_abs(x : BigInt) -> BigInt {
   if x.op_lt(BigInt::from_int(0)) {
     x.neg()
@@ -308,6 +326,7 @@ fn bigint_abs(x : BigInt) -> BigInt {
   }
 }
 
+///|
 fn field_elem_pow_nonnegative(
   base : FieldElem,
   n : Int,
@@ -331,6 +350,7 @@ fn field_elem_pow_nonnegative(
   acc
 }
 
+///|
 fn field_elems_content(
   values : Array[FieldElem],
   domain : Domain,
@@ -358,6 +378,7 @@ fn field_elems_content(
   fe_from_rational(try! @symnum.BigRational::new(numer_gcd, denom_lcm), domain)
 }
 
+///|
 fn dense_matrix_nonzero_entries(
   rows : Array[Array[FieldElem]],
 ) -> Array[(Int, Int, FieldElem)] {
@@ -373,6 +394,7 @@ fn dense_matrix_nonzero_entries(
   out
 }
 
+///|
 fn dense_matrix_is_diagonal(rows : Array[Array[FieldElem]]) -> Bool {
   for i in 0..<rows.length() {
     for j in 0..<rows[i].length() {
@@ -384,6 +406,7 @@ fn dense_matrix_is_diagonal(rows : Array[Array[FieldElem]]) -> Bool {
   true
 }
 
+///|
 fn dense_matrix_is_upper(rows : Array[Array[FieldElem]]) -> Bool {
   for i in 0..<rows.length() {
     for j in 0..<rows[i].length() {
@@ -395,6 +418,7 @@ fn dense_matrix_is_upper(rows : Array[Array[FieldElem]]) -> Bool {
   true
 }
 
+///|
 fn dense_matrix_is_lower(rows : Array[Array[FieldElem]]) -> Bool {
   for i in 0..<rows.length() {
     for j in 0..<rows[i].length() {
@@ -406,6 +430,7 @@ fn dense_matrix_is_lower(rows : Array[Array[FieldElem]]) -> Bool {
   true
 }
 
+///|
 fn dense_matrix_is_zero(rows : Array[Array[FieldElem]]) -> Bool {
   for row in rows {
     for value in row {
@@ -417,6 +442,7 @@ fn dense_matrix_is_zero(rows : Array[Array[FieldElem]]) -> Bool {
   true
 }
 
+///|
 fn matrix_adjacency_from_dense(
   rows : Array[Array[FieldElem]],
 ) -> (Array[Array[Int]], Array[Array[Int]]) {
@@ -438,6 +464,7 @@ fn matrix_adjacency_from_dense(
   (adj, rev)
 }
 
+///|
 fn dfs_postorder(
   node : Int,
   adj : Array[Array[Int]],
@@ -456,6 +483,7 @@ fn dfs_postorder(
   order.push(node)
 }
 
+///|
 fn dfs_collect_component(
   node : Int,
   adj : Array[Array[Int]],
@@ -474,6 +502,7 @@ fn dfs_collect_component(
   }
 }
 
+///|
 fn _collect_factors(
   factors : Array[(Array[FieldElem], Int)],
 ) -> Array[(Array[FieldElem], Int)] {
@@ -499,6 +528,7 @@ fn _collect_factors(
   out
 }
 
+///|
 fn poly_from_dense_desc(
   coeffs : Array[FieldElem],
   gen : String,
@@ -518,9 +548,13 @@ fn poly_from_dense_desc(
   Poly::{ coeffs: map, gens: [gen], domain, order: TermOrder::Lex }
 }
 
+///|
 fn poly_to_dense_desc(poly : Poly) -> Array[FieldElem] raise PolyError {
   let degree = poly.degree(0)
-  let coeffs : Array[FieldElem] = Array::make(degree + 1, fe_from_int(0, poly.domain))
+  let coeffs : Array[FieldElem] = Array::make(
+    degree + 1,
+    fe_from_int(0, poly.domain),
+  )
   for mono, coeff in poly.coeffs {
     coeffs[degree - mono.exps[0]] = coeff
   }
@@ -678,12 +712,7 @@ pub fn DomainMatrix::get_domain(
   gaussian? : Bool = false,
   modulus? : Int? = None,
 ) -> (Domain, Array[FieldElem]) raise PolyError {
-  let domain = infer_expr_items_domain(
-    items_sympy,
-    field=field,
-    gaussian=gaussian,
-    modulus=modulus,
-  )
+  let domain = infer_expr_items_domain(items_sympy, field~, gaussian~, modulus~)
   let values : Array[FieldElem] = Array::new()
   for item in items_sympy {
     values.push(field_elem_from_scalar_expr(item, domain))
@@ -714,9 +743,9 @@ pub fn DomainMatrix::from_list_sympy(
   }
   let (domain, values) = DomainMatrix::get_domain(
     flat,
-    field=field,
-    gaussian=gaussian,
-    modulus=modulus,
+    field~,
+    gaussian~,
+    modulus~,
   )
   DomainMatrix::from_list_flat(values, (nrows, ncols), domain)
 }
@@ -746,9 +775,9 @@ pub fn DomainMatrix::from_dict_sympy(
   }
   let (domain, values) = DomainMatrix::get_domain(
     exprs,
-    field=field,
-    gaussian=gaussian,
-    modulus=modulus,
+    field~,
+    gaussian~,
+    modulus~,
   )
   let dod : DomainMatrixDOD = Map::new()
   for i in 0..<positions.length() {
@@ -783,9 +812,9 @@ pub fn DomainMatrix::from_Matrix(
     nrows,
     ncols,
     rows,
-    field=field,
-    gaussian=gaussian,
-    modulus=modulus,
+    field~,
+    gaussian~,
+    modulus~,
   )
   match fmt {
     "dense" => dm
@@ -813,7 +842,10 @@ pub fn DomainMatrix::ones(
 }
 
 ///|
-pub fn DomainMatrix::eye(n : Int, domain : Domain) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::eye(
+  n : Int,
+  domain : Domain,
+) -> DomainMatrix raise PolyError {
   domain_matrix_eye(n, domain)
 }
 
@@ -915,9 +947,9 @@ pub fn DomainMatrix::choose_domain(
       DomainMatrixRep::Dense(_) => "dense"
       DomainMatrixRep::Sparse(_) => "sparse"
     },
-    field=field,
-    gaussian=gaussian,
-    modulus=modulus,
+    field~,
+    gaussian~,
+    modulus~,
   )
   restore_rep_like(chosen, self)
 }
@@ -977,7 +1009,9 @@ pub fn DomainMatrix::convert_to(
 }
 
 ///|
-pub fn DomainMatrix::to_field(self : DomainMatrix) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::to_field(
+  self : DomainMatrix,
+) -> DomainMatrix raise PolyError {
   self.convert_to(domain_get_field(self.domain))
 }
 
@@ -1000,10 +1034,14 @@ pub fn DomainMatrix::_unify_fmt(
     return (self, other)
   }
   match fmt {
-    "dense" => (
-      domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain),
-      domain_matrix_from_dense(clone_dense_rows(other.to_dense()), other.domain),
-    )
+    "dense" =>
+      (
+        domain_matrix_from_dense(clone_dense_rows(self.to_dense()), self.domain),
+        domain_matrix_from_dense(
+          clone_dense_rows(other.to_dense()),
+          other.domain,
+        ),
+      )
     "sparse" => (self.to_sparse(), other.to_sparse())
     _ => raise PolyError::DomainMismatch
   }
@@ -1044,7 +1082,10 @@ pub fn DomainMatrix::_check(
 }
 
 ///|
-pub fn DomainMatrix::unify_eq(self : DomainMatrix, other : DomainMatrix) -> Bool raise PolyError {
+pub fn DomainMatrix::unify_eq(
+  self : DomainMatrix,
+  other : DomainMatrix,
+) -> Bool raise PolyError {
   if self.shape() != other.shape() {
     return false
   }
@@ -1094,7 +1135,13 @@ pub fn DomainMatrix::clear_denoms(
     let out_row : Array[FieldElem] = Array::new()
     for value in row {
       let scaled = fe_mul(value, scale)
-      out_row.push(if convert { convert_matrix_elem(scaled, out_domain) } else { scaled })
+      out_row.push(
+        if convert {
+          convert_matrix_elem(scaled, out_domain)
+        } else {
+          scaled
+        },
+      )
     }
     out.push(out_row)
   }
@@ -1133,7 +1180,13 @@ pub fn DomainMatrix::clear_denoms_rowwise(
     let out_row : Array[FieldElem] = Array::new()
     for value in row {
       let scaled = fe_mul(value, scale)
-      out_row.push(if convert { convert_matrix_elem(scaled, out_domain) } else { scaled })
+      out_row.push(
+        if convert {
+          convert_matrix_elem(scaled, out_domain)
+        } else {
+          scaled
+        },
+      )
     }
     out_rows.push(out_row)
   }
@@ -1247,8 +1300,18 @@ pub fn DomainMatrix::extract_slice(
   col_stop? : Int? = None,
   col_step? : Int = 1,
 ) -> DomainMatrix raise PolyError {
-  let rows = slice_index_range(self.rows, start=row_start, stop=row_stop, step=row_step)
-  let cols = slice_index_range(self.cols, start=col_start, stop=col_stop, step=col_step)
+  let rows = slice_index_range(
+    self.rows,
+    start=row_start,
+    stop=row_stop,
+    step=row_step,
+  )
+  let cols = slice_index_range(
+    self.cols,
+    start=col_start,
+    stop=col_stop,
+    step=col_step,
+  )
   self.extract(rows, cols)
 }
 
@@ -1288,7 +1351,7 @@ pub fn DomainMatrix::hstack(
     DomainMatrixRep::Dense(_) => "dense"
     DomainMatrixRep::Sparse(_) => "sparse"
   }
-  let (left_dm, right_dm) = self.unify(other, fmt=fmt)
+  let (left_dm, right_dm) = self.unify(other, fmt~)
   if left_dm.rows != right_dm.rows {
     raise PolyError::DomainMismatch
   }
@@ -1326,7 +1389,10 @@ pub fn DomainMatrix::vstack(
 
 ///|
 pub fn DomainMatrix::neg(self : DomainMatrix) -> DomainMatrix raise PolyError {
-  restore_rep_like(domain_matrix_scale(self, fe_from_int(-1, self.domain)), self)
+  restore_rep_like(
+    domain_matrix_scale(self, fe_from_int(-1, self.domain)),
+    self,
+  )
 }
 
 ///|
@@ -1372,7 +1438,10 @@ pub fn DomainMatrix::_scalarmul(
 ) -> DomainMatrix raise PolyError {
   let _ = reverse
   if fe_is_zero(scalar) && self.domain != Domain::EXRAW {
-    return restore_rep_like(domain_matrix_zeros(self.rows, self.cols, self.domain), self)
+    return restore_rep_like(
+      domain_matrix_zeros(self.rows, self.cols, self.domain),
+      self,
+    )
   }
   if fe_is_one(scalar) {
     return self.copy()
@@ -1413,7 +1482,9 @@ pub fn DomainMatrix::truediv(
 }
 
 ///|
-pub fn DomainMatrix::diagonal(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::diagonal(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   let dense = self.to_dense()
   let limit = if self.rows < self.cols { self.rows } else { self.cols }
   let out : Array[FieldElem] = Array::new()
@@ -1429,7 +1500,9 @@ pub fn DomainMatrix::nnz(self : DomainMatrix) -> Int raise PolyError {
 }
 
 ///|
-pub fn DomainMatrix::iter_values(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::iter_values(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for entry in dense_matrix_nonzero_entries(self.to_dense()) {
     out.push(entry.2)
@@ -1438,17 +1511,23 @@ pub fn DomainMatrix::iter_values(self : DomainMatrix) -> Array[FieldElem] raise 
 }
 
 ///|
-pub fn DomainMatrix::iter_items(self : DomainMatrix) -> Array[(Int, Int, FieldElem)] raise PolyError {
+pub fn DomainMatrix::iter_items(
+  self : DomainMatrix,
+) -> Array[(Int, Int, FieldElem)] raise PolyError {
   dense_matrix_nonzero_entries(self.to_dense())
 }
 
 ///|
-pub fn DomainMatrix::to_list(self : DomainMatrix) -> Array[Array[FieldElem]] raise PolyError {
+pub fn DomainMatrix::to_list(
+  self : DomainMatrix,
+) -> Array[Array[FieldElem]] raise PolyError {
   self.to_dense()
 }
 
 ///|
-pub fn DomainMatrix::to_list_flat(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::to_list_flat(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   let out : Array[FieldElem] = Array::new()
   for row in self.to_dense() {
     for value in row {
@@ -1459,7 +1538,9 @@ pub fn DomainMatrix::to_list_flat(self : DomainMatrix) -> Array[FieldElem] raise
 }
 
 ///|
-pub fn DomainMatrix::flat(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::flat(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   self.to_list_flat()
 }
 
@@ -1477,7 +1558,10 @@ pub fn DomainMatrix::to_flat_nz(
         elements.push(entry.2)
         positions.push((entry.0, entry.1))
       }
-      (elements, DomainMatrixFlatNZData::Sparse(self.rows, self.cols, positions))
+      (
+        elements,
+        DomainMatrixFlatNZData::Sparse(self.rows, self.cols, positions),
+      )
     }
   }
 }
@@ -1514,7 +1598,9 @@ pub fn DomainMatrix::from_flat_nz(
 }
 
 ///|
-pub fn DomainMatrix::to_dod(self : DomainMatrix) -> DomainMatrixDOD raise PolyError {
+pub fn DomainMatrix::to_dod(
+  self : DomainMatrix,
+) -> DomainMatrixDOD raise PolyError {
   let dod : DomainMatrixDOD = Map::new()
   for entry in dense_matrix_nonzero_entries(self.to_dense()) {
     match dod.get(entry.0) {
@@ -1539,11 +1625,16 @@ pub fn DomainMatrix::from_dod_like(
     Some(v) => v
     None => self.domain
   }
-  restore_rep_like(DomainMatrix::from_dod(clone_dod(dod), self.shape(), out_domain), self)
+  restore_rep_like(
+    DomainMatrix::from_dod(clone_dod(dod), self.shape(), out_domain),
+    self,
+  )
 }
 
 ///|
-pub fn DomainMatrix::to_dok(self : DomainMatrix) -> DomainMatrixDOK raise PolyError {
+pub fn DomainMatrix::to_dok(
+  self : DomainMatrix,
+) -> DomainMatrixDOK raise PolyError {
   let dok : DomainMatrixDOK = Map::new()
   for entry in dense_matrix_nonzero_entries(self.to_dense()) {
     dok[(entry.0, entry.1)] = entry.2
@@ -1552,12 +1643,16 @@ pub fn DomainMatrix::to_dok(self : DomainMatrix) -> DomainMatrixDOK raise PolyEr
 }
 
 ///|
-pub fn DomainMatrix::to_sympy(self : DomainMatrix) -> MatrixExpr raise PolyError {
+pub fn DomainMatrix::to_sympy(
+  self : DomainMatrix,
+) -> MatrixExpr raise PolyError {
   expr_matrix_from_field_rows(self.to_dense())
 }
 
 ///|
-pub fn DomainMatrix::to_Matrix(self : DomainMatrix) -> MatrixExpr raise PolyError {
+pub fn DomainMatrix::to_Matrix(
+  self : DomainMatrix,
+) -> MatrixExpr raise PolyError {
   self.to_sympy()
 }
 
@@ -1596,7 +1691,9 @@ pub fn DomainMatrix::content(self : DomainMatrix) -> FieldElem raise PolyError {
 }
 
 ///|
-pub fn DomainMatrix::primitive(self : DomainMatrix) -> (FieldElem, DomainMatrix) raise PolyError {
+pub fn DomainMatrix::primitive(
+  self : DomainMatrix,
+) -> (FieldElem, DomainMatrix) raise PolyError {
   let content = self.content()
   if fe_is_zero(content) {
     return (content, self.copy())
@@ -1673,7 +1770,10 @@ pub fn DomainMatrix::cancel_denom_elementwise(
   if fe_is_one(canon_denom) {
     return (
       canon_matrix,
-      restore_rep_like(domain_matrix_ones(self.rows, self.cols, self.domain), self),
+      restore_rep_like(
+        domain_matrix_ones(self.rows, self.cols, self.domain),
+        self,
+      ),
     )
   }
   let num_rows : Array[Array[FieldElem]] = Array::new()
@@ -1701,7 +1801,10 @@ pub fn DomainMatrix::cancel_denom_elementwise(
 }
 
 ///|
-pub fn DomainMatrix::pow(self : DomainMatrix, n : Int) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::pow(
+  self : DomainMatrix,
+  n : Int,
+) -> DomainMatrix raise PolyError {
   if self.rows != self.cols {
     raise PolyError::DomainMismatch
   }
@@ -1778,6 +1881,7 @@ pub fn DomainMatrix::applyfunc(
   }
 }
 
+///|
 fn domain_matrix_minor(
   matrix : DomainMatrix,
   skip_row : Int,
@@ -1820,6 +1924,7 @@ fn fe_exact_div_in_domain(
   }
 }
 
+///|
 fn dense_lu_in_place(
   rows : Array[Array[FieldElem]],
   _domain : Domain,
@@ -1854,6 +1959,7 @@ fn dense_lu_in_place(
   swaps
 }
 
+///|
 fn dense_lu_split(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -1881,6 +1987,7 @@ fn dense_lu_split(
   (l, u, swaps)
 }
 
+///|
 fn dense_lu_solve(
   l : Array[Array[FieldElem]],
   u : Array[Array[FieldElem]],
@@ -1941,6 +2048,7 @@ fn dense_lu_solve(
   x
 }
 
+///|
 fn dense_fflu_phase1(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -1987,9 +2095,16 @@ fn dense_fflu_phase1(
     let pivot = lu[rank][j]
     for i in (rank + 1)..<row_count {
       let multiplier = lu[i][j]
-      let denominator = if rank > 0 { lu[rank - 1][rank - 1] } else { fe_from_int(1, domain) }
+      let denominator = if rank > 0 {
+        lu[rank - 1][rank - 1]
+      } else {
+        fe_from_int(1, domain)
+      }
       for k in (j + 1)..<col_count {
-        let num = fe_sub(fe_mul(pivot, lu[i][k]), fe_mul(lu[rank][k], multiplier))
+        let num = fe_sub(
+          fe_mul(pivot, lu[i][k]),
+          fe_mul(lu[rank][k], multiplier),
+        )
         lu[i].set(k, fe_exact_div_in_domain(num, denominator, domain))
       }
       lu[i].set(j, multiplier)
@@ -1999,6 +2114,7 @@ fn dense_fflu_phase1(
   (lu, perm)
 }
 
+///|
 fn dense_dot_cols(
   rows : Array[Array[FieldElem]],
   left : Int,
@@ -2012,6 +2128,7 @@ fn dense_dot_cols(
   total
 }
 
+///|
 fn tail_slice(row : Array[FieldElem], start : Int) -> Array[FieldElem] {
   let out : Array[FieldElem] = Array::new()
   for i in start..<row.length() {
@@ -2020,6 +2137,7 @@ fn tail_slice(row : Array[FieldElem], start : Int) -> Array[FieldElem] {
   out
 }
 
+///|
 fn dense_berk(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -2054,13 +2172,17 @@ fn dense_berk(
   }
 
   let mut cur_c = c
-  for i in 2..=n {
+  for i in 2..<=n {
     let an_c = if i == 2 {
       cur_c
     } else {
-      domain_matrix_from_dense(a_minor, domain).matmul(domain_matrix_from_dense(cur_c, domain)).to_dense()
+      domain_matrix_from_dense(a_minor, domain)
+      .matmul(domain_matrix_from_dense(cur_c, domain))
+      .to_dense()
     }
-    let ran_c = domain_matrix_from_dense(r, domain).matmul(domain_matrix_from_dense(an_c, domain)).to_dense()
+    let ran_c = domain_matrix_from_dense(r, domain)
+      .matmul(domain_matrix_from_dense(an_c, domain))
+      .to_dense()
     for j in 0..<(n + 1 - i) {
       t[i + j].set(j, fe_neg(ran_c[0][0]))
     }
@@ -2071,7 +2193,9 @@ fn dense_berk(
   for coeff in q {
     q_col.push([coeff])
   }
-  let out = domain_matrix_from_dense(t, domain).matmul(domain_matrix_from_dense(q_col, domain)).to_dense()
+  let out = domain_matrix_from_dense(t, domain)
+    .matmul(domain_matrix_from_dense(q_col, domain))
+    .to_dense()
   let coeffs : Array[FieldElem] = Array::new()
   for row in out {
     coeffs.push(row[0])
@@ -2182,6 +2306,7 @@ pub fn DomainMatrix::rref(
   (domain_matrix_from_dense(data, self.domain), pivots)
 }
 
+///|
 fn dense_rref_den(
   rows : Array[Array[FieldElem]],
   domain : Domain,
@@ -2192,7 +2317,7 @@ fn dense_rref_den(
     return (data, fe_from_int(1, domain), [])
   }
   let n = data[0].length()
-  let mut d : Option[FieldElem] = None
+  let mut d : FieldElem? = None
   let pivots : Array[Int] = Array::new()
   let no_pivots : Array[Int] = Array::new()
   let zero = fe_from_int(0, domain)
@@ -2218,7 +2343,8 @@ fn dense_rref_den(
     if !pivots.is_empty() {
       let mut pivot_val = fe_mul(aij, data[0][pivots[0]])
       match d {
-        Some(prev) => pivot_val = fe_exact_div_in_domain(pivot_val, prev, domain)
+        Some(prev) =>
+          pivot_val = fe_exact_div_in_domain(pivot_val, prev, domain)
         None => ()
       }
       for ip in 0..<pivots.length() {
@@ -2246,7 +2372,10 @@ fn dense_rref_den(
         continue
       }
       for kp in (j + 1)..<n {
-        let mut value = fe_sub(fe_mul(aij, data[jp][kp]), fe_mul(data[jp][j], data[i][kp]))
+        let mut value = fe_sub(
+          fe_mul(aij, data[jp][kp]),
+          fe_mul(data[jp][j], data[i][kp]),
+        )
         match d {
           Some(prev) => value = fe_exact_div_in_domain(value, prev, domain)
           None => ()
@@ -2272,6 +2401,7 @@ fn dense_rref_den(
   (data, denom, pivots)
 }
 
+///|
 fn normalize_rref_method(rref_method : String) -> String raise PolyError {
   match rref_method {
     "" | "auto" => "auto"
@@ -2283,6 +2413,7 @@ fn normalize_rref_method(rref_method : String) -> String raise PolyError {
   }
 }
 
+///|
 fn choose_rref_method(
   dm : DomainMatrix,
   rref_method : String,
@@ -2300,10 +2431,8 @@ fn choose_rref_method(
   "FF"
 }
 
-fn infer_rref_pivots(
-  rows : Array[Array[FieldElem]],
-  cols : Int,
-) -> Array[Int] {
+///|
+fn infer_rref_pivots(rows : Array[Array[FieldElem]], cols : Int) -> Array[Int] {
   let pivots : Array[Int] = Array::new()
   let mut last_pivot = -1
   for row in rows {
@@ -2318,6 +2447,7 @@ fn infer_rref_pivots(
   pivots
 }
 
+///|
 fn nullspace_from_rref_with_nonpivots(
   dm : DomainMatrix,
   pivots? : Array[Int] = [],
@@ -2358,6 +2488,7 @@ fn nullspace_from_rref_with_nonpivots(
   (domain_matrix_from_dense(basis, dm.domain), nonpivots)
 }
 
+///|
 fn particular_from_rref(
   dm : DomainMatrix,
   pivots? : Array[Int] = [],
@@ -2371,7 +2502,10 @@ fn particular_from_rref(
     pivots
   }
   let rows = dm.to_dense()
-  let sol : Array[FieldElem] = Array::make(dm.cols - 1, fe_from_int(0, dm.domain))
+  let sol : Array[FieldElem] = Array::make(
+    dm.cols - 1,
+    fe_from_int(0, dm.domain),
+  )
   let rhs_col = dm.cols - 1
   for i in 0..<actual_pivots.length() {
     let pivot_col = actual_pivots[i]
@@ -2382,7 +2516,10 @@ fn particular_from_rref(
     if fe_is_zero(rhs) {
       continue
     }
-    sol.set(pivot_col, fe_exact_div_in_domain(rhs, rows[i][pivot_col], dm.domain))
+    sol.set(
+      pivot_col,
+      fe_exact_div_in_domain(rhs, rows[i][pivot_col], dm.domain),
+    )
   }
   domain_matrix_from_dense([sol], dm.domain)
 }
@@ -2422,7 +2559,10 @@ pub fn DomainMatrix::rref_den(
     }
     "CD" => {
       let (_, cleared) = self.clear_denoms_rowwise(convert=true)
-      let (rref_r, den, pivots) = cleared.rref_den(rref_method="FF", keep_domain=false)
+      let (rref_r, den, pivots) = cleared.rref_den(
+        rref_method="FF",
+        keep_domain=false,
+      )
       if keep_domain && rref_r.domain != self.domain {
         let converted = rref_r.convert_to(self.domain)
         let den_in_self = convert_matrix_elem(den, self.domain)
@@ -2447,7 +2587,9 @@ pub fn DomainMatrix::rank(self : DomainMatrix) -> Int raise PolyError {
 }
 
 ///|
-pub fn DomainMatrix::columnspace(self : DomainMatrix) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::columnspace(
+  self : DomainMatrix,
+) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
     raise PolyError::DomainNotField
   }
@@ -2460,7 +2602,9 @@ pub fn DomainMatrix::columnspace(self : DomainMatrix) -> DomainMatrix raise Poly
 }
 
 ///|
-pub fn DomainMatrix::rowspace(self : DomainMatrix) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::rowspace(
+  self : DomainMatrix,
+) -> DomainMatrix raise PolyError {
   if !domain_is_field_pred(self.domain) {
     raise PolyError::DomainNotField
   }
@@ -2486,7 +2630,7 @@ pub fn DomainMatrix::nullspace(
   }
   if divide_last {
     let (rref, pivots) = self.rref()
-    return rref.nullspace_from_rref(pivots=pivots)
+    return rref.nullspace_from_rref(pivots~)
   }
   let (rref_den, den, pivots) = self.rref_den()
   let unit = canonical_unit_in_domain(den, rref_den.domain)
@@ -2495,7 +2639,7 @@ pub fn DomainMatrix::nullspace(
   } else {
     domain_matrix_scale(rref_den, unit)
   }
-  canonical.nullspace_from_rref(pivots=pivots)
+  canonical.nullspace_from_rref(pivots~)
 }
 
 ///|
@@ -2527,8 +2671,11 @@ pub fn DomainMatrix::_solve(
   }
   let aug = self.hstack(rhs)
   let (rref_aug, pivots) = aug.rref()
-  let particular = rref_aug.particular(pivots=pivots)
-  let left_rref = rref_aug.extract(all_indices(0, rref_aug.rows), all_indices(0, self.cols))
+  let particular = rref_aug.particular(pivots~)
+  let left_rref = rref_aug.extract(
+    all_indices(0, rref_aug.rows),
+    all_indices(0, self.cols),
+  )
   let left_pivots : Array[Int] = Array::new()
   for pivot in pivots {
     if pivot < self.cols {
@@ -2617,7 +2764,9 @@ pub fn DomainMatrix::adj_det(
 }
 
 ///|
-pub fn DomainMatrix::adjugate(self : DomainMatrix) -> DomainMatrix raise PolyError {
+pub fn DomainMatrix::adjugate(
+  self : DomainMatrix,
+) -> DomainMatrix raise PolyError {
   self.adj_det().0
 }
 
@@ -2641,7 +2790,10 @@ pub fn DomainMatrix::solve_den_rref(
   if !pivots.is_empty() && pivots[pivots.length() - 1] >= a.cols {
     raise PolyError::ExactQuotientFailed
   }
-  let num = aug_rref.extract(all_indices(0, a.cols), all_indices(a.cols, aug.cols))
+  let num = aug_rref.extract(
+    all_indices(0, a.cols),
+    all_indices(a.cols, aug.cols),
+  )
   (num, den)
 }
 
@@ -2654,7 +2806,7 @@ pub fn DomainMatrix::inv_den(
     raise PolyError::DomainMismatch
   }
   let identity = domain_matrix_eye(self.rows, self.domain)
-  self.solve_den(identity, solve_method=solve_method)
+  self.solve_den(identity, solve_method~)
 }
 
 ///|
@@ -2702,7 +2854,10 @@ pub fn DomainMatrix::qr(
     for i in 0..<bound {
       let dot_ii = dense_dot_cols(q_rows, i, i, self.domain)
       if !fe_is_zero(dot_ii) {
-        let rij = fe_mul(dense_dot_cols(q_rows, i, j, self.domain), fe_inv(dot_ii))
+        let rij = fe_mul(
+          dense_dot_cols(q_rows, i, j, self.domain),
+          fe_inv(dot_ii),
+        )
         r_rows[i].set(j, rij)
         for k in 0..<row_count {
           q_rows[k].set(j, fe_sub(q_rows[k][j], fe_mul(rij, q_rows[k][i])))
@@ -2740,7 +2895,13 @@ pub fn DomainMatrix::lu_solve(
     raise PolyError::DomainNotField
   }
   let (l, u, swaps) = a.lu()
-  let sol_rows = dense_lu_solve(l.to_dense(), u.to_dense(), swaps, b.to_dense(), a.domain)
+  let sol_rows = dense_lu_solve(
+    l.to_dense(),
+    u.to_dense(),
+    swaps,
+    b.to_dense(),
+    a.domain,
+  )
   restore_rep_like(domain_matrix_from_dense(sol_rows, a.domain), self)
 }
 
@@ -2796,7 +2957,9 @@ pub fn DomainMatrix::fflu(
 }
 
 ///|
-pub fn DomainMatrix::charpoly(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::charpoly(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   dense_berk(self.to_dense(), self.domain)
 }
 
@@ -2809,19 +2972,25 @@ pub fn DomainMatrix::charpoly_factor_list(
     let poly = poly_from_dense_desc(block.0, "lambda", self.domain)
     let (_, factors) = poly.factor_list()
     for factor_pair in factors {
-      irreducible.push((poly_to_dense_desc(factor_pair.0), block.1 * factor_pair.1))
+      irreducible.push(
+        (poly_to_dense_desc(factor_pair.0), block.1 * factor_pair.1),
+      )
     }
   }
   _collect_factors(irreducible)
 }
 
 ///|
-pub fn DomainMatrix::charpoly_berk(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::charpoly_berk(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   self.charpoly()
 }
 
 ///|
-pub fn DomainMatrix::charpoly_base(self : DomainMatrix) -> Array[FieldElem] raise PolyError {
+pub fn DomainMatrix::charpoly_base(
+  self : DomainMatrix,
+) -> Array[FieldElem] raise PolyError {
   if self.rows == 0 {
     return [fe_from_int(1, self.domain)]
   }
@@ -2854,7 +3023,10 @@ pub fn DomainMatrix::eval_poly(
     raise PolyError::DomainMismatch
   }
   if p.is_empty() {
-    return restore_rep_like(domain_matrix_zeros(self.rows, self.cols, self.domain), self)
+    return restore_rep_like(
+      domain_matrix_zeros(self.rows, self.cols, self.domain),
+      self,
+    )
   }
   let ident = domain_matrix_eye(self.rows, self.domain)
   let mut acc = ident.scalarmul(p[0])
@@ -2901,7 +3073,13 @@ pub fn DomainMatrix::adj_poly_det(
   let adj_poly : Array[FieldElem] = Array::new()
   for i in 0..<(charpoly.length() - 1) {
     let coeff = charpoly[i]
-    adj_poly.push(if charpoly.length() % 2 == 1 { fe_neg(coeff) } else { coeff })
+    adj_poly.push(
+      if charpoly.length() % 2 == 1 {
+        fe_neg(coeff)
+      } else {
+        coeff
+      },
+    )
   }
   (adj_poly, det)
 }
@@ -2917,7 +3095,7 @@ pub fn DomainMatrix::solve_den_charpoly(
   if a.rows != a.cols || b.rows != a.rows {
     raise PolyError::DomainMismatch
   }
-  let (adj_poly, det) = a.adj_poly_det(cp=cp)
+  let (adj_poly, det) = a.adj_poly_det(cp~)
   if check && fe_is_zero(det) {
     raise PolyError::ExactQuotientFailed
   }
@@ -2925,7 +3103,9 @@ pub fn DomainMatrix::solve_den_charpoly(
 }
 
 ///|
-pub fn DomainMatrix::scc(self : DomainMatrix) -> Array[Array[Int]] raise PolyError {
+pub fn DomainMatrix::scc(
+  self : DomainMatrix,
+) -> Array[Array[Int]] raise PolyError {
   if self.rows != self.cols {
     raise PolyError::DomainMismatch
   }
@@ -3016,7 +3196,9 @@ pub fn DomainMatrix::is_lower(self : DomainMatrix) -> Bool raise PolyError {
 }
 
 ///|
-pub fn DomainMatrix::is_zero_matrix(self : DomainMatrix) -> Bool raise PolyError {
+pub fn DomainMatrix::is_zero_matrix(
+  self : DomainMatrix,
+) -> Bool raise PolyError {
   dense_matrix_is_zero(self.to_dense())
 }
 

@@ -126,7 +126,10 @@ fn lift_poly_to_qq(poly : Poly) -> Poly {
 }
 
 ///|
-fn apply_extension_request(poly : Poly, ext_syms : Array[String]) -> Poly raise PolyError {
+fn apply_extension_request(
+  poly : Poly,
+  ext_syms : Array[String],
+) -> Poly raise PolyError {
   if ext_syms.is_empty() {
     return poly
   }

@@ -343,10 +343,7 @@ fn nullspace_vector(
     let pivot_val = r[row][col]
     for j in col..<cols {
       let v = r[row][j]
-      r[row].set(
-        j,
-        v.div_r(pivot_val),
-      )
+      r[row].set(j, v.div_r(pivot_val))
     }
     for i in 0..<rows {
       if i == row {

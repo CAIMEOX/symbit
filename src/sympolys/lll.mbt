@@ -21,7 +21,8 @@ pub fn lll_reduce(
   let transform = identity(basis_work.length())
   let d = match delta {
     Some(v) => v
-    None => @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4))
+    None =>
+      @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4))
   }
   let mut k = 1
   while k < basis_work.length() {

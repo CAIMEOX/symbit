@@ -18,7 +18,9 @@ fn mm_expr_matrix_text(rows : MatrixExpr) -> String {
 fn mm_sympy_eigen_text(items : SympyEigenvects) -> String {
   let parts : Array[String] = Array::new()
   for item in items {
-    parts.push("\{@symprint.to_string(item.0)}:\{item.1}:\{mm_expr_matrix_text(item.2)}")
+    parts.push(
+      "\{@symprint.to_string(item.0)}:\{item.1}:\{mm_expr_matrix_text(item.2)}",
+    )
   }
   parts.sort()
   parts.join("||")
@@ -45,7 +47,9 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   let rows = [[12, 6, 4], [3, 9, 6], [2, 16, 14]]
   let dm = domain_matrix_from_ints(rows, Domain::ZZ)
   guard mm_trim(hermite_normal_form(dm).to_matrix_string()) ==
-    mm_trim(dm.to_ddm().hermite_normal_form().to_domain_matrix().to_matrix_string()) else {
+    mm_trim(
+      dm.to_ddm().hermite_normal_form().to_domain_matrix().to_matrix_string(),
+    ) else {
     fail("hermite_normal_form wrapper mismatch")
   }
   let invs = invariant_factors(dm)
@@ -59,7 +63,9 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   }
   let oracle_invs = @sympy_polys.domainmatrix_invariant_factors(rows, "ZZ")
   guard mm_trim(ours_invs) == mm_trim(oracle_invs) else {
-    fail("invariant_factors wrapper mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}")
+    fail(
+      "invariant_factors wrapper mismatch: ours=\{ours_invs}, oracle=\{oracle_invs}",
+    )
   }
   let smf = smith_normal_form(dm)
   let oracle_smf = @sympy_polys.domainmatrix_smith_normal_form(rows, "ZZ")
@@ -71,8 +77,13 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   }
   let decomp = smith_normal_decomp(dm)
   guard mm_trim(
-    decomp.1.to_field().matmul(dm.to_field()).matmul(decomp.2.to_field()).to_matrix_string(),
-  ) == mm_trim(decomp.0.to_field().to_matrix_string()) else {
+      decomp.1
+      .to_field()
+      .matmul(dm.to_field())
+      .matmul(decomp.2.to_field())
+      .to_matrix_string(),
+    ) ==
+    mm_trim(decomp.0.to_field().to_matrix_string()) else {
     fail("smith_normal_decomp wrapper reconstruction mismatch")
   }
 }
@@ -82,15 +93,18 @@ test "matrix module wrappers: eigen wrappers preserve method data" {
   let dm = domain_matrix_from_ints([[1, 0], [0, 2]], Domain::QQ)
   let wrapped = dom_eigenvects(dm)
   let expected = dm.dom_eigenvects()
-  let wrapped_rational = wrapped.0.map(item => (fe_to_string(item.1), item.2, item.3.to_matrix_string()))
-  let expected_rational = expected.0.map(
-    item => (fe_to_string(item.1), item.2, item.3.to_matrix_string()),
-  )
+  let wrapped_rational = wrapped.0.map(item => {
+    (fe_to_string(item.1), item.2, item.3.to_matrix_string())
+  })
+  let expected_rational = expected.0.map(item => {
+    (fe_to_string(item.1), item.2, item.3.to_matrix_string())
+  })
   guard wrapped_rational == expected_rational else {
     fail("dom_eigenvects wrapper mismatch")
   }
   let sympy_view = dom_eigenvects_to_sympy(wrapped.0, wrapped.1)
-  guard mm_sympy_eigen_text(sympy_view) == "1:1:Matrix([[1, 0]])||2:1:Matrix([[0, 1]])" else {
+  guard mm_sympy_eigen_text(sympy_view) ==
+    "1:1:Matrix([[1, 0]])||2:1:Matrix([[0, 1]])" else {
     fail("dom_eigenvects_to_sympy mismatch: \{mm_sympy_eigen_text(sympy_view)}")
   }
 }
@@ -110,7 +124,8 @@ test "matrix module wrappers: add_columns and symmetric_residue helpers" {
   guard mm_trim(out.to_string()) == mm_trim("[[3, 2], [7, 4]]") else {
     fail("add_columns mismatch")
   }
-  guard symmetric_residue(BigInt::from_int(4), BigInt::from_int(5)).to_int() == -1 else {
+  guard symmetric_residue(BigInt::from_int(4), BigInt::from_int(5)).to_int() ==
+    -1 else {
     fail("symmetric_residue mismatch")
   }
 }

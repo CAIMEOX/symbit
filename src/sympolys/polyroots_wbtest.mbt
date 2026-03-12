@@ -5,7 +5,9 @@ test "polyroots wb: arity and degree guard errors" {
 
   let b2 = PolyBuilder::new(["x", "y"], Domain::QQ)
   let p2 = b2.from_expr(x + y)
-  let non_uni_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(p2)
+  let non_uni_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
+    p2,
+  )
   guard non_uni_linear is Err(PolyError::NotUnivariate) else {
     fail("roots_linear should reject multivariate polynomials")
   }
@@ -16,22 +18,30 @@ test "polyroots wb: arity and degree guard errors" {
   let cubic = b1.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
   let quartic = b1.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1))
 
-  let bad_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(quad)
+  let bad_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
+    quad,
+  )
   guard bad_linear is Err(PolyError::BadExponent) else {
     fail("roots_linear should require degree 1")
   }
 
-  let bad_quad : Result[Array[@symcore.Expr], PolyError] = try? roots_quadratic(lin)
+  let bad_quad : Result[Array[@symcore.Expr], PolyError] = try? roots_quadratic(
+    lin,
+  )
   guard bad_quad is Err(PolyError::BadExponent) else {
     fail("roots_quadratic should require degree 2")
   }
 
-  let bad_cubic : Result[Array[@symcore.Expr], PolyError] = try? roots_cubic(quad)
+  let bad_cubic : Result[Array[@symcore.Expr], PolyError] = try? roots_cubic(
+    quad,
+  )
   guard bad_cubic is Err(PolyError::BadExponent) else {
     fail("roots_cubic should require degree 3")
   }
 
-  let bad_quartic : Result[Array[@symcore.Expr], PolyError] = try? roots_quartic(cubic)
+  let bad_quartic : Result[Array[@symcore.Expr], PolyError] = try? roots_quartic(
+    cubic,
+  )
   guard bad_quartic is Err(PolyError::BadExponent) else {
     fail("roots_quartic should require degree 4")
   }
@@ -53,7 +63,9 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
 
   // Degree-4 polynomial with a quadratic factor to force the quadratic branch.
   let quartic = b.from_expr(
-    (x - @symcore.int(1)) * (x + @symcore.int(2)) * ((x ^ @symcore.int(2)) + @symcore.int(1)),
+    (x - @symcore.int(1)) *
+    (x + @symcore.int(2)) *
+    ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
   let quartic_roots = try! roots_quartic(quartic)
   guard quartic_roots.length() == 4 else {

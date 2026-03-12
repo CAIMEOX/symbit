@@ -95,7 +95,10 @@ fn ddm_bareiss_det_in_place(
     let akk = rows[k][k]
     for i in (k + 1)..<n {
       for j in (k + 1)..<n {
-        let num = fe_sub(fe_mul(rows[i][j], akk), fe_mul(rows[i][k], rows[k][j]))
+        let num = fe_sub(
+          fe_mul(rows[i][j], akk),
+          fe_mul(rows[i][k], rows[k][j]),
+        )
         let value = if k == 0 {
           num
         } else {
@@ -108,7 +111,11 @@ fn ddm_bareiss_det_in_place(
     denom = akk
   }
   let det = rows[n - 1][n - 1]
-  if sign < 0 { fe_neg(det) } else { det }
+  if sign < 0 {
+    fe_neg(det)
+  } else {
+    det
+  }
 }
 
 ///|
@@ -149,11 +156,7 @@ pub fn ddm_irmul(a : DDM, b : FieldElem) -> DDM raise PolyError {
 
 ///|
 /// Return the updated dense matrix corresponding to SymPy `ddm_imatmul`.
-pub fn ddm_imatmul(
-  a : DDM,
-  b : DDM,
-  c : DDM,
-) -> DDM raise PolyError {
+pub fn ddm_imatmul(a : DDM, b : DDM, c : DDM) -> DDM raise PolyError {
   a.add(b.matmul(c))
 }
 
@@ -179,7 +182,7 @@ pub fn ddm_irref_den(
   a : DDM,
   keep_domain? : Bool = true,
 ) -> (DDM, FieldElem, Array[Int]) raise PolyError {
-  a.rref_den(keep_domain=keep_domain)
+  a.rref_den(keep_domain~)
 }
 
 ///|
@@ -205,7 +208,13 @@ pub fn ddm_ilu_solve(
   swaps : Array[(Int, Int)],
   b : DDM,
 ) -> DDM raise PolyError {
-  let rows = dense_lu_solve(l.to_list(), u.to_list(), swaps, b.to_list(), u.domain())
+  let rows = dense_lu_solve(
+    l.to_list(),
+    u.to_list(),
+    swaps,
+    b.to_list(),
+    u.domain(),
+  )
   ddm_from_dense(rows, u.domain())
 }
 

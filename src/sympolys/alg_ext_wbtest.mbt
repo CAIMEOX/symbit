@@ -13,7 +13,9 @@ test "alg_ext wb: validation error branches are typed" {
     fail("expected BadGenerator for mismatched generator")
   }
 
-  let dom_mismatch_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
+  let dom_mismatch_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+    x + @symcore.int(1),
+  )
   let dom_mismatch : Result[AlgExtSpec, PolyError] = try? normalize_alg_ext_spec(
     alg_ext_spec(Domain::ZZ, "x", dom_mismatch_poly),
   )
@@ -21,7 +23,9 @@ test "alg_ext wb: validation error branches are typed" {
     fail("expected DomainMismatch when base/domain differ")
   }
 
-  let constant_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(@symcore.int(5))
+  let constant_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
+    @symcore.int(5),
+  )
   let bad_exp : Result[AlgExtSpec, PolyError] = try? normalize_alg_ext_spec(
     alg_ext_spec(Domain::QQ, "x", constant_poly),
   )

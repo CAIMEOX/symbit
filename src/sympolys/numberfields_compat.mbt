@@ -81,9 +81,11 @@ fn mq_minpoly_from_vector(
   if alpha.length() != dim {
     return None
   }
-  let powers : Array[Array[@symnum.BigRational]] = [mq_const(dim, @symnum.BigRational::one())]
+  let powers : Array[Array[@symnum.BigRational]] = [
+    mq_const(dim, @symnum.BigRational::one()),
+  ]
   let mut current = mq_const(dim, @symnum.BigRational::one())
-  for degree in 1..=dim {
+  for degree in 1..<=dim {
     current = mq_mul(current, alpha, atoms)
     let cols : Array[Array[@symnum.BigRational]] = Array::new()
     for i in 0..<degree {
@@ -156,13 +158,12 @@ fn parse_affine_radical(expr : @symcore.Expr) -> AffineRadical? {
     }
     _ =>
       match parse_linear_radical(expr) {
-        Some((scale, atom)) => Some(
-          AffineRadical::{
+        Some((scale, atom)) =>
+          Some(AffineRadical::{
             shift: @symnum.BigRational::zero(),
             scale,
             atom,
-          },
-        )
+          })
         None => None
       }
   }
@@ -213,7 +214,10 @@ fn parse_radical_atom(expr : @symcore.Expr) -> RadicalAtom? {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
-            let (reduced_rad, reduced_n) = reduce_radical_power(rad, den.to_int())
+            let (reduced_rad, reduced_n) = reduce_radical_power(
+              rad,
+              den.to_int(),
+            )
             if reduced_n > 1 {
               Some(RadicalAtom::{ rad: reduced_rad, n: reduced_n })
             } else {
@@ -348,7 +352,10 @@ fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
 
 ///|
 /// Alias of `minimal_polynomial` for SymPy-compatible naming.
-pub fn minpoly(expr : @symcore.Expr, gen? : String = "x") -> Poly raise PolyError {
+pub fn minpoly(
+  expr : @symcore.Expr,
+  gen? : String = "x",
+) -> Poly raise PolyError {
   minimal_polynomial(expr, gen~)
 }
 
@@ -505,14 +512,14 @@ fn rational_exact_nth_root(
   if n <= 0 {
     return None
   }
-  match (
-    bigint_exact_nth_root_signed(value.numerator(), n),
-    bigint_exact_nth_root_nonnegative(value.denominator(), n),
-  ) {
+  match
+    (
+      bigint_exact_nth_root_signed(value.numerator(), n),
+      bigint_exact_nth_root_nonnegative(value.denominator(), n),
+    ) {
     (Some(num), Some(den)) => {
       let q_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
-        num,
-        den,
+        num, den,
       )
       match q_res {
         Ok(q) => Some(q)
@@ -704,7 +711,12 @@ fn mq_collect_atoms(
       match exp {
         @symcore.Expr::Number(e) =>
           match rational_to_int_if_integer(e) {
-            Some(k) => if k >= 0 { mq_collect_atoms(base, atoms) } else { false }
+            Some(k) =>
+              if k >= 0 {
+                mq_collect_atoms(base, atoms)
+              } else {
+                false
+              }
             None =>
               if e.numerator().equal_int(1) && e.denominator().equal_int(2) {
                 match base {
@@ -821,7 +833,9 @@ fn mq_solver_matrix(
       return None
     }
   }
-  let matrix = Array::makei(rows, _ => Array::make(cols.length(), @symnum.BigRational::zero()))
+  let matrix = Array::makei(rows, _ => {
+    Array::make(cols.length(), @symnum.BigRational::zero())
+  })
   for i in 0..<rows {
     for j in 0..<cols.length() {
       matrix[i].set(j, cols[j][i])
@@ -1146,7 +1160,9 @@ fn algext_relation_coeffs(domain : Domain) -> Array[@symnum.BigRational]? {
       match poly_res {
         Err(_) => None
         Ok(poly) => {
-          let norm_res : Result[Poly, PolyError] = try? normalize_minpoly_qq(poly)
+          let norm_res : Result[Poly, PolyError] = try? normalize_minpoly_qq(
+            poly,
+          )
           match norm_res {
             Err(_) => None
             Ok(norm) => poly_to_dense_qq(norm)

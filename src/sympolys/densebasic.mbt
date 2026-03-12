@@ -1351,11 +1351,7 @@ pub fn dmp_permute(
 
 ///|
 /// Return a multivariate value nested ``l``-levels.
-pub fn dmp_nest(
-  f : DensePoly,
-  l : Int,
-  _domain : Domain,
-) -> DensePoly {
+pub fn dmp_nest(f : DensePoly, l : Int, _domain : Domain) -> DensePoly {
   if l <= 0 {
     return f
   }
