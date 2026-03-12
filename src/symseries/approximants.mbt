@@ -382,12 +382,7 @@ fn pade_expr_best(
     let dm = m + (n - dn)
     match pade_from_expr_coeffs(coeffs, dm, dn) {
       Some(v) => v
-      None =>
-        if dn == 0 {
-          ([coeffs[0]], [one_expr()])
-        } else {
-          solve(dn - 1)
-        }
+      None => if dn == 0 { ([coeffs[0]], [one_expr()]) } else { solve(dn - 1) }
     }
   }
   solve(n)
@@ -466,16 +461,29 @@ pub fn pade_approximant(
       }
       out
     }
-    None => coeffs_via_derivatives(work_expr, work_x, work_name, @symcore.int(0), order)
+    None =>
+      coeffs_via_derivatives(
+        work_expr,
+        work_x,
+        work_name,
+        @symcore.int(0),
+        order,
+      )
   }
   let (num_expr, den_expr) = match rationals_from_expr_coeffs(coeffs_expr) {
     Some(coeffs_num) => {
       let (p_coeffs, q_coeffs) = pade_numeric_best(coeffs_num, m, n0)
-      (poly_from_rationals(p_coeffs, work_x), poly_from_rationals(q_coeffs, work_x))
+      (
+        poly_from_rationals(p_coeffs, work_x),
+        poly_from_rationals(q_coeffs, work_x),
+      )
     }
     None => {
       let (p_coeffs, q_coeffs) = pade_expr_best(coeffs_expr, m, n0)
-      (poly_from_expr_coeffs(p_coeffs, work_x), poly_from_expr_coeffs(q_coeffs, work_x))
+      (
+        poly_from_expr_coeffs(p_coeffs, work_x),
+        poly_from_expr_coeffs(q_coeffs, work_x),
+      )
     }
   }
   let approx_work = if den_expr == one_expr() {

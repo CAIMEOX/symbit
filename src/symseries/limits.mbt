@@ -43,10 +43,11 @@ pub fn limit(
             }
             return expr_mul(num_val, inv)
           }
-          match (
-            local_series_poly(num_expr, var_name, x0),
-            local_series_poly(den_expr, var_name, x0),
-          ) {
+          match
+            (
+              local_series_poly(num_expr, var_name, x0),
+              local_series_poly(den_expr, var_name, x0),
+            ) {
             (Some(num_local), Some(den_local)) => {
               let ord_num = first_nonzero_order(num_local)
               let ord_den = first_nonzero_order(den_local)
@@ -73,12 +74,11 @@ pub fn limit(
               if dir == "+-" && pole_order % 2 == 1 {
                 return @symcore.symbol("zoo")
               }
-              let side_sign =
-                if dir == "-" && pole_order % 2 == 1 {
-                  -1
-                } else {
-                  1
-                }
+              let side_sign = if dir == "-" && pole_order % 2 == 1 {
+                -1
+              } else {
+                1
+              }
               let sign = sign_of_expr(lead_coeff)
               return match sign {
                 Some(0) => @symcore.int(0)

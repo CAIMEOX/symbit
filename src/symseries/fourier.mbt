@@ -243,8 +243,10 @@ fn integral_poly(
       continue
     }
     let p = i + 1
-    let anti_term =
-      expr_mul(coeff, expr_div(@symcore.pow(x, @symcore.int(p)), @symcore.int(p)))
+    let anti_term = expr_mul(
+      coeff,
+      expr_div(@symcore.pow(x, @symcore.int(p)), @symcore.int(p)),
+    )
     let at_b = eval_at(anti_term, var_name, b)
     let at_a = eval_at(anti_term, var_name, a)
     acc = expr_add(acc, expr_sub(at_b, at_a))
@@ -284,7 +286,11 @@ fn integrate_linear_atom(
 }
 
 ///|
-fn int_pow_sin_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
+fn int_pow_sin_form(
+  m : Int,
+  form : LinearForm,
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let c = form.coeff
   if is_zero_expr(c) {
     return expr_mul(
@@ -297,13 +303,22 @@ fn int_pow_sin_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.E
     return expr_neg(expr_div(@symcore.function("cos", [arg]), c))
   }
   let xm = @symcore.pow(x, @symcore.int(m))
-  let head = expr_neg(expr_div(expr_mul(xm, @symcore.function("cos", [arg])), c))
-  let tail = expr_mul(expr_div(@symcore.int(m), c), int_pow_cos_form(m - 1, form, x))
+  let head = expr_neg(
+    expr_div(expr_mul(xm, @symcore.function("cos", [arg])), c),
+  )
+  let tail = expr_mul(
+    expr_div(@symcore.int(m), c),
+    int_pow_cos_form(m - 1, form, x),
+  )
   expr_add(head, tail)
 }
 
 ///|
-fn int_pow_cos_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
+fn int_pow_cos_form(
+  m : Int,
+  form : LinearForm,
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let c = form.coeff
   if is_zero_expr(c) {
     return expr_mul(
@@ -317,12 +332,19 @@ fn int_pow_cos_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.E
   }
   let xm = @symcore.pow(x, @symcore.int(m))
   let head = expr_div(expr_mul(xm, @symcore.function("sin", [arg])), c)
-  let tail = expr_mul(expr_div(@symcore.int(m), c), int_pow_sin_form(m - 1, form, x))
+  let tail = expr_mul(
+    expr_div(@symcore.int(m), c),
+    int_pow_sin_form(m - 1, form, x),
+  )
   expr_sub(head, tail)
 }
 
 ///|
-fn int_pow_exp_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
+fn int_pow_exp_form(
+  m : Int,
+  form : LinearForm,
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let c = form.coeff
   if is_zero_expr(c) {
     return expr_mul(
@@ -336,12 +358,19 @@ fn int_pow_exp_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.E
   }
   let xm = @symcore.pow(x, @symcore.int(m))
   let head = expr_div(expr_mul(xm, @symcore.function("exp", [arg])), c)
-  let tail = expr_mul(expr_div(@symcore.int(m), c), int_pow_exp_form(m - 1, form, x))
+  let tail = expr_mul(
+    expr_div(@symcore.int(m), c),
+    int_pow_exp_form(m - 1, form, x),
+  )
   expr_sub(head, tail)
 }
 
 ///|
-fn int_pow_sinh_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
+fn int_pow_sinh_form(
+  m : Int,
+  form : LinearForm,
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let c = form.coeff
   if is_zero_expr(c) {
     return expr_mul(
@@ -363,7 +392,11 @@ fn int_pow_sinh_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.
 }
 
 ///|
-fn int_pow_cosh_form(m : Int, form : LinearForm, x : @symcore.Expr) -> @symcore.Expr {
+fn int_pow_cosh_form(
+  m : Int,
+  form : LinearForm,
+  x : @symcore.Expr,
+) -> @symcore.Expr {
   let c = form.coeff
   if is_zero_expr(c) {
     return expr_mul(
@@ -425,46 +458,54 @@ fn expand_atom_pair(
     (AtomKind::Sin, AtomKind::Sin) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("cos", [linear_arg(diff, x)]),
-          @symcore.function("cos", [linear_arg(sum, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("cos", [linear_arg(diff, x)]),
+            @symcore.function("cos", [linear_arg(sum, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Cos, AtomKind::Cos) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("cos", [linear_arg(diff, x)]),
-          @symcore.function("cos", [linear_arg(sum, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("cos", [linear_arg(diff, x)]),
+            @symcore.function("cos", [linear_arg(sum, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Sin, AtomKind::Cos) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("sin", [linear_arg(sum, x)]),
-          @symcore.function("sin", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("sin", [linear_arg(sum, x)]),
+            @symcore.function("sin", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Cos, AtomKind::Sin) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("sin", [linear_arg(sum, x)]),
-          @symcore.function("sin", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("sin", [linear_arg(sum, x)]),
+            @symcore.function("sin", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Exp, AtomKind::Exp) => {
       let form = form_add(left.form, right.form)
@@ -473,138 +514,170 @@ fn expand_atom_pair(
     (AtomKind::Exp, AtomKind::Sinh) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("exp", [linear_arg(sum, x)]),
-          @symcore.function("exp", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("exp", [linear_arg(sum, x)]),
+            @symcore.function("exp", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Exp, AtomKind::Cosh) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("exp", [linear_arg(sum, x)]),
-          @symcore.function("exp", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("exp", [linear_arg(sum, x)]),
+            @symcore.function("exp", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Sinh, AtomKind::Exp) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(right.form, left.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("exp", [linear_arg(sum, x)]),
-          @symcore.function("exp", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("exp", [linear_arg(sum, x)]),
+            @symcore.function("exp", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Cosh, AtomKind::Exp) => {
       let sum = form_add(left.form, right.form)
       let diff = form_sub(right.form, left.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("exp", [linear_arg(sum, x)]),
-          @symcore.function("exp", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("exp", [linear_arg(sum, x)]),
+            @symcore.function("exp", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Sinh, AtomKind::Sinh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("cosh", [linear_arg(sum, x)]),
-          @symcore.function("cosh", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("cosh", [linear_arg(sum, x)]),
+            @symcore.function("cosh", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Cosh, AtomKind::Cosh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("cosh", [linear_arg(sum, x)]),
-          @symcore.function("cosh", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("cosh", [linear_arg(sum, x)]),
+            @symcore.function("cosh", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Sinh, AtomKind::Cosh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_add(
-          @symcore.function("sinh", [linear_arg(sum, x)]),
-          @symcore.function("sinh", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_add(
+            @symcore.function("sinh", [linear_arg(sum, x)]),
+            @symcore.function("sinh", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Cosh, AtomKind::Sinh) => {
       let diff = form_sub(left.form, right.form)
       let sum = form_add(left.form, right.form)
-      Some(expr_mul(
-        half,
-        expr_sub(
-          @symcore.function("sinh", [linear_arg(sum, x)]),
-          @symcore.function("sinh", [linear_arg(diff, x)]),
+      Some(
+        expr_mul(
+          half,
+          expr_sub(
+            @symcore.function("sinh", [linear_arg(sum, x)]),
+            @symcore.function("sinh", [linear_arg(diff, x)]),
+          ),
         ),
-      ))
+      )
     }
     (AtomKind::Sinh, AtomKind::Sin) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("sin", [linear_arg(right.form, x)])
-      Some(expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Sinh, AtomKind::Cos) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("cos", [linear_arg(right.form, x)])
-      Some(expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Cosh, AtomKind::Sin) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("sin", [linear_arg(right.form, x)])
-      Some(expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Cosh, AtomKind::Cos) => {
       let plus = @symcore.function("exp", [linear_arg(left.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(left.form), x)])
       let trig = @symcore.function("cos", [linear_arg(right.form, x)])
-      Some(expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Sin, AtomKind::Sinh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("sin", [linear_arg(left.form, x)])
-      Some(expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Cos, AtomKind::Sinh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("cos", [linear_arg(left.form, x)])
-      Some(expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_sub(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Sin, AtomKind::Cosh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("sin", [linear_arg(left.form, x)])
-      Some(expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     (AtomKind::Cos, AtomKind::Cosh) => {
       let plus = @symcore.function("exp", [linear_arg(right.form, x)])
       let minus = @symcore.function("exp", [linear_arg(form_neg(right.form), x)])
       let trig = @symcore.function("cos", [linear_arg(left.form, x)])
-      Some(expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))))
+      Some(
+        expr_mul(half, expr_add(expr_mul(plus, trig), expr_mul(minus, trig))),
+      )
     }
     _ => None
   }
@@ -737,7 +810,10 @@ fn integrate_expr(
         match (left.kind, right.kind) {
           (AtomKind::Exp, AtomKind::Sin) | (AtomKind::Exp, AtomKind::Cos) =>
             return Some(
-              expr_mul(coeff, integrate_exp_trig_pair(left, right, x, var_name, a, b)),
+              expr_mul(
+                coeff,
+                integrate_exp_trig_pair(left, right, x, var_name, a, b),
+              ),
             )
           (AtomKind::Sin, AtomKind::Exp) | (AtomKind::Cos, AtomKind::Exp) =>
             return Some(
@@ -831,10 +907,7 @@ fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
     (self.a == @symcore.int(0) && self.b == two_pi) {
     return @symcore.int(n)
   }
-  let two_n_pi = @symcore.mul([
-    @symcore.int(2 * n),
-    pi,
-  ])
+  let two_n_pi = @symcore.mul([@symcore.int(2 * n), pi])
   expr_div(two_n_pi, self.period())
 }
 

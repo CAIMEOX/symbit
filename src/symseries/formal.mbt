@@ -125,7 +125,11 @@ fn fps_factorial_expr(n : Int) -> @symcore.Expr {
 }
 
 ///|
-fn fps_eval_at(expr : @symcore.Expr, name : String, value : @symcore.Expr) -> @symcore.Expr {
+fn fps_eval_at(
+  expr : @symcore.Expr,
+  name : String,
+  value : @symcore.Expr,
+) -> @symcore.Expr {
   let env : Map[String, @symcore.Expr] = {}
   env[name] = value
   @symcore.subst(expr, env)
@@ -211,7 +215,7 @@ pub fn FormalPowerSeries::truncate(
   }
   match series_poly_shift(self.expr, self.x, self.x0, n) {
     Some((poly, _)) => poly_expr_with_shift(poly, self.x, self.x0, n, true)
-    None => series(self.expr, x=self.x, x0=self.x0, n=n)
+    None => series(self.expr, x=self.x, x0=self.x0, n~)
   }
 }
 
@@ -225,8 +229,7 @@ pub fn FormalPowerSeries::polynomial(
   }
   match series_poly_shift(self.expr, self.x, self.x0, n) {
     Some((poly, _)) => poly_expr_with_shift(poly, self.x, self.x0, n, false)
-    None =>
-      fps_strip_order_expr(series(self.expr, x=self.x, x0=self.x0, n=n))
+    None => fps_strip_order_expr(series(self.expr, x=self.x, x0=self.x0, n~))
   }
 }
 
@@ -308,9 +311,7 @@ pub fn fps_multivariate(
   vars : Array[@symcore.Expr],
   x0s? : Array[@symcore.Expr] = [],
 ) -> FormalPowerSeriesMulti raise {
-  guard !vars.is_empty() else {
-    fail("fps_multivariate requires variables")
-  }
+  guard !vars.is_empty() else { fail("fps_multivariate requires variables") }
   let centers : Array[@symcore.Expr] = Array::new()
   if x0s.is_empty() {
     for _ in vars {
@@ -424,7 +425,7 @@ pub fn FormalPowerSeries::as_leading_term(
       zero_expr()
     }
     None => {
-      let poly = fps_strip_order_expr(self.polynomial(n=n))
+      let poly = fps_strip_order_expr(self.polynomial(n~))
       if poly == @symcore.int(0) {
         @symcore.int(0)
       } else {

@@ -228,7 +228,9 @@ test "symseries fourier hyperbolic closed form parity" {
         @symcore.symbol("pi"),
         2,
       )
-      let ours_s = try! @sympy_series.sympy_simplify_str(@symprint.to_string(ours))
+      let ours_s = try! @sympy_series.sympy_simplify_str(
+        @symprint.to_string(ours),
+      )
       let sympy_s = try! @sympy_series.sympy_simplify_str(sympy)
       assert_eq(normalize_series_str(ours_s), normalize_series_str(sympy_s))
     }

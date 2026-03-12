@@ -302,7 +302,11 @@ fn taylor_series_expr(
   let mut current = expr
   let terms : Array[@symcore.Expr] = Array::new()
   for k in 0..<n {
-    let value_at_zero = series_substitute_symbol(current, x_name, @symcore.int(0))
+    let value_at_zero = series_substitute_symbol(
+      current,
+      x_name,
+      @symcore.int(0),
+    )
     if !is_zero_expr(value_at_zero) {
       let coeff = expr_mul(value_at_zero, inv_factorial_expr(k))
       let term = if k == 0 {
@@ -841,10 +845,9 @@ fn series_poly(
           }
         "sqrt" => {
           let half = @symcore.number(
-            try @symnum.BigRational::new(
-              BigInt::from_int(1),
-              BigInt::from_int(2),
-            ) catch {
+            try
+              @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
+            catch {
               _ => @symnum.BigRational::zero()
             } noraise {
               v => v

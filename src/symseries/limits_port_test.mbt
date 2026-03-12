@@ -73,7 +73,10 @@ test "symseries limit higher-order pole parity" {
     @symcore.int(0),
     dir="-",
   )
-  assert_eq(normalize_limit_expr(even_left), normalize_limit_str(even_left_sympy))
+  assert_eq(
+    normalize_limit_expr(even_left),
+    normalize_limit_str(even_left_sympy),
+  )
 
   let odd_pole = @symcore.pow(x, @symcore.int(-3))
   let odd_left = try! limit(odd_pole, x, @symcore.int(0), dir="-")

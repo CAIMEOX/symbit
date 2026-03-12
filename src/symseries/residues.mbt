@@ -41,7 +41,8 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.symbol("oo") || expr == @symcore.symbol("zoo") ||
+  expr == @symcore.symbol("oo") ||
+  expr == @symcore.symbol("zoo") ||
   expr == @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
 }
 
@@ -108,10 +109,11 @@ pub fn residue(
     return @symcore.int(0)
   }
   let (num_expr, den_expr) = split_num_den(expr)
-  match (
-    local_series_poly(num_expr, var_name, x0),
-    local_series_poly(den_expr, var_name, x0),
-  ) {
+  match
+    (
+      local_series_poly(num_expr, var_name, x0),
+      local_series_poly(den_expr, var_name, x0),
+    ) {
     (Some(num_poly), Some(den_poly)) => {
       if den_poly.is_empty() {
         return residue_via_pole_order(expr, x, x0)

@@ -49,10 +49,11 @@ fn leading_rational_near_zero(
     _ => return None
   }
   let (num_expr, den_expr) = split_num_den(expr)
-  match (
-    local_series_poly(num_expr, var_name, @symcore.int(0)),
-    local_series_poly(den_expr, var_name, @symcore.int(0)),
-  ) {
+  match
+    (
+      local_series_poly(num_expr, var_name, @symcore.int(0)),
+      local_series_poly(den_expr, var_name, @symcore.int(0)),
+    ) {
     (Some(num_local), Some(den_local)) => {
       let ord_num = first_nonzero_order(num_local)
       let ord_den = first_nonzero_order(den_local)
@@ -79,18 +80,15 @@ fn leading_rational_near_zero(
       if dir == "+-" && pole_order % 2 == 1 {
         return Some(zoo_expr())
       }
-      let side_sign =
-        if dir == "-" && pole_order % 2 == 1 {
-          -1
-        } else {
-          1
-        }
+      let side_sign = if dir == "-" && pole_order % 2 == 1 { -1 } else { 1 }
       let sign = sign_of_expr(lead_coeff)
-      Some(match sign {
-        Some(0) => @symcore.int(0)
-        Some(s) => infinity_from_sign(s * side_sign)
-        None => oo_expr()
-      })
+      Some(
+        match sign {
+          Some(0) => @symcore.int(0)
+          Some(s) => infinity_from_sign(s * side_sign)
+          None => oo_expr()
+        },
+      )
     }
     _ => None
   }
@@ -122,18 +120,15 @@ fn leading_series_near_zero(
       if dir == "+-" && total_order % 2 != 0 {
         return Some(zoo_expr())
       }
-      let side_sign =
-        if dir == "-" && total_order % 2 != 0 {
-          -1
-        } else {
-          1
-        }
+      let side_sign = if dir == "-" && total_order % 2 != 0 { -1 } else { 1 }
       let sign = sign_of_expr(poly[idx])
-      Some(match sign {
-        Some(0) => @symcore.int(0)
-        Some(s) => infinity_from_sign(s * side_sign)
-        None => oo_expr()
-      })
+      Some(
+        match sign {
+          Some(0) => @symcore.int(0)
+          Some(s) => infinity_from_sign(s * side_sign)
+          None => oo_expr()
+        },
+      )
     }
     None => None
   }
@@ -164,7 +159,11 @@ fn strip_order_terms(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn subst_symbol(expr : @symcore.Expr, name : String, value : @symcore.Expr) -> @symcore.Expr {
+fn subst_symbol(
+  expr : @symcore.Expr,
+  name : String,
+  value : @symcore.Expr,
+) -> @symcore.Expr {
   let env : Map[String, @symcore.Expr] = {}
   env[name] = value
   @symcore.subst(expr, env)
@@ -198,11 +197,13 @@ fn eval_elementary_from_leading(
       if is_pos_oo(arg_lead) || is_neg_oo(arg_lead) {
         None
       } else {
-        Some(match name {
-          "sin" => const_sin(arg_lead)
-          "cos" => const_cos(arg_lead)
-          _ => const_tan(arg_lead)
-        })
+        Some(
+          match name {
+            "sin" => const_sin(arg_lead)
+            "cos" => const_cos(arg_lead)
+            _ => const_tan(arg_lead)
+          },
+        )
       }
     _ => None
   }
@@ -224,7 +225,8 @@ fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
       let rest : Array[@symcore.Expr] = Array::new()
       for factor in args {
         match factor {
-          @symcore.Expr::Function(name, fargs) if name == "exp" && fargs.length() == 1 =>
+          @symcore.Expr::Function(name, fargs) if name == "exp" &&
+            fargs.length() == 1 =>
             match exp_arg {
               Some(_) => return None
               None => exp_arg = Some(fargs[0])
@@ -234,7 +236,11 @@ fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
       }
       match exp_arg {
         Some(arg) => {
-          let coeff = if rest.is_empty() { @symcore.int(1) } else { @symcore.mul(rest) }
+          let coeff = if rest.is_empty() {
+            @symcore.int(1)
+          } else {
+            @symcore.mul(rest)
+          }
           Some(ExpTerm::{ coeff, arg })
         }
         None => None
@@ -328,11 +334,13 @@ fn dominant_exp_add(
   }
   if is_pos_oo(dom_lim) || is_neg_oo(dom_lim) {
     let sign = sign_of_expr(balance_lim)
-    return Some(match sign {
-      Some(0) => @symcore.int(0)
-      Some(s) => infinity_from_sign(s)
-      None => oo_expr()
-    })
+    return Some(
+      match sign {
+        Some(0) => @symcore.int(0)
+        Some(s) => infinity_from_sign(s)
+        None => oo_expr()
+      },
+    )
   }
   Some(expr_mul(balance_lim, dom_lim))
 }
@@ -377,17 +385,17 @@ fn gruntz_near_zero(
           if !contains_symbol(at_zero, t_name) {
             at_zero
           } else {
-          let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
-          let no_o = strip_order_terms(ser)
-          let v = subst_symbol(no_o, t_name, @symcore.int(0))
-          if !contains_symbol(v, t_name) {
-            v
-          } else {
-            at_zero
+            let ser = series(expr, x=t, x0=@symcore.int(0), n=6)
+            let no_o = strip_order_terms(ser)
+            let v = subst_symbol(no_o, t_name, @symcore.int(0))
+            if !contains_symbol(v, t_name) {
+              v
+            } else {
+              at_zero
+            }
           }
         }
       }
-    }
     }
     _ => {
       let at_zero = subst_symbol(expr, t_name, @symcore.int(0))
@@ -416,12 +424,11 @@ fn finite_point_to_t(
   t : @symcore.Expr,
 ) -> @symcore.Expr {
   let env : Map[String, @symcore.Expr] = {}
-  let shift =
-    if dir == "-" {
-      @symcore.add([x0, expr_neg(t)])
-    } else {
-      @symcore.add([x0, t])
-    }
+  let shift = if dir == "-" {
+    @symcore.add([x0, expr_neg(t)])
+  } else {
+    @symcore.add([x0, t])
+  }
   env[var_name] = shift
   @symcore.subst(expr, env)
 }
