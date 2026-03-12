@@ -33,7 +33,10 @@ fn quantum_repr_expr(expr : @symcore.Expr) -> String {
 }
 
 ///|
-pub fn quantum_join_label(args : Array[@symcore.Expr], separator? : String = "") -> String {
+pub fn quantum_join_label(
+  args : Array[@symcore.Expr],
+  separator? : String = "",
+) -> String {
   args.map(@symprint.to_string).join(separator)
 }
 
@@ -92,7 +95,10 @@ pub fn quantum_expr_has_name(expr : @symcore.Expr, name : String) -> Bool {
 }
 
 ///|
-pub fn quantum_expr_has_any_name(expr : @symcore.Expr, names : Array[String]) -> Bool {
+pub fn quantum_expr_has_any_name(
+  expr : @symcore.Expr,
+  names : Array[String],
+) -> Bool {
   match quantum_expr_name(expr) {
     Some(name) => names.contains(name)
     None => false
@@ -102,53 +108,26 @@ pub fn quantum_expr_has_any_name(expr : @symcore.Expr, names : Array[String]) ->
 ///|
 pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
-    "Ket",
-    "TimeDepKet",
-    "OrthogonalKet",
-    "BosonFockKet",
-    "BosonCoherentKet",
-    "FermionFockKet",
-    "Qubit",
-    "IntQubit",
-    "JxKet",
-    "JyKet",
-    "JzKet",
-    "PxKet",
-    "PositionKet3D",
-    "SHOKet",
-    "PIABKet",
-    "SigmaZKet",
-    "XKet",
+    "Ket", "TimeDepKet", "OrthogonalKet", "BosonFockKet", "BosonCoherentKet", "FermionFockKet",
+    "Qubit", "IntQubit", "JxKet", "JyKet", "JzKet", "PxKet", "PositionKet3D", "SHOKet",
+    "PIABKet", "SigmaZKet", "XKet",
   ])
 }
 
 ///|
 pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
-    "Bra",
-    "TimeDepBra",
-    "OrthogonalBra",
-    "BosonFockBra",
-    "BosonCoherentBra",
-    "FermionFockBra",
-    "QubitBra",
-    "IntQubitBra",
-    "JxBra",
-    "JyBra",
-    "JzBra",
-    "PxBra",
-    "PositionBra3D",
-    "SHOBra",
-    "PIABBra",
-    "SigmaZBra",
-    "XBra",
+    "Bra", "TimeDepBra", "OrthogonalBra", "BosonFockBra", "BosonCoherentBra", "FermionFockBra",
+    "QubitBra", "IntQubitBra", "JxBra", "JyBra", "JzBra", "PxBra", "PositionBra3D",
+    "SHOBra", "PIABBra", "SigmaZBra", "XBra",
   ])
 }
 
 ///|
 pub fn quantum_is_state_expr(expr : @symcore.Expr) -> Bool {
-  quantum_is_ket_expr(expr) || quantum_is_bra_expr(expr) ||
-    quantum_expr_has_name(expr, "Wavefunction")
+  quantum_is_ket_expr(expr) ||
+  quantum_is_bra_expr(expr) ||
+  quantum_expr_has_name(expr, "Wavefunction")
 }
 
 ///|
@@ -158,48 +137,13 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
       ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name)
     _ =>
       quantum_expr_has_any_name(expr, [
-        "Operator",
-        "HermitianOperator",
-        "UnitaryOperator",
-        "IdentityOperator",
-        "DifferentialOperator",
-        "OuterProduct",
-        "BosonOp",
-        "FermionOp",
-        "Gate",
-        "CGate",
-        "UGate",
-        "OracleGate",
-        "WGate",
-        "QFT",
-        "IQFT",
-        "RkGate",
-        "IdentityGate",
-        "HadamardGate",
-        "XGate",
-        "YGate",
-        "ZGate",
-        "TGate",
-        "PhaseGate",
-        "SwapGate",
-        "CNotGate",
-        "SigmaX",
-        "SigmaY",
-        "SigmaZ",
-        "SigmaPlus",
-        "SigmaMinus",
-        "Rotation",
-        "WignerD",
-        "Density",
-        "Hamiltonian",
-        "LoweringOp",
-        "NumberOp",
-        "PIABHamiltonian",
-        "PxOp",
-        "RaisingOp",
-        "XOp",
-        "YOp",
-        "ZOp",
+        "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "DifferentialOperator",
+        "OuterProduct", "BosonOp", "CMod", "FermionOp", "Gate", "CGate", "UGate",
+        "OracleGate", "WGate", "QFT", "IQFT", "RkGate", "IdentityGate", "HadamardGate",
+        "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate", "CNotGate",
+        "SigmaX", "SigmaY", "SigmaZ", "SigmaPlus", "SigmaMinus", "Rotation", "WignerD",
+        "Density", "Hamiltonian", "LoweringOp", "NumberOp", "PIABHamiltonian", "PxOp",
+        "RaisingOp", "XOp", "YOp", "ZOp",
       ])
   }
 }

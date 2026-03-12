@@ -4,21 +4,85 @@
 ///|
 fn quantum_reserved_operator_name(name : String) -> Bool {
   match name {
-    "AntiCommutator" | "BosonCoherentBra" | "BosonCoherentKet" | "BosonFockBra" |
-    "BosonFockKet" | "BosonOp" | "Bra" | "CGate" | "Commutator" | "Dagger" |
-    "Density" | "DifferentialOperator" | "FermionFockBra" | "FermionFockKet" | "FermionOp" | "Gate" | "HadamardGate" |
-    "HermitianOperator" | "IdentityGate" | "IdentityOperator" | "InnerProduct" |
-    "JxBra" | "JxKet" | "JyBra" | "JyKet" | "JzBra" | "JzKet" |
-    "Ket" | "OuterProduct" | "OrthogonalBra" | "OrthogonalKet" |
-    "OracleGate" |
-    "Operator" | "PhaseGate" | "PIABBra" | "PIABHamiltonian" | "PIABKet" |
-    "PositionBra3D" | "PositionKet3D" | "PxBra" | "PxKet" | "PxOp" |
-    "IQFT" | "QFT" | "Qubit" | "QubitBra" | "RaisingOp" | "RkGate" | "SHOBra" | "SHOKet" |
-    "SigmaMinus" | "SigmaPlus" | "SigmaX" | "SigmaY" | "SigmaZ" |
-    "SigmaZBra" | "SigmaZKet" | "SwapGate" | "TensorProduct" | "TGate" |
-    "TimeDepBra" | "TimeDepKet" | "Tr" | "UGate" | "UnitaryOperator" |
-    "Wavefunction" | "WGate" | "XBra" | "XGate" | "XKet" | "XOp" | "YGate" |
-    "YOp" | "ZGate" | "ZOp" | "NumberOp" | "Hamiltonian" | "LoweringOp" => true
+    "AntiCommutator"
+    | "BosonCoherentBra"
+    | "BosonCoherentKet"
+    | "BosonFockBra"
+    | "BosonFockKet"
+    | "BosonOp"
+    | "Bra"
+    | "CGate"
+    | "Commutator"
+    | "Dagger"
+    | "CMod"
+    | "Density"
+    | "DifferentialOperator"
+    | "FermionFockBra"
+    | "FermionFockKet"
+    | "FermionOp"
+    | "Gate"
+    | "HadamardGate"
+    | "HermitianOperator"
+    | "IdentityGate"
+    | "IdentityOperator"
+    | "InnerProduct"
+    | "JxBra"
+    | "JxKet"
+    | "JyBra"
+    | "JyKet"
+    | "JzBra"
+    | "JzKet"
+    | "Ket"
+    | "OuterProduct"
+    | "OrthogonalBra"
+    | "OrthogonalKet"
+    | "OracleGate"
+    | "Operator"
+    | "PhaseGate"
+    | "PIABBra"
+    | "PIABHamiltonian"
+    | "PIABKet"
+    | "PositionBra3D"
+    | "PositionKet3D"
+    | "PxBra"
+    | "PxKet"
+    | "PxOp"
+    | "IQFT"
+    | "QFT"
+    | "Qubit"
+    | "QubitBra"
+    | "RaisingOp"
+    | "RkGate"
+    | "SHOBra"
+    | "SHOKet"
+    | "SigmaMinus"
+    | "SigmaPlus"
+    | "SigmaX"
+    | "SigmaY"
+    | "SigmaZ"
+    | "SigmaZBra"
+    | "SigmaZKet"
+    | "SwapGate"
+    | "TensorProduct"
+    | "TGate"
+    | "TimeDepBra"
+    | "TimeDepKet"
+    | "Tr"
+    | "UGate"
+    | "UnitaryOperator"
+    | "Wavefunction"
+    | "WGate"
+    | "XBra"
+    | "XGate"
+    | "XKet"
+    | "XOp"
+    | "YGate"
+    | "YOp"
+    | "ZGate"
+    | "ZOp"
+    | "NumberOp"
+    | "Hamiltonian"
+    | "LoweringOp" => true
     _ => false
   }
 }
@@ -45,8 +109,10 @@ fn quantum_is_scalar_like(expr : @symcore.Expr) -> Bool {
   match expr {
     @symcore.Expr::Number(_) => true
     @symcore.Expr::Symbol(name) => quantum_symbol_is_scalar(name)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => args.all(quantum_is_scalar_like)
-    @symcore.Expr::Pow(base, exp) => quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.all(quantum_is_scalar_like)
+    @symcore.Expr::Pow(base, exp) =>
+      quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
     @symcore.Expr::Function(name, args) =>
       !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
   }
@@ -114,13 +180,16 @@ fn quantum_split_scalar_factors(
           nonscalars.push(arg)
         }
       }
-      let scalar = if scalars.is_empty() { @symcore.int(1) } else { @symcore.mul(scalars) }
-      let body =
-        if nonscalars.is_empty() {
-          None
-        } else {
-          Some(quantum_mul_from_args_preserve(nonscalars))
-        }
+      let scalar = if scalars.is_empty() {
+        @symcore.int(1)
+      } else {
+        @symcore.mul(scalars)
+      }
+      let body = if nonscalars.is_empty() {
+        None
+      } else {
+        Some(quantum_mul_from_args_preserve(nonscalars))
+      }
       (scalar, body)
     }
     _ => (@symcore.int(1), Some(expr))

@@ -1,5 +1,17 @@
 import {
   "moonbitlang/core/bigint",
+  "moonbitlang/core/math",
+  "moonbitlang/core/random",
+  "moonbitlang/core/strconv",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symcalculus",
+  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+}
+
+import {
+  "moonbitlang/core/bigint",
   "moonbitlang/core/random",
   "moonbitlang/core/strconv",
   "CAIMEOX/symbit/symcore",
@@ -8,14 +20,3 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/sympy/physics" @sympy_physics,
 } for "test"
-
-import {
-  "moonbitlang/core/bigint",
-  "moonbitlang/core/math",
-  "moonbitlang/core/random",
-  "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symcalculus",
-  "CAIMEOX/symbit/symphysics" @symphysics,
-  "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/symprint",
-}

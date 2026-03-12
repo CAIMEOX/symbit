@@ -54,26 +54,38 @@ pub fn represent(
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   match expr {
     @symcore.Expr::Add(args) => {
-      guard !args.is_empty() else { return MatrixScalarValue::Scalar(@symcore.int(0)) }
-      let mut acc = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+      guard !args.is_empty() else {
+        return MatrixScalarValue::Scalar(@symcore.int(0))
+      }
+      let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
-        acc = represent_add(acc, represent(args[idx], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim))
+        acc = represent_add(
+          acc,
+          represent(args[idx], basis~, nqubits~, spin_j~, ndim~),
+        )
       }
       acc
     }
     @symcore.Expr::Mul(args) => {
-      guard !args.is_empty() else { return MatrixScalarValue::Scalar(@symcore.int(1)) }
-      let mut acc = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+      guard !args.is_empty() else {
+        return MatrixScalarValue::Scalar(@symcore.int(1))
+      }
+      let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
-        acc = represent_mul(acc, represent(args[idx], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim))
+        acc = represent_mul(
+          acc,
+          represent(args[idx], basis~, nqubits~, spin_j~, ndim~),
+        )
       }
       acc
     }
     @symcore.Expr::Function("Dagger", args) if args.length() == 1 => {
-      let represented = represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+      let represented = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       match represented {
-        MatrixScalarValue::Scalar(value) => MatrixScalarValue::Scalar(expr_conjugate(value))
-        MatrixScalarValue::Matrix(matrix) => MatrixScalarValue::Matrix(matrix_dagger(matrix))
+        MatrixScalarValue::Scalar(value) =>
+          MatrixScalarValue::Scalar(expr_conjugate(value))
+        MatrixScalarValue::Matrix(matrix) =>
+          MatrixScalarValue::Matrix(matrix_dagger(matrix))
       }
     }
     @symcore.Expr::Function(name, args) if name == "TensorProduct" => {
@@ -83,7 +95,7 @@ pub fn represent(
       let matrices : Array[@symphysics.ExplicitMatrix] = []
       let mut scalar = @symcore.int(1)
       for arg in args {
-        let represented = represent(arg, basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+        let represented = represent(arg, basis~, nqubits~, spin_j~, ndim~)
         match represented {
           MatrixScalarValue::Scalar(value) => scalar = scalar * value
           MatrixScalarValue::Matrix(matrix) => matrices.push(matrix)
@@ -100,58 +112,126 @@ pub fn represent(
         MatrixScalarValue::Matrix(matrix.scale(scalar))
       }
     }
-    @symcore.Expr::Function(name, args) if name == "OuterProduct" && args.length() == 2 =>
+    @symcore.Expr::Function(name, args) if name == "OuterProduct" &&
+      args.length() == 2 =>
       represent_mul(
-        represent(args[0], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim),
-        represent(args[1], basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim),
+        represent(args[0], basis~, nqubits~, spin_j~, ndim~),
+        represent(args[1], basis~, nqubits~, spin_j~, ndim~),
       )
     @symcore.Expr::Function(name, _) if name == "InnerProduct" =>
       MatrixScalarValue::Scalar(inner_product_doit(expr))
     _ =>
-      match cartesian_represent(expr, basis=basis) {
+      match cartesian_represent(expr, basis~) {
         Some(value) => MatrixScalarValue::Scalar(value)
         None =>
-      match piab_represent(expr) {
-        Some(value) => MatrixScalarValue::Scalar(value)
-        None =>
-      match sho_represent(expr, basis=basis, ndim=ndim) {
-        Some(value) => value
-        None =>
-      match grover_represent(expr, nqubits) {
-        Some(value) => value
-        None =>
-      match qft_represent(expr, nqubits) {
-        Some(value) => value
-        None =>
-      match density_from_expr(expr) {
-        Some(d) => try! density_matrix(d, basis, nqubits, spin_j, ndim)
-        None =>
-      match wavefunction_from_expr(expr) {
-        Some(wf) => MatrixScalarValue::Scalar(wf.as_expr())
-        None =>
-          match sigma_z_state_from_expr(expr) {
-            Some(_) => MatrixScalarValue::Matrix(try! represent_pauli_state(expr))
+          match piab_represent(expr) {
+            Some(value) => MatrixScalarValue::Scalar(value)
             None =>
-              match pauli_from_expr(expr) {
-                Some(_) => MatrixScalarValue::Matrix(try! represent_pauli_operator(expr))
+              match sho_represent(expr, basis~, ndim~) {
+                Some(value) => value
                 None =>
-                  match qubit_from_expr(expr) {
-                    Some(_) => MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits=nqubits))
+                  match grover_represent(expr, nqubits) {
+                    Some(value) => value
                     None =>
-                      match jz_state_from_expr(expr) {
-                        Some(_) => MatrixScalarValue::Matrix(try! represent_spin_jz_state(expr))
+                      match qft_represent(expr, nqubits) {
+                        Some(value) => value
                         None =>
-                          match gate_support(expr) {
-                            Some(_) => MatrixScalarValue::Matrix(try! represent_gate_expr_zbasis(expr, nqubits))
-                            None =>
-                              match expr {
-                                @symcore.Expr::Symbol(name) =>
-                                  if ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name) {
-                                    MatrixScalarValue::Matrix(try! represent_spin_jz_operator(expr, spin_j))
-                                  } else {
-                                    MatrixScalarValue::Scalar(expr)
+                          match (try? shor_represent(expr, nqubits)) {
+                            Ok(Some(value)) => value
+                            _ =>
+                              match density_from_expr(expr) {
+                                Some(d) =>
+                                  try! density_matrix(
+                                    d, basis, nqubits, spin_j, ndim,
+                                  )
+                                None =>
+                                  match wavefunction_from_expr(expr) {
+                                    Some(wf) =>
+                                      MatrixScalarValue::Scalar(wf.as_expr())
+                                    None =>
+                                      match sigma_z_state_from_expr(expr) {
+                                        Some(_) =>
+                                          MatrixScalarValue::Matrix(
+                                            try! represent_pauli_state(expr),
+                                          )
+                                        None =>
+                                          match pauli_from_expr(expr) {
+                                            Some(_) =>
+                                              MatrixScalarValue::Matrix(
+                                                try! represent_pauli_operator(
+                                                  expr,
+                                                ),
+                                              )
+                                            None =>
+                                              match
+                                                (try? represent_spin_rotation(
+                                                  expr, spin_j,
+                                                )) {
+                                                Ok(Some(matrix)) =>
+                                                  MatrixScalarValue::Matrix(
+                                                    matrix,
+                                                  )
+                                                _ =>
+                                                  match qubit_from_expr(expr) {
+                                                    Some(_) =>
+                                                      MatrixScalarValue::Matrix(
+                                                        qubit_to_matrix(
+                                                          expr,
+                                                          nqubits~,
+                                                        ),
+                                                      )
+                                                    None =>
+                                                      match
+                                                        jz_state_from_expr(expr) {
+                                                        Some(_) =>
+                                                          MatrixScalarValue::Matrix(
+                                                            try! represent_spin_jz_state(
+                                                              expr,
+                                                            ),
+                                                          )
+                                                        None =>
+                                                          match
+                                                            gate_support(expr) {
+                                                            Some(_) =>
+                                                              MatrixScalarValue::Matrix(
+                                                                try! represent_gate_expr_zbasis(
+                                                                  expr, nqubits,
+                                                                ),
+                                                              )
+                                                            None =>
+                                                              match expr {
+                                                                @symcore.Expr::Symbol(
+                                                                  name
+                                                                ) =>
+                                                                  if [
+                                                                      "Jplus", "Jminus",
+                                                                      "Jx", "Jy",
+                                                                      "Jz", "J2",
+                                                                    ].contains(
+                                                                      name,
+                                                                    ) {
+                                                                    MatrixScalarValue::Matrix(
+                                                                      try! represent_spin_jz_operator(
+                                                                        expr, spin_j,
+                                                                      ),
+                                                                    )
+                                                                  } else {
+                                                                    MatrixScalarValue::Scalar(
+                                                                      expr,
+                                                                    )
+                                                                  }
+                                                                _ =>
+                                                                  MatrixScalarValue::Scalar(
+                                                                    expr,
+                                                                  )
+                                                              }
+                                                          }
+                                                      }
+                                                  }
+                                              }
+                                          }
+                                      }
                                   }
-                                _ => MatrixScalarValue::Scalar(expr)
                               }
                           }
                       }
@@ -159,13 +239,7 @@ pub fn represent(
               }
           }
       }
-      }
-      }
-      }
-      }
-      }
   }
-}
 }
 
 ///|
@@ -176,9 +250,10 @@ pub fn represent_matrix(
   spin_j? : @symcore.Expr = default_spin_j(),
   ndim? : Int = 4,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  let represented = represent(expr, basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+  let represented = represent(expr, basis~, nqubits~, spin_j~, ndim~)
   match represented {
     MatrixScalarValue::Matrix(matrix) => matrix
-    MatrixScalarValue::Scalar(value) => @symphysics.explicit_matrix_from_rows([[value]])
+    MatrixScalarValue::Scalar(value) =>
+      @symphysics.explicit_matrix_from_rows([[value]])
   }
 }

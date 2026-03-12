@@ -112,7 +112,8 @@ fn gate_tuple_ints(expr : @symcore.Expr) -> Array[Int]? {
       let out : Array[Int] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if n.is_integral() => out.push(n.numerator().to_int())
+          @symcore.Expr::Number(n) if n.is_integral() =>
+            out.push(n.numerator().to_int())
           _ => return None
         }
       }
@@ -151,33 +152,37 @@ pub fn GateExpr::repr(self : GateExpr) -> String {
 
 ///|
 fn sqrt2_over_2() -> @symcore.Expr {
-  try! @symcore.rational_from_ints(1, 2) * @symcore.raw_function("sqrt", [@symcore.int(2)])
+  try! (@symcore.rational_from_ints(1, 2) *
+  @symcore.raw_function("sqrt", [@symcore.int(2)]))
 }
 
 ///|
 fn gate_phase_t() -> @symcore.Expr {
   let quarter = try! @symcore.rational_from_ints(1, 4)
-  @symcore.raw_function("exp", [@symcore.symbol("I") * @symcore.symbol("pi") * quarter])
+  @symcore.raw_function("exp", [
+    @symcore.symbol("I") * @symcore.symbol("pi") * quarter,
+  ])
 }
 
 ///|
-pub fn GateExpr::target_matrix(self : GateExpr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+pub fn GateExpr::target_matrix(
+  self : GateExpr,
+) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.kind {
-    GateKind::Identity => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(1), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(1)],
-    ])
+    GateKind::Identity =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(1)],
+      ])
     GateKind::Hadamard => {
       let s = gate_hadamard_factor()
-      @symphysics.explicit_matrix_from_rows([
-        [s, s],
-        [s, @symcore.int(-1) * s],
-      ])
+      @symphysics.explicit_matrix_from_rows([[s, s], [s, @symcore.int(-1) * s]])
     }
-    GateKind::X => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(0), @symcore.int(1)],
-      [@symcore.int(1), @symcore.int(0)],
-    ])
+    GateKind::X =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(0), @symcore.int(1)],
+        [@symcore.int(1), @symcore.int(0)],
+      ])
     GateKind::Y => {
       let i = @symcore.symbol("I")
       @symphysics.explicit_matrix_from_rows([
@@ -185,10 +190,11 @@ pub fn GateExpr::target_matrix(self : GateExpr) -> @symphysics.ExplicitMatrix ra
         [i, @symcore.int(0)],
       ])
     }
-    GateKind::Z => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(1), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(-1)],
-    ])
+    GateKind::Z =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(-1)],
+      ])
     GateKind::Phase => {
       let i = @symcore.symbol("I")
       @symphysics.explicit_matrix_from_rows([
@@ -196,22 +202,25 @@ pub fn GateExpr::target_matrix(self : GateExpr) -> @symphysics.ExplicitMatrix ra
         [@symcore.int(0), i],
       ])
     }
-    GateKind::T => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(1), @symcore.int(0)],
-      [@symcore.int(0), gate_phase_t()],
-    ])
-    GateKind::Swap => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
-    ])
-    GateKind::CNot => @symphysics.explicit_matrix_from_rows([
-      [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
-      [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
-      [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
-    ])
+    GateKind::T =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(0)],
+        [@symcore.int(0), gate_phase_t()],
+      ])
+    GateKind::Swap =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      ])
+    GateKind::CNot =>
+      @symphysics.explicit_matrix_from_rows([
+        [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
+        [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
+      ])
   }
 }
 
@@ -222,20 +231,24 @@ pub fn gate_from_expr(expr : @symcore.Expr) -> GateExpr? {
       let ints : Array[Int] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if n.is_integral() => ints.push(n.numerator().to_int())
+          @symcore.Expr::Number(n) if n.is_integral() =>
+            ints.push(n.numerator().to_int())
           _ => return None
         }
       }
       match name {
         "IdentityGate" if ints.length() == 1 => Some(identity_gate(ints[0]))
-        "HadamardGate" if ints.length() == 1 => Some(hadamard_gate(ints[0]))
-        "XGate" if ints.length() == 1 => Some(x_gate(ints[0]))
-        "YGate" if ints.length() == 1 => Some(y_gate(ints[0]))
-        "ZGate" if ints.length() == 1 => Some(z_gate(ints[0]))
-        "PhaseGate" if ints.length() == 1 => Some(phase_gate(ints[0]))
-        "TGate" if ints.length() == 1 => Some(t_gate(ints[0]))
-        "SwapGate" if ints.length() == 2 => Some(swap_gate(ints[0], ints[1]))
-        "CNotGate" if ints.length() == 2 => Some(cnot_gate(ints[0], ints[1]))
+        "HadamardGate" | "H" if ints.length() == 1 =>
+          Some(hadamard_gate(ints[0]))
+        "XGate" | "X" if ints.length() == 1 => Some(x_gate(ints[0]))
+        "YGate" | "Y" if ints.length() == 1 => Some(y_gate(ints[0]))
+        "ZGate" | "Z" if ints.length() == 1 => Some(z_gate(ints[0]))
+        "PhaseGate" | "S" if ints.length() == 1 => Some(phase_gate(ints[0]))
+        "TGate" | "T" if ints.length() == 1 => Some(t_gate(ints[0]))
+        "SwapGate" | "SWAP" if ints.length() == 2 =>
+          Some(swap_gate(ints[0], ints[1]))
+        "CNotGate" | "CNOT" if ints.length() == 2 =>
+          Some(cnot_gate(ints[0], ints[1]))
         _ => None
       }
     }
@@ -276,13 +289,22 @@ fn gate_apply_concrete(
 ) -> @symcore.Expr? raise @symphysics.PhysicsError {
   for arg in gate.args {
     guard arg >= 0 && arg < q.nqubits() else {
-      raise @symphysics.PhysicsError::IndexError("Gate target/control index out of range")
+      raise @symphysics.PhysicsError::IndexError(
+        "Gate target/control index out of range",
+      )
     }
   }
   match gate.kind {
     GateKind::Identity => Some(qubit_expr)
-    GateKind::Hadamard | GateKind::X | GateKind::Y | GateKind::Z | GateKind::Phase | GateKind::T =>
-      Some(try! gate_apply_single_qubit(try! gate.target_matrix(), q, gate.args[0]))
+    GateKind::Hadamard
+    | GateKind::X
+    | GateKind::Y
+    | GateKind::Z
+    | GateKind::Phase
+    | GateKind::T =>
+      Some(
+        try! gate_apply_single_qubit(try! gate.target_matrix(), q, gate.args[0]),
+      )
     GateKind::Swap => {
       let left = q.bits.length() - 1 - gate.args[0]
       let right = q.bits.length() - 1 - gate.args[1]
@@ -290,7 +312,9 @@ fn gate_apply_concrete(
       let tmp = bits[left]
       bits[left] = bits[right]
       bits[right] = tmp
-      Some((try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)).as_expr())
+      Some(
+        (try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)).as_expr(),
+      )
     }
     GateKind::CNot => {
       let control = try! q.bit(gate.args[0])
@@ -352,12 +376,13 @@ pub fn gate_apply_to_qubit_expr(
                   }
                   let mut active = true
                   for control in controls {
-                    active = active && (try! q.bit(control) == 1)
+                    active = active && (try! (q.bit(control) == 1))
                   }
                   if active {
                     match gate_apply_to_qubit_expr(args[1], qubit_expr) {
                       Some(applied) => Some(applied)
-                      None => try! qft_apply_operator_to_ket(args[1], qubit_expr)
+                      None =>
+                        try! qft_apply_operator_to_ket(args[1], qubit_expr)
                     }
                   } else {
                     Some(qubit_expr)
@@ -386,7 +411,7 @@ pub fn represent_gate_expr_zbasis(
     let basis_expr = (try! qubit_from_bits(int_to_bits(col, nqubits))).as_expr()
     let maybe_applied = gate_apply_to_qubit_expr(gate_expr, basis_expr)
     let applied = maybe_applied.unwrap_or_else(() => basis_expr)
-    let vec = qubit_to_matrix(applied, nqubits=nqubits)
+    let vec = qubit_to_matrix(applied, nqubits~)
     for row in 0..<size {
       rows[row][col] = vec.get(row, 0)
     }
@@ -405,7 +430,8 @@ pub fn GateExpr::represent_zbasis(
 ///|
 fn gate_is_identity_expr(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => true
+    @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 =>
+      true
     @symcore.Expr::Function("IdentityGate", _) => true
     _ => false
   }
@@ -414,15 +440,21 @@ fn gate_is_identity_expr(expr : @symcore.Expr) -> Bool {
 ///|
 fn gate_is_involution(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function("CGate", args) if args.length() == 2 => gate_is_involution(args[1])
+    @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+      gate_is_involution(args[1])
     @symcore.Expr::Function(name, _) =>
-      ["IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate", "SwapGate", "CNotGate"].contains(name)
+      [
+        "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate", "SwapGate", "CNotGate",
+      ].contains(name)
     _ => false
   }
 }
 
 ///|
-fn gate_compose_pair(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr? {
+fn gate_compose_pair(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr? {
   if gate_is_identity_expr(lhs) {
     return Some(rhs)
   }
@@ -505,7 +537,8 @@ pub fn gate_sort(expr : @symcore.Expr) -> @symcore.Expr {
         changed = false
         for idx in 0..<(factors.length() - 1) {
           match (gate_support(factors[idx]), gate_support(factors[idx + 1])) {
-            (Some(lhs), Some(rhs)) if supports_disjoint(lhs, rhs) && factors[idx].compare(factors[idx + 1]) > 0 => {
+            (Some(lhs), Some(rhs)) if supports_disjoint(lhs, rhs) &&
+              factors[idx].compare(factors[idx + 1]) > 0 => {
               let tmp = factors[idx]
               factors[idx] = factors[idx + 1]
               factors[idx + 1] = tmp

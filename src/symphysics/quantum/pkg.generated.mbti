@@ -1,0 +1,864 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics/quantum"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics",
+}
+
+// Values
+pub fn anticommutator(@symcore.Expr, @symcore.Expr, evaluate? : Bool) -> @symcore.Expr
+
+pub fn anticommutator_doit(@symcore.Expr) -> @symcore.Expr
+
+pub fn apply_grover(Array[Int], Int, iterations? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn boson_apply_operator_to_bra(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn boson_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn boson_coherent_bra(@symcore.Expr) -> @symcore.Expr
+
+pub fn boson_coherent_ket(@symcore.Expr) -> @symcore.Expr
+
+pub fn boson_fock_bra(@symcore.Expr) -> @symcore.Expr
+
+pub fn boson_fock_ket(@symcore.Expr) -> @symcore.Expr
+
+pub fn boson_op(@symcore.Expr, annihilation? : Bool) -> BosonOpExpr
+
+pub fn bra(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn cartesian_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn cartesian_inner_product(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn cartesian_operator_to_state(@symcore.Expr) -> @symcore.Expr?
+
+pub fn cartesian_represent(@symcore.Expr, basis? : @symcore.Expr?) -> @symcore.Expr?
+
+pub fn cartesian_state_to_operator(@symcore.Expr) -> Array[@symcore.Expr]?
+
+pub fn cg(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> CG
+
+pub fn cg_simp(@symcore.Expr) -> @symcore.Expr
+
+pub fn cgate(Array[Int], @symcore.Expr) -> @symcore.Expr
+
+pub fn circuit_factors(@symcore.Expr) -> Array[@symcore.Expr]
+
+pub fn cmod(Int, Int, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn cnot_gate(Int, Int) -> GateExpr
+
+pub fn commutator(@symcore.Expr, @symcore.Expr, evaluate? : Bool) -> @symcore.Expr
+
+pub fn commutator_doit(@symcore.Expr) -> @symcore.Expr
+
+pub fn commutator_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn complex_space(@symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError
+
+pub fn convert_to_real_indices(@symcore.Expr, Map[String, Int]) -> Array[@symcore.Expr]
+
+pub fn convert_to_symbolic_indices(@symcore.Expr, start_index? : Int, qubit_map? : Map[String, Int]) -> SymbolicCircuit
+
+pub fn cphase(Int, Int) -> @symcore.Expr
+
+pub fn dagger(@symcore.Expr, evaluate? : Bool) -> @symcore.Expr
+
+pub fn density(Array[(@symcore.Expr, @symcore.Expr)]) -> DensityExpr
+
+pub fn density_from_expr(@symcore.Expr) -> DensityExpr?
+
+pub fn differential_operator(@symcore.Expr, @symcore.Expr) -> DifferentialOperatorExpr
+
+pub fn differential_operator_apply_to_wavefunction(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn differential_operator_from_expr(@symcore.Expr) -> DifferentialOperatorExpr?
+
+pub fn direct_sum_space(Array[HilbertSpace]) -> HilbertSpace
+
+pub fn entropy(@symcore.Expr, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn expr_conjugate(@symcore.Expr) -> @symcore.Expr
+
+pub fn fermion_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn fermion_fock_bra(@symcore.Expr) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn fermion_fock_ket(@symcore.Expr) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn fermion_op(@symcore.Expr, annihilation? : Bool) -> FermionOpExpr
+
+pub fn fidelity(@symcore.Expr, @symcore.Expr, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn find_subcircuit(@symcore.Expr, @symcore.Expr, start? : Int, end? : Int) -> Int
+
+pub fn fixcommand(String) -> String
+
+pub fn flatten_ids(Array[GateIdentity]) -> Array[Array[@symcore.Expr]]
+
+pub fn flatten_scalar(@symphysics.ExplicitMatrix) -> MatrixScalarValue raise @symphysics.PhysicsError
+
+pub fn flip_index(Int, Int) -> Int
+
+pub fn fock_space() -> HilbertSpace
+
+pub fn gate_apply_to_qubit_expr(@symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise @symphysics.PhysicsError
+
+pub fn gate_from_expr(@symcore.Expr) -> GateExpr?
+
+pub fn gate_identity(Array[@symcore.Expr]) -> GateIdentity
+
+pub fn gate_simp(@symcore.Expr) -> @symcore.Expr
+
+pub fn gate_sort(@symcore.Expr) -> @symcore.Expr
+
+pub fn get_index(String, Array[String]) -> Int raise @symphysics.PhysicsError
+
+pub fn get_indices(Array[String], Array[String]) -> Array[Int] raise @symphysics.PhysicsError
+
+pub fn getr(Int, Int, Int) -> Int raise @symphysics.PhysicsError
+
+pub fn grover_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise @symphysics.PhysicsError
+
+pub fn grover_iteration(@symcore.Expr, @symcore.Expr) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn grover_represent(@symcore.Expr, Int) -> MatrixScalarValue? raise @symphysics.PhysicsError
+
+pub fn hadamard_gate(Int) -> GateExpr
+
+pub let hbar : @symcore.Expr
+
+pub fn hermitian_operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr
+
+pub fn hilbert_space() -> HilbertSpace
+
+pub fn identity_gate(Int) -> GateExpr
+
+pub fn identity_operator(dimension? : @symcore.Expr, hilbert_space? : HilbertSpace) -> OperatorExpr
+
+pub fn inner_product(@symcore.Expr, @symcore.Expr, evaluate? : Bool) -> @symcore.Expr
+
+pub fn inner_product_doit(@symcore.Expr) -> @symcore.Expr
+
+pub fn int_qubit(Int, Int) -> QubitExpr raise @symphysics.PhysicsError
+
+pub fn int_qubit_bra(Int, Int) -> QubitExpr raise @symphysics.PhysicsError
+
+pub fn interval(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn iqft(Int, Int) -> FourierExpr raise @symphysics.PhysicsError
+
+pub fn j2() -> @symcore.Expr
+
+pub fn jminus() -> @symcore.Expr
+
+pub fn jplus() -> @symcore.Expr
+
+pub fn jx() -> @symcore.Expr
+
+pub fn jy() -> @symcore.Expr
+
+pub fn jz() -> @symcore.Expr
+
+pub fn jz_bra(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jz_ket(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jz_state_from_expr(@symcore.Expr) -> JzState?
+
+pub fn ket(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn kmp_table(Array[@symcore.Expr]) -> Array[Int]
+
+pub fn l2_space(@symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError
+
+pub fn lowering_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn m_values(@symcore.Expr) -> (Int, Array[@symcore.Expr]) raise @symphysics.PhysicsError
+
+pub fn matrix_cache(dtype? : String) -> MatrixCache
+
+pub fn matrix_dagger(@symphysics.ExplicitMatrix) -> @symphysics.ExplicitMatrix
+
+pub fn matrix_eye(Int) -> @symphysics.ExplicitMatrix
+
+pub fn matrix_flat_strings(@symphysics.ExplicitMatrix) -> Array[String] raise @symphysics.PhysicsError
+
+pub fn matrix_scalar_value_to_string(MatrixScalarValue) -> String
+
+pub fn matrix_tensor_product(Array[@symphysics.ExplicitMatrix]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn matrix_to_qubit(@symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn matrix_to_zero(@symphysics.ExplicitMatrix) -> MatrixScalarValue raise @symphysics.PhysicsError
+
+pub fn matrix_trace(@symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn matrix_zeros(Int, Int) -> @symphysics.ExplicitMatrix
+
+pub fn measure_all(@symcore.Expr, nqubits? : Int, normalize? : Bool) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError
+
+pub fn measure_all_oneshot(@symcore.Expr, nqubits? : Int, sample? : Double) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn measure_partial(@symcore.Expr, Array[Int], nqubits? : Int, normalize? : Bool) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError
+
+pub fn measure_partial_oneshot(@symcore.Expr, Array[Int], nqubits? : Int, sample? : Double) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn normal_order(@symcore.Expr, independent? : Bool, recursive_limit? : Int) -> @symcore.Expr
+
+pub fn normal_ordered_form(@symcore.Expr, independent? : Bool, recursive_limit? : Int) -> @symcore.Expr
+
+pub fn normalized(Bool) -> Unit
+
+pub fn number_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr
+
+pub fn operator_from_expr(@symcore.Expr) -> OperatorExpr?
+
+pub fn operators_to_state(@symcore.Expr) -> @symcore.Expr?
+
+pub fn operators_to_state_many(Array[@symcore.Expr]) -> @symcore.Expr?
+
+pub fn oracle_gate(Int, Array[Int]) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn orthogonal_bra(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn orthogonal_ket(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn outer_product(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn pauli_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn pauli_from_expr(@symcore.Expr) -> PauliExpr?
+
+pub fn period_find(Int, Int) -> Int raise @symphysics.PhysicsError
+
+pub fn phase_gate(Int) -> GateExpr
+
+pub fn piab_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn piab_bra(@symcore.Expr) -> @symcore.Expr
+
+pub fn piab_hamiltonian(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn piab_ket(@symcore.Expr) -> @symcore.Expr
+
+pub let piab_l : @symcore.Expr
+
+pub let piab_m : @symcore.Expr
+
+pub fn piab_represent(@symcore.Expr) -> @symcore.Expr?
+
+pub fn position_bra_3d(x? : @symcore.Expr, y? : @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
+
+pub fn position_ket_3d(x? : @symcore.Expr, y? : @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
+
+pub fn px_bra(momentum? : @symcore.Expr) -> @symcore.Expr
+
+pub fn px_ket(momentum? : @symcore.Expr) -> @symcore.Expr
+
+pub fn px_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn qapply(@symcore.Expr, dagger? : Bool, ip_doit? : Bool) -> @symcore.Expr
+
+pub fn qasm(Array[String]) -> Qasm raise @symphysics.PhysicsError
+
+pub fn qexpr(Array[@symcore.Expr], class_name? : String, hilbert_space? : HilbertSpace) -> QExpr
+
+pub fn qft(Int, Int) -> FourierExpr raise @symphysics.PhysicsError
+
+pub fn qft_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise @symphysics.PhysicsError
+
+pub fn qft_decompose(FourierExpr) -> @symcore.Expr
+
+pub fn qft_represent(@symcore.Expr, Int) -> MatrixScalarValue? raise @symphysics.PhysicsError
+
+pub fn qsimplify_pauli(@symcore.Expr) -> @symcore.Expr
+
+pub fn quantum_canonical_mul(@symcore.Expr) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn quantum_canonical_pow(@symcore.Expr, @symcore.Expr) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn quantum_expr_args(@symcore.Expr) -> Array[@symcore.Expr]?
+
+pub fn quantum_expr_has_any_name(@symcore.Expr, Array[String]) -> Bool
+
+pub fn quantum_expr_has_name(@symcore.Expr, String) -> Bool
+
+pub fn quantum_expr_name(@symcore.Expr) -> String?
+
+pub fn quantum_is_bra_expr(@symcore.Expr) -> Bool
+
+pub fn quantum_is_ket_expr(@symcore.Expr) -> Bool
+
+pub fn quantum_is_operator_expr(@symcore.Expr) -> Bool
+
+pub fn quantum_is_state_expr(@symcore.Expr) -> Bool
+
+pub fn quantum_join_label(Array[@symcore.Expr], separator? : String) -> String
+
+pub fn quantum_kind(@symcore.Expr) -> QuantumKind
+
+pub let quantum_matrix_cache : MatrixCache
+
+pub fn quantum_operator(Array[@symcore.Expr], flavor? : OperatorFlavor, hilbert_space? : HilbertSpace) -> OperatorExpr
+
+pub fn quantum_state_or_operator(@symcore.Expr) -> Bool
+
+pub fn quantum_transform_state_pair(@symcore.Expr, @symcore.Expr) -> Array[@symcore.Expr]? raise @symphysics.PhysicsError
+
+pub fn qubit(String) -> QubitExpr raise @symphysics.PhysicsError
+
+pub fn qubit_bra(String) -> QubitExpr raise @symphysics.PhysicsError
+
+pub fn qubit_from_bits(Array[Int], bra? : Bool, int_form? : Bool) -> QubitExpr raise @symphysics.PhysicsError
+
+pub fn qubit_from_expr(@symcore.Expr) -> QubitExpr?
+
+pub fn qubit_to_matrix(@symcore.Expr, nqubits? : Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn raising_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn random_circuit(Int, Int, gate_space? : Array[GateKind], seed? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn random_insert(@symcore.Expr, Array[@symcore.Expr], seed? : Array[Int]) -> Array[@symcore.Expr]
+
+pub fn random_reduce(@symcore.Expr, Array[GateIdentity], seed? : Array[Int]) -> Array[@symcore.Expr]
+
+pub fn ratioize(Array[Int], Int) -> Int
+
+pub fn read_qasm(String) -> Qasm raise @symphysics.PhysicsError
+
+pub fn replace_subcircuit(@symcore.Expr, @symcore.Expr, replace? : @symcore.Expr?, pos? : Int) -> Array[@symcore.Expr]
+
+pub fn represent(@symcore.Expr, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> MatrixScalarValue raise @symphysics.PhysicsError
+
+pub fn represent_gate_expr_zbasis(@symcore.Expr, Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_matrix(@symcore.Expr, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_pauli_operator(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_pauli_state(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_spin_jz_operator(@symcore.Expr, @symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_spin_jz_state(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn represent_spin_rotation(@symcore.Expr, @symcore.Expr, evaluate? : Bool) -> @symphysics.ExplicitMatrix? raise @symphysics.PhysicsError
+
+pub fn rk(Int, Int) -> @symcore.Expr
+
+pub fn rk_gate(Int, Int) -> @symcore.Expr
+
+pub fn rotation(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> RotationExpr
+
+pub fn rotation_D(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> WignerDExpr
+
+pub fn rotation_d(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> WignerDExpr
+
+pub fn rotation_from_expr(@symcore.Expr) -> RotationExpr?
+
+pub fn sho_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn sho_bra(@symcore.Expr) -> @symcore.Expr
+
+pub fn sho_hamiltonian(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn sho_ket(@symcore.Expr) -> @symcore.Expr
+
+pub let sho_omega : @symcore.Expr
+
+pub fn sho_represent(@symcore.Expr, basis? : @symcore.Expr?, ndim? : Int) -> MatrixScalarValue? raise @symphysics.PhysicsError
+
+pub fn shor(Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn shor_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise @symphysics.PhysicsError
+
+pub fn shor_represent(@symcore.Expr, Int) -> MatrixScalarValue? raise @symphysics.PhysicsError
+
+pub fn sigma_minus(name? : @symcore.Expr?) -> PauliExpr
+
+pub fn sigma_plus(name? : @symcore.Expr?) -> PauliExpr
+
+pub fn sigma_x(name? : @symcore.Expr?) -> PauliExpr
+
+pub fn sigma_y(name? : @symcore.Expr?) -> PauliExpr
+
+pub fn sigma_z(name? : @symcore.Expr?) -> PauliExpr
+
+pub fn sigma_z_bra(Int) -> SigmaZState raise @symphysics.PhysicsError
+
+pub fn sigma_z_ket(Int) -> SigmaZState raise @symphysics.PhysicsError
+
+pub fn sigma_z_state_from_expr(@symcore.Expr) -> SigmaZState?
+
+pub fn spin_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub let sqrt2_inv : @symcore.Expr
+
+pub fn state_from_expr(@symcore.Expr) -> StateExpr?
+
+pub fn state_to_operators(@symcore.Expr) -> Array[@symcore.Expr]?
+
+pub fn stripquotes(String) -> String
+
+pub fn superposition_basis(Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn swap_gate(Int, Int) -> GateExpr
+
+pub fn t_gate(Int) -> GateExpr
+
+pub fn tensor_power(HilbertSpace, @symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError
+
+pub fn tensor_product(Array[@symcore.Expr]) -> TensorProductExpr
+
+pub fn tensor_product_matrix(Array[@symphysics.ExplicitMatrix]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn tensor_product_space(Array[HilbertSpace]) -> HilbertSpace raise @symphysics.PhysicsError
+
+pub fn time_dep_bra(Array[@symcore.Expr], @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn time_dep_ket(Array[@symcore.Expr], @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn tr(@symcore.Expr, indices? : Array[Int]) -> @symcore.Expr
+
+pub fn tr_doit(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr_permute(@symcore.Expr, Int) -> @symcore.Expr
+
+pub fn trim(String) -> String
+
+pub fn unitary_operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr
+
+pub fn w_gate(Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn wavefunction(@symcore.Expr, Array[@symcore.Expr]) -> WavefunctionExpr
+
+pub fn wavefunction_from_expr(@symcore.Expr) -> WavefunctionExpr?
+
+pub fn wigner3j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Wigner3j
+
+pub fn wigner6j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Wigner6j
+
+pub fn wigner9j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Wigner9j
+
+pub fn wigner_d_from_expr(@symcore.Expr) -> WignerDExpr?
+
+pub fn x_bra(position? : @symcore.Expr) -> @symcore.Expr
+
+pub fn x_gate(Int) -> GateExpr
+
+pub fn x_ket(position? : @symcore.Expr) -> @symcore.Expr
+
+pub fn x_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn y_gate(Int) -> GateExpr
+
+pub fn y_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn z_gate(Int) -> GateExpr
+
+pub fn z_op(label? : @symcore.Expr) -> @symcore.Expr
+
+pub fn zx_basis_transform() -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn zy_basis_transform() -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+// Errors
+
+// Types and methods
+pub struct BosonOpExpr {
+  name : @symcore.Expr
+  is_annihilation : Bool
+}
+pub fn BosonOpExpr::as_expr(Self) -> @symcore.Expr
+pub fn BosonOpExpr::dagger(Self) -> Self
+pub fn BosonOpExpr::to_string(Self) -> String
+pub impl Eq for BosonOpExpr
+
+pub struct CG {
+  j1 : @symcore.Expr
+  m1 : @symcore.Expr
+  j2 : @symcore.Expr
+  m2 : @symcore.Expr
+  j3 : @symcore.Expr
+  m3 : @symcore.Expr
+}
+pub fn CG::as_expr(Self) -> @symcore.Expr
+pub fn CG::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn CG::is_symbolic(Self) -> Bool
+pub impl Eq for CG
+
+pub struct CModExpr {
+  t : Int
+  a : Int
+  modulus : Int
+}
+pub fn CModExpr::as_expr(Self) -> @symcore.Expr
+pub impl Eq for CModExpr
+
+pub struct DensityExpr {
+  terms : Array[DensityTerm]
+}
+pub fn DensityExpr::apply_op(Self, @symcore.Expr) -> Self
+pub fn DensityExpr::as_expr(Self) -> @symcore.Expr
+pub fn DensityExpr::doit(Self) -> @symcore.Expr
+pub fn DensityExpr::entropy(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn DensityExpr::fidelity(Self, Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn DensityExpr::get_prob(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn DensityExpr::get_state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn DensityExpr::probs(Self) -> @symcore.Expr
+pub fn DensityExpr::represent(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> MatrixScalarValue raise @symphysics.PhysicsError
+pub fn DensityExpr::states(Self) -> @symcore.Expr
+pub fn DensityExpr::trace(Self) -> @symcore.Expr
+pub impl Eq for DensityExpr
+
+pub struct DensityTerm {
+  state : @symcore.Expr
+  prob : @symcore.Expr
+}
+pub impl Eq for DensityTerm
+
+pub struct DifferentialOperatorExpr {
+  expr : @symcore.Expr
+  function_expr : @symcore.Expr
+}
+pub fn DifferentialOperatorExpr::as_expr(Self) -> @symcore.Expr
+pub fn DifferentialOperatorExpr::variables(Self) -> Array[@symcore.Expr]
+pub impl Eq for DifferentialOperatorExpr
+
+pub struct FermionOpExpr {
+  name : @symcore.Expr
+  is_annihilation : Bool
+}
+pub fn FermionOpExpr::as_expr(Self) -> @symcore.Expr
+pub fn FermionOpExpr::dagger(Self) -> Self
+pub fn FermionOpExpr::to_string(Self) -> String
+pub impl Eq for FermionOpExpr
+
+pub struct FourierExpr {
+  inverse : Bool
+  start : Int
+  finish : Int
+}
+pub fn FourierExpr::as_expr(Self) -> @symcore.Expr
+pub fn FourierExpr::inverse(Self) -> Self
+pub impl Eq for FourierExpr
+
+pub struct GateExpr {
+  kind : GateKind
+  args : Array[Int]
+}
+pub fn GateExpr::as_expr(Self) -> @symcore.Expr
+pub fn GateExpr::repr(Self) -> String
+pub fn GateExpr::represent_zbasis(Self, Int) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn GateExpr::target_matrix(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn GateExpr::to_string(Self) -> String
+pub impl Eq for GateExpr
+
+pub struct GateIdentity {
+  equivalent_ids : Array[Array[@symcore.Expr]]
+}
+
+pub enum GateKind {
+  Identity
+  Hadamard
+  X
+  Y
+  Z
+  Phase
+  T
+  Swap
+  CNot
+}
+pub impl Eq for GateKind
+
+type GateNormalizationState
+
+pub enum HilbertSpace {
+  Abstract
+  Complex(@symcore.Expr)
+  L2(@symcore.Expr)
+  Fock
+  TensorProduct(Array[HilbertSpace])
+  DirectSum(Array[HilbertSpace])
+  TensorPower(HilbertSpace, @symcore.Expr)
+}
+pub fn HilbertSpace::base(Self) -> Self raise @symphysics.PhysicsError
+pub fn HilbertSpace::dimension(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn HilbertSpace::exp(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn HilbertSpace::repr(Self) -> String
+pub fn HilbertSpace::spaces(Self) -> Array[Self] raise @symphysics.PhysicsError
+pub impl Add for HilbertSpace
+pub impl Eq for HilbertSpace
+pub impl Mul for HilbertSpace
+pub impl Show for HilbertSpace
+
+pub struct JzState {
+  j : @symcore.Expr
+  m : @symcore.Expr
+  is_bra : Bool
+}
+pub fn JzState::as_expr(Self) -> @symcore.Expr
+pub fn JzState::dual(Self) -> Self
+pub fn JzState::to_string(Self) -> String
+pub impl Eq for JzState
+
+pub struct MatrixCache {
+  dtype : String
+  entries : Map[String, @symphysics.ExplicitMatrix]
+}
+pub fn MatrixCache::cache_matrix(Self, String, @symphysics.ExplicitMatrix) -> Unit
+pub fn MatrixCache::get_matrix(Self, String, format? : String) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub enum MatrixScalarValue {
+  Matrix(@symphysics.ExplicitMatrix)
+  Scalar(@symcore.Expr)
+}
+pub impl Eq for MatrixScalarValue
+
+pub struct OperatorExpr {
+  flavor : OperatorFlavor
+  label : Array[@symcore.Expr]
+  hilbert_space : HilbertSpace
+}
+pub fn OperatorExpr::as_expr(Self) -> @symcore.Expr
+pub fn OperatorExpr::inverse(Self) -> @symcore.Expr
+pub fn OperatorExpr::repr(Self) -> String
+pub fn OperatorExpr::to_string(Self) -> String
+pub impl Eq for OperatorExpr
+
+pub enum OperatorFlavor {
+  Generic
+  Hermitian
+  Unitary
+  Identity
+}
+pub impl Eq for OperatorFlavor
+
+pub struct OracleGateExpr {
+  nqubits : Int
+  marked : Array[Int]
+}
+pub fn OracleGateExpr::as_expr(Self) -> @symcore.Expr
+pub impl Eq for OracleGateExpr
+
+pub struct PauliExpr {
+  kind : PauliKind
+  name : @symcore.Expr?
+}
+pub fn PauliExpr::as_expr(Self) -> @symcore.Expr
+pub fn PauliExpr::repr(Self) -> String
+pub fn PauliExpr::to_string(Self) -> String
+pub impl Eq for PauliExpr
+
+pub enum PauliKind {
+  X
+  Y
+  Z
+  Plus
+  Minus
+}
+pub impl Eq for PauliKind
+
+pub struct QExpr {
+  class_name : String
+  args : Array[@symcore.Expr]
+  hilbert_space : HilbertSpace
+}
+pub fn QExpr::as_expr(Self) -> @symcore.Expr
+pub fn QExpr::label(Self) -> Array[@symcore.Expr]
+pub fn QExpr::repr(Self) -> String
+pub fn QExpr::to_string(Self) -> String
+pub impl Eq for QExpr
+
+pub struct Qasm {
+  defs : Map[String, QasmDefinition]
+  circuit : Array[@symcore.Expr]
+  labels : Array[String]
+  inits : Map[String, String]
+}
+pub fn Qasm::add(Self, Array[String]) -> Unit raise @symphysics.PhysicsError
+pub fn Qasm::get_circuit(Self) -> @symcore.Expr
+pub fn Qasm::get_labels(Self) -> Array[String]
+pub fn Qasm::index(Self, String) -> Int raise @symphysics.PhysicsError
+pub fn Qasm::indices(Self, Array[String]) -> Array[Int] raise @symphysics.PhysicsError
+pub fn Qasm::qubit(Self, String, init? : String?) -> Unit
+pub impl Eq for Qasm
+
+pub struct QasmDefinition {
+  ncontrols : Int
+  symbol : String
+}
+pub impl Eq for QasmDefinition
+
+pub(all) enum QuantumKind {
+  QNumber
+  QKet
+  QBra
+  QOperator
+  QUndefined
+}
+pub impl Eq for QuantumKind
+pub impl Show for QuantumKind
+
+pub struct QubitExpr {
+  bits : Array[Int]
+  is_bra : Bool
+  int_form : Bool
+}
+pub fn QubitExpr::as_expr(Self) -> @symcore.Expr
+pub fn QubitExpr::bit(Self, Int) -> Int raise @symphysics.PhysicsError
+pub fn QubitExpr::dimension(Self) -> Int
+pub fn QubitExpr::dual(Self) -> Self
+pub fn QubitExpr::flip(Self, Int) -> Self raise @symphysics.PhysicsError
+pub fn QubitExpr::nqubits(Self) -> Int
+pub fn QubitExpr::repr(Self) -> String
+pub fn QubitExpr::to_string(Self) -> String
+pub impl Eq for QubitExpr
+
+pub struct RkExpr {
+  target : Int
+  k : Int
+}
+pub impl Eq for RkExpr
+
+pub struct RotationExpr {
+  alpha : @symcore.Expr
+  beta : @symcore.Expr
+  gamma : @symcore.Expr
+}
+pub fn RotationExpr::as_expr(Self) -> @symcore.Expr
+pub fn RotationExpr::inverse(Self) -> Self
+pub fn RotationExpr::to_string(Self) -> String
+pub impl Eq for RotationExpr
+
+pub struct SigmaZState {
+  n : Int
+  is_bra : Bool
+}
+pub fn SigmaZState::as_expr(Self) -> @symcore.Expr
+pub fn SigmaZState::dual(Self) -> Self
+pub fn SigmaZState::to_string(Self) -> String
+pub impl Eq for SigmaZState
+
+pub struct StateExpr {
+  flavor : StateFlavor
+  label : Array[@symcore.Expr]
+  time : @symcore.Expr?
+  hilbert_space : HilbertSpace
+}
+pub fn StateExpr::as_expr(Self) -> @symcore.Expr
+pub fn StateExpr::dual(Self) -> Self
+pub fn StateExpr::repr(Self) -> String
+pub fn StateExpr::to_string(Self) -> String
+pub impl Eq for StateExpr
+
+pub enum StateFlavor {
+  Ket
+  Bra
+  TimeDepKet
+  TimeDepBra
+  OrthogonalKet
+  OrthogonalBra
+}
+pub impl Eq for StateFlavor
+
+pub struct SymbolicCircuit {
+  circuit : Array[@symcore.Expr]
+  qubit_map : Map[String, Int]
+  next_index : Int
+}
+
+pub struct TensorProductExpr {
+  args : Array[@symcore.Expr]
+}
+pub fn TensorProductExpr::as_expr(Self) -> @symcore.Expr
+pub fn TensorProductExpr::dagger(Self) -> Self
+pub fn TensorProductExpr::to_string(Self) -> String
+pub impl Eq for TensorProductExpr
+
+pub struct WGateExpr {
+  nqubits : Int
+}
+pub fn WGateExpr::as_expr(Self) -> @symcore.Expr
+pub impl Eq for WGateExpr
+
+pub struct WavefunctionExpr {
+  expr : @symcore.Expr
+  coords : Array[@symcore.Expr]
+}
+pub fn WavefunctionExpr::as_expr(Self) -> @symcore.Expr
+pub fn WavefunctionExpr::call(Self, Array[@symcore.Expr], env? : Map[String, @symcore.Expr]) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn WavefunctionExpr::limits(Self) -> Map[String, (@symcore.Expr, @symcore.Expr)]
+pub fn WavefunctionExpr::norm_expr(Self) -> @symcore.Expr
+pub fn WavefunctionExpr::normalize(Self) -> Self
+pub fn WavefunctionExpr::prob(Self) -> Self
+pub fn WavefunctionExpr::repr(Self) -> String
+pub fn WavefunctionExpr::variables(Self) -> Array[@symcore.Expr]
+pub impl Eq for WavefunctionExpr
+
+pub struct Wigner3j {
+  j1 : @symcore.Expr
+  m1 : @symcore.Expr
+  j2 : @symcore.Expr
+  m2 : @symcore.Expr
+  j3 : @symcore.Expr
+  m3 : @symcore.Expr
+}
+pub fn Wigner3j::as_expr(Self) -> @symcore.Expr
+pub fn Wigner3j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn Wigner3j::is_symbolic(Self) -> Bool
+pub impl Eq for Wigner3j
+
+pub struct Wigner6j {
+  j1 : @symcore.Expr
+  j2 : @symcore.Expr
+  j12 : @symcore.Expr
+  j3 : @symcore.Expr
+  j : @symcore.Expr
+  j23 : @symcore.Expr
+}
+pub fn Wigner6j::as_expr(Self) -> @symcore.Expr
+pub fn Wigner6j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn Wigner6j::is_symbolic(Self) -> Bool
+pub impl Eq for Wigner6j
+
+pub struct Wigner9j {
+  j1 : @symcore.Expr
+  j2 : @symcore.Expr
+  j12 : @symcore.Expr
+  j3 : @symcore.Expr
+  j4 : @symcore.Expr
+  j34 : @symcore.Expr
+  j13 : @symcore.Expr
+  j24 : @symcore.Expr
+  j : @symcore.Expr
+}
+pub fn Wigner9j::as_expr(Self) -> @symcore.Expr
+pub fn Wigner9j::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn Wigner9j::is_symbolic(Self) -> Bool
+pub impl Eq for Wigner9j
+
+pub struct WignerDExpr {
+  j : @symcore.Expr
+  m : @symcore.Expr
+  mp : @symcore.Expr
+  alpha : @symcore.Expr
+  beta : @symcore.Expr
+  gamma : @symcore.Expr
+}
+pub fn WignerDExpr::as_expr(Self) -> @symcore.Expr
+pub fn WignerDExpr::doit(Self) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn WignerDExpr::to_string(Self) -> String
+pub impl Eq for WignerDExpr
+
+// Type aliases
+
+// Traits
+

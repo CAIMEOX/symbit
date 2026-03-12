@@ -1,0 +1,45 @@
+///|
+test "physics.quantum.qasm: helper parity" {
+  try! quantum_test_assert_string_equal(
+    fixcommand("Def"),
+    try! @sympy_physics.quantum_qasm_fixcommand("Def"),
+    "fixcommand parity",
+  )
+  try! quantum_test_assert_string_equal(
+    stripquotes("\"S\""),
+    try! @sympy_physics.quantum_qasm_stripquotes("\"S\""),
+    "stripquotes parity",
+  )
+  try! quantum_test_assert_string_equal(
+    trim("something #comment").trim().to_string(),
+    try! @sympy_physics.quantum_qasm_trim("something #comment"),
+    "trim parity",
+  )
+  try! quantum_test_assert_string_equal(
+    (try! get_index("q0", ["q0", "q1"])).to_string(),
+    try! @sympy_physics.quantum_qasm_index("q0", ["q0", "q1"]),
+    "get_index parity",
+  )
+  try! quantum_test_assert_array_equal(
+    (try! get_indices(["q0", "q1"], ["q0", "q1"])).map(v => v.to_string()),
+    try! @sympy_physics.quantum_qasm_indices(["q0", "q1"], ["q0", "q1"]),
+    "get_indices parity",
+  )
+}
+
+///|
+test "physics.quantum.qasm: circuit parity" {
+  let example = "qubit q0\nqubit q1\nh q0\ncnot q0,q1"
+  let example_lines = ["qubit q0", "qubit q1", "h q0", "cnot q0,q1"]
+  let parser = try! read_qasm(example)
+  try! quantum_test_assert_expr_equal(
+    parser.get_circuit(),
+    try! @sympy_physics.quantum_qasm_circuit(example_lines),
+    "example circuit parity",
+  )
+  try! quantum_test_assert_array_equal(
+    parser.get_labels(),
+    try! @sympy_physics.quantum_qasm_labels(example_lines),
+    "example labels parity",
+  )
+}

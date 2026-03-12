@@ -29,6 +29,7 @@ fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
   @sympy.expr_to_sympy(expr)
 }
 
+///|
 fn ensure_repo_sympy_path() -> Unit {
   ()
 }
@@ -209,7 +210,8 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.qexpr")
   }
-  let quantum_operator_mod = match @py.pyimport("sympy.physics.quantum.operator") {
+  let quantum_operator_mod = match
+    @py.pyimport("sympy.physics.quantum.operator") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.operator")
   }
@@ -221,7 +223,8 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.boson")
   }
-  let quantum_fermion_mod = match @py.pyimport("sympy.physics.quantum.fermion") {
+  let quantum_fermion_mod = match
+    @py.pyimport("sympy.physics.quantum.fermion") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.fermion")
   }
@@ -241,7 +244,8 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.pauli")
   }
-  let quantum_represent_mod = match @py.pyimport("sympy.physics.quantum.represent") {
+  let quantum_represent_mod = match
+    @py.pyimport("sympy.physics.quantum.represent") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.represent")
   }
@@ -273,7 +277,8 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.qft")
   }
-  let quantum_density_mod = match @py.pyimport("sympy.physics.quantum.density") {
+  let quantum_density_mod = match
+    @py.pyimport("sympy.physics.quantum.density") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.density")
   }
@@ -338,7 +343,11 @@ fn physics_globals() -> @py.PyDict raise {
     ] {
     try_bind_name(globals, quantum_operator_mod, name)
   }
-  for name in ["Ket", "Bra", "TimeDepKet", "TimeDepBra", "OrthogonalKet", "OrthogonalBra", "Wavefunction"] {
+  for
+    name in [
+      "Ket", "Bra", "TimeDepKet", "TimeDepBra", "OrthogonalKet", "OrthogonalBra",
+      "Wavefunction",
+    ] {
     try_bind_name(globals, quantum_state_mod, name)
   }
   for
@@ -359,16 +368,24 @@ fn physics_globals() -> @py.PyDict raise {
   }
   for
     name in [
-      "Gate", "CGate", "UGate", "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate",
-      "TGate", "PhaseGate", "SwapGate", "CNotGate", "CNOT", "SWAP", "H", "X", "Y", "Z",
-      "T", "S", "CPHASE", "gate_simp", "gate_sort",
+      "Gate", "CGate", "UGate", "IdentityGate", "HadamardGate", "XGate", "YGate",
+      "ZGate", "TGate", "PhaseGate", "SwapGate", "CNotGate", "CNOT", "SWAP", "H",
+      "X", "Y", "Z", "T", "S", "CPHASE", "gate_simp", "gate_sort",
     ] {
     try_bind_name(globals, quantum_gate_mod, name)
   }
-  for name in ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2", "JxKet", "JxBra", "JyKet", "JyBra", "JzKet", "JzBra", "Rotation", "WignerD"] {
+  for
+    name in [
+      "Jplus", "Jminus", "Jx", "Jy", "Jz", "J2", "JxKet", "JxBra", "JyKet", "JyBra",
+      "JzKet", "JzBra", "Rotation", "WignerD",
+    ] {
     try_bind_name(globals, quantum_spin_mod, name)
   }
-  for name in ["SigmaX", "SigmaY", "SigmaZ", "SigmaMinus", "SigmaPlus", "SigmaZKet", "SigmaZBra", "qsimplify_pauli"] {
+  for
+    name in [
+      "SigmaX", "SigmaY", "SigmaZ", "SigmaMinus", "SigmaPlus", "SigmaZKet", "SigmaZBra",
+      "qsimplify_pauli",
+    ] {
     try_bind_name(globals, quantum_pauli_mod, name)
   }
   for name in ["QFT", "IQFT", "RkGate", "Rk"] {
@@ -401,7 +418,10 @@ fn physics_globals() -> @py.PyDict raise {
     ] {
     try_bind_name(globals, quantum_circuitutils_mod, name)
   }
-  for name in ["OracleGate", "WGate", "superposition_basis", "grover_iteration", "apply_grover"] {
+  for
+    name in [
+      "OracleGate", "WGate", "superposition_basis", "grover_iteration", "apply_grover",
+    ] {
     try_bind_name(globals, quantum_grover_mod, name)
   }
   for name in ["Pauli", "evaluate_pauli_product", "delta", "epsilon"] {
@@ -1275,11 +1295,8 @@ pub fn quantum_cg_simp(expr : String) -> String raise {
 ///|
 fn quantum_subprocess_prelude() -> String {
   [
-    "import sys\n",
-    "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n",
-    "from sympy.physics.quantum import *\n",
-    "from sympy.physics.quantum.qexpr import QExpr\n",
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.quantum import *\n", "from sympy.physics.quantum.qexpr import QExpr\n",
     "from sympy.physics.quantum.state import Ket, Bra, TimeDepKet, TimeDepBra, OrthogonalKet, OrthogonalBra, Wavefunction\n",
     "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
@@ -1292,20 +1309,17 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, Rotation, WignerD\n",
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
-    "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n",
-    "from sympy.physics.quantum.density import Density, entropy, fidelity\n",
-    "from sympy.physics.quantum.matrixcache import matrix_cache\n",
+    "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n", "from sympy.physics.quantum.shor import ratioize, getr\n",
+    "from sympy.physics.quantum.qasm import Qasm, flip_index, trim, get_index, get_indices, fixcommand, stripquotes\n",
+    "from sympy.physics.quantum.density import Density, entropy, fidelity\n", "from sympy.physics.quantum.matrixcache import matrix_cache\n",
     "from sympy.physics.quantum.circuitutils import kmp_table, find_subcircuit, replace_subcircuit, convert_to_symbolic_indices, convert_to_real_indices, random_reduce, random_insert\n",
     "from sympy.physics.quantum.grover import OracleGate, WGate, superposition_basis, grover_iteration, apply_grover\n",
-    "from sympy.physics.quantum.represent import represent\n",
-    "from sympy.physics.quantum.trace import Tr\n",
-    "from sympy.physics.quantum.commutator import Commutator\n",
-    "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
+    "from sympy.physics.quantum.represent import represent\n", "from sympy.physics.quantum.trace import Tr\n",
+    "from sympy.physics.quantum.commutator import Commutator\n", "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
     "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
-    "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n",
-    "wf = Function('wf')\n",
-    "def grover_oracle_from_marks(nqubits, marks):\n",
-    "    return OracleGate(nqubits, lambda qubits: any(qubits == IntQubit(idx, nqubits=nqubits) for idx in marks))\n",
+    "alpha, beta, gamma, theta, phi = symbols('alpha beta gamma theta phi', commutative=True)\n",
+    "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n", "wf = Function('wf')\n",
+    "def grover_oracle_from_marks(nqubits, marks):\n", "    return OracleGate(nqubits, lambda qubits: any(qubits == IntQubit(idx, nqubits=nqubits) for idx in marks))\n",
   ].join("")
 }
 
@@ -1369,9 +1383,17 @@ pub fn quantum_qapply_str(
       "print(qapply(sympify(",
       python_string_literal(expr),
       ", locals=locals()), dagger=",
-      if dagger { "True" } else { "False" },
+      if dagger {
+        "True"
+      } else {
+        "False"
+      },
       ", ip_doit=",
-      if ip_doit { "True" } else { "False" },
+      if ip_doit {
+        "True"
+      } else {
+        "False"
+      },
       "))\n",
     ].join(""),
   )
@@ -1384,6 +1406,11 @@ fn python_int_tuple(items : Array[Int]) -> String {
   } else {
     "(" + items.map(item => item.to_string()).join(", ") + ")"
   }
+}
+
+///|
+fn python_string_list_literal(items : Array[String]) -> String {
+  "[" + items.map(python_string_literal).join(", ") + "]"
 }
 
 ///|
@@ -1446,7 +1473,11 @@ pub fn quantum_hadamard_normalized_qapply(
       "from sympy.physics.quantum.gate import normalized\n",
       "_old = True\n",
       "normalized(",
-      if normalize { "True" } else { "False" },
+      if normalize {
+        "True"
+      } else {
+        "False"
+      },
       ")\n",
       "try:\n",
       "    print(qapply(sympify(",
@@ -1456,6 +1487,140 @@ pub fn quantum_hadamard_normalized_qapply(
       "    normalized(True)\n",
     ].join(""),
   )
+}
+
+///|
+pub fn quantum_shor_ratioize(items : Array[Int], n : Int) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(ratioize(",
+      python_int_tuple(items),
+      ", ",
+      n.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_shor_getr(x : Int, y : Int, n : Int) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(getr(",
+      x.to_string(),
+      ", ",
+      y.to_string(),
+      ", ",
+      n.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_fixcommand(command : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(fixcommand(",
+      python_string_literal(command),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_stripquotes(text : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(stripquotes(",
+      python_string_literal(text),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_trim(text : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(trim(",
+      python_string_literal(text),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_index(
+  target : String,
+  labels : Array[String],
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(get_index(",
+      python_string_literal(target),
+      ", ",
+      python_string_list_literal(labels),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_indices(
+  targets : Array[String],
+  labels : Array[String],
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(chr(31).join(str(v) for v in get_indices(",
+      python_string_list_literal(targets),
+      ", ",
+      python_string_list_literal(labels),
+      ")))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
+}
+
+///|
+pub fn quantum_qasm_circuit(lines : Array[String]) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(Qasm(*",
+      python_string_list_literal(lines),
+      ").get_circuit())\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qasm_labels(lines : Array[String]) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(chr(31).join(Qasm(*",
+      python_string_list_literal(lines),
+      ").get_labels()))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
 }
 
 ///|
@@ -1503,7 +1668,11 @@ pub fn quantum_represent_matrix(
       "        print(row)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1519,7 +1688,11 @@ pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1577,7 +1750,8 @@ pub fn quantum_circuitutils_replace_subcircuit(
   pos? : Int = 0,
 ) -> String raise {
   let replace_code = match replace {
-    Some(expr) => "sympify(" + python_string_literal(expr) + ", locals=locals())"
+    Some(expr) =>
+      "sympify(" + python_string_literal(expr) + ", locals=locals())"
     None => "None"
   }
   python_subprocess_stdout(
@@ -1598,7 +1772,9 @@ pub fn quantum_circuitutils_replace_subcircuit(
 }
 
 ///|
-pub fn quantum_circuitutils_convert_to_symbolic(expr : String) -> Array[String] raise {
+pub fn quantum_circuitutils_convert_to_symbolic(
+  expr : String,
+) -> Array[String] raise {
   let txt = python_subprocess_stdout(
     [
       quantum_subprocess_prelude(),
@@ -1611,7 +1787,11 @@ pub fn quantum_circuitutils_convert_to_symbolic(expr : String) -> Array[String] 
       "    print(f\"{key}={mapping[key]}\")\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1638,7 +1818,9 @@ fn grover_marks_literal(marks : Array[Int]) -> String {
 }
 
 ///|
-pub fn quantum_grover_superposition_matrix(nqubits : Int) -> Array[String] raise {
+pub fn quantum_grover_superposition_matrix(
+  nqubits : Int,
+) -> Array[String] raise {
   let txt = python_subprocess_stdout(
     [
       quantum_subprocess_prelude(),
@@ -1652,7 +1834,11 @@ pub fn quantum_grover_superposition_matrix(nqubits : Int) -> Array[String] raise
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1675,7 +1861,11 @@ pub fn quantum_grover_oracle_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1702,7 +1892,11 @@ pub fn quantum_grover_w_matrix(nqubits : Int) -> Array[String] raise {
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1732,7 +1926,11 @@ pub fn quantum_grover_oracle_state_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1758,7 +1956,11 @@ pub fn quantum_grover_w_state_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1787,7 +1989,11 @@ pub fn quantum_grover_apply_matrix(
       "        print(item)\n",
     ].join(""),
   )
-  txt.split("\n").map(StringView::to_string).filter(line => line != "").collect()
+  txt
+  .split("\n")
+  .map(StringView::to_string)
+  .filter(line => line != "")
+  .collect()
 }
 
 ///|
@@ -1827,7 +2033,10 @@ pub fn quantum_density_probs_str(expr : String) -> String raise {
 }
 
 ///|
-pub fn quantum_density_get_state_str(expr : String, index : Int) -> String raise {
+pub fn quantum_density_get_state_str(
+  expr : String,
+  index : Int,
+) -> String raise {
   python_subprocess_stdout(
     [
       quantum_subprocess_prelude(),
@@ -1927,7 +2136,11 @@ pub fn quantum_normal_order_str(
       "(sympify(",
       python_string_literal(expr),
       ", locals=locals()), independent=",
-      if independent { "True" } else { "False" },
+      if independent {
+        "True"
+      } else {
+        "False"
+      },
       "))\n",
     ].join(""),
   )
@@ -2249,14 +2462,9 @@ pub fn optics_medium_property(
 pub fn optics_utils_eval(expr : String) -> String raise {
   python_subprocess_stdout(
     [
-      "from sympy import *\n",
-      "from sympy.physics.optics.utils import *\n",
-      "from sympy.physics.optics.medium import Medium\n",
-      "from sympy.physics.units import e0\n",
-      "f, u, v, N, c, n = symbols('f u v N c n')\n",
-      "print(",
-      expr,
-      ")\n",
+      "from sympy import *\n", "from sympy.physics.optics.utils import *\n", "from sympy.physics.optics.medium import Medium\n",
+      "from sympy.physics.units import e0\n", "f, u, v, N, c, n = symbols('f u v N c n')\n",
+      "print(", expr, ")\n",
     ].join(""),
   )
 }
@@ -2265,13 +2473,9 @@ pub fn optics_utils_eval(expr : String) -> String raise {
 pub fn optics_waves_eval(expr : String) -> String raise {
   python_subprocess_stdout(
     [
-      "from sympy import *\n",
-      "from sympy.physics.optics.waves import TWave\n",
-      "from sympy.physics.units import meter, second, speed_of_light\n",
-      "A, A1, A2, phi, phi1, phi2, f, n = symbols('A A1 A2 phi phi1 phi2 f n')\n",
-      "print(",
-      expr,
-      ")\n",
+      "from sympy import *\n", "from sympy.physics.optics.waves import TWave\n",
+      "from sympy.physics.units import meter, second, speed_of_light\n", "A, A1, A2, phi, phi1, phi2, f, n = symbols('A A1 A2 phi phi1 phi2 f n')\n",
+      "print(", expr, ")\n",
     ].join(""),
   )
 }
