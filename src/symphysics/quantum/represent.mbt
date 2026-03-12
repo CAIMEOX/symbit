@@ -203,7 +203,7 @@ pub fn represent(
                                                                 @symcore.Expr::Symbol(
                                                                   name
                                                                 ) =>
-                                                                  if [
+                                                                if [
                                                                       "Jplus", "Jminus",
                                                                       "Jx", "Jy",
                                                                       "Jz", "J2",
@@ -221,9 +221,31 @@ pub fn represent(
                                                                     )
                                                                   }
                                                                 _ =>
-                                                                  MatrixScalarValue::Scalar(
+                                                                  try rep_innerproduct(
                                                                     expr,
-                                                                  )
+                                                                    basis~,
+                                                                  ) catch {
+                                                                    _ =>
+                                                                      try rep_expectation(
+                                                                        expr,
+                                                                        basis~,
+                                                                      ) catch {
+                                                                        _ =>
+                                                                          MatrixScalarValue::Scalar(
+                                                                            expr,
+                                                                          )
+                                                                      } noraise {
+                                                                        value =>
+                                                                          MatrixScalarValue::Scalar(
+                                                                            value,
+                                                                          )
+                                                                      }
+                                                                  } noraise {
+                                                                    value =>
+                                                                      MatrixScalarValue::Scalar(
+                                                                        value,
+                                                                      )
+                                                                  }
                                                               }
                                                           }
                                                       }

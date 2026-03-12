@@ -1,0 +1,232 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/physics"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn clebsch_gordan(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn coherent_state(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn control_expr_equivalent(@symcore.Expr, String) -> Bool raise
+
+pub fn control_routh_auxiliary_expr(@symcore.Expr, @symcore.Expr, Int) -> String raise
+
+pub fn control_routh_table_matrix(@symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn control_routh_zero_col_infos(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn control_routh_zero_row_case(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn dot_rot_grad_ynm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn e_n(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn e_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn energy(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn expr_equal(String, String) -> Bool raise
+
+pub fn gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn hydrogen_e_nl(@symcore.Expr, z? : @symcore.Expr) -> String raise
+
+pub fn hydrogen_e_nl_dirac(@symcore.Expr, @symcore.Expr, spin_up? : Bool, z? : @symcore.Expr, c~ : @symcore.Expr) -> String raise
+
+pub fn hydrogen_psi_nlm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, z? : @symcore.Expr) -> String raise
+
+pub fn hydrogen_r_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr, z? : @symcore.Expr) -> String raise
+
+pub fn hydrogen_y_lm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn hydrogen_z_lm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn mdft(Int) -> Array[String] raise
+
+pub fn mgamma(Int, lower? : Bool) -> Array[String] raise
+
+pub fn minkowski_tensor() -> Array[String] raise
+
+pub fn msigma(Int) -> Array[String] raise
+
+pub fn optics_medium_property(String, String, permittivity? : @symcore.Expr?, permeability? : @symcore.Expr?, n? : @symcore.Expr?) -> String raise
+
+pub fn optics_polarization_matrix(String, Array[@symcore.Expr]) -> Array[String] raise
+
+pub fn optics_utils_eval(String) -> String raise
+
+pub fn optics_waves_eval(String) -> String raise
+
+pub fn pat_matrix(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn paulialgebra_delta(Int, Int) -> Int raise
+
+pub fn paulialgebra_epsilon(Int, Int, Int) -> Int raise
+
+pub fn paulialgebra_evaluate(String) -> String raise
+
+pub fn paulialgebra_evaluate_srepr(String) -> String raise
+
+pub fn physics_eval_matrix(String) -> Array[String] raise
+
+pub fn physics_eval_str(String) -> String raise
+
+pub fn physics_expr_equivalent(@symcore.Expr, String) -> Bool raise
+
+pub fn physics_expr_str(@symcore.Expr) -> String raise
+
+pub fn physics_srepr(String) -> String raise
+
+pub fn psi_n(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_cg_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_cg_expr(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_cg_simp(String) -> String raise
+
+pub fn quantum_circuitutils_convert_to_real(String, String) -> String raise
+
+pub fn quantum_circuitutils_convert_to_symbolic(String) -> Array[String] raise
+
+pub fn quantum_circuitutils_find_subcircuit(String, String, start? : Int, end? : Int) -> String raise
+
+pub fn quantum_circuitutils_kmp_table(String) -> Array[String] raise
+
+pub fn quantum_circuitutils_replace_subcircuit(String, String, replace? : String?, pos? : Int) -> String raise
+
+pub fn quantum_decompose_str(String) -> String raise
+
+pub fn quantum_density_apply_op_str(String, String) -> String raise
+
+pub fn quantum_density_get_prob_str(String, Int) -> String raise
+
+pub fn quantum_density_get_state_str(String, Int) -> String raise
+
+pub fn quantum_density_probs_str(String) -> String raise
+
+pub fn quantum_density_states_str(String) -> String raise
+
+pub fn quantum_doit_str(String) -> String raise
+
+pub fn quantum_entropy_str(String) -> String raise
+
+pub fn quantum_enumerate_states_str(String, Int, Int) -> String raise
+
+pub fn quantum_eval_str(String) -> String raise
+
+pub fn quantum_expand_commutator_str(String) -> String raise
+
+pub fn quantum_fidelity_str(String, String) -> String raise
+
+pub fn quantum_get_basis_str(String, basis? : String?) -> String raise
+
+pub fn quantum_grover_apply_matrix(Int, Array[Int], Int) -> Array[String] raise
+
+pub fn quantum_grover_oracle_matrix(Int, Array[Int]) -> Array[String] raise
+
+pub fn quantum_grover_oracle_state_matrix(Int, Array[Int], Int) -> Array[String] raise
+
+pub fn quantum_grover_superposition_matrix(Int) -> Array[String] raise
+
+pub fn quantum_grover_w_matrix(Int) -> Array[String] raise
+
+pub fn quantum_grover_w_state_matrix(Int, Int) -> Array[String] raise
+
+pub fn quantum_hadamard_normalized_qapply(Bool, String) -> String raise
+
+pub fn quantum_identitysearch_bfs_summary(Array[String], Int, Int, Bool) -> Array[String] raise
+
+pub fn quantum_identitysearch_equivalent_ids(Array[String]) -> Array[String] raise
+
+pub fn quantum_identitysearch_is_scalar(Array[String], Int, Bool) -> String raise
+
+pub fn quantum_identitysearch_rules_summary(Array[String]) -> Array[String] raise
+
+pub fn quantum_integrate_result_str(String, String, basis? : String?, unities? : Array[Int]) -> String raise
+
+pub fn quantum_kind_str(String) -> String raise
+
+pub fn quantum_matrixcache_matrix(String) -> Array[String] raise
+
+pub fn quantum_measure_all_oneshot_str(String, Double) -> String raise
+
+pub fn quantum_measure_partial_oneshot_str(String, Array[Int], Double) -> String raise
+
+pub fn quantum_normal_order_str(String, ordered_form? : Bool, independent? : Bool) -> String raise
+
+pub fn quantum_qapply_str(String, dagger? : Bool, ip_doit? : Bool) -> String raise
+
+pub fn quantum_qasm_circuit(Array[String]) -> String raise
+
+pub fn quantum_qasm_fixcommand(String) -> String raise
+
+pub fn quantum_qasm_index(String, Array[String]) -> String raise
+
+pub fn quantum_qasm_indices(Array[String], Array[String]) -> Array[String] raise
+
+pub fn quantum_qasm_labels(Array[String]) -> Array[String] raise
+
+pub fn quantum_qasm_stripquotes(String) -> String raise
+
+pub fn quantum_qasm_trim(String) -> String raise
+
+pub fn quantum_rep_expectation_str(String, basis? : String?) -> String raise
+
+pub fn quantum_rep_innerproduct_str(String, basis? : String?) -> String raise
+
+pub fn quantum_represent_matrix(String, String, Int) -> Array[String] raise
+
+pub fn quantum_represent_str(String, basis? : String?) -> String raise
+
+pub fn quantum_shor_getr(Int, Int, Int) -> String raise
+
+pub fn quantum_shor_ratioize(Array[Int], Int) -> String raise
+
+pub fn quantum_srepr_str(String) -> String raise
+
+pub fn quantum_trace_permute_str(String, Int) -> String raise
+
+pub fn quantum_wigner3j_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_wigner3j_expr(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_wigner6j_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_wigner6j_expr(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_wigner9j_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quantum_wigner9j_expr(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn r_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn racah(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn real_gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn wavefunction(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn wigner_3j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn wigner_6j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn wigner_9j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn wigner_d(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn wigner_d_small(@symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

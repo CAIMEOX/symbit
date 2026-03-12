@@ -13,6 +13,8 @@ pub fn anticommutator_doit(@symcore.Expr) -> @symcore.Expr
 
 pub fn apply_grover(Array[Int], Int, iterations? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
+pub fn bfs_identity_search(Array[@symcore.Expr], Int, max_depth? : Int, identity_only? : Bool) -> Array[GateIdentity] raise @symphysics.PhysicsError
+
 pub fn boson_apply_operator_to_bra(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn boson_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
@@ -28,6 +30,8 @@ pub fn boson_fock_ket(@symcore.Expr) -> @symcore.Expr
 pub fn boson_op(@symcore.Expr, annihilation? : Bool) -> BosonOpExpr
 
 pub fn bra(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> StateExpr
+
+pub fn build_gate_identity(Array[@symcore.Expr]) -> GateIdentity raise @symphysics.PhysicsError
 
 pub fn cartesian_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
@@ -81,6 +85,8 @@ pub fn direct_sum_space(Array[HilbertSpace]) -> HilbertSpace
 
 pub fn entropy(@symcore.Expr, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
+pub fn enumerate_states(@symcore.Expr, start_index? : Int, count? : Int, index_list? : Array[Int]) -> Array[@symcore.Expr] raise @symphysics.PhysicsError
+
 pub fn expr_conjugate(@symcore.Expr) -> @symcore.Expr
 
 pub fn fermion_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
@@ -115,6 +121,12 @@ pub fn gate_simp(@symcore.Expr) -> @symcore.Expr
 
 pub fn gate_sort(@symcore.Expr) -> @symcore.Expr
 
+pub fn generate_equivalent_ids(Array[@symcore.Expr]) -> Array[@symcore.Expr] raise @symphysics.PhysicsError
+
+pub fn generate_gate_rules(Array[@symcore.Expr]) -> Array[GateRule] raise @symphysics.PhysicsError
+
+pub fn get_basis(@symcore.Expr, basis? : @symcore.Expr?, replace_none? : Bool) -> @symcore.Expr?
+
 pub fn get_index(String, Array[String]) -> Int raise @symphysics.PhysicsError
 
 pub fn get_indices(Array[String], Array[String]) -> Array[Int] raise @symphysics.PhysicsError
@@ -147,9 +159,21 @@ pub fn int_qubit(Int, Int) -> QubitExpr raise @symphysics.PhysicsError
 
 pub fn int_qubit_bra(Int, Int) -> QubitExpr raise @symphysics.PhysicsError
 
+pub fn integrate_result(@symcore.Expr, @symcore.Expr, basis? : @symcore.Expr?, unities? : Array[Int]) -> @symcore.Expr
+
 pub fn interval(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn iqft(Int, Int) -> FourierExpr raise @symphysics.PhysicsError
+
+pub fn is_degenerate(Array[GateIdentity], Array[@symcore.Expr]) -> Bool
+
+pub fn is_reducible(Array[@symcore.Expr], Int, Int, Int) -> Bool raise @symphysics.PhysicsError
+
+pub fn is_scalar_matrix(Array[@symcore.Expr], Int, Bool) -> Bool raise @symphysics.PhysicsError
+
+pub fn is_scalar_nonsparse_matrix(Array[@symcore.Expr], Int, Bool) -> Bool raise @symphysics.PhysicsError
+
+pub fn is_scalar_sparse_matrix(Array[@symcore.Expr], Int, Bool) -> Bool raise @symphysics.PhysicsError
 
 pub fn j2() -> @symcore.Expr
 
@@ -325,6 +349,8 @@ pub fn raising_op(label? : @symcore.Expr) -> @symcore.Expr
 
 pub fn random_circuit(Int, Int, gate_space? : Array[GateKind], seed? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
+pub fn random_identity_search(Array[@symcore.Expr], Int, Int, seed? : Int) -> Array[@symcore.Expr]? raise @symphysics.PhysicsError
+
 pub fn random_insert(@symcore.Expr, Array[@symcore.Expr], seed? : Array[Int]) -> Array[@symcore.Expr]
 
 pub fn random_reduce(@symcore.Expr, Array[GateIdentity], seed? : Array[Int]) -> Array[@symcore.Expr]
@@ -332,6 +358,10 @@ pub fn random_reduce(@symcore.Expr, Array[GateIdentity], seed? : Array[Int]) -> 
 pub fn ratioize(Array[Int], Int) -> Int
 
 pub fn read_qasm(String) -> Qasm raise @symphysics.PhysicsError
+
+pub fn rep_expectation(@symcore.Expr, basis? : @symcore.Expr?, index? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn rep_innerproduct(@symcore.Expr, basis? : @symcore.Expr?, index? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn replace_subcircuit(@symcore.Expr, @symcore.Expr, replace? : @symcore.Expr?, pos? : Int) -> Array[@symcore.Expr]
 
@@ -562,8 +592,15 @@ pub fn GateExpr::to_string(Self) -> String
 pub impl Eq for GateExpr
 
 pub struct GateIdentity {
+  sequence : Array[@symcore.Expr]
+  rules : Array[GateRule]
   equivalent_ids : Array[Array[@symcore.Expr]]
 }
+pub fn GateIdentity::circuit(Self) -> @symcore.Expr
+pub fn GateIdentity::equivalent_id_exprs(Self) -> Array[@symcore.Expr]
+pub fn GateIdentity::gate_rules(Self) -> Array[GateRule]
+pub fn GateIdentity::sequence_exprs(Self) -> Array[@symcore.Expr]
+pub fn GateIdentity::to_string(Self) -> String
 
 pub enum GateKind {
   Identity
@@ -579,6 +616,15 @@ pub enum GateKind {
 pub impl Eq for GateKind
 
 type GateNormalizationState
+
+pub struct GateRule {
+  left : Array[@symcore.Expr]
+  right : Array[@symcore.Expr]
+}
+pub fn GateRule::left_expr(Self) -> @symcore.Expr
+pub fn GateRule::right_expr(Self) -> @symcore.Expr
+pub fn GateRule::to_string(Self) -> String
+pub impl Eq for GateRule
 
 pub enum HilbertSpace {
   Abstract

@@ -15,6 +15,38 @@ fn quantum_pair_to_factors(expr : @symcore.Expr) -> Array[@symcore.Expr] {
 }
 
 ///|
+fn quantum_adjoint(expr : @symcore.Expr) -> @symcore.Expr {
+  dagger(expr)
+}
+
+///|
+fn quantum_qapply_tensorproduct_args(
+  args : Array[@symcore.Expr],
+  dagger_mode : Bool,
+  ip_doit : Bool,
+) -> @symcore.Expr {
+  @symcore.raw_function(
+    "TensorProduct",
+    args.map(arg => qapply(arg, dagger=dagger_mode, ip_doit~)),
+  )
+}
+
+///|
+fn quantum_qapply_density_expr(
+  expr : @symcore.Expr,
+  dagger_mode : Bool,
+  ip_doit : Bool,
+) -> @symcore.Expr {
+  match density_from_expr(expr) {
+    Some(rho) =>
+      density(
+        rho.terms.map(term => (qapply(term.state, dagger=dagger_mode, ip_doit~), term.prob)),
+      ).as_expr()
+    None => expr
+  }
+}
+
+///|
 fn quantum_has_nontrivial_scalar_factor(expr : @symcore.Expr) -> Bool {
   let (scalar, body) = quantum_split_scalar_factors(expr)
   scalar != @symcore.int(1) && body is Some(_)
@@ -28,6 +60,41 @@ fn quantum_apply_operator_pair(
   ip_doit : Bool,
 ) -> @symcore.Expr? {
   match (lhs, rhs) {
+    (@symcore.Expr::Pow(base, exp), _) if quantum_is_operator_expr(base) =>
+      match quantum_integer_value(exp) {
+        Some(power) if power > 0 =>
+          match quantum_apply_operator_pair(base, rhs, dagger_mode, ip_doit) {
+            Some(applied) =>
+              if power == 1 {
+                Some(applied)
+              } else {
+                Some(
+                  quantum_mul_from_args_preserve([
+                    @symcore.raw_pow(base, @symcore.int(power - 1)),
+                    applied,
+                  ]),
+                )
+              }
+            None => None
+          }
+        _ => None
+      }
+    (@symcore.Expr::Function("TensorProduct", left_args), @symcore.Expr::Function(
+      "TensorProduct",
+      right_args,
+    )) if left_args.length() == right_args.length() => {
+      let factors : Array[@symcore.Expr] = []
+      for idx in 0..<left_args.length() {
+        factors.push(
+          qapply(
+            quantum_mul_from_args_preserve([left_args[idx], right_args[idx]]),
+            dagger=dagger_mode,
+            ip_doit~,
+          ),
+        )
+      }
+      Some(@symcore.raw_function("TensorProduct", factors))
+    }
     (@symcore.Expr::Function("IdentityOperator", _), _) if quantum_is_state_expr(
         rhs,
       ) => Some(rhs)
@@ -204,11 +271,40 @@ pub fn qapply(
   ip_doit? : Bool = true,
 ) -> @symcore.Expr {
   match expr {
+    @symcore.Expr::Function("Density", _) =>
+      quantum_qapply_density_expr(expr, dagger, ip_doit)
+    @symcore.Expr::Function("TensorProduct", args) =>
+      quantum_qapply_tensorproduct_args(args, dagger, ip_doit)
+    @symcore.Expr::Function("Sum", args) if !args.is_empty() => {
+      let rebuilt : Array[@symcore.Expr] = [qapply(args[0], dagger~, ip_doit~)]
+      for idx in 1..<args.length() {
+        rebuilt.push(args[idx])
+      }
+      @symcore.raw_function("Sum", rebuilt)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.raw_pow(qapply(base, dagger~, ip_doit~), exp)
     @symcore.Expr::Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => qapply(arg, dagger~, ip_doit~)),
       )
-    @symcore.Expr::Mul(args) => quantum_qapply_mul(args, dagger, ip_doit)
+    @symcore.Expr::Mul(args) => {
+      let out = quantum_qapply_mul(args, dagger, ip_doit)
+      if dagger && out == expr {
+        let restored = quantum_adjoint(
+          qapply(quantum_adjoint(expr), dagger=false, ip_doit~),
+        )
+        if restored == expr {
+          out
+        } else if ip_doit {
+          inner_product_doit(restored)
+        } else {
+          restored
+        }
+      } else {
+        out
+      }
+    }
     @symcore.Expr::Function("InnerProduct", _) if ip_doit =>
       inner_product_doit(expr)
     _ => expr
