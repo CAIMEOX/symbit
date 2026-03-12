@@ -59,6 +59,10 @@ fn quantum_apply_operator_pair(
   dagger_mode : Bool,
   ip_doit : Bool,
 ) -> @symcore.Expr? {
+  match quantum_operator_pair_simplify(lhs, rhs) {
+    Some(simplified) => return Some(simplified)
+    None => ()
+  }
   match (lhs, rhs) {
     (@symcore.Expr::Pow(base, exp), _) if quantum_is_operator_expr(base) =>
       match quantum_integer_value(exp) {
@@ -95,9 +99,6 @@ fn quantum_apply_operator_pair(
       }
       Some(@symcore.raw_function("TensorProduct", factors))
     }
-    (@symcore.Expr::Function("IdentityOperator", _), _) if quantum_is_state_expr(
-        rhs,
-      ) => Some(rhs)
     _ if quantum_is_operator_expr(lhs) && quantum_is_scalar_like(rhs) =>
       Some(quantum_mul_from_args_preserve([rhs, lhs]))
     (_, @symcore.Expr::Mul(_)) if quantum_is_operator_expr(lhs) &&

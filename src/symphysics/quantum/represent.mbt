@@ -118,6 +118,16 @@ pub fn represent(
         represent(args[0], basis~, nqubits~, spin_j~, ndim~),
         represent(args[1], basis~, nqubits~, spin_j~, ndim~),
       )
+    @symcore.Expr::Function("IdentityOperator", args) =>
+      match args {
+        [dimension] =>
+          match quantum_integer_value(dimension) {
+            Some(n) if n >= 0 =>
+              MatrixScalarValue::Matrix(@symphysics.explicit_matrix_eye(n))
+            _ => MatrixScalarValue::Scalar(expr)
+          }
+        _ => MatrixScalarValue::Scalar(expr)
+      }
     @symcore.Expr::Function(name, _) if name == "InnerProduct" =>
       MatrixScalarValue::Scalar(inner_product_doit(expr))
     _ =>

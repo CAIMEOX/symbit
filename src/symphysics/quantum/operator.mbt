@@ -22,6 +22,18 @@ pub struct OperatorExpr {
 } derive(Eq)
 
 ///|
+fn default_operator_label() -> Array[@symcore.Expr] {
+  [@symcore.symbol("O")]
+}
+
+///|
+fn normalize_operator_label(
+  label : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
+  if label.is_empty() { default_operator_label() } else { label }
+}
+
+///|
 fn operator_class_name(flavor : OperatorFlavor) -> String {
   match flavor {
     OperatorFlavor::Generic => "Operator"
@@ -37,7 +49,7 @@ pub fn quantum_operator(
   flavor? : OperatorFlavor = OperatorFlavor::Generic,
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  OperatorExpr::{ flavor, label, hilbert_space }
+  OperatorExpr::{ flavor, label: normalize_operator_label(label), hilbert_space }
 }
 
 ///|
@@ -45,7 +57,7 @@ pub fn operator(
   label : Array[@symcore.Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator(label, hilbert_space=hilbert_space)
+  quantum_operator(label, hilbert_space~)
 }
 
 ///|
@@ -53,7 +65,7 @@ pub fn hermitian_operator(
   label : Array[@symcore.Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator(label, flavor=OperatorFlavor::Hermitian, hilbert_space=hilbert_space)
+  quantum_operator(label, flavor=OperatorFlavor::Hermitian, hilbert_space~)
 }
 
 ///|
@@ -61,7 +73,7 @@ pub fn unitary_operator(
   label : Array[@symcore.Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator(label, flavor=OperatorFlavor::Unitary, hilbert_space=hilbert_space)
+  quantum_operator(label, flavor=OperatorFlavor::Unitary, hilbert_space~)
 }
 
 ///|
@@ -69,7 +81,7 @@ pub fn identity_operator(
   dimension? : @symcore.Expr = @symcore.symbol("oo"),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space=hilbert_space)
+  quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space~)
 }
 
 ///|
@@ -107,8 +119,50 @@ pub fn OperatorExpr::inverse(self : OperatorExpr) -> @symcore.Expr {
 }
 
 ///|
-pub fn outer_product(ket_expr : @symcore.Expr, bra_expr : @symcore.Expr) -> @symcore.Expr {
+fn outer_product_raw(
+  ket_expr : @symcore.Expr,
+  bra_expr : @symcore.Expr,
+) -> @symcore.Expr {
   @symcore.raw_function("OuterProduct", [ket_expr, bra_expr])
+}
+
+///|
+pub fn outer_product(
+  ket_expr : @symcore.Expr,
+  bra_expr : @symcore.Expr,
+) -> @symcore.Expr {
+  match ket_expr {
+    @symcore.Expr::Add(args) =>
+      quantum_add_from_args_preserve(
+        args.map(term => outer_product(term, bra_expr)),
+      )
+    _ =>
+      match bra_expr {
+        @symcore.Expr::Add(args) =>
+          quantum_add_from_args_preserve(
+            args.map(term => outer_product(ket_expr, term)),
+          )
+        _ => {
+          let (ket_scalar, ket_body) = quantum_split_scalar_factors(ket_expr)
+          let (bra_scalar, bra_body) = quantum_split_scalar_factors(bra_expr)
+          match (ket_body, bra_body) {
+            (Some(ket_core), Some(bra_core)) if quantum_is_ket_expr(ket_core) &&
+              quantum_is_bra_expr(bra_core) => {
+              let factors : Array[@symcore.Expr] = []
+              if ket_scalar != @symcore.int(1) {
+                factors.push(ket_scalar)
+              }
+              if bra_scalar != @symcore.int(1) {
+                factors.push(bra_scalar)
+              }
+              factors.push(outer_product_raw(ket_core, bra_core))
+              quantum_mul_from_args_preserve(factors)
+            }
+            _ => outer_product_raw(ket_expr, bra_expr)
+          }
+        }
+      }
+  }
 }
 
 ///|
@@ -120,8 +174,12 @@ pub fn operator_from_expr(expr : @symcore.Expr) -> OperatorExpr? {
         "HermitianOperator" => Some(hermitian_operator(args))
         "UnitaryOperator" => Some(unitary_operator(args))
         "IdentityOperator" => {
-          let dimension = if args.is_empty() { @symcore.symbol("oo") } else { args[0] }
-          Some(identity_operator(dimension=dimension))
+          let dimension = if args.is_empty() {
+            @symcore.symbol("oo")
+          } else {
+            args[0]
+          }
+          Some(identity_operator(dimension~))
         }
         _ => None
       }

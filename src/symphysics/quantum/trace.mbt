@@ -3,7 +3,10 @@
 /// `sympy.physics.quantum.trace`.
 
 ///|
-fn quantum_trace_raw(expr : @symcore.Expr, indices : Array[Int]) -> @symcore.Expr {
+fn quantum_trace_raw(
+  expr : @symcore.Expr,
+  indices : Array[Int],
+) -> @symcore.Expr {
   if indices.is_empty() {
     @symcore.raw_function("Tr", [expr])
   } else {
@@ -12,12 +15,9 @@ fn quantum_trace_raw(expr : @symcore.Expr, indices : Array[Int]) -> @symcore.Exp
 }
 
 ///|
-pub fn tr(
-  expr : @symcore.Expr,
-  indices? : Array[Int] = [],
-) -> @symcore.Expr {
+pub fn tr(expr : @symcore.Expr, indices? : Array[Int] = []) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args.map(arg => tr(arg, indices=indices)))
+    @symcore.Expr::Add(args) => @symcore.add(args.map(arg => tr(arg, indices~)))
     @symcore.Expr::Mul(_) => {
       let (scalar, body) = quantum_split_scalar_factors(expr)
       match body {
@@ -46,7 +46,7 @@ pub fn tr_doit(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.Expr::Function("Tr", args) if args.length() >= 1 =>
       match args[0] {
         @symcore.Expr::Function("OuterProduct", inner) if inner.length() == 2 =>
-          if inner[0] == inner[1] { @symcore.int(1) } else { expr }
+          inner_product(inner[1], inner[0])
         _ => expr
       }
     _ => expr
@@ -60,7 +60,7 @@ pub fn tr_permute(expr : @symcore.Expr, pos : Int) -> @symcore.Expr {
       match args[0] {
         @symcore.Expr::Mul(body_args) if !body_args.is_empty() => {
           let len = body_args.length()
-          let shift = if pos >= 0 { pos % len } else { len - ((-pos) % len) }
+          let shift = if pos >= 0 { pos % len } else { len - -pos % len }
           if shift == 0 {
             expr
           } else {
@@ -82,7 +82,9 @@ pub fn tr_permute(expr : @symcore.Expr, pos : Int) -> @symcore.Expr {
 }
 
 ///|
-pub fn matrix_trace(matrix : @symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn matrix_trace(
+  matrix : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard matrix.height() == matrix.width() else {
     raise @symphysics.PhysicsError::ShapeError("trace expects a square matrix")
   }

@@ -105,6 +105,33 @@ fn quantum_symbol_is_scalar(name : String) -> Bool {
 }
 
 ///|
+fn quantum_is_unitary_like_operator(expr : @symcore.Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Function(name, _) => [
+      "UnitaryOperator",
+      "IdentityOperator",
+      "Gate",
+      "CGate",
+      "UGate",
+      "IdentityGate",
+      "HadamardGate",
+      "XGate",
+      "YGate",
+      "ZGate",
+      "TGate",
+      "PhaseGate",
+      "SwapGate",
+      "CNotGate",
+      "QFT",
+      "IQFT",
+      "RkGate",
+      "Rotation",
+    ].contains(name)
+    _ => false
+  }
+}
+
+///|
 fn quantum_is_scalar_like(expr : @symcore.Expr) -> Bool {
   match expr {
     @symcore.Expr::Number(_) => true
@@ -115,6 +142,41 @@ fn quantum_is_scalar_like(expr : @symcore.Expr) -> Bool {
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
     @symcore.Expr::Function(name, args) =>
       !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
+  }
+}
+
+///|
+fn quantum_inverse_base(expr : @symcore.Expr) -> @symcore.Expr? {
+  match expr {
+    @symcore.Expr::Pow(base, exp) =>
+      match quantum_integer_value(exp) {
+        Some(-1) => Some(base)
+        _ => None
+      }
+    @symcore.Expr::Function("Dagger", args) if args.length() == 1 &&
+      quantum_is_unitary_like_operator(args[0]) => Some(args[0])
+    _ => None
+  }
+}
+
+///|
+fn quantum_operator_pair_simplify(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr? {
+  if quantum_expr_has_name(lhs, "IdentityOperator") {
+    return Some(rhs)
+  }
+  if quantum_expr_has_name(rhs, "IdentityOperator") {
+    return Some(lhs)
+  }
+  match quantum_inverse_base(lhs) {
+    Some(base) if base == rhs => Some(@symcore.int(1))
+    _ =>
+      match quantum_inverse_base(rhs) {
+        Some(base) if base == lhs => Some(@symcore.int(1))
+        _ => None
+      }
   }
 }
 
