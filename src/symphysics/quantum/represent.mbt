@@ -40,6 +40,58 @@ fn represent_mul(
 }
 
 ///|
+fn represent_gate_simplified(
+  expr : @symcore.Expr,
+  basis : @symcore.Expr?,
+  nqubits : Int,
+  spin_j : @symcore.Expr,
+  ndim : Int,
+) -> MatrixScalarValue? raise @symphysics.PhysicsError {
+  let simplified = gate_simp(expr)
+  if simplified == expr {
+    None
+  } else {
+    Some(represent(simplified, basis~, nqubits~, spin_j~, ndim~))
+  }
+}
+
+///|
+fn represent_pow_nonnegative(
+  value : MatrixScalarValue,
+  exp : Int,
+) -> MatrixScalarValue raise @symphysics.PhysicsError {
+  guard exp >= 0 else {
+    raise @symphysics.PhysicsError::ValueError(
+      "represent only supports nonnegative integer powers for matrix inputs",
+    )
+  }
+  match value {
+    MatrixScalarValue::Scalar(expr) =>
+      if exp == 0 {
+        MatrixScalarValue::Scalar(@symcore.int(1))
+      } else {
+        MatrixScalarValue::Scalar(@symcore.raw_pow(expr, @symcore.int(exp)))
+      }
+    MatrixScalarValue::Matrix(matrix) => {
+      guard matrix.height() == matrix.width() else {
+        raise @symphysics.PhysicsError::ShapeError(
+          "matrix powers require square matrices",
+        )
+      }
+      if exp == 0 {
+        MatrixScalarValue::Matrix(@symphysics.explicit_matrix_eye(matrix.height()))
+      } else {
+        let mut acc = matrix
+        for _ in 1..<exp {
+          acc = acc.mul(matrix)
+        }
+        MatrixScalarValue::Matrix(acc)
+      }
+    }
+  }
+}
+
+///|
 fn default_spin_j() -> @symcore.Expr {
   try! @symcore.rational_from_ints(1, 2)
 }
@@ -67,6 +119,12 @@ pub fn represent(
       acc
     }
     @symcore.Expr::Mul(args) => {
+      if args.any(arg => gate_support(arg) != None) {
+        match represent_gate_simplified(expr, basis, nqubits, spin_j, ndim) {
+          Some(value) => return value
+          None => ()
+        }
+      }
       guard !args.is_empty() else {
         return MatrixScalarValue::Scalar(@symcore.int(1))
       }
@@ -79,6 +137,25 @@ pub fn represent(
       }
       acc
     }
+    @symcore.Expr::Pow(base, exp) =>
+      match quantum_integer_value(exp) {
+        Some(0) => MatrixScalarValue::Scalar(@symcore.int(1))
+        Some(power) if power > 0 && gate_support(base) != None => {
+          let factors : Array[@symcore.Expr] = []
+          for _ in 0..<power {
+            factors.push(base)
+          }
+          represent(
+            gate_simp(quantum_mul_from_args_preserve(factors)),
+            basis~, nqubits~, spin_j~, ndim~,
+          )
+        }
+        Some(power) if power > 0 =>
+          represent_pow_nonnegative(
+            represent(base, basis~, nqubits~, spin_j~, ndim~), power,
+          )
+        _ => MatrixScalarValue::Scalar(expr)
+      }
     @symcore.Expr::Function("Dagger", args) if args.length() == 1 => {
       let represented = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       match represented {
@@ -88,6 +165,14 @@ pub fn represent(
           MatrixScalarValue::Matrix(matrix_dagger(matrix))
       }
     }
+    @symcore.Expr::Function("Commutator", args) if args.length() == 2 =>
+      represent(
+        commutator_doit(expr), basis~, nqubits~, spin_j~, ndim~,
+      )
+    @symcore.Expr::Function("AntiCommutator", args) if args.length() == 2 =>
+      represent(
+        anticommutator_doit(expr), basis~, nqubits~, spin_j~, ndim~,
+      )
     @symcore.Expr::Function(name, args) if name == "TensorProduct" => {
       guard !args.is_empty() else {
         return MatrixScalarValue::Scalar(@symcore.int(1))

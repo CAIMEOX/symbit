@@ -138,7 +138,7 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
     _ =>
       quantum_expr_has_any_name(expr, [
         "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "DifferentialOperator",
-        "OuterProduct", "BosonOp", "CMod", "FermionOp", "Gate", "CGate", "UGate",
+        "OuterProduct", "BosonOp", "CMod", "Commutator", "AntiCommutator", "FermionOp", "Gate", "CGate", "UGate",
         "OracleGate", "WGate", "QFT", "IQFT", "RkGate", "IdentityGate", "HadamardGate",
         "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate", "CNotGate",
         "SigmaX", "SigmaY", "SigmaZ", "SigmaPlus", "SigmaMinus", "Rotation", "WignerD",

@@ -47,5 +47,33 @@ test "physics.quantum.transforms: local canonicalization" {
     "Operator(A)**2 + Operator(A)*Operator(B) + Operator(B)*Operator(A) + Operator(B)**2",
     "operator square expansion",
   )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(x_gate(0).as_expr(), @symcore.int(2)),
+    "1",
+    "involution gate power",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(phase_gate(0).as_expr(), @symcore.int(2)),
+    "ZGate(0)",
+    "phase gate power",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(t_gate(0).as_expr(), @symcore.int(2)),
+    "PhaseGate(0)",
+    "t gate square",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(cgate([1], x_gate(0).as_expr()), @symcore.int(2)),
+    "1",
+    "controlled involution power",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! quantum_canonical_pow(
+      fermion_op(@symcore.symbol("c")).as_expr(),
+      @symcore.int(2),
+    ),
+    "0",
+    "fermion nilpotent power",
+  )
   ignore(b2)
 }

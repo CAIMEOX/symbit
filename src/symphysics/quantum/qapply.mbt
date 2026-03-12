@@ -83,6 +83,39 @@ fn quantum_apply_operator_pair(
           }
         _ => None
       }
+    (@symcore.Expr::Function("Commutator", args), _) if args.length() == 2 &&
+      quantum_is_ket_expr(rhs) =>
+      Some(
+        quantum_add_from_args_preserve([
+          qapply(
+            quantum_mul_from_args_preserve([args[0], args[1], rhs]),
+            dagger=dagger_mode,
+            ip_doit~,
+          ),
+          @symcore.int(-1) *
+            qapply(
+              quantum_mul_from_args_preserve([args[1], args[0], rhs]),
+              dagger=dagger_mode,
+              ip_doit~,
+            ),
+        ]),
+      )
+    (@symcore.Expr::Function("AntiCommutator", args), _) if args.length() == 2 &&
+      quantum_is_ket_expr(rhs) =>
+      Some(
+        quantum_add_from_args_preserve([
+          qapply(
+            quantum_mul_from_args_preserve([args[0], args[1], rhs]),
+            dagger=dagger_mode,
+            ip_doit~,
+          ),
+          qapply(
+            quantum_mul_from_args_preserve([args[1], args[0], rhs]),
+            dagger=dagger_mode,
+            ip_doit~,
+          ),
+        ]),
+      )
     (@symcore.Expr::Function("TensorProduct", left_args), @symcore.Expr::Function(
       "TensorProduct",
       right_args,

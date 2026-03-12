@@ -200,16 +200,30 @@ pub fn quantum_canonical_pow(
   match quantum_integer_value(exp) {
     Some(0) => @symcore.int(1)
     Some(1) => base
-    Some(power) if power > 1 =>
-      match base {
-        @symcore.Expr::Add(_) => {
-          let mut acc = base
-          for _ in 1..<power {
-            acc = quantum_canonical_mul(@symcore.raw_mul([acc, base]))
+    Some(power) if base is @symcore.Expr::Function("FermionOp", _) && power < 0 =>
+      raise @symphysics.PhysicsError::ValueError(
+        "Negative powers of fermion operators are undefined",
+      )
+    Some(power) if base is @symcore.Expr::Function("FermionOp", _) && power > 1 =>
+      @symcore.int(0)
+    Some(power) =>
+      match gate_pow_simplify(base, power) {
+        Some(simplified) if simplified != @symcore.raw_pow(base, exp) => simplified
+        _ =>
+          match power {
+            n if n > 1 =>
+              match base {
+                @symcore.Expr::Add(_) => {
+                  let mut acc = base
+                  for _ in 1..<n {
+                    acc = quantum_canonical_mul(@symcore.raw_mul([acc, base]))
+                  }
+                  acc
+                }
+                _ => @symcore.raw_pow(base, exp)
+              }
+            _ => @symcore.raw_pow(base, exp)
           }
-          acc
-        }
-        _ => @symcore.raw_pow(base, exp)
       }
     _ => @symcore.raw_pow(base, exp)
   }

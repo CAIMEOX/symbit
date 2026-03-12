@@ -474,6 +474,63 @@ fn gate_compose_pair(
 }
 
 ///|
+pub fn gate_pow_simplify(
+  gate_expr : @symcore.Expr,
+  exp : Int,
+) -> @symcore.Expr? {
+  if exp == 0 {
+    return Some(@symcore.int(1))
+  }
+  if exp == 1 {
+    return Some(gate_expr)
+  }
+  if gate_is_involution(gate_expr) {
+    return Some(if exp % 2 == 0 { @symcore.int(1) } else { gate_expr })
+  }
+  match gate_from_expr(gate_expr) {
+    Some(gate) =>
+      match gate.kind {
+        GateKind::Phase => {
+          let reduced = exp % 4
+          Some(match reduced {
+            0 => @symcore.int(1)
+            1 => gate_expr
+            2 => z_gate(gate.args[0]).as_expr()
+            _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+          })
+        }
+        GateKind::T => {
+          let reduced = exp % 8
+          Some(match reduced {
+            0 => @symcore.int(1)
+            1 => gate_expr
+            2 => phase_gate(gate.args[0]).as_expr()
+            4 => z_gate(gate.args[0]).as_expr()
+            _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+          })
+        }
+        _ => None
+      }
+    None =>
+      match gate_expr {
+        @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+          match gate_tuple_ints(args[0]) {
+            Some(controls) =>
+              match gate_pow_simplify(args[1], exp) {
+                Some(simplified) if gate_is_identity_expr(simplified) =>
+                  Some(@symcore.int(1))
+                Some(simplified) if gate_support(simplified) is Some(_) =>
+                  Some(cgate(controls, simplified))
+                _ => None
+              }
+            None => None
+          }
+        _ => None
+      }
+  }
+}
+
+///|
 pub fn gate_simp(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Mul(args) => {

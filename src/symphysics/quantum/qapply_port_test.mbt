@@ -87,3 +87,40 @@ test "physics.quantum.qapply: parity extensions" {
     "sum-body qapply parity",
   )
 }
+
+///|
+test "physics.quantum.qapply: spin and (anti)commutator parity" {
+  let one = @symcore.int(1)
+  let zero_state = (try! qubit("0")).as_expr()
+
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_srepr("Jx*JzKet(1, 0)"),
+    try! @sympy_physics.quantum_qapply_srepr(
+      @symprint.to_string(qapply(@symcore.raw_mul([jx(), jz_ket(one, @symcore.int(0)).as_expr()]))),
+    ),
+    "Jx qapply parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_srepr("Jminus*Jminus*JzKet(1, 1)"),
+    try! @sympy_physics.quantum_qapply_srepr(
+      @symprint.to_string(qapply(@symcore.raw_mul([jminus(), jminus(), jz_ket(one, one).as_expr()]))),
+    ),
+    "double lowering parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_srepr(
+      "AntiCommutator(XGate(0), ZGate(0))*Qubit(0)",
+    ),
+    try! @sympy_physics.quantum_qapply_srepr(
+      @symprint.to_string(
+        qapply(
+          @symcore.raw_mul([
+            anticommutator(x_gate(0).as_expr(), z_gate(0).as_expr(), evaluate=false),
+            zero_state,
+          ]),
+        ),
+      ),
+    ),
+    "gate anticommutator parity",
+  )
+}

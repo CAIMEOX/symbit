@@ -61,4 +61,54 @@ test "physics.quantum.transforms: parity" {
     try! @sympy_physics.quantum_eval_str("expand((Operator(A) + Operator(B))**2)"),
     "operator square parity",
   )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! quantum_canonical_pow(x_gate(0).as_expr(), @symcore.int(2)),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("XGate(0)**2"),
+    "gate involution power parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! quantum_canonical_pow(phase_gate(0).as_expr(), @symcore.int(2)),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(PhaseGate(0)*PhaseGate(0))"),
+    "phase power parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! quantum_canonical_pow(t_gate(0).as_expr(), @symcore.int(2)),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(TGate(0)*TGate(0))"),
+    "t power parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! quantum_canonical_pow(cgate([1], x_gate(0).as_expr()), @symcore.int(2)),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "gate_simp(CGate((1,), XGate(0))*CGate((1,), XGate(0)))",
+    ),
+    "controlled involution power parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! quantum_canonical_pow(
+          fermion_op(@symcore.symbol("c")).as_expr(),
+          @symcore.int(2),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("FermionOp(c)**2"),
+    "fermion power parity",
+  )
 }

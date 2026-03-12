@@ -282,6 +282,25 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.quantum.density")
   }
+  let quantum_commutator_mod = match
+    @py.pyimport("sympy.physics.quantum.commutator") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.commutator")
+  }
+  let quantum_anticommutator_mod = match
+    @py.pyimport("sympy.physics.quantum.anticommutator") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.anticommutator")
+  }
+  let quantum_innerproduct_mod = match
+    @py.pyimport("sympy.physics.quantum.innerproduct") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.innerproduct")
+  }
+  let quantum_qapply_mod = match @py.pyimport("sympy.physics.quantum.qapply") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.quantum.qapply")
+  }
   let paulialgebra_mod = match @py.pyimport("sympy.physics.paulialgebra") {
     Some(v) => v
     None => fail("python-missing:sympy.physics.paulialgebra")
@@ -394,6 +413,10 @@ fn physics_globals() -> @py.PyDict raise {
   for name in ["Density", "entropy", "fidelity"] {
     try_bind_name(globals, quantum_density_mod, name)
   }
+  try_bind_name(globals, quantum_commutator_mod, "Commutator")
+  try_bind_name(globals, quantum_anticommutator_mod, "AntiCommutator")
+  try_bind_name(globals, quantum_innerproduct_mod, "InnerProduct")
+  try_bind_name(globals, quantum_qapply_mod, "qapply")
   for name in ["represent"] {
     try_bind_name(globals, quantum_represent_mod, name)
   }
@@ -1396,6 +1419,34 @@ pub fn quantum_qapply_str(
         "False"
       },
       "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_qapply_srepr(
+  expr : String,
+  dagger? : Bool = false,
+  ip_doit? : Bool = true,
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(srepr(qapply(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), dagger=",
+      if dagger {
+        "True"
+      } else {
+        "False"
+      },
+      ", ip_doit=",
+      if ip_doit {
+        "True"
+      } else {
+        "False"
+      },
+      ")))\n",
     ].join(""),
   )
 }

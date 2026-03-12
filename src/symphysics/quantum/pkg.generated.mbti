@@ -117,6 +117,8 @@ pub fn gate_from_expr(@symcore.Expr) -> GateExpr?
 
 pub fn gate_identity(Array[@symcore.Expr]) -> GateIdentity
 
+pub fn gate_pow_simplify(@symcore.Expr, Int) -> @symcore.Expr?
+
 pub fn gate_simp(@symcore.Expr) -> @symcore.Expr
 
 pub fn gate_sort(@symcore.Expr) -> @symcore.Expr

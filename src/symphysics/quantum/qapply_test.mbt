@@ -63,3 +63,43 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
     "dagger bra application",
   )
 }
+
+///|
+test "physics.quantum.qapply: spin ladders and (anti)commutator action" {
+  let one = @symcore.int(1)
+  let zero_state = (try! qubit("0")).as_expr()
+  let z = jz_ket(one, @symcore.int(0)).as_expr()
+  let po = jz_ket(one, one).as_expr()
+
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([jx(), z])),
+    "sqrt(2)/2*hbar*JzKet(1, 1) + sqrt(2)/2*hbar*JzKet(1, -1)",
+    "Jx action on JzKet(1, 0)",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([jminus(), jminus(), po])),
+    "2*hbar**2*JzKet(1, -1)",
+    "double lowering",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(
+      @symcore.raw_mul([
+        commutator(jx(), jy(), evaluate=false),
+        jz(),
+        po,
+      ]),
+    ),
+    "I*hbar**3*JzKet(1, 1)",
+    "commutator action",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(
+      @symcore.raw_mul([
+        anticommutator(x_gate(0).as_expr(), z_gate(0).as_expr(), evaluate=false),
+        zero_state,
+      ]),
+    ),
+    "0",
+    "gate anticommutator action",
+  )
+}

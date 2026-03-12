@@ -159,6 +159,8 @@ pub fn quantum_measure_partial_oneshot_str(String, Array[Int], Double) -> String
 
 pub fn quantum_normal_order_str(String, ordered_form? : Bool, independent? : Bool) -> String raise
 
+pub fn quantum_qapply_srepr(String, dagger? : Bool, ip_doit? : Bool) -> String raise
+
 pub fn quantum_qapply_str(String, dagger? : Bool, ip_doit? : Bool) -> String raise
 
 pub fn quantum_qasm_circuit(Array[String]) -> String raise
