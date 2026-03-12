@@ -9,18 +9,18 @@ pub fn hydrogen_r_nl(
   z? : @symcore.Expr = @symcore.int(1),
 ) -> @symcore.Expr {
   let n_r = n - l - @symcore.int(1)
-  let r0 = expr_div((@symcore.int(2) * z * r), n)
+  let r0 = expr_div(@symcore.int(2) * z * r, n)
   let coeff = @symelem.sqrt(
     expr_div(
-      ((expr_div((@symcore.int(2) * z), n)) ^ @symcore.int(3)) *
-        @symcomb.factorial(n_r),
-      (@symcore.int(2) * n) * @symcomb.factorial(n + l),
+      (expr_div(@symcore.int(2) * z, n) ^ @symcore.int(3)) *
+      @symcomb.factorial(n_r),
+      @symcore.int(2) * n * @symcomb.factorial(n + l),
     ),
   )
   coeff *
-    (r0 ^ l) *
-    @symspec.assoc_laguerre(n_r, (@symcore.int(2) * l) + @symcore.int(1), r0) *
-    @symelem.exp(@symcore.int(-1) * r0 * rational_expr(1, 2))
+  (r0 ^ l) *
+  @symspec.assoc_laguerre(n_r, @symcore.int(2) * l + @symcore.int(1), r0) *
+  @symelem.exp(@symcore.int(-1) * r0 * rational_expr(1, 2))
 }
 
 ///|
@@ -68,7 +68,7 @@ pub fn hydrogen_psi_nlm(
       raise PhysicsError::ValueError("|'m'| must be less or equal 'l'")
     _ => ()
   }
-  hydrogen_r_nl(n, l, r, z=z) * hydrogen_y_lm(l, m, phi, theta)
+  hydrogen_r_nl(n, l, r, z~) * hydrogen_y_lm(l, m, phi, theta)
 }
 
 ///|
@@ -81,7 +81,8 @@ pub fn hydrogen_e_nl(
       raise PhysicsError::ValueError("'n' must be positive integer")
     _ => ()
   }
-  @symcore.int(-1) * expr_div(z ^ @symcore.int(2), @symcore.int(2) * (n ^ @symcore.int(2)))
+  @symcore.int(-1) *
+  expr_div(z ^ @symcore.int(2), @symcore.int(2) * (n ^ @symcore.int(2)))
 }
 
 ///|
@@ -117,14 +118,24 @@ pub fn hydrogen_e_nl_dirac(
       raise PhysicsError::ValueError("Spin must be up for l==0.")
     _ => ()
   }
-  let skappa = if spin_up { @symcore.int(-1) * l - @symcore.int(1) } else { @symcore.int(-1) * l }
+  let skappa = if spin_up {
+    @symcore.int(-1) * l - @symcore.int(1)
+  } else {
+    @symcore.int(-1) * l
+  }
   let c2 = c ^ @symcore.int(2)
-  let beta = @symelem.sqrt((skappa ^ @symcore.int(2)) - expr_div(z ^ @symcore.int(2), c2))
+  let beta = @symelem.sqrt(
+    (skappa ^ @symcore.int(2)) - expr_div(z ^ @symcore.int(2), c2),
+  )
   expr_div(
     c2,
     @symelem.sqrt(
       @symcore.int(1) +
-        expr_div(z ^ @symcore.int(2), ((n + skappa + beta) ^ @symcore.int(2)) * c2),
+      expr_div(
+        z ^ @symcore.int(2),
+        ((n + skappa + beta) ^ @symcore.int(2)) * c2,
+      ),
     ),
-  ) - c2
+  ) -
+  c2
 }

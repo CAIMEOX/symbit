@@ -57,10 +57,20 @@ pub fn mgamma(
       ])
     2 =>
       try! explicit_matrix_from_rows([
-        [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(-1) * i_expr()],
+        [
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(-1) * i_expr(),
+        ],
         [@symcore.int(0), @symcore.int(0), i_expr(), @symcore.int(0)],
         [@symcore.int(0), i_expr(), @symcore.int(0), @symcore.int(0)],
-        [@symcore.int(-1) * i_expr(), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+        [
+          @symcore.int(-1) * i_expr(),
+          @symcore.int(0),
+          @symcore.int(0),
+          @symcore.int(0),
+        ],
       ])
     3 =>
       explicit_matrix_from_ints([

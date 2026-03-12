@@ -13,18 +13,30 @@ fn wigner_rational_expr(num : BigInt, den : BigInt) -> @symcore.Expr {
 
 ///|
 fn wigner_phase_expr(k : Int) -> @symcore.Expr {
-  let parity = if k < 0 { (-k) % 2 } else { k % 2 }
-  if parity == 0 { @symcore.int(1) } else { @symcore.int(-1) }
+  let parity = if k < 0 { -k % 2 } else { k % 2 }
+  if parity == 0 {
+    @symcore.int(1)
+  } else {
+    @symcore.int(-1)
+  }
 }
 
 ///|
 fn wigner_int_max(a : Int, b : Int) -> Int {
-  if a >= b { a } else { b }
+  if a >= b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
 fn wigner_int_min(a : Int, b : Int) -> Int {
-  if a <= b { a } else { b }
+  if a <= b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|
@@ -147,7 +159,8 @@ pub fn wigner_3j(
     return @symcore.int(0)
   }
 
-  let res_num = wigner_binomial_bigint(dj1, jm2) * wigner_binomial_bigint(dj2, jm1)
+  let res_num = wigner_binomial_bigint(dj1, jm2) *
+    wigner_binomial_bigint(dj2, jm1)
   let res_den = wigner_binomial_bigint(sumj, jm3) *
     wigner_binomial_bigint(dj1, j1mm1) *
     wigner_binomial_bigint(dj2, j2mm2) *
@@ -172,8 +185,8 @@ pub fn clebsch_gordan(
   let dm3 = wigner_doubled_int(m_3)
   let phase = wigner_phase_expr((dj1 - dj2 + dm3) / 2)
   phase *
-    @symelem.sqrt((@symcore.int(2) * j_3) + @symcore.int(1)) *
-    (try! wigner_3j(j_1, j_2, j_3, m_1, m_2, @symcore.int(-1) * m_3))
+  @symelem.sqrt(@symcore.int(2) * j_3 + @symcore.int(1)) *
+  (try! wigner_3j(j_1, j_2, j_3, m_1, m_2, @symcore.int(-1) * m_3))
 }
 
 ///|
@@ -226,7 +239,8 @@ pub fn wigner_6j(
   if imax % 2 != 0 {
     sumres = BigInt::from_int(0) - sumres
   }
-  let res_num = wigner_binomial_bigint(j123 + 1, dj1 + 1) * wigner_binomial_bigint(dj1, jpm123)
+  let res_num = wigner_binomial_bigint(j123 + 1, dj1 + 1) *
+    wigner_binomial_bigint(dj1, jpm123)
   let mut res_den = wigner_binomial_bigint(j156 + 1, dj1 + 1) *
     wigner_binomial_bigint(dj1, jpm156) *
     wigner_binomial_bigint(j426 + 1, dj4 + 1) *
@@ -234,7 +248,8 @@ pub fn wigner_6j(
     wigner_binomial_bigint(j453 + 1, dj4 + 1) *
     wigner_binomial_bigint(dj4, jpm453)
   res_den = res_den * BigInt::from_int((dj4 + 1) * (dj4 + 1))
-  wigner_expr_from_bigint(sumres) * @symelem.sqrt(wigner_rational_expr(res_num, res_den))
+  wigner_expr_from_bigint(sumres) *
+  @symelem.sqrt(wigner_rational_expr(res_num, res_den))
 }
 
 ///|
@@ -304,7 +319,10 @@ pub fn wigner_9j(
   let pm789 = (dj7 + dj8 - dj9) / 2
   let pm798 = (dj7 + dj9 - dj8) / 2
   let pm897 = (dj8 + dj9 - dj7) / 2
-  let dtmin = wigner_int_max((dj2 - dj6).abs(), wigner_int_max((dj4 - dj8).abs(), (dj1 - dj9).abs()))
+  let dtmin = wigner_int_max(
+    (dj2 - dj6).abs(),
+    wigner_int_max((dj4 - dj8).abs(), (dj1 - dj9).abs()),
+  )
   let dtmax = wigner_int_min3(dj2 + dj6, dj4 + dj8, dj1 + dj9)
   let mut sumres = BigInt::from_int(0)
   let mut dt = dtmin
@@ -363,16 +381,20 @@ pub fn wigner_9j(
     (dj3 + 1) * (dj6 + 1) * (dj9 + 1) * (dj7 + 1) * (dj8 + 1) * (dj9 + 1),
   )
   res_den = res_den *
-    wigner_binomial_bigint(j123 + 1, dj3 + 1) * wigner_binomial_bigint(dj3, pm231) *
-    wigner_binomial_bigint(j456 + 1, dj6 + 1) * wigner_binomial_bigint(dj6, pm564) *
-    wigner_binomial_bigint(j789 + 1, dj9 + 1) * wigner_binomial_bigint(dj9, pm897) *
+    wigner_binomial_bigint(j123 + 1, dj3 + 1) *
+    wigner_binomial_bigint(dj3, pm231) *
+    wigner_binomial_bigint(j456 + 1, dj6 + 1) *
+    wigner_binomial_bigint(dj6, pm564) *
+    wigner_binomial_bigint(j789 + 1, dj9 + 1) *
+    wigner_binomial_bigint(dj9, pm897) *
     wigner_binomial_bigint(j147 + 1, dj7 + 1) *
     wigner_binomial_bigint(dj7, (dj4 + dj7 - dj1) / 2) *
     wigner_binomial_bigint(j258 + 1, dj8 + 1) *
     wigner_binomial_bigint(dj8, (dj5 + dj8 - dj2) / 2) *
     wigner_binomial_bigint(j369 + 1, dj9 + 1) *
     wigner_binomial_bigint(dj9, (dj6 + dj9 - dj3) / 2)
-  wigner_expr_from_bigint(sumres) * @symelem.sqrt(wigner_rational_expr(BigInt::from_int(1), res_den))
+  wigner_expr_from_bigint(sumres) *
+  @symelem.sqrt(wigner_rational_expr(BigInt::from_int(1), res_den))
 }
 
 ///|
@@ -401,19 +423,36 @@ pub fn dot_rot_grad_ynm(
   for k in lower..<(upper + 1) {
     let k_expr = @symcore.int(k)
     let alpha = @symelem.sqrt(
-      expr_div(
-        ((@symcore.int(2) * l) + @symcore.int(1)) *
-          ((@symcore.int(2) * j) + @symcore.int(1)) *
-          ((@symcore.int(2) * k_expr) + @symcore.int(1)),
-        @symcore.int(4) * pi_expr(),
-      ),
-    ) *
-      (try! wigner_3j(j, l, k_expr, @symcore.int(0), @symcore.int(0), @symcore.int(0))) *
+        expr_div(
+          (@symcore.int(2) * l + @symcore.int(1)) *
+          (@symcore.int(2) * j + @symcore.int(1)) *
+          (@symcore.int(2) * k_expr + @symcore.int(1)),
+          @symcore.int(4) * pi_expr(),
+        ),
+      ) *
+      (try! wigner_3j(
+        j,
+        l,
+        k_expr,
+        @symcore.int(0),
+        @symcore.int(0),
+        @symcore.int(0),
+      )) *
       (try! wigner_3j(j, l, k_expr, p, m, @symcore.int(-1) * (m + p)))
     let coeff = alpha *
       rational_expr(1, 2) *
-      ((k_expr ^ @symcore.int(2)) - (j ^ @symcore.int(2)) - (l ^ @symcore.int(2)) + k_expr - j - l)
-    acc = acc + wigner_phase_expr(mi + pi) * @symspec.ynm(k_expr, m + p, theta, phi) * coeff
+      (
+        (k_expr ^ @symcore.int(2)) -
+        (j ^ @symcore.int(2)) -
+        (l ^ @symcore.int(2)) +
+        k_expr -
+        j -
+        l
+      )
+    acc = acc +
+      wigner_phase_expr(mi + pi) *
+      @symspec.ynm(k_expr, m + p, theta, phi) *
+      coeff
   }
   acc
 }
@@ -424,9 +463,7 @@ pub fn wigner_d_small(
   beta : @symcore.Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let dJ = wigner_doubled_int(j_tot)
-  guard dJ >= 0 else {
-    raise PhysicsError::ValueError("J must be nonnegative")
-  }
+  guard dJ >= 0 else { raise PhysicsError::ValueError("J must be nonnegative") }
   let size = dJ + 1
   let half_beta = beta * rational_expr(1, 2)
   let cos_half = @symelem.cos(half_beta)
@@ -444,12 +481,12 @@ pub fn wigner_d_small(
       for s in sigmamin..<(sigmamax + 1) {
         let phase = wigner_phase_expr(i - s)
         let coeff = wigner_expr_from_bigint(
-          wigner_binomial_bigint(dJ - j, i - s) *
-            wigner_binomial_bigint(j, s),
+          wigner_binomial_bigint(dJ - j, i - s) * wigner_binomial_bigint(j, s),
         )
         let cos_exp = 2 * s + dJ - i - j
         let sin_exp = i + j - 2 * s
-        terms = terms + phase *
+        terms = terms +
+          phase *
           coeff *
           (cos_half ^ @symcore.int(cos_exp)) *
           (sin_half ^ @symcore.int(sin_exp))
@@ -479,8 +516,8 @@ pub fn wigner_d(
       let mj = wigner_expr_from_doubled_int(dJ - 2 * j)
       row.push(
         @symelem.exp(i_expr() * mi * alpha) *
-          d_small.rows[i][j] *
-          @symelem.exp(i_expr() * mj * gamma),
+        d_small.rows[i][j] *
+        @symelem.exp(i_expr() * mj * gamma),
       )
     }
     rows.push(row)

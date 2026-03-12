@@ -10,11 +10,18 @@ priv struct RealGauntCoeff {
 
 ///|
 fn real_gaunt_phase_int(k : Int) -> Int {
-  if k % 2 == 0 { 1 } else { -1 }
+  if k % 2 == 0 {
+    1
+  } else {
+    -1
+  }
 }
 
 ///|
-fn real_gaunt_coeff_mul(a : RealGauntCoeff, b : RealGauntCoeff) -> RealGauntCoeff {
+fn real_gaunt_coeff_mul(
+  a : RealGauntCoeff,
+  b : RealGauntCoeff,
+) -> RealGauntCoeff {
   RealGauntCoeff::{
     real: a.real * b.real - a.imag * b.imag,
     imag: a.real * b.imag + a.imag * b.real,
@@ -43,14 +50,22 @@ fn real_gaunt_u(a : Int, b : Int) -> RealGauntCoeff? {
     return None
   }
   if b == 0 {
-    return if a == 0 { Some(RealGauntCoeff::{ real: 1, imag: 0, sqrt2_pow: 0 }) } else { None }
+    return if a == 0 {
+      Some(RealGauntCoeff::{ real: 1, imag: 0, sqrt2_pow: 0 })
+    } else {
+      None
+    }
   }
   if b > 0 {
     if a == b {
       return Some(RealGauntCoeff::{ real: 1, imag: 0, sqrt2_pow: 1 })
     }
     if a == -b {
-      return Some(RealGauntCoeff::{ real: real_gaunt_phase_int(a), imag: 0, sqrt2_pow: 1 })
+      return Some(RealGauntCoeff::{
+        real: real_gaunt_phase_int(a),
+        imag: 0,
+        sqrt2_pow: 1,
+      })
     }
     return None
   }
@@ -58,7 +73,11 @@ fn real_gaunt_u(a : Int, b : Int) -> RealGauntCoeff? {
     return Some(RealGauntCoeff::{ real: 0, imag: -1, sqrt2_pow: 1 })
   }
   if a == -b {
-    return Some(RealGauntCoeff::{ real: 0, imag: real_gaunt_phase_int(b), sqrt2_pow: 1 })
+    return Some(RealGauntCoeff::{
+      real: 0,
+      imag: real_gaunt_phase_int(b),
+      sqrt2_pow: 1,
+    })
   }
   None
 }
@@ -107,7 +126,10 @@ pub fn real_gaunt(
     return @symcore.int(0)
   }
   let lmax = l2 + l3
-  let mut lmin = wigner_int_max((l2 - l3).abs(), wigner_int_min((mu2 + mu3).abs(), (mu2 - mu3).abs()))
+  let mut lmin = wigner_int_max(
+    (l2 - l3).abs(),
+    wigner_int_min((mu2 + mu3).abs(), (mu2 - mu3).abs()),
+  )
   if (lmin + lmax) % 2 != 0 {
     lmin = lmin + 1
   }
@@ -144,9 +166,17 @@ pub fn real_gaunt(
       let coeff_expr = real_gaunt_coeff_real_expr(coeff)
       match expr_number_value(coeff_expr) {
         Some(n) if n.is_zero() => ()
-        _ => {
-          acc = acc + coeff_expr * (try! gaunt(l_1, l_2, l_3, @symcore.int(m1), @symcore.int(m2), @symcore.int(m3)))
-        }
+        _ =>
+          acc = acc +
+            coeff_expr *
+            (try! gaunt(
+              l_1,
+              l_2,
+              l_3,
+              @symcore.int(m1),
+              @symcore.int(m2),
+              @symcore.int(m3),
+            ))
       }
     }
   }

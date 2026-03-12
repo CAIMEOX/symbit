@@ -106,7 +106,11 @@ fn expr_is_zero(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn rename_symbol(expr : @symcore.Expr, old_name : String, new_name : String) -> @symcore.Expr {
+fn rename_symbol(
+  expr : @symcore.Expr,
+  old_name : String,
+  new_name : String,
+) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Symbol(name) =>
       if name == old_name {
@@ -119,9 +123,15 @@ fn rename_symbol(expr : @symcore.Expr, old_name : String, new_name : String) -> 
     @symcore.Expr::Mul(args) =>
       @symcore.mul(args.map(arg => rename_symbol(arg, old_name, new_name)))
     @symcore.Expr::Pow(base, exp) =>
-      @symcore.pow(rename_symbol(base, old_name, new_name), rename_symbol(exp, old_name, new_name))
+      @symcore.pow(
+        rename_symbol(base, old_name, new_name),
+        rename_symbol(exp, old_name, new_name),
+      )
     @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(arg => rename_symbol(arg, old_name, new_name)))
+      @symcore.function(
+        name,
+        args.map(arg => rename_symbol(arg, old_name, new_name)),
+      )
     _ => expr
   }
 }
@@ -138,7 +148,7 @@ fn reaction_y_name(node : String) -> String {
 
 ///|
 fn common_angle_sin(angle : Int) -> @symcore.Expr? {
-  match ((angle % 360) + 360) % 360 {
+  match (angle % 360 + 360) % 360 {
     0 => Some(int_expr(0))
     30 => Some(rational_expr(1, 2))
     45 => Some(sqrt2_over_2())
@@ -161,7 +171,7 @@ fn common_angle_sin(angle : Int) -> @symcore.Expr? {
 
 ///|
 fn common_angle_cos(angle : Int) -> @symcore.Expr? {
-  match ((angle % 360) + 360) % 360 {
+  match (angle % 360 + 360) % 360 {
     0 => Some(int_expr(1))
     30 => Some(sqrt3_over_2())
     45 => Some(sqrt2_over_2())
@@ -307,8 +317,8 @@ fn solve_linear_system(
         continue
       }
       let factor = normalize_expr(expr_div(aug[row][pivot], pivot_value))
-      for col in pivot..<=(ncols) {
-        aug[row][col] = normalize_expr(aug[row][col] - (factor * aug[pivot][col]))
+      for col in pivot..<=ncols {
+        aug[row][col] = normalize_expr(aug[row][col] - factor * aug[pivot][col])
       }
     }
   }
@@ -319,7 +329,7 @@ fn solve_linear_system(
     let mut rhs = aug[row][ncols]
     let mut col = row + 1
     while col < ncols {
-      rhs = normalize_expr(rhs - (aug[row][col] * solution[col]))
+      rhs = normalize_expr(rhs - aug[row][col] * solution[col])
       col += 1
     }
     guard !expr_is_zero(aug[row][row]) else {
@@ -342,14 +352,20 @@ fn Truss::refresh_member_cache(self : Truss) -> Unit raise TrussError {
     let end_coords = expect_node_coords(self.node_coordinates_, end_)
     next_pairs[(start, end_)] = true
     next_pairs[(end_, start)] = true
-    next_lengths[member_label] = member_length_from_coords(start_coords, end_coords)
+    next_lengths[member_label] = member_length_from_coords(
+      start_coords, end_coords,
+    )
   }
   self.node_pairs_occupied_ = next_pairs
   self.member_lengths_ = next_lengths
 }
 
 ///|
-fn Truss::move_reaction_solution(self : Truss, old_label : String, new_label : String) -> Unit {
+fn Truss::move_reaction_solution(
+  self : Truss,
+  old_label : String,
+  new_label : String,
+) -> Unit {
   let old_rx = reaction_x_name(old_label)
   let old_ry = reaction_y_name(old_label)
   let new_rx = reaction_x_name(new_label)
@@ -371,7 +387,10 @@ fn Truss::move_reaction_solution(self : Truss, old_label : String, new_label : S
 }
 
 ///|
-fn Truss::clear_reaction_solution_for_node(self : Truss, label : String) -> Unit {
+fn Truss::clear_reaction_solution_for_node(
+  self : Truss,
+  label : String,
+) -> Unit {
   ignore(self.reaction_loads_.remove(reaction_x_name(label)))
   ignore(self.reaction_loads_.remove(reaction_y_name(label)))
 }
@@ -406,7 +425,9 @@ pub fn Truss::node_labels(self : Truss) -> Array[String] {
 }
 
 ///|
-pub fn Truss::node_positions(self : Truss) -> Array[(@symcore.Expr, @symcore.Expr)] {
+pub fn Truss::node_positions(
+  self : Truss,
+) -> Array[(@symcore.Expr, @symcore.Expr)] {
   self.node_positions_
 }
 
@@ -454,7 +475,9 @@ pub fn Truss::add_node(
     }
     for _, coords in self.node_coordinates_ {
       if coords == (x, y) {
-        raise TrussError::ValueError("A node already exists at the given position")
+        raise TrussError::ValueError(
+          "A node already exists at the given position",
+        )
       }
     }
     self.nodes_.push((label, x, y))
@@ -475,7 +498,9 @@ pub fn Truss::remove_node(
     }
     for _, endpoints in self.members_ {
       if endpoints[0] == label || endpoints[1] == label {
-        raise TrussError::ValueError("The given node already has member attached to it")
+        raise TrussError::ValueError(
+          "The given node already has member attached to it",
+        )
       }
     }
     let index = match find_string_index(self.node_labels_, label) {
@@ -504,13 +529,19 @@ pub fn Truss::add_member(
     guard start != end_ &&
       self.node_coordinates_.get(start) is Some(_) &&
       self.node_coordinates_.get(end_) is Some(_) else {
-      raise TrussError::ValueError("The start and end points of the member must be unique nodes")
+      raise TrussError::ValueError(
+        "The start and end points of the member must be unique nodes",
+      )
     }
     guard self.members_.get(label) is None else {
-      raise TrussError::ValueError("A member with the same label already exists for the truss")
+      raise TrussError::ValueError(
+        "A member with the same label already exists for the truss",
+      )
     }
     guard self.node_pairs_occupied_.get((start, end_)) is None else {
-      raise TrussError::ValueError("A member already exists between the two nodes")
+      raise TrussError::ValueError(
+        "A member already exists between the two nodes",
+      )
     }
     self.members_.set(label, [start, end_])
     self.internal_forces_.set(label, int_expr(0))
@@ -568,7 +599,10 @@ pub fn Truss::change_node_label(
     match self.loads_.get(old_label) {
       Some(loads) => {
         ignore(self.loads_.remove(old_label))
-        self.loads_.set(new_label, rename_node_load_symbols(loads, old_label, new_label))
+        self.loads_.set(
+          new_label,
+          rename_node_load_symbols(loads, old_label, new_label),
+        )
       }
       None => ()
     }
@@ -597,10 +631,13 @@ pub fn Truss::change_member_label(
     let new_label = rename.1
     let endpoints = match self.members_.get(old_label) {
       Some(value) => value
-      None => raise TrussError::ValueError("No such member exists for the Truss")
+      None =>
+        raise TrussError::ValueError("No such member exists for the Truss")
     }
     guard new_label == old_label || self.members_.get(new_label) is None else {
-      raise TrussError::ValueError("A member with the same label already exists for the truss")
+      raise TrussError::ValueError(
+        "A member with the same label already exists for the truss",
+      )
     }
     ignore(self.members_.remove(old_label))
     self.members_.set(new_label, endpoints)
@@ -648,11 +685,16 @@ pub fn Truss::remove_load(
     }
     let loads = match self.loads_.get(location) {
       Some(value) => value
-      None => raise TrussError::ValueError("No load of this magnitude and direction has been applied at this node")
+      None =>
+        raise TrussError::ValueError(
+          "No load of this magnitude and direction has been applied at this node",
+        )
     }
     let entry = [normalize_expr(spec.1), normalize_expr(spec.2)]
     guard remove_load_entry(loads, entry) else {
-      raise TrussError::ValueError("No load of this magnitude and direction has been applied at this node")
+      raise TrussError::ValueError(
+        "No load of this magnitude and direction has been applied at this node",
+      )
     }
     if loads.is_empty() {
       ignore(self.loads_.remove(location))
@@ -684,13 +726,19 @@ pub fn Truss::apply_support(
             (location, @symcore.symbol(reaction_y_name(location)), int_expr(90)),
           ])
         } else {
-          self.apply_load([(location, @symcore.symbol(reaction_y_name(location)), int_expr(90))])
+          self.apply_load([
+            (location, @symcore.symbol(reaction_y_name(location)), int_expr(90)),
+          ])
         }
       Some(existing) =>
         if existing == "pinned" && kind == "roller" {
-          self.remove_load([(location, @symcore.symbol(reaction_x_name(location)), int_expr(0))])
+          self.remove_load([
+            (location, @symcore.symbol(reaction_x_name(location)), int_expr(0)),
+          ])
         } else if existing == "roller" && kind == "pinned" {
-          self.apply_load([(location, @symcore.symbol(reaction_x_name(location)), int_expr(0))])
+          self.apply_load([
+            (location, @symcore.symbol(reaction_x_name(location)), int_expr(0)),
+          ])
         }
     }
     self.supports_.set(location, kind)
@@ -708,7 +756,10 @@ pub fn Truss::remove_support(
     }
     let kind = match self.supports_.get(label) {
       Some(value) => value
-      None => raise TrussError::ValueError("No support has been added to the given node")
+      None =>
+        raise TrussError::ValueError(
+          "No support has been added to the given node",
+        )
     }
     if kind == "pinned" {
       self.remove_load([
@@ -716,7 +767,9 @@ pub fn Truss::remove_support(
         (label, @symcore.symbol(reaction_y_name(label)), int_expr(90)),
       ])
     } else {
-      self.remove_load([(label, @symcore.symbol(reaction_y_name(label)), int_expr(90))])
+      self.remove_load([
+        (label, @symcore.symbol(reaction_y_name(label)), int_expr(90)),
+      ])
     }
     ignore(self.supports_.remove(label))
     self.clear_reaction_solution_for_node(label)
@@ -754,7 +807,8 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
         row_x[unknown_index[reaction_x_name(label)]] = int_expr(1)
         row_y[unknown_index[reaction_y_name(label)]] = int_expr(1)
       }
-      Some("roller") => row_y[unknown_index[reaction_y_name(label)]] = int_expr(1)
+      Some("roller") =>
+        row_y[unknown_index[reaction_y_name(label)]] = int_expr(1)
       _ => ()
     }
 
@@ -769,8 +823,8 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
             _ => false
           }
           if !is_reaction_symbol {
-            rhs_x = normalize_expr(rhs_x - (load[0] * cos_deg(load[1])))
-            rhs_y = normalize_expr(rhs_y - (load[0] * sin_deg(load[1])))
+            rhs_x = normalize_expr(rhs_x - load[0] * cos_deg(load[1]))
+            rhs_y = normalize_expr(rhs_y - load[0] * sin_deg(load[1]))
           }
         }
       None => ()
@@ -787,11 +841,19 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
       }
       let col = unknown_index[member_label]
       if label == start {
-        row_x[col] = normalize_expr(expr_div(end_coords.0 - start_coords.0, length))
-        row_y[col] = normalize_expr(expr_div(end_coords.1 - start_coords.1, length))
+        row_x[col] = normalize_expr(
+          expr_div(end_coords.0 - start_coords.0, length),
+        )
+        row_y[col] = normalize_expr(
+          expr_div(end_coords.1 - start_coords.1, length),
+        )
       } else if label == end_ {
-        row_x[col] = normalize_expr(expr_div(start_coords.0 - end_coords.0, length))
-        row_y[col] = normalize_expr(expr_div(start_coords.1 - end_coords.1, length))
+        row_x[col] = normalize_expr(
+          expr_div(start_coords.0 - end_coords.0, length),
+        )
+        row_y[col] = normalize_expr(
+          expr_div(start_coords.1 - end_coords.1, length),
+        )
       }
     }
 
@@ -825,6 +887,9 @@ pub fn Truss::solve(self : Truss) -> Unit raise TrussError {
     }
   }
   for member_label, _ in self.members_ {
-    self.internal_forces_.set(member_label, normalize_expr(solved[member_label]))
+    self.internal_forces_.set(
+      member_label,
+      normalize_expr(solved[member_label]),
+    )
   }
 }

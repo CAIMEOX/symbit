@@ -42,10 +42,7 @@ fn cm_double_pow(base : Double, exp : Int) -> Double {
 }
 
 ///|
-fn cm_expr_eval(
-  expr : @symcore.Expr,
-  env : Map[String, Double],
-) -> Double? {
+fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? {
   match expr {
     @symcore.Expr::Number(n) => {
       let num = Double::from_int(n.numerator().to_int())
@@ -109,7 +106,11 @@ fn cm_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
     }
     match (cm_expr_eval(lhs, env), cm_expr_eval(rhs, env)) {
       (Some(lhs_value), Some(rhs_value)) =>
-        if !lhs_value.is_close(rhs_value, relative_tolerance=1.0e-8, absolute_tolerance=1.0e-8) {
+        if !lhs_value.is_close(
+            rhs_value,
+            relative_tolerance=1.0e-8,
+            absolute_tolerance=1.0e-8,
+          ) {
           return false
         }
       _ => return false
@@ -146,11 +147,14 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
     (c, @symcore.int(3), @symcore.int(0)),
   ])
   guard t.node_labels() == [a, b, c] else { fail("node labels after add") }
-  guard t.node_positions() == [
-    (@symcore.int(0), @symcore.int(0)),
-    (@symcore.int(2), @symcore.int(2)),
-    (@symcore.int(3), @symcore.int(0)),
-  ] else { fail("node positions after add") }
+  guard t.node_positions() ==
+    [
+      (@symcore.int(0), @symcore.int(0)),
+      (@symcore.int(2), @symcore.int(2)),
+      (@symcore.int(3), @symcore.int(0)),
+    ] else {
+    fail("node positions after add")
+  }
 
   try! t.remove_node([c])
   guard t.node_labels() == [a, b] else { fail("node labels after remove") }
@@ -160,7 +164,9 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   guard t.members()[ab] == [a, b] else { fail("AB member endpoints") }
   guard t.members()[bc] == [b, c] else { fail("BC member endpoints") }
   guard t.members()[ac] == [a, c] else { fail("AC member endpoints") }
-  guard t.internal_forces()[ab] == @symcore.int(0) else { fail("AB internal force init") }
+  guard t.internal_forces()[ab] == @symcore.int(0) else {
+    fail("AB internal force init")
+  }
 
   try! t.remove_member([bc])
   guard t.members().get(bc) is None else { fail("BC removed") }
@@ -168,12 +174,18 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
 
   try! t.change_node_label([(b, d)])
   guard t.node_labels() == [a, d, c] else { fail("node labels after rename") }
-  guard t.members()[ab] == [a, d] else { fail("AB endpoints after node rename") }
-  guard t.members()[bc] == [d, c] else { fail("BC endpoints after node rename") }
+  guard t.members()[ab] == [a, d] else {
+    fail("AB endpoints after node rename")
+  }
+  guard t.members()[bc] == [d, c] else {
+    fail("BC endpoints after node rename")
+  }
   try! t.change_member_label([(bc, cd)])
   guard t.members().get(bc) is None else { fail("old member label removed") }
   guard t.members()[cd] == [d, c] else { fail("new member label inserted") }
-  guard t.internal_forces()[cd] == @symcore.int(0) else { fail("renamed member force init") }
+  guard t.internal_forces()[cd] == @symcore.int(0) else {
+    fail("renamed member force init")
+  }
 
   try! t.apply_load([
     (a, p, @symcore.int(90)),
@@ -205,15 +217,24 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   guard cm_expr_eq(rx, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p) else {
     fail("R_A_x wrong: \{@symprint.to_string(rx)}")
   }
-  guard cm_expr_eq(ry, (@symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p) - p) else {
+  guard cm_expr_eq(
+    ry,
+    @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p - p,
+  ) else {
     fail("R_A_y wrong: \{@symprint.to_string(ry)}")
   }
   guard cm_expr_eq(rdy, @symcore.int(-1) * p * half) else {
     fail("R_D_y wrong: \{@symprint.to_string(rdy)}")
   }
-  guard cm_expr_eq(t.internal_forces()[ab], @symcore.int(0)) else { fail("AB force") }
-  guard cm_expr_eq(t.internal_forces()[cd], @symcore.int(0)) else { fail("CD force") }
-  guard cm_expr_eq(t.internal_forces()[ac], @symcore.int(0)) else { fail("AC force") }
+  guard cm_expr_eq(t.internal_forces()[ab], @symcore.int(0)) else {
+    fail("AB force")
+  }
+  guard cm_expr_eq(t.internal_forces()[cd], @symcore.int(0)) else {
+    fail("CD force")
+  }
+  guard cm_expr_eq(t.internal_forces()[ac], @symcore.int(0)) else {
+    fail("AC force")
+  }
 }
 
 ///|
@@ -242,28 +263,16 @@ test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero
   guard cm_expr_eq(t.reaction_loads()["R_node_1_x"], @symcore.int(0)) else {
     fail("R_node_1_x wrong")
   }
-  guard cm_expr_eq(
-    t.reaction_loads()["R_node_1_y"],
-    @symcore.int(20) * third,
-  ) else {
+  guard cm_expr_eq(t.reaction_loads()["R_node_1_y"], @symcore.int(20) * third) else {
     fail("R_node_1_y wrong")
   }
-  guard cm_expr_eq(
-    t.reaction_loads()["R_node_2_y"],
-    @symcore.int(10) * third,
-  ) else {
+  guard cm_expr_eq(t.reaction_loads()["R_node_2_y"], @symcore.int(10) * third) else {
     fail("R_node_2_y wrong")
   }
-  guard cm_expr_eq(
-    member_1_force,
-    @symcore.int(20) * third,
-  ) else {
+  guard cm_expr_eq(member_1_force, @symcore.int(20) * third) else {
     fail("member_1 force wrong: \{@symprint.to_string(member_1_force)}")
   }
-  guard cm_expr_eq(
-    t.internal_forces()["member_2"],
-    @symcore.int(20) * third,
-  ) else {
+  guard cm_expr_eq(t.internal_forces()["member_2"], @symcore.int(20) * third) else {
     fail("member_2 force wrong")
   }
   guard cm_expr_eq(

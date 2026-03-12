@@ -69,7 +69,7 @@ pub fn Quantity::with_scale(
   self : Quantity,
   scale_factor : @symcore.Expr,
 ) -> Quantity {
-  Quantity::{ ..self, scale_factor }
+  Quantity::{ ..self, scale_factor, }
 }
 
 ///|
@@ -103,7 +103,10 @@ fn prefix_scale_factor_expr(base : Int, exponent : Int) -> @symcore.Expr {
     @symcore.number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
     @symcore.number(
-      try! @symnum.BigRational::new(BigInt::from_int(1), int_pow(base, -exponent)),
+      try! @symnum.BigRational::new(
+        BigInt::from_int(1),
+        int_pow(base, -exponent),
+      ),
     )
   }
 }
@@ -196,7 +199,10 @@ pub fn prefix_value_to_string(value : PrefixValue) -> String {
 }
 
 ///|
-pub fn prefix_unit(unit : Quantity, prefixes : Map[String, Prefix]) -> Array[Quantity] {
+pub fn prefix_unit(
+  unit : Quantity,
+  prefixes : Map[String, Prefix],
+) -> Array[Quantity] {
   let out : Array[Quantity] = Array::new()
   for _, item in prefixes {
     out.push(
@@ -214,43 +220,100 @@ pub fn prefix_unit(unit : Quantity, prefixes : Map[String, Prefix]) -> Array[Qua
 
 ///|
 pub let length : Dimension = dimension("length", symbol=Some("L"))
+
+///|
 pub let time_dimension : Dimension = dimension("time", symbol=Some("T"))
+
+///|
 pub let mass : Dimension = dimension("mass", symbol=Some("M"))
+
+///|
 pub let current : Dimension = dimension("current", symbol=Some("I"))
+
+///|
 pub let dimensionless : Dimension = dimension("dimensionless")
 
 ///|
 pub let meter : Quantity = quantity("meter", abbrev="m", dimension=length)
-pub let second : Quantity = quantity("second", abbrev="s", dimension=time_dimension)
+
+///|
+pub let second : Quantity = quantity(
+  "second",
+  abbrev="s",
+  dimension=time_dimension,
+)
+
+///|
 pub let kilogram : Quantity = quantity("kilogram", abbrev="kg", dimension=mass)
+
+///|
 pub let ampere : Quantity = quantity("ampere", abbrev="A", dimension=current)
-pub let watt : Quantity =
-  quantity(
-    "watt",
-    abbrev="W",
-    dimension=mass.mul(length.pow(2)).div(time_dimension.pow(3)),
-  )
+
+///|
+pub let watt : Quantity = quantity(
+  "watt",
+  abbrev="W",
+  dimension=mass.mul(length.pow(2)).div(time_dimension.pow(3)),
+)
 
 ///|
 pub let yotta : Prefix = prefix("yotta", "Y", 24)
+
+///|
 pub let zetta : Prefix = prefix("zetta", "Z", 21)
+
+///|
 pub let exa : Prefix = prefix("exa", "E", 18)
+
+///|
 pub let peta : Prefix = prefix("peta", "P", 15)
+
+///|
 pub let tera : Prefix = prefix("tera", "T", 12)
+
+///|
 pub let giga : Prefix = prefix("giga", "G", 9)
+
+///|
 pub let mega : Prefix = prefix("mega", "M", 6)
+
+///|
 pub let kilo : Prefix = prefix("kilo", "k", 3)
+
+///|
 pub let hecto : Prefix = prefix("hecto", "h", 2)
+
+///|
 pub let deca : Prefix = prefix("deca", "da", 1)
+
+///|
 pub let deci : Prefix = prefix("deci", "d", -1)
+
+///|
 pub let centi : Prefix = prefix("centi", "c", -2)
+
+///|
 pub let milli : Prefix = prefix("milli", "m", -3)
+
+///|
 pub let micro : Prefix = prefix("micro", "mu", -6, latex_repr=Some("\\mu"))
+
+///|
 pub let nano : Prefix = prefix("nano", "n", -9)
+
+///|
 pub let pico : Prefix = prefix("pico", "p", -12)
+
+///|
 pub let femto : Prefix = prefix("femto", "f", -15)
+
+///|
 pub let atto : Prefix = prefix("atto", "a", -18)
+
+///|
 pub let zepto : Prefix = prefix("zepto", "z", -21)
+
+///|
 pub let yocto : Prefix = prefix("yocto", "y", -24)
 
 ///|
@@ -279,10 +342,20 @@ pub let prefixes : Map[String, Prefix] = {
 
 ///|
 pub let kibi : Prefix = prefix("kibi", "Ki", 10, base=2)
+
+///|
 pub let mebi : Prefix = prefix("mebi", "Mi", 20, base=2)
+
+///|
 pub let gibi : Prefix = prefix("gibi", "Gi", 30, base=2)
+
+///|
 pub let tebi : Prefix = prefix("tebi", "Ti", 40, base=2)
+
+///|
 pub let pebi : Prefix = prefix("pebi", "Pi", 50, base=2)
+
+///|
 pub let exbi : Prefix = prefix("exbi", "Ei", 60, base=2)
 
 ///|
@@ -296,60 +369,35 @@ pub let bin_prefixes : Map[String, Prefix] = {
 }
 
 ///|
-pub let speed_of_light : @symcore.Expr =
-  @symcore.int(299792458) * meter.symbol_expr() * (second.symbol_expr() ^ @symcore.int(-1))
+pub let speed_of_light : @symcore.Expr = @symcore.int(299792458) *
+  meter.symbol_expr() *
+  (second.symbol_expr() ^ @symcore.int(-1))
 
 ///|
-pub let e0 : @symcore.Expr =
-  @symcore.number(
+pub let e0 : @symcore.Expr = @symcore.number(
     try! @symnum.BigRational::new(
       BigInt::from_int(625000),
       BigInt::from_string("22468879468420441"),
     ),
   ) *
-    (ampere.symbol_expr() ^ @symcore.int(2)) *
-    (second.symbol_expr() ^ @symcore.int(4)) *
-    (pi_expr() ^ @symcore.int(-1)) *
-    (kilogram.symbol_expr() ^ @symcore.int(-1)) *
-    (meter.symbol_expr() ^ @symcore.int(-3))
+  (ampere.symbol_expr() ^ @symcore.int(2)) *
+  (second.symbol_expr() ^ @symcore.int(4)) *
+  (pi_expr() ^ @symcore.int(-1)) *
+  (kilogram.symbol_expr() ^ @symcore.int(-1)) *
+  (meter.symbol_expr() ^ @symcore.int(-3))
 
 ///|
-pub let u0 : @symcore.Expr =
-  pi_expr() *
-    (try! @symcore.rational_from_ints(1, 2500000)) *
-    kilogram.symbol_expr() *
-    meter.symbol_expr() *
-    (ampere.symbol_expr() ^ @symcore.int(-2)) *
-    (second.symbol_expr() ^ @symcore.int(-2))
+pub let u0 : @symcore.Expr = pi_expr() *
+  (try! @symcore.rational_from_ints(1, 2500000)) *
+  kilogram.symbol_expr() *
+  meter.symbol_expr() *
+  (ampere.symbol_expr() ^ @symcore.int(-2)) *
+  (second.symbol_expr() ^ @symcore.int(-2))
 
 ///|
 fn known_prefixes() -> Array[Prefix] {
   [
-    yotta,
-    zetta,
-    exa,
-    peta,
-    tera,
-    giga,
-    mega,
-    kilo,
-    hecto,
-    deca,
-    deci,
-    centi,
-    milli,
-    micro,
-    nano,
-    pico,
-    femto,
-    atto,
-    zepto,
-    yocto,
-    kibi,
-    mebi,
-    gibi,
-    tebi,
-    pebi,
-    exbi,
+    yotta, zetta, exa, peta, tera, giga, mega, kilo, hecto, deca, deci, centi, milli,
+    micro, nano, pico, femto, atto, zepto, yocto, kibi, mebi, gibi, tebi, pebi, exbi,
   ]
 }

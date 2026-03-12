@@ -18,8 +18,24 @@ fn optics_matrix_assert_expr_equal(
 
 ///|
 test "physics.optics.polarization: core constructors" {
-  try! optics_matrix_assert_expr_equal(try! jones_vector(@symcore.int(0), @symcore.int(0)), ["1", "0"], "H")
-  try! optics_matrix_assert_expr_equal(try! stokes_vector(@symcore.int(0), @symcore.int(0)), ["1", "1", "0", "0"], "stokes H")
-  try! optics_matrix_assert_expr_equal(try! transmissive_filter(@symcore.int(1)), ["1", "0", "0", "1"], "transmissive")
-  try! optics_matrix_assert_expr_equal(try! reflective_filter(@symcore.int(1)), ["1", "0", "0", "-1"], "reflective")
+  try! optics_matrix_assert_expr_equal(
+    try! jones_vector(@symcore.int(0), @symcore.int(0)),
+    ["1", "0"],
+    "H",
+  )
+  try! optics_matrix_assert_expr_equal(
+    try! stokes_vector(@symcore.int(0), @symcore.int(0)),
+    ["1", "1", "0", "0"],
+    "stokes H",
+  )
+  try! optics_matrix_assert_expr_equal(
+    try! transmissive_filter(@symcore.int(1)),
+    ["1", "0", "0", "1"],
+    "transmissive",
+  )
+  try! optics_matrix_assert_expr_equal(
+    try! reflective_filter(@symcore.int(1)),
+    ["1", "0", "0", "-1"],
+    "reflective",
+  )
 }

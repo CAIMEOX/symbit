@@ -9,7 +9,7 @@ pub fn explicit_matrix_from_rows(
   rows : Array[Array[@symcore.Expr]],
 ) -> ExplicitMatrix raise PhysicsError {
   if rows.is_empty() {
-    return ExplicitMatrix::{ rows }
+    return ExplicitMatrix::{ rows, }
   }
   let width = rows[0].length()
   for row in rows {
@@ -17,7 +17,7 @@ pub fn explicit_matrix_from_rows(
       raise PhysicsError::ShapeError("matrix rows must have equal length")
     }
   }
-  ExplicitMatrix::{ rows }
+  ExplicitMatrix::{ rows, }
 }
 
 ///|
@@ -41,7 +41,7 @@ pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
     row[i] = @symcore.int(1)
     rows.push(row)
   }
-  ExplicitMatrix::{ rows }
+  ExplicitMatrix::{ rows, }
 }
 
 ///|

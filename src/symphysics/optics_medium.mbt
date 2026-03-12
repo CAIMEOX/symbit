@@ -15,11 +15,11 @@ fn is_vacuum_pair(ep : @symcore.Expr, mu : @symcore.Expr) -> Bool {
 ///|
 fn vacuum_impedance_expr() -> @symcore.Expr {
   (try! @symcore.rational_from_ints(149896229, 1250000)) *
-    pi_expr() *
-    (ampere.symbol_expr() ^ @symcore.int(-2)) *
-    kilogram.symbol_expr() *
-    (meter.symbol_expr() ^ @symcore.int(2)) *
-    (second.symbol_expr() ^ @symcore.int(-3))
+  pi_expr() *
+  (ampere.symbol_expr() ^ @symcore.int(-2)) *
+  kilogram.symbol_expr() *
+  (meter.symbol_expr() ^ @symcore.int(2)) *
+  (second.symbol_expr() ^ @symcore.int(-3))
 }
 
 ///|
@@ -33,11 +33,25 @@ pub fn medium(
     Some(index) =>
       match (permittivity, permeability) {
         (Some(ep), None) =>
-          Medium::MediumPP(name, ep, (index ^ @symcore.int(2)) * (speed_of_light ^ @symcore.int(-2)) * (ep ^ @symcore.int(-1)))
+          Medium::MediumPP(
+            name,
+            ep,
+            (index ^ @symcore.int(2)) *
+            (speed_of_light ^ @symcore.int(-2)) *
+            (ep ^ @symcore.int(-1)),
+          )
         (None, Some(mu)) =>
-          Medium::MediumPP(name, (index ^ @symcore.int(2)) * (speed_of_light ^ @symcore.int(-2)) * (mu ^ @symcore.int(-1)), mu)
+          Medium::MediumPP(
+            name,
+            (index ^ @symcore.int(2)) *
+            (speed_of_light ^ @symcore.int(-2)) *
+            (mu ^ @symcore.int(-1)),
+            mu,
+          )
         (Some(_), Some(_)) =>
-          raise PhysicsError::ValueError("Specifying all of permittivity, permeability, and n is not allowed")
+          raise PhysicsError::ValueError(
+            "Specifying all of permittivity, permeability, and n is not allowed",
+          )
         (None, None) => Medium::MediumN(name, index)
       }
     None =>
@@ -116,7 +130,9 @@ pub fn Medium::permeability(self : Medium) -> @symcore.Expr raise PhysicsError {
 }
 
 ///|
-pub fn Medium::intrinsic_impedance(self : Medium) -> @symcore.Expr raise PhysicsError {
+pub fn Medium::intrinsic_impedance(
+  self : Medium,
+) -> @symcore.Expr raise PhysicsError {
   match self {
     Medium::MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {
@@ -124,6 +140,9 @@ pub fn Medium::intrinsic_impedance(self : Medium) -> @symcore.Expr raise Physics
       } else {
         @symelem.sqrt(mu * (ep ^ @symcore.int(-1)))
       }
-    _ => raise PhysicsError::ValueError("intrinsic_impedance is undefined for MediumN")
+    _ =>
+      raise PhysicsError::ValueError(
+        "intrinsic_impedance is undefined for MediumN",
+      )
   }
 }

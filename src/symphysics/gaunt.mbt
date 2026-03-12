@@ -4,7 +4,9 @@
 ///|
 fn gaunt_require_integer(value : @symcore.Expr) -> Unit raise PhysicsError {
   guard expr_integer_value(value) != None else {
-    raise PhysicsError::ValueError("expecting integer, got \{@symprint.to_string(value)}")
+    raise PhysicsError::ValueError(
+      "expecting integer, got \{@symprint.to_string(value)}",
+    )
   }
 }
 
@@ -25,12 +27,19 @@ pub fn gaunt(
   gaunt_require_integer(m_3)
   @symelem.sqrt(
     expr_div(
-      ((@symcore.int(2) * l_1) + @symcore.int(1)) *
-        ((@symcore.int(2) * l_2) + @symcore.int(1)) *
-        ((@symcore.int(2) * l_3) + @symcore.int(1)),
+      (@symcore.int(2) * l_1 + @symcore.int(1)) *
+      (@symcore.int(2) * l_2 + @symcore.int(1)) *
+      (@symcore.int(2) * l_3 + @symcore.int(1)),
       @symcore.int(4) * pi_expr(),
     ),
   ) *
-    (try! wigner_3j(l_1, l_2, l_3, @symcore.int(0), @symcore.int(0), @symcore.int(0))) *
-    (try! wigner_3j(l_1, l_2, l_3, m_1, m_2, m_3))
+  (try! wigner_3j(
+    l_1,
+    l_2,
+    l_3,
+    @symcore.int(0),
+    @symcore.int(0),
+    @symcore.int(0),
+  )) *
+  (try! wigner_3j(l_1, l_2, l_3, m_1, m_2, m_3))
 }

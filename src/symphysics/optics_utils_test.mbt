@@ -17,7 +17,9 @@ fn optics_assert_expr_list_equal(
   context : String,
 ) -> Unit raise {
   guard lhs.length() == rhs.length() else {
-    fail("\{context}: length mismatch ours=\{lhs.length()} expected=\{rhs.length()}")
+    fail(
+      "\{context}: length mismatch ours=\{lhs.length()} expected=\{rhs.length()}",
+    )
   }
   for idx in 0..<lhs.length() {
     try! optics_assert_expr_equal(lhs[idx], rhs[idx], "\{context}[\{idx}]")
@@ -53,15 +55,28 @@ test "physics.optics.utils: scalar formulas" {
   let c = @symcore.symbol("c")
 
   try! optics_assert_expr_equal(
-    refraction_angle(theta, optics_index_arg(six_fifths), optics_index_arg(three_halves)),
+    refraction_angle(
+      theta,
+      optics_index_arg(six_fifths),
+      optics_index_arg(three_halves),
+    ),
     "asin(2/5)",
     "refraction_angle",
   )
-  guard fresnel_coefficients(theta, optics_index_arg(one), optics_index_arg(four_thirds)).length() == 4 else {
+  guard fresnel_coefficients(
+      theta,
+      optics_index_arg(one),
+      optics_index_arg(four_thirds),
+    ).length() ==
+    4 else {
     fail("fresnel_coefficients length")
   }
   try! optics_assert_expr_equal(
-    deviation(theta, optics_index_arg(six_fifths), optics_index_arg(three_halves)),
+    deviation(
+      theta,
+      optics_index_arg(six_fifths),
+      optics_index_arg(three_halves),
+    ),
     "asin(2/5) - pi/6",
     "deviation",
   )
@@ -76,12 +91,22 @@ test "physics.optics.utils: scalar formulas" {
     "critical_angle",
   )
   try! optics_assert_expr_equal(
-    lens_makers_formula(optics_index_arg(four_thirds), optics_index_arg(one), @symcore.int(10), @symcore.int(-10)),
+    lens_makers_formula(
+      optics_index_arg(four_thirds),
+      optics_index_arg(one),
+      @symcore.int(10),
+      @symcore.int(-10),
+    ),
     "15",
     "lens_makers_formula thin",
   )
   try! optics_assert_expr_equal(
-    lens_makers_formula(optics_index_arg(four_thirds), optics_index_arg(one), @symcore.int(10), test_oo_expr()),
+    lens_makers_formula(
+      optics_index_arg(four_thirds),
+      optics_index_arg(one),
+      @symcore.int(10),
+      test_oo_expr(),
+    ),
     "30",
     "lens_makers_formula plano",
   )

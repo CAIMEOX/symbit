@@ -22,7 +22,9 @@ test "physics.optics.waves: twave properties and rewrites" {
   }
   guard wave.frequency == freq else { fail("twave frequency") }
   guard wave.phase == phi else { fail("twave phase") }
-  guard wave.time_period == (freq ^ @symcore.int(-1)) else { fail("twave period") }
+  guard wave.time_period == (freq ^ @symcore.int(-1)) else {
+    fail("twave period")
+  }
   guard @symprint.to_string(wave.rewrite_as_cos()).contains("cos(") else {
     fail("twave rewrite cos")
   }
@@ -55,7 +57,11 @@ test "physics.optics.waves: superposition and scaling" {
     "atan2(A1*sin(phi1) + A2*sin(phi2), A1*cos(phi1) + A2*cos(phi2))",
     "twave superpose phase",
   )
-  waves_assert_expr_equal((try! w1.scale(@symcore.int(3))).amplitude, "3*A1", "twave scale")
+  waves_assert_expr_equal(
+    (try! w1.scale(@symcore.int(3))).amplitude,
+    "3*A1",
+    "twave scale",
+  )
   guard (try? t_wave(amp1, phase=phi1)) is Err(_) else {
     fail("twave missing frequency/time_period should fail")
   }

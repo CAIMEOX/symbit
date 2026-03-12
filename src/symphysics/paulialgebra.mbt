@@ -7,7 +7,11 @@
 
 ///|
 pub fn delta(i : Int, j : Int) -> Int {
-  if i == j { 1 } else { 0 }
+  if i == j {
+    1
+  } else {
+    0
+  }
 }
 
 ///|
@@ -16,8 +20,7 @@ pub fn epsilon(i : Int, j : Int, k : Int) -> Int {
     (i == 2 && j == 3 && k == 1) ||
     (i == 3 && j == 1 && k == 2) {
     1
-  } else if
-    (i == 1 && j == 3 && k == 2) ||
+  } else if (i == 1 && j == 3 && k == 2) ||
     (i == 3 && j == 2 && k == 1) ||
     (i == 2 && j == 1 && k == 3) {
     -1
@@ -79,7 +82,8 @@ fn pauli_power_atom(expr : @symcore.Expr) -> (Int, String)? {
 ///|
 fn ncsymbol_expr_name(expr : @symcore.Expr) -> String? {
   match expr {
-    @symcore.Expr::Function("NCSymbol", [@symcore.Expr::Symbol(name)]) => Some(name)
+    @symcore.Expr::Function("NCSymbol", [@symcore.Expr::Symbol(name)]) =>
+      Some(name)
     _ => None
   }
 }
@@ -94,7 +98,9 @@ fn is_tensor_product(expr : @symcore.Expr) -> Bool {
 
 ///|
 fn expr_has_ordered_factor(expr : @symcore.Expr) -> Bool {
-  if pauli_symbol_parts(expr) is Some(_) || ncsymbol_expr_name(expr) is Some(_) || is_tensor_product(expr) {
+  if pauli_symbol_parts(expr) is Some(_) ||
+    ncsymbol_expr_name(expr) is Some(_) ||
+    is_tensor_product(expr) {
     return true
   }
   match expr {
@@ -106,7 +112,8 @@ fn expr_has_ordered_factor(expr : @symcore.Expr) -> Bool {
       }
       false
     }
-    @symcore.Expr::Pow(base, exp) => expr_has_ordered_factor(base) || expr_has_ordered_factor(exp)
+    @symcore.Expr::Pow(base, exp) =>
+      expr_has_ordered_factor(base) || expr_has_ordered_factor(exp)
     @symcore.Expr::Function(_, parts) => {
       for part in parts {
         if expr_has_ordered_factor(part) {
@@ -174,7 +181,10 @@ fn pauli_absorb_atom(
 }
 
 ///|
-pub fn pauli(index : Int, label? : String = "sigma") -> @symcore.Expr raise PhysicsError {
+pub fn pauli(
+  index : Int,
+  label? : String = "sigma",
+) -> @symcore.Expr raise PhysicsError {
   guard index == 1 || index == 2 || index == 3 else {
     raise PhysicsError::IndexError("Invalid Pauli index")
   }
@@ -218,12 +228,9 @@ pub fn ncsymbol(name : String) -> @symcore.Expr {
 }
 
 ///|
-pub fn pauli_mul(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> @symcore.Expr {
+pub fn pauli_mul(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
   match (pauli_symbol_parts(lhs), pauli_symbol_parts(rhs)) {
-    (Some((i, li)), Some((j, lj))) => {
+    (Some((i, li)), Some((j, lj))) =>
       if li != lj {
         pauli_product([lhs, rhs])
       } else if i == j {
@@ -233,13 +240,16 @@ pub fn pauli_mul(
         while k <= 3 {
           let sign = epsilon(i, j, k)
           if sign != 0 {
-            return @symcore.mul([i_expr(), @symcore.int(sign), pauli_symbol_expr(k, li)])
+            return @symcore.mul([
+              i_expr(),
+              @symcore.int(sign),
+              pauli_symbol_expr(k, li),
+            ])
           }
           k = k + 1
         }
         @symcore.int(0)
       }
-    }
     _ => pauli_product([lhs, rhs])
   }
 }
@@ -255,7 +265,11 @@ pub fn evaluate_pauli_product(arg : @symcore.Expr) -> @symcore.Expr {
           } else {
             pauli_symbol_expr(i, label)
           }
-        _ => @symcore.raw_pow(evaluate_pauli_product(base), evaluate_pauli_product(exp))
+        _ =>
+          @symcore.raw_pow(
+            evaluate_pauli_product(base),
+            evaluate_pauli_product(exp),
+          )
       }
     @symcore.Expr::Add(parts) => @symcore.add(parts.map(evaluate_pauli_product))
     @symcore.Expr::Function("TensorProduct", parts) =>
@@ -267,8 +281,12 @@ pub fn evaluate_pauli_product(arg : @symcore.Expr) -> @symcore.Expr {
       let mut current_basis = 0
       let mut current_coeff = @symcore.int(1)
       let flush_current = () => {
-        if current_label != "" || current_basis != 0 || !is_one_expr(current_coeff) {
-          pauli_flush_segment(ordered, current_basis, current_coeff, current_label)
+        if current_label != "" ||
+          current_basis != 0 ||
+          !is_one_expr(current_coeff) {
+          pauli_flush_segment(
+            ordered, current_basis, current_coeff, current_label,
+          )
           current_label = ""
           current_basis = 0
           current_coeff = @symcore.int(1)

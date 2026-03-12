@@ -5,15 +5,14 @@ fn pauli_port_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.physics_srepr(@symprint.to_string(lhs))
-  guard ours == rhs else {
-    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
-  }
+  guard ours == rhs else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
 }
 
 ///|
 test "physics.paulialgebra: delta and epsilon parity" {
   for case in [(1, 1, 1), (2, 3, 0)] {
-    guard delta(case.0, case.1) == (try! @sympy_physics.paulialgebra_delta(case.0, case.1)) else {
+    guard delta(case.0, case.1) ==
+      (try! @sympy_physics.paulialgebra_delta(case.0, case.1)) else {
       fail("delta parity \{case.0},\{case.1}")
     }
   }
@@ -34,22 +33,41 @@ test "physics.paulialgebra: evaluate parity" {
   let tau1 = try! pauli(1, label="tau")
   let tau2 = try! pauli(2, label="tau")
 
-  for case in [
-    (pauli_mul(sigma1, sigma2), "sigma1*sigma2"),
-    (pauli_mul(sigma3, sigma1), "sigma3*sigma1"),
-    (pauli_mul(sigma1, tau2), "sigma1*tau2"),
-    (pauli_mul(tau1, tau2), "tau1*tau2"),
-    (evaluate_pauli_product(pauli_product([sigma1, sigma2, sigma3])), "sigma1*sigma2*sigma3"),
-    (evaluate_pauli_product(pauli_power(sigma3, 4)), "sigma3**4"),
-    (evaluate_pauli_product(pauli_product([i, sigma2, sigma3])), "I*sigma2*sigma3"),
-    (evaluate_pauli_product(pauli_product([@symcore.int(-4), i, sigma1, sigma2])), "-4*I*sigma1*sigma2"),
-    (
-      evaluate_pauli_product(
-        tensor_product([pauli_product([i, sigma1, sigma2, sigma1, sigma2]), @symcore.int(1)]),
+  for
+    case in [
+      (pauli_mul(sigma1, sigma2), "sigma1*sigma2"),
+      (pauli_mul(sigma3, sigma1), "sigma3*sigma1"),
+      (pauli_mul(sigma1, tau2), "sigma1*tau2"),
+      (pauli_mul(tau1, tau2), "tau1*tau2"),
+      (
+        evaluate_pauli_product(pauli_product([sigma1, sigma2, sigma3])),
+        "sigma1*sigma2*sigma3",
       ),
-      "TensorProduct(I*sigma1*sigma2*sigma1*sigma2, 1)",
-    ),
-  ] {
-    pauli_port_assert_expr_equal(case.0, try! @sympy_physics.paulialgebra_evaluate_srepr(case.1), case.1)
+      (evaluate_pauli_product(pauli_power(sigma3, 4)), "sigma3**4"),
+      (
+        evaluate_pauli_product(pauli_product([i, sigma2, sigma3])),
+        "I*sigma2*sigma3",
+      ),
+      (
+        evaluate_pauli_product(
+          pauli_product([@symcore.int(-4), i, sigma1, sigma2]),
+        ),
+        "-4*I*sigma1*sigma2",
+      ),
+      (
+        evaluate_pauli_product(
+          tensor_product([
+            pauli_product([i, sigma1, sigma2, sigma1, sigma2]),
+            @symcore.int(1),
+          ]),
+        ),
+        "TensorProduct(I*sigma1*sigma2*sigma1*sigma2, 1)",
+      ),
+    ] {
+    pauli_port_assert_expr_equal(
+      case.0,
+      try! @sympy_physics.paulialgebra_evaluate_srepr(case.1),
+      case.1,
+    )
   }
 }

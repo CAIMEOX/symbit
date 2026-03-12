@@ -5,9 +5,7 @@ fn medium_port_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.physics_eval_str(@symprint.to_string(lhs))
-  guard ours == rhs else {
-    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
-  }
+  guard ours == rhs else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
 }
 
 ///|
@@ -33,7 +31,11 @@ test "physics.optics.medium: parity" {
     "vacuum n parity",
   )
 
-  let symbolic = try! medium("m2", permittivity=Some(epsilon), permeability=Some(mu))
+  let symbolic = try! medium(
+    "m2",
+    permittivity=Some(epsilon),
+    permeability=Some(mu),
+  )
   try! medium_port_assert_expr_equal(
     try! symbolic.intrinsic_impedance(),
     try! @sympy_physics.optics_medium_property(

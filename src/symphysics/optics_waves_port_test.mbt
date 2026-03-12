@@ -12,7 +12,8 @@ test "physics.optics.waves: parity" {
     try! t_wave(amp2, frequency=Some(freq), phase=phi2),
   )
 
-  guard wave.to_string() == (try! @sympy_physics.optics_waves_eval("TWave(A, f, phi)")) else {
+  guard wave.to_string() ==
+    (try! @sympy_physics.optics_waves_eval("TWave(A, f, phi)")) else {
     fail("twave repr parity")
   }
   waves_assert_expr_equal(
@@ -37,12 +38,16 @@ test "physics.optics.waves: parity" {
   )
   waves_assert_expr_equal(
     sum_wave.amplitude,
-    try! @sympy_physics.optics_waves_eval("(TWave(A1, f, phi1) + TWave(A2, f, phi2)).amplitude"),
+    try! @sympy_physics.optics_waves_eval(
+      "(TWave(A1, f, phi1) + TWave(A2, f, phi2)).amplitude",
+    ),
     "twave add amplitude parity",
   )
   waves_assert_expr_equal(
     sum_wave.phase,
-    try! @sympy_physics.optics_waves_eval("(TWave(A1, f, phi1) + TWave(A2, f, phi2)).phase"),
+    try! @sympy_physics.optics_waves_eval(
+      "(TWave(A1, f, phi1) + TWave(A2, f, phi2)).phase",
+    ),
     "twave add phase parity",
   )
 }

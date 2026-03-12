@@ -12,22 +12,42 @@ test "physics.optics.utils: parity" {
   let c = @symcore.symbol("c")
 
   try! optics_assert_expr_equal(
-    refraction_angle(theta, optics_index_arg(six_fifths), optics_index_arg(three_halves)),
+    refraction_angle(
+      theta,
+      optics_index_arg(six_fifths),
+      optics_index_arg(three_halves),
+    ),
     try! @sympy_physics.optics_utils_eval("refraction_angle(pi/6, 6/5, 3/2)"),
     "refraction_angle parity",
   )
   try! optics_assert_expr_list_equal(
-    fresnel_coefficients(theta, optics_index_arg(one), optics_index_arg(four_thirds)),
+    fresnel_coefficients(
+      theta,
+      optics_index_arg(one),
+      optics_index_arg(four_thirds),
+    ),
     [
-      try! @sympy_physics.optics_utils_eval("fresnel_coefficients(pi/6, 1, 4/3)[0]"),
-      try! @sympy_physics.optics_utils_eval("fresnel_coefficients(pi/6, 1, 4/3)[1]"),
-      try! @sympy_physics.optics_utils_eval("fresnel_coefficients(pi/6, 1, 4/3)[2]"),
-      try! @sympy_physics.optics_utils_eval("fresnel_coefficients(pi/6, 1, 4/3)[3]"),
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(pi/6, 1, 4/3)[0]",
+      ),
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(pi/6, 1, 4/3)[1]",
+      ),
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(pi/6, 1, 4/3)[2]",
+      ),
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(pi/6, 1, 4/3)[3]",
+      ),
     ],
     "fresnel_coefficients parity",
   )
   try! optics_assert_expr_equal(
-    deviation(small_angle, optics_index_arg(six_fifths), optics_index_arg(three_halves)),
+    deviation(
+      small_angle,
+      optics_index_arg(six_fifths),
+      optics_index_arg(three_halves),
+    ),
     try! @sympy_physics.optics_utils_eval("deviation(0.1, 6/5, 3/2)"),
     "deviation parity",
   )
@@ -42,12 +62,24 @@ test "physics.optics.utils: parity" {
     "critical_angle parity",
   )
   try! optics_assert_expr_equal(
-    lens_makers_formula(optics_index_arg(four_thirds), optics_index_arg(one), @symcore.int(10), @symcore.int(-10)),
-    try! @sympy_physics.optics_utils_eval("lens_makers_formula(4/3, 1, 10, -10)"),
+    lens_makers_formula(
+      optics_index_arg(four_thirds),
+      optics_index_arg(one),
+      @symcore.int(10),
+      @symcore.int(-10),
+    ),
+    try! @sympy_physics.optics_utils_eval(
+      "lens_makers_formula(4/3, 1, 10, -10)",
+    ),
     "lens_makers_formula parity",
   )
   try! optics_assert_expr_equal(
-    lens_makers_formula(optics_index_arg(four_thirds), optics_index_arg(one), @symcore.int(10), test_oo_expr()),
+    lens_makers_formula(
+      optics_index_arg(four_thirds),
+      optics_index_arg(one),
+      @symcore.int(10),
+      test_oo_expr(),
+    ),
     try! @sympy_physics.optics_utils_eval("lens_makers_formula(4/3, 1, 10, oo)"),
     "lens_makers_formula plano parity",
   )

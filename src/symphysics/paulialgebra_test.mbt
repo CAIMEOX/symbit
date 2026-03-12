@@ -10,9 +10,7 @@ fn pauli_assert_expr_equal(
     Ok(value) => value
     Err(err) => fail("\{context}: expr_equal error: \{err}")
   }
-  guard ok else {
-    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
-  }
+  guard ok else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
 }
 
 ///|
@@ -32,10 +30,22 @@ test "physics.paulialgebra: core multiplication rules" {
   let tau1 = try! pauli(1, label="tau")
   let tau2 = try! pauli(2, label="tau")
 
-  try! pauli_assert_expr_equal(pauli_mul(sigma1, sigma2), "I*sigma3", "sigma1*sigma2")
-  try! pauli_assert_expr_equal(pauli_mul(sigma3, sigma1), "I*sigma2", "sigma3*sigma1")
+  try! pauli_assert_expr_equal(
+    pauli_mul(sigma1, sigma2),
+    "I*sigma3",
+    "sigma1*sigma2",
+  )
+  try! pauli_assert_expr_equal(
+    pauli_mul(sigma3, sigma1),
+    "I*sigma2",
+    "sigma3*sigma1",
+  )
   try! pauli_assert_expr_equal(pauli_mul(sigma1, sigma1), "1", "sigma1*sigma1")
-  try! pauli_assert_expr_equal(pauli_mul(sigma1, tau2), "sigma1*tau2", "sigma1*tau2")
+  try! pauli_assert_expr_equal(
+    pauli_mul(sigma1, tau2),
+    "sigma1*tau2",
+    "sigma1*tau2",
+  )
   try! pauli_assert_expr_equal(pauli_mul(tau1, tau2), "I*tau3", "tau1*tau2")
 }
 

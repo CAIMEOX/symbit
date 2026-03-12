@@ -67,17 +67,26 @@ pub fn fresnel_coefficients(
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
 ) -> Array[@symcore.Expr] {
-  let angle_of_refraction = refraction_angle(angle_of_incidence, medium1, medium2)
+  let angle_of_refraction = refraction_angle(
+    angle_of_incidence, medium1, medium2,
+  )
   let sum_angle = angle_of_incidence + angle_of_refraction
   let diff_angle = angle_of_incidence - angle_of_refraction
-  let rs = expr_div(@symcore.int(-1) * @symelem.sin(diff_angle), @symelem.sin(sum_angle))
+  let rs = expr_div(
+    @symcore.int(-1) * @symelem.sin(diff_angle),
+    @symelem.sin(sum_angle),
+  )
   let rp = expr_div(@symelem.tan(diff_angle), @symelem.tan(sum_angle))
   let ts = expr_div(
-    @symcore.int(2) * @symelem.sin(angle_of_refraction) * @symelem.cos(angle_of_incidence),
+    @symcore.int(2) *
+    @symelem.sin(angle_of_refraction) *
+    @symelem.cos(angle_of_incidence),
     @symelem.sin(sum_angle),
   )
   let tp = expr_div(
-    @symcore.int(2) * @symelem.sin(angle_of_refraction) * @symelem.cos(angle_of_incidence),
+    @symcore.int(2) *
+    @symelem.sin(angle_of_refraction) *
+    @symelem.cos(angle_of_incidence),
     @symelem.sin(sum_angle) * @symelem.cos(diff_angle),
   )
   [rp, rs, tp, ts]
@@ -112,7 +121,9 @@ pub fn critical_angle(
   let n2 = refractive_index_of_medium(medium2)
   match (expr_number_value(n1), expr_number_value(n2)) {
     (Some(lhs), Some(rhs)) if rhs.compare(lhs) > 0 =>
-      raise PhysicsError::ValueError("Total internal reflection impossible for n1 < n2")
+      raise PhysicsError::ValueError(
+        "Total internal reflection impossible for n1 < n2",
+      )
     _ => ()
   }
   @symelem.asin(expr_div(n2, n1))
@@ -129,8 +140,7 @@ pub fn lens_makers_formula(
   let nl = refractive_index_of_medium(n_lens)
   let ns = refractive_index_of_medium(n_surr)
   let contrast = expr_div(nl - ns, ns)
-  let curvature =
-    reciprocal_expr(r1) -
+  let curvature = reciprocal_expr(r1) -
     reciprocal_expr(r2) +
     expr_div((nl - ns) * d, nl * r1 * r2)
   expr_div(@symcore.int(1), contrast * curvature)
