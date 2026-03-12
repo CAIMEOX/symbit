@@ -343,7 +343,11 @@ pub fn epath_apply(path : String, expr : Expr, f : (Expr) -> Expr) -> Expr {
 
 ///|
 /// Apply a transformation to nodes at a specific tree depth.
-pub fn apply_at_level(expr : Expr, f : (Expr) -> Expr, level? : Int = 0) -> Expr {
+pub fn apply_at_level(
+  expr : Expr,
+  f : (Expr) -> Expr,
+  level? : Int = 0,
+) -> Expr {
   @symsimplify.apply_at_level(expr, f, level~)
 }
 

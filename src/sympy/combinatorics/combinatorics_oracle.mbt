@@ -1270,10 +1270,9 @@ pub fn group_numbers_groups_count_equiv(
   ours_ok : Bool,
   ours_value : String,
 ) -> Bool raise {
-  let res = sympy_call(
-    "sympy.combinatorics.group_numbers.groups_count",
-    [OracleArg::Int(n)],
-  )
+  let res = sympy_call("sympy.combinatorics.group_numbers.groups_count", [
+    OracleArg::Int(n),
+  ])
   match res {
     Some(obj) => ours_ok && py_str_enum(obj) == ours_value
     None => !ours_ok
