@@ -399,6 +399,8 @@ pub fn represent_pauli_operator(@symcore.Expr) -> @symphysics.ExplicitMatrix rai
 
 pub fn represent_pauli_state(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 
+pub fn represent_spin_coupled_state(@symcore.Expr, basis? : @symcore.Expr?, evaluate? : Bool) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
 pub fn represent_spin_jz_operator(@symcore.Expr, @symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 
 pub fn represent_spin_jz_state(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError

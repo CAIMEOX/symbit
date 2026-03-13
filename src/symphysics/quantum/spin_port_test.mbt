@@ -261,4 +261,87 @@ test "physics.quantum.spin: coupled Jz parity" {
     ),
     "symbolic uncouple parity",
   )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      jx_ket_coupled(one, one, [half, half]).as_expr(),
+      basis=Some(jz()),
+    ),
+    try! @sympy_physics.quantum_represent_matrix(
+      "JxKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))", "Jz", 4,
+    ),
+    4,
+    1,
+    "represent JxKetCoupled parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      jz_ket_coupled(one, zero, [half, half]).as_expr(),
+      basis=Some(jx()),
+    ),
+    try! @sympy_physics.quantum_represent_matrix(
+      "JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))", "Jx", 4,
+    ),
+    4,
+    1,
+    "represent JzKetCoupled in Jx basis parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + JzKetCoupled(1, -1, (Rational(1, 2), Rational(1, 2)))/2",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        jx_ket_coupled(one, one, [half, half]).rewrite(jz()),
+      ),
+    ),
+    "rewrite JxKetCoupled parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_str(
+      "Jplus*JxKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        qapply(
+          @symcore.raw_mul([
+            jplus(),
+            jx_ket_coupled(one, one, [half, half]).as_expr(),
+          ]),
+        ),
+      ),
+    ),
+    "Jplus on JxKetCoupled parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_str(
+      "Jplus*JyKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        qapply(
+          @symcore.raw_mul([
+            jplus(),
+            jy_ket_coupled(one, one, [half, half]).as_expr(),
+          ]),
+        ),
+      ),
+    ),
+    "Jplus on JyKetCoupled parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_qapply_str(
+      "Rotation(0, 0, 0)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        qapply(
+          @symcore.raw_mul([
+            rotation(@symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
+            jz_ket_coupled(one, zero, [half, half]).as_expr(),
+          ]),
+        ),
+      ),
+    ),
+    "identity rotation on JzKetCoupled parity",
+  )
 }

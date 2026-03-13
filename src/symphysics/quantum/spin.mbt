@@ -1414,11 +1414,7 @@ pub fn spin_apply_operator_to_ket(
         )
         if coeff != @symcore.int(0) {
           terms.push(
-            coeff *
-            @symcore.raw_function(
-              spin_state_expr_name(state.basis_name, false),
-              [state.j, mp],
-            ),
+            coeff * spin_state_with_basis(state, state.basis_name, mp).as_expr(),
           )
         }
       }
@@ -1644,6 +1640,123 @@ pub fn represent_spin_state(
     }
     None =>
       raise @symphysics.PhysicsError::ValueError("Expected a spin basis state")
+  }
+}
+
+///|
+fn spin_coupling_orders(
+  coupling : Array[SpinCoupling],
+) -> Array[SpinCoupleOrder] {
+  let orders : Array[SpinCoupleOrder] = []
+  for item in coupling {
+    orders.push(SpinCoupleOrder::{
+      left_index: item.left_index,
+      right_index: item.right_index,
+    })
+  }
+  orders
+}
+
+///|
+fn spin_enumerate_coupling_schemes(
+  jn : Array[@symcore.Expr],
+  coupling : Array[SpinCoupling],
+) -> Array[Array[SpinCoupling]] raise @symphysics.PhysicsError {
+  let orders = spin_coupling_orders(coupling)
+  let resolved = try! spin_resolve_orders(jn.length(), orders)
+  let results : Array[Array[SpinCoupling]] = []
+
+  fn go(
+    step : Int,
+    current_j : Array[@symcore.Expr],
+    current : Array[SpinCoupling],
+  ) -> Unit raise @symphysics.PhysicsError {
+    if step >= resolved.length() {
+      results.push(current.copy())
+      return
+    }
+    let pair = resolved[step]
+    let order = orders[step]
+    let left_index = pair.left_ns[0]
+    let right_index = pair.right_ns[0]
+    let j1 = current_j[left_index - 1]
+    let j2 = current_j[right_index - 1]
+    let merged = spin_union_indices(pair.left_ns, pair.right_ns)
+    for j3 in (try! spin_allowed_j_values(j1, j2)) {
+      let updated = current_j.copy()
+      updated[merged[0] - 1] = j3
+      let next = current.copy()
+      next.push(SpinCoupling::{
+        left_index: order.left_index,
+        right_index: order.right_index,
+        j: j3,
+      })
+      try! go(step + 1, updated, next)
+    }
+  }
+
+  try! go(0, jn.copy(), [])
+  results
+}
+
+///|
+pub fn represent_spin_coupled_state(
+  state_expr : @symcore.Expr,
+  basis? : @symcore.Expr? = None,
+  evaluate? : Bool = true,
+) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+  let state = match spin_state_from_expr(state_expr) {
+    Some(value) if value.is_coupled() => value
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "Expected a coupled spin basis state",
+      )
+  }
+  guard spin_numeric_args(state.jn) && spin_numeric_args([state.j]) else {
+    raise @symphysics.PhysicsError::ValueError(
+      "Only numeric coupled spin representations are supported",
+    )
+  }
+  let target_basis = match spin_basis_name_from_expr(basis) {
+    Some(name) => name
+    None => state.basis_name
+  }
+  let sector = try! represent_spin_state(
+    state_expr,
+    basis=Some(spin_basis_operator_expr(target_basis)),
+    evaluate~,
+  )
+  let schemes = try! spin_enumerate_coupling_schemes(state.jn, state.coupling)
+  if state.is_bra {
+    let row : Array[@symcore.Expr] = []
+    for scheme in schemes {
+      let block_size = (try! m_values(scheme[scheme.length() - 1].j)).0
+      if scheme == state.coupling {
+        for col in 0..<block_size {
+          row.push(sector.get(0, col))
+        }
+      } else {
+        for _ in 0..<block_size {
+          row.push(@symcore.int(0))
+        }
+      }
+    }
+    @symphysics.explicit_matrix_from_rows([row])
+  } else {
+    let rows : Array[Array[@symcore.Expr]] = []
+    for scheme in schemes {
+      let block_size = (try! m_values(scheme[scheme.length() - 1].j)).0
+      if scheme == state.coupling {
+        for row in 0..<block_size {
+          rows.push([sector.get(row, 0)])
+        }
+      } else {
+        for _ in 0..<block_size {
+          rows.push([@symcore.int(0)])
+        }
+      }
+    }
+    @symphysics.explicit_matrix_from_rows(rows)
   }
 }
 

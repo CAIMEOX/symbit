@@ -284,14 +284,11 @@ pub fn represent(
                                                         ) {
                                                         Some(state) =>
                                                           if state.is_coupled() {
-                                                            represent(
-                                                              try! uncouple(
+                                                            MatrixScalarValue::Matrix(
+                                                              try! represent_spin_coupled_state(
                                                                 expr,
+                                                                basis~,
                                                               ),
-                                                              basis~,
-                                                              nqubits~,
-                                                              spin_j~,
-                                                              ndim~,
                                                             )
                                                           } else {
                                                             MatrixScalarValue::Matrix(
