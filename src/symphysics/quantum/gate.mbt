@@ -134,6 +134,59 @@ pub fn cphase(control : Int, target : Int) -> @symcore.Expr {
 }
 
 ///|
+pub fn cgate_decompose(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+      match (gate_tuple_ints(args[0]), gate_from_expr(args[1])) {
+        (Some(controls), Some(gate)) if controls.length() == 1 &&
+          gate.args.length() == 1 =>
+          match gate.kind {
+            GateKind::Y =>
+              @symcore.raw_mul([
+                phase_gate(gate.args[0]).as_expr(),
+                cnot_gate(controls[0], gate.args[0]).as_expr(),
+                phase_gate(gate.args[0]).as_expr(),
+                z_gate(gate.args[0]).as_expr(),
+              ])
+            GateKind::Z =>
+              @symcore.raw_mul([
+                hadamard_gate(gate.args[0]).as_expr(),
+                cnot_gate(controls[0], gate.args[0]).as_expr(),
+                hadamard_gate(gate.args[0]).as_expr(),
+              ])
+            _ => expr
+          }
+        _ => expr
+      }
+    _ => expr
+  }
+}
+
+///|
+pub fn swap_gate_decompose(expr : @symcore.Expr) -> @symcore.Expr {
+  match gate_from_expr(expr) {
+    Some(gate) if gate.kind == GateKind::Swap => {
+      let left = gate.args[0]
+      let right = gate.args[1]
+      @symcore.raw_mul([
+        cnot_gate(left, right).as_expr(),
+        cnot_gate(right, left).as_expr(),
+        cnot_gate(left, right).as_expr(),
+      ])
+    }
+    _ => expr
+  }
+}
+
+///|
+pub fn gate_decompose(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function("CGate", _) => cgate_decompose(expr)
+    _ => swap_gate_decompose(expr)
+  }
+}
+
+///|
 fn gate_matrix_expr(
   matrix : @symphysics.ExplicitMatrix,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
@@ -470,18 +523,17 @@ fn gate_apply_custom(
     )
   }
   let mut input_col = 0
-  for target in targets {
-    input_col = input_col * 2 + (try! q.bit(target))
+  for idx in 0..<targets.length() {
+    input_col += (1 << idx) * (try! q.bit(targets[idx]))
   }
   let terms : Array[@symcore.Expr] = []
   for row in 0..<dim {
     let coeff = matrix.get(row, input_col)
     if coeff != @symcore.int(0) {
       let bits = q.bits.copy()
-      let output_bits = try! int_to_bits(row, targets.length())
       for idx in 0..<targets.length() {
         let pos = bits.length() - 1 - targets[idx]
-        bits[pos] = output_bits[idx]
+        bits[pos] = (row >> idx) & 1
       }
       let next_q = try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)
       if coeff == @symcore.int(1) {

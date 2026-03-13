@@ -216,6 +216,88 @@ test "physics.quantum.gate: ugate and controlled ugate" {
     4,
     "X + UGate matrix addition",
   )
+
+  let u2 = try! u_gate(
+    [1, 0],
+    try! @symphysics.explicit_matrix_from_rows([
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(-1), @symcore.int(0)],
+    ]),
+  )
+  inspect(
+    @symprint.to_string(
+      qapply(@symcore.raw_mul([u2, (try! qubit("00")).as_expr()])),
+    ),
+    content="Qubit(1, 0)",
+  )
+  inspect(
+    @symprint.to_string(
+      qapply(@symcore.raw_mul([u2, (try! qubit("11")).as_expr()])),
+    ),
+    content="Qubit(0, 1)",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(u2, nqubits=2),
+    [
+      "0", "0", "1", "0", "0", "0", "0", "1", "1", "0", "0", "0", "0", "-1", "0",
+      "0",
+    ],
+    4,
+    4,
+    "two-target UGate matrix",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(cgate([2], u2), nqubits=3),
+    [
+      "1", "0", "0", "0", "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0",
+      "0", "0", "0", "1", "0", "0", "0", "0", "0", "0", "0", "0", "1", "0", "0",
+      "0", "0", "0", "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0", "0",
+      "0", "0", "1", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0", "0", "0",
+      "0", "-1", "0", "0",
+    ],
+    8,
+    8,
+    "controlled two-target UGate matrix",
+  )
+}
+
+///|
+test "physics.quantum.gate: decomposition helpers" {
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      gate_decompose(cgate([1], y_gate(0).as_expr())),
+      nqubits=2,
+    ),
+    try! matrix_flat_strings(
+      try! represent_matrix(cgate([1], y_gate(0).as_expr()), nqubits=2),
+    ),
+    4,
+    4,
+    "CY decomposition",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      gate_decompose(cgate([0], z_gate(1).as_expr())),
+      nqubits=2,
+    ),
+    try! matrix_flat_strings(
+      try! represent_matrix(cgate([0], z_gate(1).as_expr()), nqubits=2),
+    ),
+    4,
+    4,
+    "CZ decomposition",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(gate_decompose(swap_gate(1, 0).as_expr()), nqubits=2),
+    try! matrix_flat_strings(
+      try! represent_matrix(swap_gate(1, 0).as_expr(), nqubits=2),
+    ),
+    4,
+    4,
+    "SWAP decomposition",
+  )
 }
 
 ///|

@@ -22,6 +22,30 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
     "TensorProduct(Operator(A), Operator(B)) + TensorProduct(Operator(A), Operator(C)) + TensorProduct(Operator(B), Operator(B)) + TensorProduct(Operator(B), Operator(C))",
     "tensorproduct additive expansion",
   )
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  try! quantum_test_assert_expr_equal(
+    tensor_product_simp(
+      @symcore.raw_mul([
+        @symcore.raw_pow(tensor_product([a, b]).as_expr(), @symcore.int(2)),
+        tensor_product([c, operator([@symcore.symbol("D")]).as_expr()]).as_expr(),
+        x,
+      ]),
+    ),
+    "x*TensorProduct(Operator(A)**2*Operator(C), Operator(B)**2*Operator(D))",
+    "tensorproduct multiplicative simplification",
+  )
+  try! quantum_test_assert_expr_equal(
+    tensor_product_simp(
+      tensor_product([a, b]).as_expr() -
+      @symcore.raw_pow(
+        tensor_product([c, operator([y]).as_expr()]).as_expr(),
+        y,
+      ),
+    ),
+    "TensorProduct(Operator(A), Operator(B)) - TensorProduct(Operator(C)**y, Operator(y)**y)",
+    "tensorproduct additive simp recursion",
+  )
 
   let m1 = @symphysics.explicit_matrix_from_ints([[1, 2], [3, 4]])
   let m2 = @symphysics.explicit_matrix_from_ints([[1, 0], [0, 1]])

@@ -419,6 +419,50 @@ fn entropy_from_diagonal_entries(
 }
 
 ///|
+fn entropy_term(entry : @symcore.Expr) -> @symcore.Expr {
+  if entry == @symcore.int(0) {
+    @symcore.int(0)
+  } else {
+    @symcore.int(-1) * entry * expr_log(entry)
+  }
+}
+
+///|
+fn matrix_is_2x2(matrix : @symphysics.ExplicitMatrix) -> Bool {
+  matrix.height() == 2 && matrix.width() == 2
+}
+
+///|
+fn matrix_det_2x2(
+  matrix : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
+  guard matrix_is_2x2(matrix) else {
+    raise @symphysics.PhysicsError::ShapeError(
+      "2x2 determinant expects a 2x2 matrix",
+    )
+  }
+  matrix.get(0, 0) * matrix.get(1, 1) - matrix.get(0, 1) * matrix.get(1, 0)
+}
+
+///|
+fn density_matrix_eigenvalues_2x2(
+  matrix : @symphysics.ExplicitMatrix,
+) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
+  let trace_value = try! matrix_trace(matrix)
+  let det_value = try! matrix_det_2x2(matrix)
+  let discr = expr_sqrt(trace_value * trace_value - @symcore.int(4) * det_value)
+  let half = try! @symcore.rational_from_ints(1, 2)
+  [half * (trace_value + discr), half * (trace_value - discr)]
+}
+
+///|
+fn entropy_from_eigenvalues(
+  eigenvalues : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  quantum_add_from_args_preserve(eigenvalues.map(entry => entropy_term(entry)))
+}
+
+///|
 fn matrix_is_rank_one_projector(matrix : @symphysics.ExplicitMatrix) -> Bool {
   guard matrix_is_square(matrix) else { return false }
   let trace_value = try! matrix_trace(matrix)
@@ -469,9 +513,11 @@ pub fn entropy(
     entropy_from_diagonal_entries(try! matrix_diagonal_entries(matrix))
   } else if matrix_is_rank_one_projector(matrix) {
     @symcore.int(0)
+  } else if matrix_is_2x2(matrix) {
+    entropy_from_eigenvalues(try! density_matrix_eigenvalues_2x2(matrix))
   } else {
     raise @symphysics.PhysicsError::ValueError(
-      "entropy currently expects a diagonal density matrix or a rank-one projector",
+      "entropy currently expects a diagonal density matrix, a rank-one projector, or a 2x2 density matrix",
     )
   }
 }
@@ -511,6 +557,19 @@ fn projector_overlap(
 }
 
 ///|
+fn fidelity_2x2(
+  left : @symphysics.ExplicitMatrix,
+  right : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr {
+  let product = try! left.mul(right)
+  expr_sqrt(
+    try! (matrix_trace(product) +
+    @symcore.int(2) *
+    expr_sqrt((try! matrix_det_2x2(left)) * (try! matrix_det_2x2(right)))),
+  )
+}
+
+///|
 pub fn fidelity(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
@@ -536,9 +595,11 @@ pub fn fidelity(
   } else if matrix_is_rank_one_projector(left) ||
     matrix_is_rank_one_projector(right) {
     projector_overlap(left, right)
+  } else if matrix_is_2x2(left) && matrix_is_2x2(right) {
+    fidelity_2x2(left, right)
   } else {
     raise @symphysics.PhysicsError::ValueError(
-      "fidelity currently expects diagonal density matrices or at least one rank-one projector",
+      "fidelity currently expects diagonal density matrices, at least one rank-one projector, or 2x2 density matrices",
     )
   }
 }

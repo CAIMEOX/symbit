@@ -85,6 +85,35 @@ test "physics.quantum.density: matrix entropy and fidelity" {
     "sqrt(2)/2",
     "density fidelity pure-vs-mixed",
   )
+
+  let q0 = (try! qubit("0")).as_expr()
+  let q1 = (try! qubit("1")).as_expr()
+  let plus = quantum_test_frac(1, 2) *
+    @symcore.raw_function("sqrt", [@symcore.int(2)]) *
+    (q0 + q1)
+  let rho_left = density([(plus, half), (q0, half)])
+  let rho_right = density([(plus, half), (q1, half)])
+  try! quantum_test_assert_expr_equal(
+    try! entropy(rho_left.as_expr(), nqubits=1),
+    "-(sqrt(2)/4 + Rational(1, 2))*log(sqrt(2)/4 + Rational(1, 2)) - (Rational(1, 2) - sqrt(2)/4)*log(Rational(1, 2) - sqrt(2)/4)",
+    "density general 2x2 entropy",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
+    "sqrt(3)/2",
+    "density general 2x2 fidelity",
+  )
+  let fidelity_lr = try! fidelity(
+    rho_left.as_expr(),
+    rho_right.as_expr(),
+    nqubits=1,
+  )
+  let fidelity_rl = try! fidelity(
+    rho_right.as_expr(),
+    rho_left.as_expr(),
+    nqubits=1,
+  )
+  guard fidelity_lr == fidelity_rl else { fail("density fidelity symmetry") }
 }
 
 ///|

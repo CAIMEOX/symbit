@@ -43,4 +43,53 @@ test "physics.quantum.tensorproduct: parity" {
     ),
     "tensorproduct additive expansion parity",
   )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        tensor_product_simp(
+          @symcore.raw_mul([
+            @symcore.symbol("x"),
+            @symcore.raw_pow(
+              tensor_product([
+                operator([@symcore.symbol("A")]).as_expr(),
+                operator([@symcore.symbol("B")]).as_expr(),
+              ]).as_expr(),
+              @symcore.int(2),
+            ),
+            tensor_product([
+              operator([@symcore.symbol("C")]).as_expr(),
+              operator([@symcore.symbol("D")]).as_expr(),
+            ]).as_expr(),
+          ]),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "tensor_product_simp(x*TensorProduct(Operator(A), Operator(B))**2*TensorProduct(Operator(C), Operator(D)))",
+    ),
+    "tensorproduct simp mul/pow parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        tensor_product_simp(
+          tensor_product([
+            operator([@symcore.symbol("A")]).as_expr(),
+            operator([@symcore.symbol("B")]).as_expr(),
+          ]).as_expr() -
+          @symcore.raw_pow(
+            tensor_product([
+              operator([@symcore.symbol("C")]).as_expr(),
+              operator([@symcore.symbol("D")]).as_expr(),
+            ]).as_expr(),
+            @symcore.symbol("y"),
+          ),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "TensorProduct(Operator(A), Operator(B)) - TensorProduct(Operator(C)**y, Operator(D)**y)",
+    ),
+    "tensorproduct simp add parity",
+  )
 }

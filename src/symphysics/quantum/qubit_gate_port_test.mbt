@@ -182,6 +182,98 @@ test "physics.quantum.gate: ugate parity" {
     4,
     "X + UGate matrix parity",
   )
+
+  let u2 = try! u_gate(
+    [1, 0],
+    try! @symphysics.explicit_matrix_from_rows([
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(-1), @symcore.int(0)],
+    ]),
+  )
+  let cu2 = cgate([2], u2)
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([u2, (try! qubit("00")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]]))*Qubit(0, 0)",
+    ),
+    "two-target UGate qapply parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([u2, (try! qubit("11")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]]))*Qubit(1, 1)",
+    ),
+    "two-target UGate qapply parity on |11>",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([cu2, (try! qubit("100")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "CGate((2,), UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]])))*Qubit(1, 0, 0)",
+    ),
+    "controlled two-target UGate qapply parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([cu2, (try! qubit("000")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "CGate((2,), UGate((1, 0), Matrix([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1], [0, 0, -1, 0]])))*Qubit(0, 0, 0)",
+    ),
+    "controlled two-target UGate inactive parity",
+  )
+}
+
+///|
+test "physics.quantum.gate: decomposition parity" {
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      gate_decompose(cgate([1], y_gate(0).as_expr())),
+      nqubits=2,
+    ),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(CGate((1,), YGate(0)).decompose(), nqubits=2)",
+    ),
+    4,
+    4,
+    "CY decompose parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      gate_decompose(cgate([0], z_gate(1).as_expr())),
+      nqubits=2,
+    ),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(CGate((0,), ZGate(1)).decompose(), nqubits=2)",
+    ),
+    4,
+    4,
+    "CZ decompose parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(gate_decompose(swap_gate(1, 0).as_expr()), nqubits=2),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(SwapGate(1, 0).decompose(), nqubits=2)",
+    ),
+    4,
+    4,
+    "SWAP decompose parity",
+  )
 }
 
 ///|

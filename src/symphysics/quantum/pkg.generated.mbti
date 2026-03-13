@@ -49,6 +49,8 @@ pub fn cg_simp(@symcore.Expr) -> @symcore.Expr
 
 pub fn cgate(Array[Int], @symcore.Expr) -> @symcore.Expr
 
+pub fn cgate_decompose(@symcore.Expr) -> @symcore.Expr
+
 pub fn circuit_factors(@symcore.Expr) -> Array[@symcore.Expr]
 
 pub fn cmod(Int, Int, Int) -> @symcore.Expr raise @symphysics.PhysicsError
@@ -114,6 +116,8 @@ pub fn flip_index(Int, Int) -> Int
 pub fn fock_space() -> HilbertSpace
 
 pub fn gate_apply_to_qubit_expr(@symcore.Expr, @symcore.Expr) -> @symcore.Expr? raise @symphysics.PhysicsError
+
+pub fn gate_decompose(@symcore.Expr) -> @symcore.Expr
 
 pub fn gate_from_expr(@symcore.Expr) -> GateExpr?
 
@@ -489,6 +493,8 @@ pub fn superposition_basis(Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn swap_gate(Int, Int) -> GateExpr
 
+pub fn swap_gate_decompose(@symcore.Expr) -> @symcore.Expr
+
 pub fn t_gate(Int) -> GateExpr
 
 pub fn tensor_power(HilbertSpace, @symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError
@@ -498,6 +504,8 @@ pub fn tensor_product(Array[@symcore.Expr]) -> TensorProductExpr
 pub fn tensor_product_expand(@symcore.Expr) -> @symcore.Expr
 
 pub fn tensor_product_matrix(Array[@symphysics.ExplicitMatrix]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn tensor_product_simp(@symcore.Expr) -> @symcore.Expr
 
 pub fn tensor_product_space(Array[HilbertSpace]) -> HilbertSpace raise @symphysics.PhysicsError
 

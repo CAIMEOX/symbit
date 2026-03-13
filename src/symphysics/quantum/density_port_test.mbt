@@ -93,10 +93,29 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
       ),
     ),
     try! @sympy_physics.quantum_fidelity_str(
-      "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))",
-      "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
+      "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))", "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),
     "density pure-vs-mixed fidelity parity",
+  )
+
+  let q0 = (try! qubit("0")).as_expr()
+  let q1 = (try! qubit("1")).as_expr()
+  let plus = quantum_test_frac(1, 2) *
+    @symcore.raw_function("sqrt", [@symcore.int(2)]) *
+    (q0 + q1)
+  let rho_left = density([(plus, half), (q0, half)])
+  let rho_right = density([(plus, half), (q1, half)])
+  let rho_left_txt = "Density((sqrt(2)*(Qubit(0) + Qubit(1))/2, Rational(1, 2)), (Qubit(0), Rational(1, 2)))"
+  let rho_right_txt = "Density((sqrt(2)*(Qubit(0) + Qubit(1))/2, Rational(1, 2)), (Qubit(1), Rational(1, 2)))"
+  try! quantum_test_assert_expr_equal(
+    try! entropy(rho_left.as_expr(), nqubits=1),
+    try! @sympy_physics.quantum_entropy_str(rho_left_txt),
+    "density general 2x2 entropy parity",
+  )
+  try! quantum_test_assert_expr_equal(
+    try! fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
+    try! @sympy_physics.quantum_fidelity_str(rho_left_txt, rho_right_txt),
+    "density general 2x2 fidelity parity",
   )
 }
 
