@@ -15,6 +15,43 @@ fn quantum_trace_raw(
 }
 
 ///|
+fn trace_indices_from_expr(expr : @symcore.Expr) -> Array[Int]? {
+  match expr {
+    @symcore.Expr::Function("Tuple", args) => {
+      let out : Array[Int] = []
+      for arg in args {
+        match quantum_integer_value(arg) {
+          Some(idx) => out.push(idx)
+          None => return None
+        }
+      }
+      Some(out)
+    }
+    _ =>
+      match quantum_integer_value(expr) {
+        Some(idx) => Some([idx])
+        None => None
+      }
+  }
+}
+
+///|
+fn trace_tensor_product_items(
+  items : Array[@symcore.Expr],
+  indices : Array[Int],
+) -> @symcore.Expr {
+  let factors : Array[@symcore.Expr] = []
+  for idx in 0..<items.length() {
+    if indices.is_empty() || indices.contains(idx) {
+      factors.push(tr_doit(tr(items[idx])))
+    } else {
+      factors.push(items[idx])
+    }
+  }
+  quantum_mul_from_args_preserve(factors)
+}
+
+///|
 pub fn tr(expr : @symcore.Expr, indices? : Array[Int] = []) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Add(args) => @symcore.add(args.map(arg => tr(arg, indices~)))
@@ -43,19 +80,26 @@ pub fn tr(expr : @symcore.Expr, indices? : Array[Int] = []) -> @symcore.Expr {
 ///|
 pub fn tr_doit(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function("Tr", args) if args.length() >= 1 =>
+    @symcore.Expr::Add(args) =>
+      quantum_add_from_args_preserve(args.map(arg => tr_doit(arg)))
+    @symcore.Expr::Mul(args) =>
+      quantum_mul_from_args_preserve(args.map(arg => tr_doit(arg)))
+    @symcore.Expr::Function("Tr", args) if args.length() >= 1 => {
+      let indices = if args.length() >= 2 {
+        trace_indices_from_expr(args[1]).unwrap_or([])
+      } else {
+        []
+      }
       match args[0] {
-        @symcore.Expr::Function("OuterProduct", inner) if inner.length() == 2 =>
-          inner_product(inner[1], inner[0])
-        @symcore.Expr::Function("TensorProduct", items) if args.length() == 1 => {
-          let factors : Array[@symcore.Expr] = []
-          for item in items {
-            factors.push(tr_doit(tr(item)))
-          }
-          quantum_mul_from_args_preserve(factors)
-        }
+        _ if density_from_expr(args[0]) is Some(density_expr) =>
+          density_expr.trace(indices~)
+        @symcore.Expr::Function("OuterProduct", inner) if inner.length() == 2 &&
+          indices.is_empty() => inner_product(inner[1], inner[0])
+        @symcore.Expr::Function("TensorProduct", items) =>
+          trace_tensor_product_items(items, indices)
         _ => expr
       }
+    }
     _ => expr
   }
 }

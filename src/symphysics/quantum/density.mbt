@@ -195,8 +195,11 @@ pub fn DensityExpr::doit(self : DensityExpr) -> @symcore.Expr {
 }
 
 ///|
-pub fn DensityExpr::trace(self : DensityExpr) -> @symcore.Expr {
-  tr_doit(tr(self.doit()))
+pub fn DensityExpr::trace(
+  self : DensityExpr,
+  indices? : Array[Int] = [],
+) -> @symcore.Expr {
+  tr_doit(tr(self.doit(), indices~))
 }
 
 ///|
@@ -530,9 +533,12 @@ pub fn fidelity(
   } else if matrix_is_rank_one_projector(left) &&
     matrix_is_rank_one_projector(right) {
     projector_overlap(left, right)
+  } else if matrix_is_rank_one_projector(left) ||
+    matrix_is_rank_one_projector(right) {
+    projector_overlap(left, right)
   } else {
     raise @symphysics.PhysicsError::ValueError(
-      "fidelity currently expects diagonal density matrices or rank-one projectors",
+      "fidelity currently expects diagonal density matrices or at least one rank-one projector",
     )
   }
 }

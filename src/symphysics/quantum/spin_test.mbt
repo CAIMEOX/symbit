@@ -218,6 +218,86 @@ test "physics.quantum.spin: local coupled Jz states" {
     ),
     "couple spin-half product",
   )
+  let j = @symcore.symbol("j")
+  let m = @symcore.symbol("m")
+  let j1v = @symcore.symbol("j1")
+  let j2v = @symcore.symbol("j2")
+  let j3v = @symcore.symbol("j3")
+  let j4v = @symcore.symbol("j4")
+  let m1 = @symcore.symbol("m1")
+  let m2 = @symcore.symbol("m2")
+  let m3 = @symcore.symbol("m3")
+  let m4 = @symcore.symbol("m4")
+  let j13 = @symcore.symbol("j13")
+  let j24 = @symcore.symbol("j24")
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        couple(
+          tensor_product([
+            jz_ket(j1v, m1).as_expr(),
+            jz_ket(j2v, m2).as_expr(),
+            jz_ket(j3v, m3).as_expr(),
+          ]).as_expr(),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "Sum(CG(j1, m1, j2, m2, j12, m1 + m2)*CG(j12, m1 + m2, j3, m3, j, m1 + m2 + m3)*JzKetCoupled(j, m1 + m2 + m3, (j1, j2, j3), ((1, 2, j12), (1, 3, j))), (j12, m1 + m2, j1 + j2), (j, m1 + m2 + m3, j12 + j3))",
+    ),
+    "symbolic three-spin couple",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        couple(
+          tensor_product([
+            jz_ket(j1v, m1).as_expr(),
+            jz_ket(j2v, m2).as_expr(),
+            jz_ket(j3v, m3).as_expr(),
+            jz_ket(j4v, m4).as_expr(),
+          ]).as_expr(),
+          orders=[
+            spin_couple_order(1, 3),
+            spin_couple_order(2, 4),
+            spin_couple_order(1, 2),
+          ],
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "Sum(CG(j1, m1, j3, m3, j13, m1 + m3)*CG(j2, m2, j4, m4, j24, m2 + m4)*CG(j13, m1 + m3, j24, m2 + m4, j, m1 + m2 + m3 + m4)*JzKetCoupled(j, m1 + m2 + m3 + m4, (j1, j2, j3, j4), ((1, 3, j13), (2, 4, j24), (1, 2, j))), (j13, m1 + m3, j1 + j3), (j24, m2 + m4, j2 + j4), (j, m1 + m2 + m3 + m4, j13 + j24))",
+    ),
+    "symbolic four-spin custom couple",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        uncouple(jz_ket_coupled(j, m, [j1v, j2v, j3v]).as_expr()),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "Sum(CG(j1, m1, j2, m2, j1 + j2, m1 + m2)*CG(j1 + j2, m1 + m2, j3, m3, j, m)*TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3)), (m1, -j1, j1), (m2, -j2, j2), (m3, -j3, j3))",
+    ),
+    "symbolic three-spin uncouple",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        uncouple(
+          jz_ket_coupled(j, m, [j1v, j2v, j3v, j4v], coupling=[
+            spin_coupling(1, 3, j13),
+            spin_coupling(2, 4, j24),
+            spin_coupling(1, 2, j),
+          ]).as_expr(),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      "Sum(CG(j1, m1, j3, m3, j13, m1 + m3)*CG(j2, m2, j4, m4, j24, m2 + m4)*CG(j13, m1 + m3, j24, m2 + m4, j, m)*TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3), JzKet(j4, m4)), (m1, -j1, j1), (m2, -j2, j2), (m3, -j3, j3), (m4, -j4, j4))",
+    ),
+    "symbolic four-spin custom uncouple",
+  )
   try! quantum_test_assert_matrix_expr_equal(
     try! represent_matrix(x_coupled.as_expr(), basis=Some(jz())),
     ["0", "1/2", "sqrt(2)/2", "1/2"],

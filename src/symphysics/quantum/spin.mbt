@@ -133,6 +133,15 @@ pub struct SpinCoupling {
 } derive(Eq)
 
 ///|
+pub fn spin_coupling(
+  left_index : Int,
+  right_index : Int,
+  j : @symcore.Expr,
+) -> SpinCoupling {
+  SpinCoupling::{ left_index, right_index, j }
+}
+
+///|
 pub struct JzState {
   j : @symcore.Expr
   m : @symcore.Expr
@@ -235,11 +244,12 @@ pub fn jx_ket_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, false, "Jx", jn~, coupling=scheme)
 }
@@ -249,11 +259,12 @@ pub fn jx_bra_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, true, "Jx", jn~, coupling=scheme)
 }
@@ -263,11 +274,12 @@ pub fn jy_ket_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, false, "Jy", jn~, coupling=scheme)
 }
@@ -277,11 +289,12 @@ pub fn jy_bra_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, true, "Jy", jn~, coupling=scheme)
 }
@@ -291,11 +304,12 @@ pub fn jz_ket_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, false, "Jz", jn~, coupling=scheme)
 }
@@ -305,11 +319,12 @@ pub fn jz_bra_coupled(
   j : @symcore.Expr,
   m : @symcore.Expr,
   jn : Array[@symcore.Expr],
-  coupling? : Array[SpinCoupling]? = None,
+  coupling? : Array[SpinCoupling] = [],
 ) -> JzState {
-  let scheme = match coupling {
-    Some(value) if !value.is_empty() => value
-    _ => spin_default_coupling(jn, j)
+  let scheme = if !coupling.is_empty() {
+    coupling
+  } else {
+    spin_default_coupling(jn, j)
   }
   spin_state_make(j, m, true, "Jz", jn~, coupling=scheme)
 }
@@ -540,103 +555,85 @@ fn spin_state_from_expr_impl(expr : @symcore.Expr) -> JzState? {
     @symcore.Expr::Function("JxKetCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jx_ket_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jx_ket_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jx_ket_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     @symcore.Expr::Function("JxBraCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jx_bra_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jx_bra_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jx_bra_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     @symcore.Expr::Function("JyKetCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jy_ket_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jy_ket_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jy_ket_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     @symcore.Expr::Function("JyBraCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jy_bra_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jy_bra_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jy_bra_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     @symcore.Expr::Function("JzKetCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jz_ket_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jz_ket_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jz_ket_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     @symcore.Expr::Function("JzBraCoupled", args) if args.length() >= 3 =>
       match parse_tuple_items(args[2]) {
         Some(jn) =>
-          Some(
-            jz_bra_coupled(
-              args[0],
-              args[1],
-              jn,
-              coupling=if args.length() >= 4 {
-                parse_coupling_items(args[3])
-              } else {
-                None
-              },
-            ),
-          )
+          if args.length() >= 4 {
+            match parse_coupling_items(args[3]) {
+              Some(coupling) =>
+                Some(jz_bra_coupled(args[0], args[1], jn, coupling~))
+              None => None
+            }
+          } else {
+            Some(jz_bra_coupled(args[0], args[1], jn))
+          }
         None => None
       }
     _ => None
@@ -1196,28 +1193,59 @@ fn spin_couple_tensor_product(
         try! go(0, items.map(s => s.j), @symcore.int(1), [])
         quantum_add_from_args_preserve(terms)
       } else {
-        guard items.length() == 2 else {
-          raise @symphysics.PhysicsError::ValueError(
-            "Symbolic spin coupling currently supports two spin spaces",
-          )
+        let total_m = spin_sum_all(items.map(s => s.m))
+        let total_j = @symcore.symbol("j")
+        let current_j = items.map(s => s.j)
+        let coeffs : Array[@symcore.Expr] = []
+        let sum_specs : Array[@symcore.Expr] = []
+        let couplings : Array[SpinCoupling] = []
+
+        fn coupling_symbol_name(indices : Array[Int]) -> String {
+          let suffix = indices.map(idx => idx.to_string()).join("")
+          "j\{suffix}"
         }
-        let j = @symcore.symbol("j")
-        let total_m = items[0].m + items[1].m
+
+        for step in 0..<resolved.length() {
+          let pair = resolved[step]
+          let left_index = pair.left_ns[0]
+          let right_index = pair.right_ns[0]
+          let j1 = current_j[left_index - 1]
+          let j2 = current_j[right_index - 1]
+          let m1 = spin_sum_by_indices(items.map(s => s.m), pair.left_ns)
+          let m2 = spin_sum_by_indices(items.map(s => s.m), pair.right_ns)
+          let m3 = m1 + m2
+          let merged = spin_union_indices(pair.left_ns, pair.right_ns)
+          let j3 = if step + 1 == resolved.length() {
+            total_j
+          } else {
+            @symcore.symbol(coupling_symbol_name(merged))
+          }
+          coeffs.push(cg(j1, m1, j2, m2, j3, m3).as_expr())
+          couplings.push(SpinCoupling::{
+            left_index: scheme[step].left_index,
+            right_index: scheme[step].right_index,
+            j: j3,
+          })
+          sum_specs.push(@symcore.function("Tuple", [j3, m3, j1 + j2]))
+          current_j[merged[0] - 1] = j3
+        }
         let coupled_state = spin_state_make(
-          j,
+          total_j,
           total_m,
           first.is_bra,
           first.basis_name,
           jn=items.map(s => s.j),
-          coupling=[SpinCoupling::{ left_index: 1, right_index: 2, j }],
+          coupling=couplings,
         )
-        spin_sum_expr(
-          cg(items[0].j, items[0].m, items[1].j, items[1].m, j, total_m).as_expr() *
-          coupled_state.as_expr(),
-          j,
-          total_m,
-          items[0].j + items[1].j,
-        )
+        let factors = coeffs.copy()
+        factors.push(coupled_state.as_expr())
+        let sum_args : Array[@symcore.Expr] = [
+          quantum_mul_from_args_preserve(factors),
+        ]
+        for spec in sum_specs {
+          sum_args.push(spec)
+        }
+        @symcore.function("Sum", sum_args)
       }
     }
     _ => expr
@@ -1227,10 +1255,13 @@ fn spin_couple_tensor_product(
 ///|
 pub fn couple(
   expr : @symcore.Expr,
-  orders? : Array[SpinCoupleOrder]? = None,
+  orders? : Array[SpinCoupleOrder] = [],
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   try! spin_map_tensor_products(expr, expr => {
-    spin_couple_tensor_product(expr, orders~)
+    spin_couple_tensor_product(
+      expr,
+      orders=if orders.is_empty() { None } else { Some(orders) },
+    )
   })
 }
 
@@ -1323,42 +1354,73 @@ fn spin_uncouple_state_expr(
     try! enumerate(0)
     quantum_add_from_args_preserve(terms)
   } else {
-    guard j_values.length() == 2 else {
-      raise @symphysics.PhysicsError::ValueError(
-        "Symbolic spin uncoupling currently supports two spin spaces",
+    let mvars : Array[@symcore.Expr] = []
+    for idx in 0..<j_values.length() {
+      mvars.push(@symcore.symbol("m\{idx + 1}"))
+    }
+    let resolved = try! spin_resolve_couplings(
+      j_values.length(),
+      coupled_state.coupling,
+    )
+    let current_j = j_values.copy()
+    let coeffs : Array[@symcore.Expr] = []
+    for idx in 0..<resolved.length() {
+      let item = resolved[idx]
+      let left_index = item.left_ns[0]
+      let right_index = item.right_ns[0]
+      let j1 = current_j[left_index - 1]
+      let j2 = current_j[right_index - 1]
+      let m1 = spin_sum_by_indices(mvars, item.left_ns)
+      let m2 = spin_sum_by_indices(mvars, item.right_ns)
+      let m3 = if idx + 1 == resolved.length() {
+        coupled_state.m
+      } else {
+        m1 + m2
+      }
+      coeffs.push(cg(j1, m1, j2, m2, item.j, m3).as_expr())
+      let merged = spin_union_indices(item.left_ns, item.right_ns)
+      current_j[merged[0] - 1] = item.j
+    }
+    let states : Array[@symcore.Expr] = []
+    for idx in 0..<j_values.length() {
+      states.push(
+        spin_state_make(j_values[idx], mvars[idx], is_bra, basis_name).as_expr(),
       )
     }
-    let m1 = @symcore.symbol("m1")
-    let m2 = @symcore.symbol("m2")
-    let factors : Array[@symcore.Expr] = [
-      spin_state_make(j_values[0], m1, is_bra, basis_name).as_expr(),
-      spin_state_make(j_values[1], m2, is_bra, basis_name).as_expr(),
+    let factors : Array[@symcore.Expr] = coeffs.copy()
+    factors.push(tensor_product(states).as_expr())
+    let sum_specs : Array[@symcore.Expr] = []
+    for idx in 0..<j_values.length() {
+      sum_specs.push(
+        @symcore.function("Tuple", [
+          mvars[idx],
+          @symcore.int(-1) * j_values[idx],
+          j_values[idx],
+        ]),
+      )
+    }
+    let sum_args : Array[@symcore.Expr] = [
+      quantum_mul_from_args_preserve(factors),
     ]
-    @symcore.function("Sum", [
-      cg(j_values[0], m1, j_values[1], m2, coupled_state.j, coupled_state.m).as_expr() *
-      tensor_product(factors).as_expr(),
-      @symcore.function("Tuple", [
-        m1,
-        @symcore.int(-1) * j_values[0],
-        j_values[0],
-      ]),
-      @symcore.function("Tuple", [
-        m2,
-        @symcore.int(-1) * j_values[1],
-        j_values[1],
-      ]),
-    ])
+    for spec in sum_specs {
+      sum_args.push(spec)
+    }
+    @symcore.function("Sum", sum_args)
   }
 }
 
 ///|
 pub fn uncouple(
   expr : @symcore.Expr,
-  jn? : Array[@symcore.Expr]? = None,
-  coupling? : Array[SpinCoupling]? = None,
+  jn? : Array[@symcore.Expr] = [],
+  coupling? : Array[SpinCoupling] = [],
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   try! spin_map_states(expr, expr => {
-    spin_uncouple_state_expr(expr, jn~, coupling~)
+    spin_uncouple_state_expr(
+      expr,
+      jn=if jn.is_empty() { None } else { Some(jn) },
+      coupling=if coupling.is_empty() { None } else { Some(coupling) },
+    )
   })
 }
 
@@ -1444,7 +1506,7 @@ pub fn spin_apply_operator_to_ket(
                     j,
                     m + @symcore.int(1),
                     state.jn,
-                    coupling=Some(state.coupling),
+                    coupling=state.coupling,
                   )
                 } else {
                   jz_ket(j, m + @symcore.int(1))
@@ -1460,7 +1522,7 @@ pub fn spin_apply_operator_to_ket(
                     j,
                     m - @symcore.int(1),
                     state.jn,
-                    coupling=Some(state.coupling),
+                    coupling=state.coupling,
                   )
                 } else {
                   jz_ket(j, m - @symcore.int(1))

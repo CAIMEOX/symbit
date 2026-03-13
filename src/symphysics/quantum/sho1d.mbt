@@ -11,6 +11,9 @@
 pub let sho_omega : @symcore.Expr = @symcore.symbol("omega")
 
 ///|
+pub let sho_mass : @symcore.Expr = @symcore.symbol("m")
+
+///|
 pub fn raising_op(
   label? : @symcore.Expr = @symcore.symbol("a"),
 ) -> @symcore.Expr {
@@ -46,6 +49,73 @@ pub fn sho_ket(n : @symcore.Expr) -> @symcore.Expr {
 ///|
 pub fn sho_bra(n : @symcore.Expr) -> @symcore.Expr {
   @symcore.raw_function("SHOBra", [n])
+}
+
+///|
+fn sho_half() -> @symcore.Expr {
+  try! @symcore.rational_from_ints(1, 2)
+}
+
+///|
+fn sho_xp_prefactor() -> @symcore.Expr {
+  let denom = @symcore.int(2) * hbar * sho_mass * sho_omega
+  @symcore.raw_pow(@symcore.raw_function("sqrt", [denom]), @symcore.int(-1))
+}
+
+///|
+pub fn sho_rewrite_as_xp(expr : @symcore.Expr) -> @symcore.Expr {
+  let xp_scale = sho_xp_prefactor()
+  let x_term = sho_mass * sho_omega * x_op()
+  let px_term = @symcore.symbol("I") * px_op()
+  let px_sq = @symcore.raw_pow(px_op(), @symcore.int(2))
+  let x_sq = @symcore.raw_pow(sho_mass * sho_omega * x_op(), @symcore.int(2))
+  match expr {
+    @symcore.Expr::Function("RaisingOp", _) => xp_scale * (x_term - px_term)
+    @symcore.Expr::Function("LoweringOp", _) => xp_scale * (x_term + px_term)
+    @symcore.Expr::Function("NumberOp", _) =>
+      (px_sq + x_sq) *
+      @symcore.raw_pow(
+        @symcore.int(2) * sho_mass * hbar * sho_omega,
+        @symcore.int(-1),
+      ) -
+      sho_half()
+    @symcore.Expr::Function("Hamiltonian", _) =>
+      (px_sq + x_sq) *
+      @symcore.raw_pow(@symcore.int(2) * sho_mass, @symcore.int(-1))
+    _ => expr
+  }
+}
+
+///|
+pub fn sho_rewrite_as_a(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function("NumberOp", _) =>
+      @symcore.raw_mul([raising_op(), lowering_op()])
+    @symcore.Expr::Function("Hamiltonian", _) =>
+      hbar *
+      sho_omega *
+      (@symcore.raw_mul([raising_op(), lowering_op()]) + sho_half())
+    _ => expr
+  }
+}
+
+///|
+pub fn sho_rewrite_as_h(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function("NumberOp", _) =>
+      sho_hamiltonian() * @symcore.raw_pow(hbar * sho_omega, @symcore.int(-1)) -
+      sho_half()
+    _ => expr
+  }
+}
+
+///|
+pub fn sho_rewrite_as_n(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Function("Hamiltonian", _) =>
+      hbar * sho_omega * (number_op() + sho_half())
+    _ => expr
+  }
 }
 
 ///|

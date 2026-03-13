@@ -1338,9 +1338,9 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n", "from sympy.physics.quantum.matrixcache import matrix_cache\n",
     "from sympy.physics.quantum.circuitutils import kmp_table, find_subcircuit, replace_subcircuit, convert_to_symbolic_indices, convert_to_real_indices, random_reduce, random_insert\n",
     "from sympy.physics.quantum.grover import OracleGate, WGate, superposition_basis, grover_iteration, apply_grover\n",
-    "from sympy.physics.quantum.represent import represent, rep_innerproduct, rep_expectation, get_basis, enumerate_states, integrate_result\n", "from sympy.physics.quantum.trace import Tr\n",
-    "from sympy.physics.quantum.commutator import Commutator\n", "from sympy.physics.quantum.anticommutator import AntiCommutator\n",
-    "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
+    "from sympy.physics.quantum.represent import represent, rep_innerproduct, rep_expectation, get_basis, enumerate_states, integrate_result\n",
+    "from sympy.physics.quantum.trace import Tr\n", "from sympy.physics.quantum.commutator import Commutator\n",
+    "from sympy.physics.quantum.anticommutator import AntiCommutator\n", "a, b, c, d, f, n, u, v, x, y, z = symbols('a b c d f n u v x y z', commutative=True)\n",
     "alpha, beta, gamma, theta, phi = symbols('alpha beta gamma theta phi', commutative=True)\n",
     "A, B, C, D, X, Y, Z = symbols('A B C D X Y Z', commutative=False)\n", "wf = Function('wf')\n",
     "def grover_oracle_from_marks(nqubits, marks):\n", "    return OracleGate(nqubits, lambda qubits: any(qubits == IntQubit(idx, nqubits=nqubits) for idx in marks))\n",
@@ -1733,7 +1733,8 @@ pub fn quantum_get_basis_str(
   basis? : String? = None,
 ) -> String raise {
   let basis_code = match basis {
-    Some(value) => ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
+    Some(value) =>
+      ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
   python_subprocess_stdout(
@@ -1775,7 +1776,8 @@ pub fn quantum_rep_innerproduct_str(
   basis? : String? = None,
 ) -> String raise {
   let basis_code = match basis {
-    Some(value) => ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
+    Some(value) =>
+      ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
   python_subprocess_stdout(
@@ -1796,7 +1798,8 @@ pub fn quantum_rep_expectation_str(
   basis? : String? = None,
 ) -> String raise {
   let basis_code = match basis {
-    Some(value) => ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
+    Some(value) =>
+      ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
   python_subprocess_stdout(
@@ -1825,7 +1828,10 @@ pub fn quantum_integrate_result_str(
       python_int_tuple(unities),
       "}\n",
       match basis {
-        Some(value) => "kwargs['basis'] = sympify(" + python_string_literal(value) + ", locals=locals())\n"
+        Some(value) =>
+          "kwargs['basis'] = sympify(" +
+          python_string_literal(value) +
+          ", locals=locals())\n"
         None => ""
       },
       "print(integrate_result(sympify(",
@@ -1899,7 +1905,11 @@ pub fn quantum_identitysearch_bfs_summary(
       ", max_depth=",
       max_depth.to_string(),
       ", identity_only=",
-      if identity_only { "True" } else { "False" },
+      if identity_only {
+        "True"
+      } else {
+        "False"
+      },
       ")\n",
       "print(chr(31).join(sorted(str(item.circuit) for item in _ids)))\n",
     ].join(""),
@@ -1926,7 +1936,11 @@ pub fn quantum_identitysearch_is_scalar(
       "print(is_scalar_nonsparse_matrix(Mul(*_seq), ",
       nqubits.to_string(),
       ", ",
-      if identity_only { "True" } else { "False" },
+      if identity_only {
+        "True"
+      } else {
+        "False"
+      },
       "))\n",
     ].join(""),
   )

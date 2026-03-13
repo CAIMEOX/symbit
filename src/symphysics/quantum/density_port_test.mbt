@@ -86,6 +86,18 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     ),
     "density fidelity parity",
   )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        try! fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
+      ),
+    ),
+    try! @sympy_physics.quantum_fidelity_str(
+      "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))",
+      "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
+    ),
+    "density pure-vs-mixed fidelity parity",
+  )
 }
 
 ///|
@@ -107,5 +119,12 @@ test "physics.quantum.density: tensor-product trace parity" {
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.trace())),
     try! @sympy_physics.quantum_eval_str("Tr(\{rho_txt}).doit()"),
     "density tensor-product trace parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(rho.trace(indices=[1])),
+    ),
+    try! @sympy_physics.quantum_doit_str("Tr(\{rho_txt}, [1])"),
+    "density tensor-product partial trace parity",
   )
 }

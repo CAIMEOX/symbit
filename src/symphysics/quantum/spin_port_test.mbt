@@ -178,8 +178,14 @@ test "physics.quantum.spin: coupled Jz parity" {
   let m = @symcore.symbol("m")
   let j1v = @symcore.symbol("j1")
   let j2v = @symcore.symbol("j2")
+  let j3v = @symcore.symbol("j3")
+  let j4v = @symcore.symbol("j4")
   let m1 = @symcore.symbol("m1")
   let m2 = @symcore.symbol("m2")
+  let m3 = @symcore.symbol("m3")
+  let m4 = @symcore.symbol("m4")
+  let j13 = @symcore.symbol("j13")
+  let j24 = @symcore.symbol("j24")
 
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_qapply_str(
@@ -260,6 +266,74 @@ test "physics.quantum.spin: coupled Jz parity" {
       ),
     ),
     "symbolic uncouple parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "couple(TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        couple(
+          tensor_product([
+            jz_ket(j1v, m1).as_expr(),
+            jz_ket(j2v, m2).as_expr(),
+            jz_ket(j3v, m3).as_expr(),
+          ]).as_expr(),
+        ),
+      ),
+    ),
+    "symbolic three-spin couple parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "couple(TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3), JzKet(j4, m4)), ((1, 3), (2, 4), (1, 2)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        couple(
+          tensor_product([
+            jz_ket(j1v, m1).as_expr(),
+            jz_ket(j2v, m2).as_expr(),
+            jz_ket(j3v, m3).as_expr(),
+            jz_ket(j4v, m4).as_expr(),
+          ]).as_expr(),
+          orders=[
+            spin_couple_order(1, 3),
+            spin_couple_order(2, 4),
+            spin_couple_order(1, 2),
+          ],
+        ),
+      ),
+    ),
+    "symbolic four-spin custom couple parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "uncouple(JzKetCoupled(j, m, (j1, j2, j3)))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        uncouple(jz_ket_coupled(j, m, [j1v, j2v, j3v]).as_expr()),
+      ),
+    ),
+    "symbolic three-spin uncouple parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "uncouple(JzKetCoupled(j, m, (j1, j2, j3, j4), ((1, 3, j13), (2, 4, j24), (1, 2, j))))",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      try! @sympy_physics.physics_expr_str(
+        uncouple(
+          jz_ket_coupled(j, m, [j1v, j2v, j3v, j4v], coupling=[
+            spin_coupling(1, 3, j13),
+            spin_coupling(2, 4, j24),
+            spin_coupling(1, 2, j),
+          ]).as_expr(),
+        ),
+      ),
+    ),
+    "symbolic four-spin custom uncouple parity",
   )
   try! quantum_test_assert_matrix_expr_equal(
     try! represent_matrix(

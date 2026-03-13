@@ -80,6 +80,11 @@ test "physics.quantum.density: matrix entropy and fidelity" {
     "0",
     "density fidelity orthogonal",
   )
+  try! quantum_test_assert_expr_equal(
+    try! fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
+    "sqrt(2)/2",
+    "density fidelity pure-vs-mixed",
+  )
 }
 
 ///|
@@ -100,5 +105,10 @@ test "physics.quantum.density: tensor-product trace semantics" {
     rho.trace(),
     "1",
     "density tensor-product trace",
+  )
+  try! quantum_test_assert_expr_equal(
+    rho.trace(indices=[1]),
+    "OuterProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzBra(Rational(1, 2), Rational(1, 2)))",
+    "density tensor-product partial trace",
   )
 }

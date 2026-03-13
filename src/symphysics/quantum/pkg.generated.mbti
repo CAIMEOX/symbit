@@ -67,7 +67,7 @@ pub fn convert_to_real_indices(@symcore.Expr, Map[String, Int]) -> Array[@symcor
 
 pub fn convert_to_symbolic_indices(@symcore.Expr, start_index? : Int, qubit_map? : Map[String, Int]) -> SymbolicCircuit
 
-pub fn couple(@symcore.Expr, orders? : Array[SpinCoupleOrder]?) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn couple(@symcore.Expr, orders? : Array[SpinCoupleOrder]) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn cphase(Int, Int) -> @symcore.Expr
 
@@ -189,31 +189,31 @@ pub fn jx() -> @symcore.Expr
 
 pub fn jx_bra(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jx_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jx_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jx_ket(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jx_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jx_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jy() -> @symcore.Expr
 
 pub fn jy_bra(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jy_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jy_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jy_ket(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jy_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jy_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jz() -> @symcore.Expr
 
 pub fn jz_bra(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jz_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jz_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jz_ket(@symcore.Expr, @symcore.Expr) -> JzState
 
-pub fn jz_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+pub fn jz_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> JzState
 
 pub fn jz_state_from_expr(@symcore.Expr) -> JzState?
 
@@ -431,9 +431,19 @@ pub fn sho_hamiltonian(label? : @symcore.Expr) -> @symcore.Expr
 
 pub fn sho_ket(@symcore.Expr) -> @symcore.Expr
 
+pub let sho_mass : @symcore.Expr
+
 pub let sho_omega : @symcore.Expr
 
 pub fn sho_represent(@symcore.Expr, basis? : @symcore.Expr?, ndim? : Int) -> MatrixScalarValue? raise @symphysics.PhysicsError
+
+pub fn sho_rewrite_as_a(@symcore.Expr) -> @symcore.Expr
+
+pub fn sho_rewrite_as_h(@symcore.Expr) -> @symcore.Expr
+
+pub fn sho_rewrite_as_n(@symcore.Expr) -> @symcore.Expr
+
+pub fn sho_rewrite_as_xp(@symcore.Expr) -> @symcore.Expr
 
 pub fn shor(Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
@@ -461,6 +471,8 @@ pub fn spin_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn spin_couple_order(Int, Int) -> SpinCoupleOrder
 
+pub fn spin_coupling(Int, Int, @symcore.Expr) -> SpinCoupling
+
 pub fn spin_inner_product(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn spin_state_from_expr(@symcore.Expr) -> JzState?
@@ -483,6 +495,8 @@ pub fn tensor_power(HilbertSpace, @symcore.Expr) -> HilbertSpace raise @symphysi
 
 pub fn tensor_product(Array[@symcore.Expr]) -> TensorProductExpr
 
+pub fn tensor_product_expand(@symcore.Expr) -> @symcore.Expr
+
 pub fn tensor_product_matrix(Array[@symphysics.ExplicitMatrix]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 
 pub fn tensor_product_space(Array[HilbertSpace]) -> HilbertSpace raise @symphysics.PhysicsError
@@ -503,7 +517,7 @@ pub fn u_gate(Array[Int], @symphysics.ExplicitMatrix) -> @symcore.Expr raise @sy
 
 pub fn u_gate_single(Int, @symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError
 
-pub fn uncouple(@symcore.Expr, jn? : Array[@symcore.Expr]?, coupling? : Array[SpinCoupling]?) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn uncouple(@symcore.Expr, jn? : Array[@symcore.Expr], coupling? : Array[SpinCoupling]) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn unitary_operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr
 
@@ -587,7 +601,7 @@ pub fn DensityExpr::get_state(Self, Int) -> @symcore.Expr raise @symphysics.Phys
 pub fn DensityExpr::probs(Self) -> @symcore.Expr
 pub fn DensityExpr::represent(Self, basis? : @symcore.Expr?, nqubits? : Int, spin_j? : @symcore.Expr, ndim? : Int) -> MatrixScalarValue raise @symphysics.PhysicsError
 pub fn DensityExpr::states(Self) -> @symcore.Expr
-pub fn DensityExpr::trace(Self) -> @symcore.Expr
+pub fn DensityExpr::trace(Self, indices? : Array[Int]) -> @symcore.Expr
 pub impl Eq for DensityExpr
 
 pub struct DensityTerm {

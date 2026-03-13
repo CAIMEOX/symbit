@@ -58,3 +58,31 @@ test "physics.quantum.sho1d: local ladder algebra and number-basis matrices" {
     "SHOKet basis vector",
   )
 }
+
+///|
+test "physics.quantum.sho1d: symbolic rewrites and symbolic ladder action" {
+  let k = @symcore.symbol("k")
+  guard sho_rewrite_as_a(number_op()) ==
+    @symcore.raw_mul([raising_op(), lowering_op()]) else {
+    fail("number rewrite as a")
+  }
+  guard sho_rewrite_as_h(number_op()) ==
+    sho_hamiltonian() * @symcore.raw_pow(hbar * sho_omega, @symcore.int(-1)) -
+    quantum_test_frac(1, 2) else {
+    fail("number rewrite as H")
+  }
+  guard sho_rewrite_as_n(sho_hamiltonian()) ==
+    hbar * sho_omega * (number_op() + quantum_test_frac(1, 2)) else {
+    fail("Hamiltonian rewrite as N")
+  }
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([raising_op(), sho_ket(k)])),
+    "sqrt(k + 1)*SHOKet(k + 1)",
+    "raising symbolic action",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([lowering_op(), sho_ket(k)])),
+    "sqrt(k)*SHOKet(k - 1)",
+    "lowering symbolic action",
+  )
+}

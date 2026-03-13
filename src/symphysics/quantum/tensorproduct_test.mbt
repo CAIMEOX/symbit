@@ -1,13 +1,26 @@
 ///|
 test "physics.quantum.tensorproduct: symbolic and matrix subset" {
-  let a = @symcore.symbol("A")
-  let b = @symcore.symbol("B")
-  let c = @symcore.symbol("C")
-  inspect(tensor_product([a, b]).to_string(), content="AxB")
-  inspect(tensor_product([a + b, c]).to_string(), content="(A + B)xC")
+  let a = operator([@symcore.symbol("A")]).as_expr()
+  let b = operator([@symcore.symbol("B")]).as_expr()
+  let c = operator([@symcore.symbol("C")]).as_expr()
+  inspect(tensor_product([a, b]).to_string(), content="Operator(A)xOperator(B)")
+  inspect(
+    tensor_product([a + b, c]).to_string(),
+    content="(Operator(A) + Operator(B))xOperator(C)",
+  )
   inspect(
     tensor_product([a, b]).dagger().to_string(),
-    content="conjugate(A)xconjugate(B)",
+    content="Dagger(A)xDagger(B)",
+  )
+  try! quantum_test_assert_expr_equal(
+    tensor_product([@symcore.symbol("x") * a, @symcore.int(2) * b]).as_expr(),
+    "2*x*TensorProduct(Operator(A), Operator(B))",
+    "tensorproduct scalar normalization",
+  )
+  try! quantum_test_assert_expr_equal(
+    tensor_product_expand(tensor_product([a + b, b + c]).as_expr()),
+    "TensorProduct(Operator(A), Operator(B)) + TensorProduct(Operator(A), Operator(C)) + TensorProduct(Operator(B), Operator(B)) + TensorProduct(Operator(B), Operator(C))",
+    "tensorproduct additive expansion",
   )
 
   let m1 = @symphysics.explicit_matrix_from_ints([[1, 2], [3, 4]])
