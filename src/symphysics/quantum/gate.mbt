@@ -134,6 +134,99 @@ pub fn cphase(control : Int, target : Int) -> @symcore.Expr {
 }
 
 ///|
+fn gate_matrix_expr(
+  matrix : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
+  let rows : Array[@symcore.Expr] = []
+  for row in 0..<matrix.height() {
+    let items : Array[@symcore.Expr] = []
+    for col in 0..<matrix.width() {
+      items.push(matrix.get(row, col))
+    }
+    rows.push(@symcore.function("Tuple", items))
+  }
+  @symcore.raw_function("ImmutableDenseMatrix", [
+    @symcore.function("Tuple", rows),
+  ])
+}
+
+///|
+fn gate_matrix_from_expr(expr : @symcore.Expr) -> @symphysics.ExplicitMatrix? {
+  fn parse_rows(arg : @symcore.Expr) -> @symphysics.ExplicitMatrix? {
+    match arg {
+      @symcore.Expr::Function("Tuple", row_args) => {
+        let rows : Array[Array[@symcore.Expr]] = []
+        for row_arg in row_args {
+          match row_arg {
+            @symcore.Expr::Function("Tuple", items) => rows.push(items.copy())
+            _ => return None
+          }
+        }
+        try @symphysics.explicit_matrix_from_rows(rows) catch {
+          _ => None
+        } noraise {
+          matrix => Some(matrix)
+        }
+      }
+      _ => None
+    }
+  }
+
+  match expr {
+    @symcore.Expr::Function("ImmutableDenseMatrix", args) if args.length() == 1 =>
+      parse_rows(args[0])
+    @symcore.Expr::Function("Matrix", args) if args.length() == 1 =>
+      parse_rows(args[0])
+    _ => None
+  }
+}
+
+///|
+pub fn u_gate(
+  targets : Array[Int],
+  matrix : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
+  let dim = 1 << targets.length()
+  guard matrix.height() == dim && matrix.width() == dim else {
+    raise @symphysics.PhysicsError::ShapeError(
+      "UGate target count must match matrix dimension",
+    )
+  }
+  @symcore.raw_function("UGate", [
+    gate_tuple_expr(targets),
+    try! gate_matrix_expr(matrix),
+  ])
+}
+
+///|
+pub fn u_gate_single(
+  target : Int,
+  matrix : @symphysics.ExplicitMatrix,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
+  try! u_gate([target], matrix)
+}
+
+///|
+fn ugate_from_expr(
+  expr : @symcore.Expr,
+) -> (Array[Int], @symphysics.ExplicitMatrix)? {
+  match expr {
+    @symcore.Expr::Function("UGate", args) if args.length() == 2 => {
+      let targets = match args[0] {
+        @symcore.Expr::Number(n) if n.is_integral() =>
+          Some([n.numerator().to_int()])
+        _ => gate_tuple_ints(args[0])
+      }
+      match (targets, gate_matrix_from_expr(args[1])) {
+        (Some(bits), Some(matrix)) => Some((bits, matrix))
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
 pub fn GateExpr::as_expr(self : GateExpr) -> @symcore.Expr {
   @symcore.raw_function(gate_class_name(self.kind), self.args.map(@symcore.int))
 }
@@ -329,28 +422,76 @@ fn gate_apply_concrete(
 
 ///|
 fn gate_support(expr : @symcore.Expr) -> Array[Int]? {
-  match gate_from_expr(expr) {
-    Some(gate) => Some(gate.args.copy())
+  match ugate_from_expr(expr) {
+    Some((targets, _)) => Some(targets.copy())
     None =>
-      match expr {
-        @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
-          match gate_tuple_ints(args[0]) {
-            Some(controls) =>
-              match gate_support(args[1]) {
-                Some(base) => {
-                  let out = controls.copy()
-                  for item in base {
-                    out.push(item)
+      match gate_from_expr(expr) {
+        Some(gate) => Some(gate.args.copy())
+        None =>
+          match expr {
+            @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+              match gate_tuple_ints(args[0]) {
+                Some(controls) =>
+                  match gate_support(args[1]) {
+                    Some(base) => {
+                      let out = controls.copy()
+                      for item in base {
+                        out.push(item)
+                      }
+                      Some(out)
+                    }
+                    None => None
                   }
-                  Some(out)
-                }
                 None => None
               }
-            None => None
+            _ => None
           }
-        _ => None
       }
   }
+}
+
+///|
+fn gate_apply_custom(
+  targets : Array[Int],
+  matrix : @symphysics.ExplicitMatrix,
+  q : QubitExpr,
+) -> @symcore.Expr? raise @symphysics.PhysicsError {
+  for target in targets {
+    guard target >= 0 && target < q.nqubits() else {
+      raise @symphysics.PhysicsError::IndexError(
+        "Gate target/control index out of range",
+      )
+    }
+  }
+  let dim = 1 << targets.length()
+  guard matrix.height() == dim && matrix.width() == dim else {
+    raise @symphysics.PhysicsError::ShapeError(
+      "UGate target count must match matrix dimension",
+    )
+  }
+  let mut input_col = 0
+  for target in targets {
+    input_col = input_col * 2 + (try! q.bit(target))
+  }
+  let terms : Array[@symcore.Expr] = []
+  for row in 0..<dim {
+    let coeff = matrix.get(row, input_col)
+    if coeff != @symcore.int(0) {
+      let bits = q.bits.copy()
+      let output_bits = try! int_to_bits(row, targets.length())
+      for idx in 0..<targets.length() {
+        let pos = bits.length() - 1 - targets[idx]
+        bits[pos] = output_bits[idx]
+      }
+      let next_q = try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)
+      if coeff == @symcore.int(1) {
+        terms.push(next_q.as_expr())
+      } else {
+        terms.push(coeff * next_q.as_expr())
+      }
+    }
+  }
+  Some(quantum_add_from_args_preserve(terms))
 }
 
 ///|
@@ -360,37 +501,41 @@ pub fn gate_apply_to_qubit_expr(
 ) -> @symcore.Expr? raise @symphysics.PhysicsError {
   match qubit_from_expr(qubit_expr) {
     Some(q) =>
-      match gate_from_expr(gate_expr) {
-        Some(gate) => gate_apply_concrete(gate, q, qubit_expr)
+      match ugate_from_expr(gate_expr) {
+        Some((targets, matrix)) => try! gate_apply_custom(targets, matrix, q)
         None =>
-          match gate_expr {
-            @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
-              match gate_tuple_ints(args[0]) {
-                Some(controls) => {
-                  for control in controls {
-                    guard control >= 0 && control < q.nqubits() else {
-                      raise @symphysics.PhysicsError::IndexError(
-                        "Gate target/control index out of range",
-                      )
+          match gate_from_expr(gate_expr) {
+            Some(gate) => gate_apply_concrete(gate, q, qubit_expr)
+            None =>
+              match gate_expr {
+                @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+                  match gate_tuple_ints(args[0]) {
+                    Some(controls) => {
+                      for control in controls {
+                        guard control >= 0 && control < q.nqubits() else {
+                          raise @symphysics.PhysicsError::IndexError(
+                            "Gate target/control index out of range",
+                          )
+                        }
+                      }
+                      let mut active = true
+                      for control in controls {
+                        active = active && (try! (q.bit(control) == 1))
+                      }
+                      if active {
+                        match gate_apply_to_qubit_expr(args[1], qubit_expr) {
+                          Some(applied) => Some(applied)
+                          None =>
+                            try! qft_apply_operator_to_ket(args[1], qubit_expr)
+                        }
+                      } else {
+                        Some(qubit_expr)
+                      }
                     }
+                    None => None
                   }
-                  let mut active = true
-                  for control in controls {
-                    active = active && (try! (q.bit(control) == 1))
-                  }
-                  if active {
-                    match gate_apply_to_qubit_expr(args[1], qubit_expr) {
-                      Some(applied) => Some(applied)
-                      None =>
-                        try! qft_apply_operator_to_ket(args[1], qubit_expr)
-                    }
-                  } else {
-                    Some(qubit_expr)
-                  }
-                }
-                None => None
+                _ => None
               }
-            _ => None
           }
       }
     None => None

@@ -113,6 +113,112 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
 }
 
 ///|
+test "physics.quantum.gate: ugate and controlled ugate" {
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let c = @symcore.symbol("c")
+  let d = @symcore.symbol("d")
+  let umat = try! @symphysics.explicit_matrix_from_rows([[a, b], [c, d]])
+  let u0 = try! u_gate_single(0, umat)
+
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u0, (try! qubit("0")).as_expr()])),
+    "a*Qubit(0) + c*Qubit(1)",
+    "UGate qapply on |0>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u0, (try! qubit("1")).as_expr()])),
+    "b*Qubit(0) + d*Qubit(1)",
+    "UGate qapply on |1>",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(u0, nqubits=1),
+    ["a", "b", "c", "d"],
+    2,
+    2,
+    "UGate matrix in 1-qubit space",
+  )
+
+  let u1 = try! u_gate_single(1, umat)
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u1, (try! qubit("00")).as_expr()])),
+    "a*Qubit(0, 0) + c*Qubit(1, 0)",
+    "UGate larger-space qapply on |00>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u1, (try! qubit("01")).as_expr()])),
+    "a*Qubit(0, 1) + c*Qubit(1, 1)",
+    "UGate larger-space qapply on |01>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u1, (try! qubit("10")).as_expr()])),
+    "b*Qubit(0, 0) + d*Qubit(1, 0)",
+    "UGate larger-space qapply on |10>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([u1, (try! qubit("11")).as_expr()])),
+    "b*Qubit(0, 1) + d*Qubit(1, 1)",
+    "UGate larger-space qapply on |11>",
+  )
+
+  let cu0 = cgate([1], u0)
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([cu0, (try! qubit("10")).as_expr()])),
+    "a*Qubit(1, 0) + c*Qubit(1, 1)",
+    "controlled UGate on |10>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([cu0, (try! qubit("11")).as_expr()])),
+    "b*Qubit(1, 0) + d*Qubit(1, 1)",
+    "controlled UGate on |11>",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(@symcore.raw_mul([cu0, (try! qubit("01")).as_expr()])),
+    "Qubit(0, 1)",
+    "controlled UGate inactive on |01>",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(cu0, nqubits=2),
+    [
+      "1", "0", "0", "0", "0", "1", "0", "0", "0", "0", "a", "b", "0", "0", "c",
+      "d",
+    ],
+    4,
+    4,
+    "controlled UGate matrix",
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(u1, nqubits=2),
+    [
+      "a", "0", "b", "0", "0", "a", "0", "b", "c", "0", "d", "0", "0", "c", "0",
+      "d",
+    ],
+    4,
+    4,
+    "UGate embedded matrix",
+  )
+
+  let v = @symcore.symbol("v")
+  let w = @symcore.symbol("w")
+  let f = @symcore.symbol("f")
+  let g = @symcore.symbol("g")
+  let uadd = try! u_gate_single(
+    0,
+    try! @symphysics.explicit_matrix_from_rows([[v, w], [f, g]]),
+  )
+  try! quantum_test_assert_matrix_equal(
+    try! represent_matrix(x_gate(0).as_expr() + uadd, nqubits=2),
+    [
+      "v", "w + 1", "0", "0", "f + 1", "g", "0", "0", "0", "0", "v", "w + 1", "0",
+      "0", "f + 1", "g",
+    ],
+    4,
+    4,
+    "X + UGate matrix addition",
+  )
+}
+
+///|
 test "physics.quantum.qubit: measurement helpers" {
   let all_results = try! measure_all((try! qubit("1")).as_expr())
   inspect(

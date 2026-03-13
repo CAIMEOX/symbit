@@ -87,3 +87,25 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     "density fidelity parity",
   )
 }
+
+///|
+test "physics.quantum.density: tensor-product trace parity" {
+  let half = quantum_test_frac(1, 2)
+  let tp = tensor_product([
+    jz_ket(half, half).as_expr(),
+    jz_ket(half, @symcore.int(-1) * half).as_expr(),
+  ]).as_expr()
+  let rho = density([(tp, @symcore.int(1))])
+  let rho_txt = @symprint.to_string(rho.as_expr())
+
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
+    try! @sympy_physics.quantum_doit_str(rho_txt),
+    "density tensor-product doit parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.trace())),
+    try! @sympy_physics.quantum_eval_str("Tr(\{rho_txt}).doit()"),
+    "density tensor-product trace parity",
+  )
+}

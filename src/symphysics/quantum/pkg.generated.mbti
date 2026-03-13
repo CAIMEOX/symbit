@@ -499,6 +499,10 @@ pub fn tr_permute(@symcore.Expr, Int) -> @symcore.Expr
 
 pub fn trim(String) -> String
 
+pub fn u_gate(Array[Int], @symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn u_gate_single(Int, @symphysics.ExplicitMatrix) -> @symcore.Expr raise @symphysics.PhysicsError
+
 pub fn uncouple(@symcore.Expr, jn? : Array[@symcore.Expr]?, coupling? : Array[SpinCoupling]?) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn unitary_operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr

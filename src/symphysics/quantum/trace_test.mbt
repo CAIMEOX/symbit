@@ -42,4 +42,14 @@ test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
     "5",
     "trace matrix",
   )
+
+  let tp = tensor_product([
+    outer_product((try! qubit("0")).as_expr(), (try! qubit("0")).dual().as_expr()),
+    outer_product((try! qubit("1")).as_expr(), (try! qubit("1")).dual().as_expr()),
+  ]).as_expr()
+  try! quantum_test_assert_expr_equal(
+    tr_doit(tr(tp)),
+    "1",
+    "trace tensor product factorization",
+  )
 }

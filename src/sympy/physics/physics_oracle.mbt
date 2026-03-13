@@ -1330,7 +1330,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.piab import PIABHamiltonian, PIABKet, PIABBra, m, L\n",
     "from sympy.physics.quantum.qubit import Qubit, QubitBra, IntQubit, IntQubitBra, measure_all, measure_partial, measure_all_oneshot, measure_partial_oneshot\n",
     "from sympy.physics.quantum.sho1d import RaisingOp, LoweringOp, NumberOp, Hamiltonian, SHOKet, SHOBra\n",
-    "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, CGate, CPHASE, gate_simp, gate_sort\n",
+    "from sympy.physics.quantum.gate import IdentityGate, HadamardGate, XGate, YGate, ZGate, PhaseGate, TGate, SwapGate, CNotGate, CNOT, SWAP, H, X, Y, Z, T, S, UGate, CGate, CPHASE, gate_simp, gate_sort\n",
     "from sympy.physics.quantum.spin import Jplus, Jminus, Jx, Jy, Jz, J2, JxKet, JxBra, JyKet, JyBra, JzKet, JzBra, JxKetCoupled, JxBraCoupled, JyKetCoupled, JyBraCoupled, JzKetCoupled, JzBraCoupled, couple, uncouple, Rotation, WignerD\n",
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
     "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n", "from sympy.physics.quantum.shor import ratioize, getr\n",

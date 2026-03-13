@@ -81,3 +81,24 @@ test "physics.quantum.density: matrix entropy and fidelity" {
     "density fidelity orthogonal",
   )
 }
+
+///|
+test "physics.quantum.density: tensor-product trace semantics" {
+  let half = quantum_test_frac(1, 2)
+  let tp = tensor_product([
+    jz_ket(half, half).as_expr(),
+    jz_ket(half, @symcore.int(-1) * half).as_expr(),
+  ]).as_expr()
+  let rho = density([(tp, @symcore.int(1))])
+
+  try! quantum_test_assert_expr_equal(
+    rho.doit(),
+    "TensorProduct(OuterProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzBra(Rational(1, 2), Rational(1, 2))), OuterProduct(JzKet(Rational(1, 2), Rational(-1, 2)), JzBra(Rational(1, 2), Rational(-1, 2))))",
+    "density tensor-product doit",
+  )
+  try! quantum_test_assert_expr_equal(
+    rho.trace(),
+    "1",
+    "density tensor-product trace",
+  )
+}

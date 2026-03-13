@@ -47,6 +47,13 @@ pub fn tr_doit(expr : @symcore.Expr) -> @symcore.Expr {
       match args[0] {
         @symcore.Expr::Function("OuterProduct", inner) if inner.length() == 2 =>
           inner_product(inner[1], inner[0])
+        @symcore.Expr::Function("TensorProduct", items) if args.length() == 1 => {
+          let factors : Array[@symcore.Expr] = []
+          for item in items {
+            factors.push(tr_doit(tr(item)))
+          }
+          quantum_mul_from_args_preserve(factors)
+        }
         _ => expr
       }
     _ => expr

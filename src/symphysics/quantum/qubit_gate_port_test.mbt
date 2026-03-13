@@ -105,6 +105,86 @@ test "physics.quantum.qubit/gate: controlled parity" {
 }
 
 ///|
+test "physics.quantum.gate: ugate parity" {
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let c = @symcore.symbol("c")
+  let d = @symcore.symbol("d")
+  let umat = try! @symphysics.explicit_matrix_from_rows([[a, b], [c, d]])
+  let u0 = try! u_gate_single(0, umat)
+  let u1 = try! u_gate_single(1, umat)
+  let cu0 = cgate([1], u0)
+
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(u0, nqubits=1),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(UGate((0,), Matrix([[a, b], [c, d]])), nqubits=1)",
+    ),
+    2,
+    2,
+    "UGate 1-qubit matrix parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([u0, (try! qubit("0")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "UGate((0,), Matrix([[a, b], [c, d]]))*Qubit(0)",
+    ),
+    "UGate qapply |0> parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(u1, nqubits=2),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(UGate((1,), Matrix([[a, b], [c, d]])), nqubits=2)",
+    ),
+    4,
+    4,
+    "UGate embedded matrix parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(cu0, nqubits=2),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(CGate((1,), UGate((0,), Matrix([[a, b], [c, d]]))), nqubits=2)",
+    ),
+    4,
+    4,
+    "controlled UGate matrix parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([cu0, (try! qubit("10")).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_qapply_str(
+      "CGate((1,), UGate((0,), Matrix([[a, b], [c, d]])))*Qubit(1, 0)",
+    ),
+    "controlled UGate qapply parity",
+  )
+
+  let v = @symcore.symbol("v")
+  let w = @symcore.symbol("w")
+  let f = @symcore.symbol("f")
+  let g = @symcore.symbol("g")
+  let uadd = try! u_gate_single(
+    0,
+    try! @symphysics.explicit_matrix_from_rows([[v, w], [f, g]]),
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(x_gate(0).as_expr() + uadd, nqubits=2),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(XGate(0) + UGate((0,), ImmutableDenseMatrix([[v, w], [f, g]])), nqubits=2)",
+    ),
+    4,
+    4,
+    "X + UGate matrix parity",
+  )
+}
+
+///|
 test "physics.quantum.qubit: measurement parity" {
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
