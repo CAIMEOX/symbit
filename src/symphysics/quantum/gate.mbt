@@ -648,6 +648,99 @@ fn gate_is_involution(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
+fn gate_sort_info(expr : @symcore.Expr) -> (String, Array[Int], Int)? {
+  match gate_from_expr(expr) {
+    Some(gate) => Some((gate_class_name(gate.kind), gate.args.copy(), 1))
+    None =>
+      match expr {
+        @symcore.Expr::Pow(base, exp) =>
+          match (gate_from_expr(base), quantum_integer_value(exp)) {
+            (Some(gate), Some(power)) =>
+              Some((gate_class_name(gate.kind), gate.args.copy(), power))
+            _ => None
+          }
+        _ => None
+      }
+  }
+}
+
+///|
+fn gate_sort_same_target_sign(
+  lhs_name : String,
+  lhs_power : Int,
+  rhs_name : String,
+  rhs_power : Int,
+) -> Int? {
+  if rhs_power % 2 == 0 && [
+    "HadamardGate", "XGate", "YGate", "ZGate",
+  ].contains(rhs_name) {
+    return Some(1)
+  }
+  if lhs_power % 2 == 0 && [
+    "HadamardGate", "XGate", "YGate", "ZGate",
+  ].contains(lhs_name) {
+    return Some(1)
+  }
+  if lhs_power % 2 == 0 || rhs_power % 2 == 0 {
+    return None
+  }
+  match (lhs_name, rhs_name) {
+    ("ZGate", "XGate") => Some(-1)
+    ("YGate", "HadamardGate") => Some(-1)
+    ("YGate", "XGate") => Some(-1)
+    ("ZGate", "YGate") => Some(-1)
+    ("TGate", "PhaseGate") => Some(1)
+    ("ZGate", "PhaseGate") => Some(1)
+    ("ZGate", "TGate") => Some(1)
+    _ => None
+  }
+}
+
+///|
+fn gate_sort_pair_sign(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int? {
+  let (lhs_name, lhs_args, lhs_power) = match gate_sort_info(lhs) {
+    Some(info) => info
+    None => return None
+  }
+  let (rhs_name, rhs_args, rhs_power) = match gate_sort_info(rhs) {
+    Some(info) => info
+    None => return None
+  }
+  if lhs_args.length() == 1 &&
+    rhs_args.length() == 1 &&
+    lhs_args[0] == rhs_args[0] {
+    return gate_sort_same_target_sign(lhs_name, lhs_power, rhs_name, rhs_power)
+  }
+  match (lhs_name, rhs_name, lhs_args, rhs_args) {
+    (
+      "ZGate",
+      "CNotGate",
+      [control_lhs],
+      [control_rhs, _],
+    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
+    (
+      "PhaseGate",
+      "CNotGate",
+      [control_lhs],
+      [control_rhs, _],
+    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
+    (
+      "TGate",
+      "CNotGate",
+      [control_lhs],
+      [control_rhs, _],
+    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
+    (
+      "XGate",
+      "CNotGate",
+      [target_lhs],
+      [_, target_rhs],
+    ) if lhs_power % 2 != 0 && target_lhs == target_rhs => Some(1)
+    _ => None
+  }
+}
+
+///|
 fn gate_compose_pair(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
@@ -688,25 +781,49 @@ pub fn gate_pow_simplify(
     Some(gate) =>
       match gate.kind {
         GateKind::Phase => {
-          let reduced = exp % 4
+          let reduced = ((exp % 4) + 4) % 4
           Some(
             match reduced {
               0 => @symcore.int(1)
               1 => gate_expr
               2 => z_gate(gate.args[0]).as_expr()
-              _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+              _ =>
+                quantum_mul_from_args_preserve([
+                  phase_gate(gate.args[0]).as_expr(),
+                  z_gate(gate.args[0]).as_expr(),
+                ])
             },
           )
         }
         GateKind::T => {
-          let reduced = exp % 8
+          let reduced = ((exp % 8) + 8) % 8
           Some(
             match reduced {
               0 => @symcore.int(1)
               1 => gate_expr
               2 => phase_gate(gate.args[0]).as_expr()
+              3 =>
+                quantum_mul_from_args_preserve([
+                  phase_gate(gate.args[0]).as_expr(),
+                  gate_expr,
+                ])
               4 => z_gate(gate.args[0]).as_expr()
-              _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+              5 =>
+                quantum_mul_from_args_preserve([
+                  gate_expr,
+                  z_gate(gate.args[0]).as_expr(),
+                ])
+              6 =>
+                quantum_mul_from_args_preserve([
+                  phase_gate(gate.args[0]).as_expr(),
+                  z_gate(gate.args[0]).as_expr(),
+                ])
+              _ =>
+                quantum_mul_from_args_preserve([
+                  phase_gate(gate.args[0]).as_expr(),
+                  gate_expr,
+                  z_gate(gate.args[0]).as_expr(),
+                ])
             },
           )
         }
@@ -734,8 +851,29 @@ pub fn gate_pow_simplify(
 ///|
 pub fn gate_simp(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(arg => gate_simp(arg)))
+    @symcore.Expr::Pow(base, exp) =>
+      match quantum_integer_value(exp) {
+        Some(power) =>
+          match gate_pow_simplify(base, power) {
+            Some(simplified) => gate_simp(simplified)
+            None => @symcore.raw_pow(gate_simp(base), exp)
+          }
+        None => @symcore.raw_pow(gate_simp(base), exp)
+      }
     @symcore.Expr::Mul(args) => {
-      let factors = args.copy()
+      let factors : Array[@symcore.Expr] = []
+      for arg in args {
+        let simplified = gate_simp(arg)
+        match simplified {
+          @symcore.Expr::Mul(items) =>
+            for item in items {
+              factors.push(item)
+            }
+          _ => factors.push(simplified)
+        }
+      }
       let mut changed = true
       while changed {
         changed = false
@@ -795,14 +933,29 @@ pub fn gate_sort(expr : @symcore.Expr) -> @symcore.Expr {
         changed = false
         for idx in 0..<(factors.length() - 1) {
           match (gate_support(factors[idx]), gate_support(factors[idx + 1])) {
-            (Some(lhs), Some(rhs)) if supports_disjoint(lhs, rhs) &&
-              factors[idx].compare(factors[idx + 1]) > 0 => {
-              let tmp = factors[idx]
-              factors[idx] = factors[idx + 1]
-              factors[idx + 1] = tmp
-              changed = true
+            (Some(lhs_support), Some(rhs_support)) if supports_disjoint(lhs_support, rhs_support) => {
+              if factors[idx].compare(factors[idx + 1]) > 0 {
+                let tmp = factors[idx]
+                factors[idx] = factors[idx + 1]
+                factors[idx + 1] = tmp
+                changed = true
+              }
             }
-            _ => ()
+            _ =>
+              match gate_sort_pair_sign(factors[idx], factors[idx + 1]) {
+                Some(sign) => {
+                  let lhs = factors[idx]
+                  let rhs = factors[idx + 1]
+                  factors[idx] = if sign == -1 {
+                    @symcore.int(-1) * rhs
+                  } else {
+                    rhs
+                  }
+                  factors[idx + 1] = lhs
+                  changed = true
+                }
+                None => ()
+              }
           }
         }
       }

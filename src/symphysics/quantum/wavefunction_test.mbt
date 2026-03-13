@@ -67,3 +67,41 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     content="Wavefunction((x**2), x)",
   )
 }
+
+///|
+test "physics.quantum.wavefunction: norm and normalization helpers" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let finite = wavefunction(
+    (x ^ @symcore.int(2)) * y + (y ^ @symcore.int(2)) * x,
+    [
+      @symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)]),
+      @symcore.raw_function("Tuple", [y, @symcore.int(0), @symcore.int(2)]),
+    ],
+  )
+  try! quantum_test_assert_expr_equal(
+    finite.norm(),
+    "sqrt(42)/3",
+    "wavefunction finite-box norm",
+  )
+
+  let normalized_wf = wavefunction(
+    @symcore.raw_function("sqrt", [@symcore.int(5)]) * (x ^ @symcore.int(2)),
+    [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
+  )
+  guard normalized_wf.is_normalized() else {
+    fail("wavefunction normalized predicate")
+  }
+  try! quantum_test_assert_expr_equal(
+    normalized_wf.normalize().as_expr(),
+    @symprint.to_string(normalized_wf.as_expr()),
+    "wavefunction normalize leaves normalized state unchanged",
+  )
+
+  let divergent = wavefunction(x ^ @symcore.int(2), [x])
+  try! quantum_test_assert_expr_equal(
+    divergent.norm(),
+    "oo",
+    "wavefunction divergent norm",
+  )
+}

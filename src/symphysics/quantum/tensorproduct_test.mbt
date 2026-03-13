@@ -56,3 +56,27 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
     content="[[1, 0, 2, 0], [0, 1, 0, 2], [3, 0, 4, 0], [0, 3, 0, 4]]",
   )
 }
+
+///|
+test "physics.quantum.tensorproduct: density and trace interplay" {
+  let a = operator([@symcore.symbol("A")]).as_expr()
+  let b = operator([@symcore.symbol("B")]).as_expr()
+  let c = operator([@symcore.symbol("C")]).as_expr()
+  let tp = tensor_product([a, b, c]).as_expr()
+  let rho = density([(tp, @symcore.int(1))])
+
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
+    try! @sympy_physics.quantum_eval_str(
+      "Density((TensorProduct(Operator(A), Operator(B), Operator(C)), 1)).doit()",
+    ),
+    "tensorproduct density doit",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(tr_doit(tr(rho.as_expr(), indices=[1])))),
+    try! @sympy_physics.quantum_eval_str(
+      "Tr(Density((TensorProduct(Operator(A), Operator(B), Operator(C)), 1)), (1,)).doit()",
+    ),
+    "tensorproduct density partial trace",
+  )
+}

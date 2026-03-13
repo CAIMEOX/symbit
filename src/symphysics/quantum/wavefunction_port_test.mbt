@@ -84,3 +84,37 @@ test "physics.quantum.wavefunction: parity" {
     "represent wavefunction parity",
   )
 }
+
+///|
+test "physics.quantum.wavefunction: norm parity" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let finite = wavefunction(
+    (x ^ @symcore.int(2)) * y + (y ^ @symcore.int(2)) * x,
+    [
+      @symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)]),
+      @symcore.raw_function("Tuple", [y, @symcore.int(0), @symcore.int(2)]),
+    ],
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "Wavefunction(x**2*y + y**2*x, (x, 0, 1), (y, 0, 2)).norm",
+    ),
+    try! @sympy_physics.quantum_eval_str(@symprint.to_string(finite.norm())),
+    "wavefunction finite norm parity",
+  )
+
+  let normalized_wf = wavefunction(
+    @symcore.raw_function("sqrt", [@symcore.int(5)]) * (x ^ @symcore.int(2)),
+    [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      "Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()",
+    ),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(normalized_wf.normalize().as_expr()),
+    ),
+    "wavefunction normalize parity",
+  )
+}

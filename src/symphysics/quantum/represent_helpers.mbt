@@ -36,7 +36,10 @@ fn represent_default_basis_state(expr : @symcore.Expr) -> @symcore.Expr? {
               Some(ket([@symcore.symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
               Some(
-                time_dep_ket([@symcore.symbol("psi")], @symcore.symbol("t")).as_expr(),
+                time_dep_ket(
+                  [@symcore.symbol("psi")],
+                  time=@symcore.symbol("t"),
+                ).as_expr(),
               )
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
               Some(orthogonal_ket([@symcore.symbol("n")]).as_expr())
@@ -83,14 +86,14 @@ fn represent_enumerate_with_index(
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
-      Some(time_dep_ket(labels, args[args.length() - 1]).as_expr())
+      Some(time_dep_ket(labels, time=args[args.length() - 1]).as_expr())
     }
     @symcore.Expr::Function("TimeDepBra", args) if args.length() >= 1 => {
       let labels : Array[@symcore.Expr] = []
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
-      Some(time_dep_bra(labels, args[args.length() - 1]).as_expr())
+      Some(time_dep_bra(labels, time=args[args.length() - 1]).as_expr())
     }
     @symcore.Expr::Function("OrthogonalKet", args) =>
       Some(

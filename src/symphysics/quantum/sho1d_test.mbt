@@ -86,3 +86,40 @@ test "physics.quantum.sho1d: symbolic rewrites and symbolic ladder action" {
     "lowering symbolic action",
   )
 }
+
+///|
+test "physics.quantum.sho1d: qapply with sum_doit" {
+  let p = @symcore.symbol("p")
+  let q = @symcore.symbol("q")
+  let n = @symcore.symbol("n")
+  let wf_n = @symcore.raw_function("wf", [n])
+
+  try! quantum_test_assert_expr_equal(
+    qapply(
+      @symcore.raw_mul([
+        @symcore.raw_function("Sum", [
+          @symcore.raw_mul([sho_ket(p), sho_bra(p)]),
+          @symcore.raw_function("Tuple", [p, @symcore.int(0), @symcore.symbol("oo")]),
+        ]),
+        sho_ket(q),
+      ]),
+      sum_doit=true,
+    ),
+    "SHOKet(q)",
+    "sho resolution of identity on ket",
+  )
+  try! quantum_test_assert_expr_equal(
+    qapply(
+      @symcore.raw_mul([
+        sho_bra(q),
+        @symcore.raw_function("Sum", [
+          wf_n * sho_ket(n),
+          @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.symbol("oo")]),
+        ]),
+      ]),
+      sum_doit=true,
+    ),
+    "wf(q)",
+    "sho bra projection through sum",
+  )
+}

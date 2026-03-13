@@ -24,10 +24,11 @@ fn quantum_qapply_tensorproduct_args(
   args : Array[@symcore.Expr],
   dagger_mode : Bool,
   ip_doit : Bool,
+  sum_doit : Bool,
 ) -> @symcore.Expr {
   @symcore.raw_function(
     "TensorProduct",
-    args.map(arg => qapply(arg, dagger=dagger_mode, ip_doit~)),
+    args.map(arg => qapply(arg, dagger=dagger_mode, ip_doit~, sum_doit~)),
   )
 }
 
@@ -36,16 +37,269 @@ fn quantum_qapply_density_expr(
   expr : @symcore.Expr,
   dagger_mode : Bool,
   ip_doit : Bool,
+  sum_doit : Bool,
 ) -> @symcore.Expr {
   match density_from_expr(expr) {
     Some(rho) =>
       density(
         rho.terms.map(term => {
-          (qapply(term.state, dagger=dagger_mode, ip_doit~), term.prob)
+          (
+            qapply(term.state, dagger=dagger_mode, ip_doit~, sum_doit~),
+            term.prob,
+          )
         }),
       ).as_expr()
     None => expr
   }
+}
+
+///|
+fn quantum_sum_limits(
+  args : Array[@symcore.Expr],
+) -> Array[@symconcrete.LimitSpec]? {
+  let limits : Array[@symconcrete.LimitSpec] = []
+  for arg in args {
+    match arg {
+      @symcore.Expr::Function("Tuple", items) =>
+        match items.length() {
+          1 => limits.push(@symconcrete.limit_var(items[0]))
+          2 => limits.push(@symconcrete.limit_lower(items[0], items[1]))
+          3 => limits.push(@symconcrete.limit_range(items[0], items[1], items[2]))
+          _ => return None
+        }
+      _ => return None
+    }
+  }
+  Some(limits)
+}
+
+///|
+fn quantum_sum_expr(
+  body : @symcore.Expr,
+  limit_args : Array[@symcore.Expr],
+  sum_doit : Bool,
+) -> @symcore.Expr {
+  if !sum_doit {
+    let rebuilt : Array[@symcore.Expr] = [body]
+    for arg in limit_args {
+      rebuilt.push(arg)
+    }
+    return @symcore.raw_function("Sum", rebuilt)
+  }
+  match quantum_sum_limits(limit_args) {
+    Some(limits) => {
+      @symconcrete.deltasummation(body, limits)
+    }
+    None => {
+      let rebuilt : Array[@symcore.Expr] = [body]
+      for arg in limit_args {
+        rebuilt.push(arg)
+      }
+      @symcore.raw_function("Sum", rebuilt)
+    }
+  }
+}
+
+///|
+fn quantum_symbolic_infinite(expr : @symcore.Expr) -> Bool {
+  expr == @symcore.symbol("oo")
+}
+
+///|
+fn quantum_single_symbolic_limit(
+  limit_args : Array[@symcore.Expr],
+) -> (String, @symcore.Expr, @symcore.Expr)? {
+  guard limit_args.length() == 1 else { return None }
+  match limit_args[0] {
+    @symcore.Expr::Function("Tuple", items) if items.length() == 3 =>
+      match items[0] {
+        @symcore.Expr::Symbol(name) => Some((name, items[1], items[2]))
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn quantum_discrete_ket_info(expr : @symcore.Expr) -> (String, @symcore.Expr)? {
+  match expr {
+    @symcore.Expr::Function(name, args) if args.length() == 1 =>
+      if [
+        "BosonFockKet", "FermionFockKet", "PIABKet", "SHOKet",
+      ].contains(name) {
+        Some((name, args[0]))
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn quantum_discrete_bra_info(expr : @symcore.Expr) -> (String, @symcore.Expr)? {
+  match expr {
+    @symcore.Expr::Function(name, args) if args.length() == 1 =>
+      if [
+        "BosonFockBra", "FermionFockBra", "PIABBra", "SHOBra",
+      ].contains(name) {
+        Some((name, args[0]))
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn quantum_matching_bra_name(ket_name : String) -> String? {
+  match ket_name {
+    "BosonFockKet" => Some("BosonFockBra")
+    "FermionFockKet" => Some("FermionFockBra")
+    "PIABKet" => Some("PIABBra")
+    "SHOKet" => Some("SHOBra")
+    _ => None
+  }
+}
+
+///|
+fn quantum_expr_is_symbol_named(expr : @symcore.Expr, name : String) -> Bool {
+  match expr {
+    @symcore.Expr::Symbol(sym) => sym == name
+    _ => false
+  }
+}
+
+///|
+fn quantum_sum_resolution_kernel(
+  expr : @symcore.Expr,
+  sum_name : String,
+) -> (@symcore.Expr, String)? {
+  let coeffs : Array[@symcore.Expr] = []
+  let mut ket_name : String? = None
+  let mut bra_name : String? = None
+  match expr {
+    @symcore.Expr::Mul(args) => {
+      for arg in args {
+        match (quantum_discrete_ket_info(arg), quantum_discrete_bra_info(arg)) {
+          (Some((kname, label)), _) if quantum_expr_is_symbol_named(label, sum_name) =>
+            match ket_name {
+              Some(_) => return None
+              None => ket_name = Some(kname)
+            }
+          (_, Some((bname, label))) if quantum_expr_is_symbol_named(label, sum_name) =>
+            match bra_name {
+              Some(_) => return None
+              None => bra_name = Some(bname)
+            }
+          _ => coeffs.push(arg)
+        }
+      }
+    }
+    _ => return None
+  }
+  match (ket_name, bra_name) {
+    (Some(kname), Some(bname)) =>
+      match quantum_matching_bra_name(kname) {
+        Some(expected) if expected == bname =>
+          Some((quantum_mul_from_args_preserve(coeffs), kname))
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn quantum_sum_state_term(
+  expr : @symcore.Expr,
+  sum_name : String,
+) -> (@symcore.Expr, String)? {
+  let coeffs : Array[@symcore.Expr] = []
+  let mut ket_name : String? = None
+  match expr {
+    @symcore.Expr::Mul(args) => {
+      for arg in args {
+        match quantum_discrete_ket_info(arg) {
+          Some((name, label)) if quantum_expr_is_symbol_named(label, sum_name) =>
+            match ket_name {
+              Some(_) => return None
+              None => ket_name = Some(name)
+            }
+          _ => coeffs.push(arg)
+        }
+      }
+    }
+    _ =>
+      match quantum_discrete_ket_info(expr) {
+        Some((name, label)) if quantum_expr_is_symbol_named(label, sum_name) =>
+          ket_name = Some(name)
+        _ => return None
+      }
+  }
+  match ket_name {
+    Some(name) => Some((quantum_mul_from_args_preserve(coeffs), name))
+    None => None
+  }
+}
+
+///|
+fn quantum_apply_discrete_sum_to_ket(
+  sum_args : Array[@symcore.Expr],
+  rhs : @symcore.Expr,
+) -> @symcore.Expr? {
+  guard !sum_args.is_empty() else { return None }
+  let (sum_name, lower, upper) = match
+    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_array()) {
+    Some(spec) => spec
+    None => return None
+  }
+  guard lower == @symcore.int(0) && quantum_symbolic_infinite(upper) else {
+    return None
+  }
+  let (coeff, ket_name) = match quantum_sum_resolution_kernel(sum_args[0], sum_name) {
+    Some(info) => info
+    None => return None
+  }
+  let (rhs_name, rhs_label) = match quantum_discrete_ket_info(rhs) {
+    Some(info) => info
+    None => return None
+  }
+  guard rhs_name == ket_name else { return None }
+  let env : Map[String, @symcore.Expr] = {}
+  env[sum_name] = rhs_label
+  let coeff_sub = @symcore.subst(coeff, env)
+  Some(quantum_mul_from_args_preserve([coeff_sub, rhs]))
+}
+
+///|
+fn quantum_project_discrete_bra_against_sum(
+  lhs : @symcore.Expr,
+  sum_args : Array[@symcore.Expr],
+) -> @symcore.Expr? {
+  guard !sum_args.is_empty() else { return None }
+  let (sum_name, lower, upper) = match
+    quantum_single_symbolic_limit(sum_args[1:sum_args.length()].to_array()) {
+    Some(spec) => spec
+    None => return None
+  }
+  guard lower == @symcore.int(0) && quantum_symbolic_infinite(upper) else {
+    return None
+  }
+  let (lhs_name, lhs_label) = match quantum_discrete_bra_info(lhs) {
+    Some(info) => info
+    None => return None
+  }
+  let (coeff, ket_name) = match quantum_sum_state_term(sum_args[0], sum_name) {
+    Some(info) => info
+    None => return None
+  }
+  let expected_bra = match quantum_matching_bra_name(ket_name) {
+    Some(name) => name
+    None => return None
+  }
+  guard lhs_name == expected_bra else { return None }
+  let env : Map[String, @symcore.Expr] = {}
+  env[sum_name] = lhs_label
+  Some(@symcore.subst(coeff, env))
 }
 
 ///|
@@ -60,6 +314,7 @@ fn quantum_apply_operator_pair(
   rhs : @symcore.Expr,
   dagger_mode : Bool,
   ip_doit : Bool,
+  sum_doit : Bool,
 ) -> @symcore.Expr? {
   match quantum_operator_pair_simplify(lhs, rhs) {
     Some(simplified) => return Some(simplified)
@@ -69,7 +324,14 @@ fn quantum_apply_operator_pair(
     (@symcore.Expr::Pow(base, exp), _) if quantum_is_operator_expr(base) =>
       match quantum_integer_value(exp) {
         Some(power) if power > 0 =>
-          match quantum_apply_operator_pair(base, rhs, dagger_mode, ip_doit) {
+          match
+            quantum_apply_operator_pair(
+              base,
+              rhs,
+              dagger_mode,
+              ip_doit,
+              sum_doit,
+            ) {
             Some(applied) =>
               if power == 1 {
                 Some(applied)
@@ -93,12 +355,14 @@ fn quantum_apply_operator_pair(
             quantum_mul_from_args_preserve([args[0], args[1], rhs]),
             dagger=dagger_mode,
             ip_doit~,
+            sum_doit~,
           ),
           @symcore.int(-1) *
           qapply(
             quantum_mul_from_args_preserve([args[1], args[0], rhs]),
             dagger=dagger_mode,
             ip_doit~,
+            sum_doit~,
           ),
         ]),
       )
@@ -110,11 +374,13 @@ fn quantum_apply_operator_pair(
             quantum_mul_from_args_preserve([args[0], args[1], rhs]),
             dagger=dagger_mode,
             ip_doit~,
+            sum_doit~,
           ),
           qapply(
             quantum_mul_from_args_preserve([args[1], args[0], rhs]),
             dagger=dagger_mode,
             ip_doit~,
+            sum_doit~,
           ),
         ]),
       )
@@ -129,11 +395,48 @@ fn quantum_apply_operator_pair(
             quantum_mul_from_args_preserve([left_args[idx], right_args[idx]]),
             dagger=dagger_mode,
             ip_doit~,
+            sum_doit~,
           ),
         )
       }
       Some(@symcore.raw_function("TensorProduct", factors))
     }
+    (@symcore.Expr::Function("Sum", args), _) if sum_doit =>
+      match quantum_apply_discrete_sum_to_ket(args, rhs) {
+        Some(applied) => Some(applied)
+        None => None
+      }
+    (_, @symcore.Expr::Function("Sum", args)) if sum_doit =>
+      match quantum_project_discrete_bra_against_sum(lhs, args) {
+        Some(applied) => Some(applied)
+        None => None
+      }
+    (@symcore.Expr::Function("Sum", args), _) if !args.is_empty() =>
+      Some(
+        quantum_sum_expr(
+          qapply(
+            quantum_mul_from_args_preserve([args[0], rhs]),
+            dagger=dagger_mode,
+            ip_doit~,
+            sum_doit~,
+          ),
+          args[1:args.length()].to_array(),
+          sum_doit,
+        ),
+      )
+    (_, @symcore.Expr::Function("Sum", args)) if !args.is_empty() =>
+      Some(
+        quantum_sum_expr(
+          qapply(
+            quantum_mul_from_args_preserve([lhs, args[0]]),
+            dagger=dagger_mode,
+            ip_doit~,
+            sum_doit~,
+          ),
+          args[1:args.length()].to_array(),
+          sum_doit,
+        ),
+      )
     _ if quantum_is_operator_expr(lhs) && quantum_is_scalar_like(rhs) =>
       Some(quantum_mul_from_args_preserve([rhs, lhs]))
     (_, @symcore.Expr::Mul(_)) if quantum_is_operator_expr(lhs) &&
@@ -141,8 +444,14 @@ fn quantum_apply_operator_pair(
       let (scalar, body) = quantum_split_scalar_factors(rhs)
       match body {
         Some(body_expr) =>
-          match
-            quantum_apply_operator_pair(lhs, body_expr, dagger_mode, ip_doit) {
+              match
+            quantum_apply_operator_pair(
+              lhs,
+              body_expr,
+              dagger_mode,
+              ip_doit,
+              sum_doit,
+            ) {
             Some(applied) =>
               Some(quantum_mul_from_args_preserve([scalar, applied]))
             None => None
@@ -158,6 +467,7 @@ fn quantum_apply_operator_pair(
               quantum_mul_from_args_preserve([lhs, term]),
               dagger=dagger_mode,
               ip_doit~,
+              sum_doit~,
             )
           }),
         ),
@@ -249,10 +559,14 @@ fn quantum_qapply_mul(
   args : Array[@symcore.Expr],
   dagger_mode : Bool,
   ip_doit : Bool,
+  sum_doit : Bool,
 ) -> @symcore.Expr {
   let factors : Array[@symcore.Expr] = Array::new()
   for arg in args {
-    factors.push(qapply(arg, dagger=dagger_mode, ip_doit~))
+    let applied = qapply(arg, dagger=dagger_mode, ip_doit~, sum_doit~)
+    for factor in quantum_pair_to_factors(applied) {
+      factors.push(factor)
+    }
   }
   let mut changed = true
   while changed {
@@ -267,6 +581,7 @@ fn quantum_qapply_mul(
           factors[idx + 1],
           dagger_mode,
           ip_doit,
+          sum_doit,
         ) {
         Some(applied) => {
           let prefix = factors[0:idx]
@@ -305,30 +620,31 @@ pub fn qapply(
   expr : @symcore.Expr,
   dagger? : Bool = false,
   ip_doit? : Bool = true,
+  sum_doit? : Bool = false,
 ) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Function("Density", _) =>
-      quantum_qapply_density_expr(expr, dagger, ip_doit)
+      quantum_qapply_density_expr(expr, dagger, ip_doit, sum_doit)
     @symcore.Expr::Function("TensorProduct", args) =>
-      quantum_qapply_tensorproduct_args(args, dagger, ip_doit)
+      quantum_qapply_tensorproduct_args(args, dagger, ip_doit, sum_doit)
     @symcore.Expr::Function("Sum", args) if !args.is_empty() => {
-      let rebuilt : Array[@symcore.Expr] = [qapply(args[0], dagger~, ip_doit~)]
-      for idx in 1..<args.length() {
-        rebuilt.push(args[idx])
-      }
-      @symcore.raw_function("Sum", rebuilt)
+      quantum_sum_expr(
+        qapply(args[0], dagger~, ip_doit~, sum_doit~),
+        args[1:args.length()].to_array(),
+        sum_doit,
+      )
     }
     @symcore.Expr::Pow(base, exp) =>
-      @symcore.raw_pow(qapply(base, dagger~, ip_doit~), exp)
+      @symcore.raw_pow(qapply(base, dagger~, ip_doit~, sum_doit~), exp)
     @symcore.Expr::Add(args) =>
       quantum_add_from_args_preserve(
-        args.map(arg => qapply(arg, dagger~, ip_doit~)),
+        args.map(arg => qapply(arg, dagger~, ip_doit~, sum_doit~)),
       )
     @symcore.Expr::Mul(args) => {
-      let out = quantum_qapply_mul(args, dagger, ip_doit)
+      let out = quantum_qapply_mul(args, dagger, ip_doit, sum_doit)
       if dagger && out == expr {
         let restored = quantum_adjoint(
-          qapply(quantum_adjoint(expr), dagger=false, ip_doit~),
+          qapply(quantum_adjoint(expr), dagger=false, ip_doit~, sum_doit~),
         )
         if restored == expr {
           out

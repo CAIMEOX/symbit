@@ -96,7 +96,7 @@ pub fn bra(
 ///|
 pub fn time_dep_ket(
   label : Array[@symcore.Expr],
-  time : @symcore.Expr,
+  time? : @symcore.Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -110,7 +110,7 @@ pub fn time_dep_ket(
 ///|
 pub fn time_dep_bra(
   label : Array[@symcore.Expr],
-  time : @symcore.Expr,
+  time? : @symcore.Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -166,9 +166,9 @@ pub fn StateExpr::dual(self : StateExpr) -> StateExpr {
     StateFlavor::Ket => bra(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::Bra => ket(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::TimeDepKet =>
-      time_dep_bra(self.label, time, hilbert_space=self.hilbert_space)
+      time_dep_bra(self.label, time=time, hilbert_space=self.hilbert_space)
     StateFlavor::TimeDepBra =>
-      time_dep_ket(self.label, time, hilbert_space=self.hilbert_space)
+      time_dep_ket(self.label, time=time, hilbert_space=self.hilbert_space)
     StateFlavor::OrthogonalKet =>
       orthogonal_bra(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::OrthogonalBra =>
@@ -211,22 +211,22 @@ pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
         "Ket" => Some(ket(args))
         "Bra" => Some(bra(args))
         "TimeDepKet" if args.is_empty() =>
-          Some(time_dep_ket([], default_time_expr()))
+          Some(time_dep_ket([], time=default_time_expr()))
         "TimeDepKet" if args.length() >= 1 => {
           let label : Array[@symcore.Expr] = []
           for idx in 0..<(args.length() - 1) {
             label.push(args[idx])
           }
-          Some(time_dep_ket(label, args[args.length() - 1]))
+          Some(time_dep_ket(label, time=args[args.length() - 1]))
         }
         "TimeDepBra" if args.is_empty() =>
-          Some(time_dep_bra([], default_time_expr()))
+          Some(time_dep_bra([], time=default_time_expr()))
         "TimeDepBra" if args.length() >= 1 => {
           let label : Array[@symcore.Expr] = []
           for idx in 0..<(args.length() - 1) {
             label.push(args[idx])
           }
-          Some(time_dep_bra(label, args[args.length() - 1]))
+          Some(time_dep_bra(label, time=args[args.length() - 1]))
         }
         "OrthogonalKet" => Some(orthogonal_ket(args))
         "OrthogonalBra" => Some(orthogonal_bra(args))

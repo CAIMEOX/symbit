@@ -17,7 +17,7 @@ test "physics.quantum.qexpr/state/operator: parity" {
 
   let k = ket([@symcore.symbol("k")])
   let b = bra([@symcore.symbol("b")])
-  let t = time_dep_ket([@symcore.int(0)], @symcore.symbol("t"))
+  let t = time_dep_ket([@symcore.int(0)], time=@symcore.symbol("t"))
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(@symprint.to_string(k.as_expr())),
     "|k>",
@@ -90,14 +90,14 @@ test "physics.quantum.operator/state: default constructors parity" {
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(time_dep_ket([], @symcore.symbol("t")).as_expr()),
+      @symprint.to_string(time_dep_ket([]).as_expr()),
     ),
     try! @sympy_physics.quantum_eval_str("TimeDepKet()"),
     "TimeDepKet() default parity",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(time_dep_bra([], @symcore.symbol("t")).as_expr()),
+      @symprint.to_string(time_dep_bra([]).as_expr()),
     ),
     try! @sympy_physics.quantum_eval_str("TimeDepBra()"),
     "TimeDepBra() default parity",

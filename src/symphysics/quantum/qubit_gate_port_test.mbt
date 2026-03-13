@@ -102,6 +102,70 @@ test "physics.quantum.qubit/gate: controlled parity" {
     try! @sympy_physics.quantum_qapply_str("CGate((1,), XGate(0))*Qubit(1, 0)"),
     "CGate qapply parity",
   )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        gate_sort(@symcore.raw_mul([z_gate(0).as_expr(), x_gate(0).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_sort(ZGate(0)*XGate(0))"),
+    "gate_sort ZX parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        gate_sort(@symcore.raw_mul([y_gate(0).as_expr(), hadamard_gate(0).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_sort(YGate(0)*HadamardGate(0))"),
+    "gate_sort YH parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        gate_sort(@symcore.raw_mul([t_gate(0).as_expr(), phase_gate(0).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_sort(TGate(0)*PhaseGate(0))"),
+    "gate_sort TS parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        gate_sort(@symcore.raw_mul([z_gate(0).as_expr(), cnot_gate(0, 1).as_expr()])),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_sort(ZGate(0)*CNotGate(0, 1))"),
+    "gate_sort Z/CNOT parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        gate_simp(
+          @symcore.raw_add([
+            @symcore.raw_pow(x_gate(0).as_expr(), @symcore.int(2)),
+            @symcore.raw_pow(y_gate(0).as_expr(), @symcore.int(2)),
+          ]),
+        ),
+      ),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(XGate(0)**2 + YGate(0)**2)"),
+    "gate_simp additive powers parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(gate_simp(@symcore.raw_pow(phase_gate(4).as_expr(), @symcore.int(3)))),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(PhaseGate(4)**3)"),
+    "gate_simp S^3 parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(gate_simp(@symcore.raw_pow(t_gate(0).as_expr(), @symcore.int(6)))),
+    ),
+    try! @sympy_physics.quantum_eval_str("gate_simp(TGate(0)**6)"),
+    "gate_simp T^6 parity",
+  )
 }
 
 ///|

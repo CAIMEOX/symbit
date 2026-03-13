@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/strconv",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symcalculus",
+  "CAIMEOX/symbit/symconcrete" @symconcrete,
   "CAIMEOX/symbit/symphysics" @symphysics,
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",

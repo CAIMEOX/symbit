@@ -1401,6 +1401,7 @@ pub fn quantum_qapply_str(
   expr : String,
   dagger? : Bool = false,
   ip_doit? : Bool = true,
+  sum_doit? : Bool = false,
 ) -> String raise {
   python_subprocess_stdout(
     [
@@ -1419,6 +1420,12 @@ pub fn quantum_qapply_str(
       } else {
         "False"
       },
+      ", sum_doit=",
+      if sum_doit {
+        "True"
+      } else {
+        "False"
+      },
       "))\n",
     ].join(""),
   )
@@ -1429,6 +1436,7 @@ pub fn quantum_qapply_srepr(
   expr : String,
   dagger? : Bool = false,
   ip_doit? : Bool = true,
+  sum_doit? : Bool = false,
 ) -> String raise {
   python_subprocess_stdout(
     [
@@ -1443,6 +1451,12 @@ pub fn quantum_qapply_srepr(
       },
       ", ip_doit=",
       if ip_doit {
+        "True"
+      } else {
+        "False"
+      },
+      ", sum_doit=",
+      if sum_doit {
         "True"
       } else {
         "False"
