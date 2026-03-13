@@ -2696,6 +2696,89 @@ fn python_subprocess_stdout(script : String) -> String raise {
 }
 
 ///|
+fn secondquant_subprocess_prelude() -> String {
+  [
+    "import sys\n",
+    "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n",
+    "from sympy.physics.secondquant import *\n",
+    "from sympy.physics.quantum.operatorordering import normal_ordered_form\n",
+    "i, j, k, l, m, n = symbols('i j k l m n')\n",
+  ].join("")
+}
+
+///|
+pub fn secondquant_eval_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn secondquant_apply_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "print(apply_operators(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn secondquant_normal_order_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "print(normal_ordered_form(sympify(",
+      python_string_literal(expr),
+      ", locals=locals())))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn secondquant_basis_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "print(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn secondquant_matrix_rows(
+  op_expr : String,
+  basis_expr : String,
+) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "m = matrix_rep(sympify(",
+      python_string_literal(op_expr),
+      ", locals=locals()), sympify(",
+      python_string_literal(basis_expr),
+      ", locals=locals()))\n",
+      "print(chr(31).join('[' + ', '.join(str(c) for c in row) + ']' for row in m.tolist()))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
+}
+
+///|
 fn control_routh_script(
   polynomial : @symcore.Expr,
   variable : @symcore.Expr,

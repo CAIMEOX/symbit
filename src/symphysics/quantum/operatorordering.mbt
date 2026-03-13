@@ -35,6 +35,10 @@ fn quantum_op_sort_key(expr : @symcore.Expr) -> (Int, String) {
       let annihilation_rank = if args[1] == @symcore.int(0) { 0 } else { 1 }
       (annihilation_rank, @symprint.to_string(args[0]))
     }
+    @symcore.Expr::Function("CreateBoson", args) if args.length() == 1 =>
+      (0, @symprint.to_string(args[0]))
+    @symcore.Expr::Function("AnnihilateBoson", args) if args.length() == 1 =>
+      (1, @symprint.to_string(args[0]))
     _ => (2, @symprint.to_string(expr))
   }
 }
@@ -55,8 +59,14 @@ fn quantum_operatorordering_pair(
   ordered_form : Bool,
   independent : Bool,
 ) -> @symcore.Expr? {
-  guard quantum_expr_has_any_name(current, ["BosonOp", "FermionOp"]) &&
-    quantum_expr_has_any_name(next, ["BosonOp", "FermionOp"]) else {
+  guard quantum_expr_has_any_name(
+    current,
+    ["BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson"],
+  ) &&
+    quantum_expr_has_any_name(
+      next,
+      ["BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson"],
+    ) else {
     return None
   }
   let current_key = quantum_op_sort_key(current)
@@ -71,8 +81,8 @@ fn quantum_operatorordering_pair(
       nargs.length() >= 1 => cargs[0] == nargs[0]
     _ => false
   }
-  if quantum_expr_has_name(current, "BosonOp") &&
-    quantum_expr_has_name(next, "BosonOp") {
+  if quantum_expr_has_any_name(current, ["BosonOp", "AnnihilateBoson", "CreateBoson"]) &&
+    quantum_expr_has_any_name(next, ["BosonOp", "AnnihilateBoson", "CreateBoson"]) {
     if ordered_form {
       if same_name {
         Some(next * current + @symcore.int(1))

@@ -175,8 +175,34 @@ fn quantum_make_commutator(
             return @symcore.int(-1)
           }
         (
+          @symcore.Expr::Function("AnnihilateBoson", largs),
+          @symcore.Expr::Function("CreateBoson", rargs),
+        ) if largs.length() == 1 && rargs.length() == 1 && largs[0] == rargs[0] =>
+          return @symcore.int(1)
+        (
+          @symcore.Expr::Function("CreateBoson", largs),
+          @symcore.Expr::Function("AnnihilateBoson", rargs),
+        ) if largs.length() == 1 && rargs.length() == 1 && largs[0] == rargs[0] =>
+          return @symcore.int(-1)
+        (
           @symcore.Expr::Function("FermionOp", _),
           @symcore.Expr::Function("BosonOp", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("AnnihilateBoson", _),
+          @symcore.Expr::Function("FermionOp", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("CreateBoson", _),
+          @symcore.Expr::Function("FermionOp", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("FermionOp", _),
+          @symcore.Expr::Function("AnnihilateBoson", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("FermionOp", _),
+          @symcore.Expr::Function("CreateBoson", _),
         ) => return @symcore.int(0)
         (
           @symcore.Expr::Function("BosonOp", _),

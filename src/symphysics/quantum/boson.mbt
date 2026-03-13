@@ -43,6 +43,44 @@ pub fn BosonOpExpr::dagger(self : BosonOpExpr) -> BosonOpExpr {
 }
 
 ///|
+fn boson_secondquant_operator(expr : @symcore.Expr) -> (@symcore.Expr, Bool)? {
+  match expr {
+    @symcore.Expr::Function("BosonOp", args) if args.length() == 2 =>
+      Some((args[0], args[1] != @symcore.int(0)))
+    @symcore.Expr::Function("AnnihilateBoson", args) if args.length() == 1 =>
+      Some((args[0], true))
+    @symcore.Expr::Function("CreateBoson", args) if args.length() == 1 =>
+      Some((args[0], false))
+    _ => None
+  }
+}
+
+///|
+fn boson_secondquant_tuple_state(
+  expr : @symcore.Expr,
+  ket? : Bool = true,
+) -> Array[@symcore.Expr]? {
+  let expected = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
+  match expr {
+    @symcore.Expr::Function(name, args) if name == expected && args.length() == 1 =>
+      match args[0] {
+        @symcore.Expr::Function("Tuple", items) => Some(items)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn boson_secondquant_state_expr(
+  items : Array[@symcore.Expr],
+  ket? : Bool = true,
+) -> @symcore.Expr {
+  let class_name = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
+  @symcore.raw_function(class_name, [@symcore.raw_function("Tuple", items)])
+}
+
+///|
 pub fn boson_fock_ket(n : @symcore.Expr) -> @symcore.Expr {
   @symcore.raw_function("BosonFockKet", [n])
 }
@@ -67,6 +105,40 @@ pub fn boson_apply_operator_to_ket(
   op_expr : @symcore.Expr,
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
+  match (boson_secondquant_operator(op_expr), boson_secondquant_tuple_state(ket_expr)) {
+    (Some((state_index, is_ann)), Some(items)) =>
+      match quantum_integer_value(state_index) {
+        Some(level) if level >= 0 && level < items.length() => {
+          let updated = items.copy()
+          if is_ann {
+            if updated[level] == @symcore.int(0) {
+              return Some(@symcore.int(0))
+            }
+            return Some(
+              @symcore.raw_function("sqrt", [updated[level]]) *
+              boson_secondquant_state_expr(
+                {
+                  updated[level] = updated[level] - @symcore.int(1)
+                  updated
+                },
+              ),
+            )
+          } else {
+            return Some(
+              @symcore.raw_function("sqrt", [updated[level] + @symcore.int(1)]) *
+              boson_secondquant_state_expr(
+                {
+                  updated[level] = updated[level] + @symcore.int(1)
+                  updated
+                },
+              ),
+            )
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
   match (op_expr, ket_expr) {
     (
       @symcore.Expr::Function("BosonOp", oargs),

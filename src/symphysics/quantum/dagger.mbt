@@ -159,6 +159,14 @@ pub fn dagger(expr : @symcore.Expr, evaluate? : Bool = true) -> @symcore.Expr {
           @symcore.int(0)
         },
       ])
+    @symcore.Expr::Function(name, args) if name == "AnnihilateBoson" &&
+      args.length() == 1 => @symcore.raw_function("CreateBoson", args)
+    @symcore.Expr::Function(name, args) if name == "CreateBoson" &&
+      args.length() == 1 => @symcore.raw_function("AnnihilateBoson", args)
+    @symcore.Expr::Function(name, args) if name == "FockStateBosonKet" &&
+      args.length() == 1 => @symcore.raw_function("FockStateBosonBra", args)
+    @symcore.Expr::Function(name, args) if name == "FockStateBosonBra" &&
+      args.length() == 1 => @symcore.raw_function("FockStateBosonKet", args)
     @symcore.Expr::Function(name, args) if name == "FermionOp" &&
       args.length() == 2 =>
       @symcore.raw_function("FermionOp", [

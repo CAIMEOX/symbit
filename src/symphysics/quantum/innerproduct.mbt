@@ -106,6 +106,39 @@ fn quantum_difference_is_zero(
 }
 
 ///|
+fn quantum_secondquant_tuple_args(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+  match expr {
+    @symcore.Expr::Function(_, args) if args.length() == 1 =>
+      match args[0] {
+        @symcore.Expr::Function("Tuple", items) => Some(items)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn quantum_tuple_inner_product(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  if lhs.length() != rhs.length() {
+    return @symcore.int(0)
+  }
+  let mut out = @symcore.int(1)
+  for idx in 0..<lhs.length() {
+    if lhs[idx] == rhs[idx] {
+      ()
+    } else if lhs[idx] is @symcore.Expr::Number(_) && rhs[idx] is @symcore.Expr::Number(_) {
+      return @symcore.int(0)
+    } else {
+      out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])
+    }
+  }
+  out
+}
+
+///|
 pub fn inner_product(
   bra_expr : @symcore.Expr,
   ket_expr : @symcore.Expr,
@@ -162,6 +195,14 @@ pub fn inner_product(
         @symcore.int(1)
       } else {
         @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
+      }
+    (
+      @symcore.Expr::Function("FockStateBosonBra", _),
+      @symcore.Expr::Function("FockStateBosonKet", _),
+    ) =>
+      match (quantum_secondquant_tuple_args(bra_expr), quantum_secondquant_tuple_args(ket_expr)) {
+        (Some(bitems), Some(kitems)) => quantum_tuple_inner_product(bitems, kitems)
+        _ => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
     (
       @symcore.Expr::Function("FermionFockBra", bargs),
