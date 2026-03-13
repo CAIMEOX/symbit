@@ -23,17 +23,29 @@ test "physics.quantum.boson/fermion: local operator and qapply rules" {
     "boson fock apply",
   )
   try! quantum_test_assert_expr_equal(
-    qapply(@symcore.raw_mul([a.as_expr(), boson_coherent_ket(@symcore.symbol("alpha"))])),
+    qapply(
+      @symcore.raw_mul([
+        a.as_expr(),
+        boson_coherent_ket(@symcore.symbol("alpha")),
+      ]),
+    ),
     "alpha*BosonCoherentKet(alpha)",
     "boson coherent apply",
   )
   try! quantum_test_assert_expr_equal(
-    qapply(@symcore.raw_mul([c.as_expr(), try! fermion_fock_ket(@symcore.int(1))])),
+    qapply(
+      @symcore.raw_mul([c.as_expr(), try! fermion_fock_ket(@symcore.int(1))]),
+    ),
     "FermionFockKet(0)",
     "fermion annihilation apply",
   )
   try! quantum_test_assert_expr_equal(
-    qapply(@symcore.raw_mul([c.dagger().as_expr(), try! fermion_fock_ket(@symcore.int(1))])),
+    qapply(
+      @symcore.raw_mul([
+        c.dagger().as_expr(),
+        try! fermion_fock_ket(@symcore.int(1)),
+      ]),
+    ),
     "0",
     "fermion creation saturates",
   )

@@ -29,7 +29,12 @@ test "physics.quantum.grover: matrix parity" {
 test "physics.quantum.grover: state parity" {
   try! quantum_test_assert_matrix_expr_equal(
     try! qubit_to_matrix(
-      qapply(@symcore.raw_mul([try! oracle_gate(2, [2]), (try! qubit("10")).as_expr()])),
+      qapply(
+        @symcore.raw_mul([
+          try! oracle_gate(2, [2]),
+          (try! qubit("10")).as_expr(),
+        ]),
+      ),
       nqubits=2,
     ),
     try! @sympy_physics.quantum_grover_oracle_state_matrix(2, [2], 2),

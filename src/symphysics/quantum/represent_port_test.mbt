@@ -4,7 +4,9 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     matrix_scalar_value_to_string(
       try! represent(x_gate(0).as_expr() ^ @symcore.int(2), nqubits=1),
     ),
-    content=try! @sympy_physics.physics_eval_str("represent(XGate(0)**2, nqubits=1)"),
+    content=try! @sympy_physics.physics_eval_str(
+      "represent(XGate(0)**2, nqubits=1)",
+    ),
   )
   inspect(
     matrix_scalar_value_to_string(
@@ -13,10 +15,15 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
         nqubits=1,
       ),
     ),
-    content=try! @sympy_physics.physics_eval_str("represent(XGate(0)*XGate(0), nqubits=1)"),
+    content=try! @sympy_physics.physics_eval_str(
+      "represent(XGate(0)*XGate(0), nqubits=1)",
+    ),
   )
 
-  let phase2 = try! represent(phase_gate(0).as_expr() ^ @symcore.int(2), nqubits=1)
+  let phase2 = try! represent(
+    phase_gate(0).as_expr() ^ @symcore.int(2),
+    nqubits=1,
+  )
   match phase2 {
     MatrixScalarValue::Matrix(matrix) =>
       try! quantum_test_assert_matrix_expr_equal(
@@ -38,7 +45,9 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     MatrixScalarValue::Matrix(matrix) =>
       try! quantum_test_assert_matrix_expr_equal(
         matrix,
-        try! @sympy_physics.physics_eval_matrix("represent(Commutator(SigmaX(), SigmaY()))"),
+        try! @sympy_physics.physics_eval_matrix(
+          "represent(Commutator(SigmaX(), SigmaY()))",
+        ),
         2,
         2,
         "represent commutator parity",
@@ -53,7 +62,9 @@ test "physics.quantum.represent: parity for gate powers, (anti)commutators, and 
     MatrixScalarValue::Matrix(matrix) =>
       try! quantum_test_assert_matrix_expr_equal(
         matrix,
-        try! @sympy_physics.physics_eval_matrix("represent(AntiCommutator(SigmaX(), SigmaY()))"),
+        try! @sympy_physics.physics_eval_matrix(
+          "represent(AntiCommutator(SigmaX(), SigmaY()))",
+        ),
         2,
         2,
         "represent anticommutator parity",

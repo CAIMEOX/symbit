@@ -6,7 +6,10 @@ test "physics.quantum.pauli: local operators, states, and simplification" {
   let sp = sigma_plus()
   let sm = sigma_minus()
   inspect(sx.to_string(), content="SigmaX()")
-  inspect(sigma_x(name=Some(@symcore.symbol("a"))).repr(), content="SigmaX(Symbol('a'))")
+  inspect(
+    sigma_x(name=Some(@symcore.symbol("a"))).repr(),
+    content="SigmaX(Symbol('a'))",
+  )
   inspect((try! sigma_z_ket(0)).dual().to_string(), content="<0|")
 
   try! quantum_test_assert_expr_equal(
@@ -25,7 +28,10 @@ test "physics.quantum.pauli: local operators, states, and simplification" {
     "SigmaMinus action",
   )
   try! quantum_test_assert_expr_equal(
-    inner_product((try! sigma_z_bra(1)).as_expr(), (try! sigma_z_ket(1)).as_expr()),
+    inner_product(
+      (try! sigma_z_bra(1)).as_expr(),
+      (try! sigma_z_ket(1)).as_expr(),
+    ),
     "1",
     "SigmaZ inner product",
   )

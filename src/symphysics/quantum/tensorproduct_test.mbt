@@ -13,7 +13,9 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
   let m1 = @symphysics.explicit_matrix_from_ints([[1, 2], [3, 4]])
   let m2 = @symphysics.explicit_matrix_from_ints([[1, 0], [0, 1]])
   inspect(
-    @symphysics.explicit_matrix_rows_string(try! tensor_product_matrix([m1, m2])),
+    @symphysics.explicit_matrix_rows_string(
+      try! tensor_product_matrix([m1, m2]),
+    ),
     content="[[1, 0, 2, 0], [0, 1, 0, 2], [3, 0, 4, 0], [0, 3, 0, 4]]",
   )
 }

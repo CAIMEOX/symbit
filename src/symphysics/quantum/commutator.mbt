@@ -3,12 +3,18 @@
 /// `sympy.physics.quantum.commutator`.
 
 ///|
-fn quantum_commutator_raw(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
+fn quantum_commutator_raw(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr {
   @symcore.raw_function("Commutator", [lhs, rhs])
 }
 
 ///|
-fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
+fn quantum_make_commutator(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr {
   if lhs == @symcore.int(0) || rhs == @symcore.int(0) {
     return @symcore.int(0)
   }
@@ -26,44 +32,67 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
         return lhs_scalar * rhs_scalar * quantum_make_commutator(nlhs, nrhs)
       }
       match (pauli_from_expr(nlhs), pauli_from_expr(nrhs)) {
-        (Some(lhs_pauli), Some(rhs_pauli)) if !pauli_name_equal(lhs_pauli.name, rhs_pauli.name) =>
-          return @symcore.int(0)
+        (Some(lhs_pauli), Some(rhs_pauli)) if !pauli_name_equal(
+            lhs_pauli.name,
+            rhs_pauli.name,
+          ) => return @symcore.int(0)
         (Some(lhs_pauli), Some(rhs_pauli)) =>
           match (lhs_pauli.kind, rhs_pauli.kind) {
             (PauliKind::X, PauliKind::Y) =>
-              return @symcore.int(2) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.int(2) *
+                @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::X) =>
-              return @symcore.int(-2) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-2) *
+                @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Z) =>
-              return @symcore.int(2) * @symcore.symbol("I") * sigma_x(name=lhs_pauli.name).as_expr()
+              return @symcore.int(2) *
+                @symcore.symbol("I") *
+                sigma_x(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Y) =>
-              return @symcore.int(-2) * @symcore.symbol("I") * sigma_x(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-2) *
+                @symcore.symbol("I") *
+                sigma_x(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::X) =>
-              return @symcore.int(2) * @symcore.symbol("I") * sigma_y(name=lhs_pauli.name).as_expr()
+              return @symcore.int(2) *
+                @symcore.symbol("I") *
+                sigma_y(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Z) =>
-              return @symcore.int(-2) * @symcore.symbol("I") * sigma_y(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-2) *
+                @symcore.symbol("I") *
+                sigma_y(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::X) =>
               return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Minus) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Y) =>
-              return @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Minus) =>
-              return @symcore.int(-1) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-1) *
+                @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Z) =>
-              return @symcore.int(2) * sigma_minus(name=lhs_pauli.name).as_expr()
+              return @symcore.int(2) *
+                sigma_minus(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Minus) =>
-              return @symcore.int(-2) * sigma_minus(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-2) *
+                sigma_minus(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::X) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Plus) =>
               return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Y) =>
-              return @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Plus) =>
-              return @symcore.int(-1) * @symcore.symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-1) *
+                @symcore.symbol("I") *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Z) =>
-              return @symcore.int(-2) * sigma_plus(name=lhs_pauli.name).as_expr()
+              return @symcore.int(-2) *
+                sigma_plus(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Plus) =>
               return @symcore.int(2) * sigma_plus(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Minus) =>
@@ -75,18 +104,25 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
         _ => ()
       }
       match (nlhs, nrhs) {
-        (@symcore.Expr::Symbol(lhs_name), @symcore.Expr::Symbol(rhs_name)) => {
+        (@symcore.Expr::Symbol(lhs_name), @symcore.Expr::Symbol(rhs_name)) =>
           match (lhs_name, rhs_name) {
-            ("Jx", "Jy") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jz")
-            ("Jy", "Jz") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jx")
-            ("Jz", "Jx") => return @symcore.symbol("I") * hbar * @symcore.symbol("Jy")
-            ("Jplus", "Jminus") => return @symcore.int(2) * hbar * @symcore.symbol("Jz")
+            ("Jx", "Jy") =>
+              return @symcore.symbol("I") * hbar * @symcore.symbol("Jz")
+            ("Jy", "Jz") =>
+              return @symcore.symbol("I") * hbar * @symcore.symbol("Jx")
+            ("Jz", "Jx") =>
+              return @symcore.symbol("I") * hbar * @symcore.symbol("Jy")
+            ("Jplus", "Jminus") =>
+              return @symcore.int(2) * hbar * @symcore.symbol("Jz")
             ("Jz", "Jplus") => return hbar * @symcore.symbol("Jplus")
-            ("Jz", "Jminus") => return @symcore.int(-1) * hbar * @symcore.symbol("Jminus")
+            ("Jz", "Jminus") =>
+              return @symcore.int(-1) * hbar * @symcore.symbol("Jminus")
             _ => ()
           }
-        }
-        (@symcore.Expr::Function("BosonOp", largs), @symcore.Expr::Function("BosonOp", rargs)) => {
+        (
+          @symcore.Expr::Function("BosonOp", largs),
+          @symcore.Expr::Function("BosonOp", rargs),
+        ) =>
           if largs.length() == 2 &&
             rargs.length() == 2 &&
             largs[0] == rargs[0] &&
@@ -94,31 +130,50 @@ fn quantum_make_commutator(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore
             rargs[1] != @symcore.int(0) {
             return @symcore.int(-1)
           }
-        }
-        (@symcore.Expr::Function("FermionOp", _), @symcore.Expr::Function("BosonOp", _)) =>
-          return @symcore.int(0)
-        (@symcore.Expr::Function("BosonOp", _), @symcore.Expr::Function("FermionOp", _)) =>
-          return @symcore.int(0)
+        (
+          @symcore.Expr::Function("FermionOp", _),
+          @symcore.Expr::Function("BosonOp", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("BosonOp", _),
+          @symcore.Expr::Function("FermionOp", _),
+        ) => return @symcore.int(0)
         (@symcore.Expr::Function("XOp", _), @symcore.Expr::Function("PxOp", _)) =>
           return @symcore.symbol("I") * hbar
         (@symcore.Expr::Function("PxOp", _), @symcore.Expr::Function("XOp", _)) =>
           return @symcore.int(-1) * @symcore.symbol("I") * hbar
-        (@symcore.Expr::Function("RaisingOp", _), @symcore.Expr::Function("LoweringOp", _)) =>
-          return @symcore.int(-1)
-        (@symcore.Expr::Function("LoweringOp", _), @symcore.Expr::Function("RaisingOp", _)) =>
-          return @symcore.int(1)
-        (@symcore.Expr::Function("RaisingOp", _), @symcore.Expr::Function("NumberOp", _)) =>
-          return @symcore.int(-1) * nlhs
-        (@symcore.Expr::Function("LoweringOp", _), @symcore.Expr::Function("NumberOp", _)) =>
-          return nlhs
-        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("RaisingOp", _)) =>
-          return nrhs
-        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("LoweringOp", _)) =>
-          return @symcore.int(-1) * nrhs
-        (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("Hamiltonian", _)) =>
-          return @symcore.int(0)
-        (@symcore.Expr::Function("Hamiltonian", _), @symcore.Expr::Function("NumberOp", _)) =>
-          return @symcore.int(0)
+        (
+          @symcore.Expr::Function("RaisingOp", _),
+          @symcore.Expr::Function("LoweringOp", _),
+        ) => return @symcore.int(-1)
+        (
+          @symcore.Expr::Function("LoweringOp", _),
+          @symcore.Expr::Function("RaisingOp", _),
+        ) => return @symcore.int(1)
+        (
+          @symcore.Expr::Function("RaisingOp", _),
+          @symcore.Expr::Function("NumberOp", _),
+        ) => return @symcore.int(-1) * nlhs
+        (
+          @symcore.Expr::Function("LoweringOp", _),
+          @symcore.Expr::Function("NumberOp", _),
+        ) => return nlhs
+        (
+          @symcore.Expr::Function("NumberOp", _),
+          @symcore.Expr::Function("RaisingOp", _),
+        ) => return nrhs
+        (
+          @symcore.Expr::Function("NumberOp", _),
+          @symcore.Expr::Function("LoweringOp", _),
+        ) => return @symcore.int(-1) * nrhs
+        (
+          @symcore.Expr::Function("NumberOp", _),
+          @symcore.Expr::Function("Hamiltonian", _),
+        ) => return @symcore.int(0)
+        (
+          @symcore.Expr::Function("Hamiltonian", _),
+          @symcore.Expr::Function("NumberOp", _),
+        ) => return @symcore.int(0)
         _ => ()
       }
       if lhs.compare(rhs) > 0 {
@@ -171,23 +226,33 @@ fn quantum_expand_pow_commutator(
             effective_base = @symcore.raw_pow(base, @symcore.int(-1))
             effective_exp = -exp
           }
-          let comm = commutator_expand(commutator(effective_base, other, evaluate=false))
+          let comm = commutator_expand(
+            commutator(effective_base, other, evaluate=false),
+          )
           let terms : Array[@symcore.Expr] = []
           for idx in 0..<effective_exp {
             let left_power = effective_exp - 1 - idx
             let right_power = idx
             let parts : Array[@symcore.Expr] = []
             if left_power > 0 {
-              parts.push(@symcore.raw_pow(effective_base, @symcore.int(left_power)))
+              parts.push(
+                @symcore.raw_pow(effective_base, @symcore.int(left_power)),
+              )
             }
             parts.push(comm)
             if right_power > 0 {
-              parts.push(@symcore.raw_pow(effective_base, @symcore.int(right_power)))
+              parts.push(
+                @symcore.raw_pow(effective_base, @symcore.int(right_power)),
+              )
             }
             terms.push(quantum_mul_from_args_preserve(parts))
           }
           let out = quantum_add_from_args_preserve(terms)
-          if sign < 0 { @symcore.int(-1) * out } else { out }
+          if sign < 0 {
+            @symcore.int(-1) * out
+          } else {
+            out
+          }
         }
         _ => quantum_commutator_raw(base_expr, other)
       }
@@ -203,7 +268,11 @@ pub fn commutator_expand(expr : @symcore.Expr) -> @symcore.Expr {
       let rhs = args[1]
       match lhs {
         @symcore.Expr::Add(lhs_args) =>
-          quantum_add_from_args_preserve(lhs_args.map(term => commutator_expand(commutator(term, rhs, evaluate=false))))
+          quantum_add_from_args_preserve(
+            lhs_args.map(term => {
+              commutator_expand(commutator(term, rhs, evaluate=false))
+            }),
+          )
         @symcore.Expr::Mul(lhs_args) if lhs_args.length() > 1 => {
           let head = lhs_args[0]
           let tail = quantum_mul_slice(lhs_args, 1, lhs_args.length())
@@ -222,7 +291,11 @@ pub fn commutator_expand(expr : @symcore.Expr) -> @symcore.Expr {
         _ =>
           match rhs {
             @symcore.Expr::Add(rhs_args) =>
-              quantum_add_from_args_preserve(rhs_args.map(term => commutator_expand(commutator(lhs, term, evaluate=false))))
+              quantum_add_from_args_preserve(
+                rhs_args.map(term => {
+                  commutator_expand(commutator(lhs, term, evaluate=false))
+                }),
+              )
             @symcore.Expr::Mul(rhs_args) if rhs_args.length() > 1 => {
               let head = rhs_args[0]
               let tail = quantum_mul_slice(rhs_args, 1, rhs_args.length())
@@ -237,7 +310,8 @@ pub fn commutator_expand(expr : @symcore.Expr) -> @symcore.Expr {
                 ]),
               ])
             }
-            @symcore.Expr::Pow(_, _) => quantum_expand_pow_commutator(rhs, lhs, -1)
+            @symcore.Expr::Pow(_, _) =>
+              quantum_expand_pow_commutator(rhs, lhs, -1)
             _ => expr
           }
       }

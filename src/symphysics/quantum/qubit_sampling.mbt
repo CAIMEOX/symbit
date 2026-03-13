@@ -18,7 +18,8 @@ fn expr_number_value_local(expr : @symcore.Expr) -> @symnum.BigRational? {
 
 ///|
 fn expr_rational_to_double(value : @symnum.BigRational) -> Double {
-  value.numerator().to_int().to_double() / value.denominator().to_int().to_double()
+  value.numerator().to_int().to_double() /
+  value.denominator().to_int().to_double()
 }
 
 ///|
@@ -79,7 +80,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
     }
     @symcore.Expr::Pow(base, exp) =>
       match (expr_complex_double(base), expr_number_value_local(exp)) {
-        (Some(base_value), Some(exp_value)) => {
+        (Some(base_value), Some(exp_value)) =>
           if base_value.1 != 0.0 {
             None
           } else if exp_value.is_integral() {
@@ -94,7 +95,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
               Some(acc)
             } else {
               let mut acc = (1.0, 0.0)
-              for _ in 0..<(-power) {
+              for _ in 0..<-power {
                 acc = complex_mul(acc, base_value)
               }
               complex_inv(acc)
@@ -103,12 +104,12 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
             let exponent = expr_rational_to_double(exp_value)
             Some((@math.pow(base_value.0, exponent), 0.0))
           }
-        }
         _ => None
       }
     @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
       match expr_complex_double(args[0]) {
-        Some(value) if value.1 == 0.0 && value.0 >= 0.0 => Some((value.0.sqrt(), 0.0))
+        Some(value) if value.1 == 0.0 && value.0 >= 0.0 =>
+          Some((value.0.sqrt(), 0.0))
         _ => None
       }
     @symcore.Expr::Function("exp", args) if args.length() == 1 =>
@@ -137,10 +138,14 @@ fn expr_real_probability(expr : @symcore.Expr) -> Double? {
 }
 
 ///|
-fn oneshot_sample_value(sample : Double) -> Double raise @symphysics.PhysicsError {
+fn oneshot_sample_value(
+  sample : Double,
+) -> Double raise @symphysics.PhysicsError {
   if sample >= 0.0 {
     guard sample < 1.0 else {
-      raise @symphysics.PhysicsError::ValueError("measurement sample must lie in [0, 1)")
+      raise @symphysics.PhysicsError::ValueError(
+        "measurement sample must lie in [0, 1)",
+      )
     }
     sample
   } else {
@@ -154,7 +159,9 @@ fn choose_measurement_state(
   sample : Double,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard !states.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("measurement produced no possible outcomes")
+    raise @symphysics.PhysicsError::ValueError(
+      "measurement produced no possible outcomes",
+    )
   }
   let cutoff = try! oneshot_sample_value(sample)
   let mut total = 0.0
@@ -181,7 +188,7 @@ pub fn measure_partial_oneshot(
   nqubits? : Int = 0,
   sample? : Double = -1.0,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
-  choose_measurement_state(try! measure_partial(expr, bits, nqubits=nqubits), sample)
+  choose_measurement_state(try! measure_partial(expr, bits, nqubits~), sample)
 }
 
 ///|
@@ -190,5 +197,5 @@ pub fn measure_all_oneshot(
   nqubits? : Int = 0,
   sample? : Double = -1.0,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
-  choose_measurement_state(try! measure_all(expr, nqubits=nqubits), sample)
+  choose_measurement_state(try! measure_all(expr, nqubits~), sample)
 }

@@ -50,7 +50,8 @@ test "physics.quantum.represent helpers: basis discovery and symbolic fallbacks"
     @symprint.to_string(
       match represent(ket([@symcore.symbol("k")]).as_expr()) {
         MatrixScalarValue::Scalar(value) => value
-        MatrixScalarValue::Matrix(_) => fail("expected scalar symbolic represent")
+        MatrixScalarValue::Matrix(_) =>
+          fail("expected scalar symbolic represent")
       },
     ),
     "InnerProduct(Bra(psi_1), Ket(k))",

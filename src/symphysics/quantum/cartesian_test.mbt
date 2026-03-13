@@ -1,10 +1,12 @@
+///|
 fn quantum_scalar_repr(
   value : MatrixScalarValue,
   context : String,
 ) -> @symcore.Expr raise {
   match value {
     MatrixScalarValue::Scalar(expr) => expr
-    MatrixScalarValue::Matrix(_) => fail("\{context}: expected scalar representation")
+    MatrixScalarValue::Matrix(_) =>
+      fail("\{context}: expected scalar representation")
   }
 }
 
@@ -43,7 +45,7 @@ test "physics.quantum.cartesian: local qapply, overlaps, and basis representatio
     "<px|x>",
   )
 
-  let pos3 = position_ket_3d(x=x, y=@symcore.symbol("y"), z=@symcore.symbol("z"))
+  let pos3 = position_ket_3d(x~, y=@symcore.symbol("y"), z=@symcore.symbol("z"))
   try! quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([x_op(), pos3])),
     "x*PositionKet3D(x, y, z)",
@@ -61,12 +63,18 @@ test "physics.quantum.cartesian: local qapply, overlaps, and basis representatio
     "represent XKet in x basis",
   )
   try! quantum_test_assert_expr_equal(
-    try! quantum_scalar_repr(represent(px_ket(momentum=py), basis=Some(x_op())), "represent PxKet"),
+    try! quantum_scalar_repr(
+      represent(px_ket(momentum=py), basis=Some(x_op())),
+      "represent PxKet",
+    ),
     "exp(I*x_1*py/hbar)/sqrt(2*pi*hbar)",
     "represent PxKet in x basis",
   )
   try! quantum_test_assert_expr_equal(
-    try! quantum_scalar_repr(represent(px_op(), basis=Some(x_op())), "represent PxOp"),
+    try! quantum_scalar_repr(
+      represent(px_op(), basis=Some(x_op())),
+      "represent PxOp",
+    ),
     "-I*hbar*DiracDelta(x_1 - x_2)*x_1",
     "represent PxOp in x basis",
   )

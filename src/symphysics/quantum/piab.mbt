@@ -35,13 +35,18 @@ pub fn piab_apply_operator_to_ket(
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
   match (op_expr, ket_expr) {
-    (@symcore.Expr::Function("PIABHamiltonian", _), @symcore.Expr::Function("PIABKet", args)) if args.length() == 1 => {
+    (
+      @symcore.Expr::Function("PIABHamiltonian", _),
+      @symcore.Expr::Function("PIABKet", args),
+    ) if args.length() == 1 => {
       let n = args[0]
-      let coeff =
-        (n ^ @symcore.int(2)) *
+      let coeff = (n ^ @symcore.int(2)) *
         (@symcore.symbol("pi") ^ @symcore.int(2)) *
         (hbar ^ @symcore.int(2)) *
-        @symcore.raw_pow(@symcore.int(2) * piab_m * (piab_l ^ @symcore.int(2)), @symcore.int(-1))
+        @symcore.raw_pow(
+          @symcore.int(2) * piab_m * (piab_l ^ @symcore.int(2)),
+          @symcore.int(-1),
+        )
       Some(coeff * ket_expr)
     }
     _ => None
@@ -51,10 +56,21 @@ pub fn piab_apply_operator_to_ket(
 ///|
 pub fn piab_represent(expr : @symcore.Expr) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Function("PIABKet", args) | @symcore.Expr::Function("PIABBra", args) if args.length() == 1 => {
+    @symcore.Expr::Function("PIABKet", args)
+    | @symcore.Expr::Function("PIABBra", args) if args.length() == 1 => {
       let x = @symcore.symbol("x")
-      let prefactor = @symcore.raw_function("sqrt", [@symcore.int(2) * @symcore.raw_pow(piab_l, @symcore.int(-1))])
-      Some(prefactor * @symcore.raw_function("sin", [args[0] * @symcore.symbol("pi") * x * @symcore.raw_pow(piab_l, @symcore.int(-1))]))
+      let prefactor = @symcore.raw_function("sqrt", [
+        @symcore.int(2) * @symcore.raw_pow(piab_l, @symcore.int(-1)),
+      ])
+      Some(
+        prefactor *
+        @symcore.raw_function("sin", [
+          args[0] *
+          @symcore.symbol("pi") *
+          x *
+          @symcore.raw_pow(piab_l, @symcore.int(-1)),
+        ]),
+      )
     }
     _ => None
   }

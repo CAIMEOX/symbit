@@ -30,7 +30,11 @@ fn default_operator_label() -> Array[@symcore.Expr] {
 fn normalize_operator_label(
   label : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr] {
-  if label.is_empty() { default_operator_label() } else { label }
+  if label.is_empty() {
+    default_operator_label()
+  } else {
+    label
+  }
 }
 
 ///|
@@ -49,7 +53,11 @@ pub fn quantum_operator(
   flavor? : OperatorFlavor = OperatorFlavor::Generic,
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
-  OperatorExpr::{ flavor, label: normalize_operator_label(label), hilbert_space }
+  OperatorExpr::{
+    flavor,
+    label: normalize_operator_label(label),
+    hilbert_space,
+  }
 }
 
 ///|

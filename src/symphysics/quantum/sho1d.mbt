@@ -59,11 +59,20 @@ pub fn sho_apply_operator_to_ket(
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
   match (op_expr, ket_expr) {
-    (@symcore.Expr::Function("RaisingOp", _), @symcore.Expr::Function("SHOKet", args)) if args.length() == 1 => {
+    (
+      @symcore.Expr::Function("RaisingOp", _),
+      @symcore.Expr::Function("SHOKet", args),
+    ) if args.length() == 1 => {
       let n = args[0]
-      Some(@symcore.raw_function("sqrt", [n + @symcore.int(1)]) * sho_ket(n + @symcore.int(1)))
+      Some(
+        @symcore.raw_function("sqrt", [n + @symcore.int(1)]) *
+        sho_ket(n + @symcore.int(1)),
+      )
     }
-    (@symcore.Expr::Function("LoweringOp", _), @symcore.Expr::Function("SHOKet", args)) if args.length() == 1 => {
+    (
+      @symcore.Expr::Function("LoweringOp", _),
+      @symcore.Expr::Function("SHOKet", args),
+    ) if args.length() == 1 => {
       let n = args[0]
       if sho_is_zero_state(n) {
         Some(@symcore.int(0))
@@ -71,11 +80,17 @@ pub fn sho_apply_operator_to_ket(
         Some(@symcore.raw_function("sqrt", [n]) * sho_ket(n - @symcore.int(1)))
       }
     }
-    (@symcore.Expr::Function("NumberOp", _), @symcore.Expr::Function("SHOKet", args)) if args.length() == 1 => {
+    (
+      @symcore.Expr::Function("NumberOp", _),
+      @symcore.Expr::Function("SHOKet", args),
+    ) if args.length() == 1 => {
       let n = args[0]
       Some(n * ket_expr)
     }
-    (@symcore.Expr::Function("Hamiltonian", _), @symcore.Expr::Function("SHOKet", args)) if args.length() == 1 => {
+    (
+      @symcore.Expr::Function("Hamiltonian", _),
+      @symcore.Expr::Function("SHOKet", args),
+    ) if args.length() == 1 => {
       let n = args[0]
       let half = try! @symcore.rational_from_ints(1, 2)
       Some(hbar * sho_omega * (n + half) * ket_expr)
@@ -108,7 +123,9 @@ fn sho_number_basis_matrix(
   ndim : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard ndim > 0 else {
-    raise @symphysics.PhysicsError::ValueError("ndim must be positive for SHO representations")
+    raise @symphysics.PhysicsError::ValueError(
+      "ndim must be positive for SHO representations",
+    )
   }
   let rows = sho_zero_matrix(ndim)
   match expr {
@@ -141,7 +158,9 @@ fn sho_number_basis_matrix(
       match sho_n_value(args[0]) {
         Some(n) => {
           guard n < ndim else {
-            raise @symphysics.PhysicsError::IndexError("state index exceeds ndim")
+            raise @symphysics.PhysicsError::IndexError(
+              "state index exceeds ndim",
+            )
           }
           let out : Array[Array[@symcore.Expr]] = []
           for i in 0..<ndim {
@@ -149,21 +168,32 @@ fn sho_number_basis_matrix(
           }
           @symphysics.explicit_matrix_from_rows(out)
         }
-        None => raise @symphysics.PhysicsError::ValueError("SHOKet representation needs a concrete nonnegative integer index")
+        None =>
+          raise @symphysics.PhysicsError::ValueError(
+            "SHOKet representation needs a concrete nonnegative integer index",
+          )
       }
     @symcore.Expr::Function("SHOBra", args) if args.length() == 1 =>
       match sho_n_value(args[0]) {
         Some(n) => {
           guard n < ndim else {
-            raise @symphysics.PhysicsError::IndexError("state index exceeds ndim")
+            raise @symphysics.PhysicsError::IndexError(
+              "state index exceeds ndim",
+            )
           }
           let row = Array::make(ndim, @symcore.int(0))
           row[n] = @symcore.int(1)
           @symphysics.explicit_matrix_from_rows([row])
         }
-        None => raise @symphysics.PhysicsError::ValueError("SHOBra representation needs a concrete nonnegative integer index")
+        None =>
+          raise @symphysics.PhysicsError::ValueError(
+            "SHOBra representation needs a concrete nonnegative integer index",
+          )
       }
-    _ => raise @symphysics.PhysicsError::ValueError("unsupported SHO number-basis object")
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "unsupported SHO number-basis object",
+      )
   }
 }
 
@@ -185,13 +215,15 @@ pub fn sho_represent(
     return None
   }
   match expr {
-    @symcore.Expr::Function(name, _) if
-      name == "RaisingOp" || name == "LoweringOp" || name == "NumberOp" ||
-      name == "Hamiltonian" || name == "SHOKet" || name == "SHOBra" =>
-      {
-        let matrix = sho_number_basis_matrix(expr, ndim)
-        Some(MatrixScalarValue::Matrix(matrix))
-      }
+    @symcore.Expr::Function(name, _) if name == "RaisingOp" ||
+      name == "LoweringOp" ||
+      name == "NumberOp" ||
+      name == "Hamiltonian" ||
+      name == "SHOKet" ||
+      name == "SHOBra" => {
+      let matrix = sho_number_basis_matrix(expr, ndim)
+      Some(MatrixScalarValue::Matrix(matrix))
+    }
     _ => None
   }
 }

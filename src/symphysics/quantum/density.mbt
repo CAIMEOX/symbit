@@ -41,7 +41,7 @@ pub fn density(values : Array[(@symcore.Expr, @symcore.Expr)]) -> DensityExpr {
   for value in values {
     terms.push(DensityTerm::{ state: value.0, prob: value.1 })
   }
-  DensityExpr::{ terms }
+  DensityExpr::{ terms, }
 }
 
 ///|
@@ -60,32 +60,51 @@ pub fn DensityExpr::probs(self : DensityExpr) -> @symcore.Expr {
 }
 
 ///|
-pub fn DensityExpr::get_state(self : DensityExpr, index : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn DensityExpr::get_state(
+  self : DensityExpr,
+  index : Int,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
-    raise @symphysics.PhysicsError::IndexError("density state index out of range")
+    raise @symphysics.PhysicsError::IndexError(
+      "density state index out of range",
+    )
   }
   self.terms[index].state
 }
 
 ///|
-pub fn DensityExpr::get_prob(self : DensityExpr, index : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn DensityExpr::get_prob(
+  self : DensityExpr,
+  index : Int,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
-    raise @symphysics.PhysicsError::IndexError("density probability index out of range")
+    raise @symphysics.PhysicsError::IndexError(
+      "density probability index out of range",
+    )
   }
   self.terms[index].prob
 }
 
 ///|
-pub fn DensityExpr::apply_op(self : DensityExpr, op : @symcore.Expr) -> DensityExpr {
+pub fn DensityExpr::apply_op(
+  self : DensityExpr,
+  op : @symcore.Expr,
+) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for term in self.terms {
-    terms.push(DensityTerm::{ state: quantum_mul_from_args_preserve([op, term.state]), prob: term.prob })
+    terms.push(DensityTerm::{
+      state: quantum_mul_from_args_preserve([op, term.state]),
+      prob: term.prob,
+    })
   }
-  DensityExpr::{ terms }
+  DensityExpr::{ terms, }
 }
 
 ///|
-fn density_mul_flatten(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
+fn density_mul_flatten(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr {
   let args : Array[@symcore.Expr] = []
   match lhs {
     @symcore.Expr::Mul(lhs_args) =>
@@ -141,18 +160,19 @@ fn density_generate_outer_prod(
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   let (left_scalar, left_body) = quantum_split_scalar_factors(left)
   let (right_scalar, right_body) = quantum_split_scalar_factors(right)
-  let left_core = left_body.unwrap_or_else(
-    () => raise @symphysics.PhysicsError::ValueError(
+  let left_core = left_body.unwrap_or_else(() => {
+    raise @symphysics.PhysicsError::ValueError(
       "Density.doit() expects each term to contain a noncommutative state factor",
-    ),
-  )
-  let right_core = right_body.unwrap_or_else(
-    () => raise @symphysics.PhysicsError::ValueError(
+    )
+  })
+  let right_core = right_body.unwrap_or_else(() => {
+    raise @symphysics.PhysicsError::ValueError(
       "Density.doit() expects each term to contain a noncommutative state factor",
-    ),
+    )
+  })
+  let op : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
+    @symcore.raw_mul([left_core, dagger(right_core)]),
   )
-  let op : Result[@symcore.Expr, @symphysics.PhysicsError] =
-    try? quantum_canonical_mul(@symcore.raw_mul([left_core, dagger(right_core)]))
   let core = match op {
     Ok(expr) => expr
     Err(_) => @symcore.raw_mul([left_core, dagger(right_core)])
@@ -190,7 +210,7 @@ pub fn density_from_expr(expr : @symcore.Expr) -> DensityExpr? {
           None => return None
         }
       }
-      Some(DensityExpr::{ terms })
+      Some(DensityExpr::{ terms, })
     }
     _ => None
   }
@@ -202,7 +222,9 @@ fn density_infer_nqubits_expr(expr : @symcore.Expr) -> Int {
     Some(q) => q.nqubits()
     None =>
       match expr {
-        @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) | @symcore.Expr::Function(_, args) => {
+        @symcore.Expr::Add(args)
+        | @symcore.Expr::Mul(args)
+        | @symcore.Expr::Function(_, args) => {
           let mut inferred = 0
           for arg in args {
             let next = density_infer_nqubits_expr(arg)
@@ -215,7 +237,11 @@ fn density_infer_nqubits_expr(expr : @symcore.Expr) -> Int {
         @symcore.Expr::Pow(base, exp) => {
           let left = density_infer_nqubits_expr(base)
           let right = density_infer_nqubits_expr(exp)
-          if left > right { left } else { right }
+          if left > right {
+            left
+          } else {
+            right
+          }
         }
         _ => 0
       }
@@ -228,7 +254,9 @@ fn density_infer_spin_j_expr(expr : @symcore.Expr) -> @symcore.Expr? {
     Some(state) => Some(state.j)
     None =>
       match expr {
-        @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) | @symcore.Expr::Function(_, args) => {
+        @symcore.Expr::Add(args)
+        | @symcore.Expr::Mul(args)
+        | @symcore.Expr::Function(_, args) => {
           for arg in args {
             match density_infer_spin_j_expr(arg) {
               Some(value) => return Some(value)
@@ -285,10 +313,10 @@ fn density_matrix(
   for term in density_expr.terms {
     let represented = represent(
       term.state,
-      basis=basis,
+      basis~,
       nqubits=effective_nqubits,
-      spin_j=spin_j,
-      ndim=ndim,
+      spin_j~,
+      ndim~,
     )
     let state_matrix = match represented {
       MatrixScalarValue::Matrix(matrix) => matrix
@@ -302,11 +330,15 @@ fn density_matrix(
         "Density representation currently expects ket-like column states",
       )
     }
-    let contrib = (try! state_matrix.mul(matrix_dagger(state_matrix))).scale(term.prob)
-    acc = Some(match acc {
-      Some(current) => try! current.add(contrib)
-      None => contrib
-    })
+    let contrib = (try! state_matrix.mul(matrix_dagger(state_matrix))).scale(
+      term.prob,
+    )
+    acc = Some(
+      match acc {
+        Some(current) => try! current.add(contrib)
+        None => contrib
+      },
+    )
   }
   match acc {
     Some(matrix) => MatrixScalarValue::Matrix(matrix)
@@ -331,7 +363,9 @@ fn matrix_is_square(matrix : @symphysics.ExplicitMatrix) -> Bool {
 }
 
 ///|
-fn matrix_is_diagonal(matrix : @symphysics.ExplicitMatrix) -> Bool raise @symphysics.PhysicsError {
+fn matrix_is_diagonal(
+  matrix : @symphysics.ExplicitMatrix,
+) -> Bool raise @symphysics.PhysicsError {
   guard matrix_is_square(matrix) else { return false }
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
@@ -365,7 +399,9 @@ fn expr_sqrt(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn entropy_from_diagonal_entries(entries : Array[@symcore.Expr]) -> @symcore.Expr {
+fn entropy_from_diagonal_entries(
+  entries : Array[@symcore.Expr],
+) -> @symcore.Expr {
   let unique : Array[@symcore.Expr] = []
   for entry in entries {
     if entry != @symcore.int(0) && !unique.contains(entry) {
@@ -380,9 +416,7 @@ fn entropy_from_diagonal_entries(entries : Array[@symcore.Expr]) -> @symcore.Exp
 }
 
 ///|
-fn matrix_is_rank_one_projector(
-  matrix : @symphysics.ExplicitMatrix,
-) -> Bool {
+fn matrix_is_rank_one_projector(matrix : @symphysics.ExplicitMatrix) -> Bool {
   guard matrix_is_square(matrix) else { return false }
   let trace_value = try! matrix_trace(matrix)
   if trace_value != @symcore.int(1) {
@@ -403,14 +437,19 @@ fn density_matrix_from_expr(
   match density_from_expr(expr) {
     Some(density_expr) => {
       let effective_spin_j = density_infer_spin_j(density_expr, spin_j)
-      match density_matrix(density_expr, basis, nqubits, effective_spin_j, ndim) {
+      match
+        density_matrix(density_expr, basis, nqubits, effective_spin_j, ndim) {
         MatrixScalarValue::Matrix(matrix) => matrix
         MatrixScalarValue::Scalar(_) =>
-          raise @symphysics.PhysicsError::ValueError("density should represent as a matrix")
+          raise @symphysics.PhysicsError::ValueError(
+            "density should represent as a matrix",
+          )
       }
     }
     None =>
-      raise @symphysics.PhysicsError::ValueError("Expected a Density expression")
+      raise @symphysics.PhysicsError::ValueError(
+        "Expected a Density expression",
+      )
   }
 }
 
@@ -442,7 +481,7 @@ pub fn DensityExpr::entropy(
   spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
-  entropy(self.as_expr(), basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+  entropy(self.as_expr(), basis~, nqubits~, spin_j~, ndim~)
 }
 
 ///|
@@ -479,12 +518,17 @@ pub fn fidelity(
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   let left = try! density_matrix_from_expr(lhs, basis, nqubits, spin_j, ndim)
   let right = try! density_matrix_from_expr(rhs, basis, nqubits, spin_j, ndim)
-  guard left.height() == right.height() && left.width() == right.width() && matrix_is_square(left) else {
-    raise @symphysics.PhysicsError::ShapeError("fidelity expects equal square density matrices")
+  guard left.height() == right.height() &&
+    left.width() == right.width() &&
+    matrix_is_square(left) else {
+    raise @symphysics.PhysicsError::ShapeError(
+      "fidelity expects equal square density matrices",
+    )
   }
   if (try! matrix_is_diagonal(left)) && (try! matrix_is_diagonal(right)) {
     fidelity_from_diagonal(left, right)
-  } else if matrix_is_rank_one_projector(left) && matrix_is_rank_one_projector(right) {
+  } else if matrix_is_rank_one_projector(left) &&
+    matrix_is_rank_one_projector(right) {
     projector_overlap(left, right)
   } else {
     raise @symphysics.PhysicsError::ValueError(
@@ -502,5 +546,5 @@ pub fn DensityExpr::fidelity(
   spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
-  fidelity(self.as_expr(), other.as_expr(), basis=basis, nqubits=nqubits, spin_j=spin_j, ndim=ndim)
+  fidelity(self.as_expr(), other.as_expr(), basis~, nqubits~, spin_j~, ndim~)
 }

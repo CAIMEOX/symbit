@@ -12,11 +12,15 @@ pub struct MatrixCache {
 }
 
 ///|
-pub let sqrt2_inv : @symcore.Expr =
-  @symcore.raw_pow(@symcore.int(2), try! @symcore.rational_from_ints(-1, 2))
+pub let sqrt2_inv : @symcore.Expr = @symcore.raw_pow(
+  @symcore.int(2),
+  try! @symcore.rational_from_ints(-1, 2),
+)
 
 ///|
-fn cached_matrix(rows : Array[Array[@symcore.Expr]]) -> @symphysics.ExplicitMatrix {
+fn cached_matrix(
+  rows : Array[Array[@symcore.Expr]],
+) -> @symphysics.ExplicitMatrix {
   match (try? @symphysics.explicit_matrix_from_rows(rows)) {
     Ok(matrix) => matrix
     Err(_) => panic()
@@ -27,73 +31,118 @@ fn cached_matrix(rows : Array[Array[@symcore.Expr]]) -> @symphysics.ExplicitMatr
 pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   let cache = MatrixCache::{ dtype, entries: {} }
   let quarter = try! @symcore.rational_from_ints(1, 4)
-  cache.cache_matrix("eye2", cached_matrix([
-    [@symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(1)],
-  ]))
-  cache.cache_matrix("op11", cached_matrix([
-    [@symcore.int(0), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(1)],
-  ]))
-  cache.cache_matrix("op00", cached_matrix([
-    [@symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(0)],
-  ]))
-  cache.cache_matrix("op10", cached_matrix([
-    [@symcore.int(0), @symcore.int(0)],
-    [@symcore.int(1), @symcore.int(0)],
-  ]))
-  cache.cache_matrix("op01", cached_matrix([
-    [@symcore.int(0), @symcore.int(1)],
-    [@symcore.int(0), @symcore.int(0)],
-  ]))
-  cache.cache_matrix("X", cached_matrix([
-    [@symcore.int(0), @symcore.int(1)],
-    [@symcore.int(1), @symcore.int(0)],
-  ]))
-  cache.cache_matrix("Y", cached_matrix([
-    [@symcore.int(0), @symcore.int(-1) * @symcore.symbol("I")],
-    [@symcore.symbol("I"), @symcore.int(0)],
-  ]))
-  cache.cache_matrix("Z", cached_matrix([
-    [@symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(-1)],
-  ]))
-  cache.cache_matrix("S", cached_matrix([
-    [@symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), @symcore.symbol("I")],
-  ]))
-  cache.cache_matrix("T", cached_matrix([
-    [@symcore.int(1), @symcore.int(0)],
-    [
-      @symcore.int(0),
-      @symcore.raw_function("exp", [
-        @symcore.symbol("I") * @symcore.symbol("pi") * quarter,
-      ]),
-    ],
-  ]))
-  cache.cache_matrix("H", cached_matrix([
-    [sqrt2_inv, sqrt2_inv],
-    [sqrt2_inv, @symcore.int(-1) * sqrt2_inv],
-  ]))
-  cache.cache_matrix("Hsqrt2", cached_matrix([
-    [@symcore.int(1), @symcore.int(1)],
-    [@symcore.int(1), @symcore.int(-1)],
-  ]))
-  cache.cache_matrix("SWAP", cached_matrix([
-    [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
-  ]))
-  cache.cache_matrix("ZX", cached_matrix([
-    [sqrt2_inv, sqrt2_inv],
-    [sqrt2_inv, @symcore.int(-1) * sqrt2_inv],
-  ]))
-  cache.cache_matrix("ZY", cached_matrix([
-    [@symcore.symbol("I"), @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(-1) * @symcore.symbol("I")],
-  ]))
+  cache.cache_matrix(
+    "eye2",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(1)],
+    ]),
+  )
+  cache.cache_matrix(
+    "op11",
+    cached_matrix([
+      [@symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(1)],
+    ]),
+  )
+  cache.cache_matrix(
+    "op00",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0)],
+    ]),
+  )
+  cache.cache_matrix(
+    "op10",
+    cached_matrix([
+      [@symcore.int(0), @symcore.int(0)],
+      [@symcore.int(1), @symcore.int(0)],
+    ]),
+  )
+  cache.cache_matrix(
+    "op01",
+    cached_matrix([
+      [@symcore.int(0), @symcore.int(1)],
+      [@symcore.int(0), @symcore.int(0)],
+    ]),
+  )
+  cache.cache_matrix(
+    "X",
+    cached_matrix([
+      [@symcore.int(0), @symcore.int(1)],
+      [@symcore.int(1), @symcore.int(0)],
+    ]),
+  )
+  cache.cache_matrix(
+    "Y",
+    cached_matrix([
+      [@symcore.int(0), @symcore.int(-1) * @symcore.symbol("I")],
+      [@symcore.symbol("I"), @symcore.int(0)],
+    ]),
+  )
+  cache.cache_matrix(
+    "Z",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(-1)],
+    ]),
+  )
+  cache.cache_matrix(
+    "S",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0)],
+      [@symcore.int(0), @symcore.symbol("I")],
+    ]),
+  )
+  cache.cache_matrix(
+    "T",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0)],
+      [
+        @symcore.int(0),
+        @symcore.raw_function("exp", [
+          @symcore.symbol("I") * @symcore.symbol("pi") * quarter,
+        ]),
+      ],
+    ]),
+  )
+  cache.cache_matrix(
+    "H",
+    cached_matrix([
+      [sqrt2_inv, sqrt2_inv],
+      [sqrt2_inv, @symcore.int(-1) * sqrt2_inv],
+    ]),
+  )
+  cache.cache_matrix(
+    "Hsqrt2",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(1)],
+      [@symcore.int(1), @symcore.int(-1)],
+    ]),
+  )
+  cache.cache_matrix(
+    "SWAP",
+    cached_matrix([
+      [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(1)],
+    ]),
+  )
+  cache.cache_matrix(
+    "ZX",
+    cached_matrix([
+      [sqrt2_inv, sqrt2_inv],
+      [sqrt2_inv, @symcore.int(-1) * sqrt2_inv],
+    ]),
+  )
+  cache.cache_matrix(
+    "ZY",
+    cached_matrix([
+      [@symcore.symbol("I"), @symcore.int(0)],
+      [@symcore.int(0), @symcore.int(-1) * @symcore.symbol("I")],
+    ]),
+  )
   cache
 }
 

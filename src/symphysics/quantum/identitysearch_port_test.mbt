@@ -5,9 +5,9 @@ test "physics.quantum.identitysearch: parity" {
   let y0 = y_gate(0).as_expr()
   let z0 = z_gate(0).as_expr()
   try! quantum_test_assert_array_equal(
-    (try! generate_equivalent_ids([x0, y0, z0])).map(expr =>
+    (try! generate_equivalent_ids([x0, y0, z0])).map(expr => {
       quantum_gate_sequence_summary(circuit_factors(expr))
-    ),
+    }),
     try! @sympy_physics.quantum_identitysearch_equivalent_ids(gates),
     "generate_equivalent_ids parity",
   )

@@ -17,9 +17,11 @@
 ///|
 fn represent_default_basis_state(expr : @symcore.Expr) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Function("XKet", _) | @symcore.Expr::Function("XBra", _)
+    @symcore.Expr::Function("XKet", _)
+    | @symcore.Expr::Function("XBra", _)
     | @symcore.Expr::Function("XOp", _) => Some(x_ket())
-    @symcore.Expr::Function("PxKet", _) | @symcore.Expr::Function("PxBra", _)
+    @symcore.Expr::Function("PxKet", _)
+    | @symcore.Expr::Function("PxBra", _)
     | @symcore.Expr::Function("PxOp", _) => Some(px_ket())
     @symcore.Expr::Function("PositionKet3D", _)
     | @symcore.Expr::Function("PositionBra3D", _) => Some(position_ket_3d())
@@ -33,7 +35,9 @@ fn represent_default_basis_state(expr : @symcore.Expr) -> @symcore.Expr? {
             StateFlavor::Ket | StateFlavor::Bra =>
               Some(ket([@symcore.symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
-              Some(time_dep_ket([@symcore.symbol("psi")], @symcore.symbol("t")).as_expr())
+              Some(
+                time_dep_ket([@symcore.symbol("psi")], @symcore.symbol("t")).as_expr(),
+              )
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
               Some(orthogonal_ket([@symcore.symbol("n")]).as_expr())
           }
@@ -54,7 +58,8 @@ fn represent_index_symbol(
   fallback : String,
 ) -> @symcore.Expr {
   match label {
-    @symcore.Expr::Symbol(name) => @symcore.symbol("\{name}_\{index.to_string()}")
+    @symcore.Expr::Symbol(name) =>
+      @symcore.symbol("\{name}_\{index.to_string()}")
     _ => @symcore.symbol("\{fallback}_\{index.to_string()}")
   }
 }
@@ -66,9 +71,13 @@ fn represent_enumerate_with_index(
 ) -> @symcore.Expr? {
   match state_expr {
     @symcore.Expr::Function("Ket", args) =>
-      Some(ket(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr())
+      Some(
+        ket(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
+      )
     @symcore.Expr::Function("Bra", args) =>
-      Some(bra(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr())
+      Some(
+        bra(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
+      )
     @symcore.Expr::Function("TimeDepKet", args) if args.length() >= 1 => {
       let labels : Array[@symcore.Expr] = []
       for i in 0..<(args.length() - 1) {
@@ -197,7 +206,9 @@ pub fn rep_innerproduct(
     )
   }
   let basis_state = get_basis(expr, basis~, replace_none=true).unwrap_or_else(() => {
-    raise @symphysics.PhysicsError::ValueError("Can't form this representation!")
+    raise @symphysics.PhysicsError::ValueError(
+      "Can't form this representation!",
+    )
   })
   let basis_kets = enumerate_states(basis_state, start_index=index, count=2)
   guard basis_kets.length() == 2 else {
@@ -229,12 +240,17 @@ fn rep_contract_bra_state(
 ) -> @symcore.Expr {
   match state_expr {
     @symcore.Expr::Add(args) =>
-      quantum_add_from_args_preserve(args.map(term => rep_contract_bra_state(bra_expr, term)))
+      quantum_add_from_args_preserve(
+        args.map(term => rep_contract_bra_state(bra_expr, term)),
+      )
     _ => {
       let (scalar, body) = quantum_split_scalar_factors(state_expr)
       match body {
         Some(body_expr) if quantum_is_ket_expr(body_expr) =>
-          quantum_mul_from_args_preserve([scalar, inner_product(bra_expr, body_expr)])
+          quantum_mul_from_args_preserve([
+            scalar,
+            inner_product(bra_expr, body_expr),
+          ])
         Some(body_expr) =>
           qapply(quantum_mul_from_args_preserve([bra_expr, scalar, body_expr]))
         None => scalar

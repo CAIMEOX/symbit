@@ -10,7 +10,10 @@ test "physics.quantum.grover: local superposition and gate matrices" {
 
   try! quantum_test_assert_matrix_equal(
     try! represent_matrix(try! oracle_gate(2, [2]), nqubits=2),
-    ["1", "0", "0", "0", "0", "1", "0", "0", "0", "0", "-1", "0", "0", "0", "0", "1"],
+    [
+      "1", "0", "0", "0", "0", "1", "0", "0", "0", "0", "-1", "0", "0", "0", "0",
+      "1",
+    ],
     4,
     4,
     "oracle gate matrix",
@@ -19,22 +22,8 @@ test "physics.quantum.grover: local superposition and gate matrices" {
   try! quantum_test_assert_matrix_equal(
     try! represent_matrix(try! w_gate(2), nqubits=2),
     [
-      "-1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "-1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "-1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "1/2",
-      "-1/2",
+      "-1/2", "1/2", "1/2", "1/2", "1/2", "-1/2", "1/2", "1/2", "1/2", "1/2", "-1/2",
+      "1/2", "1/2", "1/2", "1/2", "-1/2",
     ],
     4,
     4,
@@ -45,12 +34,16 @@ test "physics.quantum.grover: local superposition and gate matrices" {
 ///|
 test "physics.quantum.grover: local qapply and iteration" {
   try! quantum_test_assert_expr_equal(
-    qapply(@symcore.raw_mul([try! oracle_gate(2, [2]), (try! qubit("10")).as_expr()])),
+    qapply(
+      @symcore.raw_mul([try! oracle_gate(2, [2]), (try! qubit("10")).as_expr()]),
+    ),
     "-Qubit(1, 0)",
     "oracle marked apply",
   )
   try! quantum_test_assert_expr_equal(
-    qapply(@symcore.raw_mul([try! oracle_gate(2, [2]), (try! qubit("11")).as_expr()])),
+    qapply(
+      @symcore.raw_mul([try! oracle_gate(2, [2]), (try! qubit("11")).as_expr()]),
+    ),
     "Qubit(1, 1)",
     "oracle unmarked apply",
   )

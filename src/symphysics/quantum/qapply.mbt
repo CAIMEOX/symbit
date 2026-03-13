@@ -40,7 +40,9 @@ fn quantum_qapply_density_expr(
   match density_from_expr(expr) {
     Some(rho) =>
       density(
-        rho.terms.map(term => (qapply(term.state, dagger=dagger_mode, ip_doit~), term.prob)),
+        rho.terms.map(term => {
+          (qapply(term.state, dagger=dagger_mode, ip_doit~), term.prob)
+        }),
       ).as_expr()
     None => expr
   }
@@ -93,11 +95,11 @@ fn quantum_apply_operator_pair(
             ip_doit~,
           ),
           @symcore.int(-1) *
-            qapply(
-              quantum_mul_from_args_preserve([args[1], args[0], rhs]),
-              dagger=dagger_mode,
-              ip_doit~,
-            ),
+          qapply(
+            quantum_mul_from_args_preserve([args[1], args[0], rhs]),
+            dagger=dagger_mode,
+            ip_doit~,
+          ),
         ]),
       )
     (@symcore.Expr::Function("AntiCommutator", args), _) if args.length() == 2 &&
@@ -116,10 +118,10 @@ fn quantum_apply_operator_pair(
           ),
         ]),
       )
-    (@symcore.Expr::Function("TensorProduct", left_args), @symcore.Expr::Function(
-      "TensorProduct",
-      right_args,
-    )) if left_args.length() == right_args.length() => {
+    (
+      @symcore.Expr::Function("TensorProduct", left_args),
+      @symcore.Expr::Function("TensorProduct", right_args),
+    ) if left_args.length() == right_args.length() => {
       let factors : Array[@symcore.Expr] = []
       for idx in 0..<left_args.length() {
         factors.push(

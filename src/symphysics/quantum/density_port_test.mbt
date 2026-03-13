@@ -19,19 +19,25 @@ test "physics.quantum.density: parity" {
     "density probs parity",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(try! rho.get_state(1))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(try! rho.get_state(1)),
+    ),
     try! @sympy_physics.quantum_density_get_state_str(rho_txt, 1),
     "density get_state parity",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(try! rho.get_prob(0))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(try! rho.get_prob(0)),
+    ),
     try! @sympy_physics.quantum_density_get_prob_str(rho_txt, 0),
     "density get_prob parity",
   )
 
   let a = operator([@symcore.symbol("A")]).as_expr()
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.apply_op(a).as_expr())),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(rho.apply_op(a).as_expr()),
+    ),
     try! @sympy_physics.quantum_density_apply_op_str(rho_txt, "Operator(A)"),
     "density apply_op parity",
   )
@@ -61,7 +67,9 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     "density represent parity",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(try! entropy(mixed.as_expr(), spin_j=half))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(try! entropy(mixed.as_expr(), spin_j=half)),
+    ),
     try! @sympy_physics.quantum_entropy_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),
@@ -69,11 +77,12 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(try! fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half)),
+      @symprint.to_string(
+        try! fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
+      ),
     ),
     try! @sympy_physics.quantum_fidelity_str(
-      "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))",
-      "Density((JzKet(Rational(1, 2), Rational(-1, 2)), 1))",
+      "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))", "Density((JzKet(Rational(1, 2), Rational(-1, 2)), 1))",
     ),
     "density fidelity parity",
   )

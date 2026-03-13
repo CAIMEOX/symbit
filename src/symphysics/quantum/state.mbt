@@ -36,7 +36,11 @@ fn default_time_expr() -> @symcore.Expr {
 
 ///|
 fn normalize_state_label(label : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  if label.is_empty() { default_state_label() } else { label }
+  if label.is_empty() {
+    default_state_label()
+  } else {
+    label
+  }
 }
 
 ///|
@@ -206,7 +210,8 @@ pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
       match name {
         "Ket" => Some(ket(args))
         "Bra" => Some(bra(args))
-        "TimeDepKet" if args.is_empty() => Some(time_dep_ket([], default_time_expr()))
+        "TimeDepKet" if args.is_empty() =>
+          Some(time_dep_ket([], default_time_expr()))
         "TimeDepKet" if args.length() >= 1 => {
           let label : Array[@symcore.Expr] = []
           for idx in 0..<(args.length() - 1) {
@@ -214,7 +219,8 @@ pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
           }
           Some(time_dep_ket(label, args[args.length() - 1]))
         }
-        "TimeDepBra" if args.is_empty() => Some(time_dep_bra([], default_time_expr()))
+        "TimeDepBra" if args.is_empty() =>
+          Some(time_dep_bra([], default_time_expr()))
         "TimeDepBra" if args.length() >= 1 => {
           let label : Array[@symcore.Expr] = []
           for idx in 0..<(args.length() - 1) {

@@ -51,10 +51,7 @@ fn grover_marked_values(expr : @symcore.Expr) -> Array[Int]? {
 ///|
 fn grover_superposition_amplitude(nqubits : Int) -> @symcore.Expr {
   let size = 1 << nqubits
-  @symcore.raw_pow(
-    @symcore.int(size),
-    try! @symcore.rational_from_ints(-1, 2),
-  )
+  @symcore.raw_pow(@symcore.int(size), try! @symcore.rational_from_ints(-1, 2))
 }
 
 ///|
@@ -69,14 +66,21 @@ fn grover_default_iterations(nqubits : Int) -> Int {
 }
 
 ///|
-fn grover_validate_nqubits(nqubits : Int) -> Unit raise @symphysics.PhysicsError {
+fn grover_validate_nqubits(
+  nqubits : Int,
+) -> Unit raise @symphysics.PhysicsError {
   guard nqubits > 0 else {
-    raise @symphysics.PhysicsError::ValueError("Grover search needs a positive number of qubits")
+    raise @symphysics.PhysicsError::ValueError(
+      "Grover search needs a positive number of qubits",
+    )
   }
 }
 
 ///|
-fn grover_validate_marked(marked : Array[Int], nqubits : Int) -> Unit raise @symphysics.PhysicsError {
+fn grover_validate_marked(
+  marked : Array[Int],
+  nqubits : Int,
+) -> Unit raise @symphysics.PhysicsError {
   let size = 1 << nqubits
   for value in marked {
     guard value >= 0 && value < size else {
@@ -94,7 +98,10 @@ pub fn oracle_gate(
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   try! grover_validate_nqubits(nqubits)
   try! grover_validate_marked(marked, nqubits)
-  @symcore.raw_function("OracleGate", [@symcore.int(nqubits), grover_marked_tuple(marked)])
+  @symcore.raw_function("OracleGate", [
+    @symcore.int(nqubits),
+    grover_marked_tuple(marked),
+  ])
 }
 
 ///|
@@ -105,7 +112,10 @@ pub fn w_gate(nqubits : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
 
 ///|
 pub fn OracleGateExpr::as_expr(self : OracleGateExpr) -> @symcore.Expr {
-  @symcore.raw_function("OracleGate", [@symcore.int(self.nqubits), grover_marked_tuple(self.marked)])
+  @symcore.raw_function("OracleGate", [
+    @symcore.int(self.nqubits),
+    grover_marked_tuple(self.marked),
+  ])
 }
 
 ///|
@@ -118,7 +128,8 @@ fn oracle_gate_from_expr(expr : @symcore.Expr) -> OracleGateExpr? {
   match expr {
     @symcore.Expr::Function("OracleGate", args) if args.length() == 2 =>
       match (quantum_integer_value(args[0]), grover_marked_values(args[1])) {
-        (Some(nqubits), Some(marked)) => Some(OracleGateExpr::{ nqubits, marked })
+        (Some(nqubits), Some(marked)) =>
+          Some(OracleGateExpr::{ nqubits, marked })
         _ => None
       }
     _ => None
@@ -130,7 +141,7 @@ fn w_gate_from_expr(expr : @symcore.Expr) -> WGateExpr? {
   match expr {
     @symcore.Expr::Function("WGate", args) if args.length() == 1 =>
       match quantum_integer_value(args[0]) {
-        Some(nqubits) => Some(WGateExpr::{ nqubits })
+        Some(nqubits) => Some(WGateExpr::{ nqubits, })
         None => None
       }
     _ => None
@@ -138,7 +149,9 @@ fn w_gate_from_expr(expr : @symcore.Expr) -> WGateExpr? {
 }
 
 ///|
-pub fn superposition_basis(nqubits : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn superposition_basis(
+  nqubits : Int,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   try! grover_validate_nqubits(nqubits)
   let amp = grover_superposition_amplitude(nqubits)
   let terms : Array[@symcore.Expr] = []
@@ -188,12 +201,11 @@ fn grover_w_apply(
   let marked_value = bits_to_int(ket.bits)
   let terms : Array[@symcore.Expr] = []
   for value in 0..<(1 << w_expr.nqubits) {
-    let coeff =
-      if value == marked_value {
-        weight - @symcore.int(1)
-      } else {
-        weight
-      }
+    let coeff = if value == marked_value {
+      weight - @symcore.int(1)
+    } else {
+      weight
+    }
     let bits = try! int_to_bits(value, w_expr.nqubits)
     let state = (try! qubit_from_bits(bits)).as_expr()
     if coeff == @symcore.int(1) {
@@ -213,7 +225,8 @@ pub fn grover_apply_operator_to_ket(
   match qubit_from_expr(ket_expr) {
     Some(ket) =>
       match oracle_gate_from_expr(op_expr) {
-        Some(oracle_expr) => Some(try! grover_oracle_apply(oracle_expr, ket, ket_expr))
+        Some(oracle_expr) =>
+          Some(try! grover_oracle_apply(oracle_expr, ket, ket_expr))
         None =>
           match w_gate_from_expr(op_expr) {
             Some(w_expr) => Some(try! grover_w_apply(w_expr, ket, ket_expr))
@@ -225,7 +238,9 @@ pub fn grover_apply_operator_to_ket(
 }
 
 ///|
-fn grover_oracle_matrix(expr : OracleGateExpr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+fn grover_oracle_matrix(
+  expr : OracleGateExpr,
+) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let size = 1 << expr.nqubits
   let rows : Array[Array[@symcore.Expr]] = []
   for row in 0..<size {
@@ -233,7 +248,11 @@ fn grover_oracle_matrix(expr : OracleGateExpr) -> @symphysics.ExplicitMatrix rai
     for col in 0..<size {
       current.push(
         if row == col {
-          if expr.marked.contains(row) { @symcore.int(-1) } else { @symcore.int(1) }
+          if expr.marked.contains(row) {
+            @symcore.int(-1)
+          } else {
+            @symcore.int(1)
+          }
         } else {
           @symcore.int(0)
         },
@@ -245,20 +264,16 @@ fn grover_oracle_matrix(expr : OracleGateExpr) -> @symphysics.ExplicitMatrix rai
 }
 
 ///|
-fn grover_w_matrix(expr : WGateExpr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+fn grover_w_matrix(
+  expr : WGateExpr,
+) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let size = 1 << expr.nqubits
   let weight = grover_diffusion_weight(expr.nqubits)
   let rows : Array[Array[@symcore.Expr]] = []
   for row in 0..<size {
     let current : Array[@symcore.Expr] = []
     for col in 0..<size {
-      current.push(
-        if row == col {
-          weight - @symcore.int(1)
-        } else {
-          weight
-        },
-      )
+      current.push(if row == col { weight - @symcore.int(1) } else { weight })
     }
     rows.push(current)
   }
@@ -271,13 +286,16 @@ pub fn grover_represent(
   nqubits : Int,
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   match oracle_gate_from_expr(expr) {
-    Some(oracle_expr) => Some(MatrixScalarValue::Matrix(try! grover_oracle_matrix(oracle_expr)))
+    Some(oracle_expr) =>
+      Some(MatrixScalarValue::Matrix(try! grover_oracle_matrix(oracle_expr)))
     None =>
       match w_gate_from_expr(expr) {
-        Some(w_expr) => Some(MatrixScalarValue::Matrix(try! grover_w_matrix(w_expr)))
+        Some(w_expr) =>
+          Some(MatrixScalarValue::Matrix(try! grover_w_matrix(w_expr)))
         None =>
-          if quantum_expr_has_name(expr, "Qubit") || quantum_expr_has_name(expr, "QubitBra") {
-            Some(MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits=nqubits)))
+          if quantum_expr_has_name(expr, "Qubit") ||
+            quantum_expr_has_name(expr, "QubitBra") {
+            Some(MatrixScalarValue::Matrix(qubit_to_matrix(expr, nqubits~)))
           } else {
             None
           }
@@ -297,7 +315,11 @@ pub fn grover_iteration(
         "grover_iteration expects an OracleGate expression",
       )
   }
-  quantum_mul_from_args_preserve([try! w_gate(oracle.nqubits), oracle_expr, qstate])
+  quantum_mul_from_args_preserve([
+    try! w_gate(oracle.nqubits),
+    oracle_expr,
+    qstate,
+  ])
 }
 
 ///|
@@ -308,17 +330,16 @@ pub fn apply_grover(
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   try! grover_validate_nqubits(nqubits)
   try! grover_validate_marked(marked, nqubits)
-  let total_iterations =
-    if iterations >= 0 {
-      iterations
-    } else {
-      grover_default_iterations(nqubits)
-    }
+  let total_iterations = if iterations >= 0 {
+    iterations
+  } else {
+    grover_default_iterations(nqubits)
+  }
   let oracle_expr = try! oracle_gate(nqubits, marked)
   let mut iterated = try! superposition_basis(nqubits)
   for _ in 0..<total_iterations {
     let stepped = qapply(try! grover_iteration(iterated, oracle_expr))
-    iterated = try! matrix_to_qubit(try! qubit_to_matrix(stepped, nqubits=nqubits))
+    iterated = try! matrix_to_qubit(try! qubit_to_matrix(stepped, nqubits~))
   }
   iterated
 }

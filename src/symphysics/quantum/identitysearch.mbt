@@ -19,6 +19,7 @@ pub struct GateRule {
   right : Array[@symcore.Expr]
 } derive(Eq)
 
+///|
 fn gate_sequence_expr(sequence : Array[@symcore.Expr]) -> @symcore.Expr {
   quantum_mul_from_args_preserve(sequence)
 }
@@ -209,9 +210,10 @@ fn lr_op(
   }
   let new_right = right.copy()
   new_right.push(dagger(gate))
-  Some(
-    GateRule::{ left: left[0:left.length() - 1].to_array(), right: new_right },
-  )
+  Some(GateRule::{
+    left: left[0:left.length() - 1].to_array(),
+    right: new_right,
+  })
 }
 
 ///|
@@ -228,9 +230,7 @@ fn rl_op(
   for item in left {
     new_left.push(item)
   }
-  Some(
-    GateRule::{ left: new_left, right: right[1:right.length()].to_array() },
-  )
+  Some(GateRule::{ left: new_left, right: right[1:right.length()].to_array() })
 }
 
 ///|
@@ -245,12 +245,10 @@ fn rr_op(
   }
   let new_left = left.copy()
   new_left.push(dagger(gate))
-  Some(
-    GateRule::{
-      left: new_left,
-      right: right[0:right.length() - 1].to_array(),
-    },
-  )
+  Some(GateRule::{
+    left: new_left,
+    right: right[0:right.length() - 1].to_array(),
+  })
 }
 
 ///|
@@ -290,7 +288,9 @@ pub fn generate_gate_rules(
       }
     }
   }
-  rules.sort_by((lhs, rhs) => gate_rule_sort_key(lhs).compare(gate_rule_sort_key(rhs)))
+  rules.sort_by((lhs, rhs) => {
+    gate_rule_sort_key(lhs).compare(gate_rule_sort_key(rhs))
+  })
   rules
 }
 
@@ -311,7 +311,9 @@ pub fn generate_equivalent_ids(
       }
     }
   }
-  out.sort_by((lhs, rhs) => gate_sequence_key(lhs).compare(gate_sequence_key(rhs)))
+  out.sort_by((lhs, rhs) => {
+    gate_sequence_key(lhs).compare(gate_sequence_key(rhs))
+  })
   out.map(gate_sequence_expr)
 }
 
@@ -324,10 +326,13 @@ pub fn build_gate_identity(
   GateIdentity::{
     sequence: gate_seq.copy(),
     rules,
-    equivalent_ids: equivalent_ids.map(expr => match expr {
-      @symcore.Expr::Mul(args) => args.copy()
-      @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => []
-      _ => [expr]
+    equivalent_ids: equivalent_ids.map(expr => {
+      match expr {
+        @symcore.Expr::Mul(args) => args.copy()
+        @symcore.Expr::Number(n) if n.is_integral() &&
+          n.numerator().to_int() == 1 => []
+        _ => [expr]
+      }
     }),
   }
 }
@@ -361,7 +366,9 @@ pub fn GateIdentity::circuit(self : GateIdentity) -> @symcore.Expr {
 }
 
 ///|
-pub fn GateIdentity::sequence_exprs(self : GateIdentity) -> Array[@symcore.Expr] {
+pub fn GateIdentity::sequence_exprs(
+  self : GateIdentity,
+) -> Array[@symcore.Expr] {
   if self.sequence.is_empty() {
     if self.equivalent_ids.is_empty() {
       []
@@ -379,7 +386,9 @@ pub fn GateIdentity::gate_rules(self : GateIdentity) -> Array[GateRule] {
 }
 
 ///|
-pub fn GateIdentity::equivalent_id_exprs(self : GateIdentity) -> Array[@symcore.Expr] {
+pub fn GateIdentity::equivalent_id_exprs(
+  self : GateIdentity,
+) -> Array[@symcore.Expr] {
   self.equivalent_ids.map(gate_sequence_expr)
 }
 
@@ -435,7 +444,11 @@ pub fn bfs_identity_search(
   max_depth? : Int = -1,
   identity_only? : Bool = false,
 ) -> Array[GateIdentity] raise @symphysics.PhysicsError {
-  let effective_depth = if max_depth <= 0 { gate_list.length() } else { max_depth }
+  let effective_depth = if max_depth <= 0 {
+    gate_list.length()
+  } else {
+    max_depth
+  }
   let ids : Array[GateIdentity] = []
   let queue : Array[Array[@symcore.Expr]] = [[]]
   let mut head = 0

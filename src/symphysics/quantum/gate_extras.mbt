@@ -13,7 +13,9 @@ struct GateNormalizationState {
 }
 
 ///|
-let gate_normalization_state : GateNormalizationState = GateNormalizationState::{ normalized: true }
+let gate_normalization_state : GateNormalizationState = GateNormalizationState::{
+  normalized: true,
+}
 
 ///|
 let gate_random_source : @random.Rand = @random.Rand::new()
@@ -45,11 +47,18 @@ fn random_gate_expr(
   rng : @random.Rand,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard nqubits > 0 else {
-    raise @symphysics.PhysicsError::ValueError("random_circuit expects nqubits > 0")
+    raise @symphysics.PhysicsError::ValueError(
+      "random_circuit expects nqubits > 0",
+    )
   }
   match kind {
-    GateKind::Identity | GateKind::Hadamard | GateKind::X | GateKind::Y | GateKind::Z |
-    GateKind::Phase | GateKind::T => {
+    GateKind::Identity
+    | GateKind::Hadamard
+    | GateKind::X
+    | GateKind::Y
+    | GateKind::Z
+    | GateKind::Phase
+    | GateKind::T => {
       let target = rng.int(limit=nqubits)
       match kind {
         GateKind::Identity => identity_gate(target).as_expr()
@@ -99,12 +108,20 @@ pub fn random_circuit(
   seed? : Int = -1,
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard ngates >= 0 else {
-    raise @symphysics.PhysicsError::ValueError("random_circuit expects ngates >= 0")
+    raise @symphysics.PhysicsError::ValueError(
+      "random_circuit expects ngates >= 0",
+    )
   }
   guard !gate_space.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("random_circuit expects a non-empty gate space")
+    raise @symphysics.PhysicsError::ValueError(
+      "random_circuit expects a non-empty gate space",
+    )
   }
-  let rng = if seed >= 0 { gate_random_from_seed(seed) } else { gate_random_source }
+  let rng = if seed >= 0 {
+    gate_random_from_seed(seed)
+  } else {
+    gate_random_source
+  }
   let gates : Array[@symcore.Expr] = []
   for _ in 0..<ngates {
     let index = rng.int(limit=gate_space.length())

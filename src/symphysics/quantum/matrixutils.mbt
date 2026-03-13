@@ -32,7 +32,9 @@ pub fn matrix_flat_strings(
 }
 
 ///|
-fn is_zero_matrix(matrix : @symphysics.ExplicitMatrix) -> Bool raise @symphysics.PhysicsError {
+fn is_zero_matrix(
+  matrix : @symphysics.ExplicitMatrix,
+) -> Bool raise @symphysics.PhysicsError {
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
       if matrix.get(i, j) != @symcore.int(0) {
@@ -81,7 +83,8 @@ fn kronecker_pair(
       let coeff = lhs.get(i, j)
       for k in 0..<rhs.height() {
         for l in 0..<rhs.width() {
-          rows[i * rhs.height() + k][j * rhs.width() + l] = coeff * rhs.get(k, l)
+          rows[i * rhs.height() + k][j * rhs.width() + l] = coeff *
+            rhs.get(k, l)
         }
       }
     }
@@ -94,7 +97,9 @@ pub fn matrix_tensor_product(
   product : Array[@symphysics.ExplicitMatrix],
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   guard !product.is_empty() else {
-    raise @symphysics.PhysicsError::ValueError("matrix_tensor_product expects at least one matrix")
+    raise @symphysics.PhysicsError::ValueError(
+      "matrix_tensor_product expects at least one matrix",
+    )
   }
   let mut acc = product[0]
   for idx in 1..<product.length() {
@@ -106,7 +111,8 @@ pub fn matrix_tensor_product(
 ///|
 pub fn matrix_scalar_value_to_string(value : MatrixScalarValue) -> String {
   match value {
-    MatrixScalarValue::Matrix(matrix) => @symphysics.explicit_matrix_rows_string(matrix)
+    MatrixScalarValue::Matrix(matrix) =>
+      @symphysics.explicit_matrix_rows_string(matrix)
     MatrixScalarValue::Scalar(expr) => @symprint.to_string(expr)
   }
 }

@@ -21,12 +21,14 @@ fn oo_expr() -> @symcore.Expr {
 ///|
 fn hilbert_expr_repr(expr : @symcore.Expr) -> String {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => "Integer(\{n.numerator().to_string()})"
+    @symcore.Expr::Number(n) if n.is_integral() =>
+      "Integer(\{n.numerator().to_string()})"
     @symcore.Expr::Number(n) =>
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
     @symcore.Expr::Symbol(name) if name == "oo" => "oo"
     @symcore.Expr::Symbol(name) => "Symbol('\{name}')"
-    @symcore.Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
+    @symcore.Expr::Function(name, args) if name == "Interval" &&
+      args.length() == 2 =>
       "Interval(\{hilbert_expr_repr(args[0])}, \{hilbert_expr_repr(args[1])})"
     _ => @symprint.to_string(expr)
   }
@@ -43,11 +45,14 @@ pub fn hilbert_space() -> HilbertSpace {
 }
 
 ///|
-pub fn complex_space(dimension : @symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError {
+pub fn complex_space(
+  dimension : @symcore.Expr,
+) -> HilbertSpace raise @symphysics.PhysicsError {
   match dimension {
     @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() > 0 =>
       HilbertSpace::Complex(dimension)
-    @symcore.Expr::Symbol(name) if name == "oo" => HilbertSpace::Complex(dimension)
+    @symcore.Expr::Symbol(name) if name == "oo" =>
+      HilbertSpace::Complex(dimension)
     @symcore.Expr::Symbol(_) => HilbertSpace::Complex(dimension)
     _ =>
       raise @symphysics.PhysicsError::ValueError(
@@ -57,11 +62,16 @@ pub fn complex_space(dimension : @symcore.Expr) -> HilbertSpace raise @symphysic
 }
 
 ///|
-pub fn l2_space(interval_expr : @symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError {
+pub fn l2_space(
+  interval_expr : @symcore.Expr,
+) -> HilbertSpace raise @symphysics.PhysicsError {
   match interval_expr {
-    @symcore.Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
-      HilbertSpace::L2(interval_expr)
-    _ => raise @symphysics.PhysicsError::ValueError("L2 expects Interval(start, stop)")
+    @symcore.Expr::Function(name, args) if name == "Interval" &&
+      args.length() == 2 => HilbertSpace::L2(interval_expr)
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "L2 expects Interval(start, stop)",
+      )
   }
 }
 
@@ -73,7 +83,8 @@ pub fn fock_space() -> HilbertSpace {
 ///|
 fn same_base(lhs : HilbertSpace, rhs : HilbertSpace) -> Bool {
   match (lhs, rhs) {
-    (HilbertSpace::TensorPower(base1, _), HilbertSpace::TensorPower(base2, _)) => base1 == base2
+    (HilbertSpace::TensorPower(base1, _), HilbertSpace::TensorPower(base2, _)) =>
+      base1 == base2
     (HilbertSpace::TensorPower(base, _), other) => base == other
     (other, HilbertSpace::TensorPower(base, _)) => other == base
     _ => lhs == rhs
@@ -103,7 +114,9 @@ pub fn tensor_power(
 ) -> HilbertSpace raise @symphysics.PhysicsError {
   match exp {
     @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() <= 0 =>
-      raise @symphysics.PhysicsError::ValueError("Tensor powers require a positive integer or symbol")
+      raise @symphysics.PhysicsError::ValueError(
+        "Tensor powers require a positive integer or symbol",
+      )
     _ => ()
   }
   if exp == @symcore.int(1) {
@@ -152,9 +165,7 @@ pub fn tensor_product_space(
 }
 
 ///|
-pub fn direct_sum_space(
-  args : Array[HilbertSpace],
-) -> HilbertSpace {
+pub fn direct_sum_space(args : Array[HilbertSpace]) -> HilbertSpace {
   guard !args.is_empty() else { return hilbert_space() }
   let flat : Array[HilbertSpace] = Array::new()
   for arg in args {
@@ -174,10 +185,14 @@ pub fn direct_sum_space(
 }
 
 ///|
-pub fn HilbertSpace::dimension(self : HilbertSpace) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn HilbertSpace::dimension(
+  self : HilbertSpace,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   match self {
     HilbertSpace::Abstract =>
-      raise @symphysics.PhysicsError::ValueError("Abstract HilbertSpace has no fixed dimension")
+      raise @symphysics.PhysicsError::ValueError(
+        "Abstract HilbertSpace has no fixed dimension",
+      )
     HilbertSpace::Complex(dimension) => dimension
     HilbertSpace::L2(_) | HilbertSpace::Fock => oo_expr()
     HilbertSpace::TensorProduct(args) => {
@@ -214,26 +229,41 @@ pub fn HilbertSpace::dimension(self : HilbertSpace) -> @symcore.Expr raise @symp
 }
 
 ///|
-pub fn HilbertSpace::spaces(self : HilbertSpace) -> Array[HilbertSpace] raise @symphysics.PhysicsError {
+pub fn HilbertSpace::spaces(
+  self : HilbertSpace,
+) -> Array[HilbertSpace] raise @symphysics.PhysicsError {
   match self {
     HilbertSpace::TensorProduct(args) | HilbertSpace::DirectSum(args) => args
-    _ => raise @symphysics.PhysicsError::ValueError("spaces is only defined on tensor/direct sums")
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "spaces is only defined on tensor/direct sums",
+      )
   }
 }
 
 ///|
-pub fn HilbertSpace::base(self : HilbertSpace) -> HilbertSpace raise @symphysics.PhysicsError {
+pub fn HilbertSpace::base(
+  self : HilbertSpace,
+) -> HilbertSpace raise @symphysics.PhysicsError {
   match self {
     HilbertSpace::TensorPower(base, _) => base
-    _ => raise @symphysics.PhysicsError::ValueError("base is only defined on tensor powers")
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "base is only defined on tensor powers",
+      )
   }
 }
 
 ///|
-pub fn HilbertSpace::exp(self : HilbertSpace) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn HilbertSpace::exp(
+  self : HilbertSpace,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   match self {
     HilbertSpace::TensorPower(_, exp) => exp
-    _ => raise @symphysics.PhysicsError::ValueError("exp is only defined on tensor powers")
+    _ =>
+      raise @symphysics.PhysicsError::ValueError(
+        "exp is only defined on tensor powers",
+      )
   }
 }
 
@@ -241,7 +271,8 @@ pub fn HilbertSpace::exp(self : HilbertSpace) -> @symcore.Expr raise @symphysics
 pub fn HilbertSpace::repr(self : HilbertSpace) -> String {
   match self {
     HilbertSpace::Abstract => "HilbertSpace()"
-    HilbertSpace::Complex(dimension) => "ComplexSpace(\{hilbert_expr_repr(dimension)})"
+    HilbertSpace::Complex(dimension) =>
+      "ComplexSpace(\{hilbert_expr_repr(dimension)})"
     HilbertSpace::L2(interval_expr) => "L2(\{hilbert_expr_repr(interval_expr)})"
     HilbertSpace::Fock => "FockSpace()"
     HilbertSpace::TensorProduct(args) => {
@@ -262,15 +293,18 @@ pub impl Show for HilbertSpace with to_string(self) {
   match self {
     HilbertSpace::Abstract => "H"
     HilbertSpace::Complex(dimension) => "C(\{@symprint.to_string(dimension)})"
-    HilbertSpace::L2(interval_expr) => "L2(\{@symprint.to_string(interval_expr)})"
+    HilbertSpace::L2(interval_expr) =>
+      "L2(\{@symprint.to_string(interval_expr)})"
     HilbertSpace::Fock => "F"
     HilbertSpace::TensorProduct(args) =>
-      args.map(item =>
+      args
+      .map(item => {
         match item {
           HilbertSpace::DirectSum(_) => "(\{item.to_string()})"
           _ => item.to_string()
         }
-      ).join("*")
+      })
+      .join("*")
     HilbertSpace::DirectSum(args) =>
       args.map(item => item.to_string()).join("+")
     HilbertSpace::TensorPower(base, exp) =>

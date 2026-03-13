@@ -1,10 +1,12 @@
+///|
 fn quantum_port_scalar_repr(
   value : MatrixScalarValue,
   context : String,
 ) -> @symcore.Expr raise {
   match value {
     MatrixScalarValue::Scalar(expr) => expr
-    MatrixScalarValue::Matrix(_) => fail("\{context}: expected scalar representation")
+    MatrixScalarValue::Matrix(_) =>
+      fail("\{context}: expected scalar representation")
   }
 }
 
@@ -17,7 +19,9 @@ test "physics.quantum.cartesian: parity" {
 
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_qapply_str("XOp()*XKet(x)"),
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(qapply(@symcore.raw_mul([x_op(), x_ket(position=x)])))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(qapply(@symcore.raw_mul([x_op(), x_ket(position=x)]))),
+    ),
     "XOp qapply parity",
   )
   try! quantum_test_assert_expr_equal(
@@ -31,12 +35,18 @@ test "physics.quantum.cartesian: parity" {
     "PxBra/XKet parity",
   )
   try! quantum_test_assert_expr_equal(
-    try! quantum_port_scalar_repr(represent(px_ket(momentum=py), basis=Some(x_op())), "represent PxKet"),
+    try! quantum_port_scalar_repr(
+      represent(px_ket(momentum=py), basis=Some(x_op())),
+      "represent PxKet",
+    ),
     try! @sympy_physics.quantum_represent_str("PxKet(py)", basis=Some("XOp()")),
     "represent PxKet parity",
   )
   try! quantum_test_assert_expr_equal(
-    try! quantum_port_scalar_repr(represent(px_op(), basis=Some(x_op())), "represent PxOp"),
+    try! quantum_port_scalar_repr(
+      represent(px_op(), basis=Some(x_op())),
+      "represent PxOp",
+    ),
     try! @sympy_physics.quantum_represent_str("PxOp()", basis=Some("XOp()")),
     "represent PxOp parity",
   )

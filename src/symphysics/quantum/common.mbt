@@ -28,10 +28,16 @@ fn quantum_reserved_operator_name(name : String) -> Bool {
     | "InnerProduct"
     | "JxBra"
     | "JxKet"
+    | "JxBraCoupled"
+    | "JxKetCoupled"
     | "JyBra"
     | "JyKet"
+    | "JyBraCoupled"
+    | "JyKetCoupled"
     | "JzBra"
     | "JzKet"
+    | "JzBraCoupled"
+    | "JzKetCoupled"
     | "Ket"
     | "OuterProduct"
     | "OrthogonalBra"
@@ -107,26 +113,12 @@ fn quantum_symbol_is_scalar(name : String) -> Bool {
 ///|
 fn quantum_is_unitary_like_operator(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(name, _) => [
-      "UnitaryOperator",
-      "IdentityOperator",
-      "Gate",
-      "CGate",
-      "UGate",
-      "IdentityGate",
-      "HadamardGate",
-      "XGate",
-      "YGate",
-      "ZGate",
-      "TGate",
-      "PhaseGate",
-      "SwapGate",
-      "CNotGate",
-      "QFT",
-      "IQFT",
-      "RkGate",
-      "Rotation",
-    ].contains(name)
+    @symcore.Expr::Function(name, _) =>
+      [
+        "UnitaryOperator", "IdentityOperator", "Gate", "CGate", "UGate", "IdentityGate",
+        "HadamardGate", "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate",
+        "CNotGate", "QFT", "IQFT", "RkGate", "Rotation",
+      ].contains(name)
     _ => false
   }
 }

@@ -24,11 +24,11 @@ fn cartesian_delta(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn cartesian_plane_wave(phase : @symcore.Expr) -> @symcore.Expr {
-  let norm = @symcore.raw_function(
-    "sqrt",
-    [@symcore.int(2) * @symcore.symbol("pi") * hbar],
-  )
-  @symcore.raw_function("exp", [phase]) * @symcore.raw_pow(norm, @symcore.int(-1))
+  let norm = @symcore.raw_function("sqrt", [
+    @symcore.int(2) * @symcore.symbol("pi") * hbar,
+  ])
+  @symcore.raw_function("exp", [phase]) *
+  @symcore.raw_pow(norm, @symcore.int(-1))
 }
 
 ///|
@@ -41,42 +41,58 @@ fn cartesian_symbol(base : String, idx? : Int = 0) -> @symcore.Expr {
 }
 
 ///|
-pub fn x_op(label? : @symcore.Expr = cartesian_default_label("X")) -> @symcore.Expr {
+pub fn x_op(
+  label? : @symcore.Expr = cartesian_default_label("X"),
+) -> @symcore.Expr {
   @symcore.raw_function("XOp", [label])
 }
 
 ///|
-pub fn y_op(label? : @symcore.Expr = cartesian_default_label("Y")) -> @symcore.Expr {
+pub fn y_op(
+  label? : @symcore.Expr = cartesian_default_label("Y"),
+) -> @symcore.Expr {
   @symcore.raw_function("YOp", [label])
 }
 
 ///|
-pub fn z_op(label? : @symcore.Expr = cartesian_default_label("Z")) -> @symcore.Expr {
+pub fn z_op(
+  label? : @symcore.Expr = cartesian_default_label("Z"),
+) -> @symcore.Expr {
   @symcore.raw_function("ZOp", [label])
 }
 
 ///|
-pub fn px_op(label? : @symcore.Expr = cartesian_default_label("Px")) -> @symcore.Expr {
+pub fn px_op(
+  label? : @symcore.Expr = cartesian_default_label("Px"),
+) -> @symcore.Expr {
   @symcore.raw_function("PxOp", [label])
 }
 
 ///|
-pub fn x_ket(position? : @symcore.Expr = cartesian_default_label("x")) -> @symcore.Expr {
+pub fn x_ket(
+  position? : @symcore.Expr = cartesian_default_label("x"),
+) -> @symcore.Expr {
   @symcore.raw_function("XKet", [position])
 }
 
 ///|
-pub fn x_bra(position? : @symcore.Expr = cartesian_default_label("x")) -> @symcore.Expr {
+pub fn x_bra(
+  position? : @symcore.Expr = cartesian_default_label("x"),
+) -> @symcore.Expr {
   @symcore.raw_function("XBra", [position])
 }
 
 ///|
-pub fn px_ket(momentum? : @symcore.Expr = cartesian_default_label("px")) -> @symcore.Expr {
+pub fn px_ket(
+  momentum? : @symcore.Expr = cartesian_default_label("px"),
+) -> @symcore.Expr {
   @symcore.raw_function("PxKet", [momentum])
 }
 
 ///|
-pub fn px_bra(momentum? : @symcore.Expr = cartesian_default_label("px")) -> @symcore.Expr {
+pub fn px_bra(
+  momentum? : @symcore.Expr = cartesian_default_label("px"),
+) -> @symcore.Expr {
   @symcore.raw_function("PxBra", [momentum])
 }
 
@@ -99,7 +115,10 @@ pub fn position_bra_3d(
 }
 
 ///|
-fn cartesian_lowercase_label(label : @symcore.Expr, fallback : String) -> @symcore.Expr {
+fn cartesian_lowercase_label(
+  label : @symcore.Expr,
+  fallback : String,
+) -> @symcore.Expr {
   match label {
     @symcore.Expr::Symbol(name) => @symcore.symbol(name.to_lower())
     _ => @symcore.symbol(fallback)
@@ -110,11 +129,19 @@ fn cartesian_lowercase_label(label : @symcore.Expr, fallback : String) -> @symco
 pub fn cartesian_operator_to_state(op_expr : @symcore.Expr) -> @symcore.Expr? {
   match op_expr {
     @symcore.Expr::Function("XOp", args) => {
-      let label = if args.is_empty() { cartesian_default_label("x") } else { cartesian_lowercase_label(args[0], "x") }
+      let label = if args.is_empty() {
+        cartesian_default_label("x")
+      } else {
+        cartesian_lowercase_label(args[0], "x")
+      }
       Some(x_ket(position=label))
     }
     @symcore.Expr::Function("PxOp", args) => {
-      let label = if args.is_empty() { cartesian_default_label("px") } else { cartesian_lowercase_label(args[0], "px") }
+      let label = if args.is_empty() {
+        cartesian_default_label("px")
+      } else {
+        cartesian_lowercase_label(args[0], "px")
+      }
       Some(px_ket(momentum=label))
     }
     _ => None
@@ -122,17 +149,22 @@ pub fn cartesian_operator_to_state(op_expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-pub fn cartesian_state_to_operator(state_expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+pub fn cartesian_state_to_operator(
+  state_expr : @symcore.Expr,
+) -> Array[@symcore.Expr]? {
   match state_expr {
-    @symcore.Expr::Function("XKet", args) | @symcore.Expr::Function("XBra", args) => {
+    @symcore.Expr::Function("XKet", args)
+    | @symcore.Expr::Function("XBra", args) => {
       ignore(args)
       Some([x_op()])
     }
-    @symcore.Expr::Function("PxKet", args) | @symcore.Expr::Function("PxBra", args) => {
+    @symcore.Expr::Function("PxKet", args)
+    | @symcore.Expr::Function("PxBra", args) => {
       ignore(args)
       Some([px_op()])
     }
-    @symcore.Expr::Function("PositionKet3D", _) | @symcore.Expr::Function("PositionBra3D", _) =>
+    @symcore.Expr::Function("PositionKet3D", _)
+    | @symcore.Expr::Function("PositionBra3D", _) =>
       Some([x_op(), y_op(), z_op()])
     _ => None
   }
@@ -144,16 +176,22 @@ pub fn cartesian_apply_operator_to_ket(
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
   match (op_expr, ket_expr) {
-    (@symcore.Expr::Function("XOp", _), @symcore.Expr::Function("XKet", args)) if args.length() == 1 =>
-      Some(args[0] * ket_expr)
-    (@symcore.Expr::Function("PxOp", _), @symcore.Expr::Function("PxKet", args)) if args.length() == 1 =>
-      Some(args[0] * ket_expr)
-    (@symcore.Expr::Function("XOp", _), @symcore.Expr::Function("PositionKet3D", args)) if args.length() == 3 =>
-      Some(args[0] * ket_expr)
-    (@symcore.Expr::Function("YOp", _), @symcore.Expr::Function("PositionKet3D", args)) if args.length() == 3 =>
-      Some(args[1] * ket_expr)
-    (@symcore.Expr::Function("ZOp", _), @symcore.Expr::Function("PositionKet3D", args)) if args.length() == 3 =>
-      Some(args[2] * ket_expr)
+    (@symcore.Expr::Function("XOp", _), @symcore.Expr::Function("XKet", args)) if args.length() ==
+      1 => Some(args[0] * ket_expr)
+    (@symcore.Expr::Function("PxOp", _), @symcore.Expr::Function("PxKet", args)) if args.length() ==
+      1 => Some(args[0] * ket_expr)
+    (
+      @symcore.Expr::Function("XOp", _),
+      @symcore.Expr::Function("PositionKet3D", args),
+    ) if args.length() == 3 => Some(args[0] * ket_expr)
+    (
+      @symcore.Expr::Function("YOp", _),
+      @symcore.Expr::Function("PositionKet3D", args),
+    ) if args.length() == 3 => Some(args[1] * ket_expr)
+    (
+      @symcore.Expr::Function("ZOp", _),
+      @symcore.Expr::Function("PositionKet3D", args),
+    ) if args.length() == 3 => Some(args[2] * ket_expr)
     _ => None
   }
 }
@@ -164,15 +202,45 @@ pub fn cartesian_inner_product(
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
   match (bra_expr, ket_expr) {
-    (@symcore.Expr::Function("XBra", bargs), @symcore.Expr::Function("XKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+    (
+      @symcore.Expr::Function("XBra", bargs),
+      @symcore.Expr::Function("XKet", kargs),
+    ) if bargs.length() == 1 && kargs.length() == 1 =>
       Some(cartesian_delta(kargs[0], bargs[0]))
-    (@symcore.Expr::Function("PxBra", bargs), @symcore.Expr::Function("PxKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+    (
+      @symcore.Expr::Function("PxBra", bargs),
+      @symcore.Expr::Function("PxKet", kargs),
+    ) if bargs.length() == 1 && kargs.length() == 1 =>
       Some(cartesian_delta(kargs[0], bargs[0]))
-    (@symcore.Expr::Function("XBra", bargs), @symcore.Expr::Function("PxKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
-      Some(cartesian_plane_wave(@symcore.symbol("I") * bargs[0] * kargs[0] * @symcore.raw_pow(hbar, @symcore.int(-1))))
-    (@symcore.Expr::Function("PxBra", bargs), @symcore.Expr::Function("XKet", kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
-      Some(cartesian_plane_wave(@symcore.int(-1) * @symcore.symbol("I") * kargs[0] * bargs[0] * @symcore.raw_pow(hbar, @symcore.int(-1))))
-    (@symcore.Expr::Function("PositionBra3D", bargs), @symcore.Expr::Function("PositionKet3D", kargs)) if bargs.length() == 3 && kargs.length() == 3 =>
+    (
+      @symcore.Expr::Function("XBra", bargs),
+      @symcore.Expr::Function("PxKet", kargs),
+    ) if bargs.length() == 1 && kargs.length() == 1 =>
+      Some(
+        cartesian_plane_wave(
+          @symcore.symbol("I") *
+          bargs[0] *
+          kargs[0] *
+          @symcore.raw_pow(hbar, @symcore.int(-1)),
+        ),
+      )
+    (
+      @symcore.Expr::Function("PxBra", bargs),
+      @symcore.Expr::Function("XKet", kargs),
+    ) if bargs.length() == 1 && kargs.length() == 1 =>
+      Some(
+        cartesian_plane_wave(
+          @symcore.int(-1) *
+          @symcore.symbol("I") *
+          kargs[0] *
+          bargs[0] *
+          @symcore.raw_pow(hbar, @symcore.int(-1)),
+        ),
+      )
+    (
+      @symcore.Expr::Function("PositionBra3D", bargs),
+      @symcore.Expr::Function("PositionKet3D", kargs),
+    ) if bargs.length() == 3 && kargs.length() == 3 =>
       Some(
         cartesian_delta(kargs[0], bargs[0]) *
         cartesian_delta(kargs[1], bargs[1]) *
@@ -188,8 +256,12 @@ fn cartesian_basis_family(basis : @symcore.Expr?) -> String {
     None => "default"
     Some(expr) =>
       match expr {
-        @symcore.Expr::Function(name, _) if name == "XOp" || name == "XKet" || name == "XBra" => "x"
-        @symcore.Expr::Function(name, _) if name == "PxOp" || name == "PxKet" || name == "PxBra" => "px"
+        @symcore.Expr::Function(name, _) if name == "XOp" ||
+          name == "XKet" ||
+          name == "XBra" => "x"
+        @symcore.Expr::Function(name, _) if name == "PxOp" ||
+          name == "PxKet" ||
+          name == "PxBra" => "px"
         _ => "default"
       }
   }
@@ -214,7 +286,13 @@ pub fn cartesian_represent(
     @symcore.Expr::Function("XKet", args) if args.length() == 1 =>
       Some(
         if basis_name == "px" {
-          cartesian_plane_wave(@symcore.int(-1) * @symcore.symbol("I") * args[0] * coord * @symcore.raw_pow(hbar, @symcore.int(-1)))
+          cartesian_plane_wave(
+            @symcore.int(-1) *
+            @symcore.symbol("I") *
+            args[0] *
+            coord *
+            @symcore.raw_pow(hbar, @symcore.int(-1)),
+          )
         } else {
           cartesian_delta(coord, args[0])
         },
@@ -222,7 +300,12 @@ pub fn cartesian_represent(
     @symcore.Expr::Function("XBra", args) if args.length() == 1 =>
       Some(
         if basis_name == "px" {
-          cartesian_plane_wave(@symcore.symbol("I") * args[0] * coord * @symcore.raw_pow(hbar, @symcore.int(-1)))
+          cartesian_plane_wave(
+            @symcore.symbol("I") *
+            args[0] *
+            coord *
+            @symcore.raw_pow(hbar, @symcore.int(-1)),
+          )
         } else {
           cartesian_delta(coord, args[0])
         },
@@ -230,7 +313,12 @@ pub fn cartesian_represent(
     @symcore.Expr::Function("PxKet", args) if args.length() == 1 =>
       Some(
         if basis_name == "x" {
-          cartesian_plane_wave(@symcore.symbol("I") * coord * args[0] * @symcore.raw_pow(hbar, @symcore.int(-1)))
+          cartesian_plane_wave(
+            @symcore.symbol("I") *
+            coord *
+            args[0] *
+            @symcore.raw_pow(hbar, @symcore.int(-1)),
+          )
         } else {
           cartesian_delta(coord, args[0])
         },
@@ -238,7 +326,13 @@ pub fn cartesian_represent(
     @symcore.Expr::Function("PxBra", args) if args.length() == 1 =>
       Some(
         if basis_name == "x" {
-          cartesian_plane_wave(@symcore.int(-1) * @symcore.symbol("I") * coord * args[0] * @symcore.raw_pow(hbar, @symcore.int(-1)))
+          cartesian_plane_wave(
+            @symcore.int(-1) *
+            @symcore.symbol("I") *
+            coord *
+            args[0] *
+            @symcore.raw_pow(hbar, @symcore.int(-1)),
+          )
         } else {
           cartesian_delta(coord, args[0])
         },
@@ -270,7 +364,11 @@ pub fn cartesian_represent(
         if basis_name == "x" || basis_name == "default" {
           let x1 = cartesian_symbol("x", idx=1)
           let x2 = cartesian_symbol("x", idx=2)
-          @symcore.int(-1) * @symcore.symbol("I") * hbar * cartesian_delta(x1, x2) * x1
+          @symcore.int(-1) *
+          @symcore.symbol("I") *
+          hbar *
+          cartesian_delta(x1, x2) *
+          x1
         } else {
           coord
         },

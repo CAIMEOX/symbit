@@ -36,7 +36,14 @@ pub fn wigner3j(
 
 ///|
 pub fn Wigner3j::as_expr(self : Wigner3j) -> @symcore.Expr {
-  @symcore.function("Wigner3j", [self.j1, self.m1, self.j2, self.m2, self.j3, self.m3])
+  @symcore.function("Wigner3j", [
+    self.j1,
+    self.m1,
+    self.j2,
+    self.m2,
+    self.j3,
+    self.m3,
+  ])
 }
 
 ///|
@@ -45,11 +52,20 @@ pub fn Wigner3j::is_symbolic(self : Wigner3j) -> Bool {
 }
 
 ///|
-pub fn Wigner3j::doit(self : Wigner3j) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn Wigner3j::doit(
+  self : Wigner3j,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.wigner_3j(self.j1, self.j2, self.j3, self.m1, self.m2, self.m3)
+  try! @symphysics.wigner_3j(
+    self.j1,
+    self.j2,
+    self.j3,
+    self.m1,
+    self.m2,
+    self.m3,
+  )
 }
 
 ///|
@@ -89,7 +105,14 @@ pub fn CG::doit(self : CG) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.clebsch_gordan(self.j1, self.j2, self.j3, self.m1, self.m2, self.m3)
+  try! @symphysics.clebsch_gordan(
+    self.j1,
+    self.j2,
+    self.j3,
+    self.m1,
+    self.m2,
+    self.m3,
+  )
 }
 
 ///|
@@ -116,7 +139,14 @@ pub fn wigner6j(
 
 ///|
 pub fn Wigner6j::as_expr(self : Wigner6j) -> @symcore.Expr {
-  @symcore.function("Wigner6j", [self.j1, self.j2, self.j12, self.j3, self.j, self.j23])
+  @symcore.function("Wigner6j", [
+    self.j1,
+    self.j2,
+    self.j12,
+    self.j3,
+    self.j,
+    self.j23,
+  ])
 }
 
 ///|
@@ -125,11 +155,20 @@ pub fn Wigner6j::is_symbolic(self : Wigner6j) -> Bool {
 }
 
 ///|
-pub fn Wigner6j::doit(self : Wigner6j) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn Wigner6j::doit(
+  self : Wigner6j,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.wigner_6j(self.j1, self.j2, self.j12, self.j3, self.j, self.j23)
+  try! @symphysics.wigner_6j(
+    self.j1,
+    self.j2,
+    self.j12,
+    self.j3,
+    self.j,
+    self.j23,
+  )
 }
 
 ///|
@@ -162,19 +201,38 @@ pub fn wigner9j(
 
 ///|
 pub fn Wigner9j::as_expr(self : Wigner9j) -> @symcore.Expr {
-  @symcore.function(
-    "Wigner9j",
-    [self.j1, self.j2, self.j12, self.j3, self.j4, self.j34, self.j13, self.j24, self.j],
-  )
+  @symcore.function("Wigner9j", [
+    self.j1,
+    self.j2,
+    self.j12,
+    self.j3,
+    self.j4,
+    self.j34,
+    self.j13,
+    self.j24,
+    self.j,
+  ])
 }
 
 ///|
 pub fn Wigner9j::is_symbolic(self : Wigner9j) -> Bool {
-  !quantum_all_numeric([self.j1, self.j2, self.j12, self.j3, self.j4, self.j34, self.j13, self.j24, self.j])
+  !quantum_all_numeric([
+    self.j1,
+    self.j2,
+    self.j12,
+    self.j3,
+    self.j4,
+    self.j34,
+    self.j13,
+    self.j24,
+    self.j,
+  ])
 }
 
 ///|
-pub fn Wigner9j::doit(self : Wigner9j) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn Wigner9j::doit(
+  self : Wigner9j,
+) -> @symcore.Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }

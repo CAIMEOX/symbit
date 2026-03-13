@@ -26,7 +26,8 @@ fn wavefunction_coord_limit(
   coord : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr) {
   match coord {
-    @symcore.Expr::Function("Tuple", args) if args.length() == 3 => (args[1], args[2])
+    @symcore.Expr::Function("Tuple", args) if args.length() == 3 =>
+      (args[1], args[2])
     _ => (@symcore.symbol("-oo"), @symcore.symbol("oo"))
   }
 }
@@ -49,7 +50,9 @@ pub fn WavefunctionExpr::as_expr(self : WavefunctionExpr) -> @symcore.Expr {
 }
 
 ///|
-pub fn WavefunctionExpr::variables(self : WavefunctionExpr) -> Array[@symcore.Expr] {
+pub fn WavefunctionExpr::variables(
+  self : WavefunctionExpr,
+) -> Array[@symcore.Expr] {
   self.coords.map(wavefunction_coord_var)
 }
 
@@ -79,10 +82,7 @@ pub fn WavefunctionExpr::repr(self : WavefunctionExpr) -> String {
 }
 
 ///|
-fn wavefunction_numeric_lt(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> Bool {
+fn wavefunction_numeric_lt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
   match (lhs, rhs) {
     (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) => a.compare(b) < 0
     _ => false
@@ -90,10 +90,7 @@ fn wavefunction_numeric_lt(
 }
 
 ///|
-fn wavefunction_numeric_gt(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> Bool {
+fn wavefunction_numeric_gt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
   match (lhs, rhs) {
     (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) => a.compare(b) > 0
     _ => false
@@ -132,20 +129,18 @@ fn wavefunction_simplify_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
         continue
       }
       match (factors[idx], factors[jdx]) {
-        (@symcore.Expr::Pow(base, @symcore.Expr::Number(n)), other) => {
+        (@symcore.Expr::Pow(base, @symcore.Expr::Number(n)), other) =>
           if n.is_integral() && n.numerator().to_int() == -1 && base == other {
             removed[idx] = true
             removed[jdx] = true
             break
           }
-        }
-        (other, @symcore.Expr::Pow(base, @symcore.Expr::Number(n))) => {
+        (other, @symcore.Expr::Pow(base, @symcore.Expr::Number(n))) =>
           if n.is_integral() && n.numerator().to_int() == -1 && base == other {
             removed[idx] = true
             removed[jdx] = true
             break
           }
-        }
         _ => ()
       }
     }
@@ -193,12 +188,15 @@ pub fn WavefunctionExpr::call(
 ) -> @symcore.Expr raise @symphysics.PhysicsError {
   let vars = self.variables()
   guard values.length() == vars.length() else {
-    raise @symphysics.PhysicsError::ValueError("Incorrect number of arguments to Wavefunction")
+    raise @symphysics.PhysicsError::ValueError(
+      "Incorrect number of arguments to Wavefunction",
+    )
   }
   for idx in 0..<self.coords.length() {
     let (lower, upper) = wavefunction_coord_limit(self.coords[idx])
     let value = values[idx]
-    if wavefunction_numeric_lt(value, lower) || wavefunction_numeric_gt(value, upper) {
+    if wavefunction_numeric_lt(value, lower) ||
+      wavefunction_numeric_gt(value, upper) {
       return @symcore.int(0)
     }
   }
@@ -237,7 +235,10 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> @symcore.Expr {
 ///|
 pub fn WavefunctionExpr::normalize(self : WavefunctionExpr) -> WavefunctionExpr {
   let norm = self.norm_expr()
-  wavefunction(@symcore.raw_pow(norm, @symcore.int(-1)) * self.expr, self.coords)
+  wavefunction(
+    @symcore.raw_pow(norm, @symcore.int(-1)) * self.expr,
+    self.coords,
+  )
 }
 
 ///|
@@ -269,12 +270,16 @@ pub fn differential_operator(
 }
 
 ///|
-pub fn DifferentialOperatorExpr::as_expr(self : DifferentialOperatorExpr) -> @symcore.Expr {
+pub fn DifferentialOperatorExpr::as_expr(
+  self : DifferentialOperatorExpr,
+) -> @symcore.Expr {
   @symcore.raw_function("DifferentialOperator", [self.expr, self.function_expr])
 }
 
 ///|
-pub fn DifferentialOperatorExpr::variables(self : DifferentialOperatorExpr) -> Array[@symcore.Expr] {
+pub fn DifferentialOperatorExpr::variables(
+  self : DifferentialOperatorExpr,
+) -> Array[@symcore.Expr] {
   match self.function_expr {
     @symcore.Expr::Function(_, args) => args
     _ => []
@@ -304,9 +309,13 @@ fn quantum_replace_exact(
   match expr {
     @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => expr
     @symcore.Expr::Add(args) =>
-      @symcore.raw_add(args.map(arg => quantum_replace_exact(arg, needle, replacement)))
+      @symcore.raw_add(
+        args.map(arg => quantum_replace_exact(arg, needle, replacement)),
+      )
     @symcore.Expr::Mul(args) =>
-      @symcore.raw_mul(args.map(arg => quantum_replace_exact(arg, needle, replacement)))
+      @symcore.raw_mul(
+        args.map(arg => quantum_replace_exact(arg, needle, replacement)),
+      )
     @symcore.Expr::Pow(base, exp) =>
       @symcore.raw_pow(
         quantum_replace_exact(base, needle, replacement),
@@ -341,13 +350,13 @@ fn wavefunction_eval_derivatives(expr : @symcore.Expr) -> @symcore.Expr {
       let mut last_var : @symcore.Expr? = None
       for idx in 1..<args.length() {
         match args[idx] {
-          @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
+          @symcore.Expr::Number(n) if n.is_integral() &&
+            n.numerator().to_int() >= 0 =>
             match last_var {
-              Some(diff_var) => {
+              Some(diff_var) =>
                 for _ in 1..<n.numerator().to_int() {
                   out = @symcalculus.diff(out, diff_var)
                 }
-              }
               None => ()
             }
           diff_var => {
@@ -368,7 +377,8 @@ pub fn differential_operator_apply_to_wavefunction(
   op_expr : @symcore.Expr,
   wf_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
-  match (differential_operator_from_expr(op_expr), wavefunction_from_expr(wf_expr)) {
+  match
+    (differential_operator_from_expr(op_expr), wavefunction_from_expr(wf_expr)) {
     (Some(op), Some(wf)) => {
       let vars = op.variables()
       let wf_vars = wf.variables()
@@ -385,7 +395,12 @@ pub fn differential_operator_apply_to_wavefunction(
         wf.expr
       }
       let substituted = quantum_replace_exact(op.expr, op.function_expr, body)
-      Some(wavefunction(wavefunction_simplify_expr(wavefunction_eval_derivatives(substituted)), wf.coords).as_expr())
+      Some(
+        wavefunction(
+          wavefunction_simplify_expr(wavefunction_eval_derivatives(substituted)),
+          wf.coords,
+        ).as_expr(),
+      )
     }
     _ => None
   }

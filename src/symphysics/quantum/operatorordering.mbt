@@ -7,7 +7,9 @@
 /// MoonBit port.
 
 ///|
-fn quantum_expand_powers(factors : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn quantum_expand_powers(
+  factors : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
   let out : Array[@symcore.Expr] = Array::new()
   for factor in factors {
     match factor {
@@ -28,7 +30,8 @@ fn quantum_expand_powers(factors : Array[@symcore.Expr]) -> Array[@symcore.Expr]
 ///|
 fn quantum_op_sort_key(expr : @symcore.Expr) -> (Int, String) {
   match expr {
-    @symcore.Expr::Function("BosonOp", args) | @symcore.Expr::Function("FermionOp", args) if args.length() == 2 => {
+    @symcore.Expr::Function("BosonOp", args)
+    | @symcore.Expr::Function("FermionOp", args) if args.length() == 2 => {
       let annihilation_rank = if args[1] == @symcore.int(0) { 0 } else { 1 }
       (annihilation_rank, @symprint.to_string(args[0]))
     }
@@ -39,7 +42,8 @@ fn quantum_op_sort_key(expr : @symcore.Expr) -> (Int, String) {
 ///|
 fn quantum_same_species(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
   match (lhs, rhs) {
-    (@symcore.Expr::Function(name1, _), @symcore.Expr::Function(name2, _)) => name1 == name2
+    (@symcore.Expr::Function(name1, _), @symcore.Expr::Function(name2, _)) =>
+      name1 == name2
     _ => false
   }
 }
@@ -61,12 +65,14 @@ fn quantum_operatorordering_pair(
     return None
   }
   let same_species = quantum_same_species(current, next)
-  let same_name =
-    match (current, next) {
-      (@symcore.Expr::Function(_, cargs), @symcore.Expr::Function(_, nargs)) if cargs.length() >= 1 && nargs.length() >= 1 => cargs[0] == nargs[0]
-      _ => false
-    }
-  if quantum_expr_has_name(current, "BosonOp") && quantum_expr_has_name(next, "BosonOp") {
+  let same_name = match (current, next) {
+    (@symcore.Expr::Function(_, cargs), @symcore.Expr::Function(_, nargs)) if cargs.length() >=
+      1 &&
+      nargs.length() >= 1 => cargs[0] == nargs[0]
+    _ => false
+  }
+  if quantum_expr_has_name(current, "BosonOp") &&
+    quantum_expr_has_name(next, "BosonOp") {
     if ordered_form {
       if same_name {
         Some(next * current + @symcore.int(1))
@@ -78,15 +84,21 @@ fn quantum_operatorordering_pair(
     } else {
       Some(next * current)
     }
-  } else if quantum_expr_has_name(current, "FermionOp") && quantum_expr_has_name(next, "FermionOp") {
+  } else if quantum_expr_has_name(current, "FermionOp") &&
+    quantum_expr_has_name(next, "FermionOp") {
     if same_species {
       let swapped = @symcore.int(-1) * next * current
       if ordered_form {
-        if same_name && quantum_op_sort_key(current).0 == 1 && quantum_op_sort_key(next).0 == 0 {
+        if same_name &&
+          quantum_op_sort_key(current).0 == 1 &&
+          quantum_op_sort_key(next).0 == 0 {
           Some(@symcore.int(1) + swapped)
         } else if independent && !same_name {
           Some(swapped)
-        } else if !same_name && !independent && quantum_op_sort_key(current).0 == 1 && quantum_op_sort_key(next).0 == 0 {
+        } else if !same_name &&
+          !independent &&
+          quantum_op_sort_key(current).0 == 1 &&
+          quantum_op_sort_key(next).0 == 0 {
           Some(swapped + anticommutator(next, current, evaluate=false))
         } else {
           Some(swapped)
@@ -119,7 +131,13 @@ fn quantum_reorder_product(
       let mut changed = false
       while idx < factors.length() {
         if idx + 1 < factors.length() {
-          match quantum_operatorordering_pair(factors[idx], factors[idx + 1], ordered_form, independent) {
+          match
+            quantum_operatorordering_pair(
+              factors[idx],
+              factors[idx + 1],
+              ordered_form,
+              independent,
+            ) {
             Some(replacement) => {
               rebuilt.push(replacement)
               idx += 2
@@ -162,9 +180,16 @@ fn quantum_reorder_expression(
   match expr {
     @symcore.Expr::Add(args) =>
       quantum_add_from_args_preserve(
-        args.map(term => quantum_reorder_product(term, ordered_form, independent, recursive_limit, recursive_depth)),
+        args.map(term => {
+          quantum_reorder_product(
+            term, ordered_form, independent, recursive_limit, recursive_depth,
+          )
+        }),
       )
-    @symcore.Expr::Mul(_) => quantum_reorder_product(expr, ordered_form, independent, recursive_limit, recursive_depth)
+    @symcore.Expr::Mul(_) =>
+      quantum_reorder_product(
+        expr, ordered_form, independent, recursive_limit, recursive_depth,
+      )
     _ => expr
   }
 }

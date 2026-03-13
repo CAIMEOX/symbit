@@ -44,7 +44,9 @@ test "physics.quantum.transforms: parity" {
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        try! quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),
+        try! quantum_canonical_mul(
+          @symcore.raw_mul([a, @symcore.raw_add([b, c])]),
+        ),
       ),
     ),
     try! @sympy_physics.quantum_eval_str(
@@ -58,7 +60,9 @@ test "physics.quantum.transforms: parity" {
         try! quantum_canonical_pow(@symcore.raw_add([a, b]), @symcore.int(2)),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str("expand((Operator(A) + Operator(B))**2)"),
+    try! @sympy_physics.quantum_eval_str(
+      "expand((Operator(A) + Operator(B))**2)",
+    ),
     "operator square parity",
   )
   try! quantum_test_assert_string_equal(
@@ -91,7 +95,10 @@ test "physics.quantum.transforms: parity" {
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        try! quantum_canonical_pow(cgate([1], x_gate(0).as_expr()), @symcore.int(2)),
+        try! quantum_canonical_pow(
+          cgate([1], x_gate(0).as_expr()),
+          @symcore.int(2),
+        ),
       ),
     ),
     try! @sympy_physics.quantum_eval_str(

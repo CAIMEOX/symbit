@@ -47,10 +47,12 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
 
   inspect(
     @symprint.to_string(
-      qapply(@symcore.raw_function("Sum", [
-        @symcore.raw_mul([x_gate(0).as_expr(), zero]),
-        @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.int(2)]),
-      ])),
+      qapply(
+        @symcore.raw_function("Sum", [
+          @symcore.raw_mul([x_gate(0).as_expr(), zero]),
+          @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.int(2)]),
+        ]),
+      ),
     ),
     content="Sum(Qubit(1), Tuple(n, 0, 2))",
   )
@@ -82,13 +84,7 @@ test "physics.quantum.qapply: spin ladders and (anti)commutator action" {
     "double lowering",
   )
   try! quantum_test_assert_expr_equal(
-    qapply(
-      @symcore.raw_mul([
-        commutator(jx(), jy(), evaluate=false),
-        jz(),
-        po,
-      ]),
-    ),
+    qapply(@symcore.raw_mul([commutator(jx(), jy(), evaluate=false), jz(), po])),
     "I*hbar**3*JzKet(1, 1)",
     "commutator action",
   )

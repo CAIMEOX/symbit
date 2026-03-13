@@ -10,12 +10,13 @@ test "physics.quantum.cg_simp: sum parity" {
   let gamma = @symcore.symbol("gamma")
   let gammap = @symcore.symbol("gammap")
 
-  let eq1 = x * quantum_sum1(
-    cg(a, alpha, b, @symcore.int(0), a, alpha).as_expr(),
-    alpha,
-    @symcore.int(-1) * a,
-    a,
-  )
+  let eq1 = x *
+    quantum_sum1(
+      cg(a, alpha, b, @symcore.int(0), a, alpha).as_expr(),
+      alpha,
+      @symcore.int(-1) * a,
+      a,
+    )
   try! quantum_test_assert_expr_equal(
     cg_simp(eq1),
     try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
@@ -23,7 +24,8 @@ test "physics.quantum.cg_simp: sum parity" {
   )
 
   let eq2 = quantum_sum1(
-    ((@symcore.int(-1)) ^ (a - alpha)) * cg(a, alpha, a, @symcore.int(-1) * alpha, c, @symcore.int(0)).as_expr(),
+    (@symcore.int(-1) ^ (a - alpha)) *
+    cg(a, alpha, a, @symcore.int(-1) * alpha, c, @symcore.int(0)).as_expr(),
     alpha,
     @symcore.int(-1) * a,
     a,
@@ -35,7 +37,8 @@ test "physics.quantum.cg_simp: sum parity" {
   )
 
   let eq4 = quantum_sum2(
-    cg(a, alpha, b, beta, c, gamma).as_expr() * cg(a, alpha, b, beta, cp, gammap).as_expr(),
+    cg(a, alpha, b, beta, c, gamma).as_expr() *
+    cg(a, alpha, b, beta, cp, gammap).as_expr(),
     alpha,
     @symcore.int(-1) * a,
     a,
@@ -57,7 +60,8 @@ test "physics.quantum.cg_simp: square-sum parity" {
   let beta = @symcore.symbol("beta")
 
   let expr = quantum_sum2(
-    (cg(half, alpha, half, beta, @symcore.int(1), alpha + beta).as_expr()) ^ @symcore.int(2),
+    cg(half, alpha, half, beta, @symcore.int(1), alpha + beta).as_expr() ^
+    @symcore.int(2),
     alpha,
     @symcore.int(-1) * half,
     half,
@@ -78,8 +82,18 @@ test "physics.quantum.cg_simp: additive parity" {
   let half = quantum_test_frac(1, 2)
 
   let eq1 = @symcore.add([
-    @symcore.mul([@symcore.int(2), cg(half, half, j, @symcore.int(0), half, half).as_expr()]),
-    cg(half, @symcore.int(-1) * half, j, @symcore.int(0), half, @symcore.int(-1) * half).as_expr(),
+    @symcore.mul([
+      @symcore.int(2),
+      cg(half, half, j, @symcore.int(0), half, half).as_expr(),
+    ]),
+    cg(
+      half,
+      @symcore.int(-1) * half,
+      j,
+      @symcore.int(0),
+      half,
+      @symcore.int(-1) * half,
+    ).as_expr(),
   ])
   try! quantum_test_assert_expr_equal(
     cg_simp(eq1),
@@ -88,12 +102,33 @@ test "physics.quantum.cg_simp: additive parity" {
   )
 
   let eq2 = @symcore.add([
-    cg(@symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(-1), @symcore.int(0), @symcore.int(0)).as_expr(),
+    cg(
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(-1),
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
     @symcore.mul([
       @symcore.int(-1),
-      cg(@symcore.int(1), @symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
+      cg(
+        @symcore.int(1),
+        @symcore.int(0),
+        @symcore.int(1),
+        @symcore.int(0),
+        @symcore.int(0),
+        @symcore.int(0),
+      ).as_expr(),
     ]),
-    cg(@symcore.int(1), @symcore.int(-1), @symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(0)).as_expr(),
+    cg(
+      @symcore.int(1),
+      @symcore.int(-1),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
   ])
   try! quantum_test_assert_expr_equal(
     cg_simp(eq2),
@@ -108,9 +143,23 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
   let m1 = @symcore.symbol("m1")
   let m2 = @symcore.symbol("m2")
 
-  let a = (cg(half, half, half, @symcore.int(-1) * half, @symcore.int(1), @symcore.int(0)).as_expr()) ^
+  let a = cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(1),
+      @symcore.int(0),
+    ).as_expr() ^
     @symcore.int(2)
-  let b = (cg(half, half, half, @symcore.int(-1) * half, @symcore.int(0), @symcore.int(0)).as_expr()) ^
+  let b = cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr() ^
     @symcore.int(2)
   let numeric = @symcore.add([a, b])
   try! quantum_test_assert_expr_equal(
@@ -128,10 +177,14 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
     "cg_simp eq9 square weighted numeric",
   )
 
-  let s1 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(1)).as_expr()) ^ @symcore.int(2)
-  let s2 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(0)).as_expr()) ^ @symcore.int(2)
-  let s3 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(-1)).as_expr()) ^ @symcore.int(2)
-  let s4 = (cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr()) ^ @symcore.int(2)
+  let s1 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(1)).as_expr() ^
+    @symcore.int(2)
+  let s2 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(0)).as_expr() ^
+    @symcore.int(2)
+  let s3 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(-1)).as_expr() ^
+    @symcore.int(2)
+  let s4 = cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr() ^
+    @symcore.int(2)
   let symbolic = @symcore.add([s1, s2, s3, s4])
   try! quantum_test_assert_expr_equal(
     cg_simp(symbolic),
@@ -161,12 +214,40 @@ test "physics.quantum.cg_simp: additive eq9 cross parity" {
 
   let numeric = @symcore.add([
     @symcore.mul([
-      cg(half, half, half, @symcore.int(-1) * half, @symcore.int(1), @symcore.int(0)).as_expr(),
-      cg(half, @symcore.int(-1) * half, half, half, @symcore.int(1), @symcore.int(0)).as_expr(),
+      cg(
+        half,
+        half,
+        half,
+        @symcore.int(-1) * half,
+        @symcore.int(1),
+        @symcore.int(0),
+      ).as_expr(),
+      cg(
+        half,
+        @symcore.int(-1) * half,
+        half,
+        half,
+        @symcore.int(1),
+        @symcore.int(0),
+      ).as_expr(),
     ]),
     @symcore.mul([
-      cg(half, half, half, @symcore.int(-1) * half, @symcore.int(0), @symcore.int(0)).as_expr(),
-      cg(half, @symcore.int(-1) * half, half, half, @symcore.int(0), @symcore.int(0)).as_expr(),
+      cg(
+        half,
+        half,
+        half,
+        @symcore.int(-1) * half,
+        @symcore.int(0),
+        @symcore.int(0),
+      ).as_expr(),
+      cg(
+        half,
+        @symcore.int(-1) * half,
+        half,
+        half,
+        @symcore.int(0),
+        @symcore.int(0),
+      ).as_expr(),
     ]),
   ])
   let symbolic = @symcore.add([

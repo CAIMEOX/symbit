@@ -1,7 +1,5 @@
 ///|
-fn quantum_gate_sequence_summary(
-  gates : Array[@symcore.Expr],
-) -> String {
+fn quantum_gate_sequence_summary(gates : Array[@symcore.Expr]) -> String {
   if gates.is_empty() {
     return "1"
   }
@@ -16,16 +14,15 @@ fn quantum_gate_sequence_summary(
 }
 
 ///|
-fn quantum_gate_sequence_strings(
-  gates : Array[@symcore.Expr],
-) -> Array[String] {
+fn quantum_gate_sequence_strings(gates : Array[@symcore.Expr]) -> Array[String] {
   gates.map(gate => quantum_gate_sequence_summary([gate]))
 }
 
 ///|
 fn quantum_gate_rule_summaries(rules : Array[GateRule]) -> Array[String] {
   let out = rules.map(rule => {
-    quantum_gate_sequence_summary(rule.left) + " == " +
+    quantum_gate_sequence_summary(rule.left) +
+    " == " +
     quantum_gate_sequence_summary(rule.right)
   })
   out.sort()
@@ -33,10 +30,10 @@ fn quantum_gate_rule_summaries(rules : Array[GateRule]) -> Array[String] {
 }
 
 ///|
-fn quantum_gate_identity_summaries(
-  ids : Array[GateIdentity],
-) -> Array[String] {
-  let out = ids.map(id => quantum_gate_sequence_summary(circuit_factors(id.circuit())))
+fn quantum_gate_identity_summaries(ids : Array[GateIdentity]) -> Array[String] {
+  let out = ids.map(id => {
+    quantum_gate_sequence_summary(circuit_factors(id.circuit()))
+  })
   out.sort()
   out
 }
@@ -68,7 +65,9 @@ test "physics.quantum.identitysearch: scalar detection and rule generation" {
   }
 
   let ids = try! generate_equivalent_ids([x0, y0, z0])
-  let id_summaries = ids.map(expr => quantum_gate_sequence_summary(circuit_factors(expr)))
+  let id_summaries = ids.map(expr => {
+    quantum_gate_sequence_summary(circuit_factors(expr))
+  })
   guard id_summaries.length() == 6 else { fail("generate_equivalent_ids size") }
   guard id_summaries.contains("X(0)*Y(0)*Z(0)") else {
     fail("generate_equivalent_ids contains original")

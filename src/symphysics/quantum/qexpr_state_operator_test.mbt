@@ -99,7 +99,9 @@ test "physics.quantum.operator/state: operator simplification hooks" {
   let u = unitary_operator([@symcore.symbol("U")]).as_expr()
   let id3 = identity_operator(dimension=@symcore.int(3)).as_expr()
   try! quantum_test_assert_expr_equal(
-    quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_pow(a, @symcore.int(-1))])),
+    quantum_canonical_mul(
+      @symcore.raw_mul([a, @symcore.raw_pow(a, @symcore.int(-1))]),
+    ),
     "1",
     "canonical inverse cancellation",
   )

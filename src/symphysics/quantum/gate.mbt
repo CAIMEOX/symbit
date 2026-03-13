@@ -492,22 +492,26 @@ pub fn gate_pow_simplify(
       match gate.kind {
         GateKind::Phase => {
           let reduced = exp % 4
-          Some(match reduced {
-            0 => @symcore.int(1)
-            1 => gate_expr
-            2 => z_gate(gate.args[0]).as_expr()
-            _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
-          })
+          Some(
+            match reduced {
+              0 => @symcore.int(1)
+              1 => gate_expr
+              2 => z_gate(gate.args[0]).as_expr()
+              _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+            },
+          )
         }
         GateKind::T => {
           let reduced = exp % 8
-          Some(match reduced {
-            0 => @symcore.int(1)
-            1 => gate_expr
-            2 => phase_gate(gate.args[0]).as_expr()
-            4 => z_gate(gate.args[0]).as_expr()
-            _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
-          })
+          Some(
+            match reduced {
+              0 => @symcore.int(1)
+              1 => gate_expr
+              2 => phase_gate(gate.args[0]).as_expr()
+              4 => z_gate(gate.args[0]).as_expr()
+              _ => @symcore.raw_pow(gate_expr, @symcore.int(exp))
+            },
+          )
         }
         _ => None
       }

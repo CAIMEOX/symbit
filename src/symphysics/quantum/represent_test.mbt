@@ -16,7 +16,10 @@ test "physics.quantum.represent: gate powers, (anti)commutators, and outer produ
     content="1",
   )
 
-  let phase2 = try! represent(phase_gate(0).as_expr() ^ @symcore.int(2), nqubits=1)
+  let phase2 = try! represent(
+    phase_gate(0).as_expr() ^ @symcore.int(2),
+    nqubits=1,
+  )
   match phase2 {
     MatrixScalarValue::Matrix(matrix) =>
       try! quantum_test_assert_matrix_expr_equal(

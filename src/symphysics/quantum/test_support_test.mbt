@@ -1,13 +1,13 @@
+///|
 fn quantum_test_assert_string_equal(
   lhs : String,
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard lhs == rhs else {
-    fail("\{context}: ours=\{lhs}; oracle=\{rhs}")
-  }
+  guard lhs == rhs else { fail("\{context}: ours=\{lhs}; oracle=\{rhs}") }
 }
 
+///|
 fn quantum_test_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
@@ -19,16 +19,16 @@ fn quantum_test_assert_expr_equal(
   }
 }
 
+///|
 fn quantum_test_assert_array_equal(
   lhs : Array[String],
   rhs : Array[String],
   context : String,
 ) -> Unit raise {
-  guard lhs == rhs else {
-    fail("\{context}: ours=\{lhs}; oracle=\{rhs}")
-  }
+  guard lhs == rhs else { fail("\{context}: ours=\{lhs}; oracle=\{rhs}") }
 }
 
+///|
 fn quantum_test_assert_matrix_equal(
   lhs : @symphysics.ExplicitMatrix,
   rhs : Array[String],
@@ -45,6 +45,7 @@ fn quantum_test_assert_matrix_equal(
   quantum_test_assert_array_equal(try! matrix_flat_strings(lhs), rhs, context)
 }
 
+///|
 fn quantum_test_assert_matrix_expr_equal(
   lhs : @symphysics.ExplicitMatrix,
   rhs : Array[String],
@@ -60,7 +61,9 @@ fn quantum_test_assert_matrix_expr_equal(
   }
   let flat = try! matrix_flat_strings(lhs)
   guard flat.length() == rhs.length() else {
-    fail("\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}")
+    fail(
+      "\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}",
+    )
   }
   for idx in 0..<flat.length() {
     guard (try! @sympy_physics.expr_equal(flat[idx], rhs[idx])) else {
@@ -69,17 +72,21 @@ fn quantum_test_assert_matrix_expr_equal(
   }
 }
 
+///|
 fn quantum_measurements_to_expr_string(
   results : Array[(@symcore.Expr, @symcore.Expr)],
 ) -> String {
   let items : Array[String] = []
   for item in results {
-    items.push("(\{@symprint.to_string(item.0)}, \{@symprint.to_string(item.1)})")
+    items.push(
+      "(\{@symprint.to_string(item.0)}, \{@symprint.to_string(item.1)})",
+    )
   }
   let joined = items.join(", ")
   "[\{joined}]"
 }
 
+///|
 fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
   @symcore.number(
     try! @symnum.BigRational::new(
@@ -89,15 +96,20 @@ fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
   )
 }
 
+///|
 fn quantum_sum1(
   expr : @symcore.Expr,
   sym : @symcore.Expr,
   lower : @symcore.Expr,
   upper : @symcore.Expr,
 ) -> @symcore.Expr {
-  @symcore.function("Sum", [expr, @symcore.function("Tuple", [sym, lower, upper])])
+  @symcore.function("Sum", [
+    expr,
+    @symcore.function("Tuple", [sym, lower, upper]),
+  ])
 }
 
+///|
 fn quantum_sum2(
   expr : @symcore.Expr,
   sym1 : @symcore.Expr,
@@ -107,12 +119,9 @@ fn quantum_sum2(
   lower2 : @symcore.Expr,
   upper2 : @symcore.Expr,
 ) -> @symcore.Expr {
-  @symcore.function(
-    "Sum",
-    [
-      expr,
-      @symcore.function("Tuple", [sym1, lower1, upper1]),
-      @symcore.function("Tuple", [sym2, lower2, upper2]),
-    ],
-  )
+  @symcore.function("Sum", [
+    expr,
+    @symcore.function("Tuple", [sym1, lower1, upper1]),
+    @symcore.function("Tuple", [sym2, lower2, upper2]),
+  ])
 }

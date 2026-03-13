@@ -67,6 +67,8 @@ pub fn convert_to_real_indices(@symcore.Expr, Map[String, Int]) -> Array[@symcor
 
 pub fn convert_to_symbolic_indices(@symcore.Expr, start_index? : Int, qubit_map? : Map[String, Int]) -> SymbolicCircuit
 
+pub fn couple(@symcore.Expr, orders? : Array[SpinCoupleOrder]?) -> @symcore.Expr raise @symphysics.PhysicsError
+
 pub fn cphase(Int, Int) -> @symcore.Expr
 
 pub fn dagger(@symcore.Expr, evaluate? : Bool) -> @symcore.Expr
@@ -185,13 +187,33 @@ pub fn jplus() -> @symcore.Expr
 
 pub fn jx() -> @symcore.Expr
 
+pub fn jx_bra(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jx_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+
+pub fn jx_ket(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jx_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+
 pub fn jy() -> @symcore.Expr
+
+pub fn jy_bra(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jy_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+
+pub fn jy_ket(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jy_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
 
 pub fn jz() -> @symcore.Expr
 
 pub fn jz_bra(@symcore.Expr, @symcore.Expr) -> JzState
 
+pub fn jz_bra_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
+
 pub fn jz_ket(@symcore.Expr, @symcore.Expr) -> JzState
+
+pub fn jz_ket_coupled(@symcore.Expr, @symcore.Expr, Array[@symcore.Expr], coupling? : Array[SpinCoupling]?) -> JzState
 
 pub fn jz_state_from_expr(@symcore.Expr) -> JzState?
 
@@ -381,7 +403,11 @@ pub fn represent_spin_jz_operator(@symcore.Expr, @symcore.Expr) -> @symphysics.E
 
 pub fn represent_spin_jz_state(@symcore.Expr) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 
+pub fn represent_spin_operator(@symcore.Expr, @symcore.Expr, basis? : @symcore.Expr?) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
 pub fn represent_spin_rotation(@symcore.Expr, @symcore.Expr, evaluate? : Bool) -> @symphysics.ExplicitMatrix? raise @symphysics.PhysicsError
+
+pub fn represent_spin_state(@symcore.Expr, basis? : @symcore.Expr?, evaluate? : Bool) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 
 pub fn rk(Int, Int) -> @symcore.Expr
 
@@ -431,6 +457,12 @@ pub fn sigma_z_state_from_expr(@symcore.Expr) -> SigmaZState?
 
 pub fn spin_apply_operator_to_ket(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
+pub fn spin_couple_order(Int, Int) -> SpinCoupleOrder
+
+pub fn spin_inner_product(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn spin_state_from_expr(@symcore.Expr) -> JzState?
+
 pub let sqrt2_inv : @symcore.Expr
 
 pub fn state_from_expr(@symcore.Expr) -> StateExpr?
@@ -464,6 +496,8 @@ pub fn tr_doit(@symcore.Expr) -> @symcore.Expr
 pub fn tr_permute(@symcore.Expr, Int) -> @symcore.Expr
 
 pub fn trim(String) -> String
+
+pub fn uncouple(@symcore.Expr, jn? : Array[@symcore.Expr]?, coupling? : Array[SpinCoupling]?) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn unitary_operator(Array[@symcore.Expr], hilbert_space? : HilbertSpace) -> OperatorExpr
 
@@ -651,9 +685,14 @@ pub struct JzState {
   j : @symcore.Expr
   m : @symcore.Expr
   is_bra : Bool
+  basis_name : String
+  jn : Array[@symcore.Expr]
+  coupling : Array[SpinCoupling]
 }
 pub fn JzState::as_expr(Self) -> @symcore.Expr
 pub fn JzState::dual(Self) -> Self
+pub fn JzState::is_coupled(Self) -> Bool
+pub fn JzState::rewrite(Self, @symcore.Expr) -> @symcore.Expr
 pub fn JzState::to_string(Self) -> String
 pub impl Eq for JzState
 
@@ -794,6 +833,25 @@ pub fn SigmaZState::as_expr(Self) -> @symcore.Expr
 pub fn SigmaZState::dual(Self) -> Self
 pub fn SigmaZState::to_string(Self) -> String
 pub impl Eq for SigmaZState
+
+pub struct SpinCoupleOrder {
+  left_index : Int
+  right_index : Int
+}
+pub impl Eq for SpinCoupleOrder
+
+pub struct SpinCoupling {
+  left_index : Int
+  right_index : Int
+  j : @symcore.Expr
+}
+pub impl Eq for SpinCoupling
+
+type SpinResolvedCoupling
+pub impl Eq for SpinResolvedCoupling
+
+type SpinResolvedPair
+pub impl Eq for SpinResolvedPair
 
 pub struct StateExpr {
   flavor : StateFlavor

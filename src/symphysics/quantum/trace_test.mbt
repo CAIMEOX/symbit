@@ -13,18 +13,24 @@ test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
     "tr scalar add",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(tr(@symcore.raw_mul([a, a_op]))),
+    ),
     try! @sympy_physics.quantum_eval_str("a*Tr(A)"),
     "tr scalar factor",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2]))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
+    ),
     try! @sympy_physics.quantum_eval_str("Tr(A*B, (2,))"),
     "tr explicit tuple",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(tr_permute(tr(@symcore.raw_mul([a_op, b_op, c_op, d_op])), 2)),
+      @symprint.to_string(
+        tr_permute(tr(@symcore.raw_mul([a_op, b_op, c_op, d_op])), 2),
+      ),
     ),
     try! @sympy_physics.quantum_eval_str("Tr(C*D*A*B)"),
     "tr permute",

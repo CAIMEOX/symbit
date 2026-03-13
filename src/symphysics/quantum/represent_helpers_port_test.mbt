@@ -2,12 +2,16 @@
 test "physics.quantum.represent helpers: parity" {
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_get_basis_str("XKet()"),
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(get_basis(x_ket()).unwrap())),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(get_basis(x_ket()).unwrap()),
+    ),
     "get_basis state parity",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_get_basis_str("XOp()"),
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(get_basis(x_op()).unwrap())),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(get_basis(x_op()).unwrap()),
+    ),
     "get_basis operator parity",
   )
   try! quantum_test_assert_string_equal(

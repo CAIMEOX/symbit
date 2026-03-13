@@ -10,12 +10,13 @@ test "physics.quantum.cg_simp: core sum identities" {
   let gamma = @symcore.symbol("gamma")
   let gammap = @symcore.symbol("gammap")
 
-  let eq1 = x * quantum_sum1(
-    cg(a, alpha, b, @symcore.int(0), a, alpha).as_expr(),
-    alpha,
-    @symcore.int(-1) * a,
-    a,
-  )
+  let eq1 = x *
+    quantum_sum1(
+      cg(a, alpha, b, @symcore.int(0), a, alpha).as_expr(),
+      alpha,
+      @symcore.int(-1) * a,
+      a,
+    )
   try! quantum_test_assert_expr_equal(
     cg_simp(eq1),
     "x*(2*a + 1)*KroneckerDelta(b, 0)",
@@ -23,7 +24,8 @@ test "physics.quantum.cg_simp: core sum identities" {
   )
 
   let eq2 = quantum_sum1(
-    ((@symcore.int(-1)) ^ (a - alpha)) * cg(a, alpha, a, @symcore.int(-1) * alpha, c, @symcore.int(0)).as_expr(),
+    (@symcore.int(-1) ^ (a - alpha)) *
+    cg(a, alpha, a, @symcore.int(-1) * alpha, c, @symcore.int(0)).as_expr(),
     alpha,
     @symcore.int(-1) * a,
     a,
@@ -35,7 +37,8 @@ test "physics.quantum.cg_simp: core sum identities" {
   )
 
   let eq4 = quantum_sum2(
-    cg(a, alpha, b, beta, c, gamma).as_expr() * cg(a, alpha, b, beta, cp, gammap).as_expr(),
+    cg(a, alpha, b, beta, c, gamma).as_expr() *
+    cg(a, alpha, b, beta, cp, gammap).as_expr(),
     alpha,
     @symcore.int(-1) * a,
     a,
@@ -56,7 +59,8 @@ test "physics.quantum.cg_simp: square orthogonality identity" {
   let alpha = @symcore.symbol("alpha")
   let beta = @symcore.symbol("beta")
   let expr = quantum_sum2(
-    (cg(half, alpha, half, beta, @symcore.int(1), alpha + beta).as_expr()) ^ @symcore.int(2),
+    cg(half, alpha, half, beta, @symcore.int(1), alpha + beta).as_expr() ^
+    @symcore.int(2),
     alpha,
     @symcore.int(-1) * half,
     half,
@@ -73,8 +77,18 @@ test "physics.quantum.cg_simp: additive identities" {
   let half = quantum_test_frac(1, 2)
 
   let eq1 = @symcore.add([
-    @symcore.mul([@symcore.int(2), cg(half, half, j, @symcore.int(0), half, half).as_expr()]),
-    cg(half, @symcore.int(-1) * half, j, @symcore.int(0), half, @symcore.int(-1) * half).as_expr(),
+    @symcore.mul([
+      @symcore.int(2),
+      cg(half, half, j, @symcore.int(0), half, half).as_expr(),
+    ]),
+    cg(
+      half,
+      @symcore.int(-1) * half,
+      j,
+      @symcore.int(0),
+      half,
+      @symcore.int(-1) * half,
+    ).as_expr(),
   ])
   try! quantum_test_assert_expr_equal(
     cg_simp(eq1),
@@ -83,12 +97,33 @@ test "physics.quantum.cg_simp: additive identities" {
   )
 
   let eq2 = @symcore.add([
-    cg(@symcore.int(1), @symcore.int(1), @symcore.int(1), @symcore.int(-1), @symcore.int(0), @symcore.int(0)).as_expr(),
+    cg(
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(-1),
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
     @symcore.mul([
       @symcore.int(-1),
-      cg(@symcore.int(1), @symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
+      cg(
+        @symcore.int(1),
+        @symcore.int(0),
+        @symcore.int(1),
+        @symcore.int(0),
+        @symcore.int(0),
+        @symcore.int(0),
+      ).as_expr(),
     ]),
-    cg(@symcore.int(1), @symcore.int(-1), @symcore.int(1), @symcore.int(1), @symcore.int(0), @symcore.int(0)).as_expr(),
+    cg(
+      @symcore.int(1),
+      @symcore.int(-1),
+      @symcore.int(1),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
   ])
   try! quantum_test_assert_expr_equal(
     cg_simp(eq2),
@@ -103,22 +138,53 @@ test "physics.quantum.cg_simp: additive eq9 square families" {
   let m1 = @symcore.symbol("m1")
   let m2 = @symcore.symbol("m2")
 
-  let a = (cg(half, half, half, @symcore.int(-1) * half, @symcore.int(1), @symcore.int(0)).as_expr()) ^
+  let a = cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(1),
+      @symcore.int(0),
+    ).as_expr() ^
     @symcore.int(2)
-  let b = (cg(half, half, half, @symcore.int(-1) * half, @symcore.int(0), @symcore.int(0)).as_expr()) ^
+  let b = cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr() ^
     @symcore.int(2)
-  try! quantum_test_assert_expr_equal(cg_simp(a + b), "1", "cg_simp eq9 square numeric")
   try! quantum_test_assert_expr_equal(
-    cg_simp(@symcore.add([@symcore.mul([@symcore.int(5), a]), @symcore.mul([@symcore.int(3), b])])),
+    cg_simp(a + b),
+    "1",
+    "cg_simp eq9 square numeric",
+  )
+  try! quantum_test_assert_expr_equal(
+    cg_simp(
+      @symcore.add([
+        @symcore.mul([@symcore.int(5), a]),
+        @symcore.mul([@symcore.int(3), b]),
+      ]),
+    ),
     "3 + 2*CG(1/2, 1/2, 1/2, -1/2, 1, 0)**2",
     "cg_simp eq9 square weighted numeric",
   )
 
-  let s1 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(1)).as_expr()) ^ @symcore.int(2)
-  let s2 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(0)).as_expr()) ^ @symcore.int(2)
-  let s3 = (cg(half, m1, half, m2, @symcore.int(1), @symcore.int(-1)).as_expr()) ^ @symcore.int(2)
-  let s4 = (cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr()) ^ @symcore.int(2)
-  try! quantum_test_assert_expr_equal(cg_simp(@symcore.add([s1, s2, s3, s4])), "1", "cg_simp eq9 square symbolic")
+  let s1 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(1)).as_expr() ^
+    @symcore.int(2)
+  let s2 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(0)).as_expr() ^
+    @symcore.int(2)
+  let s3 = cg(half, m1, half, m2, @symcore.int(1), @symcore.int(-1)).as_expr() ^
+    @symcore.int(2)
+  let s4 = cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr() ^
+    @symcore.int(2)
+  try! quantum_test_assert_expr_equal(
+    cg_simp(@symcore.add([s1, s2, s3, s4])),
+    "1",
+    "cg_simp eq9 square symbolic",
+  )
   try! quantum_test_assert_expr_equal(
     cg_simp(
       @symcore.add([
@@ -142,14 +208,46 @@ test "physics.quantum.cg_simp: additive eq9 cross families" {
   let m2p = @symcore.symbol("m2p")
 
   let a = @symcore.mul([
-    cg(half, half, half, @symcore.int(-1) * half, @symcore.int(1), @symcore.int(0)).as_expr(),
-    cg(half, @symcore.int(-1) * half, half, half, @symcore.int(1), @symcore.int(0)).as_expr(),
+    cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(1),
+      @symcore.int(0),
+    ).as_expr(),
+    cg(
+      half,
+      @symcore.int(-1) * half,
+      half,
+      half,
+      @symcore.int(1),
+      @symcore.int(0),
+    ).as_expr(),
   ])
   let b = @symcore.mul([
-    cg(half, half, half, @symcore.int(-1) * half, @symcore.int(0), @symcore.int(0)).as_expr(),
-    cg(half, @symcore.int(-1) * half, half, half, @symcore.int(0), @symcore.int(0)).as_expr(),
+    cg(
+      half,
+      half,
+      half,
+      @symcore.int(-1) * half,
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
+    cg(
+      half,
+      @symcore.int(-1) * half,
+      half,
+      half,
+      @symcore.int(0),
+      @symcore.int(0),
+    ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(cg_simp(a + b), "0", "cg_simp eq9 cross numeric")
+  try! quantum_test_assert_expr_equal(
+    cg_simp(a + b),
+    "0",
+    "cg_simp eq9 cross numeric",
+  )
 
   let s1 = @symcore.mul([
     cg(half, m1, half, m2, @symcore.int(1), @symcore.int(1)).as_expr(),

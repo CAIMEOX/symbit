@@ -12,27 +12,37 @@ test "physics.quantum.commutator: constructor, expansion, and doit" {
     "commutator scalar annihilates",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(commutator(b_op, a_op))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(commutator(b_op, a_op)),
+    ),
     try! @sympy_physics.quantum_eval_str("Commutator(B, A)"),
     "commutator canonical order",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(commutator(@symcore.raw_mul([a, a_op]), @symcore.raw_mul([b, b_op]))),
+      @symprint.to_string(
+        commutator(@symcore.raw_mul([a, a_op]), @symcore.raw_mul([b, b_op])),
+      ),
     ),
     try! @sympy_physics.quantum_eval_str("Commutator(a*A, b*B)"),
     "commutator scalar factors",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(commutator_expand(commutator(@symcore.raw_mul([a_op, b_op]), c_op, evaluate=false))),
+      @symprint.to_string(
+        commutator_expand(
+          commutator(@symcore.raw_mul([a_op, b_op]), c_op, evaluate=false),
+        ),
+      ),
     ),
     try! @sympy_physics.quantum_expand_commutator_str("Commutator(A*B, C)"),
     "commutator expand mul",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(commutator_doit(commutator(a_op, b_op, evaluate=false))),
+      @symprint.to_string(
+        commutator_doit(commutator(a_op, b_op, evaluate=false)),
+      ),
     ),
     try! @sympy_physics.quantum_doit_str("Commutator(A, B)"),
     "commutator doit",
@@ -46,18 +56,24 @@ test "physics.quantum.anticommutator: constructor and doit" {
   let b_op = @symcore.symbol("B")
 
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(anticommutator(a, b_op))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(anticommutator(a, b_op)),
+    ),
     try! @sympy_physics.quantum_eval_str("AntiCommutator(a, B)"),
     "anticommutator scalar",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(anticommutator(b_op, a_op))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(anticommutator(b_op, a_op)),
+    ),
     try! @sympy_physics.quantum_eval_str("AntiCommutator(B, A)"),
     "anticommutator canonical order",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(anticommutator_doit(anticommutator(a_op, b_op, evaluate=false))),
+      @symprint.to_string(
+        anticommutator_doit(anticommutator(a_op, b_op, evaluate=false)),
+      ),
     ),
     try! @sympy_physics.quantum_doit_str("AntiCommutator(A, B)"),
     "anticommutator doit",

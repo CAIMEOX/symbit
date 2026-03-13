@@ -65,7 +65,8 @@ fn represent_delta_replacement(
       let mut coord_coeff : @symnum.BigRational? = None
       for term in terms {
         match term.0 {
-          @symcore.Expr::Symbol(name) if name == coord_name => coord_coeff = Some(term.1)
+          @symcore.Expr::Symbol(name) if name == coord_name =>
+            coord_coeff = Some(term.1)
           _ => others.push(term)
         }
       }
@@ -94,7 +95,8 @@ fn represent_integrate_coord_once(
     @symcore.Expr::Mul(args) => {
       for idx in 0..<args.length() {
         match args[idx] {
-          @symcore.Expr::Function("DiracDelta", delta_args) if delta_args.length() == 1 =>
+          @symcore.Expr::Function("DiracDelta", delta_args) if delta_args.length() ==
+            1 =>
             match represent_delta_replacement(coord_name, delta_args[0]) {
               Some(replacement) => {
                 let rebuilt : Array[@symcore.Expr] = []
@@ -106,10 +108,7 @@ fn represent_integrate_coord_once(
                 let env : Map[String, @symcore.Expr] = {}
                 env[coord_name] = replacement
                 return (
-                  @symcore.subst(
-                    quantum_mul_from_args_preserve(rebuilt),
-                    env,
-                  ),
+                  @symcore.subst(quantum_mul_from_args_preserve(rebuilt), env),
                   true,
                 )
               }
@@ -134,12 +133,16 @@ fn represent_integrate_coord(
   }
   match expr {
     @symcore.Expr::Add(args) =>
-      quantum_add_from_args_preserve(args.map(arg => represent_integrate_coord(arg, coord_name)))
+      quantum_add_from_args_preserve(
+        args.map(arg => represent_integrate_coord(arg, coord_name)),
+      )
     _ => {
       let mut current = expr
       let mut changed = true
       while changed {
-        let (next, did_change) = represent_integrate_coord_once(current, coord_name)
+        let (next, did_change) = represent_integrate_coord_once(
+          current, coord_name,
+        )
         current = next
         changed = did_change
       }

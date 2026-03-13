@@ -26,10 +26,9 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
   inspect(@symprint.to_string(try! wf.call([@symcore.int(2)])), content="4")
   inspect(
     @symprint.to_string(
-      try! wavefunction(
-        x ^ @symcore.int(2),
-        [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
-      ).call([@symcore.int(2)]),
+      try! wavefunction(x ^ @symcore.int(2), [
+        @symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)]),
+      ]).call([@symcore.int(2)]),
     ),
     content="0",
   )
@@ -58,7 +57,9 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     f_of_x,
   )
   inspect(
-    @symprint.to_string(qapply(@symcore.raw_mul([dop2.as_expr(), wf.as_expr()]))),
+    @symprint.to_string(
+      qapply(@symcore.raw_mul([dop2.as_expr(), wf.as_expr()])),
+    ),
     content="Wavefunction(2, x)",
   )
   inspect(

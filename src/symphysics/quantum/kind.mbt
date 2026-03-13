@@ -84,8 +84,8 @@ pub fn quantum_kind(expr : @symcore.Expr) -> QuantumKind {
       }
     @symcore.Expr::Function("InnerProduct", _) => QuantumKind::QNumber
     @symcore.Expr::Function("OuterProduct", _) => QuantumKind::QOperator
-    @symcore.Expr::Function("Commutator", _) | @symcore.Expr::Function("AntiCommutator", _) =>
-      QuantumKind::QOperator
+    @symcore.Expr::Function("Commutator", _)
+    | @symcore.Expr::Function("AntiCommutator", _) => QuantumKind::QOperator
     @symcore.Expr::Function("TensorProduct", args) => {
       let mut out = QuantumKind::QNumber
       for arg in args {

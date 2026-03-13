@@ -148,7 +148,9 @@ test "physics.quantum.operator/state: operator simplification parity" {
   let id3 = identity_operator(dimension=@symcore.int(3)).as_expr()
 
   try! quantum_test_assert_expr_equal(
-    quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_pow(a, @symcore.int(-1))])),
+    quantum_canonical_mul(
+      @symcore.raw_mul([a, @symcore.raw_pow(a, @symcore.int(-1))]),
+    ),
     "Operator(A)*Operator(A).inv()",
     "inverse cancellation parity",
   )
@@ -176,13 +178,17 @@ test "physics.quantum.operator/state: operator simplification parity" {
     MatrixScalarValue::Matrix(matrix) =>
       try! quantum_test_assert_matrix_expr_equal(
         matrix,
-        try! @sympy_physics.physics_eval_matrix("represent(IdentityOperator(3))"),
+        try! @sympy_physics.physics_eval_matrix(
+          "represent(IdentityOperator(3))",
+        ),
         3,
         3,
         "represent identity parity",
       )
     MatrixScalarValue::Scalar(value) =>
-      fail("represent identity parity: expected matrix, got \{@symprint.to_string(value)}")
+      fail(
+        "represent identity parity: expected matrix, got \{@symprint.to_string(value)}",
+      )
   }
 }
 

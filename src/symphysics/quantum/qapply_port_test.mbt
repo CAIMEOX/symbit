@@ -12,10 +12,12 @@ test "physics.quantum.qapply: parity extensions" {
     ),
     try! @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        qapply(@symcore.raw_mul([
-          tensor_product([x_gate(0).as_expr(), identity_gate(0).as_expr()]).as_expr(),
-          tensor_product([zero, one]).as_expr(),
-        ])),
+        qapply(
+          @symcore.raw_mul([
+            tensor_product([x_gate(0).as_expr(), identity_gate(0).as_expr()]).as_expr(),
+            tensor_product([zero, one]).as_expr(),
+          ]),
+        ),
       ),
     ),
     "tensor-product pair qapply parity",
@@ -73,15 +75,15 @@ test "physics.quantum.qapply: parity extensions" {
   )
 
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
-      "Sum(XGate(0)*Qubit(0), (n, 0, 2))",
-    ),
+    try! @sympy_physics.quantum_qapply_str("Sum(XGate(0)*Qubit(0), (n, 0, 2))"),
     try! @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        qapply(@symcore.raw_function("Sum", [
-          @symcore.raw_mul([x_gate(0).as_expr(), zero]),
-          @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.int(2)]),
-        ])),
+        qapply(
+          @symcore.raw_function("Sum", [
+            @symcore.raw_mul([x_gate(0).as_expr(), zero]),
+            @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.int(2)]),
+          ]),
+        ),
       ),
     ),
     "sum-body qapply parity",
@@ -96,14 +98,20 @@ test "physics.quantum.qapply: spin and (anti)commutator parity" {
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_qapply_srepr("Jx*JzKet(1, 0)"),
     try! @sympy_physics.quantum_qapply_srepr(
-      @symprint.to_string(qapply(@symcore.raw_mul([jx(), jz_ket(one, @symcore.int(0)).as_expr()]))),
+      @symprint.to_string(
+        qapply(@symcore.raw_mul([jx(), jz_ket(one, @symcore.int(0)).as_expr()])),
+      ),
     ),
     "Jx qapply parity",
   )
   try! quantum_test_assert_string_equal(
     try! @sympy_physics.quantum_qapply_srepr("Jminus*Jminus*JzKet(1, 1)"),
     try! @sympy_physics.quantum_qapply_srepr(
-      @symprint.to_string(qapply(@symcore.raw_mul([jminus(), jminus(), jz_ket(one, one).as_expr()]))),
+      @symprint.to_string(
+        qapply(
+          @symcore.raw_mul([jminus(), jminus(), jz_ket(one, one).as_expr()]),
+        ),
+      ),
     ),
     "double lowering parity",
   )
@@ -115,7 +123,11 @@ test "physics.quantum.qapply: spin and (anti)commutator parity" {
       @symprint.to_string(
         qapply(
           @symcore.raw_mul([
-            anticommutator(x_gate(0).as_expr(), z_gate(0).as_expr(), evaluate=false),
+            anticommutator(
+              x_gate(0).as_expr(),
+              z_gate(0).as_expr(),
+              evaluate=false,
+            ),
             zero_state,
           ]),
         ),

@@ -109,8 +109,8 @@ pub fn quantum_expr_has_any_name(
 pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
     "Ket", "TimeDepKet", "OrthogonalKet", "BosonFockKet", "BosonCoherentKet", "FermionFockKet",
-    "Qubit", "IntQubit", "JxKet", "JyKet", "JzKet", "PxKet", "PositionKet3D", "SHOKet",
-    "PIABKet", "SigmaZKet", "XKet",
+    "Qubit", "IntQubit", "JxKet", "JyKet", "JzKet", "JxKetCoupled", "JyKetCoupled",
+    "JzKetCoupled", "PxKet", "PositionKet3D", "SHOKet", "PIABKet", "SigmaZKet", "XKet",
   ])
 }
 
@@ -118,8 +118,8 @@ pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
 pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
     "Bra", "TimeDepBra", "OrthogonalBra", "BosonFockBra", "BosonCoherentBra", "FermionFockBra",
-    "QubitBra", "IntQubitBra", "JxBra", "JyBra", "JzBra", "PxBra", "PositionBra3D",
-    "SHOBra", "PIABBra", "SigmaZBra", "XBra",
+    "QubitBra", "IntQubitBra", "JxBra", "JyBra", "JzBra", "JxBraCoupled", "JyBraCoupled",
+    "JzBraCoupled", "PxBra", "PositionBra3D", "SHOBra", "PIABBra", "SigmaZBra", "XBra",
   ])
 }
 
@@ -138,12 +138,12 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
     _ =>
       quantum_expr_has_any_name(expr, [
         "Operator", "HermitianOperator", "UnitaryOperator", "IdentityOperator", "DifferentialOperator",
-        "OuterProduct", "BosonOp", "CMod", "Commutator", "AntiCommutator", "FermionOp", "Gate", "CGate", "UGate",
-        "OracleGate", "WGate", "QFT", "IQFT", "RkGate", "IdentityGate", "HadamardGate",
-        "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate", "CNotGate",
-        "SigmaX", "SigmaY", "SigmaZ", "SigmaPlus", "SigmaMinus", "Rotation", "WignerD",
-        "Density", "Hamiltonian", "LoweringOp", "NumberOp", "PIABHamiltonian", "PxOp",
-        "RaisingOp", "XOp", "YOp", "ZOp",
+        "OuterProduct", "BosonOp", "CMod", "Commutator", "AntiCommutator", "FermionOp",
+        "Gate", "CGate", "UGate", "OracleGate", "WGate", "QFT", "IQFT", "RkGate",
+        "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate", "TGate", "PhaseGate",
+        "SwapGate", "CNotGate", "SigmaX", "SigmaY", "SigmaZ", "SigmaPlus", "SigmaMinus",
+        "Rotation", "WignerD", "Density", "Hamiltonian", "LoweringOp", "NumberOp",
+        "PIABHamiltonian", "PxOp", "RaisingOp", "XOp", "YOp", "ZOp",
       ])
   }
 }

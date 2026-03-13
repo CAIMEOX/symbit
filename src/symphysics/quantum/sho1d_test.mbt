@@ -39,17 +39,19 @@ test "physics.quantum.sho1d: local ladder algebra and number-basis matrices" {
   try! quantum_test_assert_matrix_expr_equal(
     try! represent_matrix(raising_op(), basis=Some(number_op()), ndim=4),
     [
-      "0", "0", "0", "0",
-      "1", "0", "0", "0",
-      "0", "sqrt(2)", "0", "0",
-      "0", "0", "sqrt(3)", "0",
+      "0", "0", "0", "0", "1", "0", "0", "0", "0", "sqrt(2)", "0", "0", "0", "0",
+      "sqrt(3)", "0",
     ],
     4,
     4,
     "raising matrix",
   )
   try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(sho_ket(@symcore.int(3)), basis=Some(number_op()), ndim=4),
+    try! represent_matrix(
+      sho_ket(@symcore.int(3)),
+      basis=Some(number_op()),
+      ndim=4,
+    ),
     ["0", "0", "0", "1"],
     4,
     1,

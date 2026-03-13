@@ -79,7 +79,9 @@ fn represent_pow_nonnegative(
         )
       }
       if exp == 0 {
-        MatrixScalarValue::Matrix(@symphysics.explicit_matrix_eye(matrix.height()))
+        MatrixScalarValue::Matrix(
+          @symphysics.explicit_matrix_eye(matrix.height()),
+        )
       } else {
         let mut acc = matrix
         for _ in 1..<exp {
@@ -147,12 +149,16 @@ pub fn represent(
           }
           represent(
             gate_simp(quantum_mul_from_args_preserve(factors)),
-            basis~, nqubits~, spin_j~, ndim~,
+            basis~,
+            nqubits~,
+            spin_j~,
+            ndim~,
           )
         }
         Some(power) if power > 0 =>
           represent_pow_nonnegative(
-            represent(base, basis~, nqubits~, spin_j~, ndim~), power,
+            represent(base, basis~, nqubits~, spin_j~, ndim~),
+            power,
           )
         _ => MatrixScalarValue::Scalar(expr)
       }
@@ -166,13 +172,9 @@ pub fn represent(
       }
     }
     @symcore.Expr::Function("Commutator", args) if args.length() == 2 =>
-      represent(
-        commutator_doit(expr), basis~, nqubits~, spin_j~, ndim~,
-      )
+      represent(commutator_doit(expr), basis~, nqubits~, spin_j~, ndim~)
     @symcore.Expr::Function("AntiCommutator", args) if args.length() == 2 =>
-      represent(
-        anticommutator_doit(expr), basis~, nqubits~, spin_j~, ndim~,
-      )
+      represent(anticommutator_doit(expr), basis~, nqubits~, spin_j~, ndim~)
     @symcore.Expr::Function(name, args) if name == "TensorProduct" => {
       guard !args.is_empty() else {
         return MatrixScalarValue::Scalar(@symcore.int(1))
@@ -277,13 +279,28 @@ pub fn represent(
                                                       )
                                                     None =>
                                                       match
-                                                        jz_state_from_expr(expr) {
-                                                        Some(_) =>
-                                                          MatrixScalarValue::Matrix(
-                                                            try! represent_spin_jz_state(
-                                                              expr,
-                                                            ),
-                                                          )
+                                                        spin_state_from_expr(
+                                                          expr,
+                                                        ) {
+                                                        Some(state) =>
+                                                          if state.is_coupled() {
+                                                            represent(
+                                                              try! uncouple(
+                                                                expr,
+                                                              ),
+                                                              basis~,
+                                                              nqubits~,
+                                                              spin_j~,
+                                                              ndim~,
+                                                            )
+                                                          } else {
+                                                            MatrixScalarValue::Matrix(
+                                                              try! represent_spin_state(
+                                                                expr,
+                                                                basis~,
+                                                              ),
+                                                            )
+                                                          }
                                                         None =>
                                                           match
                                                             gate_support(expr) {
@@ -298,7 +315,7 @@ pub fn represent(
                                                                 @symcore.Expr::Symbol(
                                                                   name
                                                                 ) =>
-                                                                if [
+                                                                  if [
                                                                       "Jplus", "Jminus",
                                                                       "Jx", "Jy",
                                                                       "Jz", "J2",
@@ -306,8 +323,10 @@ pub fn represent(
                                                                       name,
                                                                     ) {
                                                                     MatrixScalarValue::Matrix(
-                                                                      try! represent_spin_jz_operator(
-                                                                        expr, spin_j,
+                                                                      try! represent_spin_operator(
+                                                                        expr,
+                                                                        spin_j,
+                                                                        basis~,
                                                                       ),
                                                                     )
                                                                   } else {
@@ -316,15 +335,19 @@ pub fn represent(
                                                                     )
                                                                   }
                                                                 _ =>
-                                                                  try rep_innerproduct(
-                                                                    expr,
-                                                                    basis~,
-                                                                  ) catch {
+                                                                  try
+                                                                    rep_innerproduct(
+                                                                      expr,
+                                                                      basis~,
+                                                                    )
+                                                                  catch {
                                                                     _ =>
-                                                                      try rep_expectation(
-                                                                        expr,
-                                                                        basis~,
-                                                                      ) catch {
+                                                                      try
+                                                                        rep_expectation(
+                                                                          expr,
+                                                                          basis~,
+                                                                        )
+                                                                      catch {
                                                                         _ =>
                                                                           MatrixScalarValue::Scalar(
                                                                             expr,

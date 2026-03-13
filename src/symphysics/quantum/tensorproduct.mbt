@@ -9,7 +9,7 @@ pub struct TensorProductExpr {
 
 ///|
 pub fn tensor_product(args : Array[@symcore.Expr]) -> TensorProductExpr {
-  TensorProductExpr::{ args }
+  TensorProductExpr::{ args, }
 }
 
 ///|
@@ -20,7 +20,8 @@ pub fn TensorProductExpr::as_expr(self : TensorProductExpr) -> @symcore.Expr {
 ///|
 fn tensor_product_needs_parens(expr : @symcore.Expr) -> Bool {
   match expr {
-    @symcore.Expr::Add(_) | @symcore.Expr::Mul(_) | @symcore.Expr::Pow(_, _) => true
+    @symcore.Expr::Add(_) | @symcore.Expr::Mul(_) | @symcore.Expr::Pow(_, _) =>
+      true
     _ => false
   }
 }
