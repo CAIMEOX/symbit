@@ -53,6 +53,10 @@ pub fn cgate_decompose(@symcore.Expr) -> @symcore.Expr
 
 pub fn circuit_factors(@symcore.Expr) -> Array[@symcore.Expr]
 
+pub fn circuit_plot(@symcore.Expr, Int, labels? : Array[String], inits? : Map[String, String], scale? : Double, fontsize? : Double, linewidth? : Double, control_radius? : Double, not_radius? : Double, swap_delta? : Double, label_buffer? : Double) -> CircuitPlot
+
+pub fn circuitplot_summary(CircuitPlot) -> String
+
 pub fn cmod(Int, Int, Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn cnot_gate(Int, Int) -> GateExpr
@@ -72,6 +76,10 @@ pub fn convert_to_symbolic_indices(@symcore.Expr, start_index? : Int, qubit_map?
 pub fn couple(@symcore.Expr, orders? : Array[SpinCoupleOrder]) -> @symcore.Expr raise @symphysics.PhysicsError
 
 pub fn cphase(Int, Int) -> @symcore.Expr
+
+pub fn create_cgate(String, _latexname? : String?) -> (Array[Int], Int) -> @symcore.Expr
+
+pub fn create_one_qubit_gate(String, _latexname? : String?) -> (Int) -> @symcore.Expr
 
 pub fn dagger(@symcore.Expr, evaluate? : Bool) -> @symcore.Expr
 
@@ -227,6 +235,8 @@ pub fn kmp_table(Array[@symcore.Expr]) -> Array[Int]
 
 pub fn l2_space(@symcore.Expr) -> HilbertSpace raise @symphysics.PhysicsError
 
+pub fn labeller(Int, symbol? : String) -> Array[String]
+
 pub fn lowering_op(label? : @symcore.Expr) -> @symcore.Expr
 
 pub fn m_values(@symcore.Expr) -> (Int, Array[@symcore.Expr]) raise @symphysics.PhysicsError
@@ -258,6 +268,10 @@ pub fn measure_all_oneshot(@symcore.Expr, nqubits? : Int, sample? : Double) -> @
 pub fn measure_partial(@symcore.Expr, Array[Int], nqubits? : Int, normalize? : Bool) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError
 
 pub fn measure_partial_oneshot(@symcore.Expr, Array[Int], nqubits? : Int, sample? : Double) -> @symcore.Expr raise @symphysics.PhysicsError
+
+pub fn mx(Int) -> @symcore.Expr
+
+pub fn mz(Int) -> @symcore.Expr
 
 pub fn normal_order(@symcore.Expr, independent? : Bool, recursive_limit? : Int) -> @symcore.Expr
 
@@ -386,6 +400,8 @@ pub fn random_reduce(@symcore.Expr, Array[GateIdentity], seed? : Array[Int]) -> 
 pub fn ratioize(Array[Int], Int) -> Int
 
 pub fn read_qasm(String) -> Qasm raise @symphysics.PhysicsError
+
+pub fn render_label(String, inits? : Map[String, String]) -> String
 
 pub fn rep_expectation(@symcore.Expr, basis? : @symcore.Expr?, index? : Int) -> @symcore.Expr raise @symphysics.PhysicsError
 
@@ -595,6 +611,26 @@ pub struct CModExpr {
 }
 pub fn CModExpr::as_expr(Self) -> @symcore.Expr
 pub impl Eq for CModExpr
+
+pub struct CircuitPlot {
+  circuit : @symcore.Expr
+  ngates : Int
+  nqubits : Int
+  labels : Array[String]
+  inits : Map[String, String]
+  scale : Double
+  fontsize : Double
+  linewidth : Double
+  control_radius : Double
+  not_radius : Double
+  swap_delta : Double
+  label_buffer : Double
+  wire_grid : Array[Double]
+  gate_grid : Array[Double]
+  gates : Array[@symcore.Expr]
+  measurements : Map[Int, Int]
+}
+pub fn CircuitPlot::new(@symcore.Expr, Int, labels? : Array[String], inits? : Map[String, String], scale? : Double, fontsize? : Double, linewidth? : Double, control_radius? : Double, not_radius? : Double, swap_delta? : Double, label_buffer? : Double) -> Self
 
 pub struct DensityExpr {
   terms : Array[DensityTerm]

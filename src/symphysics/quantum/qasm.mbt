@@ -12,18 +12,13 @@ pub struct QasmDefinition {
 } derive(Eq)
 
 ///|
-fn qasm_custom_gate(symbol : String, target : Int) -> @symcore.Expr {
-  @symcore.raw_function(symbol, [@symcore.int(target)])
-}
-
-///|
 fn qasm_builtin_gate(symbol : String, args : Array[Int]) -> @symcore.Expr {
   @symcore.raw_function(symbol, args.map(@symcore.int))
 }
 
 ///|
 fn qasm_measure_gate(target : Int) -> @symcore.Expr {
-  @symcore.raw_function("Mz", [@symcore.int(target)])
+  mz(target)
 }
 
 ///|
@@ -201,16 +196,16 @@ fn qasm_apply_definition(
         "Custom one-qubit QASM gate expects one target",
       )
     }
-    qasm_custom_gate(definition.symbol, indices[0])
+    create_one_qubit_gate(definition.symbol)(indices[0])
   } else {
     guard indices.length() == definition.ncontrols + 1 else {
       raise @symphysics.PhysicsError::ValueError(
         "Custom controlled QASM gate arity mismatch",
       )
     }
-    cgate(
+    create_cgate(definition.symbol)(
       indices[:definition.ncontrols].to_array(),
-      qasm_custom_gate(definition.symbol, indices[indices.length() - 1]),
+      indices[indices.length() - 1],
     )
   }
 }

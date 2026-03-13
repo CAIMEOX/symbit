@@ -1335,6 +1335,7 @@ fn quantum_subprocess_prelude() -> String {
     "from sympy.physics.quantum.pauli import SigmaX, SigmaY, SigmaZ, SigmaMinus, SigmaPlus, SigmaZKet, SigmaZBra, qsimplify_pauli\n",
     "from sympy.physics.quantum.qft import QFT, IQFT, RkGate, Rk\n", "from sympy.physics.quantum.shor import ratioize, getr\n",
     "from sympy.physics.quantum.qasm import Qasm, flip_index, trim, get_index, get_indices, fixcommand, stripquotes\n",
+    "from sympy.physics.quantum.circuitplot import CircuitPlot, render_label, labeller, Mz, Mx, CreateOneQubitGate, CreateCGate\n",
     "from sympy.physics.quantum.density import Density, entropy, fidelity\n", "from sympy.physics.quantum.matrixcache import matrix_cache\n",
     "from sympy.physics.quantum.circuitutils import kmp_table, find_subcircuit, replace_subcircuit, convert_to_symbolic_indices, convert_to_real_indices, random_reduce, random_insert\n",
     "from sympy.physics.quantum.grover import OracleGate, WGate, superposition_basis, grover_iteration, apply_grover\n",
@@ -1644,6 +1645,124 @@ pub fn quantum_qasm_indices(
   } else {
     txt.split("\u001f").to_array().map(s => s.to_string())
   }
+}
+
+///|
+pub fn quantum_render_label(
+  label : String,
+  init? : String? = None,
+) -> String raise {
+  let init_code = match init {
+    Some(value) =>
+      "{" +
+      python_string_literal(label) +
+      ": " +
+      python_string_literal(value) +
+      "}"
+    None => "{}"
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(render_label(",
+      python_string_literal(label),
+      ", ",
+      init_code,
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_labeller(n : Int, symbol? : String = "q") -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(chr(31).join(labeller(",
+      n.to_string(),
+      ", ",
+      python_string_literal(symbol),
+      ")))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
+}
+
+///|
+pub fn quantum_create_one_qubit_gate_str(
+  name : String,
+  target : Int,
+  latexname? : String? = None,
+) -> String raise {
+  let latex_code = match latexname {
+    Some(value) => ", " + python_string_literal(value)
+    None => ""
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(CreateOneQubitGate(",
+      python_string_literal(name),
+      latex_code,
+      ")(",
+      target.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_create_cgate_str(
+  name : String,
+  controls : Array[Int],
+  target : Int,
+  latexname? : String? = None,
+) -> String raise {
+  let latex_code = match latexname {
+    Some(value) => ", " + python_string_literal(value)
+    None => ""
+  }
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "print(CreateCGate(",
+      python_string_literal(name),
+      latex_code,
+      ")(",
+      python_int_tuple(controls),
+      ", ",
+      target.to_string(),
+      "))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn quantum_circuitplot_summary(
+  expr : String,
+  nqubits : Int,
+  labels? : Array[String] = [],
+) -> String raise {
+  python_subprocess_stdout(
+    [
+      quantum_subprocess_prelude(),
+      "plot = CircuitPlot(sympify(",
+      python_string_literal(expr),
+      ", locals=locals()), ",
+      nqubits.to_string(),
+      ", labels=",
+      python_string_list_literal(labels),
+      ")\n",
+      "_meas = plot._measurements()\n",
+      "_mkeys = sorted(_meas)\n",
+      "_ms = '-' if not _mkeys else ','.join(f'{k}:{_meas[k]}' for k in _mkeys)\n",
+      "print('ngates=' + str(plot.ngates) + ';nqubits=' + str(plot.nqubits) + ';gate_count=' + str(len(plot._gates())) + ';measurements=' + _ms + ';labels=' + ','.join(plot.labels))\n",
+    ].join(""),
+  )
 }
 
 ///|
