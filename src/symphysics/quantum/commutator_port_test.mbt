@@ -41,3 +41,44 @@ test "physics.quantum.commutator: parity" {
     "anticommutator parity",
   )
 }
+
+///|
+test "physics.quantum.(anti)commutator: gate parity" {
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
+    ),
+    try! @sympy_physics.quantum_doit_str("Commutator(XGate(0), YGate(1))"),
+    "disjoint one-qubit commutator parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        commutator(cnot_gate(0, 1).as_expr(), z_gate(0).as_expr()),
+      ),
+    ),
+    try! @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), ZGate(0))"),
+    "CNOT/Z commutator parity",
+  )
+  try! quantum_test_assert_string_equal(
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(
+        commutator(cnot_gate(0, 1).as_expr(), x_gate(1).as_expr()),
+      ),
+    ),
+    try! @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), XGate(1))"),
+    "CNOT/X commutator parity",
+  )
+  try! quantum_test_assert_matrix_expr_equal(
+    try! represent_matrix(
+      anticommutator(hadamard_gate(0).as_expr(), z_gate(1).as_expr()),
+      nqubits=2,
+    ),
+    try! @sympy_physics.physics_eval_matrix(
+      "represent(AntiCommutator(HadamardGate(0), ZGate(1)).doit(), nqubits=2)",
+    ),
+    4,
+    4,
+    "disjoint one-qubit anticommutator parity",
+  )
+}

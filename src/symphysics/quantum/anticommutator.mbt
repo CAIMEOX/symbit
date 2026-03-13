@@ -85,6 +85,12 @@ fn quantum_make_anticommutator(
         ) => return @symcore.int(2) * nlhs * nrhs
         _ => ()
       }
+      match (gate_support(nlhs), gate_support(nrhs)) {
+        (Some(lhs_support), Some(rhs_support)) if supports_disjoint(
+            lhs_support, rhs_support,
+          ) => return @symcore.int(2) * nlhs * nrhs
+        _ => ()
+      }
       if lhs.compare(rhs) > 0 {
         return quantum_make_anticommutator(rhs, lhs)
       }

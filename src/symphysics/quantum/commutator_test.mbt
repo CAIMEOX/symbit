@@ -79,3 +79,29 @@ test "physics.quantum.anticommutator: constructor and doit" {
     "anticommutator doit",
   )
 }
+
+///|
+test "physics.quantum.(anti)commutator: gate commuting subsets" {
+  inspect(
+    @symprint.to_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(
+      commutator(cnot_gate(0, 1).as_expr(), z_gate(0).as_expr()),
+    ),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(
+      commutator(cnot_gate(0, 1).as_expr(), x_gate(1).as_expr()),
+    ),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(
+      anticommutator(hadamard_gate(0).as_expr(), z_gate(1).as_expr()),
+    ),
+    content="2*ZGate(1)*HadamardGate(0)",
+  )
+}

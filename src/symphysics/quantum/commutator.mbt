@@ -11,6 +11,38 @@ fn quantum_commutator_raw(
 }
 
 ///|
+fn gate_commutator_zero(lhs_gate : GateExpr, rhs_gate : GateExpr) -> Bool {
+  if lhs_gate.kind == GateKind::CNot &&
+    rhs_gate.kind == GateKind::CNot &&
+    lhs_gate.args.length() == 2 &&
+    rhs_gate.args.length() == 2 &&
+    lhs_gate.args[0] == rhs_gate.args[0] {
+    return true
+  }
+  if lhs_gate.kind == GateKind::CNot &&
+    lhs_gate.args.length() == 2 &&
+    rhs_gate.args.length() == 1 {
+    return match rhs_gate.kind {
+      GateKind::Z | GateKind::Phase | GateKind::T =>
+        rhs_gate.args[0] == lhs_gate.args[0]
+      GateKind::X => rhs_gate.args[0] == lhs_gate.args[1]
+      _ => false
+    }
+  }
+  if rhs_gate.kind == GateKind::CNot &&
+    rhs_gate.args.length() == 2 &&
+    lhs_gate.args.length() == 1 {
+    return match lhs_gate.kind {
+      GateKind::Z | GateKind::Phase | GateKind::T =>
+        lhs_gate.args[0] == rhs_gate.args[0]
+      GateKind::X => lhs_gate.args[0] == rhs_gate.args[1]
+      _ => false
+    }
+  }
+  false
+}
+
+///|
 fn quantum_make_commutator(
   lhs : @symcore.Expr,
   rhs : @symcore.Expr,
@@ -101,6 +133,18 @@ fn quantum_make_commutator(
               return @symcore.int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             _ => ()
           }
+        _ => ()
+      }
+      match (gate_support(nlhs), gate_support(nrhs)) {
+        (Some(lhs_support), Some(rhs_support)) if supports_disjoint(
+            lhs_support, rhs_support,
+          ) => return @symcore.int(0)
+        _ => ()
+      }
+      match (gate_from_expr(nlhs), gate_from_expr(nrhs)) {
+        (Some(lhs_gate), Some(rhs_gate)) if gate_commutator_zero(
+            lhs_gate, rhs_gate,
+          ) => return @symcore.int(0)
         _ => ()
       }
       match (nlhs, nrhs) {
