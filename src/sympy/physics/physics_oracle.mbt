@@ -2705,6 +2705,23 @@ fn secondquant_subprocess_prelude() -> String {
 }
 
 ///|
+fn continuum_subprocess_prelude() -> String {
+  [
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.continuum_mechanics.beam import Beam\n",
+    "from sympy.physics.continuum_mechanics.column import Column\n", "from sympy.physics.continuum_mechanics.cable import Cable\n",
+    "from sympy.physics.continuum_mechanics.arch import Arch\n", "x = Symbol('x')\n",
+    "y = Symbol('y')\n", "t = Symbol('t')\n", "E = Symbol('E')\n", "I = Symbol('I')\n",
+    "A = Symbol('A')\n", "R1, R2 = symbols('R1 R2')\n",
+  ].join("")
+}
+
+///|
+pub fn continuum_exec_stdout(script : String) -> String raise {
+  python_subprocess_stdout(continuum_subprocess_prelude() + script)
+}
+
+///|
 pub fn secondquant_eval_str(expr : String) -> String raise {
   python_subprocess_stdout(
     [
@@ -2773,6 +2790,19 @@ pub fn secondquant_matrix_rows(
   } else {
     txt.split("\u001f").to_array().map(s => s.to_string())
   }
+}
+
+///|
+fn control_subprocess_prelude() -> String {
+  [
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.control.lti import *\n", "a, b, c, d, s, p, g, k, tau, zeta, wn, T, z, x, y = symbols('a b c d s p g k tau zeta wn T z x y')\n",
+  ].join("")
+}
+
+///|
+pub fn control_exec_stdout(script : String) -> String raise {
+  python_subprocess_stdout(control_subprocess_prelude() + script)
 }
 
 ///|

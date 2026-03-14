@@ -1,9 +1,15 @@
 import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/strconv" @strconv,
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symfunctions/special" @symspec,
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympolys" @sympolys,
   "CAIMEOX/symbit/symsimplify" @symsimplify,
 }
 
 import {
   "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
 } for "test"

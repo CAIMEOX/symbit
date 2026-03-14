@@ -1,0 +1,291 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics/control"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics",
+}
+
+// Values
+pub fn backward_diff(TransferFunction, @symcore.Expr) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError
+
+pub fn bilinear(TransferFunction, @symcore.Expr) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError
+
+pub fn bode_magnitude_numerical_data(SISOLinearTimeInvariant, initial_exp? : Double, final_exp? : Double, freq_unit? : String, n? : Int) -> (Array[Double], Array[Double]) raise ControlError
+
+pub fn bode_magnitude_plot(SISOLinearTimeInvariant, initial_exp? : Double, final_exp? : Double, color? : String, show_axes? : Bool, grid? : Bool, freq_unit? : String, n? : Int) -> SampledLinePlot raise ControlError
+
+pub fn bode_phase_numerical_data(SISOLinearTimeInvariant, initial_exp? : Double, final_exp? : Double, freq_unit? : String, phase_unit? : String, phase_unwrap? : Bool, n? : Int) -> (Array[Double], Array[Double]) raise ControlError
+
+pub fn bode_phase_plot(SISOLinearTimeInvariant, initial_exp? : Double, final_exp? : Double, color? : String, show_axes? : Bool, grid? : Bool, freq_unit? : String, phase_unit? : String, phase_unwrap? : Bool, n? : Int) -> SampledLinePlot raise ControlError
+
+pub fn bode_plot(SISOLinearTimeInvariant, initial_exp? : Double, final_exp? : Double, grid? : Bool, show_axes? : Bool, freq_unit? : String, phase_unit? : String, phase_unwrap? : Bool, n? : Int) -> BodePlot raise ControlError
+
+pub fn create_transfer_function(@symcore.Expr, @symcore.Expr, @symcore.Expr, sampling_time? : @symcore.Expr) -> SISOLinearTimeInvariant raise ControlError
+
+pub fn discrete_transfer_function(@symcore.Expr, @symcore.Expr, @symcore.Expr, sampling_time? : @symcore.Expr) -> DiscreteTransferFunction raise ControlError
+
+pub fn discrete_transfer_function_from_coeff_lists(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, sampling_time? : @symcore.Expr) -> DiscreteTransferFunction raise ControlError
+
+pub fn feedback(SISOLinearTimeInvariant, sys2? : SISOLinearTimeInvariant?, sign? : Int) -> Feedback raise ControlError
+
+pub fn forward_diff(TransferFunction, @symcore.Expr) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError
+
+pub fn gbt(TransferFunction, @symcore.Expr, @symcore.Expr) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError
+
+pub fn impulse_response_numerical_data(SISOLinearTimeInvariant, _prec? : Int, lower_limit? : Double, upper_limit? : Double, n? : Int) -> (Array[Double], Array[Double]) raise ControlError
+
+pub fn impulse_response_plot(SISOLinearTimeInvariant, color? : String, prec? : Int, lower_limit? : Double, upper_limit? : Double, show_axes? : Bool, grid? : Bool, n? : Int) -> SampledLinePlot raise ControlError
+
+pub fn nichols_plot(SISOLinearTimeInvariant, initial_omega? : Double, final_omega? : Double, color? : String, grid? : Bool, n? : Int) -> ParametricPlot raise ControlError
+
+pub fn nichols_plot_expr(SISOLinearTimeInvariant) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise ControlError
+
+pub fn nyquist_plot(SISOLinearTimeInvariant, initial_omega? : Double, final_omega? : Double, color? : String, grid? : Bool, n? : Int) -> ParametricPlot raise ControlError
+
+pub fn nyquist_plot_expr(SISOLinearTimeInvariant) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise ControlError
+
+pub fn parallel(Array[SISOLinearTimeInvariant]) -> Parallel raise ControlError
+
+pub fn pid_controller(kp? : @symcore.Expr, ki? : @symcore.Expr, kd? : @symcore.Expr, tf? : @symcore.Expr, var? : @symcore.Expr) -> PIDController raise ControlError
+
+pub fn pole_zero_numerical_data(SISOLinearTimeInvariant) -> (Array[(Double, Double)], Array[(Double, Double)]) raise ControlError
+
+pub fn pole_zero_plot(SISOLinearTimeInvariant, pole_color? : String, pole_markersize? : Double, zero_color? : String, zero_markersize? : Double, grid? : Bool, show_axes? : Bool) -> PoleZeroPlot raise ControlError
+
+pub fn ramp_response_numerical_data(SISOLinearTimeInvariant, slope? : Double, _prec? : Int, lower_limit? : Double, upper_limit? : Double, n? : Int) -> (Array[Double], Array[Double]) raise ControlError
+
+pub fn ramp_response_plot(SISOLinearTimeInvariant, slope? : Double, color? : String, prec? : Int, lower_limit? : Double, upper_limit? : Double, show_axes? : Bool, grid? : Bool, n? : Int) -> SampledLinePlot raise ControlError
+
+pub fn routh_hurwitz(@symcore.Expr, @symcore.Expr) -> RouthHurwitz raise @symphysics.PhysicsError
+
+pub fn series(Array[SISOLinearTimeInvariant]) -> Series raise ControlError
+
+pub fn step_response_numerical_data(SISOLinearTimeInvariant, _prec? : Int, lower_limit? : Double, upper_limit? : Double, n? : Int) -> (Array[Double], Array[Double]) raise ControlError
+
+pub fn step_response_plot(SISOLinearTimeInvariant, color? : String, prec? : Int, lower_limit? : Double, upper_limit? : Double, show_axes? : Bool, grid? : Bool, n? : Int) -> SampledLinePlot raise ControlError
+
+pub fn transfer_function(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> TransferFunction raise ControlError
+
+// Errors
+pub suberror ControlError {
+  ValueError(String)
+  TypeError(String)
+  ShapeError(String)
+  NotImplemented(String)
+}
+pub impl Eq for ControlError
+pub impl Show for ControlError
+
+// Types and methods
+pub struct BodePlot {
+  magnitude : SampledLinePlot
+  phase : SampledLinePlot
+}
+
+pub struct DiscreteTransferFunction {
+  num_ : @symcore.Expr
+  den_ : @symcore.Expr
+  var_ : @symcore.Expr
+  sampling_time_ : @symcore.Expr
+}
+pub fn DiscreteTransferFunction::args(Self) -> Array[@symcore.Expr]
+pub fn DiscreteTransferFunction::as_system(Self) -> SISOLinearTimeInvariant
+pub fn DiscreteTransferFunction::dc_gain(Self) -> @symcore.Expr raise ControlError
+pub fn DiscreteTransferFunction::den(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::discrete_tf_den(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::discrete_tf_num(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::discrete_tf_var(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::eval_frequency(Self, @symcore.Expr) -> @symcore.Expr raise ControlError
+pub fn DiscreteTransferFunction::expand(Self) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_backward_diff(TransferFunction, @symcore.Expr, @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_bilinear(TransferFunction, @symcore.Expr, @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_coeff_lists(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, sampling_time? : @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_forward_diff(TransferFunction, @symcore.Expr, @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_gbt(TransferFunction, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_rational_expression(@symcore.Expr, @symcore.Expr, sampling_time? : @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::from_zpk(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, @symcore.Expr, sampling_time? : @symcore.Expr) -> Self raise ControlError
+pub fn DiscreteTransferFunction::is_biproper(Self) -> Bool raise ControlError
+pub fn DiscreteTransferFunction::is_proper(Self) -> Bool raise ControlError
+pub fn DiscreteTransferFunction::is_stable(Self) -> Bool? raise ControlError
+pub fn DiscreteTransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
+pub fn DiscreteTransferFunction::num(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError
+pub fn DiscreteTransferFunction::sampling_time(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::simplify(Self) -> Self raise ControlError
+pub fn DiscreteTransferFunction::to_expr(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::var(Self) -> @symcore.Expr
+pub fn DiscreteTransferFunction::zeros(Self) -> Array[@symcore.Expr] raise ControlError
+pub impl Eq for DiscreteTransferFunction
+pub impl Neg for DiscreteTransferFunction
+
+pub struct Feedback {
+  sys1_ : SISOLinearTimeInvariant
+  sys2_ : SISOLinearTimeInvariant
+  sign_ : Int
+}
+pub fn Feedback::as_system(Self) -> SISOLinearTimeInvariant
+pub fn Feedback::den(Self) -> SISOLinearTimeInvariant raise ControlError
+pub fn Feedback::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+pub fn Feedback::num(Self) -> SISOLinearTimeInvariant
+pub fn Feedback::sampling_time(Self) -> @symcore.Expr? raise ControlError
+pub fn Feedback::sign(Self) -> Int
+pub fn Feedback::sys1(Self) -> SISOLinearTimeInvariant
+pub fn Feedback::sys2(Self) -> SISOLinearTimeInvariant
+pub fn Feedback::to_expr(Self) -> @symcore.Expr raise ControlError
+pub fn Feedback::var(Self) -> @symcore.Expr raise ControlError
+pub impl Eq for Feedback
+
+pub struct PIDController {
+  kp_ : @symcore.Expr
+  ki_ : @symcore.Expr
+  kd_ : @symcore.Expr
+  tf_ : @symcore.Expr
+  var_ : @symcore.Expr
+}
+pub fn PIDController::as_system(Self) -> SISOLinearTimeInvariant
+pub fn PIDController::doit(Self) -> TransferFunction raise ControlError
+pub fn PIDController::kd(Self) -> @symcore.Expr
+pub fn PIDController::ki(Self) -> @symcore.Expr
+pub fn PIDController::kp(Self) -> @symcore.Expr
+pub fn PIDController::tf(Self) -> @symcore.Expr
+pub fn PIDController::to_expr(Self) -> @symcore.Expr raise ControlError
+pub fn PIDController::var(Self) -> @symcore.Expr
+pub impl Eq for PIDController
+
+pub struct Parallel {
+  args_ : Array[SISOLinearTimeInvariant]
+}
+pub fn Parallel::args(Self) -> Array[SISOLinearTimeInvariant]
+pub fn Parallel::as_system(Self) -> SISOLinearTimeInvariant
+pub fn Parallel::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+pub fn Parallel::is_biproper(Self) -> Bool raise ControlError
+pub fn Parallel::is_proper(Self) -> Bool raise ControlError
+pub fn Parallel::is_strictly_proper(Self) -> Bool raise ControlError
+pub fn Parallel::sampling_time(Self) -> @symcore.Expr? raise ControlError
+pub fn Parallel::to_expr(Self) -> @symcore.Expr raise ControlError
+pub fn Parallel::var(Self) -> @symcore.Expr raise ControlError
+pub impl Eq for Parallel
+
+pub struct ParametricPlot {
+  x : Array[Double]
+  y : Array[Double]
+  mirror_x : Array[Double]?
+  mirror_y : Array[Double]?
+  color : String
+  xlabel : String
+  ylabel : String
+  title : String
+  grid : Bool
+}
+
+pub struct PoleZeroPlot {
+  zeros : Array[(Double, Double)]
+  poles : Array[(Double, Double)]
+  pole_color : String
+  pole_markersize : Double
+  zero_color : String
+  zero_markersize : Double
+  grid : Bool
+  show_axes : Bool
+  title : String
+}
+
+pub struct RouthHurwitz {
+  table : @symphysics.ExplicitMatrix
+  variable : String
+  polynomial : @symcore.Expr
+  zero_row_case : Bool
+  zero_col_infos : Array[(Int, Int)]
+  auxiliary_polynomials : Array[@symcore.Expr]
+}
+pub fn RouthHurwitz::auxiliary_polynomials(Self) -> Array[@symcore.Expr]
+pub fn RouthHurwitz::cols(Self) -> Int
+pub fn RouthHurwitz::first_column(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn RouthHurwitz::get(Self, Int, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn RouthHurwitz::matrix(Self) -> @symphysics.ExplicitMatrix
+pub fn RouthHurwitz::rows(Self) -> Int
+pub fn RouthHurwitz::zero_col_infos(Self) -> Array[(Int, Int)]
+pub fn RouthHurwitz::zero_row_case(Self) -> Bool
+pub impl Eq for RouthHurwitz
+
+pub enum SISOLinearTimeInvariant {
+  TF(TransferFunction)
+  DTF(DiscreteTransferFunction)
+  PID(PIDController)
+  SeriesLTI(Series)
+  ParallelLTI(Parallel)
+  FeedbackLTI(Feedback)
+}
+pub fn SISOLinearTimeInvariant::doit(Self) -> Self raise ControlError
+pub fn SISOLinearTimeInvariant::is_biproper(Self) -> Bool raise ControlError
+pub fn SISOLinearTimeInvariant::is_discrete(Self) -> Bool
+pub fn SISOLinearTimeInvariant::is_proper(Self) -> Bool raise ControlError
+pub fn SISOLinearTimeInvariant::is_strictly_proper(Self) -> Bool raise ControlError
+pub fn SISOLinearTimeInvariant::neg_system(Self) -> Self raise ControlError
+pub fn SISOLinearTimeInvariant::sampling_time(Self) -> @symcore.Expr? raise ControlError
+pub fn SISOLinearTimeInvariant::to_expr(Self) -> @symcore.Expr raise ControlError
+pub fn SISOLinearTimeInvariant::var(Self) -> @symcore.Expr raise ControlError
+pub impl Eq for SISOLinearTimeInvariant
+
+pub struct SampledLinePlot {
+  x : Array[Double]
+  y : Array[Double]
+  color : String
+  xlabel : String
+  ylabel : String
+  title : String
+  grid : Bool
+  show_axes : Bool
+  xscale : String
+}
+
+pub struct Series {
+  args_ : Array[SISOLinearTimeInvariant]
+}
+pub fn Series::args(Self) -> Array[SISOLinearTimeInvariant]
+pub fn Series::as_system(Self) -> SISOLinearTimeInvariant
+pub fn Series::doit(Self) -> SISOLinearTimeInvariant raise ControlError
+pub fn Series::is_biproper(Self) -> Bool raise ControlError
+pub fn Series::is_proper(Self) -> Bool raise ControlError
+pub fn Series::is_strictly_proper(Self) -> Bool raise ControlError
+pub fn Series::sampling_time(Self) -> @symcore.Expr? raise ControlError
+pub fn Series::to_expr(Self) -> @symcore.Expr raise ControlError
+pub fn Series::var(Self) -> @symcore.Expr raise ControlError
+pub impl Eq for Series
+
+pub struct TransferFunction {
+  num_ : @symcore.Expr
+  den_ : @symcore.Expr
+  var_ : @symcore.Expr
+}
+pub fn TransferFunction::args(Self) -> Array[@symcore.Expr]
+pub fn TransferFunction::as_system(Self) -> SISOLinearTimeInvariant
+pub fn TransferFunction::dc_gain(Self) -> @symcore.Expr raise ControlError
+pub fn TransferFunction::den(Self) -> @symcore.Expr
+pub fn TransferFunction::eval_frequency(Self, @symcore.Expr) -> @symcore.Expr raise ControlError
+pub fn TransferFunction::expand(Self) -> Self raise ControlError
+pub fn TransferFunction::from_coeff_lists(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr) -> Self raise ControlError
+pub fn TransferFunction::from_rational_expression(@symcore.Expr, var? : @symcore.Expr) -> Self raise ControlError
+pub fn TransferFunction::from_zpk(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, @symcore.Expr) -> Self raise ControlError
+pub fn TransferFunction::is_biproper(Self) -> Bool raise ControlError
+pub fn TransferFunction::is_proper(Self) -> Bool raise ControlError
+pub fn TransferFunction::is_stable(Self) -> Bool? raise ControlError
+pub fn TransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
+pub fn TransferFunction::num(Self) -> @symcore.Expr
+pub fn TransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError
+pub fn TransferFunction::sampling_time(Self) -> @symcore.Expr
+pub fn TransferFunction::simplify(Self) -> Self raise ControlError
+pub fn TransferFunction::subs(Self, Map[String, @symcore.Expr]) -> Self raise ControlError
+pub fn TransferFunction::to_expr(Self) -> @symcore.Expr
+pub fn TransferFunction::var(Self) -> @symcore.Expr
+pub fn TransferFunction::xreplace(Self, Map[String, @symcore.Expr]) -> Self raise ControlError
+pub fn TransferFunction::zeros(Self) -> Array[@symcore.Expr] raise ControlError
+pub impl Eq for TransferFunction
+pub impl Neg for TransferFunction
+
+// Type aliases
+pub type ControlComplex = (Double, Double)
+
+// Traits
+

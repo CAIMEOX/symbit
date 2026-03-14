@@ -1,0 +1,307 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics/continuum_mechanics"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympolys",
+}
+
+// Values
+pub fn arch((@symcore.Expr, @symcore.Expr), (@symcore.Expr, @symcore.Expr), @symcore.Expr, crown_y? : @symcore.Expr?) -> Arch raise ArchError
+
+pub fn beam(@symcore.Expr, @symcore.Expr, @symcore.Expr, area? : @symcore.Expr, variable? : @symcore.Expr, base_char? : String) -> Beam raise BeamError
+
+pub fn cable((String, @symcore.Expr, @symcore.Expr), (String, @symcore.Expr, @symcore.Expr)) -> Cable raise CableError
+
+pub fn cm_collect_symbols(@symcore.Expr, Map[String, Bool]) -> Unit
+
+pub fn cm_depends_on(@symcore.Expr, String) -> Bool
+
+pub fn cm_double_pow(Double, Int) -> Double
+
+pub fn cm_eval_at(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn cm_eval_singularity_exact(@symcore.Expr, @symcore.Expr, Int) -> @symcore.Expr
+
+pub fn cm_eval_singularity_left_limit(@symcore.Expr, @symcore.Expr, Int) -> @symcore.Expr
+
+pub fn cm_eval_singularity_right_limit(@symcore.Expr, @symcore.Expr, Int) -> @symcore.Expr
+
+pub fn cm_expr_eq(@symcore.Expr, @symcore.Expr) -> Bool
+
+pub fn cm_expr_eval(@symcore.Expr, Map[String, Double]) -> Double?
+
+pub fn cm_expr_is_zero(@symcore.Expr) -> Bool
+
+pub fn cm_int_expr(Int) -> @symcore.Expr
+
+pub fn cm_integrate(@symcore.Expr, String) -> @symcore.Expr
+
+pub fn cm_left_limit_at(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn cm_linear_solve(Array[@symcore.Expr], Array[@symcore.Expr]) -> Map[String, @symcore.Expr]? raise @sympolys.PolyError
+
+pub fn cm_numeric_expr_eq(@symcore.Expr, @symcore.Expr) -> Bool
+
+pub fn cm_rat_expr(Int, Int) -> @symcore.Expr
+
+pub fn cm_right_limit_at(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn cm_sign_of_difference(@symcore.Expr, @symcore.Expr) -> Int?
+
+pub fn cm_simplify(@symcore.Expr) -> @symcore.Expr
+
+pub fn cm_singularity(@symcore.Expr, @symcore.Expr, Int) -> @symcore.Expr
+
+pub fn cm_subst(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn cm_symbol(String) -> @symcore.Expr
+
+pub fn column(@symcore.Expr, @symcore.Expr, @symcore.Expr, variable? : @symcore.Expr, base_char? : String) -> Column raise ColumnError
+
+pub fn truss() -> Truss
+
+// Errors
+pub suberror ArchError {
+  ValueError(String)
+  TypeError(String)
+  SolveError(String)
+}
+pub impl Eq for ArchError
+pub impl Show for ArchError
+
+pub suberror BeamError {
+  ValueError(String)
+  TypeError(String)
+  SolveError(String)
+}
+pub impl Eq for BeamError
+pub impl Show for BeamError
+
+pub suberror CableError {
+  ValueError(String)
+  SolveError(String)
+}
+pub impl Eq for CableError
+pub impl Show for CableError
+
+pub suberror ColumnError {
+  ValueError(String)
+  TypeError(String)
+  SolveError(String)
+}
+pub impl Eq for ColumnError
+pub impl Show for ColumnError
+
+pub suberror TrussError {
+  ValueError(String)
+}
+pub impl Eq for TrussError
+pub impl Show for TrussError
+
+// Types and methods
+pub struct Arch {
+  mut left_support_ : Array[@symcore.Expr]
+  mut right_support_ : Array[@symcore.Expr]
+  mut crown_x_ : @symcore.Expr
+  mut crown_y_ : @symcore.Expr
+  mut shape_a_ : @symcore.Expr
+  supports_ : Map[String, String]
+  point_loads_ : Map[String, Array[@symcore.Expr]]
+  distributed_loads_ : Map[String, Array[@symcore.Expr]]
+  mut member_ : Array[@symcore.Expr]?
+  reaction_force_ : Map[String, @symcore.Expr]
+}
+pub fn Arch::add_member(Self, @symcore.Expr) -> Unit raise ArchError
+pub fn Arch::apply_load(Self, Int, String, @symcore.Expr, @symcore.Expr, end? : @symcore.Expr?, angle? : @symcore.Expr?) -> Unit raise ArchError
+pub fn Arch::axial_force_at(Self, pos? : @symcore.Expr?) -> @symcore.Expr raise ArchError
+pub fn Arch::bending_moment_at(Self, pos? : @symcore.Expr?) -> @symcore.Expr raise ArchError
+pub fn Arch::change_crown_position(Self, crown_x? : @symcore.Expr?, crown_y? : @symcore.Expr?) -> Unit raise ArchError
+pub fn Arch::change_support_position(Self, left_support? : (@symcore.Expr, @symcore.Expr)?, right_support? : (@symcore.Expr, @symcore.Expr)?) -> Unit raise ArchError
+pub fn Arch::change_support_type(Self, left_support? : String?, right_support? : String?) -> Unit raise ArchError
+pub fn Arch::get_loads(Self) -> Map[String, Map[String, Array[@symcore.Expr]]]
+pub fn Arch::get_shape_eqn(Self) -> @symcore.Expr
+pub fn Arch::left_support(Self) -> Array[@symcore.Expr]
+pub fn Arch::reaction_force(Self) -> Map[String, @symcore.Expr]
+pub fn Arch::remove_load(Self, String) -> Unit raise ArchError
+pub fn Arch::right_support(Self) -> Array[@symcore.Expr]
+pub fn Arch::shear_force_at(Self, pos? : @symcore.Expr?) -> @symcore.Expr raise ArchError
+pub fn Arch::solve(Self) -> Unit raise ArchError
+pub fn Arch::supports(Self) -> Map[String, String]
+
+pub struct Beam {
+  mut length_ : @symcore.Expr
+  mut elastic_modulus_ : @symcore.Expr
+  mut second_moment_ : @symcore.Expr
+  mut area_ : @symcore.Expr
+  mut variable_ : @symcore.Expr
+  base_char_ : String
+  mut bc_shear_force_ : Array[(@symcore.Expr, @symcore.Expr)]
+  mut bc_bending_moment_ : Array[(@symcore.Expr, @symcore.Expr)]
+  mut bc_slope_ : Array[(@symcore.Expr, @symcore.Expr)]
+  mut bc_deflection_ : Array[(@symcore.Expr, @symcore.Expr)]
+  mut applied_loads_ : Array[(@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)]
+  applied_support_symbols_ : Array[@symcore.Expr]
+  mut load_ : @symcore.Expr
+  mut reaction_loads_ : Map[String, @symcore.Expr]
+}
+pub fn Beam::applied_loads(Self) -> Array[(@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)]
+pub fn Beam::apply_load(Self, @symcore.Expr, @symcore.Expr, Int, end? : @symcore.Expr?) -> Unit raise BeamError
+pub fn Beam::apply_support(Self, @symcore.Expr, kind? : String) -> Array[@symcore.Expr] raise BeamError
+pub fn Beam::area(Self) -> @symcore.Expr
+pub fn Beam::bc_bending_moment(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn Beam::bc_deflection(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn Beam::bc_shear_force(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn Beam::bc_slope(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn Beam::bending_moment(Self) -> @symcore.Expr
+pub fn Beam::boundary_conditions(Self) -> Map[String, Array[(@symcore.Expr, @symcore.Expr)]]
+pub fn Beam::deflection(Self) -> @symcore.Expr raise BeamError
+pub fn Beam::elastic_modulus(Self) -> @symcore.Expr
+pub fn Beam::length(Self) -> @symcore.Expr
+pub fn Beam::load(Self) -> @symcore.Expr
+pub fn Beam::reaction_loads(Self) -> Map[String, @symcore.Expr]
+pub fn Beam::remove_load(Self, @symcore.Expr, @symcore.Expr, Int, end? : @symcore.Expr?) -> Unit raise BeamError
+pub fn Beam::second_moment(Self) -> @symcore.Expr
+pub fn Beam::set_area(Self, @symcore.Expr) -> Unit
+pub fn Beam::set_bc_bending_moment(Self, Array[(@symcore.Expr, @symcore.Expr)]) -> Unit
+pub fn Beam::set_bc_deflection(Self, Array[(@symcore.Expr, @symcore.Expr)]) -> Unit
+pub fn Beam::set_bc_shear_force(Self, Array[(@symcore.Expr, @symcore.Expr)]) -> Unit
+pub fn Beam::set_bc_slope(Self, Array[(@symcore.Expr, @symcore.Expr)]) -> Unit
+pub fn Beam::set_elastic_modulus(Self, @symcore.Expr) -> Unit
+pub fn Beam::set_length(Self, @symcore.Expr) -> Unit
+pub fn Beam::set_second_moment(Self, @symcore.Expr) -> Unit
+pub fn Beam::set_variable(Self, @symcore.Expr) -> Unit raise BeamError
+pub fn Beam::shear_force(Self) -> @symcore.Expr
+pub fn Beam::shear_stress(Self) -> @symcore.Expr
+pub fn Beam::slope(Self) -> @symcore.Expr raise BeamError
+pub fn Beam::solve_for_reaction_loads(Self, reactions? : Array[@symcore.Expr]) -> Unit raise BeamError
+pub fn Beam::variable(Self) -> @symcore.Expr
+
+pub struct Cable {
+  mut supports_ : Map[String, Array[@symcore.Expr]]
+  mut support_labels_ : Array[String]
+  mut left_support_ : Array[@symcore.Expr]
+  mut right_support_ : Array[@symcore.Expr]
+  point_loads_ : Map[String, Array[@symcore.Expr]]
+  distributed_loads_ : Map[String, @symcore.Expr]
+  loads_position_ : Map[String, Array[@symcore.Expr]]
+  mut length_ : @symcore.Expr
+  mut reaction_loads_ : Map[String, @symcore.Expr]
+  mut tension_ : Map[String, @symcore.Expr]
+  mut lowest_x_ : @symcore.Expr
+  mut lowest_y_ : @symcore.Expr
+}
+pub fn Cable::apply_distributed_load(Self, String, @symcore.Expr) -> Unit raise CableError
+pub fn Cable::apply_length(Self, @symcore.Expr) -> Unit
+pub fn Cable::apply_point_load(Self, (String, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)) -> Unit raise CableError
+pub fn Cable::change_support(Self, String, (String, @symcore.Expr, @symcore.Expr)) -> Unit raise CableError
+pub fn Cable::left_support(Self) -> Array[@symcore.Expr]
+pub fn Cable::length(Self) -> @symcore.Expr
+pub fn Cable::loads(Self) -> Map[String, Map[String, Array[@symcore.Expr]]]
+pub fn Cable::loads_position(Self) -> Map[String, Array[@symcore.Expr]]
+pub fn Cable::reaction_loads(Self) -> Map[String, @symcore.Expr]
+pub fn Cable::remove_loads(Self, Array[String]) -> Unit raise CableError
+pub fn Cable::right_support(Self) -> Array[@symcore.Expr]
+pub fn Cable::solve(Self, lowest_x? : @symcore.Expr?, lowest_y? : @symcore.Expr?) -> Unit raise CableError
+pub fn Cable::supports(Self) -> Map[String, Array[@symcore.Expr]]
+pub fn Cable::tension(Self) -> Map[String, @symcore.Expr]
+pub fn Cable::tension_at(Self, @symcore.Expr) -> @symcore.Expr raise CableError
+
+pub struct Column {
+  mut length_ : @symcore.Expr
+  mut elastic_modulus_ : @symcore.Expr
+  mut area_ : @symcore.Expr
+  mut variable_ : @symcore.Expr
+  base_char_ : String
+  mut bc_extension_ : Array[@symcore.Expr]
+  mut bc_hinge_ : Array[@symcore.Expr]
+  mut applied_supports_ : Array[@symcore.Expr]
+  mut applied_hinges_ : Array[@symcore.Expr]
+  mut applied_loads_ : Array[(@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)]
+  mut load_ : @symcore.Expr
+  mut reaction_loads_ : Map[String, @symcore.Expr]
+  mut hinge_extensions_ : Map[String, @symcore.Expr]
+  mut integration_constants_ : Map[String, @symcore.Expr]
+  mut is_solved_ : Bool
+}
+pub fn Column::applied_loads(Self) -> Array[(@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)]
+pub fn Column::apply_load(Self, @symcore.Expr, @symcore.Expr, Int, end? : @symcore.Expr?) -> Unit raise ColumnError
+pub fn Column::apply_support(Self, @symcore.Expr) -> @symcore.Expr raise ColumnError
+pub fn Column::apply_telescope_hinge(Self, @symcore.Expr) -> @symcore.Expr
+pub fn Column::area(Self) -> @symcore.Expr
+pub fn Column::axial_force(Self) -> @symcore.Expr
+pub fn Column::bc_extension(Self) -> Array[@symcore.Expr]
+pub fn Column::bc_hinge(Self) -> Array[@symcore.Expr]
+pub fn Column::elastic_modulus(Self) -> @symcore.Expr
+pub fn Column::extension(Self) -> @symcore.Expr
+pub fn Column::hinge_extensions(Self) -> Map[String, @symcore.Expr]
+pub fn Column::length(Self) -> @symcore.Expr
+pub fn Column::load(Self) -> @symcore.Expr
+pub fn Column::reaction_loads(Self) -> Map[String, @symcore.Expr]
+pub fn Column::remove_load(Self, @symcore.Expr, @symcore.Expr, Int, end? : @symcore.Expr?) -> Unit raise ColumnError
+pub fn Column::set_area(Self, @symcore.Expr) -> Unit
+pub fn Column::set_elastic_modulus(Self, @symcore.Expr) -> Unit
+pub fn Column::set_length(Self, @symcore.Expr) -> Unit
+pub fn Column::set_variable(Self, @symcore.Expr) -> Unit raise ColumnError
+pub fn Column::solve_for_reaction_loads(Self, reactions? : Array[@symcore.Expr]) -> Unit raise ColumnError
+pub fn Column::variable(Self) -> @symcore.Expr
+
+pub struct Truss {
+  nodes_ : Array[(String, @symcore.Expr, @symcore.Expr)]
+  node_labels_ : Array[String]
+  node_positions_ : Array[(@symcore.Expr, @symcore.Expr)]
+  members_ : Map[String, Array[String]]
+  loads_ : Map[String, Array[Array[@symcore.Expr]]]
+  supports_ : Map[String, String]
+  mut reaction_loads_ : Map[String, @symcore.Expr]
+  mut internal_forces_ : Map[String, @symcore.Expr]
+  node_coordinates_ : Map[String, (@symcore.Expr, @symcore.Expr)]
+  mut node_pairs_occupied_ : Map[(String, String), Bool]
+  mut member_lengths_ : Map[String, @symcore.Expr]
+}
+pub fn Truss::add_member(Self, Array[(String, String, String)]) -> Unit raise TrussError
+pub fn Truss::add_node(Self, Array[(String, @symcore.Expr, @symcore.Expr)]) -> Unit raise TrussError
+pub fn Truss::apply_load(Self, Array[(String, @symcore.Expr, @symcore.Expr)]) -> Unit raise TrussError
+pub fn Truss::apply_support(Self, Array[(String, String)]) -> Unit raise TrussError
+pub fn Truss::change_member_label(Self, Array[(String, String)]) -> Unit raise TrussError
+pub fn Truss::change_node_label(Self, Array[(String, String)]) -> Unit raise TrussError
+pub fn Truss::internal_forces(Self) -> Map[String, @symcore.Expr]
+pub fn Truss::loads(Self) -> Map[String, Array[Array[@symcore.Expr]]]
+pub fn Truss::member_lengths(Self) -> Map[String, @symcore.Expr]
+pub fn Truss::members(Self) -> Map[String, Array[String]]
+pub fn Truss::node_labels(Self) -> Array[String]
+pub fn Truss::node_positions(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn Truss::nodes(Self) -> Array[(String, @symcore.Expr, @symcore.Expr)]
+pub fn Truss::reaction_loads(Self) -> Map[String, @symcore.Expr]
+pub fn Truss::remove_load(Self, Array[(String, @symcore.Expr, @symcore.Expr)]) -> Unit raise TrussError
+pub fn Truss::remove_member(Self, Array[String]) -> Unit raise TrussError
+pub fn Truss::remove_node(Self, Array[String]) -> Unit raise TrussError
+pub fn Truss::remove_support(Self, Array[String]) -> Unit raise TrussError
+pub fn Truss::solve(Self) -> Unit raise TrussError
+pub fn Truss::supports(Self) -> Map[String, String]
+
+// Type aliases
+pub type BeamBoundaryValue = (@symcore.Expr, @symcore.Expr)
+
+pub type BeamLoadSpec = (@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)
+
+pub type CablePointLoadSpec = (String, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)
+
+pub type CableSupportSpec = (String, @symcore.Expr, @symcore.Expr)
+
+pub type ColumnLoadSpec = (@symcore.Expr, @symcore.Expr, Int, @symcore.Expr?)
+
+pub type LoadSpec = (String, @symcore.Expr, @symcore.Expr)
+
+pub type MemberEndpoints = Array[String]
+
+pub type MemberSpec = (String, String, String)
+
+pub type NodeLoads = Array[Array[@symcore.Expr]]
+
+pub type NodeSpec = (String, @symcore.Expr, @symcore.Expr)
+
+pub type SupportSpec = (String, String)
+
+// Traits
+
