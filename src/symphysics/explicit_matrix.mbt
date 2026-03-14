@@ -178,12 +178,24 @@ pub fn ExplicitMatrix::mul(
 }
 
 ///|
+fn explicit_matrix_cell_string(value : @symcore.Expr) -> String {
+  let txt = @symprint.to_string(value)
+  if txt == "-1" {
+    "-1"
+  } else if txt.has_prefix("-1*") {
+    "-" + txt[3:].to_string()
+  } else {
+    txt
+  }
+}
+
+///|
 pub fn explicit_matrix_rows_string(matrix : ExplicitMatrix) -> String {
   let rows : Array[String] = Array::new()
   for row in matrix.rows {
     let items : Array[String] = Array::new()
     for value in row {
-      items.push(@symprint.to_string(value))
+      items.push(explicit_matrix_cell_string(value))
     }
     let joined_items = items.join(", ")
     rows.push("[\{joined_items}]")

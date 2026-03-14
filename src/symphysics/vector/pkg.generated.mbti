@@ -1,0 +1,225 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics/vector"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics",
+}
+
+// Values
+pub fn _check_dyadic(Dyadic) -> Dyadic
+
+pub fn _check_frame(ReferenceFrame) -> ReferenceFrame
+
+pub fn _check_vector(Vector) -> Vector
+
+pub fn cross(Vector, Vector) -> Vector raise VectorError
+
+pub fn curl(Vector, ReferenceFrame) -> Vector raise VectorError
+
+pub fn divergence(Vector, ReferenceFrame) -> @symcore.Expr raise VectorError
+
+pub fn dot(Vector, Vector) -> @symcore.Expr raise VectorError
+
+pub fn dyadic_basis(ReferenceFrame, Int, ReferenceFrame, Int) -> Dyadic
+
+pub fn dyadic_zero() -> Dyadic
+
+pub fn dynamicsymbol(String, level? : Int) -> @symcore.Expr
+
+pub fn dynamicsymbols(String, level? : Int) -> Array[@symcore.Expr]
+
+pub let dynamicsymbols_t : @symcore.Expr
+
+pub fn express(Vector, ReferenceFrame, variables? : Bool) -> Vector raise VectorError
+
+pub fn express_scalar(@symcore.Expr, ReferenceFrame, variables? : Bool) -> @symcore.Expr
+
+pub fn get_motion_params(ReferenceFrame, acceleration? : Vector?, velocity? : Vector?, position? : Vector?, timevalue1? : @symcore.Expr, timevalue2? : @symcore.Expr) -> (Vector, Vector, Vector) raise VectorError
+
+pub fn gradient(@symcore.Expr, ReferenceFrame) -> Vector
+
+pub fn is_conservative(Vector) -> Bool raise VectorError
+
+pub fn is_solenoidal(Vector) -> Bool raise VectorError
+
+pub fn kinematic_equations(Array[@symcore.Expr], Array[@symcore.Expr], String, rot_order? : String) -> Array[@symcore.Expr] raise VectorError
+
+pub fn orient_axis(@symcore.Expr, Vector) -> OrientationSpec
+
+pub fn orient_body(Array[@symcore.Expr], String) -> OrientationSpec
+
+pub fn orient_dcm(@symphysics.ExplicitMatrix) -> OrientationSpec
+
+pub fn orient_quaternion(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> OrientationSpec
+
+pub fn orient_space(Array[@symcore.Expr], String) -> OrientationSpec
+
+pub fn outer(Vector, Vector) -> Dyadic raise VectorError
+
+pub fn partial_velocity(Array[Vector], Array[@symcore.Expr], ReferenceFrame) -> Array[Array[Vector]] raise VectorError
+
+pub fn point(String) -> Point raise VectorError
+
+pub fn reference_frame(String, indices? : Array[String]?, latexs? : Array[String]?, variables? : Array[String]?) -> ReferenceFrame raise VectorError
+
+pub fn scalar_potential(Vector, ReferenceFrame) -> @symcore.Expr raise VectorError
+
+pub fn scalar_potential_difference(@symcore.Expr, ReferenceFrame, Point, Point, Point) -> @symcore.Expr raise VectorError
+
+pub fn scalar_potential_difference_field(Vector, ReferenceFrame, Point, Point, Point) -> @symcore.Expr raise VectorError
+
+pub fn time_derivative(Vector, ReferenceFrame, order? : Int) -> Vector raise VectorError
+
+pub fn time_derivative_dyadic(Dyadic, ReferenceFrame, order? : Int) -> Dyadic raise VectorError
+
+pub fn time_derivative_scalar(@symcore.Expr, ReferenceFrame, order? : Int) -> @symcore.Expr
+
+pub fn vector_from_components(ReferenceFrame, Array[@symcore.Expr]) -> Vector
+
+pub fn vector_zero() -> Vector
+
+pub fn vsprint(Vector) -> String
+
+pub fn vsprint_dyadic(Dyadic) -> String
+
+// Errors
+pub suberror VectorError {
+  ValueError(String)
+  TypeError(String)
+}
+pub impl Eq for VectorError
+pub impl Show for VectorError
+
+// Types and methods
+pub enum AxisName {
+  X
+  Y
+  Z
+}
+pub impl Eq for AxisName
+pub impl Show for AxisName
+
+pub struct Dyadic {
+  args : Array[(@symcore.Expr, Int, Int, Int, Int)]
+}
+pub fn Dyadic::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
+pub fn Dyadic::cross_vector(Self, Vector) -> Self raise VectorError
+pub fn Dyadic::doit(Self) -> Self
+pub fn Dyadic::dot_dyadic(Self, Self) -> Self raise VectorError
+pub fn Dyadic::dot_vector(Self, Vector) -> Vector raise VectorError
+pub fn Dyadic::dt(Self, ReferenceFrame, order? : Int) -> Self raise VectorError
+pub fn Dyadic::express(Self, ReferenceFrame, frame2? : ReferenceFrame?, variables? : Bool) -> Self raise VectorError
+pub fn Dyadic::neg(Self) -> Self
+pub fn Dyadic::scale(Self, @symcore.Expr) -> Self
+pub fn Dyadic::simplify(Self) -> Self
+pub fn Dyadic::subs(Self, Map[String, @symcore.Expr]) -> Self
+pub fn Dyadic::to_matrix(Self, ReferenceFrame, frame2? : ReferenceFrame?) -> @symphysics.ExplicitMatrix raise VectorError
+pub fn Dyadic::truediv(Self, @symcore.Expr) -> Self raise VectorError
+pub impl Add for Dyadic
+pub impl Eq for Dyadic
+pub impl Sub for Dyadic
+
+pub enum OrientationSpec {
+  AxisSpec(@symcore.Expr, Vector)
+  DcmSpec(@symphysics.ExplicitMatrix)
+  BodySpec(Array[@symcore.Expr], String)
+  SpaceSpec(Array[@symcore.Expr], String)
+  QuaternionSpec(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)
+}
+
+pub struct Point {
+  name_ : String
+  index_ : Int
+}
+pub fn Point::a1pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
+pub fn Point::a2pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
+pub fn Point::acc(Self, ReferenceFrame) -> Vector raise VectorError
+pub fn Point::locatenew(Self, String, Vector) -> Self raise VectorError
+pub fn Point::name(Self) -> String
+pub fn Point::partial_velocities(Self, ReferenceFrame, Array[@symcore.Expr]) -> Array[Vector] raise VectorError
+pub fn Point::partial_velocity(Self, ReferenceFrame, @symcore.Expr) -> Vector raise VectorError
+pub fn Point::pos_from(Self, Self) -> Vector raise VectorError
+pub fn Point::set_acc(Self, ReferenceFrame, Vector) -> Unit
+pub fn Point::set_pos(Self, Self, Vector) -> Unit
+pub fn Point::set_vel(Self, ReferenceFrame, Vector) -> Unit
+pub fn Point::v1pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
+pub fn Point::v2pt_theory(Self, Self, ReferenceFrame, ReferenceFrame) -> Vector raise VectorError
+pub fn Point::vel(Self, ReferenceFrame) -> Vector raise VectorError
+pub impl Eq for Point
+
+pub struct ReferenceFrame {
+  name_ : String
+  index_ : Int
+  indices_ : Array[String]
+  latexs_ : Array[String]
+  variables_ : Array[String]
+}
+pub fn ReferenceFrame::ang_acc_in(Self, Self) -> Vector raise VectorError
+pub fn ReferenceFrame::ang_vel_in(Self, Self) -> Vector raise VectorError
+pub fn ReferenceFrame::basis(Self, Int) -> Vector raise VectorError
+pub fn ReferenceFrame::coord(Self, Int) -> @symcore.Expr raise VectorError
+pub fn ReferenceFrame::coords(Self) -> Array[@symcore.Expr]
+pub fn ReferenceFrame::dcm(Self, Self) -> @symphysics.ExplicitMatrix raise VectorError
+pub fn ReferenceFrame::item(Self, Int) -> @symcore.Expr raise VectorError
+pub fn ReferenceFrame::iter_basis(Self) -> Array[Vector]
+pub fn ReferenceFrame::name(Self) -> String
+pub fn ReferenceFrame::orient(Self, Self, OrientationSpec) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_axis(Self, Self, Vector, @symcore.Expr) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_body_fixed(Self, Self, Array[@symcore.Expr], String) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_dcm(Self, Self, @symphysics.ExplicitMatrix) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_explicit(Self, Self, @symphysics.ExplicitMatrix) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_quaternion(Self, Self, (@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)) -> Unit raise VectorError
+pub fn ReferenceFrame::orient_space_fixed(Self, Self, Array[@symcore.Expr], String) -> Unit raise VectorError
+pub fn ReferenceFrame::orientnew(Self, String, OrientationSpec, indices? : Array[String]?, latexs? : Array[String]?, variables? : Array[String]?) -> Self raise VectorError
+pub fn ReferenceFrame::partial_velocity(Self, Self, Array[@symcore.Expr]) -> Array[Vector] raise VectorError
+pub fn ReferenceFrame::set_ang_acc(Self, Self, Vector) -> Unit
+pub fn ReferenceFrame::set_ang_vel(Self, Self, Vector) -> Unit
+pub fn ReferenceFrame::u(Self) -> Dyadic
+pub fn ReferenceFrame::variable_map(Self, Self) -> Map[String, @symcore.Expr] raise VectorError
+pub fn ReferenceFrame::x(Self) -> Vector
+pub fn ReferenceFrame::xx(Self) -> Dyadic
+pub fn ReferenceFrame::xy(Self) -> Dyadic
+pub fn ReferenceFrame::xz(Self) -> Dyadic
+pub fn ReferenceFrame::y(Self) -> Vector
+pub fn ReferenceFrame::yx(Self) -> Dyadic
+pub fn ReferenceFrame::yy(Self) -> Dyadic
+pub fn ReferenceFrame::yz(Self) -> Dyadic
+pub fn ReferenceFrame::z(Self) -> Vector
+pub fn ReferenceFrame::zx(Self) -> Dyadic
+pub fn ReferenceFrame::zy(Self) -> Dyadic
+pub fn ReferenceFrame::zz(Self) -> Dyadic
+pub impl Eq for ReferenceFrame
+
+pub struct Vector {
+  args : Array[(Int, Array[@symcore.Expr])]
+}
+pub fn Vector::angle_between(Self, Self) -> @symcore.Expr raise VectorError
+pub fn Vector::applyfunc(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
+pub fn Vector::components_in(Self, ReferenceFrame) -> Array[@symcore.Expr] raise VectorError
+pub fn Vector::cross(Self, Self) -> Self raise VectorError
+pub fn Vector::diff(Self, @symcore.Expr, ReferenceFrame, var_in_dcm? : Bool) -> Self raise VectorError
+pub fn Vector::doit(Self) -> Self
+pub fn Vector::dot(Self, Self) -> @symcore.Expr raise VectorError
+pub fn Vector::dt(Self, ReferenceFrame, order? : Int) -> Self raise VectorError
+pub fn Vector::express(Self, ReferenceFrame, variables? : Bool) -> Self raise VectorError
+pub fn Vector::is_zero(Self) -> Bool
+pub fn Vector::magnitude(Self) -> @symcore.Expr raise VectorError
+pub fn Vector::neg(Self) -> Self
+pub fn Vector::normalize(Self) -> Self raise VectorError
+pub fn Vector::outer(Self, Self) -> Dyadic raise VectorError
+pub fn Vector::scale(Self, @symcore.Expr) -> Self
+pub fn Vector::separate(Self) -> Array[(ReferenceFrame, Self)]
+pub fn Vector::simplify(Self) -> Self
+pub fn Vector::subs(Self, Map[String, @symcore.Expr]) -> Self
+pub fn Vector::to_matrix(Self, ReferenceFrame) -> @symphysics.ExplicitMatrix raise VectorError
+pub fn Vector::truediv(Self, @symcore.Expr) -> Self raise VectorError
+pub impl Add for Vector
+pub impl Eq for Vector
+pub impl Sub for Vector
+
+// Type aliases
+pub using @symcore {type Expr as CoordinateSym}
+
+// Traits
+

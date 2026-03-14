@@ -2698,11 +2698,8 @@ fn python_subprocess_stdout(script : String) -> String raise {
 ///|
 fn secondquant_subprocess_prelude() -> String {
   [
-    "import sys\n",
-    "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n",
-    "from sympy.physics.secondquant import *\n",
-    "from sympy.physics.quantum.operatorordering import normal_ordered_form\n",
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.secondquant import *\n", "from sympy.physics.quantum.operatorordering import normal_ordered_form\n",
     "i, j, k, l, m, n = symbols('i j k l m n')\n",
   ].join("")
 }
@@ -2974,4 +2971,144 @@ pub fn optics_waves_eval(expr : String) -> String raise {
       "print(", expr, ")\n",
     ].join(""),
   )
+}
+
+///|
+fn vector_subprocess_prelude() -> String {
+  [
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.vector import *\n", "from sympy.physics.vector.fieldfunctions import *\n",
+    "t = dynamicsymbols._t\n", "def _symbit_vector_summary(obj):\n", "    if isinstance(obj, (Vector, Dyadic)):\n",
+    "        return vsprint(obj)\n", "    if isinstance(obj, list):\n", "        return '[' + ', '.join(_symbit_vector_summary(x) for x in obj) + ']'\n",
+    "    if isinstance(obj, tuple):\n", "        items = ', '.join(_symbit_vector_summary(x) for x in obj)\n",
+    "        if len(obj) == 1:\n", "            items += ','\n", "        return '(' + items + ')'\n",
+    "    return str(obj)\n",
+  ].join("")
+}
+
+///|
+fn vector_python_result_script(
+  expr : String,
+  prefix : String,
+  suffix : String,
+) -> String {
+  let pieces = expr
+    .split(";")
+    .to_array()
+    .map(s => s.trim().to_string())
+    .filter(s => s != "")
+  if pieces.is_empty() {
+    return [vector_subprocess_prelude(), prefix, "None", suffix, "\n"].join("")
+  }
+  let body : Array[String] = [vector_subprocess_prelude()]
+  for piece in pieces[:pieces.length() - 1] {
+    body.push(piece.to_string())
+    body.push("\n")
+  }
+  body.push(prefix)
+  body.push(pieces[pieces.length() - 1].to_string())
+  body.push(suffix)
+  body.push("\n")
+  body.join("")
+}
+
+///|
+pub fn vector_eval(expr : String) -> String raise {
+  python_subprocess_stdout(vector_python_result_script(expr, "print(", ")"))
+}
+
+///|
+pub fn vector_summary(expr : String) -> String raise {
+  python_subprocess_stdout(
+    vector_python_result_script(expr, "print(_symbit_vector_summary(", "))"),
+  )
+}
+
+///|
+pub fn vector_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
+  let pieces = rhs_expr
+    .split(";")
+    .to_array()
+    .map(s => s.trim().to_string())
+    .filter(s => s != "")
+  let body : Array[String] = [
+    vector_subprocess_prelude(),
+    "import re\n",
+    "_locals = {'t': t}\n",
+    "for _name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\(t\\)', ",
+  ]
+  body.push(python_string_literal(lhs_expr))
+  body.push(")):\n")
+  body.push("    _locals[_name] = Function(_name)\n")
+  body.push("lhs = sympify(")
+  body.push(python_string_literal(lhs_expr))
+  body.push(", locals=_locals)\n")
+  if pieces.is_empty() {
+    body.push("rhs = 0\n")
+  } else {
+    for piece in pieces[:pieces.length() - 1] {
+      body.push(piece.to_string())
+      body.push("\n")
+    }
+    body.push("rhs = ")
+    body.push(pieces[pieces.length() - 1].to_string())
+    body.push("\n")
+  }
+  body.push("ok = simplify(lhs - rhs) == 0\nprint(ok)\n")
+  python_subprocess_stdout(body.join("")) == "True"
+}
+
+///|
+pub fn vector_bool(expr : String) -> Bool raise {
+  vector_eval(expr) == "True"
+}
+
+///|
+pub fn vector_matrix_rows(expr : String) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    vector_python_result_script(expr, "m = ", "") +
+    "print(chr(31).join('[' + ', '.join(str(c) for c in row) + ']' for row in m.tolist()))\n",
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(s => s.to_string())
+  }
+}
+
+///|
+pub fn vector_matrix_equal(lhs_rows : String, rhs_expr : String) -> Bool raise {
+  let pieces = rhs_expr
+    .split(";")
+    .to_array()
+    .map(s => s.trim().to_string())
+    .filter(s => s != "")
+  let body : Array[String] = [
+    vector_subprocess_prelude(),
+    "import re\n",
+    "_locals = {'t': t}\n",
+    "for _name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\(t\\)', ",
+  ]
+  body.push(python_string_literal(lhs_rows))
+  body.push(")):\n")
+  body.push("    _locals[_name] = Function(_name)\n")
+  body.push("lhs = Matrix(sympify(")
+  body.push(python_string_literal(lhs_rows))
+  body.push(", locals=_locals))\n")
+  if pieces.is_empty() {
+    body.push("rhs = Matrix([[0]])\n")
+  } else {
+    for piece in pieces[:pieces.length() - 1] {
+      body.push(piece.to_string())
+      body.push("\n")
+    }
+    body.push("rhs = ")
+    body.push(pieces[pieces.length() - 1].to_string())
+    body.push("\n")
+  }
+  body.push(
+    "ok = lhs.shape == rhs.shape and all(simplify(lhs[i, j] - rhs[i, j]) == 0 for i in range(lhs.rows) for j in range(lhs.cols))\n",
+  )
+  body.push("print(ok)\n")
+  python_subprocess_stdout(body.join("")) == "True"
 }
