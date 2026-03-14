@@ -96,6 +96,7 @@ pub fn Plane::contains(
     GeometryEntity::Plane(plane_obj) =>
       self.contains_point(plane_obj.point_) &&
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
+    _ => false
   }
 }
 
@@ -176,6 +177,7 @@ pub fn Plane::intersection(
       plane_intersection_linear(self, GeometryEntity::Segment(seg_obj))
     GeometryEntity::Plane(plane_obj) =>
       plane_intersection_plane(self, plane_obj)
+    _ => []
   }
 }
 

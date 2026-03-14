@@ -26,6 +26,41 @@ pub fn geometry_plane(entity : Plane) -> GeometryEntity {
 }
 
 ///|
+pub fn geometry_ellipse(entity : Ellipse) -> GeometryEntity {
+  GeometryEntity::Ellipse(entity)
+}
+
+///|
+pub fn geometry_circle(entity : Circle) -> GeometryEntity {
+  GeometryEntity::Circle(entity)
+}
+
+///|
+pub fn geometry_polygon(entity : Polygon) -> GeometryEntity {
+  GeometryEntity::Polygon(entity)
+}
+
+///|
+pub fn geometry_regular_polygon(entity : RegularPolygon) -> GeometryEntity {
+  GeometryEntity::RegularPolygon(entity)
+}
+
+///|
+pub fn geometry_triangle(entity : Triangle) -> GeometryEntity {
+  GeometryEntity::Triangle(entity)
+}
+
+///|
+pub fn geometry_parabola(entity : Parabola) -> GeometryEntity {
+  GeometryEntity::Parabola(entity)
+}
+
+///|
+pub fn geometry_curve(entity : Curve) -> GeometryEntity {
+  GeometryEntity::Curve(entity)
+}
+
+///|
 pub fn GeometryEntity::ambient_dimension(self : GeometryEntity) -> Int {
   match self {
     GeometryEntity::Point(point_obj) => point_obj.ambient_dimension()
@@ -33,6 +68,13 @@ pub fn GeometryEntity::ambient_dimension(self : GeometryEntity) -> Int {
     GeometryEntity::Ray(ray_obj) => ray_obj.ambient_dimension()
     GeometryEntity::Segment(seg_obj) => seg_obj.ambient_dimension()
     GeometryEntity::Plane(_) => 3
+    GeometryEntity::Ellipse(ellipse_obj) => ellipse_obj.ambient_dimension()
+    GeometryEntity::Circle(circle_obj) => circle_obj.ambient_dimension()
+    GeometryEntity::Polygon(polygon_obj) => polygon_obj.ambient_dimension()
+    GeometryEntity::RegularPolygon(poly_obj) => poly_obj.ambient_dimension()
+    GeometryEntity::Triangle(triangle_obj) => triangle_obj.ambient_dimension()
+    GeometryEntity::Parabola(parabola_obj) => parabola_obj.ambient_dimension()
+    GeometryEntity::Curve(curve_obj) => curve_obj.ambient_dimension()
   }
 }
 
@@ -46,6 +88,13 @@ pub fn GeometryEntity::repr(
     GeometryEntity::Ray(ray_obj) => ray_obj.repr()
     GeometryEntity::Segment(seg_obj) => seg_obj.repr()
     GeometryEntity::Plane(plane_obj) => plane_obj.repr()
+    GeometryEntity::Ellipse(ellipse_obj) => ellipse_obj.repr()
+    GeometryEntity::Circle(circle_obj) => circle_obj.repr()
+    GeometryEntity::Polygon(polygon_obj) => polygon_obj.repr()
+    GeometryEntity::RegularPolygon(poly_obj) => poly_obj.repr()
+    GeometryEntity::Triangle(triangle_obj) => triangle_obj.repr()
+    GeometryEntity::Parabola(parabola_obj) => parabola_obj.repr()
+    GeometryEntity::Curve(curve_obj) => curve_obj.repr()
   }
 }
 
@@ -62,6 +111,20 @@ pub fn GeometryEntity::translate(
     | GeometryEntity::Segment(_) => linear_translate(self, offsets)
     GeometryEntity::Plane(plane_obj) =>
       GeometryEntity::Plane(plane_obj.translate(offsets))
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      geometry_ellipse(ellipse_obj.translate(offsets))
+    GeometryEntity::Circle(circle_obj) =>
+      geometry_circle(circle_obj.translate(offsets))
+    GeometryEntity::Polygon(polygon_obj) =>
+      geometry_polygon(polygon_obj.translate(offsets))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      geometry_regular_polygon(poly_obj.translate(offsets))
+    GeometryEntity::Triangle(triangle_obj) =>
+      geometry_triangle(triangle_obj.translate(offsets))
+    GeometryEntity::Parabola(parabola_obj) =>
+      geometry_parabola(parabola_obj.translate(offsets))
+    GeometryEntity::Curve(curve_obj) =>
+      geometry_curve(curve_obj.translate(offsets))
   }
 }
 
@@ -79,6 +142,20 @@ pub fn GeometryEntity::scale(
     | GeometryEntity::Segment(_) => linear_scale(self, factors, pt)
     GeometryEntity::Plane(plane_obj) =>
       GeometryEntity::Plane(plane_obj.scale(factors, pt~))
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      ellipse_obj.scale(factors[0], y=factors[1], pt~)
+    GeometryEntity::Circle(circle_obj) =>
+      circle_obj.scale(factors[0], y=factors[1], pt~)
+    GeometryEntity::Polygon(polygon_obj) =>
+      geometry_polygon(polygon_obj.scale(factors, pt~))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      poly_obj.scale(factors[0], y=factors[1], pt~)
+    GeometryEntity::Triangle(triangle_obj) =>
+      geometry_triangle(triangle_obj.scale(factors, pt~))
+    GeometryEntity::Parabola(parabola_obj) =>
+      geometry_parabola(parabola_obj.scale(factors, pt~))
+    GeometryEntity::Curve(curve_obj) =>
+      geometry_curve(curve_obj.scale(factors, pt~))
   }
 }
 
@@ -98,5 +175,17 @@ pub fn GeometryEntity::rotate(
       raise GeometryError::ValueError(
         "plane rotation is not implemented in the first geometry slice",
       )
+    GeometryEntity::Ellipse(ellipse_obj) => ellipse_obj.rotate(angle, pt~)
+    GeometryEntity::Circle(circle_obj) => circle_obj.rotate(angle, pt~)
+    GeometryEntity::Polygon(polygon_obj) =>
+      geometry_polygon(polygon_obj.rotate(angle, pt~))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      geometry_regular_polygon(poly_obj.rotate(angle, pt~))
+    GeometryEntity::Triangle(triangle_obj) =>
+      geometry_triangle(triangle_obj.rotate(angle, pt~))
+    GeometryEntity::Parabola(parabola_obj) =>
+      geometry_parabola(parabola_obj.rotate(angle, pt~))
+    GeometryEntity::Curve(curve_obj) =>
+      geometry_curve(curve_obj.rotate(angle, pt~))
   }
 }

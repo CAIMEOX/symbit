@@ -46,7 +46,7 @@ fn geometry_globals() -> @py.PyDict raise {
       "Point", "Point2D", "Point3D", "Line", "Line2D", "Line3D", "Ray", "Ray2D",
       "Ray3D", "Segment", "Segment2D", "Segment3D", "Plane", "intersection", "are_coplanar",
       "centroid", "Ellipse", "Circle", "Polygon", "RegularPolygon", "Triangle", "Parabola",
-      "Curve",
+      "Curve", "convex_hull", "closest_points", "farthest_points",
     ] {
     match geometry_mod.get_attr(name, print_err=false) {
       Some(obj) => globals.set(name, objenum_to_obj(obj))
@@ -182,7 +182,8 @@ pub fn geometry_summary(expr : String) -> String raise {
       "def _symbit_geometry_summary(obj):\n", "    if isinstance(obj, list):\n",
       "        return '[' + ', '.join(_symbit_geometry_summary(x) for x in obj) + ']'\n",
       "    if isinstance(obj, tuple):\n", "        return '(' + ', '.join(_symbit_geometry_summary(x) for x in obj) + ')'\n",
-      "    return repr(obj)\n",
+      "    if isinstance(obj, (set, frozenset)):\n", "        parts = sorted((_symbit_geometry_summary(x) for x in obj))\n",
+      "        return '{' + ', '.join(parts) + '}'\n", "    return repr(obj)\n",
     ].join("")
     ignore(
       match

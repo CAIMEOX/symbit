@@ -30,6 +30,13 @@ pub enum GeometryEntity {
   Ray(Ray)
   Segment(Segment)
   Plane(Plane)
+  Ellipse(Ellipse)
+  Circle(Circle)
+  Polygon(Polygon)
+  RegularPolygon(RegularPolygon)
+  Triangle(Triangle)
+  Parabola(Parabola)
+  Curve(Curve)
 } derive(Eq)
 
 ///|
@@ -493,7 +500,33 @@ pub fn Line::intersection(
   self : Line,
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
-  linear_intersection(GeometryEntity::Line(self), other)
+  match other {
+    GeometryEntity::Line(_)
+    | GeometryEntity::Ray(_)
+    | GeometryEntity::Segment(_) =>
+      linear_intersection(GeometryEntity::Line(self), other)
+    GeometryEntity::Plane(plane_obj) =>
+      plane_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      ellipse_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Circle(circle_obj) =>
+      circle_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Polygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Triangle(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Parabola(parabola_obj) =>
+      parabola_obj.intersection(GeometryEntity::Line(self))
+    GeometryEntity::Point(point_obj) =>
+      if self.contains(point_obj) {
+        [GeometryEntity::Point(point_obj.with_dim(self.ambient_dimension()))]
+      } else {
+        []
+      }
+    GeometryEntity::Curve(_) => []
+  }
 }
 
 ///|
@@ -581,7 +614,33 @@ pub fn Ray::intersection(
   self : Ray,
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
-  linear_intersection(GeometryEntity::Ray(self), other)
+  match other {
+    GeometryEntity::Line(_)
+    | GeometryEntity::Ray(_)
+    | GeometryEntity::Segment(_) =>
+      linear_intersection(GeometryEntity::Ray(self), other)
+    GeometryEntity::Plane(plane_obj) =>
+      plane_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      ellipse_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Circle(circle_obj) =>
+      circle_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Polygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Triangle(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Parabola(parabola_obj) =>
+      parabola_obj.intersection(GeometryEntity::Ray(self))
+    GeometryEntity::Point(point_obj) =>
+      if self.contains(point_obj) {
+        [GeometryEntity::Point(point_obj.with_dim(self.ambient_dimension()))]
+      } else {
+        []
+      }
+    GeometryEntity::Curve(_) => []
+  }
 }
 
 ///|
@@ -691,7 +750,33 @@ pub fn Segment::intersection(
   self : Segment,
   other : GeometryEntity,
 ) -> Array[GeometryEntity] raise GeometryError {
-  linear_intersection(GeometryEntity::Segment(self), other)
+  match other {
+    GeometryEntity::Line(_)
+    | GeometryEntity::Ray(_)
+    | GeometryEntity::Segment(_) =>
+      linear_intersection(GeometryEntity::Segment(self), other)
+    GeometryEntity::Plane(plane_obj) =>
+      plane_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      ellipse_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Circle(circle_obj) =>
+      circle_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Polygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Triangle(poly_obj) =>
+      poly_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Parabola(parabola_obj) =>
+      parabola_obj.intersection(GeometryEntity::Segment(self))
+    GeometryEntity::Point(point_obj) =>
+      if self.contains(point_obj) {
+        [GeometryEntity::Point(point_obj.with_dim(self.ambient_dimension()))]
+      } else {
+        []
+      }
+    GeometryEntity::Curve(_) => []
+  }
 }
 
 ///|
