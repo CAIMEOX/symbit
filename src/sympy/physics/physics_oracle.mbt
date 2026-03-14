@@ -477,7 +477,7 @@ fn physics_globals() -> @py.PyDict raise {
     name in [
       "jones_vector", "stokes_vector", "jones_2_stokes", "linear_polarizer", "phase_retarder",
       "half_wave_retarder", "quarter_wave_retarder", "transmissive_filter", "reflective_filter",
-      "polarizing_beam_splitter",
+      "mueller_matrix", "polarizing_beam_splitter",
     ] {
     try_bind_name(globals, optics_polarization_mod, name)
   }

@@ -20,10 +20,14 @@ test "physics.optics.waves: twave properties and rewrites" {
   guard wave.to_string() == "TWave(A, f, phi, 1/f, n)" else {
     fail("twave repr")
   }
+  guard wave.amplitude_expr() == amp else { fail("twave amplitude") }
   guard wave.frequency == freq else { fail("twave frequency") }
   guard wave.phase == phi else { fail("twave phase") }
   guard wave.time_period == (freq ^ @symcore.int(-1)) else {
     fail("twave period")
+  }
+  guard wave.refractive_index_expr() == @symcore.symbol("n") else {
+    fail("twave refractive index")
   }
   guard @symprint.to_string(wave.rewrite_as_cos()).contains("cos(") else {
     fail("twave rewrite cos")

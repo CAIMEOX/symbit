@@ -8,7 +8,7 @@ fn optics_matrix_assert_expr_equal(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(try! lhs.get(i, j))
-      guard ours == rhs[idx] else {
+      guard (try! @sympy_physics.expr_equal(ours, rhs[idx])) else {
         fail("\{context}[\{idx}]: ours=\{ours}; oracle=\{rhs[idx]}")
       }
       idx = idx + 1
@@ -37,5 +37,13 @@ test "physics.optics.polarization: core constructors" {
     try! reflective_filter(@symcore.int(1)),
     ["1", "0", "0", "-1"],
     "reflective",
+  )
+  try! optics_matrix_assert_expr_equal(
+    try! mueller_matrix(try! linear_polarizer()),
+    [
+      "1/2", "1/2", "0", "0", "1/2", "1/2", "0", "0", "0", "0", "0", "0", "0", "0",
+      "0", "0",
+    ],
+    "mueller linear polarizer theta=0",
   )
 }

@@ -17,6 +17,31 @@ test "physics.optics.waves: parity" {
     fail("twave repr parity")
   }
   waves_assert_expr_equal(
+    wave.amplitude_expr(),
+    try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).amplitude"),
+    "twave amplitude parity",
+  )
+  waves_assert_expr_equal(
+    wave.frequency_expr(),
+    try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).frequency"),
+    "twave frequency parity",
+  )
+  waves_assert_expr_equal(
+    wave.phase_expr(),
+    try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).phase"),
+    "twave phase parity",
+  )
+  waves_assert_expr_equal(
+    wave.time_period_expr(),
+    try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).time_period"),
+    "twave time_period parity",
+  )
+  waves_assert_expr_equal(
+    wave.refractive_index_expr(),
+    try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).n"),
+    "twave n parity",
+  )
+  waves_assert_expr_equal(
     wave.wavelength(),
     try! @sympy_physics.optics_waves_eval("TWave(A, f, phi).wavelength"),
     "twave wavelength parity",

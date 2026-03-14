@@ -8,7 +8,7 @@ fn optics_matrix_assert_expr_parity(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(try! lhs.get(i, j))
-      guard ours == rhs[idx] else {
+      guard (try! @sympy_physics.expr_equal(ours, rhs[idx])) else {
         fail("\{context}[\{idx}]: ours=\{ours}; oracle=\{rhs[idx]}")
       }
       idx = idx + 1
@@ -33,5 +33,12 @@ test "physics.optics.polarization: parity" {
       @symcore.int(0),
     ]),
     "stokes_vector parity",
+  )
+  try! optics_matrix_assert_expr_parity(
+    try! mueller_matrix(try! linear_polarizer(theta=@symcore.symbol("theta"))),
+    try! @sympy_physics.physics_eval_matrix(
+      "mueller_matrix(linear_polarizer(theta))",
+    ),
+    "mueller_matrix parity",
   )
 }

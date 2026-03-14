@@ -38,7 +38,7 @@ pub let deci : Prefix
 
 pub fn delta(Int, Int) -> Int
 
-pub fn deviation(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr
+pub fn deviation(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr raise PhysicsError
 
 pub fn dimension(String, symbol? : String?) -> Dimension
 
@@ -80,7 +80,7 @@ pub fn flat_refraction(@symcore.Expr, @symcore.Expr) -> RayTransferMatrix
 
 pub fn free_space(@symcore.Expr) -> RayTransferMatrix
 
-pub fn fresnel_coefficients(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> Array[@symcore.Expr]
+pub fn fresnel_coefficients(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> Array[@symcore.Expr] raise PhysicsError
 
 pub fn gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
 
@@ -162,6 +162,8 @@ pub fn mirror_formula(focal_length? : @symcore.Expr?, u? : @symcore.Expr?, v? : 
 
 pub fn msigma(Int) -> ExplicitMatrix raise PhysicsError
 
+pub fn mueller_matrix(ExplicitMatrix) -> ExplicitMatrix raise PhysicsError
+
 pub let nano : Prefix
 
 pub fn ncsymbol(String) -> @symcore.Expr
@@ -218,7 +220,7 @@ pub fn real_gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @s
 
 pub fn reflective_filter(@symcore.Expr) -> ExplicitMatrix raise PhysicsError
 
-pub fn refraction_angle(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr
+pub fn refraction_angle(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr raise PhysicsError
 
 pub fn refractive_index_of_medium(OpticsMediumArg) -> @symcore.Expr
 
@@ -406,9 +408,13 @@ pub struct TWave {
   time_period : @symcore.Expr
   n : @symcore.Expr
 }
+pub fn TWave::amplitude_expr(Self) -> @symcore.Expr
 pub fn TWave::angular_velocity(Self) -> @symcore.Expr
 pub fn TWave::as_expr(Self) -> @symcore.Expr
+pub fn TWave::frequency_expr(Self) -> @symcore.Expr
 pub fn TWave::neg(Self) -> Self raise PhysicsError
+pub fn TWave::phase_expr(Self) -> @symcore.Expr
+pub fn TWave::refractive_index_expr(Self) -> @symcore.Expr
 pub fn TWave::rewrite_as_cos(Self) -> @symcore.Expr
 pub fn TWave::rewrite_as_exp(Self) -> @symcore.Expr
 pub fn TWave::rewrite_as_pde(Self) -> @symcore.Expr
@@ -417,6 +423,7 @@ pub fn TWave::scale(Self, @symcore.Expr) -> Self raise PhysicsError
 pub fn TWave::speed(Self) -> @symcore.Expr
 pub fn TWave::sub(Self, Self) -> Self raise PhysicsError
 pub fn TWave::superpose(Self, Self) -> Self raise PhysicsError
+pub fn TWave::time_period_expr(Self) -> @symcore.Expr
 pub fn TWave::to_string(Self) -> String
 pub fn TWave::wavelength(Self) -> @symcore.Expr
 pub fn TWave::wavenumber(Self) -> @symcore.Expr

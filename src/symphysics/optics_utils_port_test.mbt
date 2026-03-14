@@ -12,7 +12,7 @@ test "physics.optics.utils: parity" {
   let c = @symcore.symbol("c")
 
   try! optics_assert_expr_equal(
-    refraction_angle(
+    try! refraction_angle(
       theta,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
@@ -21,7 +21,7 @@ test "physics.optics.utils: parity" {
     "refraction_angle parity",
   )
   try! optics_assert_expr_list_equal(
-    fresnel_coefficients(
+    try! fresnel_coefficients(
       theta,
       optics_index_arg(one),
       optics_index_arg(four_thirds),
@@ -43,13 +43,29 @@ test "physics.optics.utils: parity" {
     "fresnel_coefficients parity",
   )
   try! optics_assert_expr_equal(
-    deviation(
+    try! deviation(
       small_angle,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
     ),
     try! @sympy_physics.optics_utils_eval("deviation(0.1, 6/5, 3/2)"),
     "deviation parity",
+  )
+  try! optics_assert_expr_list_equal(
+    try! fresnel_coefficients(
+      test_pi_expr() * test_rational_expr(3, 10),
+      optics_index_arg(@symcore.int(2)),
+      optics_index_arg(@symcore.int(1)),
+    ),
+    [
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(3*pi/10, 2, 1)[0]",
+      ),
+      try! @sympy_physics.optics_utils_eval(
+        "fresnel_coefficients(3*pi/10, 2, 1)[1]",
+      ),
+    ],
+    "fresnel_coefficients tir parity",
   )
   try! optics_assert_expr_equal(
     brewster_angle(optics_index_arg(one), optics_index_arg(four_thirds)),

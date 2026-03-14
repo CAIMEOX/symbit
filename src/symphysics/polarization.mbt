@@ -131,6 +131,49 @@ pub fn reflective_filter(
 }
 
 ///|
+pub fn mueller_matrix(j : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
+  guard j.height() == 2 && j.width() == 2 else {
+    raise PhysicsError::ShapeError("mueller_matrix expects a 2x2 Jones matrix")
+  }
+  let i = i_expr()
+  let half = rational_expr(1, 2)
+  let a = try! j.get(0, 0)
+  let b = try! j.get(0, 1)
+  let c = try! j.get(1, 0)
+  let d = try! j.get(1, 1)
+  let ac = @symelem.conjugate(a)
+  let bc = @symelem.conjugate(b)
+  let cc = @symelem.conjugate(c)
+  let dc = @symelem.conjugate(d)
+  explicit_matrix_from_rows([
+    [
+      half * (a * ac + b * bc + c * cc + d * dc),
+      half * (a * ac - b * bc + c * cc - d * dc),
+      half * (a * bc + b * ac + c * dc + d * cc),
+      half * i * (a * bc - b * ac + c * dc - d * cc),
+    ],
+    [
+      half * (a * ac + b * bc - c * cc - d * dc),
+      half * (a * ac - b * bc - c * cc + d * dc),
+      half * (a * bc + b * ac - c * dc - d * cc),
+      half * i * (a * bc - b * ac - c * dc + d * cc),
+    ],
+    [
+      half * (a * cc + b * dc + c * ac + d * bc),
+      half * (a * cc - b * dc + c * ac - d * bc),
+      half * (a * dc + b * cc + c * bc + d * ac),
+      half * i * (a * dc - b * cc + c * bc - d * ac),
+    ],
+    [
+      half * i * (@symcore.int(-1) * a * cc - b * dc + c * ac + d * bc),
+      half * i * (@symcore.int(-1) * a * cc + b * dc + c * ac - d * bc),
+      half * i * (@symcore.int(-1) * a * dc - b * cc + c * bc + d * ac),
+      half * (a * dc - b * cc - c * bc + d * ac),
+    ],
+  ])
+}
+
+///|
 pub fn polarizing_beam_splitter(
   tp? : @symcore.Expr = @symcore.int(1),
   rs? : @symcore.Expr = @symcore.int(1),

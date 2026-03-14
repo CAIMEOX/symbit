@@ -95,6 +95,31 @@ pub fn TWave::to_string(self : TWave) -> String {
 }
 
 ///|
+pub fn TWave::amplitude_expr(self : TWave) -> @symcore.Expr {
+  self.amplitude
+}
+
+///|
+pub fn TWave::frequency_expr(self : TWave) -> @symcore.Expr {
+  self.frequency
+}
+
+///|
+pub fn TWave::phase_expr(self : TWave) -> @symcore.Expr {
+  self.phase
+}
+
+///|
+pub fn TWave::time_period_expr(self : TWave) -> @symcore.Expr {
+  self.time_period
+}
+
+///|
+pub fn TWave::refractive_index_expr(self : TWave) -> @symcore.Expr {
+  self.n
+}
+
+///|
 pub fn TWave::wavelength(self : TWave) -> @symcore.Expr {
   speed_of_light * ((self.frequency * self.n) ^ @symcore.int(-1))
 }

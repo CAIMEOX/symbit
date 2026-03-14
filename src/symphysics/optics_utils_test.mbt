@@ -55,7 +55,7 @@ test "physics.optics.utils: scalar formulas" {
   let c = @symcore.symbol("c")
 
   try! optics_assert_expr_equal(
-    refraction_angle(
+    try! refraction_angle(
       theta,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
@@ -63,16 +63,16 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5)",
     "refraction_angle",
   )
-  guard fresnel_coefficients(
+  guard (try! fresnel_coefficients(
       theta,
       optics_index_arg(one),
       optics_index_arg(four_thirds),
-    ).length() ==
+    )).length() ==
     4 else {
     fail("fresnel_coefficients length")
   }
   try! optics_assert_expr_equal(
-    deviation(
+    try! deviation(
       theta,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
@@ -80,6 +80,14 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5) - pi/6",
     "deviation",
   )
+  guard (try! fresnel_coefficients(
+      test_pi_expr() * test_rational_expr(3, 10),
+      optics_index_arg(@symcore.int(2)),
+      optics_index_arg(@symcore.int(1)),
+    )).length() ==
+    2 else {
+    fail("fresnel_coefficients tir length")
+  }
   try! optics_assert_expr_equal(
     brewster_angle(optics_index_arg(one), optics_index_arg(four_thirds)),
     "atan(4/3)",
