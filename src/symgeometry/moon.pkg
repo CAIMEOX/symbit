@@ -1,0 +1,13 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symsimplify",
+}
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/geometry" @sympy_geometry,
+} for "test"

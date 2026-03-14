@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/geometry"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn geometry_eval_repr(String) -> String raise
+
+pub fn geometry_eval_str(String) -> String raise
+
+pub fn geometry_expr_equal(String, String) -> Bool raise
+
+pub fn geometry_summary(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

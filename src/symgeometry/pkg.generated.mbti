@@ -1,0 +1,183 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symgeometry"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn are_coplanar(Array[GeometryEntity]) -> Bool raise GeometryError
+
+pub fn are_coplanar_points(Array[Point]) -> Bool raise GeometryError
+
+pub fn centroid(Array[Point]) -> Point? raise GeometryError
+
+pub fn find(String, @symcore.Expr) -> @symcore.Expr raise GeometryError
+
+pub fn geometry_line(Line) -> GeometryEntity
+
+pub fn geometry_plane(Plane) -> GeometryEntity
+
+pub fn geometry_point(Point) -> GeometryEntity
+
+pub fn geometry_ray(Ray) -> GeometryEntity
+
+pub fn geometry_segment(Segment) -> GeometryEntity
+
+pub fn intersection(GeometryEntity, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+
+pub fn line(Point, Point) -> Line raise GeometryError
+
+pub fn ordered_points(Array[Point]) -> Array[Point]
+
+pub fn plane_from_normal(Point, Array[@symcore.Expr]) -> Plane raise GeometryError
+
+pub fn plane_from_points(Point, Point, Point) -> Plane raise GeometryError
+
+pub fn point(Array[@symcore.Expr], dim? : Int) -> Point raise GeometryError
+
+pub fn point2d(@symcore.Expr, @symcore.Expr) -> Point raise GeometryError
+
+pub fn point3d(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Point raise GeometryError
+
+pub fn point_are_collinear(Array[Point]) -> Bool raise GeometryError
+
+pub fn point_are_coplanar(Array[Point]) -> Bool raise GeometryError
+
+pub fn point_origin(Int) -> Point raise GeometryError
+
+pub fn ray(Point, Point) -> Ray raise GeometryError
+
+pub fn segment(Point, Point) -> Segment raise GeometryError
+
+// Errors
+pub suberror GeometryError {
+  ValueError(String)
+  TypeError(String)
+  Undecidable(String)
+}
+pub impl Eq for GeometryError
+pub impl Show for GeometryError
+
+// Types and methods
+pub enum GeometryEntity {
+  Point(Point)
+  Line(Line)
+  Ray(Ray)
+  Segment(Segment)
+  Plane(Plane)
+}
+pub fn GeometryEntity::ambient_dimension(Self) -> Int
+pub fn GeometryEntity::repr(Self) -> String raise GeometryError
+pub fn GeometryEntity::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
+pub fn GeometryEntity::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
+pub fn GeometryEntity::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub impl Eq for GeometryEntity
+
+pub struct Line {
+  p1_ : Point
+  p2_ : Point
+}
+pub fn Line::ambient_dimension(Self) -> Int
+pub fn Line::angle_between(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
+pub fn Line::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
+pub fn Line::contains(Self, Point) -> Bool raise GeometryError
+pub fn Line::direction(Self) -> Point
+pub fn Line::distance(Self, Point) -> @symcore.Expr raise GeometryError
+pub fn Line::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+pub fn Line::is_parallel(Self, GeometryEntity) -> Bool raise GeometryError
+pub fn Line::is_perpendicular(Self, GeometryEntity) -> Bool raise GeometryError
+pub fn Line::p1(Self) -> Point
+pub fn Line::p2(Self) -> Point
+pub fn Line::repr(Self) -> String raise GeometryError
+pub fn Line::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
+pub fn Line::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
+pub fn Line::smallest_angle_between(Self, GeometryEntity) -> @symcore.Expr raise GeometryError
+pub fn Line::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub impl Eq for Line
+
+pub struct Plane {
+  point_ : Point
+  normal_ : Array[@symcore.Expr]
+}
+pub fn Plane::contains(Self, GeometryEntity) -> Bool raise GeometryError
+pub fn Plane::contains_point(Self, Point) -> Bool raise GeometryError
+pub fn Plane::distance(Self, Point) -> @symcore.Expr raise GeometryError
+pub fn Plane::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
+pub fn Plane::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+pub fn Plane::normal_vector(Self) -> Array[@symcore.Expr]
+pub fn Plane::point(Self) -> Point
+pub fn Plane::projection(Self, Point) -> Point raise GeometryError
+pub fn Plane::repr(Self) -> String
+pub fn Plane::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
+pub fn Plane::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub impl Eq for Plane
+
+pub struct Point {
+  coords_ : Array[@symcore.Expr]
+}
+pub fn Point::abs(Self) -> @symcore.Expr raise GeometryError
+pub fn Point::ambient_dimension(Self) -> Int
+pub fn Point::coords(Self) -> Array[@symcore.Expr]
+pub fn Point::distance(Self, Self) -> @symcore.Expr raise GeometryError
+pub fn Point::dot(Self, Self) -> @symcore.Expr raise GeometryError
+pub fn Point::get(Self, Int) -> @symcore.Expr raise GeometryError
+pub fn Point::is_collinear(Self, Array[Self]) -> Bool raise GeometryError
+pub fn Point::is_zero(Self) -> Bool
+pub fn Point::len(Self) -> Int
+pub fn Point::midpoint(Self, Self) -> Self raise GeometryError
+pub fn Point::mul(Self, @symcore.Expr) -> Self
+pub fn Point::repr(Self) -> String
+pub fn Point::rotate(Self, @symcore.Expr, pt? : Self?) -> Self raise GeometryError
+pub fn Point::scale(Self, Array[@symcore.Expr], pt? : Self?) -> Self raise GeometryError
+pub fn Point::subs(Self, Map[String, @symcore.Expr]) -> Self
+pub fn Point::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub fn Point::truediv(Self, @symcore.Expr) -> Self
+pub fn Point::with_dim(Self, Int) -> Self raise GeometryError
+pub fn Point::x(Self) -> @symcore.Expr raise GeometryError
+pub fn Point::y(Self) -> @symcore.Expr raise GeometryError
+pub fn Point::z(Self) -> @symcore.Expr raise GeometryError
+pub impl Add for Point
+pub impl Eq for Point
+pub impl Sub for Point
+
+pub struct Ray {
+  p1_ : Point
+  p2_ : Point
+}
+pub fn Ray::ambient_dimension(Self) -> Int
+pub fn Ray::contains(Self, Point) -> Bool raise GeometryError
+pub fn Ray::direction(Self) -> Point
+pub fn Ray::distance(Self, Point) -> @symcore.Expr raise GeometryError
+pub fn Ray::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+pub fn Ray::p1(Self) -> Point
+pub fn Ray::p2(Self) -> Point
+pub fn Ray::repr(Self) -> String raise GeometryError
+pub fn Ray::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
+pub fn Ray::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
+pub fn Ray::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub impl Eq for Ray
+
+pub struct Segment {
+  p1_ : Point
+  p2_ : Point
+}
+pub fn Segment::ambient_dimension(Self) -> Int
+pub fn Segment::contains(Self, Point) -> Bool raise GeometryError
+pub fn Segment::direction(Self) -> Point
+pub fn Segment::distance(Self, Point) -> @symcore.Expr raise GeometryError
+pub fn Segment::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+pub fn Segment::length(Self) -> @symcore.Expr raise GeometryError
+pub fn Segment::midpoint(Self) -> Point raise GeometryError
+pub fn Segment::p1(Self) -> Point
+pub fn Segment::p2(Self) -> Point
+pub fn Segment::repr(Self) -> String raise GeometryError
+pub fn Segment::rotate(Self, @symcore.Expr, pt? : Point?) -> Self raise GeometryError
+pub fn Segment::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
+pub fn Segment::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
+pub impl Eq for Segment
+
+// Type aliases
+
+// Traits
+
