@@ -11,6 +11,10 @@ pub fn clebsch_gordan(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr
 
 pub fn coherent_state(@symcore.Expr, @symcore.Expr) -> String raise
 
+pub fn continuum_exec_stdout(String) -> String raise
+
+pub fn control_exec_stdout(String) -> String raise
+
 pub fn control_expr_equivalent(@symcore.Expr, String) -> Bool raise
 
 pub fn control_routh_auxiliary_expr(@symcore.Expr, @symcore.Expr, Int) -> String raise
@@ -47,11 +51,23 @@ pub fn hydrogen_z_lm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)
 
 pub fn mdft(Int) -> Array[String] raise
 
+pub fn mechanics_eval(String) -> String raise
+
+pub fn mechanics_expr_equal(String, String) -> Bool raise
+
+pub fn mechanics_matrix_equal(String, String) -> Bool raise
+
+pub fn mechanics_summary(String) -> String raise
+
 pub fn mgamma(Int, lower? : Bool) -> Array[String] raise
 
 pub fn minkowski_tensor() -> Array[String] raise
 
 pub fn msigma(Int) -> Array[String] raise
+
+pub fn optics_gaussopt_eval(String) -> String raise
+
+pub fn optics_gaussopt_matrix(String) -> Array[String] raise
 
 pub fn optics_medium_property(String, String, permittivity? : @symcore.Expr?, permeability? : @symcore.Expr?, n? : @symcore.Expr?) -> String raise
 
@@ -77,6 +93,8 @@ pub fn physics_eval_str(String) -> String raise
 
 pub fn physics_expr_equivalent(@symcore.Expr, String) -> Bool raise
 
+pub fn physics_expr_srepr(@symcore.Expr) -> String raise
+
 pub fn physics_expr_str(@symcore.Expr) -> String raise
 
 pub fn physics_srepr(String) -> String raise
@@ -89,6 +107,8 @@ pub fn quantum_cg_expr(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Exp
 
 pub fn quantum_cg_simp(String) -> String raise
 
+pub fn quantum_circuitplot_summary(String, Int, labels? : Array[String]) -> String raise
+
 pub fn quantum_circuitutils_convert_to_real(String, String) -> String raise
 
 pub fn quantum_circuitutils_convert_to_symbolic(String) -> Array[String] raise
@@ -98,6 +118,10 @@ pub fn quantum_circuitutils_find_subcircuit(String, String, start? : Int, end? :
 pub fn quantum_circuitutils_kmp_table(String) -> Array[String] raise
 
 pub fn quantum_circuitutils_replace_subcircuit(String, String, replace? : String?, pos? : Int) -> String raise
+
+pub fn quantum_create_cgate_str(String, Array[Int], Int, latexname? : String?) -> String raise
+
+pub fn quantum_create_one_qubit_gate_str(String, Int, latexname? : String?) -> String raise
 
 pub fn quantum_decompose_str(String) -> String raise
 
@@ -151,6 +175,8 @@ pub fn quantum_integrate_result_str(String, String, basis? : String?, unities? :
 
 pub fn quantum_kind_str(String) -> String raise
 
+pub fn quantum_labeller(Int, symbol? : String) -> Array[String] raise
+
 pub fn quantum_matrixcache_matrix(String) -> Array[String] raise
 
 pub fn quantum_measure_all_oneshot_str(String, Double) -> String raise
@@ -159,9 +185,9 @@ pub fn quantum_measure_partial_oneshot_str(String, Array[Int], Double) -> String
 
 pub fn quantum_normal_order_str(String, ordered_form? : Bool, independent? : Bool) -> String raise
 
-pub fn quantum_qapply_srepr(String, dagger? : Bool, ip_doit? : Bool) -> String raise
+pub fn quantum_qapply_srepr(String, dagger? : Bool, ip_doit? : Bool, sum_doit? : Bool) -> String raise
 
-pub fn quantum_qapply_str(String, dagger? : Bool, ip_doit? : Bool) -> String raise
+pub fn quantum_qapply_str(String, dagger? : Bool, ip_doit? : Bool, sum_doit? : Bool) -> String raise
 
 pub fn quantum_qasm_circuit(Array[String]) -> String raise
 
@@ -176,6 +202,8 @@ pub fn quantum_qasm_labels(Array[String]) -> Array[String] raise
 pub fn quantum_qasm_stripquotes(String) -> String raise
 
 pub fn quantum_qasm_trim(String) -> String raise
+
+pub fn quantum_render_label(String, init? : String?) -> String raise
 
 pub fn quantum_rep_expectation_str(String, basis? : String?) -> String raise
 
@@ -210,6 +238,28 @@ pub fn r_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Strin
 pub fn racah(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
 
 pub fn real_gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn secondquant_apply_str(String) -> String raise
+
+pub fn secondquant_basis_str(String) -> String raise
+
+pub fn secondquant_eval_str(String) -> String raise
+
+pub fn secondquant_matrix_rows(String, String) -> Array[String] raise
+
+pub fn secondquant_normal_order_str(String) -> String raise
+
+pub fn vector_bool(String) -> Bool raise
+
+pub fn vector_eval(String) -> String raise
+
+pub fn vector_expr_equal(String, String) -> Bool raise
+
+pub fn vector_matrix_equal(String, String) -> Bool raise
+
+pub fn vector_matrix_rows(String) -> Array[String] raise
+
+pub fn vector_summary(String) -> String raise
 
 pub fn wavefunction(@symcore.Expr, @symcore.Expr) -> String raise
 

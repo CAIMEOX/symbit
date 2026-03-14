@@ -317,6 +317,11 @@ fn physics_globals() -> @py.PyDict raise {
     Some(v) => v
     None => fail("python-missing:sympy.physics.optics.utils")
   }
+  let optics_gaussopt_mod = match
+    @py.pyimport("sympy.physics.optics.gaussopt") {
+    Some(v) => v
+    None => fail("python-missing:sympy.physics.optics.gaussopt")
+  }
   let optics_polarization_mod = match
     @py.pyimport("sympy.physics.optics.polarization") {
     Some(v) => v
@@ -458,6 +463,15 @@ fn physics_globals() -> @py.PyDict raise {
       "hyperfocal_distance", "transverse_magnification",
     ] {
     try_bind_name(globals, optics_utils_mod, name)
+  }
+  for
+    name in [
+      "RayTransferMatrix", "FreeSpace", "FlatRefraction", "CurvedRefraction", "FlatMirror",
+      "CurvedMirror", "ThinLens", "GeometricRay", "BeamParameter", "waist2rayleigh",
+      "rayleigh2waist", "geometric_conj_ab", "geometric_conj_af", "geometric_conj_bf",
+      "gaussian_conj", "conjugate_gauss_beams",
+    ] {
+    try_bind_name(globals, optics_gaussopt_mod, name)
   }
   for
     name in [
@@ -3001,6 +3015,31 @@ pub fn optics_waves_eval(expr : String) -> String raise {
       "print(", expr, ")\n",
     ].join(""),
   )
+}
+
+///|
+pub fn optics_gaussopt_eval(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      "from sympy import *\n", "from sympy.physics.optics.gaussopt import *\n", "d, f, h, angle, n1, n2, R, w, wavelen, z_r, a, b, s_in, z_r_in, l, w_i, w_o, z, w_0 = symbols('d f h angle n1 n2 R w wavelen z_r a b s_in z_r_in l w_i w_o z w_0')\n",
+      "print(", expr, ")\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn optics_gaussopt_matrix(expr : String) -> Array[String] raise {
+  let txt = python_subprocess_stdout(
+    [
+      "from sympy import *\n", "from sympy.physics.optics.gaussopt import *\n", "d, f, h, angle, n1, n2, R, w, wavelen, z_r, a, b, s_in, z_r_in, l, w_i, w_o, z, w_0 = symbols('d f h angle n1 n2 R w wavelen z_r a b s_in z_r_in l w_i w_o z w_0')\n",
+      "obj = ", expr, "\n", "print(chr(31).join(str(c) for row in obj.tolist() for c in row))\n",
+    ].join(""),
+  )
+  if txt == "" {
+    []
+  } else {
+    txt.split("\u001f").to_array().map(StringView::to_string)
+  }
 }
 
 ///|

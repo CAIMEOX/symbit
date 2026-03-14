@@ -3,6 +3,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symfunctions/combinatorial" @symcomb,
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symfunctions/special" @symspec,

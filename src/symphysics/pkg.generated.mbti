@@ -1,0 +1,428 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub let ampere : Quantity
+
+pub let atto : Prefix
+
+pub fn beam_parameter(@symcore.Expr, @symcore.Expr, z_r? : @symcore.Expr?, w? : @symcore.Expr?, n? : @symcore.Expr) -> BeamParameter raise PhysicsError
+
+pub let bin_prefixes : Map[String, Prefix]
+
+pub fn brewster_angle(OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr
+
+pub let centi : Prefix
+
+pub fn clebsch_gordan(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn coherent_state(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn conjugate_gauss_beams(@symcore.Expr, @symcore.Expr, @symcore.Expr, f? : @symcore.Expr?) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PhysicsError
+
+pub fn critical_angle(OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr raise PhysicsError
+
+pub let current : Dimension
+
+pub fn curved_mirror(@symcore.Expr) -> RayTransferMatrix
+
+pub fn curved_refraction(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> RayTransferMatrix
+
+pub let deca : Prefix
+
+pub let deci : Prefix
+
+pub fn delta(Int, Int) -> Int
+
+pub fn deviation(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr
+
+pub fn dimension(String, symbol? : String?) -> Dimension
+
+pub let dimensionless : Dimension
+
+pub fn dot_rot_grad_ynm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub let e0 : @symcore.Expr
+
+pub fn e_n(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn e_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn energy(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn epsilon(Int, Int, Int) -> Int
+
+pub fn evaluate_pauli_product(@symcore.Expr) -> @symcore.Expr
+
+pub let exa : Prefix
+
+pub let exbi : Prefix
+
+pub fn explicit_matrix_eye(Int) -> ExplicitMatrix
+
+pub fn explicit_matrix_from_ints(Array[Array[Int]]) -> ExplicitMatrix
+
+pub fn explicit_matrix_from_rows(Array[Array[@symcore.Expr]]) -> ExplicitMatrix raise PhysicsError
+
+pub fn explicit_matrix_rows_string(ExplicitMatrix) -> String
+
+pub fn explicit_matrix_zeros(Int, Int) -> ExplicitMatrix
+
+pub let femto : Prefix
+
+pub fn flat_mirror() -> RayTransferMatrix
+
+pub fn flat_refraction(@symcore.Expr, @symcore.Expr) -> RayTransferMatrix
+
+pub fn free_space(@symcore.Expr) -> RayTransferMatrix
+
+pub fn fresnel_coefficients(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> Array[@symcore.Expr]
+
+pub fn gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn gaussian_conj(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+
+pub fn geometric_conj_ab(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn geometric_conj_af(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn geometric_conj_bf(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn geometric_ray(@symcore.Expr, @symcore.Expr) -> GeometricRay
+
+pub fn geometric_ray_from_matrix(ExplicitMatrix) -> GeometricRay raise PhysicsError
+
+pub let gibi : Prefix
+
+pub let giga : Prefix
+
+pub fn half_wave_retarder(@symcore.Expr) -> ExplicitMatrix
+
+pub let hbar : @symcore.Expr
+
+pub let hecto : Prefix
+
+pub fn hydrogen_e_nl(@symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn hydrogen_e_nl_dirac(@symcore.Expr, @symcore.Expr, spin_up? : Bool, z? : @symcore.Expr, c? : @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn hydrogen_psi_nlm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn hydrogen_r_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
+
+pub fn hydrogen_y_lm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hydrogen_z_lm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hyperfocal_distance(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn jones_2_stokes(ExplicitMatrix) -> ExplicitMatrix raise PhysicsError
+
+pub fn jones_vector(@symcore.Expr, @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub let kibi : Prefix
+
+pub let kilo : Prefix
+
+pub let kilogram : Quantity
+
+pub let length : Dimension
+
+pub fn lens_formula(focal_length? : @symcore.Expr?, u? : @symcore.Expr?, v? : @symcore.Expr?) -> @symcore.Expr raise PhysicsError
+
+pub fn lens_makers_formula(OpticsMediumArg, OpticsMediumArg, @symcore.Expr, @symcore.Expr, d? : @symcore.Expr) -> @symcore.Expr
+
+pub fn linear_polarizer(theta? : @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub let mass : Dimension
+
+pub fn mdft(Int) -> ExplicitMatrix raise PhysicsError
+
+pub let mebi : Prefix
+
+pub fn medium(String, permittivity? : @symcore.Expr?, permeability? : @symcore.Expr?, n? : @symcore.Expr?) -> Medium raise PhysicsError
+
+pub let mega : Prefix
+
+pub let meter : Quantity
+
+pub fn mgamma(Int, lower? : Bool) -> ExplicitMatrix raise PhysicsError
+
+pub let micro : Prefix
+
+pub let milli : Prefix
+
+pub let minkowski_tensor : ExplicitMatrix
+
+pub fn mirror_formula(focal_length? : @symcore.Expr?, u? : @symcore.Expr?, v? : @symcore.Expr?) -> @symcore.Expr raise PhysicsError
+
+pub fn msigma(Int) -> ExplicitMatrix raise PhysicsError
+
+pub let nano : Prefix
+
+pub fn ncsymbol(String) -> @symcore.Expr
+
+pub fn optics_index_arg(@symcore.Expr) -> OpticsMediumArg
+
+pub fn optics_medium_arg(Medium) -> OpticsMediumArg
+
+pub fn pat_matrix(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> ExplicitMatrix
+
+pub fn pauli(Int, label? : String) -> @symcore.Expr raise PhysicsError
+
+pub fn pauli_mul(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn pauli_power(@symcore.Expr, Int) -> @symcore.Expr
+
+pub fn pauli_product(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub let pebi : Prefix
+
+pub let peta : Prefix
+
+pub fn phase_retarder(theta? : @symcore.Expr, delta? : @symcore.Expr) -> ExplicitMatrix
+
+pub let pico : Prefix
+
+pub fn polarizing_beam_splitter(tp? : @symcore.Expr, rs? : @symcore.Expr, ts? : @symcore.Expr, rp? : @symcore.Expr, phia? : @symcore.Expr, phib? : @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub fn prefix(String, String, Int, base? : Int, latex_repr? : String?) -> Prefix
+
+pub fn prefix_unit(Quantity, Map[String, Prefix]) -> Array[Quantity]
+
+pub fn prefix_value_to_string(PrefixValue) -> String
+
+pub let prefixes : Map[String, Prefix]
+
+pub fn psi_n(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn quantity(String, abbrev? : String, dimension? : Dimension, scale_factor? : @symcore.Expr, is_prefixed? : Bool) -> Quantity
+
+pub fn quarter_wave_retarder(@symcore.Expr) -> ExplicitMatrix
+
+pub fn r_nl(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn racah(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn ray_transfer_matrix(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> RayTransferMatrix
+
+pub fn ray_transfer_matrix_from_matrix(ExplicitMatrix) -> RayTransferMatrix raise PhysicsError
+
+pub fn rayleigh2waist(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn real_gaunt(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn reflective_filter(@symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub fn refraction_angle(@symcore.Expr, OpticsMediumArg, OpticsMediumArg) -> @symcore.Expr
+
+pub fn refractive_index_of_medium(OpticsMediumArg) -> @symcore.Expr
+
+pub let second : Quantity
+
+pub let speed_of_light : @symcore.Expr
+
+pub fn stokes_vector(@symcore.Expr, @symcore.Expr, p? : @symcore.Expr, intensity? : @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub fn t_wave(@symcore.Expr, frequency? : @symcore.Expr?, phase? : @symcore.Expr, time_period? : @symcore.Expr?, n? : @symcore.Expr) -> TWave raise PhysicsError
+
+pub let tebi : Prefix
+
+pub fn tensor_product(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub let tera : Prefix
+
+pub fn thin_lens(@symcore.Expr) -> RayTransferMatrix
+
+pub let time_dimension : Dimension
+
+pub fn transmissive_filter(@symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub fn transverse_magnification(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub let u0 : @symcore.Expr
+
+pub fn waist2rayleigh(@symcore.Expr, @symcore.Expr, n? : @symcore.Expr) -> @symcore.Expr
+
+pub let watt : Quantity
+
+pub fn wavefunction(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn wigner_3j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn wigner_6j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn wigner_9j(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PhysicsError
+
+pub fn wigner_d(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub fn wigner_d_small(@symcore.Expr, @symcore.Expr) -> ExplicitMatrix raise PhysicsError
+
+pub let yocto : Prefix
+
+pub let yotta : Prefix
+
+pub let zepto : Prefix
+
+pub let zetta : Prefix
+
+// Errors
+pub(all) suberror PhysicsError {
+  ValueError(String)
+  IndexError(String)
+  ShapeError(String)
+}
+pub impl Eq for PhysicsError
+pub impl Show for PhysicsError
+
+// Types and methods
+pub struct BeamParameter {
+  wavelen_ : @symcore.Expr
+  z_ : @symcore.Expr
+  z_r_ : @symcore.Expr
+  n_ : @symcore.Expr
+}
+pub fn BeamParameter::divergence(Self) -> @symcore.Expr
+pub fn BeamParameter::gouy(Self) -> @symcore.Expr
+pub fn BeamParameter::n(Self) -> @symcore.Expr
+pub fn BeamParameter::q(Self) -> @symcore.Expr
+pub fn BeamParameter::radius(Self) -> @symcore.Expr
+pub fn BeamParameter::to_string(Self) -> String
+pub fn BeamParameter::w(Self) -> @symcore.Expr
+pub fn BeamParameter::w_0(Self) -> @symcore.Expr
+pub fn BeamParameter::waist_approximation_limit(Self) -> @symcore.Expr
+pub fn BeamParameter::wavelen(Self) -> @symcore.Expr
+pub fn BeamParameter::z(Self) -> @symcore.Expr
+pub fn BeamParameter::z_r(Self) -> @symcore.Expr
+pub impl Eq for BeamParameter
+
+pub struct Dimension {
+  name : @symcore.Expr
+  symbol : String?
+}
+pub fn Dimension::add(Self, Self) -> Self raise PhysicsError
+pub fn Dimension::div(Self, Self) -> Self
+pub fn Dimension::mul(Self, Self) -> Self
+pub fn Dimension::pow(Self, Int) -> Self
+pub impl Eq for Dimension
+
+pub struct ExplicitMatrix {
+  rows : Array[Array[@symcore.Expr]]
+}
+pub fn ExplicitMatrix::add(Self, Self) -> Self raise PhysicsError
+pub fn ExplicitMatrix::get(Self, Int, Int) -> @symcore.Expr raise PhysicsError
+pub fn ExplicitMatrix::height(Self) -> Int
+pub fn ExplicitMatrix::map(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
+pub fn ExplicitMatrix::mul(Self, Self) -> Self raise PhysicsError
+pub fn ExplicitMatrix::neg(Self) -> Self
+pub fn ExplicitMatrix::scale(Self, @symcore.Expr) -> Self
+pub fn ExplicitMatrix::sub(Self, Self) -> Self raise PhysicsError
+pub fn ExplicitMatrix::transpose(Self) -> Self
+pub fn ExplicitMatrix::width(Self) -> Int
+pub impl Eq for ExplicitMatrix
+
+pub struct GeometricRay {
+  matrix_ : ExplicitMatrix
+}
+pub fn GeometricRay::angle(Self) -> @symcore.Expr
+pub fn GeometricRay::height(Self) -> @symcore.Expr
+pub fn GeometricRay::matrix(Self) -> ExplicitMatrix
+pub fn GeometricRay::to_string(Self) -> String
+pub impl Eq for GeometricRay
+
+pub enum Medium {
+  MediumN(String, @symcore.Expr)
+  MediumPP(String, @symcore.Expr, @symcore.Expr)
+}
+pub fn Medium::intrinsic_impedance(Self) -> @symcore.Expr raise PhysicsError
+pub fn Medium::n(Self) -> @symcore.Expr
+pub fn Medium::name(Self) -> String
+pub fn Medium::permeability(Self) -> @symcore.Expr raise PhysicsError
+pub fn Medium::permittivity(Self) -> @symcore.Expr raise PhysicsError
+pub fn Medium::refractive_index(Self) -> @symcore.Expr
+pub fn Medium::speed(Self) -> @symcore.Expr
+pub impl Eq for Medium
+
+pub enum OpticsMediumArg {
+  Medium(Medium)
+  Index(@symcore.Expr)
+}
+pub impl Eq for OpticsMediumArg
+
+pub struct Prefix {
+  name : String
+  abbrev : String
+  exponent : Int
+  base : Int
+  latex_repr : String?
+}
+pub fn Prefix::div_prefix(Self, Self) -> PrefixValue
+pub fn Prefix::div_quantity(Self, Quantity) -> @symcore.Expr
+pub fn Prefix::mul_prefix(Self, Self) -> PrefixValue
+pub fn Prefix::mul_quantity(Self, Quantity) -> @symcore.Expr
+pub fn Prefix::rdiv_one(Self) -> PrefixValue
+pub fn Prefix::scale_factor(Self) -> @symcore.Expr
+pub impl Eq for Prefix
+
+pub enum PrefixValue {
+  Prefix(Prefix)
+  Expr(@symcore.Expr)
+}
+pub impl Eq for PrefixValue
+
+pub struct Quantity {
+  name : String
+  abbrev : String
+  dimension : Dimension
+  scale_factor : @symcore.Expr
+  is_prefixed : Bool
+}
+pub fn Quantity::symbol_expr(Self) -> @symcore.Expr
+pub fn Quantity::with_scale(Self, @symcore.Expr) -> Self
+pub impl Eq for Quantity
+
+pub struct RayTransferMatrix {
+  matrix_ : ExplicitMatrix
+}
+pub fn RayTransferMatrix::a(Self) -> @symcore.Expr
+pub fn RayTransferMatrix::apply_beam(Self, BeamParameter) -> BeamParameter raise PhysicsError
+pub fn RayTransferMatrix::apply_geometric_ray(Self, GeometricRay) -> GeometricRay raise PhysicsError
+pub fn RayTransferMatrix::apply_matrix(Self, Self) -> Self raise PhysicsError
+pub fn RayTransferMatrix::b(Self) -> @symcore.Expr
+pub fn RayTransferMatrix::c(Self) -> @symcore.Expr
+pub fn RayTransferMatrix::d(Self) -> @symcore.Expr
+pub fn RayTransferMatrix::matrix(Self) -> ExplicitMatrix
+pub fn RayTransferMatrix::to_string(Self) -> String
+pub impl Eq for RayTransferMatrix
+
+pub struct TWave {
+  amplitude : @symcore.Expr
+  frequency : @symcore.Expr
+  phase : @symcore.Expr
+  time_period : @symcore.Expr
+  n : @symcore.Expr
+}
+pub fn TWave::angular_velocity(Self) -> @symcore.Expr
+pub fn TWave::as_expr(Self) -> @symcore.Expr
+pub fn TWave::neg(Self) -> Self raise PhysicsError
+pub fn TWave::rewrite_as_cos(Self) -> @symcore.Expr
+pub fn TWave::rewrite_as_exp(Self) -> @symcore.Expr
+pub fn TWave::rewrite_as_pde(Self) -> @symcore.Expr
+pub fn TWave::rewrite_as_sin(Self) -> @symcore.Expr
+pub fn TWave::scale(Self, @symcore.Expr) -> Self raise PhysicsError
+pub fn TWave::speed(Self) -> @symcore.Expr
+pub fn TWave::sub(Self, Self) -> Self raise PhysicsError
+pub fn TWave::superpose(Self, Self) -> Self raise PhysicsError
+pub fn TWave::to_string(Self) -> String
+pub fn TWave::wavelength(Self) -> @symcore.Expr
+pub fn TWave::wavenumber(Self) -> @symcore.Expr
+pub impl Eq for TWave
+
+// Type aliases
+
+// Traits
+
