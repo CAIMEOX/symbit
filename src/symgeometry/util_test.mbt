@@ -43,3 +43,16 @@ test "geometry.util convex hull and distance pairs" {
     "{(Point2D(0, 0), Point2D(1, 1))}",
   )
 }
+
+///|
+test "geometry.util are_similar dispatch" {
+  let s1 = try! segment(
+    try! point2d(@symcore.int(0), @symcore.int(0)),
+    try! point2d(@symcore.int(2), @symcore.int(2)),
+  )
+  let s2 = try! segment(
+    try! point2d(@symcore.int(2), @symcore.int(2)),
+    try! point2d(@symcore.int(4), @symcore.int(4)),
+  )
+  assert_true(try! are_similar(geometry_segment(s1), geometry_segment(s2)))
+}

@@ -69,3 +69,23 @@ test "geometry.util parity convex hull and point-pair helpers" {
     "{(Point2D(0, 0), Point2D(1, 1))}",
   )
 }
+
+///|
+test "geometry.util parity are_similar dispatch" {
+  let s1 = try! segment(
+    try! point2d(@symcore.int(0), @symcore.int(0)),
+    try! point2d(@symcore.int(2), @symcore.int(2)),
+  )
+  let s2 = try! segment(
+    try! point2d(@symcore.int(2), @symcore.int(2)),
+    try! point2d(@symcore.int(4), @symcore.int(4)),
+  )
+  assert_eq(
+    (try! are_similar(geometry_segment(s1), geometry_segment(s2)))
+    .to_string()
+    .to_lower(),
+    try! @sympy_geometry.geometry_eval_str(
+      "sympy.geometry.util.are_similar(Segment(Point2D(0, 0), Point2D(2, 2)), Segment(Point2D(2, 2), Point2D(4, 4)))",
+    ).to_lower(),
+  )
+}

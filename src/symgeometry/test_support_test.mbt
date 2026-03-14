@@ -119,3 +119,66 @@ fn point_pair_set_summary(items : Array[(Point, Point)]) -> String {
 fn point_chains_summary(chains : (Array[Point], Array[Point])) -> String {
   "(" + point_list_summary(chains.0) + ", " + point_list_summary(chains.1) + ")"
 }
+
+///|
+fn expr_map_summary(items : Map[@symcore.Expr, @symcore.Expr]) -> String {
+  let parts : Array[String] = []
+  for item in items {
+    parts.push(
+      geometry_py_expr_text(item.0) + ": " + geometry_py_expr_text(item.1),
+    )
+  }
+  let n = parts.length()
+  for i in 0..<n {
+    for j in (i + 1)..<n {
+      if parts[i].compare(parts[j]) > 0 {
+        let tmp = parts[i]
+        parts[i] = parts[j]
+        parts[j] = tmp
+      }
+    }
+  }
+  "{" + parts.join(", ") + "}"
+}
+
+///|
+fn expr_set_summary(items : Array[@symcore.Expr]) -> String {
+  let parts = items.map(geometry_py_expr_text)
+  let n = parts.length()
+  for i in 0..<n {
+    for j in (i + 1)..<n {
+      if parts[i].compare(parts[j]) > 0 {
+        let tmp = parts[i]
+        parts[i] = parts[j]
+        parts[j] = tmp
+      }
+    }
+  }
+  "{" + parts.join(", ") + "}"
+}
+
+///|
+fn string_set_summary(text : String) -> String {
+  if !text.has_prefix("{") || !text.has_suffix("}") {
+    return text
+  }
+  let inner = text[1:text.length() - 1].to_string()
+  if inner.is_empty() {
+    return "{}"
+  }
+  let parts = inner
+    .split(",")
+    .to_array()
+    .map(fn(part) { part.trim().to_string() })
+  let n = parts.length()
+  for i in 0..<n {
+    for j in (i + 1)..<n {
+      if parts[i].compare(parts[j]) > 0 {
+        let tmp = parts[i]
+        parts[i] = parts[j]
+        parts[j] = tmp
+      }
+    }
+  }
+  "{" + parts.join(", ") + "}"
+}

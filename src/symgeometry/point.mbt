@@ -2,7 +2,20 @@
 /// A point in Euclidean space.
 pub struct Point {
   coords_ : Array[@symcore.Expr]
-} derive(Eq)
+} derive(Eq, Hash)
+
+///|
+fn geo_point_eq(lhs : Point, rhs : Point) -> Bool {
+  let normalized = geo_normalize_dim([lhs, rhs]) catch { _ => return false }
+  let left = normalized[0]
+  let right = normalized[1]
+  for i in 0..<left.coords_.length() {
+    if !geo_expr_eq(left.coords_[i], right.coords_[i]) {
+      return false
+    }
+  }
+  true
+}
 
 ///|
 pub impl Add for Point with add(self, other : Point) {
@@ -72,7 +85,25 @@ pub fn Point::ambient_dimension(self : Point) -> Int {
 }
 
 ///|
+pub fn Point::equals(self : Point, other : Point) -> Bool {
+  if self.ambient_dimension() != other.ambient_dimension() {
+    return false
+  }
+  for i in 0..<self.coords_.length() {
+    if !geo_expr_eq(self.coords_[i], other.coords_[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 pub fn Point::len(self : Point) -> Int {
+  self.coords_.length()
+}
+
+///|
+pub fn Point::length(self : Point) -> Int {
   self.coords_.length()
 }
 
@@ -180,6 +211,14 @@ pub fn Point::distance(
 }
 
 ///|
+pub fn Point::intersection(
+  self : Point,
+  other : GeometryEntity,
+) -> Array[GeometryEntity] raise GeometryError {
+  intersection(geometry_point(self), other)
+}
+
+///|
 pub fn Point::midpoint(
   self : Point,
   other : Point,
@@ -207,6 +246,16 @@ pub fn Point::abs(self : Point) -> @symcore.Expr raise GeometryError {
 }
 
 ///|
+pub fn Point::origin(self : Point) -> Point raise GeometryError {
+  point_origin(self.ambient_dimension())
+}
+
+///|
+pub fn Point::is_nonzero(self : Point) -> Bool {
+  !self.is_zero()
+}
+
+///|
 pub fn Point::mul(self : Point, factor : @symcore.Expr) -> Point {
   geo_point_from_coords(geo_scale_coords(self.coords_, factor))
 }
@@ -228,6 +277,163 @@ pub fn Point::subs(self : Point, env : Map[String, @symcore.Expr]) -> Point {
 ///|
 pub fn Point::is_zero(self : Point) -> Bool {
   geo_all_zero(self.coords_)
+}
+
+///|
+pub fn Point::orthogonal_direction(self : Point) -> Point raise GeometryError {
+  let dim = self.ambient_dimension()
+  if geo_expr_is_zero(self.coords_[0]) {
+    let coords = geo_zero_coords(dim)
+    coords[0] = geo_one()
+    return point(coords, dim~)
+  }
+  if geo_expr_is_zero(self.coords_[1]) {
+    let coords = geo_zero_coords(dim)
+    coords[1] = geo_one()
+    return point(coords, dim~)
+  }
+  let coords = geo_zero_coords(dim)
+  coords[0] = geo_zero() - self.coords_[1]
+  coords[1] = self.coords_[0]
+  point(coords, dim~)
+}
+
+///|
+pub fn Point::project(self : Point, other : Point) -> Point raise GeometryError {
+  let normalized = geo_normalize_dim([self, other])
+  let lhs = normalized[0]
+  let rhs = normalized[1]
+  if rhs.is_zero() {
+    raise GeometryError::ValueError("Cannot project to the zero vector.")
+  }
+  let scale = geo_div(lhs.dot(rhs), rhs.dot(rhs))
+  rhs.mul(scale)
+}
+
+///|
+pub fn Point::taxicab_distance(
+  self : Point,
+  other : Point,
+) -> @symcore.Expr raise GeometryError {
+  let normalized = geo_normalize_dim([self, other])
+  let lhs = normalized[0]
+  let rhs = normalized[1]
+  let mut acc = geo_zero()
+  for i in 0..<lhs.coords_.length() {
+    acc = geo_simplify(acc + @symelem.abs(lhs.coords_[i] - rhs.coords_[i]))
+  }
+  acc
+}
+
+///|
+pub fn Point::canberra_distance(
+  self : Point,
+  other : Point,
+) -> @symcore.Expr raise GeometryError {
+  let normalized = geo_normalize_dim([self, other])
+  let lhs = normalized[0]
+  let rhs = normalized[1]
+  if lhs.is_zero() && rhs.is_zero() {
+    raise GeometryError::ValueError("Cannot project to the zero vector.")
+  }
+  let mut acc = geo_zero()
+  for i in 0..<lhs.coords_.length() {
+    let numer = @symelem.abs(lhs.coords_[i] - rhs.coords_[i])
+    let denom = geo_simplify(
+      @symelem.abs(lhs.coords_[i]) + @symelem.abs(rhs.coords_[i]),
+    )
+    acc = geo_simplify(acc + geo_div(numer, denom))
+  }
+  acc
+}
+
+///|
+pub fn Point::unit(self : Point) -> Point raise GeometryError {
+  self.truediv(self.abs())
+}
+
+///|
+pub fn Point::is_scalar_multiple(
+  self : Point,
+  other : Point,
+) -> Bool raise GeometryError {
+  let normalized = geo_normalize_dim([self, other])
+  let lhs = normalized[0]
+  let rhs = normalized[1]
+  if lhs.ambient_dimension() == 2 {
+    return geo_expr_is_zero(
+      lhs.coords_[0] * rhs.coords_[1] - rhs.coords_[0] * lhs.coords_[1],
+    )
+  }
+  if lhs.ambient_dimension() == 3 {
+    return geo_all_zero(geo_cross3(lhs.coords_, rhs.coords_))
+  }
+  let pivot = match geo_dominant_index(rhs.coords_) {
+    Some(idx) => idx
+    None => return lhs.is_zero()
+  }
+  let scale = geo_div(lhs.coords_[pivot], rhs.coords_[pivot])
+  for i in 0..<lhs.coords_.length() {
+    if !geo_expr_is_zero(lhs.coords_[i] - scale * rhs.coords_[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn Point::is_concyclic(
+  self : Point,
+  others : Array[Point],
+) -> Bool raise GeometryError {
+  let points : Array[Point] = [self]
+  for item in others {
+    points.push(item)
+  }
+  let normalized = geo_normalize_dim(points)
+  if normalized[0].ambient_dimension() != 2 {
+    raise GeometryError::ValueError(
+      "concyclic test is only implemented for planar points",
+    )
+  }
+  let unique : Array[Point] = []
+  for item in normalized {
+    if !unique.any(fn(prev) { geo_point_eq(prev, item) }) {
+      unique.push(item.with_dim(2))
+    }
+  }
+  if unique.length() < 3 {
+    return true
+  }
+  let mut seed : Triangle? = None
+  for i in 0..<unique.length() {
+    for j in (i + 1)..<unique.length() {
+      for k in (j + 1)..<unique.length() {
+        if !(try! point_are_collinear([unique[i], unique[j], unique[k]])) {
+          seed = Some(try! triangle(unique[i], unique[j], unique[k]))
+          break
+        }
+      }
+      if seed is Some(_) {
+        break
+      }
+    }
+    if seed is Some(_) {
+      break
+    }
+  }
+  match seed {
+    None => false
+    Some(tri) => {
+      let circle_obj = try! tri.circumcircle()
+      for item in unique {
+        if !circle_obj.contains_point(item) {
+          return false
+        }
+      }
+      true
+    }
+  }
 }
 
 ///|

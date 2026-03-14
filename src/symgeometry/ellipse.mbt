@@ -63,11 +63,103 @@ fn quadratic_roots(
 ///|
 fn unique_push_point(points : Array[Point], pt : Point) -> Unit {
   for item in points {
-    if item == pt {
+    if geo_point_eq(item, pt) {
       return
     }
   }
   points.push(pt)
+}
+
+///|
+fn ellipse_unit_coords(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  pt : Point,
+) -> Array[@symcore.Expr] raise GeometryError {
+  let pt = pt.with_dim(2)
+  [
+    geo_div(pt.coords_[0] - center.coords_[0], hradius),
+    geo_div(pt.coords_[1] - center.coords_[1], vradius),
+  ]
+}
+
+///|
+fn ellipse_tangent_point_from_unit(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  unit_coords : Array[@symcore.Expr],
+) -> Point raise GeometryError {
+  point2d(
+    geo_radsimp(center.coords_[0] + hradius * unit_coords[0]),
+    geo_radsimp(center.coords_[1] + vradius * unit_coords[1]),
+  )
+}
+
+///|
+fn tangent_line_at_boundary_point(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  pt : Point,
+) -> Line raise GeometryError {
+  let pt = pt.with_dim(2)
+  let normal = [
+    geo_div(pt.coords_[0] - center.coords_[0], hradius ^ geo_int(2)),
+    geo_div(pt.coords_[1] - center.coords_[1], vradius ^ geo_int(2)),
+  ]
+  let direction = try! geo_perp2(normal)
+  let q = try! point2d(
+    geo_simplify(pt.coords_[0] + direction[0]),
+    geo_simplify(pt.coords_[1] + direction[1]),
+  )
+  line(pt, q)
+}
+
+///|
+fn ellipse_tangent_lines_from_point(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  pt : Point,
+) -> Array[Line] raise GeometryError {
+  let pt = pt.with_dim(2)
+  let u = try! ellipse_unit_coords(center, hradius, vradius, pt)
+  let d2 = geo_simplify(u[0] * u[0] + u[1] * u[1])
+  match geo_expr_sign(d2 - geo_one()) {
+    Some(sign) if sign < 0 => []
+    Some(0) =>
+      [try! tangent_line_at_boundary_point(center, hradius, vradius, pt)]
+    Some(_) => {
+      let scale = geo_div(@symelem.sqrt(d2 - geo_one()), d2)
+      let base = [geo_div(u[0], d2), geo_div(u[1], d2)]
+      let perp = try! geo_perp2(u)
+      let q1 = [
+        geo_simplify(base[0] + perp[0] * scale),
+        geo_simplify(base[1] + perp[1] * scale),
+      ]
+      let q2 = [
+        geo_simplify(base[0] - perp[0] * scale),
+        geo_simplify(base[1] - perp[1] * scale),
+      ]
+      let t1 = try! ellipse_tangent_point_from_unit(
+        center, hradius, vradius, q1,
+      )
+      let t2 = try! ellipse_tangent_point_from_unit(
+        center, hradius, vradius, q2,
+      )
+      if t1 == t2 {
+        [try! line(pt, t1)]
+      } else {
+        [try! line(pt, t1), try! line(pt, t2)]
+      }
+    }
+    None =>
+      raise GeometryError::Undecidable(
+        "cannot decide tangent multiplicity for ellipse",
+      )
+  }
 }
 
 ///|
@@ -90,7 +182,7 @@ fn conic_points_from_linear_entity(
     let mut seen = false
     for item in out {
       match item {
-        GeometryEntity::Point(prev) if prev == pt => seen = true
+        GeometryEntity::Point(prev) if geo_point_eq(prev, pt) => seen = true
         _ => ()
       }
     }
@@ -99,6 +191,75 @@ fn conic_points_from_linear_entity(
     }
   }
   out
+}
+
+///|
+fn unique_intersection_points(hits : Array[GeometryEntity]) -> Array[Point] {
+  let out : Array[Point] = []
+  for hit in hits {
+    match hit {
+      GeometryEntity::Point(pt) => unique_push_point(out, pt)
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+fn linear_line_coeffs_2d(
+  entity : GeometryEntity,
+) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError {
+  let p1 = linear_p1(entity).with_dim(2)
+  let p2 = linear_p2(entity).with_dim(2)
+  let a = geo_simplify(p1.coords_[1] - p2.coords_[1])
+  let b = geo_simplify(p2.coords_[0] - p1.coords_[0])
+  let c = geo_simplify(
+    p1.coords_[0] * p2.coords_[1] - p2.coords_[0] * p1.coords_[1],
+  )
+  (a, b, c)
+}
+
+///|
+fn ellipse_line_contact_point(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  entity : GeometryEntity,
+) -> Point raise GeometryError {
+  let (a, b, c) = linear_line_coeffs_2d(entity)
+  let shifted_c = geo_simplify(
+    a * center.coords_[0] + b * center.coords_[1] + c,
+  )
+  point2d(
+    geo_simplify(
+      center.coords_[0] - geo_div((hradius ^ geo_int(2)) * a, shifted_c),
+    ),
+    geo_simplify(
+      center.coords_[1] - geo_div((vradius ^ geo_int(2)) * b, shifted_c),
+    ),
+  )
+}
+
+///|
+fn ellipse_supporting_line_is_tangent(
+  center : Point,
+  hradius : @symcore.Expr,
+  vradius : @symcore.Expr,
+  entity : GeometryEntity,
+) -> Bool raise GeometryError {
+  let (a, b, c) = linear_line_coeffs_2d(entity)
+  let shifted_c = geo_simplify(
+    a * center.coords_[0] + b * center.coords_[1] + c,
+  )
+  geo_expr_is_zero(
+    geo_simplify(
+      (shifted_c ^ geo_int(2)) -
+      (
+        (a ^ geo_int(2)) * (hradius ^ geo_int(2)) +
+        (b ^ geo_int(2)) * (vradius ^ geo_int(2))
+      ),
+    ),
+  )
 }
 
 ///|
@@ -178,6 +339,37 @@ pub fn Ellipse::area(self : Ellipse) -> @symcore.Expr {
 }
 
 ///|
+pub fn Ellipse::major(self : Ellipse) -> @symcore.Expr {
+  if ellipse_major_on_x(self.hradius_, self.vradius_) {
+    @symelem.abs(self.hradius_)
+  } else {
+    @symelem.abs(self.vradius_)
+  }
+}
+
+///|
+pub fn Ellipse::minor(self : Ellipse) -> @symcore.Expr {
+  if ellipse_major_on_x(self.hradius_, self.vradius_) {
+    @symelem.abs(self.vradius_)
+  } else {
+    @symelem.abs(self.hradius_)
+  }
+}
+
+///|
+pub fn Ellipse::circumference(self : Ellipse) -> @symcore.Expr {
+  if geo_expr_eq(self.major(), self.minor()) {
+    geo_simplify(geo_two_pi() * self.major())
+  } else {
+    geo_simplify(
+      geo_int(4) *
+      self.major() *
+      @symcore.raw_function("elliptic_e", [self.eccentricity() ^ geo_int(2)]),
+    )
+  }
+}
+
+///|
 pub fn Ellipse::eccentricity(self : Ellipse) -> @symcore.Expr {
   if ellipse_major_on_x(self.hradius_, self.vradius_) {
     geo_div(
@@ -195,6 +387,21 @@ pub fn Ellipse::eccentricity(self : Ellipse) -> @symcore.Expr {
 ///|
 pub fn Ellipse::focus_distance(self : Ellipse) -> @symcore.Expr {
   ellipse_focus_distance_expr(self.hradius_, self.vradius_)
+}
+
+///|
+pub fn Ellipse::periapsis(self : Ellipse) -> @symcore.Expr {
+  geo_simplify(self.major() * (geo_one() - self.eccentricity()))
+}
+
+///|
+pub fn Ellipse::apoapsis(self : Ellipse) -> @symcore.Expr {
+  geo_simplify(self.major() * (geo_one() + self.eccentricity()))
+}
+
+///|
+pub fn Ellipse::semilatus_rectum(self : Ellipse) -> @symcore.Expr {
+  geo_simplify(self.major() * (geo_one() - (self.eccentricity() ^ geo_int(2))))
 }
 
 ///|
@@ -218,18 +425,26 @@ pub fn Ellipse::equation(
   self : Ellipse,
   x? : @symcore.Expr = @symcore.symbol("x"),
   y? : @symcore.Expr = @symcore.symbol("y"),
+  _slope? : @symcore.Expr? = None,
 ) -> @symcore.Expr {
-  geo_simplify(
-    geo_div(
-      (x - self.center_.coords_[0]) ^ geo_int(2),
-      self.hradius_ ^ geo_int(2),
-    ) +
-    geo_div(
-      (y - self.center_.coords_[1]) ^ geo_int(2),
-      self.vradius_ ^ geo_int(2),
-    ) -
-    geo_one(),
-  )
+  let dx = x - self.center_.coords_[0]
+  let dy = y - self.center_.coords_[1]
+  match _slope {
+    Some(slope) => {
+      let l = (slope * dy + dx) ^ geo_int(2)
+      let big_l = (dy - slope * dx) ^ geo_int(2)
+      let h = geo_one() + slope * slope
+      let b = geo_simplify(h * (self.major() ^ geo_int(2)))
+      let a = geo_simplify(h * (self.minor() ^ geo_int(2)))
+      geo_simplify(geo_div(l, b) + geo_div(big_l, a) - geo_one())
+    }
+    None =>
+      geo_simplify(
+        geo_div(dx ^ geo_int(2), self.hradius_ ^ geo_int(2)) +
+        geo_div(dy ^ geo_int(2), self.vradius_ ^ geo_int(2)) -
+        geo_one(),
+      )
+  }
 }
 
 ///|
@@ -254,6 +469,108 @@ pub fn Ellipse::contains_point(
 ) -> Bool raise GeometryError {
   let pt = pt.with_dim(2)
   geo_expr_is_zero(self.equation(x=pt.coords_[0], y=pt.coords_[1]))
+}
+
+///|
+pub fn Ellipse::encloses_point(
+  self : Ellipse,
+  pt : Point,
+) -> Bool raise GeometryError {
+  let pt = pt.with_dim(2)
+  if self.contains_point(pt) {
+    return false
+  }
+  match geo_expr_sign(self.equation(x=pt.coords_[0], y=pt.coords_[1])) {
+    Some(sign) => sign < 0
+    None =>
+      raise GeometryError::Undecidable(
+        "cannot decide strict ellipse containment",
+      )
+  }
+}
+
+///|
+pub fn Ellipse::bounds(self : Ellipse) -> (Point, Point) raise GeometryError {
+  (
+    try! point2d(
+      self.center_.coords_[0] - self.hradius_,
+      self.center_.coords_[1] - self.vradius_,
+    ),
+    try! point2d(
+      self.center_.coords_[0] + self.hradius_,
+      self.center_.coords_[1] + self.vradius_,
+    ),
+  )
+}
+
+///|
+pub fn Ellipse::plot_interval(
+  self : Ellipse,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  [parameter, geo_zero() - geo_pi(), geo_pi()]
+}
+
+///|
+pub fn Ellipse::parameter_value(
+  self : Ellipse,
+  other : Point,
+  t : @symcore.Expr,
+) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  let pt = other.with_dim(2)
+  if !(try! self.contains_point(pt)) {
+    raise GeometryError::ValueError("point is not on ellipse")
+  }
+  let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.hradius_)
+  let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.vradius_)
+  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  out.set(t, geo_normalized_atan2(uy, ux))
+  out
+}
+
+///|
+pub fn Ellipse::encloses(
+  self : Ellipse,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Ellipse(value) if self == value => return false
+    _ => ()
+  }
+  if !(try! self.intersection(other)).is_empty() {
+    return false
+  }
+  match other {
+    GeometryEntity::Point(pt) => self.encloses_point(pt)
+    GeometryEntity::Segment(seg) =>
+      self.encloses_point(seg.p1()) && self.encloses_point(seg.p2())
+    GeometryEntity::Polygon(poly) => {
+      for pt in poly.vertices() {
+        if !(try! self.encloses_point(pt)) {
+          return false
+        }
+      }
+      true
+    }
+    GeometryEntity::RegularPolygon(poly) => {
+      let vertices = try! poly.vertices()
+      for pt in vertices {
+        if !(try! self.encloses_point(pt)) {
+          return false
+        }
+      }
+      true
+    }
+    GeometryEntity::Triangle(poly) => {
+      for pt in poly.vertices() {
+        if !(try! self.encloses_point(pt)) {
+          return false
+        }
+      }
+      true
+    }
+    _ => false
+  }
 }
 
 ///|
@@ -352,12 +669,70 @@ pub fn Ellipse::intersection(
 }
 
 ///|
+pub fn Ellipse::tangent_lines(
+  self : Ellipse,
+  pt : Point,
+) -> Array[Line] raise GeometryError {
+  ellipse_tangent_lines_from_point(
+    self.center_,
+    self.hradius_,
+    self.vradius_,
+    pt,
+  )
+}
+
+///|
+pub fn Ellipse::is_tangent(
+  self : Ellipse,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(_) =>
+      ellipse_supporting_line_is_tangent(
+        self.center_,
+        self.hradius_,
+        self.vradius_,
+        other,
+      )
+    GeometryEntity::Ray(_) | GeometryEntity::Segment(_) => {
+      if !ellipse_supporting_line_is_tangent(
+          self.center_,
+          self.hradius_,
+          self.vradius_,
+          other,
+        ) {
+        return false
+      }
+      linear_contains_point(
+        other,
+        try! ellipse_line_contact_point(
+          self.center_,
+          self.hradius_,
+          self.vradius_,
+          other,
+        ),
+      )
+    }
+    GeometryEntity::Circle(_) => {
+      let hits = self.intersection(other)
+      unique_intersection_points(hits).length() == 1
+    }
+    _ => false
+  }
+}
+
+///|
 pub fn Circle::center(self : Circle) -> Point {
   self.center_
 }
 
 ///|
 pub fn Circle::radius(self : Circle) -> @symcore.Expr {
+  self.radius_
+}
+
+///|
+pub fn Circle::vradius(self : Circle) -> @symcore.Expr {
   self.radius_
 }
 
@@ -379,6 +754,45 @@ pub fn Circle::area(self : Circle) -> @symcore.Expr {
 ///|
 pub fn Circle::circumference(self : Circle) -> @symcore.Expr {
   geo_simplify(geo_int(2) * @symcore.symbol("pi") * self.radius_)
+}
+
+///|
+pub fn Circle::bounds(self : Circle) -> (Point, Point) raise GeometryError {
+  (
+    try! point2d(
+      self.center_.coords_[0] - self.radius_,
+      self.center_.coords_[1] - self.radius_,
+    ),
+    try! point2d(
+      self.center_.coords_[0] + self.radius_,
+      self.center_.coords_[1] + self.radius_,
+    ),
+  )
+}
+
+///|
+pub fn Circle::plot_interval(
+  self : Circle,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  [parameter, geo_zero() - geo_pi(), geo_pi()]
+}
+
+///|
+pub fn Circle::parameter_value(
+  self : Circle,
+  other : Point,
+  t : @symcore.Expr,
+) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  let pt = other.with_dim(2)
+  if !(try! self.contains_point(pt)) {
+    raise GeometryError::ValueError("point is not on circle")
+  }
+  let ux = geo_div(pt.coords_[0] - self.center_.coords_[0], self.radius_)
+  let uy = geo_div(pt.coords_[1] - self.center_.coords_[1], self.radius_)
+  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  out.set(t, geo_normalized_atan2(uy, ux))
+  out
 }
 
 ///|
@@ -416,6 +830,37 @@ pub fn Circle::contains_point(
 ) -> Bool raise GeometryError {
   let pt = pt.with_dim(2)
   geo_expr_is_zero(self.equation(x=pt.coords_[0], y=pt.coords_[1]))
+}
+
+///|
+pub fn Circle::encloses_point(
+  self : Circle,
+  pt : Point,
+) -> Bool raise GeometryError {
+  let pt = pt.with_dim(2)
+  if self.contains_point(pt) {
+    return false
+  }
+  match geo_expr_sign(self.equation(x=pt.coords_[0], y=pt.coords_[1])) {
+    Some(sign) => sign < 0
+    None =>
+      raise GeometryError::Undecidable(
+        "cannot decide strict circle containment",
+      )
+  }
+}
+
+///|
+pub fn Circle::encloses(
+  self : Circle,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  let as_ellipse = Ellipse::{
+    center_: self.center_,
+    hradius_: self.radius_,
+    vradius_: self.radius_,
+  }
+  as_ellipse.encloses(other)
 }
 
 ///|
@@ -526,5 +971,53 @@ pub fn Circle::intersection(
     GeometryEntity::Triangle(poly_obj) =>
       poly_obj.intersection(geometry_circle(self))
     _ => []
+  }
+}
+
+///|
+pub fn Circle::tangent_lines(
+  self : Circle,
+  pt : Point,
+) -> Array[Line] raise GeometryError {
+  ellipse_tangent_lines_from_point(self.center_, self.radius_, self.radius_, pt)
+}
+
+///|
+pub fn Circle::is_tangent(
+  self : Circle,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(_) =>
+      ellipse_supporting_line_is_tangent(
+        self.center_,
+        self.radius_,
+        self.radius_,
+        other,
+      )
+    GeometryEntity::Ray(_) | GeometryEntity::Segment(_) => {
+      if !ellipse_supporting_line_is_tangent(
+          self.center_,
+          self.radius_,
+          self.radius_,
+          other,
+        ) {
+        return false
+      }
+      linear_contains_point(
+        other,
+        try! ellipse_line_contact_point(
+          self.center_,
+          self.radius_,
+          self.radius_,
+          other,
+        ),
+      )
+    }
+    GeometryEntity::Circle(_) => {
+      let hits = self.intersection(other)
+      unique_intersection_points(hits).length() == 1
+    }
+    _ => false
   }
 }

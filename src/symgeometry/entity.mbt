@@ -67,7 +67,7 @@ pub fn GeometryEntity::ambient_dimension(self : GeometryEntity) -> Int {
     GeometryEntity::Line(line_obj) => line_obj.ambient_dimension()
     GeometryEntity::Ray(ray_obj) => ray_obj.ambient_dimension()
     GeometryEntity::Segment(seg_obj) => seg_obj.ambient_dimension()
-    GeometryEntity::Plane(_) => 3
+    GeometryEntity::Plane(plane_obj) => plane_obj.ambient_dimension()
     GeometryEntity::Ellipse(ellipse_obj) => ellipse_obj.ambient_dimension()
     GeometryEntity::Circle(circle_obj) => circle_obj.ambient_dimension()
     GeometryEntity::Polygon(polygon_obj) => polygon_obj.ambient_dimension()
@@ -187,5 +187,81 @@ pub fn GeometryEntity::rotate(
       geometry_parabola(parabola_obj.rotate(angle, pt~))
     GeometryEntity::Curve(curve_obj) =>
       geometry_curve(curve_obj.rotate(angle, pt~))
+  }
+}
+
+///|
+pub fn GeometryEntity::encloses(
+  self : GeometryEntity,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match self {
+    GeometryEntity::Ellipse(ellipse_obj) => ellipse_obj.encloses(other)
+    GeometryEntity::Circle(circle_obj) => circle_obj.encloses(other)
+    GeometryEntity::Polygon(polygon_obj) => polygon_obj.encloses(other)
+    GeometryEntity::RegularPolygon(poly_obj) => poly_obj.encloses(other)
+    GeometryEntity::Triangle(triangle_obj) => triangle_obj.encloses(other)
+    _ => false
+  }
+}
+
+///|
+pub fn GeometryEntity::is_similar(
+  self : GeometryEntity,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match self {
+    GeometryEntity::Line(line_obj) => line_obj.is_similar(other)
+    GeometryEntity::Ray(ray_obj) => ray_obj.is_similar(other)
+    GeometryEntity::Segment(seg_obj) => seg_obj.is_similar(other)
+    GeometryEntity::Triangle(triangle_obj) => triangle_obj.is_similar(other)
+    _ => false
+  }
+}
+
+///|
+pub fn GeometryEntity::parameter_value(
+  self : GeometryEntity,
+  other : Point,
+  t : @symcore.Expr,
+) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  match self {
+    GeometryEntity::Line(line_obj) => {
+      let value = try! linear_param_for_point(geometry_line(line_obj), other)
+      out.set(t, geo_simplify(value))
+      out
+    }
+    GeometryEntity::Ray(ray_obj) => {
+      let value = try! linear_param_for_point(geometry_ray(ray_obj), other)
+      if !linear_param_ok(LinearKind::Ray, value) {
+        raise GeometryError::ValueError("point is not on ray")
+      }
+      out.set(t, geo_simplify(value))
+      out
+    }
+    GeometryEntity::Segment(seg_obj) => {
+      let value = try! linear_param_for_point(geometry_segment(seg_obj), other)
+      if !linear_param_ok(LinearKind::Segment, value) {
+        raise GeometryError::ValueError("point is not on segment")
+      }
+      out.set(t, geo_simplify(value))
+      out
+    }
+    GeometryEntity::Plane(plane_obj) => plane_obj.parameter_value(other, t)
+    GeometryEntity::Ellipse(ellipse_obj) =>
+      ellipse_obj.parameter_value(other, t)
+    GeometryEntity::Circle(circle_obj) => circle_obj.parameter_value(other, t)
+    GeometryEntity::Polygon(polygon_obj) =>
+      polygon_obj.parameter_value(other, t)
+    GeometryEntity::RegularPolygon(poly_obj) =>
+      poly_obj.parameter_value(other, t)
+    GeometryEntity::Triangle(triangle_obj) =>
+      triangle_as_polygon_of(triangle_obj).parameter_value(other, t)
+    GeometryEntity::Curve(curve_obj) => curve_obj.parameter_value(other, t)
+    _ =>
+      raise GeometryError::TypeError(
+        "parameter_value is not implemented for this geometry entity",
+      )
   }
 }

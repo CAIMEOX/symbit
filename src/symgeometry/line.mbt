@@ -9,19 +9,19 @@ priv enum LinearKind {
 pub struct Line {
   p1_ : Point
   p2_ : Point
-} derive(Eq)
+} derive(Eq, Hash)
 
 ///|
 pub struct Ray {
   p1_ : Point
   p2_ : Point
-} derive(Eq)
+} derive(Eq, Hash)
 
 ///|
 pub struct Segment {
   p1_ : Point
   p2_ : Point
-} derive(Eq)
+} derive(Eq, Hash)
 
 ///|
 pub enum GeometryEntity {
@@ -219,6 +219,22 @@ fn linear_contains_point(
     e => raise e
   }
   linear_param_ok(linear_kind(entity), t)
+}
+
+///|
+fn linear_entity_is_similar(
+  entity : GeometryEntity,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(_)
+    | GeometryEntity::Ray(_)
+    | GeometryEntity::Segment(_) => {
+      let base = line(linear_p1(entity), linear_p2(entity))
+      base.contains(linear_p1(other)) && base.contains(linear_p2(other))
+    }
+    _ => false
+  }
 }
 
 ///|
@@ -424,6 +440,18 @@ pub fn Line::direction(self : Line) -> Point {
 }
 
 ///|
+pub fn Line::equals(
+  self : Line,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(line_obj) =>
+      point_are_collinear([self.p1_, self.p2_, line_obj.p1_, line_obj.p2_])
+    _ => false
+  }
+}
+
+///|
 pub fn Line::repr(self : Line) -> String raise GeometryError {
   linear_repr(GeometryEntity::Line(self))
 }
@@ -434,6 +462,15 @@ pub fn Line::arbitrary_point(
   parameter? : @symcore.Expr = @symcore.symbol("t"),
 ) -> Point raise GeometryError {
   linear_point_at(GeometryEntity::Line(self), parameter)
+}
+
+///|
+pub fn Line::plot_interval(
+  self : Line,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  let _ = self
+  [parameter, geo_int(-5), geo_int(5)]
 }
 
 ///|
@@ -580,6 +617,14 @@ pub fn Line::smallest_angle_between(
 }
 
 ///|
+pub fn Line::is_similar(
+  self : Line,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  linear_entity_is_similar(geometry_line(self), other)
+}
+
+///|
 pub fn Ray::p1(self : Ray) -> Point {
   self.p1_
 }
@@ -600,8 +645,34 @@ pub fn Ray::direction(self : Ray) -> Point {
 }
 
 ///|
+pub fn Ray::equals(
+  self : Ray,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Ray(ray_obj) =>
+      self.source().equals(ray_obj.source()) && self.contains(ray_obj.p2_)
+    _ => false
+  }
+}
+
+///|
 pub fn Ray::repr(self : Ray) -> String raise GeometryError {
   linear_repr(GeometryEntity::Ray(self))
+}
+
+///|
+pub fn Ray::plot_interval(
+  self : Ray,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  let _ = self
+  [parameter, geo_zero(), geo_int(10)]
+}
+
+///|
+pub fn Ray::source(self : Ray) -> Point {
+  self.p1_
 }
 
 ///|
@@ -703,6 +774,14 @@ pub fn Ray::distance(
 }
 
 ///|
+pub fn Ray::is_similar(
+  self : Ray,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  linear_entity_is_similar(geometry_ray(self), other)
+}
+
+///|
 pub fn Segment::p1(self : Segment) -> Point {
   self.p1_
 }
@@ -720,6 +799,19 @@ pub fn Segment::ambient_dimension(self : Segment) -> Int {
 ///|
 pub fn Segment::direction(self : Segment) -> Point {
   geo_point_from_coords(geo_sub_coords(self.p2_.coords_, self.p1_.coords_))
+}
+
+///|
+pub fn Segment::equals(
+  self : Segment,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Segment(seg_obj) =>
+      (self.p1_.equals(seg_obj.p1_) && self.p2_.equals(seg_obj.p2_)) ||
+      (self.p1_.equals(seg_obj.p2_) && self.p2_.equals(seg_obj.p1_))
+    _ => false
+  }
 }
 
 ///|
@@ -743,6 +835,35 @@ pub fn Segment::length(self : Segment) -> @symcore.Expr raise GeometryError {
 ///|
 pub fn Segment::midpoint(self : Segment) -> Point raise GeometryError {
   self.p1_.midpoint(self.p2_)
+}
+
+///|
+pub fn Segment::plot_interval(
+  self : Segment,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  let _ = self
+  [parameter, geo_zero(), geo_one()]
+}
+
+///|
+pub fn Segment::perpendicular_bisector(
+  self : Segment,
+  p? : Point? = None,
+) -> GeometryEntity raise GeometryError {
+  let midpoint = try! self.midpoint()
+  let direction = try! self.direction().orthogonal_direction()
+  let bisector = try! line(midpoint, midpoint + direction)
+  match p {
+    Some(point_obj) => {
+      let point_obj = point_obj.with_dim(midpoint.ambient_dimension())
+      if bisector.contains(point_obj) {
+        return geometry_segment(try! segment(point_obj, midpoint))
+      }
+      geometry_line(bisector)
+    }
+    None => geometry_line(bisector)
+  }
 }
 
 ///|
@@ -834,4 +955,12 @@ pub fn Segment::distance(
     _ =>
       raise GeometryError::Undecidable("cannot decide segment distance branch")
   }
+}
+
+///|
+pub fn Segment::is_similar(
+  self : Segment,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  linear_entity_is_similar(geometry_segment(self), other)
 }

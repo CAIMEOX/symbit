@@ -19,6 +19,20 @@ pub fn find(
 }
 
 ///|
+pub fn are_similar(
+  lhs : GeometryEntity,
+  rhs : GeometryEntity,
+) -> Bool raise GeometryError {
+  if lhs == rhs {
+    return true
+  }
+  if lhs.is_similar(rhs) {
+    return true
+  }
+  rhs.is_similar(lhs)
+}
+
+///|
 pub fn ordered_points(points : Array[Point]) -> Array[Point] {
   let out = points[:].to_array()
   let n = out.length()

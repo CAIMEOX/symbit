@@ -26,3 +26,45 @@ test "geometry.plane equation projection and intersection" {
     _ => fail("expected plane-line point")
   }
 }
+
+///|
+test "geometry.plane parallel perpendicular and parameter helpers" {
+  let pl = try! plane_from_normal(
+    try! point3d(@symcore.int(1), @symcore.int(1), @symcore.int(1)),
+    [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
+  )
+  let same = try! plane_from_normal(
+    try! point3d(@symcore.int(2), @symcore.int(2), @symcore.int(-1)),
+    [@symcore.int(2), @symcore.int(2), @symcore.int(2)],
+  )
+  assert_true(try! pl.equals(geometry_plane(same)))
+  let line_obj = try! line(
+    try! point3d(@symcore.int(0), @symcore.int(0), @symcore.int(0)),
+    try! point3d(@symcore.int(1), @symcore.int(-1), @symcore.int(0)),
+  )
+  assert_true(try! pl.is_parallel(geometry_line(line_obj)))
+  let normal_line = try! pl.perpendicular_line(
+    try! point3d(@symcore.int(2), @symcore.int(0), @symcore.int(1)),
+  )
+  assert_true(try! pl.is_perpendicular(geometry_line(normal_line)))
+  let projected = try! pl.projection_line(
+    geometry_line(
+      try! line(
+        try! point3d(@symcore.int(1), @symcore.int(1), @symcore.int(1)),
+        try! point3d(@symcore.int(2), @symcore.int(2), @symcore.int(2)),
+      ),
+    ),
+  )
+  match projected {
+    GeometryEntity::Point(pt) => assert_eq(pt.repr(), "Point3D(1, 1, 1)")
+    _ => fail("expected projected point")
+  }
+  let u = @symcore.symbol("u")
+  let v = @symcore.symbol("v")
+  let uv_point = try! pl.arbitrary_point(
+    u=Some(@symcore.int(1)),
+    v=Some(@symcore.int(2)),
+  )
+  let uv_values = try! pl.parameter_value(uv_point, u, v=Some(v))
+  assert_eq(expr_map_summary(uv_values), "{u: 1, v: 2}")
+}

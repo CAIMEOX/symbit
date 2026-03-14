@@ -46,6 +46,12 @@ pub fn Plane::point(self : Plane) -> Point {
 }
 
 ///|
+pub fn Plane::ambient_dimension(self : Plane) -> Int {
+  let _ = self
+  3
+}
+
+///|
 pub fn Plane::normal_vector(self : Plane) -> Array[@symcore.Expr] {
   geo_clone_exprs(self.normal_)
 }
@@ -53,6 +59,77 @@ pub fn Plane::normal_vector(self : Plane) -> Array[@symcore.Expr] {
 ///|
 pub fn Plane::repr(self : Plane) -> String {
   "Plane(" + self.point_.repr() + ", " + geo_render_tuple(self.normal_) + ")"
+}
+
+///|
+fn plane_basis_vectors(
+  plane_obj : Plane,
+) -> (Array[@symcore.Expr], Array[@symcore.Expr]) {
+  let x = plane_obj.normal_[0]
+  let y = plane_obj.normal_[1]
+  let z = plane_obj.normal_[2]
+  let basis1 = if geo_expr_is_zero(x) && geo_expr_is_zero(y) {
+    [geo_one(), geo_zero(), geo_zero()]
+  } else {
+    [geo_zero() - y, x, geo_zero()]
+  }
+  let basis2 = geo_cross3([x, y, z], basis1)
+  (basis1, basis2)
+}
+
+///|
+fn plane_point_with_basis(
+  base : Point,
+  basis1 : Array[@symcore.Expr],
+  basis2 : Array[@symcore.Expr],
+  u : @symcore.Expr,
+  v : @symcore.Expr,
+) -> Point raise GeometryError {
+  point(
+    [
+      geo_simplify(base.coords_[0] + basis1[0] * u + basis2[0] * v),
+      geo_simplify(base.coords_[1] + basis1[1] * u + basis2[1] * v),
+      geo_simplify(base.coords_[2] + basis1[2] * u + basis2[2] * v),
+    ],
+    dim=3,
+  )
+}
+
+///|
+fn plane_basis_coeffs(
+  plane_obj : Plane,
+  target : Point,
+) -> (@symcore.Expr, @symcore.Expr)? raise GeometryError {
+  let delta = geo_sub_coords(target.coords_, plane_obj.point_.coords_)
+  let (basis1, basis2) = plane_basis_vectors(plane_obj)
+  let pairs = [(0, 1), (0, 2), (1, 2)]
+  for pair in pairs {
+    let det = geo_pair_determinant(basis1, basis2, pair.0, pair.1)
+    if geo_expr_is_zero(det) {
+      continue
+    }
+    let u_value = geo_div(
+      delta[pair.0] * basis2[pair.1] - delta[pair.1] * basis2[pair.0],
+      det,
+    )
+    let v_value = geo_div(
+      basis1[pair.0] * delta[pair.1] - basis1[pair.1] * delta[pair.0],
+      det,
+    )
+    let candidate = plane_point_with_basis(
+      plane_obj.point_,
+      basis1,
+      basis2,
+      u_value,
+      v_value,
+    ) catch {
+      _ => continue
+    }
+    if candidate.equals(target) {
+      return Some((geo_simplify(u_value), geo_simplify(v_value)))
+    }
+  }
+  None
 }
 
 ///|
@@ -67,6 +144,52 @@ pub fn Plane::equation(
     self.normal_[1] * (y - self.point_.coords_[1]) +
     self.normal_[2] * (z - self.point_.coords_[2]),
   )
+}
+
+///|
+pub fn Plane::arbitrary_point(
+  self : Plane,
+  u? : @symcore.Expr? = None,
+  v? : @symcore.Expr? = None,
+) -> Point raise GeometryError {
+  let (basis1, basis2) = plane_basis_vectors(self)
+  match v {
+    Some(vsym) => {
+      let usym = match u {
+        Some(value) => value
+        None => @symcore.symbol("u")
+      }
+      plane_point_with_basis(self.point_, basis1, basis2, usym, vsym)
+    }
+    None => {
+      let tsym = match u {
+        Some(value) => value
+        None => @symcore.symbol("t")
+      }
+      let norm1 = geo_norm(basis1)
+      let norm2 = geo_norm(basis2)
+      point(
+        [
+          geo_simplify(
+            self.point_.coords_[0] +
+            geo_div(basis1[0], norm1) * @symelem.cos(tsym) +
+            geo_div(basis2[0], norm2) * @symelem.sin(tsym),
+          ),
+          geo_simplify(
+            self.point_.coords_[1] +
+            geo_div(basis1[1], norm1) * @symelem.cos(tsym) +
+            geo_div(basis2[1], norm2) * @symelem.sin(tsym),
+          ),
+          geo_simplify(
+            self.point_.coords_[2] +
+            geo_div(basis1[2], norm1) * @symelem.cos(tsym) +
+            geo_div(basis2[2], norm2) * @symelem.sin(tsym),
+          ),
+        ],
+        dim=3,
+      )
+    }
+  }
 }
 
 ///|
@@ -155,6 +278,251 @@ pub fn Plane::scale(
     geo_div(self.normal_[2], factors[2]),
   ]
   plane_from_normal(moved.with_dim(3), scaled_normal)
+}
+
+///|
+pub fn Plane::equals(
+  self : Plane,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Plane(plane_obj) =>
+      self.contains_point(plane_obj.point_) &&
+      geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
+    _ => false
+  }
+}
+
+///|
+pub fn Plane::angle_between(
+  self : Plane,
+  other : GeometryEntity,
+) -> @symcore.Expr raise GeometryError {
+  match other {
+    GeometryEntity::Line(line_obj) =>
+      @symelem.asin(
+        geo_div(
+          geo_dot(self.normal_, try! line_obj.direction().with_dim(3).coords()),
+          geo_norm(self.normal_) *
+          geo_norm(try! line_obj.direction().with_dim(3).coords()),
+        ),
+      )
+    GeometryEntity::Ray(ray_obj) =>
+      @symelem.asin(
+        geo_div(
+          geo_dot(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
+          geo_norm(self.normal_) *
+          geo_norm(try! ray_obj.direction().with_dim(3).coords()),
+        ),
+      )
+    GeometryEntity::Segment(seg_obj) =>
+      @symelem.asin(
+        geo_div(
+          geo_dot(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
+          geo_norm(self.normal_) *
+          geo_norm(try! seg_obj.direction().with_dim(3).coords()),
+        ),
+      )
+    GeometryEntity::Plane(plane_obj) =>
+      @symelem.acos(
+        geo_div(
+          geo_dot(self.normal_, plane_obj.normal_),
+          geo_norm(self.normal_) * geo_norm(plane_obj.normal_),
+        ),
+      )
+    _ =>
+      raise GeometryError::TypeError(
+        "angle_between expects a plane or linear entity",
+      )
+  }
+}
+
+///|
+pub fn Plane::is_parallel(
+  self : Plane,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(line_obj) =>
+      geo_expr_is_zero(
+        geo_dot(self.normal_, try! line_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Ray(ray_obj) =>
+      geo_expr_is_zero(
+        geo_dot(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Segment(seg_obj) =>
+      geo_expr_is_zero(
+        geo_dot(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Plane(plane_obj) =>
+      geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
+    _ => false
+  }
+}
+
+///|
+pub fn Plane::is_perpendicular(
+  self : Plane,
+  other : GeometryEntity,
+) -> Bool raise GeometryError {
+  match other {
+    GeometryEntity::Line(line_obj) =>
+      geo_all_zero(
+        geo_cross3(self.normal_, try! line_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Ray(ray_obj) =>
+      geo_all_zero(
+        geo_cross3(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Segment(seg_obj) =>
+      geo_all_zero(
+        geo_cross3(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
+      )
+    GeometryEntity::Plane(plane_obj) =>
+      geo_expr_is_zero(geo_dot(self.normal_, plane_obj.normal_))
+    _ => false
+  }
+}
+
+///|
+pub fn Plane::parallel_plane(
+  self : Plane,
+  pt : Point,
+) -> Plane raise GeometryError {
+  plane_from_normal(pt.with_dim(3), self.normal_)
+}
+
+///|
+pub fn Plane::perpendicular_line(
+  self : Plane,
+  pt : Point,
+) -> Line raise GeometryError {
+  let p1 = pt.with_dim(3)
+  let p2 = point(geo_add_coords(p1.coords_, self.normal_), dim=3)
+  line(p1, p2)
+}
+
+///|
+pub fn Plane::perpendicular_plane(
+  self : Plane,
+  pts? : Array[Point] = [],
+) -> Plane raise GeometryError {
+  if pts.length() > 2 {
+    raise GeometryError::ValueError("no more than 2 points should be provided")
+  }
+  let items : Array[Point] = []
+  for item in pts {
+    items.push(item.with_dim(3))
+  }
+  if items.is_empty() {
+    items.push(self.point_)
+  }
+  if items.length() == 1 {
+    let dir = if geo_expr_is_zero(self.normal_[0]) &&
+      geo_expr_is_zero(self.normal_[1]) {
+      [geo_zero(), geo_one(), geo_zero()]
+    } else {
+      [geo_zero(), geo_zero(), geo_one()]
+    }
+    items.push(point(geo_add_coords(items[0].coords_, dir), dim=3))
+  }
+  let p1 = items[0]
+  let p2 = items[1]
+  let candidate_line = line(p1, p2)
+  let along_normal = try! self.perpendicular_line(p1)
+  let p3 = if along_normal.contains(p2) {
+    let mut axis_point = if geo_expr_is_zero(self.normal_[0]) &&
+      geo_expr_is_zero(self.normal_[1]) {
+      try! point3d(geo_zero(), geo_one(), geo_zero())
+    } else {
+      try! point3d(geo_zero(), geo_zero(), geo_one())
+    }
+    if candidate_line.contains(axis_point) {
+      axis_point = axis_point.mul(geo_int(2))
+    }
+    axis_point
+  } else {
+    try! point(geo_add_coords(p1.coords_, self.normal_), dim=3)
+  }
+  plane_from_points(p1, p2, p3)
+}
+
+///|
+pub fn Plane::projection_line(
+  self : Plane,
+  other : GeometryEntity,
+) -> GeometryEntity raise GeometryError {
+  match other {
+    GeometryEntity::Line(line_obj) => {
+      let a = try! self.projection(line_obj.p1_)
+      let b = try! self.projection(line_obj.p2_)
+      if a.equals(b) {
+        geometry_point(a)
+      } else {
+        geometry_line(try! line(a, b))
+      }
+    }
+    GeometryEntity::Ray(ray_obj) => {
+      let a = try! self.projection(ray_obj.p1_)
+      let b = try! self.projection(ray_obj.p2_)
+      if a.equals(b) {
+        geometry_point(a)
+      } else {
+        geometry_ray(try! ray(a, b))
+      }
+    }
+    GeometryEntity::Segment(seg_obj) => {
+      let a = try! self.projection(seg_obj.p1_)
+      let b = try! self.projection(seg_obj.p2_)
+      if a.equals(b) {
+        geometry_point(a)
+      } else {
+        geometry_segment(try! segment(a, b))
+      }
+    }
+    _ =>
+      raise GeometryError::TypeError("projection_line expects a linear entity")
+  }
+}
+
+///|
+pub fn Plane::parameter_value(
+  self : Plane,
+  other : Point,
+  u : @symcore.Expr,
+  v? : @symcore.Expr? = None,
+) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  let target = other.with_dim(3)
+  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  match v {
+    None => {
+      let delta = geo_sub_coords(target.coords_, self.point_.coords_)
+      if geo_all_zero(delta) {
+        out.set(u, geo_zero())
+        return out
+      }
+      let (basis1, basis2) = plane_basis_vectors(self)
+      match plane_basis_coeffs(self, target) {
+        Some((u_value, v_value)) => {
+          let alpha = geo_simplify(u_value * geo_norm(basis1))
+          let beta = geo_simplify(v_value * geo_norm(basis2))
+          out.set(u, geo_normalized_atan2(beta, alpha))
+          out
+        }
+        None => raise GeometryError::ValueError("given point is not on plane")
+      }
+    }
+    Some(vsym) =>
+      match plane_basis_coeffs(self, target) {
+        Some((u_value, v_value)) => {
+          out.set(u, u_value)
+          out.set(vsym, v_value)
+          return out
+        }
+        None => raise GeometryError::ValueError("given point is not on plane")
+      }
+  }
 }
 
 ///|

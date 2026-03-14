@@ -9,6 +9,21 @@ fn geo_one() -> @symcore.Expr {
 }
 
 ///|
+fn geo_pi() -> @symcore.Expr {
+  @symcore.symbol("pi")
+}
+
+///|
+fn geo_two_pi() -> @symcore.Expr {
+  geo_int(2) * geo_pi()
+}
+
+///|
+fn geo_half_pi() -> @symcore.Expr {
+  geo_div(geo_pi(), geo_int(2))
+}
+
+///|
 fn geo_neg_one() -> @symcore.Expr {
   @symcore.int(-1)
 }
@@ -27,6 +42,11 @@ fn geo_simplify(expr : @symcore.Expr) -> @symcore.Expr {
     ),
     max_passes=4,
   )
+}
+
+///|
+fn geo_radsimp(expr : @symcore.Expr) -> @symcore.Expr {
+  geo_simplify(@symsimplify.radsimp(geo_simplify(expr), max_passes=6))
 }
 
 ///|
@@ -92,6 +112,164 @@ fn geo_collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
     }
     _ => ()
   }
+}
+
+///|
+fn geo_expr_depends_on(expr : @symcore.Expr, wrt : @symcore.Expr) -> Bool {
+  if @symcore.compare_expr(expr, wrt) == 0 {
+    return true
+  }
+  match expr {
+    @symcore.Expr::Add(args)
+    | @symcore.Expr::Mul(args)
+    | @symcore.Expr::Function(_, args) =>
+      args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
+    @symcore.Expr::Pow(base, exp) =>
+      geo_expr_depends_on(base, wrt) || geo_expr_depends_on(exp, wrt)
+    _ => false
+  }
+}
+
+///|
+fn geo_expr_int_value(expr : @symcore.Expr) -> Int? {
+  match geo_simplify(expr) {
+    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    _ => None
+  }
+}
+
+///|
+fn geo_poly_deg2_add(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
+  [
+    geo_simplify(lhs[0] + rhs[0]),
+    geo_simplify(lhs[1] + rhs[1]),
+    geo_simplify(lhs[2] + rhs[2]),
+  ]
+}
+
+///|
+fn geo_poly_deg2_mul(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> Array[@symcore.Expr]? {
+  let out = [geo_zero(), geo_zero(), geo_zero()]
+  for i in 0..<3 {
+    for j in 0..<3 {
+      if i + j > 2 {
+        if !geo_expr_is_zero(lhs[i]) && !geo_expr_is_zero(rhs[j]) {
+          return None
+        }
+        continue
+      }
+      out[i + j] = geo_simplify(out[i + j] + lhs[i] * rhs[j])
+    }
+  }
+  Some(out)
+}
+
+///|
+fn geo_poly_deg2_pow(
+  coeffs : Array[@symcore.Expr],
+  exp : Int,
+) -> Array[@symcore.Expr]? {
+  let mut out = [geo_one(), geo_zero(), geo_zero()]
+  for _ in 0..<exp {
+    match geo_poly_deg2_mul(out, coeffs) {
+      Some(next) => out = next
+      None => return None
+    }
+  }
+  Some(out)
+}
+
+///|
+fn geo_poly_deg2_coeffs(
+  expr : @symcore.Expr,
+  wrt : @symcore.Expr,
+) -> Array[@symcore.Expr]? {
+  match geo_simplify(expr) {
+    @symcore.Expr::Number(_) => Some([expr, geo_zero(), geo_zero()])
+    @symcore.Expr::Symbol(_) =>
+      if @symcore.compare_expr(expr, wrt) == 0 {
+        Some([geo_zero(), geo_one(), geo_zero()])
+      } else {
+        Some([expr, geo_zero(), geo_zero()])
+      }
+    @symcore.Expr::Add(args) => {
+      let mut out = [geo_zero(), geo_zero(), geo_zero()]
+      for arg in args {
+        match geo_poly_deg2_coeffs(arg, wrt) {
+          Some(coeffs) => out = geo_poly_deg2_add(out, coeffs)
+          None => return None
+        }
+      }
+      Some(out)
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut out = [geo_one(), geo_zero(), geo_zero()]
+      for arg in args {
+        match geo_poly_deg2_coeffs(arg, wrt) {
+          Some(coeffs) =>
+            match geo_poly_deg2_mul(out, coeffs) {
+              Some(next) => out = next
+              None => return None
+            }
+          None => return None
+        }
+      }
+      Some(out)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      if !geo_expr_depends_on(expr, wrt) {
+        Some([expr, geo_zero(), geo_zero()])
+      } else {
+        match geo_expr_int_value(exp) {
+          Some(k) if k >= 0 && k <= 2 =>
+            match geo_poly_deg2_coeffs(base, wrt) {
+              Some(coeffs) => geo_poly_deg2_pow(coeffs, k)
+              None => None
+            }
+          _ => None
+        }
+      }
+    @symcore.Expr::Function(_, _) =>
+      if geo_expr_depends_on(expr, wrt) {
+        None
+      } else {
+        Some([expr, geo_zero(), geo_zero()])
+      }
+  }
+}
+
+///|
+fn geo_solve_univar_deg2(
+  expr : @symcore.Expr,
+  wrt : @symcore.Expr,
+) -> Array[@symcore.Expr]? {
+  match geo_poly_deg2_coeffs(expr, wrt) {
+    Some(coeffs) => Some(quadratic_roots(coeffs[2], coeffs[1], coeffs[0]))
+    None => None
+  }
+}
+
+///|
+fn geo_normalized_atan2(y : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+  if geo_expr_is_zero(y) && geo_expr_eq(x, geo_one()) {
+    return geo_zero()
+  }
+  if geo_expr_eq(y, geo_one()) && geo_expr_is_zero(x) {
+    return geo_half_pi()
+  }
+  if geo_expr_is_zero(y) && geo_expr_eq(x, geo_neg_one()) {
+    return geo_pi()
+  }
+  if geo_expr_eq(y, geo_neg_one()) && geo_expr_is_zero(x) {
+    return geo_zero() - geo_half_pi()
+  }
+  geo_simplify(@symelem.atan2(y, x))
 }
 
 ///|
@@ -208,6 +386,16 @@ fn geo_cross2(
   rhs : Array[@symcore.Expr],
 ) -> @symcore.Expr {
   geo_simplify(lhs[0] * rhs[1] - lhs[1] * rhs[0])
+}
+
+///|
+fn geo_perp2(
+  coords : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] raise GeometryError {
+  if coords.length() != 2 {
+    raise GeometryError::ValueError("perp2 is only defined for planar vectors")
+  }
+  [geo_simplify(geo_zero() - coords[1]), coords[0]]
 }
 
 ///|

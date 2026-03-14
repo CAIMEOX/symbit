@@ -50,3 +50,34 @@ test "geometry.curve arbitrary point transforms and length shell" {
     "Integral(sqrt(((2*s)**2 + 4)), s, 0, 2)",
   )
 }
+
+///|
+test "geometry.curve parameter helpers" {
+  let t = @symcore.symbol("t")
+  let z = @symcore.symbol("z")
+  let c = try! curve(
+    [@symcore.int(2) * t, t ^ @symcore.int(2)],
+    t,
+    @symcore.int(0),
+    @symcore.int(2),
+  )
+  assert_eq(
+    "[" + c.plot_interval().map(geometry_py_expr_text).join(", ") + "]",
+    "[t, 0, 2]",
+  )
+  assert_eq(
+    "[" +
+    c.plot_interval(parameter=z).map(geometry_py_expr_text).join(", ") +
+    "]",
+    "[z, 0, 2]",
+  )
+}
+
+///|
+test "geometry.curve free symbol helpers" {
+  let t = @symcore.symbol("t")
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let c = try! curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
+  assert_eq(expr_set_summary(c.free_symbols()), "{a, b}")
+}

@@ -72,3 +72,34 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     fail("curve rotate y parity")
   }
 }
+
+///|
+test "geometry.curve parity parameter helpers" {
+  let t = @symcore.symbol("t")
+  let c = try! curve(
+    [@symcore.int(2) * t, t ^ @symcore.int(2)],
+    t,
+    @symcore.int(0),
+    @symcore.int(2),
+  )
+  assert_eq(
+    "[" + c.plot_interval().map(geometry_py_expr_text).join(", ") + "]",
+    "[t, 0, 2]",
+  )
+}
+
+///|
+test "geometry.curve parity free symbol helpers" {
+  let t = @symcore.symbol("t")
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let c = try! curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
+  assert_eq(
+    expr_set_summary(c.free_symbols()),
+    string_set_summary(
+      try! @sympy_geometry.geometry_eval_str(
+        "Curve((t + a, t**2), (t, b, 2)).free_symbols",
+      ),
+    ),
+  )
+}

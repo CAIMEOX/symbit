@@ -66,7 +66,7 @@ fn geometry_globals() -> @py.PyDict raise {
       }
     None => fail("python-missing:sympy.symbols")
   }
-  for name in ["x", "y", "z", "t", "u", "v"] {
+  for name in ["a", "b", "c", "x", "y", "z", "t", "u", "v"] {
     match
       symbols_fn.invoke(
         args=@sympy.py_pack_args([OracleArg::Str(name)]),

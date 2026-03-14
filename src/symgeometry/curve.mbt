@@ -63,6 +63,45 @@ pub fn Curve::limits(
 }
 
 ///|
+pub fn Curve::free_symbols(self : Curve) -> Array[@symcore.Expr] {
+  let seen : Map[String, Bool] = {}
+  for expr in self.functions_ {
+    geo_collect_symbols(expr, seen)
+  }
+  geo_collect_symbols(self.start_, seen)
+  geo_collect_symbols(self.end_, seen)
+  let out : Array[@symcore.Expr] = []
+  let parameter_name = match self.parameter_ {
+    @symcore.Expr::Symbol(name) => Some(name)
+    _ => None
+  }
+  for item in seen {
+    if parameter_name != Some(item.0) {
+      out.push(@symcore.symbol(item.0))
+    }
+  }
+  let n = out.length()
+  for i in 0..<n {
+    for j in (i + 1)..<n {
+      if @symprint.to_string(out[i]).compare(@symprint.to_string(out[j])) > 0 {
+        let tmp = out[i]
+        out[i] = out[j]
+        out[j] = tmp
+      }
+    }
+  }
+  out
+}
+
+///|
+pub fn Curve::plot_interval(
+  self : Curve,
+  parameter? : @symcore.Expr = @symcore.symbol("t"),
+) -> Array[@symcore.Expr] {
+  [parameter, self.start_, self.end_]
+}
+
+///|
 pub fn Curve::arbitrary_point(
   self : Curve,
   parameter? : @symcore.Expr = @symcore.symbol("t"),
@@ -81,6 +120,70 @@ pub fn Curve::arbitrary_point(
     self.functions_.map(fn(expr) { @symcore.subst(expr, env) }),
     dim=self.functions_.length(),
   )
+}
+
+///|
+pub fn Curve::parameter_value(
+  self : Curve,
+  other : Point,
+  t : @symcore.Expr,
+) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  let point_obj = other.with_dim(self.functions_.length())
+  let mut candidates : Array[@symcore.Expr]? = None
+  for i in 0..<self.functions_.length() {
+    let diff = geo_simplify(self.functions_[i] - point_obj.coords_[i])
+    if geo_expr_is_zero(diff) {
+      continue
+    }
+    let roots = match geo_solve_univar_deg2(diff, self.parameter_) {
+      Some(items) if !items.is_empty() => items
+      _ => raise GeometryError::ValueError("point is not on curve")
+    }
+    let unique_roots : Array[@symcore.Expr] = []
+    for root in roots {
+      let normalized_root = geo_simplify(root)
+      if !unique_roots.any(fn(prev) { geo_expr_eq(prev, normalized_root) }) {
+        unique_roots.push(normalized_root)
+      }
+    }
+    match candidates {
+      None => candidates = Some(unique_roots)
+      Some(prev) => {
+        let next : Array[@symcore.Expr] = []
+        for candidate in prev {
+          if unique_roots.any(fn(root) { geo_expr_eq(root, candidate) }) {
+            next.push(candidate)
+          }
+        }
+        candidates = Some(next)
+      }
+    }
+  }
+  let matches = match candidates {
+    Some(items) if !items.is_empty() => items
+    _ => raise GeometryError::ValueError("point is not on curve")
+  }
+  for candidate in matches {
+    let candidate = geo_simplify(candidate)
+    let env : Map[String, @symcore.Expr] = {}
+    match self.parameter_ {
+      @symcore.Expr::Symbol(name) => env.set(name, candidate)
+      _ => ()
+    }
+    let mut ok = true
+    for i in 0..<self.functions_.length() {
+      let value = geo_simplify(@symcore.subst(self.functions_[i], env))
+      if !geo_expr_eq(value, point_obj.coords_[i]) {
+        ok = false
+      }
+    }
+    if ok {
+      let out : Map[@symcore.Expr, @symcore.Expr] = {}
+      out.set(t, geo_simplify(candidate))
+      return out
+    }
+  }
+  raise GeometryError::ValueError("point is not on curve")
 }
 
 ///|
