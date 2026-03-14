@@ -1,0 +1,27 @@
+///|
+test "physics.mechanics wrapping geometry core" {
+  let n = try! @symvector.reference_frame("WN")
+  let p_o = try! @symvector.point("WpO")
+  let sphere = wrapping_sphere(@symcore.symbol("r"), p_o)
+  let p_1 = try! @symvector.point("Wp1")
+  let p_2 = try! @symvector.point("Wp2")
+  p_1.set_pos(p_o, n.x().scale(@symcore.symbol("r")))
+  p_2.set_pos(p_o, n.y().scale(@symcore.symbol("r")))
+  inspect(sphere.repr(), content="WrappingSphere(radius=r, point=WpO)")
+  inspect(
+    @symprint.to_string(try! sphere.geodesic_length(p_1, p_2)),
+    content="r*acos(0)",
+  )
+
+  let cylinder = try! wrapping_cylinder(@symcore.symbol("r"), p_o, n.z())
+  let p_3 = try! @symvector.point("Wp3")
+  p_3.set_pos(p_o, n.x().scale(@symcore.symbol("r")) + n.z())
+  inspect(
+    cylinder.repr(),
+    content="WrappingCylinder(radius=r, point=WpO, axis=WN.z)",
+  )
+  inspect(
+    @symprint.to_string(try! cylinder.geodesic_length(p_1, p_3)),
+    content="1",
+  )
+}

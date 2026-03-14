@@ -1,0 +1,22 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symcalculus",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symsimplify",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics/vector" @symvector,
+}
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symcalculus",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symsimplify",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics/vector" @symvector,
+  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
+} for "test"

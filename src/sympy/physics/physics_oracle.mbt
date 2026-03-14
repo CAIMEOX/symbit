@@ -2987,6 +2987,22 @@ fn vector_subprocess_prelude() -> String {
 }
 
 ///|
+fn mechanics_subprocess_prelude() -> String {
+  [
+    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
+    "from sympy import *\n", "from sympy.physics.vector import *\n", "from sympy.physics.vector.fieldfunctions import *\n",
+    "from sympy.physics.mechanics import *\n", "from sympy.physics.mechanics.functions import *\n",
+    "from sympy.physics.mechanics.loads import *\n", "t = dynamicsymbols._t\n", "def _symbit_mechanics_summary(obj):\n",
+    "    if isinstance(obj, (Vector, Dyadic)):\n", "        return vsprint(obj)\n",
+    "    if isinstance(obj, (Particle, RigidBody, Body, Inertia, Force, Torque)):\n",
+    "        return repr(obj)\n", "    if isinstance(obj, list):\n", "        return '[' + ', '.join(_symbit_mechanics_summary(x) for x in obj) + ']'\n",
+    "    if isinstance(obj, tuple):\n", "        items = ', '.join(_symbit_mechanics_summary(x) for x in obj)\n",
+    "        if len(obj) == 1:\n", "            items += ','\n", "        return '(' + items + ')'\n",
+    "    return str(obj)\n",
+  ].join("")
+}
+
+///|
 fn vector_python_result_script(
   expr : String,
   prefix : String,
@@ -3013,6 +3029,34 @@ fn vector_python_result_script(
 }
 
 ///|
+fn mechanics_python_result_script(
+  expr : String,
+  prefix : String,
+  suffix : String,
+) -> String {
+  let pieces = expr
+    .split(";")
+    .to_array()
+    .map(s => s.trim().to_string())
+    .filter(s => s != "")
+  if pieces.is_empty() {
+    return [mechanics_subprocess_prelude(), prefix, "None", suffix, "\n"].join(
+      "",
+    )
+  }
+  let body : Array[String] = [mechanics_subprocess_prelude()]
+  for piece in pieces[:pieces.length() - 1] {
+    body.push(piece.to_string())
+    body.push("\n")
+  }
+  body.push(prefix)
+  body.push(pieces[pieces.length() - 1].to_string())
+  body.push(suffix)
+  body.push("\n")
+  body.join("")
+}
+
+///|
 pub fn vector_eval(expr : String) -> String raise {
   python_subprocess_stdout(vector_python_result_script(expr, "print(", ")"))
 }
@@ -3022,6 +3066,43 @@ pub fn vector_summary(expr : String) -> String raise {
   python_subprocess_stdout(
     vector_python_result_script(expr, "print(_symbit_vector_summary(", "))"),
   )
+}
+
+///|
+pub fn mechanics_eval(expr : String) -> String raise {
+  python_subprocess_stdout(mechanics_python_result_script(expr, "print(", ")"))
+}
+
+///|
+pub fn mechanics_summary(expr : String) -> String raise {
+  python_subprocess_stdout(
+    mechanics_python_result_script(
+      expr, "print(_symbit_mechanics_summary(", "))",
+    ),
+  )
+}
+
+///|
+pub fn mechanics_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
+  let combined = lhs_expr + ";" + rhs_expr
+  let body : Array[String] = [
+    mechanics_subprocess_prelude(),
+    "import re\n",
+    "_locals = {'t': t}\n",
+    "for _name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\(t\\)', ",
+    python_string_literal(combined),
+    ")):\n",
+    "    _locals[_name] = Function(_name)\n",
+    "lhs = sympify(",
+    python_string_literal(lhs_expr),
+    ", locals=_locals)\n",
+    "rhs = sympify(",
+    python_string_literal(rhs_expr),
+    ", locals=_locals)\n",
+    "ok = simplify(expand_func(lhs - rhs)) == 0\n",
+    "print(ok)\n",
+  ]
+  python_subprocess_stdout(body.join("")) == "True"
 }
 
 ///|
@@ -3040,6 +3121,12 @@ pub fn vector_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
   body.push(python_string_literal(lhs_expr))
   body.push(")):\n")
   body.push("    _locals[_name] = Function(_name)\n")
+  body.push(
+    "for _frame_name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\.[xyz]', ",
+  )
+  body.push(python_string_literal(lhs_expr))
+  body.push(")):\n")
+  body.push("    _locals[_frame_name] = ReferenceFrame(_frame_name)\n")
   body.push("lhs = sympify(")
   body.push(python_string_literal(lhs_expr))
   body.push(", locals=_locals)\n")
@@ -3054,7 +3141,12 @@ pub fn vector_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
     body.push(pieces[pieces.length() - 1].to_string())
     body.push("\n")
   }
-  body.push("ok = simplify(lhs - rhs) == 0\nprint(ok)\n")
+  body.push("delta = lhs - rhs\n")
+  body.push("if isinstance(delta, (Vector, Dyadic)):\n")
+  body.push("    ok = delta.simplify() == 0\n")
+  body.push("else:\n")
+  body.push("    ok = simplify(delta) == 0\n")
+  body.push("print(ok)\n")
   python_subprocess_stdout(body.join("")) == "True"
 }
 
@@ -3085,6 +3177,46 @@ pub fn vector_matrix_equal(lhs_rows : String, rhs_expr : String) -> Bool raise {
     .filter(s => s != "")
   let body : Array[String] = [
     vector_subprocess_prelude(),
+    "import re\n",
+    "_locals = {'t': t}\n",
+    "for _name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\(t\\)', ",
+  ]
+  body.push(python_string_literal(lhs_rows))
+  body.push(")):\n")
+  body.push("    _locals[_name] = Function(_name)\n")
+  body.push("lhs = Matrix(sympify(")
+  body.push(python_string_literal(lhs_rows))
+  body.push(", locals=_locals))\n")
+  if pieces.is_empty() {
+    body.push("rhs = Matrix([[0]])\n")
+  } else {
+    for piece in pieces[:pieces.length() - 1] {
+      body.push(piece.to_string())
+      body.push("\n")
+    }
+    body.push("rhs = ")
+    body.push(pieces[pieces.length() - 1].to_string())
+    body.push("\n")
+  }
+  body.push(
+    "ok = lhs.shape == rhs.shape and all(simplify(lhs[i, j] - rhs[i, j]) == 0 for i in range(lhs.rows) for j in range(lhs.cols))\n",
+  )
+  body.push("print(ok)\n")
+  python_subprocess_stdout(body.join("")) == "True"
+}
+
+///|
+pub fn mechanics_matrix_equal(
+  lhs_rows : String,
+  rhs_expr : String,
+) -> Bool raise {
+  let pieces = rhs_expr
+    .split(";")
+    .to_array()
+    .map(s => s.trim().to_string())
+    .filter(s => s != "")
+  let body : Array[String] = [
+    mechanics_subprocess_prelude(),
     "import re\n",
     "_locals = {'t': t}\n",
     "for _name in set(re.findall(r'([A-Za-z_][A-Za-z0-9_]*)\\(t\\)', ",
