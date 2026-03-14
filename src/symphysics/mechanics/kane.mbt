@@ -299,7 +299,56 @@ pub fn KanesMethod::linearizer(
 ) -> Linearizer raise @symphysics.PhysicsError {
   let rhs = try! self.rhs()
   let rhs_terms = mechanics_matrix_entries(rhs).map(fn(row) { row[0] })
-  linearizer(self.q_ind_ + self.u_ind_, rhs_terms)
+  let qdots = kane_qdots(self.q_ind_)
+  let udots = kane_udots(self.u_ind_)
+  let inputs = mechanics_dynamic_inputs(
+    rhs_terms,
+    self.q_ind_ + self.u_ind_ + qdots + udots,
+  )
+  let f_2 = try! self.mass_matrix_.mul(mechanics_matrix_column(udots))
+  let top_rows : Array[Array[@symcore.Expr]] = []
+  for i in 0..<self.q_ind_.length() {
+    let row = Array::make(
+      self.q_ind_.length() + self.u_ind_.length(),
+      @symcore.int(0),
+    )
+    row[i] = @symcore.int(1)
+    top_rows.push(row)
+  }
+  let lower_rows = mechanics_matrix_entries(self.mass_matrix_).map(fn(row) {
+    Array::make(self.q_ind_.length(), @symcore.int(0)) +
+    row.map(fn(item) { mech_simplify_expr(@symcore.int(-1) * item) })
+  })
+  let implicit_mass = try! @symphysics.explicit_matrix_from_rows(
+    top_rows + lower_rows,
+  )
+  let implicit_forcing = mechanics_matrix_column(
+    self.u_ind_ +
+    mechanics_matrix_entries(self.forcing_).map(fn(row) {
+      mech_simplify_expr(@symcore.int(-1) * row[0])
+    }),
+  )
+  linearizer_with_metadata(
+    self.q_ind_ + self.u_ind_,
+    rhs_terms,
+    inputs~,
+    q=self.q_ind_,
+    u=self.u_ind_,
+    q_i=self.q_ind_,
+    u_i=self.u_ind_,
+    r=inputs,
+    f_0=mechanics_matrix_column(qdots),
+    f_1=mechanics_matrix_column(
+      self.u_ind_.map(fn(u) { mech_simplify_expr(@symcore.int(-1) * u) }),
+    ),
+    f_2~,
+    f_3=self.forcing_.neg(),
+    implicit_mass=Some(implicit_mass),
+    implicit_forcing=Some(implicit_forcing),
+    perm_mat=Some(
+      mechanics_identity(self.q_ind_.length() + self.u_ind_.length()),
+    ),
+  )
 }
 
 ///|
@@ -321,6 +370,7 @@ pub fn KanesMethod::linearize(
   self : KanesMethod,
   op_point? : Array[Substitution] = [],
   a_and_b? : Bool = false,
+  simplify? : Bool = false,
 ) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError {
-  (try! self.linearizer()).linearize(op_point~, a_and_b~)
+  (try! self.linearizer()).linearize(op_point~, a_and_b~, simplify~)
 }

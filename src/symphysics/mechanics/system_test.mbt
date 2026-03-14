@@ -39,7 +39,11 @@ test "physics.mechanics system core" {
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
-  try! sys.validate_system()
+  let validation : Result[Unit, @symphysics.PhysicsError] = try? sys.validate_system()
+  match validation {
+    Ok(_) => ()
+    Err(err) => fail("system should validate: " + err.to_string())
+  }
 
   inspect(system_bodies_summary(sys.bodies()), content="[rail, cart, bob]")
   inspect(system_exprs_summary(sys.q_ind()), content="[q_slider(t), q_pin(t)]")
@@ -109,5 +113,57 @@ test "physics.mechanics system backend equations" {
     "(b*Derivative(q(t), t) - k*q(t))/m",
   )) else {
     fail("system lagrange rhs mismatch")
+  }
+}
+
+///|
+test "physics.mechanics system validation semantics" {
+  let n = try! @symvector.reference_frame("SVN")
+  let origin = try! @symvector.point("SVO")
+  origin.set_vel(n, @symvector.vector_zero())
+  let wall = try! rigid_body("wall", masscenter=Some(origin), frame=Some(n))
+  let bob = try! particle("bob", mass=Some(@symcore.symbol("m")))
+  let q = @symvector.dynamicsymbol("q")
+  let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
+
+  let valid_lagrange = system_from_newtonian(wall.as_bodylike())
+  let lag_joint = try! prismatic_joint(
+    "slide_l",
+    wall.as_bodylike(),
+    bob.as_bodylike(),
+    coordinates=Some([q]),
+    speeds=Some([qd]),
+  )
+  try! valid_lagrange.add_joints([lag_joint.as_joint()])
+  try! valid_lagrange.validate_system(use_lagrange=true)
+
+  let missing_kde = system_from_newtonian(wall.as_bodylike())
+  let kane_joint = try! prismatic_joint(
+    "slide_k",
+    wall.as_bodylike(),
+    bob.as_bodylike(),
+  )
+  missing_kde.add_bodies([wall.as_bodylike(), bob.as_bodylike()])
+  try! missing_kde.add_coordinates(kane_joint.coordinates())
+  try! missing_kde.add_speeds(kane_joint.speeds())
+  let bad_kane : Result[Unit, @symphysics.PhysicsError] = try? missing_kde.validate_system()
+  guard bad_kane is Err(@symphysics.PhysicsError::ValueError(_)) else {
+    fail("system validation should reject missing joint kdes")
+  }
+
+  let invalid_lagrange = system_from_newtonian(wall.as_bodylike())
+  let bad_joint = try! prismatic_joint(
+    "slide_bad",
+    wall.as_bodylike(),
+    bob.as_bodylike(),
+    coordinates=Some([q]),
+    speeds=Some([@symvector.dynamicsymbol("u_bad")]),
+  )
+  try! invalid_lagrange.add_joints([bad_joint.as_joint()])
+  let bad_lagrange : Result[Unit, @symphysics.PhysicsError] = try? invalid_lagrange.validate_system(
+    use_lagrange=true,
+  )
+  guard bad_lagrange is Err(@symphysics.PhysicsError::ValueError(_)) else {
+    fail("system validation should reject non-qdot speeds for lagrange")
   }
 }

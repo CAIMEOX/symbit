@@ -43,8 +43,19 @@ test "physics.mechanics kane: spring mass damper" {
   )) else {
     fail("kane acceleration mismatch")
   }
-  inspect(
-    @symphysics.explicit_matrix_rows_string((try! km.linearize(a_and_b=true)).0),
-    content="[[0, 1], [-k*m**-1, -c*m**-1]]",
-  )
+  let a = (try! km.linearize(a_and_b=true)).0
+  inspect(@symprint.to_string(try! a.get(0, 0)), content="0")
+  inspect(@symprint.to_string(try! a.get(0, 1)), content="1")
+  guard (try! @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(try! a.get(1, 0)),
+    "-k/m",
+  )) else {
+    fail("kane linearized A(1,0) mismatch")
+  }
+  guard (try! @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(try! a.get(1, 1)),
+    "-c/m",
+  )) else {
+    fail("kane linearized A(1,1) mismatch")
+  }
 }

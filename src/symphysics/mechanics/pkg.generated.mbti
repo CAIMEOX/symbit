@@ -104,6 +104,8 @@ pub fn rigid_body(String, masscenter? : @vector.Point?, frame? : @vector.Referen
 
 pub fn spherical_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, rot_type? : String, rot_order? : String) -> SphericalJoint raise @vector.VectorError
 
+pub fn symbolic_system(Array[@symcore.Expr], @symphysics.ExplicitMatrix, speeds? : Array[@symcore.Expr]?, mass_matrix? : @symphysics.ExplicitMatrix?, coordinate_derivatives? : @symphysics.ExplicitMatrix?, alg_con? : Array[Int]?, output_eqns? : Array[(@symcore.Expr, @symcore.Expr)], coord_idxs? : Array[Int]?, speed_idxs? : Array[Int]?, bodies? : Array[BodyLike]?, loads? : Array[Load]?) -> SymbolicSystem raise @symphysics.PhysicsError
+
 pub fn system(frame? : @vector.ReferenceFrame?, fixed_point? : @vector.Point?) -> System raise @vector.VectorError
 
 pub fn system_from_newtonian(BodyLike) -> System raise @symphysics.PhysicsError
@@ -225,6 +227,7 @@ pub struct CylindricalJoint {
 }
 pub fn CylindricalJoint::as_joint(Self) -> JointLike
 pub fn CylindricalJoint::child(Self) -> BodyLike
+pub fn CylindricalJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::child_point(Self) -> @vector.Point
 pub fn CylindricalJoint::coordinates(Self) -> Array[@symcore.Expr]
@@ -232,6 +235,7 @@ pub fn CylindricalJoint::joint_axis(Self) -> @vector.Vector
 pub fn CylindricalJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn CylindricalJoint::name(Self) -> String
 pub fn CylindricalJoint::parent(Self) -> BodyLike
+pub fn CylindricalJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn CylindricalJoint::parent_point(Self) -> @vector.Point
 pub fn CylindricalJoint::repr(Self) -> String
@@ -301,10 +305,16 @@ pub enum JointLike {
   Weld(WeldJoint)
 }
 pub fn JointLike::child(Self) -> BodyLike
+pub fn JointLike::child_frame(Self) -> @vector.ReferenceFrame
+pub fn JointLike::child_interframe(Self) -> @vector.ReferenceFrame
+pub fn JointLike::child_point(Self) -> @vector.Point
 pub fn JointLike::coordinates(Self) -> Array[@symcore.Expr]
 pub fn JointLike::kdes(Self) -> Array[@symcore.Expr]
 pub fn JointLike::name(Self) -> String
 pub fn JointLike::parent(Self) -> BodyLike
+pub fn JointLike::parent_frame(Self) -> @vector.ReferenceFrame
+pub fn JointLike::parent_interframe(Self) -> @vector.ReferenceFrame
+pub fn JointLike::parent_point(Self) -> @vector.Point
 pub fn JointLike::repr(Self) -> String
 pub fn JointLike::speeds(Self) -> Array[@symcore.Expr]
 pub impl Eq for JointLike
@@ -359,7 +369,7 @@ pub fn KanesMethod::forcing_kin(Self) -> @symphysics.ExplicitMatrix
 pub fn KanesMethod::kanes_equations(Self, Array[BodyLike], Array[Load]) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise
 pub fn KanesMethod::kd_eqs(Self) -> Array[@symcore.Expr]
 pub fn KanesMethod::kindiffdict(Self) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError
-pub fn KanesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
+pub fn KanesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
 pub fn KanesMethod::linearizer(Self) -> Linearizer raise @symphysics.PhysicsError
 pub fn KanesMethod::loads(Self) -> Array[Load]
 pub fn KanesMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
@@ -394,14 +404,14 @@ pub fn LagrangesMethod::forcing(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::forcing_full(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::form_lagranges_equations(Self) -> @symphysics.ExplicitMatrix raise
 pub fn LagrangesMethod::lam_vec(Self) -> @symphysics.ExplicitMatrix
-pub fn LagrangesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
+pub fn LagrangesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
 pub fn LagrangesMethod::linearizer(Self) -> Linearizer raise @symphysics.PhysicsError
 pub fn LagrangesMethod::loads(Self) -> Array[Load]
 pub fn LagrangesMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::q(Self) -> Array[@symcore.Expr]
 pub fn LagrangesMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
-pub fn LagrangesMethod::solve_multipliers(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn LagrangesMethod::solve_multipliers(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn LagrangesMethod::to_linearizer(Self) -> Linearizer raise @symphysics.PhysicsError
 pub fn LagrangesMethod::u(Self) -> Array[@symcore.Expr]
 pub impl Eq for LagrangesMethod
@@ -448,12 +458,48 @@ pub struct Linearizer {
   states_ : Array[@symcore.Expr]
   inputs_ : Array[@symcore.Expr]
   rhs_ : Array[@symcore.Expr]
+  q_ : Array[@symcore.Expr]
+  u_ : Array[@symcore.Expr]
+  q_i_ : Array[@symcore.Expr]
+  q_d_ : Array[@symcore.Expr]
+  u_i_ : Array[@symcore.Expr]
+  u_d_ : Array[@symcore.Expr]
+  r_ : Array[@symcore.Expr]
+  lams_ : Array[@symcore.Expr]
+  f_0_ : @symphysics.ExplicitMatrix
+  f_1_ : @symphysics.ExplicitMatrix
+  f_2_ : @symphysics.ExplicitMatrix
+  f_3_ : @symphysics.ExplicitMatrix
+  f_4_ : @symphysics.ExplicitMatrix
+  f_c_ : @symphysics.ExplicitMatrix
+  f_v_ : @symphysics.ExplicitMatrix
+  f_a_ : @symphysics.ExplicitMatrix
+  implicit_mass_ : @symphysics.ExplicitMatrix?
+  implicit_forcing_ : @symphysics.ExplicitMatrix?
+  perm_mat_ : @symphysics.ExplicitMatrix
 }
+pub fn Linearizer::f_0(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_1(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_2(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_3(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_4(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_a(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_c(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::f_v(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::inputs(Self) -> Array[@symcore.Expr]
-pub fn Linearizer::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix)
+pub fn Linearizer::lams(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
+pub fn Linearizer::linearize_mab(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix)
 pub fn Linearizer::permutation_matrix(Self) -> @symphysics.ExplicitMatrix
+pub fn Linearizer::q(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::q_d(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::q_i(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::r(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::rhs(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::states(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::u(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::u_d(Self) -> Array[@symcore.Expr]
+pub fn Linearizer::u_i(Self) -> Array[@symcore.Expr]
 pub impl Eq for Linearizer
 
 pub enum Load {
@@ -528,6 +574,7 @@ pub struct PinJoint {
 }
 pub fn PinJoint::as_joint(Self) -> JointLike
 pub fn PinJoint::child(Self) -> BodyLike
+pub fn PinJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::child_point(Self) -> @vector.Point
 pub fn PinJoint::coordinates(Self) -> Array[@symcore.Expr]
@@ -535,6 +582,7 @@ pub fn PinJoint::joint_axis(Self) -> @vector.Vector
 pub fn PinJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PinJoint::name(Self) -> String
 pub fn PinJoint::parent(Self) -> BodyLike
+pub fn PinJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn PinJoint::parent_point(Self) -> @vector.Point
 pub fn PinJoint::repr(Self) -> String
@@ -559,12 +607,14 @@ pub struct PlanarJoint {
 }
 pub fn PlanarJoint::as_joint(Self) -> JointLike
 pub fn PlanarJoint::child(Self) -> BodyLike
+pub fn PlanarJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::child_point(Self) -> @vector.Point
 pub fn PlanarJoint::coordinates(Self) -> Array[@symcore.Expr]
 pub fn PlanarJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PlanarJoint::name(Self) -> String
 pub fn PlanarJoint::parent(Self) -> BodyLike
+pub fn PlanarJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn PlanarJoint::parent_point(Self) -> @vector.Point
 pub fn PlanarJoint::planar_coordinates(Self) -> Array[@symcore.Expr]
@@ -594,6 +644,7 @@ pub struct PrismaticJoint {
 }
 pub fn PrismaticJoint::as_joint(Self) -> JointLike
 pub fn PrismaticJoint::child(Self) -> BodyLike
+pub fn PrismaticJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::child_point(Self) -> @vector.Point
 pub fn PrismaticJoint::coordinates(Self) -> Array[@symcore.Expr]
@@ -601,6 +652,7 @@ pub fn PrismaticJoint::joint_axis(Self) -> @vector.Vector
 pub fn PrismaticJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn PrismaticJoint::name(Self) -> String
 pub fn PrismaticJoint::parent(Self) -> BodyLike
+pub fn PrismaticJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn PrismaticJoint::parent_point(Self) -> @vector.Point
 pub fn PrismaticJoint::repr(Self) -> String
@@ -658,17 +710,52 @@ pub struct SphericalJoint {
 }
 pub fn SphericalJoint::as_joint(Self) -> JointLike
 pub fn SphericalJoint::child(Self) -> BodyLike
+pub fn SphericalJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::child_point(Self) -> @vector.Point
 pub fn SphericalJoint::coordinates(Self) -> Array[@symcore.Expr]
 pub fn SphericalJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn SphericalJoint::name(Self) -> String
 pub fn SphericalJoint::parent(Self) -> BodyLike
+pub fn SphericalJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn SphericalJoint::parent_point(Self) -> @vector.Point
 pub fn SphericalJoint::repr(Self) -> String
 pub fn SphericalJoint::speeds(Self) -> Array[@symcore.Expr]
 pub impl Eq for SphericalJoint
+
+pub struct SymbolicSystem {
+  states_ : @symphysics.ExplicitMatrix
+  coordinates_ : @symphysics.ExplicitMatrix?
+  speeds_ : @symphysics.ExplicitMatrix?
+  alg_con_ : Array[Int]?
+  dyn_implicit_mat_ : @symphysics.ExplicitMatrix?
+  dyn_implicit_rhs_ : @symphysics.ExplicitMatrix?
+  mut comb_implicit_mat_ : @symphysics.ExplicitMatrix?
+  mut comb_implicit_rhs_ : @symphysics.ExplicitMatrix?
+  mut comb_explicit_rhs_ : @symphysics.ExplicitMatrix?
+  kin_explicit_rhs_ : @symphysics.ExplicitMatrix?
+  output_eqns_ : Array[(@symcore.Expr, @symcore.Expr)]
+  bodies_ : Array[BodyLike]?
+  loads_ : Array[Load]?
+}
+pub fn SymbolicSystem::alg_con(Self) -> Array[Int]?
+pub fn SymbolicSystem::bodies(Self) -> Array[BodyLike] raise @symphysics.PhysicsError
+pub fn SymbolicSystem::comb_explicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::comb_implicit_mat(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::comb_implicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::compute_explicit_form(Self) -> Unit raise @symphysics.PhysicsError
+pub fn SymbolicSystem::constant_symbols(Self) -> Array[@symcore.Expr]
+pub fn SymbolicSystem::coordinates(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::dyn_implicit_mat(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::dyn_implicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::dynamic_symbols(Self) -> Array[@symcore.Expr]
+pub fn SymbolicSystem::kin_explicit_rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::loads(Self) -> Array[Load] raise @symphysics.PhysicsError
+pub fn SymbolicSystem::output_eqns(Self) -> Array[(@symcore.Expr, @symcore.Expr)]
+pub fn SymbolicSystem::speeds(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn SymbolicSystem::states(Self) -> @symphysics.ExplicitMatrix
+pub impl Eq for SymbolicSystem
 
 pub struct System {
   frame_ : @vector.ReferenceFrame
@@ -729,7 +816,7 @@ pub fn System::u(Self) -> Array[@symcore.Expr]
 pub fn System::u_aux(Self) -> Array[@symcore.Expr]
 pub fn System::u_dep(Self) -> Array[@symcore.Expr]
 pub fn System::u_ind(Self) -> Array[@symcore.Expr]
-pub fn System::validate_system(Self) -> Unit raise @symphysics.PhysicsError
+pub fn System::validate_system(Self, use_lagrange? : Bool, check_duplicates? : Bool) -> Unit raise @symphysics.PhysicsError
 pub fn System::velocity_constraints(Self) -> Array[@symcore.Expr]
 pub fn System::x(Self) -> @vector.Vector
 pub fn System::y(Self) -> @vector.Vector
@@ -771,12 +858,14 @@ pub struct WeldJoint {
 }
 pub fn WeldJoint::as_joint(Self) -> JointLike
 pub fn WeldJoint::child(Self) -> BodyLike
+pub fn WeldJoint::child_frame(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::child_interframe(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::child_point(Self) -> @vector.Point
 pub fn WeldJoint::coordinates(Self) -> Array[@symcore.Expr]
 pub fn WeldJoint::kdes(Self) -> Array[@symcore.Expr]
 pub fn WeldJoint::name(Self) -> String
 pub fn WeldJoint::parent(Self) -> BodyLike
+pub fn WeldJoint::parent_frame(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::parent_interframe(Self) -> @vector.ReferenceFrame
 pub fn WeldJoint::parent_point(Self) -> @vector.Point
 pub fn WeldJoint::repr(Self) -> String
@@ -854,6 +943,8 @@ pub fn WrappingSphere::repr(Self) -> String
 pub impl Eq for WrappingSphere
 
 // Type aliases
+pub type OutputEquation = (@symcore.Expr, @symcore.Expr)
+
 pub type Substitution = (@symcore.Expr, @symcore.Expr)
 
 // Traits

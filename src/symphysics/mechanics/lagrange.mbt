@@ -147,6 +147,15 @@ fn lagrange_constraint_acceleration_equations(
 }
 
 ///|
+fn lagrange_constraint_velocity_equations(
+  constraints : Array[@symcore.Expr],
+) -> Array[@symcore.Expr] {
+  constraints.map(fn(expr) {
+    mech_simplify_expr(@symcalculus.diff(expr, @symvector.dynamicsymbols_t))
+  })
+}
+
+///|
 pub fn lagranges_method(
   lagrangian : @symcore.Expr,
   coordinates : Array[@symcore.Expr],
@@ -295,12 +304,17 @@ pub fn LagrangesMethod::rhs(
     self.full_mass_matrix_,
     mechanics_matrix_entries(self.full_forcing_).map(fn(row) { row[0] }),
   )
-  mechanics_matrix_column(qdots + rhs_terms)
+  let qdd_rhs : Array[@symcore.Expr] = []
+  for expr in rhs_terms[:self.coordinates_.length()] {
+    qdd_rhs.push(expr)
+  }
+  mechanics_matrix_column(qdots + qdd_rhs)
 }
 
 ///|
 pub fn LagrangesMethod::solve_multipliers(
   self : LagrangesMethod,
+  op_point? : Array[Substitution] = [],
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   if self.eom_.is_empty() {
     ignore(try! self.form_lagranges_equations())
@@ -315,7 +329,7 @@ pub fn LagrangesMethod::solve_multipliers(
   let start = self.coordinates_.length()
   let out : Array[@symcore.Expr] = []
   for expr in solved[start:] {
-    out.push(expr)
+    out.push(msubs_expr(expr, op_point))
   }
   mechanics_matrix_column(out)
 }
@@ -326,7 +340,63 @@ pub fn LagrangesMethod::linearizer(
 ) -> Linearizer raise @symphysics.PhysicsError {
   let rhs = try! self.rhs()
   let rhs_terms = mechanics_matrix_entries(rhs).map(fn(row) { row[0] })
-  linearizer(self.coordinates_ + lagrange_qdots(self.coordinates_), rhs_terms)
+  let qdots = lagrange_qdots(self.coordinates_)
+  let qddots = lagrange_qddots(self.coordinates_)
+  let velocity_constraints = lagrange_constraint_velocity_equations(
+    self.hol_coneqs_,
+  )
+  let inputs = mechanics_dynamic_inputs(
+    rhs_terms,
+    self.coordinates_ + qdots + qddots + self.lam_vec_,
+  )
+  let mut implicit_mass : @symphysics.ExplicitMatrix? = None
+  let mut implicit_forcing : @symphysics.ExplicitMatrix? = None
+  if self.hol_coneqs_.is_empty() && self.lam_vec_.is_empty() {
+    let top_rows : Array[Array[@symcore.Expr]] = []
+    for i in 0..<self.coordinates_.length() {
+      let row = Array::make(self.coordinates_.length() * 2, @symcore.int(0))
+      row[i] = @symcore.int(1)
+      top_rows.push(row)
+    }
+    let lower_rows = mechanics_matrix_entries(self.mass_matrix_).map(fn(row) {
+      Array::make(self.coordinates_.length(), @symcore.int(0)) + row
+    })
+    implicit_mass = Some(
+      try! @symphysics.explicit_matrix_from_rows(top_rows + lower_rows),
+    )
+    implicit_forcing = Some(
+      mechanics_matrix_column(
+        qdots + mechanics_matrix_entries(self.forcing_).map(fn(row) { row[0] }),
+      ),
+    )
+  }
+  linearizer_with_metadata(
+    self.coordinates_ + qdots,
+    rhs_terms,
+    inputs~,
+    q=self.coordinates_,
+    u=qdots,
+    q_i=self.coordinates_,
+    u_i=qdots,
+    r=inputs,
+    lams=self.lam_vec_,
+    f_0=mechanics_matrix_column(qdots),
+    f_1=mechanics_matrix_column(
+      qdots.map(fn(qd) { mech_simplify_expr(@symcore.int(-1) * qd) }),
+    ),
+    f_2=try! self.mass_matrix_.mul(
+      mechanics_matrix_column(qddots + self.lam_vec_),
+    ),
+    f_3=self.forcing_.neg(),
+    f_c=mechanics_matrix_column(self.hol_coneqs_),
+    f_v=mechanics_matrix_column(velocity_constraints),
+    f_a=mechanics_matrix_column(
+      lagrange_constraint_acceleration_equations(self.hol_coneqs_),
+    ),
+    implicit_mass~,
+    implicit_forcing~,
+    perm_mat=Some(mechanics_identity(self.coordinates_.length() * 2)),
+  )
 }
 
 ///|
@@ -346,6 +416,7 @@ pub fn LagrangesMethod::linearize(
   self : LagrangesMethod,
   op_point? : Array[Substitution] = [],
   a_and_b? : Bool = false,
+  simplify? : Bool = false,
 ) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError {
-  (try! self.linearizer()).linearize(op_point~, a_and_b~)
+  (try! self.linearizer()).linearize(op_point~, a_and_b~, simplify~)
 }

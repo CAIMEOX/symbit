@@ -441,6 +441,16 @@ pub fn PinJoint::child_interframe(self : PinJoint) -> @symvector.ReferenceFrame 
 }
 
 ///|
+pub fn PinJoint::parent_frame(self : PinJoint) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn PinJoint::child_frame(self : PinJoint) -> @symvector.ReferenceFrame {
+  self.child_frame_
+}
+
+///|
 pub fn PinJoint::joint_axis(self : PinJoint) -> @symvector.Vector {
   self.joint_axis_
 }
@@ -590,6 +600,20 @@ pub fn PrismaticJoint::child_interframe(
   self : PrismaticJoint,
 ) -> @symvector.ReferenceFrame {
   self.child_interframe_
+}
+
+///|
+pub fn PrismaticJoint::parent_frame(
+  self : PrismaticJoint,
+) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn PrismaticJoint::child_frame(
+  self : PrismaticJoint,
+) -> @symvector.ReferenceFrame {
+  self.child_frame_
 }
 
 ///|
@@ -756,6 +780,20 @@ pub fn CylindricalJoint::child_interframe(
   self : CylindricalJoint,
 ) -> @symvector.ReferenceFrame {
   self.child_interframe_
+}
+
+///|
+pub fn CylindricalJoint::parent_frame(
+  self : CylindricalJoint,
+) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn CylindricalJoint::child_frame(
+  self : CylindricalJoint,
+) -> @symvector.ReferenceFrame {
+  self.child_frame_
 }
 
 ///|
@@ -961,6 +999,20 @@ pub fn PlanarJoint::child_interframe(
 }
 
 ///|
+pub fn PlanarJoint::parent_frame(
+  self : PlanarJoint,
+) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn PlanarJoint::child_frame(
+  self : PlanarJoint,
+) -> @symvector.ReferenceFrame {
+  self.child_frame_
+}
+
+///|
 pub fn PlanarJoint::rotation_coordinate(self : PlanarJoint) -> @symcore.Expr {
   self.coordinates_[0]
 }
@@ -1155,6 +1207,20 @@ pub fn SphericalJoint::child_interframe(
 }
 
 ///|
+pub fn SphericalJoint::parent_frame(
+  self : SphericalJoint,
+) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn SphericalJoint::child_frame(
+  self : SphericalJoint,
+) -> @symvector.ReferenceFrame {
+  self.child_frame_
+}
+
+///|
 pub fn SphericalJoint::repr(self : SphericalJoint) -> String {
   "SphericalJoint: " +
   self.name_ +
@@ -1282,6 +1348,16 @@ pub fn WeldJoint::child_interframe(
 }
 
 ///|
+pub fn WeldJoint::parent_frame(self : WeldJoint) -> @symvector.ReferenceFrame {
+  self.parent_frame_
+}
+
+///|
+pub fn WeldJoint::child_frame(self : WeldJoint) -> @symvector.ReferenceFrame {
+  self.child_frame_
+}
+
+///|
 pub fn WeldJoint::repr(self : WeldJoint) -> String {
   "WeldJoint: " +
   self.name_ +
@@ -1365,6 +1441,82 @@ pub fn JointLike::kdes(self : JointLike) -> Array[@symcore.Expr] {
     JointLike::Planar(value) => value.kdes()
     JointLike::Spherical(value) => value.kdes()
     JointLike::Weld(value) => value.kdes()
+  }
+}
+
+///|
+pub fn JointLike::parent_point(self : JointLike) -> @symvector.Point {
+  match self {
+    JointLike::Pin(value) => value.parent_point()
+    JointLike::Prismatic(value) => value.parent_point()
+    JointLike::Cylindrical(value) => value.parent_point()
+    JointLike::Planar(value) => value.parent_point()
+    JointLike::Spherical(value) => value.parent_point()
+    JointLike::Weld(value) => value.parent_point()
+  }
+}
+
+///|
+pub fn JointLike::child_point(self : JointLike) -> @symvector.Point {
+  match self {
+    JointLike::Pin(value) => value.child_point()
+    JointLike::Prismatic(value) => value.child_point()
+    JointLike::Cylindrical(value) => value.child_point()
+    JointLike::Planar(value) => value.child_point()
+    JointLike::Spherical(value) => value.child_point()
+    JointLike::Weld(value) => value.child_point()
+  }
+}
+
+///|
+pub fn JointLike::parent_interframe(
+  self : JointLike,
+) -> @symvector.ReferenceFrame {
+  match self {
+    JointLike::Pin(value) => value.parent_interframe()
+    JointLike::Prismatic(value) => value.parent_interframe()
+    JointLike::Cylindrical(value) => value.parent_interframe()
+    JointLike::Planar(value) => value.parent_interframe()
+    JointLike::Spherical(value) => value.parent_interframe()
+    JointLike::Weld(value) => value.parent_interframe()
+  }
+}
+
+///|
+pub fn JointLike::child_interframe(
+  self : JointLike,
+) -> @symvector.ReferenceFrame {
+  match self {
+    JointLike::Pin(value) => value.child_interframe()
+    JointLike::Prismatic(value) => value.child_interframe()
+    JointLike::Cylindrical(value) => value.child_interframe()
+    JointLike::Planar(value) => value.child_interframe()
+    JointLike::Spherical(value) => value.child_interframe()
+    JointLike::Weld(value) => value.child_interframe()
+  }
+}
+
+///|
+pub fn JointLike::parent_frame(self : JointLike) -> @symvector.ReferenceFrame {
+  match self {
+    JointLike::Pin(value) => value.parent_frame()
+    JointLike::Prismatic(value) => value.parent_frame()
+    JointLike::Cylindrical(value) => value.parent_frame()
+    JointLike::Planar(value) => value.parent_frame()
+    JointLike::Spherical(value) => value.parent_frame()
+    JointLike::Weld(value) => value.parent_frame()
+  }
+}
+
+///|
+pub fn JointLike::child_frame(self : JointLike) -> @symvector.ReferenceFrame {
+  match self {
+    JointLike::Pin(value) => value.child_frame()
+    JointLike::Prismatic(value) => value.child_frame()
+    JointLike::Cylindrical(value) => value.child_frame()
+    JointLike::Planar(value) => value.child_frame()
+    JointLike::Spherical(value) => value.child_frame()
+    JointLike::Weld(value) => value.child_frame()
   }
 }
 

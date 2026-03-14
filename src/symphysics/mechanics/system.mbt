@@ -515,28 +515,187 @@ pub fn System::get_joint(self : System, name : String) -> JointLike? {
 ///|
 pub fn System::validate_system(
   self : System,
+  use_lagrange? : Bool = false,
+  check_duplicates? : Bool = false,
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q(),
     speeds=self.u(),
     u_auxiliary=self.u_aux_,
+    check_duplicates~,
   )
-  let body_names = self.bodies_.map(mech_bodylike_name)
-  if Set::from_array(body_names).length() != body_names.length() {
-    raise @symphysics.PhysicsError::ValueError("duplicate body name in system")
+  let msgs : Array[String] = []
+  let q_all = self.q()
+  let u_all = self.u()
+  let n_hc = self.holonomic_constraints_.length()
+  let n_vc = self.velocity_constraints().length()
+  let n_q_dep = self.q_dep_.length()
+  let n_u_dep = self.u_dep_.length()
+  let q_keys = q_all.map(mech_expr_key)
+  let u_keys = u_all.map(mech_expr_key)
+  let n_q = Set::from_array(q_keys).length()
+  let n_u = Set::from_array(u_keys).length()
+  if n_q_dep != n_hc {
+    msgs.push(
+      "The number of dependent generalized coordinates " +
+      n_q_dep.to_string() +
+      " should be equal to the number of holonomic constraints " +
+      n_hc.to_string() +
+      ".",
+    )
   }
-  let joint_names = self.joints_.map(fn(joint) { joint.name() })
-  if Set::from_array(joint_names).length() != joint_names.length() {
-    raise @symphysics.PhysicsError::ValueError("duplicate joint name in system")
-  }
+  let missing_q : Map[String, @symcore.Expr] = {}
   for joint in self.joints_ {
     let parent_name = mech_bodylike_name(joint.parent())
     let child_name = mech_bodylike_name(joint.child())
     if self.get_body(parent_name) is None || self.get_body(child_name) is None {
-      raise @symphysics.PhysicsError::ValueError(
-        "joint references body not present in system",
+      msgs.push(
+        "Joint " +
+        joint.name() +
+        " references a body not present in the system.",
       )
     }
+    for coord in joint.coordinates() {
+      if !q_keys.contains(mech_expr_key(coord)) {
+        missing_q.set(mech_expr_key(coord), coord)
+      }
+    }
+  }
+  if !missing_q.is_empty() {
+    let names : Array[String] = []
+    for item in missing_q {
+      names.push(@symprint.to_string(item.1))
+    }
+    names.sort()
+    msgs.push(
+      "The generalized coordinates {" +
+      names.join(", ") +
+      "} used in joints are not added to the system.",
+    )
+  }
+  if use_lagrange {
+    let qdots = q_all.map(fn(q) {
+      @symcalculus.diff(q, @symvector.dynamicsymbols_t)
+    })
+    let qdot_keys = qdots.map(mech_expr_key)
+    let not_qdots : Map[String, @symcore.Expr] = {}
+    for speed in u_all {
+      if !qdot_keys.contains(mech_expr_key(speed)) {
+        not_qdots.set(mech_expr_key(speed), speed)
+      }
+    }
+    for joint in self.joints_ {
+      for speed in joint.speeds() {
+        if !qdot_keys.contains(mech_expr_key(speed)) {
+          not_qdots.set(mech_expr_key(speed), speed)
+        }
+      }
+    }
+    if !not_qdots.is_empty() {
+      let names : Array[String] = []
+      for item in not_qdots {
+        names.push(@symprint.to_string(item.1))
+      }
+      names.sort()
+      msgs.push(
+        "The generalized speeds {" +
+        names.join(", ") +
+        "} are not supported by this method. Only derivatives of the generalized coordinates are supported.",
+      )
+    }
+    if !self.u_aux_.is_empty() {
+      msgs.push(
+        "This method does not support auxiliary speeds. The auxiliary speeds are {" +
+        self.u_aux_.map(@symprint.to_string).join(", ") +
+        "}.",
+      )
+    }
+  } else {
+    let n_kdes = self.kdes_.length()
+    let missing_u : Map[String, @symcore.Expr] = {}
+    let missing_kdes : Map[String, @symcore.Expr] = {}
+    for joint in self.joints_ {
+      for speed in joint.speeds() {
+        if !u_keys.contains(mech_expr_key(speed)) {
+          missing_u.set(mech_expr_key(speed), speed)
+        }
+      }
+      for kde in joint.kdes() {
+        if !self.kdes_.any(fn(existing) {
+            @symcore.compare_expr(existing, kde) == 0 ||
+            @symcore.compare_expr(existing, @symcore.int(-1) * kde) == 0 ||
+            @symcore.compare_expr(@symcore.int(-1) * existing, kde) == 0 ||
+            mech_expr_equal(existing, kde) ||
+            mech_expr_equal(existing, @symcore.int(-1) * kde)
+          }) {
+          missing_kdes.set(mech_expr_key(kde), kde)
+        }
+      }
+    }
+    if !missing_u.is_empty() {
+      let names : Array[String] = []
+      for item in missing_u {
+        names.push(@symprint.to_string(item.1))
+      }
+      names.sort()
+      msgs.push(
+        "The generalized speeds {" +
+        names.join(", ") +
+        "} used in joints are not added to the system.",
+      )
+    }
+    if !missing_kdes.is_empty() {
+      let names : Array[String] = []
+      for item in missing_kdes {
+        names.push(@symprint.to_string(item.1))
+      }
+      names.sort()
+      msgs.push(
+        "The kinematic differential equations {" +
+        names.join(", ") +
+        "} used in joints are not added to the system.",
+      )
+    }
+    if n_u_dep != n_vc {
+      msgs.push(
+        "The number of dependent generalized speeds " +
+        n_u_dep.to_string() +
+        " should be equal to the number of velocity constraints " +
+        n_vc.to_string() +
+        ".",
+      )
+    }
+    if n_q > n_u {
+      msgs.push(
+        "The number of generalized coordinates " +
+        n_q.to_string() +
+        " should be less than or equal to the number of generalized speeds " +
+        n_u.to_string() +
+        ".",
+      )
+    }
+    if n_u != n_kdes {
+      msgs.push(
+        "The number of generalized speeds " +
+        n_u.to_string() +
+        " should be equal to the number of kinematic differential equations " +
+        n_kdes.to_string() +
+        ".",
+      )
+    }
+  }
+  if check_duplicates {
+    let body_names = self.bodies_.map(mech_bodylike_name)
+    if Set::from_array(body_names).length() != body_names.length() {
+      msgs.push("The bodies exist multiple times within the system.")
+    }
+    let joint_names = self.joints_.map(fn(joint) { joint.name() })
+    if Set::from_array(joint_names).length() != joint_names.length() {
+      msgs.push("The joints exist multiple times within the system.")
+    }
+  }
+  if !msgs.is_empty() {
+    raise @symphysics.PhysicsError::ValueError(msgs.join("\n"))
   }
 }
 
@@ -556,7 +715,7 @@ pub fn System::form_eoms(
   self : System,
   use_lagrange? : Bool = false,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  try! self.validate_system()
+  try! self.validate_system(use_lagrange~)
   let loads = try! self.system_effective_loads()
   if use_lagrange {
     let q_all = self.q()
