@@ -165,3 +165,56 @@ test "geometry.plane parity high-value helpers" {
     ),
   )
 }
+
+///|
+test "geometry.plane parity remaining public helpers" {
+  let a = try! plane_from_normal(
+    try! point3d(@symcore.int(5), @symcore.int(0), @symcore.int(0)),
+    [@symcore.int(1), @symcore.int(-1), @symcore.int(1)],
+  )
+  let b = try! plane_from_normal(
+    try! point3d(@symcore.int(0), @symcore.int(-2), @symcore.int(0)),
+    [@symcore.int(3), @symcore.int(1), @symcore.int(1)],
+  )
+  let c = try! plane_from_normal(
+    try! point3d(@symcore.int(0), @symcore.int(-1), @symcore.int(0)),
+    [@symcore.int(5), @symcore.int(-1), @symcore.int(9)],
+  )
+  assert_eq(
+    a.p1().repr(),
+    try! @sympy_geometry.geometry_eval_repr(
+      "Plane(Point3D(5, 0, 0), normal_vector=(1, -1, 1)).p1",
+    ),
+  )
+  assert_eq(
+    (try! plane_are_concurrent([a, b])).to_string().to_lower(),
+    try! @sympy_geometry.geometry_eval_str(
+      "Plane.are_concurrent(Plane(Point3D(5, 0, 0), normal_vector=(1, -1, 1)), Plane(Point3D(0, -2, 0), normal_vector=(3, 1, 1)))",
+    ).to_lower(),
+  )
+  assert_eq(
+    (try! plane_are_concurrent([a, b, c])).to_string().to_lower(),
+    try! @sympy_geometry.geometry_eval_str(
+      "Plane.are_concurrent(Plane(Point3D(5, 0, 0), normal_vector=(1, -1, 1)), Plane(Point3D(0, -2, 0), normal_vector=(3, 1, 1)), Plane(Point3D(0, -1, 0), normal_vector=(5, -1, 9)))",
+    ).to_lower(),
+  )
+  let xy = try! plane_from_normal(
+    try! point3d(@symcore.int(0), @symcore.int(0), @symcore.int(0)),
+    [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
+  )
+  assert_eq(
+    (try! xy.is_coplanar(
+      geometry_circle(
+        try! circle(
+          try! point2d(@symcore.int(0), @symcore.int(0)),
+          @symcore.int(1),
+        ),
+      ),
+    ))
+    .to_string()
+    .to_lower(),
+    try! @sympy_geometry.geometry_eval_str(
+      "Plane(Point3D(0, 0, 0), normal_vector=(0, 0, 1)).is_coplanar(Circle(Point2D(0, 0), 1))",
+    ).to_lower(),
+  )
+}

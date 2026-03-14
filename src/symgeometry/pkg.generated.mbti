@@ -62,6 +62,8 @@ pub fn ordered_points(Array[Point]) -> Array[Point]
 
 pub fn parabola(Point, Line) -> Parabola raise GeometryError
 
+pub fn plane_are_concurrent(Array[Plane]) -> Bool raise GeometryError
+
 pub fn plane_from_normal(Point, Array[@symcore.Expr]) -> Plane raise GeometryError
 
 pub fn plane_from_points(Point, Point, Point) -> Plane raise GeometryError
@@ -105,21 +107,30 @@ pub struct Circle {
 pub fn Circle::ambient_dimension(Self) -> Int
 pub fn Circle::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
 pub fn Circle::area(Self) -> @symcore.Expr
+pub fn Circle::auxiliary_circle(Self) -> Self
 pub fn Circle::bounds(Self) -> (Point, Point) raise GeometryError
 pub fn Circle::center(Self) -> Point
 pub fn Circle::circumference(Self) -> @symcore.Expr
 pub fn Circle::contains_point(Self, Point) -> Bool raise GeometryError
+pub fn Circle::director_circle(Self) -> Self raise GeometryError
 pub fn Circle::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Circle::encloses_point(Self, Point) -> Bool raise GeometryError
 pub fn Circle::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr
+pub fn Circle::evolute(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr raise
 pub fn Circle::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Circle::is_tangent(Self, GeometryEntity) -> Bool raise GeometryError
+pub fn Circle::normal_lines(Self, Point, prec? : Int?) -> Array[Line] raise GeometryError
 pub fn Circle::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Circle::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
+pub fn Circle::polar_second_moment_of_area(Self) -> @symcore.Expr raise GeometryError
 pub fn Circle::radius(Self) -> @symcore.Expr
+pub fn Circle::random_point(Self, seed? : Int?) -> Point raise GeometryError
+pub fn Circle::reflect(Self, Line) -> Self raise GeometryError
 pub fn Circle::repr(Self) -> String
 pub fn Circle::rotate(Self, @symcore.Expr, pt? : Point?) -> GeometryEntity raise GeometryError
 pub fn Circle::scale(Self, @symcore.Expr, y? : @symcore.Expr, pt? : Point?) -> GeometryEntity raise GeometryError
+pub fn Circle::second_moment_of_area(Self, point? : Point?) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError
+pub fn Circle::section_modulus(Self, point? : Point?) -> (@symcore.Expr, @symcore.Expr) raise GeometryError
 pub fn Circle::tangent_lines(Self, Point) -> Array[Line] raise GeometryError
 pub fn Circle::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
 pub fn Circle::vradius(Self) -> @symcore.Expr
@@ -155,14 +166,17 @@ pub fn Ellipse::ambient_dimension(Self) -> Int
 pub fn Ellipse::apoapsis(Self) -> @symcore.Expr
 pub fn Ellipse::arbitrary_point(Self, parameter? : @symcore.Expr) -> Point raise GeometryError
 pub fn Ellipse::area(Self) -> @symcore.Expr
+pub fn Ellipse::auxiliary_circle(Self) -> Circle raise GeometryError
 pub fn Ellipse::bounds(Self) -> (Point, Point) raise GeometryError
 pub fn Ellipse::center(Self) -> Point
 pub fn Ellipse::circumference(Self) -> @symcore.Expr
 pub fn Ellipse::contains_point(Self, Point) -> Bool raise GeometryError
+pub fn Ellipse::director_circle(Self) -> Circle raise GeometryError
 pub fn Ellipse::eccentricity(Self) -> @symcore.Expr
 pub fn Ellipse::encloses(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Ellipse::encloses_point(Self, Point) -> Bool raise GeometryError
 pub fn Ellipse::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr, _slope? : @symcore.Expr?) -> @symcore.Expr
+pub fn Ellipse::evolute(Self, x? : @symcore.Expr, y? : @symcore.Expr) -> @symcore.Expr raise
 pub fn Ellipse::foci(Self) -> Array[Point] raise GeometryError
 pub fn Ellipse::focus_distance(Self) -> @symcore.Expr
 pub fn Ellipse::hradius(Self) -> @symcore.Expr
@@ -170,12 +184,18 @@ pub fn Ellipse::intersection(Self, GeometryEntity) -> Array[GeometryEntity] rais
 pub fn Ellipse::is_tangent(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Ellipse::major(Self) -> @symcore.Expr
 pub fn Ellipse::minor(Self) -> @symcore.Expr
+pub fn Ellipse::normal_lines(Self, Point, prec? : Int?) -> Array[Line] raise GeometryError
 pub fn Ellipse::parameter_value(Self, Point, @symcore.Expr) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Ellipse::periapsis(Self) -> @symcore.Expr
 pub fn Ellipse::plot_interval(Self, parameter? : @symcore.Expr) -> Array[@symcore.Expr]
+pub fn Ellipse::polar_second_moment_of_area(Self) -> @symcore.Expr raise GeometryError
+pub fn Ellipse::random_point(Self, seed? : Int?) -> Point raise GeometryError
+pub fn Ellipse::reflect(Self, Line) -> GeometryEntity raise GeometryError
 pub fn Ellipse::repr(Self) -> String
 pub fn Ellipse::rotate(Self, @symcore.Expr, pt? : Point?) -> GeometryEntity raise GeometryError
 pub fn Ellipse::scale(Self, @symcore.Expr, y? : @symcore.Expr, pt? : Point?) -> GeometryEntity raise GeometryError
+pub fn Ellipse::second_moment_of_area(Self, point? : Point?) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError
+pub fn Ellipse::section_modulus(Self, point? : Point?) -> (@symcore.Expr, @symcore.Expr) raise GeometryError
 pub fn Ellipse::semilatus_rectum(Self) -> @symcore.Expr
 pub fn Ellipse::tangent_lines(Self, Point) -> Array[Line] raise GeometryError
 pub fn Ellipse::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError
@@ -266,9 +286,11 @@ pub fn Plane::distance(Self, Point) -> @symcore.Expr raise GeometryError
 pub fn Plane::equals(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::equation(Self, x? : @symcore.Expr, y? : @symcore.Expr, z? : @symcore.Expr) -> @symcore.Expr
 pub fn Plane::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
+pub fn Plane::is_coplanar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::is_parallel(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::is_perpendicular(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Plane::normal_vector(Self) -> Array[@symcore.Expr]
+pub fn Plane::p1(Self) -> Point
 pub fn Plane::parallel_plane(Self, Point) -> Self raise GeometryError
 pub fn Plane::parameter_value(Self, Point, @symcore.Expr, v? : @symcore.Expr?) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError
 pub fn Plane::perpendicular_line(Self, Point) -> Line raise GeometryError
@@ -276,6 +298,7 @@ pub fn Plane::perpendicular_plane(Self, pts? : Array[Point]) -> Self raise Geome
 pub fn Plane::point(Self) -> Point
 pub fn Plane::projection(Self, Point) -> Point raise GeometryError
 pub fn Plane::projection_line(Self, GeometryEntity) -> GeometryEntity raise GeometryError
+pub fn Plane::random_point(Self, seed? : Int?) -> Point raise GeometryError
 pub fn Plane::repr(Self) -> String
 pub fn Plane::scale(Self, Array[@symcore.Expr], pt? : Point?) -> Self raise GeometryError
 pub fn Plane::translate(Self, Array[@symcore.Expr]) -> Self raise GeometryError

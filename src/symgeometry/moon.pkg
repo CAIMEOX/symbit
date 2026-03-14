@@ -1,4 +1,6 @@
 import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/random",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,

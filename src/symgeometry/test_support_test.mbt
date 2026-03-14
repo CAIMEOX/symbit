@@ -16,6 +16,22 @@ fn geometry_assert_expr_equal(
 }
 
 ///|
+fn geometry_assert_expr_close(
+  lhs : @symcore.Expr,
+  rhs : String,
+  tol : String,
+  context : String,
+) -> Unit raise {
+  let ours = geometry_py_expr_text(lhs)
+  guard (try! @sympy_geometry.geometry_eval_str(
+      "abs((" + ours + ") - (" + rhs + ")) < (" + tol + ")",
+    )) ==
+    "True" else {
+    fail("\{context}: ours=\{ours}; expected≈\{rhs}; tol=\{tol}")
+  }
+}
+
+///|
 fn geometry_assert_point_equal(
   lhs : Point,
   rhs_x : String,
@@ -24,6 +40,18 @@ fn geometry_assert_point_equal(
 ) -> Unit raise {
   try! geometry_assert_expr_equal(lhs.x(), rhs_x, context + ".x")
   try! geometry_assert_expr_equal(lhs.y(), rhs_y, context + ".y")
+}
+
+///|
+fn geometry_assert_point_close(
+  lhs : Point,
+  rhs_x : String,
+  rhs_y : String,
+  tol : String,
+  context : String,
+) -> Unit raise {
+  try! geometry_assert_expr_close(lhs.x(), rhs_x, tol, context + ".x")
+  try! geometry_assert_expr_close(lhs.y(), rhs_y, tol, context + ".y")
 }
 
 ///|
@@ -155,6 +183,28 @@ fn expr_set_summary(items : Array[@symcore.Expr]) -> String {
     }
   }
   "{" + parts.join(", ") + "}"
+}
+
+///|
+fn expr_pair_summary(items : (@symcore.Expr, @symcore.Expr)) -> String {
+  "(" +
+  geometry_py_expr_text(items.0) +
+  ", " +
+  geometry_py_expr_text(items.1) +
+  ")"
+}
+
+///|
+fn expr_triple_summary(
+  items : (@symcore.Expr, @symcore.Expr, @symcore.Expr),
+) -> String {
+  "(" +
+  geometry_py_expr_text(items.0) +
+  ", " +
+  geometry_py_expr_text(items.1) +
+  ", " +
+  geometry_py_expr_text(items.2) +
+  ")"
 }
 
 ///|
