@@ -1,7 +1,11 @@
 ///|
-/// Group constructions.
+/// Constructions that combine existing groups into new permutation groups.
 
 ///|
+/// Return the direct product of the supplied permutation groups.
+///
+/// Each factor acts on its own disjoint block of points, so the resulting generators are
+/// block-diagonal permutations exactly as in SymPy's `DirectProduct` construction.
 pub fn direct_product(
   groups : Array[PermutationGroup],
 ) -> PermutationGroup raise CombinatoricsError {

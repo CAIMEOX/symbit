@@ -1,7 +1,12 @@
 ///|
-/// Prufer sequence utilities.
+/// Prüfer-code conversions for labelled trees.
+///
+/// The `Prufer` object mirrors `sympy.combinatorics.prufer`: it stores either a Prüfer
+/// sequence or a tree edge list, converts lazily between the two forms, and supports the
+/// standard rank/unrank operations derived from Cayley's correspondence.
 
 ///|
+/// A labelled tree encoded either by a Prüfer sequence or by an edge list.
 pub struct Prufer {
   mut prufer_repr : Array[Int]?
   mut tree_repr : Array[Array[Int]]?
@@ -10,6 +15,7 @@ pub struct Prufer {
 }
 
 ///|
+/// Construct a Prüfer object from the edge list of a labelled tree.
 pub fn Prufer::from_edges(
   edges : Array[Array[Int]],
   nodes? : Int,
@@ -45,12 +51,14 @@ pub fn Prufer::from_edges(
 }
 
 ///|
+/// Construct a Prüfer object directly from its sequence.
 pub fn Prufer::from_sequence(seq : Array[Int]) -> Prufer {
   let nnodes = seq.length() + 2
   { prufer_repr: Some(seq), tree_repr: None, nodes: nnodes, rank_cache: None }
 }
 
 ///|
+/// Return the Prüfer sequence representation of the tree.
 pub fn Prufer::prufer_repr(self : Prufer) -> Array[Int] {
   match self.prufer_repr {
     Some(seq) => seq
@@ -64,6 +72,7 @@ pub fn Prufer::prufer_repr(self : Prufer) -> Array[Int] {
 }
 
 ///|
+/// Return the tree as a sorted edge list.
 pub fn Prufer::tree_repr(self : Prufer) -> Array[Array[Int]] {
   match self.tree_repr {
     Some(tree) => tree
@@ -77,6 +86,7 @@ pub fn Prufer::tree_repr(self : Prufer) -> Array[Array[Int]] {
 }
 
 ///|
+/// Return the rank of the Prüfer sequence in base-`n` order.
 pub fn Prufer::rank(self : Prufer) -> Int {
   match self.rank_cache {
     Some(r) => r
@@ -89,11 +99,13 @@ pub fn Prufer::rank(self : Prufer) -> Int {
 }
 
 ///|
+/// Return the number of labelled trees on this vertex set, namely `n^(n-2)`.
 pub fn Prufer::size(self : Prufer) -> Int {
   pow_int(self.nodes, self.nodes - 2)
 }
 
 ///|
+/// Convert a labelled tree edge list to its Prüfer sequence.
 pub fn to_prufer(tree : Array[Array[Int]], n : Int) -> Array[Int] {
   let degrees : Array[Int] = Array::make(n, 0)
   let edges : Array[Array[Int]] = Array::new()
@@ -136,6 +148,7 @@ pub fn to_prufer(tree : Array[Array[Int]], n : Int) -> Array[Int] {
 }
 
 ///|
+/// Reconstruct the labelled tree represented by a Prüfer sequence.
 pub fn to_tree(prufer : Array[Int]) -> Array[Array[Int]] {
   let n = prufer.length() + 2
   let degrees : Array[Int] = Array::make(n, 1)
@@ -167,6 +180,7 @@ pub fn to_tree(prufer : Array[Int]) -> Array[Array[Int]] {
 }
 
 ///|
+/// Normalize edge runs into a sorted edge list and inferred vertex count.
 pub fn prufer_edges(
   runs : Array[Array[Int]],
 ) -> (Array[Array[Int]], Int) raise CombinatoricsError {
@@ -246,6 +260,7 @@ pub fn prufer_edges(
 }
 
 ///|
+/// Compute the Prüfer rank directly from the sequence.
 pub fn Prufer::prufer_rank(self : Prufer) -> Int {
   let seq = self.prufer_repr()
   let mut r = 0
@@ -260,6 +275,7 @@ pub fn Prufer::prufer_rank(self : Prufer) -> Int {
 }
 
 ///|
+/// Return the Prüfer object of rank `rank` on `n` labelled vertices.
 pub fn Prufer::unrank(rank : Int, n : Int) -> Prufer {
   let mut r = rank
   let values : Array[Int] = Array::new()
@@ -275,11 +291,13 @@ pub fn Prufer::unrank(rank : Int, n : Int) -> Prufer {
 }
 
 ///|
+/// Move forward by `delta` positions in Prüfer rank order.
 pub fn Prufer::next(self : Prufer, delta? : Int = 1) -> Prufer {
   Prufer::unrank(self.rank() + delta, self.nodes)
 }
 
 ///|
+/// Move backward by `delta` positions in Prüfer rank order.
 pub fn Prufer::prev(self : Prufer, delta? : Int = 1) -> Prufer {
   Prufer::unrank(self.rank() - delta, self.nodes)
 }

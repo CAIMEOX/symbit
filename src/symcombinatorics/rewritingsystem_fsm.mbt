@@ -1,7 +1,8 @@
 ///|
-/// Finite state machine utilities for rewriting systems.
+/// Finite-state automata used to accelerate word reduction.
 
 ///|
+/// Role of a state in the reduction automaton.
 pub enum StateType {
   Start
   Accept
@@ -9,12 +10,14 @@ pub enum StateType {
 } derive(Eq)
 
 ///|
+/// Identifier of an automaton state.
 pub enum StateName {
   Start
   Word(FreeGroupElement)
 } derive(Eq, Hash)
 
 ///|
+/// One state of the rewriting-system automaton.
 pub struct State {
   name : StateName
   transitions : Map[FreeGroupElement, StateName]
@@ -23,6 +26,7 @@ pub struct State {
 }
 
 ///|
+/// Mutable automaton storing states and labelled transitions.
 pub struct StateMachine {
   name : String
   automaton_alphabet : Array[FreeGroupElement]
@@ -31,6 +35,7 @@ pub struct StateMachine {
 }
 
 ///|
+/// Construct an empty state machine.
 pub fn StateMachine::new(
   name : String,
   alphabet : Array[FreeGroupElement],
@@ -46,11 +51,13 @@ pub fn StateMachine::new(
 }
 
 ///|
+/// Return whether a state with the given name exists.
 pub fn StateMachine::has_state(self : StateMachine, name : StateName) -> Bool {
   self.state_index.contains(name)
 }
 
 ///|
+/// Add a new state to the automaton.
 pub fn StateMachine::add_state(
   self : StateMachine,
   name : StateName,
@@ -67,6 +74,7 @@ pub fn StateMachine::add_state(
 }
 
 ///|
+/// Look up a state by name.
 pub fn StateMachine::get_state(self : StateMachine, name : StateName) -> State? {
   match self.state_index.get(name) {
     Some(idx) => Some(self.states[idx])
@@ -75,6 +83,7 @@ pub fn StateMachine::get_state(self : StateMachine, name : StateName) -> State? 
 }
 
 ///|
+/// Replace the stored data for an existing state.
 pub fn StateMachine::update_state(self : StateMachine, state : State) -> Unit {
   match self.state_index.get(state.name) {
     Some(idx) => self.states[idx] = state
@@ -83,6 +92,7 @@ pub fn StateMachine::update_state(self : StateMachine, state : State) -> Unit {
 }
 
 ///|
+/// Return the list of state names currently stored.
 pub fn StateMachine::state_names(self : StateMachine) -> Array[StateName] {
   let out : Array[StateName] = Array::new()
   for st in self.states {
@@ -92,6 +102,7 @@ pub fn StateMachine::state_names(self : StateMachine) -> Array[StateName] {
 }
 
 ///|
+/// Change the state type of an existing state.
 pub fn StateMachine::set_state_type(
   self : StateMachine,
   name : StateName,
@@ -108,6 +119,7 @@ pub fn StateMachine::set_state_type(
 }
 
 ///|
+/// Attach the rewrite rule associated with a dead state.
 pub fn StateMachine::set_dead_rule(
   self : StateMachine,
   name : StateName,
@@ -125,6 +137,7 @@ pub fn StateMachine::set_dead_rule(
 }
 
 ///|
+/// Add or replace a labelled transition.
 pub fn StateMachine::add_transition(
   self : StateMachine,
   from_name : StateName,
@@ -142,6 +155,7 @@ pub fn StateMachine::add_transition(
 }
 
 ///|
+/// Follow one labelled transition from a given state.
 pub fn StateMachine::transition(
   self : StateMachine,
   from_name : StateName,

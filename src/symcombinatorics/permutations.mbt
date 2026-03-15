@@ -1,5 +1,10 @@
 ///|
-/// Permutations and cycles (SymPy-style).
+/// Finite permutations in array and cycle notation.
+///
+/// The API mirrors the core of `sympy.combinatorics.permutations`.  A `Permutation` acts on
+/// the points `0..n-1`, stores the image of each point in array form, and exposes standard
+/// conversions to cycle notation, parity and inversion statistics, permutation ranking, and
+/// several successor orders used in exhaustive generation.
 
 ///|
 fn gcd_int(a0 : Int, b0 : Int) -> Int {
@@ -185,11 +190,18 @@ fn sort_cycles(cycles : Array[Array[Int]]) -> Array[Array[Int]] {
 }
 
 ///|
+/// A single cycle written in cyclic notation.
+///
+/// Only moved points are stored; points missing from the mapping are fixed implicitly.
 pub struct Cycle {
   mapping : Map[Int, Int]
 }
 
 ///|
+/// Construct the cycle `(items[0] items[1] ... items[n-1])`.
+///
+/// Entries must be distinct non-negative integers.  An empty list represents the identity
+/// cycle.
 pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
   let mapping : Map[Int, Int] = {}
   if items.is_empty() {
@@ -219,6 +231,10 @@ pub fn Cycle::new(items : Array[Int]) -> Cycle raise CombinatoricsError {
 }
 
 ///|
+/// Convert a permutation into the product of its non-trivial cycles.
+///
+/// The returned `Cycle` stores the combined moved-point mapping encoded by that cycle
+/// decomposition.
 pub fn Cycle::from_permutation(p : Permutation) -> Cycle {
   let mapping : Map[Int, Int] = {}
   for cycle in p.cyclic_form() {
@@ -234,6 +250,7 @@ pub fn Cycle::from_permutation(p : Permutation) -> Cycle {
 }
 
 ///|
+/// Apply the cycle to a single point, fixing points not mentioned in the cycle.
 pub fn Cycle::apply(self : Cycle, x : Int) -> Int {
   match self.mapping.get(x) {
     Some(v) => v
@@ -242,6 +259,9 @@ pub fn Cycle::apply(self : Cycle, x : Int) -> Int {
 }
 
 ///|
+/// Compose two cycles as maps on points.
+///
+/// The result acts like `self(other(x))` on every moved point.
 pub fn Cycle::compose(self : Cycle, other : Cycle) -> Cycle {
   let rv : Map[Int, Int] = {}
   for k, v in other.mapping {
@@ -254,6 +274,10 @@ pub fn Cycle::compose(self : Cycle, other : Cycle) -> Cycle {
 }
 
 ///|
+/// Return the cycle as an explicit ordered list of its moved points.
+///
+/// The output starts at the smallest moved point, which gives a canonical representative for
+/// display and comparisons.
 pub fn Cycle::list(
   self : Cycle,
   size? : Int,
@@ -287,6 +311,7 @@ pub fn Cycle::list(
 }
 
 ///|
+/// Return the support size of the cycle, i.e. the largest moved point plus one.
 pub fn Cycle::size(self : Cycle) -> Int {
   if self.mapping.is_empty() {
     return 0
@@ -301,6 +326,7 @@ pub fn Cycle::size(self : Cycle) -> Int {
 }
 
 ///|
+/// Render the cycle in canonical cyclic notation.
 pub impl Show for Cycle with output(self, logger : &Logger) -> Unit {
   if self.mapping.is_empty() {
     logger.write_string("()")
@@ -332,6 +358,10 @@ pub impl Show for Cycle with output(self, logger : &Logger) -> Unit {
 }
 
 ///|
+/// A permutation of `0..n-1` stored in array form.
+///
+/// `array_form[i]` is the image of `i`.  Trailing fixed points are trimmed unless an explicit
+/// size is requested, matching SymPy's canonical representation.
 pub struct Permutation {
   array_form : Array[Int]
   size : Int
@@ -342,6 +372,7 @@ pub struct Permutation {
 }
 
 ///|
+/// Compare permutations by their trimmed array forms.
 pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) -> Bool {
   if self.size != other.size {
     return false
@@ -360,6 +391,7 @@ pub impl Eq for Permutation with equal(self : Permutation, other : Permutation) 
 }
 
 ///|
+/// Negated equality for permutations.
 pub impl Eq for Permutation with not_equal(
   self : Permutation,
   other : Permutation,
@@ -368,6 +400,7 @@ pub impl Eq for Permutation with not_equal(
 }
 
 ///|
+/// Hash the permutation from its canonical array form.
 pub impl Hash for Permutation with hash(self) -> Int {
   let hasher = Hasher::new()
   self.hash_combine(hasher)
@@ -375,6 +408,7 @@ pub impl Hash for Permutation with hash(self) -> Int {
 }
 
 ///|
+/// Feed the canonical array form into an external hasher.
 pub impl Hash for Permutation with hash_combine(self, hasher : Hasher) -> Unit {
   self.array_form.hash_combine(hasher)
 }
@@ -408,6 +442,11 @@ fn make_perm(array : Array[Int]) -> Permutation {
 }
 
 ///|
+/// Construct a permutation from array form and optional metadata.
+///
+/// The array must be a valid permutation of `0..n-1`.  `size` can be used to preserve
+/// trailing fixed points, and `rank` seeds the cached lexicographic rank when it is already
+/// known.
 pub fn Permutation::new(
   array : Array[Int],
 ) -> Permutation raise CombinatoricsError {
@@ -422,6 +461,7 @@ pub fn Permutation::new(
 }
 
 ///|
+/// Construct a permutation directly from its array form.
 pub fn Permutation::from_array(
   array : Array[Int],
   size? : Int,
@@ -458,6 +498,7 @@ pub fn Permutation::from_array(
 }
 
 ///|
+/// Return the identity permutation on `size` points.
 pub fn Permutation::identity(size : Int) -> Permutation {
   let arr : Array[Int] = Array::new()
   for i in 0..<size {
@@ -467,6 +508,10 @@ pub fn Permutation::identity(size : Int) -> Permutation {
 }
 
 ///|
+/// Construct a permutation from one cycle.
+///
+/// Points not appearing in the cycle are fixed, and the ambient size is chosen large enough
+/// to contain the largest moved point unless `size` is supplied.
 pub fn Permutation::from_cycle(
   cycle : Cycle,
   size? : Int,
@@ -482,6 +527,7 @@ pub fn Permutation::from_cycle(
 }
 
 ///|
+/// Construct a permutation from a collection of pairwise-disjoint cycles.
 pub fn Permutation::from_cycles(
   cycles : Array[Array[Int]],
   size? : Int,
@@ -514,6 +560,10 @@ pub fn Permutation::from_cycles(
 }
 
 ///|
+/// Return the permutation that stably sorts a character array.
+///
+/// This matches SymPy's sequence constructors: the permutation records where each element
+/// of the original sequence moves in sorted order.
 pub fn Permutation::from_sequence_chars(items : Array[Char]) -> Permutation {
   let pairs : Array[(Char, Int)] = Array::new()
   for i in 0..<items.length() {
@@ -538,12 +588,14 @@ pub fn Permutation::from_sequence_chars(items : Array[Char]) -> Permutation {
 }
 
 ///|
+/// Return the sorting permutation induced by the characters of `s`.
 pub fn Permutation::from_sequence_string(s : String) -> Permutation {
   let chars = string_to_chars(s)
   Permutation::from_sequence_chars(chars)
 }
 
 ///|
+/// Return a copy of the permutation's array form.
 pub fn Permutation::array_form(self : Permutation) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for v in self.array_form {
@@ -553,11 +605,13 @@ pub fn Permutation::array_form(self : Permutation) -> Array[Int] {
 }
 
 ///|
+/// Return the degree of the permutation.
 pub fn Permutation::size(self : Permutation) -> Int {
   self.size
 }
 
 ///|
+/// Apply the permutation to one point.
 pub fn Permutation::apply_index(
   self : Permutation,
   i : Int,
@@ -569,6 +623,7 @@ pub fn Permutation::apply_index(
 }
 
 ///|
+/// Reorder an array by applying the permutation to its indices.
 pub fn[T] Permutation::apply_array(
   self : Permutation,
   values : Array[T],
@@ -584,6 +639,7 @@ pub fn[T] Permutation::apply_array(
 }
 
 ///|
+/// Reorder the characters of a string by applying the permutation to its indices.
 pub fn Permutation::apply_string(
   self : Permutation,
   value : String,
@@ -593,6 +649,9 @@ pub fn Permutation::apply_string(
 }
 
 ///|
+/// Compose two permutations.
+///
+/// The product uses SymPy's convention: `self.mul(other)` acts as `self(other(i))`.
 pub fn Permutation::mul(
   self : Permutation,
   other : Permutation,
@@ -605,31 +664,39 @@ pub fn Permutation::mul(
 }
 
 ///|
+/// Raise the permutation to an integer power.
+///
+/// Negative powers apply the inverse permutation, and zero gives the identity.
 pub fn Permutation::pow(self : Permutation, n : Int) -> Permutation {
   make_perm(af_pow(self.array_form, n))
 }
 
 ///|
+/// Return the inverse permutation.
 pub fn Permutation::invert(self : Permutation) -> Permutation {
   make_perm(af_invert(self.array_form))
 }
 
 ///|
+/// Return `0` for even permutations and `1` for odd permutations.
 pub fn Permutation::parity(self : Permutation) -> Int {
   af_parity(self.array_form)
 }
 
 ///|
+/// Return whether the permutation has even parity.
 pub fn Permutation::is_even(self : Permutation) -> Bool {
   self.parity() == 0
 }
 
 ///|
+/// Return whether the permutation has odd parity.
 pub fn Permutation::is_odd(self : Permutation) -> Bool {
   !self.is_even()
 }
 
 ///|
+/// Return the sign of the permutation: `+1` for even and `-1` for odd.
 pub fn Permutation::signature(self : Permutation) -> Int {
   if self.parity() == 0 {
     1
@@ -639,6 +706,7 @@ pub fn Permutation::signature(self : Permutation) -> Int {
 }
 
 ///|
+/// Return the moved points of the permutation in increasing order.
 pub fn Permutation::support(self : Permutation) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for i in 0..<self.size {
@@ -650,11 +718,15 @@ pub fn Permutation::support(self : Permutation) -> Array[Int] {
 }
 
 ///|
+/// Return the number of moved points, i.e. the size of the support.
 pub fn Permutation::length(self : Permutation) -> Int {
   self.support().length()
 }
 
 ///|
+/// Return the smallest moved point.
+///
+/// A value error is raised for the identity permutation, which has empty support.
 pub fn Permutation::min(self : Permutation) -> Int raise CombinatoricsError {
   let mut found = false
   let mut min_val = 0
@@ -674,6 +746,9 @@ pub fn Permutation::min(self : Permutation) -> Int raise CombinatoricsError {
 }
 
 ///|
+/// Return the largest moved point.
+///
+/// A value error is raised for the identity permutation, which has empty support.
 pub fn Permutation::max(self : Permutation) -> Int raise CombinatoricsError {
   let mut found = false
   let mut max_val = 0
@@ -693,6 +768,7 @@ pub fn Permutation::max(self : Permutation) -> Int raise CombinatoricsError {
 }
 
 ///|
+/// Return the ascent positions `i` with `p(i) < p(i + 1)`.
 pub fn Permutation::ascents(self : Permutation) -> Array[Int] {
   let out : Array[Int] = Array::new()
   if self.size < 2 {
@@ -707,6 +783,7 @@ pub fn Permutation::ascents(self : Permutation) -> Array[Int] {
 }
 
 ///|
+/// Return the descent positions `i` with `p(i) > p(i + 1)`.
 pub fn Permutation::descents(self : Permutation) -> Array[Int] {
   let out : Array[Int] = Array::new()
   if self.size < 2 {
@@ -721,6 +798,7 @@ pub fn Permutation::descents(self : Permutation) -> Array[Int] {
 }
 
 ///|
+/// Return the index of the permutation, the sum over cycle lengths of `length - 1`.
 pub fn Permutation::index(self : Permutation) -> Int {
   if self.size < 2 {
     return 0
@@ -735,6 +813,7 @@ pub fn Permutation::index(self : Permutation) -> Int {
 }
 
 ///|
+/// Count inversions in the array form of the permutation.
 pub fn Permutation::inversions(self : Permutation) -> Int {
   let mut inv = 0
   for i in 0..<self.size {
@@ -749,6 +828,7 @@ pub fn Permutation::inversions(self : Permutation) -> Int {
 }
 
 ///|
+/// Return the Lehmer-style inversion vector of the permutation.
 pub fn Permutation::inversion_vector(self : Permutation) -> Array[Int] {
   let inv : Array[Int] = Array::new()
   if self.size <= 1 {
@@ -767,6 +847,7 @@ pub fn Permutation::inversion_vector(self : Permutation) -> Array[Int] {
 }
 
 ///|
+/// Reconstruct a permutation from its inversion vector.
 pub fn Permutation::from_inversion_vector(
   inversion : Array[Int],
 ) -> Permutation raise CombinatoricsError {
@@ -818,6 +899,9 @@ fn build_cycles(
 }
 
 ///|
+/// Return the non-trivial cycle decomposition of the permutation.
+///
+/// Fixed points are omitted, and each cycle is rotated so its smallest entry comes first.
 pub fn Permutation::cyclic_form(self : Permutation) -> Array[Array[Int]] {
   match self.cyclic_form_cache {
     Some(c) => c
@@ -830,6 +914,7 @@ pub fn Permutation::cyclic_form(self : Permutation) -> Array[Array[Int]] {
 }
 
 ///|
+/// Return the full cycle decomposition including singleton fixed-point cycles.
 pub fn Permutation::full_cyclic_form(self : Permutation) -> Array[Array[Int]] {
   match self.full_cyclic_form_cache {
     Some(c) => c
@@ -842,6 +927,7 @@ pub fn Permutation::full_cyclic_form(self : Permutation) -> Array[Array[Int]] {
 }
 
 ///|
+/// Return `(cycle_length, multiplicity)` pairs for the permutation's cycle structure.
 pub fn Permutation::cycle_structure_pairs(
   self : Permutation,
 ) -> Array[(Int, Int)] {
@@ -885,11 +971,16 @@ pub fn Permutation::cycle_structure_pairs(
 }
 
 ///|
+/// Return the number of non-trivial cycles in the permutation.
 pub fn Permutation::cycles(self : Permutation) -> Int {
   self.full_cyclic_form().length()
 }
 
 ///|
+/// Decompose the permutation into a product of transpositions.
+///
+/// The chosen transpositions correspond to the canonical cycle decomposition used by
+/// SymPy.
 pub fn Permutation::transpositions(self : Permutation) -> Array[(Int, Int)] {
   let res : Array[(Int, Int)] = Array::new()
   for cycle in self.cyclic_form() {
@@ -909,6 +1000,9 @@ pub fn Permutation::transpositions(self : Permutation) -> Array[(Int, Int)] {
 }
 
 ///|
+/// Return the multiplicative order of the permutation.
+///
+/// This is the least common multiple of the non-trivial cycle lengths.
 pub fn Permutation::order(self : Permutation) -> Int {
   let mut ord = 1
   for cycle in self.cyclic_form() {
@@ -922,11 +1016,15 @@ pub fn Permutation::order(self : Permutation) -> Int {
 }
 
 ///|
+/// Return the number of permutations of the same degree, namely `size!`.
 pub fn Permutation::cardinality(self : Permutation) -> Int {
   factorial_int(self.size)
 }
 
 ///|
+/// Return the lexicographic rank of the permutation.
+///
+/// The implementation uses the factoradic / Lehmer-code ranking used by SymPy.
 pub fn Permutation::rank(self : Permutation) -> Int {
   if self.size <= 1 {
     return 0
@@ -960,6 +1058,7 @@ pub fn Permutation::rank(self : Permutation) -> Int {
 }
 
 ///|
+/// Return the next permutation in lexicographic order, or `None` at the end.
 pub fn Permutation::next_lex(self : Permutation) -> Permutation? {
   let perm : Array[Int] = self.array_form()
   let n = perm.length()
@@ -997,6 +1096,7 @@ pub fn Permutation::next_lex(self : Permutation) -> Permutation? {
 }
 
 ///|
+/// Return the permutation of degree `size` with the given lexicographic rank.
 pub fn Permutation::unrank_lex(size : Int, rank0 : Int) -> Permutation {
   let perm : Array[Int] = Array::make(size, 0)
   let mut psize = 1
@@ -1017,6 +1117,7 @@ pub fn Permutation::unrank_lex(size : Int, rank0 : Int) -> Permutation {
 }
 
 ///|
+/// Rank the permutation in SymPy's non-lexicographic recursive ordering.
 pub fn Permutation::rank_nonlex(self : Permutation) -> Int {
   let n = self.size
   if n <= 1 {
@@ -1043,6 +1144,7 @@ pub fn Permutation::rank_nonlex(self : Permutation) -> Int {
 }
 
 ///|
+/// Invert `rank_nonlex` for permutations of degree `size`.
 pub fn Permutation::unrank_nonlex(size : Int, r0 : Int) -> Permutation {
   let n = size
   let mut r = r0
@@ -1069,6 +1171,7 @@ pub fn Permutation::unrank_nonlex(size : Int, r0 : Int) -> Permutation {
 }
 
 ///|
+/// Return the next permutation in the non-lexicographic ordering.
 pub fn Permutation::next_nonlex(self : Permutation) -> Permutation? {
   let r = self.rank_nonlex()
   let card = self.cardinality()
@@ -1079,6 +1182,9 @@ pub fn Permutation::next_nonlex(self : Permutation) -> Permutation? {
 }
 
 ///|
+/// Rank the permutation in Trotter-Johnson order.
+///
+/// This ordering changes adjacent transpositions only between consecutive permutations.
 pub fn Permutation::rank_trotterjohnson(self : Permutation) -> Int {
   if self.array_form.is_empty() || self.is_identity() {
     return 0
@@ -1111,6 +1217,7 @@ pub fn Permutation::rank_trotterjohnson(self : Permutation) -> Int {
 }
 
 ///|
+/// Invert `rank_trotterjohnson` for permutations of the given size.
 pub fn Permutation::unrank_trotterjohnson(
   size : Int,
   rank0 : Int,
@@ -1146,6 +1253,7 @@ pub fn Permutation::unrank_trotterjohnson(
 }
 
 ///|
+/// Return the next permutation in Trotter-Johnson order.
 pub fn Permutation::next_trotterjohnson(self : Permutation) -> Permutation? {
   let pi = self.array_form()
   let n = pi.length()
@@ -1197,6 +1305,7 @@ pub fn Permutation::next_trotterjohnson(self : Permutation) -> Permutation? {
 }
 
 ///|
+/// Offset the permutation by `other` positions in lexicographic rank order.
 pub fn Permutation::add(self : Permutation, other : Int) -> Permutation {
   let card = self.cardinality()
   let mut rank = self.rank() + other
@@ -1207,11 +1316,13 @@ pub fn Permutation::add(self : Permutation, other : Int) -> Permutation {
 }
 
 ///|
+/// Move backward by `other` positions in lexicographic rank order.
 pub fn Permutation::sub(self : Permutation, other : Int) -> Permutation {
   self.add(-other)
 }
 
 ///|
+/// Return whether the two permutations commute under composition.
 pub fn Permutation::commutes_with(
   self : Permutation,
   other : Permutation,
@@ -1220,6 +1331,7 @@ pub fn Permutation::commutes_with(
 }
 
 ///|
+/// Return the group commutator `other^-1 * self^-1 * other * self`.
 pub fn Permutation::commutator(
   self : Permutation,
   other : Permutation,
@@ -1232,6 +1344,7 @@ pub fn Permutation::commutator(
 }
 
 ///|
+/// Return whether the permutation fixes every point in its degree.
 pub fn Permutation::is_identity(self : Permutation) -> Bool {
   if self.array_form.is_empty() {
     return true
@@ -1245,6 +1358,9 @@ pub fn Permutation::is_identity(self : Permutation) -> Bool {
 }
 
 ///|
+/// Change the ambient degree while preserving the permutation action.
+///
+/// Enlarging appends fixed points.  Shrinking is allowed only when no cycle is cut.
 pub fn Permutation::resize(
   self : Permutation,
   n : Int,
@@ -1285,6 +1401,7 @@ pub fn Permutation::resize(
 }
 
 ///|
+/// Return a uniformly shuffled permutation of degree `n`.
 pub fn Permutation::random(n : Int) -> Permutation {
   let arr : Array[Int] = Array::new()
   for i in 0..<n {
@@ -1300,6 +1417,7 @@ pub fn Permutation::random(n : Int) -> Permutation {
 }
 
 ///|
+/// Return the cycle structure as a map `{cycle_length -> multiplicity}`.
 pub fn Permutation::cycle_structure(self : Permutation) -> Map[Int, Int] {
   let map : Map[Int, Int] = {}
   for pair in self.cycle_structure_pairs() {
@@ -1309,6 +1427,7 @@ pub fn Permutation::cycle_structure(self : Permutation) -> Map[Int, Int] {
 }
 
 ///|
+/// Return whether the supports of the two permutations are disjoint.
 pub fn Permutation::is_disjoint(
   self : Permutation,
   other : Permutation,

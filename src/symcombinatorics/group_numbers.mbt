@@ -1,5 +1,9 @@
 ///|
-/// Group order number theory helpers.
+/// Arithmetic tests and counting formulas for finite group orders.
+///
+/// The predicates here correspond to the helpers in `sympy.combinatorics.group_numbers`:
+/// they decide when every group of a given order is nilpotent, abelian, or cyclic, and they
+/// implement small-order exact formulas for counting groups of order `n`.
 
 ///|
 fn bi_str(value : String) -> BigInt {
@@ -45,6 +49,7 @@ fn is_nilpotent_number_from_factors(factors : Map[Int, Int]) -> Bool {
 }
 
 ///|
+/// Return whether every group of order `n` is nilpotent.
 pub fn is_nilpotent_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
     raise CombinatoricsError::ValueError("n must be a positive integer")
@@ -54,6 +59,7 @@ pub fn is_nilpotent_number(n : Int) -> Bool raise CombinatoricsError {
 }
 
 ///|
+/// Return whether every group of order `n` is abelian.
 pub fn is_abelian_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
     raise CombinatoricsError::ValueError("n must be a positive integer")
@@ -68,6 +74,7 @@ pub fn is_abelian_number(n : Int) -> Bool raise CombinatoricsError {
 }
 
 ///|
+/// Return whether every group of order `n` is cyclic.
 pub fn is_cyclic_number(n : Int) -> Bool raise CombinatoricsError {
   if n <= 0 {
     raise CombinatoricsError::ValueError("n must be a positive integer")
@@ -158,6 +165,10 @@ fn holder_formula(prime_factors : Array[Int]) -> BigInt {
 }
 
 ///|
+/// Return the number of groups of order `n` in the cases supported by SymPy's formulas.
+///
+/// The implementation combines exact tables for prime powers with Holder-type formulas for
+/// square-free and related composite orders.
 pub fn groups_count(n : Int) -> BigInt raise CombinatoricsError {
   if n <= 0 {
     raise CombinatoricsError::ValueError("n must be a positive integer")

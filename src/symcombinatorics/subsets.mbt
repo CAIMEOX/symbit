@@ -1,7 +1,16 @@
 ///|
-/// Subset utilities.
+/// Ranked subset objects and subset-order traversals.
+///
+/// This module follows `sympy.combinatorics.subsets`: a `Subset` is a chosen subset of a
+/// fixed ordered superset, together with conversions between binary, lexicographic, and
+/// Gray-code traversals.  The ordering always depends on the explicit order of the supplied
+/// superset.
 
 ///|
+/// A subset of a fixed ordered superset.
+///
+/// The object caches ranks in several traversal orders and provides the same rank/unrank
+/// and successor/predecessor operations exposed by SymPy's `Subset`.
 pub struct Subset[T] {
   subset : Array[T]
   superset : Array[T]
@@ -30,6 +39,10 @@ fn array_remove_first(values : Array[Int], value : Int) -> Array[Int] {
 }
 
 ///|
+/// Build a subset object from explicit subset and superset arrays.
+///
+/// Validation matches SymPy: every subset element must occur in the superset, and the
+/// subset cannot be larger than the superset itself.
 pub fn[T : Eq] Subset::new(
   subset : Array[T],
   superset : Array[T],
@@ -54,6 +67,10 @@ pub fn[T : Eq] Subset::new(
 }
 
 ///|
+/// Move by `k` steps in binary rank order.
+///
+/// The subset is represented by its characteristic bitlist and advanced modulo `2^n`,
+/// where `n` is the size of the superset.
 pub fn[T : Eq] Subset::iterate_binary(
   self : Subset[T],
   k : Int,
@@ -70,6 +87,7 @@ pub fn[T : Eq] Subset::iterate_binary(
 }
 
 ///|
+/// Return the next subset in binary rank order.
 pub fn[T : Eq] Subset::next_binary(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -77,6 +95,7 @@ pub fn[T : Eq] Subset::next_binary(
 }
 
 ///|
+/// Return the previous subset in binary rank order.
 pub fn[T : Eq] Subset::prev_binary(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -84,6 +103,9 @@ pub fn[T : Eq] Subset::prev_binary(
 }
 
 ///|
+/// Return the next subset in SymPy's lexicographic subset order.
+///
+/// This order is induced by the ordered superset and is different from plain binary rank.
 pub fn[T : Eq] Subset::next_lexicographic(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -118,6 +140,7 @@ pub fn[T : Eq] Subset::next_lexicographic(
 }
 
 ///|
+/// Return the previous subset in SymPy's lexicographic subset order.
 pub fn[T : Eq] Subset::prev_lexicographic(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -145,6 +168,10 @@ pub fn[T : Eq] Subset::prev_lexicographic(
 }
 
 ///|
+/// Move by `k` steps in Gray-code subset order.
+///
+/// Successive subsets in this order differ by one membership bit, which is useful when an
+/// algorithm can update incrementally from the previous subset.
 pub fn[T : Eq] Subset::iterate_graycode(
   self : Subset[T],
   k : Int,
@@ -160,6 +187,7 @@ pub fn[T : Eq] Subset::iterate_graycode(
 }
 
 ///|
+/// Return the next subset in Gray-code order.
 pub fn[T : Eq] Subset::next_gray(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -167,6 +195,7 @@ pub fn[T : Eq] Subset::next_gray(
 }
 
 ///|
+/// Return the previous subset in Gray-code order.
 pub fn[T : Eq] Subset::prev_gray(
   self : Subset[T],
 ) -> Subset[T] raise CombinatoricsError {
@@ -174,6 +203,7 @@ pub fn[T : Eq] Subset::prev_gray(
 }
 
 ///|
+/// Return the binary rank of the subset's characteristic bitlist.
 pub fn[T : Eq] Subset::rank_binary(self : Subset[T]) -> Int {
   match self.rank_binary_cache {
     Some(r) => r
@@ -182,6 +212,7 @@ pub fn[T : Eq] Subset::rank_binary(self : Subset[T]) -> Int {
 }
 
 ///|
+/// Return the rank of the subset in lexicographic subset order.
 pub fn[T : Eq] Subset::rank_lexicographic(self : Subset[T]) -> Int {
   match self.rank_lex_cache {
     Some(r) => r
@@ -204,6 +235,7 @@ pub fn[T : Eq] Subset::rank_lexicographic(self : Subset[T]) -> Int {
 }
 
 ///|
+/// Return the rank of the subset in Gray-code order.
 pub fn[T : Eq] Subset::rank_gray(self : Subset[T]) -> Int {
   match self.rank_gray_cache {
     Some(r) => r
@@ -215,31 +247,37 @@ pub fn[T : Eq] Subset::rank_gray(self : Subset[T]) -> Int {
 }
 
 ///|
+/// Return the selected subset elements in superset order.
 pub fn[T] Subset::subset(self : Subset[T]) -> Array[T] {
   self.subset
 }
 
 ///|
+/// Return the ordered superset that defines all rank/unrank operations.
 pub fn[T] Subset::superset(self : Subset[T]) -> Array[T] {
   self.superset
 }
 
 ///|
+/// Return the number of elements currently selected.
 pub fn[T] Subset::size(self : Subset[T]) -> Int {
   self.subset.length()
 }
 
 ///|
+/// Return the size of the ambient superset.
 pub fn[T] Subset::superset_size(self : Subset[T]) -> Int {
   self.superset.length()
 }
 
 ///|
+/// Return the total number of subsets of the ambient superset, namely `2^n`.
 pub fn[T] Subset::cardinality(self : Subset[T]) -> Int {
   pow_int(2, self.superset.length())
 }
 
 ///|
+/// Build a `Subset` from a characteristic bitlist over `superset`.
 pub fn[T : Eq] Subset::subset_from_bitlist(
   super_set : Array[T],
   bitlist : String,
@@ -258,6 +296,7 @@ pub fn[T : Eq] Subset::subset_from_bitlist(
 }
 
 ///|
+/// Return the characteristic bitlist of `subset` relative to `superset`.
 pub fn[T : Eq] Subset::bitlist_from_subset(
   subset : Array[T],
   superset : Array[T],
@@ -271,6 +310,7 @@ pub fn[T : Eq] Subset::bitlist_from_subset(
 }
 
 ///|
+/// Return the subset of `superset` at the given binary rank.
 pub fn[T : Eq] Subset::unrank_binary(
   rank : Int,
   superset : Array[T],
@@ -280,6 +320,7 @@ pub fn[T : Eq] Subset::unrank_binary(
 }
 
 ///|
+/// Return the subset of `superset` at the given Gray-code rank.
 pub fn[T : Eq] Subset::unrank_gray(
   rank : Int,
   superset : Array[T],
@@ -289,6 +330,9 @@ pub fn[T : Eq] Subset::unrank_gray(
 }
 
 ///|
+/// Return the positions occupied by `subset` inside `superset`.
+///
+/// The indices are exactly the data used by the ranking algorithms.
 pub fn[T : Eq] Subset::subset_indices(
   subset : Array[T],
   superset : Array[T],
@@ -311,6 +355,7 @@ pub fn[T : Eq] Subset::subset_indices(
 }
 
 ///|
+/// Enumerate all `k`-element subsets of `superset` in lexicographic index order.
 pub fn[T] ksubsets(superset : Array[T], k : Int) -> Array[Array[T]] {
   let n = superset.length()
   if k < 0 || k > n {

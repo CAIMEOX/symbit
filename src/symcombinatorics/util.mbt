@@ -1,5 +1,9 @@
 ///|
-/// Utilities for computational group theory (SymPy-style).
+/// Low-level helpers for permutation-group algorithms.
+///
+/// These are mostly direct ports of support routines used by `perm_groups`, Schreier-Sims
+/// code, and tensor-style group computations.  They are public so that parity tests and other
+/// combinatorics modules can reuse the same primitives.
 
 ///|
 fn array_contains_int(values : Array[Int], target : Int) -> Bool {
@@ -147,6 +151,7 @@ fn isprime_int(n : Int) -> Bool {
 }
 
 ///|
+/// Extend a base to a full point ordering used by BSGS routines.
 pub fn _base_ordering(base : Array[Int], degree : Int) -> Array[Int] {
   let ordering : Array[Int] = Array::make(degree, 0)
   let base_len = base.length()
@@ -169,6 +174,7 @@ pub fn _base_ordering(base : Array[Int], degree : Int) -> Array[Int] {
 }
 
 ///|
+/// Check the cycle-shape criterion used to recognize alternating or symmetric groups.
 pub fn _check_cycles_alt_sym(perm : Permutation) -> Bool {
   let n = perm.size()
   let af = perm.array_form()
@@ -195,6 +201,7 @@ pub fn _check_cycles_alt_sym(perm : Permutation) -> Bool {
 }
 
 ///|
+/// Distribute generators by the first base point they move.
 pub fn _distribute_gens_by_base(
   base : Array[Int],
   gens : Array[Permutation],
@@ -229,6 +236,7 @@ pub fn _distribute_gens_by_base(
 }
 
 ///|
+/// Orbit and transversal data computed from a BSGS description.
 pub struct OrbitsTransversals {
   basic_orbits : Array[Array[Int]]
   transversals : Array[Map[Int, Permutation]]
@@ -236,6 +244,7 @@ pub struct OrbitsTransversals {
 }
 
 ///|
+/// Compute basic orbit/transversal data from a base and strong generators.
 pub fn _orbits_transversals_from_bsgs(
   base : Array[Int],
   strong_gens_distr : Array[Array[Permutation]],
@@ -272,6 +281,7 @@ pub fn _orbits_transversals_from_bsgs(
 }
 
 ///|
+/// Normalize optional precomputed BSGS input to the internal helper format.
 pub fn _handle_precomputed_bsgs(
   base : Array[Int],
   strong_gens : Array[Permutation],
@@ -309,6 +319,7 @@ pub fn _handle_precomputed_bsgs(
 }
 
 ///|
+/// Remove redundant generators from a distributed strong generating set.
 pub fn _remove_gens(
   base : Array[Int],
   strong_gens : Array[Permutation],
@@ -370,6 +381,7 @@ pub fn _remove_gens(
 }
 
 ///|
+/// Strip an element through a BSGS chain and return the residual data.
 pub fn _strip(
   g : Permutation,
   base : Array[Int],
@@ -396,6 +408,7 @@ pub fn _strip(
 }
 
 ///|
+/// Array-form variant of `_strip`.
 pub fn _strip_af(
   h0 : Array[Int],
   base : Array[Int],
@@ -462,6 +475,7 @@ pub fn _strip_af(
 }
 
 ///|
+/// Flatten distributed strong generators back into one generating set.
 pub fn _strong_gens_from_distr(
   strong_gens_distr : Array[Array[Permutation]],
 ) -> Array[Permutation] {

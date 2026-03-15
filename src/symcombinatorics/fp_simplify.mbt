@@ -1,5 +1,5 @@
 ///|
-/// Simplify presentations and eliminate redundant generators.
+/// Simplification routines for finitely presented group presentations.
 
 ///|
 fn set_unique_words(
@@ -17,6 +17,7 @@ fn set_unique_words(
 }
 
 ///|
+/// Apply SymPy's first elimination technique to remove redundant generators.
 pub fn elimination_technique_1(
   gens : Array[FreeGroupElement],
   rels : Array[FreeGroupElement],
@@ -114,6 +115,7 @@ pub fn elimination_technique_1(
 }
 
 ///|
+/// Simplify a relator list by repeated rewriting and redundancy elimination.
 pub fn _simplify_relators(
   rels : Array[FreeGroupElement],
 ) -> Array[FreeGroupElement] raise CombinatoricsError {
@@ -196,6 +198,7 @@ pub fn _simplify_relators(
 }
 
 ///|
+/// Return a simplified presentation equivalent to the input one.
 pub fn simplify_presentation(
   gens : Array[FreeGroupElement],
   rels : Array[FreeGroupElement],

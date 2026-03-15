@@ -1,5 +1,9 @@
 ///|
-/// Galois-related transitive subgroup constructors.
+/// Named transitive subgroups used by Galois-group computations.
+///
+/// SymPy represents many low-degree Galois groups as explicit transitive permutation groups.
+/// This file exposes those standard models together with enums that classify transitive
+/// subgroups of `S_n` for `n <= 6`.
 
 ///|
 fn perm(
@@ -68,6 +72,7 @@ pub(all) enum S1TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_1` represented by this enum value.
 pub fn S1TransitiveSubgroups::get_perm_group(
   self : S1TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -82,6 +87,7 @@ pub(all) enum S2TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_2` represented by this enum value.
 pub fn S2TransitiveSubgroups::get_perm_group(
   self : S2TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -97,6 +103,7 @@ pub(all) enum S3TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_3` represented by this enum value.
 pub fn S3TransitiveSubgroups::get_perm_group(
   self : S3TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -116,6 +123,7 @@ pub(all) enum S4TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_4` represented by this enum value.
 pub fn S4TransitiveSubgroups::get_perm_group(
   self : S4TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -138,6 +146,7 @@ pub(all) enum S5TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_5` represented by this enum value.
 pub fn S5TransitiveSubgroups::get_perm_group(
   self : S5TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -171,6 +180,7 @@ pub(all) enum S6TransitiveSubgroups {
 } derive(Eq)
 
 ///|
+/// Materialize the transitive subgroup of `S_6` represented by this enum value.
 pub fn S6TransitiveSubgroups::get_perm_group(
   self : S6TransitiveSubgroups,
 ) -> PermutationGroup raise CombinatoricsError {
@@ -195,6 +205,7 @@ pub fn S6TransitiveSubgroups::get_perm_group(
 }
 
 ///|
+/// Return the Klein four group in its degree-4 transitive action.
 pub fn four_group() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 1], [2, 3]], size=4),
@@ -203,6 +214,7 @@ pub fn four_group() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the transitive degree-5 Frobenius group `M20`.
 pub fn m20() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 1, 2, 3, 4]], size=5),
@@ -218,6 +230,7 @@ pub fn m20() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the degree-6 transitive copy of `S_3` used in SymPy's Galois tables.
 pub fn s3_in_s6() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 1, 2], [3, 4, 5]], size=6),
@@ -230,6 +243,7 @@ pub fn s3_in_s6() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the degree-6 transitive copy of `A_4` used in SymPy's Galois tables.
 pub fn a4_in_s6() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 4, 5], [1, 3, 2]], size=6),
@@ -241,6 +255,7 @@ pub fn a4_in_s6() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return one of the two standard degree-6 transitive copies of `S_4`.
 pub fn s4m() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[1, 4, 5, 3]], size=6),
@@ -253,6 +268,7 @@ pub fn s4m() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the second standard degree-6 transitive copy of `S_4`.
 pub fn s4p() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 2, 4, 1], [3, 5]], size=6),
@@ -265,6 +281,7 @@ pub fn s4p() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the transitive degree-6 group `A_4 x C_2`.
 pub fn a4xc2() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 4, 5], [1, 3, 2]], size=6),
@@ -274,6 +291,7 @@ pub fn a4xc2() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the transitive degree-6 group `S_4 x C_2`.
 pub fn s4xc2() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[1, 4, 5, 3]], size=6),
@@ -283,6 +301,7 @@ pub fn s4xc2() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the degree-6 transitive group of order 18 appearing in the Galois classification.
 pub fn g18() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 1, 2]], size=6),
@@ -292,6 +311,7 @@ pub fn g18() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the first degree-6 transitive group of order 36 from SymPy's tables.
 pub fn g36m() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 1, 2]], size=6),
@@ -302,6 +322,7 @@ pub fn g36m() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the second degree-6 transitive group of order 36 from SymPy's tables.
 pub fn g36p() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 1, 2]], size=6),
@@ -311,6 +332,7 @@ pub fn g36p() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the standard degree-6 transitive group of order 72.
 pub fn g72() -> PermutationGroup raise CombinatoricsError {
   PermutationGroup::new([
     perm([[0, 1, 2]], size=6),
@@ -320,6 +342,7 @@ pub fn g72() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the degree-6 action of `PSL(2, 5)`, isomorphic to `A_5`.
 pub fn psl2f5() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 4, 5], [1, 3, 2]], size=6),
@@ -331,6 +354,7 @@ pub fn psl2f5() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Return the degree-6 action of `PGL(2, 5)`, isomorphic to `S_5`.
 pub fn pgl2f5() -> PermutationGroup raise CombinatoricsError {
   let g = PermutationGroup::new([
     perm([[0, 1, 2, 3, 4]], size=6),
@@ -343,6 +367,10 @@ pub fn pgl2f5() -> PermutationGroup raise CombinatoricsError {
 }
 
 ///|
+/// Materialize a list of chosen transitive subgroups of `S_6`.
+///
+/// `print_report` is kept for parity with SymPy's debugging-oriented helper but is not used
+/// in this MoonBit port.
 pub fn find_transitive_subgroups_of_S6(
   targets : Array[S6TransitiveSubgroups],
   print_report? : Bool = false,

@@ -1,5 +1,9 @@
 ///|
-/// Coset tables and Todd-Coxeter enumeration (SymPy-style).
+/// Coset tables and Todd-Coxeter enumeration for finitely presented groups.
+///
+/// This file follows `sympy.combinatorics.coset_table`.  A `CosetTable` stores the action of
+/// generators on subgroup cosets and exposes the standard scan, coincidence, deduction, and
+/// compression operations used by the Todd-Coxeter algorithm.
 
 ///|
 let coset_table_max_limit : Int = 4096000
@@ -61,6 +65,7 @@ fn bisect_left(values : Array[Int], item : Int) -> Int {
 }
 
 ///|
+/// A Todd-Coxeter coset table for a subgroup of an `FpGroup`.
 pub struct CosetTable {
   free_group : FreeGroup
   relators : Array[FreeGroupElement]
@@ -84,6 +89,7 @@ pub struct CosetTable {
 }
 
 ///|
+/// Construct an empty coset table for `fp_group / subgroup`.
 pub fn CosetTable::new(
   free_group : FreeGroup,
   relators : Array[FreeGroupElement],
@@ -151,6 +157,7 @@ pub fn CosetTable::new(
 }
 
 ///|
+/// Return the list of currently alive coset numbers.
 pub fn CosetTable::omega(self : CosetTable) -> Array[Int] {
   let out : Array[Int] = Array::new()
   for coset in 0..<self.p.length() {
@@ -162,6 +169,7 @@ pub fn CosetTable::omega(self : CosetTable) -> Array[Int] {
 }
 
 ///|
+/// Return a structural copy of the coset table.
 pub fn CosetTable::copy(self : CosetTable) -> CosetTable {
   let copy = CosetTable::new(
     self.free_group,
@@ -178,11 +186,13 @@ pub fn CosetTable::copy(self : CosetTable) -> CosetTable {
 }
 
 ///|
+/// Return a readable textual rendering of the coset table.
 pub fn CosetTable::to_string(self : CosetTable) -> String {
   "Coset Table on \{self.group_name} with \{self.subgroup.length()} as subgroup generators"
 }
 
 ///|
+/// Return the number of allocated cosets, including merged ones.
 pub fn CosetTable::n(self : CosetTable) -> Int {
   if self.table.is_empty() {
     return 0
@@ -197,6 +207,7 @@ pub fn CosetTable::n(self : CosetTable) -> Int {
 }
 
 ///|
+/// Return whether every defined coset has all generator images filled in.
 pub fn CosetTable::is_complete(self : CosetTable) -> Bool {
   for coset in self.omega() {
     let row = self.table[coset]
@@ -210,6 +221,7 @@ pub fn CosetTable::is_complete(self : CosetTable) -> Bool {
 }
 
 ///|
+/// Define a new coset reached from `alpha` by generator position `x`.
 pub fn CosetTable::define_coset(
   self : CosetTable,
   alpha : Int,
@@ -237,6 +249,7 @@ pub fn CosetTable::define_coset(
 }
 
 ///|
+/// Compact-table variant of `define_coset`.
 pub fn CosetTable::define_c(
   self : CosetTable,
   alpha : Int,
@@ -258,6 +271,7 @@ pub fn CosetTable::define_c(
 }
 
 ///|
+/// Compact-table scan of one relator around a coset.
 pub fn CosetTable::scan_c(
   self : CosetTable,
   alpha : Int,
@@ -310,6 +324,7 @@ pub fn CosetTable::scan_c(
 }
 
 ///|
+/// Record a coincidence in the compact-table variant.
 pub fn CosetTable::coincidence_c(
   self : CosetTable,
   alpha : Int,
@@ -349,6 +364,7 @@ pub fn CosetTable::coincidence_c(
 }
 
 ///|
+/// Scan one relator around a coset and perform deductions.
 pub fn CosetTable::scan(
   self : CosetTable,
   alpha : Int,
@@ -439,6 +455,7 @@ pub fn CosetTable::scan(
 }
 
 ///|
+/// Scan a relator without introducing new definitions, only checking consistency.
 pub fn CosetTable::scan_check(
   self : CosetTable,
   alpha : Int,
@@ -488,6 +505,7 @@ pub fn CosetTable::scan_check(
 }
 
 ///|
+/// Merge two coincident cosets.
 pub fn CosetTable::merge(
   self : CosetTable,
   k : Int,
@@ -521,6 +539,7 @@ pub fn CosetTable::merge(
 }
 
 ///|
+/// Return the current representative of a coset under merges.
 pub fn CosetTable::rep(
   self : CosetTable,
   k : Int,
@@ -559,6 +578,7 @@ pub fn CosetTable::rep(
 }
 
 ///|
+/// Handle a coincidence between two cosets and propagate deductions.
 pub fn CosetTable::coincidence(
   self : CosetTable,
   alpha : Int,
@@ -652,6 +672,7 @@ pub fn CosetTable::coincidence(
 }
 
 ///|
+/// Scan a relator and create any necessary new cosets.
 pub fn CosetTable::scan_and_fill(
   self : CosetTable,
   alpha : Int,
@@ -661,6 +682,7 @@ pub fn CosetTable::scan_and_fill(
 }
 
 ///|
+/// Compact-table variant of `scan_and_fill`.
 pub fn CosetTable::scan_and_fill_c(
   self : CosetTable,
   alpha : Int,
@@ -717,6 +739,7 @@ pub fn CosetTable::scan_and_fill_c(
 }
 
 ///|
+/// Perform look-ahead scans to discover forced coincidences early.
 pub fn CosetTable::look_ahead(
   self : CosetTable,
 ) -> Unit raise CombinatoricsError {
@@ -732,6 +755,7 @@ pub fn CosetTable::look_ahead(
 }
 
 ///|
+/// Process the pending deduction stack.
 pub fn CosetTable::process_deductions(
   self : CosetTable,
   relators_by_x : Array[FreeGroupElement],
@@ -770,6 +794,7 @@ pub fn CosetTable::process_deductions(
 }
 
 ///|
+/// Check deductions without extending the table.
 pub fn CosetTable::process_deductions_check(
   self : CosetTable,
   relators_by_x : Array[FreeGroupElement],
@@ -798,6 +823,7 @@ pub fn CosetTable::process_deductions_check(
 }
 
 ///|
+/// Swap two coset labels throughout the table.
 pub fn CosetTable::switch(self : CosetTable, beta : Int, gamma : Int) -> Unit {
   let alphabet = self.alphabet
   let alphabet_index = self.alphabet_index
@@ -820,6 +846,7 @@ pub fn CosetTable::switch(self : CosetTable, beta : Int, gamma : Int) -> Unit {
 }
 
 ///|
+/// Renumber live cosets into standard increasing order.
 pub fn CosetTable::standardize(self : CosetTable) -> Unit {
   let alphabet = self.alphabet
   let alphabet_index = self.alphabet_index
@@ -842,6 +869,7 @@ pub fn CosetTable::standardize(self : CosetTable) -> Unit {
 }
 
 ///|
+/// Remove dead cosets and compact the table.
 pub fn CosetTable::compress(self : CosetTable) -> Unit {
   let mut gamma = -1
   let alphabet = self.alphabet
@@ -885,6 +913,7 @@ pub fn CosetTable::compress(self : CosetTable) -> Unit {
 }
 
 ///|
+/// Return the conjugates of relators used by the relator-based algorithm.
 pub fn CosetTable::conjugates(
   self : CosetTable,
   relators : Array[FreeGroupElement],
@@ -916,6 +945,7 @@ pub fn CosetTable::conjugates(
 }
 
 ///|
+/// Return a word representative of a given coset.
 pub fn CosetTable::coset_representative(
   self : CosetTable,
   coset : Int,
@@ -933,6 +963,7 @@ pub fn CosetTable::coset_representative(
 }
 
 ///|
+/// Modified-table variant of `define_coset`.
 pub fn CosetTable::modified_define(
   self : CosetTable,
   alpha : Int,
@@ -942,6 +973,7 @@ pub fn CosetTable::modified_define(
 }
 
 ///|
+/// Modified-table variant of `scan`.
 pub fn CosetTable::modified_scan(
   self : CosetTable,
   alpha : Int,
@@ -953,6 +985,7 @@ pub fn CosetTable::modified_scan(
 }
 
 ///|
+/// Modified-table variant of `scan_and_fill`.
 pub fn CosetTable::modified_scan_and_fill(
   self : CosetTable,
   alpha : Int,
@@ -963,6 +996,7 @@ pub fn CosetTable::modified_scan_and_fill(
 }
 
 ///|
+/// Modified-table variant of `merge`.
 pub fn CosetTable::modified_merge(
   self : CosetTable,
   k : Int,
@@ -974,6 +1008,7 @@ pub fn CosetTable::modified_merge(
 }
 
 ///|
+/// Modified-table variant of `rep`.
 pub fn CosetTable::modified_rep(
   self : CosetTable,
   k : Int,
@@ -982,6 +1017,7 @@ pub fn CosetTable::modified_rep(
 }
 
 ///|
+/// Modified-table variant of `coincidence`.
 pub fn CosetTable::modified_coincidence(
   self : CosetTable,
   alpha : Int,
@@ -992,6 +1028,7 @@ pub fn CosetTable::modified_coincidence(
 }
 
 ///|
+/// Run the relator-based Todd-Coxeter enumeration.
 pub fn coset_enumeration_r(
   fp_grp : FpGroup,
   subgroup : Array[FreeGroupElement],
@@ -1097,6 +1134,7 @@ pub fn coset_enumeration_r(
 }
 
 ///|
+/// Run the relator-based enumeration with the modified-table strategy.
 pub fn modified_coset_enumeration_r(
   fp_grp : FpGroup,
   subgroup : Array[FreeGroupElement],
@@ -1142,6 +1180,7 @@ pub fn modified_coset_enumeration_r(
 }
 
 ///|
+/// Run the coset-table-based Todd-Coxeter enumeration.
 pub fn coset_enumeration_c(
   fp_grp : FpGroup,
   subgroup : Array[FreeGroupElement],

@@ -1,5 +1,10 @@
 ///|
-/// Partitions and integer partitions.
+/// Set partitions, restricted growth strings, and integer partitions.
+///
+/// The file mirrors the main functionality of `sympy.combinatorics.partitions`.  It
+/// distinguishes between partitions of a finite set (`Partition`) and partitions of an
+/// integer (`IntegerPartition`), and exposes the same rank/unrank machinery based on
+/// restricted growth strings.
 
 ///|
 fn bell_number(n : Int) -> Int {
@@ -106,6 +111,10 @@ fn array_compare_int(a : Array[Int], b : Array[Int]) -> Int {
 }
 
 ///|
+/// A partition of a finite set into disjoint blocks.
+///
+/// The blocks are stored in user-supplied form but normalized on demand so that ranking
+/// and equality-sensitive operations use a canonical block ordering.
 pub struct Partition[T] {
   blocks : Array[Array[T]]
   members : Array[T]
@@ -114,6 +123,10 @@ pub struct Partition[T] {
 }
 
 ///|
+/// Construct a partition from explicit blocks.
+///
+/// Each element must occur exactly once across all blocks; duplicates are rejected in the
+/// same way as SymPy's `Partition`.
 pub fn[T : Eq + Show] Partition::new(
   blocks : Array[Array[T]],
 ) -> Partition[T] raise CombinatoricsError {
@@ -145,6 +158,10 @@ pub fn[T : Eq + Show] Partition::new(
 }
 
 ///|
+/// Return the partition in canonical block order.
+///
+/// Each block is internally sorted by string form, and the blocks themselves are ordered
+/// lexicographically by that normalized representation.
 pub fn[T : Show] Partition::partition(self : Partition[T]) -> Array[Array[T]] {
   match self.partition_cache {
     Some(p) => p
@@ -157,6 +174,9 @@ pub fn[T : Show] Partition::partition(self : Partition[T]) -> Array[Array[T]] {
 }
 
 ///|
+/// Return the restricted growth string corresponding to the partition.
+///
+/// This is the standard encoding used by SymPy for ranking and unranking set partitions.
 pub fn[T : Show] Partition::rgs(self : Partition[T]) -> Array[Int] {
   let parts = self.partition()
   let rgs_map : Array[(String, Int)] = Array::new()
@@ -181,6 +201,7 @@ pub fn[T : Show] Partition::rgs(self : Partition[T]) -> Array[Int] {
 }
 
 ///|
+/// Return the rank of the partition among all set partitions of the same size.
 pub fn[T : Show] Partition::rank(self : Partition[T]) -> Int {
   match self.rank_cache {
     Some(r) => r
@@ -193,6 +214,7 @@ pub fn[T : Show] Partition::rank(self : Partition[T]) -> Int {
 }
 
 ///|
+/// Offset the partition by `other` ranks and wrap inside the Bell-number-sized space.
 pub fn[T : Eq + Show] Partition::add(
   self : Partition[T],
   other : Int,
@@ -208,6 +230,7 @@ pub fn[T : Eq + Show] Partition::add(
 }
 
 ///|
+/// Move backward by `other` ranks in partition order.
 pub fn[T : Eq + Show] Partition::sub(
   self : Partition[T],
   other : Int,
@@ -216,6 +239,7 @@ pub fn[T : Eq + Show] Partition::sub(
 }
 
 ///|
+/// Construct a partition from a restricted growth string and the ordered member list.
 pub fn[T : Eq + Show] Partition::from_rgs(
   rgs : Array[Int],
   elements : Array[T],
@@ -248,6 +272,10 @@ pub fn[T : Eq + Show] Partition::from_rgs(
 }
 
 ///|
+/// A partition of a positive integer into a non-increasing list of parts.
+///
+/// Integer partitions are represented by their Ferrers-style part list and support the
+/// same lexicographic predecessor/successor operations offered by SymPy.
 pub struct IntegerPartition {
   integer : Int
   partition : Array[Int]
@@ -256,6 +284,10 @@ pub struct IntegerPartition {
 }
 
 ///|
+/// Construct an integer partition from a part list.
+///
+/// The parts are normalized into non-increasing order and must sum to the supplied
+/// integer.
 pub fn IntegerPartition::new(
   partition : Array[Int],
   integer? : Int,
@@ -283,6 +315,7 @@ pub fn IntegerPartition::new(
 }
 
 ///|
+/// Construct an integer partition from a multiplicity dictionary `{part -> count}`.
 pub fn IntegerPartition::from_dict(
   integer : Int,
   dict : Map[Int, Int],
@@ -300,6 +333,7 @@ pub fn IntegerPartition::from_dict(
 }
 
 ///|
+/// Return the multiplicity dictionary of the partition.
 pub fn IntegerPartition::as_dict(self : IntegerPartition) -> Map[Int, Int] {
   match self.dict_cache {
     Some(d) => d
@@ -326,6 +360,7 @@ pub fn IntegerPartition::as_dict(self : IntegerPartition) -> Map[Int, Int] {
 }
 
 ///|
+/// Return the previous integer partition in reverse lexicographic order.
 pub fn IntegerPartition::prev_lex(
   self : IntegerPartition,
 ) -> IntegerPartition raise CombinatoricsError {
@@ -375,6 +410,7 @@ pub fn IntegerPartition::prev_lex(
 }
 
 ///|
+/// Return the next integer partition in lexicographic order.
 pub fn IntegerPartition::next_lex(
   self : IntegerPartition,
 ) -> IntegerPartition raise CombinatoricsError {
@@ -439,6 +475,7 @@ pub fn IntegerPartition::next_lex(
 }
 
 ///|
+/// Return the conjugate partition obtained by transposing the Ferrers diagram.
 pub fn IntegerPartition::conjugate(self : IntegerPartition) -> Array[Int] {
   let mut j = 1
   let temp_arr : Array[Int] = Array::new()
@@ -459,6 +496,7 @@ pub fn IntegerPartition::conjugate(self : IntegerPartition) -> Array[Int] {
 }
 
 ///|
+/// Render the Ferrers diagram of the partition using repeated `char`.
 pub fn IntegerPartition::as_ferrers(
   self : IntegerPartition,
   char? : Char = '#',
@@ -472,6 +510,7 @@ pub fn IntegerPartition::as_ferrers(
 }
 
 ///|
+/// Compare two integer partitions in the same lexicographic order used by SymPy.
 pub fn IntegerPartition::lt(
   self : IntegerPartition,
   other : IntegerPartition,
@@ -490,6 +529,7 @@ pub fn IntegerPartition::lt(
 }
 
 ///|
+/// Return whether this partition is less than or equal to `other` in lexicographic order.
 pub fn IntegerPartition::le(
   self : IntegerPartition,
   other : IntegerPartition,
@@ -508,11 +548,16 @@ pub fn IntegerPartition::le(
 }
 
 ///|
+/// Return the canonical string representation of the partition.
 pub fn IntegerPartition::to_string(self : IntegerPartition) -> String {
   "\{self.partition}"
 }
 
 ///|
+/// Draw a pseudo-random integer partition of `n`.
+///
+/// The implementation follows the same recursive-counting strategy used by SymPy's helper
+/// for small exact combinatorics tasks.
 pub fn random_integer_partition(
   n : Int,
   seed? : Array[Int],
@@ -577,6 +622,7 @@ pub fn random_integer_partition(
 }
 
 ///|
+/// Enumerate all restricted growth strings of length `m`.
 pub fn rgs_generalized(m : Int) -> Array[Array[Int]] {
   let d : Array[Array[Int]] = Array::new()
   for _ in 0..<=m {
@@ -598,6 +644,7 @@ pub fn rgs_generalized(m : Int) -> Array[Array[Int]] {
 }
 
 ///|
+/// Return the number of restricted growth strings of length `m`, i.e. the Bell number.
 pub fn rgs_enum(m : Int) -> Int {
   if m < 1 {
     0
@@ -609,6 +656,7 @@ pub fn rgs_enum(m : Int) -> Int {
 }
 
 ///|
+/// Return the restricted growth string of rank `rank` and length `m`.
 pub fn rgs_unrank(rank : Int, m : Int) -> Array[Int] raise CombinatoricsError {
   if m < 1 {
     raise CombinatoricsError::ValueError("The superset size must be >= 1")
@@ -641,6 +689,7 @@ pub fn rgs_unrank(rank : Int, m : Int) -> Array[Int] raise CombinatoricsError {
 }
 
 ///|
+/// Rank a restricted growth string in the standard SymPy ordering.
 pub fn rgs_rank(rgs : Array[Int]) -> Int {
   let rgs_size = rgs.length()
   if rgs_size == 0 {

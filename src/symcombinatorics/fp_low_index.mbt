@@ -1,7 +1,8 @@
 ///|
-/// Low index subgroups algorithm.
+/// Low-index subgroup search for finitely presented groups.
 
 ///|
+/// Enumerate subgroups up to a prescribed index using the low-index algorithm.
 pub fn low_index_subgroups(
   group : FpGroup,
   max_index : Int,

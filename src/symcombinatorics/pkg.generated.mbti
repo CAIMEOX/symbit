@@ -1,0 +1,909 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symcombinatorics"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/bigint",
+}
+
+// Values
+pub fn _base_ordering(Array[Int], Int) -> Array[Int]
+
+pub fn _check_cycles_alt_sym(Permutation) -> Bool
+
+pub fn _cmp_perm_lists(Array[Permutation], Array[Permutation]) -> Bool
+
+pub fn _distribute_gens_by_base(Array[Int], Array[Permutation]) -> Array[Array[Permutation]]
+
+pub fn _handle_precomputed_bsgs(Array[Int], Array[Permutation], transversals? : Array[Map[Int, Permutation]], basic_orbits? : Array[Array[Int]], strong_gens_distr? : Array[Array[Permutation]]) -> (Array[Map[Int, Permutation]], Array[Array[Int]], Array[Array[Permutation]]) raise CombinatoricsError
+
+pub fn _is_minimal_bsgs(Array[Int], Array[Permutation]) -> Bool
+
+pub fn _min_dummies(Array[Array[Int]], Array[Int?], Array[Int]) -> Array[Int]
+
+pub fn _naive_list_centralizer(PermutationGroup, PermutationGroup) -> Array[Permutation] raise CombinatoricsError
+
+pub fn _orbits_transversals_from_bsgs(Array[Int], Array[Array[Permutation]], _transversals_only? : Bool, _slp? : Bool) -> OrbitsTransversals raise CombinatoricsError
+
+pub fn _remove_gens(Array[Int], Array[Permutation], basic_orbits? : Array[Array[Int]], strong_gens_distr? : Array[Array[Permutation]]) -> Array[Permutation]
+
+pub fn _simplify_relators(Array[FreeGroupElement]) -> Array[FreeGroupElement] raise CombinatoricsError
+
+pub fn _strip(Permutation, Array[Int], Array[Array[Int]], Array[Map[Int, Permutation]]) -> (Permutation, Int) raise CombinatoricsError
+
+pub fn _strip_af(Array[Int], Array[Int], Array[Array[Int]], Array[Map[Int, Array[Int]]], Int, slp? : Array[(Int, Array[Int])], slps? : Array[Map[Int, Array[Int]]]) -> (Array[Int]?, Int, Array[(Int, Array[Int])]) raise CombinatoricsError
+
+pub fn _strong_gens_from_distr(Array[Array[Permutation]]) -> Array[Permutation]
+
+pub fn _verify_bsgs(PermutationGroup, Array[Int], Array[Permutation]) -> Bool raise CombinatoricsError
+
+pub fn _verify_centralizer(PermutationGroup, PermutationGroup, centr? : PermutationGroup) -> Bool raise CombinatoricsError
+
+pub fn _verify_normal_closure(PermutationGroup, PermutationGroup, closure? : PermutationGroup) -> Bool raise CombinatoricsError
+
+pub fn a4_in_s6() -> PermutationGroup raise CombinatoricsError
+
+pub fn a4xc2() -> PermutationGroup raise CombinatoricsError
+
+pub fn abelian_group(Array[Int]) -> PermutationGroup raise CombinatoricsError
+
+pub fn alternating(Int) -> Array[Permutation] raise CombinatoricsError
+
+pub fn alternating_group(Int) -> PermutationGroup raise CombinatoricsError
+
+pub fn array_forms(Array[Permutation]) -> Array[Array[Int]]
+
+pub fn assert_oracle(Result[Bool, Error]) -> Unit raise
+
+pub fn assert_oracle_named(String, Result[Bool, Error]) -> Unit raise
+
+pub fn bin_to_gray(String) -> String
+
+pub fn block_homomorphism(PermutationGroup, Array[Int]) -> GroupHomomorphism raise CombinatoricsError
+
+pub fn bsgs_direct_product(Array[Int], Array[Permutation], Array[Int], Array[Permutation], signed? : Bool) -> (Array[Int], Array[Permutation]) raise CombinatoricsError
+
+pub fn canonical_free(Array[Int], Array[Permutation], Permutation, Int) -> Array[Int] raise CombinatoricsError
+
+pub fn canonicalize(Permutation, Array[Array[Int]], Array[Int?], Array[TensorComponent]) -> Array[Int]? raise CombinatoricsError
+
+pub fn canonicalize_naive(Permutation, Array[Array[Int]], Array[Int?], Array[TensorComponent]) -> Array[Int]? raise CombinatoricsError
+
+pub fn canonicalize_single(Permutation, Array[Int], Int?, Array[TensorComponent]) -> Array[Int]? raise CombinatoricsError
+
+pub fn coset_enumeration_c(FpGroup, Array[FreeGroupElement], max_cosets? : Int, draft? : CosetTable, incomplete? : Bool) -> CosetTable raise CombinatoricsError
+
+pub fn coset_enumeration_r(FpGroup, Array[FreeGroupElement], max_cosets? : Int, draft? : CosetTable, incomplete? : Bool, modified? : Bool) -> CosetTable raise CombinatoricsError
+
+pub let cube : Polyhedron
+
+pub fn cyclic(Int) -> Array[Permutation] raise CombinatoricsError
+
+pub fn cyclic_group(Int) -> PermutationGroup raise CombinatoricsError
+
+pub fn define_schreier_generators(CosetTable, homomorphism? : Bool) -> Map[String, FreeGroupElement]? raise CombinatoricsError
+
+pub fn dihedral(Int) -> Array[Permutation] raise CombinatoricsError
+
+pub fn dihedral_group(Int) -> PermutationGroup raise CombinatoricsError
+
+pub fn direct_product(Array[PermutationGroup]) -> PermutationGroup raise CombinatoricsError
+
+pub let dodecahedron : Polyhedron
+
+pub fn double_coset_can_rep(Array[Array[Int]], Array[Int?], Array[Int], Array[Permutation], Array[Map[Int, Array[Int]]], Permutation) -> Array[Int]? raise CombinatoricsError
+
+pub fn dummy_sgs(Array[Int], Int?, Int) -> Array[Array[Int]] raise CombinatoricsError
+
+pub fn elimination_technique_1(Array[FreeGroupElement], Array[FreeGroupElement], FreeGroupElement) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError
+
+pub fn elimination_technique_2(CosetTable) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError
+
+pub fn find_transitive_subgroups_of_S6(Array[S6TransitiveSubgroups], print_report? : Bool) -> Array[(S6TransitiveSubgroups, PermutationGroup)] raise CombinatoricsError
+
+pub fn four_group() -> PermutationGroup raise CombinatoricsError
+
+pub fn fp_group(FreeGroup, Array[FreeGroupElement]) -> (FpGroup, Array[FreeGroupElement])
+
+pub fn fp_group_abelian_invariants(FpGroup) -> AbelianInvariants
+
+pub fn fp_group_abelian_quotient_moduli(FpGroup, free_mod? : Int) -> (Array[Int], Array[Array[Int]])
+
+pub fn free_group(String) -> (FreeGroup, Array[FreeGroupElement])
+
+pub fn free_group_element_from_form(FreeGroup, Array[(Int, Int)]) -> FreeGroupElement
+
+pub fn free_group_from_array(Array[String]) -> (FreeGroup, Array[FreeGroupElement])
+
+pub fn g18() -> PermutationGroup raise CombinatoricsError
+
+pub fn g36m() -> PermutationGroup raise CombinatoricsError
+
+pub fn g36p() -> PermutationGroup raise CombinatoricsError
+
+pub fn g72() -> PermutationGroup raise CombinatoricsError
+
+pub fn gens_products(Array[TensorComponentFree]) -> (Int, Array[Int], Array[Permutation]) raise CombinatoricsError
+
+pub fn get_minimal_bsgs(Array[Int], Array[Permutation]) -> (Array[Int], Array[Permutation])? raise CombinatoricsError
+
+pub fn[T] get_subset_from_bitstring(Array[T], String) -> Array[T] raise CombinatoricsError
+
+pub fn get_symmetric_group_sgs(Int, antisym? : Bool) -> (Array[Int], Array[Permutation]) raise CombinatoricsError
+
+pub fn get_transversals(Array[Int], Array[Permutation]) -> Array[Map[Int, Array[Int]]] raise CombinatoricsError
+
+pub fn gray_to_bin(String) -> String
+
+pub fn[T] graycode_subsets(Array[T]) -> Array[Array[T]] raise CombinatoricsError
+
+pub fn group_isomorphism(HomGroup, HomGroup, isomorphism? : Bool) -> (Bool, GroupHomomorphism?) raise CombinatoricsError
+
+pub fn group_order_to_string(GroupOrder) -> String
+
+pub fn groups_count(Int) -> @bigint.BigInt raise CombinatoricsError
+
+pub fn homomorphism(HomGroup, HomGroup, Array[HomElement], images? : Array[HomElement], check? : Bool) -> GroupHomomorphism raise CombinatoricsError
+
+pub let icosahedron : Polyhedron
+
+pub fn is_abelian_number(Int) -> Bool raise CombinatoricsError
+
+pub fn is_cyclic_number(Int) -> Bool raise CombinatoricsError
+
+pub fn is_isomorphic(HomGroup, HomGroup) -> Bool raise CombinatoricsError
+
+pub fn is_nilpotent_number(Int) -> Bool raise CombinatoricsError
+
+pub fn[T] ksubsets(Array[T], Int) -> Array[Array[T]]
+
+pub fn letter_form_to_array_form(Array[Int]) -> Array[(Int, Int)]
+
+pub fn low_index_subgroups(FpGroup, Int, subgroup? : Array[FreeGroupElement]) -> Array[CosetTable] raise CombinatoricsError
+
+pub fn m20() -> PermutationGroup raise CombinatoricsError
+
+pub fn modified_coset_enumeration_r(FpGroup, Array[FreeGroupElement], max_cosets? : Int, draft? : CosetTable, incomplete? : Bool) -> CosetTable raise CombinatoricsError
+
+pub let octahedron : Polyhedron
+
+pub fn orbit_homomorphism(PermutationGroup, Array[Int]) -> GroupHomomorphism raise CombinatoricsError
+
+pub fn perm_af_direct_product(Array[Array[Int]], Array[Array[Int]], signed? : Bool) -> Array[Array[Int]]
+
+pub fn pgl2f5() -> PermutationGroup raise CombinatoricsError
+
+pub fn prufer_edges(Array[Array[Int]]) -> (Array[Array[Int]], Int) raise CombinatoricsError
+
+pub fn psl2f5() -> PermutationGroup raise CombinatoricsError
+
+pub fn random_bitstring(Int, seed? : Int) -> String
+
+pub fn random_integer_partition(Int, seed? : Array[Int]) -> Array[Int] raise CombinatoricsError
+
+pub fn reidemeister_presentation(FpGroup, Array[FreeGroupElement], draft? : CosetTable, homomorphism? : Bool) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError
+
+pub fn reidemeister_relators(CosetTable) -> Unit raise CombinatoricsError
+
+pub fn rewrite(CosetTable, Int, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
+
+pub fn rgs_enum(Int) -> Int
+
+pub fn rgs_generalized(Int) -> Array[Array[Int]]
+
+pub fn rgs_rank(Array[Int]) -> Int
+
+pub fn rgs_unrank(Int, Int) -> Array[Int] raise CombinatoricsError
+
+pub let riemann_bsgs : (Array[Int], Array[Permutation])
+
+pub fn rubik(Int) -> Array[Permutation] raise CombinatoricsError
+
+pub fn rubik_cube_generators() -> Array[Permutation] raise CombinatoricsError
+
+pub fn rubik_group(Int) -> PermutationGroup raise CombinatoricsError
+
+pub fn s3_in_s6() -> PermutationGroup raise CombinatoricsError
+
+pub fn s4m() -> PermutationGroup raise CombinatoricsError
+
+pub fn s4p() -> PermutationGroup raise CombinatoricsError
+
+pub fn s4xc2() -> PermutationGroup raise CombinatoricsError
+
+pub fn schur_number(Int) -> Int? raise CombinatoricsError
+
+pub fn schur_number_lower_bound(Int) -> Int raise CombinatoricsError
+
+pub fn schur_partition(Int) -> Array[Array[Int]] raise CombinatoricsError
+
+pub fn simplify_presentation(Array[FreeGroupElement], Array[FreeGroupElement], change_gens? : Bool) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError
+
+pub fn symmetric(Int) -> Array[Permutation] raise CombinatoricsError
+
+pub fn symmetric_group(Int) -> PermutationGroup raise CombinatoricsError
+
+pub fn tensor_gens(Array[Int], Array[Permutation], Array[Array[Int]], sym? : Int?) -> (Int, Array[Int], Array[Permutation]) raise CombinatoricsError
+
+pub let tetrahedron : Polyhedron
+
+pub fn to_prufer(Array[Array[Int]], Int) -> Array[Int]
+
+pub fn to_tree(Array[Int]) -> Array[Array[Int]]
+
+pub fn vfp_group(FreeGroup, Array[FreeGroupElement]) -> FpGroup
+
+pub fn vfree_group(String) -> FreeGroup
+
+pub fn xfp_group(FreeGroup, Array[FreeGroupElement]) -> (FpGroup, Array[FreeGroupElement])
+
+pub fn xfree_group(String) -> (FreeGroup, Array[FreeGroupElement])
+
+pub fn zero_mul_simp(Array[(Int, Int)]) -> Array[(Int, Int)]
+
+// Errors
+type CombinatoricsError
+
+// Types and methods
+pub struct AbelianInvariants {
+  rank : Int
+  torsion : Array[Int]
+  basis : Array[Array[Int]]
+}
+
+pub struct Collector {
+  pcgs : Array[Permutation]
+  pc_series : Array[PermutationGroup]
+  relative_order : Array[Int]
+  free_group : FreeGroup
+  index : Map[Int, Int]
+  mut pc_presentation : Map[FreeGroupElement, FreeGroupElement]
+}
+pub fn Collector::collected_word(Self, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
+pub fn Collector::constructive_membership_test(Self, Array[Permutation], Permutation) -> Array[Int]? raise CombinatoricsError
+pub fn Collector::depth(Self, Permutation) -> Int raise CombinatoricsError
+pub fn Collector::exponent_vector(Self, Permutation) -> Array[Int] raise CombinatoricsError
+pub fn Collector::induced_pcgs(Self, Array[Permutation]) -> Array[Permutation] raise CombinatoricsError
+pub fn Collector::leading_exponent(Self, Permutation) -> Int? raise CombinatoricsError
+pub fn Collector::map_relation(Self, FreeGroupElement) -> FreeGroupElement
+pub fn Collector::minimal_uncollected_subword(Self, FreeGroupElement) -> Array[(Int, Int)]?
+pub fn Collector::new(Array[Permutation], Array[PermutationGroup], Array[Int], free_group? : FreeGroup) -> Self raise CombinatoricsError
+pub fn Collector::pc_relators(Self) -> Map[FreeGroupElement, FreeGroupElement] raise CombinatoricsError
+pub fn Collector::relations(Self) -> (Map[FreeGroupElement, FreeGroupElement], Map[FreeGroupElement, FreeGroupElement])
+pub fn Collector::subword_index(Self, FreeGroupElement, FreeGroupElement) -> (Int, Int) raise CombinatoricsError
+
+pub struct Coset {
+  g : Permutation
+  h : PermutationGroup
+  dir : String
+}
+pub fn Coset::as_list(Self) -> Array[Permutation] raise CombinatoricsError
+pub fn Coset::is_left(Self) -> Bool
+pub fn Coset::is_right(Self) -> Bool
+pub fn Coset::new(Permutation, PermutationGroup, dir? : String) -> Self raise CombinatoricsError
+
+pub struct CosetTable {
+  free_group : FreeGroup
+  relators : Array[FreeGroupElement]
+  generators : Array[FreeGroupElement]
+  group_name : String
+  subgroup : Array[FreeGroupElement]
+  coset_table_limit : Int
+  mut p : Array[Int]
+  alphabet : Array[FreeGroupElement]
+  mut word_table : Array[Array[FreeGroupElement?]]
+  mut table : Array[Array[Int?]]
+  alphabet_index : Map[FreeGroupElement, Int]
+  alphabet_inv_index : Map[FreeGroupElement, Int]
+  mut deduction_stack : Array[(Int, FreeGroupElement)]
+  _grp : FreeGroup
+  p_p : Map[Int, FreeGroupElement]
+  mut schreier_free_group : FreeGroup?
+  mut schreier_generators : Array[FreeGroupElement]
+  mut schreier_gen_elem : Map[String, FreeGroupElement]
+  mut reidemeister_relators : Array[FreeGroupElement]
+}
+pub fn CosetTable::coincidence(Self, Int, Int, w? : FreeGroupElement, modified? : Bool) -> Unit raise CombinatoricsError
+pub fn CosetTable::coincidence_c(Self, Int, Int) -> Unit raise CombinatoricsError
+pub fn CosetTable::compress(Self) -> Unit
+pub fn CosetTable::conjugates(Self, Array[FreeGroupElement]) -> Array[Array[FreeGroupElement]]
+pub fn CosetTable::copy(Self) -> Self
+pub fn CosetTable::coset_representative(Self, Int) -> FreeGroupElement raise CombinatoricsError
+pub fn CosetTable::define_c(Self, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::define_coset(Self, Int, FreeGroupElement, modified? : Bool) -> Unit raise CombinatoricsError
+pub fn CosetTable::is_complete(Self) -> Bool
+pub fn CosetTable::look_ahead(Self) -> Unit raise CombinatoricsError
+pub fn CosetTable::merge(Self, Int, Int, Array[Int], w? : FreeGroupElement, modified? : Bool) -> Unit raise CombinatoricsError
+pub fn CosetTable::modified_coincidence(Self, Int, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::modified_define(Self, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::modified_merge(Self, Int, Int, FreeGroupElement, Array[Int]) -> Unit raise CombinatoricsError
+pub fn CosetTable::modified_rep(Self, Int) -> Int raise CombinatoricsError
+pub fn CosetTable::modified_scan(Self, Int, FreeGroupElement, FreeGroupElement, fill? : Bool) -> Unit raise CombinatoricsError
+pub fn CosetTable::modified_scan_and_fill(Self, Int, FreeGroupElement, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::n(Self) -> Int
+pub fn CosetTable::new(FreeGroup, Array[FreeGroupElement], Array[FreeGroupElement], String, Array[FreeGroupElement], max_cosets? : Int) -> Self
+pub fn CosetTable::omega(Self) -> Array[Int]
+pub fn CosetTable::process_deductions(Self, Array[FreeGroupElement], Array[FreeGroupElement]) -> Unit raise CombinatoricsError
+pub fn CosetTable::process_deductions_check(Self, Array[FreeGroupElement], Array[FreeGroupElement]) -> Bool
+pub fn CosetTable::rep(Self, Int, modified? : Bool) -> Int raise CombinatoricsError
+pub fn CosetTable::scan(Self, Int, FreeGroupElement, y? : FreeGroupElement, fill? : Bool, modified? : Bool) -> Unit raise CombinatoricsError
+pub fn CosetTable::scan_and_fill(Self, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::scan_and_fill_c(Self, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::scan_c(Self, Int, FreeGroupElement) -> Unit raise CombinatoricsError
+pub fn CosetTable::scan_check(Self, Int, FreeGroupElement) -> Bool
+pub fn CosetTable::standardize(Self) -> Unit
+pub fn CosetTable::switch(Self, Int, Int) -> Unit
+pub fn CosetTable::to_string(Self) -> String
+
+pub struct Cycle {
+  mapping : Map[Int, Int]
+}
+pub fn Cycle::apply(Self, Int) -> Int
+pub fn Cycle::compose(Self, Self) -> Self
+pub fn Cycle::from_permutation(Permutation) -> Self
+pub fn Cycle::list(Self, size? : Int) -> Array[Int] raise CombinatoricsError
+pub fn Cycle::new(Array[Int]) -> Self raise CombinatoricsError
+pub fn Cycle::size(Self) -> Int
+pub impl Show for Cycle
+
+pub struct FpGroup {
+  free_group : FreeGroup
+  relators : Array[FreeGroupElement]
+  generators : Array[FreeGroupElement]
+  mut coset_table_cache : CosetTable?
+  mut is_standardized : Bool
+  mut order_cache : GroupOrder?
+  center_cache : Array[FreeGroupElement]?
+  rewriting_system : RewritingSystem
+}
+pub fn FpGroup::_finite_index_subgroup(Self, s? : Array[FreeGroupElement]) -> (Array[FreeGroupElement], CosetTable?) raise CombinatoricsError
+pub fn FpGroup::_is_infinite(Self) -> Bool?
+pub fn FpGroup::contains(Self, FreeGroupElement) -> Bool
+pub fn FpGroup::coset_enumeration(Self, Array[FreeGroupElement], strategy? : String, max_cosets? : Int, draft? : CosetTable, incomplete? : Bool) -> CosetTable raise CombinatoricsError
+pub fn FpGroup::coset_table(Self, Array[FreeGroupElement], strategy? : String, max_cosets? : Int, draft? : CosetTable, incomplete? : Bool) -> Array[Array[Int?]] raise CombinatoricsError
+pub fn FpGroup::equals(Self, FreeGroupElement, FreeGroupElement) -> Bool? raise CombinatoricsError
+pub fn FpGroup::identity(Self) -> FreeGroupElement
+pub fn FpGroup::index(Self, Array[FreeGroupElement], strategy? : String) -> GroupOrder raise CombinatoricsError
+pub fn FpGroup::make_confluent(Self) -> Unit raise CombinatoricsError
+pub fn FpGroup::most_frequent_generator(Self) -> FreeGroupElement raise CombinatoricsError
+pub fn FpGroup::new(FreeGroup, Array[FreeGroupElement]) -> Self
+pub fn FpGroup::order(Self, strategy? : String) -> GroupOrder raise CombinatoricsError
+pub fn FpGroup::random(Self) -> FreeGroupElement raise CombinatoricsError
+pub fn FpGroup::reduce(Self, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
+pub fn FpGroup::standardize_coset_table(Self) -> Unit
+pub fn FpGroup::subgroup(Self, Array[FreeGroupElement], draft? : CosetTable) -> Self raise CombinatoricsError
+pub fn FpGroup::to_string(Self) -> String
+
+pub struct FpSubgroup {
+  parent : SubgroupParent
+  generators : Array[FreeGroupElement]
+  normal : Bool
+  mut min_words : Array[MinWord]?
+  mut coset_table : CosetTable?
+}
+pub fn FpSubgroup::contains(Self, FreeGroupElement) -> Bool raise CombinatoricsError
+pub fn FpSubgroup::new(SubgroupParent, Array[FreeGroupElement], normal? : Bool) -> Self
+pub fn FpSubgroup::order(Self) -> GroupOrder raise CombinatoricsError
+pub fn FpSubgroup::to_fp_group(Self) -> FpGroup raise CombinatoricsError
+pub fn FpSubgroup::to_string(Self) -> String
+
+pub struct FreeGroup {
+  symbols : Array[String]
+  rank : Int
+}
+pub fn FreeGroup::center(Self) -> Array[FreeGroupElement]
+pub fn FreeGroup::contains(Self, FreeGroupElement) -> Bool
+pub fn FreeGroup::elements(Self) -> Array[FreeGroupElement] raise CombinatoricsError
+pub fn FreeGroup::generators(Self) -> Array[FreeGroupElement]
+pub fn FreeGroup::identity(Self) -> FreeGroupElement
+pub fn FreeGroup::index(Self, FreeGroupElement) -> Int raise CombinatoricsError
+pub fn FreeGroup::is_abelian(Self) -> Bool
+pub fn FreeGroup::new(Array[String]) -> Self
+pub fn FreeGroup::order(Self) -> GroupOrder
+pub fn FreeGroup::symbols(Self) -> Array[String]
+pub fn FreeGroup::to_string(Self) -> String
+pub impl Eq for FreeGroup
+pub impl Hash for FreeGroup
+pub impl Show for FreeGroup
+
+#alias(FpGroupElement)
+pub struct FreeGroupElement {
+  group : FreeGroup
+  array_form : Array[(Int, Int)]
+}
+pub fn FreeGroupElement::array_form(Self) -> Array[(Int, Int)]
+pub fn FreeGroupElement::commutator(Self, Self) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::contains(Self, Self) -> Bool
+pub fn FreeGroupElement::contains_generators(Self) -> Array[Self]
+pub fn FreeGroupElement::copy(Self) -> Self
+pub fn FreeGroupElement::cyclic_conjugates(Self) -> Array[Self]
+pub fn FreeGroupElement::cyclic_reduction(Self) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::cyclic_reduction_removed(Self) -> (Self, Self) raise CombinatoricsError
+pub fn FreeGroupElement::cyclic_subword(Self, Int, Int) -> Self
+pub fn FreeGroupElement::div(Self, Self) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::eliminate_word(Self, Self, by? : Self, all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::eliminate_words(Self, Array[Self], all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::eliminate_words_map(Self, Map[Self, Self], all? : Bool, inverse? : Bool) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::exponent_sum(Self, Self) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::exponent_syllable(Self, Int) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::ext_rep(Self) -> Array[Int]
+pub fn FreeGroupElement::generator_count(Self, Self) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::generator_syllable(Self, Int) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::identity_cyclic_reduction(Self) -> Self
+pub fn FreeGroupElement::index(Self, Self) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::inverse(Self) -> Self
+pub fn FreeGroupElement::is_cyclic_conjugate(Self, Self) -> Bool
+pub fn FreeGroupElement::is_cyclically_reduced(Self) -> Bool
+pub fn FreeGroupElement::is_dependent(Self, Self) -> Bool
+pub fn FreeGroupElement::is_identity(Self) -> Bool
+pub fn FreeGroupElement::is_independent(Self, Self) -> Bool
+pub fn FreeGroupElement::length(Self) -> Int
+pub fn FreeGroupElement::letter_at(Self, Int) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::letter_form(Self) -> Array[Int]
+pub fn FreeGroupElement::letter_form_elm(Self) -> Array[Self]
+pub fn FreeGroupElement::mul(Self, Self) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::number_syllables(Self) -> Int
+pub fn FreeGroupElement::order(Self) -> GroupOrder
+pub fn FreeGroupElement::pow(Self, Int) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::power_of(Self, Self) -> Bool raise CombinatoricsError
+pub fn FreeGroupElement::sub_syllables(Self, Int, Int) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::substituted_word(Self, Int, Int, Self) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::subword(Self, Int, Int, strict? : Bool) -> Self raise CombinatoricsError
+pub fn FreeGroupElement::subword_index(Self, Self, start? : Int) -> Int raise CombinatoricsError
+pub fn FreeGroupElement::to_string(Self) -> String
+pub impl Compare for FreeGroupElement
+pub impl Eq for FreeGroupElement
+pub impl Hash for FreeGroupElement
+pub impl Show for FreeGroupElement
+
+pub struct GrayCode {
+  n : Int
+  mut current_val : Int
+  mut skip_next : Bool
+  mut rank_cache : Int?
+}
+pub fn GrayCode::current(Self) -> String
+pub fn GrayCode::generate_gray(Self, start? : String, rank? : Int) -> Array[String] raise CombinatoricsError
+pub fn GrayCode::new(Int, start? : String, rank? : Int) -> Self raise CombinatoricsError
+pub fn GrayCode::next(Self, delta? : Int) -> Self raise CombinatoricsError
+pub fn GrayCode::rank(Self) -> Int
+pub fn GrayCode::selections(Self) -> Int
+pub fn GrayCode::skip(Self) -> Unit
+pub fn GrayCode::unrank(Int, Int) -> String
+
+pub struct GroupHomomorphism {
+  domain : HomGroup
+  codomain : HomGroup
+  domain_gens : Array[HomElement]
+  images : Array[HomElement]
+  mut inverses : Map[HomElement, HomElement]?
+  mut kernel_cache : HomSubgroup?
+  mut image_cache : HomSubgroup?
+}
+pub fn GroupHomomorphism::apply(Self, HomElement) -> HomElement raise CombinatoricsError
+pub fn GroupHomomorphism::apply_all(Self, Array[HomElement]) -> Array[HomElement] raise CombinatoricsError
+pub fn GroupHomomorphism::compose(Self, Self) -> Self raise CombinatoricsError
+pub fn GroupHomomorphism::image(Self) -> HomSubgroup raise CombinatoricsError
+pub fn GroupHomomorphism::invert(Self, HomElement) -> HomElement raise CombinatoricsError
+pub fn GroupHomomorphism::invert_all(Self, Array[HomElement]) -> Array[HomElement] raise CombinatoricsError
+pub fn GroupHomomorphism::invert_subgroup(Self, PermutationGroup) -> PermutationGroup raise CombinatoricsError
+pub fn GroupHomomorphism::is_injective(Self) -> Bool raise CombinatoricsError
+pub fn GroupHomomorphism::is_isomorphism(Self) -> Bool? raise CombinatoricsError
+pub fn GroupHomomorphism::is_surjective(Self) -> Bool? raise CombinatoricsError
+pub fn GroupHomomorphism::is_trivial(Self) -> Bool raise CombinatoricsError
+pub fn GroupHomomorphism::kernel(Self) -> HomSubgroup raise CombinatoricsError
+pub fn GroupHomomorphism::restrict_to(Self, PermutationGroup) -> Self raise CombinatoricsError
+
+pub enum GroupOrder {
+  Finite(Int)
+  Infinite
+}
+pub impl Eq for GroupOrder
+pub impl Show for GroupOrder
+
+pub(all) enum HomElement {
+  Perm(Permutation)
+  Word(FreeGroupElement)
+}
+pub impl Eq for HomElement
+pub impl Hash for HomElement
+
+pub(all) enum HomGroup {
+  PermGroup(PermutationGroup)
+  FpGroup(FpGroup)
+  FreeGroup(FreeGroup)
+}
+
+pub(all) enum HomSubgroup {
+  PermSub(PermutationGroup)
+  FpSub(FpSubgroup)
+}
+
+pub struct IntegerPartition {
+  integer : Int
+  partition : Array[Int]
+  mut dict_cache : Map[Int, Int]?
+  mut keys_cache : Array[Int]?
+}
+pub fn IntegerPartition::as_dict(Self) -> Map[Int, Int]
+pub fn IntegerPartition::as_ferrers(Self, char? : Char) -> String
+pub fn IntegerPartition::conjugate(Self) -> Array[Int]
+pub fn IntegerPartition::from_dict(Int, Map[Int, Int]) -> Self raise CombinatoricsError
+pub fn IntegerPartition::le(Self, Self) -> Bool
+pub fn IntegerPartition::lt(Self, Self) -> Bool
+pub fn IntegerPartition::new(Array[Int], integer? : Int) -> Self raise CombinatoricsError
+pub fn IntegerPartition::next_lex(Self) -> Self raise CombinatoricsError
+pub fn IntegerPartition::prev_lex(Self) -> Self raise CombinatoricsError
+pub fn IntegerPartition::to_string(Self) -> String
+
+type MinWord
+pub impl Eq for MinWord
+
+pub struct OrbitsTransversals {
+  basic_orbits : Array[Array[Int]]
+  transversals : Array[Map[Int, Permutation]]
+  slps : Array[Map[Int, Array[Int]]]
+}
+
+pub struct Partition[T] {
+  blocks : Array[Array[T]]
+  members : Array[T]
+  mut rank_cache : Int?
+  mut partition_cache : Array[Array[T]]?
+}
+pub fn[T : Eq + Show] Partition::add(Self[T], Int) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq + Show] Partition::from_rgs(Array[Int], Array[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq + Show] Partition::new(Array[Array[T]]) -> Self[T] raise CombinatoricsError
+pub fn[T : Show] Partition::partition(Self[T]) -> Array[Array[T]]
+pub fn[T : Show] Partition::rank(Self[T]) -> Int
+pub fn[T : Show] Partition::rgs(Self[T]) -> Array[Int]
+pub fn[T : Eq + Show] Partition::sub(Self[T], Int) -> Self[T] raise CombinatoricsError
+
+pub struct Permutation {
+  array_form : Array[Int]
+  size : Int
+  mut cyclic_form_cache : Array[Array[Int]]?
+  mut full_cyclic_form_cache : Array[Array[Int]]?
+  mut cycle_structure_cache : Map[Int, Int]?
+  mut rank_cache : Int?
+}
+pub fn Permutation::add(Self, Int) -> Self
+pub fn[T] Permutation::apply_array(Self, Array[T]) -> Array[T] raise CombinatoricsError
+pub fn Permutation::apply_index(Self, Int) -> Int raise CombinatoricsError
+pub fn Permutation::apply_string(Self, String) -> Array[Char] raise CombinatoricsError
+pub fn Permutation::array_form(Self) -> Array[Int]
+pub fn Permutation::ascents(Self) -> Array[Int]
+pub fn Permutation::cardinality(Self) -> Int
+pub fn Permutation::commutator(Self, Self) -> Self raise CombinatoricsError
+pub fn Permutation::commutes_with(Self, Self) -> Bool
+pub fn Permutation::cycle_structure(Self) -> Map[Int, Int]
+pub fn Permutation::cycle_structure_pairs(Self) -> Array[(Int, Int)]
+pub fn Permutation::cycles(Self) -> Int
+pub fn Permutation::cyclic_form(Self) -> Array[Array[Int]]
+pub fn Permutation::descents(Self) -> Array[Int]
+pub fn Permutation::from_array(Array[Int], size? : Int) -> Self raise CombinatoricsError
+pub fn Permutation::from_cycle(Cycle, size? : Int) -> Self raise CombinatoricsError
+pub fn Permutation::from_cycles(Array[Array[Int]], size? : Int) -> Self raise CombinatoricsError
+pub fn Permutation::from_inversion_vector(Array[Int]) -> Self raise CombinatoricsError
+pub fn Permutation::from_sequence_chars(Array[Char]) -> Self
+pub fn Permutation::from_sequence_string(String) -> Self
+pub fn Permutation::full_cyclic_form(Self) -> Array[Array[Int]]
+pub fn Permutation::identity(Int) -> Self
+pub fn Permutation::index(Self) -> Int
+pub fn Permutation::inversion_vector(Self) -> Array[Int]
+pub fn Permutation::inversions(Self) -> Int
+pub fn Permutation::invert(Self) -> Self
+pub fn Permutation::is_disjoint(Self, Self) -> Bool
+pub fn Permutation::is_even(Self) -> Bool
+pub fn Permutation::is_identity(Self) -> Bool
+pub fn Permutation::is_odd(Self) -> Bool
+pub fn Permutation::length(Self) -> Int
+pub fn Permutation::max(Self) -> Int raise CombinatoricsError
+pub fn Permutation::min(Self) -> Int raise CombinatoricsError
+pub fn Permutation::mul(Self, Self) -> Self raise CombinatoricsError
+pub fn Permutation::new(Array[Int]) -> Self raise CombinatoricsError
+pub fn Permutation::next_lex(Self) -> Self?
+pub fn Permutation::next_nonlex(Self) -> Self?
+pub fn Permutation::next_trotterjohnson(Self) -> Self?
+pub fn Permutation::order(Self) -> Int
+pub fn Permutation::parity(Self) -> Int
+pub fn Permutation::pow(Self, Int) -> Self
+pub fn Permutation::random(Int) -> Self
+pub fn Permutation::rank(Self) -> Int
+pub fn Permutation::rank_nonlex(Self) -> Int
+pub fn Permutation::rank_trotterjohnson(Self) -> Int
+pub fn Permutation::resize(Self, Int) -> Self raise CombinatoricsError
+pub fn Permutation::signature(Self) -> Int
+pub fn Permutation::size(Self) -> Int
+pub fn Permutation::sub(Self, Int) -> Self
+pub fn Permutation::support(Self) -> Array[Int]
+pub fn Permutation::transpositions(Self) -> Array[(Int, Int)]
+pub fn Permutation::unrank_lex(Int, Int) -> Self
+pub fn Permutation::unrank_nonlex(Int, Int) -> Self
+pub fn Permutation::unrank_trotterjohnson(Int, Int) -> Self
+pub impl Eq for Permutation
+pub impl Hash for Permutation
+
+pub struct PermutationGroup {
+  generators : Array[Permutation]
+  degree : Int
+  mut elements_cache : Array[Permutation]?
+  mut order_cache : Int?
+  mut is_abelian_cache : Bool?
+  mut is_transitive_cache : Bool?
+  mut is_dihedral_cache : Bool?
+  mut is_symmetric_cache : Bool?
+  mut is_alternating_cache : Bool?
+  mut is_nilpotent_cache : Bool?
+  mut is_solvable_cache : Bool?
+  mut is_cyclic_cache : Bool?
+}
+pub fn PermutationGroup::centralizer(Self, Self) -> Self raise CombinatoricsError
+pub fn PermutationGroup::contains(Self, Permutation, strict? : Bool) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::degree(Self) -> Int
+pub fn PermutationGroup::derived_series(Self) -> Array[Self] raise CombinatoricsError
+pub fn PermutationGroup::derived_subgroup(Self) -> Self raise CombinatoricsError
+pub fn PermutationGroup::elements(Self) -> Array[Permutation] raise CombinatoricsError
+pub fn PermutationGroup::equals(Self, Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::generate(Self) -> Array[Permutation] raise CombinatoricsError
+pub fn PermutationGroup::generate_dimino(Self) -> Array[Permutation] raise CombinatoricsError
+pub fn PermutationGroup::generate_dimino_af(Self) -> Array[Array[Int]] raise CombinatoricsError
+pub fn PermutationGroup::generate_schreier_sims(Self) -> Array[Permutation] raise CombinatoricsError
+pub fn PermutationGroup::generator_product(Self, Permutation, original? : Bool) -> Array[Permutation] raise CombinatoricsError
+pub fn PermutationGroup::generators(Self) -> Array[Permutation]
+pub fn PermutationGroup::identity(Self) -> Permutation
+pub fn PermutationGroup::is_abelian(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_alternating(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_cyclic(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_dihedral(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_polycyclic(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_solvable(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_subgroup(Self, Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_symmetric(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::is_transitive(Self) -> Bool raise CombinatoricsError
+pub fn PermutationGroup::make_perm(Self, Array[Int]) -> Permutation raise CombinatoricsError
+pub fn PermutationGroup::mul(Self, Self) -> Self raise CombinatoricsError
+pub fn PermutationGroup::new(Array[Permutation], dups? : Bool) -> Self raise CombinatoricsError
+pub fn PermutationGroup::normal_closure(Self, Self) -> Self raise CombinatoricsError
+pub fn PermutationGroup::orbit(Self, Int) -> Array[Int] raise CombinatoricsError
+pub fn PermutationGroup::order(Self) -> Int raise CombinatoricsError
+pub fn PermutationGroup::pointwise_stabilizer(Self, Array[Int]) -> Self raise CombinatoricsError
+pub fn PermutationGroup::polycyclic_group(Self) -> PolycyclicGroup raise CombinatoricsError
+pub fn PermutationGroup::random(Self) -> Permutation raise CombinatoricsError
+pub fn PermutationGroup::schreier_sims_incremental(Self) -> (Array[Int], Array[Permutation]) raise CombinatoricsError
+pub fn PermutationGroup::stabilizer(Self, Int) -> Self raise CombinatoricsError
+pub fn PermutationGroup::subgroup(Self, Array[Permutation]) -> Self raise CombinatoricsError
+
+pub(all) enum PolyRotate {
+  Index(Int)
+  Perm(Permutation)
+}
+
+pub struct PolycyclicGroup {
+  pcgs : Array[Permutation]
+  pc_series : Array[PermutationGroup]
+  relative_order : Array[Int]
+  collector : Collector
+}
+pub fn PolycyclicGroup::is_prime_order(Self) -> Bool
+pub fn PolycyclicGroup::length(Self) -> Int
+pub fn PolycyclicGroup::new(Array[Permutation], Array[PermutationGroup], Array[Int], collector? : Collector) -> Self raise CombinatoricsError
+
+pub struct Polyhedron {
+  original_corners : Array[@symcore.Expr]
+  mut corners : Array[@symcore.Expr]
+  faces : Array[Array[Int]]
+  pgroup_generators : Array[Permutation]
+  pgroup : PermutationGroup
+  mut edges_cache : Array[(Int, Int)]?
+}
+pub fn Polyhedron::array_form(Self) -> Array[Int] raise CombinatoricsError
+pub fn Polyhedron::copy(Self) -> Self
+pub fn Polyhedron::corners(Self) -> Array[@symcore.Expr]
+pub fn Polyhedron::cyclic_form(Self) -> Array[Array[Int]] raise CombinatoricsError
+pub fn Polyhedron::edges(Self) -> Array[(Int, Int)]
+pub fn Polyhedron::faces(Self) -> Array[Array[Int]]
+pub fn Polyhedron::new(Array[@symcore.Expr], faces? : Array[Array[Int]], pgroup? : Array[Permutation]) -> Self raise CombinatoricsError
+pub fn Polyhedron::pgroup(Self) -> PermutationGroup
+pub fn Polyhedron::reset(Self) -> Unit
+pub fn Polyhedron::rotate(Self, PolyRotate) -> Unit raise CombinatoricsError
+pub fn Polyhedron::size(Self) -> Int
+pub fn Polyhedron::vertices(Self) -> Array[@symcore.Expr]
+
+pub struct Prufer {
+  mut prufer_repr : Array[Int]?
+  mut tree_repr : Array[Array[Int]]?
+  nodes : Int
+  mut rank_cache : Int?
+}
+pub fn Prufer::from_edges(Array[Array[Int]], nodes? : Int) -> Self raise CombinatoricsError
+pub fn Prufer::from_sequence(Array[Int]) -> Self
+pub fn Prufer::next(Self, delta? : Int) -> Self
+pub fn Prufer::prev(Self, delta? : Int) -> Self
+pub fn Prufer::prufer_rank(Self) -> Int
+pub fn Prufer::prufer_repr(Self) -> Array[Int]
+pub fn Prufer::rank(Self) -> Int
+pub fn Prufer::size(Self) -> Int
+pub fn Prufer::tree_repr(Self) -> Array[Array[Int]]
+pub fn Prufer::unrank(Int, Int) -> Self
+
+pub struct RewritingSystem {
+  free_group : FreeGroup
+  relators : Array[FreeGroupElement]
+  generators : Array[FreeGroupElement]
+  group_name : String
+  alphabet : Array[FreeGroupElement]
+  mut is_confluent_cache : Bool?
+  mut maxeqns : Int
+  tidyint : Int
+  mut max_exceeded : Bool
+  mut reduction_automaton : StateMachine?
+  mut new_rules : Map[FreeGroupElement, FreeGroupElement]
+  rules : Map[FreeGroupElement, FreeGroupElement]
+  rules_cache : Array[(FreeGroupElement, FreeGroupElement)]
+}
+pub fn RewritingSystem::add_rule(Self, FreeGroupElement, FreeGroupElement, check? : Bool) -> Array[FreeGroupElement] raise CombinatoricsError
+pub fn RewritingSystem::construct_automaton(Self) -> Unit raise CombinatoricsError
+pub fn RewritingSystem::is_confluent(Self) -> Bool raise CombinatoricsError
+pub fn RewritingSystem::make_confluent(Self, check? : Bool) -> Bool raise CombinatoricsError
+pub fn RewritingSystem::new(FreeGroup, Array[FreeGroupElement], Array[FreeGroupElement], String) -> Self
+pub fn RewritingSystem::reduce(Self, FreeGroupElement, exclude? : FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
+pub fn RewritingSystem::reduce_using_automaton(Self, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
+pub fn RewritingSystem::set_max(Self, Int) -> Unit
+
+pub(all) enum S1TransitiveSubgroups {
+  S1
+}
+pub fn S1TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S1TransitiveSubgroups
+
+pub(all) enum S2TransitiveSubgroups {
+  S2
+}
+pub fn S2TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S2TransitiveSubgroups
+
+pub(all) enum S3TransitiveSubgroups {
+  A3
+  S3
+}
+pub fn S3TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S3TransitiveSubgroups
+
+pub(all) enum S4TransitiveSubgroups {
+  C4
+  V
+  D4
+  A4
+  S4
+}
+pub fn S4TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S4TransitiveSubgroups
+
+pub(all) enum S5TransitiveSubgroups {
+  C5
+  D5
+  M20
+  A5
+  S5
+}
+pub fn S5TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S5TransitiveSubgroups
+
+pub(all) enum S6TransitiveSubgroups {
+  C6
+  S3
+  D6
+  A4
+  G18
+  A4xC2
+  S4m
+  S4p
+  G36m
+  G36p
+  S4xC2
+  PSL2F5
+  G72
+  PGL2F5
+  A6
+  S6
+}
+pub fn S6TransitiveSubgroups::get_perm_group(Self) -> PermutationGroup raise CombinatoricsError
+pub impl Eq for S6TransitiveSubgroups
+
+pub struct State {
+  name : StateName
+  transitions : Map[FreeGroupElement, StateName]
+  mut state_type : StateType
+  mut rh_rule : FreeGroupElement?
+}
+
+pub struct StateMachine {
+  name : String
+  automaton_alphabet : Array[FreeGroupElement]
+  states : Array[State]
+  state_index : Map[StateName, Int]
+}
+pub fn StateMachine::add_state(Self, StateName, StateType, rh_rule? : FreeGroupElement) -> Unit
+pub fn StateMachine::add_transition(Self, StateName, FreeGroupElement, StateName) -> Unit
+pub fn StateMachine::get_state(Self, StateName) -> State?
+pub fn StateMachine::has_state(Self, StateName) -> Bool
+pub fn StateMachine::new(String, Array[FreeGroupElement]) -> Self
+pub fn StateMachine::set_dead_rule(Self, StateName, FreeGroupElement) -> Unit
+pub fn StateMachine::set_state_type(Self, StateName, StateType) -> Unit
+pub fn StateMachine::state_names(Self) -> Array[StateName]
+pub fn StateMachine::transition(Self, StateName, FreeGroupElement) -> StateName?
+pub fn StateMachine::update_state(Self, State) -> Unit
+
+pub enum StateName {
+  Start
+  Word(FreeGroupElement)
+}
+pub impl Eq for StateName
+pub impl Hash for StateName
+
+pub enum StateType {
+  Start
+  Accept
+  Dead
+}
+pub impl Eq for StateType
+
+pub enum SubgroupParent {
+  Free(FreeGroup)
+  Fp(FpGroup)
+}
+
+pub struct Subset[T] {
+  subset : Array[T]
+  superset : Array[T]
+  rank_binary_cache : Int?
+  rank_lex_cache : Int?
+  rank_gray_cache : Int?
+}
+pub fn[T : Eq] Subset::bitlist_from_subset(Array[T], Array[T]) -> String
+pub fn[T] Subset::cardinality(Self[T]) -> Int
+pub fn[T : Eq] Subset::iterate_binary(Self[T], Int) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::iterate_graycode(Self[T], Int) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::new(Array[T], Array[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::next_binary(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::next_gray(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::next_lexicographic(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::prev_binary(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::prev_gray(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::prev_lexicographic(Self[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::rank_binary(Self[T]) -> Int
+pub fn[T : Eq] Subset::rank_gray(Self[T]) -> Int
+pub fn[T : Eq] Subset::rank_lexicographic(Self[T]) -> Int
+pub fn[T] Subset::size(Self[T]) -> Int
+pub fn[T] Subset::subset(Self[T]) -> Array[T]
+pub fn[T : Eq] Subset::subset_from_bitlist(Array[T], String) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::subset_indices(Array[T], Array[T]) -> Array[Int]
+pub fn[T] Subset::superset(Self[T]) -> Array[T]
+pub fn[T] Subset::superset_size(Self[T]) -> Int
+pub fn[T : Eq] Subset::unrank_binary(Int, Array[T]) -> Self[T] raise CombinatoricsError
+pub fn[T : Eq] Subset::unrank_gray(Int, Array[T]) -> Self[T] raise CombinatoricsError
+
+pub struct SymmetricPermutationGroup {
+  degree : Int
+  mut order_cache : Int?
+}
+pub fn SymmetricPermutationGroup::contains(Self, Permutation) -> Bool
+pub fn SymmetricPermutationGroup::degree(Self) -> Int
+pub fn SymmetricPermutationGroup::identity(Self) -> Permutation
+pub fn SymmetricPermutationGroup::new(Int) -> Self
+pub fn SymmetricPermutationGroup::order(Self) -> Int
+
+pub(all) struct TensorComponent {
+  base : Array[Int]
+  gens : Array[Permutation]
+  count : Int
+  sym : Int?
+}
+
+type TensorComponentFree
+
+// Type aliases
+
+// Traits
+

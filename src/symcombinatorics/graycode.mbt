@@ -1,7 +1,16 @@
 ///|
-/// Gray code utilities.
+/// Binary-reflected Gray code tools.
+///
+/// The APIs in this file follow the same conventions as `sympy.combinatorics.graycode`:
+/// they enumerate `2^n` bitstrings so that consecutive words differ in exactly one
+/// position.  Besides rank/unrank utilities, the module also exposes helpers that turn
+/// Gray-code bitstrings into subsets of a fixed base set.
 
 ///|
+/// Iterator state for an `n`-bit binary-reflected Gray code.
+///
+/// The object stores the current word and lets callers move by rank, enumerate the
+/// remaining words, or convert between Gray-code and ordinary binary order.
 pub struct GrayCode {
   n : Int
   mut current_val : Int
@@ -10,6 +19,11 @@ pub struct GrayCode {
 }
 
 ///|
+/// Construct an `n`-bit Gray-code iterator.
+///
+/// `start` gives the initial Gray-code word directly, while `rank` selects the word by
+/// its position in ordinary binary order.  The arguments mirror SymPy: exactly one of
+/// `start` or `rank` should be used when a non-default starting point is needed.
 pub fn GrayCode::new(
   n : Int,
   start? : String,
@@ -45,16 +59,22 @@ pub fn GrayCode::new(
 }
 
 ///|
+/// Return the total number of words in this Gray code, namely `2^n`.
 pub fn GrayCode::selections(self : GrayCode) -> Int {
   pow_int(2, self.n)
 }
 
 ///|
+/// Return the current Gray-code word as a bitstring.
 pub fn GrayCode::current(self : GrayCode) -> String {
   int_to_bin(self.current_val, self.n)
 }
 
 ///|
+/// Return the rank of the current Gray-code word.
+///
+/// As in SymPy, the rank is measured in the underlying binary-reflected Gray-code order,
+/// not lexicographic order on bitstrings.
 pub fn GrayCode::rank(self : GrayCode) -> Int {
   match self.rank_cache {
     Some(r) => r
@@ -67,6 +87,10 @@ pub fn GrayCode::rank(self : GrayCode) -> Int {
 }
 
 ///|
+/// Move forward or backward by `delta` steps in Gray-code order.
+///
+/// The move wraps modulo `2^n`, so negative offsets and offsets larger than the code size
+/// are both allowed.
 pub fn GrayCode::next(
   self : GrayCode,
   delta? : Int = 1,
@@ -80,11 +104,20 @@ pub fn GrayCode::next(
 }
 
 ///|
+/// Tell the next call to `generate_gray` to omit the current word once.
+///
+/// This matches SymPy's `skip()` helper, which is mainly useful when generating the tail
+/// of a Gray-code traversal after inspecting the current state manually.
 pub fn GrayCode::skip(self : GrayCode) -> Unit {
   self.skip_next = true
 }
 
 ///|
+/// Generate Gray-code words from the chosen starting point to the end of the cycle.
+///
+/// The returned array is ordered exactly as SymPy's generator would yield it.  When
+/// `start` or `rank` is supplied they temporarily override the object's current state for
+/// this enumeration.
 pub fn GrayCode::generate_gray(
   self : GrayCode,
   start? : String,
@@ -128,6 +161,10 @@ pub fn GrayCode::generate_gray(
 }
 
 ///|
+/// Return the Gray-code word at the given rank for length `n`.
+///
+/// This is the inverse of `GrayCode::rank` up to the same indexing convention used by
+/// SymPy.
 pub fn GrayCode::unrank(n : Int, rank : Int) -> String {
   fn rec(k : Int, n : Int) -> String {
     if n == 1 {
@@ -144,6 +181,7 @@ pub fn GrayCode::unrank(n : Int, rank : Int) -> String {
 }
 
 ///|
+/// Convert a Gray-code bitstring to its ordinary binary representation.
 pub fn gray_to_bin(bits : String) -> String {
   if bits.is_empty() {
     return ""
@@ -160,6 +198,7 @@ pub fn gray_to_bin(bits : String) -> String {
 }
 
 ///|
+/// Convert an ordinary binary bitstring to binary-reflected Gray-code form.
 pub fn bin_to_gray(bits : String) -> String {
   if bits.is_empty() {
     return ""
@@ -175,6 +214,10 @@ pub fn bin_to_gray(bits : String) -> String {
 }
 
 ///|
+/// Return a deterministic pseudo-random bitstring of length `n`.
+///
+/// The helper is used in the same way as SymPy's testing-oriented utility: passing a
+/// seed gives reproducible output without exposing a general-purpose RNG API.
 pub fn random_bitstring(n : Int, seed? : Int) -> String {
   let mut state = match seed {
     Some(v) => v
@@ -189,6 +232,10 @@ pub fn random_bitstring(n : Int, seed? : Int) -> String {
 }
 
 ///|
+/// Select the elements of `super_set` marked by ones in `bitstring`.
+///
+/// The i-th character of the bitstring decides whether the i-th element of the superset
+/// belongs to the returned subset.
 pub fn[T] get_subset_from_bitstring(
   super_set : Array[T],
   bitstring : String,
@@ -207,6 +254,10 @@ pub fn[T] get_subset_from_bitstring(
 }
 
 ///|
+/// Enumerate all subsets of `gray_code_set` in Gray-code order.
+///
+/// Consecutive subsets differ by exactly one inserted or removed element, which is often
+/// useful for incremental subset algorithms.
 pub fn[T] graycode_subsets(
   gray_code_set : Array[T],
 ) -> Array[Array[T]] raise CombinatoricsError {

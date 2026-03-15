@@ -1,5 +1,5 @@
 ///|
-/// Abelian invariants for finitely presented groups.
+/// Abelian invariants and abelian quotients of finitely presented groups.
 
 ///|
 fn abs_int(x : Int) -> Int {
@@ -242,6 +242,7 @@ fn smith_normal_form_with_transform(
 }
 
 ///|
+/// Structural data for the abelianization of a finitely presented group.
 pub struct AbelianInvariants {
   rank : Int
   torsion : Array[Int]
@@ -263,6 +264,7 @@ fn relation_matrix(fp : FpGroup) -> Array[Array[Int]] {
 }
 
 ///|
+/// Compute the invariant factors of the abelianization of `fp`.
 pub fn fp_group_abelian_invariants(fp : FpGroup) -> AbelianInvariants {
   let n = fp.generators.length()
   let mat = relation_matrix(fp)
@@ -281,6 +283,7 @@ pub fn fp_group_abelian_invariants(fp : FpGroup) -> AbelianInvariants {
 }
 
 ///|
+/// Return the moduli describing the abelian quotient determined by the relators.
 pub fn fp_group_abelian_quotient_moduli(
   fp : FpGroup,
   free_mod? : Int = 2,

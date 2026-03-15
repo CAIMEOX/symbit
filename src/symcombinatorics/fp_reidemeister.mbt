@@ -1,7 +1,8 @@
 ///|
-/// Schreier generators and Reidemeister presentation utilities.
+/// Reidemeister-Schreier subgroup presentation helpers.
 
 ///|
+/// Construct Schreier generators from a coset table.
 pub fn define_schreier_generators(
   table : CosetTable,
   homomorphism? : Bool = false,
@@ -96,6 +97,7 @@ pub fn define_schreier_generators(
 }
 
 ///|
+/// Rewrite a word in terms of Schreier generators.
 pub fn rewrite(
   table : CosetTable,
   alpha0 : Int,
@@ -117,6 +119,7 @@ pub fn rewrite(
 }
 
 ///|
+/// Compute the Reidemeister relators for a subgroup presentation.
 pub fn reidemeister_relators(
   table : CosetTable,
 ) -> Unit raise CombinatoricsError {
@@ -172,6 +175,7 @@ pub fn reidemeister_relators(
 }
 
 ///|
+/// Apply the second generator-elimination technique from SymPy's presentation simplifier.
 pub fn elimination_technique_2(
   table : CosetTable,
 ) -> (Array[FreeGroupElement], Array[FreeGroupElement]) raise CombinatoricsError {
@@ -219,6 +223,7 @@ pub fn elimination_technique_2(
 }
 
 ///|
+/// Build a subgroup presentation via the Reidemeister-Schreier method.
 pub fn reidemeister_presentation(
   fp_grp : FpGroup,
   subgroup : Array[FreeGroupElement],

@@ -1,7 +1,14 @@
 ///|
-/// Schur numbers and partitions.
+/// Schur numbers and explicit sum-free partitions.
+///
+/// The functions follow `sympy.combinatorics.schur_number`: they expose known exact Schur
+/// numbers, lower bounds beyond the proven range, and constructive partitions witnessing the
+/// lower bounds.
 
 ///|
+/// Return the exact Schur number `S(k)` when it is known to this implementation.
+///
+/// Unknown values are reported as `None` rather than guessed.
 pub fn schur_number(k : Int) -> Int? raise CombinatoricsError {
   if k < 0 {
     raise CombinatoricsError::ValueError("k should be a positive integer")
@@ -17,6 +24,7 @@ pub fn schur_number(k : Int) -> Int? raise CombinatoricsError {
 }
 
 ///|
+/// Return the best lower bound on `S(k)` built into the library.
 pub fn schur_number_lower_bound(k : Int) -> Int raise CombinatoricsError {
   if k < 0 {
     raise CombinatoricsError::ValueError("k should be a positive integer")
@@ -98,6 +106,7 @@ fn generate_next_list(
 }
 
 ///|
+/// Return a partition of `{1, ..., n}` into sum-free subsets witnessing the Schur bound.
 pub fn schur_partition(n : Int) -> Array[Array[Int]] raise CombinatoricsError {
   let number_of_subsets = schur_subsets_number(n)
   let sum_free_subsets : Array[Array[Int]] = if n == 1 {

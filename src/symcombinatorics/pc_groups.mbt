@@ -1,5 +1,9 @@
 ///|
-/// Polycyclic groups and collector.
+/// Polycyclic presentations and collection algorithms.
+///
+/// The file mirrors the key ideas of `sympy.combinatorics.pc_groups`: a polycyclic group is
+/// represented by a pc generating sequence and a polycyclic series, while a `Collector` turns
+/// arbitrary words into collected normal form using power and conjugation relators.
 
 ///|
 fn pc_free_group(rank : Int) -> FreeGroup {
@@ -12,6 +16,7 @@ fn pc_free_group(rank : Int) -> FreeGroup {
 }
 
 ///|
+/// A group equipped with a polycyclic generating sequence.
 pub struct PolycyclicGroup {
   pcgs : Array[Permutation]
   pc_series : Array[PermutationGroup]
@@ -20,6 +25,7 @@ pub struct PolycyclicGroup {
 }
 
 ///|
+/// Construct a polycyclic group from its pc sequence, series, and relative orders.
 pub fn PolycyclicGroup::new(
   pc_sequence : Array[Permutation],
   pc_series : Array[PermutationGroup],
@@ -34,6 +40,7 @@ pub fn PolycyclicGroup::new(
 }
 
 ///|
+/// Return whether every relative order in the pc sequence is prime.
 pub fn PolycyclicGroup::is_prime_order(self : PolycyclicGroup) -> Bool {
   for order in self.relative_order {
     if !@symntheory.isprime(BigInt::from_int(order)) {
@@ -44,11 +51,13 @@ pub fn PolycyclicGroup::is_prime_order(self : PolycyclicGroup) -> Bool {
 }
 
 ///|
+/// Return the length of the polycyclic generating sequence.
 pub fn PolycyclicGroup::length(self : PolycyclicGroup) -> Int {
   self.pcgs.length()
 }
 
 ///|
+/// A collector that rewrites words into polycyclic normal form.
 pub struct Collector {
   pcgs : Array[Permutation]
   pc_series : Array[PermutationGroup]
@@ -59,6 +68,7 @@ pub struct Collector {
 }
 
 ///|
+/// Construct a collector for the given pc generating sequence.
 pub fn Collector::new(
   pcgs : Array[Permutation],
   pc_series : Array[PermutationGroup],
@@ -87,6 +97,7 @@ pub fn Collector::new(
 }
 
 ///|
+/// Return the leftmost syllable pattern that violates collected normal form.
 pub fn Collector::minimal_uncollected_subword(
   self : Collector,
   word : FreeGroupElement,
@@ -120,6 +131,7 @@ pub fn Collector::minimal_uncollected_subword(
 }
 
 ///|
+/// Split the current pc presentation into power relators and conjugation relators.
 pub fn Collector::relations(
   self : Collector,
 ) -> (
@@ -139,6 +151,7 @@ pub fn Collector::relations(
 }
 
 ///|
+/// Return the start and end positions of a subword inside another word.
 pub fn Collector::subword_index(
   _self : Collector,
   word : FreeGroupElement,
@@ -161,6 +174,7 @@ pub fn Collector::subword_index(
 }
 
 ///|
+/// Return the stored conjugation image for a basic two-generator relation.
 pub fn Collector::map_relation(
   self : Collector,
   w : FreeGroupElement,
@@ -180,6 +194,7 @@ pub fn Collector::map_relation(
 }
 
 ///|
+/// Rewrite a free-group word into collected pc normal form.
 pub fn Collector::collected_word(
   self : Collector,
   word0 : FreeGroupElement,
@@ -245,6 +260,7 @@ pub fn Collector::collected_word(
 }
 
 ///|
+/// Compute the pc relators induced by the stored pc sequence and series.
 pub fn Collector::pc_relators(
   self : Collector,
 ) -> Map[FreeGroupElement, FreeGroupElement] raise CombinatoricsError {
@@ -328,6 +344,7 @@ pub fn Collector::pc_relators(
 }
 
 ///|
+/// Return the exponent vector of an element in collected coordinates.
 pub fn Collector::exponent_vector(
   self : Collector,
   element : Permutation,
@@ -362,6 +379,7 @@ pub fn Collector::exponent_vector(
 }
 
 ///|
+/// Return the depth of an element in the pc series.
 pub fn Collector::depth(
   self : Collector,
   element : Permutation,
@@ -376,6 +394,7 @@ pub fn Collector::depth(
 }
 
 ///|
+/// Return the leading non-zero exponent of an element, if any.
 pub fn Collector::leading_exponent(
   self : Collector,
   element : Permutation,
@@ -441,6 +460,7 @@ fn Collector::sift_z(
 }
 
 ///|
+/// Compute an induced pc generating sequence for a subgroup.
 pub fn Collector::induced_pcgs(
   self : Collector,
   gens0 : Array[Permutation],
@@ -475,6 +495,9 @@ pub fn Collector::induced_pcgs(
 }
 
 ///|
+/// Try to express `g` in the induced pc generating sequence.
+///
+/// On success the returned vector gives the exponents of the subgroup generators.
 pub fn Collector::constructive_membership_test(
   self : Collector,
   ipcgs : Array[Permutation],

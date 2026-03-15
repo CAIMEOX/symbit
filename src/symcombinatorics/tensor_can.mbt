@@ -1,5 +1,10 @@
 ///|
-/// Tensor canonicalization (SymPy tensor_can port).
+/// Canonicalization routines for tensor expressions with slot symmetries and dummy indices.
+///
+/// These functions correspond to the combinatorial core of
+/// `sympy.combinatorics.tensor_can`.  They build symmetry generators, compute minimal dummy
+/// placements, and choose canonical representatives of double cosets so that tensor terms
+/// with the same abstract symmetry normalize to identical index permutations.
 
 ///|
 pub(all) struct TensorComponent {
@@ -203,6 +208,10 @@ fn remove_int_once(values : Array[Int], target : Int) -> Array[Int] {
 }
 
 ///|
+/// Return the strong generating system for dummy-index exchanges.
+///
+/// `dummies` gives the paired dummy slots, `sym` describes metric symmetry, and `n` is the
+/// number of tensor slots before the sign positions appended by SymPy's algorithm.
 pub fn dummy_sgs(
   dummies : Array[Int],
   sym : Int?,
@@ -250,6 +259,7 @@ pub fn dummy_sgs(
 }
 
 ///|
+/// Choose the lexicographically minimal arrangement of dummy indices.
 pub fn _min_dummies(
   dummies : Array[Array[Int]],
   sym : Array[Int?],
@@ -445,6 +455,10 @@ fn double_coset_bruteforce(
 }
 
 ///|
+/// Return a canonical representative of a double coset.
+///
+/// This is the core routine used to canonicalize a tensor term modulo slot symmetries and
+/// dummy-index relabelings.
 pub fn double_coset_can_rep(
   dummies : Array[Array[Int]],
   sym : Array[Int?],
@@ -699,6 +713,7 @@ pub fn double_coset_can_rep(
 }
 
 ///|
+/// Canonicalize an index permutation when only free indices are present.
 pub fn canonical_free(
   base_in : Array[Int],
   gens : Array[Permutation],
@@ -805,6 +820,7 @@ fn sym_valid(sym : Int?) -> Bool {
 }
 
 ///|
+/// Canonicalize a tensor permutation given its component symmetries.
 pub fn canonicalize(
   g : Permutation,
   dummies : Array[Array[Int]],
@@ -961,6 +977,7 @@ pub fn canonicalize(
 }
 
 ///|
+/// Canonicalize a single tensor component with one symmetry specification.
 pub fn canonicalize_single(
   g : Permutation,
   dummies : Array[Int],
@@ -971,6 +988,7 @@ pub fn canonicalize_single(
 }
 
 ///|
+/// Form the direct product of array-form permutation generators.
 pub fn perm_af_direct_product(
   gens1_in : Array[Array[Int]],
   gens2_in : Array[Array[Int]],
@@ -1016,6 +1034,7 @@ pub fn perm_af_direct_product(
 }
 
 ///|
+/// Form the direct product of two BSGS descriptions.
 pub fn bsgs_direct_product(
   base1 : Array[Int],
   gens1 : Array[Permutation],
@@ -1053,6 +1072,7 @@ pub fn bsgs_direct_product(
 }
 
 ///|
+/// Return a strong generating system for the symmetric group of degree `n`.
 pub fn get_symmetric_group_sgs(
   n : Int,
   antisym? : Bool = false,
@@ -1087,6 +1107,7 @@ pub fn get_symmetric_group_sgs(
 }
 
 ///|
+/// Minimal BSGS data for the monoterm symmetries of the Riemann tensor.
 pub let riemann_bsgs : (Array[Int], Array[Permutation]) = {
   let base : Array[Int] = [0, 2]
   let g1 = try! Permutation::from_cycles([[0, 1], [4, 5]], size=6)
@@ -1096,6 +1117,7 @@ pub let riemann_bsgs : (Array[Int], Array[Permutation]) = {
 }
 
 ///|
+/// Compute Schreier transversals for a BSGS description.
 pub fn get_transversals(
   base : Array[Int],
   gens : Array[Permutation],
@@ -1117,6 +1139,7 @@ pub fn get_transversals(
 }
 
 ///|
+/// Return whether the supplied BSGS base is already minimal.
 pub fn _is_minimal_bsgs(base : Array[Int], gens : Array[Permutation]) -> Bool {
   let base1 : Array[Int] = Array::new()
   let mut sgs1 : Array[Permutation] = Array::new()
@@ -1147,6 +1170,7 @@ pub fn _is_minimal_bsgs(base : Array[Int], gens : Array[Permutation]) -> Bool {
 }
 
 ///|
+/// Reduce a BSGS description to a minimal base when possible.
 pub fn get_minimal_bsgs(
   base : Array[Int],
   gens : Array[Permutation],
@@ -1161,6 +1185,7 @@ pub fn get_minimal_bsgs(
 }
 
 ///|
+/// Build the combined generators for a tensor product from component symmetries.
 pub fn tensor_gens(
   base : Array[Int],
   gens : Array[Permutation],
@@ -1288,6 +1313,7 @@ pub fn tensor_gens(
 }
 
 ///|
+/// Form products of generator families used by tensor canonicalization.
 pub fn gens_products(
   components : Array[TensorComponentFree],
 ) -> (Int, Array[Int], Array[Permutation]) raise CombinatoricsError {
@@ -1333,6 +1359,7 @@ pub fn gens_products(
 }
 
 ///|
+/// Brute-force canonicalization used for cross-checking and small examples.
 pub fn canonicalize_naive(
   g : Permutation,
   dummies : Array[Array[Int]],

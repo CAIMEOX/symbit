@@ -1,5 +1,9 @@
 ///|
-/// Rewriting system for finitely presented groups.
+/// Knuth-Bendix-style rewriting systems for finitely presented groups.
+///
+/// This is the algorithmic engine used by `FpGroup`.  It stores reduction rules on free
+/// words, can attempt to complete them to a confluent system, and optionally accelerates
+/// reductions with a finite-state automaton.
 
 ///|
 fn rules_cache_contains(
@@ -48,6 +52,7 @@ fn map_keys_sorted(
 }
 
 ///|
+/// A rewriting system on free-group words generated from relators.
 pub struct RewritingSystem {
   free_group : FreeGroup
   relators : Array[FreeGroupElement]
@@ -65,6 +70,7 @@ pub struct RewritingSystem {
 }
 
 ///|
+/// Construct a rewriting system from a free group, relators, and generator list.
 pub fn RewritingSystem::new(
   free_group : FreeGroup,
   relators : Array[FreeGroupElement],
@@ -100,6 +106,7 @@ pub fn RewritingSystem::new(
 }
 
 ///|
+/// Set the maximum number of rules allowed during completion.
 pub fn RewritingSystem::set_max(self : RewritingSystem, n : Int) -> Unit {
   if n > self.maxeqns {
     self.max_exceeded = false
@@ -108,6 +115,9 @@ pub fn RewritingSystem::set_max(self : RewritingSystem, n : Int) -> Unit {
 }
 
 ///|
+/// Return whether the current rules are confluent.
+///
+/// The result is cached after the first full confluence check.
 pub fn RewritingSystem::is_confluent(
   self : RewritingSystem,
 ) -> Bool raise CombinatoricsError {
@@ -151,6 +161,7 @@ fn RewritingSystem::_add_rule(
 }
 
 ///|
+/// Add a new reduction rule and all short overlap consequences it generates.
 pub fn RewritingSystem::add_rule(
   self : RewritingSystem,
   w1 : FreeGroupElement,
@@ -316,6 +327,7 @@ fn process_overlap(
 }
 
 ///|
+/// Run the completion procedure until the system is confluent or the rule limit is hit.
 pub fn RewritingSystem::make_confluent(
   self : RewritingSystem,
   check? : Bool = false,
@@ -413,6 +425,7 @@ fn RewritingSystem::_check_confluence(
 }
 
 ///|
+/// Reduce a word by repeatedly applying the current rewrite rules.
 pub fn RewritingSystem::reduce(
   self : RewritingSystem,
   word : FreeGroupElement,
@@ -465,6 +478,7 @@ fn RewritingSystem::_compute_inverse_rules(
 }
 
 ///|
+/// Build or refresh the reduction automaton for the current rule set.
 pub fn RewritingSystem::construct_automaton(
   self : RewritingSystem,
 ) -> Unit raise CombinatoricsError {
@@ -580,6 +594,7 @@ fn RewritingSystem::_add_to_automaton(
 }
 
 ///|
+/// Reduce a word using the finite-state reduction automaton.
 pub fn RewritingSystem::reduce_using_automaton(
   self : RewritingSystem,
   word : FreeGroupElement,
