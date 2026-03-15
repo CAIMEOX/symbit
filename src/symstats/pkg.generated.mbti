@@ -245,6 +245,8 @@ pub fn joint_components(RandomVar) -> Array[RandomVar]?
 
 pub fn joint_eigen_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
 
+pub fn joint_eigen_distribution_of(RandomVar) -> @symcore.Expr?
+
 pub fn joint_independent(String, Array[RandomVar]) -> RandomVar
 
 pub fn joint_rv(String, params? : Array[@symcore.Expr]) -> RandomVar
@@ -258,6 +260,8 @@ pub fn laplace(String, params? : Array[@symcore.Expr]) -> RandomVar
 pub fn le(@symcore.Expr, @symcore.Expr) -> Event
 
 pub fn level_spacing_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
+
+pub fn level_spacing_distribution_of(RandomVar) -> @symcore.Expr?
 
 pub fn levy(String, params? : Array[@symcore.Expr]) -> RandomVar
 
@@ -343,11 +347,17 @@ pub fn probability(Event, rv? : RandomVar) -> @symcore.Expr
 
 pub fn probability_expr(Event) -> @symcore.Expr
 
+pub fn process_cdf_at(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
 pub fn process_increment_mean(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn process_increment_variance(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
+pub fn process_is_discrete(RandomVar) -> Bool
+
 pub fn process_mean_at(RandomVar, @symcore.Expr) -> @symcore.Expr?
+
+pub fn process_probability_at(RandomVar, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn process_transition_probability(RandomVar, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
@@ -410,6 +420,8 @@ pub fn stochastic_state_space_of(@symcore.Expr) -> @symcore.Expr
 pub fn student_t(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn substitute_symbol(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
+
+pub fn symbolic_opaque_stats_name(String) -> Bool
 
 pub fn symbolic_rv_data(RandomVar) -> (String, Array[@symcore.Expr])?
 
