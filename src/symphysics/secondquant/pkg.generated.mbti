@@ -1,0 +1,191 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symphysics/secondquant"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symphysics",
+}
+
+// Values
+pub fn anti_symmetric_tensor(@symcore.Expr, Array[@symcore.Expr], Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn b(@symcore.Expr) -> @symcore.Expr
+
+pub fn bbra(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn bd(@symcore.Expr) -> @symcore.Expr
+
+pub fn bket(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn boson_annihilator(@symcore.Expr) -> BosonicOperatorExpr
+
+pub fn boson_bra(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn boson_creator(@symcore.Expr) -> BosonicOperatorExpr
+
+pub fn boson_ket(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn boson_state(Array[@symcore.Expr]) -> BosonState
+
+pub fn boson_state_from_expr(@symcore.Expr) -> BosonState?
+
+pub fn contraction(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn evaluate_deltas(@symcore.Expr) -> @symcore.Expr
+
+pub fn f(@symcore.Expr) -> @symcore.Expr
+
+pub fn fbra(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn fd(@symcore.Expr) -> @symcore.Expr
+
+pub fn fermion_annihilator(@symcore.Expr) -> FermionicOperatorExpr
+
+pub fn fermion_bra(Array[@symcore.Expr], fermi_level? : Int) -> @symcore.Expr
+
+pub fn fermion_creator(@symcore.Expr) -> FermionicOperatorExpr
+
+pub fn fermion_ket(Array[@symcore.Expr], fermi_level? : Int) -> @symcore.Expr
+
+pub fn fermion_state(Array[@symcore.Expr], fermi_level? : Int) -> FermionState
+
+pub fn fermion_state_from_expr(@symcore.Expr) -> FermionState?
+
+pub fn fixed_bosonic_basis(Int, Int) -> FixedBosonicBasis
+
+pub fn fket(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn no(@symcore.Expr) -> @symcore.Expr
+
+pub fn permutation_operator(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_apply_operators(@symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_commutator(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_contraction(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_dagger(@symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_evaluate_deltas(@symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_inner_product(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_matrix_rep(@symcore.Expr, BosonicBasisSet) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+
+pub fn secondquant_no(@symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_normal_ordered_form(@symcore.Expr, independent? : Bool, recursive_limit? : Int) -> @symcore.Expr
+
+pub fn secondquant_permutation_operator(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn secondquant_simplify_index_permutations(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn secondquant_substitute_dummies(@symcore.Expr, new_indices? : Bool, pretty_indices? : Map[String, String]) -> @symcore.Expr
+
+pub fn secondquant_wicks(@symcore.Expr, simplify_kronecker_deltas? : Bool, expand? : Bool, simplify_dummies? : Bool, keep_only_fully_contracted? : Bool) -> @symcore.Expr
+
+pub fn simplify_index_permutations(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn substitute_dummies(@symcore.Expr, new_indices? : Bool, pretty_indices? : Map[String, String]) -> @symcore.Expr
+
+pub fn tensor_symbol(@symcore.Expr) -> @symcore.Expr
+
+pub fn variable_bosonic_basis(Int) -> VarBosonicBasis
+
+pub fn wicks(@symcore.Expr, simplify_kronecker_deltas? : Bool, expand? : Bool, simplify_dummies? : Bool, keep_only_fully_contracted? : Bool) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+pub struct BosonState {
+  occupations : Array[@symcore.Expr]
+}
+pub fn BosonState::as_bra_expr(Self) -> @symcore.Expr
+pub fn BosonState::as_expr(Self) -> @symcore.Expr
+pub fn BosonState::as_ket_expr(Self) -> @symcore.Expr
+pub fn BosonState::down(Self, Int) -> Self? raise @symphysics.PhysicsError
+pub fn BosonState::get(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn BosonState::len(Self) -> Int
+pub fn BosonState::repr(Self) -> String
+pub fn BosonState::to_string(Self) -> String
+pub fn BosonState::up(Self, Int) -> Self raise @symphysics.PhysicsError
+pub impl Eq for BosonState
+
+pub enum BosonicBasisSet {
+  Var(VarBosonicBasis)
+  Fixed(FixedBosonicBasis)
+}
+pub fn BosonicBasisSet::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
+pub fn BosonicBasisSet::len(Self) -> Int
+pub fn BosonicBasisSet::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn BosonicBasisSet::to_string(Self) -> String
+pub impl Eq for BosonicBasisSet
+
+pub struct BosonicOperatorExpr {
+  index : @symcore.Expr
+  is_annihilation : Bool
+}
+pub fn BosonicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
+pub fn BosonicOperatorExpr::as_expr(Self) -> @symcore.Expr
+pub fn BosonicOperatorExpr::dagger(Self) -> Self
+pub fn BosonicOperatorExpr::is_symbolic(Self) -> Bool
+pub fn BosonicOperatorExpr::repr(Self) -> String
+pub fn BosonicOperatorExpr::state(Self) -> @symcore.Expr
+pub fn BosonicOperatorExpr::to_string(Self) -> String
+pub impl Eq for BosonicOperatorExpr
+
+pub struct FermionState {
+  orbitals : Array[@symcore.Expr]
+  fermi_level : Int
+}
+pub fn FermionState::as_bra_expr(Self) -> @symcore.Expr
+pub fn FermionState::as_expr(Self) -> @symcore.Expr
+pub fn FermionState::as_ket_expr(Self) -> @symcore.Expr
+pub fn FermionState::down(Self, @symcore.Expr) -> @symcore.Expr
+pub fn FermionState::len(Self) -> Int
+pub fn FermionState::repr(Self) -> String
+pub fn FermionState::to_string(Self) -> String
+pub fn FermionState::up(Self, @symcore.Expr) -> @symcore.Expr
+pub impl Eq for FermionState
+
+pub struct FermionicOperatorExpr {
+  index : @symcore.Expr
+  is_annihilation : Bool
+}
+pub fn FermionicOperatorExpr::apply_operator(Self, @symcore.Expr) -> @symcore.Expr
+pub fn FermionicOperatorExpr::as_expr(Self) -> @symcore.Expr
+pub fn FermionicOperatorExpr::dagger(Self) -> Self
+pub fn FermionicOperatorExpr::repr(Self) -> String
+pub fn FermionicOperatorExpr::to_string(Self) -> String
+pub impl Eq for FermionicOperatorExpr
+
+pub struct FixedBosonicBasis {
+  n_particles : Int
+  n_levels : Int
+  basis : Array[@symcore.Expr]
+}
+pub fn FixedBosonicBasis::as_basis(Self) -> BosonicBasisSet
+pub fn FixedBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
+pub fn FixedBosonicBasis::len(Self) -> Int
+pub fn FixedBosonicBasis::repr(Self) -> String
+pub fn FixedBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn FixedBosonicBasis::to_string(Self) -> String
+pub impl Eq for FixedBosonicBasis
+
+pub struct VarBosonicBasis {
+  n_max : Int
+  basis : Array[@symcore.Expr]
+}
+pub fn VarBosonicBasis::as_basis(Self) -> BosonicBasisSet
+pub fn VarBosonicBasis::index(Self, @symcore.Expr) -> Int raise @symphysics.PhysicsError
+pub fn VarBosonicBasis::len(Self) -> Int
+pub fn VarBosonicBasis::repr(Self) -> String
+pub fn VarBosonicBasis::state(Self, Int) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn VarBosonicBasis::to_string(Self) -> String
+pub impl Eq for VarBosonicBasis
+
+// Type aliases
+
+// Traits
+

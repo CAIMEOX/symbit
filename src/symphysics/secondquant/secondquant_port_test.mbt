@@ -1,5 +1,9 @@
 ///|
-fn sq_assert_string_equal(lhs : String, rhs : String, context : String) -> Unit raise {
+fn sq_assert_string_equal(
+  lhs : String,
+  rhs : String,
+  context : String,
+) -> Unit raise {
   guard lhs == rhs else { fail("\{context}: ours=\{lhs}; oracle=\{rhs}") }
 }
 
@@ -43,48 +47,64 @@ test "physics.secondquant: boson parity" {
   let b1d = boson_creator(@symcore.int(1))
 
   inspect(
-    try! @sympy_physics.secondquant_eval_str(@symprint.to_string(secondquant_dagger(boson_ket([n])))),
+    try! @sympy_physics.secondquant_eval_str(
+      @symprint.to_string(secondquant_dagger(boson_ket([n]))),
+    ),
     content=try! @sympy_physics.secondquant_eval_str("Dagger(BKet([n]))"),
   )
   sq_assert_string_equal(
     try! @sympy_physics.secondquant_apply_str("B(0)*BKet([n])"),
-    try! @sympy_physics.secondquant_eval_str(@symprint.to_string(
-      secondquant_apply_operators(@symcore.raw_mul([b0.as_expr(), boson_ket([n])])),
-    )),
+    try! @sympy_physics.secondquant_eval_str(
+      @symprint.to_string(
+        secondquant_apply_operators(
+          @symcore.raw_mul([b0.as_expr(), boson_ket([n])]),
+        ),
+      ),
+    ),
     "boson annihilation parity",
   )
   sq_assert_string_equal(
     try! @sympy_physics.secondquant_apply_str("Bd(0)*BKet([n])"),
-    try! @sympy_physics.secondquant_eval_str(@symprint.to_string(
-      secondquant_apply_operators(@symcore.raw_mul([bd0.as_expr(), boson_ket([n])])),
-    )),
+    try! @sympy_physics.secondquant_eval_str(
+      @symprint.to_string(
+        secondquant_apply_operators(
+          @symcore.raw_mul([bd0.as_expr(), boson_ket([n])]),
+        ),
+      ),
+    ),
     "boson creation parity",
   )
   sq_assert_string_equal(
     try! @sympy_physics.secondquant_apply_str(
       "Bd(0)*B(0)*Bd(1)*B(0)*BKet([n, m])",
     ),
-    try! @sympy_physics.secondquant_eval_str(@symprint.to_string(
-      secondquant_apply_operators(
-        @symcore.raw_mul([
-          bd0.as_expr(),
-          b0.as_expr(),
-          b1d.as_expr(),
-          b0.as_expr(),
-          boson_ket([n, m]),
-        ]),
+    try! @sympy_physics.secondquant_eval_str(
+      @symprint.to_string(
+        secondquant_apply_operators(
+          @symcore.raw_mul([
+            bd0.as_expr(),
+            b0.as_expr(),
+            b1d.as_expr(),
+            b0.as_expr(),
+            boson_ket([n, m]),
+          ]),
+        ),
       ),
-    )),
+    ),
     "composed boson apply parity",
   )
   sq_assert_string_equal(
-    try! @sympy_physics.secondquant_eval_str("InnerProduct(BBra([i, j]), BKet([k, l]))"),
-    try! @sympy_physics.secondquant_eval_str(@symprint.to_string(
-      secondquant_inner_product(
-        boson_bra([@symcore.symbol("i"), @symcore.symbol("j")]),
-        boson_ket([@symcore.symbol("k"), @symcore.symbol("l")]),
+    try! @sympy_physics.secondquant_eval_str(
+      "InnerProduct(BBra([i, j]), BKet([k, l]))",
+    ),
+    try! @sympy_physics.secondquant_eval_str(
+      @symprint.to_string(
+        secondquant_inner_product(
+          boson_bra([@symcore.symbol("i"), @symcore.symbol("j")]),
+          boson_ket([@symcore.symbol("k"), @symcore.symbol("l")]),
+        ),
       ),
-    )),
+    ),
     "tuple inner product parity",
   )
   sq_assert_string_equal(
@@ -103,7 +123,10 @@ test "physics.secondquant: boson parity" {
     content=fixed_bosonic_basis(2, 2).to_string(),
   )
   sq_assert_matrix_oracle_equal(
-    try! secondquant_matrix_rep(b0.as_expr(), variable_bosonic_basis(5).as_basis()),
+    try! secondquant_matrix_rep(
+      b0.as_expr(),
+      variable_bosonic_basis(5).as_basis(),
+    ),
     try! @sympy_physics.secondquant_matrix_rows("B(0)", "VarBosonicBasis(5)"),
     5,
     5,

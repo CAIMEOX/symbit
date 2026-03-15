@@ -1,0 +1,639 @@
+///|
+/// Fermionic operator/state families and shorthand constructors for
+/// `sympy.physics.secondquant`.
+///
+/// This covers the many-body fermionic Fock-state layer that the initial
+/// bosonic-only tranche did not implement. The representation is intentionally
+/// explicit: operators are `AnnihilateFermion/CreateFermion` expressions and
+/// states are `FockStateFermionKet/Bra(Tuple(...))`.
+
+///|
+pub struct FermionState {
+  orbitals : Array[@symcore.Expr]
+  fermi_level : Int
+} derive(Eq)
+
+///|
+pub struct FermionicOperatorExpr {
+  index : @symcore.Expr
+  is_annihilation : Bool
+} derive(Eq)
+
+///|
+fn sq_raw_mul(args : Array[@symcore.Expr]) -> @symcore.Expr {
+  match args.length() {
+    0 => @symcore.int(1)
+    1 => args[0]
+    _ => @symcore.raw_mul(args)
+  }
+}
+
+///|
+fn sq_raw_add(args : Array[@symcore.Expr]) -> @symcore.Expr {
+  match args.length() {
+    0 => @symcore.int(0)
+    1 => args[0]
+    _ => @symcore.raw_add(args)
+  }
+}
+
+///|
+fn sq_sign_expr(sign : Int, expr : @symcore.Expr) -> @symcore.Expr {
+  if sign % 2 == 0 {
+    expr
+  } else {
+    @symcore.int(-1) * expr
+  }
+}
+
+///|
+fn sq_fermion_tuple_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  @symcore.raw_function("Tuple", items)
+}
+
+///|
+fn sq_fermion_ket_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  @symcore.raw_function("FockStateFermionKet", [sq_fermion_tuple_expr(items)])
+}
+
+///|
+fn sq_fermion_bra_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  @symcore.raw_function("FockStateFermionBra", [sq_fermion_tuple_expr(items)])
+}
+
+///|
+fn sq_fermion_items_from_expr(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+  match expr {
+    @symcore.Expr::Function(name, args) if (
+        name == "FockStateFermionKet" ||
+        name == "FockStateFermionBra" ||
+        name == "FockStateKet" ||
+        name == "FockStateBra"
+      ) &&
+      args.length() == 1 =>
+      match args[0] {
+        @symcore.Expr::Function("Tuple", items) => Some(items)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn sq_expr_text(expr : @symcore.Expr) -> String {
+  @symprint.to_string(expr)
+}
+
+///|
+fn sq_tuple_inner_product(
+  lhs : Array[@symcore.Expr],
+  rhs : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  if lhs.length() != rhs.length() {
+    return @symcore.int(0)
+  }
+  let mut out = @symcore.int(1)
+  for idx in 0..<lhs.length() {
+    if lhs[idx] == rhs[idx] {
+      ()
+    } else if lhs[idx] is @symcore.Expr::Number(_) &&
+      rhs[idx] is @symcore.Expr::Number(_) {
+      return @symcore.int(0)
+    } else {
+      out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])
+    }
+  }
+  out
+}
+
+///|
+fn sq_symbol_prefix(name : String) -> String {
+  if name.length() >= 2 {
+    name[:2].to_string()
+  } else if name.length() == 1 {
+    name[:1].to_string()
+  } else {
+    ""
+  }
+}
+
+///|
+fn sq_symbol_head(name : String) -> String {
+  if name.length() >= 1 {
+    name[:1].to_string()
+  } else {
+    ""
+  }
+}
+
+///|
+fn sq_index_group(expr : @symcore.Expr, fermi_level : Int) -> Int {
+  match expr {
+    @symcore.Expr::Number(n) if n.is_integral() =>
+      if n.numerator().to_int() > fermi_level {
+        0
+      } else {
+        1
+      }
+    @symcore.Expr::Symbol(name) =>
+      if sq_symbol_prefix(name) == "_a" ||
+        ["a", "b", "c", "d"].contains(sq_symbol_head(name)) {
+        0
+      } else if sq_symbol_prefix(name) == "_i" ||
+        ["i", "j", "k", "l", "m", "n"].contains(sq_symbol_head(name)) {
+        1
+      } else {
+        2
+      }
+    _ => 2
+  }
+}
+
+///|
+fn sq_compare_fermion_indices(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+  fermi_level : Int,
+) -> Int {
+  let group_l = sq_index_group(lhs, fermi_level)
+  let group_r = sq_index_group(rhs, fermi_level)
+  if group_l != group_r {
+    return if group_l < group_r { -1 } else { 1 }
+  }
+  match (lhs, rhs) {
+    (@symcore.Expr::Number(ln), @symcore.Expr::Number(rn)) => ln.compare(rn)
+    _ => sq_expr_text(rhs).compare(sq_expr_text(lhs))
+  }
+}
+
+///|
+fn sq_sort_fermion_indices(
+  values : Array[@symcore.Expr],
+  fermi_level : Int,
+) -> (Array[@symcore.Expr], Int, Bool) {
+  let out = values.copy()
+  let mut sign = 0
+  if out.length() <= 1 {
+    return (out, 0, false)
+  }
+  for i in 0..<out.length() {
+    let mut j = 0
+    while j + 1 < out.length() - i {
+      if out[j] == out[j + 1] {
+        return ([], 0, true)
+      }
+      if sq_compare_fermion_indices(out[j], out[j + 1], fermi_level) > 0 {
+        let tmp = out[j]
+        out[j] = out[j + 1]
+        out[j + 1] = tmp
+        sign += 1
+      }
+      j += 1
+    }
+  }
+  (out, sign, false)
+}
+
+///|
+fn sq_fermion_hole_count(
+  orbitals : Array[@symcore.Expr],
+  fermi_level : Int,
+) -> Int {
+  let mut total = 0
+  for orbital in orbitals {
+    if sq_index_group(orbital, fermi_level) == 1 {
+      total += 1
+    }
+  }
+  total
+}
+
+///|
+fn sq_fermion_state_expr(
+  orbitals : Array[@symcore.Expr],
+  ket : Bool,
+  fermi_level : Int,
+) -> @symcore.Expr {
+  let (sorted, sign, invalid) = sq_sort_fermion_indices(orbitals, fermi_level)
+  if invalid || sq_fermion_hole_count(sorted, fermi_level) > fermi_level {
+    return @symcore.int(0)
+  }
+  let base = if ket {
+    sq_fermion_ket_expr(sorted)
+  } else {
+    sq_fermion_bra_expr(sorted)
+  }
+  sq_sign_expr(sign, base)
+}
+
+///|
+fn sq_fermion_state_from_items(
+  orbitals : Array[@symcore.Expr],
+  fermi_level : Int,
+) -> FermionState {
+  let (sorted, _, _) = sq_sort_fermion_indices(orbitals, fermi_level)
+  FermionState::{ orbitals: sorted, fermi_level }
+}
+
+///|
+fn sq_fermion_operator_parts(expr : @symcore.Expr) -> (@symcore.Expr, Bool)? {
+  match expr {
+    @symcore.Expr::Function("AnnihilateFermion", args) if args.length() == 1 =>
+      Some((args[0], true))
+    @symcore.Expr::Function("CreateFermion", args) if args.length() == 1 =>
+      Some((args[0], false))
+    @symcore.Expr::Function("FermionOp", args) if args.length() == 2 =>
+      Some((args[0], args[1] != @symcore.int(0)))
+    _ => None
+  }
+}
+
+///|
+fn sq_fermion_remove_orbital(
+  orbitals : Array[@symcore.Expr],
+  target : @symcore.Expr,
+  fermi_level : Int,
+  ket : Bool,
+) -> @symcore.Expr {
+  let mut idx = -1
+  for i in 0..<orbitals.length() {
+    if orbitals[i] == target {
+      idx = i
+      break
+    }
+  }
+  if idx < 0 {
+    return @symcore.int(0)
+  }
+  let updated : Array[@symcore.Expr] = []
+  for i in 0..<orbitals.length() {
+    if i != idx {
+      updated.push(orbitals[i])
+    }
+  }
+  sq_sign_expr(idx, sq_fermion_state_expr(updated, ket, fermi_level))
+}
+
+///|
+fn sq_fermion_add_orbital(
+  orbitals : Array[@symcore.Expr],
+  target : @symcore.Expr,
+  fermi_level : Int,
+  ket : Bool,
+) -> @symcore.Expr {
+  for orbital in orbitals {
+    if orbital == target {
+      return @symcore.int(0)
+    }
+  }
+  let updated : Array[@symcore.Expr] = [target]
+  for orbital in orbitals {
+    updated.push(orbital)
+  }
+  sq_fermion_state_expr(updated, ket, fermi_level)
+}
+
+///|
+fn sq_apply_fermion_op_to_items(
+  index : @symcore.Expr,
+  is_annihilation : Bool,
+  orbitals : Array[@symcore.Expr],
+  fermi_level : Int,
+  ket : Bool,
+) -> @symcore.Expr {
+  let group = sq_index_group(index, fermi_level)
+  if is_annihilation {
+    if group == 0 {
+      sq_fermion_remove_orbital(orbitals, index, fermi_level, ket)
+    } else if group == 1 {
+      let current_holes = sq_fermion_hole_count(orbitals, fermi_level)
+      if current_holes >= fermi_level {
+        @symcore.int(0)
+      } else {
+        sq_fermion_add_orbital(orbitals, index, fermi_level, ket)
+      }
+    } else {
+      sq_fermion_remove_orbital(orbitals, index, fermi_level, ket)
+    }
+  } else if group == 1 {
+    sq_fermion_remove_orbital(orbitals, index, fermi_level, ket)
+  } else {
+    sq_fermion_add_orbital(orbitals, index, fermi_level, ket)
+  }
+}
+
+///|
+fn sq_apply_fermion_operator_to_state(
+  op_expr : @symcore.Expr,
+  state_expr : @symcore.Expr,
+  ket : Bool,
+) -> @symcore.Expr? {
+  let (index, is_annihilation) = match sq_fermion_operator_parts(op_expr) {
+    Some(parts) => parts
+    None => return None
+  }
+  match state_expr {
+    @symcore.Expr::Function(name, args) if (
+        ket && name == "FockStateFermionKet"
+      ) ||
+      (!ket && name == "FockStateFermionBra") => {
+      guard args.length() == 1 else { return None }
+      match args[0] {
+        @symcore.Expr::Function("Tuple", items) =>
+          match index {
+            @symcore.Expr::Number(_) =>
+              Some(
+                sq_apply_fermion_op_to_items(
+                  index, is_annihilation, items, 0, ket,
+                ),
+              )
+            _ =>
+              if sq_index_group(index, 0) == 1 && items.contains(index) {
+                Some(@symcore.int(0))
+              } else {
+                None
+              }
+          }
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+pub fn fermion_state(
+  orbitals : Array[@symcore.Expr],
+  fermi_level? : Int = 0,
+) -> FermionState {
+  sq_fermion_state_from_items(orbitals, fermi_level)
+}
+
+///|
+pub fn FermionState::len(self : FermionState) -> Int {
+  self.orbitals.length()
+}
+
+///|
+pub fn FermionState::as_expr(self : FermionState) -> @symcore.Expr {
+  @symcore.raw_function("FockState", [sq_fermion_tuple_expr(self.orbitals)])
+}
+
+///|
+pub fn FermionState::as_ket_expr(self : FermionState) -> @symcore.Expr {
+  sq_fermion_state_expr(self.orbitals, true, self.fermi_level)
+}
+
+///|
+pub fn FermionState::as_bra_expr(self : FermionState) -> @symcore.Expr {
+  sq_fermion_state_expr(self.orbitals, false, self.fermi_level)
+}
+
+///|
+pub fn FermionState::up(
+  self : FermionState,
+  orbital : @symcore.Expr,
+) -> @symcore.Expr {
+  sq_apply_fermion_op_to_items(
+    orbital,
+    false,
+    self.orbitals,
+    self.fermi_level,
+    true,
+  )
+}
+
+///|
+pub fn FermionState::down(
+  self : FermionState,
+  orbital : @symcore.Expr,
+) -> @symcore.Expr {
+  sq_apply_fermion_op_to_items(
+    orbital,
+    true,
+    self.orbitals,
+    self.fermi_level,
+    true,
+  )
+}
+
+///|
+pub fn FermionState::repr(self : FermionState) -> String {
+  "FockStateKet(\{sq_tuple_string(self.orbitals)})"
+}
+
+///|
+pub fn FermionState::to_string(self : FermionState) -> String {
+  sq_tuple_string(self.orbitals)
+}
+
+///|
+pub fn fermion_state_from_expr(expr : @symcore.Expr) -> FermionState? {
+  match sq_fermion_items_from_expr(expr) {
+    Some(items) => Some(fermion_state(items))
+    None => None
+  }
+}
+
+///|
+pub fn fermion_ket(
+  orbitals : Array[@symcore.Expr],
+  fermi_level? : Int = 0,
+) -> @symcore.Expr {
+  sq_fermion_state_expr(orbitals, true, fermi_level)
+}
+
+///|
+pub fn fermion_bra(
+  orbitals : Array[@symcore.Expr],
+  fermi_level? : Int = 0,
+) -> @symcore.Expr {
+  sq_fermion_state_expr(orbitals, false, fermi_level)
+}
+
+///|
+pub fn fermion_annihilator(index : @symcore.Expr) -> FermionicOperatorExpr {
+  FermionicOperatorExpr::{ index, is_annihilation: true }
+}
+
+///|
+pub fn fermion_creator(index : @symcore.Expr) -> FermionicOperatorExpr {
+  FermionicOperatorExpr::{ index, is_annihilation: false }
+}
+
+///|
+pub fn FermionicOperatorExpr::as_expr(
+  self : FermionicOperatorExpr,
+) -> @symcore.Expr {
+  @symcore.raw_function(
+    if self.is_annihilation {
+      "AnnihilateFermion"
+    } else {
+      "CreateFermion"
+    },
+    [self.index],
+  )
+}
+
+///|
+pub fn FermionicOperatorExpr::dagger(
+  self : FermionicOperatorExpr,
+) -> FermionicOperatorExpr {
+  FermionicOperatorExpr::{
+    index: self.index,
+    is_annihilation: !self.is_annihilation,
+  }
+}
+
+///|
+pub fn FermionicOperatorExpr::to_string(self : FermionicOperatorExpr) -> String {
+  if self.is_annihilation {
+    "f(\{@symprint.to_string(self.index)})"
+  } else {
+    "f+(\{@symprint.to_string(self.index)})"
+  }
+}
+
+///|
+pub fn FermionicOperatorExpr::repr(self : FermionicOperatorExpr) -> String {
+  let name = if self.is_annihilation {
+    "AnnihilateFermion"
+  } else {
+    "CreateFermion"
+  }
+  "\{name}(\{@symprint.to_string(self.index)})"
+}
+
+///|
+pub fn FermionicOperatorExpr::apply_operator(
+  self : FermionicOperatorExpr,
+  state : @symcore.Expr,
+) -> @symcore.Expr {
+  match sq_apply_fermion_operator_to_state(self.as_expr(), state, true) {
+    Some(value) => value
+    None => @symcore.raw_mul([self.as_expr(), state])
+  }
+}
+
+///|
+pub fn b(index : @symcore.Expr) -> @symcore.Expr {
+  boson_annihilator(index).as_expr()
+}
+
+///|
+pub fn bd(index : @symcore.Expr) -> @symcore.Expr {
+  boson_creator(index).as_expr()
+}
+
+///|
+pub fn f(index : @symcore.Expr) -> @symcore.Expr {
+  fermion_annihilator(index).as_expr()
+}
+
+///|
+pub fn fd(index : @symcore.Expr) -> @symcore.Expr {
+  fermion_creator(index).as_expr()
+}
+
+///|
+pub fn bket(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  boson_ket(items)
+}
+
+///|
+pub fn bbra(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  boson_bra(items)
+}
+
+///|
+pub fn fket(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  fermion_ket(items)
+}
+
+///|
+pub fn fbra(items : Array[@symcore.Expr]) -> @symcore.Expr {
+  fermion_bra(items)
+}
+
+///|
+fn sq_secondquant_dagger_local(expr : @symcore.Expr) -> @symcore.Expr? {
+  match expr {
+    @symcore.Expr::Function("AnnihilateFermion", args) if args.length() == 1 =>
+      Some(@symcore.raw_function("CreateFermion", args))
+    @symcore.Expr::Function("CreateFermion", args) if args.length() == 1 =>
+      Some(@symcore.raw_function("AnnihilateFermion", args))
+    @symcore.Expr::Function("FockStateFermionKet", args) if args.length() == 1 =>
+      Some(@symcore.raw_function("FockStateFermionBra", args))
+    @symcore.Expr::Function("FockStateFermionBra", args) if args.length() == 1 =>
+      Some(@symcore.raw_function("FockStateFermionKet", args))
+    _ => None
+  }
+}
+
+///|
+fn sq_secondquant_inner_product_local(
+  bra : @symcore.Expr,
+  ket : @symcore.Expr,
+) -> @symcore.Expr? {
+  match (sq_fermion_items_from_expr(bra), sq_fermion_items_from_expr(ket)) {
+    (Some(bitems), Some(kitems)) => Some(sq_tuple_inner_product(bitems, kitems))
+    _ => None
+  }
+}
+
+///|
+fn sq_apply_fermion_mul(args : Array[@symcore.Expr]) -> @symcore.Expr? {
+  guard args.length() >= 2 else { return None }
+  let factors = args.copy()
+  let scalar_terms : Array[@symcore.Expr] = []
+  let mut current : @symcore.Expr? = None
+  let mut idx = factors.length()
+  while idx > 0 {
+    idx -= 1
+    let factor = factors[idx]
+    match current {
+      None =>
+        if @symquant.quantum_is_ket_expr(factor) ||
+          @symquant.quantum_is_bra_expr(factor) {
+          current = Some(factor)
+        } else {
+          scalar_terms.push(factor)
+        }
+      Some(state_expr) =>
+        match
+          sq_apply_fermion_operator_to_state(
+            factor,
+            state_expr,
+            @symquant.quantum_is_ket_expr(state_expr),
+          ) {
+          Some(next) => current = Some(next)
+          None =>
+            if @symquant.quantum_is_bra_expr(factor) &&
+              @symquant.quantum_is_ket_expr(state_expr) {
+              current = Some(
+                match sq_secondquant_inner_product_local(factor, state_expr) {
+                  Some(value) => value
+                  None =>
+                    @symcore.raw_function("InnerProduct", [factor, state_expr])
+                },
+              )
+            } else {
+              return None
+            }
+        }
+    }
+  }
+  match current {
+    Some(value) => {
+      let rebuilt : Array[@symcore.Expr] = []
+      let mut i = scalar_terms.length()
+      while i > 0 {
+        i -= 1
+        rebuilt.push(scalar_terms[i])
+      }
+      rebuilt.push(value)
+      Some(sq_raw_mul(rebuilt))
+    }
+    None => None
+  }
+}

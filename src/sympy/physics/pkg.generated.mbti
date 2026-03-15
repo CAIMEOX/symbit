@@ -245,6 +245,8 @@ pub fn secondquant_basis_str(String) -> String raise
 
 pub fn secondquant_eval_str(String) -> String raise
 
+pub fn secondquant_exec_str(String) -> String raise
+
 pub fn secondquant_matrix_rows(String, String) -> Array[String] raise
 
 pub fn secondquant_normal_order_str(String) -> String raise

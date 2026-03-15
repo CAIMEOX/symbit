@@ -2714,7 +2714,9 @@ fn secondquant_subprocess_prelude() -> String {
   [
     "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
     "from sympy import *\n", "from sympy.physics.secondquant import *\n", "from sympy.physics.quantum.operatorordering import normal_ordered_form\n",
-    "i, j, k, l, m, n = symbols('i j k l m n')\n",
+    "a, b, c, d = symbols('a b c d', above_fermi=True)\n", "i, j, k, l, m, n = symbols('i j k l m n', below_fermi=True)\n",
+    "p, q, r, s = symbols('p q r s')\n", "v = Symbol('v')\n", "T = Function('T')\n",
+    "f = Function('f')\n", "g = Function('g')\n",
   ].join("")
 }
 
@@ -2743,6 +2745,18 @@ pub fn secondquant_eval_str(expr : String) -> String raise {
       "print(sympify(",
       python_string_literal(expr),
       ", locals=locals()))\n",
+    ].join(""),
+  )
+}
+
+///|
+pub fn secondquant_exec_str(expr : String) -> String raise {
+  python_subprocess_stdout(
+    [
+      secondquant_subprocess_prelude(),
+      "print(eval(",
+      python_string_literal(expr),
+      ", globals(), locals()))\n",
     ].join(""),
   )
 }

@@ -27,7 +27,9 @@ fn sq_assert_matrix_expr_equal(
   }
   let flat = try! @symquant.matrix_flat_strings(lhs)
   guard flat.length() == rhs.length() else {
-    fail("\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}")
+    fail(
+      "\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}",
+    )
   }
   for idx in 0..<flat.length() {
     guard (try! @sympy_physics.expr_equal(flat[idx], rhs[idx])) else {
@@ -79,12 +81,16 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     content="FockStateBosonBra(Tuple(n))",
   )
   sq_assert_expr_equal(
-    secondquant_apply_operators(@symcore.raw_mul([b0.as_expr(), boson_ket([n])])),
+    secondquant_apply_operators(
+      @symcore.raw_mul([b0.as_expr(), boson_ket([n])]),
+    ),
     "sqrt(n)*FockStateBosonKet((n - 1,))",
     "single annihilation apply",
   )
   sq_assert_expr_equal(
-    secondquant_apply_operators(@symcore.raw_mul([bd0.as_expr(), boson_ket([n])])),
+    secondquant_apply_operators(
+      @symcore.raw_mul([bd0.as_expr(), boson_ket([n])]),
+    ),
     "sqrt(n + 1)*FockStateBosonKet((n + 1,))",
     "single creation apply",
   )
@@ -102,12 +108,18 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     "composed boson apply",
   )
   sq_assert_expr_equal(
-    secondquant_inner_product(boson_bra([@symcore.int(0)]), boson_ket([@symcore.int(1)])),
+    secondquant_inner_product(
+      boson_bra([@symcore.int(0)]),
+      boson_ket([@symcore.int(1)]),
+    ),
     "0",
     "orthogonal inner product",
   )
   sq_assert_expr_equal(
-    secondquant_inner_product(boson_bra([@symcore.symbol("i"), @symcore.symbol("j")]), boson_ket([@symcore.symbol("k"), @symcore.symbol("l")])),
+    secondquant_inner_product(
+      boson_bra([@symcore.symbol("i"), @symcore.symbol("j")]),
+      boson_ket([@symcore.symbol("k"), @symcore.symbol("l")]),
+    ),
     "KroneckerDelta(i, k)*KroneckerDelta(j, l)",
     "tuple inner product",
   )
@@ -117,36 +129,38 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     "boson commutator",
   )
   sq_assert_expr_equal(
-    secondquant_normal_ordered_form(@symcore.raw_mul([b0.as_expr(), bd0.as_expr()])),
+    secondquant_normal_ordered_form(
+      @symcore.raw_mul([b0.as_expr(), bd0.as_expr()]),
+    ),
     "1 + CreateBoson(0)*AnnihilateBoson(0)",
     "normal ordered boson pair",
   )
 
   let variable = variable_bosonic_basis(5)
-  inspect(variable.to_string(), content="[FockState((0,)), FockState((1,)), FockState((2,)), FockState((3,)), FockState((4,))]")
+  inspect(
+    variable.to_string(),
+    content="[FockState((0,)), FockState((1,)), FockState((2,)), FockState((3,)), FockState((4,))]",
+  )
   let matrix_a = try! secondquant_matrix_rep(b0.as_expr(), variable.as_basis())
   sq_assert_matrix_expr_equal(
     matrix_a,
     [
-      "0", "1", "0", "0", "0",
-      "0", "0", "sqrt(2)", "0", "0",
-      "0", "0", "0", "sqrt(3)", "0",
-      "0", "0", "0", "0", "2",
-      "0", "0", "0", "0", "0",
+      "0", "1", "0", "0", "0", "0", "0", "sqrt(2)", "0", "0", "0", "0", "0", "sqrt(3)",
+      "0", "0", "0", "0", "0", "2", "0", "0", "0", "0", "0",
     ],
     5,
     5,
     "annihilator matrix",
   )
-  let matrix_ad = try! secondquant_matrix_rep(bd0.as_expr(), variable.as_basis())
+  let matrix_ad = try! secondquant_matrix_rep(
+    bd0.as_expr(),
+    variable.as_basis(),
+  )
   sq_assert_matrix_expr_equal(
     matrix_ad,
     [
-      "0", "0", "0", "0", "0",
-      "1", "0", "0", "0", "0",
-      "0", "sqrt(2)", "0", "0", "0",
-      "0", "0", "sqrt(3)", "0", "0",
-      "0", "0", "0", "2", "0",
+      "0", "0", "0", "0", "0", "1", "0", "0", "0", "0", "0", "sqrt(2)", "0", "0",
+      "0", "0", "0", "sqrt(3)", "0", "0", "0", "0", "0", "2", "0",
     ],
     5,
     5,
@@ -154,7 +168,16 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   )
 
   let fixed = fixed_bosonic_basis(2, 2)
-  inspect(fixed.to_string(), content="[FockState((2, 0)), FockState((1, 1)), FockState((0, 2))]")
-  inspect(@symprint.to_string(try! fixed.state(1)), content="FockStateBosonKet(Tuple(1, 1))")
-  inspect((try! fixed.index(boson_ket([@symcore.int(1), @symcore.int(1)]))).to_string(), content="1")
+  inspect(
+    fixed.to_string(),
+    content="[FockState((2, 0)), FockState((1, 1)), FockState((0, 2))]",
+  )
+  inspect(
+    @symprint.to_string(try! fixed.state(1)),
+    content="FockStateBosonKet(Tuple(1, 1))",
+  )
+  inspect(
+    (try! fixed.index(boson_ket([@symcore.int(1), @symcore.int(1)]))).to_string(),
+    content="1",
+  )
 }

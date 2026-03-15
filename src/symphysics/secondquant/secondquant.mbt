@@ -72,8 +72,11 @@ fn sq_boson_bra_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
 fn sq_boson_items_from_expr(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
   match expr {
     @symcore.Expr::Function(name, args) if (
-      name == "FockStateBosonKet" || name == "FockStateBosonBra" || name == "FockState"
-    ) && args.length() == 1 =>
+        name == "FockStateBosonKet" ||
+        name == "FockStateBosonBra" ||
+        name == "FockState"
+      ) &&
+      args.length() == 1 =>
       match args[0] {
         @symcore.Expr::Function("Tuple", items) => Some(items)
         _ => None
@@ -84,12 +87,14 @@ fn sq_boson_items_from_expr(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
 
 ///|
 fn sq_boson_basis_list_string(states : Array[@symcore.Expr]) -> String {
-  let rendered = states.map(expr =>
-    match sq_boson_items_from_expr(expr) {
-      Some(items) => sq_fock_state_repr(items)
-      None => @symprint.to_string(expr)
-    }
-  ).join(", ")
+  let rendered = states
+    .map(expr => {
+      match sq_boson_items_from_expr(expr) {
+        Some(items) => sq_fock_state_repr(items)
+        None => @symprint.to_string(expr)
+      }
+    })
+    .join(", ")
   "[\{rendered}]"
 }
 
@@ -121,7 +126,7 @@ fn sq_fixed_boson_states(
     return [[@symcore.int(remaining)]]
   }
   let out : Array[Array[@symcore.Expr]] = []
-  for occ in 0..=remaining {
+  for occ in 0..<=remaining {
     let leading = remaining - occ
     for tail in sq_fixed_boson_states(occ, levels_left - 1) {
       let row : Array[@symcore.Expr] = [@symcore.int(leading)]
@@ -232,9 +237,15 @@ pub fn boson_creator(index : @symcore.Expr) -> BosonicOperatorExpr {
 }
 
 ///|
-pub fn BosonicOperatorExpr::as_expr(self : BosonicOperatorExpr) -> @symcore.Expr {
+pub fn BosonicOperatorExpr::as_expr(
+  self : BosonicOperatorExpr,
+) -> @symcore.Expr {
   @symcore.raw_function(
-    if self.is_annihilation { "AnnihilateBoson" } else { "CreateBoson" },
+    if self.is_annihilation {
+      "AnnihilateBoson"
+    } else {
+      "CreateBoson"
+    },
     [self.index],
   )
 }
@@ -259,8 +270,13 @@ pub fn BosonicOperatorExpr::repr(self : BosonicOperatorExpr) -> String {
 }
 
 ///|
-pub fn BosonicOperatorExpr::dagger(self : BosonicOperatorExpr) -> BosonicOperatorExpr {
-  BosonicOperatorExpr::{ index: self.index, is_annihilation: !self.is_annihilation }
+pub fn BosonicOperatorExpr::dagger(
+  self : BosonicOperatorExpr,
+) -> BosonicOperatorExpr {
+  BosonicOperatorExpr::{
+    index: self.index,
+    is_annihilation: !self.is_annihilation,
+  }
 }
 
 ///|
@@ -332,7 +348,9 @@ pub fn VarBosonicBasis::index(
       return idx
     }
   }
-  raise @symphysics.PhysicsError::ValueError("state not present in bosonic basis")
+  raise @symphysics.PhysicsError::ValueError(
+    "state not present in bosonic basis",
+  )
 }
 
 ///|
@@ -376,7 +394,9 @@ pub fn FixedBosonicBasis::index(
       return idx
     }
   }
-  raise @symphysics.PhysicsError::ValueError("state not present in bosonic basis")
+  raise @symphysics.PhysicsError::ValueError(
+    "state not present in bosonic basis",
+  )
 }
 
 ///|
@@ -434,7 +454,10 @@ pub fn BosonicBasisSet::to_string(self : BosonicBasisSet) -> String {
 
 ///|
 pub fn secondquant_dagger(expr : @symcore.Expr) -> @symcore.Expr {
-  @symquant.dagger(expr)
+  match sq_secondquant_dagger_local(expr) {
+    Some(value) => value
+    None => @symquant.dagger(expr)
+  }
 }
 
 ///|
@@ -442,12 +465,24 @@ pub fn secondquant_inner_product(
   bra : @symcore.Expr,
   ket : @symcore.Expr,
 ) -> @symcore.Expr {
-  @symquant.inner_product(bra, ket)
+  match sq_secondquant_inner_product_local(bra, ket) {
+    Some(value) => value
+    None => @symquant.inner_product(bra, ket)
+  }
 }
 
 ///|
 pub fn secondquant_apply_operators(expr : @symcore.Expr) -> @symcore.Expr {
-  @symquant.qapply(expr)
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.raw_add(args.map(term => secondquant_apply_operators(term)))
+    @symcore.Expr::Mul(args) =>
+      match sq_apply_fermion_mul(args) {
+        Some(value) => value
+        None => @symquant.qapply(expr)
+      }
+    _ => @symquant.qapply(expr)
+  }
 }
 
 ///|
@@ -456,6 +491,66 @@ pub fn secondquant_commutator(
   rhs : @symcore.Expr,
 ) -> @symcore.Expr {
   @symquant.commutator(lhs, rhs)
+}
+
+///|
+pub fn secondquant_no(expr : @symcore.Expr) -> @symcore.Expr {
+  no(expr)
+}
+
+///|
+pub fn secondquant_contraction(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr {
+  contraction(lhs, rhs)
+}
+
+///|
+pub fn secondquant_evaluate_deltas(expr : @symcore.Expr) -> @symcore.Expr {
+  evaluate_deltas(expr)
+}
+
+///|
+pub fn secondquant_substitute_dummies(
+  expr : @symcore.Expr,
+  new_indices? : Bool = false,
+  pretty_indices? : Map[String, String] = {},
+) -> @symcore.Expr {
+  substitute_dummies(expr, new_indices~, pretty_indices~)
+}
+
+///|
+pub fn secondquant_wicks(
+  expr : @symcore.Expr,
+  simplify_kronecker_deltas? : Bool = false,
+  expand? : Bool = true,
+  simplify_dummies? : Bool = false,
+  keep_only_fully_contracted? : Bool = false,
+) -> @symcore.Expr {
+  wicks(
+    expr,
+    simplify_kronecker_deltas~,
+    expand~,
+    simplify_dummies~,
+    keep_only_fully_contracted~,
+  )
+}
+
+///|
+pub fn secondquant_permutation_operator(
+  lhs : @symcore.Expr,
+  rhs : @symcore.Expr,
+) -> @symcore.Expr {
+  permutation_operator(lhs, rhs)
+}
+
+///|
+pub fn secondquant_simplify_index_permutations(
+  expr : @symcore.Expr,
+  permutation_operators : Array[@symcore.Expr],
+) -> @symcore.Expr {
+  simplify_index_permutations(expr, permutation_operators)
 }
 
 ///|
@@ -481,7 +576,11 @@ fn sq_normal_order_product(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
     @symcore.Expr::Mul(args) if args.length() >= 2 => {
       for idx in 0..<(args.length() - 1) {
-        match (sq_is_boson_annihilator(args[idx]), sq_is_boson_creator(args[idx + 1])) {
+        match
+          (
+            sq_is_boson_annihilator(args[idx]),
+            sq_is_boson_creator(args[idx + 1]),
+          ) {
           (Some(left_idx), Some(right_idx)) => {
             let prefix = args[0:idx]
             let suffix = args[idx + 2:args.length()]
@@ -504,7 +603,8 @@ fn sq_normal_order_product(expr : @symcore.Expr) -> @symcore.Expr {
             for item in prefix {
               leading.push(item)
             }
-            if comm_term != @symcore.int(1) || (prefix.length() + suffix.length()) > 0 {
+            if comm_term != @symcore.int(1) ||
+              prefix.length() + suffix.length() > 0 {
               if comm_term != @symcore.int(1) {
                 leading.push(comm_term)
               }
@@ -572,7 +672,8 @@ fn sq_scale_inner_product(
         bra * expr
       }
     }
-    _ if @symquant.quantum_is_ket_expr(expr) => secondquant_inner_product(bra, expr)
+    _ if @symquant.quantum_is_ket_expr(expr) =>
+      secondquant_inner_product(bra, expr)
     _ => bra * expr
   }
 }
@@ -587,7 +688,9 @@ pub fn secondquant_matrix_rep(
     let row : Array[@symcore.Expr] = []
     let bra = secondquant_dagger(basis.state(i))
     for j in 0..<basis.len() {
-      let acted = secondquant_apply_operators(@symcore.raw_mul([op, basis.state(j)]))
+      let acted = secondquant_apply_operators(
+        @symcore.raw_mul([op, basis.state(j)]),
+      )
       row.push(sq_scale_inner_product(bra, acted))
     }
     rows.push(row)
