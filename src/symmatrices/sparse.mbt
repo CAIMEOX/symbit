@@ -55,6 +55,209 @@ fn sparse_row_entries(matrix : SparseMatrix) -> Array[Array[(Int, Expr)]] {
 }
 
 ///|
+fn sparse_row_maps(matrix : SparseMatrix) -> Array[Map[Int, Expr]] {
+  let rows = Array::makei(matrix.rows, fn(_) { Map::new() })
+  for key, value in matrix.entries {
+    rows[key.0][key.1] = value
+  }
+  rows
+}
+
+///|
+fn clone_sparse_row_map(row : Map[Int, Expr]) -> Map[Int, Expr] {
+  let out : Map[Int, Expr] = {}
+  for key, value in row {
+    out[key] = value
+  }
+  out
+}
+
+///|
+fn clone_sparse_row_maps(rows : Array[Map[Int, Expr]]) -> Array[Map[Int, Expr]] {
+  let out : Array[Map[Int, Expr]] = []
+  for row in rows {
+    out.push(clone_sparse_row_map(row))
+  }
+  out
+}
+
+///|
+fn sparse_row_get(row : Map[Int, Expr], col : Int) -> Expr {
+  match row.get(col) {
+    Some(value) => value
+    None => expr_zero()
+  }
+}
+
+///|
+fn sparse_row_set(row : Map[Int, Expr], col : Int, value : Expr) -> Unit {
+  if expr_is_zero(value) {
+    ignore(row.remove(col))
+  } else {
+    row[col] = value
+  }
+}
+
+///|
+fn sparse_swap_row_maps(rows : Array[Map[Int, Expr]], i : Int, j : Int) -> Unit {
+  let tmp = rows[i]
+  rows[i] = rows[j]
+  rows[j] = tmp
+}
+
+///|
+fn sparse_row_active_cols(
+  lhs : Map[Int, Expr],
+  rhs : Map[Int, Expr],
+  min_col : Int,
+) -> Array[Int] {
+  let seen : Map[Int, Bool] = {}
+  for col, _ in lhs {
+    if col >= min_col {
+      seen[col] = true
+    }
+  }
+  for col, _ in rhs {
+    if col >= min_col {
+      seen[col] = true
+    }
+  }
+  let cols : Array[Int] = []
+  for col, _ in seen {
+    cols.push(col)
+  }
+  cols.sort()
+  cols
+}
+
+///|
+fn sparse_row_scale(row : Map[Int, Expr], scalar : Expr) -> Unit {
+  let cols : Array[Int] = []
+  for col, _ in row {
+    cols.push(col)
+  }
+  for col in cols {
+    sparse_row_set(row, col, expr_div(sparse_row_get(row, col), scalar))
+  }
+}
+
+///|
+fn sparse_row_to_dense(row : Map[Int, Expr], cols : Int) -> Array[Expr] {
+  let out = Array::make(cols, expr_zero())
+  for col, value in row {
+    out[col] = value
+  }
+  out
+}
+
+///|
+fn sparse_row_maps_to_dense(
+  rows : Array[Map[Int, Expr]],
+  ncols : Int,
+) -> Matrix {
+  let data : Array[Array[Expr]] = []
+  for row in rows {
+    data.push(sparse_row_to_dense(row, ncols))
+  }
+  { rows: rows.length(), cols: ncols, data }
+}
+
+///|
+fn sparse_rref_internal(
+  matrix : SparseMatrix,
+) -> (Array[Map[Int, Expr]], Array[Int]) {
+  let rows = clone_sparse_row_maps(sparse_row_maps(matrix))
+  let pivots : Array[Int] = []
+  let mut row = 0
+  let mut col = 0
+  while row < matrix.rows && col < matrix.cols {
+    let mut pivot_row = row
+    while pivot_row < matrix.rows &&
+          expr_is_zero(sparse_row_get(rows[pivot_row], col)) {
+      pivot_row += 1
+    }
+    if pivot_row == matrix.rows {
+      col += 1
+      continue
+    }
+    if pivot_row != row {
+      sparse_swap_row_maps(rows, pivot_row, row)
+    }
+    let pivot = sparse_row_get(rows[row], col)
+    sparse_row_scale(rows[row], pivot)
+    sparse_row_set(rows[row], col, expr_one())
+    for i in 0..<matrix.rows {
+      if i == row {
+        continue
+      }
+      let factor = sparse_row_get(rows[i], col)
+      if expr_is_zero(factor) {
+        continue
+      }
+      let active_cols = sparse_row_active_cols(rows[i], rows[row], col)
+      for active_col in active_cols {
+        let updated = expr_sub(
+          sparse_row_get(rows[i], active_col),
+          expr_mul(factor, sparse_row_get(rows[row], active_col)),
+        )
+        sparse_row_set(rows[i], active_col, updated)
+      }
+      sparse_row_set(rows[i], col, expr_zero())
+    }
+    pivots.push(col)
+    row += 1
+    col += 1
+  }
+  (rows, pivots)
+}
+
+///|
+fn sparse_echelon_internal(
+  matrix : SparseMatrix,
+) -> (Array[Map[Int, Expr]], Array[Int]) {
+  let rows = clone_sparse_row_maps(sparse_row_maps(matrix))
+  let pivots : Array[Int] = []
+  let mut row = 0
+  let mut col = 0
+  let mut prev = expr_one()
+  while row < matrix.rows && col < matrix.cols {
+    let mut pivot_row = row
+    while pivot_row < matrix.rows &&
+          expr_is_zero(sparse_row_get(rows[pivot_row], col)) {
+      pivot_row += 1
+    }
+    if pivot_row == matrix.rows {
+      col += 1
+      continue
+    }
+    if pivot_row != row {
+      sparse_swap_row_maps(rows, pivot_row, row)
+    }
+    let pivot = sparse_row_get(rows[row], col)
+    for i in (row + 1)..<matrix.rows {
+      let factor = sparse_row_get(rows[i], col)
+      if expr_is_zero(factor) {
+        continue
+      }
+      sparse_row_set(rows[i], col, expr_zero())
+      let active_cols = sparse_row_active_cols(rows[i], rows[row], col + 1)
+      for active_col in active_cols {
+        let numer = expr_sub(
+          expr_mul(pivot, sparse_row_get(rows[i], active_col)),
+          expr_mul(factor, sparse_row_get(rows[row], active_col)),
+        )
+        sparse_row_set(rows[i], active_col, expr_div(numer, prev))
+      }
+    }
+    pivots.push(col)
+    prev = pivot
+    row += 1
+    col += 1
+  }
+  (rows, pivots)
+}
+
+///|
 pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
   SparseMatrix::{
     rows: self.rows,
@@ -483,7 +686,7 @@ pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
 
 ///|
 pub fn SparseMatrix::rank(self : SparseMatrix) -> Int raise MatrixError {
-  self.to_dense().rank()
+  self.rref().1.length()
 }
 
 ///|
@@ -521,42 +724,130 @@ pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
 pub fn SparseMatrix::echelon_form(
   self : SparseMatrix,
 ) -> Matrix raise MatrixError {
-  self.to_dense().echelon_form()
+  let (rows, _) = sparse_echelon_internal(self)
+  sparse_row_maps_to_dense(rows, self.cols)
 }
 
 ///|
 pub fn SparseMatrix::rref(
   self : SparseMatrix,
 ) -> (Matrix, Array[Int]) raise MatrixError {
-  self.to_dense().rref()
+  let (rows, pivots) = sparse_rref_internal(self)
+  (sparse_row_maps_to_dense(rows, self.cols), pivots)
 }
 
 ///|
 pub fn SparseMatrix::rowspace(
   self : SparseMatrix,
 ) -> Array[Array[Expr]] raise MatrixError {
-  self.to_dense().rowspace()
+  let (rref, _) = self.rref()
+  let out : Array[Array[Expr]] = []
+  for row in rref.data {
+    if row.any(item => !expr_is_zero(item)) {
+      let copied : Array[Expr] = []
+      for item in row {
+        copied.push(item)
+      }
+      out.push(copied)
+    }
+  }
+  out
 }
 
 ///|
 pub fn SparseMatrix::columnspace(
   self : SparseMatrix,
 ) -> Array[Array[Expr]] raise MatrixError {
-  self.to_dense().columnspace()
+  let (_, pivots) = self.rref()
+  let out : Array[Array[Expr]] = []
+  for pivot in pivots {
+    let col : Array[Expr] = []
+    for i in 0..<self.rows {
+      col.push(self.getitem(i, pivot))
+    }
+    out.push(col)
+  }
+  out
 }
 
 ///|
 pub fn SparseMatrix::nullspace(
   self : SparseMatrix,
 ) -> Array[Array[Expr]] raise MatrixError {
-  self.to_dense().nullspace()
+  let (rref, pivots) = self.rref()
+  let pivot_set : Map[Int, Bool] = {}
+  for pivot in pivots {
+    pivot_set[pivot] = true
+  }
+  let free_cols : Array[Int] = []
+  for j in 0..<self.cols {
+    if !pivot_set.contains(j) {
+      free_cols.push(j)
+    }
+  }
+  let basis : Array[Array[Expr]] = []
+  for free_col in free_cols {
+    let vec = Array::make(self.cols, expr_zero())
+    vec[free_col] = expr_one()
+    for i in 0..<pivots.length() {
+      let pivot_col = pivots[i]
+      vec[pivot_col] = expr_neg(rref.data[i][free_col])
+    }
+    basis.push(vec)
+  }
+  basis
 }
 
 ///|
 pub fn SparseMatrix::lu(
   self : SparseMatrix,
 ) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError {
-  self.to_dense().lu()
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "LU decomposition requires a square matrix",
+    )
+  }
+  let n = self.rows
+  let u_rows = clone_sparse_row_maps(sparse_row_maps(self))
+  let l = clone_expr_rows(eye(n).data)
+  let swaps : Array[(Int, Int)] = []
+  for k in 0..<n {
+    let mut pivot_row = k
+    while pivot_row < n && expr_is_zero(sparse_row_get(u_rows[pivot_row], k)) {
+      pivot_row += 1
+    }
+    if pivot_row == n {
+      continue
+    }
+    if pivot_row != k {
+      sparse_swap_row_maps(u_rows, pivot_row, k)
+      for j in 0..<k {
+        let tmp = l[pivot_row][j]
+        l[pivot_row][j] = l[k][j]
+        l[k][j] = tmp
+      }
+      swaps.push((k, pivot_row))
+    }
+    let pivot = sparse_row_get(u_rows[k], k)
+    for i in (k + 1)..<n {
+      let factor_num = sparse_row_get(u_rows[i], k)
+      if expr_is_zero(factor_num) {
+        continue
+      }
+      let factor = expr_div(factor_num, pivot)
+      l[i][k] = factor
+      let active_cols = sparse_row_active_cols(u_rows[i], u_rows[k], k)
+      for active_col in active_cols {
+        let updated = expr_sub(
+          sparse_row_get(u_rows[i], active_col),
+          expr_mul(factor, sparse_row_get(u_rows[k], active_col)),
+        )
+        sparse_row_set(u_rows[i], active_col, updated)
+      }
+      sparse_row_set(u_rows[i], k, expr_zero())
+    }
+  }
+  ({ rows: n, cols: n, data: l }, sparse_row_maps_to_dense(u_rows, n), swaps)
 }
 
 ///|

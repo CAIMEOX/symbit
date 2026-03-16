@@ -1,4 +1,25 @@
 ///|
+fn apply_row_swaps(
+  m : Matrix,
+  swaps : Array[(Int, Int)],
+) -> Matrix raise MatrixError {
+  let data : Array[Array[Expr]] = []
+  for row in m.data {
+    let copied : Array[Expr] = []
+    for item in row {
+      copied.push(item)
+    }
+    data.push(copied)
+  }
+  for swap in swaps {
+    let tmp = data[swap.0]
+    data[swap.0] = data[swap.1]
+    data[swap.1] = tmp
+  }
+  matrix(data)
+}
+
+///|
 test "matrices sparse construction and conversion" {
   let entries : Map[(Int, Int), Expr] = {}
   entries[(0, 1)] = @symcore.int(2)
@@ -142,4 +163,47 @@ test "matrices sparse native multiply and triangular determinant" {
   tri_entries[(1, 1)] = @symcore.int(5)
   let tri = try! sparse_matrix(2, 2, tri_entries)
   inspect(@symprint.to_string(try! tri.det()), content="10")
+}
+
+///|
+test "matrices sparse native rref echelon and subspace helpers" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(1)
+  entries[(0, 2)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(1)
+  entries[(1, 2)] = @symcore.int(3)
+  entries[(2, 0)] = @symcore.int(2)
+  entries[(2, 2)] = @symcore.int(4)
+  let s = try! sparse_matrix(3, 3, entries)
+  inspect(
+    (try! s.echelon_form()).to_string(),
+    content="Matrix([[1, 0, 2], [0, 1, 3], [0, 0, 0]])",
+  )
+  inspect(
+    (try! s.rref()).0.to_string(),
+    content="Matrix([[1, 0, 2], [0, 1, 3], [0, 0, 0]])",
+  )
+  inspect(try! s.rank(), content="2")
+  inspect(vecs_to_string(try! s.rowspace()), content="[[1, 0, 2], [0, 1, 3]]")
+  inspect(
+    vecs_to_string(try! s.columnspace()),
+    content="[[1, 0, 2], [0, 1, 0]]",
+  )
+  inspect(vecs_to_string(try! s.nullspace()), content="[[-2, -3, 1]]")
+}
+
+///|
+test "matrices sparse native lu reconstructs row-permuted matrix" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 1)] = @symcore.int(2)
+  entries[(0, 2)] = @symcore.int(1)
+  entries[(1, 0)] = @symcore.int(4)
+  entries[(1, 1)] = @symcore.int(5)
+  entries[(2, 2)] = @symcore.int(3)
+  let s = try! sparse_matrix(3, 3, entries)
+  let (l, u, swaps) = try! s.lu()
+  inspect(
+    (l * u).to_string(),
+    content=(try! apply_row_swaps(try! s.to_dense(), swaps)).to_string(),
+  )
 }

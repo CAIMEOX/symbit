@@ -345,6 +345,50 @@ fn eigen_pack_diagonal(diagonal : Array[Expr]) -> Array[EigenValueMult] {
 }
 
 ///|
+fn eigen_pack_values(values : Array[Expr]) -> Array[EigenValueMult] {
+  let counts : Map[String, (Expr, Int)] = {}
+  let order : Array[String] = []
+  for value in values {
+    let key = @symprint.to_string(value)
+    match counts.get(key) {
+      Some((expr, mult)) => counts[key] = (expr, mult + 1)
+      None => {
+        counts[key] = (value, 1)
+        order.push(key)
+      }
+    }
+  }
+  let out : Array[EigenValueMult] = []
+  for key in order {
+    match counts.get(key) {
+      Some(item) => out.push(item)
+      None => ()
+    }
+  }
+  out
+}
+
+///|
+fn matrix_charpoly_roots(matrix : Matrix) -> Array[Expr] raise MatrixError {
+  let lam_name = "_lambda"
+  let poly = @sympolys.Poly::from_expr_defaults(
+    matrix.charpoly_expr(x=@symcore.symbol(lam_name)),
+    gens=[lam_name],
+  ) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "charpoly could not be converted into a polynomial over a supported exact domain",
+      )
+  }
+  @sympolys.roots(poly).map(expr_simplify) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "eigen root extraction is not available for this characteristic polynomial",
+      )
+  }
+}
+
+///|
 pub fn Matrix::charpoly_expr(
   self : Matrix,
   x? : Expr = @symcore.symbol("lambda"),
@@ -395,9 +439,7 @@ pub fn Matrix::eigenvals(
     }
     return [(r1, 1), (r2, 1)]
   }
-  raise MatrixError::ValueError(
-    "eigenvals currently supports diagonal/triangular matrices and general 2x2 matrices",
-  )
+  eigen_pack_values(matrix_charpoly_roots(self))
 }
 
 ///|

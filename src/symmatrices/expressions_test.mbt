@@ -110,3 +110,58 @@ test "matrices expressions inverse and transpose simplify block forms" {
     content="Block([A.T], [B.T])",
   )
 }
+
+///|
+test "matrices expressions collapse identity into block structures" {
+  let a = matrix_symbol("A", 1, 1)
+  let b = matrix_symbol("B", 2, 2)
+  inspect(
+    mat_add([identity_expr(3), block_diag_matrix_expr([a, b])])
+    .block_collapse()
+    .to_string(),
+    content="BlockDiag((Identity(1) + A), (Identity(2) + B))",
+  )
+}
+
+///|
+test "matrices expressions collapse blockdiag and block multiplication symbolically" {
+  let a = matrix_symbol("A", 1, 1)
+  let b = matrix_symbol("B", 2, 2)
+  let c = matrix_symbol("C", 1, 1)
+  let d = matrix_symbol("D", 1, 2)
+  let e = matrix_symbol("E", 2, 1)
+  let f = matrix_symbol("F", 2, 2)
+  inspect(
+    mat_mul([
+      block_diag_matrix_expr([a, b]),
+      block_matrix_expr([[c, d], [e, f]]),
+    ])
+    .block_collapse()
+    .to_string(),
+    content="Block([(A * C), (A * D)], [(B * E), (B * F)])",
+  )
+  inspect(
+    mat_mul([
+      block_matrix_expr([[c, d], [e, f]]),
+      block_diag_matrix_expr([a, b]),
+    ])
+    .block_collapse()
+    .to_string(),
+    content="Block([(C * A), (D * B)], [(E * A), (F * B)])",
+  )
+}
+
+///|
+test "matrices expressions rewrite inverse zero and power without explicit evaluation" {
+  let a = matrix_symbol("A", 2, 2)
+  let b = matrix_symbol("B", 2, 2)
+  inspect(matrix_expr_pow(a, 0).to_string(), content="Identity(2)")
+  inspect(
+    matrix_expr_inverse(matrix_expr_transpose(mat_mul([a, b]))).to_string(),
+    content="(A^-1.T * B^-1.T)",
+  )
+  inspect(
+    mat_mul([a, zero_matrix_expr(2, 3)]).to_string(),
+    content="ZeroMatrix(2, 3)",
+  )
+}

@@ -122,3 +122,41 @@ test "matrices jordan form handles mixed Jordan block sizes" {
   inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 0], [0, 0, 5]])")
   inspect((mixed * p).to_string(), content=(p * j).to_string())
 }
+
+///|
+test "matrices eigenvals and eigenvects support general non-triangular 3x3" {
+  let companion = try! matrix([
+    [@symcore.int(0), @symcore.int(0), @symcore.int(6)],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(-11)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(6)],
+  ])
+  inspect(
+    eigenvals_text(try! companion.eigenvals()),
+    content="[(1, 1), (2, 1), (3, 1)]",
+  )
+  inspect(
+    eigenvects_text(try! companion.eigenvects()),
+    content="[(1, 1, [[6, -5, 1]]), (2, 1, [[3, -4, 1]]), (3, 1, [[2, -3, 1]])]",
+  )
+  assert_true(companion.is_diagonalizable())
+}
+
+///|
+test "matrices diagonalize supports general non-triangular 4x4 companion" {
+  let companion = try! matrix([
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(-24)],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(50)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(-35)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(10)],
+  ])
+  inspect(
+    eigenvals_text(try! companion.eigenvals()),
+    content="[(1, 1), (2, 1), (3, 1), (4, 1)]",
+  )
+  let (p, d) = try! companion.diagonalize()
+  inspect(
+    d.to_string(),
+    content="Matrix([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4]])",
+  )
+  inspect((companion * p).to_string(), content=(p * d).to_string())
+}

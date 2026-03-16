@@ -139,3 +139,27 @@ test "matrices parity sparse arithmetic paths" {
     ),
   )
 }
+
+///|
+test "matrices parity sparse native rref echelon and rank" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(1)
+  entries[(0, 2)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(1)
+  entries[(1, 2)] = @symcore.int(3)
+  entries[(2, 0)] = @symcore.int(2)
+  entries[(2, 2)] = @symcore.int(4)
+  let s = try! sparse_matrix(3, 3, entries)
+  assert_eq(
+    local_matrix_list_text(try! s.echelon_form()),
+    try! py_matrix_list_text(py_sparse_matrix_expr(s) + ".echelon_form()"),
+  )
+  assert_eq(
+    local_matrix_list_text((try! s.rref()).0),
+    try! py_matrix_list_text(py_sparse_matrix_expr(s) + ".rref()[0]"),
+  )
+  assert_eq(
+    (try! s.rank()).to_string(),
+    try! py_list_text("sympy.sstr(" + py_sparse_matrix_expr(s) + ".rank())"),
+  )
+}

@@ -107,3 +107,44 @@ test "matrices parity jordan form on mixed 3x3 blocks" {
     local_matrix_list_text(ours.0 * ours.1),
   )
 }
+
+///|
+test "matrices parity eigenvals on general non-triangular 3x3" {
+  let a = try! matrix([
+    [@symcore.int(0), @symcore.int(0), @symcore.int(6)],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(-11)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(6)],
+  ])
+  assert_eq(
+    "ok",
+    try! py_list_text(
+      "(lambda loc, ref: (lambda loc2, ref2: 'ok' if len(loc2) == len(ref2) and all(sympy.simplify(loc2[i][0] - ref2[i][0]) == 0 and loc2[i][1] == int(ref2[i][1]) for i in range(len(ref2))) else 'mismatch')(sorted(loc, key=lambda kv: float(sympy.N(kv[0], 30))), sorted(ref, key=lambda kv: float(sympy.N(kv[0], 30)))))(" +
+      local_eigenvals_py(try! a.eigenvals()) +
+      ", sorted(" +
+      py_matrix_expr(a) +
+      ".eigenvals().items(), key=lambda kv: sympy.sstr(kv[0])))",
+    ),
+  )
+  let (p, d) = try! a.diagonalize()
+  inspect((a * p).to_string(), content=(p * d).to_string())
+}
+
+///|
+test "matrices parity eigenvals on general non-triangular 4x4 companion" {
+  let a = try! matrix([
+    [@symcore.int(0), @symcore.int(0), @symcore.int(0), @symcore.int(-24)],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(0), @symcore.int(50)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(0), @symcore.int(-35)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(1), @symcore.int(10)],
+  ])
+  assert_eq(
+    "ok",
+    try! py_list_text(
+      "(lambda loc, ref: (lambda loc2, ref2: 'ok' if len(loc2) == len(ref2) and all(sympy.simplify(loc2[i][0] - ref2[i][0]) == 0 and loc2[i][1] == int(ref2[i][1]) for i in range(len(ref2))) else 'mismatch')(sorted(loc, key=lambda kv: float(sympy.N(kv[0], 30))), sorted(ref, key=lambda kv: float(sympy.N(kv[0], 30)))))(" +
+      local_eigenvals_py(try! a.eigenvals()) +
+      ", sorted(" +
+      py_matrix_expr(a) +
+      ".eigenvals().items(), key=lambda kv: sympy.sstr(kv[0])))",
+    ),
+  )
+}
