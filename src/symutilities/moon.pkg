@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/bench",
+  "moonbitlang/core/math",
+  "moonbitlang/core/ref",
+  "moonbitlang/core/strconv",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symprint",
+}
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
+} for "test"

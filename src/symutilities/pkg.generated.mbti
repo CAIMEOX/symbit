@@ -1,0 +1,277 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symutilities"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "moonbitlang/core/ref",
+}
+
+// Values
+pub fn as_int(IntLike, strict? : Bool) -> Int raise UtilitiesError
+
+pub fn[T] assoc_recurrence_memo() -> AssocRecurrenceMemo[T]
+
+pub fn binary_partitions(Int) -> Array[Array[Int]]
+
+pub fn bracelets(Int, Int) -> Array[Array[Int]]
+
+pub fn capture(((String) -> Unit) -> Unit) -> String
+
+pub fn[T] cartes(Array[Array[T]]) -> Array[Array[T]]
+
+pub fn[T : Eq] common_prefix(Array[Array[T]]) -> Array[T]
+
+pub fn[T : Eq] common_suffix(Array[Array[T]]) -> Array[T]
+
+pub fn[T : Eq + Hash] connected_components(Array[T], Array[(T, T)]) -> Array[Array[T]]
+
+pub fn[T, U] deprecated(String, String, String, (T) -> U, reporter? : (SymPyDeprecationWarning) -> Unit) -> (T) -> U
+
+pub fn[K : Eq + Hash, V] dict_merge(Array[Map[K, V]]) -> Map[K, V]
+
+pub fn filldedent(String, w? : Int) -> String
+
+pub fn[T] flatten(Array[Nested[T]], levels? : Int) -> Array[T] raise UtilitiesError
+
+pub fn func_name(String, short? : Bool) -> String
+
+pub fn[T : Eq + Hash + Compare] generate_derangements(Array[T]) -> Array[Array[T]]
+
+pub fn[T] get_class(String, Map[String, T]) -> T raise UtilitiesError
+
+pub fn get_mod_func(String) -> (String, String)
+
+pub fn[T : Eq] group(Array[T], multiple? : Bool) -> GroupResult[T]
+
+pub fn[T : Eq + Hash] has_dups(Array[T]) -> Bool
+
+pub fn[T : Eq] has_variety(Array[T]) -> Bool
+
+pub fn ibin(Int, bits? : Int) -> Array[Int]
+
+pub fn ibin_all(Int) -> Array[Array[Int]]
+
+pub fn ibin_all_str(Int) -> Array[String]
+
+pub fn ibin_str(Int, bits? : Int) -> String
+
+pub fn int_like_bool(Bool) -> IntLike
+
+pub fn int_like_double(Double) -> IntLike
+
+pub fn int_like_expr(@symcore.Expr) -> IntLike
+
+pub fn int_like_int(Int) -> IntLike
+
+pub fn[T : Eq] is_palindromic(Array[T], start? : Int, stop? : Int) -> Bool
+
+pub fn lambdify(Array[String], @symcore.Expr) -> LambdaFn
+
+pub fn[T : Compare] least_rotation(Array[T]) -> Int
+
+pub fn[T : Eq + Hash, U] memoize((T) -> U) -> (T) -> U
+
+pub fn[T : Eq + Hash, U] memoize_property((T) -> U) -> (T) -> U
+
+pub fn[T : Compare] minlex(Array[T], directed? : Bool) -> Array[T]
+
+pub fn[T : Eq + Hash] multiset(Array[T]) -> Map[T, Int]
+
+pub fn[T : Eq + Hash + Compare] multiset_combinations(Array[T], Int) -> Array[Array[T]]
+
+pub fn[T : Eq + Hash + Compare] multiset_derangements(Array[T]) -> Array[Array[T]]
+
+pub fn[T : Eq + Hash + Compare] multiset_permutations(Array[T], size? : Int) -> Array[Array[T]]
+
+pub fn necklaces(Int, Int, free? : Bool) -> Array[Array[Int]]
+
+pub fn[T] nested_atom(T) -> Nested[T]
+
+pub fn[T] nested_items(Array[Nested[T]]) -> Nested[T]
+
+pub fn numbered_symbols(prefix? : String, start? : Int, exclude? : Array[String]) -> NumberedSymbols
+
+pub fn ordered_partitions(Int, m? : Int?) -> Array[Array[Int]]
+
+pub fn ordinal(Int) -> String
+
+pub fn partitions(Int, m? : Int?, k? : Int?, size? : Bool) -> Array[PartitionResult]
+
+pub fn[T] permutations(Array[T], size? : Int) -> Array[Array[T]]
+
+pub fn permute_signs(Array[Int]) -> Array[Array[Int]]
+
+pub fn[T] pollute(Array[String], Array[T], @ref.Ref[Map[String, T]]) -> Unit raise UtilitiesError
+
+pub fn[T] postfixes(Array[T]) -> Array[Array[T]]
+
+pub fn[T] prefixes(Array[T]) -> Array[Array[T]]
+
+pub fn[T] public(T, @ref.Ref[Array[String]], String) -> T
+
+pub fn rawlines(String) -> String
+
+pub fn[T] recurrence_memo(Array[T]) -> RecurrenceMemo[T]
+
+pub fn replace(String, Array[(String, String)]) -> String
+
+pub fn[T] reshape(Array[T], Array[ShapeSpec]) -> Array[Nested[T]] raise UtilitiesError
+
+pub fn[T] rotate_left(Array[T], Int) -> Array[T]
+
+pub fn[T] rotate_right(Array[T], Int) -> Array[T]
+
+pub fn[T] rotations(Array[T], dir? : Int) -> Array[Array[T]]
+
+pub fn[T : Compare] runs(Array[T]) -> Array[Array[T]]
+
+pub fn[T] runs_by(Array[T], (T, T) -> Bool) -> Array[Array[T]]
+
+pub fn[T] sequence_partitions(Array[T], Int) -> Array[Array[Array[T]]]
+
+pub fn[T] sequence_partitions_empty(Array[T], Int) -> Array[Array[Array[T]]]
+
+pub fn shape_group(Array[ShapeSpec]) -> ShapeSpec
+
+pub fn shape_take(Int) -> ShapeSpec
+
+pub fn[T, K : Eq + Hash] sift(Array[T], (T) -> K) -> Map[K, Array[T]]
+
+pub fn[T] sift_binary(Array[T], (T) -> Bool) -> (Array[T], Array[T])
+
+pub fn signed_permutations(Array[Int]) -> Array[Array[Int]]
+
+pub fn strlines(String, c? : Int, short? : Bool) -> String
+
+pub fn[T : Eq + Hash] strongly_connected_components(Array[T], Array[(T, T)]) -> Array[Array[T]]
+
+pub fn[T] subsets(Array[T], k? : Int, repetition? : Bool) -> Array[Array[T]]
+
+pub fn sympy_deprecation_warning(String, String, String) -> SymPyDeprecationWarning raise UtilitiesError
+
+pub fn[T] take(Iter[T], Int) -> Array[T]
+
+pub fn[T] threadable_array(Array[Threadable[T]]) -> Threadable[T]
+
+pub fn[T] threadable_scalar(T) -> Threadable[T]
+
+pub fn threaded((@symcore.Expr) -> @symcore.Expr) -> (Threadable[@symcore.Expr]) -> Threadable[@symcore.Expr]
+
+pub fn timed(() -> Unit, limit? : Int?) -> TimedResult
+
+pub fn[T, U] timethis(String, enabled? : Bool, reporter? : (TimethisReport) -> Unit, (T) -> U) -> (T) -> U
+
+pub fn[T : Compare + Eq + Hash] topological_sort(Array[T], Array[(T, T)]) -> Array[T] raise UtilitiesError
+
+pub fn translate(String, oldchars? : String?, newchars? : String?, deletechars? : String?, multimap? : Array[(String, String)]) -> String raise UtilitiesError
+
+pub fn[T] unflatten(Array[T], Int) -> Array[Array[T]] raise UtilitiesError
+
+pub fn[T : Eq + Hash] uniq(Array[T]) -> Array[T]
+
+pub fn[T] variations(Array[T], n? : Int, repetition? : Bool) -> Array[Array[T]]
+
+pub fn xthreaded((@symcore.Expr) -> @symcore.Expr) -> (Threadable[@symcore.Expr]) -> Threadable[@symcore.Expr]
+
+// Errors
+pub(all) suberror UtilitiesError {
+  InvalidArgument(String)
+  Unsupported(String)
+  MissingValue(String)
+}
+pub impl Eq for UtilitiesError
+pub impl Show for UtilitiesError
+
+// Types and methods
+pub struct AssocRecurrenceMemo[T] {
+  cache : @ref.Ref[Array[Array[T]]]
+}
+pub fn[T] AssocRecurrenceMemo::apply(Self[T], Int, Int, (Int) -> T, (Int, Int, Array[Array[T]]) -> T) -> T raise UtilitiesError
+
+pub enum GroupResult[T] {
+  Multiple(Array[Array[T]])
+  Counts(Array[(T, Int)])
+}
+pub impl[T : Eq] Eq for GroupResult[T]
+
+pub enum IntLike {
+  Int(Int)
+  Double(Double)
+  Bool(Bool)
+  Expr(@symcore.Expr)
+}
+pub impl Eq for IntLike
+
+pub struct LambdaFn {
+  args : Array[String]
+  expr : @symcore.Expr
+}
+pub fn LambdaFn::call(Self, Array[Double]) -> Double raise UtilitiesError
+pub fn LambdaFn::call_map(Self, Map[String, Double]) -> Double raise UtilitiesError
+pub impl Eq for LambdaFn
+
+pub enum Nested[T] {
+  Atom(T)
+  Items(Array[Nested[T]])
+}
+pub impl[T : Eq] Eq for Nested[T]
+
+pub struct NumberedSymbols {
+  prefix : String
+  next_index : @ref.Ref[Int]
+  exclude : Array[String]
+}
+pub fn NumberedSymbols::next(Self) -> @symcore.Expr
+
+pub enum PartitionResult {
+  Parts(Map[Int, Int])
+  Sized(Int, Map[Int, Int])
+}
+pub impl Eq for PartitionResult
+
+pub struct RecurrenceMemo[T] {
+  cache : @ref.Ref[Array[T]]
+}
+pub fn[T] RecurrenceMemo::apply(Self[T], Int, (Int, Array[T]) -> T) -> T raise UtilitiesError
+pub fn[T] RecurrenceMemo::cache_length(Self[T]) -> Int
+pub fn[T] RecurrenceMemo::fetch_item(Self[T], Int) -> T raise UtilitiesError
+
+pub enum ShapeSpec {
+  Take(Int)
+  Group(Array[ShapeSpec])
+}
+pub impl Eq for ShapeSpec
+
+pub struct SymPyDeprecationWarning {
+  message : String
+  deprecated_since_version : String
+  active_deprecations_target : String
+}
+pub fn SymPyDeprecationWarning::full_message(Self) -> String
+pub impl Eq for SymPyDeprecationWarning
+pub impl Show for SymPyDeprecationWarning
+
+pub enum Threadable[T] {
+  Scalar(T)
+  Array(Array[Threadable[T]])
+}
+pub impl[T : Eq] Eq for Threadable[T]
+
+pub struct TimedResult {
+  number : Int
+  seconds_per_call : Double
+  scaled : Double
+  unit : String
+}
+pub impl Eq for TimedResult
+
+pub struct TimethisReport {
+  name : String
+  elapsed_seconds : Double
+}
+pub impl Eq for TimethisReport
+
+// Type aliases
+
+// Traits
+
