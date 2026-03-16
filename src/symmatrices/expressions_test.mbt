@@ -38,3 +38,31 @@ test "matrices expressions power and transpose evaluation" {
   ])
   inspect((try! expr.eval(env)).to_string(), content="Matrix([[1, 0], [2, 1]])")
 }
+
+///|
+test "matrices expressions block helpers" {
+  let a = matrix_symbol("A", 1, 2)
+  let b = matrix_symbol("B", 2, 1)
+  let expr = matrix_expr_block_diag([a, b])
+  assert_eq(try! expr.shape(), (3, 3))
+  let env : Map[String, Matrix] = {}
+  env["A"] = try! matrix([[@symcore.int(1), @symcore.int(2)]])
+  env["B"] = try! matrix([[@symcore.int(3)], [@symcore.int(4)]])
+  inspect(
+    (try! expr.eval(env)).to_string(),
+    content="Matrix([[1, 2, 0], [0, 0, 3], [0, 0, 4]])",
+  )
+}
+
+///|
+test "matrices expressions identity zero and block evaluation" {
+  let a = matrix_symbol("A", 1, 1)
+  let expr = matrix_expr_add([
+    matrix_expr_block([[identity_expr(1), zero_matrix_expr(1, 1)], [a, a]]),
+    zero_matrix_expr(2, 2),
+  ])
+  assert_eq(try! expr.shape(), (2, 2))
+  let env : Map[String, Matrix] = {}
+  env["A"] = try! matrix([[@symcore.int(5)]])
+  inspect((try! expr.eval(env)).to_string(), content="Matrix([[1, 0], [5, 5]])")
+}

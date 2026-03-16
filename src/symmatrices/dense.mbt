@@ -20,6 +20,16 @@ pub type MutableMatrix = Matrix
 pub type ImmutableMatrix = Matrix
 
 ///|
+pub fn Matrix::as_mutable(self : Matrix) -> MutableDenseMatrix {
+  self.copy()
+}
+
+///|
+pub fn Matrix::as_immutable(self : Matrix) -> ImmutableDenseMatrix {
+  self.copy()
+}
+
+///|
 pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
   if rows.is_empty() {
     return { rows: 0, cols: 0, data: [] }

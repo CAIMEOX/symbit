@@ -47,3 +47,36 @@ test "matrices sparse metadata and scaling helpers" {
     content="Matrix([[0, 3], [4, 0]])",
   )
 }
+
+///|
+test "matrices sparse immutable structural and solver helpers" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(1)
+  entries[(1, 1)] = @symcore.int(2)
+  let s = try! sparse_matrix(2, 2, entries)
+  let copy = s.copy()
+  assert_true(try! copy.equals(s))
+  assert_true(copy.as_immutable().nnz() == 2)
+  assert_true(copy.as_mutable().nnz() == 2)
+  inspect((try! s.reshape(1, 4)).to_string(), content="Matrix([[1, 0, 0, 2]])")
+  inspect(
+    (try! s.extract([0, 1], [1])).to_string(),
+    content="Matrix([[0], [2]])",
+  )
+  let join_entries : Map[(Int, Int), Expr] = {}
+  join_entries[(0, 0)] = @symcore.int(3)
+  let joined = try! s.row_join(try! sparse_matrix(2, 1, join_entries))
+  inspect(joined.to_string(), content="Matrix([[1, 0, 3], [0, 2, 0]])")
+  inspect((try! s.row_del(0)).to_string(), content="Matrix([[0, 2]])")
+  assert_false(try! joined.is_diagonal())
+  let tri_entries : Map[(Int, Int), Expr] = {}
+  tri_entries[(0, 0)] = @symcore.int(2)
+  tri_entries[(1, 0)] = @symcore.int(1)
+  tri_entries[(1, 1)] = @symcore.int(3)
+  let lower = try! sparse_matrix(2, 2, tri_entries)
+  let rhs = try! matrix([[@symcore.int(2)], [@symcore.int(7)]])
+  inspect(
+    (try! lower.lower_triangular_solve(rhs)).to_string(),
+    content="Matrix([[1], [2]])",
+  )
+}
