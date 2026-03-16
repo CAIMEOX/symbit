@@ -67,3 +67,23 @@ test "matrices eigen triangular repeated roots" {
   inspect(eigenvals_text(try! a.eigenvals()), content="[(4, 2)]")
   assert_false(a.is_diagonalizable())
 }
+
+///|
+test "matrices jordan cells and jordan form" {
+  let defective = try! matrix([
+    [@symcore.int(4), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(4)],
+  ])
+  let cells = try! defective.jordan_cells()
+  assert_eq(cells.length(), 1)
+  inspect(cells[0].to_string(), content="Matrix([[4, 1], [0, 4]])")
+  let (p, j) = try! defective.jordan_form()
+  inspect(j.to_string(), content="Matrix([[4, 1], [0, 4]])")
+  inspect((defective * p).to_string(), content=(p * j).to_string())
+  let diagonal = try! matrix([
+    [@symcore.int(2), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(3)],
+  ])
+  let (_, jd) = try! diagonal.jordan_form(calc_transform=false)
+  inspect(jd.to_string(), content="Matrix([[2, 0], [0, 3]])")
+}

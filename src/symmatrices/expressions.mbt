@@ -14,6 +14,53 @@ pub enum MatrixExpr {
 }
 
 ///|
+fn normalize_add_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
+  let out : Array[MatrixExpr] = []
+  for item in items {
+    match item {
+      MatrixExpr::Add(inner) =>
+        for nested in normalize_add_items(inner) {
+          out.push(nested)
+        }
+      MatrixExpr::Zero(_, _) => ()
+      _ => out.push(item)
+    }
+  }
+  out
+}
+
+///|
+fn normalize_mul_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
+  let out : Array[MatrixExpr] = []
+  for item in items {
+    match item {
+      MatrixExpr::Mul(inner) =>
+        for nested in normalize_mul_items(inner) {
+          out.push(nested)
+        }
+      MatrixExpr::Identity(_) => ()
+      _ => out.push(item)
+    }
+  }
+  out
+}
+
+///|
+fn normalize_block_diag_items(items : Array[MatrixExpr]) -> Array[MatrixExpr] {
+  let out : Array[MatrixExpr] = []
+  for item in items {
+    match item {
+      MatrixExpr::BlockDiag(inner) =>
+        for nested in normalize_block_diag_items(inner) {
+          out.push(nested)
+        }
+      _ => out.push(item)
+    }
+  }
+  out
+}
+
+///|
 pub fn matrix_symbol(name : String, rows : Int, cols : Int) -> MatrixExpr {
   MatrixExpr::Symbol(name, rows, cols)
 }
@@ -35,22 +82,57 @@ pub fn zero_matrix_expr(rows : Int, cols : Int) -> MatrixExpr {
 
 ///|
 pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
-  MatrixExpr::Add(items)
+  let normalized = normalize_add_items(items)
+  match normalized.length() {
+    0 => MatrixExpr::Zero(0, 0)
+    1 => normalized[0]
+    _ => MatrixExpr::Add(normalized)
+  }
 }
 
 ///|
 pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
-  MatrixExpr::Mul(items)
+  let normalized = normalize_mul_items(items)
+  match normalized.length() {
+    0 => MatrixExpr::Identity(0)
+    1 => normalized[0]
+    _ => MatrixExpr::Mul(normalized)
+  }
 }
 
 ///|
 pub fn matrix_expr_block_diag(items : Array[MatrixExpr]) -> MatrixExpr {
-  MatrixExpr::BlockDiag(items)
+  let normalized = normalize_block_diag_items(items)
+  match normalized.length() {
+    0 => MatrixExpr::Zero(0, 0)
+    1 => normalized[0]
+    _ => MatrixExpr::BlockDiag(normalized)
+  }
 }
 
 ///|
 pub fn matrix_expr_block(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
   MatrixExpr::Block(rows)
+}
+
+///|
+pub fn mat_add(items : Array[MatrixExpr]) -> MatrixExpr {
+  matrix_expr_add(items)
+}
+
+///|
+pub fn mat_mul(items : Array[MatrixExpr]) -> MatrixExpr {
+  matrix_expr_mul(items)
+}
+
+///|
+pub fn block_matrix_expr(rows : Array[Array[MatrixExpr]]) -> MatrixExpr {
+  matrix_expr_block(rows)
+}
+
+///|
+pub fn block_diag_matrix_expr(items : Array[MatrixExpr]) -> MatrixExpr {
+  matrix_expr_block_diag(items)
 }
 
 ///|
@@ -288,5 +370,42 @@ pub fn MatrixExpr::eval(
       }
       out
     }
+  }
+}
+
+///|
+pub fn MatrixExpr::doit(
+  self : MatrixExpr,
+  env : Map[String, Matrix],
+) -> Matrix raise MatrixError {
+  self.eval(env)
+}
+
+///|
+pub fn MatrixExpr::as_explicit(
+  self : MatrixExpr,
+  env : Map[String, Matrix],
+) -> Matrix raise MatrixError {
+  self.eval(env)
+}
+
+///|
+pub fn MatrixExpr::block_collapse(self : MatrixExpr) -> MatrixExpr {
+  match self {
+    MatrixExpr::Add(items) =>
+      matrix_expr_add(items.map(fn(item) { item.block_collapse() }))
+    MatrixExpr::Mul(items) =>
+      matrix_expr_mul(items.map(fn(item) { item.block_collapse() }))
+    MatrixExpr::BlockDiag(items) =>
+      matrix_expr_block_diag(items.map(fn(item) { item.block_collapse() }))
+    MatrixExpr::Block(rows) =>
+      matrix_expr_block(
+        rows.map(fn(row) { row.map(fn(item) { item.block_collapse() }) }),
+      )
+    MatrixExpr::Transpose(inner) =>
+      matrix_expr_transpose(inner.block_collapse())
+    MatrixExpr::Inverse(inner) => matrix_expr_inverse(inner.block_collapse())
+    MatrixExpr::Pow(inner, exp) => matrix_expr_pow(inner.block_collapse(), exp)
+    _ => self
   }
 }

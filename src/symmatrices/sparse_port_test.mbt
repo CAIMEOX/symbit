@@ -57,3 +57,29 @@ test "matrices parity sparse triangular solve" {
     ),
   )
 }
+
+///|
+test "matrices parity sparse decomposition helpers" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(3)
+  let s = try! sparse_matrix(2, 2, entries)
+  assert_eq(
+    @symprint.to_string(try! s.det()),
+    try! py_list_text("sympy.sstr(" + py_sparse_matrix_expr(s) + ".det())"),
+  )
+  assert_eq(
+    local_matrix_list_text(try! s.inv()),
+    try! py_matrix_list_text(py_sparse_matrix_expr(s) + ".inv()"),
+  )
+  assert_eq(
+    local_matrix_list_text((try! s.rref()).0),
+    try! py_matrix_list_text(py_sparse_matrix_expr(s) + ".rref()[0]"),
+  )
+  assert_eq(
+    local_matrix_list_text(try! s.jordan_form(calc_transform=false).1),
+    try! py_matrix_list_text(
+      py_sparse_matrix_expr(s) + ".jordan_form(calc_transform=False)",
+    ),
+  )
+}

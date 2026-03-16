@@ -54,3 +54,20 @@ test "matrices parity charpoly eigenvals and diagonalize" {
     try! py_matrix_list_text(py_matrix_expr(d) + ".diagonalize()[1]"),
   )
 }
+
+///|
+test "matrices parity jordan form on defective 2x2" {
+  let a = try! matrix([
+    [@symcore.int(4), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(4)],
+  ])
+  let ours = try! a.jordan_form()
+  assert_eq(
+    local_matrix_list_text(ours.1),
+    try! py_matrix_list_text(py_matrix_expr(a) + ".jordan_form()[1]"),
+  )
+  assert_eq(
+    local_matrix_list_text(a * ours.0),
+    local_matrix_list_text(ours.0 * ours.1),
+  )
+}

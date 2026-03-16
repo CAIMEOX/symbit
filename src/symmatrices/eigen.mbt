@@ -5,6 +5,39 @@ pub type EigenValueMult = (Expr, Int)
 pub type EigenVectData = (Expr, Int, Array[Array[Expr]])
 
 ///|
+fn vector_matrix_from_array(items : Array[Expr]) -> Matrix raise MatrixError {
+  let rows : Array[Array[Expr]] = []
+  for item in items {
+    rows.push([item])
+  }
+  matrix(rows)
+}
+
+///|
+fn generalized_eigenvector_2x2(
+  shifted : Matrix,
+  eigenvector : Array[Expr],
+) -> Array[Expr] raise MatrixError {
+  let rhs = vector_matrix_from_array(eigenvector)
+  let data = shifted.data
+  let b0 = rhs.data[0][0]
+  let b1 = rhs.data[1][0]
+  if !expr_is_zero(data[0][0]) {
+    return [expr_div(b0, data[0][0]), expr_zero()]
+  }
+  if !expr_is_zero(data[0][1]) {
+    return [expr_zero(), expr_div(b0, data[0][1])]
+  }
+  if !expr_is_zero(data[1][0]) {
+    return [expr_div(b1, data[1][0]), expr_zero()]
+  }
+  if !expr_is_zero(data[1][1]) {
+    return [expr_zero(), expr_div(b1, data[1][1])]
+  }
+  raise MatrixError::ValueError("failed to construct generalized eigenvector")
+}
+
+///|
 fn matrix_add_diag_scalar(
   matrix : Matrix,
   scalar : Expr,
@@ -272,6 +305,47 @@ pub fn Matrix::eigenvects(
 }
 
 ///|
+pub fn Matrix::jordan_cells(self : Matrix) -> Array[Matrix] raise MatrixError {
+  if !self.is_square() {
+    raise MatrixError::NonSquareMatrixError(
+      "jordan_cells requires a square matrix",
+    )
+  }
+  if self.rows == 0 {
+    return []
+  }
+  if self.is_diagonal() {
+    let out : Array[Matrix] = []
+    for value in self.diagonal() {
+      out.push(jordan_cell(value, 1))
+    }
+    return out
+  }
+  if self.rows == 1 {
+    return [jordan_cell(self.data[0][0], 1)]
+  }
+  let eigs = self.eigenvects()
+  let out : Array[Matrix] = []
+  for item in eigs {
+    let (value, mult, basis) = item
+    if mult == basis.length() {
+      for _ in 0..<mult {
+        out.push(jordan_cell(value, 1))
+      }
+      continue
+    }
+    if self.rows == 2 && mult == 2 && basis.length() == 1 {
+      out.push(jordan_cell(value, 2))
+      continue
+    }
+    raise MatrixError::ValueError(
+      "jordan_cells currently supports diagonalizable matrices and defective 2x2 matrices",
+    )
+  }
+  out
+}
+
+///|
 pub fn Matrix::is_diagonalizable(self : Matrix) -> Bool {
   if !self.is_square() {
     return false
@@ -289,7 +363,11 @@ pub fn Matrix::is_diagonalizable(self : Matrix) -> Bool {
 }
 
 ///|
-pub fn Matrix::diagonalize(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
+pub fn Matrix::diagonalize(
+  self : Matrix,
+  reals_only? : Bool = false,
+) -> (Matrix, Matrix) raise MatrixError {
+  ignore(reals_only)
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError(
       "diagonalize requires a square matrix",
@@ -318,4 +396,42 @@ pub fn Matrix::diagonalize(self : Matrix) -> (Matrix, Matrix) raise MatrixError 
   let p = Matrix::{ rows: self.rows, cols: self.rows, data: pdata }
   let d = diag(diag_values)
   (p, d)
+}
+
+///|
+pub fn Matrix::jordan_form(
+  self : Matrix,
+  calc_transform? : Bool = true,
+) -> (Matrix, Matrix) raise MatrixError {
+  if !self.is_square() {
+    raise MatrixError::NonSquareMatrixError(
+      "jordan_form requires a square matrix",
+    )
+  }
+  if self.is_diagonalizable() {
+    if calc_transform {
+      return self.diagonalize()
+    }
+    return (eye(self.rows), diag(self.diagonal()))
+  }
+  if self.rows == 2 {
+    let eigs = self.eigenvects()
+    if eigs.length() == 1 {
+      let (value, mult, basis) = eigs[0]
+      if mult == 2 && basis.length() == 1 {
+        let shifted = matrix_add_diag_scalar(self, expr_neg(value))
+        let gen = generalized_eigenvector_2x2(shifted, basis[0])
+        let pdata = [[basis[0][0], gen[0]], [basis[0][1], gen[1]]]
+        let p = matrix(pdata)
+        let j = jordan_cell(value, 2)
+        if calc_transform {
+          return (p, j)
+        }
+        return (eye(2), j)
+      }
+    }
+  }
+  raise MatrixError::ValueError(
+    "jordan_form currently supports diagonalizable matrices and defective 2x2 matrices",
+  )
 }

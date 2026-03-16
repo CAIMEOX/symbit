@@ -80,3 +80,23 @@ test "matrices sparse immutable structural and solver helpers" {
     content="Matrix([[1], [2]])",
   )
 }
+
+///|
+test "matrices sparse decomposition and eigen helpers" {
+  let diag_entries : Map[(Int, Int), Expr] = {}
+  diag_entries[(0, 0)] = @symcore.int(2)
+  diag_entries[(1, 1)] = @symcore.int(3)
+  let diagm = try! sparse_matrix(2, 2, diag_entries)
+  inspect(@symprint.to_string(try! diagm.trace()), content="5")
+  inspect(@symprint.to_string(try! diagm.det()), content="6")
+  inspect(
+    (try! diagm.inv()).to_string(),
+    content="Matrix([[1/2, 0], [0, 1/3]])",
+  )
+  inspect(try! diagm.rank(), content="2")
+  inspect((try! diagm.rref()).0.to_string(), content="Matrix([[1, 0], [0, 1]])")
+  inspect(vecs_to_string(try! diagm.rowspace()), content="[[1, 0], [0, 1]]")
+  inspect(eigenvals_text(try! diagm.eigenvals()), content="[(2, 1), (3, 1)]")
+  let (_, j) = try! diagm.jordan_form(calc_transform=false)
+  inspect(j.to_string(), content="Matrix([[2, 0], [0, 3]])")
+}

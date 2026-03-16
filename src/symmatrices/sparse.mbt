@@ -309,6 +309,97 @@ pub fn SparseMatrix::is_symmetric(
 }
 
 ///|
+pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
+  self.to_dense().trace()
+}
+
+///|
+pub fn SparseMatrix::rank(self : SparseMatrix) -> Int raise MatrixError {
+  self.to_dense().rank()
+}
+
+///|
+pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
+  self.to_dense().det()
+}
+
+///|
+pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
+  self.to_dense().inv()
+}
+
+///|
+pub fn SparseMatrix::echelon_form(
+  self : SparseMatrix,
+) -> Matrix raise MatrixError {
+  self.to_dense().echelon_form()
+}
+
+///|
+pub fn SparseMatrix::rref(
+  self : SparseMatrix,
+) -> (Matrix, Array[Int]) raise MatrixError {
+  self.to_dense().rref()
+}
+
+///|
+pub fn SparseMatrix::rowspace(
+  self : SparseMatrix,
+) -> Array[Array[Expr]] raise MatrixError {
+  self.to_dense().rowspace()
+}
+
+///|
+pub fn SparseMatrix::columnspace(
+  self : SparseMatrix,
+) -> Array[Array[Expr]] raise MatrixError {
+  self.to_dense().columnspace()
+}
+
+///|
+pub fn SparseMatrix::nullspace(
+  self : SparseMatrix,
+) -> Array[Array[Expr]] raise MatrixError {
+  self.to_dense().nullspace()
+}
+
+///|
+pub fn SparseMatrix::lu(
+  self : SparseMatrix,
+) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError {
+  self.to_dense().lu()
+}
+
+///|
+pub fn SparseMatrix::qr(
+  self : SparseMatrix,
+) -> (Matrix, Matrix) raise MatrixError {
+  self.to_dense().qr()
+}
+
+///|
+pub fn SparseMatrix::eigenvals(
+  self : SparseMatrix,
+) -> Array[EigenValueMult] raise MatrixError {
+  self.to_dense().eigenvals()
+}
+
+///|
+pub fn SparseMatrix::eigenvects(
+  self : SparseMatrix,
+) -> Array[EigenVectData] raise MatrixError {
+  self.to_dense().eigenvects()
+}
+
+///|
+pub fn SparseMatrix::jordan_form(
+  self : SparseMatrix,
+  calc_transform? : Bool = true,
+) -> (Matrix, Matrix) raise MatrixError {
+  self.to_dense().jordan_form(calc_transform~)
+}
+
+///|
 pub fn SparseMatrix::solve(
   self : SparseMatrix,
   rhs : Matrix,

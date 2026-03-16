@@ -66,3 +66,21 @@ test "matrices expressions identity zero and block evaluation" {
   env["A"] = try! matrix([[@symcore.int(5)]])
   inspect((try! expr.eval(env)).to_string(), content="Matrix([[1, 0], [5, 5]])")
 }
+
+///|
+test "matrices expressions matadd matmul and collapse helpers" {
+  let a = matrix_symbol("A", 1, 1)
+  let expr = mat_mul([identity_expr(1), mat_add([a, zero_matrix_expr(1, 1)])]).block_collapse()
+  inspect(expr.to_string(), content="A")
+  let block = block_diag_matrix_expr([
+    identity_expr(1),
+    block_diag_matrix_expr([a]),
+  ]).block_collapse()
+  inspect(block.to_string(), content="BlockDiag(Identity(1), A)")
+  let env : Map[String, Matrix] = {}
+  env["A"] = try! matrix([[@symcore.int(9)]])
+  inspect(
+    (try! block.as_explicit(env)).to_string(),
+    content="Matrix([[1, 0], [0, 9]])",
+  )
+}

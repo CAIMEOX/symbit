@@ -8,7 +8,11 @@ import {
 // Values
 pub fn block_diag(Array[Matrix]) -> Matrix raise MatrixError
 
+pub fn block_diag_matrix_expr(Array[MatrixExpr]) -> MatrixExpr
+
 pub fn block_matrix(Array[Array[Matrix]]) -> Matrix raise MatrixError
+
+pub fn block_matrix_expr(Array[Array[MatrixExpr]]) -> MatrixExpr
 
 pub fn casoratian(Array[@symcore.Expr], @symcore.Expr, zero? : Bool) -> @symcore.Expr raise MatrixError
 
@@ -25,6 +29,10 @@ pub fn hstack(Array[Matrix]) -> Matrix raise MatrixError
 pub fn identity_expr(Int) -> MatrixExpr
 
 pub fn jordan_cell(@symcore.Expr, Int) -> Matrix raise MatrixError
+
+pub fn mat_add(Array[MatrixExpr]) -> MatrixExpr
+
+pub fn mat_mul(Array[MatrixExpr]) -> MatrixExpr
 
 pub fn matrix(Array[Array[@symcore.Expr]]) -> Matrix raise MatrixError
 
@@ -112,7 +120,7 @@ pub fn Matrix::columnspace(Self) -> Array[Array[@symcore.Expr]]
 pub fn Matrix::copy(Self) -> Self
 pub fn Matrix::det(Self) -> @symcore.Expr raise MatrixError
 pub fn Matrix::diagonal(Self, k? : Int) -> Array[@symcore.Expr]
-pub fn Matrix::diagonalize(Self) -> (Self, Self) raise MatrixError
+pub fn Matrix::diagonalize(Self, reals_only? : Bool) -> (Self, Self) raise MatrixError
 pub fn Matrix::echelon_form(Self) -> Self
 pub fn Matrix::echelon_form_with_pivots(Self) -> (Self, Array[Int])
 pub fn Matrix::eigenvals(Self) -> Array[(@symcore.Expr, Int)] raise MatrixError
@@ -129,6 +137,8 @@ pub fn Matrix::is_square(Self) -> Bool
 pub fn Matrix::is_symmetric(Self) -> Bool
 pub fn Matrix::is_upper(Self) -> Bool
 pub fn Matrix::is_zero_matrix(Self) -> Bool
+pub fn Matrix::jordan_cells(Self) -> Array[Self] raise MatrixError
+pub fn Matrix::jordan_form(Self, calc_transform? : Bool) -> (Self, Self) raise MatrixError
 pub fn Matrix::ldl(Self) -> (Self, Self) raise MatrixError
 pub fn Matrix::lower_triangular_solve(Self, Self) -> Self raise MatrixError
 pub fn Matrix::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise MatrixError
@@ -178,6 +188,9 @@ pub enum MatrixExpr {
   Inverse(MatrixExpr)
   Pow(MatrixExpr, Int)
 }
+pub fn MatrixExpr::as_explicit(Self, Map[String, Matrix]) -> Matrix raise MatrixError
+pub fn MatrixExpr::block_collapse(Self) -> Self
+pub fn MatrixExpr::doit(Self, Map[String, Matrix]) -> Matrix raise MatrixError
 pub fn MatrixExpr::eval(Self, Map[String, Matrix]) -> Matrix raise MatrixError
 pub fn MatrixExpr::shape(Self) -> (Int, Int) raise MatrixError
 pub fn MatrixExpr::to_string(Self) -> String
@@ -197,21 +210,34 @@ pub fn SparseMatrix::col_del(Self, Int) -> Self raise MatrixError
 pub fn SparseMatrix::col_insert(Self, Int, Self) -> Self raise MatrixError
 pub fn SparseMatrix::col_join(Self, Self) -> Self raise MatrixError
 pub fn SparseMatrix::col_list(Self) -> Array[(Int, Int, @symcore.Expr)]
+pub fn SparseMatrix::columnspace(Self) -> Array[Array[@symcore.Expr]] raise MatrixError
 pub fn SparseMatrix::copy(Self) -> Self
+pub fn SparseMatrix::det(Self) -> @symcore.Expr raise MatrixError
+pub fn SparseMatrix::echelon_form(Self) -> Matrix raise MatrixError
+pub fn SparseMatrix::eigenvals(Self) -> Array[(@symcore.Expr, Int)] raise MatrixError
+pub fn SparseMatrix::eigenvects(Self) -> Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])] raise MatrixError
 pub fn SparseMatrix::equals(Self, Self) -> Bool raise MatrixError
 pub fn SparseMatrix::extract(Self, Array[Int], Array[Int]) -> Self raise MatrixError
 pub fn SparseMatrix::getitem(Self, Int, Int) -> @symcore.Expr raise MatrixError
+pub fn SparseMatrix::inv(Self) -> Matrix raise MatrixError
 pub fn SparseMatrix::is_diagonal(Self) -> Bool raise MatrixError
 pub fn SparseMatrix::is_symmetric(Self) -> Bool raise MatrixError
 pub fn SparseMatrix::is_zero_matrix(Self) -> Bool
+pub fn SparseMatrix::jordan_form(Self, calc_transform? : Bool) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::ldl(Self) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::lower_triangular_solve(Self, Matrix) -> Matrix raise MatrixError
+pub fn SparseMatrix::lu(Self) -> (Matrix, Matrix, Array[(Int, Int)]) raise MatrixError
 pub fn SparseMatrix::nnz(Self) -> Int
+pub fn SparseMatrix::nullspace(Self) -> Array[Array[@symcore.Expr]] raise MatrixError
+pub fn SparseMatrix::qr(Self) -> (Matrix, Matrix) raise MatrixError
+pub fn SparseMatrix::rank(Self) -> Int raise MatrixError
 pub fn SparseMatrix::reshape(Self, Int, Int) -> Self raise MatrixError
 pub fn SparseMatrix::row_del(Self, Int) -> Self raise MatrixError
 pub fn SparseMatrix::row_insert(Self, Int, Self) -> Self raise MatrixError
 pub fn SparseMatrix::row_join(Self, Self) -> Self raise MatrixError
 pub fn SparseMatrix::row_list(Self) -> Array[(Int, Int, @symcore.Expr)]
+pub fn SparseMatrix::rowspace(Self) -> Array[Array[@symcore.Expr]] raise MatrixError
+pub fn SparseMatrix::rref(Self) -> (Matrix, Array[Int]) raise MatrixError
 pub fn SparseMatrix::scalar_multiply(Self, @symcore.Expr) -> Self raise MatrixError
 pub fn SparseMatrix::setitem(Self, Int, Int, @symcore.Expr) -> Self raise MatrixError
 pub fn SparseMatrix::shape(Self) -> (Int, Int)
@@ -222,6 +248,7 @@ pub fn SparseMatrix::to_list(Self) -> Array[Array[@symcore.Expr]] raise MatrixEr
 pub fn SparseMatrix::to_string(Self) -> String raise MatrixError
 pub fn SparseMatrix::todok(Self) -> Map[(Int, Int), @symcore.Expr]
 pub fn SparseMatrix::tolist(Self) -> Array[Array[@symcore.Expr]] raise MatrixError
+pub fn SparseMatrix::trace(Self) -> @symcore.Expr raise MatrixError
 pub fn SparseMatrix::transpose(Self) -> Self
 pub fn SparseMatrix::upper_triangular_solve(Self, Matrix) -> Matrix raise MatrixError
 
