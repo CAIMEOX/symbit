@@ -148,3 +148,52 @@ test "matrices parity eigenvals on general non-triangular 4x4 companion" {
     ),
   )
 }
+
+///|
+test "matrices parity eigenvals on general non-companion algebraic 3x3" {
+  let a = try! matrix([
+    [@symcore.int(1), @symcore.int(1), @symcore.int(0)],
+    [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(1)],
+  ])
+  assert_eq(
+    "ok",
+    try! py_list_text(
+      "(lambda loc, ref: (lambda loc2, ref2: 'ok' if len(loc2) == len(ref2) and all(sympy.simplify(loc2[i][0] - ref2[i][0]) == 0 and loc2[i][1] == int(ref2[i][1]) for i in range(len(ref2))) else 'mismatch')(sorted(loc, key=lambda kv: sympy.sstr(kv[0])), sorted(ref, key=lambda kv: sympy.sstr(kv[0]))))(" +
+      local_eigenvals_py(try! a.eigenvals()) +
+      ", sorted(" +
+      py_matrix_expr(a) +
+      ".eigenvals().items(), key=lambda kv: sympy.sstr(kv[0])))",
+    ),
+  )
+}
+
+///|
+test "matrices parity jordan form on defective non-triangular 3x3" {
+  let a = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(0)],
+    [
+      try! @symcore.rational_from_ints(-1, 2),
+      try! @symcore.rational_from_ints(11, 2),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+    [
+      try! @symcore.rational_from_ints(1, 2),
+      try! @symcore.rational_from_ints(1, 2),
+      try! @symcore.rational_from_ints(9, 2),
+    ],
+  ])
+  let ours = try! a.jordan_form()
+  assert_eq(
+    local_matrix_list_text(ours.1),
+    try! py_list_text(
+      "'[' + ', '.join('[' + ', '.join(sympy.sstr(sympy.nsimplify(v)) for v in row) + ']' for row in (" +
+      py_matrix_expr(a) +
+      ".jordan_form()[1]).tolist()) + ']'",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(a * ours.0),
+    local_matrix_list_text(ours.0 * ours.1),
+  )
+}

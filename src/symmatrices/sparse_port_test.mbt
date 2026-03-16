@@ -8,6 +8,23 @@ fn py_sparse_matrix_expr(m : SparseMatrix) -> String {
 }
 
 ///|
+fn py_exact_matrix_expr(m : Matrix) -> String {
+  let rows : Array[String] = []
+  for row in m.to_list() {
+    let items : Array[String] = []
+    for value in row {
+      items.push(
+        "sympy.sympify('" +
+        @symprint.to_string(value) +
+        "', locals={'sqrt': sympy.sqrt})",
+      )
+    }
+    rows.push("[" + items.join(", ") + "]")
+  }
+  "sympy.Matrix([" + rows.join(", ") + "])"
+}
+
+///|
 test "matrices parity sparse structural helpers" {
   let entries : Map[(Int, Int), Expr] = {}
   entries[(0, 0)] = @symcore.int(1)
@@ -161,5 +178,56 @@ test "matrices parity sparse native rref echelon and rank" {
   assert_eq(
     (try! s.rank()).to_string(),
     try! py_list_text("sympy.sstr(" + py_sparse_matrix_expr(s) + ".rank())"),
+  )
+}
+
+///|
+test "matrices parity sparse solve inverse cholesky and ldl" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(4)
+  entries[(0, 1)] = @symcore.int(1)
+  entries[(1, 0)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(3)
+  let s = try! sparse_matrix(2, 2, entries)
+  let rhs = try! matrix([[@symcore.int(1)], [@symcore.int(0)]])
+  assert_eq(
+    local_matrix_list_text(try! s.solve(rhs)),
+    try! py_matrix_list_text(
+      py_sparse_matrix_expr(s) + ".solve(" + py_matrix_expr(rhs) + ")",
+    ),
+  )
+  assert_eq(
+    local_matrix_list_text(try! s.inv()),
+    try! py_matrix_list_text(py_sparse_matrix_expr(s) + ".inv()"),
+  )
+  let spd_entries : Map[(Int, Int), Expr] = {}
+  spd_entries[(0, 0)] = @symcore.int(4)
+  spd_entries[(0, 1)] = @symcore.int(2)
+  spd_entries[(1, 0)] = @symcore.int(2)
+  spd_entries[(1, 1)] = @symcore.int(5)
+  let spd = try! sparse_matrix(2, 2, spd_entries)
+  let chol = try! spd.cholesky()
+  assert_eq(
+    "ok",
+    try! py_list_text(
+      "(lambda ours, ref: 'ok' if sympy.simplify(ours - ref) == sympy.Matrix.zeros(ref.rows, ref.cols) else sympy.sstr(sympy.simplify(ours - ref)))(" +
+      py_exact_matrix_expr(chol) +
+      ", " +
+      py_sparse_matrix_expr(spd) +
+      ".cholesky())",
+    ),
+  )
+  let ldl = try! spd.ldl()
+  assert_eq(
+    "ok",
+    try! py_list_text(
+      "(lambda ours_l, ours_d, ref: 'ok' if sympy.simplify(ours_l - ref[0]) == sympy.Matrix.zeros(ref[0].rows, ref[0].cols) and sympy.simplify(ours_d - ref[1]) == sympy.Matrix.zeros(ref[1].rows, ref[1].cols) else 'mismatch')(" +
+      py_exact_matrix_expr(ldl.0) +
+      ", " +
+      py_exact_matrix_expr(ldl.1) +
+      ", " +
+      py_sparse_matrix_expr(spd) +
+      ".LDLdecomposition())",
+    ),
   )
 }

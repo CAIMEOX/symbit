@@ -204,6 +204,67 @@ fn concrete_mul(items : Array[MatrixExpr]) -> MatrixExpr {
 }
 
 ///|
+fn matrix_expr_same(lhs : MatrixExpr, rhs : MatrixExpr) -> Bool {
+  (try? lhs.shape()) == (try? rhs.shape()) && lhs.to_string() == rhs.to_string()
+}
+
+///|
+fn matrix_expr_power_view(expr : MatrixExpr) -> (MatrixExpr, Int) {
+  match expr {
+    MatrixExpr::Pow(base, exp) => (base, exp)
+    _ => (expr, 1)
+  }
+}
+
+///|
+fn matrix_expr_cancel_or_merge_pair(
+  lhs : MatrixExpr,
+  rhs : MatrixExpr,
+) -> MatrixExpr? {
+  match (lhs, rhs) {
+    (MatrixExpr::Inverse(inner), other) =>
+      if matrix_expr_same(inner, other) {
+        let shape = try? inner.shape()
+        match shape {
+          Ok((rows, cols)) =>
+            if rows == cols {
+              Some(identity_expr(rows))
+            } else {
+              None
+            }
+          Err(_) => None
+        }
+      } else {
+        None
+      }
+    (other, MatrixExpr::Inverse(inner)) =>
+      if matrix_expr_same(other, inner) {
+        let shape = try? inner.shape()
+        match shape {
+          Ok((rows, cols)) =>
+            if rows == cols {
+              Some(identity_expr(rows))
+            } else {
+              None
+            }
+          Err(_) => None
+        }
+      } else {
+        None
+      }
+    _ => {
+      let left = matrix_expr_power_view(lhs)
+      let right = matrix_expr_power_view(rhs)
+      if matrix_expr_same(left.0, right.0) {
+        Some(matrix_expr_pow(left.0, left.1 + right.1))
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
 fn blockdiag_identity_like(items : Array[MatrixExpr]) -> MatrixExpr? {
   let identities : Array[MatrixExpr] = []
   for item in items {
@@ -314,6 +375,37 @@ pub fn matrix_expr_add(items : Array[MatrixExpr]) -> MatrixExpr {
   if normalized.length() > 1 && all_concrete(normalized) {
     return concrete_add(normalized)
   }
+  if normalized.length() > 1 &&
+    normalized.all(fn(item) {
+      match item {
+        MatrixExpr::BlockDiag(_) => true
+        _ => false
+      }
+    }) {
+    let first = match normalized[0] {
+      MatrixExpr::BlockDiag(items) => items
+      _ => []
+    }
+    if normalized.all(fn(item) {
+        match item {
+          MatrixExpr::BlockDiag(parts) => parts.length() == first.length()
+          _ => false
+        }
+      }) {
+      let blocks : Array[MatrixExpr] = []
+      for i in 0..<first.length() {
+        let pieces : Array[MatrixExpr] = []
+        for item in normalized {
+          match item {
+            MatrixExpr::BlockDiag(parts) => pieces.push(parts[i])
+            _ => ()
+          }
+        }
+        blocks.push(matrix_expr_add(pieces))
+      }
+      return matrix_expr_block_diag(blocks)
+    }
+  }
   match normalized.length() {
     0 =>
       match items[0] {
@@ -346,14 +438,80 @@ pub fn matrix_expr_mul(items : Array[MatrixExpr]) -> MatrixExpr {
       Err(_) => ()
     }
   }
-  match normalized.length() {
-    0 =>
-      match items[0] {
-        MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
-        _ => items[0]
+  let reduced : Array[MatrixExpr] = []
+  for item in normalized {
+    if reduced.is_empty() {
+      reduced.push(item)
+      continue
+    }
+    let last = reduced[reduced.length() - 1]
+    match matrix_expr_cancel_or_merge_pair(last, item) {
+      Some(merged) => {
+        ignore(reduced.pop())
+        match merged {
+          MatrixExpr::Identity(_) => ()
+          _ => reduced.push(merged)
+        }
       }
-    1 => normalized[0]
-    _ => MatrixExpr::Mul(normalized)
+      None =>
+        match (last, item) {
+          (MatrixExpr::Concrete(lhs), MatrixExpr::Concrete(rhs)) => {
+            ignore(reduced.pop())
+            reduced.push(MatrixExpr::Concrete(lhs * rhs))
+          }
+          _ => reduced.push(item)
+        }
+    }
+  }
+  if reduced.length() > 1 &&
+    reduced.all(fn(item) {
+      match item {
+        MatrixExpr::BlockDiag(_) => true
+        _ => false
+      }
+    }) {
+    let first = match reduced[0] {
+      MatrixExpr::BlockDiag(items) => items
+      _ => []
+    }
+    if reduced.all(fn(item) {
+        match item {
+          MatrixExpr::BlockDiag(parts) => parts.length() == first.length()
+          _ => false
+        }
+      }) {
+      let blocks : Array[MatrixExpr] = []
+      for i in 0..<first.length() {
+        let pieces : Array[MatrixExpr] = []
+        for item in reduced {
+          match item {
+            MatrixExpr::BlockDiag(parts) => pieces.push(parts[i])
+            _ => ()
+          }
+        }
+        blocks.push(matrix_expr_mul(pieces))
+      }
+      return matrix_expr_block_diag(blocks)
+    }
+  }
+  match reduced.length() {
+    0 =>
+      try MatrixExpr::Mul(items).shape() catch {
+        _ =>
+          match items[0] {
+            MatrixExpr::Identity(n) => MatrixExpr::Identity(n)
+            _ => items[0]
+          }
+      } noraise {
+        (rows, cols) =>
+          if rows == cols {
+            MatrixExpr::Identity(rows)
+          } else {
+            items[0]
+          }
+      }
+    1 => reduced[0]
+    _ => MatrixExpr::Mul(reduced)
   }
 }
 

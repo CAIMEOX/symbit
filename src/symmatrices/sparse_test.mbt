@@ -207,3 +207,55 @@ test "matrices sparse native lu reconstructs row-permuted matrix" {
     content=(try! apply_row_swaps(try! s.to_dense(), swaps)).to_string(),
   )
 }
+
+///|
+test "matrices sparse native solve and inverse avoid dense fallback" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(4)
+  entries[(0, 1)] = @symcore.int(1)
+  entries[(1, 0)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(3)
+  let s = try! sparse_matrix(2, 2, entries)
+  let rhs = try! matrix([[@symcore.int(1)], [@symcore.int(0)]])
+  inspect((try! s.solve(rhs)).to_string(), content="Matrix([[3/10], [-1/5]])")
+  inspect(
+    (try! s.inv()).to_string(),
+    content="Matrix([[3/10, -1/10], [-1/5, 2/5]])",
+  )
+}
+
+///|
+test "matrices sparse native cholesky and ldl match reconstruction" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(4)
+  entries[(0, 1)] = @symcore.int(2)
+  entries[(1, 0)] = @symcore.int(2)
+  entries[(1, 1)] = @symcore.int(5)
+  let s = try! sparse_matrix(2, 2, entries)
+  let chol = try! s.cholesky()
+  inspect(
+    chol.to_string(),
+    content="Matrix([[sqrt(4), 0], [2*sqrt(4)**-1, sqrt((-4*sqrt(4)**-2 + 5))]])",
+  )
+  let (l, d) = try! s.ldl()
+  inspect(l.to_string(), content="Matrix([[1, 0], [1/2, 1]])")
+  inspect(d.to_string(), content="Matrix([[4, 0], [0, 4]])")
+}
+
+///|
+test "matrices sparse native qr reconstructs the source matrix" {
+  let entries : Map[(Int, Int), Expr] = {}
+  entries[(0, 0)] = @symcore.int(1)
+  entries[(1, 0)] = @symcore.int(1)
+  entries[(1, 1)] = @symcore.int(1)
+  let s = try! sparse_matrix(2, 2, entries)
+  let (q, r) = try! s.qr()
+  inspect(
+    q.to_string(),
+    content="Matrix([[sqrt(2)**-1, -1*sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))**-1*sqrt(2)**-2], [sqrt(2)**-1, sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))**-1*(-1*sqrt(2)**-2 + 1)]])",
+  )
+  inspect(
+    r.to_string(),
+    content="Matrix([[sqrt(2), sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))], [sqrt(2), sqrt((sqrt(2)**-4 + (-1*sqrt(2)**-2 + 1)**2))]])",
+  )
+}

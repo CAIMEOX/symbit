@@ -165,3 +165,27 @@ test "matrices expressions rewrite inverse zero and power without explicit evalu
     content="ZeroMatrix(2, 3)",
   )
 }
+
+///|
+test "matrices expressions matmul combines inverse pairs and powers" {
+  let a = matrix_symbol("A", 2, 2)
+  inspect(
+    mat_mul([a, matrix_expr_inverse(a)]).to_string(),
+    content="Identity(2)",
+  )
+  inspect(mat_mul([a, a]).to_string(), content="A^2")
+  inspect(mat_mul([matrix_expr_pow(a, 2), a]).to_string(), content="A^3")
+}
+
+///|
+test "matrices expressions matadd collapses blockdiag operands immediately" {
+  let a = matrix_symbol("A", 1, 1)
+  let b = matrix_symbol("B", 2, 2)
+  inspect(
+    mat_add([
+      block_diag_matrix_expr([a, b]),
+      block_diag_matrix_expr([identity_expr(1), identity_expr(2)]),
+    ]).to_string(),
+    content="BlockDiag((A + Identity(1)), (B + Identity(2)))",
+  )
+}

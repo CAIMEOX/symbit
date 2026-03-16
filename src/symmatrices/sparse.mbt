@@ -163,6 +163,20 @@ fn sparse_row_maps_to_dense(
 }
 
 ///|
+fn sparse_apply_row_swaps_rhs(
+  rhs : Matrix,
+  swaps : Array[(Int, Int)],
+) -> Matrix {
+  let data = clone_expr_rows(rhs.data)
+  for swap in swaps {
+    let tmp = data[swap.0]
+    data[swap.0] = data[swap.1]
+    data[swap.1] = tmp
+  }
+  { rows: rhs.rows, cols: rhs.cols, data }
+}
+
+///|
 fn sparse_rref_internal(
   matrix : SparseMatrix,
 ) -> (Array[Map[Int, Expr]], Array[Int]) {
@@ -717,7 +731,10 @@ pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
 
 ///|
 pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
-  self.to_dense().inv()
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
+  }
+  self.solve(try! eye(self.rows))
 }
 
 ///|
@@ -851,13 +868,6 @@ pub fn SparseMatrix::lu(
 }
 
 ///|
-pub fn SparseMatrix::qr(
-  self : SparseMatrix,
-) -> (Matrix, Matrix) raise MatrixError {
-  self.to_dense().qr()
-}
-
-///|
 pub fn SparseMatrix::eigenvals(
   self : SparseMatrix,
 ) -> Array[EigenValueMult] raise MatrixError {
@@ -884,7 +894,17 @@ pub fn SparseMatrix::solve(
   self : SparseMatrix,
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
-  self.to_dense().solve(rhs)
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError("solve requires a square matrix")
+  }
+  if rhs.rows != self.rows {
+    raise MatrixError::ShapeError(
+      "solve expects rhs with the same number of rows",
+    )
+  }
+  let (l, u, swaps) = self.lu()
+  let rhs_swapped = sparse_apply_row_swaps_rhs(rhs, swaps)
+  u.upper_triangular_solve(l.lower_triangular_solve(rhs_swapped))
 }
 
 ///|
@@ -991,14 +1011,116 @@ pub fn SparseMatrix::upper_triangular_solve(
 
 ///|
 pub fn SparseMatrix::cholesky(self : SparseMatrix) -> Matrix raise MatrixError {
-  self.to_dense().cholesky()
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "cholesky decomposition requires a square matrix",
+    )
+  }
+  let n = self.rows
+  let out = zeros(n, cols=Some(n))
+  let l = clone_expr_rows(out.data)
+  for i in 0..<n {
+    for j in 0..<=i {
+      let mut acc = self.getitem(i, j)
+      for k in 0..<j {
+        acc = expr_sub(acc, expr_mul(l[i][k], l[j][k]))
+      }
+      if i == j {
+        l[i][j] = expr_simplify(@symcore.function("sqrt", [acc]))
+      } else {
+        l[i][j] = expr_div(acc, l[j][j])
+      }
+    }
+  }
+  { rows: n, cols: n, data: l }
 }
 
 ///|
 pub fn SparseMatrix::ldl(
   self : SparseMatrix,
 ) -> (Matrix, Matrix) raise MatrixError {
-  self.to_dense().ldl()
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "LDL decomposition requires a square matrix",
+    )
+  }
+  let n = self.rows
+  let l0 = zeros(n, cols=Some(n))
+  let d0 = zeros(n, cols=Some(n))
+  let l = clone_expr_rows(l0.data)
+  let d = clone_expr_rows(d0.data)
+  for i in 0..<n {
+    l[i][i] = expr_one()
+  }
+  for j in 0..<n {
+    let mut diag = self.getitem(j, j)
+    for k in 0..<j {
+      diag = expr_sub(diag, expr_mul(expr_mul(l[j][k], l[j][k]), d[k][k]))
+    }
+    d[j][j] = diag
+    for i in (j + 1)..<n {
+      let mut value = self.getitem(i, j)
+      for k in 0..<j {
+        value = expr_sub(value, expr_mul(expr_mul(l[i][k], l[j][k]), d[k][k]))
+      }
+      l[i][j] = expr_div(value, d[j][j])
+    }
+  }
+  ({ rows: n, cols: n, data: l }, { rows: n, cols: n, data: d })
+}
+
+///|
+pub fn SparseMatrix::qr(
+  self : SparseMatrix,
+) -> (Matrix, Matrix) raise MatrixError {
+  if self.rows == 0 || self.cols == 0 {
+    return (
+      zeros(self.rows, cols=Some(self.cols)),
+      zeros(self.cols, cols=Some(self.cols)),
+    )
+  }
+  let qcols : Array[Array[Expr]] = []
+  let r = Array::make(self.cols, Array::make(self.cols, expr_zero()))
+  for j in 0..<self.cols {
+    let v : Array[Expr] = []
+    for i in 0..<self.rows {
+      v.push(self.getitem(i, j))
+    }
+    for i in 0..<j {
+      let qi = qcols[i]
+      let mut dot = expr_zero()
+      for k in 0..<self.rows {
+        dot = expr_add(dot, expr_mul(qi[k], v[k]))
+      }
+      r[i][j] = dot
+      for k in 0..<self.rows {
+        v[k] = expr_sub(v[k], expr_mul(dot, qi[k]))
+      }
+    }
+    let mut norm_sq = expr_zero()
+    for k in 0..<self.rows {
+      norm_sq = expr_add(norm_sq, expr_mul(v[k], v[k]))
+    }
+    let norm = expr_simplify(@symcore.function("sqrt", [norm_sq]))
+    r[j][j] = norm
+    let qj : Array[Expr] = []
+    for k in 0..<self.rows {
+      qj.push(expr_div(v[k], norm))
+    }
+    qcols.push(qj)
+  }
+  let qrows : Array[Array[Expr]] = []
+  for i in 0..<self.rows {
+    let row : Array[Expr] = []
+    for j in 0..<self.cols {
+      row.push(qcols[j][i])
+    }
+    qrows.push(row)
+  }
+  (
+    { rows: self.rows, cols: self.cols, data: qrows },
+    { rows: self.cols, cols: self.cols, data: r },
+  )
 }
 
 ///|

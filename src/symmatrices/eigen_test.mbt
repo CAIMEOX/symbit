@@ -160,3 +160,45 @@ test "matrices diagonalize supports general non-triangular 4x4 companion" {
   )
   inspect((companion * p).to_string(), content=(p * d).to_string())
 }
+
+///|
+test "matrices exact eigen path supports general non-companion algebraic 3x3" {
+  let algebraic = try! matrix([
+    [@symcore.int(1), @symcore.int(1), @symcore.int(0)],
+    [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(1)],
+  ])
+  inspect(
+    eigenvals_text(try! algebraic.eigenvals()),
+    content="[(1, 1), (1/2*(-1*8**(1/2) + 2), 1), (1/2*(8**(1/2) + 2), 1)]",
+  )
+  let (p, d) = try! algebraic.diagonalize()
+  inspect(
+    p.to_string(),
+    content="Matrix([[-1, 1, 1], [0, 1/2*(-1*8**(1/2) + 2) + -1, 1/2*(8**(1/2) + 2) + -1], [1, 1, 1]])",
+  )
+  inspect(
+    d.to_string(),
+    content="Matrix([[1, 0, 0], [0, 1/2*(-1*8**(1/2) + 2), 0], [0, 0, 1/2*(8**(1/2) + 2)]])",
+  )
+}
+
+///|
+test "matrices jordan form supports defective non-triangular 3x3 after exact eigen solve" {
+  let transformed = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(0)],
+    [
+      try! @symcore.rational_from_ints(-1, 2),
+      try! @symcore.rational_from_ints(11, 2),
+      try! @symcore.rational_from_ints(1, 2),
+    ],
+    [
+      try! @symcore.rational_from_ints(1, 2),
+      try! @symcore.rational_from_ints(1, 2),
+      try! @symcore.rational_from_ints(9, 2),
+    ],
+  ])
+  let (p, j) = try! transformed.jordan_form()
+  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])")
+  inspect((transformed * p).to_string(), content=(p * j).to_string())
+}

@@ -389,6 +389,82 @@ fn matrix_charpoly_roots(matrix : Matrix) -> Array[Expr] raise MatrixError {
 }
 
 ///|
+fn expr_rows_clone(rows : Array[Array[Expr]]) -> Array[Array[Expr]] {
+  let out : Array[Array[Expr]] = []
+  for row in rows {
+    let copied : Array[Expr] = []
+    for item in row {
+      copied.push(item)
+    }
+    out.push(copied)
+  }
+  out
+}
+
+///|
+fn matrix_exact_eigenvects(
+  matrix : Matrix,
+) -> Array[EigenVectData] raise MatrixError {
+  let dm = @sympolys.DomainMatrix::from_Matrix(
+    matrix.to_list(),
+    fmt="dense",
+    field=true,
+  ) catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "matrix entries are not supported by the exact DomainMatrix eigensolver",
+      )
+  }
+  let (rational, algebraic) = @sympolys.dom_eigenvects(dm, l="_lambda") catch {
+    _ =>
+      raise MatrixError::ValueError(
+        "exact DomainMatrix eigen decomposition is not available for this matrix",
+      )
+  }
+  let out : Array[EigenVectData] = []
+  for item in rational {
+    let eigenvalue = (try! @sympolys.DomainScalar::new(item.1, item.0)).to_sympy()
+    let basis_rows = item.3.to_Matrix() catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact rational eigenbasis could not be converted back to expression rows",
+        )
+    }
+    out.push((expr_simplify(eigenvalue), item.2, expr_rows_clone(basis_rows)))
+  }
+  for item in algebraic {
+    let gen = if item.1.gens.is_empty() { "_lambda" } else { item.1.gens[0] }
+    let basis_rows = item.3.to_Matrix() catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact algebraic eigenbasis could not be converted back to expression rows",
+        )
+    }
+    let roots = @sympolys.roots(item.1) catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "algebraic eigenvalue expansion is not available for this matrix",
+        )
+    }
+    for root in roots {
+      let env : Map[String, Expr] = {}
+      let eigenvalue = expr_simplify(root)
+      env[gen] = eigenvalue
+      let basis : Array[Array[Expr]] = []
+      for row in basis_rows {
+        let copied : Array[Expr] = []
+        for item in row {
+          copied.push(expr_simplify(@symcore.subst(item, env)))
+        }
+        basis.push(copied)
+      }
+      out.push((eigenvalue, item.2, basis))
+    }
+  }
+  out
+}
+
+///|
 pub fn Matrix::charpoly_expr(
   self : Matrix,
   x? : Expr = @symcore.symbol("lambda"),
@@ -439,6 +515,14 @@ pub fn Matrix::eigenvals(
     }
     return [(r1, 1), (r2, 1)]
   }
+  let exact = matrix_exact_eigenvects(self) catch { _ => [] }
+  if !exact.is_empty() {
+    let out : Array[EigenValueMult] = []
+    for item in exact {
+      out.push((item.0, item.1))
+    }
+    return out
+  }
   eigen_pack_values(matrix_charpoly_roots(self))
 }
 
@@ -446,6 +530,13 @@ pub fn Matrix::eigenvals(
 pub fn Matrix::eigenvects(
   self : Matrix,
 ) -> Array[EigenVectData] raise MatrixError {
+  if self.rows > 2 &&
+    !(self.is_diagonal() || self.is_upper() || self.is_lower()) {
+    let exact = matrix_exact_eigenvects(self) catch { _ => [] }
+    if !exact.is_empty() {
+      return exact
+    }
+  }
   let values = self.eigenvals()
   let out : Array[EigenVectData] = []
   for item in values {
