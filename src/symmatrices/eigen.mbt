@@ -5,6 +5,9 @@ pub type EigenValueMult = (Expr, Int)
 pub type EigenVectData = (Expr, Int, Array[Array[Expr]])
 
 ///|
+type JordanChain = (Expr, Array[Array[Expr]])
+
+///|
 fn vector_matrix_from_array(items : Array[Expr]) -> Matrix raise MatrixError {
   let rows : Array[Array[Expr]] = []
   for item in items {
@@ -14,27 +17,135 @@ fn vector_matrix_from_array(items : Array[Expr]) -> Matrix raise MatrixError {
 }
 
 ///|
-fn generalized_eigenvector_2x2(
-  shifted : Matrix,
-  eigenvector : Array[Expr],
+fn matrix_from_columns(
+  columns : Array[Array[Expr]],
+) -> Matrix raise MatrixError {
+  if columns.is_empty() {
+    return zeros(0, cols=Some(0))
+  }
+  let rows = columns[0].length()
+  let data = Array::makei(rows, fn(_) {
+    Array::make(columns.length(), expr_zero())
+  })
+  for j in 0..<columns.length() {
+    if columns[j].length() != rows {
+      raise MatrixError::ShapeError("matrix columns must have equal height")
+    }
+    for i in 0..<rows {
+      data[i][j] = columns[j][i]
+    }
+  }
+  matrix(data)
+}
+
+///|
+fn vector_extends_basis(
+  basis : Array[Array[Expr]],
+  candidate : Array[Expr],
+) -> Bool raise MatrixError {
+  if basis.is_empty() {
+    return !candidate.all(expr_is_zero)
+  }
+  let old_rank = matrix_from_columns(basis).rank()
+  let extended : Array[Array[Expr]] = []
+  for vec in basis {
+    extended.push(vec)
+  }
+  extended.push(candidate)
+  let new_rank = matrix_from_columns(extended).rank()
+  new_rank > old_rank
+}
+
+///|
+fn solve_singular_particular(
+  lhs : Matrix,
+  rhs : Array[Expr],
 ) -> Array[Expr] raise MatrixError {
-  let rhs = vector_matrix_from_array(eigenvector)
-  let data = shifted.data
-  let b0 = rhs.data[0][0]
-  let b1 = rhs.data[1][0]
-  if !expr_is_zero(data[0][0]) {
-    return [expr_div(b0, data[0][0]), expr_zero()]
+  let rhs_matrix = vector_matrix_from_array(rhs)
+  let (reduced_lhs, reduced_rhs) = lhs.rref_rhs(rhs_matrix)
+  let solution = Array::make(lhs.cols, expr_zero())
+  for i in 0..<reduced_lhs.rows {
+    let mut pivot : Int? = None
+    for j in 0..<reduced_lhs.cols {
+      if !expr_is_zero(reduced_lhs.data[i][j]) {
+        pivot = Some(j)
+        break
+      }
+    }
+    match pivot {
+      Some(col) => solution[col] = reduced_rhs.data[i][0]
+      None =>
+        if !expr_is_zero(reduced_rhs.data[i][0]) {
+          raise MatrixError::ValueError(
+            "singular linear system is inconsistent",
+          )
+        }
+    }
   }
-  if !expr_is_zero(data[0][1]) {
-    return [expr_zero(), expr_div(b0, data[0][1])]
+  solution
+}
+
+///|
+fn jordan_chains_for_eigenvalue(
+  matrix : Matrix,
+  value : Expr,
+  mult : Int,
+  basis : Array[Array[Expr]],
+) -> Array[Array[Array[Expr]]] raise MatrixError {
+  if mult == basis.length() {
+    let out : Array[Array[Array[Expr]]] = []
+    for vec in basis {
+      out.push([vec])
+    }
+    return out
   }
-  if !expr_is_zero(data[1][0]) {
-    return [expr_div(b1, data[1][0]), expr_zero()]
+  let shifted = matrix_add_diag_scalar(matrix, expr_neg(value))
+  let chains : Array[Array[Array[Expr]]] = []
+  let used_vectors : Array[Array[Expr]] = []
+  for vec in basis {
+    chains.push([vec])
+    used_vectors.push(vec)
   }
-  if !expr_is_zero(data[1][1]) {
-    return [expr_zero(), expr_div(b1, data[1][1])]
+  let mut remaining = mult - basis.length()
+  while remaining > 0 {
+    let mut extended_any = false
+    for idx in 0..<chains.length() {
+      if remaining == 0 {
+        break
+      }
+      let chain = chains[idx]
+      let tail = chain[chain.length() - 1]
+      let candidate = solve_singular_particular(shifted, tail) catch {
+        _ => continue
+      }
+      if !vector_extends_basis(used_vectors, candidate) {
+        continue
+      }
+      chains[idx].push(candidate)
+      used_vectors.push(candidate)
+      remaining -= 1
+      extended_any = true
+    }
+    if !extended_any {
+      raise MatrixError::ValueError(
+        "failed to construct full generalized eigenvector chains",
+      )
+    }
   }
-  raise MatrixError::ValueError("failed to construct generalized eigenvector")
+  chains
+}
+
+///|
+fn jordan_chain_data(matrix : Matrix) -> Array[JordanChain] raise MatrixError {
+  let out : Array[JordanChain] = []
+  for item in matrix.eigenvects() {
+    let (value, mult, basis) = item
+    let chains = jordan_chains_for_eigenvalue(matrix, value, mult, basis)
+    for chain in chains {
+      out.push((value, chain))
+    }
+  }
+  out
 }
 
 ///|
@@ -321,26 +432,10 @@ pub fn Matrix::jordan_cells(self : Matrix) -> Array[Matrix] raise MatrixError {
     }
     return out
   }
-  if self.rows == 1 {
-    return [jordan_cell(self.data[0][0], 1)]
-  }
-  let eigs = self.eigenvects()
   let out : Array[Matrix] = []
-  for item in eigs {
-    let (value, mult, basis) = item
-    if mult == basis.length() {
-      for _ in 0..<mult {
-        out.push(jordan_cell(value, 1))
-      }
-      continue
-    }
-    if self.rows == 2 && mult == 2 && basis.length() == 1 {
-      out.push(jordan_cell(value, 2))
-      continue
-    }
-    raise MatrixError::ValueError(
-      "jordan_cells currently supports diagonalizable matrices and defective 2x2 matrices",
-    )
+  for item in jordan_chain_data(self) {
+    let (value, chain) = item
+    out.push(jordan_cell(value, chain.length()))
   }
   out
 }
@@ -408,30 +503,27 @@ pub fn Matrix::jordan_form(
       "jordan_form requires a square matrix",
     )
   }
-  if self.is_diagonalizable() {
-    if calc_transform {
-      return self.diagonalize()
-    }
-    return (eye(self.rows), diag(self.diagonal()))
-  }
-  if self.rows == 2 {
-    let eigs = self.eigenvects()
-    if eigs.length() == 1 {
-      let (value, mult, basis) = eigs[0]
-      if mult == 2 && basis.length() == 1 {
-        let shifted = matrix_add_diag_scalar(self, expr_neg(value))
-        let gen = generalized_eigenvector_2x2(shifted, basis[0])
-        let pdata = [[basis[0][0], gen[0]], [basis[0][1], gen[1]]]
-        let p = matrix(pdata)
-        let j = jordan_cell(value, 2)
-        if calc_transform {
-          return (p, j)
-        }
-        return (eye(2), j)
-      }
+  let chains = jordan_chain_data(self)
+  let jordan_blocks : Array[Matrix] = []
+  let columns : Array[Array[Expr]] = []
+  for item in chains {
+    let (value, chain) = item
+    jordan_blocks.push(jordan_cell(value, chain.length()))
+    for vec in chain {
+      columns.push(vec)
     }
   }
-  raise MatrixError::ValueError(
-    "jordan_form currently supports diagonalizable matrices and defective 2x2 matrices",
-  )
+  if columns.length() != self.rows {
+    raise MatrixError::ValueError("failed to assemble full Jordan basis")
+  }
+  let j = if jordan_blocks.length() == 1 {
+    jordan_blocks[0]
+  } else {
+    block_diag(jordan_blocks)
+  }
+  if !calc_transform {
+    return (eye(self.rows), j)
+  }
+  let p = matrix_from_columns(columns)
+  (p, j)
 }

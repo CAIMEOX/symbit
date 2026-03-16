@@ -71,3 +71,39 @@ test "matrices parity jordan form on defective 2x2" {
     local_matrix_list_text(ours.0 * ours.1),
   )
 }
+
+///|
+test "matrices parity jordan form on defective 3x3 chain" {
+  let a = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(5), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(5)],
+  ])
+  let ours = try! a.jordan_form()
+  assert_eq(
+    local_matrix_list_text(ours.1),
+    try! py_matrix_list_text(py_matrix_expr(a) + ".jordan_form()[1]"),
+  )
+  assert_eq(
+    local_matrix_list_text(a * ours.0),
+    local_matrix_list_text(ours.0 * ours.1),
+  )
+}
+
+///|
+test "matrices parity jordan form on mixed 3x3 blocks" {
+  let a = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(5), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(5)],
+  ])
+  let ours = try! a.jordan_form()
+  assert_eq(
+    local_matrix_list_text(ours.1),
+    try! py_matrix_list_text(py_matrix_expr(a) + ".jordan_form()[1]"),
+  )
+  assert_eq(
+    local_matrix_list_text(a * ours.0),
+    local_matrix_list_text(ours.0 * ours.1),
+  )
+}

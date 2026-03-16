@@ -13,12 +13,54 @@ pub type ImmutableSparseMatrix = SparseMatrix
 pub type MutableSparseMatrix = SparseMatrix
 
 ///|
-pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
-  let entries : Map[(Int, Int), Expr] = {}
-  for key, value in self.entries {
-    entries[key] = value
+fn clone_sparse_entries(
+  entries : Map[(Int, Int), Expr],
+) -> Map[(Int, Int), Expr] {
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in entries {
+    out[key] = value
   }
-  SparseMatrix::{ rows: self.rows, cols: self.cols, entries }
+  out
+}
+
+///|
+fn sparse_accumulate(
+  out : Map[(Int, Int), Expr],
+  key : (Int, Int),
+  value : Expr,
+) -> Unit {
+  if expr_is_zero(value) {
+    return
+  }
+  match out.get(key) {
+    Some(prev) => {
+      let merged = expr_add(prev, value)
+      if expr_is_zero(merged) {
+        ignore(out.remove(key))
+      } else {
+        out[key] = merged
+      }
+    }
+    None => out[key] = value
+  }
+}
+
+///|
+fn sparse_row_entries(matrix : SparseMatrix) -> Array[Array[(Int, Expr)]] {
+  let rows = Array::makei(matrix.rows, fn(_) { [] })
+  for key, value in matrix.entries {
+    rows[key.0].push((key.1, value))
+  }
+  rows
+}
+
+///|
+pub fn SparseMatrix::as_mutable(self : SparseMatrix) -> MutableSparseMatrix {
+  SparseMatrix::{
+    rows: self.rows,
+    cols: self.cols,
+    entries: clone_sparse_entries(self.entries),
+  }
 }
 
 ///|
@@ -64,11 +106,7 @@ pub fn SparseMatrix::nnz(self : SparseMatrix) -> Int {
 
 ///|
 pub fn SparseMatrix::todok(self : SparseMatrix) -> Map[(Int, Int), Expr] {
-  let out : Map[(Int, Int), Expr] = {}
-  for key, value in self.entries {
-    out[key] = value
-  }
-  out
+  clone_sparse_entries(self.entries)
 }
 
 ///|
@@ -116,10 +154,7 @@ pub fn SparseMatrix::setitem(
 ) -> SparseMatrix raise MatrixError {
   let r = normalize_index(row, self.rows)
   let c = normalize_index(col, self.cols)
-  let entries : Map[(Int, Int), Expr] = {}
-  for key, item in self.entries {
-    entries[key] = item
-  }
+  let entries = clone_sparse_entries(self.entries)
   if expr_is_zero(value) {
     ignore(entries.remove((r, c)))
   } else {
@@ -229,7 +264,17 @@ pub fn SparseMatrix::reshape(
   rows : Int,
   cols : Int,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().reshape(rows, cols).to_sparse()
+  if rows < 0 || cols < 0 || rows * cols != self.rows * self.cols {
+    raise MatrixError::ShapeError(
+      "cannot reshape matrix to incompatible dimensions",
+    )
+  }
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    let flat = key.0 * self.cols + key.1
+    out[(flat / cols, flat % cols)] = value
+  }
+  sparse_matrix(rows, cols, out)
 }
 
 ///|
@@ -238,7 +283,18 @@ pub fn SparseMatrix::extract(
   row_ids : Array[Int],
   col_ids : Array[Int],
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().extract(row_ids, col_ids).to_sparse()
+  let rows = row_ids.map(fn(index) { try! normalize_index(index, self.rows) })
+  let cols = col_ids.map(fn(index) { try! normalize_index(index, self.cols) })
+  let out : Map[(Int, Int), Expr] = {}
+  for i in 0..<rows.length() {
+    for j in 0..<cols.length() {
+      match self.entries.get((rows[i], cols[j])) {
+        Some(value) => out[(i, j)] = value
+        None => ()
+      }
+    }
+  }
+  sparse_matrix(rows.length(), cols.length(), out)
 }
 
 ///|
@@ -246,7 +302,16 @@ pub fn SparseMatrix::row_join(
   self : SparseMatrix,
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().row_join(other.to_dense()).to_sparse()
+  if self.rows != other.rows {
+    raise MatrixError::ShapeError(
+      "row_join requires matrices with the same row count",
+    )
+  }
+  let out = clone_sparse_entries(self.entries)
+  for key, value in other.entries {
+    out[(key.0, key.1 + self.cols)] = value
+  }
+  sparse_matrix(self.rows, self.cols + other.cols, out)
 }
 
 ///|
@@ -254,7 +319,16 @@ pub fn SparseMatrix::col_join(
   self : SparseMatrix,
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().col_join(other.to_dense()).to_sparse()
+  if self.cols != other.cols {
+    raise MatrixError::ShapeError(
+      "col_join requires matrices with the same column count",
+    )
+  }
+  let out = clone_sparse_entries(self.entries)
+  for key, value in other.entries {
+    out[(key.0 + self.rows, key.1)] = value
+  }
+  sparse_matrix(self.rows + other.rows, self.cols, out)
 }
 
 ///|
@@ -263,7 +337,21 @@ pub fn SparseMatrix::row_insert(
   pos : Int,
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().row_insert(pos, other.to_dense()).to_sparse()
+  if self.cols != other.cols {
+    raise MatrixError::ShapeError(
+      "row_insert requires matrices with the same column count",
+    )
+  }
+  let insert_at = normalize_insert_pos(pos, self.rows)
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    let row = if key.0 >= insert_at { key.0 + other.rows } else { key.0 }
+    out[(row, key.1)] = value
+  }
+  for key, value in other.entries {
+    out[(insert_at + key.0, key.1)] = value
+  }
+  sparse_matrix(self.rows + other.rows, self.cols, out)
 }
 
 ///|
@@ -272,7 +360,21 @@ pub fn SparseMatrix::col_insert(
   pos : Int,
   other : SparseMatrix,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().col_insert(pos, other.to_dense()).to_sparse()
+  if self.rows != other.rows {
+    raise MatrixError::ShapeError(
+      "col_insert requires matrices with the same row count",
+    )
+  }
+  let insert_at = normalize_insert_pos(pos, self.cols)
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    let col = if key.1 >= insert_at { key.1 + other.cols } else { key.1 }
+    out[(key.0, col)] = value
+  }
+  for key, value in other.entries {
+    out[(key.0, insert_at + key.1)] = value
+  }
+  sparse_matrix(self.rows, self.cols + other.cols, out)
 }
 
 ///|
@@ -280,7 +382,16 @@ pub fn SparseMatrix::row_del(
   self : SparseMatrix,
   pos : Int,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().row_del(pos).to_sparse()
+  let removed = normalize_index(pos, self.rows)
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    if key.0 == removed {
+      continue
+    }
+    let row = if key.0 > removed { key.0 - 1 } else { key.0 }
+    out[(row, key.1)] = value
+  }
+  sparse_matrix(self.rows - 1, self.cols, out)
 }
 
 ///|
@@ -288,7 +399,16 @@ pub fn SparseMatrix::col_del(
   self : SparseMatrix,
   pos : Int,
 ) -> SparseMatrix raise MatrixError {
-  self.to_dense().col_del(pos).to_sparse()
+  let removed = normalize_index(pos, self.cols)
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    if key.1 == removed {
+      continue
+    }
+    let col = if key.1 > removed { key.1 - 1 } else { key.1 }
+    out[(key.0, col)] = value
+  }
+  sparse_matrix(self.rows, self.cols - 1, out)
 }
 
 ///|
@@ -297,20 +417,68 @@ pub fn SparseMatrix::is_zero_matrix(self : SparseMatrix) -> Bool {
 }
 
 ///|
-pub fn SparseMatrix::is_diagonal(self : SparseMatrix) -> Bool raise MatrixError {
-  self.to_dense().is_diagonal()
+pub fn SparseMatrix::is_diagonal(self : SparseMatrix) -> Bool {
+  for key, value in self.entries {
+    if key.0 != key.1 && !expr_is_zero(value) {
+      return false
+    }
+  }
+  true
 }
 
 ///|
-pub fn SparseMatrix::is_symmetric(
-  self : SparseMatrix,
-) -> Bool raise MatrixError {
-  self.to_dense().is_symmetric()
+pub fn SparseMatrix::is_symmetric(self : SparseMatrix) -> Bool {
+  if self.rows != self.cols {
+    return false
+  }
+  for key, value in self.entries {
+    match self.entries.get((key.1, key.0)) {
+      Some(other) => if !expr_eq(value, other) { return false }
+      None => if !expr_is_zero(value) { return false }
+    }
+  }
+  true
+}
+
+///|
+pub fn SparseMatrix::is_upper(self : SparseMatrix) -> Bool {
+  if self.rows != self.cols {
+    return false
+  }
+  for key, value in self.entries {
+    if key.0 > key.1 && !expr_is_zero(value) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn SparseMatrix::is_lower(self : SparseMatrix) -> Bool {
+  if self.rows != self.cols {
+    return false
+  }
+  for key, value in self.entries {
+    if key.0 < key.1 && !expr_is_zero(value) {
+      return false
+    }
+  }
+  true
 }
 
 ///|
 pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
-  self.to_dense().trace()
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
+  }
+  let mut acc = expr_zero()
+  for i in 0..<self.rows {
+    match self.entries.get((i, i)) {
+      Some(value) => acc = expr_add(acc, value)
+      None => ()
+    }
+  }
+  acc
 }
 
 ///|
@@ -320,6 +488,27 @@ pub fn SparseMatrix::rank(self : SparseMatrix) -> Int raise MatrixError {
 
 ///|
 pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "determinant requires a square matrix",
+    )
+  }
+  if self.rows == 0 {
+    return expr_one()
+  }
+  if self.is_diagonal() || self.is_upper() || self.is_lower() {
+    let mut acc = expr_one()
+    for i in 0..<self.rows {
+      acc = expr_mul(
+        acc,
+        match self.entries.get((i, i)) {
+          Some(value) => value
+          None => expr_zero()
+        },
+      )
+    }
+    return acc
+  }
   self.to_dense().det()
 }
 
@@ -423,7 +612,44 @@ pub fn SparseMatrix::lower_triangular_solve(
   self : SparseMatrix,
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
-  self.to_dense().lower_triangular_solve(rhs)
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "lower_triangular_solve requires a square matrix",
+    )
+  }
+  if rhs.rows != self.rows {
+    raise MatrixError::ShapeError(
+      "lower_triangular_solve expects matching row counts",
+    )
+  }
+  let row_entries = sparse_row_entries(self)
+  let out = zeros(self.rows, cols=Some(rhs.cols))
+  let data = clone_expr_rows(out.data)
+  for i in 0..<self.rows {
+    let mut diag = expr_zero()
+    for item in row_entries[i] {
+      let (col, value) = item
+      if col == i {
+        diag = value
+      } else if col > i && !expr_is_zero(value) {
+        raise MatrixError::ValueError("matrix is not lower triangular")
+      }
+    }
+    if expr_is_zero(diag) {
+      raise MatrixError::SingularMatrixError("matrix is singular")
+    }
+    for j in 0..<rhs.cols {
+      let mut acc = rhs.data[i][j]
+      for item in row_entries[i] {
+        let (col, value) = item
+        if col < i {
+          acc = expr_sub(acc, expr_mul(value, data[col][j]))
+        }
+      }
+      data[i][j] = expr_div(acc, diag)
+    }
+  }
+  { rows: self.rows, cols: rhs.cols, data }
 }
 
 ///|
@@ -431,7 +657,45 @@ pub fn SparseMatrix::upper_triangular_solve(
   self : SparseMatrix,
   rhs : Matrix,
 ) -> Matrix raise MatrixError {
-  self.to_dense().upper_triangular_solve(rhs)
+  if self.rows != self.cols {
+    raise MatrixError::NonSquareMatrixError(
+      "upper_triangular_solve requires a square matrix",
+    )
+  }
+  if rhs.rows != self.rows {
+    raise MatrixError::ShapeError(
+      "upper_triangular_solve expects matching row counts",
+    )
+  }
+  let row_entries = sparse_row_entries(self)
+  let out = zeros(self.rows, cols=Some(rhs.cols))
+  let data = clone_expr_rows(out.data)
+  for offset in 0..<self.rows {
+    let i = self.rows - 1 - offset
+    let mut diag = expr_zero()
+    for item in row_entries[i] {
+      let (col, value) = item
+      if col == i {
+        diag = value
+      } else if col < i && !expr_is_zero(value) {
+        raise MatrixError::ValueError("matrix is not upper triangular")
+      }
+    }
+    if expr_is_zero(diag) {
+      raise MatrixError::SingularMatrixError("matrix is singular")
+    }
+    for j in 0..<rhs.cols {
+      let mut acc = rhs.data[i][j]
+      for item in row_entries[i] {
+        let (col, value) = item
+        if col > i {
+          acc = expr_sub(acc, expr_mul(value, data[col][j]))
+        }
+      }
+      data[i][j] = expr_div(acc, diag)
+    }
+  }
+  { rows: self.rows, cols: rhs.cols, data }
 }
 
 ///|
@@ -444,4 +708,36 @@ pub fn SparseMatrix::ldl(
   self : SparseMatrix,
 ) -> (Matrix, Matrix) raise MatrixError {
   self.to_dense().ldl()
+}
+
+///|
+pub impl Add for SparseMatrix with add(self, other) {
+  let out = clone_sparse_entries(self.entries)
+  for key, value in other.entries {
+    sparse_accumulate(out, key, value)
+  }
+  { rows: self.rows, cols: self.cols, entries: out }
+}
+
+///|
+pub impl Sub for SparseMatrix with sub(self, other) {
+  let out = clone_sparse_entries(self.entries)
+  for key, value in other.entries {
+    sparse_accumulate(out, key, expr_neg(value))
+  }
+  { rows: self.rows, cols: self.cols, entries: out }
+}
+
+///|
+pub impl Mul for SparseMatrix with mul(self, other) {
+  let rhs_rows = sparse_row_entries(other)
+  let out : Map[(Int, Int), Expr] = {}
+  for key, value in self.entries {
+    let (row, inner) = key
+    for item in rhs_rows[inner] {
+      let (col, rhs_value) = item
+      sparse_accumulate(out, (row, col), expr_mul(value, rhs_value))
+    }
+  }
+  { rows: self.rows, cols: other.cols, entries: out }
 }

@@ -4,7 +4,7 @@ test "matrices expressions shape and render" {
   let b = matrix_symbol("B", 2, 2)
   let expr = matrix_expr_transpose(matrix_expr_mul([a, matrix_expr_inverse(b)]))
   assert_eq(try! expr.shape(), (2, 2))
-  inspect(expr.to_string(), content="(A * B^-1).T")
+  inspect(expr.to_string(), content="(B^-1.T * A.T)")
 }
 
 ///|
@@ -82,5 +82,31 @@ test "matrices expressions matadd matmul and collapse helpers" {
   inspect(
     (try! block.as_explicit(env)).to_string(),
     content="Matrix([[1, 0], [0, 9]])",
+  )
+}
+
+///|
+test "matrices expressions symbolic block multiply collapse" {
+  let a = matrix_symbol("A", 1, 1)
+  let b = matrix_symbol("B", 1, 1)
+  let c = matrix_symbol("C", 1, 1)
+  let d = matrix_symbol("D", 1, 1)
+  let left = block_matrix_expr([[a, b]])
+  let right = block_matrix_expr([[c], [d]])
+  let collapsed = mat_mul([left, right]).block_collapse()
+  inspect(collapsed.to_string(), content="((A * C) + (B * D))")
+}
+
+///|
+test "matrices expressions inverse and transpose simplify block forms" {
+  let a = matrix_symbol("A", 1, 1)
+  let b = matrix_symbol("B", 1, 1)
+  inspect(
+    matrix_expr_inverse(block_diag_matrix_expr([a, b])).to_string(),
+    content="BlockDiag(A^-1, B^-1)",
+  )
+  inspect(
+    matrix_expr_transpose(block_matrix_expr([[a, b]])).to_string(),
+    content="Block([A.T], [B.T])",
   )
 }

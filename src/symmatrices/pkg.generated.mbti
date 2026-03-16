@@ -220,8 +220,10 @@ pub fn SparseMatrix::equals(Self, Self) -> Bool raise MatrixError
 pub fn SparseMatrix::extract(Self, Array[Int], Array[Int]) -> Self raise MatrixError
 pub fn SparseMatrix::getitem(Self, Int, Int) -> @symcore.Expr raise MatrixError
 pub fn SparseMatrix::inv(Self) -> Matrix raise MatrixError
-pub fn SparseMatrix::is_diagonal(Self) -> Bool raise MatrixError
-pub fn SparseMatrix::is_symmetric(Self) -> Bool raise MatrixError
+pub fn SparseMatrix::is_diagonal(Self) -> Bool
+pub fn SparseMatrix::is_lower(Self) -> Bool
+pub fn SparseMatrix::is_symmetric(Self) -> Bool
+pub fn SparseMatrix::is_upper(Self) -> Bool
 pub fn SparseMatrix::is_zero_matrix(Self) -> Bool
 pub fn SparseMatrix::jordan_form(Self, calc_transform? : Bool) -> (Matrix, Matrix) raise MatrixError
 pub fn SparseMatrix::ldl(Self) -> (Matrix, Matrix) raise MatrixError
@@ -251,6 +253,9 @@ pub fn SparseMatrix::tolist(Self) -> Array[Array[@symcore.Expr]] raise MatrixErr
 pub fn SparseMatrix::trace(Self) -> @symcore.Expr raise MatrixError
 pub fn SparseMatrix::transpose(Self) -> Self
 pub fn SparseMatrix::upper_triangular_solve(Self, Matrix) -> Matrix raise MatrixError
+pub impl Add for SparseMatrix
+pub impl Mul for SparseMatrix
+pub impl Sub for SparseMatrix
 
 // Type aliases
 pub type EigenValueMult = (@symcore.Expr, Int)

@@ -87,3 +87,38 @@ test "matrices jordan cells and jordan form" {
   let (_, jd) = try! diagonal.jordan_form(calc_transform=false)
   inspect(jd.to_string(), content="Matrix([[2, 0], [0, 3]])")
 }
+
+///|
+test "matrices jordan form handles longer generalized eigenvector chains" {
+  let upper = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(5), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(5)],
+  ])
+  let cells = try! upper.jordan_cells()
+  assert_eq(cells.length(), 1)
+  inspect(
+    cells[0].to_string(),
+    content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])",
+  )
+  let (p, j) = try! upper.jordan_form()
+  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 1], [0, 0, 5]])")
+  inspect((upper * p).to_string(), content=(p * j).to_string())
+}
+
+///|
+test "matrices jordan form handles mixed Jordan block sizes" {
+  let mixed = try! matrix([
+    [@symcore.int(5), @symcore.int(1), @symcore.int(1)],
+    [@symcore.int(0), @symcore.int(5), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(5)],
+  ])
+  let cells = try! mixed.jordan_cells()
+  inspect(
+    "[" + cells.map(fn(item) { item.to_string() }).join(", ") + "]",
+    content="[Matrix([[5, 1], [0, 5]]), Matrix([[5]])]",
+  )
+  let (p, j) = try! mixed.jordan_form()
+  inspect(j.to_string(), content="Matrix([[5, 1, 0], [0, 5, 0], [0, 0, 5]])")
+  inspect((mixed * p).to_string(), content=(p * j).to_string())
+}

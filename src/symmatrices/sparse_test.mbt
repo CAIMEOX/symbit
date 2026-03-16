@@ -46,6 +46,15 @@ test "matrices sparse metadata and scaling helpers" {
     (try! s.applyfunc(value => value + @symcore.int(1))).to_string(),
     content="Matrix([[0, 3], [4, 0]])",
   )
+  let plus_left_entries : Map[(Int, Int), Expr] = {}
+  plus_left_entries[(0, 0)] = @symcore.int(1)
+  let plus_right_entries : Map[(Int, Int), Expr] = {}
+  plus_right_entries[(0, 1)] = @symcore.int(4)
+  inspect(
+    ((try! sparse_matrix(2, 2, plus_left_entries)) +
+    (try! sparse_matrix(2, 2, plus_right_entries))).to_string(),
+    content="Matrix([[1, 4], [0, 0]])",
+  )
 }
 
 ///|
@@ -67,8 +76,10 @@ test "matrices sparse immutable structural and solver helpers" {
   join_entries[(0, 0)] = @symcore.int(3)
   let joined = try! s.row_join(try! sparse_matrix(2, 1, join_entries))
   inspect(joined.to_string(), content="Matrix([[1, 0, 3], [0, 2, 0]])")
+  let inserted = try! s.col_insert(1, try! sparse_matrix(2, 1, join_entries))
+  inspect(inserted.to_string(), content="Matrix([[1, 3, 0], [0, 0, 2]])")
   inspect((try! s.row_del(0)).to_string(), content="Matrix([[0, 2]])")
-  assert_false(try! joined.is_diagonal())
+  assert_false(joined.is_diagonal())
   let tri_entries : Map[(Int, Int), Expr] = {}
   tri_entries[(0, 0)] = @symcore.int(2)
   tri_entries[(1, 0)] = @symcore.int(1)
@@ -78,6 +89,15 @@ test "matrices sparse immutable structural and solver helpers" {
   inspect(
     (try! lower.lower_triangular_solve(rhs)).to_string(),
     content="Matrix([[1], [2]])",
+  )
+  let upper_entries : Map[(Int, Int), Expr] = {}
+  upper_entries[(0, 0)] = @symcore.int(2)
+  upper_entries[(0, 1)] = @symcore.int(1)
+  upper_entries[(1, 1)] = @symcore.int(3)
+  let upper = try! sparse_matrix(2, 2, upper_entries)
+  inspect(
+    (try! upper.upper_triangular_solve(rhs)).to_string(),
+    content="Matrix([[-1/6], [7/3]])",
   )
 }
 
@@ -89,6 +109,8 @@ test "matrices sparse decomposition and eigen helpers" {
   let diagm = try! sparse_matrix(2, 2, diag_entries)
   inspect(@symprint.to_string(try! diagm.trace()), content="5")
   inspect(@symprint.to_string(try! diagm.det()), content="6")
+  assert_true(diagm.is_upper())
+  assert_true(diagm.is_lower())
   inspect(
     (try! diagm.inv()).to_string(),
     content="Matrix([[1/2, 0], [0, 1/3]])",
@@ -99,4 +121,25 @@ test "matrices sparse decomposition and eigen helpers" {
   inspect(eigenvals_text(try! diagm.eigenvals()), content="[(2, 1), (3, 1)]")
   let (_, j) = try! diagm.jordan_form(calc_transform=false)
   inspect(j.to_string(), content="Matrix([[2, 0], [0, 3]])")
+}
+
+///|
+test "matrices sparse native multiply and triangular determinant" {
+  let lhs_entries : Map[(Int, Int), Expr] = {}
+  lhs_entries[(0, 0)] = @symcore.int(1)
+  lhs_entries[(0, 2)] = @symcore.int(2)
+  lhs_entries[(1, 1)] = @symcore.int(3)
+  let rhs_entries : Map[(Int, Int), Expr] = {}
+  rhs_entries[(0, 1)] = @symcore.int(4)
+  rhs_entries[(2, 0)] = @symcore.int(5)
+  rhs_entries[(1, 1)] = @symcore.int(6)
+  let lhs = try! sparse_matrix(2, 3, lhs_entries)
+  let rhs = try! sparse_matrix(3, 2, rhs_entries)
+  inspect((lhs * rhs).to_string(), content="Matrix([[10, 4], [0, 18]])")
+  let tri_entries : Map[(Int, Int), Expr] = {}
+  tri_entries[(0, 0)] = @symcore.int(2)
+  tri_entries[(0, 1)] = @symcore.int(1)
+  tri_entries[(1, 1)] = @symcore.int(5)
+  let tri = try! sparse_matrix(2, 2, tri_entries)
+  inspect(@symprint.to_string(try! tri.det()), content="10")
 }
