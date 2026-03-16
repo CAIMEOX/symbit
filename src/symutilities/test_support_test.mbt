@@ -12,6 +12,26 @@ fn int_matrix_json(values : Array[Array[Int]]) -> String {
 }
 
 ///|
+fn string_json(value : String) -> String {
+  "\"" + value + "\""
+}
+
+///|
+fn string_array_json(values : Array[String]) -> String {
+  "[" + values.map(string_json).join(", ") + "]"
+}
+
+///|
+fn string_matrix_json(values : Array[Array[String]]) -> String {
+  "[" + values.map(string_array_json).join(", ") + "]"
+}
+
+///|
+fn string_tensor3_json(values : Array[Array[Array[String]]]) -> String {
+  "[" + values.map(string_matrix_json).join(", ") + "]"
+}
+
+///|
 fn int_count_map_json(values : Map[Int, Int]) -> String {
   let items : Array[(Int, Int)] = []
   for key, value in values {
