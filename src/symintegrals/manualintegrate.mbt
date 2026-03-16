@@ -1,0 +1,300 @@
+///|
+/// Rule-based antiderivative engine for the high-value practical subset of
+/// `sympy.integrals.manualintegrate`.
+
+///|
+fn integrate_linear_power(
+  base : Expr,
+  exp_value : Expr,
+  var_name : String,
+) -> Expr? {
+  match (linear_coeffs(base, var_name), expr_num_value(exp_value)) {
+    (Some((a, _)), Some(power)) if !expr_is_zero(a) &&
+      power.compare(@symnum.BigRational::from_int(-1)) != 0 => {
+      let next = power.add_r(@symnum.BigRational::one())
+      Some(
+        expr_div(
+          expr_pow(base, expr_from_num(next)),
+          expr_mul(a, expr_from_num(next)),
+        ),
+      )
+    }
+    (Some((a, _)), Some(power)) if !expr_is_zero(a) &&
+      power.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+      Some(expr_div(@symelem.log(base), a))
+    _ => None
+  }
+}
+
+///|
+fn integrate_poly_times_exp(
+  poly_expr : Expr,
+  arg : Expr,
+  var_name : String,
+) -> Expr? {
+  match (poly_coeffs_upto2(poly_expr, var_name), linear_coeffs(arg, var_name)) {
+    (Some(pc), Some((a, b))) if !expr_is_zero(a) && expr_is_zero(pc[2]) => {
+      let x = @symcore.symbol(var_name)
+      let alpha = expr_add(expr_mul(a, x), b)
+      let c1 = expr_div(pc[1], a)
+      let c0 = expr_div(expr_sub(pc[0], expr_div(pc[1], a)), a)
+      Some(@symelem.exp(alpha) * (c1 * x + c0))
+    }
+    _ => None
+  }
+}
+
+///|
+fn integrate_poly_times_trig(
+  poly_expr : Expr,
+  trig_name : String,
+  arg : Expr,
+  var_name : String,
+) -> Expr? {
+  match (poly_coeffs_upto2(poly_expr, var_name), linear_coeffs(arg, var_name)) {
+    (Some(pc), Some((a, b))) if !expr_is_zero(a) && expr_is_zero(pc[2]) => {
+      let x = @symcore.symbol(var_name)
+      let alpha = expr_add(expr_mul(a, x), b)
+      let m = pc[1]
+      let n = pc[0]
+      match trig_name {
+        "sin" =>
+          Some(
+            expr_div(expr_neg_one() * (m * x + n) * @symelem.cos(alpha), a) +
+            expr_div(m * @symelem.sin(alpha), expr_pow(a, expr_int(2))),
+          )
+        "cos" =>
+          Some(
+            expr_div((m * x + n) * @symelem.sin(alpha), a) +
+            expr_div(m * @symelem.cos(alpha), expr_pow(a, expr_int(2))),
+          )
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn reciprocal_sqrt_quadratic(inner : Expr, var_name : String) -> Expr? {
+  match poly_coeffs_upto2(inner, var_name) {
+    Some(coeffs) if expr_is_one(coeffs[0]) &&
+      expr_is_zero(coeffs[1]) &&
+      expr_is_minus_one(coeffs[2]) =>
+      Some(@symelem.asin(@symcore.symbol(var_name)))
+    Some(coeffs) if expr_is_one(coeffs[0]) &&
+      expr_is_zero(coeffs[1]) &&
+      expr_is_one(coeffs[2]) => Some(@symelem.asinh(@symcore.symbol(var_name)))
+    _ => None
+  }
+}
+
+///|
+fn integrate_exp_power(base : Expr, exp : Expr, var_name : String) -> Expr? {
+  match (base, expr_num_value(exp)) {
+    (@symcore.Expr::Function("exp", [arg]), Some(power)) =>
+      match linear_coeffs(arg, var_name) {
+        Some((a, _)) if !expr_is_zero(a) && !power.is_zero() =>
+          Some(
+            expr_div(
+              @symelem.exp(expr_mul(expr_from_num(power), arg)),
+              expr_mul(expr_from_num(power), a),
+            ),
+          )
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
+  match integrate_exp_power(base, exp, var_name) {
+    Some(res) => return Some(res)
+    None => ()
+  }
+  match integrate_linear_power(base, exp, var_name) {
+    Some(res) => return Some(res)
+    None => ()
+  }
+  if expr_eq(
+      base,
+      expr_add(expr_pow(@symcore.symbol(var_name), expr_int(2)), expr_one()),
+    ) &&
+    expr_eq(exp, expr_neg_one()) {
+    return Some(@symelem.atan(@symcore.symbol(var_name)))
+  }
+  if expr_eq(
+      base,
+      expr_sub(expr_one(), expr_pow(@symcore.symbol(var_name), expr_int(2))),
+    ) &&
+    expr_eq(exp, expr_rat(-1, 2)) {
+    return Some(@symelem.asin(@symcore.symbol(var_name)))
+  }
+  if expr_eq(
+      base,
+      expr_add(expr_pow(@symcore.symbol(var_name), expr_int(2)), expr_one()),
+    ) &&
+    expr_eq(exp, expr_rat(-1, 2)) {
+    return Some(@symelem.asinh(@symcore.symbol(var_name)))
+  }
+  None
+}
+
+///|
+pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
+  let simplified = expr_simplify(expr)
+  if !expr_depends_on(simplified, var_name) {
+    return Some(simplified * @symcore.symbol(var_name))
+  }
+  match singularityintegrate(simplified, var_name) {
+    Some(res) => return Some(expr_simplify(res))
+    None => ()
+  }
+  match simplified {
+    @symcore.Expr::Add(args) => {
+      let out : Array[Expr] = []
+      for arg in args {
+        match manual_integrate(arg, var_name) {
+          Some(item) => out.push(item)
+          None => return None
+        }
+      }
+      return Some(expr_simplify(@symcore.add(out)))
+    }
+    @symcore.Expr::Mul(args) => {
+      let indep : Array[Expr] = []
+      let dep : Array[Expr] = []
+      for arg in args {
+        if expr_depends_on(arg, var_name) {
+          dep.push(arg)
+        } else {
+          indep.push(arg)
+        }
+      }
+      let coeff = if indep.is_empty() {
+        expr_one()
+      } else {
+        expr_simplify(@symcore.mul(indep))
+      }
+      if dep.length() == 1 {
+        match manual_integrate(dep[0], var_name) {
+          Some(item) => return Some(expr_simplify(coeff * item))
+          None => ()
+        }
+      }
+      if dep.length() == 2 {
+        match dep[0] {
+          @symcore.Expr::Function("exp", [arg]) =>
+            match integrate_poly_times_exp(dep[1], arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          @symcore.Expr::Function("sin", [arg]) =>
+            match integrate_poly_times_trig(dep[1], "sin", arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          @symcore.Expr::Function("cos", [arg]) =>
+            match integrate_poly_times_trig(dep[1], "cos", arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          _ => ()
+        }
+        match dep[1] {
+          @symcore.Expr::Function("exp", [arg]) =>
+            match integrate_poly_times_exp(dep[0], arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          @symcore.Expr::Function("sin", [arg]) =>
+            match integrate_poly_times_trig(dep[0], "sin", arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          @symcore.Expr::Function("cos", [arg]) =>
+            match integrate_poly_times_trig(dep[0], "cos", arg, var_name) {
+              Some(item) => return Some(expr_simplify(coeff * item))
+              None => ()
+            }
+          _ => ()
+        }
+      }
+      match deltaintegrate(simplified, var_name, None, None) {
+        Some(item) => return Some(expr_simplify(item))
+        None => ()
+      }
+      match trigintegrate(simplified, var_name) {
+        Some(item) => return Some(expr_simplify(item))
+        None => ()
+      }
+      match ratint(simplified, var_name) {
+        Some(item) => return Some(expr_simplify(item))
+        None => None
+      }
+    }
+    @symcore.Expr::Symbol(name) if name == var_name =>
+      Some(expr_rat(1, 2) * expr_pow(@symcore.symbol(var_name), expr_int(2)))
+    @symcore.Expr::Pow(base, exp) => {
+      let pow_res = match base {
+        @symcore.Expr::Function("sqrt", [inner]) if expr_eq(exp, expr_neg_one()) =>
+          match reciprocal_sqrt_quadratic(inner, var_name) {
+            Some(res) => Some(res)
+            None => fallback_pow_integrate(base, exp, var_name)
+          }
+        _ => fallback_pow_integrate(base, exp, var_name)
+      }
+      match pow_res {
+        Some(res) => Some(res)
+        None => trigintegrate(simplified, var_name)
+      }
+    }
+    @symcore.Expr::Function("exp", [arg]) =>
+      match linear_coeffs(arg, var_name) {
+        Some((a, _)) if !expr_is_zero(a) => Some(expr_div(@symelem.exp(arg), a))
+        _ => None
+      }
+    @symcore.Expr::Function("Heaviside", [arg]) =>
+      match linear_coeffs(arg, var_name) {
+        Some((a, _)) if !expr_is_zero(a) =>
+          Some(expr_div(arg * @symspec.heaviside(arg), a))
+        _ => None
+      }
+    @symcore.Expr::Function("log", [@symcore.Expr::Symbol(name)]) if name ==
+      var_name =>
+      Some(
+        @symcore.symbol(var_name) * @symelem.log(@symcore.symbol(var_name)) -
+        @symcore.symbol(var_name),
+      )
+    @symcore.Expr::Function("Piecewise", args) => {
+      let out_cases : Array[(Expr, Expr)] = []
+      let mut i = 0
+      while i + 1 < args.length() {
+        let branch = args[i]
+        let cond = args[i + 1]
+        if cond == @symcore.symbol("True") {
+          match manual_integrate(branch, var_name) {
+            Some(item) => return Some(piecewise_expr(out_cases, default=item))
+            None => return None
+          }
+        }
+        match manual_integrate(branch, var_name) {
+          Some(item) => out_cases.push((item, cond))
+          None => return None
+        }
+        i += 2
+      }
+      Some(piecewise_expr(out_cases))
+    }
+    _ =>
+      match deltaintegrate(simplified, var_name, None, None) {
+        Some(item) => Some(expr_simplify(item))
+        None =>
+          match trigintegrate(simplified, var_name) {
+            Some(item) => Some(expr_simplify(item))
+            None => ratint(simplified, var_name).map(expr_simplify)
+          }
+      }
+  }
+}

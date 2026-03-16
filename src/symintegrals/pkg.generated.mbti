@@ -1,0 +1,77 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symintegrals"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symgeometry",
+}
+
+// Values
+pub fn change_mul(@symcore.Expr, String) -> (@symcore.Expr?, @symcore.Expr?)
+
+pub fn components(@symcore.Expr, String) -> Array[@symcore.Expr]
+
+pub fn deltaintegrate(@symcore.Expr, String, @symcore.Expr?, @symcore.Expr?) -> @symcore.Expr?
+
+pub fn doit(@symcore.Expr) -> @symcore.Expr
+
+pub fn fourier_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn heurisch(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn heurisch_integrate(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn heurisch_wrapper(@symcore.Expr, String) -> @symcore.Expr
+
+pub fn integral(@symcore.Expr, limits? : Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn integral_limit(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn integral_transform_error(String) -> IntegralError
+
+pub fn integrate(@symcore.Expr, limits? : Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn inverse_fourier_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn line_integrate(@symcore.Expr, @symgeometry.Curve, Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
+
+pub fn manual_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn manualintegrate(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn prde_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn ratint(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn rde_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn risch_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn singularityintegrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn trigintegrate(@symcore.Expr, String) -> @symcore.Expr?
+
+// Errors
+pub suberror IntegralError {
+  ValueError(String)
+  IntegralTransformError(String)
+}
+pub impl Show for IntegralError
+
+// Types and methods
+
+// Type aliases
+pub using @symcore {type Expr}
+
+pub type LimitSpec = (String, @symcore.Expr?, @symcore.Expr?)
+
+// Traits
+

@@ -1,0 +1,14 @@
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symcalculus",
+  "CAIMEOX/symbit/symgeometry",
+  "CAIMEOX/symbit/symsimplify",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symfunctions/special" @symspec,
+}
+
+import {
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/sympy/integrals" @sympy_integrals,
+} for "test"

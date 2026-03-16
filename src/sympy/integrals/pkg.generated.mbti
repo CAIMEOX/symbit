@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/integrals"
+
+import {
+  "CAIMEOX/symbit/sympy",
+  "Kaida-Amethyst/python",
+}
+
+// Values
+pub fn integrals_eval(String) -> @python.PyObjectEnum raise
+
+pub fn integrals_eval_str(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+
