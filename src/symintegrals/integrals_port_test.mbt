@@ -170,6 +170,8 @@ test "symintegrals parity transforms forward/inverse family" {
     ("exp(2*x)", @symelem.exp(@symcore.int(2) * x)),
     ("sin(x)", @symelem.sin(x)),
     ("cos(x)", @symelem.cos(x)),
+    ("sinh(x)", @symelem.sinh(x)),
+    ("cosh(x)", @symelem.cosh(x)),
     ("1/(x + 1)", (x + @symcore.int(1)) ^ @symcore.int(-1)),
   ]
   for item in lp_cases {
@@ -212,6 +214,27 @@ test "symintegrals parity transforms forward/inverse family" {
         @symcore.symbol("s") *
         (
           ((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^
+          @symcore.int(-1)
+        ),
+        s,
+        x,
+      ),
+    ),
+    (
+      "1/(s**2 - 1)",
+      inverse_laplace_transform(
+        ((@symcore.symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
+        @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+    (
+      "s/(s**2 - 1)",
+      inverse_laplace_transform(
+        @symcore.symbol("s") *
+        (
+          ((@symcore.symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
           @symcore.int(-1)
         ),
         s,

@@ -290,6 +290,17 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   guard deriv_eval.contains("f(0)") else {
     fail("missing initial value term in derivative rule")
   }
+
+  guard !@symprint.to_string(doit(laplace_transform(@symelem.sinh(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("sinh Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(laplace_transform(@symelem.cosh(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("cosh Laplace transform stayed unevaluated")
+  }
 }
 
 ///|
@@ -358,6 +369,18 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   guard !shifted_quad_num.contains("InverseLaplaceTransform") &&
     shifted_quad_num.contains("Heaviside") else {
     fail("shifted quadratic numerator inverse Laplace stayed unevaluated")
+  }
+
+  guard !@symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+  ).contains("InverseLaplaceTransform") else {
+    fail("hyperbolic inverse Laplace stayed unevaluated")
   }
 }
 

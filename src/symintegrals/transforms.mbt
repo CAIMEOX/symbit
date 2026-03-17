@@ -335,6 +335,38 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
+    @symcore.Expr::Function("sinh", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some(pair) => {
+          let a = pair.0
+          let b = pair.1
+          if expr_is_zero(a) {
+            None
+          } else {
+            match laplace_hyperbolic_term(a, b, s, true) {
+              Some(v) => Some((v, expr_zero(), true_expr()))
+              None => None
+            }
+          }
+        }
+        None => None
+      }
+    @symcore.Expr::Function("cosh", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some(pair) => {
+          let a = pair.0
+          let b = pair.1
+          if expr_is_zero(a) {
+            None
+          } else {
+            match laplace_hyperbolic_term(a, b, s, false) {
+              Some(v) => Some((v, expr_zero(), true_expr()))
+              None => None
+            }
+          }
+        }
+        None => None
+      }
     @symcore.Expr::Function("Derivative", args) =>
       laplace_derivative_term(args, t_name, s)
     _ => None
@@ -468,6 +500,28 @@ fn laplace_trig_term(a : Expr, b : Expr, s : Expr, is_sin : Bool) -> Expr? {
 }
 
 ///|
+fn laplace_hyperbolic_term(
+  a : Expr,
+  b : Expr,
+  s : Expr,
+  is_sinh : Bool,
+) -> Expr? {
+  let a2 = expr_pow(a, expr_int(2))
+  let den = expr_sub(expr_pow(s, expr_int(2)), a2)
+  let cb = @symelem.cosh(b)
+  let sb = @symelem.sinh(b)
+  if is_sinh {
+    Some(
+      expr_add(expr_mul(cb, expr_div(a, den)), expr_mul(sb, expr_div(s, den))),
+    )
+  } else {
+    Some(
+      expr_add(expr_mul(cb, expr_div(s, den)), expr_mul(sb, expr_div(a, den))),
+    )
+  }
+}
+
+///|
 pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
   match symbol_name(s) {
     Some(s_name) => inverse_laplace_doit(expr_simplify(expr), s_name, t)
@@ -576,35 +630,50 @@ fn inverse_laplace_no_var(
         )
       }
     None =>
-      match split_linear_power_denom(den, s_name) {
-        Some((a, b, power)) =>
-          if expr_is_zero(a) {
-            None
-          } else {
-            let scale = expr_div(
-              coeff,
+      match denom_to_diff_square_freq(den, s_name) {
+        Some(freq) =>
+          Some(
+            expr_simplify(
               expr_mul(
-                expr_pow(a, expr_int(power)),
-                factorial_expr(expr_int(power - 1)),
-              ),
-            )
-            let tpow = if power == 1 {
-              expr_one()
-            } else {
-              expr_pow(t, expr_int(power - 1))
-            }
-            Some(
-              expr_simplify(
                 expr_mul(
-                  expr_mul(expr_mul(scale, tpow), @symspec.heaviside(t)),
-                  @symelem.exp(
-                    expr_mul(expr_div(expr_neg_one(), a), expr_mul(b, t)),
-                  ),
+                  expr_div(coeff, freq),
+                  @symelem.sinh(expr_mul(freq, t)),
                 ),
+                @symspec.heaviside(t),
               ),
-            )
+            ),
+          )
+        None =>
+          match split_linear_power_denom(den, s_name) {
+            Some((a, b, power)) =>
+              if expr_is_zero(a) {
+                None
+              } else {
+                let scale = expr_div(
+                  coeff,
+                  expr_mul(
+                    expr_pow(a, expr_int(power)),
+                    factorial_expr(expr_int(power - 1)),
+                  ),
+                )
+                let tpow = if power == 1 {
+                  expr_one()
+                } else {
+                  expr_pow(t, expr_int(power - 1))
+                }
+                Some(
+                  expr_simplify(
+                    expr_mul(
+                      expr_mul(expr_mul(scale, tpow), @symspec.heaviside(t)),
+                      @symelem.exp(
+                        expr_mul(expr_div(expr_neg_one(), a), expr_mul(b, t)),
+                      ),
+                    ),
+                  ),
+                )
+              }
+            None => None
           }
-        None => None
       }
   }
 }
@@ -656,7 +725,32 @@ fn inverse_laplace_with_var(
           None => None
         }
       }
-    None => None
+    None =>
+      match denom_to_diff_square_freq(den, s_name) {
+        Some(freq) =>
+          match split_linear_coeff(num_var, s_name) {
+            Some((lin_coeff, lin_const)) =>
+              Some(
+                expr_simplify(
+                  expr_mul(
+                    @symspec.heaviside(t),
+                    expr_add(
+                      expr_mul(
+                        expr_mul(coeff, lin_coeff),
+                        @symelem.cosh(expr_mul(freq, t)),
+                      ),
+                      expr_mul(
+                        expr_div(expr_mul(coeff, lin_const), freq),
+                        @symelem.sinh(expr_mul(freq, t)),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            None => None
+          }
+        None => None
+      }
   }
 }
 
@@ -1912,6 +2006,31 @@ fn split_shifted_square_denom(
         }
       }
     None => None
+  }
+}
+
+///|
+fn denom_to_diff_square_freq(den : Expr, s_name : String) -> Expr? {
+  let coeffs = poly_coeffs_upto2(expr_simplify(den), s_name)
+  match coeffs {
+    Some(c) =>
+      if expr_is_zero(c[1]) &&
+        !expr_depends_on(c[0], s_name) &&
+        !expr_depends_on(c[2], s_name) {
+        if expr_is_zero(c[2]) {
+          None
+        } else {
+          let ratio = expr_div(c[0], c[2])
+          if expr_is_negative(ratio) {
+            Some(expr_sqrt_positive(expr_mul(expr_neg_one(), ratio)))
+          } else {
+            None
+          }
+        }
+      } else {
+        None
+      }
+    _ => None
   }
 }
 
