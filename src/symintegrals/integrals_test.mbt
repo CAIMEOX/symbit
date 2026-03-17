@@ -301,6 +301,26 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   ) else {
     fail("cosh Laplace transform stayed unevaluated")
   }
+  guard !@symprint.to_string(doit(laplace_transform(x * @symelem.sin(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("x*sin(x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(laplace_transform(x * @symelem.cos(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("x*cos(x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(x * @symelem.sinh(x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("x*sinh(x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(x * @symelem.cosh(x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("x*cosh(x) Laplace transform stayed unevaluated")
+  }
 }
 
 ///|
@@ -381,6 +401,28 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     ),
   ).contains("InverseLaplaceTransform") else {
     fail("hyperbolic inverse Laplace stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        ((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+  ).contains("InverseLaplaceTransform") else {
+    fail("two-pole rational inverse Laplace stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        s * (((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1)),
+        s,
+        x,
+      ),
+    ),
+  ).contains("InverseLaplaceTransform") else {
+    fail("linear-numerator two-pole inverse Laplace stayed unevaluated")
   }
 }
 
