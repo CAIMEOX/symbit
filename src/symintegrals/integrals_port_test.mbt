@@ -207,6 +207,28 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   inspect(oracle_ift, content="0")
 
+  let shifted_ft = doit(
+    fourier_transform(
+      @symelem.exp(@symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2))),
+      x,
+      k,
+    ),
+  )
+  let shifted_ft_oracle = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.simplify(sympy.expand(((" +
+    py_expr(shifted_ft) +
+    ") - (sympy.fourier_transform(sympy.exp(-(sympy.Symbol('x') - 1)**2), sympy.Symbol('x'), sympy.Symbol('k')))).rewrite(sympy.exp))))",
+  )
+  inspect(shifted_ft_oracle, content="0")
+
+  let shifted_ift = doit(inverse_fourier_transform(shifted_ft, k, x))
+  let shifted_ift_oracle = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.simplify(sympy.expand(((" +
+    py_expr(shifted_ift) +
+    ") - (sympy.exp(-(sympy.Symbol('x') - 1)**2))).rewrite(sympy.exp))))",
+  )
+  inspect(shifted_ift_oracle, content="0")
+
   let inverse_lp_cases : Array[(String, Expr)] = [
     (
       "1/s",

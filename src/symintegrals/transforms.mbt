@@ -1004,19 +1004,13 @@ fn fourier_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
 fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
   match expr {
     @symcore.Expr::Function("exp", [inner]) =>
-      match extract_fourier_coeff(inner, x_name) {
-        Some(scale) =>
+      match extract_negative_quadratic_poly(inner, x_name) {
+        Some((scale, linear, constant)) =>
           Some(
             expr_mul(
               expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
               @symelem.exp(
-                expr_mul(
-                  expr_neg_one(),
-                  expr_div(
-                    expr_pow(expr_mul(@symcore.symbol("pi"), k), expr_int(2)),
-                    scale,
-                  ),
-                ),
+                fourier_gaussian_exponent(scale, linear, constant, k, false),
               ),
             ),
           )
@@ -1044,15 +1038,15 @@ fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
   } else {
     match factors[0] {
       @symcore.Expr::Function("exp", [inner]) =>
-        match extract_inverse_fourier_coeff(inner, k_name) {
-          Some(scale) =>
+        match extract_negative_quadratic_poly(inner, k_name) {
+          Some((scale, linear, constant)) =>
             Some(
               expr_mul(
                 coeff,
-                @symelem.exp(
-                  expr_mul(
-                    expr_neg_one(),
-                    expr_mul(scale, expr_pow(x, expr_int(2))),
+                expr_mul(
+                  expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
+                  @symelem.exp(
+                    fourier_gaussian_exponent(scale, linear, constant, x, true),
                   ),
                 ),
               ),
@@ -2343,12 +2337,20 @@ fn denom_to_square_freq(den : Expr, s_name : String) -> Expr? {
 }
 
 ///|
-fn extract_fourier_coeff(inner : Expr, x_name : String) -> Expr? {
-  let coeffs = poly_coeffs_upto2(expr_simplify(inner), x_name)
+fn extract_negative_quadratic_poly(
+  inner : Expr,
+  var_name : String,
+) -> (Expr, Expr, Expr)? {
+  let coeffs = poly_coeffs_upto2(expr_simplify(inner), var_name)
   match coeffs {
     Some(c) =>
-      if expr_is_zero(c[1]) && expr_is_zero(c[0]) && expr_is_negative(c[2]) {
-        Some(expr_mul(expr_int(-1), c[2]))
+      if !expr_depends_on(c[0], var_name) &&
+        !expr_depends_on(c[1], var_name) &&
+        !expr_depends_on(c[2], var_name) {
+        match extract_explicit_negative_factor(c[2]) {
+          Some(scale) => Some((scale, c[1], c[0]))
+          None => None
+        }
       } else {
         None
       }
@@ -2357,19 +2359,82 @@ fn extract_fourier_coeff(inner : Expr, x_name : String) -> Expr? {
 }
 
 ///|
-fn extract_inverse_fourier_coeff(inner : Expr, k_name : String) -> Expr? {
-  let coeffs = poly_coeffs_upto2(expr_simplify(inner), k_name)
-  match coeffs {
-    Some(c) =>
-      if expr_is_zero(c[1]) &&
-        !expr_depends_on(c[0], k_name) &&
-        !expr_depends_on(c[2], k_name) &&
-        expr_is_negative(c[2]) {
-        Some(expr_mul(expr_int(-1), c[2]))
+fn fourier_gaussian_exponent(
+  scale : Expr,
+  linear : Expr,
+  constant : Expr,
+  var_expr : Expr,
+  inverse : Bool,
+) -> Expr {
+  let const_term = expr_add(
+    constant,
+    expr_div(expr_pow(linear, expr_int(2)), expr_mul(expr_int(4), scale)),
+  )
+  let imag_coeff = expr_div(
+    expr_mul(expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")), linear),
+    scale,
+  )
+  let linear_term = expr_mul(
+    if inverse {
+      imag_coeff
+    } else {
+      expr_mul(expr_neg_one(), imag_coeff)
+    },
+    var_expr,
+  )
+  let quad_term = expr_mul(
+    expr_div(
+      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(2))),
+      scale,
+    ),
+    expr_pow(var_expr, expr_int(2)),
+  )
+  expr_simplify(expr_add(const_term, expr_add(linear_term, quad_term)))
+}
+
+///|
+fn extract_explicit_negative_factor(expr : Expr) -> Expr? {
+  let simplified = expr_simplify(expr)
+  match expr_num_value(simplified) {
+    Some(value) =>
+      if value.compare(@symnum.BigRational::zero()) < 0 {
+        Some(@symcore.number(value.neg()))
       } else {
         None
       }
-    _ => None
+    None =>
+      match simplified {
+        @symcore.Expr::Mul(args) => {
+          let positive_factors : Array[Expr] = []
+          let mut sign = 1
+          for arg in args {
+            match expr_num_value(arg) {
+              Some(value) =>
+                if value.compare(@symnum.BigRational::zero()) < 0 {
+                  sign = -sign
+                  positive_factors.push(@symcore.number(value.neg()))
+                } else {
+                  positive_factors.push(arg)
+                }
+              None => positive_factors.push(arg)
+            }
+          }
+          if sign < 0 {
+            Some(
+              if positive_factors.length() == 0 {
+                expr_one()
+              } else if positive_factors.length() == 1 {
+                positive_factors[0]
+              } else {
+                expr_simplify(@symcore.mul(positive_factors))
+              },
+            )
+          } else {
+            None
+          }
+        }
+        _ => None
+      }
   }
 }
 

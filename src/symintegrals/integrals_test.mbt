@@ -208,6 +208,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let x = @symcore.symbol("x")
   let r = @symcore.symbol("r")
   let k = @symcore.symbol("k")
+  let shifted_gaussian = @symelem.exp(
+    @symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2)),
+  )
   assert_eq(
     @symprint.to_string(sine_transform(x, x, k)),
     "SineTransform(x, x, k)",
@@ -235,6 +238,18 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
       @symcore.int(1),
     ),
   )
+  let shifted_fourier_eval = @symprint.to_string(
+    fourier_transform_eval(shifted_gaussian, x, k),
+  )
+  let shifted_inverse_fourier_eval = @symprint.to_string(
+    doit(
+      inverse_fourier_transform(
+        doit(fourier_transform(shifted_gaussian, x, k)),
+        k,
+        x,
+      ),
+    ),
+  )
   guard !sine_eval.contains("SineTransform") else {
     fail("sine transform stayed unevaluated")
   }
@@ -243,6 +258,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   }
   guard !hankel_eval.contains("HankelTransform") else {
     fail("hankel transform stayed unevaluated")
+  }
+  guard !shifted_fourier_eval.contains("FourierTransform") else {
+    fail("shifted gaussian fourier transform stayed unevaluated")
+  }
+  guard !shifted_inverse_fourier_eval.contains("InverseFourierTransform") else {
+    fail("shifted gaussian inverse fourier transform stayed unevaluated")
   }
 }
 
