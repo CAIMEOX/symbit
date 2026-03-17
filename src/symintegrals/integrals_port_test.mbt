@@ -1,4 +1,9 @@
 ///|
+fn py_locals() -> String {
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge}"
+}
+
+///|
 fn py_expr(expr : Expr) -> String {
   match expr {
     @symcore.Expr::Function("Piecewise", args) => {
@@ -26,15 +31,15 @@ fn py_expr(expr : Expr) -> String {
     _ =>
       "sympy.sympify('" +
       @symprint.to_string(expr) +
-      "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le})"
+      "', locals=" +
+      py_locals() +
+      ")"
   }
 }
 
 ///|
 fn py_src_expr(text : String) -> String {
-  "sympy.sympify('" +
-  text +
-  "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le})"
+  "sympy.sympify('" + text + "', locals=" + py_locals() + ")"
 }
 
 ///|
@@ -179,7 +184,7 @@ test "symintegrals parity transforms forward/inverse family" {
     inspect(oracle, content="0")
   }
 
-  let ft = @symelem.exp((@symcore.int(-1) * (x ^ @symcore.int(2))))
+  let ft = @symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(2)))
   let ours_ft = doit(fourier_transform(ft, x, k))
   let oracle_ft = try! @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
@@ -204,7 +209,11 @@ test "symintegrals parity transforms forward/inverse family" {
     (
       "s/(s**2 + 4)",
       inverse_laplace_transform(
-        @symcore.symbol("s") * (((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^ @symcore.int(-1)),
+        @symcore.symbol("s") *
+        (
+          ((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^
+          @symcore.int(-1)
+        ),
         s,
         x,
       ),
@@ -245,16 +254,16 @@ test "symintegrals parity Mellin forward and inverse" {
   for item in mt_cases {
     let ours = do_mellin_doit(item.0, x, s).unwrap()
     let oracle = try! @sympy_integrals.integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
-      py_expr(ours) +
-      ") - (" +
-      item.1 +
-      ")))",
+      "sympy.sstr(sympy.simplify((" + py_expr(ours) + ") - (" + item.1 + ")))",
     )
     inspect(oracle, content="0")
   }
 
-  let exp_inv = do_mellin_doit(@symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(-1))), x, s).unwrap()
+  let exp_inv = do_mellin_doit(
+    @symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(-1))),
+    x,
+    s,
+  ).unwrap()
   let inv_exp_oracle = try! @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
     py_expr(exp_inv) +
@@ -295,4 +304,102 @@ test "symintegrals parity Mellin forward and inverse" {
       None => inspect(@symprint.to_string(item.0), content="NONE")
     }
   }
+}
+
+///|
+test "symintegrals parity transform conditions and auxiliary stage 5 families" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let k = @symcore.symbol("k")
+  let r = @symcore.symbol("r")
+
+  let ours_laplace = laplace_transform_eval(
+    @symelem.exp(@symcore.int(2) * x),
+    x,
+    s,
+  )
+  let ours_laplace_txt = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(" + py_expr(ours_laplace) + ")",
+  )
+  let sympy_laplace_txt = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.laplace_transform(sympy.exp(2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')))",
+  )
+  assert_eq(ours_laplace_txt, sympy_laplace_txt)
+
+  let ours_mellin = mellin_transform_eval(
+    x * @symspec.heaviside(@symcore.int(1) - x),
+    x,
+    s,
+  )
+  let ours_mellin_txt = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(" + py_expr(ours_mellin) + ")",
+  )
+  let sympy_mellin_txt = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.mellin_transform(sympy.Symbol('x')*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')))",
+  )
+  assert_eq(ours_mellin_txt, sympy_mellin_txt)
+
+  let ours_sine = sine_transform_eval(@symelem.exp(@symcore.int(-2) * x), x, k)
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours_sine) +
+      ") - sympy.sine_transform(sympy.exp(-2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let ours_cosine = cosine_transform_eval(
+    @symelem.exp(@symcore.int(-2) * x),
+    x,
+    k,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours_cosine) +
+      ") - sympy.cosine_transform(sympy.exp(-2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let ours_hankel = hankel_transform_eval(
+    r * @symelem.exp(@symcore.int(-2) * r),
+    r,
+    k,
+    @symcore.int(1),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours_hankel) +
+      ") - sympy.hankel_transform(sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), 1)))",
+    ),
+    "0",
+  )
+}
+
+///|
+test "symintegrals parity intpoly square moments" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let square = unit_square_polygon()
+  let ours_xy = try! polytope_integrate(square, x * y, vars=[x, y])
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours_xy) +
+      ") - (__import__('sympy.integrals.intpoly', fromlist=['polytope_integrate']).polytope_integrate(sympy.Polygon(sympy.Point(0, 0), sympy.Point(0, 1), sympy.Point(1, 1), sympy.Point(1, 0)), sympy.Symbol('x')*sympy.Symbol('y')))))",
+    ),
+    "0",
+  )
+  let ours_x2y = try! polytope_integrate(square, (x ^ @symcore.int(2)) * y, vars=[
+    x, y,
+  ])
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours_x2y) +
+      ") - (__import__('sympy.integrals.intpoly', fromlist=['polytope_integrate']).polytope_integrate(sympy.Polygon(sympy.Point(0, 0), sympy.Point(0, 1), sympy.Point(1, 1), sympy.Point(1, 0)), sympy.Symbol('x')**2*sympy.Symbol('y')))))",
+    ),
+    "0",
+  )
 }

@@ -36,6 +36,26 @@ pub fn inverse_fourier_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
 }
 
 ///|
+pub fn sine_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
+  @symcore.raw_function("SineTransform", [expr, x, k])
+}
+
+///|
+pub fn inverse_sine_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
+  @symcore.raw_function("InverseSineTransform", [expr, k, x])
+}
+
+///|
+pub fn cosine_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
+  @symcore.raw_function("CosineTransform", [expr, x, k])
+}
+
+///|
+pub fn inverse_cosine_transform(expr : Expr, k : Expr, x : Expr) -> Expr {
+  @symcore.raw_function("InverseCosineTransform", [expr, k, x])
+}
+
+///|
 pub fn mellin_transform(expr : Expr, x : Expr, s : Expr) -> Expr {
   @symcore.raw_function("MellinTransform", [expr, x, s])
 }
@@ -43,6 +63,21 @@ pub fn mellin_transform(expr : Expr, x : Expr, s : Expr) -> Expr {
 ///|
 pub fn inverse_mellin_transform(expr : Expr, s : Expr, x : Expr) -> Expr {
   @symcore.raw_function("InverseMellinTransform", [expr, s, x])
+}
+
+///|
+pub fn hankel_transform(expr : Expr, r : Expr, k : Expr, nu : Expr) -> Expr {
+  @symcore.raw_function("HankelTransform", [expr, r, k, nu])
+}
+
+///|
+pub fn inverse_hankel_transform(
+  expr : Expr,
+  k : Expr,
+  r : Expr,
+  nu : Expr,
+) -> Expr {
+  @symcore.raw_function("InverseHankelTransform", [expr, k, r, nu])
 }
 
 ///|
@@ -119,7 +154,8 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
           None =>
             match meijerg_integrate(expr, name) {
               Some(res) => expr_simplify(res)
-              None => integral(expr, limits=[tuple_expr([@symcore.symbol(name)])])
+              None =>
+                integral(expr, limits=[tuple_expr([@symcore.symbol(name)])])
             }
         }
       None => integral(expr)
@@ -164,7 +200,8 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
             Some(anti) =>
               expr_eval_special(
                 expr_simplify(
-                  subst_symbol(anti, name, upper) - subst_symbol(anti, name, lower),
+                  subst_symbol(anti, name, upper) -
+                  subst_symbol(anti, name, lower),
                 ),
               )
             None => integral(expr, limits=[limit])
@@ -174,6 +211,82 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
     Some(_) => integral(expr, limits=[limit])
     None => integral(expr, limits=[limit])
   }
+}
+
+///|
+pub fn laplace_transform_eval(
+  expr : Expr,
+  t : Expr,
+  s : Expr,
+  noconds? : Bool = false,
+) -> Expr {
+  laplace_transform_result(expr, t, s, noconds~)
+}
+
+///|
+pub fn mellin_transform_eval(
+  expr : Expr,
+  x : Expr,
+  s : Expr,
+  noconds? : Bool = false,
+) -> Expr {
+  mellin_transform_result(expr, x, s, noconds~)
+}
+
+///|
+pub fn fourier_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
+  do_fourier_doit(expr, x, k).unwrap_or(fourier_transform(expr, x, k))
+}
+
+///|
+pub fn inverse_fourier_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
+  do_inverse_fourier_doit(expr, k, x).unwrap_or(
+    inverse_fourier_transform(expr, k, x),
+  )
+}
+
+///|
+pub fn sine_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
+  do_sine_doit(expr, x, k).unwrap_or(sine_transform(expr, x, k))
+}
+
+///|
+pub fn inverse_sine_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
+  do_inverse_sine_doit(expr, k, x).unwrap_or(inverse_sine_transform(expr, k, x))
+}
+
+///|
+pub fn cosine_transform_eval(expr : Expr, x : Expr, k : Expr) -> Expr {
+  do_cosine_doit(expr, x, k).unwrap_or(cosine_transform(expr, x, k))
+}
+
+///|
+pub fn inverse_cosine_transform_eval(expr : Expr, k : Expr, x : Expr) -> Expr {
+  do_inverse_cosine_doit(expr, k, x).unwrap_or(
+    inverse_cosine_transform(expr, k, x),
+  )
+}
+
+///|
+pub fn hankel_transform_eval(
+  expr : Expr,
+  r : Expr,
+  k : Expr,
+  nu : Expr,
+) -> Expr {
+  do_hankel_doit(expr, r, k, nu).unwrap_or(hankel_transform(expr, r, k, nu))
+}
+
+///|
+pub fn inverse_hankel_transform_eval(
+  expr : Expr,
+  k : Expr,
+  r : Expr,
+  nu : Expr,
+) -> Expr {
+  do_inverse_hankel_doit(expr, k, r, nu).unwrap_or(
+    inverse_hankel_transform(expr, k, r, nu),
+  )
 }
 
 ///|
@@ -209,6 +322,26 @@ pub fn doit(expr : Expr) -> Expr {
         Some(res) => res
         None => expr
       }
+    @symcore.Expr::Function("SineTransform", [inner, x, k]) =>
+      match do_sine_doit(inner, x, k) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseSineTransform", [inner, k, x]) =>
+      match do_inverse_sine_doit(inner, k, x) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("CosineTransform", [inner, x, k]) =>
+      match do_cosine_doit(inner, x, k) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseCosineTransform", [inner, k, x]) =>
+      match do_inverse_cosine_doit(inner, k, x) {
+        Some(res) => res
+        None => expr
+      }
     @symcore.Expr::Function("MellinTransform", [inner, x, s]) =>
       match do_mellin_doit(inner, x, s) {
         Some(res) => res
@@ -216,6 +349,16 @@ pub fn doit(expr : Expr) -> Expr {
       }
     @symcore.Expr::Function("InverseMellinTransform", [inner, s, x]) =>
       match do_inverse_mellin_doit(inner, s, x) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("HankelTransform", [inner, r, k, nu]) =>
+      match do_hankel_doit(inner, r, k, nu) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseHankelTransform", [inner, k, r, nu]) =>
+      match do_inverse_hankel_doit(inner, k, r, nu) {
         Some(res) => res
         None => expr
       }

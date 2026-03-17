@@ -1,4 +1,23 @@
 ///|
+fn approx_double(lhs : Double, rhs : Double, eps? : Double = 1.0e-4) -> Bool {
+  (lhs - rhs).abs() <= eps
+}
+
+///|
+fn unit_square_polygon() -> @symgeometry.Polygon {
+  match
+    (try! @symgeometry.polygon([
+      try! @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
+      try! @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
+      try! @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
+      try! @symgeometry.point2d(@symcore.int(1), @symcore.int(0)),
+    ])) {
+    @symgeometry.GeometryEntity::Polygon(poly) => poly
+    _ => panic()
+  }
+}
+
+///|
 test "symintegrals integral constructors and doit" {
   let x = @symcore.symbol("x")
   inspect(
@@ -181,5 +200,107 @@ test "symintegrals line integrate and delta symbolic bounds keep stage 1 objects
       "false"
     },
     content="true",
+  )
+}
+
+///|
+test "symintegrals auxiliary transforms evaluate and stay out of unevaluated objects" {
+  let x = @symcore.symbol("x")
+  let r = @symcore.symbol("r")
+  let k = @symcore.symbol("k")
+  assert_eq(
+    @symprint.to_string(sine_transform(x, x, k)),
+    "SineTransform(x, x, k)",
+  )
+  assert_eq(
+    @symprint.to_string(cosine_transform(x, x, k)),
+    "CosineTransform(x, x, k)",
+  )
+  assert_eq(
+    @symprint.to_string(hankel_transform(r, r, k, @symcore.int(1))),
+    "HankelTransform(r, r, k, 1)",
+  )
+
+  let sine_eval = @symprint.to_string(
+    sine_transform_eval(@symelem.exp(@symcore.int(-2) * x), x, k),
+  )
+  let cosine_eval = @symprint.to_string(
+    cosine_transform_eval(@symelem.exp(@symcore.int(-2) * x), x, k),
+  )
+  let hankel_eval = @symprint.to_string(
+    hankel_transform_eval(
+      r * @symelem.exp(@symcore.int(-2) * r),
+      r,
+      k,
+      @symcore.int(1),
+    ),
+  )
+  guard !sine_eval.contains("SineTransform") else {
+    fail("sine transform stayed unevaluated")
+  }
+  guard !cosine_eval.contains("CosineTransform") else {
+    fail("cosine transform stayed unevaluated")
+  }
+  guard !hankel_eval.contains("HankelTransform") else {
+    fail("hankel transform stayed unevaluated")
+  }
+}
+
+///|
+test "symintegrals quadrature and intpoly exact stage 6 paths" {
+  let (leg_nodes, leg_weights) = try! gauss_legendre(3, n_digits=5)
+  guard leg_nodes.length() == 3 && leg_weights.length() == 3 else {
+    fail("gauss_legendre size mismatch")
+  }
+  guard approx_double(leg_nodes[0], -0.7746, eps=1.0e-3) &&
+    approx_double(leg_nodes[1], 0.0, eps=1.0e-8) &&
+    approx_double(leg_nodes[2], 0.7746, eps=1.0e-3) else {
+    fail("gauss_legendre nodes mismatch")
+  }
+  guard approx_double(leg_weights[0], 0.55556, eps=1.0e-4) &&
+    approx_double(leg_weights[1], 0.88889, eps=1.0e-4) &&
+    approx_double(leg_weights[2], 0.55556, eps=1.0e-4) else {
+    fail("gauss_legendre weights mismatch")
+  }
+
+  let (lob_nodes, lob_weights) = try! gauss_lobatto(4, n_digits=5)
+  guard approx_double(lob_nodes[0], -1.0, eps=1.0e-8) &&
+    approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
+    approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
+    approx_double(lob_weights[3], 1.0 / 6.0, eps=1.0e-4) else {
+    fail("gauss_lobatto edge data mismatch")
+  }
+
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let square = unit_square_polygon()
+  assert_eq(
+    @symprint.to_string(
+      try! polytope_integrate(square, @symcore.int(1), vars=[x, y]),
+    ),
+    "1",
+  )
+  assert_eq(
+    @symprint.to_string(try! polytope_integrate(square, x * y, vars=[x, y])),
+    "1/4",
+  )
+  let bulk = try! polytope_integrate_many(
+    square,
+    [@symcore.int(1), x, y, x * y],
+    vars=[x, y],
+  )
+  assert_eq(@symprint.to_string(bulk[x]), "1/2")
+  assert_eq(@symprint.to_string(bulk[y]), "1/2")
+  let upto = try! polytope_integrate_upto(square, 2, vars=[x, y])
+  assert_eq(@symprint.to_string(upto[x ^ @symcore.int(2)]), "1/3")
+  assert_eq(@symprint.to_string(upto[y ^ @symcore.int(2)]), "1/3")
+
+  let seg = try! @symgeometry.segment(
+    try! @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
+    try! @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
+  )
+  assert_eq(
+    @symprint.to_string(try! segment_integrate(seg, x + y, vars=[x, y])),
+    "sqrt(2)",
   )
 }

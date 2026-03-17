@@ -39,7 +39,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
         None
       } else {
         match numerator[0] {
-          @symcore.Expr::Function("sin", [arg]) => {
+          @symcore.Expr::Function("sin", [arg]) =>
             match linear_coeffs(arg, var_name) {
               Some(pair) => {
                 let a = pair.0
@@ -52,8 +52,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
               }
               None => None
             }
-          }
-          @symcore.Expr::Function("cos", [arg]) => {
+          @symcore.Expr::Function("cos", [arg]) =>
             match linear_coeffs(arg, var_name) {
               Some(pair) => {
                 let a = pair.0
@@ -66,7 +65,6 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
               }
               None => None
             }
-          }
           _ => None
         }
       }
@@ -95,7 +93,8 @@ fn extract_erf_scale(inner : Expr, var_name : String) -> Expr? {
 fn extract_division(expr : Expr) -> (Array[Expr], Expr?) {
   let simplified = expr_simplify(expr)
   match simplified {
-    @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) => ([expr_one()], Some(base))
+    @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
+      ([expr_one()], Some(base))
     @symcore.Expr::Mul(args) => {
       let numerator : Array[Expr] = []
       let denominator : Array[Expr] = []

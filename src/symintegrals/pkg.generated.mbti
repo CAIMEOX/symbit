@@ -11,11 +11,61 @@ pub fn change_mul(@symcore.Expr, String) -> (@symcore.Expr?, @symcore.Expr?)
 
 pub fn components(@symcore.Expr, String) -> Array[@symcore.Expr]
 
+pub fn cosine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn cosine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
 pub fn deltaintegrate(@symcore.Expr, String, @symcore.Expr?, @symcore.Expr?) -> @symcore.Expr?
+
+pub fn do_cosine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_fourier_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_hankel_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_cosine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_fourier_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_hankel_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_laplace_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_mellin_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_inverse_sine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_laplace_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_mellin_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn do_sine_doit(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
 
 pub fn doit(@symcore.Expr) -> @symcore.Expr
 
 pub fn fourier_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn fourier_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn gauss_chebyshev_t(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_chebyshev_u(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_gen_laguerre(Int, @symcore.Expr, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_hermite(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_jacobi(Int, @symcore.Expr, @symcore.Expr, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_laguerre(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_legendre(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn gauss_lobatto(Int, n_digits? : Int) -> (Array[Double], Array[Double]) raise IntegralError
+
+pub fn hankel_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hankel_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn heurisch(@symcore.Expr, String) -> @symcore.Expr?
 
@@ -31,13 +81,31 @@ pub fn integral_transform_error(String) -> IntegralError
 
 pub fn integrate(@symcore.Expr, limits? : Array[@symcore.Expr]) -> @symcore.Expr
 
+pub fn inverse_cosine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_cosine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
 pub fn inverse_fourier_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_fourier_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_hankel_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_hankel_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn inverse_laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn inverse_mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn inverse_sine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn inverse_sine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
 pub fn laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
+
+pub fn laplace_transform_result(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
 
 pub fn line_integrate(@symcore.Expr, @symgeometry.Curve, Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
 
@@ -45,7 +113,19 @@ pub fn manual_integrate(@symcore.Expr, String) -> @symcore.Expr?
 
 pub fn manualintegrate(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn meijerg_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
 pub fn mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mellin_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
+
+pub fn mellin_transform_result(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
+
+pub fn polytope_integrate(@symgeometry.Polygon, @symcore.Expr, vars? : Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
+
+pub fn polytope_integrate_many(@symgeometry.Polygon, Array[@symcore.Expr], vars? : Array[@symcore.Expr]) -> Map[@symcore.Expr, @symcore.Expr] raise IntegralError
+
+pub fn polytope_integrate_upto(@symgeometry.Polygon, Int, vars? : Array[@symcore.Expr]) -> Map[@symcore.Expr, @symcore.Expr] raise IntegralError
 
 pub fn prde_integrate(@symcore.Expr, String) -> @symcore.Expr?
 
@@ -54,6 +134,12 @@ pub fn ratint(@symcore.Expr, String) -> @symcore.Expr?
 pub fn rde_integrate(@symcore.Expr, String) -> @symcore.Expr?
 
 pub fn risch_integrate(@symcore.Expr, String) -> @symcore.Expr?
+
+pub fn segment_integrate(@symgeometry.Segment, @symcore.Expr, vars? : Array[@symcore.Expr]) -> @symcore.Expr raise IntegralError
+
+pub fn sine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn sine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn singularityintegrate(@symcore.Expr, String) -> @symcore.Expr?
 
