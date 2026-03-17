@@ -116,7 +116,11 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
       Some(name) =>
         match risch_integrate(expr, name) {
           Some(res) => expr_simplify(res)
-          None => integral(expr, limits=[tuple_expr([@symcore.symbol(name)])])
+          None =>
+            match meijerg_integrate(expr, name) {
+              Some(res) => expr_simplify(res)
+              None => integral(expr, limits=[tuple_expr([@symcore.symbol(name)])])
+            }
         }
       None => integral(expr)
     }
@@ -137,7 +141,11 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
     Some((name, None, None)) =>
       match risch_integrate(expr, name) {
         Some(res) => expr_simplify(res)
-        None => integral(expr, limits=[limit])
+        None =>
+          match meijerg_integrate(expr, name) {
+            Some(res) => expr_simplify(res)
+            None => integral(expr, limits=[limit])
+          }
       }
     Some((name, Some(lower), Some(upper))) => {
       match deltaintegrate(expr, name, Some(lower), Some(upper)) {
@@ -151,7 +159,16 @@ fn integrate_one(expr : Expr, limit : Expr) -> Expr {
               subst_symbol(anti, name, upper) - subst_symbol(anti, name, lower),
             ),
           )
-        None => integral(expr, limits=[limit])
+        None =>
+          match meijerg_integrate(expr, name) {
+            Some(anti) =>
+              expr_eval_special(
+                expr_simplify(
+                  subst_symbol(anti, name, upper) - subst_symbol(anti, name, lower),
+                ),
+              )
+            None => integral(expr, limits=[limit])
+          }
       }
     }
     Some(_) => integral(expr, limits=[limit])
@@ -171,6 +188,36 @@ pub fn doit(expr : Expr) -> Expr {
           limits.push(args[i])
         }
         integrate(args[0], limits~)
+      }
+    @symcore.Expr::Function("LaplaceTransform", [inner, t, s]) =>
+      match do_laplace_doit(inner, t, s) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t]) =>
+      match do_inverse_laplace_doit(inner, s, t) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("FourierTransform", [inner, x, k]) =>
+      match do_fourier_doit(inner, x, k) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseFourierTransform", [inner, k, x]) =>
+      match do_inverse_fourier_doit(inner, k, x) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("MellinTransform", [inner, x, s]) =>
+      match do_mellin_doit(inner, x, s) {
+        Some(res) => res
+        None => expr
+      }
+    @symcore.Expr::Function("InverseMellinTransform", [inner, s, x]) =>
+      match do_inverse_mellin_doit(inner, s, x) {
+        Some(res) => res
+        None => expr
       }
     _ => expr
   }

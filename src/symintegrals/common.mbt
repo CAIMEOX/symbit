@@ -426,3 +426,16 @@ fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
 fn quadratic_discriminant(a : Expr, b : Expr, c : Expr) -> Expr {
   expr_sub(expr_mul(b, b), expr_mul(expr_int(4), expr_mul(a, c)))
 }
+
+///|
+fn symbol_name(expr : Expr) -> String? {
+  match expr {
+    @symcore.Expr::Symbol(name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+fn expr_is_symbol(expr : Expr, name : String) -> Bool {
+  symbol_name(expr) == Some(name)
+}

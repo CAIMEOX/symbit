@@ -14,6 +14,14 @@ fn py_expr(expr : Expr) -> String {
       "sympy.And(" + args.map(py_expr).join(", ") + ")"
     @symcore.Expr::Function("Le", [lhs, rhs]) =>
       "sympy.Le(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+    @symcore.Expr::Function("InverseLaplaceTransform", [inner, var_s, var_t]) =>
+      "sympy.InverseLaplaceTransform(" +
+      py_expr(inner) +
+      ", " +
+      py_expr(var_s) +
+      ", " +
+      py_expr(var_t) +
+      ", 0)"
     @symcore.Expr::Symbol("True") => "True"
     _ =>
       "sympy.sympify('" +
@@ -143,4 +151,74 @@ test "symintegrals parity line_integrate and heurisch wrapper" {
     ),
     content="0",
   )
+}
+
+///|
+test "symintegrals parity transforms forward/inverse family" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let k = @symcore.symbol("k")
+
+  let lp_cases : Array[(String, Expr)] = [
+    ("1", @symcore.int(1)),
+    ("x", x),
+    ("exp(2*x)", @symelem.exp(@symcore.int(2) * x)),
+    ("sin(x)", @symelem.sin(x)),
+    ("cos(x)", @symelem.cos(x)),
+    ("1/(x + 1)", (x + @symcore.int(1)) ^ @symcore.int(-1)),
+  ]
+  for item in lp_cases {
+    let ours = doit(laplace_transform(item.1, x, s))
+    let oracle = try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours) +
+      ") - (sympy.laplace_transform(sympy.sympify('" +
+      item.0 +
+      "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le}), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
+    )
+    inspect(oracle, content="0")
+  }
+
+  let ft = @symelem.exp((@symcore.int(-1) * (x ^ @symcore.int(2))))
+  let ours_ft = doit(fourier_transform(ft, x, k))
+  let oracle_ft = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.simplify((" +
+    py_expr(ours_ft) +
+    ") - (sympy.fourier_transform(sympy.exp(-sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k')))))",
+  )
+  inspect(oracle_ft, content="0")
+
+  let ours_ift = doit(inverse_fourier_transform(ours_ft, k, x))
+  let oracle_ift = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.simplify((" +
+    py_expr(ours_ift) +
+    ") - (sympy.exp(-sympy.Symbol('x')**2))))",
+  )
+  inspect(oracle_ift, content="0")
+
+  let inverse_lp_cases : Array[(String, Expr)] = [
+    (
+      "1/s",
+      inverse_laplace_transform(@symcore.symbol("s") ^ @symcore.int(-1), s, x),
+    ),
+    (
+      "s/(s**2 + 4)",
+      inverse_laplace_transform(
+        @symcore.symbol("s") * (((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(4)) ^ @symcore.int(-1)),
+        s,
+        x,
+      ),
+    ),
+  ]
+  for item in inverse_lp_cases {
+    let ours = doit(item.1)
+    let oracle = try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours) +
+      ") - (sympy.inverse_laplace_transform(sympy.sympify('" +
+      item.0 +
+      "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le}), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))))",
+    )
+    inspect(oracle, content="0")
+  }
 }

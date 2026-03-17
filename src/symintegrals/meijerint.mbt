@@ -1,0 +1,122 @@
+///|
+/// Stage-4 Meijer-style heuristics.
+///
+/// The goal here is to cover high-value non-elementary closed forms that are
+/// commonly returned from SymPy through the Meijer G machinery.
+
+///|
+pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
+  let target = expr_simplify(expr)
+  match target {
+    @symcore.Expr::Function("exp", [inner]) =>
+      match extract_erf_scale(inner, var_name) {
+        Some(scale) =>
+          Some(
+            expr_mul(
+              expr_div(sqrt_pi(), expr_int(2)),
+              @symspec.erf(expr_mul(scale, @symcore.symbol(var_name))),
+            ),
+          )
+        None => None
+      }
+    _ =>
+      match sincos_division(target, var_name) {
+        Some(res) => Some(res)
+        None => None
+      }
+  }
+}
+
+///|
+fn sincos_division(expr : Expr, var_name : String) -> Expr? {
+  let (numerator, den_opt) = extract_division(expr)
+  match den_opt {
+    None => None
+    Some(den) =>
+      if !expr_is_symbol(den, var_name) {
+        None
+      } else if numerator.length() != 1 {
+        None
+      } else {
+        match numerator[0] {
+          @symcore.Expr::Function("sin", [arg]) => {
+            match linear_coeffs(arg, var_name) {
+              Some(pair) => {
+                let a = pair.0
+                let b = pair.1
+                if expr_is_zero(b) && !expr_is_zero(a) {
+                  Some(@symspec.si(expr_mul(a, @symcore.symbol(var_name))))
+                } else {
+                  None
+                }
+              }
+              None => None
+            }
+          }
+          @symcore.Expr::Function("cos", [arg]) => {
+            match linear_coeffs(arg, var_name) {
+              Some(pair) => {
+                let a = pair.0
+                let b = pair.1
+                if expr_is_zero(b) && !expr_is_zero(a) {
+                  Some(@symspec.ci(expr_mul(a, @symcore.symbol(var_name))))
+                } else {
+                  None
+                }
+              }
+              None => None
+            }
+          }
+          _ => None
+        }
+      }
+  }
+}
+
+///|
+fn extract_erf_scale(inner : Expr, var_name : String) -> Expr? {
+  match poly_coeffs_upto2(expr_simplify(inner), var_name) {
+    Some(coeffs) =>
+      if !expr_is_zero(coeffs[1]) || !expr_is_zero(coeffs[0]) {
+        None
+      } else {
+        let quad = expr_simplify(coeffs[2])
+        if expr_is_negative(quad) {
+          Some(expr_sqrt_positive(expr_mul(expr_int(-1), quad)))
+        } else {
+          None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn extract_division(expr : Expr) -> (Array[Expr], Expr?) {
+  let simplified = expr_simplify(expr)
+  match simplified {
+    @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) => ([expr_one()], Some(base))
+    @symcore.Expr::Mul(args) => {
+      let numerator : Array[Expr] = []
+      let denominator : Array[Expr] = []
+      for item in args {
+        match item {
+          @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
+            denominator.push(base)
+          _ => numerator.push(item)
+        }
+      }
+      if denominator.length() == 0 {
+        (numerator, None)
+      } else {
+        let den = if denominator.length() == 1 {
+          denominator[0]
+        } else {
+          expr_simplify(@symcore.mul(denominator))
+        }
+        (numerator, Some(den))
+      }
+    }
+    _ => ([simplified], None)
+  }
+}
