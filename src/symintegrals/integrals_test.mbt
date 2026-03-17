@@ -211,6 +211,10 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let shifted_gaussian = @symelem.exp(
     @symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2)),
   )
+  let cosine_gaussian = @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2)))
+  let sine_log_over_x = @symelem.log(x) * (x ^ @symcore.int(-1))
+  let cosine_sqrt_decay = @symelem.exp(@symcore.int(-2) * @symelem.sqrt(x)) *
+    @symelem.cos(@symcore.int(2) * @symelem.sqrt(x))
   assert_eq(
     @symprint.to_string(sine_transform(x, x, k)),
     "SineTransform(x, x, k)",
@@ -250,6 +254,49 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
       ),
     ),
   )
+  let cosine_gaussian_eval = @symprint.to_string(
+    cosine_transform_eval(cosine_gaussian, x, k),
+  )
+  let inverse_cosine_gaussian_eval = @symprint.to_string(
+    doit(
+      inverse_cosine_transform(
+        doit(cosine_transform(cosine_gaussian, x, k)),
+        k,
+        x,
+      ),
+    ),
+  )
+  let sine_log_over_x_eval = @symprint.to_string(
+    doit(sine_transform(sine_log_over_x, x, k)),
+  )
+  let cosine_sqrt_decay_eval = @symprint.to_string(
+    doit(cosine_transform(cosine_sqrt_decay, x, k)),
+  )
+  let hankel_gaussian_eval = @symprint.to_string(
+    hankel_transform_eval(
+      @symelem.exp(@symcore.int(-2) * (r ^ @symcore.int(2))),
+      r,
+      k,
+      @symcore.int(0),
+    ),
+  )
+  let inverse_hankel_gaussian_eval = @symprint.to_string(
+    doit(
+      inverse_hankel_transform(
+        doit(
+          hankel_transform(
+            @symelem.exp(@symcore.int(-2) * (r ^ @symcore.int(2))),
+            r,
+            k,
+            @symcore.int(0),
+          ),
+        ),
+        k,
+        r,
+        @symcore.int(0),
+      ),
+    ),
+  )
   guard !sine_eval.contains("SineTransform") else {
     fail("sine transform stayed unevaluated")
   }
@@ -264,6 +311,24 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   }
   guard !shifted_inverse_fourier_eval.contains("InverseFourierTransform") else {
     fail("shifted gaussian inverse fourier transform stayed unevaluated")
+  }
+  guard !cosine_gaussian_eval.contains("CosineTransform") else {
+    fail("cosine gaussian transform stayed unevaluated")
+  }
+  guard !inverse_cosine_gaussian_eval.contains("InverseCosineTransform") else {
+    fail("inverse cosine gaussian transform stayed unevaluated")
+  }
+  guard !sine_log_over_x_eval.contains("SineTransform") else {
+    fail("sine log-over-x transform stayed unevaluated")
+  }
+  guard !cosine_sqrt_decay_eval.contains("CosineTransform") else {
+    fail("cosine sqrt-decay transform stayed unevaluated")
+  }
+  guard !hankel_gaussian_eval.contains("HankelTransform") else {
+    fail("hankel gaussian transform stayed unevaluated")
+  }
+  guard !inverse_hankel_gaussian_eval.contains("InverseHankelTransform") else {
+    fail("inverse hankel gaussian transform stayed unevaluated")
   }
 }
 

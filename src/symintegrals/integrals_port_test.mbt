@@ -547,6 +547,17 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
     "0",
   )
+  let sine_log_over_x = doit(
+    sine_transform(@symelem.log(x) * (x ^ @symcore.int(-1)), x, k),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sine_log_over_x) +
+      ") - sympy.sine_transform(sympy.log(sympy.Symbol('x'))/sympy.Symbol('x'), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
   let ours_cosine = cosine_transform_eval(
     @symelem.exp(@symcore.int(-2) * x),
     x,
@@ -557,6 +568,79 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_cosine) +
       ") - sympy.cosine_transform(sympy.exp(-2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inv_cosine_linear = doit(inverse_cosine_transform(ours_cosine, k, x))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_cosine_linear) +
+      ") - sympy.exp(-2*sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+  let cosine_half_power = doit(
+    cosine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_half_power) +
+      ") - sympy.cosine_transform(1/sympy.sqrt(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inv_cosine_half_power = doit(
+    inverse_cosine_transform(@symelem.sqrt(k) ^ @symcore.int(-1), k, x),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_cosine_half_power) +
+      ") - 1/sympy.sqrt(sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+  let cosine_recip_quadratic = doit(
+    cosine_transform(
+      ((x ^ @symcore.int(2)) + @symcore.int(4)) ^ @symcore.int(-1),
+      x,
+      k,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_recip_quadratic) +
+      ") - sympy.cosine_transform(1/(sympy.Symbol('x')**2 + 4), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inv_cosine_recip_quadratic = doit(
+    inverse_cosine_transform(cosine_recip_quadratic, k, x),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_cosine_recip_quadratic) +
+      ") - 1/(sympy.Symbol('x')**2 + 4)))",
+    ),
+    "0",
+  )
+  let cosine_sqrt_decay = doit(
+    cosine_transform(
+      @symelem.exp(@symcore.int(-2) * @symelem.sqrt(x)) *
+      @symelem.cos(@symcore.int(2) * @symelem.sqrt(x)),
+      x,
+      k,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_sqrt_decay) +
+      ") - sympy.cosine_transform(sympy.exp(-2*sympy.sqrt(sympy.Symbol('x')))*sympy.cos(2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
     ),
     "0",
   )
@@ -571,6 +655,94 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_hankel) +
       ") - sympy.hankel_transform(sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), 1)))",
+    ),
+    "0",
+  )
+  let inv_hankel_linear = doit(
+    inverse_hankel_transform(ours_hankel, k, r, @symcore.int(1)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_linear) +
+      ") - sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r'))))",
+    ),
+    "0",
+  )
+  let hankel_recip = doit(
+    hankel_transform(r ^ @symcore.int(-1), r, k, @symcore.int(0)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hankel_recip) +
+      ") - sympy.hankel_transform(1/sympy.Symbol('r'), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
+    ),
+    "0",
+  )
+  let inv_hankel_recip = doit(
+    inverse_hankel_transform(k ^ @symcore.int(-1), k, r, @symcore.int(0)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_recip) +
+      ") - 1/sympy.Symbol('r'))) ",
+    ),
+    "0",
+  )
+
+  let cosine_gaussian = doit(
+    cosine_transform(
+      @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2))),
+      x,
+      k,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_gaussian) +
+      ") - sympy.cosine_transform(sympy.exp(-2*sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inv_cosine_gaussian = doit(
+    inverse_cosine_transform(cosine_gaussian, k, x),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_cosine_gaussian) +
+      ") - sympy.exp(-2*sympy.Symbol('x')**2)))",
+    ),
+    "0",
+  )
+
+  let hankel_gaussian = doit(
+    hankel_transform(
+      @symelem.exp(@symcore.int(-2) * (r ^ @symcore.int(2))),
+      r,
+      k,
+      @symcore.int(0),
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hankel_gaussian) +
+      ") - sympy.hankel_transform(sympy.exp(-2*sympy.Symbol('r')**2), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
+    ),
+    "0",
+  )
+  let inv_hankel_gaussian = doit(
+    inverse_hankel_transform(hankel_gaussian, k, r, @symcore.int(0)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_gaussian) +
+      ") - sympy.exp(-2*sympy.Symbol('r')**2)))",
     ),
     "0",
   )

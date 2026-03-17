@@ -1282,6 +1282,10 @@ fn sine_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
 
 ///|
 fn sine_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
+  match sine_log_over_x_term(factors, x_name, k) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   if factors.length() == 1 {
     return sine_base_term(factors[0], x_name, k)
   }
@@ -1326,6 +1330,46 @@ fn sine_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
         ),
       )
     _ => None
+  }
+}
+
+///|
+fn sine_log_over_x_term(
+  factors : Array[Expr],
+  x_name : String,
+  k : Expr,
+) -> Expr? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut saw_log = false
+  let mut saw_inverse_x = false
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("log", [@symcore.Expr::Symbol(name)]) if name ==
+        x_name => saw_log = true
+      _ =>
+        match parse_negative_power(factor, x_name) {
+          Some(power) if expr_eq(power, expr_one()) => saw_inverse_x = true
+          _ => return None
+        }
+    }
+  }
+  if saw_log && saw_inverse_x {
+    Some(
+      expr_div(
+        expr_mul(
+          expr_mul(expr_neg_one(), expr_mul(expr_sqrt_two(), sqrt_pi())),
+          expr_add(
+            @symelem.log(expr_pow(k, expr_int(2))),
+            expr_mul(expr_int(2), @symcore.symbol("EulerGamma")),
+          ),
+        ),
+        expr_int(4),
+      ),
+    )
+  } else {
+    None
   }
 }
 
@@ -1488,15 +1532,57 @@ fn cosine_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
       transform_add(terms, x_name, fn(term) { cosine_doit(term, x_name, k) })
     _ => {
       let (coeff, factors) = split_mul(expr, x_name)
-      if factors.length() == 1 {
-        match cosine_base_term(factors[0], x_name, k) {
-          Some(value) => Some(expr_mul(coeff, value))
-          None => None
-        }
-      } else {
-        None
+      match cosine_mul_term(factors, x_name, k) {
+        Some(value) => Some(expr_mul(coeff, value))
+        None => None
       }
     }
+  }
+}
+
+///|
+fn cosine_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
+  if factors.length() == 1 {
+    return cosine_base_term(factors[0], x_name, k)
+  }
+  if factors.length() == 2 {
+    let mut exp_coeff : Expr? = None
+    let mut cos_coeff : Expr? = None
+    for factor in factors {
+      match factor {
+        @symcore.Expr::Function("exp", [inner]) =>
+          match parse_sqrt_linear(expr_mul(expr_neg_one(), inner), x_name) {
+            Some(a) => exp_coeff = Some(a)
+            None => return None
+          }
+        @symcore.Expr::Function("cos", [inner]) =>
+          match parse_sqrt_linear(inner, x_name) {
+            Some(a) => cos_coeff = Some(a)
+            None => return None
+          }
+        _ => return None
+      }
+    }
+    match (exp_coeff, cos_coeff) {
+      (Some(a1), Some(a2)) if expr_eq(a1, a2) =>
+        Some(
+          expr_div(
+            expr_mul(
+              a1,
+              @symelem.exp(
+                expr_div(
+                  expr_mul(expr_neg_one(), expr_pow(a1, expr_int(2))),
+                  expr_mul(expr_int(2), k),
+                ),
+              ),
+            ),
+            expr_mul(expr_int(2), expr_pow(k, expr_rat(3, 2))),
+          ),
+        )
+      _ => None
+    }
+  } else {
+    None
   }
 }
 
@@ -1546,9 +1632,69 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                   expr_mul(expr_int(2), a),
                 ),
               )
-            None => None
+            None =>
+              match expr {
+                @symcore.Expr::Function("exp", [inner]) =>
+                  match parse_negative_quadratic_exp(inner, x_name) {
+                    Some(a) =>
+                      Some(
+                        expr_div(
+                          expr_mul(
+                            expr_sqrt_two(),
+                            @symelem.exp(
+                              expr_div(
+                                expr_mul(
+                                  expr_neg_one(),
+                                  expr_pow(k, expr_int(2)),
+                                ),
+                                expr_mul(expr_int(4), a),
+                              ),
+                            ),
+                          ),
+                          expr_mul(expr_int(2), expr_sqrt_positive(a)),
+                        ),
+                      )
+                    None => None
+                  }
+                _ => None
+              }
           }
       }
+  }
+}
+
+///|
+fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
+  let simplified = expr_simplify(expr)
+  match simplified {
+    @symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)]) if name ==
+      var_name => Some(expr_one())
+    @symcore.Expr::Mul(args) => {
+      let mut coeff = expr_one()
+      let mut saw_sqrt = false
+      for arg in args {
+        match arg {
+          @symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)]) =>
+            if name == var_name {
+              saw_sqrt = true
+            } else {
+              return None
+            }
+          _ =>
+            if expr_depends_on(arg, var_name) {
+              return None
+            } else {
+              coeff = expr_mul(coeff, arg)
+            }
+        }
+      }
+      if saw_sqrt {
+        Some(coeff)
+      } else {
+        None
+      }
+    }
+    _ => None
   }
 }
 
@@ -1564,6 +1710,14 @@ pub fn do_inverse_cosine_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
 fn inverse_cosine_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
   if matches_negative_power_transform(expr, k_name, x, false) is Some(v) {
     return Some(v)
+  }
+  match inverse_cosine_reciprocal_quadratic_term(expr, k_name, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_cosine_gaussian_term(expr, k_name, x) {
+    Some(v) => return Some(v)
+    None => ()
   }
   let (num, den_opt) = split_division(expr)
   match den_opt {
@@ -1592,6 +1746,78 @@ fn inverse_cosine_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
 }
 
 ///|
+fn inverse_cosine_reciprocal_quadratic_term(
+  expr : Expr,
+  k_name : String,
+  x : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match parse_negative_linear_exp(factors[0], k_name) {
+    Some(a) => {
+      let expected = expr_div(
+        expr_mul(expr_sqrt_two(), sqrt_pi()),
+        expr_mul(expr_int(2), a),
+      )
+      if expr_eq(coeff, expected) {
+        Some(
+          expr_div(
+            expr_one(),
+            expr_add(expr_pow(a, expr_int(2)), expr_pow(x, expr_int(2))),
+          ),
+        )
+      } else {
+        None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn inverse_cosine_gaussian_term(
+  expr : Expr,
+  k_name : String,
+  x : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match factors[0] {
+    @symcore.Expr::Function("exp", [inner]) =>
+      match parse_negative_quadratic_exp(inner, k_name) {
+        Some(scale) => {
+          let a = expr_div(expr_one(), expr_mul(expr_int(4), scale))
+          let forward_coeff = expr_div(
+            expr_sqrt_two(),
+            expr_mul(expr_int(2), expr_sqrt_positive(a)),
+          )
+          let simplified_coeff = expr_mul(
+            expr_sqrt_two(),
+            expr_sqrt_positive(scale),
+          )
+          if expr_eq(coeff, forward_coeff) ||
+            expr_eq(coeff, simplified_coeff) ||
+            expr_eq(expr_pow(coeff, expr_int(2)), expr_mul(expr_int(2), scale)) {
+            Some(
+              @symelem.exp(
+                expr_mul(expr_neg_one(), expr_mul(a, expr_pow(x, expr_int(2)))),
+              ),
+            )
+          } else {
+            None
+          }
+        }
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 pub fn do_hankel_doit(expr : Expr, r : Expr, k : Expr, nu : Expr) -> Expr? {
   match symbol_name(r) {
     Some(r_name) => hankel_doit(expr_simplify(expr), r_name, k, nu)
@@ -1615,6 +1841,10 @@ fn hankel_mul_term(
   k : Expr,
   nu : Expr,
 ) -> Expr? {
+  match hankel_gaussian_term(factors, r_name, k, nu) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   if factors.length() == 1 {
     return hankel_base_term(factors[0], r_name, k, nu)
   }
@@ -1660,6 +1890,57 @@ fn hankel_mul_term(
     }
   } else {
     None
+  }
+}
+
+///|
+fn hankel_gaussian_term(
+  factors : Array[Expr],
+  r_name : String,
+  k : Expr,
+  nu : Expr,
+) -> Expr? {
+  let mut power = expr_zero()
+  let mut decay : Expr? = None
+  for factor in factors {
+    match parse_power_factor(factor, r_name) {
+      Some(p) => power = expr_add(power, p)
+      None =>
+        match factor {
+          @symcore.Expr::Function("exp", [inner]) =>
+            match parse_negative_quadratic_exp(inner, r_name) {
+              Some(a) =>
+                if decay is None {
+                  decay = Some(a)
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          _ => return None
+        }
+    }
+  }
+  match decay {
+    Some(a) if expr_eq(power, nu) =>
+      Some(
+        expr_mul(
+          expr_mul(
+            expr_pow(k, nu),
+            expr_pow(
+              expr_div(expr_one(), expr_mul(expr_int(2), a)),
+              expr_add(nu, expr_one()),
+            ),
+          ),
+          @symelem.exp(
+            expr_div(
+              expr_mul(expr_neg_one(), expr_pow(k, expr_int(2))),
+              expr_mul(expr_int(4), a),
+            ),
+          ),
+        ),
+      )
+    _ => None
   }
 }
 
@@ -1713,7 +1994,10 @@ fn inverse_hankel_doit(
   if matches_hankel_power_transform(expr, k_name, r, nu) is Some(v) {
     return Some(v)
   }
-  inverse_hankel_exp_term(expr, k_name, r, nu)
+  match inverse_hankel_gaussian_term(expr, k_name, r, nu) {
+    Some(v) => Some(v)
+    None => inverse_hankel_exp_term(expr, k_name, r, nu)
+  }
 }
 
 ///|
@@ -3040,6 +3324,63 @@ fn inverse_hankel_exp_term(
     )
   } else {
     None
+  }
+}
+
+///|
+fn inverse_hankel_gaussian_term(
+  expr : Expr,
+  k_name : String,
+  r : Expr,
+  nu : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  let mut power = expr_zero()
+  let mut scale : Expr? = None
+  for factor in factors {
+    match parse_power_factor(factor, k_name) {
+      Some(p) => power = expr_add(power, p)
+      None =>
+        match factor {
+          @symcore.Expr::Function("exp", [inner]) =>
+            match parse_negative_quadratic_exp(inner, k_name) {
+              Some(a) =>
+                if scale is None {
+                  scale = Some(a)
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          _ => return None
+        }
+    }
+  }
+  match scale {
+    Some(v) if expr_eq(power, nu) => {
+      let a = expr_div(expr_one(), expr_mul(expr_int(4), v))
+      let expected = expr_pow(
+        expr_mul(expr_int(2), v),
+        expr_add(nu, expr_one()),
+      )
+      let forward_coeff = expr_pow(
+        expr_div(expr_one(), expr_mul(expr_int(2), a)),
+        expr_add(nu, expr_one()),
+      )
+      if expr_eq(coeff, expected) || expr_eq(coeff, forward_coeff) {
+        Some(
+          expr_mul(
+            expr_pow(r, nu),
+            @symelem.exp(
+              expr_mul(expr_neg_one(), expr_mul(a, expr_pow(r, expr_int(2)))),
+            ),
+          ),
+        )
+      } else {
+        None
+      }
+    }
+    _ => None
   }
 }
 
