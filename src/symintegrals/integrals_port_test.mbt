@@ -272,15 +272,57 @@ test "symintegrals parity transforms forward/inverse family" {
         x,
       ),
     ),
+    (
+      "1/(s**2 + 1)**2",
+      inverse_laplace_transform(
+        ((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^
+        @symcore.int(-2),
+        s,
+        x,
+      ),
+    ),
+    (
+      "s/(s**2 + 1)**2",
+      inverse_laplace_transform(
+        @symcore.symbol("s") *
+        (
+          ((@symcore.symbol("s") ^ @symcore.int(2)) + @symcore.int(1)) ^
+          @symcore.int(-2)
+        ),
+        s,
+        x,
+      ),
+    ),
+    (
+      "1/(s**2 - 1)**2",
+      inverse_laplace_transform(
+        ((@symcore.symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
+        @symcore.int(-2),
+        s,
+        x,
+      ),
+    ),
+    (
+      "s/(s**2 - 1)**2",
+      inverse_laplace_transform(
+        @symcore.symbol("s") *
+        (
+          ((@symcore.symbol("s") ^ @symcore.int(2)) - @symcore.int(1)) ^
+          @symcore.int(-2)
+        ),
+        s,
+        x,
+      ),
+    ),
   ]
   for item in inverse_lp_cases {
     let ours = doit(item.1)
     let oracle = try! @sympy_integrals.integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
+      "sympy.sstr(sympy.simplify(sympy.trigsimp(sympy.expand(((" +
       py_expr(ours) +
       ") - (sympy.inverse_laplace_transform(sympy.sympify('" +
       item.0 +
-      "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le}), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))))",
+      "', locals={'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'And': sympy.And, 'Le': sympy.Le}), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True))).rewrite(sympy.exp)))))",
     )
     inspect(oracle, content="0")
   }
