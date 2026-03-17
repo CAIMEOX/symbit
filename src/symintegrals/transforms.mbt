@@ -94,6 +94,14 @@ fn laplace_mul_term(
   if factors.length() == 0 {
     return laplace_base_term(expr_one(), t_name, s)
   }
+  match laplace_delta_term(factors, t_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match laplace_heaviside_shift_term(factors, t_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   let mut exp_coeff : Expr? = None
   let mut exp_const = expr_zero()
   let rest : Array[Expr] = []
@@ -132,6 +140,118 @@ fn laplace_mul_term(
             (expr_mul(@symelem.exp(exp_const), value), expr_add(plane, a), cond),
           )
         None => Some((value, plane, cond))
+      }
+    None => None
+  }
+}
+
+///|
+fn laplace_delta_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  let mut delta_at : Expr? = None
+  let rest : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("DiracDelta", [arg]) =>
+        match linear_coeffs(arg, t_name) {
+          Some((coeff, offset)) =>
+            if delta_at is None &&
+              (expr_is_one(coeff) || expr_is_minus_one(coeff)) {
+              delta_at = Some(
+                if expr_is_one(coeff) {
+                  expr_mul(expr_neg_one(), offset)
+                } else {
+                  offset
+                },
+              )
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => rest.push(factor)
+    }
+  }
+  match delta_at {
+    Some(at) =>
+      if expr_is_negative(at) {
+        Some((expr_zero(), neg_oo_expr(), true_expr()))
+      } else {
+        Some(
+          (
+            expr_simplify(
+              expr_mul(
+                subst_symbol(factors_expr(rest), t_name, at),
+                @symelem.exp(expr_mul(expr_neg_one(), expr_mul(at, s))),
+              ),
+            ),
+            neg_oo_expr(),
+            nonnegative_condition(at),
+          ),
+        )
+      }
+    None => None
+  }
+}
+
+///|
+fn laplace_heaviside_shift_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  let mut shift : Expr? = None
+  let rest : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("Heaviside", [arg]) =>
+        match parse_heaviside_limit(arg, t_name) {
+          Some((bound, is_le)) =>
+            if shift is None && !is_le {
+              shift = Some(bound)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => rest.push(factor)
+    }
+  }
+  match shift {
+    Some(bound) =>
+      if expr_is_negative(bound) {
+        None
+      } else {
+        let shift_name = if t_name == "_laplace_u" {
+          "_laplace_v"
+        } else {
+          "_laplace_u"
+        }
+        let shift_var = @symcore.symbol(shift_name)
+        let shifted = subst_symbol(
+          factors_expr(rest),
+          t_name,
+          expr_add(shift_var, bound),
+        )
+        match laplace_info_doit(expr_simplify(shifted), shift_name, s) {
+          Some((value, plane, cond)) =>
+            Some(
+              (
+                expr_simplify(
+                  expr_mul(
+                    @symelem.exp(expr_mul(expr_neg_one(), expr_mul(bound, s))),
+                    value,
+                  ),
+                ),
+                plane,
+                and_expr(cond, nonnegative_condition(bound)),
+              ),
+            )
+          None => None
+        }
       }
     None => None
   }
@@ -215,7 +335,110 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
+    @symcore.Expr::Function("Derivative", args) =>
+      laplace_derivative_term(args, t_name, s)
     _ => None
+  }
+}
+
+///|
+fn laplace_derivative_term(
+  args : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  let order = match laplace_derivative_order(args, t_name) {
+    Some(v) if v > 0 => v
+    _ => return None
+  }
+  let base = args[0]
+  let t_sym = @symcore.symbol(t_name)
+  let (base_value, plane, cond) = match
+    laplace_info_doit(expr_simplify(base), t_name, s) {
+    Some(info) => info
+    None =>
+      (
+        @symcore.raw_function("LaplaceTransform", [base, t_sym, s]),
+        neg_oo_expr(),
+        true_expr(),
+      )
+  }
+  let leading = expr_mul(expr_pow(s, expr_int(order)), base_value)
+  let init_terms : Array[Expr] = []
+  for idx in 0..<order {
+    let init = laplace_initial_value(base, t_sym, t_name, idx)
+    let s_pow = order - idx - 1
+    init_terms.push(
+      if s_pow == 0 {
+        init
+      } else {
+        expr_mul(expr_pow(s, expr_int(s_pow)), init)
+      },
+    )
+  }
+  Some(
+    (
+      expr_simplify(
+        expr_sub(
+          leading,
+          if init_terms.length() == 1 {
+            init_terms[0]
+          } else {
+            expr_simplify(@symcore.add(init_terms))
+          },
+        ),
+      ),
+      plane,
+      cond,
+    ),
+  )
+}
+
+///|
+fn laplace_derivative_order(args : Array[Expr], t_name : String) -> Int? {
+  if args.length() < 2 {
+    return None
+  }
+  let mut order = 0
+  let mut saw_var = false
+  for idx in 1..<args.length() {
+    match args[idx] {
+      @symcore.Expr::Symbol(name) if name == t_name => {
+        order += 1
+        saw_var = true
+      }
+      @symcore.Expr::Number(n) if saw_var &&
+        n.is_integral() &&
+        n.numerator().to_int() >= 1 => order += n.numerator().to_int() - 1
+      _ => return None
+    }
+  }
+  if saw_var {
+    Some(order)
+  } else {
+    None
+  }
+}
+
+///|
+fn laplace_initial_value(
+  base : Expr,
+  t_sym : Expr,
+  t_name : String,
+  order : Int,
+) -> Expr {
+  if order == 0 {
+    expr_simplify(subst_symbol(base, t_name, expr_zero()))
+  } else {
+    let mut deriv = base
+    for _ in 0..<order {
+      deriv = @symcalculus.diff(deriv, t_sym)
+    }
+    if expr_has_function_name(deriv, "Derivative") {
+      @symcore.raw_function("Subs", [deriv, t_sym, expr_zero()])
+    } else {
+      expr_simplify(subst_symbol(deriv, t_name, expr_zero()))
+    }
   }
 }
 
@@ -259,20 +482,69 @@ fn inverse_laplace_doit(expr : Expr, s_name : String, t : Expr) -> Expr? {
       transform_add(terms, s_name, fn(term) {
         inverse_laplace_doit(term, s_name, t)
       })
-    _ => {
-      let (num_exprs, den_opt) = split_division(expr)
-      match den_opt {
-        None => None
-        Some(den) => {
-          let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
-          match var_expr_opt {
-            None => inverse_laplace_no_var(coeff, den, t, s_name)
-            Some(var_expr) =>
-              inverse_laplace_with_var(coeff, var_expr, den, t, s_name)
+    _ =>
+      match inverse_laplace_delay_term(expr, s_name, t) {
+        Some(v) => Some(v)
+        None => {
+          let (num_exprs, den_opt) = split_division(expr)
+          match den_opt {
+            None => None
+            Some(den) => {
+              let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
+              match var_expr_opt {
+                None => inverse_laplace_no_var(coeff, den, t, s_name)
+                Some(var_expr) =>
+                  inverse_laplace_with_var(coeff, var_expr, den, t, s_name)
+              }
+            }
           }
         }
       }
+  }
+}
+
+///|
+fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  let t_name = match symbol_name(t) {
+    Some(v) => v
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut delay : Expr? = None
+  let mut exp_const = expr_zero()
+  let rest : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("exp", [inner]) =>
+        match linear_coeffs(inner, s_name) {
+          Some((coeff, offset)) if expr_is_negative(coeff) =>
+            if delay is None {
+              delay = Some(expr_mul(expr_neg_one(), coeff))
+              exp_const = offset
+            } else {
+              return None
+            }
+          _ => rest.push(factor)
+        }
+      _ => rest.push(factor)
     }
+  }
+  match delay {
+    Some(amount) =>
+      match
+        inverse_laplace_doit(
+          expr_simplify(expr_mul(@symelem.exp(exp_const), factors_expr(rest))),
+          s_name,
+          t,
+        ) {
+        Some(value) =>
+          Some(expr_simplify(subst_symbol(value, t_name, expr_sub(t, amount))))
+        None => None
+      }
+    None => None
   }
 }
 
@@ -283,29 +555,35 @@ fn inverse_laplace_no_var(
   t : Expr,
   s_name : String,
 ) -> Expr? {
-  let s_sym = @symcore.symbol(s_name)
-  if expr_eq(den, s_sym) {
-    Some(expr_mul(coeff, @symspec.heaviside(t)))
-  } else {
-    match split_linear_coeff(den, s_name) {
-      Some(pair) => {
-        let a = pair.0
-        let b = pair.1
-        if expr_is_zero(a) {
-          None
+  match split_linear_power_denom(den, s_name) {
+    Some((a, b, power)) =>
+      if expr_is_zero(a) {
+        None
+      } else {
+        let scale = expr_div(
+          coeff,
+          expr_mul(
+            expr_pow(a, expr_int(power)),
+            factorial_expr(expr_int(power - 1)),
+          ),
+        )
+        let tpow = if power == 1 {
+          expr_one()
         } else {
-          Some(
+          expr_pow(t, expr_int(power - 1))
+        }
+        Some(
+          expr_simplify(
             expr_mul(
-              expr_mul(expr_div(coeff, a), @symspec.heaviside(t)),
+              expr_mul(expr_mul(scale, tpow), @symspec.heaviside(t)),
               @symelem.exp(
                 expr_mul(expr_div(expr_neg_one(), a), expr_mul(b, t)),
               ),
             ),
-          )
-        }
+          ),
+        )
       }
-      None => None
-    }
+    None => None
   }
 }
 
@@ -1524,6 +1802,17 @@ fn split_mul_factor(factors : Array[Expr], var_name : String) -> (Expr, Expr?) {
 }
 
 ///|
+fn factors_expr(factors : Array[Expr]) -> Expr {
+  if factors.length() == 0 {
+    expr_one()
+  } else if factors.length() == 1 {
+    factors[0]
+  } else {
+    expr_simplify(@symcore.mul(factors))
+  }
+}
+
+///|
 fn split_linear_coeff(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match poly_coeffs_upto2(expr_simplify(expr), var_name) {
     Some(coeffs) =>
@@ -1533,6 +1822,29 @@ fn split_linear_coeff(expr : Expr, var_name : String) -> (Expr, Expr)? {
         None
       }
     _ => None
+  }
+}
+
+///|
+fn split_linear_power_denom(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Expr, Int)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power > 0 =>
+          match split_linear_coeff(base, var_name) {
+            Some((a, b)) => Some((a, b, power))
+            None => None
+          }
+        _ => None
+      }
+    _ =>
+      match split_linear_coeff(expr, var_name) {
+        Some((a, b)) => Some((a, b, 1))
+        None => None
+      }
   }
 }
 
@@ -1625,11 +1937,18 @@ fn true_expr() -> Expr {
 }
 
 ///|
+fn false_expr() -> Expr {
+  @symcore.symbol("False")
+}
+
+///|
 fn and_expr(lhs : Expr, rhs : Expr) -> Expr {
   if lhs == true_expr() {
     rhs
   } else if rhs == true_expr() {
     lhs
+  } else if lhs == false_expr() || rhs == false_expr() {
+    false_expr()
   } else if expr_eq(lhs, rhs) {
     lhs
   } else {
@@ -1660,6 +1979,19 @@ fn min_expr(lhs : Expr, rhs : Expr) -> Expr {
       } else {
         @symcore.function("Min", [lhs, rhs])
       }
+  }
+}
+
+///|
+fn nonnegative_condition(expr : Expr) -> Expr {
+  match expr_num_value(expr_simplify(expr)) {
+    Some(value) =>
+      if value.compare(@symnum.BigRational::zero()) >= 0 {
+        true_expr()
+      } else {
+        false_expr()
+      }
+    None => @symcore.function("Ge", [expr, expr_zero()])
   }
 }
 
@@ -1902,6 +2234,20 @@ fn inverse_hankel_exp_term(
     )
   } else {
     None
+  }
+}
+
+///|
+fn expr_has_function_name(expr : Expr, name : String) -> Bool {
+  match expr {
+    @symcore.Expr::Function(func_name, args) =>
+      func_name == name ||
+      args.any(fn(arg) { expr_has_function_name(arg, name) })
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.any(fn(arg) { expr_has_function_name(arg, name) })
+    @symcore.Expr::Pow(base, exp) =>
+      expr_has_function_name(base, name) || expr_has_function_name(exp, name)
+    _ => false
   }
 }
 

@@ -247,6 +247,88 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
 }
 
 ///|
+test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let f_of_x = @symcore.raw_function("f", [x])
+
+  inspect(
+    @symprint.to_string(
+      doit(laplace_transform(@symspec.dirac_delta(x - @symcore.int(2)), x, s)),
+    ),
+    content="exp((-2*s))",
+  )
+  inspect(
+    @symprint.to_string(
+      doit(laplace_transform(@symspec.heaviside(x - @symcore.int(2)), x, s)),
+    ),
+    content="s**-1*exp((-2*s))",
+  )
+  inspect(
+    @symprint.to_string(
+      doit(
+        laplace_transform(
+          (x - @symcore.int(2)) * @symspec.heaviside(x - @symcore.int(2)),
+          x,
+          s,
+        ),
+      ),
+    ),
+    content="s**-2*exp((-2*s))",
+  )
+
+  let deriv_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symcore.raw_function("Derivative", [f_of_x, x]),
+      x,
+      s,
+    ),
+  )
+  guard deriv_eval.contains("LaplaceTransform(f(x), x, s)") else {
+    fail("missing generic LaplaceTransform object in derivative rule")
+  }
+  guard deriv_eval.contains("f(0)") else {
+    fail("missing initial value term in derivative rule")
+  }
+}
+
+///|
+test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+
+  let delayed = @symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        @symelem.exp(@symcore.int(-2) * s) *
+        ((s + @symcore.int(1)) ^ @symcore.int(-2)),
+        s,
+        x,
+      ),
+    ),
+  )
+  guard delayed.contains("Heaviside") else {
+    fail("delayed inverse Laplace missed Heaviside shift")
+  }
+  guard delayed.contains("x + -2") else {
+    fail("delayed inverse Laplace missed time shift")
+  }
+
+  inspect(
+    @symprint.to_string(
+      doit(
+        inverse_laplace_transform(
+          (@symcore.int(2) * s + @symcore.int(4)) ^ @symcore.int(-3),
+          s,
+          x,
+        ),
+      ),
+    ),
+    content="1/16*x**2*exp((-2*x))*Heaviside(x)",
+  )
+}
+
+///|
 test "symintegrals quadrature and intpoly exact stage 6 paths" {
   let (leg_nodes, leg_weights) = try! gauss_legendre(3, n_digits=5)
   guard leg_nodes.length() == 3 && leg_weights.length() == 3 else {

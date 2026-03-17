@@ -1,6 +1,6 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
 }
 
 ///|
@@ -372,6 +372,116 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_hankel) +
       ") - sympy.hankel_transform(sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), 1)))",
+    ),
+    "0",
+  )
+}
+
+///|
+test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay rules" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let f_of_x = @symcore.raw_function("f", [x])
+
+  let delta_eval = laplace_transform_eval(
+    @symspec.dirac_delta(x - @symcore.int(2)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(delta_eval) + ")",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+
+  let heaviside_eval = laplace_transform_eval(
+    @symspec.heaviside(x - @symcore.int(2)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(heaviside_eval) + ")",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform(sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+
+  let shifted_poly_eval = laplace_transform_eval(
+    (x - @symcore.int(2)) * @symspec.heaviside(x - @symcore.int(2)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(shifted_poly_eval) + ")",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform((sympy.Symbol('x') - 2)*sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+
+  let deriv1_eval = laplace_transform_eval(
+    @symcore.raw_function("Derivative", [f_of_x, x]),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(deriv1_eval) + ")",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
+    ),
+  )
+
+  let deriv2_eval = laplace_transform_eval(
+    @symcore.raw_function("Derivative", [f_of_x, x, @symcore.int(2)]),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(deriv2_eval) + ")",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), (x, 2)), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
+    ),
+  )
+
+  let delayed_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-2) * s) *
+      ((s + @symcore.int(1)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(delayed_inverse) +
+      ") - sympy.inverse_laplace_transform(sympy.exp(-2*sympy.Symbol('s'))/(sympy.Symbol('s') + 1)**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let linear_power_inverse = doit(
+    inverse_laplace_transform(
+      (@symcore.int(2) * s + @symcore.int(4)) ^ @symcore.int(-3),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(linear_power_inverse) +
+      ") - sympy.inverse_laplace_transform((2*sympy.Symbol('s') + 4)**-3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
     ),
     "0",
   )
