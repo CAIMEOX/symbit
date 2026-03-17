@@ -222,3 +222,77 @@ test "symintegrals parity transforms forward/inverse family" {
     inspect(oracle, content="0")
   }
 }
+
+///|
+test "symintegrals parity Mellin forward and inverse" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+
+  let mt_cases : Array[(Expr, String)] = [
+    (
+      @symelem.exp(x),
+      "sympy.mellin_transform(sympy.exp(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)",
+    ),
+    (
+      (x ^ @symcore.int(1)) * @symspec.heaviside(@symcore.int(1) - x),
+      "sympy.mellin_transform(sympy.Symbol('x')*sympy.Heaviside(1-sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)",
+    ),
+    (
+      (x ^ @symcore.int(1)) * @symspec.heaviside(x - @symcore.int(1)),
+      "sympy.mellin_transform(sympy.Symbol('x')*sympy.Heaviside(sympy.Symbol('x')-1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)",
+    ),
+  ]
+  for item in mt_cases {
+    let ours = do_mellin_doit(item.0, x, s).unwrap()
+    let oracle = try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ours) +
+      ") - (" +
+      item.1 +
+      ")))",
+    )
+    inspect(oracle, content="0")
+  }
+
+  let exp_inv = do_mellin_doit(@symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(-1))), x, s).unwrap()
+  let inv_exp_oracle = try! @sympy_integrals.integrals_eval_str(
+    "sympy.sstr(sympy.simplify((" +
+    py_expr(exp_inv) +
+    ") - (sympy.mellin_transform(sympy.exp(-sympy.Symbol('x') ** -1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
+  )
+  inspect(inv_exp_oracle, content="0")
+
+  let imt_cases : Array[(Expr, String)] = [
+    (
+      @symspec.gamma(s),
+      "sympy.inverse_mellin_transform(sympy.gamma(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), (0, sympy.oo), noconds=True)",
+    ),
+    (
+      @symspec.gamma(s * @symcore.int(-1)),
+      "sympy.inverse_mellin_transform(sympy.gamma(-sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('x'), (-sympy.oo, 0), noconds=True)",
+    ),
+    (
+      s ^ @symcore.int(-1),
+      "sympy.inverse_mellin_transform(1/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), (None, sympy.oo), noconds=True)",
+    ),
+    (
+      @symcore.int(-1) * (s ^ @symcore.int(-1)),
+      "sympy.inverse_mellin_transform(-1/sympy.Symbol('s'), sympy.Symbol('s'), sympy.Symbol('x'), (-sympy.oo, None), noconds=True)",
+    ),
+  ]
+  for item in imt_cases {
+    match do_inverse_mellin_doit(item.0, s, x) {
+      Some(ours) => {
+        let inv = try! @sympy_integrals.integrals_eval_str(
+          "sympy.sstr(sympy.simplify((" +
+          py_expr(ours) +
+          ") - (" +
+          item.1 +
+          ")))",
+        )
+        inspect(inv, content="0")
+      }
+      None => inspect(@symprint.to_string(item.0), content="NONE")
+    }
+  }
+}

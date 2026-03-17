@@ -337,7 +337,8 @@ fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
 ///|
 pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
   match (symbol_name(x), symbol_name(s)) {
-    (Some(_), Some(_)) => None
+    (Some(x_name), Some(s_name)) =>
+      mellin_doit(expr_simplify(_expr), x_name, @symcore.symbol(s_name))
     _ => None
   }
 }
@@ -345,8 +346,325 @@ pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
 ///|
 pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
   match (symbol_name(s), symbol_name(x)) {
-    (Some(_), Some(_)) => None
+    (Some(s_name), Some(_)) => inverse_mellin_doit(expr_simplify(_expr), s_name, x)
     _ => None
+  }
+}
+
+fn mellin_doit(expr : Expr, x_name : String, s : Expr) -> Expr? {
+  match expr {
+    @symcore.Expr::Add(terms) =>
+      transform_add(terms, x_name, fn (term) { mellin_doit(term, x_name, s) })
+    _ => {
+      let (coeff, factors) = split_mul(expr, x_name)
+      if factors.length() == 0 {
+        None
+      } else {
+        match mellin_mul_term(factors, x_name, s) {
+          Some(v) => Some(expr_mul(coeff, v))
+          None => None
+        }
+      }
+    }
+  }
+}
+
+fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  let mut pow_opt : Expr? = None
+  let mut exp_opt : (Expr, Int)? = None
+  let mut heav_opt : (Expr, Bool)? = None
+  let mut other_count = 0
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("exp", [inner]) => {
+        match parse_mellin_exp(inner, x_name) {
+          Some((coef, degree)) =>
+            if exp_opt is None {
+              exp_opt = Some((coef, degree))
+            } else {
+              return None
+            }
+          None => return None
+        }
+      }
+      @symcore.Expr::Function("Heaviside", [arg]) => {
+        match parse_heaviside_limit(arg, x_name) {
+          Some((bound, is_le)) =>
+            if heav_opt is None {
+              heav_opt = Some((bound, is_le))
+            } else {
+              return None
+            }
+          None => other_count += 1
+        }
+      }
+      _ =>
+        match parse_power_factor(factor, x_name) {
+          Some(p) =>
+            match pow_opt {
+              None => pow_opt = Some(p)
+              Some(prev) => pow_opt = Some(expr_add(prev, p))
+            }
+          None => other_count += 1
+        }
+    }
+  }
+  if other_count != 0 {
+    return None
+  }
+  let pow = match pow_opt {
+    Some(v) => v
+    None => expr_zero()
+  }
+  match (exp_opt, heav_opt) {
+    (Some((coef, degree)), None) =>
+      Some(mellin_exp_formula(pow, coef, degree, s))
+    (None, Some((bound, is_le))) =>
+      Some(mellin_heaviside_term(pow, bound, is_le, s))
+    _ => None
+  }
+}
+
+fn parse_power_factor(expr : Expr, x_name : String) -> Expr? {
+  match expr {
+    @symcore.Expr::Symbol(name) =>
+      if name == x_name {
+        Some(expr_one())
+      } else {
+        None
+      }
+    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) =>
+      if name == x_name {
+        Some(exp)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+fn parse_mellin_exp(inner : Expr, x_name : String) -> (Expr, Int)? {
+  match parse_mellin_inverse_exp(inner, x_name) {
+    Some(coef) => Some((coef, -1))
+    None => parse_mellin_polynomial_exp(inner, x_name)
+  }
+}
+
+fn parse_mellin_polynomial_exp(inner : Expr, x_name : String) -> (Expr, Int)? {
+  match poly_coeffs_upto2(inner, x_name) {
+    Some(coeffs) =>
+      if !expr_is_zero(coeffs[0]) {
+        None
+      } else if !expr_is_zero(coeffs[1]) && expr_is_zero(coeffs[2]) {
+        if expr_is_constant(expr_simplify(coeffs[1]), x_name) {
+          Some((coeffs[1], 1))
+        } else {
+          None
+        }
+      } else if !expr_is_zero(coeffs[2]) && expr_is_zero(coeffs[1]) {
+        if expr_is_constant(expr_simplify(coeffs[2]), x_name) {
+          Some((coeffs[2], 2))
+        } else {
+          None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+fn parse_mellin_inverse_exp(inner : Expr, x_name : String) -> Expr? {
+  let (coeff, vars) = split_mul(inner, x_name)
+  match vars.length() {
+    1 => match vars[0] {
+      @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) =>
+        if name == x_name &&
+          expr_is_minus_one(exp) &&
+          expr_is_constant(expr_simplify(coeff), x_name) &&
+          expr_is_negative(coeff) {
+          Some(coeff)
+        } else {
+          None
+        }
+      _ => None
+    }
+    _ => None
+  }
+}
+
+fn parse_heaviside_limit(arg : Expr, x_name : String) -> (Expr, Bool)? {
+  match linear_coeffs(arg, x_name) {
+    Some((coeff, offset)) =>
+      if expr_is_one(coeff) {
+        Some((expr_mul(expr_neg_one(), offset), false))
+      } else if expr_is_minus_one(coeff) {
+        Some((offset, true))
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+fn mellin_exp_formula(pow : Expr, coef : Expr, degree : Int, s : Expr) -> Expr {
+  let shifted = expr_add(s, pow)
+  if degree == 1 {
+    if expr_is_positive(expr_simplify(coef)) {
+      let phase = expr_mul(
+        expr_mul(
+          expr_mul(expr_neg_one(), @symcore.symbol("I")),
+          @symcore.symbol("pi"),
+        ),
+        shifted,
+      )
+      let gamma_factor = expr_pow(
+        coef,
+        expr_mul(expr_neg_one(), shifted),
+      )
+      let lower = @symspec.lowergamma(shifted, neg_oo_expr())
+      expr_mul(
+        @symelem.exp(phase),
+        expr_mul(gamma_factor, lower),
+      )
+    } else {
+      expr_mul(
+        expr_pow(expr_mul(expr_neg_one(), coef), expr_mul(expr_neg_one(), shifted)),
+        @symspec.gamma(shifted),
+      )
+    }
+    } else {
+      if degree == -1 {
+      let norm = expr_mul(expr_neg_one(), coef)
+      let coef_factor = if expr_eq(norm, expr_one()) {
+        expr_one()
+      } else {
+        expr_pow(norm, shifted)
+      }
+      expr_mul(
+        coef_factor,
+        @symspec.gamma(expr_sub(expr_zero(), shifted)),
+      )
+    } else {
+      expr_div(
+        expr_mul(
+          expr_pow(
+            coef,
+            expr_mul(expr_neg_one(), expr_div(shifted, expr_int(degree))),
+          ),
+          @symspec.gamma(expr_div(shifted, expr_int(degree))),
+        ),
+        expr_int(degree),
+      )
+    }
+  }
+}
+
+fn mellin_heaviside_term(
+  pow : Expr,
+  bound : Expr,
+  is_le : Bool,
+  s : Expr,
+) -> Expr {
+  let scale = expr_div(
+    expr_pow(bound, expr_add(s, pow)),
+    expr_add(s, pow),
+  )
+  if is_le {
+    scale
+  } else {
+    expr_mul(expr_neg_one(), scale)
+  }
+}
+
+fn expr_is_constant(expr : Expr, symbol_name : String) -> Bool {
+  !expr_depends_on(expr, symbol_name)
+}
+
+fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
+  let s_sym = @symcore.symbol(s_name)
+  match expr {
+    @symcore.Expr::Add(terms) =>
+      transform_add(terms, s_name, fn (term) { inverse_mellin_doit(term, s_name, x) })
+    _ => {
+      let (num, den_opt) = split_division(expr)
+      let numerator = if num.length() == 0 {
+        expr_one()
+      } else if num.length() == 1 {
+        num[0]
+      } else {
+        expr_simplify(@symcore.mul(num))
+      }
+      let direct_gamma = match den_opt {
+        None =>
+          match numerator {
+            @symcore.Expr::Function("gamma", [arg]) =>
+              if expr_eq(arg, s_sym) {
+                Some(@symelem.exp(expr_mul(expr_neg_one(), x)))
+              } else if expr_eq(arg, expr_mul(expr_neg_one(), s_sym)) {
+                Some(@symelem.exp(expr_div(expr_neg_one(), x)))
+              } else {
+                None
+              }
+            _ => None
+          }
+        Some(_) => None
+      }
+      if direct_gamma is Some(gamma_inv) {
+        return Some(gamma_inv)
+      }
+      let (num_coeff, vars_opt) = split_mul(numerator, s_name)
+      if vars_opt.length() != 0 {
+        None
+      } else {
+        match den_opt {
+          None =>
+            match numerator {
+              @symcore.Expr::Function("gamma", [arg]) =>
+                if expr_eq(arg, s_sym) {
+                  Some(@symelem.exp(expr_mul(expr_neg_one(), x)))
+                } else if expr_eq(arg, expr_mul(expr_neg_one(), s_sym)) {
+                  Some(@symelem.exp(expr_div(expr_neg_one(), x)))
+                } else {
+                  None
+                }
+              _ => None
+            }
+          Some(den) =>
+          match linear_coeffs(den, s_name) {
+            Some((s_coeff, shift)) =>
+              if expr_is_zero(s_coeff) {
+                None
+              } else {
+                let norm_shift = expr_div(shift, s_coeff)
+                let norm_num = expr_div(num_coeff, s_coeff)
+                let (side_is_le, coeff_abs) =
+                  if expr_is_negative(norm_num) {
+                    (false, expr_mul(expr_neg_one(), norm_num))
+                  } else {
+                    (true, norm_num)
+                  }
+                Some(
+                  expr_mul(
+                    coeff_abs,
+                    inverse_mellin_term(norm_shift, side_is_le, x),
+                  ),
+                )
+              }
+              _ => None
+            }
+        }
+      }
+    }
+  }
+}
+
+fn inverse_mellin_term(pow : Expr, is_le : Bool, x : Expr) -> Expr {
+  let xpow = if expr_is_zero(pow) { expr_one() } else { expr_pow(x, pow) }
+  if is_le {
+    expr_mul(xpow, @symspec.heaviside(expr_sub(expr_one(), x)))
+  } else {
+    expr_mul(xpow, @symspec.heaviside(expr_sub(x, expr_one())))
   }
 }
 
@@ -392,6 +710,14 @@ fn split_mul(expr : Expr, var_name : String) -> (Expr, Array[Expr]) {
 fn split_division(expr : Expr) -> (Array[Expr], Expr?) {
   let simplified = expr_simplify(expr)
   match simplified {
+    @symcore.Expr::Pow(base, exp) if expr_is_int_value(exp) is Some(exp_int) && exp_int < 0 => {
+      let n = -exp_int
+      if n == 1 {
+        ([], Some(base))
+      } else {
+        ([], Some(base ^ @symcore.int(n)))
+      }
+    }
     @symcore.Expr::Mul(args) => {
       let num : Array[Expr] = []
       let den : Array[Expr] = []
@@ -528,4 +854,15 @@ fn expr_is_negative(expr : Expr) -> Bool {
     Some(value) => value.compare(@symnum.BigRational::zero()) < 0
     None => false
   }
+}
+
+fn expr_is_positive(expr : Expr) -> Bool {
+  match expr_num_value(expr_simplify(expr)) {
+    Some(value) => value.compare(@symnum.BigRational::zero()) > 0
+    None => false
+  }
+}
+
+fn neg_oo_expr() -> Expr {
+  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
 }
