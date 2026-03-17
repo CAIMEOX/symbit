@@ -326,6 +326,39 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     ),
     content="1/16*x**2*exp((-2*x))*Heaviside(x)",
   )
+
+  let shifted_quad = @symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+        @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+  )
+  guard !shifted_quad.contains("InverseLaplaceTransform") &&
+    shifted_quad.contains("Heaviside") else {
+    fail("shifted quadratic inverse Laplace stayed unevaluated")
+  }
+
+  let shifted_quad_num = @symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        (s + @symcore.int(1)) *
+        (
+          (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+          @symcore.int(-1)
+        ),
+        s,
+        x,
+      ),
+    ),
+  )
+  guard !shifted_quad_num.contains("InverseLaplaceTransform") &&
+    shifted_quad_num.contains("Heaviside") else {
+    fail("shifted quadratic numerator inverse Laplace stayed unevaluated")
+  }
 }
 
 ///|

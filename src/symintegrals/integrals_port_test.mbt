@@ -485,6 +485,43 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
     "0",
   )
+
+  let shifted_quad_inverse = doit(
+    inverse_laplace_transform(
+      (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+      @symcore.int(-1),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(shifted_quad_inverse) +
+      ") - sympy.inverse_laplace_transform(1/((sympy.Symbol('s') + 1)**2 + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let shifted_quad_num_inverse = doit(
+    inverse_laplace_transform(
+      (s + @symcore.int(1)) *
+      (
+        (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(shifted_quad_num_inverse) +
+      ") - sympy.inverse_laplace_transform((sympy.Symbol('s') + 1)/((sympy.Symbol('s') + 1)**2 + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
 }
 
 ///|

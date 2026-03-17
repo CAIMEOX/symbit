@@ -555,35 +555,57 @@ fn inverse_laplace_no_var(
   t : Expr,
   s_name : String,
 ) -> Expr? {
-  match split_linear_power_denom(den, s_name) {
-    Some((a, b, power)) =>
-      if expr_is_zero(a) {
+  match split_shifted_square_denom(den, s_name) {
+    Some((lead, shift, freq)) =>
+      if expr_is_zero(freq) {
         None
       } else {
-        let scale = expr_div(
-          coeff,
-          expr_mul(
-            expr_pow(a, expr_int(power)),
-            factorial_expr(expr_int(power - 1)),
-          ),
-        )
-        let tpow = if power == 1 {
-          expr_one()
-        } else {
-          expr_pow(t, expr_int(power - 1))
-        }
         Some(
           expr_simplify(
             expr_mul(
-              expr_mul(expr_mul(scale, tpow), @symspec.heaviside(t)),
-              @symelem.exp(
-                expr_mul(expr_div(expr_neg_one(), a), expr_mul(b, t)),
+              expr_mul(
+                expr_mul(
+                  expr_div(coeff, expr_mul(lead, freq)),
+                  @symelem.exp(expr_mul(expr_neg_one(), expr_mul(shift, t))),
+                ),
+                @symelem.sin(expr_mul(freq, t)),
               ),
+              @symspec.heaviside(t),
             ),
           ),
         )
       }
-    None => None
+    None =>
+      match split_linear_power_denom(den, s_name) {
+        Some((a, b, power)) =>
+          if expr_is_zero(a) {
+            None
+          } else {
+            let scale = expr_div(
+              coeff,
+              expr_mul(
+                expr_pow(a, expr_int(power)),
+                factorial_expr(expr_int(power - 1)),
+              ),
+            )
+            let tpow = if power == 1 {
+              expr_one()
+            } else {
+              expr_pow(t, expr_int(power - 1))
+            }
+            Some(
+              expr_simplify(
+                expr_mul(
+                  expr_mul(expr_mul(scale, tpow), @symspec.heaviside(t)),
+                  @symelem.exp(
+                    expr_mul(expr_div(expr_neg_one(), a), expr_mul(b, t)),
+                  ),
+                ),
+              ),
+            )
+          }
+        None => None
+      }
   }
 }
 
@@ -595,28 +617,44 @@ fn inverse_laplace_with_var(
   t : Expr,
   s_name : String,
 ) -> Expr? {
-  let s_sym = @symcore.symbol(s_name)
-  let freq_opt = denom_to_square_freq(den, s_name)
-  match freq_opt {
-    Some(freq) =>
+  match split_shifted_square_denom(den, s_name) {
+    Some((lead, shift, freq)) =>
       if expr_is_zero(freq) {
         None
-      } else if expr_eq(num_var, expr_one()) {
-        Some(
-          expr_mul(
-            expr_mul(expr_div(coeff, freq), @symspec.heaviside(t)),
-            @symelem.sin(expr_mul(freq, t)),
-          ),
-        )
-      } else if expr_eq(num_var, s_sym) {
-        Some(
-          expr_mul(
-            expr_mul(coeff, @symspec.heaviside(t)),
-            @symelem.cos(expr_mul(freq, t)),
-          ),
-        )
       } else {
-        None
+        match split_linear_coeff(num_var, s_name) {
+          Some((lin_coeff, lin_const)) => {
+            let centered_const = expr_sub(lin_const, expr_mul(lin_coeff, shift))
+            let cos_part = if expr_is_zero(lin_coeff) {
+              expr_zero()
+            } else {
+              expr_mul(lin_coeff, @symelem.cos(expr_mul(freq, t)))
+            }
+            let sin_part = if expr_is_zero(centered_const) {
+              expr_zero()
+            } else {
+              expr_mul(
+                expr_div(centered_const, freq),
+                @symelem.sin(expr_mul(freq, t)),
+              )
+            }
+            Some(
+              expr_simplify(
+                expr_mul(
+                  expr_mul(
+                    expr_mul(
+                      expr_div(coeff, lead),
+                      @symelem.exp(expr_mul(expr_neg_one(), expr_mul(shift, t))),
+                    ),
+                    @symspec.heaviside(t),
+                  ),
+                  expr_add(cos_part, sin_part),
+                ),
+              ),
+            )
+          }
+          None => None
+        }
       }
     None => None
   }
@@ -1845,6 +1883,35 @@ fn split_linear_power_denom(
         Some((a, b)) => Some((a, b, 1))
         None => None
       }
+  }
+}
+
+///|
+fn split_shifted_square_denom(
+  den : Expr,
+  s_name : String,
+) -> (Expr, Expr, Expr)? {
+  match poly_coeffs_upto2(expr_simplify(den), s_name) {
+    Some(coeffs) =>
+      if expr_is_zero(coeffs[2]) ||
+        expr_depends_on(coeffs[0], s_name) ||
+        expr_depends_on(coeffs[1], s_name) ||
+        expr_depends_on(coeffs[2], s_name) {
+        None
+      } else {
+        let lead = coeffs[2]
+        let shift = expr_div(coeffs[1], expr_mul(expr_int(2), lead))
+        let remainder = expr_sub(
+          expr_div(coeffs[0], lead),
+          expr_pow(shift, expr_int(2)),
+        )
+        if expr_is_negative(remainder) || expr_is_zero(remainder) {
+          None
+        } else {
+          Some((lead, shift, expr_sqrt_positive(remainder)))
+        }
+      }
+    None => None
   }
 }
 
