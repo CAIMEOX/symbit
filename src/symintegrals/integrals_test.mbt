@@ -489,6 +489,37 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   ).contains("InverseLaplaceTransform") else {
     fail("linear hyperbolic double-pole inverse Laplace stayed unevaluated")
   }
+  guard !@symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+        @symcore.int(2) ^
+        @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+  ).contains("InverseLaplaceTransform") else {
+    fail("shifted quadratic double-pole inverse Laplace stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      inverse_laplace_transform(
+        s *
+        (
+          (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+          @symcore.int(2) ^
+          @symcore.int(-1)
+        ),
+        s,
+        x,
+      ),
+    ),
+  ).contains("InverseLaplaceTransform") else {
+    fail(
+      "linear shifted quadratic double-pole inverse Laplace stayed unevaluated",
+    )
+  }
 }
 
 ///|

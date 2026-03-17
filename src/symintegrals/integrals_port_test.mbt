@@ -336,6 +336,33 @@ test "symintegrals parity transforms forward/inverse family" {
         x,
       ),
     ),
+    (
+      "1/((s + 1)**2 + 4)**2",
+      inverse_laplace_transform(
+        (
+          ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) +
+          @symcore.int(4)
+        ) ^
+        @symcore.int(-2),
+        s,
+        x,
+      ),
+    ),
+    (
+      "s/((s + 1)**2 + 4)**2",
+      inverse_laplace_transform(
+        @symcore.symbol("s") *
+        (
+          (
+            ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) +
+            @symcore.int(4)
+          ) ^
+          @symcore.int(-2)
+        ),
+        s,
+        x,
+      ),
+    ),
   ]
   for item in inverse_lp_cases {
     let ours = doit(item.1)
