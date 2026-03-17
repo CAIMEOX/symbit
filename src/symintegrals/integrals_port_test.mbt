@@ -337,6 +337,60 @@ test "symintegrals parity transforms forward/inverse family" {
       ),
     ),
     (
+      "1/((s + 1)**2 - 4)",
+      inverse_laplace_transform(
+        (
+          ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+          @symcore.int(4)
+        ) ^
+        @symcore.int(-1),
+        s,
+        x,
+      ),
+    ),
+    (
+      "(s + 1)/((s + 1)**2 - 4)",
+      inverse_laplace_transform(
+        (@symcore.symbol("s") + @symcore.int(1)) *
+        (
+          (
+            ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+            @symcore.int(4)
+          ) ^
+          @symcore.int(-1)
+        ),
+        s,
+        x,
+      ),
+    ),
+    (
+      "1/((s + 1)**2 - 4)**2",
+      inverse_laplace_transform(
+        (
+          ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+          @symcore.int(4)
+        ) ^
+        @symcore.int(-2),
+        s,
+        x,
+      ),
+    ),
+    (
+      "s/((s + 1)**2 - 4)**2",
+      inverse_laplace_transform(
+        @symcore.symbol("s") *
+        (
+          (
+            ((@symcore.symbol("s") + @symcore.int(1)) ^ @symcore.int(2)) -
+            @symcore.int(4)
+          ) ^
+          @symcore.int(-2)
+        ),
+        s,
+        x,
+      ),
+    ),
+    (
       "1/((s + 1)**2 + 4)**2",
       inverse_laplace_transform(
         (
