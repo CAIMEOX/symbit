@@ -432,6 +432,53 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       } else {
         None
       }
+    @symcore.Expr::Function("Si", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        Some(
+          (
+            expr_div(@symelem.atan(expr_pow(s, expr_int(-1))), s),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Shi", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        Some(
+          (
+            expr_div(@symelem.acoth(s), s),
+            neg_oo_expr(),
+            @symcore.function("Gt", [expr_pow(s, expr_int(2)), expr_one()]),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Chi", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        Some(
+          (
+            expr_div(
+              expr_sub(
+                @symelem.log(expr_pow(s, expr_int(-2))),
+                @symelem.log(
+                  expr_sub(
+                    expr_one(),
+                    expr_div(expr_one(), expr_pow(s, expr_int(2))),
+                  ),
+                ),
+              ),
+              expr_mul(expr_int(2), s),
+            ),
+            neg_oo_expr(),
+            @symcore.function("Gt", [expr_pow(s, expr_int(2)), expr_one()]),
+          ),
+        )
+      } else {
+        None
+      }
     @symcore.Expr::Function("E1", [@symcore.Expr::Symbol(name)]) =>
       if name == t_name {
         Some(

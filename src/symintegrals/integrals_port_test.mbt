@@ -1,6 +1,6 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
 }
 
 ///|
@@ -1301,6 +1301,78 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       ") - sympy.laplace_transform(sympy.Ci(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
     ),
     "0",
+  )
+
+  let si_laplace = doit(laplace_transform(@symspec.si(x), x, s))
+  for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
+    assert_eq(
+      try! @sympy_integrals.integrals_eval_str(
+        "sympy.sstr(sympy.Abs(sympy.N(((" +
+        py_expr(si_laplace) +
+        ").subs(sympy.Symbol('s'), " +
+        sample +
+        ")) - (sympy.laplace_transform(sympy.Si(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True).subs(sympy.Symbol('s'), " +
+        sample +
+        ")), 50)) < sympy.Float('1e-40'))",
+      ),
+      "True",
+    )
+  }
+
+  let shi_laplace = laplace_transform_eval(@symspec.shi(x), x, s)
+  for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
+    assert_eq(
+      try! @sympy_integrals.integrals_eval_str(
+        "sympy.sstr(sympy.Abs(sympy.N(((" +
+        py_expr(shi_laplace) +
+        ")[0]).subs(sympy.Symbol('s'), " +
+        sample +
+        ") - (sympy.laplace_transform(sympy.Shi(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True).subs(sympy.Symbol('s'), " +
+        sample +
+        ")), 50)) < sympy.Float('1e-40'))",
+      ),
+      "True",
+    )
+  }
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(shi_laplace) + ")[1])",
+    ),
+    "-oo",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(shi_laplace) + ")[2])",
+    ),
+    "s**2 > 1",
+  )
+
+  let chi_laplace = laplace_transform_eval(@symspec.chi(x), x, s)
+  for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
+    assert_eq(
+      try! @sympy_integrals.integrals_eval_str(
+        "sympy.sstr(sympy.Abs(sympy.N(((" +
+        py_expr(chi_laplace) +
+        ")[0]).subs(sympy.Symbol('s'), " +
+        sample +
+        ") - (sympy.laplace_transform(sympy.Chi(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True).subs(sympy.Symbol('s'), " +
+        sample +
+        ")), 50)) < sympy.Float('1e-40'))",
+      ),
+      "True",
+    )
+  }
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(chi_laplace) + ")[1])",
+    ),
+    "-oo",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(chi_laplace) + ")[2])",
+    ),
+    "s**2 > 1",
   )
 
   let e1_laplace = doit(laplace_transform(@symspec.e1(x), x, s))

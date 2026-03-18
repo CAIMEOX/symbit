@@ -721,6 +721,21 @@ test "symintegrals Laplace special-function rules evaluate" {
   ) else {
     fail("Ci Laplace transform stayed unevaluated")
   }
+  guard !@symprint.to_string(doit(laplace_transform(@symspec.si(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("Si Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(laplace_transform(@symspec.shi(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("Shi Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(laplace_transform(@symspec.chi(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("Chi Laplace transform stayed unevaluated")
+  }
   guard !@symprint.to_string(doit(laplace_transform(@symspec.e1(x), x, s))).contains(
     "LaplaceTransform",
   ) else {
