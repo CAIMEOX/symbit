@@ -5223,6 +5223,25 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
   if expr_eq(expr_simplify(expr), expr_simplify(ci_sqrt_formula)) {
     return Some(@symspec.ci(@symelem.sqrt(x)))
   }
+  let sec_formula = expr_div(
+    @symcore.symbol("pi"),
+    @symelem.cos(expr_mul(@symcore.symbol("pi"), s_sym)),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(sec_formula)) {
+    return Some(expr_div(@symelem.sqrt(x), expr_add(x, expr_one())))
+  }
+  let log_quadratic_formula = expr_div(
+    @symcore.symbol("pi"),
+    expr_mul(
+      s_sym,
+      @symelem.sin(
+        expr_div(expr_mul(@symcore.symbol("pi"), s_sym), expr_int(2)),
+      ),
+    ),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(log_quadratic_formula)) {
+    return Some(@symelem.log(expr_add(expr_pow(x, expr_int(2)), expr_one())))
+  }
   None
 }
 

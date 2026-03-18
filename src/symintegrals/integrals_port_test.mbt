@@ -1788,6 +1788,36 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let log_quadratic_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    ((s * @symelem.sin(@symcore.symbol("pi") * s * half)) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_quadratic_inverse) +
+      ") - sympy.log(sympy.Symbol('x')**2 + 1)))",
+    ),
+    "0",
+  )
+
+  let sec_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    (@symelem.cos(@symcore.symbol("pi") * s) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sec_inverse) +
+      ") - (sympy.sqrt(sympy.Symbol('x'))/(sympy.Symbol('x') + 1))))",
+    ),
+    "0",
+  )
 }
 
 ///|
