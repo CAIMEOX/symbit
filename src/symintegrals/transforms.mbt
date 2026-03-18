@@ -102,6 +102,10 @@ fn laplace_mul_term(
     Some(info) => return Some(info)
     None => ()
   }
+  match laplace_distribute_add_term(factors, t_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   let mut exp_coeff : Expr? = None
   let mut exp_const = expr_zero()
   let rest : Array[Expr] = []
@@ -129,14 +133,43 @@ fn laplace_mul_term(
   match base_info {
     Some((value, plane, cond)) =>
       match exp_coeff {
-        Some(a) =>
-          Some(
-            (expr_mul(@symelem.exp(exp_const), value), expr_add(plane, a), cond),
-          )
+        Some(a) => {
+          let shifted_plane = if expr_eq(plane, neg_oo_expr()) {
+            expr_add(plane, @symelem.re(a))
+          } else {
+            expr_add(plane, a)
+          }
+          Some((expr_mul(@symelem.exp(exp_const), value), shifted_plane, cond))
+        }
         None => Some((value, plane, cond))
       }
     None => None
   }
+}
+
+///|
+fn laplace_distribute_add_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  for i in 0..<factors.length() {
+    match factors[i] {
+      @symcore.Expr::Add(terms) => {
+        let expanded : Array[Expr] = []
+        for term in terms {
+          let items : Array[Expr] = []
+          for j in 0..<factors.length() {
+            items.push(if i == j { term } else { factors[j] })
+          }
+          expanded.push(factors_expr(items))
+        }
+        return laplace_add_info(expanded, t_name, s)
+      }
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
@@ -153,7 +186,11 @@ fn laplace_rest_term(
     return laplace_base_term(factors[0], t_name, shifted_s)
   }
   match symbol_name(s) {
-    Some(_) => laplace_power_times_term(factors, t_name, shifted_s, s)
+    Some(_) =>
+      match laplace_power_times_term(factors, t_name, shifted_s, s) {
+        Some(info) => Some(info)
+        None => laplace_generic_shifted_term(factors, t_name, shifted_s)
+      }
     None => None
   }
 }
@@ -182,13 +219,46 @@ fn laplace_power_times_term(
   }
   match laplace_base_term(rest[0], t_name, shifted_s) {
     Some((value, plane, cond)) => {
-      let mut out = value
-      for _ in 0..<total_power {
-        out = expr_mul(expr_neg_one(), @symcalculus.diff(out, s))
+      let out = match laplace_generic_power_derivative(value, s, total_power) {
+        Some(generic_out) => generic_out
+        None => {
+          let mut derived = value
+          for _ in 0..<total_power {
+            derived = expr_mul(expr_neg_one(), @symcalculus.diff(derived, s))
+          }
+          derived
+        }
       }
       Some((expr_simplify(out), plane, cond))
     }
     None => None
+  }
+}
+
+///|
+fn laplace_generic_power_derivative(
+  value : Expr,
+  s : Expr,
+  order : Int,
+) -> Expr? {
+  if order <= 0 {
+    return Some(value)
+  }
+  match value {
+    @symcore.Expr::Function("LaplaceTransform", _)
+    | @symcore.Expr::Function("Derivative", _) => {
+      let deriv = if order == 1 {
+        @symcore.raw_function("Derivative", [value, s])
+      } else {
+        @symcore.raw_function("Derivative", [value, s, expr_int(order)])
+      }
+      if order % 2 == 0 {
+        Some(deriv)
+      } else {
+        Some(expr_mul(expr_neg_one(), deriv))
+      }
+    }
+    _ => None
   }
 }
 
@@ -686,6 +756,151 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       }
     @symcore.Expr::Function("Derivative", args) =>
       laplace_derivative_term(args, t_name, s)
+    _ =>
+      if expr_depends_on(expr, t_name) {
+        Some(generic_laplace_object(expr, t_name, s))
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn generic_laplace_object(
+  expr : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo {
+  (
+    @symcore.raw_function("LaplaceTransform", [expr, @symcore.symbol(t_name), s]),
+    neg_oo_expr(),
+    true_expr(),
+  )
+}
+
+///|
+fn laplace_generic_shifted_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let first = factors[0]
+  let second = factors[1]
+  match laplace_generic_trig_term(first, second, t_name, s) {
+    Some(info) => Some(info)
+    None => laplace_generic_trig_term(second, first, t_name, s)
+  }
+}
+
+///|
+fn laplace_generic_trig_term(
+  trig_factor : Expr,
+  other : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  if !expr_depends_on(other, t_name) {
+    return None
+  }
+  let transform = fn(shifted_s : Expr) {
+    @symcore.raw_function("LaplaceTransform", [
+      other,
+      @symcore.symbol(t_name),
+      shifted_s,
+    ])
+  }
+  match trig_factor {
+    @symcore.Expr::Function("sinh", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) if expr_is_zero(b) =>
+          Some(
+            (
+              expr_mul(
+                expr_rat(1, 2),
+                expr_sub(transform(expr_sub(s, a)), transform(expr_add(s, a))),
+              ),
+              max_expr(
+                expr_add(
+                  expr_mul(expr_neg_one(), @symelem.re(a)),
+                  neg_oo_expr(),
+                ),
+                expr_add(@symelem.re(a), neg_oo_expr()),
+              ),
+              true_expr(),
+            ),
+          )
+        _ => None
+      }
+    @symcore.Expr::Function("cosh", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) if expr_is_zero(b) =>
+          Some(
+            (
+              expr_mul(
+                expr_rat(1, 2),
+                expr_add(transform(expr_sub(s, a)), transform(expr_add(s, a))),
+              ),
+              max_expr(
+                expr_add(
+                  expr_mul(expr_neg_one(), @symelem.re(a)),
+                  neg_oo_expr(),
+                ),
+                expr_add(@symelem.re(a), neg_oo_expr()),
+              ),
+              true_expr(),
+            ),
+          )
+        _ => None
+      }
+    @symcore.Expr::Function("sin", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) if expr_is_zero(b) => {
+          let ia = expr_mul(@symcore.symbol("I"), a)
+          Some(
+            (
+              expr_mul(
+                expr_div(@symcore.symbol("I"), expr_int(2)),
+                expr_sub(transform(expr_add(s, ia)), transform(expr_sub(s, ia))),
+              ),
+              max_expr(
+                expr_add(
+                  expr_mul(expr_neg_one(), @symelem.im(a)),
+                  neg_oo_expr(),
+                ),
+                expr_add(@symelem.im(a), neg_oo_expr()),
+              ),
+              true_expr(),
+            ),
+          )
+        }
+        _ => None
+      }
+    @symcore.Expr::Function("cos", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) if expr_is_zero(b) => {
+          let ia = expr_mul(@symcore.symbol("I"), a)
+          Some(
+            (
+              expr_mul(
+                expr_rat(1, 2),
+                expr_add(transform(expr_add(s, ia)), transform(expr_sub(s, ia))),
+              ),
+              max_expr(
+                expr_add(
+                  expr_mul(expr_neg_one(), @symelem.im(a)),
+                  neg_oo_expr(),
+                ),
+                expr_add(@symelem.im(a), neg_oo_expr()),
+              ),
+              true_expr(),
+            ),
+          )
+        }
+        _ => None
+      }
     _ => None
   }
 }

@@ -726,6 +726,7 @@ test "symintegrals Mellin special-function rules evaluate" {
 test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
   let f_of_x = @symcore.raw_function("f", [x])
 
   inspect(
@@ -796,6 +797,117 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     doit(laplace_transform(x * @symelem.cosh(x), x, s)),
   ).contains("LaplaceTransform") else {
     fail("x*cosh(x) Laplace transform stayed unevaluated")
+  }
+
+  let generic_eval = @symprint.to_string(laplace_transform_eval(f_of_x, x, s))
+  guard generic_eval.contains("LaplaceTransform(f(x), x, s)") else {
+    fail("generic function Laplace tuple missing transform object")
+  }
+  guard generic_eval.contains("oo") else {
+    fail("generic function Laplace tuple missing -oo plane")
+  }
+
+  let scaled_eval = @symprint.to_string(
+    laplace_transform_eval(a * f_of_x, x, s),
+  )
+  guard scaled_eval.contains("a*LaplaceTransform(f(x), x, s)") else {
+    fail("scaled generic Laplace lost scalar factor")
+  }
+
+  let shifted_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symelem.exp(a * (x * @symcore.int(-1))) * f_of_x,
+      x,
+      s,
+    ),
+  )
+  guard shifted_generic_eval.contains("LaplaceTransform(f(x), x,") &&
+    (
+      shifted_generic_eval.contains("a + s)") ||
+      shifted_generic_eval.contains("s + a)")
+    ) else {
+    fail("exponential shift generic Laplace missing shifted transform")
+  }
+
+  let x_generic_eval = @symprint.to_string(
+    laplace_transform_eval(x * f_of_x, x, s),
+  )
+  guard x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)") else {
+    fail("x*f(x) Laplace did not become derivative of transform")
+  }
+
+  let poly_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      (
+        @symcore.int(2) * (x ^ @symcore.int(2)) +
+        @symcore.int(3) * x +
+        @symcore.int(4)
+      ) *
+      f_of_x,
+      x,
+      s,
+    ),
+  )
+  guard poly_generic_eval.contains(
+      "Derivative(LaplaceTransform(f(x), x, s), s, 2)",
+    ) ||
+    poly_generic_eval.contains(
+      "Derivative(LaplaceTransform(f(x), x, s), (s, 2))",
+    ) else {
+    fail("quadratic polynomial generic Laplace missing second derivative")
+  }
+  guard poly_generic_eval.contains(
+    "Derivative(LaplaceTransform(f(x), x, s), s)",
+  ) else {
+    fail("quadratic polynomial generic Laplace missing first derivative")
+  }
+
+  let sinh_generic_eval = @symprint.to_string(
+    laplace_transform_eval(@symelem.sinh(a * x) * f_of_x, x, s),
+  )
+  let sinh_transform_count = sinh_generic_eval
+    .split("LaplaceTransform(f(x), x,")
+    .to_array()
+    .length()
+  guard sinh_transform_count >= 3 && sinh_generic_eval.contains("a") else {
+    fail("sinh generic Laplace missing shifted object terms")
+  }
+
+  let cosh_generic_eval = @symprint.to_string(
+    laplace_transform_eval(@symelem.cosh(a * x) * f_of_x, x, s),
+  )
+  let cosh_transform_count = cosh_generic_eval
+    .split("LaplaceTransform(f(x), x,")
+    .to_array()
+    .length()
+  guard cosh_transform_count >= 3 && cosh_generic_eval.contains("a") else {
+    fail("cosh generic Laplace missing shifted object terms")
+  }
+
+  let sin_generic_eval = @symprint.to_string(
+    laplace_transform_eval(@symelem.sin(a * x) * f_of_x, x, s),
+  )
+  let sin_transform_count = sin_generic_eval
+    .split("LaplaceTransform(f(x), x,")
+    .to_array()
+    .length()
+  guard sin_transform_count >= 3 &&
+    sin_generic_eval.contains("I") &&
+    sin_generic_eval.contains("a") else {
+    fail("sin generic Laplace missing imaginary shifts")
+  }
+
+  let cos_generic_eval = @symprint.to_string(
+    laplace_transform_eval(@symelem.cos(a * x) * f_of_x, x, s),
+  )
+  let cos_transform_count = cos_generic_eval
+    .split("LaplaceTransform(f(x), x,")
+    .to_array()
+    .length()
+  guard cos_transform_count >= 3 &&
+    cos_generic_eval.contains("I") &&
+    cos_generic_eval.contains("a") else {
+    fail("cos generic Laplace missing imaginary shifts")
   }
 }
 
