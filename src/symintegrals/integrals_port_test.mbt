@@ -229,6 +229,68 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   inspect(shifted_ift_oracle, content="0")
 
+  let half_line_ft = doit(
+    fourier_transform(
+      @symelem.exp(@symcore.int(-2) * x) * @symspec.heaviside(x),
+      x,
+      k,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_ft) +
+      ") - sympy.fourier_transform(sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+
+  let half_line_x_ft = doit(
+    fourier_transform(
+      x * @symelem.exp(@symcore.int(-2) * x) * @symspec.heaviside(x),
+      x,
+      k,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_x_ft) +
+      ") - sympy.fourier_transform(sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+
+  let half_line_sin_ft = doit(
+    fourier_transform(
+      @symelem.exp(@symcore.int(-2) * x) *
+      @symelem.sin(@symcore.int(3) * x) *
+      @symspec.heaviside(x),
+      x,
+      k,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_sin_ft) +
+      ") - sympy.fourier_transform(sympy.exp(-2*sympy.Symbol('x'))*sympy.sin(3*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+
+  let abs_decay_ft = doit(
+    fourier_transform(@symelem.exp(@symcore.int(-2) * @symelem.abs(x)), x, k),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(abs_decay_ft) +
+      ") - sympy.fourier_transform(sympy.exp(-2*sympy.Abs(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+
   let inverse_lp_cases : Array[(String, Expr)] = [
     (
       "1/s",
@@ -547,6 +609,39 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
     "0",
   )
+  let sine_half_power = doit(
+    sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sine_half_power) +
+      ") - sympy.sine_transform(1/sympy.sqrt(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_sine_half_power = doit(
+    inverse_sine_transform(@symelem.sqrt(k) ^ @symcore.int(-1), k, x),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_sine_half_power) +
+      ") - 1/sympy.sqrt(sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+  let sine_three_halves = doit(
+    sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1) ^ @symcore.int(3), x, k),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sine_three_halves) +
+      ") - sympy.sine_transform((1/sympy.sqrt(sympy.Symbol('x')))**3, sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
   let sine_log_over_x = doit(
     sine_transform(@symelem.log(x) * (x ^ @symcore.int(-1)), x, k),
   )
@@ -555,6 +650,30 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_log_over_x) +
       ") - sympy.sine_transform(sympy.log(sympy.Symbol('x'))/sympy.Symbol('x'), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let sine_gaussian = doit(
+    sine_transform(
+      x * @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2))),
+      x,
+      k,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sine_gaussian) +
+      ") - sympy.sine_transform(sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_sine_gaussian = doit(inverse_sine_transform(sine_gaussian, k, x))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_sine_gaussian) +
+      ") - sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x')**2)))",
     ),
     "0",
   )

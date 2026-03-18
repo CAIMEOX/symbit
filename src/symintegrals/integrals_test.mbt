@@ -208,13 +208,21 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let x = @symcore.symbol("x")
   let r = @symcore.symbol("r")
   let k = @symcore.symbol("k")
+  let a = @symcore.symbol("a")
   let shifted_gaussian = @symelem.exp(
     @symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2)),
   )
   let cosine_gaussian = @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2)))
   let sine_log_over_x = @symelem.log(x) * (x ^ @symcore.int(-1))
+  let sine_gaussian = x * @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2)))
   let cosine_sqrt_decay = @symelem.exp(@symcore.int(-2) * @symelem.sqrt(x)) *
     @symelem.cos(@symcore.int(2) * @symelem.sqrt(x))
+  let half_line_exp = @symelem.exp(@symcore.int(-2) * x) * @symspec.heaviside(x)
+  let half_line_x_exp = x * half_line_exp
+  let half_line_sin = @symelem.exp(@symcore.int(-2) * x) *
+    @symelem.sin(@symcore.int(3) * x) *
+    @symspec.heaviside(x)
+  let abs_decay = @symelem.exp(@symcore.int(-2) * @symelem.abs(x))
   assert_eq(
     @symprint.to_string(sine_transform(x, x, k)),
     "SineTransform(x, x, k)",
@@ -252,6 +260,59 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
         k,
         x,
       ),
+    ),
+  )
+  let half_line_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(half_line_exp, x, k)),
+  )
+  let half_line_x_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(half_line_x_exp, x, k)),
+  )
+  let half_line_sin_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(half_line_sin, x, k)),
+  )
+  let abs_decay_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(abs_decay, x, k)),
+  )
+  let symbolic_half_line_fourier_eval = @symprint.to_string(
+    doit(
+      fourier_transform(
+        @symelem.exp(@symcore.int(-1) * a * x) * @symspec.heaviside(x),
+        x,
+        k,
+      ),
+    ),
+  )
+  let symbolic_cosine_gaussian_eval = @symprint.to_string(
+    doit(
+      cosine_transform(
+        @symelem.exp(@symcore.int(-1) * a * (x ^ @symcore.int(2))),
+        x,
+        k,
+      ),
+    ),
+  )
+  let sine_half_power_eval = @symprint.to_string(
+    doit(sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k)),
+  )
+  let inverse_sine_half_power_eval = @symprint.to_string(
+    doit(inverse_sine_transform(@symelem.sqrt(k) ^ @symcore.int(-1), k, x)),
+  )
+  let sine_three_halves_eval = @symprint.to_string(
+    doit(
+      sine_transform(
+        @symelem.sqrt(x) ^ @symcore.int(-1) ^ @symcore.int(3),
+        x,
+        k,
+      ),
+    ),
+  )
+  let sine_gaussian_eval = @symprint.to_string(
+    doit(sine_transform(sine_gaussian, x, k)),
+  )
+  let inverse_sine_gaussian_eval = @symprint.to_string(
+    doit(
+      inverse_sine_transform(doit(sine_transform(sine_gaussian, x, k)), k, x),
     ),
   )
   let cosine_gaussian_eval = @symprint.to_string(
@@ -311,6 +372,39 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   }
   guard !shifted_inverse_fourier_eval.contains("InverseFourierTransform") else {
     fail("shifted gaussian inverse fourier transform stayed unevaluated")
+  }
+  guard !half_line_fourier_eval.contains("FourierTransform") else {
+    fail("half-line exponential fourier transform stayed unevaluated")
+  }
+  guard !half_line_x_fourier_eval.contains("FourierTransform") else {
+    fail("half-line x*exp fourier transform stayed unevaluated")
+  }
+  guard !half_line_sin_fourier_eval.contains("FourierTransform") else {
+    fail("half-line sin-exponential fourier transform stayed unevaluated")
+  }
+  guard !abs_decay_fourier_eval.contains("FourierTransform") else {
+    fail("abs-decay fourier transform stayed unevaluated")
+  }
+  guard !symbolic_half_line_fourier_eval.contains("FourierTransform") else {
+    fail("symbolic half-line fourier transform stayed unevaluated")
+  }
+  guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
+    fail("symbolic cosine gaussian transform stayed unevaluated")
+  }
+  guard !sine_half_power_eval.contains("SineTransform") else {
+    fail("sine half-power transform stayed unevaluated")
+  }
+  guard !inverse_sine_half_power_eval.contains("InverseSineTransform") else {
+    fail("inverse sine half-power transform stayed unevaluated")
+  }
+  guard !sine_three_halves_eval.contains("SineTransform") else {
+    fail("sine three-halves transform stayed unevaluated")
+  }
+  guard !sine_gaussian_eval.contains("SineTransform") else {
+    fail("sine gaussian transform stayed unevaluated")
+  }
+  guard !inverse_sine_gaussian_eval.contains("InverseSineTransform") else {
+    fail("inverse sine gaussian transform stayed unevaluated")
   }
   guard !cosine_gaussian_eval.contains("CosineTransform") else {
     fail("cosine gaussian transform stayed unevaluated")

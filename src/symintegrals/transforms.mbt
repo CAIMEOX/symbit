@@ -1187,15 +1187,26 @@ fn fourier_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
           Some(v) => Some(v)
           None => None
         }
-      } else if factors.length() == 1 {
-        match fourier_term(factors[0], x_name, k) {
+      } else {
+        match fourier_mul_term(factors, x_name, k) {
           Some(v) => Some(expr_mul(coeff, v))
           None => None
         }
-      } else {
-        None
       }
     }
+  }
+}
+
+///|
+fn fourier_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
+  match fourier_half_line_term(factors, x_name, k) {
+    Some(value) => return Some(value)
+    None => ()
+  }
+  if factors.length() == 1 {
+    fourier_term(factors[0], x_name, k)
+  } else {
+    None
   }
 }
 
@@ -1203,17 +1214,36 @@ fn fourier_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
 fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
   match expr {
     @symcore.Expr::Function("exp", [inner]) =>
-      match extract_negative_quadratic_poly(inner, x_name) {
-        Some((scale, linear, constant)) =>
+      match parse_negative_abs_linear(inner, x_name) {
+        Some(a) =>
           Some(
-            expr_mul(
-              expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
-              @symelem.exp(
-                fourier_gaussian_exponent(scale, linear, constant, k, false),
+            expr_div(
+              expr_mul(expr_int(2), a),
+              expr_add(
+                expr_pow(a, expr_int(2)),
+                expr_mul(
+                  expr_int(4),
+                  expr_mul(
+                    expr_pow(@symcore.symbol("pi"), expr_int(2)),
+                    expr_pow(k, expr_int(2)),
+                  ),
+                ),
               ),
             ),
           )
-        None => None
+        None =>
+          match extract_negative_quadratic_poly(inner, x_name) {
+            Some((scale, linear, constant)) =>
+              Some(
+                expr_mul(
+                  expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
+                  @symelem.exp(
+                    fourier_gaussian_exponent(scale, linear, constant, k, false),
+                  ),
+                ),
+              )
+            None => None
+          }
       }
     _ => None
   }
@@ -1255,6 +1285,89 @@ fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
       _ => None
     }
   }
+}
+
+///|
+fn fourier_half_line_term(
+  factors : Array[Expr],
+  x_name : String,
+  k : Expr,
+) -> Expr? {
+  let mut exp_rate : Expr? = None
+  let mut power = expr_zero()
+  let mut sine_rate : Expr? = None
+  let mut saw_heaviside = false
+  for factor in factors {
+    match parse_power_factor(factor, x_name) {
+      Some(p) => {
+        power = expr_add(power, p)
+        continue
+      }
+      None => ()
+    }
+    match factor {
+      @symcore.Expr::Function("exp", [inner]) =>
+        match parse_negative_linear_exp_raw(inner, x_name) {
+          Some(a) =>
+            if exp_rate is None {
+              exp_rate = Some(a)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("Heaviside", [arg]) =>
+        match parse_heaviside_limit(arg, x_name) {
+          Some((bound, is_le)) if expr_is_zero(bound) && !is_le =>
+            saw_heaviside = true
+          _ => return None
+        }
+      @symcore.Expr::Function("sin", [inner]) =>
+        match linear_coeffs(inner, x_name) {
+          Some((b, offset)) =>
+            if expr_is_zero(offset) &&
+              expr_is_constant(expr_simplify(b), x_name) {
+              if sine_rate is None {
+                sine_rate = Some(b)
+              } else {
+                return None
+              }
+            } else {
+              return None
+            }
+          _ => return None
+        }
+      _ => return None
+    }
+  }
+  if !saw_heaviside || exp_rate is None {
+    return None
+  }
+  let a = exp_rate.unwrap()
+  let shift = fourier_linear_shift(a, k)
+  match (expr_is_zero(power), expr_eq(power, expr_one()), sine_rate) {
+    (true, _, None) => Some(expr_pow(shift, expr_int(-1)))
+    (_, true, None) => Some(expr_pow(shift, expr_int(-2)))
+    (true, _, Some(b)) =>
+      Some(
+        expr_div(
+          b,
+          expr_add(expr_pow(b, expr_int(2)), expr_pow(shift, expr_int(2))),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn fourier_linear_shift(a : Expr, k : Expr) -> Expr {
+  expr_add(
+    a,
+    expr_mul(
+      expr_int(2),
+      expr_mul(expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")), k),
+    ),
+  )
 }
 
 ///|
@@ -2291,12 +2404,22 @@ fn parse_power_factor(expr : Expr, x_name : String) -> Expr? {
       } else {
         None
       }
+    @symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)]) =>
+      if name == x_name {
+        Some(expr_rat(1, 2))
+      } else {
+        None
+      }
     @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) =>
       if name == x_name {
         Some(exp)
       } else {
         None
       }
+    @symcore.Expr::Pow(
+      @symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)]),
+      exp
+    ) => if name == x_name { Some(expr_div(exp, expr_int(2))) } else { None }
     _ => None
   }
 }
@@ -3087,10 +3210,9 @@ fn nonnegative_condition(expr : Expr) -> Expr {
 
 ///|
 fn parse_negative_power(expr : Expr, var_name : String) -> Expr? {
-  match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == var_name =>
-      Some(expr_mul(expr_neg_one(), exp))
-    _ => None
+  match parse_power_factor(expr, var_name) {
+    Some(power) => extract_explicit_negative_factor(power)
+    None => None
   }
 }
 
@@ -3104,11 +3226,24 @@ fn parse_negative_linear_exp(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+fn parse_negative_abs_linear(inner : Expr, var_name : String) -> Expr? {
+  let (coeff, factors) = split_mul(inner, var_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match factors[0] {
+    @symcore.Expr::Function("Abs", [@symcore.Expr::Symbol(name)]) if name ==
+      var_name => extract_explicit_negative_factor(coeff)
+    _ => None
+  }
+}
+
+///|
 fn parse_negative_linear_exp_raw(inner : Expr, var_name : String) -> Expr? {
   match linear_coeffs(inner, var_name) {
     Some((a, b)) =>
-      if expr_is_zero(b) && expr_is_negative(a) {
-        Some(expr_mul(expr_neg_one(), a))
+      if expr_is_zero(b) {
+        extract_explicit_negative_factor(a)
       } else {
         None
       }
@@ -3120,10 +3255,8 @@ fn parse_negative_linear_exp_raw(inner : Expr, var_name : String) -> Expr? {
 fn parse_negative_quadratic_exp(inner : Expr, var_name : String) -> Expr? {
   match poly_coeffs_upto2(inner, var_name) {
     Some(coeffs) =>
-      if expr_is_zero(coeffs[0]) &&
-        expr_is_zero(coeffs[1]) &&
-        expr_is_negative(coeffs[2]) {
-        Some(expr_mul(expr_neg_one(), coeffs[2]))
+      if expr_is_zero(coeffs[0]) && expr_is_zero(coeffs[1]) {
+        extract_explicit_negative_factor(coeffs[2])
       } else {
         None
       }
