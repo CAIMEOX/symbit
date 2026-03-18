@@ -1812,30 +1812,83 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                 ),
               )
             None =>
-              match expr {
-                @symcore.Expr::Function("exp", [inner]) =>
-                  match parse_negative_quadratic_exp(inner, x_name) {
-                    Some(a) =>
+              match parse_shifted_reciprocal_linear(expr, x_name) {
+                Some(a) =>
+                  Some(
+                    expr_div(
+                      expr_mul(
+                        expr_sqrt_two(),
+                        expr_sub(
+                          expr_mul(
+                            expr_div(
+                              expr_sub(
+                                @symcore.symbol("pi"),
+                                expr_mul(
+                                  expr_int(2),
+                                  @symspec.si(expr_mul(a, k)),
+                                ),
+                              ),
+                              expr_int(2),
+                            ),
+                            @symelem.sin(expr_mul(a, k)),
+                          ),
+                          expr_mul(
+                            @symelem.cos(expr_mul(a, k)),
+                            @symspec.ci(expr_mul(a, k)),
+                          ),
+                        ),
+                      ),
+                      sqrt_pi(),
+                    ),
+                  )
+                None =>
+                  match parse_reciprocal_sqrt_quadratic(expr, x_name) {
+                    Some(a_sq) =>
                       Some(
                         expr_div(
                           expr_mul(
                             expr_sqrt_two(),
-                            @symelem.exp(
+                            @symspec.meijerg(
+                              [expr_rat(1, 2)],
+                              [],
+                              [expr_zero(), expr_zero()],
+                              [expr_rat(1, 2)],
                               expr_div(
-                                expr_mul(
-                                  expr_neg_one(),
-                                  expr_pow(k, expr_int(2)),
-                                ),
-                                expr_mul(expr_int(4), a),
+                                expr_mul(a_sq, expr_pow(k, expr_int(2))),
+                                expr_int(4),
                               ),
                             ),
                           ),
-                          expr_mul(expr_int(2), expr_sqrt_positive(a)),
+                          expr_mul(expr_int(2), sqrt_pi()),
                         ),
                       )
-                    None => None
+                    None =>
+                      match expr {
+                        @symcore.Expr::Function("exp", [inner]) =>
+                          match parse_negative_quadratic_exp(inner, x_name) {
+                            Some(a) =>
+                              Some(
+                                expr_div(
+                                  expr_mul(
+                                    expr_sqrt_two(),
+                                    @symelem.exp(
+                                      expr_div(
+                                        expr_mul(
+                                          expr_neg_one(),
+                                          expr_pow(k, expr_int(2)),
+                                        ),
+                                        expr_mul(expr_int(4), a),
+                                      ),
+                                    ),
+                                  ),
+                                  expr_mul(expr_int(2), expr_sqrt_positive(a)),
+                                ),
+                              )
+                            None => None
+                          }
+                        _ => None
+                      }
                   }
-                _ => None
               }
           }
       }
@@ -1890,6 +1943,10 @@ fn inverse_cosine_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
   if matches_negative_power_transform(expr, k_name, x, false) is Some(v) {
     return Some(v)
   }
+  match inverse_cosine_meijerg_term(expr, k_name, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_cosine_reciprocal_quadratic_term(expr, k_name, x) {
     Some(v) => return Some(v)
     None => ()
@@ -1921,6 +1978,55 @@ fn inverse_cosine_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
       }
     }
     None => None
+  }
+}
+
+///|
+fn inverse_cosine_meijerg_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match parse_cosine_linear_meijerg(factors[0], k_name) {
+    Some(a_sq) => {
+      let expected = expr_div(
+        expr_sqrt_two(),
+        expr_mul(expr_int(2), @symcore.symbol("pi")),
+      )
+      if expr_eq(coeff, expected) {
+        Some(expr_pow(expr_add(x, expr_sqrt_positive(a_sq)), expr_int(-1)))
+      } else {
+        None
+      }
+    }
+    None =>
+      match parse_cosine_sqrt_meijerg(factors[0], k_name) {
+        Some(a_sq) => {
+          let expected = expr_div(
+            expr_sqrt_two(),
+            expr_mul(expr_int(2), sqrt_pi()),
+          )
+          if expr_eq(coeff, expected) {
+            Some(
+              expr_div(
+                expr_one(),
+                expr_mul(
+                  x,
+                  @symelem.sqrt(
+                    expr_add(
+                      expr_div(a_sq, expr_pow(x, expr_int(2))),
+                      expr_one(),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          } else {
+            None
+          }
+        }
+        None => None
+      }
   }
 }
 
@@ -3355,6 +3461,135 @@ fn parse_negative_abs_term(expr : Expr, var_name : String) -> Expr? {
         None => None
       }
     }
+    _ => None
+  }
+}
+
+///|
+fn parse_shifted_reciprocal_linear(expr : Expr, var_name : String) -> Expr? {
+  match split_division(expr) {
+    (num, Some(den)) =>
+      if num.length() == 0 || (num.length() == 1 && expr_is_one(num[0])) {
+        match linear_coeffs(den, var_name) {
+          Some((coeff, offset)) =>
+            if expr_is_one(coeff) && !expr_depends_on(offset, var_name) {
+              Some(offset)
+            } else {
+              None
+            }
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_reciprocal_sqrt_quadratic(expr : Expr, var_name : String) -> Expr? {
+  match split_division(expr) {
+    (num, Some(@symcore.Expr::Function("sqrt", [inner]))) =>
+      if num.length() == 0 || (num.length() == 1 && expr_is_one(num[0])) {
+        match poly_coeffs_upto2(inner, var_name) {
+          Some(coeffs) =>
+            if expr_is_zero(coeffs[1]) &&
+              expr_is_one(coeffs[2]) &&
+              !expr_depends_on(coeffs[0], var_name) {
+              Some(coeffs[0])
+            } else {
+              None
+            }
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_square_scaled_var(expr : Expr, var_name : String) -> Expr? {
+  match poly_coeffs_upto2(expr_simplify(expr), var_name) {
+    Some(coeffs) =>
+      if expr_is_zero(coeffs[0]) &&
+        expr_is_zero(coeffs[1]) &&
+        !expr_depends_on(coeffs[2], var_name) {
+        Some(coeffs[2])
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn tuple_items(expr : Expr) -> Array[Expr]? {
+  match expr {
+    @symcore.Expr::Function("Tuple", args) => Some(args)
+    _ => None
+  }
+}
+
+///|
+fn parse_cosine_linear_meijerg(expr : Expr, k_name : String) -> Expr? {
+  match expr {
+    @symcore.Expr::Function("meijerg", [a, b, z]) =>
+      match
+        (tuple_items(a), tuple_items(b), parse_square_scaled_var(z, k_name)) {
+        (Some([a1, a2]), Some([b1, b2]), Some(scale)) =>
+          match
+            (tuple_items(a1), tuple_items(a2), tuple_items(b1), tuple_items(b2)) {
+            (Some(a1s), Some(a2s), Some(b1s), Some(b2s)) =>
+              if a1s.length() == 2 &&
+                expr_eq(a1s[0], expr_rat(1, 2)) &&
+                expr_is_zero(a1s[1]) &&
+                a2s.is_empty() &&
+                b1s.length() == 3 &&
+                expr_eq(b1s[0], expr_rat(1, 2)) &&
+                expr_is_zero(b1s[1]) &&
+                expr_is_zero(b1s[2]) &&
+                b2s.length() == 1 &&
+                expr_eq(b2s[0], expr_rat(1, 2)) {
+                Some(expr_mul(expr_int(4), scale))
+              } else {
+                None
+              }
+            _ => None
+          }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_cosine_sqrt_meijerg(expr : Expr, k_name : String) -> Expr? {
+  match expr {
+    @symcore.Expr::Function("meijerg", [a, b, z]) =>
+      match
+        (tuple_items(a), tuple_items(b), parse_square_scaled_var(z, k_name)) {
+        (Some([a1, a2]), Some([b1, b2]), Some(scale)) =>
+          match
+            (tuple_items(a1), tuple_items(a2), tuple_items(b1), tuple_items(b2)) {
+            (Some(a1s), Some(a2s), Some(b1s), Some(b2s)) =>
+              if a1s.length() == 1 &&
+                expr_eq(a1s[0], expr_rat(1, 2)) &&
+                a2s.is_empty() &&
+                b1s.length() == 2 &&
+                expr_is_zero(b1s[0]) &&
+                expr_is_zero(b1s[1]) &&
+                b2s.length() == 1 &&
+                expr_eq(b2s[0], expr_rat(1, 2)) {
+                Some(expr_mul(expr_int(4), scale))
+              } else {
+                None
+              }
+            _ => None
+          }
+        _ => None
+      }
     _ => None
   }
 }

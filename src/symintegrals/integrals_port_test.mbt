@@ -613,6 +613,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   let s = @symcore.symbol("s")
   let k = @symcore.symbol("k")
   let r = @symcore.symbol("r")
+  let half = try! @symcore.rational_from_ints(1, 2)
 
   let ours_laplace = laplace_transform_eval(
     @symelem.exp(@symcore.int(2) * x),
@@ -784,6 +785,81 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_recip_quadratic) +
       ") - 1/(sympy.Symbol('x')**2 + 4)))",
+    ),
+    "0",
+  )
+  let cosine_shifted_recip = doit(
+    cosine_transform((x + @symcore.int(2)) ^ @symcore.int(-1), x, k),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_shifted_recip) +
+      ") - sympy.cosine_transform(1/(sympy.Symbol('x') + 2), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_cosine_shifted_recip = doit(
+    inverse_cosine_transform(
+      @symelem.sqrt(@symcore.int(2)) *
+      @symspec.meijerg(
+        [half, @symcore.int(0)],
+        [],
+        [half, @symcore.int(0), @symcore.int(0)],
+        [half],
+        k ^ @symcore.int(2),
+      ) *
+      ((@symcore.int(2) * @symcore.symbol("pi")) ^ @symcore.int(-1)),
+      k,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_cosine_shifted_recip) +
+      ") - 1/(sympy.Symbol('x') + 2)))",
+    ),
+    "0",
+  )
+  let cosine_sqrt_recip = doit(
+    cosine_transform(
+      @symelem.sqrt((x ^ @symcore.int(2)) + @symcore.int(4)) ^ @symcore.int(-1),
+      x,
+      k,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_sqrt_recip) +
+      ") - sympy.cosine_transform(1/sympy.sqrt(sympy.Symbol('x')**2 + 4), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_cosine_sqrt_recip = doit(
+    inverse_cosine_transform(
+      @symelem.sqrt(@symcore.int(2)) *
+      @symspec.meijerg(
+        [half],
+        [],
+        [@symcore.int(0), @symcore.int(0)],
+        [half],
+        k ^ @symcore.int(2),
+      ) *
+      (
+        (@symcore.int(2) * @symelem.sqrt(@symcore.symbol("pi"))) ^
+        @symcore.int(-1)
+      ),
+      k,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_cosine_sqrt_recip) +
+      ") - 1/(sympy.Symbol('x')*sympy.sqrt(4/sympy.Symbol('x')**2 + 1))))",
     ),
     "0",
   )

@@ -215,6 +215,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let cosine_gaussian = @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2)))
   let sine_log_over_x = @symelem.log(x) * (x ^ @symcore.int(-1))
   let sine_gaussian = x * @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2)))
+  let cosine_shifted_recip = (x + @symcore.int(2)) ^ @symcore.int(-1)
+  let cosine_sqrt_recip = @symelem.sqrt((x ^ @symcore.int(2)) + @symcore.int(4)) ^
+    @symcore.int(-1)
   let cosine_sqrt_decay = @symelem.exp(@symcore.int(-2) * @symelem.sqrt(x)) *
     @symelem.cos(@symcore.int(2) * @symelem.sqrt(x))
   let half_line_exp = @symelem.exp(@symcore.int(-2) * x) * @symspec.heaviside(x)
@@ -303,6 +306,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
       ),
     ),
   )
+  let cosine_shifted_recip_eval = @symprint.to_string(
+    doit(cosine_transform(cosine_shifted_recip, x, k)),
+  )
+  let cosine_sqrt_recip_eval = @symprint.to_string(
+    doit(cosine_transform(cosine_sqrt_recip, x, k)),
+  )
   let sine_half_power_eval = @symprint.to_string(
     doit(sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k)),
   )
@@ -333,6 +342,15 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     doit(
       inverse_cosine_transform(
         doit(cosine_transform(cosine_gaussian, x, k)),
+        k,
+        x,
+      ),
+    ),
+  )
+  let inverse_cosine_sqrt_recip_eval = @symprint.to_string(
+    doit(
+      inverse_cosine_transform(
+        doit(cosine_transform(cosine_sqrt_recip, x, k)),
         k,
         x,
       ),
@@ -408,6 +426,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
     fail("symbolic cosine gaussian transform stayed unevaluated")
   }
+  guard !cosine_shifted_recip_eval.contains("CosineTransform") else {
+    fail("cosine shifted reciprocal transform stayed unevaluated")
+  }
+  guard !cosine_sqrt_recip_eval.contains("CosineTransform") else {
+    fail("cosine reciprocal sqrt transform stayed unevaluated")
+  }
   guard !sine_half_power_eval.contains("SineTransform") else {
     fail("sine half-power transform stayed unevaluated")
   }
@@ -428,6 +452,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   }
   guard !inverse_cosine_gaussian_eval.contains("InverseCosineTransform") else {
     fail("inverse cosine gaussian transform stayed unevaluated")
+  }
+  guard !inverse_cosine_sqrt_recip_eval.contains("InverseCosineTransform") else {
+    fail("inverse cosine reciprocal sqrt transform stayed unevaluated")
   }
   guard !sine_log_over_x_eval.contains("SineTransform") else {
     fail("sine log-over-x transform stayed unevaluated")
