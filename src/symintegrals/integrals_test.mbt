@@ -273,14 +273,38 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let half_line_fourier_eval = @symprint.to_string(
     doit(fourier_transform(half_line_exp, x, k)),
   )
+  let half_line_inverse_fourier = doit(
+    inverse_fourier_transform(
+      doit(fourier_transform(half_line_exp, x, k)),
+      k,
+      x,
+    ),
+  )
   let half_line_x_fourier_eval = @symprint.to_string(
     doit(fourier_transform(half_line_x_exp, x, k)),
+  )
+  let half_line_x_inverse_fourier = doit(
+    inverse_fourier_transform(
+      doit(fourier_transform(half_line_x_exp, x, k)),
+      k,
+      x,
+    ),
   )
   let half_line_sin_fourier_eval = @symprint.to_string(
     doit(fourier_transform(half_line_sin, x, k)),
   )
+  let half_line_sin_inverse_fourier = doit(
+    inverse_fourier_transform(
+      doit(fourier_transform(half_line_sin, x, k)),
+      k,
+      x,
+    ),
+  )
   let abs_decay_fourier_eval = @symprint.to_string(
     doit(fourier_transform(abs_decay, x, k)),
+  )
+  let abs_decay_inverse_fourier = doit(
+    inverse_fourier_transform(doit(fourier_transform(abs_decay, x, k)), k, x),
   )
   let symbolic_half_line_fourier_eval = @symprint.to_string(
     doit(
@@ -405,15 +429,43 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   guard !half_line_fourier_eval.contains("FourierTransform") else {
     fail("half-line exponential fourier transform stayed unevaluated")
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(half_line_inverse_fourier),
+      @symsimplify.simplify(half_line_exp),
+    ),
+    0,
+  )
   guard !half_line_x_fourier_eval.contains("FourierTransform") else {
     fail("half-line x*exp fourier transform stayed unevaluated")
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(half_line_x_inverse_fourier),
+      @symsimplify.simplify(half_line_x_exp),
+    ),
+    0,
+  )
   guard !half_line_sin_fourier_eval.contains("FourierTransform") else {
     fail("half-line sin-exponential fourier transform stayed unevaluated")
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(half_line_sin_inverse_fourier),
+      @symsimplify.simplify(half_line_sin),
+    ),
+    0,
+  )
   guard !abs_decay_fourier_eval.contains("FourierTransform") else {
     fail("abs-decay fourier transform stayed unevaluated")
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(abs_decay_inverse_fourier),
+      @symsimplify.simplify(abs_decay),
+    ),
+    0,
+  )
   guard !symbolic_half_line_fourier_eval.contains("FourierTransform") else {
     fail("symbolic half-line fourier transform stayed unevaluated")
   }

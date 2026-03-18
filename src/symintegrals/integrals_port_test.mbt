@@ -244,6 +244,15 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
     content="0",
   )
+  let half_line_ift = doit(inverse_fourier_transform(half_line_ft, k, x))
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_ift) +
+      ") - (sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
+    ),
+    content="0",
+  )
 
   let half_line_x_ft = doit(
     fourier_transform(
@@ -257,6 +266,15 @@ test "symintegrals parity transforms forward/inverse family" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_x_ft) +
       ") - sympy.fourier_transform(sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+  let half_line_x_ift = doit(inverse_fourier_transform(half_line_x_ft, k, x))
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_x_ift) +
+      ") - (sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
     ),
     content="0",
   )
@@ -278,6 +296,17 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
     content="0",
   )
+  let half_line_sin_ift = doit(
+    inverse_fourier_transform(half_line_sin_ft, k, x),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(half_line_sin_ift) +
+      ") - (sympy.exp(-2*sympy.Symbol('x'))*sympy.sin(3*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
+    ),
+    content="0",
+  )
 
   let abs_decay_ft = doit(
     fourier_transform(@symelem.exp(@symcore.int(-2) * @symelem.abs(x)), x, k),
@@ -287,6 +316,15 @@ test "symintegrals parity transforms forward/inverse family" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(abs_decay_ft) +
       ") - sympy.fourier_transform(sympy.exp(-2*sympy.Abs(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+  let abs_decay_ift = doit(inverse_fourier_transform(abs_decay_ft, k, x))
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(abs_decay_ift) +
+      ") - sympy.exp(-2*sympy.Abs(sympy.Symbol('x')))))",
     ),
     content="0",
   )

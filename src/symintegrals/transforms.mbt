@@ -1279,31 +1279,86 @@ pub fn do_inverse_fourier_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
 
 ///|
 fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
-  let (coeff, factors) = split_mul(expr, k_name)
-  if factors.length() == 0 {
-    None
-  } else if factors.length() != 1 {
-    None
-  } else {
-    match factors[0] {
-      @symcore.Expr::Function("exp", [inner]) =>
-        match extract_negative_quadratic_poly(inner, k_name) {
-          Some((scale, linear, constant)) =>
-            Some(
-              expr_mul(
-                coeff,
-                expr_mul(
-                  expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
-                  @symelem.exp(
-                    fourier_gaussian_exponent(scale, linear, constant, x, true),
+  match inverse_fourier_half_line_term(expr_simplify(expr), k_name, x) {
+    Some(v) => Some(v)
+    None => {
+      let (coeff, factors) = split_mul(expr, k_name)
+      if factors.length() == 0 {
+        None
+      } else if factors.length() != 1 {
+        None
+      } else {
+        match factors[0] {
+          @symcore.Expr::Function("exp", [inner]) =>
+            match extract_negative_quadratic_poly(inner, k_name) {
+              Some((scale, linear, constant)) =>
+                Some(
+                  expr_mul(
+                    coeff,
+                    expr_mul(
+                      expr_div(sqrt_pi(), expr_sqrt_positive(scale)),
+                      @symelem.exp(
+                        fourier_gaussian_exponent(
+                          scale, linear, constant, x, true,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
-          None => None
+                )
+              None => None
+            }
+          _ => None
         }
-      _ => None
+      }
     }
+  }
+}
+
+///|
+fn inverse_fourier_half_line_term(
+  expr : Expr,
+  k_name : String,
+  x : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = if num.length() == 0 {
+    expr_one()
+  } else if num.length() == 1 {
+    num[0]
+  } else {
+    expr_simplify(@symcore.mul(num))
+  }
+  let heaviside = @symspec.heaviside(x)
+  match parse_fourier_shift_power(den, k_name) {
+    Some((a, 1)) if expr_is_one(numerator) =>
+      Some(heaviside * @symelem.exp(expr_mul(expr_neg_one(), expr_mul(a, x))))
+    Some((a, 2)) if expr_is_one(numerator) =>
+      Some(
+        heaviside * x * @symelem.exp(expr_mul(expr_neg_one(), expr_mul(a, x))),
+      )
+    _ =>
+      match parse_fourier_shifted_sine_denominator(den, k_name) {
+        Some((a, b)) if expr_eq(numerator, b) =>
+          Some(
+            heaviside *
+            @symelem.exp(expr_mul(expr_neg_one(), expr_mul(a, x))) *
+            @symelem.sin(expr_mul(b, x)),
+          )
+        _ =>
+          match parse_fourier_abs_quadratic(den, k_name) {
+            Some(a) if expr_eq(numerator, expr_mul(expr_int(2), a)) =>
+              Some(
+                @symelem.exp(
+                  expr_mul(expr_neg_one(), expr_mul(a, @symelem.abs(x))),
+                ),
+              )
+            _ => None
+          }
+      }
   }
 }
 
@@ -1434,6 +1489,99 @@ fn fourier_linear_shift(a : Expr, k : Expr) -> Expr {
       expr_mul(expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")), k),
     ),
   )
+}
+
+///|
+fn fourier_linear_shift_coeff() -> Expr {
+  expr_mul(expr_int(2), expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")))
+}
+
+///|
+fn parse_fourier_linear_shift(expr : Expr, k_name : String) -> Expr? {
+  match linear_coeffs(expr_simplify(expr), k_name) {
+    Some((coeff, offset)) =>
+      if expr_eq(coeff, fourier_linear_shift_coeff()) &&
+        !expr_depends_on(offset, k_name) {
+        Some(offset)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_fourier_shift_power(expr : Expr, k_name : String) -> (Expr, Int)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) =>
+          match parse_fourier_linear_shift(base, k_name) {
+            Some(a) if power > 0 => Some((a, power))
+            _ => None
+          }
+        _ => None
+      }
+    _ =>
+      match parse_fourier_linear_shift(expr, k_name) {
+        Some(a) => Some((a, 1))
+        None => None
+      }
+  }
+}
+
+///|
+fn parse_fourier_shifted_sine_denominator(
+  expr : Expr,
+  k_name : String,
+) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut shift : Expr? = None
+      let mut other : Expr? = None
+      for arg in args {
+        match parse_fourier_shift_power(arg, k_name) {
+          Some((a, 2)) =>
+            if shift is None {
+              shift = Some(a)
+            } else {
+              return None
+            }
+          _ =>
+            if expr_depends_on(arg, k_name) {
+              return None
+            } else if other is None {
+              other = Some(arg)
+            } else {
+              return None
+            }
+        }
+      }
+      match (shift, other) {
+        (Some(a), Some(b_sq)) => Some((a, preferred_positive_sqrt(b_sq)))
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_fourier_abs_quadratic(expr : Expr, k_name : String) -> Expr? {
+  match poly_coeffs_upto2(expr_simplify(expr), k_name) {
+    Some(coeffs) =>
+      if expr_is_zero(coeffs[1]) &&
+        !expr_depends_on(coeffs[0], k_name) &&
+        expr_eq(
+          coeffs[2],
+          expr_mul(expr_int(4), expr_pow(@symcore.symbol("pi"), expr_int(2))),
+        ) {
+        Some(preferred_positive_sqrt(coeffs[0]))
+      } else {
+        None
+      }
+    _ => None
+  }
 }
 
 ///|
@@ -3309,6 +3457,14 @@ fn factorial_expr(n : Expr) -> Expr {
 ///|
 fn sqrt_pi() -> Expr {
   @symelem.sqrt(@symcore.symbol("pi"))
+}
+
+///|
+fn preferred_positive_sqrt(expr : Expr) -> Expr {
+  match expr_exact_sqrt(expr_simplify(expr)) {
+    @symcore.Expr::Function("sqrt", _) => expr_sqrt_positive(expr)
+    exact => exact
+  }
 }
 
 ///|
