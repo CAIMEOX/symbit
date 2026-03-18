@@ -5163,6 +5163,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_log_power_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let erf_sqrt_formula = expr_div(
     expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
     expr_mul(sqrt_pi(), s_sym),
@@ -5369,6 +5373,48 @@ fn inverse_mellin_shifted_power_term(
   }
   if has_gamma_s && has_gamma_rho_minus_s {
     Some(expr_pow(expr_add(x, expr_one()), expr_mul(expr_neg_one(), rho)))
+  } else {
+    None
+  }
+}
+
+///|
+fn inverse_mellin_log_power_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let (coeff, factors) = split_mul(expr_simplify(expr), s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  let n = match factors[0] {
+    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == s_name =>
+      match expr_is_int_value(exp) {
+        Some(v) if v <= -2 => -v - 1
+        _ => return None
+      }
+    _ => return None
+  }
+  let factorial = factorial_expr(expr_int(n))
+  let log_pow = if n == 1 {
+    @symelem.log(x)
+  } else {
+    expr_pow(@symelem.log(x), expr_int(n))
+  }
+  let left_coeff = expr_simplify(
+    if n % 2 == 0 {
+      factorial
+    } else {
+      expr_mul(expr_neg_one(), factorial)
+    },
+  )
+  let right_coeff = expr_simplify(expr_mul(expr_neg_one(), left_coeff))
+  let coeff_simplified = expr_simplify(coeff)
+  if expr_eq(coeff_simplified, left_coeff) {
+    Some(expr_mul(log_pow, @symspec.heaviside(expr_sub(expr_one(), x))))
+  } else if expr_eq(coeff_simplified, right_coeff) {
+    Some(expr_mul(log_pow, @symspec.heaviside(expr_sub(x, expr_one()))))
   } else {
     None
   }

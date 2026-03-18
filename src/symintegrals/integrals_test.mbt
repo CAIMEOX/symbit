@@ -1060,6 +1060,12 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_log_left = doit(
+    inverse_mellin_transform(@symcore.int(24) * (s ^ @symcore.int(-5)), s, x),
+  )
+  let inv_log_right = doit(
+    inverse_mellin_transform(@symcore.int(6) * (s ^ @symcore.int(-4)), s, x),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1129,6 +1135,26 @@ test "symintegrals Mellin special-function rules evaluate" {
   assert_eq(
     @symprint.to_string(inv_erf_sqrt),
     @symprint.to_string(@symspec.erf(@symelem.sqrt(x))),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_log_left),
+      @symsimplify.simplify(
+        (@symelem.log(x) ^ @symcore.int(4)) *
+        @symspec.heaviside(@symcore.int(1) - x),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_log_right),
+      @symsimplify.simplify(
+        (@symelem.log(x) ^ @symcore.int(3)) *
+        @symspec.heaviside(x - @symcore.int(1)),
+      ),
+    ),
+    0,
   )
 }
 

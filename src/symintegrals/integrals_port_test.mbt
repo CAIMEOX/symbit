@@ -1760,6 +1760,34 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let log_left_inverse = do_inverse_mellin_doit(
+    @symcore.int(24) * (s ^ @symcore.int(-5)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_left_inverse) +
+      ") - (sympy.log(sympy.Symbol('x'))**4*sympy.Heaviside(1 - sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let log_right_inverse = do_inverse_mellin_doit(
+    @symcore.int(6) * (s ^ @symcore.int(-4)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_right_inverse) +
+      ") - (sympy.log(sympy.Symbol('x'))**3*sympy.Heaviside(sympy.Symbol('x') - 1))))",
+    ),
+    "0",
+  )
 }
 
 ///|
