@@ -661,6 +661,8 @@ test "symintegrals parity Mellin forward and inverse" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
 
@@ -697,6 +699,128 @@ test "symintegrals parity Mellin forward and inverse" {
     ") - (sympy.mellin_transform(sympy.exp(-sympy.Symbol('x') ** -1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
   )
   inspect(inv_exp_oracle, content="0")
+
+  let shifted_power_mellin = mellin_transform_eval(
+    (x + @symcore.int(1)) ^ (@symcore.int(-1) * rho),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(shifted_power_mellin) +
+      ")[0]) - sympy.mellin_transform((1 + sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(shifted_power_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(shifted_power_mellin) + ")[1])[1])",
+    ),
+    "re(rho)",
+  )
+
+  let left_beta_mellin = mellin_transform_eval(
+    ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
+    @symspec.heaviside(@symcore.int(1) - x),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(left_beta_mellin) +
+      ")[0]) - sympy.mellin_transform((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1)*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(left_beta_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(left_beta_mellin) + ")[1])[1])",
+    ),
+    "oo",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(left_beta_mellin) + ")[2])",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.mellin_transform((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1)*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
+    ),
+  )
+
+  let right_beta_mellin = mellin_transform_eval(
+    ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
+    @symspec.heaviside(x - @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(right_beta_mellin) +
+      ")[0]) - sympy.mellin_transform((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(right_beta_mellin) + ")[1])[0])",
+    ),
+    "-oo",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(right_beta_mellin) + ")[1])[1])",
+    ),
+    "1 - re(b)",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(right_beta_mellin) + ")[2])",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.mellin_transform((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
+    ),
+  )
+
+  let erf_sqrt_mellin = mellin_transform_eval(
+    @symspec.erf(@symelem.sqrt(x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(erf_sqrt_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.erf(sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[0])",
+    ),
+    "-1/2",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[1])",
+    ),
+    "0",
+  )
 
   let e1_mellin = mellin_transform_eval(@symspec.e1(x), x, s)
   assert_eq(
@@ -1121,6 +1245,22 @@ test "symintegrals parity Mellin forward and inverse" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(ci_sqrt_inverse) +
       ") - sympy.Ci(sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let erf_sqrt_inverse = do_inverse_mellin_doit(
+    @symcore.int(-1) *
+    @symspec.gamma(s + half) *
+    ((@symelem.sqrt(@symcore.symbol("pi")) * s) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(erf_sqrt_inverse) +
+      ") - sympy.erf(sympy.sqrt(sympy.Symbol('x')))))",
     ),
     "0",
   )

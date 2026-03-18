@@ -3410,7 +3410,33 @@ fn generic_mellin_object(expr : Expr, x_name : String, s : Expr) -> Expr {
 
 ///|
 fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
+  match mellin_shifted_power_info(expr, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match expr {
+    @symcore.Expr::Function(
+      "erf",
+      [@symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)])]
+    ) =>
+      if name == x_name {
+        Some(
+          (
+            expr_div(
+              expr_mul(
+                expr_neg_one(),
+                @symspec.gamma(expr_add(s, expr_rat(1, 2))),
+              ),
+              expr_mul(sqrt_pi(), s),
+            ),
+            expr_mul(expr_neg_one(), expr_rat(1, 2)),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
     @symcore.Expr::Function("besselj", [order, arg]) =>
       match parse_sqrt_linear(arg, x_name) {
         Some(coeff) =>
@@ -3598,6 +3624,33 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
 }
 
 ///|
+fn mellin_shifted_power_info(
+  expr : Expr,
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match parse_shifted_linear_power(expr, x_name) {
+    Some((coeff, offset, exp)) if expr_is_one(coeff) && expr_is_one(offset) =>
+      match extract_explicit_negative_factor(exp) {
+        Some(rho) =>
+          Some(
+            (
+              expr_div(
+                expr_mul(@symspec.gamma(s), @symspec.gamma(expr_sub(rho, s))),
+                @symspec.gamma(rho),
+              ),
+              expr_zero(),
+              @symelem.re(rho),
+              true_expr(),
+            ),
+          )
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
   if expr_eq(coeff, expr_int(2)) {
     expr_one()
@@ -3608,6 +3661,10 @@ fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
 
 ///|
 fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  match mellin_beta_heaviside_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
   match mellin_besselj_product_info(factors, x_name, s) {
     Some((value, _, _, _)) => return Some(value)
     None => ()
@@ -3679,6 +3736,10 @@ fn mellin_mul_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
+  match mellin_beta_heaviside_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match mellin_besselj_product_info(factors, x_name, s) {
     Some(info) => return Some(info)
     None => ()
@@ -3756,6 +3817,85 @@ fn mellin_mul_info(
         )
       }
     }
+    _ => None
+  }
+}
+
+///|
+fn mellin_beta_heaviside_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut power_data : (Expr, Expr, Expr)? = None
+  let mut heav_data : (Expr, Bool)? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("Heaviside", [arg]) =>
+        match parse_heaviside_limit(arg, x_name) {
+          Some(info) =>
+            if heav_data is None {
+              heav_data = Some(info)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ =>
+        match parse_shifted_linear_power(factor, x_name) {
+          Some(info) =>
+            if power_data is None {
+              power_data = Some(info)
+            } else {
+              return None
+            }
+          None => return None
+        }
+    }
+  }
+  match (power_data, heav_data) {
+    (Some((pow_coeff, pow_offset, exp)), Some((bound, is_le))) =>
+      if expr_is_one(bound) &&
+        expr_is_minus_one(pow_coeff) &&
+        expr_is_one(pow_offset) &&
+        is_le {
+        let beta = expr_add(exp, expr_one())
+        Some(
+          (
+            expr_div(
+              expr_mul(@symspec.gamma(beta), @symspec.gamma(s)),
+              @symspec.gamma(expr_add(beta, s)),
+            ),
+            expr_zero(),
+            @symcore.symbol("oo"),
+            @symcore.function("Gt", [@symelem.re(beta), expr_zero()]),
+          ),
+        )
+      } else if expr_is_one(bound) &&
+        expr_is_one(pow_coeff) &&
+        expr_is_minus_one(pow_offset) &&
+        !is_le {
+        let beta = expr_add(exp, expr_one())
+        Some(
+          (
+            expr_div(
+              expr_mul(
+                @symspec.gamma(beta),
+                @symspec.gamma(expr_sub(expr_sub(expr_one(), beta), s)),
+              ),
+              @symspec.gamma(expr_sub(expr_one(), s)),
+            ),
+            neg_oo_expr(),
+            expr_sub(expr_one(), @symelem.re(beta)),
+            @symcore.function("Gt", [@symelem.re(beta), expr_zero()]),
+          ),
+        )
+      } else {
+        None
+      }
     _ => None
   }
 }
@@ -4364,6 +4504,13 @@ fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
 
 ///|
 fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
+  let erf_sqrt_formula = expr_div(
+    expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
+    expr_mul(sqrt_pi(), s_sym),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(erf_sqrt_formula)) {
+    return Some(@symspec.erf(@symelem.sqrt(x)))
+  }
   let e1_formula = expr_div(@symspec.gamma(s_sym), s_sym)
   if expr_eq(expr_simplify(expr), expr_simplify(e1_formula)) {
     return Some(@symspec.e1(x))
@@ -4551,6 +4698,27 @@ fn split_linear_coeff(expr : Expr, var_name : String) -> (Expr, Expr)? {
         Some((coeffs[1], coeffs[0]))
       } else {
         None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_shifted_linear_power(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, exp) =>
+      match split_linear_coeff(base, var_name) {
+        Some((coeff, offset)) =>
+          if !expr_depends_on(coeff, var_name) &&
+            !expr_depends_on(offset, var_name) {
+            Some((coeff, offset, exp))
+          } else {
+            None
+          }
+        None => None
       }
     _ => None
   }

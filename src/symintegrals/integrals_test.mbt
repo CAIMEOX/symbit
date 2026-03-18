@@ -638,9 +638,51 @@ test "symintegrals Mellin special-function rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
 
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho), x, s),
+    ),
+  ).contains("MellinTransform") else {
+    fail("(1 + x)**(-rho) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
+        @symspec.heaviside(@symcore.int(1) - x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "(1 - x)**(beta - 1)*Heaviside(1 - x) Mellin transform stayed unevaluated",
+    )
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
+        @symspec.heaviside(x - @symcore.int(1)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "(x - 1)**(beta - 1)*Heaviside(x - 1) Mellin transform stayed unevaluated",
+    )
+  }
+  guard !@symprint.to_string(
+    doit(mellin_transform(@symspec.erf(@symelem.sqrt(x)), x, s)),
+  ).contains("MellinTransform") else {
+    fail("erf(sqrt(x)) Mellin transform stayed unevaluated")
+  }
   guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
     "MellinTransform",
   ) else {
@@ -803,6 +845,15 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_erf_sqrt = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      @symspec.gamma(s + half) *
+      ((@symelem.sqrt(@symcore.symbol("pi")) * s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -822,6 +873,10 @@ test "symintegrals Mellin special-function rules evaluate" {
   assert_eq(
     @symprint.to_string(inv_ci_sqrt),
     @symprint.to_string(@symspec.ci(@symelem.sqrt(x))),
+  )
+  assert_eq(
+    @symprint.to_string(inv_erf_sqrt),
+    @symprint.to_string(@symspec.erf(@symelem.sqrt(x))),
   )
 }
 
