@@ -638,6 +638,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
+  let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
 
   guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
@@ -692,6 +693,35 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
   ).contains("MellinTransform") else {
     fail("besselk(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besseli(a, @symelem.sqrt(x)) *
+        @symspec.besselk(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "besseli(a, sqrt(x))*besselk(a, sqrt(x)) Mellin transform stayed unevaluated",
+    )
+  }
+
+  let generic_mellin_eval = @symprint.to_string(
+    mellin_transform_eval(f_of_x, x, s),
+  )
+  guard generic_mellin_eval.contains("MellinTransform(f(x), x, s)") else {
+    fail("generic Mellin transform did not preserve unevaluated object")
+  }
+
+  let partial_generic_mellin_eval = @symprint.to_string(
+    mellin_transform_eval(f_of_x + @symelem.exp(@symcore.int(-1) * x), x, s),
+  )
+  guard partial_generic_mellin_eval.contains("MellinTransform(f(x), x, s)") &&
+    partial_generic_mellin_eval.contains("gamma(s)") else {
+    fail("generic-plus-known Mellin transform did not partially evaluate")
   }
 
   let inv_e1 = doit(

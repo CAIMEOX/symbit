@@ -3323,7 +3323,12 @@ fn mellin_doit(expr : Expr, x_name : String, s : Expr) -> Expr? {
       } else {
         match mellin_mul_term(factors, x_name, s) {
           Some(v) => Some(expr_mul(coeff, v))
-          None => None
+          None =>
+            if expr_depends_on(expr, x_name) {
+              Some(generic_mellin_object(expr, x_name, s))
+            } else {
+              None
+            }
         }
       }
     }
@@ -3338,9 +3343,11 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
       let mut lower : Expr? = None
       let mut upper : Expr? = None
       let mut cond = true_expr()
+      let mut saw_known = false
       for term in terms {
         match mellin_info_doit(term, x_name, s) {
           Some((value, lo, up, term_cond)) => {
+            saw_known = true
             values.push(value)
             lower = Some(
               match lower {
@@ -3356,17 +3363,26 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
             )
             cond = and_expr(cond, term_cond)
           }
-          None => return None
+          None =>
+            if expr_depends_on(term, x_name) {
+              values.push(generic_mellin_object(term, x_name, s))
+            } else {
+              return None
+            }
         }
       }
-      Some(
-        (
-          expr_simplify(@symcore.add(values)),
-          lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.symbol("oo"))),
-          upper.unwrap_or(@symcore.symbol("oo")),
-          cond,
-        ),
-      )
+      if saw_known {
+        Some(
+          (
+            expr_simplify(@symcore.add(values)),
+            lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.symbol("oo"))),
+            upper.unwrap_or(@symcore.symbol("oo")),
+            cond,
+          ),
+        )
+      } else {
+        None
+      }
     }
     _ => {
       match mellin_special_info(expr, x_name, s) {
@@ -3385,6 +3401,11 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
       }
     }
   }
+}
+
+///|
+fn generic_mellin_object(expr : Expr, x_name : String, s : Expr) -> Expr {
+  @symcore.raw_function("MellinTransform", [expr, @symcore.symbol(x_name), s])
 }
 
 ///|
@@ -3587,6 +3608,10 @@ fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
 
 ///|
 fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  match mellin_besseli_besselk_product_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
   let mut pow_opt : Expr? = None
   let mut exp_opt : (Expr, Int)? = None
   let mut heav_opt : (Expr, Bool)? = None
@@ -3646,6 +3671,10 @@ fn mellin_mul_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
+  match mellin_besseli_besselk_product_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   let mut pow_opt : Expr? = None
   let mut exp_opt : (Expr, Int)? = None
   let mut heav_opt : (Expr, Bool)? = None
@@ -3711,6 +3740,87 @@ fn mellin_mul_info(
         )
       }
     }
+    _ => None
+  }
+}
+
+///|
+fn mellin_besseli_besselk_product_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut order_i : Expr? = None
+  let mut coeff_i : Expr? = None
+  let mut order_k : Expr? = None
+  let mut coeff_k : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("besseli", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if order_i is None {
+              order_i = Some(order)
+              coeff_i = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("besselk", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if order_k is None {
+              order_k = Some(order)
+              coeff_k = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => return None
+    }
+  }
+  match (order_i, coeff_i, order_k, coeff_k) {
+    (Some(order1), Some(coeff1), Some(order2), Some(coeff2)) =>
+      if expr_eq(order1, order2) && expr_eq(coeff1, coeff2) {
+        let scale = if expr_eq(coeff1, expr_one()) {
+          expr_one()
+        } else {
+          expr_pow(expr_pow(coeff1, expr_int(2)), expr_mul(expr_neg_one(), s))
+        }
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  @symspec.gamma(s),
+                  expr_mul(
+                    @symspec.gamma(expr_add(order1, s)),
+                    @symspec.gamma(expr_sub(expr_rat(1, 2), s)),
+                  ),
+                ),
+                expr_mul(
+                  expr_int(2),
+                  expr_mul(
+                    sqrt_pi(),
+                    @symspec.gamma(expr_add(expr_sub(order1, s), expr_one())),
+                  ),
+                ),
+              ),
+            ),
+            max_expr(expr_mul(expr_neg_one(), @symelem.re(order1)), expr_zero()),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
     _ => None
   }
 }

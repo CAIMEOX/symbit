@@ -661,6 +661,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
+  let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
 
   let mt_cases : Array[(Expr, String)] = [
@@ -867,6 +868,71 @@ test "symintegrals parity Mellin forward and inverse" {
   assert_eq(
     try! @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[1])",
+    ),
+    "oo",
+  )
+
+  let besseli_besselk_mellin = mellin_transform_eval(
+    @symspec.besseli(a, @symelem.sqrt(x)) *
+    @symspec.besselk(a, @symelem.sqrt(x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(besseli_besselk_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.besseli(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besseli_besselk_mellin) + ")[1])[0])",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((sympy.mellin_transform(sympy.besseli(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besseli_besselk_mellin) + ")[1])[1])",
+    ),
+    "1/2",
+  )
+
+  let generic_mellin = mellin_transform_eval(f_of_x, x, s)
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda x: sympy.sstr(sympy.mellin_transform(sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(" + py_expr(generic_mellin) + ")",
+    ),
+  )
+
+  let partial_generic_mellin = mellin_transform_eval(
+    f_of_x + @symelem.exp(@symcore.int(-1) * x),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(partial_generic_mellin) +
+      ")[0]) - (sympy.MellinTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')) + sympy.mellin_transform(sympy.exp(-sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(partial_generic_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(partial_generic_mellin) + ")[1])[1])",
     ),
     "oo",
   )
