@@ -4055,7 +4055,60 @@ fn mellin_besselj_product_info(
           ),
         )
       } else {
-        None
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  expr_pow(expr_int(4), s),
+                  expr_mul(
+                    @symspec.gamma(
+                      expr_sub(expr_one(), expr_mul(expr_int(2), s)),
+                    ),
+                    @symspec.gamma(
+                      expr_add(
+                        expr_div(expr_add(order1, order2), expr_int(2)),
+                        s,
+                      ),
+                    ),
+                  ),
+                ),
+                expr_mul(
+                  @symspec.gamma(
+                    expr_add(
+                      expr_sub(expr_one(), s),
+                      expr_div(expr_sub(order2, order1), expr_int(2)),
+                    ),
+                  ),
+                  expr_mul(
+                    @symspec.gamma(
+                      expr_add(
+                        expr_sub(expr_one(), s),
+                        expr_div(expr_sub(order1, order2), expr_int(2)),
+                      ),
+                    ),
+                    @symspec.gamma(
+                      expr_add(
+                        expr_sub(expr_one(), s),
+                        expr_div(expr_add(order1, order2), expr_int(2)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            expr_div(
+              expr_mul(
+                expr_neg_one(),
+                expr_add(@symelem.re(order1), @symelem.re(order2)),
+              ),
+              expr_int(2),
+            ),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
       }
     }
     None => None
@@ -4135,6 +4188,61 @@ fn mellin_besselj_bessely_product_info(
             true_expr(),
           ),
         )
+      } else if expr_eq(coeff_j, coeff_y) {
+        let scale = mellin_bessel_pair_scale(coeff_j, s)
+        let half_diff = expr_div(expr_sub(order_j, order_y), expr_int(2))
+        let half_sum = expr_div(expr_add(order_j, order_y), expr_int(2))
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  expr_neg_one(),
+                  expr_mul(
+                    expr_pow(expr_int(4), s),
+                    expr_mul(
+                      @symelem.cos(
+                        expr_mul(@symcore.symbol("pi"), expr_add(half_diff, s)),
+                      ),
+                      expr_mul(
+                        @symspec.gamma(
+                          expr_sub(expr_one(), expr_mul(expr_int(2), s)),
+                        ),
+                        expr_mul(
+                          @symspec.gamma(expr_add(half_diff, s)),
+                          @symspec.gamma(expr_add(half_sum, s)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                expr_mul(
+                  @symcore.symbol("pi"),
+                  expr_mul(
+                    @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_diff)),
+                    @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_sum)),
+                  ),
+                ),
+              ),
+            ),
+            max_expr(
+              expr_div(
+                expr_sub(@symelem.re(order_y), @symelem.re(order_j)),
+                expr_int(2),
+              ),
+              expr_div(
+                expr_mul(
+                  expr_neg_one(),
+                  expr_add(@symelem.re(order_j), @symelem.re(order_y)),
+                ),
+                expr_int(2),
+              ),
+            ),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
       } else {
         None
       }
@@ -4209,6 +4317,53 @@ fn mellin_besseli_besselk_product_info(
               ),
             ),
             max_expr(expr_mul(expr_neg_one(), @symelem.re(order1)), expr_zero()),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else if expr_eq(coeff1, coeff2) {
+        let scale = mellin_bessel_pair_scale(coeff1, s)
+        let half_diff = expr_div(expr_sub(order1, order2), expr_int(2))
+        let half_sum = expr_div(expr_add(order1, order2), expr_int(2))
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  expr_pow(
+                    expr_int(2),
+                    expr_sub(expr_mul(expr_int(2), s), expr_one()),
+                  ),
+                  expr_mul(
+                    @symspec.gamma(
+                      expr_sub(expr_one(), expr_mul(expr_int(2), s)),
+                    ),
+                    expr_mul(
+                      @symspec.gamma(expr_add(half_diff, s)),
+                      @symspec.gamma(expr_add(half_sum, s)),
+                    ),
+                  ),
+                ),
+                expr_mul(
+                  @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_diff)),
+                  @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_sum)),
+                ),
+              ),
+            ),
+            max_expr(
+              expr_div(
+                expr_sub(
+                  expr_mul(expr_neg_one(), @symelem.re(order1)),
+                  @symelem.re(order2),
+                ),
+                expr_int(2),
+              ),
+              expr_div(
+                expr_sub(@symelem.re(order2), @symelem.re(order1)),
+                expr_int(2),
+              ),
+            ),
             expr_rat(1, 2),
             true_expr(),
           ),
