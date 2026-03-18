@@ -5167,6 +5167,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_piecewise_log_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let erf_sqrt_formula = expr_div(
     expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
     expr_mul(sqrt_pi(), s_sym),
@@ -5437,6 +5441,83 @@ fn inverse_mellin_log_power_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
   } else {
     None
   }
+}
+
+///|
+fn inverse_mellin_piecewise_log_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let pi = @symcore.symbol("pi")
+  let one = expr_one()
+  let sin_pi_formula = expr_div(
+    pi,
+    expr_mul(s_sym, @symelem.sin(expr_mul(pi, s_sym))),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(sin_pi_formula)) {
+    return Some(
+      expr_simplify(
+        expr_add(
+          expr_mul(
+            @symelem.log(expr_add(one, x)),
+            @symspec.heaviside(expr_sub(one, x)),
+          ),
+          expr_mul(
+            @symelem.log(expr_add(one, expr_pow(x, expr_int(-1)))),
+            @symspec.heaviside(expr_sub(x, one)),
+          ),
+        ),
+      ),
+    )
+  }
+  let sin_two_pi_formula = expr_div(
+    pi,
+    expr_mul(s_sym, @symelem.sin(expr_mul(expr_int(2), expr_mul(pi, s_sym)))),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(sin_two_pi_formula)) {
+    let sqrt_x = @symelem.sqrt(x)
+    return Some(
+      expr_simplify(
+        expr_add(
+          expr_mul(
+            @symelem.log(expr_add(one, sqrt_x)),
+            @symspec.heaviside(expr_sub(one, x)),
+          ),
+          expr_mul(
+            @symelem.log(expr_add(one, expr_pow(sqrt_x, expr_int(-1)))),
+            @symspec.heaviside(expr_sub(x, one)),
+          ),
+        ),
+      ),
+    )
+  }
+  let tan_formula = expr_div(
+    pi,
+    expr_mul(s_sym, @symelem.tan(expr_mul(pi, s_sym))),
+  )
+  let cot_formula = expr_div(
+    expr_mul(pi, @symelem.cot(expr_mul(pi, s_sym))),
+    s_sym,
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(tan_formula)) ||
+    expr_eq(expr_simplify(expr), expr_simplify(cot_formula)) {
+    return Some(
+      expr_simplify(
+        expr_add(
+          expr_mul(
+            @symelem.log(expr_sub(one, x)),
+            @symspec.heaviside(expr_sub(one, x)),
+          ),
+          expr_mul(
+            @symelem.log(expr_sub(x, one)),
+            @symspec.heaviside(expr_sub(x, one)),
+          ),
+        ),
+      ),
+    )
+  }
+  None
 }
 
 ///|

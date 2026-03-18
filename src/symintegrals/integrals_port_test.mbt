@@ -1818,6 +1818,75 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let log_piecewise_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    ((s * @symelem.sin(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(log_piecewise_inverse) +
+      ") - ((sympy.log(1 + sympy.Symbol('x'))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(1 + sympy.Symbol('x')**-1)*sympy.Heaviside(sympy.Symbol('x') - 1)))))",
+    ),
+    "0",
+  )
+
+  let sqrt_piecewise_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    (
+      (s * @symelem.sin(@symcore.int(2) * @symcore.symbol("pi") * s)) ^
+      @symcore.int(-1)
+    ),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_piecewise_inverse) +
+      ") - ((sympy.log(1 + sympy.sqrt(sympy.Symbol('x')))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(1 + sympy.sqrt(sympy.Symbol('x'))**-1)*sympy.Heaviside(sympy.Symbol('x') - 1)))))",
+    ),
+    "0",
+  )
+
+  let tan_piecewise_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    ((s * @symelem.tan(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  let tan_piecewise_target = "((sympy.log(1 - sympy.Symbol('x'))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(sympy.Symbol('x') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1)))"
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(tan_piecewise_inverse) +
+      ") - " +
+      tan_piecewise_target +
+      "))",
+    ),
+    "0",
+  )
+
+  let cot_piecewise_inverse = do_inverse_mellin_doit(
+    @symcore.symbol("pi") *
+    @symelem.cot(@symcore.symbol("pi") * s) *
+    (s ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cot_piecewise_inverse) +
+      ") - " +
+      tan_piecewise_target +
+      "))",
+    ),
+    "0",
+  )
 }
 
 ///|

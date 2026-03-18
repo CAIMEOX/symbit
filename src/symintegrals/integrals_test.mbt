@@ -1082,6 +1082,42 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_log_piecewise = doit(
+    inverse_mellin_transform(
+      @symcore.symbol("pi") *
+      ((s * @symelem.sin(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_sqrt_piecewise = doit(
+    inverse_mellin_transform(
+      @symcore.symbol("pi") *
+      (
+        (s * @symelem.sin(@symcore.int(2) * @symcore.symbol("pi") * s)) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let inv_tan_piecewise = doit(
+    inverse_mellin_transform(
+      @symcore.symbol("pi") *
+      ((s * @symelem.tan(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_cot_piecewise = doit(
+    inverse_mellin_transform(
+      @symcore.symbol("pi") *
+      @symelem.cot(@symcore.symbol("pi") * s) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1187,6 +1223,45 @@ test "symintegrals Mellin special-function rules evaluate" {
       @symsimplify.simplify(
         @symelem.sqrt(x) * ((x + @symcore.int(1)) ^ @symcore.int(-1)),
       ),
+    ),
+    0,
+  )
+  let log_piecewise_expected = @symelem.log(@symcore.int(1) + x) *
+    @symspec.heaviside(@symcore.int(1) - x) +
+    @symelem.log(@symcore.int(1) + (x ^ @symcore.int(-1))) *
+    @symspec.heaviside(x - @symcore.int(1))
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_log_piecewise),
+      @symsimplify.simplify(log_piecewise_expected),
+    ),
+    0,
+  )
+  let sqrt_piecewise_expected = @symelem.log(@symcore.int(1) + @symelem.sqrt(x)) *
+    @symspec.heaviside(@symcore.int(1) - x) +
+    @symelem.log(@symcore.int(1) + (@symelem.sqrt(x) ^ @symcore.int(-1))) *
+    @symspec.heaviside(x - @symcore.int(1))
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_sqrt_piecewise),
+      @symsimplify.simplify(sqrt_piecewise_expected),
+    ),
+    0,
+  )
+  let tan_piecewise_expected = @symelem.log(@symcore.int(1) - x) *
+    @symspec.heaviside(@symcore.int(1) - x) +
+    @symelem.log(x - @symcore.int(1)) * @symspec.heaviside(x - @symcore.int(1))
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_tan_piecewise),
+      @symsimplify.simplify(tan_piecewise_expected),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_cot_piecewise),
+      @symsimplify.simplify(tan_piecewise_expected),
     ),
     0,
   )
