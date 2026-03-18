@@ -1,6 +1,6 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'exp_polar': sympy.exp_polar, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 're': sympy.re, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'besseli': sympy.besseli, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'exp_polar': sympy.exp_polar, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 're': sympy.re, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'bessely': sympy.bessely, 'besselk': sympy.besselk, 'besseli': sympy.besseli, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
 }
 
 ///|
@@ -660,6 +660,7 @@ test "symintegrals parity transforms forward/inverse family" {
 test "symintegrals parity Mellin forward and inverse" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
   let half = try! @symcore.rational_from_ints(1, 2)
 
   let mt_cases : Array[(Expr, String)] = [
@@ -790,6 +791,84 @@ test "symintegrals parity Mellin forward and inverse" {
       "sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[1])",
     ),
     "1",
+  )
+
+  let besselj_mellin = mellin_transform_eval(
+    @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(besselj_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[0])",
+    ),
+    "-re(a)/2",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[1])",
+    ),
+    "3/4",
+  )
+
+  let bessely_mellin = mellin_transform_eval(
+    @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(bessely_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.bessely(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[0])",
+    ),
+    "Max(-re(a)/2, re(a)/2)",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[1])",
+    ),
+    "3/4",
+  )
+
+  let besselk_mellin = mellin_transform_eval(
+    @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(besselk_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.besselk(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[0])",
+    ),
+    "Max(-re(a)/2, re(a)/2)",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[1])",
+    ),
+    "oo",
   )
 
   let imt_cases : Array[(Expr, String)] = [

@@ -637,6 +637,7 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
 test "symintegrals Mellin special-function rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
   let half = try! @symcore.rational_from_ints(1, 2)
 
   guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
@@ -658,6 +659,39 @@ test "symintegrals Mellin special-function rules evaluate" {
     doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
   ).contains("MellinTransform") else {
     fail("Ci(sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("besselj(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("bessely(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("besselk(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
   }
 
   let inv_e1 = doit(

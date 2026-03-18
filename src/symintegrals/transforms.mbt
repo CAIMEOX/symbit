@@ -3390,6 +3390,101 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
 ///|
 fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
   match expr {
+    @symcore.Expr::Function("besselj", [order, arg]) =>
+      match parse_sqrt_linear(arg, x_name) {
+        Some(coeff) =>
+          Some(
+            (
+              expr_mul(
+                mellin_bessel_sqrt_scale(coeff, s),
+                expr_div(
+                  @symspec.gamma(expr_add(s, expr_div(order, expr_int(2)))),
+                  @symspec.gamma(
+                    expr_add(
+                      expr_one(),
+                      expr_sub(expr_div(order, expr_int(2)), s),
+                    ),
+                  ),
+                ),
+              ),
+              expr_div(
+                expr_mul(expr_neg_one(), @symelem.re(order)),
+                expr_int(2),
+              ),
+              expr_rat(3, 4),
+              true_expr(),
+            ),
+          )
+        None => None
+      }
+    @symcore.Expr::Function("bessely", [order, arg]) =>
+      match parse_sqrt_linear(arg, x_name) {
+        Some(coeff) => {
+          let half_order = expr_div(order, expr_int(2))
+          Some(
+            (
+              expr_mul(
+                mellin_bessel_sqrt_scale(coeff, s),
+                expr_div(
+                  expr_mul(
+                    expr_neg_one(),
+                    expr_mul(
+                      @symelem.cos(
+                        expr_mul(@symcore.symbol("pi"), expr_sub(half_order, s)),
+                      ),
+                      expr_mul(
+                        @symspec.gamma(expr_sub(s, half_order)),
+                        @symspec.gamma(expr_add(s, half_order)),
+                      ),
+                    ),
+                  ),
+                  @symcore.symbol("pi"),
+                ),
+              ),
+              max_expr(
+                expr_div(
+                  expr_mul(expr_neg_one(), @symelem.re(order)),
+                  expr_int(2),
+                ),
+                expr_div(@symelem.re(order), expr_int(2)),
+              ),
+              expr_rat(3, 4),
+              true_expr(),
+            ),
+          )
+        }
+        None => None
+      }
+    @symcore.Expr::Function("besselk", [order, arg]) =>
+      match parse_sqrt_linear(arg, x_name) {
+        Some(coeff) => {
+          let half_order = expr_div(order, expr_int(2))
+          Some(
+            (
+              expr_mul(
+                mellin_bessel_sqrt_scale(coeff, s),
+                expr_div(
+                  expr_mul(
+                    @symspec.gamma(expr_sub(s, half_order)),
+                    @symspec.gamma(expr_add(s, half_order)),
+                  ),
+                  expr_int(2),
+                ),
+              ),
+              max_expr(
+                expr_div(
+                  expr_mul(expr_neg_one(), @symelem.re(order)),
+                  expr_int(2),
+                ),
+                expr_div(@symelem.re(order), expr_int(2)),
+              ),
+              @symcore.symbol("oo"),
+              true_expr(),
+            ),
+          )
+        }
+        None => None
+      }
     @symcore.Expr::Function("E1", [@symcore.Expr::Symbol(name)]) =>
       if name == x_name {
         Some(
@@ -3478,6 +3573,15 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
         None
       }
     _ => None
+  }
+}
+
+///|
+fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
+  if expr_eq(coeff, expr_int(2)) {
+    expr_one()
+  } else {
+    expr_pow(expr_div(expr_int(4), expr_pow(coeff, expr_int(2))), s)
   }
 }
 
