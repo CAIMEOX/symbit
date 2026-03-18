@@ -1,6 +1,6 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'besseli': sympy.besseli, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'exp_polar': sympy.exp_polar, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 're': sympy.re, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'besseli': sympy.besseli, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
 }
 
 ///|
@@ -1389,6 +1389,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
 test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay rules" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
   let f_of_x = @symcore.raw_function("f", [x])
 
   let delta_eval = laplace_transform_eval(
@@ -1564,6 +1565,27 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       ") - sympy.laplace_transform(sympy.expint(2, sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
     ),
     "0",
+  )
+  let expinta_laplace = laplace_transform_eval(@symspec.expint(a, x), x, s)
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(expinta_laplace) +
+      ")[0]) - sympy.laplace_transform(sympy.expint(sympy.Symbol('a'), sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), simplify=True, noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(expinta_laplace) + ")[1])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(expinta_laplace) + ")[2])",
+    ),
+    "re(a) > 0",
   )
 
   let erf_laplace = laplace_transform_eval(
@@ -1829,6 +1851,31 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       "sympy.sstr(sympy.simplify((" +
       py_expr(shifted_quad_num_inverse) +
       ") - sympy.inverse_laplace_transform((sympy.Symbol('s') + 1)/((sympy.Symbol('s') + 1)**2 + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let t = @symcore.symbol("t")
+  let f_t = @symcore.raw_function("f", [t])
+  let ilt_roundtrip = doit(
+    inverse_laplace_transform(laplace_transform(f_t, t, s), s, x),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ilt_roundtrip) +
+      ") - (sympy.Function('f')(sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+  let ilt_wrong = doit(
+    inverse_laplace_transform(laplace_transform(f_t, t, s), x, t),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ilt_wrong) +
+      ") - (sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('s'))*sympy.DiracDelta(sympy.Symbol('t')))))",
     ),
     "0",
   )

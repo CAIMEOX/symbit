@@ -803,6 +803,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
 test "symintegrals Laplace special-function rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
   let neg_half = try! @symcore.rational_from_ints(-1, 2)
 
   guard !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
@@ -834,6 +835,11 @@ test "symintegrals Laplace special-function rules evaluate" {
     doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
   ).contains("LaplaceTransform") else {
     fail("expint(2, x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(@symspec.expint(a, x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("expint(a, x) Laplace transform stayed unevaluated")
   }
   guard !@symprint.to_string(
     doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
@@ -951,6 +957,45 @@ test "symintegrals Laplace special-function rules evaluate" {
       ),
     ),
     0,
+  )
+}
+
+///|
+test "symintegrals inverse Laplace transform objects roundtrip" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let t = @symcore.symbol("t")
+  let f_t = @symcore.raw_function("f", [t])
+
+  let same_var = doit(
+    inverse_laplace_transform(laplace_transform(f_t, t, s), s, t),
+  )
+  let renamed_var = doit(
+    inverse_laplace_transform(laplace_transform(f_t, t, s), s, x),
+  )
+  let wrong_freq = doit(
+    inverse_laplace_transform(laplace_transform(f_t, t, s), x, t),
+  )
+
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(same_var),
+      @symsimplify.simplify(f_t * @symspec.heaviside(t)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(renamed_var),
+      @symsimplify.simplify(
+        @symcore.raw_function("f", [x]) * @symspec.heaviside(x),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symprint.to_string(wrong_freq),
+    @symprint.to_string(laplace_transform(f_t, t, s) * @symspec.dirac_delta(t)),
   )
 }
 

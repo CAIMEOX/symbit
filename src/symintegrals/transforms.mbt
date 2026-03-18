@@ -659,7 +659,27 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                 true_expr(),
               ),
             )
-          _ => None
+          _ =>
+            if expr_is_constant(n, t_name) {
+              Some(
+                (
+                  @symspec.lerchphi(
+                    expr_mul(
+                      s,
+                      @symelem.exp_polar(
+                        expr_mul(@symcore.symbol("I"), @symcore.symbol("pi")),
+                      ),
+                    ),
+                    expr_one(),
+                    n,
+                  ),
+                  expr_zero(),
+                  @symcore.function("Gt", [@symelem.re(n), expr_zero()]),
+                ),
+              )
+            } else {
+              None
+            }
         }
       } else {
         None
@@ -866,6 +886,10 @@ fn inverse_laplace_special_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
+  match inverse_laplace_transform_object_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_e1_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
@@ -875,6 +899,33 @@ fn inverse_laplace_special_term(
     None => ()
   }
   inverse_laplace_ci_term(expr, s_name, t)
+}
+
+///|
+fn inverse_laplace_transform_object_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match expr {
+    @symcore.Expr::Function("LaplaceTransform", [inner, source_t, source_s]) => {
+      let s_sym = @symcore.symbol(s_name)
+      if expr_eq(source_s, s_sym) {
+        match symbol_name(source_t) {
+          Some(source_name) =>
+            Some(
+              expr_simplify(
+                subst_symbol(inner, source_name, t) * @symspec.heaviside(t),
+              ),
+            )
+          None => Some(expr_simplify(inner * @symspec.heaviside(t)))
+        }
+      } else {
+        Some(expr_simplify(expr * @symspec.dirac_delta(t)))
+      }
+    }
+    _ => None
+  }
 }
 
 ///|
