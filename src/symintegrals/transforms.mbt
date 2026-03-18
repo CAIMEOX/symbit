@@ -3608,6 +3608,14 @@ fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
 
 ///|
 fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  match mellin_besselj_product_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
+  match mellin_besselj_bessely_product_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
   match mellin_besseli_besselk_product_info(factors, x_name, s) {
     Some((value, _, _, _)) => return Some(value)
     None => ()
@@ -3671,6 +3679,14 @@ fn mellin_mul_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
+  match mellin_besselj_product_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match mellin_besselj_bessely_product_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match mellin_besseli_besselk_product_info(factors, x_name, s) {
     Some(info) => return Some(info)
     None => ()
@@ -3745,19 +3761,262 @@ fn mellin_mul_info(
 }
 
 ///|
+fn normalize_bessel_product_factors(factors : Array[Expr]) -> Array[Expr]? {
+  let items : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Pow(base, exp) if expr_eq(exp, expr_int(2)) => {
+        items.push(base)
+        items.push(base)
+      }
+      _ => items.push(factor)
+    }
+  }
+  if items.length() == 2 {
+    Some(items)
+  } else {
+    None
+  }
+}
+
+///|
+fn mellin_bessel_pair_scale(coeff : Expr, s : Expr) -> Expr {
+  if expr_eq(coeff, expr_one()) {
+    expr_one()
+  } else {
+    expr_pow(expr_pow(coeff, expr_int(2)), expr_mul(expr_neg_one(), s))
+  }
+}
+
+///|
+fn parse_besselj_pair(
+  factors : Array[Expr],
+  x_name : String,
+) -> ((Expr, Expr), Expr)? {
+  let normalized = match normalize_bessel_product_factors(factors) {
+    Some(items) => items
+    None => return None
+  }
+  let mut first : (Expr, Expr)? = None
+  let mut second : (Expr, Expr)? = None
+  for factor in normalized {
+    match factor {
+      @symcore.Expr::Function("besselj", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if first is None {
+              first = Some((order, coeff))
+            } else if second is None {
+              second = Some((order, coeff))
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => return None
+    }
+  }
+  match (first, second) {
+    (Some((order1, coeff1)), Some((order2, coeff2))) if expr_eq(coeff1, coeff2) =>
+      Some(((order1, order2), coeff1))
+    _ => None
+  }
+}
+
+///|
+fn mellin_besselj_product_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match parse_besselj_pair(factors, x_name) {
+    Some(((order1, order2), coeff)) => {
+      let scale = mellin_bessel_pair_scale(coeff, s)
+      if expr_eq(order1, order2) {
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  @symspec.gamma(expr_add(order1, s)),
+                  @symspec.gamma(expr_sub(expr_rat(1, 2), s)),
+                ),
+                expr_mul(
+                  sqrt_pi(),
+                  expr_mul(
+                    @symspec.gamma(expr_sub(expr_one(), s)),
+                    @symspec.gamma(expr_add(expr_sub(order1, s), expr_one())),
+                  ),
+                ),
+              ),
+            ),
+            expr_mul(expr_neg_one(), @symelem.re(order1)),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else if expr_eq(order2, expr_mul(expr_neg_one(), order1)) {
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  @symspec.gamma(s),
+                  @symspec.gamma(expr_sub(expr_rat(1, 2), s)),
+                ),
+                expr_mul(
+                  sqrt_pi(),
+                  expr_mul(
+                    @symspec.gamma(
+                      expr_add(
+                        expr_mul(expr_neg_one(), order1),
+                        expr_sub(expr_one(), s),
+                      ),
+                    ),
+                    @symspec.gamma(expr_add(order1, expr_sub(expr_one(), s))),
+                  ),
+                ),
+              ),
+            ),
+            expr_zero(),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else if expr_eq(order1, expr_mul(expr_neg_one(), order2)) {
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  @symspec.gamma(s),
+                  @symspec.gamma(expr_sub(expr_rat(1, 2), s)),
+                ),
+                expr_mul(
+                  sqrt_pi(),
+                  expr_mul(
+                    @symspec.gamma(
+                      expr_add(
+                        expr_mul(expr_neg_one(), order2),
+                        expr_sub(expr_one(), s),
+                      ),
+                    ),
+                    @symspec.gamma(expr_add(order2, expr_sub(expr_one(), s))),
+                  ),
+                ),
+              ),
+            ),
+            expr_zero(),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn mellin_besselj_bessely_product_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  let normalized = match normalize_bessel_product_factors(factors) {
+    Some(items) => items
+    None => return None
+  }
+  let mut j_data : (Expr, Expr)? = None
+  let mut y_data : (Expr, Expr)? = None
+  for factor in normalized {
+    match factor {
+      @symcore.Expr::Function("besselj", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if j_data is None {
+              j_data = Some((order, coeff))
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("bessely", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if y_data is None {
+              y_data = Some((order, coeff))
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => return None
+    }
+  }
+  match (j_data, y_data) {
+    (Some((order_j, coeff_j)), Some((order_y, coeff_y))) =>
+      if expr_eq(order_j, order_y) && expr_eq(coeff_j, coeff_y) {
+        let scale = mellin_bessel_pair_scale(coeff_j, s)
+        Some(
+          (
+            expr_mul(
+              scale,
+              expr_div(
+                expr_mul(
+                  expr_neg_one(),
+                  expr_mul(
+                    @symelem.cos(expr_mul(@symcore.symbol("pi"), s)),
+                    expr_mul(
+                      @symspec.gamma(s),
+                      expr_mul(
+                        @symspec.gamma(expr_add(order_j, s)),
+                        @symspec.gamma(expr_sub(expr_rat(1, 2), s)),
+                      ),
+                    ),
+                  ),
+                ),
+                expr_mul(
+                  expr_mul(@symcore.symbol("pi"), sqrt_pi()),
+                  @symspec.gamma(expr_add(expr_sub(order_j, s), expr_one())),
+                ),
+              ),
+            ),
+            max_expr(
+              expr_mul(expr_neg_one(), @symelem.re(order_j)),
+              expr_zero(),
+            ),
+            expr_rat(1, 2),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
 fn mellin_besseli_besselk_product_info(
   factors : Array[Expr],
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
-  if factors.length() != 2 {
-    return None
+  let normalized = match normalize_bessel_product_factors(factors) {
+    Some(items) => items
+    None => return None
   }
   let mut order_i : Expr? = None
   let mut coeff_i : Expr? = None
   let mut order_k : Expr? = None
   let mut coeff_k : Expr? = None
-  for factor in factors {
+  for factor in normalized {
     match factor {
       @symcore.Expr::Function("besseli", [order, arg]) =>
         match parse_sqrt_linear(arg, x_name) {
@@ -3787,11 +4046,7 @@ fn mellin_besseli_besselk_product_info(
   match (order_i, coeff_i, order_k, coeff_k) {
     (Some(order1), Some(coeff1), Some(order2), Some(coeff2)) =>
       if expr_eq(order1, order2) && expr_eq(coeff1, coeff2) {
-        let scale = if expr_eq(coeff1, expr_one()) {
-          expr_one()
-        } else {
-          expr_pow(expr_pow(coeff1, expr_int(2)), expr_mul(expr_neg_one(), s))
-        }
+        let scale = mellin_bessel_pair_scale(coeff1, s)
         Some(
           (
             expr_mul(

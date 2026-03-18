@@ -708,6 +708,45 @@ test "symintegrals Mellin special-function rules evaluate" {
       "besseli(a, sqrt(x))*besselk(a, sqrt(x)) Mellin transform stayed unevaluated",
     )
   }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besselj(a, @symelem.sqrt(x)) ^ @symcore.int(2),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("besselj(a, sqrt(x))**2 Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besselj(a, @symelem.sqrt(x)) *
+        @symspec.besselj(@symcore.int(-1) * a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "besselj(a, sqrt(x))*besselj(-a, sqrt(x)) Mellin transform stayed unevaluated",
+    )
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symspec.besselj(a, @symelem.sqrt(x)) *
+        @symspec.bessely(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "besselj(a, sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated",
+    )
+  }
 
   let generic_mellin_eval = @symprint.to_string(
     mellin_transform_eval(f_of_x, x, s),
