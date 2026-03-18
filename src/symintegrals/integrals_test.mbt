@@ -634,6 +634,95 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
 }
 
 ///|
+test "symintegrals Mellin special-function rules evaluate" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let half = try! @symcore.rational_from_ints(1, 2)
+
+  guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
+    "MellinTransform",
+  ) else {
+    fail("E1 Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(mellin_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+  ).contains("MellinTransform") else {
+    fail("expint(2, x) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(mellin_transform(@symspec.si(x), x, s))).contains(
+    "MellinTransform",
+  ) else {
+    fail("Si Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
+  ).contains("MellinTransform") else {
+    fail("Ci(sqrt(x)) Mellin transform stayed unevaluated")
+  }
+
+  let inv_e1 = doit(
+    inverse_mellin_transform(@symspec.gamma(s) * (s ^ @symcore.int(-1)), s, x),
+  )
+  let inv_expint2 = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(s) * ((s + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_si = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (
+        (@symcore.int(2) ^ s) *
+        (
+          @symelem.sqrt(@symcore.symbol("pi")) *
+          @symspec.gamma((s + @symcore.int(1)) * half)
+        )
+      ) *
+      (
+        (@symcore.int(2) * (s * @symspec.gamma(@symcore.int(1) - s * half))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let inv_ci_sqrt = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (
+        (@symcore.int(2) ^ (@symcore.int(2) * s - @symcore.int(1))) *
+        (@symelem.sqrt(@symcore.symbol("pi")) * @symspec.gamma(s))
+      ) *
+      ((s * @symspec.gamma(half - s)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_e1),
+      @symsimplify.simplify(@symspec.e1(x)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_expint2),
+      @symsimplify.simplify(@symspec.expint(@symcore.int(2), x)),
+    ),
+    0,
+  )
+  assert_eq(@symprint.to_string(inv_si), @symprint.to_string(@symspec.si(x)))
+  assert_eq(
+    @symprint.to_string(inv_ci_sqrt),
+    @symprint.to_string(@symspec.ci(@symelem.sqrt(x))),
+  )
+}
+
+///|
 test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
@@ -745,6 +834,65 @@ test "symintegrals Laplace special-function rules evaluate" {
     doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
   ).contains("LaplaceTransform") else {
     fail("expint(2, x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("erf(2*x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      laplace_transform(
+        @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("LaplaceTransform") else {
+    fail("besselj(0, 2*x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      laplace_transform(
+        x * @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("LaplaceTransform") else {
+    fail("x*besselj(0, 2*x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      laplace_transform(
+        @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("LaplaceTransform") else {
+    fail("besseli(0, 2*x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      laplace_transform(
+        x * @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("LaplaceTransform") else {
+    fail("x*besseli(0, 2*x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(@symspec.fresnels(x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("fresnels(x) Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(@symspec.fresnelc(x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("fresnelc(x) Laplace transform stayed unevaluated")
   }
 
   let inv_ci = doit(

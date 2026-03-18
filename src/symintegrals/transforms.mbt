@@ -414,6 +414,152 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
+    @symcore.Expr::Function("erf", [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) =>
+          if expr_is_zero(a) || !expr_is_zero(b) {
+            None
+          } else {
+            Some(
+              (
+                expr_div(
+                  expr_mul(
+                    @symelem.exp(
+                      expr_div(
+                        expr_pow(s, expr_int(2)),
+                        expr_mul(expr_int(4), expr_pow(a, expr_int(2))),
+                      ),
+                    ),
+                    @symspec.erfc(expr_div(s, expr_mul(expr_int(2), a))),
+                  ),
+                  s,
+                ),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          }
+        None => None
+      }
+    @symcore.Expr::Function("besselj", [order, arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) =>
+          if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
+            None
+          } else {
+            Some(
+              (
+                expr_div(
+                  expr_one(),
+                  preferred_positive_sqrt(
+                    expr_add(expr_pow(a, expr_int(2)), expr_pow(s, expr_int(2))),
+                  ),
+                ),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          }
+        None => None
+      }
+    @symcore.Expr::Function("besseli", [order, arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) =>
+          if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
+            None
+          } else {
+            Some(
+              (
+                expr_div(
+                  expr_one(),
+                  preferred_positive_sqrt(
+                    expr_sub(expr_pow(s, expr_int(2)), expr_pow(a, expr_int(2))),
+                  ),
+                ),
+                a,
+                true_expr(),
+              ),
+            )
+          }
+        None => None
+      }
+    @symcore.Expr::Function("fresnels", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        let phase = expr_div(
+          expr_pow(s, expr_int(2)),
+          expr_mul(expr_int(2), @symcore.symbol("pi")),
+        )
+        let arg = expr_div(s, @symcore.symbol("pi"))
+        Some(
+          (
+            expr_div(
+              expr_add(
+                expr_mul(
+                  expr_neg_one(),
+                  expr_mul(@symelem.sin(phase), @symspec.fresnels(arg)),
+                ),
+                expr_add(
+                  expr_mul(
+                    expr_div(expr_sqrt_two(), expr_int(2)),
+                    @symelem.sin(
+                      expr_add(
+                        phase,
+                        expr_div(@symcore.symbol("pi"), expr_int(4)),
+                      ),
+                    ),
+                  ),
+                  expr_mul(
+                    expr_neg_one(),
+                    expr_mul(@symelem.cos(phase), @symspec.fresnelc(arg)),
+                  ),
+                ),
+              ),
+              s,
+            ),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("fresnelc", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        let phase = expr_div(
+          expr_pow(s, expr_int(2)),
+          expr_mul(expr_int(2), @symcore.symbol("pi")),
+        )
+        let arg = expr_div(s, @symcore.symbol("pi"))
+        Some(
+          (
+            expr_div(
+              expr_add(
+                expr_mul(@symelem.sin(phase), @symspec.fresnelc(arg)),
+                expr_add(
+                  expr_mul(
+                    expr_mul(expr_neg_one(), @symelem.cos(phase)),
+                    @symspec.fresnels(arg),
+                  ),
+                  expr_mul(
+                    expr_div(expr_sqrt_two(), expr_int(2)),
+                    @symelem.cos(
+                      expr_add(
+                        phase,
+                        expr_div(@symcore.symbol("pi"), expr_int(4)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              s,
+            ),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
     @symcore.Expr::Function("Ci", [@symcore.Expr::Symbol(name)]) =>
       if name == t_name {
         Some(
@@ -2901,6 +3047,10 @@ fn mellin_doit(expr : Expr, x_name : String, s : Expr) -> Expr? {
     @symcore.Expr::Add(terms) =>
       transform_add(terms, x_name, fn(term) { mellin_doit(term, x_name, s) })
     _ => {
+      match mellin_special_info(expr, x_name, s) {
+        Some((value, _, _, _)) => return Some(value)
+        None => ()
+      }
       let (coeff, factors) = split_mul(expr, x_name)
       if factors.length() == 0 {
         None
@@ -2953,6 +3103,10 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
       )
     }
     _ => {
+      match mellin_special_info(expr, x_name, s) {
+        Some(info) => return Some(info)
+        None => ()
+      }
       let (coeff, factors) = split_mul(expr, x_name)
       if factors.length() == 0 {
         None
@@ -2964,6 +3118,100 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
         }
       }
     }
+  }
+}
+
+///|
+fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
+  match expr {
+    @symcore.Expr::Function("E1", [@symcore.Expr::Symbol(name)]) =>
+      if name == x_name {
+        Some(
+          (
+            expr_div(@symspec.gamma(s), s),
+            expr_zero(),
+            @symcore.symbol("oo"),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("expint", [n, @symcore.Expr::Symbol(name)]) =>
+      if name == x_name && expr_is_constant(n, x_name) {
+        Some(
+          (
+            expr_div(@symspec.gamma(s), expr_sub(expr_add(n, s), expr_one())),
+            max_expr(expr_sub(expr_one(), n), expr_zero()),
+            @symcore.symbol("oo"),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Si", [@symcore.Expr::Symbol(name)]) =>
+      if name == x_name {
+        Some(
+          (
+            expr_div(
+              expr_mul(
+                expr_neg_one(),
+                expr_mul(
+                  expr_pow(expr_int(2), s),
+                  expr_mul(
+                    sqrt_pi(),
+                    @symspec.gamma(
+                      expr_div(expr_add(s, expr_one()), expr_int(2)),
+                    ),
+                  ),
+                ),
+              ),
+              expr_mul(
+                expr_int(2),
+                expr_mul(
+                  s,
+                  @symspec.gamma(expr_sub(expr_one(), expr_div(s, expr_int(2)))),
+                ),
+              ),
+            ),
+            expr_int(-1),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function(
+      "Ci",
+      [@symcore.Expr::Function("sqrt", [@symcore.Expr::Symbol(name)])]
+    ) =>
+      if name == x_name {
+        Some(
+          (
+            expr_div(
+              expr_mul(
+                expr_neg_one(),
+                expr_mul(
+                  expr_pow(
+                    expr_int(2),
+                    expr_sub(expr_mul(expr_int(2), s), expr_one()),
+                  ),
+                  expr_mul(sqrt_pi(), @symspec.gamma(s)),
+                ),
+              ),
+              expr_mul(s, @symspec.gamma(expr_sub(expr_rat(1, 2), s))),
+            ),
+            expr_zero(),
+            expr_one(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    _ => None
   }
 }
 
@@ -3304,6 +3552,10 @@ fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
         inverse_mellin_doit(term, s_name, x)
       })
     _ => {
+      match inverse_mellin_special_term(expr_simplify(expr), s_sym, x) {
+        Some(v) => return Some(v)
+        None => ()
+      }
       let (num, den_opt) = split_division(expr)
       let numerator = if num.length() == 0 {
         expr_one()
@@ -3373,6 +3625,60 @@ fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
       }
     }
   }
+}
+
+///|
+fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
+  let e1_formula = expr_div(@symspec.gamma(s_sym), s_sym)
+  if expr_eq(expr_simplify(expr), expr_simplify(e1_formula)) {
+    return Some(@symspec.e1(x))
+  }
+  let expint2_formula = expr_div(
+    @symspec.gamma(s_sym),
+    expr_add(s_sym, expr_one()),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(expint2_formula)) {
+    return Some(@symspec.expint(expr_int(2), x))
+  }
+  let si_formula = expr_div(
+    expr_mul(
+      expr_neg_one(),
+      expr_mul(
+        expr_pow(expr_int(2), s_sym),
+        expr_mul(
+          sqrt_pi(),
+          @symspec.gamma(expr_div(expr_add(s_sym, expr_one()), expr_int(2))),
+        ),
+      ),
+    ),
+    expr_mul(
+      expr_int(2),
+      expr_mul(
+        s_sym,
+        @symspec.gamma(expr_sub(expr_one(), expr_div(s_sym, expr_int(2)))),
+      ),
+    ),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(si_formula)) {
+    return Some(@symspec.si(x))
+  }
+  let ci_sqrt_formula = expr_div(
+    expr_mul(
+      expr_neg_one(),
+      expr_mul(
+        expr_pow(
+          expr_int(2),
+          expr_sub(expr_mul(expr_int(2), s_sym), expr_one()),
+        ),
+        expr_mul(sqrt_pi(), @symspec.gamma(s_sym)),
+      ),
+    ),
+    expr_mul(s_sym, @symspec.gamma(expr_sub(expr_rat(1, 2), s_sym))),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(ci_sqrt_formula)) {
+    return Some(@symspec.ci(@symelem.sqrt(x)))
+  }
+  None
 }
 
 ///|
