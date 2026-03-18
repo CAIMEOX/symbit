@@ -977,6 +977,43 @@ test "symintegrals Mellin special-function rules evaluate" {
   let inv_e1 = doit(
     inverse_mellin_transform(@symspec.gamma(s) * (s ^ @symcore.int(-1)), s, x),
   )
+  let inv_gamma_shift = doit(
+    inverse_mellin_transform(@symspec.gamma(s - @symcore.int(1)), s, x),
+  )
+  let inv_gamma_sum = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(s) + @symspec.gamma(s - @symcore.int(1)),
+      s,
+      x,
+    ),
+  )
+  let inv_beta_left = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(b) *
+      @symspec.gamma(s) *
+      (@symspec.gamma(s + b) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_beta_right = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(b) *
+      @symspec.gamma(@symcore.int(1) - b - s) *
+      (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_shifted_power = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(s) *
+      @symspec.gamma(rho - s) *
+      (@symspec.gamma(rho) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
   let inv_expint2 = doit(
     inverse_mellin_transform(
       @symspec.gamma(s) * ((s + @symcore.int(1)) ^ @symcore.int(-1)),
@@ -1028,6 +1065,52 @@ test "symintegrals Mellin special-function rules evaluate" {
     @symcore.compare_expr(
       @symsimplify.simplify(inv_e1),
       @symsimplify.simplify(@symspec.e1(x)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_gamma_shift),
+      @symsimplify.simplify(
+        @symelem.exp(@symcore.int(-1) * x) * (x ^ @symcore.int(-1)),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_gamma_sum),
+      @symsimplify.simplify(
+        @symelem.exp(@symcore.int(-1) * x) +
+        @symelem.exp(@symcore.int(-1) * x) * (x ^ @symcore.int(-1)),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_beta_left),
+      @symsimplify.simplify(
+        ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
+        @symspec.heaviside(@symcore.int(1) - x),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_beta_right),
+      @symsimplify.simplify(
+        ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
+        @symspec.heaviside(x - @symcore.int(1)),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_shifted_power),
+      @symsimplify.simplify((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho)),
     ),
     0,
   )

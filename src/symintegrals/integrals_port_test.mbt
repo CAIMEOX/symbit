@@ -1602,6 +1602,82 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
     x,
   ).unwrap()
+  let gamma_shift_inverse = do_inverse_mellin_doit(
+    @symspec.gamma(s - @symcore.int(1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(gamma_shift_inverse) +
+      ") - (sympy.exp(-sympy.Symbol('x'))/sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+
+  let gamma_sum_inverse = do_inverse_mellin_doit(
+    @symspec.gamma(s) + @symspec.gamma(s - @symcore.int(1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(gamma_sum_inverse) +
+      ") - ((sympy.Symbol('x') + 1)*sympy.exp(-sympy.Symbol('x'))/sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+
+  let beta_left_inverse = do_inverse_mellin_doit(
+    @symspec.gamma(b) *
+    @symspec.gamma(s) *
+    (@symspec.gamma(s + b) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(beta_left_inverse) +
+      ") - (((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1))*sympy.Heaviside(1 - sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let beta_right_inverse = do_inverse_mellin_doit(
+    @symspec.gamma(b) *
+    @symspec.gamma(@symcore.int(1) - b - s) *
+    (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(beta_right_inverse) +
+      ") - (((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1))*sympy.Heaviside(sympy.Symbol('x') - 1))))",
+    ),
+    "0",
+  )
+
+  let shifted_power_inverse = do_inverse_mellin_doit(
+    @symspec.gamma(s) *
+    @symspec.gamma(rho - s) *
+    (@symspec.gamma(rho) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(shifted_power_inverse) +
+      ") - ((1 + sympy.Symbol('x'))**(-sympy.Symbol('rho')))))",
+    ),
+    "0",
+  )
+
   assert_eq(
     try! @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +

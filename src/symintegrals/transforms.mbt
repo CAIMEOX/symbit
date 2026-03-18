@@ -5151,6 +5151,18 @@ fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
 
 ///|
 fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
+  match inverse_mellin_gamma_linear_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_mellin_beta_heaviside_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_mellin_shifted_power_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let erf_sqrt_formula = expr_div(
     expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
     expr_mul(sqrt_pi(), s_sym),
@@ -5211,12 +5223,172 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
 }
 
 ///|
+fn inverse_mellin_gamma_linear_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("gamma", [arg]) =>
+      match split_linear_coeff(arg, s_name) {
+        Some((coeff, offset)) if !expr_depends_on(offset, s_name) =>
+          if expr_is_one(coeff) {
+            let xpow = if expr_is_zero(offset) {
+              expr_one()
+            } else {
+              expr_pow(x, offset)
+            }
+            Some(expr_mul(xpow, @symelem.exp(expr_mul(expr_neg_one(), x))))
+          } else if expr_is_minus_one(coeff) {
+            let xpow = if expr_is_zero(offset) {
+              expr_one()
+            } else {
+              expr_pow(x, expr_mul(expr_neg_one(), offset))
+            }
+            Some(expr_mul(xpow, @symelem.exp(expr_div(expr_neg_one(), x))))
+          } else {
+            None
+          }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_mellin_beta_heaviside_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let num_factors = expr_factors(factors_expr(num))
+  let den_factors = expr_factors(den)
+  if num_factors.length() != 2 || den_factors.length() != 1 {
+    return None
+  }
+  let mut beta_const : Expr? = None
+  for factor in num_factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) =>
+        if !expr_depends_on(arg, s_name) {
+          beta_const = Some(arg)
+        } else {
+          ()
+        }
+      _ => return None
+    }
+  }
+  match beta_const {
+    Some(beta) => {
+      let left_formula = expr_simplify(
+        @symspec.gamma(beta) *
+        @symspec.gamma(s_sym) *
+        (@symspec.gamma(s_sym + beta) ^ @symcore.int(-1)),
+      )
+      if expr_eq(expr_simplify(expr), left_formula) {
+        Some(
+          expr_mul(
+            expr_pow(expr_sub(expr_one(), x), expr_sub(beta, expr_one())),
+            @symspec.heaviside(expr_sub(expr_one(), x)),
+          ),
+        )
+      } else {
+        let right_formula = expr_simplify(
+          @symspec.gamma(beta) *
+          @symspec.gamma(@symcore.int(1) - beta - s_sym) *
+          (@symspec.gamma(@symcore.int(1) - s_sym) ^ @symcore.int(-1)),
+        )
+        if expr_eq(expr_simplify(expr), right_formula) {
+          Some(
+            expr_mul(
+              expr_pow(expr_sub(x, expr_one()), expr_sub(beta, expr_one())),
+              @symspec.heaviside(expr_sub(x, expr_one())),
+            ),
+          )
+        } else {
+          None
+        }
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn inverse_mellin_shifted_power_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let num_factors = expr_factors(factors_expr(num))
+  let den_factors = expr_factors(den)
+  if num_factors.length() != 2 || den_factors.length() != 1 {
+    return None
+  }
+  let rho = match den_factors[0] {
+    @symcore.Expr::Function("gamma", [arg]) if !expr_depends_on(arg, s_name) =>
+      arg
+    _ => return None
+  }
+  let mut has_gamma_s = false
+  let mut has_gamma_rho_minus_s = false
+  for factor in num_factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) =>
+        match split_linear_coeff(arg, s_name) {
+          Some((coeff, offset)) if expr_is_one(coeff) && expr_is_zero(offset) =>
+            has_gamma_s = true
+          Some((coeff, offset)) if expr_is_minus_one(coeff) &&
+            expr_eq(offset, rho) => has_gamma_rho_minus_s = true
+          _ => return None
+        }
+      _ => return None
+    }
+  }
+  if has_gamma_s && has_gamma_rho_minus_s {
+    Some(expr_pow(expr_add(x, expr_one()), expr_mul(expr_neg_one(), rho)))
+  } else {
+    None
+  }
+}
+
+///|
 fn inverse_mellin_term(pow : Expr, is_le : Bool, x : Expr) -> Expr {
   let xpow = if expr_is_zero(pow) { expr_one() } else { expr_pow(x, pow) }
   if is_le {
     expr_mul(xpow, @symspec.heaviside(expr_sub(expr_one(), x)))
   } else {
     expr_mul(xpow, @symspec.heaviside(expr_sub(x, expr_one())))
+  }
+}
+
+///|
+fn expr_factors(expr : Expr) -> Array[Expr] {
+  match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    simplified => [simplified]
   }
 }
 
