@@ -318,6 +318,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let box_window_fourier_eval = @symprint.to_string(
     doit(fourier_transform(box_window, x, k)),
   )
+  let box_window_inverse_fourier = doit(
+    inverse_fourier_transform(doit(fourier_transform(box_window, x, k)), k, x),
+  )
   let triangle_window_fourier_eval = @symprint.to_string(
     doit(fourier_transform(triangle_window, x, k)),
   )
@@ -472,6 +475,13 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   guard !box_window_fourier_eval.contains("FourierTransform") else {
     fail("box-window fourier transform stayed unevaluated")
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(box_window_inverse_fourier),
+      @symsimplify.simplify(box_window),
+    ),
+    0,
+  )
   guard !triangle_window_fourier_eval.contains("FourierTransform") else {
     fail("triangle-window fourier transform stayed unevaluated")
   }

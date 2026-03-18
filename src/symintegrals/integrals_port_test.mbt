@@ -344,6 +344,15 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
     content="0",
   )
+  let box_window_ift = doit(inverse_fourier_transform(box_window_ft, k, x))
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(box_window_ift) +
+      ") - sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))))",
+    ),
+    content="0",
+  )
 
   let triangle_window_ft = doit(
     fourier_transform(
@@ -651,6 +660,9 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   let s = @symcore.symbol("s")
   let k = @symcore.symbol("k")
   let r = @symcore.symbol("r")
+  let a = @symcore.symbol("a")
+  let m = @symcore.symbol("m")
+  let nu = @symcore.symbol("nu")
   let half = try! @symcore.rational_from_ints(1, 2)
 
   let ours_laplace = laplace_transform_eval(
@@ -756,6 +768,24 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
     "0",
   )
+  let sine_power = doit(sine_transform(x ^ (@symcore.int(-1) * a), x, k))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sine_power) +
+      ") - sympy.sine_transform(sympy.Symbol('x')**(-sympy.Symbol('a')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_sine_power = doit(inverse_sine_transform(sine_power, k, x))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_sine_power) +
+      ") - sympy.Symbol('x')**(-sympy.Symbol('a'))))",
+    ),
+    "0",
+  )
   let ours_cosine = cosine_transform_eval(
     @symelem.exp(@symcore.int(-2) * x),
     x,
@@ -797,6 +827,24 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_half_power) +
       ") - 1/sympy.sqrt(sympy.Symbol('x'))))",
+    ),
+    "0",
+  )
+  let cosine_power = doit(cosine_transform(x ^ (@symcore.int(-1) * a), x, k))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cosine_power) +
+      ") - sympy.cosine_transform(sympy.Symbol('x')**(-sympy.Symbol('a')), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    "0",
+  )
+  let inverse_cosine_power = doit(inverse_cosine_transform(cosine_power, k, x))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inverse_cosine_power) +
+      ") - sympy.Symbol('x')**(-sympy.Symbol('a'))))",
     ),
     "0",
   )
@@ -961,6 +1009,77 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_recip) +
       ") - 1/sympy.Symbol('r'))) ",
+    ),
+    "0",
+  )
+  let hankel_power_zero = doit(
+    hankel_transform(r ^ (@symcore.int(-1) * m), r, k, @symcore.int(0)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hankel_power_zero) +
+      ") - sympy.hankel_transform(sympy.Symbol('r')**(-sympy.Symbol('m')), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
+    ),
+    "0",
+  )
+  let inv_hankel_power_zero = doit(
+    inverse_hankel_transform(hankel_power_zero, k, r, @symcore.int(0)),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_power_zero) +
+      ") - sympy.Symbol('r')**(-sympy.Symbol('m'))))",
+    ),
+    "0",
+  )
+  let hankel_power_generic = doit(
+    hankel_transform(r ^ (@symcore.int(-1) * m), r, k, nu),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hankel_power_generic) +
+      ") - sympy.hankel_transform(sympy.Symbol('r')**(-sympy.Symbol('m')), sympy.Symbol('r'), sympy.Symbol('k'), sympy.Symbol('nu'))))",
+    ),
+    "0",
+  )
+  let inv_hankel_power_generic = doit(
+    inverse_hankel_transform(hankel_power_generic, k, r, nu),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_power_generic) +
+      ") - sympy.Symbol('r')**(-sympy.Symbol('m'))))",
+    ),
+    "0",
+  )
+  let hankel_exp_generic = doit(
+    hankel_transform(
+      (r ^ nu) * @symelem.exp(@symcore.int(-1) * a * r),
+      r,
+      k,
+      nu,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(hankel_exp_generic) +
+      ") - sympy.hankel_transform(sympy.Symbol('r')**sympy.Symbol('nu')*sympy.exp(-sympy.Symbol('a')*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), sympy.Symbol('nu'))))",
+    ),
+    "0",
+  )
+  let inv_hankel_exp_generic = doit(
+    inverse_hankel_transform(hankel_exp_generic, k, r, nu),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(inv_hankel_exp_generic) +
+      ") - (sympy.Symbol('r')**sympy.Symbol('nu')*sympy.exp(-sympy.Symbol('a')*sympy.Symbol('r')))))",
     ),
     "0",
   )

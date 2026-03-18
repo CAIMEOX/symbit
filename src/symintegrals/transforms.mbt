@@ -1279,6 +1279,10 @@ pub fn do_inverse_fourier_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
 
 ///|
 fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
+  match inverse_fourier_window_term(expr_simplify(expr), k_name, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_fourier_half_line_term(expr_simplify(expr), k_name, x) {
     Some(v) => Some(v)
     None => {
@@ -1312,6 +1316,19 @@ fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
       }
     }
   }
+}
+
+///|
+fn inverse_fourier_window_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
+  match parse_inverse_fourier_box_scale(expr, k_name) {
+    Some(scale) => Some(inverse_fourier_box_window(scale, x))
+    None => None
+  }
+}
+
+///|
+fn inverse_fourier_box_window(scale : Expr, x : Expr) -> Expr {
+  @symspec.heaviside(expr_one() - @symelem.abs(expr_mul(scale, x)))
 }
 
 ///|
@@ -1579,6 +1596,38 @@ fn parse_fourier_abs_quadratic(expr : Expr, k_name : String) -> Expr? {
         Some(preferred_positive_sqrt(coeffs[0]))
       } else {
         None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if num.length() != 1 {
+    return None
+  }
+  match linear_coeffs(den, k_name) {
+    Some((coeff, offset)) =>
+      if !expr_eq(coeff, @symcore.symbol("pi")) || !expr_is_zero(offset) {
+        return None
+      }
+    _ => return None
+  }
+  match num[0] {
+    @symcore.Expr::Function("sin", [arg]) =>
+      match linear_coeffs(arg, k_name) {
+        Some((coeff, offset)) if expr_is_zero(offset) =>
+          Some(
+            expr_simplify(
+              expr_div(expr_mul(expr_int(2), @symcore.symbol("pi")), coeff),
+            ),
+          )
+        _ => None
       }
     _ => None
   }
