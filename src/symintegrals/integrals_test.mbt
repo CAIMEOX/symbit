@@ -324,6 +324,16 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let triangle_window_fourier_eval = @symprint.to_string(
     doit(fourier_transform(triangle_window, x, k)),
   )
+  let triangle_window_inverse_fourier = doit(
+    inverse_fourier_transform(
+      doit(fourier_transform(triangle_window, x, k)),
+      k,
+      x,
+    ),
+  )
+  let triangle_window_inverse_fourier_eval = @symprint.to_string(
+    triangle_window_inverse_fourier,
+  )
   let symbolic_cosine_gaussian_eval = @symprint.to_string(
     doit(
       cosine_transform(
@@ -485,6 +495,18 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   guard !triangle_window_fourier_eval.contains("FourierTransform") else {
     fail("triangle-window fourier transform stayed unevaluated")
   }
+  guard !triangle_window_inverse_fourier_eval.contains(
+    "InverseFourierTransform",
+  ) else {
+    fail("triangle-window inverse fourier transform stayed unevaluated")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(triangle_window_inverse_fourier),
+      @symsimplify.simplify(triangle_window),
+    ),
+    0,
+  )
   guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
     fail("symbolic cosine gaussian transform stayed unevaluated")
   }

@@ -377,6 +377,17 @@ test "symintegrals parity transforms forward/inverse family" {
       content="0",
     )
   }
+  let triangle_window_ift = doit(
+    inverse_fourier_transform(triangle_window_ft, k, x),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(triangle_window_ift) +
+      ") - (sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))*(1 - sympy.Abs(2*sympy.Symbol('x'))))))",
+    ),
+    content="0",
+  )
 
   let inverse_lp_cases : Array[(String, Expr)] = [
     (

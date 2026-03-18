@@ -1322,7 +1322,15 @@ fn inverse_fourier_doit(expr : Expr, k_name : String, x : Expr) -> Expr? {
 fn inverse_fourier_window_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
   match parse_inverse_fourier_box_scale(expr, k_name) {
     Some(scale) => Some(inverse_fourier_box_window(scale, x))
-    None => None
+    None =>
+      match parse_inverse_fourier_triangle_scale(expr, k_name) {
+        Some(scale) =>
+          Some(
+            inverse_fourier_box_window(scale, x) *
+            (expr_one() - @symelem.abs(expr_mul(scale, x))),
+          )
+        None => None
+      }
   }
 }
 
@@ -1629,6 +1637,53 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
           )
         _ => None
       }
+    _ => None
+  }
+}
+
+///|
+fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 2 {
+    return None
+  }
+  let mut den_ok = false
+  let mut scale : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Pow(base, exp) if expr_eq(exp, expr_int(-1)) =>
+        match poly_coeffs_upto2(base, k_name) {
+          Some(coeffs) =>
+            if expr_is_zero(coeffs[0]) &&
+              expr_is_zero(coeffs[1]) &&
+              expr_eq(coeffs[2], expr_pow(@symcore.symbol("pi"), expr_int(2))) {
+              den_ok = true
+            } else {
+              return None
+            }
+          _ => return None
+        }
+      @symcore.Expr::Pow(@symcore.Expr::Function("sin", [arg]), exp) if expr_eq(
+          exp,
+          expr_int(2),
+        ) =>
+        match linear_coeffs(arg, k_name) {
+          Some((freq, offset)) if expr_is_zero(offset) =>
+            if expr_eq(
+                expr_simplify(expr_mul(coeff, freq)),
+                @symcore.symbol("pi"),
+              ) {
+              scale = Some(coeff)
+            } else {
+              return None
+            }
+          _ => return None
+        }
+      _ => return None
+    }
+  }
+  match (den_ok, scale) {
+    (true, Some(v)) => Some(v)
     _ => None
   }
 }
