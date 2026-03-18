@@ -845,6 +845,50 @@ test "symintegrals Mellin special-function rules evaluate" {
       "besseli(b, sqrt(x))*besselk(a, sqrt(x)) Mellin transform stayed unevaluated",
     )
   }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.sin(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("sin(sqrt(x))*besselj(a, sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.cos(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("cos(sqrt(x))*besselj(a, sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.sin(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("sin(sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.cos(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("cos(sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated")
+  }
 
   let generic_mellin_eval = @symprint.to_string(
     mellin_transform_eval(f_of_x, x, s),

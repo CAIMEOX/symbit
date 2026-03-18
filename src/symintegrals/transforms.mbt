@@ -3661,6 +3661,10 @@ fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
 
 ///|
 fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  match mellin_trig_bessel_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
   match mellin_beta_heaviside_info(factors, x_name, s) {
     Some((value, _, _, _)) => return Some(value)
     None => ()
@@ -3736,6 +3740,10 @@ fn mellin_mul_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
+  match mellin_trig_bessel_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match mellin_beta_heaviside_info(factors, x_name, s) {
     Some(info) => return Some(info)
     None => ()
@@ -3895,6 +3903,298 @@ fn mellin_beta_heaviside_info(
         )
       } else {
         None
+      }
+    _ => None
+  }
+}
+
+///|
+fn mellin_trig_bessel_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut trig_name : String? = None
+  let mut trig_coeff : Expr? = None
+  let mut bessel_kind : String? = None
+  let mut bessel_order : Expr? = None
+  let mut bessel_coeff : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("sin", [arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if trig_name is None {
+              trig_name = Some("sin")
+              trig_coeff = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("cos", [arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if trig_name is None {
+              trig_name = Some("cos")
+              trig_coeff = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("besselj", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if bessel_kind is None {
+              bessel_kind = Some("besselj")
+              bessel_order = Some(order)
+              bessel_coeff = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Function("bessely", [order, arg]) =>
+        match parse_sqrt_linear(arg, x_name) {
+          Some(coeff) =>
+            if bessel_kind is None {
+              bessel_kind = Some("bessely")
+              bessel_order = Some(order)
+              bessel_coeff = Some(coeff)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ => return None
+    }
+  }
+  match (trig_name, trig_coeff, bessel_kind, bessel_order, bessel_coeff) {
+    (Some(trig), Some(coeff1), Some(kind), Some(order), Some(coeff2)) =>
+      if !expr_eq(coeff1, coeff2) {
+        None
+      } else {
+        let scale = mellin_bessel_pair_scale(coeff1, s)
+        let half_order = expr_div(order, expr_int(2))
+        let common_strip = max_expr(
+          expr_div(expr_mul(expr_neg_one(), @symelem.re(order)), expr_int(2)),
+          expr_div(@symelem.re(order), expr_int(2)),
+        )
+        match (trig, kind) {
+          ("sin", "besselj") =>
+            Some(
+              (
+                expr_mul(
+                  scale,
+                  expr_div(
+                    expr_mul(
+                      expr_pow(expr_int(2), order),
+                      expr_mul(
+                        @symspec.gamma(
+                          expr_sub(expr_rat(1, 2), expr_mul(expr_int(2), s)),
+                        ),
+                        @symspec.gamma(
+                          expr_add(half_order, expr_add(s, expr_rat(1, 2))),
+                        ),
+                      ),
+                    ),
+                    expr_mul(
+                      @symspec.gamma(
+                        expr_add(
+                          expr_mul(expr_neg_one(), half_order),
+                          expr_sub(expr_one(), s),
+                        ),
+                      ),
+                      @symspec.gamma(
+                        expr_add(
+                          order,
+                          expr_sub(expr_one(), expr_mul(expr_int(2), s)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                expr_sub(
+                  expr_div(
+                    expr_mul(expr_neg_one(), @symelem.re(order)),
+                    expr_int(2),
+                  ),
+                  expr_rat(1, 2),
+                ),
+                expr_rat(1, 4),
+                true_expr(),
+              ),
+            )
+          ("cos", "besselj") =>
+            Some(
+              (
+                expr_mul(
+                  scale,
+                  expr_div(
+                    expr_mul(
+                      expr_pow(expr_int(2), order),
+                      expr_mul(
+                        @symspec.gamma(expr_add(half_order, s)),
+                        @symspec.gamma(
+                          expr_sub(expr_rat(1, 2), expr_mul(expr_int(2), s)),
+                        ),
+                      ),
+                    ),
+                    expr_mul(
+                      @symspec.gamma(
+                        expr_add(
+                          expr_sub(expr_rat(1, 2), half_order),
+                          expr_mul(expr_neg_one(), s),
+                        ),
+                      ),
+                      @symspec.gamma(
+                        expr_add(
+                          order,
+                          expr_sub(expr_one(), expr_mul(expr_int(2), s)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                expr_div(
+                  expr_mul(expr_neg_one(), @symelem.re(order)),
+                  expr_int(2),
+                ),
+                expr_rat(1, 4),
+                true_expr(),
+              ),
+            )
+          ("sin", "bessely") =>
+            Some(
+              (
+                expr_mul(
+                  scale,
+                  expr_div(
+                    expr_mul(
+                      expr_neg_one(),
+                      expr_mul(
+                        expr_pow(expr_int(4), s),
+                        expr_mul(
+                          @symelem.sin(
+                            expr_mul(
+                              @symcore.symbol("pi"),
+                              expr_sub(half_order, s),
+                            ),
+                          ),
+                          expr_mul(
+                            @symspec.gamma(
+                              expr_sub(expr_rat(1, 2), expr_mul(expr_int(2), s)),
+                            ),
+                            expr_mul(
+                              @symspec.gamma(
+                                expr_add(
+                                  expr_div(
+                                    expr_sub(expr_one(), order),
+                                    expr_int(2),
+                                  ),
+                                  s,
+                                ),
+                              ),
+                              @symspec.gamma(
+                                expr_add(
+                                  expr_div(
+                                    expr_add(expr_one(), order),
+                                    expr_int(2),
+                                  ),
+                                  s,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    expr_mul(
+                      sqrt_pi(),
+                      expr_mul(
+                        @symspec.gamma(
+                          expr_sub(expr_one(), expr_add(s, half_order)),
+                        ),
+                        @symspec.gamma(
+                          expr_add(expr_sub(expr_one(), s), half_order),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                max_expr(
+                  expr_div(
+                    expr_sub(
+                      expr_mul(expr_neg_one(), @symelem.re(order)),
+                      expr_one(),
+                    ),
+                    expr_int(2),
+                  ),
+                  expr_div(
+                    expr_sub(@symelem.re(order), expr_one()),
+                    expr_int(2),
+                  ),
+                ),
+                expr_rat(1, 4),
+                true_expr(),
+              ),
+            )
+          ("cos", "bessely") =>
+            Some(
+              (
+                expr_mul(
+                  scale,
+                  expr_div(
+                    expr_mul(
+                      expr_neg_one(),
+                      expr_mul(
+                        expr_pow(expr_int(4), s),
+                        expr_mul(
+                          @symelem.cos(
+                            expr_mul(
+                              @symcore.symbol("pi"),
+                              expr_sub(half_order, s),
+                            ),
+                          ),
+                          expr_mul(
+                            @symspec.gamma(expr_sub(s, half_order)),
+                            expr_mul(
+                              @symspec.gamma(expr_add(s, half_order)),
+                              @symspec.gamma(
+                                expr_sub(
+                                  expr_rat(1, 2),
+                                  expr_mul(expr_int(2), s),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    expr_mul(
+                      sqrt_pi(),
+                      expr_mul(
+                        @symspec.gamma(
+                          expr_sub(expr_rat(1, 2), expr_add(s, half_order)),
+                        ),
+                        @symspec.gamma(
+                          expr_add(expr_sub(expr_rat(1, 2), s), half_order),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                common_strip,
+                expr_rat(1, 4),
+                true_expr(),
+              ),
+            )
+          _ => None
+        }
       }
     _ => None
   }
