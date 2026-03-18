@@ -822,6 +822,198 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
 
+  let abs_one_minus_mellin = mellin_transform_eval(
+    @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(abs_one_minus_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.Abs(1 - sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(abs_one_minus_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(abs_one_minus_mellin) + ")[1])[1])",
+    ),
+    "re(rho)",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr((" + py_expr(abs_one_minus_mellin) + ")[2])",
+    ),
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.mellin_transform(sympy.Abs(1 - sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
+    ),
+  )
+
+  let log_left_mellin = mellin_transform_eval(
+    (@symelem.log(x) ^ @symcore.int(4)) *
+    @symspec.heaviside(@symcore.int(1) - x),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_left_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x'))**4*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[1])",
+    ),
+    "oo",
+  )
+
+  let log_right_mellin = mellin_transform_eval(
+    (@symelem.log(x) ^ @symcore.int(3)) *
+    @symspec.heaviside(x - @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_right_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x'))**3*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_right_mellin) + ")[1])[0])",
+    ),
+    "-oo",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_right_mellin) + ")[1])[1])",
+    ),
+    "0",
+  )
+
+  let log_one_plus_mellin = mellin_transform_eval(
+    @symelem.log(x + @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_one_plus_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x') + 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_one_plus_mellin) + ")[1])[0])",
+    ),
+    "-1",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_one_plus_mellin) + ")[1])[1])",
+    ),
+    "0",
+  )
+
+  let log_one_plus_inverse_mellin = mellin_transform_eval(
+    @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_one_plus_inverse_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(1/sympy.Symbol('x') + 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_one_plus_inverse_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_one_plus_inverse_mellin) + ")[1])[1])",
+    ),
+    "1",
+  )
+
+  let log_abs_left_mellin = mellin_transform_eval(
+    @symelem.log(@symelem.abs(@symcore.int(1) - x)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_abs_left_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(sympy.Abs(1 - sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_abs_left_mellin) + ")[1])[0])",
+    ),
+    "-1",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_abs_left_mellin) + ")[1])[1])",
+    ),
+    "0",
+  )
+
+  let log_abs_inverse_mellin = mellin_transform_eval(
+    @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(log_abs_inverse_mellin) +
+      ")[0]) - sympy.mellin_transform(sympy.log(sympy.Abs(1 - 1/sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_abs_inverse_mellin) + ")[1])[0])",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(log_abs_inverse_mellin) + ")[1])[1])",
+    ),
+    "1",
+  )
+
   let e1_mellin = mellin_transform_eval(@symspec.e1(x), x, s)
   assert_eq(
     try! @sympy_integrals.integrals_eval_str(

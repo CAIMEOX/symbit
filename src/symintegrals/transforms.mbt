@@ -3414,6 +3414,14 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
     Some(info) => return Some(info)
     None => ()
   }
+  match mellin_abs_one_minus_power_info(expr, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match mellin_log_special_info(expr, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match expr {
     @symcore.Expr::Function(
       "erf",
@@ -3624,6 +3632,125 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
 }
 
 ///|
+fn mellin_abs_one_minus_power_info(
+  expr : Expr,
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(@symcore.Expr::Function("Abs", [arg]), exp) =>
+      match
+        (
+          parse_one_minus_linear(arg, x_name),
+          extract_explicit_negative_factor(exp),
+        ) {
+        (true, Some(rho)) =>
+          Some(
+            (
+              expr_div(
+                expr_mul(
+                  expr_int(2),
+                  expr_mul(
+                    @symelem.sin(
+                      expr_div(
+                        expr_mul(@symcore.symbol("pi"), rho),
+                        expr_int(2),
+                      ),
+                    ),
+                    expr_mul(
+                      @symspec.gamma(expr_sub(expr_one(), rho)),
+                      expr_mul(
+                        @symelem.cos(
+                          expr_mul(
+                            @symcore.symbol("pi"),
+                            expr_sub(s, expr_div(rho, expr_int(2))),
+                          ),
+                        ),
+                        expr_mul(
+                          @symspec.gamma(s),
+                          @symspec.gamma(expr_sub(rho, s)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                @symcore.symbol("pi"),
+              ),
+              expr_zero(),
+              @symelem.re(rho),
+              @symcore.function("Lt", [@symelem.re(rho), expr_one()]),
+            ),
+          )
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn mellin_log_special_info(
+  expr : Expr,
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match expr {
+    @symcore.Expr::Function("log", [inner]) =>
+      if parse_one_plus_linear(inner, x_name) {
+        Some(
+          (
+            expr_div(
+              @symcore.symbol("pi"),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.symbol("pi"), s))),
+            ),
+            expr_int(-1),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else if parse_one_plus_inverse(inner, x_name) {
+        Some(
+          (
+            expr_div(
+              @symcore.symbol("pi"),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.symbol("pi"), s))),
+            ),
+            expr_zero(),
+            expr_one(),
+            true_expr(),
+          ),
+        )
+      } else if parse_abs_one_minus_linear(inner, x_name) {
+        Some(
+          (
+            expr_div(
+              @symcore.symbol("pi"),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.symbol("pi"), s))),
+            ),
+            expr_int(-1),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else if parse_abs_one_minus_inverse(inner, x_name) {
+        Some(
+          (
+            expr_div(
+              @symcore.symbol("pi"),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.symbol("pi"), s))),
+            ),
+            expr_zero(),
+            expr_one(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
 fn mellin_shifted_power_info(
   expr : Expr,
   x_name : String,
@@ -3661,6 +3788,10 @@ fn mellin_bessel_sqrt_scale(coeff : Expr, s : Expr) -> Expr {
 
 ///|
 fn mellin_mul_term(factors : Array[Expr], x_name : String, s : Expr) -> Expr? {
+  match mellin_log_heaviside_info(factors, x_name, s) {
+    Some((value, _, _, _)) => return Some(value)
+    None => ()
+  }
   match mellin_trig_bessel_info(factors, x_name, s) {
     Some((value, _, _, _)) => return Some(value)
     None => ()
@@ -3740,6 +3871,10 @@ fn mellin_mul_info(
   x_name : String,
   s : Expr,
 ) -> MellinInfo? {
+  match mellin_log_heaviside_info(factors, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match mellin_trig_bessel_info(factors, x_name, s) {
     Some(info) => return Some(info)
     None => ()
@@ -3904,6 +4039,63 @@ fn mellin_beta_heaviside_info(
       } else {
         None
       }
+    _ => None
+  }
+}
+
+///|
+fn mellin_log_heaviside_info(
+  factors : Array[Expr],
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut power : Int? = None
+  let mut heav : (Expr, Bool)? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("Heaviside", [arg]) =>
+        match parse_heaviside_limit(arg, x_name) {
+          Some(info) =>
+            if heav is None {
+              heav = Some(info)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ =>
+        match parse_log_x_power(factor, x_name) {
+          Some(n) => if power is None { power = Some(n) } else { return None }
+          None => return None
+        }
+    }
+  }
+  match (power, heav) {
+    (Some(n), Some((bound, is_le))) if expr_is_one(bound) => {
+      let sign = if is_le {
+        if n % 2 == 0 {
+          expr_one()
+        } else {
+          expr_neg_one()
+        }
+      } else if n % 2 == 0 {
+        expr_neg_one()
+      } else {
+        expr_one()
+      }
+      let value = expr_mul(
+        sign,
+        expr_mul(factorial_expr(expr_int(n)), expr_pow(s, expr_int(-(n + 1)))),
+      )
+      if is_le {
+        Some((value, expr_zero(), @symcore.symbol("oo"), true_expr()))
+      } else {
+        Some((value, neg_oo_expr(), expr_zero(), true_expr()))
+      }
+    }
     _ => None
   }
 }
@@ -5176,6 +5368,106 @@ fn parse_shifted_linear_power(
         None => None
       }
     _ => None
+  }
+}
+
+///|
+fn parse_log_x_power(expr : Expr, var_name : String) -> Int? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("log", [@symcore.Expr::Symbol(name)]) =>
+      if name == var_name {
+        Some(1)
+      } else {
+        None
+      }
+    @symcore.Expr::Pow(
+      @symcore.Expr::Function("log", [@symcore.Expr::Symbol(name)]),
+      exp
+    ) =>
+      if name == var_name {
+        match expr_is_int_value(exp) {
+          Some(n) if n > 0 => Some(n)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_one_plus_linear(expr : Expr, var_name : String) -> Bool {
+  match linear_coeffs(expr_simplify(expr), var_name) {
+    Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
+    _ => false
+  }
+}
+
+///|
+fn parse_one_minus_linear(expr : Expr, var_name : String) -> Bool {
+  match linear_coeffs(expr_simplify(expr), var_name) {
+    Some((coeff, offset)) =>
+      (expr_is_one(coeff) || expr_is_minus_one(coeff)) && expr_is_one(offset)
+    _ => false
+  }
+}
+
+///|
+fn parse_one_plus_inverse(expr : Expr, var_name : String) -> Bool {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut saw_one = false
+      let mut saw_inv = false
+      for arg in args {
+        if expr_is_one(arg) {
+          saw_one = true
+        } else {
+          match parse_negative_power(arg, var_name) {
+            Some(power) if expr_eq(power, expr_one()) => saw_inv = true
+            _ => return false
+          }
+        }
+      }
+      saw_one && saw_inv
+    }
+    _ => false
+  }
+}
+
+///|
+fn parse_abs_one_minus_linear(expr : Expr, var_name : String) -> Bool {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("Abs", [inner]) =>
+      parse_one_minus_linear(inner, var_name)
+    _ => false
+  }
+}
+
+///|
+fn parse_abs_one_minus_inverse(expr : Expr, var_name : String) -> Bool {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("Abs", [inner]) =>
+      match expr_simplify(inner) {
+        @symcore.Expr::Add(args) if args.length() == 2 => {
+          let mut saw_one = false
+          let mut saw_neg_inv = false
+          for arg in args {
+            if expr_is_one(arg) {
+              saw_one = true
+            } else {
+              match
+                parse_negative_power(expr_mul(expr_neg_one(), arg), var_name) {
+                Some(power) if expr_eq(power, expr_one()) => saw_neg_inv = true
+                _ => return false
+              }
+            }
+          }
+          saw_one && saw_neg_inv
+        }
+        _ => false
+      }
+    _ => false
   }
 }
 

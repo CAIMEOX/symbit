@@ -683,6 +683,75 @@ test "symintegrals Mellin special-function rules evaluate" {
   ).contains("MellinTransform") else {
     fail("erf(sqrt(x)) Mellin transform stayed unevaluated")
   }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("abs(1 - x)**(-rho) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        (@symelem.log(x) ^ @symcore.int(4)) *
+        @symspec.heaviside(@symcore.int(1) - x),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("log(x)**4*Heaviside(1 - x) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        (@symelem.log(x) ^ @symcore.int(3)) *
+        @symspec.heaviside(x - @symcore.int(1)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("log(x)**3*Heaviside(x - 1) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(mellin_transform(@symelem.log(x + @symcore.int(1)), x, s)),
+  ).contains("MellinTransform") else {
+    fail("log(x + 1) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("log(1/x + 1) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(@symelem.log(@symelem.abs(@symcore.int(1) - x)), x, s),
+    ),
+  ).contains("MellinTransform") else {
+    fail("log(abs(1 - x)) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("log(abs(1 - 1/x)) Mellin transform stayed unevaluated")
+  }
   guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
     "MellinTransform",
   ) else {
