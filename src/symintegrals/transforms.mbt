@@ -414,6 +414,63 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
+    @symcore.Expr::Function("Ci", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        Some(
+          (
+            expr_mul(
+              expr_rat(-1, 2),
+              expr_div(
+                @symelem.log(expr_add(expr_one(), expr_pow(s, expr_int(2)))),
+                s,
+              ),
+            ),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("E1", [@symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        Some(
+          (
+            expr_div(@symelem.log(expr_add(s, expr_one())), s),
+            expr_zero(),
+            true_expr(),
+          ),
+        )
+      } else {
+        None
+      }
+    @symcore.Expr::Function("expint", [n, @symcore.Expr::Symbol(name)]) =>
+      if name == t_name {
+        match expr_is_int_value(n) {
+          Some(1) =>
+            Some(
+              (
+                expr_div(@symelem.log(expr_add(s, expr_one())), s),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          Some(2) =>
+            Some(
+              (
+                expr_div(
+                  expr_sub(s, @symelem.log(expr_add(s, expr_one()))),
+                  expr_pow(s, expr_int(2)),
+                ),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          _ => None
+        }
+      } else {
+        None
+      }
     @symcore.Expr::Function("Derivative", args) =>
       laplace_derivative_term(args, t_name, s)
     _ => None
@@ -584,23 +641,126 @@ fn inverse_laplace_doit(expr : Expr, s_name : String, t : Expr) -> Expr? {
         inverse_laplace_doit(term, s_name, t)
       })
     _ =>
-      match inverse_laplace_delay_term(expr, s_name, t) {
+      match inverse_laplace_special_term(expr_simplify(expr), s_name, t) {
         Some(v) => Some(v)
-        None => {
-          let (num_exprs, den_opt) = split_division(expr)
-          match den_opt {
-            None => None
-            Some(den) => {
-              let (coeff, var_expr_opt) = split_mul_factor(num_exprs, s_name)
-              match var_expr_opt {
-                None => inverse_laplace_no_var(coeff, den, t, s_name)
-                Some(var_expr) =>
-                  inverse_laplace_with_var(coeff, var_expr, den, t, s_name)
+        None =>
+          match inverse_laplace_delay_term(expr, s_name, t) {
+            Some(v) => Some(v)
+            None => {
+              let (num_exprs, den_opt) = split_division(expr)
+              match den_opt {
+                None => None
+                Some(den) => {
+                  let (coeff, var_expr_opt) = split_mul_factor(
+                    num_exprs, s_name,
+                  )
+                  match var_expr_opt {
+                    None => inverse_laplace_no_var(coeff, den, t, s_name)
+                    Some(var_expr) =>
+                      inverse_laplace_with_var(coeff, var_expr, den, t, s_name)
+                  }
+                }
               }
             }
           }
-        }
       }
+  }
+}
+
+///|
+fn inverse_laplace_special_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match inverse_laplace_e1_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_expint2_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  inverse_laplace_ci_term(expr, s_name, t)
+}
+
+///|
+fn inverse_laplace_ci_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_eq(den, @symcore.symbol(s_name)) {
+    return None
+  }
+  let numerator = factors_expr(num)
+  let (coeff, factors) = split_mul(numerator, s_name)
+  if !expr_eq(coeff, expr_rat(-1, 2)) || factors.length() != 1 {
+    return None
+  }
+  match factors[0] {
+    @symcore.Expr::Function("log", [inner]) =>
+      match poly_coeffs_upto2(inner, s_name) {
+        Some(coeffs) =>
+          if expr_eq(coeffs[0], expr_one()) &&
+            expr_is_zero(coeffs[1]) &&
+            expr_eq(coeffs[2], expr_one()) {
+            Some(expr_simplify(@symspec.heaviside(t) * @symspec.ci(t)))
+          } else {
+            None
+          }
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_e1_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_eq(den, @symcore.symbol(s_name)) {
+    return None
+  }
+  let numerator = factors_expr(num)
+  if matches_log_one_plus_linear(numerator, s_name) {
+    Some(expr_simplify(@symspec.heaviside(t) * @symspec.e1(t)))
+  } else {
+    None
+  }
+}
+
+///|
+fn inverse_laplace_expint2_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let s_sym = @symcore.symbol(s_name)
+  let target = expr_div(
+    expr_sub(s_sym, @symelem.log(expr_add(s_sym, expr_one()))),
+    expr_pow(s_sym, expr_int(2)),
+  )
+  if expr_eq(expr_simplify(expr), expr_simplify(target)) {
+    Some(expr_simplify(@symspec.heaviside(t) * @symspec.expint(expr_int(2), t)))
+  } else {
+    None
+  }
+}
+
+///|
+fn matches_log_one_plus_linear(expr : Expr, s_name : String) -> Bool {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("log", [inner]) =>
+      match linear_coeffs(inner, s_name) {
+        Some((coeff, offset)) => expr_is_one(coeff) && expr_is_one(offset)
+        None => false
+      }
+    _ => false
   }
 }
 
@@ -1611,6 +1771,10 @@ fn parse_fourier_abs_quadratic(expr : Expr, k_name : String) -> Expr? {
 
 ///|
 fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
+  match parse_inverse_fourier_box_sinc_scale(expr, k_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let (num, den_opt) = split_division(expr)
   let den = match den_opt {
     Some(v) => v
@@ -1642,7 +1806,31 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
 }
 
 ///|
+fn parse_inverse_fourier_box_sinc_scale(expr : Expr, k_name : String) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match factors[0] {
+    @symcore.Expr::Function("sinc", [arg]) =>
+      match parse_scaled_symbol(arg, k_name) {
+        Some(freq) =>
+          match inverse_fourier_sinc_scale(coeff, freq, 2) {
+            Some(scale) => Some(scale)
+            None => None
+          }
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
+  match parse_inverse_fourier_triangle_sinc_scale(expr, k_name) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let (coeff, factors) = split_mul(expr, k_name)
   if factors.length() != 2 {
     return None
@@ -1684,6 +1872,83 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
   }
   match (den_ok, scale) {
     (true, Some(v)) => Some(v)
+    _ => None
+  }
+}
+
+///|
+fn parse_inverse_fourier_triangle_sinc_scale(
+  expr : Expr,
+  k_name : String,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, k_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match factors[0] {
+    @symcore.Expr::Pow(@symcore.Expr::Function("sinc", [arg]), exp) if expr_eq(
+        exp,
+        expr_int(2),
+      ) =>
+      match parse_scaled_symbol(arg, k_name) {
+        Some(freq) =>
+          match inverse_fourier_sinc_scale(coeff, freq, 1) {
+            Some(scale) => Some(scale)
+            None => None
+          }
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_fourier_sinc_scale(coeff : Expr, freq : Expr, width : Int) -> Expr? {
+  let ratio = expr_simplify(expr_mul(coeff, expr_pow(freq, expr_int(-1))))
+  if expr_eq(ratio, expr_one()) || expr_eq(ratio, expr_neg_one()) {
+    Some(expr_simplify(expr_div(expr_int(width), freq)))
+  } else {
+    None
+  }
+}
+
+///|
+fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Symbol(name) =>
+      if name == var_name {
+        Some(expr_one())
+      } else {
+        None
+      }
+    @symcore.Expr::Mul(args) => {
+      let mut coeff = expr_one()
+      let mut seen_var = false
+      for arg in args {
+        match arg {
+          @symcore.Expr::Symbol(name) =>
+            if name == var_name {
+              if seen_var {
+                return None
+              }
+              seen_var = true
+            } else {
+              return None
+            }
+          _ =>
+            if expr_depends_on(arg, var_name) {
+              return None
+            } else {
+              coeff = expr_mul(coeff, arg)
+            }
+        }
+      }
+      if seen_var {
+        Some(coeff)
+      } else {
+        None
+      }
+    }
     _ => None
   }
 }

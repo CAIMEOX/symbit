@@ -1,6 +1,6 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform}"
 }
 
 ///|
@@ -191,6 +191,10 @@ test "symintegrals parity transforms forward/inverse family" {
   }
 
   let ft = @symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(2)))
+  let a = @symcore.symbol("a")
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let two_thirds = try! @symcore.rational_from_ints(2, 3)
+  let three_halves = try! @symcore.rational_from_ints(3, 2)
   let ours_ft = doit(fourier_transform(ft, x, k))
   let oracle_ft = try! @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
@@ -385,6 +389,67 @@ test "symintegrals parity transforms forward/inverse family" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(triangle_window_ift) +
       ") - (sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))*(1 - sympy.Abs(2*sympy.Symbol('x'))))))",
+    ),
+    content="0",
+  )
+  let direct_sinc_box_ift = doit(
+    inverse_fourier_transform(
+      two_thirds * @symelem.sinc(k * (three_halves ^ @symcore.int(-1))),
+      k,
+      x,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(direct_sinc_box_ift) +
+      ") - sympy.Heaviside(1 - sympy.Abs(3*sympy.Symbol('x')))))",
+    ),
+    content="0",
+  )
+  let direct_sinc_triangle_ift = doit(
+    inverse_fourier_transform(
+      third * (@symelem.sinc(k * third) ^ @symcore.int(2)),
+      k,
+      x,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(direct_sinc_triangle_ift) +
+      ") - (sympy.Heaviside(1 - sympy.Abs(3*sympy.Symbol('x')))*(1 - sympy.Abs(3*sympy.Symbol('x'))))))",
+    ),
+    content="0",
+  )
+  let direct_symbolic_sinc_box_ift = doit(
+    inverse_fourier_transform(
+      (a ^ @symcore.int(-1)) * @symelem.sinc(k * (a ^ @symcore.int(-1))),
+      k,
+      x,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(direct_symbolic_sinc_box_ift) +
+      ") - sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('a')*sympy.Symbol('x')))))",
+    ),
+    content="0",
+  )
+  let direct_symbolic_sinc_triangle_ift = doit(
+    inverse_fourier_transform(
+      (a ^ @symcore.int(-1)) *
+      (@symelem.sinc(k * (a ^ @symcore.int(-1))) ^ @symcore.int(2)),
+      k,
+      x,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(direct_symbolic_sinc_triangle_ift) +
+      ") - (sympy.Heaviside(1 - sympy.Abs(sympy.Symbol('a')*sympy.Symbol('x')))*(1 - sympy.Abs(sympy.Symbol('a')*sympy.Symbol('x'))))))",
     ),
     content="0",
   )
@@ -1218,6 +1283,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     x,
     s,
   )
+  let neg_half = try! @symcore.rational_from_ints(-1, 2)
   assert_eq(
     try! @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(deriv2_eval) + ")",
@@ -1225,6 +1291,88 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     try! @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), (x, 2)), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
+  )
+
+  let ci_laplace = doit(laplace_transform(@symspec.ci(x), x, s))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ci_laplace) +
+      ") - sympy.laplace_transform(sympy.Ci(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let e1_laplace = doit(laplace_transform(@symspec.e1(x), x, s))
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(e1_laplace) +
+      ") - sympy.laplace_transform(sympy.E1(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let expint2_laplace = doit(
+    laplace_transform(@symspec.expint(@symcore.int(2), x), x, s),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(expint2_laplace) +
+      ") - sympy.laplace_transform(sympy.expint(2, sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+
+  let ci_inverse = doit(
+    inverse_laplace_transform(
+      neg_half *
+      @symelem.log(@symcore.int(1) + (s ^ @symcore.int(2))) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(ci_inverse) +
+      ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.Ci(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let e1_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.log(s + @symcore.int(1)) * (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(e1_inverse) +
+      ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.E1(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let expint2_inverse = doit(
+    inverse_laplace_transform(
+      (s - @symelem.log(s + @symcore.int(1))) * (s ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(expint2_inverse) +
+      ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.expint(2, sympy.Symbol('x')))))",
+    ),
+    "0",
   )
 
   let delayed_inverse = doit(

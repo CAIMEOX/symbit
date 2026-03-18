@@ -209,6 +209,8 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let r = @symcore.symbol("r")
   let k = @symcore.symbol("k")
   let a = @symcore.symbol("a")
+  let third = try! @symcore.rational_from_ints(1, 3)
+  let two_thirds = try! @symcore.rational_from_ints(2, 3)
   let shifted_gaussian = @symelem.exp(
     @symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2)),
   )
@@ -334,6 +336,37 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let triangle_window_inverse_fourier_eval = @symprint.to_string(
     triangle_window_inverse_fourier,
   )
+  let direct_sinc_box = doit(
+    inverse_fourier_transform(
+      two_thirds * @symelem.sinc(@symcore.int(2) * k * third),
+      k,
+      x,
+    ),
+  )
+  let direct_sinc_triangle = doit(
+    inverse_fourier_transform(
+      third * (@symelem.sinc(k * third) ^ @symcore.int(2)),
+      k,
+      x,
+    ),
+  )
+  let symbolic_sinc_box = doit(
+    inverse_fourier_transform(
+      (a ^ @symcore.int(-1)) * @symelem.sinc(k * (a ^ @symcore.int(-1))),
+      k,
+      x,
+    ),
+  )
+  let symbolic_sinc_triangle = doit(
+    inverse_fourier_transform(
+      (a ^ @symcore.int(-1)) *
+      (@symelem.sinc(k * (a ^ @symcore.int(-1))) ^ @symcore.int(2)),
+      k,
+      x,
+    ),
+  )
+  let symbolic_sinc_box_eval = @symprint.to_string(symbolic_sinc_box)
+  let symbolic_sinc_triangle_eval = @symprint.to_string(symbolic_sinc_triangle)
   let symbolic_cosine_gaussian_eval = @symprint.to_string(
     doit(
       cosine_transform(
@@ -507,6 +540,52 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(direct_sinc_box),
+      @symsimplify.simplify(
+        @symspec.heaviside(@symcore.int(1) - @symelem.abs(@symcore.int(3) * x)),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(direct_sinc_triangle),
+      @symsimplify.simplify(
+        @symspec.heaviside(@symcore.int(1) - @symelem.abs(@symcore.int(3) * x)) *
+        (@symcore.int(1) - @symelem.abs(@symcore.int(3) * x)),
+      ),
+    ),
+    0,
+  )
+  guard !symbolic_sinc_box_eval.contains("InverseFourierTransform") else {
+    fail("symbolic sinc box inverse fourier transform stayed unevaluated")
+  }
+  guard !symbolic_sinc_triangle_eval.contains("InverseFourierTransform") else {
+    fail("symbolic sinc triangle inverse fourier transform stayed unevaluated")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(symbolic_sinc_box),
+      @symsimplify.simplify(
+        @symspec.heaviside(
+          @symcore.int(1) - @symelem.abs(@symcore.int(2) * a * x),
+        ),
+      ),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(symbolic_sinc_triangle),
+      @symsimplify.simplify(
+        @symspec.heaviside(@symcore.int(1) - @symelem.abs(a * x)) *
+        (@symcore.int(1) - @symelem.abs(a * x)),
+      ),
+    ),
+    0,
+  )
   guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
     fail("symbolic cosine gaussian transform stayed unevaluated")
   }
@@ -629,6 +708,87 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   ).contains("LaplaceTransform") else {
     fail("x*cosh(x) Laplace transform stayed unevaluated")
   }
+}
+
+///|
+test "symintegrals Laplace special-function rules evaluate" {
+  let x = @symcore.symbol("x")
+  let s = @symcore.symbol("s")
+  let neg_half = try! @symcore.rational_from_ints(-1, 2)
+
+  guard !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("Ci Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(doit(laplace_transform(@symspec.e1(x), x, s))).contains(
+    "LaplaceTransform",
+  ) else {
+    fail("E1 Laplace transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+  ).contains("LaplaceTransform") else {
+    fail("expint(2, x) Laplace transform stayed unevaluated")
+  }
+
+  let inv_ci = doit(
+    inverse_laplace_transform(
+      neg_half *
+      @symelem.log(@symcore.int(1) + (s ^ @symcore.int(2))) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_e1 = doit(
+    inverse_laplace_transform(
+      @symelem.log(s + @symcore.int(1)) * (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_expint2 = doit(
+    inverse_laplace_transform(
+      (s - @symelem.log(s + @symcore.int(1))) * (s ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+
+  guard !@symprint.to_string(inv_ci).contains("InverseLaplaceTransform") else {
+    fail("Ci inverse Laplace stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_e1).contains("InverseLaplaceTransform") else {
+    fail("E1 inverse Laplace stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_expint2).contains("InverseLaplaceTransform") else {
+    fail("expint(2, x) inverse Laplace stayed unevaluated")
+  }
+
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_ci),
+      @symsimplify.simplify(@symspec.heaviside(x) * @symspec.ci(x)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_e1),
+      @symsimplify.simplify(@symspec.heaviside(x) * @symspec.e1(x)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_expint2),
+      @symsimplify.simplify(
+        @symspec.heaviside(x) * @symspec.expint(@symcore.int(2), x),
+      ),
+    ),
+    0,
+  )
 }
 
 ///|
