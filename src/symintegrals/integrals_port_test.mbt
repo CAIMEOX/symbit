@@ -291,6 +291,46 @@ test "symintegrals parity transforms forward/inverse family" {
     content="0",
   )
 
+  let box_window_ft = doit(
+    fourier_transform(
+      @symspec.heaviside(@symcore.int(1) - @symelem.abs(@symcore.int(2) * x)),
+      x,
+      k,
+    ),
+  )
+  inspect(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(box_window_ft) +
+      ") - sympy.fourier_transform(sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
+    ),
+    content="0",
+  )
+
+  let triangle_window_ft = doit(
+    fourier_transform(
+      @symspec.heaviside(@symcore.int(1) - @symelem.abs(@symcore.int(2) * x)) *
+      (@symcore.int(1) - @symelem.abs(@symcore.int(2) * x)),
+      x,
+      k,
+    ),
+  )
+  let triangle_samples = ["sympy.Integer(1)", "sympy.Integer(2)"]
+  for sample in triangle_samples {
+    inspect(
+      try! @sympy_integrals.integrals_eval_str(
+        "sympy.sstr(sympy.simplify(((" +
+        py_expr(triangle_window_ft) +
+        ").subs(sympy.Symbol('k'), " +
+        sample +
+        ")) - (sympy.fourier_transform(sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))*(1 - sympy.Abs(2*sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k')).subs(sympy.Symbol('k'), " +
+        sample +
+        "))))",
+      ),
+      content="0",
+    )
+  }
+
   let inverse_lp_cases : Array[(String, Expr)] = [
     (
       "1/s",

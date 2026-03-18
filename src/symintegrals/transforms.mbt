@@ -1199,6 +1199,10 @@ fn fourier_doit(expr : Expr, x_name : String, k : Expr) -> Expr? {
 
 ///|
 fn fourier_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
+  match fourier_triangle_term(factors, x_name, k) {
+    Some(value) => return Some(value)
+    None => ()
+  }
   match fourier_half_line_term(factors, x_name, k) {
     Some(value) => return Some(value)
     None => ()
@@ -1213,6 +1217,22 @@ fn fourier_mul_term(factors : Array[Expr], x_name : String, k : Expr) -> Expr? {
 ///|
 fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
   match expr {
+    @symcore.Expr::Function("Heaviside", [arg]) =>
+      match parse_one_minus_abs_linear(arg, x_name) {
+        Some(scale) =>
+          Some(
+            expr_div(
+              @symelem.sin(
+                expr_div(
+                  expr_mul(expr_int(2), expr_mul(@symcore.symbol("pi"), k)),
+                  scale,
+                ),
+              ),
+              expr_mul(@symcore.symbol("pi"), k),
+            ),
+          )
+        None => None
+      }
     @symcore.Expr::Function("exp", [inner]) =>
       match parse_negative_abs_linear(inner, x_name) {
         Some(a) =>
@@ -1353,6 +1373,52 @@ fn fourier_half_line_term(
         expr_div(
           b,
           expr_add(expr_pow(b, expr_int(2)), expr_pow(shift, expr_int(2))),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn fourier_triangle_term(
+  factors : Array[Expr],
+  x_name : String,
+  k : Expr,
+) -> Expr? {
+  if factors.length() != 2 {
+    return None
+  }
+  let mut box_scale : Expr? = None
+  let mut ramp_scale : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("Heaviside", [arg]) =>
+        match parse_one_minus_abs_linear(arg, x_name) {
+          Some(scale) => box_scale = Some(scale)
+          None => return None
+        }
+      _ =>
+        match parse_one_minus_abs_linear(factor, x_name) {
+          Some(scale) => ramp_scale = Some(scale)
+          None => return None
+        }
+    }
+  }
+  match (box_scale, ramp_scale) {
+    (Some(c1), Some(c2)) if expr_eq(c1, c2) =>
+      Some(
+        expr_div(
+          expr_mul(
+            c1,
+            expr_pow(
+              @symelem.sin(expr_div(expr_mul(@symcore.symbol("pi"), k), c1)),
+              expr_int(2),
+            ),
+          ),
+          expr_mul(
+            expr_pow(@symcore.symbol("pi"), expr_int(2)),
+            expr_pow(k, expr_int(2)),
+          ),
         ),
       )
     _ => None
@@ -3234,6 +3300,87 @@ fn parse_negative_abs_linear(inner : Expr, var_name : String) -> Expr? {
   match factors[0] {
     @symcore.Expr::Function("Abs", [@symcore.Expr::Symbol(name)]) if name ==
       var_name => extract_explicit_negative_factor(coeff)
+    _ => None
+  }
+}
+
+///|
+fn parse_abs_scaled_var(inner : Expr, var_name : String) -> Expr? {
+  let (coeff, factors) = split_mul(inner, var_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match parse_power_factor(factors[0], var_name) {
+    Some(power) if expr_eq(power, expr_one()) =>
+      match extract_explicit_negative_factor(coeff) {
+        Some(pos_coeff) => Some(pos_coeff)
+        None => Some(coeff)
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_negative_abs_term(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => {
+      let mut coeff = expr_one()
+      let mut abs_scale : Expr? = None
+      for arg in args {
+        match arg {
+          @symcore.Expr::Function("Abs", [inner]) =>
+            match parse_abs_scaled_var(inner, var_name) {
+              Some(scale) =>
+                if abs_scale is None {
+                  abs_scale = Some(scale)
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          _ =>
+            if expr_depends_on(arg, var_name) {
+              return None
+            } else {
+              coeff = expr_mul(coeff, arg)
+            }
+        }
+      }
+      match abs_scale {
+        Some(scale) =>
+          match extract_explicit_negative_factor(coeff) {
+            Some(neg_coeff) if expr_is_one(neg_coeff) => Some(scale)
+            _ => None
+          }
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_one_minus_abs_linear(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut saw_one = false
+      let mut scale : Expr? = None
+      for arg in args {
+        if expr_is_one(arg) {
+          saw_one = true
+        } else {
+          match parse_negative_abs_term(arg, var_name) {
+            Some(found) => scale = Some(found)
+            None => return None
+          }
+        }
+      }
+      if saw_one {
+        scale
+      } else {
+        None
+      }
+    }
     _ => None
   }
 }

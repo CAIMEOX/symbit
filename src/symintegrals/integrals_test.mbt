@@ -223,6 +223,11 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     @symelem.sin(@symcore.int(3) * x) *
     @symspec.heaviside(x)
   let abs_decay = @symelem.exp(@symcore.int(-2) * @symelem.abs(x))
+  let box_window = @symspec.heaviside(
+    @symcore.int(1) - @symelem.abs(@symcore.int(2) * x),
+  )
+  let triangle_window = box_window *
+    (@symcore.int(1) - @symelem.abs(@symcore.int(2) * x))
   assert_eq(
     @symprint.to_string(sine_transform(x, x, k)),
     "SineTransform(x, x, k)",
@@ -282,6 +287,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
         k,
       ),
     ),
+  )
+  let box_window_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(box_window, x, k)),
+  )
+  let triangle_window_fourier_eval = @symprint.to_string(
+    doit(fourier_transform(triangle_window, x, k)),
   )
   let symbolic_cosine_gaussian_eval = @symprint.to_string(
     doit(
@@ -387,6 +398,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   }
   guard !symbolic_half_line_fourier_eval.contains("FourierTransform") else {
     fail("symbolic half-line fourier transform stayed unevaluated")
+  }
+  guard !box_window_fourier_eval.contains("FourierTransform") else {
+    fail("box-window fourier transform stayed unevaluated")
+  }
+  guard !triangle_window_fourier_eval.contains("FourierTransform") else {
+    fail("triangle-window fourier transform stayed unevaluated")
   }
   guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
     fail("symbolic cosine gaussian transform stayed unevaluated")
