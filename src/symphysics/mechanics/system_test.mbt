@@ -52,9 +52,7 @@ test "physics.mechanics system core" {
     sys.joints().map(fn(joint) { joint.repr() }).join(" | "),
     content="PrismaticJoint: slider  parent: rail  child: cart | PinJoint: pin  parent: cart  child: bob",
   )
-  guard sys.loads().length() == 4 else {
-    fail("system should include 3 gravity loads and one external force")
-  }
+  assert_eq(sys.loads().length(), 4)
 }
 
 ///|
@@ -98,18 +96,18 @@ test "physics.mechanics system backend equations" {
   ignore(sys.form_eoms(use_lagrange=true))
   inspect(@symprint.to_string(sys.mass_matrix().get(0, 0)), content="m")
   let forcing_expr = sys.forcing().get(0, 0)
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(forcing_expr),
-    "b*Derivative(q(t), t) - k*q(t)",
-  ) else {
-    fail("system lagrange forcing mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(sys.rhs().get(1, 0)),
-    "(b*Derivative(q(t), t) - k*q(t))/m",
-  ) else {
-    fail("system lagrange rhs mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(forcing_expr),
+        "b*Derivative(q(t), t) - k*q(t)",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(sys.rhs().get(1, 0)),
+        "(b*Derivative(q(t), t) - k*q(t))/m",
+      )
+  )
 }
 
 ///|
@@ -143,9 +141,7 @@ test "physics.mechanics system validation semantics" {
   missing_kde.add_coordinates(kane_joint.coordinates())
   missing_kde.add_speeds(kane_joint.speeds())
   let bad_kane : Result[Unit, @symphysics.PhysicsError] = try? missing_kde.validate_system()
-  guard bad_kane is Err(@symphysics.PhysicsError::ValueError(_)) else {
-    fail("system validation should reject missing joint kdes")
-  }
+  assert_true(bad_kane is Err(@symphysics.PhysicsError::ValueError(_)))
 
   let invalid_lagrange = system_from_newtonian(wall.as_bodylike())
   let bad_joint = prismatic_joint(
@@ -159,7 +155,5 @@ test "physics.mechanics system validation semantics" {
   let bad_lagrange : Result[Unit, @symphysics.PhysicsError] = try? invalid_lagrange.validate_system(
     use_lagrange=true,
   )
-  guard bad_lagrange is Err(@symphysics.PhysicsError::ValueError(_)) else {
-    fail("system validation should reject non-qdot speeds for lagrange")
-  }
+  assert_true(bad_lagrange is Err(@symphysics.PhysicsError::ValueError(_)))
 }

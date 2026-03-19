@@ -16,9 +16,7 @@ test "physics.mechanics parity model coordinates and speeds" {
   let chain_oracle = @sympy_physics.mechanics_summary(
     "from sympy.physics.mechanics.models import multi_mass_spring_damper; km = multi_mass_spring_damper(2, apply_gravity=True, apply_external_forces=True); [[str(x) for x in km.q], [str(x) for x in km.u]]",
   )
-  guard models_compact(chain_summary) == models_compact(chain_oracle) else {
-    fail("multi_mass_spring_damper parity mismatch")
-  }
+  assert_eq(models_compact(chain_summary), models_compact(chain_oracle))
 
   let pendulum = n_link_pendulum_on_cart(
     n=2,
@@ -35,7 +33,5 @@ test "physics.mechanics parity model coordinates and speeds" {
   let pendulum_oracle = @sympy_physics.mechanics_summary(
     "from sympy.physics.mechanics.models import n_link_pendulum_on_cart; km = n_link_pendulum_on_cart(2, cart_force=True, joint_torques=True); [[str(x) for x in km.q], [str(x) for x in km.u]]",
   )
-  guard models_compact(pendulum_summary) == models_compact(pendulum_oracle) else {
-    fail("n_link_pendulum_on_cart parity mismatch")
-  }
+  assert_eq(models_compact(pendulum_summary), models_compact(pendulum_oracle))
 }

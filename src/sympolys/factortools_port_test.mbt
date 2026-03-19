@@ -11,9 +11,7 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -48,9 +46,7 @@ test "factortools: sqf_list compares with SymPy" {
   let oracle = sort_factor_repr(@sympy_polys.sqf_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("sqf_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -77,7 +73,5 @@ test "factortools: extension argument no longer rejected" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("factor extension mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }

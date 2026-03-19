@@ -1,0 +1,134 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symholonomic"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn differential_operator(Array[@symcore.Expr], DifferentialOperatorAlgebra) -> DifferentialOperator
+
+pub fn differential_operators(symbol_var? : @symcore.Expr, generator? : String) -> (DifferentialOperatorAlgebra, DifferentialOperator)
+
+pub fn evalf(HolonomicFunction, @symnum.BigRational, terms? : Int) -> @symcore.Expr
+
+pub fn evalf_euler(HolonomicFunction, @symnum.BigRational, steps? : Int) -> @symcore.Expr
+
+pub fn evalf_rk4(HolonomicFunction, @symnum.BigRational, steps? : Int) -> @symcore.Expr
+
+pub fn expr_to_holonomic(@symcore.Expr, x? : @symcore.Expr, x0? : @symcore.Expr) -> HolonomicFunction
+
+pub fn from_hyper(@symcore.Expr, x? : @symcore.Expr, x0? : @symcore.Expr) -> HolonomicFunction
+
+pub fn from_meijerg(@symcore.Expr, x? : @symcore.Expr, x0? : @symcore.Expr) -> HolonomicFunction
+
+pub fn holonomic_function(DifferentialOperator, @symcore.Expr, x0? : @symcore.Expr, y0? : Array[@symcore.Expr], expr_hint? : @symcore.Expr?) -> HolonomicFunction
+
+pub fn holonomic_sequence(RecurrenceOperator, u0? : Array[@symcore.Expr]) -> HolonomicSequence
+
+pub fn recurrence_operator(Array[@symcore.Expr], RecurrenceOperatorAlgebra) -> RecurrenceOperator
+
+pub fn recurrence_operators(symbol_var? : @symcore.Expr, generator? : String) -> (RecurrenceOperatorAlgebra, RecurrenceOperator)
+
+pub fn to_expr(HolonomicFunction) -> @symcore.Expr
+
+pub fn to_hyper(HolonomicFunction) -> @symcore.Expr
+
+pub fn to_sequence(HolonomicFunction) -> Array[HolonomicSequence]
+
+// Errors
+pub(all) suberror HolonomicError {
+  NotPowerSeries(String)
+  NotHyperSeries(String)
+  Singularity(String)
+  NotHolonomic(String)
+}
+pub impl Show for HolonomicError
+
+// Types and methods
+pub struct DifferentialOperator {
+  coeffs : Array[@symcore.Expr]
+  parent : DifferentialOperatorAlgebra
+}
+pub fn DifferentialOperator::algebra(Self) -> DifferentialOperatorAlgebra
+pub fn DifferentialOperator::coefficients(Self) -> Array[@symcore.Expr]
+pub fn DifferentialOperator::order(Self) -> Int
+pub fn DifferentialOperator::pow(Self, Int) -> Self
+pub fn DifferentialOperator::to_sympy_str(Self) -> String
+pub impl Add for DifferentialOperator
+pub impl Eq for DifferentialOperator
+pub impl Mul for DifferentialOperator
+pub impl Show for DifferentialOperator
+
+pub struct DifferentialOperatorAlgebra {
+  symbol_var : @symcore.Expr
+  generator : String
+}
+pub fn DifferentialOperatorAlgebra::generator(Self) -> String
+pub fn DifferentialOperatorAlgebra::variable(Self) -> @symcore.Expr
+pub impl Eq for DifferentialOperatorAlgebra
+pub impl Show for DifferentialOperatorAlgebra
+
+pub struct HolonomicFunction {
+  annihilator : DifferentialOperator?
+  x : @symcore.Expr
+  x0 : @symcore.Expr
+  y0 : Array[@symcore.Expr]
+  expr_hint : @symcore.Expr?
+}
+pub fn HolonomicFunction::annihilator(Self) -> DifferentialOperator?
+pub fn HolonomicFunction::composition(Self, @symcore.Expr, x0? : @symcore.Expr) -> Self
+pub fn HolonomicFunction::diff(Self) -> Self
+pub fn HolonomicFunction::evalf(Self, @symnum.BigRational, terms? : Int) -> @symcore.Expr
+pub fn HolonomicFunction::initial_values(Self) -> Array[@symcore.Expr]
+pub fn HolonomicFunction::integrate(Self) -> Self
+pub fn HolonomicFunction::pow(Self, Int) -> Self
+pub fn HolonomicFunction::series(Self, n? : Int) -> @symcore.Expr
+pub fn HolonomicFunction::to_expr(Self) -> @symcore.Expr
+pub fn HolonomicFunction::to_sequence(Self) -> Array[HolonomicSequence]
+pub fn HolonomicFunction::to_sympy_str(Self) -> String
+pub fn HolonomicFunction::variable(Self) -> @symcore.Expr
+pub fn HolonomicFunction::x0(Self) -> @symcore.Expr
+pub impl Add for HolonomicFunction
+pub impl Eq for HolonomicFunction
+pub impl Mul for HolonomicFunction
+pub impl Show for HolonomicFunction
+
+pub struct HolonomicSequence {
+  recurrence : RecurrenceOperator
+  u0 : Array[@symcore.Expr]
+}
+pub fn HolonomicSequence::initial_values(Self) -> Array[@symcore.Expr]
+pub fn HolonomicSequence::recurrence(Self) -> RecurrenceOperator
+pub fn HolonomicSequence::to_sympy_str(Self) -> String
+pub impl Eq for HolonomicSequence
+pub impl Show for HolonomicSequence
+
+pub struct RecurrenceOperator {
+  coeffs : Array[@symcore.Expr]
+  parent : RecurrenceOperatorAlgebra
+}
+pub fn RecurrenceOperator::algebra(Self) -> RecurrenceOperatorAlgebra
+pub fn RecurrenceOperator::coefficients(Self) -> Array[@symcore.Expr]
+pub fn RecurrenceOperator::order(Self) -> Int
+pub fn RecurrenceOperator::pow(Self, Int) -> Self
+pub fn RecurrenceOperator::to_sympy_str(Self) -> String
+pub impl Add for RecurrenceOperator
+pub impl Eq for RecurrenceOperator
+pub impl Mul for RecurrenceOperator
+pub impl Show for RecurrenceOperator
+
+pub struct RecurrenceOperatorAlgebra {
+  symbol_var : @symcore.Expr
+  generator : String
+}
+pub fn RecurrenceOperatorAlgebra::generator(Self) -> String
+pub fn RecurrenceOperatorAlgebra::variable(Self) -> @symcore.Expr
+pub impl Eq for RecurrenceOperatorAlgebra
+pub impl Show for RecurrenceOperatorAlgebra
+
+// Type aliases
+
+// Traits
+

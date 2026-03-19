@@ -27,9 +27,7 @@ fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let oracle = normalize_basis_str(
     @sympy_polys.groebner(exprs, order=order_to_sympy(order)),
   )
-  guard ours == oracle else {
-    fail("groebner mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|

@@ -510,9 +510,7 @@ test "densebasic: dmp_validate" {
       poly([coef(0)]),
     ]),
   )
-  guard bad is Err(PolyError::NonPolynomial) else {
-    fail("expected NonPolynomial")
-  }
+  assert_true(bad is Err(PolyError::NonPolynomial))
 }
 
 ///|
@@ -567,11 +565,9 @@ test "densebasic: dmp_degree_in/list coverage" {
 test "densebasic: dmp_degree_in bounds" {
   let f = poly([poly([coef(1)])])
   let neg : Result[Int, PolyError] = try? dmp_degree_in(f, -1, 1)
-  guard neg is Err(PolyError::BadExponent) else { fail("expected BadExponent") }
+  assert_true(neg is Err(PolyError::BadExponent))
   let high : Result[Int, PolyError] = try? dmp_degree_in(f, 2, 1)
-  guard high is Err(PolyError::BadExponent) else {
-    fail("expected BadExponent")
-  }
+  assert_true(high is Err(PolyError::BadExponent))
 }
 
 ///|
@@ -681,16 +677,14 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
     [fez(3), fez(4), fez(5)],
     -1,
   )
-  guard neg is Err(PolyError::BadExponent) else { fail("expected BadExponent") }
+  assert_true(neg is Err(PolyError::BadExponent))
   let f = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
   inspect(dense_repr(dmp_nth(f, 0, 1)), content="[3]")
   inspect(dense_repr(dmp_nth(f, 1, 1)), content="[2]")
   inspect(dense_repr(dmp_nth(f, 2, 1)), content="[1]")
   inspect(dense_repr(dmp_nth(f, 9, 1)), content="[]")
   let neg2 : Result[DensePoly, PolyError] = try? dmp_nth(f, -1, 1)
-  guard neg2 is Err(PolyError::BadExponent) else {
-    fail("expected BadExponent")
-  }
+  assert_true(neg2 is Err(PolyError::BadExponent))
   let f3 = poly([poly([])])
   inspect(dmp_ground_nth(f3, [0, 0], 1, Domain::ZZ), content="0")
   let f4 = poly([poly([coef(1)]), poly([coef(2)]), poly([coef(3)])])
@@ -705,9 +699,7 @@ test "densebasic: dup_nth/dmp_nth/dmp_ground_nth" {
     1,
     Domain::ZZ,
   )
-  guard neg3 is Err(PolyError::BadExponent) else {
-    fail("expected BadExponent")
-  }
+  assert_true(neg3 is Err(PolyError::BadExponent))
 }
 
 ///|
@@ -950,7 +942,7 @@ test "densebasic: dup_reverse sympy cases" {
 ///|
 test "densebasic: dmp_degree_in bad index" {
   let bad : Result[Int, PolyError] = try? dmp_degree_in(poly([coef(1)]), -1, 0)
-  guard bad is Err(_) else { fail("expected error for negative index") }
+  assert_true(bad is Err(_))
 }
 
 ///|
@@ -976,11 +968,11 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
   let f1 = [br_int(1), br_int(2)]
   let ours1 = dup_repr(dup_from_sympy(f1, Domain::ZZ))
   let oracle1 = @sympy_polys.dup_from_sympy(f1, domain="ZZ")
-  guard ours1 == oracle1 else { fail("dup_from_sympy ZZ mismatch") }
+  assert_eq(ours1, oracle1)
   let f2 = [br_rat(1, 2), br_int(3)]
   let ours2 = dup_repr(dup_from_sympy(f2, Domain::QQ))
   let oracle2 = @sympy_polys.dup_from_sympy(f2, domain="QQ")
-  guard ours2 == oracle2 else { fail("dup_from_sympy QQ mismatch") }
+  assert_eq(ours2, oracle2)
   let d1 = dense_rat_poly([
     dense_rat_poly([dense_rat_coef(br_int(1)), dense_rat_coef(br_int(2))]),
     dense_rat_poly([dense_rat_coef(br_int(0))]),
@@ -991,7 +983,7 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
     1,
     domain="ZZ",
   )
-  guard ours3 == oracle3 else { fail("dmp_from_sympy ZZ mismatch") }
+  assert_eq(ours3, oracle3)
   let d2 = dense_rat_poly([
     dense_rat_poly([dense_rat_coef(br_rat(1, 2)), dense_rat_coef(br_int(2))]),
   ])
@@ -1001,7 +993,7 @@ test "densebasic: dup_from_sympy/dmp_from_sympy parity" {
     1,
     domain="QQ",
   )
-  guard ours4 == oracle4 else { fail("dmp_from_sympy QQ mismatch") }
+  assert_eq(ours4, oracle4)
 }
 
 ///|
@@ -1015,19 +1007,19 @@ test "densebasic: dmp_exclude/include parity" {
   let f0 = poly([poly([poly([])])])
   let ours0 = exclude_repr(dmp_exclude(f0, 2, Domain::ZZ))
   let oracle0 = @sympy_polys.dmp_exclude(dense_data_of(f0), 2, domain="ZZ")
-  guard ours0 == oracle0 else { fail("dmp_exclude zero mismatch") }
+  assert_eq(ours0, oracle0)
   let f1 = poly([poly([poly([coef(7)])])])
   let ours1 = exclude_repr(dmp_exclude(f1, 2, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_exclude(dense_data_of(f1), 2, domain="ZZ")
-  guard ours1 == oracle1 else { fail("dmp_exclude const mismatch") }
+  assert_eq(ours1, oracle1)
   let f2 = poly([coef(1), coef(2), coef(3)])
   let ours2 = exclude_repr(dmp_exclude(f2, 0, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_exclude(dense_data_of(f2), 0, domain="ZZ")
-  guard ours2 == oracle2 else { fail("dmp_exclude u=0 mismatch") }
+  assert_eq(ours2, oracle2)
   let f3 = poly([poly([coef(1), coef(2), coef(3)])])
   let ours3 = exclude_repr(dmp_exclude(f3, 1, Domain::ZZ))
   let oracle3 = @sympy_polys.dmp_exclude(dense_data_of(f3), 1, domain="ZZ")
-  guard ours3 == oracle3 else { fail("dmp_exclude leading level mismatch") }
+  assert_eq(ours3, oracle3)
   let include_base = poly([coef(1), coef(2), coef(3)])
   let inc0 = dmp_include(include_base, [], 0, Domain::ZZ)
   inspect(dense_repr(inc0), content="[1,2,3]")
@@ -1073,15 +1065,15 @@ test "densebasic: terms_gcd parity" {
   let f1 : Array[FieldElem] = []
   let ours1 = terms_gcd_repr(dup_terms_gcd(f1, Domain::ZZ))
   let oracle1 = @sympy_polys.dup_terms_gcd([])
-  guard ours1 == oracle1 else { fail("dup_terms_gcd empty mismatch") }
+  assert_eq(ours1, oracle1)
   let f2 : Array[FieldElem] = [fez(1), fez(0), fez(1)]
   let ours2 = terms_gcd_repr(dup_terms_gcd(f2, Domain::ZZ))
   let oracle2 = @sympy_polys.dup_terms_gcd([br_int(1), br_int(0), br_int(1)])
-  guard ours2 == oracle2 else { fail("dup_terms_gcd mismatch") }
+  assert_eq(ours2, oracle2)
   let f3 = poly([poly([coef(1)]), poly([]), poly([coef(1)]), poly([])])
   let ours3 = dmp_terms_gcd_repr(dmp_terms_gcd(f3, 1, Domain::ZZ))
   let oracle3 = @sympy_polys.dmp_terms_gcd(dense_data_of(f3), 1, domain="ZZ")
-  guard ours3 == oracle3 else { fail("dmp_terms_gcd mismatch") }
+  assert_eq(ours3, oracle3)
 }
 
 ///|
@@ -1089,11 +1081,11 @@ test "densebasic: dmp_list_terms parity" {
   let f0 = poly([poly([poly([])])])
   let ours0 = term_list_repr(dmp_list_terms(f0, 2, Domain::ZZ))
   let oracle0 = @sympy_polys.dmp_list_terms(dense_data_of(f0), 2, domain="ZZ")
-  guard ours0 == oracle0 else { fail("dmp_list_terms zero mismatch") }
+  assert_eq(ours0, oracle0)
   let f1 = poly([coef(1), coef(2), coef(4), coef(3), coef(5)])
   let ours1 = term_list_repr(dmp_list_terms(f1, 0, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_list_terms(dense_data_of(f1), 0, domain="ZZ")
-  guard ours1 == oracle1 else { fail("dmp_list_terms u=0 mismatch") }
+  assert_eq(ours1, oracle1)
   let f2 = poly([
     poly([coef(1)]),
     poly([coef(2), coef(4)]),
@@ -1101,7 +1093,7 @@ test "densebasic: dmp_list_terms parity" {
   ])
   let ours2 = term_list_repr(dmp_list_terms(f2, 1, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_list_terms(dense_data_of(f2), 1, domain="ZZ")
-  guard ours2 == oracle2 else { fail("dmp_list_terms u=1 mismatch") }
+  assert_eq(ours2, oracle2)
   let f3 = poly([
     poly([coef(2), coef(0), coef(0), coef(0)]),
     poly([coef(1), coef(0), coef(0), coef(0), coef(0), coef(0)]),
@@ -1115,7 +1107,7 @@ test "densebasic: dmp_list_terms parity" {
     order="lex",
     domain="ZZ",
   )
-  guard ours3 == oracle3 else { fail("dmp_list_terms lex mismatch") }
+  assert_eq(ours3, oracle3)
 }
 
 ///|
@@ -1144,11 +1136,11 @@ test "densebasic: dup_slice/dmp_slice parity" {
     0,
     2,
   )
-  guard ours0 == oracle0 else { fail("dup_slice mismatch") }
+  assert_eq(ours0, oracle0)
   let g = poly([poly([coef(1)]), poly([coef(2), coef(3)]), poly([coef(4)])])
   let ours1 = dense_repr(dmp_slice(g, 0, 2, 1, Domain::ZZ))
   let oracle1 = @sympy_polys.dmp_slice(dense_data_of(g), 0, 2, 1, domain="ZZ")
-  guard ours1 == oracle1 else { fail("dmp_slice mismatch") }
+  assert_eq(ours1, oracle1)
   let ours2 = dense_repr(dmp_slice_in(g, 1, 2, 1, 1, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_slice_in(
     dense_data_of(g),
@@ -1158,7 +1150,7 @@ test "densebasic: dup_slice/dmp_slice parity" {
     1,
     domain="ZZ",
   )
-  guard ours2 == oracle2 else { fail("dmp_slice_in mismatch") }
+  assert_eq(ours2, oracle2)
 }
 
 ///|
@@ -1167,9 +1159,7 @@ test "densebasic: dup_random range/degree" {
   inspect(dup_degree(f0), content="0")
   for c in f0 {
     let r = fe_expect_rational(c)
-    guard r.compare(br_int(-10)) >= 0 && r.compare(br_int(10)) <= 0 else {
-      fail("dup_random bounds")
-    }
+    assert_true(r.compare(br_int(-10)) >= 0 && r.compare(br_int(10)) <= 0)
   }
   let f1 = dup_random(2, -5, 5, Domain::ZZ)
   inspect(dup_degree(f1), content="2")

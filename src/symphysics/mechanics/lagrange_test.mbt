@@ -40,10 +40,10 @@ test "physics.mechanics lagrange: simple pendulum rhs" {
   ignore(lm.form_lagranges_equations())
   let rhs = lm.rhs()
   inspect(lagrange_matrix_entry_summary(lm.mass_matrix()), content="[[l**2*m]]")
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(1, 0)),
-    "-g*sin(q(t))/l",
-  ) else {
-    fail("simple pendulum acceleration mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(rhs.get(1, 0)),
+        "-g*sin(q(t))/l",
+      )
+  )
 }

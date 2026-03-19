@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/tree"
+
+// Values
+pub fn[T : Eq + Hash] allresults(Tree[(T) -> T], leaf? : ((T) -> T) -> (T) -> Array[T]) -> (T) -> Array[T]
+
+pub fn[T : Compare + Eq + Hash] brute(Tree[(T) -> T], objective? : (T) -> T) -> (T) -> T
+
+pub fn[T : Compare] greedy(Tree[(T) -> T], objective? : (T) -> T) -> (T) -> T
+
+pub fn[A, B, C] partial((A, B) -> C, A) -> (B) -> C
+
+pub fn[T] treeapply(Tree[T], TreeJoin[T], leaf? : (T) -> T) -> T
+
+pub fn[T] yieldify((T) -> T) -> (T) -> Array[T]
+
+// Errors
+
+// Types and methods
+pub(all) enum Tree[T] {
+  Leaf(T)
+  Choice(Array[Tree[T]])
+  Seq(Array[Tree[T]])
+}
+
+pub(all) struct TreeJoin[T] {
+  choice : (Array[T]) -> T
+  seq : (Array[T]) -> T
+}
+
+// Type aliases
+
+// Traits
+

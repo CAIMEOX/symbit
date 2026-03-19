@@ -4,12 +4,12 @@ test "geometry.plane equation projection and intersection" {
     point3d(@symcore.int(0), @symcore.int(0), @symcore.int(1)),
     [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(pl.equation()),
-    "z - 1",
-  ) else {
-    fail("plane equation")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(pl.equation()),
+        "z - 1",
+      )
+  )
   assert_eq(
     pl
     .projection(point3d(@symcore.int(2), @symcore.int(3), @symcore.int(5)))

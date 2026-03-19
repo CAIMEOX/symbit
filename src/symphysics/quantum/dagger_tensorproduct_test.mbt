@@ -1,15 +1,9 @@
 ///|
 test "physics.quantum.dagger: symbolic and matrix behaviors" {
-  guard @symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)) ==
-    "Dagger(x)" else {
-    fail("unevaluated dagger")
-  }
-  guard @symprint.to_string(
-      dagger(@symcore.raw_mul([@symcore.symbol("a"), @symcore.symbol("b")])),
-    ) ==
-    "conjugate(b)*conjugate(a)" else {
-    fail("product dagger should reverse order")
-  }
+  assert_eq(@symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)), "Dagger(x)")
+  assert_eq(@symprint.to_string(
+          dagger(@symcore.raw_mul([@symcore.symbol("a"), @symcore.symbol("b")])),
+        ), "conjugate(b)*conjugate(a)")
 
   let mat = @symphysics.explicit_matrix_from_rows([
     [@symcore.symbol("I"), @symcore.int(2) * @symcore.symbol("I")],
@@ -30,12 +24,8 @@ test "physics.quantum.tensorproduct: symbolic wrapper and matrix behavior" {
     @symcore.symbol("a") + @symcore.symbol("b"),
     @symcore.symbol("c"),
   ])
-  guard tp.to_string() == "(a + b)xc" else {
-    fail("tensor-product string form")
-  }
-  guard tp.dagger().to_string() == "(conjugate(a) + conjugate(b))xconjugate(c)" else {
-    fail("tensor-product dagger")
-  }
+  assert_eq(tp.to_string(), "(a + b)xc")
+  assert_eq(tp.dagger().to_string(), "(conjugate(a) + conjugate(b))xconjugate(c)")
 
   let sigma_x = @symphysics.msigma(1)
   quantum_test_assert_matrix_equal(

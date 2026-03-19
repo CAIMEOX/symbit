@@ -142,9 +142,7 @@ test "domains: basic constructor/repr parity" {
     let domain = domain_from_string(spec)
     let ours = domain_to_sympy_string(domain)
     let oracle = @sympy_polys.domain_repr(spec)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("domain repr mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
@@ -159,12 +157,8 @@ test "domains: polynomial/fraction descriptors parity" {
   let poly_oracle = @sympy_polys.domain_repr("ZZ[x,y]")
   let frac_oracle = @sympy_polys.domain_repr("QQ(x,y)")
 
-  guard trim_ws(poly_ours) == trim_ws(poly_oracle) else {
-    fail("poly ring repr mismatch: ours=\{poly_ours}, oracle=\{poly_oracle}")
-  }
-  guard trim_ws(frac_ours) == trim_ws(frac_oracle) else {
-    fail("frac field repr mismatch: ours=\{frac_ours}, oracle=\{frac_oracle}")
-  }
+  assert_eq(trim_ws(poly_ours), trim_ws(poly_oracle))
+  assert_eq(trim_ws(frac_ours), trim_ws(frac_oracle))
 }
 
 ///|
@@ -174,11 +168,7 @@ test "domains: characteristic parity" {
     let domain = domain_from_string(spec)
     let ours = domain_characteristic(domain)
     let oracle = @sympy_polys.domain_characteristic(spec)
-    guard ours == oracle else {
-      fail(
-        "characteristic mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -187,19 +177,10 @@ test "domains: predicate parity (field/ring/exact/finite)" {
   let specs = ["ZZ", "QQ", "RR", "CC", "GF(7)", "ZZ[x]", "QQ(x)", "EX", "EXRAW"]
   for spec in specs {
     let domain = domain_from_string(spec)
-    guard domain_is_field_pred(domain) == @sympy_polys.domain_is_field(spec) else {
-      fail("is_Field mismatch for \{spec}")
-    }
-    guard domain_is_ring_pred(domain) == @sympy_polys.domain_is_ring(spec) else {
-      fail("is_Ring mismatch for \{spec}")
-    }
-    guard domain_is_exact_pred(domain) == @sympy_polys.domain_is_exact(spec) else {
-      fail("is_Exact mismatch for \{spec}")
-    }
-    guard domain_is_finite_pred(domain) ==
-      @sympy_polys.domain_is_finite_field(spec) else {
-      fail("is_FiniteField mismatch for \{spec}")
-    }
+    assert_eq(domain_is_field_pred(domain), @sympy_polys.domain_is_field(spec))
+    assert_eq(domain_is_ring_pred(domain), @sympy_polys.domain_is_ring(spec))
+    assert_eq(domain_is_exact_pred(domain), @sympy_polys.domain_is_exact(spec))
+    assert_eq(domain_is_finite_pred(domain), @sympy_polys.domain_is_finite_field(spec))
   }
 }
 
@@ -213,9 +194,7 @@ test "domains: get_field/get_ring parity" {
       domain_get_field(domain_from_string(spec)),
     )
     let oracle = @sympy_polys.domain_get_field(spec)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("get_field mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let ring_specs = [
@@ -231,9 +210,7 @@ test "domains: get_field/get_ring parity" {
       Err(_) => "ERROR"
     }
     let oracle = @sympy_polys.domain_get_ring(spec)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("get_ring mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
@@ -279,11 +256,7 @@ test "domains: unify parity for key coercion paths" {
     )
     let ours_text = domain_to_sympy_string(ours)
     let oracle = @sympy_polys.domain_unify(lhs, rhs)
-    guard trim_ws(ours_text) == trim_ws(oracle) else {
-      fail(
-        "unify mismatch for \{lhs} + \{rhs}: ours=\{ours_text}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours_text), trim_ws(oracle))
   }
 }
 
@@ -295,58 +268,19 @@ test "domains: extended predicate parity (module-level tags)" {
   ]
   for spec in specs {
     let domain = domain_from_string(spec)
-    guard domain_is_composite_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Composite") else {
-      fail("is_Composite mismatch for \{spec}")
-    }
-    guard domain_is_simple_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Simple") else {
-      fail("is_Simple mismatch for \{spec}")
-    }
-    guard domain_is_numerical_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Numerical") else {
-      fail("is_Numerical mismatch for \{spec}")
-    }
-    guard domain_has_assoc_ring_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Ring") else {
-      fail("has_assoc_Ring mismatch for \{spec}")
-    }
-    guard domain_is_pid_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_PID") else {
-      fail("is_PID mismatch for \{spec}")
-    }
-    guard domain_is_integer_ring_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_IntegerRing") else {
-      fail("is_IntegerRing mismatch for \{spec}")
-    }
-    guard domain_is_rational_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_RationalField") else {
-      fail("is_RationalField mismatch for \{spec}")
-    }
-    guard domain_is_real_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_RealField") else {
-      fail("is_RealField mismatch for \{spec}")
-    }
-    guard domain_is_complex_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_ComplexField") else {
-      fail("is_ComplexField mismatch for \{spec}")
-    }
-    guard domain_is_gaussian_ring_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_GaussianRing") else {
-      fail("is_GaussianRing mismatch for \{spec}")
-    }
-    guard domain_is_gaussian_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_GaussianField") else {
-      fail("is_GaussianField mismatch for \{spec}")
-    }
-    guard domain_is_expression_domain_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_EX") else {
-      fail("is_EX mismatch for \{spec}")
-    }
-    guard domain_is_expression_raw_domain_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_EXRAW") else {
-      fail("is_EXRAW mismatch for \{spec}")
-    }
+    assert_eq(domain_is_composite_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Composite"))
+    assert_eq(domain_is_simple_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Simple"))
+    assert_eq(domain_is_numerical_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Numerical"))
+    assert_eq(domain_has_assoc_ring_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Ring"))
+    assert_eq(domain_is_pid_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_PID"))
+    assert_eq(domain_is_integer_ring_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_IntegerRing"))
+    assert_eq(domain_is_rational_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_RationalField"))
+    assert_eq(domain_is_real_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_RealField"))
+    assert_eq(domain_is_complex_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_ComplexField"))
+    assert_eq(domain_is_gaussian_ring_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_GaussianRing"))
+    assert_eq(domain_is_gaussian_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_GaussianField"))
+    assert_eq(domain_is_expression_domain_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_EX"))
+    assert_eq(domain_is_expression_raw_domain_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_EXRAW"))
   }
 }
 
@@ -358,82 +292,25 @@ test "domains: advanced predicate parity (meta/family tags)" {
   ]
   for spec in specs {
     let domain = domain_from_string(spec)
-    guard domain_is_algebraic_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Algebraic") else {
-      fail("is_Algebraic mismatch for \{spec}")
-    }
-    guard domain_is_algebraic_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_AlgebraicField") else {
-      fail("is_AlgebraicField mismatch for \{spec}")
-    }
-    guard domain_is_symbolic_domain_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicDomain") else {
-      fail("is_SymbolicDomain mismatch for \{spec}")
-    }
-    guard domain_has_assoc_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Field") else {
-      fail("has_assoc_Field mismatch for \{spec}")
-    }
-    guard domain_has_characteristic_zero_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "has_CharacteristicZero") else {
-      fail("has_CharacteristicZero mismatch for \{spec}")
-    }
-    guard domain_is_finite_extension_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_FiniteExtension") else {
-      fail("is_FiniteExtension mismatch for \{spec}")
-    }
-    guard domain_is_zz_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_ZZ") else {
-      fail("is_ZZ mismatch for \{spec}")
-    }
-    guard domain_is_qq_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_QQ") else {
-      fail("is_QQ mismatch for \{spec}")
-    }
-    guard domain_is_zz_i_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_ZZ_I") else {
-      fail("is_ZZ_I mismatch for \{spec}")
-    }
-    guard domain_is_qq_i_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_QQ_I") else {
-      fail("is_QQ_I mismatch for \{spec}")
-    }
-    guard domain_is_cc_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_CC") else {
-      fail("is_CC mismatch for \{spec}")
-    }
-    guard domain_is_rr_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_RR") else {
-      fail("is_RR mismatch for \{spec}")
-    }
-    guard domain_is_ff_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_FF") else {
-      fail("is_FF mismatch for \{spec}")
-    }
-    guard domain_is_frac_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Frac") else {
-      fail("is_Frac mismatch for \{spec}")
-    }
-    guard domain_is_fraction_field_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_FractionField") else {
-      fail("is_FractionField mismatch for \{spec}")
-    }
-    guard domain_is_poly_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_Poly") else {
-      fail("is_Poly mismatch for \{spec}")
-    }
-    guard domain_is_polynomial_ring_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_PolynomialRing") else {
-      fail("is_PolynomialRing mismatch for \{spec}")
-    }
-    guard domain_is_symbolic_raw_domain_pred(domain) ==
-      @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicRawDomain") else {
-      fail("is_SymbolicRawDomain mismatch for \{spec}")
-    }
-    guard domain_has_default_precision_pred(domain) ==
-      @sympy_polys.domain_attr_bool_or_false(spec, "has_default_precision") else {
-      fail("has_default_precision mismatch for \{spec}")
-    }
+    assert_eq(domain_is_algebraic_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Algebraic"))
+    assert_eq(domain_is_algebraic_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_AlgebraicField"))
+    assert_eq(domain_is_symbolic_domain_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicDomain"))
+    assert_eq(domain_has_assoc_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "has_assoc_Field"))
+    assert_eq(domain_has_characteristic_zero_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "has_CharacteristicZero"))
+    assert_eq(domain_is_finite_extension_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_FiniteExtension"))
+    assert_eq(domain_is_zz_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_ZZ"))
+    assert_eq(domain_is_qq_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_QQ"))
+    assert_eq(domain_is_zz_i_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_ZZ_I"))
+    assert_eq(domain_is_qq_i_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_QQ_I"))
+    assert_eq(domain_is_cc_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_CC"))
+    assert_eq(domain_is_rr_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_RR"))
+    assert_eq(domain_is_ff_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_FF"))
+    assert_eq(domain_is_frac_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Frac"))
+    assert_eq(domain_is_fraction_field_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_FractionField"))
+    assert_eq(domain_is_poly_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_Poly"))
+    assert_eq(domain_is_polynomial_ring_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_PolynomialRing"))
+    assert_eq(domain_is_symbolic_raw_domain_pred(domain), @sympy_polys.domain_attr_bool_query(spec, "is_SymbolicRawDomain"))
+    assert_eq(domain_has_default_precision_pred(domain), @sympy_polys.domain_attr_bool_or_false(spec, "has_default_precision"))
   }
 }
 
@@ -448,99 +325,51 @@ test "domains: get_exact parity across core/coercion domains" {
       domain_get_exact(domain_from_string(spec)),
     )
     let oracle = @sympy_polys.domain_get_exact(spec)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("get_exact mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
 ///|
 test "domains: alias constructors and parser coverage" {
-  guard domain_to_sympy_string(domain_from_string("IntegerRing")) ==
-    domain_to_sympy_string(integer_ring_domain()) else {
-    fail("IntegerRing alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("RationalField")) ==
-    domain_to_sympy_string(rational_field_domain()) else {
-    fail("RationalField alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("RealField")) ==
-    domain_to_sympy_string(real_field_domain()) else {
-    fail("RealField alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("ComplexField")) ==
-    domain_to_sympy_string(complex_field_domain()) else {
-    fail("ComplexField alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("GaussianIntegerRing")) ==
-    domain_to_sympy_string(gaussian_integer_ring_domain()) else {
-    fail("GaussianIntegerRing alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("GaussianRationalField")) ==
-    domain_to_sympy_string(gaussian_rational_field_domain()) else {
-    fail("GaussianRationalField alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("ExpressionDomain")) ==
-    domain_to_sympy_string(expression_domain()) else {
-    fail("ExpressionDomain alias mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("ExpressionRawDomain")) ==
-    domain_to_sympy_string(expression_raw_domain()) else {
-    fail("ExpressionRawDomain alias mismatch")
-  }
+  assert_eq(domain_to_sympy_string(domain_from_string("IntegerRing")), domain_to_sympy_string(integer_ring_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("RationalField")), domain_to_sympy_string(rational_field_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("RealField")), domain_to_sympy_string(real_field_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("ComplexField")), domain_to_sympy_string(complex_field_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("GaussianIntegerRing")), domain_to_sympy_string(gaussian_integer_ring_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("GaussianRationalField")), domain_to_sympy_string(gaussian_rational_field_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("ExpressionDomain")), domain_to_sympy_string(expression_domain()))
+  assert_eq(domain_to_sympy_string(domain_from_string("ExpressionRawDomain")), domain_to_sympy_string(expression_raw_domain()))
   let ff7 = ff_domain(7)
-  guard domain_to_sympy_string(domain_from_string("FF(7)")) ==
-    domain_to_sympy_string(ff7) else {
-    fail("FF alias mismatch")
-  }
+  assert_eq(domain_to_sympy_string(domain_from_string("FF(7)")), domain_to_sympy_string(ff7))
   let ff11 = finite_field_domain(11)
-  guard domain_to_sympy_string(domain_from_string("FiniteField(11)")) ==
-    domain_to_sympy_string(ff11) else {
-    fail("FiniteField alias mismatch")
-  }
+  assert_eq(domain_to_sympy_string(domain_from_string("FiniteField(11)")), domain_to_sympy_string(ff11))
   let gfext = domain_from_string("GF(5,2)")
-  guard domain_to_sympy_string(gfext) == "GF(5**2)" else {
-    fail("GF comma extension parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(gfext), "GF(5**2)")
   let gfext_ff = domain_from_string("FF(7,3)")
-  guard domain_to_sympy_string(gfext_ff) == "GF(7**3)" else {
-    fail("FF comma extension parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(gfext_ff), "GF(7**3)")
 }
 
 ///|
 test "domains: extended parser handles Frac/GFExt/PowerSeries syntax" {
   let frac = domain_from_string("Frac(ZZ[x])")
-  guard domain_to_sympy_string(frac) == "Frac(ZZ[x])" else {
-    fail("Frac parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(frac), "Frac(ZZ[x])")
   let gfext_pow = domain_from_string("GF(5**2)")
-  guard domain_to_sympy_string(gfext_pow) == "GF(5**2)" else {
-    fail("GFExt parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(gfext_pow), "GF(5**2)")
   let ps = domain_from_string("QQ[[x,y]]")
-  guard domain_to_sympy_string(ps) == "QQ[[x,y]]" else {
-    fail("PowerSeries parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(ps), "QQ[[x,y]]")
   let ps_prec = domain_from_string("RR[[t]](prec=7)")
-  guard domain_to_sympy_string(ps_prec) == "RR[[t]](prec=7)" else {
-    fail("PowerSeries precision parser mismatch")
-  }
+  assert_eq(domain_to_sympy_string(ps_prec), "RR[[t]](prec=7)")
 }
 
 ///|
 test "domains: oracle GF descriptor parser handles extension forms" {
   let gf_pow = @sympy_polys.domain_repr("GF(5**2)")
   let gf_flat = @sympy_polys.domain_repr("GF(25)")
-  guard trim_ws(gf_pow) == trim_ws(gf_flat) else {
-    fail("oracle GF power descriptor mismatch: \{gf_pow} vs \{gf_flat}")
-  }
+  assert_eq(trim_ws(gf_pow), trim_ws(gf_flat))
 
   let ff_pair = @sympy_polys.domain_repr("FF(7,3)")
   let ff_flat = @sympy_polys.domain_repr("GF(343)")
-  guard trim_ws(ff_pair) == trim_ws(ff_flat) else {
-    fail("oracle FF pair descriptor mismatch: \{ff_pair} vs \{ff_flat}")
-  }
+  assert_eq(trim_ws(ff_pair), trim_ws(ff_flat))
 }
 
 ///|
@@ -549,9 +378,7 @@ test "domains: nested composite parser handles recursive suffix forms" {
   for spec in cases {
     let ours = domain_to_sympy_string(domain_from_string(spec))
     let oracle = @sympy_polys.domain_repr(spec)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("nested parser mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
@@ -571,35 +398,19 @@ test "domains: method constructor parity for poly/frac old/new rings" {
 
     let poly_ours = domain_to_sympy_string(domain.poly_ring(gens))
     let poly_oracle = @sympy_polys.domain_poly_ring(spec, gens)
-    guard trim_ws(poly_ours) == trim_ws(poly_oracle) else {
-      fail(
-        "poly_ring mismatch for \{spec}: ours=\{poly_ours}, oracle=\{poly_oracle}",
-      )
-    }
+    assert_eq(trim_ws(poly_ours), trim_ws(poly_oracle))
 
     let frac_ours = domain_to_sympy_string(domain.frac_field(gens))
     let frac_oracle = @sympy_polys.domain_frac_field(spec, gens)
-    guard trim_ws(frac_ours) == trim_ws(frac_oracle) else {
-      fail(
-        "frac_field mismatch for \{spec}: ours=\{frac_ours}, oracle=\{frac_oracle}",
-      )
-    }
+    assert_eq(trim_ws(frac_ours), trim_ws(frac_oracle))
 
     let old_poly_ours = domain_to_sympy_string(domain.old_poly_ring(gens))
     let old_poly_oracle = @sympy_polys.domain_old_poly_ring(spec, gens)
-    guard trim_ws(old_poly_ours) == trim_ws(old_poly_oracle) else {
-      fail(
-        "old_poly_ring mismatch for \{spec}: ours=\{old_poly_ours}, oracle=\{old_poly_oracle}",
-      )
-    }
+    assert_eq(trim_ws(old_poly_ours), trim_ws(old_poly_oracle))
 
     let old_frac_ours = domain_to_sympy_string(domain.old_frac_field(gens))
     let old_frac_oracle = @sympy_polys.domain_old_frac_field(spec, gens)
-    guard trim_ws(old_frac_ours) == trim_ws(old_frac_oracle) else {
-      fail(
-        "old_frac_field mismatch for \{spec}: ours=\{old_frac_ours}, oracle=\{old_frac_oracle}",
-      )
-    }
+    assert_eq(trim_ws(old_frac_ours), trim_ws(old_frac_oracle))
   }
 
   let quotient = quotient_ring_domain(Domain::QQ, ["x"], [
@@ -609,9 +420,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
     ]),
   ])
   let quotient_try : Result[Domain, PolyError] = try? quotient.poly_ring(["y"])
-  guard render_domain_result(quotient_try) == "ERROR" else {
-    fail("quotient poly_ring should reject nested domains")
-  }
+  assert_eq(render_domain_result(quotient_try), "ERROR")
 }
 
 ///|
@@ -629,11 +438,7 @@ test "domains: set_domain and unify_with_symbols parity" {
       domain_from_string(spec).set_domain(domain_from_string(ground)),
     )
     let oracle = @sympy_polys.domain_set_domain(spec, ground)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "set_domain mismatch for \{spec} -> \{ground}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let unify_cases = [
@@ -652,11 +457,7 @@ test "domains: set_domain and unify_with_symbols parity" {
     )
     let ours = render_domain_result(ours_try)
     let oracle = @sympy_polys.domain_unify_with_symbols(lhs, rhs, symbols)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "unify_with_symbols mismatch for \{lhs}, \{rhs}, \{symbols_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let composite_cases = [
@@ -671,11 +472,7 @@ test "domains: set_domain and unify_with_symbols parity" {
       domain_from_string(lhs).unify_composite(domain_from_string(rhs)),
     )
     let oracle = @sympy_polys.domain_unify_composite(lhs, rhs)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "unify_composite mismatch for \{lhs}, \{rhs}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
@@ -691,18 +488,14 @@ test "domains: inject and drop parity across simple and nested composites" {
     let gens = item.1
     let ours = domain_to_sympy_string(domain_from_string(spec).inject(gens))
     let oracle = @sympy_polys.domain_inject(spec, gens)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("inject mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let overlap_try : Result[Domain, PolyError] = try? domain_from_string("ZZ[x]").inject([
       "x",
     ],
   )
-  guard render_domain_result(overlap_try) == "ERROR" else {
-    fail("inject overlap should fail")
-  }
+  assert_eq(render_domain_result(overlap_try), "ERROR")
 
   let drop_cases = [
     ("ZZ", ["x"]),
@@ -722,9 +515,7 @@ test "domains: inject and drop parity across simple and nested composites" {
     )
     let ours = render_domain_result(ours_try)
     let oracle = @sympy_polys.domain_drop(spec, gens)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail("drop mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 }
 
@@ -746,11 +537,7 @@ test "domains: algebraic_field parity and Domain methods" {
       domain_from_string(spec).algebraic_field(ext_exprs),
     )
     let oracle = @sympy_polys.domain_algebraic_field(spec, ext_specs)
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "algebraic_field mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let poly_cases : Array[(String, String, String, String)] = [
@@ -776,11 +563,7 @@ test "domains: algebraic_field parity and Domain methods" {
       gen,
       alias=Some(ext_alias),
     )
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "alg_field_from_poly mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let poly_root_cases : Array[(String, String, String, Int)] = [
@@ -808,11 +591,7 @@ test "domains: algebraic_field parity and Domain methods" {
       gen,
       root_index~,
     )
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "alg_field_from_poly root mismatch for \{spec}, \{poly_expr}, root_index=\{root_index}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let direct_alg_field = domain_from_string("QQ").alg_field_from_poly(
@@ -821,14 +600,8 @@ test "domains: algebraic_field parity and Domain methods" {
   )
   match direct_alg_field {
     Domain::AlgExt(_, gens, rels) => {
-      guard gens.equal(["a"]) else {
-        fail("alg_field_from_poly should use the requested alias")
-      }
-      guard normalize_expr_text(@symprint.to_string(rels[0])) == "a**2-2" else {
-        fail(
-          "alg_field_from_poly should rewrite the minimal polynomial to the alias generator",
-        )
-      }
+      assert_true(gens.equal(["a"]))
+      assert_eq(normalize_expr_text(@symprint.to_string(rels[0])), "a**2-2")
     }
     _ => fail("expected AlgExt from alg_field_from_poly")
   }
@@ -859,11 +632,7 @@ test "domains: algebraic_field parity and Domain methods" {
       alias=ext_alias,
       gen=gen_opt,
     )
-    guard trim_ws(ours) == trim_ws(oracle) else {
-      fail(
-        "cyclotomic_field mismatch for \{spec}, n=\{n}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
   let direct_cyclo = domain_from_string("QQ").cyclotomic_field(
@@ -873,38 +642,19 @@ test "domains: algebraic_field parity and Domain methods" {
   )
   match direct_cyclo {
     Domain::AlgExt(_, gens, rels) => {
-      guard gens.equal(["a"]) else {
-        fail("cyclotomic_field should expose the requested alias")
-      }
-      guard normalize_expr_text(@symprint.to_string(rels[0])) ==
-        "a**4+a**3+a**2+a+1" else {
-        fail("cyclotomic_field should build the correct cyclotomic polynomial")
-      }
+      assert_true(gens.equal(["a"]))
+      assert_eq(normalize_expr_text(@symprint.to_string(rels[0])), "a**4+a**3+a**2+a+1")
     }
     _ => fail("expected AlgExt from cyclotomic_field")
   }
 
-  guard domain_from_string("GF(5)").characteristic() == 5 else {
-    fail("Domain::characteristic mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("RR[x]").get_exact()) ==
-    "QQ[x]" else {
-    fail("Domain::get_exact mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("ZZ[x]").get_field()) ==
-    "ZZ(x)" else {
-    fail("Domain::get_field mismatch")
-  }
-  guard domain_to_sympy_string(domain_from_string("QQ(x)").get_ring()) ==
-    "QQ[x]" else {
-    fail("Domain::get_ring mismatch")
-  }
-  guard domain_to_sympy_string(
-      domain_from_string("ZZ").unify(domain_from_string("QQ")),
-    ) ==
-    "QQ" else {
-    fail("Domain::unify mismatch")
-  }
+  assert_eq(domain_from_string("GF(5)").characteristic(), 5)
+  assert_eq(domain_to_sympy_string(domain_from_string("RR[x]").get_exact()), "QQ[x]")
+  assert_eq(domain_to_sympy_string(domain_from_string("ZZ[x]").get_field()), "ZZ(x)")
+  assert_eq(domain_to_sympy_string(domain_from_string("QQ(x)").get_ring()), "QQ[x]")
+  assert_eq(domain_to_sympy_string(
+          domain_from_string("ZZ").unify(domain_from_string("QQ")),
+        ), "QQ")
 }
 
 ///|
@@ -943,16 +693,10 @@ test "domains: contains_expr parity for constants polynomials and rational funct
     let expr_text = item.2
     let ours = domain_from_string(spec).contains_expr(expr)
     let oracle = @sympy_polys.domain_contains_expr(spec, expr_text)
-    guard ours == oracle else {
-      fail(
-        "contains_expr mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
-  guard domain_from_string("RR").contains_expr(sin1) else {
-    fail("contains_expr RR constant function mismatch")
-  }
+  assert_true(domain_from_string("RR").contains_expr(sin1))
 }
 
 ///|
@@ -994,20 +738,12 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let oracle_from = normalize_expr_text(
       @sympy_polys.domain_from_sympy_expr(spec, expr_text),
     )
-    guard ours_from == oracle_from else {
-      fail(
-        "from_sympy parity mismatch for \{spec} and \{expr_text}: ours=\{ours_from}, oracle=\{oracle_from}",
-      )
-    }
+    assert_eq(ours_from, oracle_from)
     let ours_to = render_expr_result(try? domain.to_sympy_expr(expr))
     let oracle_to = normalize_expr_text(
       @sympy_polys.domain_to_sympy_expr(spec, expr_text),
     )
-    guard ours_to == oracle_to else {
-      fail(
-        "to_sympy parity mismatch for \{spec} and \{expr_text}: ours=\{ours_to}, oracle=\{oracle_to}",
-      )
-    }
+    assert_eq(ours_to, oracle_to)
   }
 
   let convert_cases : Array[(String, String, @symcore.Expr, String)] = [
@@ -1038,11 +774,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let oracle = normalize_expr_text(
       @sympy_polys.domain_convert_from_expr(target, expr_text, base),
     )
-    guard ours == oracle else {
-      fail(
-        "convert_from parity mismatch for \{target} <- \{base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
   let direct_cases : Array[(String, @symcore.Expr, String)] = [
@@ -1062,11 +794,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let oracle = normalize_expr_text(
       @sympy_polys.domain_convert_expr(target, expr_text),
     )
-    guard ours == oracle else {
-      fail(
-        "convert parity mismatch for \{target} using \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -1099,9 +827,7 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_sum_expr(spec, expr_texts),
     )
-    guard ours == oracle else {
-      fail("sum_expr mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -1227,26 +953,17 @@ test "domains: from_* conversion hook parity on representative base families" {
         )
       _ => "ERROR"
     }
-    guard ours == oracle else {
-      fail(
-        "\{family} mismatch for \{target} <- \{base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
-  guard render_optional_expr_result(
-      Ok(
-        domain_from_string("QQ").from_fraction_field_expr(
-          @symcore.int(2),
-          domain_from_string("QQ(x)"),
-        ),
-      ),
-    ) ==
-    "NONE" else {
-    fail(
-      "from_fraction_field should reject constant rational functions for scalar targets",
-    )
-  }
+  assert_eq(render_optional_expr_result(
+          Ok(
+            domain_from_string("QQ").from_fraction_field_expr(
+              @symcore.int(2),
+              domain_from_string("QQ(x)"),
+            ),
+          ),
+        ), "NONE")
   ignore(sqrt2)
 }
 
@@ -1420,57 +1137,36 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
         )
       _ => "ERROR"
     }
-    guard ours == oracle else {
-      fail(
-        "\{family} mismatch for \{target} <- \{oracle_base} using \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
-  guard render_optional_expr_result(
-      Ok(
-        domain_from_string("QQ").from_global_polynomial_ring_expr(
-          x + @symcore.int(1),
-          domain_from_string("QQ[x]"),
-        ),
-      ),
-    ) ==
-    "NONE" else {
-    fail(
-      "from_global_polynomial_ring should reject non-constant scalar polynomials",
-    )
-  }
-  guard render_optional_expr_result(
-      Ok(
-        domain_from_string("QQ").from_monogenic_finite_extension_expr(
-          @symcore.int(2),
-          domain_from_string("QQ<sqrt(2)>"),
-        ),
-      ),
-    ) ==
-    "2" else {
-    fail(
-      "from_monogenic_finite_extension should reuse algebraic-field conversion for constant elements",
-    )
-  }
+  assert_eq(render_optional_expr_result(
+          Ok(
+            domain_from_string("QQ").from_global_polynomial_ring_expr(
+              x + @symcore.int(1),
+              domain_from_string("QQ[x]"),
+            ),
+          ),
+        ), "NONE")
+  assert_eq(render_optional_expr_result(
+          Ok(
+            domain_from_string("QQ").from_monogenic_finite_extension_expr(
+              @symcore.int(2),
+              domain_from_string("QQ<sqrt(2)>"),
+            ),
+          ),
+        ), "2")
 }
 
 ///|
 test "domains: new/normal constructors and recursive map stay normalized" {
   let x = @symcore.symbol("x")
   let gf = domain_from_string("GF(5)")
-  guard render_expr_result(try? gf.new_expr(@symcore.int(7))) == "2" else {
-    fail("GF new_expr should reduce modulo the characteristic")
-  }
-  guard render_expr_result(try? gf.normal_expr(@symcore.int(12))) == "2" else {
-    fail("GF normal_expr should normalize via the domain constructor")
-  }
-  guard render_expr_result(
-      try? domain_from_string("QQ[x]").new_expr(x + @symcore.int(1)),
-    ) ==
-    "x+1" else {
-    fail("poly new_expr should preserve the polynomial expression")
-  }
+  assert_eq(render_expr_result(try? gf.new_expr(@symcore.int(7))), "2")
+  assert_eq(render_expr_result(try? gf.normal_expr(@symcore.int(12))), "2")
+  assert_eq(render_expr_result(
+          try? domain_from_string("QQ[x]").new_expr(x + @symcore.int(1)),
+        ), "x+1")
 
   let mapped = gf.map_expr_tree([
     domain_expr_tree_elem(@symcore.int(6)),
@@ -1479,9 +1175,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
       domain_expr_tree_elem(@symcore.int(10)),
     ]),
   ])
-  guard render_expr_tree(mapped) == "[1,[2,0]]" else {
-    fail("map_expr_tree should recurse and normalize each leaf")
-  }
+  assert_eq(render_expr_tree(mapped), "[1,[2,0]]")
 
   let zz_mapped = domain_from_string("ZZ").map_expr_tree([
     domain_expr_tree_list([
@@ -1489,9 +1183,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
       domain_expr_tree_elem(@symcore.int(2)),
     ]),
   ])
-  guard render_expr_tree(zz_mapped) == "[[1,2]]" else {
-    fail("map_expr_tree should preserve nested list structure")
-  }
+  assert_eq(render_expr_tree(zz_mapped), "[[1,2]]")
 }
 
 ///|
@@ -1521,22 +1213,12 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
     let expr_text = item.2
     let ours = domain_from_string(spec).is_unit_expr(expr)
     let oracle = @sympy_polys.domain_is_unit_expr(spec, expr_text)
-    guard ours == oracle else {
-      fail(
-        "is_unit mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
-  guard domain_from_string("QQ").is_zero_expr(@symcore.int(0)) else {
-    fail("is_zero_expr mismatch")
-  }
-  guard domain_from_string("QQ").is_one_expr(@symcore.int(1)) else {
-    fail("is_one_expr mismatch")
-  }
-  guard !domain_from_string("QQ").is_one_expr(@symcore.int(2)) else {
-    fail("is_one_expr false positive")
-  }
+  assert_true(domain_from_string("QQ").is_zero_expr(@symcore.int(0)))
+  assert_true(domain_from_string("QQ").is_one_expr(@symcore.int(1)))
+  assert_true(!domain_from_string("QQ").is_one_expr(@symcore.int(2)))
 }
 
 ///|
@@ -1550,18 +1232,10 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let domain = domain_from_string(spec)
     let ours_zero = render_expr_result(try? domain.zero_expr())
     let oracle_zero = normalize_expr_text(@sympy_polys.domain_zero_expr(spec))
-    guard ours_zero == oracle_zero else {
-      fail(
-        "zero parity mismatch for \{spec}: ours=\{ours_zero}, oracle=\{oracle_zero}",
-      )
-    }
+    assert_eq(ours_zero, oracle_zero)
     let ours_one = render_expr_result(try? domain.one_expr())
     let oracle_one = normalize_expr_text(@sympy_polys.domain_one_expr(spec))
-    guard ours_one == oracle_one else {
-      fail(
-        "one parity mismatch for \{spec}: ours=\{ours_one}, oracle=\{oracle_one}",
-      )
-    }
+    assert_eq(ours_one, oracle_one)
   }
 
   let unary_cases : Array[(String, @symcore.Expr, String)] = [
@@ -1578,20 +1252,12 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let oracle_pos = normalize_expr_text(
       @sympy_polys.domain_pos_expr(spec, expr_text),
     )
-    guard ours_pos == oracle_pos else {
-      fail(
-        "pos parity mismatch for \{spec} and \{expr_text}: ours=\{ours_pos}, oracle=\{oracle_pos}",
-      )
-    }
+    assert_eq(ours_pos, oracle_pos)
     let ours_neg = render_expr_result(try? domain.neg_expr(expr))
     let oracle_neg = normalize_expr_text(
       @sympy_polys.domain_neg_expr(spec, expr_text),
     )
-    guard ours_neg == oracle_neg else {
-      fail(
-        "neg parity mismatch for \{spec} and \{expr_text}: ours=\{ours_neg}, oracle=\{oracle_neg}",
-      )
-    }
+    assert_eq(ours_neg, oracle_neg)
   }
 
   let binary_cases : Array[
@@ -1631,29 +1297,17 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let oracle_add = normalize_expr_text(
       @sympy_polys.domain_add_expr(spec, left_text, right_text),
     )
-    guard ours_add == oracle_add else {
-      fail(
-        "add parity mismatch for \{spec}: ours=\{ours_add}, oracle=\{oracle_add}",
-      )
-    }
+    assert_eq(ours_add, oracle_add)
     let ours_sub = render_expr_result(try? domain.sub_expr(left, right))
     let oracle_sub = normalize_expr_text(
       @sympy_polys.domain_sub_expr(spec, left_text, right_text),
     )
-    guard ours_sub == oracle_sub else {
-      fail(
-        "sub parity mismatch for \{spec}: ours=\{ours_sub}, oracle=\{oracle_sub}",
-      )
-    }
+    assert_eq(ours_sub, oracle_sub)
     let ours_mul = render_expr_result(try? domain.mul_expr(left, right))
     let oracle_mul = normalize_expr_text(
       @sympy_polys.domain_mul_expr(spec, left_text, right_text),
     )
-    guard ours_mul == oracle_mul else {
-      fail(
-        "mul parity mismatch for \{spec}: ours=\{ours_mul}, oracle=\{oracle_mul}",
-      )
-    }
+    assert_eq(ours_mul, oracle_mul)
   }
 
   let pow_cases : Array[(String, @symcore.Expr, Int, String)] = [
@@ -1675,11 +1329,7 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_pow_expr(spec, expr_text, exp),
     )
-    guard ours == oracle else {
-      fail(
-        "pow parity mismatch for \{spec}, exp=\{exp}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -1703,76 +1353,50 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let oracle_half = normalize_expr_tuple2_text(
       @sympy_polys.domain_half_gcdex_expr(spec, left_text, right_text),
     )
-    guard ours_half == oracle_half else {
-      fail(
-        "half_gcdex parity mismatch for \{spec}: ours=\{ours_half}, oracle=\{oracle_half}",
-      )
-    }
+    assert_eq(ours_half, oracle_half)
     let ours_full = render_expr_triple_result(
       try? domain.gcdex_expr(left, right),
     )
     let oracle_full = normalize_expr_tuple3_text(
       @sympy_polys.domain_gcdex_expr(spec, left_text, right_text),
     )
-    guard ours_full == oracle_full else {
-      fail(
-        "gcdex parity mismatch for \{spec}: ours=\{ours_full}, oracle=\{oracle_full}",
-      )
-    }
+    assert_eq(ours_full, oracle_full)
   }
 
   let qq_left = @symcore.rational_from_ints(2, 3)
   let qq_right = @symcore.rational_from_ints(4, 9)
-  guard render_expr_pair_result(
-      try? domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
-    ) ==
-    "(1/3,2/9)" else {
-    fail("QQ half_gcdex local behavior mismatch")
-  }
-  guard render_expr_triple_result(
-      try? domain_from_string("QQ").gcdex_expr(qq_left, qq_right),
-    ) ==
-    "(1/3,0,2/9)" else {
-    fail("QQ gcdex local behavior mismatch")
-  }
+  assert_eq(render_expr_pair_result(
+          try? domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
+        ), "(1/3,2/9)")
+  assert_eq(render_expr_triple_result(
+          try? domain_from_string("QQ").gcdex_expr(qq_left, qq_right),
+        ), "(1/3,0,2/9)")
 
   let zzi_left = @symcore.add([@symcore.int(2), i])
   let zzi_right = @symcore.add([@symcore.int(1), @symcore.int(-1) * i])
   let zzi = domain_from_string("ZZ_I")
   let zzi_half = zzi.half_gcdex_expr(zzi_left, zzi_right)
-  guard render_expr_result(Ok(zzi_half.1)) == "1" else {
-    fail("ZZ_I half_gcdex gcd mismatch")
-  }
+  assert_eq(render_expr_result(Ok(zzi_half.1)), "1")
   let zzi_full = zzi.gcdex_expr(zzi_left, zzi_right)
-  guard render_expr_result(Ok(zzi_full.2)) == "1" else {
-    fail("ZZ_I gcdex gcd mismatch")
-  }
+  assert_eq(render_expr_result(Ok(zzi_full.2)), "1")
   let zzi_bezout = zzi.add_expr(
     zzi.mul_expr(zzi_left, zzi_full.0),
     zzi.mul_expr(zzi_right, zzi_full.1),
   )
-  guard render_expr_result(Ok(zzi_bezout)) == "1" else {
-    fail("ZZ_I gcdex Bezout mismatch")
-  }
+  assert_eq(render_expr_result(Ok(zzi_bezout)), "1")
 
   let qqx_left = (x ^ @symcore.int(2)) - @symcore.int(1)
   let qqx_right = x - @symcore.int(1)
   let qqx = domain_from_string("QQ[x]")
   let qqx_half = qqx.half_gcdex_expr(qqx_left, qqx_right)
-  guard render_expr_result(Ok(qqx_half.1)) == "x-1" else {
-    fail("QQ[x] half_gcdex gcd mismatch")
-  }
+  assert_eq(render_expr_result(Ok(qqx_half.1)), "x-1")
   let qqx_full = qqx.gcdex_expr(qqx_left, qqx_right)
-  guard render_expr_result(Ok(qqx_full.2)) == "x-1" else {
-    fail("QQ[x] gcdex gcd mismatch")
-  }
+  assert_eq(render_expr_result(Ok(qqx_full.2)), "x-1")
   let qqx_bezout = qqx.add_expr(
     qqx.mul_expr(qqx_left, qqx_full.0),
     qqx.mul_expr(qqx_right, qqx_full.1),
   )
-  guard render_expr_result(Ok(qqx_bezout)) == "x-1" else {
-    fail("QQ[x] gcdex Bezout mismatch")
-  }
+  assert_eq(render_expr_result(Ok(qqx_bezout)), "x-1")
 
   let invert_cases : Array[
     (String, @symcore.Expr, @symcore.Expr, String, String),
@@ -1799,9 +1423,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_invert_expr(spec, left_text, right_text),
     )
-    guard ours == oracle else {
-      fail("invert parity mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(ours, oracle)
   }
 
   let revert_cases : Array[(String, @symcore.Expr, String)] = [
@@ -1822,9 +1444,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_revert_expr(spec, expr_text),
     )
-    guard ours == oracle else {
-      fail("revert parity mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -1865,40 +1485,22 @@ test "domains: sign predicate parity on ordered and composite domains" {
     let oracle_nonnegative = @sympy_polys.domain_is_nonnegative_expr(
       spec, expr_text,
     )
-    guard ours_positive == oracle_positive else {
-      fail(
-        "is_positive mismatch for \{spec} and \{expr_text}: ours=\{ours_positive}, oracle=\{oracle_positive}",
-      )
-    }
-    guard ours_negative == oracle_negative else {
-      fail(
-        "is_negative mismatch for \{spec} and \{expr_text}: ours=\{ours_negative}, oracle=\{oracle_negative}",
-      )
-    }
-    guard ours_nonpositive == oracle_nonpositive else {
-      fail(
-        "is_nonpositive mismatch for \{spec} and \{expr_text}: ours=\{ours_nonpositive}, oracle=\{oracle_nonpositive}",
-      )
-    }
-    guard ours_nonnegative == oracle_nonnegative else {
-      fail(
-        "is_nonnegative mismatch for \{spec} and \{expr_text}: ours=\{ours_nonnegative}, oracle=\{oracle_nonnegative}",
-      )
-    }
+    assert_eq(ours_positive, oracle_positive)
+    assert_eq(ours_negative, oracle_negative)
+    assert_eq(ours_nonpositive, oracle_nonpositive)
+    assert_eq(ours_nonnegative, oracle_nonnegative)
   }
 
   let minus_one = @symcore.int(-1)
-  guard domain_from_string("ZZ").is_negative_one_expr(minus_one) else {
-    fail("is_negative_one_expr mismatch")
-  }
+  assert_true(domain_from_string("ZZ").is_negative_one_expr(minus_one))
 
   let zz_series = domain_from_string("ZZ[[x]](prec=5)")
-  guard !zz_series.is_positive_expr(x) &&
-    !zz_series.is_negative_expr(x) &&
-    zz_series.is_nonpositive_expr(x) &&
-    zz_series.is_nonnegative_expr(x) else {
-    fail("power-series sign semantics mismatch")
-  }
+  assert_true(
+    !zz_series.is_positive_expr(x) &&
+        !zz_series.is_negative_expr(x) &&
+        zz_series.is_nonpositive_expr(x) &&
+        zz_series.is_nonnegative_expr(x)
+  )
 }
 
 ///|
@@ -1928,20 +1530,13 @@ test "domains: canonical_unit parity on scalar and composite domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_canonical_unit_expr(spec, expr_text),
     )
-    guard ours == oracle else {
-      fail(
-        "canonical_unit mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
   let zz_series = domain_from_string("ZZ[[x]](prec=5)")
-  guard trim_ws(
-      @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
-    ) ==
-    "-1" else {
-    fail("power-series canonical_unit should follow constant coefficient")
-  }
+  assert_eq(trim_ws(
+          @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
+        ), "-1")
 }
 
 ///|
@@ -1963,11 +1558,7 @@ test "domains: abs parity on supported/error domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_abs_expr(spec, expr_text),
     )
-    guard ours == oracle else {
-      fail(
-        "abs mismatch for \{spec} and \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 }
 
@@ -2038,17 +1629,9 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
     let oracle_cof = normalize_expr_tuple3_text(
       @sympy_polys.domain_cofactors_expr(spec, left_text, right_text),
     )
-    guard ours_gcd == oracle_gcd else {
-      fail("gcd mismatch for \{spec}: ours=\{ours_gcd}, oracle=\{oracle_gcd}")
-    }
-    guard ours_lcm == oracle_lcm else {
-      fail("lcm mismatch for \{spec}: ours=\{ours_lcm}, oracle=\{oracle_lcm}")
-    }
-    guard ours_cof == oracle_cof else {
-      fail(
-        "cofactors mismatch for \{spec}: ours=\{ours_cof}, oracle=\{oracle_cof}",
-      )
-    }
+    assert_eq(ours_gcd, oracle_gcd)
+    assert_eq(ours_lcm, oracle_lcm)
+    assert_eq(ours_cof, oracle_cof)
   }
 }
 
@@ -2088,12 +1671,8 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
     let oracle_den = normalize_expr_text(
       @sympy_polys.domain_denom_expr(spec, expr_text),
     )
-    guard ours_num == oracle_num else {
-      fail("numer mismatch for \{spec}: ours=\{ours_num}, oracle=\{oracle_num}")
-    }
-    guard ours_den == oracle_den else {
-      fail("denom mismatch for \{spec}: ours=\{ours_den}, oracle=\{oracle_den}")
-    }
+    assert_eq(ours_num, oracle_num)
+    assert_eq(ours_den, oracle_den)
   }
 }
 
@@ -2157,28 +1736,16 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
     let oracle_exquo = normalize_expr_text(
       @sympy_polys.domain_exquo_expr(spec, left_text, right_text),
     )
-    guard ours_quo == oracle_quo else {
-      fail("quo mismatch for \{spec}: ours=\{ours_quo}, oracle=\{oracle_quo}")
-    }
-    guard ours_rem == oracle_rem else {
-      fail("rem mismatch for \{spec}: ours=\{ours_rem}, oracle=\{oracle_rem}")
-    }
-    guard ours_div == oracle_div else {
-      fail("div mismatch for \{spec}: ours=\{ours_div}, oracle=\{oracle_div}")
-    }
-    guard ours_exquo == oracle_exquo else {
-      fail(
-        "exquo mismatch for \{spec}: ours=\{ours_exquo}, oracle=\{oracle_exquo}",
-      )
-    }
+    assert_eq(ours_quo, oracle_quo)
+    assert_eq(ours_rem, oracle_rem)
+    assert_eq(ours_div, oracle_div)
+    assert_eq(ours_exquo, oracle_exquo)
   }
 
   let exact_fail = render_expr_result(
     try? domain_from_string("ZZ").exquo_expr(@symcore.int(7), @symcore.int(3)),
   )
-  guard exact_fail == "ERROR" else {
-    fail("ZZ exquo should reject non-exact quotient")
-  }
+  assert_eq(exact_fail, "ERROR")
 }
 
 ///|
@@ -2196,11 +1763,7 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_factorial_expr("ZZ", expr_text),
     )
-    guard ours == oracle else {
-      fail(
-        "factorial mismatch for \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
   let log_cases : Array[(@symcore.Expr, String, @symcore.Expr, String)] = [
@@ -2219,11 +1782,7 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_log_expr("ZZ", value_text, base_text),
     )
-    guard ours == oracle else {
-      fail(
-        "log mismatch for \{value_text}, \{base_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
   let sqrt_cases : Array[(@symcore.Expr, String)] = [
@@ -2238,22 +1797,13 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_sqrt_expr("ZZ", expr_text),
     )
-    guard ours == oracle else {
-      fail("sqrt mismatch for \{expr_text}: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_eq(ours, oracle)
   }
 
   let zzx = domain_from_string("ZZ[x]")
-  guard render_expr_result(try? zzx.factorial_expr(@symcore.int(5))) == "120" else {
-    fail("ZZ[x] factorial should delegate to the ground domain")
-  }
-  guard render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))) ==
-    "3" else {
-    fail("ZZ[x] log should delegate to the ground domain")
-  }
-  guard render_expr_result(try? zzx.sqrt_expr(@symcore.int(8))) == "2" else {
-    fail("ZZ[x] sqrt should delegate to the ground domain")
-  }
+  assert_eq(render_expr_result(try? zzx.factorial_expr(@symcore.int(5))), "120")
+  assert_eq(render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))), "3")
+  assert_eq(render_expr_result(try? zzx.sqrt_expr(@symcore.int(8))), "2")
 }
 
 ///|
@@ -2278,9 +1828,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
       value => value
     }
     let oracle_square = @sympy_polys.domain_is_square_expr(spec, expr_text)
-    guard ours_square == oracle_square else {
-      fail("is_square mismatch for \{spec}, \{expr_text}")
-    }
+    assert_eq(ours_square, oracle_square)
     let ours_root = render_optional_expr_result(try? domain.exsqrt_expr(expr))
     let oracle_root = @sympy_polys.domain_exsqrt_expr(spec, expr_text)
     let oracle_root_expected = if oracle_root == "ERROR" && !oracle_square {
@@ -2288,51 +1836,27 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     } else {
       normalize_expr_text(oracle_root)
     }
-    guard ours_root == oracle_root_expected else {
-      fail(
-        "exsqrt mismatch for \{spec}, \{expr_text}: ours=\{ours_root}, oracle=\{oracle_root}",
-      )
-    }
+    assert_eq(ours_root, oracle_root_expected)
   }
 
   let zz_i = domain_from_string("ZZ_I")
   let zz_i_square = @symcore.add([@symcore.int(3), @symcore.int(4) * i])
-  guard zz_i.is_square_expr(zz_i_square) else {
-    fail("3 + 4*I should be a square in ZZ_I")
-  }
-  guard render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)) ==
-    normalize_expr_text("2 + I") else {
-    fail("ZZ_I exsqrt should recover the principal Gaussian root")
-  }
+  assert_true(zz_i.is_square_expr(zz_i_square))
+  assert_eq(render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)), normalize_expr_text("2 + I"))
 
   let qq_i = domain_from_string("QQ_I")
   let qq_i_square = @symcore.rational_from_ints(-3, 4) + i
-  guard qq_i.is_square_expr(qq_i_square) else {
-    fail("-3/4 + I should be a square in QQ_I")
-  }
-  guard render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)) ==
-    normalize_expr_text("1/2 + I") else {
-    fail("QQ_I exsqrt should recover the principal Gaussian rational root")
-  }
+  assert_true(qq_i.is_square_expr(qq_i_square))
+  assert_eq(render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)), normalize_expr_text("1/2 + I"))
 
   let rr = domain_from_string("RR")
-  guard render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))) ==
-    normalize_expr_text("sqrt(2)") else {
-    fail("RR exsqrt should stay symbolic for non-rational roots")
-  }
-  guard !rr.is_square_expr(@symcore.int(-1)) else {
-    fail("negative reals are not squares in RR")
-  }
+  assert_eq(render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))), normalize_expr_text("sqrt(2)"))
+  assert_true(!rr.is_square_expr(@symcore.int(-1)))
 
   let cc = domain_from_string("CC")
   let cc_expr = @symcore.add([@symcore.int(2), i])
-  guard cc.is_square_expr(cc_expr) else {
-    fail("all complex numbers should be squares in CC")
-  }
-  guard render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)) ==
-    normalize_expr_text("sqrt(2 + I)") else {
-    fail("CC exsqrt should produce the principal symbolic square root")
-  }
+  assert_true(cc.is_square_expr(cc_expr))
+  assert_eq(render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)), normalize_expr_text("sqrt(2 + I)"))
 }
 
 ///|
@@ -2364,16 +1888,8 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let oracle_imag = normalize_expr_text(
       @sympy_polys.domain_imag_expr(spec, expr_text),
     )
-    guard ours_real == oracle_real else {
-      fail(
-        "real mismatch for \{spec}, \{expr_text}: ours=\{ours_real}, oracle=\{oracle_real}",
-      )
-    }
-    guard ours_imag == oracle_imag else {
-      fail(
-        "imag mismatch for \{spec}, \{expr_text}: ours=\{ours_imag}, oracle=\{oracle_imag}",
-      )
-    }
+    assert_eq(ours_real, oracle_real)
+    assert_eq(ours_imag, oracle_imag)
   }
 
   let almosteq_cases : Array[
@@ -2428,34 +1944,30 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let right_text = item.4
     let ours = domain_from_string(spec).almosteq_expr(left, right)
     let oracle = @sympy_polys.domain_almosteq_expr(spec, left_text, right_text)
-    guard ours == oracle else {
-      fail(
-        "almosteq mismatch for \{spec}: left=\{left_text}, right=\{right_text}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 
   let qq = domain_from_string("QQ")
-  guard qq.almosteq_expr(
-    @symcore.rational_from_ints(1, 2),
-    @symcore.rational_from_ints(2, 3),
-    tolerance=Some(
-      @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
-    ),
-  ) else {
-    fail("QQ almosteq should honor explicit tolerance")
-  }
+  assert_true(
+    qq.almosteq_expr(
+        @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(2, 3),
+        tolerance=Some(
+          @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
+        ),
+      )
+  )
 
   let qq_i = domain_from_string("QQ_I")
-  guard qq_i.almosteq_expr(
-    @symcore.add([@symcore.int(1), i]),
-    @symcore.add([@symcore.int(1), @symcore.rational_from_ints(1, 2) * i]),
-    tolerance=Some(
-      @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
-    ),
-  ) else {
-    fail("QQ_I almosteq should compare component-wise within tolerance")
-  }
+  assert_true(
+    qq_i.almosteq_expr(
+        @symcore.add([@symcore.int(1), i]),
+        @symcore.add([@symcore.int(1), @symcore.rational_from_ints(1, 2) * i]),
+        tolerance=Some(
+          @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
+        ),
+      )
+  )
 
   let evalf_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),
@@ -2473,10 +1985,6 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let oracle = normalize_expr_text(
       @sympy_polys.domain_evalf_expr(spec, expr_text),
     )
-    guard ours == oracle else {
-      fail(
-        "evalf mismatch for \{spec}, \{expr_text}: ours=\{ours}, oracle=\{oracle}",
-      )
-    }
+    assert_eq(ours, oracle)
   }
 }

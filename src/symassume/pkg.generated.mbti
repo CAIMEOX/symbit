@@ -1,0 +1,317 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symassume"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn add_global_assumption(Query) -> Unit
+
+pub fn and_q(Array[Query]) -> Query
+
+pub fn ask(Query, assumptions? : Query, env? : Map[String, SymbolFacts], context? : Array[Query]) -> Tri raise AskError
+
+pub fn ask_global(Query, assumptions? : Query, env? : Map[String, SymbolFacts]) -> Tri raise AskError
+
+pub fn ask_predicate(@symcore.Expr, Predicate, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn assume_env(Array[(String, SymbolFacts)]) -> Map[String, SymbolFacts]
+
+pub fn clear_global_assumptions() -> Unit
+
+pub fn empty_env() -> Map[String, SymbolFacts]
+
+pub fn env_get(Map[String, SymbolFacts], String) -> SymbolFacts
+
+pub fn env_set(Map[String, SymbolFacts], String, SymbolFacts) -> Unit
+
+pub fn env_to_query(Map[String, SymbolFacts]) -> Query
+
+pub fn equivalent_q(Array[Query]) -> Query
+
+pub fn get_global_assumptions() -> Array[Query]
+
+pub fn implies_q(Query, Query) -> Query
+
+pub fn is_integer(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_nonnegative(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_nonzero(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_positive(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_rational(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_real(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn is_zero(@symcore.Expr, env? : Map[String, SymbolFacts]) -> Tri
+
+pub fn normalize_facts(SymbolFacts) -> SymbolFacts
+
+pub fn not_q(Query) -> Query
+
+pub fn or_q(Array[Query]) -> Query
+
+pub fn pred(PredicateKey, Array[@symcore.Expr]) -> Query
+
+pub fn predicate_name(PredicateKey) -> String
+
+pub fn q1(PredicateKey, @symcore.Expr) -> Query
+
+pub fn q2(PredicateKey, @symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_algebraic(@symcore.Expr) -> Query
+
+pub fn q_antihermitian(@symcore.Expr) -> Query
+
+pub fn q_commutative(@symcore.Expr) -> Query
+
+pub fn q_complex(@symcore.Expr) -> Query
+
+pub fn q_complex_elements(@symcore.Expr) -> Query
+
+pub fn q_composite(@symcore.Expr) -> Query
+
+pub fn q_diagonal(@symcore.Expr) -> Query
+
+pub fn q_eq(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_even(@symcore.Expr) -> Query
+
+pub fn q_extended_negative(@symcore.Expr) -> Query
+
+pub fn q_extended_nonnegative(@symcore.Expr) -> Query
+
+pub fn q_extended_nonpositive(@symcore.Expr) -> Query
+
+pub fn q_extended_nonzero(@symcore.Expr) -> Query
+
+pub fn q_extended_positive(@symcore.Expr) -> Query
+
+pub fn q_extended_real(@symcore.Expr) -> Query
+
+pub fn q_finite(@symcore.Expr) -> Query
+
+pub fn q_fullrank(@symcore.Expr) -> Query
+
+pub fn q_ge(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_gt(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_hermitian(@symcore.Expr) -> Query
+
+pub fn q_imaginary(@symcore.Expr) -> Query
+
+pub fn q_infinite(@symcore.Expr) -> Query
+
+pub fn q_integer(@symcore.Expr) -> Query
+
+pub fn q_integer_elements(@symcore.Expr) -> Query
+
+pub fn q_invertible(@symcore.Expr) -> Query
+
+pub fn q_irrational(@symcore.Expr) -> Query
+
+pub fn q_is_true(@symcore.Expr) -> Query
+
+pub fn q_le(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_lower_triangular(@symcore.Expr) -> Query
+
+pub fn q_lt(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_ne(@symcore.Expr, @symcore.Expr) -> Query
+
+pub fn q_negative(@symcore.Expr) -> Query
+
+pub fn q_negative_infinite(@symcore.Expr) -> Query
+
+pub fn q_noninteger(@symcore.Expr) -> Query
+
+pub fn q_nonnegative(@symcore.Expr) -> Query
+
+pub fn q_nonpositive(@symcore.Expr) -> Query
+
+pub fn q_nonzero(@symcore.Expr) -> Query
+
+pub fn q_normal(@symcore.Expr) -> Query
+
+pub fn q_odd(@symcore.Expr) -> Query
+
+pub fn q_orthogonal(@symcore.Expr) -> Query
+
+pub fn q_positive(@symcore.Expr) -> Query
+
+pub fn q_positive_definite(@symcore.Expr) -> Query
+
+pub fn q_positive_infinite(@symcore.Expr) -> Query
+
+pub fn q_prime(@symcore.Expr) -> Query
+
+pub fn q_rational(@symcore.Expr) -> Query
+
+pub fn q_real(@symcore.Expr) -> Query
+
+pub fn q_real_elements(@symcore.Expr) -> Query
+
+pub fn q_singular(@symcore.Expr) -> Query
+
+pub fn q_square(@symcore.Expr) -> Query
+
+pub fn q_symmetric(@symcore.Expr) -> Query
+
+pub fn q_transcendental(@symcore.Expr) -> Query
+
+pub fn q_triangular(@symcore.Expr) -> Query
+
+pub fn q_unit_triangular(@symcore.Expr) -> Query
+
+pub fn q_unitary(@symcore.Expr) -> Query
+
+pub fn q_upper_triangular(@symcore.Expr) -> Query
+
+pub fn q_zero(@symcore.Expr) -> Query
+
+pub fn query_atom_key(PredicateKey, Array[@symcore.Expr]) -> String
+
+pub fn query_false() -> Query
+
+pub fn query_to_sympy(Query) -> String
+
+pub fn query_true() -> Query
+
+pub fn remove_global_assumption(Query) -> Unit
+
+pub fn symbol_facts(is_zero? : Tri, is_nonzero? : Tri, is_integer? : Tri, is_rational? : Tri, is_real? : Tri, is_positive? : Tri, is_nonnegative? : Tri) -> SymbolFacts
+
+pub fn tri_and(Tri, Tri) -> Tri
+
+pub fn tri_merge(Tri, Tri) -> Tri
+
+pub fn tri_not(Tri) -> Tri
+
+pub fn tri_of_bool(Bool) -> Tri
+
+pub fn tri_or(Tri, Tri) -> Tri
+
+pub fn tri_to_bool_option(Tri) -> Bool?
+
+pub fn unknown_facts() -> SymbolFacts
+
+// Errors
+pub(all) suberror AskError {
+  InconsistentAssumptions
+}
+
+// Types and methods
+pub(all) enum Predicate {
+  IsZero
+  IsNonzero
+  IsInteger
+  IsRational
+  IsReal
+  IsPositive
+  IsNonnegative
+}
+pub impl Eq for Predicate
+pub impl Show for Predicate
+
+pub(all) enum PredicateKey {
+  Hermitian
+  Antihermitian
+  Real
+  ExtendedReal
+  Imaginary
+  Complex
+  Algebraic
+  Transcendental
+  Integer
+  NonInteger
+  Rational
+  Irrational
+  Finite
+  Infinite
+  PositiveInfinite
+  NegativeInfinite
+  Positive
+  Negative
+  Zero
+  ExtendedPositive
+  ExtendedNegative
+  Nonzero
+  Nonpositive
+  Nonnegative
+  ExtendedNonzero
+  ExtendedNonpositive
+  ExtendedNonnegative
+  Even
+  Odd
+  Prime
+  Composite
+  Commutative
+  IsTrue
+  Symmetric
+  Invertible
+  Orthogonal
+  Unitary
+  PositiveDefinite
+  UpperTriangular
+  LowerTriangular
+  Diagonal
+  Fullrank
+  Square
+  IntegerElements
+  RealElements
+  ComplexElements
+  Singular
+  Normal
+  Triangular
+  UnitTriangular
+  Eq
+  Ne
+  Gt
+  Ge
+  Lt
+  Le
+}
+pub impl Eq for PredicateKey
+pub impl Show for PredicateKey
+
+pub(all) enum Query {
+  Bool(Bool)
+  Atom(PredicateKey, Array[@symcore.Expr])
+  Not(Query)
+  And(Array[Query])
+  Or(Array[Query])
+  Implies(Query, Query)
+  Equivalent(Array[Query])
+}
+pub impl Eq for Query
+
+pub struct SymbolFacts {
+  is_zero : Tri
+  is_nonzero : Tri
+  is_integer : Tri
+  is_rational : Tri
+  is_real : Tri
+  is_positive : Tri
+  is_nonnegative : Tri
+}
+pub impl Eq for SymbolFacts
+pub impl Show for SymbolFacts
+
+pub(all) enum Tri {
+  True
+  False
+  Unknown
+}
+pub impl Eq for Tri
+pub impl Show for Tri
+
+// Type aliases
+pub type AssumeEnv = Map[String, SymbolFacts]
+
+// Traits
+

@@ -7,13 +7,9 @@ test "rootoftools: rootof parity (degree 5)" {
   let oracle = @sympy_polys.rootof(poly.to_expr(), 0)
   let ours_norm = sympy_normalize(ours)
   let oracle_norm = sympy_normalize(oracle)
-  guard ours_norm == oracle_norm else {
-    fail("rootof mismatch: ours=\{ours_norm}, oracle=\{oracle_norm}")
-  }
+  assert_eq(ours_norm, oracle_norm)
 
   // Cover `impl Show for RootOf`.
   let shown = "\{rootof(poly, 0)}"
-  guard shown.contains("CRootOf(") && shown.contains(", 0)") else {
-    fail("unexpected RootOf show output: \{shown}")
-  }
+  assert_true(shown.contains("CRootOf(") && shown.contains(", 0)"))
 }

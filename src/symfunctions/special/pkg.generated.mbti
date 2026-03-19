@@ -1,0 +1,190 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symfunctions/special"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn airyai(@symcore.Expr) -> @symcore.Expr
+
+pub fn airyaiprime(@symcore.Expr) -> @symcore.Expr
+
+pub fn airybi(@symcore.Expr) -> @symcore.Expr
+
+pub fn airybiprime(@symcore.Expr) -> @symcore.Expr
+
+pub fn appellf1(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn assoc_laguerre(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn assoc_legendre(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn besseli(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn besselj(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn besselk(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn bessely(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn beta(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn betainc(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn betainc_regularized(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn bspline_basis(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn bspline_basis_set(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn chebyshevt(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn chebyshevt_root(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn chebyshevu(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn chebyshevu_root(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn chi(@symcore.Expr) -> @symcore.Expr
+
+pub fn ci(@symcore.Expr) -> @symcore.Expr
+
+pub fn digamma(@symcore.Expr) -> @symcore.Expr
+
+pub fn dirac_delta(@symcore.Expr) -> @symcore.Expr
+
+pub fn dirichlet_eta(@symcore.Expr) -> @symcore.Expr
+
+pub fn e1(@symcore.Expr) -> @symcore.Expr
+
+pub fn ei(@symcore.Expr) -> @symcore.Expr
+
+pub fn eijk(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn elliptic_e(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn elliptic_f(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn elliptic_k(@symcore.Expr) -> @symcore.Expr
+
+pub fn elliptic_pi(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn erf(@symcore.Expr) -> @symcore.Expr
+
+pub fn erf2(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn erf2inv(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn erfc(@symcore.Expr) -> @symcore.Expr
+
+pub fn erfcinv(@symcore.Expr) -> @symcore.Expr
+
+pub fn erfi(@symcore.Expr) -> @symcore.Expr
+
+pub fn erfinv(@symcore.Expr) -> @symcore.Expr
+
+pub fn expint(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn fresnelc(@symcore.Expr) -> @symcore.Expr
+
+pub fn fresnels(@symcore.Expr) -> @symcore.Expr
+
+pub fn gamma(@symcore.Expr) -> @symcore.Expr
+
+pub fn gegenbauer(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hankel1(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hankel2(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn heaviside(@symcore.Expr) -> @symcore.Expr
+
+pub fn hermite(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hermite_prob(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hn1(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hn2(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn hyper(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr) -> @symcore.Expr
+
+pub fn interpolating_spline(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn jacobi(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn jacobi_normalized(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn jn(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn jn_zeros(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn kronecker_delta(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn laguerre(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn legendre(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn lerchphi(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn levi_civita(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn li(@symcore.Expr) -> @symcore.Expr
+
+pub fn li_offset(@symcore.Expr) -> @symcore.Expr
+
+pub fn loggamma(@symcore.Expr) -> @symcore.Expr
+
+pub fn lowergamma(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn marcumq(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mathieuc(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mathieucprime(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mathieus(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn mathieusprime(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn meijerg(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr) -> @symcore.Expr
+
+pub fn multigamma(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn polygamma(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn polylog(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn riemann_xi(@symcore.Expr) -> @symcore.Expr
+
+pub fn shi(@symcore.Expr) -> @symcore.Expr
+
+pub fn si(@symcore.Expr) -> @symcore.Expr
+
+pub fn singularity_function(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn stieltjes(@symcore.Expr) -> @symcore.Expr
+
+pub fn trigamma(@symcore.Expr) -> @symcore.Expr
+
+pub fn uppergamma(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn yn(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn ynm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn ynm_c(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn zeta(@symcore.Expr) -> @symcore.Expr
+
+pub fn znm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

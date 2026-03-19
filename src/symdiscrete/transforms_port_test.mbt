@@ -39,7 +39,7 @@ test "discrete fft/ifft parity" {
     @symcore.mul([@symcore.int(4), @symcore.pow(x, @symcore.int(3))]),
   ]
   let bad : Result[Array[Expr], Error] = try? ifft(seq_sym)
-  guard bad is Err(_) else { fail("expected fft symbol error") }
+  assert_true(bad is Err(_))
 }
 
 ///|
@@ -85,14 +85,14 @@ test "discrete ntt/intt parity" {
   )
   let nonint = [sqrt_int(2), @symcore.int(3)]
   let bad0 : Result[Array[Expr], Error] = try? ntt(nonint, p)
-  guard bad0 is Err(_) else { fail("expected non-integer error") }
+  assert_true(bad0 is Err(_))
   let bad1 : Result[Array[Expr], Error] = try? ntt(seq2, r)
-  guard bad1 is Err(_) else { fail("expected composite modulus error") }
+  assert_true(bad1 is Err(_))
   let bad2 : Result[Array[Expr], Error] = try? ntt(
     [@symcore.int(3), @symcore.int(5), @symcore.int(6)],
     q,
   )
-  guard bad2 is Err(_) else { fail("expected invalid modulus error") }
+  assert_true(bad2 is Err(_))
 }
 
 ///|

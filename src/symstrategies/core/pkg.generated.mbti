@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/core"
+
+// Values
+pub fn[T] chain(Array[(T) -> T]) -> (T) -> T
+
+pub fn[T] condition((T) -> Bool, (T) -> T) -> (T) -> T
+
+pub fn[T : Eq + Show] debug((T) -> T, name? : String, write? : (String) -> Unit) -> (T) -> T
+
+pub fn[T : Eq] do_one(Array[(T) -> T]) -> (T) -> T
+
+pub fn[T : Eq] exhaust((T) -> T) -> (T) -> T
+
+pub fn[T] identity(T) -> T
+
+pub fn[T : Eq + Hash, U] memoize((T) -> U) -> (T) -> U
+
+pub fn[T : Compare] minimize(Array[(T) -> T], objective? : (T) -> T) -> (T) -> T
+
+pub fn[T] null_safe((T) -> T?) -> (T) -> T
+
+pub fn[T, K : Eq + Hash] switch((T) -> K, Map[K, (T) -> T]) -> (T) -> T
+
+pub fn[T] tryit((T) -> T raise, _exception? : String) -> (T) -> T
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

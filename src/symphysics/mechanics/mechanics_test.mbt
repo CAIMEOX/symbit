@@ -4,9 +4,7 @@ fn mechanics_assert_expr(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard (try! @sympy_physics.expr_equal(@symprint.to_string(lhs), rhs)) else {
-    fail(context + ": ours=" + @symprint.to_string(lhs) + "; oracle=" + rhs)
-  }
+  assert_true((try! @sympy_physics.expr_equal(@symprint.to_string(lhs), rhs)))
 }
 
 ///|
@@ -134,7 +132,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     smart=true,
   )
   let txt = @symprint.to_string(replaced)
-  guard txt == "b + 1" || txt == "1 + b" else { fail("msubs smart: " + txt) }
+  assert_true(txt == "b + 1" || txt == "1 + b")
 
   let found = find_dynamicsymbols_expr(
     x * @symcalculus.diff(y, @symvector.dynamicsymbols_t) + y,
@@ -161,15 +159,11 @@ test "physics.mechanics body loads and helpers" {
     reaction_body=Some(b2),
     reaction_point=Some(p2),
   )
-  guard b1.loads().length() == 1 && b2.loads().length() == 1 else {
-    fail("apply_force reaction")
-  }
+  assert_true(b1.loads().length() == 1 && b2.loads().length() == 1)
   b1.apply_torque(n.x(), reaction_body=Some(b2))
-  guard b1.loads().length() == 2 && b2.loads().length() == 2 else {
-    fail("apply_torque reaction")
-  }
+  assert_true(b1.loads().length() == 2 && b2.loads().length() == 2)
   b1.remove_load(about=Some(p1))
-  guard b1.loads().length() == 1 else { fail("remove point load") }
+  assert_eq(b1.loads().length(), 1)
   b1.clear_loads()
-  guard b1.loads().is_empty() else { fail("clear_loads") }
+  assert_true(b1.loads().is_empty())
 }

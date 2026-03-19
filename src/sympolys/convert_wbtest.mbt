@@ -19,17 +19,13 @@ test "convert wb: fe_to_expr_const covers CC branch variants" {
     FieldElem::CC(conv_wb_rat(0, 1), conv_wb_rat(3, 1)),
   )
   let pure_imag_s = @symprint.to_string(pure_imag)
-  guard pure_imag_s.contains("I") && pure_imag_s.contains("3") else {
-    fail("pure imaginary rendering mismatch: \{pure_imag_s}")
-  }
+  assert_true(pure_imag_s.contains("I") && pure_imag_s.contains("3"))
 
   let full = fe_to_expr_const(
     FieldElem::CC(conv_wb_rat(2, 1), conv_wb_rat(3, 1)),
   )
   let full_s = @symprint.to_string(full)
-  guard full_s.contains("I") && full_s.contains("2") && full_s.contains("3") else {
-    fail("complex rendering mismatch: \{full_s}")
-  }
+  assert_true(full_s.contains("I") && full_s.contains("2") && full_s.contains("3"))
 }
 
 ///|
@@ -48,9 +44,7 @@ test "convert wb: fe_ext_to_expr handles empty/sparse/mixed terms" {
     content="alpha_p5_m1_0_2**2",
   )
   let mix = @symprint.to_string(fe_ext_to_expr(5, [0, 1, 3, 0], mod_poly))
-  guard mix.contains("alpha_p5_m1_0_2") && mix.contains("3*alpha_p5_m1_0_2**2") else {
-    fail("GFExt mixed rendering mismatch: \{mix}")
-  }
+  assert_true(mix.contains("alpha_p5_m1_0_2") && mix.contains("3*alpha_p5_m1_0_2**2"))
 }
 
 ///|

@@ -36,7 +36,7 @@ test "physics.quantum.transforms: local canonicalization" {
   let bad : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
     @symcore.raw_mul([k1, k2]),
   )
-  guard bad is Err(_) else { fail("ket*ket should fail") }
+  assert_true(bad is Err(_))
   quantum_test_assert_expr_equal(
     quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),
     "Operator(A)*Operator(B) + Operator(A)*Operator(C)",

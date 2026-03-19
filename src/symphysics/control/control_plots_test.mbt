@@ -7,25 +7,17 @@ test "physics.control.control_plots: pole-zero numerical data" {
     s,
   ).as_system()
   let data = pole_zero_numerical_data(tf)
-  guard control_complex_array_close(
-    data.0,
-    [(0.0, -1.0), (0.0, 1.0)],
-    tol=1.0e-5,
-  ) else {
-    fail("zeros")
-  }
-  guard control_complex_array_close(
-    data.1,
-    [(-0.5, -1.3228756555), (-0.5, 1.3228756555)],
-    tol=1.0e-5,
-  ) else {
-    fail("poles")
-  }
+  assert_true(control_complex_array_close(data.0, [(0.0, -1.0), (0.0, 1.0)], tol=1.0e-5),)
+  assert_true(
+    control_complex_array_close(
+      data.1,
+      [(-0.5, -1.3228756555), (-0.5, 1.3228756555)],
+      tol=1.0e-5,
+    ),
+  )
 
   let plot = pole_zero_plot(tf)
-  guard plot.title.contains("Poles and Zeros") && plot.grid && plot.show_axes else {
-    fail("plot metadata")
-  }
+  assert_true(plot.title.contains("Poles and Zeros") && plot.grid && plot.show_axes,)
 }
 
 ///|
@@ -39,16 +31,14 @@ test "physics.control.control_plots: time responses" {
     upper_limit=2.0,
     n=3,
   )
-  guard control_double_array_close(step.0, [0.0, 1.0, 2.0]) else {
-    fail("step x")
-  }
-  guard control_double_array_close(
-    step.1,
-    [0.0, 1.0 - @math.exp(-1.0), 1.0 - @math.exp(-2.0)],
-    tol=1.0e-4,
-  ) else {
-    fail("step y")
-  }
+  assert_true(control_double_array_close(step.0, [0.0, 1.0, 2.0]))
+  assert_true(
+    control_double_array_close(
+      step.1,
+      [0.0, 1.0 - @math.exp(-1.0), 1.0 - @math.exp(-2.0)],
+      tol=1.0e-4,
+    ),
+  )
 
   let impulse = impulse_response_numerical_data(
     tf,
@@ -56,13 +46,13 @@ test "physics.control.control_plots: time responses" {
     upper_limit=2.0,
     n=3,
   )
-  guard control_double_array_close(
-    impulse.1,
-    [1.0, @math.exp(-1.0), @math.exp(-2.0)],
-    tol=1.0e-4,
-  ) else {
-    fail("impulse y")
-  }
+  assert_true(
+    control_double_array_close(
+      impulse.1,
+      [1.0, @math.exp(-1.0), @math.exp(-2.0)],
+      tol=1.0e-4,
+    ),
+  )
 
   let ramp = ramp_response_numerical_data(
     tf,
@@ -70,13 +60,13 @@ test "physics.control.control_plots: time responses" {
     upper_limit=2.0,
     n=3,
   )
-  guard control_double_array_close(
-    ramp.1,
-    [0.0, @math.exp(-1.0), 1.0 + @math.exp(-2.0)],
-    tol=1.0e-4,
-  ) else {
-    fail("ramp y")
-  }
+  assert_true(
+    control_double_array_close(
+      ramp.1,
+      [0.0, @math.exp(-1.0), 1.0 + @math.exp(-2.0)],
+      tol=1.0e-4,
+    ),
+  )
 }
 
 ///|
@@ -90,12 +80,8 @@ test "physics.control.control_plots: bode and parametric helpers" {
     final_exp=1.0,
     n=3,
   )
-  guard control_double_array_close(mag.0, [0.1, 1.0, 10.0], tol=1.0e-10) else {
-    fail("bode mag x")
-  }
-  guard control_test_double_close(mag.1[1], -3.0102999566, tol=1.0e-4) else {
-    fail("bode mag mid")
-  }
+  assert_true(control_double_array_close(mag.0, [0.1, 1.0, 10.0], tol=1.0e-10))
+  assert_true(control_test_double_close(mag.1[1], -3.0102999566, tol=1.0e-4))
 
   let phase = bode_phase_numerical_data(
     tf,
@@ -104,22 +90,14 @@ test "physics.control.control_plots: bode and parametric helpers" {
     phase_unit="deg",
     n=3,
   )
-  guard control_test_double_close(phase.1[1], -45.0, tol=1.0e-4) else {
-    fail("bode phase mid")
-  }
+  assert_true(control_test_double_close(phase.1[1], -45.0, tol=1.0e-4))
 
   let nyquist_expr = nyquist_plot_expr(tf)
-  guard control_expr_eq(nyquist_expr.0, "1/(w**2 + 1)") else {
-    fail("nyquist real expr")
-  }
-  guard control_expr_eq(nyquist_expr.1, "-w/(w**2 + 1)") else {
-    fail("nyquist imag expr")
-  }
+  assert_true(control_expr_eq(nyquist_expr.0, "1/(w**2 + 1)"))
+  assert_true(control_expr_eq(nyquist_expr.1, "-w/(w**2 + 1)"))
 
   let nichols_expr = nichols_plot_expr(tf)
-  guard control_expr_eq(nichols_expr.1, "180*arg(1/(I*w + 1))/pi") else {
-    fail("nichols phase expr")
-  }
+  assert_true(control_expr_eq(nichols_expr.1, "180*arg(1/(I*w + 1))/pi"))
 }
 
 ///|
@@ -128,17 +106,11 @@ test "physics.control.control_plots: plot records" {
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let bode = bode_plot(tf, initial_exp=-1.0, final_exp=1.0, n=5)
-  guard bode.magnitude.xscale == "log" && bode.phase.xscale == "log" else {
-    fail("bode plot xscale")
-  }
+  assert_true(bode.magnitude.xscale == "log" && bode.phase.xscale == "log")
 
   let nyquist = nyquist_plot(tf, initial_omega=0.0, final_omega=2.0, n=5)
-  guard nyquist.mirror_x is Some(_) && nyquist.mirror_y is Some(_) else {
-    fail("nyquist mirror")
-  }
+  assert_true(nyquist.mirror_x is Some(_) && nyquist.mirror_y is Some(_))
 
   let nichols = nichols_plot(tf, initial_omega=0.1, final_omega=1.0, n=5)
-  guard nichols.xlabel == "Phase [deg]" && nichols.ylabel == "Magnitude [dB]" else {
-    fail("nichols labels")
-  }
+  assert_true(nichols.xlabel == "Phase [deg]" && nichols.ylabel == "Magnitude [dB]",)
 }

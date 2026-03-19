@@ -47,9 +47,7 @@ test "resolve_domain modulus and gaussian" {
     gf_degree=None,
     expr=None,
   )
-  guard status is Err(PolyError::BadModulus) else {
-    fail("expected BadModulus error")
-  }
+  assert_true(status is Err(PolyError::BadModulus))
 }
 
 ///|

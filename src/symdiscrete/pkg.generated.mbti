@@ -1,0 +1,75 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symdiscrete"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/bigint",
+}
+
+// Values
+pub fn assert_oracle(Result[Bool, Error]) -> Unit raise
+
+pub fn assert_oracle_named(String, Result[Bool, Error]) -> Unit raise
+
+pub fn complex(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn convolution(Array[@symcore.Expr], Array[@symcore.Expr], cycle? : Int, dps? : Int, prime? : Int, dyadic? : Bool, subset? : Bool) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn convolution_fft(Array[@symcore.Expr], Array[@symcore.Expr], dps? : Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn convolution_fwht(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn convolution_int(Array[Int], Array[Int]) -> Array[Int] raise DiscreteError
+
+pub fn convolution_ntt(Array[@symcore.Expr], Array[@symcore.Expr], Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn convolution_subset(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn covering_product(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn fft(Array[@symcore.Expr], dps? : Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn fwht(Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn ifft(Array[@symcore.Expr], dps? : Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn ifwht(Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn intersecting_product(Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn intt(Array[@symcore.Expr], Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn inverse_mobius_transform(Array[@symcore.Expr], subset? : Bool) -> Array[@symcore.Expr]
+
+pub fn linrec(Array[@symcore.Expr], Array[@symcore.Expr], Int) -> @symcore.Expr raise DiscreteError
+
+pub fn linrec_coeffs(Array[@symcore.Expr], Int) -> Array[@symcore.Expr]
+
+pub fn mobius_transform(Array[@symcore.Expr], subset? : Bool) -> Array[@symcore.Expr]
+
+pub fn ntt(Array[@symcore.Expr], Int) -> Array[@symcore.Expr] raise DiscreteError
+
+pub fn rat(Int, Int) -> @symcore.Expr
+
+pub fn sqrt_int(Int) -> @symcore.Expr
+
+// Errors
+pub(all) suberror DiscreteError {
+  TypeError(String)
+  ValueError(String)
+}
+pub impl Eq for DiscreteError
+pub impl Show for DiscreteError
+
+// Types and methods
+
+// Type aliases
+pub using @bigint {type BigInt}
+
+pub using @symnum {type BigRational}
+
+pub using @symcore {type Expr}
+
+// Traits
+

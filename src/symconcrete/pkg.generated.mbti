@@ -1,0 +1,123 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symconcrete"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn deltaproduct(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr
+
+pub fn deltasummation(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr
+
+pub fn eval_product_direct(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_product_symbolic(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_sum(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_sum_direct(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_sum_hyper(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_sum_residue(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn eval_sum_symbolic(@symcore.Expr, Array[LimitSpec]) -> @symcore.Expr?
+
+pub fn find_simple_recurrence(Array[@symcore.Expr], a? : @symcore.Expr, n? : @symcore.Expr) -> @symcore.Expr?
+
+pub fn find_simple_recurrence_vector(Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn find_simple_recurrence_vector_expr(Array[@symcore.Expr]) -> Array[@symcore.Expr]?
+
+pub fn gosper_normal(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn gosper_sum(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn gosper_term(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn guess(Array[@symcore.Expr], all? : Bool, evaluate? : Bool, niter? : Int, variables? : Array[@symcore.Expr]) -> @symcore.Expr?
+
+pub fn guess_generating_function(Array[@symcore.Expr], x? : @symcore.Expr) -> @symcore.Expr?
+
+pub fn guess_generating_function_rational(Array[@symcore.Expr], x? : @symcore.Expr) -> @symcore.Expr?
+
+pub fn limit_bounds(LimitSpec) -> (@symcore.Expr?, @symcore.Expr?)
+
+pub fn limit_is_finite_int(LimitSpec) -> Bool
+
+pub fn limit_lower(@symcore.Expr, @symcore.Expr) -> LimitSpec
+
+pub fn limit_range(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> LimitSpec
+
+pub fn limit_symbol(LimitSpec) -> @symcore.Expr
+
+pub fn limit_var(@symcore.Expr) -> LimitSpec
+
+pub fn product(@symcore.Expr, limits? : Array[LimitSpec]) -> @symcore.Expr
+
+pub fn rationalize(@symcore.Expr, maxcoeff? : Int) -> @symcore.Expr
+
+pub fn rinterp(Array[@symcore.Expr], Int, x? : @symcore.Expr) -> @symcore.Expr?
+
+pub fn summation(@symcore.Expr, limits? : Array[LimitSpec]) -> @symcore.Expr
+
+pub fn telescopic(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn telescopic_direct(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+// Errors
+
+// Types and methods
+pub(all) struct ExprWithIntLimits {
+  expr : @symcore.Expr
+  limits : Array[LimitSpec]
+}
+pub fn ExprWithIntLimits::bound_symbol_names(Self) -> Array[String]
+pub fn ExprWithIntLimits::free_symbols(Self) -> Array[String]
+pub fn ExprWithIntLimits::has_finite_limits(Self) -> Bool
+pub fn ExprWithIntLimits::has_infinite_limits(Self) -> Bool
+pub fn ExprWithIntLimits::to_expr(Self, String) -> @symcore.Expr
+pub fn ExprWithIntLimits::variables(Self) -> Array[@symcore.Expr]
+
+pub(all) struct ExprWithLimits {
+  expr : @symcore.Expr
+  limits : Array[LimitSpec]
+}
+pub fn ExprWithLimits::bound_symbol_names(Self) -> Array[String]
+pub fn ExprWithLimits::free_symbols(Self) -> Array[String]
+pub fn ExprWithLimits::has_finite_limits(Self) -> Bool
+pub fn ExprWithLimits::has_infinite_limits(Self) -> Bool
+pub fn ExprWithLimits::to_expr(Self, String) -> @symcore.Expr
+pub fn ExprWithLimits::variables(Self) -> Array[@symcore.Expr]
+
+pub(all) enum LimitSpec {
+  Var(@symcore.Expr)
+  Lower(@symcore.Expr, @symcore.Expr)
+  Range(@symcore.Expr, @symcore.Expr, @symcore.Expr)
+}
+
+pub(all) struct Product {
+  expr : @symcore.Expr
+  limits : Array[LimitSpec]
+}
+pub fn Product::as_expr(Self) -> @symcore.Expr
+pub fn Product::change_index(Self, @symcore.Expr, @symcore.Expr, newvar? : @symcore.Expr) -> Self
+pub fn Product::doit(Self) -> @symcore.Expr
+pub fn Product::reorder(Self, Array[Int]) -> Self
+pub fn Product::reverse_order(Self, symbols? : Array[@symcore.Expr]) -> Self
+
+pub(all) struct Sum {
+  expr : @symcore.Expr
+  limits : Array[LimitSpec]
+}
+pub fn Sum::as_expr(Self) -> @symcore.Expr
+pub fn Sum::change_index(Self, @symcore.Expr, @symcore.Expr, newvar? : @symcore.Expr) -> Self
+pub fn Sum::doit(Self) -> @symcore.Expr
+pub fn Sum::reorder(Self, Array[Int]) -> Self
+pub fn Sum::reverse_order(Self, symbols? : Array[@symcore.Expr]) -> Self
+
+// Type aliases
+
+// Traits
+

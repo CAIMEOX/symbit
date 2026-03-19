@@ -1,0 +1,61 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/liealgebras"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn cartan_matrix_list_str(String) -> String raise
+
+pub fn cartan_type_basis_str(String) -> String raise
+
+pub fn cartan_type_dimension_str(String) -> String raise
+
+pub fn cartan_type_highest_root_list_str(String) -> String raise
+
+pub fn cartan_type_lie_algebra_str(String) -> String raise
+
+pub fn cartan_type_positive_roots_map_str(String) -> String raise
+
+pub fn cartan_type_rank_str(String) -> String raise
+
+pub fn cartan_type_roots_str(String) -> String raise
+
+pub fn cartan_type_series_str(String) -> String raise
+
+pub fn cartan_type_simple_root_list_str(String, Int) -> String raise
+
+pub fn dynkin_diagram_str(String) -> String raise
+
+pub fn root_system_add_as_roots_str(String, Array[Int], Array[Int]) -> String raise
+
+pub fn root_system_add_simple_roots_list_str(String, Int, Int) -> String raise
+
+pub fn root_system_all_roots_map_str(String) -> String raise
+
+pub fn root_system_root_space_str(String) -> String raise
+
+pub fn root_system_simple_roots_map_str(String) -> String raise
+
+pub fn weyl_group_coxeter_diagram_str(String) -> String raise
+
+pub fn weyl_group_element_order_str(String, String) -> String raise
+
+pub fn weyl_group_generators_list_str(String) -> String raise
+
+pub fn weyl_group_group_name_str(String) -> String raise
+
+pub fn weyl_group_group_order_str(String) -> String raise
+
+pub fn weyl_group_matrix_form_list_str(String, String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

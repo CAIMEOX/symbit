@@ -18,12 +18,12 @@ test "homomorphism trivial and isomorphism" {
     images=[HomElement::Perm(image)],
     check=true,
   )
-  assert_true(hom_auto.is_isomorphism() == Some(true))
+  assert_eq(hom_auto.is_isomorphism(), Some(true))
 }
 
 ///|
 test "orbit homomorphism for S3" {
   let s3 = symmetric_group(3)
   let hom = orbit_homomorphism(s3, [0, 1, 2])
-  assert_true(hom.is_isomorphism() == Some(true))
+  assert_eq(hom.is_isomorphism(), Some(true))
 }

@@ -5,22 +5,16 @@ fn pauli_port_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.physics_srepr(@symprint.to_string(lhs))
-  guard ours == rhs else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
+  assert_eq(ours, rhs)
 }
 
 ///|
 test "physics.paulialgebra: delta and epsilon parity" {
   for case in [(1, 1, 1), (2, 3, 0)] {
-    guard delta(case.0, case.1) ==
-      @sympy_physics.paulialgebra_delta(case.0, case.1) else {
-      fail("delta parity \{case.0},\{case.1}")
-    }
+    assert_eq(delta(case.0, case.1), @sympy_physics.paulialgebra_delta(case.0, case.1))
   }
   for case in [(1, 2, 3, 1), (1, 3, 2, -1), (1, 1, 2, 0)] {
-    guard epsilon(case.0, case.1, case.2) ==
-      @sympy_physics.paulialgebra_epsilon(case.0, case.1, case.2) else {
-      fail("epsilon parity \{case.0},\{case.1},\{case.2}")
-    }
+    assert_eq(epsilon(case.0, case.1, case.2), @sympy_physics.paulialgebra_epsilon(case.0, case.1, case.2))
   }
 }
 

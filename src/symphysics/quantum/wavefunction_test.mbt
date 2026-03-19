@@ -89,9 +89,7 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
     @symcore.raw_function("sqrt", [@symcore.int(5)]) * (x ^ @symcore.int(2)),
     [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
   )
-  guard normalized_wf.is_normalized() else {
-    fail("wavefunction normalized predicate")
-  }
+  assert_true(normalized_wf.is_normalized())
   quantum_test_assert_expr_equal(
     normalized_wf.normalize().as_expr(),
     @symprint.to_string(normalized_wf.as_expr()),

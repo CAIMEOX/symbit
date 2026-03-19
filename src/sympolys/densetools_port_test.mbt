@@ -7,16 +7,16 @@ test "densetools dup integrate/diff/eval" {
   ]
   let ours_i = dup_repr(dup_integrate(f, 1, Domain::QQ))
   let oracle_i = @sympy_polys.dup_integrate(dup_to_rats(f), 1, domain="QQ")
-  guard ours_i == oracle_i else { fail("dup_integrate mismatch") }
+  assert_eq(ours_i, oracle_i)
   let ours_i2 = dup_repr(dup_integrate(f, 2, Domain::QQ))
   let oracle_i2 = @sympy_polys.dup_integrate(dup_to_rats(f), 2, domain="QQ")
-  guard ours_i2 == oracle_i2 else { fail("dup_integrate m=2 mismatch") }
+  assert_eq(ours_i2, oracle_i2)
   let ours_d = dup_repr(dup_diff(f, 1, Domain::QQ))
   let oracle_d = @sympy_polys.dup_diff(dup_to_rats(f), 1, domain="QQ")
-  guard ours_d == oracle_d else { fail("dup_diff mismatch") }
+  assert_eq(ours_d, oracle_d)
   let ours_d2 = dup_repr(dup_diff(f, 2, Domain::QQ))
   let oracle_d2 = @sympy_polys.dup_diff(dup_to_rats(f), 2, domain="QQ")
-  guard ours_d2 == oracle_d2 else { fail("dup_diff m=2 mismatch") }
+  assert_eq(ours_d2, oracle_d2)
   let a = fe_from_int(2, Domain::QQ)
   let ours_eval = dup_eval(f, a, Domain::QQ).to_string()
   let oracle_eval = @sympy_polys.dup_eval(
@@ -24,7 +24,7 @@ test "densetools dup integrate/diff/eval" {
     br_int(2),
     domain="QQ",
   )
-  guard ours_eval == oracle_eval else { fail("dup_eval mismatch") }
+  assert_eq(ours_eval, oracle_eval)
 }
 
 ///|
@@ -36,7 +36,7 @@ test "densetools dmp integrate/diff/eval" {
   let f = dense_poly([poly_fe([one]), poly_fe([two, zero])])
   let ours_i = dmp_repr(dmp_integrate(f, 1, 1, Domain::QQ))
   let oracle_i = @sympy_polys.dmp_integrate(dense_data_of(f), 1, 1, domain="QQ")
-  guard ours_i == oracle_i else { fail("dmp_integrate mismatch") }
+  assert_eq(ours_i, oracle_i)
   let ours_i1 = dmp_repr(dmp_integrate_in(f, 1, 1, 1, Domain::QQ))
   let oracle_i1 = @sympy_polys.dmp_integrate_in(
     dense_data_of(f),
@@ -45,10 +45,10 @@ test "densetools dmp integrate/diff/eval" {
     1,
     domain="QQ",
   )
-  guard ours_i1 == oracle_i1 else { fail("dmp_integrate_in mismatch") }
+  assert_eq(ours_i1, oracle_i1)
   let ours_d = dmp_repr(dmp_diff(f, 1, 1, Domain::QQ))
   let oracle_d = @sympy_polys.dmp_diff(dense_data_of(f), 1, 1, domain="QQ")
-  guard ours_d == oracle_d else { fail("dmp_diff mismatch") }
+  assert_eq(ours_d, oracle_d)
   let ours_d1 = dmp_repr(dmp_diff_in(f, 1, 1, 1, Domain::QQ))
   let oracle_d1 = @sympy_polys.dmp_diff_in(
     dense_data_of(f),
@@ -57,7 +57,7 @@ test "densetools dmp integrate/diff/eval" {
     1,
     domain="QQ",
   )
-  guard ours_d1 == oracle_d1 else { fail("dmp_diff_in mismatch") }
+  assert_eq(ours_d1, oracle_d1)
   let a = feqq(2, 1)
   let ours_eval = dmp_repr(dmp_eval(f, a, 1, Domain::QQ))
   let oracle_eval = @sympy_polys.dmp_eval(
@@ -66,7 +66,7 @@ test "densetools dmp integrate/diff/eval" {
     1,
     domain="QQ",
   )
-  guard ours_eval == oracle_eval else { fail("dmp_eval mismatch") }
+  assert_eq(ours_eval, oracle_eval)
   let ours_eval1 = dmp_repr(dmp_eval_in(f, a, 1, 1, Domain::QQ))
   let oracle_eval1 = @sympy_polys.dmp_eval_in(
     dense_data_of(f),
@@ -75,7 +75,7 @@ test "densetools dmp integrate/diff/eval" {
     1,
     domain="QQ",
   )
-  guard ours_eval1 == oracle_eval1 else { fail("dmp_eval_in mismatch") }
+  assert_eq(ours_eval1, oracle_eval1)
 }
 
 ///|
@@ -83,9 +83,9 @@ test "densetools monic" {
   let f = [fezz(3), fezz(6), fezz(9)]
   let ours = dup_repr(dup_monic(f, Domain::ZZ))
   let oracle = @sympy_polys.dup_monic(dup_to_rats(f))
-  guard ours == oracle else { fail("dup_monic mismatch") }
+  assert_eq(ours, oracle)
   let f2 = dense_poly([poly_int([3, 0]), poly_int([6])])
   let ours2 = dmp_repr(dmp_ground_monic(f2, 1, Domain::ZZ))
   let oracle2 = @sympy_polys.dmp_ground_monic(dense_data_of(f2), 1)
-  guard ours2 == oracle2 else { fail("dmp_ground_monic mismatch") }
+  assert_eq(ours2, oracle2)
 }

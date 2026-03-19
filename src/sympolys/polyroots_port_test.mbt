@@ -32,7 +32,7 @@ test "polyroots: linear/quadratic parity" {
   let f = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
   let ours_lin = roots_repr(roots_linear(f))
   let oracle_lin = normalize_root_list(@sympy_polys.roots_linear(f.to_expr()))
-  guard ours_lin == oracle_lin else { fail("roots_linear mismatch") }
+  assert_eq(ours_lin, oracle_lin)
   let g = b.from_expr(
     (x ^ @symcore.int(2)) - @symcore.int(3) * x + @symcore.int(2),
   )
@@ -40,9 +40,7 @@ test "polyroots: linear/quadratic parity" {
   let oracle_quad = normalize_root_list(
     @sympy_polys.roots_quadratic(g.to_expr()),
   )
-  guard ours_quad == oracle_quad else {
-    fail("roots_quadratic mismatch: ours=\{ours_quad}, oracle=\{oracle_quad}")
-  }
+  assert_eq(ours_quad, oracle_quad)
 }
 
 ///|
@@ -52,19 +50,13 @@ test "polyroots: cubic/quartic parity (factorable)" {
   let f = b.from_expr((x - @symcore.int(1)) ^ @symcore.int(3))
   let ours_cubic = roots_repr(roots_cubic(f))
   let oracle_cubic = normalize_root_list(@sympy_polys.roots_cubic(f.to_expr()))
-  guard ours_cubic == oracle_cubic else {
-    fail("roots_cubic mismatch: ours=\{ours_cubic}, oracle=\{oracle_cubic}")
-  }
+  assert_eq(ours_cubic, oracle_cubic)
   let g = b.from_expr(x ^ @symcore.int(4))
   let ours_quartic = roots_repr(roots_quartic(g))
   let oracle_quartic = normalize_root_list(
     @sympy_polys.roots_quartic(g.to_expr()),
   )
-  guard ours_quartic == oracle_quartic else {
-    fail(
-      "roots_quartic mismatch: ours=\{ours_quartic}, oracle=\{oracle_quartic}",
-    )
-  }
+  assert_eq(ours_quartic, oracle_quartic)
 }
 
 ///|
@@ -74,19 +66,11 @@ test "polyroots: cubic/quartic parity (rootof fallback)" {
   let f = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2))
   let ours_cubic = roots_repr(roots_cubic(f))
   let oracle_cubic = rootof_list(f.to_expr(), 3)
-  guard ours_cubic == oracle_cubic else {
-    fail(
-      "roots_cubic rootof mismatch: ours=\{ours_cubic}, oracle=\{oracle_cubic}",
-    )
-  }
+  assert_eq(ours_cubic, oracle_cubic)
   let g = b.from_expr((x ^ @symcore.int(4)) + x + @symcore.int(1))
   let ours_quartic = roots_repr(roots_quartic(g))
   let oracle_quartic = rootof_list(g.to_expr(), 4)
-  guard ours_quartic == oracle_quartic else {
-    fail(
-      "roots_quartic rootof mismatch: ours=\{ours_quartic}, oracle=\{oracle_quartic}",
-    )
-  }
+  assert_eq(ours_quartic, oracle_quartic)
 }
 
 ///|
@@ -96,9 +80,7 @@ test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
   let f = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   let ours = roots_repr(roots(f))
   let oracle = rootof_list(f.to_expr(), 5)
-  guard ours == oracle else {
-    fail("roots generic degree-5 mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -111,7 +93,5 @@ test "polyroots: generic roots keeps multiplicities" {
   )
   let ours = roots_repr(roots(f))
   let expected = sympy_normalize("[1,1,2,2,2]")
-  guard ours == expected else {
-    fail("roots multiplicity mismatch: ours=\{ours}, expected=\{expected}")
-  }
+  assert_eq(ours, expected)
 }

@@ -4,24 +4,161 @@ package "CAIMEOX/symbit"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/symsimplify",
 }
 
 // Values
 pub fn add(Array[@symcore.Expr]) -> @symcore.Expr
 
+pub fn apply_at_level(@symcore.Expr, (@symcore.Expr) -> @symcore.Expr, level? : Int) -> @symcore.Expr
+
+pub fn besselsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn collect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn collect_abs(@symcore.Expr) -> @symcore.Expr
+
+pub fn collect_const(@symcore.Expr) -> @symcore.Expr
+
+pub fn collect_sqrt(@symcore.Expr) -> @symcore.Expr
+
+pub fn combsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn cse(Array[@symcore.Expr]) -> @symsimplify.CseResult
+
+pub fn cse_reconstruct(@symsimplify.CseResult) -> Array[@symcore.Expr]
+
 pub fn debug_repr(@symcore.Expr) -> String
+
+pub fn denom(@symcore.Expr) -> @symcore.Expr
+
+pub fn denom_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn epath(String, @symcore.Expr) -> Array[@symcore.Expr]
+
+pub fn epath_apply(String, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @symcore.Expr
+
+pub fn exptrigsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn fraction_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn fu(@symcore.Expr) -> @symcore.Expr
+
+pub fn futrig(@symcore.Expr) -> @symcore.Expr
+
+pub fn gammasimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn hyperexpand(@symcore.Expr) -> @symcore.Expr
+
+pub fn hypersimilar(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Bool
+
+pub fn hypersimp(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn integer(Int) -> @symcore.Expr
 
+pub fn kroneckersimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn logcombine(@symcore.Expr) -> @symcore.Expr
+
 pub fn mul(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn nsimplify(@symcore.Expr, constants? : Array[@symcore.Expr], full? : Bool, rational? : Bool) -> @symcore.Expr
+
+pub fn numer(@symcore.Expr) -> @symcore.Expr
+
+pub fn numer_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn posify(@symcore.Expr) -> (@symcore.Expr, Map[String, @symcore.Expr])
 
 pub fn pow(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn powdenest(@symcore.Expr) -> @symcore.Expr
+
+pub fn powsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn rad_rationalize(@symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn radsimp(@symcore.Expr) -> @symcore.Expr
+
 pub fn rational(Int, Int) -> @symcore.Expr raise @symnum.RationalError
+
+pub fn ratsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn ratsimpmodprime(@symcore.Expr, basis? : Array[@symcore.Expr], gens? : Array[@symcore.Expr], quick? : Bool, polynomial? : Bool) -> @symcore.Expr
+
+pub fn rcollect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn separatevars(@symcore.Expr, force? : Bool) -> @symcore.Expr
+
+pub fn signsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn simplify(@symcore.Expr) -> @symcore.Expr
+
+pub fn simplify_with_patterns(@symcore.Expr, Array[@symsimplify.SimplifyPattern], max_passes? : Int) -> @symcore.Expr
+
+pub fn split_surds(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+
+pub fn sqrtdenest(@symcore.Expr) -> @symcore.Expr
+
+pub fn sub_post(@symcore.Expr) -> @symcore.Expr
+
+pub fn sub_pre(@symcore.Expr) -> @symcore.Expr
 
 pub fn symbol(String) -> @symcore.Expr
 
 pub fn to_string(@symcore.Expr) -> String
+
+pub fn tr0(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr1(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr10(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr10i(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr11(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr111(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr12(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr12i(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr13(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr14(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr15(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr16(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr2(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr22(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr2i(@symcore.Expr, half? : Bool) -> @symcore.Expr
+
+pub fn tr3(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr4(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr5(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr6(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr7(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr8(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr9(@symcore.Expr) -> @symcore.Expr
+
+pub fn trigsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
+
+pub fn trpower(@symcore.Expr) -> @symcore.Expr
 
 // Errors
 
@@ -30,7 +167,15 @@ pub fn to_string(@symcore.Expr) -> String
 // Type aliases
 pub using @symnum {type BigRational}
 
+pub using @symsimplify {type CseResult}
+
+pub using @symsimplify {type EPath}
+
 pub using @symcore {type Expr}
+
+pub using @symsimplify {type SimplifyPattern}
+
+pub using @symsimplify {type SimplifyPlan}
 
 // Traits
 

@@ -2,11 +2,10 @@
 fn control_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
-  let ours = @symprint.to_string(lhs)
   let equal = try! @sympy_physics.control_expr_equivalent(lhs, rhs)
-  guard equal else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
+  assert_true(equal)
 }
 
 ///|
@@ -15,21 +14,17 @@ fn control_assert_matrix_expr_equal(
   rhs : Array[String],
   rows : Int,
   cols : Int,
-  context : String,
+  _context : String,
 ) -> Unit raise {
-  guard lhs.height() == rows else {
-    fail("\{context}: row mismatch ours=\{lhs.height()} oracle=\{rows}")
-  }
-  guard lhs.width() == cols else {
-    fail("\{context}: col mismatch ours=\{lhs.width()} oracle=\{cols}")
-  }
+  assert_eq(lhs.height(), rows)
+  assert_eq(lhs.width(), cols)
   let mut idx = 0
   for i in 0..<rows {
     for j in 0..<cols {
       try! control_assert_expr_equal(
         lhs.get(i, j),
         rhs[idx],
-        "\{context}[\{idx}]",
+        "\{_context}[\{idx}]",
       )
       idx += 1
     }
@@ -57,9 +52,7 @@ test "physics.control.routh_table: parity" {
     3,
     "generic table parity",
   )
-  guard t1.zero_col_infos().is_empty() else {
-    fail("generic zero_col_infos parity")
-  }
+  assert_true(t1.zero_col_infos().is_empty())
 
   let p2 = (z ^ @symcore.int(4)) +
     (z ^ @symcore.int(3)) +
@@ -74,10 +67,10 @@ test "physics.control.routh_table: parity" {
     3,
     "zero-column parity",
   )
-  guard t2.zero_col_infos().to_string() ==
-    @sympy_physics.control_routh_zero_col_infos(p2, z) else {
-    fail("zero_col_infos parity")
-  }
+  assert_true(
+    t2.zero_col_infos().to_string() ==
+    @sympy_physics.control_routh_zero_col_infos(p2, z),
+  )
 
   let p3 = (z ^ @symcore.int(6)) +
     @symcore.int(2) * (z ^ @symcore.int(5)) +
@@ -94,10 +87,10 @@ test "physics.control.routh_table: parity" {
     4,
     "zero-row parity",
   )
-  guard t3.zero_row_case() ==
-    (@sympy_physics.control_routh_zero_row_case(p3, z) == "True") else {
-    fail("zero_row_case parity")
-  }
+  assert_true(
+    t3.zero_row_case() ==
+    (@sympy_physics.control_routh_zero_row_case(p3, z) == "True"),
+  )
   control_assert_expr_equal(
     t3.auxiliary_polynomials()[0],
     @sympy_physics.control_routh_auxiliary_expr(p3, z, 0),

@@ -37,62 +37,56 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   )
   let klin = km.to_linearizer()
   let oracle_kq = @sympy_physics.mechanics_eval(kprefix + "; list(klin.q)")
-  guard method_expr_list_summary(klin.q()) == oracle_kq else {
-    fail("kane linearizer q parity mismatch")
-  }
+  assert_eq(method_expr_list_summary(klin.q()), oracle_kq)
   let oracle_ku = @sympy_physics.mechanics_eval(kprefix + "; list(klin.u)")
-  guard method_expr_list_summary(klin.u()) == oracle_ku else {
-    fail("kane linearizer u parity mismatch")
-  }
+  assert_eq(method_expr_list_summary(klin.u()), oracle_ku)
   let oracle_kr = @sympy_physics.mechanics_eval(kprefix + "; list(klin.r)")
-  guard method_expr_list_summary(klin.r()) == oracle_kr else {
-    fail("kane linearizer r parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(klin.f_0()),
-    kprefix + "; klin.f_0",
-  ) else {
-    fail("kane linearizer f_0 parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(klin.f_1()),
-    kprefix + "; klin.f_1",
-  ) else {
-    fail("kane linearizer f_1 parity mismatch")
-  }
+  assert_eq(method_expr_list_summary(klin.r()), oracle_kr)
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(klin.f_0()),
+        kprefix + "; klin.f_0",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(klin.f_1()),
+        kprefix + "; klin.f_1",
+      )
+  )
   let (km_m, km_a) = klin.linearize()
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(km_m),
-    kprefix + "; klin.linearize()[0]",
-  ) else {
-    fail("kane linearizer implicit M parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(km_a),
-    kprefix + "; klin.linearize()[1]",
-  ) else {
-    fail("kane linearizer implicit A parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(km_m),
+        kprefix + "; klin.linearize()[0]",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(km_a),
+        kprefix + "; klin.linearize()[1]",
+      )
+  )
   let (_, _, km_b) = klin.linearize_mab()
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(km_b),
-    kprefix + "; klin.linearize()[2]",
-  ) else {
-    fail("kane linearizer implicit B parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(km_b),
+        kprefix + "; klin.linearize()[2]",
+      )
+  )
   let (km_ae, km_be) = klin.linearize(a_and_b=true)
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(km_ae),
-    kprefix + "; klin.linearize(A_and_B=True)[0]",
-  ) else {
-    fail("kane linearizer explicit A parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(km_be),
-    kprefix + "; klin.linearize(A_and_B=True)[1]",
-  ) else {
-    fail("kane linearizer explicit B parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(km_ae),
+        kprefix + "; klin.linearize(A_and_B=True)[0]",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(km_be),
+        kprefix + "; klin.linearize(A_and_B=True)[1]",
+      )
+  )
 
   let lprefix = [
     "q = dynamicsymbols('q')", "l, m, g = symbols('l m g')", "N = ReferenceFrame('LNP')",
@@ -133,37 +127,33 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   ignore(lm.form_lagranges_equations())
   let llin = lm.to_linearizer()
   let oracle_lq = @sympy_physics.mechanics_eval(lprefix + "; list(llin.q)")
-  guard method_expr_list_summary(llin.q()) == oracle_lq else {
-    fail("lagrange linearizer q parity mismatch")
-  }
+  assert_eq(method_expr_list_summary(llin.q()), oracle_lq)
   let oracle_lu = @sympy_physics.mechanics_eval(lprefix + "; list(llin.u)")
-  guard method_expr_list_summary(llin.u()) == oracle_lu else {
-    fail("lagrange linearizer u parity mismatch")
-  }
+  assert_eq(method_expr_list_summary(llin.u()), oracle_lu)
   let (lm_m, lm_a) = llin.linearize()
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(lm_m),
-    lprefix + "; llin.linearize()[0]",
-  ) else {
-    fail("lagrange linearizer implicit M parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(lm_a),
-    lprefix + "; llin.linearize()[1]",
-  ) else {
-    fail("lagrange linearizer implicit A parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(lm_m),
+        lprefix + "; llin.linearize()[0]",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(lm_a),
+        lprefix + "; llin.linearize()[1]",
+      )
+  )
   let (lm_ae, lm_be) = llin.linearize(a_and_b=true)
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(lm_ae),
-    lprefix + "; llin.linearize(A_and_B=True)[0]",
-  ) else {
-    fail("lagrange linearizer explicit A parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    method_matrix_rows(lm_be),
-    lprefix + "; llin.linearize(A_and_B=True)[1]",
-  ) else {
-    fail("lagrange linearizer explicit B parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(lm_ae),
+        lprefix + "; llin.linearize(A_and_B=True)[0]",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        method_matrix_rows(lm_be),
+        lprefix + "; llin.linearize(A_and_B=True)[1]",
+      )
+  )
 }

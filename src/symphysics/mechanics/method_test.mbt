@@ -62,7 +62,7 @@ test "physics.mechanics lagrange solve_multipliers parity-friendly semantics" {
     (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(0)),
     (@symcalculus.diff(y, @symvector.dynamicsymbols_t), @symcore.int(0)),
   ])
-  guard lambdas.height() == 1 else { fail("expected a single multiplier") }
+  assert_eq(lambdas.height(), 1)
   let oracle_lambda = @sympy_physics.mechanics_eval(
     [
       "x, y = dynamicsymbols('x y')", "m, g, l = symbols('m g l')", "N = ReferenceFrame('MLN')",
@@ -72,10 +72,10 @@ test "physics.mechanics lagrange solve_multipliers parity-friendly semantics" {
       "LM.form_lagranges_equations()", "LM.solve_multipliers({x: l, y: 0, x.diff(t): 0, y.diff(t): 0}, sol_type='Matrix')[0]",
     ].join("; "),
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(lambdas.get(0, 0)),
-    oracle_lambda,
-  ) else {
-    fail("lagrange multiplier mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(lambdas.get(0, 0)),
+        oracle_lambda,
+      )
+  )
 }

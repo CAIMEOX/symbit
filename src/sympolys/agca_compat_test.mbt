@@ -14,19 +14,15 @@ test "agca: ideal sum/product/contains basics" {
   let j = ideal([builder.from_expr(x + @symcore.int(1))])
 
   let sum = i.sum(j)
-  guard sum.gens.length() == 2 else {
-    fail("ideal sum should union generators")
-  }
+  assert_eq(sum.gens.length(), 2)
 
   let prod = i.product(j)
-  guard prod.gens.length() == 1 else {
-    fail("single-generator ideals should produce one product generator")
-  }
+  assert_eq(prod.gens.length(), 1)
 
   let p = builder.from_expr(
     ((x ^ @symcore.int(2)) + @symcore.int(1)) * (x + @symcore.int(3)),
   )
-  guard i.contains(p) else { fail("membership by exact divisibility failed") }
+  assert_true(i.contains(p))
 }
 
 ///|
@@ -45,9 +41,7 @@ test "agca: ring homomorphism applies substitutions" {
   let expected = ag_norm(
     (y ^ @symcore.int(2)) + @symcore.int(2) * y + @symcore.int(2),
   )
-  guard got == expected else {
-    fail("ring hom image mismatch: got=\{got}, expected=\{expected}")
-  }
+  assert_eq(got, expected)
 }
 
 ///|
@@ -60,22 +54,15 @@ test "agca: groebner membership handles linear combinations and multivariate ide
     qx.from_expr(x + @symcore.int(1)),
     qx.from_expr(x - @symcore.int(1)),
   ])
-  guard i1.contains(qx.from_expr(@symcore.int(3))) else {
-    fail("ideal <x+1, x-1> should contain 3")
-  }
-  guard ag_norm(i1.reduce_element(qx.from_expr(@symcore.int(3))).to_expr()) ==
-    "0" else {
-    fail("ideal reduction should eliminate constant combination")
-  }
+  assert_true(i1.contains(qx.from_expr(@symcore.int(3))))
+  assert_eq(ag_norm(i1.reduce_element(qx.from_expr(@symcore.int(3))).to_expr()), "0")
 
   let qxy = PolyBuilder::new(["x", "y"], Domain::QQ)
   let i2 = ideal([
     qxy.from_expr((x ^ @symcore.int(2)) + y),
     qxy.from_expr((x ^ @symcore.int(2)) + x),
   ])
-  guard i2.contains(qxy.from_expr(x - y)) else {
-    fail("multivariate groebner membership mismatch")
-  }
+  assert_true(i2.contains(qxy.from_expr(x - y)))
 }
 
 ///|
@@ -87,28 +74,16 @@ test "agca: intersection, union, powers, and whole-ring predicates" {
   let i = ideal([builder.from_expr(x), builder.from_expr(y)])
   let sq = i.power(2)
   let xy_norm = ag_norm(builder.from_expr(x * y).to_expr())
-  guard sq.gens.any(g => ag_norm(g.to_expr()) == xy_norm) else {
-    fail("<x, y>^2 should expose x*y among pairwise product generators")
-  }
-  guard sq.gens.length() == 4 else {
-    fail("<x, y>^2 should keep pairwise product generators")
-  }
+  assert_true(sq.gens.any(g => ag_norm(g.to_expr()) == xy_norm))
+  assert_eq(sq.gens.length(), 4)
 
   let j = ideal([builder.from_expr(x + @symcore.int(1))])
   let inter = ideal([builder.from_expr(x)]).intersect(j)
-  guard inter.contains(builder.from_expr(x * (x + @symcore.int(1)))) else {
-    fail("intersection should contain product generator")
-  }
-  guard !inter.contains(builder.from_expr(x)) else {
-    fail("intersection should not contain x")
-  }
+  assert_true(inter.contains(builder.from_expr(x * (x + @symcore.int(1)))))
+  assert_true(!inter.contains(builder.from_expr(x)))
 
   let union = ideal([builder.from_expr(x)]).union(ideal([builder.from_expr(y)]))
-  guard union.contains(builder.from_expr(x + y)) else {
-    fail("ideal union should contain sums of generators")
-  }
+  assert_true(union.contains(builder.from_expr(x + y)))
 
-  guard ideal([builder.from_expr(@symcore.int(1))]).is_whole_ring() else {
-    fail("<1> should be the whole ring")
-  }
+  assert_true(ideal([builder.from_expr(@symcore.int(1))]).is_whole_ring())
 }

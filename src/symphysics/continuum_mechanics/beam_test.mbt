@@ -24,41 +24,29 @@ test "physics.continuum_mechanics.beam: reactions and fields" {
   let beam_r1 = b.reaction_loads()["R1"]
   let beam_r2 = b.reaction_loads()["R2"]
 
-  guard cm_numeric_expr_eq(beam_r1, @symcore.int(6)) else {
-    fail("R1 wrong: \{@symprint.to_string(beam_r1)}")
-  }
-  guard cm_numeric_expr_eq(beam_r2, @symcore.int(2)) else {
-    fail("R2 wrong: \{@symprint.to_string(beam_r2)}")
-  }
+  assert_true(cm_numeric_expr_eq(beam_r1, @symcore.int(6)))
+  assert_true(cm_numeric_expr_eq(beam_r2, @symcore.int(2)))
 
   let expected_load = @symcore.int(-8) * beam_test_sf(@symcore.int(0), -1) +
     @symcore.int(6) * beam_test_sf(@symcore.int(10), -1) +
     @symcore.int(2) * beam_test_sf(@symcore.int(30), -1) +
     @symcore.int(120) * beam_test_sf(@symcore.int(30), -2)
-  guard cm_numeric_expr_eq(b.load(), expected_load) else {
-    fail("load mismatch: \{@symprint.to_string(b.load())}")
-  }
+  assert_true(cm_numeric_expr_eq(b.load(), expected_load))
 
   let expected_shear = @symcore.int(8) * beam_test_sf(@symcore.int(0), 0) +
     @symcore.int(-6) * beam_test_sf(@symcore.int(10), 0) +
     @symcore.int(-2) * beam_test_sf(@symcore.int(30), 0) +
     @symcore.int(-120) * beam_test_sf(@symcore.int(30), -1)
-  guard cm_numeric_expr_eq(b.shear_force(), expected_shear) else {
-    fail("shear mismatch: \{@symprint.to_string(b.shear_force())}")
-  }
+  assert_true(cm_numeric_expr_eq(b.shear_force(), expected_shear))
 
   let expected_moment = @symcore.int(8) * beam_test_sf(@symcore.int(0), 1) +
     @symcore.int(-6) * beam_test_sf(@symcore.int(10), 1) +
     @symcore.int(-2) * beam_test_sf(@symcore.int(30), 1) +
     @symcore.int(-120) * beam_test_sf(@symcore.int(30), 0)
-  guard cm_numeric_expr_eq(b.bending_moment(), expected_moment) else {
-    fail("moment mismatch: \{@symprint.to_string(b.bending_moment())}")
-  }
+  assert_true(cm_numeric_expr_eq(b.bending_moment(), expected_moment))
 
   let expected_stress = expected_shear * (a ^ @symcore.int(-1))
-  guard cm_numeric_expr_eq(b.shear_stress(), expected_stress) else {
-    fail("shear stress mismatch")
-  }
+  assert_true(cm_numeric_expr_eq(b.shear_stress(), expected_stress))
 }
 
 ///|
@@ -67,9 +55,7 @@ test "physics.continuum_mechanics.beam: distributed end load and support applica
   let i = @symcore.symbol("I")
   let b = beam(@symcore.int(9), e, i, area=@symcore.int(2))
   let supports = b.apply_support(@symcore.int(0), kind="fixed")
-  guard supports.length() == 2 else {
-    fail("fixed support should add force and moment")
-  }
+  assert_eq(supports.length(), 2)
   b.apply_load(@symcore.int(-2), @symcore.int(2), 2, end=Some(@symcore.int(3)))
 
   let expected_load = @symcore.int(-2) * beam_test_sf(@symcore.int(2), 2) +
@@ -78,14 +64,10 @@ test "physics.continuum_mechanics.beam: distributed end load and support applica
     @symcore.int(2) * beam_test_sf(@symcore.int(3), 2) +
     supports[0] * beam_test_sf(@symcore.int(0), -1) +
     supports[1] * beam_test_sf(@symcore.int(0), -2)
-  guard cm_numeric_expr_eq(b.load(), expected_load) else {
-    fail("end load mismatch: \{@symprint.to_string(b.load())}")
-  }
+  assert_true(cm_numeric_expr_eq(b.load(), expected_load))
 
   b.remove_load(@symcore.int(-2), @symcore.int(2), 2, end=Some(@symcore.int(3)))
   let support_only = supports[0] * beam_test_sf(@symcore.int(0), -1) +
     supports[1] * beam_test_sf(@symcore.int(0), -2)
-  guard cm_numeric_expr_eq(b.load(), support_only) else {
-    fail("remove_load should restore support-only load")
-  }
+  assert_true(cm_numeric_expr_eq(b.load(), support_only))
 }

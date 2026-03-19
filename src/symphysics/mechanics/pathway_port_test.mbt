@@ -9,9 +9,7 @@ fn pathway_assert_summary(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard pathway_compact(lhs) == pathway_compact(rhs) else {
-    fail(context + ": ours=" + lhs + "; oracle=" + rhs)
-  }
+  assert_eq(pathway_compact(lhs), pathway_compact(rhs))
 }
 
 ///|
@@ -29,22 +27,14 @@ fn pathway_assert_force(
   rhs_z : String,
   context : String,
 ) -> Unit raise {
-  guard load.point.name() == point_name else {
-    fail(context + ": unexpected point " + load.point.name())
-  }
+  assert_eq(load.point.name(), point_name)
   let comps = load.force.to_matrix(frame)
   let ours_x = @symprint.to_string(try! comps.get(0, 0))
   let ours_y = @symprint.to_string(try! comps.get(1, 0))
   let ours_z = @symprint.to_string(try! comps.get(2, 0))
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)) else {
-    fail(context + ": x mismatch " + ours_x)
-  }
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)) else {
-    fail(context + ": y mismatch " + ours_y)
-  }
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)) else {
-    fail(context + ": z mismatch " + ours_z)
-  }
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)))
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)))
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)))
 }
 
 ///|
@@ -59,12 +49,12 @@ test "physics.mechanics parity pathways" {
   let linear_length_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('QPN'); pA=Point('QpA'); pB=Point('QpB'); q=dynamicsymbols('q'); pB.set_pos(pA, q*N.x); LinearPathway(pA, pB).length",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(linear.length()),
-    linear_length_oracle,
-  ) else {
-    fail("linear pathway length parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(linear.length()),
+        linear_length_oracle,
+      )
+  )
   let linear_loads = linear.to_loads(f)
   pathway_assert_force(
     linear_loads[0],
@@ -91,12 +81,12 @@ test "physics.mechanics parity pathways" {
   let obstacle_length_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('QPN'); pA=Point('QpA'); pB=Point('QpB'); pC=Point('QpC'); q=dynamicsymbols('q'); pB.set_pos(pA, q*N.x); pC.set_pos(pB, N.y); ObstacleSetPathway(pA, pB, pC).length",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(obstacle.length()),
-    obstacle_length_oracle,
-  ) else {
-    fail("obstacle pathway length parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(obstacle.length()),
+        obstacle_length_oracle,
+      )
+  )
   let obstacle_loads = obstacle.to_loads(f)
   pathway_assert_force(
     obstacle_loads[0],

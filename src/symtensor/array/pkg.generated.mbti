@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symtensor/array"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn array_add(Array[ArrayExpr]) -> ArrayExpr
+
+pub fn array_contraction(ArrayExpr, Array[(Int, Int)]) -> ArrayExpr
+
+pub fn array_element(ArrayExpr, Array[@symcore.Expr]) -> ArrayExpr
+
+pub fn array_expr_to_string(ArrayExpr) -> String
+
+pub fn array_mul(Array[ArrayExpr]) -> ArrayExpr
+
+pub fn array_symbol(String, shape? : Array[@symcore.Expr]) -> ArrayExpr
+
+pub fn array_tensor_product(Array[ArrayExpr]) -> ArrayExpr
+
+pub fn dense(Array[Int], Array[@symcore.Expr]) -> NDimArray raise
+
+pub fn eye(Int) -> NDimArray
+
+pub fn getitem(NDimArray, Array[Int]) -> @symcore.Expr raise
+
+pub fn permutedims(NDimArray, Array[Int]) -> NDimArray raise
+
+pub fn rank(NDimArray) -> Int
+
+pub fn reshape(NDimArray, Array[Int]) -> NDimArray raise
+
+pub fn setitem(NDimArray, Array[Int], @symcore.Expr) -> NDimArray raise
+
+pub fn shape(NDimArray) -> Array[Int]
+
+pub fn sparse(Array[Int], Array[(Array[Int], @symcore.Expr)]) -> NDimArray
+
+pub fn tensorcontraction(NDimArray, Array[(Int, Int)]) -> NDimArray raise
+
+pub fn tensorproduct(Array[NDimArray]) -> NDimArray raise
+
+pub fn to_string(NDimArray) -> String
+
+pub fn zeros(Array[Int]) -> NDimArray
+
+// Errors
+
+// Types and methods
+pub enum ArrayExpr {
+  Symbol(String, Array[@symcore.Expr]?)
+  Element(ArrayExpr, Array[@symcore.Expr])
+  TensorProduct(Array[ArrayExpr])
+  Contraction(ArrayExpr, Array[(Int, Int)])
+  Add(Array[ArrayExpr])
+  Mul(Array[ArrayExpr])
+}
+
+pub(all) struct DenseArray {
+  shape : Array[Int]
+  data : Array[@symcore.Expr]
+}
+
+pub enum NDimArray {
+  Dense(DenseArray)
+  Sparse(SparseArray)
+}
+
+pub(all) struct SparseArray {
+  shape : Array[Int]
+  data : Map[String, @symcore.Expr]
+}
+
+// Type aliases
+
+// Traits
+

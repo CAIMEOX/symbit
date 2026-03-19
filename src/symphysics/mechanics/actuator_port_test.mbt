@@ -9,9 +9,7 @@ fn actuator_assert_summary(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard actuator_compact(lhs) == actuator_compact(rhs) else {
-    fail(context + ": ours=" + lhs + "; oracle=" + rhs)
-  }
+  assert_eq(actuator_compact(lhs), actuator_compact(rhs))
 }
 
 ///|
@@ -40,22 +38,14 @@ fn actuator_assert_force_load(
 ) -> Unit raise {
   match load {
     Load::ForceLoad(value) => {
-      guard value.point.name() == point_name else {
-        fail(context + ": unexpected point " + value.point.name())
-      }
+      assert_eq(value.point.name(), point_name)
       let comps = value.force.to_matrix(frame)
       let ours_x = @symprint.to_string(try! comps.get(0, 0))
       let ours_y = @symprint.to_string(try! comps.get(1, 0))
       let ours_z = @symprint.to_string(try! comps.get(2, 0))
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)) else {
-        fail(context + ": x mismatch " + ours_x)
-      }
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)) else {
-        fail(context + ": y mismatch " + ours_y)
-      }
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)) else {
-        fail(context + ": z mismatch " + ours_z)
-      }
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)))
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)))
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)))
     }
     _ => fail(context + ": expected force load")
   }
@@ -73,22 +63,14 @@ fn actuator_assert_torque_load(
 ) -> Unit raise {
   match load {
     Load::TorqueLoad(value) => {
-      guard value.frame.name() == frame_name else {
-        fail(context + ": unexpected frame " + value.frame.name())
-      }
+      assert_eq(value.frame.name(), frame_name)
       let comps = value.torque.to_matrix(basis_frame)
       let ours_x = @symprint.to_string(try! comps.get(0, 0))
       let ours_y = @symprint.to_string(try! comps.get(1, 0))
       let ours_z = @symprint.to_string(try! comps.get(2, 0))
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)) else {
-        fail(context + ": x mismatch " + ours_x)
-      }
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)) else {
-        fail(context + ": y mismatch " + ours_y)
-      }
-      guard (try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)) else {
-        fail(context + ": z mismatch " + ours_z)
-      }
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)))
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)))
+      assert_true((try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)))
     }
     _ => fail(context + ": expected torque load")
   }
@@ -132,23 +114,23 @@ test "physics.mechanics parity actuators" {
   let spring_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k,l=symbols('k l'); pB.set_pos(pA, q*N.x); LinearSpring(k, LinearPathway(pA, pB), equilibrium_length=l).force",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(spring.force()),
-    spring_force_oracle,
-  ) else {
-    fail("linear spring force parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(spring.force()),
+        spring_force_oracle,
+      )
+  )
 
   let damper = linear_damper(@symcore.symbol("c"), pathway)
   let damper_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); c=symbols('c'); pB.set_pos(pA, q*N.x); LinearDamper(c, LinearPathway(pA, pB)).force",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(damper.force()),
-    damper_force_oracle,
-  ) else {
-    fail("linear damper force parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(damper.force()),
+        damper_force_oracle,
+      )
+  )
 
   let duffing = duffing_spring(
     @symcore.symbol("k_lin"),
@@ -158,12 +140,12 @@ test "physics.mechanics parity actuators" {
   let duffing_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k_lin,k_nl=symbols('k_lin k_nl'); pB.set_pos(pA, q*N.x); DuffingSpring(k_lin, k_nl, LinearPathway(pA, pB)).force",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(duffing.force()),
-    duffing_force_oracle,
-  ) else {
-    fail("duffing spring force parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(duffing.force()),
+        duffing_force_oracle,
+      )
+  )
 
   let friction = coulomb_kinetic_friction(
     @symcore.symbol("mu_k"),
@@ -174,12 +156,12 @@ test "physics.mechanics parity actuators" {
   let friction_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); mu_k,Nf,sigma=symbols('mu_k Nf sigma'); pB.set_pos(pA, q*N.x); CoulombKineticFriction(mu_k, Nf, LinearPathway(pA, pB), sigma=sigma).force",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(friction.force()),
-    friction_force_oracle,
-  ) else {
-    fail("coulomb friction force parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(friction.force()),
+        friction_force_oracle,
+      )
+  )
 
   let target = @symvector.reference_frame("TA")
   let reaction = @symvector.reference_frame("RA")

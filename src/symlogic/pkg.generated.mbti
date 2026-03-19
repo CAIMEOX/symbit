@@ -1,0 +1,248 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symlogic"
+
+import {
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn anf_coeffs(Array[Int]) -> Array[Int]
+
+pub fn anf_form(Array[BoolExpr], Array[Int]) -> BoolExpr
+
+pub fn bool_and(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_equivalent(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_eval(BoolExpr, Map[String, Bool]) -> Bool
+
+pub fn bool_exclusive(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_false() -> BoolExpr
+
+pub fn bool_implies(BoolExpr, BoolExpr) -> BoolExpr
+
+pub fn bool_ite(BoolExpr, BoolExpr, BoolExpr) -> BoolExpr
+
+pub fn bool_map(BoolExpr, BoolExpr) -> BoolMapResult?
+
+pub fn bool_maxterm(BitPattern, Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_minterm(BitPattern, Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_monomial(BitPattern, Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_nand(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_nor(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_not(BoolExpr) -> BoolExpr
+
+pub fn bool_or(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_subst(BoolExpr, Map[String, BoolExpr]) -> BoolExpr
+
+pub fn bool_symbol(String) -> BoolExpr
+
+pub fn bool_true() -> BoolExpr
+
+pub fn bool_xnor(Array[BoolExpr]) -> BoolExpr
+
+pub fn bool_xor(Array[BoolExpr]) -> BoolExpr
+
+pub fn conjuncts(BoolExpr) -> Array[BoolExpr]
+
+pub fn dimacs_load(String) -> BoolExpr raise
+
+pub fn disjuncts(BoolExpr) -> Array[BoolExpr]
+
+pub fn distribute_and_over_or(BoolExpr) -> BoolExpr
+
+pub fn distribute_or_over_and(BoolExpr) -> BoolExpr
+
+pub fn distribute_xor_over_and(BoolExpr) -> BoolExpr
+
+pub fn dpll(Array[BoolExpr], Array[BoolExpr], Map[String, Bool]) -> Map[String, Bool]?
+
+pub fn dpll2_all_models(BoolExpr, use_lra_theory? : Bool) -> Array[Map[String, Bool]?]
+
+pub fn dpll2_satisfiable(BoolExpr, use_lra_theory? : Bool) -> Map[String, Bool]?
+
+pub fn dpll_satisfiable(BoolExpr) -> Map[String, Bool]?
+
+pub fn eliminate_implications(BoolExpr, form? : String) -> BoolExpr
+
+pub fn entails(BoolExpr, formula_set? : Array[BoolExpr]) -> Bool
+
+pub fn find_pure_symbol(Array[BoolExpr], Array[BoolExpr]) -> (BoolExpr?, Bool?)
+
+pub fn find_pure_symbol_int_repr(Array[Int], Array[Array[Int]]) -> (Int?, Bool?)
+
+pub fn find_unit_clause(Array[BoolExpr], Map[String, Bool]) -> (BoolExpr?, Bool?)
+
+pub fn find_unit_clause_int_repr(Array[Array[Int]], Map[Int, Bool]) -> (Int?, Bool?)
+
+pub fn gateinputcount(BoolExpr) -> Int
+
+pub fn integer_to_term(Int, Int) -> Array[Int]
+
+pub fn is_anf(BoolExpr) -> Bool
+
+pub fn is_cnf(BoolExpr) -> Bool
+
+pub fn is_dnf(BoolExpr) -> Bool
+
+pub fn is_literal(BoolExpr) -> Bool
+
+pub fn is_nnf(BoolExpr, simplified? : Bool) -> Bool
+
+pub fn linear_constraint_from_ints(Array[(String, Int)], Int, RelOp) -> LinearConstraint
+
+pub fn linear_constraint_key(LinearConstraint) -> String
+
+pub fn linear_constraint_negate(LinearConstraint) -> Array[LinearConstraint]
+
+pub fn linear_constraint_to_string(LinearConstraint) -> String
+
+pub fn literal_symbol(BoolExpr) -> BoolExpr
+
+pub fn lra_check_with_conflict(Array[LraAssumption]) -> Array[LraConflictLit]?
+
+pub fn lra_satisfiable(Array[LinearConstraint]) -> Bool
+
+pub fn model_to_string(Map[String, Bool]?) -> String
+
+pub fn models_to_string(Array[Map[String, Bool]?]) -> String
+
+pub fn pl_true(BoolExpr, model? : Map[String, Bool?], deep? : Bool) -> Bool?
+
+pub fn pl_true_int_repr(Array[Int], Map[Int, Bool]) -> Bool?
+
+pub fn pos_form(Array[BoolExpr], Array[TermInput], dontcares? : Array[TermInput]) -> BoolExpr
+
+pub fn satisfiable(BoolExpr, algorithm? : String, all_models? : Bool, minimal? : Bool, use_lra_theory? : Bool) -> SatResult
+
+pub fn satresult_to_string(SatResult) -> String
+
+pub fn simplify_logic(BoolExpr, form? : String, deep? : Bool, force? : Bool, dontcare? : BoolExpr) -> BoolExpr
+
+pub fn simplify_univariate(BoolExpr) -> BoolExpr
+
+pub fn sop_form(Array[BoolExpr], Array[TermInput], dontcares? : Array[TermInput]) -> BoolExpr
+
+pub fn symbols_in(BoolExpr) -> Array[BoolExpr]
+
+pub fn term_to_integer_bits(Array[Int]) -> Int
+
+pub fn term_to_integer_str(String) -> Int
+
+pub fn to_anf(BoolExpr, deep? : Bool) -> BoolExpr
+
+pub fn to_cnf(BoolExpr, simplify? : Bool, force? : Bool) -> BoolExpr
+
+pub fn to_dnf(BoolExpr, simplify? : Bool, force? : Bool) -> BoolExpr
+
+pub fn to_int_repr(Array[BoolExpr], Array[BoolExpr]) -> Array[Array[Int]]
+
+pub fn to_nnf(BoolExpr, simplify? : Bool, form? : String) -> BoolExpr
+
+pub fn to_string(BoolExpr) -> String
+
+pub fn truth_table(BoolExpr, Array[BoolExpr], input? : Bool) -> Array[TruthTableRow]
+
+pub fn unit_propagate(Array[BoolExpr], BoolExpr) -> Array[BoolExpr]
+
+pub fn unit_propagate_int_repr(Array[Array[Int]], Int) -> Array[Array[Int]]
+
+pub fn valid(BoolExpr) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) enum BitPattern {
+  Index(Int)
+  Bits(Array[Int])
+}
+
+pub(all) enum BoolExpr {
+  True
+  False
+  Symbol(String)
+  LRA(LinearConstraint)
+  Not(BoolExpr)
+  And(Array[BoolExpr])
+  Or(Array[BoolExpr])
+  Xor(Array[BoolExpr])
+  Implies(BoolExpr, BoolExpr)
+  Equivalent(Array[BoolExpr])
+  ITE(BoolExpr, BoolExpr, BoolExpr)
+}
+pub impl Compare for BoolExpr
+pub impl Eq for BoolExpr
+pub impl Hash for BoolExpr
+
+pub struct BoolMapResult {
+  simplified : BoolExpr
+  mapping : Map[String, BoolExpr]
+}
+pub impl Show for BoolMapResult
+
+pub struct LinearConstraint {
+  coeffs : Map[String, @symnum.BigRational]
+  rhs : @symnum.BigRational
+  op : RelOp
+}
+
+pub(all) struct LraAssumption {
+  constraint : LinearConstraint
+  key : String
+  negated : Bool
+}
+
+pub struct LraConflictLit {
+  key : String
+  negated : Bool
+}
+pub impl Eq for LraConflictLit
+pub impl Show for LraConflictLit
+
+pub struct PropKB {
+  clauses : Map[BoolExpr, Bool]
+}
+pub fn PropKB::ask(Self, BoolExpr) -> Bool
+pub fn PropKB::clauses(Self) -> Array[BoolExpr]
+pub fn PropKB::new() -> Self
+pub fn PropKB::retract(Self, BoolExpr) -> Unit
+pub fn PropKB::tell(Self, BoolExpr) -> Unit
+
+pub(all) enum RelOp {
+  Le
+  Ge
+  Lt
+  Gt
+  Eq
+}
+pub impl Eq for RelOp
+
+pub enum SatResult {
+  Single(Map[String, Bool]?)
+  All(Array[Map[String, Bool]?])
+}
+
+pub(all) enum TermInput {
+  IntTerm(Int)
+  BitsTerm(Array[Int])
+  MapTerm(Map[String, Int])
+}
+
+pub(all) enum TruthTableRow {
+  WithInput(Array[Int], Bool)
+  Value(Bool)
+}
+pub impl Eq for TruthTableRow
+pub impl Show for TruthTableRow
+
+// Type aliases
+
+// Traits
+

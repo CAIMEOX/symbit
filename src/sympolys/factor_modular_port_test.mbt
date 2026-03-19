@@ -12,9 +12,7 @@ test "factor_modular: hensel/crt parity with linear + quadratic factors" {
   let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("hensel/crt factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -31,9 +29,7 @@ test "factor_modular: hensel/crt parity with mixed factors" {
   let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("hensel/crt factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -48,7 +44,5 @@ test "factor_modular: zassenhaus parity (no linear factors)" {
   let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("zassenhaus factor_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }

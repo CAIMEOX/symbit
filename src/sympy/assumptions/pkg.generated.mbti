@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/assumptions"
+
+import {
+  "CAIMEOX/symbit/symassume",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn ask_query_str(String, assumptions? : String) -> String
+
+pub fn expr_attr(@symcore.Expr, String, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_integer(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_nonnegative(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_nonzero(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_positive(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_rational(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_real(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+pub fn is_zero(@symcore.Expr, env? : Map[String, @symassume.SymbolFacts]) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

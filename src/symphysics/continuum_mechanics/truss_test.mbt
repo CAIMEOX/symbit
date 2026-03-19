@@ -134,58 +134,49 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   let half = @symcore.rational_from_ints(1, 2)
 
   let t = truss()
-  guard t.nodes().is_empty() else { fail("initial nodes") }
-  guard t.members().is_empty() else { fail("initial members") }
-  guard t.loads().is_empty() else { fail("initial loads") }
-  guard t.supports().is_empty() else { fail("initial supports") }
-  guard t.reaction_loads().is_empty() else { fail("initial reaction loads") }
-  guard t.internal_forces().is_empty() else { fail("initial internal forces") }
+  assert_true(t.nodes().is_empty())
+  assert_true(t.members().is_empty())
+  assert_true(t.loads().is_empty())
+  assert_true(t.supports().is_empty())
+  assert_true(t.reaction_loads().is_empty())
+  assert_true(t.internal_forces().is_empty())
 
   t.add_node([
     (a, @symcore.int(0), @symcore.int(0)),
     (b, @symcore.int(2), @symcore.int(2)),
     (c, @symcore.int(3), @symcore.int(0)),
   ])
-  guard t.node_labels() == [a, b, c] else { fail("node labels after add") }
-  guard t.node_positions() ==
-    [
+  assert_eq(t.node_labels(), [a, b, c])
+  assert_true(
+    t.node_positions() == [
       (@symcore.int(0), @symcore.int(0)),
       (@symcore.int(2), @symcore.int(2)),
       (@symcore.int(3), @symcore.int(0)),
-    ] else {
-    fail("node positions after add")
-  }
+    ]
+  )
 
   t.remove_node([c])
-  guard t.node_labels() == [a, b] else { fail("node labels after remove") }
+  assert_eq(t.node_labels(), [a, b])
   t.add_node([(c, @symcore.int(3), @symcore.int(0))])
 
   t.add_member([(ab, a, b), (bc, b, c), (ac, a, c)])
-  guard t.members()[ab] == [a, b] else { fail("AB member endpoints") }
-  guard t.members()[bc] == [b, c] else { fail("BC member endpoints") }
-  guard t.members()[ac] == [a, c] else { fail("AC member endpoints") }
-  guard t.internal_forces()[ab] == @symcore.int(0) else {
-    fail("AB internal force init")
-  }
+  assert_eq(t.members()[ab], [a, b])
+  assert_eq(t.members()[bc], [b, c])
+  assert_eq(t.members()[ac], [a, c])
+  assert_true(t.internal_forces()[ab] == @symcore.int(0))
 
   t.remove_member([bc])
-  guard t.members().get(bc) is None else { fail("BC removed") }
+  assert_true(t.members().get(bc) is None)
   t.add_member([(bc, b, c)])
 
   t.change_node_label([(b, d)])
-  guard t.node_labels() == [a, d, c] else { fail("node labels after rename") }
-  guard t.members()[ab] == [a, d] else {
-    fail("AB endpoints after node rename")
-  }
-  guard t.members()[bc] == [d, c] else {
-    fail("BC endpoints after node rename")
-  }
+  assert_eq(t.node_labels(), [a, d, c])
+  assert_eq(t.members()[ab], [a, d])
+  assert_eq(t.members()[bc], [d, c])
   t.change_member_label([(bc, cd)])
-  guard t.members().get(bc) is None else { fail("old member label removed") }
-  guard t.members()[cd] == [d, c] else { fail("new member label inserted") }
-  guard t.internal_forces()[cd] == @symcore.int(0) else {
-    fail("renamed member force init")
-  }
+  assert_true(t.members().get(bc) is None)
+  assert_eq(t.members()[cd], [d, c])
+  assert_true(t.internal_forces()[cd] == @symcore.int(0))
 
   t.apply_load([
     (a, p, @symcore.int(90)),
@@ -193,48 +184,38 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
     (a, @symcore.int(2) * p, @symcore.int(45)),
     (d, p * half, @symcore.int(90)),
   ])
-  guard t.loads()[a].length() == 3 else { fail("A loads count after apply") }
-  guard t.loads()[d].length() == 1 else { fail("D loads count after apply") }
+  assert_eq(t.loads()[a].length(), 3)
+  assert_eq(t.loads()[d].length(), 1)
 
   t.remove_load([(a, p * quarter, @symcore.int(90))])
-  guard t.loads()[a].length() == 2 else { fail("A loads count after remove") }
+  assert_eq(t.loads()[a].length(), 2)
 
   t.apply_support([(a, "pinned"), (d, "roller")])
-  guard t.supports()[a] == "pinned" else { fail("A support") }
-  guard t.supports()[d] == "roller" else { fail("D support") }
-  guard t.loads()[a].length() == 4 else { fail("A loads include reactions") }
-  guard t.loads()[d].length() == 2 else { fail("D loads include reactions") }
+  assert_eq(t.supports()[a], "pinned")
+  assert_eq(t.supports()[d], "roller")
+  assert_eq(t.loads()[a].length(), 4)
+  assert_eq(t.loads()[d].length(), 2)
 
   t.remove_support([a])
-  guard t.supports().get(a) is None else { fail("A support removed") }
-  guard t.loads()[a].length() == 2 else { fail("A reaction loads removed") }
+  assert_true(t.supports().get(a) is None)
+  assert_eq(t.loads()[a].length(), 2)
   t.apply_support([(a, "pinned")])
 
   t.solve()
   let rx = t.reaction_loads()["R_A_x"]
   let ry = t.reaction_loads()["R_A_y"]
   let rdy = t.reaction_loads()["R_D_y"]
-  guard cm_expr_eq(rx, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p) else {
-    fail("R_A_x wrong: \{@symprint.to_string(rx)}")
-  }
-  guard cm_expr_eq(
-    ry,
-    @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p - p,
-  ) else {
-    fail("R_A_y wrong: \{@symprint.to_string(ry)}")
-  }
-  guard cm_expr_eq(rdy, @symcore.int(-1) * p * half) else {
-    fail("R_D_y wrong: \{@symprint.to_string(rdy)}")
-  }
-  guard cm_expr_eq(t.internal_forces()[ab], @symcore.int(0)) else {
-    fail("AB force")
-  }
-  guard cm_expr_eq(t.internal_forces()[cd], @symcore.int(0)) else {
-    fail("CD force")
-  }
-  guard cm_expr_eq(t.internal_forces()[ac], @symcore.int(0)) else {
-    fail("AC force")
-  }
+  assert_true(cm_expr_eq(rx, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p))
+  assert_true(
+    cm_expr_eq(
+        ry,
+        @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p - p,
+      )
+  )
+  assert_true(cm_expr_eq(rdy, @symcore.int(-1) * p * half))
+  assert_true(cm_expr_eq(t.internal_forces()[ab], @symcore.int(0)))
+  assert_true(cm_expr_eq(t.internal_forces()[cd], @symcore.int(0)))
+  assert_true(cm_expr_eq(t.internal_forces()[ac], @symcore.int(0)))
 }
 
 ///|
@@ -260,60 +241,36 @@ test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero
   t.solve()
   let member_1_force = t.internal_forces()["member_1"]
 
-  guard cm_expr_eq(t.reaction_loads()["R_node_1_x"], @symcore.int(0)) else {
-    fail("R_node_1_x wrong")
-  }
-  guard cm_expr_eq(t.reaction_loads()["R_node_1_y"], @symcore.int(20) * third) else {
-    fail("R_node_1_y wrong")
-  }
-  guard cm_expr_eq(t.reaction_loads()["R_node_2_y"], @symcore.int(10) * third) else {
-    fail("R_node_2_y wrong")
-  }
-  guard cm_expr_eq(member_1_force, @symcore.int(20) * third) else {
-    fail("member_1 force wrong: \{@symprint.to_string(member_1_force)}")
-  }
-  guard cm_expr_eq(t.internal_forces()["member_2"], @symcore.int(20) * third) else {
-    fail("member_2 force wrong")
-  }
-  guard cm_expr_eq(
-    t.internal_forces()["member_3"],
-    @symcore.int(-20) * @symelem.sqrt(@symcore.int(2)) * third,
-  ) else {
-    fail("member_3 force wrong")
-  }
-  guard cm_expr_eq(
-    t.internal_forces()["member_4"],
-    @symcore.int(-10) * @symelem.sqrt(@symcore.int(5)) * third,
-  ) else {
-    fail("member_4 force wrong")
-  }
-  guard cm_expr_eq(t.internal_forces()["member_5"], @symcore.int(10)) else {
-    fail("member_5 force wrong")
-  }
+  assert_true(cm_expr_eq(t.reaction_loads()["R_node_1_x"], @symcore.int(0)))
+  assert_true(cm_expr_eq(t.reaction_loads()["R_node_1_y"], @symcore.int(20) * third))
+  assert_true(cm_expr_eq(t.reaction_loads()["R_node_2_y"], @symcore.int(10) * third))
+  assert_true(cm_expr_eq(member_1_force, @symcore.int(20) * third))
+  assert_true(cm_expr_eq(t.internal_forces()["member_2"], @symcore.int(20) * third))
+  assert_true(
+    cm_expr_eq(
+        t.internal_forces()["member_3"],
+        @symcore.int(-20) * @symelem.sqrt(@symcore.int(2)) * third,
+      )
+  )
+  assert_true(
+    cm_expr_eq(
+        t.internal_forces()["member_4"],
+        @symcore.int(-10) * @symelem.sqrt(@symcore.int(5)) * third,
+      )
+  )
+  assert_true(cm_expr_eq(t.internal_forces()["member_5"], @symcore.int(10)))
 }
 
 ///|
 test "physics.continuum_mechanics.truss: validation errors" {
   let t = truss()
   t.add_node([("A", @symcore.int(0), @symcore.int(0))])
-  guard (try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_) else {
-    fail("duplicate node label should fail")
-  }
-  guard (try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_) else {
-    fail("duplicate node position should fail")
-  }
+  assert_true((try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_))
+  assert_true((try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_))
   t.add_node([("B", @symcore.int(1), @symcore.int(0))])
-  guard (try? t.add_member([("AB", "A", "A")])) is Err(_) else {
-    fail("self-edge member should fail")
-  }
+  assert_true((try? t.add_member([("AB", "A", "A")])) is Err(_))
   t.add_member([("AB", "A", "B")])
-  guard (try? t.remove_node(["A"])) is Err(_) else {
-    fail("removing attached node should fail")
-  }
-  guard (try? t.apply_support([("Z", "pinned")])) is Err(_) else {
-    fail("support on missing node should fail")
-  }
-  guard (try? t.apply_support([("A", "hinge")])) is Err(_) else {
-    fail("unknown support kind should fail")
-  }
+  assert_true((try? t.remove_node(["A"])) is Err(_))
+  assert_true((try? t.apply_support([("Z", "pinned")])) is Err(_))
+  assert_true((try? t.apply_support([("A", "hinge")])) is Err(_))
 }

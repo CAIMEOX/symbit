@@ -24,7 +24,7 @@ test "physics.quantum.represent helpers: basis discovery and symbolic fallbacks"
     start_index=1,
     count=3,
   )
-  guard states.length() == 3 else { fail("enumerate_states length") }
+  assert_eq(states.length(), 3)
   quantum_test_assert_expr_equal(
     states[0],
     "XKet(foo_1)",

@@ -35,19 +35,11 @@ fn expr_equal_expr(expr : Expr, oracle_str : String) -> Bool raise {
 
 ///|
 fn assert_quat_components(q : Quaternion, oracle : Array[String]) -> Unit raise {
-  guard oracle.length() == 4 else { fail("oracle arity") }
-  guard expr_equal_expr(q.a(), oracle[0]) else {
-    fail("a mismatch: ours=\{@symprint.to_string(q.a())}, oracle=\{oracle[0]}")
-  }
-  guard expr_equal_expr(q.b(), oracle[1]) else {
-    fail("b mismatch: ours=\{@symprint.to_string(q.b())}, oracle=\{oracle[1]}")
-  }
-  guard expr_equal_expr(q.c(), oracle[2]) else {
-    fail("c mismatch: ours=\{@symprint.to_string(q.c())}, oracle=\{oracle[2]}")
-  }
-  guard expr_equal_expr(q.d(), oracle[3]) else {
-    fail("d mismatch: ours=\{@symprint.to_string(q.d())}, oracle=\{oracle[3]}")
-  }
+  assert_eq(oracle.length(), 4)
+  assert_true(expr_equal_expr(q.a(), oracle[0]))
+  assert_true(expr_equal_expr(q.b(), oracle[1]))
+  assert_true(expr_equal_expr(q.c(), oracle[2]))
+  assert_true(expr_equal_expr(q.d(), oracle[3]))
 }
 
 ///|
@@ -132,11 +124,7 @@ test "quaternion: conjugate parity" {
 test "quaternion: norm parity" {
   let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
   let norm_oracle = @sympy_algebras.quat_norm(q.a(), q.b(), q.c(), q.d())
-  guard expr_equal_expr(q.norm(), norm_oracle) else {
-    fail(
-      "norm mismatch: ours=\{@symprint.to_string(q.norm())}, oracle=\{norm_oracle}",
-    )
-  }
+  assert_true(expr_equal_expr(q.norm(), norm_oracle))
 }
 
 ///|
@@ -196,19 +184,11 @@ test "quaternion: axis-angle parity" {
     q.c(),
     q.d(),
   )
-  guard oracle_axis.length() == 4 else { fail("oracle axis len") }
-  guard expr_equal_expr(axis_angle.0.0, oracle_axis[0]) else {
-    fail("axis x mismatch")
-  }
-  guard expr_equal_expr(axis_angle.0.1, oracle_axis[1]) else {
-    fail("axis y mismatch")
-  }
-  guard expr_equal_expr(axis_angle.0.2, oracle_axis[2]) else {
-    fail("axis z mismatch")
-  }
-  guard expr_equal_expr(axis_angle.1, oracle_axis[3]) else {
-    fail("angle mismatch")
-  }
+  assert_eq(oracle_axis.length(), 4)
+  assert_true(expr_equal_expr(axis_angle.0.0, oracle_axis[0]))
+  assert_true(expr_equal_expr(axis_angle.0.1, oracle_axis[1]))
+  assert_true(expr_equal_expr(axis_angle.0.2, oracle_axis[2]))
+  assert_true(expr_equal_expr(axis_angle.1, oracle_axis[3]))
 }
 
 ///|
@@ -226,10 +206,8 @@ test "quaternion: rotation matrix parity" {
     q.d(),
   )
   let ours = matrix_flat_str(mat)
-  guard ours.length() == oracle.length() else { fail("matrix size mismatch") }
+  assert_eq(ours.length(), oracle.length())
   for i in 0..<ours.length() {
-    guard @sympy_algebras.expr_equal(ours[i], oracle[i]) else {
-      fail("matrix mismatch at \{i}: ours=\{ours[i]} oracle=\{oracle[i]}")
-    }
+    assert_true(@sympy_algebras.expr_equal(ours[i], oracle[i]))
   }
 }

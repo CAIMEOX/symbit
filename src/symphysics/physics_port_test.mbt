@@ -10,9 +10,7 @@ fn physics_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  guard (try! @sympy_physics.expr_equal(ours, rhs)) else {
-    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
-  }
+  assert_true((try! @sympy_physics.expr_equal(ours, rhs)))
 }
 
 ///|
@@ -27,9 +25,7 @@ fn physics_assert_matrix_equiv(
       entries.push(item)
     }
   }
-  guard entries.length() == rhs.length() else {
-    fail("\{context}: size mismatch \{entries.length()} vs \{rhs.length()}")
-  }
+  assert_eq(entries.length(), rhs.length())
   for i in 0..<entries.length() {
     physics_assert_expr_equal(entries[i], rhs[i], "\{context}[\{i}]")
   }

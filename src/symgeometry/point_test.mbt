@@ -6,12 +6,12 @@ test "geometry.point arithmetic and metric helpers" {
   assert_eq((q - p).repr(), "Point2D(3, -3)")
   assert_eq(p.mul(@symcore.int(2)).repr(), "Point2D(2, 4)")
   assert_eq(p.midpoint(q).repr(), "Point2D(5/2, 1/2)")
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(p.distance(q)),
-    "3*sqrt(2)",
-  ) else {
-    fail("point distance")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(p.distance(q)),
+        "3*sqrt(2)",
+      )
+  )
 }
 
 ///|

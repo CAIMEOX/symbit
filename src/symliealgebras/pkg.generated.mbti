@@ -1,0 +1,225 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symliealgebras"
+
+import {
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn br_int(Int) -> @symnum.BigRational
+
+pub fn br_rat(Int, Int) -> @symnum.BigRational
+
+pub fn cartan_matrix(CartanType) -> Matrix raise
+
+pub fn cartan_matrix_from_parts(String, Int) -> Matrix raise
+
+pub fn cartan_matrix_from_string(String) -> Matrix raise
+
+pub fn cartan_type_from_parts(String, Int) -> CartanType raise
+
+pub fn cartan_type_from_string(String) -> CartanType raise
+
+pub fn dynkin_diagram(CartanType) -> String raise
+
+pub fn dynkin_diagram_from_parts(String, Int) -> String raise
+
+pub fn dynkin_diagram_from_string(String) -> String raise
+
+pub fn matrix_eye(Int) -> Matrix
+
+pub fn matrix_from_ints(Array[Array[Int]]) -> Matrix
+
+pub fn matrix_from_rows(Array[Array[@symnum.BigRational]]) -> Matrix
+
+pub fn matrix_mul(Matrix, Matrix) -> Matrix
+
+pub fn matrix_rows_string(Matrix) -> String
+
+pub fn root_system_from_parts(String, Int) -> RootSystem raise
+
+pub fn root_system_from_string(String) -> RootSystem raise
+
+pub fn roots_map_string(Map[Int, Array[@symnum.BigRational]]) -> String
+
+pub fn type_a_basic_root(Int, Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_a_basis(Int) -> Int
+
+pub fn type_a_dimension(Int) -> Int
+
+pub fn type_a_dynkin_diagram(Int) -> String
+
+pub fn type_a_highest_root(Int) -> Array[@symnum.BigRational]
+
+pub fn type_a_lie_algebra(Int) -> String
+
+pub fn type_a_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_a_roots(Int) -> Int
+
+pub fn type_a_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_b_basic_root(Int, Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_b_basis(Int) -> Int
+
+pub fn type_b_dimension(Int) -> Int
+
+pub fn type_b_dynkin_diagram(Int) -> String
+
+pub fn type_b_lie_algebra(Int) -> String
+
+pub fn type_b_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_b_roots(Int) -> Int
+
+pub fn type_b_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_c_basic_root(Int, Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_c_basis(Int) -> Int
+
+pub fn type_c_dimension(Int) -> Int
+
+pub fn type_c_dynkin_diagram(Int) -> String
+
+pub fn type_c_lie_algebra(Int) -> String
+
+pub fn type_c_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_c_roots(Int) -> Int
+
+pub fn type_c_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_d_basic_root(Int, Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_d_basis(Int) -> Int
+
+pub fn type_d_dimension(Int) -> Int
+
+pub fn type_d_dynkin_diagram(Int) -> String
+
+pub fn type_d_lie_algebra(Int) -> String
+
+pub fn type_d_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_d_roots(Int) -> Int
+
+pub fn type_d_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_e_basic_root(Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_e_basis(Int) -> Int
+
+pub fn type_e_dimension(Int) -> Int
+
+pub fn type_e_dynkin_diagram(Int) -> String
+
+pub fn type_e_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_e_roots(Int) -> Int
+
+pub fn type_e_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_f_basic_root(Int, Int, Int) -> Array[@symnum.BigRational]
+
+pub fn type_f_basis(Int) -> Int
+
+pub fn type_f_dimension(Int) -> Int
+
+pub fn type_f_dynkin_diagram(Int) -> String
+
+pub fn type_f_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_f_roots(Int) -> Int
+
+pub fn type_f_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn type_g_basis(Int) -> Int
+
+pub fn type_g_dimension(Int) -> Int
+
+pub fn type_g_dynkin_diagram(Int) -> String
+
+pub fn type_g_positive_roots(Int) -> Map[Int, Array[@symnum.BigRational]]
+
+pub fn type_g_roots(Int) -> Int
+
+pub fn type_g_simple_root(Int, Int) -> Array[@symnum.BigRational] raise
+
+pub fn vec_add(Array[@symnum.BigRational], Array[@symnum.BigRational]) -> Array[@symnum.BigRational]
+
+pub fn vec_copy(Array[@symnum.BigRational]) -> Array[@symnum.BigRational]
+
+pub fn vec_equal(Array[@symnum.BigRational], Array[@symnum.BigRational]) -> Bool
+
+pub fn vec_from_ints(Array[Int]) -> Array[@symnum.BigRational]
+
+pub fn vec_neg(Array[@symnum.BigRational]) -> Array[@symnum.BigRational]
+
+pub fn vec_string(Array[@symnum.BigRational]) -> String
+
+pub fn vec_to_string_list(Array[@symnum.BigRational]) -> Array[String]
+
+pub fn vec_zero(Int) -> Array[@symnum.BigRational]
+
+pub fn weyl_group_from_string(String) -> WeylGroup raise
+
+// Errors
+
+// Types and methods
+pub struct CartanType {
+  series : String
+  n : Int
+}
+pub fn CartanType::basis(Self) -> Int
+pub fn CartanType::cartan_matrix(Self) -> Matrix raise
+pub fn CartanType::dimension(Self) -> Int
+pub fn CartanType::dynkin_diagram(Self) -> String raise
+pub fn CartanType::highest_root(Self) -> Array[@symnum.BigRational] raise
+pub fn CartanType::lie_algebra(Self) -> String
+pub fn CartanType::positive_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
+pub fn CartanType::rank(Self) -> Int
+pub fn CartanType::roots(Self) -> Int
+pub fn CartanType::series(Self) -> String
+pub fn CartanType::simple_root(Self, Int) -> Array[@symnum.BigRational] raise
+
+pub struct Matrix {
+  rows : Array[Array[@symnum.BigRational]]
+}
+pub fn Matrix::get(Self, Int, Int) -> @symnum.BigRational
+pub fn Matrix::height(Self) -> Int
+pub fn Matrix::mul(Self, Self) -> Self
+pub fn Matrix::set(Self, Int, Int, @symnum.BigRational) -> Unit
+pub fn Matrix::width(Self) -> Int
+pub impl Eq for Matrix
+
+pub struct RootSystem {
+  cartan_type : CartanType
+}
+pub fn RootSystem::add_as_roots(Self, Array[@symnum.BigRational], Array[@symnum.BigRational]) -> Result[Array[@symnum.BigRational], String]
+pub fn RootSystem::add_simple_roots(Self, Int, Int) -> Array[@symnum.BigRational] raise
+pub fn RootSystem::all_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
+pub fn RootSystem::cartan_matrix(Self) -> Matrix raise
+pub fn RootSystem::cartan_type(Self) -> CartanType
+pub fn RootSystem::dynkin_diagram(Self) -> String raise
+pub fn RootSystem::root_space(Self) -> String
+pub fn RootSystem::simple_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
+
+pub struct WeylGroup {
+  cartan_type : CartanType
+}
+pub fn WeylGroup::cartan_type(Self) -> CartanType
+pub fn WeylGroup::coxeter_diagram(Self) -> String raise
+pub fn WeylGroup::element_order(Self, String) -> Int
+pub fn WeylGroup::generators(Self) -> Array[String]
+pub fn WeylGroup::group_name(Self) -> String
+pub fn WeylGroup::group_order(Self) -> @symnum.BigRational
+pub fn WeylGroup::matrix_form(Self, String) -> Matrix
+
+// Type aliases
+pub type RootVector = Array[@symnum.BigRational]
+
+// Traits
+

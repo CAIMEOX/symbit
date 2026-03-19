@@ -1,18 +1,16 @@
 ///|
 test "physics.quantum.qasm: helper functions" {
-  guard flip_index(0, 2) == 1 else { fail("flip_index left") }
-  guard flip_index(1, 2) == 0 else { fail("flip_index right") }
-  guard trim("something #comment") == "something " else { fail("trim") }
-  guard fixcommand("Def") == "qdef" else { fail("fixcommand def") }
-  guard fixcommand("c-phase") == "cphase" else { fail("fixcommand hyphen") }
+  assert_eq(flip_index(0, 2), 1)
+  assert_eq(flip_index(1, 2), 0)
+  assert_eq(trim("something #comment"), "something ")
+  assert_eq(fixcommand("Def"), "qdef")
+  assert_eq(fixcommand("c-phase"), "cphase")
   let single = stripquotes("'S'")
-  guard single == "S" else { fail("stripquotes single: \{single}") }
+  assert_eq(single, "S")
   let double = stripquotes("\"T\"")
-  guard double == "T" else { fail("stripquotes double: \{double}") }
-  guard get_index("q0", ["q0", "q1"]) == 1 else { fail("get_index q0") }
-  guard get_indices(["q0", "q1"], ["q0", "q1"]) == [1, 0] else {
-    fail("get_indices")
-  }
+  assert_eq(double, "T")
+  assert_eq(get_index("q0", ["q0", "q1"]), 1)
+  assert_eq(get_indices(["q0", "q1"], ["q0", "q1"]), [1, 0])
 }
 
 ///|
@@ -23,7 +21,7 @@ test "physics.quantum.qasm: builtin circuits and labels" {
     "CNOT(1,0)*H(1)",
     "example circuit",
   )
-  guard parser.get_labels() == ["q1", "q0"] else { fail("example labels") }
+  assert_eq(parser.get_labels(), ["q1", "q0"])
 
   let swap = read_qasm("qubit q0\nqubit q1\ncnot q0,q1\ncnot q1,q0\ncnot q0,q1")
   quantum_test_assert_expr_equal(
@@ -37,11 +35,9 @@ test "physics.quantum.qasm: builtin circuits and labels" {
 test "physics.quantum.qasm: qdef custom gates" {
   let parser = qasm(["qubit q0", "qdef foo,0,'G'", "foo q0"])
   let one_qubit = @symprint.to_string(parser.get_circuit())
-  guard one_qubit == "G(0)" else { fail("qdef one-qubit: \{one_qubit}") }
+  assert_eq(one_qubit, "G(0)")
 
   let controlled = qasm(["qubit q0", "qubit q1", "qdef foo,1,'G'", "foo q0,q1"])
   let controlled_circuit = @symprint.to_string(controlled.get_circuit())
-  guard controlled_circuit == "CGate(Tuple(1), G(0))" else {
-    fail("qdef controlled: \{controlled_circuit}")
-  }
+  assert_eq(controlled_circuit, "CGate(Tuple(1), G(0))")
 }

@@ -77,9 +77,7 @@ test "polyfuncs: interpolate parity for quadratic data" {
   let p = interpolate(pts, "x", Domain::QQ)
   let ours = poly_canon_str(p).trim().to_string()
   let oracle = @sympy_polys.interpolate(pts, x="x").trim().to_string()
-  guard ours == oracle else {
-    fail("interpolate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -92,9 +90,7 @@ test "polyfuncs: interpolate parity for shifted quadratic" {
   let p = interpolate(pts, "x", Domain::QQ)
   let ours = poly_canon_str(p).trim().to_string()
   let oracle = @sympy_polys.interpolate(pts, x="x").trim().to_string()
-  guard ours == oracle else {
-    fail("interpolate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -108,9 +104,7 @@ test "polyfuncs: interpolate parity for values list" {
   let p = interpolate_values(vals, "x", Domain::QQ)
   let ours = poly_canon_str(p).trim().to_string()
   let oracle = @sympy_polys.interpolate_values(vals, x="x").trim().to_string()
-  guard ours == oracle else {
-    fail("interpolate values mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -127,9 +121,7 @@ test "polyfuncs: interpolate parity for dict input" {
   let p = interpolate_dict(map, "x", Domain::QQ)
   let ours = poly_canon_str(p).trim().to_string()
   let oracle = @sympy_polys.interpolate_dict(pts, x="x").trim().to_string()
-  guard ours == oracle else {
-    fail("interpolate dict mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -151,9 +143,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2)" {
     .trim()
     .to_string()
   inspect(ours, content="60*x**2 + 60||x")
-  guard ours == oracle else {
-    fail("rational_interpolate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -174,9 +164,7 @@ test "polyfuncs: rational_interpolate parity (degnum=3)" {
   let oracle = @sympy_polys.rational_interpolate(pts, 3, x="x")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("rational_interpolate deg3 mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -196,9 +184,7 @@ test "polyfuncs: rational_interpolate parity (degnum=5, larger data)" {
   let oracle = @sympy_polys.rational_interpolate(pts, 5, x="x")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("rational_interpolate deg5 mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -219,9 +205,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2, y)" {
   let oracle = @sympy_polys.rational_interpolate(pts, 2, x="y")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("rational_interpolate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -234,65 +218,45 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
   let oracle0 = @sympy_polys.symmetrize(zero, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours0 == oracle0 else {
-    fail("symmetrize 0 mismatch: ours=\{ours0}, oracle=\{oracle0}")
-  }
+  assert_eq(ours0, oracle0)
   let res1 = symmetrize(one, gens=["x", "y", "z"])
   let ours1 = symmetrize_to_string(res1, false).trim().to_string()
   let oracle1 = @sympy_polys.symmetrize(one, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours1 == oracle1 else {
-    fail("symmetrize 1 mismatch: ours=\{ours1}, oracle=\{oracle1}")
-  }
+  assert_eq(ours1, oracle1)
   let resx = symmetrize(x, gens=["x", "y"])
   let oursx = symmetrize_to_string(resx, false).trim().to_string()
   let oraclex = @sympy_polys.symmetrize(x, gens=["x", "y"]).trim().to_string()
-  guard oursx == oraclex else {
-    fail("symmetrize x mismatch: ours=\{oursx}, oracle=\{oraclex}")
-  }
+  assert_eq(oursx, oraclex)
   let resx1 = symmetrize(x + one, gens=["x", "y", "z"])
   let oursx1 = symmetrize_to_string(resx1, false).trim().to_string()
   let oraclex1 = @sympy_polys.symmetrize(x + one, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard oursx1 == oraclex1 else {
-    fail("symmetrize x+1 mismatch: ours=\{oursx1}, oracle=\{oraclex1}")
-  }
+  assert_eq(oursx1, oraclex1)
   let res_xy = symmetrize(x, gens=["x", "y"])
   let ours_xy = symmetrize_to_string(res_xy, false).trim().to_string()
   let oracle_xy = @sympy_polys.symmetrize(x, gens=["x", "y"]).trim().to_string()
-  guard ours_xy == oracle_xy else {
-    fail("symmetrize x,x,y mismatch: ours=\{ours_xy}, oracle=\{oracle_xy}")
-  }
+  assert_eq(ours_xy, oracle_xy)
   let res_x1 = symmetrize(x + one, gens=["x", "y"])
   let ours_x1 = symmetrize_to_string(res_x1, false).trim().to_string()
   let oracle_x1 = @sympy_polys.symmetrize(x + one, gens=["x", "y"])
     .trim()
     .to_string()
-  guard ours_x1 == oracle_x1 else {
-    fail("symmetrize x+1,x,y mismatch: ours=\{ours_x1}, oracle=\{oracle_x1}")
-  }
+  assert_eq(ours_x1, oracle_x1)
   let res_xxyz = symmetrize(x, gens=["x", "y", "z"])
   let ours_xxyz = symmetrize_to_string(res_xxyz, false).trim().to_string()
   let oracle_xxyz = @sympy_polys.symmetrize(x, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours_xxyz == oracle_xxyz else {
-    fail(
-      "symmetrize x,x,y,z mismatch: ours=\{ours_xxyz}, oracle=\{oracle_xxyz}",
-    )
-  }
+  assert_eq(ours_xxyz, oracle_xxyz)
   let res_x1xyz = symmetrize(x + one, gens=["x", "y", "z"])
   let ours_x1xyz = symmetrize_to_string(res_x1xyz, false).trim().to_string()
   let oracle_x1xyz = @sympy_polys.symmetrize(x + one, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours_x1xyz == oracle_x1xyz else {
-    fail(
-      "symmetrize x+1,x,y,z mismatch: ours=\{ours_x1xyz}, oracle=\{oracle_x1xyz}",
-    )
-  }
+  assert_eq(ours_x1xyz, oracle_x1xyz)
 }
 
 ///|
@@ -311,9 +275,7 @@ test "polyfuncs: symmetrize formal mapping u0/u1/u2" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize formal u0/u1/u2 mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -326,9 +288,7 @@ test "polyfuncs: symmetrize parity higher-degree in 3 vars" {
   let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize x^2 mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
   let res_xy2 = symmetrize((x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), gens=[
     "x", "y",
   ])
@@ -339,9 +299,7 @@ test "polyfuncs: symmetrize parity higher-degree in 3 vars" {
     )
     .trim()
     .to_string()
-  guard ours_xy2 == oracle_xy2 else {
-    fail("symmetrize x^2+y^2 mismatch: ours=\{ours_xy2}, oracle=\{oracle_xy2}")
-  }
+  assert_eq(ours_xy2, oracle_xy2)
 }
 
 ///|
@@ -359,9 +317,7 @@ test "polyfuncs: horner parity small cases" {
   for expr in cases {
     let ours = @symprint.to_string(horner(expr, gens=["x"]))
     let oracle = @sympy_polys.horner(expr, gens=["x"])
-    guard expr_equal(ours, oracle) else {
-      fail("horner small mismatch: ours=\{ours}, oracle=\{oracle}")
-    }
+    assert_true(expr_equal(ours, oracle))
   }
 }
 
@@ -373,9 +329,7 @@ test "polyfuncs: symmetrize parity x^2 + y^2" {
   let res = symmetrize(expr, gens=["x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
   let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y"]).trim().to_string()
-  guard ours == oracle else {
-    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -386,9 +340,7 @@ test "polyfuncs: symmetrize parity x^2 - y^2" {
   let res = symmetrize(expr, gens=["x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
   let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y"]).trim().to_string()
-  guard ours == oracle else {
-    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -402,9 +354,7 @@ test "polyfuncs: symmetrize parity mixed coefficients" {
   let res = symmetrize(expr, gens=["x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
   let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y"]).trim().to_string()
-  guard ours == oracle else {
-    fail("symmetrize mixed coeffs mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -419,9 +369,7 @@ test "polyfuncs: symmetrize parity formal mapping" {
     ])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize formal mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -437,9 +385,7 @@ test "polyfuncs: symmetrize parity x^2 + y^2 + z^2" {
   let oracle = @sympy_polys.symmetrize(expr, gens=["x", "y", "z"])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -453,9 +399,7 @@ test "polyfuncs: symmetrize parity mixed ordering gens" {
   let oracle = @sympy_polys.symmetrize(expr, gens=["z", "x", "y"])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -476,9 +420,7 @@ test "polyfuncs: symmetrize parity mixed ordering formal" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("symmetrize formal mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -491,9 +433,7 @@ test "polyfuncs: symmetrize parity list cases" {
   let oracle1 = @sympy_polys.symmetrize_list(list1, gens=["x", "y"])
     .trim()
     .to_string()
-  guard ours1 == oracle1 else {
-    fail("symmetrize list mismatch: ours=\{ours1}, oracle=\{oracle1}")
-  }
+  assert_eq(ours1, oracle1)
   let res1f = symmetrize_list(list1, gens=["x", "y"], formal=true)
   let ours1f = symmetrize_list_to_string(res1f, true).trim().to_string()
   let oracle1f = @sympy_polys.symmetrize_list(
@@ -503,18 +443,14 @@ test "polyfuncs: symmetrize parity list cases" {
     )
     .trim()
     .to_string()
-  guard ours1f == oracle1f else {
-    fail("symmetrize list formal mismatch: ours=\{ours1f}, oracle=\{oracle1f}")
-  }
+  assert_eq(ours1f, oracle1f)
   let list2 = [x + y, x - y]
   let res2 = symmetrize_list(list2, gens=["x", "y"])
   let ours2 = symmetrize_list_to_string(res2, false).trim().to_string()
   let oracle2 = @sympy_polys.symmetrize_list(list2, gens=["x", "y"])
     .trim()
     .to_string()
-  guard ours2 == oracle2 else {
-    fail("symmetrize list x±y mismatch: ours=\{ours2}, oracle=\{oracle2}")
-  }
+  assert_eq(ours2, oracle2)
 }
 
 ///|
@@ -529,9 +465,7 @@ test "polyfuncs: horner parity univariate" {
   let oracle = sympy_normalize(@sympy_polys.horner(expr, gens=["x"]))
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("horner mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -544,9 +478,7 @@ test "polyfuncs: horner parity multivariate wrt=y" {
     x * y
   let ours = @symprint.to_string(horner(expr, gens=["x", "y"], wrt="y"))
   let oracle = @sympy_polys.horner(expr, gens=["x", "y"], wrt="y")
-  guard expr_equal(ours, oracle) else {
-    fail("horner wrt=y mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_true(expr_equal(ours, oracle))
 }
 
 ///|
@@ -559,9 +491,7 @@ test "polyfuncs: horner parity multivariate wrt default" {
     x * y
   let ours = @symprint.to_string(horner(expr, gens=["x", "y"]))
   let oracle = @sympy_polys.horner(expr, gens=["x", "y"])
-  guard expr_equal(ours, oracle) else {
-    fail("horner default mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_true(expr_equal(ours, oracle))
 }
 
 ///|
@@ -580,9 +510,7 @@ test "polyfuncs: horner parity multivariate wrt" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("horner mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -595,9 +523,7 @@ test "polyfuncs: viete parity quadratic" {
   let oracle = @sympy_polys.viete(expr, roots=["r1", "r2"], gen="x")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("viete mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -613,9 +539,7 @@ test "polyfuncs: viete parity cubic" {
   let oracle = @sympy_polys.viete(expr, roots=["r1", "r2", "r3"], gen="x")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("viete mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -627,16 +551,16 @@ test "polyfuncs: viete error cases" {
     roots=["r1"],
     gen="x",
   )
-  guard r0 is Err(_) else { fail("viete constant should error") }
+  assert_true(r0 is Err(_))
   let r1 : Result[Array[(@symcore.Expr, @symcore.Expr)], _] = try? viete(
     (x ^ @symcore.int(2)) + @symcore.int(1),
     roots=["r1"],
     gen="x",
   )
-  guard r1 is Err(_) else { fail("viete roots length should error") }
+  assert_true(r1 is Err(_))
   let r2 : Result[Array[(@symcore.Expr, @symcore.Expr)], _] = try? viete(
     x + y,
     roots=["r1"],
   )
-  guard r2 is Err(_) else { fail("viete multivariate should error") }
+  assert_true(r2 is Err(_))
 }

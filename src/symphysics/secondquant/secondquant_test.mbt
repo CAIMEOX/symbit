@@ -2,13 +2,11 @@
 fn sq_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.secondquant_eval_str(@symprint.to_string(lhs))
   let expected = try! @sympy_physics.secondquant_eval_str(rhs)
-  guard ours == expected else {
-    fail("\{context}: ours=\{ours}; oracle=\{expected}")
-  }
+  assert_eq(ours, expected)
 }
 
 ///|
@@ -17,24 +15,14 @@ fn sq_assert_matrix_expr_equal(
   rhs : Array[String],
   rows : Int,
   cols : Int,
-  context : String,
+  _context : String,
 ) -> Unit raise {
-  guard lhs.height() == rows else {
-    fail("\{context}: row mismatch ours=\{lhs.height()} oracle=\{rows}")
-  }
-  guard lhs.width() == cols else {
-    fail("\{context}: col mismatch ours=\{lhs.width()} oracle=\{cols}")
-  }
+  assert_eq(lhs.height(), rows)
+  assert_eq(lhs.width(), cols)
   let flat = try! @symquant.matrix_flat_strings(lhs)
-  guard flat.length() == rhs.length() else {
-    fail(
-      "\{context}: size mismatch ours=\{flat.length()} oracle=\{rhs.length()}",
-    )
-  }
+  assert_eq(flat.length(), rhs.length())
   for idx in 0..<flat.length() {
-    guard (try! @sympy_physics.expr_equal(flat[idx], rhs[idx])) else {
-      fail("\{context}[\{idx}]: ours=\{flat[idx]}; oracle=\{rhs[idx]}")
-    }
+    assert_true((try! @sympy_physics.expr_equal(flat[idx], rhs[idx])))
   }
 }
 

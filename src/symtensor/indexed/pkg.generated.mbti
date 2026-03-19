@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symtensor/indexed"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn add(Array[IndexedExpr]) -> IndexedExpr
+
+pub fn get_contraction_structure(IndexedExpr) -> Map[String, Array[Indexed]]
+
+pub fn get_indices(IndexedExpr) -> IndexInfo
+
+pub fn idx(String, upper? : @symcore.Expr, lower? : @symcore.Expr) -> Idx
+
+pub fn idx_expr(Idx) -> @symcore.Expr
+
+pub fn idx_to_string(Idx) -> String
+
+pub fn index_expr(@symcore.Expr) -> Index
+
+pub fn index_idx(Idx) -> Index
+
+pub fn indexed(IndexedBase, Array[Index]) -> Indexed raise
+
+pub fn indexed_base(String, shape? : Array[@symcore.Expr]) -> IndexedBase
+
+pub fn indexed_base_to_string(IndexedBase) -> String
+
+pub fn indexed_expr(Indexed) -> IndexedExpr
+
+pub fn indexed_expr_to_string(IndexedExpr) -> String
+
+pub fn indexed_name(String, Array[Index]) -> Indexed raise
+
+pub fn indexed_to_string(Indexed) -> String
+
+pub fn mul(Array[IndexedExpr]) -> IndexedExpr
+
+pub fn scalar_expr(@symcore.Expr) -> IndexedExpr
+
+// Errors
+
+// Types and methods
+pub(all) struct Idx {
+  name : String
+  lower : @symcore.Expr
+  upper : @symcore.Expr?
+}
+
+pub enum Index {
+  Expr(@symcore.Expr)
+  Idx(Idx)
+}
+
+pub struct IndexInfo {
+  free : Array[String]
+  dummy : Array[String]
+}
+
+pub(all) struct Indexed {
+  base : IndexedBase
+  indices : Array[Index]
+}
+
+pub(all) struct IndexedBase {
+  name : String
+  shape : Array[@symcore.Expr]?
+}
+pub fn IndexedBase::at(Self, Array[Index]) -> Indexed raise
+
+pub enum IndexedExpr {
+  Scalar(@symcore.Expr)
+  Atom(Indexed)
+  Add(Array[IndexedExpr])
+  Mul(Array[IndexedExpr])
+}
+
+// Type aliases
+
+// Traits
+

@@ -22,7 +22,7 @@ pub struct BigRational {
 pub fn BigRational::add_r(Self, Self) -> Self
 pub fn BigRational::compare(Self, Self) -> Int
 pub fn BigRational::denominator(Self) -> @bigint.BigInt
-pub fn BigRational::div_r(Self, Self) -> Self raise RationalError
+pub fn BigRational::div_r(Self, Self) -> Self
 pub fn BigRational::from_bigint(@bigint.BigInt) -> Self
 pub fn BigRational::from_int(Int) -> Self
 pub fn BigRational::is_integral(Self) -> Bool

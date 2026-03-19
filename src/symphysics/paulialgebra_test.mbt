@@ -10,16 +10,16 @@ fn pauli_assert_expr_equal(
     Ok(value) => value
     Err(err) => fail("\{context}: expr_equal error: \{err}")
   }
-  guard ok else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
+  assert_true(ok)
 }
 
 ///|
 test "physics.paulialgebra: delta and epsilon" {
-  guard delta(1, 1) == 1 else { fail("delta(1,1)") }
-  guard delta(2, 3) == 0 else { fail("delta(2,3)") }
-  guard epsilon(1, 2, 3) == 1 else { fail("epsilon(1,2,3)") }
-  guard epsilon(1, 3, 2) == -1 else { fail("epsilon(1,3,2)") }
-  guard epsilon(1, 1, 2) == 0 else { fail("epsilon(1,1,2)") }
+  assert_eq(delta(1, 1), 1)
+  assert_eq(delta(2, 3), 0)
+  assert_eq(epsilon(1, 2, 3), 1)
+  assert_eq(epsilon(1, 3, 2), -1)
+  assert_eq(epsilon(1, 1, 2), 0)
 }
 
 ///|

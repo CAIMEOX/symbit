@@ -2,13 +2,11 @@
 fn sq_adv_assert_port(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.secondquant_eval_str(@symprint.to_string(lhs))
   let expected = try! @sympy_physics.secondquant_exec_str(rhs)
-  guard ours == expected else {
-    fail("\{context}: ours=\{ours}; oracle=\{expected}")
-  }
+  assert_eq(ours, expected)
 }
 
 ///|

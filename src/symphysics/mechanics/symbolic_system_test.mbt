@@ -145,18 +145,10 @@ test "physics.mechanics symbolic system forms" {
     loads=Some(loads),
   )
 
-  guard symsystem1.coordinates().height() == 2 else {
-    fail("form 1 should expose inferred coordinates")
-  }
-  guard symsystem2.states().height() == 5 else {
-    fail("form 2 should expose combined states")
-  }
-  guard symsystem3.kin_explicit_rhs().height() == 2 else {
-    fail("form 3 should expose kinematic rhs")
-  }
-  guard symsystem3.alg_con() == Some([4]) else {
-    fail("form 3 should offset algebraic constraint rows")
-  }
+  assert_eq(symsystem1.coordinates().height(), 2)
+  assert_eq(symsystem2.states().height(), 5)
+  assert_eq(symsystem3.kin_explicit_rhs().height(), 2)
+  assert_eq(symsystem3.alg_con(), Some([4]))
   inspect(
     symsystem1.dynamic_symbols().map(@symprint.to_string).join(","),
     content="u(t),v(t),x(t),y(t),lambda(t)",
@@ -165,15 +157,9 @@ test "physics.mechanics symbolic system forms" {
     symsystem3.constant_symbols().map(@symprint.to_string).join(","),
     content="g,l,m",
   )
-  guard symsystem2.bodies().length() == 1 && symsystem2.loads().length() == 1 else {
-    fail("symbolic system should preserve bodies and loads")
-  }
-  guard symsystem2.output_eqns().length() == 1 else {
-    fail("symbolic system should preserve output equations")
-  }
-  guard @symprint.to_string(symsystem2.output_eqns()[0].1) == "g*m*(l + y(t))" else {
-    fail("symbolic system output equation mismatch")
-  }
+  assert_true(symsystem2.bodies().length() == 1 && symsystem2.loads().length() == 1)
+  assert_eq(symsystem2.output_eqns().length(), 1)
+  assert_eq(@symprint.to_string(symsystem2.output_eqns()[0].1), "g*m*(l + y(t))")
 }
 
 ///|
@@ -199,18 +185,12 @@ test "physics.mechanics symbolic system errors" {
     mass_matrix=Some(@symphysics.explicit_matrix_eye(5)),
   )
   let bad_coords : Result[@symphysics.ExplicitMatrix, @symphysics.PhysicsError] = try? symsystem.coordinates()
-  guard bad_coords is Err(@symphysics.PhysicsError::ValueError(_)) else {
-    fail("missing coordinates should raise a value error")
-  }
+  assert_true(bad_coords is Err(@symphysics.PhysicsError::ValueError(_)))
   let bad_loads : Result[Array[Load], @symphysics.PhysicsError] = try? symsystem.loads()
-  guard bad_loads is Err(@symphysics.PhysicsError::ValueError(_)) else {
-    fail("missing loads should raise a value error")
-  }
+  assert_true(bad_loads is Err(@symphysics.PhysicsError::ValueError(_)))
   let bad_explicit : Result[
     @symphysics.ExplicitMatrix,
     @symphysics.PhysicsError,
   ] = try? implicit_system.comb_explicit_rhs()
-  guard bad_explicit is Err(@symphysics.PhysicsError::ValueError(_)) else {
-    fail("explicit rhs should require compute_explicit_form first")
-  }
+  assert_true(bad_explicit is Err(@symphysics.PhysicsError::ValueError(_)))
 }

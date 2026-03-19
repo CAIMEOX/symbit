@@ -1,0 +1,124 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symseries"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn approximants(Array[@symcore.Expr], x? : @symcore.Expr, simplify? : Bool) -> Array[@symcore.Expr] raise
+
+pub fn big_o(@symcore.Expr) -> @symcore.Expr
+
+pub fn difference_delta(@symcore.Expr, n? : @symcore.Expr, step? : Int) -> @symcore.Expr raise
+
+pub fn fourier_series(@symcore.Expr, limits? : Array[@symcore.Expr], finite? : Bool) -> FourierSeriesResult raise
+
+pub fn fps(@symcore.Expr, x? : @symcore.Expr, x0? : @symcore.Expr, dir? : Int, hyper? : Bool, order? : Int, rational? : Bool, full? : Bool) -> FpsResult raise
+
+pub fn fps_multivariate(@symcore.Expr, Array[@symcore.Expr], x0s? : Array[@symcore.Expr]) -> FormalPowerSeriesMulti raise
+
+pub fn gruntz(@symcore.Expr, @symcore.Expr, @symcore.Expr, dir? : String) -> @symcore.Expr raise
+
+pub fn is_order(@symcore.Expr) -> Bool
+
+pub fn limit(@symcore.Expr, @symcore.Expr, @symcore.Expr, dir? : String) -> @symcore.Expr raise
+
+pub fn limit_seq(@symcore.Expr, n? : @symcore.Expr) -> @symcore.Expr raise
+
+pub fn order(@symcore.Expr) -> @symcore.Expr
+
+pub fn order_arg(@symcore.Expr) -> @symcore.Expr?
+
+pub fn pade_approximant(@symcore.Expr, @symcore.Expr, x0? : @symcore.Expr, m? : Int, n? : Int) -> @symcore.Expr raise
+
+pub fn residue(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise
+
+pub fn richardson(@symcore.Expr, @symcore.Expr, Int, Int) -> @symcore.Expr raise
+
+pub fn seq_add(Sequence, Sequence) -> Sequence
+
+pub fn seq_mul(Sequence, Sequence) -> Sequence
+
+pub fn seq_per(Array[@symcore.Expr], start? : Int, stop? : Int) -> Sequence
+
+pub fn sequence(@symcore.Expr, var_name? : String, start? : Int, stop? : Int) -> Sequence
+
+pub fn series(@symcore.Expr, x? : @symcore.Expr, x0? : @symcore.Expr, n? : Int, dir? : String) -> @symcore.Expr raise
+
+pub fn shanks(@symcore.Expr, @symcore.Expr, Int, m? : Int) -> @symcore.Expr raise
+
+// Errors
+
+// Types and methods
+pub struct FormalPowerSeries {
+  expr : @symcore.Expr
+  x : @symcore.Expr
+  x0 : @symcore.Expr
+}
+pub fn FormalPowerSeries::as_leading_term(Self, @symcore.Expr) -> @symcore.Expr raise
+pub fn FormalPowerSeries::coeff(Self, Int) -> @symcore.Expr raise
+pub fn FormalPowerSeries::function(Self) -> @symcore.Expr
+pub fn FormalPowerSeries::polynomial(Self, n? : Int) -> @symcore.Expr raise
+pub fn FormalPowerSeries::slice(Self, Int, Int, step? : Int) -> Array[@symcore.Expr] raise
+pub fn FormalPowerSeries::truncate(Self, n? : Int) -> @symcore.Expr raise
+
+pub struct FormalPowerSeriesMulti {
+  expr : @symcore.Expr
+  vars : Array[@symcore.Expr]
+  x0s : Array[@symcore.Expr]
+}
+pub fn FormalPowerSeriesMulti::coeff(Self, Array[Int]) -> @symcore.Expr raise
+pub fn FormalPowerSeriesMulti::truncate(Self, order? : Int) -> @symcore.Expr raise
+
+pub struct FourierSeries {
+  expr : @symcore.Expr
+  x : @symcore.Expr
+  a : @symcore.Expr
+  b : @symcore.Expr
+}
+pub fn FourierSeries::a0(Self) -> @symcore.Expr raise
+pub fn FourierSeries::an(Self, Int) -> @symcore.Expr raise
+pub fn FourierSeries::as_leading_term(Self, @symcore.Expr) -> @symcore.Expr raise
+pub fn FourierSeries::bn(Self, Int) -> @symcore.Expr raise
+pub fn FourierSeries::function(Self) -> @symcore.Expr
+pub fn FourierSeries::period(Self) -> @symcore.Expr
+pub fn FourierSeries::scale(Self, @symcore.Expr) -> Self
+pub fn FourierSeries::scalex(Self, @symcore.Expr) -> Self
+pub fn FourierSeries::shift(Self, @symcore.Expr) -> Self
+pub fn FourierSeries::shiftx(Self, @symcore.Expr) -> Self
+pub fn FourierSeries::sigma_approximation(Self, Int) -> @symcore.Expr raise
+pub fn FourierSeries::term(Self, Int) -> @symcore.Expr raise
+pub fn FourierSeries::truncate(Self, n? : Int) -> @symcore.Expr raise
+pub fn FourierSeries::x(Self) -> @symcore.Expr
+
+pub enum FourierSeriesResult {
+  Expr(@symcore.Expr)
+  Series(FourierSeries)
+}
+
+pub enum FpsResult {
+  Expr(@symcore.Expr)
+  Series(FormalPowerSeries)
+}
+
+pub(all) struct Limit {
+  expr : @symcore.Expr
+  variable : @symcore.Expr
+  point : @symcore.Expr
+  dir : String
+}
+pub fn Limit::doit(Self) -> @symcore.Expr raise
+
+pub enum Sequence {
+  SeqFormula(@symcore.Expr, String, Int, Int)
+  SeqPer(Array[@symcore.Expr], Int, Int)
+  SeqAdd(Sequence, Sequence)
+  SeqMul(Sequence, Sequence)
+}
+pub fn Sequence::coeff(Self, Int) -> @symcore.Expr raise
+
+// Type aliases
+
+// Traits
+

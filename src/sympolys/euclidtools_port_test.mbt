@@ -3,9 +3,7 @@ fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
   let g = try! p.gcd_univar(q)
   let ours = sympy_normalize(g.to_string()).trim().to_string()
   let oracle = @sympy_polys.gcd(p.to_expr(), q.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("gcd mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -13,9 +11,7 @@ fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
   let (quo, rem) = try! p.divmod_univar(q)
   let ours = div_pair_to_string(quo, rem).trim().to_string()
   let oracle = @sympy_polys.div(p.to_expr(), q.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("divmod mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -25,9 +21,7 @@ fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
   let oracle = @sympy_polys.resultant(p.to_expr(), q.to_expr(), x="x")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("resultant mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|

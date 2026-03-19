@@ -40,32 +40,22 @@ test "physics.mechanics parity system assembly" {
     prefix + "[str(j) for j in sys.joints]",
   )
   let oracle_loads = @sympy_physics.mechanics_summary(prefix + "sys.loads")
-  guard "[" + sys.q_ind().map(@symprint.to_string).join(", ") + "]" == oracle_q else {
-    fail("system q_ind parity mismatch")
-  }
-  guard "[" + sys.u_ind().map(@symprint.to_string).join(", ") + "]" == oracle_u else {
-    fail("system u_ind parity mismatch")
-  }
+  assert_eq("[" + sys.q_ind().map(@symprint.to_string).join(", ") + "]", oracle_q)
+  assert_eq("[" + sys.u_ind().map(@symprint.to_string).join(", ") + "]", oracle_u)
   let oracle_kdes = [
     "u_slider(t) - Derivative(q_slider(t), t)", "u_pin(t) - Derivative(q_pin(t), t)",
   ]
   for i in 0..<sys.kdes().length() {
-    guard @sympy_physics.mechanics_expr_equal(
-      @symprint.to_string(sys.kdes()[i]),
-      oracle_kdes[i],
-    ) else {
-      fail("system kde parity mismatch")
-    }
+    assert_true(
+      @sympy_physics.mechanics_expr_equal(
+            @symprint.to_string(sys.kdes()[i]),
+            oracle_kdes[i],
+          )
+    )
   }
-  guard "[" + sys.bodies().map(fn(body) { body.name() }).join(", ") + "]" ==
-    oracle_bodies else {
-    fail("system bodies parity mismatch")
-  }
-  guard "[" + sys.joints().map(fn(joint) { joint.repr() }).join(", ") + "]" ==
-    oracle_joints else {
-    fail("system joints parity mismatch")
-  }
-  guard sys.loads().length() == 4 else { fail("system load count mismatch") }
+  assert_eq("[" + sys.bodies().map(fn(body) { body.name() }).join(", ") + "]", oracle_bodies)
+  assert_eq("[" + sys.joints().map(fn(joint) { joint.repr() }).join(", ") + "]", oracle_joints)
+  assert_eq(sys.loads().length(), 4)
   let mut gravity_count = 0
   let mut found_external = false
   for load in sys.loads() {
@@ -84,9 +74,7 @@ test "physics.mechanics parity system assembly" {
       _ => fail("system should only create force loads")
     }
   }
-  guard found_external && gravity_count == 3 && oracle_loads.contains("F(t)") else {
-    fail("system load parity mismatch")
-  }
+  assert_true(found_external && gravity_count == 3 && oracle_loads.contains("F(t)"))
 }
 
 ///|
@@ -121,19 +109,17 @@ test "physics.mechanics parity system form_eoms lagrange" {
   let oracle_forcing = @sympy_physics.mechanics_summary(
     prefix + "sys.forcing[0, 0]",
   )
-  guard @symprint.to_string(sys.mass_matrix().get(0, 0)) == oracle_mass else {
-    fail("system lagrange mass matrix parity mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(sys.forcing().get(0, 0)),
-    oracle_forcing,
-  ) else {
-    fail("system lagrange forcing parity mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(sys.rhs()),
-    prefix + "sys.rhs()",
-  ) else {
-    fail("system lagrange rhs parity mismatch")
-  }
+  assert_eq(@symprint.to_string(sys.mass_matrix().get(0, 0)), oracle_mass)
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(sys.forcing().get(0, 0)),
+        oracle_forcing,
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        @symphysics.explicit_matrix_rows_string(sys.rhs()),
+        prefix + "sys.rhs()",
+      )
+  )
 }

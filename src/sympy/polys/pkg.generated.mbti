@@ -18,6 +18,22 @@ pub fn canonical_cmp(String) -> String
 
 pub fn compose(@symcore.Expr, @symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
+pub fn ddm_add(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn ddm_det(Array[Array[Int]], String) -> String raise
+
+pub fn ddm_inv(Array[Array[Int]], String) -> String raise
+
+pub fn ddm_matmul(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn ddm_mul(Array[Array[Int]], Int, String) -> String raise
+
+pub fn ddm_nullspace(Array[Array[Int]], String) -> String raise
+
+pub fn ddm_rank(Array[Array[Int]], String) -> Int raise
+
+pub fn ddm_rref(Array[Array[Int]], String) -> String raise
+
 pub fn decompose(@symcore.Expr, gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
 pub fn dict_from_expr(@symcore.Expr, gens? : Array[String]) -> String raise
@@ -115,6 +131,314 @@ pub fn dmp_sub_mul(DenseData, DenseData, DenseData, Int, domain? : String) -> St
 pub fn dmp_sub_term(DenseData, DenseData, Int, Int, domain? : String) -> String raise
 
 pub fn dmp_terms_gcd(DenseData, Int, domain? : String) -> String raise
+
+pub fn domain_abs_expr(String, String) -> String raise
+
+pub fn domain_add_expr(String, String, String) -> String raise
+
+pub fn domain_alg_field_from_poly(String, String, String, alias? : String?, root_index? : Int) -> String raise
+
+pub fn domain_algebraic_field(String, Array[String]) -> String raise
+
+pub fn domain_almosteq_expr(String, String, String) -> Bool raise
+
+pub fn domain_attr_bool_or_false(String, String) -> Bool raise
+
+pub fn domain_attr_bool_query(String, String) -> Bool raise
+
+pub fn domain_canonical_unit_expr(String, String) -> String raise
+
+pub fn domain_characteristic(String) -> Int raise
+
+pub fn domain_cofactors_expr(String, String, String) -> String raise
+
+pub fn domain_contains_expr(String, String) -> Bool raise
+
+pub fn domain_convert_expr(String, String) -> String raise
+
+pub fn domain_convert_from_expr(String, String, String) -> String raise
+
+pub fn domain_cyclotomic_field(String, Int, ss? : Bool, alias? : String, gen? : String?, root_index? : Int) -> String raise
+
+pub fn domain_denom_expr(String, String) -> String raise
+
+pub fn domain_div_expr(String, String, String) -> String raise
+
+pub fn domain_drop(String, Array[String]) -> String raise
+
+pub fn domain_evalf_expr(String, String) -> String raise
+
+pub fn domain_exquo_expr(String, String, String) -> String raise
+
+pub fn domain_exsqrt_expr(String, String) -> String raise
+
+pub fn domain_factorial_expr(String, String) -> String raise
+
+pub fn domain_frac_field(String, Array[String]) -> String raise
+
+pub fn domain_from_algebraic_field_expr(String, String, String) -> String raise
+
+pub fn domain_from_complex_field_expr(String, String, String) -> String raise
+
+pub fn domain_from_expression_domain_expr(String, String, String) -> String raise
+
+pub fn domain_from_expression_raw_domain_expr(String, String, String) -> String raise
+
+pub fn domain_from_ff_expr(String, String, String) -> String raise
+
+pub fn domain_from_ff_gmpy_expr(String, String, String) -> String raise
+
+pub fn domain_from_ff_python_expr(String, String, String) -> String raise
+
+pub fn domain_from_fraction_field_expr(String, String, String) -> String raise
+
+pub fn domain_from_gaussian_integer_ring_expr(String, String, String) -> String raise
+
+pub fn domain_from_gaussian_rational_field_expr(String, String, String) -> String raise
+
+pub fn domain_from_generalized_polynomial_ring_expr(String, String, String) -> String raise
+
+pub fn domain_from_global_polynomial_ring_expr(String, String, String) -> String raise
+
+pub fn domain_from_monogenic_finite_extension_expr(String, String, String) -> String raise
+
+pub fn domain_from_polynomial_ring_expr(String, String, String) -> String raise
+
+pub fn domain_from_qq_expr(String, String, String) -> String raise
+
+pub fn domain_from_qq_gmpy_expr(String, String, String) -> String raise
+
+pub fn domain_from_qq_python_expr(String, String, String) -> String raise
+
+pub fn domain_from_real_field_expr(String, String, String) -> String raise
+
+pub fn domain_from_sympy_expr(String, String) -> String raise
+
+pub fn domain_from_zz_expr(String, String, String) -> String raise
+
+pub fn domain_from_zz_gmpy_expr(String, String, String) -> String raise
+
+pub fn domain_from_zz_python_expr(String, String, String) -> String raise
+
+pub fn domain_gcd_expr(String, String, String) -> String raise
+
+pub fn domain_gcdex_expr(String, String, String) -> String raise
+
+pub fn domain_get_exact(String) -> String raise
+
+pub fn domain_get_field(String) -> String raise
+
+pub fn domain_get_ring(String) -> String raise
+
+pub fn domain_half_gcdex_expr(String, String, String) -> String raise
+
+pub fn domain_imag_expr(String, String) -> String raise
+
+pub fn domain_inject(String, Array[String]) -> String raise
+
+pub fn domain_invert_expr(String, String, String) -> String raise
+
+pub fn domain_is_exact(String) -> Bool raise
+
+pub fn domain_is_field(String) -> Bool raise
+
+pub fn domain_is_finite_field(String) -> Bool raise
+
+pub fn domain_is_negative_expr(String, String) -> Bool raise
+
+pub fn domain_is_negative_one_expr(String, String) -> Bool raise
+
+pub fn domain_is_nonnegative_expr(String, String) -> Bool raise
+
+pub fn domain_is_nonpositive_expr(String, String) -> Bool raise
+
+pub fn domain_is_one_expr(String, String) -> Bool raise
+
+pub fn domain_is_positive_expr(String, String) -> Bool raise
+
+pub fn domain_is_ring(String) -> Bool raise
+
+pub fn domain_is_square_expr(String, String) -> Bool raise
+
+pub fn domain_is_unit_expr(String, String) -> Bool raise
+
+pub fn domain_is_zero_expr(String, String) -> Bool raise
+
+pub fn domain_lcm_expr(String, String, String) -> String raise
+
+pub fn domain_log_expr(String, String, String) -> String raise
+
+pub fn domain_mul_expr(String, String, String) -> String raise
+
+pub fn domain_neg_expr(String, String) -> String raise
+
+pub fn domain_numer_expr(String, String) -> String raise
+
+pub fn domain_old_frac_field(String, Array[String]) -> String raise
+
+pub fn domain_old_poly_ring(String, Array[String]) -> String raise
+
+pub fn domain_one_expr(String) -> String raise
+
+pub fn domain_poly_ring(String, Array[String]) -> String raise
+
+pub fn domain_pos_expr(String, String) -> String raise
+
+pub fn domain_pow_expr(String, String, Int) -> String raise
+
+pub fn domain_quo_expr(String, String, String) -> String raise
+
+pub fn domain_real_expr(String, String) -> String raise
+
+pub fn domain_rem_expr(String, String, String) -> String raise
+
+pub fn domain_repr(String) -> String raise
+
+pub fn domain_revert_expr(String, String) -> String raise
+
+pub fn domain_set_domain(String, String) -> String raise
+
+pub fn domain_sqrt_expr(String, String) -> String raise
+
+pub fn domain_sub_expr(String, String, String) -> String raise
+
+pub fn domain_sum_expr(String, Array[String]) -> String raise
+
+pub fn domain_to_sympy_expr(String, String) -> String raise
+
+pub fn domain_unify(String, String) -> String raise
+
+pub fn domain_unify_composite(String, String) -> String raise
+
+pub fn domain_unify_with_symbols(String, String, Array[String]) -> String raise
+
+pub fn domain_zero_expr(String) -> String raise
+
+pub fn domainmatrix_add(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_adj_det(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_adj_poly_det(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_adjugate(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_cancel_denom_elementwise_expr(Array[Array[String]], String, String) -> String raise
+
+pub fn domainmatrix_cancel_denom_expr(Array[Array[String]], String, String) -> String raise
+
+pub fn domainmatrix_charpoly(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_charpoly_factor_blocks(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_charpoly_factor_list(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_choose_domain(Array[Array[Int]], String, field? : Bool, gaussian? : Bool, modulus? : Int?) -> String raise
+
+pub fn domainmatrix_clear_denoms(Array[Array[Int]], String, convert? : Bool) -> String raise
+
+pub fn domainmatrix_clear_denoms_expr(Array[Array[String]], String, convert? : Bool) -> String raise
+
+pub fn domainmatrix_clear_denoms_rowwise_expr(Array[Array[String]], String, convert? : Bool) -> String raise
+
+pub fn domainmatrix_columnspace(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_content_expr(Array[Array[String]], String) -> String raise
+
+pub fn domainmatrix_convert_to(Array[Array[Int]], String, String) -> String raise
+
+pub fn domainmatrix_convert_to_summary(Array[Array[Int]], String, String, fmt? : String) -> String raise
+
+pub fn domainmatrix_det(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_diagonal(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_dom_eigenvects_summary(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_eval_poly(Array[Array[Int]], Array[String], String) -> String raise
+
+pub fn domainmatrix_eval_poly_mul(Array[Array[Int]], Array[String], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_fflu(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_from_dod_roundtrip(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_from_dok_roundtrip(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_from_list_flat(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_from_list_sympy_expr(Array[Array[String]], field? : Bool, gaussian? : Bool, modulus? : Int?) -> String raise
+
+pub fn domainmatrix_from_matrix_expr(Array[Array[String]], fmt? : String, field? : Bool, gaussian? : Bool, modulus? : Int?) -> String raise
+
+pub fn domainmatrix_hstack_summary(Array[Array[Int]], String, String, Array[Array[Int]], String, String) -> String raise
+
+pub fn domainmatrix_internal_solve_summary(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_inv(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_inv_den(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_invariant_factors(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_is_smith_normal_form(Array[Array[Int]], String) -> Bool raise
+
+pub fn domainmatrix_lll(Array[Array[Int]]) -> String raise
+
+pub fn domainmatrix_lll_transform(Array[Array[Int]]) -> String raise
+
+pub fn domainmatrix_lu(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_lu_solve(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_matmul(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_mul(Array[Array[Int]], Int, String) -> String raise
+
+pub fn domainmatrix_nnz(Array[Array[Int]], String) -> Int raise
+
+pub fn domainmatrix_nullspace(Array[Array[Int]], String, divide_last? : Bool) -> String raise
+
+pub fn domainmatrix_pow(Array[Array[Int]], String, Int) -> String raise
+
+pub fn domainmatrix_primitive_expr(Array[Array[String]], String) -> String raise
+
+pub fn domainmatrix_qr(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_rowspace(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_rref(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_rref_den(Array[Array[Int]], String, rref_method? : String, keep_domain? : Bool) -> String raise
+
+pub fn domainmatrix_scc(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_smith_normal_decomp(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_smith_normal_form(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_solve_den(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_solve_den_charpoly(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_solve_den_rref(Array[Array[Int]], Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_to_dod(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_to_dok(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_to_field(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_to_flat_nz(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_to_list_flat(Array[Array[Int]], String) -> String raise
+
+pub fn domainmatrix_truediv_summary(Array[Array[Int]], String, String, fmt? : String) -> String raise
+
+pub fn domainmatrix_unify_summary(Array[Array[Int]], String, String, Array[Array[Int]], String, String, fmt? : String) -> String raise
+
+pub fn domainmatrix_vstack_summary(Array[Array[Int]], String, String, Array[Array[Int]], String, String) -> String raise
+
+pub fn domainscalar_from_expr(String) -> String raise
 
 pub fn dup_abs(Array[@symnum.BigRational], domain? : String) -> String raise
 
@@ -242,9 +566,29 @@ pub fn interpolate_values(Array[@symnum.BigRational], x? : String) -> String rai
 
 pub fn lcm_list(Array[@symcore.Expr], gens? : Array[String], domain? : String, modulus? : Int) -> String raise
 
+pub fn linsolve_internal_summary(Array[String], Array[String]) -> String raise
+
+pub fn linsolve_linear_eq_to_dict_summary(Array[String], Array[String]) -> String raise
+
+pub fn linsolve_sympy_dict_to_dm_summary(Array[Map[String, String]], Array[String], Array[String]) -> String raise
+
+pub fn matrix_hnf_code(Array[Array[Int]]) -> String raise
+
 pub fn mod_rational(Int, Int, Int) -> String raise
 
 pub fn monic(@symcore.Expr, modulus? : Int) -> String raise
+
+pub fn numberfield_field_isomorphic(String, String) -> Bool raise
+
+pub fn numberfield_field_isomorphism_coeffs(String, String) -> String raise
+
+pub fn numberfield_minpoly(String, gen? : String) -> String raise
+
+pub fn numberfield_primitive_coeffs(Array[String], gen? : String) -> Array[Int] raise
+
+pub fn numberfield_primitive_reps(Array[String], gen? : String) -> String raise
+
+pub fn numberfield_to_number_field_coeffs(String, String) -> String raise
 
 pub fn poly_degree_list(String, gens? : Array[String]) -> Array[Int] raise
 

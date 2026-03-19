@@ -6,9 +6,21 @@ import {
 }
 
 // Values
+pub fn apply_at_level(@symcore.Expr, (@symcore.Expr) -> @symcore.Expr, level? : Int) -> @symcore.Expr
+
 pub fn apply_pattern(SimplifyPattern, @symcore.Expr) -> @symcore.Expr
 
 pub fn apply_patterns_once(@symcore.Expr, Array[SimplifyPattern]) -> @symcore.Expr
+
+pub fn besselsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn collect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn collect_abs(@symcore.Expr) -> @symcore.Expr
+
+pub fn collect_const(@symcore.Expr) -> @symcore.Expr
+
+pub fn collect_sqrt(@symcore.Expr, evaluate? : Bool) -> @symcore.Expr
 
 pub fn combsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
 
@@ -16,15 +28,61 @@ pub fn cse(Array[@symcore.Expr], min_nodes? : Int) -> CseResult
 
 pub fn cse_reconstruct(CseResult) -> Array[@symcore.Expr]
 
+pub fn denom(@symcore.Expr) -> @symcore.Expr
+
+pub fn denom_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn epath(String, @symcore.Expr) -> Array[@symcore.Expr]
+
+pub fn epath_apply(String, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @symcore.Expr
+
+pub fn exptrigsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
+
+pub fn fraction_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn fu(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn futrig(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn gammasimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
 pub fn hyperexpand(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn hypersimilar(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Bool
+
+pub fn hypersimp(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn kroneckersimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn logcombine(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn nsimplify(@symcore.Expr, constants? : Array[@symcore.Expr], full? : Bool, rational? : Bool, max_passes? : Int) -> @symcore.Expr
+
+pub fn numer(@symcore.Expr) -> @symcore.Expr
+
+pub fn numer_expand(@symcore.Expr) -> @symcore.Expr
 
 pub fn plan_patterns(SimplifyPlan) -> Array[SimplifyPattern]
 
+pub fn posify(@symcore.Expr) -> (@symcore.Expr, Map[String, @symcore.Expr])
+
+pub fn powdenest(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
 pub fn powsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn rad_rationalize(@symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 
 pub fn radsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
 
 pub fn ratsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn ratsimpmodprime(@symcore.Expr, basis? : Array[@symcore.Expr], gens? : Array[@symcore.Expr], quick? : Bool, polynomial? : Bool, max_passes? : Int) -> @symcore.Expr
+
+pub fn rcollect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn separatevars(@symcore.Expr, force? : Bool) -> @symcore.Expr
 
 pub fn signsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
 
@@ -32,9 +90,63 @@ pub fn simplify(@symcore.Expr, plan? : SimplifyPlan, max_passes? : Int) -> @symc
 
 pub fn simplify_with_patterns(@symcore.Expr, Array[SimplifyPattern], max_passes? : Int) -> @symcore.Expr
 
+pub fn split_surds(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+
 pub fn sqrtdenest(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
 
+pub fn sub_post(@symcore.Expr) -> @symcore.Expr
+
+pub fn sub_pre(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr0(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr1(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr10(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr10i(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr11(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr111(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr12(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr12i(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr13(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr14(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr15(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr16(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr2(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr22(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr2i(@symcore.Expr, half? : Bool) -> @symcore.Expr
+
+pub fn tr3(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr4(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr5(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr6(@symcore.Expr, max? : Int, pow? : Bool) -> @symcore.Expr
+
+pub fn tr7(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr8(@symcore.Expr) -> @symcore.Expr
+
+pub fn tr9(@symcore.Expr) -> @symcore.Expr
+
 pub fn trigsimp(@symcore.Expr, max_passes? : Int) -> @symcore.Expr
+
+pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
+
+pub fn trpower(@symcore.Expr) -> @symcore.Expr
 
 // Errors
 
@@ -46,6 +158,28 @@ pub(all) struct CseResult {
 pub fn CseResult::reduced_exprs_copy(Self) -> Array[@symcore.Expr]
 pub fn CseResult::replacement_count(Self) -> Int
 pub fn CseResult::replacements_copy(Self) -> Array[(String, @symcore.Expr)]
+
+pub(all) struct EPath {
+  raw : String
+  selectors : Array[ESelector]
+}
+pub fn EPath::apply(Self, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @symcore.Expr
+pub fn EPath::new(String) -> Self
+pub fn EPath::select(Self, @symcore.Expr) -> Array[@symcore.Expr]
+
+pub(all) struct ESelector {
+  attrs : Array[String]
+  types : Array[String]
+  span : ESpan
+}
+
+pub(all) enum ESpan {
+  All
+  Index(Int)
+  Slice(Int?, Int?, Int?)
+}
+pub impl Eq for ESpan
+pub impl Show for ESpan
 
 pub(all) enum SimplifyPattern {
   FoldConstants

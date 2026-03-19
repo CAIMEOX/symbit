@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/rl"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/util",
+}
+
+// Values
+pub fn distribute(@util.ExprOp, @util.ExprOp) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn flatten(@symcore.Expr, new? : (@util.ExprOp, Array[@symcore.Expr]) -> @symcore.Expr) -> @symcore.Expr
+
+pub fn[K : Eq + Hash, C : Add] glom((@symcore.Expr) -> K, (@symcore.Expr) -> C, (C, K) -> @symcore.Expr) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn rebuild(@symcore.Expr) -> @symcore.Expr
+
+pub fn rm_id((@symcore.Expr) -> Bool, new? : (@util.ExprOp, Array[@symcore.Expr]) -> @symcore.Expr) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn[K : Compare] sort((@symcore.Expr) -> K, new? : (@util.ExprOp, Array[@symcore.Expr]) -> @symcore.Expr) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn subs(@symcore.Expr, @symcore.Expr) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn unpack(@symcore.Expr) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

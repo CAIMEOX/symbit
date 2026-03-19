@@ -28,9 +28,7 @@ test "field_elem: expect_rational rejects non-constant extensions" {
   let gf_res : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
     gf_non_const,
   )
-  guard gf_res is Err(PolyError::DomainMismatch) else {
-    fail("expected DomainMismatch")
-  }
+  assert_true(gf_res is Err(PolyError::DomainMismatch))
 
   let a = @symcore.symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
@@ -48,9 +46,7 @@ test "field_elem: expect_rational rejects non-constant extensions" {
   let alg_res : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
     alg_non_const,
   )
-  guard alg_res is Err(PolyError::DomainMismatch) else {
-    fail("expected DomainMismatch")
-  }
+  assert_true(alg_res is Err(PolyError::DomainMismatch))
 }
 
 ///|
@@ -83,9 +79,7 @@ fn fe_wb_minpoly(
 
 ///|
 test "field_elem wb: helper branches and domain mismatches" {
-  guard fe_trim([], 5).to_string() == "[0]" else {
-    fail("fe_trim([]) should canonicalize to [0]")
-  }
+  assert_eq(fe_trim([], 5).to_string(), "[0]")
   inspect(fe_mod_inv_int(2, 4), content="0")
 
   let pow_neg = fe_pow(
@@ -101,17 +95,13 @@ test "field_elem wb: helper branches and domain mismatches" {
     FieldElem::GFp(5, 1),
     FieldElem::GFp(7, 1),
   )
-  guard gf_add_bad is Err(PolyError::DomainMismatch) else {
-    fail("GFp add with different primes should raise DomainMismatch")
-  }
+  assert_true(gf_add_bad is Err(PolyError::DomainMismatch))
 
   let gfext_add_bad : Result[FieldElem, PolyError] = try? fe_add(
     FieldElem::GFExt(5, [1], [1, 0, 1]),
     FieldElem::GFExt(5, [1], [1, 1, 1]),
   )
-  guard gfext_add_bad is Err(PolyError::DomainMismatch) else {
-    fail("GFExt add with different mod poly should raise DomainMismatch")
-  }
+  assert_true(gfext_add_bad is Err(PolyError::DomainMismatch))
 
   let a = @symcore.symbol("a")
   let minpoly = fe_wb_minpoly(
@@ -132,13 +122,9 @@ test "field_elem wb: helper branches and domain mismatches" {
     "b",
   )
   let alg_add_bad : Result[FieldElem, PolyError] = try? fe_add(alg1, alg2)
-  guard alg_add_bad is Err(PolyError::DomainMismatch) else {
-    fail("AlgExt add with different generator should raise DomainMismatch")
-  }
+  assert_true(alg_add_bad is Err(PolyError::DomainMismatch))
   let alg_mul_bad : Result[FieldElem, PolyError] = try? fe_mul(alg1, alg2)
-  guard alg_mul_bad is Err(PolyError::DomainMismatch) else {
-    fail("AlgExt mul with different generator should raise DomainMismatch")
-  }
+  assert_true(alg_mul_bad is Err(PolyError::DomainMismatch))
 }
 
 ///|
@@ -146,30 +132,22 @@ test "field_elem wb: inverses and conversion guard paths" {
   let inv_qq_zero : Result[FieldElem, PolyError] = try? fe_inv(
     FieldElem::QQ(@symnum.BigRational::zero()),
   )
-  guard inv_qq_zero is Err(PolyError::DivisionByZero) else {
-    fail("QQ inverse of zero should raise DivisionByZero")
-  }
+  assert_true(inv_qq_zero is Err(PolyError::DivisionByZero))
 
   let inv_cc_zero : Result[FieldElem, PolyError] = try? fe_inv(
     FieldElem::CC(@symnum.BigRational::zero(), @symnum.BigRational::zero()),
   )
-  guard inv_cc_zero is Err(PolyError::DivisionByZero) else {
-    fail("CC inverse of zero should raise DivisionByZero")
-  }
+  assert_true(inv_cc_zero is Err(PolyError::DivisionByZero))
 
   let inv_gfp_zero : Result[FieldElem, PolyError] = try? fe_inv(
     FieldElem::GFp(5, 0),
   )
-  guard inv_gfp_zero is Err(PolyError::DivisionByZero) else {
-    fail("GFp inverse of zero should raise DivisionByZero")
-  }
+  assert_true(inv_gfp_zero is Err(PolyError::DivisionByZero))
 
   let inv_gfext_zero : Result[FieldElem, PolyError] = try? fe_inv(
     FieldElem::GFExt(5, [0], [1, 0, 1]),
   )
-  guard inv_gfext_zero is Err(PolyError::DivisionByZero) else {
-    fail("GFExt inverse of zero should raise DivisionByZero")
-  }
+  assert_true(inv_gfext_zero is Err(PolyError::DivisionByZero))
 
   let x = @symcore.symbol("x")
   let minpoly = fe_wb_minpoly("x", x ^ @symcore.int(2), Domain::QQ)
@@ -180,17 +158,13 @@ test "field_elem wb: inverses and conversion guard paths" {
     ],
     minpoly,
   )
-  guard inv_alg_nonfield is Err(PolyError::DomainNotField) else {
-    fail("fe_alg_poly_inv should fail in non-field quotient")
-  }
+  assert_true(inv_alg_nonfield is Err(PolyError::DomainNotField))
 
   let bad_zz : Result[FieldElem, PolyError] = try? fe_from_rational(
     fe_wb_rat(1, 2),
     Domain::ZZ,
   )
-  guard bad_zz is Err(PolyError::CoefficientNotInteger) else {
-    fail("fe_from_rational(1/2, ZZ) should reject non-integers")
-  }
+  assert_true(bad_zz is Err(PolyError::CoefficientNotInteger))
 
   let frac_gf = fe_from_rational(fe_wb_rat(8, 3), Domain::Frac(Domain::GF(7)))
   inspect(fe_to_string(frac_gf), content="5")
@@ -200,27 +174,21 @@ test "field_elem wb: inverses and conversion guard paths" {
     ["a", "b"],
     [@symcore.int(1)],
   )
-  guard bad_loader_gen is Err(PolyError::BadGenerator("algext")) else {
-    fail("load_algext_minpoly should require one generator/relation")
-  }
+  assert_true(bad_loader_gen is Err(PolyError::BadGenerator("algext")))
 
   let bad_loader_base : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
     Domain::ZZ,
     ["a"],
     [@symcore.symbol("a") + @symcore.int(1)],
   )
-  guard bad_loader_base is Err(PolyError::DomainNotField) else {
-    fail("load_algext_minpoly should reject non-field base domains")
-  }
+  assert_true(bad_loader_base is Err(PolyError::DomainNotField))
 
   let bad_loader_deg : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
     Domain::QQ,
     ["a"],
     [@symcore.int(1)],
   )
-  guard bad_loader_deg is Err(PolyError::BadExponent) else {
-    fail("load_algext_minpoly should reject degree <= 0 relations")
-  }
+  assert_true(bad_loader_deg is Err(PolyError::BadExponent))
 }
 
 ///|
@@ -235,16 +203,12 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
   let add_res = fe_alg_poly_add([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
   ])
-  guard add_res.length() == 2 && add_res[0].to_string() == "3" else {
-    fail("fe_alg_poly_add padding branch mismatch")
-  }
+  assert_true(add_res.length() == 2 && add_res[0].to_string() == "3")
 
   let sub_res = fe_alg_poly_sub([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
   ])
-  guard sub_res.length() == 2 && sub_res[0].to_string() == "-1" else {
-    fail("fe_alg_poly_sub padding branch mismatch")
-  }
+  assert_true(sub_res.length() == 2 && sub_res[0].to_string() == "-1")
 
   let non_monic = fe_wb_minpoly(
     "a",
@@ -255,32 +219,24 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
     [fe_wb_qq(1, 1), fe_wb_qq(0, 1), fe_wb_qq(1, 1)],
     non_monic,
   )
-  guard mod_bad is Err(PolyError::DomainNotField) else {
-    fail("fe_alg_poly_mod should reject non-monic minimal polynomial")
-  }
+  assert_true(mod_bad is Err(PolyError::DomainNotField))
 
   let div_zero = fe_alg_poly_divmod([fe_wb_qq(3, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(0, 1),
   ])
-  guard div_zero.0.length() == 1 && div_zero.1.length() == 2 else {
-    fail("fe_alg_poly_divmod zero divisor branch mismatch")
-  }
+  assert_true(div_zero.0.length() == 1 && div_zero.1.length() == 2)
 
   let div_short = fe_alg_poly_divmod([fe_wb_qq(1, 1)], [
     fe_wb_qq(1, 1),
     fe_wb_qq(1, 1),
   ])
-  guard div_short.0.length() == 1 else {
-    fail("fe_alg_poly_divmod n<m quotient shape mismatch")
-  }
+  assert_eq(div_short.0.length(), 1)
 
   let inv_zero : Result[Array[FieldElem], PolyError] = try? fe_alg_poly_inv(
     [fe_wb_qq(0, 1)],
     minpoly,
   )
-  guard inv_zero is Err(PolyError::DivisionByZero) else {
-    fail("fe_alg_poly_inv(0) should raise DivisionByZero")
-  }
+  assert_true(inv_zero is Err(PolyError::DivisionByZero))
 
   let cc_str = fe_to_string(
     FieldElem::CC(
@@ -301,9 +257,7 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
   let bad_cc_proj : Result[@symnum.BigRational, PolyError] = try? fe_expect_rational(
     FieldElem::CC(@symnum.BigRational::one(), @symnum.BigRational::one()),
   )
-  guard bad_cc_proj is Err(PolyError::DomainMismatch) else {
-    fail("fe_expect_rational should reject non-real CC")
-  }
+  assert_true(bad_cc_proj is Err(PolyError::DomainMismatch))
 
   let gfext_empty = fe_expect_rational(FieldElem::GFExt(5, [], [1, 0, 1]))
   inspect(gfext_empty.to_string(), content="0")
@@ -317,9 +271,7 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
 ///|
 test "field_elem wb: remaining branch sweep" {
   let poly_add = fe_poly_add([1, 2], [3], 5)
-  guard poly_add.length() == 2 else {
-    fail("fe_poly_add should keep max input length")
-  }
+  assert_eq(poly_add.length(), 2)
 
   let qpow = fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
   inspect(fe_to_string(qpow), content="8")
@@ -342,64 +294,42 @@ test "field_elem wb: remaining branch sweep" {
     "a",
   )
   let apow = fe_pow(alg, 2)
-  guard apow is FieldElem::AlgExt(_, _, _, _) else {
-    fail("fe_pow should preserve AlgExt shape")
-  }
+  assert_true(apow is FieldElem::AlgExt(_, _, _, _))
 
-  guard fe_is_negative(
-    FieldElem::CC(
-      @symnum.BigRational::from_int(-2),
-      @symnum.BigRational::zero(),
-    ),
-  ) else {
-    fail("fe_is_negative should detect negative real CC")
-  }
-  guard fe_is_positive(
-    FieldElem::CC(@symnum.BigRational::from_int(3), @symnum.BigRational::zero()),
-  ) else {
-    fail("fe_is_positive should detect positive real CC")
-  }
-  guard !fe_is_negative(FieldElem::GFp(5, 4)) else {
-    fail("fe_is_negative should be false on finite-field elements")
-  }
-  guard !fe_is_positive(FieldElem::GFp(5, 4)) else {
-    fail("fe_is_positive should be false on finite-field elements")
-  }
-  guard !fe_is_negative(FieldElem::GFExt(5, [1], [1, 0, 1])) else {
-    fail("fe_is_negative should be false on GFExt elements")
-  }
-  guard !fe_is_positive(FieldElem::GFExt(5, [1], [1, 0, 1])) else {
-    fail("fe_is_positive should be false on GFExt elements")
-  }
+  assert_true(
+    fe_is_negative(
+        FieldElem::CC(
+          @symnum.BigRational::from_int(-2),
+          @symnum.BigRational::zero(),
+        ),
+      )
+  )
+  assert_true(
+    fe_is_positive(
+        FieldElem::CC(@symnum.BigRational::from_int(3), @symnum.BigRational::zero()),
+      )
+  )
+  assert_true(!fe_is_negative(FieldElem::GFp(5, 4)))
+  assert_true(!fe_is_positive(FieldElem::GFp(5, 4)))
+  assert_true(!fe_is_negative(FieldElem::GFExt(5, [1], [1, 0, 1])))
+  assert_true(!fe_is_positive(FieldElem::GFExt(5, [1], [1, 0, 1])))
   let alg_sign_probe = FieldElem::AlgExt(
     Domain::QQ,
     [FieldElem::QQ(@symnum.BigRational::one())],
     minpoly,
     "a",
   )
-  guard !fe_is_negative(alg_sign_probe) else {
-    fail("fe_is_negative should be false on AlgExt elements")
-  }
-  guard !fe_is_positive(alg_sign_probe) else {
-    fail("fe_is_positive should be false on AlgExt elements")
-  }
+  assert_true(!fe_is_negative(alg_sign_probe))
+  assert_true(!fe_is_positive(alg_sign_probe))
 
   let pm_edge = fe_poly_mod([1, 0], [1], 1)
-  guard pm_edge.length() == 0 else {
-    fail(
-      "fe_poly_mod should pop zero-leading residue in degenerate modulus case",
-    )
-  }
+  assert_eq(pm_edge.length(), 0)
   let mp_const = fe_wb_minpoly("a", @symcore.int(1), Domain::QQ)
   let alg_mod_edge = fe_alg_poly_mod(
     [FieldElem::QQ(@symnum.BigRational::zero())],
     mp_const,
   )
-  guard alg_mod_edge.length() == 0 else {
-    fail(
-      "fe_alg_poly_mod should pop zero-leading residue for constant minpoly edge",
-    )
-  }
+  assert_eq(alg_mod_edge.length(), 0)
 
   inspect(
     fe_to_string(
@@ -429,9 +359,7 @@ test "field_elem wb: remaining branch sweep" {
     FieldElem::QQ(@symnum.BigRational::one()),
     FieldElem::GFp(5, 1),
   )
-  guard add_default_bad is Err(PolyError::DomainMismatch) else {
-    fail("fe_add mismatched domains should raise DomainMismatch")
-  }
+  assert_true(add_default_bad is Err(PolyError::DomainMismatch))
 
   inspect(
     fe_to_string(
@@ -461,23 +389,17 @@ test "field_elem wb: remaining branch sweep" {
     FieldElem::GFp(5, 2),
     FieldElem::GFp(7, 3),
   )
-  guard mul_gfp_bad is Err(PolyError::DomainMismatch) else {
-    fail("fe_mul GFp mismatch should raise DomainMismatch")
-  }
+  assert_true(mul_gfp_bad is Err(PolyError::DomainMismatch))
   let mul_gfext_bad : Result[FieldElem, PolyError] = try? fe_mul(
     FieldElem::GFExt(5, [1], [1, 0, 1]),
     FieldElem::GFExt(5, [1], [1, 1, 1]),
   )
-  guard mul_gfext_bad is Err(PolyError::DomainMismatch) else {
-    fail("fe_mul GFExt mismatch should raise DomainMismatch")
-  }
+  assert_true(mul_gfext_bad is Err(PolyError::DomainMismatch))
   let mul_default_bad : Result[FieldElem, PolyError] = try? fe_mul(
     FieldElem::QQ(@symnum.BigRational::one()),
     FieldElem::GFp(5, 2),
   )
-  guard mul_default_bad is Err(PolyError::DomainMismatch) else {
-    fail("fe_mul default mismatch should raise DomainMismatch")
-  }
+  assert_true(mul_default_bad is Err(PolyError::DomainMismatch))
 
   let inv_alg_zero : Result[FieldElem, PolyError] = try? fe_inv(
     FieldElem::AlgExt(
@@ -487,9 +409,7 @@ test "field_elem wb: remaining branch sweep" {
       "a",
     ),
   )
-  guard inv_alg_zero is Err(PolyError::DivisionByZero) else {
-    fail("fe_inv should reject zero AlgExt elements")
-  }
+  assert_true(inv_alg_zero is Err(PolyError::DivisionByZero))
 
   let cc_from_rat = fe_from_rational(fe_wb_rat(7, 2), Domain::CC)
   inspect(fe_to_string(cc_from_rat), content="7/2")
@@ -523,14 +443,10 @@ test "field_elem wb: remaining branch sweep" {
   )
   inspect(alg_str, content="1 + a")
 
-  guard fe_alg_poly_trim([]).length() == 1 else {
-    fail("fe_alg_poly_trim([]) should canonicalize to [0]")
-  }
+  assert_eq(fe_alg_poly_trim([]).length(), 1)
   let padded = fe_alg_poly_add([fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
     fe_wb_qq(3, 1),
   ])
-  guard padded.length() == 2 && padded[1].to_string() == "3" else {
-    fail("fe_alg_poly_add should pad shorter input with zeros")
-  }
+  assert_true(padded.length() == 2 && padded[1].to_string() == "3")
 }

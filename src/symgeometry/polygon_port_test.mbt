@@ -16,12 +16,12 @@ test "geometry.polygon parity repr and area" {
       "Polygon(Point2D(0, 0), Point2D(4, 0), Point2D(4, 3), Point2D(0, 3))",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(poly.area()),
-    "Polygon(Point2D(0, 0), Point2D(4, 0), Point2D(4, 3), Point2D(0, 3)).area",
-  ) else {
-    fail("polygon area parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(poly.area()),
+        "Polygon(Point2D(0, 0), Point2D(4, 0), Point2D(4, 3), Point2D(0, 3)).area",
+      )
+  )
 }
 
 ///|
@@ -42,24 +42,24 @@ test "geometry.regular polygon and triangle parity" {
       "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[0]",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    geometry_py_expr_text(args.1),
-    "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[1]",
-  ) else {
-    fail("regular polygon args radius parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        geometry_py_expr_text(args.1),
+        "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[1]",
+      )
+  )
   assert_eq(
     args.2.to_string(),
     @sympy_geometry.geometry_eval_str(
       "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[2]",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    geometry_py_expr_text(args.3),
-    "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[3]",
-  ) else {
-    fail("regular polygon args rotation parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        geometry_py_expr_text(args.3),
+        "RegularPolygon(Point2D(0, 0), 1, 4, 0).args[3]",
+      )
+  )
   assert_eq(
     rp.circumcenter().repr(),
     @sympy_geometry.geometry_eval_repr(
@@ -67,43 +67,43 @@ test "geometry.regular polygon and triangle parity" {
     ),
   )
   let vertices = rp.vertices()
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(vertices[0].x()),
-    "RegularPolygon(Point2D(0, 0), 1, 4, 0).vertices[0].x",
-  ) else {
-    fail("regular polygon vertex0 x parity")
-  }
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(vertices[1].y()),
-    "RegularPolygon(Point2D(0, 0), 1, 4, 0).vertices[1].y",
-  ) else {
-    fail("regular polygon vertex1 y parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(vertices[0].x()),
+        "RegularPolygon(Point2D(0, 0), 1, 4, 0).vertices[0].x",
+      )
+  )
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(vertices[1].y()),
+        "RegularPolygon(Point2D(0, 0), 1, 4, 0).vertices[1].y",
+      )
+  )
   let tri = triangle(
     point2d(@symcore.int(0), @symcore.int(0)),
     point2d(@symcore.int(4), @symcore.int(0)),
     point2d(@symcore.int(0), @symcore.int(3)),
   )
   let incenter = tri.incenter()
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(incenter.x()),
-    "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).incenter.x",
-  ) else {
-    fail("triangle incenter x parity")
-  }
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(incenter.y()),
-    "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).incenter.y",
-  ) else {
-    fail("triangle incenter y parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(incenter.x()),
+        "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).incenter.x",
+      )
+  )
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(incenter.y()),
+        "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).incenter.y",
+      )
+  )
   let circumcircle = tri.circumcircle()
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(circumcircle.radius()),
-    "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).circumcircle.radius",
-  ) else {
-    fail("triangle circumcircle radius parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(circumcircle.radius()),
+        "Triangle(Point2D(0, 0), Point2D(4, 0), Point2D(0, 3)).circumcircle.radius",
+      )
+  )
   assert_eq(
     expr_map_summary(
       geometry_regular_polygon(rp).parameter_value(
@@ -173,12 +173,12 @@ test "geometry.triangle parity extended centers" {
       "Triangle(Point2D(0, 0), Point2D(1, 0), Point2D(0, 1)).nine_point_circle.center",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    geometry_py_expr_text(nine.radius()),
-    "Triangle(Point2D(0, 0), Point2D(1, 0), Point2D(0, 1)).nine_point_circle.radius",
-  ) else {
-    fail("triangle nine-point radius parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        geometry_py_expr_text(nine.radius()),
+        "Triangle(Point2D(0, 0), Point2D(1, 0), Point2D(0, 1)).nine_point_circle.radius",
+      )
+  )
   assert_eq(
     tri.eulerline().repr(),
     @sympy_geometry.geometry_eval_repr(

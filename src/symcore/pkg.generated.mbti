@@ -31,6 +31,14 @@ pub fn pow(Expr, Expr) -> Expr
 
 pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 
+pub fn raw_add(Array[Expr]) -> Expr
+
+pub fn raw_function(String, Array[Expr]) -> Expr
+
+pub fn raw_mul(Array[Expr]) -> Expr
+
+pub fn raw_pow(Expr, Expr) -> Expr
+
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
 pub fn subst(Expr, Map[String, Expr]) -> Expr
@@ -50,6 +58,9 @@ pub enum Expr {
 }
 pub impl Add for Expr
 pub impl BitXOr for Expr
+pub impl Compare for Expr
+pub impl Eq for Expr
+pub impl Hash for Expr
 pub impl Mul for Expr
 pub impl Sub for Expr
 

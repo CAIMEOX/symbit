@@ -1,0 +1,136 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/strategies"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn branch_canon_branch5(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_canon_posdec(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_chain_examples(Int, Int) -> Array[Int] raise
+
+pub fn branch_condition_even_branch5(Int) -> Array[Int] raise
+
+pub fn branch_debug_posdec(Int) -> String raise
+
+pub fn branch_do_one_inc_posdec(Int) -> Array[Int] raise
+
+pub fn branch_exhaust_branch5(Int) -> Array[Int] raise
+
+pub fn branch_multiplex_posdec_branch5(Int) -> Array[Int] raise
+
+pub fn branch_notempty_even_only(Int) -> Array[Int] raise
+
+pub fn branch_onaction_inc() -> Array[String] raise
+
+pub fn branch_sfilter_even_one_to_n(Int) -> Array[Int] raise
+
+pub fn branch_traverse_sall_do_one(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_traverse_sall_inc(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_traverse_top_down_inc(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_traverse_top_down_split5(@symcore.Expr) -> Array[String] raise
+
+pub fn branch_yieldify_inc(Int) -> Array[Int] raise
+
+pub fn core_chain_posdec(Int) -> Int raise
+
+pub fn core_condition_posdec(Int) -> Int raise
+
+pub fn core_debug_log_posdec(Int) -> String raise
+
+pub fn core_do_one_pair(Int) -> Int raise
+
+pub fn core_do_one_posdec(Int) -> Int raise
+
+pub fn core_exhaust_posdec(Int) -> Int raise
+
+pub fn core_memoize_posdec(Int) -> Int raise
+
+pub fn core_minimize(Int, maximize? : Bool) -> Int raise
+
+pub fn core_null_safe(Int) -> Int raise
+
+pub fn core_switch_mod3(Int) -> Int raise
+
+pub fn core_tryit_assertion(Int) -> Int raise
+
+pub fn rl_distribute_add_mul(@symcore.Expr) -> String raise
+
+pub fn rl_distribute_custom() -> String raise
+
+pub fn rl_flatten(@symcore.Expr) -> String raise
+
+pub fn rl_glom(@symcore.Expr) -> String raise
+
+pub fn rl_rebuild(@symcore.Expr) -> String raise
+
+pub fn rl_rm_id(@symcore.Expr) -> String raise
+
+pub fn rl_sort(@symcore.Expr) -> String raise
+
+pub fn rl_subs(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn rl_unpack(@symcore.Expr) -> String raise
+
+pub fn tools_subs(@symcore.Expr, Map[@symcore.Expr, @symcore.Expr]) -> String raise
+
+pub fn tools_subs_empty(@symcore.Expr) -> String raise
+
+pub fn tools_typed(@symcore.Expr) -> String raise
+
+pub fn traverse_bottom_up_once(@symcore.Expr) -> String raise
+
+pub fn traverse_bottom_up_zero_symbols(@symcore.Expr) -> String raise
+
+pub fn traverse_expr_fns(@symcore.Expr) -> String raise
+
+pub fn traverse_sall_zero_symbols(@symcore.Expr) -> String raise
+
+pub fn traverse_top_down_once(@symcore.Expr) -> String raise
+
+pub fn traverse_top_down_zero_symbols(@symcore.Expr) -> String raise
+
+pub fn tree_allresults_1(Int) -> Array[Int] raise
+
+pub fn tree_allresults_2(Int) -> Array[Int] raise
+
+pub fn tree_allresults_3(Int) -> Array[Int] raise
+
+pub fn tree_allresults_single(Int) -> Array[Int] raise
+
+pub fn tree_brute(Int) -> Int raise
+
+pub fn tree_brute_inc(Int) -> Int raise
+
+pub fn tree_greedy_chain(Int, maximize? : Bool) -> Int raise
+
+pub fn tree_greedy_max(Int) -> Int raise
+
+pub fn tree_treeapply_addmul() -> Int raise
+
+pub fn tree_treeapply_leaf_square() -> Int raise
+
+pub fn tree_treeapply_maximize(Int) -> Int raise
+
+pub fn tree_treeapply_minmax() -> Int raise
+
+pub fn tree_treeapply_strategies_1() -> Int raise
+
+pub fn tree_treeapply_strategies_2() -> Int raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

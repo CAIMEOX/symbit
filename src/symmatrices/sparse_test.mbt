@@ -83,8 +83,8 @@ test "matrices sparse immutable structural and solver helpers" {
   let s = sparse_matrix(2, 2, entries)
   let copy = s.copy()
   assert_true(copy.equals(s))
-  assert_true(copy.as_immutable().nnz() == 2)
-  assert_true(copy.as_mutable().nnz() == 2)
+  assert_eq(copy.as_immutable().nnz(), 2)
+  assert_eq(copy.as_mutable().nnz(), 2)
   inspect(s.reshape(1, 4).to_string(), content="Matrix([[1, 0, 0, 2]])")
   inspect(s.extract([0, 1], [1]).to_string(), content="Matrix([[0], [2]])")
   let join_entries : Map[(Int, Int), Expr] = {}

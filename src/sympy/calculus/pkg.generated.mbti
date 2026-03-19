@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/calculus"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn accum_abs(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_add(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_delta(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_div(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_mid(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_mul(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_pow(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn accum_sub(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn apply_finite_diff_str(Int, Array[@symnum.BigRational], Array[@symcore.Expr], x0? : @symnum.BigRational) -> String raise
+
+pub fn euler_equations_str(@symcore.Expr, Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[String] raise
+
+pub fn finite_diff_weights_str(Int, Array[@symnum.BigRational], x0? : @symnum.BigRational) -> String raise
+
+pub fn periodicity_str(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn singularities_str(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn sympy_normalize(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

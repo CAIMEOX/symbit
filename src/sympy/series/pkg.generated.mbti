@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/series"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn approximants_str(Array[Int], String) -> String raise
+
+pub fn difference_delta_str(@symcore.Expr, String, step? : Int) -> String raise
+
+pub fn fourier_sigma_str(@symcore.Expr, String, @symcore.Expr, @symcore.Expr, Int) -> String raise
+
+pub fn fourier_term_str(@symcore.Expr, String, @symcore.Expr, @symcore.Expr, Int) -> String raise
+
+pub fn fourier_truncate_str(@symcore.Expr, String, @symcore.Expr, @symcore.Expr, Int) -> String raise
+
+pub fn fps_coeff_str(@symcore.Expr, String, @symcore.Expr, Int) -> String raise
+
+pub fn fps_slice_str(@symcore.Expr, String, @symcore.Expr, Int, Int, step? : Int) -> String raise
+
+pub fn fps_truncate_str(@symcore.Expr, String, @symcore.Expr, Int) -> String raise
+
+pub fn gruntz_str(@symcore.Expr, String, @symcore.Expr, dir? : String) -> String raise
+
+pub fn limit_seq_str(@symcore.Expr, String) -> String raise
+
+pub fn limit_str(@symcore.Expr, String, @symcore.Expr, dir? : String) -> String raise
+
+pub fn pade_approximant_str(@symcore.Expr, String, @symcore.Expr, Int, n? : Int) -> String raise
+
+pub fn residue_str(@symcore.Expr, String, @symcore.Expr) -> String raise
+
+pub fn richardson_str(@symcore.Expr, String, Int, Int) -> String raise
+
+pub fn series_str(@symcore.Expr, String, @symcore.Expr, Int, dir? : String) -> String raise
+
+pub fn shanks_str(@symcore.Expr, String, Int, m? : Int) -> String raise
+
+pub fn sympy_equiv_str(String, String) -> Bool raise
+
+pub fn sympy_normalize_str(String) -> String raise
+
+pub fn sympy_simplify_str(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

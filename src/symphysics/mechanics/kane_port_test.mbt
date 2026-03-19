@@ -41,36 +41,33 @@ test "physics.mechanics parity kane spring mass damper" {
   let oracle_mass = @sympy_physics.mechanics_summary(
     prefix + "[[str(x) for x in row] for row in KM.mass_matrix.tolist()]",
   )
-  guard kane_port_matrix_entry_summary(km.mass_matrix()).replace(
-      old=" ",
-      new="",
-    ) ==
-    oracle_mass.replace(old=" ", new="") else {
-    fail("kane mass matrix parity mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(km.forcing().get(0, 0)),
-    "-c*u(t) - k*q(t)",
-  ) else {
-    fail("kane forcing parity mismatch")
-  }
+  assert_eq(kane_port_matrix_entry_summary(km.mass_matrix()).replace(
+          old=" ",
+          new="",
+        ), oracle_mass.replace(old=" ", new=""))
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(km.forcing().get(0, 0)),
+        "-c*u(t) - k*q(t)",
+      )
+  )
   let rhs = km.rhs()
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(0, 0)),
-    "u(t)",
-  ) else {
-    fail("kane rhs first entry mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(1, 0)),
-    "-(k*q(t) + c*u(t))/m",
-  ) else {
-    fail("kane rhs acceleration mismatch")
-  }
-  guard @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(km.linearize(a_and_b=true).0),
-    prefix + "KM.linearize(A_and_B=True)[0]",
-  ) else {
-    fail("kane linearize parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(rhs.get(0, 0)),
+        "u(t)",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(rhs.get(1, 0)),
+        "-(k*q(t) + c*u(t))/m",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_matrix_equal(
+        @symphysics.explicit_matrix_rows_string(km.linearize(a_and_b=true).0),
+        prefix + "KM.linearize(A_and_B=True)[0]",
+      )
+  )
 }

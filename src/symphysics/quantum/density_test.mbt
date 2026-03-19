@@ -7,12 +7,8 @@ test "physics.quantum.density: local semantics" {
   let k1 = ket([one]).as_expr()
   let rho = density([(k0, half), (k1, half)])
 
-  guard @symprint.to_string(rho.states()) == "Tuple(Ket(0), Ket(1))" else {
-    fail("density states")
-  }
-  guard @symprint.to_string(rho.probs()) == "Tuple(1/2, 1/2)" else {
-    fail("density probs")
-  }
+  assert_eq(@symprint.to_string(rho.states()), "Tuple(Ket(0), Ket(1))")
+  assert_eq(@symprint.to_string(rho.probs()), "Tuple(1/2, 1/2)")
   quantum_test_assert_expr_equal(
     rho.get_state(1),
     "Ket(1)",
@@ -105,7 +101,7 @@ test "physics.quantum.density: matrix entropy and fidelity" {
   )
   let fidelity_lr = fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1)
   let fidelity_rl = fidelity(rho_right.as_expr(), rho_left.as_expr(), nqubits=1)
-  guard fidelity_lr == fidelity_rl else { fail("density fidelity symmetry") }
+  assert_true(fidelity_lr == fidelity_rl)
 }
 
 ///|

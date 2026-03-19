@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/discrete"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn convolution_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr], cycle? : Int, dps? : Int, prime? : Int, dyadic? : Bool, subset? : Bool) -> Bool raise
+
+pub fn convolution_fft_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr], dps? : Int) -> Bool raise
+
+pub fn convolution_fwht_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn convolution_int_equiv(Array[Int], Array[Int], Array[Int]) -> Bool raise
+
+pub fn convolution_ntt_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr], Int) -> Bool raise
+
+pub fn convolution_subset_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn covering_product_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn fft_equiv(Array[@symcore.Expr], Array[@symcore.Expr], dps? : Int) -> Bool raise
+
+pub fn fwht_equiv(Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn ifft_equiv(Array[@symcore.Expr], Array[@symcore.Expr], dps? : Int) -> Bool raise
+
+pub fn ifwht_equiv(Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn intersecting_product_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Array[@symcore.Expr]) -> Bool raise
+
+pub fn intt_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Int) -> Bool raise
+
+pub fn inverse_mobius_transform_equiv(Array[@symcore.Expr], Array[@symcore.Expr], subset? : Bool) -> Bool raise
+
+pub fn linrec_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Int, @symcore.Expr) -> Bool raise
+
+pub fn mobius_transform_equiv(Array[@symcore.Expr], Array[@symcore.Expr], subset? : Bool) -> Bool raise
+
+pub fn ntt_equiv(Array[@symcore.Expr], Array[@symcore.Expr], Int) -> Bool raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

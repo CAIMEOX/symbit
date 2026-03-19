@@ -5,9 +5,7 @@ fn gaussopt_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  guard (try! @sympy_physics.expr_equal(ours, rhs)) else {
-    fail("\{context}: ours=\{ours}; expected=\{rhs}")
-  }
+  assert_true((try! @sympy_physics.expr_equal(ours, rhs)))
 }
 
 ///|
@@ -20,9 +18,7 @@ fn gaussopt_assert_matrix_equal(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(try! lhs.get(i, j))
-      guard (try! @sympy_physics.expr_equal(ours, rhs[idx])) else {
-        fail("\{context}[\{idx}]: ours=\{ours}; expected=\{rhs[idx]}")
-      }
+      assert_true((try! @sympy_physics.expr_equal(ours, rhs[idx])))
       idx = idx + 1
     }
   }

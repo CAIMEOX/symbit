@@ -51,45 +51,19 @@ test "physics.continuum_mechanics.cable: oracle parity" {
     "print(N(d.reaction_loads[Symbol('R_B_x')], 30))\n" +
     "print(N(d.reaction_loads[Symbol('R_B_y')], 30))\n",
   )
-  guard oracle.length() == 14 else { fail("unexpected oracle cable output") }
-  guard continuum_expr_eq(c.tension()["A_Z"], oracle[0]) else {
-    fail("cable A_Z")
-  }
-  guard continuum_expr_eq(c.tension()["Z_X"], oracle[1]) else {
-    fail("cable Z_X")
-  }
-  guard continuum_expr_eq(c.tension()["X_B"], oracle[2]) else {
-    fail("cable X_B")
-  }
-  guard continuum_expr_eq(c.reaction_loads()["R_A_x"], oracle[3]) else {
-    fail("cable R_A_x")
-  }
-  guard continuum_expr_eq(c.reaction_loads()["R_A_y"], oracle[4]) else {
-    fail("cable R_A_y")
-  }
-  guard continuum_expr_eq(c.reaction_loads()["R_B_x"], oracle[5]) else {
-    fail("cable R_B_x")
-  }
-  guard continuum_expr_eq(c.reaction_loads()["R_B_y"], oracle[6]) else {
-    fail("cable R_B_y")
-  }
-  guard continuum_expr_eq(c.length(), oracle[7]) else { fail("cable length") }
-  guard continuum_float_close(d.tension_at(@symcore.int(0)), oracle[8]) else {
-    fail("distributed tension 0")
-  }
-  guard continuum_float_close(d.tension_at(@symcore.int(40)), oracle[9]) else {
-    fail("distributed tension 40")
-  }
-  guard continuum_float_close(d.reaction_loads()["R_A_x"], oracle[10]) else {
-    fail("distributed R_A_x")
-  }
-  guard continuum_float_close(d.reaction_loads()["R_A_y"], oracle[11]) else {
-    fail("distributed R_A_y")
-  }
-  guard continuum_float_close(d.reaction_loads()["R_B_x"], oracle[12]) else {
-    fail("distributed R_B_x")
-  }
-  guard continuum_float_close(d.reaction_loads()["R_B_y"], oracle[13]) else {
-    fail("distributed R_B_y")
-  }
+  assert_eq(oracle.length(), 14)
+  assert_true(continuum_expr_eq(c.tension()["A_Z"], oracle[0]))
+  assert_true(continuum_expr_eq(c.tension()["Z_X"], oracle[1]))
+  assert_true(continuum_expr_eq(c.tension()["X_B"], oracle[2]))
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_A_x"], oracle[3]))
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_A_y"], oracle[4]))
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_B_x"], oracle[5]))
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_B_y"], oracle[6]))
+  assert_true(continuum_expr_eq(c.length(), oracle[7]))
+  assert_true(continuum_float_close(d.tension_at(@symcore.int(0)), oracle[8]))
+  assert_true(continuum_float_close(d.tension_at(@symcore.int(40)), oracle[9]))
+  assert_true(continuum_float_close(d.reaction_loads()["R_A_x"], oracle[10]))
+  assert_true(continuum_float_close(d.reaction_loads()["R_A_y"], oracle[11]))
+  assert_true(continuum_float_close(d.reaction_loads()["R_B_x"], oracle[12]))
+  assert_true(continuum_float_close(d.reaction_loads()["R_B_y"], oracle[13]))
 }

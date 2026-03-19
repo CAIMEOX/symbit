@@ -10,14 +10,14 @@ test "geometry.plane parity repr distance and line intersection" {
       "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1))",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(
-      pl.distance(point3d(@symcore.int(0), @symcore.int(0), @symcore.int(4))),
-    ),
-    "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1)).distance(Point3D(0,0,4))",
-  ) else {
-    fail("plane distance parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(
+          pl.distance(point3d(@symcore.int(0), @symcore.int(0), @symcore.int(4))),
+        ),
+        "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1)).distance(Point3D(0,0,4))",
+      )
+  )
   let line_obj = line(
     point3d(@symcore.int(0), @symcore.int(0), @symcore.int(0)),
     point3d(@symcore.int(0), @symcore.int(0), @symcore.int(2)),

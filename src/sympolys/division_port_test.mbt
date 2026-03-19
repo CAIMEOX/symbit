@@ -19,9 +19,7 @@ test "division: univariate div parity over ZZ (exact)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("div ZZ exact mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -40,9 +38,7 @@ test "division: univariate div parity over ZZ (remainder)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("div ZZ remainder mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -63,7 +59,5 @@ test "division: univariate div parity over QQ" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("div QQ mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }

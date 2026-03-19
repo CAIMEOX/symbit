@@ -45,7 +45,7 @@ test "symseries pade approximant parity" {
   let ours = pade_approximant(expr, x, m=1, n=1)
   let sympy_list = @sympy_series.approximants_str([1, 1, 1, 1, 1, 1], "x")
   let items = split_list_items(sympy_list)
-  guard items.length() > 1 else { fail("sympy approximants missing entry") }
+  assert_true(items.length() > 1)
   assert_true(sympy_equiv_expr_str(ours, items[1]))
 }
 

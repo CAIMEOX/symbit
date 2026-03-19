@@ -31,34 +31,28 @@ test "physics: Pauli and Dirac matrices satisfy core identities" {
   let gamma3 = mgamma(3)
   let gamma5 = mgamma(5)
 
-  guard sigma1.mul(sigma2) == sigma3.scale(i) else {
-    fail("sigma1*sigma2 should equal I*sigma3")
-  }
-  guard sigma1.mul(sigma1) == explicit_matrix_eye(2) else {
-    fail("sigma1 squared should be identity")
-  }
-  guard sigma1.mul(sigma3).mul(sigma1) == sigma3.neg() else {
-    fail("sigma1*sigma3*sigma1 should equal -sigma3")
-  }
+  assert_true(sigma1.mul(sigma2) == sigma3.scale(i))
+  assert_true(sigma1.mul(sigma1) == explicit_matrix_eye(2))
+  assert_true(sigma1.mul(sigma3).mul(sigma1) == sigma3.neg())
 
-  guard physics_matrix_expr_equal(
-    gamma0.mul(gamma1).mul(gamma2).mul(gamma3).scale(i),
-    gamma5,
-  ) else {
-    fail("gamma5 identity mismatch")
-  }
-  guard physics_matrix_expr_equal(
-    gamma0.mul(gamma0),
-    explicit_matrix_eye(4).scale(@symcore.int(1)),
-  ) else {
-    fail("gamma0 squared should be identity")
-  }
-  guard physics_matrix_expr_equal(
-    gamma2.mul(gamma2),
-    explicit_matrix_eye(4).scale(@symcore.int(-1)),
-  ) else {
-    fail("gamma2 squared should be negative identity")
-  }
+  assert_true(
+    physics_matrix_expr_equal(
+        gamma0.mul(gamma1).mul(gamma2).mul(gamma3).scale(i),
+        gamma5,
+      )
+  )
+  assert_true(
+    physics_matrix_expr_equal(
+        gamma0.mul(gamma0),
+        explicit_matrix_eye(4).scale(@symcore.int(1)),
+      )
+  )
+  assert_true(
+    physics_matrix_expr_equal(
+        gamma2.mul(gamma2),
+        explicit_matrix_eye(4).scale(@symcore.int(-1)),
+      )
+  )
 }
 
 ///|
@@ -84,11 +78,7 @@ test "physics: simple wavefunction and energy behaviors" {
     @symcore.symbol("m"),
     @symcore.symbol("r"),
   )
-  guard err is Err(_) else {
-    fail(
-      "pring energy should reject non-literal integer n in current core model",
-    )
-  }
+  assert_true(err is Err(_))
 }
 
 ///|
@@ -116,16 +106,14 @@ test "physics: hydrogen formulas and quantum-number guards" {
     phi,
     theta,
   )
-  guard psi_err is Err(_) else { fail("hydrogen Psi_nlm should reject n <= l") }
+  assert_true(psi_err is Err(_))
 
   let dirac_err : Result[@symcore.Expr, PhysicsError] = try? hydrogen_e_nl_dirac(
     @symcore.int(1),
     @symcore.int(0),
     spin_up=false,
   )
-  guard dirac_err is Err(_) else {
-    fail("hydrogen E_nl_dirac should reject spin_down for l == 0")
-  }
+  assert_true(dirac_err is Err(_))
 }
 
 ///|
@@ -171,9 +159,7 @@ test "physics: wigner coefficients obey core examples and guards" {
     half,
     @symcore.int(-1) * half,
   )
-  guard bad is Err(_) else {
-    fail("wigner_3j should reject non half-integer input")
-  }
+  assert_true(bad is Err(_))
 }
 
 ///|
@@ -211,7 +197,7 @@ test "physics: gaunt examples and guards" {
     @symcore.int(0),
     @symcore.int(0),
   )
-  guard bad is Err(_) else { fail("gaunt should reject half-integer l values") }
+  assert_true(bad is Err(_))
 }
 
 ///|
@@ -374,12 +360,12 @@ test "physics: rotational harmonic examples" {
     "dot_rot_grad zero",
   )
 
-  guard physics_matrix_expr_equal(
-    wigner_d_small(half, @symcore.int(0)),
-    explicit_matrix_eye(2),
-  ) else {
-    fail("wigner_d_small(1/2, 0) should be identity")
-  }
+  assert_true(
+    physics_matrix_expr_equal(
+        wigner_d_small(half, @symcore.int(0)),
+        explicit_matrix_eye(2),
+      )
+  )
 
   let d = wigner_d(half, alpha, beta, gamma)
   physics_assert_expr_equal(

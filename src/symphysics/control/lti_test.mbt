@@ -18,7 +18,7 @@ test "physics.control.lti: transfer function surface" {
     (s ^ @symcore.int(2)) + @symcore.int(1),
     s,
   )
-  guard tf == expected_tf else { fail("from_rational_expression") }
+  assert_true(tf == expected_tf)
 
   let unsimplified = transfer_function(
     (s + @symcore.int(3)) * (s + @symcore.int(-1)),
@@ -31,17 +31,15 @@ test "physics.control.lti: transfer function surface" {
     s + @symcore.int(5),
     s,
   )
-  guard simplified == simplified_expected else { fail("simplify") }
+  assert_true(simplified == simplified_expected)
   let dc_gain = simplified.dc_gain()
-  guard dc_gain == control_test_rat(3, 5) else { fail("dc_gain") }
-  guard simplified.poles() == [@symcore.int(-5)] else { fail("poles") }
-  guard simplified.zeros() == [@symcore.int(-3)] else { fail("zeros") }
+  assert_true(dc_gain == control_test_rat(3, 5))
+  assert_true(simplified.poles() == [@symcore.int(-5)])
+  assert_true(simplified.zeros() == [@symcore.int(-3)])
   let is_proper = simplified.is_proper()
   let is_strictly_proper = simplified.is_strictly_proper()
   let is_biproper = simplified.is_biproper()
-  guard is_proper && !is_strictly_proper && is_biproper else {
-    fail("properness/biproperness")
-  }
+  assert_true(is_proper && !is_strictly_proper && is_biproper)
 }
 
 ///|
@@ -58,7 +56,7 @@ test "physics.control.lti: series parallel and feedback" {
     (s + @symcore.int(2)) * (s + @symcore.int(4)),
     s,
   )
-  guard ser == ser_expected.as_system() else { fail("series.doit") }
+  assert_true(ser == ser_expected.as_system())
 
   let par = parallel([g, h]).doit()
   let par_expected = transfer_function(
@@ -66,7 +64,7 @@ test "physics.control.lti: series parallel and feedback" {
     (s + @symcore.int(2)) * (s + @symcore.int(4)),
     s,
   )
-  guard par == par_expected.as_system() else { fail("parallel.doit") }
+  assert_true(par == par_expected.as_system())
 
   let fb = feedback(g).doit()
   let fb_expected = transfer_function(
@@ -74,7 +72,7 @@ test "physics.control.lti: series parallel and feedback" {
     s + @symcore.int(2) + (s + @symcore.int(1)),
     s,
   )
-  guard fb == fb_expected.as_system() else { fail("feedback.doit") }
+  assert_true(fb == fb_expected.as_system())
 }
 
 ///|
@@ -86,9 +84,9 @@ test "physics.control.lti: discrete transforms and stability" {
 
   let fd = DiscreteTransferFunction::from_forward_diff(cont, t, z)
   let fd_gbt = DiscreteTransferFunction::from_gbt(cont, t, @symcore.int(0), z)
-  guard fd == fd_gbt else { fail("forward diff == gbt(alpha=0)") }
+  assert_true(fd == fd_gbt)
   let fd_dc_gain = fd.dc_gain()
-  guard fd_dc_gain == @symcore.int(1) else { fail("discrete dc_gain") }
+  assert_true(fd_dc_gain == @symcore.int(1))
 
   let stable = discrete_transfer_function(
     @symcore.int(1),
@@ -96,7 +94,7 @@ test "physics.control.lti: discrete transforms and stability" {
     z,
     sampling_time=t,
   )
-  guard stable.is_stable() == Some(true) else { fail("stable dtf") }
+  assert_eq(stable.is_stable(), Some(true))
 
   let unstable = discrete_transfer_function(
     @symcore.int(1),
@@ -104,7 +102,7 @@ test "physics.control.lti: discrete transforms and stability" {
     z,
     sampling_time=t,
   )
-  guard unstable.is_stable() == Some(false) else { fail("unstable dtf") }
+  assert_eq(unstable.is_stable(), Some(false))
 }
 
 ///|
@@ -126,23 +124,19 @@ test "physics.control.lti: pid and create_transfer_function" {
     tfilt * (s ^ @symcore.int(2)) + s,
     s,
   )
-  guard pid_doit == pid_expected else { fail("pid.doit") }
+  assert_true(pid_doit == pid_expected)
 
   let continuous = create_transfer_function(
     @symcore.int(1),
     s + @symcore.int(1),
     s,
   )
-  guard continuous is SISOLinearTimeInvariant::TF(_) else {
-    fail("create continuous tf")
-  }
+  assert_true(continuous is SISOLinearTimeInvariant::TF(_))
   let discrete = create_transfer_function(
     @symcore.int(1),
     z + @symcore.int(1),
     z,
     sampling_time=control_test_rat(1, 5),
   )
-  guard discrete is SISOLinearTimeInvariant::DTF(_) else {
-    fail("create discrete tf")
-  }
+  assert_true(discrete is SISOLinearTimeInvariant::DTF(_))
 }

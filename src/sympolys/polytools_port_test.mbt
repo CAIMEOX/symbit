@@ -76,17 +76,17 @@ test "polytools: gcd/div/resultant parity with SymPy" {
   let g = p.gcd_univar(q)
   let ours_g = sympy_normalize(g.to_string()).trim().to_string()
   let oracle_g = @sympy_polys.gcd(p.to_expr(), q.to_expr()).trim().to_string()
-  guard ours_g == oracle_g else { fail("gcd mismatch") }
+  assert_eq(ours_g, oracle_g)
   let (quo, rem) = p.divmod_univar(q)
   let ours_div = div_pair_to_string(quo, rem).trim().to_string()
   let oracle_div = @sympy_polys.div(p.to_expr(), q.to_expr()).trim().to_string()
-  guard ours_div == oracle_div else { fail("div mismatch") }
+  assert_eq(ours_div, oracle_div)
   let res = p.resultant(q, 0)
   let ours_res = sympy_normalize(res.to_string()).trim().to_string()
   let oracle_res = @sympy_polys.resultant(p.to_expr(), q.to_expr(), x="x")
     .trim()
     .to_string()
-  guard ours_res == oracle_res else { fail("resultant mismatch") }
+  assert_eq(ours_res, oracle_res)
 }
 
 ///|
@@ -106,9 +106,7 @@ test "polytools: gcd_multivar parity over QQ" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("gcd_multivar mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -124,7 +122,7 @@ test "polytools: factor_list parity over QQ" {
   let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else { fail("factor_list mismatch") }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -141,7 +139,7 @@ test "polytools: sqf_list parity over ZZ" {
   let oracle = sort_factor_repr(@sympy_polys.sqf_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else { fail("sqf_list mismatch") }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -159,9 +157,7 @@ test "polytools: factor_list parity over GF(2)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("factor_list GF mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -189,9 +185,7 @@ test "polytools: factor_list parity over GF(5) simple" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("factor_list GF(5) mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -207,9 +201,7 @@ test "polytools: factor_list parity over GF(7) simple" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("factor_list GF(7) mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -230,9 +222,7 @@ test "polytools: gcd/div parity over GFExt(5^2)" {
     )
     .trim()
     .to_string()
-  guard ours_g == oracle_g else {
-    fail("gcd GFExt mismatch: ours=\{ours_g}, oracle=\{oracle_g}")
-  }
+  assert_eq(ours_g, oracle_g)
   let (quo, rem) = p.divmod_univar(q)
   let ours_div = div_pair_to_string(quo, rem).trim().to_string()
   let oracle_div = @sympy_polys.div(
@@ -244,9 +234,7 @@ test "polytools: gcd/div parity over GFExt(5^2)" {
     )
     .trim()
     .to_string()
-  guard ours_div == oracle_div else {
-    fail("div GFExt mismatch: ours=\{ours_div}, oracle=\{oracle_div}")
-  }
+  assert_eq(ours_div, oracle_div)
 }
 
 ///|
@@ -269,9 +257,7 @@ test "polytools: gcd/div parity over GFExt(5^2) extra" {
     )
     .trim()
     .to_string()
-  guard ours_g == oracle_g else {
-    fail("gcd GFExt extra mismatch: ours=\{ours_g}, oracle=\{oracle_g}")
-  }
+  assert_eq(ours_g, oracle_g)
   let (quo, rem) = p.divmod_univar(q)
   let ours_div = div_pair_to_string(quo, rem).trim().to_string()
   let oracle_div = @sympy_polys.div(
@@ -283,9 +269,7 @@ test "polytools: gcd/div parity over GFExt(5^2) extra" {
     )
     .trim()
     .to_string()
-  guard ours_div == oracle_div else {
-    fail("div GFExt extra mismatch: ours=\{ours_div}, oracle=\{oracle_div}")
-  }
+  assert_eq(ours_div, oracle_div)
 }
 
 ///|
@@ -309,9 +293,7 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("sqf_list GFExt mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -336,9 +318,7 @@ test "polytools: sqf_list parity over GFExt(5^2) extra" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("sqf_list GFExt extra mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -350,7 +330,7 @@ test "polytools: factor_list GFExt self-consistent" {
     ((x + @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
   )
   let (content, factors) = poly.factor_list()
-  guard content.is_one() else { fail("GFExt factor_list content not one") }
+  assert_true(content.is_one())
   let mut acc = Poly::one(poly.gens, poly.domain)
   for entry in factors {
     let (f, m) = entry
@@ -360,7 +340,7 @@ test "polytools: factor_list GFExt self-consistent" {
   }
   let lhs = acc.to_string()
   let rhs = poly.to_string()
-  guard lhs == rhs else { fail("GFExt factor_list product mismatch") }
+  assert_eq(lhs, rhs)
 }
 
 ///|
@@ -379,7 +359,7 @@ test "polytools: factor_list parity over QQ with repeated factor" {
   let oracle = sort_factor_repr(@sympy_polys.factor_list(poly.to_expr()))
     .trim()
     .to_string()
-  guard ours == oracle else { fail("factor_list QQ repeated mismatch") }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -397,9 +377,7 @@ test "polytools: groebner_list parity for multivariate QQ" {
   let oracle = normalize_basis_str_local(
     @sympy_polys.groebner(exprs, order="lex"),
   )
-  guard ours == oracle else {
-    fail("groebner_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -413,9 +391,7 @@ test "polytools: gcd_list parity over ZZ" {
   let oracle = @sympy_polys.gcd_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("gcd_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -429,9 +405,7 @@ test "polytools: lcm_list parity over ZZ" {
   let oracle = @sympy_polys.lcm_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("lcm_list mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -445,9 +419,7 @@ test "polytools: terms_gcd parity over ZZ" {
   )
   let ours = sympy_normalize(terms_gcd(f).to_string()).trim().to_string()
   let oracle = @sympy_polys.terms_gcd(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("terms_gcd mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -465,9 +437,7 @@ test "polytools: sqf_list parity over GF(5)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("sqf_list GF(5) mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -485,9 +455,7 @@ test "polytools: sqf_list parity over GF(7)" {
     )
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("sqf_list GF(7) mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -501,9 +469,7 @@ test "polytools: cancel parity over ZZ" {
   let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr())
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("cancel mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -518,9 +484,7 @@ test "polytools: cancel parity multivariate (no common factor)" {
   let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr())
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("cancel multivariate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -535,11 +499,7 @@ test "polytools: cancel parity multivariate with common x+y factor" {
   let oracle = @sympy_polys.cancel(num.to_expr(), den.to_expr())
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail(
-      "cancel multivariate common factor mismatch: ours=\{ours}, oracle=\{oracle}",
-    )
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -553,9 +513,7 @@ test "polytools: reduced parity over ZZ" {
   let oracle = @sympy_polys.reduced(f.to_expr(), [g.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("reduced mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -571,9 +529,7 @@ test "polytools: reduced parity multivariate over ZZ" {
   let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("reduced multivariate ZZ mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -589,9 +545,7 @@ test "polytools: reduced parity multivariate over QQ" {
   let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("reduced multivariate mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -602,7 +556,7 @@ test "polytools: compose parity multivariate should error" {
   let f = b.from_expr(x * y + @symcore.int(1))
   let g = b.from_expr(x + y)
   let ours : Result[Poly, _] = try? compose(f, g)
-  guard ours is Err(_) else { fail("compose multivariate should error") }
+  assert_true(ours is Err(_))
 }
 
 ///|
@@ -613,9 +567,7 @@ test "polytools: decompose parity for cubic" {
   let parts = decompose(f)
   let ours = parts.map(p => sympy_normalize(p.to_string())).join(" | ")
   let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("decompose cubic mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -630,9 +582,7 @@ test "polytools: reduced parity with two divisors" {
   let oracle = @sympy_polys.reduced(f.to_expr(), [g1.to_expr(), g2.to_expr()])
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("reduced two divisors mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -644,9 +594,7 @@ test "polytools: compose parity over QQ" {
   let h = compose(f, g)
   let ours = sympy_normalize(h.to_string()).trim().to_string()
   let oracle = @sympy_polys.compose(f.to_expr(), g.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("compose mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -658,9 +606,7 @@ test "polytools: compose parity higher degree" {
   let h = compose(f, g)
   let ours = sympy_normalize(h.to_string()).trim().to_string()
   let oracle = @sympy_polys.compose(f.to_expr(), g.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("compose higher mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -671,9 +617,7 @@ test "polytools: decompose parity over ZZ" {
   let parts = decompose(f)
   let ours = parts.map(p => sympy_normalize(p.to_string())).join(" | ")
   let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("decompose mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -684,9 +628,7 @@ test "polytools: decompose parity for nondecomposable" {
   let parts = decompose(f)
   let ours = parts.map(p => sympy_normalize(p.to_string())).join(" | ")
   let oracle = @sympy_polys.decompose(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("decompose nondecomposable mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -697,9 +639,7 @@ test "polytools: sturm sequence parity over ZZ" {
   let seq = sturm_sequence(f)
   let ours = seq.map(p => sympy_normalize(p.to_string())).join(" | ")
   let oracle = @sympy_polys.sturm(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("sturm mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -710,9 +650,7 @@ test "polytools: discriminant parity over ZZ" {
   let disc = discriminant(f)
   let ours = fe_to_string(disc).trim().to_string()
   let oracle = @sympy_polys.discriminant(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("discriminant mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -726,7 +664,5 @@ test "polytools: subresultants parity over ZZ" {
   let oracle = @sympy_polys.subresultants(f.to_expr(), g.to_expr())
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("subresultants mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }

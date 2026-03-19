@@ -1,0 +1,165 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/combinatorics"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn abelian_group_elements_equiv(Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn bin_to_gray_equiv(String, String) -> Bool raise
+
+pub fn fp_group_coset_table_equiv(Array[String], Array[Array[(Int, Int)]], Array[Array[(Int, Int)]], String, Array[Array[Int]]) -> Bool raise
+
+pub fn fp_group_reduce_equiv(Array[String], Array[Array[(Int, Int)]], Array[(Int, Int)], Array[(Int, Int)]) -> Bool raise
+
+pub fn free_group_inverse_equiv(Array[String], Array[(Int, Int)], Array[(Int, Int)]) -> Bool raise
+
+pub fn free_group_mul_equiv(Array[String], Array[(Int, Int)], Array[(Int, Int)], Array[(Int, Int)]) -> Bool raise
+
+pub fn free_group_pow_equiv(Array[String], Array[(Int, Int)], Int, Array[(Int, Int)]) -> Bool raise
+
+pub fn free_group_subword_equiv(Array[String], Array[(Int, Int)], Int, Int, Array[(Int, Int)]) -> Bool raise
+
+pub fn galois_enum_group_elements_equiv(String, String, Array[Array[Int]]) -> Bool raise
+
+pub fn galois_group_elements_equiv(String, Array[Array[Int]]) -> Bool raise
+
+pub fn generators_alternating_equiv(Int, Array[Array[Int]]) -> Bool raise
+
+pub fn generators_cyclic_equiv(Int, Array[Array[Int]]) -> Bool raise
+
+pub fn generators_dihedral_equiv(Int, Array[Array[Int]]) -> Bool raise
+
+pub fn generators_symmetric_equiv(Int, Array[Array[Int]]) -> Bool raise
+
+pub fn gray_to_bin_equiv(String, String) -> Bool raise
+
+pub fn graycode_generate_equiv(Int, Array[String], start? : String, rank? : Int) -> Bool raise
+
+pub fn graycode_rank_equiv(Int, String, Int) -> Bool raise
+
+pub fn graycode_subsets_equiv(Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn group_numbers_groups_count_equiv(Int, Bool, String) -> Bool raise
+
+pub fn group_numbers_is_abelian_equiv(Int, Bool) -> Bool raise
+
+pub fn group_numbers_is_cyclic_equiv(Int, Bool) -> Bool raise
+
+pub fn group_numbers_is_nilpotent_equiv(Int, Bool) -> Bool raise
+
+pub fn integer_partition_conjugate_equiv(Array[Int], Array[Int]) -> Bool raise
+
+pub fn integer_partition_next_prev_equiv(Array[Int], Array[Int], Array[Int]) -> Bool raise
+
+pub fn ksubsets_equiv(Array[Int], Int, Array[Array[Int]]) -> Bool raise
+
+pub fn named_group_elements_equiv(String, Int, Array[Array[Int]]) -> Bool raise
+
+pub fn named_group_order_equiv(String, Int, Int) -> Bool raise
+
+pub fn partition_rgs_equiv(Array[Array[Int]], Array[Int], Int) -> Bool raise
+
+pub fn perm_apply_array_equiv(Array[Int], Array[String], Array[String], size? : Int) -> Bool raise
+
+pub fn perm_array_form_equiv_from_array(Array[Int], Array[Int], size? : Int) -> Bool raise
+
+pub fn perm_array_form_equiv_from_cycles(Array[Array[Int]], Array[Int], size? : Int) -> Bool raise
+
+pub fn perm_cycle_structure_equiv_from_array(Array[Int], Array[(Int, Int)], size? : Int) -> Bool raise
+
+pub fn perm_cyclic_form_equiv_from_array(Array[Int], Array[Array[Int]], size? : Int) -> Bool raise
+
+pub fn perm_from_sequence_string_equiv(String, Array[Int]) -> Bool raise
+
+pub fn perm_full_cyclic_form_equiv_from_array(Array[Int], Array[Array[Int]], size? : Int) -> Bool raise
+
+pub fn perm_group_elements_equiv_from_gens(Array[Array[Int]], Array[Array[Int]]) -> Bool raise
+
+pub fn perm_group_order_equiv_from_gens(Array[Array[Int]], Int) -> Bool raise
+
+pub fn perm_inversion_vector_equiv_from_array(Array[Int], Array[Int], size? : Int) -> Bool raise
+
+pub fn perm_next_lex_equiv(Array[Int], Bool, Array[Int]) -> Bool raise
+
+pub fn perm_order_equiv_from_array(Array[Int], Int, size? : Int) -> Bool raise
+
+pub fn perm_parity_equiv_from_array(Array[Int], Int, size? : Int) -> Bool raise
+
+pub fn perm_rank_equiv_from_array(Array[Int], Int, size? : Int) -> Bool raise
+
+pub fn perm_transpositions_equiv_from_array(Array[Int], Array[(Int, Int)], size? : Int) -> Bool raise
+
+pub fn perm_unrank_lex_equiv(Int, Int, Array[Int]) -> Bool raise
+
+pub fn polyhedron_array_form_equiv_index(String, Int, Array[Int]) -> Bool raise
+
+pub fn polyhedron_array_form_equiv_perm(String, Array[Int], Array[Int]) -> Bool raise
+
+pub fn polyhedron_corners_equiv(String, Array[String]) -> Bool raise
+
+pub fn polyhedron_cyclic_form_equiv_index(String, Int, Array[Array[Int]]) -> Bool raise
+
+pub fn polyhedron_edges_equiv(String, Array[(Int, Int)]) -> Bool raise
+
+pub fn polyhedron_faces_equiv(String, Array[Array[Int]]) -> Bool raise
+
+pub fn polyhedron_pgroup_elements_equiv(String, Array[Array[Int]]) -> Bool raise
+
+pub fn prufer_equiv_sequence(Array[Array[Int]], Array[Int]) -> Bool raise
+
+pub fn prufer_equiv_tree(Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn prufer_rank_equiv(Array[Int], Int) -> Bool raise
+
+pub fn rgs_rank_equiv(Array[Int], Int) -> Bool raise
+
+pub fn rgs_unrank_equiv(Int, Int, Array[Int]) -> Bool raise
+
+pub fn schur_number_equiv(Int, Bool, Int) -> Bool raise
+
+pub fn schur_number_lower_bound_equiv(Int, Int) -> Bool raise
+
+pub fn schur_partition_equiv(Int, Array[Array[Int]]) -> Bool raise
+
+pub fn subset_next_prev_equiv(Array[Int], Array[Int], Array[Int], Array[Int]) -> Bool raise
+
+pub fn subset_rank_equiv(Array[Int], Array[Int], Int, Int, Int) -> Bool raise
+
+pub fn tensor_can_bsgs_direct_product_equiv(Array[Int], Array[Array[Int]], Array[Int], Array[Array[Int]], Bool, Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn tensor_can_canonical_free_equiv(Array[Int], Array[Array[Int]], Array[Int], Int, Array[Int]) -> Bool raise
+
+pub fn tensor_can_canonicalize_equiv(Array[Array[Int]], Array[Int?], Array[Int], Array[Array[Int]], Array[Array[Array[Int]]], Array[Int], Array[Int?], Array[Int]?) -> Bool raise
+
+pub fn tensor_can_double_coset_can_rep_equiv(Array[Array[Int]], Array[Int?], Array[Int], Array[Array[Int]], Array[Int], Array[Int]?) -> Bool raise
+
+pub fn tensor_can_dummy_sgs_equiv(Array[Int], Int?, Int, Array[Array[Int]]) -> Bool raise
+
+pub fn tensor_can_min_dummies_equiv(Array[Array[Int]], Array[Int?], Array[Int], Array[Int]) -> Bool raise
+
+pub fn tensor_can_perm_af_direct_product_equiv(Array[Array[Int]], Array[Array[Int]], Bool, Array[Array[Int]]) -> Bool raise
+
+pub fn tensor_can_symmetric_group_equiv(Int, Bool, Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn tensor_can_tensor_gens_equiv(Array[Int], Array[Array[Int]], Array[Array[Int]], Int?, Int, Array[Int], Array[Array[Int]]) -> Bool raise
+
+pub fn util_base_ordering_equiv(Array[Int], Int, Array[Int]) -> Bool raise
+
+pub fn util_check_cycles_alt_sym_equiv(Array[Int], Bool) -> Bool raise
+
+pub fn util_distribute_gens_by_base_equiv(Array[Int], Array[Array[Int]], Array[Array[Array[Int]]]) -> Bool raise
+
+pub fn util_strong_gens_from_distr_equiv(Array[Array[Array[Int]]], Array[Array[Int]]) -> Bool raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

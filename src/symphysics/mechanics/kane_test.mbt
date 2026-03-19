@@ -37,25 +37,25 @@ test "physics.mechanics kane: spring mass damper" {
   )
   inspect(kane_matrix_entry_summary(km.mass_matrix()), content="[[m]]")
   let rhs = km.rhs()
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(1, 0)),
-    "-(k*q(t) + c*u(t))/m",
-  ) else {
-    fail("kane acceleration mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(rhs.get(1, 0)),
+        "-(k*q(t) + c*u(t))/m",
+      )
+  )
   let a = km.linearize(a_and_b=true).0
   inspect(@symprint.to_string(a.get(0, 0)), content="0")
   inspect(@symprint.to_string(a.get(0, 1)), content="1")
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(a.get(1, 0)),
-    "-k/m",
-  ) else {
-    fail("kane linearized A(1,0) mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(a.get(1, 1)),
-    "-c/m",
-  ) else {
-    fail("kane linearized A(1,1) mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(a.get(1, 0)),
+        "-k/m",
+      )
+  )
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(a.get(1, 1)),
+        "-c/m",
+      )
+  )
 }

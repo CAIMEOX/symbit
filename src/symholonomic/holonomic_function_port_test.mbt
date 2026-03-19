@@ -34,20 +34,16 @@ test "holonomic function: closure ops and calculus on expr hints" {
 test "holonomic function: sequence conversion for constant-coefficient ode" {
   let x = @symcore.symbol("x")
   let seq_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~).to_sequence()
-  guard seq_exp.length() == 1 else { fail("expected one sequence") }
+  assert_eq(seq_exp.length(), 1)
   let oracle_exp = @sympy_holo.sequence_str(["-1", "n + 1"], u0=["1"])
   assert_eq(seq_exp[0].to_sympy_str(), oracle_exp)
 
   let seq_sin = expr_to_holonomic(@symcore.function("sin", [x]), x~).to_sequence()
-  guard seq_sin.length() == 1 else { fail("expected one sequence") }
+  assert_eq(seq_sin.length(), 1)
   let sin_coeffs = seq_sin[0].recurrence().coefficients()
   assert_eq(sin_coeffs.length(), 3)
-  assert_true(
-    @sympy_holo.sympy_equiv_str(@symprint.to_string(sin_coeffs[0]), "1"),
-  )
-  assert_true(
-    @sympy_holo.sympy_equiv_str(@symprint.to_string(sin_coeffs[1]), "0"),
-  )
+  assert_true(@sympy_holo.sympy_equiv_str(@symprint.to_string(sin_coeffs[0]), "1"),)
+  assert_true(@sympy_holo.sympy_equiv_str(@symprint.to_string(sin_coeffs[1]), "0"),)
   assert_true(
     @sympy_holo.sympy_equiv_str(
       @symprint.to_string(sin_coeffs[2]),

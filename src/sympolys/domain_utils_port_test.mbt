@@ -8,15 +8,11 @@ test "domain_utils: normalize_mod parity over GF(p)" {
   let r1 = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let got1 = normalize_mod(r1, Domain::GF(5)).to_string()
   let oracle1 = @sympy_polys.mod_rational(3, 2, 5).trim().to_string()
-  guard got1 == oracle1 else {
-    fail("normalize_mod GF(5) mismatch: ours=\{got1}, oracle=\{oracle1}")
-  }
+  assert_eq(got1, oracle1)
   let r2 = @symnum.BigRational::new(BigInt::from_int(-7), BigInt::from_int(3))
   let got2 = normalize_mod(r2, Domain::GF(5)).to_string()
   let oracle2 = @sympy_polys.mod_rational(-7, 3, 5).trim().to_string()
-  guard got2 == oracle2 else {
-    fail("normalize_mod GF(5) mismatch: ours=\{got2}, oracle=\{oracle2}")
-  }
+  assert_eq(got2, oracle2)
 }
 
 ///|
@@ -30,9 +26,7 @@ test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
     )
     .trim()
     .to_string()
-  guard got_q == oracle_q else {
-    fail("normalize_mod QQ mismatch: ours=\{got_q}, oracle=\{oracle_q}")
-  }
+  assert_eq(got_q, oracle_q)
   let r2 = @symnum.BigRational::new(BigInt::from_int(4), BigInt::from_int(1))
   let got_z = normalize_mod(r2, Domain::ZZ).to_string()
   let oracle_z = @sympy_polys.poly_expr(
@@ -42,9 +36,7 @@ test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
     )
     .trim()
     .to_string()
-  guard got_z == oracle_z else {
-    fail("normalize_mod ZZ mismatch: ours=\{got_z}, oracle=\{oracle_z}")
-  }
+  assert_eq(got_z, oracle_z)
 }
 
 ///|
@@ -57,17 +49,13 @@ test "domain_utils: GF/QQ/ZZ coercions align with SymPy" {
   let c0 = @sympy_polys.mod_rational(1, 3, 5)
   let gf_expected = "\{c1}*x + \{c0}"
   let gf_oracle = @sympy_polys.sympy_normalize(gf_expected).trim().to_string()
-  guard gf_ours == gf_oracle else {
-    fail("GF coercion mismatch: ours=\{gf_ours}, oracle=\{gf_oracle}")
-  }
+  assert_eq(gf_ours, gf_oracle)
   let qq_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(expr)
   let qq_ours = sympy_normalize(qq_poly.to_string()).trim().to_string()
   let qq_oracle = @sympy_polys.poly_expr(expr, gens=["x"], domain="QQ")
     .trim()
     .to_string()
-  guard qq_ours == qq_oracle else {
-    fail("QQ coercion mismatch: ours=\{qq_ours}, oracle=\{qq_oracle}")
-  }
+  assert_eq(qq_ours, qq_oracle)
   let zz_poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
   )
@@ -79,7 +67,5 @@ test "domain_utils: GF/QQ/ZZ coercions align with SymPy" {
     )
     .trim()
     .to_string()
-  guard zz_ours == zz_oracle else {
-    fail("ZZ coercion mismatch: ours=\{zz_ours}, oracle=\{zz_oracle}")
-  }
+  assert_eq(zz_ours, zz_oracle)
 }

@@ -1,0 +1,86 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symsets"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symlogic",
+}
+
+// Values
+pub fn compare_set(Set, Set) -> Int
+
+pub fn complement(Set, Set) -> Set
+
+pub fn condition_set(@symcore.Expr, @symlogic.BoolExpr, base? : Set) -> Set
+
+pub fn contains(Set, @symcore.Expr) -> SetBool
+
+pub fn empty_set() -> Set
+
+pub fn finite_set(Array[@symcore.Expr]) -> Set
+
+pub fn image_set(@symcore.Expr, @symcore.Expr, base? : Set) -> Set
+
+pub fn integers() -> Set
+
+pub fn intersection(Array[Set]) -> Set
+
+pub fn interval(@symcore.Expr, @symcore.Expr, left_open? : Bool, right_open? : Bool) -> Set
+
+pub fn is_subset(Set, Set) -> SetBool
+
+pub fn naturals() -> Set
+
+pub fn naturals0() -> Set
+
+pub fn product_set(Array[Set]) -> Set
+
+pub fn rationals() -> Set
+
+pub fn reals() -> Set
+
+pub fn setbool_to_string(SetBool) -> String
+
+pub fn sort_sets_in_place(Array[Set]) -> Unit
+
+pub fn to_string(Set) -> String
+
+pub fn union(Array[Set]) -> Set
+
+pub fn universal_set() -> Set
+
+// Errors
+
+// Types and methods
+pub(all) enum Set {
+  EmptySet
+  UniversalSet
+  FiniteSet(Array[@symcore.Expr])
+  Interval(left~ : @symcore.Expr, right~ : @symcore.Expr, left_open~ : Bool, right_open~ : Bool)
+  ConditionSet(symbol~ : @symcore.Expr, condition~ : @symlogic.BoolExpr, base~ : Set)
+  ImageSet(symbol~ : @symcore.Expr, expr~ : @symcore.Expr, base~ : Set)
+  ProductSet(Array[Set])
+  Union(Array[Set])
+  Intersection(Array[Set])
+  Complement(Set, Set)
+  Naturals
+  Naturals0
+  Integers
+  Rationals
+  Reals
+}
+pub impl Compare for Set
+pub impl Eq for Set
+pub impl Hash for Set
+
+pub enum SetBool {
+  True
+  False
+  Unknown
+}
+pub impl Eq for SetBool
+
+// Type aliases
+
+// Traits
+

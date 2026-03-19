@@ -11,18 +11,14 @@ test "ops: gcd_list/lcm_list parity over ZZ" {
   let oracle_g = @sympy_polys.gcd_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
-  guard ours_g == oracle_g else {
-    fail("gcd_list mismatch: ours=\{ours_g}, oracle=\{oracle_g}")
-  }
+  assert_eq(ours_g, oracle_g)
   let ours_l = sympy_normalize(lcm_list([f, g, h]).to_string())
     .trim()
     .to_string()
   let oracle_l = @sympy_polys.lcm_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
-  guard ours_l == oracle_l else {
-    fail("lcm_list mismatch: ours=\{ours_l}, oracle=\{oracle_l}")
-  }
+  assert_eq(ours_l, oracle_l)
 }
 
 ///|
@@ -35,9 +31,7 @@ test "ops: discriminant parity over ZZ" {
   let disc = discriminant(f)
   let ours = disc.to_string()
   let oracle = @sympy_polys.discriminant(f.to_expr()).trim().to_string()
-  guard ours == oracle else {
-    fail("discriminant mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -50,9 +44,7 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
   let oracle = @sympy_polys.resultant(f, g, x="x", gens=["x"], domain="ZZ")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("resultant_expr mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -65,9 +57,7 @@ test "ops: resultant_expr parity for multivar with univariate support" {
   let oracle = @sympy_polys.resultant(f, g, x="y", gens=["x", "y"], domain="ZZ")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("resultant_expr multivar mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
 }
 
 ///|
@@ -81,9 +71,7 @@ test "ops: resultant_expr parity for non-constant multivar elimination" {
   let oracle = @sympy_polys.resultant(f, g, x="x", gens=["x", "y"], domain="ZZ")
     .trim()
     .to_string()
-  guard ours == oracle else {
-    fail("resultant_expr polynomial mismatch: ours=\{ours}, oracle=\{oracle}")
-  }
+  assert_eq(ours, oracle)
   let scalar_res : Result[@symnum.BigRational, PolyError] = try? resultant_expr_scalar(
     f,
     g,

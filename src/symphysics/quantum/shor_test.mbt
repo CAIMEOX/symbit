@@ -1,15 +1,15 @@
 ///|
 test "physics.quantum.shor: local helper arithmetic" {
-  guard ratioize([1, 2, 3], 15) == 6 else { fail("ratioize basic") }
-  guard ratioize([20, 1], 15) == 0 else { fail("ratioize cutoff") }
-  guard getr(1, 4, 15) == 4 else { fail("getr quarter") }
-  guard getr(3, 8, 15) == 5 else { fail("getr three eighths") }
+  assert_eq(ratioize([1, 2, 3], 15), 6)
+  assert_eq(ratioize([20, 1], 15), 0)
+  assert_eq(getr(1, 4, 15), 4)
+  assert_eq(getr(3, 8, 15), 5)
 }
 
 ///|
 test "physics.quantum.shor: local period finding and factoring" {
-  guard period_find(2, 15) == 4 else { fail("period_find(2, 15)") }
-  guard @symprint.to_string(shor(15)) == "Tuple(3, 5)" else { fail("shor(15)") }
+  assert_eq(period_find(2, 15), 4)
+  assert_eq(@symprint.to_string(shor(15)), "Tuple(3, 5)")
 }
 
 ///|
@@ -23,9 +23,7 @@ test "physics.quantum.shor: local CMod qapply and represent" {
   )
 
   let matrix = represent_matrix(op, nqubits=4)
-  guard matrix.height() == 16 && matrix.width() == 16 else {
-    fail("cmod matrix shape")
-  }
+  assert_true(matrix.height() == 16 && matrix.width() == 16)
   for col in 0..<16 {
     let basis = qubit_from_bits(int_qubit(col, 4).bits).as_expr()
     let expected = qubit_to_matrix(
@@ -33,9 +31,7 @@ test "physics.quantum.shor: local CMod qapply and represent" {
       nqubits=4,
     )
     for row in 0..<16 {
-      guard matrix.get(row, col) == expected.get(row, 0) else {
-        fail("cmod matrix column \{col} row \{row}")
-      }
+      assert_true(matrix.get(row, col) == expected.get(row, 0))
     }
   }
 }

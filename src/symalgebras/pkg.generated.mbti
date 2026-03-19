@@ -1,0 +1,91 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symalgebras"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+
+// Errors
+pub(all) suberror QuaternionError {
+  InvalidSeq(String)
+  InvalidMatrix(String)
+  InvalidAxis(String)
+  InvalidNorm(String)
+  ZeroNorm
+  NotPure
+}
+pub impl Show for QuaternionError
+
+// Types and methods
+pub struct Quaternion {
+  a : @symcore.Expr
+  b : @symcore.Expr
+  c : @symcore.Expr
+  d : @symcore.Expr
+  real_field : Bool
+  norm_override : @symcore.Expr?
+}
+pub fn Quaternion::a(Self) -> @symcore.Expr
+pub fn Quaternion::add(Self, Self) -> Self
+pub fn Quaternion::add_scalar(Self, @symcore.Expr) -> Self
+pub fn Quaternion::angle(Self) -> @symcore.Expr
+pub fn Quaternion::arc_coplanar(Self, Self) -> Bool? raise QuaternionError
+pub fn Quaternion::axis(Self) -> Self
+pub fn Quaternion::b(Self) -> @symcore.Expr
+pub fn Quaternion::c(Self) -> @symcore.Expr
+pub fn Quaternion::conjugate(Self) -> Self
+pub fn Quaternion::d(Self) -> @symcore.Expr
+pub fn Quaternion::div(Self, Self) -> Self raise QuaternionError
+pub fn Quaternion::div_scalar(Self, @symcore.Expr) -> Self
+pub fn Quaternion::exp(Self) -> Self
+pub fn Quaternion::from_axis_angle((@symcore.Expr, @symcore.Expr, @symcore.Expr), @symcore.Expr) -> Self
+pub fn Quaternion::from_elements(Array[@symcore.Expr]) -> Self raise QuaternionError
+pub fn Quaternion::from_euler(Array[@symcore.Expr], String) -> Self raise QuaternionError
+pub fn Quaternion::from_matrix(Array[Array[@symcore.Expr]]) -> Self raise QuaternionError
+pub fn Quaternion::from_rotation_matrix(Array[Array[@symcore.Expr]]) -> Self raise QuaternionError
+pub fn Quaternion::index_vector(Self) -> Self
+pub fn Quaternion::inverse(Self) -> Self raise QuaternionError
+pub fn Quaternion::is_pure(Self) -> Bool?
+pub fn Quaternion::is_zero_quaternion(Self) -> Bool?
+pub fn Quaternion::log(Self) -> Self raise QuaternionError
+pub fn Quaternion::mensor(Self) -> @symcore.Expr
+pub fn Quaternion::mul(Self, Self) -> Self
+pub fn Quaternion::mul_scalar(Self, @symcore.Expr) -> Self
+pub fn Quaternion::neg(Self) -> Self
+pub fn Quaternion::new(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, real_field? : Bool, norm? : @symcore.Expr) -> Self raise QuaternionError
+pub fn Quaternion::norm(Self) -> @symcore.Expr
+pub fn Quaternion::normalize(Self) -> Self
+pub fn Quaternion::orthogonal(Self, Self) -> Bool? raise QuaternionError
+pub fn Quaternion::parallel(Self, Self) -> Bool? raise QuaternionError
+pub fn Quaternion::pow(Self, Int) -> Self raise QuaternionError
+pub fn Quaternion::pow_cos_sin(Self, Int) -> Self raise QuaternionError
+pub fn Quaternion::product_matrix_left(Self) -> Array[Array[@symcore.Expr]]
+pub fn Quaternion::product_matrix_right(Self) -> Array[Array[@symcore.Expr]]
+pub fn Quaternion::real_field(Self) -> Bool
+pub fn Quaternion::rotate_point((@symcore.Expr, @symcore.Expr, @symcore.Expr), RotationArg) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
+pub fn Quaternion::scalar_part(Self) -> @symcore.Expr
+pub fn Quaternion::sub(Self, Self) -> Self
+pub fn Quaternion::to_axis_angle(Self) -> ((@symcore.Expr, @symcore.Expr, @symcore.Expr), @symcore.Expr) raise QuaternionError
+pub fn Quaternion::to_euler(Self, String, angle_addition? : Bool, avoid_square_root? : Bool) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise QuaternionError
+pub fn Quaternion::to_matrix(Self, vector_only? : Bool) -> Array[Array[@symcore.Expr]]
+pub fn Quaternion::to_rotation_matrix(Self, v? : (@symcore.Expr, @symcore.Expr, @symcore.Expr), homogeneous? : Bool) -> Array[Array[@symcore.Expr]]
+pub fn Quaternion::to_string(Self) -> String
+pub fn Quaternion::vector_coplanar(Self, Self, Self) -> Bool? raise QuaternionError
+pub fn Quaternion::vector_part(Self) -> Self
+pub fn Quaternion::with_norm(Self, @symcore.Expr?) -> Self raise QuaternionError
+pub impl Show for Quaternion
+
+pub(all) enum RotationArg {
+  Quat(Quaternion)
+  AxisAngle((@symcore.Expr, @symcore.Expr, @symcore.Expr), @symcore.Expr)
+}
+
+// Type aliases
+pub using @symcore {type Expr}
+
+pub type Matrix = Array[Array[@symcore.Expr]]
+
+// Traits
+

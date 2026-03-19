@@ -18,18 +18,10 @@ test "physics.continuum_mechanics.column: oracle parity" {
     "print(c.axial_force())\n" +
     "print(c.extension())\n",
   )
-  guard oracle.length() == 5 else { fail("unexpected oracle column output") }
-  guard continuum_expr_eq(c.reaction_loads()["R_0"], oracle[0]) else {
-    fail("column R_0")
-  }
-  guard continuum_expr_eq(c.reaction_loads()["R_10"], oracle[1]) else {
-    fail("column R_10")
-  }
-  guard continuum_expr_eq(c.load(), oracle[2]) else { fail("column load") }
-  guard continuum_expr_eq(c.axial_force(), oracle[3]) else {
-    fail("column axial force")
-  }
-  guard continuum_expr_eq(c.extension(), oracle[4]) else {
-    fail("column extension")
-  }
+  assert_eq(oracle.length(), 5)
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_0"], oracle[0]))
+  assert_true(continuum_expr_eq(c.reaction_loads()["R_10"], oracle[1]))
+  assert_true(continuum_expr_eq(c.load(), oracle[2]))
+  assert_true(continuum_expr_eq(c.axial_force(), oracle[3]))
+  assert_true(continuum_expr_eq(c.extension(), oracle[4]))
 }

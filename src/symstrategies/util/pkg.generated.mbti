@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/util"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn[K : Eq + Hash, V] assoc(Map[K, V], K, V) -> Map[K, V]
+
+pub let basic_fns : Fns[@symcore.Expr, ExprOp]
+
+pub fn expr_children(@symcore.Expr) -> ArrayView[@symcore.Expr]
+
+pub let expr_fns : Fns[@symcore.Expr, ExprOp]
+
+pub fn expr_leaf(@symcore.Expr) -> Bool
+
+pub fn expr_new_eval(ExprOp, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn expr_new_raw(ExprOp, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn expr_op(@symcore.Expr) -> ExprOp
+
+pub fn new(ExprOp, Array[@symcore.Expr]) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+pub(all) enum ExprOp {
+  Number
+  Symbol
+  Add
+  Mul
+  Pow
+  Function(String)
+}
+pub impl Eq for ExprOp
+pub impl Hash for ExprOp
+
+pub struct Fns[T, Op] {
+  op : (T) -> Op
+  new : (Op, Array[T]) -> T
+  children : (T) -> ArrayView[T]
+  leaf : (T) -> Bool
+}
+
+// Type aliases
+pub using @symcore {type Expr as Basic}
+
+// Traits
+

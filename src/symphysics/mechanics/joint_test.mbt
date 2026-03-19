@@ -88,10 +88,10 @@ test "physics.mechanics advanced joints core" {
     ),
     content="0",
   )
-  guard spherical.coordinates().length() == 3 &&
-    spherical.speeds().length() == 3 else {
-    fail("spherical joint should use three coordinates and speeds")
-  }
+  assert_true(
+    spherical.coordinates().length() == 3 &&
+        spherical.speeds().length() == 3
+  )
 
   let weld_child = rigid_body("AW")
   let weld = weld_joint("Fix", parent.as_bodylike(), weld_child.as_bodylike())

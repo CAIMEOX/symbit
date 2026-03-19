@@ -12,9 +12,7 @@ test "physics.optics.waves: parity" {
     t_wave(amp2, frequency=Some(freq), phase=phi2),
   )
 
-  guard wave.to_string() == @sympy_physics.optics_waves_eval("TWave(A, f, phi)") else {
-    fail("twave repr parity")
-  }
+  assert_eq(wave.to_string(), @sympy_physics.optics_waves_eval("TWave(A, f, phi)"))
   waves_assert_expr_equal(
     wave.amplitude_expr(),
     @sympy_physics.optics_waves_eval("TWave(A, f, phi).amplitude"),

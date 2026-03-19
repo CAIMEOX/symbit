@@ -5,9 +5,7 @@ fn waves_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let lhs_txt = @symprint.to_string(lhs)
-  guard (try! @sympy_physics.physics_expr_equivalent(lhs, rhs)) else {
-    fail("\{context}: ours=\{lhs_txt}; oracle=\{rhs}")
-  }
+  assert_true((try! @sympy_physics.physics_expr_equivalent(lhs, rhs)))
 }
 
 ///|
@@ -17,27 +15,15 @@ test "physics.optics.waves: twave properties and rewrites" {
   let freq = @symcore.symbol("f")
   let wave = t_wave(amp, frequency=Some(freq), phase=phi)
 
-  guard wave.to_string() == "TWave(A, f, phi, 1/f, n)" else {
-    fail("twave repr")
-  }
-  guard wave.amplitude_expr() == amp else { fail("twave amplitude") }
-  guard wave.frequency == freq else { fail("twave frequency") }
-  guard wave.phase == phi else { fail("twave phase") }
-  guard wave.time_period == (freq ^ @symcore.int(-1)) else {
-    fail("twave period")
-  }
-  guard wave.refractive_index_expr() == @symcore.symbol("n") else {
-    fail("twave refractive index")
-  }
-  guard @symprint.to_string(wave.rewrite_as_cos()).contains("cos(") else {
-    fail("twave rewrite cos")
-  }
-  guard @symprint.to_string(wave.rewrite_as_sin()).contains("sin(") else {
-    fail("twave rewrite sin")
-  }
-  guard @symprint.to_string(wave.rewrite_as_exp()).contains("exp(") else {
-    fail("twave rewrite exp")
-  }
+  assert_eq(wave.to_string(), "TWave(A, f, phi, 1/f, n)")
+  assert_true(wave.amplitude_expr() == amp)
+  assert_true(wave.frequency == freq)
+  assert_true(wave.phase == phi)
+  assert_true(wave.time_period == (freq ^ @symcore.int(-1)))
+  assert_true(wave.refractive_index_expr() == @symcore.symbol("n"))
+  assert_true(@symprint.to_string(wave.rewrite_as_cos()).contains("cos("))
+  assert_true(@symprint.to_string(wave.rewrite_as_sin()).contains("sin("))
+  assert_true(@symprint.to_string(wave.rewrite_as_exp()).contains("exp("))
 }
 
 ///|
@@ -66,7 +52,5 @@ test "physics.optics.waves: superposition and scaling" {
     "3*A1",
     "twave scale",
   )
-  guard (try? t_wave(amp1, phase=phi1)) is Err(_) else {
-    fail("twave missing frequency/time_period should fail")
-  }
+  assert_true((try? t_wave(amp1, phase=phi1)) is Err(_))
 }

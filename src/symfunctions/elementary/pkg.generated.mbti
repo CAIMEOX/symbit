@@ -1,0 +1,139 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symfunctions/elementary"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symlogic",
+}
+
+// Values
+pub fn abs(@symcore.Expr) -> @symcore.Expr
+
+pub fn acos(@symcore.Expr) -> @symcore.Expr
+
+pub fn acosh(@symcore.Expr) -> @symcore.Expr
+
+pub fn acot(@symcore.Expr) -> @symcore.Expr
+
+pub fn acoth(@symcore.Expr) -> @symcore.Expr
+
+pub fn acsc(@symcore.Expr) -> @symcore.Expr
+
+pub fn acsch(@symcore.Expr) -> @symcore.Expr
+
+pub fn adjoint(@symcore.Expr) -> @symcore.Expr
+
+pub fn arg(@symcore.Expr) -> @symcore.Expr
+
+pub fn asec(@symcore.Expr) -> @symcore.Expr
+
+pub fn asech(@symcore.Expr) -> @symcore.Expr
+
+pub fn asin(@symcore.Expr) -> @symcore.Expr
+
+pub fn asinh(@symcore.Expr) -> @symcore.Expr
+
+pub fn atan(@symcore.Expr) -> @symcore.Expr
+
+pub fn atan2(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn atanh(@symcore.Expr) -> @symcore.Expr
+
+pub fn cbrt(@symcore.Expr) -> @symcore.Expr
+
+pub fn ceiling(@symcore.Expr) -> @symcore.Expr
+
+pub fn conjugate(@symcore.Expr) -> @symcore.Expr
+
+pub fn cos(@symcore.Expr) -> @symcore.Expr
+
+pub fn cosh(@symcore.Expr) -> @symcore.Expr
+
+pub fn cot(@symcore.Expr) -> @symcore.Expr
+
+pub fn coth(@symcore.Expr) -> @symcore.Expr
+
+pub fn csc(@symcore.Expr) -> @symcore.Expr
+
+pub fn csch(@symcore.Expr) -> @symcore.Expr
+
+pub fn exp(@symcore.Expr) -> @symcore.Expr
+
+pub fn exp_polar(@symcore.Expr) -> @symcore.Expr
+
+pub fn floor(@symcore.Expr) -> @symcore.Expr
+
+pub fn frac(@symcore.Expr) -> @symcore.Expr
+
+pub fn id(@symcore.Expr) -> @symcore.Expr
+
+pub fn im(@symcore.Expr) -> @symcore.Expr
+
+pub fn lambert_w(@symcore.Expr) -> @symcore.Expr
+
+pub fn ln(@symcore.Expr) -> @symcore.Expr
+
+pub fn log(@symcore.Expr) -> @symcore.Expr
+
+pub fn max(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn min(Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn periodic_argument(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn piecewise(Array[PiecewiseCase], default? : @symcore.Expr) -> @symcore.Expr
+
+pub fn piecewise_exclusive(@symcore.Expr) -> @symcore.Expr
+
+pub fn piecewise_fold(@symcore.Expr) -> @symcore.Expr
+
+pub fn polar_lift(@symcore.Expr) -> @symcore.Expr
+
+pub fn polarify(@symcore.Expr) -> @symcore.Expr
+
+pub fn principal_branch(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn re(@symcore.Expr) -> @symcore.Expr
+
+pub fn real_root(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn rem(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn root(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn sec(@symcore.Expr) -> @symcore.Expr
+
+pub fn sech(@symcore.Expr) -> @symcore.Expr
+
+pub fn sign(@symcore.Expr) -> @symcore.Expr
+
+pub fn sin(@symcore.Expr) -> @symcore.Expr
+
+pub fn sinc(@symcore.Expr) -> @symcore.Expr
+
+pub fn sinh(@symcore.Expr) -> @symcore.Expr
+
+pub fn sqrt(@symcore.Expr) -> @symcore.Expr
+
+pub fn tan(@symcore.Expr) -> @symcore.Expr
+
+pub fn tanh(@symcore.Expr) -> @symcore.Expr
+
+pub fn transpose(@symcore.Expr) -> @symcore.Expr
+
+pub fn unbranched_argument(@symcore.Expr) -> @symcore.Expr
+
+pub fn unpolarify(@symcore.Expr) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+pub(all) struct PiecewiseCase {
+  expr : @symcore.Expr
+  cond : @symlogic.BoolExpr
+}
+
+// Type aliases
+
+// Traits
+

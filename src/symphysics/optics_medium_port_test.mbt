@@ -5,7 +5,7 @@ fn medium_port_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = try! @sympy_physics.physics_eval_str(@symprint.to_string(lhs))
-  guard ours == rhs else { fail("\{context}: ours=\{ours}; oracle=\{rhs}") }
+  assert_eq(ours, rhs)
 }
 
 ///|

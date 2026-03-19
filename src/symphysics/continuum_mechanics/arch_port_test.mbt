@@ -53,41 +53,21 @@ test "physics.continuum_mechanics.arch: oracle parity" {
     "print(b.reaction_force[Symbol('R_B_y')])\n" +
     "print(b.bending_moment_at(4))\n",
   )
-  guard oracle.length() == 11 else { fail("unexpected oracle arch output") }
-  guard continuum_expr_eq(a.reaction_force()["R_A_x"], oracle[0]) else {
-    fail("arch R_A_x")
-  }
-  guard continuum_expr_eq(a.reaction_force()["R_A_y"], oracle[1]) else {
-    fail("arch R_A_y")
-  }
-  guard continuum_expr_eq(a.reaction_force()["R_B_x"], oracle[2]) else {
-    fail("arch R_B_x")
-  }
-  guard continuum_expr_eq(a.reaction_force()["R_B_y"], oracle[3]) else {
-    fail("arch R_B_y")
-  }
-  guard continuum_expr_eq(a.axial_force_at(pos=Some(near_eight)), oracle[4]) else {
-    fail("arch axial")
-  }
-  guard continuum_expr_eq(a.shear_force_at(pos=Some(near_eight)), oracle[5]) else {
-    fail("arch shear")
-  }
-  guard continuum_expr_eq(b.reaction_force()["R_A_x"], oracle[6]) else {
-    fail("arch symbolic R_A_x")
-  }
-  guard continuum_expr_eq(b.reaction_force()["R_A_y"], oracle[7]) else {
-    fail("arch symbolic R_A_y")
-  }
-  guard continuum_expr_eq(b.reaction_force()["R_B_x"], oracle[8]) else {
-    fail("arch symbolic R_B_x")
-  }
-  guard continuum_expr_eq(b.reaction_force()["R_B_y"], oracle[9]) else {
-    fail("arch symbolic R_B_y")
-  }
-  guard continuum_expr_eq(
-    b.bending_moment_at(pos=Some(@symcore.int(4))),
-    oracle[10],
-  ) else {
-    fail("arch symbolic moment")
-  }
+  assert_eq(oracle.length(), 11)
+  assert_true(continuum_expr_eq(a.reaction_force()["R_A_x"], oracle[0]))
+  assert_true(continuum_expr_eq(a.reaction_force()["R_A_y"], oracle[1]))
+  assert_true(continuum_expr_eq(a.reaction_force()["R_B_x"], oracle[2]))
+  assert_true(continuum_expr_eq(a.reaction_force()["R_B_y"], oracle[3]))
+  assert_true(continuum_expr_eq(a.axial_force_at(pos=Some(near_eight)), oracle[4]))
+  assert_true(continuum_expr_eq(a.shear_force_at(pos=Some(near_eight)), oracle[5]))
+  assert_true(continuum_expr_eq(b.reaction_force()["R_A_x"], oracle[6]))
+  assert_true(continuum_expr_eq(b.reaction_force()["R_A_y"], oracle[7]))
+  assert_true(continuum_expr_eq(b.reaction_force()["R_B_x"], oracle[8]))
+  assert_true(continuum_expr_eq(b.reaction_force()["R_B_y"], oracle[9]))
+  assert_true(
+    continuum_expr_eq(
+        b.bending_moment_at(pos=Some(@symcore.int(4))),
+        oracle[10],
+      )
+  )
 }

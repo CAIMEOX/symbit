@@ -457,24 +457,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
       ),
     ),
   )
-  guard !sine_eval.contains("SineTransform") else {
-    fail("sine transform stayed unevaluated")
-  }
-  guard !cosine_eval.contains("CosineTransform") else {
-    fail("cosine transform stayed unevaluated")
-  }
-  guard !hankel_eval.contains("HankelTransform") else {
-    fail("hankel transform stayed unevaluated")
-  }
-  guard !shifted_fourier_eval.contains("FourierTransform") else {
-    fail("shifted gaussian fourier transform stayed unevaluated")
-  }
-  guard !shifted_inverse_fourier_eval.contains("InverseFourierTransform") else {
-    fail("shifted gaussian inverse fourier transform stayed unevaluated")
-  }
-  guard !half_line_fourier_eval.contains("FourierTransform") else {
-    fail("half-line exponential fourier transform stayed unevaluated")
-  }
+  assert_true(!sine_eval.contains("SineTransform"))
+  assert_true(!cosine_eval.contains("CosineTransform"))
+  assert_true(!hankel_eval.contains("HankelTransform"))
+  assert_true(!shifted_fourier_eval.contains("FourierTransform"))
+  assert_true(!shifted_inverse_fourier_eval.contains("InverseFourierTransform"))
+  assert_true(!half_line_fourier_eval.contains("FourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(half_line_inverse_fourier),
@@ -482,9 +470,7 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !half_line_x_fourier_eval.contains("FourierTransform") else {
-    fail("half-line x*exp fourier transform stayed unevaluated")
-  }
+  assert_true(!half_line_x_fourier_eval.contains("FourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(half_line_x_inverse_fourier),
@@ -492,9 +478,7 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !half_line_sin_fourier_eval.contains("FourierTransform") else {
-    fail("half-line sin-exponential fourier transform stayed unevaluated")
-  }
+  assert_true(!half_line_sin_fourier_eval.contains("FourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(half_line_sin_inverse_fourier),
@@ -502,9 +486,7 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !abs_decay_fourier_eval.contains("FourierTransform") else {
-    fail("abs-decay fourier transform stayed unevaluated")
-  }
+  assert_true(!abs_decay_fourier_eval.contains("FourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(abs_decay_inverse_fourier),
@@ -512,12 +494,8 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !symbolic_half_line_fourier_eval.contains("FourierTransform") else {
-    fail("symbolic half-line fourier transform stayed unevaluated")
-  }
-  guard !box_window_fourier_eval.contains("FourierTransform") else {
-    fail("box-window fourier transform stayed unevaluated")
-  }
+  assert_true(!symbolic_half_line_fourier_eval.contains("FourierTransform"))
+  assert_true(!box_window_fourier_eval.contains("FourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(box_window_inverse_fourier),
@@ -525,14 +503,12 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !triangle_window_fourier_eval.contains("FourierTransform") else {
-    fail("triangle-window fourier transform stayed unevaluated")
-  }
-  guard !triangle_window_inverse_fourier_eval.contains(
-    "InverseFourierTransform",
-  ) else {
-    fail("triangle-window inverse fourier transform stayed unevaluated")
-  }
+  assert_true(!triangle_window_fourier_eval.contains("FourierTransform"))
+  assert_true(
+    !triangle_window_inverse_fourier_eval.contains(
+        "InverseFourierTransform",
+      )
+  )
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(triangle_window_inverse_fourier),
@@ -559,12 +535,8 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !symbolic_sinc_box_eval.contains("InverseFourierTransform") else {
-    fail("symbolic sinc box inverse fourier transform stayed unevaluated")
-  }
-  guard !symbolic_sinc_triangle_eval.contains("InverseFourierTransform") else {
-    fail("symbolic sinc triangle inverse fourier transform stayed unevaluated")
-  }
+  assert_true(!symbolic_sinc_box_eval.contains("InverseFourierTransform"))
+  assert_true(!symbolic_sinc_triangle_eval.contains("InverseFourierTransform"))
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(symbolic_sinc_box),
@@ -586,51 +558,21 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
     ),
     0,
   )
-  guard !symbolic_cosine_gaussian_eval.contains("CosineTransform") else {
-    fail("symbolic cosine gaussian transform stayed unevaluated")
-  }
-  guard !cosine_shifted_recip_eval.contains("CosineTransform") else {
-    fail("cosine shifted reciprocal transform stayed unevaluated")
-  }
-  guard !cosine_sqrt_recip_eval.contains("CosineTransform") else {
-    fail("cosine reciprocal sqrt transform stayed unevaluated")
-  }
-  guard !sine_half_power_eval.contains("SineTransform") else {
-    fail("sine half-power transform stayed unevaluated")
-  }
-  guard !inverse_sine_half_power_eval.contains("InverseSineTransform") else {
-    fail("inverse sine half-power transform stayed unevaluated")
-  }
-  guard !sine_three_halves_eval.contains("SineTransform") else {
-    fail("sine three-halves transform stayed unevaluated")
-  }
-  guard !sine_gaussian_eval.contains("SineTransform") else {
-    fail("sine gaussian transform stayed unevaluated")
-  }
-  guard !inverse_sine_gaussian_eval.contains("InverseSineTransform") else {
-    fail("inverse sine gaussian transform stayed unevaluated")
-  }
-  guard !cosine_gaussian_eval.contains("CosineTransform") else {
-    fail("cosine gaussian transform stayed unevaluated")
-  }
-  guard !inverse_cosine_gaussian_eval.contains("InverseCosineTransform") else {
-    fail("inverse cosine gaussian transform stayed unevaluated")
-  }
-  guard !inverse_cosine_sqrt_recip_eval.contains("InverseCosineTransform") else {
-    fail("inverse cosine reciprocal sqrt transform stayed unevaluated")
-  }
-  guard !sine_log_over_x_eval.contains("SineTransform") else {
-    fail("sine log-over-x transform stayed unevaluated")
-  }
-  guard !cosine_sqrt_decay_eval.contains("CosineTransform") else {
-    fail("cosine sqrt-decay transform stayed unevaluated")
-  }
-  guard !hankel_gaussian_eval.contains("HankelTransform") else {
-    fail("hankel gaussian transform stayed unevaluated")
-  }
-  guard !inverse_hankel_gaussian_eval.contains("InverseHankelTransform") else {
-    fail("inverse hankel gaussian transform stayed unevaluated")
-  }
+  assert_true(!symbolic_cosine_gaussian_eval.contains("CosineTransform"))
+  assert_true(!cosine_shifted_recip_eval.contains("CosineTransform"))
+  assert_true(!cosine_sqrt_recip_eval.contains("CosineTransform"))
+  assert_true(!sine_half_power_eval.contains("SineTransform"))
+  assert_true(!inverse_sine_half_power_eval.contains("InverseSineTransform"))
+  assert_true(!sine_three_halves_eval.contains("SineTransform"))
+  assert_true(!sine_gaussian_eval.contains("SineTransform"))
+  assert_true(!inverse_sine_gaussian_eval.contains("InverseSineTransform"))
+  assert_true(!cosine_gaussian_eval.contains("CosineTransform"))
+  assert_true(!inverse_cosine_gaussian_eval.contains("InverseCosineTransform"))
+  assert_true(!inverse_cosine_sqrt_recip_eval.contains("InverseCosineTransform"))
+  assert_true(!sine_log_over_x_eval.contains("SineTransform"))
+  assert_true(!cosine_sqrt_decay_eval.contains("CosineTransform"))
+  assert_true(!hankel_gaussian_eval.contains("HankelTransform"))
+  assert_true(!inverse_hankel_gaussian_eval.contains("InverseHankelTransform"))
 }
 
 ///|
@@ -644,367 +586,345 @@ test "symintegrals Mellin special-function rules evaluate" {
   let f_of_x = @symcore.raw_function("f", [x])
   let half = @symcore.rational_from_ints(1, 2)
 
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho), x, s),
-    ),
-  ).contains("MellinTransform") else {
-    fail("(1 + x)**(-rho) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
-        @symspec.heaviside(@symcore.int(1) - x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "(1 - x)**(beta - 1)*Heaviside(1 - x) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
-        @symspec.heaviside(x - @symcore.int(1)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "(x - 1)**(beta - 1)*Heaviside(x - 1) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(mellin_transform(@symspec.erf(@symelem.sqrt(x)), x, s)),
-  ).contains("MellinTransform") else {
-    fail("erf(sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("abs(1 - x)**(-rho) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        (@symelem.log(x) ^ @symcore.int(4)) *
-        @symspec.heaviside(@symcore.int(1) - x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("log(x)**4*Heaviside(1 - x) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        (@symelem.log(x) ^ @symcore.int(3)) *
-        @symspec.heaviside(x - @symcore.int(1)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("log(x)**3*Heaviside(x - 1) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(mellin_transform(@symelem.log(x + @symcore.int(1)), x, s)),
-  ).contains("MellinTransform") else {
-    fail("log(x + 1) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("log(1/x + 1) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("(x**a - b**a)/(x - b) Mellin transform stayed unevaluated")
-  }
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho), x, s),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
+            @symspec.heaviside(@symcore.int(1) - x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
+            @symspec.heaviside(x - @symcore.int(1)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(mellin_transform(@symspec.erf(@symelem.sqrt(x)), x, s)),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            (@symelem.log(x) ^ @symcore.int(4)) *
+            @symspec.heaviside(@symcore.int(1) - x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            (@symelem.log(x) ^ @symcore.int(3)) *
+            @symspec.heaviside(x - @symcore.int(1)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(mellin_transform(@symelem.log(x + @symcore.int(1)), x, s)),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
   let sqrt_shift = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
-  guard !@symprint.to_string(doit(mellin_transform(sqrt_shift ^ a, x, s))).contains(
-    "MellinTransform",
-  ) else {
-    fail("(sqrt(x + b**2) + b)**a Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        (sqrt_shift ^ a) *
-        (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "(sqrt(x + b**2) + b)**a/sqrt(x + b**2) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(@symelem.log(@symelem.abs(@symcore.int(1) - x)), x, s),
-    ),
-  ).contains("MellinTransform") else {
-    fail("log(abs(1 - x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("log(abs(1 - 1/x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
-    "MellinTransform",
-  ) else {
-    fail("E1 Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(mellin_transform(@symspec.expint(@symcore.int(2), x), x, s)),
-  ).contains("MellinTransform") else {
-    fail("expint(2, x) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(mellin_transform(@symspec.si(x), x, s))).contains(
-    "MellinTransform",
-  ) else {
-    fail("Si Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
-  ).contains("MellinTransform") else {
-    fail("Ci(sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("besselj(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("bessely(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("besselk(a, 2*sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besseli(a, @symelem.sqrt(x)) *
-        @symspec.besselk(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besseli(a, sqrt(x))*besselk(a, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symelem.sqrt(x)) ^ @symcore.int(2),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("besselj(a, sqrt(x))**2 Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symelem.sqrt(x)) *
-        @symspec.besselj(@symcore.int(-1) * a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besselj(a, sqrt(x))*besselj(-a, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symelem.sqrt(x)) *
-        @symspec.bessely(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besselj(a, sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symelem.sqrt(x)) *
-        @symspec.besselj(b, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besselj(a, sqrt(x))*besselj(b, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a - @symcore.int(1), @symelem.sqrt(x)) *
-        @symspec.besselj(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besselj(a - 1, sqrt(x))*besselj(a, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besselj(a, @symelem.sqrt(x)) *
-        @symspec.bessely(b, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besselj(a, sqrt(x))*bessely(b, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symspec.besseli(b, @symelem.sqrt(x)) *
-        @symspec.besselk(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail(
-      "besseli(b, sqrt(x))*besselk(a, sqrt(x)) Mellin transform stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.sin(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("sin(sqrt(x))*besselj(a, sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.cos(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("cos(sqrt(x))*besselj(a, sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.sin(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("sin(sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      mellin_transform(
-        @symelem.cos(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
-        x,
-        s,
-      ),
-    ),
-  ).contains("MellinTransform") else {
-    fail("cos(sqrt(x))*bessely(a, sqrt(x)) Mellin transform stayed unevaluated")
-  }
+  assert_true(
+    !@symprint.to_string(doit(mellin_transform(sqrt_shift ^ a, x, s))).contains(
+        "MellinTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            (sqrt_shift ^ a) *
+            (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(@symelem.log(@symelem.abs(@symcore.int(1) - x)), x, s),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
+        "MellinTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(mellin_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(doit(mellin_transform(@symspec.si(x), x, s))).contains(
+        "MellinTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besseli(a, @symelem.sqrt(x)) *
+            @symspec.besselk(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symelem.sqrt(x)) ^ @symcore.int(2),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symelem.sqrt(x)) *
+            @symspec.besselj(@symcore.int(-1) * a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symelem.sqrt(x)) *
+            @symspec.bessely(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symelem.sqrt(x)) *
+            @symspec.besselj(b, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a - @symcore.int(1), @symelem.sqrt(x)) *
+            @symspec.besselj(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besselj(a, @symelem.sqrt(x)) *
+            @symspec.bessely(b, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symspec.besseli(b, @symelem.sqrt(x)) *
+            @symspec.besselk(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.sin(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.cos(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.sin(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          mellin_transform(
+            @symelem.cos(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+            x,
+            s,
+          ),
+        ),
+      ).contains("MellinTransform")
+  )
 
   let generic_mellin_eval = @symprint.to_string(
     mellin_transform_eval(f_of_x, x, s),
   )
-  guard generic_mellin_eval.contains("MellinTransform(f(x), x, s)") else {
-    fail("generic Mellin transform did not preserve unevaluated object")
-  }
+  assert_true(generic_mellin_eval.contains("MellinTransform(f(x), x, s)"))
 
   let partial_generic_mellin_eval = @symprint.to_string(
     mellin_transform_eval(f_of_x + @symelem.exp(@symcore.int(-1) * x), x, s),
   )
-  guard partial_generic_mellin_eval.contains("MellinTransform(f(x), x, s)") &&
-    partial_generic_mellin_eval.contains("gamma(s)") else {
-    fail("generic-plus-known Mellin transform did not partially evaluate")
-  }
+  assert_true(
+    partial_generic_mellin_eval.contains("MellinTransform(f(x), x, s)") &&
+        partial_generic_mellin_eval.contains("gamma(s)")
+  )
 
   let inv_e1 = doit(
     inverse_mellin_transform(@symspec.gamma(s) * (s ^ @symcore.int(-1)), s, x),
@@ -1517,93 +1437,55 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
     0,
   )
-  guard @symprint.to_string(inv_sqrt_shift_recip).contains("sqrt") else {
-    fail(
-      "sqrt-shift reciprocal inverse Mellin did not retain direct sqrt structure",
-    )
-  }
-  guard !@symprint.to_string(inv_besselj).contains("InverseMellinTransform") else {
-    fail("besselj inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_bessely).contains("InverseMellinTransform") else {
-    fail("bessely inverse Mellin stayed unevaluated")
-  }
-  guard @symprint.to_string(inv_bessely).contains("bessely") else {
-    fail("bessely inverse Mellin did not land on direct BesselY object")
-  }
-  guard !@symprint.to_string(inv_besselk).contains("InverseMellinTransform") else {
-    fail("besselk inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_sin_besselj).contains("InverseMellinTransform") else {
-    fail("sin(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform") else {
-    fail("cos(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_sin_bessely).contains("InverseMellinTransform") else {
-    fail("sin(sqrt(x))*bessely(a, sqrt(x)) inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_cos_bessely).contains("InverseMellinTransform") else {
-    fail("cos(sqrt(x))*bessely(a, sqrt(x)) inverse Mellin stayed unevaluated")
-  }
-  guard @symprint.to_string(inv_sin_bessely).contains("sin") &&
-    @symprint.to_string(inv_sin_bessely).contains("bessely") else {
-    fail("sin*bessely inverse Mellin did not land on direct symbolic objects")
-  }
-  guard @symprint.to_string(inv_cos_bessely).contains("cos") &&
-    @symprint.to_string(inv_cos_bessely).contains("bessely") else {
-    fail("cos*bessely inverse Mellin did not land on direct symbolic objects")
-  }
-  guard !@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform") else {
-    fail("besselj(a, sqrt(x))^2 inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_besselj_pm).contains("InverseMellinTransform") else {
-    fail(
-      "besselj(-a, sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(inv_besselj_ab).contains("InverseMellinTransform") else {
-    fail(
-      "besselj(a, sqrt(x))*besselj(b, sqrt(x)) inverse Mellin stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(inv_besselj_bessely).contains(
-    "InverseMellinTransform",
-  ) else {
-    fail(
-      "besselj(a, sqrt(x))*bessely(b, sqrt(x)) inverse Mellin stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(inv_besselj_bessely_same).contains(
-    "InverseMellinTransform",
-  ) else {
-    fail(
-      "besselj(a, sqrt(x))*bessely(a, sqrt(x)) inverse Mellin stayed unevaluated",
-    )
-  }
-  guard @symprint.to_string(inv_besselj_bessely_same).contains("besselj") &&
-    @symprint.to_string(inv_besselj_bessely_same).contains("bessely") else {
-    fail(
-      "same-order besselj*bessely inverse Mellin did not land on direct Bessel objects",
-    )
-  }
-  guard @symprint.to_string(inv_besselj_bessely).contains("besselj") &&
-    @symprint.to_string(inv_besselj_bessely).contains("bessely") else {
-    fail("besselj*bessely inverse Mellin did not land on direct Bessel objects")
-  }
-  guard !@symprint.to_string(inv_difference_quotient).contains(
-    "InverseMellinTransform",
-  ) else {
-    fail("difference-quotient inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_sqrt_shift).contains("InverseMellinTransform") else {
-    fail("sqrt-shift power inverse Mellin stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_sqrt_shift_recip).contains(
-    "InverseMellinTransform",
-  ) else {
-    fail("sqrt-shift reciprocal inverse Mellin stayed unevaluated")
-  }
+  assert_true(@symprint.to_string(inv_sqrt_shift_recip).contains("sqrt"))
+  assert_true(!@symprint.to_string(inv_besselj).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_bessely).contains("InverseMellinTransform"))
+  assert_true(@symprint.to_string(inv_bessely).contains("bessely"))
+  assert_true(!@symprint.to_string(inv_besselk).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_sin_besselj).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_sin_bessely).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_cos_bessely).contains("InverseMellinTransform"))
+  assert_true(
+    @symprint.to_string(inv_sin_bessely).contains("sin") &&
+        @symprint.to_string(inv_sin_bessely).contains("bessely")
+  )
+  assert_true(
+    @symprint.to_string(inv_cos_bessely).contains("cos") &&
+        @symprint.to_string(inv_cos_bessely).contains("bessely")
+  )
+  assert_true(!@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_besselj_pm).contains("InverseMellinTransform"))
+  assert_true(!@symprint.to_string(inv_besselj_ab).contains("InverseMellinTransform"))
+  assert_true(
+    !@symprint.to_string(inv_besselj_bessely).contains(
+        "InverseMellinTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(inv_besselj_bessely_same).contains(
+        "InverseMellinTransform",
+      )
+  )
+  assert_true(
+    @symprint.to_string(inv_besselj_bessely_same).contains("besselj") &&
+        @symprint.to_string(inv_besselj_bessely_same).contains("bessely")
+  )
+  assert_true(
+    @symprint.to_string(inv_besselj_bessely).contains("besselj") &&
+        @symprint.to_string(inv_besselj_bessely).contains("bessely")
+  )
+  assert_true(
+    !@symprint.to_string(inv_difference_quotient).contains(
+        "InverseMellinTransform",
+      )
+  )
+  assert_true(!@symprint.to_string(inv_sqrt_shift).contains("InverseMellinTransform"))
+  assert_true(
+    !@symprint.to_string(inv_sqrt_shift_recip).contains(
+        "InverseMellinTransform",
+      )
+  )
   assert_eq(
     @symcore.compare_expr(
       @symsimplify.simplify(inv_exp_subst),
@@ -1659,58 +1541,48 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
       s,
     ),
   )
-  guard deriv_eval.contains("LaplaceTransform(f(x), x, s)") else {
-    fail("missing generic LaplaceTransform object in derivative rule")
-  }
-  guard deriv_eval.contains("f(0)") else {
-    fail("missing initial value term in derivative rule")
-  }
+  assert_true(deriv_eval.contains("LaplaceTransform(f(x), x, s)"))
+  assert_true(deriv_eval.contains("f(0)"))
 
-  guard !@symprint.to_string(doit(laplace_transform(@symelem.sinh(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("sinh Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(@symelem.cosh(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("cosh Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(x * @symelem.sin(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("x*sin(x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(x * @symelem.cos(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("x*cos(x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(x * @symelem.sinh(x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("x*sinh(x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(x * @symelem.cosh(x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("x*cosh(x) Laplace transform stayed unevaluated")
-  }
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symelem.sinh(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symelem.cosh(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(x * @symelem.sin(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(x * @symelem.cos(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(x * @symelem.sinh(x), x, s)),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(x * @symelem.cosh(x), x, s)),
+      ).contains("LaplaceTransform")
+  )
 
   let generic_eval = @symprint.to_string(laplace_transform_eval(f_of_x, x, s))
-  guard generic_eval.contains("LaplaceTransform(f(x), x, s)") else {
-    fail("generic function Laplace tuple missing transform object")
-  }
-  guard generic_eval.contains("oo") else {
-    fail("generic function Laplace tuple missing -oo plane")
-  }
+  assert_true(generic_eval.contains("LaplaceTransform(f(x), x, s)"))
+  assert_true(generic_eval.contains("oo"))
 
   let scaled_eval = @symprint.to_string(
     laplace_transform_eval(a * f_of_x, x, s),
   )
-  guard scaled_eval.contains("a*LaplaceTransform(f(x), x, s)") else {
-    fail("scaled generic Laplace lost scalar factor")
-  }
+  assert_true(scaled_eval.contains("a*LaplaceTransform(f(x), x, s)"))
 
   let shifted_generic_eval = @symprint.to_string(
     laplace_transform_eval(
@@ -1719,20 +1591,18 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
       s,
     ),
   )
-  guard shifted_generic_eval.contains("LaplaceTransform(f(x), x,") &&
-    (
-      shifted_generic_eval.contains("a + s)") ||
-      shifted_generic_eval.contains("s + a)")
-    ) else {
-    fail("exponential shift generic Laplace missing shifted transform")
-  }
+  assert_true(
+    shifted_generic_eval.contains("LaplaceTransform(f(x), x,") &&
+        (
+          shifted_generic_eval.contains("a + s)") ||
+          shifted_generic_eval.contains("s + a)")
+        )
+  )
 
   let x_generic_eval = @symprint.to_string(
     laplace_transform_eval(x * f_of_x, x, s),
   )
-  guard x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)") else {
-    fail("x*f(x) Laplace did not become derivative of transform")
-  }
+  assert_true(x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)"))
 
   let poly_generic_eval = @symprint.to_string(
     laplace_transform_eval(
@@ -1746,19 +1616,19 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
       s,
     ),
   )
-  guard poly_generic_eval.contains(
-      "Derivative(LaplaceTransform(f(x), x, s), s, 2)",
-    ) ||
+  assert_true(
     poly_generic_eval.contains(
-      "Derivative(LaplaceTransform(f(x), x, s), (s, 2))",
-    ) else {
-    fail("quadratic polynomial generic Laplace missing second derivative")
-  }
-  guard poly_generic_eval.contains(
-    "Derivative(LaplaceTransform(f(x), x, s), s)",
-  ) else {
-    fail("quadratic polynomial generic Laplace missing first derivative")
-  }
+          "Derivative(LaplaceTransform(f(x), x, s), s, 2)",
+        ) ||
+        poly_generic_eval.contains(
+          "Derivative(LaplaceTransform(f(x), x, s), (s, 2))",
+        )
+  )
+  assert_true(
+    poly_generic_eval.contains(
+        "Derivative(LaplaceTransform(f(x), x, s), s)",
+      )
+  )
 
   let sinh_generic_eval = @symprint.to_string(
     laplace_transform_eval(@symelem.sinh(a * x) * f_of_x, x, s),
@@ -1767,9 +1637,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .split("LaplaceTransform(f(x), x,")
     .to_array()
     .length()
-  guard sinh_transform_count >= 3 && sinh_generic_eval.contains("a") else {
-    fail("sinh generic Laplace missing shifted object terms")
-  }
+  assert_true(sinh_transform_count >= 3 && sinh_generic_eval.contains("a"))
 
   let cosh_generic_eval = @symprint.to_string(
     laplace_transform_eval(@symelem.cosh(a * x) * f_of_x, x, s),
@@ -1778,9 +1646,7 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .split("LaplaceTransform(f(x), x,")
     .to_array()
     .length()
-  guard cosh_transform_count >= 3 && cosh_generic_eval.contains("a") else {
-    fail("cosh generic Laplace missing shifted object terms")
-  }
+  assert_true(cosh_transform_count >= 3 && cosh_generic_eval.contains("a"))
 
   let sin_generic_eval = @symprint.to_string(
     laplace_transform_eval(@symelem.sin(a * x) * f_of_x, x, s),
@@ -1789,11 +1655,11 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .split("LaplaceTransform(f(x), x,")
     .to_array()
     .length()
-  guard sin_transform_count >= 3 &&
-    sin_generic_eval.contains("I") &&
-    sin_generic_eval.contains("a") else {
-    fail("sin generic Laplace missing imaginary shifts")
-  }
+  assert_true(
+    sin_transform_count >= 3 &&
+        sin_generic_eval.contains("I") &&
+        sin_generic_eval.contains("a")
+  )
 
   let cos_generic_eval = @symprint.to_string(
     laplace_transform_eval(@symelem.cos(a * x) * f_of_x, x, s),
@@ -1802,11 +1668,11 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .split("LaplaceTransform(f(x), x,")
     .to_array()
     .length()
-  guard cos_transform_count >= 3 &&
-    cos_generic_eval.contains("I") &&
-    cos_generic_eval.contains("a") else {
-    fail("cos generic Laplace missing imaginary shifts")
-  }
+  assert_true(
+    cos_transform_count >= 3 &&
+        cos_generic_eval.contains("I") &&
+        cos_generic_eval.contains("a")
+  )
 }
 
 ///|
@@ -1816,100 +1682,100 @@ test "symintegrals Laplace special-function rules evaluate" {
   let a = @symcore.symbol("a")
   let neg_half = @symcore.rational_from_ints(-1, 2)
 
-  guard !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("Ci Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(@symspec.si(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("Si Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(@symspec.shi(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("Shi Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(@symspec.chi(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("Chi Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(doit(laplace_transform(@symspec.e1(x), x, s))).contains(
-    "LaplaceTransform",
-  ) else {
-    fail("E1 Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("expint(2, x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(@symspec.expint(a, x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("expint(a, x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("erf(2*x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      laplace_transform(
-        @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("LaplaceTransform") else {
-    fail("besselj(0, 2*x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      laplace_transform(
-        x * @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("LaplaceTransform") else {
-    fail("x*besselj(0, 2*x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      laplace_transform(
-        @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("LaplaceTransform") else {
-    fail("besseli(0, 2*x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      laplace_transform(
-        x * @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
-        x,
-        s,
-      ),
-    ),
-  ).contains("LaplaceTransform") else {
-    fail("x*besseli(0, 2*x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(@symspec.fresnels(x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("fresnels(x) Laplace transform stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(laplace_transform(@symspec.fresnelc(x), x, s)),
-  ).contains("LaplaceTransform") else {
-    fail("fresnelc(x) Laplace transform stayed unevaluated")
-  }
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.si(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.shi(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.chi(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.e1(x), x, s))).contains(
+        "LaplaceTransform",
+      )
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(@symspec.expint(a, x), x, s)),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          laplace_transform(
+            @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          laplace_transform(
+            x * @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          laplace_transform(
+            @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          laplace_transform(
+            x * @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+            x,
+            s,
+          ),
+        ),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(@symspec.fresnels(x), x, s)),
+      ).contains("LaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(laplace_transform(@symspec.fresnelc(x), x, s)),
+      ).contains("LaplaceTransform")
+  )
 
   let inv_ci = doit(
     inverse_laplace_transform(
@@ -1935,15 +1801,9 @@ test "symintegrals Laplace special-function rules evaluate" {
     ),
   )
 
-  guard !@symprint.to_string(inv_ci).contains("InverseLaplaceTransform") else {
-    fail("Ci inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_e1).contains("InverseLaplaceTransform") else {
-    fail("E1 inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(inv_expint2).contains("InverseLaplaceTransform") else {
-    fail("expint(2, x) inverse Laplace stayed unevaluated")
-  }
+  assert_true(!@symprint.to_string(inv_ci).contains("InverseLaplaceTransform"))
+  assert_true(!@symprint.to_string(inv_e1).contains("InverseLaplaceTransform"))
+  assert_true(!@symprint.to_string(inv_expint2).contains("InverseLaplaceTransform"))
 
   assert_eq(
     @symcore.compare_expr(
@@ -2024,12 +1884,8 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       ),
     ),
   )
-  guard delayed.contains("Heaviside") else {
-    fail("delayed inverse Laplace missed Heaviside shift")
-  }
-  guard delayed.contains("x + -2") else {
-    fail("delayed inverse Laplace missed time shift")
-  }
+  assert_true(delayed.contains("Heaviside"))
+  assert_true(delayed.contains("x + -2"))
 
   inspect(
     @symprint.to_string(
@@ -2054,10 +1910,10 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       ),
     ),
   )
-  guard !shifted_quad.contains("InverseLaplaceTransform") &&
-    shifted_quad.contains("Heaviside") else {
-    fail("shifted quadratic inverse Laplace stayed unevaluated")
-  }
+  assert_true(
+    !shifted_quad.contains("InverseLaplaceTransform") &&
+        shifted_quad.contains("Heaviside")
+  )
 
   let shifted_quad_num = @symprint.to_string(
     doit(
@@ -2072,204 +1928,198 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
       ),
     ),
   )
-  guard !shifted_quad_num.contains("InverseLaplaceTransform") &&
-    shifted_quad_num.contains("Heaviside") else {
-    fail("shifted quadratic numerator inverse Laplace stayed unevaluated")
-  }
+  assert_true(
+    !shifted_quad_num.contains("InverseLaplaceTransform") &&
+        shifted_quad_num.contains("Heaviside")
+  )
 
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-        @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("shifted hyperbolic inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        (s + @symcore.int(1)) *
-        (
-          (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-          @symcore.int(-1)
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+            @symcore.int(-1),
+            s,
+            x,
+          ),
         ),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("shifted hyperbolic numerator inverse Laplace stayed unevaluated")
-  }
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            (s + @symcore.int(1)) *
+            (
+              (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+              @symcore.int(-1)
+            ),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
 
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("hyperbolic inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        ((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("two-pole rational inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        s * (((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1)),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("linear-numerator two-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        ((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("quadratic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        s * (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2)),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("linear quadratic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("hyperbolic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        s * (((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2)),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("linear hyperbolic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-        @symcore.int(2) ^
-        @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("shifted hyperbolic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        s *
-        (
-          (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-          @symcore.int(2) ^
-          @symcore.int(-1)
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
+            s,
+            x,
+          ),
         ),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail(
-      "linear shifted hyperbolic double-pole inverse Laplace stayed unevaluated",
-    )
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
-        @symcore.int(2) ^
-        @symcore.int(-1),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail("shifted quadratic double-pole inverse Laplace stayed unevaluated")
-  }
-  guard !@symprint.to_string(
-    doit(
-      inverse_laplace_transform(
-        s *
-        (
-          (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
-          @symcore.int(2) ^
-          @symcore.int(-1)
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            ((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),
+            s,
+            x,
+          ),
         ),
-        s,
-        x,
-      ),
-    ),
-  ).contains("InverseLaplaceTransform") else {
-    fail(
-      "linear shifted quadratic double-pole inverse Laplace stayed unevaluated",
-    )
-  }
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            s * (((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1)),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            ((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            s * (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2)),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            s * (((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2)),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+            @symcore.int(2) ^
+            @symcore.int(-1),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            s *
+            (
+              (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+              @symcore.int(2) ^
+              @symcore.int(-1)
+            ),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+            @symcore.int(2) ^
+            @symcore.int(-1),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
+  assert_true(
+    !@symprint.to_string(
+        doit(
+          inverse_laplace_transform(
+            s *
+            (
+              (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+              @symcore.int(2) ^
+              @symcore.int(-1)
+            ),
+            s,
+            x,
+          ),
+        ),
+      ).contains("InverseLaplaceTransform")
+  )
 }
 
 ///|
 test "symintegrals quadrature and intpoly exact stage 6 paths" {
   let (leg_nodes, leg_weights) = gauss_legendre(3, n_digits=5)
-  guard leg_nodes.length() == 3 && leg_weights.length() == 3 else {
-    fail("gauss_legendre size mismatch")
-  }
-  guard approx_double(leg_nodes[0], -0.7746, eps=1.0e-3) &&
-    approx_double(leg_nodes[1], 0.0, eps=1.0e-8) &&
-    approx_double(leg_nodes[2], 0.7746, eps=1.0e-3) else {
-    fail("gauss_legendre nodes mismatch")
-  }
-  guard approx_double(leg_weights[0], 0.55556, eps=1.0e-4) &&
-    approx_double(leg_weights[1], 0.88889, eps=1.0e-4) &&
-    approx_double(leg_weights[2], 0.55556, eps=1.0e-4) else {
-    fail("gauss_legendre weights mismatch")
-  }
+  assert_true(leg_nodes.length() == 3 && leg_weights.length() == 3)
+  assert_true(
+    approx_double(leg_nodes[0], -0.7746, eps=1.0e-3) &&
+        approx_double(leg_nodes[1], 0.0, eps=1.0e-8) &&
+        approx_double(leg_nodes[2], 0.7746, eps=1.0e-3)
+  )
+  assert_true(
+    approx_double(leg_weights[0], 0.55556, eps=1.0e-4) &&
+        approx_double(leg_weights[1], 0.88889, eps=1.0e-4) &&
+        approx_double(leg_weights[2], 0.55556, eps=1.0e-4)
+  )
 
   let (lob_nodes, lob_weights) = gauss_lobatto(4, n_digits=5)
-  guard approx_double(lob_nodes[0], -1.0, eps=1.0e-8) &&
-    approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
-    approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
-    approx_double(lob_weights[3], 1.0 / 6.0, eps=1.0e-4) else {
-    fail("gauss_lobatto edge data mismatch")
-  }
+  assert_true(
+    approx_double(lob_nodes[0], -1.0, eps=1.0e-8) &&
+        approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
+        approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
+        approx_double(lob_weights[3], 1.0 / 6.0, eps=1.0e-4)
+  )
 
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")

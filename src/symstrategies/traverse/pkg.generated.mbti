@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/traverse"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symstrategies/util",
+}
+
+// Values
+pub fn bottom_up((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore.Expr, @util.ExprOp]) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn bottom_up_once((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore.Expr, @util.ExprOp]) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn sall((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore.Expr, @util.ExprOp]) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn top_down((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore.Expr, @util.ExprOp]) -> (@symcore.Expr) -> @symcore.Expr
+
+pub fn top_down_once((@symcore.Expr) -> @symcore.Expr, fns? : @util.Fns[@symcore.Expr, @util.ExprOp]) -> (@symcore.Expr) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

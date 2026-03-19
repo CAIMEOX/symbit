@@ -9,9 +9,7 @@ fn wrapping_assert_summary(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard wrapping_compact(lhs) == wrapping_compact(rhs) else {
-    fail(context + ": ours=" + lhs + "; oracle=" + rhs)
-  }
+  assert_eq(wrapping_compact(lhs), wrapping_compact(rhs))
 }
 
 ///|
@@ -27,15 +25,9 @@ fn wrapping_assert_vector(
   let ours_x = @symprint.to_string(try! comps.get(0, 0))
   let ours_y = @symprint.to_string(try! comps.get(1, 0))
   let ours_z = @symprint.to_string(try! comps.get(2, 0))
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)) else {
-    fail(context + ": x mismatch " + ours_x)
-  }
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)) else {
-    fail(context + ": y mismatch " + ours_y)
-  }
-  guard (try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)) else {
-    fail(context + ": z mismatch " + ours_z)
-  }
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_x, rhs_x)))
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_y, rhs_y)))
+  assert_true((try! @sympy_physics.mechanics_expr_equal(ours_z, rhs_z)))
 }
 
 ///|
@@ -52,12 +44,12 @@ test "physics.mechanics parity wrapping geometry" {
   let sphere_len_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('GWN'); pO=Point('GpO'); p1=Point('Gp1'); p2=Point('Gp2'); r=2; p1.set_pos(pO, r*N.x); p2.set_pos(pO, r*N.y); WrappingSphere(r, pO).geodesic_length(p1, p2)",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
-    sphere_len_oracle,
-  ) else {
-    fail("sphere geodesic length parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
+        sphere_len_oracle,
+      )
+  )
   let (sv1, sv2) = sphere.geodesic_end_vectors(p_1, p_2)
   wrapping_assert_vector(
     sv1.simplify(),
@@ -82,12 +74,12 @@ test "physics.mechanics parity wrapping geometry" {
   let cylinder_len_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('GWN'); pO=Point('GpO'); p1=Point('Gp1'); p3=Point('Gp3'); r=2; p1.set_pos(pO, r*N.x); p3.set_pos(pO, r*N.y); WrappingCylinder(r, pO, N.z).geodesic_length(p1, p3)",
   )
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
-    cylinder_len_oracle,
-  ) else {
-    fail("cylinder geodesic length parity")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
+        cylinder_len_oracle,
+      )
+  )
   let (cv1, cv2) = cylinder.geodesic_end_vectors(p_1, p_3)
   wrapping_assert_vector(
     cv1.simplify(),

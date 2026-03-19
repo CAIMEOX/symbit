@@ -117,11 +117,11 @@ test "discrete linrec errors" {
   let coeffs = [@symcore.int(1), @symcore.int(1)]
   let init = [@symcore.int(1), @symcore.int(2), @symcore.int(3)]
   let bad0 : Result[Expr, Error] = try? linrec(coeffs, init, 1)
-  guard bad0 is Err(_) else { fail("expected init length error") }
+  assert_true(bad0 is Err(_))
   let bad1 : Result[Expr, Error] = try? linrec(
     coeffs,
     [@symcore.int(1), @symcore.int(2)],
     -5,
   )
-  guard bad1 is Err(_) else { fail("expected negative n error") }
+  assert_true(bad1 is Err(_))
 }

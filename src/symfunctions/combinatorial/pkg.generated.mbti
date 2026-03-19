@@ -1,0 +1,80 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symfunctions/combinatorial"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn andre(@symcore.Expr) -> @symcore.Expr
+
+pub fn bell(@symcore.Expr) -> @symcore.Expr
+
+pub fn bernoulli(@symcore.Expr) -> @symcore.Expr
+
+pub fn binomial(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn carmichael(@symcore.Expr) -> @symcore.Expr
+
+pub fn catalan(@symcore.Expr) -> @symcore.Expr
+
+pub fn divisor_sigma(@symcore.Expr, k? : @symcore.Expr) -> @symcore.Expr
+
+pub fn euler(@symcore.Expr) -> @symcore.Expr
+
+pub fn factorial(@symcore.Expr) -> @symcore.Expr
+
+pub fn factorial2(@symcore.Expr) -> @symcore.Expr
+
+pub fn falling_factorial(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn ff(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn fibonacci(@symcore.Expr) -> @symcore.Expr
+
+pub fn genocchi(@symcore.Expr) -> @symcore.Expr
+
+pub fn harmonic(@symcore.Expr) -> @symcore.Expr
+
+pub fn jacobi_symbol(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn kronecker_symbol(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn legendre_symbol(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn lucas(@symcore.Expr) -> @symcore.Expr
+
+pub fn mobius(@symcore.Expr) -> @symcore.Expr
+
+pub fn motzkin(@symcore.Expr) -> @symcore.Expr
+
+pub fn partition(@symcore.Expr) -> @symcore.Expr
+
+pub fn primenu(@symcore.Expr) -> @symcore.Expr
+
+pub fn primeomega(@symcore.Expr) -> @symcore.Expr
+
+pub fn primepi(@symcore.Expr) -> @symcore.Expr
+
+pub fn reduced_totient(@symcore.Expr) -> @symcore.Expr
+
+pub fn rf(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn rising_factorial(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn subfactorial(@symcore.Expr) -> @symcore.Expr
+
+pub fn totient(@symcore.Expr) -> @symcore.Expr
+
+pub fn tribonacci(@symcore.Expr) -> @symcore.Expr
+
+pub fn udivisor_sigma(@symcore.Expr, k? : @symcore.Expr) -> @symcore.Expr
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -45,103 +45,69 @@ test "densearith wb: dup guard and error branches" {
     3,
     Domain::ZZ,
   )
-  guard da_wb_dup_repr(keep_same) == "[1,2]" else {
-    fail("dup_add_term zero-coeff branch mismatch")
-  }
+  assert_eq(da_wb_dup_repr(keep_same), "[1,2]")
 
   let mul_empty = dup_mul_ground([], da_wb_fezz(2), Domain::ZZ)
-  guard mul_empty.is_empty() else {
-    fail("dup_mul_ground([]) should stay empty")
-  }
+  assert_true(mul_empty.is_empty())
   let mul_zero = dup_mul_ground([da_wb_fezz(3)], da_wb_fezz(0), Domain::ZZ)
-  guard mul_zero.is_empty() else {
-    fail("dup_mul_ground(..., 0) should return zero polynomial")
-  }
+  assert_true(mul_zero.is_empty())
 
   let quo_empty = dup_quo_ground([], da_wb_fezz(1), Domain::ZZ)
-  guard quo_empty.is_empty() else {
-    fail("dup_quo_ground([]) should stay empty")
-  }
+  assert_true(quo_empty.is_empty())
   let exquo_empty = dup_exquo_ground([], da_wb_fezz(1), Domain::ZZ)
-  guard exquo_empty.is_empty() else {
-    fail("dup_exquo_ground([]) should stay empty")
-  }
+  assert_true(exquo_empty.is_empty())
 
   let quo_zero : Result[Array[FieldElem], PolyError] = try? dup_quo_ground(
     [da_wb_fezz(1)],
     da_wb_fezz(0),
     Domain::ZZ,
   )
-  guard quo_zero is Err(PolyError::DivisionByZero) else {
-    fail("dup_quo_ground by zero should raise DivisionByZero")
-  }
+  assert_true(quo_zero is Err(PolyError::DivisionByZero))
   let exquo_zero : Result[Array[FieldElem], PolyError] = try? dup_exquo_ground(
     [da_wb_fezz(1)],
     da_wb_fezz(0),
     Domain::ZZ,
   )
-  guard exquo_zero is Err(PolyError::DivisionByZero) else {
-    fail("dup_exquo_ground by zero should raise DivisionByZero")
-  }
+  assert_true(exquo_zero is Err(PolyError::DivisionByZero))
 
   let qq_poly = [da_wb_feqq(1, 2), da_wb_feqq(3, 4)]
   let qq_quo = dup_quo_ground(qq_poly, da_wb_feqq(1, 4), Domain::QQ)
-  guard da_wb_dup_repr(qq_quo) == "[2,3]" else {
-    fail("dup_quo_ground QQ branch mismatch")
-  }
+  assert_eq(da_wb_dup_repr(qq_quo), "[2,3]")
   let qq_exquo = dup_exquo_ground(qq_poly, da_wb_feqq(1, 2), Domain::QQ)
-  guard da_wb_dup_repr(qq_exquo) == "[1,3/2]" else {
-    fail("dup_exquo_ground QQ branch mismatch")
-  }
+  assert_eq(da_wb_dup_repr(qq_exquo), "[1,3/2]")
 
-  guard dup_lshift([], 4, Domain::ZZ).is_empty() else {
-    fail("dup_lshift([]) should stay empty")
-  }
-  guard dup_rshift([], 4, Domain::ZZ).is_empty() else {
-    fail("dup_rshift([]) should stay empty")
-  }
-  guard dup_rshift([da_wb_fezz(1)], 1, Domain::ZZ).is_empty() else {
-    fail("dup_rshift with n>=len should be empty")
-  }
+  assert_true(dup_lshift([], 4, Domain::ZZ).is_empty())
+  assert_true(dup_rshift([], 4, Domain::ZZ).is_empty())
+  assert_true(dup_rshift([da_wb_fezz(1)], 1, Domain::ZZ).is_empty())
 
   let pow_zero = dup_pow([da_wb_fezz(3), da_wb_fezz(2)], 0, Domain::ZZ)
-  guard da_wb_dup_repr(pow_zero) == "[1]" else {
-    fail("dup_pow(..., 0) should be 1")
-  }
+  assert_eq(da_wb_dup_repr(pow_zero), "[1]")
   let pow_neg : Result[Array[FieldElem], PolyError] = try? dup_pow(
     [da_wb_fezz(1)],
     -1,
     Domain::ZZ,
   )
-  guard pow_neg is Err(PolyError::BadExponent) else {
-    fail("dup_pow negative exponent should raise BadExponent")
-  }
+  assert_true(pow_neg is Err(PolyError::BadExponent))
 
   let pdiv_zero : Result[(Array[FieldElem], Array[FieldElem]), PolyError] = try? dup_pdiv(
     [da_wb_fezz(1)],
     [],
     Domain::ZZ,
   )
-  guard pdiv_zero is Err(PolyError::DivisionByZero) else {
-    fail("dup_pdiv by zero polynomial should raise DivisionByZero")
-  }
+  assert_true(pdiv_zero is Err(PolyError::DivisionByZero))
   let (short_q, short_r) = dup_pdiv(
     [da_wb_fezz(1)],
     [da_wb_fezz(1), da_wb_fezz(0)],
     Domain::ZZ,
   )
-  guard short_q.is_empty() && da_wb_dup_repr(short_r) == "[1]" else {
-    fail("dup_pdiv short dividend branch mismatch")
-  }
+  assert_true(short_q.is_empty() && da_wb_dup_repr(short_r) == "[1]")
 
   let pexquo_fail : Result[Array[FieldElem], PolyError] = try? dup_pexquo(
     [da_wb_fezz(1), da_wb_fezz(0), da_wb_fezz(1)],
     [da_wb_fezz(1), da_wb_fezz(-1)],
     Domain::ZZ,
   )
-  guard pexquo_fail is Err(PolyError::ExactQuotientFailed) else {
-    fail("dup_pexquo should fail for non-exact pseudo-quotient")
-  }
+  assert_true(pexquo_fail is Err(PolyError::ExactQuotientFailed))
 }
 
 ///|
@@ -149,21 +115,13 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
   let f0 = DensePoly::Coef(da_wb_fezz(2))
   let c0 = DensePoly::Coef(da_wb_fezz(3))
   let add0 = dmp_add_term(f0, c0, 0, 0, Domain::ZZ)
-  guard da_wb_dense_repr(add0) == "[5]" else {
-    fail("dmp_add_term u=0 branch mismatch")
-  }
+  assert_eq(da_wb_dense_repr(add0), "[5]")
   let mul0 = dmp_mul_term(f0, c0, 1, 0, Domain::ZZ)
-  guard da_wb_dense_repr(mul0) == "[6,0]" else {
-    fail("dmp_mul_term u=0 branch mismatch")
-  }
+  assert_eq(da_wb_dense_repr(mul0), "[6,0]")
   let add_ground0 = dmp_add_ground(f0, da_wb_fezz(4), 0, Domain::ZZ)
-  guard da_wb_dense_repr(add_ground0) == "[6]" else {
-    fail("dmp_add_ground u=0 branch mismatch")
-  }
+  assert_eq(da_wb_dense_repr(add_ground0), "[6]")
   let sub_ground0 = dmp_sub_ground(f0, da_wb_fezz(4), 0, Domain::ZZ)
-  guard da_wb_dense_repr(sub_ground0) == "[-2]" else {
-    fail("dmp_sub_ground u=0 branch mismatch")
-  }
+  assert_eq(da_wb_dense_repr(sub_ground0), "[-2]")
 
   let nested_univar_err : Result[DensePoly, PolyError] = try? dmp_add_term(
     dense_poly([dense_poly([dense_coef(da_wb_fezz(1))])]),
@@ -172,9 +130,7 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     0,
     Domain::ZZ,
   )
-  guard nested_univar_err is Err(PolyError::NotUnivariate) else {
-    fail("dmp_to_coeffs should reject nested poly for u=0")
-  }
+  assert_true(nested_univar_err is Err(PolyError::NotUnivariate))
 
   let lifted = dmp_add_term(
     DensePoly::Coef(da_wb_fezz(1)),
@@ -183,9 +139,7 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard da_wb_dense_repr(lifted) != "[]" else {
-    fail("dmp_items(Coef) branch mismatch")
-  }
+  assert_true(da_wb_dense_repr(lifted) != "[]")
 
   let from_empty = dmp_add_term(
     dense_poly([]),
@@ -194,9 +148,7 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard da_wb_dense_repr(from_empty).contains("7") else {
-    fail("dmp_add_term deg<0 branch mismatch")
-  }
+  assert_true(da_wb_dense_repr(from_empty).contains("7"))
 
   let mul_zero = dmp_mul_ground(
     dmp_ground(da_wb_fezz(3), 1),
@@ -204,27 +156,15 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard dmp_zero_p(mul_zero, 1) else {
-    fail("dmp_mul_ground zero-scalar branch mismatch")
-  }
+  assert_true(dmp_zero_p(mul_zero, 1))
 
   let z1 = dmp_zero(1)
   let nz1 = dense_poly([dense_coef(da_wb_fezz(5))])
-  guard da_wb_dense_repr(dmp_add(z1, nz1, 1, Domain::ZZ)) == "[5]" else {
-    fail("dmp_add left-zero branch mismatch")
-  }
-  guard da_wb_dense_repr(dmp_add(nz1, z1, 1, Domain::ZZ)) == "[5]" else {
-    fail("dmp_add right-zero branch mismatch")
-  }
-  guard da_wb_dense_repr(dmp_sub(nz1, z1, 1, Domain::ZZ)) == "[5]" else {
-    fail("dmp_sub right-zero branch mismatch")
-  }
-  guard da_wb_dense_repr(dmp_sub(z1, nz1, 1, Domain::ZZ)).contains("5") else {
-    fail("dmp_sub left-zero branch mismatch")
-  }
-  guard dmp_zero_p(dmp_mul(z1, nz1, 1, Domain::ZZ), 1) else {
-    fail("dmp_mul zero branch mismatch")
-  }
+  assert_eq(da_wb_dense_repr(dmp_add(z1, nz1, 1, Domain::ZZ)), "[5]")
+  assert_eq(da_wb_dense_repr(dmp_add(nz1, z1, 1, Domain::ZZ)), "[5]")
+  assert_eq(da_wb_dense_repr(dmp_sub(nz1, z1, 1, Domain::ZZ)), "[5]")
+  assert_true(da_wb_dense_repr(dmp_sub(z1, nz1, 1, Domain::ZZ)).contains("5"))
+  assert_true(dmp_zero_p(dmp_mul(z1, nz1, 1, Domain::ZZ), 1))
 
   let dmp_pow_neg : Result[DensePoly, PolyError] = try? dmp_pow(
     nz1,
@@ -232,9 +172,7 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard dmp_pow_neg is Err(PolyError::BadExponent) else {
-    fail("dmp_pow negative exponent should raise BadExponent")
-  }
+  assert_true(dmp_pow_neg is Err(PolyError::BadExponent))
 
   let _u0_pair = dmp_pdiv(
     DensePoly::Coef(da_wb_fezz(6)),
@@ -249,15 +187,11 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard dmp_div_zero is Err(PolyError::DivisionByZero) else {
-    fail("dmp_pdiv by zero polynomial should raise DivisionByZero")
-  }
+  assert_true(dmp_div_zero is Err(PolyError::DivisionByZero))
 
   let big = dense_poly([dense_coef(da_wb_fezz(1)), dense_coef(da_wb_fezz(0))])
   let (q_short, r_short) = dmp_pdiv(nz1, big, 1, Domain::ZZ)
-  guard dmp_zero_p(q_short, 1) && da_wb_dense_repr(r_short) == "[5]" else {
-    fail("dmp_pdiv short dividend branch mismatch")
-  }
+  assert_true(dmp_zero_p(q_short, 1) && da_wb_dense_repr(r_short) == "[5]")
 
   let dmp_pexquo_fail : Result[DensePoly, PolyError] = try? dmp_pexquo(
     nz1,
@@ -265,25 +199,17 @@ test "densearith wb: dmp u=0 and zero-shape branches" {
     1,
     Domain::ZZ,
   )
-  guard dmp_pexquo_fail is Err(PolyError::ExactQuotientFailed) else {
-    fail("dmp_pexquo should fail when remainder is non-zero")
-  }
+  assert_true(dmp_pexquo_fail is Err(PolyError::ExactQuotientFailed))
 }
 
 ///|
 test "densearith wb: internal helper branches" {
-  guard domain_is_field(Domain::GF(5)) else {
-    fail("GF(p) should be treated as field")
-  }
+  assert_true(domain_is_field(Domain::GF(5)))
 
   let inv = fe_pow_local(da_wb_feqq(2, 1), -1)
-  guard inv.to_string() == "1/2" else {
-    fail("fe_pow_local negative exponent branch mismatch")
-  }
+  assert_eq(inv.to_string(), "1/2")
   let cube = fe_pow_local(da_wb_fezz(2), 3)
-  guard cube.to_string() == "8" else {
-    fail("fe_pow_local binary exponentiation branch mismatch")
-  }
+  assert_eq(cube.to_string(), "8")
 
   let cc_one = FieldElem::CC(
     @symnum.BigRational::one(),
@@ -300,36 +226,28 @@ test "densearith wb: internal helper branches" {
     da_wb_fezz(0),
     Domain::ZZ,
   )
-  guard div_zero is Err(PolyError::DivisionByZero) else {
-    fail("fe_divides by zero should raise DivisionByZero")
-  }
+  assert_true(div_zero is Err(PolyError::DivisionByZero))
 
   let (ok_field, q_field) = fe_divides(
     da_wb_feqq(1, 1),
     da_wb_feqq(2, 1),
     Domain::QQ,
   )
-  guard ok_field && q_field.to_string() == "1/2" else {
-    fail("fe_divides field branch mismatch")
-  }
+  assert_true(ok_field && q_field.to_string() == "1/2")
 
   let (ok_non_integral, q_non_integral) = fe_divides(
     da_wb_feqq(1, 2),
     da_wb_fezz(1),
     Domain::ZZ,
   )
-  guard !ok_non_integral && q_non_integral.to_string() == "0" else {
-    fail("fe_divides non-integral guard branch mismatch")
-  }
+  assert_true(!ok_non_integral && q_non_integral.to_string() == "0")
 
   let (ok_not_div, q_not_div) = fe_divides(
     da_wb_fezz(3),
     da_wb_fezz(2),
     Domain::ZZ,
   )
-  guard !ok_not_div && q_not_div.to_string() == "0" else {
-    fail("fe_divides inexact ZZ branch mismatch")
-  }
+  assert_true(!ok_not_div && q_not_div.to_string() == "0")
 
   let a = @symcore.symbol("a")
   let default_domain = Domain::AlgExt(Domain::ZZ, ["a"], [
@@ -340,7 +258,5 @@ test "densearith wb: internal helper branches" {
     da_wb_feqq(2, 1),
     default_domain,
   )
-  guard default_div is Err(PolyError::DomainNotField) else {
-    fail("fe_divides invalid AlgExt domain should raise DomainNotField")
-  }
+  assert_true(default_div is Err(PolyError::DomainNotField))
 }

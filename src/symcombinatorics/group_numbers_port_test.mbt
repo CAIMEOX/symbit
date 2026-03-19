@@ -63,7 +63,5 @@ test "combinatorics group_numbers groups_count parity" {
     }
   }
   let res_unknown : Result[BigInt, Error] = try? groups_count(99)
-  guard res_unknown is Err(_) else {
-    fail("expected groups_count(99) to raise")
-  }
+  assert_true(res_unknown is Err(_))
 }

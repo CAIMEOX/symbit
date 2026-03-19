@@ -49,7 +49,7 @@ test "euler_equations: harmonic oscillator" {
   let lagrangian = term1 - term2
   let eqs = euler_equations(lagrangian, [xt], [t])
   let oracle = @sympy_calculus.euler_equations_str(lagrangian, [xt], [t])
-  guard eqs.length() == oracle.length() else { fail("eq length mismatch") }
+  assert_eq(eqs.length(), oracle.length())
   for i in 0..<eqs.length() {
     euler_assert_expr_equal(eqs[i], oracle[i])
   }

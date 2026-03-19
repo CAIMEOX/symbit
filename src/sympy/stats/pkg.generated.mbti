@@ -14,6 +14,8 @@ pub fn stats_expr_equiv(String, String) -> Bool raise
 
 pub fn stats_srepr_eq(String, String) -> Bool raise
 
+pub fn stats_try_eval_str(String) -> String?
+
 // Errors
 
 // Types and methods

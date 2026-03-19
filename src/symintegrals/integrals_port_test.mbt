@@ -2034,11 +2034,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let besselj_input = @symspec.gamma(s + a * half) *
     (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1))
   let besselj_inverse_opt = do_inverse_mellin_doit(besselj_input, s, x)
-  guard besselj_inverse_opt is Some(_) else {
-    fail(
-      "besselj inverse stayed None for " + @symprint.debug_repr(besselj_input),
-    )
-  }
+  assert_true(besselj_inverse_opt is Some(_))
   let besselj_inverse = besselj_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2055,11 +2051,7 @@ test "symintegrals parity Mellin forward and inverse" {
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half)
   let bessely_inverse_opt = do_inverse_mellin_doit(bessely_input, s, x)
-  guard bessely_inverse_opt is Some(_) else {
-    fail(
-      "bessely inverse stayed None for " + @symprint.debug_repr(bessely_input),
-    )
-  }
+  assert_true(bessely_inverse_opt is Some(_))
   let bessely_inverse = bessely_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2074,11 +2066,7 @@ test "symintegrals parity Mellin forward and inverse" {
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half)
   let besselk_inverse_opt = do_inverse_mellin_doit(besselk_input, s, x)
-  guard besselk_inverse_opt is Some(_) else {
-    fail(
-      "besselk inverse stayed None for " + @symprint.debug_repr(besselk_input),
-    )
-  }
+  assert_true(besselk_inverse_opt is Some(_))
   let besselk_inverse = besselk_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2098,12 +2086,7 @@ test "symintegrals parity Mellin forward and inverse" {
       @symcore.int(-1)
     )
   let sin_besselj_inverse_opt = do_inverse_mellin_doit(sin_besselj_input, s, x)
-  guard sin_besselj_inverse_opt is Some(_) else {
-    fail(
-      "sin*besselj inverse stayed None for " +
-      @symprint.debug_repr(sin_besselj_input),
-    )
-  }
+  assert_true(sin_besselj_inverse_opt is Some(_))
   let sin_besselj_inverse = sin_besselj_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2123,12 +2106,7 @@ test "symintegrals parity Mellin forward and inverse" {
       @symcore.int(-1)
     )
   let cos_besselj_inverse_opt = do_inverse_mellin_doit(cos_besselj_input, s, x)
-  guard cos_besselj_inverse_opt is Some(_) else {
-    fail(
-      "cos*besselj inverse stayed None for " +
-      @symprint.debug_repr(cos_besselj_input),
-    )
-  }
+  assert_true(cos_besselj_inverse_opt is Some(_))
   let cos_besselj_inverse = cos_besselj_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2149,12 +2127,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (@symspec.gamma(@symcore.int(1) - s - a * half) ^ @symcore.int(-1)) *
     (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1))
   let sin_bessely_inverse_opt = do_inverse_mellin_doit(sin_bessely_input, s, x)
-  guard sin_bessely_inverse_opt is Some(_) else {
-    fail(
-      "sin*bessely inverse stayed None for " +
-      @symprint.debug_repr(sin_bessely_input),
-    )
-  }
+  assert_true(sin_bessely_inverse_opt is Some(_))
   let sin_bessely_inverse = sin_bessely_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2175,12 +2148,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (@symspec.gamma(half - s - a * half) ^ @symcore.int(-1)) *
     (@symspec.gamma(half - s + a * half) ^ @symcore.int(-1))
   let cos_bessely_inverse_opt = do_inverse_mellin_doit(cos_bessely_input, s, x)
-  guard cos_bessely_inverse_opt is Some(_) else {
-    fail(
-      "cos*bessely inverse stayed None for " +
-      @symprint.debug_repr(cos_bessely_input),
-    )
-  }
+  assert_true(cos_bessely_inverse_opt is Some(_))
   let cos_bessely_inverse = cos_bessely_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2199,12 +2167,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)) *
     (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1))
   let besselj_sq_inverse_opt = do_inverse_mellin_doit(besselj_sq_input, s, x)
-  guard besselj_sq_inverse_opt is Some(_) else {
-    fail(
-      "besselj^2 inverse stayed None for " +
-      @symprint.debug_repr(besselj_sq_input),
-    )
-  }
+  assert_true(besselj_sq_inverse_opt is Some(_))
   let besselj_sq_inverse = besselj_sq_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2223,12 +2186,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (@symspec.gamma(@symcore.int(1) - s - a) ^ @symcore.int(-1)) *
     (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1))
   let besselj_pm_inverse_opt = do_inverse_mellin_doit(besselj_pm_input, s, x)
-  guard besselj_pm_inverse_opt is Some(_) else {
-    fail(
-      "besselj(-a)*besselj(a) inverse stayed None for " +
-      @symprint.debug_repr(besselj_pm_input),
-    )
-  }
+  assert_true(besselj_pm_inverse_opt is Some(_))
   let besselj_pm_inverse = besselj_pm_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2246,12 +2204,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (@symspec.gamma(@symcore.int(1) + (a - b) * half - s) ^ @symcore.int(-1)) *
     (@symspec.gamma(@symcore.int(1) + (a + b) * half - s) ^ @symcore.int(-1))
   let besselj_ab_inverse_opt = do_inverse_mellin_doit(besselj_ab_input, s, x)
-  guard besselj_ab_inverse_opt is Some(_) else {
-    fail(
-      "besselj(a)*besselj(b) inverse stayed None for " +
-      @symprint.debug_repr(besselj_ab_input),
-    )
-  }
+  assert_true(besselj_ab_inverse_opt is Some(_))
   let besselj_ab_inverse = besselj_ab_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2274,12 +2227,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let besselj_bessely_inverse_opt = do_inverse_mellin_doit(
     besselj_bessely_input, s, x,
   )
-  guard besselj_bessely_inverse_opt is Some(_) else {
-    fail(
-      "besselj(a)*bessely(b) inverse stayed None for " +
-      @symprint.debug_repr(besselj_bessely_input),
-    )
-  }
+  assert_true(besselj_bessely_inverse_opt is Some(_))
   let besselj_bessely_inverse = besselj_bessely_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2301,12 +2249,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let besselj_bessely_same_inverse_opt = do_inverse_mellin_doit(
     besselj_bessely_same_input, s, x,
   )
-  guard besselj_bessely_same_inverse_opt is Some(_) else {
-    fail(
-      "besselj(a)*bessely(a) inverse stayed None for " +
-      @symprint.debug_repr(besselj_bessely_same_input),
-    )
-  }
+  assert_true(besselj_bessely_same_inverse_opt is Some(_))
   let besselj_bessely_same_inverse = besselj_bessely_same_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2323,12 +2266,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (b ^ (@symcore.int(-1) * s * (a ^ @symcore.int(-1)))) *
     (s ^ @symcore.int(-1))
   let exp_subst_inverse_opt = do_inverse_mellin_doit(exp_subst_input, s, x)
-  guard exp_subst_inverse_opt is Some(_) else {
-    fail(
-      "exp(-b*x**a) multiplicative substitution inverse stayed None for " +
-      @symprint.debug_repr(exp_subst_input),
-    )
-  }
+  assert_true(exp_subst_inverse_opt is Some(_))
   let exp_subst_inverse = exp_subst_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(
@@ -2346,12 +2284,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let xpow_exp_subst_inverse_opt = do_inverse_mellin_doit(
     xpow_exp_subst_input, s, x,
   )
-  guard xpow_exp_subst_inverse_opt is Some(_) else {
-    fail(
-      "x**a*exp(-x**b) multiplicative substitution inverse stayed None for " +
-      @symprint.debug_repr(xpow_exp_subst_input),
-    )
-  }
+  assert_true(xpow_exp_subst_inverse_opt is Some(_))
   let xpow_exp_subst_inverse = xpow_exp_subst_inverse_opt.unwrap()
   assert_eq(
     @sympy_integrals.integrals_eval_str(

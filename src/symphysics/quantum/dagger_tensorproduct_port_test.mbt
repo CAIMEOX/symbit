@@ -1,9 +1,6 @@
 ///|
 test "physics.quantum.dagger and tensorproduct: parity" {
-  guard @symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)) ==
-    "Dagger(x)" else {
-    fail("unevaluated dagger parity")
-  }
+  assert_eq(@symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)), "Dagger(x)")
 
   let mat = @symphysics.explicit_matrix_from_rows([
     [@symcore.symbol("I"), @symcore.symbol("x") * @symcore.symbol("I")],

@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symcalculus"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symnum",
+}
+
+// Values
+pub fn accum_abs(@symcore.Expr) -> @symcore.Expr
+
+pub fn accum_add(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn accum_bounds(@symcore.Expr, @symcore.Expr) -> @symcore.Expr raise AccumBoundsError
+
+pub fn accum_delta(@symcore.Expr) -> @symcore.Expr?
+
+pub fn accum_div(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn accum_is_bounds(@symcore.Expr) -> Bool
+
+pub fn accum_max(@symcore.Expr) -> @symcore.Expr?
+
+pub fn accum_mid(@symcore.Expr) -> @symcore.Expr?
+
+pub fn accum_min(@symcore.Expr) -> @symcore.Expr?
+
+pub fn accum_mul(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn accum_neg(@symcore.Expr) -> @symcore.Expr
+
+pub fn accum_pow(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn accum_sub(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn accum_union(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn apply_finite_diff(Int, Array[@symnum.BigRational], Array[@symcore.Expr], x0? : @symnum.BigRational) -> @symcore.Expr raise
+
+pub fn derivative_expr(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr
+
+pub fn diff(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+pub fn euler_equations(@symcore.Expr, Array[@symcore.Expr], Array[@symcore.Expr]) -> Array[@symcore.Expr]
+
+pub fn finite_diff_weights(Int, Array[@symnum.BigRational], x0? : @symnum.BigRational) -> Array[Array[Array[@symnum.BigRational]]]
+
+pub fn periodicity(@symcore.Expr, @symcore.Expr) -> @symcore.Expr?
+
+pub fn singularities(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
+// Errors
+type AccumBoundsError
+pub impl Eq for AccumBoundsError
+pub impl Show for AccumBoundsError
+
+// Types and methods
+
+// Type aliases
+pub using @symnum {type BigRational}
+
+pub using @symcore {type Expr}
+
+// Traits
+

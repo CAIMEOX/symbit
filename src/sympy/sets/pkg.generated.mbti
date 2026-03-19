@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/sets"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+  "CAIMEOX/symbit/symsets",
+}
+
+// Values
+pub fn complement_str(@symsets.Set, @symsets.Set) -> String raise
+
+pub fn contains_str(@symsets.Set, @symcore.Expr) -> String raise
+
+pub fn intersection_str(Array[@symsets.Set]) -> String raise
+
+pub fn set_str(@symsets.Set) -> String raise
+
+pub fn union_str(Array[@symsets.Set]) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

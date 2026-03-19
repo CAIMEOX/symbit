@@ -1,0 +1,159 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/ntheory"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn abundance_str(Int) -> String raise
+
+pub fn binomial_coefficients_list_str(Int) -> String raise
+
+pub fn binomial_coefficients_str(Int) -> String raise
+
+pub fn binomial_mod_str(Int, Int, Int) -> String raise
+
+pub fn composite_str(Int) -> String raise
+
+pub fn compositepi_str(Int) -> String raise
+
+pub fn continued_fraction_convergents_str(Array[Int]) -> String raise
+
+pub fn continued_fraction_periodic_str(Int, Int, d? : Int, s? : Int) -> String raise
+
+pub fn continued_fraction_reduce_str(Array[Int]) -> String raise
+
+pub fn continued_fraction_str(Int, den? : Int) -> String raise
+
+pub fn count_digits_pairs_str(Int, b? : Int) -> String raise
+
+pub fn crt_str(Array[Int], Array[Int], symmetric? : Bool, check? : Bool) -> String raise
+
+pub fn cycle_length_str(Int, nmax? : Int, values? : Bool) -> String raise
+
+pub fn digits_str(Int, b? : Int, digits? : Int) -> String raise
+
+pub fn discrete_log_str(Int, Int, Int) -> String raise
+
+pub fn divisor_count_str(Int) -> String raise
+
+pub fn divisor_sigma_str(Int, k? : Int) -> String raise
+
+pub fn divisors_str(Int) -> String raise
+
+pub fn dra_str(Int, Int) -> String raise
+
+pub fn drm_str(Int, Int) -> String raise
+
+pub fn ecm_factors_str(Int) -> String raise
+
+pub fn egyptian_fraction_str(Int, Int) -> String raise
+
+pub fn elliptic_curve_points_str(Int, Int, a1? : Int, a2? : Int, a3? : Int, modulus? : Int) -> String raise
+
+pub fn factorint_pairs_str(Int) -> String raise
+
+pub fn factorrat_pairs_str(Int, den? : Int) -> String raise
+
+pub fn is_abundant_str(Int) -> String raise
+
+pub fn is_amicable_str(Int, Int) -> String raise
+
+pub fn is_carmichael_str(Int) -> String raise
+
+pub fn is_deficient_str(Int) -> String raise
+
+pub fn is_gaussian_prime_str(Int, b? : Int) -> String raise
+
+pub fn is_mersenne_prime_str(Int) -> String raise
+
+pub fn is_nthpow_residue_str(Int, Int, Int) -> String raise
+
+pub fn is_palindromic_str(Int, b? : Int) -> String raise
+
+pub fn is_perfect_str(Int) -> String raise
+
+pub fn is_primitive_root_str(Int, Int) -> String raise
+
+pub fn is_quad_residue_str(Int, Int) -> String raise
+
+pub fn isprime_str(Int) -> String raise
+
+pub fn jacobi_symbol_str(Int, Int) -> String raise
+
+pub fn legendre_symbol_str(Int, Int) -> String raise
+
+pub fn mersenne_prime_exponent_str(Int) -> String raise
+
+pub fn mobius_str(Int) -> String raise
+
+pub fn multinomial_coefficients_str(Int, Int) -> String raise
+
+pub fn multiplicity_in_factorial_str(Int, Int) -> String raise
+
+pub fn multiplicity_str(Int, Int) -> String raise
+
+pub fn n_order_str(Int, Int) -> String raise
+
+pub fn nextprime_str(Int) -> String raise
+
+pub fn npartitions_str(Int) -> String raise
+
+pub fn nthroot_mod_str(Int, Int, Int, all_roots? : Bool) -> String raise
+
+pub fn perfect_power_str(Int) -> String raise
+
+pub fn pi_hex_digits_str(Int, prec? : Int) -> String raise
+
+pub fn polynomial_congruence_str(Array[Int], Int) -> String raise
+
+pub fn prevprime_str(Int) -> String raise
+
+pub fn prime_str(Int) -> String raise
+
+pub fn primefactors_str(Int) -> String raise
+
+pub fn primenu_str(Int) -> String raise
+
+pub fn primeomega_str(Int) -> String raise
+
+pub fn primepi_str(Int) -> String raise
+
+pub fn primerange_str(Int, b? : Int) -> String raise
+
+pub fn primitive_root_str(Int, smallest? : Bool) -> String raise
+
+pub fn primorial_str(Int, nth? : Bool) -> String raise
+
+pub fn proper_divisor_count_str(Int) -> String raise
+
+pub fn proper_divisors_str(Int) -> String raise
+
+pub fn qs_factor_str(Int, prime_bound? : Int, m? : Int, error_term? : Int, seed? : Int) -> String raise
+
+pub fn qs_str(Int, prime_bound? : Int, m? : Int, error_term? : Int, seed? : Int) -> String raise
+
+pub fn quadratic_congruence_str(Int, Int, Int, Int) -> String raise
+
+pub fn quadratic_residues_str(Int) -> String raise
+
+pub fn reduced_totient_str(Int) -> String raise
+
+pub fn solve_congruence_str(Array[Int], Array[Int], symmetric? : Bool, check? : Bool) -> String raise
+
+pub fn sqrt_mod_str(Int, Int, all_roots? : Bool) -> String raise
+
+pub fn symmetric_residue_str(Int, Int) -> String raise
+
+pub fn totient_str(Int) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

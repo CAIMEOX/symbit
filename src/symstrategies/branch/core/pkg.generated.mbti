@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symstrategies/branch/core"
+
+// Values
+pub fn[T] chain(Array[(T) -> Array[T]]) -> (T) -> Array[T]
+
+pub fn[T] condition((T) -> Bool, (T) -> Array[T]) -> (T) -> Array[T]
+
+pub fn[T : Eq + Show] debug((T) -> Array[T], name? : String, write? : (String) -> Unit) -> (T) -> Array[T]
+
+pub fn[T] do_one(Array[(T) -> Array[T]]) -> (T) -> Array[T]
+
+pub fn[T : Eq + Hash] exhaust((T) -> Array[T]) -> (T) -> Array[T]
+
+pub fn[T] identity(T) -> Array[T]
+
+pub fn[T : Eq + Hash] multiplex(Array[(T) -> Array[T]]) -> (T) -> Array[T]
+
+pub fn[T] notempty((T) -> Array[T]) -> (T) -> Array[T]
+
+pub fn[T : Eq] onaction((T) -> Array[T], ((T) -> Array[T], T, T) -> Unit) -> (T) -> Array[T]
+
+pub fn[T] sfilter((T) -> Bool, (T) -> Array[T]) -> (T) -> Array[T]
+
+pub fn[T] yieldify((T) -> T) -> (T) -> Array[T]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub type BRule[T] = (T) -> Array[T]
+
+// Traits
+

@@ -33,23 +33,19 @@ test "physics.mechanics parity jointsmethod simple pendulum" {
   bob.set_potential_energy(@symcore.int(-1) * m * g * l * @symelem.cos(q))
   let jm = joints_method(ceiling.as_bodylike(), [joint.as_joint()])
   ignore(jm.form_eoms(use_lagrange=true))
-  guard jointsmethod_matrix_entry_summary(jm.q()) == "[[q(t)]]" else {
-    fail("jointsmethod q parity mismatch")
-  }
-  guard jointsmethod_matrix_entry_summary(jm.u()) == "[[Derivative(q(t), t)]]" else {
-    fail("jointsmethod u parity mismatch")
-  }
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(jm.mass_matrix().get(0, 0)),
-    "l**2*m",
-  ) else {
-    fail("jointsmethod mass matrix parity mismatch")
-  }
+  assert_eq(jointsmethod_matrix_entry_summary(jm.q()), "[[q(t)]]")
+  assert_eq(jointsmethod_matrix_entry_summary(jm.u()), "[[Derivative(q(t), t)]]")
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(jm.mass_matrix().get(0, 0)),
+        "l**2*m",
+      )
+  )
   let rhs = jm.rhs()
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(1, 0)),
-    "-g*sin(q(t))/l",
-  ) else {
-    fail("jointsmethod rhs parity mismatch")
-  }
+  assert_true(
+    @sympy_physics.mechanics_expr_equal(
+        @symprint.to_string(rhs.get(1, 0)),
+        "-g*sin(q(t))/l",
+      )
+  )
 }

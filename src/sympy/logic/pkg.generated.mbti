@@ -1,0 +1,91 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/logic"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn boolalg_anf_form(Array[String], Array[Int]) -> String raise
+
+pub fn boolalg_bool_map(String, String) -> String raise
+
+pub fn boolalg_bool_maxterm_bits(Array[String], Array[Int]) -> String raise
+
+pub fn boolalg_bool_maxterm_int(Array[String], Int) -> String raise
+
+pub fn boolalg_bool_minterm_bits(Array[String], Array[Int]) -> String raise
+
+pub fn boolalg_bool_minterm_int(Array[String], Int) -> String raise
+
+pub fn boolalg_bool_monomial_bits(Array[String], Array[Int]) -> String raise
+
+pub fn boolalg_bool_monomial_int(Array[String], Int) -> String raise
+
+pub fn boolalg_distribute_and_over_or(String) -> String raise
+
+pub fn boolalg_distribute_or_over_and(String) -> String raise
+
+pub fn boolalg_distribute_xor_over_and(String) -> String raise
+
+pub fn boolalg_eliminate_implications(String, form? : String) -> String raise
+
+pub fn boolalg_gateinputcount(String) -> String raise
+
+pub fn boolalg_is_anf(String) -> String raise
+
+pub fn boolalg_is_cnf(String) -> String raise
+
+pub fn boolalg_is_dnf(String) -> String raise
+
+pub fn boolalg_is_nnf(String, simplified? : Bool) -> String raise
+
+pub fn boolalg_pos_form_ints(Array[String], Array[Int], dontcares? : Array[Int]) -> String raise
+
+pub fn boolalg_simplify_logic(String, form? : String, deep? : Bool, force? : Bool, dontcare? : String) -> String raise
+
+pub fn boolalg_sop_form_ints(Array[String], Array[Int], dontcares? : Array[Int]) -> String raise
+
+pub fn boolalg_str(String) -> String raise
+
+pub fn boolalg_to_anf(String, deep? : Bool) -> String raise
+
+pub fn boolalg_to_cnf(String, simplify? : Bool, force? : Bool) -> String raise
+
+pub fn boolalg_to_dnf(String, simplify? : Bool, force? : Bool) -> String raise
+
+pub fn boolalg_to_nnf(String, simplify? : Bool, form? : String) -> String raise
+
+pub fn dimacs_load_str(String) -> String raise
+
+pub fn dpll2_all_models_str(String) -> String raise
+
+pub fn dpll2_satisfiable_str(String) -> String raise
+
+pub fn dpll_satisfiable_str(String) -> String raise
+
+pub fn inference_entails(String, Array[String]) -> String raise
+
+pub fn inference_literal_symbol(String) -> String raise
+
+pub fn inference_pl_true(String, Array[String], Array[Bool], deep? : Bool) -> String raise
+
+pub fn inference_satisfiable_str(String, algorithm? : String, all_models? : Bool, minimal? : Bool, use_lra_theory? : Bool) -> String raise
+
+pub fn inference_valid(String) -> String raise
+
+pub fn propkb_ask_str(Array[String], String) -> String raise
+
+pub fn propkb_clauses_str(Array[String]) -> String raise
+
+pub fn propkb_retract_clauses_str(Array[String], String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

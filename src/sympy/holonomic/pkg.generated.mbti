@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/holonomic"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn differential_expr_srepr(String, var_name? : String, generator? : String) -> String raise
+
+pub fn differential_mul_srepr(Array[String], Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn differential_pow_srepr(Array[String], Int, var_name? : String, generator? : String) -> String raise
+
+pub fn differential_srepr(Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn differential_str(Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn expr_to_holonomic_str(String, var_name? : String) -> String raise
+
+pub fn holonomic_str(Array[String], var_name? : String, generator? : String, x0? : String, y0? : Array[String]) -> String raise
+
+pub fn recurrence_expr_srepr(String, var_name? : String, generator? : String) -> String raise
+
+pub fn recurrence_mul_srepr(Array[String], Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn recurrence_pow_srepr(Array[String], Int, var_name? : String, generator? : String) -> String raise
+
+pub fn recurrence_srepr(Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn recurrence_str(Array[String], var_name? : String, generator? : String) -> String raise
+
+pub fn sequence_str(Array[String], var_name? : String, generator? : String, u0? : Array[String]) -> String raise
+
+pub fn sympy_equiv_str(String, String) -> Bool raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

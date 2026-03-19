@@ -173,25 +173,15 @@ test "symparse stage-2 matches sympy callable heuristic" {
 ///|
 test "symparse default parser still rejects stage-2 sugar" {
   let implicit_mul : Result[@symcore.Expr, ParseError] = try? parse_expr("2x")
-  guard implicit_mul is Err(_) else {
-    fail("default parse_expr should reject implicit multiplication")
-  }
+  assert_true(implicit_mul is Err(_))
   let implicit_app : Result[@symcore.Expr, ParseError] = try? parse_expr(
     "sin x",
   )
-  guard implicit_app is Err(_) else {
-    fail("default parse_expr should reject implicit application")
-  }
+  assert_true(implicit_app is Err(_))
   let factorial : Result[@symcore.Expr, ParseError] = try? parse_expr("x!")
-  guard factorial is Err(_) else {
-    fail("default parse_expr should reject factorial notation")
-  }
+  assert_true(factorial is Err(_))
   let single_eq : Result[@symcore.Expr, ParseError] = try? parse_expr("x = y")
-  guard single_eq is Err(_) else {
-    fail(
-      "default parse_expr should reject single '=' without convert_equals_signs",
-    )
-  }
+  assert_true(single_eq is Err(_))
 }
 
 ///|

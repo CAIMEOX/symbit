@@ -18,9 +18,7 @@ fn assert_predicate_parity(
     Err(err) => fail("oracle failure for \{label}: \{err}")
   }
   let got = tri_repr(ours)
-  guard got == expected else {
-    fail("predicate mismatch \{label}: ours=\{got}, oracle=\{expected}")
-  }
+  assert_eq(got, expected)
 }
 
 ///|

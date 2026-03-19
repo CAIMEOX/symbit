@@ -29,9 +29,7 @@ test "physics.quantum.circuitutils: search and replace" {
     z_gate(0).as_expr(),
     x_gate(0).as_expr(),
   ])
-  guard kmp_table(circuit_factors(pattern)) == [-1, 0, 0, 1, 2] else {
-    fail("kmp_table")
-  }
+  assert_eq(kmp_table(circuit_factors(pattern)), [-1, 0, 0, 1, 2])
 
   let circuit = @symcore.raw_mul([
     x_gate(0).as_expr(),
@@ -42,18 +40,11 @@ test "physics.quantum.circuitutils: search and replace" {
     y_gate(0).as_expr(),
   ])
   let subcircuit = @symcore.raw_mul([z_gate(0).as_expr(), y_gate(0).as_expr()])
-  guard find_subcircuit(circuit, subcircuit) == 1 else {
-    fail("find_subcircuit")
-  }
-  guard find_subcircuit(circuit, subcircuit, start=2) == 4 else {
-    fail("find_subcircuit with start")
-  }
+  assert_eq(find_subcircuit(circuit, subcircuit), 1)
+  assert_eq(find_subcircuit(circuit, subcircuit, start=2), 4)
 
   let removed = replace_subcircuit(circuit, subcircuit)
-  guard circuit_factor_strings(removed) ==
-    ["XGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)"] else {
-    fail("replace_subcircuit remove")
-  }
+  assert_eq(circuit_factor_strings(removed), ["XGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)"])
 
   let replacement = @symcore.raw_mul([
     hadamard_gate(0).as_expr(),
@@ -64,12 +55,9 @@ test "physics.quantum.circuitutils: search and replace" {
     subcircuit,
     replace=Some(replacement),
   )
-  guard circuit_factor_strings(replaced) ==
-    [
-      "XGate(0)", "HadamardGate(0)", "ZGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)",
-    ] else {
-    fail("replace_subcircuit replace")
-  }
+  assert_eq(circuit_factor_strings(replaced), [
+          "XGate(0)", "HadamardGate(0)", "ZGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)",
+        ])
 }
 
 ///|
@@ -81,27 +69,17 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
     cgate([5], x_gate(2).as_expr()),
   ])
   let symbolic = convert_to_symbolic_indices(circuit)
-  guard circuit_factor_strings(symbolic.circuit) ==
-    [
-      "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate(Tuple(i1), XGate(i0))",
-    ] else {
-    fail("convert_to_symbolic_indices circuit")
-  }
-  guard circuit_map_strings(symbolic.qubit_map) == ["i0=2", "i1=5"] else {
-    fail("convert_to_symbolic_indices map")
-  }
-  guard symbolic.next_index == 2 else {
-    fail("convert_to_symbolic_indices next index")
-  }
+  assert_eq(circuit_factor_strings(symbolic.circuit), [
+          "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate(Tuple(i1), XGate(i0))",
+        ])
+  assert_eq(circuit_map_strings(symbolic.qubit_map), ["i0=2", "i1=5"])
+  assert_eq(symbolic.next_index, 2)
 
   let roundtrip = convert_to_real_indices(
     @symcore.raw_mul(symbolic.circuit),
     symbolic.qubit_map,
   )
-  guard circuit_factor_strings(roundtrip) ==
-    circuit_factor_strings(circuit_factors(circuit)) else {
-    fail("convert_to_real_indices")
-  }
+  assert_eq(circuit_factor_strings(roundtrip), circuit_factor_strings(circuit_factors(circuit)))
 
   let identities = [
     gate_identity([
@@ -118,17 +96,12 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
     identities,
     seed=[0],
   )
-  guard circuit_factor_strings(reduced) == ["ZGate(0)", "XGate(1)"] else {
-    fail("random_reduce")
-  }
+  assert_eq(circuit_factor_strings(reduced), ["ZGate(0)", "XGate(1)"])
 
   let inserted = random_insert(
     @symcore.raw_mul([x_gate(0).as_expr(), z_gate(0).as_expr()]),
     [@symcore.raw_mul([hadamard_gate(1).as_expr(), y_gate(1).as_expr()])],
     seed=[1, 0],
   )
-  guard circuit_factor_strings(inserted) ==
-    ["XGate(0)", "HadamardGate(1)", "YGate(1)", "ZGate(0)"] else {
-    fail("random_insert")
-  }
+  assert_eq(circuit_factor_strings(inserted), ["XGate(0)", "HadamardGate(1)", "YGate(1)", "ZGate(0)"])
 }

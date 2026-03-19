@@ -23,9 +23,7 @@ test "reject non-integer exponent" {
     ["x"],
     Domain::ZZ,
   ).from_expr(expr)
-  guard status is Err(PolyError::BadExponent) else {
-    fail("expected BadExponent")
-  }
+  assert_true(status is Err(PolyError::BadExponent))
 }
 
 ///|
@@ -35,9 +33,7 @@ test "reject rational coefficient in ZZ domain" {
     ["x"],
     Domain::ZZ,
   ).from_expr(expr)
-  guard status is Err(PolyError::CoefficientNotInteger) else {
-    fail("expected CoefficientNotInteger")
-  }
+  assert_true(status is Err(PolyError::CoefficientNotInteger))
 }
 
 ///|

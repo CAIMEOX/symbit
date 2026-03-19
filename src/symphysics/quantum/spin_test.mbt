@@ -76,9 +76,7 @@ test "physics.quantum.spin: local rotations and Wigner D" {
       @symcore.symbol("pi") * quantum_test_frac(1, 2),
     ).doit(),
   )
-  guard @sympy_physics.expr_equal(wigner_d_value, "-sqrt(2)/2") else {
-    fail("Wigner d doit: \{wigner_d_value}")
-  }
+  assert_true(@sympy_physics.expr_equal(wigner_d_value, "-sqrt(2)/2"))
   quantum_test_assert_expr_equal(
     qapply(
       @symcore.raw_mul([

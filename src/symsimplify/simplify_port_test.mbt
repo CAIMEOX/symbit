@@ -1,15 +1,11 @@
 ///|
 fn assert_srepr_parity(
-  label : String,
+  _label : String,
   ours : @symcore.Expr,
   oracle : String,
 ) -> Unit raise {
   let ours_srepr = try! @sympy_simplify.expr_srepr(ours)
-  guard ours_srepr == oracle else {
-    fail(
-      "\{label} mismatch: ours=\{ours_srepr}; oracle=\{oracle}; ours_str=\{@symprint.to_string(ours)}",
-    )
-  }
+  assert_eq(ours_srepr, oracle)
 }
 
 ///|
@@ -283,9 +279,7 @@ test "symsimplify compat simplify parity" {
   ]
   let gens = [x]
   let rm_ours = ratsimpmodprime(rm_expr, basis~, gens~)
-  assert_true(
-    @sympy_simplify.ratsimpmodprime_equivalent(rm_expr, basis, gens, rm_ours),
-  )
+  assert_true(@sympy_simplify.ratsimpmodprime_equivalent(rm_expr, basis, gens, rm_ours),)
 }
 
 ///|
@@ -368,14 +362,10 @@ test "symsimplify fu rules parity" {
     @symcore.function("sin", [x]),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-1)),
   ])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR2i", tr2i_expr, tr2i(tr2i_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR2i", tr2i_expr, tr2i(tr2i_expr)),)
 
   let tr3_expr = @symcore.function("sin", [@symcore.mul([@symcore.int(-1), x])])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR3", tr3_expr, tr3(tr3_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR3", tr3_expr, tr3(tr3_expr)),)
   assert_true(
     @sympy_simplify.tr_rule_equivalent(
       "TR4",
@@ -386,15 +376,9 @@ test "symsimplify fu rules parity" {
 
   let tr5_expr = @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2))
   let tr6_expr = @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2))
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR5", tr5_expr, tr5(tr5_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR6", tr6_expr, tr6(tr6_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR7", tr6_expr, tr7(tr6_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR5", tr5_expr, tr5(tr5_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR6", tr6_expr, tr6(tr6_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR7", tr6_expr, tr7(tr6_expr)),)
 
   let tr8_expr = @symcore.mul([
     @symcore.function("sin", [x]),
@@ -404,24 +388,16 @@ test "symsimplify fu rules parity" {
     @symcore.function("cos", [x]),
     @symcore.function("cos", [y]),
   ])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR8", tr8_expr, tr8(tr8_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR9", tr9_expr, tr9(tr9_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR8", tr8_expr, tr8(tr8_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR9", tr9_expr, tr9(tr9_expr)),)
 
   let tr10_expr = @symcore.function("sin", [@symcore.add([x, y])])
   let tr10i_expr = @symcore.add([
     @symcore.mul([@symcore.function("cos", [x]), @symcore.function("cos", [y])]),
     @symcore.mul([@symcore.function("sin", [x]), @symcore.function("sin", [y])]),
   ])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR10", tr10_expr, tr10(tr10_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR10i", tr10i_expr, tr10i(tr10i_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR10", tr10_expr, tr10(tr10_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR10i", tr10i_expr, tr10i(tr10i_expr)),)
 
   let tr11_expr = @symcore.function("sin", [@symcore.mul([@symcore.int(2), x])])
   let tr12_expr = @symcore.function("tan", [@symcore.add([x, y])])
@@ -439,15 +415,9 @@ test "symsimplify fu rules parity" {
       @symcore.int(-1),
     ),
   ])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR11", tr11_expr, tr11(tr11_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR12", tr12_expr, tr12(tr12_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR12i", tr12i_expr, tr12i(tr12i_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR11", tr11_expr, tr11(tr11_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR12", tr12_expr, tr12(tr12_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR12i", tr12i_expr, tr12i(tr12i_expr)),)
 
   let tr13_expr = @symcore.mul([
     @symcore.function("tan", [x]),
@@ -459,18 +429,10 @@ test "symsimplify fu rules parity" {
   ])
   let tr15_expr = @symcore.pow(@symcore.function("sin", [x]), @symcore.int(-2))
   let tr16_expr = @symcore.pow(@symcore.function("cos", [x]), @symcore.int(-2))
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR13", tr13_expr, tr13(tr13_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR14", tr14_expr, tr14(tr14_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR15", tr15_expr, tr15(tr15_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR16", tr16_expr, tr16(tr16_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR13", tr13_expr, tr13(tr13_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR14", tr14_expr, tr14(tr14_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR15", tr15_expr, tr15(tr15_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR16", tr16_expr, tr16(tr16_expr)),)
 
   let tr111_expr = @symcore.pow(@symcore.function("tan", [x]), @symcore.int(-2))
   let tr22_expr = @symcore.pow(@symcore.function("tan", [x]), @symcore.int(2))
@@ -483,12 +445,8 @@ test "symsimplify fu rules parity" {
     @symcore.function("cos", [@symcore.mul([@symcore.int(2), x])]),
     @symcore.function("cos", [@symcore.mul([@symcore.int(4), x])]),
   ])
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR111", tr111_expr, tr111(tr111_expr)),
-  )
-  assert_true(
-    @sympy_simplify.tr_rule_equivalent("TR22", tr22_expr, tr22(tr22_expr)),
-  )
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR111", tr111_expr, tr111(tr111_expr)),)
+  assert_true(@sympy_simplify.tr_rule_equivalent("TR22", tr22_expr, tr22(tr22_expr)),)
   assert_true(
     @sympy_simplify.tr_rule_equivalent(
       "TRpower",
@@ -508,7 +466,5 @@ test "symsimplify fu rules parity" {
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
   ])
-  assert_true(
-    @sympy_simplify.futrig_equivalent(futrig_expr, futrig(futrig_expr)),
-  )
+  assert_true(@sympy_simplify.futrig_equivalent(futrig_expr, futrig(futrig_expr)),)
 }

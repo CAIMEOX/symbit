@@ -10,7 +10,5 @@ test "exceptions full message formatting" {
 
 ///|
 test "exceptions reject malformed target" {
-  guard (try? sympy_deprecation_warning("x", "1.0", "(bad)=target")) is Err(_) else {
-    fail("expected malformed deprecation target to be rejected")
-  }
+  assert_true((try? sympy_deprecation_warning("x", "1.0", "(bad)=target")) is Err(_))
 }

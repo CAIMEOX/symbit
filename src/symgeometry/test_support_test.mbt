@@ -10,9 +10,7 @@ fn geometry_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
-  guard (try! @sympy_geometry.geometry_expr_equal(ours, rhs)) else {
-    fail("\{context}: ours=\{ours}; expected=\{rhs}")
-  }
+  assert_true((try! @sympy_geometry.geometry_expr_equal(ours, rhs)))
 }
 
 ///|
@@ -23,12 +21,9 @@ fn geometry_assert_expr_close(
   context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
-  guard (try! @sympy_geometry.geometry_eval_str(
-      "abs((" + ours + ") - (" + rhs + ")) < (" + tol + ")",
-    )) ==
-    "True" else {
-    fail("\{context}: ours=\{ours}; expected≈\{rhs}; tol=\{tol}")
-  }
+  assert_eq((try! @sympy_geometry.geometry_eval_str(
+          "abs((" + ours + ") - (" + rhs + ")) < (" + tol + ")",
+        )), "True")
 }
 
 ///|
@@ -60,11 +55,7 @@ fn geometry_assert_point_set_equal(
   expected : Array[(String, String)],
   context : String,
 ) -> Unit raise {
-  guard items.length() == expected.length() else {
-    fail(
-      "\{context}: length mismatch ours=\{items.length()} expected=\{expected.length()}",
-    )
-  }
+  assert_eq(items.length(), expected.length())
   let used : Array[Bool] = []
   for _ in 0..<expected.length() {
     used.push(false)
@@ -93,7 +84,7 @@ fn geometry_assert_point_set_equal(
         break
       }
     }
-    guard matched else { fail("\{context}: unmatched point \{pt.repr()}") }
+    assert_true(matched)
   }
 }
 

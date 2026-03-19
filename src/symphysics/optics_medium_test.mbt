@@ -5,9 +5,7 @@ fn medium_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  guard (try! @sympy_physics.expr_equal(ours, rhs)) else {
-    fail("\{context}: ours=\{ours}; oracle=\{rhs}")
-  }
+  assert_true((try! @sympy_physics.expr_equal(ours, rhs)))
 }
 
 ///|
@@ -63,5 +61,5 @@ test "physics.optics.medium: derived parameterizations and guards" {
     permeability=Some(u0),
     n=Some(@symcore.int(2)),
   )
-  guard err is Err(_) else { fail("expected over-specified Medium to fail") }
+  assert_true(err is Err(_))
 }

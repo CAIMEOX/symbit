@@ -45,25 +45,22 @@ test "physics.mechanics parity lagrange simple pendulum" {
   let oracle_rhs = @sympy_physics.mechanics_summary(
     prefix + "[[str(x) for x in row] for row in LM.rhs().tolist()]",
   )
-  guard lagrange_port_matrix_entry_summary(lm.mass_matrix()).replace(
-      old=" ",
-      new="",
-    ) ==
-    oracle_mass.replace(old=" ", new="") else {
-    fail("lagrange mass matrix parity mismatch")
-  }
+  assert_eq(lagrange_port_matrix_entry_summary(lm.mass_matrix()).replace(
+          old=" ",
+          new="",
+        ), oracle_mass.replace(old=" ", new=""))
   let rhs = lm.rhs()
-  guard @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(rhs.get(0, 0)),
-    "Derivative(q(t), t)",
-  ) else {
-    fail("lagrange rhs first entry mismatch")
-  }
-  guard oracle_rhs.contains("-g*sin(q(t))/l") &&
+  assert_true(
     @sympy_physics.mechanics_expr_equal(
-      @symprint.to_string(rhs.get(1, 0)),
-      "-g*sin(q(t))/l",
-    ) else {
-    fail("lagrange rhs acceleration mismatch")
-  }
+        @symprint.to_string(rhs.get(0, 0)),
+        "Derivative(q(t), t)",
+      )
+  )
+  assert_true(
+    oracle_rhs.contains("-g*sin(q(t))/l") &&
+        @sympy_physics.mechanics_expr_equal(
+          @symprint.to_string(rhs.get(1, 0)),
+          "-g*sin(q(t))/l",
+        )
+  )
 }

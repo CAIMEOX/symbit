@@ -9,12 +9,12 @@ test "geometry.ellipse core helpers" {
     GeometryEntity::Ellipse(value) => value
     _ => fail("expected ellipse")
   }
-  guard @sympy_geometry.geometry_expr_equal(
-    geometry_py_expr_text(e.area()),
-    "2*pi",
-  ) else {
-    fail("ellipse area")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        geometry_py_expr_text(e.area()),
+        "2*pi",
+      )
+  )
   let foci = e.foci()
   geometry_assert_point_equal(foci[0], "-sqrt(3)", "0", "ellipse focus 0")
   geometry_assert_point_equal(foci[1], "sqrt(3)", "0", "ellipse focus 1")
@@ -36,12 +36,12 @@ test "geometry.ellipse core helpers" {
 ///|
 test "geometry.circle specialization and polygon intersection" {
   let c = circle(point2d(@symcore.int(0), @symcore.int(0)), @symcore.int(1))
-  guard @sympy_geometry.geometry_expr_equal(
-    geometry_py_expr_text(c.circumference()),
-    "2*pi",
-  ) else {
-    fail("circle circumference")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        geometry_py_expr_text(c.circumference()),
+        "2*pi",
+      )
+  )
   let hits = c.intersection(
     geometry_circle(
       circle(point2d(@symcore.int(1), @symcore.int(0)), @symcore.int(1)),

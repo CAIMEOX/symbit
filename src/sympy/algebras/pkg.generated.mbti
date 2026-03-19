@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/algebras"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn expr_equal(String, String) -> Bool raise
+
+pub fn quat_add(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_conjugate(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_exp(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_from_axis_angle(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_inverse(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_log(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_mul(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_norm(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn quat_pow(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr, Int) -> Array[String] raise
+
+pub fn quat_to_axis_angle(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+pub fn quat_to_rotation_matrix(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> Array[String] raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

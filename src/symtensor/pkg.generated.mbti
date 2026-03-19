@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symtensor"
+
+// Values
+pub fn clone_int_array(Array[Int]) -> Array[Int]
+
+pub fn product_ints(Array[Int]) -> Int
+
+pub fn shape_key(Array[Int]) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

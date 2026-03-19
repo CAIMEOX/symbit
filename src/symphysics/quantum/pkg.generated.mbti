@@ -329,7 +329,7 @@ pub fn px_ket(momentum? : @symcore.Expr) -> @symcore.Expr
 
 pub fn px_op(label? : @symcore.Expr) -> @symcore.Expr
 
-pub fn qapply(@symcore.Expr, dagger? : Bool, ip_doit? : Bool) -> @symcore.Expr
+pub fn qapply(@symcore.Expr, dagger? : Bool, ip_doit? : Bool, sum_doit? : Bool) -> @symcore.Expr
 
 pub fn qasm(Array[String]) -> Qasm raise @symphysics.PhysicsError
 
@@ -525,9 +525,9 @@ pub fn tensor_product_simp(@symcore.Expr) -> @symcore.Expr
 
 pub fn tensor_product_space(Array[HilbertSpace]) -> HilbertSpace raise @symphysics.PhysicsError
 
-pub fn time_dep_bra(Array[@symcore.Expr], @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
+pub fn time_dep_bra(Array[@symcore.Expr], time? : @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
 
-pub fn time_dep_ket(Array[@symcore.Expr], @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
+pub fn time_dep_ket(Array[@symcore.Expr], time? : @symcore.Expr, hilbert_space? : HilbertSpace) -> StateExpr
 
 pub fn tr(@symcore.Expr, indices? : Array[Int]) -> @symcore.Expr
 
@@ -965,7 +965,9 @@ pub struct WavefunctionExpr {
 }
 pub fn WavefunctionExpr::as_expr(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::call(Self, Array[@symcore.Expr], env? : Map[String, @symcore.Expr]) -> @symcore.Expr raise @symphysics.PhysicsError
+pub fn WavefunctionExpr::is_normalized(Self) -> Bool
 pub fn WavefunctionExpr::limits(Self) -> Map[String, (@symcore.Expr, @symcore.Expr)]
+pub fn WavefunctionExpr::norm(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::norm_expr(Self) -> @symcore.Expr
 pub fn WavefunctionExpr::normalize(Self) -> Self
 pub fn WavefunctionExpr::prob(Self) -> Self

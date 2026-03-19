@@ -9,9 +9,7 @@ fn mechanics_assert_summary(
   rhs : String,
   context : String,
 ) -> Unit raise {
-  guard mechanics_compact(lhs) == mechanics_compact(rhs) else {
-    fail(context + ": ours=" + lhs + "; oracle=" + rhs)
-  }
+  assert_eq(mechanics_compact(lhs), mechanics_compact(rhs))
 }
 
 ///|
@@ -65,14 +63,14 @@ test "physics.mechanics parity rigidbody wrappers and body loads" {
     mass=Some(@symcore.symbol("m")),
     inertia=Some(inertia_tuple(@symvector.outer(b.x(), b.x()), p)),
   )
-  guard @sympy_physics.expr_equal(
-    @symprint.to_string(rb.kinetic_energy(n)),
-    @sympy_physics.mechanics_eval(
-      "m,v,omega=symbols('m v omega'); N=ReferenceFrame('RN'); b=ReferenceFrame('Rb'); b.set_ang_vel(N, omega*b.x); P=Point('RP'); P.set_vel(N, v*N.x); RB=RigidBody('RB', P, b, m, (outer(b.x, b.x), P)); RB.kinetic_energy(N)",
-    ),
-  ) else {
-    fail("rigidbody kinetic energy parity")
-  }
+  assert_true(
+    @sympy_physics.expr_equal(
+        @symprint.to_string(rb.kinetic_energy(n)),
+        @sympy_physics.mechanics_eval(
+          "m,v,omega=symbols('m v omega'); N=ReferenceFrame('RN'); b=ReferenceFrame('Rb'); b.set_ang_vel(N, omega*b.x); P=Point('RP'); P.set_vel(N, v*N.x); RB=RigidBody('RB', P, b, m, (outer(b.x, b.x), P)); RB.kinetic_energy(N)",
+        ),
+      )
+  )
 
   let legacy = body("LB")
   legacy.apply_force(legacy.x())

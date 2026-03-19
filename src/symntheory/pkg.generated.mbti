@@ -1,0 +1,225 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/symntheory"
+
+import {
+  "moonbitlang/core/bigint",
+}
+
+// Values
+pub fn abs_bigint(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn abundance(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn bi(Int) -> @bigint.BigInt
+
+pub fn binomial_coefficients(Int) -> Array[(Array[Int], @bigint.BigInt)] raise
+
+pub fn binomial_coefficients_list(Int) -> Array[@bigint.BigInt] raise
+
+pub fn binomial_mod(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn composite(Int) -> @bigint.BigInt raise
+
+pub fn compositepi(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn continued_fraction(@bigint.BigInt, den? : @bigint.BigInt) -> Array[Int] raise
+
+pub fn continued_fraction_convergents(Array[Int]) -> Array[(@bigint.BigInt, @bigint.BigInt)]
+
+pub fn continued_fraction_iterator(@bigint.BigInt, den? : @bigint.BigInt) -> Array[Int] raise
+
+pub fn continued_fraction_periodic(@bigint.BigInt, @bigint.BigInt, d? : @bigint.BigInt, s? : @bigint.BigInt) -> Array[Int] raise
+
+pub fn continued_fraction_reduce(Array[Int]) -> (@bigint.BigInt, @bigint.BigInt) raise
+
+pub fn count_digits(@bigint.BigInt, b? : @bigint.BigInt) -> Map[Int, Int] raise
+
+pub fn crt(Array[@bigint.BigInt], Array[@bigint.BigInt], symmetric? : Bool, check? : Bool) -> (@bigint.BigInt, @bigint.BigInt)?
+
+pub fn crt1(Array[@bigint.BigInt]) -> (@bigint.BigInt, Array[@bigint.BigInt], Array[@bigint.BigInt])
+
+pub fn crt2(Array[@bigint.BigInt], Array[@bigint.BigInt], @bigint.BigInt, Array[@bigint.BigInt], Array[@bigint.BigInt], symmetric? : Bool) -> (@bigint.BigInt, @bigint.BigInt)
+
+pub fn cycle_length((Int) -> Int, Int, nmax? : Int, values? : Bool) -> CycleLengthResult
+
+pub fn digits(@bigint.BigInt, b? : @bigint.BigInt, digits? : Int) -> Array[Int] raise
+
+pub fn discrete_log(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt? raise
+
+pub fn divisor_count(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn divisor_sigma(@bigint.BigInt, k? : Int) -> @bigint.BigInt
+
+pub fn divisors(@bigint.BigInt, generator? : Bool) -> Array[@bigint.BigInt]
+
+pub fn dra(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn drm(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn ecm(@bigint.BigInt, b1? : Int, b2? : Int, max_curve? : Int, seed? : Int) -> Array[@bigint.BigInt]
+
+pub fn egyptian_fraction(@bigint.BigInt, @bigint.BigInt) -> Array[@bigint.BigInt] raise
+
+pub fn factorint(@bigint.BigInt, limit? : @bigint.BigInt, use_trial? : Bool, use_rho? : Bool, use_pm1? : Bool) -> Map[@bigint.BigInt, Int]
+
+pub fn factorrat(@bigint.BigInt, den? : @bigint.BigInt) -> Map[@bigint.BigInt, Int]
+
+pub fn gcd(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn gcd3(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn gcdext(@bigint.BigInt, @bigint.BigInt) -> (@bigint.BigInt, @bigint.BigInt, @bigint.BigInt)
+
+pub fn is_abundant(@bigint.BigInt) -> Bool
+
+pub fn is_amicable(@bigint.BigInt, @bigint.BigInt) -> Bool
+
+pub fn is_carmichael(@bigint.BigInt) -> Bool
+
+pub fn is_deficient(@bigint.BigInt) -> Bool
+
+pub fn is_even(@bigint.BigInt) -> Bool
+
+pub fn is_gaussian_prime(@bigint.BigInt, b? : @bigint.BigInt) -> Bool
+
+pub fn is_mersenne_prime(@bigint.BigInt) -> Bool
+
+pub fn is_nthpow_residue(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> Bool raise
+
+pub fn is_palindromic(@bigint.BigInt, b? : @bigint.BigInt) -> Bool raise
+
+pub fn is_perfect(@bigint.BigInt) -> Bool
+
+pub fn is_primitive_root(@bigint.BigInt, @bigint.BigInt) -> Bool raise
+
+pub fn is_quad_residue(@bigint.BigInt, @bigint.BigInt) -> Bool raise
+
+pub fn isprime(@bigint.BigInt) -> Bool
+
+pub fn jacobi_symbol(@bigint.BigInt, @bigint.BigInt) -> Int raise
+
+pub fn lcm(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn legendre_symbol(@bigint.BigInt, @bigint.BigInt) -> Int raise
+
+pub fn mersenne_prime_exponent(Int) -> Int raise
+
+pub let mersenne_prime_exponents : Array[Int]
+
+pub fn mobius(@bigint.BigInt) -> Int raise
+
+pub fn mod_inverse(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt?
+
+pub fn mod_positive(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn multinomial_coefficients(Int, Int) -> Array[(Array[Int], @bigint.BigInt)] raise
+
+pub fn multiplicity(@bigint.BigInt, @bigint.BigInt) -> Int
+
+pub fn multiplicity_in_factorial(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn n_order(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn nextprime(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn npartitions(Int) -> @bigint.BigInt
+
+pub fn nthroot_mod(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt, all_roots? : Bool) -> Array[@bigint.BigInt] raise
+
+pub fn perfect_power(@bigint.BigInt) -> (@bigint.BigInt, Int)? raise
+
+pub fn pi_hex_digits(Int, prec? : Int) -> String raise
+
+pub fn pollard_pm1(@bigint.BigInt, bound? : Int) -> @bigint.BigInt?
+
+pub fn pollard_rho(@bigint.BigInt) -> @bigint.BigInt?
+
+pub fn polynomial_congruence(Array[@bigint.BigInt], @bigint.BigInt) -> Array[@bigint.BigInt] raise
+
+pub fn pow_mod(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn prevprime(@bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn prime(Int) -> @bigint.BigInt raise
+
+pub fn primefactors(@bigint.BigInt) -> Array[@bigint.BigInt]
+
+pub fn primenu(@bigint.BigInt) -> Int
+
+pub fn primeomega(@bigint.BigInt) -> Int
+
+pub fn primepi(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn primerange(@bigint.BigInt, b? : @bigint.BigInt) -> Array[@bigint.BigInt]
+
+pub fn primitive_root(@bigint.BigInt, smallest? : Bool) -> @bigint.BigInt? raise
+
+pub fn primorial(Int, nth? : Bool) -> @bigint.BigInt raise
+
+pub fn proper_divisor_count(@bigint.BigInt) -> @bigint.BigInt
+
+pub fn proper_divisors(@bigint.BigInt, generator? : Bool) -> Array[@bigint.BigInt]
+
+pub fn qs(@bigint.BigInt, prime_bound? : Int, m? : Int, error_term? : Int, seed? : Int) -> Array[@bigint.BigInt] raise
+
+pub fn qs_factor(@bigint.BigInt, prime_bound? : Int, m? : Int, error_term? : Int, seed? : Int) -> Map[@bigint.BigInt, Int] raise
+
+pub fn quadratic_congruence(@bigint.BigInt, @bigint.BigInt, @bigint.BigInt, @bigint.BigInt) -> Array[@bigint.BigInt] raise
+
+pub fn quadratic_residues(@bigint.BigInt) -> Array[@bigint.BigInt] raise
+
+pub fn randprime(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt raise
+
+pub fn reduced_totient(@bigint.BigInt) -> @bigint.BigInt
+
+pub let sieve : Sieve
+
+pub fn solve_congruence(Array[(@bigint.BigInt, @bigint.BigInt)], symmetric? : Bool, check? : Bool) -> (@bigint.BigInt, @bigint.BigInt)?
+
+pub fn sqrt_mod(@bigint.BigInt, @bigint.BigInt, all_roots? : Bool) -> Array[@bigint.BigInt] raise
+
+pub fn sqrt_mod_iter(@bigint.BigInt, @bigint.BigInt) -> Iter[@bigint.BigInt] raise
+
+pub fn symmetric_residue(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn to_int_checked(@bigint.BigInt, Int) -> Int raise
+
+pub fn totient(@bigint.BigInt) -> @bigint.BigInt
+
+// Errors
+
+// Types and methods
+pub enum CycleLengthResult {
+  Params(Int, Int?)
+  Values(Array[Int])
+}
+
+pub struct EllipticCurve {
+  a1 : @bigint.BigInt
+  a2 : @bigint.BigInt
+  a3 : @bigint.BigInt
+  a4 : @bigint.BigInt
+  a6 : @bigint.BigInt
+  modulus : @bigint.BigInt
+}
+pub fn EllipticCurve::characteristic(Self) -> @bigint.BigInt
+pub fn EllipticCurve::contains(Self, @bigint.BigInt, @bigint.BigInt) -> Bool
+pub fn EllipticCurve::discriminant(Self) -> @bigint.BigInt
+pub fn EllipticCurve::new(@bigint.BigInt, @bigint.BigInt, a1? : @bigint.BigInt, a2? : @bigint.BigInt, a3? : @bigint.BigInt, modulus? : @bigint.BigInt) -> Self
+pub fn EllipticCurve::points(Self) -> Array[(@bigint.BigInt, @bigint.BigInt)] raise
+pub fn EllipticCurve::points_x(Self, @bigint.BigInt) -> Array[(@bigint.BigInt, @bigint.BigInt)] raise
+
+pub struct Sieve {
+  primes : Array[@bigint.BigInt]
+}
+pub fn Sieve::extend(Self, @bigint.BigInt) -> Unit
+pub fn Sieve::extend_to_no(Self, Int) -> Unit
+pub fn Sieve::new() -> Self
+pub fn Sieve::prime(Self, Int) -> @bigint.BigInt raise
+pub fn Sieve::primerange(Self, @bigint.BigInt, @bigint.BigInt) -> Array[@bigint.BigInt]
+
+// Type aliases
+pub using @bigint {type BigInt}
+
+// Traits
+

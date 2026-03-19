@@ -35,21 +35,21 @@ test "physics.control.control_plots: pole-zero parity" {
       ]),
     ),
   )
-  guard sections.length() == 2 else { fail("oracle section count") }
-  guard control_complex_array_close(
-    ours.0,
-    control_parse_complex_lines(sections[0]),
-    tol=1.0e-5,
-  ) else {
-    fail("zero parity")
-  }
-  guard control_complex_array_close(
-    ours.1,
-    control_parse_complex_lines(sections[1]),
-    tol=1.0e-5,
-  ) else {
-    fail("pole parity")
-  }
+  assert_eq(sections.length(), 2)
+  assert_true(
+    control_complex_array_close(
+      ours.0,
+      control_parse_complex_lines(sections[0]),
+      tol=1.0e-5,
+    ),
+  )
+  assert_true(
+    control_complex_array_close(
+      ours.1,
+      control_parse_complex_lines(sections[1]),
+      tol=1.0e-5,
+    ),
+  )
 }
 
 ///|
@@ -72,20 +72,20 @@ test "physics.control.control_plots: response parity" {
       ]),
     ),
   )
-  guard control_double_array_close(
-    step.0,
-    control_parse_double_lines(step_sections[0]),
-    tol=1.0e-8,
-  ) else {
-    fail("step x parity")
-  }
-  guard control_double_array_close(
-    step.1,
-    control_parse_double_lines(step_sections[1]),
-    tol=1.0e-4,
-  ) else {
-    fail("step y parity")
-  }
+  assert_true(
+    control_double_array_close(
+      step.0,
+      control_parse_double_lines(step_sections[0]),
+      tol=1.0e-8,
+    ),
+  )
+  assert_true(
+    control_double_array_close(
+      step.1,
+      control_parse_double_lines(step_sections[1]),
+      tol=1.0e-4,
+    ),
+  )
 
   let impulse = impulse_response_numerical_data(
     tf,
@@ -102,13 +102,13 @@ test "physics.control.control_plots: response parity" {
       ]),
     ),
   )
-  guard control_double_array_close(
-    impulse.1,
-    control_parse_double_lines(impulse_sections[1]),
-    tol=1.0e-4,
-  ) else {
-    fail("impulse y parity")
-  }
+  assert_true(
+    control_double_array_close(
+      impulse.1,
+      control_parse_double_lines(impulse_sections[1]),
+      tol=1.0e-4,
+    ),
+  )
 
   let ramp = ramp_response_numerical_data(
     tf,
@@ -125,13 +125,13 @@ test "physics.control.control_plots: response parity" {
       ]),
     ),
   )
-  guard control_double_array_close(
-    ramp.1,
-    control_parse_double_lines(ramp_sections[1]),
-    tol=1.0e-4,
-  ) else {
-    fail("ramp y parity")
-  }
+  assert_true(
+    control_double_array_close(
+      ramp.1,
+      control_parse_double_lines(ramp_sections[1]),
+      tol=1.0e-4,
+    ),
+  )
 }
 
 ///|
@@ -154,20 +154,20 @@ test "physics.control.control_plots: bode parity" {
       ]),
     ),
   )
-  guard control_double_array_close(
-    mag.0,
-    control_parse_double_lines(mag_sections[0]),
-    tol=1.0e-8,
-  ) else {
-    fail("bode mag x parity")
-  }
-  guard control_double_array_close(
-    mag.1,
-    control_parse_double_lines(mag_sections[1]),
-    tol=1.0e-4,
-  ) else {
-    fail("bode mag y parity")
-  }
+  assert_true(
+    control_double_array_close(
+      mag.0,
+      control_parse_double_lines(mag_sections[0]),
+      tol=1.0e-8,
+    ),
+  )
+  assert_true(
+    control_double_array_close(
+      mag.1,
+      control_parse_double_lines(mag_sections[1]),
+      tol=1.0e-4,
+    ),
+  )
 
   let phase = bode_phase_numerical_data(
     tf,
@@ -185,13 +185,13 @@ test "physics.control.control_plots: bode parity" {
       ]),
     ),
   )
-  guard control_double_array_close(
-    phase.1,
-    control_parse_double_lines(phase_sections[1]),
-    tol=1.0e-4,
-  ) else {
-    fail("bode phase y parity")
-  }
+  assert_true(
+    control_double_array_close(
+      phase.1,
+      control_parse_double_lines(phase_sections[1]),
+      tol=1.0e-4,
+    ),
+  )
 }
 
 ///|
@@ -207,12 +207,8 @@ test "physics.control.control_plots: expr parity" {
       "print(real_expr.xreplace({w: ww}))\n", "print(imag_expr.xreplace({w: ww}))\n",
     ]),
   )
-  guard control_expr_eq(nyquist.0, nyquist_lines[0]) else {
-    fail("nyquist real parity")
-  }
-  guard control_expr_eq(nyquist.1, nyquist_lines[1]) else {
-    fail("nyquist imag parity")
-  }
+  assert_true(control_expr_eq(nyquist.0, nyquist_lines[0]))
+  assert_true(control_expr_eq(nyquist.1, nyquist_lines[1]))
 
   let nichols = nichols_plot_expr(tf)
   let nichols_lines = control_oracle_lines(
@@ -222,10 +218,6 @@ test "physics.control.control_plots: expr parity" {
       "print(mag_expr.xreplace({w: ww}))\n", "print(phase_expr.xreplace({w: ww}))\n",
     ]),
   )
-  guard control_expr_eq(nichols.0, nichols_lines[0]) else {
-    fail("nichols mag parity")
-  }
-  guard control_expr_eq(nichols.1, nichols_lines[1]) else {
-    fail("nichols phase parity")
-  }
+  assert_true(control_expr_eq(nichols.0, nichols_lines[0]))
+  assert_true(control_expr_eq(nichols.1, nichols_lines[1]))
 }

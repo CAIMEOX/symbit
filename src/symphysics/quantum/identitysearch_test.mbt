@@ -44,34 +44,22 @@ test "physics.quantum.identitysearch: scalar detection and rule generation" {
   let y0 = y_gate(0).as_expr()
   let z0 = z_gate(0).as_expr()
 
-  guard is_scalar_matrix([x0, x0], 1, true) else {
-    fail("X*X should be identity")
-  }
-  guard is_scalar_matrix([x0, y0, z0], 1, false) else {
-    fail("X*Y*Z should be scalar")
-  }
-  guard !is_scalar_matrix([x0, y0], 1, false) else {
-    fail("X*Y should not be scalar")
-  }
+  assert_true(is_scalar_matrix([x0, x0], 1, true))
+  assert_true(is_scalar_matrix([x0, y0, z0], 1, false))
+  assert_true(!is_scalar_matrix([x0, y0], 1, false))
 
   let rules = generate_gate_rules([x0, y0, z0])
   let summaries = quantum_gate_rule_summaries(rules)
-  guard summaries.length() == 12 else { fail("generate_gate_rules size") }
-  guard summaries.contains("X(0)*Y(0)*Z(0) == 1") else {
-    fail("generate_gate_rules original identity")
-  }
-  guard summaries.contains("1 == X(0)*Z(0)*Y(0)") else {
-    fail("generate_gate_rules reversed identity")
-  }
+  assert_eq(summaries.length(), 12)
+  assert_true(summaries.contains("X(0)*Y(0)*Z(0) == 1"))
+  assert_true(summaries.contains("1 == X(0)*Z(0)*Y(0)"))
 
   let ids = generate_equivalent_ids([x0, y0, z0])
   let id_summaries = ids.map(expr => {
     quantum_gate_sequence_summary(circuit_factors(expr))
   })
-  guard id_summaries.length() == 6 else { fail("generate_equivalent_ids size") }
-  guard id_summaries.contains("X(0)*Y(0)*Z(0)") else {
-    fail("generate_equivalent_ids contains original")
-  }
+  assert_eq(id_summaries.length(), 6)
+  assert_true(id_summaries.contains("X(0)*Y(0)*Z(0)"))
 }
 
 ///|
@@ -86,22 +74,14 @@ test "physics.quantum.identitysearch: GateIdentity and searches" {
     "X(0)*Y(0)*Z(0)",
     "GateIdentity circuit",
   )
-  guard is_degenerate([identity], [y0, z0, x0]) else {
-    fail("permutation should be degenerate")
-  }
-  guard !is_reducible([x0, y0, z0], 1, 1, 3) else {
-    fail("YZ should not be reducible")
-  }
-  guard is_reducible([x0, y0, y0], 1, 1, 3) else {
-    fail("YY should be reducible")
-  }
+  assert_true(is_degenerate([identity], [y0, z0, x0]))
+  assert_true(!is_reducible([x0, y0, z0], 1, 1, 3))
+  assert_true(is_reducible([x0, y0, y0], 1, 1, 3))
 
   let bfs = bfs_identity_search([x0, y0, z0], 1, max_depth=3)
   let bfs_summaries = quantum_gate_identity_summaries(bfs)
-  guard !bfs_summaries.is_empty() else { fail("bfs should find identities") }
-  guard bfs_summaries.contains("X(0)*Y(0)*Z(0)") else {
-    fail("bfs contains XYZ")
-  }
+  assert_true(!bfs_summaries.is_empty())
+  assert_true(bfs_summaries.contains("X(0)*Y(0)*Z(0)"))
 
   let found = match random_identity_search([x0], 2, 1, seed=7) {
     Some(sequence) => sequence

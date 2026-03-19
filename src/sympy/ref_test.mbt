@@ -6,9 +6,7 @@ fn py_str_obj(obj : @py.PyObject) -> String {
 ///|
 test "sympy ref: import and poly attr" {
   guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
-  guard sympy.get_attr("poly") is Some(PyCallable(_)) else {
-    fail("sympy.poly missing")
-  }
+  assert_true(sympy.get_attr("poly") is Some(PyCallable(_)))
 }
 
 ///|
@@ -23,9 +21,9 @@ test "sympy ref: symbols get" {
   guard py_call_object(symbols, args) is Some(PyTuple(xyz_tuple)) else {
     fail("expected tuple from symbols")
   }
-  guard xyz_tuple.get(0) is Some(PyClass(_)) else { fail("x missing") }
-  guard xyz_tuple.get(1) is Some(PyClass(_)) else { fail("y missing") }
-  guard xyz_tuple.get(2) is Some(PyClass(_)) else { fail("z missing") }
+  assert_true(xyz_tuple.get(0) is Some(PyClass(_)))
+  assert_true(xyz_tuple.get(1) is Some(PyClass(_)))
+  assert_true(xyz_tuple.get(2) is Some(PyClass(_)))
 }
 
 ///|

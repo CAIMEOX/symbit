@@ -14,19 +14,17 @@ test "physics.quantum.circuitplot: labels and gate constructors" {
   let cq_gate = create_cgate("Q")
   inspect(@symprint.to_string(cq_gate([1], 0)), content="CGate(Tuple(1), Q(0))")
 
-  guard labeller(2) == ["q_1", "q_0"] else { fail("labeller default") }
-  guard labeller(3, symbol="j") == ["j_2", "j_1", "j_0"] else {
-    fail("labeller custom symbol")
-  }
+  assert_eq(labeller(2), ["q_1", "q_0"])
+  assert_eq(labeller(3, symbol="j"), ["j_2", "j_1", "j_0"])
 }
 
 ///|
 test "physics.quantum.circuitplot: layout metadata" {
   let cnot = circuit_plot(cnot_gate(1, 0).as_expr(), 2, labels=labeller(2))
-  guard cnot.ngates == 2 else { fail("cnot ngates") }
-  guard cnot.nqubits == 2 else { fail("cnot nqubits") }
-  guard cnot.labels == ["q_1", "q_0"] else { fail("cnot labels") }
-  guard cnot.gates.length() == 1 else { fail("cnot gate extraction") }
+  assert_eq(cnot.ngates, 2)
+  assert_eq(cnot.nqubits, 2)
+  assert_eq(cnot.labels, ["q_1", "q_0"])
+  assert_eq(cnot.gates.length(), 1)
   inspect(
     circuitplot_summary(cnot),
     content="ngates=2;nqubits=2;gate_count=1;measurements=-;labels=q_1,q_0",
@@ -55,9 +53,9 @@ test "physics.quantum.circuitplot: layout metadata" {
     3,
     labels=labeller(3, symbol="j"),
   )
-  guard ex4.ngates == 7 else { fail("ex4 ngates") }
-  guard ex4.nqubits == 3 else { fail("ex4 nqubits") }
-  guard ex4.labels == ["j_2", "j_1", "j_0"] else { fail("ex4 labels") }
+  assert_eq(ex4.ngates, 7)
+  assert_eq(ex4.nqubits, 3)
+  assert_eq(ex4.labels, ["j_2", "j_1", "j_0"])
   inspect(
     circuitplot_summary(ex4),
     content="ngates=7;nqubits=3;gate_count=7;measurements=-;labels=j_2,j_1,j_0",

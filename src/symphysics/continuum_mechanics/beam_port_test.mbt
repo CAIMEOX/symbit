@@ -30,18 +30,10 @@ test "physics.continuum_mechanics.beam: oracle parity" {
     "print(b.shear_force())\n" +
     "print(b.bending_moment())\n",
   )
-  guard oracle.length() == 5 else { fail("unexpected oracle beam output") }
-  guard continuum_expr_eq(b.reaction_loads()["R1"], oracle[0]) else {
-    fail("beam R1")
-  }
-  guard continuum_expr_eq(b.reaction_loads()["R2"], oracle[1]) else {
-    fail("beam R2")
-  }
-  guard continuum_expr_eq(b.load(), oracle[2]) else { fail("beam load") }
-  guard continuum_expr_eq(b.shear_force(), oracle[3]) else {
-    fail("beam shear")
-  }
-  guard continuum_expr_eq(b.bending_moment(), oracle[4]) else {
-    fail("beam moment")
-  }
+  assert_eq(oracle.length(), 5)
+  assert_true(continuum_expr_eq(b.reaction_loads()["R1"], oracle[0]))
+  assert_true(continuum_expr_eq(b.reaction_loads()["R2"], oracle[1]))
+  assert_true(continuum_expr_eq(b.load(), oracle[2]))
+  assert_true(continuum_expr_eq(b.shear_force(), oracle[3]))
+  assert_true(continuum_expr_eq(b.bending_moment(), oracle[4]))
 }

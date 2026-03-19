@@ -5,9 +5,7 @@ fn optics_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let lhs_txt = try! @sympy_physics.physics_expr_str(lhs)
-  guard (try! @sympy_physics.control_expr_equivalent(lhs, rhs)) else {
-    fail("\{context}: ours=\{lhs_txt}; expected=\{rhs}")
-  }
+  assert_true((try! @sympy_physics.control_expr_equivalent(lhs, rhs)))
 }
 
 ///|
@@ -16,11 +14,7 @@ fn optics_assert_expr_list_equal(
   rhs : Array[String],
   context : String,
 ) -> Unit raise {
-  guard lhs.length() == rhs.length() else {
-    fail(
-      "\{context}: length mismatch ours=\{lhs.length()} expected=\{rhs.length()}",
-    )
-  }
+  assert_eq(lhs.length(), rhs.length())
   for idx in 0..<lhs.length() {
     try! optics_assert_expr_equal(lhs[idx], rhs[idx], "\{context}[\{idx}]")
   }
@@ -63,14 +57,11 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5)",
     "refraction_angle",
   )
-  guard fresnel_coefficients(
-      theta,
-      optics_index_arg(one),
-      optics_index_arg(four_thirds),
-    ).length() ==
-    4 else {
-    fail("fresnel_coefficients length")
-  }
+  assert_eq(fresnel_coefficients(
+          theta,
+          optics_index_arg(one),
+          optics_index_arg(four_thirds),
+        ).length(), 4)
   optics_assert_expr_equal(
     deviation(
       theta,
@@ -80,14 +71,11 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5) - pi/6",
     "deviation",
   )
-  guard fresnel_coefficients(
-      test_pi_expr() * test_rational_expr(3, 10),
-      optics_index_arg(@symcore.int(2)),
-      optics_index_arg(@symcore.int(1)),
-    ).length() ==
-    2 else {
-    fail("fresnel_coefficients tir length")
-  }
+  assert_eq(fresnel_coefficients(
+          test_pi_expr() * test_rational_expr(3, 10),
+          optics_index_arg(@symcore.int(2)),
+          optics_index_arg(@symcore.int(1)),
+        ).length(), 2)
   optics_assert_expr_equal(
     brewster_angle(optics_index_arg(one), optics_index_arg(four_thirds)),
     "atan(4/3)",

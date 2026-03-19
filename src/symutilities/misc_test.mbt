@@ -20,7 +20,5 @@ test "misc as_int behavior" {
   assert_eq(as_int(int_like_int(3)), 3)
   assert_eq(as_int(int_like_bool(true), strict=false), 1)
   assert_eq(as_int(int_like_expr(@symcore.int(5))), 5)
-  guard (try? as_int(int_like_double(1.1), strict=false)) is Err(_) else {
-    fail("expected as_int to reject non-integral double")
-  }
+  assert_true((try? as_int(int_like_double(1.1), strict=false)) is Err(_))
 }

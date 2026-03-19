@@ -48,9 +48,7 @@ test "physics.quantum.grover: local qapply and iteration" {
     nqubits=2,
   )
   let w_flat = matrix_flat_strings(w_matrix)
-  guard w_flat == ["1/2", "1/2", "-1/2", "1/2"] else {
-    fail("W gate apply: \{w_flat}")
-  }
+  assert_eq(w_flat, ["1/2", "1/2", "-1/2", "1/2"])
 
   quantum_test_assert_matrix_expr_equal(
     qubit_to_matrix(apply_grover([2], 2, iterations=1), nqubits=2),

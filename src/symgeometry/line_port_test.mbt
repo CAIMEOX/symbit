@@ -32,12 +32,12 @@ test "geometry.line parity transforms and distance" {
       "Segment(Point2D(0,0), Point2D(4,0)).translate(0, 1)",
     ),
   )
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(seg.distance(point2d(@symcore.int(1), @symcore.int(2)))),
-    "Segment(Point2D(0,0), Point2D(4,0)).distance(Point2D(1,2))",
-  ) else {
-    fail("segment distance parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(seg.distance(point2d(@symcore.int(1), @symcore.int(2)))),
+        "Segment(Point2D(0,0), Point2D(4,0)).distance(Point2D(1,2))",
+      )
+  )
 }
 
 ///|

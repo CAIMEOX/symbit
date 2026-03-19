@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/concrete"
+
+import {
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn expr_str_eq(String, String) -> Bool raise
+
+pub fn sympy_equiv_str(String, String) -> Bool raise
+
+pub fn sympy_srepr(String) -> String raise
+
+pub fn sympy_str(String) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

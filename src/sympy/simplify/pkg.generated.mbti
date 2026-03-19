@@ -1,0 +1,124 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/simplify"
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/sympy",
+}
+
+// Values
+pub fn besselsimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn besselsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn collect_abs_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn collect_abs_srepr(@symcore.Expr) -> String raise
+
+pub fn collect_sqrt_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn collect_sqrt_srepr(@symcore.Expr) -> String raise
+
+pub fn combsimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn combsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn denom_expand_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn denom_expand_srepr(@symcore.Expr) -> String raise
+
+pub fn expr_srepr(@symcore.Expr) -> String raise
+
+pub fn exptrigsimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn exptrigsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn fraction_expand_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn fraction_expand_srepr(@symcore.Expr) -> String raise
+
+pub fn fu_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn fu_srepr(@symcore.Expr) -> String raise
+
+pub fn futrig_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn futrig_srepr(@symcore.Expr) -> String raise
+
+pub fn gammasimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn gammasimp_srepr(@symcore.Expr) -> String raise
+
+pub fn hyperexpand_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn hyperexpand_srepr(@symcore.Expr) -> String raise
+
+pub fn hypersimilar_bool(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn hypersimp_srepr(@symcore.Expr, @symcore.Expr) -> String raise
+
+pub fn kroneckersimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn kroneckersimp_srepr(@symcore.Expr) -> String raise
+
+pub fn logcombine_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn logcombine_srepr(@symcore.Expr) -> String raise
+
+pub fn nsimplify_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn nsimplify_srepr(@symcore.Expr) -> String raise
+
+pub fn numer_expand_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn numer_expand_srepr(@symcore.Expr) -> String raise
+
+pub fn powdenest_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn powdenest_srepr(@symcore.Expr) -> String raise
+
+pub fn powsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn radsimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn radsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn ratsimp_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn ratsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn ratsimpmodprime_equivalent(@symcore.Expr, Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, quick? : Bool, polynomial? : Bool) -> Bool raise
+
+pub fn ratsimpmodprime_srepr(@symcore.Expr, Array[@symcore.Expr], Array[@symcore.Expr], quick? : Bool, polynomial? : Bool) -> String raise
+
+pub fn separatevars_srepr(@symcore.Expr, force? : Bool) -> String raise
+
+pub fn signsimp_srepr(@symcore.Expr) -> String raise
+
+pub fn simplify_srepr(@symcore.Expr) -> String raise
+
+pub fn sqrtdenest_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn sqrtdenest_srepr(@symcore.Expr) -> String raise
+
+pub fn sub_post_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn sub_post_srepr(@symcore.Expr) -> String raise
+
+pub fn sub_pre_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn sub_pre_srepr(@symcore.Expr) -> String raise
+
+pub fn tr_rule_equivalent(String, @symcore.Expr, @symcore.Expr) -> Bool raise
+
+pub fn trigsimp_srepr(@symcore.Expr) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @sympy {type OracleArg}
+
+// Traits
+

@@ -69,7 +69,7 @@ test "discrete convolution parity" {
     ),
   )
   let bad0 : Result[Array[Expr], Error] = try? convolution(b, d, dps=5, prime=q)
-  guard bad0 is Err(_) else { fail("expected ambiguous hint error") }
+  assert_true(bad0 is Err(_))
 }
 
 ///|

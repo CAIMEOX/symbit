@@ -43,34 +43,34 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     @symcore.int(2),
   )
   let ap = c.arbitrary_point(parameter=@symcore.symbol("z"))
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(ap.x()),
-    "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).x",
-  ) else {
-    fail("curve arbitrary point x parity")
-  }
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(ap.y()),
-    "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).y",
-  ) else {
-    fail("curve arbitrary point y parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(ap.x()),
+        "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).x",
+      )
+  )
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(ap.y()),
+        "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).y",
+      )
+  )
   let rotated = c.rotate(
     @symcore.symbol("pi") * (@symcore.int(2) ^ @symcore.int(-1)),
   )
   let rot_pt = rotated.arbitrary_point(parameter=@symcore.symbol("z"))
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(rot_pt.x()),
-    "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).x",
-  ) else {
-    fail("curve rotate x parity")
-  }
-  guard @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(rot_pt.y()),
-    "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).y",
-  ) else {
-    fail("curve rotate y parity")
-  }
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(rot_pt.x()),
+        "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).x",
+      )
+  )
+  assert_true(
+    @sympy_geometry.geometry_expr_equal(
+        @symprint.to_string(rot_pt.y()),
+        "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).y",
+      )
+  )
 }
 
 ///|

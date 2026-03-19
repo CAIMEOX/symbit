@@ -8,9 +8,7 @@ test "polyroots wb: arity and degree guard errors" {
   let non_uni_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
     p2,
   )
-  guard non_uni_linear is Err(PolyError::NotUnivariate) else {
-    fail("roots_linear should reject multivariate polynomials")
-  }
+  assert_true(non_uni_linear is Err(PolyError::NotUnivariate))
 
   let b1 = PolyBuilder::new(["x"], Domain::QQ)
   let lin = b1.from_expr(x + @symcore.int(1))
@@ -21,30 +19,22 @@ test "polyroots wb: arity and degree guard errors" {
   let bad_linear : Result[Array[@symcore.Expr], PolyError] = try? roots_linear(
     quad,
   )
-  guard bad_linear is Err(PolyError::BadExponent) else {
-    fail("roots_linear should require degree 1")
-  }
+  assert_true(bad_linear is Err(PolyError::BadExponent))
 
   let bad_quad : Result[Array[@symcore.Expr], PolyError] = try? roots_quadratic(
     lin,
   )
-  guard bad_quad is Err(PolyError::BadExponent) else {
-    fail("roots_quadratic should require degree 2")
-  }
+  assert_true(bad_quad is Err(PolyError::BadExponent))
 
   let bad_cubic : Result[Array[@symcore.Expr], PolyError] = try? roots_cubic(
     quad,
   )
-  guard bad_cubic is Err(PolyError::BadExponent) else {
-    fail("roots_cubic should require degree 3")
-  }
+  assert_true(bad_cubic is Err(PolyError::BadExponent))
 
   let bad_quartic : Result[Array[@symcore.Expr], PolyError] = try? roots_quartic(
     cubic,
   )
-  guard bad_quartic is Err(PolyError::BadExponent) else {
-    fail("roots_quartic should require degree 4")
-  }
+  assert_true(bad_quartic is Err(PolyError::BadExponent))
 
   let _ = quartic
 }
@@ -57,9 +47,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
   // Degree-3 polynomial with a linear and an irreducible quadratic factor.
   let cubic = b.from_expr(x * ((x ^ @symcore.int(2)) + @symcore.int(1)))
   let cubic_roots = roots_cubic(cubic)
-  guard cubic_roots.length() == 3 else {
-    fail("roots_cubic should return three roots with multiplicity")
-  }
+  assert_eq(cubic_roots.length(), 3)
 
   // Degree-4 polynomial with a quadratic factor to force the quadratic branch.
   let quartic = b.from_expr(
@@ -68,9 +56,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
     ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
   let quartic_roots = roots_quartic(quartic)
-  guard quartic_roots.length() == 4 else {
-    fail("roots_quartic should return four roots with multiplicity")
-  }
+  assert_eq(quartic_roots.length(), 4)
 }
 
 ///|
@@ -79,25 +65,17 @@ test "polyroots wb: roots_for_factor and zero-root handling" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
 
   let const_poly = b.from_expr(@symcore.int(7))
-  guard roots_for_factor(const_poly, true).length() == 0 else {
-    fail("roots_for_factor should return [] for constants")
-  }
+  assert_eq(roots_for_factor(const_poly, true).length(), 0)
 
   let quadratic = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
-  guard roots_for_factor(quadratic, true).length() == 2 else {
-    fail("roots_for_factor degree-2 branch mismatch")
-  }
+  assert_eq(roots_for_factor(quadratic, true).length(), 2)
 
   let cubic = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
-  guard roots_for_factor(cubic, true).length() == 3 else {
-    fail("roots_for_factor degree-3 radicals branch mismatch")
-  }
+  assert_eq(roots_for_factor(cubic, true).length(), 3)
 
   let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
-  guard roots_for_factor(quartic, true).length() == 4 else {
-    fail("roots_for_factor degree-4 radicals branch mismatch")
-  }
+  assert_eq(roots_for_factor(quartic, true).length(), 4)
 
   let zero = Poly::zero(["x"], Domain::QQ)
-  guard roots(zero).length() == 0 else { fail("roots(0) should return []") }
+  assert_eq(roots(zero).length(), 0)
 }
