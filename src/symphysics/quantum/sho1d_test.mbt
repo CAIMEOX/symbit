@@ -99,7 +99,11 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
       @symcore.raw_mul([
         @symcore.raw_function("Sum", [
           @symcore.raw_mul([sho_ket(p), sho_bra(p)]),
-          @symcore.raw_function("Tuple", [p, @symcore.int(0), @symcore.symbol("oo")]),
+          @symcore.raw_function("Tuple", [
+            p,
+            @symcore.int(0),
+            @symcore.symbol("oo"),
+          ]),
         ]),
         sho_ket(q),
       ]),
@@ -114,7 +118,11 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
         sho_bra(q),
         @symcore.raw_function("Sum", [
           wf_n * sho_ket(n),
-          @symcore.raw_function("Tuple", [n, @symcore.int(0), @symcore.symbol("oo")]),
+          @symcore.raw_function("Tuple", [
+            n,
+            @symcore.int(0),
+            @symcore.symbol("oo"),
+          ]),
         ]),
       ]),
       sum_doit=true,

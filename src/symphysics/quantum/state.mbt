@@ -166,9 +166,9 @@ pub fn StateExpr::dual(self : StateExpr) -> StateExpr {
     StateFlavor::Ket => bra(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::Bra => ket(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::TimeDepKet =>
-      time_dep_bra(self.label, time=time, hilbert_space=self.hilbert_space)
+      time_dep_bra(self.label, time~, hilbert_space=self.hilbert_space)
     StateFlavor::TimeDepBra =>
-      time_dep_ket(self.label, time=time, hilbert_space=self.hilbert_space)
+      time_dep_ket(self.label, time~, hilbert_space=self.hilbert_space)
     StateFlavor::OrthogonalKet =>
       orthogonal_bra(self.label, hilbert_space=self.hilbert_space)
     StateFlavor::OrthogonalBra =>

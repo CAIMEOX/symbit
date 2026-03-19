@@ -59,10 +59,21 @@ fn format_expr(expr : @symcore.Expr, parent_prec : Int) -> String {
       }
       "\{wrapped_base}**\{wrapped_exp}"
     }
-    @symcore.Expr::Function(name, args) => {
-      let rendered = args.map(child => format_expr(child, prec)).join(", ")
-      "\{name}(\{rendered})"
-    }
+    @symcore.Expr::Function(name, args) =>
+      match (name, args) {
+        ("Lt", [lhs, rhs]) =>
+          "\{format_expr(lhs, prec)} < \{format_expr(rhs, prec)}"
+        ("Le", [lhs, rhs]) =>
+          "\{format_expr(lhs, prec)} <= \{format_expr(rhs, prec)}"
+        ("Gt", [lhs, rhs]) =>
+          "\{format_expr(lhs, prec)} > \{format_expr(rhs, prec)}"
+        ("Ge", [lhs, rhs]) =>
+          "\{format_expr(lhs, prec)} >= \{format_expr(rhs, prec)}"
+        _ => {
+          let rendered = args.map(child => format_expr(child, prec)).join(", ")
+          "\{name}(\{rendered})"
+        }
+      }
   }
   if prec < parent_prec {
     "(\{body})"

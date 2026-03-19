@@ -121,3 +121,154 @@ pub fn parse_expr_equiv(lhs_src : String, rhs_src : String) -> String raise {
     ")))",
   )
 }
+
+///|
+pub fn parse_expr_equiv_stage2(
+  lhs_src : String,
+  rhs_src : String,
+) -> String raise {
+  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
+    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
+    "sympy.parsing.sympy_parser.factorial_notation, " +
+    "sympy.parsing.sympy_parser.convert_equals_signs)"
+  parsing_eval_str(
+    "sympy.sstr(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ")))",
+  )
+}
+
+///|
+fn binding_lookup(
+  binding_names : Array[String],
+  binding_exprs : Array[String],
+  name : String,
+) -> String? {
+  for i in 0..<binding_names.length() {
+    if binding_names[i] == name {
+      return Some(binding_exprs[i])
+    }
+  }
+  None
+}
+
+///|
+fn locals_literal(
+  callable_names : Array[String],
+  binding_names : Array[String],
+  binding_exprs : Array[String],
+) -> String {
+  let entries : Array[String] = []
+  for i in 0..<binding_names.length() {
+    let name = python_string_literal(binding_names[i])
+    let expr = python_string_literal(binding_exprs[i])
+    entries.push(name + ": sympy.sympify(" + expr + ")")
+  }
+  for name in callable_names {
+    let rendered_name = python_string_literal(name)
+    let function_name = match
+      binding_lookup(binding_names, binding_exprs, name) {
+      Some(expr) => "str(sympy.sympify(" + python_string_literal(expr) + "))"
+      None => rendered_name
+    }
+    entries.push(rendered_name + ": sympy.Function(" + function_name + ")")
+  }
+  "{" + entries.join(", ") + "}"
+}
+
+///|
+fn parse_expr_sstr_with(
+  src : String,
+  transformations : String,
+  local_dict_literal : String,
+  evaluate : Bool,
+) -> String raise {
+  let evaluate_text = if evaluate { "True" } else { "False" }
+  let local_dict_clause = if local_dict_literal == "{}" {
+    ""
+  } else {
+    ", local_dict=" + local_dict_literal
+  }
+  parsing_eval_str(
+    "sympy.sstr(sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(src) +
+    ", transformations=" +
+    transformations +
+    local_dict_clause +
+    ", evaluate=" +
+    evaluate_text +
+    "))",
+  )
+}
+
+///|
+pub fn parse_expr_equiv_stage3(
+  lhs_src : String,
+  rhs_src : String,
+  callable_names : Array[String],
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+) -> String raise {
+  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
+    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
+    "sympy.parsing.sympy_parser.factorial_notation, " +
+    "sympy.parsing.sympy_parser.convert_equals_signs)"
+  let local_dict_literal = locals_literal(
+    callable_names, binding_names, binding_exprs,
+  )
+  parsing_eval_str(
+    "sympy.sstr(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ", local_dict=" +
+    local_dict_literal +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ", local_dict=" +
+    local_dict_literal +
+    ")))",
+  )
+}
+
+///|
+pub fn parse_expr_sstr_stage2(
+  src : String,
+  evaluate? : Bool = true,
+) -> String raise {
+  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
+    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
+    "sympy.parsing.sympy_parser.factorial_notation, " +
+    "sympy.parsing.sympy_parser.convert_equals_signs)"
+  parse_expr_sstr_with(src, transforms, "{}", evaluate)
+}
+
+///|
+pub fn parse_expr_sstr_stage3(
+  src : String,
+  callable_names : Array[String],
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+  evaluate? : Bool = true,
+) -> String raise {
+  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
+    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
+    "sympy.parsing.sympy_parser.factorial_notation, " +
+    "sympy.parsing.sympy_parser.convert_equals_signs)"
+  parse_expr_sstr_with(
+    src,
+    transforms,
+    locals_literal(callable_names, binding_names, binding_exprs),
+    evaluate,
+  )
+}

@@ -671,14 +671,12 @@ fn gate_sort_same_target_sign(
   rhs_name : String,
   rhs_power : Int,
 ) -> Int? {
-  if rhs_power % 2 == 0 && [
-    "HadamardGate", "XGate", "YGate", "ZGate",
-  ].contains(rhs_name) {
+  if rhs_power % 2 == 0 &&
+    ["HadamardGate", "XGate", "YGate", "ZGate"].contains(rhs_name) {
     return Some(1)
   }
-  if lhs_power % 2 == 0 && [
-    "HadamardGate", "XGate", "YGate", "ZGate",
-  ].contains(lhs_name) {
+  if lhs_power % 2 == 0 &&
+    ["HadamardGate", "XGate", "YGate", "ZGate"].contains(lhs_name) {
     return Some(1)
   }
   if lhs_power % 2 == 0 || rhs_power % 2 == 0 {
@@ -712,30 +710,15 @@ fn gate_sort_pair_sign(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int? {
     return gate_sort_same_target_sign(lhs_name, lhs_power, rhs_name, rhs_power)
   }
   match (lhs_name, rhs_name, lhs_args, rhs_args) {
-    (
-      "ZGate",
-      "CNotGate",
-      [control_lhs],
-      [control_rhs, _],
-    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
-    (
-      "PhaseGate",
-      "CNotGate",
-      [control_lhs],
-      [control_rhs, _],
-    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
-    (
-      "TGate",
-      "CNotGate",
-      [control_lhs],
-      [control_rhs, _],
-    ) if lhs_power % 2 != 0 && control_lhs == control_rhs => Some(1)
-    (
-      "XGate",
-      "CNotGate",
-      [target_lhs],
-      [_, target_rhs],
-    ) if lhs_power % 2 != 0 && target_lhs == target_rhs => Some(1)
+    ("ZGate", "CNotGate", [control_lhs], [control_rhs, _]) if lhs_power % 2 != 0 &&
+      control_lhs == control_rhs => Some(1)
+    ("PhaseGate", "CNotGate", [control_lhs], [control_rhs, _]) if lhs_power % 2 !=
+      0 &&
+      control_lhs == control_rhs => Some(1)
+    ("TGate", "CNotGate", [control_lhs], [control_rhs, _]) if lhs_power % 2 != 0 &&
+      control_lhs == control_rhs => Some(1)
+    ("XGate", "CNotGate", [target_lhs], [_, target_rhs]) if lhs_power % 2 != 0 &&
+      target_lhs == target_rhs => Some(1)
     _ => None
   }
 }
@@ -781,7 +764,7 @@ pub fn gate_pow_simplify(
     Some(gate) =>
       match gate.kind {
         GateKind::Phase => {
-          let reduced = ((exp % 4) + 4) % 4
+          let reduced = (exp % 4 + 4) % 4
           Some(
             match reduced {
               0 => @symcore.int(1)
@@ -796,7 +779,7 @@ pub fn gate_pow_simplify(
           )
         }
         GateKind::T => {
-          let reduced = ((exp % 8) + 8) % 8
+          let reduced = (exp % 8 + 8) % 8
           Some(
             match reduced {
               0 => @symcore.int(1)
@@ -851,8 +834,7 @@ pub fn gate_pow_simplify(
 ///|
 pub fn gate_simp(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
-      @symcore.add(args.map(arg => gate_simp(arg)))
+    @symcore.Expr::Add(args) => @symcore.add(args.map(arg => gate_simp(arg)))
     @symcore.Expr::Pow(base, exp) =>
       match quantum_integer_value(exp) {
         Some(power) =>
@@ -933,14 +915,15 @@ pub fn gate_sort(expr : @symcore.Expr) -> @symcore.Expr {
         changed = false
         for idx in 0..<(factors.length() - 1) {
           match (gate_support(factors[idx]), gate_support(factors[idx + 1])) {
-            (Some(lhs_support), Some(rhs_support)) if supports_disjoint(lhs_support, rhs_support) => {
+            (Some(lhs_support), Some(rhs_support)) if supports_disjoint(
+                lhs_support, rhs_support,
+              ) =>
               if factors[idx].compare(factors[idx + 1]) > 0 {
                 let tmp = factors[idx]
                 factors[idx] = factors[idx + 1]
                 factors[idx + 1] = tmp
                 changed = true
               }
-            }
             _ =>
               match gate_sort_pair_sign(factors[idx], factors[idx + 1]) {
                 Some(sign) => {

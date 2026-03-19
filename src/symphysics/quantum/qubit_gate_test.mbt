@@ -119,21 +119,27 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
   )
   try! quantum_test_assert_string_equal(
     @symprint.to_string(
-      gate_sort(@symcore.raw_mul([y_gate(0).as_expr(), hadamard_gate(0).as_expr()])),
+      gate_sort(
+        @symcore.raw_mul([y_gate(0).as_expr(), hadamard_gate(0).as_expr()]),
+      ),
     ),
     "-1*HadamardGate(0)*YGate(0)",
     "gate_sort YH anticommute",
   )
   try! quantum_test_assert_string_equal(
     @symprint.to_string(
-      gate_sort(@symcore.raw_mul([t_gate(0).as_expr(), phase_gate(0).as_expr()])),
+      gate_sort(
+        @symcore.raw_mul([t_gate(0).as_expr(), phase_gate(0).as_expr()]),
+      ),
     ),
     "PhaseGate(0)*TGate(0)",
     "gate_sort TS commute",
   )
   try! quantum_test_assert_string_equal(
     @symprint.to_string(
-      gate_sort(@symcore.raw_mul([z_gate(0).as_expr(), cnot_gate(0, 1).as_expr()])),
+      gate_sort(
+        @symcore.raw_mul([z_gate(0).as_expr(), cnot_gate(0, 1).as_expr()]),
+      ),
     ),
     "CNotGate(0, 1)*ZGate(0)",
     "gate_sort Z and CNOT",
@@ -152,18 +158,14 @@ test "physics.quantum.qubit/gate: controlled and simplification" {
   )
   try! quantum_test_assert_string_equal(
     @symprint.to_string(
-      gate_simp(
-        @symcore.raw_pow(phase_gate(4).as_expr(), @symcore.int(3)),
-      ),
+      gate_simp(@symcore.raw_pow(phase_gate(4).as_expr(), @symcore.int(3))),
     ),
     "PhaseGate(4)*ZGate(4)",
     "gate_simp S^3",
   )
   try! quantum_test_assert_string_equal(
     @symprint.to_string(
-      gate_simp(
-        @symcore.raw_pow(t_gate(0).as_expr(), @symcore.int(6)),
-      ),
+      gate_simp(@symcore.raw_pow(t_gate(0).as_expr(), @symcore.int(6))),
     ),
     "PhaseGate(0)*ZGate(0)",
     "gate_simp T^6",

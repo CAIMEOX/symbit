@@ -59,14 +59,12 @@ fn quantum_operatorordering_pair(
   ordered_form : Bool,
   independent : Bool,
 ) -> @symcore.Expr? {
-  guard quantum_expr_has_any_name(
-    current,
-    ["BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson"],
-  ) &&
-    quantum_expr_has_any_name(
-      next,
-      ["BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson"],
-    ) else {
+  guard quantum_expr_has_any_name(current, [
+      "BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson",
+    ]) &&
+    quantum_expr_has_any_name(next, [
+      "BosonOp", "FermionOp", "AnnihilateBoson", "CreateBoson",
+    ]) else {
     return None
   }
   let current_key = quantum_op_sort_key(current)
@@ -81,8 +79,12 @@ fn quantum_operatorordering_pair(
       nargs.length() >= 1 => cargs[0] == nargs[0]
     _ => false
   }
-  if quantum_expr_has_any_name(current, ["BosonOp", "AnnihilateBoson", "CreateBoson"]) &&
-    quantum_expr_has_any_name(next, ["BosonOp", "AnnihilateBoson", "CreateBoson"]) {
+  if quantum_expr_has_any_name(current, [
+      "BosonOp", "AnnihilateBoson", "CreateBoson",
+    ]) &&
+    quantum_expr_has_any_name(next, [
+      "BosonOp", "AnnihilateBoson", "CreateBoson",
+    ]) {
     if ordered_form {
       if same_name {
         Some(next * current + @symcore.int(1))

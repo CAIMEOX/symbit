@@ -268,7 +268,10 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> @symcore.Expr {
 }
 
 ///|
-fn wavefunction_expr_contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
+fn wavefunction_expr_contains_symbol(
+  expr : @symcore.Expr,
+  name : String,
+) -> Bool {
   match expr {
     @symcore.Expr::Symbol(sym) => sym == name
     @symcore.Expr::Add(args)
@@ -349,7 +352,10 @@ fn wavefunction_expand_expr(expr : @symcore.Expr) -> @symcore.Expr {
       }
     }
     @symcore.Expr::Pow(base, exp) =>
-      @symcore.raw_pow(wavefunction_expand_expr(base), wavefunction_expand_expr(exp))
+      @symcore.raw_pow(
+        wavefunction_expand_expr(base),
+        wavefunction_expand_expr(exp),
+      )
     @symcore.Expr::Function(name, args) =>
       @symcore.raw_function(name, args.map(wavefunction_expand_expr))
     _ => expr
@@ -382,8 +388,7 @@ fn wavefunction_poly_term(
     @symcore.Expr::Pow(base, exp) =>
       match (base, exp) {
         (@symcore.Expr::Symbol(name), @symcore.Expr::Number(n)) =>
-          if name == var_name && n.is_integral() &&
-            n.numerator().to_int() >= 0 {
+          if name == var_name && n.is_integral() && n.numerator().to_int() >= 0 {
             Some((@symcore.int(1), n.numerator().to_int()))
           } else if !wavefunction_expr_contains_symbol(expr, var_name) {
             Some((expr, 0))
@@ -432,7 +437,8 @@ fn wavefunction_integrate_poly_term(
   if coeff == @symcore.int(0) {
     return Some(@symcore.int(0))
   }
-  if wavefunction_is_infinite_bound(lower) || wavefunction_is_infinite_bound(upper) {
+  if wavefunction_is_infinite_bound(lower) ||
+    wavefunction_is_infinite_bound(upper) {
     return Some(@symcore.symbol("oo"))
   }
   let next_power = power + 1
@@ -494,7 +500,8 @@ fn wavefunction_norm_sq_of(wf : WavefunctionExpr) -> @symcore.Expr? {
 pub fn WavefunctionExpr::norm(self : WavefunctionExpr) -> @symcore.Expr {
   match wavefunction_norm_sq_of(self) {
     Some(value) if value == @symcore.symbol("oo") => value
-    Some(value) => wavefunction_simplify_expr(@symcore.raw_function("sqrt", [value]))
+    Some(value) =>
+      wavefunction_simplify_expr(@symcore.raw_function("sqrt", [value]))
     None => self.norm_expr()
   }
 }

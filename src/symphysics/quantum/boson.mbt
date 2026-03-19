@@ -62,7 +62,8 @@ fn boson_secondquant_tuple_state(
 ) -> Array[@symcore.Expr]? {
   let expected = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
   match expr {
-    @symcore.Expr::Function(name, args) if name == expected && args.length() == 1 =>
+    @symcore.Expr::Function(name, args) if name == expected &&
+      args.length() == 1 =>
       match args[0] {
         @symcore.Expr::Function("Tuple", items) => Some(items)
         _ => None
@@ -105,7 +106,11 @@ pub fn boson_apply_operator_to_ket(
   op_expr : @symcore.Expr,
   ket_expr : @symcore.Expr,
 ) -> @symcore.Expr? {
-  match (boson_secondquant_operator(op_expr), boson_secondquant_tuple_state(ket_expr)) {
+  match
+    (
+      boson_secondquant_operator(op_expr),
+      boson_secondquant_tuple_state(ket_expr),
+    ) {
     (Some((state_index, is_ann)), Some(items)) =>
       match quantum_integer_value(state_index) {
         Some(level) if level >= 0 && level < items.length() => {

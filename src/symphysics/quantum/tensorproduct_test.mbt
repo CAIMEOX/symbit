@@ -73,7 +73,9 @@ test "physics.quantum.tensorproduct: density and trace interplay" {
     "tensorproduct density doit",
   )
   try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(tr_doit(tr(rho.as_expr(), indices=[1])))),
+    try! @sympy_physics.quantum_eval_str(
+      @symprint.to_string(tr_doit(tr(rho.as_expr(), indices=[1]))),
+    ),
     try! @sympy_physics.quantum_eval_str(
       "Tr(Density((TensorProduct(Operator(A), Operator(B), Operator(C)), 1)), (1,)).doit()",
     ),
