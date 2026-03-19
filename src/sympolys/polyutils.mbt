@@ -48,8 +48,7 @@ fn split_name(name : String) -> (String, Int?) {
   if i == name.length() {
     (name, None)
   } else {
-    let prefix_view = try! name[0:i]
-    let prefix = prefix_view.to_string()
+    let prefix = name[:i].to_string()
     let mut num = 0
     for j in i..<name.length() {
       let digit = name[j].to_int() - 48
@@ -116,7 +115,7 @@ fn sort_by_default(xs : Array[String]) -> Array[String] {
 
 ///|
 /// SymPy-style generator sorting (simplified).
-pub fn _sort_gens(
+fn _sort_gens(
   gens : Array[String],
   wrt? : Array[String] = [],
   sort? : String = "",
@@ -173,7 +172,7 @@ pub fn _sort_gens(
 
 ///|
 /// Convenience wrapper that accepts wrt as a string (comma-separated).
-pub fn _sort_gens_wrt(
+fn _sort_gens_wrt(
   gens : Array[String],
   wrt : String,
   sort? : String = "",
@@ -194,7 +193,7 @@ fn index_of(name : String, arr : Array[String]) -> Int {
 
 ///|
 /// Unify gens by merging order constraints; falls back to first list on cycles.
-pub fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
+fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
   if a.is_empty() {
     return b
   }
@@ -281,13 +280,13 @@ pub fn _unify_gens(a : Array[String], b : Array[String]) -> Array[String] {
 
 ///|
 /// Normalize and validate generator arguments.
-pub fn _analyze_gens(gens : Array[String]) -> Array[String] {
+fn _analyze_gens(gens : Array[String]) -> Array[String] {
   gens
 }
 
 ///|
 /// Normalize nested generator specifications.
-pub fn _analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] {
+fn _analyze_gens_nested(gens : Array[Array[String]]) -> Array[String] {
   if gens.length() == 1 {
     return gens[0]
   }
@@ -318,7 +317,7 @@ fn compare_int_lists(a : Array[Int], b : Array[Int]) -> Int {
 
 ///|
 /// Sort factors in deterministic polynomial order.
-pub fn _sort_factors(factors : Array[Array[Int]]) -> Array[Array[Int]] {
+fn _sort_factors(factors : Array[Array[Int]]) -> Array[Array[Int]] {
   let out = factors.copy()
   out.sort_by((a, b) => compare_int_lists(a, b))
   out
@@ -326,7 +325,7 @@ pub fn _sort_factors(factors : Array[Array[Int]]) -> Array[Array[Int]] {
 
 ///|
 /// Sort grouped factors in deterministic order.
-pub fn _sort_factors_multiple(
+fn _sort_factors_multiple(
   factors : Array[(Array[Int], Int)],
 ) -> Array[(Array[Int], Int)] {
   let out = factors.copy()

@@ -8,21 +8,7 @@ import {
 }
 
 // Values
-pub fn _analyze_gens(Array[String]) -> Array[String]
-
-pub fn _analyze_gens_nested(Array[Array[String]]) -> Array[String]
-
-pub fn _sort_factors(Array[Array[Int]]) -> Array[Array[Int]]
-
-pub fn _sort_factors_multiple(Array[(Array[Int], Int)]) -> Array[(Array[Int], Int)]
-
-pub fn _sort_gens(Array[String], wrt? : Array[String], sort? : String) -> Array[String]
-
-pub fn _sort_gens_wrt(Array[String], String, sort? : String) -> Array[String]
-
-pub fn _unify_gens(Array[String], Array[String]) -> Array[String]
-
-pub fn add_term(Map[Monomial, FieldElem], Monomial, FieldElem, Domain) -> Unit raise PolyError
+pub fn add_columns(DDM, Int, Int, FieldElem, FieldElem, FieldElem, FieldElem) -> DDM raise PolyError
 
 pub fn alg_ext_spec(Domain, String, Poly) -> AlgExtSpec
 
@@ -48,9 +34,43 @@ pub fn complex_field_domain() -> Domain
 
 pub fn compose(Poly, Poly) -> Poly raise PolyError
 
+pub fn ddm_berk(DDM) -> DDM raise PolyError
+
 pub fn ddm_from_dense(Array[Array[FieldElem]], Domain) -> DDM raise PolyError
 
 pub fn ddm_from_ints(Array[Array[Int]], Domain) -> DDM raise PolyError
+
+pub fn ddm_iadd(DDM, DDM) -> DDM raise PolyError
+
+pub fn ddm_idet(DDM) -> (DDM, FieldElem) raise PolyError
+
+pub fn ddm_iinv(DDM) -> DDM raise PolyError
+
+pub fn ddm_ilu(DDM) -> (DDM, Array[(Int, Int)]) raise PolyError
+
+pub fn ddm_ilu_solve(DDM, DDM, Array[(Int, Int)], DDM) -> DDM raise PolyError
+
+pub fn ddm_ilu_split(DDM) -> (DDM, DDM, Array[(Int, Int)]) raise PolyError
+
+pub fn ddm_imatmul(DDM, DDM, DDM) -> DDM raise PolyError
+
+pub fn ddm_imul(DDM, FieldElem) -> DDM raise PolyError
+
+pub fn ddm_ineg(DDM) -> DDM raise PolyError
+
+pub fn ddm_irmul(DDM, FieldElem) -> DDM raise PolyError
+
+pub fn ddm_irref(DDM, partial_pivot? : Bool) -> (DDM, Array[Int]) raise PolyError
+
+pub fn ddm_irref_den(DDM, keep_domain? : Bool) -> (DDM, FieldElem, Array[Int]) raise PolyError
+
+pub fn ddm_isub(DDM, DDM) -> DDM raise PolyError
+
+pub fn ddm_lll(DDM, delta? : @symnum.BigRational) -> DDM raise PolyError
+
+pub fn ddm_lll_transform(DDM, delta? : @symnum.BigRational) -> (DDM, DDM) raise PolyError
+
+pub fn ddm_transpose(DDM) -> DDM raise PolyError
 
 pub fn decompose(Poly) -> Array[Poly] raise PolyError
 
@@ -240,15 +260,111 @@ pub fn dmp_zero_p(DensePoly, Int) -> Bool
 
 pub fn dmp_zeros(Int, Int, Domain) -> Array[DensePoly] raise PolyError
 
+pub fn dom_eigenvects(DomainMatrix, l? : String) -> (Array[(Domain, FieldElem, Int, DomainMatrix)], Array[(Domain, Poly, Int, DomainMatrix)]) raise PolyError
+
+pub fn dom_eigenvects_to_sympy(Array[(Domain, FieldElem, Int, DomainMatrix)], Array[(Domain, Poly, Int, DomainMatrix)]) -> Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])] raise PolyError
+
+pub fn domain_abs_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_add_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_alg_field_from_poly(Domain, Poly, alias? : String?, root_index? : Int) -> Domain raise PolyError
+
+pub fn domain_algebraic_field(Domain, Array[@symcore.Expr]) -> Domain raise PolyError
+
+pub fn domain_almosteq_expr(Domain, @symcore.Expr, @symcore.Expr, tolerance? : @symnum.BigRational?) -> Bool
+
+pub fn domain_canonical_unit_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
 pub fn domain_characteristic(Domain) -> Int
 
+pub fn domain_cofactors_expr(Domain, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError
+
+pub fn domain_contains_expr(Domain, @symcore.Expr) -> Bool
+
+pub fn domain_convert_expr(Domain, @symcore.Expr, base? : Domain?) -> @symcore.Expr raise PolyError
+
+pub fn domain_convert_from_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr raise PolyError
+
+pub fn domain_cyclotomic_field(Domain, Int, ss? : Bool, alias? : String, gen? : String?, root_index? : Int) -> Domain raise PolyError
+
+pub fn domain_denom_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_div_expr(Domain, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
+
+pub fn domain_drop(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_evalf_expr(Domain, @symcore.Expr, prec? : Int?) -> @symcore.Expr raise PolyError
+
+pub fn domain_expr_tree_elem(@symcore.Expr) -> DomainExprTree
+
+pub fn domain_expr_tree_list(Array[DomainExprTree]) -> DomainExprTree
+
+pub fn domain_exquo_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_exsqrt_expr(Domain, @symcore.Expr) -> @symcore.Expr? raise PolyError
+
+pub fn domain_factorial_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_frac_field(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_from_algebraic_field_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_complex_field_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_expression_domain_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_expression_raw_domain_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_ff_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_ff_gmpy_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_ff_python_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_fraction_field_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_gaussian_integer_ring_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_gaussian_rational_field_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_generalized_polynomial_ring_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_global_polynomial_ring_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_monogenic_finite_extension_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_polynomial_ring_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_qq_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_qq_gmpy_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_qq_python_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_real_field_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
 pub fn domain_from_string(String) -> Domain raise PolyError
+
+pub fn domain_from_sympy_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_from_zz_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_zz_gmpy_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_from_zz_python_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr?
+
+pub fn domain_gcd_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_gcdex_expr(Domain, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError
 
 pub fn domain_get_exact(Domain) -> Domain
 
 pub fn domain_get_field(Domain) -> Domain raise PolyError
 
 pub fn domain_get_ring(Domain) -> Domain raise PolyError
+
+pub fn domain_half_gcdex_expr(Domain, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
 
 pub fn domain_has_assoc_field_pred(Domain) -> Bool
 
@@ -257,6 +373,12 @@ pub fn domain_has_assoc_ring_pred(Domain) -> Bool
 pub fn domain_has_characteristic_zero_pred(Domain) -> Bool
 
 pub fn domain_has_default_precision_pred(Domain) -> Bool
+
+pub fn domain_imag_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_inject(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_invert_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 
 pub fn domain_is_algebraic_field_pred(Domain) -> Bool
 
@@ -292,13 +414,25 @@ pub fn domain_is_gaussian_ring_pred(Domain) -> Bool
 
 pub fn domain_is_integer_ring_pred(Domain) -> Bool
 
+pub fn domain_is_negative_expr(Domain, @symcore.Expr) -> Bool
+
+pub fn domain_is_negative_one_expr(Domain, @symcore.Expr) -> Bool
+
+pub fn domain_is_nonnegative_expr(Domain, @symcore.Expr) -> Bool
+
+pub fn domain_is_nonpositive_expr(Domain, @symcore.Expr) -> Bool
+
 pub fn domain_is_numerical_pred(Domain) -> Bool
+
+pub fn domain_is_one_expr(Domain, @symcore.Expr) -> Bool
 
 pub fn domain_is_pid_pred(Domain) -> Bool
 
 pub fn domain_is_poly_pred(Domain) -> Bool
 
 pub fn domain_is_polynomial_ring_pred(Domain) -> Bool
+
+pub fn domain_is_positive_expr(Domain, @symcore.Expr) -> Bool
 
 pub fn domain_is_qq_i_pred(Domain) -> Bool
 
@@ -314,13 +448,25 @@ pub fn domain_is_rr_pred(Domain) -> Bool
 
 pub fn domain_is_simple_pred(Domain) -> Bool
 
+pub fn domain_is_square_expr(Domain, @symcore.Expr) -> Bool raise PolyError
+
 pub fn domain_is_symbolic_domain_pred(Domain) -> Bool
 
 pub fn domain_is_symbolic_raw_domain_pred(Domain) -> Bool
 
+pub fn domain_is_unit_expr(Domain, @symcore.Expr) -> Bool
+
+pub fn domain_is_zero_expr(Domain, @symcore.Expr) -> Bool
+
 pub fn domain_is_zz_i_pred(Domain) -> Bool
 
 pub fn domain_is_zz_pred(Domain) -> Bool
+
+pub fn domain_lcm_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_log_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_map_expr_tree(Domain, Array[DomainExprTree]) -> Array[DomainExprTree] raise PolyError
 
 pub fn domain_matrix_eye(Int, Domain) -> DomainMatrix raise PolyError
 
@@ -334,13 +480,59 @@ pub fn domain_matrix_ones(Int, Int, Domain) -> DomainMatrix raise PolyError
 
 pub fn domain_matrix_zeros(Int, Int, Domain) -> DomainMatrix raise PolyError
 
+pub fn domain_mul_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_neg_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_new_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_normal_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_numer_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_old_frac_field(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_old_poly_ring(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_one_expr(Domain) -> @symcore.Expr raise PolyError
+
+pub fn domain_poly_ring(Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_pos_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_pow_expr(Domain, @symcore.Expr, Int) -> @symcore.Expr raise PolyError
+
+pub fn domain_quo_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_real_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_rem_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_revert_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
 pub fn domain_scalar_from_int(Int, Domain) -> DomainScalar raise PolyError
 
 pub fn domain_scalar_new(FieldElem, Domain) -> DomainScalar raise PolyError
 
+pub fn domain_set_domain(Domain, Domain) -> Domain
+
+pub fn domain_sqrt_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_sub_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+
+pub fn domain_sum_expr(Domain, Array[@symcore.Expr]) -> @symcore.Expr raise PolyError
+
+pub fn domain_to_sympy_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
+
 pub fn domain_to_sympy_string(Domain) -> String
 
+pub fn domain_unify_composite(Domain, Domain) -> Domain raise PolyError
+
 pub fn domain_unify_pair(Domain, Domain) -> Domain raise PolyError
+
+pub fn domain_unify_with_symbols(Domain, Domain, Array[String]) -> Domain raise PolyError
+
+pub fn domain_zero_expr(Domain) -> @symcore.Expr raise PolyError
 
 pub fn dup_LC(Array[FieldElem]) -> FieldElem raise PolyError
 
@@ -383,6 +575,8 @@ pub fn dup_expand(Array[Array[FieldElem]], Domain) -> Array[FieldElem] raise Pol
 pub fn dup_exquo(Array[FieldElem], Array[FieldElem], Domain) -> Array[FieldElem] raise PolyError
 
 pub fn dup_exquo_ground(Array[FieldElem], FieldElem, Domain) -> Array[FieldElem] raise PolyError
+
+pub fn dup_factor_list(Array[FieldElem], Domain) -> (FieldElem, Array[(Array[FieldElem], Int)]) raise PolyError
 
 pub fn dup_ff_div(Array[FieldElem], Array[FieldElem], Domain) -> (Array[FieldElem], Array[FieldElem]) raise PolyError
 
@@ -480,8 +674,6 @@ pub fn dup_to_raw_dict(Array[FieldElem], Domain) -> Map[Int, FieldElem]
 
 pub fn dup_to_tuple(Array[FieldElem]) -> Array[FieldElem] raise PolyError
 
-pub fn ensure_coeff_domain(@symnum.BigRational, Domain) -> FieldElem raise PolyError
-
 pub fn euclid_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn expression_domain() -> Domain
@@ -562,6 +754,8 @@ pub fn gf_trunc(Array[Int], Int) -> Array[Int]
 
 pub fn groebner_expr(Array[@symcore.Expr], gens? : Array[String], domain? : Domain, modulus? : Int, extension? : Array[String], gf_degree? : Int, order? : TermOrder) -> Array[Poly] raise PolyError
 
+pub fn hermite_normal_form(DomainMatrix, d? : FieldElem?, check_rank? : Bool) -> DomainMatrix raise PolyError
+
 pub fn horner(@symcore.Expr, gens? : Array[String], wrt? : String) -> @symcore.Expr raise PolyError
 
 pub fn ideal(Array[Poly]) -> Ideal raise PolyError
@@ -574,7 +768,11 @@ pub fn interpolate_dict(Map[@symnum.BigRational, @symnum.BigRational], String, D
 
 pub fn interpolate_values(Array[@symnum.BigRational], String, Domain) -> Poly raise PolyError
 
+pub fn invariant_factors(DomainMatrix) -> Array[FieldElem] raise PolyError
+
 pub fn is_isomorphism_possible(@symcore.Expr, @symcore.Expr) -> Bool
+
+pub fn is_smith_normal_form(DomainMatrix) -> Bool raise PolyError
 
 pub fn lcm_list(Array[Poly]) -> Poly raise PolyError
 
@@ -670,6 +868,16 @@ pub fn sdm_from_dense(Array[Array[FieldElem]], Domain) -> SDM raise PolyError
 
 pub fn sdm_from_entries(Int, Int, Array[(Int, Int, FieldElem)], Domain) -> SDM raise PolyError
 
+pub fn sdm_irref(SDM) -> (SDM, Array[Int], Map[Int, Array[Int]]) raise PolyError
+
+pub fn sdm_nullspace_from_rref(SDM, FieldElem, Int, Array[Int], Map[Int, Array[Int]]) -> (SDM, Array[Int]) raise PolyError
+
+pub fn sdm_particular_from_rref(SDM, Int, Array[Int]) -> SDM raise PolyError
+
+pub fn smith_normal_decomp(DomainMatrix) -> (DomainMatrix, DomainMatrix, DomainMatrix) raise PolyError
+
+pub fn smith_normal_form(DomainMatrix) -> DomainMatrix raise PolyError
+
 pub fn sturm_q(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn sturm_sequence(Poly) -> Array[Poly] raise PolyError
@@ -680,9 +888,13 @@ pub fn subresultants_pg(Poly, Poly) -> Array[Poly] raise PolyError
 
 pub fn subresultants_rem(Poly, Poly) -> Array[Poly] raise PolyError
 
+pub fn symmetric_residue(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
 pub fn symmetrize(@symcore.Expr, gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeResult raise PolyError
 
 pub fn symmetrize_list(Array[@symcore.Expr], gens? : Array[String], formal? : Bool, symbols? : Array[String]) -> SymmetrizeListResult raise PolyError
+
+pub fn sympy_dict_to_dm(Array[Map[String, @symcore.Expr]], Array[@symcore.Expr], Array[String]) -> SDM raise PolyError
 
 pub fn terms_gcd(Poly) -> Poly raise PolyError
 
@@ -722,25 +934,88 @@ pub struct AlgExtSpec {
 pub struct DDM {
   dm : DomainMatrix
 }
+pub fn DDM::_check(Self, String, Self, (Int, Int), (Int, Int)) -> Unit raise PolyError
+pub fn DDM::_fflu(Self) -> (Self, Array[Int]) raise PolyError
 pub fn DDM::add(Self, Self) -> Self raise PolyError
+pub fn DDM::adj_det(Self) -> (Self, FieldElem) raise PolyError
+pub fn DDM::adjugate(Self) -> Self raise PolyError
+pub fn DDM::applyfunc(Self, (FieldElem) -> FieldElem raise PolyError, domain? : Domain?) -> Self raise PolyError
+pub fn DDM::charpoly(Self) -> Array[FieldElem] raise PolyError
+pub fn DDM::clear_denoms(Self, convert? : Bool) -> (DomainScalar, Self) raise PolyError
+pub fn DDM::clear_denoms_rowwise(Self, convert? : Bool) -> (Self, Self) raise PolyError
+pub fn DDM::convert_to(Self, Domain) -> Self raise PolyError
+pub fn DDM::copy(Self) -> Self raise PolyError
 pub fn DDM::det(Self) -> FieldElem raise PolyError
+pub fn DDM::diag(Array[FieldElem], Domain, rows? : Int?, cols? : Int?) -> Self raise PolyError
+pub fn DDM::diagonal(Self) -> Array[FieldElem] raise PolyError
+pub fn DDM::dom_eigenvects(Self, gen? : String) -> (Array[(Domain, FieldElem, Int, Self)], Array[(Domain, Poly, Int, Self)]) raise PolyError
 pub fn DDM::domain(Self) -> Domain
+pub fn DDM::extract(Self, Array[Int], Array[Int]) -> Self raise PolyError
+pub fn DDM::extract_slice(Self, row_start? : Int?, row_stop? : Int?, row_step? : Int, col_start? : Int?, col_stop? : Int?, col_step? : Int) -> Self raise PolyError
+pub fn DDM::eye(Int, Domain) -> Self raise PolyError
+pub fn DDM::fflu(Self) -> (Self, Self, Self, Self) raise PolyError
+pub fn DDM::flat(Self) -> Array[FieldElem] raise PolyError
+pub fn DDM::flatiter(Self) -> Iter[FieldElem] raise PolyError
+pub fn DDM::from_ddm(Self) -> Self raise PolyError
+pub fn DDM::from_dod(Map[Int, Map[Int, FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn DDM::from_dok(Map[(Int, Int), FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn DDM::from_flat_nz(Self, Array[FieldElem], DomainMatrixFlatNZData, Domain) -> Self raise PolyError
+pub fn DDM::from_list(Array[Array[FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn DDM::from_list_flat(Array[FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn DDM::getitem(Self, Int, Int) -> FieldElem raise PolyError
 pub fn DDM::hermite_normal_form(Self) -> Self raise PolyError
+pub fn DDM::hstack(Self, Self) -> Self raise PolyError
 pub fn DDM::inv(Self) -> Self raise PolyError
+pub fn DDM::inv_den(Self, solve_method? : String) -> (Self, FieldElem) raise PolyError
+pub fn DDM::invariant_factors(Self) -> Array[FieldElem] raise PolyError
+pub fn DDM::is_diagonal(Self) -> Bool raise PolyError
+pub fn DDM::is_lower(Self) -> Bool raise PolyError
+pub fn DDM::is_smith_normal_form(Self) -> Bool raise PolyError
+pub fn DDM::is_upper(Self) -> Bool raise PolyError
+pub fn DDM::is_zero_matrix(Self) -> Bool raise PolyError
+pub fn DDM::iter_items(Self) -> Array[(Int, Int, FieldElem)] raise PolyError
+pub fn DDM::iter_values(Self) -> Array[FieldElem] raise PolyError
 pub fn DDM::lll(Self, delta? : @symnum.BigRational) -> Self raise PolyError
 pub fn DDM::lll_transform(Self, delta? : @symnum.BigRational) -> (Self, Self) raise PolyError
-pub fn DDM::mul(Self, Self) -> Self raise PolyError
+pub fn DDM::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise PolyError
+pub fn DDM::lu_solve(Self, Self) -> Self raise PolyError
+pub fn DDM::matmul(Self, Self) -> Self raise PolyError
+pub fn DDM::mul(Self, FieldElem) -> Self raise PolyError
+pub fn DDM::mul_elementwise(Self, Self) -> Self raise PolyError
 pub fn DDM::mul_scalar(Self, FieldElem) -> Self raise PolyError
 pub fn DDM::neg(Self) -> Self raise PolyError
-pub fn DDM::nullspace(Self) -> Array[Array[FieldElem]] raise PolyError
+pub fn DDM::nnz(Self) -> Int raise PolyError
+pub fn DDM::nullspace(Self, divide_last? : Bool) -> Array[Array[FieldElem]] raise PolyError
+pub fn DDM::nullspace_from_rref(Self, pivots? : Array[Int]) -> (Self, Array[Int]) raise PolyError
+pub fn DDM::ones(Int, Int, Domain) -> Self raise PolyError
+pub fn DDM::particular(Self, pivots? : Array[Int]) -> Self raise PolyError
+pub fn DDM::qr(Self) -> (Self, Self) raise PolyError
 pub fn DDM::rank(Self) -> Int raise PolyError
+pub fn DDM::rmul(Self, FieldElem) -> Self raise PolyError
 pub fn DDM::rref(Self) -> (Self, Array[Int]) raise PolyError
+pub fn DDM::rref_den(Self, rref_method? : String, keep_domain? : Bool) -> (Self, FieldElem, Array[Int]) raise PolyError
+pub fn DDM::scc(Self) -> Array[Array[Int]] raise PolyError
+pub fn DDM::setitem(Self, Int, Int, FieldElem) -> Self raise PolyError
 pub fn DDM::shape(Self) -> (Int, Int)
+pub fn DDM::smith_normal_decomp(Self) -> (Self, Self, Self) raise PolyError
+pub fn DDM::smith_normal_form(Self) -> Self raise PolyError
+pub fn DDM::solve_den(Self, Self, solve_method? : String) -> (Self, FieldElem) raise PolyError
+pub fn DDM::solve_den_rref(Self, Self) -> (Self, FieldElem) raise PolyError
 pub fn DDM::sub(Self, Self) -> Self raise PolyError
+pub fn DDM::to_ddm(Self) -> Self raise PolyError
+pub fn DDM::to_dfm(Self) -> Self raise PolyError
+pub fn DDM::to_dfm_or_ddm(Self) -> Self raise PolyError
+pub fn DDM::to_dod(Self) -> Map[Int, Map[Int, FieldElem]] raise PolyError
+pub fn DDM::to_dok(Self) -> Map[(Int, Int), FieldElem] raise PolyError
 pub fn DDM::to_domain_matrix(Self) -> DomainMatrix
+pub fn DDM::to_flat_nz(Self) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError
 pub fn DDM::to_list(Self) -> Array[Array[FieldElem]] raise PolyError
+pub fn DDM::to_list_flat(Self) -> Array[FieldElem] raise PolyError
+pub fn DDM::to_sdm(Self) -> SDM raise PolyError
 pub fn DDM::to_string(Self) -> String raise PolyError
 pub fn DDM::transpose(Self) -> Self raise PolyError
+pub fn DDM::vstack(Self, Self) -> Self raise PolyError
+pub fn DDM::zeros(Int, Int, Domain) -> Self raise PolyError
 
 pub enum DensePoly {
   Coef(FieldElem)
@@ -775,6 +1050,99 @@ pub(all) enum Domain {
   GFExt(Int, Int, Array[Int])
   AlgExt(Domain, Array[String], Array[@symcore.Expr])
 }
+pub fn Domain::abs_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::add_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::alg_field_from_poly(Self, Poly, alias? : String?, root_index? : Int) -> Self raise PolyError
+pub fn Domain::algebraic_field(Self, Array[@symcore.Expr]) -> Self raise PolyError
+pub fn Domain::almosteq_expr(Self, @symcore.Expr, @symcore.Expr, tolerance? : @symnum.BigRational?) -> Bool
+pub fn Domain::canonical_unit_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::characteristic(Self) -> Int
+pub fn Domain::cofactors_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError
+pub fn Domain::contains_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::convert_expr(Self, @symcore.Expr, base? : Self?) -> @symcore.Expr raise PolyError
+pub fn Domain::convert_from_expr(Self, @symcore.Expr, Self) -> @symcore.Expr raise PolyError
+pub fn Domain::cyclotomic_field(Self, Int, ss? : Bool, alias? : String, gen? : String?, root_index? : Int) -> Self raise PolyError
+pub fn Domain::denom_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::div_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
+pub fn Domain::drop(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::evalf_expr(Self, @symcore.Expr, prec? : Int?) -> @symcore.Expr raise PolyError
+pub fn Domain::exquo_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::exsqrt_expr(Self, @symcore.Expr) -> @symcore.Expr? raise PolyError
+pub fn Domain::factorial_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::frac_field(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::from_algebraic_field_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_complex_field_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_expression_domain_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_expression_raw_domain_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_ff_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_ff_gmpy_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_ff_python_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_fraction_field_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_gaussian_integer_ring_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_gaussian_rational_field_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_generalized_polynomial_ring_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_global_polynomial_ring_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_monogenic_finite_extension_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_polynomial_ring_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_qq_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_qq_gmpy_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_qq_python_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_real_field_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_sympy_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::from_zz_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_zz_gmpy_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::from_zz_python_expr(Self, @symcore.Expr, Self) -> @symcore.Expr?
+pub fn Domain::gcd_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::gcdex_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError
+pub fn Domain::get_exact(Self) -> Self
+pub fn Domain::get_field(Self) -> Self raise PolyError
+pub fn Domain::get_ring(Self) -> Self raise PolyError
+pub fn Domain::half_gcdex_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
+pub fn Domain::imag_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::inject(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::invert_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::is_negative_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_negative_one_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_nonnegative_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_nonpositive_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_one_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_positive_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_square_expr(Self, @symcore.Expr) -> Bool raise PolyError
+pub fn Domain::is_unit_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::is_zero_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::lcm_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::log_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::map_expr_tree(Self, Array[DomainExprTree]) -> Array[DomainExprTree] raise PolyError
+pub fn Domain::mul_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::neg_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::new_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::normal_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::numer_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::of_type_expr(Self, @symcore.Expr) -> Bool
+pub fn Domain::old_frac_field(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::old_poly_ring(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::one_expr(Self) -> @symcore.Expr raise PolyError
+pub fn Domain::poly_ring(Self, Array[String]) -> Self raise PolyError
+pub fn Domain::pos_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::pow_expr(Self, @symcore.Expr, Int) -> @symcore.Expr raise PolyError
+pub fn Domain::quo_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::real_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::rem_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::revert_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::set_domain(Self, Self) -> Self
+pub fn Domain::sqrt_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::sub_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::sum_expr(Self, Array[@symcore.Expr]) -> @symcore.Expr raise PolyError
+pub fn Domain::to_sympy_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn Domain::unify(Self, Self) -> Self raise PolyError
+pub fn Domain::unify_composite(Self, Self) -> Self raise PolyError
+pub fn Domain::unify_with_symbols(Self, Self, Array[String]) -> Self raise PolyError
+pub fn Domain::zero_expr(Self) -> @symcore.Expr raise PolyError
+
+pub enum DomainExprTree {
+  Elem(@symcore.Expr)
+  List(Array[DomainExprTree])
+}
 
 pub struct DomainMatrix {
   rep : DomainMatrixRep
@@ -782,26 +1150,124 @@ pub struct DomainMatrix {
   cols : Int
   domain : Domain
 }
+pub fn DomainMatrix::_check(Self, String, Self, (Int, Int), (Int, Int), require_format? : Bool) -> Unit raise PolyError
+pub fn DomainMatrix::_scalarmul(Self, FieldElem, reverse? : Bool) -> Self raise PolyError
+pub fn DomainMatrix::_solve(Self, Self) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::_unify_domain(Self, Self) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::_unify_fmt(Self, Self, String) -> (Self, Self) raise PolyError
 pub fn DomainMatrix::add(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::adj_det(Self) -> (Self, FieldElem) raise PolyError
+pub fn DomainMatrix::adj_poly_det(Self, cp? : Array[FieldElem]) -> (Array[FieldElem], FieldElem) raise PolyError
+pub fn DomainMatrix::adjugate(Self) -> Self raise PolyError
+pub fn DomainMatrix::applyfunc(Self, (FieldElem) -> FieldElem raise PolyError, domain? : Domain?) -> Self raise PolyError
+pub fn DomainMatrix::cancel_denom(Self, FieldElem) -> (Self, FieldElem) raise PolyError
+pub fn DomainMatrix::cancel_denom_elementwise(Self, FieldElem) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::charpoly(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::charpoly_base(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::charpoly_berk(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::charpoly_factor_blocks(Self) -> Array[(Array[FieldElem], Int)] raise PolyError
+pub fn DomainMatrix::charpoly_factor_list(Self) -> Array[(Array[FieldElem], Int)] raise PolyError
+pub fn DomainMatrix::choose_domain(Self, field? : Bool, gaussian? : Bool, modulus? : Int?) -> Self raise PolyError
+pub fn DomainMatrix::clear_denoms(Self, convert? : Bool) -> (DomainScalar, Self) raise PolyError
+pub fn DomainMatrix::clear_denoms_rowwise(Self, convert? : Bool) -> (Self, Self) raise PolyError
 pub fn DomainMatrix::columnspace(Self) -> Self raise PolyError
+pub fn DomainMatrix::content(Self) -> FieldElem raise PolyError
 pub fn DomainMatrix::convert_to(Self, Domain) -> Self raise PolyError
 pub fn DomainMatrix::copy(Self) -> Self raise PolyError
 pub fn DomainMatrix::det(Self) -> FieldElem raise PolyError
+pub fn DomainMatrix::diag(Array[FieldElem], Domain, rows? : Int?, cols? : Int?) -> Self raise PolyError
+pub fn DomainMatrix::diagonal(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::dom_eigenvects(Self, gen? : String) -> (Array[(Domain, FieldElem, Int, Self)], Array[(Domain, Poly, Int, Self)]) raise PolyError
+pub fn DomainMatrix::eval_poly(Self, Array[FieldElem]) -> Self raise PolyError
+pub fn DomainMatrix::eval_poly_mul(Self, Array[FieldElem], Self) -> Self raise PolyError
 pub fn DomainMatrix::extract(Self, Array[Int], Array[Int]) -> Self raise PolyError
+pub fn DomainMatrix::extract_slice(Self, row_start? : Int?, row_stop? : Int?, row_step? : Int, col_start? : Int?, col_stop? : Int?, col_step? : Int) -> Self raise PolyError
+pub fn DomainMatrix::eye(Int, Domain) -> Self raise PolyError
+pub fn DomainMatrix::fflu(Self) -> (Self, Self, Self, Self) raise PolyError
+pub fn DomainMatrix::flat(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::from_Matrix(Array[Array[@symcore.Expr]], fmt? : String, field? : Bool, gaussian? : Bool, modulus? : Int?) -> Self raise PolyError
+pub fn DomainMatrix::from_dict_sympy(Int, Int, Map[Int, Map[Int, @symcore.Expr]], field? : Bool, gaussian? : Bool, modulus? : Int?) -> Self raise PolyError
+pub fn DomainMatrix::from_dod(Map[Int, Map[Int, FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn DomainMatrix::from_dod_like(Self, Map[Int, Map[Int, FieldElem]], domain? : Domain?) -> Self raise PolyError
+pub fn DomainMatrix::from_dok(Map[(Int, Int), FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn DomainMatrix::from_flat_nz(Self, Array[FieldElem], DomainMatrixFlatNZData, Domain) -> Self raise PolyError
+pub fn DomainMatrix::from_list(Array[Array[FieldElem]], Domain) -> Self raise PolyError
+pub fn DomainMatrix::from_list_flat(Array[FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn DomainMatrix::from_list_sympy(Int, Int, Array[Array[@symcore.Expr]], field? : Bool, gaussian? : Bool, modulus? : Int?) -> Self raise PolyError
+pub fn DomainMatrix::from_rep(DomainMatrixRep, (Int, Int), Domain) -> Self raise PolyError
+pub fn DomainMatrix::get_domain(Array[@symcore.Expr], field? : Bool, gaussian? : Bool, modulus? : Int?) -> (Domain, Array[FieldElem]) raise PolyError
+pub fn DomainMatrix::getitem(Self, Int, Int) -> DomainScalar raise PolyError
+pub fn DomainMatrix::getitem_sympy(Self, Int, Int) -> @symcore.Expr raise PolyError
+pub fn DomainMatrix::hstack(Self, Self) -> Self raise PolyError
 pub fn DomainMatrix::inv(Self) -> Self raise PolyError
-pub fn DomainMatrix::mul(Self, Self) -> Self raise PolyError
-pub fn DomainMatrix::nullspace(Self) -> Self raise PolyError
+pub fn DomainMatrix::inv_den(Self, solve_method? : String) -> (Self, FieldElem) raise PolyError
+pub fn DomainMatrix::invariant_factors(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::is_diagonal(Self) -> Bool raise PolyError
+pub fn DomainMatrix::is_lower(Self) -> Bool raise PolyError
+pub fn DomainMatrix::is_smith_normal_form(Self) -> Bool raise PolyError
+pub fn DomainMatrix::is_square(Self) -> Bool
+pub fn DomainMatrix::is_upper(Self) -> Bool raise PolyError
+pub fn DomainMatrix::is_zero_matrix(Self) -> Bool raise PolyError
+pub fn DomainMatrix::iter_items(Self) -> Array[(Int, Int, FieldElem)] raise PolyError
+pub fn DomainMatrix::iter_values(Self) -> Array[FieldElem] raise PolyError
+pub fn DomainMatrix::lll(Self, delta? : @symnum.BigRational) -> Self raise PolyError
+pub fn DomainMatrix::lll_transform(Self, delta? : @symnum.BigRational) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise PolyError
+pub fn DomainMatrix::lu_solve(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::matmul(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::mul(Self, FieldElem) -> Self raise PolyError
+pub fn DomainMatrix::mul_elementwise(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::neg(Self) -> Self raise PolyError
+pub fn DomainMatrix::nnz(Self) -> Int raise PolyError
+pub fn DomainMatrix::nullspace(Self, divide_last? : Bool) -> Self raise PolyError
+pub fn DomainMatrix::nullspace_from_rref(Self, pivots? : Array[Int]) -> Self raise PolyError
+pub fn DomainMatrix::ones(Int, Int, Domain) -> Self raise PolyError
+pub fn DomainMatrix::particular(Self, pivots? : Array[Int]) -> Self raise PolyError
+pub fn DomainMatrix::pow(Self, Int) -> Self raise PolyError
+pub fn DomainMatrix::primitive(Self) -> (FieldElem, Self) raise PolyError
+pub fn DomainMatrix::qr(Self) -> (Self, Self) raise PolyError
 pub fn DomainMatrix::rank(Self) -> Int raise PolyError
+pub fn DomainMatrix::rmul(Self, FieldElem) -> Self raise PolyError
 pub fn DomainMatrix::rowspace(Self) -> Self raise PolyError
 pub fn DomainMatrix::rref(Self) -> (Self, Array[Int]) raise PolyError
+pub fn DomainMatrix::rref_den(Self, rref_method? : String, keep_domain? : Bool) -> (Self, FieldElem, Array[Int]) raise PolyError
+pub fn DomainMatrix::rscalarmul(Self, FieldElem) -> Self raise PolyError
+pub fn DomainMatrix::scalarmul(Self, FieldElem) -> Self raise PolyError
+pub fn DomainMatrix::scc(Self) -> Array[Array[Int]] raise PolyError
+pub fn DomainMatrix::setitem(Self, Int, Int, FieldElem) -> Self raise PolyError
 pub fn DomainMatrix::shape(Self) -> (Int, Int)
+pub fn DomainMatrix::smith_normal_decomp(Self) -> (Self, Self, Self) raise PolyError
+pub fn DomainMatrix::smith_normal_form(Self) -> Self raise PolyError
+pub fn DomainMatrix::solve_den(Self, Self, solve_method? : String) -> (Self, FieldElem) raise PolyError
+pub fn DomainMatrix::solve_den_charpoly(Self, Self, cp? : Array[FieldElem], check? : Bool) -> (Self, FieldElem) raise PolyError
+pub fn DomainMatrix::solve_den_rref(Self, Self) -> (Self, FieldElem) raise PolyError
 pub fn DomainMatrix::sub(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::to_Matrix(Self) -> Array[Array[@symcore.Expr]] raise PolyError
+pub fn DomainMatrix::to_ddm(Self) -> DDM raise PolyError
 pub fn DomainMatrix::to_dense(Self) -> Array[Array[FieldElem]] raise PolyError
+pub fn DomainMatrix::to_dfm(Self) -> DDM raise PolyError
+pub fn DomainMatrix::to_dfm_or_ddm(Self) -> DDM raise PolyError
+pub fn DomainMatrix::to_dod(Self) -> Map[Int, Map[Int, FieldElem]] raise PolyError
+pub fn DomainMatrix::to_dok(Self) -> Map[(Int, Int), FieldElem] raise PolyError
 pub fn DomainMatrix::to_field(Self) -> Self raise PolyError
+pub fn DomainMatrix::to_flat_nz(Self) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError
+pub fn DomainMatrix::to_list(Self) -> Array[Array[FieldElem]] raise PolyError
+pub fn DomainMatrix::to_list_flat(Self) -> Array[FieldElem] raise PolyError
 pub fn DomainMatrix::to_matrix_string(Self) -> String raise PolyError
+pub fn DomainMatrix::to_sdm(Self) -> SDM raise PolyError
 pub fn DomainMatrix::to_sparse(Self) -> Self raise PolyError
+pub fn DomainMatrix::to_sympy(Self) -> Array[Array[@symcore.Expr]] raise PolyError
 pub fn DomainMatrix::transpose(Self) -> Self raise PolyError
-pub fn DomainMatrix::unify(Self, Self) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::truediv(Self, DomainScalar) -> Self raise PolyError
+pub fn DomainMatrix::unify(Self, Self, fmt? : String) -> (Self, Self) raise PolyError
+pub fn DomainMatrix::unify_eq(Self, Self) -> Bool raise PolyError
+pub fn DomainMatrix::vstack(Self, Self) -> Self raise PolyError
+pub fn DomainMatrix::zeros(Int, Int, Domain) -> Self raise PolyError
+
+pub enum DomainMatrixFlatNZData {
+  Dense(Int, Int)
+  Sparse(Int, Int, Array[(Int, Int)])
+}
 
 pub(all) enum DomainMatrixRep {
   Dense(Array[Array[FieldElem]])
@@ -813,13 +1279,22 @@ pub struct DomainScalar {
   domain : Domain
 }
 pub fn DomainScalar::add(Self, Self) -> Self raise PolyError
+pub fn DomainScalar::convert_to(Self, Domain) -> Self raise PolyError
+pub fn DomainScalar::divmod(Self, Self) -> (Self, Self) raise PolyError
+pub fn DomainScalar::floordiv(Self, Self) -> Self raise PolyError
+pub fn DomainScalar::from_sympy(@symcore.Expr) -> Self raise PolyError
 pub fn DomainScalar::is_one(Self) -> Bool
 pub fn DomainScalar::is_zero(Self) -> Bool
+pub fn DomainScalar::mod(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::mul(Self, Self) -> Self raise PolyError
+pub fn DomainScalar::neg(Self) -> Self raise PolyError
+pub fn DomainScalar::new(FieldElem, Domain) -> Self raise PolyError
+pub fn DomainScalar::pos(Self) -> Self raise PolyError
 pub fn DomainScalar::pow(Self, Int) -> Self raise PolyError
 pub fn DomainScalar::sub(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::to_domain(Self, Domain) -> Self raise PolyError
 pub fn DomainScalar::to_string(Self) -> String
+pub fn DomainScalar::to_sympy(Self) -> @symcore.Expr
 pub fn DomainScalar::unify(Self, Self) -> (Self, Self) raise PolyError
 
 pub enum FieldElem {
@@ -933,13 +1408,72 @@ pub struct SDM {
   dm : DomainMatrix
 }
 pub fn SDM::add(Self, Self) -> Self raise PolyError
+pub fn SDM::applyfunc(Self, (FieldElem) -> FieldElem raise PolyError, domain? : Domain?) -> Self raise PolyError
+pub fn SDM::charpoly(Self) -> Array[FieldElem] raise PolyError
+pub fn SDM::convert_to(Self, Domain) -> Self raise PolyError
+pub fn SDM::copy(Self) -> Self raise PolyError
+pub fn SDM::det(Self) -> FieldElem raise PolyError
+pub fn SDM::diag(Array[FieldElem], Domain, rows? : Int?, cols? : Int?) -> Self raise PolyError
+pub fn SDM::diagonal(Self) -> Array[FieldElem] raise PolyError
 pub fn SDM::domain(Self) -> Domain
-pub fn SDM::mul(Self, Self) -> Self raise PolyError
+pub fn SDM::extract(Self, Array[Int], Array[Int]) -> Self raise PolyError
+pub fn SDM::extract_slice(Self, row_start? : Int?, row_stop? : Int?, row_step? : Int, col_start? : Int?, col_stop? : Int?, col_step? : Int) -> Self raise PolyError
+pub fn SDM::eye(Int, Domain) -> Self raise PolyError
+pub fn SDM::fflu(Self) -> (Self, Self, Self, Self) raise PolyError
+pub fn SDM::flat(Self) -> Array[FieldElem] raise PolyError
+pub fn SDM::from_ddm(DDM) -> Self raise PolyError
+pub fn SDM::from_dod(Map[Int, Map[Int, FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn SDM::from_dok(Map[(Int, Int), FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn SDM::from_flat_nz(Self, Array[FieldElem], DomainMatrixFlatNZData, Domain) -> Self raise PolyError
+pub fn SDM::from_list(Array[Array[FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn SDM::from_list_flat(Array[FieldElem], (Int, Int), Domain) -> Self raise PolyError
+pub fn SDM::getitem(Self, Int, Int) -> FieldElem raise PolyError
+pub fn SDM::hstack(Self, Self) -> Self raise PolyError
+pub fn SDM::inv(Self) -> Self raise PolyError
+pub fn SDM::is_diagonal(Self) -> Bool raise PolyError
+pub fn SDM::is_lower(Self) -> Bool raise PolyError
+pub fn SDM::is_upper(Self) -> Bool raise PolyError
+pub fn SDM::is_zero_matrix(Self) -> Bool raise PolyError
+pub fn SDM::iter_items(Self) -> Array[(Int, Int, FieldElem)] raise PolyError
+pub fn SDM::iter_values(Self) -> Array[FieldElem] raise PolyError
+pub fn SDM::lll(Self, delta? : @symnum.BigRational) -> Self raise PolyError
+pub fn SDM::lll_transform(Self, delta? : @symnum.BigRational) -> (Self, Self) raise PolyError
+pub fn SDM::lu(Self) -> (Self, Self, Array[(Int, Int)]) raise PolyError
+pub fn SDM::lu_solve(Self, Self) -> Self raise PolyError
+pub fn SDM::matmul(Self, Self) -> Self raise PolyError
+pub fn SDM::mul(Self, FieldElem) -> Self raise PolyError
+pub fn SDM::mul_elementwise(Self, Self) -> Self raise PolyError
+pub fn SDM::neg(Self) -> Self raise PolyError
+pub fn SDM::new(Map[Int, Map[Int, FieldElem]], (Int, Int), Domain) -> Self raise PolyError
+pub fn SDM::nnz(Self) -> Int raise PolyError
+pub fn SDM::nullspace(Self, divide_last? : Bool) -> Array[Array[FieldElem]] raise PolyError
+pub fn SDM::nullspace_from_rref(Self, pivots? : Array[Int]) -> (Self, Array[Int]) raise PolyError
+pub fn SDM::ones(Int, Int, Domain) -> Self raise PolyError
+pub fn SDM::particular(Self, pivots? : Array[Int]) -> Self raise PolyError
+pub fn SDM::qr(Self) -> (Self, Self) raise PolyError
+pub fn SDM::rmul(Self, FieldElem) -> Self raise PolyError
+pub fn SDM::rref(Self) -> (Self, Array[Int]) raise PolyError
+pub fn SDM::rref_den(Self, rref_method? : String, keep_domain? : Bool) -> (Self, FieldElem, Array[Int]) raise PolyError
+pub fn SDM::scc(Self) -> Array[Array[Int]] raise PolyError
+pub fn SDM::setitem(Self, Int, Int, FieldElem) -> Self raise PolyError
 pub fn SDM::shape(Self) -> (Int, Int)
 pub fn SDM::sub(Self, Self) -> Self raise PolyError
+pub fn SDM::to_ddm(Self) -> DDM raise PolyError
 pub fn SDM::to_dense(Self) -> DDM raise PolyError
+pub fn SDM::to_dfm(Self) -> DDM raise PolyError
+pub fn SDM::to_dfm_or_ddm(Self) -> DDM raise PolyError
+pub fn SDM::to_dod(Self) -> Map[Int, Map[Int, FieldElem]] raise PolyError
+pub fn SDM::to_dok(Self) -> Map[(Int, Int), FieldElem] raise PolyError
+pub fn SDM::to_domain_matrix(Self) -> DomainMatrix
+pub fn SDM::to_flat_nz(Self) -> (Array[FieldElem], DomainMatrixFlatNZData) raise PolyError
+pub fn SDM::to_list(Self) -> Array[Array[FieldElem]] raise PolyError
+pub fn SDM::to_list_flat(Self) -> Array[FieldElem] raise PolyError
+pub fn SDM::to_sdm(Self) -> Self raise PolyError
 pub fn SDM::to_sparse_entries(Self) -> Array[(Int, Int, FieldElem)] raise PolyError
 pub fn SDM::to_string(Self) -> String raise PolyError
+pub fn SDM::transpose(Self) -> Self raise PolyError
+pub fn SDM::vstack(Self, Self) -> Self raise PolyError
+pub fn SDM::zeros(Int, Int, Domain) -> Self raise PolyError
 
 pub struct SeriesElem {
   ring : SeriesRing
@@ -1015,7 +1549,23 @@ pub(all) enum TermOrder {
 pub impl Eq for TermOrder
 
 // Type aliases
+pub type DomainMatrixAlgebraicEigenvects = Array[(Domain, Poly, Int, DomainMatrix)]
+
+pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
+
+pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
+
+pub type DomainMatrixRationalEigenvects = Array[(Domain, FieldElem, Int, DomainMatrix)]
+
+pub type FieldElemMapper = (FieldElem) -> FieldElem raise PolyError
+
 pub type Matrix = Array[Array[@bigint.BigInt]]
+
+pub type MatrixExpr = Array[Array[@symcore.Expr]]
+
+pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
+
+pub type SympyEigenvects = Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])]
 
 // Traits
 

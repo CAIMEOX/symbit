@@ -11,7 +11,6 @@ The examples in this README are executable `mbt check` blocks. They are kept int
 The fastest way to start is to build expressions with `symbol`, `integer`, `rational`, `add`, `mul`, and `pow`, then render them with `to_string` or `debug_repr`. This keeps the entry path explicit and avoids hiding tree structure behind parser magic. In real use you usually construct a symbolic expression, inspect it in debug or readable form, then apply one of the simplifiers depending on whether you want a general rewrite, a rational-function normalization, or a more specialized transformation.
 
 ```mbt check
-
 ///|
 test "quickstart expression construction and simplification" {
   let x = symbol("x")
@@ -102,7 +101,10 @@ test "fu-style helpers are available from the root package" {
     debug_repr(tr2(tan_x)),
     content="(* (^ (call cos sym:x) -1) (call sin sym:x))",
   )
-  inspect(to_string(tr2i(mul([sin_x, pow(cos_x, integer(-1))]))), content="tan(x)")
+  inspect(
+    to_string(tr2i(mul([sin_x, pow(cos_x, integer(-1))]))),
+    content="tan(x)",
+  )
 }
 ```
 

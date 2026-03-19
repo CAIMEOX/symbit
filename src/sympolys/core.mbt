@@ -35,7 +35,7 @@ pub fn Poly::with_order(self : Poly, order : TermOrder) -> Poly {
 
 ///|
 /// Coerce/validate coefficients against a target polynomial domain.
-pub fn ensure_coeff_domain(
+fn ensure_coeff_domain(
   coeff : @symnum.BigRational,
   domain : Domain,
 ) -> FieldElem raise PolyError {
@@ -69,7 +69,7 @@ pub fn ensure_coeff_domain(
 
 ///|
 /// Insert a term into sparse polynomial storage with term merging.
-pub fn add_term(
+fn add_term(
   coeffs : Map[Monomial, FieldElem],
   mono : Monomial,
   coeff : FieldElem,

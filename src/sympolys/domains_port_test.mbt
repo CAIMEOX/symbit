@@ -30,7 +30,7 @@ fn normalize_expr_tuple3_text(text : String) -> String {
   if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
     return compact
   }
-  let inner = (try! compact[1:compact.length() - 1]).to_string()
+  let inner = compact[1:compact.length() - 1].to_string()
   let parts : Array[String] = Array::new()
   for part in inner.split(",") {
     parts.push(normalize_expr_text(part.trim().to_string()))
@@ -48,7 +48,7 @@ fn normalize_expr_tuple2_text(text : String) -> String {
   if compact == "ERROR" || !compact.has_prefix("(") || !compact.has_suffix(")") {
     return compact
   }
-  let inner = (try! compact[1:compact.length() - 1]).to_string()
+  let inner = compact[1:compact.length() - 1].to_string()
   let parts : Array[String] = Array::new()
   for part in inner.split(",") {
     parts.push(normalize_expr_text(part.trim().to_string()))

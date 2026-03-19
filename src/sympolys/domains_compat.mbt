@@ -53,13 +53,13 @@ fn find_matching_open_from_end(
 
 ///|
 fn find_matching_double_open_from_end(s : String) -> Int? {
-  if s.length() < 4 || (try! s[s.length() - 2:s.length()]).to_string() != "]]" {
+  if s.length() < 4 || s[s.length() - 2:s.length()].to_string() != "]]" {
     return None
   }
   let mut depth = 0
   let mut i = s.length() - 2
   while i >= 0 {
-    if i + 2 <= s.length() && (try! s[i:i + 2]).to_string() == "]]" {
+    if i + 2 <= s.length() && s[i:i + 2].to_string() == "]]" {
       depth += 1
       if i == 0 {
         break
@@ -67,7 +67,7 @@ fn find_matching_double_open_from_end(s : String) -> Int? {
       i -= 1
       continue
     }
-    if i + 2 <= s.length() && (try! s[i:i + 2]).to_string() == "[[" {
+    if i + 2 <= s.length() && s[i:i + 2].to_string() == "[[" {
       depth -= 1
       if depth == 0 {
         return Some(i)
@@ -95,7 +95,7 @@ fn find_last_substring(s : String, needle : String) -> Int? {
   let mut i = s.length() - n + 1
   while i > 0 {
     i -= 1
-    if (try! s[i:i + n]).to_string() == needle {
+    if s[i:i + n].to_string() == needle {
       return Some(i)
     }
   }
@@ -156,7 +156,7 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let inner = (try! s[left + 1:s.length() - 1]).to_string()
+    let inner = s[left + 1:s.length() - 1].to_string()
     let parsed = split_gf_descriptor(inner, s)
     let p = parsed.0
     let ext_opt = parsed.1
@@ -180,21 +180,21 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let ps_head = (try! s[:right + 2]).to_string()
+    let ps_head = s[:right + 2].to_string()
     let left = match find_matching_double_open_from_end(ps_head) {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string((try! s[:left]).to_string())
-    let gens_str = (try! s[left + 2:right]).to_string()
+    let base = domain_from_string(s[:left].to_string())
+    let gens_str = s[left + 2:right].to_string()
     let gens = split_gens(gens_str)
     if right + 2 == s.length() {
       return Domain::PowerSeries(base, gens, -1)
     }
     if s.has_suffix(")") &&
       right + 8 <= s.length() - 1 &&
-      (try! s[right + 2:right + 8]).to_string() == "(prec=" {
-      let prec_text = (try! s[right + 8:s.length() - 1]).to_string()
+      s[right + 2:right + 8].to_string() == "(prec=" {
+      let prec_text = s[right + 8:s.length() - 1].to_string()
       let precision = @strconv.parse_int(prec_text.trim().to_string()) catch {
         _ => raise PolyError::BadGenerator(s)
       }
@@ -207,13 +207,13 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string((try! s[:left]).to_string())
-    let gens_str = (try! s[left + 1:s.length() - 1]).to_string()
+    let base = domain_from_string(s[:left].to_string())
+    let gens_str = s[left + 1:s.length() - 1].to_string()
     let gens = split_gens(gens_str)
     return Domain::AlgExt(base, gens, [])
   }
   if s.has_prefix("Frac(") && s.has_suffix(")") {
-    let inner = (try! s[5:s.length() - 1]).to_string()
+    let inner = s[5:s.length() - 1].to_string()
     return Domain::Frac(domain_from_string(inner))
   }
   if s.has_suffix("]") && !s.has_suffix("]]") {
@@ -221,8 +221,8 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string((try! s[:left]).to_string())
-    let gens_str = (try! s[left + 1:s.length() - 1]).to_string()
+    let base = domain_from_string(s[:left].to_string())
+    let gens_str = s[left + 1:s.length() - 1].to_string()
     let gens = split_gens(gens_str)
     return Domain::PolyRing(base, gens)
   }
@@ -231,8 +231,8 @@ fn parse_composite_domain(s : String) -> Domain raise PolyError {
       Some(pos) => pos
       None => raise PolyError::BadGenerator(s)
     }
-    let base = domain_from_string((try! s[:left]).to_string())
-    let gens_str = (try! s[left + 1:s.length() - 1]).to_string()
+    let base = domain_from_string(s[:left].to_string())
+    let gens_str = s[left + 1:s.length() - 1].to_string()
     let gens = split_gens(gens_str)
     return Domain::RationalFunctionField(base, gens)
   }
@@ -1467,7 +1467,7 @@ fn gen_symbol_name(gen : String) -> String? {
     return Some(text)
   }
   if text.has_prefix("1/") {
-    let rest = (try! text[2:text.length()]).to_string().trim().to_string()
+    let rest = text[2:text.length()].to_string().trim().to_string()
     if rest != "" &&
       !rest.contains("/") &&
       !rest.contains("(") &&
@@ -2343,7 +2343,7 @@ fn reciprocal_gen_symbol_name(gen : String) -> String? {
   if !text.has_prefix("1/") {
     return None
   }
-  let rest = (try! text[2:text.length()]).to_string().trim().to_string()
+  let rest = text[2:text.length()].to_string().trim().to_string()
   if rest == "" ||
     rest.contains("/") ||
     rest.contains("(") ||
