@@ -1906,6 +1906,27 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
 
+  let bessely_input = @symcore.int(-1) *
+    (@symcore.symbol("pi") ^ @symcore.int(-1)) *
+    @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+    @symspec.gamma(s - a * half) *
+    @symspec.gamma(s + a * half)
+  let bessely_inverse_opt = do_inverse_mellin_doit(bessely_input, s, x)
+  guard bessely_inverse_opt is Some(_) else {
+    fail(
+      "bessely inverse stayed None for " + @symprint.debug_repr(bessely_input),
+    )
+  }
+  let bessely_inverse = bessely_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(bessely_inverse) +
+      ") - sympy.bessely(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
   let besselk_input = half *
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half)

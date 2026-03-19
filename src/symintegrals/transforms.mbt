@@ -5623,7 +5623,11 @@ fn inverse_mellin_bessel_single_term(
 ) -> Expr? {
   match inverse_mellin_besselj_single_term(expr, s_sym, x) {
     Some(v) => Some(v)
-    None => inverse_mellin_besselk_single_term(expr, s_sym, x)
+    None =>
+      match inverse_mellin_bessely_single_term(expr, s_sym, x) {
+        Some(v) => Some(v)
+        None => inverse_mellin_besselk_single_term(expr, s_sym, x)
+      }
   }
 }
 
@@ -6396,6 +6400,87 @@ fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+fn inverse_mellin_bessely_single_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let mut trig_info : (Int, Expr)? = None
+  let gamma_args : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_args.push(arg)
+      @symcore.Expr::Function("cos", _) =>
+        match parse_pi_linear_trig_factor(factor, s_name, "cos") {
+          Some(info) =>
+            if trig_info is None {
+              trig_info = Some(info)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      other =>
+        if expr_depends_on(other, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, other)
+        }
+    }
+  }
+  if gamma_args.length() != 2 ||
+    !expr_same_simplified(
+      coeff,
+      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
+    ) {
+    return None
+  }
+  let (trig_coeff, half_order) = match trig_info {
+    Some(v) => v
+    None => return None
+  }
+  if trig_coeff != -1 {
+    return None
+  }
+  let mut saw_pos = false
+  let mut saw_neg = false
+  for arg in gamma_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some((linear, offset)) if expr_same_simplified(linear, expr_one()) =>
+        if expr_same_simplified(offset, half_order) {
+          saw_pos = true
+        } else if expr_same_simplified(
+            offset,
+            expr_mul(expr_neg_one(), half_order),
+          ) {
+          saw_neg = true
+        } else {
+          return None
+        }
+      _ => return None
+    }
+  }
+  if !(saw_pos && saw_neg) {
+    return None
+  }
+  Some(
+    @symspec.bessely(
+      expr_simplify(expr_mul(expr_int(2), half_order)),
+      expr_int(2) * @symelem.sqrt(x),
+    ),
+  )
+}
+
+///|
 fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match expr_simplify(expr) {
     @symcore.Expr::Function("gamma", [arg]) =>
@@ -6455,15 +6540,22 @@ fn divide_by_pi_if_common(expr : Expr) -> Expr? {
 
 ///|
 fn parse_pi_linear_cos_factor(expr : Expr, var_name : String) -> Expr? {
+  match parse_pi_linear_trig_factor(expr, var_name, "cos") {
+    Some((coeff, offset)) if coeff == 1 => Some(offset)
+    _ => None
+  }
+}
+
+///|
+fn parse_pi_linear_trig_factor(
+  expr : Expr,
+  var_name : String,
+  trig_name : String,
+) -> (Int, Expr)? {
   match expr_simplify(expr) {
-    @symcore.Expr::Function("cos", [arg]) =>
+    @symcore.Expr::Function(name, [arg]) if name == trig_name =>
       match divide_by_pi_if_common(arg) {
-        Some(linear_arg) =>
-          match parse_linear_offset_expr(linear_arg, var_name) {
-            Some((coeff, offset)) if expr_same_simplified(coeff, expr_one()) =>
-              Some(offset)
-            _ => None
-          }
+        Some(linear_arg) => parse_unit_linear_offset(linear_arg, var_name)
         None => None
       }
     _ => None

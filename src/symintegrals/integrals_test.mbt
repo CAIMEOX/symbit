@@ -1126,6 +1126,17 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_bessely = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (@symcore.symbol("pi") ^ @symcore.int(-1)) *
+      @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+      @symspec.gamma(s - a * half) *
+      @symspec.gamma(s + a * half),
+      s,
+      x,
+    ),
+  )
   let inv_besselk = doit(
     inverse_mellin_transform(
       half * @symspec.gamma(s - a * half) * @symspec.gamma(s + a * half),
@@ -1378,6 +1389,12 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   guard !@symprint.to_string(inv_besselj).contains("InverseMellinTransform") else {
     fail("besselj inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_bessely).contains("InverseMellinTransform") else {
+    fail("bessely inverse Mellin stayed unevaluated")
+  }
+  guard @symprint.to_string(inv_bessely).contains("bessely") else {
+    fail("bessely inverse Mellin did not land on direct BesselY object")
   }
   guard !@symprint.to_string(inv_besselk).contains("InverseMellinTransform") else {
     fail("besselk inverse Mellin stayed unevaluated")
