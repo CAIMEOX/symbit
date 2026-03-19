@@ -5183,6 +5183,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_trig_bessely_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_mellin_besselj_product_term(expr, s_sym, x) {
     Some(v) => return Some(v)
     None => ()
@@ -5762,6 +5766,154 @@ fn inverse_mellin_trig_besselj_term(
     )
   }
   None
+}
+
+///|
+fn inverse_mellin_trig_bessely_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let mut s_scale = expr_one()
+  let mut trig_info : (String, Int, Expr)? = None
+  let gamma_num_args : Array[Expr] = []
+  let gamma_den_args : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_num_args.push(arg)
+      @symcore.Expr::Pow(@symcore.Expr::Function("gamma", [arg]), exp) =>
+        if expr_eq(exp, expr_int(-1)) {
+          gamma_den_args.push(arg)
+        } else {
+          return None
+        }
+      @symcore.Expr::Function(name, _) if name == "sin" || name == "cos" =>
+        match parse_pi_linear_trig_factor(factor, s_name, name) {
+          Some((trig_coeff, trig_offset)) =>
+            if trig_info is None {
+              trig_info = Some((name, trig_coeff, trig_offset))
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Pow(base, exp) =>
+        if expr_eq(exp, s_sym) && !expr_depends_on(base, s_name) {
+          s_scale = expr_mul(s_scale, factor)
+        } else if expr_depends_on(factor, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, factor)
+        }
+      other =>
+        if expr_depends_on(other, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, other)
+        }
+    }
+  }
+  if gamma_num_args.length() != 3 || gamma_den_args.length() != 2 {
+    return None
+  }
+  if !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
+    !expr_same_simplified(
+      coeff,
+      expr_mul(expr_neg_one(), expr_div(expr_one(), sqrt_pi())),
+    ) {
+    return None
+  }
+  let (trig_name, trig_coeff, trig_offset) = match trig_info {
+    Some(v) => v
+    None => return None
+  }
+  if trig_coeff != -1 {
+    return None
+  }
+  let num_linears : Array[(Expr, Expr)] = []
+  let den_linears : Array[(Expr, Expr)] = []
+  for arg in gamma_num_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => num_linears.push(info)
+      None => return None
+    }
+  }
+  for arg in gamma_den_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => den_linears.push(info)
+      None => return None
+    }
+  }
+  let half = expr_rat(1, 2)
+  let order = trig_offset
+  let saw_gamma_half_minus_2s = has_linear_offset(num_linears, expr_int(-2), fn(
+    offset,
+  ) {
+    expr_same_simplified(offset, half)
+  })
+  if !saw_gamma_half_minus_2s {
+    return None
+  }
+  let expected_pos = expr_simplify(expr_add(half, order))
+  let expected_neg = expr_simplify(expr_sub(half, order))
+  let expected_den_sin_pos = expr_simplify(expr_add(expr_one(), order))
+  let expected_den_sin_neg = expr_simplify(expr_sub(expr_one(), order))
+  let expected_den_cos_pos = expr_simplify(expr_add(half, order))
+  let expected_den_cos_neg = expr_simplify(expr_sub(half, order))
+  let ok = match trig_name {
+    "sin" =>
+      has_linear_offset(num_linears, expr_one(), fn(offset) {
+        expr_same_simplified(offset, expected_pos)
+      }) &&
+      has_linear_offset(num_linears, expr_one(), fn(offset) {
+        expr_same_simplified(offset, expected_neg)
+      }) &&
+      has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+        expr_same_simplified(offset, expected_den_sin_pos)
+      }) &&
+      has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+        expr_same_simplified(offset, expected_den_sin_neg)
+      })
+    "cos" =>
+      has_linear_offset(num_linears, expr_one(), fn(offset) {
+        expr_same_simplified(offset, order)
+      }) &&
+      has_linear_offset(num_linears, expr_one(), fn(offset) {
+        expr_same_simplified(offset, expr_mul(expr_neg_one(), order))
+      }) &&
+      has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+        expr_same_simplified(offset, expected_den_cos_pos)
+      }) &&
+      has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+        expr_same_simplified(offset, expected_den_cos_neg)
+      })
+    _ => false
+  }
+  if !ok {
+    return None
+  }
+  let body = @symspec.bessely(
+    expr_simplify(expr_mul(expr_int(2), order)),
+    @symelem.sqrt(x),
+  )
+  Some(
+    expr_simplify(
+      match trig_name {
+        "sin" => expr_mul(@symelem.sin(@symelem.sqrt(x)), body)
+        "cos" => expr_mul(@symelem.cos(@symelem.sqrt(x)), body)
+        _ => body
+      },
+    ),
+  )
 }
 
 ///|

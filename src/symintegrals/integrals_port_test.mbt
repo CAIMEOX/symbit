@@ -1996,6 +1996,58 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
 
+  let sin_bessely_input = @symcore.int(-1) *
+    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+    (@symcore.int(4) ^ s) *
+    @symelem.sin(@symcore.symbol("pi") * (a * half - s)) *
+    @symspec.gamma(half - @symcore.int(2) * s) *
+    @symspec.gamma((@symcore.int(1) - a) * half + s) *
+    @symspec.gamma((@symcore.int(1) + a) * half + s) *
+    (@symspec.gamma(@symcore.int(1) - s - a * half) ^ @symcore.int(-1)) *
+    (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1))
+  let sin_bessely_inverse_opt = do_inverse_mellin_doit(sin_bessely_input, s, x)
+  guard sin_bessely_inverse_opt is Some(_) else {
+    fail(
+      "sin*bessely inverse stayed None for " +
+      @symprint.debug_repr(sin_bessely_input),
+    )
+  }
+  let sin_bessely_inverse = sin_bessely_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sin_bessely_inverse) +
+      ") - sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let cos_bessely_input = @symcore.int(-1) *
+    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+    (@symcore.int(4) ^ s) *
+    @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+    @symspec.gamma(s - a * half) *
+    @symspec.gamma(s + a * half) *
+    @symspec.gamma(half - @symcore.int(2) * s) *
+    (@symspec.gamma(half - s - a * half) ^ @symcore.int(-1)) *
+    (@symspec.gamma(half - s + a * half) ^ @symcore.int(-1))
+  let cos_bessely_inverse_opt = do_inverse_mellin_doit(cos_bessely_input, s, x)
+  guard cos_bessely_inverse_opt is Some(_) else {
+    fail(
+      "cos*bessely inverse stayed None for " +
+      @symprint.debug_repr(cos_bessely_input),
+    )
+  }
+  let cos_bessely_inverse = cos_bessely_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cos_bessely_inverse) +
+      ") - sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
   let besselj_sq_input = (
       @symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)
     ) *

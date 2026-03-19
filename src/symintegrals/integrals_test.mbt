@@ -1172,6 +1172,36 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_sin_bessely = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+      (@symcore.int(4) ^ s) *
+      @symelem.sin(@symcore.symbol("pi") * (a * half - s)) *
+      @symspec.gamma(half - @symcore.int(2) * s) *
+      @symspec.gamma((@symcore.int(1) - a) * half + s) *
+      @symspec.gamma((@symcore.int(1) + a) * half + s) *
+      (@symspec.gamma(@symcore.int(1) - s - a * half) ^ @symcore.int(-1)) *
+      (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_cos_bessely = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+      (@symcore.int(4) ^ s) *
+      @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+      @symspec.gamma(s - a * half) *
+      @symspec.gamma(s + a * half) *
+      @symspec.gamma(half - @symcore.int(2) * s) *
+      (@symspec.gamma(half - s - a * half) ^ @symcore.int(-1)) *
+      (@symspec.gamma(half - s + a * half) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
   let inv_besselj_sq = doit(
     inverse_mellin_transform(
       (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
@@ -1404,6 +1434,20 @@ test "symintegrals Mellin special-function rules evaluate" {
   }
   guard !@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform") else {
     fail("cos(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_sin_bessely).contains("InverseMellinTransform") else {
+    fail("sin(sqrt(x))*bessely(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_cos_bessely).contains("InverseMellinTransform") else {
+    fail("cos(sqrt(x))*bessely(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
+  guard @symprint.to_string(inv_sin_bessely).contains("sin") &&
+    @symprint.to_string(inv_sin_bessely).contains("bessely") else {
+    fail("sin*bessely inverse Mellin did not land on direct symbolic objects")
+  }
+  guard @symprint.to_string(inv_cos_bessely).contains("cos") &&
+    @symprint.to_string(inv_cos_bessely).contains("bessely") else {
+    fail("cos*bessely inverse Mellin did not land on direct symbolic objects")
   }
   guard !@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform") else {
     fail("besselj(a, sqrt(x))^2 inverse Mellin stayed unevaluated")
