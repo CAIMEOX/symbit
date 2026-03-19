@@ -2147,6 +2147,33 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
 
+  let besselj_bessely_same_input = @symcore.int(-1) *
+    (@symcore.symbol("pi") ^ @symcore.int(-1)) *
+    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+    @symelem.cos(@symcore.symbol("pi") * s) *
+    @symspec.gamma(s) *
+    @symspec.gamma(a + s) *
+    @symspec.gamma(half - s) *
+    (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1))
+  let besselj_bessely_same_inverse_opt = do_inverse_mellin_doit(
+    besselj_bessely_same_input, s, x,
+  )
+  guard besselj_bessely_same_inverse_opt is Some(_) else {
+    fail(
+      "besselj(a)*bessely(a) inverse stayed None for " +
+      @symprint.debug_repr(besselj_bessely_same_input),
+    )
+  }
+  let besselj_bessely_same_inverse = besselj_bessely_same_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselj_bessely_same_inverse) +
+      ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
   let exp_subst_input = @symcore.function("factorial", [
       s * (a ^ @symcore.int(-1)),
     ]) *

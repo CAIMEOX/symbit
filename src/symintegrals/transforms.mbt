@@ -5863,8 +5863,6 @@ fn inverse_mellin_trig_bessely_term(
   if !saw_gamma_half_minus_2s {
     return None
   }
-  let expected_pos = expr_simplify(expr_add(half, order))
-  let expected_neg = expr_simplify(expr_sub(half, order))
   let expected_den_sin_pos = expr_simplify(expr_add(expr_one(), order))
   let expected_den_sin_neg = expr_simplify(expr_sub(expr_one(), order))
   let expected_den_cos_pos = expr_simplify(expr_add(half, order))
@@ -5872,10 +5870,16 @@ fn inverse_mellin_trig_bessely_term(
   let ok = match trig_name {
     "sin" =>
       has_linear_offset(num_linears, expr_one(), fn(offset) {
-        expr_same_simplified(offset, expected_pos)
+        expr_same_simplified(
+          expr_mul(expr_int(2), offset),
+          expr_add(expr_one(), expr_mul(expr_int(2), order)),
+        )
       }) &&
       has_linear_offset(num_linears, expr_one(), fn(offset) {
-        expr_same_simplified(offset, expected_neg)
+        expr_same_simplified(
+          expr_mul(expr_int(2), offset),
+          expr_sub(expr_one(), expr_mul(expr_int(2), order)),
+        )
       }) &&
       has_linear_offset(den_linears, expr_int(-1), fn(offset) {
         expr_same_simplified(offset, expected_den_sin_pos)
@@ -6036,7 +6040,7 @@ fn inverse_mellin_besselj_bessely_product_term(
   }
   let mut coeff = expr_one()
   let mut s_scale = expr_one()
-  let mut trig_shift : Expr? = None
+  let mut trig_info : (Int, Expr)? = None
   let gamma_num_args : Array[Expr] = []
   let gamma_den_args : Array[Expr] = []
   for factor in factors {
@@ -6049,10 +6053,10 @@ fn inverse_mellin_besselj_bessely_product_term(
           return None
         }
       @symcore.Expr::Function("cos", _) =>
-        match parse_pi_linear_cos_factor(factor, s_name) {
-          Some(shift) =>
-            if trig_shift is None {
-              trig_shift = Some(shift)
+        match parse_pi_linear_trig_factor(factor, s_name, "cos") {
+          Some(info) =>
+            if trig_info is None {
+              trig_info = Some(info)
             } else {
               return None
             }
@@ -6074,17 +6078,10 @@ fn inverse_mellin_besselj_bessely_product_term(
         }
     }
   }
-  if gamma_num_args.length() != 3 || gamma_den_args.length() != 2 {
+  if gamma_num_args.length() != 3 {
     return None
   }
-  if !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
-    !expr_same_simplified(
-      coeff,
-      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
-    ) {
-    return None
-  }
-  let trig_shift = match trig_shift {
+  let (trig_coeff, trig_shift) = match trig_info {
     Some(v) => v
     None => return None
   }
@@ -6102,6 +6099,45 @@ fn inverse_mellin_besselj_bessely_product_term(
       None => return None
     }
   }
+  if gamma_den_args.length() == 1 &&
+    expr_same_simplified(s_scale, expr_one()) &&
+    expr_same_simplified(
+      coeff,
+      expr_mul(
+        expr_neg_one(),
+        expr_mul(
+          expr_pow(@symcore.symbol("pi"), expr_int(-1)),
+          expr_div(expr_one(), sqrt_pi()),
+        ),
+      ),
+    ) &&
+    trig_coeff == 1 &&
+    expr_same_simplified(trig_shift, expr_zero()) {
+    match
+      inverse_mellin_same_order_besselj_bessely_product(
+        num_linears, den_linears,
+      ) {
+      Some(order) =>
+        return Some(
+          expr_simplify(
+            expr_mul(
+              @symspec.besselj(order, @symelem.sqrt(x)),
+              @symspec.bessely(order, @symelem.sqrt(x)),
+            ),
+          ),
+        )
+      None => ()
+    }
+  }
+  if gamma_den_args.length() != 2 ||
+    !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
+    !expr_same_simplified(
+      coeff,
+      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
+    ) ||
+    trig_coeff != 1 {
+    return None
+  }
   match
     inverse_mellin_general_besselj_bessely_product(
       num_linears, den_linears, trig_shift,
@@ -6117,6 +6153,41 @@ fn inverse_mellin_besselj_bessely_product_term(
       )
     None => None
   }
+}
+
+///|
+fn inverse_mellin_same_order_besselj_bessely_product(
+  num_linears : Array[(Expr, Expr)],
+  den_linears : Array[(Expr, Expr)],
+) -> Expr? {
+  if num_linears.length() != 3 || den_linears.length() != 1 {
+    return None
+  }
+  let mut order : Expr? = None
+  let mut saw_zero_num = false
+  let mut saw_half_num = false
+  for item in num_linears {
+    if expr_same_simplified(item.0, expr_one()) &&
+      expr_same_simplified(item.1, expr_zero()) {
+      saw_zero_num = true
+    } else if expr_same_simplified(item.0, expr_one()) {
+      order = Some(item.1)
+    } else if expr_same_simplified(item.0, expr_int(-1)) &&
+      expr_same_simplified(item.1, expr_rat(1, 2)) {
+      saw_half_num = true
+    } else {
+      return None
+    }
+  }
+  let order = match order {
+    Some(v) if saw_zero_num && saw_half_num => v
+    _ => return None
+  }
+  if !expr_same_simplified(den_linears[0].0, expr_int(-1)) ||
+    !expr_same_simplified(den_linears[0].1, expr_add(order, expr_one())) {
+    return None
+  }
+  Some(order)
 }
 
 ///|
@@ -6686,14 +6757,6 @@ fn divide_by_pi_if_common(expr : Expr) -> Expr? {
         Some(expr_simplify(@symcore.add(reduced)))
       }
     }
-    _ => None
-  }
-}
-
-///|
-fn parse_pi_linear_cos_factor(expr : Expr, var_name : String) -> Expr? {
-  match parse_pi_linear_trig_factor(expr, var_name, "cos") {
-    Some((coeff, offset)) if coeff == 1 => Some(offset)
     _ => None
   }
 }
