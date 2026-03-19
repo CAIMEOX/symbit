@@ -5163,6 +5163,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_multiplicative_substitution_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_mellin_log_power_term(expr, s_sym, x) {
     Some(v) => return Some(v)
     None => ()
@@ -5411,6 +5415,81 @@ fn inverse_mellin_shifted_power_term(
   } else {
     None
   }
+}
+
+///|
+fn inverse_mellin_multiplicative_substitution_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let mut gamma_info : (Expr, Expr)? = None
+  let mut scale_info : (Expr, Expr)? = None
+  for factor in num_factors {
+    match parse_gamma_like_linear_arg(factor, s_name) {
+      Some(info) =>
+        if gamma_info is None {
+          gamma_info = Some(info)
+        } else {
+          return None
+        }
+      None =>
+        match expr_simplify(factor) {
+          @symcore.Expr::Pow(base, exp) if !expr_depends_on(base, s_name) =>
+            match parse_linear_offset_expr(exp, s_name) {
+              Some((coeff, offset)) if expr_same_simplified(offset, expr_zero()) =>
+                if scale_info is None {
+                  scale_info = Some((base, coeff))
+                } else {
+                  return None
+                }
+              _ => return None
+            }
+          _ => return None
+        }
+    }
+  }
+  let (gamma_coeff, gamma_offset) = match gamma_info {
+    Some(v) => v
+    None => return None
+  }
+  let (den_coeff, den_offset) = match split_linear_coeff(den, s_name) {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_same_simplified(den_coeff, expr_one()) ||
+    !expr_same_simplified(
+      expr_sub(gamma_offset, expr_one()),
+      expr_mul(den_offset, gamma_coeff),
+    ) {
+    return None
+  }
+  let scale = match scale_info {
+    Some((base, coeff)) =>
+      if expr_same_simplified(coeff, expr_mul(expr_neg_one(), gamma_coeff)) {
+        base
+      } else {
+        return None
+      }
+    None => expr_one()
+  }
+  let power = expr_simplify(expr_div(expr_one(), gamma_coeff))
+  let xpow = if expr_same_simplified(den_offset, expr_zero()) {
+    expr_one()
+  } else {
+    expr_pow(x, den_offset)
+  }
+  let exp_arg = expr_mul(expr_neg_one(), expr_mul(scale, expr_pow(x, power)))
+  Some(expr_simplify(expr_mul(xpow, @symelem.exp(exp_arg))))
 }
 
 ///|
@@ -6143,6 +6222,21 @@ fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
         Some(expr_simplify(@symcore.mul(coeff_factors)))
       }
     }
+    _ => None
+  }
+}
+
+///|
+fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("gamma", [arg]) =>
+      parse_linear_offset_expr(arg, var_name)
+    @symcore.Expr::Function("factorial", [arg]) =>
+      match parse_linear_offset_expr(arg, var_name) {
+        Some((coeff, offset)) =>
+          Some((coeff, expr_simplify(expr_add(offset, expr_one()))))
+        None => None
+      }
     _ => None
   }
 }

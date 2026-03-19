@@ -2045,6 +2045,51 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let exp_subst_input = @symcore.function("factorial", [
+      s * (a ^ @symcore.int(-1)),
+    ]) *
+    (b ^ (@symcore.int(-1) * s * (a ^ @symcore.int(-1)))) *
+    (s ^ @symcore.int(-1))
+  let exp_subst_inverse_opt = do_inverse_mellin_doit(exp_subst_input, s, x)
+  guard exp_subst_inverse_opt is Some(_) else {
+    fail(
+      "exp(-b*x**a) multiplicative substitution inverse stayed None for " +
+      @symprint.debug_repr(exp_subst_input),
+    )
+  }
+  let exp_subst_inverse = exp_subst_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(exp_subst_inverse) +
+      ") - sympy.exp(-sympy.Symbol('b')*sympy.Symbol('x')**sympy.Symbol('a'))))",
+    ),
+    "0",
+  )
+
+  let xpow_exp_subst_input = @symcore.function("factorial", [
+      a * (b ^ @symcore.int(-1)) + s * (b ^ @symcore.int(-1)),
+    ]) *
+    ((a + s) ^ @symcore.int(-1))
+  let xpow_exp_subst_inverse_opt = do_inverse_mellin_doit(
+    xpow_exp_subst_input, s, x,
+  )
+  guard xpow_exp_subst_inverse_opt is Some(_) else {
+    fail(
+      "x**a*exp(-x**b) multiplicative substitution inverse stayed None for " +
+      @symprint.debug_repr(xpow_exp_subst_input),
+    )
+  }
+  let xpow_exp_subst_inverse = xpow_exp_subst_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(xpow_exp_subst_inverse) +
+      ") - (sympy.Symbol('x')**sympy.Symbol('a')*sympy.exp(-sympy.Symbol('x')**sympy.Symbol('b')))))",
+    ),
+    "0",
+  )
 }
 
 ///|

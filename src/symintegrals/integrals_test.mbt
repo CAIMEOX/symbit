@@ -1195,6 +1195,25 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_exp_subst = doit(
+    inverse_mellin_transform(
+      @symcore.function("factorial", [s * (a ^ @symcore.int(-1))]) *
+      (b ^ (@symcore.int(-1) * s * (a ^ @symcore.int(-1)))) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_xpow_exp_subst = doit(
+    inverse_mellin_transform(
+      @symcore.function("factorial", [
+        a * (b ^ @symcore.int(-1)) + s * (b ^ @symcore.int(-1)),
+      ]) *
+      ((a + s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1367,6 +1386,20 @@ test "symintegrals Mellin special-function rules evaluate" {
       "besselj(a, sqrt(x))*besselj(b, sqrt(x)) inverse Mellin stayed unevaluated",
     )
   }
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_exp_subst),
+      @symsimplify.simplify(@symelem.exp(@symcore.int(-1) * b * (x ^ a))),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_xpow_exp_subst),
+      @symsimplify.simplify((x ^ a) * @symelem.exp(@symcore.int(-1) * (x ^ b))),
+    ),
+    0,
+  )
 }
 
 ///|
