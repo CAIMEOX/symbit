@@ -1118,6 +1118,49 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_besselj = doit(
+    inverse_mellin_transform(
+      @symspec.gamma(s + a * half) *
+      (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_besselk = doit(
+    inverse_mellin_transform(
+      half * @symspec.gamma(s - a * half) * @symspec.gamma(s + a * half),
+      s,
+      x,
+    ),
+  )
+  let inv_sin_besselj = doit(
+    inverse_mellin_transform(
+      (@symcore.int(2) ^ a) *
+      @symspec.gamma(half - @symcore.int(2) * s) *
+      @symspec.gamma(s + (a + @symcore.int(1)) * half) *
+      (@symspec.gamma(@symcore.int(1) - s - a * half) ^ @symcore.int(-1)) *
+      (
+        @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s + a) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let inv_cos_besselj = doit(
+    inverse_mellin_transform(
+      (@symcore.int(2) ^ a) *
+      @symspec.gamma(a * half + s) *
+      @symspec.gamma(half - @symcore.int(2) * s) *
+      (@symspec.gamma(half - s - a * half) ^ @symcore.int(-1)) *
+      (
+        @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s + a) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1265,6 +1308,18 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
     0,
   )
+  guard !@symprint.to_string(inv_besselj).contains("InverseMellinTransform") else {
+    fail("besselj inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_besselk).contains("InverseMellinTransform") else {
+    fail("besselk inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_sin_besselj).contains("InverseMellinTransform") else {
+    fail("sin(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform") else {
+    fail("cos(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
 }
 
 ///|

@@ -5171,6 +5171,14 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_bessel_single_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_mellin_trig_besselj_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let erf_sqrt_formula = expr_div(
     expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
     expr_mul(sqrt_pi(), s_sym),
@@ -5518,6 +5526,473 @@ fn inverse_mellin_piecewise_log_term(
     )
   }
   None
+}
+
+///|
+fn inverse_mellin_bessel_single_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  match inverse_mellin_besselj_single_term(expr, s_sym, x) {
+    Some(v) => Some(v)
+    None => inverse_mellin_besselk_single_term(expr, s_sym, x)
+  }
+}
+
+///|
+fn inverse_mellin_trig_besselj_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let simplified = expr_simplify(expr)
+  let factors = match simplified {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let gamma_num_args : Array[Expr] = []
+  let gamma_den_args : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_num_args.push(arg)
+      @symcore.Expr::Pow(@symcore.Expr::Function("gamma", [arg]), exp) =>
+        if expr_eq(exp, expr_int(-1)) {
+          gamma_den_args.push(arg)
+        } else {
+          return None
+        }
+      other =>
+        if expr_depends_on(other, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, other)
+        }
+    }
+  }
+  if gamma_num_args.length() != 2 || gamma_den_args.length() != 2 {
+    return None
+  }
+  let order = match parse_power_of_two(coeff, s_name) {
+    Some(v) => v
+    None => return None
+  }
+  let num_linears : Array[(Expr, Expr)] = []
+  let den_linears : Array[(Expr, Expr)] = []
+  for arg in gamma_num_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => num_linears.push(info)
+      None => return None
+    }
+  }
+  for arg in gamma_den_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => den_linears.push(info)
+      None => return None
+    }
+  }
+  if has_linear_offset(num_linears, expr_int(-2), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(expr_mul(expr_int(2), offset)),
+        expr_one(),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(num_linears, expr_one(), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(expr_mul(expr_int(2), offset)),
+        expr_simplify(expr_add(order, expr_one())),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(offset),
+        expr_simplify(expr_sub(expr_one(), expr_mul(expr_rat(1, 2), order))),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(den_linears, expr_int(-2), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(offset),
+        expr_simplify(expr_add(order, expr_one())),
+      ) ==
+      0
+    }) {
+    return Some(
+      expr_simplify(
+        expr_mul(
+          @symelem.sin(@symelem.sqrt(x)),
+          @symspec.besselj(order, @symelem.sqrt(x)),
+        ),
+      ),
+    )
+  }
+  if has_linear_offset(num_linears, expr_int(-2), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(expr_mul(expr_int(2), offset)),
+        expr_one(),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(num_linears, expr_one(), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(expr_mul(expr_int(2), offset)),
+        expr_simplify(order),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(den_linears, expr_int(-1), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(offset),
+        expr_simplify(expr_sub(expr_rat(1, 2), expr_mul(expr_rat(1, 2), order))),
+      ) ==
+      0
+    }) &&
+    has_linear_offset(den_linears, expr_int(-2), fn(offset) {
+      @symcore.compare_expr(
+        expr_simplify(offset),
+        expr_simplify(expr_add(order, expr_one())),
+      ) ==
+      0
+    }) {
+    return Some(
+      expr_simplify(
+        expr_mul(
+          @symelem.cos(@symelem.sqrt(x)),
+          @symspec.besselj(order, @symelem.sqrt(x)),
+        ),
+      ),
+    )
+  }
+  None
+}
+
+///|
+fn inverse_mellin_besselj_single_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let simplified = expr_simplify(expr)
+  let factors = match simplified {
+    @symcore.Expr::Mul(args) if args.length() == 2 => args
+    _ => return None
+  }
+  let mut gamma_num : Expr? = None
+  let mut gamma_den : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) =>
+        if gamma_num is None {
+          gamma_num = Some(arg)
+        } else {
+          return None
+        }
+      @symcore.Expr::Pow(@symcore.Expr::Function("gamma", [arg]), exp) =>
+        if expr_eq(exp, expr_int(-1)) && gamma_den is None {
+          gamma_den = Some(arg)
+        } else {
+          return None
+        }
+      _ => return None
+    }
+  }
+  match (gamma_num, gamma_den) {
+    (Some(num_arg), Some(den_arg)) =>
+      match
+        (
+          parse_unit_linear_offset(num_arg, s_name),
+          parse_unit_linear_offset(den_arg, s_name),
+        ) {
+        (Some((1, num_offset)), Some((-1, den_offset))) =>
+          if !expr_eq(
+              expr_simplify(expr_sub(den_offset, num_offset)),
+              expr_one(),
+            ) {
+            None
+          } else {
+            let order = expr_simplify(expr_mul(expr_int(2), num_offset))
+            if expr_depends_on(order, s_name) {
+              None
+            } else {
+              Some(@symspec.besselj(order, expr_int(2) * @symelem.sqrt(x)))
+            }
+          }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_mellin_besselk_single_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let simplified = expr_simplify(expr)
+  let factors = match simplified {
+    @symcore.Expr::Mul(args) if args.length() == 3 => args
+    @symcore.Expr::Mul(args) if args.length() == 2 => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let gamma_args : Array[Expr] = []
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_args.push(arg)
+      other =>
+        if expr_depends_on(other, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, other)
+        }
+    }
+  }
+  if !expr_eq(expr_simplify(coeff), expr_rat(1, 2)) || gamma_args.length() != 2 {
+    return None
+  }
+  match
+    (
+      parse_unit_linear_offset(gamma_args[0], s_name),
+      parse_unit_linear_offset(gamma_args[1], s_name),
+    ) {
+    (Some((1, offset1)), Some((1, offset2))) =>
+      if !expr_eq(expr_simplify(expr_add(offset1, offset2)), expr_zero()) {
+        None
+      } else {
+        let order = expr_simplify(expr_sub(offset2, offset1))
+        if expr_depends_on(order, s_name) {
+          None
+        } else {
+          Some(@symspec.besselk(order, expr_int(2) * @symelem.sqrt(x)))
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_unit_linear_offset(expr : Expr, var_name : String) -> (Int, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) => {
+      let mut sign : Int? = None
+      let offset_terms : Array[Expr] = []
+      for arg in args {
+        match parse_unit_linear_var_term(arg, var_name) {
+          Some(term_sign) =>
+            if sign is None {
+              sign = Some(term_sign)
+            } else {
+              return None
+            }
+          None =>
+            if expr_depends_on(arg, var_name) {
+              return None
+            } else {
+              offset_terms.push(arg)
+            }
+        }
+      }
+      match sign {
+        Some(term_sign) =>
+          if offset_terms.is_empty() {
+            Some((term_sign, expr_zero()))
+          } else {
+            Some((term_sign, expr_simplify(@symcore.add(offset_terms))))
+          }
+        None => None
+      }
+    }
+    simplified =>
+      match parse_unit_linear_var_term(simplified, var_name) {
+        Some(term_sign) => Some((term_sign, expr_zero()))
+        None => None
+      }
+  }
+}
+
+///|
+fn parse_linear_offset_expr(expr : Expr, var_name : String) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) => {
+      let mut coeff : Expr? = None
+      let offset_terms : Array[Expr] = []
+      for arg in args {
+        match parse_linear_var_coeff(arg, var_name) {
+          Some(term_coeff) =>
+            if coeff is None {
+              coeff = Some(term_coeff)
+            } else {
+              return None
+            }
+          None =>
+            if expr_depends_on(arg, var_name) {
+              return None
+            } else {
+              offset_terms.push(arg)
+            }
+        }
+      }
+      match coeff {
+        Some(term_coeff) =>
+          if offset_terms.is_empty() {
+            Some((expr_simplify(term_coeff), expr_zero()))
+          } else {
+            Some(
+              (
+                expr_simplify(term_coeff),
+                expr_simplify(@symcore.add(offset_terms)),
+              ),
+            )
+          }
+        None => None
+      }
+    }
+    simplified =>
+      match parse_linear_var_coeff(simplified, var_name) {
+        Some(term_coeff) => Some((expr_simplify(term_coeff), expr_zero()))
+        None => None
+      }
+  }
+}
+
+///|
+fn parse_linear_var_coeff(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Symbol(name) =>
+      if name == var_name {
+        Some(expr_one())
+      } else {
+        None
+      }
+    @symcore.Expr::Mul(args) => {
+      let mut saw_var = false
+      let coeff_factors : Array[Expr] = []
+      for arg in args {
+        match expr_simplify(arg) {
+          @symcore.Expr::Symbol(name) =>
+            if name == var_name {
+              if saw_var {
+                return None
+              }
+              saw_var = true
+            } else {
+              return None
+            }
+          simplified =>
+            if expr_depends_on(simplified, var_name) {
+              return None
+            } else {
+              coeff_factors.push(simplified)
+            }
+        }
+      }
+      if !saw_var {
+        None
+      } else if coeff_factors.is_empty() {
+        Some(expr_one())
+      } else {
+        Some(expr_simplify(@symcore.mul(coeff_factors)))
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_unit_linear_var_term(expr : Expr, var_name : String) -> Int? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Symbol(name) => if name == var_name { Some(1) } else { None }
+    @symcore.Expr::Mul(args) => {
+      let mut saw_var = false
+      let coeff_factors : Array[Expr] = []
+      for arg in args {
+        match expr_simplify(arg) {
+          @symcore.Expr::Symbol(name) =>
+            if name == var_name {
+              if saw_var {
+                return None
+              }
+              saw_var = true
+            } else {
+              return None
+            }
+          simplified =>
+            if expr_depends_on(simplified, var_name) {
+              return None
+            } else {
+              coeff_factors.push(simplified)
+            }
+        }
+      }
+      if !saw_var {
+        None
+      } else {
+        let coeff = if coeff_factors.is_empty() {
+          expr_one()
+        } else {
+          expr_simplify(@symcore.mul(coeff_factors))
+        }
+        if expr_eq(coeff, expr_one()) {
+          Some(1)
+        } else if expr_eq(coeff, expr_int(-1)) {
+          Some(-1)
+        } else {
+          None
+        }
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn has_linear_offset(
+  args : Array[(Expr, Expr)],
+  target_coeff : Expr,
+  check_offset : (Expr) -> Bool,
+) -> Bool {
+  for item in args {
+    if expr_eq(item.0, target_coeff) && check_offset(item.1) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn parse_power_of_two(expr : Expr, var_name : String) -> Expr? {
+  let simplified = expr_simplify(expr)
+  if expr_depends_on(simplified, var_name) {
+    return None
+  }
+  if expr_eq(simplified, expr_one()) {
+    return Some(expr_zero())
+  }
+  match simplified {
+    @symcore.Expr::Pow(base, exp) =>
+      if expr_eq(base, expr_int(2)) && !expr_depends_on(exp, var_name) {
+        Some(exp)
+      } else {
+        None
+      }
+    _ => None
+  }
 }
 
 ///|

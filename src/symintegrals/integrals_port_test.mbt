@@ -1887,6 +1887,93 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let besselj_input = @symspec.gamma(s + a * half) *
+    (@symspec.gamma(@symcore.int(1) - s + a * half) ^ @symcore.int(-1))
+  let besselj_inverse_opt = do_inverse_mellin_doit(besselj_input, s, x)
+  guard besselj_inverse_opt is Some(_) else {
+    fail(
+      "besselj inverse stayed None for " + @symprint.debug_repr(besselj_input),
+    )
+  }
+  let besselj_inverse = besselj_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselj_inverse) +
+      ") - sympy.besselj(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let besselk_input = half *
+    @symspec.gamma(s - a * half) *
+    @symspec.gamma(s + a * half)
+  let besselk_inverse_opt = do_inverse_mellin_doit(besselk_input, s, x)
+  guard besselk_inverse_opt is Some(_) else {
+    fail(
+      "besselk inverse stayed None for " + @symprint.debug_repr(besselk_input),
+    )
+  }
+  let besselk_inverse = besselk_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselk_inverse) +
+      ") - sympy.besselk(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let sin_besselj_input = (@symcore.int(2) ^ a) *
+    @symspec.gamma(half - @symcore.int(2) * s) *
+    @symspec.gamma(s + (a + @symcore.int(1)) * half) *
+    (@symspec.gamma(@symcore.int(1) - s - a * half) ^ @symcore.int(-1)) *
+    (
+      @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s + a) ^
+      @symcore.int(-1)
+    )
+  let sin_besselj_inverse_opt = do_inverse_mellin_doit(sin_besselj_input, s, x)
+  guard sin_besselj_inverse_opt is Some(_) else {
+    fail(
+      "sin*besselj inverse stayed None for " +
+      @symprint.debug_repr(sin_besselj_input),
+    )
+  }
+  let sin_besselj_inverse = sin_besselj_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(sin_besselj_inverse) +
+      ") - sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
+
+  let cos_besselj_input = (@symcore.int(2) ^ a) *
+    @symspec.gamma(a * half + s) *
+    @symspec.gamma(half - @symcore.int(2) * s) *
+    (@symspec.gamma(half - s - a * half) ^ @symcore.int(-1)) *
+    (
+      @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s + a) ^
+      @symcore.int(-1)
+    )
+  let cos_besselj_inverse_opt = do_inverse_mellin_doit(cos_besselj_input, s, x)
+  guard cos_besselj_inverse_opt is Some(_) else {
+    fail(
+      "cos*besselj inverse stayed None for " +
+      @symprint.debug_repr(cos_besselj_input),
+    )
+  }
+  let cos_besselj_inverse = cos_besselj_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(cos_besselj_inverse) +
+      ") - sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
 }
 
 ///|
