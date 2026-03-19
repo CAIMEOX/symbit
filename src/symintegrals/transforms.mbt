@@ -5187,6 +5187,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_besselj_bessely_product_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   let erf_sqrt_formula = expr_div(
     expr_mul(expr_neg_one(), @symspec.gamma(expr_add(s_sym, expr_rat(1, 2)))),
     expr_mul(sqrt_pi(), s_sym),
@@ -5861,6 +5865,105 @@ fn inverse_mellin_besselj_product_term(
 }
 
 ///|
+fn inverse_mellin_besselj_bessely_product_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let mut s_scale = expr_one()
+  let mut trig_shift : Expr? = None
+  let gamma_num_args : Array[Expr] = []
+  let gamma_den_args : Array[Expr] = []
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_num_args.push(arg)
+      @symcore.Expr::Pow(@symcore.Expr::Function("gamma", [arg]), exp) =>
+        if expr_eq(exp, expr_int(-1)) {
+          gamma_den_args.push(arg)
+        } else {
+          return None
+        }
+      @symcore.Expr::Function("cos", _) =>
+        match parse_pi_linear_cos_factor(factor, s_name) {
+          Some(shift) =>
+            if trig_shift is None {
+              trig_shift = Some(shift)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      @symcore.Expr::Pow(base, exp) =>
+        if expr_eq(exp, s_sym) && !expr_depends_on(base, s_name) {
+          s_scale = expr_mul(s_scale, factor)
+        } else if expr_depends_on(factor, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, factor)
+        }
+      other =>
+        if expr_depends_on(other, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, other)
+        }
+    }
+  }
+  if gamma_num_args.length() != 3 || gamma_den_args.length() != 2 {
+    return None
+  }
+  if !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
+    !expr_same_simplified(
+      coeff,
+      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
+    ) {
+    return None
+  }
+  let trig_shift = match trig_shift {
+    Some(v) => v
+    None => return None
+  }
+  let num_linears : Array[(Expr, Expr)] = []
+  let den_linears : Array[(Expr, Expr)] = []
+  for arg in gamma_num_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => num_linears.push(info)
+      None => return None
+    }
+  }
+  for arg in gamma_den_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => den_linears.push(info)
+      None => return None
+    }
+  }
+  match
+    inverse_mellin_general_besselj_bessely_product(
+      num_linears, den_linears, trig_shift,
+    ) {
+    Some((order_j, order_y)) =>
+      Some(
+        expr_simplify(
+          expr_mul(
+            @symspec.besselj(order_j, @symelem.sqrt(x)),
+            @symspec.bessely(order_y, @symelem.sqrt(x)),
+          ),
+        ),
+      )
+    None => None
+  }
+}
+
+///|
 fn inverse_mellin_same_order_besselj_product(
   num_linears : Array[(Expr, Expr)],
   den_linears : Array[(Expr, Expr)],
@@ -5981,6 +6084,72 @@ fn inverse_mellin_general_besselj_product(
     (
       expr_simplify(expr_add(half_sum, diff_half)),
       expr_simplify(expr_sub(half_sum, diff_half)),
+    ),
+  )
+}
+
+///|
+fn inverse_mellin_general_besselj_bessely_product(
+  num_linears : Array[(Expr, Expr)],
+  den_linears : Array[(Expr, Expr)],
+  trig_shift : Expr,
+) -> (Expr, Expr)? {
+  if num_linears.length() != 3 || den_linears.length() != 2 {
+    return None
+  }
+  let mut half_diff : Expr? = None
+  let mut half_sum : Expr? = None
+  let mut saw_gamma_one_minus_2s = false
+  for item in num_linears {
+    if expr_same_simplified(item.0, expr_int(-2)) &&
+      expr_same_simplified(item.1, expr_one()) {
+      saw_gamma_one_minus_2s = true
+    } else if expr_same_simplified(item.0, expr_one()) {
+      if half_diff is None {
+        half_diff = Some(item.1)
+      } else if half_sum is None {
+        half_sum = Some(item.1)
+      } else {
+        return None
+      }
+    } else {
+      return None
+    }
+  }
+  let half_diff = match half_diff {
+    Some(v) if saw_gamma_one_minus_2s => v
+    _ => return None
+  }
+  let half_sum = match half_sum {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_same_simplified(trig_shift, half_diff) {
+    return None
+  }
+  let expected_den1 = expr_simplify(expr_add(expr_one(), half_diff))
+  let expected_den2 = expr_simplify(expr_add(expr_one(), half_sum))
+  let mut saw_diff_den = false
+  let mut saw_sum_den = false
+  for item in den_linears {
+    if !expr_same_simplified(item.0, expr_int(-1)) {
+      return None
+    }
+    if expr_same_simplified(item.1, expected_den1) {
+      saw_diff_den = true
+    } else if expr_same_simplified(item.1, expected_den2) {
+      saw_sum_den = true
+    } else {
+      return None
+    }
+  }
+  if !saw_diff_den || !saw_sum_den {
+    return None
+  }
+  Some(
+    (
+      expr_simplify(expr_add(half_sum, half_diff)),
+      expr_simplify(expr_sub(half_sum, half_diff)),
     ),
   )
 }
@@ -6235,6 +6404,66 @@ fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? 
       match parse_linear_offset_expr(arg, var_name) {
         Some((coeff, offset)) =>
           Some((coeff, expr_simplify(expr_add(offset, expr_one()))))
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn divide_by_pi_if_common(expr : Expr) -> Expr? {
+  let pi = @symcore.symbol("pi")
+  match expr_simplify(expr) {
+    @symcore.Expr::Symbol(name) if name == "pi" => Some(expr_one())
+    @symcore.Expr::Mul(args) => {
+      let rest : Array[Expr] = []
+      let mut removed = false
+      for arg in args {
+        if !removed && expr_same_simplified(arg, pi) {
+          removed = true
+        } else {
+          rest.push(arg)
+        }
+      }
+      if !removed {
+        None
+      } else if rest.is_empty() {
+        Some(expr_one())
+      } else if rest.length() == 1 {
+        Some(rest[0])
+      } else {
+        Some(expr_simplify(@symcore.mul(rest)))
+      }
+    }
+    @symcore.Expr::Add(args) => {
+      let reduced : Array[Expr] = []
+      for arg in args {
+        match divide_by_pi_if_common(arg) {
+          Some(v) => reduced.push(v)
+          None => return None
+        }
+      }
+      if reduced.length() == 1 {
+        Some(reduced[0])
+      } else {
+        Some(expr_simplify(@symcore.add(reduced)))
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_pi_linear_cos_factor(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Function("cos", [arg]) =>
+      match divide_by_pi_if_common(arg) {
+        Some(linear_arg) =>
+          match parse_linear_offset_expr(linear_arg, var_name) {
+            Some((coeff, offset)) if expr_same_simplified(coeff, expr_one()) =>
+              Some(offset)
+            _ => None
+          }
         None => None
       }
     _ => None

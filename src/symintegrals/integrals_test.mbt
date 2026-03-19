@@ -1195,6 +1195,21 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_besselj_bessely = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      (@symcore.symbol("pi") ^ @symcore.int(-1)) *
+      (@symcore.int(4) ^ s) *
+      @symelem.cos(@symcore.symbol("pi") * ((a - b) * half + s)) *
+      @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s) *
+      @symspec.gamma((a - b) * half + s) *
+      @symspec.gamma((a + b) * half + s) *
+      (@symspec.gamma(@symcore.int(1) + (a - b) * half - s) ^ @symcore.int(-1)) *
+      (@symspec.gamma(@symcore.int(1) + (a + b) * half - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
   let inv_exp_subst = doit(
     inverse_mellin_transform(
       @symcore.function("factorial", [s * (a ^ @symcore.int(-1))]) *
@@ -1385,6 +1400,17 @@ test "symintegrals Mellin special-function rules evaluate" {
     fail(
       "besselj(a, sqrt(x))*besselj(b, sqrt(x)) inverse Mellin stayed unevaluated",
     )
+  }
+  guard !@symprint.to_string(inv_besselj_bessely).contains(
+    "InverseMellinTransform",
+  ) else {
+    fail(
+      "besselj(a, sqrt(x))*bessely(b, sqrt(x)) inverse Mellin stayed unevaluated",
+    )
+  }
+  guard @symprint.to_string(inv_besselj_bessely).contains("besselj") &&
+    @symprint.to_string(inv_besselj_bessely).contains("bessely") else {
+    fail("besselj*bessely inverse Mellin did not land on direct Bessel objects")
   }
   assert_eq(
     @symcore.compare_expr(
