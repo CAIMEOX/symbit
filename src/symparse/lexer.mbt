@@ -24,22 +24,61 @@ fn is_ascii_digit_at(src : String, index : Int) -> Bool {
 ///|
 fn scan_number(src : String, start : Int) -> (TokenKind, Int) {
   let mut i = start
+  let mut has_dot = false
+  if char_at(src, i) is Some('.') {
+    has_dot = true
+    i += 1
+  }
   while is_ascii_digit_at(src, i) {
     i += 1
   }
-  if is_ascii_digit_at(src, i + 1) {
-    match char_at(src, i) {
-      Some('.') => {
-        i += 1
-        while is_ascii_digit_at(src, i) {
-          i += 1
-        }
-        (TokenKind::DecimalLit(src.unsafe_substring(start~, end=i)), i)
-      }
-      _ => (TokenKind::IntLit(src.unsafe_substring(start~, end=i)), i)
+  if char_at(src, i) is Some('.') {
+    has_dot = true
+    i += 1
+    while is_ascii_digit_at(src, i) {
+      i += 1
     }
+  }
+  if has_dot && char_at(src, i) is Some('[') {
+    let mut j = i + 1
+    while is_ascii_digit_at(src, j) {
+      j += 1
+    }
+    if j > i + 1 && char_at(src, j) is Some(']') {
+      i = j + 1
+    }
+  }
+  if has_dot {
+    (TokenKind::DecimalLit(src.unsafe_substring(start~, end=i)), i)
   } else {
     (TokenKind::IntLit(src.unsafe_substring(start~, end=i)), i)
+  }
+}
+
+///|
+fn starts_decimal(src : String, index : Int) -> Bool {
+  match char_at(src, index) {
+    Some('.') => is_ascii_digit_at(src, index + 1)
+    _ => false
+  }
+}
+
+///|
+fn decimal_parts(text : String) -> (String, String, String) {
+  match text.split_once(".") {
+    Some((whole, frac_part)) =>
+      match frac_part.to_string().split_once("[") {
+        Some((nonrepeat, repeat_part)) =>
+          (
+            whole.to_string(),
+            nonrepeat.to_string(),
+            repeat_part
+            .to_string()
+            .unsafe_substring(start=0, end=repeat_part.length() - 1),
+          )
+        None => (whole.to_string(), frac_part.to_string(), "")
+      }
+    None => (text, "", "")
   }
 }
 
@@ -79,6 +118,7 @@ pub fn lex(src : String) -> Array[Token] raise ParseError {
       ')' => (TokenKind::RParen, index + 1)
       ',' => (TokenKind::Comma, index + 1)
       '^' => (TokenKind::Caret, index + 1)
+      '!' => (TokenKind::Bang, index + 1)
       '<' =>
         match char_at(src, index + 1) {
           Some('=') => (TokenKind::Le, index + 2)
@@ -99,6 +139,7 @@ pub fn lex(src : String) -> Array[Token] raise ParseError {
           Some('*') => (TokenKind::Pow, index + 2)
           _ => (TokenKind::Star, index + 1)
         }
+      '.' if starts_decimal(src, index) => scan_number(src, start)
       ch if ch.is_ascii_digit() => scan_number(src, start)
       ch if is_ident_start(ch) => scan_ident(src, start)
       other =>

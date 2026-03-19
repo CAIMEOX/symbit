@@ -9,6 +9,7 @@ pub enum TokenKind {
   Slash
   Pow
   Caret
+  Bang
   LParen
   RParen
   Comma
@@ -44,6 +45,7 @@ pub fn token_kind_name(kind : TokenKind) -> String {
     TokenKind::Slash => "`/`"
     TokenKind::Pow => "`**`"
     TokenKind::Caret => "`^`"
+    TokenKind::Bang => "`!`"
     TokenKind::LParen => "`(`"
     TokenKind::RParen => "`)`"
     TokenKind::Comma => "`,`"
@@ -65,8 +67,7 @@ fn token_tag_eq(lhs : TokenKind, rhs : TokenKind) -> Bool {
 ///|
 fn token_is_compare(kind : TokenKind) -> Bool {
   match kind {
-    TokenKind::Eq
-    | TokenKind::EqEq
+    TokenKind::EqEq
     | TokenKind::Lt
     | TokenKind::Le
     | TokenKind::Gt

@@ -16,6 +16,7 @@ pub enum BinaryOp {
 ///|
 pub enum CompareOp {
   Eq
+  EqEq
   Lt
   Le
   Gt
@@ -50,17 +51,58 @@ pub fn ast_span(ast : Ast) -> Span {
 pub struct ParseOptions {
   caret_as_power : Bool
   evaluate : Bool
+  implicit_multiplication : Bool
+  implicit_application : Bool
+  factorial_notation : Bool
+  convert_equals_signs : Bool
 } derive(Eq, Show)
 
 ///|
+pub struct ParseContext {
+  callable_names : Array[String]
+  bindings : Map[String, @symcore.Expr]
+} derive(Eq)
+
+///|
 pub fn default_parse_options() -> ParseOptions {
-  ParseOptions::{ caret_as_power: true, evaluate: true }
+  ParseOptions::{
+    caret_as_power: true,
+    evaluate: true,
+    implicit_multiplication: false,
+    implicit_application: false,
+    factorial_notation: false,
+    convert_equals_signs: false,
+  }
+}
+
+///|
+pub fn default_parse_context() -> ParseContext {
+  ParseContext::{ callable_names: [], bindings: {} }
+}
+
+///|
+pub fn parse_context(
+  callable_names? : Array[String] = [],
+  bindings? : Map[String, @symcore.Expr] = {},
+) -> ParseContext {
+  ParseContext::{ callable_names, bindings }
 }
 
 ///|
 pub fn parse_options(
   caret_as_power? : Bool = true,
   evaluate? : Bool = true,
+  implicit_multiplication? : Bool = false,
+  implicit_application? : Bool = false,
+  factorial_notation? : Bool = false,
+  convert_equals_signs? : Bool = false,
 ) -> ParseOptions {
-  ParseOptions::{ caret_as_power, evaluate }
+  ParseOptions::{
+    caret_as_power,
+    evaluate,
+    implicit_multiplication,
+    implicit_application,
+    factorial_notation,
+    convert_equals_signs,
+  }
 }

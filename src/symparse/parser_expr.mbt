@@ -2,12 +2,17 @@
 priv struct Parser {
   tokens : Array[Token]
   options : ParseOptions
+  context : ParseContext
   mut index : Int
 }
 
 ///|
-fn parser(tokens : Array[Token], options : ParseOptions) -> Parser {
-  Parser::{ tokens, options, index: 0 }
+fn parser(
+  tokens : Array[Token],
+  options : ParseOptions,
+  context : ParseContext,
+) -> Parser {
+  Parser::{ tokens, options, context, index: 0 }
 }
 
 ///|
@@ -78,12 +83,95 @@ fn binary_info(
 ///|
 fn compare_op(kind : TokenKind) -> CompareOp? {
   match kind {
-    TokenKind::Eq | TokenKind::EqEq => Some(CompareOp::Eq)
+    TokenKind::EqEq => Some(CompareOp::EqEq)
     TokenKind::Lt => Some(CompareOp::Lt)
     TokenKind::Le => Some(CompareOp::Le)
     TokenKind::Gt => Some(CompareOp::Gt)
     TokenKind::Ge => Some(CompareOp::Ge)
     _ => None
+  }
+}
+
+///|
+fn token_can_start_primary(kind : TokenKind) -> Bool {
+  match kind {
+    TokenKind::IntLit(_)
+    | TokenKind::DecimalLit(_)
+    | TokenKind::Ident(_)
+    | TokenKind::LParen => true
+    _ => false
+  }
+}
+
+///|
+fn is_builtin_callable_name(name : String) -> Bool {
+  match name {
+    "sin"
+    | "cos"
+    | "tan"
+    | "cot"
+    | "sec"
+    | "csc"
+    | "asin"
+    | "acos"
+    | "atan"
+    | "sinh"
+    | "cosh"
+    | "tanh"
+    | "asinh"
+    | "acosh"
+    | "atanh"
+    | "exp"
+    | "log"
+    | "sqrt"
+    | "Abs"
+    | "factorial"
+    | "gamma"
+    | "erf"
+    | "erfc"
+    | "Ei"
+    | "Si"
+    | "Ci"
+    | "Shi"
+    | "Chi"
+    | "besselj"
+    | "bessely"
+    | "besseli"
+    | "besselk"
+    | "Min"
+    | "Max" => true
+    _ => false
+  }
+}
+
+///|
+fn context_has_callable_name(context : ParseContext, name : String) -> Bool {
+  for callable_name in context.callable_names {
+    if callable_name == name {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn context_has_binding(context : ParseContext, name : String) -> Bool {
+  context.bindings.get(name) is Some(_)
+}
+
+///|
+fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
+  match ast {
+    Ast::Symbol(span~, name) => {
+      ignore(span)
+      if context_has_binding(context, name) {
+        context_has_callable_name(context, name)
+      } else {
+        is_builtin_callable_name(name) ||
+        context_has_callable_name(context, name)
+      }
+    }
+    _ => false
   }
 }
 
@@ -141,12 +229,56 @@ fn Parser::parse_group_or_tuple(
 }
 
 ///|
+fn Parser::should_parse_explicit_call(self : Parser, callee : Ast) -> Bool {
+  if !token_tag_eq(self.peek().kind, TokenKind::LParen) {
+    return false
+  }
+  if !self.options.implicit_multiplication {
+    return true
+  }
+  ast_is_known_callable(callee, self.context)
+}
+
+///|
+fn Parser::should_parse_implicit_application(
+  self : Parser,
+  callee : Ast,
+) -> Bool {
+  self.options.implicit_application &&
+  ast_is_known_callable(callee, self.context) &&
+  token_can_start_primary(self.peek().kind)
+}
+
+///|
+fn Parser::should_parse_implicit_multiplication(
+  self : Parser,
+  min_prec : Int,
+) -> Bool {
+  self.options.implicit_multiplication &&
+  20 >= min_prec &&
+  token_can_start_primary(self.peek().kind)
+}
+
+///|
 fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
   let mut expr = base
-  while token_tag_eq(self.peek().kind, TokenKind::LParen) {
-    let args = self.parse_call_args()
-    let end_span = self.tokens[self.index - 1].span
-    expr = Ast::Call(span=span_merge(ast_span(expr), end_span), expr, args)
+  while true {
+    if self.should_parse_explicit_call(expr) {
+      let args = self.parse_call_args()
+      let end_span = self.tokens[self.index - 1].span
+      expr = Ast::Call(span=span_merge(ast_span(expr), end_span), expr, args)
+    } else if self.options.factorial_notation &&
+      self.match_kind(TokenKind::Bang) is Some(tok) {
+      let callee = Ast::Symbol(span=tok.span, "factorial")
+      expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
+    } else if self.should_parse_implicit_application(expr) {
+      let arg = self.parse_binary(20)
+      expr = Ast::Call(span=span_merge(ast_span(expr), ast_span(arg)), expr, [
+        arg,
+      ])
+    } else {
+      return expr
+    }
   }
   expr
 }
@@ -210,6 +342,15 @@ fn Parser::parse_binary(self : Parser, min_prec : Int) -> Ast raise ParseError {
           rhs,
         )
       }
+      _ if self.should_parse_implicit_multiplication(min_prec) => {
+        let rhs = self.parse_binary(21)
+        lhs = Ast::Binary(
+          span=span_merge(ast_span(lhs), ast_span(rhs)),
+          BinaryOp::Mul,
+          lhs,
+          rhs,
+        )
+      }
       _ => return lhs
     }
   }
@@ -250,9 +391,31 @@ pub fn parse_ast_with(
   src : String,
   options : ParseOptions,
 ) -> Ast raise ParseError {
-  let p = parser(lex(src), options)
+  parse_ast_in(src, options, default_parse_context())
+}
+
+///|
+pub fn parse_ast_in(
+  src : String,
+  options : ParseOptions,
+  context : ParseContext,
+) -> Ast raise ParseError {
+  let p = parser(lex(src), options, context)
   let expr = p.parse_compare()
   match p.peek().kind {
+    TokenKind::Eq if options.convert_equals_signs => {
+      ignore(p.advance())
+      let rhs = p.parse_compare()
+      match p.peek().kind {
+        TokenKind::Eof =>
+          Ast::Compare(
+            span=span_merge(ast_span(expr), ast_span(rhs)),
+            [expr, rhs],
+            [CompareOp::Eq],
+          )
+        _ => raise unexpected_token(p.peek(), "end of input")
+      }
+    }
     TokenKind::Eof => expr
     _ => raise unexpected_token(p.peek(), "end of input")
   }
