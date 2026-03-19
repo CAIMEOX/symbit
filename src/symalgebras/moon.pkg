@@ -5,5 +5,4 @@ import {
 }
 
 import {
-  "CAIMEOX/symbit/sympy/algebras" @sympy_algebras,
 } for "test"

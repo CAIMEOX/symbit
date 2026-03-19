@@ -2,3 +2,8 @@ import {
   "CAIMEOX/symbit/sympy" @sympy,
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "moonbitlang/core/bigint",
+  "CAIMEOX/symbit/symntheory" @symntheory,
+} for "test"

@@ -3,3 +3,7 @@ import {
   "CAIMEOX/symbit/symcore",
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "CAIMEOX/symbit/symdiscrete" @symdiscrete,
+} for "test"

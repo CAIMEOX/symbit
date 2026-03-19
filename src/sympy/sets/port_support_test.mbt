@@ -1,0 +1,22 @@
+///|
+using @symsets {
+  type Set,
+  type SetBool,
+  complement,
+  condition_set,
+  contains,
+  empty_set,
+  finite_set,
+  image_set,
+  integers,
+  interval,
+  naturals,
+  naturals0,
+  product_set,
+  rationals,
+  reals,
+  setbool_to_string,
+  to_string,
+  intersection,
+  union,
+}

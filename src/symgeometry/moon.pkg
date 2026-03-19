@@ -8,9 +8,3 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
 }
-
-import {
-  "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/geometry" @sympy_geometry,
-} for "test"

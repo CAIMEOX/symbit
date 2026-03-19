@@ -4,5 +4,4 @@ import {
 }
 
 import {
-  "CAIMEOX/symbit/sympy/logic" @sympy_logic,
 } for "test"

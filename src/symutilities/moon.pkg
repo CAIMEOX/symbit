@@ -7,9 +7,3 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
 }
-
-import {
-  "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
-} for "test"

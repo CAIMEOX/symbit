@@ -6,3 +6,7 @@ import {
   "CAIMEOX/symbit/symtensor/tensor" @symtensor_tensor,
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "CAIMEOX/symbit/symcombinatorics" @symcombinatorics,
+} for "test"

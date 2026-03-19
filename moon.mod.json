@@ -12,5 +12,6 @@
   "keywords": ["symbolic", "math", "algebra", "polynomials"],
   "description": "A symbolic mathematics library for Moonbit.",
   "source": "src",
+  "exclude": ["src/sympy", "*test.mbt"],
   "preferred-target": "native"
 }

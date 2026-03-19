@@ -5,6 +5,4 @@ import {
 }
 
 import {
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/functions" @sympy_functions,
 } for "test"

@@ -3,7 +3,3 @@ import {
   "moonbitlang/core/strconv",
   "CAIMEOX/symbit/symnum",
 }
-
-import {
-  "CAIMEOX/symbit/sympy/liealgebras" @sympy_lie,
-} for "test"

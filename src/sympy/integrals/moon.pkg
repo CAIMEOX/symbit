@@ -2,3 +2,13 @@ import {
   "CAIMEOX/symbit/sympy" @sympy,
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symgeometry",
+  "CAIMEOX/symbit/symintegrals" @symintegrals,
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symsimplify",
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symfunctions/special" @symspec,
+} for "test"

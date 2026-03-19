@@ -5,3 +5,7 @@ import {
   "CAIMEOX/symbit/symlogic",
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "CAIMEOX/symbit/symsets" @symsets,
+} for "test"

@@ -2,3 +2,11 @@ import {
   "CAIMEOX/symbit/sympy" @sympy,
   "Kaida-Amethyst/python" @py,
 }
+
+import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/ref",
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symutilities" @symutilities,
+} for "test"

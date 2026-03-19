@@ -3,3 +3,8 @@ import {
   "Kaida-Amethyst/python" @py,
   "moonbitlang/core/strconv",
 }
+
+import {
+  "CAIMEOX/symbit/symcombinatorics" @symcombinatorics,
+  "CAIMEOX/symbit/symprint" @symprint,
+} for "test"

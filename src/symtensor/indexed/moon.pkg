@@ -3,7 +3,3 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
 }
-
-import {
-  "CAIMEOX/symbit/sympy/tensor" @sympy_tensor,
-} for "test"

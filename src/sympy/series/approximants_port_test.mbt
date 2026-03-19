@@ -1,0 +1,86 @@
+///|
+fn normalize_appr(expr : @symcore.Expr) -> String {
+  let s = @symprint.to_string(expr)
+  try! sympy_normalize_str(s)
+}
+
+///|
+
+///|
+fn sympy_equiv_expr_str(expr : @symcore.Expr, other : String) -> Bool {
+  let s = @symprint.to_string(expr)
+  try! sympy_equiv_str(s, other)
+}
+
+///|
+fn split_list_items(list_str : String) -> Array[String] {
+  let trimmed = list_str.trim()
+  if trimmed.length() < 2 {
+    return []
+  }
+  let inner_view = try trimmed[1:trimmed.length() - 1] catch {
+    _ => return []
+  }
+  let inner = inner_view.to_string()
+  if inner.trim().length() == 0 {
+    return []
+  }
+  let parts : Array[String] = Array::new()
+  for part in inner.split(", ") {
+    parts.push(part.to_string())
+  }
+  parts
+}
+
+///|
+test "symseries pade approximant parity" {
+  let x = @symcore.symbol("x")
+  let denom = @symcore.add([
+    @symcore.int(1),
+    @symcore.mul([@symcore.int(-1), x]),
+  ])
+  let expr = @symcore.pow(denom, @symcore.int(-1))
+  let ours = pade_approximant(expr, x, m=1, n=1)
+  let sympy_list = approximants_str([1, 1, 1, 1, 1, 1], "x")
+  let items = split_list_items(sympy_list)
+  assert_true(items.length() > 1)
+  assert_true(sympy_equiv_expr_str(ours, items[1]))
+}
+
+///|
+test "symseries approximants list parity" {
+  let x = @symcore.symbol("x")
+  let coeffs_expr : Array[@symcore.Expr] = [
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(1),
+    @symcore.int(1),
+  ]
+  let ours = approximants(coeffs_expr, x~)
+  let ours_norm : Array[String] = Array::new()
+  for v in ours {
+    ours_norm.push(normalize_appr(v))
+  }
+  let sympy_list = approximants_str([1, 1, 1, 1, 1, 1], "x")
+  let items = split_list_items(sympy_list)
+  assert_eq(ours_norm.length(), items.length())
+  for i in 0..<ours_norm.length() {
+    assert_true(sympy_equiv_expr_str(ours[i], items[i]))
+  }
+}
+
+///|
+test "symseries pade approximant nonzero center parity" {
+  let x = @symcore.symbol("x")
+  let denom = @symcore.add([
+    @symcore.int(1),
+    @symcore.mul([@symcore.int(-1), x]),
+  ])
+  let expr = @symcore.pow(denom, @symcore.int(-1))
+  let ours = pade_approximant(expr, x, x0=@symcore.int(2), m=1, n=1)
+  let ours_ser = series(ours, x~, x0=@symcore.int(2), n=3)
+  let expr_ser = series(expr, x~, x0=@symcore.int(2), n=3)
+  assert_eq(normalize_appr(ours_ser), normalize_appr(expr_ser))
+}

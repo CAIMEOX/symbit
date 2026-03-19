@@ -1,7 +1,3 @@
 import {
   "moonbitlang/core/bigint",
 }
-
-import {
-  "CAIMEOX/symbit/sympy/ntheory" @sympy_nt,
-} for "test"

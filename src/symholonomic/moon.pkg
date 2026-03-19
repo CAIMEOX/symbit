@@ -4,8 +4,3 @@ import {
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symprint",
 }
-
-import {
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/holonomic" @sympy_holo,
-} for "test"
