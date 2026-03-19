@@ -662,6 +662,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
   let b = @symcore.symbol("b")
+  let bp = @symcore.symbol("bp")
   let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
@@ -724,6 +725,90 @@ test "symintegrals parity Mellin forward and inverse" {
       "sympy.sstr(((" + py_expr(shifted_power_mellin) + ")[1])[1])",
     ),
     "re(rho)",
+  )
+
+  let difference_quotient_mellin = mellin_transform_eval(
+    ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify(((" +
+      py_expr(difference_quotient_mellin) +
+      ")[0]) - sympy.mellin_transform((sympy.Symbol('x')**sympy.Symbol('a') - sympy.Symbol('bp')**sympy.Symbol('a'))/(sympy.Symbol('x') - sympy.Symbol('bp')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(difference_quotient_mellin) + ")[1])[0])",
+    ),
+    "Max(0, -re(a))",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(((" + py_expr(difference_quotient_mellin) + ")[1])[1])",
+    ),
+    "Min(1, 1 - re(a))",
+  )
+
+  let sqrt_shift = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
+  let sqrt_shift_mellin = mellin_transform_eval(sqrt_shift ^ a, x, s)
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(sympy.simplify((((" +
+      py_expr(sqrt_shift_mellin) +
+      ")[0]).subs(sympy.Symbol('bp'), bp) - sympy.mellin_transform((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a'), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(((((" +
+      py_expr(sqrt_shift_mellin) +
+      ")[1])[0]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(((((" +
+      py_expr(sqrt_shift_mellin) +
+      ")[1])[1]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "-re(a)/2",
+  )
+
+  let sqrt_shift_recip_mellin = mellin_transform_eval(
+    (sqrt_shift ^ a) *
+    (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
+    x,
+    s,
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(sympy.simplify((((" +
+      py_expr(sqrt_shift_recip_mellin) +
+      ")[0]).subs(sympy.Symbol('bp'), bp) - sympy.mellin_transform((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a')/sympy.sqrt(sympy.Symbol('x') + bp**2), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(((((" +
+      py_expr(sqrt_shift_recip_mellin) +
+      ")[1])[0]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "0",
+  )
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(((((" +
+      py_expr(sqrt_shift_recip_mellin) +
+      ")[1])[1]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "1/2 - re(a)/2",
   )
 
   let left_beta_mellin = mellin_transform_eval(
@@ -1674,6 +1759,64 @@ test "symintegrals parity Mellin forward and inverse" {
       "sympy.sstr(sympy.simplify((" +
       py_expr(shifted_power_inverse) +
       ") - ((1 + sympy.Symbol('x'))**(-sympy.Symbol('rho')))))",
+    ),
+    "0",
+  )
+
+  let difference_quotient_inverse = do_inverse_mellin_doit(
+    (bp ^ (a + s - @symcore.int(1))) *
+    @symelem.sin(@symcore.symbol("pi") * a) *
+    @symspec.gamma(s) *
+    @symspec.gamma(a + s) *
+    @symspec.gamma(@symcore.int(1) - s) *
+    @symspec.gamma(@symcore.int(1) - a - s) *
+    (@symcore.symbol("pi") ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(difference_quotient_inverse) +
+      ") - ((sympy.Symbol('x')**sympy.Symbol('a') - sympy.Symbol('bp')**sympy.Symbol('a'))/(sympy.Symbol('x') - sympy.Symbol('bp')))))",
+    ),
+    "0",
+  )
+
+  let sqrt_shift_inverse = do_inverse_mellin_doit(
+    @symcore.int(-1) *
+    a *
+    (@symcore.int(2) ^ (a + @symcore.int(2) * s)) *
+    (bp ^ (a + @symcore.int(2) * s)) *
+    @symspec.gamma(s) *
+    @symspec.gamma(@symcore.int(-1) * (a + @symcore.int(2) * s)) *
+    (@symspec.gamma(@symcore.int(1) - a - s) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_shift_inverse) +
+      ").subs(sympy.Symbol('bp'), bp) - (sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a'))))(sympy.Symbol('bp', positive=True))",
+    ),
+    "0",
+  )
+
+  let sqrt_shift_recip_inverse = do_inverse_mellin_doit(
+    (@symcore.int(2) ^ (a + @symcore.int(2) * s)) *
+    (bp ^ (a + @symcore.int(2) * s - @symcore.int(1))) *
+    @symspec.gamma(s) *
+    @symspec.gamma(@symcore.int(1) - a - @symcore.int(2) * s) *
+    (@symspec.gamma(@symcore.int(1) - a - s) ^ @symcore.int(-1)),
+    s,
+    x,
+  ).unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "(lambda bp: sympy.sstr(sympy.simplify((" +
+      py_expr(sqrt_shift_recip_inverse) +
+      ").subs(sympy.Symbol('bp'), bp) - ((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a')/sympy.sqrt(sympy.Symbol('x') + bp**2)))))(sympy.Symbol('bp', positive=True))",
     ),
     "0",
   )

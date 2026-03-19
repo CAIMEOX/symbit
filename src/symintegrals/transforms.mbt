@@ -3414,6 +3414,10 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
     Some(info) => return Some(info)
     None => ()
   }
+  match mellin_algebraic_info(expr, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match mellin_abs_one_minus_power_info(expr, x_name, s) {
     Some(info) => return Some(info)
     None => ()
@@ -3628,6 +3632,104 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
         None
       }
     _ => None
+  }
+}
+
+///|
+fn mellin_algebraic_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
+  match mellin_difference_quotient_info(expr, x_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  mellin_sqrt_shifted_power_info(expr, x_name, s)
+}
+
+///|
+fn mellin_difference_quotient_info(
+  expr : Expr,
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match parse_difference_quotient(expr, x_name) {
+    Some((power, scale)) =>
+      Some(
+        (
+          expr_simplify(
+            expr_div(
+              expr_mul(
+                @symcore.symbol("pi"),
+                expr_mul(
+                  expr_pow(scale, expr_add(expr_sub(power, expr_one()), s)),
+                  @symelem.sin(expr_mul(@symcore.symbol("pi"), power)),
+                ),
+              ),
+              expr_mul(
+                @symelem.sin(expr_mul(@symcore.symbol("pi"), s)),
+                @symelem.sin(
+                  expr_mul(@symcore.symbol("pi"), expr_add(power, s)),
+                ),
+              ),
+            ),
+          ),
+          max_expr(expr_zero(), expr_mul(expr_neg_one(), @symelem.re(power))),
+          min_expr(expr_one(), expr_sub(expr_one(), @symelem.re(power))),
+          true_expr(),
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn mellin_sqrt_shifted_power_info(
+  expr : Expr,
+  x_name : String,
+  s : Expr,
+) -> MellinInfo? {
+  match parse_sqrt_shifted_power_expr(expr, x_name) {
+    Some((scale, _shift_sq, power, with_recip_sqrt)) => {
+      let scale_pow = if with_recip_sqrt {
+        expr_sub(expr_add(power, expr_mul(expr_int(2), s)), expr_one())
+      } else {
+        expr_add(power, expr_mul(expr_int(2), s))
+      }
+      let gamma_arg = if with_recip_sqrt {
+        expr_sub(expr_one(), expr_add(power, expr_mul(expr_int(2), s)))
+      } else {
+        expr_mul(expr_neg_one(), expr_add(power, expr_mul(expr_int(2), s)))
+      }
+      let numerator = expr_mul(
+        expr_pow(expr_int(2), expr_add(power, expr_mul(expr_int(2), s))),
+        expr_mul(
+          expr_pow(scale, scale_pow),
+          expr_mul(@symspec.gamma(s), @symspec.gamma(gamma_arg)),
+        ),
+      )
+      let value = if with_recip_sqrt {
+        expr_div(
+          numerator,
+          @symspec.gamma(expr_sub(expr_one(), expr_add(power, s))),
+        )
+      } else {
+        expr_mul(
+          expr_neg_one(),
+          expr_div(
+            expr_mul(power, numerator),
+            @symspec.gamma(expr_sub(expr_one(), expr_add(power, s))),
+          ),
+        )
+      }
+      let upper = if with_recip_sqrt {
+        expr_add(
+          expr_mul(expr_neg_one(), expr_div(@symelem.re(power), expr_int(2))),
+          expr_rat(1, 2),
+        )
+      } else {
+        expr_mul(expr_neg_one(), expr_div(@symelem.re(power), expr_int(2)))
+      }
+      Some((expr_simplify(value), expr_zero(), upper, true_expr()))
+    }
+    None => None
   }
 }
 
@@ -5163,6 +5265,10 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_mellin_algebraic_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_mellin_multiplicative_substitution_term(expr, s_sym, x) {
     Some(v) => return Some(v)
     None => ()
@@ -5271,6 +5377,225 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     return Some(@symelem.log(expr_add(expr_pow(x, expr_int(2)), expr_one())))
   }
   None
+}
+
+///|
+fn inverse_mellin_algebraic_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
+  match inverse_mellin_difference_quotient_term(expr, s_sym, x) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  inverse_mellin_sqrt_shifted_power_term(expr, s_sym, x)
+}
+
+///|
+fn inverse_mellin_difference_quotient_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let gamma_args : Array[Expr] = []
+  let mut scale : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_args.push(arg)
+      @symcore.Expr::Pow(base, exp) if !expr_depends_on(base, s_name) =>
+        match parse_linear_offset_expr(exp, s_name) {
+          Some((coeff, _)) if expr_same_simplified(coeff, expr_one()) =>
+            if scale is None {
+              scale = Some(base)
+            } else if !expr_same_simplified(scale.unwrap(), base) {
+              return None
+            }
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+  if gamma_args.length() != 4 {
+    return None
+  }
+  let linears : Array[(Expr, Expr)] = []
+  for arg in gamma_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => linears.push(info)
+      None => return None
+    }
+  }
+  let mut power : Expr? = None
+  let mut saw_gamma_s = false
+  let mut saw_gamma_one_minus_s = false
+  let mut one_minus_power : Expr? = None
+  for item in linears {
+    if expr_same_simplified(item.0, expr_one()) &&
+      expr_same_simplified(item.1, expr_zero()) {
+      saw_gamma_s = true
+    } else if expr_same_simplified(item.0, expr_one()) {
+      power = Some(item.1)
+    } else if expr_same_simplified(item.0, expr_int(-1)) &&
+      expr_same_simplified(item.1, expr_one()) {
+      saw_gamma_one_minus_s = true
+    } else if expr_same_simplified(item.0, expr_int(-1)) {
+      one_minus_power = Some(item.1)
+    } else {
+      return None
+    }
+  }
+  let power = match power {
+    Some(v) if saw_gamma_s && saw_gamma_one_minus_s => v
+    _ => return None
+  }
+  let scale = match scale {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_same_simplified(
+      one_minus_power.unwrap_or(expr_zero()),
+      expr_sub(expr_one(), power),
+    ) {
+    return None
+  }
+  let expected = expr_simplify(
+    expr_div(
+      expr_mul(
+        expr_pow(scale, expr_add(expr_sub(s_sym, expr_one()), power)),
+        expr_mul(
+          @symelem.sin(expr_mul(@symcore.symbol("pi"), power)),
+          expr_mul(
+            @symspec.gamma(s_sym),
+            expr_mul(
+              @symspec.gamma(expr_add(s_sym, power)),
+              expr_mul(
+                @symspec.gamma(expr_sub(expr_one(), s_sym)),
+                @symspec.gamma(expr_sub(expr_sub(expr_one(), s_sym), power)),
+              ),
+            ),
+          ),
+        ),
+      ),
+      @symcore.symbol("pi"),
+    ),
+  )
+  if !expr_same_simplified(expr, expected) {
+    return None
+  }
+  Some(
+    expr_simplify(
+      expr_div(
+        expr_sub(expr_pow(x, power), expr_pow(scale, power)),
+        expr_sub(x, scale),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_mellin_sqrt_shifted_power_term(
+  expr : Expr,
+  s_sym : Expr,
+  x : Expr,
+) -> Expr? {
+  let s_name = match symbol_name(s_sym) {
+    Some(name) => name
+    None => return None
+  }
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let gamma_num_args : Array[Expr] = []
+  let gamma_den_args : Array[Expr] = []
+  let mut scale : Expr? = None
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("gamma", [arg]) => gamma_num_args.push(arg)
+      @symcore.Expr::Pow(@symcore.Expr::Function("gamma", [arg]), exp) =>
+        if expr_same_simplified(exp, expr_int(-1)) {
+          gamma_den_args.push(arg)
+        } else {
+          return None
+        }
+      @symcore.Expr::Pow(base, exp) if !expr_depends_on(base, s_name) =>
+        match parse_linear_offset_expr(exp, s_name) {
+          Some((coeff, _)) if expr_same_simplified(coeff, expr_int(2)) &&
+            !expr_same_simplified(base, expr_int(2)) =>
+            if scale is None {
+              scale = Some(base)
+            } else if !expr_same_simplified(scale.unwrap(), base) {
+              return None
+            }
+          _ => ()
+        }
+      _ => ()
+    }
+  }
+  if gamma_num_args.length() != 2 || gamma_den_args.length() != 1 {
+    return None
+  }
+  let num_linears : Array[(Expr, Expr)] = []
+  for arg in gamma_num_args {
+    match parse_linear_offset_expr(arg, s_name) {
+      Some(info) => num_linears.push(info)
+      None => return None
+    }
+  }
+  let den_linear = match parse_linear_offset_expr(gamma_den_args[0], s_name) {
+    Some(v) => v
+    None => return None
+  }
+  let scale = match scale {
+    Some(v) => v
+    None => return None
+  }
+  let mut saw_gamma_s = false
+  let mut double_linear : (Expr, Expr)? = None
+  for item in num_linears {
+    if expr_same_simplified(item.0, expr_one()) &&
+      expr_same_simplified(item.1, expr_zero()) {
+      saw_gamma_s = true
+    } else if expr_same_simplified(item.0, expr_int(-2)) {
+      double_linear = Some(item)
+    } else {
+      return None
+    }
+  }
+  let power = match double_linear {
+    Some((_, offset)) if saw_gamma_s &&
+      expr_same_simplified(den_linear.0, expr_int(-1)) =>
+      if expr_same_simplified(den_linear.1, offset) {
+        expr_sub(expr_one(), offset)
+      } else if expr_same_simplified(den_linear.1, expr_add(offset, expr_one())) {
+        expr_mul(expr_neg_one(), offset)
+      } else {
+        return None
+      }
+    _ => return None
+  }
+  let shift = expr_add(x, expr_pow(scale, expr_int(2)))
+  let base = expr_add(@symelem.sqrt(shift), scale)
+  Some(
+    expr_simplify(
+      if expr_same_simplified(
+          den_linear.1,
+          match double_linear {
+            Some((_, offset)) => expr_add(offset, expr_one())
+            None => expr_zero()
+          },
+        ) {
+        expr_pow(base, power)
+      } else {
+        expr_div(expr_pow(base, power), @symelem.sqrt(shift))
+      },
+    ),
+  )
 }
 
 ///|
@@ -6571,6 +6896,35 @@ fn parse_linear_offset_expr(expr : Expr, var_name : String) -> (Expr, Expr)? {
         None => None
       }
     }
+    @symcore.Expr::Mul(args) => {
+      let mut coeff_scale = expr_one()
+      let mut dependent : Expr? = None
+      for arg in args {
+        if expr_depends_on(arg, var_name) {
+          if dependent is None {
+            dependent = Some(arg)
+          } else {
+            return None
+          }
+        } else {
+          coeff_scale = expr_mul(coeff_scale, arg)
+        }
+      }
+      match dependent {
+        Some(dep) =>
+          match parse_linear_offset_expr(dep, var_name) {
+            Some((coeff, offset)) =>
+              Some(
+                (
+                  expr_simplify(expr_mul(coeff_scale, coeff)),
+                  expr_simplify(expr_mul(coeff_scale, offset)),
+                ),
+              )
+            None => None
+          }
+        None => None
+      }
+    }
     simplified =>
       match parse_linear_var_coeff(simplified, var_name) {
         Some(term_coeff) => Some((expr_simplify(term_coeff), expr_zero()))
@@ -7028,6 +7382,178 @@ fn parse_shifted_linear_power(
           }
         None => None
       }
+    _ => None
+  }
+}
+
+///|
+fn parse_difference_quotient(expr : Expr, x_name : String) -> (Expr, Expr)? {
+  let (num_factors, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let (den_coeff, den_offset) = match split_linear_coeff(den, x_name) {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_same_simplified(den_coeff, expr_one()) {
+    return None
+  }
+  let scale = expr_mul(expr_neg_one(), den_offset)
+  let num = factors_expr(num_factors)
+  match expr_simplify(num) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut power : Expr? = None
+      let mut saw_const = false
+      for arg in args {
+        match parse_power_factor(arg, x_name) {
+          Some(p) => power = Some(p)
+          None =>
+            match power {
+              Some(p) =>
+                if expr_same_simplified(
+                    arg,
+                    expr_mul(expr_neg_one(), expr_pow(scale, p)),
+                  ) {
+                  saw_const = true
+                } else {
+                  return None
+                }
+              None => return None
+            }
+        }
+      }
+      match power {
+        Some(p) if saw_const => Some((p, scale))
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_sqrt_shifted_base(expr : Expr, x_name : String) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut scale : Expr? = None
+      let mut shift_sq : Expr? = None
+      for arg in args {
+        match arg {
+          @symcore.Expr::Function("sqrt", [inner]) =>
+            match split_linear_coeff(inner, x_name) {
+              Some((coeff, offset)) if expr_same_simplified(coeff, expr_one()) &&
+                !expr_depends_on(offset, x_name) =>
+                if shift_sq is None {
+                  shift_sq = Some(offset)
+                } else {
+                  return None
+                }
+              _ => return None
+            }
+          other =>
+            if expr_depends_on(other, x_name) {
+              return None
+            } else if scale is None {
+              scale = Some(other)
+            } else {
+              return None
+            }
+        }
+      }
+      match (scale, shift_sq) {
+        (Some(v), Some(shift)) =>
+          if expr_same_simplified(expr_pow(v, expr_int(2)), shift) ||
+            expr_same_simplified(v, preferred_positive_sqrt(shift)) {
+            Some((v, shift))
+          } else {
+            None
+          }
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_reciprocal_sqrt_shift(expr : Expr, x_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(@symcore.Expr::Function("sqrt", [inner]), exp) =>
+      if expr_same_simplified(exp, expr_int(-1)) {
+        match split_linear_coeff(inner, x_name) {
+          Some((coeff, offset)) if expr_same_simplified(coeff, expr_one()) &&
+            !expr_depends_on(offset, x_name) => Some(offset)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_sqrt_shifted_power_expr(
+  expr : Expr,
+  x_name : String,
+) -> (Expr, Expr, Expr, Bool)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, power) =>
+      match parse_sqrt_shifted_base(base, x_name) {
+        Some((scale, shift_sq)) => Some((scale, shift_sq, power, false))
+        None => None
+      }
+    @symcore.Expr::Mul(args) if args.length() == 2 => {
+      let mut scale : Expr? = None
+      let mut shift_sq : Expr? = None
+      let mut power : Expr? = None
+      let mut saw_recip = false
+      for arg in args {
+        match arg {
+          @symcore.Expr::Pow(base, exp) =>
+            match parse_sqrt_shifted_base(base, x_name) {
+              Some((parsed_scale, parsed_shift)) =>
+                if scale is None {
+                  scale = Some(parsed_scale)
+                  shift_sq = Some(parsed_shift)
+                  power = Some(exp)
+                } else {
+                  return None
+                }
+              None =>
+                match parse_reciprocal_sqrt_shift(arg, x_name) {
+                  Some(parsed_shift) =>
+                    if saw_recip {
+                      return None
+                    } else {
+                      shift_sq = Some(parsed_shift)
+                      saw_recip = true
+                    }
+                  None => return None
+                }
+            }
+          _ =>
+            match parse_reciprocal_sqrt_shift(arg, x_name) {
+              Some(parsed_shift) =>
+                if saw_recip {
+                  return None
+                } else {
+                  shift_sq = Some(parsed_shift)
+                  saw_recip = true
+                }
+              None => return None
+            }
+        }
+      }
+      match (scale, shift_sq, power) {
+        (Some(v), Some(shift), Some(exp)) if saw_recip &&
+          expr_same_simplified(expr_pow(v, expr_int(2)), shift) =>
+          Some((v, shift, exp, true))
+        _ => None
+      }
+    }
     _ => None
   }
 }

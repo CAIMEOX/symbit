@@ -639,6 +639,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
   let b = @symcore.symbol("b")
+  let bp = @symcore.symbol("bp")
   let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
   let half = try! @symcore.rational_from_ints(1, 2)
@@ -733,6 +734,37 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
   ).contains("MellinTransform") else {
     fail("log(1/x + 1) Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail("(x**a - b**a)/(x - b) Mellin transform stayed unevaluated")
+  }
+  let sqrt_shift = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
+  guard !@symprint.to_string(doit(mellin_transform(sqrt_shift ^ a, x, s))).contains(
+    "MellinTransform",
+  ) else {
+    fail("(sqrt(x + b**2) + b)**a Mellin transform stayed unevaluated")
+  }
+  guard !@symprint.to_string(
+    doit(
+      mellin_transform(
+        (sqrt_shift ^ a) *
+        (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
+        x,
+        s,
+      ),
+    ),
+  ).contains("MellinTransform") else {
+    fail(
+      "(sqrt(x + b**2) + b)**a/sqrt(x + b**2) Mellin transform stayed unevaluated",
+    )
   }
   guard !@symprint.to_string(
     doit(
@@ -1265,6 +1297,43 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_difference_quotient = doit(
+    inverse_mellin_transform(
+      (bp ^ (a + s - @symcore.int(1))) *
+      @symelem.sin(@symcore.symbol("pi") * a) *
+      @symspec.gamma(s) *
+      @symspec.gamma(a + s) *
+      @symspec.gamma(@symcore.int(1) - s) *
+      @symspec.gamma(@symcore.int(1) - a - s) *
+      (@symcore.symbol("pi") ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_sqrt_shift = doit(
+    inverse_mellin_transform(
+      @symcore.int(-1) *
+      a *
+      (@symcore.int(2) ^ (a + @symcore.int(2) * s)) *
+      (bp ^ (a + @symcore.int(2) * s)) *
+      @symspec.gamma(s) *
+      @symspec.gamma(@symcore.int(-1) * (a + @symcore.int(2) * s)) *
+      (@symspec.gamma(@symcore.int(1) - a - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_sqrt_shift_recip = doit(
+    inverse_mellin_transform(
+      (@symcore.int(2) ^ (a + @symcore.int(2) * s)) *
+      (bp ^ (a + @symcore.int(2) * s - @symcore.int(1))) *
+      @symspec.gamma(s) *
+      @symspec.gamma(@symcore.int(1) - a - @symcore.int(2) * s) *
+      (@symspec.gamma(@symcore.int(1) - a - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
   let inv_exp_subst = doit(
     inverse_mellin_transform(
       @symcore.function("factorial", [s * (a ^ @symcore.int(-1))]) *
@@ -1431,6 +1500,28 @@ test "symintegrals Mellin special-function rules evaluate" {
     ),
     0,
   )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_difference_quotient),
+      @symsimplify.simplify(
+        ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
+      ),
+    ),
+    0,
+  )
+  let sqrt_shift_target = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(inv_sqrt_shift),
+      @symsimplify.simplify(sqrt_shift_target ^ a),
+    ),
+    0,
+  )
+  guard @symprint.to_string(inv_sqrt_shift_recip).contains("sqrt") else {
+    fail(
+      "sqrt-shift reciprocal inverse Mellin did not retain direct sqrt structure",
+    )
+  }
   guard !@symprint.to_string(inv_besselj).contains("InverseMellinTransform") else {
     fail("besselj inverse Mellin stayed unevaluated")
   }
@@ -1499,6 +1590,19 @@ test "symintegrals Mellin special-function rules evaluate" {
   guard @symprint.to_string(inv_besselj_bessely).contains("besselj") &&
     @symprint.to_string(inv_besselj_bessely).contains("bessely") else {
     fail("besselj*bessely inverse Mellin did not land on direct Bessel objects")
+  }
+  guard !@symprint.to_string(inv_difference_quotient).contains(
+    "InverseMellinTransform",
+  ) else {
+    fail("difference-quotient inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_sqrt_shift).contains("InverseMellinTransform") else {
+    fail("sqrt-shift power inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_sqrt_shift_recip).contains(
+    "InverseMellinTransform",
+  ) else {
+    fail("sqrt-shift reciprocal inverse Mellin stayed unevaluated")
   }
   assert_eq(
     @symcore.compare_expr(
