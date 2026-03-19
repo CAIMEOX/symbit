@@ -4,20 +4,20 @@
 
 ///|
 pub struct TWave {
-  amplitude : @symcore.Expr
-  frequency : @symcore.Expr
-  phase : @symcore.Expr
-  time_period : @symcore.Expr
-  n : @symcore.Expr
+  amplitude : Expr
+  frequency : Expr
+  phase : Expr
+  time_period : Expr
+  n : Expr
 } derive(Eq)
 
 ///|
 pub fn t_wave(
-  amplitude : @symcore.Expr,
-  frequency? : @symcore.Expr? = None,
-  phase? : @symcore.Expr = @symcore.int(0),
-  time_period? : @symcore.Expr? = None,
-  n? : @symcore.Expr = @symcore.symbol("n"),
+  amplitude : Expr,
+  frequency? : Expr? = None,
+  phase? : Expr = int(0),
+  time_period? : Expr? = None,
+  n? : Expr = symbol("n"),
 ) -> TWave raise PhysicsError {
   match (frequency, time_period) {
     (None, None) =>
@@ -25,7 +25,7 @@ pub fn t_wave(
         "Either frequency or time period is needed.",
       )
     (Some(freq), Some(period)) => {
-      guard freq == (period ^ @symcore.int(-1)) else {
+      guard freq == (period ^ int(-1)) else {
         raise PhysicsError::ValueError(
           "frequency and time_period should be consistent.",
         )
@@ -37,13 +37,13 @@ pub fn t_wave(
         amplitude,
         frequency: freq,
         phase,
-        time_period: freq ^ @symcore.int(-1),
+        time_period: freq ^ int(-1),
         n,
       }
     (None, Some(period)) =>
       TWave::{
         amplitude,
-        frequency: period ^ @symcore.int(-1),
+        frequency: period ^ int(-1),
         phase,
         time_period: period,
         n,
@@ -52,13 +52,13 @@ pub fn t_wave(
 }
 
 ///|
-fn twave_render_arg(expr : @symcore.Expr) -> String {
+fn twave_render_arg(expr : Expr) -> String {
   match expr {
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(n)) if n.is_integral() &&
+    Expr::Pow(base, Expr::Number(n)) if n.is_integral() &&
       n.numerator() == BigInt::from_int(-1) => {
       let base_txt = @symprint.to_string(base)
       match base {
-        @symcore.Expr::Add(_) | @symcore.Expr::Mul(_) => "1/(\{base_txt})"
+        Expr::Add(_) | Expr::Mul(_) => "1/(\{base_txt})"
         _ => "1/\{base_txt}"
       }
     }
@@ -67,7 +67,7 @@ fn twave_render_arg(expr : @symcore.Expr) -> String {
 }
 
 ///|
-pub fn TWave::as_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::as_expr(self : TWave) -> Expr {
   @symcore.raw_function("TWave", [
     self.amplitude,
     self.frequency,
@@ -95,48 +95,48 @@ pub fn TWave::to_string(self : TWave) -> String {
 }
 
 ///|
-pub fn TWave::amplitude_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::amplitude_expr(self : TWave) -> Expr {
   self.amplitude
 }
 
 ///|
-pub fn TWave::frequency_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::frequency_expr(self : TWave) -> Expr {
   self.frequency
 }
 
 ///|
-pub fn TWave::phase_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::phase_expr(self : TWave) -> Expr {
   self.phase
 }
 
 ///|
-pub fn TWave::time_period_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::time_period_expr(self : TWave) -> Expr {
   self.time_period
 }
 
 ///|
-pub fn TWave::refractive_index_expr(self : TWave) -> @symcore.Expr {
+pub fn TWave::refractive_index_expr(self : TWave) -> Expr {
   self.n
 }
 
 ///|
-pub fn TWave::wavelength(self : TWave) -> @symcore.Expr {
-  speed_of_light * ((self.frequency * self.n) ^ @symcore.int(-1))
+pub fn TWave::wavelength(self : TWave) -> Expr {
+  speed_of_light * ((self.frequency * self.n) ^ int(-1))
 }
 
 ///|
-pub fn TWave::speed(self : TWave) -> @symcore.Expr {
+pub fn TWave::speed(self : TWave) -> Expr {
   self.wavelength() * self.frequency
 }
 
 ///|
-pub fn TWave::angular_velocity(self : TWave) -> @symcore.Expr {
-  @symcore.int(2) * pi_expr() * self.frequency
+pub fn TWave::angular_velocity(self : TWave) -> Expr {
+  int(2) * pi_expr() * self.frequency
 }
 
 ///|
-pub fn TWave::wavenumber(self : TWave) -> @symcore.Expr {
-  @symcore.int(2) * pi_expr() * (self.wavelength() ^ @symcore.int(-1))
+pub fn TWave::wavenumber(self : TWave) -> Expr {
+  int(2) * pi_expr() * (self.wavelength() ^ int(-1))
 }
 
 ///|
@@ -152,9 +152,9 @@ pub fn TWave::superpose(
   }
   t_wave(
     @symelem.sqrt(
-      (self.amplitude ^ @symcore.int(2)) +
-      (other.amplitude ^ @symcore.int(2)) +
-      @symcore.int(2) *
+      (self.amplitude ^ int(2)) +
+      (other.amplitude ^ int(2)) +
+      int(2) *
       self.amplitude *
       other.amplitude *
       @symelem.cos(self.phase - other.phase),
@@ -173,10 +173,10 @@ pub fn TWave::superpose(
 ///|
 pub fn TWave::scale(
   self : TWave,
-  factor : @symcore.Expr,
+  factor : Expr,
 ) -> TWave raise PhysicsError {
   match factor {
-    @symcore.Expr::Number(_) =>
+    Expr::Number(_) =>
       TWave::{ ..self, amplitude: self.amplitude * factor }
     _ =>
       raise PhysicsError::ValueError(
@@ -187,7 +187,7 @@ pub fn TWave::scale(
 
 ///|
 pub fn TWave::neg(self : TWave) -> TWave raise PhysicsError {
-  self.scale(@symcore.int(-1))
+  self.scale(int(-1))
 }
 
 ///|
@@ -196,49 +196,49 @@ pub fn TWave::sub(self : TWave, other : TWave) -> TWave raise PhysicsError {
 }
 
 ///|
-pub fn TWave::rewrite_as_sin(self : TWave) -> @symcore.Expr {
+pub fn TWave::rewrite_as_sin(self : TWave) -> Expr {
   self.amplitude *
   @symelem.sin(
-    self.wavenumber() * @symcore.symbol("x") -
-    self.angular_velocity() * @symcore.symbol("t") +
+    self.wavenumber() * symbol("x") -
+    self.angular_velocity() * symbol("t") +
     self.phase +
     pi_expr() * rational_expr(1, 2),
   )
 }
 
 ///|
-pub fn TWave::rewrite_as_cos(self : TWave) -> @symcore.Expr {
+pub fn TWave::rewrite_as_cos(self : TWave) -> Expr {
   self.amplitude *
   @symelem.cos(
-    self.wavenumber() * @symcore.symbol("x") -
-    self.angular_velocity() * @symcore.symbol("t") +
+    self.wavenumber() * symbol("x") -
+    self.angular_velocity() * symbol("t") +
     self.phase,
   )
 }
 
 ///|
-pub fn TWave::rewrite_as_exp(self : TWave) -> @symcore.Expr {
+pub fn TWave::rewrite_as_exp(self : TWave) -> Expr {
   self.amplitude *
   @symelem.exp(
     i_expr() *
     (
-      self.wavenumber() * @symcore.symbol("x") -
-      self.angular_velocity() * @symcore.symbol("t") +
+      self.wavenumber() * symbol("x") -
+      self.angular_velocity() * symbol("t") +
       self.phase
     ),
   )
 }
 
 ///|
-pub fn TWave::rewrite_as_pde(self : TWave) -> @symcore.Expr {
+pub fn TWave::rewrite_as_pde(self : TWave) -> Expr {
   ignore(self)
-  let mu = @symcore.symbol("mu")
-  let epsilon = @symcore.symbol("epsilon")
-  let x = @symcore.symbol("x")
-  let t = @symcore.symbol("t")
+  let mu = symbol("mu")
+  let epsilon = symbol("epsilon")
+  let x = symbol("x")
+  let t = symbol("t")
   let e = @symcore.raw_function("E", [x, t])
   @symcore.raw_add([
-    @symcore.raw_function("Derivative", [e, x, @symcore.int(2)]),
-    mu * epsilon * @symcore.raw_function("Derivative", [e, t, @symcore.int(2)]),
+    @symcore.raw_function("Derivative", [e, x, int(2)]),
+    mu * epsilon * @symcore.raw_function("Derivative", [e, t, int(2)]),
   ])
 }

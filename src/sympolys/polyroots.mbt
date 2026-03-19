@@ -8,18 +8,18 @@ fn ensure_univar(poly : Poly) -> Unit raise PolyError {
 }
 
 ///|
-fn coeff_expr(poly : Poly, exp : Int) -> @symcore.Expr raise PolyError {
+fn coeff_expr(poly : Poly, exp : Int) -> Expr raise PolyError {
   let mono = monomial_one(1)
   mono.exps.set(0, exp)
   match poly.coeffs.get(mono) {
     Some(c) => field_elem_to_expr(c, poly.domain)
-    None => @symcore.int(0)
+    None => int(0)
   }
 }
 
 ///|
 /// Return the unique root of a linear polynomial `a*x + b`.
-pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+pub fn roots_linear(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 1 {
@@ -27,16 +27,16 @@ pub fn roots_linear(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   }
   let a = coeff_expr(poly, 1)
   let b = coeff_expr(poly, 0)
-  let neg_b = @symcore.mul([@symcore.int(-1), b])
+  let neg_b = @symcore.mul([int(-1), b])
   let denom = a
-  let inv = @symcore.pow(denom, @symcore.int(-1))
+  let inv = @symcore.pow(denom, int(-1))
   let root = @symcore.mul([neg_b, inv])
   [root]
 }
 
 ///|
 /// Return roots of a quadratic polynomial via the quadratic formula.
-pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 2 {
@@ -45,22 +45,22 @@ pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
   let a = coeff_expr(poly, 2)
   let b = coeff_expr(poly, 1)
   let c = coeff_expr(poly, 0)
-  let four = @symcore.int(4)
-  let two = @symcore.int(2)
-  let b2 = b ^ @symcore.int(2)
+  let four = int(4)
+  let two = int(2)
+  let b2 = b ^ int(2)
   let ac4 = @symcore.mul([four, a, c])
-  let disc = @symcore.add([b2, @symcore.mul([@symcore.int(-1), ac4])])
+  let disc = @symcore.add([b2, @symcore.mul([int(-1), ac4])])
   // SymPy reference: sympy/polys/polyroots.py::roots_quadratic.
   // Keep discriminant under symbolic square root (disc**(1/2)).
   let half = @symcore.number(
     @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
   )
   let sqrt_disc = @symcore.pow(disc, half)
-  let neg_b = @symcore.mul([@symcore.int(-1), b])
+  let neg_b = @symcore.mul([int(-1), b])
   let denom = @symcore.mul([two, a])
-  let inv = @symcore.pow(denom, @symcore.int(-1))
+  let inv = @symcore.pow(denom, int(-1))
   let r1 = @symcore.mul([
-    @symcore.add([neg_b, @symcore.mul([@symcore.int(-1), sqrt_disc])]),
+    @symcore.add([neg_b, @symcore.mul([int(-1), sqrt_disc])]),
     inv,
   ])
   let r2 = @symcore.mul([@symcore.add([neg_b, sqrt_disc]), inv])
@@ -69,8 +69,8 @@ pub fn roots_quadratic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 
 ///|
 fn append_roots(
-  out : Array[@symcore.Expr],
-  roots : Array[@symcore.Expr],
+  out : Array[Expr],
+  roots : Array[Expr],
   mult : Int,
 ) -> Unit {
   for _ in 0..<mult {
@@ -81,20 +81,20 @@ fn append_roots(
 }
 
 ///|
-fn rootof_expr(poly : Poly, index : Int) -> @symcore.Expr {
-  @symcore.function("CRootOf", [poly.to_expr(), @symcore.int(index)])
+fn rootof_expr(poly : Poly, index : Int) -> Expr {
+  @symcore.function("CRootOf", [poly.to_expr(), int(index)])
 }
 
 ///|
 /// Return roots of a cubic polynomial, using `CRootOf` for irreducible factors.
-pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+pub fn roots_cubic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 3 {
     raise PolyError::BadExponent
   }
   let (_, factors) = poly.factor_list()
-  let roots : Array[@symcore.Expr] = Array::new()
+  let roots : Array[Expr] = Array::new()
   for pair in factors {
     let (f, mult) = pair
     let fdeg = f.degree(0)
@@ -103,7 +103,7 @@ pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
     } else if fdeg == 2 {
       append_roots(roots, roots_quadratic(f), mult)
     } else {
-      let ros : Array[@symcore.Expr] = Array::new()
+      let ros : Array[Expr] = Array::new()
       for i in 0..<fdeg {
         ros.push(rootof_expr(f, i))
       }
@@ -115,14 +115,14 @@ pub fn roots_cubic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 
 ///|
 /// Return roots of a quartic polynomial, using `CRootOf` for irreducible factors.
-pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
+pub fn roots_quartic(poly : Poly) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   let deg = poly.degree(0)
   if deg != 4 {
     raise PolyError::BadExponent
   }
   let (_, factors) = poly.factor_list()
-  let roots : Array[@symcore.Expr] = Array::new()
+  let roots : Array[Expr] = Array::new()
   for pair in factors {
     let (f, mult) = pair
     let fdeg = f.degree(0)
@@ -131,7 +131,7 @@ pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
     } else if fdeg == 2 {
       append_roots(roots, roots_quadratic(f), mult)
     } else {
-      let ros : Array[@symcore.Expr] = Array::new()
+      let ros : Array[Expr] = Array::new()
       for i in 0..<fdeg {
         ros.push(rootof_expr(f, i))
       }
@@ -145,7 +145,7 @@ pub fn roots_quartic(poly : Poly) -> Array[@symcore.Expr] raise PolyError {
 fn roots_for_factor(
   poly : Poly,
   radicals : Bool,
-) -> Array[@symcore.Expr] raise PolyError {
+) -> Array[Expr] raise PolyError {
   let deg = poly.degree(0)
   if deg <= 0 {
     return []
@@ -162,7 +162,7 @@ fn roots_for_factor(
   if radicals && deg == 4 {
     return roots_quartic(poly)
   }
-  let roots : Array[@symcore.Expr] = Array::new()
+  let roots : Array[Expr] = Array::new()
   for i in 0..<deg {
     roots.push(rootof_expr(poly, i))
   }
@@ -176,13 +176,13 @@ fn roots_for_factor(
 pub fn roots(
   poly : Poly,
   radicals? : Bool = true,
-) -> Array[@symcore.Expr] raise PolyError {
+) -> Array[Expr] raise PolyError {
   ensure_univar(poly)
   if poly.is_zero() {
     return []
   }
   let (_, factors) = poly.factor_list()
-  let roots : Array[@symcore.Expr] = Array::new()
+  let roots : Array[Expr] = Array::new()
   for pair in factors {
     let (f, mult) = pair
     let f_roots = roots_for_factor(f, radicals)

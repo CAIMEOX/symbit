@@ -7,8 +7,8 @@
 
 ///|
 fn quantum_accumulate_linear_term(
-  terms : Array[(@symcore.Expr, @symnum.BigRational)],
-  base : @symcore.Expr,
+  terms : Array[(Expr, @symnum.BigRational)],
+  base : Expr,
   coeff : @symnum.BigRational,
 ) -> Unit {
   for idx in 0..<terms.length() {
@@ -22,17 +22,17 @@ fn quantum_accumulate_linear_term(
 
 ///|
 fn quantum_linear_term(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr?, @symnum.BigRational)? {
+  expr : Expr,
+) -> (Expr?, @symnum.BigRational)? {
   match expr {
-    @symcore.Expr::Number(n) => Some((None, n))
-    @symcore.Expr::Add(_) => None
-    @symcore.Expr::Mul(args) => {
+    Expr::Number(n) => Some((None, n))
+    Expr::Add(_) => None
+    Expr::Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
-      let bases : Array[@symcore.Expr] = []
+      let bases : Array[Expr] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) => coeff = coeff.mul_r(n)
+          Expr::Number(n) => coeff = coeff.mul_r(n)
           _ => bases.push(arg)
         }
       }
@@ -48,11 +48,11 @@ fn quantum_linear_term(
 
 ///|
 fn quantum_collect_linear_terms(
-  expr : @symcore.Expr,
-) -> (Array[(@symcore.Expr, @symnum.BigRational)], @symnum.BigRational)? {
+  expr : Expr,
+) -> (Array[(Expr, @symnum.BigRational)], @symnum.BigRational)? {
   match expr {
-    @symcore.Expr::Add(args) => {
-      let terms : Array[(@symcore.Expr, @symnum.BigRational)] = []
+    Expr::Add(args) => {
+      let terms : Array[(Expr, @symnum.BigRational)] = []
       let mut const_coeff = @symnum.BigRational::zero()
       for arg in args {
         match quantum_collect_linear_terms(arg) {
@@ -79,8 +79,8 @@ fn quantum_collect_linear_terms(
 
 ///|
 fn quantum_difference_is_zero(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
+  lhs : Expr,
+  rhs : Expr,
 ) -> Bool? {
   match (quantum_collect_linear_terms(lhs), quantum_collect_linear_terms(rhs)) {
     (Some((lhs_terms, lhs_const)), Some((rhs_terms, rhs_const))) => {
@@ -89,7 +89,7 @@ fn quantum_difference_is_zero(
         quantum_accumulate_linear_term(terms, term.0, term.1.neg_r())
       }
       let const_diff = lhs_const.add_r(rhs_const.neg_r())
-      let nonzero_terms : Array[(@symcore.Expr, @symnum.BigRational)] = []
+      let nonzero_terms : Array[(Expr, @symnum.BigRational)] = []
       for term in terms {
         if !term.1.is_zero() {
           nonzero_terms.push(term)
@@ -107,12 +107,12 @@ fn quantum_difference_is_zero(
 
 ///|
 fn quantum_secondquant_tuple_args(
-  expr : @symcore.Expr,
-) -> Array[@symcore.Expr]? {
+  expr : Expr,
+) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function(_, args) if args.length() == 1 =>
+    Expr::Function(_, args) if args.length() == 1 =>
       match args[0] {
-        @symcore.Expr::Function("Tuple", items) => Some(items)
+        Expr::Function("Tuple", items) => Some(items)
         _ => None
       }
     _ => None
@@ -121,19 +121,19 @@ fn quantum_secondquant_tuple_args(
 
 ///|
 fn quantum_tuple_inner_product(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Expr {
   if lhs.length() != rhs.length() {
-    return @symcore.int(0)
+    return int(0)
   }
-  let mut out = @symcore.int(1)
+  let mut out = int(1)
   for idx in 0..<lhs.length() {
     if lhs[idx] == rhs[idx] {
       ()
-    } else if lhs[idx] is @symcore.Expr::Number(_) &&
-      rhs[idx] is @symcore.Expr::Number(_) {
-      return @symcore.int(0)
+    } else if lhs[idx] is Expr::Number(_) &&
+      rhs[idx] is Expr::Number(_) {
+      return int(0)
     } else {
       out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])
     }
@@ -143,10 +143,10 @@ fn quantum_tuple_inner_product(
 
 ///|
 pub fn inner_product(
-  bra_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
+  bra_expr : Expr,
+  ket_expr : Expr,
   evaluate? : Bool = true,
-) -> @symcore.Expr {
+) -> Expr {
   guard quantum_is_bra_expr(bra_expr) else {
     return @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
   }
@@ -158,13 +158,13 @@ pub fn inner_product(
   }
   match (bra_expr, ket_expr) {
     (
-      @symcore.Expr::Function("OrthogonalBra", bargs),
-      @symcore.Expr::Function("OrthogonalKet", kargs),
+      Expr::Function("OrthogonalBra", bargs),
+      Expr::Function("OrthogonalKet", kargs),
     ) =>
       if bargs.length() != kargs.length() {
-        @symcore.int(0)
+        int(0)
       } else if bargs == kargs {
-        @symcore.int(1)
+        int(1)
       } else {
         let mut definitely_zero = false
         let mut maybe_zero = true
@@ -179,29 +179,29 @@ pub fn inner_product(
           }
         }
         if definitely_zero {
-          @symcore.int(0)
+          int(0)
         } else if maybe_zero {
-          @symcore.int(1)
+          int(1)
         } else {
           @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
         }
       }
     (
-      @symcore.Expr::Function("QubitBra", bargs),
-      @symcore.Expr::Function("Qubit", kargs),
-    ) => if bargs == kargs { @symcore.int(1) } else { @symcore.int(0) }
+      Expr::Function("QubitBra", bargs),
+      Expr::Function("Qubit", kargs),
+    ) => if bargs == kargs { int(1) } else { int(0) }
     (
-      @symcore.Expr::Function("BosonFockBra", bargs),
-      @symcore.Expr::Function("BosonFockKet", kargs),
+      Expr::Function("BosonFockBra", bargs),
+      Expr::Function("BosonFockKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 =>
       if bargs[0] == kargs[0] {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
       }
     (
-      @symcore.Expr::Function("FockStateBosonBra", _),
-      @symcore.Expr::Function("FockStateBosonKet", _),
+      Expr::Function("FockStateBosonBra", _),
+      Expr::Function("FockStateBosonKet", _),
     ) =>
       match
         (
@@ -213,50 +213,50 @@ pub fn inner_product(
         _ => @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
     (
-      @symcore.Expr::Function("FermionFockBra", bargs),
-      @symcore.Expr::Function("FermionFockKet", kargs),
+      Expr::Function("FermionFockBra", bargs),
+      Expr::Function("FermionFockKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 =>
       if bargs[0] == kargs[0] {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
       }
     (
-      @symcore.Expr::Function("BosonCoherentBra", bargs),
-      @symcore.Expr::Function("BosonCoherentKet", kargs),
+      Expr::Function("BosonCoherentBra", bargs),
+      Expr::Function("BosonCoherentKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 => {
       let bra_alpha = bargs[0]
       let ket_alpha = kargs[0]
       if bra_alpha == ket_alpha {
-        @symcore.int(1)
+        int(1)
       } else {
         let half = try! @symcore.rational_from_ints(1, 2)
-        let exponent = @symcore.int(-1) *
+        let exponent = int(-1) *
           half *
           (
             expr_conjugate(bra_alpha) * bra_alpha +
             expr_conjugate(ket_alpha) * ket_alpha -
-            @symcore.int(2) * expr_conjugate(bra_alpha) * ket_alpha
+            int(2) * expr_conjugate(bra_alpha) * ket_alpha
           )
         @symcore.raw_function("exp", [exponent])
       }
     }
     (
-      @symcore.Expr::Function("PIABBra", bargs),
-      @symcore.Expr::Function("PIABKet", kargs),
+      Expr::Function("PIABBra", bargs),
+      Expr::Function("PIABKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 =>
       @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
     (
-      @symcore.Expr::Function("SHOBra", bargs),
-      @symcore.Expr::Function("SHOKet", kargs),
+      Expr::Function("SHOBra", bargs),
+      Expr::Function("SHOKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 =>
       @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
     (
-      @symcore.Expr::Function("SigmaZBra", bargs),
-      @symcore.Expr::Function("SigmaZKet", kargs),
+      Expr::Function("SigmaZBra", bargs),
+      Expr::Function("SigmaZKet", kargs),
     ) if bargs.length() == 1 && kargs.length() == 1 =>
       if bargs[0] == kargs[0] {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.raw_function("KroneckerDelta", [bargs[0], kargs[0]])
       }
@@ -273,9 +273,9 @@ pub fn inner_product(
 }
 
 ///|
-pub fn inner_product_doit(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn inner_product_doit(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function("InnerProduct", args) if args.length() == 2 =>
+    Expr::Function("InnerProduct", args) if args.length() == 2 =>
       inner_product(args[0], args[1])
     _ => expr
   }

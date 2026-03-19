@@ -2,11 +2,11 @@
 /// Delta and step functions.
 
 ///|
-pub fn dirac_delta(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn dirac_delta(expr : Expr) -> Expr {
   @symcore.function("DiracDelta", [expr])
 }
 
 ///|
-pub fn heaviside(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn heaviside(expr : Expr) -> Expr {
   @symcore.function("Heaviside", [expr])
 }

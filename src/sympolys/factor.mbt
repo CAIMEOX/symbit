@@ -466,7 +466,7 @@ fn factor_linear_rationals(poly : Poly) -> Array[Poly] raise PolyError {
       let r = @symnum.BigRational::from_int(cand)
       if eval_univar(remaining, r).is_zero() {
         let factor_poly = Poly::from_expr(
-          @symcore.symbol(remaining.gens[0]) - @symcore.int(cand),
+          symbol(remaining.gens[0]) - int(cand),
           remaining.gens,
           remaining.domain,
         )
@@ -518,7 +518,7 @@ fn strip_linear_roots_gf(
   for r in 0..<modulus {
     while remaining.degree(0) > 0 && eval_univar_mod(remaining, r, modulus) == 0 {
       let factor_poly = Poly::from_expr(
-        @symcore.symbol(remaining.gens[0]) - @symcore.int(r),
+        symbol(remaining.gens[0]) - int(r),
         remaining.gens,
         remaining.domain,
       )
@@ -629,7 +629,7 @@ fn distinct_degree_decompose(
   let res : Array[Poly] = Array::new()
   let mut f = make_monic(poly)
   let x_poly = Poly::from_expr(
-    @symcore.symbol(poly.gens[0]),
+    symbol(poly.gens[0]),
     poly.gens,
     poly.domain,
   )
@@ -665,7 +665,7 @@ fn equal_degree_factor(
   let stack : Array[Poly] = Array::new()
   stack.push(poly)
   let x_poly = Poly::from_expr(
-    @symcore.symbol(poly.gens[0]),
+    symbol(poly.gens[0]),
     poly.gens,
     poly.domain,
   )

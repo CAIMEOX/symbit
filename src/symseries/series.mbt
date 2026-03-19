@@ -1,13 +1,16 @@
 ///|
+using @symcore {type Expr, int, symbol}
+
+///|
 /// Series expansion entry point (limited to polynomial/rational, x0=0).
 
 ///|
 fn poly_to_expr(
-  poly : Array[@symcore.Expr],
-  x : @symcore.Expr,
+  poly : Array[Expr],
+  x : Expr,
   n : Int,
-) -> @symcore.Expr {
-  let terms : Array[@symcore.Expr] = Array::new()
+) -> Expr {
+  let terms : Array[Expr] = Array::new()
   let limit = if n < poly.length() { n } else { poly.length() }
   for k in 0..<limit {
     let coeff = poly[k]
@@ -17,61 +20,61 @@ fn poly_to_expr(
     let term = if k == 0 {
       coeff
     } else {
-      expr_mul(coeff, @symcore.pow(x, @symcore.int(k)))
+      expr_mul(coeff, @symcore.pow(x, int(k)))
     }
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.int(0)
+    int(0)
   } else {
     @symcore.add(terms)
   }
 }
 
 ///|
-fn split_num_den(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
+fn split_num_den(expr : Expr) -> (Expr, Expr) {
   match expr {
-    @symcore.Expr::Mul(args) => {
-      let num : Array[@symcore.Expr] = Array::new()
-      let den : Array[@symcore.Expr] = Array::new()
+    Expr::Mul(args) => {
+      let num : Array[Expr] = Array::new()
+      let den : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Pow(base, exp) =>
+          Expr::Pow(base, exp) =>
             match int_exp(exp) {
-              Some(e) if e < 0 => den.push(@symcore.pow(base, @symcore.int(-e)))
+              Some(e) if e < 0 => den.push(@symcore.pow(base, int(-e)))
               _ => num.push(arg)
             }
           _ => num.push(arg)
         }
       }
       let num_expr = if num.is_empty() {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.mul(num)
       }
       let den_expr = if den.is_empty() {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.mul(den)
       }
       (num_expr, den_expr)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e < 0 =>
-          (@symcore.int(1), @symcore.pow(base, @symcore.int(-e)))
-        _ => (expr, @symcore.int(1))
+          (int(1), @symcore.pow(base, int(-e)))
+        _ => (expr, int(1))
       }
-    _ => (expr, @symcore.int(1))
+    _ => (expr, int(1))
   }
 }
 
 ///|
 fn series_rational(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
+  expr : Expr,
+  x : Expr,
   n : Int,
-) -> (@symcore.Expr, Bool)? {
+) -> (Expr, Bool)? {
   let (num_expr, den_expr) = split_num_den(expr)
   let num_poly = poly_from_expr(num_expr, x)
   let den_poly = poly_from_expr(den_expr, x)
@@ -103,21 +106,21 @@ fn series_rational(
 
 ///|
 pub fn series(
-  expr : @symcore.Expr,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  x0? : @symcore.Expr = @symcore.int(0),
+  expr : Expr,
+  x? : Expr = symbol("x"),
+  x0? : Expr = int(0),
   n? : Int = 6,
   dir? : String = "+",
-) -> @symcore.Expr raise {
+) -> Expr raise {
   if n <= 0 {
     fail("series n must be positive")
   }
   let var_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Expr::Symbol(name) => name
     _ => fail("series variable must be a Symbol")
   }
-  let t = @symcore.symbol("__series_t")
-  let env : Map[String, @symcore.Expr] = {}
+  let t = symbol("__series_t")
+  let env : Map[String, Expr] = {}
   let forward_shift = if dir == "-" {
     @symcore.add([x0, expr_neg(t)])
   } else {
@@ -132,7 +135,7 @@ pub fn series(
   match expanded {
     Some((poly_expr, needs_order)) => {
       // Substitute back t -> (x - x0)
-      let back : Map[String, @symcore.Expr] = {}
+      let back : Map[String, Expr] = {}
       let back_shift = if dir == "-" {
         @symcore.add([x0, expr_neg(x)])
       } else {
@@ -142,10 +145,10 @@ pub fn series(
       let order_shift = @symcore.add([x, expr_neg(x0)])
       if needs_order {
         match x0 {
-          @symcore.Expr::Number(n0) if !n0.is_zero() => {
+          Expr::Number(n0) if !n0.is_zero() => {
             let poly_sub = @symcore.subst(poly_expr, back)
             let order_term = @symcore.function("O", [
-              @symcore.pow(order_shift, @symcore.int(n)),
+              @symcore.pow(order_shift, int(n)),
               @symcore.function("Tuple", [x, x0]),
             ])
             @symcore.add([poly_sub, order_term])
@@ -153,7 +156,7 @@ pub fn series(
           _ => {
             let with_order = @symcore.add([
               poly_expr,
-              big_o(@symcore.pow(t, @symcore.int(n))),
+              big_o(@symcore.pow(t, int(n))),
             ])
             @symcore.subst(with_order, back)
           }
@@ -165,16 +168,16 @@ pub fn series(
     None => {
       let order_shift = @symcore.add([x, expr_neg(x0)])
       let taylor = taylor_series_expr(shifted, t, n)
-      let back : Map[String, @symcore.Expr] = {}
+      let back : Map[String, Expr] = {}
       back["__series_t"] = order_shift
       let poly_sub = @symcore.subst(taylor, back)
       let order_term = match x0 {
-        @symcore.Expr::Number(n0) if !n0.is_zero() =>
+        Expr::Number(n0) if !n0.is_zero() =>
           @symcore.function("O", [
-            @symcore.pow(order_shift, @symcore.int(n)),
+            @symcore.pow(order_shift, int(n)),
             @symcore.function("Tuple", [x, x0]),
           ])
-        _ => big_o(@symcore.pow(order_shift, @symcore.int(n)))
+        _ => big_o(@symcore.pow(order_shift, int(n)))
       }
       @symcore.add([poly_sub, order_term])
     }
@@ -182,11 +185,11 @@ pub fn series(
 }
 
 ///|
-fn poly_truncate(poly : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn poly_truncate(poly : Array[Expr], n : Int) -> Array[Expr] {
   if poly.length() <= n {
     poly
   } else {
-    let out : Array[@symcore.Expr] = Array::new()
+    let out : Array[Expr] = Array::new()
     for i in 0..<n {
       out.push(poly[i])
     }
@@ -196,14 +199,14 @@ fn poly_truncate(poly : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn poly_mul_trunc(
-  a : Array[@symcore.Expr],
-  b : Array[@symcore.Expr],
+  a : Array[Expr],
+  b : Array[Expr],
   n : Int,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
   }
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for _ in 0..<n {
     out.push(zero_expr())
   }
@@ -221,15 +224,15 @@ fn poly_mul_trunc(
 
 ///|
 fn poly_pow_trunc(
-  base : Array[@symcore.Expr],
+  base : Array[Expr],
   exp : Int,
   n : Int,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   if exp == 0 {
     return [one_expr()]
   }
   let mut e = exp
-  let mut result : Array[@symcore.Expr] = [one_expr()]
+  let mut result : Array[Expr] = [one_expr()]
   let mut b = base
   while e > 0 {
     if e % 2 == 1 {
@@ -258,141 +261,137 @@ fn factorial_bigint(n : Int) -> BigInt {
 fn safe_rational(num : BigInt, den : BigInt) -> @symnum.BigRational {
   try @symnum.BigRational::new(num, den) catch {
     _ => @symnum.BigRational::zero()
-  } noraise {
-    v => v
   }
 }
 
 ///|
-fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
+fn rational_expr(num : Int, den : Int) -> Expr {
   try @symcore.rational_from_ints(num, den) catch {
-    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
-  } noraise {
-    v => v
+    _ => @symcore.function("Rational", [int(num), int(den)])
   }
 }
 
 ///|
-fn inv_factorial_expr(n : Int) -> @symcore.Expr {
+fn inv_factorial_expr(n : Int) -> Expr {
   let den = factorial_bigint(n)
   @symcore.number(safe_rational(BigInt::from_int(1), den))
 }
 
 ///|
 fn series_substitute_symbol(
-  expr : @symcore.Expr,
+  expr : Expr,
   symbol_name : String,
-  value : @symcore.Expr,
-) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  value : Expr,
+) -> Expr {
+  let env : Map[String, Expr] = {}
   env[symbol_name] = value
   @symcore.subst(expr, env)
 }
 
 ///|
 fn taylor_series_expr(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
+  expr : Expr,
+  x : Expr,
   n : Int,
-) -> @symcore.Expr {
+) -> Expr {
   let x_name = match x {
-    @symcore.Expr::Symbol(name) => name
+    Expr::Symbol(name) => name
     _ => return expr
   }
   let mut current = expr
-  let terms : Array[@symcore.Expr] = Array::new()
+  let terms : Array[Expr] = Array::new()
   for k in 0..<n {
     let value_at_zero = series_substitute_symbol(
       current,
       x_name,
-      @symcore.int(0),
+      int(0),
     )
     if !is_zero_expr(value_at_zero) {
       let coeff = expr_mul(value_at_zero, inv_factorial_expr(k))
       let term = if k == 0 {
         coeff
       } else {
-        expr_mul(coeff, @symcore.pow(x, @symcore.int(k)))
+        expr_mul(coeff, @symcore.pow(x, int(k)))
       }
       terms.push(term)
     }
     current = @symcalculus.diff(current, x)
   }
   if terms.is_empty() {
-    @symcore.int(0)
+    int(0)
   } else {
     @symcore.add(terms)
   }
 }
 
 ///|
-fn const_sin(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_sin(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    Expr::Number(n) if n.is_zero() => int(0)
     _ => @symcore.function("sin", [expr])
   }
 }
 
 ///|
-fn const_cos(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_cos(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(1)
+    Expr::Number(n) if n.is_zero() => int(1)
     _ => @symcore.function("cos", [expr])
   }
 }
 
 ///|
-fn const_tan(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_tan(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    Expr::Number(n) if n.is_zero() => int(0)
     _ => @symcore.function("tan", [expr])
   }
 }
 
 ///|
-fn const_exp(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_exp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(1)
+    Expr::Number(n) if n.is_zero() => int(1)
     _ => @symcore.function("exp", [expr])
   }
 }
 
 ///|
-fn const_sinh(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_sinh(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    Expr::Number(n) if n.is_zero() => int(0)
     _ => @symcore.function("sinh", [expr])
   }
 }
 
 ///|
-fn const_cosh(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_cosh(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(1)
+    Expr::Number(n) if n.is_zero() => int(1)
     _ => @symcore.function("cosh", [expr])
   }
 }
 
 ///|
-fn const_tanh(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_tanh(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_zero() => @symcore.int(0)
+    Expr::Number(n) if n.is_zero() => int(0)
     _ => @symcore.function("tanh", [expr])
   }
 }
 
 ///|
-fn const_log(expr : @symcore.Expr) -> @symcore.Expr {
+fn const_log(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) if n.is_one() => @symcore.int(0)
+    Expr::Number(n) if n.is_one() => int(0)
     _ => @symcore.function("log", [expr])
   }
 }
 
 ///|
-fn series_exp_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
-  let mut out : Array[@symcore.Expr] = [one_expr()]
-  let mut term : Array[@symcore.Expr] = [one_expr()]
+fn series_exp_zero(u : Array[Expr], n : Int) -> Array[Expr] {
+  let mut out : Array[Expr] = [one_expr()]
+  let mut term : Array[Expr] = [one_expr()]
   let mut k = 1
   while k < n {
     term = poly_mul_trunc(term, u, n)
@@ -405,9 +404,9 @@ fn series_exp_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn series_sin_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn series_sin_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
-  let mut out : Array[@symcore.Expr] = []
+  let mut out : Array[Expr] = []
   let mut term = u
   let mut k = 0
   let mut sign = 1
@@ -427,10 +426,10 @@ fn series_sin_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn series_cos_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn series_cos_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
-  let mut out : Array[@symcore.Expr] = []
-  let mut term : Array[@symcore.Expr] = [one_expr()]
+  let mut out : Array[Expr] = []
+  let mut term : Array[Expr] = [one_expr()]
   let mut k = 0
   let mut sign = 1
   while true {
@@ -449,9 +448,9 @@ fn series_cos_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn series_sinh_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn series_sinh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
-  let mut out : Array[@symcore.Expr] = []
+  let mut out : Array[Expr] = []
   let mut term = u
   let mut k = 0
   while true {
@@ -469,10 +468,10 @@ fn series_sinh_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn series_cosh_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn series_cosh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
-  let mut out : Array[@symcore.Expr] = []
-  let mut term : Array[@symcore.Expr] = [one_expr()]
+  let mut out : Array[Expr] = []
+  let mut term : Array[Expr] = [one_expr()]
   let mut k = 0
   while true {
     let power = 2 * k
@@ -506,19 +505,19 @@ fn binomial_coeff(alpha : @symnum.BigRational, k : Int) -> @symnum.BigRational {
 
 ///|
 fn series_pow_general(
-  poly : Array[@symcore.Expr],
+  poly : Array[Expr],
   alpha : @symnum.BigRational,
-  alpha_expr : @symcore.Expr,
+  alpha_expr : Expr,
   n : Int,
-) -> (Array[@symcore.Expr], Bool)? {
+) -> (Array[Expr], Bool)? {
   let (c0, rest) = split_const(poly)
   let c0_inv = match expr_inv(c0) {
     Some(v) => v
     None => return None
   }
   let scaled = poly_scale(rest, c0_inv)
-  let mut out : Array[@symcore.Expr] = [one_expr()]
-  let mut term : Array[@symcore.Expr] = [one_expr()]
+  let mut out : Array[Expr] = [one_expr()]
+  let mut term : Array[Expr] = [one_expr()]
   let mut k = 1
   while k < n {
     term = poly_mul_trunc(term, scaled, n)
@@ -530,9 +529,9 @@ fn series_pow_general(
 }
 
 ///|
-fn series_atan_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
+fn series_atan_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
-  let mut out : Array[@symcore.Expr] = []
+  let mut out : Array[Expr] = []
   let mut term = u
   let mut k = 0
   let mut sign = 1
@@ -552,8 +551,8 @@ fn series_atan_zero(u : Array[@symcore.Expr], n : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn split_const(
-  poly : Array[@symcore.Expr],
-) -> (@symcore.Expr, Array[@symcore.Expr]) {
+  poly : Array[Expr],
+) -> (Expr, Array[Expr]) {
   if poly.is_empty() {
     return (zero_expr(), [])
   }
@@ -565,10 +564,10 @@ fn split_const(
 
 ///|
 fn series_log_one_plus(
-  v : Array[@symcore.Expr],
+  v : Array[Expr],
   n : Int,
-) -> Array[@symcore.Expr] {
-  let mut out : Array[@symcore.Expr] = []
+) -> Array[Expr] {
+  let mut out : Array[Expr] = []
   let mut term = v
   let mut k = 1
   while k < n {
@@ -583,24 +582,24 @@ fn series_log_one_plus(
 
 ///|
 fn replace_expr(
-  expr : @symcore.Expr,
-  target : @symcore.Expr,
-  replacement : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  target : Expr,
+  replacement : Expr,
+) -> Expr {
   if expr == target {
     return replacement
   }
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       @symcore.add(args.map(child => replace_expr(child, target, replacement)))
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(args.map(child => replace_expr(child, target, replacement)))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(
         replace_expr(base, target, replacement),
         replace_expr(exp, target, replacement),
       )
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(
         name,
         args.map(child => replace_expr(child, target, replacement)),
@@ -611,10 +610,10 @@ fn replace_expr(
 
 ///|
 fn simplify_tan_coeff(
-  expr : @symcore.Expr,
-  tan_c0 : @symcore.Expr,
-) -> @symcore.Expr {
-  let sym = @symcore.symbol("__tan_c0")
+  expr : Expr,
+  tan_c0 : Expr,
+) -> Expr {
+  let sym = symbol("__tan_c0")
   let replaced = replace_expr(expr, tan_c0, sym)
   match poly_from_expr(replaced, sym) {
     Some(poly) => {
@@ -627,20 +626,20 @@ fn simplify_tan_coeff(
 
 ///|
 fn series_poly(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
+  expr : Expr,
+  x : Expr,
   n : Int,
-) -> (Array[@symcore.Expr], Bool)? {
+) -> (Array[Expr], Bool)? {
   match expr {
-    @symcore.Expr::Number(_) => Some(([expr], false))
-    @symcore.Expr::Symbol(_) =>
+    Expr::Number(_) => Some(([expr], false))
+    Expr::Symbol(_) =>
       if expr == x {
         Some(([zero_expr(), one_expr()], false))
       } else {
         Some(([expr], false))
       }
-    @symcore.Expr::Add(args) => {
-      let mut acc : Array[@symcore.Expr] = [zero_expr()]
+    Expr::Add(args) => {
+      let mut acc : Array[Expr] = [zero_expr()]
       let mut inf = false
       for arg in args {
         match series_poly(arg, x, n) {
@@ -653,8 +652,8 @@ fn series_poly(
       }
       Some((poly_truncate(acc, n), inf))
     }
-    @symcore.Expr::Mul(args) => {
-      let mut acc : Array[@symcore.Expr] = [one_expr()]
+    Expr::Mul(args) => {
+      let mut acc : Array[Expr] = [one_expr()]
       let mut inf = false
       for arg in args {
         match series_poly(arg, x, n) {
@@ -667,7 +666,7 @@ fn series_poly(
       }
       Some((poly_truncate(acc, n), inf))
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match int_exp(exp) {
         Some(e) if e >= 0 =>
           match series_poly(base, x, n) {
@@ -690,7 +689,7 @@ fn series_poly(
           }
         _ =>
           match exp {
-            @symcore.Expr::Number(alpha) =>
+            Expr::Number(alpha) =>
               match series_poly(base, x, n) {
                 Some((poly, _)) => series_pow_general(poly, alpha, exp, n)
                 None => None
@@ -698,7 +697,7 @@ fn series_poly(
             _ => None
           }
       }
-    @symcore.Expr::Function(name, args) => {
+    Expr::Function(name, args) => {
       if args.length() != 1 {
         return None
       }
@@ -849,8 +848,6 @@ fn series_poly(
               @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
             catch {
               _ => @symnum.BigRational::zero()
-            } noraise {
-              v => v
             },
           )
           series_poly(@symcore.pow(arg, half), x, n)

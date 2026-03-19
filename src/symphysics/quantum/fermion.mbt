@@ -4,26 +4,26 @@
 
 ///|
 pub struct FermionOpExpr {
-  name : @symcore.Expr
+  name : Expr
   is_annihilation : Bool
 } derive(Eq)
 
 ///|
 pub fn fermion_op(
-  name : @symcore.Expr,
+  name : Expr,
   annihilation? : Bool = true,
 ) -> FermionOpExpr {
   FermionOpExpr::{ name, is_annihilation: annihilation }
 }
 
 ///|
-pub fn FermionOpExpr::as_expr(self : FermionOpExpr) -> @symcore.Expr {
+pub fn FermionOpExpr::as_expr(self : FermionOpExpr) -> Expr {
   @symcore.raw_function("FermionOp", [
     self.name,
     if self.is_annihilation {
-      @symcore.int(1)
+      int(1)
     } else {
-      @symcore.int(0)
+      int(0)
     },
   ])
 }
@@ -44,9 +44,9 @@ pub fn FermionOpExpr::dagger(self : FermionOpExpr) -> FermionOpExpr {
 
 ///|
 pub fn fermion_fock_ket(
-  n : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
-  guard n == @symcore.int(0) || n == @symcore.int(1) else {
+  n : Expr,
+) -> Expr raise @symphysics.PhysicsError {
+  guard n == int(0) || n == int(1) else {
     raise @symphysics.PhysicsError::ValueError(
       "FermionFockKet expects occupation 0 or 1",
     )
@@ -56,9 +56,9 @@ pub fn fermion_fock_ket(
 
 ///|
 pub fn fermion_fock_bra(
-  n : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
-  guard n == @symcore.int(0) || n == @symcore.int(1) else {
+  n : Expr,
+) -> Expr raise @symphysics.PhysicsError {
+  guard n == int(0) || n == int(1) else {
     raise @symphysics.PhysicsError::ValueError(
       "FermionFockBra expects occupation 0 or 1",
     )
@@ -68,30 +68,30 @@ pub fn fermion_fock_bra(
 
 ///|
 pub fn fermion_apply_operator_to_ket(
-  op_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
-) -> @symcore.Expr? {
+  op_expr : Expr,
+  ket_expr : Expr,
+) -> Expr? {
   match (op_expr, ket_expr) {
     (
-      @symcore.Expr::Function("FermionOp", oargs),
-      @symcore.Expr::Function("FermionFockKet", kargs),
+      Expr::Function("FermionOp", oargs),
+      Expr::Function("FermionFockKet", kargs),
     ) if oargs.length() == 2 && kargs.length() == 1 => {
-      let is_ann = oargs[1] != @symcore.int(0)
+      let is_ann = oargs[1] != int(0)
       let n = kargs[0]
       if is_ann {
         Some(
-          if n == @symcore.int(1) {
-            try! fermion_fock_ket(@symcore.int(0))
+          if n == int(1) {
+            try! fermion_fock_ket(int(0))
           } else {
-            @symcore.int(0)
+            int(0)
           },
         )
       } else {
         Some(
-          if n == @symcore.int(0) {
-            try! fermion_fock_ket(@symcore.int(1))
+          if n == int(0) {
+            try! fermion_fock_ket(int(1))
           } else {
-            @symcore.int(0)
+            int(0)
           },
         )
       }

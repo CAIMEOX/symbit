@@ -251,8 +251,6 @@ fn py_eval_assumptions(expr : String) -> @py.PyObjectEnum raise {
       py_gil_release(state)
       raise err
     }
-  } noraise {
-    v => v
   }
   py_gil_release(state)
   result

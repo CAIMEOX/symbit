@@ -9,9 +9,9 @@
 let qubit_measure_random_source : @random.Rand = @random.Rand::new()
 
 ///|
-fn expr_number_value_local(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn expr_number_value_local(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Expr::Number(n) => Some(n)
     _ => None
   }
 }
@@ -49,16 +49,16 @@ fn complex_inv(value : (Double, Double)) -> (Double, Double)? {
 }
 
 ///|
-fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
+fn expr_complex_double(expr : Expr) -> (Double, Double)? {
   match expr {
-    @symcore.Expr::Number(n) => Some((expr_rational_to_double(n), 0.0))
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(n) => Some((expr_rational_to_double(n), 0.0))
+    Expr::Symbol(name) =>
       match name {
         "I" => Some((0.0, 1.0))
         "pi" => Some((@math.PI, 0.0))
         _ => None
       }
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut acc = (0.0, 0.0)
       for arg in args {
         match expr_complex_double(arg) {
@@ -68,7 +68,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = (1.0, 0.0)
       for arg in args {
         match expr_complex_double(arg) {
@@ -78,7 +78,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (expr_complex_double(base), expr_number_value_local(exp)) {
         (Some(base_value), Some(exp_value)) =>
           if base_value.1 != 0.0 {
@@ -106,13 +106,13 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
           }
         _ => None
       }
-    @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
+    Expr::Function("sqrt", args) if args.length() == 1 =>
       match expr_complex_double(args[0]) {
         Some(value) if value.1 == 0.0 && value.0 >= 0.0 =>
           Some((value.0.sqrt(), 0.0))
         _ => None
       }
-    @symcore.Expr::Function("exp", args) if args.length() == 1 =>
+    Expr::Function("exp", args) if args.length() == 1 =>
       match expr_complex_double(args[0]) {
         Some(value) => {
           let factor = @math.exp(value.0)
@@ -120,7 +120,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
         }
         None => None
       }
-    @symcore.Expr::Function("conjugate", args) if args.length() == 1 =>
+    Expr::Function("conjugate", args) if args.length() == 1 =>
       match expr_complex_double(args[0]) {
         Some(value) => Some((value.0, -value.1))
         None => None
@@ -130,7 +130,7 @@ fn expr_complex_double(expr : @symcore.Expr) -> (Double, Double)? {
 }
 
 ///|
-fn expr_real_probability(expr : @symcore.Expr) -> Double? {
+fn expr_real_probability(expr : Expr) -> Double? {
   match expr_complex_double(expr) {
     Some(value) if value.1.abs() <= 0.0000000001 => Some(value.0)
     _ => None
@@ -155,9 +155,9 @@ fn oneshot_sample_value(
 
 ///|
 fn choose_measurement_state(
-  states : Array[(@symcore.Expr, @symcore.Expr)],
+  states : Array[(Expr, Expr)],
   sample : Double,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard !states.is_empty() else {
     raise @symphysics.PhysicsError::ValueError(
       "measurement produced no possible outcomes",
@@ -183,19 +183,19 @@ fn choose_measurement_state(
 
 ///|
 pub fn measure_partial_oneshot(
-  expr : @symcore.Expr,
+  expr : Expr,
   bits : Array[Int],
   nqubits? : Int = 0,
   sample? : Double = -1.0,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   choose_measurement_state(try! measure_partial(expr, bits, nqubits~), sample)
 }
 
 ///|
 pub fn measure_all_oneshot(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits? : Int = 0,
   sample? : Double = -1.0,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   choose_measurement_state(try! measure_all(expr, nqubits~), sample)
 }

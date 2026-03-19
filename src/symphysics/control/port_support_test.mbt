@@ -11,8 +11,6 @@ fn control_oracle_lines(script : String) -> Array[String] {
 fn control_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
   try @sympy_physics.control_expr_equivalent(ours, oracle) catch {
     _ => false
-  } noraise {
-    ok => ok
   }
 }
 

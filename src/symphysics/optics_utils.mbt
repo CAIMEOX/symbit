@@ -5,30 +5,30 @@
 ///|
 pub enum OpticsMediumArg {
   Medium(Medium)
-  Index(@symcore.Expr)
+  Index(Expr)
 } derive(Eq)
 
 ///|
-fn oo_expr() -> @symcore.Expr {
-  @symcore.symbol("oo")
+fn oo_expr() -> Expr {
+  symbol("oo")
 }
 
 ///|
-fn neg_oo_expr() -> @symcore.Expr {
-  @symcore.int(-1) * oo_expr()
+fn neg_oo_expr() -> Expr {
+  int(-1) * oo_expr()
 }
 
 ///|
-fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
+fn is_infinite_expr(expr : Expr) -> Bool {
   expr == oo_expr() || expr == neg_oo_expr()
 }
 
 ///|
-fn reciprocal_expr(expr : @symcore.Expr) -> @symcore.Expr {
+fn reciprocal_expr(expr : Expr) -> Expr {
   if is_infinite_expr(expr) {
-    @symcore.int(0)
+    int(0)
   } else {
-    expr ^ @symcore.int(-1)
+    expr ^ int(-1)
   }
 }
 
@@ -39,11 +39,11 @@ fn optics_rational_to_double(value : @symnum.BigRational) -> Double {
 }
 
 ///|
-fn optics_expr_real_double(expr : @symcore.Expr) -> Double? {
+fn optics_expr_real_double(expr : Expr) -> Double? {
   match expr {
-    @symcore.Expr::Number(value) => Some(optics_rational_to_double(value))
-    @symcore.Expr::Symbol(name) if name == "pi" => Some(@math.PI)
-    @symcore.Expr::Add(args) => {
+    Expr::Number(value) => Some(optics_rational_to_double(value))
+    Expr::Symbol(name) if name == "pi" => Some(@math.PI)
+    Expr::Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match optics_expr_real_double(arg) {
@@ -53,7 +53,7 @@ fn optics_expr_real_double(expr : @symcore.Expr) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match optics_expr_real_double(arg) {
@@ -63,7 +63,7 @@ fn optics_expr_real_double(expr : @symcore.Expr) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (optics_expr_real_double(base), expr_number_value(exp)) {
         (Some(lhs), Some(rhs)) =>
           Some(@math.pow(lhs, optics_rational_to_double(rhs)))
@@ -75,7 +75,7 @@ fn optics_expr_real_double(expr : @symcore.Expr) -> Double? {
 
 ///|
 fn optics_numeric_tir(
-  incident : @symcore.Expr,
+  incident : Expr,
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
 ) -> Bool {
@@ -104,12 +104,12 @@ pub fn optics_medium_arg(medium : Medium) -> OpticsMediumArg {
 }
 
 ///|
-pub fn optics_index_arg(index : @symcore.Expr) -> OpticsMediumArg {
+pub fn optics_index_arg(index : Expr) -> OpticsMediumArg {
   OpticsMediumArg::Index(index)
 }
 
 ///|
-pub fn refractive_index_of_medium(medium : OpticsMediumArg) -> @symcore.Expr {
+pub fn refractive_index_of_medium(medium : OpticsMediumArg) -> Expr {
   match medium {
     OpticsMediumArg::Medium(value) => value.refractive_index()
     OpticsMediumArg::Index(value) => value
@@ -118,10 +118,10 @@ pub fn refractive_index_of_medium(medium : OpticsMediumArg) -> @symcore.Expr {
 
 ///|
 pub fn refraction_angle(
-  incident : @symcore.Expr,
+  incident : Expr,
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
-) -> @symcore.Expr raise PhysicsError {
+) -> Expr raise PhysicsError {
   match expr_number_value(incident) {
     Some(value) if value.compare(@symnum.BigRational::zero()) < 0 =>
       raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
@@ -142,10 +142,10 @@ pub fn refraction_angle(
 
 ///|
 pub fn fresnel_coefficients(
-  angle_of_incidence : @symcore.Expr,
+  angle_of_incidence : Expr,
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
-) -> Array[@symcore.Expr] raise PhysicsError {
+) -> Array[Expr] raise PhysicsError {
   match expr_number_value(angle_of_incidence) {
     Some(value) if value.compare(@symnum.BigRational::zero()) < 0 =>
       raise PhysicsError::ValueError("Angle of incidence not in range [0:pi/2)")
@@ -161,17 +161,17 @@ pub fn fresnel_coefficients(
     let n2 = refractive_index_of_medium(medium2)
     let n = expr_div(n2, n1)
     let radical = @symelem.sqrt(
-      (@symelem.sin(angle_of_incidence) ^ @symcore.int(2)) -
-      (n ^ @symcore.int(2)),
+      (@symelem.sin(angle_of_incidence) ^ int(2)) -
+      (n ^ int(2)),
     )
     let rs = expr_div(
       @symelem.cos(angle_of_incidence) - i_expr() * radical,
       @symelem.cos(angle_of_incidence) + i_expr() * radical,
     )
     let rp = expr_div(
-      (n ^ @symcore.int(2)) * @symelem.cos(angle_of_incidence) -
+      (n ^ int(2)) * @symelem.cos(angle_of_incidence) -
       i_expr() * radical,
-      (n ^ @symcore.int(2)) * @symelem.cos(angle_of_incidence) +
+      (n ^ int(2)) * @symelem.cos(angle_of_incidence) +
       i_expr() * radical,
     )
     return [rp, rs]
@@ -182,18 +182,18 @@ pub fn fresnel_coefficients(
   let sum_angle = angle_of_incidence + angle_of_refraction
   let diff_angle = angle_of_incidence - angle_of_refraction
   let rs = expr_div(
-    @symcore.int(-1) * @symelem.sin(diff_angle),
+    int(-1) * @symelem.sin(diff_angle),
     @symelem.sin(sum_angle),
   )
   let rp = expr_div(@symelem.tan(diff_angle), @symelem.tan(sum_angle))
   let ts = expr_div(
-    @symcore.int(2) *
+    int(2) *
     @symelem.sin(angle_of_refraction) *
     @symelem.cos(angle_of_incidence),
     @symelem.sin(sum_angle),
   )
   let tp = expr_div(
-    @symcore.int(2) *
+    int(2) *
     @symelem.sin(angle_of_refraction) *
     @symelem.cos(angle_of_incidence),
     @symelem.sin(sum_angle) * @symelem.cos(diff_angle),
@@ -203,10 +203,10 @@ pub fn fresnel_coefficients(
 
 ///|
 pub fn deviation(
-  incident : @symcore.Expr,
+  incident : Expr,
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
-) -> @symcore.Expr raise PhysicsError {
+) -> Expr raise PhysicsError {
   try! (refraction_angle(incident, medium1, medium2) - incident)
 }
 
@@ -214,7 +214,7 @@ pub fn deviation(
 pub fn brewster_angle(
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
-) -> @symcore.Expr {
+) -> Expr {
   @symelem.atan2(
     refractive_index_of_medium(medium2),
     refractive_index_of_medium(medium1),
@@ -225,7 +225,7 @@ pub fn brewster_angle(
 pub fn critical_angle(
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
-) -> @symcore.Expr raise PhysicsError {
+) -> Expr raise PhysicsError {
   let n1 = refractive_index_of_medium(medium1)
   let n2 = refractive_index_of_medium(medium2)
   match (expr_number_value(n1), expr_number_value(n2)) {
@@ -242,25 +242,25 @@ pub fn critical_angle(
 pub fn lens_makers_formula(
   n_lens : OpticsMediumArg,
   n_surr : OpticsMediumArg,
-  r1 : @symcore.Expr,
-  r2 : @symcore.Expr,
-  d? : @symcore.Expr = @symcore.int(0),
-) -> @symcore.Expr {
+  r1 : Expr,
+  r2 : Expr,
+  d? : Expr = int(0),
+) -> Expr {
   let nl = refractive_index_of_medium(n_lens)
   let ns = refractive_index_of_medium(n_surr)
   let contrast = expr_div(nl - ns, ns)
   let curvature = reciprocal_expr(r1) -
     reciprocal_expr(r2) +
     expr_div((nl - ns) * d, nl * r1 * r2)
-  expr_div(@symcore.int(1), contrast * curvature)
+  expr_div(int(1), contrast * curvature)
 }
 
 ///|
 pub fn mirror_formula(
-  focal_length? : @symcore.Expr? = None,
-  u? : @symcore.Expr? = None,
-  v? : @symcore.Expr? = None,
-) -> @symcore.Expr raise PhysicsError {
+  focal_length? : Expr? = None,
+  u? : Expr? = None,
+  v? : Expr? = None,
+) -> Expr raise PhysicsError {
   let supplied = (if focal_length is Some(_) { 1 } else { 0 }) +
     (if u is Some(_) { 1 } else { 0 }) +
     (if v is Some(_) { 1 } else { 0 })
@@ -284,7 +284,7 @@ pub fn mirror_formula(
       } else if is_infinite_expr(vv) {
         ff
       } else if is_infinite_expr(ff) {
-        @symcore.int(-1) * vv
+        int(-1) * vv
       } else {
         expr_div(ff * vv, vv - ff)
       }
@@ -294,7 +294,7 @@ pub fn mirror_formula(
       } else if is_infinite_expr(uv) {
         ff
       } else if is_infinite_expr(ff) {
-        @symcore.int(-1) * uv
+        int(-1) * uv
       } else {
         expr_div(ff * uv, uv - ff)
       }
@@ -304,10 +304,10 @@ pub fn mirror_formula(
 
 ///|
 pub fn lens_formula(
-  focal_length? : @symcore.Expr? = None,
-  u? : @symcore.Expr? = None,
-  v? : @symcore.Expr? = None,
-) -> @symcore.Expr raise PhysicsError {
+  focal_length? : Expr? = None,
+  u? : Expr? = None,
+  v? : Expr? = None,
+) -> Expr raise PhysicsError {
   let supplied = (if focal_length is Some(_) { 1 } else { 0 }) +
     (if u is Some(_) { 1 } else { 0 }) +
     (if v is Some(_) { 1 } else { 0 })
@@ -321,7 +321,7 @@ pub fn lens_formula(
       } else if is_infinite_expr(uv) {
         vv
       } else if is_infinite_expr(vv) {
-        @symcore.int(-1) * uv
+        int(-1) * uv
       } else {
         expr_div(uv * vv, uv - vv)
       }
@@ -329,7 +329,7 @@ pub fn lens_formula(
       if is_infinite_expr(vv) && is_infinite_expr(ff) {
         neg_oo_expr()
       } else if is_infinite_expr(vv) {
-        @symcore.int(-1) * ff
+        int(-1) * ff
       } else if is_infinite_expr(ff) {
         vv
       } else {
@@ -351,17 +351,17 @@ pub fn lens_formula(
 
 ///|
 pub fn hyperfocal_distance(
-  f : @symcore.Expr,
-  n : @symcore.Expr,
-  c : @symcore.Expr,
-) -> @symcore.Expr {
-  expr_div(f ^ @symcore.int(2), n * c)
+  f : Expr,
+  n : Expr,
+  c : Expr,
+) -> Expr {
+  expr_div(f ^ int(2), n * c)
 }
 
 ///|
 pub fn transverse_magnification(
-  si : @symcore.Expr,
-  so : @symcore.Expr,
-) -> @symcore.Expr {
-  @symcore.int(-1) * expr_div(si, so)
+  si : Expr,
+  so : Expr,
+) -> Expr {
+  int(-1) * expr_div(si, so)
 }

@@ -39,7 +39,7 @@ pub fn dyadic_basis(
 }
 
 ///|
-fn dyadic_key(coeff : (@symcore.Expr, Int, Int, Int, Int)) -> String {
+fn dyadic_key(coeff : (Expr, Int, Int, Int, Int)) -> String {
   coeff.1.to_string() +
   ":" +
   coeff.2.to_string() +
@@ -51,9 +51,9 @@ fn dyadic_key(coeff : (@symcore.Expr, Int, Int, Int, Int)) -> String {
 
 ///|
 fn dyadic_normalize(
-  items : Array[(@symcore.Expr, Int, Int, Int, Int)],
+  items : Array[(Expr, Int, Int, Int, Int)],
 ) -> Dyadic {
-  let combined : Map[String, (@symcore.Expr, Int, Int, Int, Int)] = {}
+  let combined : Map[String, (Expr, Int, Int, Int, Int)] = {}
   for item in items {
     let key = dyadic_key(item)
     match combined.get(key) {
@@ -67,7 +67,7 @@ fn dyadic_normalize(
     keys.push(entry.0)
   }
   keys.sort()
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for key in keys {
     let value = combined[key]
     let coeff = simplify_expr(value.0)
@@ -79,8 +79,8 @@ fn dyadic_normalize(
 }
 
 ///|
-pub fn Dyadic::scale(self : Dyadic, scalar : @symcore.Expr) -> Dyadic {
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+pub fn Dyadic::scale(self : Dyadic, scalar : Expr) -> Dyadic {
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for item in self.args {
     out.push((item.0 * scalar, item.1, item.2, item.3, item.4))
   }
@@ -94,7 +94,7 @@ pub fn Dyadic::neg(self : Dyadic) -> Dyadic {
 
 ///|
 fn dyadic_add(lhs : Dyadic, rhs : Dyadic) -> Dyadic {
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for item in lhs.args {
     out.push(item)
   }
@@ -188,7 +188,7 @@ pub fn Dyadic::to_matrix(
 ) -> @symphysics.ExplicitMatrix raise VectorError {
   let right_frame = frame2.unwrap_or(frame1)
   let expressed = self.express(frame1, frame2=Some(right_frame))
-  let rows : Array[Array[@symcore.Expr]] = [
+  let rows : Array[Array[Expr]] = [
     [zero_expr(), zero_expr(), zero_expr()],
     [zero_expr(), zero_expr(), zero_expr()],
     [zero_expr(), zero_expr(), zero_expr()],

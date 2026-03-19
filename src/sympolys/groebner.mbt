@@ -188,7 +188,7 @@ pub fn Poly::groebner(
 ///|
 /// Groebner wrapper that accepts expressions + optional domain/modulus/order/gens.
 pub fn groebner_expr(
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
   gens? : Array[String],
   domain? : Domain,
   modulus? : Int,
@@ -244,7 +244,7 @@ pub fn groebner_expr(
 }
 
 ///|
-fn infer_gens_union(exprs : Array[@symcore.Expr]) -> Array[String] {
+fn infer_gens_union(exprs : Array[Expr]) -> Array[String] {
   let seen : Map[String, Bool] = Map::new()
   for e in exprs {
     collect_symbols_expr(e, seen)
@@ -258,18 +258,18 @@ fn infer_gens_union(exprs : Array[@symcore.Expr]) -> Array[String] {
 }
 
 ///|
-fn collect_symbols_expr(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+fn collect_symbols_expr(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args) | Expr::Mul(args) =>
       for child in args {
         collect_symbols_expr(child, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       collect_symbols_expr(base, seen)
       collect_symbols_expr(exp, seen)
     }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       for child in args {
         collect_symbols_expr(child, seen)
       }

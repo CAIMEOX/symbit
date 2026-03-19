@@ -1,8 +1,8 @@
 ///|
 fn make_add(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   options : ParseOptions,
-) -> @symcore.Expr {
+) -> Expr {
   if options.evaluate {
     @symcore.add(args)
   } else {
@@ -12,9 +12,9 @@ fn make_add(
 
 ///|
 fn make_mul(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   options : ParseOptions,
-) -> @symcore.Expr {
+) -> Expr {
   if options.evaluate {
     @symcore.mul(args)
   } else {
@@ -24,10 +24,10 @@ fn make_mul(
 
 ///|
 fn make_pow(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   options : ParseOptions,
-) -> @symcore.Expr {
+) -> Expr {
   if options.evaluate {
     @symcore.pow(base, exp)
   } else {
@@ -38,9 +38,9 @@ fn make_pow(
 ///|
 fn make_function(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   options : ParseOptions,
-) -> @symcore.Expr {
+) -> Expr {
   if options.evaluate {
     @symcore.function(name, args)
   } else {
@@ -64,40 +64,40 @@ fn options_with_evaluate(
 }
 
 ///|
-fn lookup_binding(context : ParseContext, name : String) -> @symcore.Expr? {
+fn lookup_binding(context : ParseContext, name : String) -> Expr? {
   context.bindings.get(name)
 }
 
 ///|
-fn bool_of_expr(expr : @symcore.Expr) -> Bool? {
+fn bool_of_expr(expr : Expr) -> Bool? {
   match expr {
-    @symcore.Expr::Symbol("True") => Some(true)
-    @symcore.Expr::Symbol("False") => Some(false)
+    Expr::Symbol("True") => Some(true)
+    Expr::Symbol("False") => Some(false)
     _ => None
   }
 }
 
 ///|
-fn raw_add_or_identity(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn raw_add_or_identity(args : Array[Expr]) -> Expr {
   match args.length() {
-    0 => @symcore.int(0)
+    0 => int(0)
     1 => args[0]
     _ => @symcore.raw_add(args)
   }
 }
 
 ///|
-fn raw_mul_or_identity(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn raw_mul_or_identity(args : Array[Expr]) -> Expr {
   match args.length() {
-    0 => @symcore.int(1)
+    0 => int(1)
     1 => args[0]
     _ => @symcore.raw_mul(args)
   }
 }
 
 ///|
-fn negate_expr(expr : @symcore.Expr, options : ParseOptions) -> @symcore.Expr {
-  make_mul([@symcore.int(-1), expr], options)
+fn negate_expr(expr : Expr, options : ParseOptions) -> Expr {
+  make_mul([int(-1), expr], options)
 }
 
 ///|
@@ -132,7 +132,7 @@ fn lower_raw_add_terms(
   ast : Ast,
   options : ParseOptions,
   context : ParseContext,
-) -> Array[@symcore.Expr] raise ParseError {
+) -> Array[Expr] raise ParseError {
   match ast {
     Ast::Binary(span~, BinaryOp::Add, lhs, rhs) => {
       ignore(span)
@@ -157,7 +157,7 @@ fn lower_raw_mul_factors(
   ast : Ast,
   options : ParseOptions,
   context : ParseContext,
-) -> Array[@symcore.Expr] raise ParseError {
+) -> Array[Expr] raise ParseError {
   match ast {
     Ast::Binary(span~, BinaryOp::Mul, lhs, rhs) => {
       ignore(span)
@@ -171,7 +171,7 @@ fn lower_raw_mul_factors(
       ignore(span)
       let out = lower_raw_mul_factors(lhs, options, context)
       out.push(
-        make_pow(lower_ast_in(rhs, options, context), @symcore.int(-1), options),
+        make_pow(lower_ast_in(rhs, options, context), int(-1), options),
       )
       out
     }
@@ -186,7 +186,7 @@ fn lower_compare_pair(
   rhs_ast : Ast,
   options : ParseOptions,
   context : ParseContext,
-) -> @symcore.Expr raise ParseError {
+) -> Expr raise ParseError {
   let lhs = lower_ast_in(lhs_ast, options, context)
   let rhs = lower_ast_in(rhs_ast, options, context)
   let eval_options = options_with_evaluate(options, true)
@@ -204,7 +204,7 @@ fn lower_compare_pair(
       return bool_expr(true)
     }
     match (lhs_eval, rhs_eval) {
-      (@symcore.Expr::Number(lhs_num), @symcore.Expr::Number(rhs_num)) =>
+      (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
         return bool_expr(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
@@ -212,7 +212,7 @@ fn lower_compare_pair(
   }
   if options.evaluate {
     match (lhs_eval, rhs_eval) {
-      (@symcore.Expr::Number(lhs_num), @symcore.Expr::Number(rhs_num)) =>
+      (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
         return bool_expr(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
@@ -227,7 +227,7 @@ fn lower_compare_chain(
   ops : Array[CompareOp],
   options : ParseOptions,
   context : ParseContext,
-) -> @symcore.Expr raise ParseError {
+) -> Expr raise ParseError {
   if ops.is_empty() {
     return lower_ast_in(exprs[0], options, context)
   }
@@ -283,7 +283,7 @@ fn pow10(count : Int) -> BigInt {
 fn number_from_literal(
   text : String,
   source_span : Span,
-) -> @symcore.Expr raise ParseError {
+) -> Expr raise ParseError {
   if text.contains(".") {
     let (whole_s0, frac_s, repeat_s) = decimal_parts(text)
     let whole_s = if whole_s0 == "" { "0" } else { whole_s0 }
@@ -309,8 +309,8 @@ fn number_from_literal(
 }
 
 ///|
-fn bool_expr(value : Bool) -> @symcore.Expr {
-  @symcore.symbol(if value { "True" } else { "False" })
+fn bool_expr(value : Bool) -> Expr {
+  symbol(if value { "True" } else { "False" })
 }
 
 ///|
@@ -318,14 +318,14 @@ pub fn lower_ast_in(
   ast : Ast,
   options : ParseOptions,
   context : ParseContext,
-) -> @symcore.Expr raise ParseError {
+) -> Expr raise ParseError {
   match ast {
     Ast::Number(span~, text) => number_from_literal(text, span)
     Ast::Symbol(span~, name) => {
       ignore(span)
       match lookup_binding(context, name) {
         Some(bound) => bound
-        None => @symcore.symbol(name)
+        None => symbol(name)
       }
     }
     Ast::Unary(span~, UnaryOp::Plus, operand) => {
@@ -335,7 +335,7 @@ pub fn lower_ast_in(
     Ast::Unary(span~, UnaryOp::Minus, operand) => {
       ignore(span)
       make_mul(
-        [@symcore.int(-1), lower_ast_in(operand, options, context)],
+        [int(-1), lower_ast_in(operand, options, context)],
         options,
       )
     }
@@ -360,7 +360,7 @@ pub fn lower_ast_in(
           [
             lower_ast_in(lhs, options, context),
             make_mul(
-              [@symcore.int(-1), lower_ast_in(rhs, options, context)],
+              [int(-1), lower_ast_in(rhs, options, context)],
               options,
             ),
           ],
@@ -392,7 +392,7 @@ pub fn lower_ast_in(
             lower_ast_in(lhs, options, context),
             make_pow(
               lower_ast_in(rhs, options, context),
-              @symcore.int(-1),
+              int(-1),
               options,
             ),
           ],
@@ -415,7 +415,7 @@ pub fn lower_ast_in(
         Ast::Symbol(span~, name) => {
           ignore(span)
           let function_name = match lookup_binding(context, name) {
-            Some(@symcore.Expr::Symbol(target_name)) =>
+            Some(Expr::Symbol(target_name)) =>
               if context_has_callable_name(context, name) {
                 target_name
               } else {
@@ -452,11 +452,11 @@ pub fn lower_ast_in(
 pub fn lower_ast_with(
   ast : Ast,
   options : ParseOptions,
-) -> @symcore.Expr raise ParseError {
+) -> Expr raise ParseError {
   lower_ast_in(ast, options, default_parse_context())
 }
 
 ///|
-pub fn lower_ast(ast : Ast) -> @symcore.Expr raise ParseError {
+pub fn lower_ast(ast : Ast) -> Expr raise ParseError {
   lower_ast_in(ast, default_parse_options(), default_parse_context())
 }

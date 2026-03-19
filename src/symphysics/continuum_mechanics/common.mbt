@@ -1,36 +1,39 @@
 ///|
+using @symcore {type Expr, int, symbol}
+
+///|
 /// Shared symbolic helpers for `physics.continuum_mechanics` ports.
 
 ///|
-pub fn cm_int_expr(value : Int) -> @symcore.Expr {
-  @symcore.int(value)
+pub fn cm_int_expr(value : Int) -> Expr {
+  int(value)
 }
 
 ///|
-pub fn cm_rat_expr(num : Int, den : Int) -> @symcore.Expr {
+pub fn cm_rat_expr(num : Int, den : Int) -> Expr {
   try! @symcore.rational_from_ints(num, den)
 }
 
 ///|
-pub fn cm_symbol(name : String) -> @symcore.Expr {
-  @symcore.symbol(name)
+pub fn cm_symbol(name : String) -> Expr {
+  symbol(name)
 }
 
 ///|
-pub fn cm_simplify(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn cm_simplify(expr : Expr) -> Expr {
   @symsimplify.ratsimp(@symsimplify.simplify(expr, max_passes=8), max_passes=8)
 }
 
 ///|
-pub fn cm_expr_is_zero(expr : @symcore.Expr) -> Bool {
+pub fn cm_expr_is_zero(expr : Expr) -> Bool {
   cm_simplify(expr) == cm_int_expr(0)
 }
 
 ///|
-pub fn cm_sign_of_difference(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int? {
+pub fn cm_sign_of_difference(lhs : Expr, rhs : Expr) -> Int? {
   let diff = cm_simplify(lhs - rhs)
   match diff {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       if n.is_zero() {
         Some(0)
       } else if n.numerator().to_int() > 0 {
@@ -43,19 +46,19 @@ pub fn cm_sign_of_difference(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Int? {
 }
 
 ///|
-pub fn cm_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+pub fn cm_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
   cm_sign_of_difference(lhs, rhs) == Some(0)
 }
 
 ///|
-pub fn cm_depends_on(expr : @symcore.Expr, var_name : String) -> Bool {
+pub fn cm_depends_on(expr : Expr, var_name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => name == var_name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => name == var_name
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(arg => cm_depends_on(arg, var_name))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       cm_depends_on(base, var_name) || cm_depends_on(exp, var_name)
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       args.any(arg => cm_depends_on(arg, var_name))
     _ => false
   }
@@ -63,20 +66,20 @@ pub fn cm_depends_on(expr : @symcore.Expr, var_name : String) -> Bool {
 
 ///|
 pub fn cm_collect_symbols(
-  expr : @symcore.Expr,
+  expr : Expr,
   names : Map[String, Bool],
 ) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => names[name] = true
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => names[name] = true
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         cm_collect_symbols(arg, names)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       cm_collect_symbols(base, names)
       cm_collect_symbols(exp, names)
     }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       for arg in args {
         cm_collect_symbols(arg, names)
       }
@@ -131,11 +134,11 @@ fn cm_number_text_to_double(text : String) -> Double? {
 }
 
 ///|
-pub fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? {
+pub fn cm_expr_eval(expr : Expr, env : Map[String, Double]) -> Double? {
   match expr {
-    @symcore.Expr::Number(n) => cm_number_text_to_double(n.to_string())
-    @symcore.Expr::Symbol(name) => env.get(name)
-    @symcore.Expr::Add(args) => {
+    Expr::Number(n) => cm_number_text_to_double(n.to_string())
+    Expr::Symbol(name) => env.get(name)
+    Expr::Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match cm_expr_eval(arg, env) {
@@ -145,7 +148,7 @@ pub fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? 
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match cm_expr_eval(arg, env) {
@@ -155,35 +158,35 @@ pub fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? 
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (cm_expr_eval(base, env), exp) {
-        (Some(base_value), @symcore.Expr::Number(n)) if n.is_integral() =>
+        (Some(base_value), Expr::Number(n)) if n.is_integral() =>
           Some(cm_double_pow(base_value, n.numerator().to_int()))
         _ => None
       }
-    @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
+    Expr::Function("sqrt", args) if args.length() == 1 =>
       match cm_expr_eval(args[0], env) {
         Some(value) => Some(value.sqrt())
         None => None
       }
-    @symcore.Expr::Function("sin", args) if args.length() == 1 =>
+    Expr::Function("sin", args) if args.length() == 1 =>
       match cm_expr_eval(args[0], env) {
         Some(value) => Some(@math.sin(value))
         None => None
       }
-    @symcore.Expr::Function("cos", args) if args.length() == 1 =>
+    Expr::Function("cos", args) if args.length() == 1 =>
       match cm_expr_eval(args[0], env) {
         Some(value) => Some(@math.cos(value))
         None => None
       }
-    @symcore.Expr::Function("atan", args) if args.length() == 1 =>
+    Expr::Function("atan", args) if args.length() == 1 =>
       match cm_expr_eval(args[0], env) {
         Some(value) => Some(@math.atan(value))
         None => None
       }
-    @symcore.Expr::Function("SingularityFunction", args) if args.length() == 3 =>
+    Expr::Function("SingularityFunction", args) if args.length() == 3 =>
       match (args[0], args[2]) {
-        (@symcore.Expr::Symbol(name), @symcore.Expr::Number(n)) if n.is_integral() =>
+        (Expr::Symbol(name), Expr::Number(n)) if n.is_integral() =>
           match (env.get(name), cm_expr_eval(args[1], env)) {
             (Some(at), Some(start)) => {
               let order = n.numerator().to_int()
@@ -215,7 +218,7 @@ pub fn cm_expr_eval(expr : @symcore.Expr, env : Map[String, Double]) -> Double? 
 }
 
 ///|
-pub fn cm_numeric_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+pub fn cm_numeric_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
   if cm_expr_is_zero(lhs - rhs) {
     return true
   }
@@ -242,26 +245,26 @@ pub fn cm_numeric_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
 
 ///|
 pub fn cm_singularity(
-  var_expr : @symcore.Expr,
-  start : @symcore.Expr,
+  var_expr : Expr,
+  start : Expr,
   order : Int,
-) -> @symcore.Expr {
+) -> Expr {
   @symspec.singularity_function(var_expr, start, cm_int_expr(order))
 }
 
 ///|
 pub fn cm_subst(
-  expr : @symcore.Expr,
+  expr : Expr,
   name : String,
-  value : @symcore.Expr,
-) -> @symcore.Expr {
-  let env : Map[String, @symcore.Expr] = {}
+  value : Expr,
+) -> Expr {
+  let env : Map[String, Expr] = {}
   env[name] = value
   @symcore.subst(expr, env)
 }
 
 ///|
-fn cm_integrated_singularity(order : Int) -> (@symcore.Expr, Int) {
+fn cm_integrated_singularity(order : Int) -> (Expr, Int) {
   if order >= 0 {
     (cm_rat_expr(1, order + 1), order + 1)
   } else if order == -1 {
@@ -272,13 +275,13 @@ fn cm_integrated_singularity(order : Int) -> (@symcore.Expr, Int) {
 }
 
 ///|
-pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
+pub fn cm_integrate(expr : Expr, var_name : String) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       @symcore.add(args.map(arg => cm_integrate(arg, var_name)))
-    @symcore.Expr::Mul(args) => {
-      let indep : Array[@symcore.Expr] = []
-      let dep : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let indep : Array[Expr] = []
+      let dep : Array[Expr] = []
       for arg in args {
         if cm_depends_on(arg, var_name) {
           dep.push(arg)
@@ -297,15 +300,15 @@ pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
           @symcore.mul(indep)
         }
         match dep_item {
-          @symcore.Expr::Symbol(name) if name == var_name =>
+          Expr::Symbol(name) if name == var_name =>
             return coeff *
               (cm_symbol(var_name) ^ cm_int_expr(2)) *
               cm_rat_expr(1, 2)
-          @symcore.Expr::Function("SingularityFunction", sf_args) if sf_args.length() ==
+          Expr::Function("SingularityFunction", sf_args) if sf_args.length() ==
             3 &&
             sf_args[0] == cm_symbol(var_name) =>
             match sf_args[2] {
-              @symcore.Expr::Number(n) if n.is_integral() => {
+              Expr::Number(n) if n.is_integral() => {
                 let (scale, next_order) = cm_integrated_singularity(
                   n.numerator().to_int(),
                 )
@@ -315,9 +318,9 @@ pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
               }
               _ => ()
             }
-          @symcore.Expr::Pow(base, exp) if base == cm_symbol(var_name) =>
+          Expr::Pow(base, exp) if base == cm_symbol(var_name) =>
             match exp {
-              @symcore.Expr::Number(n) if n.is_integral() => {
+              Expr::Number(n) if n.is_integral() => {
                 let power = n.numerator().to_int()
                 return coeff *
                   (cm_symbol(var_name) ^ cm_int_expr(power + 1)) *
@@ -325,7 +328,7 @@ pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
               }
               _ => ()
             }
-          @symcore.Expr::Add(_) =>
+          Expr::Add(_) =>
             return coeff * cm_integrate(dep_item, var_name)
           _ => ()
         }
@@ -333,7 +336,7 @@ pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
       }
       expr * cm_symbol(var_name)
     }
-    @symcore.Expr::Symbol(name) if name == var_name =>
+    Expr::Symbol(name) if name == var_name =>
       (cm_symbol(var_name) ^ cm_int_expr(2)) * cm_rat_expr(1, 2)
     _ => expr * cm_symbol(var_name)
   }
@@ -341,10 +344,10 @@ pub fn cm_integrate(expr : @symcore.Expr, var_name : String) -> @symcore.Expr {
 
 ///|
 pub fn cm_eval_singularity_exact(
-  at : @symcore.Expr,
-  start : @symcore.Expr,
+  at : Expr,
+  start : Expr,
   order : Int,
-) -> @symcore.Expr {
+) -> Expr {
   match cm_sign_of_difference(at, start) {
     Some(sign) =>
       if sign < 0 {
@@ -370,10 +373,10 @@ pub fn cm_eval_singularity_exact(
 
 ///|
 pub fn cm_eval_singularity_left_limit(
-  at : @symcore.Expr,
-  start : @symcore.Expr,
+  at : Expr,
+  start : Expr,
   order : Int,
-) -> @symcore.Expr {
+) -> Expr {
   match cm_sign_of_difference(at, start) {
     Some(sign) =>
       if sign <= 0 {
@@ -391,10 +394,10 @@ pub fn cm_eval_singularity_left_limit(
 
 ///|
 pub fn cm_eval_singularity_right_limit(
-  at : @symcore.Expr,
-  start : @symcore.Expr,
+  at : Expr,
+  start : Expr,
   order : Int,
-) -> @symcore.Expr {
+) -> Expr {
   match cm_sign_of_difference(at, start) {
     Some(sign) =>
       if sign < 0 {
@@ -414,25 +417,25 @@ pub fn cm_eval_singularity_right_limit(
 
 ///|
 pub fn cm_eval_at(
-  expr : @symcore.Expr,
+  expr : Expr,
   var_name : String,
-  at : @symcore.Expr,
-) -> @symcore.Expr {
+  at : Expr,
+) -> Expr {
   match expr {
-    @symcore.Expr::Symbol(name) => if name == var_name { at } else { expr }
-    @symcore.Expr::Add(args) =>
+    Expr::Symbol(name) => if name == var_name { at } else { expr }
+    Expr::Add(args) =>
       @symcore.add(args.map(arg => cm_eval_at(arg, var_name, at)))
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(args.map(arg => cm_eval_at(arg, var_name, at)))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(
         cm_eval_at(base, var_name, at),
         cm_eval_at(exp, var_name, at),
       )
-    @symcore.Expr::Function("SingularityFunction", args) if args.length() == 3 &&
+    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
       args[0] == cm_symbol(var_name) =>
       match args[2] {
-        @symcore.Expr::Number(n) if n.is_integral() =>
+        Expr::Number(n) if n.is_integral() =>
           cm_eval_singularity_exact(at, args[1], n.numerator().to_int())
         _ =>
           @symcore.function("SingularityFunction", [
@@ -441,7 +444,7 @@ pub fn cm_eval_at(
             cm_eval_at(args[2], var_name, at),
           ])
       }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(name, args.map(arg => cm_eval_at(arg, var_name, at)))
     _ => expr
   }
@@ -449,25 +452,25 @@ pub fn cm_eval_at(
 
 ///|
 pub fn cm_left_limit_at(
-  expr : @symcore.Expr,
+  expr : Expr,
   var_name : String,
-  at : @symcore.Expr,
-) -> @symcore.Expr {
+  at : Expr,
+) -> Expr {
   match expr {
-    @symcore.Expr::Symbol(name) => if name == var_name { at } else { expr }
-    @symcore.Expr::Add(args) =>
+    Expr::Symbol(name) => if name == var_name { at } else { expr }
+    Expr::Add(args) =>
       @symcore.add(args.map(arg => cm_left_limit_at(arg, var_name, at)))
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(args.map(arg => cm_left_limit_at(arg, var_name, at)))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(
         cm_left_limit_at(base, var_name, at),
         cm_left_limit_at(exp, var_name, at),
       )
-    @symcore.Expr::Function("SingularityFunction", args) if args.length() == 3 &&
+    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
       args[0] == cm_symbol(var_name) =>
       match args[2] {
-        @symcore.Expr::Number(n) if n.is_integral() =>
+        Expr::Number(n) if n.is_integral() =>
           cm_eval_singularity_left_limit(at, args[1], n.numerator().to_int())
         _ =>
           @symcore.function("SingularityFunction", [
@@ -476,7 +479,7 @@ pub fn cm_left_limit_at(
             cm_left_limit_at(args[2], var_name, at),
           ])
       }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(
         name,
         args.map(arg => cm_left_limit_at(arg, var_name, at)),
@@ -487,25 +490,25 @@ pub fn cm_left_limit_at(
 
 ///|
 pub fn cm_right_limit_at(
-  expr : @symcore.Expr,
+  expr : Expr,
   var_name : String,
-  at : @symcore.Expr,
-) -> @symcore.Expr {
+  at : Expr,
+) -> Expr {
   match expr {
-    @symcore.Expr::Symbol(name) => if name == var_name { at } else { expr }
-    @symcore.Expr::Add(args) =>
+    Expr::Symbol(name) => if name == var_name { at } else { expr }
+    Expr::Add(args) =>
       @symcore.add(args.map(arg => cm_right_limit_at(arg, var_name, at)))
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(args.map(arg => cm_right_limit_at(arg, var_name, at)))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(
         cm_right_limit_at(base, var_name, at),
         cm_right_limit_at(exp, var_name, at),
       )
-    @symcore.Expr::Function("SingularityFunction", args) if args.length() == 3 &&
+    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
       args[0] == cm_symbol(var_name) =>
       match args[2] {
-        @symcore.Expr::Number(n) if n.is_integral() =>
+        Expr::Number(n) if n.is_integral() =>
           cm_eval_singularity_right_limit(at, args[1], n.numerator().to_int())
         _ =>
           @symcore.function("SingularityFunction", [
@@ -514,7 +517,7 @@ pub fn cm_right_limit_at(
             cm_right_limit_at(args[2], var_name, at),
           ])
       }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(
         name,
         args.map(arg => cm_right_limit_at(arg, var_name, at)),
@@ -525,13 +528,13 @@ pub fn cm_right_limit_at(
 
 ///|
 pub fn cm_linear_solve(
-  equations : Array[@symcore.Expr],
-  unknowns : Array[@symcore.Expr],
-) -> Map[String, @symcore.Expr]? raise @sympolys.PolyError {
+  equations : Array[Expr],
+  unknowns : Array[Expr],
+) -> Map[String, Expr]? raise @sympolys.PolyError {
   let names : Array[String] = []
   for unknown in unknowns {
     match unknown {
-      @symcore.Expr::Symbol(name) => names.push(name)
+      Expr::Symbol(name) => names.push(name)
       _ => raise @sympolys.PolyError::NonPolynomial
     }
   }
@@ -548,17 +551,17 @@ pub fn cm_linear_solve(
 
 ///|
 fn cm_linear_solve_elimination(
-  equations : Array[@symcore.Expr],
+  equations : Array[Expr],
   names : Array[String],
-) -> Map[String, @symcore.Expr]? raise @sympolys.PolyError {
+) -> Map[String, Expr]? raise @sympolys.PolyError {
   let (coeffs, consts) = @sympolys._linear_eq_to_dict(equations, names)
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for i in 0..<coeffs.length() {
-    let row : Array[@symcore.Expr] = []
+    let row : Array[Expr] = []
     for name in names {
-      row.push(cm_simplify(coeffs[i].get(name).unwrap_or(@symcore.int(0))))
+      row.push(cm_simplify(coeffs[i].get(name).unwrap_or(int(0))))
     }
-    row.push(cm_simplify(@symcore.int(0) - consts[i]))
+    row.push(cm_simplify(int(0) - consts[i]))
     rows.push(row)
   }
   let nrows = rows.length()
@@ -581,7 +584,7 @@ fn cm_linear_solve_elimination(
           rows[row_idx] = temp
         }
         let pivot = rows[pivot_row][col]
-        let pivot_inv = cm_simplify(pivot ^ @symcore.int(-1))
+        let pivot_inv = cm_simplify(pivot ^ int(-1))
         for j in col..<(ncols + 1) {
           rows[pivot_row][j] = cm_simplify(rows[pivot_row][j] * pivot_inv)
         }
@@ -620,7 +623,7 @@ fn cm_linear_solve_elimination(
   if pivots.length() != ncols {
     return None
   }
-  let solution : Map[String, @symcore.Expr] = {}
+  let solution : Map[String, Expr] = {}
   for col in 0..<ncols {
     solution[names[col]] = cm_simplify(rows[pivots[col]][ncols])
   }

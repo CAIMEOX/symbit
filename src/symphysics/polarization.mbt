@@ -4,9 +4,9 @@
 
 ///|
 fn optics_column(
-  values : Array[@symcore.Expr],
+  values : Array[Expr],
 ) -> ExplicitMatrix raise PhysicsError {
-  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  let rows : Array[Array[Expr]] = Array::new()
   for value in values {
     rows.push([value])
   }
@@ -15,11 +15,11 @@ fn optics_column(
 
 ///|
 pub fn jones_vector(
-  psi : @symcore.Expr,
-  chi : @symcore.Expr,
+  psi : Expr,
+  chi : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   optics_column([
-    @symcore.int(-1) * i_expr() * @symelem.sin(chi) * @symelem.sin(psi) +
+    int(-1) * i_expr() * @symelem.sin(chi) * @symelem.sin(psi) +
     @symelem.cos(chi) * @symelem.cos(psi),
     i_expr() * @symelem.sin(chi) * @symelem.cos(psi) +
     @symelem.sin(psi) * @symelem.cos(chi),
@@ -28,21 +28,21 @@ pub fn jones_vector(
 
 ///|
 pub fn stokes_vector(
-  psi : @symcore.Expr,
-  chi : @symcore.Expr,
-  p? : @symcore.Expr = @symcore.int(1),
-  intensity? : @symcore.Expr = @symcore.int(1),
+  psi : Expr,
+  chi : Expr,
+  p? : Expr = int(1),
+  intensity? : Expr = int(1),
 ) -> ExplicitMatrix raise PhysicsError {
   let s0 = intensity
   let s1 = intensity *
     p *
-    @symelem.cos(@symcore.int(2) * psi) *
-    @symelem.cos(@symcore.int(2) * chi)
+    @symelem.cos(int(2) * psi) *
+    @symelem.cos(int(2) * chi)
   let s2 = intensity *
     p *
-    @symelem.sin(@symcore.int(2) * psi) *
-    @symelem.cos(@symcore.int(2) * chi)
-  let s3 = intensity * p * @symelem.sin(@symcore.int(2) * chi)
+    @symelem.sin(int(2) * psi) *
+    @symelem.cos(int(2) * chi)
+  let s3 = intensity * p * @symelem.sin(int(2) * chi)
   optics_column([s0, s1, s2, s3])
 }
 
@@ -55,78 +55,78 @@ pub fn jones_2_stokes(e : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
   let ey = try! e.get(1, 0)
   let eyc = @symelem.conjugate(ey)
   optics_column([
-    (@symelem.abs(ex) ^ @symcore.int(2)) + (@symelem.abs(ey) ^ @symcore.int(2)),
-    (@symelem.abs(ex) ^ @symcore.int(2)) - (@symelem.abs(ey) ^ @symcore.int(2)),
-    @symcore.int(2) * @symelem.re(ex * eyc),
-    @symcore.int(-2) * @symelem.im(ex * eyc),
+    (@symelem.abs(ex) ^ int(2)) + (@symelem.abs(ey) ^ int(2)),
+    (@symelem.abs(ex) ^ int(2)) - (@symelem.abs(ey) ^ int(2)),
+    int(2) * @symelem.re(ex * eyc),
+    int(-2) * @symelem.im(ex * eyc),
   ])
 }
 
 ///|
 pub fn linear_polarizer(
-  theta? : @symcore.Expr = @symcore.int(0),
+  theta? : Expr = int(0),
 ) -> ExplicitMatrix raise PhysicsError {
   explicit_matrix_from_rows([
     [
-      @symelem.cos(theta) ^ @symcore.int(2),
+      @symelem.cos(theta) ^ int(2),
       @symelem.sin(theta) * @symelem.cos(theta),
     ],
     [
       @symelem.sin(theta) * @symelem.cos(theta),
-      @symelem.sin(theta) ^ @symcore.int(2),
+      @symelem.sin(theta) ^ int(2),
     ],
   ])
 }
 
 ///|
 pub fn phase_retarder(
-  theta? : @symcore.Expr = @symcore.int(0),
-  delta? : @symcore.Expr = @symcore.int(0),
+  theta? : Expr = int(0),
+  delta? : Expr = int(0),
 ) -> ExplicitMatrix {
   let phase = @symelem.exp(i_expr() * delta)
   let mat = try! explicit_matrix_from_rows([
     [
-      (@symelem.cos(theta) ^ @symcore.int(2)) +
-      phase * (@symelem.sin(theta) ^ @symcore.int(2)),
-      (@symcore.int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
+      (@symelem.cos(theta) ^ int(2)) +
+      phase * (@symelem.sin(theta) ^ int(2)),
+      (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
     ],
     [
-      (@symcore.int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
-      (@symelem.sin(theta) ^ @symcore.int(2)) +
-      phase * (@symelem.cos(theta) ^ @symcore.int(2)),
+      (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
+      (@symelem.sin(theta) ^ int(2)) +
+      phase * (@symelem.cos(theta) ^ int(2)),
     ],
   ])
   mat.scale(
-    @symelem.exp(@symcore.int(-1) * i_expr() * delta * rational_expr(1, 2)),
+    @symelem.exp(int(-1) * i_expr() * delta * rational_expr(1, 2)),
   )
 }
 
 ///|
-pub fn half_wave_retarder(theta : @symcore.Expr) -> ExplicitMatrix {
+pub fn half_wave_retarder(theta : Expr) -> ExplicitMatrix {
   phase_retarder(theta~, delta=pi_expr())
 }
 
 ///|
-pub fn quarter_wave_retarder(theta : @symcore.Expr) -> ExplicitMatrix {
+pub fn quarter_wave_retarder(theta : Expr) -> ExplicitMatrix {
   phase_retarder(theta~, delta=pi_expr() * rational_expr(1, 2))
 }
 
 ///|
 pub fn transmissive_filter(
-  t : @symcore.Expr,
+  t : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let s = @symelem.sqrt(t)
-  explicit_matrix_from_rows([[s, @symcore.int(0)], [@symcore.int(0), s]])
+  explicit_matrix_from_rows([[s, int(0)], [int(0), s]])
 }
 
 ///|
 pub fn reflective_filter(
-  r : @symcore.Expr,
+  r : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let s = @symelem.sqrt(r)
   explicit_matrix_from_rows([
-    [s, @symcore.int(0)],
-    [@symcore.int(0), @symcore.int(-1) * s],
+    [s, int(0)],
+    [int(0), int(-1) * s],
   ])
 }
 
@@ -165,9 +165,9 @@ pub fn mueller_matrix(j : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
       half * i * (a * dc - b * cc + c * bc - d * ac),
     ],
     [
-      half * i * (@symcore.int(-1) * a * cc - b * dc + c * ac + d * bc),
-      half * i * (@symcore.int(-1) * a * cc + b * dc + c * ac - d * bc),
-      half * i * (@symcore.int(-1) * a * dc - b * cc + c * bc + d * ac),
+      half * i * (int(-1) * a * cc - b * dc + c * ac + d * bc),
+      half * i * (int(-1) * a * cc + b * dc + c * ac - d * bc),
+      half * i * (int(-1) * a * dc - b * cc + c * bc + d * ac),
       half * (a * dc - b * cc - c * bc + d * ac),
     ],
   ])
@@ -175,42 +175,42 @@ pub fn mueller_matrix(j : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
 
 ///|
 pub fn polarizing_beam_splitter(
-  tp? : @symcore.Expr = @symcore.int(1),
-  rs? : @symcore.Expr = @symcore.int(1),
-  ts? : @symcore.Expr = @symcore.int(0),
-  rp? : @symcore.Expr = @symcore.int(0),
-  phia? : @symcore.Expr = @symcore.int(0),
-  phib? : @symcore.Expr = @symcore.int(0),
+  tp? : Expr = int(1),
+  rs? : Expr = int(1),
+  ts? : Expr = int(0),
+  rp? : Expr = int(0),
+  phia? : Expr = int(0),
+  phib? : Expr = int(0),
 ) -> ExplicitMatrix raise PhysicsError {
   explicit_matrix_from_rows([
     [
       @symelem.sqrt(tp),
-      @symcore.int(0),
+      int(0),
       i_expr() * @symelem.sqrt(rp),
-      @symcore.int(0),
+      int(0),
     ],
     [
-      @symcore.int(0),
+      int(0),
       @symelem.sqrt(ts),
-      @symcore.int(0),
-      @symcore.int(-1) *
+      int(0),
+      int(-1) *
       i_expr() *
       @symelem.sqrt(rs) *
       @symelem.exp(i_expr() * phia),
     ],
     [
       i_expr() * @symelem.sqrt(rp),
-      @symcore.int(0),
+      int(0),
       @symelem.sqrt(tp),
-      @symcore.int(0),
+      int(0),
     ],
     [
-      @symcore.int(0),
-      @symcore.int(-1) *
+      int(0),
+      int(-1) *
       i_expr() *
       @symelem.sqrt(rs) *
       @symelem.exp(i_expr() * phib),
-      @symcore.int(0),
+      int(0),
       @symelem.sqrt(ts),
     ],
   ])

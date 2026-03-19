@@ -12,8 +12,6 @@ fn continuum_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
   let ours_text = @symprint.to_string(cm_simplify(ours))
   try @sympy_physics.expr_equal(ours_text, oracle) catch {
     _ => false
-  } noraise {
-    ok => ok
   }
 }
 

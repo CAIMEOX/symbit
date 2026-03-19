@@ -101,7 +101,7 @@ fn linear_p2(entity : GeometryEntity) -> Point raise GeometryError {
 ///|
 fn linear_direction_coords(
   entity : GeometryEntity,
-) -> Array[@symcore.Expr] raise GeometryError {
+) -> Array[Expr] raise GeometryError {
   let p1 = linear_p1(entity)
   let p2 = linear_p2(entity)
   geo_sub_coords(p2.coords_, p1.coords_)
@@ -123,7 +123,7 @@ fn linear_repr(entity : GeometryEntity) -> String raise GeometryError {
 ///|
 fn linear_param_ok(
   kind : LinearKind,
-  value : @symcore.Expr,
+  value : Expr,
 ) -> Bool raise GeometryError {
   match kind {
     LinearKind::Line => true
@@ -150,11 +150,11 @@ fn linear_param_ok(
 ///|
 fn linear_point_at(
   entity : GeometryEntity,
-  t : @symcore.Expr,
+  t : Expr,
 ) -> Point raise GeometryError {
   let p1 = linear_p1(entity)
   let direction = linear_direction_coords(entity)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<direction.length() {
     out.push(geo_simplify(p1.coords_[i] + t * direction[i]))
   }
@@ -165,7 +165,7 @@ fn linear_point_at(
 fn linear_param_for_point(
   entity : GeometryEntity,
   pt : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let p1 = linear_p1(entity)
   let target = pt.with_dim(p1.ambient_dimension())
   let diff = geo_sub_coords(target.coords_, p1.coords_)
@@ -354,7 +354,7 @@ fn linear_intersection(
 ///|
 fn linear_translate(
   entity : GeometryEntity,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> GeometryEntity raise GeometryError {
   match entity {
     GeometryEntity::Line(item) =>
@@ -376,7 +376,7 @@ fn linear_translate(
 ///|
 fn linear_scale(
   entity : GeometryEntity,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt : Point?,
 ) -> GeometryEntity raise GeometryError {
   match entity {
@@ -399,7 +399,7 @@ fn linear_scale(
 ///|
 fn linear_rotate(
   entity : GeometryEntity,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt : Point?,
 ) -> GeometryEntity raise GeometryError {
   match entity {
@@ -459,7 +459,7 @@ pub fn Line::repr(self : Line) -> String raise GeometryError {
 ///|
 pub fn Line::arbitrary_point(
   self : Line,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
+  parameter? : Expr = symbol("t"),
 ) -> Point raise GeometryError {
   linear_point_at(GeometryEntity::Line(self), parameter)
 }
@@ -467,8 +467,8 @@ pub fn Line::arbitrary_point(
 ///|
 pub fn Line::plot_interval(
   self : Line,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
-) -> Array[@symcore.Expr] {
+  parameter? : Expr = symbol("t"),
+) -> Array[Expr] {
   let _ = self
   [parameter, geo_int(-5), geo_int(5)]
 }
@@ -482,7 +482,7 @@ pub fn Line::contains(self : Line, other : Point) -> Bool raise GeometryError {
 pub fn Line::distance(
   self : Line,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let point_obj = other.with_dim(self.ambient_dimension())
   let diff = geo_sub_coords(point_obj.coords_, self.p1_.coords_)
   let direction = geo_sub_coords(self.p2_.coords_, self.p1_.coords_)
@@ -500,7 +500,7 @@ pub fn Line::distance(
 ///|
 pub fn Line::translate(
   self : Line,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Line raise GeometryError {
   match linear_translate(GeometryEntity::Line(self), offsets) {
     GeometryEntity::Line(value) => value
@@ -511,7 +511,7 @@ pub fn Line::translate(
 ///|
 pub fn Line::scale(
   self : Line,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Line raise GeometryError {
   match linear_scale(GeometryEntity::Line(self), factors, pt) {
@@ -523,7 +523,7 @@ pub fn Line::scale(
 ///|
 pub fn Line::rotate(
   self : Line,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Line raise GeometryError {
   match linear_rotate(GeometryEntity::Line(self), angle, pt) {
@@ -598,7 +598,7 @@ pub fn Line::is_perpendicular(
 pub fn Line::angle_between(
   self : Line,
   other : GeometryEntity,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let lhs = self.direction().coords_
   let rhs = linear_direction_coords(other)
   @symelem.acos(geo_div(geo_dot(lhs, rhs), geo_norm(lhs) * geo_norm(rhs)))
@@ -608,7 +608,7 @@ pub fn Line::angle_between(
 pub fn Line::smallest_angle_between(
   self : Line,
   other : GeometryEntity,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let lhs = self.direction().coords_
   let rhs = linear_direction_coords(other)
   @symelem.acos(
@@ -664,8 +664,8 @@ pub fn Ray::repr(self : Ray) -> String raise GeometryError {
 ///|
 pub fn Ray::plot_interval(
   self : Ray,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
-) -> Array[@symcore.Expr] {
+  parameter? : Expr = symbol("t"),
+) -> Array[Expr] {
   let _ = self
   [parameter, geo_zero(), geo_int(10)]
 }
@@ -717,7 +717,7 @@ pub fn Ray::intersection(
 ///|
 pub fn Ray::translate(
   self : Ray,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Ray raise GeometryError {
   match linear_translate(GeometryEntity::Ray(self), offsets) {
     GeometryEntity::Ray(value) => value
@@ -728,7 +728,7 @@ pub fn Ray::translate(
 ///|
 pub fn Ray::scale(
   self : Ray,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Ray raise GeometryError {
   match linear_scale(GeometryEntity::Ray(self), factors, pt) {
@@ -740,7 +740,7 @@ pub fn Ray::scale(
 ///|
 pub fn Ray::rotate(
   self : Ray,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Ray raise GeometryError {
   match linear_rotate(GeometryEntity::Ray(self), angle, pt) {
@@ -753,7 +753,7 @@ pub fn Ray::rotate(
 pub fn Ray::distance(
   self : Ray,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let target = other.with_dim(self.ambient_dimension())
   let direction = self.direction().coords_
   let diff = geo_sub_coords(target.coords_, self.p1_.coords_)
@@ -828,7 +828,7 @@ pub fn Segment::contains(
 }
 
 ///|
-pub fn Segment::length(self : Segment) -> @symcore.Expr raise GeometryError {
+pub fn Segment::length(self : Segment) -> Expr raise GeometryError {
   self.p1_.distance(self.p2_)
 }
 
@@ -840,8 +840,8 @@ pub fn Segment::midpoint(self : Segment) -> Point raise GeometryError {
 ///|
 pub fn Segment::plot_interval(
   self : Segment,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
-) -> Array[@symcore.Expr] {
+  parameter? : Expr = symbol("t"),
+) -> Array[Expr] {
   let _ = self
   [parameter, geo_zero(), geo_one()]
 }
@@ -903,7 +903,7 @@ pub fn Segment::intersection(
 ///|
 pub fn Segment::translate(
   self : Segment,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Segment raise GeometryError {
   match linear_translate(GeometryEntity::Segment(self), offsets) {
     GeometryEntity::Segment(value) => value
@@ -914,7 +914,7 @@ pub fn Segment::translate(
 ///|
 pub fn Segment::scale(
   self : Segment,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Segment raise GeometryError {
   match linear_scale(GeometryEntity::Segment(self), factors, pt) {
@@ -926,7 +926,7 @@ pub fn Segment::scale(
 ///|
 pub fn Segment::rotate(
   self : Segment,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Segment raise GeometryError {
   match linear_rotate(GeometryEntity::Segment(self), angle, pt) {
@@ -939,7 +939,7 @@ pub fn Segment::rotate(
 pub fn Segment::distance(
   self : Segment,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let target = other.with_dim(self.ambient_dimension())
   let direction = self.direction().coords_
   let diff = geo_sub_coords(target.coords_, self.p1_.coords_)

@@ -19,14 +19,14 @@ priv struct AffineRadical {
 /// - radicals `q**(1/n)` with integer `n > 1`
 /// - affine transforms `a + b*q**(1/n)` with rational `a, b`.
 pub fn minimal_polynomial(
-  expr : @symcore.Expr,
+  expr : Expr,
   gen? : String = "x",
 ) -> Poly raise PolyError {
   match expr_rational_constant(expr) {
     Some(q) => {
       // Match SymPy's primitive-content convention for rationals:
       // minpoly(a/b) = b*x - a.
-      let x = @symcore.symbol(gen)
+      let x = symbol(gen)
       let a = q.numerator()
       let b = q.denominator()
       let bx = @symcore.number(@symnum.BigRational::from_bigint(b)) * x
@@ -36,13 +36,13 @@ pub fn minimal_polynomial(
     None =>
       match parse_affine_radical(expr) {
         Some(aff) => {
-          let x = @symcore.symbol(gen)
+          let x = symbol(gen)
           let shift_expr = if aff.shift.is_zero() {
             x
           } else {
             x - @symcore.number(aff.shift)
           }
-          let lhs = shift_expr ^ @symcore.int(aff.atom.n)
+          let lhs = shift_expr ^ int(aff.atom.n)
           let scale_pow = rat_pow_nonnegative(aff.scale, aff.atom.n)
           let rhs = @symcore.number(scale_pow.mul_r(aff.atom.rad))
           let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(lhs - rhs)
@@ -60,7 +60,7 @@ pub fn minimal_polynomial(
 ///|
 /// Minimal polynomial for multiquadratic expressions built from rational
 /// combinations of square roots.
-fn mq_minpoly(expr : @symcore.Expr, gen : String) -> Poly? raise PolyError {
+fn mq_minpoly(expr : Expr, gen : String) -> Poly? raise PolyError {
   let atoms : Array[@symnum.BigRational] = Array::new()
   if !mq_collect_atoms(expr, atoms) || atoms.is_empty() {
     return None
@@ -109,8 +109,8 @@ fn mq_relation_to_poly(
   degree : Int,
   gen : String,
 ) -> Poly raise PolyError {
-  let x = @symcore.symbol(gen)
-  let terms : Array[@symcore.Expr] = [x ^ @symcore.int(degree)]
+  let x = symbol(gen)
+  let terms : Array[Expr] = [x ^ int(degree)]
   for i in 0..<coeffs.length() {
     let c = coeffs[i]
     if c.is_zero() {
@@ -122,7 +122,7 @@ fn mq_relation_to_poly(
     } else if i == 1 {
       coeff_expr * x
     } else {
-      coeff_expr * (x ^ @symcore.int(i))
+      coeff_expr * (x ^ int(i))
     }
     terms.push(term)
   }
@@ -131,9 +131,9 @@ fn mq_relation_to_poly(
 }
 
 ///|
-fn parse_affine_radical(expr : @symcore.Expr) -> AffineRadical? {
+fn parse_affine_radical(expr : Expr) -> AffineRadical? {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut shift = @symnum.BigRational::zero()
       let mut term : (@symnum.BigRational, RadicalAtom)? = None
       for arg in args {
@@ -171,13 +171,13 @@ fn parse_affine_radical(expr : @symcore.Expr) -> AffineRadical? {
 
 ///|
 fn parse_linear_radical(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> (@symnum.BigRational, RadicalAtom)? {
   match parse_radical_atom(expr) {
     Some(atom) => Some((@symnum.BigRational::one(), atom))
     None =>
       match expr {
-        @symcore.Expr::Mul(args) => {
+        Expr::Mul(args) => {
           let mut coeff = @symnum.BigRational::one()
           let mut atom : RadicalAtom? = None
           for arg in args {
@@ -206,11 +206,11 @@ fn parse_linear_radical(
 }
 
 ///|
-fn parse_radical_atom(expr : @symcore.Expr) -> RadicalAtom? {
+fn parse_radical_atom(expr : Expr) -> RadicalAtom? {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (base, exp) {
-        (@symcore.Expr::Number(rad), @symcore.Expr::Number(e)) => {
+        (Expr::Number(rad), Expr::Number(e)) => {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
@@ -280,10 +280,10 @@ fn reduce_radical_power(
 }
 
 ///|
-fn expr_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn expr_rational_constant(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(q) => Some(q)
-    @symcore.Expr::Add(args) => {
+    Expr::Number(q) => Some(q)
+    Expr::Add(args) => {
       let mut sum = @symnum.BigRational::zero()
       for arg in args {
         match expr_rational_constant(arg) {
@@ -293,7 +293,7 @@ fn expr_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(sum)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut prod = @symnum.BigRational::one()
       for arg in args {
         match expr_rational_constant(arg) {
@@ -303,9 +303,9 @@ fn expr_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(prod)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (base, exp) {
-        (@symcore.Expr::Number(rad), @symcore.Expr::Number(e)) => {
+        (Expr::Number(rad), Expr::Number(e)) => {
           let num = e.numerator()
           let den = e.denominator()
           if num.equal_int(1) && den.compare(BigInt::from_int(1)) > 0 {
@@ -353,7 +353,7 @@ fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
 ///|
 /// Alias of `minimal_polynomial` for SymPy-compatible naming.
 pub fn minpoly(
-  expr : @symcore.Expr,
+  expr : Expr,
   gen? : String = "x",
 ) -> Poly raise PolyError {
   minimal_polynomial(expr, gen~)
@@ -363,7 +363,7 @@ pub fn minpoly(
 /// Construct a one-generator algebraic field extension `QQ(a)`, where `a`
 /// satisfies the computed minimal polynomial.
 pub fn to_number_field(
-  expr : @symcore.Expr,
+  expr : Expr,
   gen? : String = "a",
 ) -> Domain raise PolyError {
   let mp = minimal_polynomial(expr, gen~)
@@ -376,8 +376,8 @@ pub fn to_number_field(
 /// Returns coefficients in falling powers of `theta` when `expr` is in
 /// `Q(theta)`, matching `AlgebraicNumber(...).coeffs()` ordering.
 pub fn to_number_field_coeffs(
-  expr : @symcore.Expr,
-  theta : @symcore.Expr,
+  expr : Expr,
+  theta : Expr,
 ) -> Array[@symnum.BigRational] raise PolyError {
   match field_isomorphism(expr, theta) {
     Some(coeffs) => coeffs
@@ -391,8 +391,8 @@ pub fn to_number_field_coeffs(
 /// We currently use the linear combination `sum(generators)` with all-ones
 /// integer coefficients, matching SymPy's common choice on many radical inputs.
 pub fn primitive_element(
-  generators : Array[@symcore.Expr],
-) -> (@symcore.Expr, Array[Int]) raise PolyError {
+  generators : Array[Expr],
+) -> (Expr, Array[Int]) raise PolyError {
   if generators.is_empty() {
     raise PolyError::NonPolynomial
   }
@@ -409,8 +409,8 @@ pub fn primitive_element(
 ///
 /// Each rep is in falling powers of the returned primitive element.
 pub fn primitive_element_ex(
-  generators : Array[@symcore.Expr],
-) -> (@symcore.Expr, Array[Int], Array[Array[@symnum.BigRational]]) raise PolyError {
+  generators : Array[Expr],
+) -> (Expr, Array[Int], Array[Array[@symnum.BigRational]]) raise PolyError {
   let (prim, coeffs) = primitive_element(generators)
   let reps : Array[Array[@symnum.BigRational]] = Array::new()
   for g in generators {
@@ -423,12 +423,12 @@ pub fn primitive_element_ex(
 }
 
 ///|
-fn as_rational_constant(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn as_rational_constant(expr : Expr) -> @symnum.BigRational? {
   expr_rational_constant(expr)
 }
 
 ///|
-fn nonconstant_affine(expr : @symcore.Expr) -> AffineRadical? {
+fn nonconstant_affine(expr : Expr) -> AffineRadical? {
   match parse_affine_radical(expr) {
     Some(aff) =>
       if aff.scale.is_zero() || aff.atom.rad.is_zero() {
@@ -686,12 +686,12 @@ fn mq_find_atom_mask(
 
 ///|
 fn mq_collect_atoms(
-  expr : @symcore.Expr,
+  expr : Expr,
   atoms : Array[@symnum.BigRational],
 ) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) => true
-    @symcore.Expr::Add(args) => {
+    Expr::Number(_) => true
+    Expr::Add(args) => {
       for arg in args {
         if !mq_collect_atoms(arg, atoms) {
           return false
@@ -699,7 +699,7 @@ fn mq_collect_atoms(
       }
       true
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       for arg in args {
         if !mq_collect_atoms(arg, atoms) {
           return false
@@ -707,9 +707,9 @@ fn mq_collect_atoms(
       }
       true
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match exp {
-        @symcore.Expr::Number(e) =>
+        Expr::Number(e) =>
           match rational_to_int_if_integer(e) {
             Some(k) =>
               if k >= 0 {
@@ -720,7 +720,7 @@ fn mq_collect_atoms(
             None =>
               if e.numerator().equal_int(1) && e.denominator().equal_int(2) {
                 match base {
-                  @symcore.Expr::Number(rad) => {
+                  Expr::Number(rad) => {
                     if rad.compare(@symnum.BigRational::zero()) < 0 {
                       return false
                     }
@@ -753,13 +753,13 @@ fn mq_collect_atoms(
 
 ///|
 fn mq_parse_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   atoms : Array[@symnum.BigRational],
 ) -> Array[@symnum.BigRational]? {
   let dim = mq_dimension(atoms.length())
   match expr {
-    @symcore.Expr::Number(q) => Some(mq_const(dim, q))
-    @symcore.Expr::Add(args) => {
+    Expr::Number(q) => Some(mq_const(dim, q))
+    Expr::Add(args) => {
       let mut acc = mq_const(dim, @symnum.BigRational::zero())
       for arg in args {
         match mq_parse_expr(arg, atoms) {
@@ -769,7 +769,7 @@ fn mq_parse_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = mq_const(dim, @symnum.BigRational::one())
       for arg in args {
         match mq_parse_expr(arg, atoms) {
@@ -779,9 +779,9 @@ fn mq_parse_expr(
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match exp {
-        @symcore.Expr::Number(e) =>
+        Expr::Number(e) =>
           match rational_to_int_if_integer(e) {
             Some(k) =>
               match mq_parse_expr(base, atoms) {
@@ -791,7 +791,7 @@ fn mq_parse_expr(
             None =>
               if e.numerator().equal_int(1) && e.denominator().equal_int(2) {
                 match base {
-                  @symcore.Expr::Number(rad) => {
+                  Expr::Number(rad) => {
                     if rad.compare(@symnum.BigRational::zero()) < 0 {
                       return None
                     }
@@ -1010,8 +1010,8 @@ fn mq_trim_to_falling(
 
 ///|
 fn field_isomorphism_multiquadratic(
-  a : @symcore.Expr,
-  b : @symcore.Expr,
+  a : Expr,
+  b : Expr,
 ) -> Array[@symnum.BigRational]? {
   let atoms : Array[@symnum.BigRational] = Array::new()
   if !mq_collect_atoms(a, atoms) || !mq_collect_atoms(b, atoms) {
@@ -1046,7 +1046,7 @@ fn field_isomorphism_multiquadratic(
 }
 
 ///|
-fn mq_degree(expr : @symcore.Expr) -> Int? {
+fn mq_degree(expr : Expr) -> Int? {
   let atoms : Array[@symnum.BigRational] = Array::new()
   if !mq_collect_atoms(expr, atoms) {
     return None
@@ -1065,7 +1065,7 @@ fn mq_degree(expr : @symcore.Expr) -> Int? {
 
 ///|
 /// Necessary degree-based filter mirroring SymPy's subfield pre-check shape.
-pub fn is_isomorphism_possible(a : @symcore.Expr, b : @symcore.Expr) -> Bool {
+pub fn is_isomorphism_possible(a : Expr, b : Expr) -> Bool {
   let ma_res : Result[Poly, PolyError] = try? minimal_polynomial(a)
   let mb_res : Result[Poly, PolyError] = try? minimal_polynomial(b)
   match (ma_res, mb_res) {
@@ -1104,8 +1104,8 @@ pub fn is_isomorphism_possible(a : @symcore.Expr, b : @symcore.Expr) -> Bool {
 /// - affine radical embeddings between `a + b*q**(1/n)` forms (`[k, c]`)
 /// - low-degree multiquadratic embeddings (up to 3 independent square roots).
 pub fn field_isomorphism(
-  a : @symcore.Expr,
-  b : @symcore.Expr,
+  a : Expr,
+  b : Expr,
 ) -> Array[@symnum.BigRational]? {
   match as_rational_constant(a) {
     Some(q) => return Some([q])

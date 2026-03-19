@@ -264,7 +264,7 @@ pub fn Point::a2pt_theory(
 pub fn Point::partial_velocity(
   self : Point,
   frame : ReferenceFrame,
-  speed : @symcore.Expr,
+  speed : Expr,
 ) -> Vector raise VectorError {
   self.vel(frame).diff(speed, frame, var_in_dcm=false)
 }
@@ -273,7 +273,7 @@ pub fn Point::partial_velocity(
 pub fn Point::partial_velocities(
   self : Point,
   frame : ReferenceFrame,
-  speeds : Array[@symcore.Expr],
+  speeds : Array[Expr],
 ) -> Array[Vector] raise VectorError {
   let out : Array[Vector] = []
   for speed in speeds {

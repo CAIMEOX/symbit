@@ -7,13 +7,13 @@
 /// structure, coordinates, speeds, joints, loads, and actuators explicit.
 
 ///|
-fn model_dynamicsymbol(prefix : String, index : Int) -> @symcore.Expr {
+fn model_dynamicsymbol(prefix : String, index : Int) -> Expr {
   @symvector.dynamicsymbol(prefix + index.to_string())
 }
 
 ///|
-fn model_symbol(prefix : String, index : Int) -> @symcore.Expr {
-  @symcore.symbol(prefix + index.to_string())
+fn model_symbol(prefix : String, index : Int) -> Expr {
+  symbol(prefix + index.to_string())
 }
 
 ///|
@@ -78,7 +78,7 @@ pub fn multi_mass_spring_damper(
   sys.add_actuators(actuators)
   sys.add_loads(loads)
   if apply_gravity {
-    sys.apply_uniform_gravity(n_frame.y().scale(@symcore.symbol("g")).neg())
+    sys.apply_uniform_gravity(n_frame.y().scale(symbol("g")).neg())
   }
   try! sys.validate_system()
   sys
@@ -149,7 +149,7 @@ pub fn n_link_pendulum_on_cart(
       loads.push(
         torque_load(
           pin.parent_interframe(),
-          pin.joint_axis().scale(@symcore.int(-1) * torque_symbol),
+          pin.joint_axis().scale(int(-1) * torque_symbol),
         ),
       )
       loads.push(
@@ -164,7 +164,7 @@ pub fn n_link_pendulum_on_cart(
   }
 
   sys.add_bodies(bodies)
-  sys.apply_uniform_gravity(i_frame.y().scale(@symcore.symbol("g")).neg())
+  sys.apply_uniform_gravity(i_frame.y().scale(symbol("g")).neg())
   if cart_force {
     sys.add_loads([
       force_load(

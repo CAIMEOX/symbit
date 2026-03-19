@@ -2,13 +2,13 @@
 /// Functional helpers aligned with `sympy.physics.vector.functions`.
 
 ///|
-pub fn dynamicsymbol(name : String, level? : Int = 0) -> @symcore.Expr {
+pub fn dynamicsymbol(name : String, level? : Int = 0) -> Expr {
   dynamicsymbol_single(name, level)
 }
 
 ///|
-pub fn dynamicsymbols(names : String, level? : Int = 0) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+pub fn dynamicsymbols(names : String, level? : Int = 0) -> Array[Expr] {
+  let out : Array[Expr] = []
   for token in tokenize_dynamicsymbols(names) {
     for expanded in expand_dynamicsymbol_token(token) {
       out.push(dynamicsymbol_single(expanded, level))
@@ -18,7 +18,7 @@ pub fn dynamicsymbols(names : String, level? : Int = 0) -> Array[@symcore.Expr] 
 }
 
 ///|
-pub fn dot(vec1 : Vector, vec2 : Vector) -> @symcore.Expr raise VectorError {
+pub fn dot(vec1 : Vector, vec2 : Vector) -> Expr raise VectorError {
   vec1.dot(vec2)
 }
 
@@ -43,16 +43,16 @@ pub fn express(
 
 ///|
 pub fn express_scalar(
-  expr : @symcore.Expr,
+  expr : Expr,
   frame : ReferenceFrame,
   variables? : Bool = false,
-) -> @symcore.Expr {
+) -> Expr {
   if !variables {
     return expr
   }
   let seen : Map[String, Bool] = {}
   collect_symbol_names(expr, seen)
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, Expr] = {}
   for entry in seen {
     let name = entry.0
     match vector_coordinate_registry.get(name) {
@@ -84,10 +84,10 @@ pub fn time_derivative(
 
 ///|
 pub fn time_derivative_scalar(
-  expr : @symcore.Expr,
+  expr : Expr,
   frame : ReferenceFrame,
   order? : Int = 1,
-) -> @symcore.Expr {
+) -> Expr {
   let base = express_scalar(expr, frame, variables=true)
   let mut out = base
   for _ in 0..<order {

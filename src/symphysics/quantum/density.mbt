@@ -12,8 +12,8 @@
 
 ///|
 pub struct DensityTerm {
-  state : @symcore.Expr
-  prob : @symcore.Expr
+  state : Expr
+  prob : Expr
 } derive(Eq)
 
 ///|
@@ -22,21 +22,21 @@ pub struct DensityExpr {
 } derive(Eq)
 
 ///|
-fn density_tuple_expr(term : DensityTerm) -> @symcore.Expr {
+fn density_tuple_expr(term : DensityTerm) -> Expr {
   @symcore.raw_function("Tuple", [term.state, term.prob])
 }
 
 ///|
-fn density_term_from_expr(expr : @symcore.Expr) -> DensityTerm? {
+fn density_term_from_expr(expr : Expr) -> DensityTerm? {
   match expr {
-    @symcore.Expr::Function("Tuple", args) if args.length() == 2 =>
+    Expr::Function("Tuple", args) if args.length() == 2 =>
       Some(DensityTerm::{ state: args[0], prob: args[1] })
     _ => None
   }
 }
 
 ///|
-pub fn density(values : Array[(@symcore.Expr, @symcore.Expr)]) -> DensityExpr {
+pub fn density(values : Array[(Expr, Expr)]) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for value in values {
     terms.push(DensityTerm::{ state: value.0, prob: value.1 })
@@ -45,17 +45,17 @@ pub fn density(values : Array[(@symcore.Expr, @symcore.Expr)]) -> DensityExpr {
 }
 
 ///|
-pub fn DensityExpr::as_expr(self : DensityExpr) -> @symcore.Expr {
+pub fn DensityExpr::as_expr(self : DensityExpr) -> Expr {
   @symcore.raw_function("Density", self.terms.map(density_tuple_expr))
 }
 
 ///|
-pub fn DensityExpr::states(self : DensityExpr) -> @symcore.Expr {
+pub fn DensityExpr::states(self : DensityExpr) -> Expr {
   @symcore.raw_function("Tuple", self.terms.map(term => term.state))
 }
 
 ///|
-pub fn DensityExpr::probs(self : DensityExpr) -> @symcore.Expr {
+pub fn DensityExpr::probs(self : DensityExpr) -> Expr {
   @symcore.raw_function("Tuple", self.terms.map(term => term.prob))
 }
 
@@ -63,7 +63,7 @@ pub fn DensityExpr::probs(self : DensityExpr) -> @symcore.Expr {
 pub fn DensityExpr::get_state(
   self : DensityExpr,
   index : Int,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
     raise @symphysics.PhysicsError::IndexError(
       "density state index out of range",
@@ -76,7 +76,7 @@ pub fn DensityExpr::get_state(
 pub fn DensityExpr::get_prob(
   self : DensityExpr,
   index : Int,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard index >= 0 && index < self.terms.length() else {
     raise @symphysics.PhysicsError::IndexError(
       "density probability index out of range",
@@ -88,7 +88,7 @@ pub fn DensityExpr::get_prob(
 ///|
 pub fn DensityExpr::apply_op(
   self : DensityExpr,
-  op : @symcore.Expr,
+  op : Expr,
 ) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for term in self.terms {
@@ -102,19 +102,19 @@ pub fn DensityExpr::apply_op(
 
 ///|
 fn density_mul_flatten(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = []
+  lhs : Expr,
+  rhs : Expr,
+) -> Expr {
+  let args : Array[Expr] = []
   match lhs {
-    @symcore.Expr::Mul(lhs_args) =>
+    Expr::Mul(lhs_args) =>
       for arg in lhs_args {
         args.push(arg)
       }
     _ => args.push(lhs)
   }
   match rhs {
-    @symcore.Expr::Mul(rhs_args) =>
+    Expr::Mul(rhs_args) =>
       for arg in rhs_args {
         args.push(arg)
       }
@@ -124,10 +124,10 @@ fn density_mul_flatten(
 }
 
 ///|
-fn density_expand_terms(expr : @symcore.Expr) -> Array[@symcore.Expr] {
+fn density_expand_terms(expr : Expr) -> Array[Expr] {
   match expr {
-    @symcore.Expr::Add(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Add(args) => {
+      let out : Array[Expr] = []
       for arg in args {
         for term in density_expand_terms(arg) {
           out.push(term)
@@ -135,11 +135,11 @@ fn density_expand_terms(expr : @symcore.Expr) -> Array[@symcore.Expr] {
       }
       out
     }
-    @symcore.Expr::Mul(args) => {
-      let mut partials : Array[@symcore.Expr] = [@symcore.int(1)]
+    Expr::Mul(args) => {
+      let mut partials : Array[Expr] = [int(1)]
       for arg in args {
         let expanded = density_expand_terms(arg)
-        let next : Array[@symcore.Expr] = []
+        let next : Array[Expr] = []
         for partial in partials {
           for term in expanded {
             next.push(density_mul_flatten(partial, term))
@@ -155,9 +155,9 @@ fn density_expand_terms(expr : @symcore.Expr) -> Array[@symcore.Expr] {
 
 ///|
 fn density_generate_outer_prod(
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise @symphysics.PhysicsError {
   let (left_scalar, left_body) = quantum_split_scalar_factors(left)
   let (right_scalar, right_body) = quantum_split_scalar_factors(right)
   let left_core = left_body.unwrap_or_else(() => {
@@ -170,7 +170,7 @@ fn density_generate_outer_prod(
       "Density.doit() expects each term to contain a noncommutative state factor",
     )
   })
-  let op : Result[@symcore.Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
+  let op : Result[Expr, @symphysics.PhysicsError] = try? quantum_canonical_mul(
     @symcore.raw_mul([left_core, dagger(right_core)]),
   )
   let core = match op {
@@ -181,8 +181,8 @@ fn density_generate_outer_prod(
 }
 
 ///|
-pub fn DensityExpr::doit(self : DensityExpr) -> @symcore.Expr {
-  let terms : Array[@symcore.Expr] = []
+pub fn DensityExpr::doit(self : DensityExpr) -> Expr {
+  let terms : Array[Expr] = []
   for entry in self.terms {
     let expanded = density_expand_terms(entry.state)
     for left in expanded {
@@ -198,14 +198,14 @@ pub fn DensityExpr::doit(self : DensityExpr) -> @symcore.Expr {
 pub fn DensityExpr::trace(
   self : DensityExpr,
   indices? : Array[Int] = [],
-) -> @symcore.Expr {
+) -> Expr {
   tr_doit(tr(self.doit(), indices~))
 }
 
 ///|
-pub fn density_from_expr(expr : @symcore.Expr) -> DensityExpr? {
+pub fn density_from_expr(expr : Expr) -> DensityExpr? {
   match expr {
-    @symcore.Expr::Function("Density", args) => {
+    Expr::Function("Density", args) => {
       let terms : Array[DensityTerm] = []
       for arg in args {
         match density_term_from_expr(arg) {
@@ -220,14 +220,14 @@ pub fn density_from_expr(expr : @symcore.Expr) -> DensityExpr? {
 }
 
 ///|
-fn density_infer_nqubits_expr(expr : @symcore.Expr) -> Int {
+fn density_infer_nqubits_expr(expr : Expr) -> Int {
   match qubit_from_expr(expr) {
     Some(q) => q.nqubits()
     None =>
       match expr {
-        @symcore.Expr::Add(args)
-        | @symcore.Expr::Mul(args)
-        | @symcore.Expr::Function(_, args) => {
+        Expr::Add(args)
+        | Expr::Mul(args)
+        | Expr::Function(_, args) => {
           let mut inferred = 0
           for arg in args {
             let next = density_infer_nqubits_expr(arg)
@@ -237,7 +237,7 @@ fn density_infer_nqubits_expr(expr : @symcore.Expr) -> Int {
           }
           inferred
         }
-        @symcore.Expr::Pow(base, exp) => {
+        Expr::Pow(base, exp) => {
           let left = density_infer_nqubits_expr(base)
           let right = density_infer_nqubits_expr(exp)
           if left > right {
@@ -252,14 +252,14 @@ fn density_infer_nqubits_expr(expr : @symcore.Expr) -> Int {
 }
 
 ///|
-fn density_infer_spin_j_expr(expr : @symcore.Expr) -> @symcore.Expr? {
+fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
   match jz_state_from_expr(expr) {
     Some(state) => Some(state.j)
     None =>
       match expr {
-        @symcore.Expr::Add(args)
-        | @symcore.Expr::Mul(args)
-        | @symcore.Expr::Function(_, args) => {
+        Expr::Add(args)
+        | Expr::Mul(args)
+        | Expr::Function(_, args) => {
           for arg in args {
             match density_infer_spin_j_expr(arg) {
               Some(value) => return Some(value)
@@ -268,7 +268,7 @@ fn density_infer_spin_j_expr(expr : @symcore.Expr) -> @symcore.Expr? {
           }
           None
         }
-        @symcore.Expr::Pow(base, exp) =>
+        Expr::Pow(base, exp) =>
           match density_infer_spin_j_expr(base) {
             Some(value) => Some(value)
             None => density_infer_spin_j_expr(exp)
@@ -281,8 +281,8 @@ fn density_infer_spin_j_expr(expr : @symcore.Expr) -> @symcore.Expr? {
 ///|
 fn density_infer_spin_j(
   density_expr : DensityExpr,
-  fallback : @symcore.Expr,
-) -> @symcore.Expr {
+  fallback : Expr,
+) -> Expr {
   for term in density_expr.terms {
     match density_infer_spin_j_expr(term.state) {
       Some(value) => return value
@@ -295,9 +295,9 @@ fn density_infer_spin_j(
 ///|
 fn density_matrix(
   density_expr : DensityExpr,
-  basis : @symcore.Expr?,
+  basis : Expr?,
   nqubits : Int,
-  spin_j : @symcore.Expr,
+  spin_j : Expr,
   ndim : Int,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   let effective_nqubits = if nqubits > 0 {
@@ -352,9 +352,9 @@ fn density_matrix(
 ///|
 pub fn DensityExpr::represent(
   self : DensityExpr,
-  basis? : @symcore.Expr? = None,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   density_matrix(self, basis, nqubits, spin_j, ndim)
@@ -372,7 +372,7 @@ fn matrix_is_diagonal(
   guard matrix_is_square(matrix) else { return false }
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
-      if i != j && matrix.get(i, j) != @symcore.int(0) {
+      if i != j && matrix.get(i, j) != int(0) {
         return false
       }
     }
@@ -383,8 +383,8 @@ fn matrix_is_diagonal(
 ///|
 fn matrix_diagonal_entries(
   matrix : @symphysics.ExplicitMatrix,
-) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
-  let out : Array[@symcore.Expr] = []
+) -> Array[Expr] raise @symphysics.PhysicsError {
+  let out : Array[Expr] = []
   for idx in 0..<matrix.height() {
     out.push(matrix.get(idx, idx))
   }
@@ -392,38 +392,38 @@ fn matrix_diagonal_entries(
 }
 
 ///|
-fn expr_log(expr : @symcore.Expr) -> @symcore.Expr {
+fn expr_log(expr : Expr) -> Expr {
   @symcore.raw_function("log", [expr])
 }
 
 ///|
-fn expr_sqrt(expr : @symcore.Expr) -> @symcore.Expr {
+fn expr_sqrt(expr : Expr) -> Expr {
   @symcore.raw_function("sqrt", [expr])
 }
 
 ///|
 fn entropy_from_diagonal_entries(
-  entries : Array[@symcore.Expr],
-) -> @symcore.Expr {
-  let unique : Array[@symcore.Expr] = []
+  entries : Array[Expr],
+) -> Expr {
+  let unique : Array[Expr] = []
   for entry in entries {
-    if entry != @symcore.int(0) && !unique.contains(entry) {
+    if entry != int(0) && !unique.contains(entry) {
       unique.push(entry)
     }
   }
-  let terms : Array[@symcore.Expr] = []
+  let terms : Array[Expr] = []
   for entry in unique {
-    terms.push(@symcore.int(-1) * entry * expr_log(entry))
+    terms.push(int(-1) * entry * expr_log(entry))
   }
   quantum_add_from_args_preserve(terms)
 }
 
 ///|
-fn entropy_term(entry : @symcore.Expr) -> @symcore.Expr {
-  if entry == @symcore.int(0) {
-    @symcore.int(0)
+fn entropy_term(entry : Expr) -> Expr {
+  if entry == int(0) {
+    int(0)
   } else {
-    @symcore.int(-1) * entry * expr_log(entry)
+    int(-1) * entry * expr_log(entry)
   }
 }
 
@@ -435,7 +435,7 @@ fn matrix_is_2x2(matrix : @symphysics.ExplicitMatrix) -> Bool {
 ///|
 fn matrix_det_2x2(
   matrix : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard matrix_is_2x2(matrix) else {
     raise @symphysics.PhysicsError::ShapeError(
       "2x2 determinant expects a 2x2 matrix",
@@ -447,18 +447,18 @@ fn matrix_det_2x2(
 ///|
 fn density_matrix_eigenvalues_2x2(
   matrix : @symphysics.ExplicitMatrix,
-) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
+) -> Array[Expr] raise @symphysics.PhysicsError {
   let trace_value = try! matrix_trace(matrix)
   let det_value = try! matrix_det_2x2(matrix)
-  let discr = expr_sqrt(trace_value * trace_value - @symcore.int(4) * det_value)
+  let discr = expr_sqrt(trace_value * trace_value - int(4) * det_value)
   let half = try! @symcore.rational_from_ints(1, 2)
   [half * (trace_value + discr), half * (trace_value - discr)]
 }
 
 ///|
 fn entropy_from_eigenvalues(
-  eigenvalues : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  eigenvalues : Array[Expr],
+) -> Expr {
   quantum_add_from_args_preserve(eigenvalues.map(entry => entropy_term(entry)))
 }
 
@@ -466,7 +466,7 @@ fn entropy_from_eigenvalues(
 fn matrix_is_rank_one_projector(matrix : @symphysics.ExplicitMatrix) -> Bool {
   guard matrix_is_square(matrix) else { return false }
   let trace_value = try! matrix_trace(matrix)
-  if trace_value != @symcore.int(1) {
+  if trace_value != int(1) {
     return false
   }
   let product = try! matrix.mul(matrix)
@@ -475,10 +475,10 @@ fn matrix_is_rank_one_projector(matrix : @symphysics.ExplicitMatrix) -> Bool {
 
 ///|
 fn density_matrix_from_expr(
-  expr : @symcore.Expr,
-  basis : @symcore.Expr?,
+  expr : Expr,
+  basis : Expr?,
   nqubits : Int,
-  spin_j : @symcore.Expr,
+  spin_j : Expr,
   ndim : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match density_from_expr(expr) {
@@ -502,17 +502,17 @@ fn density_matrix_from_expr(
 
 ///|
 pub fn entropy(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   let matrix = try! density_matrix_from_expr(expr, basis, nqubits, spin_j, ndim)
   if (try! matrix_is_diagonal(matrix)) {
     entropy_from_diagonal_entries(try! matrix_diagonal_entries(matrix))
   } else if matrix_is_rank_one_projector(matrix) {
-    @symcore.int(0)
+    int(0)
   } else if matrix_is_2x2(matrix) {
     entropy_from_eigenvalues(try! density_matrix_eigenvalues_2x2(matrix))
   } else {
@@ -525,11 +525,11 @@ pub fn entropy(
 ///|
 pub fn DensityExpr::entropy(
   self : DensityExpr,
-  basis? : @symcore.Expr? = None,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   entropy(self.as_expr(), basis~, nqubits~, spin_j~, ndim~)
 }
 
@@ -537,10 +537,10 @@ pub fn DensityExpr::entropy(
 fn fidelity_from_diagonal(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr {
+) -> Expr {
   let left_diag = try! matrix_diagonal_entries(left)
   let right_diag = try! matrix_diagonal_entries(right)
-  let terms : Array[@symcore.Expr] = []
+  let terms : Array[Expr] = []
   for idx in 0..<left_diag.length() {
     terms.push(expr_sqrt(left_diag[idx] * right_diag[idx]))
   }
@@ -551,7 +551,7 @@ fn fidelity_from_diagonal(
 fn projector_overlap(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr {
+) -> Expr {
   let product = try! left.mul(right)
   expr_sqrt(try! matrix_trace(product))
 }
@@ -560,24 +560,24 @@ fn projector_overlap(
 fn fidelity_2x2(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr {
+) -> Expr {
   let product = try! left.mul(right)
   expr_sqrt(
     try! (matrix_trace(product) +
-    @symcore.int(2) *
+    int(2) *
     expr_sqrt((try! matrix_det_2x2(left)) * (try! matrix_det_2x2(right)))),
   )
 }
 
 ///|
 pub fn fidelity(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  lhs : Expr,
+  rhs : Expr,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   let left = try! density_matrix_from_expr(lhs, basis, nqubits, spin_j, ndim)
   let right = try! density_matrix_from_expr(rhs, basis, nqubits, spin_j, ndim)
   guard left.height() == right.height() &&
@@ -608,10 +608,10 @@ pub fn fidelity(
 pub fn DensityExpr::fidelity(
   self : DensityExpr,
   other : DensityExpr,
-  basis? : @symcore.Expr? = None,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
   ndim? : Int = 4,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   fidelity(self.as_expr(), other.as_expr(), basis~, nqubits~, spin_j~, ndim~)
 }

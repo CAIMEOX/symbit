@@ -14,9 +14,9 @@ pub struct JointsMethod {
   frame_ : @symvector.ReferenceFrame
   bodies_ : Array[BodyLike]
   mut loads_ : Array[Load]
-  q_ : Array[@symcore.Expr]
-  u_ : Array[@symcore.Expr]
-  kdes_ : Array[@symcore.Expr]
+  q_ : Array[Expr]
+  u_ : Array[Expr]
+  kdes_ : Array[Expr]
   mut backend_ : MechanicsBackend?
 } derive(Eq)
 
@@ -69,9 +69,9 @@ pub fn joints_method(
         "JointsMethod root body must provide a reference frame",
       )
   }
-  let q : Array[@symcore.Expr] = []
-  let u : Array[@symcore.Expr] = []
-  let kdes : Array[@symcore.Expr] = []
+  let q : Array[Expr] = []
+  let u : Array[Expr] = []
+  let kdes : Array[Expr] = []
   for joint in joints {
     system_append_exprs_unique(q, joint.coordinates())
     system_append_exprs_unique(u, joint.speeds())

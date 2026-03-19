@@ -3,25 +3,25 @@
 
 ///|
 pub(all) struct PiecewiseCase {
-  expr : @symcore.Expr
+  expr : Expr
   cond : @symlogic.BoolExpr
 }
 
 ///|
-fn cond_to_expr(cond : @symlogic.BoolExpr) -> @symcore.Expr {
+fn cond_to_expr(cond : @symlogic.BoolExpr) -> Expr {
   match cond {
-    @symlogic.BoolExpr::True => @symcore.symbol("True")
-    @symlogic.BoolExpr::False => @symcore.symbol("False")
-    @symlogic.BoolExpr::Symbol(name) => @symcore.symbol(name)
-    _ => @symcore.symbol(@symlogic.to_string(cond))
+    @symlogic.BoolExpr::True => symbol("True")
+    @symlogic.BoolExpr::False => symbol("False")
+    @symlogic.BoolExpr::Symbol(name) => symbol(name)
+    _ => symbol(@symlogic.to_string(cond))
   }
 }
 
 ///|
 pub fn piecewise(
   cases : Array[PiecewiseCase],
-  default? : @symcore.Expr = @symcore.function("NaN", []),
-) -> @symcore.Expr {
+  default? : Expr = @symcore.function("NaN", []),
+) -> Expr {
   let filtered : Array[PiecewiseCase] = Array::new()
   for c in cases {
     match c.cond {
@@ -33,25 +33,25 @@ pub fn piecewise(
   if filtered.is_empty() {
     return default
   }
-  let args : Array[@symcore.Expr] = Array::new()
+  let args : Array[Expr] = Array::new()
   for c in filtered {
     args.push(c.expr)
     args.push(cond_to_expr(c.cond))
   }
   args.push(default)
-  args.push(@symcore.symbol("True"))
-  if args.length() == 2 && args[1] == @symcore.symbol("True") {
+  args.push(symbol("True"))
+  if args.length() == 2 && args[1] == symbol("True") {
     return args[0]
   }
   @symcore.function("Piecewise", args)
 }
 
 ///|
-pub fn piecewise_fold(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn piecewise_fold(expr : Expr) -> Expr {
   expr
 }
 
 ///|
-pub fn piecewise_exclusive(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn piecewise_exclusive(expr : Expr) -> Expr {
   expr
 }

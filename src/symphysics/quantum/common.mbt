@@ -117,9 +117,9 @@ fn quantum_symbol_is_scalar(name : String) -> Bool {
 }
 
 ///|
-fn quantum_is_unitary_like_operator(expr : @symcore.Expr) -> Bool {
+fn quantum_is_unitary_like_operator(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(name, _) =>
+    Expr::Function(name, _) =>
       [
         "UnitaryOperator", "IdentityOperator", "Gate", "CGate", "UGate", "IdentityGate",
         "HadamardGate", "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate",
@@ -130,28 +130,28 @@ fn quantum_is_unitary_like_operator(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn quantum_is_scalar_like(expr : @symcore.Expr) -> Bool {
+fn quantum_is_scalar_like(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) => true
-    @symcore.Expr::Symbol(name) => quantum_symbol_is_scalar(name)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(_) => true
+    Expr::Symbol(name) => quantum_symbol_is_scalar(name)
+    Expr::Add(args) | Expr::Mul(args) =>
       args.all(quantum_is_scalar_like)
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
   }
 }
 
 ///|
-fn quantum_inverse_base(expr : @symcore.Expr) -> @symcore.Expr? {
+fn quantum_inverse_base(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match quantum_integer_value(exp) {
         Some(-1) => Some(base)
         _ => None
       }
-    @symcore.Expr::Function("Dagger", args) if args.length() == 1 &&
+    Expr::Function("Dagger", args) if args.length() == 1 &&
       quantum_is_unitary_like_operator(args[0]) => Some(args[0])
     _ => None
   }
@@ -159,9 +159,9 @@ fn quantum_inverse_base(expr : @symcore.Expr) -> @symcore.Expr? {
 
 ///|
 fn quantum_operator_pair_simplify(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> @symcore.Expr? {
+  lhs : Expr,
+  rhs : Expr,
+) -> Expr? {
   if quantum_expr_has_name(lhs, "IdentityOperator") {
     return Some(rhs)
   }
@@ -169,28 +169,28 @@ fn quantum_operator_pair_simplify(
     return Some(lhs)
   }
   match quantum_inverse_base(lhs) {
-    Some(base) if base == rhs => Some(@symcore.int(1))
+    Some(base) if base == rhs => Some(int(1))
     _ =>
       match quantum_inverse_base(rhs) {
-        Some(base) if base == lhs => Some(@symcore.int(1))
+        Some(base) if base == lhs => Some(int(1))
         _ => None
       }
   }
 }
 
 ///|
-fn quantum_mul_from_args_preserve(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn quantum_mul_from_args_preserve(args : Array[Expr]) -> Expr {
   match args.length() {
-    0 => @symcore.int(1)
+    0 => int(1)
     1 => args[0]
     _ => @symcore.raw_mul(args)
   }
 }
 
 ///|
-fn quantum_add_from_args_preserve(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn quantum_add_from_args_preserve(args : Array[Expr]) -> Expr {
   match args.length() {
-    0 => @symcore.int(0)
+    0 => int(0)
     1 => args[0]
     _ => @symcore.raw_add(args)
   }
@@ -198,11 +198,11 @@ fn quantum_add_from_args_preserve(args : Array[@symcore.Expr]) -> @symcore.Expr 
 
 ///|
 fn quantum_mul_slice(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   start : Int,
   stop : Int,
-) -> @symcore.Expr {
-  let out : Array[@symcore.Expr] = []
+) -> Expr {
+  let out : Array[Expr] = []
   for idx in start..<stop {
     out.push(args[idx])
   }
@@ -210,29 +210,29 @@ fn quantum_mul_slice(
 }
 
 ///|
-fn quantum_integer_value(expr : @symcore.Expr) -> Int? {
+fn quantum_integer_value(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
 
 ///|
-fn quantum_tuple_expr(items : Array[Int]) -> @symcore.Expr {
+fn quantum_tuple_expr(items : Array[Int]) -> Expr {
   @symcore.raw_function("Tuple", items.map(@symcore.int))
 }
 
 ///|
 fn quantum_split_scalar_factors(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr?) {
+  expr : Expr,
+) -> (Expr, Expr?) {
   if quantum_is_scalar_like(expr) {
     return (expr, None)
   }
   match expr {
-    @symcore.Expr::Mul(args) => {
-      let scalars : Array[@symcore.Expr] = []
-      let nonscalars : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let scalars : Array[Expr] = []
+      let nonscalars : Array[Expr] = []
       for arg in args {
         if quantum_is_scalar_like(arg) {
           scalars.push(arg)
@@ -241,7 +241,7 @@ fn quantum_split_scalar_factors(
         }
       }
       let scalar = if scalars.is_empty() {
-        @symcore.int(1)
+        int(1)
       } else {
         @symcore.mul(scalars)
       }
@@ -252,6 +252,6 @@ fn quantum_split_scalar_factors(
       }
       (scalar, body)
     }
-    _ => (@symcore.int(1), Some(expr))
+    _ => (int(1), Some(expr))
   }
 }

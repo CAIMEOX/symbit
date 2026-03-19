@@ -2,9 +2,9 @@
 /// Printing helpers for sets.
 
 ///|
-fn expr_str(expr : @symcore.Expr) -> String {
+fn expr_str(expr : Expr) -> String {
   match expr {
-    @symcore.Expr::Function(name, args) if name == "Tuple" =>
+    Expr::Function(name, args) if name == "Tuple" =>
       if args.is_empty() {
         "()"
       } else if args.length() == 1 {

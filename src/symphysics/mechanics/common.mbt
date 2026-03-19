@@ -3,7 +3,7 @@
 /// `sympy.physics.mechanics`.
 
 ///|
-pub type Substitution = (@symcore.Expr, @symcore.Expr)
+pub type Substitution = (Expr, Expr)
 
 ///|
 pub struct Inertia {
@@ -15,8 +15,8 @@ pub struct Inertia {
 pub struct Particle {
   name_ : String
   mut point_ : @symvector.Point
-  mut mass_ : @symcore.Expr
-  mut potential_energy_ : @symcore.Expr
+  mut mass_ : Expr
+  mut potential_energy_ : Expr
 } derive(Eq)
 
 ///|
@@ -24,10 +24,10 @@ pub struct RigidBody {
   name_ : String
   mut masscenter_ : @symvector.Point
   mut frame_ : @symvector.ReferenceFrame
-  mut mass_ : @symcore.Expr
+  mut mass_ : Expr
   mut inertia_ : Inertia
   mut central_inertia_ : @symvector.Dyadic
-  mut potential_energy_ : @symcore.Expr
+  mut potential_energy_ : Expr
 } derive(Eq)
 
 ///|
@@ -53,10 +53,10 @@ pub struct Body {
   name_ : String
   masscenter_ : @symvector.Point
   frame_ : @symvector.ReferenceFrame
-  mass_ : @symcore.Expr
+  mass_ : Expr
   mut inertia_ : Inertia
   mut central_inertia_ : @symvector.Dyadic
-  mut potential_energy_ : @symcore.Expr
+  mut potential_energy_ : Expr
   mut loads_ : Array[Load]
   mut is_rigidbody_ : Bool
 } derive(Eq)
@@ -69,51 +69,51 @@ pub enum BodyLike {
 } derive(Eq)
 
 ///|
-fn mech_zero_expr() -> @symcore.Expr {
-  @symcore.int(0)
+fn mech_zero_expr() -> Expr {
+  int(0)
 }
 
 ///|
-fn mech_one_expr() -> @symcore.Expr {
-  @symcore.int(1)
+fn mech_one_expr() -> Expr {
+  int(1)
 }
 
 ///|
-fn mech_half_expr() -> @symcore.Expr {
+fn mech_half_expr() -> Expr {
   try! @symcore.rational_from_ints(1, 2)
 }
 
 ///|
-fn mech_neg(expr : @symcore.Expr) -> @symcore.Expr {
-  @symcore.int(-1) * expr
+fn mech_neg(expr : Expr) -> Expr {
+  int(-1) * expr
 }
 
 ///|
-fn mech_simplify_expr(expr : @symcore.Expr) -> @symcore.Expr {
+fn mech_simplify_expr(expr : Expr) -> Expr {
   @symsimplify.ratsimp(@symsimplify.simplify(expr, max_passes=6), max_passes=4)
 }
 
 ///|
-fn mech_expr_is_zero(expr : @symcore.Expr) -> Bool {
+fn mech_expr_is_zero(expr : Expr) -> Bool {
   mech_simplify_expr(expr) == mech_zero_expr()
 }
 
 ///|
-fn mech_expr_equal(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+fn mech_expr_equal(lhs : Expr, rhs : Expr) -> Bool {
   mech_expr_is_zero(lhs - rhs)
 }
 
 ///|
-fn mech_expr_depends_on(expr : @symcore.Expr, wrt : @symcore.Expr) -> Bool {
+fn mech_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return true
   }
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(fn(arg) { mech_expr_depends_on(arg, wrt) })
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       mech_expr_depends_on(base, wrt) || mech_expr_depends_on(exp, wrt)
     _ => false
   }
@@ -128,12 +128,12 @@ fn mech_builtin_function(name : String) -> Bool {
 }
 
 ///|
-fn mech_is_dynamicsymbol(expr : @symcore.Expr) -> Bool {
+fn mech_is_dynamicsymbol(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(name, args) if args.length() == 1 &&
+    Expr::Function(name, args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], @symvector.dynamicsymbols_t) == 0 =>
       !mech_builtin_function(name)
-    @symcore.Expr::Function("Derivative", args) if args.length() >= 2 => {
+    Expr::Function("Derivative", args) if args.length() >= 2 => {
       let head = args[0]
       let only_t = args[1:].all(fn(arg) {
         @symcore.compare_expr(arg, @symvector.dynamicsymbols_t) == 0
@@ -145,35 +145,35 @@ fn mech_is_dynamicsymbol(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn mech_expr_key(expr : @symcore.Expr) -> String {
+fn mech_expr_key(expr : Expr) -> String {
   @symprint.to_string(expr)
 }
 
 ///|
-fn mech_rewrite_tan(expr : @symcore.Expr) -> @symcore.Expr {
+fn mech_rewrite_tan(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function("tan", args) if args.length() == 1 =>
+    Expr::Function("tan", args) if args.length() == 1 =>
       @symelem.sin(mech_rewrite_tan(args[0])) *
-      (@symelem.cos(mech_rewrite_tan(args[0])) ^ @symcore.int(-1))
-    @symcore.Expr::Add(args) => @symcore.add(args.map(mech_rewrite_tan))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(mech_rewrite_tan))
-    @symcore.Expr::Pow(base, exp) =>
+      (@symelem.cos(mech_rewrite_tan(args[0])) ^ int(-1))
+    Expr::Add(args) => @symcore.add(args.map(mech_rewrite_tan))
+    Expr::Mul(args) => @symcore.mul(args.map(mech_rewrite_tan))
+    Expr::Pow(base, exp) =>
       @symcore.pow(mech_rewrite_tan(base), mech_rewrite_tan(exp))
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.raw_function(name, args.map(mech_rewrite_tan))
     _ => expr
   }
 }
 
 ///|
-fn mech_pi_half() -> @symcore.Expr {
-  mech_half_expr() * @symcore.symbol("pi")
+fn mech_pi_half() -> Expr {
+  mech_half_expr() * symbol("pi")
 }
 
 ///|
-fn mech_eval_special_trig(expr : @symcore.Expr) -> @symcore.Expr {
+fn mech_eval_special_trig(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function("sin", args) if args.length() == 1 => {
+    Expr::Function("sin", args) if args.length() == 1 => {
       let arg = mech_eval_special_trig(args[0])
       if @symcore.compare_expr(arg, mech_zero_expr()) == 0 {
         mech_zero_expr()
@@ -183,7 +183,7 @@ fn mech_eval_special_trig(expr : @symcore.Expr) -> @symcore.Expr {
         @symcore.raw_function("sin", [arg])
       }
     }
-    @symcore.Expr::Function("cos", args) if args.length() == 1 => {
+    Expr::Function("cos", args) if args.length() == 1 => {
       let arg = mech_eval_special_trig(args[0])
       if @symcore.compare_expr(arg, mech_zero_expr()) == 0 {
         mech_one_expr()
@@ -193,11 +193,11 @@ fn mech_eval_special_trig(expr : @symcore.Expr) -> @symcore.Expr {
         @symcore.raw_function("cos", [arg])
       }
     }
-    @symcore.Expr::Add(args) => @symcore.add(args.map(mech_eval_special_trig))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(mech_eval_special_trig))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Add(args) => @symcore.add(args.map(mech_eval_special_trig))
+    Expr::Mul(args) => @symcore.mul(args.map(mech_eval_special_trig))
+    Expr::Pow(base, exp) =>
       @symcore.pow(mech_eval_special_trig(base), mech_eval_special_trig(exp))
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.raw_function(name, args.map(mech_eval_special_trig))
     _ => expr
   }
@@ -205,34 +205,34 @@ fn mech_eval_special_trig(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn mech_apply_subs_exact(
-  expr : @symcore.Expr,
+  expr : Expr,
   subs : Array[Substitution],
   ignore_derivative_children? : Bool = true,
-) -> @symcore.Expr {
+) -> Expr {
   for pair in subs {
     if @symcore.compare_expr(expr, pair.0) == 0 {
       return pair.1
     }
   }
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       @symcore.add(
         args.map(arg => {
           mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
         }),
       )
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(
         args.map(arg => {
           mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
         }),
       )
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(
         mech_apply_subs_exact(base, subs, ignore_derivative_children~),
         mech_apply_subs_exact(exp, subs, ignore_derivative_children~),
       )
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       if ignore_derivative_children && name == "Derivative" {
         expr
       } else {
@@ -249,20 +249,20 @@ fn mech_apply_subs_exact(
 
 ///|
 fn mech_find_dynamicsymbols_go(
-  expr : @symcore.Expr,
-  seen : Map[String, @symcore.Expr],
+  expr : Expr,
+  seen : Map[String, Expr],
 ) -> Unit {
   if mech_is_dynamicsymbol(expr) {
     seen.set(mech_expr_key(expr), expr)
   }
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       for arg in args {
         mech_find_dynamicsymbols_go(arg, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       mech_find_dynamicsymbols_go(base, seen)
       mech_find_dynamicsymbols_go(exp, seen)
     }
@@ -282,12 +282,12 @@ pub fn inertia_tuple(
 pub fn Inertia::from_inertia_scalars(
   point : @symvector.Point,
   frame : @symvector.ReferenceFrame,
-  ixx : @symcore.Expr,
-  iyy : @symcore.Expr,
-  izz : @symcore.Expr,
-  ixy? : @symcore.Expr = @symcore.int(0),
-  iyz? : @symcore.Expr = @symcore.int(0),
-  izx? : @symcore.Expr = @symcore.int(0),
+  ixx : Expr,
+  iyy : Expr,
+  izz : Expr,
+  ixy? : Expr = int(0),
+  iyz? : Expr = int(0),
+  izx? : Expr = int(0),
 ) -> Inertia {
   inertia_tuple(inertia(frame, ixx, iyy, izz, ixy~, iyz~, izx~), point)
 }
@@ -399,7 +399,7 @@ pub fn BodyLike::masscenter(self : BodyLike) -> @symvector.Point {
 }
 
 ///|
-fn mech_bodylike_mass(body : BodyLike) -> @symcore.Expr {
+fn mech_bodylike_mass(body : BodyLike) -> Expr {
   match body {
     BodyLike::ParticleLike(value) => value.mass()
     BodyLike::RigidBodyLike(value) => value.mass()
@@ -423,7 +423,7 @@ fn mech_bodylike_masscenter(body : BodyLike) -> @symvector.Point {
 }
 
 ///|
-fn mech_bodylike_potential_energy(body : BodyLike) -> @symcore.Expr {
+fn mech_bodylike_potential_energy(body : BodyLike) -> Expr {
   match body {
     BodyLike::ParticleLike(value) => value.potential_energy()
     BodyLike::RigidBodyLike(value) => value.potential_energy()
@@ -460,7 +460,7 @@ fn mech_bodylike_angular_momentum(
 fn mech_bodylike_kinetic_energy(
   body : BodyLike,
   frame : @symvector.ReferenceFrame,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   match body {
     BodyLike::ParticleLike(value) => value.kinetic_energy(frame)
     BodyLike::RigidBodyLike(value) => value.kinetic_energy(frame)
@@ -474,7 +474,7 @@ pub fn mechanics_printing() -> Unit {
 }
 
 ///|
-pub fn msprint_expr(expr : @symcore.Expr) -> String {
+pub fn msprint_expr(expr : Expr) -> String {
   @symprint.to_string(expr)
 }
 

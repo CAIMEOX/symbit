@@ -30,7 +30,7 @@ pub fn angular_momentum(
 pub fn kinetic_energy(
   frame : @symvector.ReferenceFrame,
   bodies : Array[BodyLike],
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let mut out = mech_zero_expr()
   for body in bodies {
     out = mech_simplify_expr(
@@ -41,7 +41,7 @@ pub fn kinetic_energy(
 }
 
 ///|
-pub fn potential_energy(bodies : Array[BodyLike]) -> @symcore.Expr {
+pub fn potential_energy(bodies : Array[BodyLike]) -> Expr {
   let mut out = mech_zero_expr()
   for body in bodies {
     out = mech_simplify_expr(out + mech_bodylike_potential_energy(body))
@@ -72,7 +72,7 @@ pub fn center_of_mass(
 pub fn lagrangian(
   frame : @symvector.ReferenceFrame,
   bodies : Array[BodyLike],
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   mech_simplify_expr(
     (try! kinetic_energy(frame, bodies)) - potential_energy(bodies),
   )
@@ -80,10 +80,10 @@ pub fn lagrangian(
 
 ///|
 pub fn find_dynamicsymbols_expr(
-  expr : @symcore.Expr,
-  exclude? : Array[@symcore.Expr] = [],
-) -> Array[@symcore.Expr] {
-  let seen : Map[String, @symcore.Expr] = {}
+  expr : Expr,
+  exclude? : Array[Expr] = [],
+) -> Array[Expr] {
+  let seen : Map[String, Expr] = {}
   mech_find_dynamicsymbols_go(expr, seen)
   for item in exclude {
     seen.remove(mech_expr_key(item))
@@ -100,10 +100,10 @@ pub fn find_dynamicsymbols_expr(
 pub fn find_dynamicsymbols_vector(
   expr : @symvector.Vector,
   reference_frame : @symvector.ReferenceFrame,
-  exclude? : Array[@symcore.Expr] = [],
-) -> Array[@symcore.Expr] raise @symvector.VectorError {
+  exclude? : Array[Expr] = [],
+) -> Array[Expr] raise @symvector.VectorError {
   let comps = expr.to_matrix(reference_frame)
-  let found : Map[String, @symcore.Expr] = {}
+  let found : Map[String, Expr] = {}
   for i in 0..<comps.height() {
     for j in 0..<comps.width() {
       mech_find_dynamicsymbols_go(try! comps.get(i, j), found)
@@ -122,10 +122,10 @@ pub fn find_dynamicsymbols_vector(
 
 ///|
 pub fn msubs_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   substitutions : Array[Substitution],
   smart? : Bool = false,
-) -> @symcore.Expr {
+) -> Expr {
   let base = if smart { mech_rewrite_tan(expr) } else { expr }
   let replaced = mech_apply_subs_exact(base, substitutions)
   if smart {
@@ -166,11 +166,11 @@ pub fn msubs_matrix(
 
 ///|
 pub fn validate_coordinates(
-  coordinates? : Array[@symcore.Expr] = [],
-  speeds? : Array[@symcore.Expr] = [],
+  coordinates? : Array[Expr] = [],
+  speeds? : Array[Expr] = [],
   check_duplicates? : Bool = true,
   is_dynamicsymbols? : Bool = true,
-  u_auxiliary? : Array[@symcore.Expr] = [],
+  u_auxiliary? : Array[Expr] = [],
 ) -> Unit raise @symphysics.PhysicsError {
   if check_duplicates {
     let coord_keys = coordinates.map(mech_expr_key)

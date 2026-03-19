@@ -69,9 +69,9 @@ fn make_monic_if_field(poly : Poly) -> Poly raise PolyError {
 ///|
 test "normalize algebraic extension spec to monic" {
   let builder = PolyBuilder::new(["x"], Domain::QQ)
-  let x = @symcore.symbol("x")
+  let x = symbol("x")
   let raw = builder.from_expr(
-    @symcore.int(2) * (x ^ @symcore.int(2)) + @symcore.int(1),
+    int(2) * (x ^ int(2)) + int(1),
   )
   let spec = alg_ext_spec(Domain::QQ, "x", raw)
   let normalized = normalize_alg_ext_spec(spec)

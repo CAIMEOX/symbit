@@ -18,7 +18,7 @@ pub enum PauliKind {
 ///|
 pub struct PauliExpr {
   kind : PauliKind
-  name : @symcore.Expr?
+  name : Expr?
 } derive(Eq)
 
 ///|
@@ -33,32 +33,32 @@ fn pauli_class_name(kind : PauliKind) -> String {
 }
 
 ///|
-pub fn sigma_x(name? : @symcore.Expr? = None) -> PauliExpr {
+pub fn sigma_x(name? : Expr? = None) -> PauliExpr {
   PauliExpr::{ kind: PauliKind::X, name }
 }
 
 ///|
-pub fn sigma_y(name? : @symcore.Expr? = None) -> PauliExpr {
+pub fn sigma_y(name? : Expr? = None) -> PauliExpr {
   PauliExpr::{ kind: PauliKind::Y, name }
 }
 
 ///|
-pub fn sigma_z(name? : @symcore.Expr? = None) -> PauliExpr {
+pub fn sigma_z(name? : Expr? = None) -> PauliExpr {
   PauliExpr::{ kind: PauliKind::Z, name }
 }
 
 ///|
-pub fn sigma_plus(name? : @symcore.Expr? = None) -> PauliExpr {
+pub fn sigma_plus(name? : Expr? = None) -> PauliExpr {
   PauliExpr::{ kind: PauliKind::Plus, name }
 }
 
 ///|
-pub fn sigma_minus(name? : @symcore.Expr? = None) -> PauliExpr {
+pub fn sigma_minus(name? : Expr? = None) -> PauliExpr {
   PauliExpr::{ kind: PauliKind::Minus, name }
 }
 
 ///|
-pub fn PauliExpr::as_expr(self : PauliExpr) -> @symcore.Expr {
+pub fn PauliExpr::as_expr(self : PauliExpr) -> Expr {
   match self.name {
     Some(name) => @symcore.raw_function(pauli_class_name(self.kind), [name])
     None => @symcore.raw_function(pauli_class_name(self.kind), [])
@@ -94,7 +94,7 @@ fn pauli_kind_from_name(name : String) -> PauliKind? {
 }
 
 ///|
-fn pauli_name_equal(lhs : @symcore.Expr?, rhs : @symcore.Expr?) -> Bool {
+fn pauli_name_equal(lhs : Expr?, rhs : Expr?) -> Bool {
   match (lhs, rhs) {
     (None, None) => true
     (Some(a), Some(b)) => a == b
@@ -103,14 +103,14 @@ fn pauli_name_equal(lhs : @symcore.Expr?, rhs : @symcore.Expr?) -> Bool {
 }
 
 ///|
-fn pauli_half() -> @symcore.Expr {
+fn pauli_half() -> Expr {
   try! @symcore.rational_from_ints(1, 2)
 }
 
 ///|
-pub fn pauli_from_expr(expr : @symcore.Expr) -> PauliExpr? {
+pub fn pauli_from_expr(expr : Expr) -> PauliExpr? {
   match expr {
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       match pauli_kind_from_name(name) {
         Some(kind) =>
           match args.length() {
@@ -147,9 +147,9 @@ pub fn sigma_z_bra(n : Int) -> SigmaZState raise @symphysics.PhysicsError {
 }
 
 ///|
-pub fn SigmaZState::as_expr(self : SigmaZState) -> @symcore.Expr {
+pub fn SigmaZState::as_expr(self : SigmaZState) -> Expr {
   let class_name = if self.is_bra { "SigmaZBra" } else { "SigmaZKet" }
-  @symcore.raw_function(class_name, [@symcore.int(self.n)])
+  @symcore.raw_function(class_name, [int(self.n)])
 }
 
 ///|
@@ -167,14 +167,14 @@ pub fn SigmaZState::dual(self : SigmaZState) -> SigmaZState {
 }
 
 ///|
-pub fn sigma_z_state_from_expr(expr : @symcore.Expr) -> SigmaZState? {
+pub fn sigma_z_state_from_expr(expr : Expr) -> SigmaZState? {
   match expr {
-    @symcore.Expr::Function(name, args) if (
+    Expr::Function(name, args) if (
         name == "SigmaZKet" || name == "SigmaZBra"
       ) &&
       args.length() == 1 =>
       match args[0] {
-        @symcore.Expr::Number(n) if n.is_integral() => {
+        Expr::Number(n) if n.is_integral() => {
           let value = n.numerator().to_int()
           if value == 0 || value == 1 {
             Some(SigmaZState::{ n: value, is_bra: name == "SigmaZBra" })
@@ -190,9 +190,9 @@ pub fn sigma_z_state_from_expr(expr : @symcore.Expr) -> SigmaZState? {
 
 ///|
 pub fn pauli_apply_operator_to_ket(
-  op_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
-) -> @symcore.Expr? {
+  op_expr : Expr,
+  ket_expr : Expr,
+) -> Expr? {
   match (pauli_from_expr(op_expr), sigma_z_state_from_expr(ket_expr)) {
     (Some(op), Some(state)) if !state.is_bra =>
       match op.kind {
@@ -201,7 +201,7 @@ pub fn pauli_apply_operator_to_ket(
             if state.n == 0 {
               ket_expr
             } else {
-              @symcore.int(-1) * ket_expr
+              int(-1) * ket_expr
             },
           )
         PauliKind::X =>
@@ -209,10 +209,10 @@ pub fn pauli_apply_operator_to_ket(
         PauliKind::Y =>
           Some(
             if state.n == 0 {
-              @symcore.symbol("I") * (try! sigma_z_ket(1)).as_expr()
+              symbol("I") * (try! sigma_z_ket(1)).as_expr()
             } else {
-              @symcore.int(-1) *
-              @symcore.symbol("I") *
+              int(-1) *
+              symbol("I") *
               (try! sigma_z_ket(0)).as_expr()
             },
           )
@@ -221,13 +221,13 @@ pub fn pauli_apply_operator_to_ket(
             if state.n == 0 {
               (try! sigma_z_ket(1)).as_expr()
             } else {
-              @symcore.int(0)
+              int(0)
             },
           )
         PauliKind::Plus =>
           Some(
             if state.n == 0 {
-              @symcore.int(0)
+              int(0)
             } else {
               (try! sigma_z_ket(0)).as_expr()
             },
@@ -239,35 +239,35 @@ pub fn pauli_apply_operator_to_ket(
 
 ///|
 pub fn represent_pauli_operator(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match pauli_from_expr(expr) {
     Some(op) =>
       match op.kind {
         PauliKind::X =>
           @symphysics.explicit_matrix_from_rows([
-            [@symcore.int(0), @symcore.int(1)],
-            [@symcore.int(1), @symcore.int(0)],
+            [int(0), int(1)],
+            [int(1), int(0)],
           ])
         PauliKind::Y =>
           @symphysics.explicit_matrix_from_rows([
-            [@symcore.int(0), @symcore.int(-1) * @symcore.symbol("I")],
-            [@symcore.symbol("I"), @symcore.int(0)],
+            [int(0), int(-1) * symbol("I")],
+            [symbol("I"), int(0)],
           ])
         PauliKind::Z =>
           @symphysics.explicit_matrix_from_rows([
-            [@symcore.int(1), @symcore.int(0)],
-            [@symcore.int(0), @symcore.int(-1)],
+            [int(1), int(0)],
+            [int(0), int(-1)],
           ])
         PauliKind::Plus =>
           @symphysics.explicit_matrix_from_rows([
-            [@symcore.int(0), @symcore.int(1)],
-            [@symcore.int(0), @symcore.int(0)],
+            [int(0), int(1)],
+            [int(0), int(0)],
           ])
         PauliKind::Minus =>
           @symphysics.explicit_matrix_from_rows([
-            [@symcore.int(0), @symcore.int(0)],
-            [@symcore.int(1), @symcore.int(0)],
+            [int(0), int(0)],
+            [int(1), int(0)],
           ])
       }
     None =>
@@ -277,7 +277,7 @@ pub fn represent_pauli_operator(
 
 ///|
 pub fn represent_pauli_state(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match sigma_z_state_from_expr(expr) {
     Some(state) =>
@@ -285,21 +285,21 @@ pub fn represent_pauli_state(
         @symphysics.explicit_matrix_from_rows([
           [
             if state.n == 0 {
-              @symcore.int(1)
+              int(1)
             } else {
-              @symcore.int(0)
+              int(0)
             },
             if state.n == 1 {
-              @symcore.int(1)
+              int(1)
             } else {
-              @symcore.int(0)
+              int(0)
             },
           ],
         ])
       } else {
         @symphysics.explicit_matrix_from_rows([
-          [if state.n == 0 { @symcore.int(1) } else { @symcore.int(0) }],
-          [if state.n == 1 { @symcore.int(1) } else { @symcore.int(0) }],
+          [if state.n == 0 { int(1) } else { int(0) }],
+          [if state.n == 1 { int(1) } else { int(0) }],
         ])
       }
     None =>
@@ -310,7 +310,7 @@ pub fn represent_pauli_state(
 }
 
 ///|
-fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> @symcore.Expr {
+fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> Expr {
   if !pauli_name_equal(lhs.name, rhs.name) {
     if lhs.as_expr().compare(rhs.as_expr()) <= 0 {
       return quantum_mul_from_args_preserve([lhs.as_expr(), rhs.as_expr()])
@@ -321,27 +321,27 @@ fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> @symcore.Expr {
   match (lhs.kind, rhs.kind) {
     (PauliKind::X, PauliKind::X)
     | (PauliKind::Y, PauliKind::Y)
-    | (PauliKind::Z, PauliKind::Z) => @symcore.int(1)
+    | (PauliKind::Z, PauliKind::Z) => int(1)
     (PauliKind::X, PauliKind::Y) =>
-      @symcore.symbol("I") * sigma_z(name=lhs.name).as_expr()
+      symbol("I") * sigma_z(name=lhs.name).as_expr()
     (PauliKind::Y, PauliKind::X) =>
-      @symcore.int(-1) * @symcore.symbol("I") * sigma_z(name=lhs.name).as_expr()
+      int(-1) * symbol("I") * sigma_z(name=lhs.name).as_expr()
     (PauliKind::X, PauliKind::Z) =>
-      @symcore.int(-1) * @symcore.symbol("I") * sigma_y(name=lhs.name).as_expr()
+      int(-1) * symbol("I") * sigma_y(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::X) =>
-      @symcore.symbol("I") * sigma_y(name=lhs.name).as_expr()
+      symbol("I") * sigma_y(name=lhs.name).as_expr()
     (PauliKind::Y, PauliKind::Z) =>
-      @symcore.symbol("I") * sigma_x(name=lhs.name).as_expr()
+      symbol("I") * sigma_x(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::Y) =>
-      @symcore.int(-1) * @symcore.symbol("I") * sigma_x(name=lhs.name).as_expr()
+      int(-1) * symbol("I") * sigma_x(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::Minus) =>
-      @symcore.int(-1) * sigma_minus(name=lhs.name).as_expr()
+      int(-1) * sigma_minus(name=lhs.name).as_expr()
     (PauliKind::Minus, PauliKind::Z) => sigma_minus(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::Plus) => sigma_plus(name=lhs.name).as_expr()
     (PauliKind::Plus, PauliKind::Z) =>
-      @symcore.int(-1) * sigma_plus(name=lhs.name).as_expr()
+      int(-1) * sigma_plus(name=lhs.name).as_expr()
     (PauliKind::Minus, PauliKind::Minus) | (PauliKind::Plus, PauliKind::Plus) =>
-      @symcore.int(0)
+      int(0)
     (PauliKind::Minus, PauliKind::Plus) =>
       pauli_half() - pauli_half() * sigma_z(name=lhs.name).as_expr()
     (PauliKind::Plus, PauliKind::Minus) =>
@@ -355,35 +355,35 @@ fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> @symcore.Expr {
     (PauliKind::Plus, PauliKind::X) =>
       pauli_half() + pauli_half() * sigma_z(name=lhs.name).as_expr()
     (PauliKind::Y, PauliKind::Minus) =>
-      @symcore.int(-1) *
-      @symcore.symbol("I") *
+      int(-1) *
+      symbol("I") *
       (pauli_half() + pauli_half() * sigma_z(name=lhs.name).as_expr())
     (PauliKind::Minus, PauliKind::Y) =>
-      @symcore.int(-1) *
-      @symcore.symbol("I") *
+      int(-1) *
+      symbol("I") *
       (pauli_half() - pauli_half() * sigma_z(name=lhs.name).as_expr())
     (PauliKind::Y, PauliKind::Plus) =>
-      @symcore.symbol("I") *
+      symbol("I") *
       (pauli_half() - pauli_half() * sigma_z(name=lhs.name).as_expr())
     (PauliKind::Plus, PauliKind::Y) =>
-      @symcore.symbol("I") *
+      symbol("I") *
       (pauli_half() + pauli_half() * sigma_z(name=lhs.name).as_expr())
   }
 }
 
 ///|
-pub fn qsimplify_pauli(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn qsimplify_pauli(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_add_from_args_preserve(args.map(qsimplify_pauli))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.raw_pow(qsimplify_pauli(base), qsimplify_pauli(exp))
-    @symcore.Expr::Function(name, args) if name == "exp" =>
+    Expr::Function(name, args) if name == "exp" =>
       @symcore.raw_function(name, args.map(qsimplify_pauli))
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let factors = args.map(qsimplify_pauli)
-      let scalars : Array[@symcore.Expr] = []
-      let nonscalars : Array[@symcore.Expr] = []
+      let scalars : Array[Expr] = []
+      let nonscalars : Array[Expr] = []
       for factor in factors {
         if quantum_is_scalar_like(factor) {
           scalars.push(factor)
@@ -391,7 +391,7 @@ pub fn qsimplify_pauli(expr : @symcore.Expr) -> @symcore.Expr {
           nonscalars.push(factor)
         }
       }
-      let reduced : Array[@symcore.Expr] = []
+      let reduced : Array[Expr] = []
       let mut idx = 0
       while idx < nonscalars.length() {
         let current = nonscalars[idx]

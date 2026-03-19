@@ -4,7 +4,7 @@
 ///|
 pub fn Dyadic::truediv(
   self : Dyadic,
-  scalar : @symcore.Expr,
+  scalar : Expr,
 ) -> Dyadic raise VectorError {
   if expr_is_zero(scalar) {
     raise VectorError::ValueError("division by zero")
@@ -13,8 +13,8 @@ pub fn Dyadic::truediv(
 }
 
 ///|
-pub fn Dyadic::subs(self : Dyadic, env : Map[String, @symcore.Expr]) -> Dyadic {
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+pub fn Dyadic::subs(self : Dyadic, env : Map[String, Expr]) -> Dyadic {
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for item in self.args {
     out.push((@symcore.subst(item.0, env), item.1, item.2, item.3, item.4))
   }
@@ -24,9 +24,9 @@ pub fn Dyadic::subs(self : Dyadic, env : Map[String, @symcore.Expr]) -> Dyadic {
 ///|
 pub fn Dyadic::applyfunc(
   self : Dyadic,
-  f : (@symcore.Expr) -> @symcore.Expr,
+  f : (Expr) -> Expr,
 ) -> Dyadic {
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for item in self.args {
     out.push((f(item.0), item.1, item.2, item.3, item.4))
   }

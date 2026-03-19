@@ -2,17 +2,17 @@
 /// Kinematic helpers aligned with `sympy.physics.vector.functions`.
 
 ///|
-fn vector_substitute_time(vec : Vector, value : @symcore.Expr) -> Vector {
-  let env : Map[String, @symcore.Expr] = { "t": value }
+fn vector_substitute_time(vec : Vector, value : Expr) -> Vector {
+  let env : Map[String, Expr] = { "t": value }
   vec.subs(env)
 }
 
 ///|
 fn motion_integral_symbolic(
-  expr : @symcore.Expr,
-  lower : @symcore.Expr,
-  upper : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  lower : Expr,
+  upper : Expr,
+) -> Expr {
   @symcore.function("Integral", [
     expr,
     @symcore.function("Tuple", [dynamicsymbols_t, lower, upper]),
@@ -21,10 +21,10 @@ fn motion_integral_symbolic(
 
 ///|
 fn motion_integral_scalar(
-  expr : @symcore.Expr,
-  lower : @symcore.Expr,
-  upper : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  lower : Expr,
+  upper : Expr,
+) -> Expr {
   if expr_is_zero(expr) {
     return zero_expr()
   }
@@ -32,16 +32,16 @@ fn motion_integral_scalar(
     return simplify_expr(expr * (upper - lower))
   }
   match expr {
-    @symcore.Expr::Add(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Add(args) => {
+      let out : Array[Expr] = []
       for arg in args {
         out.push(motion_integral_scalar(arg, lower, upper))
       }
       simplify_expr(@symcore.add(out))
     }
-    @symcore.Expr::Mul(args) => {
-      let indep : Array[@symcore.Expr] = []
-      let dep : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let indep : Array[Expr] = []
+      let dep : Array[Expr] = []
       for arg in args {
         if expr_depends_on(arg, dynamicsymbols_t) {
           dep.push(arg)
@@ -62,16 +62,16 @@ fn motion_integral_scalar(
         motion_integral_symbolic(expr, lower, upper)
       }
     }
-    @symcore.Expr::Symbol(name) if name == "t" => {
+    Expr::Symbol(name) if name == "t" => {
       let half = try! @symcore.rational_from_ints(1, 2)
       simplify_expr(half * ((upper ^ int_expr(2)) - (lower ^ int_expr(2))))
     }
-    @symcore.Expr::Pow(base, exp) if @symcore.compare_expr(
+    Expr::Pow(base, exp) if @symcore.compare_expr(
         base, dynamicsymbols_t,
       ) ==
       0 =>
       match exp {
-        @symcore.Expr::Number(n) if n.is_integral() => {
+        Expr::Number(n) if n.is_integral() => {
           let power = n.numerator().to_int()
           if power == -1 {
             motion_integral_symbolic(expr, lower, upper)
@@ -85,10 +85,10 @@ fn motion_integral_scalar(
         }
         _ => motion_integral_symbolic(expr, lower, upper)
       }
-    @symcore.Expr::Function("sin", args) if args.length() == 1 &&
+    Expr::Function("sin", args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], dynamicsymbols_t) == 0 =>
       simplify_expr(@symelem.cos(lower) - @symelem.cos(upper))
-    @symcore.Expr::Function("cos", args) if args.length() == 1 &&
+    Expr::Function("cos", args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], dynamicsymbols_t) == 0 =>
       simplify_expr(@symelem.sin(upper) - @symelem.sin(lower))
     _ => motion_integral_symbolic(expr, lower, upper)
@@ -99,8 +99,8 @@ fn motion_integral_scalar(
 fn vector_integral_between(
   vec : Vector,
   frame : ReferenceFrame,
-  lower : @symcore.Expr,
-  upper : @symcore.Expr,
+  lower : Expr,
+  upper : Expr,
 ) -> Vector raise VectorError {
   let comps = vec.express(frame, variables=true).components_in(frame)
   vector_from_components(frame, [
@@ -129,7 +129,7 @@ fn normalize_rotation_order(order : String) -> String {
 ///|
 pub fn partial_velocity(
   vel_vecs : Array[Vector],
-  gen_speeds : Array[@symcore.Expr],
+  gen_speeds : Array[Expr],
   frame : ReferenceFrame,
 ) -> Array[Array[Vector]] raise VectorError {
   let out : Array[Array[Vector]] = []
@@ -145,11 +145,11 @@ pub fn partial_velocity(
 
 ///|
 pub fn kinematic_equations(
-  speeds : Array[@symcore.Expr],
-  coords : Array[@symcore.Expr],
+  speeds : Array[Expr],
+  coords : Array[Expr],
   rot_type : String,
   rot_order? : String = "",
-) -> Array[@symcore.Expr] raise VectorError {
+) -> Array[Expr] raise VectorError {
   let rot_kind = rot_type.to_lower()
   let order = normalize_rotation_order(rot_order)
   let approved = [
@@ -377,8 +377,8 @@ pub fn get_motion_params(
   acceleration? : Vector? = None,
   velocity? : Vector? = None,
   position? : Vector? = None,
-  timevalue1? : @symcore.Expr = zero_expr(),
-  timevalue2? : @symcore.Expr = zero_expr(),
+  timevalue1? : Expr = zero_expr(),
+  timevalue2? : Expr = zero_expr(),
 ) -> (Vector, Vector, Vector) raise VectorError {
   let zero = vector_zero()
   match acceleration {

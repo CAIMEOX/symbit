@@ -5,7 +5,7 @@
 ///|
 pub struct LambdaFn {
   args : Array[String]
-  expr : @symcore.Expr
+  expr : Expr
 } derive(Eq)
 
 ///|
@@ -53,12 +53,12 @@ fn eval_builtin_function(name : String, vals : Array[Double]) -> Double? {
 
 ///|
 fn eval_double(
-  expr : @symcore.Expr,
+  expr : Expr,
   env : Map[String, Double],
 ) -> Double raise UtilitiesError {
   match expr {
-    @symcore.Expr::Number(n) => expr_number_to_double(n)
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(n) => expr_number_to_double(n)
+    Expr::Symbol(name) =>
       match env.get(name) {
         Some(v) => v
         None =>
@@ -66,23 +66,23 @@ fn eval_double(
             "missing numeric value for " + name,
           )
       }
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut acc = 0.0
       for arg in args {
         acc += eval_double(arg, env)
       }
       acc
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         acc *= eval_double(arg, env)
       }
       acc
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @math.pow(eval_double(base, env), eval_double(exp, env))
-    @symcore.Expr::Function(name, args) => {
+    Expr::Function(name, args) => {
       let vals = args.map(arg => eval_double(arg, env))
       match eval_builtin_function(name, vals) {
         Some(value) => value
@@ -100,22 +100,22 @@ fn eval_double(
 }
 
 ///|
-pub fn lambdify(args : Array[String], expr : @symcore.Expr) -> LambdaFn {
+pub fn lambdify(args : Array[String], expr : Expr) -> LambdaFn {
   { args: args.map(x => x), expr }
 }
 
 ///|
-fn lambdastr_prec(expr : @symcore.Expr, parent_prec : Int) -> String {
+fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
   let current_prec = match expr {
-    @symcore.Expr::Add(_) => 0
-    @symcore.Expr::Mul(_) => 1
-    @symcore.Expr::Pow(_, _) => 2
-    @symcore.Expr::Number(_)
-    | @symcore.Expr::Symbol(_)
-    | @symcore.Expr::Function(_, _) => 3
+    Expr::Add(_) => 0
+    Expr::Mul(_) => 1
+    Expr::Pow(_, _) => 2
+    Expr::Number(_)
+    | Expr::Symbol(_)
+    | Expr::Function(_, _) => 3
   }
   let text = match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       if n.denominator().to_string() == "1" {
         n.numerator().to_string()
       } else {
@@ -125,16 +125,16 @@ fn lambdastr_prec(expr : @symcore.Expr, parent_prec : Int) -> String {
         n.denominator().to_string() +
         ")"
       }
-    @symcore.Expr::Symbol(name) => name
-    @symcore.Expr::Add(args) =>
+    Expr::Symbol(name) => name
+    Expr::Add(args) =>
       args.map(arg => lambdastr_prec(arg, current_prec)).join(" + ")
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       args.map(arg => lambdastr_prec(arg, current_prec)).join("*")
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       lambdastr_prec(base, current_prec) +
       "**" +
       lambdastr_prec(exp, current_prec)
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       name + "(" + args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
   }
   if current_prec < parent_prec {
@@ -145,7 +145,7 @@ fn lambdastr_prec(expr : @symcore.Expr, parent_prec : Int) -> String {
 }
 
 ///|
-pub fn lambdastr(args : Array[String], expr : @symcore.Expr) -> String {
+pub fn lambdastr(args : Array[String], expr : Expr) -> String {
   "lambda " + args.join(", ") + ": " + lambdastr_prec(expr, 0)
 }
 
@@ -161,8 +161,8 @@ pub fn implemented_function(
 ///|
 pub fn ImplementedFunction::apply(
   self : ImplementedFunction,
-  args : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  args : Array[Expr],
+) -> Expr {
   @symcore.function(self.name, args)
 }
 

@@ -4,7 +4,7 @@ fn default_lll_delta() -> @symnum.BigRational raise @symnum.RationalError {
 }
 
 ///|
-pub type SympyEigenvects = Array[(@symcore.Expr, Int, MatrixExpr)]
+pub type SympyEigenvects = Array[(Expr, Int, MatrixExpr)]
 
 ///|
 /// Functional wrapper matching SymPy `polys.matrices.lll.ddm_lll`.
@@ -45,7 +45,7 @@ pub fn dom_eigenvects_to_sympy(
   }
   for item in algebraic_eigenvects {
     let gen = if item.1.gens.is_empty() { "lambda" } else { item.1.gens[0] }
-    result.push((@symcore.symbol(gen), item.2, item.3.to_Matrix()))
+    result.push((symbol(gen), item.2, item.3.to_Matrix()))
   }
   result
 }

@@ -869,9 +869,9 @@ pub fn SeriesElem::asinh(self : SeriesElem) -> SeriesElem raise PolyError {
 }
 
 ///|
-pub fn SeriesElem::to_expr(self : SeriesElem) -> @symcore.Expr {
-  let x = @symcore.symbol(self.ring.sym)
-  let terms : Array[@symcore.Expr] = Array::new()
+pub fn SeriesElem::to_expr(self : SeriesElem) -> Expr {
+  let x = symbol(self.ring.sym)
+  let terms : Array[Expr] = Array::new()
   for i in 0..<self.coeffs.length() {
     let c = self.coeffs[i]
     if fe_is_zero(c) {
@@ -883,12 +883,12 @@ pub fn SeriesElem::to_expr(self : SeriesElem) -> @symcore.Expr {
     } else if i == 1 {
       coeff_expr * x
     } else {
-      coeff_expr * (x ^ @symcore.int(i))
+      coeff_expr * (x ^ int(i))
     }
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.int(0)
+    int(0)
   } else {
     @symcore.add(terms)
   }

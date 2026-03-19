@@ -44,7 +44,7 @@ fn wrap_backend_from_string(name : String) -> WrapBackend raise UtilitiesError {
 
 ///|
 fn infer_wrap_args(
-  expr : @symcore.Expr,
+  expr : Expr,
   args : Array[String]?,
 ) -> Array[String] {
   match args {
@@ -77,8 +77,8 @@ pub fn WrappedBinary::files(self : WrappedBinary) -> Array[(String, String)] {
 ///|
 pub fn BinaryFunction::apply(
   self : BinaryFunction,
-  args : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  args : Array[Expr],
+) -> Expr {
   @symcore.function(self.name, args)
 }
 
@@ -97,7 +97,7 @@ pub fn BinaryFunction::files(self : BinaryFunction) -> Array[(String, String)] {
 
 ///|
 pub fn autowrap(
-  expr : @symcore.Expr,
+  expr : Expr,
   language? : String? = None,
   backend? : String = "dummy",
   tempdir? : String? = None,
@@ -128,7 +128,7 @@ pub fn autowrap(
 ///|
 pub fn binary_function(
   name : String,
-  expr : @symcore.Expr,
+  expr : Expr,
   language? : String? = None,
   backend? : String = "dummy",
   tempdir? : String? = None,
@@ -142,7 +142,7 @@ pub fn binary_function(
 ///|
 pub fn ufuncify(
   args : Array[String],
-  expr : @symcore.Expr,
+  expr : Expr,
   language? : String? = None,
   backend? : String = "ufunc",
   tempdir? : String? = None,

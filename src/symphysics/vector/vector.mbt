@@ -29,14 +29,14 @@ pub fn vector_zero() -> Vector {
 ///|
 pub fn vector_from_components(
   frame : ReferenceFrame,
-  comps : Array[@symcore.Expr],
+  comps : Array[Expr],
 ) -> Vector {
   vector_normalize([(frame.index_, clone_expr_array(comps))])
 }
 
 ///|
-fn vector_normalize(items : Array[(Int, Array[@symcore.Expr])]) -> Vector {
-  let combined : Map[Int, Array[@symcore.Expr]] = {}
+fn vector_normalize(items : Array[(Int, Array[Expr])]) -> Vector {
+  let combined : Map[Int, Array[Expr]] = {}
   for item in items {
     let frame_id = item.0
     let comps = item.1
@@ -50,7 +50,7 @@ fn vector_normalize(items : Array[(Int, Array[@symcore.Expr])]) -> Vector {
     ids.push(entry.0)
   }
   ids.sort()
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+  let out : Array[(Int, Array[Expr])] = []
   for frame_id in ids {
     let comps = combined[frame_id]
     if !(expr_is_zero(comps[0]) &&
@@ -77,8 +77,8 @@ pub fn Vector::is_zero(self : Vector) -> Bool {
 }
 
 ///|
-pub fn Vector::scale(self : Vector, scalar : @symcore.Expr) -> Vector {
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+pub fn Vector::scale(self : Vector, scalar : Expr) -> Vector {
+  let out : Array[(Int, Array[Expr])] = []
   for item in self.args {
     let frame_id = item.0
     let comps = item.1
@@ -94,7 +94,7 @@ pub fn Vector::neg(self : Vector) -> Vector {
 
 ///|
 fn vector_add(lhs : Vector, rhs : Vector) -> Vector {
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+  let out : Array[(Int, Array[Expr])] = []
   for item in lhs.args {
     out.push(item)
   }
@@ -108,7 +108,7 @@ fn vector_add(lhs : Vector, rhs : Vector) -> Vector {
 pub fn Vector::components_in(
   self : Vector,
   frame : ReferenceFrame,
-) -> Array[@symcore.Expr] raise VectorError {
+) -> Array[Expr] raise VectorError {
   if self.is_zero() {
     return zero_components()
   }
@@ -155,7 +155,7 @@ pub fn Vector::express(
 pub fn Vector::dot(
   self : Vector,
   other : Vector,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   if self.is_zero() || other.is_zero() {
     return zero_expr()
   }
@@ -193,7 +193,7 @@ pub fn Vector::outer(self : Vector, other : Vector) -> Dyadic raise VectorError 
     let frame = frame_registry_get(other.args[0].0)
     (frame.index_, other.components_in(frame))
   }
-  let out : Array[(@symcore.Expr, Int, Int, Int, Int)] = []
+  let out : Array[(Expr, Int, Int, Int, Int)] = []
   for i in 0..<3 {
     for j in 0..<3 {
       let coeff = left.1[i] * right.1[j]
@@ -220,8 +220,8 @@ pub fn Vector::normalize(self : Vector) -> Vector raise VectorError {
 }
 
 ///|
-pub fn Vector::subs(self : Vector, env : Map[String, @symcore.Expr]) -> Vector {
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+pub fn Vector::subs(self : Vector, env : Map[String, Expr]) -> Vector {
+  let out : Array[(Int, Array[Expr])] = []
   for item in self.args {
     let frame_id = item.0
     let comps = item.1
@@ -242,9 +242,9 @@ pub fn Vector::subs(self : Vector, env : Map[String, @symcore.Expr]) -> Vector {
 ///|
 pub fn Vector::applyfunc(
   self : Vector,
-  f : (@symcore.Expr) -> @symcore.Expr,
+  f : (Expr) -> Expr,
 ) -> Vector {
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+  let out : Array[(Int, Array[Expr])] = []
   for item in self.args {
     let frame_id = item.0
     let comps = item.1
@@ -261,7 +261,7 @@ pub fn Vector::simplify(self : Vector) -> Vector {
 ///|
 pub fn Vector::diff(
   self : Vector,
-  wrt : @symcore.Expr,
+  wrt : Expr,
   frame : ReferenceFrame,
   var_in_dcm? : Bool = true,
 ) -> Vector raise VectorError {
@@ -273,7 +273,7 @@ pub fn Vector::diff(
       @symcalculus.diff(comps[2], wrt),
     ])
   }
-  let out : Array[(Int, Array[@symcore.Expr])] = []
+  let out : Array[(Int, Array[Expr])] = []
   for item in self.args {
     let frame_id = item.0
     let comps = item.1

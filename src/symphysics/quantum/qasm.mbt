@@ -12,19 +12,19 @@ pub struct QasmDefinition {
 } derive(Eq)
 
 ///|
-fn qasm_builtin_gate(symbol : String, args : Array[Int]) -> @symcore.Expr {
+fn qasm_builtin_gate(symbol : String, args : Array[Int]) -> Expr {
   @symcore.raw_function(symbol, args.map(@symcore.int))
 }
 
 ///|
-fn qasm_measure_gate(target : Int) -> @symcore.Expr {
+fn qasm_measure_gate(target : Int) -> Expr {
   mz(target)
 }
 
 ///|
-fn qasm_product(exprs : Array[@symcore.Expr]) -> @symcore.Expr {
+fn qasm_product(exprs : Array[Expr]) -> Expr {
   if exprs.is_empty() {
-    @symcore.int(1)
+    int(1)
   } else {
     quantum_mul_from_args_preserve(exprs)
   }
@@ -151,7 +151,7 @@ fn qasm_fullsplit(
 ///|
 pub struct Qasm {
   defs : Map[String, QasmDefinition]
-  circuit : Array[@symcore.Expr]
+  circuit : Array[Expr]
   labels : Array[String]
   inits : Map[String, String]
 } derive(Eq)
@@ -189,7 +189,7 @@ pub fn Qasm::add(
 fn qasm_apply_definition(
   definition : QasmDefinition,
   indices : Array[Int],
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   if definition.ncontrols == 0 {
     guard indices.length() == 1 else {
       raise @symphysics.PhysicsError::ValueError(
@@ -288,8 +288,8 @@ fn qasm_apply_builtin(
 }
 
 ///|
-pub fn Qasm::get_circuit(self : Qasm) -> @symcore.Expr {
-  let reversed : Array[@symcore.Expr] = []
+pub fn Qasm::get_circuit(self : Qasm) -> Expr {
+  let reversed : Array[Expr] = []
   for idx in 0..<self.circuit.length() {
     reversed.push(self.circuit[self.circuit.length() - 1 - idx])
   }

@@ -4,30 +4,30 @@
 
 ///|
 fn quantum_tuple3(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)? {
+  expr : Expr,
+) -> (Expr, Expr, Expr)? {
   match expr {
-    @symcore.Expr::Function("Tuple", [a, b, c]) => Some((a, b, c))
+    Expr::Function("Tuple", [a, b, c]) => Some((a, b, c))
     _ => None
   }
 }
 
 ///|
-fn quantum_neg(expr : @symcore.Expr) -> @symcore.Expr {
-  @symcore.mul([@symcore.int(-1), expr])
+fn quantum_neg(expr : Expr) -> Expr {
+  @symcore.mul([int(-1), expr])
 }
 
 ///|
-fn quantum_kdelta(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
+fn quantum_kdelta(a : Expr, b : Expr) -> Expr {
   if a == b {
-    @symcore.int(1)
+    int(1)
   } else {
     match (a, b) {
-      (@symcore.Expr::Number(lhs), @symcore.Expr::Number(rhs)) =>
+      (Expr::Number(lhs), Expr::Number(rhs)) =>
         if lhs == rhs {
-          @symcore.int(1)
+          int(1)
         } else {
-          @symcore.int(0)
+          int(0)
         }
       _ => @symcore.function("KroneckerDelta", [a, b])
     }
@@ -35,33 +35,33 @@ fn quantum_kdelta(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn quantum_cg_args(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+fn quantum_cg_args(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function("CG", args) if args.length() == 6 => Some(args)
+    Expr::Function("CG", args) if args.length() == 6 => Some(args)
     _ => None
   }
 }
 
 ///|
 priv struct QuantumEq1Group {
-  a : @symcore.Expr
-  b : @symcore.Expr
+  a : Expr
+  b : Expr
   coeffs : Map[Int, Int]
 }
 
 ///|
 priv struct QuantumEq2Group {
-  a : @symcore.Expr
-  c : @symcore.Expr
+  a : Expr
+  c : Expr
   coeffs : Map[Int, Int]
 }
 
 ///|
 priv struct QuantumEq9SquareGroup {
-  j1 : @symcore.Expr
-  m1 : @symcore.Expr
-  j2 : @symcore.Expr
-  m2 : @symcore.Expr
+  j1 : Expr
+  m1 : Expr
+  j2 : Expr
+  m2 : Expr
   dj1 : Int
   dj2 : Int
   coeffs : Map[Int, Int]
@@ -69,21 +69,21 @@ priv struct QuantumEq9SquareGroup {
 
 ///|
 priv struct QuantumEq9CrossGroup {
-  j1 : @symcore.Expr
-  m1 : @symcore.Expr
-  m1p : @symcore.Expr
-  j2 : @symcore.Expr
-  m2 : @symcore.Expr
-  m2p : @symcore.Expr
+  j1 : Expr
+  m1 : Expr
+  m1p : Expr
+  j2 : Expr
+  m2 : Expr
+  m2p : Expr
   dj1 : Int
   dj2 : Int
   coeffs : Map[Int, Int]
 }
 
 ///|
-fn quantum_expr_from_doubled_int(value : Int) -> @symcore.Expr {
+fn quantum_expr_from_doubled_int(value : Int) -> Expr {
   if value % 2 == 0 {
-    @symcore.int(value / 2)
+    int(value / 2)
   } else {
     @symcore.number(
       try! @symnum.BigRational::new(
@@ -95,9 +95,9 @@ fn quantum_expr_from_doubled_int(value : Int) -> @symcore.Expr {
 }
 
 ///|
-fn quantum_doubled_int_number(expr : @symcore.Expr) -> Int? {
+fn quantum_doubled_int_number(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       if n.denominator().equal_int(1) {
         Some((n.numerator() * @bigint.BigInt::from_int(2)).to_int())
       } else if n.denominator().equal_int(2) {
@@ -110,22 +110,22 @@ fn quantum_doubled_int_number(expr : @symcore.Expr) -> Int? {
 }
 
 ///|
-fn quantum_split_integer_coeff(expr : @symcore.Expr) -> (Int, @symcore.Expr)? {
+fn quantum_split_integer_coeff(expr : Expr) -> (Int, Expr)? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() =>
-      Some((n.numerator().to_int(), @symcore.int(1)))
-    @symcore.Expr::Mul(factors) => {
+    Expr::Number(n) if n.is_integral() =>
+      Some((n.numerator().to_int(), int(1)))
+    Expr::Mul(factors) => {
       let mut coeff = 1
-      let rest : Array[@symcore.Expr] = Array::new()
+      let rest : Array[Expr] = Array::new()
       for factor in factors {
         match factor {
-          @symcore.Expr::Number(n) if n.is_integral() =>
+          Expr::Number(n) if n.is_integral() =>
             coeff = coeff * n.numerator().to_int()
           _ => rest.push(factor)
         }
       }
       let core = if rest.is_empty() {
-        @symcore.int(1)
+        int(1)
       } else if rest.length() == 1 {
         rest[0]
       } else {
@@ -233,19 +233,19 @@ fn quantum_common_signed_coeff_states(
 }
 
 ///|
-fn quantum_scale_expr(coeff : Int, expr : @symcore.Expr) -> @symcore.Expr {
+fn quantum_scale_expr(coeff : Int, expr : Expr) -> Expr {
   if coeff == 1 {
     expr
   } else {
-    @symcore.mul([@symcore.int(coeff), expr])
+    @symcore.mul([int(coeff), expr])
   }
 }
 
 ///|
 fn quantum_find_eq1_group(
   groups : Array[QuantumEq1Group],
-  a : @symcore.Expr,
-  b : @symcore.Expr,
+  a : Expr,
+  b : Expr,
 ) -> Int? {
   for i in 0..<groups.length() {
     if groups[i].a == a && groups[i].b == b {
@@ -258,8 +258,8 @@ fn quantum_find_eq1_group(
 ///|
 fn quantum_find_eq2_group(
   groups : Array[QuantumEq2Group],
-  a : @symcore.Expr,
-  c : @symcore.Expr,
+  a : Expr,
+  c : Expr,
 ) -> Int? {
   for i in 0..<groups.length() {
     if groups[i].a == a && groups[i].c == c {
@@ -272,10 +272,10 @@ fn quantum_find_eq2_group(
 ///|
 fn quantum_find_eq9_square_group(
   groups : Array[QuantumEq9SquareGroup],
-  j1 : @symcore.Expr,
-  m1 : @symcore.Expr,
-  j2 : @symcore.Expr,
-  m2 : @symcore.Expr,
+  j1 : Expr,
+  m1 : Expr,
+  j2 : Expr,
+  m2 : Expr,
 ) -> Int? {
   for i in 0..<groups.length() {
     if groups[i].j1 == j1 &&
@@ -291,12 +291,12 @@ fn quantum_find_eq9_square_group(
 ///|
 fn quantum_find_eq9_cross_group(
   groups : Array[QuantumEq9CrossGroup],
-  j1 : @symcore.Expr,
-  m1 : @symcore.Expr,
-  m1p : @symcore.Expr,
-  j2 : @symcore.Expr,
-  m2 : @symcore.Expr,
-  m2p : @symcore.Expr,
+  j1 : Expr,
+  m1 : Expr,
+  m1p : Expr,
+  j2 : Expr,
+  m2 : Expr,
+  m2p : Expr,
 ) -> Int? {
   for i in 0..<groups.length() {
     if groups[i].j1 == j1 &&
@@ -313,8 +313,8 @@ fn quantum_find_eq9_cross_group(
 
 ///|
 fn quantum_parse_eq1_add_term(
-  expr : @symcore.Expr,
-) -> (Int, @symcore.Expr, @symcore.Expr, Int)? {
+  expr : Expr,
+) -> (Int, Expr, Expr, Int)? {
   match quantum_split_integer_coeff(expr) {
     Some((coeff, core)) =>
       match quantum_cg_args(core) {
@@ -325,7 +325,7 @@ fn quantum_parse_eq1_add_term(
               quantum_doubled_int_number(args[1]),
             ) {
             (Some(da), Some(dalpha)) =>
-              if args[3] == @symcore.int(0) &&
+              if args[3] == int(0) &&
                 args[0] == args[4] &&
                 args[1] == args[5] &&
                 dalpha >= -da &&
@@ -344,8 +344,8 @@ fn quantum_parse_eq1_add_term(
 
 ///|
 fn quantum_parse_eq2_add_term(
-  expr : @symcore.Expr,
-) -> (Int, @symcore.Expr, @symcore.Expr, Int)? {
+  expr : Expr,
+) -> (Int, Expr, Expr, Int)? {
   match quantum_split_integer_coeff(expr) {
     Some((coeff, core)) =>
       match quantum_cg_args(core) {
@@ -358,7 +358,7 @@ fn quantum_parse_eq2_add_term(
             (Some(da), Some(dalpha)) =>
               if args[0] == args[2] &&
                 args[3] == quantum_neg(args[1]) &&
-                args[5] == @symcore.int(0) &&
+                args[5] == int(0) &&
                 dalpha >= -da &&
                 dalpha <= da {
                 Some(
@@ -382,13 +382,13 @@ fn quantum_parse_eq2_add_term(
 
 ///|
 fn quantum_parse_eq9_square_add_term(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> (
   Int,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
+  Expr,
+  Expr,
+  Expr,
+  Expr,
   Int,
   Int,
   Int,
@@ -397,7 +397,7 @@ fn quantum_parse_eq9_square_add_term(
   match quantum_split_integer_coeff(expr) {
     Some((coeff, core)) =>
       match core {
-        @symcore.Expr::Pow(base, exp) if exp == @symcore.int(2) =>
+        Expr::Pow(base, exp) if exp == int(2) =>
           match quantum_cg_args(base) {
             Some(args) =>
               match
@@ -433,15 +433,15 @@ fn quantum_parse_eq9_square_add_term(
 
 ///|
 fn quantum_parse_eq9_cross_add_term(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> (
   Int,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
-  @symcore.Expr,
+  Expr,
+  Expr,
+  Expr,
+  Expr,
+  Expr,
+  Expr,
   Int,
   Int,
   Int,
@@ -450,7 +450,7 @@ fn quantum_parse_eq9_cross_add_term(
   match quantum_split_integer_coeff(expr) {
     Some((coeff, core)) =>
       match core {
-        @symcore.Expr::Mul([lhs, rhs]) =>
+        Expr::Mul([lhs, rhs]) =>
           match (quantum_cg_args(lhs), quantum_cg_args(rhs)) {
             (Some(a1), Some(a2)) =>
               match
@@ -494,37 +494,37 @@ fn quantum_parse_eq9_cross_add_term(
 }
 
 ///|
-fn quantum_eq1_result(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
+fn quantum_eq1_result(a : Expr, b : Expr) -> Expr {
   @symcore.mul([
-    @symcore.add([@symcore.mul([@symcore.int(2), a]), @symcore.int(1)]),
-    quantum_kdelta(b, @symcore.int(0)),
+    @symcore.add([@symcore.mul([int(2), a]), int(1)]),
+    quantum_kdelta(b, int(0)),
   ])
 }
 
 ///|
-fn quantum_eq2_result(a : @symcore.Expr, c : @symcore.Expr) -> @symcore.Expr {
+fn quantum_eq2_result(a : Expr, c : Expr) -> Expr {
   @symcore.mul([
     @symcore.function("sqrt", [
-      @symcore.add([@symcore.mul([@symcore.int(2), a]), @symcore.int(1)]),
+      @symcore.add([@symcore.mul([int(2), a]), int(1)]),
     ]),
-    quantum_kdelta(c, @symcore.int(0)),
+    quantum_kdelta(c, int(0)),
   ])
 }
 
 ///|
 fn quantum_eq1_term(
-  a : @symcore.Expr,
-  b : @symcore.Expr,
+  a : Expr,
+  b : Expr,
   dalpha : Int,
   coeff : Int,
-) -> @symcore.Expr {
+) -> Expr {
   quantum_scale_expr(
     coeff,
     @symcore.function("CG", [
       a,
       quantum_expr_from_doubled_int(dalpha),
       b,
-      @symcore.int(0),
+      int(0),
       a,
       quantum_expr_from_doubled_int(dalpha),
     ]),
@@ -533,11 +533,11 @@ fn quantum_eq1_term(
 
 ///|
 fn quantum_eq2_term(
-  a : @symcore.Expr,
-  c : @symcore.Expr,
+  a : Expr,
+  c : Expr,
   dalpha : Int,
   scalar_coeff : Int,
-) -> @symcore.Expr {
+) -> Expr {
   let da = match quantum_doubled_int_number(a) {
     Some(value) => value
     None => 0
@@ -551,7 +551,7 @@ fn quantum_eq2_term(
       a,
       quantum_neg(quantum_expr_from_doubled_int(dalpha)),
       c,
-      @symcore.int(0),
+      int(0),
     ]),
   )
 }
@@ -560,8 +560,8 @@ fn quantum_eq2_term(
 fn quantum_expected_eq9_states(
   dj1 : Int,
   dj2 : Int,
-  m1 : @symcore.Expr,
-  m2 : @symcore.Expr,
+  m1 : Expr,
+  m2 : Expr,
 ) -> Array[Int] {
   let states : Array[Int] = Array::new()
   match (quantum_doubled_int_number(m1), quantum_doubled_int_number(m2)) {
@@ -592,32 +592,32 @@ fn quantum_expected_eq9_states(
 
 ///|
 fn quantum_eq9_square_term(
-  j1 : @symcore.Expr,
-  m1 : @symcore.Expr,
-  j2 : @symcore.Expr,
-  m2 : @symcore.Expr,
+  j1 : Expr,
+  m1 : Expr,
+  j2 : Expr,
+  m2 : Expr,
   key : Int,
   coeff : Int,
-) -> @symcore.Expr {
+) -> Expr {
   let j3 = quantum_expr_from_doubled_int(quantum_state_key_dj(key))
   let m3 = quantum_expr_from_doubled_int(quantum_state_key_dm(key))
   quantum_scale_expr(
     coeff,
-    @symcore.function("CG", [j1, m1, j2, m2, j3, m3]) ^ @symcore.int(2),
+    @symcore.function("CG", [j1, m1, j2, m2, j3, m3]) ^ int(2),
   )
 }
 
 ///|
 fn quantum_eq9_cross_term(
-  j1 : @symcore.Expr,
-  m1 : @symcore.Expr,
-  m1p : @symcore.Expr,
-  j2 : @symcore.Expr,
-  m2 : @symcore.Expr,
-  m2p : @symcore.Expr,
+  j1 : Expr,
+  m1 : Expr,
+  m1p : Expr,
+  j2 : Expr,
+  m2 : Expr,
+  m2p : Expr,
   key : Int,
   coeff : Int,
-) -> @symcore.Expr {
+) -> Expr {
   let j3 = quantum_expr_from_doubled_int(quantum_state_key_dj(key))
   let m3 = quantum_expr_from_doubled_int(quantum_state_key_dm(key))
   quantum_scale_expr(
@@ -630,9 +630,9 @@ fn quantum_eq9_cross_term(
 }
 
 ///|
-fn quantum_parse_sum_871_1(expr : @symcore.Expr) -> @symcore.Expr? {
+fn quantum_parse_sum_871_1(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function("Sum", [body, limit]) =>
+    Expr::Function("Sum", [body, limit]) =>
       match (quantum_cg_args(body), quantum_tuple3(limit)) {
         (Some(args), Some((alpha, lower, upper))) => {
           let a = args[0]
@@ -644,16 +644,16 @@ fn quantum_parse_sum_871_1(expr : @symcore.Expr) -> @symcore.Expr? {
           if alpha1 == alpha &&
             alpha2 == alpha &&
             a == a2 &&
-            zero == @symcore.int(0) &&
+            zero == int(0) &&
             lower == quantum_neg(a) &&
             upper == a {
             Some(
               @symcore.mul([
                 @symcore.add([
-                  @symcore.mul([@symcore.int(2), a]),
-                  @symcore.int(1),
+                  @symcore.mul([int(2), a]),
+                  int(1),
                 ]),
-                quantum_kdelta(b, @symcore.int(0)),
+                quantum_kdelta(b, int(0)),
               ]),
             )
           } else {
@@ -667,19 +667,19 @@ fn quantum_parse_sum_871_1(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn quantum_parse_sum_871_2(expr : @symcore.Expr) -> @symcore.Expr? {
+fn quantum_parse_sum_871_2(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function("Sum", [body, limit]) =>
+    Expr::Function("Sum", [body, limit]) =>
       match quantum_tuple3(limit) {
         Some((alpha, lower, upper)) =>
           match body {
-            @symcore.Expr::Mul(factors) => {
-              let mut phase_exp : @symcore.Expr? = None
-              let mut a_val : @symcore.Expr? = None
-              let mut c_val : @symcore.Expr? = None
+            Expr::Mul(factors) => {
+              let mut phase_exp : Expr? = None
+              let mut a_val : Expr? = None
+              let mut c_val : Expr? = None
               for factor in factors {
                 match factor {
-                  @symcore.Expr::Pow(base, exp) if base == @symcore.int(-1) =>
+                  Expr::Pow(base, exp) if base == int(-1) =>
                     phase_exp = Some(exp)
                   _ =>
                     match quantum_cg_args(factor) {
@@ -687,7 +687,7 @@ fn quantum_parse_sum_871_2(expr : @symcore.Expr) -> @symcore.Expr? {
                         if args[1] == alpha &&
                           args[0] == args[2] &&
                           args[3] == quantum_neg(alpha) &&
-                          args[5] == @symcore.int(0) {
+                          args[5] == int(0) {
                           a_val = Some(args[0])
                           c_val = Some(args[4])
                         }
@@ -704,11 +704,11 @@ fn quantum_parse_sum_871_2(expr : @symcore.Expr) -> @symcore.Expr? {
                       @symcore.mul([
                         @symcore.function("sqrt", [
                           @symcore.add([
-                            @symcore.mul([@symcore.int(2), a]),
-                            @symcore.int(1),
+                            @symcore.mul([int(2), a]),
+                            int(1),
                           ]),
                         ]),
-                        quantum_kdelta(c, @symcore.int(0)),
+                        quantum_kdelta(c, int(0)),
                       ]),
                     )
                   } else {
@@ -726,13 +726,13 @@ fn quantum_parse_sum_871_2(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn quantum_parse_sum_872_4(expr : @symcore.Expr) -> @symcore.Expr? {
+fn quantum_parse_sum_872_4(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function("Sum", [body, limit1, limit2]) =>
+    Expr::Function("Sum", [body, limit1, limit2]) =>
       match (quantum_tuple3(limit1), quantum_tuple3(limit2)) {
         (Some((alpha, lower_a, upper_a)), Some((beta, lower_b, upper_b))) =>
           match body {
-            @symcore.Expr::Pow(base, exp) if exp == @symcore.int(2) =>
+            Expr::Pow(base, exp) if exp == int(2) =>
               match quantum_cg_args(base) {
                 Some(args) => {
                   let a = args[0]
@@ -745,14 +745,14 @@ fn quantum_parse_sum_872_4(expr : @symcore.Expr) -> @symcore.Expr? {
                     upper_a == a &&
                     lower_b == quantum_neg(b) &&
                     upper_b == b {
-                    Some(@symcore.int(1))
+                    Some(int(1))
                   } else {
                     None
                   }
                 }
                 None => None
               }
-            @symcore.Expr::Mul([lhs, rhs]) =>
+            Expr::Mul([lhs, rhs]) =>
               match (quantum_cg_args(lhs), quantum_cg_args(rhs)) {
                 (Some(args1), Some(args2)) => {
                   let a = args1[0]
@@ -788,7 +788,7 @@ fn quantum_parse_sum_872_4(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn quantum_cg_simp_sum(expr : @symcore.Expr) -> @symcore.Expr {
+fn quantum_cg_simp_sum(expr : Expr) -> Expr {
   match quantum_parse_sum_871_1(expr) {
     Some(out) => out
     None =>
@@ -804,14 +804,14 @@ fn quantum_cg_simp_sum(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn quantum_cg_simp_add(expr : @symcore.Expr) -> @symcore.Expr {
+fn quantum_cg_simp_add(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let eq1_groups : Array[QuantumEq1Group] = Array::new()
       let eq2_groups : Array[QuantumEq2Group] = Array::new()
       let eq9_square_groups : Array[QuantumEq9SquareGroup] = Array::new()
       let eq9_cross_groups : Array[QuantumEq9CrossGroup] = Array::new()
-      let others : Array[@symcore.Expr] = Array::new()
+      let others : Array[Expr] = Array::new()
       for arg in args {
         match quantum_parse_eq1_add_term(arg) {
           Some((coeff, a, b, dalpha)) =>
@@ -909,7 +909,7 @@ fn quantum_cg_simp_add(expr : @symcore.Expr) -> @symcore.Expr {
         }
       }
 
-      let out : Array[@symcore.Expr] = Array::new()
+      let out : Array[Expr] = Array::new()
       for item in others {
         out.push(item)
       }
@@ -1005,7 +1005,7 @@ fn quantum_cg_simp_add(expr : @symcore.Expr) -> @symcore.Expr {
         )
         match quantum_common_signed_coeff_states(group.coeffs, states) {
           Some(common) => {
-            out.push(@symcore.int(common))
+            out.push(int(common))
             for state in states {
               let residual = match group.coeffs.get(state) {
                 Some(coeff) => coeff - common
@@ -1139,13 +1139,13 @@ fn quantum_cg_simp_add(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn cg_simp(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn cg_simp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_cg_simp_add(@symcore.add(args.map(cg_simp)))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(cg_simp))
-    @symcore.Expr::Pow(base, exp) => @symcore.pow(cg_simp(base), cg_simp(exp))
-    @symcore.Expr::Function("Sum", _) => quantum_cg_simp_sum(expr)
+    Expr::Mul(args) => @symcore.mul(args.map(cg_simp))
+    Expr::Pow(base, exp) => @symcore.pow(cg_simp(base), cg_simp(exp))
+    Expr::Function("Sum", _) => quantum_cg_simp_sum(expr)
     _ => expr
   }
 }

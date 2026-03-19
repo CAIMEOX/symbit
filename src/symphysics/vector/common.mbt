@@ -2,7 +2,7 @@
 /// Shared helpers for `sympy.physics.vector` style frame/vector algebra.
 
 ///|
-pub type CoordinateSym = @symcore.Expr
+pub type CoordinateSym = Expr
 
 ///|
 pub enum AxisName {
@@ -13,11 +13,11 @@ pub enum AxisName {
 
 ///|
 pub enum OrientationSpec {
-  AxisSpec(@symcore.Expr, Vector)
+  AxisSpec(Expr, Vector)
   DcmSpec(@symphysics.ExplicitMatrix)
-  BodySpec(Array[@symcore.Expr], String)
-  SpaceSpec(Array[@symcore.Expr], String)
-  QuaternionSpec(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)
+  BodySpec(Array[Expr], String)
+  SpaceSpec(Array[Expr], String)
+  QuaternionSpec(Expr, Expr, Expr, Expr)
 }
 
 ///|
@@ -58,16 +58,16 @@ pub struct ReferenceFrame {
 
 ///|
 pub struct Vector {
-  args : Array[(Int, Array[@symcore.Expr])]
+  args : Array[(Int, Array[Expr])]
 }
 
 ///|
 pub struct Dyadic {
-  args : Array[(@symcore.Expr, Int, Int, Int, Int)]
+  args : Array[(Expr, Int, Int, Int, Int)]
 }
 
 ///|
-pub let dynamicsymbols_t : @symcore.Expr = @symcore.symbol("t")
+pub let dynamicsymbols_t : Expr = symbol("t")
 
 ///|
 let vector_frame_registry : Array[ReferenceFrame] = []
@@ -85,51 +85,51 @@ let vector_point_registry : Array[Point] = []
 let vector_point_states : Array[PointState] = []
 
 ///|
-fn zero_expr() -> @symcore.Expr {
-  @symcore.int(0)
+fn zero_expr() -> Expr {
+  int(0)
 }
 
 ///|
-fn one_expr() -> @symcore.Expr {
-  @symcore.int(1)
+fn one_expr() -> Expr {
+  int(1)
 }
 
 ///|
-fn neg_one_expr() -> @symcore.Expr {
-  @symcore.int(-1)
+fn neg_one_expr() -> Expr {
+  int(-1)
 }
 
 ///|
-fn int_expr(value : Int) -> @symcore.Expr {
-  @symcore.int(value)
+fn int_expr(value : Int) -> Expr {
+  int(value)
 }
 
 ///|
-fn simplify_expr(expr : @symcore.Expr) -> @symcore.Expr {
+fn simplify_expr(expr : Expr) -> Expr {
   @symsimplify.ratsimp(@symsimplify.simplify(expr, max_passes=6), max_passes=4)
 }
 
 ///|
-fn expr_is_zero(expr : @symcore.Expr) -> Bool {
+fn expr_is_zero(expr : Expr) -> Bool {
   match simplify_expr(expr) {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Expr::Number(n) => n.is_zero()
     _ => false
   }
 }
 
 ///|
-fn expr_neg(expr : @symcore.Expr) -> @symcore.Expr {
+fn expr_neg(expr : Expr) -> Expr {
   neg_one_expr() * expr
 }
 
 ///|
-fn expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+fn expr_eq(lhs : Expr, rhs : Expr) -> Bool {
   expr_is_zero(lhs - rhs)
 }
 
 ///|
-fn clone_expr_array(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+fn clone_expr_array(items : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = []
   for item in items {
     out.push(item)
   }
@@ -137,12 +137,12 @@ fn clone_expr_array(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn zero_components() -> Array[@symcore.Expr] {
+fn zero_components() -> Array[Expr] {
   [zero_expr(), zero_expr(), zero_expr()]
 }
 
 ///|
-fn basis_components(axis : Int) -> Array[@symcore.Expr] {
+fn basis_components(axis : Int) -> Array[Expr] {
   match axis {
     0 => [one_expr(), zero_expr(), zero_expr()]
     1 => [zero_expr(), one_expr(), zero_expr()]
@@ -152,33 +152,33 @@ fn basis_components(axis : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn components_add(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   [lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2]]
 }
 
 ///|
 fn components_scale(
-  scalar : @symcore.Expr,
-  comps : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  scalar : Expr,
+  comps : Array[Expr],
+) -> Array[Expr] {
   [scalar * comps[0], scalar * comps[1], scalar * comps[2]]
 }
 
 ///|
 fn components_dot(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Expr {
   lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
 }
 
 ///|
 fn components_cross(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   [
     lhs[1] * rhs[2] - lhs[2] * rhs[1],
     lhs[2] * rhs[0] - lhs[0] * rhs[2],
@@ -187,17 +187,17 @@ fn components_cross(
 }
 
 ///|
-fn components_norm_sq(comps : Array[@symcore.Expr]) -> @symcore.Expr {
+fn components_norm_sq(comps : Array[Expr]) -> Expr {
   components_dot(comps, comps)
 }
 
 ///|
 fn matrix_from_rows(
-  rows : Array[Array[@symcore.Expr]],
+  rows : Array[Array[Expr]],
 ) -> @symphysics.ExplicitMatrix {
-  let normalized : Array[Array[@symcore.Expr]] = []
+  let normalized : Array[Array[Expr]] = []
   for row in rows {
-    let next : Array[@symcore.Expr] = []
+    let next : Array[Expr] = []
     for value in row {
       next.push(simplify_expr(value))
     }
@@ -210,7 +210,7 @@ fn matrix_from_rows(
 fn matrix_column(
   matrix : @symphysics.ExplicitMatrix,
   col : Int,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   let a = try! matrix.get(0, col)
   let b = try! matrix.get(1, col)
   let c = try! matrix.get(2, col)
@@ -220,8 +220,8 @@ fn matrix_column(
 ///|
 fn matrix_mul_vec(
   matrix : @symphysics.ExplicitMatrix,
-  vec : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  vec : Array[Expr],
+) -> Array[Expr] {
   let a00 = try! matrix.get(0, 0)
   let a01 = try! matrix.get(0, 1)
   let a02 = try! matrix.get(0, 2)
@@ -241,7 +241,7 @@ fn matrix_mul_vec(
 ///|
 fn rotation_matrix(
   axis : Int,
-  angle : @symcore.Expr,
+  angle : Expr,
 ) -> @symphysics.ExplicitMatrix {
   let c = @symelem.cos(angle)
   let s = @symelem.sin(angle)
@@ -269,8 +269,8 @@ fn rotation_matrix(
 
 ///|
 fn rotation_matrix_about_axis(
-  axis : Array[@symcore.Expr],
-  angle : @symcore.Expr,
+  axis : Array[Expr],
+  angle : Expr,
 ) -> @symphysics.ExplicitMatrix {
   let u0 = axis[0]
   let u1 = axis[1]
@@ -304,16 +304,16 @@ fn coordinate_symbol_name(frame : ReferenceFrame, axis : Int) -> String {
 
 ///|
 fn coordinate_symbol(frame : ReferenceFrame, axis : Int) -> CoordinateSym {
-  @symcore.symbol(coordinate_symbol_name(frame, axis))
+  symbol(coordinate_symbol_name(frame, axis))
 }
 
 ///|
-fn dynamicsymbol_single(name : String, level : Int) -> @symcore.Expr {
+fn dynamicsymbol_single(name : String, level : Int) -> Expr {
   let base = @symcore.function(name, [dynamicsymbols_t])
   if level <= 0 {
     base
   } else {
-    let args : Array[@symcore.Expr] = [base]
+    let args : Array[Expr] = [base]
     for _ in 0..<level {
       args.push(dynamicsymbols_t)
     }
@@ -366,16 +366,16 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
 }
 
 ///|
-fn collect_symbol_names(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+fn collect_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       for arg in args {
         collect_symbol_names(arg, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       collect_symbol_names(base, seen)
       collect_symbol_names(exp, seen)
     }
@@ -389,7 +389,7 @@ fn point_registry_get(index : Int) -> Point {
 }
 
 ///|
-pub fn orient_axis(angle : @symcore.Expr, axis : Vector) -> OrientationSpec {
+pub fn orient_axis(angle : Expr, axis : Vector) -> OrientationSpec {
   AxisSpec(angle, axis)
 }
 
@@ -400,7 +400,7 @@ pub fn orient_dcm(matrix : @symphysics.ExplicitMatrix) -> OrientationSpec {
 
 ///|
 pub fn orient_body(
-  angles : Array[@symcore.Expr],
+  angles : Array[Expr],
   order : String,
 ) -> OrientationSpec {
   BodySpec(angles, order)
@@ -408,7 +408,7 @@ pub fn orient_body(
 
 ///|
 pub fn orient_space(
-  angles : Array[@symcore.Expr],
+  angles : Array[Expr],
   order : String,
 ) -> OrientationSpec {
   SpaceSpec(angles, order)
@@ -416,10 +416,10 @@ pub fn orient_space(
 
 ///|
 pub fn orient_quaternion(
-  q0 : @symcore.Expr,
-  q1 : @symcore.Expr,
-  q2 : @symcore.Expr,
-  q3 : @symcore.Expr,
+  q0 : Expr,
+  q1 : Expr,
+  q2 : Expr,
+  q3 : Expr,
 ) -> OrientationSpec {
   QuaternionSpec(q0, q1, q2, q3)
 }

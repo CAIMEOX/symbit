@@ -1,18 +1,18 @@
 ///|
 /// Parametric curve given by coordinate functions and a parameter interval.
 pub struct Curve {
-  functions_ : Array[@symcore.Expr]
-  parameter_ : @symcore.Expr
-  start_ : @symcore.Expr
-  end_ : @symcore.Expr
+  functions_ : Array[Expr]
+  parameter_ : Expr
+  start_ : Expr
+  end_ : Expr
 } derive(Eq)
 
 ///|
 pub fn curve(
-  functions : Array[@symcore.Expr],
-  parameter : @symcore.Expr,
-  start : @symcore.Expr,
-  end : @symcore.Expr,
+  functions : Array[Expr],
+  parameter : Expr,
+  start : Expr,
+  end : Expr,
 ) -> Curve raise GeometryError {
   if functions.length() < 2 {
     raise GeometryError::ValueError(
@@ -46,38 +46,38 @@ pub fn Curve::ambient_dimension(self : Curve) -> Int {
 }
 
 ///|
-pub fn Curve::functions(self : Curve) -> Array[@symcore.Expr] {
+pub fn Curve::functions(self : Curve) -> Array[Expr] {
   self.functions_[:].to_array()
 }
 
 ///|
-pub fn Curve::parameter(self : Curve) -> @symcore.Expr {
+pub fn Curve::parameter(self : Curve) -> Expr {
   self.parameter_
 }
 
 ///|
 pub fn Curve::limits(
   self : Curve,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
+) -> (Expr, Expr, Expr) {
   (self.parameter_, self.start_, self.end_)
 }
 
 ///|
-pub fn Curve::free_symbols(self : Curve) -> Array[@symcore.Expr] {
+pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
   let seen : Map[String, Bool] = {}
   for expr in self.functions_ {
     geo_collect_symbols(expr, seen)
   }
   geo_collect_symbols(self.start_, seen)
   geo_collect_symbols(self.end_, seen)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   let parameter_name = match self.parameter_ {
-    @symcore.Expr::Symbol(name) => Some(name)
+    Expr::Symbol(name) => Some(name)
     _ => None
   }
   for item in seen {
     if parameter_name != Some(item.0) {
-      out.push(@symcore.symbol(item.0))
+      out.push(symbol(item.0))
     }
   }
   let n = out.length()
@@ -96,24 +96,24 @@ pub fn Curve::free_symbols(self : Curve) -> Array[@symcore.Expr] {
 ///|
 pub fn Curve::plot_interval(
   self : Curve,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
-) -> Array[@symcore.Expr] {
+  parameter? : Expr = symbol("t"),
+) -> Array[Expr] {
   [parameter, self.start_, self.end_]
 }
 
 ///|
 pub fn Curve::arbitrary_point(
   self : Curve,
-  parameter? : @symcore.Expr = @symcore.symbol("t"),
+  parameter? : Expr = symbol("t"),
 ) -> Point raise GeometryError {
-  let env : Map[String, @symcore.Expr] = {}
-  let actual = if @symcore.compare_expr(parameter, @symcore.symbol("t")) == 0 {
+  let env : Map[String, Expr] = {}
+  let actual = if @symcore.compare_expr(parameter, symbol("t")) == 0 {
     self.parameter_
   } else {
     parameter
   }
   match self.parameter_ {
-    @symcore.Expr::Symbol(name) => env.set(name, actual)
+    Expr::Symbol(name) => env.set(name, actual)
     _ => ()
   }
   point(
@@ -126,10 +126,10 @@ pub fn Curve::arbitrary_point(
 pub fn Curve::parameter_value(
   self : Curve,
   other : Point,
-  t : @symcore.Expr,
-) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  t : Expr,
+) -> Map[Expr, Expr] raise GeometryError {
   let point_obj = other.with_dim(self.functions_.length())
-  let mut candidates : Array[@symcore.Expr]? = None
+  let mut candidates : Array[Expr]? = None
   for i in 0..<self.functions_.length() {
     let diff = geo_simplify(self.functions_[i] - point_obj.coords_[i])
     if geo_expr_is_zero(diff) {
@@ -139,7 +139,7 @@ pub fn Curve::parameter_value(
       Some(items) if !items.is_empty() => items
       _ => raise GeometryError::ValueError("point is not on curve")
     }
-    let unique_roots : Array[@symcore.Expr] = []
+    let unique_roots : Array[Expr] = []
     for root in roots {
       let normalized_root = geo_simplify(root)
       if !unique_roots.any(fn(prev) { geo_expr_eq(prev, normalized_root) }) {
@@ -149,7 +149,7 @@ pub fn Curve::parameter_value(
     match candidates {
       None => candidates = Some(unique_roots)
       Some(prev) => {
-        let next : Array[@symcore.Expr] = []
+        let next : Array[Expr] = []
         for candidate in prev {
           if unique_roots.any(fn(root) { geo_expr_eq(root, candidate) }) {
             next.push(candidate)
@@ -165,9 +165,9 @@ pub fn Curve::parameter_value(
   }
   for candidate in matches {
     let candidate = geo_simplify(candidate)
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, Expr] = {}
     match self.parameter_ {
-      @symcore.Expr::Symbol(name) => env.set(name, candidate)
+      Expr::Symbol(name) => env.set(name, candidate)
       _ => ()
     }
     let mut ok = true
@@ -178,7 +178,7 @@ pub fn Curve::parameter_value(
       }
     }
     if ok {
-      let out : Map[@symcore.Expr, @symcore.Expr] = {}
+      let out : Map[Expr, Expr] = {}
       out.set(t, geo_simplify(candidate))
       return out
     }
@@ -189,7 +189,7 @@ pub fn Curve::parameter_value(
 ///|
 pub fn Curve::translate(
   self : Curve,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Curve raise GeometryError {
   if offsets.length() != self.functions_.length() {
     raise GeometryError::ValueError(
@@ -207,7 +207,7 @@ pub fn Curve::translate(
 ///|
 pub fn Curve::scale(
   self : Curve,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Curve raise GeometryError {
   if factors.length() != self.functions_.length() {
@@ -219,7 +219,7 @@ pub fn Curve::scale(
     Some(value) => value.with_dim(self.functions_.length())
     None => point_origin(self.functions_.length())
   }
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<self.functions_.length() {
     out.push(
       geo_simplify(
@@ -234,7 +234,7 @@ pub fn Curve::scale(
 ///|
 pub fn Curve::rotate(
   self : Curve,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Curve raise GeometryError {
   if self.functions_.length() != 2 {
@@ -251,8 +251,8 @@ pub fn Curve::rotate(
 }
 
 ///|
-pub fn Curve::length(self : Curve) -> @symcore.Expr {
-  let integrand_terms : Array[@symcore.Expr] = []
+pub fn Curve::length(self : Curve) -> Expr {
+  let integrand_terms : Array[Expr] = []
   for expr in self.functions_ {
     integrand_terms.push(@symcalculus.diff(expr, self.parameter_) ^ geo_int(2))
   }

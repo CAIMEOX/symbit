@@ -102,7 +102,7 @@ pub fn cmod(
   t : Int,
   a : Int,
   modulus : Int,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard t > 0 else {
     raise @symphysics.PhysicsError::ValueError("CMod expects t > 0")
   }
@@ -115,25 +115,25 @@ pub fn cmod(
     )
   }
   @symcore.raw_function("CMod", [
-    @symcore.int(t),
-    @symcore.int(a),
-    @symcore.int(modulus),
+    int(t),
+    int(a),
+    int(modulus),
   ])
 }
 
 ///|
-pub fn CModExpr::as_expr(self : CModExpr) -> @symcore.Expr {
+pub fn CModExpr::as_expr(self : CModExpr) -> Expr {
   @symcore.raw_function("CMod", [
-    @symcore.int(self.t),
-    @symcore.int(self.a),
-    @symcore.int(self.modulus),
+    int(self.t),
+    int(self.a),
+    int(self.modulus),
   ])
 }
 
 ///|
-fn cmod_from_expr(expr : @symcore.Expr) -> CModExpr? {
+fn cmod_from_expr(expr : Expr) -> CModExpr? {
   match expr {
-    @symcore.Expr::Function("CMod", args) if args.length() == 3 =>
+    Expr::Function("CMod", args) if args.length() == 3 =>
       match
         (
           quantum_integer_value(args[0]),
@@ -151,7 +151,7 @@ fn cmod_from_expr(expr : @symcore.Expr) -> CModExpr? {
 fn cmod_apply(
   op : CModExpr,
   ket : QubitExpr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard ket.nqubits() == 2 * op.t else {
     raise @symphysics.PhysicsError::ShapeError(
       "CMod operates on exactly 2*t qubits",
@@ -177,9 +177,9 @@ fn cmod_apply(
 
 ///|
 pub fn shor_apply_operator_to_ket(
-  op_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
-) -> @symcore.Expr? raise @symphysics.PhysicsError {
+  op_expr : Expr,
+  ket_expr : Expr,
+) -> Expr? raise @symphysics.PhysicsError {
   match (cmod_from_expr(op_expr), qubit_from_expr(ket_expr)) {
     (Some(op), Some(ket)) => Some(try! cmod_apply(op, ket))
     _ => None
@@ -191,9 +191,9 @@ fn cmod_matrix(
   op : CModExpr,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let size = 1 << (2 * op.t)
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for _ in 0..<size {
-    rows.push(Array::make(size, @symcore.int(0)))
+    rows.push(Array::make(size, int(0)))
   }
   for col in 0..<size {
     let bits = try! int_to_bits(col, 2 * op.t)
@@ -206,14 +206,14 @@ fn cmod_matrix(
           "CMod matrix expects basis-state output",
         )
     }
-    rows[bits_to_int(q.bits)][col] = @symcore.int(1)
+    rows[bits_to_int(q.bits)][col] = int(1)
   }
   @symphysics.explicit_matrix_from_rows(rows)
 }
 
 ///|
 pub fn shor_represent(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits : Int,
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   match cmod_from_expr(expr) {
@@ -271,14 +271,14 @@ fn shor_factor_pair(a : Int, r : Int, n : Int) -> (Int, Int) {
 }
 
 ///|
-pub fn shor(n : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
+pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
   guard n > 1 else {
     raise @symphysics.PhysicsError::ValueError("shor expects n > 1")
   }
   for a in 2..<n {
     let divisor = shor_int_gcd(n, a)
     if divisor != 1 {
-      return @symcore.int(divisor)
+      return int(divisor)
     }
     let r = try! period_find(a, n)
     if (r & 1) == 1 {
@@ -287,8 +287,8 @@ pub fn shor(n : Int) -> @symcore.Expr raise @symphysics.PhysicsError {
     let factors = shor_factor_pair(a, r, n)
     if factors.0 > 1 && factors.0 < n && factors.1 > 1 && factors.1 < n {
       return @symcore.raw_function("Tuple", [
-        @symcore.int(factors.0),
-        @symcore.int(factors.1),
+        int(factors.0),
+        int(factors.1),
       ])
     }
   }

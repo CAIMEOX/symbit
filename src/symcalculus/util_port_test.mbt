@@ -52,8 +52,6 @@ fn util_oracle_periodicity(
 ) -> String raise {
   try @sympy_calculus.periodicity_str(expr, sym) catch {
     err => fail("oracle periodicity \{label} error: \{err}")
-  } noraise {
-    v => v
   }
 }
 

@@ -1,18 +1,18 @@
 ///|
 pub struct DifferentialOperatorAlgebra {
-  symbol_var : @symcore.Expr
+  symbol_var : Expr
   generator : String
 } derive(Eq)
 
 ///|
 pub struct DifferentialOperator {
-  coeffs : Array[@symcore.Expr]
+  coeffs : Array[Expr]
   parent : DifferentialOperatorAlgebra
 } derive(Eq)
 
 ///|
 pub fn differential_operator(
-  coeffs : Array[@symcore.Expr],
+  coeffs : Array[Expr],
   parent : DifferentialOperatorAlgebra,
 ) -> DifferentialOperator {
   let normalized = trim_coeffs(coeffs)
@@ -21,7 +21,7 @@ pub fn differential_operator(
 
 ///|
 pub fn differential_operators(
-  symbol_var? : @symcore.Expr = @symcore.symbol("x"),
+  symbol_var? : Expr = symbol("x"),
   generator? : String = "Dx",
 ) -> (DifferentialOperatorAlgebra, DifferentialOperator) {
   ignore(require_symbol_name(symbol_var))
@@ -32,7 +32,7 @@ pub fn differential_operators(
 ///|
 pub fn DifferentialOperatorAlgebra::variable(
   self : DifferentialOperatorAlgebra,
-) -> @symcore.Expr {
+) -> Expr {
   self.symbol_var
 }
 
@@ -46,8 +46,8 @@ pub fn DifferentialOperatorAlgebra::generator(
 ///|
 pub fn DifferentialOperator::coefficients(
   self : DifferentialOperator,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for c in self.coeffs {
     out.push(c)
   }
@@ -87,7 +87,7 @@ fn differential_add(
   } else {
     b.coeffs.length()
   }
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for i in 0..<len {
     out.push(expr_add(coeff_at(a.coeffs, i), coeff_at(b.coeffs, i)))
   }
@@ -103,7 +103,7 @@ fn differential_mul(
     return differential_operator([holo_zero()], a.parent)
   }
   let max_order = a.order() + b.order()
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for _ in 0..<=max_order {
     out.push(holo_zero())
   }

@@ -1,4 +1,7 @@
 ///|
+using @symcore {type Expr, int, symbol}
+
+///|
 /// Core SISO LTI object model aligned with the high-value surface of
 /// `sympy.physics.control.lti`.
 
@@ -12,26 +15,26 @@ pub suberror ControlError {
 
 ///|
 pub struct TransferFunction {
-  num_ : @symcore.Expr
-  den_ : @symcore.Expr
-  var_ : @symcore.Expr
+  num_ : Expr
+  den_ : Expr
+  var_ : Expr
 } derive(Eq)
 
 ///|
 pub struct DiscreteTransferFunction {
-  num_ : @symcore.Expr
-  den_ : @symcore.Expr
-  var_ : @symcore.Expr
-  sampling_time_ : @symcore.Expr
+  num_ : Expr
+  den_ : Expr
+  var_ : Expr
+  sampling_time_ : Expr
 } derive(Eq)
 
 ///|
 pub struct PIDController {
-  kp_ : @symcore.Expr
-  ki_ : @symcore.Expr
-  kd_ : @symcore.Expr
-  tf_ : @symcore.Expr
-  var_ : @symcore.Expr
+  kp_ : Expr
+  ki_ : Expr
+  kd_ : Expr
+  tf_ : Expr
+  var_ : Expr
 } derive(Eq)
 
 ///|
@@ -62,40 +65,40 @@ pub enum SISOLinearTimeInvariant {
 } derive(Eq)
 
 ///|
-fn control_var_name(var_expr : @symcore.Expr) -> String raise ControlError {
+fn control_var_name(var_expr : Expr) -> String raise ControlError {
   match var_expr {
-    @symcore.Expr::Symbol(name) => name
+    Expr::Symbol(name) => name
     _ => raise ControlError::TypeError("control variable should be a symbol")
   }
 }
 
 ///|
-fn control_expr_is_zero(expr : @symcore.Expr) -> Bool {
-  control_normalize(expr) == @symcore.int(0)
+fn control_expr_is_zero(expr : Expr) -> Bool {
+  control_normalize(expr) == int(0)
 }
 
 ///|
-fn control_expr_is_one(expr : @symcore.Expr) -> Bool {
-  control_normalize(expr) == @symcore.int(1)
+fn control_expr_is_one(expr : Expr) -> Bool {
+  control_normalize(expr) == int(1)
 }
 
 ///|
-fn control_negated_factor(expr : @symcore.Expr) -> @symcore.Expr? {
+fn control_negated_factor(expr : Expr) -> Expr? {
   match control_normalize(expr) {
-    @symcore.Expr::Mul(args) if args.length() == 2 &&
-      args[0] == @symcore.int(-1) => Some(args[1])
+    Expr::Mul(args) if args.length() == 2 &&
+      args[0] == int(-1) => Some(args[1])
     _ => None
   }
 }
 
 ///|
 fn control_expand_mul_pair(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> @symcore.Expr {
+  lhs : Expr,
+  rhs : Expr,
+) -> Expr {
   match (lhs, rhs) {
-    (@symcore.Expr::Add(lhs_args), @symcore.Expr::Add(rhs_args)) => {
-      let out : Array[@symcore.Expr] = []
+    (Expr::Add(lhs_args), Expr::Add(rhs_args)) => {
+      let out : Array[Expr] = []
       for a in lhs_args {
         for b in rhs_args {
           out.push(control_expand_expr(a * b))
@@ -103,20 +106,20 @@ fn control_expand_mul_pair(
       }
       @symcore.add(out)
     }
-    (@symcore.Expr::Add(lhs_args), _) =>
+    (Expr::Add(lhs_args), _) =>
       @symcore.add(lhs_args.map(a => control_expand_expr(a * rhs)))
-    (_, @symcore.Expr::Add(rhs_args)) =>
+    (_, Expr::Add(rhs_args)) =>
       @symcore.add(rhs_args.map(b => control_expand_expr(lhs * b)))
     _ => lhs * rhs
   }
 }
 
 ///|
-fn control_expand_pow(base : @symcore.Expr, exp : Int) -> @symcore.Expr {
+fn control_expand_pow(base : Expr, exp : Int) -> Expr {
   if exp < 0 {
-    return @symcore.pow(control_expand_expr(base), @symcore.int(exp))
+    return @symcore.pow(control_expand_expr(base), int(exp))
   }
-  let mut out = @symcore.int(1)
+  let mut out = int(1)
   for _ in 0..<exp {
     out = control_expand_mul_pair(out, control_expand_expr(base))
   }
@@ -124,21 +127,21 @@ fn control_expand_pow(base : @symcore.Expr, exp : Int) -> @symcore.Expr {
 }
 
 ///|
-fn control_expand_expr(expr : @symcore.Expr) -> @symcore.Expr {
+fn control_expand_expr(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args.map(control_expand_expr))
-    @symcore.Expr::Mul(args) => {
-      let mut acc = @symcore.int(1)
+    Expr::Add(args) => @symcore.add(args.map(control_expand_expr))
+    Expr::Mul(args) => {
+      let mut acc = int(1)
       for arg in args {
         acc = control_expand_mul_pair(acc, control_expand_expr(arg))
       }
       acc
     }
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(n)) if n.is_integral() =>
+    Expr::Pow(base, Expr::Number(n)) if n.is_integral() =>
       control_expand_pow(base, n.numerator().to_int())
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.pow(control_expand_expr(base), control_expand_expr(exp))
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(name, args.map(control_expand_expr))
     _ => expr
   }
@@ -146,11 +149,11 @@ fn control_expand_expr(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn control_expr_from_coeffs(
-  coeffs : Array[@symcore.Expr],
-  var_expr : @symcore.Expr,
-) -> @symcore.Expr {
+  coeffs : Array[Expr],
+  var_expr : Expr,
+) -> Expr {
   let degree = coeffs.length() - 1
-  let terms : Array[@symcore.Expr] = []
+  let terms : Array[Expr] = []
   for i in 0..<coeffs.length() {
     let coeff = coeffs[i]
     let power = degree - i
@@ -159,7 +162,7 @@ fn control_expr_from_coeffs(
     } else if power == 1 {
       coeff * var_expr
     } else {
-      coeff * (var_expr ^ @symcore.int(power))
+      coeff * (var_expr ^ int(power))
     }
     terms.push(term)
   }
@@ -168,17 +171,17 @@ fn control_expr_from_coeffs(
 
 ///|
 fn control_fraction_mul(
-  lhs : (@symcore.Expr, @symcore.Expr),
-  rhs : (@symcore.Expr, @symcore.Expr),
-) -> (@symcore.Expr, @symcore.Expr) {
+  lhs : (Expr, Expr),
+  rhs : (Expr, Expr),
+) -> (Expr, Expr) {
   (control_normalize(lhs.0 * rhs.0), control_normalize(lhs.1 * rhs.1))
 }
 
 ///|
 fn control_fraction_add(
-  lhs : (@symcore.Expr, @symcore.Expr),
-  rhs : (@symcore.Expr, @symcore.Expr),
-) -> (@symcore.Expr, @symcore.Expr) {
+  lhs : (Expr, Expr),
+  rhs : (Expr, Expr),
+) -> (Expr, Expr) {
   (
     control_normalize(lhs.0 * rhs.1 + rhs.0 * lhs.1),
     control_normalize(lhs.1 * rhs.1),
@@ -187,17 +190,17 @@ fn control_fraction_add(
 
 ///|
 fn control_fraction_pow(
-  value : (@symcore.Expr, @symcore.Expr),
+  value : (Expr, Expr),
   power : Int,
-) -> (@symcore.Expr, @symcore.Expr) {
+) -> (Expr, Expr) {
   if power == 0 {
-    return (@symcore.int(1), @symcore.int(1))
+    return (int(1), int(1))
   }
   if power < 0 {
     let pos = control_fraction_pow(value, -power)
     return (pos.1, pos.0)
   }
-  let mut out = (@symcore.int(1), @symcore.int(1))
+  let mut out = (int(1), int(1))
   for _ in 0..<power {
     out = control_fraction_mul(out, value)
   }
@@ -206,19 +209,19 @@ fn control_fraction_pow(
 
 ///|
 fn control_rational_parts(
-  expr : @symcore.Expr,
+  expr : Expr,
   variable_name : String,
-) -> (@symcore.Expr, @symcore.Expr) raise ControlError {
+) -> (Expr, Expr) raise ControlError {
   match expr {
-    @symcore.Expr::Number(_) => (expr, @symcore.int(1))
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(_) => (expr, int(1))
+    Expr::Symbol(name) =>
       if name == variable_name {
-        (expr, @symcore.int(1))
+        (expr, int(1))
       } else {
-        (expr, @symcore.int(1))
+        (expr, int(1))
       }
-    @symcore.Expr::Add(args) => {
-      let mut out = (@symcore.int(0), @symcore.int(1))
+    Expr::Add(args) => {
+      let mut out = (int(0), int(1))
       for arg in args {
         out = control_fraction_add(
           out,
@@ -227,8 +230,8 @@ fn control_rational_parts(
       }
       out
     }
-    @symcore.Expr::Mul(args) => {
-      let mut out = (@symcore.int(1), @symcore.int(1))
+    Expr::Mul(args) => {
+      let mut out = (int(1), int(1))
       for arg in args {
         out = control_fraction_mul(
           out,
@@ -237,26 +240,26 @@ fn control_rational_parts(
       }
       out
     }
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(n)) if n.is_integral() =>
+    Expr::Pow(base, Expr::Number(n)) if n.is_integral() =>
       control_fraction_pow(
         control_rational_parts(base, variable_name),
         n.numerator().to_int(),
       )
-    @symcore.Expr::Pow(_, _) => (expr, @symcore.int(1))
-    @symcore.Expr::Function("exp", [arg]) if control_expr_depends_on_symbol(
+    Expr::Pow(_, _) => (expr, int(1))
+    Expr::Function("exp", [arg]) if control_expr_depends_on_symbol(
         expr, variable_name,
       ) =>
       match control_negated_factor(arg) {
-        Some(inner) => (@symcore.int(1), @symcore.function("exp", [inner]))
-        None => (expr, @symcore.int(1))
+        Some(inner) => (int(1), @symcore.function("exp", [inner]))
+        None => (expr, int(1))
       }
-    @symcore.Expr::Function(_, _) => (expr, @symcore.int(1))
+    Expr::Function(_, _) => (expr, int(1))
   }
 }
 
 ///|
 fn control_poly_degree(
-  expr : @symcore.Expr,
+  expr : Expr,
   variable_name : String,
 ) -> Int raise ControlError {
   match (try? poly_from_expr(expr, variable_name)) {
@@ -274,9 +277,9 @@ fn control_poly_degree(
 
 ///|
 fn control_poly_roots(
-  expr : @symcore.Expr,
+  expr : Expr,
   variable_name : String,
-) -> Array[@symcore.Expr] raise ControlError {
+) -> Array[Expr] raise ControlError {
   if control_expr_is_zero(expr) {
     return []
   }
@@ -296,27 +299,27 @@ fn control_poly_roots(
 
 ///|
 fn control_tf_expr(
-  numerator : @symcore.Expr,
-  denominator : @symcore.Expr,
-) -> @symcore.Expr {
+  numerator : Expr,
+  denominator : Expr,
+) -> Expr {
   if control_expr_is_zero(numerator) {
     @symcore.raw_mul([
-      @symcore.int(0),
-      @symcore.raw_pow(denominator, @symcore.int(-1)),
+      int(0),
+      @symcore.raw_pow(denominator, int(-1)),
     ])
   } else if control_expr_is_one(denominator) {
     if control_expr_is_one(numerator) {
-      @symcore.raw_pow(@symcore.int(1), @symcore.int(-1))
+      @symcore.raw_pow(int(1), int(-1))
     } else {
       @symcore.raw_mul([
         numerator,
-        @symcore.raw_pow(@symcore.int(1), @symcore.int(-1)),
+        @symcore.raw_pow(int(1), int(-1)),
       ])
     }
   } else {
     @symcore.raw_mul([
       numerator,
-      @symcore.raw_pow(denominator, @symcore.int(-1)),
+      @symcore.raw_pow(denominator, int(-1)),
     ])
   }
 }
@@ -329,15 +332,15 @@ fn control_unit_like(
     SISOLinearTimeInvariant::DTF(tf) =>
       SISOLinearTimeInvariant::DTF(
         discrete_transfer_function(
-          @symcore.int(1),
-          @symcore.int(1),
+          int(1),
+          int(1),
           tf.var_,
           sampling_time=tf.sampling_time_,
         ),
       )
     _ =>
       SISOLinearTimeInvariant::TF(
-        transfer_function(@symcore.int(1), @symcore.int(1), system.var()),
+        transfer_function(int(1), int(1), system.var()),
       )
   }
 }
@@ -345,7 +348,7 @@ fn control_unit_like(
 ///|
 fn control_lti_time_signature(
   system : SISOLinearTimeInvariant,
-) -> (@symcore.Expr, Bool, @symcore.Expr?) raise ControlError {
+) -> (Expr, Bool, Expr?) raise ControlError {
   match system {
     SISOLinearTimeInvariant::TF(tf) => (tf.var_, false, None)
     SISOLinearTimeInvariant::DTF(tf) => (tf.var_, true, Some(tf.sampling_time_))
@@ -463,11 +466,11 @@ fn control_add_base(
 
 ///|
 pub fn transfer_function(
-  numerator : @symcore.Expr,
-  denominator : @symcore.Expr,
-  var : @symcore.Expr,
+  numerator : Expr,
+  denominator : Expr,
+  var : Expr,
 ) -> TransferFunction raise ControlError {
-  guard var is @symcore.Expr::Symbol(_) else {
+  guard var is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
@@ -485,12 +488,12 @@ pub fn transfer_function(
 
 ///|
 pub fn discrete_transfer_function(
-  numerator : @symcore.Expr,
-  denominator : @symcore.Expr,
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(1),
+  numerator : Expr,
+  denominator : Expr,
+  var : Expr,
+  sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
-  guard var is @symcore.Expr::Symbol(_) else {
+  guard var is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
@@ -509,10 +512,10 @@ pub fn discrete_transfer_function(
 
 ///|
 pub fn create_transfer_function(
-  numerator : @symcore.Expr,
-  denominator : @symcore.Expr,
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(0),
+  numerator : Expr,
+  denominator : Expr,
+  var : Expr,
+  sampling_time? : Expr = int(0),
 ) -> SISOLinearTimeInvariant raise ControlError {
   if control_expr_is_zero(sampling_time) {
     SISOLinearTimeInvariant::TF(transfer_function(numerator, denominator, var))
@@ -525,8 +528,8 @@ pub fn create_transfer_function(
 
 ///|
 pub fn TransferFunction::from_rational_expression(
-  expr : @symcore.Expr,
-  var? : @symcore.Expr,
+  expr : Expr,
+  var? : Expr,
 ) -> TransferFunction raise ControlError {
   let resolved_var = match var {
     Some(value) => value
@@ -542,7 +545,7 @@ pub fn TransferFunction::from_rational_expression(
           "from_rational_expression needs the complex variable when it cannot be inferred",
         )
       }
-      @symcore.symbol(names[0])
+      symbol(names[0])
     }
   }
   let variable_name = control_var_name(resolved_var)
@@ -556,9 +559,9 @@ pub fn TransferFunction::from_rational_expression(
 
 ///|
 pub fn TransferFunction::from_coeff_lists(
-  numerator_coeffs : Array[@symcore.Expr],
-  denominator_coeffs : Array[@symcore.Expr],
-  var : @symcore.Expr,
+  numerator_coeffs : Array[Expr],
+  denominator_coeffs : Array[Expr],
+  var : Expr,
 ) -> TransferFunction raise ControlError {
   guard !denominator_coeffs.all(coeff => control_expr_is_zero(coeff)) else {
     raise ControlError::ValueError(
@@ -574,16 +577,16 @@ pub fn TransferFunction::from_coeff_lists(
 
 ///|
 pub fn TransferFunction::from_zpk(
-  zeros : Array[@symcore.Expr],
-  poles : Array[@symcore.Expr],
-  gain : @symcore.Expr,
-  var : @symcore.Expr,
+  zeros : Array[Expr],
+  poles : Array[Expr],
+  gain : Expr,
+  var : Expr,
 ) -> TransferFunction raise ControlError {
   let mut numerator = gain
   for zero in zeros {
     numerator = numerator * (var - zero)
   }
-  let mut denominator = @symcore.int(1)
+  let mut denominator = int(1)
   for pole in poles {
     denominator = denominator * (var - pole)
   }
@@ -591,30 +594,30 @@ pub fn TransferFunction::from_zpk(
 }
 
 ///|
-pub fn TransferFunction::num(self : TransferFunction) -> @symcore.Expr {
+pub fn TransferFunction::num(self : TransferFunction) -> Expr {
   self.num_
 }
 
 ///|
-pub fn TransferFunction::den(self : TransferFunction) -> @symcore.Expr {
+pub fn TransferFunction::den(self : TransferFunction) -> Expr {
   self.den_
 }
 
 ///|
-pub fn TransferFunction::var(self : TransferFunction) -> @symcore.Expr {
+pub fn TransferFunction::var(self : TransferFunction) -> Expr {
   self.var_
 }
 
 ///|
-pub fn TransferFunction::args(self : TransferFunction) -> Array[@symcore.Expr] {
+pub fn TransferFunction::args(self : TransferFunction) -> Array[Expr] {
   [self.num_, self.den_, self.var_]
 }
 
 ///|
 pub fn TransferFunction::sampling_time(
   self : TransferFunction,
-) -> @symcore.Expr {
-  @symcore.int(0)
+) -> Expr {
+  int(0)
 }
 
 ///|
@@ -625,7 +628,7 @@ pub fn TransferFunction::as_system(
 }
 
 ///|
-pub fn TransferFunction::to_expr(self : TransferFunction) -> @symcore.Expr {
+pub fn TransferFunction::to_expr(self : TransferFunction) -> Expr {
   control_tf_expr(self.num_, self.den_)
 }
 
@@ -654,9 +657,9 @@ pub fn TransferFunction::simplify(
 ///|
 pub fn TransferFunction::eval_frequency(
   self : TransferFunction,
-  point : @symcore.Expr,
-) -> @symcore.Expr raise ControlError {
-  let env : Map[String, @symcore.Expr] = {}
+  point : Expr,
+) -> Expr raise ControlError {
+  let env : Map[String, Expr] = {}
   env[control_var_name(self.var_)] = point
   control_normalize(@symcore.subst(self.to_expr(), env))
 }
@@ -664,10 +667,10 @@ pub fn TransferFunction::eval_frequency(
 ///|
 pub fn TransferFunction::dc_gain(
   self : TransferFunction,
-) -> @symcore.Expr raise ControlError {
+) -> Expr raise ControlError {
   let simplified = self.simplify()
-  let env : Map[String, @symcore.Expr] = {}
-  env[control_var_name(self.var_)] = @symcore.int(0)
+  let env : Map[String, Expr] = {}
+  env[control_var_name(self.var_)] = int(0)
   let num0 = control_normalize(@symcore.subst(simplified.num_, env))
   let den0 = control_normalize(@symcore.subst(simplified.den_, env))
   if control_expr_is_zero(den0) {
@@ -676,23 +679,23 @@ pub fn TransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.symbol("oo")
+    symbol("oo")
   } else {
-    control_normalize(num0 * @symcore.pow(den0, @symcore.int(-1)))
+    control_normalize(num0 * @symcore.pow(den0, int(-1)))
   }
 }
 
 ///|
 pub fn TransferFunction::poles(
   self : TransferFunction,
-) -> Array[@symcore.Expr] raise ControlError {
+) -> Array[Expr] raise ControlError {
   control_poly_roots(self.den_, control_var_name(self.var_))
 }
 
 ///|
 pub fn TransferFunction::zeros(
   self : TransferFunction,
-) -> Array[@symcore.Expr] raise ControlError {
+) -> Array[Expr] raise ControlError {
   if control_expr_is_zero(self.num_) {
     []
   } else {
@@ -757,7 +760,7 @@ pub fn TransferFunction::is_stable(
 ///|
 pub fn TransferFunction::subs(
   self : TransferFunction,
-  env : Map[String, @symcore.Expr],
+  env : Map[String, Expr],
 ) -> TransferFunction raise ControlError {
   transfer_function(
     @symcore.subst(self.num_, env),
@@ -769,14 +772,14 @@ pub fn TransferFunction::subs(
 ///|
 pub fn TransferFunction::xreplace(
   self : TransferFunction,
-  env : Map[String, @symcore.Expr],
+  env : Map[String, Expr],
 ) -> TransferFunction raise ControlError {
   let next_var = match self.var_ {
-    @symcore.Expr::Symbol(name) =>
+    Expr::Symbol(name) =>
       match env.get(name) {
         Some(value) =>
           match value {
-            @symcore.Expr::Symbol(_) => value
+            Expr::Symbol(_) => value
             _ => self.var_
           }
         None => self.var_
@@ -792,15 +795,15 @@ pub fn TransferFunction::xreplace(
 
 ///|
 pub impl Neg for TransferFunction with neg(self) {
-  try! transfer_function(@symcore.int(-1) * self.num_, self.den_, self.var_)
+  try! transfer_function(int(-1) * self.num_, self.den_, self.var_)
 }
 
 ///|
 pub fn discrete_transfer_function_from_coeff_lists(
-  numerator_coeffs : Array[@symcore.Expr],
-  denominator_coeffs : Array[@symcore.Expr],
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(1),
+  numerator_coeffs : Array[Expr],
+  denominator_coeffs : Array[Expr],
+  var : Expr,
+  sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   discrete_transfer_function(
     control_expr_from_coeffs(numerator_coeffs, var),
@@ -812,9 +815,9 @@ pub fn discrete_transfer_function_from_coeff_lists(
 
 ///|
 pub fn DiscreteTransferFunction::from_rational_expression(
-  expr : @symcore.Expr,
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(1),
+  expr : Expr,
+  var : Expr,
+  sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   let parts = control_rational_parts(
     control_normalize(expr),
@@ -825,10 +828,10 @@ pub fn DiscreteTransferFunction::from_rational_expression(
 
 ///|
 pub fn DiscreteTransferFunction::from_coeff_lists(
-  numerator_coeffs : Array[@symcore.Expr],
-  denominator_coeffs : Array[@symcore.Expr],
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(1),
+  numerator_coeffs : Array[Expr],
+  denominator_coeffs : Array[Expr],
+  var : Expr,
+  sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   discrete_transfer_function_from_coeff_lists(
     numerator_coeffs,
@@ -840,11 +843,11 @@ pub fn DiscreteTransferFunction::from_coeff_lists(
 
 ///|
 pub fn DiscreteTransferFunction::from_zpk(
-  zeros : Array[@symcore.Expr],
-  poles : Array[@symcore.Expr],
-  gain : @symcore.Expr,
-  var : @symcore.Expr,
-  sampling_time? : @symcore.Expr = @symcore.int(1),
+  zeros : Array[Expr],
+  poles : Array[Expr],
+  gain : Expr,
+  var : Expr,
+  sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   let tf = try! TransferFunction::from_zpk(zeros, poles, gain, var)
   discrete_transfer_function(tf.num_, tf.den_, var, sampling_time~)
@@ -853,9 +856,9 @@ pub fn DiscreteTransferFunction::from_zpk(
 ///|
 pub fn gbt(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-  alpha : @symcore.Expr,
-) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError {
+  sampling_time : Expr,
+  alpha : Expr,
+) -> (Array[Expr], Array[Expr]) raise ControlError {
   let variable_name = control_var_name(cont_tf.var_)
   let np = coeff_array(poly_from_expr(cont_tf.num_, variable_name)).1 catch {
       _ =>
@@ -873,26 +876,26 @@ pub fn gbt(
   } else {
     dp.length() - 1
   }
-  let num_terms : Array[@symcore.Expr] = []
-  let den_terms : Array[@symcore.Expr] = []
+  let num_terms : Array[Expr] = []
+  let den_terms : Array[Expr] = []
   for i in 0..<np.length() {
     let coeff = np[np.length() - 1 - i]
     let power = n - i
     num_terms.push(
-      (sampling_time ^ @symcore.int(power)) *
+      (sampling_time ^ int(power)) *
       coeff *
-      ((z - @symcore.int(1)) ^ @symcore.int(i)) *
-      ((alpha * z + @symcore.int(1) - alpha) ^ @symcore.int(power)),
+      ((z - int(1)) ^ int(i)) *
+      ((alpha * z + int(1) - alpha) ^ int(power)),
     )
   }
   for i in 0..<dp.length() {
     let coeff = dp[dp.length() - 1 - i]
     let power = n - i
     den_terms.push(
-      (sampling_time ^ @symcore.int(power)) *
+      (sampling_time ^ int(power)) *
       coeff *
-      ((z - @symcore.int(1)) ^ @symcore.int(i)) *
-      ((alpha * z + @symcore.int(1) - alpha) ^ @symcore.int(power)),
+      ((z - int(1)) ^ int(i)) *
+      ((alpha * z + int(1) - alpha) ^ int(power)),
     )
   }
   let num_expr = control_expand_expr(control_normalize(@symcore.add(num_terms)))
@@ -911,41 +914,41 @@ pub fn gbt(
     }
   let lead = den_coeffs[0]
   (
-    num_coeffs.map(coeff => control_normalize(coeff * (lead ^ @symcore.int(-1)))),
-    den_coeffs.map(coeff => control_normalize(coeff * (lead ^ @symcore.int(-1)))),
+    num_coeffs.map(coeff => control_normalize(coeff * (lead ^ int(-1)))),
+    den_coeffs.map(coeff => control_normalize(coeff * (lead ^ int(-1)))),
   )
 }
 
 ///|
 pub fn bilinear(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError {
+  sampling_time : Expr,
+) -> (Array[Expr], Array[Expr]) raise ControlError {
   gbt(cont_tf, sampling_time, try! @symcore.rational_from_ints(1, 2))
 }
 
 ///|
 pub fn forward_diff(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError {
-  gbt(cont_tf, sampling_time, @symcore.int(0))
+  sampling_time : Expr,
+) -> (Array[Expr], Array[Expr]) raise ControlError {
+  gbt(cont_tf, sampling_time, int(0))
 }
 
 ///|
 pub fn backward_diff(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-) -> (Array[@symcore.Expr], Array[@symcore.Expr]) raise ControlError {
-  gbt(cont_tf, sampling_time, @symcore.int(1))
+  sampling_time : Expr,
+) -> (Array[Expr], Array[Expr]) raise ControlError {
+  gbt(cont_tf, sampling_time, int(1))
 }
 
 ///|
 pub fn DiscreteTransferFunction::from_gbt(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-  alpha : @symcore.Expr,
-  var : @symcore.Expr,
+  sampling_time : Expr,
+  alpha : Expr,
+  var : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   let result = gbt(cont_tf, sampling_time, alpha)
   discrete_transfer_function(
@@ -959,8 +962,8 @@ pub fn DiscreteTransferFunction::from_gbt(
 ///|
 pub fn DiscreteTransferFunction::from_bilinear(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-  var : @symcore.Expr,
+  sampling_time : Expr,
+  var : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
@@ -973,13 +976,13 @@ pub fn DiscreteTransferFunction::from_bilinear(
 ///|
 pub fn DiscreteTransferFunction::from_forward_diff(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-  var : @symcore.Expr,
+  sampling_time : Expr,
+  var : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
-    @symcore.int(0),
+    int(0),
     var,
   )
 }
@@ -987,13 +990,13 @@ pub fn DiscreteTransferFunction::from_forward_diff(
 ///|
 pub fn DiscreteTransferFunction::from_backward_diff(
   cont_tf : TransferFunction,
-  sampling_time : @symcore.Expr,
-  var : @symcore.Expr,
+  sampling_time : Expr,
+  var : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
-    @symcore.int(1),
+    int(1),
     var,
   )
 }
@@ -1001,56 +1004,56 @@ pub fn DiscreteTransferFunction::from_backward_diff(
 ///|
 pub fn DiscreteTransferFunction::discrete_tf_num(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.num_
 }
 
 ///|
 pub fn DiscreteTransferFunction::discrete_tf_den(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.den_
 }
 
 ///|
 pub fn DiscreteTransferFunction::discrete_tf_var(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.var_
 }
 
 ///|
 pub fn DiscreteTransferFunction::num(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.num_
 }
 
 ///|
 pub fn DiscreteTransferFunction::den(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.den_
 }
 
 ///|
 pub fn DiscreteTransferFunction::var(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.var_
 }
 
 ///|
 pub fn DiscreteTransferFunction::sampling_time(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   self.sampling_time_
 }
 
 ///|
 pub fn DiscreteTransferFunction::args(
   self : DiscreteTransferFunction,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   [self.num_, self.den_, self.var_, self.sampling_time_]
 }
 
@@ -1064,7 +1067,7 @@ pub fn DiscreteTransferFunction::as_system(
 ///|
 pub fn DiscreteTransferFunction::to_expr(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr {
+) -> Expr {
   control_tf_expr(self.num_, self.den_)
 }
 
@@ -1095,9 +1098,9 @@ pub fn DiscreteTransferFunction::simplify(
 ///|
 pub fn DiscreteTransferFunction::eval_frequency(
   self : DiscreteTransferFunction,
-  point : @symcore.Expr,
-) -> @symcore.Expr raise ControlError {
-  let env : Map[String, @symcore.Expr] = {}
+  point : Expr,
+) -> Expr raise ControlError {
+  let env : Map[String, Expr] = {}
   env[control_var_name(self.var_)] = point
   control_normalize(@symcore.subst(self.to_expr(), env))
 }
@@ -1105,10 +1108,10 @@ pub fn DiscreteTransferFunction::eval_frequency(
 ///|
 pub fn DiscreteTransferFunction::dc_gain(
   self : DiscreteTransferFunction,
-) -> @symcore.Expr raise ControlError {
+) -> Expr raise ControlError {
   let simplified = self.simplify()
-  let env : Map[String, @symcore.Expr] = {}
-  env[control_var_name(self.var_)] = @symcore.int(1)
+  let env : Map[String, Expr] = {}
+  env[control_var_name(self.var_)] = int(1)
   let num1 = control_normalize(@symcore.subst(simplified.num_, env))
   let den1 = control_normalize(@symcore.subst(simplified.den_, env))
   if control_expr_is_zero(den1) {
@@ -1117,23 +1120,23 @@ pub fn DiscreteTransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.symbol("oo")
+    symbol("oo")
   } else {
-    control_normalize(num1 * (den1 ^ @symcore.int(-1)))
+    control_normalize(num1 * (den1 ^ int(-1)))
   }
 }
 
 ///|
 pub fn DiscreteTransferFunction::poles(
   self : DiscreteTransferFunction,
-) -> Array[@symcore.Expr] raise ControlError {
+) -> Array[Expr] raise ControlError {
   control_poly_roots(self.den_, control_var_name(self.var_))
 }
 
 ///|
 pub fn DiscreteTransferFunction::zeros(
   self : DiscreteTransferFunction,
-) -> Array[@symcore.Expr] raise ControlError {
+) -> Array[Expr] raise ControlError {
   if control_expr_is_zero(self.num_) {
     []
   } else {
@@ -1199,7 +1202,7 @@ pub fn DiscreteTransferFunction::is_stable(
 ///|
 pub impl Neg for DiscreteTransferFunction with neg(self) {
   try! discrete_transfer_function(
-    @symcore.int(-1) * self.num_,
+    int(-1) * self.num_,
     self.den_,
     self.var_,
     sampling_time=self.sampling_time_,
@@ -1208,40 +1211,40 @@ pub impl Neg for DiscreteTransferFunction with neg(self) {
 
 ///|
 pub fn pid_controller(
-  kp? : @symcore.Expr = @symcore.symbol("kp"),
-  ki? : @symcore.Expr = @symcore.symbol("ki"),
-  kd? : @symcore.Expr = @symcore.symbol("kd"),
-  tf? : @symcore.Expr = @symcore.int(0),
-  var? : @symcore.Expr = @symcore.symbol("s"),
+  kp? : Expr = symbol("kp"),
+  ki? : Expr = symbol("ki"),
+  kd? : Expr = symbol("kd"),
+  tf? : Expr = int(0),
+  var? : Expr = symbol("s"),
 ) -> PIDController raise ControlError {
-  guard var is @symcore.Expr::Symbol(_) else {
+  guard var is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
   PIDController::{ kp_: kp, ki_: ki, kd_: kd, tf_: tf, var_: var }
 }
 
 ///|
-pub fn PIDController::kp(self : PIDController) -> @symcore.Expr {
+pub fn PIDController::kp(self : PIDController) -> Expr {
   self.kp_
 }
 
 ///|
-pub fn PIDController::ki(self : PIDController) -> @symcore.Expr {
+pub fn PIDController::ki(self : PIDController) -> Expr {
   self.ki_
 }
 
 ///|
-pub fn PIDController::kd(self : PIDController) -> @symcore.Expr {
+pub fn PIDController::kd(self : PIDController) -> Expr {
   self.kd_
 }
 
 ///|
-pub fn PIDController::tf(self : PIDController) -> @symcore.Expr {
+pub fn PIDController::tf(self : PIDController) -> Expr {
   self.tf_
 }
 
 ///|
-pub fn PIDController::var(self : PIDController) -> @symcore.Expr {
+pub fn PIDController::var(self : PIDController) -> Expr {
   self.var_
 }
 
@@ -1256,19 +1259,19 @@ pub fn PIDController::as_system(
 pub fn PIDController::doit(
   self : PIDController,
 ) -> TransferFunction raise ControlError {
-  let numerator = self.kp_ * self.tf_ * (self.var_ ^ @symcore.int(2)) +
+  let numerator = self.kp_ * self.tf_ * (self.var_ ^ int(2)) +
     self.kp_ * self.var_ +
     self.ki_ * self.tf_ * self.var_ +
     self.ki_ +
-    self.kd_ * (self.var_ ^ @symcore.int(2))
-  let denominator = self.tf_ * (self.var_ ^ @symcore.int(2)) + self.var_
+    self.kd_ * (self.var_ ^ int(2))
+  let denominator = self.tf_ * (self.var_ ^ int(2)) + self.var_
   transfer_function(numerator, denominator, self.var_)
 }
 
 ///|
 pub fn PIDController::to_expr(
   self : PIDController,
-) -> @symcore.Expr raise ControlError {
+) -> Expr raise ControlError {
   self.doit().to_expr()
 }
 
@@ -1311,14 +1314,14 @@ pub fn Series::args(self : Series) -> Array[SISOLinearTimeInvariant] {
 }
 
 ///|
-pub fn Series::var(self : Series) -> @symcore.Expr raise ControlError {
+pub fn Series::var(self : Series) -> Expr raise ControlError {
   control_lti_time_signature(self.args_[0]).0
 }
 
 ///|
 pub fn Series::sampling_time(
   self : Series,
-) -> @symcore.Expr? raise ControlError {
+) -> Expr? raise ControlError {
   control_lti_time_signature(self.args_[0]).2
 }
 
@@ -1339,7 +1342,7 @@ pub fn Series::doit(
 }
 
 ///|
-pub fn Series::to_expr(self : Series) -> @symcore.Expr raise ControlError {
+pub fn Series::to_expr(self : Series) -> Expr raise ControlError {
   self.doit().to_expr()
 }
 
@@ -1364,14 +1367,14 @@ pub fn Parallel::args(self : Parallel) -> Array[SISOLinearTimeInvariant] {
 }
 
 ///|
-pub fn Parallel::var(self : Parallel) -> @symcore.Expr raise ControlError {
+pub fn Parallel::var(self : Parallel) -> Expr raise ControlError {
   control_lti_time_signature(self.args_[0]).0
 }
 
 ///|
 pub fn Parallel::sampling_time(
   self : Parallel,
-) -> @symcore.Expr? raise ControlError {
+) -> Expr? raise ControlError {
   control_lti_time_signature(self.args_[0]).2
 }
 
@@ -1392,7 +1395,7 @@ pub fn Parallel::doit(
 }
 
 ///|
-pub fn Parallel::to_expr(self : Parallel) -> @symcore.Expr raise ControlError {
+pub fn Parallel::to_expr(self : Parallel) -> Expr raise ControlError {
   self.doit().to_expr()
 }
 
@@ -1427,14 +1430,14 @@ pub fn Feedback::sign(self : Feedback) -> Int {
 }
 
 ///|
-pub fn Feedback::var(self : Feedback) -> @symcore.Expr raise ControlError {
+pub fn Feedback::var(self : Feedback) -> Expr raise ControlError {
   control_lti_time_signature(self.sys1_).0
 }
 
 ///|
 pub fn Feedback::sampling_time(
   self : Feedback,
-) -> @symcore.Expr? raise ControlError {
+) -> Expr? raise ControlError {
   control_lti_time_signature(self.sys1_).2
 }
 
@@ -1501,14 +1504,14 @@ pub fn Feedback::doit(
 }
 
 ///|
-pub fn Feedback::to_expr(self : Feedback) -> @symcore.Expr raise ControlError {
+pub fn Feedback::to_expr(self : Feedback) -> Expr raise ControlError {
   self.doit().to_expr()
 }
 
 ///|
 pub fn SISOLinearTimeInvariant::var(
   self : SISOLinearTimeInvariant,
-) -> @symcore.Expr raise ControlError {
+) -> Expr raise ControlError {
   match self {
     SISOLinearTimeInvariant::TF(tf) => tf.var_
     SISOLinearTimeInvariant::DTF(tf) => tf.var_
@@ -1522,7 +1525,7 @@ pub fn SISOLinearTimeInvariant::var(
 ///|
 pub fn SISOLinearTimeInvariant::sampling_time(
   self : SISOLinearTimeInvariant,
-) -> @symcore.Expr? raise ControlError {
+) -> Expr? raise ControlError {
   match self {
     SISOLinearTimeInvariant::TF(_) | SISOLinearTimeInvariant::PID(_) => None
     SISOLinearTimeInvariant::DTF(tf) => Some(tf.sampling_time_)
@@ -1564,7 +1567,7 @@ pub fn SISOLinearTimeInvariant::doit(
 ///|
 pub fn SISOLinearTimeInvariant::to_expr(
   self : SISOLinearTimeInvariant,
-) -> @symcore.Expr raise ControlError {
+) -> Expr raise ControlError {
   match control_as_base(self) {
     SISOLinearTimeInvariant::TF(tf) => tf.to_expr()
     SISOLinearTimeInvariant::DTF(tf) => tf.to_expr()

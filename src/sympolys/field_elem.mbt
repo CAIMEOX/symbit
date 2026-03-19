@@ -739,7 +739,7 @@ fn fe_alg_poly_inv(
 fn load_algext_minpoly(
   base : Domain,
   gens : Array[String],
-  rels : Array[@symcore.Expr],
+  rels : Array[Expr],
 ) -> (Poly, String) raise PolyError {
   if gens.length() != 1 || rels.length() != 1 {
     raise PolyError::BadGenerator("algext")

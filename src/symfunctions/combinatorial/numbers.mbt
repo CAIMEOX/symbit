@@ -125,7 +125,7 @@ fn bernoulli_small(n : Int) -> @symnum.BigRational? {
 }
 
 ///|
-pub fn fibonacci(n : @symcore.Expr) -> @symcore.Expr {
+pub fn fibonacci(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -140,7 +140,7 @@ pub fn fibonacci(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn lucas(n : @symcore.Expr) -> @symcore.Expr {
+pub fn lucas(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -155,7 +155,7 @@ pub fn lucas(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn tribonacci(n : @symcore.Expr) -> @symcore.Expr {
+pub fn tribonacci(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -170,7 +170,7 @@ pub fn tribonacci(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn harmonic(n : @symcore.Expr) -> @symcore.Expr {
+pub fn harmonic(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -185,7 +185,7 @@ pub fn harmonic(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn bernoulli(n : @symcore.Expr) -> @symcore.Expr {
+pub fn bernoulli(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -199,40 +199,40 @@ pub fn bernoulli(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn bell(n : @symcore.Expr) -> @symcore.Expr {
+pub fn bell(n : Expr) -> Expr {
   @symcore.function("bell", [n])
 }
 
 ///|
-pub fn euler(n : @symcore.Expr) -> @symcore.Expr {
+pub fn euler(n : Expr) -> Expr {
   @symcore.function("euler", [n])
 }
 
 ///|
-pub fn catalan(n : @symcore.Expr) -> @symcore.Expr {
+pub fn catalan(n : Expr) -> Expr {
   @symcore.function("catalan", [n])
 }
 
 ///|
-pub fn genocchi(n : @symcore.Expr) -> @symcore.Expr {
+pub fn genocchi(n : Expr) -> Expr {
   @symcore.function("genocchi", [n])
 }
 
 ///|
-pub fn andre(n : @symcore.Expr) -> @symcore.Expr {
+pub fn andre(n : Expr) -> Expr {
   @symcore.function("andre", [n])
 }
 
 ///|
-pub fn partition(n : @symcore.Expr) -> @symcore.Expr {
+pub fn partition(n : Expr) -> Expr {
   @symcore.function("partition", [n])
 }
 
 ///|
 pub fn divisor_sigma(
-  n : @symcore.Expr,
-  k? : @symcore.Expr = @symcore.int(1),
-) -> @symcore.Expr {
+  n : Expr,
+  k? : Expr = int(1),
+) -> Expr {
   match (int_value(n), int_value(k)) {
     (Some(ni), Some(ki)) => {
       let res = @symntheory.divisor_sigma(ni, k=ki.to_int())
@@ -244,14 +244,14 @@ pub fn divisor_sigma(
 
 ///|
 pub fn udivisor_sigma(
-  n : @symcore.Expr,
-  k? : @symcore.Expr = @symcore.int(1),
-) -> @symcore.Expr {
+  n : Expr,
+  k? : Expr = int(1),
+) -> Expr {
   @symcore.function("udivisor_sigma", [n, k])
 }
 
 ///|
-pub fn legendre_symbol(a : @symcore.Expr, p : @symcore.Expr) -> @symcore.Expr {
+pub fn legendre_symbol(a : Expr, p : Expr) -> Expr {
   match (int_value(a), int_value(p)) {
     (Some(ai), Some(pi)) => {
       let res = try! @symntheory.legendre_symbol(ai, pi)
@@ -262,7 +262,7 @@ pub fn legendre_symbol(a : @symcore.Expr, p : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn jacobi_symbol(a : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
+pub fn jacobi_symbol(a : Expr, n : Expr) -> Expr {
   match (int_value(a), int_value(n)) {
     (Some(ai), Some(ni)) => {
       let res = try! @symntheory.jacobi_symbol(ai, ni)
@@ -273,12 +273,12 @@ pub fn jacobi_symbol(a : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn kronecker_symbol(a : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
+pub fn kronecker_symbol(a : Expr, n : Expr) -> Expr {
   @symcore.function("kronecker_symbol", [a, n])
 }
 
 ///|
-pub fn mobius(n : @symcore.Expr) -> @symcore.Expr {
+pub fn mobius(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => {
       let res = try! @symntheory.mobius(ni)
@@ -289,7 +289,7 @@ pub fn mobius(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn primenu(n : @symcore.Expr) -> @symcore.Expr {
+pub fn primenu(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => expr_from_int(@symntheory.primenu(ni))
     None => @symcore.function("primenu", [n])
@@ -297,7 +297,7 @@ pub fn primenu(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn primeomega(n : @symcore.Expr) -> @symcore.Expr {
+pub fn primeomega(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => expr_from_int(@symntheory.primeomega(ni))
     None => @symcore.function("primeomega", [n])
@@ -305,7 +305,7 @@ pub fn primeomega(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn totient(n : @symcore.Expr) -> @symcore.Expr {
+pub fn totient(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => expr_from_bigint(@symntheory.totient(ni))
     None => @symcore.function("totient", [n])
@@ -313,7 +313,7 @@ pub fn totient(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn reduced_totient(n : @symcore.Expr) -> @symcore.Expr {
+pub fn reduced_totient(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => expr_from_bigint(@symntheory.reduced_totient(ni))
     None => @symcore.function("reduced_totient", [n])
@@ -321,7 +321,7 @@ pub fn reduced_totient(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn primepi(n : @symcore.Expr) -> @symcore.Expr {
+pub fn primepi(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) => expr_from_bigint(@symntheory.primepi(ni))
     None => @symcore.function("primepi", [n])
@@ -329,11 +329,11 @@ pub fn primepi(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn motzkin(n : @symcore.Expr) -> @symcore.Expr {
+pub fn motzkin(n : Expr) -> Expr {
   @symcore.function("motzkin", [n])
 }
 
 ///|
-pub fn carmichael(n : @symcore.Expr) -> @symcore.Expr {
+pub fn carmichael(n : Expr) -> Expr {
   @symcore.function("carmichael", [n])
 }

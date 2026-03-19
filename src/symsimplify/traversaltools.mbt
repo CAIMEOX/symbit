@@ -1,20 +1,20 @@
 ///|
 /// Apply `func` to nodes at a fixed depth in the expression tree.
 pub fn apply_at_level(
-  expr : @symcore.Expr,
-  func : (@symcore.Expr) -> @symcore.Expr,
+  expr : Expr,
+  func : (Expr) -> Expr,
   level? : Int = 0,
-) -> @symcore.Expr {
+) -> Expr {
   let depth = if level < 0 { 0 } else { level }
   use_at(expr, func, depth)
 }
 
 ///|
 fn use_at(
-  expr : @symcore.Expr,
-  func : (@symcore.Expr) -> @symcore.Expr,
+  expr : Expr,
+  func : (Expr) -> Expr,
   depth : Int,
-) -> @symcore.Expr {
+) -> Expr {
   if depth <= 0 {
     return func(expr)
   }
@@ -25,9 +25,9 @@ fn use_at(
 }
 
 ///|
-fn is_atom_traversal(expr : @symcore.Expr) -> Bool {
+fn is_atom_traversal(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => true
+    Expr::Number(_) | Expr::Symbol(_) => true
     _ => false
   }
 }

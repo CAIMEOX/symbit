@@ -5,17 +5,17 @@
 
 ///|
 pub struct Linearizer {
-  states_ : Array[@symcore.Expr]
-  inputs_ : Array[@symcore.Expr]
-  rhs_ : Array[@symcore.Expr]
-  q_ : Array[@symcore.Expr]
-  u_ : Array[@symcore.Expr]
-  q_i_ : Array[@symcore.Expr]
-  q_d_ : Array[@symcore.Expr]
-  u_i_ : Array[@symcore.Expr]
-  u_d_ : Array[@symcore.Expr]
-  r_ : Array[@symcore.Expr]
-  lams_ : Array[@symcore.Expr]
+  states_ : Array[Expr]
+  inputs_ : Array[Expr]
+  rhs_ : Array[Expr]
+  q_ : Array[Expr]
+  u_ : Array[Expr]
+  q_i_ : Array[Expr]
+  q_d_ : Array[Expr]
+  u_i_ : Array[Expr]
+  u_d_ : Array[Expr]
+  r_ : Array[Expr]
+  lams_ : Array[Expr]
   f_0_ : @symphysics.ExplicitMatrix
   f_1_ : @symphysics.ExplicitMatrix
   f_2_ : @symphysics.ExplicitMatrix
@@ -31,17 +31,17 @@ pub struct Linearizer {
 
 ///|
 fn mechanics_expr_div(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> @symcore.Expr {
-  mech_simplify_expr(lhs * (rhs ^ @symcore.int(-1)))
+  lhs : Expr,
+  rhs : Expr,
+) -> Expr {
+  mech_simplify_expr(lhs * (rhs ^ int(-1)))
 }
 
 ///|
 fn mechanics_matrix_column(
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> @symphysics.ExplicitMatrix {
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for expr in exprs {
     rows.push([expr])
   }
@@ -51,10 +51,10 @@ fn mechanics_matrix_column(
 ///|
 fn mechanics_matrix_entries(
   matrix : @symphysics.ExplicitMatrix,
-) -> Array[Array[@symcore.Expr]] {
-  let rows : Array[Array[@symcore.Expr]] = []
+) -> Array[Array[Expr]] {
+  let rows : Array[Array[Expr]] = []
   for i in 0..<matrix.height() {
-    let row : Array[@symcore.Expr] = []
+    let row : Array[Expr] = []
     for j in 0..<matrix.width() {
       row.push(try! matrix.get(i, j))
     }
@@ -65,12 +65,12 @@ fn mechanics_matrix_entries(
 
 ///|
 fn mechanics_matrix_jacobian(
-  exprs : Array[@symcore.Expr],
-  vars : Array[@symcore.Expr],
+  exprs : Array[Expr],
+  vars : Array[Expr],
 ) -> @symphysics.ExplicitMatrix {
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for expr in exprs {
-    let row : Array[@symcore.Expr] = []
+    let row : Array[Expr] = []
     for wrt in vars {
       row.push(mech_simplify_expr(@symcalculus.diff(expr, wrt)))
     }
@@ -107,8 +107,8 @@ fn mechanics_identity(n : Int) -> @symphysics.ExplicitMatrix {
 ///|
 fn mechanics_linear_solve(
   coeff : @symphysics.ExplicitMatrix,
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
+  rhs : Array[Expr],
+) -> Array[Expr] raise @symphysics.PhysicsError {
   let nrows = coeff.height()
   let ncols = coeff.width()
   guard nrows == rhs.length() && nrows == ncols else {
@@ -150,7 +150,7 @@ fn mechanics_linear_solve(
     }
   }
 
-  let solution : Array[@symcore.Expr] = Array::make(ncols, @symcore.int(0))
+  let solution : Array[Expr] = Array::make(ncols, int(0))
   let mut row = nrows - 1
   while row >= 0 {
     let mut value = aug[row][ncols]
@@ -180,17 +180,17 @@ fn mechanics_matrix_linear_solve(
       "mechanics linear systems require equal row counts",
     )
   }
-  let solved_columns : Array[Array[@symcore.Expr]] = []
+  let solved_columns : Array[Array[Expr]] = []
   for j in 0..<rhs.width() {
-    let column : Array[@symcore.Expr] = []
+    let column : Array[Expr] = []
     for i in 0..<rhs.height() {
       column.push(try! rhs.get(i, j))
     }
     solved_columns.push(try! mechanics_linear_solve(coeff, column))
   }
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for i in 0..<coeff.width() {
-    let row : Array[@symcore.Expr] = []
+    let row : Array[Expr] = []
     for j in 0..<solved_columns.length() {
       row.push(solved_columns[j][i])
     }
@@ -201,24 +201,24 @@ fn mechanics_matrix_linear_solve(
 
 ///|
 fn mechanics_matrix_negative_residual(
-  exprs : Array[@symcore.Expr],
-  vars : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  exprs : Array[Expr],
+  vars : Array[Expr],
+) -> Array[Expr] {
   let zero_subs : Array[Substitution] = []
   for wrt in vars {
-    zero_subs.push((wrt, @symcore.int(0)))
+    zero_subs.push((wrt, int(0)))
   }
   exprs.map(fn(expr) {
-    mech_simplify_expr(@symcore.int(-1) * msubs_expr(expr, zero_subs))
+    mech_simplify_expr(int(-1) * msubs_expr(expr, zero_subs))
   })
 }
 
 ///|
 fn mechanics_dynamic_inputs(
-  exprs : Array[@symcore.Expr],
-  exclude : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
-  let seen : Map[String, @symcore.Expr] = {}
+  exprs : Array[Expr],
+  exclude : Array[Expr],
+) -> Array[Expr] {
+  let seen : Map[String, Expr] = {}
   for expr in exprs {
     mech_find_dynamicsymbols_go(expr, seen)
   }
@@ -235,17 +235,17 @@ fn mechanics_dynamic_inputs(
 
 ///|
 fn linearizer_with_metadata(
-  states : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-  inputs? : Array[@symcore.Expr] = [],
-  q? : Array[@symcore.Expr] = [],
-  u? : Array[@symcore.Expr] = [],
-  q_i? : Array[@symcore.Expr] = [],
-  q_d? : Array[@symcore.Expr] = [],
-  u_i? : Array[@symcore.Expr] = [],
-  u_d? : Array[@symcore.Expr] = [],
-  r? : Array[@symcore.Expr] = [],
-  lams? : Array[@symcore.Expr] = [],
+  states : Array[Expr],
+  rhs : Array[Expr],
+  inputs? : Array[Expr] = [],
+  q? : Array[Expr] = [],
+  u? : Array[Expr] = [],
+  q_i? : Array[Expr] = [],
+  q_d? : Array[Expr] = [],
+  u_i? : Array[Expr] = [],
+  u_d? : Array[Expr] = [],
+  r? : Array[Expr] = [],
+  lams? : Array[Expr] = [],
   f_0? : @symphysics.ExplicitMatrix = mechanics_zero_column(0),
   f_1? : @symphysics.ExplicitMatrix = mechanics_zero_column(0),
   f_2? : @symphysics.ExplicitMatrix = mechanics_zero_column(0),
@@ -298,9 +298,9 @@ fn linearizer_with_metadata(
 
 ///|
 pub fn linearizer(
-  states : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-  inputs? : Array[@symcore.Expr] = [],
+  states : Array[Expr],
+  rhs : Array[Expr],
+  inputs? : Array[Expr] = [],
 ) -> Linearizer {
   linearizer_with_metadata(states, rhs, inputs~)
 }
@@ -313,17 +313,17 @@ pub fn Linearizer::permutation_matrix(
 }
 
 ///|
-pub fn Linearizer::states(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::states(self : Linearizer) -> Array[Expr] {
   self.states_.copy()
 }
 
 ///|
-pub fn Linearizer::inputs(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::inputs(self : Linearizer) -> Array[Expr] {
   self.inputs_.copy()
 }
 
 ///|
-pub fn Linearizer::q(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::q(self : Linearizer) -> Array[Expr] {
   if self.q_.is_empty() {
     self.states_.copy()
   } else {
@@ -332,12 +332,12 @@ pub fn Linearizer::q(self : Linearizer) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn Linearizer::u(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::u(self : Linearizer) -> Array[Expr] {
   self.u_.copy()
 }
 
 ///|
-pub fn Linearizer::q_i(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::q_i(self : Linearizer) -> Array[Expr] {
   if self.q_i_.is_empty() && self.q_d_.is_empty() {
     self.q()
   } else {
@@ -346,12 +346,12 @@ pub fn Linearizer::q_i(self : Linearizer) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn Linearizer::q_d(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::q_d(self : Linearizer) -> Array[Expr] {
   self.q_d_.copy()
 }
 
 ///|
-pub fn Linearizer::u_i(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::u_i(self : Linearizer) -> Array[Expr] {
   if self.u_i_.is_empty() && self.u_d_.is_empty() {
     self.u()
   } else {
@@ -360,12 +360,12 @@ pub fn Linearizer::u_i(self : Linearizer) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn Linearizer::u_d(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::u_d(self : Linearizer) -> Array[Expr] {
   self.u_d_.copy()
 }
 
 ///|
-pub fn Linearizer::r(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::r(self : Linearizer) -> Array[Expr] {
   if self.r_.is_empty() {
     self.inputs()
   } else {
@@ -374,7 +374,7 @@ pub fn Linearizer::r(self : Linearizer) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn Linearizer::lams(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::lams(self : Linearizer) -> Array[Expr] {
   self.lams_.copy()
 }
 
@@ -419,7 +419,7 @@ pub fn Linearizer::f_a(self : Linearizer) -> @symphysics.ExplicitMatrix {
 }
 
 ///|
-pub fn Linearizer::rhs(self : Linearizer) -> Array[@symcore.Expr] {
+pub fn Linearizer::rhs(self : Linearizer) -> Array[Expr] {
   self.rhs_.copy()
 }
 

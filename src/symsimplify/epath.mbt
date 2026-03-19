@@ -28,9 +28,9 @@ pub fn EPath::new(path : String) -> EPath {
 /// Select all subexpressions matched by this path.
 pub fn EPath::select(
   self : EPath,
-  expr : @symcore.Expr,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+  expr : Expr,
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   select_at(self.selectors, 0, expr, out)
   out
 }
@@ -39,15 +39,15 @@ pub fn EPath::select(
 /// Apply `f` to every subexpression matched by this path.
 pub fn EPath::apply(
   self : EPath,
-  expr : @symcore.Expr,
-  f : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  f : (Expr) -> Expr,
+) -> Expr {
   apply_at(self.selectors, 0, expr, f)
 }
 
 ///|
 /// Convenience wrapper for `EPath::select`.
-pub fn epath(path : String, expr : @symcore.Expr) -> Array[@symcore.Expr] {
+pub fn epath(path : String, expr : Expr) -> Array[Expr] {
   EPath::new(path).select(expr)
 }
 
@@ -55,9 +55,9 @@ pub fn epath(path : String, expr : @symcore.Expr) -> Array[@symcore.Expr] {
 /// Convenience wrapper for `EPath::apply`.
 pub fn epath_apply(
   path : String,
-  expr : @symcore.Expr,
-  f : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  f : (Expr) -> Expr,
+) -> Expr {
   EPath::new(path).apply(expr, f)
 }
 
@@ -189,8 +189,8 @@ fn parse_span(content : String) -> ESpan {
 fn select_at(
   selectors : Array[ESelector],
   idx : Int,
-  expr : @symcore.Expr,
-  out : Array[@symcore.Expr],
+  expr : Expr,
+  out : Array[Expr],
 ) -> Unit {
   if idx >= selectors.length() {
     out.push(expr)
@@ -214,9 +214,9 @@ fn select_at(
 fn apply_at(
   selectors : Array[ESelector],
   idx : Int,
-  expr : @symcore.Expr,
-  f : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  f : (Expr) -> Expr,
+) -> Expr {
   if idx >= selectors.length() {
     return f(expr)
   }
@@ -240,7 +240,7 @@ fn apply_at(
 }
 
 ///|
-fn selector_matches(sel : ESelector, expr : @symcore.Expr) -> Bool {
+fn selector_matches(sel : ESelector, expr : Expr) -> Bool {
   if sel.attrs.is_empty() && sel.types.is_empty() {
     return true
   }
@@ -258,40 +258,40 @@ fn selector_matches(sel : ESelector, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn has_type(expr : @symcore.Expr, t : String) -> Bool {
+fn has_type(expr : Expr, t : String) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) => t == "Number" || t == "Expr"
-    @symcore.Expr::Symbol(_) => t == "Symbol" || t == "Expr"
-    @symcore.Expr::Add(_) => t == "Add" || t == "Expr"
-    @symcore.Expr::Mul(_) => t == "Mul" || t == "Expr"
-    @symcore.Expr::Pow(_, _) => t == "Pow" || t == "Expr"
-    @symcore.Expr::Function(_, _) => t == "Function" || t == "Expr"
+    Expr::Number(_) => t == "Number" || t == "Expr"
+    Expr::Symbol(_) => t == "Symbol" || t == "Expr"
+    Expr::Add(_) => t == "Add" || t == "Expr"
+    Expr::Mul(_) => t == "Mul" || t == "Expr"
+    Expr::Pow(_, _) => t == "Pow" || t == "Expr"
+    Expr::Function(_, _) => t == "Function" || t == "Expr"
   }
 }
 
 ///|
-fn has_attr(expr : @symcore.Expr, a : String) -> Bool {
+fn has_attr(expr : Expr, a : String) -> Bool {
   match a {
     "is_Atom" => epath_is_atom(expr)
     "__iter__" => !ordered_children(expr).is_empty()
     "is_Add" =>
       match expr {
-        @symcore.Expr::Add(_) => true
+        Expr::Add(_) => true
         _ => false
       }
     "is_Mul" =>
       match expr {
-        @symcore.Expr::Mul(_) => true
+        Expr::Mul(_) => true
         _ => false
       }
     "is_Pow" =>
       match expr {
-        @symcore.Expr::Pow(_, _) => true
+        Expr::Pow(_, _) => true
         _ => false
       }
     "is_Function" =>
       match expr {
-        @symcore.Expr::Function(_, _) => true
+        Expr::Function(_, _) => true
         _ => false
       }
     _ => false
@@ -299,34 +299,34 @@ fn has_attr(expr : @symcore.Expr, a : String) -> Bool {
 }
 
 ///|
-fn epath_is_atom(expr : @symcore.Expr) -> Bool {
+fn epath_is_atom(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => true
+    Expr::Number(_) | Expr::Symbol(_) => true
     _ => false
   }
 }
 
 ///|
-fn ordered_children(expr : @symcore.Expr) -> Array[@symcore.Expr] {
+fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) => args.map(x => x)
-    @symcore.Expr::Pow(a, b) => [a, b]
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) => args.map(x => x)
+    Expr::Pow(a, b) => [a, b]
     _ => []
   }
 }
 
 ///|
 fn rebuild_expr(
-  expr : @symcore.Expr,
-  args : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  expr : Expr,
+  args : Array[Expr],
+) -> Expr {
   match expr {
-    @symcore.Expr::Add(_) => @symcore.raw_add(args)
-    @symcore.Expr::Mul(_) => @symcore.raw_mul(args)
-    @symcore.Expr::Function(name, _) => @symcore.raw_function(name, args)
-    @symcore.Expr::Pow(_, _) =>
+    Expr::Add(_) => @symcore.raw_add(args)
+    Expr::Mul(_) => @symcore.raw_mul(args)
+    Expr::Function(name, _) => @symcore.raw_function(name, args)
+    Expr::Pow(_, _) =>
       if args.length() == 2 {
         @symcore.raw_pow(args[0], args[1])
       } else {

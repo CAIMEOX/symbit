@@ -7,45 +7,45 @@
 /// `sqrt(2/L) * sin(n*pi*x/L)`.
 
 ///|
-pub let piab_m : @symcore.Expr = @symcore.symbol("m")
+pub let piab_m : Expr = symbol("m")
 
 ///|
-pub let piab_l : @symcore.Expr = @symcore.symbol("L")
+pub let piab_l : Expr = symbol("L")
 
 ///|
 pub fn piab_hamiltonian(
-  label? : @symcore.Expr = @symcore.symbol("H"),
-) -> @symcore.Expr {
+  label? : Expr = symbol("H"),
+) -> Expr {
   @symcore.raw_function("PIABHamiltonian", [label])
 }
 
 ///|
-pub fn piab_ket(n : @symcore.Expr) -> @symcore.Expr {
+pub fn piab_ket(n : Expr) -> Expr {
   @symcore.raw_function("PIABKet", [n])
 }
 
 ///|
-pub fn piab_bra(n : @symcore.Expr) -> @symcore.Expr {
+pub fn piab_bra(n : Expr) -> Expr {
   @symcore.raw_function("PIABBra", [n])
 }
 
 ///|
 pub fn piab_apply_operator_to_ket(
-  op_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
-) -> @symcore.Expr? {
+  op_expr : Expr,
+  ket_expr : Expr,
+) -> Expr? {
   match (op_expr, ket_expr) {
     (
-      @symcore.Expr::Function("PIABHamiltonian", _),
-      @symcore.Expr::Function("PIABKet", args),
+      Expr::Function("PIABHamiltonian", _),
+      Expr::Function("PIABKet", args),
     ) if args.length() == 1 => {
       let n = args[0]
-      let coeff = (n ^ @symcore.int(2)) *
-        (@symcore.symbol("pi") ^ @symcore.int(2)) *
-        (hbar ^ @symcore.int(2)) *
+      let coeff = (n ^ int(2)) *
+        (symbol("pi") ^ int(2)) *
+        (hbar ^ int(2)) *
         @symcore.raw_pow(
-          @symcore.int(2) * piab_m * (piab_l ^ @symcore.int(2)),
-          @symcore.int(-1),
+          int(2) * piab_m * (piab_l ^ int(2)),
+          int(-1),
         )
       Some(coeff * ket_expr)
     }
@@ -54,21 +54,21 @@ pub fn piab_apply_operator_to_ket(
 }
 
 ///|
-pub fn piab_represent(expr : @symcore.Expr) -> @symcore.Expr? {
+pub fn piab_represent(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function("PIABKet", args)
-    | @symcore.Expr::Function("PIABBra", args) if args.length() == 1 => {
-      let x = @symcore.symbol("x")
+    Expr::Function("PIABKet", args)
+    | Expr::Function("PIABBra", args) if args.length() == 1 => {
+      let x = symbol("x")
       let prefactor = @symcore.raw_function("sqrt", [
-        @symcore.int(2) * @symcore.raw_pow(piab_l, @symcore.int(-1)),
+        int(2) * @symcore.raw_pow(piab_l, int(-1)),
       ])
       Some(
         prefactor *
         @symcore.raw_function("sin", [
           args[0] *
-          @symcore.symbol("pi") *
+          symbol("pi") *
           x *
-          @symcore.raw_pow(piab_l, @symcore.int(-1)),
+          @symcore.raw_pow(piab_l, int(-1)),
         ]),
       )
     }

@@ -7,23 +7,23 @@
 /// constructor postprocessors, so the rules are exposed as explicit functions.
 
 ///|
-fn tensor_product_args(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+fn tensor_product_args(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function("TensorProduct", args) => Some(args)
+    Expr::Function("TensorProduct", args) => Some(args)
     _ => None
   }
 }
 
 ///|
 fn quantum_distribute_mul(
-  factors : Array[@symcore.Expr],
-) -> @symcore.Expr? raise @symphysics.PhysicsError {
+  factors : Array[Expr],
+) -> Expr? raise @symphysics.PhysicsError {
   for idx in 0..<factors.length() {
     match factors[idx] {
-      @symcore.Expr::Add(terms) => {
-        let expanded : Array[@symcore.Expr] = []
+      Expr::Add(terms) => {
+        let expanded : Array[Expr] = []
         for term in terms {
-          let rebuilt : Array[@symcore.Expr] = []
+          let rebuilt : Array[Expr] = []
           for jdx in 0..<factors.length() {
             rebuilt.push(if idx == jdx { term } else { factors[jdx] })
           }
@@ -39,9 +39,9 @@ fn quantum_distribute_mul(
 
 ///|
 pub fn quantum_transform_state_pair(
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
-) -> Array[@symcore.Expr]? raise @symphysics.PhysicsError {
+  lhs : Expr,
+  rhs : Expr,
+) -> Array[Expr]? raise @symphysics.PhysicsError {
   match quantum_operator_pair_simplify(lhs, rhs) {
     Some(simplified) => Some([simplified])
     None =>
@@ -50,19 +50,19 @@ pub fn quantum_transform_state_pair(
           Some([inner_product(lhs, rhs, evaluate=false)])
         _ if quantum_is_ket_expr(lhs) && quantum_is_bra_expr(rhs) =>
           Some([outer_product(lhs, rhs)])
-        (@symcore.Expr::Function("OuterProduct", args), _) if args.length() == 2 &&
+        (Expr::Function("OuterProduct", args), _) if args.length() == 2 &&
           quantum_is_ket_expr(args[0]) &&
           quantum_is_bra_expr(args[1]) &&
           quantum_is_ket_expr(rhs) =>
           Some([inner_product(args[1], rhs, evaluate=false), args[0]])
-        (_, @symcore.Expr::Function("OuterProduct", args)) if args.length() == 2 &&
+        (_, Expr::Function("OuterProduct", args)) if args.length() == 2 &&
           quantum_is_bra_expr(lhs) &&
           quantum_is_ket_expr(args[0]) &&
           quantum_is_bra_expr(args[1]) =>
           Some([inner_product(lhs, args[0], evaluate=false), args[1]])
         (
-          @symcore.Expr::Function("OuterProduct", lhs_args),
-          @symcore.Expr::Function("OuterProduct", rhs_args),
+          Expr::Function("OuterProduct", lhs_args),
+          Expr::Function("OuterProduct", rhs_args),
         ) if lhs_args.length() == 2 && rhs_args.length() == 2 =>
           Some([
             inner_product(lhs_args[1], rhs_args[0], evaluate=false),
@@ -75,7 +75,7 @@ pub fn quantum_transform_state_pair(
               let lhs_kind = quantum_kind(lhs)
               let rhs_kind = quantum_kind(rhs)
               if lhs_kind == QuantumKind::QBra && rhs_kind == QuantumKind::QKet {
-                let out : Array[@symcore.Expr] = []
+                let out : Array[Expr] = []
                 for idx in 0..<lhs_items.length() {
                   out.push(
                     inner_product(
@@ -87,7 +87,7 @@ pub fn quantum_transform_state_pair(
                 }
                 Some(out)
               } else {
-                let out : Array[@symcore.Expr] = []
+                let out : Array[Expr] = []
                 for idx in 0..<lhs_items.length() {
                   out.push(
                     quantum_canonical_mul(
@@ -137,10 +137,10 @@ pub fn quantum_transform_state_pair(
 
 ///|
 pub fn quantum_canonical_mul(
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+  expr : Expr,
+) -> Expr raise @symphysics.PhysicsError {
   let factors = match expr {
-    @symcore.Expr::Mul(items) => items
+    Expr::Mul(items) => items
     _ => [expr]
   }
   match quantum_distribute_mul(factors) {
@@ -148,10 +148,10 @@ pub fn quantum_canonical_mul(
     None => ()
   }
   let work = match expr {
-    @symcore.Expr::Mul(items) => items.copy()
+    Expr::Mul(items) => items.copy()
     _ => [expr]
   }
-  let result : Array[@symcore.Expr] = []
+  let result : Array[Expr] = []
   while work.length() > 1 {
     let first = work[0]
     let second = work[1]
@@ -160,7 +160,7 @@ pub fn quantum_canonical_mul(
         for idx in 0..<(transformed.length() - 1) {
           result.push(transformed[idx])
         }
-        let rebuilt : Array[@symcore.Expr] = [
+        let rebuilt : Array[Expr] = [
           transformed[transformed.length() - 1],
         ]
         for idx in 2..<work.length() {
@@ -173,7 +173,7 @@ pub fn quantum_canonical_mul(
       }
       None => {
         result.push(first)
-        let rebuilt : Array[@symcore.Expr] = []
+        let rebuilt : Array[Expr] = []
         for idx in 1..<work.length() {
           rebuilt.push(work[idx])
         }
@@ -192,9 +192,9 @@ pub fn quantum_canonical_mul(
 
 ///|
 pub fn quantum_canonical_pow(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+  base : Expr,
+  exp : Expr,
+) -> Expr raise @symphysics.PhysicsError {
   let kind = quantum_kind(base)
   if kind == QuantumKind::QKet || kind == QuantumKind::QBra {
     raise @symphysics.PhysicsError::ValueError(
@@ -202,14 +202,14 @@ pub fn quantum_canonical_pow(
     )
   }
   match quantum_integer_value(exp) {
-    Some(0) => @symcore.int(1)
+    Some(0) => int(1)
     Some(1) => base
-    Some(power) if base is @symcore.Expr::Function("FermionOp", _) && power < 0 =>
+    Some(power) if base is Expr::Function("FermionOp", _) && power < 0 =>
       raise @symphysics.PhysicsError::ValueError(
         "Negative powers of fermion operators are undefined",
       )
-    Some(power) if base is @symcore.Expr::Function("FermionOp", _) && power > 1 =>
-      @symcore.int(0)
+    Some(power) if base is Expr::Function("FermionOp", _) && power > 1 =>
+      int(0)
     Some(power) =>
       match gate_pow_simplify(base, power) {
         Some(simplified) if simplified != @symcore.raw_pow(base, exp) =>
@@ -218,7 +218,7 @@ pub fn quantum_canonical_pow(
           match power {
             n if n > 1 =>
               match base {
-                @symcore.Expr::Add(_) => {
+                Expr::Add(_) => {
                   let mut acc = base
                   for _ in 1..<n {
                     acc = quantum_canonical_mul(@symcore.raw_mul([acc, base]))

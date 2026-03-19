@@ -1,3 +1,3 @@
 ///|
 /// Reduced Planck constant.
-pub let hbar : @symcore.Expr = @symcore.symbol("hbar")
+pub let hbar : Expr = symbol("hbar")

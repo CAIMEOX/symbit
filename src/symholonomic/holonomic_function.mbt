@@ -1,15 +1,15 @@
 ///|
 pub struct HolonomicFunction {
   annihilator : DifferentialOperator?
-  x : @symcore.Expr
-  x0 : @symcore.Expr
-  y0 : Array[@symcore.Expr]
-  expr_hint : @symcore.Expr?
+  x : Expr
+  x0 : Expr
+  y0 : Array[Expr]
+  expr_hint : Expr?
 }
 
 ///|
-fn copy_expr_array(values : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+fn copy_expr_array(values : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for v in values {
     out.push(v)
   }
@@ -17,23 +17,23 @@ fn copy_expr_array(values : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn depends_on(expr : @symcore.Expr, x : @symcore.Expr) -> Bool {
+fn depends_on(expr : Expr, x : Expr) -> Bool {
   if expr == x {
     return true
   }
   match expr {
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(arg => depends_on(arg, x))
-    @symcore.Expr::Pow(base, exp) => depends_on(base, x) || depends_on(exp, x)
-    @symcore.Expr::Function(_, args) => args.any(arg => depends_on(arg, x))
+    Expr::Pow(base, exp) => depends_on(base, x) || depends_on(exp, x)
+    Expr::Function(_, args) => args.any(arg => depends_on(arg, x))
     _ => false
   }
 }
 
 ///|
-fn to_number(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn to_number(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(v) => Some(v)
+    Expr::Number(v) => Some(v)
     _ => None
   }
 }
@@ -56,38 +56,38 @@ fn factorial_rat(n : Int) -> @symnum.BigRational {
 }
 
 ///|
-fn rising_factorial_expr(n : @symcore.Expr, k : Int) -> @symcore.Expr {
+fn rising_factorial_expr(n : Expr, k : Int) -> Expr {
   if k <= 0 {
     return holo_one()
   }
-  let terms : Array[@symcore.Expr] = Array::new()
+  let terms : Array[Expr] = Array::new()
   for i in 1..<=k {
-    terms.push(expr_add(n, @symcore.int(i)))
+    terms.push(expr_add(n, int(i)))
   }
   @symcore.mul(terms)
 }
 
 ///|
 fn split_linear_in_x(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-) -> (@symnum.BigRational, @symcore.Expr)? {
+  expr : Expr,
+  x : Expr,
+) -> (@symnum.BigRational, Expr)? {
   if expr == x {
-    return Some((@symnum.BigRational::one(), @symcore.int(0)))
+    return Some((@symnum.BigRational::one(), int(0)))
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut coeff = @symnum.BigRational::zero()
-      let mut const_term = @symcore.int(0)
+      let mut const_term = int(0)
       for arg in args {
         if arg == x {
           coeff = coeff.add_r(@symnum.BigRational::one())
           continue
         }
         match arg {
-          @symcore.Expr::Mul(factors) if factors.length() == 2 =>
+          Expr::Mul(factors) if factors.length() == 2 =>
             match (factors[0], factors[1]) {
-              (@symcore.Expr::Number(c), t) if t == x => coeff = coeff.add_r(c)
+              (Expr::Number(c), t) if t == x => coeff = coeff.add_r(c)
               _ => const_term = expr_add(const_term, arg)
             }
           _ => const_term = expr_add(const_term, arg)
@@ -95,9 +95,9 @@ fn split_linear_in_x(
       }
       Some((coeff, const_term))
     }
-    @symcore.Expr::Mul(args) if args.length() == 2 =>
+    Expr::Mul(args) if args.length() == 2 =>
       match (args[0], args[1]) {
-        (@symcore.Expr::Number(c), t) if t == x => Some((c, @symcore.int(0)))
+        (Expr::Number(c), t) if t == x => Some((c, int(0)))
         _ => None
       }
     _ => None
@@ -107,10 +107,10 @@ fn split_linear_in_x(
 ///|
 fn make_hf(
   annihilator : DifferentialOperator?,
-  x : @symcore.Expr,
-  x0 : @symcore.Expr,
-  y0 : Array[@symcore.Expr],
-  expr_hint : @symcore.Expr?,
+  x : Expr,
+  x0 : Expr,
+  y0 : Array[Expr],
+  expr_hint : Expr?,
 ) -> HolonomicFunction {
   HolonomicFunction::{ annihilator, x, x0, y0: copy_expr_array(y0), expr_hint }
 }
@@ -118,47 +118,47 @@ fn make_hf(
 ///|
 pub fn holonomic_function(
   annihilator : DifferentialOperator,
-  x : @symcore.Expr,
-  x0? : @symcore.Expr = @symcore.int(0),
-  y0? : Array[@symcore.Expr] = [],
-  expr_hint? : @symcore.Expr? = None,
+  x : Expr,
+  x0? : Expr = int(0),
+  y0? : Array[Expr] = [],
+  expr_hint? : Expr? = None,
 ) -> HolonomicFunction {
   ignore(require_symbol_name(x))
   make_hf(Some(annihilator), x, x0, y0, expr_hint)
 }
 
 ///|
-fn infer_expr_from_operator(hf : HolonomicFunction) -> @symcore.Expr? {
+fn infer_expr_from_operator(hf : HolonomicFunction) -> Expr? {
   match hf.annihilator {
     None => None
     Some(op) => {
       let coeffs = op.coefficients()
       if coeffs.length() == 2 {
-        if coeffs[0] == @symcore.int(-1) &&
-          coeffs[1] == @symcore.int(1) &&
+        if coeffs[0] == int(-1) &&
+          coeffs[1] == int(1) &&
           hf.y0.length() >= 1 {
-          if hf.y0[0] == @symcore.int(1) {
+          if hf.y0[0] == int(1) {
             return Some(@symcore.function("exp", [hf.x]))
           }
           return Some(
             @symcore.mul([hf.y0[0], @symcore.function("exp", [hf.x])]),
           )
         }
-        if coeffs[0] == @symcore.int(0) &&
-          coeffs[1] == @symcore.int(1) &&
+        if coeffs[0] == int(0) &&
+          coeffs[1] == int(1) &&
           hf.y0.length() >= 1 {
           return Some(hf.y0[0])
         }
       }
       if coeffs.length() == 3 &&
-        coeffs[0] == @symcore.int(1) &&
-        coeffs[1] == @symcore.int(0) &&
-        coeffs[2] == @symcore.int(1) &&
+        coeffs[0] == int(1) &&
+        coeffs[1] == int(0) &&
+        coeffs[2] == int(1) &&
         hf.y0.length() >= 2 {
-        if hf.y0[0] == @symcore.int(0) && hf.y0[1] == @symcore.int(1) {
+        if hf.y0[0] == int(0) && hf.y0[1] == int(1) {
           return Some(@symcore.function("sin", [hf.x]))
         }
-        if hf.y0[0] == @symcore.int(1) && hf.y0[1] == @symcore.int(0) {
+        if hf.y0[0] == int(1) && hf.y0[1] == int(0) {
           return Some(@symcore.function("cos", [hf.x]))
         }
       }
@@ -184,9 +184,9 @@ fn try_constant_coeffs(
 ///|
 fn solve_constant_ode_coefficients(
   coeffs : Array[@symnum.BigRational],
-  init_derivs : Array[@symcore.Expr],
+  init_derivs : Array[Expr],
   terms : Int,
-) -> Array[@symcore.Expr]? {
+) -> Array[Expr]? {
   if coeffs.is_empty() {
     return None
   }
@@ -201,7 +201,7 @@ fn solve_constant_ode_coefficients(
   if cr.is_zero() {
     return None
   }
-  let a : Array[@symcore.Expr] = Array::new()
+  let a : Array[Expr] = Array::new()
   for k in 0..<r {
     let yk = init_derivs[k]
     let fk = factorial_rat(k)
@@ -215,7 +215,7 @@ fn solve_constant_ode_coefficients(
   }
   while a.length() < terms {
     let n = a.length() - r
-    let mut sum = @symcore.int(0)
+    let mut sum = int(0)
     for k in 0..<r {
       let ck = coeffs[k]
       if ck.is_zero() {
@@ -235,7 +235,7 @@ fn solve_constant_ode_coefficients(
 
 ///|
 fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
-  if hf.x0 != @symcore.int(0) {
+  if hf.x0 != int(0) {
     return None
   }
   match hf.annihilator {
@@ -244,12 +244,12 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
       match try_constant_coeffs(op) {
         None => None
         Some(cvals) => {
-          let n = @symcore.symbol("n")
+          let n = symbol("n")
           let (r_alg, _) = recurrence_operators(symbol_var=n)
-          let coeffs : Array[@symcore.Expr] = Array::new()
+          let coeffs : Array[Expr] = Array::new()
           for k, ck in cvals {
             if ck.is_zero() {
-              coeffs.push(@symcore.int(0))
+              coeffs.push(int(0))
               continue
             }
             let scale = @symcore.number(ck)
@@ -262,7 +262,7 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
           } else {
             cvals.length() - 1
           }
-          let init : Array[@symcore.Expr] = Array::new()
+          let init : Array[Expr] = Array::new()
           for k in 0..<init_terms {
             let fk = factorial_rat(k)
             match to_number(hf.y0[k]) {
@@ -290,24 +290,24 @@ pub fn HolonomicFunction::annihilator(
 }
 
 ///|
-pub fn HolonomicFunction::variable(self : HolonomicFunction) -> @symcore.Expr {
+pub fn HolonomicFunction::variable(self : HolonomicFunction) -> Expr {
   self.x
 }
 
 ///|
-pub fn HolonomicFunction::x0(self : HolonomicFunction) -> @symcore.Expr {
+pub fn HolonomicFunction::x0(self : HolonomicFunction) -> Expr {
   self.x0
 }
 
 ///|
 pub fn HolonomicFunction::initial_values(
   self : HolonomicFunction,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   copy_expr_array(self.y0)
 }
 
 ///|
-pub fn HolonomicFunction::to_expr(self : HolonomicFunction) -> @symcore.Expr {
+pub fn HolonomicFunction::to_expr(self : HolonomicFunction) -> Expr {
   match self.expr_hint {
     Some(expr) => expr
     None =>
@@ -332,9 +332,9 @@ pub fn HolonomicFunction::to_sequence(
 pub fn HolonomicFunction::series(
   self : HolonomicFunction,
   n? : Int = 6,
-) -> @symcore.Expr {
+) -> Expr {
   if n <= 0 {
-    return @symcore.int(0)
+    return int(0)
   }
   match self.annihilator {
     Some(op) =>
@@ -342,7 +342,7 @@ pub fn HolonomicFunction::series(
         Some(cvals) =>
           match solve_constant_ode_coefficients(cvals, self.y0, n) {
             Some(seq) => {
-              let terms : Array[@symcore.Expr] = Array::new()
+              let terms : Array[Expr] = Array::new()
               for i in 0..<seq.length() {
                 if expr_is_zero(seq[i]) {
                   continue
@@ -355,7 +355,7 @@ pub fn HolonomicFunction::series(
                 terms.push(term)
               }
               if terms.is_empty() {
-                @symcore.int(0)
+                int(0)
               } else {
                 @symcore.add(terms)
               }
@@ -373,9 +373,9 @@ pub fn HolonomicFunction::evalf(
   self : HolonomicFunction,
   x_value : @symnum.BigRational,
   terms? : Int = 20,
-) -> @symcore.Expr {
+) -> Expr {
   let series_expr = self.series(n=terms)
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, Expr] = {}
   env[require_symbol_name(self.x)] = @symcore.number(x_value)
   @symcore.subst(series_expr, env)
 }
@@ -388,28 +388,28 @@ pub fn HolonomicFunction::diff(self : HolonomicFunction) -> HolonomicFunction {
 }
 
 ///|
-fn integrate_expr(expr : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+fn integrate_expr(expr : Expr, x : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(_) => expr_mul(expr, x)
-    @symcore.Expr::Add(args) => {
-      let out : Array[@symcore.Expr] = Array::new()
+    Expr::Number(_) => expr_mul(expr, x)
+    Expr::Add(args) => {
+      let out : Array[Expr] = Array::new()
       for arg in args {
         out.push(integrate_expr(arg, x))
       }
       @symcore.add(out)
     }
-    @symcore.Expr::Pow(base, exp) if base == x =>
+    Expr::Pow(base, exp) if base == x =>
       match expr_int(exp) {
         Some(e) if e >= 0 => {
           let n1 = e + 1
           expr_mul(
-            @symcore.pow(x, @symcore.int(n1)),
+            @symcore.pow(x, int(n1)),
             @symcore.number(try! @symnum.BigRational::from_int(n1).reciprocal()),
           )
         }
         _ => @symcore.function("Integral", [expr, x])
       }
-    @symcore.Expr::Function(name, args) if args.length() == 1 && args[0] == x =>
+    Expr::Function(name, args) if args.length() == 1 && args[0] == x =>
       match name {
         "exp" => @symcore.function("exp", [x])
         "sin" => expr_neg(@symcore.function("cos", [x]))
@@ -432,10 +432,10 @@ pub fn HolonomicFunction::integrate(
 ///|
 pub fn HolonomicFunction::composition(
   self : HolonomicFunction,
-  arg : @symcore.Expr,
-  x0? : @symcore.Expr = @symcore.int(0),
+  arg : Expr,
+  x0? : Expr = int(0),
 ) -> HolonomicFunction {
-  let env : Map[String, @symcore.Expr] = {}
+  let env : Map[String, Expr] = {}
   env[require_symbol_name(self.x)] = arg
   let composed = @symcore.subst(self.to_expr(), env)
   expr_to_holonomic(composed, x=self.x, x0~)
@@ -460,18 +460,18 @@ pub fn HolonomicFunction::to_sympy_str(self : HolonomicFunction) -> String {
 
 ///|
 fn fallback_from_expr(
-  expr : @symcore.Expr,
-  x : @symcore.Expr,
-  x0 : @symcore.Expr,
+  expr : Expr,
+  x : Expr,
+  x0 : Expr,
 ) -> HolonomicFunction {
   make_hf(None, x, x0, [], Some(expr))
 }
 
 ///|
 pub fn expr_to_holonomic(
-  expr : @symcore.Expr,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  x0? : @symcore.Expr = @symcore.int(0),
+  expr : Expr,
+  x? : Expr = symbol("x"),
+  x0? : Expr = int(0),
 ) -> HolonomicFunction {
   ignore(require_symbol_name(x))
   if !depends_on(expr, x) {
@@ -480,7 +480,7 @@ pub fn expr_to_holonomic(
     return holonomic_function(dx, x, x0~, y0=[expr], expr_hint=Some(expr))
   }
   match expr {
-    @symcore.Expr::Function(name, args) if args.length() == 1 =>
+    Expr::Function(name, args) if args.length() == 1 =>
       match split_linear_in_x(args[0], x) {
         Some((a, b)) =>
           if a.is_zero() {
@@ -491,12 +491,12 @@ pub fn expr_to_holonomic(
             match name {
               "exp" => {
                 let op = differential_operator(
-                  [@symcore.number(a.neg_r()), @symcore.int(1)],
+                  [@symcore.number(a.neg_r()), int(1)],
                   dx.parent,
                 )
-                let y0 = if x0 == @symcore.int(0) {
-                  if b == @symcore.int(0) {
-                    [@symcore.int(1)]
+                let y0 = if x0 == int(0) {
+                  if b == int(0) {
+                    [int(1)]
                   } else {
                     [@symcore.function("exp", [b])]
                   }
@@ -508,16 +508,16 @@ pub fn expr_to_holonomic(
               "sin" => {
                 let a2 = a.mul_r(a)
                 let op = differential_operator(
-                  [@symcore.number(a2), @symcore.int(0), @symcore.int(1)],
+                  [@symcore.number(a2), int(0), int(1)],
                   dx.parent,
                 )
-                let y0 = if x0 == @symcore.int(0) {
-                  let y = if b == @symcore.int(0) {
-                    @symcore.int(0)
+                let y0 = if x0 == int(0) {
+                  let y = if b == int(0) {
+                    int(0)
                   } else {
                     @symcore.function("sin", [b])
                   }
-                  let dy = if b == @symcore.int(0) {
+                  let dy = if b == int(0) {
                     @symcore.number(a)
                   } else {
                     expr_mul(@symcore.number(a), @symcore.function("cos", [b]))
@@ -531,17 +531,17 @@ pub fn expr_to_holonomic(
               "cos" => {
                 let a2 = a.mul_r(a)
                 let op = differential_operator(
-                  [@symcore.number(a2), @symcore.int(0), @symcore.int(1)],
+                  [@symcore.number(a2), int(0), int(1)],
                   dx.parent,
                 )
-                let y0 = if x0 == @symcore.int(0) {
-                  let y = if b == @symcore.int(0) {
-                    @symcore.int(1)
+                let y0 = if x0 == int(0) {
+                  let y = if b == int(0) {
+                    int(1)
                   } else {
                     @symcore.function("cos", [b])
                   }
-                  let dy = if b == @symcore.int(0) {
-                    @symcore.int(0)
+                  let dy = if b == int(0) {
+                    int(0)
                   } else {
                     expr_mul(
                       @symcore.number(a.neg_r()),

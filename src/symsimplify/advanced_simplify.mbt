@@ -1,48 +1,48 @@
 ///|
 /// Return `(num, den)` so `expr = num/den` in symbolic form.
-pub fn fraction(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) {
+pub fn fraction(expr : Expr) -> (Expr, Expr) {
   split_fraction_simple(expr)
 }
 
 ///|
 /// Return the numerator of `expr`.
-pub fn numer(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn numer(expr : Expr) -> Expr {
   let (n, _) = fraction(expr)
   n
 }
 
 ///|
 /// Return the denominator of `expr`.
-pub fn denom(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn denom(expr : Expr) -> Expr {
   let (_, d) = fraction(expr)
   d
 }
 
 ///|
 /// Collect additive terms by powers of `sym`.
-pub fn collect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
+pub fn collect(expr : Expr, sym : Expr) -> Expr {
   match sym {
-    @symcore.Expr::Symbol(_) => collect_one_symbol(expr, sym)
+    Expr::Symbol(_) => collect_one_symbol(expr, sym)
     _ => expr
   }
 }
 
 ///|
 /// Recursively apply `collect` to `expr` and its children.
-pub fn rcollect(expr : @symcore.Expr, sym : @symcore.Expr) -> @symcore.Expr {
+pub fn rcollect(expr : Expr, sym : Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => rcollect(child, sym))
   collect(rewritten, sym)
 }
 
 ///|
 /// Factor a shared rational constant out of additive terms.
-pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn collect_const(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       if args.is_empty() {
         return expr
       }
-      let terms : Array[(@symnum.BigRational, @symcore.Expr)] = Array::new()
+      let terms : Array[(@symnum.BigRational, Expr)] = Array::new()
       for arg in args {
         terms.push(split_coeff_mul(arg))
       }
@@ -50,12 +50,12 @@ pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
       if g.is_zero() || g.is_one() {
         return expr
       }
-      let scaled : Array[@symcore.Expr] = Array::new()
+      let scaled : Array[Expr] = Array::new()
       for pair in terms {
         let coeff = pair.0
         let rest = pair.1
         let new_coeff = coeff.div_r(g)
-        let scaled_term = if rest == @symcore.int(1) {
+        let scaled_term = if rest == int(1) {
           @symcore.number(new_coeff)
         } else if new_coeff.is_one() {
           rest
@@ -72,84 +72,84 @@ pub fn collect_const(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 /// Denest nested powers when exponent rules allow.
-pub fn powdenest(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
+pub fn powdenest(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_powdenest, max_passes~)
 }
 
 ///|
 /// Switch between exp/trig forms to simplify expressions.
 pub fn exptrigsimp(
-  expr : @symcore.Expr,
+  expr : Expr,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   fixpoint_advanced(expr, rewrite_exptrigsimp, max_passes~)
 }
 
 ///|
 /// Simplify Gamma-function identities.
-pub fn gammasimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
+pub fn gammasimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_gammasimp, max_passes~)
 }
 
 ///|
 /// Combine additive/multiplicative log terms into compact logarithmic form.
-pub fn logcombine(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
+pub fn logcombine(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_advanced(expr, rewrite_logcombine, max_passes~)
 }
 
 ///|
 /// Separate multiplicative factors by symbolic variable sets.
 pub fn separatevars(
-  expr : @symcore.Expr,
+  expr : Expr,
   force? : Bool = false,
-) -> @symcore.Expr {
+) -> Expr {
   rewrite_bottom_up_advanced(expr, child => rewrite_separatevars(child, force~))
 }
 
 ///|
 /// Replace symbols with positivity-assumed dummies and return a restoration map.
 pub fn posify(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr, Map[String, @symcore.Expr]) {
+  expr : Expr,
+) -> (Expr, Map[String, Expr]) {
   let symbols : Map[String, Bool] = {}
   collect_symbols(expr, symbols)
-  let env : Map[String, @symcore.Expr] = {}
-  let restore : Map[String, @symcore.Expr] = {}
+  let env : Map[String, Expr] = {}
+  let restore : Map[String, Expr] = {}
   for name, _ in symbols {
     let new_name = "_\{name}"
-    env[name] = @symcore.symbol(new_name)
-    restore[new_name] = @symcore.symbol(name)
+    env[name] = symbol(new_name)
+    restore[new_name] = symbol(name)
   }
   (@symcore.subst(expr, env), restore)
 }
 
 ///|
 /// Return the hypergeometric term ratio `f(k+1)/f(k)` when it exists.
-pub fn hypersimp(f : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn hypersimp(f : Expr, k : Expr) -> Expr {
   match k {
-    @symcore.Expr::Symbol(name) => {
-      let env : Map[String, @symcore.Expr] = {}
-      env[name] = @symcore.add([k, @symcore.int(1)])
+    Expr::Symbol(name) => {
+      let env : Map[String, Expr] = {}
+      env[name] = @symcore.add([k, int(1)])
       let fk1 = @symcore.subst(f, env)
-      combsimp(simplify(@symcore.mul([fk1, @symcore.pow(f, @symcore.int(-1))])))
+      combsimp(simplify(@symcore.mul([fk1, @symcore.pow(f, int(-1))])))
     }
-    _ => @symcore.int(0)
+    _ => int(0)
   }
 }
 
 ///|
 /// Check whether two sequences are hyper-similar in index `k`.
 pub fn hypersimilar(
-  f : @symcore.Expr,
-  g : @symcore.Expr,
-  k : @symcore.Expr,
+  f : Expr,
+  g : Expr,
+  k : Expr,
 ) -> Bool {
   match k {
-    @symcore.Expr::Symbol(name) => {
+    Expr::Symbol(name) => {
       let rf = hypersimp(f, k)
       let rg = hypersimp(g, k)
       let ratio = combsimp(
-        simplify(@symcore.mul([rf, @symcore.pow(rg, @symcore.int(-1))])),
+        simplify(@symcore.mul([rf, @symcore.pow(rg, int(-1))])),
       )
       is_rational_form(ratio, name) && !contains_function(ratio)
     }
@@ -159,52 +159,52 @@ pub fn hypersimilar(
 
 ///|
 fn split_fraction_simple(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) {
+  expr : Expr,
+) -> (Expr, Expr) {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       if n.is_integral() {
-        (expr, @symcore.int(1))
+        (expr, int(1))
       } else {
         (
           @symcore.number(@symnum.BigRational::from_bigint(n.numerator())),
           @symcore.number(@symnum.BigRational::from_bigint(n.denominator())),
         )
       }
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(exp)) =>
+    Expr::Pow(base, Expr::Number(exp)) =>
       if exp.is_integral() && exp.numerator().to_int() < 0 {
         let p = -exp.numerator().to_int()
-        (@symcore.int(1), @symcore.pow(base, @symcore.int(p)))
+        (int(1), @symcore.pow(base, int(p)))
       } else {
-        (expr, @symcore.int(1))
+        (expr, int(1))
       }
-    @symcore.Expr::Mul(args) => {
-      let num_factors : Array[@symcore.Expr] = Array::new()
-      let den_factors : Array[@symcore.Expr] = Array::new()
+    Expr::Mul(args) => {
+      let num_factors : Array[Expr] = Array::new()
+      let den_factors : Array[Expr] = Array::new()
       for arg in args {
         let (n, d) = split_fraction_simple(arg)
-        if n != @symcore.int(1) {
+        if n != int(1) {
           num_factors.push(n)
         }
-        if d != @symcore.int(1) {
+        if d != int(1) {
           den_factors.push(d)
         }
       }
       (@symcore.mul(num_factors), @symcore.mul(den_factors))
     }
-    _ => (expr, @symcore.int(1))
+    _ => (expr, int(1))
   }
 }
 
 ///|
 fn collect_one_symbol(
-  expr : @symcore.Expr,
-  sym : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  sym : Expr,
+) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => {
-      let bins : Map[Int, @symcore.Expr] = {}
-      let leftover : Array[@symcore.Expr] = Array::new()
+    Expr::Add(args) => {
+      let bins : Map[Int, Expr] = {}
+      let leftover : Array[Expr] = Array::new()
       for arg in args {
         match decompose_sym_power(arg, sym) {
           Some((exp, coeff)) =>
@@ -229,7 +229,7 @@ fn collect_one_symbol(
         } else if exp == 1 {
           @symcore.mul([coeff, sym])
         } else {
-          @symcore.mul([coeff, @symcore.pow(sym, @symcore.int(exp))])
+          @symcore.mul([coeff, @symcore.pow(sym, int(exp))])
         }
         leftover.push(term)
       }
@@ -241,29 +241,29 @@ fn collect_one_symbol(
 
 ///|
 fn decompose_sym_power(
-  term : @symcore.Expr,
-  sym : @symcore.Expr,
-) -> (Int, @symcore.Expr)? {
+  term : Expr,
+  sym : Expr,
+) -> (Int, Expr)? {
   if term == sym {
-    return Some((1, @symcore.int(1)))
+    return Some((1, int(1)))
   }
   match term {
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(e)) if base == sym =>
+    Expr::Pow(base, Expr::Number(e)) if base == sym =>
       if e.is_integral() && e.numerator().to_int() >= 0 {
-        Some((e.numerator().to_int(), @symcore.int(1)))
+        Some((e.numerator().to_int(), int(1)))
       } else {
         None
       }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut exp = 0
-      let coeff_factors : Array[@symcore.Expr] = Array::new()
+      let coeff_factors : Array[Expr] = Array::new()
       for arg in args {
         if arg == sym {
           exp = exp + 1
           continue
         }
         match arg {
-          @symcore.Expr::Pow(base, @symcore.Expr::Number(e)) if base == sym => {
+          Expr::Pow(base, Expr::Number(e)) if base == sym => {
             if !e.is_integral() || e.numerator().to_int() < 0 {
               return None
             }
@@ -280,16 +280,16 @@ fn decompose_sym_power(
 
 ///|
 fn split_coeff_mul(
-  term : @symcore.Expr,
-) -> (@symnum.BigRational, @symcore.Expr) {
+  term : Expr,
+) -> (@symnum.BigRational, Expr) {
   match term {
-    @symcore.Expr::Number(n) => (n, @symcore.int(1))
-    @symcore.Expr::Mul(args) => {
+    Expr::Number(n) => (n, int(1))
+    Expr::Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
-      let rest : Array[@symcore.Expr] = Array::new()
+      let rest : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) => coeff = coeff.mul_r(n)
+          Expr::Number(n) => coeff = coeff.mul_r(n)
           _ => rest.push(arg)
         }
       }
@@ -328,10 +328,10 @@ fn abs_big(x : BigInt) -> BigInt {
 
 ///|
 fn fixpoint_advanced(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
+  expr : Expr,
+  rule : (Expr) -> Expr,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   let passes = if max_passes <= 0 { 1 } else { max_passes }
   let mut cur = expr
   for _ in 0..<passes {
@@ -346,9 +346,9 @@ fn fixpoint_advanced(
 
 ///|
 fn rewrite_bottom_up_advanced(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  rule : (Expr) -> Expr,
+) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_advanced(child, rule)
   })
@@ -356,46 +356,46 @@ fn rewrite_bottom_up_advanced(
 }
 
 ///|
-fn rewrite_powdenest(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_powdenest(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Pow(base, a), b) =>
+    Expr::Pow(Expr::Pow(base, a), b) =>
       @symcore.pow(base, @symcore.mul([a, b]))
-    @symcore.Expr::Function(name, [@symcore.Expr::Function(inner, [x])]) =>
+    Expr::Function(name, [Expr::Function(inner, [x])]) =>
       if name == "exp" && inner == "log" {
         x
       } else {
         expr
       }
-    @symcore.Expr::Function(
+    Expr::Function(
       name,
-      [@symcore.Expr::Mul([a, @symcore.Expr::Function(inner, [x])])]
+      [Expr::Mul([a, Expr::Function(inner, [x])])]
     ) => if name == "exp" && inner == "log" { @symcore.pow(x, a) } else { expr }
-    @symcore.Expr::Function(
+    Expr::Function(
       name,
-      [@symcore.Expr::Mul([@symcore.Expr::Function(inner, [x]), a])]
+      [Expr::Mul([Expr::Function(inner, [x]), a])]
     ) => if name == "exp" && inner == "log" { @symcore.pow(x, a) } else { expr }
     _ => expr
   }
 }
 
 ///|
-fn rewrite_exptrigsimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_exptrigsimp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, [@symcore.Expr::Function(inner, [x])]) =>
+    Expr::Function(name, [Expr::Function(inner, [x])]) =>
       if name == "exp" && inner == "log" {
         x
       } else {
         expr
       }
-    @symcore.Expr::Add([a, b]) =>
+    Expr::Add([a, b]) =>
       match parse_exp_i_pair(a, b) {
         Some((x, sign)) =>
           if sign == 1 {
-            @symcore.mul([@symcore.int(2), @symcore.function("cos", [x])])
+            @symcore.mul([int(2), @symcore.function("cos", [x])])
           } else {
             @symcore.mul([
-              @symcore.int(2),
-              @symcore.symbol("I"),
+              int(2),
+              symbol("I"),
               @symcore.function("sin", [x]),
             ])
           }
@@ -404,11 +404,11 @@ fn rewrite_exptrigsimp(expr : @symcore.Expr) -> @symcore.Expr {
             Some((x, sign)) =>
               if sign == 1 {
                 @symcore.function("exp", [
-                  @symcore.mul([@symcore.symbol("I"), x]),
+                  @symcore.mul([symbol("I"), x]),
                 ])
               } else {
                 @symcore.function("exp", [
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x]),
+                  @symcore.mul([int(-1), symbol("I"), x]),
                 ])
               }
             None => expr
@@ -420,9 +420,9 @@ fn rewrite_exptrigsimp(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn parse_exp_i_pair(
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-) -> (@symcore.Expr, Int)? {
+  a : Expr,
+  b : Expr,
+) -> (Expr, Int)? {
   match (exp_i_arg(a), exp_minus_i_arg(b)) {
     (Some(x), Some(y)) if x == y => Some((x, 1))
     _ =>
@@ -442,12 +442,12 @@ fn parse_exp_i_pair(
 }
 
 ///|
-fn exp_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn exp_i_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function(name, [@symcore.Expr::Mul([a, b])]) =>
-      if name == "exp" && a == @symcore.symbol("I") {
+    Expr::Function(name, [Expr::Mul([a, b])]) =>
+      if name == "exp" && a == symbol("I") {
         Some(b)
-      } else if name == "exp" && b == @symcore.symbol("I") {
+      } else if name == "exp" && b == symbol("I") {
         Some(a)
       } else {
         None
@@ -457,16 +457,16 @@ fn exp_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn exp_minus_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn exp_minus_i_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function(name, [@symcore.Expr::Mul(args)]) if name == "exp" =>
+    Expr::Function(name, [Expr::Mul(args)]) if name == "exp" =>
       if args.length() == 3 &&
-        args[0] == @symcore.int(-1) &&
-        args[1] == @symcore.symbol("I") {
+        args[0] == int(-1) &&
+        args[1] == symbol("I") {
         Some(args[2])
       } else if args.length() == 3 &&
-        args[0] == @symcore.int(-1) &&
-        args[2] == @symcore.symbol("I") {
+        args[0] == int(-1) &&
+        args[2] == symbol("I") {
         Some(args[1])
       } else {
         None
@@ -476,9 +476,9 @@ fn exp_minus_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn neg_exp_minus_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn neg_exp_minus_i_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Mul([@symcore.Expr::Number(c), t]) =>
+    Expr::Mul([Expr::Number(c), t]) =>
       if c.compare(@symnum.BigRational::from_int(-1)) == 0 {
         exp_minus_i_arg(t)
       } else {
@@ -490,9 +490,9 @@ fn neg_exp_minus_i_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 
 ///|
 fn parse_cos_i_sin_pair(
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-) -> (@symcore.Expr, Int)? {
+  a : Expr,
+  b : Expr,
+) -> (Expr, Int)? {
   match (cos_arg(a), i_sin_arg(b)) {
     (Some(x), Some((y, sign))) if x == y => Some((x, sign))
     _ =>
@@ -504,33 +504,33 @@ fn parse_cos_i_sin_pair(
 }
 
 ///|
-fn cos_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn cos_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function(name, [x]) if name == "cos" => Some(x)
+    Expr::Function(name, [x]) if name == "cos" => Some(x)
     _ => None
   }
 }
 
 ///|
-fn i_sin_arg(expr : @symcore.Expr) -> (@symcore.Expr, Int)? {
+fn i_sin_arg(expr : Expr) -> (Expr, Int)? {
   match expr {
-    @symcore.Expr::Mul([i, @symcore.Expr::Function(name, [x])]) =>
-      if i == @symcore.symbol("I") && name == "sin" {
+    Expr::Mul([i, Expr::Function(name, [x])]) =>
+      if i == symbol("I") && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
-    @symcore.Expr::Mul([@symcore.Expr::Function(name, [x]), i]) =>
-      if i == @symcore.symbol("I") && name == "sin" {
+    Expr::Mul([Expr::Function(name, [x]), i]) =>
+      if i == symbol("I") && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
-    @symcore.Expr::Mul(
-      [@symcore.Expr::Number(c), i, @symcore.Expr::Function(name, [x])]
+    Expr::Mul(
+      [Expr::Number(c), i, Expr::Function(name, [x])]
     ) =>
       if c.compare(@symnum.BigRational::from_int(-1)) == 0 &&
-        i == @symcore.symbol("I") &&
+        i == symbol("I") &&
         name == "sin" {
         Some((x, -1))
       } else {
@@ -541,36 +541,36 @@ fn i_sin_arg(expr : @symcore.Expr) -> (@symcore.Expr, Int)? {
 }
 
 ///|
-fn rewrite_gammasimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_gammasimp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(
+    Expr::Function(
       name,
-      [@symcore.Expr::Add([x, @symcore.Expr::Number(n)])]
+      [Expr::Add([x, Expr::Number(n)])]
     ) =>
       if name == "gamma" && n.is_one() {
         @symcore.mul([x, @symcore.function("gamma", [x])])
       } else {
         expr
       }
-    @symcore.Expr::Function(name, [@symcore.Expr::Number(n)]) if name == "gamma" =>
+    Expr::Function(name, [Expr::Number(n)]) if name == "gamma" =>
       if n.is_integral() && n.numerator().to_int() > 0 {
         @symcore.function("factorial", [
-          @symcore.int(n.numerator().to_int() - 1),
+          int(n.numerator().to_int() - 1),
         ])
       } else {
         expr
       }
-    @symcore.Expr::Mul(args) => combsimp(@symcore.mul(args))
+    Expr::Mul(args) => combsimp(@symcore.mul(args))
     _ => expr
   }
 }
 
 ///|
-fn rewrite_logcombine(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_logcombine(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => {
-      let log_pows : Array[@symcore.Expr] = Array::new()
-      let others : Array[@symcore.Expr] = Array::new()
+    Expr::Add(args) => {
+      let log_pows : Array[Expr] = Array::new()
+      let others : Array[Expr] = Array::new()
       for arg in args {
         match parse_coeff_log(arg) {
           Some((coeff, base)) =>
@@ -582,7 +582,7 @@ fn rewrite_logcombine(expr : @symcore.Expr) -> @symcore.Expr {
         expr
       } else {
         let combined = @symcore.function("log", [@symcore.mul(log_pows)])
-        let merged : Array[@symcore.Expr] = [combined]
+        let merged : Array[Expr] = [combined]
         for item in others {
           merged.push(item)
         }
@@ -595,16 +595,16 @@ fn rewrite_logcombine(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn parse_coeff_log(
-  term : @symcore.Expr,
-) -> (@symnum.BigRational, @symcore.Expr)? {
+  term : Expr,
+) -> (@symnum.BigRational, Expr)? {
   match term {
-    @symcore.Expr::Function(name, [arg]) if name == "log" =>
+    Expr::Function(name, [arg]) if name == "log" =>
       Some((@symnum.BigRational::one(), arg))
-    @symcore.Expr::Mul(
-      [@symcore.Expr::Number(c), @symcore.Expr::Function(name, [arg])]
+    Expr::Mul(
+      [Expr::Number(c), Expr::Function(name, [arg])]
     ) => if name == "log" { Some((c, arg)) } else { None }
-    @symcore.Expr::Mul(
-      [@symcore.Expr::Function(name, [arg]), @symcore.Expr::Number(c)]
+    Expr::Mul(
+      [Expr::Function(name, [arg]), Expr::Number(c)]
     ) => if name == "log" { Some((c, arg)) } else { None }
     _ => None
   }
@@ -612,13 +612,13 @@ fn parse_coeff_log(
 
 ///|
 fn rewrite_separatevars(
-  expr : @symcore.Expr,
+  expr : Expr,
   force? : Bool = false,
-) -> @symcore.Expr {
+) -> Expr {
   match expr {
-    @symcore.Expr::Pow(@symcore.Expr::Mul(factors), exp) =>
+    Expr::Pow(Expr::Mul(factors), exp) =>
       match exp {
-        @symcore.Expr::Number(n) =>
+        Expr::Number(n) =>
           if force || n.is_integral() {
             @symcore.mul(factors.map(f => @symcore.pow(f, exp)))
           } else {
@@ -631,9 +631,9 @@ fn rewrite_separatevars(
 }
 
 ///|
-fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
+fn collect_symbols(expr : Expr, out : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => out[name] = true
+    Expr::Symbol(name) => out[name] = true
     _ =>
       for child in @symcore.children(expr) {
         collect_symbols(child, out)
@@ -642,12 +642,12 @@ fn collect_symbols(expr : @symcore.Expr, out : Map[String, Bool]) -> Unit {
 }
 
 ///|
-fn is_rational_form(expr : @symcore.Expr, k_name : String) -> Bool {
+fn is_rational_form(expr : Expr, k_name : String) -> Bool {
   ignore(k_name)
   match expr {
-    @symcore.Expr::Number(_) => true
-    @symcore.Expr::Symbol(_) => true
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+    Expr::Number(_) => true
+    Expr::Symbol(_) => true
+    Expr::Add(args) | Expr::Mul(args) => {
       for arg in args {
         if !is_rational_form(arg, k_name) {
           return false
@@ -655,17 +655,17 @@ fn is_rational_form(expr : @symcore.Expr, k_name : String) -> Bool {
       }
       true
     }
-    @symcore.Expr::Pow(base, @symcore.Expr::Number(e)) =>
+    Expr::Pow(base, Expr::Number(e)) =>
       e.is_integral() && is_rational_form(base, k_name)
-    @symcore.Expr::Pow(_, _) => false
-    @symcore.Expr::Function(_, _) => false
+    Expr::Pow(_, _) => false
+    Expr::Function(_, _) => false
   }
 }
 
 ///|
-fn contains_function(expr : @symcore.Expr) -> Bool {
+fn contains_function(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(_, _) => true
+    Expr::Function(_, _) => true
     _ => {
       for child in @symcore.children(expr) {
         if contains_function(child) {

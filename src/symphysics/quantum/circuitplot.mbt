@@ -9,7 +9,7 @@
 
 ///|
 pub struct CircuitPlot {
-  circuit : @symcore.Expr
+  circuit : Expr
   ngates : Int
   nqubits : Int
   labels : Array[String]
@@ -23,62 +23,62 @@ pub struct CircuitPlot {
   label_buffer : Double
   wire_grid : Array[Double]
   gate_grid : Array[Double]
-  gates : Array[@symcore.Expr]
+  gates : Array[Expr]
   measurements : Map[Int, Int]
 }
 
 ///|
-fn circuitplot_expr_arg_count(expr : @symcore.Expr) -> Int {
+fn circuitplot_expr_arg_count(expr : Expr) -> Int {
   match expr {
-    @symcore.Expr::Add(args) => args.length()
-    @symcore.Expr::Mul(args) => args.length()
-    @symcore.Expr::Pow(_, _) => 2
-    @symcore.Expr::Function(_, args) => args.length()
+    Expr::Add(args) => args.length()
+    Expr::Mul(args) => args.length()
+    Expr::Pow(_, _) => 2
+    Expr::Function(_, args) => args.length()
     _ => 0
   }
 }
 
 ///|
-fn circuitplot_integral_arg(expr : @symcore.Expr) -> Int? {
+fn circuitplot_integral_arg(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
 
 ///|
-fn circuitplot_is_measurement(expr : @symcore.Expr) -> Bool {
+fn circuitplot_is_measurement(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function("Mz", _) => true
-    @symcore.Expr::Function("Mx", _) => true
-    @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+    Expr::Function("Mz", _) => true
+    Expr::Function("Mx", _) => true
+    Expr::Function("CGate", args) if args.length() == 2 =>
       circuitplot_is_measurement(args[1])
     _ => false
   }
 }
 
 ///|
-fn circuitplot_targets(expr : @symcore.Expr) -> Array[Int]? {
+fn circuitplot_targets(expr : Expr) -> Array[Int]? {
   match gate_from_expr(expr) {
     Some(gate) => Some(gate.args.copy())
     None =>
       match expr {
-        @symcore.Expr::Function("Mz", args) if args.length() == 1 =>
+        Expr::Function("Mz", args) if args.length() == 1 =>
           match circuitplot_integral_arg(args[0]) {
             Some(target) => Some([target])
             None => None
           }
-        @symcore.Expr::Function("Mx", args) if args.length() == 1 =>
+        Expr::Function("Mx", args) if args.length() == 1 =>
           match circuitplot_integral_arg(args[0]) {
             Some(target) => Some([target])
             None => None
           }
-        @symcore.Expr::Function("CGate", args) if args.length() == 2 =>
+        Expr::Function("CGate", args) if args.length() == 2 =>
           match (gate_tuple_ints(args[0]), circuitplot_targets(args[1])) {
             (Some(controls), Some(targets)) => Some(controls + targets)
             _ => None
           }
-        @symcore.Expr::Function(_, args) if args.length() == 1 =>
+        Expr::Function(_, args) if args.length() == 1 =>
           match circuitplot_integral_arg(args[0]) {
             Some(target) => Some([target])
             None => None
@@ -89,7 +89,7 @@ fn circuitplot_targets(expr : @symcore.Expr) -> Array[Int]? {
 }
 
 ///|
-fn circuitplot_is_gate(expr : @symcore.Expr) -> Bool {
+fn circuitplot_is_gate(expr : Expr) -> Bool {
   match circuitplot_targets(expr) {
     Some(_) => true
     None => false
@@ -97,10 +97,10 @@ fn circuitplot_is_gate(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn circuitplot_extract_gates(expr : @symcore.Expr) -> Array[@symcore.Expr] {
+fn circuitplot_extract_gates(expr : Expr) -> Array[Expr] {
   match expr {
-    @symcore.Expr::Mul(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let out : Array[Expr] = []
       for idx in 0..<args.length() {
         let gate = args[args.length() - idx - 1]
         if circuitplot_is_gate(gate) {
@@ -123,7 +123,7 @@ fn circuitplot_grid(count : Int, scale : Double) -> Array[Double] {
 }
 
 ///|
-fn circuitplot_measurements(gates : Array[@symcore.Expr]) -> Map[Int, Int] {
+fn circuitplot_measurements(gates : Array[Expr]) -> Map[Int, Int] {
   let out : Map[Int, Int] = Map::new()
   for gate_idx in 0..<gates.length() {
     let gate = gates[gate_idx]
@@ -168,35 +168,35 @@ pub fn labeller(n : Int, symbol? : String = "q") -> Array[String] {
 }
 
 ///|
-pub fn mz(target : Int) -> @symcore.Expr {
-  @symcore.raw_function("Mz", [@symcore.int(target)])
+pub fn mz(target : Int) -> Expr {
+  @symcore.raw_function("Mz", [int(target)])
 }
 
 ///|
-pub fn mx(target : Int) -> @symcore.Expr {
-  @symcore.raw_function("Mx", [@symcore.int(target)])
+pub fn mx(target : Int) -> Expr {
+  @symcore.raw_function("Mx", [int(target)])
 }
 
 ///|
 pub fn create_one_qubit_gate(
   name : String,
   _latexname? : String? = None,
-) -> (Int) -> @symcore.Expr {
-  target => @symcore.raw_function(name, [@symcore.int(target)])
+) -> (Int) -> Expr {
+  target => @symcore.raw_function(name, [int(target)])
 }
 
 ///|
 pub fn create_cgate(
   name : String,
   _latexname? : String? = None,
-) -> (Array[Int], Int) -> @symcore.Expr {
+) -> (Array[Int], Int) -> Expr {
   let builder = create_one_qubit_gate(name)
   (controls, target) => cgate(controls, builder(target))
 }
 
 ///|
 pub fn CircuitPlot::new(
-  circuit : @symcore.Expr,
+  circuit : Expr,
   nqubits : Int,
   labels? : Array[String] = [],
   inits? : Map[String, String] = Map::new(),
@@ -231,7 +231,7 @@ pub fn CircuitPlot::new(
 
 ///|
 pub fn circuit_plot(
-  circuit : @symcore.Expr,
+  circuit : Expr,
   nqubits : Int,
   labels? : Array[String] = [],
   inits? : Map[String, String] = Map::new(),

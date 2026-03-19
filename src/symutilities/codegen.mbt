@@ -18,7 +18,7 @@ pub enum TargetLanguage {
 ///|
 pub struct RoutineResult {
   name : String
-  expr : @symcore.Expr
+  expr : Expr
 } derive(Eq)
 
 ///|
@@ -35,7 +35,7 @@ pub struct CodeGenerator {
 
 ///|
 /// Construct a scalar routine result.
-pub fn routine_result(name : String, expr : @symcore.Expr) -> RoutineResult {
+pub fn routine_result(name : String, expr : Expr) -> RoutineResult {
   { name, expr }
 }
 
@@ -70,11 +70,11 @@ fn string_upper(value : String) -> String {
 }
 
 ///|
-fn free_symbols(expr : @symcore.Expr) -> Array[String] {
+fn free_symbols(expr : Expr) -> Array[String] {
   match expr {
-    @symcore.Expr::Number(_) => []
-    @symcore.Expr::Symbol(name) => [name]
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+    Expr::Number(_) => []
+    Expr::Symbol(name) => [name]
+    Expr::Add(args) | Expr::Mul(args) => {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
@@ -83,9 +83,9 @@ fn free_symbols(expr : @symcore.Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       sort_unique_symbols(free_symbols(base) + free_symbols(exp))
-    @symcore.Expr::Function(_, args) => {
+    Expr::Function(_, args) => {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
@@ -167,22 +167,22 @@ fn parenthesize_if_needed(
 
 ///|
 fn print_expr_prec(
-  expr : @symcore.Expr,
+  expr : Expr,
   language : TargetLanguage,
   parent_prec : Int,
 ) -> String raise UtilitiesError {
   match expr {
-    @symcore.Expr::Number(n) => expr_number_to_code(n)
-    @symcore.Expr::Symbol(name) => sanitize_name(name, language)
-    @symcore.Expr::Add(args) => {
+    Expr::Number(n) => expr_number_to_code(n)
+    Expr::Symbol(name) => sanitize_name(name, language)
+    Expr::Add(args) => {
       let text = args.map(arg => print_expr_prec(arg, language, 0)).join(" + ")
       parenthesize_if_needed(text, 0, parent_prec)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let text = args.map(arg => print_expr_prec(arg, language, 1)).join("*")
       parenthesize_if_needed(text, 1, parent_prec)
     }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       let text = match language {
         TargetLanguage::Rust =>
           print_expr_prec(base, language, 3) +
@@ -198,7 +198,7 @@ fn print_expr_prec(
       }
       parenthesize_if_needed(text, 2, parent_prec)
     }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       print_function_name(name, language) +
       "(" +
       args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
@@ -208,7 +208,7 @@ fn print_expr_prec(
 
 ///|
 fn print_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   language : TargetLanguage,
 ) -> String raise UtilitiesError {
   print_expr_prec(expr, language, 0)
@@ -437,7 +437,7 @@ pub fn CodeGenerator::write(
 /// Each `(name, expr)` pair becomes a routine named `name` returning a single
 /// scalar `name_result` temporary.
 pub fn codegen(
-  entries : Array[(String, @symcore.Expr)],
+  entries : Array[(String, Expr)],
   language : String,
   prefix : String,
   header? : Bool = false,

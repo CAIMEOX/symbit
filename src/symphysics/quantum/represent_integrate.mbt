@@ -9,14 +9,14 @@
 /// substitution.
 
 ///|
-fn represent_expr_contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
+fn represent_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(sym) => sym == name
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Symbol(sym) => sym == name
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(arg => represent_expr_contains_symbol(arg, name))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       represent_expr_contains_symbol(base, name) ||
       represent_expr_contains_symbol(exp, name)
     _ => false
@@ -25,13 +25,13 @@ fn represent_expr_contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
 
 ///|
 fn represent_linear_term_expr(
-  base : @symcore.Expr,
+  base : Expr,
   coeff : @symnum.BigRational,
-) -> @symcore.Expr {
+) -> Expr {
   if coeff.is_one() {
     base
   } else if coeff.neg_r().is_one() {
-    @symcore.int(-1) * base
+    int(-1) * base
   } else {
     @symcore.number(coeff) * base
   }
@@ -39,10 +39,10 @@ fn represent_linear_term_expr(
 
 ///|
 fn represent_linear_sum_expr(
-  terms : Array[(@symcore.Expr, @symnum.BigRational)],
+  terms : Array[(Expr, @symnum.BigRational)],
   const_coeff : @symnum.BigRational,
-) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = []
+) -> Expr {
+  let args : Array[Expr] = []
   if !const_coeff.is_zero() {
     args.push(@symcore.number(const_coeff))
   }
@@ -57,15 +57,15 @@ fn represent_linear_sum_expr(
 ///|
 fn represent_delta_replacement(
   coord_name : String,
-  arg : @symcore.Expr,
-) -> @symcore.Expr? {
+  arg : Expr,
+) -> Expr? {
   match quantum_collect_linear_terms(arg) {
     Some((terms, const_coeff)) => {
-      let others : Array[(@symcore.Expr, @symnum.BigRational)] = []
+      let others : Array[(Expr, @symnum.BigRational)] = []
       let mut coord_coeff : @symnum.BigRational? = None
       for term in terms {
         match term.0 {
-          @symcore.Expr::Symbol(name) if name == coord_name =>
+          Expr::Symbol(name) if name == coord_name =>
             coord_coeff = Some(term.1)
           _ => others.push(term)
         }
@@ -74,7 +74,7 @@ fn represent_delta_replacement(
         Some(coeff) if coeff.is_one() || coeff.neg_r().is_one() => {
           let rest = represent_linear_sum_expr(others, const_coeff)
           if coeff.is_one() {
-            Some(@symcore.int(-1) * rest)
+            Some(int(-1) * rest)
           } else {
             Some(rest)
           }
@@ -88,24 +88,24 @@ fn represent_delta_replacement(
 
 ///|
 fn represent_integrate_coord_once(
-  expr : @symcore.Expr,
+  expr : Expr,
   coord_name : String,
-) -> (@symcore.Expr, Bool) {
+) -> (Expr, Bool) {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       for idx in 0..<args.length() {
         match args[idx] {
-          @symcore.Expr::Function("DiracDelta", delta_args) if delta_args.length() ==
+          Expr::Function("DiracDelta", delta_args) if delta_args.length() ==
             1 =>
             match represent_delta_replacement(coord_name, delta_args[0]) {
               Some(replacement) => {
-                let rebuilt : Array[@symcore.Expr] = []
+                let rebuilt : Array[Expr] = []
                 for j in 0..<args.length() {
                   if j != idx {
                     rebuilt.push(args[j])
                   }
                 }
-                let env : Map[String, @symcore.Expr] = {}
+                let env : Map[String, Expr] = {}
                 env[coord_name] = replacement
                 return (
                   @symcore.subst(quantum_mul_from_args_preserve(rebuilt), env),
@@ -125,14 +125,14 @@ fn represent_integrate_coord_once(
 
 ///|
 fn represent_integrate_coord(
-  expr : @symcore.Expr,
+  expr : Expr,
   coord_name : String,
-) -> @symcore.Expr {
+) -> Expr {
   if !represent_expr_contains_symbol(expr, coord_name) {
     return expr
   }
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => represent_integrate_coord(arg, coord_name)),
       )
@@ -152,18 +152,18 @@ fn represent_integrate_coord(
 }
 
 ///|
-fn represent_state_coordinates(state_expr : @symcore.Expr) -> Array[String] {
+fn represent_state_coordinates(state_expr : Expr) -> Array[String] {
   match state_expr {
-    @symcore.Expr::Function("XKet", [@symcore.Expr::Symbol(name)])
-    | @symcore.Expr::Function("XBra", [@symcore.Expr::Symbol(name)])
-    | @symcore.Expr::Function("PxKet", [@symcore.Expr::Symbol(name)])
-    | @symcore.Expr::Function("PxBra", [@symcore.Expr::Symbol(name)]) => [name]
-    @symcore.Expr::Function("PositionKet3D", args)
-    | @symcore.Expr::Function("PositionBra3D", args) => {
+    Expr::Function("XKet", [Expr::Symbol(name)])
+    | Expr::Function("XBra", [Expr::Symbol(name)])
+    | Expr::Function("PxKet", [Expr::Symbol(name)])
+    | Expr::Function("PxBra", [Expr::Symbol(name)]) => [name]
+    Expr::Function("PositionKet3D", args)
+    | Expr::Function("PositionBra3D", args) => {
       let out : Array[String] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Symbol(name) => out.push(name)
+          Expr::Symbol(name) => out.push(name)
           _ => ()
         }
       }
@@ -175,14 +175,14 @@ fn represent_state_coordinates(state_expr : @symcore.Expr) -> Array[String] {
 
 ///|
 fn represent_resolve_integration_basis(
-  orig_expr : @symcore.Expr,
-  basis : @symcore.Expr?,
-) -> @symcore.Expr? {
+  orig_expr : Expr,
+  basis : Expr?,
+) -> Expr? {
   match basis {
     Some(value) => get_basis(orig_expr, basis=Some(value), replace_none=true)
     None =>
       match orig_expr {
-        @symcore.Expr::Mul(args) if !args.is_empty() =>
+        Expr::Mul(args) if !args.is_empty() =>
           match get_basis(args[args.length() - 1], replace_none=true) {
             Some(value) => Some(value)
             None => get_basis(orig_expr, replace_none=true)
@@ -194,11 +194,11 @@ fn represent_resolve_integration_basis(
 
 ///|
 pub fn integrate_result(
-  orig_expr : @symcore.Expr,
-  result : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  orig_expr : Expr,
+  result : Expr,
+  basis? : Expr? = None,
   unities? : Array[Int] = [],
-) -> @symcore.Expr {
+) -> Expr {
   if unities.is_empty() {
     return result
   }

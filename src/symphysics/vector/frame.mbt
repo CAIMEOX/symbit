@@ -370,7 +370,7 @@ pub fn ReferenceFrame::orient_axis(
   self : ReferenceFrame,
   parent : ReferenceFrame,
   axis : Vector,
-  angle : @symcore.Expr,
+  angle : Expr,
 ) -> Unit raise VectorError {
   self.orient(parent, OrientationSpec::AxisSpec(angle, axis))
 }
@@ -409,9 +409,9 @@ pub fn ReferenceFrame::dcm(
 pub fn ReferenceFrame::variable_map(
   self : ReferenceFrame,
   other : ReferenceFrame,
-) -> Map[String, @symcore.Expr] raise VectorError {
+) -> Map[String, Expr] raise VectorError {
   let dcm = other.dcm(self)
-  let out : Map[String, @symcore.Expr] = {}
+  let out : Map[String, Expr] = {}
   for i in 0..<3 {
     let col = matrix_column(dcm, i)
     let mapped = col[0] * coordinate_symbol(other, 0) +

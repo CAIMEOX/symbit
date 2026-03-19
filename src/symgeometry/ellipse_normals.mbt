@@ -15,8 +15,8 @@ fn ellipse_sort_points_in_place(points : Array[(Double, Double)]) -> Unit {
 ///|
 fn ellipse_normal_boundary_points_numeric(
   center : Point,
-  hradius : @symcore.Expr,
-  vradius : @symcore.Expr,
+  hradius : Expr,
+  vradius : Expr,
   pt : Point,
   digits : Int,
 ) -> Array[Point]? raise GeometryError {
@@ -98,8 +98,8 @@ fn ellipse_normal_boundary_points_numeric(
 ///|
 fn ellipse_normal_lines_numeric(
   center : Point,
-  hradius : @symcore.Expr,
-  vradius : @symcore.Expr,
+  hradius : Expr,
+  vradius : Expr,
   pt : Point,
   digits : Int,
 ) -> Array[Line]? raise GeometryError {

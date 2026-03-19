@@ -144,10 +144,10 @@ fn int_to_minimal_bits(
 }
 
 ///|
-pub fn QubitExpr::as_expr(self : QubitExpr) -> @symcore.Expr {
+pub fn QubitExpr::as_expr(self : QubitExpr) -> Expr {
   if self.int_form {
     let class_name = if self.is_bra { "IntQubitBra" } else { "IntQubit" }
-    @symcore.raw_function(class_name, [@symcore.int(bits_to_int(self.bits))])
+    @symcore.raw_function(class_name, [int(bits_to_int(self.bits))])
   } else {
     let args = self.bits.map(@symcore.int)
     if self.is_bra {
@@ -225,25 +225,25 @@ pub fn QubitExpr::flip(
 }
 
 ///|
-pub fn qubit_from_expr(expr : @symcore.Expr) -> QubitExpr? {
+pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
   match expr {
-    @symcore.Expr::Function(name, args) if name == "Qubit" || name == "QubitBra" => {
+    Expr::Function(name, args) if name == "Qubit" || name == "QubitBra" => {
       let bits : Array[Int] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if n.is_integral() =>
+          Expr::Number(n) if n.is_integral() =>
             bits.push(n.numerator().to_int())
           _ => return None
         }
       }
       Some(QubitExpr::{ bits, is_bra: name == "QubitBra", int_form: false })
     }
-    @symcore.Expr::Function(name, args) if (
+    Expr::Function(name, args) if (
         name == "IntQubit" || name == "IntQubitBra"
       ) &&
       args.length() == 1 =>
       match args[0] {
-        @symcore.Expr::Number(n) if n.is_integral() &&
+        Expr::Number(n) if n.is_integral() &&
           n.numerator().to_int() >= 0 =>
           Some(QubitExpr::{
             bits: try! int_to_minimal_bits(n.numerator().to_int()),
@@ -268,17 +268,17 @@ fn qubit_basis_vector(
   }
   let size = 1 << nqubits
   if q.is_bra {
-    let row = Array::make(size, @symcore.int(0))
-    row[bits_to_int(q.bits)] = @symcore.int(1)
+    let row = Array::make(size, int(0))
+    row[bits_to_int(q.bits)] = int(1)
     @symphysics.explicit_matrix_from_rows([row])
   } else {
-    let rows : Array[Array[@symcore.Expr]] = []
+    let rows : Array[Array[Expr]] = []
     for idx in 0..<size {
       rows.push([
         if idx == bits_to_int(q.bits) {
-          @symcore.int(1)
+          int(1)
         } else {
-          @symcore.int(0)
+          int(0)
         },
       ])
     }
@@ -287,12 +287,12 @@ fn qubit_basis_vector(
 }
 
 ///|
-fn qubit_expr_nqubits(expr : @symcore.Expr) -> Int? {
+fn qubit_expr_nqubits(expr : Expr) -> Int? {
   match qubit_from_expr(expr) {
     Some(q) => Some(q.nqubits())
     None =>
       match expr {
-        @symcore.Expr::Add(args) => {
+        Expr::Add(args) => {
           let sizes = args.map(qubit_expr_nqubits)
           for size in sizes {
             match size {
@@ -302,7 +302,7 @@ fn qubit_expr_nqubits(expr : @symcore.Expr) -> Int? {
           }
           None
         }
-        @symcore.Expr::Mul(args) => {
+        Expr::Mul(args) => {
           for arg in args {
             match qubit_expr_nqubits(arg) {
               Some(v) => return Some(v)
@@ -326,7 +326,7 @@ fn matrix_add_or_scalar(
 
 ///|
 pub fn qubit_to_matrix(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits? : Int = 0,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let effective_nqubits = if nqubits > 0 {
@@ -341,7 +341,7 @@ pub fn qubit_to_matrix(
     }
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       guard !args.is_empty() else {
         raise @symphysics.PhysicsError::ValueError("Empty qubit sum")
       }
@@ -354,7 +354,7 @@ pub fn qubit_to_matrix(
       }
       acc
     }
-    @symcore.Expr::Mul(_) => {
+    Expr::Mul(_) => {
       let (scalar, body) = quantum_split_scalar_factors(expr)
       match body {
         Some(body_expr) => {
@@ -381,7 +381,7 @@ pub fn qubit_to_matrix(
 ///|
 pub fn matrix_to_qubit(
   matrix : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   let is_bra = matrix.height() == 1
   let size = if is_bra { matrix.width() } else { matrix.height() }
   let mut nqubits = 0
@@ -395,13 +395,13 @@ pub fn matrix_to_qubit(
       "Matrix size is not a power-of-two qubit basis",
     )
   }
-  let terms : Array[@symcore.Expr] = []
+  let terms : Array[Expr] = []
   for idx in 0..<size {
     let coeff = if is_bra { matrix.get(0, idx) } else { matrix.get(idx, 0) }
-    if coeff != @symcore.int(0) {
+    if coeff != int(0) {
       let q = qubit_from_bits(int_to_bits(idx, nqubits), bra=is_bra)
       let qexpr = q.as_expr()
-      if coeff == @symcore.int(1) {
+      if coeff == int(1) {
         terms.push(qexpr)
       } else {
         terms.push(coeff * qexpr)
@@ -414,10 +414,10 @@ pub fn matrix_to_qubit(
 ///|
 fn qubit_matrix_norm_squared(
   matrix : @symphysics.ExplicitMatrix,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   let is_bra = matrix.height() == 1
   let size = if is_bra { matrix.width() } else { matrix.height() }
-  let mut acc = @symcore.int(0)
+  let mut acc = int(0)
   for idx in 0..<size {
     let coeff = if is_bra { matrix.get(0, idx) } else { matrix.get(idx, 0) }
     acc = acc + expr_conjugate(coeff) * coeff
@@ -430,7 +430,7 @@ fn qubit_normalize_matrix(
   matrix : @symphysics.ExplicitMatrix,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let norm_sq = qubit_matrix_norm_squared(matrix)
-  if norm_sq == @symcore.int(0) || norm_sq == @symcore.int(1) {
+  if norm_sq == int(0) || norm_sq == int(1) {
     matrix
   } else {
     let half = try! @symcore.rational_from_ints(-1, 2)
@@ -468,7 +468,7 @@ fn qubit_partial_outcome_matrix(
     )
   }
   let size = qubit_matrix_size(matrix)
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for idx in 0..<size {
     let mut key = 0
     for pos in 0..<bits.length() {
@@ -480,7 +480,7 @@ fn qubit_partial_outcome_matrix(
       if key == outcome {
         matrix.get(idx, 0)
       } else {
-        @symcore.int(0)
+        int(0)
       },
     ])
   }
@@ -490,7 +490,7 @@ fn qubit_partial_outcome_matrix(
 ///|
 fn qubit_probability_terms(
   matrix : @symphysics.ExplicitMatrix,
-) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError {
+) -> Array[(Expr, Expr)] raise @symphysics.PhysicsError {
   guard matrix.width() == 1 else {
     raise @symphysics.PhysicsError::ShapeError(
       "Measurements currently expect qubit kets",
@@ -503,10 +503,10 @@ fn qubit_probability_terms(
     width = width * 2
     nqubits += 1
   }
-  let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+  let out : Array[(Expr, Expr)] = []
   for idx in 0..<size {
     let coeff = matrix.get(idx, 0)
-    if coeff != @symcore.int(0) {
+    if coeff != int(0) {
       let state = (try! qubit_from_bits(int_to_bits(idx, nqubits))).as_expr()
       out.push((state, expr_conjugate(coeff) * coeff))
     }
@@ -516,10 +516,10 @@ fn qubit_probability_terms(
 
 ///|
 pub fn measure_all(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits? : Int = 0,
   normalize? : Bool = true,
-) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError {
+) -> Array[(Expr, Expr)] raise @symphysics.PhysicsError {
   let matrix = qubit_to_matrix(expr, nqubits~)
   let effective = if normalize {
     qubit_normalize_matrix(matrix)
@@ -531,22 +531,22 @@ pub fn measure_all(
 
 ///|
 pub fn measure_partial(
-  expr : @symcore.Expr,
+  expr : Expr,
   bits : Array[Int],
   nqubits? : Int = 0,
   normalize? : Bool = true,
-) -> Array[(@symcore.Expr, @symcore.Expr)] raise @symphysics.PhysicsError {
+) -> Array[(Expr, Expr)] raise @symphysics.PhysicsError {
   let matrix = qubit_to_matrix(expr, nqubits~)
   let effective = if normalize {
     qubit_normalize_matrix(matrix)
   } else {
     matrix
   }
-  let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+  let out : Array[(Expr, Expr)] = []
   for outcome in 0..<(1 << bits.length()) {
     let next_matrix = qubit_partial_outcome_matrix(effective, bits, outcome)
     let prob = qubit_matrix_norm_squared(next_matrix)
-    if prob != @symcore.int(0) {
+    if prob != int(0) {
       let state = if normalize {
         matrix_to_qubit(qubit_normalize_matrix(next_matrix))
       } else {

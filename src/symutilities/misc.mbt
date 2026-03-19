@@ -6,7 +6,7 @@ pub enum IntLike {
   Int(Int)
   Double(Double)
   Bool(Bool)
-  Expr(@symcore.Expr)
+  Expr(Expr)
 } derive(Eq)
 
 ///|
@@ -25,7 +25,7 @@ pub fn int_like_bool(value : Bool) -> IntLike {
 }
 
 ///|
-pub fn int_like_expr(value : @symcore.Expr) -> IntLike {
+pub fn int_like_expr(value : Expr) -> IntLike {
   IntLike::Expr(value)
 }
 
@@ -408,7 +408,7 @@ pub fn as_int(
       }
       n
     }
-    IntLike::Expr(@symcore.Expr::Number(n)) if n.is_integral() =>
+    IntLike::Expr(Expr::Number(n)) if n.is_integral() =>
       n.numerator().to_int()
     IntLike::Expr(expr) =>
       raise UtilitiesError::InvalidArgument(

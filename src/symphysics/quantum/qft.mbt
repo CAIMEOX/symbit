@@ -23,18 +23,18 @@ pub struct FourierExpr {
 } derive(Eq)
 
 ///|
-pub fn rk_gate(target : Int, k : Int) -> @symcore.Expr {
+pub fn rk_gate(target : Int, k : Int) -> Expr {
   match k {
     1 => z_gate(target).as_expr()
     2 => phase_gate(target).as_expr()
     3 => t_gate(target).as_expr()
     _ =>
-      @symcore.raw_function("RkGate", [@symcore.int(target), @symcore.int(k)])
+      @symcore.raw_function("RkGate", [int(target), int(k)])
   }
 }
 
 ///|
-pub fn rk(target : Int, k : Int) -> @symcore.Expr {
+pub fn rk(target : Int, k : Int) -> Expr {
   rk_gate(target, k)
 }
 
@@ -65,11 +65,11 @@ pub fn iqft(
 }
 
 ///|
-pub fn FourierExpr::as_expr(self : FourierExpr) -> @symcore.Expr {
+pub fn FourierExpr::as_expr(self : FourierExpr) -> Expr {
   let name = if self.inverse { "IQFT" } else { "QFT" }
   @symcore.raw_function(name, [
-    @symcore.int(self.start),
-    @symcore.int(self.finish),
+    int(self.start),
+    int(self.finish),
   ])
 }
 
@@ -83,9 +83,9 @@ pub fn FourierExpr::inverse(self : FourierExpr) -> FourierExpr {
 }
 
 ///|
-fn fourier_from_expr(expr : @symcore.Expr) -> FourierExpr? {
+fn fourier_from_expr(expr : Expr) -> FourierExpr? {
   match expr {
-    @symcore.Expr::Function(name, args) if (name == "QFT" || name == "IQFT") &&
+    Expr::Function(name, args) if (name == "QFT" || name == "IQFT") &&
       args.length() == 2 =>
       match (quantum_integer_value(args[0]), quantum_integer_value(args[1])) {
         (Some(start), Some(finish)) if start < finish =>
@@ -97,9 +97,9 @@ fn fourier_from_expr(expr : @symcore.Expr) -> FourierExpr? {
 }
 
 ///|
-fn rk_from_expr(expr : @symcore.Expr) -> RkExpr? {
+fn rk_from_expr(expr : Expr) -> RkExpr? {
   match expr {
-    @symcore.Expr::Function("RkGate", args) if args.length() == 2 =>
+    Expr::Function("RkGate", args) if args.length() == 2 =>
       match (quantum_integer_value(args[0]), quantum_integer_value(args[1])) {
         (Some(target), Some(k)) => Some(RkExpr::{ target, k })
         _ => None
@@ -109,21 +109,21 @@ fn rk_from_expr(expr : @symcore.Expr) -> RkExpr? {
 }
 
 ///|
-fn rk_phase(k : Int) -> @symcore.Expr {
+fn rk_phase(k : Int) -> Expr {
   let sign = if k > 0 {
-    @symcore.int(1)
+    int(1)
   } else if k < 0 {
-    @symcore.int(-1)
+    int(-1)
   } else {
-    @symcore.int(0)
+    int(0)
   }
-  let two = @symcore.int(2)
-  let denom = @symcore.raw_pow(two, @symcore.int(Int::abs(k)))
+  let two = int(2)
+  let denom = @symcore.raw_pow(two, int(Int::abs(k)))
   let angle = sign *
     two *
-    @symcore.symbol("pi") *
-    @symcore.symbol("I") *
-    @symcore.raw_pow(denom, @symcore.int(-1))
+    symbol("pi") *
+    symbol("I") *
+    @symcore.raw_pow(denom, int(-1))
   @symcore.raw_function("exp", [angle])
 }
 
@@ -132,26 +132,26 @@ fn rk_target_matrix(
   expr : RkExpr,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   @symphysics.explicit_matrix_from_rows([
-    [@symcore.int(1), @symcore.int(0)],
-    [@symcore.int(0), rk_phase(expr.k)],
+    [int(1), int(0)],
+    [int(0), rk_phase(expr.k)],
   ])
 }
 
 ///|
-fn qft_norm(size : Int) -> @symcore.Expr {
-  @symcore.raw_pow(@symcore.int(size), try! @symcore.rational_from_ints(-1, 2))
+fn qft_norm(size : Int) -> Expr {
+  @symcore.raw_pow(int(size), try! @symcore.rational_from_ints(-1, 2))
 }
 
 ///|
-fn qft_omega(expr : FourierExpr) -> @symcore.Expr {
-  let exponent = if expr.inverse { @symcore.int(-1) } else { @symcore.int(1) }
-  let denom = @symcore.int(1 << (expr.finish - expr.start))
+fn qft_omega(expr : FourierExpr) -> Expr {
+  let exponent = if expr.inverse { int(-1) } else { int(1) }
+  let denom = int(1 << (expr.finish - expr.start))
   @symcore.raw_function("exp", [
     exponent *
-    @symcore.int(2) *
-    @symcore.symbol("pi") *
-    @symcore.symbol("I") *
-    @symcore.raw_pow(denom, @symcore.int(-1)),
+    int(2) *
+    symbol("pi") *
+    symbol("I") *
+    @symcore.raw_pow(denom, int(-1)),
   ])
 }
 
@@ -162,12 +162,12 @@ fn qft_core_matrix(
   let size = 1 << (expr.finish - expr.start)
   let omega = qft_omega(expr)
   let norm = qft_norm(size)
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for row in 0..<size {
-    let entries : Array[@symcore.Expr] = []
+    let entries : Array[Expr] = []
     for col in 0..<size {
       entries.push(
-        norm * @symcore.raw_pow(omega, @symcore.int(row * col % size)),
+        norm * @symcore.raw_pow(omega, int(row * col % size)),
       )
     }
     rows.push(entries)
@@ -198,8 +198,8 @@ fn embed_gate_matrix(
 }
 
 ///|
-pub fn qft_decompose(expr : FourierExpr) -> @symcore.Expr {
-  let mut circuit = @symcore.int(1)
+pub fn qft_decompose(expr : FourierExpr) -> Expr {
+  let mut circuit = int(1)
   if expr.inverse {
     for i in 0..<((expr.finish - expr.start) / 2) {
       circuit = quantum_mul_from_args_preserve([
@@ -248,7 +248,7 @@ pub fn qft_decompose(expr : FourierExpr) -> @symcore.Expr {
 
 ///|
 pub fn qft_represent(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits : Int,
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   match fourier_from_expr(expr) {
@@ -292,9 +292,9 @@ pub fn qft_represent(
 
 ///|
 pub fn qft_apply_operator_to_ket(
-  op_expr : @symcore.Expr,
-  ket_expr : @symcore.Expr,
-) -> @symcore.Expr? raise @symphysics.PhysicsError {
+  op_expr : Expr,
+  ket_expr : Expr,
+) -> Expr? raise @symphysics.PhysicsError {
   match (fourier_from_expr(op_expr), qubit_from_expr(ket_expr)) {
     (Some(_), Some(q)) => {
       let matrix = match qft_represent(op_expr, q.nqubits()) {

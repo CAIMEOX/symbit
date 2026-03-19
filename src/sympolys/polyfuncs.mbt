@@ -1,14 +1,14 @@
 ///|
 pub struct SymmetrizeResult {
-  sym : @symcore.Expr
-  rem : @symcore.Expr
-  mapping : Array[(@symcore.Expr, @symcore.Expr)]
+  sym : Expr
+  rem : Expr
+  mapping : Array[(Expr, Expr)]
 }
 
 ///|
 pub struct SymmetrizeListResult {
   items : Array[SymmetrizeResult]
-  mapping : Array[(@symcore.Expr, @symcore.Expr)]
+  mapping : Array[(Expr, Expr)]
 }
 
 ///|
@@ -30,7 +30,7 @@ pub fn interpolate(
       }
       let (xj, _) = points[j]
       denom = denom.mul_r(xi.add_r(xj.neg_r()))
-      let term_expr = @symcore.symbol(gen) - @symcore.number(xj)
+      let term_expr = symbol(gen) - @symcore.number(xj)
       let term = builder.from_expr(term_expr)
       basis = basis.mul(term)
     }
@@ -130,7 +130,7 @@ pub fn rational_interpolate(
 ///|
 /// Rewrite an expression in elementary symmetric-polynomial basis.
 pub fn symmetrize(
-  expr : @symcore.Expr,
+  expr : Expr,
   gens? : Array[String] = [],
   formal? : Bool = false,
   symbols? : Array[String] = [],
@@ -159,8 +159,8 @@ pub fn symmetrize(
   let (sym_poly, rem_poly, elem_polys) = symmetrize_poly(poly, sym_names)
   let mut sym_expr = sym_poly.to_expr()
   let rem_expr = rem_poly.to_expr()
-  let mapping : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
-  let env : Map[String, @symcore.Expr] = Map::new()
+  let mapping : Array[(Expr, Expr)] = Array::new()
+  let env : Map[String, Expr] = Map::new()
   let limit = if sym_names.length() < elem_polys.length() {
     sym_names.length()
   } else {
@@ -168,7 +168,7 @@ pub fn symmetrize(
   }
   for i in 0..<limit {
     let sym_name = sym_names[i]
-    let sym_var = @symcore.symbol(sym_name)
+    let sym_var = symbol(sym_name)
     let elem_expr = elem_polys[i].to_expr()
     mapping.push((sym_var, elem_expr))
     env.set(sym_name, elem_expr)
@@ -182,7 +182,7 @@ pub fn symmetrize(
 ///|
 /// Symmetrize a batch of expressions.
 pub fn symmetrize_list(
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
   gens? : Array[String] = [],
   formal? : Bool = false,
   symbols? : Array[String] = [],
@@ -212,10 +212,10 @@ pub fn symmetrize_list(
 ///|
 /// Rewrite a polynomial in Horner form.
 pub fn horner(
-  expr : @symcore.Expr,
+  expr : Expr,
   gens? : Array[String] = [],
   wrt? : String = "",
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   let mut gens_final = if gens.is_empty() {
     infer_gens_expr(expr)
   } else {
@@ -242,10 +242,10 @@ pub fn horner(
 ///|
 /// Compute Viete relations between roots and coefficients.
 pub fn viete(
-  expr : @symcore.Expr,
+  expr : Expr,
   roots? : Array[String] = [],
   gen? : String = "",
-) -> Array[(@symcore.Expr, @symcore.Expr)] raise PolyError {
+) -> Array[(Expr, Expr)] raise PolyError {
   let gens_final = if gen != "" { [gen] } else { infer_gens_expr(expr) }
   let poly = if gen == "" {
     Poly::from_expr_defaults(expr)
@@ -272,13 +272,13 @@ pub fn viete(
   let coeffs = univar_coeffs(poly)
   let lc = coeffs[deg]
   let inv_lc = fe_inv(lc)
-  let result : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
+  let result : Array[(Expr, Expr)] = Array::new()
   for i in 1..<=deg {
     let coeff = coeffs[deg - i]
     let scaled = fe_mul(coeff, inv_lc)
     let mut expr_coeff = field_elem_to_expr(scaled, poly.domain)
     if i % 2 == 1 {
-      expr_coeff = @symcore.int(-1) * expr_coeff
+      expr_coeff = int(-1) * expr_coeff
     }
     let sym_expr = elementary_sym_expr(roots_names, i)
     result.push((sym_expr, expr_coeff))
@@ -411,7 +411,7 @@ fn poly_from_coeffs(
 }
 
 ///|
-fn infer_gens_expr(expr : @symcore.Expr) -> Array[String] {
+fn infer_gens_expr(expr : Expr) -> Array[String] {
   let seen : Map[String, Bool] = Map::new()
   collect_symbols_expr_pf(expr, seen)
   let names : Array[String] = Array::new()
@@ -424,20 +424,20 @@ fn infer_gens_expr(expr : @symcore.Expr) -> Array[String] {
 
 ///|
 fn collect_symbols_expr_pf(
-  expr : @symcore.Expr,
+  expr : Expr,
   seen : Map[String, Bool],
 ) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args) | Expr::Mul(args) =>
       for child in args {
         collect_symbols_expr_pf(child, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       collect_symbols_expr_pf(base, seen)
       collect_symbols_expr_pf(exp, seen)
     }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       for child in args {
         collect_symbols_expr_pf(child, seen)
       }
@@ -580,7 +580,7 @@ fn symmetrize_poly(
 fn horner_poly(
   poly : Poly,
   gens : Array[String],
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   if poly.is_zero() {
     return @symcore.number(@symnum.BigRational::zero())
   }
@@ -590,7 +590,7 @@ fn horner_poly(
     }
     let deg = poly.degree(0)
     let coeff_polys = univar_coeff_polys(poly, [])
-    let sym = @symcore.symbol(gens[0])
+    let sym = symbol(gens[0])
     let mut form = coeff_polys[deg].to_expr()
     let mut d = deg - 1
     while d >= 0 {
@@ -606,7 +606,7 @@ fn horner_poly(
   }
   let deg = poly.degree(0)
   let coeff_polys = univar_coeff_polys(poly, rest_gens)
-  let sym = @symcore.symbol(gens[0])
+  let sym = symbol(gens[0])
   let mut form = horner_poly(coeff_polys[deg], rest_gens)
   let mut d = deg - 1
   while d >= 0 {
@@ -654,8 +654,8 @@ fn univar_coeffs(poly : Poly) -> Array[FieldElem] raise PolyError {
 }
 
 ///|
-fn elementary_sym_expr(roots : Array[String], k : Int) -> @symcore.Expr {
-  let terms : Array[@symcore.Expr] = Array::new()
+fn elementary_sym_expr(roots : Array[String], k : Int) -> Expr {
+  let terms : Array[Expr] = Array::new()
   build_sym_expr_terms(terms, roots, k, 0, [])
   if terms.is_empty() {
     @symcore.number(@symnum.BigRational::zero())
@@ -668,16 +668,16 @@ fn elementary_sym_expr(roots : Array[String], k : Int) -> @symcore.Expr {
 
 ///|
 fn build_sym_expr_terms(
-  terms : Array[@symcore.Expr],
+  terms : Array[Expr],
   roots : Array[String],
   k : Int,
   start : Int,
   chosen : Array[String],
 ) -> Unit {
   if chosen.length() == k {
-    let factors : Array[@symcore.Expr] = Array::new()
+    let factors : Array[Expr] = Array::new()
     for name in chosen {
-      factors.push(@symcore.symbol(name))
+      factors.push(symbol(name))
     }
     let term = if factors.is_empty() {
       @symcore.number(@symnum.BigRational::one())
@@ -702,7 +702,7 @@ fn build_sym_expr_terms(
 fn field_elem_to_expr(
   fe : FieldElem,
   domain : Domain,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   let mono = monomial_one(1)
   add_term(coeffs, mono, fe, domain)
@@ -711,7 +711,7 @@ fn field_elem_to_expr(
 }
 
 ///|
-fn expr_mul_all_pf(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn expr_mul_all_pf(args : Array[Expr]) -> Expr {
   let mut acc = args[0]
   for i in 1..<args.length() {
     acc = acc * args[i]
@@ -720,7 +720,7 @@ fn expr_mul_all_pf(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-fn expr_add_all_pf(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn expr_add_all_pf(args : Array[Expr]) -> Expr {
   let mut acc = args[0]
   for i in 1..<args.length() {
     acc = acc + args[i]

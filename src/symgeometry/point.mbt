@@ -1,7 +1,7 @@
 ///|
 /// A point in Euclidean space.
 pub struct Point {
-  coords_ : Array[@symcore.Expr]
+  coords_ : Array[Expr]
 } derive(Eq, Hash)
 
 ///|
@@ -35,7 +35,7 @@ pub impl Sub for Point with sub(self, other : Point) {
 
 ///|
 pub fn point(
-  coords : Array[@symcore.Expr],
+  coords : Array[Expr],
   dim? : Int = -1,
 ) -> Point raise GeometryError {
   let actual_dim = if dim > 0 { dim } else { coords.length() }
@@ -49,7 +49,7 @@ pub fn point(
       }
     }
   }
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<actual_dim {
     let value = if i < coords.length() { coords[i] } else { geo_zero() }
     out.push(geo_simplify(value))
@@ -59,17 +59,17 @@ pub fn point(
 
 ///|
 pub fn point2d(
-  x : @symcore.Expr,
-  y : @symcore.Expr,
+  x : Expr,
+  y : Expr,
 ) -> Point raise GeometryError {
   point([x, y], dim=2)
 }
 
 ///|
 pub fn point3d(
-  x : @symcore.Expr,
-  y : @symcore.Expr,
-  z : @symcore.Expr,
+  x : Expr,
+  y : Expr,
+  z : Expr,
 ) -> Point raise GeometryError {
   point([x, y, z], dim=3)
 }
@@ -108,7 +108,7 @@ pub fn Point::length(self : Point) -> Int {
 }
 
 ///|
-pub fn Point::coords(self : Point) -> Array[@symcore.Expr] {
+pub fn Point::coords(self : Point) -> Array[Expr] {
   geo_clone_exprs(self.coords_)
 }
 
@@ -121,7 +121,7 @@ pub fn Point::with_dim(self : Point, dim : Int) -> Point raise GeometryError {
 pub fn Point::get(
   self : Point,
   index : Int,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   if index < 0 || index >= self.coords_.length() {
     raise GeometryError::ValueError("point coordinate index out of range")
   }
@@ -129,17 +129,17 @@ pub fn Point::get(
 }
 
 ///|
-pub fn Point::x(self : Point) -> @symcore.Expr raise GeometryError {
+pub fn Point::x(self : Point) -> Expr raise GeometryError {
   self.get(0)
 }
 
 ///|
-pub fn Point::y(self : Point) -> @symcore.Expr raise GeometryError {
+pub fn Point::y(self : Point) -> Expr raise GeometryError {
   self.get(1)
 }
 
 ///|
-pub fn Point::z(self : Point) -> @symcore.Expr raise GeometryError {
+pub fn Point::z(self : Point) -> Expr raise GeometryError {
   if self.coords_.length() < 3 {
     raise GeometryError::ValueError("Point has no z coordinate")
   }
@@ -157,7 +157,7 @@ pub fn Point::repr(self : Point) -> String {
 ///|
 pub fn Point::translate(
   self : Point,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Point raise GeometryError {
   if offsets.length() != self.coords_.length() {
     raise GeometryError::ValueError(
@@ -170,7 +170,7 @@ pub fn Point::translate(
 ///|
 pub fn Point::scale(
   self : Point,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Point raise GeometryError {
   if factors.length() != self.coords_.length() {
@@ -187,7 +187,7 @@ pub fn Point::scale(
 ///|
 pub fn Point::rotate(
   self : Point,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Point raise GeometryError {
   let pivot = match pt {
@@ -203,7 +203,7 @@ pub fn Point::rotate(
 pub fn Point::distance(
   self : Point,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -233,7 +233,7 @@ pub fn Point::midpoint(
 pub fn Point::dot(
   self : Point,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -241,7 +241,7 @@ pub fn Point::dot(
 }
 
 ///|
-pub fn Point::abs(self : Point) -> @symcore.Expr raise GeometryError {
+pub fn Point::abs(self : Point) -> Expr raise GeometryError {
   self.distance(try! point_origin(self.ambient_dimension()))
 }
 
@@ -256,18 +256,18 @@ pub fn Point::is_nonzero(self : Point) -> Bool {
 }
 
 ///|
-pub fn Point::mul(self : Point, factor : @symcore.Expr) -> Point {
+pub fn Point::mul(self : Point, factor : Expr) -> Point {
   geo_point_from_coords(geo_scale_coords(self.coords_, factor))
 }
 
 ///|
-pub fn Point::truediv(self : Point, divisor : @symcore.Expr) -> Point {
+pub fn Point::truediv(self : Point, divisor : Expr) -> Point {
   self.mul(geo_div(geo_one(), divisor))
 }
 
 ///|
-pub fn Point::subs(self : Point, env : Map[String, @symcore.Expr]) -> Point {
-  let out : Array[@symcore.Expr] = []
+pub fn Point::subs(self : Point, env : Map[String, Expr]) -> Point {
+  let out : Array[Expr] = []
   for coord in self.coords_ {
     out.push(@symcore.subst(coord, env))
   }
@@ -314,7 +314,7 @@ pub fn Point::project(self : Point, other : Point) -> Point raise GeometryError 
 pub fn Point::taxicab_distance(
   self : Point,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -329,7 +329,7 @@ pub fn Point::taxicab_distance(
 pub fn Point::canberra_distance(
   self : Point,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -456,7 +456,7 @@ pub fn point_are_collinear(points : Array[Point]) -> Bool raise GeometryError {
   }
   let normalized = geo_normalize_dim(points)
   let anchor = normalized[0]
-  let mut base : Array[@symcore.Expr]? = None
+  let mut base : Array[Expr]? = None
   for item in normalized[1:] {
     let diff = geo_sub_coords(item.coords_, anchor.coords_)
     if geo_all_zero(diff) {
@@ -506,8 +506,8 @@ pub fn point_are_coplanar(points : Array[Point]) -> Bool raise GeometryError {
     )
   }
   let p0 = normalized[0]
-  let mut u : Array[@symcore.Expr]? = None
-  let mut v : Array[@symcore.Expr]? = None
+  let mut u : Array[Expr]? = None
+  let mut v : Array[Expr]? = None
   for item in normalized[1:] {
     let diff = geo_sub_coords(item.coords_, p0.coords_)
     if geo_all_zero(diff) {

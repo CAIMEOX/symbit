@@ -32,8 +32,8 @@ pub fn Poly::resultant(
 /// Compute `resultant(f, g, var_name)` from expressions with optional domain/options.
 /// Returns an expression so multivariate elimination results stay symbolic.
 pub fn resultant_expr(
-  f_expr : @symcore.Expr,
-  g_expr : @symcore.Expr,
+  f_expr : Expr,
+  g_expr : Expr,
   var_name : String,
   gens? : Array[String],
   domain? : Domain,
@@ -41,7 +41,7 @@ pub fn resultant_expr(
   extension? : Array[String],
   gf_degree? : Int,
   order? : TermOrder,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   let (f, g, resolved_gens) = build_resultant_inputs(
     f_expr,
     g_expr,
@@ -62,8 +62,8 @@ pub fn resultant_expr(
 ///|
 /// Scalar compatibility wrapper for callers that require a rational resultant.
 pub fn resultant_expr_scalar(
-  f_expr : @symcore.Expr,
-  g_expr : @symcore.Expr,
+  f_expr : Expr,
+  g_expr : Expr,
   var_name : String,
   gens? : Array[String],
   domain? : Domain,
@@ -91,8 +91,8 @@ pub fn resultant_expr_scalar(
 
 ///|
 fn build_resultant_inputs(
-  f_expr : @symcore.Expr,
-  g_expr : @symcore.Expr,
+  f_expr : Expr,
+  g_expr : Expr,
   var_name : String,
   gens~ : Array[String]?,
   domain~ : Domain?,

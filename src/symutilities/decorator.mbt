@@ -28,12 +28,12 @@ fn[T] thread_container(value : Threadable[T], rule : (T) -> T) -> Threadable[T] 
 
 ///|
 fn thread_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   use_add : Bool,
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  rule : (Expr) -> Expr,
+) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) if use_add =>
+    Expr::Add(args) if use_add =>
       @symcore.add(args.map(arg => rule(arg)))
     _ => rule(expr)
   }
@@ -43,9 +43,9 @@ fn thread_expr(
 /// Apply `rule` over arrays of expressions and, by default, over additive
 /// expression arguments as well.
 pub fn threaded(
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> (Threadable[@symcore.Expr]) -> Threadable[@symcore.Expr] {
-  letrec apply = (value : Threadable[@symcore.Expr]) => {
+  rule : (Expr) -> Expr,
+) -> (Threadable[Expr]) -> Threadable[Expr] {
+  letrec apply = (value : Threadable[Expr]) => {
     match value {
       Threadable::Scalar(expr) =>
         Threadable::Scalar(thread_expr(expr, true, rule))
@@ -58,9 +58,9 @@ pub fn threaded(
 ///|
 /// Same as `threaded`, but treats additive expressions as atomic values.
 pub fn xthreaded(
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> (Threadable[@symcore.Expr]) -> Threadable[@symcore.Expr] {
-  (value : Threadable[@symcore.Expr]) => {
+  rule : (Expr) -> Expr,
+) -> (Threadable[Expr]) -> Threadable[Expr] {
+  (value : Threadable[Expr]) => {
     thread_container(value, expr => rule(expr))
   }
 }

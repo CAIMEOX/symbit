@@ -122,8 +122,8 @@ pub fn Ideal::intersect(self : Ideal, other : Ideal) -> Ideal raise PolyError {
     ext_gens.push(g)
   }
   let builder = PolyBuilder::new(ext_gens, self.ring_domain())
-  let t = @symcore.symbol(aux)
-  let one = @symcore.int(1)
+  let t = symbol(aux)
+  let one = int(1)
   let elim_gens : Array[Poly] = Array::new()
   for f in self.gens {
     elim_gens.push(builder.from_expr(t * f.to_expr()))
@@ -174,7 +174,7 @@ pub struct RingHomomorphism {
   source_gens : Array[String]
   target_gens : Array[String]
   target_domain : Domain
-  image : Map[String, @symcore.Expr]
+  image : Map[String, Expr]
 }
 
 ///|
@@ -182,7 +182,7 @@ pub fn ring_homomorphism(
   source_gens : Array[String],
   target_gens : Array[String],
   target_domain : Domain,
-  image : Map[String, @symcore.Expr],
+  image : Map[String, Expr],
 ) -> RingHomomorphism raise PolyError {
   for g in source_gens {
     if image.get(g) is None {
@@ -195,8 +195,8 @@ pub fn ring_homomorphism(
 ///|
 pub fn RingHomomorphism::apply_expr(
   self : RingHomomorphism,
-  expr : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+) -> Expr {
   @symcore.subst(expr, self.image)
 }
 

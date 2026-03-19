@@ -15,34 +15,34 @@
 ///   no direct matrix representation exists.
 
 ///|
-fn represent_default_basis_state(expr : @symcore.Expr) -> @symcore.Expr? {
+fn represent_default_basis_state(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function("XKet", _)
-    | @symcore.Expr::Function("XBra", _)
-    | @symcore.Expr::Function("XOp", _) => Some(x_ket())
-    @symcore.Expr::Function("PxKet", _)
-    | @symcore.Expr::Function("PxBra", _)
-    | @symcore.Expr::Function("PxOp", _) => Some(px_ket())
-    @symcore.Expr::Function("PositionKet3D", _)
-    | @symcore.Expr::Function("PositionBra3D", _) => Some(position_ket_3d())
-    @symcore.Expr::Function("JzKet", args)
-    | @symcore.Expr::Function("JzBra", args) if args.length() == 2 =>
-      Some(jz_ket(args[0], @symcore.symbol("m")).as_expr())
+    Expr::Function("XKet", _)
+    | Expr::Function("XBra", _)
+    | Expr::Function("XOp", _) => Some(x_ket())
+    Expr::Function("PxKet", _)
+    | Expr::Function("PxBra", _)
+    | Expr::Function("PxOp", _) => Some(px_ket())
+    Expr::Function("PositionKet3D", _)
+    | Expr::Function("PositionBra3D", _) => Some(position_ket_3d())
+    Expr::Function("JzKet", args)
+    | Expr::Function("JzBra", args) if args.length() == 2 =>
+      Some(jz_ket(args[0], symbol("m")).as_expr())
     _ =>
       match state_from_expr(expr) {
         Some(state) =>
           match state.flavor {
             StateFlavor::Ket | StateFlavor::Bra =>
-              Some(ket([@symcore.symbol("psi")]).as_expr())
+              Some(ket([symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
               Some(
                 time_dep_ket(
-                  [@symcore.symbol("psi")],
-                  time=@symcore.symbol("t"),
+                  [symbol("psi")],
+                  time=symbol("t"),
                 ).as_expr(),
               )
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
-              Some(orthogonal_ket([@symcore.symbol("n")]).as_expr())
+              Some(orthogonal_ket([symbol("n")]).as_expr())
           }
         None =>
           if quantum_is_operator_expr(expr) {
@@ -56,62 +56,62 @@ fn represent_default_basis_state(expr : @symcore.Expr) -> @symcore.Expr? {
 
 ///|
 fn represent_index_symbol(
-  label : @symcore.Expr,
+  label : Expr,
   index : Int,
   fallback : String,
-) -> @symcore.Expr {
+) -> Expr {
   match label {
-    @symcore.Expr::Symbol(name) =>
-      @symcore.symbol("\{name}_\{index.to_string()}")
-    _ => @symcore.symbol("\{fallback}_\{index.to_string()}")
+    Expr::Symbol(name) =>
+      symbol("\{name}_\{index.to_string()}")
+    _ => symbol("\{fallback}_\{index.to_string()}")
   }
 }
 
 ///|
 fn represent_enumerate_with_index(
-  state_expr : @symcore.Expr,
+  state_expr : Expr,
   index : Int,
-) -> @symcore.Expr? {
+) -> Expr? {
   match state_expr {
-    @symcore.Expr::Function("Ket", args) =>
+    Expr::Function("Ket", args) =>
       Some(
         ket(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
       )
-    @symcore.Expr::Function("Bra", args) =>
+    Expr::Function("Bra", args) =>
       Some(
         bra(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
       )
-    @symcore.Expr::Function("TimeDepKet", args) if args.length() >= 1 => {
-      let labels : Array[@symcore.Expr] = []
+    Expr::Function("TimeDepKet", args) if args.length() >= 1 => {
+      let labels : Array[Expr] = []
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
       Some(time_dep_ket(labels, time=args[args.length() - 1]).as_expr())
     }
-    @symcore.Expr::Function("TimeDepBra", args) if args.length() >= 1 => {
-      let labels : Array[@symcore.Expr] = []
+    Expr::Function("TimeDepBra", args) if args.length() >= 1 => {
+      let labels : Array[Expr] = []
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
       Some(time_dep_bra(labels, time=args[args.length() - 1]).as_expr())
     }
-    @symcore.Expr::Function("OrthogonalKet", args) =>
+    Expr::Function("OrthogonalKet", args) =>
       Some(
         orthogonal_ket(args.map(arg => represent_index_symbol(arg, index, "n"))).as_expr(),
       )
-    @symcore.Expr::Function("OrthogonalBra", args) =>
+    Expr::Function("OrthogonalBra", args) =>
       Some(
         orthogonal_bra(args.map(arg => represent_index_symbol(arg, index, "n"))).as_expr(),
       )
-    @symcore.Expr::Function("XKet", args) if args.length() == 1 =>
+    Expr::Function("XKet", args) if args.length() == 1 =>
       Some(x_ket(position=represent_index_symbol(args[0], index, "x")))
-    @symcore.Expr::Function("XBra", args) if args.length() == 1 =>
+    Expr::Function("XBra", args) if args.length() == 1 =>
       Some(x_bra(position=represent_index_symbol(args[0], index, "x")))
-    @symcore.Expr::Function("PxKet", args) if args.length() == 1 =>
+    Expr::Function("PxKet", args) if args.length() == 1 =>
       Some(px_ket(momentum=represent_index_symbol(args[0], index, "px")))
-    @symcore.Expr::Function("PxBra", args) if args.length() == 1 =>
+    Expr::Function("PxBra", args) if args.length() == 1 =>
       Some(px_bra(momentum=represent_index_symbol(args[0], index, "px")))
-    @symcore.Expr::Function("PositionKet3D", args) if args.length() == 3 =>
+    Expr::Function("PositionKet3D", args) if args.length() == 3 =>
       Some(
         position_ket_3d(
           x=represent_index_symbol(args[0], index, "x"),
@@ -119,7 +119,7 @@ fn represent_enumerate_with_index(
           z=represent_index_symbol(args[2], index, "z"),
         ),
       )
-    @symcore.Expr::Function("PositionBra3D", args) if args.length() == 3 =>
+    Expr::Function("PositionBra3D", args) if args.length() == 3 =>
       Some(
         position_bra_3d(
           x=represent_index_symbol(args[0], index, "x"),
@@ -127,11 +127,11 @@ fn represent_enumerate_with_index(
           z=represent_index_symbol(args[2], index, "z"),
         ),
       )
-    @symcore.Expr::Function("JzKet", args) if args.length() == 2 =>
+    Expr::Function("JzKet", args) if args.length() == 2 =>
       Some(
         jz_ket(args[0], represent_index_symbol(args[1], index, "m")).as_expr(),
       )
-    @symcore.Expr::Function("JzBra", args) if args.length() == 2 =>
+    Expr::Function("JzBra", args) if args.length() == 2 =>
       Some(
         jz_bra(args[0], represent_index_symbol(args[1], index, "m")).as_expr(),
       )
@@ -141,10 +141,10 @@ fn represent_enumerate_with_index(
 
 ///|
 pub fn get_basis(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   replace_none? : Bool = true,
-) -> @symcore.Expr? {
+) -> Expr? {
   match basis {
     Some(value) =>
       if quantum_is_operator_expr(value) {
@@ -167,11 +167,11 @@ pub fn get_basis(
 
 ///|
 pub fn enumerate_states(
-  state_expr : @symcore.Expr,
+  state_expr : Expr,
   start_index? : Int = 1,
   count? : Int = 0,
   index_list? : Array[Int] = [],
-) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
+) -> Array[Expr] raise @symphysics.PhysicsError {
   guard quantum_is_state_expr(state_expr) else {
     raise @symphysics.PhysicsError::ValueError(
       "enumerate_states expects a state expression",
@@ -187,7 +187,7 @@ pub fn enumerate_states(
       indices.push(idx)
     }
   }
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for index in indices {
     match represent_enumerate_with_index(state_expr, index) {
       Some(next) => out.push(next)
@@ -199,10 +199,10 @@ pub fn enumerate_states(
 
 ///|
 pub fn rep_innerproduct(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   index? : Int = 1,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard quantum_is_ket_expr(expr) || quantum_is_bra_expr(expr) else {
     raise @symphysics.PhysicsError::ValueError(
       "rep_innerproduct expects a bra or ket expression",
@@ -238,11 +238,11 @@ pub fn rep_innerproduct(
 
 ///|
 fn rep_contract_bra_state(
-  bra_expr : @symcore.Expr,
-  state_expr : @symcore.Expr,
-) -> @symcore.Expr {
+  bra_expr : Expr,
+  state_expr : Expr,
+) -> Expr {
   match state_expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_add_from_args_preserve(
         args.map(term => rep_contract_bra_state(bra_expr, term)),
       )
@@ -264,10 +264,10 @@ fn rep_contract_bra_state(
 
 ///|
 pub fn rep_expectation(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   index? : Int = 1,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard quantum_is_operator_expr(expr) else {
     raise @symphysics.PhysicsError::ValueError(
       "rep_expectation expects an operator expression",

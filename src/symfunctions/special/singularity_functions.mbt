@@ -3,9 +3,9 @@
 
 ///|
 pub fn singularity_function(
-  expr : @symcore.Expr,
-  a : @symcore.Expr,
-  n : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  a : Expr,
+  n : Expr,
+) -> Expr {
   @symcore.function("SingularityFunction", [expr, a, n])
 }

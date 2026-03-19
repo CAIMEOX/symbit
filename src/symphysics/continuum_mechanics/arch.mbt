@@ -11,32 +11,32 @@ pub suberror ArchError {
 
 ///|
 pub struct Arch {
-  mut left_support_ : Array[@symcore.Expr]
-  mut right_support_ : Array[@symcore.Expr]
-  mut crown_x_ : @symcore.Expr
-  mut crown_y_ : @symcore.Expr
-  mut shape_a_ : @symcore.Expr
+  mut left_support_ : Array[Expr]
+  mut right_support_ : Array[Expr]
+  mut crown_x_ : Expr
+  mut crown_y_ : Expr
+  mut shape_a_ : Expr
   supports_ : Map[String, String]
-  point_loads_ : Map[String, Array[@symcore.Expr]]
-  distributed_loads_ : Map[String, Array[@symcore.Expr]]
-  mut member_ : Array[@symcore.Expr]?
-  reaction_force_ : Map[String, @symcore.Expr]
+  point_loads_ : Map[String, Array[Expr]]
+  distributed_loads_ : Map[String, Array[Expr]]
+  mut member_ : Array[Expr]?
+  reaction_force_ : Map[String, Expr]
 }
 
 ///|
-fn arch_var() -> @symcore.Expr {
-  @symcore.symbol("x")
+fn arch_var() -> Expr {
+  symbol("x")
 }
 
 ///|
-fn arch_pi() -> @symcore.Expr {
-  @symcore.symbol("pi")
+fn arch_pi() -> Expr {
+  symbol("pi")
 }
 
 ///|
-fn arch_normalized_degree(angle : @symcore.Expr) -> Int? {
+fn arch_normalized_degree(angle : Expr) -> Int? {
   match angle {
-    @symcore.Expr::Number(n) if n.is_integral() => {
+    Expr::Number(n) if n.is_integral() => {
       let mut deg = n.numerator().to_int() % 360
       if deg < 0 {
         deg += 360
@@ -48,58 +48,58 @@ fn arch_normalized_degree(angle : @symcore.Expr) -> Int? {
 }
 
 ///|
-fn arch_sin_deg(angle : @symcore.Expr) -> @symcore.Expr {
+fn arch_sin_deg(angle : Expr) -> Expr {
   match arch_normalized_degree(angle) {
-    Some(0) | Some(180) => @symcore.int(0)
+    Some(0) | Some(180) => int(0)
     Some(30) | Some(150) => cm_rat_expr(1, 2)
     Some(210) | Some(330) => cm_rat_expr(-1, 2)
-    Some(90) => @symcore.int(1)
-    Some(270) => @symcore.int(-1)
-    Some(45) | Some(135) => cm_rat_expr(1, 2) * @symelem.sqrt(@symcore.int(2))
-    Some(225) | Some(315) => cm_rat_expr(-1, 2) * @symelem.sqrt(@symcore.int(2))
-    Some(60) | Some(120) => cm_rat_expr(1, 2) * @symelem.sqrt(@symcore.int(3))
-    Some(240) | Some(300) => cm_rat_expr(-1, 2) * @symelem.sqrt(@symcore.int(3))
+    Some(90) => int(1)
+    Some(270) => int(-1)
+    Some(45) | Some(135) => cm_rat_expr(1, 2) * @symelem.sqrt(int(2))
+    Some(225) | Some(315) => cm_rat_expr(-1, 2) * @symelem.sqrt(int(2))
+    Some(60) | Some(120) => cm_rat_expr(1, 2) * @symelem.sqrt(int(3))
+    Some(240) | Some(300) => cm_rat_expr(-1, 2) * @symelem.sqrt(int(3))
     _ => @symelem.sin(arch_pi() * angle * cm_rat_expr(1, 180))
   }
 }
 
 ///|
-fn arch_cos_deg(angle : @symcore.Expr) -> @symcore.Expr {
+fn arch_cos_deg(angle : Expr) -> Expr {
   match arch_normalized_degree(angle) {
-    Some(90) | Some(270) => @symcore.int(0)
-    Some(0) => @symcore.int(1)
-    Some(180) => @symcore.int(-1)
+    Some(90) | Some(270) => int(0)
+    Some(0) => int(1)
+    Some(180) => int(-1)
     Some(60) | Some(300) => cm_rat_expr(1, 2)
     Some(120) | Some(240) => cm_rat_expr(-1, 2)
-    Some(45) | Some(315) => cm_rat_expr(1, 2) * @symelem.sqrt(@symcore.int(2))
-    Some(135) | Some(225) => cm_rat_expr(-1, 2) * @symelem.sqrt(@symcore.int(2))
-    Some(30) | Some(330) => cm_rat_expr(1, 2) * @symelem.sqrt(@symcore.int(3))
-    Some(150) | Some(210) => cm_rat_expr(-1, 2) * @symelem.sqrt(@symcore.int(3))
+    Some(45) | Some(315) => cm_rat_expr(1, 2) * @symelem.sqrt(int(2))
+    Some(135) | Some(225) => cm_rat_expr(-1, 2) * @symelem.sqrt(int(2))
+    Some(30) | Some(330) => cm_rat_expr(1, 2) * @symelem.sqrt(int(3))
+    Some(150) | Some(210) => cm_rat_expr(-1, 2) * @symelem.sqrt(int(3))
     _ => @symelem.cos(arch_pi() * angle * cm_rat_expr(1, 180))
   }
 }
 
 ///|
 fn arch_recompute_shape(
-  left_support : Array[@symcore.Expr],
-  right_support : Array[@symcore.Expr],
-  crown_x : @symcore.Expr,
-  crown_y? : @symcore.Expr? = None,
-) -> (@symcore.Expr, @symcore.Expr) raise ArchError {
+  left_support : Array[Expr],
+  right_support : Array[Expr],
+  crown_x : Expr,
+  crown_y? : Expr? = None,
+) -> (Expr, Expr) raise ArchError {
   let x1 = left_support[0]
   let y1 = left_support[1]
   let x2 = right_support[0]
   let y2 = right_support[1]
   match crown_y {
     Some(cy) => {
-      let denom = cm_simplify((x1 - crown_x) ^ @symcore.int(2))
+      let denom = cm_simplify((x1 - crown_x) ^ int(2))
       guard !cm_expr_is_zero(denom) else {
         raise ArchError::ValueError(
           "provided coordinates do not define a parabolic arch",
         )
       }
-      let a = cm_simplify((y1 - cy) * (denom ^ @symcore.int(-1)))
-      let rhs = cm_simplify(a * ((x2 - crown_x) ^ @symcore.int(2)) + cy)
+      let a = cm_simplify((y1 - cy) * (denom ^ int(-1)))
+      let rhs = cm_simplify(a * ((x2 - crown_x) ^ int(2)) + cy)
       guard cm_numeric_expr_eq(rhs, y2) else {
         raise ArchError::ValueError(
           "provided coordinates of crown and supports are not consistent with parabolic arch",
@@ -109,20 +109,20 @@ fn arch_recompute_shape(
     }
     None => {
       let denom = cm_simplify(
-        ((x1 - crown_x) ^ @symcore.int(2)) - ((x2 - crown_x) ^ @symcore.int(2)),
+        ((x1 - crown_x) ^ int(2)) - ((x2 - crown_x) ^ int(2)),
       )
       guard !cm_expr_is_zero(denom) else {
         raise ArchError::ValueError(
           "parabolic arch cannot be constructed with the provided coordinates, try providing crown_y",
         )
       }
-      let a = cm_simplify((y1 - y2) * (denom ^ @symcore.int(-1)))
+      let a = cm_simplify((y1 - y2) * (denom ^ int(-1)))
       guard !cm_expr_is_zero(a) else {
         raise ArchError::ValueError(
           "parabolic arch cannot be constructed with the provided coordinates, try providing crown_y",
         )
       }
-      let cy = cm_simplify(y1 - a * ((x1 - crown_x) ^ @symcore.int(2)))
+      let cy = cm_simplify(y1 - a * ((x1 - crown_x) ^ int(2)))
       (a, cy)
     }
   }
@@ -130,19 +130,19 @@ fn arch_recompute_shape(
 
 ///|
 pub fn arch(
-  left_support : (@symcore.Expr, @symcore.Expr),
-  right_support : (@symcore.Expr, @symcore.Expr),
-  crown_x : @symcore.Expr,
-  crown_y? : @symcore.Expr? = None,
+  left_support : (Expr, Expr),
+  right_support : (Expr, Expr),
+  crown_x : Expr,
+  crown_y? : Expr? = None,
 ) -> Arch raise ArchError {
   let left = [left_support.0, left_support.1]
   let right = [right_support.0, right_support.1]
   let (a, cy) = try! arch_recompute_shape(left, right, crown_x, crown_y~)
-  let reactions : Map[String, @symcore.Expr] = {
-    "R_A_x": @symcore.int(0),
-    "R_A_y": @symcore.int(0),
-    "R_B_x": @symcore.int(0),
-    "R_B_y": @symcore.int(0),
+  let reactions : Map[String, Expr] = {
+    "R_A_x": int(0),
+    "R_A_y": int(0),
+    "R_B_x": int(0),
+    "R_B_y": int(0),
   }
   Arch::{
     left_support_: left,
@@ -159,20 +159,20 @@ pub fn arch(
 }
 
 ///|
-fn arch_shape_value(a : Arch, x : @symcore.Expr) -> @symcore.Expr {
-  cm_simplify(a.shape_a_ * ((x - a.crown_x_) ^ @symcore.int(2)) + a.crown_y_)
+fn arch_shape_value(a : Arch, x : Expr) -> Expr {
+  cm_simplify(a.shape_a_ * ((x - a.crown_x_) ^ int(2)) + a.crown_y_)
 }
 
 ///|
-fn arch_shape_slope(a : Arch, x : @symcore.Expr) -> @symcore.Expr {
-  cm_simplify(@symcore.int(2) * a.shape_a_ * (x - a.crown_x_))
+fn arch_shape_slope(a : Arch, x : Expr) -> Expr {
+  cm_simplify(int(2) * a.shape_a_ * (x - a.crown_x_))
 }
 
 ///|
 fn arch_interval_contains(
-  lower : @symcore.Expr,
-  upper : @symcore.Expr,
-  point : @symcore.Expr,
+  lower : Expr,
+  upper : Expr,
+  point : Expr,
 ) -> Bool {
   let lhs_ok = cm_sign_of_difference(lower, point)
     .map(v => v <= 0)
@@ -185,22 +185,22 @@ fn arch_interval_contains(
 
 ///|
 fn arch_load_moment(
-  point_x : @symcore.Expr,
-  point_y : @symcore.Expr,
-  force_x : @symcore.Expr,
-  force_y : @symcore.Expr,
-  ref_x : @symcore.Expr,
-  ref_y : @symcore.Expr,
-) -> @symcore.Expr {
+  point_x : Expr,
+  point_y : Expr,
+  force_x : Expr,
+  force_y : Expr,
+  ref_x : Expr,
+  ref_y : Expr,
+) -> Expr {
   cm_simplify((point_x - ref_x) * force_y - (point_y - ref_y) * force_x)
 }
 
 ///|
 fn arch_partial_distributed_segment(
-  start : @symcore.Expr,
-  end : @symcore.Expr,
-  upto : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr)? {
+  start : Expr,
+  end : Expr,
+  upto : Expr,
+) -> (Expr, Expr)? {
   if !arch_interval_contains(start, end, upto) &&
     cm_sign_of_difference(upto, end).map(v => v > 0).unwrap_or(false) {
     Some((start, end))
@@ -214,14 +214,14 @@ fn arch_partial_distributed_segment(
 ///|
 fn arch_total_force_and_moment(
   arch : Arch,
-  ref_x : @symcore.Expr,
-  ref_y : @symcore.Expr,
-  lower? : @symcore.Expr? = None,
-  upper? : @symcore.Expr? = None,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
-  let mut fx = @symcore.int(0)
-  let mut fy = @symcore.int(0)
-  let mut moment = @symcore.int(0)
+  ref_x : Expr,
+  ref_y : Expr,
+  lower? : Expr? = None,
+  upper? : Expr? = None,
+) -> (Expr, Expr, Expr) {
+  let mut fx = int(0)
+  let mut fy = int(0)
+  let mut moment = int(0)
   for _, item in arch.point_loads_ {
     let x = item[0]
     let y = item[1]
@@ -271,8 +271,8 @@ fn arch_total_force_and_moment(
 ///|
 fn arch_left_force_and_moment_at(
   arch : Arch,
-  pos : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
+  pos : Expr,
+) -> (Expr, Expr, Expr) {
   let y_cut = arch_shape_value(arch, pos)
   let rax = arch.reaction_force_["R_A_x"]
   let ray = arch.reaction_force_["R_A_y"]
@@ -314,14 +314,14 @@ fn arch_left_force_and_moment_at(
 }
 
 ///|
-pub fn Arch::get_shape_eqn(self : Arch) -> @symcore.Expr {
+pub fn Arch::get_shape_eqn(self : Arch) -> Expr {
   arch_shape_value(self, arch_var())
 }
 
 ///|
 pub fn Arch::get_loads(
   self : Arch,
-) -> Map[String, Map[String, Array[@symcore.Expr]]] {
+) -> Map[String, Map[String, Array[Expr]]] {
   { "distributed": self.distributed_loads_, "concentrated": self.point_loads_ }
 }
 
@@ -331,17 +331,17 @@ pub fn Arch::supports(self : Arch) -> Map[String, String] {
 }
 
 ///|
-pub fn Arch::left_support(self : Arch) -> Array[@symcore.Expr] {
+pub fn Arch::left_support(self : Arch) -> Array[Expr] {
   self.left_support_
 }
 
 ///|
-pub fn Arch::right_support(self : Arch) -> Array[@symcore.Expr] {
+pub fn Arch::right_support(self : Arch) -> Array[Expr] {
   self.right_support_
 }
 
 ///|
-pub fn Arch::reaction_force(self : Arch) -> Map[String, @symcore.Expr] {
+pub fn Arch::reaction_force(self : Arch) -> Map[String, Expr] {
   self.reaction_force_
 }
 
@@ -350,10 +350,10 @@ pub fn Arch::apply_load(
   self : Arch,
   order : Int,
   label : String,
-  start : @symcore.Expr,
-  mag : @symcore.Expr,
-  end? : @symcore.Expr? = None,
-  angle? : @symcore.Expr? = None,
+  start : Expr,
+  mag : Expr,
+  end? : Expr? = None,
+  angle? : Expr? = None,
 ) -> Unit raise ArchError {
   guard self.point_loads_.get(label) is None &&
     self.distributed_loads_.get(label) is None else {
@@ -407,8 +407,8 @@ pub fn Arch::remove_load(self : Arch, label : String) -> Unit raise ArchError {
 ///|
 pub fn Arch::change_support_position(
   self : Arch,
-  left_support? : (@symcore.Expr, @symcore.Expr)? = None,
-  right_support? : (@symcore.Expr, @symcore.Expr)? = None,
+  left_support? : (Expr, Expr)? = None,
+  right_support? : (Expr, Expr)? = None,
 ) -> Unit raise ArchError {
   match left_support {
     Some(v) => self.left_support_ = [v.0, v.1]
@@ -431,8 +431,8 @@ pub fn Arch::change_support_position(
 ///|
 pub fn Arch::change_crown_position(
   self : Arch,
-  crown_x? : @symcore.Expr? = None,
-  crown_y? : @symcore.Expr? = None,
+  crown_x? : Expr? = None,
+  crown_y? : Expr? = None,
 ) -> Unit raise ArchError {
   match crown_x {
     Some(v) => self.crown_x_ = v
@@ -478,7 +478,7 @@ pub fn Arch::change_support_type(
 }
 
 ///|
-pub fn Arch::add_member(self : Arch, y : @symcore.Expr) -> Unit raise ArchError {
+pub fn Arch::add_member(self : Arch, y : Expr) -> Unit raise ArchError {
   let min_y = self.left_support_[1]
   let right_y = self.right_support_[1]
   let lower = if cm_sign_of_difference(min_y, right_y)
@@ -495,7 +495,7 @@ pub fn Arch::add_member(self : Arch, y : @symcore.Expr) -> Unit raise ArchError 
     )
   }
   let x_diff = @symelem.sqrt(
-    cm_simplify((y - self.crown_y_) * (self.shape_a_ ^ @symcore.int(-1))),
+    cm_simplify((y - self.crown_y_) * (self.shape_a_ ^ int(-1))),
   )
   self.member_ = Some([
     cm_simplify(self.crown_x_ - x_diff),
@@ -530,8 +530,8 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
   let rbx = cm_symbol("R_B_x")
   let rby = cm_symbol("R_B_y")
   let t = cm_symbol("T")
-  let eqs : Array[@symcore.Expr] = []
-  let unknowns : Array[@symcore.Expr] = []
+  let eqs : Array[Expr] = []
+  let unknowns : Array[Expr] = []
   if self.supports_["left"] == "hinge" && self.supports_["right"] == "hinge" {
     eqs.push(cm_simplify(rax + rbx + net_x))
     eqs.push(cm_simplify(ray + rby + net_y))
@@ -632,22 +632,20 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
   }
   let solution = try cm_linear_solve(eqs, unknowns) catch {
     _ => raise ArchError::SolveError("unable to solve arch reactions")
-  } noraise {
-    result => result
   }
   match solution {
     Some(values) => {
       self.reaction_force_["R_A_x"] = cm_simplify(
-        values.get("R_A_x").unwrap_or(@symcore.int(0)),
+        values.get("R_A_x").unwrap_or(int(0)),
       )
       self.reaction_force_["R_A_y"] = cm_simplify(
-        values.get("R_A_y").unwrap_or(@symcore.int(0)),
+        values.get("R_A_y").unwrap_or(int(0)),
       )
       self.reaction_force_["R_B_x"] = cm_simplify(
-        values.get("R_B_x").unwrap_or(@symcore.int(0)),
+        values.get("R_B_x").unwrap_or(int(0)),
       )
       self.reaction_force_["R_B_y"] = cm_simplify(
-        values.get("R_B_y").unwrap_or(@symcore.int(0)),
+        values.get("R_B_y").unwrap_or(int(0)),
       )
     }
     None => raise ArchError::SolveError("unable to solve arch reactions")
@@ -657,39 +655,39 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
 ///|
 pub fn Arch::bending_moment_at(
   self : Arch,
-  pos? : @symcore.Expr? = None,
-) -> @symcore.Expr raise ArchError {
+  pos? : Expr? = None,
+) -> Expr raise ArchError {
   let x = pos.unwrap_or_else(() => {
     raise ArchError::ValueError("position is required")
   })
   let (_, _, moment) = arch_left_force_and_moment_at(self, x)
-  cm_simplify(@symcore.int(-1) * moment)
+  cm_simplify(int(-1) * moment)
 }
 
 ///|
 pub fn Arch::axial_force_at(
   self : Arch,
-  pos? : @symcore.Expr? = None,
-) -> @symcore.Expr raise ArchError {
+  pos? : Expr? = None,
+) -> Expr raise ArchError {
   let x = pos.unwrap_or_else(() => {
     raise ArchError::ValueError("position is required")
   })
   let (fx, fy, _) = arch_left_force_and_moment_at(self, x)
   let slope = arch_shape_slope(self, x)
-  let denom = @symelem.sqrt(@symcore.int(1) + (slope ^ @symcore.int(2)))
-  cm_simplify((fx + fy * slope) * (denom ^ @symcore.int(-1)))
+  let denom = @symelem.sqrt(int(1) + (slope ^ int(2)))
+  cm_simplify((fx + fy * slope) * (denom ^ int(-1)))
 }
 
 ///|
 pub fn Arch::shear_force_at(
   self : Arch,
-  pos? : @symcore.Expr? = None,
-) -> @symcore.Expr raise ArchError {
+  pos? : Expr? = None,
+) -> Expr raise ArchError {
   let x = pos.unwrap_or_else(() => {
     raise ArchError::ValueError("position is required")
   })
   let (fx, fy, _) = arch_left_force_and_moment_at(self, x)
   let slope = arch_shape_slope(self, x)
-  let denom = @symelem.sqrt(@symcore.int(1) + (slope ^ @symcore.int(2)))
-  cm_simplify((@symcore.int(-1) * fx * slope + fy) * (denom ^ @symcore.int(-1)))
+  let denom = @symelem.sqrt(int(1) + (slope ^ int(2)))
+  cm_simplify((int(-1) * fx * slope + fy) * (denom ^ int(-1)))
 }

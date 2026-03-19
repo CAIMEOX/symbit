@@ -29,14 +29,14 @@ fn setbool_not(a : SetBool) -> SetBool {
 }
 
 ///|
-fn expr_depends_on(expr : @symcore.Expr, name : String) -> Bool {
+fn expr_depends_on(expr : Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(s) => s == name
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(s) => s == name
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(child => expr_depends_on(child, name))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       expr_depends_on(base, name) || expr_depends_on(exp, name)
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       args.any(child => expr_depends_on(child, name))
     _ => false
   }
@@ -261,8 +261,8 @@ fn interval_numeric(
   @symnum.BigRational,
   Bool,
   Bool,
-  @symcore.Expr,
-  @symcore.Expr,
+  Expr,
+  Expr,
 )? {
   match set {
     Set::Interval(left~, right~, left_open~, right_open~) =>
@@ -299,24 +299,24 @@ fn merge_interval_pair(
     @symnum.BigRational,
     Bool,
     Bool,
-    @symcore.Expr,
-    @symcore.Expr,
+    Expr,
+    Expr,
   ),
   b : (
     @symnum.BigRational,
     @symnum.BigRational,
     Bool,
     Bool,
-    @symcore.Expr,
-    @symcore.Expr,
+    Expr,
+    Expr,
   ),
 ) -> (
   @symnum.BigRational,
   @symnum.BigRational,
   Bool,
   Bool,
-  @symcore.Expr,
-  @symcore.Expr,
+  Expr,
+  Expr,
 ) {
   let (al, ar, alo, aro, aleft, aright) = a
   let (bl, br, _blo, bro, _bleft, bright) = b
@@ -348,8 +348,8 @@ fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
       @symnum.BigRational,
       Bool,
       Bool,
-      @symcore.Expr,
-      @symcore.Expr,
+      Expr,
+      Expr,
     ),
   ] = Array::new()
   let others : Array[Set] = Array::new()
@@ -405,7 +405,7 @@ fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
 }
 
 ///|
-fn combine_finite_sets(items : Array[@symcore.Expr]) -> Set {
+fn combine_finite_sets(items : Array[Expr]) -> Set {
   finite_set(items)
 }
 
@@ -416,7 +416,7 @@ pub fn union(args : Array[Set]) -> Set {
   }
   let flat : Array[Set] = Array::new()
   let mut has_universal = false
-  let finite_items : Array[@symcore.Expr] = Array::new()
+  let finite_items : Array[Expr] = Array::new()
   let intervals : Array[Set] = Array::new()
   for set in args {
     match set {
@@ -498,10 +498,10 @@ fn interval_intersection(a : Set, b : Set) -> Set? {
 
 ///|
 fn intersect_finite_sets(
-  a : Array[@symcore.Expr],
-  b : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+  a : Array[Expr],
+  b : Array[Expr],
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for item in a {
     let mut found = false
     for other in b {
@@ -519,10 +519,10 @@ fn intersect_finite_sets(
 
 ///|
 fn filter_finite_by_interval(
-  items : Array[@symcore.Expr],
+  items : Array[Expr],
   interval_set : Set,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for item in items {
     let res = contains(interval_set, item)
     match res {
@@ -563,7 +563,7 @@ pub fn intersection(args : Array[Set]) -> Set {
     return trimmed[0]
   }
   // Handle finite sets
-  let mut finite_items : Array[@symcore.Expr]? = None
+  let mut finite_items : Array[Expr]? = None
   let mut interval_acc : Set? = None
   let rest : Array[Set] = Array::new()
   for set in trimmed {
@@ -669,7 +669,7 @@ pub fn complement(a : Set, b : Set) -> Set {
     (Set::UniversalSet, Set::UniversalSet) => Set::EmptySet
     (x, y) if compare_set(x, y) == 0 => Set::EmptySet
     (Set::FiniteSet(items), Set::FiniteSet(remove)) => {
-      let remaining : Array[@symcore.Expr] = Array::new()
+      let remaining : Array[Expr] = Array::new()
       for item in items {
         let mut found = false
         for r in remove {
@@ -688,7 +688,7 @@ pub fn complement(a : Set, b : Set) -> Set {
       match interval_set {
         Set::Interval(..) => {
           // filter_finite_by_interval keeps contained items; we need complement
-          let out : Array[@symcore.Expr] = Array::new()
+          let out : Array[Expr] = Array::new()
           for item in items {
             let res = contains(interval_set, item)
             match res {
@@ -717,7 +717,7 @@ pub fn complement(a : Set, b : Set) -> Set {
 }
 
 ///|
-fn interval_contains(set : Set, elem : @symcore.Expr) -> SetBool {
+fn interval_contains(set : Set, elem : Expr) -> SetBool {
   match (set, expr_number_value(elem)) {
     (Set::Interval(left~, right~, left_open~, right_open~), Some(value)) =>
       match (expr_number_value(left), expr_number_value(right)) {
@@ -750,8 +750,8 @@ fn interval_contains(set : Set, elem : @symcore.Expr) -> SetBool {
 
 ///|
 fn finite_contains(
-  items : Array[@symcore.Expr],
-  elem : @symcore.Expr,
+  items : Array[Expr],
+  elem : Expr,
 ) -> SetBool {
   for item in items {
     if @symcore.compare_expr(item, elem) == 0 {
@@ -762,7 +762,7 @@ fn finite_contains(
 }
 
 ///|
-fn contains_numerical_set(kind : Set, elem : @symcore.Expr) -> SetBool {
+fn contains_numerical_set(kind : Set, elem : Expr) -> SetBool {
   match expr_number_value(elem) {
     Some(value) => {
       let is_int = value.is_integral()
@@ -790,7 +790,7 @@ fn contains_numerical_set(kind : Set, elem : @symcore.Expr) -> SetBool {
 }
 
 ///|
-pub fn contains(set : Set, elem : @symcore.Expr) -> SetBool {
+pub fn contains(set : Set, elem : Expr) -> SetBool {
   match set {
     Set::EmptySet => SetBool::False
     Set::UniversalSet => SetBool::True
@@ -803,7 +803,7 @@ pub fn contains(set : Set, elem : @symcore.Expr) -> SetBool {
         SetBool::Unknown => SetBool::Unknown
         SetBool::True => {
           let var_name = match symbol {
-            @symcore.Expr::Symbol(name) => name
+            Expr::Symbol(name) => name
             _ => ""
           }
           if var_name == "" {
@@ -817,7 +817,7 @@ pub fn contains(set : Set, elem : @symcore.Expr) -> SetBool {
     }
     Set::ImageSet(symbol~, expr~, base~) => {
       let var_name = match symbol {
-        @symcore.Expr::Symbol(name) => name
+        Expr::Symbol(name) => name
         _ => ""
       }
       if var_name != "" && !expr_depends_on(expr, var_name) {
@@ -834,7 +834,7 @@ pub fn contains(set : Set, elem : @symcore.Expr) -> SetBool {
           if var_name == "" {
             return SetBool::Unknown
           }
-          let env : Map[String, @symcore.Expr] = Map::new()
+          let env : Map[String, Expr] = Map::new()
           for item in items {
             env[var_name] = item
             let mapped = @symcore.subst(expr, env)
@@ -849,7 +849,7 @@ pub fn contains(set : Set, elem : @symcore.Expr) -> SetBool {
     }
     Set::ProductSet(items) =>
       match elem {
-        @symcore.Expr::Function(name, args) if name == "Tuple" => {
+        Expr::Function(name, args) if name == "Tuple" => {
           if args.length() != items.length() {
             return SetBool::False
           }

@@ -178,8 +178,6 @@ fn py_eval_stats(expr : String) -> @py.PyObjectEnum raise {
       py_gil_release(state)
       raise err
     }
-  } noraise {
-    v => v
   }
   py_gil_release(state)
   result
@@ -207,8 +205,6 @@ fn py_eval_stats_silent(expr : String) -> @py.PyObjectEnum? {
       py_gil_release(state)
       return None
     }
-  } noraise {
-    v => v
   }
   py_gil_release(state)
   result

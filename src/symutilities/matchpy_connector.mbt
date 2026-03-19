@@ -30,14 +30,14 @@ pub fn[T] replacement_info(
 
 ///|
 enum WildBinding {
-  Single(@symcore.Expr)
-  Sequence(Array[@symcore.Expr])
+  Single(Expr)
+  Sequence(Array[Expr])
 } derive(Eq)
 
 ///|
 struct ReplacementRule {
-  pattern : @symcore.Expr
-  replacement : @symcore.Expr
+  pattern : Expr
+  replacement : Expr
   info : String?
 } derive(Eq)
 
@@ -59,9 +59,9 @@ fn wildcard_tag(kind : WildcardKind) -> String {
 fn encode_wildcard(
   kind : WildcardKind,
   variable_name : String,
-  optional : @symcore.Expr?,
-) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = [@symcore.symbol(variable_name)]
+  optional : Expr?,
+) -> Expr {
+  let args : Array[Expr] = [symbol(variable_name)]
   match optional {
     Some(value) => args.push(value)
     None => ()
@@ -71,10 +71,10 @@ fn encode_wildcard(
 
 ///|
 fn decode_wildcard(
-  expr : @symcore.Expr,
-) -> (WildcardKind, String, @symcore.Expr?)? {
+  expr : Expr,
+) -> (WildcardKind, String, Expr?)? {
   match expr {
-    @symcore.Expr::Function(name, args) => {
+    Expr::Function(name, args) => {
       let kind = match name {
         "__symutil_wild_dot" => Some(WildcardKind::Dot)
         "__symutil_wild_plus" => Some(WildcardKind::Plus)
@@ -82,9 +82,9 @@ fn decode_wildcard(
         _ => None
       }
       match (kind, args) {
-        (Some(kind), [@symcore.Expr::Symbol(variable_name)]) =>
+        (Some(kind), [Expr::Symbol(variable_name)]) =>
           Some((kind, variable_name, None))
-        (Some(kind), [@symcore.Expr::Symbol(variable_name), optional]) =>
+        (Some(kind), [Expr::Symbol(variable_name), optional]) =>
           Some((kind, variable_name, Some(optional)))
         _ => None
       }
@@ -96,29 +96,29 @@ fn decode_wildcard(
 ///|
 pub fn wild_dot(
   variable_name : String,
-  optional? : @symcore.Expr? = None,
-) -> @symcore.Expr {
+  optional? : Expr? = None,
+) -> Expr {
   encode_wildcard(WildcardKind::Dot, variable_name, optional)
 }
 
 ///|
 pub fn wild_plus(
   variable_name : String,
-  optional? : @symcore.Expr? = None,
-) -> @symcore.Expr {
+  optional? : Expr? = None,
+) -> Expr {
   encode_wildcard(WildcardKind::Plus, variable_name, optional)
 }
 
 ///|
 pub fn wild_star(
   variable_name : String,
-  optional? : @symcore.Expr? = None,
-) -> @symcore.Expr {
+  optional? : Expr? = None,
+) -> Expr {
   encode_wildcard(WildcardKind::Star, variable_name, optional)
 }
 
 ///|
-pub fn get_srepr(expr : @symcore.Expr) -> String {
+pub fn get_srepr(expr : Expr) -> String {
   match decode_wildcard(expr) {
     Some((kind, variable_name, _)) =>
       match kind {
@@ -127,15 +127,15 @@ pub fn get_srepr(expr : @symcore.Expr) -> String {
       }
     None =>
       match expr {
-        @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) =>
+        Expr::Number(_) | Expr::Symbol(_) =>
           @symprint.to_string(expr)
-        @symcore.Expr::Add(args) =>
+        Expr::Add(args) =>
           "Add(" + args.map(get_srepr).join(", ") + ")"
-        @symcore.Expr::Mul(args) =>
+        Expr::Mul(args) =>
           "Mul(" + args.map(get_srepr).join(", ") + ")"
-        @symcore.Expr::Pow(base, exp) =>
+        Expr::Pow(base, exp) =>
           "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
-        @symcore.Expr::Function(name, args) =>
+        Expr::Function(name, args) =>
           name + "(" + args.map(get_srepr).join(", ") + ")"
       }
   }
@@ -159,7 +159,7 @@ fn[K : Eq + Hash, V] map_copy(source : Map[K, V]) -> Map[K, V] {
 fn bind_single(
   bindings : Map[String, WildBinding],
   name : String,
-  value : @symcore.Expr,
+  value : Expr,
 ) -> Map[String, WildBinding]? {
   match bindings.get(name) {
     Some(WildBinding::Single(existing)) =>
@@ -181,7 +181,7 @@ fn bind_single(
 fn bind_sequence(
   bindings : Map[String, WildBinding],
   name : String,
-  values : Array[@symcore.Expr],
+  values : Array[Expr],
 ) -> Map[String, WildBinding]? {
   match bindings.get(name) {
     Some(WildBinding::Sequence(existing)) =>
@@ -193,7 +193,7 @@ fn bind_sequence(
     Some(_) => None
     None => {
       let out = map_copy(bindings)
-      let seq : Array[@symcore.Expr] = []
+      let seq : Array[Expr] = []
       for value in values {
         seq.push(value)
       }
@@ -204,7 +204,7 @@ fn bind_sequence(
 }
 
 ///|
-fn min_required_exprs(patterns : Array[@symcore.Expr], start : Int) -> Int {
+fn min_required_exprs(patterns : Array[Expr], start : Int) -> Int {
   let mut need = 0
   for i in start..<patterns.length() {
     match decode_wildcard(patterns[i]) {
@@ -218,8 +218,8 @@ fn min_required_exprs(patterns : Array[@symcore.Expr], start : Int) -> Int {
 
 ///|
 fn match_expr(
-  pattern : @symcore.Expr,
-  expr : @symcore.Expr,
+  pattern : Expr,
+  expr : Expr,
   bindings : Map[String, WildBinding],
 ) -> Map[String, WildBinding]? {
   match decode_wildcard(pattern) {
@@ -229,29 +229,29 @@ fn match_expr(
       bind_single(bindings, variable_name, expr)
     None =>
       match (pattern, expr) {
-        (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) =>
+        (Expr::Number(a), Expr::Number(b)) =>
           if a == b {
             Some(bindings)
           } else {
             None
           }
-        (@symcore.Expr::Symbol(a), @symcore.Expr::Symbol(b)) =>
+        (Expr::Symbol(a), Expr::Symbol(b)) =>
           if a == b {
             Some(bindings)
           } else {
             None
           }
-        (@symcore.Expr::Add(pa), @symcore.Expr::Add(ea))
-        | (@symcore.Expr::Mul(pa), @symcore.Expr::Mul(ea)) =>
+        (Expr::Add(pa), Expr::Add(ea))
+        | (Expr::Mul(pa), Expr::Mul(ea)) =>
           match_expr_list(pa, ea, 0, 0, bindings)
-        (@symcore.Expr::Pow(pb, pe), @symcore.Expr::Pow(eb, ee)) =>
+        (Expr::Pow(pb, pe), Expr::Pow(eb, ee)) =>
           match match_expr(pb, eb, bindings) {
             Some(next) => match_expr(pe, ee, next)
             None => None
           }
         (
-          @symcore.Expr::Function(pname, pargs),
-          @symcore.Expr::Function(ename, eargs),
+          Expr::Function(pname, pargs),
+          Expr::Function(ename, eargs),
         ) =>
           if pname == ename {
             match_expr_list(pargs, eargs, 0, 0, bindings)
@@ -265,8 +265,8 @@ fn match_expr(
 
 ///|
 fn match_expr_list(
-  patterns : Array[@symcore.Expr],
-  exprs : Array[@symcore.Expr],
+  patterns : Array[Expr],
+  exprs : Array[Expr],
   pidx : Int,
   eidx : Int,
   bindings : Map[String, WildBinding],
@@ -289,7 +289,7 @@ fn match_expr_list(
       }
       let max_len = exprs.length() - eidx - remaining_need
       for count in min_len..<=max_len {
-        let seq : Array[@symcore.Expr] = []
+        let seq : Array[Expr] = []
         for i in 0..<count {
           seq.push(exprs[eidx + i])
         }
@@ -328,7 +328,7 @@ fn match_expr_list(
 
 ///|
 fn resolve_binding(
-  pattern : @symcore.Expr,
+  pattern : Expr,
   bindings : Map[String, WildBinding],
 ) -> WildBinding? {
   match decode_wildcard(pattern) {
@@ -347,10 +347,10 @@ fn resolve_binding(
 
 ///|
 fn substitute_expr_list(
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
   bindings : Map[String, WildBinding],
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for expr in exprs {
     match resolve_binding(expr, bindings) {
       Some(WildBinding::Single(value)) => out.push(value)
@@ -366,29 +366,29 @@ fn substitute_expr_list(
 
 ///|
 fn substitute_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   bindings : Map[String, WildBinding],
-) -> @symcore.Expr {
+) -> Expr {
   match resolve_binding(expr, bindings) {
     Some(WildBinding::Single(value)) => value
     Some(WildBinding::Sequence(values)) =>
       match values.length() {
-        0 => @symcore.int(0)
+        0 => int(0)
         1 => values[0]
         _ => @symcore.add(values)
       }
     None =>
       match expr {
-        @symcore.Expr::Add(args) =>
+        Expr::Add(args) =>
           @symcore.raw_add(substitute_expr_list(args, bindings))
-        @symcore.Expr::Mul(args) =>
+        Expr::Mul(args) =>
           @symcore.raw_mul(substitute_expr_list(args, bindings))
-        @symcore.Expr::Pow(base, exp) =>
+        Expr::Pow(base, exp) =>
           @symcore.pow(
             substitute_expr(base, bindings),
             substitute_expr(exp, bindings),
           )
-        @symcore.Expr::Function(name, args) =>
+        Expr::Function(name, args) =>
           @symcore.function(name, substitute_expr_list(args, bindings))
         _ => expr
       }
@@ -397,9 +397,9 @@ fn substitute_expr(
 
 ///|
 fn apply_rules_at_root(
-  expr : @symcore.Expr,
+  expr : Expr,
   rules : Array[ReplacementRule],
-) -> (@symcore.Expr, String?)? {
+) -> (Expr, String?)? {
   for rule in rules {
     let bindings : Map[String, WildBinding] = {}
     match match_expr(rule.pattern, expr, bindings) {
@@ -413,15 +413,15 @@ fn apply_rules_at_root(
 
 ///|
 fn replace_once(
-  expr : @symcore.Expr,
+  expr : Expr,
   rules : Array[ReplacementRule],
-) -> (@symcore.Expr, Bool, String?) {
+) -> (Expr, Bool, String?) {
   match apply_rules_at_root(expr, rules) {
     Some((replaced, info)) => (replaced, true, info)
     None =>
       match expr {
-        @symcore.Expr::Add(args) => {
-          let rebuilt : Array[@symcore.Expr] = []
+        Expr::Add(args) => {
+          let rebuilt : Array[Expr] = []
           for arg in args {
             let (next, changed, info) = replace_once(arg, rules)
             rebuilt.push(next)
@@ -434,8 +434,8 @@ fn replace_once(
           }
           (expr, false, None)
         }
-        @symcore.Expr::Mul(args) => {
-          let rebuilt : Array[@symcore.Expr] = []
+        Expr::Mul(args) => {
+          let rebuilt : Array[Expr] = []
           for arg in args {
             let (next, changed, info) = replace_once(arg, rules)
             rebuilt.push(next)
@@ -448,7 +448,7 @@ fn replace_once(
           }
           (expr, false, None)
         }
-        @symcore.Expr::Pow(base, exp) => {
+        Expr::Pow(base, exp) => {
           let (base_next, base_changed, base_info) = replace_once(base, rules)
           if base_changed {
             (@symcore.pow(base_next, exp), true, base_info)
@@ -461,8 +461,8 @@ fn replace_once(
             }
           }
         }
-        @symcore.Expr::Function(name, args) => {
-          let rebuilt : Array[@symcore.Expr] = []
+        Expr::Function(name, args) => {
+          let rebuilt : Array[Expr] = []
           for arg in args {
             let (next, changed, info) = replace_once(arg, rules)
             rebuilt.push(next)
@@ -488,8 +488,8 @@ pub fn Replacer::clear(self : Replacer) -> Unit {
 ///|
 pub fn Replacer::add(
   self : Replacer,
-  expr : @symcore.Expr,
-  replacement : @symcore.Expr,
+  expr : Expr,
+  replacement : Expr,
   info? : String? = None,
 ) -> Unit {
   self.rules.val.push({ pattern: expr, replacement, info })
@@ -498,18 +498,18 @@ pub fn Replacer::add(
 ///|
 pub fn Replacer::replace(
   self : Replacer,
-  expression : @symcore.Expr,
+  expression : Expr,
   max_count? : Int = -1,
-) -> @symcore.Expr {
+) -> Expr {
   self.replace_with_info(expression, max_count~).0
 }
 
 ///|
 pub fn Replacer::replace_with_info(
   self : Replacer,
-  expression : @symcore.Expr,
+  expression : Expr,
   max_count? : Int = -1,
-) -> (@symcore.Expr, Array[String]) {
+) -> (Expr, Array[String]) {
   let rules = self.rules.val
   let infos : Array[String] = []
   let mut current = expression

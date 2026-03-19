@@ -343,7 +343,7 @@ fn _sort_factors_multiple(
 }
 
 ///|
-fn infer_gens_expr_local(expr : @symcore.Expr) -> Array[String] {
+fn infer_gens_expr_local(expr : Expr) -> Array[String] {
   let seen : Map[String, Bool] = Map::new()
   collect_symbols_local(expr, seen)
   let names : Array[String] = Array::new()
@@ -356,20 +356,20 @@ fn infer_gens_expr_local(expr : @symcore.Expr) -> Array[String] {
 
 ///|
 fn collect_symbols_local(
-  expr : @symcore.Expr,
+  expr : Expr,
   seen : Map[String, Bool],
 ) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args) | Expr::Mul(args) =>
       for child in args {
         collect_symbols_local(child, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       collect_symbols_local(base, seen)
       collect_symbols_local(exp, seen)
     }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       for child in args {
         collect_symbols_local(child, seen)
       }
@@ -400,7 +400,7 @@ fn dict_repr(entries : Array[(Array[Int], String)]) -> String {
 ///|
 /// Convert an expression into polynomial dict form under chosen generators.
 pub fn dict_from_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   gens? : Array[String] = [],
 ) -> String raise PolyError {
   let gens_list = if gens.is_empty() {

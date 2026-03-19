@@ -60,7 +60,7 @@ pub struct ParseOptions {
 ///|
 pub struct ParseContext {
   callable_names : Array[String]
-  bindings : Map[String, @symcore.Expr]
+  bindings : Map[String, Expr]
 } derive(Eq)
 
 ///|
@@ -83,7 +83,7 @@ pub fn default_parse_context() -> ParseContext {
 ///|
 pub fn parse_context(
   callable_names? : Array[String] = [],
-  bindings? : Map[String, @symcore.Expr] = {},
+  bindings? : Map[String, Expr] = {},
 ) -> ParseContext {
   ParseContext::{ callable_names, bindings }
 }

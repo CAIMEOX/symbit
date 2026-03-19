@@ -4,20 +4,20 @@
 
 ///|
 pub struct WrappingSphere {
-  radius_ : @symcore.Expr
+  radius_ : Expr
   point_ : @symvector.Point
 } derive(Eq)
 
 ///|
 pub struct WrappingCylinder {
-  radius_ : @symcore.Expr
+  radius_ : Expr
   point_ : @symvector.Point
   axis_ : @symvector.Vector
 } derive(Eq)
 
 ///|
 pub struct WrappingCone {
-  alpha_ : @symcore.Expr
+  alpha_ : Expr
   apex_ : @symvector.Point
   axis_ : @symvector.Vector
 } derive(Eq)
@@ -30,32 +30,32 @@ pub enum WrappingGeometryLike {
 } derive(Eq)
 
 ///|
-fn mechanics_eq_expr(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
+fn mechanics_eq_expr(lhs : Expr, rhs : Expr) -> Expr {
   @symcore.function("Eq", [lhs, rhs])
 }
 
 ///|
-fn mechanics_pi_expr() -> @symcore.Expr {
-  @symcore.symbol("pi")
+fn mechanics_pi_expr() -> Expr {
+  symbol("pi")
 }
 
 ///|
-fn mechanics_two_expr() -> @symcore.Expr {
-  @symcore.int(2)
+fn mechanics_two_expr() -> Expr {
+  int(2)
 }
 
 ///|
-fn mechanics_neg_one_expr() -> @symcore.Expr {
-  @symcore.int(-1)
+fn mechanics_neg_one_expr() -> Expr {
+  int(-1)
 }
 
 ///|
-fn mechanics_is_zero(expr : @symcore.Expr) -> Bool {
+fn mechanics_is_zero(expr : Expr) -> Bool {
   mech_expr_is_zero(expr)
 }
 
 ///|
-fn mechanics_is_negative_one(expr : @symcore.Expr) -> Bool {
+fn mechanics_is_negative_one(expr : Expr) -> Bool {
   @symcore.compare_expr(expr, mechanics_neg_one_expr()) == 0
 }
 
@@ -126,10 +126,10 @@ fn mechanics_rational_pow(
 }
 
 ///|
-fn mechanics_try_numeric(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(value) => Some(value)
-    @symcore.Expr::Add(args) => {
+    Expr::Number(value) => Some(value)
+    Expr::Add(args) => {
       let mut acc = @symnum.BigRational::zero()
       for arg in args {
         match mechanics_try_numeric(arg) {
@@ -139,7 +139,7 @@ fn mechanics_try_numeric(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = @symnum.BigRational::one()
       for arg in args {
         match mechanics_try_numeric(arg) {
@@ -149,7 +149,7 @@ fn mechanics_try_numeric(expr : @symcore.Expr) -> @symnum.BigRational? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exponent) =>
+    Expr::Pow(base, exponent) =>
       match (mechanics_try_numeric(base), mechanics_try_numeric(exponent)) {
         (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
           let num = exp_value.numerator()
@@ -168,7 +168,7 @@ fn mechanics_try_numeric(expr : @symcore.Expr) -> @symnum.BigRational? {
         }
         _ => None
       }
-    @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
+    Expr::Function("sqrt", args) if args.length() == 1 =>
       match mechanics_try_numeric(args[0]) {
         Some(value) => mechanics_rational_exact_sqrt(value)
         None => None
@@ -179,9 +179,9 @@ fn mechanics_try_numeric(expr : @symcore.Expr) -> @symnum.BigRational? {
 
 ///|
 fn mechanics_directional_atan(
-  numerator : @symcore.Expr,
-  denominator : @symcore.Expr,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+  numerator : Expr,
+  denominator : Expr,
+) -> Expr raise @symphysics.PhysicsError {
   let numerator = mech_simplify_expr(numerator)
   let denominator = mech_simplify_expr(denominator)
   match (mechanics_try_numeric(numerator), mechanics_try_numeric(denominator)) {
@@ -200,7 +200,7 @@ fn mechanics_directional_atan(
       }
       if num.is_zero() {
         if den.compare(@symnum.BigRational::zero()) >= 0 {
-          return @symcore.int(0)
+          return int(0)
         } else {
           return mechanics_pi_expr()
         }
@@ -220,18 +220,18 @@ fn mechanics_directional_atan(
         max_passes=8,
       )
       match ratio {
-        @symcore.Expr::Function("tan", args) if args.length() == 1 => args[0]
-        @symcore.Expr::Mul(args) if args.length() == 2 &&
+        Expr::Function("tan", args) if args.length() == 1 => args[0]
+        Expr::Mul(args) if args.length() == 2 &&
           mechanics_is_negative_one(args[0]) =>
           match args[1] {
-            @symcore.Expr::Function("tan", inner) if inner.length() == 1 =>
+            Expr::Function("tan", inner) if inner.length() == 1 =>
               mechanics_two_expr() * mechanics_pi_expr() - inner[0]
             _ =>
               raise @symphysics.PhysicsError::ValueError(
                 "unsupported symbolic directional atan ratio",
               )
           }
-        _ if mechanics_is_zero(ratio) => @symcore.int(0)
+        _ if mechanics_is_zero(ratio) => int(0)
         _ =>
           raise @symphysics.PhysicsError::ValueError(
             "unsupported symbolic directional atan ratio",
@@ -243,14 +243,14 @@ fn mechanics_directional_atan(
 
 ///|
 pub fn wrapping_sphere(
-  radius : @symcore.Expr,
+  radius : Expr,
   point : @symvector.Point,
 ) -> WrappingSphere {
   WrappingSphere::{ radius_: radius, point_: point }
 }
 
 ///|
-pub fn WrappingSphere::radius(self : WrappingSphere) -> @symcore.Expr {
+pub fn WrappingSphere::radius(self : WrappingSphere) -> Expr {
   self.radius_
 }
 
@@ -263,7 +263,7 @@ pub fn WrappingSphere::point(self : WrappingSphere) -> @symvector.Point {
 pub fn WrappingSphere::point_on_surface(
   self : WrappingSphere,
   point : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let point_vector = point.pos_from(self.point_)
   let point_radius_squared = try! point_vector.dot(point_vector)
   mechanics_eq_expr(point_radius_squared, self.radius_ ^ mechanics_two_expr())
@@ -274,7 +274,7 @@ pub fn WrappingSphere::geodesic_length(
   self : WrappingSphere,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let point_1_vector = try! point_1.pos_from(self.point_).normalize()
   let point_2_vector = try! point_2.pos_from(self.point_).normalize()
   let central_angle = @symelem.acos(try! point_2_vector.dot(point_1_vector))
@@ -321,7 +321,7 @@ pub fn WrappingSphere::as_geometry(
 
 ///|
 pub fn wrapping_cylinder(
-  radius : @symcore.Expr,
+  radius : Expr,
   point : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCylinder raise @symvector.VectorError {
@@ -333,7 +333,7 @@ pub fn wrapping_cylinder(
 }
 
 ///|
-pub fn WrappingCylinder::radius(self : WrappingCylinder) -> @symcore.Expr {
+pub fn WrappingCylinder::radius(self : WrappingCylinder) -> Expr {
   self.radius_
 }
 
@@ -351,7 +351,7 @@ pub fn WrappingCylinder::axis(self : WrappingCylinder) -> @symvector.Vector {
 pub fn WrappingCylinder::point_on_surface(
   self : WrappingCylinder,
   point : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let relative_position = try! point.pos_from(self.point_)
   let parallel = self.axis_.scale(try! relative_position.dot(self.axis_))
   let point_vector = relative_position - parallel
@@ -367,7 +367,7 @@ pub fn WrappingCylinder::geodesic_length(
   self : WrappingCylinder,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let relative_position = try! point_2.pos_from(point_1)
   let parallel_length = try! relative_position.dot(self.axis_)
 
@@ -468,7 +468,7 @@ pub fn WrappingCylinder::as_geometry(
 
 ///|
 pub fn wrapping_cone(
-  alpha : @symcore.Expr,
+  alpha : Expr,
   apex : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCone raise @symvector.VectorError {
@@ -476,7 +476,7 @@ pub fn wrapping_cone(
 }
 
 ///|
-pub fn WrappingCone::alpha(self : WrappingCone) -> @symcore.Expr {
+pub fn WrappingCone::alpha(self : WrappingCone) -> Expr {
   self.alpha_
 }
 
@@ -499,7 +499,7 @@ pub fn WrappingCone::axis(self : WrappingCone) -> @symvector.Vector {
 pub fn WrappingCone::point_on_surface(
   self : WrappingCone,
   point : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let position = try! point.pos_from(self.apex_)
   let axis_component = self.axis_.scale(try! position.dot(self.axis_))
   let radial_component = position - axis_component
@@ -514,7 +514,7 @@ pub fn WrappingCone::geodesic_length(
   self : WrappingCone,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let pos1 = try! point_1.pos_from(self.apex_)
   let pos2 = try! point_2.pos_from(self.apex_)
   let z1 = try! pos1.dot(self.axis_)
@@ -646,7 +646,7 @@ pub fn WrappingGeometryLike::point(
 pub fn WrappingGeometryLike::point_on_surface(
   self : WrappingGeometryLike,
   point : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   match self {
     WrappingGeometryLike::Sphere(value) => value.point_on_surface(point)
     WrappingGeometryLike::Cylinder(value) => value.point_on_surface(point)
@@ -659,7 +659,7 @@ pub fn WrappingGeometryLike::geodesic_length(
   self : WrappingGeometryLike,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   match self {
     WrappingGeometryLike::Sphere(value) =>
       value.geodesic_length(point_1, point_2)

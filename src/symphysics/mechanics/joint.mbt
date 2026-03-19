@@ -19,8 +19,8 @@ pub struct PinJoint {
   name_ : String
   parent_ : BodyLike
   child_ : BodyLike
-  coordinates_ : Array[@symcore.Expr]
-  speeds_ : Array[@symcore.Expr]
+  coordinates_ : Array[Expr]
+  speeds_ : Array[Expr]
   parent_point_ : @symvector.Point
   child_point_ : @symvector.Point
   parent_interframe_ : @symvector.ReferenceFrame
@@ -28,7 +28,7 @@ pub struct PinJoint {
   parent_frame_ : @symvector.ReferenceFrame
   child_frame_ : @symvector.ReferenceFrame
   joint_axis_ : @symvector.Vector
-  kdes_ : Array[@symcore.Expr]
+  kdes_ : Array[Expr]
 } derive(Eq)
 
 ///|
@@ -36,8 +36,8 @@ pub struct PrismaticJoint {
   name_ : String
   parent_ : BodyLike
   child_ : BodyLike
-  coordinates_ : Array[@symcore.Expr]
-  speeds_ : Array[@symcore.Expr]
+  coordinates_ : Array[Expr]
+  speeds_ : Array[Expr]
   parent_point_ : @symvector.Point
   child_point_ : @symvector.Point
   parent_interframe_ : @symvector.ReferenceFrame
@@ -45,7 +45,7 @@ pub struct PrismaticJoint {
   parent_frame_ : @symvector.ReferenceFrame
   child_frame_ : @symvector.ReferenceFrame
   joint_axis_ : @symvector.Vector
-  kdes_ : Array[@symcore.Expr]
+  kdes_ : Array[Expr]
 } derive(Eq)
 
 ///|
@@ -53,8 +53,8 @@ pub struct CylindricalJoint {
   name_ : String
   parent_ : BodyLike
   child_ : BodyLike
-  coordinates_ : Array[@symcore.Expr]
-  speeds_ : Array[@symcore.Expr]
+  coordinates_ : Array[Expr]
+  speeds_ : Array[Expr]
   parent_point_ : @symvector.Point
   child_point_ : @symvector.Point
   parent_interframe_ : @symvector.ReferenceFrame
@@ -62,7 +62,7 @@ pub struct CylindricalJoint {
   parent_frame_ : @symvector.ReferenceFrame
   child_frame_ : @symvector.ReferenceFrame
   joint_axis_ : @symvector.Vector
-  kdes_ : Array[@symcore.Expr]
+  kdes_ : Array[Expr]
 } derive(Eq)
 
 ///|
@@ -70,8 +70,8 @@ pub struct PlanarJoint {
   name_ : String
   parent_ : BodyLike
   child_ : BodyLike
-  coordinates_ : Array[@symcore.Expr]
-  speeds_ : Array[@symcore.Expr]
+  coordinates_ : Array[Expr]
+  speeds_ : Array[Expr]
   parent_point_ : @symvector.Point
   child_point_ : @symvector.Point
   parent_interframe_ : @symvector.ReferenceFrame
@@ -80,7 +80,7 @@ pub struct PlanarJoint {
   child_frame_ : @symvector.ReferenceFrame
   rotation_axis_ : @symvector.Vector
   planar_vectors_ : Array[@symvector.Vector]
-  kdes_ : Array[@symcore.Expr]
+  kdes_ : Array[Expr]
 } derive(Eq)
 
 ///|
@@ -88,8 +88,8 @@ pub struct SphericalJoint {
   name_ : String
   parent_ : BodyLike
   child_ : BodyLike
-  coordinates_ : Array[@symcore.Expr]
-  speeds_ : Array[@symcore.Expr]
+  coordinates_ : Array[Expr]
+  speeds_ : Array[Expr]
   parent_point_ : @symvector.Point
   child_point_ : @symvector.Point
   parent_interframe_ : @symvector.ReferenceFrame
@@ -98,7 +98,7 @@ pub struct SphericalJoint {
   child_frame_ : @symvector.ReferenceFrame
   rot_type_ : String
   rot_order_ : String
-  kdes_ : Array[@symcore.Expr]
+  kdes_ : Array[Expr]
 } derive(Eq)
 
 ///|
@@ -147,22 +147,22 @@ pub fn joint_interframe_axis(axis : @symvector.Vector) -> JointInterframe {
 }
 
 ///|
-fn joint_default_coordinate(name : String) -> @symcore.Expr {
+fn joint_default_coordinate(name : String) -> Expr {
   @symvector.dynamicsymbol("q_" + name)
 }
 
 ///|
-fn joint_default_speed(name : String) -> @symcore.Expr {
+fn joint_default_speed(name : String) -> Expr {
   @symvector.dynamicsymbol("u_" + name)
 }
 
 ///|
-fn joint_default_coordinate_index(name : String, index : Int) -> @symcore.Expr {
+fn joint_default_coordinate_index(name : String, index : Int) -> Expr {
   @symvector.dynamicsymbol("q" + index.to_string() + "_" + name)
 }
 
 ///|
-fn joint_default_speed_index(name : String, index : Int) -> @symcore.Expr {
+fn joint_default_speed_index(name : String, index : Int) -> Expr {
   @symvector.dynamicsymbol("u" + index.to_string() + "_" + name)
 }
 
@@ -215,10 +215,10 @@ fn joint_locate_interframe(
       let rotation_axis = try! base_x.cross(axis_unit)
       if rotation_axis.is_zero() {
         let dot = try! base_x.dot(axis_unit)
-        if mech_expr_is_zero(dot + @symcore.int(1)) {
-          aligned.orient_axis(frame, frame.y(), @symcore.symbol("pi"))
+        if mech_expr_is_zero(dot + int(1)) {
+          aligned.orient_axis(frame, frame.y(), symbol("pi"))
         } else {
-          aligned.orient_axis(frame, frame.x(), @symcore.int(0))
+          aligned.orient_axis(frame, frame.x(), int(0))
         }
       } else {
         aligned.orient_axis(
@@ -252,10 +252,10 @@ fn joint_resolve_frame(
 
 ///|
 fn joint_kdes(
-  coordinates : Array[@symcore.Expr],
-  speeds : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+  coordinates : Array[Expr],
+  speeds : Array[Expr],
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for i in 0..<coordinates.length() {
     out.push(
       mech_simplify_expr(
@@ -269,8 +269,8 @@ fn joint_kdes(
 
 ///|
 fn joint_qdot_subs(
-  coordinates : Array[@symcore.Expr],
-  speeds : Array[@symcore.Expr],
+  coordinates : Array[Expr],
+  speeds : Array[Expr],
 ) -> Array[Substitution] {
   let out : Array[Substitution] = []
   for i in 0..<coordinates.length() {
@@ -321,8 +321,8 @@ pub fn pin_joint(
   name : String,
   parent : BodyLike,
   child : BodyLike,
-  coordinates? : Array[@symcore.Expr]? = None,
-  speeds? : Array[@symcore.Expr]? = None,
+  coordinates? : Array[Expr]? = None,
+  speeds? : Array[Expr]? = None,
   parent_point? : JointAttachment? = None,
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
@@ -404,17 +404,17 @@ pub fn PinJoint::child(self : PinJoint) -> BodyLike {
 }
 
 ///|
-pub fn PinJoint::coordinates(self : PinJoint) -> Array[@symcore.Expr] {
+pub fn PinJoint::coordinates(self : PinJoint) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn PinJoint::speeds(self : PinJoint) -> Array[@symcore.Expr] {
+pub fn PinJoint::speeds(self : PinJoint) -> Array[Expr] {
   self.speeds_.copy()
 }
 
 ///|
-pub fn PinJoint::kdes(self : PinJoint) -> Array[@symcore.Expr] {
+pub fn PinJoint::kdes(self : PinJoint) -> Array[Expr] {
   self.kdes_.copy()
 }
 
@@ -475,8 +475,8 @@ pub fn prismatic_joint(
   name : String,
   parent : BodyLike,
   child : BodyLike,
-  coordinates? : Array[@symcore.Expr]? = None,
-  speeds? : Array[@symcore.Expr]? = None,
+  coordinates? : Array[Expr]? = None,
+  speeds? : Array[Expr]? = None,
   parent_point? : JointAttachment? = None,
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
@@ -510,7 +510,7 @@ pub fn prismatic_joint(
   resolved_child_interframe.orient_axis(
     resolved_parent_interframe,
     resolved_axis,
-    @symcore.int(0),
+    int(0),
   )
   resolved_child_interframe.set_ang_vel(
     resolved_parent_interframe,
@@ -564,17 +564,17 @@ pub fn PrismaticJoint::child(self : PrismaticJoint) -> BodyLike {
 ///|
 pub fn PrismaticJoint::coordinates(
   self : PrismaticJoint,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn PrismaticJoint::speeds(self : PrismaticJoint) -> Array[@symcore.Expr] {
+pub fn PrismaticJoint::speeds(self : PrismaticJoint) -> Array[Expr] {
   self.speeds_.copy()
 }
 
 ///|
-pub fn PrismaticJoint::kdes(self : PrismaticJoint) -> Array[@symcore.Expr] {
+pub fn PrismaticJoint::kdes(self : PrismaticJoint) -> Array[Expr] {
   self.kdes_.copy()
 }
 
@@ -641,10 +641,10 @@ pub fn cylindrical_joint(
   name : String,
   parent : BodyLike,
   child : BodyLike,
-  rotation_coordinate? : @symcore.Expr? = None,
-  translation_coordinate? : @symcore.Expr? = None,
-  rotation_speed? : @symcore.Expr? = None,
-  translation_speed? : @symcore.Expr? = None,
+  rotation_coordinate? : Expr? = None,
+  translation_coordinate? : Expr? = None,
+  rotation_speed? : Expr? = None,
+  translation_speed? : Expr? = None,
   parent_point? : JointAttachment? = None,
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
@@ -738,19 +738,19 @@ pub fn CylindricalJoint::child(self : CylindricalJoint) -> BodyLike {
 ///|
 pub fn CylindricalJoint::coordinates(
   self : CylindricalJoint,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
 pub fn CylindricalJoint::speeds(
   self : CylindricalJoint,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.speeds_.copy()
 }
 
 ///|
-pub fn CylindricalJoint::kdes(self : CylindricalJoint) -> Array[@symcore.Expr] {
+pub fn CylindricalJoint::kdes(self : CylindricalJoint) -> Array[Expr] {
   self.kdes_.copy()
 }
 
@@ -806,28 +806,28 @@ pub fn CylindricalJoint::joint_axis(
 ///|
 pub fn CylindricalJoint::rotation_coordinate(
   self : CylindricalJoint,
-) -> @symcore.Expr {
+) -> Expr {
   self.coordinates_[0]
 }
 
 ///|
 pub fn CylindricalJoint::translation_coordinate(
   self : CylindricalJoint,
-) -> @symcore.Expr {
+) -> Expr {
   self.coordinates_[1]
 }
 
 ///|
 pub fn CylindricalJoint::rotation_speed(
   self : CylindricalJoint,
-) -> @symcore.Expr {
+) -> Expr {
   self.speeds_[0]
 }
 
 ///|
 pub fn CylindricalJoint::translation_speed(
   self : CylindricalJoint,
-) -> @symcore.Expr {
+) -> Expr {
   self.speeds_[1]
 }
 
@@ -851,10 +851,10 @@ pub fn planar_joint(
   name : String,
   parent : BodyLike,
   child : BodyLike,
-  rotation_coordinate? : @symcore.Expr? = None,
-  planar_coordinates? : Array[@symcore.Expr]? = None,
-  rotation_speed? : @symcore.Expr? = None,
-  planar_speeds? : Array[@symcore.Expr]? = None,
+  rotation_coordinate? : Expr? = None,
+  planar_coordinates? : Array[Expr]? = None,
+  rotation_speed? : Expr? = None,
+  planar_speeds? : Array[Expr]? = None,
   parent_point? : JointAttachment? = None,
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
@@ -960,17 +960,17 @@ pub fn PlanarJoint::child(self : PlanarJoint) -> BodyLike {
 }
 
 ///|
-pub fn PlanarJoint::coordinates(self : PlanarJoint) -> Array[@symcore.Expr] {
+pub fn PlanarJoint::coordinates(self : PlanarJoint) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn PlanarJoint::speeds(self : PlanarJoint) -> Array[@symcore.Expr] {
+pub fn PlanarJoint::speeds(self : PlanarJoint) -> Array[Expr] {
   self.speeds_.copy()
 }
 
 ///|
-pub fn PlanarJoint::kdes(self : PlanarJoint) -> Array[@symcore.Expr] {
+pub fn PlanarJoint::kdes(self : PlanarJoint) -> Array[Expr] {
   self.kdes_.copy()
 }
 
@@ -1013,24 +1013,24 @@ pub fn PlanarJoint::child_frame(
 }
 
 ///|
-pub fn PlanarJoint::rotation_coordinate(self : PlanarJoint) -> @symcore.Expr {
+pub fn PlanarJoint::rotation_coordinate(self : PlanarJoint) -> Expr {
   self.coordinates_[0]
 }
 
 ///|
 pub fn PlanarJoint::planar_coordinates(
   self : PlanarJoint,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   [self.coordinates_[1], self.coordinates_[2]]
 }
 
 ///|
-pub fn PlanarJoint::rotation_speed(self : PlanarJoint) -> @symcore.Expr {
+pub fn PlanarJoint::rotation_speed(self : PlanarJoint) -> Expr {
   self.speeds_[0]
 }
 
 ///|
-pub fn PlanarJoint::planar_speeds(self : PlanarJoint) -> Array[@symcore.Expr] {
+pub fn PlanarJoint::planar_speeds(self : PlanarJoint) -> Array[Expr] {
   [self.speeds_[1], self.speeds_[2]]
 }
 
@@ -1066,8 +1066,8 @@ pub fn spherical_joint(
   name : String,
   parent : BodyLike,
   child : BodyLike,
-  coordinates? : Array[@symcore.Expr]? = None,
-  speeds? : Array[@symcore.Expr]? = None,
+  coordinates? : Array[Expr]? = None,
+  speeds? : Array[Expr]? = None,
   parent_point? : JointAttachment? = None,
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
@@ -1168,17 +1168,17 @@ pub fn SphericalJoint::child(self : SphericalJoint) -> BodyLike {
 ///|
 pub fn SphericalJoint::coordinates(
   self : SphericalJoint,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn SphericalJoint::speeds(self : SphericalJoint) -> Array[@symcore.Expr] {
+pub fn SphericalJoint::speeds(self : SphericalJoint) -> Array[Expr] {
   self.speeds_.copy()
 }
 
 ///|
-pub fn SphericalJoint::kdes(self : SphericalJoint) -> Array[@symcore.Expr] {
+pub fn SphericalJoint::kdes(self : SphericalJoint) -> Array[Expr] {
   self.kdes_.copy()
 }
 
@@ -1266,7 +1266,7 @@ pub fn weld_joint(
   resolved_child_interframe.orient_axis(
     resolved_parent_interframe,
     resolved_parent_interframe.x(),
-    @symcore.int(0),
+    int(0),
   )
   resolved_child_interframe.set_ang_vel(
     resolved_parent_interframe,
@@ -1309,17 +1309,17 @@ pub fn WeldJoint::child(self : WeldJoint) -> BodyLike {
 }
 
 ///|
-pub fn WeldJoint::coordinates(_self : WeldJoint) -> Array[@symcore.Expr] {
+pub fn WeldJoint::coordinates(_self : WeldJoint) -> Array[Expr] {
   []
 }
 
 ///|
-pub fn WeldJoint::speeds(_self : WeldJoint) -> Array[@symcore.Expr] {
+pub fn WeldJoint::speeds(_self : WeldJoint) -> Array[Expr] {
   []
 }
 
 ///|
-pub fn WeldJoint::kdes(_self : WeldJoint) -> Array[@symcore.Expr] {
+pub fn WeldJoint::kdes(_self : WeldJoint) -> Array[Expr] {
   []
 }
 
@@ -1409,7 +1409,7 @@ pub fn JointLike::child(self : JointLike) -> BodyLike {
 }
 
 ///|
-pub fn JointLike::coordinates(self : JointLike) -> Array[@symcore.Expr] {
+pub fn JointLike::coordinates(self : JointLike) -> Array[Expr] {
   match self {
     JointLike::Pin(value) => value.coordinates()
     JointLike::Prismatic(value) => value.coordinates()
@@ -1421,7 +1421,7 @@ pub fn JointLike::coordinates(self : JointLike) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn JointLike::speeds(self : JointLike) -> Array[@symcore.Expr] {
+pub fn JointLike::speeds(self : JointLike) -> Array[Expr] {
   match self {
     JointLike::Pin(value) => value.speeds()
     JointLike::Prismatic(value) => value.speeds()
@@ -1433,7 +1433,7 @@ pub fn JointLike::speeds(self : JointLike) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn JointLike::kdes(self : JointLike) -> Array[@symcore.Expr] {
+pub fn JointLike::kdes(self : JointLike) -> Array[Expr] {
   match self {
     JointLike::Pin(value) => value.kdes()
     JointLike::Prismatic(value) => value.kdes()

@@ -11,11 +11,11 @@ pub(all) enum Domain {
   Frac(Domain) // fraction field over an integral domain
   PolyRing(Domain, Array[String]) // K[x1, ..., xn]
   RationalFunctionField(Domain, Array[String]) // K(x1, ..., xn)
-  QuotientRing(Domain, Array[String], Array[@symcore.Expr]) // K[x]/I
+  QuotientRing(Domain, Array[String], Array[Expr]) // K[x]/I
   PowerSeries(Domain, Array[String], Int) // K[[x1, ..., xn]] with optional precision hint
   GF(Int) // prime modulus
   GFExt(Int, Int, Array[Int]) // GF(p^k) with modulus polynomial coefficients (lowest degree first)
-  AlgExt(Domain, Array[String], Array[@symcore.Expr]) // algebraic extension over base with generators/relations
+  AlgExt(Domain, Array[String], Array[Expr]) // algebraic extension over base with generators/relations
 }
 
 ///|

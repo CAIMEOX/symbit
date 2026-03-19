@@ -2,15 +2,15 @@
 /// Shared helpers for elementary functions.
 
 ///|
-fn num_value(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn num_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Expr::Number(n) => Some(n)
     _ => None
   }
 }
 
 ///|
-fn is_zero_expr(expr : @symcore.Expr) -> Bool {
+fn is_zero_expr(expr : Expr) -> Bool {
   match num_value(expr) {
     Some(n) => n.is_zero()
     None => false
@@ -18,7 +18,7 @@ fn is_zero_expr(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn is_one_expr(expr : @symcore.Expr) -> Bool {
+fn is_one_expr(expr : Expr) -> Bool {
   match num_value(expr) {
     Some(n) => n.is_one()
     None => false
@@ -26,7 +26,7 @@ fn is_one_expr(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn is_integral_expr(expr : @symcore.Expr) -> Bool {
+fn is_integral_expr(expr : Expr) -> Bool {
   match num_value(expr) {
     Some(n) => n.is_integral()
     None => false

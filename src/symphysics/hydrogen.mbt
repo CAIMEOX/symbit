@@ -3,56 +3,56 @@
 
 ///|
 pub fn hydrogen_r_nl(
-  n : @symcore.Expr,
-  l : @symcore.Expr,
-  r : @symcore.Expr,
-  z? : @symcore.Expr = @symcore.int(1),
-) -> @symcore.Expr {
-  let n_r = n - l - @symcore.int(1)
-  let r0 = expr_div(@symcore.int(2) * z * r, n)
+  n : Expr,
+  l : Expr,
+  r : Expr,
+  z? : Expr = int(1),
+) -> Expr {
+  let n_r = n - l - int(1)
+  let r0 = expr_div(int(2) * z * r, n)
   let coeff = @symelem.sqrt(
     expr_div(
-      (expr_div(@symcore.int(2) * z, n) ^ @symcore.int(3)) *
+      (expr_div(int(2) * z, n) ^ int(3)) *
       @symcomb.factorial(n_r),
-      @symcore.int(2) * n * @symcomb.factorial(n + l),
+      int(2) * n * @symcomb.factorial(n + l),
     ),
   )
   coeff *
   (r0 ^ l) *
-  @symspec.assoc_laguerre(n_r, @symcore.int(2) * l + @symcore.int(1), r0) *
-  @symelem.exp(@symcore.int(-1) * r0 * rational_expr(1, 2))
+  @symspec.assoc_laguerre(n_r, int(2) * l + int(1), r0) *
+  @symelem.exp(int(-1) * r0 * rational_expr(1, 2))
 }
 
 ///|
 pub fn hydrogen_y_lm(
-  l : @symcore.Expr,
-  m : @symcore.Expr,
-  phi : @symcore.Expr,
-  theta : @symcore.Expr,
-) -> @symcore.Expr {
+  l : Expr,
+  m : Expr,
+  phi : Expr,
+  theta : Expr,
+) -> Expr {
   @symspec.ynm(l, m, theta, phi)
 }
 
 ///|
 pub fn hydrogen_z_lm(
-  l : @symcore.Expr,
-  m : @symcore.Expr,
-  phi : @symcore.Expr,
-  theta : @symcore.Expr,
-) -> @symcore.Expr {
+  l : Expr,
+  m : Expr,
+  phi : Expr,
+  theta : Expr,
+) -> Expr {
   @symspec.znm(l, m, theta, phi)
 }
 
 ///|
 pub fn hydrogen_psi_nlm(
-  n : @symcore.Expr,
-  l : @symcore.Expr,
-  m : @symcore.Expr,
-  r : @symcore.Expr,
-  phi : @symcore.Expr,
-  theta : @symcore.Expr,
-  z? : @symcore.Expr = @symcore.int(1),
-) -> @symcore.Expr raise PhysicsError {
+  n : Expr,
+  l : Expr,
+  m : Expr,
+  r : Expr,
+  phi : Expr,
+  theta : Expr,
+  z? : Expr = int(1),
+) -> Expr raise PhysicsError {
   match expr_integer_value(n) {
     Some(ni) if ni < 1 =>
       raise PhysicsError::ValueError("'n' must be positive integer")
@@ -73,20 +73,20 @@ pub fn hydrogen_psi_nlm(
 
 ///|
 pub fn hydrogen_e_nl(
-  n : @symcore.Expr,
-  z? : @symcore.Expr = @symcore.int(1),
-) -> @symcore.Expr raise PhysicsError {
+  n : Expr,
+  z? : Expr = int(1),
+) -> Expr raise PhysicsError {
   match expr_integer_value(n) {
     Some(ni) if ni < 1 =>
       raise PhysicsError::ValueError("'n' must be positive integer")
     _ => ()
   }
-  @symcore.int(-1) *
-  expr_div(z ^ @symcore.int(2), @symcore.int(2) * (n ^ @symcore.int(2)))
+  int(-1) *
+  expr_div(z ^ int(2), int(2) * (n ^ int(2)))
 }
 
 ///|
-fn hydrogen_dirac_default_c() -> @symcore.Expr {
+fn hydrogen_dirac_default_c() -> Expr {
   @symcore.number(
     try! @symnum.BigRational::new(
       @bigint.BigInt::from_string("137035999037"),
@@ -97,12 +97,12 @@ fn hydrogen_dirac_default_c() -> @symcore.Expr {
 
 ///|
 pub fn hydrogen_e_nl_dirac(
-  n : @symcore.Expr,
-  l : @symcore.Expr,
+  n : Expr,
+  l : Expr,
   spin_up? : Bool = true,
-  z? : @symcore.Expr = @symcore.int(1),
-  c? : @symcore.Expr = hydrogen_dirac_default_c(),
-) -> @symcore.Expr raise PhysicsError {
+  z? : Expr = int(1),
+  c? : Expr = hydrogen_dirac_default_c(),
+) -> Expr raise PhysicsError {
   match expr_integer_value(l) {
     Some(li) if li < 0 =>
       raise PhysicsError::ValueError("'l' must be positive or zero")
@@ -119,21 +119,21 @@ pub fn hydrogen_e_nl_dirac(
     _ => ()
   }
   let skappa = if spin_up {
-    @symcore.int(-1) * l - @symcore.int(1)
+    int(-1) * l - int(1)
   } else {
-    @symcore.int(-1) * l
+    int(-1) * l
   }
-  let c2 = c ^ @symcore.int(2)
+  let c2 = c ^ int(2)
   let beta = @symelem.sqrt(
-    (skappa ^ @symcore.int(2)) - expr_div(z ^ @symcore.int(2), c2),
+    (skappa ^ int(2)) - expr_div(z ^ int(2), c2),
   )
   expr_div(
     c2,
     @symelem.sqrt(
-      @symcore.int(1) +
+      int(1) +
       expr_div(
-        z ^ @symcore.int(2),
-        ((n + skappa + beta) ^ @symcore.int(2)) * c2,
+        z ^ int(2),
+        ((n + skappa + beta) ^ int(2)) * c2,
       ),
     ),
   ) -

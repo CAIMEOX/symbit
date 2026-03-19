@@ -2,35 +2,35 @@
 /// Zeta and polylogarithmic special functions.
 
 ///|
-pub fn zeta(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn zeta(expr : Expr) -> Expr {
   @symcore.function("zeta", [expr])
 }
 
 ///|
-pub fn dirichlet_eta(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn dirichlet_eta(expr : Expr) -> Expr {
   @symcore.function("dirichlet_eta", [expr])
 }
 
 ///|
 pub fn lerchphi(
-  z : @symcore.Expr,
-  s : @symcore.Expr,
-  a : @symcore.Expr,
-) -> @symcore.Expr {
+  z : Expr,
+  s : Expr,
+  a : Expr,
+) -> Expr {
   @symcore.function("lerchphi", [z, s, a])
 }
 
 ///|
-pub fn polylog(s : @symcore.Expr, z : @symcore.Expr) -> @symcore.Expr {
+pub fn polylog(s : Expr, z : Expr) -> Expr {
   @symcore.function("polylog", [s, z])
 }
 
 ///|
-pub fn stieltjes(n : @symcore.Expr) -> @symcore.Expr {
+pub fn stieltjes(n : Expr) -> Expr {
   @symcore.function("stieltjes", [n])
 }
 
 ///|
-pub fn riemann_xi(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn riemann_xi(expr : Expr) -> Expr {
   @symcore.function("riemann_xi", [expr])
 }

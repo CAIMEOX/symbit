@@ -2,8 +2,8 @@
 /// Find the unique symbol named `x` inside `equation`.
 pub fn find(
   x : String,
-  equation : @symcore.Expr,
-) -> @symcore.Expr raise GeometryError {
+  equation : Expr,
+) -> Expr raise GeometryError {
   let seen : Map[String, Bool] = {}
   geo_collect_symbols(equation, seen)
   let matches : Array[String] = []
@@ -15,7 +15,7 @@ pub fn find(
   if matches.is_empty() {
     raise GeometryError::ValueError("could not find " + x)
   }
-  @symcore.symbol(matches[0])
+  symbol(matches[0])
 }
 
 ///|
@@ -140,7 +140,7 @@ fn hull_orientation(
   p : Point,
   q : Point,
   r : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   geo_cross2(
     geo_sub_coords(q.with_dim(2).coords_, p.with_dim(2).coords_),
     geo_sub_coords(r.with_dim(2).coords_, p.with_dim(2).coords_),
@@ -271,7 +271,7 @@ pub fn closest_points(
       "closest_points requires at least two distinct points",
     )
   }
-  let mut best : @symcore.Expr? = None
+  let mut best : Expr? = None
   let out : Array[(Point, Point)] = []
   for i in 0..<unique.length() {
     for j in (i + 1)..<unique.length() {
@@ -321,7 +321,7 @@ pub fn farthest_points(
       "farthest_points requires at least two distinct points",
     )
   }
-  let mut best : @symcore.Expr? = None
+  let mut best : Expr? = None
   let out : Array[(Point, Point)] = []
   for i in 0..<unique.length() {
     for j in (i + 1)..<unique.length() {

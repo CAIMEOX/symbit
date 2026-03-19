@@ -4,7 +4,7 @@
 
 ///|
 pub struct Dimension {
-  name : @symcore.Expr
+  name : Expr
   symbol : String?
 } derive(Eq)
 
@@ -20,12 +20,12 @@ pub fn Dimension::mul(self : Dimension, other : Dimension) -> Dimension {
 
 ///|
 pub fn Dimension::div(self : Dimension, other : Dimension) -> Dimension {
-  Dimension::{ name: self.name * (other.name ^ @symcore.int(-1)), symbol: None }
+  Dimension::{ name: self.name * (other.name ^ int(-1)), symbol: None }
 }
 
 ///|
 pub fn Dimension::pow(self : Dimension, exp : Int) -> Dimension {
-  Dimension::{ name: self.name ^ @symcore.int(exp), symbol: None }
+  Dimension::{ name: self.name ^ int(exp), symbol: None }
 }
 
 ///|
@@ -44,7 +44,7 @@ pub struct Quantity {
   name : String
   abbrev : String
   dimension : Dimension
-  scale_factor : @symcore.Expr
+  scale_factor : Expr
   is_prefixed : Bool
 } derive(Eq)
 
@@ -53,21 +53,21 @@ pub fn quantity(
   name : String,
   abbrev? : String = "",
   dimension? : Dimension = dimension("dimensionless"),
-  scale_factor? : @symcore.Expr = @symcore.int(1),
+  scale_factor? : Expr = int(1),
   is_prefixed? : Bool = false,
 ) -> Quantity {
   Quantity::{ name, abbrev, dimension, scale_factor, is_prefixed }
 }
 
 ///|
-pub fn Quantity::symbol_expr(self : Quantity) -> @symcore.Expr {
-  @symcore.symbol(self.name)
+pub fn Quantity::symbol_expr(self : Quantity) -> Expr {
+  symbol(self.name)
 }
 
 ///|
 pub fn Quantity::with_scale(
   self : Quantity,
-  scale_factor : @symcore.Expr,
+  scale_factor : Expr,
 ) -> Quantity {
   Quantity::{ ..self, scale_factor, }
 }
@@ -84,7 +84,7 @@ pub struct Prefix {
 ///|
 pub enum PrefixValue {
   Prefix(Prefix)
-  Expr(@symcore.Expr)
+  Expr(Expr)
 } derive(Eq)
 
 ///|
@@ -98,7 +98,7 @@ fn int_pow(base : Int, exp : Int) -> BigInt {
 }
 
 ///|
-fn prefix_scale_factor_expr(base : Int, exponent : Int) -> @symcore.Expr {
+fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
   if exponent >= 0 {
     @symcore.number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
@@ -112,13 +112,13 @@ fn prefix_scale_factor_expr(base : Int, exponent : Int) -> @symcore.Expr {
 }
 
 ///|
-fn expr_inverse(expr : @symcore.Expr) -> @symcore.Expr {
+fn expr_inverse(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       @symcore.number(
         try! @symnum.BigRational::new(n.denominator(), n.numerator()),
       )
-    _ => expr ^ @symcore.int(-1)
+    _ => expr ^ int(-1)
   }
 }
 
@@ -134,15 +134,15 @@ pub fn prefix(
 }
 
 ///|
-pub fn Prefix::scale_factor(self : Prefix) -> @symcore.Expr {
+pub fn Prefix::scale_factor(self : Prefix) -> Expr {
   prefix_scale_factor_expr(self.base, self.exponent)
 }
 
 ///|
 pub fn Prefix::mul_prefix(self : Prefix, other : Prefix) -> PrefixValue {
   let factor = self.scale_factor() * other.scale_factor()
-  if factor == @symcore.int(1) {
-    return PrefixValue::Expr(@symcore.int(1))
+  if factor == int(1) {
+    return PrefixValue::Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
@@ -155,8 +155,8 @@ pub fn Prefix::mul_prefix(self : Prefix, other : Prefix) -> PrefixValue {
 ///|
 pub fn Prefix::div_prefix(self : Prefix, other : Prefix) -> PrefixValue {
   let factor = self.scale_factor() * expr_inverse(other.scale_factor())
-  if factor == @symcore.int(1) {
-    return PrefixValue::Expr(@symcore.int(1))
+  if factor == int(1) {
+    return PrefixValue::Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
@@ -169,8 +169,8 @@ pub fn Prefix::div_prefix(self : Prefix, other : Prefix) -> PrefixValue {
 ///|
 pub fn Prefix::rdiv_one(self : Prefix) -> PrefixValue {
   let factor = expr_inverse(self.scale_factor())
-  if factor == @symcore.int(1) {
-    return PrefixValue::Expr(@symcore.int(1))
+  if factor == int(1) {
+    return PrefixValue::Expr(int(1))
   }
   for item in known_prefixes() {
     if item.scale_factor() == factor {
@@ -181,12 +181,12 @@ pub fn Prefix::rdiv_one(self : Prefix) -> PrefixValue {
 }
 
 ///|
-pub fn Prefix::mul_quantity(self : Prefix, other : Quantity) -> @symcore.Expr {
+pub fn Prefix::mul_quantity(self : Prefix, other : Quantity) -> Expr {
   self.scale_factor() * other.symbol_expr()
 }
 
 ///|
-pub fn Prefix::div_quantity(self : Prefix, other : Quantity) -> @symcore.Expr {
+pub fn Prefix::div_quantity(self : Prefix, other : Quantity) -> Expr {
   self.scale_factor() * expr_inverse(other.symbol_expr())
 }
 
@@ -369,30 +369,30 @@ pub let bin_prefixes : Map[String, Prefix] = {
 }
 
 ///|
-pub let speed_of_light : @symcore.Expr = @symcore.int(299792458) *
+pub let speed_of_light : Expr = int(299792458) *
   meter.symbol_expr() *
-  (second.symbol_expr() ^ @symcore.int(-1))
+  (second.symbol_expr() ^ int(-1))
 
 ///|
-pub let e0 : @symcore.Expr = @symcore.number(
+pub let e0 : Expr = @symcore.number(
     try! @symnum.BigRational::new(
       BigInt::from_int(625000),
       BigInt::from_string("22468879468420441"),
     ),
   ) *
-  (ampere.symbol_expr() ^ @symcore.int(2)) *
-  (second.symbol_expr() ^ @symcore.int(4)) *
-  (pi_expr() ^ @symcore.int(-1)) *
-  (kilogram.symbol_expr() ^ @symcore.int(-1)) *
-  (meter.symbol_expr() ^ @symcore.int(-3))
+  (ampere.symbol_expr() ^ int(2)) *
+  (second.symbol_expr() ^ int(4)) *
+  (pi_expr() ^ int(-1)) *
+  (kilogram.symbol_expr() ^ int(-1)) *
+  (meter.symbol_expr() ^ int(-3))
 
 ///|
-pub let u0 : @symcore.Expr = pi_expr() *
+pub let u0 : Expr = pi_expr() *
   (try! @symcore.rational_from_ints(1, 2500000)) *
   kilogram.symbol_expr() *
   meter.symbol_expr() *
-  (ampere.symbol_expr() ^ @symcore.int(-2)) *
-  (second.symbol_expr() ^ @symcore.int(-2))
+  (ampere.symbol_expr() ^ int(-2)) *
+  (second.symbol_expr() ^ int(-2))
 
 ///|
 fn known_prefixes() -> Array[Prefix] {

@@ -1,16 +1,16 @@
 ///|
 /// Simplifies the given expression.
 pub fn simplify(
-  expr : @symcore.Expr,
+  expr : Expr,
   plan? : SimplifyPlan = SimplifyPlan::Default,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   simplify_with_patterns(expr, plan_patterns(plan), max_passes~)
 }
 
 ///|
 /// Reduce expression by combining powers with similar bases and exponents.
-pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
+pub fn powsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
     [
@@ -25,7 +25,7 @@ pub fn powsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 
 ///|
 /// Return a reduced expression by using known trig identities.
-pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
+pub fn trigsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
     [
@@ -40,7 +40,7 @@ pub fn trigsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 
 ///|
 /// Normalize signs in sums/products by pulling minus factors to canonical form.
-pub fn signsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
+pub fn signsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   simplify_with_patterns(
     expr,
     [
@@ -55,10 +55,10 @@ pub fn signsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
 ///|
 /// Run pattern-driven simplify passes.
 pub fn simplify_with_patterns(
-  expr : @symcore.Expr,
+  expr : Expr,
   patterns : Array[SimplifyPattern],
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   let passes = if max_passes <= 0 { 1 } else { max_passes }
   let mut cur = expr
   for _ in 0..<passes {
@@ -74,9 +74,9 @@ pub fn simplify_with_patterns(
 ///|
 /// Apply each simplify pattern once over the expression tree.
 pub fn apply_patterns_once(
-  expr : @symcore.Expr,
+  expr : Expr,
   patterns : Array[SimplifyPattern],
-) -> @symcore.Expr {
+) -> Expr {
   let mut cur = expr
   for pattern in patterns {
     cur = rewrite_bottom_up(cur, pattern)
@@ -86,9 +86,9 @@ pub fn apply_patterns_once(
 
 ///|
 fn rewrite_bottom_up(
-  expr : @symcore.Expr,
+  expr : Expr,
   pattern : SimplifyPattern,
-) -> @symcore.Expr {
+) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up(child, pattern)
   })
@@ -99,8 +99,8 @@ fn rewrite_bottom_up(
 /// Apply one simplify pattern at the current node.
 pub fn apply_pattern(
   pattern : SimplifyPattern,
-  expr : @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+) -> Expr {
   match pattern {
     SimplifyPattern::FoldConstants => fold_constants(expr)
     SimplifyPattern::AddLikeTerms => add_like_terms(expr)
@@ -112,25 +112,25 @@ pub fn apply_pattern(
 }
 
 ///|
-fn fold_constants(expr : @symcore.Expr) -> @symcore.Expr {
+fn fold_constants(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => @symcore.add(args)
-    @symcore.Expr::Mul(args) => @symcore.mul(args)
-    @symcore.Expr::Pow(base, exp) => @symcore.pow(base, exp)
+    Expr::Add(args) => @symcore.add(args)
+    Expr::Mul(args) => @symcore.mul(args)
+    Expr::Pow(base, exp) => @symcore.pow(base, exp)
     _ => expr
   }
 }
 
 ///|
 priv struct AddTerm {
-  base : @symcore.Expr
+  base : Expr
   coeff : @symnum.BigRational
 }
 
 ///|
-fn add_like_terms(expr : @symcore.Expr) -> @symcore.Expr {
+fn add_like_terms(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let minus_one = @symnum.BigRational::from_int(-1)
       let mut const_term = @symnum.BigRational::zero()
       let terms : Map[String, AddTerm] = {}
@@ -151,7 +151,7 @@ fn add_like_terms(expr : @symcore.Expr) -> @symcore.Expr {
           }
         }
       }
-      let out : Array[@symcore.Expr] = Array::new()
+      let out : Array[Expr] = Array::new()
       for _, acc in terms {
         if acc.coeff.is_zero() {
           continue
@@ -159,7 +159,7 @@ fn add_like_terms(expr : @symcore.Expr) -> @symcore.Expr {
         if acc.coeff.is_one() {
           out.push(acc.base)
         } else if acc.coeff.compare(minus_one) == 0 {
-          out.push(@symcore.mul([@symcore.int(-1), acc.base]))
+          out.push(@symcore.mul([int(-1), acc.base]))
         } else {
           out.push(@symcore.mul([@symcore.number(acc.coeff), acc.base]))
         }
@@ -175,16 +175,16 @@ fn add_like_terms(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn split_add_term(
-  term : @symcore.Expr,
-) -> (@symnum.BigRational, @symcore.Expr?) {
+  term : Expr,
+) -> (@symnum.BigRational, Expr?) {
   match term {
-    @symcore.Expr::Number(n) => (n, None)
-    @symcore.Expr::Mul(args) => {
+    Expr::Number(n) => (n, None)
+    Expr::Mul(args) => {
       let mut coeff = @symnum.BigRational::one()
-      let factors : Array[@symcore.Expr] = Array::new()
+      let factors : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) => coeff = coeff.mul_r(n)
+          Expr::Number(n) => coeff = coeff.mul_r(n)
           _ => factors.push(arg)
         }
       }
@@ -202,20 +202,20 @@ fn split_add_term(
 
 ///|
 priv struct BasePow {
-  base : @symcore.Expr
+  base : Expr
   exp : @symnum.BigRational
 }
 
 ///|
-fn mul_like_bases(expr : @symcore.Expr) -> @symcore.Expr {
+fn mul_like_bases(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut const_factor = @symnum.BigRational::one()
       let powers : Map[String, BasePow] = {}
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) => const_factor = const_factor.mul_r(n)
-          @symcore.Expr::Pow(base, @symcore.Expr::Number(exp)) => {
+          Expr::Number(n) => const_factor = const_factor.mul_r(n)
+          Expr::Pow(base, Expr::Number(exp)) => {
             let key = @symprint.debug_repr(base)
             match powers.get(key) {
               Some(acc) =>
@@ -244,9 +244,9 @@ fn mul_like_bases(expr : @symcore.Expr) -> @symcore.Expr {
         }
       }
       if const_factor.is_zero() {
-        return @symcore.int(0)
+        return int(0)
       }
-      let factors : Array[@symcore.Expr] = Array::new()
+      let factors : Array[Expr] = Array::new()
       for _, acc in powers {
         if acc.exp.is_zero() {
           continue
@@ -267,13 +267,13 @@ fn mul_like_bases(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn pow_denest(expr : @symcore.Expr) -> @symcore.Expr {
+fn pow_denest(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Pow(
-      @symcore.Expr::Pow(base, @symcore.Expr::Number(a)),
-      @symcore.Expr::Number(b)
+    Expr::Pow(
+      Expr::Pow(base, Expr::Number(a)),
+      Expr::Number(b)
     ) => @symcore.pow(base, @symcore.number(a.mul_r(b)))
-    @symcore.Expr::Pow(@symcore.Expr::Number(base), @symcore.Expr::Number(exp)) =>
+    Expr::Pow(Expr::Number(base), Expr::Number(exp)) =>
       match eval_numeric_pow(base, exp) {
         Some(v) => @symcore.number(v)
         None => expr
@@ -307,25 +307,25 @@ fn eval_numeric_pow(
 }
 
 ///|
-fn function_identities(expr : @symcore.Expr) -> @symcore.Expr {
+fn function_identities(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, [arg]) =>
+    Expr::Function(name, [arg]) =>
       match (name, arg) {
-        ("sin", @symcore.Expr::Number(n)) if n.is_zero() => @symcore.int(0)
-        ("cos", @symcore.Expr::Number(n)) if n.is_zero() => @symcore.int(1)
-        ("tan", @symcore.Expr::Number(n)) if n.is_zero() => @symcore.int(0)
-        ("exp", @symcore.Expr::Number(n)) if n.is_zero() => @symcore.int(1)
-        ("log", @symcore.Expr::Number(n)) if n.is_one() => @symcore.int(0)
-        ("log", @symcore.Expr::Symbol(name)) if name == "E" => @symcore.int(1)
-        ("sqrt", @symcore.Expr::Number(n)) if n.is_zero() => @symcore.int(0)
-        ("sqrt", @symcore.Expr::Number(n)) if n.is_one() => @symcore.int(1)
-        ("Abs", @symcore.Expr::Number(n)) =>
+        ("sin", Expr::Number(n)) if n.is_zero() => int(0)
+        ("cos", Expr::Number(n)) if n.is_zero() => int(1)
+        ("tan", Expr::Number(n)) if n.is_zero() => int(0)
+        ("exp", Expr::Number(n)) if n.is_zero() => int(1)
+        ("log", Expr::Number(n)) if n.is_one() => int(0)
+        ("log", Expr::Symbol(name)) if name == "E" => int(1)
+        ("sqrt", Expr::Number(n)) if n.is_zero() => int(0)
+        ("sqrt", Expr::Number(n)) if n.is_one() => int(1)
+        ("Abs", Expr::Number(n)) =>
           if n.compare(@symnum.BigRational::zero()) < 0 {
             @symcore.number(n.neg_r())
           } else {
             @symcore.number(n)
           }
-        ("abs", @symcore.Expr::Number(n)) =>
+        ("abs", Expr::Number(n)) =>
           if n.compare(@symnum.BigRational::zero()) < 0 {
             @symcore.number(n.neg_r())
           } else {
@@ -338,14 +338,14 @@ fn function_identities(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn trig_pythagorean(expr : @symcore.Expr) -> @symcore.Expr {
+fn trig_pythagorean(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add([a, b]) =>
+    Expr::Add([a, b]) =>
       match (trig_square_arg(a, "sin"), trig_square_arg(b, "cos")) {
-        (Some(lhs), Some(rhs)) if lhs == rhs => @symcore.int(1)
+        (Some(lhs), Some(rhs)) if lhs == rhs => int(1)
         _ =>
           match (trig_square_arg(a, "cos"), trig_square_arg(b, "sin")) {
-            (Some(lhs), Some(rhs)) if lhs == rhs => @symcore.int(1)
+            (Some(lhs), Some(rhs)) if lhs == rhs => int(1)
             _ => expr
           }
       }
@@ -354,11 +354,11 @@ fn trig_pythagorean(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn trig_square_arg(term : @symcore.Expr, name : String) -> @symcore.Expr? {
+fn trig_square_arg(term : Expr, name : String) -> Expr? {
   match term {
-    @symcore.Expr::Pow(
-      @symcore.Expr::Function(func, [arg]),
-      @symcore.Expr::Number(exp)
+    Expr::Pow(
+      Expr::Function(func, [arg]),
+      Expr::Number(exp)
     ) =>
       if func == name && exp.compare(@symnum.BigRational::from_int(2)) == 0 {
         Some(arg)

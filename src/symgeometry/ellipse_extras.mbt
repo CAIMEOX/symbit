@@ -1,8 +1,8 @@
 ///|
 fn ellipse_auxiliary_radius(
-  hradius : @symcore.Expr,
-  vradius : @symcore.Expr,
-) -> @symcore.Expr {
+  hradius : Expr,
+  vradius : Expr,
+) -> Expr {
   match (geo_expr_sign(hradius), geo_expr_sign(vradius)) {
     (Some(hs), Some(vs)) if hs >= 0 && vs >= 0 =>
       @symelem.max([hradius, vradius])
@@ -33,10 +33,10 @@ fn reflect_point_across_line_2d(
 ///|
 fn ellipse_second_moment_tuple(
   center : Point,
-  hradius : @symcore.Expr,
-  vradius : @symcore.Expr,
+  hradius : Expr,
+  vradius : Expr,
   point~ : Point?,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr, Expr) raise GeometryError {
   let i_xx = geo_simplify(
     geo_div(geo_pi() * hradius * (vradius ^ geo_int(3)), geo_int(4)),
   )
@@ -63,10 +63,10 @@ fn ellipse_second_moment_tuple(
 ///|
 fn ellipse_section_modulus_tuple(
   center : Point,
-  hradius : @symcore.Expr,
-  vradius : @symcore.Expr,
+  hradius : Expr,
+  vradius : Expr,
   point~ : Point?,
-) -> (@symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr) raise GeometryError {
   let (i_xx, i_yy, _) = ellipse_second_moment_tuple(
     center,
     hradius,
@@ -89,10 +89,10 @@ fn ellipse_section_modulus_tuple(
 ///|
 pub fn Ellipse::evolute(
   self : Ellipse,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  y? : @symcore.Expr = @symcore.symbol("y"),
-) -> @symcore.Expr raise {
-  let two_thirds = try! @symcore.rational_from_ints(2, 3)
+  x? : Expr = symbol("x"),
+  y? : Expr = symbol("y"),
+) -> Expr raise {
+  let two_thirds = @symcore.rational_from_ints(2, 3)
   let first = (self.hradius_ * (x - self.center_.coords_[0])) ^ two_thirds
   let second = (self.vradius_ * (y - self.center_.coords_[1])) ^ two_thirds
   let offset = ((self.hradius_ ^ geo_int(2)) - (self.vradius_ ^ geo_int(2))) ^
@@ -156,7 +156,7 @@ pub fn Ellipse::reflect(
 pub fn Ellipse::second_moment_of_area(
   self : Ellipse,
   point? : Point? = None,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr, Expr) raise GeometryError {
   ellipse_second_moment_tuple(
     self.center_,
     self.hradius_,
@@ -168,7 +168,7 @@ pub fn Ellipse::second_moment_of_area(
 ///|
 pub fn Ellipse::polar_second_moment_of_area(
   self : Ellipse,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let second = self.second_moment_of_area()
   geo_simplify(second.0 + second.1)
 }
@@ -177,7 +177,7 @@ pub fn Ellipse::polar_second_moment_of_area(
 pub fn Ellipse::section_modulus(
   self : Ellipse,
   point? : Point? = None,
-) -> (@symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr) raise GeometryError {
   ellipse_section_modulus_tuple(
     self.center_,
     self.hradius_,
@@ -214,7 +214,7 @@ pub fn Circle::reflect(
   line_obj : Line,
 ) -> Circle raise GeometryError {
   Circle::{
-    center_: try! reflect_point_across_line_2d(self.center_, line_obj),
+    center_: reflect_point_across_line_2d(self.center_, line_obj),
     radius_: geo_simplify(geo_zero() - self.radius_),
   }
 }
@@ -223,14 +223,14 @@ pub fn Circle::reflect(
 pub fn Circle::second_moment_of_area(
   self : Circle,
   point? : Point? = None,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr, Expr) raise GeometryError {
   ellipse_second_moment_tuple(self.center_, self.radius_, self.radius_, point~)
 }
 
 ///|
 pub fn Circle::polar_second_moment_of_area(
   self : Circle,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let second = self.second_moment_of_area()
   geo_simplify(second.0 + second.1)
 }
@@ -239,7 +239,7 @@ pub fn Circle::polar_second_moment_of_area(
 pub fn Circle::section_modulus(
   self : Circle,
   point? : Point? = None,
-) -> (@symcore.Expr, @symcore.Expr) raise GeometryError {
+) -> (Expr, Expr) raise GeometryError {
   ellipse_section_modulus_tuple(
     self.center_,
     self.radius_,
@@ -251,9 +251,9 @@ pub fn Circle::section_modulus(
 ///|
 pub fn Circle::evolute(
   self : Circle,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  y? : @symcore.Expr = @symcore.symbol("y"),
-) -> @symcore.Expr raise {
+  x? : Expr = symbol("x"),
+  y? : Expr = symbol("y"),
+) -> Expr raise {
   Ellipse::{
     center_: self.center_,
     hradius_: self.radius_,

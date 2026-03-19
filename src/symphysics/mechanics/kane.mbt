@@ -5,9 +5,9 @@
 ///|
 pub struct KanesMethod {
   frame_ : @symvector.ReferenceFrame
-  q_ind_ : Array[@symcore.Expr]
-  u_ind_ : Array[@symcore.Expr]
-  kd_eqs_ : Array[@symcore.Expr]
+  q_ind_ : Array[Expr]
+  u_ind_ : Array[Expr]
+  kd_eqs_ : Array[Expr]
   mut bodies_ : Array[BodyLike]
   mut loads_ : Array[Load]
   mut mass_matrix_ : @symphysics.ExplicitMatrix
@@ -18,20 +18,20 @@ pub struct KanesMethod {
 } derive(Eq)
 
 ///|
-fn kane_qdots(coords : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn kane_qdots(coords : Array[Expr]) -> Array[Expr] {
   coords.map(fn(q) { @symcalculus.diff(q, @symvector.dynamicsymbols_t) })
 }
 
 ///|
-fn kane_udots(speeds : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn kane_udots(speeds : Array[Expr]) -> Array[Expr] {
   speeds.map(fn(u) { @symcalculus.diff(u, @symvector.dynamicsymbols_t) })
 }
 
 ///|
 fn kane_identity_kdes(
-  coords : Array[@symcore.Expr],
-  speeds : Array[@symcore.Expr],
-  kd_eqs : Array[@symcore.Expr],
+  coords : Array[Expr],
+  speeds : Array[Expr],
+  kd_eqs : Array[Expr],
 ) -> Array[Substitution] raise @symphysics.PhysicsError {
   guard coords.length() == speeds.length() && kd_eqs.length() == coords.length() else {
     raise @symphysics.PhysicsError::ValueError(
@@ -56,12 +56,12 @@ fn kane_identity_kdes(
 ///|
 fn kane_generalized_forces(
   frame : @symvector.ReferenceFrame,
-  speeds : Array[@symcore.Expr],
+  speeds : Array[Expr],
   loads : Array[Load],
-) -> Array[@symcore.Expr] raise @symvector.VectorError {
-  let out : Array[@symcore.Expr] = []
+) -> Array[Expr] raise @symvector.VectorError {
+  let out : Array[Expr] = []
   for speed in speeds {
-    let mut total = @symcore.int(0)
+    let mut total = int(0)
     for load in loads {
       match load {
         Load::ForceLoad(value) =>
@@ -85,10 +85,10 @@ fn kane_generalized_forces(
 ///|
 fn kane_kinetic_lagrangian(
   frame : @symvector.ReferenceFrame,
-  q_ind : Array[@symcore.Expr],
-  u_ind : Array[@symcore.Expr],
+  q_ind : Array[Expr],
+  u_ind : Array[Expr],
   bodies : Array[BodyLike],
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let qdots = kane_qdots(q_ind)
   let to_qdots : Array[Substitution] = []
   for i in 0..<u_ind.length() {
@@ -101,9 +101,9 @@ fn kane_kinetic_lagrangian(
 ///|
 pub fn kanes_method(
   frame : @symvector.ReferenceFrame,
-  q_ind : Array[@symcore.Expr],
-  u_ind : Array[@symcore.Expr],
-  kd_eqs : Array[@symcore.Expr],
+  q_ind : Array[Expr],
+  u_ind : Array[Expr],
+  kd_eqs : Array[Expr],
   bodies? : Array[BodyLike] = [],
   forcelist? : Array[Load] = [],
   explicit_kinematics? : Bool = true,
@@ -126,12 +126,12 @@ pub fn kanes_method(
 }
 
 ///|
-pub fn KanesMethod::q(self : KanesMethod) -> Array[@symcore.Expr] {
+pub fn KanesMethod::q(self : KanesMethod) -> Array[Expr] {
   self.q_ind_.copy()
 }
 
 ///|
-pub fn KanesMethod::u(self : KanesMethod) -> Array[@symcore.Expr] {
+pub fn KanesMethod::u(self : KanesMethod) -> Array[Expr] {
   self.u_ind_.copy()
 }
 
@@ -156,7 +156,7 @@ pub fn KanesMethod::forcelist(self : KanesMethod) -> Array[Load] {
 }
 
 ///|
-pub fn KanesMethod::kd_eqs(self : KanesMethod) -> Array[@symcore.Expr] {
+pub fn KanesMethod::kd_eqs(self : KanesMethod) -> Array[Expr] {
   self.kd_eqs_.copy()
 }
 
@@ -240,7 +240,7 @@ pub fn KanesMethod::kanes_equations(
     loads,
   )
   let udots = kane_udots(self.u_ind_)
-  let dynamic_eqs : Array[@symcore.Expr] = []
+  let dynamic_eqs : Array[Expr] = []
   for i in 0..<self.u_ind_.length() {
     let u = self.u_ind_[i]
     let q = self.q_ind_[i]
@@ -260,19 +260,19 @@ pub fn KanesMethod::kanes_equations(
     mechanics_matrix_negative_residual(dynamic_eqs, udots),
   )
 
-  let top_rows : Array[Array[@symcore.Expr]] = []
+  let top_rows : Array[Array[Expr]] = []
   for i in 0..<self.q_ind_.length() {
     let row = Array::make(
       self.q_ind_.length() + self.u_ind_.length(),
-      @symcore.int(0),
+      int(0),
     )
-    row[i] = @symcore.int(1)
+    row[i] = int(1)
     top_rows.push(row)
   }
   let lower = mechanics_matrix_entries(self.mass_matrix_)
   let full_rows = top_rows +
     lower.map(fn(row) {
-      Array::make(self.q_ind_.length(), @symcore.int(0)) + row
+      Array::make(self.q_ind_.length(), int(0)) + row
     })
   self.full_mass_matrix_ = try! @symphysics.explicit_matrix_from_rows(full_rows)
   self.full_forcing_ = mechanics_matrix_column(
@@ -306,18 +306,18 @@ pub fn KanesMethod::linearizer(
     self.q_ind_ + self.u_ind_ + qdots + udots,
   )
   let f_2 = try! self.mass_matrix_.mul(mechanics_matrix_column(udots))
-  let top_rows : Array[Array[@symcore.Expr]] = []
+  let top_rows : Array[Array[Expr]] = []
   for i in 0..<self.q_ind_.length() {
     let row = Array::make(
       self.q_ind_.length() + self.u_ind_.length(),
-      @symcore.int(0),
+      int(0),
     )
-    row[i] = @symcore.int(1)
+    row[i] = int(1)
     top_rows.push(row)
   }
   let lower_rows = mechanics_matrix_entries(self.mass_matrix_).map(fn(row) {
-    Array::make(self.q_ind_.length(), @symcore.int(0)) +
-    row.map(fn(item) { mech_simplify_expr(@symcore.int(-1) * item) })
+    Array::make(self.q_ind_.length(), int(0)) +
+    row.map(fn(item) { mech_simplify_expr(int(-1) * item) })
   })
   let implicit_mass = try! @symphysics.explicit_matrix_from_rows(
     top_rows + lower_rows,
@@ -325,7 +325,7 @@ pub fn KanesMethod::linearizer(
   let implicit_forcing = mechanics_matrix_column(
     self.u_ind_ +
     mechanics_matrix_entries(self.forcing_).map(fn(row) {
-      mech_simplify_expr(@symcore.int(-1) * row[0])
+      mech_simplify_expr(int(-1) * row[0])
     }),
   )
   linearizer_with_metadata(
@@ -339,7 +339,7 @@ pub fn KanesMethod::linearizer(
     r=inputs,
     f_0=mechanics_matrix_column(qdots),
     f_1=mechanics_matrix_column(
-      self.u_ind_.map(fn(u) { mech_simplify_expr(@symcore.int(-1) * u) }),
+      self.u_ind_.map(fn(u) { mech_simplify_expr(int(-1) * u) }),
     ),
     f_2~,
     f_3=self.forcing_.neg(),

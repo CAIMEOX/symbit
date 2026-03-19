@@ -21,7 +21,7 @@ pub fn parabola(
 ///|
 fn line_coeffs_2d(
   line_obj : Line,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) {
+) -> (Expr, Expr, Expr) {
   let p1 = line_obj.p1()
   let p2 = line_obj.p2()
   let a = geo_simplify(p1.coords_[1] - p2.coords_[1])
@@ -53,7 +53,7 @@ pub fn Parabola::directrix(self : Parabola) -> Line {
 }
 
 ///|
-pub fn Parabola::eccentricity(self : Parabola) -> @symcore.Expr {
+pub fn Parabola::eccentricity(self : Parabola) -> Expr {
   geo_one()
 }
 
@@ -82,14 +82,14 @@ pub fn Parabola::axis_of_symmetry(self : Parabola) -> Line raise GeometryError {
 ///|
 pub fn Parabola::focal_length(
   self : Parabola,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   self.focus_.distance(self.vertex())
 }
 
 ///|
 pub fn Parabola::p_parameter(
   self : Parabola,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let foot = self.directrix_.projection(self.focus_)
   let dx = geo_simplify(self.focus_.coords_[0] - foot.coords_[0])
   let dy = geo_simplify(self.focus_.coords_[1] - foot.coords_[1])
@@ -107,9 +107,9 @@ pub fn Parabola::p_parameter(
 ///|
 pub fn Parabola::equation(
   self : Parabola,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  y? : @symcore.Expr = @symcore.symbol("y"),
-) -> @symcore.Expr {
+  x? : Expr = symbol("x"),
+  y? : Expr = symbol("y"),
+) -> Expr {
   let (a, b, c) = line_coeffs_2d(self.directrix_)
   geo_simplify(
     ((x - self.focus_.coords_[0]) ^ geo_int(2)) +
@@ -168,7 +168,7 @@ pub fn Parabola::intersection(
 ///|
 pub fn Parabola::translate(
   self : Parabola,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Parabola raise GeometryError {
   parabola(self.focus_.translate(offsets), self.directrix_.translate(offsets))
 }
@@ -176,7 +176,7 @@ pub fn Parabola::translate(
 ///|
 pub fn Parabola::rotate(
   self : Parabola,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> Parabola raise GeometryError {
   parabola(self.focus_.rotate(angle, pt~), self.directrix_.rotate(angle, pt~))
@@ -185,7 +185,7 @@ pub fn Parabola::rotate(
 ///|
 pub fn Parabola::scale(
   self : Parabola,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Parabola raise GeometryError {
   parabola(self.focus_.scale(factors, pt~), self.directrix_.scale(factors, pt~))

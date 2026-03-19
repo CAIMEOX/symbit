@@ -1,23 +1,23 @@
 ///|
 pub fn from_hyper(
-  expr : @symcore.Expr,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  x0? : @symcore.Expr = @symcore.int(0),
+  expr : Expr,
+  x? : Expr = symbol("x"),
+  x0? : Expr = int(0),
 ) -> HolonomicFunction {
   expr_to_holonomic(expr, x~, x0~)
 }
 
 ///|
 pub fn from_meijerg(
-  expr : @symcore.Expr,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  x0? : @symcore.Expr = @symcore.int(0),
+  expr : Expr,
+  x? : Expr = symbol("x"),
+  x0? : Expr = int(0),
 ) -> HolonomicFunction {
   expr_to_holonomic(expr, x~, x0~)
 }
 
 ///|
-pub fn to_expr(hf : HolonomicFunction) -> @symcore.Expr {
+pub fn to_expr(hf : HolonomicFunction) -> Expr {
   hf.to_expr()
 }
 
@@ -27,6 +27,6 @@ pub fn to_sequence(hf : HolonomicFunction) -> Array[HolonomicSequence] {
 }
 
 ///|
-pub fn to_hyper(hf : HolonomicFunction) -> @symcore.Expr {
+pub fn to_hyper(hf : HolonomicFunction) -> Expr {
   hf.to_expr()
 }

@@ -191,8 +191,6 @@ pub fn Column::apply_load(
         BeamError::ValueError(message) => raise ColumnError::ValueError(message)
         BeamError::TypeError(message) => raise ColumnError::TypeError(message)
         BeamError::SolveError(message) => raise ColumnError::SolveError(message)
-      } noraise {
-        items => items
       }
       let start_before_end = cm_sign_of_difference(start, stop)
         .map(s => s <= 0)

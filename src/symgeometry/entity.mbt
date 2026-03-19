@@ -101,7 +101,7 @@ pub fn GeometryEntity::repr(
 ///|
 pub fn GeometryEntity::translate(
   self : GeometryEntity,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> GeometryEntity raise GeometryError {
   match self {
     GeometryEntity::Point(point_obj) =>
@@ -131,7 +131,7 @@ pub fn GeometryEntity::translate(
 ///|
 pub fn GeometryEntity::scale(
   self : GeometryEntity,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   match self {
@@ -162,7 +162,7 @@ pub fn GeometryEntity::scale(
 ///|
 pub fn GeometryEntity::rotate(
   self : GeometryEntity,
-  angle : @symcore.Expr,
+  angle : Expr,
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   match self {
@@ -223,9 +223,9 @@ pub fn GeometryEntity::is_similar(
 pub fn GeometryEntity::parameter_value(
   self : GeometryEntity,
   other : Point,
-  t : @symcore.Expr,
-) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
-  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  t : Expr,
+) -> Map[Expr, Expr] raise GeometryError {
+  let out : Map[Expr, Expr] = {}
   match self {
     GeometryEntity::Line(line_obj) => {
       let value = try! linear_param_for_point(geometry_line(line_obj), other)

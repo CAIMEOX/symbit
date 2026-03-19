@@ -3,19 +3,19 @@
 
 ///|
 pub fn eijk(
-  i : @symcore.Expr,
-  j : @symcore.Expr,
-  k : @symcore.Expr,
-) -> @symcore.Expr {
+  i : Expr,
+  j : Expr,
+  k : Expr,
+) -> Expr {
   @symcore.function("Eijk", [i, j, k])
 }
 
 ///|
-pub fn levi_civita(args : Array[@symcore.Expr]) -> @symcore.Expr {
+pub fn levi_civita(args : Array[Expr]) -> Expr {
   @symcore.function("LeviCivita", args)
 }
 
 ///|
-pub fn kronecker_delta(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
+pub fn kronecker_delta(a : Expr, b : Expr) -> Expr {
   @symcore.function("KroneckerDelta", [a, b])
 }

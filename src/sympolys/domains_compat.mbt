@@ -327,12 +327,12 @@ pub fn domain_to_sympy_string(domain : Domain) -> String {
 
 ///|
 pub enum DomainExprTree {
-  Elem(@symcore.Expr)
+  Elem(Expr)
   List(Array[DomainExprTree])
 }
 
 ///|
-pub fn domain_expr_tree_elem(expr : @symcore.Expr) -> DomainExprTree {
+pub fn domain_expr_tree_elem(expr : Expr) -> DomainExprTree {
   DomainExprTree::Elem(expr)
 }
 
@@ -433,7 +433,7 @@ pub fn rational_function_field_domain(
 pub fn quotient_ring_domain(
   base : Domain,
   gens : Array[String],
-  rels : Array[@symcore.Expr],
+  rels : Array[Expr],
 ) -> Domain raise PolyError {
   let normalized = split_gens(gens.join(","))
   if rels.is_empty() {
@@ -1145,7 +1145,7 @@ pub fn domain_unify_composite(
 }
 
 ///|
-fn extension_names(extension : Array[@symcore.Expr]) -> Array[String] {
+fn extension_names(extension : Array[Expr]) -> Array[String] {
   let names : Array[String] = Array::new()
   for expr in extension {
     let name = @symprint.to_string(expr)
@@ -1158,9 +1158,9 @@ fn extension_names(extension : Array[@symcore.Expr]) -> Array[String] {
 
 ///|
 fn append_unique_exprs(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   let out = lhs.copy()
   for expr in rhs {
     if !out.contains(expr) {
@@ -1174,7 +1174,7 @@ fn append_unique_exprs(
 /// Construct an algebraic extension over `QQ` or extend an existing one.
 pub fn domain_algebraic_field(
   domain : Domain,
-  extension : Array[@symcore.Expr],
+  extension : Array[Expr],
 ) -> Domain raise PolyError {
   if extension.is_empty() {
     raise PolyError::BadGenerator("algebraic_field")
@@ -1196,30 +1196,30 @@ pub fn domain_algebraic_field(
 
 ///|
 fn expr_replace_symbol(
-  expr : @symcore.Expr,
+  expr : Expr,
   old_name : String,
   new_name : String,
-) -> @symcore.Expr {
+) -> Expr {
   match expr {
-    @symcore.Expr::Number(_) => expr
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(_) => expr
+    Expr::Symbol(name) =>
       if name == old_name {
-        @symcore.symbol(new_name)
+        symbol(new_name)
       } else {
         expr
       }
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       @symcore.add(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.mul(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       expr_replace_symbol(base, old_name, new_name) ^
       expr_replace_symbol(exp, old_name, new_name)
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.function(
         name,
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
@@ -1310,9 +1310,9 @@ pub fn domain_alg_field_from_poly(
 ///|
 fn cyclotomic_poly_domain(n : Int, gen : String) -> Poly raise PolyError {
   guard n > 0 else { raise PolyError::BadExponent }
-  let x = @symcore.symbol(gen)
+  let x = symbol(gen)
   let mut poly = Poly::from_expr(
-    (x ^ @symcore.int(n)) - @symcore.int(1),
+    (x ^ int(n)) - int(1),
     [gen],
     Domain::QQ,
   )
@@ -1445,7 +1445,7 @@ pub fn domain_drop(
 }
 
 ///|
-fn expr_key(expr : @symcore.Expr) -> String {
+fn expr_key(expr : Expr) -> String {
   @symprint.to_string(expr).replace_all(old=" ", new="")
 }
 
@@ -1492,47 +1492,47 @@ fn generator_symbol_names(gens : Array[String]) -> Array[String] {
 }
 
 ///|
-fn expr_is_integer(expr : @symcore.Expr) -> Bool {
+fn expr_is_integer(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_integral()
+    Expr::Number(n) => n.is_integral()
     _ => false
   }
 }
 
 ///|
-fn expr_is_nonnegative_integer(expr : @symcore.Expr) -> Bool {
+fn expr_is_nonnegative_integer(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       n.is_integral() && n.compare(@symnum.BigRational::zero()) >= 0
     _ => false
   }
 }
 
 ///|
-fn expr_has_forbidden_symbol(expr : @symcore.Expr, allow_i : Bool) -> Bool {
+fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) => false
-    @symcore.Expr::Symbol(name) => if allow_i { name != "I" } else { true }
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Number(_) => false
+    Expr::Symbol(name) => if allow_i { name != "I" } else { true }
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       expr_has_forbidden_symbol(base, allow_i) ||
       expr_has_forbidden_symbol(exp, allow_i)
   }
 }
 
 ///|
-fn expr_is_imaginary_unit(expr : @symcore.Expr) -> Bool {
+fn expr_is_imaginary_unit(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) => name == "I"
+    Expr::Symbol(name) => name == "I"
     _ => false
   }
 }
 
 ///|
-fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
+fn gaussian_term_in_domain(expr : Expr, coeff_dom : Domain) -> Bool {
   if expr_is_imaginary_unit(expr) {
     return true
   }
@@ -1540,9 +1540,9 @@ fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
     return true
   }
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut imag_count = 0
-      let coeffs : Array[@symcore.Expr] = Array::new()
+      let coeffs : Array[Expr] = Array::new()
       for arg in args {
         if expr_is_imaginary_unit(arg) {
           imag_count += 1
@@ -1554,7 +1554,7 @@ fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
       domain_contains_expr(
         coeff_dom,
         if coeffs.is_empty() {
-          @symcore.int(1)
+          int(1)
         } else {
           @symcore.mul(coeffs)
         },
@@ -1568,8 +1568,8 @@ fn gaussian_term_in_domain(expr : @symcore.Expr, coeff_dom : Domain) -> Bool {
 fn expr_in_algext(
   base : Domain,
   gens : Array[String],
-  rels : Array[@symcore.Expr],
-  expr : @symcore.Expr,
+  rels : Array[Expr],
+  expr : Expr,
 ) -> Bool {
   if domain_contains_expr(base, expr) {
     return true
@@ -1583,9 +1583,9 @@ fn expr_in_algext(
     }
   }
   match expr {
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_algext(base, gens, rels, item))
-    @symcore.Expr::Pow(inner, exp) =>
+    Expr::Pow(inner, exp) =>
       expr_is_integer(exp) && expr_in_algext(base, gens, rels, inner)
     _ => all_allowed.contains(expr_key(expr))
   }
@@ -1595,21 +1595,21 @@ fn expr_in_algext(
 fn expr_in_polynomial_domain(
   base : Domain,
   gens : Array[String],
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   if domain_contains_expr(base, expr) {
     return true
   }
   let symbols = generator_symbol_names(gens)
   match expr {
-    @symcore.Expr::Number(_) => domain_contains_expr(base, expr)
-    @symcore.Expr::Symbol(name) => symbols.contains(name)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(_) => domain_contains_expr(base, expr)
+    Expr::Symbol(name) => symbols.contains(name)
+    Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_polynomial_domain(base, gens, item))
-    @symcore.Expr::Pow(inner, exp) =>
+    Expr::Pow(inner, exp) =>
       expr_is_nonnegative_integer(exp) &&
       expr_in_polynomial_domain(base, gens, inner)
-    @symcore.Expr::Function(_, _) => false
+    Expr::Function(_, _) => false
   }
 }
 
@@ -1617,51 +1617,51 @@ fn expr_in_polynomial_domain(
 fn expr_in_fraction_domain(
   base : Domain,
   gens : Array[String],
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   if domain_contains_expr(base, expr) {
     return true
   }
   let symbols = generator_symbol_names(gens)
   match expr {
-    @symcore.Expr::Number(_) => domain_contains_expr(base, expr)
-    @symcore.Expr::Symbol(name) => symbols.contains(name)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(_) => domain_contains_expr(base, expr)
+    Expr::Symbol(name) => symbols.contains(name)
+    Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_fraction_domain(base, gens, item))
-    @symcore.Expr::Pow(inner, exp) =>
+    Expr::Pow(inner, exp) =>
       expr_is_integer(exp) && expr_in_fraction_domain(base, gens, inner)
-    @symcore.Expr::Function(_, _) => false
+    Expr::Function(_, _) => false
   }
 }
 
 ///|
 /// Check whether an expression belongs to the given domain.
-pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_contains_expr(domain : Domain, expr : Expr) -> Bool {
   match domain {
     Domain::EX | Domain::EXRAW => true
     Domain::ZZ =>
       match expr {
-        @symcore.Expr::Number(n) => n.is_integral()
+        Expr::Number(n) => n.is_integral()
         _ => false
       }
-    Domain::QQ => expr is @symcore.Expr::Number(_)
+    Domain::QQ => expr is Expr::Number(_)
     Domain::RR => !expr_has_forbidden_symbol(expr, false)
     Domain::CC => !expr_has_forbidden_symbol(expr, true)
     Domain::ZZ_I =>
       match expr {
-        @symcore.Expr::Add(args) =>
+        Expr::Add(args) =>
           args.all(item => gaussian_term_in_domain(item, Domain::ZZ))
         _ => gaussian_term_in_domain(expr, Domain::ZZ)
       }
     Domain::QQ_I =>
       match expr {
-        @symcore.Expr::Add(args) =>
+        Expr::Add(args) =>
           args.all(item => gaussian_term_in_domain(item, Domain::QQ))
         _ => gaussian_term_in_domain(expr, Domain::QQ)
       }
     Domain::GF(_) | Domain::GFExt(_, _, _) =>
       match expr {
-        @symcore.Expr::Number(n) => n.is_integral()
+        Expr::Number(n) => n.is_integral()
         _ => false
       }
     Domain::AlgExt(base, gens, rels) => expr_in_algext(base, gens, rels, expr)
@@ -1687,12 +1687,12 @@ pub fn domain_contains_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn Domain::contains_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::contains_expr(self : Domain, expr : Expr) -> Bool {
   domain_contains_expr(self, expr)
 }
 
 ///|
-pub fn Domain::of_type_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::of_type_expr(self : Domain, expr : Expr) -> Bool {
   domain_contains_expr(self, expr)
 }
 
@@ -1700,8 +1700,8 @@ pub fn Domain::of_type_expr(self : Domain, expr : @symcore.Expr) -> Bool {
 /// Convert a SymPy-style expression into a canonical element of `domain`.
 pub fn domain_from_sympy_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   match domain {
     Domain::ZZ =>
       match expr_rational_value(expr) {
@@ -1760,24 +1760,24 @@ pub fn domain_from_sympy_expr(
 /// Convert an internal domain element back to a SymPy-style expression.
 pub fn domain_to_sympy_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
 pub fn domain_new_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
 pub fn domain_normal_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_new_expr(domain, expr)
 }
 
@@ -1785,9 +1785,9 @@ pub fn domain_normal_expr(
 /// Convert an expression from `base` into `domain`, mirroring `convert_from`.
 pub fn domain_convert_from_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   let scalar_target = match domain {
     Domain::PolyRing(_, _)
     | Domain::RationalFunctionField(_, _)
@@ -1832,9 +1832,9 @@ pub fn domain_convert_from_expr(
 ///|
 fn domain_try_convert_from_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   try domain_convert_from_expr(domain, expr, base) catch {
     _ => None
   } noraise {
@@ -1845,9 +1845,9 @@ fn domain_try_convert_from_expr(
 ///|
 pub fn domain_from_ff_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::GF(_) | Domain::GFExt(_, _, _) =>
       domain_try_convert_from_expr(domain, expr, base)
@@ -1858,18 +1858,18 @@ pub fn domain_from_ff_expr(
 ///|
 pub fn domain_from_ff_python_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_ff_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_zz_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::ZZ => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1879,18 +1879,18 @@ pub fn domain_from_zz_expr(
 ///|
 pub fn domain_from_zz_python_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_zz_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_qq_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::QQ => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1900,45 +1900,45 @@ pub fn domain_from_qq_expr(
 ///|
 pub fn domain_from_qq_python_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_qq_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_ff_gmpy_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_ff_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_zz_gmpy_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_zz_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_qq_gmpy_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_qq_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_real_field_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::RR => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1948,9 +1948,9 @@ pub fn domain_from_real_field_expr(
 ///|
 pub fn domain_from_complex_field_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::CC => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1960,9 +1960,9 @@ pub fn domain_from_complex_field_expr(
 ///|
 pub fn domain_from_algebraic_field_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::AlgExt(_, _, _) => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1972,9 +1972,9 @@ pub fn domain_from_algebraic_field_expr(
 ///|
 pub fn domain_from_gaussian_integer_ring_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::ZZ_I => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1984,9 +1984,9 @@ pub fn domain_from_gaussian_integer_ring_expr(
 ///|
 pub fn domain_from_gaussian_rational_field_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::QQ_I => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -1996,9 +1996,9 @@ pub fn domain_from_gaussian_rational_field_expr(
 ///|
 pub fn domain_from_polynomial_ring_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::PolyRing(_, _)
     | Domain::QuotientRing(_, _, _)
@@ -2011,9 +2011,9 @@ pub fn domain_from_polynomial_ring_expr(
 ///|
 pub fn domain_from_fraction_field_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::RationalFunctionField(_, _) | Domain::Frac(_) =>
       domain_try_convert_from_expr(domain, expr, base)
@@ -2024,18 +2024,18 @@ pub fn domain_from_fraction_field_expr(
 ///|
 pub fn domain_from_global_polynomial_ring_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_polynomial_ring_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_generalized_polynomial_ring_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::RationalFunctionField(_, _) | Domain::Frac(_) =>
       match domain {
@@ -2056,18 +2056,18 @@ pub fn domain_from_generalized_polynomial_ring_expr(
 ///|
 pub fn domain_from_monogenic_finite_extension_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_algebraic_field_expr(domain, expr, base)
 }
 
 ///|
 pub fn domain_from_expression_domain_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::EX => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -2077,9 +2077,9 @@ pub fn domain_from_expression_domain_expr(
 ///|
 pub fn domain_from_expression_raw_domain_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   match base {
     Domain::EXRAW => domain_try_convert_from_expr(domain, expr, base)
     _ => None
@@ -2090,9 +2090,9 @@ pub fn domain_from_expression_raw_domain_expr(
 /// Convert an expression into `domain`, optionally using an explicit source domain.
 pub fn domain_convert_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base? : Domain? = None,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   match base {
     Some(source) => domain_convert_from_expr(domain, expr, source)
     None => domain_from_sympy_expr(domain, expr)
@@ -2102,8 +2102,8 @@ pub fn domain_convert_expr(
 ///|
 pub fn domain_sum_expr(
   domain : Domain,
-  exprs : Array[@symcore.Expr],
-) -> @symcore.Expr raise PolyError {
+  exprs : Array[Expr],
+) -> Expr raise PolyError {
   let mut acc = domain_zero_expr(domain)
   for expr in exprs {
     acc = domain_add_expr(domain, acc, domain_from_sympy_expr(domain, expr))
@@ -2130,47 +2130,47 @@ pub fn domain_map_expr_tree(
 
 ///|
 fn expr_depends_on_symbols(
-  expr : @symcore.Expr,
+  expr : Expr,
   symbols : Array[String],
 ) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) => false
-    @symcore.Expr::Symbol(name) => symbols.contains(name)
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Number(_) => false
+    Expr::Symbol(name) => symbols.contains(name)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       expr_depends_on_symbols(base, symbols) ||
       expr_depends_on_symbols(exp, symbols)
   }
 }
 
 ///|
-fn expr_zero() -> @symcore.Expr {
-  @symcore.int(0)
+fn expr_zero() -> Expr {
+  int(0)
 }
 
 ///|
-fn domain_expr_is_zero(expr : @symcore.Expr) -> Bool {
+fn domain_expr_is_zero(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Expr::Number(n) => n.is_zero()
     _ => false
   }
 }
 
 ///|
-fn domain_expr_is_one(expr : @symcore.Expr) -> Bool {
+fn domain_expr_is_one(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_one()
+    Expr::Number(n) => n.is_one()
     _ => false
   }
 }
 
 ///|
-fn domain_expr_is_minus_one(expr : @symcore.Expr) -> Bool {
+fn domain_expr_is_minus_one(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       n.compare(@symnum.BigRational::from_int(-1)) == 0
     _ => false
   }
@@ -2178,22 +2178,22 @@ fn domain_expr_is_minus_one(expr : @symcore.Expr) -> Bool {
 
 ///|
 fn expr_constant_term(
-  expr : @symcore.Expr,
+  expr : Expr,
   symbols : Array[String],
-) -> @symcore.Expr? {
+) -> Expr? {
   if !expr_depends_on_symbols(expr, symbols) {
     return Some(expr)
   }
   match expr {
-    @symcore.Expr::Number(_) => Some(expr)
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(_) => Some(expr)
+    Expr::Symbol(name) =>
       if symbols.contains(name) {
         Some(expr_zero())
       } else {
         Some(expr)
       }
-    @symcore.Expr::Add(args) => {
-      let parts : Array[@symcore.Expr] = Array::new()
+    Expr::Add(args) => {
+      let parts : Array[Expr] = Array::new()
       for arg in args {
         match expr_constant_term(arg, symbols) {
           Some(part) => parts.push(part)
@@ -2202,8 +2202,8 @@ fn expr_constant_term(
       }
       Some(@symcore.add(parts))
     }
-    @symcore.Expr::Mul(args) => {
-      let parts : Array[@symcore.Expr] = Array::new()
+    Expr::Mul(args) => {
+      let parts : Array[Expr] = Array::new()
       for arg in args {
         match expr_constant_term(arg, symbols) {
           Some(part) => parts.push(part)
@@ -2212,7 +2212,7 @@ fn expr_constant_term(
       }
       Some(@symcore.mul(parts))
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       if expr_is_nonnegative_integer(exp) {
         match expr_constant_term(base, symbols) {
           Some(term) => Some(@symcore.pow(term, exp))
@@ -2221,7 +2221,7 @@ fn expr_constant_term(
       } else {
         None
       }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       if args.any(arg => expr_depends_on_symbols(arg, symbols)) {
         None
       } else {
@@ -2231,19 +2231,19 @@ fn expr_constant_term(
 }
 
 ///|
-fn expr_terms_one(var_count : Int) -> Map[Monomial, @symcore.Expr] {
-  let out : Map[Monomial, @symcore.Expr] = Map::new()
-  out.set(monomial_one(var_count), @symcore.int(1))
+fn expr_terms_one(var_count : Int) -> Map[Monomial, Expr] {
+  let out : Map[Monomial, Expr] = Map::new()
+  out.set(monomial_one(var_count), int(1))
   out
 }
 
 ///|
 fn expr_terms_from_coeff(
   coeff_domain : Domain,
-  coeff : @symcore.Expr,
+  coeff : Expr,
   var_count : Int,
-) -> Map[Monomial, @symcore.Expr] {
-  let out : Map[Monomial, @symcore.Expr] = Map::new()
+) -> Map[Monomial, Expr] {
+  let out : Map[Monomial, Expr] = Map::new()
   if !domain_is_zero_expr(coeff_domain, coeff) {
     out.set(monomial_one(var_count), coeff)
   }
@@ -2253,10 +2253,10 @@ fn expr_terms_from_coeff(
 ///|
 fn expr_terms_add(
   coeff_domain : Domain,
-  left : Map[Monomial, @symcore.Expr],
-  right : Map[Monomial, @symcore.Expr],
-) -> Map[Monomial, @symcore.Expr] {
-  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  left : Map[Monomial, Expr],
+  right : Map[Monomial, Expr],
+) -> Map[Monomial, Expr] {
+  let out : Map[Monomial, Expr] = Map::new()
   for mono, coeff in left {
     if !domain_is_zero_expr(coeff_domain, coeff) {
       out.set(mono, coeff)
@@ -2284,10 +2284,10 @@ fn expr_terms_add(
 ///|
 fn expr_terms_mul(
   coeff_domain : Domain,
-  left : Map[Monomial, @symcore.Expr],
-  right : Map[Monomial, @symcore.Expr],
-) -> Map[Monomial, @symcore.Expr] {
-  let out : Map[Monomial, @symcore.Expr] = Map::new()
+  left : Map[Monomial, Expr],
+  right : Map[Monomial, Expr],
+) -> Map[Monomial, Expr] {
+  let out : Map[Monomial, Expr] = Map::new()
   if left.is_empty() || right.is_empty() {
     return out
   }
@@ -2323,10 +2323,10 @@ fn expr_terms_mul(
 ///|
 fn expr_terms_pow(
   coeff_domain : Domain,
-  terms : Map[Monomial, @symcore.Expr],
+  terms : Map[Monomial, Expr],
   exp : Int,
   var_count : Int,
-) -> Map[Monomial, @symcore.Expr] {
+) -> Map[Monomial, Expr] {
   if exp == 0 {
     return expr_terms_one(var_count)
   }
@@ -2358,26 +2358,26 @@ fn reciprocal_gen_symbol_name(gen : String) -> String? {
 ///|
 fn expr_generator_rational(
   gens : Array[String],
-  expr : @symcore.Expr,
-) -> (Map[Monomial, @symcore.Expr], Map[Monomial, @symcore.Expr])? {
+  expr : Expr,
+) -> (Map[Monomial, Expr], Map[Monomial, Expr])? {
   let expr_text = expr_key(expr)
   for i in 0..<gens.length() {
     let gen = gens[i]
     if expr_text == gen.replace_all(old=" ", new="") {
-      let numer : Map[Monomial, @symcore.Expr] = Map::new()
+      let numer : Map[Monomial, Expr] = Map::new()
       let mono = monomial_one(gens.length())
       mono.exps.set(i, 1)
-      numer.set(mono, @symcore.int(1))
+      numer.set(mono, int(1))
       return Some((numer, expr_terms_one(gens.length())))
     }
     match reciprocal_gen_symbol_name(gen) {
       Some(name) =>
         match expr {
-          @symcore.Expr::Symbol(expr_name) if expr_name == name => {
-            let denom : Map[Monomial, @symcore.Expr] = Map::new()
+          Expr::Symbol(expr_name) if expr_name == name => {
+            let denom : Map[Monomial, Expr] = Map::new()
             let mono = monomial_one(gens.length())
             mono.exps.set(i, 1)
-            denom.set(mono, @symcore.int(1))
+            denom.set(mono, int(1))
             return Some((expr_terms_one(gens.length()), denom))
           }
           _ => ()
@@ -2392,8 +2392,8 @@ fn expr_generator_rational(
 fn expr_collect_rational_terms(
   coeff_domain : Domain,
   gens : Array[String],
-  expr : @symcore.Expr,
-) -> (Map[Monomial, @symcore.Expr], Map[Monomial, @symcore.Expr])? {
+  expr : Expr,
+) -> (Map[Monomial, Expr], Map[Monomial, Expr])? {
   let var_count = gens.length()
   if domain_contains_expr(coeff_domain, expr) {
     return Some(
@@ -2408,8 +2408,8 @@ fn expr_collect_rational_terms(
     None => ()
   }
   match expr {
-    @symcore.Expr::Add(args) => {
-      let mut numer : Map[Monomial, @symcore.Expr] = Map::new()
+    Expr::Add(args) => {
+      let mut numer : Map[Monomial, Expr] = Map::new()
       let mut denom = expr_terms_one(var_count)
       let mut first = true
       for arg in args {
@@ -2430,7 +2430,7 @@ fn expr_collect_rational_terms(
       }
       Some((numer, denom))
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut numer = expr_terms_one(var_count)
       let mut denom = expr_terms_one(var_count)
       for arg in args {
@@ -2444,12 +2444,12 @@ fn expr_collect_rational_terms(
       }
       Some((numer, denom))
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       if !expr_is_integer(exp) {
         None
       } else {
         let k = match exp {
-          @symcore.Expr::Number(n) => n.numerator().to_int()
+          Expr::Number(n) => n.numerator().to_int()
           _ => 0
         }
         match expr_collect_rational_terms(coeff_domain, gens, base) {
@@ -2479,7 +2479,7 @@ fn expr_collect_rational_terms(
 ///|
 fn expr_terms_is_one(
   coeff_domain : Domain,
-  terms : Map[Monomial, @symcore.Expr],
+  terms : Map[Monomial, Expr],
   var_count : Int,
 ) -> Bool {
   if terms.length() != 1 {
@@ -2494,9 +2494,9 @@ fn expr_terms_is_one(
 ///|
 fn expr_terms_leading_coeff(
   coeff_domain : Domain,
-  terms : Map[Monomial, @symcore.Expr],
-) -> @symcore.Expr? {
-  let mut best : (Monomial, @symcore.Expr)? = None
+  terms : Map[Monomial, Expr],
+) -> Expr? {
+  let mut best : (Monomial, Expr)? = None
   for mono, coeff in terms {
     if domain_is_zero_expr(coeff_domain, coeff) {
       continue
@@ -2520,20 +2520,20 @@ fn expr_terms_leading_coeff(
 ///|
 fn expr_terms_constant_coeff(
   coeff_domain : Domain,
-  terms : Map[Monomial, @symcore.Expr],
+  terms : Map[Monomial, Expr],
   var_count : Int,
-) -> @symcore.Expr {
+) -> Expr {
   match terms.get(monomial_one(var_count)) {
     Some(coeff) if !domain_is_zero_expr(coeff_domain, coeff) => coeff
-    _ => @symcore.int(0)
+    _ => int(0)
   }
 }
 
 ///|
-fn expr_numeric_sign(expr : @symcore.Expr) -> Int? {
+fn expr_numeric_sign(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n.compare(@symnum.BigRational::zero()))
-    @symcore.Expr::Mul(args) => {
+    Expr::Number(n) => Some(n.compare(@symnum.BigRational::zero()))
+    Expr::Mul(args) => {
       let mut sign = 1
       for arg in args {
         match expr_numeric_sign(arg) {
@@ -2544,12 +2544,12 @@ fn expr_numeric_sign(expr : @symcore.Expr) -> Int? {
       }
       Some(sign)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       if !expr_is_integer(exp) {
         None
       } else {
         let k = match exp {
-          @symcore.Expr::Number(n) => n.numerator().to_int()
+          Expr::Number(n) => n.numerator().to_int()
           _ => 0
         }
         match expr_numeric_sign(base) {
@@ -2563,14 +2563,14 @@ fn expr_numeric_sign(expr : @symcore.Expr) -> Int? {
 }
 
 ///|
-fn expr_coeff_sign_like(expr : @symcore.Expr) -> Int {
+fn expr_coeff_sign_like(expr : Expr) -> Int {
   match expr {
-    @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero())
-    @symcore.Expr::Mul(args) => {
+    Expr::Number(n) => n.compare(@symnum.BigRational::zero())
+    Expr::Mul(args) => {
       let mut sign = 1
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) =>
+          Expr::Number(n) =>
             if n.compare(@symnum.BigRational::zero()) < 0 {
               sign = -sign
             }
@@ -2584,7 +2584,7 @@ fn expr_coeff_sign_like(expr : @symcore.Expr) -> Int {
 }
 
 ///|
-fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
+fn domain_expr_sign(domain : Domain, expr : Expr) -> Int? {
   if !domain_contains_expr(domain, expr) {
     return None
   }
@@ -2668,25 +2668,25 @@ fn domain_expr_sign(domain : Domain, expr : @symcore.Expr) -> Int? {
 }
 
 ///|
-pub fn domain_is_zero_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_zero_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_zero(expr)
 }
 
 ///|
-pub fn domain_is_one_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_one_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_one(expr)
 }
 
 ///|
 pub fn domain_is_negative_one_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_minus_one(expr)
 }
 
 ///|
-pub fn domain_is_unit_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_unit_expr(domain : Domain, expr : Expr) -> Bool {
   if !domain_contains_expr(domain, expr) {
     return false
   }
@@ -2719,7 +2719,7 @@ pub fn domain_is_unit_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_positive_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_positive_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(1) => true
     _ => false
@@ -2727,7 +2727,7 @@ pub fn domain_is_positive_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_negative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
+pub fn domain_is_negative_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v < 0
     None => false
@@ -2737,7 +2737,7 @@ pub fn domain_is_negative_expr(domain : Domain, expr : @symcore.Expr) -> Bool {
 ///|
 pub fn domain_is_nonpositive_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v <= 0
@@ -2748,7 +2748,7 @@ pub fn domain_is_nonpositive_expr(
 ///|
 pub fn domain_is_nonnegative_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v >= 0
@@ -2928,17 +2928,17 @@ fn domain_rational_exsqrt(value : @symnum.BigRational) -> @symnum.BigRational? {
 }
 
 ///|
-fn expr_from_bigint(n : BigInt) -> @symcore.Expr {
+fn expr_from_bigint(n : BigInt) -> Expr {
   @symcore.number(@symnum.BigRational::from_bigint(n))
 }
 
 ///|
-fn expr_from_rational(n : @symnum.BigRational) -> @symcore.Expr {
+fn expr_from_rational(n : @symnum.BigRational) -> Expr {
   @symcore.number(n)
 }
 
 ///|
-fn expr_exact_sqrt_or_symbolic(expr : @symcore.Expr) -> @symcore.Expr {
+fn expr_exact_sqrt_or_symbolic(expr : Expr) -> Expr {
   match expr_rational_value(expr) {
     Some(value) =>
       match domain_rational_exsqrt(value) {
@@ -2950,9 +2950,9 @@ fn expr_exact_sqrt_or_symbolic(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn expr_rational_value(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn expr_rational_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Expr::Number(n) => Some(n)
     _ => None
   }
 }
@@ -2960,7 +2960,7 @@ fn expr_rational_value(expr : @symcore.Expr) -> @symnum.BigRational? {
 ///|
 fn expr_gaussian_coeffs(
   coeff_domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> GaussianRatCompat? {
   let gens = ["I"]
   match expr_collect_rational_terms(coeff_domain, gens, expr) {
@@ -2992,9 +2992,9 @@ fn expr_gaussian_coeffs(
 }
 
 ///|
-fn gaussian_rat_to_expr(value : GaussianRatCompat) -> @symcore.Expr {
-  let i_sym = @symcore.symbol("I")
-  let terms : Array[@symcore.Expr] = Array::new()
+fn gaussian_rat_to_expr(value : GaussianRatCompat) -> Expr {
+  let i_sym = symbol("I")
+  let terms : Array[Expr] = Array::new()
   if !value.re.is_zero() {
     terms.push(@symcore.number(value.re))
   }
@@ -3004,14 +3004,14 @@ fn gaussian_rat_to_expr(value : GaussianRatCompat) -> @symcore.Expr {
       if value.im.is_one() {
         i_sym
       } else if value.im.compare(@symnum.BigRational::from_int(-1)) == 0 {
-        @symcore.int(-1) * i_sym
+        int(-1) * i_sym
       } else {
         imag_coeff * i_sym
       },
     )
   }
   if terms.is_empty() {
-    @symcore.int(0)
+    int(0)
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -3142,7 +3142,7 @@ fn gaussian_rat_canonical_unit(value : GaussianRatCompat) -> GaussianRatCompat {
 ///|
 fn gaussian_int_from_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> GaussianIntCompat raise PolyError {
   let coeff_domain = match domain {
     Domain::ZZ_I => Domain::ZZ
@@ -3166,7 +3166,7 @@ fn gaussian_int_from_expr(
 ///|
 fn gaussian_rat_from_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> GaussianRatCompat raise PolyError {
   let coeff_domain = match domain {
     Domain::ZZ_I => Domain::ZZ
@@ -3260,7 +3260,7 @@ fn gaussian_int_lcm(
 }
 
 ///|
-fn gaussian_int_to_expr(value : GaussianIntCompat) -> @symcore.Expr {
+fn gaussian_int_to_expr(value : GaussianIntCompat) -> Expr {
   gaussian_rat_to_expr(GaussianRatCompat::{
     re: @symnum.BigRational::from_bigint(value.re),
     im: @symnum.BigRational::from_bigint(value.im),
@@ -3460,22 +3460,22 @@ fn finite_field_exsqrt(
 }
 
 ///|
-fn expr_has_leading_minus(expr : @symcore.Expr) -> Bool {
+fn expr_has_leading_minus(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
-    @symcore.Expr::Add(args) =>
+    Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
+    Expr::Add(args) =>
       if args.is_empty() {
         false
       } else {
         match args[0] {
-          @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
+          Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
           _ => expr_key(expr).has_prefix("-")
         }
       }
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       args.any(arg => {
         match arg {
-          @symcore.Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
+          Expr::Number(n) => n.compare(@symnum.BigRational::zero()) < 0
           _ => false
         }
       })
@@ -3484,16 +3484,16 @@ fn expr_has_leading_minus(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
+fn expr_strip_leading_minus(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Mul(args) => {
-      let updated : Array[@symcore.Expr] = Array::new()
+    Expr::Mul(args) => {
+      let updated : Array[Expr] = Array::new()
       let mut removed = false
       for arg in args {
         match arg {
-          @symcore.Expr::Number(n) if !removed &&
+          Expr::Number(n) if !removed &&
             n.compare(@symnum.BigRational::from_int(-1)) == 0 => removed = true
-          @symcore.Expr::Number(n) if !removed &&
+          Expr::Number(n) if !removed &&
             n.compare(@symnum.BigRational::zero()) < 0 => {
             updated.push(@symcore.number(n.neg_r()))
             removed = true
@@ -3504,7 +3504,7 @@ fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
       if removed {
         Some(
           if updated.is_empty() {
-            @symcore.int(1)
+            int(1)
           } else {
             @symcore.mul(updated)
           },
@@ -3513,14 +3513,14 @@ fn expr_strip_leading_minus(expr : @symcore.Expr) -> @symcore.Expr? {
         None
       }
     }
-    @symcore.Expr::Number(n) if n.compare(@symnum.BigRational::zero()) < 0 =>
+    Expr::Number(n) if n.compare(@symnum.BigRational::zero()) < 0 =>
       Some(@symcore.number(n.neg_r()))
     _ => None
   }
 }
 
 ///|
-fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> @symcore.Expr {
+fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> Expr {
   if value.is_zero() || value.is_one() {
     @symcore.number(value)
   } else {
@@ -3532,7 +3532,7 @@ fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> @symcore.Expr {
 fn poly_from_expr_terms(
   coeff_domain : Domain,
   gens : Array[String],
-  terms : Map[Monomial, @symcore.Expr],
+  terms : Map[Monomial, Expr],
 ) -> Poly raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   for mono, coeff_expr in terms {
@@ -3555,13 +3555,13 @@ fn poly_is_ground(poly : Poly) -> Bool {
 }
 
 ///|
-fn poly_ground_expr(poly : Poly) -> @symcore.Expr raise PolyError {
+fn poly_ground_expr(poly : Poly) -> Expr raise PolyError {
   if !poly_is_ground(poly) {
     raise PolyError::DomainMismatch
   }
   match poly.coeffs.get(monomial_one(poly.gens.length())) {
     Some(coeff) => fe_to_expr_const(coeff)
-    None => @symcore.int(0)
+    None => int(0)
   }
 }
 
@@ -3569,7 +3569,7 @@ fn poly_ground_expr(poly : Poly) -> @symcore.Expr raise PolyError {
 fn poly_from_ground_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Poly raise PolyError {
   let coeff = field_elem_from_scalar_expr(expr, coeff_domain)
   let coeffs : Map[Monomial, FieldElem] = Map::new()
@@ -3619,7 +3619,7 @@ fn poly_lcm_compat(left : Poly, right : Poly) -> Poly raise PolyError {
 fn rational_function_pair_from_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> (Poly, Poly) raise PolyError {
   match expr_collect_rational_terms(coeff_domain, gens, expr) {
     Some((numer, denom)) =>
@@ -3636,22 +3636,22 @@ fn rational_function_expr_from_pair(
   numer : Poly,
   denom : Poly,
   coeff_domain : Domain,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   let (num_s, den_s) = cancel(numer, denom)
   let den_expr = den_s.to_expr()
   if domain_is_one_expr(coeff_domain, den_expr) {
     num_s.to_expr()
   } else {
-    num_s.to_expr() * (den_expr ^ @symcore.int(-1))
+    num_s.to_expr() * (den_expr ^ int(-1))
   }
 }
 
 ///|
 fn domain_scalar_gcd_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -3703,22 +3703,22 @@ fn domain_scalar_gcd_expr(
       let lhs = field_elem_from_scalar_expr(left, domain)
       let rhs = field_elem_from_scalar_expr(right, domain)
       if fe_is_zero(lhs) && fe_is_zero(rhs) {
-        @symcore.int(1)
+        int(1)
       } else {
         fe_to_expr_const(fe_from_int(1, domain))
       }
     }
     Domain::RR | Domain::CC =>
       if domain_is_zero_expr(domain, left) && domain_is_zero_expr(domain, right) {
-        @symcore.int(1)
+        int(1)
       } else {
         fe_to_expr_const(fe_from_int(1, domain))
       }
     Domain::EX | Domain::EXRAW | Domain::AlgExt(_, _, _) =>
       if domain_is_zero_expr(domain, left) && domain_is_zero_expr(domain, right) {
-        @symcore.int(1)
+        int(1)
       } else {
-        @symcore.int(1)
+        int(1)
       }
     _ => raise PolyError::DomainMismatch
   }
@@ -3727,9 +3727,9 @@ fn domain_scalar_gcd_expr(
 ///|
 fn domain_scalar_lcm_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -3745,7 +3745,7 @@ fn domain_scalar_lcm_expr(
         _ => raise PolyError::DomainMismatch
       }
       if lhs.is_zero() || rhs.is_zero() {
-        @symcore.int(0)
+        int(0)
       } else {
         expr_from_bigint(domain_bigint_lcm(lhs, rhs))
       }
@@ -3760,7 +3760,7 @@ fn domain_scalar_lcm_expr(
         None => raise PolyError::DomainMismatch
       }
       if lhs.is_zero() || rhs.is_zero() {
-        @symcore.int(0)
+        int(0)
       } else {
         let num = domain_bigint_lcm(lhs.numerator(), rhs.numerator())
         let den = @symnum.gcd_bigint(lhs.denominator(), rhs.denominator())
@@ -3800,14 +3800,14 @@ fn domain_scalar_lcm_expr(
         _ =>
           if domain_is_zero_expr(domain, left) ||
             domain_is_zero_expr(domain, right) {
-            @symcore.int(0)
+            int(0)
           } else {
             left * right
           }
       }
     Domain::EX | Domain::EXRAW | Domain::AlgExt(_, _, _) =>
       if domain_is_zero_expr(domain, left) || domain_is_zero_expr(domain, right) {
-        @symcore.int(0)
+        int(0)
       } else {
         left * right
       }
@@ -3819,9 +3819,9 @@ fn domain_scalar_lcm_expr(
 fn domain_poly_gcd_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let lhs = Poly::from_expr(left, gens, coeff_domain)
   let rhs = Poly::from_expr(right, gens, coeff_domain)
   poly_gcd_compat(lhs, rhs).to_expr()
@@ -3831,9 +3831,9 @@ fn domain_poly_gcd_expr(
 fn domain_poly_lcm_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let lhs = Poly::from_expr(left, gens, coeff_domain)
   let rhs = Poly::from_expr(right, gens, coeff_domain)
   poly_lcm_compat(lhs, rhs).to_expr()
@@ -3843,9 +3843,9 @@ fn domain_poly_lcm_expr(
 fn domain_rational_function_gcd_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let (left_num, left_den) = rational_function_pair_from_expr(
     coeff_domain, gens, left,
   )
@@ -3885,9 +3885,9 @@ fn domain_rational_function_gcd_expr(
 fn domain_rational_function_lcm_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let (left_num, left_den) = rational_function_pair_from_expr(
     coeff_domain, gens, left,
   )
@@ -3928,8 +3928,8 @@ fn domain_rational_function_lcm_expr(
 ///|
 pub fn domain_canonical_unit_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -3940,14 +3940,14 @@ pub fn domain_canonical_unit_expr(
     | Domain::GF(_)
     | Domain::GFExt(_, _, _) =>
       match domain_expr_sign(domain, expr) {
-        Some(v) if v < 0 => @symcore.int(-1)
-        _ => @symcore.int(1)
+        Some(v) if v < 0 => int(-1)
+        _ => int(1)
       }
     Domain::CC =>
       if domain_is_zero_expr(domain, expr) {
-        @symcore.int(1)
+        int(1)
       } else {
-        @symcore.int(1)
+        int(1)
       }
     Domain::ZZ_I =>
       gaussian_int_to_expr(
@@ -3959,11 +3959,11 @@ pub fn domain_canonical_unit_expr(
       )
     Domain::EX | Domain::EXRAW =>
       if domain_is_zero_expr(domain, expr) {
-        @symcore.int(1)
+        int(1)
       } else if expr_has_leading_minus(expr) {
-        @symcore.int(-1)
+        int(-1)
       } else {
-        @symcore.int(1)
+        int(1)
       }
     Domain::PolyRing(base, gens) | Domain::QuotientRing(base, gens, _) =>
       match expr_collect_rational_terms(base, gens, expr) {
@@ -3973,7 +3973,7 @@ pub fn domain_canonical_unit_expr(
           } else {
             match expr_terms_leading_coeff(base, numer) {
               Some(coeff) => domain_canonical_unit_expr(base, coeff)
-              None => @symcore.int(1)
+              None => int(1)
             }
           }
         None => raise PolyError::DomainMismatch
@@ -3983,7 +3983,7 @@ pub fn domain_canonical_unit_expr(
         Some((numer, _)) =>
           match expr_terms_leading_coeff(base, numer) {
             Some(coeff) => domain_canonical_unit_expr(base, coeff)
-            None => @symcore.int(1)
+            None => int(1)
           }
         None => raise PolyError::DomainMismatch
       }
@@ -4007,13 +4007,13 @@ pub fn domain_canonical_unit_expr(
         Some((numer, _)) =>
           match expr_terms_leading_coeff(base, numer) {
             Some(coeff) => domain_canonical_unit_expr(base, coeff)
-            None => @symcore.int(1)
+            None => int(1)
           }
         None =>
           if expr_has_leading_minus(expr) {
-            @symcore.int(-1)
+            int(-1)
           } else {
-            @symcore.int(1)
+            int(1)
           }
       }
   }
@@ -4022,8 +4022,8 @@ pub fn domain_canonical_unit_expr(
 ///|
 pub fn domain_abs_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4048,7 +4048,7 @@ pub fn domain_abs_expr(
         Some(v) =>
           if v < 0 {
             match expr {
-              @symcore.Expr::Number(n) => @symcore.number(n.neg_r())
+              Expr::Number(n) => @symcore.number(n.neg_r())
               _ => @symcore.function("Abs", [expr])
             }
           } else {
@@ -4076,9 +4076,9 @@ pub fn domain_abs_expr(
 ///|
 pub fn domain_gcd_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   match domain {
     Domain::PolyRing(base, gens) =>
       domain_poly_gcd_expr(base, gens, left, right)
@@ -4098,9 +4098,9 @@ pub fn domain_gcd_expr(
 ///|
 pub fn domain_lcm_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   match domain {
     Domain::PolyRing(base, gens) =>
       domain_poly_lcm_expr(base, gens, left, right)
@@ -4120,9 +4120,9 @@ pub fn domain_lcm_expr(
 ///|
 pub fn domain_cofactors_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr, Expr) raise PolyError {
   let gcd = domain_gcd_expr(domain, left, right)
   let cfa = match domain {
     Domain::ZZ =>
@@ -4189,14 +4189,14 @@ pub fn domain_cofactors_expr(
           if domain_is_one_expr(base, gcd) {
             left
           } else {
-            left * (gcd ^ @symcore.int(-1))
+            left * (gcd ^ int(-1))
           }
       }
     _ =>
       if domain_is_one_expr(domain, gcd) {
         left
       } else {
-        left * (gcd ^ @symcore.int(-1))
+        left * (gcd ^ int(-1))
       }
   }
   let cfb = match domain {
@@ -4264,14 +4264,14 @@ pub fn domain_cofactors_expr(
           if domain_is_one_expr(base, gcd) {
             right
           } else {
-            right * (gcd ^ @symcore.int(-1))
+            right * (gcd ^ int(-1))
           }
       }
     _ =>
       if domain_is_one_expr(domain, gcd) {
         right
       } else {
-        right * (gcd ^ @symcore.int(-1))
+        right * (gcd ^ int(-1))
       }
   }
   (gcd, cfa, cfb)
@@ -4281,9 +4281,9 @@ pub fn domain_cofactors_expr(
 fn domain_poly_gcdex_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr, Expr) raise PolyError {
   if gens.length() != 1 {
     raise PolyError::NotUnivariate
   }
@@ -4329,9 +4329,9 @@ fn domain_poly_gcdex_expr(
 ///|
 pub fn domain_gcdex_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr, Expr) raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -4422,9 +4422,9 @@ pub fn domain_gcdex_expr(
 ///|
 pub fn domain_half_gcdex_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr) raise PolyError {
   let (s, _, g) = domain_gcdex_expr(domain, left, right)
   (s, g)
 }
@@ -4432,9 +4432,9 @@ pub fn domain_half_gcdex_expr(
 ///|
 pub fn domain_invert_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let (s, _, h) = domain_gcdex_expr(domain, left, right)
   guard domain_is_one_expr(domain, h) else {
     raise PolyError::ExactQuotientFailed
@@ -4445,8 +4445,8 @@ pub fn domain_invert_expr(
 ///|
 pub fn domain_revert_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   if domain_is_field_pred(domain) {
     guard !domain_is_zero_expr(domain, expr) else {
       raise PolyError::DivisionByZero
@@ -4464,8 +4464,8 @@ pub fn domain_revert_expr(
 ///|
 pub fn domain_factorial_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4510,9 +4510,9 @@ pub fn domain_factorial_expr(
 ///|
 pub fn domain_log_expr(
   domain : Domain,
-  value : @symcore.Expr,
-  base : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  value : Expr,
+  base : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, value) &&
     domain_contains_expr(domain, base) else {
     raise PolyError::DomainMismatch
@@ -4540,8 +4540,8 @@ pub fn domain_log_expr(
 ///|
 pub fn domain_sqrt_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4566,8 +4566,8 @@ pub fn domain_sqrt_expr(
 ///|
 pub fn domain_exsqrt_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr? raise PolyError {
+  expr : Expr,
+) -> Expr? raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4628,7 +4628,7 @@ pub fn domain_exsqrt_expr(
               domain_exsqrt_expr(Domain::PolyRing(inner, gens), denom.to_expr()),
             ) {
             (Some(num_root), Some(den_root)) =>
-              Some(num_root * (den_root ^ @symcore.int(-1)))
+              Some(num_root * (den_root ^ int(-1)))
             _ => None
           }
         }
@@ -4641,7 +4641,7 @@ pub fn domain_exsqrt_expr(
 ///|
 pub fn domain_is_square_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool raise PolyError {
   match domain {
     Domain::RR =>
@@ -4673,8 +4673,8 @@ pub fn domain_is_square_expr(
 ///|
 pub fn domain_real_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4684,8 +4684,8 @@ pub fn domain_real_expr(
 ///|
 pub fn domain_imag_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4705,8 +4705,8 @@ fn gaussian_rat_almosteq(
 ///|
 pub fn domain_almosteq_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
+  left : Expr,
+  right : Expr,
   tolerance? : @symnum.BigRational? = None,
 ) -> Bool {
   if !domain_contains_expr(domain, left) || !domain_contains_expr(domain, right) {
@@ -4759,9 +4759,9 @@ pub fn domain_almosteq_expr(
 ///|
 pub fn domain_evalf_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   prec? : Int? = None,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   ignore(prec)
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
@@ -4770,32 +4770,32 @@ pub fn domain_evalf_expr(
 }
 
 ///|
-fn domain_zero_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
+fn domain_zero_like_expr(domain : Domain) -> Expr raise PolyError {
   match domain {
     Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
       domain_field_elem_to_expr(domain, fe_from_int(0, domain))
-    _ => @symcore.int(0)
+    _ => int(0)
   }
 }
 
 ///|
-fn domain_one_like_expr(domain : Domain) -> @symcore.Expr raise PolyError {
+fn domain_one_like_expr(domain : Domain) -> Expr raise PolyError {
   match domain {
     Domain::GF(_) | Domain::GFExt(_, _, _) | Domain::RR | Domain::CC =>
       domain_field_elem_to_expr(domain, fe_from_int(1, domain))
-    _ => @symcore.int(1)
+    _ => int(1)
   }
 }
 
 ///|
 /// Return the additive identity of `domain` as an expression.
-pub fn domain_zero_expr(domain : Domain) -> @symcore.Expr raise PolyError {
+pub fn domain_zero_expr(domain : Domain) -> Expr raise PolyError {
   domain_zero_like_expr(domain)
 }
 
 ///|
 /// Return the multiplicative identity of `domain` as an expression.
-pub fn domain_one_expr(domain : Domain) -> @symcore.Expr raise PolyError {
+pub fn domain_one_expr(domain : Domain) -> Expr raise PolyError {
   domain_one_like_expr(domain)
 }
 
@@ -4803,8 +4803,8 @@ pub fn domain_one_expr(domain : Domain) -> @symcore.Expr raise PolyError {
 /// Unary plus over domain elements.
 pub fn domain_pos_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
@@ -4812,21 +4812,21 @@ pub fn domain_pos_expr(
 /// Unary minus over domain elements.
 pub fn domain_neg_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
-  domain_from_sympy_expr(domain, @symcore.int(-1) * expr)
+  domain_from_sympy_expr(domain, int(-1) * expr)
 }
 
 ///|
 /// Addition over domain elements.
 pub fn domain_add_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -4838,23 +4838,23 @@ pub fn domain_add_expr(
 /// Subtraction over domain elements.
 pub fn domain_sub_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
   }
-  domain_from_sympy_expr(domain, left + @symcore.int(-1) * right)
+  domain_from_sympy_expr(domain, left + int(-1) * right)
 }
 
 ///|
 /// Multiplication over domain elements.
 pub fn domain_mul_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -4882,9 +4882,9 @@ pub fn domain_mul_expr(
 /// Exponentiation over domain elements.
 pub fn domain_pow_expr(
   domain : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   exp : Int,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4918,7 +4918,7 @@ pub fn domain_pow_expr(
 fn domain_field_elem_to_expr(
   domain : Domain,
   elem : FieldElem,
-) -> @symcore.Expr {
+) -> Expr {
   match (domain, elem) {
     (Domain::GF(p), FieldElem::GFp(_, value)) => {
       let symm = if value > p / 2 { value - p } else { value }
@@ -4932,9 +4932,9 @@ fn domain_field_elem_to_expr(
 fn domain_rational_function_quo_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   let (left_num, left_den) = rational_function_pair_from_expr(
     coeff_domain, gens, left,
   )
@@ -4955,9 +4955,9 @@ fn domain_rational_function_quo_expr(
 fn domain_poly_div_expr(
   coeff_domain : Domain,
   gens : Array[String],
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr) raise PolyError {
   let lhs = Poly::from_expr(left, gens, coeff_domain)
   let rhs = Poly::from_expr(right, gens, coeff_domain)
   if rhs.is_zero() {
@@ -4975,8 +4975,8 @@ fn domain_poly_div_expr(
 ///|
 pub fn domain_numer_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -5019,8 +5019,8 @@ pub fn domain_numer_expr(
 ///|
 pub fn domain_denom_expr(
   domain : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -5051,9 +5051,9 @@ pub fn domain_denom_expr(
 ///|
 pub fn domain_quo_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -5096,7 +5096,7 @@ pub fn domain_quo_expr(
       if domain_is_zero_expr(domain, right) {
         raise PolyError::DivisionByZero
       } else {
-        left * (right ^ @symcore.int(-1))
+        left * (right ^ int(-1))
       }
     Domain::PolyRing(coeff_domain, gens)
     | Domain::QuotientRing(coeff_domain, gens, _) =>
@@ -5117,9 +5117,9 @@ pub fn domain_quo_expr(
 ///|
 pub fn domain_rem_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -5163,18 +5163,18 @@ pub fn domain_rem_expr(
 ///|
 pub fn domain_div_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr) raise PolyError {
   (domain_quo_expr(domain, left, right), domain_rem_expr(domain, left, right))
 }
 
 ///|
 pub fn domain_exquo_expr(
   domain : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   guard domain_contains_expr(domain, left) &&
     domain_contains_expr(domain, right) else {
     raise PolyError::DomainMismatch
@@ -5207,75 +5207,75 @@ pub fn domain_exquo_expr(
 }
 
 ///|
-pub fn Domain::is_zero_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_zero_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_zero_expr(self, expr)
 }
 
 ///|
-pub fn Domain::zero_expr(self : Domain) -> @symcore.Expr raise PolyError {
+pub fn Domain::zero_expr(self : Domain) -> Expr raise PolyError {
   domain_zero_expr(self)
 }
 
 ///|
-pub fn Domain::one_expr(self : Domain) -> @symcore.Expr raise PolyError {
+pub fn Domain::one_expr(self : Domain) -> Expr raise PolyError {
   domain_one_expr(self)
 }
 
 ///|
 pub fn Domain::from_sympy_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_from_sympy_expr(self, expr)
 }
 
 ///|
 pub fn Domain::new_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_new_expr(self, expr)
 }
 
 ///|
 pub fn Domain::normal_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_normal_expr(self, expr)
 }
 
 ///|
 pub fn Domain::to_sympy_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_to_sympy_expr(self, expr)
 }
 
 ///|
 pub fn Domain::convert_from_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   domain_convert_from_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::convert_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base? : Domain? = None,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   domain_convert_expr(self, expr, base~)
 }
 
 ///|
 pub fn Domain::sum_expr(
   self : Domain,
-  exprs : Array[@symcore.Expr],
-) -> @symcore.Expr raise PolyError {
+  exprs : Array[Expr],
+) -> Expr raise PolyError {
   domain_sum_expr(self, exprs)
 }
 
@@ -5290,189 +5290,189 @@ pub fn Domain::map_expr_tree(
 ///|
 pub fn Domain::from_ff_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_ff_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_ff_python_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_ff_python_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_zz_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_zz_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_zz_python_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_zz_python_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_qq_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_qq_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_qq_python_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_qq_python_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_ff_gmpy_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_ff_gmpy_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_zz_gmpy_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_zz_gmpy_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_qq_gmpy_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_qq_gmpy_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_real_field_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_real_field_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_complex_field_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_complex_field_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_algebraic_field_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_algebraic_field_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_gaussian_integer_ring_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_gaussian_integer_ring_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_gaussian_rational_field_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_gaussian_rational_field_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_polynomial_ring_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_polynomial_ring_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_fraction_field_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_fraction_field_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_global_polynomial_ring_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_global_polynomial_ring_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_generalized_polynomial_ring_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_generalized_polynomial_ring_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_monogenic_finite_extension_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_monogenic_finite_extension_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_expression_domain_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_expression_domain_expr(self, expr, base)
 }
 
 ///|
 pub fn Domain::from_expression_raw_domain_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   base : Domain,
-) -> @symcore.Expr? {
+) -> Expr? {
   domain_from_expression_raw_domain_expr(self, expr, base)
 }
 
@@ -5485,202 +5485,202 @@ pub fn Domain::unify_composite(
 }
 
 ///|
-pub fn Domain::is_one_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_one_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_one_expr(self, expr)
 }
 
 ///|
 pub fn Domain::is_negative_one_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool {
   domain_is_negative_one_expr(self, expr)
 }
 
 ///|
-pub fn Domain::is_unit_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_unit_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_unit_expr(self, expr)
 }
 
 ///|
-pub fn Domain::is_positive_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_positive_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_positive_expr(self, expr)
 }
 
 ///|
-pub fn Domain::is_negative_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_negative_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_negative_expr(self, expr)
 }
 
 ///|
-pub fn Domain::is_nonpositive_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_nonpositive_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_nonpositive_expr(self, expr)
 }
 
 ///|
-pub fn Domain::is_nonnegative_expr(self : Domain, expr : @symcore.Expr) -> Bool {
+pub fn Domain::is_nonnegative_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_nonnegative_expr(self, expr)
 }
 
 ///|
 pub fn Domain::canonical_unit_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_canonical_unit_expr(self, expr)
 }
 
 ///|
 pub fn Domain::abs_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_abs_expr(self, expr)
 }
 
 ///|
 pub fn Domain::gcd_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_gcd_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::lcm_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_lcm_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::cofactors_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr, Expr) raise PolyError {
   domain_cofactors_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::numer_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_numer_expr(self, expr)
 }
 
 ///|
 pub fn Domain::denom_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_denom_expr(self, expr)
 }
 
 ///|
 pub fn Domain::quo_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_quo_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::rem_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_rem_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::div_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr) raise PolyError {
   domain_div_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::exquo_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_exquo_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::half_gcdex_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr) raise PolyError {
   domain_half_gcdex_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::gcdex_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> (Expr, Expr, Expr) raise PolyError {
   domain_gcdex_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::invert_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_invert_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::revert_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_revert_expr(self, expr)
 }
 
 ///|
 pub fn Domain::factorial_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_factorial_expr(self, expr)
 }
 
 ///|
 pub fn Domain::log_expr(
   self : Domain,
-  value : @symcore.Expr,
-  base : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  value : Expr,
+  base : Expr,
+) -> Expr raise PolyError {
   domain_log_expr(self, value, base)
 }
 
 ///|
 pub fn Domain::sqrt_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_sqrt_expr(self, expr)
 }
 
 ///|
 pub fn Domain::is_square_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Bool raise PolyError {
   domain_is_square_expr(self, expr)
 }
@@ -5688,32 +5688,32 @@ pub fn Domain::is_square_expr(
 ///|
 pub fn Domain::exsqrt_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr? raise PolyError {
+  expr : Expr,
+) -> Expr? raise PolyError {
   domain_exsqrt_expr(self, expr)
 }
 
 ///|
 pub fn Domain::real_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_real_expr(self, expr)
 }
 
 ///|
 pub fn Domain::imag_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_imag_expr(self, expr)
 }
 
 ///|
 pub fn Domain::almosteq_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
+  left : Expr,
+  right : Expr,
   tolerance? : @symnum.BigRational? = None,
 ) -> Bool {
   domain_almosteq_expr(self, left, right, tolerance~)
@@ -5722,61 +5722,61 @@ pub fn Domain::almosteq_expr(
 ///|
 pub fn Domain::evalf_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   prec? : Int? = None,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   domain_evalf_expr(self, expr, prec~)
 }
 
 ///|
 pub fn Domain::pos_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_pos_expr(self, expr)
 }
 
 ///|
 pub fn Domain::neg_expr(
   self : Domain,
-  expr : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  expr : Expr,
+) -> Expr raise PolyError {
   domain_neg_expr(self, expr)
 }
 
 ///|
 pub fn Domain::add_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_add_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::sub_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_sub_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::mul_expr(
   self : Domain,
-  left : @symcore.Expr,
-  right : @symcore.Expr,
-) -> @symcore.Expr raise PolyError {
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   domain_mul_expr(self, left, right)
 }
 
 ///|
 pub fn Domain::pow_expr(
   self : Domain,
-  expr : @symcore.Expr,
+  expr : Expr,
   exp : Int,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   domain_pow_expr(self, expr, exp)
 }
 
@@ -5854,7 +5854,7 @@ pub fn Domain::set_domain(self : Domain, ground : Domain) -> Domain {
 ///|
 pub fn Domain::algebraic_field(
   self : Domain,
-  extension : Array[@symcore.Expr],
+  extension : Array[Expr],
 ) -> Domain raise PolyError {
   domain_algebraic_field(self, extension)
 }

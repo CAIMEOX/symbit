@@ -12,10 +12,10 @@ pub type DomainMatrixDOD = Map[Int, Map[Int, FieldElem]]
 pub type DomainMatrixDOK = Map[(Int, Int), FieldElem]
 
 ///|
-pub type MatrixExpr = Array[Array[@symcore.Expr]]
+pub type MatrixExpr = Array[Array[Expr]]
 
 ///|
-pub type MatrixExprDOD = Map[Int, Map[Int, @symcore.Expr]]
+pub type MatrixExprDOD = Map[Int, Map[Int, Expr]]
 
 ///|
 /// Layout token used by `to_flat_nz`/`from_flat_nz`.
@@ -191,7 +191,7 @@ fn slice_index_range(
 
 ///|
 fn infer_expr_items_domain(
-  items : Array[@symcore.Expr],
+  items : Array[Expr],
   field? : Bool = false,
   gaussian? : Bool = false,
   modulus? : Int? = None,
@@ -219,7 +219,7 @@ fn infer_expr_items_domain(
 
 ///|
 fn field_elem_from_scalar_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   domain : Domain,
 ) -> FieldElem raise PolyError {
   let poly = Poly::from_expr(expr, [], domain) catch {
@@ -707,7 +707,7 @@ pub fn DomainMatrix::from_dok(
 
 ///|
 pub fn DomainMatrix::get_domain(
-  items_sympy : Array[@symcore.Expr],
+  items_sympy : Array[Expr],
   field? : Bool = false,
   gaussian? : Bool = false,
   modulus? : Int? = None,
@@ -732,7 +732,7 @@ pub fn DomainMatrix::from_list_sympy(
   if rows.length() != nrows {
     raise PolyError::DomainMismatch
   }
-  let flat : Array[@symcore.Expr] = Array::new()
+  let flat : Array[Expr] = Array::new()
   for row in rows {
     if row.length() != ncols {
       raise PolyError::DomainMismatch
@@ -759,7 +759,7 @@ pub fn DomainMatrix::from_dict_sympy(
   gaussian? : Bool = false,
   modulus? : Int? = None,
 ) -> DomainMatrix raise PolyError {
-  let exprs : Array[@symcore.Expr] = Array::new()
+  let exprs : Array[Expr] = Array::new()
   let positions : Array[(Int, Int)] = Array::new()
   for r, row in elemsdict {
     if r < 0 || r >= nrows {
@@ -1661,7 +1661,7 @@ pub fn DomainMatrix::getitem_sympy(
   self : DomainMatrix,
   row : Int,
   col : Int,
-) -> @symcore.Expr raise PolyError {
+) -> Expr raise PolyError {
   fe_to_expr_const(self.getitem(row, col).element)
 }
 

@@ -2,13 +2,13 @@
 /// A plane in 3-dimensional Euclidean space.
 pub struct Plane {
   point_ : Point
-  normal_ : Array[@symcore.Expr]
+  normal_ : Array[Expr]
 } derive(Eq)
 
 ///|
 pub fn plane_from_normal(
   point_value : Point,
-  normal_vector : Array[@symcore.Expr],
+  normal_vector : Array[Expr],
 ) -> Plane raise GeometryError {
   let point_value = point_value.with_dim(3)
   if normal_vector.length() != 3 {
@@ -52,7 +52,7 @@ pub fn Plane::ambient_dimension(self : Plane) -> Int {
 }
 
 ///|
-pub fn Plane::normal_vector(self : Plane) -> Array[@symcore.Expr] {
+pub fn Plane::normal_vector(self : Plane) -> Array[Expr] {
   geo_clone_exprs(self.normal_)
 }
 
@@ -64,7 +64,7 @@ pub fn Plane::repr(self : Plane) -> String {
 ///|
 fn plane_basis_vectors(
   plane_obj : Plane,
-) -> (Array[@symcore.Expr], Array[@symcore.Expr]) {
+) -> (Array[Expr], Array[Expr]) {
   let x = plane_obj.normal_[0]
   let y = plane_obj.normal_[1]
   let z = plane_obj.normal_[2]
@@ -80,10 +80,10 @@ fn plane_basis_vectors(
 ///|
 fn plane_point_with_basis(
   base : Point,
-  basis1 : Array[@symcore.Expr],
-  basis2 : Array[@symcore.Expr],
-  u : @symcore.Expr,
-  v : @symcore.Expr,
+  basis1 : Array[Expr],
+  basis2 : Array[Expr],
+  u : Expr,
+  v : Expr,
 ) -> Point raise GeometryError {
   point(
     [
@@ -99,7 +99,7 @@ fn plane_point_with_basis(
 fn plane_basis_coeffs(
   plane_obj : Plane,
   target : Point,
-) -> (@symcore.Expr, @symcore.Expr)? raise GeometryError {
+) -> (Expr, Expr)? raise GeometryError {
   let delta = geo_sub_coords(target.coords_, plane_obj.point_.coords_)
   let (basis1, basis2) = plane_basis_vectors(plane_obj)
   let pairs = [(0, 1), (0, 2), (1, 2)]
@@ -135,10 +135,10 @@ fn plane_basis_coeffs(
 ///|
 pub fn Plane::equation(
   self : Plane,
-  x? : @symcore.Expr = @symcore.symbol("x"),
-  y? : @symcore.Expr = @symcore.symbol("y"),
-  z? : @symcore.Expr = @symcore.symbol("z"),
-) -> @symcore.Expr {
+  x? : Expr = symbol("x"),
+  y? : Expr = symbol("y"),
+  z? : Expr = symbol("z"),
+) -> Expr {
   geo_simplify(
     self.normal_[0] * (x - self.point_.coords_[0]) +
     self.normal_[1] * (y - self.point_.coords_[1]) +
@@ -149,22 +149,22 @@ pub fn Plane::equation(
 ///|
 pub fn Plane::arbitrary_point(
   self : Plane,
-  u? : @symcore.Expr? = None,
-  v? : @symcore.Expr? = None,
+  u? : Expr? = None,
+  v? : Expr? = None,
 ) -> Point raise GeometryError {
   let (basis1, basis2) = plane_basis_vectors(self)
   match v {
     Some(vsym) => {
       let usym = match u {
         Some(value) => value
-        None => @symcore.symbol("u")
+        None => symbol("u")
       }
       plane_point_with_basis(self.point_, basis1, basis2, usym, vsym)
     }
     None => {
       let tsym = match u {
         Some(value) => value
-        None => @symcore.symbol("t")
+        None => symbol("t")
       }
       let norm1 = geo_norm(basis1)
       let norm2 = geo_norm(basis2)
@@ -227,7 +227,7 @@ pub fn Plane::contains(
 pub fn Plane::distance(
   self : Plane,
   other : Point,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   let pt = other.with_dim(3)
   geo_div(
     @symelem.abs(
@@ -260,7 +260,7 @@ pub fn Plane::projection(
 ///|
 pub fn Plane::translate(
   self : Plane,
-  offsets : Array[@symcore.Expr],
+  offsets : Array[Expr],
 ) -> Plane raise GeometryError {
   plane_from_normal(self.point_.translate(offsets), self.normal_)
 }
@@ -268,7 +268,7 @@ pub fn Plane::translate(
 ///|
 pub fn Plane::scale(
   self : Plane,
-  factors : Array[@symcore.Expr],
+  factors : Array[Expr],
   pt? : Point? = None,
 ) -> Plane raise GeometryError {
   let moved = self.point_.scale(factors, pt~)
@@ -297,7 +297,7 @@ pub fn Plane::equals(
 pub fn Plane::angle_between(
   self : Plane,
   other : GeometryEntity,
-) -> @symcore.Expr raise GeometryError {
+) -> Expr raise GeometryError {
   match other {
     GeometryEntity::Line(line_obj) =>
       @symelem.asin(
@@ -490,11 +490,11 @@ pub fn Plane::projection_line(
 pub fn Plane::parameter_value(
   self : Plane,
   other : Point,
-  u : @symcore.Expr,
-  v? : @symcore.Expr? = None,
-) -> Map[@symcore.Expr, @symcore.Expr] raise GeometryError {
+  u : Expr,
+  v? : Expr? = None,
+) -> Map[Expr, Expr] raise GeometryError {
   let target = other.with_dim(3)
-  let out : Map[@symcore.Expr, @symcore.Expr] = {}
+  let out : Map[Expr, Expr] = {}
   match v {
     None => {
       let delta = geo_sub_coords(target.coords_, self.point_.coords_)

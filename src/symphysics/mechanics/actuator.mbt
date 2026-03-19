@@ -4,44 +4,44 @@
 
 ///|
 pub struct ForceActuator {
-  force_ : @symcore.Expr
+  force_ : Expr
   pathway_ : PathwayLike
 } derive(Eq)
 
 ///|
 pub struct LinearSpring {
-  stiffness_ : @symcore.Expr
+  stiffness_ : Expr
   pathway_ : PathwayLike
-  equilibrium_length_ : @symcore.Expr
+  equilibrium_length_ : Expr
 } derive(Eq)
 
 ///|
 pub struct LinearDamper {
-  damping_ : @symcore.Expr
+  damping_ : Expr
   pathway_ : PathwayLike
 } derive(Eq)
 
 ///|
 pub struct DuffingSpring {
-  linear_stiffness_ : @symcore.Expr
-  nonlinear_stiffness_ : @symcore.Expr
+  linear_stiffness_ : Expr
+  nonlinear_stiffness_ : Expr
   pathway_ : PathwayLike
-  equilibrium_length_ : @symcore.Expr
+  equilibrium_length_ : Expr
 } derive(Eq)
 
 ///|
 pub struct CoulombKineticFriction {
-  mu_k_ : @symcore.Expr
-  mu_s_ : @symcore.Expr
-  f_n_ : @symcore.Expr
+  mu_k_ : Expr
+  mu_s_ : Expr
+  f_n_ : Expr
   pathway_ : PathwayLike
-  v_s_ : @symcore.Expr
-  sigma_ : @symcore.Expr
+  v_s_ : Expr
+  sigma_ : Expr
 } derive(Eq)
 
 ///|
 pub struct TorqueActuator {
-  torque_ : @symcore.Expr
+  torque_ : Expr
   axis_ : @symvector.Vector
   target_frame_ : @symvector.ReferenceFrame
   reaction_frame_ : @symvector.ReferenceFrame?
@@ -59,14 +59,14 @@ pub enum ActuatorLike {
 
 ///|
 pub fn force_actuator(
-  force_value : @symcore.Expr,
+  force_value : Expr,
   pathway : PathwayLike,
 ) -> ForceActuator {
   ForceActuator::{ force_: force_value, pathway_: pathway }
 }
 
 ///|
-pub fn ForceActuator::force(self : ForceActuator) -> @symcore.Expr {
+pub fn ForceActuator::force(self : ForceActuator) -> Expr {
   self.force_
 }
 
@@ -98,9 +98,9 @@ pub fn ForceActuator::as_actuator(self : ForceActuator) -> ActuatorLike {
 
 ///|
 pub fn linear_spring(
-  stiffness : @symcore.Expr,
+  stiffness : Expr,
   pathway : PathwayLike,
-  equilibrium_length? : @symcore.Expr = @symcore.int(0),
+  equilibrium_length? : Expr = int(0),
 ) -> LinearSpring {
   LinearSpring::{
     stiffness_: stiffness,
@@ -110,7 +110,7 @@ pub fn linear_spring(
 }
 
 ///|
-pub fn LinearSpring::stiffness(self : LinearSpring) -> @symcore.Expr {
+pub fn LinearSpring::stiffness(self : LinearSpring) -> Expr {
   self.stiffness_
 }
 
@@ -120,16 +120,16 @@ pub fn LinearSpring::pathway(self : LinearSpring) -> PathwayLike {
 }
 
 ///|
-pub fn LinearSpring::equilibrium_length(self : LinearSpring) -> @symcore.Expr {
+pub fn LinearSpring::equilibrium_length(self : LinearSpring) -> Expr {
   self.equilibrium_length_
 }
 
 ///|
 pub fn LinearSpring::force(
   self : LinearSpring,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   mech_simplify_expr(
-    @symcore.int(-1) *
+    int(-1) *
     self.stiffness_ *
     ((try! self.pathway_.length()) - self.equilibrium_length_),
   )
@@ -150,7 +150,7 @@ pub fn LinearSpring::repr(self : LinearSpring) -> String {
     @symprint.to_string(self.stiffness_) +
     ", " +
     self.pathway_.repr()
-  if @symcore.compare_expr(self.equilibrium_length_, @symcore.int(0)) == 0 {
+  if @symcore.compare_expr(self.equilibrium_length_, int(0)) == 0 {
     base + ")"
   } else {
     base +
@@ -167,14 +167,14 @@ pub fn LinearSpring::as_actuator(self : LinearSpring) -> ActuatorLike {
 
 ///|
 pub fn linear_damper(
-  damping : @symcore.Expr,
+  damping : Expr,
   pathway : PathwayLike,
 ) -> LinearDamper {
   LinearDamper::{ damping_: damping, pathway_: pathway }
 }
 
 ///|
-pub fn LinearDamper::damping(self : LinearDamper) -> @symcore.Expr {
+pub fn LinearDamper::damping(self : LinearDamper) -> Expr {
   self.damping_
 }
 
@@ -186,9 +186,9 @@ pub fn LinearDamper::pathway(self : LinearDamper) -> PathwayLike {
 ///|
 pub fn LinearDamper::force(
   self : LinearDamper,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   mech_simplify_expr(
-    @symcore.int(-1) * self.damping_ * (try! self.pathway_.extension_velocity()),
+    int(-1) * self.damping_ * (try! self.pathway_.extension_velocity()),
   )
 }
 
@@ -217,10 +217,10 @@ pub fn LinearDamper::as_actuator(self : LinearDamper) -> ActuatorLike {
 
 ///|
 pub fn duffing_spring(
-  linear_stiffness : @symcore.Expr,
-  nonlinear_stiffness : @symcore.Expr,
+  linear_stiffness : Expr,
+  nonlinear_stiffness : Expr,
   pathway : PathwayLike,
-  equilibrium_length? : @symcore.Expr = @symcore.int(0),
+  equilibrium_length? : Expr = int(0),
 ) -> DuffingSpring {
   DuffingSpring::{
     linear_stiffness_: linear_stiffness,
@@ -233,13 +233,13 @@ pub fn duffing_spring(
 ///|
 pub fn DuffingSpring::force(
   self : DuffingSpring,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let displacement = mech_simplify_expr(
     (try! self.pathway_.length()) - self.equilibrium_length_,
   )
   mech_simplify_expr(
-    @symcore.int(-1) * self.linear_stiffness_ * displacement -
-    self.nonlinear_stiffness_ * (displacement ^ @symcore.int(3)),
+    int(-1) * self.linear_stiffness_ * displacement -
+    self.nonlinear_stiffness_ * (displacement ^ int(3)),
   )
 }
 
@@ -272,12 +272,12 @@ pub fn DuffingSpring::as_actuator(self : DuffingSpring) -> ActuatorLike {
 
 ///|
 pub fn coulomb_kinetic_friction(
-  mu_k : @symcore.Expr,
-  f_n : @symcore.Expr,
+  mu_k : Expr,
+  f_n : Expr,
   pathway : PathwayLike,
-  v_s? : @symcore.Expr = @symcore.int(100) ^ @symcore.int(-1),
-  sigma? : @symcore.Expr = @symcore.int(0),
-  mu_s? : @symcore.Expr = mu_k,
+  v_s? : Expr = int(100) ^ int(-1),
+  sigma? : Expr = int(0),
+  mu_s? : Expr = mu_k,
 ) -> CoulombKineticFriction {
   CoulombKineticFriction::{
     mu_k_: mu_k,
@@ -292,7 +292,7 @@ pub fn coulomb_kinetic_friction(
 ///|
 pub fn CoulombKineticFriction::force(
   self : CoulombKineticFriction,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let v = try! self.pathway_.extension_velocity()
   let f_c = self.mu_k_ * self.f_n_
   let f_max = self.mu_s_ * self.f_n_
@@ -300,14 +300,14 @@ pub fn CoulombKineticFriction::force(
     (f_max - f_c) *
     @symelem.exp(
       mech_simplify_expr(
-        @symcore.int(-1) *
-        ((v * (self.v_s_ ^ @symcore.int(-1))) ^ @symcore.int(2)),
+        int(-1) *
+        ((v * (self.v_s_ ^ int(-1))) ^ int(2)),
       ),
     ),
   )
   let viscous = self.sigma_ * v
   mech_simplify_expr(
-    @symcore.int(-1) * (f_c + stribeck) * @symelem.sign(v) - viscous,
+    int(-1) * (f_c + stribeck) * @symelem.sign(v) - viscous,
   )
 }
 
@@ -346,7 +346,7 @@ pub fn CoulombKineticFriction::as_actuator(
 
 ///|
 pub fn torque_actuator(
-  torque_value : @symcore.Expr,
+  torque_value : Expr,
   axis : @symvector.Vector,
   target_frame : @symvector.ReferenceFrame,
   reaction_frame? : @symvector.ReferenceFrame? = None,
@@ -360,7 +360,7 @@ pub fn torque_actuator(
 }
 
 ///|
-pub fn TorqueActuator::torque(self : TorqueActuator) -> @symcore.Expr {
+pub fn TorqueActuator::torque(self : TorqueActuator) -> Expr {
   self.torque_
 }
 

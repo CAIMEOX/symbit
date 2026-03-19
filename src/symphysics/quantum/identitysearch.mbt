@@ -10,22 +10,22 @@
 /// - breadth-first and random identity searches.
 ///
 /// The public API is more explicit than Python's tuple/set surface:
-/// circuits are `Array[@symcore.Expr]`, rules are `GateRule`, and search
+/// circuits are `Array[Expr]`, rules are `GateRule`, and search
 /// results are deterministic arrays sorted by circuit string.
 
 ///|
 pub struct GateRule {
-  left : Array[@symcore.Expr]
-  right : Array[@symcore.Expr]
+  left : Array[Expr]
+  right : Array[Expr]
 } derive(Eq)
 
 ///|
-fn gate_sequence_expr(sequence : Array[@symcore.Expr]) -> @symcore.Expr {
+fn gate_sequence_expr(sequence : Array[Expr]) -> Expr {
   quantum_mul_from_args_preserve(sequence)
 }
 
 ///|
-fn gate_sequence_key(sequence : Array[@symcore.Expr]) -> String {
+fn gate_sequence_key(sequence : Array[Expr]) -> String {
   @symprint.to_string(gate_sequence_expr(sequence))
 }
 
@@ -54,8 +54,8 @@ fn gate_rule_exists(rules : Array[GateRule], rule : GateRule) -> Bool {
 
 ///|
 fn gate_sequence_exists(
-  sequences : Array[Array[@symcore.Expr]],
-  sequence : Array[@symcore.Expr],
+  sequences : Array[Array[Expr]],
+  sequence : Array[Expr],
 ) -> Bool {
   let key = gate_sequence_key(sequence)
   for item in sequences {
@@ -67,16 +67,16 @@ fn gate_sequence_exists(
 }
 
 ///|
-fn gate_min_qubits(expr : @symcore.Expr) -> Int {
+fn gate_min_qubits(expr : Expr) -> Int {
   match expr {
-    @symcore.Expr::Pow(base, _) => gate_min_qubits(base)
-    @symcore.Expr::Function("Dagger", args) if args.length() == 1 =>
+    Expr::Pow(base, _) => gate_min_qubits(base)
+    Expr::Function("Dagger", args) if args.length() == 1 =>
       gate_min_qubits(args[0])
-    @symcore.Expr::Function("QFT", args)
-    | @symcore.Expr::Function("IQFT", args)
-    | @symcore.Expr::Function("OracleGate", args)
-    | @symcore.Expr::Function("WGate", args)
-    | @symcore.Expr::Function("CMod", args) if args.length() >= 1 =>
+    Expr::Function("QFT", args)
+    | Expr::Function("IQFT", args)
+    | Expr::Function("OracleGate", args)
+    | Expr::Function("WGate", args)
+    | Expr::Function("CMod", args) if args.length() >= 1 =>
       match quantum_integer_value(args[0]) {
         Some(value) if value > 0 => value
         _ => 1
@@ -99,7 +99,7 @@ fn gate_min_qubits(expr : @symcore.Expr) -> Int {
 
 ///|
 fn gate_scalar_matrix_from_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   nqubits : Int,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   if quantum_is_scalar_like(expr) {
@@ -117,13 +117,13 @@ fn matrix_is_scalar_multiple(
   guard matrix.height() == matrix.width() else { return false }
   guard matrix.height() > 0 else { return true }
   let diagonal = matrix.get(0, 0)
-  if identity_only && diagonal != @symcore.int(1) {
+  if identity_only && diagonal != int(1) {
     return false
   }
-  if diagonal == @symcore.int(0) {
+  if diagonal == int(0) {
     for row in 0..<matrix.height() {
       for col in 0..<matrix.width() {
-        if matrix.get(row, col) != @symcore.int(0) {
+        if matrix.get(row, col) != int(0) {
           return false
         }
       }
@@ -137,7 +137,7 @@ fn matrix_is_scalar_multiple(
         if value != diagonal {
           return false
         }
-      } else if value != @symcore.int(0) {
+      } else if value != int(0) {
         return false
       }
     }
@@ -147,14 +147,14 @@ fn matrix_is_scalar_multiple(
 
 ///|
 pub fn is_scalar_nonsparse_matrix(
-  circuit : Array[@symcore.Expr],
+  circuit : Array[Expr],
   nqubits : Int,
   identity_only : Bool,
 ) -> Bool raise @symphysics.PhysicsError {
   let simplified = gate_simp(gate_sequence_expr(circuit))
   if quantum_is_scalar_like(simplified) {
     if identity_only {
-      return simplified == @symcore.int(1)
+      return simplified == int(1)
     } else {
       return true
     }
@@ -165,7 +165,7 @@ pub fn is_scalar_nonsparse_matrix(
 
 ///|
 pub fn is_scalar_sparse_matrix(
-  circuit : Array[@symcore.Expr],
+  circuit : Array[Expr],
   nqubits : Int,
   identity_only : Bool,
 ) -> Bool raise @symphysics.PhysicsError {
@@ -174,7 +174,7 @@ pub fn is_scalar_sparse_matrix(
 
 ///|
 pub fn is_scalar_matrix(
-  circuit : Array[@symcore.Expr],
+  circuit : Array[Expr],
   nqubits : Int,
   identity_only : Bool,
 ) -> Bool raise @symphysics.PhysicsError {
@@ -183,15 +183,15 @@ pub fn is_scalar_matrix(
 
 ///|
 fn ll_op(
-  left : Array[@symcore.Expr],
-  right : Array[@symcore.Expr],
+  left : Array[Expr],
+  right : Array[Expr],
 ) -> GateRule? raise @symphysics.PhysicsError {
   guard !left.is_empty() else { return None }
   let gate = left[0]
   if !is_scalar_matrix([dagger(gate), gate], gate_min_qubits(gate), true) {
     return None
   }
-  let new_right : Array[@symcore.Expr] = [dagger(gate)]
+  let new_right : Array[Expr] = [dagger(gate)]
   for item in right {
     new_right.push(item)
   }
@@ -200,8 +200,8 @@ fn ll_op(
 
 ///|
 fn lr_op(
-  left : Array[@symcore.Expr],
-  right : Array[@symcore.Expr],
+  left : Array[Expr],
+  right : Array[Expr],
 ) -> GateRule? raise @symphysics.PhysicsError {
   guard !left.is_empty() else { return None }
   let gate = left[left.length() - 1]
@@ -218,15 +218,15 @@ fn lr_op(
 
 ///|
 fn rl_op(
-  left : Array[@symcore.Expr],
-  right : Array[@symcore.Expr],
+  left : Array[Expr],
+  right : Array[Expr],
 ) -> GateRule? raise @symphysics.PhysicsError {
   guard !right.is_empty() else { return None }
   let gate = right[0]
   if !is_scalar_matrix([dagger(gate), gate], gate_min_qubits(gate), true) {
     return None
   }
-  let new_left : Array[@symcore.Expr] = [dagger(gate)]
+  let new_left : Array[Expr] = [dagger(gate)]
   for item in left {
     new_left.push(item)
   }
@@ -235,8 +235,8 @@ fn rl_op(
 
 ///|
 fn rr_op(
-  left : Array[@symcore.Expr],
-  right : Array[@symcore.Expr],
+  left : Array[Expr],
+  right : Array[Expr],
 ) -> GateRule? raise @symphysics.PhysicsError {
   guard !right.is_empty() else { return None }
   let gate = right[right.length() - 1]
@@ -258,10 +258,10 @@ fn gate_rule_sort_key(rule : GateRule) -> String {
 
 ///|
 pub fn generate_gate_rules(
-  gate_seq : Array[@symcore.Expr],
+  gate_seq : Array[Expr],
 ) -> Array[GateRule] raise @symphysics.PhysicsError {
   let rules : Array[GateRule] = [GateRule::{ left: gate_seq.copy(), right: [] }]
-  let queue : Array[(Array[@symcore.Expr], Array[@symcore.Expr], Int)] = [
+  let queue : Array[(Array[Expr], Array[Expr], Int)] = [
     (gate_seq.copy(), [], 0),
   ]
   let max_ops = gate_seq.length()
@@ -296,9 +296,9 @@ pub fn generate_gate_rules(
 
 ///|
 pub fn generate_equivalent_ids(
-  gate_seq : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] raise @symphysics.PhysicsError {
-  let out : Array[Array[@symcore.Expr]] = []
+  gate_seq : Array[Expr],
+) -> Array[Expr] raise @symphysics.PhysicsError {
+  let out : Array[Array[Expr]] = []
   let rules = generate_gate_rules(gate_seq)
   for rule in rules {
     if rule.left.is_empty() {
@@ -319,7 +319,7 @@ pub fn generate_equivalent_ids(
 
 ///|
 pub fn build_gate_identity(
-  gate_seq : Array[@symcore.Expr],
+  gate_seq : Array[Expr],
 ) -> GateIdentity raise @symphysics.PhysicsError {
   let rules = try! generate_gate_rules(gate_seq)
   let equivalent_ids = try! generate_equivalent_ids(gate_seq)
@@ -328,8 +328,8 @@ pub fn build_gate_identity(
     rules,
     equivalent_ids: equivalent_ids.map(expr => {
       match expr {
-        @symcore.Expr::Mul(args) => args.copy()
-        @symcore.Expr::Number(n) if n.is_integral() &&
+        Expr::Mul(args) => args.copy()
+        Expr::Number(n) if n.is_integral() &&
           n.numerator().to_int() == 1 => []
         _ => [expr]
       }
@@ -338,12 +338,12 @@ pub fn build_gate_identity(
 }
 
 ///|
-pub fn GateRule::left_expr(self : GateRule) -> @symcore.Expr {
+pub fn GateRule::left_expr(self : GateRule) -> Expr {
   gate_sequence_expr(self.left)
 }
 
 ///|
-pub fn GateRule::right_expr(self : GateRule) -> @symcore.Expr {
+pub fn GateRule::right_expr(self : GateRule) -> Expr {
   gate_sequence_expr(self.right)
 }
 
@@ -353,10 +353,10 @@ pub fn GateRule::to_string(self : GateRule) -> String {
 }
 
 ///|
-pub fn GateIdentity::circuit(self : GateIdentity) -> @symcore.Expr {
+pub fn GateIdentity::circuit(self : GateIdentity) -> Expr {
   if self.sequence.is_empty() {
     if self.equivalent_ids.is_empty() {
-      @symcore.int(1)
+      int(1)
     } else {
       gate_simp(gate_sequence_expr(self.equivalent_ids[0]))
     }
@@ -368,7 +368,7 @@ pub fn GateIdentity::circuit(self : GateIdentity) -> @symcore.Expr {
 ///|
 pub fn GateIdentity::sequence_exprs(
   self : GateIdentity,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   if self.sequence.is_empty() {
     if self.equivalent_ids.is_empty() {
       []
@@ -388,7 +388,7 @@ pub fn GateIdentity::gate_rules(self : GateIdentity) -> Array[GateRule] {
 ///|
 pub fn GateIdentity::equivalent_id_exprs(
   self : GateIdentity,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.equivalent_ids.map(gate_sequence_expr)
 }
 
@@ -400,7 +400,7 @@ pub fn GateIdentity::to_string(self : GateIdentity) -> String {
 ///|
 pub fn is_degenerate(
   identity_set : Array[GateIdentity],
-  gate_seq : Array[@symcore.Expr],
+  gate_seq : Array[Expr],
 ) -> Bool {
   let key = gate_sequence_key(gate_seq)
   for identity in identity_set {
@@ -415,15 +415,15 @@ pub fn is_degenerate(
 
 ///|
 pub fn is_reducible(
-  circuit : Array[@symcore.Expr],
+  circuit : Array[Expr],
   nqubits : Int,
   begin : Int,
   end_ : Int,
 ) -> Bool raise @symphysics.PhysicsError {
-  let mut current : Array[@symcore.Expr] = []
+  let mut current : Array[Expr] = []
   let mut idx = end_ - 1
   while idx >= begin {
-    let next_current : Array[@symcore.Expr] = [circuit[idx]]
+    let next_current : Array[Expr] = [circuit[idx]]
     for item in current {
       next_current.push(item)
     }
@@ -439,7 +439,7 @@ pub fn is_reducible(
 
 ///|
 pub fn bfs_identity_search(
-  gate_list : Array[@symcore.Expr],
+  gate_list : Array[Expr],
   nqubits : Int,
   max_depth? : Int = -1,
   identity_only? : Bool = false,
@@ -450,7 +450,7 @@ pub fn bfs_identity_search(
     max_depth
   }
   let ids : Array[GateIdentity] = []
-  let queue : Array[Array[@symcore.Expr]] = [[]]
+  let queue : Array[Array[Expr]] = [[]]
   let mut head = 0
   while head < queue.length() {
     let current = queue[head]
@@ -486,11 +486,11 @@ fn identitysearch_random_from_seed(seed : Int) -> @random.Rand {
 
 ///|
 pub fn random_identity_search(
-  gate_list : Array[@symcore.Expr],
+  gate_list : Array[Expr],
   numgates : Int,
   nqubits : Int,
   seed? : Int = -1,
-) -> Array[@symcore.Expr]? raise @symphysics.PhysicsError {
+) -> Array[Expr]? raise @symphysics.PhysicsError {
   guard numgates >= 0 else {
     raise @symphysics.PhysicsError::ValueError(
       "random_identity_search expects numgates >= 0",
@@ -506,7 +506,7 @@ pub fn random_identity_search(
   } else {
     identitysearch_random_source
   }
-  let circuit : Array[@symcore.Expr] = []
+  let circuit : Array[Expr] = []
   for _ in 0..<numgates {
     circuit.push(gate_list[rng.int(limit=gate_list.length())])
   }

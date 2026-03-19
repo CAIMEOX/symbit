@@ -3,30 +3,30 @@
 ///
 /// SymPy models all quantum objects as noncommutative `QExpr` subclasses.
 /// MoonBit does not have that inheritance stack, so this package uses a small
-/// explicit record plus predicate helpers over `@symcore.Expr` constructor
+/// explicit record plus predicate helpers over `Expr` constructor
 /// forms like `Ket(...)`, `Operator(...)`, and `BosonOp(...)`.
 
 ///|
 pub struct QExpr {
   class_name : String
-  args : Array[@symcore.Expr]
+  args : Array[Expr]
   hilbert_space : HilbertSpace
 } derive(Eq)
 
 ///|
-fn quantum_repr_expr(expr : @symcore.Expr) -> String {
+fn quantum_repr_expr(expr : Expr) -> String {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() =>
+    Expr::Number(n) if n.is_integral() =>
       "Integer(\{n.numerator().to_string()})"
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
-    @symcore.Expr::Symbol(name) if name == "oo" => "oo"
-    @symcore.Expr::Symbol(name) => "Symbol('\{name}')"
-    @symcore.Expr::Function(name, args) => {
+    Expr::Symbol(name) if name == "oo" => "oo"
+    Expr::Symbol(name) => "Symbol('\{name}')"
+    Expr::Function(name, args) => {
       let rendered = args.map(quantum_repr_expr).join(",")
       "\{name}(\{rendered})"
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       "Pow(\{quantum_repr_expr(base)},\{quantum_repr_expr(exp)})"
     _ => @symprint.to_string(expr)
   }
@@ -34,7 +34,7 @@ fn quantum_repr_expr(expr : @symcore.Expr) -> String {
 
 ///|
 pub fn quantum_join_label(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   separator? : String = "",
 ) -> String {
   args.map(@symprint.to_string).join(separator)
@@ -42,7 +42,7 @@ pub fn quantum_join_label(
 
 ///|
 pub fn qexpr(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   class_name? : String = "QExpr",
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> QExpr {
@@ -50,12 +50,12 @@ pub fn qexpr(
 }
 
 ///|
-pub fn QExpr::label(self : QExpr) -> Array[@symcore.Expr] {
+pub fn QExpr::label(self : QExpr) -> Array[Expr] {
   self.args
 }
 
 ///|
-pub fn QExpr::as_expr(self : QExpr) -> @symcore.Expr {
+pub fn QExpr::as_expr(self : QExpr) -> Expr {
   @symcore.raw_function(self.class_name, self.args)
 }
 
@@ -71,32 +71,32 @@ pub fn QExpr::repr(self : QExpr) -> String {
 }
 
 ///|
-pub fn quantum_expr_name(expr : @symcore.Expr) -> String? {
+pub fn quantum_expr_name(expr : Expr) -> String? {
   match expr {
-    @symcore.Expr::Function(name, _) => Some(name)
+    Expr::Function(name, _) => Some(name)
     _ => None
   }
 }
 
 ///|
-pub fn quantum_expr_args(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+pub fn quantum_expr_args(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function(_, args) => Some(args)
+    Expr::Function(_, args) => Some(args)
     _ => None
   }
 }
 
 ///|
-pub fn quantum_expr_has_name(expr : @symcore.Expr, name : String) -> Bool {
+pub fn quantum_expr_has_name(expr : Expr, name : String) -> Bool {
   match expr {
-    @symcore.Expr::Function(expr_name, _) => expr_name == name
+    Expr::Function(expr_name, _) => expr_name == name
     _ => false
   }
 }
 
 ///|
 pub fn quantum_expr_has_any_name(
-  expr : @symcore.Expr,
+  expr : Expr,
   names : Array[String],
 ) -> Bool {
   match quantum_expr_name(expr) {
@@ -106,7 +106,7 @@ pub fn quantum_expr_has_any_name(
 }
 
 ///|
-pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
+pub fn quantum_is_ket_expr(expr : Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
     "Ket", "TimeDepKet", "OrthogonalKet", "BosonFockKet", "BosonCoherentKet", "FermionFockKet",
     "FockStateBosonKet", "FockStateFermionKet", "Qubit", "IntQubit", "JxKet", "JyKet",
@@ -116,7 +116,7 @@ pub fn quantum_is_ket_expr(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
+pub fn quantum_is_bra_expr(expr : Expr) -> Bool {
   quantum_expr_has_any_name(expr, [
     "Bra", "TimeDepBra", "OrthogonalBra", "BosonFockBra", "BosonCoherentBra", "FermionFockBra",
     "FockStateBosonBra", "FockStateFermionBra", "QubitBra", "IntQubitBra", "JxBra",
@@ -126,16 +126,16 @@ pub fn quantum_is_bra_expr(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn quantum_is_state_expr(expr : @symcore.Expr) -> Bool {
+pub fn quantum_is_state_expr(expr : Expr) -> Bool {
   quantum_is_ket_expr(expr) ||
   quantum_is_bra_expr(expr) ||
   quantum_expr_has_name(expr, "Wavefunction")
 }
 
 ///|
-pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
+pub fn quantum_is_operator_expr(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(name) =>
+    Expr::Symbol(name) =>
       ["Jplus", "Jminus", "Jx", "Jy", "Jz", "J2"].contains(name)
     _ =>
       quantum_expr_has_any_name(expr, [
@@ -152,6 +152,6 @@ pub fn quantum_is_operator_expr(expr : @symcore.Expr) -> Bool {
 }
 
 ///|
-pub fn quantum_state_or_operator(expr : @symcore.Expr) -> Bool {
+pub fn quantum_state_or_operator(expr : Expr) -> Bool {
   quantum_is_state_expr(expr) || quantum_is_operator_expr(expr)
 }

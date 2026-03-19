@@ -5,14 +5,14 @@
 
 ///|
 pub struct LagrangesMethod {
-  lagrangian_ : @symcore.Expr
-  coordinates_ : Array[@symcore.Expr]
+  lagrangian_ : Expr
+  coordinates_ : Array[Expr]
   frame_ : @symvector.ReferenceFrame?
   bodies_ : Array[BodyLike]
   forcelist_ : Array[Load]
-  hol_coneqs_ : Array[@symcore.Expr]
-  lam_vec_ : Array[@symcore.Expr]
-  mut eom_ : Array[@symcore.Expr]
+  hol_coneqs_ : Array[Expr]
+  lam_vec_ : Array[Expr]
+  mut eom_ : Array[Expr]
   mut mass_matrix_ : @symphysics.ExplicitMatrix
   mut forcing_ : @symphysics.ExplicitMatrix
   mut full_mass_matrix_ : @symphysics.ExplicitMatrix
@@ -20,12 +20,12 @@ pub struct LagrangesMethod {
 } derive(Eq)
 
 ///|
-fn lagrange_qdots(coords : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn lagrange_qdots(coords : Array[Expr]) -> Array[Expr] {
   coords.map(fn(q) { @symcalculus.diff(q, @symvector.dynamicsymbols_t) })
 }
 
 ///|
-fn lagrange_qddots(coords : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn lagrange_qddots(coords : Array[Expr]) -> Array[Expr] {
   coords.map(fn(q) {
     @symcalculus.diff(
       @symcalculus.diff(q, @symvector.dynamicsymbols_t),
@@ -35,10 +35,10 @@ fn lagrange_qddots(coords : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn lagrange_lambda_symbols(count : Int) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+fn lagrange_lambda_symbols(count : Int) -> Array[Expr] {
+  let out : Array[Expr] = []
   for i in 0..<count {
-    out.push(@symcore.symbol("lam" + (i + 1).to_string()))
+    out.push(symbol("lam" + (i + 1).to_string()))
   }
   out
 }
@@ -74,13 +74,13 @@ fn lagrange_default_frame(
 ///|
 fn lagrange_generalized_forces(
   frame : @symvector.ReferenceFrame,
-  coordinates : Array[@symcore.Expr],
+  coordinates : Array[Expr],
   forcelist : Array[Load],
-) -> Array[@symcore.Expr] raise @symvector.VectorError {
+) -> Array[Expr] raise @symvector.VectorError {
   let qdots = lagrange_qdots(coordinates)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for qd in qdots {
-    let mut total = @symcore.int(0)
+    let mut total = int(0)
     for load in forcelist {
       match load {
         Load::ForceLoad(value) =>
@@ -103,14 +103,14 @@ fn lagrange_generalized_forces(
 
 ///|
 fn lagrange_dynamic_equations(
-  lagrangian : @symcore.Expr,
-  coordinates : Array[@symcore.Expr],
-  loads : Array[@symcore.Expr],
-  constraints : Array[@symcore.Expr],
-  lambdas : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lagrangian : Expr,
+  coordinates : Array[Expr],
+  loads : Array[Expr],
+  constraints : Array[Expr],
+  lambdas : Array[Expr],
+) -> Array[Expr] {
   let qdots = lagrange_qdots(coordinates)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<coordinates.length() {
     let q = coordinates[i]
     let qd = qdots[i]
@@ -134,8 +134,8 @@ fn lagrange_dynamic_equations(
 
 ///|
 fn lagrange_constraint_acceleration_equations(
-  constraints : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  constraints : Array[Expr],
+) -> Array[Expr] {
   constraints.map(fn(expr) {
     mech_simplify_expr(
       @symcalculus.diff(
@@ -148,8 +148,8 @@ fn lagrange_constraint_acceleration_equations(
 
 ///|
 fn lagrange_constraint_velocity_equations(
-  constraints : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  constraints : Array[Expr],
+) -> Array[Expr] {
   constraints.map(fn(expr) {
     mech_simplify_expr(@symcalculus.diff(expr, @symvector.dynamicsymbols_t))
   })
@@ -157,12 +157,12 @@ fn lagrange_constraint_velocity_equations(
 
 ///|
 pub fn lagranges_method(
-  lagrangian : @symcore.Expr,
-  coordinates : Array[@symcore.Expr],
+  lagrangian : Expr,
+  coordinates : Array[Expr],
   bodies? : Array[BodyLike] = [],
   forcelist? : Array[Load] = [],
   frame? : @symvector.ReferenceFrame? = None,
-  hol_coneqs? : Array[@symcore.Expr] = [],
+  hol_coneqs? : Array[Expr] = [],
 ) -> LagrangesMethod raise @symphysics.PhysicsError {
   try! validate_coordinates(coordinates~, is_dynamicsymbols=true)
   let chosen_frame = match
@@ -190,17 +190,17 @@ pub fn lagranges_method(
 ///|
 pub fn LagrangesMethod::coordinates(
   self : LagrangesMethod,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn LagrangesMethod::q(self : LagrangesMethod) -> Array[@symcore.Expr] {
+pub fn LagrangesMethod::q(self : LagrangesMethod) -> Array[Expr] {
   self.coordinates()
 }
 
 ///|
-pub fn LagrangesMethod::u(self : LagrangesMethod) -> Array[@symcore.Expr] {
+pub fn LagrangesMethod::u(self : LagrangesMethod) -> Array[Expr] {
   lagrange_qdots(self.coordinates_)
 }
 
@@ -304,7 +304,7 @@ pub fn LagrangesMethod::rhs(
     self.full_mass_matrix_,
     mechanics_matrix_entries(self.full_forcing_).map(fn(row) { row[0] }),
   )
-  let qdd_rhs : Array[@symcore.Expr] = []
+  let qdd_rhs : Array[Expr] = []
   for expr in rhs_terms[:self.coordinates_.length()] {
     qdd_rhs.push(expr)
   }
@@ -327,7 +327,7 @@ pub fn LagrangesMethod::solve_multipliers(
     mechanics_matrix_entries(self.full_forcing_).map(fn(row) { row[0] }),
   )
   let start = self.coordinates_.length()
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for expr in solved[start:] {
     out.push(msubs_expr(expr, op_point))
   }
@@ -352,14 +352,14 @@ pub fn LagrangesMethod::linearizer(
   let mut implicit_mass : @symphysics.ExplicitMatrix? = None
   let mut implicit_forcing : @symphysics.ExplicitMatrix? = None
   if self.hol_coneqs_.is_empty() && self.lam_vec_.is_empty() {
-    let top_rows : Array[Array[@symcore.Expr]] = []
+    let top_rows : Array[Array[Expr]] = []
     for i in 0..<self.coordinates_.length() {
-      let row = Array::make(self.coordinates_.length() * 2, @symcore.int(0))
-      row[i] = @symcore.int(1)
+      let row = Array::make(self.coordinates_.length() * 2, int(0))
+      row[i] = int(1)
       top_rows.push(row)
     }
     let lower_rows = mechanics_matrix_entries(self.mass_matrix_).map(fn(row) {
-      Array::make(self.coordinates_.length(), @symcore.int(0)) + row
+      Array::make(self.coordinates_.length(), int(0)) + row
     })
     implicit_mass = Some(
       try! @symphysics.explicit_matrix_from_rows(top_rows + lower_rows),
@@ -382,7 +382,7 @@ pub fn LagrangesMethod::linearizer(
     lams=self.lam_vec_,
     f_0=mechanics_matrix_column(qdots),
     f_1=mechanics_matrix_column(
-      qdots.map(fn(qd) { mech_simplify_expr(@symcore.int(-1) * qd) }),
+      qdots.map(fn(qd) { mech_simplify_expr(int(-1) * qd) }),
     ),
     f_2=try! self.mass_matrix_.mul(
       mechanics_matrix_column(qddots + self.lam_vec_),

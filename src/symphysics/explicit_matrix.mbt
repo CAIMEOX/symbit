@@ -1,12 +1,12 @@
 ///|
 /// Explicit dense matrix of symbolic expressions.
 pub struct ExplicitMatrix {
-  rows : Array[Array[@symcore.Expr]]
+  rows : Array[Array[Expr]]
 } derive(Eq)
 
 ///|
 pub fn explicit_matrix_from_rows(
-  rows : Array[Array[@symcore.Expr]],
+  rows : Array[Array[Expr]],
 ) -> ExplicitMatrix raise PhysicsError {
   if rows.is_empty() {
     return ExplicitMatrix::{ rows, }
@@ -22,11 +22,11 @@ pub fn explicit_matrix_from_rows(
 
 ///|
 pub fn explicit_matrix_from_ints(rows : Array[Array[Int]]) -> ExplicitMatrix {
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for row in rows {
-    let next : Array[@symcore.Expr] = Array::new()
+    let next : Array[Expr] = Array::new()
     for value in row {
-      next.push(@symcore.int(value))
+      next.push(int(value))
     }
     out.push(next)
   }
@@ -35,10 +35,10 @@ pub fn explicit_matrix_from_ints(rows : Array[Array[Int]]) -> ExplicitMatrix {
 
 ///|
 pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
-  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  let rows : Array[Array[Expr]] = Array::new()
   for i in 0..<n {
-    let row = Array::make(n, @symcore.int(0))
-    row[i] = @symcore.int(1)
+    let row = Array::make(n, int(0))
+    row[i] = int(1)
     rows.push(row)
   }
   ExplicitMatrix::{ rows, }
@@ -46,9 +46,9 @@ pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
 
 ///|
 pub fn explicit_matrix_zeros(rows : Int, cols : Int) -> ExplicitMatrix {
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for _ in 0..<rows {
-    out.push(Array::make(cols, @symcore.int(0)))
+    out.push(Array::make(cols, int(0)))
   }
   ExplicitMatrix::{ rows: out }
 }
@@ -72,7 +72,7 @@ pub fn ExplicitMatrix::get(
   self : ExplicitMatrix,
   row : Int,
   col : Int,
-) -> @symcore.Expr raise PhysicsError {
+) -> Expr raise PhysicsError {
   if row < 0 || row >= self.height() || col < 0 || col >= self.width() {
     raise PhysicsError::IndexError("matrix index out of range")
   }
@@ -82,11 +82,11 @@ pub fn ExplicitMatrix::get(
 ///|
 pub fn ExplicitMatrix::scale(
   self : ExplicitMatrix,
-  scalar : @symcore.Expr,
+  scalar : Expr,
 ) -> ExplicitMatrix {
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for row in self.rows {
-    let next : Array[@symcore.Expr] = Array::new()
+    let next : Array[Expr] = Array::new()
     for value in row {
       next.push(scalar * value)
     }
@@ -97,17 +97,17 @@ pub fn ExplicitMatrix::scale(
 
 ///|
 pub fn ExplicitMatrix::neg(self : ExplicitMatrix) -> ExplicitMatrix {
-  self.scale(@symcore.int(-1))
+  self.scale(int(-1))
 }
 
 ///|
 pub fn ExplicitMatrix::map(
   self : ExplicitMatrix,
-  f : (@symcore.Expr) -> @symcore.Expr,
+  f : (Expr) -> Expr,
 ) -> ExplicitMatrix {
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for row in self.rows {
-    let next : Array[@symcore.Expr] = Array::new()
+    let next : Array[Expr] = Array::new()
     for value in row {
       next.push(f(value))
     }
@@ -135,9 +135,9 @@ pub fn ExplicitMatrix::add(
   if self.height() != other.height() || self.width() != other.width() {
     raise PhysicsError::ShapeError("matrix shapes differ")
   }
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for i in 0..<self.height() {
-    let row : Array[@symcore.Expr] = Array::new()
+    let row : Array[Expr] = Array::new()
     for j in 0..<self.width() {
       row.push(self.rows[i][j] + other.rows[i][j])
     }
@@ -162,11 +162,11 @@ pub fn ExplicitMatrix::mul(
   if self.width() != other.height() {
     raise PhysicsError::ShapeError("matrix product shape mismatch")
   }
-  let out : Array[Array[@symcore.Expr]] = Array::new()
+  let out : Array[Array[Expr]] = Array::new()
   for i in 0..<self.height() {
-    let row : Array[@symcore.Expr] = Array::new()
+    let row : Array[Expr] = Array::new()
     for j in 0..<other.width() {
-      let mut acc = @symcore.int(0)
+      let mut acc = int(0)
       for k in 0..<self.width() {
         acc = acc + self.rows[i][k] * other.rows[k][j]
       }
@@ -178,7 +178,7 @@ pub fn ExplicitMatrix::mul(
 }
 
 ///|
-fn explicit_matrix_cell_string(value : @symcore.Expr) -> String {
+fn explicit_matrix_cell_string(value : Expr) -> String {
   let txt = @symprint.to_string(value)
   if txt == "-1" {
     "-1"

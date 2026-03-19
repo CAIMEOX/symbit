@@ -3,7 +3,7 @@
 /// `sympy.physics.mechanics.system.SymbolicSystem`.
 
 ///|
-pub type OutputEquation = (@symcore.Expr, @symcore.Expr)
+pub type OutputEquation = (Expr, Expr)
 
 ///|
 pub struct SymbolicSystem {
@@ -24,7 +24,7 @@ pub struct SymbolicSystem {
 
 ///|
 fn symbolic_system_column(
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> @symphysics.ExplicitMatrix {
   mechanics_matrix_column(exprs)
 }
@@ -39,9 +39,9 @@ fn symbolic_system_join_rows(
       "matrix row join requires equal heights",
     )
   }
-  let rows : Array[Array[@symcore.Expr]] = []
+  let rows : Array[Array[Expr]] = []
   for i in 0..<lhs.height() {
-    let row : Array[@symcore.Expr] = []
+    let row : Array[Expr] = []
     for j in 0..<lhs.width() {
       row.push(try! lhs.get(i, j))
     }
@@ -70,8 +70,8 @@ fn symbolic_system_join_cols(
 ///|
 fn symbolic_system_flatten(
   matrix : @symphysics.ExplicitMatrix,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for row in mechanics_matrix_entries(matrix) {
     for value in row {
       out.push(value)
@@ -118,18 +118,18 @@ fn symbolic_system_copy_opt_loads(values : Array[Load]?) -> Array[Load]? {
 
 ///|
 fn symbolic_system_collect_free_symbols(
-  expr : @symcore.Expr,
-  seen : Map[String, @symcore.Expr],
+  expr : Expr,
+  seen : Map[String, Expr],
 ) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(_) => seen.set(mech_expr_key(expr), expr)
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Symbol(_) => seen.set(mech_expr_key(expr), expr)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       for arg in args {
         symbolic_system_collect_free_symbols(arg, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       symbolic_system_collect_free_symbols(base, seen)
       symbolic_system_collect_free_symbols(exp, seen)
     }
@@ -139,9 +139,9 @@ fn symbolic_system_collect_free_symbols(
 
 ///|
 pub fn symbolic_system(
-  coord_states : Array[@symcore.Expr],
+  coord_states : Array[Expr],
   right_hand_side : @symphysics.ExplicitMatrix,
-  speeds? : Array[@symcore.Expr]? = None,
+  speeds? : Array[Expr]? = None,
   mass_matrix? : @symphysics.ExplicitMatrix? = None,
   coordinate_derivatives? : @symphysics.ExplicitMatrix? = None,
   alg_con? : Array[Int]? = None,
@@ -398,12 +398,12 @@ pub fn SymbolicSystem::kin_explicit_rhs(
 ///|
 pub fn SymbolicSystem::dynamic_symbols(
   self : SymbolicSystem,
-) -> Array[@symcore.Expr] {
-  let seen : Map[String, @symcore.Expr] = {}
+) -> Array[Expr] {
+  let seen : Map[String, Expr] = {}
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)
     None => {
-      let out : Array[@symcore.Expr] = []
+      let out : Array[Expr] = []
       match (try? self.comb_implicit_mat()) {
         Ok(matrix) =>
           for item in symbolic_system_flatten(matrix) {
@@ -438,12 +438,12 @@ pub fn SymbolicSystem::dynamic_symbols(
 ///|
 pub fn SymbolicSystem::constant_symbols(
   self : SymbolicSystem,
-) -> Array[@symcore.Expr] {
-  let seen : Map[String, @symcore.Expr] = {}
+) -> Array[Expr] {
+  let seen : Map[String, Expr] = {}
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)
     None => {
-      let out : Array[@symcore.Expr] = []
+      let out : Array[Expr] = []
       match (try? self.comb_implicit_mat()) {
         Ok(matrix) =>
           for item in symbolic_system_flatten(matrix) {

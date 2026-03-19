@@ -1,6 +1,6 @@
 ///|
 pub fn ask_predicate(
-  expr : @symcore.Expr,
+  expr : Expr,
   predicate : Predicate,
   env? : AssumeEnv = {},
 ) -> Tri {
@@ -16,96 +16,96 @@ pub fn ask_predicate(
 }
 
 ///|
-pub fn is_zero(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) => tri_of_bool(n.is_zero())
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_zero
-    @symcore.Expr::Add(args) => add_is_zero(args, env)
-    @symcore.Expr::Mul(args) => mul_is_zero(args, env)
-    @symcore.Expr::Pow(base, exp) => pow_is_zero(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_zero(name, args, env)
+    Expr::Number(n) => tri_of_bool(n.is_zero())
+    Expr::Symbol(name) => env_get(env, name).is_zero
+    Expr::Add(args) => add_is_zero(args, env)
+    Expr::Mul(args) => mul_is_zero(args, env)
+    Expr::Pow(base, exp) => pow_is_zero(base, exp, env)
+    Expr::Function(name, args) => function_is_zero(name, args, env)
   }
 }
 
 ///|
-pub fn is_nonzero(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) => tri_of_bool(!n.is_zero())
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_nonzero
-    @symcore.Expr::Add(args) => add_is_nonzero(args, env)
-    @symcore.Expr::Mul(args) => mul_is_nonzero(args, env)
-    @symcore.Expr::Pow(base, exp) => pow_is_nonzero(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_nonzero(name, args, env)
+    Expr::Number(n) => tri_of_bool(!n.is_zero())
+    Expr::Symbol(name) => env_get(env, name).is_nonzero
+    Expr::Add(args) => add_is_nonzero(args, env)
+    Expr::Mul(args) => mul_is_nonzero(args, env)
+    Expr::Pow(base, exp) => pow_is_nonzero(base, exp, env)
+    Expr::Function(name, args) => function_is_nonzero(name, args, env)
   }
 }
 
 ///|
-pub fn is_integer(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) => tri_of_bool(n.is_integral())
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_integer
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(n) => tri_of_bool(n.is_integral())
+    Expr::Symbol(name) => env_get(env, name).is_integer
+    Expr::Add(args) | Expr::Mul(args) =>
       all_predicate(args, child => is_integer(child, env~))
-    @symcore.Expr::Pow(base, exp) => pow_is_integer(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_integer(name, args, env)
+    Expr::Pow(base, exp) => pow_is_integer(base, exp, env)
+    Expr::Function(name, args) => function_is_integer(name, args, env)
   }
 }
 
 ///|
-pub fn is_rational(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(_) => Tri::True
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_rational
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(_) => Tri::True
+    Expr::Symbol(name) => env_get(env, name).is_rational
+    Expr::Add(args) | Expr::Mul(args) =>
       all_predicate(args, child => is_rational(child, env~))
-    @symcore.Expr::Pow(base, exp) => pow_is_rational(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_rational(name, args, env)
+    Expr::Pow(base, exp) => pow_is_rational(base, exp, env)
+    Expr::Function(name, args) => function_is_rational(name, args, env)
   }
 }
 
 ///|
-pub fn is_real(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(_) => Tri::True
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_real
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(_) => Tri::True
+    Expr::Symbol(name) => env_get(env, name).is_real
+    Expr::Add(args) | Expr::Mul(args) =>
       all_predicate(args, child => is_real(child, env~))
-    @symcore.Expr::Pow(base, exp) => pow_is_real(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_real(name, args, env)
+    Expr::Pow(base, exp) => pow_is_real(base, exp, env)
+    Expr::Function(name, args) => function_is_real(name, args, env)
   }
 }
 
 ///|
-pub fn is_positive(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_positive
-    @symcore.Expr::Add(args) => add_is_positive(args, env)
-    @symcore.Expr::Mul(args) => mul_is_positive(args, env)
-    @symcore.Expr::Pow(base, exp) => pow_is_positive(base, exp, env)
-    @symcore.Expr::Function(name, args) => function_is_positive(name, args, env)
+    Expr::Symbol(name) => env_get(env, name).is_positive
+    Expr::Add(args) => add_is_positive(args, env)
+    Expr::Mul(args) => mul_is_positive(args, env)
+    Expr::Pow(base, exp) => pow_is_positive(base, exp, env)
+    Expr::Function(name, args) => function_is_positive(name, args, env)
   }
 }
 
 ///|
-pub fn is_nonnegative(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
+pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
-    @symcore.Expr::Symbol(name) => env_get(env, name).is_nonnegative
-    @symcore.Expr::Add(args) => add_is_nonnegative(args, env)
-    @symcore.Expr::Mul(args) => mul_is_nonnegative(args, env)
-    @symcore.Expr::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
-    @symcore.Expr::Function(name, args) =>
+    Expr::Symbol(name) => env_get(env, name).is_nonnegative
+    Expr::Add(args) => add_is_nonnegative(args, env)
+    Expr::Mul(args) => mul_is_nonnegative(args, env)
+    Expr::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
+    Expr::Function(name, args) =>
       function_is_nonnegative(name, args, env)
   }
 }
 
 ///|
 fn all_predicate(
-  args : Array[@symcore.Expr],
-  pred : (@symcore.Expr) -> Tri,
+  args : Array[Expr],
+  pred : (Expr) -> Tri,
 ) -> Tri {
   let mut saw_unknown = false
   for arg in args {
@@ -123,7 +123,7 @@ fn all_predicate(
 }
 
 ///|
-fn add_is_zero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn add_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::True
   }
@@ -160,7 +160,7 @@ fn add_is_zero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn mul_is_zero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn mul_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
   let mut all_nonzero = true
   for arg in args {
     match is_zero(arg, env~) {
@@ -181,12 +181,12 @@ fn mul_is_zero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 
 ///|
 fn pow_is_zero(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   match exp {
-    @symcore.Expr::Number(n) if n.is_zero() => return Tri::False
+    Expr::Number(n) if n.is_zero() => return Tri::False
     _ => ()
   }
   if is_zero(base, env~) == Tri::True && is_positive(exp, env~) == Tri::True {
@@ -199,7 +199,7 @@ fn pow_is_zero(
 }
 
 ///|
-fn add_is_nonzero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn add_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::False
   }
@@ -236,7 +236,7 @@ fn add_is_nonzero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn mul_is_nonzero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn mul_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
   let mut saw_unknown = false
   for arg in args {
     match is_nonzero(arg, env~) {
@@ -254,12 +254,12 @@ fn mul_is_nonzero(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 
 ///|
 fn pow_is_nonzero(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   match exp {
-    @symcore.Expr::Number(n) if n.is_zero() => return Tri::True
+    Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
   }
   if is_nonzero(base, env~) == Tri::True {
@@ -274,8 +274,8 @@ fn pow_is_nonzero(
 
 ///|
 fn pow_is_integer(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   let exp_is_integer = is_integer(exp, env~)
@@ -304,8 +304,8 @@ fn pow_is_integer(
 
 ///|
 fn pow_is_rational(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   if is_integer(exp, env~) == Tri::False {
@@ -329,8 +329,8 @@ fn pow_is_rational(
 
 ///|
 fn pow_is_real(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   let base_real = is_real(base, env~)
@@ -354,7 +354,7 @@ fn pow_is_real(
 }
 
 ///|
-fn add_is_positive(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn add_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::False
   }
@@ -385,7 +385,7 @@ fn add_is_positive(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn mul_is_positive(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn mul_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::True
   }
@@ -417,12 +417,12 @@ fn mul_is_positive(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 
 ///|
 fn pow_is_positive(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   match exp {
-    @symcore.Expr::Number(n) if n.is_zero() => return Tri::True
+    Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
   }
   if is_positive(base, env~) == Tri::True {
@@ -448,7 +448,7 @@ fn pow_is_positive(
 }
 
 ///|
-fn add_is_nonnegative(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn add_is_nonnegative(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::True
   }
@@ -472,7 +472,7 @@ fn add_is_nonnegative(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn mul_is_nonnegative(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
+fn mul_is_nonnegative(args : Array[Expr], env : AssumeEnv) -> Tri {
   if args.is_empty() {
     return Tri::True
   }
@@ -494,12 +494,12 @@ fn mul_is_nonnegative(args : Array[@symcore.Expr], env : AssumeEnv) -> Tri {
 
 ///|
 fn pow_is_nonnegative(
-  base : @symcore.Expr,
-  exp : @symcore.Expr,
+  base : Expr,
+  exp : Expr,
   env : AssumeEnv,
 ) -> Tri {
   match exp {
-    @symcore.Expr::Number(n) if n.is_zero() => return Tri::True
+    Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
   }
   match even_integer_literal(exp) {
@@ -524,7 +524,7 @@ fn pow_is_nonnegative(
 ///|
 fn function_is_zero(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -538,7 +538,7 @@ fn function_is_zero(
 ///|
 fn function_is_nonzero(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -552,7 +552,7 @@ fn function_is_nonzero(
 ///|
 fn function_is_integer(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -565,7 +565,7 @@ fn function_is_integer(
 ///|
 fn function_is_rational(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -577,7 +577,7 @@ fn function_is_rational(
 ///|
 fn function_is_real(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -609,7 +609,7 @@ fn function_is_real(
 ///|
 fn function_is_positive(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -642,7 +642,7 @@ fn function_is_positive(
 ///|
 fn function_is_nonnegative(
   name : String,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match (name, args.length()) {
@@ -664,9 +664,9 @@ fn function_is_nonnegative(
 }
 
 ///|
-fn even_integer_literal(expr : @symcore.Expr) -> Bool? {
+fn even_integer_literal(expr : Expr) -> Bool? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => {
+    Expr::Number(n) if n.is_integral() => {
       let two = BigInt::from_int(2)
       Some(n.numerator().mod(two).is_zero())
     }
@@ -675,16 +675,16 @@ fn even_integer_literal(expr : @symcore.Expr) -> Bool? {
 }
 
 ///|
-fn nonnegative_integer_literal(expr : @symcore.Expr) -> Bool? {
+fn nonnegative_integer_literal(expr : Expr) -> Bool? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() =>
+    Expr::Number(n) if n.is_integral() =>
       Some(n.numerator().compare(BigInt::from_int(0)) >= 0)
     _ => None
   }
 }
 
 ///|
-fn nonnegative_integer_or_unknown(expr : @symcore.Expr, env : AssumeEnv) -> Tri {
+fn nonnegative_integer_or_unknown(expr : Expr, env : AssumeEnv) -> Tri {
   match nonnegative_integer_literal(expr) {
     Some(true) => Tri::True
     Some(false) => Tri::False

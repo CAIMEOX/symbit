@@ -1,24 +1,24 @@
 ///|
 /// Simplify combinatorial expressions.
-pub fn combsimp(expr : @symcore.Expr, max_passes? : Int = 6) -> @symcore.Expr {
+pub fn combsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_special(expr, rewrite_combsimp, max_passes~)
 }
 
 ///|
 /// Expand hypergeometric functions into equivalent closed forms when known.
 pub fn hyperexpand(
-  expr : @symcore.Expr,
+  expr : Expr,
   max_passes? : Int = 6,
-) -> @symcore.Expr {
+) -> Expr {
   fixpoint_special(expr, rewrite_hyperexpand, max_passes~)
 }
 
 ///|
 fn fixpoint_special(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
+  expr : Expr,
+  rule : (Expr) -> Expr,
   max_passes? : Int = 6,
-) -> @symcore.Expr {
+) -> Expr {
   let passes = if max_passes <= 0 { 1 } else { max_passes }
   let mut cur = expr
   for _ in 0..<passes {
@@ -33,9 +33,9 @@ fn fixpoint_special(
 
 ///|
 fn rewrite_bottom_up_special(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  rule : (Expr) -> Expr,
+) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_special(child, rule)
   })
@@ -43,11 +43,11 @@ fn rewrite_bottom_up_special(
 }
 
 ///|
-fn rewrite_combsimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_combsimp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       rewrite_combinatorial_call(name, args, expr)
-    @symcore.Expr::Mul(args) => reduce_factorial_ratios(args)
+    Expr::Mul(args) => reduce_factorial_ratios(args)
     _ => expr
   }
 }
@@ -55,27 +55,27 @@ fn rewrite_combsimp(expr : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn rewrite_combinatorial_call(
   name : String,
-  args : Array[@symcore.Expr],
-  original : @symcore.Expr,
-) -> @symcore.Expr {
+  args : Array[Expr],
+  original : Expr,
+) -> Expr {
   match (name, args) {
-    ("factorial", [@symcore.Expr::Number(n)]) =>
+    ("factorial", [Expr::Number(n)]) =>
       match to_nonnegative_int(n) {
         Some(k) => @symcore.number(int_factorial_rational(k))
         None => original
       }
-    ("gamma", [@symcore.Expr::Number(n)]) =>
+    ("gamma", [Expr::Number(n)]) =>
       match to_positive_int(n) {
         Some(k) => @symcore.number(int_factorial_rational(k - 1))
         None => original
       }
-    ("binomial", [@symcore.Expr::Number(n), @symcore.Expr::Number(k)]) =>
+    ("binomial", [Expr::Number(n), Expr::Number(k)]) =>
       match (to_nonnegative_int(n), to_nonnegative_int(k)) {
         (Some(ni), Some(ki)) =>
           if ki > ni {
-            @symcore.int(0)
+            int(0)
           } else if ki == 0 || ki == ni {
-            @symcore.int(1)
+            int(1)
           } else if ki == 1 {
             @symcore.number(n)
           } else {
@@ -83,9 +83,9 @@ fn rewrite_combinatorial_call(
           }
         _ => original
       }
-    ("binomial", [n, @symcore.Expr::Number(k)]) =>
+    ("binomial", [n, Expr::Number(k)]) =>
       match to_nonnegative_int(k) {
-        Some(0) => @symcore.int(1)
+        Some(0) => int(1)
         Some(1) => n
         _ => original
       }
@@ -94,7 +94,7 @@ fn rewrite_combinatorial_call(
 }
 
 ///|
-fn reduce_factorial_ratios(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn reduce_factorial_ratios(args : Array[Expr]) -> Expr {
   let mut reduced = @symcore.mul(args)
   for i in 0..<args.length() {
     for j in 0..<args.length() {
@@ -104,14 +104,14 @@ fn reduce_factorial_ratios(args : Array[@symcore.Expr]) -> @symcore.Expr {
       let lhs = args[i]
       let rhs = args[j]
       match (factorial_arg(lhs), inverse_factorial_arg(rhs)) {
-        (Some(a), Some(b)) if a == @symcore.add([b, @symcore.int(1)]) =>
+        (Some(a), Some(b)) if a == @symcore.add([b, int(1)]) =>
           reduced = @symcore.mul([
-            @symcore.add([b, @symcore.int(1)]),
+            @symcore.add([b, int(1)]),
             strip_factor_pair(args, i, j),
           ])
-        (Some(a), Some(b)) if b == @symcore.add([a, @symcore.int(1)]) =>
+        (Some(a), Some(b)) if b == @symcore.add([a, int(1)]) =>
           reduced = @symcore.mul([
-            @symcore.pow(@symcore.add([a, @symcore.int(1)]), @symcore.int(-1)),
+            @symcore.pow(@symcore.add([a, int(1)]), int(-1)),
             strip_factor_pair(args, i, j),
           ])
         _ => ()
@@ -123,11 +123,11 @@ fn reduce_factorial_ratios(args : Array[@symcore.Expr]) -> @symcore.Expr {
 
 ///|
 fn strip_factor_pair(
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   idx_a : Int,
   idx_b : Int,
-) -> @symcore.Expr {
-  let kept : Array[@symcore.Expr] = Array::new()
+) -> Expr {
+  let kept : Array[Expr] = Array::new()
   for i in 0..<args.length() {
     if i == idx_a || i == idx_b {
       continue
@@ -138,19 +138,19 @@ fn strip_factor_pair(
 }
 
 ///|
-fn factorial_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn factorial_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Function(name, [arg]) if name == "factorial" => Some(arg)
+    Expr::Function(name, [arg]) if name == "factorial" => Some(arg)
     _ => None
   }
 }
 
 ///|
-fn inverse_factorial_arg(expr : @symcore.Expr) -> @symcore.Expr? {
+fn inverse_factorial_arg(expr : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Pow(
-      @symcore.Expr::Function(name, [arg]),
-      @symcore.Expr::Number(exp)
+    Expr::Pow(
+      Expr::Function(name, [arg]),
+      Expr::Number(exp)
     ) =>
       if name == "factorial" &&
         exp.is_integral() &&
@@ -164,21 +164,21 @@ fn inverse_factorial_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 }
 
 ///|
-fn rewrite_hyperexpand(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_hyperexpand(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, [a_params, b_params, z]) if name == "hyper" =>
+    Expr::Function(name, [a_params, b_params, z]) if name == "hyper" =>
       match (parse_tuple(a_params), parse_tuple(b_params)) {
         (Some(a), Some(b)) =>
           match (a.length(), b.length()) {
             (0, 0) => @symcore.function("exp", [z])
             (1, 1) if a[0] == b[0] => @symcore.function("exp", [z])
-            (1, 0) if a[0] == @symcore.int(1) =>
+            (1, 0) if a[0] == int(1) =>
               @symcore.pow(
                 @symcore.add([
-                  @symcore.int(1),
-                  @symcore.mul([@symcore.int(-1), z]),
+                  int(1),
+                  @symcore.mul([int(-1), z]),
                 ]),
-                @symcore.int(-1),
+                int(-1),
               )
             _ => expr
           }
@@ -189,9 +189,9 @@ fn rewrite_hyperexpand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn parse_tuple(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+fn parse_tuple(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function(name, args) if name == "Tuple" =>
+    Expr::Function(name, args) if name == "Tuple" =>
       Some(args.map(x => x))
     _ => None
   }

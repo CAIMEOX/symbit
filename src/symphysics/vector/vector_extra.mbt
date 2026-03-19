@@ -4,7 +4,7 @@
 ///|
 pub fn Vector::truediv(
   self : Vector,
-  scalar : @symcore.Expr,
+  scalar : Expr,
 ) -> Vector raise VectorError {
   if expr_is_zero(scalar) {
     raise VectorError::ValueError("division by zero")
@@ -13,7 +13,7 @@ pub fn Vector::truediv(
 }
 
 ///|
-pub fn Vector::magnitude(self : Vector) -> @symcore.Expr raise VectorError {
+pub fn Vector::magnitude(self : Vector) -> Expr raise VectorError {
   if self.is_zero() {
     return zero_expr()
   }
@@ -25,7 +25,7 @@ pub fn Vector::magnitude(self : Vector) -> @symcore.Expr raise VectorError {
 pub fn Vector::angle_between(
   self : Vector,
   other : Vector,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   let lhs_mag = self.magnitude()
   let rhs_mag = other.magnitude()
   if expr_is_zero(lhs_mag) || expr_is_zero(rhs_mag) {
@@ -36,14 +36,14 @@ pub fn Vector::angle_between(
   )
   if expr_is_zero(cosine) {
     return simplify_expr(
-      @symcore.symbol("pi") * (try! @symcore.rational_from_ints(1, 2)),
+      symbol("pi") * (try! @symcore.rational_from_ints(1, 2)),
     )
   }
   if expr_eq(cosine, one_expr()) {
     return zero_expr()
   }
   if expr_eq(cosine, neg_one_expr()) {
-    return @symcore.symbol("pi")
+    return symbol("pi")
   }
   simplify_expr(@symelem.acos(cosine))
 }

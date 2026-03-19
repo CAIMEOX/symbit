@@ -20,8 +20,6 @@ fn split_list_items(list_str : String) -> Array[String] {
   }
   let inner_view = try trimmed[1:trimmed.length() - 1] catch {
     _ => return []
-  } noraise {
-    v => v
   }
   let inner = inner_view.to_string()
   if inner.trim().length() == 0 {

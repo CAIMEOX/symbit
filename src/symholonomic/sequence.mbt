@@ -1,15 +1,15 @@
 ///|
 pub struct HolonomicSequence {
   recurrence : RecurrenceOperator
-  u0 : Array[@symcore.Expr]
+  u0 : Array[Expr]
 } derive(Eq)
 
 ///|
 pub fn holonomic_sequence(
   recurrence : RecurrenceOperator,
-  u0? : Array[@symcore.Expr] = [],
+  u0? : Array[Expr] = [],
 ) -> HolonomicSequence {
-  let init : Array[@symcore.Expr] = Array::new()
+  let init : Array[Expr] = Array::new()
   for v in u0 {
     init.push(v)
   }
@@ -26,8 +26,8 @@ pub fn HolonomicSequence::recurrence(
 ///|
 pub fn HolonomicSequence::initial_values(
   self : HolonomicSequence,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for v in self.u0 {
     out.push(v)
   }

@@ -6,23 +6,23 @@
 pub fn body(
   name : String,
   masscenter? : @symvector.Point? = None,
-  mass? : @symcore.Expr? = None,
+  mass? : Expr? = None,
   frame? : @symvector.ReferenceFrame? = None,
   central_inertia? : @symvector.Dyadic? = None,
 ) -> Body raise @symvector.VectorError {
   let fr = frame.unwrap_or(try! @symvector.reference_frame(name + "_frame"))
   let mc = masscenter.unwrap_or(try! @symvector.point(name + "_masscenter"))
-  let m = mass.unwrap_or(@symcore.symbol(name + "_mass"))
+  let m = mass.unwrap_or(symbol(name + "_mass"))
   mc.set_vel(fr, @symvector.vector_zero())
   let default_inertia = Inertia::from_inertia_scalars(
     mc,
     fr,
-    @symcore.symbol(name + "_ixx"),
-    @symcore.symbol(name + "_iyy"),
-    @symcore.symbol(name + "_izz"),
-    ixy=@symcore.symbol(name + "_ixy"),
-    iyz=@symcore.symbol(name + "_iyz"),
-    izx=@symcore.symbol(name + "_izx"),
+    symbol(name + "_ixx"),
+    symbol(name + "_iyy"),
+    symbol(name + "_izz"),
+    ixy=symbol(name + "_ixy"),
+    iyz=symbol(name + "_iyz"),
+    izx=symbol(name + "_izx"),
   )
   let is_rb = match central_inertia {
     Some(_) => true
@@ -66,7 +66,7 @@ pub fn Body::masscenter(self : Body) -> @symvector.Point {
 }
 
 ///|
-pub fn Body::mass(self : Body) -> @symcore.Expr {
+pub fn Body::mass(self : Body) -> Expr {
   self.mass_
 }
 
@@ -76,12 +76,12 @@ pub fn Body::frame(self : Body) -> @symvector.ReferenceFrame {
 }
 
 ///|
-pub fn Body::potential_energy(self : Body) -> @symcore.Expr {
+pub fn Body::potential_energy(self : Body) -> Expr {
   self.potential_energy_
 }
 
 ///|
-pub fn Body::set_potential_energy(self : Body, value : @symcore.Expr) -> Unit {
+pub fn Body::set_potential_energy(self : Body, value : Expr) -> Unit {
   self.potential_energy_ = value
 }
 
@@ -203,7 +203,7 @@ pub fn Body::angular_momentum(
 pub fn Body::kinetic_energy(
   self : Body,
   frame : @symvector.ReferenceFrame,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   if self.is_rigidbody_ {
     let omega = self.frame_.ang_vel_in(frame)
     mech_simplify_expr(

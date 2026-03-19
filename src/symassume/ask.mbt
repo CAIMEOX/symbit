@@ -130,14 +130,14 @@ fn collect_conjunct_literals(query : Query, env : AssumeEnv) -> Unit {
 fn absorb_symbol_literal(
   env : AssumeEnv,
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   value : Tri,
 ) -> Unit {
   if args.length() != 1 {
     return
   }
   match args[0] {
-    @symcore.Expr::Symbol(name) =>
+    Expr::Symbol(name) =>
       match key {
         PredicateKey::Zero
         | PredicateKey::Nonzero
@@ -241,7 +241,7 @@ priv struct SatBuilder {
   mut next_var : Int
   clauses : Array[Array[Int]]
   atom_vars : Map[String, Int]
-  atom_infos : Map[Int, (PredicateKey, Array[@symcore.Expr])]
+  atom_infos : Map[Int, (PredicateKey, Array[Expr])]
 }
 
 ///|
@@ -346,7 +346,7 @@ fn SatBuilder::encode(self : SatBuilder, query : Query) -> Int {
 fn SatBuilder::atom_var(
   self : SatBuilder,
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
 ) -> Int {
   let cache_key = query_atom_key(key, args)
   match self.atom_vars.get(cache_key) {
@@ -366,8 +366,8 @@ fn SatBuilder::clauses_copy(self : SatBuilder) -> Array[Array[Int]] {
 }
 
 ///|
-fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[@symcore.Expr] {
-  let seen : Map[String, @symcore.Expr] = {}
+fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[Expr] {
+  let seen : Map[String, Expr] = {}
   for _, info in self.atom_infos {
     let (_, args) = info
     for arg in args {
@@ -377,7 +377,7 @@ fn SatBuilder::relevant_exprs(self : SatBuilder) -> Array[@symcore.Expr] {
       }
     }
   }
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for _, expr in seen {
     out.push(expr)
   }
@@ -403,7 +403,7 @@ fn SatBuilder::apply_direct_atom_truth(
 pub fn env_to_query(env : AssumeEnv) -> Query {
   let facts : Array[Query] = Array::new()
   for name, sf in env {
-    let x = @symcore.symbol(name)
+    let x = symbol(name)
     push_fact_literal(facts, q_zero(x), sf.is_zero)
     push_fact_literal(facts, q_nonzero(x), sf.is_nonzero)
     push_fact_literal(facts, q_integer(x), sf.is_integer)
@@ -425,7 +425,7 @@ fn push_fact_literal(out : Array[Query], atom : Query, tri : Tri) -> Unit {
 }
 
 ///|
-fn known_fact_formulas(expr : @symcore.Expr) -> Array[Query] {
+fn known_fact_formulas(expr : Expr) -> Array[Query] {
   let f : Array[Query] = Array::new()
   let ni = q1(PredicateKey::NegativeInfinite, expr)
   let n = q_negative(expr)
@@ -474,7 +474,7 @@ fn known_fact_formulas(expr : @symcore.Expr) -> Array[Query] {
   let normal = q1(PredicateKey::Normal, expr)
   let triangular = q1(PredicateKey::Triangular, expr)
   let unit_triangular = q1(PredicateKey::UnitTriangular, expr)
-  let z0 = @symcore.int(0)
+  let z0 = int(0)
   let eq0 = q_eq(expr, z0)
   let ne0 = q_ne(expr, z0)
   let ge0 = q_ge(expr, z0)
@@ -557,7 +557,7 @@ fn known_fact_formulas(expr : @symcore.Expr) -> Array[Query] {
 ///|
 fn known_atom_formulas(
   _key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
 ) -> Array[Query] {
   let f : Array[Query] = Array::new()
   if args.length() != 2 {
@@ -598,18 +598,18 @@ fn push_exclusive_pairs(out : Array[Query], atoms : Array[Query]) -> Unit {
 }
 
 ///|
-fn is_matrix_symbol_expr(expr : @symcore.Expr) -> Bool {
+fn is_matrix_symbol_expr(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       name == "MatrixSymbol" && args.length() == 3
     _ => false
   }
 }
 
 ///|
-fn is_symbol_expr(expr : @symcore.Expr) -> Bool {
+fn is_symbol_expr(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Symbol(_) => true
+    Expr::Symbol(_) => true
     _ => false
   }
 }
@@ -617,7 +617,7 @@ fn is_symbol_expr(expr : @symcore.Expr) -> Bool {
 ///|
 fn eval_atom(
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   match key {
@@ -634,7 +634,7 @@ fn eval_atom(
 ///|
 fn eval_relation_atom(
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   if args.length() != 2 {
@@ -662,7 +662,7 @@ fn eval_relation_atom(
     None => ()
   }
   match (args[0], args[1]) {
-    (@symcore.Expr::Number(a), @symcore.Expr::Number(b)) => {
+    (Expr::Number(a), Expr::Number(b)) => {
       let cmp = a.compare(b)
       match key {
         PredicateKey::Eq => tri_of_bool(cmp == 0)
@@ -681,12 +681,12 @@ fn eval_relation_atom(
 ///|
 fn relation_from_linear_symbol_constant(
   key : PredicateKey,
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
+  lhs : Expr,
+  rhs : Expr,
   env : AssumeEnv,
 ) -> Tri? {
   match rhs {
-    @symcore.Expr::Number(constant) =>
+    Expr::Number(constant) =>
       match extract_linear_symbol_plus_const(lhs) {
         Some((name, offset)) => {
           let shifted = constant.add_r(offset.neg_r())
@@ -700,21 +700,21 @@ fn relation_from_linear_symbol_constant(
 
 ///|
 fn extract_linear_symbol_plus_const(
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> (String, @symnum.BigRational)? {
   match expr {
-    @symcore.Expr::Symbol(name) => Some((name, @symnum.BigRational::zero()))
-    @symcore.Expr::Add(args) => {
+    Expr::Symbol(name) => Some((name, @symnum.BigRational::zero()))
+    Expr::Add(args) => {
       let mut symbol_name : String? = None
       let mut offset = @symnum.BigRational::zero()
       for arg in args {
         match arg {
-          @symcore.Expr::Symbol(name) =>
+          Expr::Symbol(name) =>
             match symbol_name {
               Some(_) => return None
               None => symbol_name = Some(name)
             }
-          @symcore.Expr::Number(n) => offset = offset.add_r(n)
+          Expr::Number(n) => offset = offset.add_r(n)
           _ => return None
         }
       }
@@ -799,7 +799,7 @@ fn flip_relation_key(key : PredicateKey) -> PredicateKey {
 ///|
 fn eval_unary_atom(
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
   env : AssumeEnv,
 ) -> Tri {
   if args.length() != 1 {
@@ -914,12 +914,12 @@ fn eval_unary_atom(
 ///|
 fn eval_from_expr(
   key : PredicateKey,
-  expr : @symcore.Expr,
+  expr : Expr,
   env : AssumeEnv,
 ) -> Tri {
   match expr {
-    @symcore.Expr::Number(_) => eval_number_predicate(key, expr)
-    @symcore.Expr::Symbol(name) => eval_symbol_predicate(key, name, env)
+    Expr::Number(_) => eval_number_predicate(key, expr)
+    Expr::Symbol(name) => eval_symbol_predicate(key, name, env)
     _ =>
       match key {
         PredicateKey::Imaginary => expr_is_imaginary(expr, env)
@@ -937,9 +937,9 @@ fn eval_from_expr(
 }
 
 ///|
-fn expr_is_imaginary(expr : @symcore.Expr, env : AssumeEnv) -> Tri {
+fn expr_is_imaginary(expr : Expr, env : AssumeEnv) -> Tri {
   match expr {
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut imag_count = 0
       for arg in args {
         let imag = eval_unary_atom(PredicateKey::Imaginary, [arg], env)
@@ -954,7 +954,7 @@ fn expr_is_imaginary(expr : @symcore.Expr, env : AssumeEnv) -> Tri {
       }
       tri_of_bool(imag_count % 2 != 0)
     }
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut all_imag = true
       let mut all_real = true
       for arg in args {
@@ -1192,9 +1192,9 @@ fn eval_infinity_symbol_predicate(key : PredicateKey, positive : Bool) -> Tri {
 }
 
 ///|
-fn eval_number_predicate(key : PredicateKey, expr : @symcore.Expr) -> Tri {
+fn eval_number_predicate(key : PredicateKey, expr : Expr) -> Tri {
   match expr {
-    @symcore.Expr::Number(n) => {
+    Expr::Number(n) => {
       let cmp = n.compare(@symnum.BigRational::zero())
       let is_int = n.is_integral()
       let int_val = if is_int { Some(n.numerator().to_int()) } else { None }

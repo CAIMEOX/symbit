@@ -2,7 +2,7 @@
 /// Elementary miscellaneous functions.
 
 ///|
-pub fn sqrt(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn sqrt(expr : Expr) -> Expr {
   if is_zero_expr(expr) || is_one_expr(expr) {
     return expr
   }
@@ -10,7 +10,7 @@ pub fn sqrt(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn root(base : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
+pub fn root(base : Expr, n : Expr) -> Expr {
   if is_one_expr(n) {
     return base
   }
@@ -18,17 +18,17 @@ pub fn root(base : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn real_root(base : @symcore.Expr, n : @symcore.Expr) -> @symcore.Expr {
+pub fn real_root(base : Expr, n : Expr) -> Expr {
   @symcore.function("real_root", [base, n])
 }
 
 ///|
-pub fn cbrt(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn cbrt(expr : Expr) -> Expr {
   @symcore.function("cbrt", [expr])
 }
 
 ///|
-pub fn min(args : Array[@symcore.Expr]) -> @symcore.Expr {
+pub fn min(args : Array[Expr]) -> Expr {
   if args.is_empty() {
     return @symcore.function("Min", [])
   }
@@ -54,7 +54,7 @@ pub fn min(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-pub fn max(args : Array[@symcore.Expr]) -> @symcore.Expr {
+pub fn max(args : Array[Expr]) -> Expr {
   if args.is_empty() {
     return @symcore.function("Max", [])
   }
@@ -80,11 +80,11 @@ pub fn max(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-pub fn id(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn id(expr : Expr) -> Expr {
   expr
 }
 
 ///|
-pub fn rem(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
+pub fn rem(a : Expr, b : Expr) -> Expr {
   @symcore.function("Rem", [a, b])
 }

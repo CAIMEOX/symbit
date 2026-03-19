@@ -8,16 +8,16 @@ fn geo_rational_to_double(value : @symnum.BigRational) -> Double {
 }
 
 ///|
-fn geo_expr_real_double(expr : @symcore.Expr) -> Double? {
+fn geo_expr_real_double(expr : Expr) -> Double? {
   match geo_simplify(expr) {
-    @symcore.Expr::Number(value) => Some(geo_rational_to_double(value))
-    @symcore.Expr::Symbol(name) =>
+    Expr::Number(value) => Some(geo_rational_to_double(value))
+    Expr::Symbol(name) =>
       match name {
         "pi" => Some(@math.PI)
         "E" => Some(2.718281828459045)
         _ => None
       }
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut acc = 0.0
       for arg in args {
         match geo_expr_real_double(arg) {
@@ -27,7 +27,7 @@ fn geo_expr_real_double(expr : @symcore.Expr) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         match geo_expr_real_double(arg) {
@@ -37,12 +37,12 @@ fn geo_expr_real_double(expr : @symcore.Expr) -> Double? {
       }
       Some(acc)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match (geo_expr_real_double(base), geo_expr_real_double(exp)) {
         (Some(lhs), Some(rhs)) => Some(@math.pow(lhs, rhs))
         _ => None
       }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       if args.length() != 1 {
         None
       } else {
@@ -80,7 +80,7 @@ fn geo_round_to_int(value : Double) -> Int {
 }
 
 ///|
-fn geo_decimal_expr_from_double(value : Double, digits : Int) -> @symcore.Expr {
+fn geo_decimal_expr_from_double(value : Double, digits : Int) -> Expr {
   let prec = if digits < 0 { 0 } else { digits }
   let denom = geo_int_pow10(prec)
   let numer = geo_round_to_int(value * denom.to_double())

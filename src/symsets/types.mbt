@@ -5,19 +5,19 @@
 pub(all) enum Set {
   EmptySet
   UniversalSet
-  FiniteSet(Array[@symcore.Expr])
+  FiniteSet(Array[Expr])
   Interval(
-    left~ : @symcore.Expr,
-    right~ : @symcore.Expr,
+    left~ : Expr,
+    right~ : Expr,
     left_open~ : Bool,
     right_open~ : Bool
   )
   ConditionSet(
-    symbol~ : @symcore.Expr,
+    symbol~ : Expr,
     condition~ : @symlogic.BoolExpr,
     base~ : Set
   )
-  ImageSet(symbol~ : @symcore.Expr, expr~ : @symcore.Expr, base~ : Set)
+  ImageSet(symbol~ : Expr, expr~ : Expr, base~ : Set)
   ProductSet(Array[Set])
   Union(Array[Set])
   Intersection(Array[Set])
@@ -72,12 +72,12 @@ pub fn reals() -> Set {
 }
 
 ///|
-fn dedup_exprs(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+fn dedup_exprs(items : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   if items.is_empty() {
     return out
   }
-  let tmp : Array[@symcore.Expr] = Array::new()
+  let tmp : Array[Expr] = Array::new()
   for item in items {
     tmp.push(item)
   }
@@ -96,7 +96,7 @@ fn dedup_exprs(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
-pub fn finite_set(items : Array[@symcore.Expr]) -> Set {
+pub fn finite_set(items : Array[Expr]) -> Set {
   let uniq = dedup_exprs(items)
   if uniq.is_empty() {
     Set::EmptySet
@@ -107,7 +107,7 @@ pub fn finite_set(items : Array[@symcore.Expr]) -> Set {
 
 ///|
 pub fn condition_set(
-  symbol : @symcore.Expr,
+  symbol : Expr,
   condition : @symlogic.BoolExpr,
   base? : Set = Set::UniversalSet,
 ) -> Set {
@@ -124,12 +124,12 @@ pub fn condition_set(
 
 ///|
 pub fn image_set(
-  symbol : @symcore.Expr,
-  expr : @symcore.Expr,
+  symbol : Expr,
+  expr : Expr,
   base? : Set = Set::UniversalSet,
 ) -> Set {
   let var_name = match symbol {
-    @symcore.Expr::Symbol(name) => name
+    Expr::Symbol(name) => name
     _ => ""
   }
   if expr_equal(expr, symbol) {
@@ -173,22 +173,22 @@ pub fn product_set(sets : Array[Set]) -> Set {
 }
 
 ///|
-fn expr_number_value(expr : @symcore.Expr) -> @symnum.BigRational? {
+fn expr_number_value(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => Some(n)
+    Expr::Number(n) => Some(n)
     _ => None
   }
 }
 
 ///|
-fn expr_equal(a : @symcore.Expr, b : @symcore.Expr) -> Bool {
+fn expr_equal(a : Expr, b : Expr) -> Bool {
   @symcore.compare_expr(a, b) == 0
 }
 
 ///|
 pub fn interval(
-  left : @symcore.Expr,
-  right : @symcore.Expr,
+  left : Expr,
+  right : Expr,
   left_open? : Bool = false,
   right_open? : Bool = false,
 ) -> Set {
@@ -239,14 +239,14 @@ fn variant_rank(set : Set) -> Int {
 }
 
 ///|
-fn compare_exprs(a : @symcore.Expr, b : @symcore.Expr) -> Int {
+fn compare_exprs(a : Expr, b : Expr) -> Int {
   @symcore.compare_expr(a, b)
 }
 
 ///|
 fn compare_expr_arrays(
-  xs : Array[@symcore.Expr],
-  ys : Array[@symcore.Expr],
+  xs : Array[Expr],
+  ys : Array[Expr],
 ) -> Int {
   let len_x = xs.length()
   let len_y = ys.length()

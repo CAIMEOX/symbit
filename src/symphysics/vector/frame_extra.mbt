@@ -5,7 +5,7 @@
 pub fn ReferenceFrame::partial_velocity(
   self : ReferenceFrame,
   other : ReferenceFrame,
-  speeds : Array[@symcore.Expr],
+  speeds : Array[Expr],
 ) -> Array[Vector] raise VectorError {
   let omega = self.ang_vel_in(other)
   let out : Array[Vector] = []
@@ -37,7 +37,7 @@ pub fn ReferenceFrame::orient_explicit(
 pub fn ReferenceFrame::orient_body_fixed(
   self : ReferenceFrame,
   parent : ReferenceFrame,
-  angles : Array[@symcore.Expr],
+  angles : Array[Expr],
   order : String,
 ) -> Unit raise VectorError {
   self.orient(parent, OrientationSpec::BodySpec(angles, order))
@@ -47,7 +47,7 @@ pub fn ReferenceFrame::orient_body_fixed(
 pub fn ReferenceFrame::orient_space_fixed(
   self : ReferenceFrame,
   parent : ReferenceFrame,
-  angles : Array[@symcore.Expr],
+  angles : Array[Expr],
   order : String,
 ) -> Unit raise VectorError {
   self.orient(parent, OrientationSpec::SpaceSpec(angles, order))
@@ -57,7 +57,7 @@ pub fn ReferenceFrame::orient_space_fixed(
 pub fn ReferenceFrame::orient_quaternion(
   self : ReferenceFrame,
   parent : ReferenceFrame,
-  quat : (@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr),
+  quat : (Expr, Expr, Expr, Expr),
 ) -> Unit raise VectorError {
   self.orient(
     parent,

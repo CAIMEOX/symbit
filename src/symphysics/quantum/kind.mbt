@@ -44,7 +44,7 @@ fn quantum_mul_kind(lhs : QuantumKind, rhs : QuantumKind) -> QuantumKind {
 }
 
 ///|
-pub fn quantum_kind(expr : @symcore.Expr) -> QuantumKind {
+pub fn quantum_kind(expr : Expr) -> QuantumKind {
   if quantum_is_scalar_like(expr) {
     return QuantumKind::QNumber
   }
@@ -58,7 +58,7 @@ pub fn quantum_kind(expr : @symcore.Expr) -> QuantumKind {
     return QuantumKind::QOperator
   }
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       guard !args.is_empty() else { return QuantumKind::QNumber }
       let first = quantum_kind(args[0])
       for idx in 1..<args.length() {
@@ -68,7 +68,7 @@ pub fn quantum_kind(expr : @symcore.Expr) -> QuantumKind {
       }
       first
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       guard !args.is_empty() else { return QuantumKind::QNumber }
       let mut acc = quantum_kind(args[0])
       for idx in 1..<args.length() {
@@ -76,17 +76,17 @@ pub fn quantum_kind(expr : @symcore.Expr) -> QuantumKind {
       }
       acc
     }
-    @symcore.Expr::Function("Dagger", args) if args.length() == 1 =>
+    Expr::Function("Dagger", args) if args.length() == 1 =>
       match quantum_kind(args[0]) {
         QuantumKind::QKet => QuantumKind::QBra
         QuantumKind::QBra => QuantumKind::QKet
         other => other
       }
-    @symcore.Expr::Function("InnerProduct", _) => QuantumKind::QNumber
-    @symcore.Expr::Function("OuterProduct", _) => QuantumKind::QOperator
-    @symcore.Expr::Function("Commutator", _)
-    | @symcore.Expr::Function("AntiCommutator", _) => QuantumKind::QOperator
-    @symcore.Expr::Function("TensorProduct", args) => {
+    Expr::Function("InnerProduct", _) => QuantumKind::QNumber
+    Expr::Function("OuterProduct", _) => QuantumKind::QOperator
+    Expr::Function("Commutator", _)
+    | Expr::Function("AntiCommutator", _) => QuantumKind::QOperator
+    Expr::Function("TensorProduct", args) => {
       let mut out = QuantumKind::QNumber
       for arg in args {
         let kind = quantum_kind(arg)

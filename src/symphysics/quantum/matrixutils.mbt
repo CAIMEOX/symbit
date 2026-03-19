@@ -5,7 +5,7 @@
 ///|
 pub enum MatrixScalarValue {
   Matrix(@symphysics.ExplicitMatrix)
-  Scalar(@symcore.Expr)
+  Scalar(Expr)
 } derive(Eq)
 
 ///|
@@ -37,7 +37,7 @@ fn is_zero_matrix(
 ) -> Bool raise @symphysics.PhysicsError {
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
-      if matrix.get(i, j) != @symcore.int(0) {
+      if matrix.get(i, j) != int(0) {
         return false
       }
     }
@@ -61,7 +61,7 @@ pub fn matrix_to_zero(
   matrix : @symphysics.ExplicitMatrix,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   if is_zero_matrix(matrix) {
-    MatrixScalarValue::Scalar(@symcore.int(0))
+    MatrixScalarValue::Scalar(int(0))
   } else {
     MatrixScalarValue::Matrix(matrix)
   }
@@ -74,9 +74,9 @@ fn kronecker_pair(
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let out_rows = lhs.height() * rhs.height()
   let out_cols = lhs.width() * rhs.width()
-  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  let rows : Array[Array[Expr]] = Array::new()
   for _ in 0..<out_rows {
-    rows.push(Array::make(out_cols, @symcore.int(0)))
+    rows.push(Array::make(out_cols, int(0)))
   }
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {

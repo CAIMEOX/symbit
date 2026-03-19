@@ -2,7 +2,7 @@
 /// Exact Gaunt coefficients built from Wigner 3j symbols.
 
 ///|
-fn gaunt_require_integer(value : @symcore.Expr) -> Unit raise PhysicsError {
+fn gaunt_require_integer(value : Expr) -> Unit raise PhysicsError {
   guard expr_integer_value(value) != None else {
     raise PhysicsError::ValueError(
       "expecting integer, got \{@symprint.to_string(value)}",
@@ -12,13 +12,13 @@ fn gaunt_require_integer(value : @symcore.Expr) -> Unit raise PhysicsError {
 
 ///|
 pub fn gaunt(
-  l_1 : @symcore.Expr,
-  l_2 : @symcore.Expr,
-  l_3 : @symcore.Expr,
-  m_1 : @symcore.Expr,
-  m_2 : @symcore.Expr,
-  m_3 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  l_1 : Expr,
+  l_2 : Expr,
+  l_3 : Expr,
+  m_1 : Expr,
+  m_2 : Expr,
+  m_3 : Expr,
+) -> Expr raise PhysicsError {
   gaunt_require_integer(l_1)
   gaunt_require_integer(l_2)
   gaunt_require_integer(l_3)
@@ -27,19 +27,19 @@ pub fn gaunt(
   gaunt_require_integer(m_3)
   @symelem.sqrt(
     expr_div(
-      (@symcore.int(2) * l_1 + @symcore.int(1)) *
-      (@symcore.int(2) * l_2 + @symcore.int(1)) *
-      (@symcore.int(2) * l_3 + @symcore.int(1)),
-      @symcore.int(4) * pi_expr(),
+      (int(2) * l_1 + int(1)) *
+      (int(2) * l_2 + int(1)) *
+      (int(2) * l_3 + int(1)),
+      int(4) * pi_expr(),
     ),
   ) *
   (try! wigner_3j(
     l_1,
     l_2,
     l_3,
-    @symcore.int(0),
-    @symcore.int(0),
-    @symcore.int(0),
+    int(0),
+    int(0),
+    int(0),
   )) *
   (try! wigner_3j(l_1, l_2, l_3, m_1, m_2, m_3))
 }

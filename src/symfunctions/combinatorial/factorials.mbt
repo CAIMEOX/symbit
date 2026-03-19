@@ -94,7 +94,7 @@ fn falling_factorial_bigint(x : Int, k : Int) -> BigInt {
 }
 
 ///|
-pub fn factorial(n : @symcore.Expr) -> @symcore.Expr {
+pub fn factorial(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -109,7 +109,7 @@ pub fn factorial(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn factorial2(n : @symcore.Expr) -> @symcore.Expr {
+pub fn factorial2(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -124,7 +124,7 @@ pub fn factorial2(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn subfactorial(n : @symcore.Expr) -> @symcore.Expr {
+pub fn subfactorial(n : Expr) -> Expr {
   match int_value(n) {
     Some(bi) => {
       let ni = bi.to_int()
@@ -139,7 +139,7 @@ pub fn subfactorial(n : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn rf(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn rf(x : Expr, k : Expr) -> Expr {
   match (int_value(x), int_value(k)) {
     (Some(xi), Some(ki)) => {
       let kint = ki.to_int()
@@ -154,7 +154,7 @@ pub fn rf(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn ff(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn ff(x : Expr, k : Expr) -> Expr {
   match (int_value(x), int_value(k)) {
     (Some(xi), Some(ki)) => {
       let kint = ki.to_int()
@@ -169,17 +169,17 @@ pub fn ff(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn rising_factorial(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn rising_factorial(x : Expr, k : Expr) -> Expr {
   @symcore.function("RisingFactorial", [x, k])
 }
 
 ///|
-pub fn falling_factorial(x : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn falling_factorial(x : Expr, k : Expr) -> Expr {
   @symcore.function("FallingFactorial", [x, k])
 }
 
 ///|
-pub fn binomial(n : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn binomial(n : Expr, k : Expr) -> Expr {
   match (int_value(n), int_value(k)) {
     (Some(ni), Some(ki)) => {
       let nint = ni.to_int()

@@ -5,10 +5,10 @@
 pub fn particle(
   name : String,
   point? : @symvector.Point? = None,
-  mass? : @symcore.Expr? = None,
+  mass? : Expr? = None,
 ) -> Particle raise @symvector.VectorError {
   let p = point.unwrap_or(try! @symvector.point(name + "_masscenter"))
-  let m = mass.unwrap_or(@symcore.symbol(name + "_mass"))
+  let m = mass.unwrap_or(symbol(name + "_mass"))
   Particle::{
     name_: name,
     point_: p,
@@ -33,24 +33,24 @@ pub fn Particle::set_point(self : Particle, value : @symvector.Point) -> Unit {
 }
 
 ///|
-pub fn Particle::mass(self : Particle) -> @symcore.Expr {
+pub fn Particle::mass(self : Particle) -> Expr {
   self.mass_
 }
 
 ///|
-pub fn Particle::set_mass(self : Particle, value : @symcore.Expr) -> Unit {
+pub fn Particle::set_mass(self : Particle, value : Expr) -> Unit {
   self.mass_ = value
 }
 
 ///|
-pub fn Particle::potential_energy(self : Particle) -> @symcore.Expr {
+pub fn Particle::potential_energy(self : Particle) -> Expr {
   self.potential_energy_
 }
 
 ///|
 pub fn Particle::set_potential_energy(
   self : Particle,
-  value : @symcore.Expr,
+  value : Expr,
 ) -> Unit {
   self.potential_energy_ = value
 }
@@ -89,7 +89,7 @@ pub fn Particle::angular_momentum(
 pub fn Particle::kinetic_energy(
   self : Particle,
   frame : @symvector.ReferenceFrame,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let v = self.point_.vel(frame)
   mech_half_expr() * self.mass_ * (try! v.dot(v))
 }

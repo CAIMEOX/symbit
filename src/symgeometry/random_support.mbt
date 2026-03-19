@@ -11,7 +11,7 @@ fn geo_random_from_seed(seed : Int) -> @random.Rand {
 fn geo_random_symmetric_rational(
   rng : @random.Rand,
   scale? : Int = 1_000_000,
-) -> @symcore.Expr {
+) -> Expr {
   let denom = if scale <= 0 { 1_000_000 } else { scale }
   let numer = rng.int(limit=2 * denom + 1) - denom
   try! @symcore.rational_from_ints(numer, denom)

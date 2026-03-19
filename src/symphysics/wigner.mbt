@@ -2,22 +2,22 @@
 /// Exact Wigner 3j symbols and Clebsch-Gordan coefficients.
 
 ///|
-fn wigner_expr_from_bigint(value : BigInt) -> @symcore.Expr {
+fn wigner_expr_from_bigint(value : BigInt) -> Expr {
   @symcore.number(@symnum.BigRational::from_bigint(value))
 }
 
 ///|
-fn wigner_rational_expr(num : BigInt, den : BigInt) -> @symcore.Expr {
+fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr {
   @symcore.number(try! @symnum.BigRational::new(num, den))
 }
 
 ///|
-fn wigner_phase_expr(k : Int) -> @symcore.Expr {
+fn wigner_phase_expr(k : Int) -> Expr {
   let parity = if k < 0 { -k % 2 } else { k % 2 }
   if parity == 0 {
-    @symcore.int(1)
+    int(1)
   } else {
-    @symcore.int(-1)
+    int(-1)
   }
 }
 
@@ -66,16 +66,16 @@ fn wigner_binomial_bigint(n : Int, k : Int) -> BigInt {
 }
 
 ///|
-fn wigner_expr_from_doubled_int(value : Int) -> @symcore.Expr {
+fn wigner_expr_from_doubled_int(value : Int) -> Expr {
   if value % 2 == 0 {
-    @symcore.int(value / 2)
+    int(value / 2)
   } else {
     rational_expr(value, 2)
   }
 }
 
 ///|
-fn wigner_doubled_int(value : @symcore.Expr) -> Int raise PhysicsError {
+fn wigner_doubled_int(value : Expr) -> Int raise PhysicsError {
   match expr_number_value(value) {
     Some(q) => {
       let num = q.numerator()
@@ -110,13 +110,13 @@ fn wigner_check_dj_couple(dj1 : Int, dj2 : Int, dj3 : Int) -> Bool {
 
 ///|
 pub fn wigner_3j(
-  j_1 : @symcore.Expr,
-  j_2 : @symcore.Expr,
-  j_3 : @symcore.Expr,
-  m_1 : @symcore.Expr,
-  m_2 : @symcore.Expr,
-  m_3 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  j_1 : Expr,
+  j_2 : Expr,
+  j_3 : Expr,
+  m_1 : Expr,
+  m_2 : Expr,
+  m_3 : Expr,
+) -> Expr raise PhysicsError {
   let dj1 = wigner_doubled_int(j_1)
   let dj2 = wigner_doubled_int(j_2)
   let dj3 = wigner_doubled_int(j_3)
@@ -125,16 +125,16 @@ pub fn wigner_3j(
   let dm3 = wigner_doubled_int(m_3)
 
   if dm1 + dm2 + dm3 != 0 {
-    return @symcore.int(0)
+    return int(0)
   }
   if !wigner_check_dj_couple(dj1, dj2, dj3) {
-    return @symcore.int(0)
+    return int(0)
   }
   if dm1.abs() > dj1 || dm2.abs() > dj2 || dm3.abs() > dj3 {
-    return @symcore.int(0)
+    return int(0)
   }
   if (dj1 - dm1) % 2 != 0 || (dj2 - dm2) % 2 != 0 || (dj3 - dm3) % 2 != 0 {
-    return @symcore.int(0)
+    return int(0)
   }
 
   let sumj = (dj1 + dj2 + dj3) / 2
@@ -156,7 +156,7 @@ pub fn wigner_3j(
     sumres = term - sumres
   }
   if sumres.is_zero() {
-    return @symcore.int(0)
+    return int(0)
   }
 
   let res_num = wigner_binomial_bigint(dj1, jm2) *
@@ -173,31 +173,31 @@ pub fn wigner_3j(
 
 ///|
 pub fn clebsch_gordan(
-  j_1 : @symcore.Expr,
-  j_2 : @symcore.Expr,
-  j_3 : @symcore.Expr,
-  m_1 : @symcore.Expr,
-  m_2 : @symcore.Expr,
-  m_3 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  j_1 : Expr,
+  j_2 : Expr,
+  j_3 : Expr,
+  m_1 : Expr,
+  m_2 : Expr,
+  m_3 : Expr,
+) -> Expr raise PhysicsError {
   let dj1 = wigner_doubled_int(j_1)
   let dj2 = wigner_doubled_int(j_2)
   let dm3 = wigner_doubled_int(m_3)
   let phase = wigner_phase_expr((dj1 - dj2 + dm3) / 2)
   phase *
-  @symelem.sqrt(@symcore.int(2) * j_3 + @symcore.int(1)) *
-  (try! wigner_3j(j_1, j_2, j_3, m_1, m_2, @symcore.int(-1) * m_3))
+  @symelem.sqrt(int(2) * j_3 + int(1)) *
+  (try! wigner_3j(j_1, j_2, j_3, m_1, m_2, int(-1) * m_3))
 }
 
 ///|
 pub fn wigner_6j(
-  j_1 : @symcore.Expr,
-  j_2 : @symcore.Expr,
-  j_3 : @symcore.Expr,
-  j_4 : @symcore.Expr,
-  j_5 : @symcore.Expr,
-  j_6 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  j_1 : Expr,
+  j_2 : Expr,
+  j_3 : Expr,
+  j_4 : Expr,
+  j_5 : Expr,
+  j_6 : Expr,
+) -> Expr raise PhysicsError {
   let dj1 = wigner_doubled_int(j_1)
   let dj2 = wigner_doubled_int(j_2)
   let dj3 = wigner_doubled_int(j_3)
@@ -208,7 +208,7 @@ pub fn wigner_6j(
     !wigner_check_dj_couple(dj1, dj5, dj6) ||
     !wigner_check_dj_couple(dj4, dj2, dj6) ||
     !wigner_check_dj_couple(dj4, dj5, dj3) {
-    return @symcore.int(0)
+    return int(0)
   }
   let j123 = (dj1 + dj2 + dj3) / 2
   let j156 = (dj1 + dj5 + dj6) / 2
@@ -234,7 +234,7 @@ pub fn wigner_6j(
     sumres = term - sumres
   }
   if sumres.is_zero() {
-    return @symcore.int(0)
+    return int(0)
   }
   if imax % 2 != 0 {
     sumres = BigInt::from_int(0) - sumres
@@ -254,16 +254,16 @@ pub fn wigner_6j(
 
 ///|
 pub fn racah(
-  aa : @symcore.Expr,
-  bb : @symcore.Expr,
-  cc : @symcore.Expr,
-  dd : @symcore.Expr,
-  ee : @symcore.Expr,
-  ff : @symcore.Expr,
-) -> @symcore.Expr {
+  aa : Expr,
+  bb : Expr,
+  cc : Expr,
+  dd : Expr,
+  ee : Expr,
+  ff : Expr,
+) -> Expr {
   let res = try! wigner_6j(aa, bb, ee, dd, cc, ff)
   match expr_number_value(res) {
-    Some(n) if n.is_zero() => @symcore.int(0)
+    Some(n) if n.is_zero() => int(0)
     _ => {
       let daa = try! wigner_doubled_int(aa)
       let dbb = try! wigner_doubled_int(bb)
@@ -277,16 +277,16 @@ pub fn racah(
 
 ///|
 pub fn wigner_9j(
-  j_1 : @symcore.Expr,
-  j_2 : @symcore.Expr,
-  j_3 : @symcore.Expr,
-  j_4 : @symcore.Expr,
-  j_5 : @symcore.Expr,
-  j_6 : @symcore.Expr,
-  j_7 : @symcore.Expr,
-  j_8 : @symcore.Expr,
-  j_9 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  j_1 : Expr,
+  j_2 : Expr,
+  j_3 : Expr,
+  j_4 : Expr,
+  j_5 : Expr,
+  j_6 : Expr,
+  j_7 : Expr,
+  j_8 : Expr,
+  j_9 : Expr,
+) -> Expr raise PhysicsError {
   let dj1 = wigner_doubled_int(j_1)
   let dj2 = wigner_doubled_int(j_2)
   let dj3 = wigner_doubled_int(j_3)
@@ -302,7 +302,7 @@ pub fn wigner_9j(
     !wigner_check_dj_couple(dj1, dj4, dj7) ||
     !wigner_check_dj_couple(dj2, dj5, dj8) ||
     !wigner_check_dj_couple(dj3, dj6, dj9) {
-    return @symcore.int(0)
+    return int(0)
   }
   let j123 = (dj1 + dj2 + dj3) / 2
   let j456 = (dj4 + dj5 + dj6) / 2
@@ -372,7 +372,7 @@ pub fn wigner_9j(
     dt = dt + 2
   }
   if sumres.is_zero() {
-    return @symcore.int(0)
+    return int(0)
   }
   if dtmax % 2 != 0 {
     sumres = BigInt::from_int(0) - sumres
@@ -399,13 +399,13 @@ pub fn wigner_9j(
 
 ///|
 pub fn dot_rot_grad_ynm(
-  j : @symcore.Expr,
-  p : @symcore.Expr,
-  l : @symcore.Expr,
-  m : @symcore.Expr,
-  theta : @symcore.Expr,
-  phi : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  j : Expr,
+  p : Expr,
+  l : Expr,
+  m : Expr,
+  theta : Expr,
+  phi : Expr,
+) -> Expr raise PhysicsError {
   let dj = wigner_doubled_int(j)
   let dp = wigner_doubled_int(p)
   let dl = wigner_doubled_int(l)
@@ -417,34 +417,34 @@ pub fn dot_rot_grad_ynm(
   let pi = dp / 2
   let li = dl / 2
   let mi = dm / 2
-  let mut acc = @symcore.int(0)
+  let mut acc = int(0)
   let lower = (li - ji).abs()
   let upper = li + ji
   for k in lower..<(upper + 1) {
-    let k_expr = @symcore.int(k)
+    let k_expr = int(k)
     let alpha = @symelem.sqrt(
         expr_div(
-          (@symcore.int(2) * l + @symcore.int(1)) *
-          (@symcore.int(2) * j + @symcore.int(1)) *
-          (@symcore.int(2) * k_expr + @symcore.int(1)),
-          @symcore.int(4) * pi_expr(),
+          (int(2) * l + int(1)) *
+          (int(2) * j + int(1)) *
+          (int(2) * k_expr + int(1)),
+          int(4) * pi_expr(),
         ),
       ) *
       (try! wigner_3j(
         j,
         l,
         k_expr,
-        @symcore.int(0),
-        @symcore.int(0),
-        @symcore.int(0),
+        int(0),
+        int(0),
+        int(0),
       )) *
-      (try! wigner_3j(j, l, k_expr, p, m, @symcore.int(-1) * (m + p)))
+      (try! wigner_3j(j, l, k_expr, p, m, int(-1) * (m + p)))
     let coeff = alpha *
       rational_expr(1, 2) *
       (
-        (k_expr ^ @symcore.int(2)) -
-        (j ^ @symcore.int(2)) -
-        (l ^ @symcore.int(2)) +
+        (k_expr ^ int(2)) -
+        (j ^ int(2)) -
+        (l ^ int(2)) +
         k_expr -
         j -
         l
@@ -459,8 +459,8 @@ pub fn dot_rot_grad_ynm(
 
 ///|
 pub fn wigner_d_small(
-  j_tot : @symcore.Expr,
-  beta : @symcore.Expr,
+  j_tot : Expr,
+  beta : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let dJ = wigner_doubled_int(j_tot)
   guard dJ >= 0 else { raise PhysicsError::ValueError("J must be nonnegative") }
@@ -468,16 +468,16 @@ pub fn wigner_d_small(
   let half_beta = beta * rational_expr(1, 2)
   let cos_half = @symelem.cos(half_beta)
   let sin_half = @symelem.sin(half_beta)
-  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  let rows : Array[Array[Expr]] = Array::new()
   for i in 0..<size {
-    let row : Array[@symcore.Expr] = Array::new()
+    let row : Array[Expr] = Array::new()
     for j in 0..<size {
       let sigmamax = wigner_int_min(i, j)
       let sigmamin = wigner_int_max(0, i + j - dJ)
       let numer = wigner_binomial_bigint(dJ, j)
       let denom = wigner_binomial_bigint(dJ, i)
       let dij = @symelem.sqrt(wigner_rational_expr(numer, denom))
-      let mut terms = @symcore.int(0)
+      let mut terms = int(0)
       for s in sigmamin..<(sigmamax + 1) {
         let phase = wigner_phase_expr(i - s)
         let coeff = wigner_expr_from_bigint(
@@ -488,8 +488,8 @@ pub fn wigner_d_small(
         terms = terms +
           phase *
           coeff *
-          (cos_half ^ @symcore.int(cos_exp)) *
-          (sin_half ^ @symcore.int(sin_exp))
+          (cos_half ^ int(cos_exp)) *
+          (sin_half ^ int(sin_exp))
       }
       row.push(dij * terms)
     }
@@ -500,18 +500,18 @@ pub fn wigner_d_small(
 
 ///|
 pub fn wigner_d(
-  j_tot : @symcore.Expr,
-  alpha : @symcore.Expr,
-  beta : @symcore.Expr,
-  gamma : @symcore.Expr,
+  j_tot : Expr,
+  alpha : Expr,
+  beta : Expr,
+  gamma : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
   let d_small = try! wigner_d_small(j_tot, beta)
   let dJ = wigner_doubled_int(j_tot)
   let size = dJ + 1
-  let rows : Array[Array[@symcore.Expr]] = Array::new()
+  let rows : Array[Array[Expr]] = Array::new()
   for i in 0..<size {
     let mi = wigner_expr_from_doubled_int(dJ - 2 * i)
-    let row : Array[@symcore.Expr] = Array::new()
+    let row : Array[Expr] = Array::new()
     for j in 0..<size {
       let mj = wigner_expr_from_doubled_int(dJ - 2 * j)
       row.push(

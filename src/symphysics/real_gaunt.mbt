@@ -30,9 +30,9 @@ fn real_gaunt_coeff_mul(
 }
 
 ///|
-fn real_gaunt_coeff_real_expr(coeff : RealGauntCoeff) -> @symcore.Expr {
+fn real_gaunt_coeff_real_expr(coeff : RealGauntCoeff) -> Expr {
   if coeff.real == 0 {
-    return @symcore.int(0)
+    return int(0)
   }
   let half_pow = coeff.sqrt2_pow / 2
   let denom = if half_pow == 0 { 1 } else { 1 << half_pow }
@@ -40,7 +40,7 @@ fn real_gaunt_coeff_real_expr(coeff : RealGauntCoeff) -> @symcore.Expr {
   if coeff.sqrt2_pow % 2 == 0 {
     base
   } else {
-    base * (@symelem.sqrt(@symcore.int(2)) ^ @symcore.int(-1))
+    base * (@symelem.sqrt(int(2)) ^ int(-1))
   }
 }
 
@@ -93,13 +93,13 @@ fn real_gaunt_candidates(mu : Int) -> Array[Int] {
 
 ///|
 pub fn real_gaunt(
-  l_1 : @symcore.Expr,
-  l_2 : @symcore.Expr,
-  l_3 : @symcore.Expr,
-  mu_1 : @symcore.Expr,
-  mu_2 : @symcore.Expr,
-  mu_3 : @symcore.Expr,
-) -> @symcore.Expr raise PhysicsError {
+  l_1 : Expr,
+  l_2 : Expr,
+  l_3 : Expr,
+  mu_1 : Expr,
+  mu_2 : Expr,
+  mu_3 : Expr,
+) -> Expr raise PhysicsError {
   gaunt_require_integer(l_1)
   gaunt_require_integer(l_2)
   gaunt_require_integer(l_3)
@@ -120,10 +120,10 @@ pub fn real_gaunt(
     }
   }
   if neg_count % 2 != 0 {
-    return @symcore.int(0)
+    return int(0)
   }
   if (l1 + l2 + l3) % 2 != 0 {
-    return @symcore.int(0)
+    return int(0)
   }
   let lmax = l2 + l3
   let mut lmin = wigner_int_max(
@@ -143,10 +143,10 @@ pub fn real_gaunt(
     probe = probe - 2
   }
   if !admissible {
-    return @symcore.int(0)
+    return int(0)
   }
 
-  let mut acc = @symcore.int(0)
+  let mut acc = int(0)
   for m1 in real_gaunt_candidates(mu1) {
     let u1 = match real_gaunt_u(m1, mu1) {
       Some(v) => v
@@ -173,9 +173,9 @@ pub fn real_gaunt(
               l_1,
               l_2,
               l_3,
-              @symcore.int(m1),
-              @symcore.int(m2),
-              @symcore.int(m3),
+              int(m1),
+              int(m2),
+              int(m3),
             ))
       }
     }

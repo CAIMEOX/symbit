@@ -61,7 +61,7 @@ pub(all) enum PredicateKey {
 ///|
 pub(all) enum Query {
   Bool(Bool)
-  Atom(PredicateKey, Array[@symcore.Expr])
+  Atom(PredicateKey, Array[Expr])
   Not(Query)
   And(Array[Query])
   Or(Array[Query])
@@ -142,20 +142,20 @@ pub fn query_false() -> Query {
 }
 
 ///|
-pub fn pred(key : PredicateKey, args : Array[@symcore.Expr]) -> Query {
+pub fn pred(key : PredicateKey, args : Array[Expr]) -> Query {
   Query::Atom(key, args.map(v => v))
 }
 
 ///|
-pub fn q1(key : PredicateKey, arg : @symcore.Expr) -> Query {
+pub fn q1(key : PredicateKey, arg : Expr) -> Query {
   pred(key, [arg])
 }
 
 ///|
 pub fn q2(
   key : PredicateKey,
-  lhs : @symcore.Expr,
-  rhs : @symcore.Expr,
+  lhs : Expr,
+  rhs : Expr,
 ) -> Query {
   pred(key, [lhs, rhs])
 }
@@ -239,282 +239,282 @@ pub fn equivalent_q(args : Array[Query]) -> Query {
 }
 
 ///|
-pub fn q_real(arg : @symcore.Expr) -> Query {
+pub fn q_real(arg : Expr) -> Query {
   q1(PredicateKey::Real, arg)
 }
 
 ///|
-pub fn q_integer(arg : @symcore.Expr) -> Query {
+pub fn q_integer(arg : Expr) -> Query {
   q1(PredicateKey::Integer, arg)
 }
 
 ///|
-pub fn q_rational(arg : @symcore.Expr) -> Query {
+pub fn q_rational(arg : Expr) -> Query {
   q1(PredicateKey::Rational, arg)
 }
 
 ///|
-pub fn q_irrational(arg : @symcore.Expr) -> Query {
+pub fn q_irrational(arg : Expr) -> Query {
   q1(PredicateKey::Irrational, arg)
 }
 
 ///|
-pub fn q_positive(arg : @symcore.Expr) -> Query {
+pub fn q_positive(arg : Expr) -> Query {
   q1(PredicateKey::Positive, arg)
 }
 
 ///|
-pub fn q_negative(arg : @symcore.Expr) -> Query {
+pub fn q_negative(arg : Expr) -> Query {
   q1(PredicateKey::Negative, arg)
 }
 
 ///|
-pub fn q_zero(arg : @symcore.Expr) -> Query {
+pub fn q_zero(arg : Expr) -> Query {
   q1(PredicateKey::Zero, arg)
 }
 
 ///|
-pub fn q_nonzero(arg : @symcore.Expr) -> Query {
+pub fn q_nonzero(arg : Expr) -> Query {
   q1(PredicateKey::Nonzero, arg)
 }
 
 ///|
-pub fn q_nonnegative(arg : @symcore.Expr) -> Query {
+pub fn q_nonnegative(arg : Expr) -> Query {
   q1(PredicateKey::Nonnegative, arg)
 }
 
 ///|
-pub fn q_nonpositive(arg : @symcore.Expr) -> Query {
+pub fn q_nonpositive(arg : Expr) -> Query {
   q1(PredicateKey::Nonpositive, arg)
 }
 
 ///|
-pub fn q_even(arg : @symcore.Expr) -> Query {
+pub fn q_even(arg : Expr) -> Query {
   q1(PredicateKey::Even, arg)
 }
 
 ///|
-pub fn q_odd(arg : @symcore.Expr) -> Query {
+pub fn q_odd(arg : Expr) -> Query {
   q1(PredicateKey::Odd, arg)
 }
 
 ///|
-pub fn q_prime(arg : @symcore.Expr) -> Query {
+pub fn q_prime(arg : Expr) -> Query {
   q1(PredicateKey::Prime, arg)
 }
 
 ///|
-pub fn q_composite(arg : @symcore.Expr) -> Query {
+pub fn q_composite(arg : Expr) -> Query {
   q1(PredicateKey::Composite, arg)
 }
 
 ///|
-pub fn q_finite(arg : @symcore.Expr) -> Query {
+pub fn q_finite(arg : Expr) -> Query {
   q1(PredicateKey::Finite, arg)
 }
 
 ///|
-pub fn q_infinite(arg : @symcore.Expr) -> Query {
+pub fn q_infinite(arg : Expr) -> Query {
   q1(PredicateKey::Infinite, arg)
 }
 
 ///|
-pub fn q_extended_real(arg : @symcore.Expr) -> Query {
+pub fn q_extended_real(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedReal, arg)
 }
 
 ///|
-pub fn q_complex(arg : @symcore.Expr) -> Query {
+pub fn q_complex(arg : Expr) -> Query {
   q1(PredicateKey::Complex, arg)
 }
 
 ///|
-pub fn q_imaginary(arg : @symcore.Expr) -> Query {
+pub fn q_imaginary(arg : Expr) -> Query {
   q1(PredicateKey::Imaginary, arg)
 }
 
 ///|
-pub fn q_algebraic(arg : @symcore.Expr) -> Query {
+pub fn q_algebraic(arg : Expr) -> Query {
   q1(PredicateKey::Algebraic, arg)
 }
 
 ///|
-pub fn q_transcendental(arg : @symcore.Expr) -> Query {
+pub fn q_transcendental(arg : Expr) -> Query {
   q1(PredicateKey::Transcendental, arg)
 }
 
 ///|
-pub fn q_positive_infinite(arg : @symcore.Expr) -> Query {
+pub fn q_positive_infinite(arg : Expr) -> Query {
   q1(PredicateKey::PositiveInfinite, arg)
 }
 
 ///|
-pub fn q_negative_infinite(arg : @symcore.Expr) -> Query {
+pub fn q_negative_infinite(arg : Expr) -> Query {
   q1(PredicateKey::NegativeInfinite, arg)
 }
 
 ///|
-pub fn q_extended_positive(arg : @symcore.Expr) -> Query {
+pub fn q_extended_positive(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedPositive, arg)
 }
 
 ///|
-pub fn q_extended_negative(arg : @symcore.Expr) -> Query {
+pub fn q_extended_negative(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedNegative, arg)
 }
 
 ///|
-pub fn q_extended_nonzero(arg : @symcore.Expr) -> Query {
+pub fn q_extended_nonzero(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedNonzero, arg)
 }
 
 ///|
-pub fn q_extended_nonpositive(arg : @symcore.Expr) -> Query {
+pub fn q_extended_nonpositive(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedNonpositive, arg)
 }
 
 ///|
-pub fn q_extended_nonnegative(arg : @symcore.Expr) -> Query {
+pub fn q_extended_nonnegative(arg : Expr) -> Query {
   q1(PredicateKey::ExtendedNonnegative, arg)
 }
 
 ///|
-pub fn q_noninteger(arg : @symcore.Expr) -> Query {
+pub fn q_noninteger(arg : Expr) -> Query {
   q1(PredicateKey::NonInteger, arg)
 }
 
 ///|
-pub fn q_hermitian(arg : @symcore.Expr) -> Query {
+pub fn q_hermitian(arg : Expr) -> Query {
   q1(PredicateKey::Hermitian, arg)
 }
 
 ///|
-pub fn q_antihermitian(arg : @symcore.Expr) -> Query {
+pub fn q_antihermitian(arg : Expr) -> Query {
   q1(PredicateKey::Antihermitian, arg)
 }
 
 ///|
-pub fn q_commutative(arg : @symcore.Expr) -> Query {
+pub fn q_commutative(arg : Expr) -> Query {
   q1(PredicateKey::Commutative, arg)
 }
 
 ///|
-pub fn q_is_true(arg : @symcore.Expr) -> Query {
+pub fn q_is_true(arg : Expr) -> Query {
   q1(PredicateKey::IsTrue, arg)
 }
 
 ///|
-pub fn q_symmetric(arg : @symcore.Expr) -> Query {
+pub fn q_symmetric(arg : Expr) -> Query {
   q1(PredicateKey::Symmetric, arg)
 }
 
 ///|
-pub fn q_invertible(arg : @symcore.Expr) -> Query {
+pub fn q_invertible(arg : Expr) -> Query {
   q1(PredicateKey::Invertible, arg)
 }
 
 ///|
-pub fn q_orthogonal(arg : @symcore.Expr) -> Query {
+pub fn q_orthogonal(arg : Expr) -> Query {
   q1(PredicateKey::Orthogonal, arg)
 }
 
 ///|
-pub fn q_unitary(arg : @symcore.Expr) -> Query {
+pub fn q_unitary(arg : Expr) -> Query {
   q1(PredicateKey::Unitary, arg)
 }
 
 ///|
-pub fn q_positive_definite(arg : @symcore.Expr) -> Query {
+pub fn q_positive_definite(arg : Expr) -> Query {
   q1(PredicateKey::PositiveDefinite, arg)
 }
 
 ///|
-pub fn q_upper_triangular(arg : @symcore.Expr) -> Query {
+pub fn q_upper_triangular(arg : Expr) -> Query {
   q1(PredicateKey::UpperTriangular, arg)
 }
 
 ///|
-pub fn q_lower_triangular(arg : @symcore.Expr) -> Query {
+pub fn q_lower_triangular(arg : Expr) -> Query {
   q1(PredicateKey::LowerTriangular, arg)
 }
 
 ///|
-pub fn q_diagonal(arg : @symcore.Expr) -> Query {
+pub fn q_diagonal(arg : Expr) -> Query {
   q1(PredicateKey::Diagonal, arg)
 }
 
 ///|
-pub fn q_fullrank(arg : @symcore.Expr) -> Query {
+pub fn q_fullrank(arg : Expr) -> Query {
   q1(PredicateKey::Fullrank, arg)
 }
 
 ///|
-pub fn q_square(arg : @symcore.Expr) -> Query {
+pub fn q_square(arg : Expr) -> Query {
   q1(PredicateKey::Square, arg)
 }
 
 ///|
-pub fn q_integer_elements(arg : @symcore.Expr) -> Query {
+pub fn q_integer_elements(arg : Expr) -> Query {
   q1(PredicateKey::IntegerElements, arg)
 }
 
 ///|
-pub fn q_real_elements(arg : @symcore.Expr) -> Query {
+pub fn q_real_elements(arg : Expr) -> Query {
   q1(PredicateKey::RealElements, arg)
 }
 
 ///|
-pub fn q_complex_elements(arg : @symcore.Expr) -> Query {
+pub fn q_complex_elements(arg : Expr) -> Query {
   q1(PredicateKey::ComplexElements, arg)
 }
 
 ///|
-pub fn q_singular(arg : @symcore.Expr) -> Query {
+pub fn q_singular(arg : Expr) -> Query {
   q1(PredicateKey::Singular, arg)
 }
 
 ///|
-pub fn q_normal(arg : @symcore.Expr) -> Query {
+pub fn q_normal(arg : Expr) -> Query {
   q1(PredicateKey::Normal, arg)
 }
 
 ///|
-pub fn q_triangular(arg : @symcore.Expr) -> Query {
+pub fn q_triangular(arg : Expr) -> Query {
   q1(PredicateKey::Triangular, arg)
 }
 
 ///|
-pub fn q_unit_triangular(arg : @symcore.Expr) -> Query {
+pub fn q_unit_triangular(arg : Expr) -> Query {
   q1(PredicateKey::UnitTriangular, arg)
 }
 
 ///|
-pub fn q_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_eq(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Eq, lhs, rhs)
 }
 
 ///|
-pub fn q_ne(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_ne(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Ne, lhs, rhs)
 }
 
 ///|
-pub fn q_gt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_gt(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Gt, lhs, rhs)
 }
 
 ///|
-pub fn q_ge(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_ge(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Ge, lhs, rhs)
 }
 
 ///|
-pub fn q_lt(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_lt(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Lt, lhs, rhs)
 }
 
 ///|
-pub fn q_le(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Query {
+pub fn q_le(lhs : Expr, rhs : Expr) -> Query {
   q2(PredicateKey::Le, lhs, rhs)
 }
 
@@ -562,7 +562,7 @@ pub fn query_to_sympy(expr : Query) -> String {
 ///|
 pub fn query_atom_key(
   key : PredicateKey,
-  args : Array[@symcore.Expr],
+  args : Array[Expr],
 ) -> String {
   let rendered = args.map(arg => @symprint.to_string(arg)).join(",")
   "\{predicate_name(key)}:\{rendered}"

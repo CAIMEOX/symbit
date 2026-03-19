@@ -2,7 +2,7 @@
 /// Elementary integer-valued functions.
 
 ///|
-pub fn floor(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn floor(expr : Expr) -> Expr {
   if is_integral_expr(expr) {
     return expr
   }
@@ -10,7 +10,7 @@ pub fn floor(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn ceiling(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn ceiling(expr : Expr) -> Expr {
   if is_integral_expr(expr) {
     return expr
   }
@@ -18,9 +18,9 @@ pub fn ceiling(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn frac(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn frac(expr : Expr) -> Expr {
   if is_integral_expr(expr) {
-    return @symcore.int(0)
+    return int(0)
   }
   @symcore.function("frac", [expr])
 }

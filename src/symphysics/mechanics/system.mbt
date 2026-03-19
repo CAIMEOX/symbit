@@ -6,33 +6,33 @@
 pub struct System {
   frame_ : @symvector.ReferenceFrame
   fixed_point_ : @symvector.Point
-  mut q_ind_ : Array[@symcore.Expr]
-  mut q_dep_ : Array[@symcore.Expr]
-  mut u_ind_ : Array[@symcore.Expr]
-  mut u_dep_ : Array[@symcore.Expr]
-  mut u_aux_ : Array[@symcore.Expr]
-  kdes_ : Array[@symcore.Expr]
+  mut q_ind_ : Array[Expr]
+  mut q_dep_ : Array[Expr]
+  mut u_ind_ : Array[Expr]
+  mut u_dep_ : Array[Expr]
+  mut u_aux_ : Array[Expr]
+  kdes_ : Array[Expr]
   bodies_ : Array[BodyLike]
   joints_ : Array[JointLike]
   loads_ : Array[Load]
   actuators_ : Array[ActuatorLike]
-  holonomic_constraints_ : Array[@symcore.Expr]
-  nonholonomic_constraints_ : Array[@symcore.Expr]
+  holonomic_constraints_ : Array[Expr]
+  nonholonomic_constraints_ : Array[Expr]
   mut eom_method_ : MechanicsBackend?
 } derive(Eq)
 
 ///|
 fn system_contains_expr(
-  items : Array[@symcore.Expr],
-  expr : @symcore.Expr,
+  items : Array[Expr],
+  expr : Expr,
 ) -> Bool {
   items.any(fn(item) { @symcore.compare_expr(item, expr) == 0 })
 }
 
 ///|
 fn system_append_exprs_unique(
-  target : Array[@symcore.Expr],
-  items : Array[@symcore.Expr],
+  target : Array[Expr],
+  items : Array[Expr],
 ) -> Unit {
   for item in items {
     if !system_contains_expr(target, item) {
@@ -211,58 +211,58 @@ pub fn System::actuators(self : System) -> Array[ActuatorLike] {
 }
 
 ///|
-pub fn System::q_ind(self : System) -> Array[@symcore.Expr] {
+pub fn System::q_ind(self : System) -> Array[Expr] {
   self.q_ind_.copy()
 }
 
 ///|
-pub fn System::q_dep(self : System) -> Array[@symcore.Expr] {
+pub fn System::q_dep(self : System) -> Array[Expr] {
   self.q_dep_.copy()
 }
 
 ///|
-pub fn System::u_ind(self : System) -> Array[@symcore.Expr] {
+pub fn System::u_ind(self : System) -> Array[Expr] {
   self.u_ind_.copy()
 }
 
 ///|
-pub fn System::u_dep(self : System) -> Array[@symcore.Expr] {
+pub fn System::u_dep(self : System) -> Array[Expr] {
   self.u_dep_.copy()
 }
 
 ///|
-pub fn System::u_aux(self : System) -> Array[@symcore.Expr] {
+pub fn System::u_aux(self : System) -> Array[Expr] {
   self.u_aux_.copy()
 }
 
 ///|
-pub fn System::kdes(self : System) -> Array[@symcore.Expr] {
+pub fn System::kdes(self : System) -> Array[Expr] {
   self.kdes_.copy()
 }
 
 ///|
-pub fn System::q(self : System) -> Array[@symcore.Expr] {
+pub fn System::q(self : System) -> Array[Expr] {
   self.q_ind_.copy() + self.q_dep_.copy()
 }
 
 ///|
-pub fn System::u(self : System) -> Array[@symcore.Expr] {
+pub fn System::u(self : System) -> Array[Expr] {
   self.u_ind_.copy() + self.u_dep_.copy()
 }
 
 ///|
-pub fn System::holonomic_constraints(self : System) -> Array[@symcore.Expr] {
+pub fn System::holonomic_constraints(self : System) -> Array[Expr] {
   self.holonomic_constraints_.copy()
 }
 
 ///|
-pub fn System::nonholonomic_constraints(self : System) -> Array[@symcore.Expr] {
+pub fn System::nonholonomic_constraints(self : System) -> Array[Expr] {
   self.nonholonomic_constraints_.copy()
 }
 
 ///|
-pub fn System::velocity_constraints(self : System) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+pub fn System::velocity_constraints(self : System) -> Array[Expr] {
+  let out : Array[Expr] = []
   for expr in self.holonomic_constraints_ {
     out.push(
       mech_simplify_expr(@symcalculus.diff(expr, @symvector.dynamicsymbols_t)),
@@ -282,7 +282,7 @@ pub fn System::eom_method(self : System) -> MechanicsBackend? {
 ///|
 pub fn System::set_q_ind(
   self : System,
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=exprs,
@@ -295,7 +295,7 @@ pub fn System::set_q_ind(
 ///|
 pub fn System::set_q_dep(
   self : System,
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q_ind_ + exprs,
@@ -308,7 +308,7 @@ pub fn System::set_q_dep(
 ///|
 pub fn System::set_u_ind(
   self : System,
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q(),
@@ -321,7 +321,7 @@ pub fn System::set_u_ind(
 ///|
 pub fn System::set_u_dep(
   self : System,
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q(),
@@ -334,7 +334,7 @@ pub fn System::set_u_dep(
 ///|
 pub fn System::set_u_aux(
   self : System,
-  exprs : Array[@symcore.Expr],
+  exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q(),
@@ -347,7 +347,7 @@ pub fn System::set_u_aux(
 ///|
 pub fn System::add_coordinates(
   self : System,
-  coordinates : Array[@symcore.Expr],
+  coordinates : Array[Expr],
   independent? : Bool = true,
 ) -> Unit raise @symphysics.PhysicsError {
   let next_ind = if independent {
@@ -376,7 +376,7 @@ pub fn System::add_coordinates(
 ///|
 pub fn System::add_speeds(
   self : System,
-  speeds : Array[@symcore.Expr],
+  speeds : Array[Expr],
   independent? : Bool = true,
 ) -> Unit raise @symphysics.PhysicsError {
   let next_ind = if independent {
@@ -405,7 +405,7 @@ pub fn System::add_speeds(
 ///|
 pub fn System::add_auxiliary_speeds(
   self : System,
-  speeds : Array[@symcore.Expr],
+  speeds : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
   try! validate_coordinates(
     coordinates=self.q(),
@@ -419,7 +419,7 @@ pub fn System::add_auxiliary_speeds(
 ///|
 pub fn System::add_kdes(
   self : System,
-  equations : Array[@symcore.Expr],
+  equations : Array[Expr],
 ) -> Unit {
   system_append_exprs_unique(self.kdes_, equations)
   self.eom_method_ = None
@@ -428,7 +428,7 @@ pub fn System::add_kdes(
 ///|
 pub fn System::add_holonomic_constraints(
   self : System,
-  equations : Array[@symcore.Expr],
+  equations : Array[Expr],
 ) -> Unit {
   system_append_exprs_unique(self.holonomic_constraints_, equations)
   self.eom_method_ = None
@@ -437,7 +437,7 @@ pub fn System::add_holonomic_constraints(
 ///|
 pub fn System::add_nonholonomic_constraints(
   self : System,
-  equations : Array[@symcore.Expr],
+  equations : Array[Expr],
 ) -> Unit {
   system_append_exprs_unique(self.nonholonomic_constraints_, equations)
   self.eom_method_ = None
@@ -544,7 +544,7 @@ pub fn System::validate_system(
       ".",
     )
   }
-  let missing_q : Map[String, @symcore.Expr] = {}
+  let missing_q : Map[String, Expr] = {}
   for joint in self.joints_ {
     let parent_name = mech_bodylike_name(joint.parent())
     let child_name = mech_bodylike_name(joint.child())
@@ -578,7 +578,7 @@ pub fn System::validate_system(
       @symcalculus.diff(q, @symvector.dynamicsymbols_t)
     })
     let qdot_keys = qdots.map(mech_expr_key)
-    let not_qdots : Map[String, @symcore.Expr] = {}
+    let not_qdots : Map[String, Expr] = {}
     for speed in u_all {
       if !qdot_keys.contains(mech_expr_key(speed)) {
         not_qdots.set(mech_expr_key(speed), speed)
@@ -612,8 +612,8 @@ pub fn System::validate_system(
     }
   } else {
     let n_kdes = self.kdes_.length()
-    let missing_u : Map[String, @symcore.Expr] = {}
-    let missing_kdes : Map[String, @symcore.Expr] = {}
+    let missing_u : Map[String, Expr] = {}
+    let missing_kdes : Map[String, Expr] = {}
     for joint in self.joints_ {
       for speed in joint.speeds() {
         if !u_keys.contains(mech_expr_key(speed)) {
@@ -623,10 +623,10 @@ pub fn System::validate_system(
       for kde in joint.kdes() {
         if !self.kdes_.any(fn(existing) {
             @symcore.compare_expr(existing, kde) == 0 ||
-            @symcore.compare_expr(existing, @symcore.int(-1) * kde) == 0 ||
-            @symcore.compare_expr(@symcore.int(-1) * existing, kde) == 0 ||
+            @symcore.compare_expr(existing, int(-1) * kde) == 0 ||
+            @symcore.compare_expr(int(-1) * existing, kde) == 0 ||
             mech_expr_equal(existing, kde) ||
-            mech_expr_equal(existing, @symcore.int(-1) * kde)
+            mech_expr_equal(existing, int(-1) * kde)
           }) {
           missing_kdes.set(mech_expr_key(kde), kde)
         }

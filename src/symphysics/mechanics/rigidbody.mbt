@@ -10,18 +10,18 @@ fn rigidbody_default_inertia(
   Inertia::from_inertia_scalars(
     masscenter,
     frame,
-    @symcore.symbol(name + "_ixx"),
-    @symcore.symbol(name + "_iyy"),
-    @symcore.symbol(name + "_izz"),
-    ixy=@symcore.symbol(name + "_ixy"),
-    iyz=@symcore.symbol(name + "_iyz"),
-    izx=@symcore.symbol(name + "_izx"),
+    symbol(name + "_ixx"),
+    symbol(name + "_iyy"),
+    symbol(name + "_izz"),
+    ixy=symbol(name + "_ixy"),
+    iyz=symbol(name + "_iyz"),
+    izx=symbol(name + "_izx"),
   )
 }
 
 ///|
 fn rigidbody_central_inertia(
-  mass : @symcore.Expr,
+  mass : Expr,
   masscenter : @symvector.Point,
   frame : @symvector.ReferenceFrame,
   value : Inertia,
@@ -39,12 +39,12 @@ pub fn rigid_body(
   name : String,
   masscenter? : @symvector.Point? = None,
   frame? : @symvector.ReferenceFrame? = None,
-  mass? : @symcore.Expr? = None,
+  mass? : Expr? = None,
   inertia? : Inertia? = None,
 ) -> RigidBody raise @symvector.VectorError {
   let mc = masscenter.unwrap_or(try! @symvector.point(name + "_masscenter"))
   let fr = frame.unwrap_or(try! @symvector.reference_frame(name + "_frame"))
-  let m = mass.unwrap_or(@symcore.symbol(name + "_mass"))
+  let m = mass.unwrap_or(symbol(name + "_mass"))
   let inertia_value = inertia.unwrap_or(rigidbody_default_inertia(name, mc, fr))
   let central = rigidbody_central_inertia(m, mc, fr, inertia_value)
   RigidBody::{
@@ -102,12 +102,12 @@ pub fn RigidBody::set_frame(
 }
 
 ///|
-pub fn RigidBody::mass(self : RigidBody) -> @symcore.Expr {
+pub fn RigidBody::mass(self : RigidBody) -> Expr {
   self.mass_
 }
 
 ///|
-pub fn RigidBody::set_mass(self : RigidBody, value : @symcore.Expr) -> Unit {
+pub fn RigidBody::set_mass(self : RigidBody, value : Expr) -> Unit {
   self.mass_ = value
   self.central_inertia_ = try! rigidbody_central_inertia(
     self.mass_,
@@ -118,14 +118,14 @@ pub fn RigidBody::set_mass(self : RigidBody, value : @symcore.Expr) -> Unit {
 }
 
 ///|
-pub fn RigidBody::potential_energy(self : RigidBody) -> @symcore.Expr {
+pub fn RigidBody::potential_energy(self : RigidBody) -> Expr {
   self.potential_energy_
 }
 
 ///|
 pub fn RigidBody::set_potential_energy(
   self : RigidBody,
-  value : @symcore.Expr,
+  value : Expr,
 ) -> Unit {
   self.potential_energy_ = value
 }
@@ -216,7 +216,7 @@ pub fn RigidBody::angular_momentum(
 pub fn RigidBody::kinetic_energy(
   self : RigidBody,
   frame : @symvector.ReferenceFrame,
-) -> @symcore.Expr raise @symvector.VectorError {
+) -> Expr raise @symvector.VectorError {
   let omega = self.frame_.ang_vel_in(frame)
   let translational = mech_half_expr() *
     self.mass_ *

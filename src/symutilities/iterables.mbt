@@ -696,7 +696,7 @@ pub fn numbered_symbols(
 }
 
 ///|
-pub fn NumberedSymbols::next(self : NumberedSymbols) -> @symcore.Expr {
+pub fn NumberedSymbols::next(self : NumberedSymbols) -> Expr {
   let mut index = self.next_index.val
   let mut name = self.prefix + index.to_string()
   while self.exclude.contains(name) {
@@ -704,5 +704,5 @@ pub fn NumberedSymbols::next(self : NumberedSymbols) -> @symcore.Expr {
     name = self.prefix + index.to_string()
   }
   self.next_index.val = index + 1
-  @symcore.symbol(name)
+  symbol(name)
 }

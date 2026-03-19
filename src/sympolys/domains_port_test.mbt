@@ -1824,8 +1824,6 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     let domain = domain_from_string(spec)
     let ours_square = try domain.is_square_expr(expr) catch {
       _ => false
-    } noraise {
-      value => value
     }
     let oracle_square = @sympy_polys.domain_is_square_expr(spec, expr_text)
     assert_eq(ours_square, oracle_square)

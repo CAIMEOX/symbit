@@ -4,24 +4,24 @@
 
 ///|
 pub struct TensorProductExpr {
-  args : Array[@symcore.Expr]
+  args : Array[Expr]
 } derive(Eq)
 
 ///|
 fn tensor_product_scalar_body(
-  expr : @symcore.Expr,
-) -> (@symcore.Expr, @symcore.Expr?) {
+  expr : Expr,
+) -> (Expr, Expr?) {
   let (scalar, body) = quantum_split_scalar_factors(expr)
   match body {
-    Some(@symcore.Expr::Function("TensorProduct", inner)) => {
-      let scalar_factors : Array[@symcore.Expr] = [scalar]
-      let items : Array[@symcore.Expr] = []
+    Some(Expr::Function("TensorProduct", inner)) => {
+      let scalar_factors : Array[Expr] = [scalar]
+      let items : Array[Expr] = []
       for item in inner {
         let (item_scalar, item_body) = tensor_product_scalar_body(item)
-        if item_scalar != @symcore.int(1) {
+        if item_scalar != int(1) {
           scalar_factors.push(item_scalar)
         }
-        items.push(item_body.unwrap_or(@symcore.int(1)))
+        items.push(item_body.unwrap_or(int(1)))
       }
       (
         quantum_mul_from_args_preserve(scalar_factors),
@@ -33,28 +33,28 @@ fn tensor_product_scalar_body(
 }
 
 ///|
-fn tensor_product_as_expr(args : Array[@symcore.Expr]) -> @symcore.Expr {
+fn tensor_product_as_expr(args : Array[Expr]) -> Expr {
   if args.is_empty() {
-    return @symcore.int(1)
+    return int(1)
   }
-  let scalar_factors : Array[@symcore.Expr] = []
-  let normalized : Array[@symcore.Expr] = []
+  let scalar_factors : Array[Expr] = []
+  let normalized : Array[Expr] = []
   for arg in args {
     let (scalar, body) = tensor_product_scalar_body(arg)
-    if scalar != @symcore.int(1) {
+    if scalar != int(1) {
       scalar_factors.push(scalar)
     }
     match body {
-      Some(@symcore.Expr::Function("TensorProduct", inner)) =>
+      Some(Expr::Function("TensorProduct", inner)) =>
         for item in inner {
           normalized.push(item)
         }
       Some(core) => normalized.push(core)
-      None => normalized.push(@symcore.int(1))
+      None => normalized.push(int(1))
     }
   }
   let scalar = quantum_mul_from_args_preserve(scalar_factors)
-  if normalized.all(item => item == @symcore.int(1)) {
+  if normalized.all(item => item == int(1)) {
     return scalar
   }
   if args.length() == 1 && normalized.length() == 1 {
@@ -69,23 +69,23 @@ fn tensor_product_as_expr(args : Array[@symcore.Expr]) -> @symcore.Expr {
 }
 
 ///|
-pub fn tensor_product(args : Array[@symcore.Expr]) -> TensorProductExpr {
+pub fn tensor_product(args : Array[Expr]) -> TensorProductExpr {
   TensorProductExpr::{ args, }
 }
 
 ///|
-pub fn TensorProductExpr::as_expr(self : TensorProductExpr) -> @symcore.Expr {
+pub fn TensorProductExpr::as_expr(self : TensorProductExpr) -> Expr {
   tensor_product_as_expr(self.args)
 }
 
 ///|
-pub fn tensor_product_expand(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn tensor_product_expand(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function("TensorProduct", args) => {
+    Expr::Function("TensorProduct", args) => {
       for idx in 0..<args.length() {
         match args[idx] {
-          @symcore.Expr::Add(terms) => {
-            let expanded : Array[@symcore.Expr] = []
+          Expr::Add(terms) => {
+            let expanded : Array[Expr] = []
             for term in terms {
               let rebuilt = args.copy()
               rebuilt[idx] = term
@@ -100,7 +100,7 @@ pub fn tensor_product_expand(expr : @symcore.Expr) -> @symcore.Expr {
       }
       tensor_product(args).as_expr()
     }
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => tensor_product_expand(arg)),
       )
@@ -109,17 +109,17 @@ pub fn tensor_product_expand(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn tensor_product_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+fn tensor_product_items(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Function("TensorProduct", args) => Some(args.copy())
+    Expr::Function("TensorProduct", args) => Some(args.copy())
     _ => None
   }
 }
 
 ///|
-fn tensor_product_pow_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
+fn tensor_product_pow_items(expr : Expr) -> Array[Expr]? {
   match expr {
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match tensor_product_items(base) {
         Some(items) =>
           Some(
@@ -133,17 +133,17 @@ fn tensor_product_pow_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
 
 ///|
 fn tensor_product_merge_factors(
-  factors : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  factors : Array[Expr],
+) -> Expr {
   let mut saw_other = false
-  let simplified_factors : Array[@symcore.Expr] = []
-  let scalar_factors : Array[@symcore.Expr] = []
-  let mut merged_items : Array[@symcore.Expr]? = None
+  let simplified_factors : Array[Expr] = []
+  let scalar_factors : Array[Expr] = []
+  let mut merged_items : Array[Expr]? = None
   for factor in factors {
     let simplified = tensor_product_simp(factor)
     simplified_factors.push(simplified)
     let (scalar, body) = quantum_split_scalar_factors(simplified)
-    if scalar != @symcore.int(1) {
+    if scalar != int(1) {
       scalar_factors.push(scalar)
     }
     match body {
@@ -153,7 +153,7 @@ fn tensor_product_merge_factors(
             match merged_items {
               None => merged_items = Some(items)
               Some(current) if current.length() == items.length() => {
-                let next : Array[@symcore.Expr] = []
+                let next : Array[Expr] = []
                 for idx in 0..<current.length() {
                   next.push(
                     quantum_mul_from_args_preserve([current[idx], items[idx]]),
@@ -181,12 +181,12 @@ fn tensor_product_merge_factors(
 }
 
 ///|
-pub fn tensor_product_simp(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn tensor_product_simp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       quantum_add_from_args_preserve(args.map(arg => tensor_product_simp(arg)))
-    @symcore.Expr::Mul(args) => tensor_product_merge_factors(args)
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Mul(args) => tensor_product_merge_factors(args)
+    Expr::Pow(base, exp) =>
       match tensor_product_items(tensor_product_simp(base)) {
         Some(items) =>
           tensor_product(
@@ -199,9 +199,9 @@ pub fn tensor_product_simp(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn tensor_product_needs_parens(expr : @symcore.Expr) -> Bool {
+fn tensor_product_needs_parens(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Add(_) | @symcore.Expr::Mul(_) | @symcore.Expr::Pow(_, _) =>
+    Expr::Add(_) | Expr::Mul(_) | Expr::Pow(_, _) =>
       true
     _ => false
   }

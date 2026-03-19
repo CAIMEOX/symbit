@@ -841,8 +841,6 @@ pub fn FreeGroupElement::eliminate_word(
         }
       }
     }
-  } noraise {
-    v => v
   }
   let left = word.subword(0, i)
   let right = word.subword(i + l, word.length())

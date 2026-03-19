@@ -1,18 +1,18 @@
 ///|
 pub struct RecurrenceOperatorAlgebra {
-  symbol_var : @symcore.Expr
+  symbol_var : Expr
   generator : String
 } derive(Eq)
 
 ///|
 pub struct RecurrenceOperator {
-  coeffs : Array[@symcore.Expr]
+  coeffs : Array[Expr]
   parent : RecurrenceOperatorAlgebra
 } derive(Eq)
 
 ///|
 pub fn recurrence_operator(
-  coeffs : Array[@symcore.Expr],
+  coeffs : Array[Expr],
   parent : RecurrenceOperatorAlgebra,
 ) -> RecurrenceOperator {
   let normalized = trim_coeffs(coeffs)
@@ -21,7 +21,7 @@ pub fn recurrence_operator(
 
 ///|
 pub fn recurrence_operators(
-  symbol_var? : @symcore.Expr = @symcore.symbol("n"),
+  symbol_var? : Expr = symbol("n"),
   generator? : String = "Sn",
 ) -> (RecurrenceOperatorAlgebra, RecurrenceOperator) {
   ignore(require_symbol_name(symbol_var))
@@ -32,7 +32,7 @@ pub fn recurrence_operators(
 ///|
 pub fn RecurrenceOperatorAlgebra::variable(
   self : RecurrenceOperatorAlgebra,
-) -> @symcore.Expr {
+) -> Expr {
   self.symbol_var
 }
 
@@ -46,8 +46,8 @@ pub fn RecurrenceOperatorAlgebra::generator(
 ///|
 pub fn RecurrenceOperator::coefficients(
   self : RecurrenceOperator,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = Array::new()
+) -> Array[Expr] {
+  let out : Array[Expr] = Array::new()
   for c in self.coeffs {
     out.push(c)
   }
@@ -87,7 +87,7 @@ fn recurrence_add(
   } else {
     b.coeffs.length()
   }
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for i in 0..<len {
     out.push(expr_add(coeff_at(a.coeffs, i), coeff_at(b.coeffs, i)))
   }
@@ -103,7 +103,7 @@ fn recurrence_mul(
     return recurrence_operator([holo_zero()], a.parent)
   }
   let out_len = a.coeffs.length() + b.coeffs.length() - 1
-  let out : Array[@symcore.Expr] = Array::new()
+  let out : Array[Expr] = Array::new()
   for _ in 0..<out_len {
     out.push(holo_zero())
   }

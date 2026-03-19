@@ -2,34 +2,34 @@
 /// Vector-calculus helpers aligned with `sympy.physics.vector.fieldfunctions`.
 
 ///|
-fn expr_depends_on(expr : @symcore.Expr, wrt : @symcore.Expr) -> Bool {
+fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return true
   }
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(fn(arg) { expr_depends_on(arg, wrt) })
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
     _ => false
   }
 }
 
 ///|
-fn expr_int_value(expr : @symcore.Expr) -> Int? {
+fn expr_int_value(expr : Expr) -> Int? {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
 
 ///|
 fn integrate_scalar(
-  expr : @symcore.Expr,
-  wrt : @symcore.Expr,
-) -> @symcore.Expr raise VectorError {
+  expr : Expr,
+  wrt : Expr,
+) -> Expr raise VectorError {
   if !expr_depends_on(expr, wrt) {
     return simplify_expr(expr * wrt)
   }
@@ -39,16 +39,16 @@ fn integrate_scalar(
     )
   }
   match expr {
-    @symcore.Expr::Add(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Add(args) => {
+      let out : Array[Expr] = []
       for arg in args {
         out.push(integrate_scalar(arg, wrt))
       }
       simplify_expr(@symcore.add(out))
     }
-    @symcore.Expr::Mul(args) => {
-      let indep : Array[@symcore.Expr] = []
-      let dep : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let indep : Array[Expr] = []
+      let dep : Array[Expr] = []
       for arg in args {
         if expr_depends_on(arg, wrt) {
           dep.push(arg)
@@ -66,7 +66,7 @@ fn integrate_scalar(
       }
       raise VectorError::ValueError("unsupported antiderivative")
     }
-    @symcore.Expr::Pow(base, exp) if @symcore.compare_expr(base, wrt) == 0 =>
+    Expr::Pow(base, exp) if @symcore.compare_expr(base, wrt) == 0 =>
       match expr_int_value(exp) {
         Some(-1) =>
           raise VectorError::ValueError("log antiderivative not implemented")
@@ -78,10 +78,10 @@ fn integrate_scalar(
         None =>
           raise VectorError::ValueError("unsupported power antiderivative")
       }
-    @symcore.Expr::Function("sin", args) if args.length() == 1 &&
+    Expr::Function("sin", args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], wrt) == 0 =>
       simplify_expr(expr_neg(@symelem.cos(wrt)))
-    @symcore.Expr::Function("cos", args) if args.length() == 1 &&
+    Expr::Function("cos", args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], wrt) == 0 =>
       simplify_expr(@symelem.sin(wrt))
     _ => raise VectorError::ValueError("unsupported antiderivative")
@@ -89,7 +89,7 @@ fn integrate_scalar(
 }
 
 ///|
-pub fn gradient(scalar : @symcore.Expr, frame : ReferenceFrame) -> Vector {
+pub fn gradient(scalar : Expr, frame : ReferenceFrame) -> Vector {
   let x = coordinate_symbol(frame, 0)
   let y = coordinate_symbol(frame, 1)
   let z = coordinate_symbol(frame, 2)
@@ -108,7 +108,7 @@ pub fn gradient(scalar : @symcore.Expr, frame : ReferenceFrame) -> Vector {
 pub fn divergence(
   vect : Vector,
   frame : ReferenceFrame,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   if vect.is_zero() {
     return zero_expr()
   }
@@ -164,7 +164,7 @@ pub fn is_solenoidal(field : Vector) -> Bool raise VectorError {
 pub fn scalar_potential(
   field : Vector,
   frame : ReferenceFrame,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   if field.is_zero() {
     return zero_expr()
   }
@@ -192,12 +192,12 @@ pub fn scalar_potential(
 
 ///|
 pub fn scalar_potential_difference(
-  scalar : @symcore.Expr,
+  scalar : Expr,
   frame : ReferenceFrame,
   point1 : Point,
   point2 : Point,
   origin : Point,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   let p1 = point1
     .pos_from(origin)
     .express(frame, variables=true)
@@ -206,11 +206,11 @@ pub fn scalar_potential_difference(
     .pos_from(origin)
     .express(frame, variables=true)
     .components_in(frame)
-  let env1 : Map[String, @symcore.Expr] = {}
+  let env1 : Map[String, Expr] = {}
   env1.set(coordinate_symbol_name(frame, 0), p1[0])
   env1.set(coordinate_symbol_name(frame, 1), p1[1])
   env1.set(coordinate_symbol_name(frame, 2), p1[2])
-  let env2 : Map[String, @symcore.Expr] = {}
+  let env2 : Map[String, Expr] = {}
   env2.set(coordinate_symbol_name(frame, 0), p2[0])
   env2.set(coordinate_symbol_name(frame, 1), p2[1])
   env2.set(coordinate_symbol_name(frame, 2), p2[2])
@@ -224,7 +224,7 @@ pub fn scalar_potential_difference_field(
   point1 : Point,
   point2 : Point,
   origin : Point,
-) -> @symcore.Expr raise VectorError {
+) -> Expr raise VectorError {
   scalar_potential_difference(
     scalar_potential(field, frame),
     frame,

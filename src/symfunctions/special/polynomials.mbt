@@ -2,88 +2,88 @@
 /// Orthogonal polynomial special functions.
 
 ///|
-pub fn legendre(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn legendre(n : Expr, x : Expr) -> Expr {
   @symcore.function("legendre", [n, x])
 }
 
 ///|
 pub fn assoc_legendre(
-  n : @symcore.Expr,
-  m : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
+  n : Expr,
+  m : Expr,
+  x : Expr,
+) -> Expr {
   @symcore.function("assoc_legendre", [n, m, x])
 }
 
 ///|
-pub fn hermite(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn hermite(n : Expr, x : Expr) -> Expr {
   @symcore.function("hermite", [n, x])
 }
 
 ///|
-pub fn hermite_prob(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn hermite_prob(n : Expr, x : Expr) -> Expr {
   @symcore.function("hermite_prob", [n, x])
 }
 
 ///|
-pub fn chebyshevt(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn chebyshevt(n : Expr, x : Expr) -> Expr {
   @symcore.function("chebyshevt", [n, x])
 }
 
 ///|
-pub fn chebyshevu(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn chebyshevu(n : Expr, x : Expr) -> Expr {
   @symcore.function("chebyshevu", [n, x])
 }
 
 ///|
-pub fn chebyshevu_root(n : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn chebyshevu_root(n : Expr, k : Expr) -> Expr {
   @symcore.function("chebyshevu_root", [n, k])
 }
 
 ///|
-pub fn chebyshevt_root(n : @symcore.Expr, k : @symcore.Expr) -> @symcore.Expr {
+pub fn chebyshevt_root(n : Expr, k : Expr) -> Expr {
   @symcore.function("chebyshevt_root", [n, k])
 }
 
 ///|
-pub fn laguerre(n : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+pub fn laguerre(n : Expr, x : Expr) -> Expr {
   @symcore.function("laguerre", [n, x])
 }
 
 ///|
 pub fn assoc_laguerre(
-  n : @symcore.Expr,
-  m : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
+  n : Expr,
+  m : Expr,
+  x : Expr,
+) -> Expr {
   @symcore.function("assoc_laguerre", [n, m, x])
 }
 
 ///|
 pub fn gegenbauer(
-  n : @symcore.Expr,
-  a : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
+  n : Expr,
+  a : Expr,
+  x : Expr,
+) -> Expr {
   @symcore.function("gegenbauer", [n, a, x])
 }
 
 ///|
 pub fn jacobi(
-  n : @symcore.Expr,
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
+  n : Expr,
+  a : Expr,
+  b : Expr,
+  x : Expr,
+) -> Expr {
   @symcore.function("jacobi", [n, a, b, x])
 }
 
 ///|
 pub fn jacobi_normalized(
-  n : @symcore.Expr,
-  a : @symcore.Expr,
-  b : @symcore.Expr,
-  x : @symcore.Expr,
-) -> @symcore.Expr {
+  n : Expr,
+  a : Expr,
+  b : Expr,
+  x : Expr,
+) -> Expr {
   @symcore.function("jacobi_normalized", [n, a, b, x])
 }

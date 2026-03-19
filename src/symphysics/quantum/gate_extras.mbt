@@ -27,11 +27,11 @@ fn gate_random_from_seed(seed : Int) -> @random.Rand {
 }
 
 ///|
-fn gate_hadamard_factor() -> @symcore.Expr {
+fn gate_hadamard_factor() -> Expr {
   if gate_normalization_state.normalized {
     sqrt2_over_2()
   } else {
-    @symcore.int(1)
+    int(1)
   }
 }
 
@@ -45,7 +45,7 @@ fn random_gate_expr(
   kind : GateKind,
   nqubits : Int,
   rng : @random.Rand,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard nqubits > 0 else {
     raise @symphysics.PhysicsError::ValueError(
       "random_circuit expects nqubits > 0",
@@ -106,7 +106,7 @@ pub fn random_circuit(
     GateKind::Swap,
   ],
   seed? : Int = -1,
-) -> @symcore.Expr raise @symphysics.PhysicsError {
+) -> Expr raise @symphysics.PhysicsError {
   guard ngates >= 0 else {
     raise @symphysics.PhysicsError::ValueError(
       "random_circuit expects ngates >= 0",
@@ -122,7 +122,7 @@ pub fn random_circuit(
   } else {
     gate_random_source
   }
-  let gates : Array[@symcore.Expr] = []
+  let gates : Array[Expr] = []
   for _ in 0..<ngates {
     let index = rng.int(limit=gate_space.length())
     gates.push(try! random_gate_expr(gate_space[index], nqubits, rng))

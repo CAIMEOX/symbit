@@ -1,7 +1,7 @@
 ///|
 pub(all) struct CseResult {
-  replacements : Array[(String, @symcore.Expr)]
-  reduced_exprs : Array[@symcore.Expr]
+  replacements : Array[(String, Expr)]
+  reduced_exprs : Array[Expr]
 }
 
 ///|
@@ -14,21 +14,21 @@ pub fn CseResult::replacement_count(self : CseResult) -> Int {
 /// Return a copy of the extracted substitution list.
 pub fn CseResult::replacements_copy(
   self : CseResult,
-) -> Array[(String, @symcore.Expr)] {
+) -> Array[(String, Expr)] {
   self.replacements.map(item => item)
 }
 
 ///|
 /// Return a copy of reduced expressions after extraction.
-pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[@symcore.Expr] {
+pub fn CseResult::reduced_exprs_copy(self : CseResult) -> Array[Expr] {
   self.reduced_exprs.map(item => item)
 }
 
 ///|
 /// Perform common subexpression elimination on a list of expressions.
-pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
+pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
   let counts : Map[String, Int] = {}
-  let key_expr : Map[String, @symcore.Expr] = {}
+  let key_expr : Map[String, Expr] = {}
   for expr in exprs {
     collect_counts(expr, counts, key_expr)
   }
@@ -50,7 +50,7 @@ pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
   sort_candidates(candidates)
 
   let mut reduced = exprs.map(e => e)
-  let replacements : Array[(String, @symcore.Expr)] = Array::new()
+  let replacements : Array[(String, Expr)] = Array::new()
   let mut idx = 0
   for candidate in candidates {
     let occ = total_occurrences(reduced, candidate.key)
@@ -58,9 +58,9 @@ pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
       continue
     }
     let sym_name = "x\{idx}"
-    let sym_expr = @symcore.symbol(sym_name)
+    let sym_expr = symbol(sym_name)
     let rhs = candidate.expr
-    let next_reduced : Array[@symcore.Expr] = Array::new()
+    let next_reduced : Array[Expr] = Array::new()
     for expr in reduced {
       next_reduced.push(replace_exact(expr, candidate.key, sym_expr))
     }
@@ -73,12 +73,12 @@ pub fn cse(exprs : Array[@symcore.Expr], min_nodes? : Int = 2) -> CseResult {
 
 ///|
 /// Reconstruct original expressions by substituting CSE replacements back.
-pub fn cse_reconstruct(result : CseResult) -> Array[@symcore.Expr] {
+pub fn cse_reconstruct(result : CseResult) -> Array[Expr] {
   let mut out = result.reduced_exprs.map(e => e)
   for i in 0..<result.replacements.length() {
     let idx = result.replacements.length() - 1 - i
     let (name, rhs) = result.replacements[idx]
-    let env : Map[String, @symcore.Expr] = {}
+    let env : Map[String, Expr] = {}
     env[name] = rhs
     out = out.map(expr => @symcore.subst(expr, env))
   }
@@ -88,7 +88,7 @@ pub fn cse_reconstruct(result : CseResult) -> Array[@symcore.Expr] {
 ///|
 priv struct CseCandidate {
   key : String
-  expr : @symcore.Expr
+  expr : Expr
   size : Int
 }
 
@@ -116,9 +116,9 @@ fn sort_candidates(items : Array[CseCandidate]) -> Unit {
 
 ///|
 fn collect_counts(
-  expr : @symcore.Expr,
+  expr : Expr,
   counts : Map[String, Int],
-  key_expr : Map[String, @symcore.Expr],
+  key_expr : Map[String, Expr],
 ) -> Unit {
   if is_atom(expr) {
     return
@@ -137,15 +137,15 @@ fn collect_counts(
 }
 
 ///|
-fn is_atom(expr : @symcore.Expr) -> Bool {
+fn is_atom(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => true
+    Expr::Number(_) | Expr::Symbol(_) => true
     _ => false
   }
 }
 
 ///|
-fn node_count(expr : @symcore.Expr) -> Int {
+fn node_count(expr : Expr) -> Int {
   let mut total = 1
   for child in @symcore.children(expr) {
     total = total + node_count(child)
@@ -154,7 +154,7 @@ fn node_count(expr : @symcore.Expr) -> Int {
 }
 
 ///|
-fn total_occurrences(exprs : Array[@symcore.Expr], key : String) -> Int {
+fn total_occurrences(exprs : Array[Expr], key : String) -> Int {
   let mut total = 0
   for expr in exprs {
     total = total + count_occurrences(expr, key)
@@ -163,7 +163,7 @@ fn total_occurrences(exprs : Array[@symcore.Expr], key : String) -> Int {
 }
 
 ///|
-fn count_occurrences(expr : @symcore.Expr, key : String) -> Int {
+fn count_occurrences(expr : Expr, key : String) -> Int {
   let mut total = if @symprint.debug_repr(expr) == key { 1 } else { 0 }
   for child in @symcore.children(expr) {
     total = total + count_occurrences(child, key)
@@ -173,10 +173,10 @@ fn count_occurrences(expr : @symcore.Expr, key : String) -> Int {
 
 ///|
 fn replace_exact(
-  expr : @symcore.Expr,
+  expr : Expr,
   key : String,
-  replacement : @symcore.Expr,
-) -> @symcore.Expr {
+  replacement : Expr,
+) -> Expr {
   if @symprint.debug_repr(expr) == key {
     return replacement
   }

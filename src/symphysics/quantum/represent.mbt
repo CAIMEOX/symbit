@@ -41,10 +41,10 @@ fn represent_mul(
 
 ///|
 fn represent_gate_simplified(
-  expr : @symcore.Expr,
-  basis : @symcore.Expr?,
+  expr : Expr,
+  basis : Expr?,
   nqubits : Int,
-  spin_j : @symcore.Expr,
+  spin_j : Expr,
   ndim : Int,
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   let simplified = gate_simp(expr)
@@ -68,9 +68,9 @@ fn represent_pow_nonnegative(
   match value {
     MatrixScalarValue::Scalar(expr) =>
       if exp == 0 {
-        MatrixScalarValue::Scalar(@symcore.int(1))
+        MatrixScalarValue::Scalar(int(1))
       } else {
-        MatrixScalarValue::Scalar(@symcore.raw_pow(expr, @symcore.int(exp)))
+        MatrixScalarValue::Scalar(@symcore.raw_pow(expr, int(exp)))
       }
     MatrixScalarValue::Matrix(matrix) => {
       guard matrix.height() == matrix.width() else {
@@ -94,22 +94,22 @@ fn represent_pow_nonnegative(
 }
 
 ///|
-fn default_spin_j() -> @symcore.Expr {
+fn default_spin_j() -> Expr {
   try! @symcore.rational_from_ints(1, 2)
 }
 
 ///|
 pub fn represent(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = default_spin_j(),
+  spin_j? : Expr = default_spin_j(),
   ndim? : Int = 4,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   match expr {
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(@symcore.int(0))
+        return MatrixScalarValue::Scalar(int(0))
       }
       let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
@@ -120,7 +120,7 @@ pub fn represent(
       }
       acc
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       if args.any(arg => gate_support(arg) != None) {
         match represent_gate_simplified(expr, basis, nqubits, spin_j, ndim) {
           Some(value) => return value
@@ -128,7 +128,7 @@ pub fn represent(
         }
       }
       guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(@symcore.int(1))
+        return MatrixScalarValue::Scalar(int(1))
       }
       let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
@@ -139,11 +139,11 @@ pub fn represent(
       }
       acc
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       match quantum_integer_value(exp) {
-        Some(0) => MatrixScalarValue::Scalar(@symcore.int(1))
+        Some(0) => MatrixScalarValue::Scalar(int(1))
         Some(power) if power > 0 && gate_support(base) != None => {
-          let factors : Array[@symcore.Expr] = []
+          let factors : Array[Expr] = []
           for _ in 0..<power {
             factors.push(base)
           }
@@ -162,7 +162,7 @@ pub fn represent(
           )
         _ => MatrixScalarValue::Scalar(expr)
       }
-    @symcore.Expr::Function("Dagger", args) if args.length() == 1 => {
+    Expr::Function("Dagger", args) if args.length() == 1 => {
       let represented = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       match represented {
         MatrixScalarValue::Scalar(value) =>
@@ -171,16 +171,16 @@ pub fn represent(
           MatrixScalarValue::Matrix(matrix_dagger(matrix))
       }
     }
-    @symcore.Expr::Function("Commutator", args) if args.length() == 2 =>
+    Expr::Function("Commutator", args) if args.length() == 2 =>
       represent(commutator_doit(expr), basis~, nqubits~, spin_j~, ndim~)
-    @symcore.Expr::Function("AntiCommutator", args) if args.length() == 2 =>
+    Expr::Function("AntiCommutator", args) if args.length() == 2 =>
       represent(anticommutator_doit(expr), basis~, nqubits~, spin_j~, ndim~)
-    @symcore.Expr::Function(name, args) if name == "TensorProduct" => {
+    Expr::Function(name, args) if name == "TensorProduct" => {
       guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(@symcore.int(1))
+        return MatrixScalarValue::Scalar(int(1))
       }
       let matrices : Array[@symphysics.ExplicitMatrix] = []
-      let mut scalar = @symcore.int(1)
+      let mut scalar = int(1)
       for arg in args {
         let represented = represent(arg, basis~, nqubits~, spin_j~, ndim~)
         match represented {
@@ -189,23 +189,23 @@ pub fn represent(
         }
       }
       let matrix = if matrices.is_empty() {
-        @symphysics.explicit_matrix_from_rows([[@symcore.int(1)]])
+        @symphysics.explicit_matrix_from_rows([[int(1)]])
       } else {
         matrix_tensor_product(matrices)
       }
-      if scalar == @symcore.int(1) {
+      if scalar == int(1) {
         MatrixScalarValue::Matrix(matrix)
       } else {
         MatrixScalarValue::Matrix(matrix.scale(scalar))
       }
     }
-    @symcore.Expr::Function(name, args) if name == "OuterProduct" &&
+    Expr::Function(name, args) if name == "OuterProduct" &&
       args.length() == 2 =>
       represent_mul(
         represent(args[0], basis~, nqubits~, spin_j~, ndim~),
         represent(args[1], basis~, nqubits~, spin_j~, ndim~),
       )
-    @symcore.Expr::Function("IdentityOperator", args) =>
+    Expr::Function("IdentityOperator", args) =>
       match args {
         [dimension] =>
           match quantum_integer_value(dimension) {
@@ -215,7 +215,7 @@ pub fn represent(
           }
         _ => MatrixScalarValue::Scalar(expr)
       }
-    @symcore.Expr::Function(name, _) if name == "InnerProduct" =>
+    Expr::Function(name, _) if name == "InnerProduct" =>
       MatrixScalarValue::Scalar(inner_product_doit(expr))
     _ =>
       match cartesian_represent(expr, basis~) {
@@ -309,7 +309,7 @@ pub fn represent(
                                                               )
                                                             None =>
                                                               match expr {
-                                                                @symcore.Expr::Symbol(
+                                                                Expr::Symbol(
                                                                   name
                                                                 ) =>
                                                                   if [
@@ -381,10 +381,10 @@ pub fn represent(
 
 ///|
 pub fn represent_matrix(
-  expr : @symcore.Expr,
-  basis? : @symcore.Expr? = None,
+  expr : Expr,
+  basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : @symcore.Expr = default_spin_j(),
+  spin_j? : Expr = default_spin_j(),
   ndim? : Int = 4,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let represented = represent(expr, basis~, nqubits~, spin_j~, ndim~)

@@ -4,12 +4,12 @@
 ///|
 pub fn inertia(
   frame : @symvector.ReferenceFrame,
-  ixx : @symcore.Expr,
-  iyy : @symcore.Expr,
-  izz : @symcore.Expr,
-  ixy? : @symcore.Expr = @symcore.int(0),
-  iyz? : @symcore.Expr = @symcore.int(0),
-  izx? : @symcore.Expr = @symcore.int(0),
+  ixx : Expr,
+  iyy : Expr,
+  izz : Expr,
+  ixy? : Expr = int(0),
+  iyz? : Expr = int(0),
+  izx? : Expr = int(0),
 ) -> @symvector.Dyadic {
   (try! @symvector.outer(frame.x(), frame.x())).scale(ixx) +
   (try! @symvector.outer(frame.x(), frame.y())).scale(ixy) +
@@ -24,7 +24,7 @@ pub fn inertia(
 
 ///|
 pub fn inertia_of_point_mass(
-  mass : @symcore.Expr,
+  mass : Expr,
   pos_vec : @symvector.Vector,
   frame : @symvector.ReferenceFrame,
 ) -> @symvector.Dyadic raise @symvector.VectorError {

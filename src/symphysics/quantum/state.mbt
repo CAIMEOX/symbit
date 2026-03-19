@@ -19,23 +19,23 @@ pub enum StateFlavor {
 ///|
 pub struct StateExpr {
   flavor : StateFlavor
-  label : Array[@symcore.Expr]
-  time : @symcore.Expr?
+  label : Array[Expr]
+  time : Expr?
   hilbert_space : HilbertSpace
 } derive(Eq)
 
 ///|
-fn default_state_label() -> Array[@symcore.Expr] {
-  [@symcore.symbol("psi")]
+fn default_state_label() -> Array[Expr] {
+  [symbol("psi")]
 }
 
 ///|
-fn default_time_expr() -> @symcore.Expr {
-  @symcore.symbol("t")
+fn default_time_expr() -> Expr {
+  symbol("t")
 }
 
 ///|
-fn normalize_state_label(label : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
+fn normalize_state_label(label : Array[Expr]) -> Array[Expr] {
   if label.is_empty() {
     default_state_label()
   } else {
@@ -69,7 +69,7 @@ fn state_brackets(flavor : StateFlavor) -> (String, String, String) {
 
 ///|
 pub fn ket(
-  label : Array[@symcore.Expr],
+  label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -82,7 +82,7 @@ pub fn ket(
 
 ///|
 pub fn bra(
-  label : Array[@symcore.Expr],
+  label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -95,8 +95,8 @@ pub fn bra(
 
 ///|
 pub fn time_dep_ket(
-  label : Array[@symcore.Expr],
-  time? : @symcore.Expr = default_time_expr(),
+  label : Array[Expr],
+  time? : Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -109,8 +109,8 @@ pub fn time_dep_ket(
 
 ///|
 pub fn time_dep_bra(
-  label : Array[@symcore.Expr],
-  time? : @symcore.Expr = default_time_expr(),
+  label : Array[Expr],
+  time? : Expr = default_time_expr(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -123,7 +123,7 @@ pub fn time_dep_bra(
 
 ///|
 pub fn orthogonal_ket(
-  label : Array[@symcore.Expr],
+  label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -136,7 +136,7 @@ pub fn orthogonal_ket(
 
 ///|
 pub fn orthogonal_bra(
-  label : Array[@symcore.Expr],
+  label : Array[Expr],
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> StateExpr {
   StateExpr::{
@@ -148,7 +148,7 @@ pub fn orthogonal_bra(
 }
 
 ///|
-pub fn StateExpr::as_expr(self : StateExpr) -> @symcore.Expr {
+pub fn StateExpr::as_expr(self : StateExpr) -> Expr {
   let args = self.label.copy()
   match self.time {
     Some(time) => {
@@ -204,16 +204,16 @@ pub fn StateExpr::repr(self : StateExpr) -> String {
 }
 
 ///|
-pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
+pub fn state_from_expr(expr : Expr) -> StateExpr? {
   match expr {
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       match name {
         "Ket" => Some(ket(args))
         "Bra" => Some(bra(args))
         "TimeDepKet" if args.is_empty() =>
           Some(time_dep_ket([], time=default_time_expr()))
         "TimeDepKet" if args.length() >= 1 => {
-          let label : Array[@symcore.Expr] = []
+          let label : Array[Expr] = []
           for idx in 0..<(args.length() - 1) {
             label.push(args[idx])
           }
@@ -222,7 +222,7 @@ pub fn state_from_expr(expr : @symcore.Expr) -> StateExpr? {
         "TimeDepBra" if args.is_empty() =>
           Some(time_dep_bra([], time=default_time_expr()))
         "TimeDepBra" if args.length() >= 1 => {
-          let label : Array[@symcore.Expr] = []
+          let label : Array[Expr] = []
           for idx in 0..<(args.length() - 1) {
             label.push(args[idx])
           }

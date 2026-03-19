@@ -21,7 +21,7 @@ pub fn PolyBuilder::order(self : PolyBuilder, order : TermOrder) -> PolyBuilder 
 /// Parse an expression into a polynomial using this builder configuration.
 pub fn PolyBuilder::from_expr(
   self : PolyBuilder,
-  expr : @symcore.Expr,
+  expr : Expr,
 ) -> Poly raise PolyError {
   Poly::from_expr(expr, self.gens, self.domain).with_order(self.order)
 }
@@ -29,7 +29,7 @@ pub fn PolyBuilder::from_expr(
 ///|
 /// SymPy-style convenience wrapper that infers generators and domain.
 pub fn Poly::from_expr_defaults(
-  expr : @symcore.Expr,
+  expr : Expr,
   gens? : Array[String],
   domain? : Domain,
   modulus? : Int,
@@ -59,7 +59,7 @@ pub fn Poly::from_expr_defaults(
 }
 
 ///|
-fn infer_gens(expr : @symcore.Expr) -> Array[String] {
+fn infer_gens(expr : Expr) -> Array[String] {
   let seen : Map[String, Bool] = Map::new()
   collect_symbols(expr, seen)
   let names : Array[String] = Array::new()
@@ -71,18 +71,18 @@ fn infer_gens(expr : @symcore.Expr) -> Array[String] {
 }
 
 ///|
-fn collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args) | Expr::Mul(args) =>
       for child in args {
         collect_symbols(child, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       collect_symbols(base, seen)
       collect_symbols(exp, seen)
     }
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       for child in args {
         collect_symbols(child, seen)
       }
@@ -91,7 +91,7 @@ fn collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
 }
 
 ///|
-fn infer_domain(expr : @symcore.Expr) -> Domain {
+fn infer_domain(expr : Expr) -> Domain {
   if has_fractional_coeff(expr) {
     Domain::QQ
   } else {
@@ -106,7 +106,7 @@ fn resolve_domain(
   gaussian~ : Bool?,
   extension~ : Array[String]?,
   gf_degree~ : Int?,
-  expr~ : @symcore.Expr?,
+  expr~ : Expr?,
 ) -> Domain raise PolyError {
   // SymPy-style precedence:
   // 1) explicit domain wins (with modulus consistency checks)
@@ -211,14 +211,14 @@ fn gfext_default_poly(k : Int) -> Array[Int] {
 }
 
 ///|
-fn has_fractional_coeff(expr : @symcore.Expr) -> Bool {
+fn has_fractional_coeff(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => !n.is_integral()
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+    Expr::Number(n) => !n.is_integral()
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(child => has_fractional_coeff(child))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       has_fractional_coeff(base) || has_fractional_coeff(exp)
-    @symcore.Expr::Function(_, args) =>
+    Expr::Function(_, args) =>
       args.any(child => has_fractional_coeff(child))
     _ => false
   }

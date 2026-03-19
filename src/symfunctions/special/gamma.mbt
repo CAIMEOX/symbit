@@ -2,7 +2,7 @@
 /// Gamma and related special functions.
 
 ///|
-pub fn gamma(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn gamma(expr : Expr) -> Expr {
   match int_value(expr) {
     Some(bi) => {
       let n = bi.to_int()
@@ -16,36 +16,36 @@ pub fn gamma(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn lowergamma(a : @symcore.Expr, z : @symcore.Expr) -> @symcore.Expr {
+pub fn lowergamma(a : Expr, z : Expr) -> Expr {
   @symcore.function("lowergamma", [a, z])
 }
 
 ///|
-pub fn uppergamma(a : @symcore.Expr, z : @symcore.Expr) -> @symcore.Expr {
+pub fn uppergamma(a : Expr, z : Expr) -> Expr {
   @symcore.function("uppergamma", [a, z])
 }
 
 ///|
-pub fn polygamma(n : @symcore.Expr, z : @symcore.Expr) -> @symcore.Expr {
+pub fn polygamma(n : Expr, z : Expr) -> Expr {
   @symcore.function("polygamma", [n, z])
 }
 
 ///|
-pub fn loggamma(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn loggamma(expr : Expr) -> Expr {
   @symcore.function("loggamma", [expr])
 }
 
 ///|
-pub fn digamma(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn digamma(expr : Expr) -> Expr {
   @symcore.function("digamma", [expr])
 }
 
 ///|
-pub fn trigamma(expr : @symcore.Expr) -> @symcore.Expr {
+pub fn trigamma(expr : Expr) -> Expr {
   @symcore.function("trigamma", [expr])
 }
 
 ///|
-pub fn multigamma(a : @symcore.Expr, p : @symcore.Expr) -> @symcore.Expr {
+pub fn multigamma(a : Expr, p : Expr) -> Expr {
   @symcore.function("multigamma", [a, p])
 }

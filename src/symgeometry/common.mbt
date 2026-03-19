@@ -1,40 +1,40 @@
 ///|
-fn geo_zero() -> @symcore.Expr {
-  @symcore.int(0)
+fn geo_zero() -> Expr {
+  int(0)
 }
 
 ///|
-fn geo_one() -> @symcore.Expr {
-  @symcore.int(1)
+fn geo_one() -> Expr {
+  int(1)
 }
 
 ///|
-fn geo_pi() -> @symcore.Expr {
-  @symcore.symbol("pi")
+fn geo_pi() -> Expr {
+  symbol("pi")
 }
 
 ///|
-fn geo_two_pi() -> @symcore.Expr {
+fn geo_two_pi() -> Expr {
   geo_int(2) * geo_pi()
 }
 
 ///|
-fn geo_half_pi() -> @symcore.Expr {
+fn geo_half_pi() -> Expr {
   geo_div(geo_pi(), geo_int(2))
 }
 
 ///|
-fn geo_neg_one() -> @symcore.Expr {
-  @symcore.int(-1)
+fn geo_neg_one() -> Expr {
+  int(-1)
 }
 
 ///|
-fn geo_int(value : Int) -> @symcore.Expr {
-  @symcore.int(value)
+fn geo_int(value : Int) -> Expr {
+  int(value)
 }
 
 ///|
-fn geo_simplify(expr : @symcore.Expr) -> @symcore.Expr {
+fn geo_simplify(expr : Expr) -> Expr {
   @symsimplify.ratsimp(
     @symsimplify.trigsimp(
       @symsimplify.simplify(expr, max_passes=6),
@@ -45,13 +45,13 @@ fn geo_simplify(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn geo_radsimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn geo_radsimp(expr : Expr) -> Expr {
   geo_simplify(@symsimplify.radsimp(geo_simplify(expr), max_passes=6))
 }
 
 ///|
-fn geo_clone_exprs(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+fn geo_clone_exprs(items : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = []
   for item in items {
     out.push(item)
   }
@@ -59,32 +59,32 @@ fn geo_clone_exprs(items : Array[@symcore.Expr]) -> Array[@symcore.Expr] {
 }
 
 ///|
-fn geo_expr_text(expr : @symcore.Expr) -> String {
+fn geo_expr_text(expr : Expr) -> String {
   @symprint.to_string(geo_simplify(expr))
 }
 
 ///|
-fn geo_expr_eq(lhs : @symcore.Expr, rhs : @symcore.Expr) -> Bool {
+fn geo_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
   match geo_simplify(lhs - rhs) {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Expr::Number(n) => n.is_zero()
     _ => false
   }
 }
 
 ///|
-fn geo_div(lhs : @symcore.Expr, rhs : @symcore.Expr) -> @symcore.Expr {
+fn geo_div(lhs : Expr, rhs : Expr) -> Expr {
   geo_simplify(lhs * (rhs ^ geo_neg_one()))
 }
 
 ///|
-fn geo_expr_is_zero(expr : @symcore.Expr) -> Bool {
+fn geo_expr_is_zero(expr : Expr) -> Bool {
   geo_expr_eq(expr, geo_zero())
 }
 
 ///|
-fn geo_expr_sign(expr : @symcore.Expr) -> Int? {
+fn geo_expr_sign(expr : Expr) -> Int? {
   match geo_simplify(expr) {
-    @symcore.Expr::Number(n) =>
+    Expr::Number(n) =>
       if n.is_zero() {
         Some(0)
       } else if n.compare(@symnum.BigRational::zero()) < 0 {
@@ -97,16 +97,16 @@ fn geo_expr_sign(expr : @symcore.Expr) -> Int? {
 }
 
 ///|
-fn geo_collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
+fn geo_collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
-    @symcore.Expr::Symbol(name) => seen.set(name, true)
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Symbol(name) => seen.set(name, true)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       for arg in args {
         geo_collect_symbols(arg, seen)
       }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       geo_collect_symbols(base, seen)
       geo_collect_symbols(exp, seen)
     }
@@ -115,34 +115,34 @@ fn geo_collect_symbols(expr : @symcore.Expr, seen : Map[String, Bool]) -> Unit {
 }
 
 ///|
-fn geo_expr_depends_on(expr : @symcore.Expr, wrt : @symcore.Expr) -> Bool {
+fn geo_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
   if @symcore.compare_expr(expr, wrt) == 0 {
     return true
   }
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Function(_, args) =>
       args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       geo_expr_depends_on(base, wrt) || geo_expr_depends_on(exp, wrt)
     _ => false
   }
 }
 
 ///|
-fn geo_expr_int_value(expr : @symcore.Expr) -> Int? {
+fn geo_expr_int_value(expr : Expr) -> Int? {
   match geo_simplify(expr) {
-    @symcore.Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
 
 ///|
 fn geo_poly_deg2_add(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   [
     geo_simplify(lhs[0] + rhs[0]),
     geo_simplify(lhs[1] + rhs[1]),
@@ -152,9 +152,9 @@ fn geo_poly_deg2_add(
 
 ///|
 fn geo_poly_deg2_mul(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr]? {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr]? {
   let out = [geo_zero(), geo_zero(), geo_zero()]
   for i in 0..<3 {
     for j in 0..<3 {
@@ -172,9 +172,9 @@ fn geo_poly_deg2_mul(
 
 ///|
 fn geo_poly_deg2_pow(
-  coeffs : Array[@symcore.Expr],
+  coeffs : Array[Expr],
   exp : Int,
-) -> Array[@symcore.Expr]? {
+) -> Array[Expr]? {
   let mut out = [geo_one(), geo_zero(), geo_zero()]
   for _ in 0..<exp {
     match geo_poly_deg2_mul(out, coeffs) {
@@ -187,18 +187,18 @@ fn geo_poly_deg2_pow(
 
 ///|
 fn geo_poly_deg2_coeffs(
-  expr : @symcore.Expr,
-  wrt : @symcore.Expr,
-) -> Array[@symcore.Expr]? {
+  expr : Expr,
+  wrt : Expr,
+) -> Array[Expr]? {
   match geo_simplify(expr) {
-    @symcore.Expr::Number(_) => Some([expr, geo_zero(), geo_zero()])
-    @symcore.Expr::Symbol(_) =>
+    Expr::Number(_) => Some([expr, geo_zero(), geo_zero()])
+    Expr::Symbol(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
         Some([geo_zero(), geo_one(), geo_zero()])
       } else {
         Some([expr, geo_zero(), geo_zero()])
       }
-    @symcore.Expr::Add(args) => {
+    Expr::Add(args) => {
       let mut out = [geo_zero(), geo_zero(), geo_zero()]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
@@ -208,7 +208,7 @@ fn geo_poly_deg2_coeffs(
       }
       Some(out)
     }
-    @symcore.Expr::Mul(args) => {
+    Expr::Mul(args) => {
       let mut out = [geo_one(), geo_zero(), geo_zero()]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
@@ -222,7 +222,7 @@ fn geo_poly_deg2_coeffs(
       }
       Some(out)
     }
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       if !geo_expr_depends_on(expr, wrt) {
         Some([expr, geo_zero(), geo_zero()])
       } else {
@@ -235,7 +235,7 @@ fn geo_poly_deg2_coeffs(
           _ => None
         }
       }
-    @symcore.Expr::Function(_, _) =>
+    Expr::Function(_, _) =>
       if geo_expr_depends_on(expr, wrt) {
         None
       } else {
@@ -246,9 +246,9 @@ fn geo_poly_deg2_coeffs(
 
 ///|
 fn geo_solve_univar_deg2(
-  expr : @symcore.Expr,
-  wrt : @symcore.Expr,
-) -> Array[@symcore.Expr]? {
+  expr : Expr,
+  wrt : Expr,
+) -> Array[Expr]? {
   match geo_poly_deg2_coeffs(expr, wrt) {
     Some(coeffs) => Some(quadratic_roots(coeffs[2], coeffs[1], coeffs[0]))
     None => None
@@ -256,7 +256,7 @@ fn geo_solve_univar_deg2(
 }
 
 ///|
-fn geo_normalized_atan2(y : @symcore.Expr, x : @symcore.Expr) -> @symcore.Expr {
+fn geo_normalized_atan2(y : Expr, x : Expr) -> Expr {
   if geo_expr_is_zero(y) && geo_expr_eq(x, geo_one()) {
     return geo_zero()
   }
@@ -297,18 +297,18 @@ fn geo_linear_name(kind : LinearKind, dim : Int) -> String {
 }
 
 ///|
-fn geo_render_exprs(items : Array[@symcore.Expr]) -> String {
+fn geo_render_exprs(items : Array[Expr]) -> String {
   items.map(geo_expr_text).join(", ")
 }
 
 ///|
-fn geo_render_tuple(items : Array[@symcore.Expr]) -> String {
+fn geo_render_tuple(items : Array[Expr]) -> String {
   "(" + geo_render_exprs(items) + ")"
 }
 
 ///|
-fn geo_zero_coords(dim : Int) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+fn geo_zero_coords(dim : Int) -> Array[Expr] {
+  let out : Array[Expr] = []
   for _ in 0..<dim {
     out.push(geo_zero())
   }
@@ -317,10 +317,10 @@ fn geo_zero_coords(dim : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn geo_add_coords(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for i in 0..<lhs.length() {
     out.push(geo_simplify(lhs[i] + rhs[i]))
   }
@@ -329,10 +329,10 @@ fn geo_add_coords(
 
 ///|
 fn geo_sub_coords(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for i in 0..<lhs.length() {
     out.push(geo_simplify(lhs[i] - rhs[i]))
   }
@@ -341,10 +341,10 @@ fn geo_sub_coords(
 
 ///|
 fn geo_scale_coords(
-  coords : Array[@symcore.Expr],
-  factor : @symcore.Expr,
-) -> Array[@symcore.Expr] {
-  let out : Array[@symcore.Expr] = []
+  coords : Array[Expr],
+  factor : Expr,
+) -> Array[Expr] {
+  let out : Array[Expr] = []
   for item in coords {
     out.push(geo_simplify(item * factor))
   }
@@ -353,15 +353,15 @@ fn geo_scale_coords(
 
 ///|
 fn geo_scale_coords_axis(
-  coords : Array[@symcore.Expr],
-  factors : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] raise GeometryError {
+  coords : Array[Expr],
+  factors : Array[Expr],
+) -> Array[Expr] raise GeometryError {
   if coords.length() != factors.length() {
     raise GeometryError::ValueError(
       "scale factors must match coordinate dimension",
     )
   }
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<coords.length() {
     out.push(geo_simplify(coords[i] * factors[i]))
   }
@@ -370,9 +370,9 @@ fn geo_scale_coords_axis(
 
 ///|
 fn geo_dot(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Expr {
   let mut acc = geo_zero()
   for i in 0..<lhs.length() {
     acc = geo_simplify(acc + lhs[i] * rhs[i])
@@ -382,16 +382,16 @@ fn geo_dot(
 
 ///|
 fn geo_cross2(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> @symcore.Expr {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Expr {
   geo_simplify(lhs[0] * rhs[1] - lhs[1] * rhs[0])
 }
 
 ///|
 fn geo_perp2(
-  coords : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] raise GeometryError {
+  coords : Array[Expr],
+) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 {
     raise GeometryError::ValueError("perp2 is only defined for planar vectors")
   }
@@ -400,9 +400,9 @@ fn geo_perp2(
 
 ///|
 fn geo_cross3(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   [
     geo_simplify(lhs[1] * rhs[2] - lhs[2] * rhs[1]),
     geo_simplify(lhs[2] * rhs[0] - lhs[0] * rhs[2]),
@@ -411,17 +411,17 @@ fn geo_cross3(
 }
 
 ///|
-fn geo_norm_sq(coords : Array[@symcore.Expr]) -> @symcore.Expr {
+fn geo_norm_sq(coords : Array[Expr]) -> Expr {
   geo_dot(coords, coords)
 }
 
 ///|
-fn geo_norm(coords : Array[@symcore.Expr]) -> @symcore.Expr {
+fn geo_norm(coords : Array[Expr]) -> Expr {
   @symelem.sqrt(geo_norm_sq(coords))
 }
 
 ///|
-fn geo_all_zero(coords : Array[@symcore.Expr]) -> Bool {
+fn geo_all_zero(coords : Array[Expr]) -> Bool {
   for item in coords {
     if !geo_expr_is_zero(item) {
       return false
@@ -431,7 +431,7 @@ fn geo_all_zero(coords : Array[@symcore.Expr]) -> Bool {
 }
 
 ///|
-fn geo_dominant_index(coords : Array[@symcore.Expr]) -> Int? {
+fn geo_dominant_index(coords : Array[Expr]) -> Int? {
   for i in 0..<coords.length() {
     if !geo_expr_is_zero(coords[i]) {
       return Some(i)
@@ -442,20 +442,20 @@ fn geo_dominant_index(coords : Array[@symcore.Expr]) -> Int? {
 
 ///|
 fn geo_pair_determinant(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
+  lhs : Array[Expr],
+  rhs : Array[Expr],
   i : Int,
   j : Int,
-) -> @symcore.Expr {
+) -> Expr {
   geo_simplify(lhs[i] * rhs[j] - lhs[j] * rhs[i])
 }
 
 ///|
 fn geo_rotate_coords_2d(
-  coords : Array[@symcore.Expr],
-  angle : @symcore.Expr,
-  pivot : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] raise GeometryError {
+  coords : Array[Expr],
+  angle : Expr,
+  pivot : Array[Expr],
+) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 || pivot.length() != 2 {
     raise GeometryError::ValueError(
       "rotation is only defined for 2D coordinates",
@@ -473,11 +473,11 @@ fn geo_rotate_coords_2d(
 
 ///|
 fn geo_midpoint_coords(
-  lhs : Array[@symcore.Expr],
-  rhs : Array[@symcore.Expr],
-) -> Array[@symcore.Expr] {
+  lhs : Array[Expr],
+  rhs : Array[Expr],
+) -> Array[Expr] {
   let two = geo_int(2)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for i in 0..<lhs.length() {
     out.push(geo_div(lhs[i] + rhs[i], two))
   }
@@ -485,7 +485,7 @@ fn geo_midpoint_coords(
 }
 
 ///|
-fn geo_point_from_coords(coords : Array[@symcore.Expr]) -> Point {
+fn geo_point_from_coords(coords : Array[Expr]) -> Point {
   Point::{ coords_: coords.map(geo_simplify) }
 }
 

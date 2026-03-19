@@ -3,38 +3,38 @@
 
 ///|
 pub fn r_nl(
-  n : @symcore.Expr,
-  l : @symcore.Expr,
-  nu : @symcore.Expr,
-  r : @symcore.Expr,
-) -> @symcore.Expr {
-  let n1 = n + @symcore.int(1)
+  n : Expr,
+  l : Expr,
+  nu : Expr,
+  r : Expr,
+) -> Expr {
+  let n1 = n + int(1)
   let coeff = @symelem.sqrt(
     expr_div(
-      ((@symcore.int(2) * nu) ^ (l + rational_expr(3, 2))) *
-      (@symcore.int(2) ^ (n1 + l + @symcore.int(1))) *
-      @symcomb.factorial(n1 + @symcore.int(-1)),
+      ((int(2) * nu) ^ (l + rational_expr(3, 2))) *
+      (int(2) ^ (n1 + l + int(1))) *
+      @symcomb.factorial(n1 + int(-1)),
       @symelem.sqrt(pi_expr()) *
       @symcomb.factorial2(
-        @symcore.int(2) * n1 + @symcore.int(2) * l + @symcore.int(-1),
+        int(2) * n1 + int(2) * l + int(-1),
       ),
     ),
   )
   coeff *
   (r ^ l) *
-  @symelem.exp(@symcore.int(-1) * nu * (r ^ @symcore.int(2))) *
+  @symelem.exp(int(-1) * nu * (r ^ int(2))) *
   @symspec.assoc_laguerre(
-    n1 + @symcore.int(-1),
+    n1 + int(-1),
     l + rational_expr(1, 2),
-    @symcore.int(2) * nu * (r ^ @symcore.int(2)),
+    int(2) * nu * (r ^ int(2)),
   )
 }
 
 ///|
 pub fn e_nl(
-  n : @symcore.Expr,
-  l : @symcore.Expr,
-  hw : @symcore.Expr,
-) -> @symcore.Expr {
-  (@symcore.int(2) * n + l + rational_expr(3, 2)) * hw
+  n : Expr,
+  l : Expr,
+  hw : Expr,
+) -> Expr {
+  (int(2) * n + l + rational_expr(3, 2)) * hw
 }

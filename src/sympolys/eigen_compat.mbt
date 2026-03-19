@@ -104,9 +104,9 @@ test "eigen_compat: algebraic eigenvectors over QQ extension" {
 
 ///|
 test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
-  let x = @symcore.symbol("_lambda")
+  let x = symbol("_lambda")
   let minpoly = PolyBuilder::new(["_lambda"], Domain::QQ).from_expr(
-    (x ^ @symcore.int(2)) - @symcore.int(2),
+    (x ^ int(2)) - int(2),
   )
   let field = try! build_alg_extension(
     alg_ext_spec(Domain::QQ, "_lambda", minpoly),

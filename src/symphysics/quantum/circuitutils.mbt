@@ -17,35 +17,35 @@
 
 ///|
 pub struct SymbolicCircuit {
-  circuit : Array[@symcore.Expr]
+  circuit : Array[Expr]
   qubit_map : Map[String, Int]
   next_index : Int
 }
 
 ///|
 pub struct GateIdentity {
-  sequence : Array[@symcore.Expr]
+  sequence : Array[Expr]
   rules : Array[GateRule]
-  equivalent_ids : Array[Array[@symcore.Expr]]
+  equivalent_ids : Array[Array[Expr]]
 }
 
 ///|
-fn circuit_from_factors(factors : Array[@symcore.Expr]) -> @symcore.Expr {
+fn circuit_from_factors(factors : Array[Expr]) -> Expr {
   quantum_mul_from_args_preserve(factors)
 }
 
 ///|
-pub fn circuit_factors(expr : @symcore.Expr) -> Array[@symcore.Expr] {
+pub fn circuit_factors(expr : Expr) -> Array[Expr] {
   match expr {
-    @symcore.Expr::Mul(args) => args.copy()
-    @symcore.Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 =>
+    Expr::Mul(args) => args.copy()
+    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 =>
       []
     _ => [expr]
   }
 }
 
 ///|
-pub fn gate_identity(equivalent_ids : Array[@symcore.Expr]) -> GateIdentity {
+pub fn gate_identity(equivalent_ids : Array[Expr]) -> GateIdentity {
   GateIdentity::{
     sequence: [],
     rules: [],
@@ -54,7 +54,7 @@ pub fn gate_identity(equivalent_ids : Array[@symcore.Expr]) -> GateIdentity {
 }
 
 ///|
-pub fn kmp_table(word : Array[@symcore.Expr]) -> Array[Int] {
+pub fn kmp_table(word : Array[Expr]) -> Array[Int] {
   let table = [-1, 0]
   let mut pos = 2
   let mut cnd = 0
@@ -75,8 +75,8 @@ pub fn kmp_table(word : Array[@symcore.Expr]) -> Array[Int] {
 
 ///|
 pub fn find_subcircuit(
-  circuit : @symcore.Expr,
-  subcircuit : @symcore.Expr,
+  circuit : Expr,
+  subcircuit : Expr,
   start? : Int = 0,
   end? : Int = 0,
 ) -> Int {
@@ -105,11 +105,11 @@ pub fn find_subcircuit(
 
 ///|
 pub fn replace_subcircuit(
-  circuit : @symcore.Expr,
-  subcircuit : @symcore.Expr,
-  replace? : @symcore.Expr? = None,
+  circuit : Expr,
+  subcircuit : Expr,
+  replace? : Expr? = None,
   pos? : Int = 0,
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   let circuit_items = circuit_factors(circuit)
   let sub_items = circuit_factors(subcircuit)
   let replace_items = match replace {
@@ -124,7 +124,7 @@ pub fn replace_subcircuit(
   if loc < 0 {
     return circuit_items
   }
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for idx in 0..<loc {
     out.push(circuit_items[idx])
   }
@@ -180,26 +180,26 @@ fn next_symbolic_index(
 
 ///|
 fn symbolic_index_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   qubit_map : Map[String, Int],
   inverse_map : Map[Int, String],
   next_index : Int,
-) -> (@symcore.Expr, Int) {
+) -> (Expr, Int) {
   match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => {
+    Expr::Number(n) if n.is_integral() => {
       let value = n.numerator().to_int()
       match inverse_map.get(value) {
-        Some(name) => (@symcore.symbol(name), next_index)
+        Some(name) => (symbol(name), next_index)
         None => {
           let (name, next_value) = next_symbolic_index(qubit_map, next_index)
           qubit_map.set(name, value)
           inverse_map.set(value, name)
-          (@symcore.symbol(name), next_value)
+          (symbol(name), next_value)
         }
       }
     }
-    @symcore.Expr::Function(name, args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Function(name, args) => {
+      let out : Array[Expr] = []
       let mut cursor = next_index
       for arg in args {
         let (rewritten, next_cursor) = symbolic_index_expr(
@@ -210,8 +210,8 @@ fn symbolic_index_expr(
       }
       (@symcore.raw_function(name, out), cursor)
     }
-    @symcore.Expr::Mul(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Mul(args) => {
+      let out : Array[Expr] = []
       let mut cursor = next_index
       for arg in args {
         let (rewritten, next_cursor) = symbolic_index_expr(
@@ -222,8 +222,8 @@ fn symbolic_index_expr(
       }
       (@symcore.raw_mul(out), cursor)
     }
-    @symcore.Expr::Add(args) => {
-      let out : Array[@symcore.Expr] = []
+    Expr::Add(args) => {
+      let out : Array[Expr] = []
       let mut cursor = next_index
       for arg in args {
         let (rewritten, next_cursor) = symbolic_index_expr(
@@ -234,7 +234,7 @@ fn symbolic_index_expr(
       }
       (@symcore.raw_add(out), cursor)
     }
-    @symcore.Expr::Pow(base, exp) => {
+    Expr::Pow(base, exp) => {
       let (next_base, after_base) = symbolic_index_expr(
         base, qubit_map, inverse_map, next_index,
       )
@@ -249,13 +249,13 @@ fn symbolic_index_expr(
 
 ///|
 pub fn convert_to_symbolic_indices(
-  seq : @symcore.Expr,
+  seq : Expr,
   start_index? : Int = 0,
   qubit_map? : Map[String, Int] = Map::new(),
 ) -> SymbolicCircuit {
   let map_copy = clone_index_map(qubit_map)
   let inverse_map = index_inverse_map(map_copy)
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   let mut cursor = if start_index < 0 { 0 } else { start_index }
   for item in circuit_factors(seq) {
     let (rewritten, next_cursor) = symbolic_index_expr(
@@ -269,25 +269,25 @@ pub fn convert_to_symbolic_indices(
 
 ///|
 fn real_index_expr(
-  expr : @symcore.Expr,
+  expr : Expr,
   qubit_map : Map[String, Int],
-) -> @symcore.Expr {
+) -> Expr {
   match expr {
-    @symcore.Expr::Symbol(name) =>
+    Expr::Symbol(name) =>
       match qubit_map.get(name) {
-        Some(value) => @symcore.int(value)
+        Some(value) => int(value)
         None => expr
       }
-    @symcore.Expr::Function(name, args) =>
+    Expr::Function(name, args) =>
       @symcore.raw_function(
         name,
         args.map(arg => real_index_expr(arg, qubit_map)),
       )
-    @symcore.Expr::Mul(args) =>
+    Expr::Mul(args) =>
       @symcore.raw_mul(args.map(arg => real_index_expr(arg, qubit_map)))
-    @symcore.Expr::Add(args) =>
+    Expr::Add(args) =>
       @symcore.raw_add(args.map(arg => real_index_expr(arg, qubit_map)))
-    @symcore.Expr::Pow(base, exp) =>
+    Expr::Pow(base, exp) =>
       @symcore.raw_pow(
         real_index_expr(base, qubit_map),
         real_index_expr(exp, qubit_map),
@@ -298,15 +298,15 @@ fn real_index_expr(
 
 ///|
 pub fn convert_to_real_indices(
-  seq : @symcore.Expr,
+  seq : Expr,
   qubit_map : Map[String, Int],
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   circuit_factors(seq).map(item => real_index_expr(item, qubit_map))
 }
 
 ///|
-pub fn flatten_ids(ids : Array[GateIdentity]) -> Array[Array[@symcore.Expr]] {
-  let out : Array[Array[@symcore.Expr]] = []
+pub fn flatten_ids(ids : Array[GateIdentity]) -> Array[Array[Expr]] {
+  let out : Array[Array[Expr]] = []
   for identity in ids {
     for circuit in identity.equivalent_ids {
       out.push(circuit)
@@ -328,10 +328,10 @@ fn seed_pick(limit : Int, seed : Array[Int], cursor : Int) -> (Int, Int) {
 
 ///|
 pub fn random_reduce(
-  circuit : @symcore.Expr,
+  circuit : Expr,
   gate_ids : Array[GateIdentity],
   seed? : Array[Int] = [],
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   if gate_ids.is_empty() {
     return circuit_factors(circuit)
   }
@@ -359,10 +359,10 @@ pub fn random_reduce(
 
 ///|
 pub fn random_insert(
-  circuit : @symcore.Expr,
-  choices : Array[@symcore.Expr],
+  circuit : Expr,
+  choices : Array[Expr],
   seed? : Array[Int] = [],
-) -> Array[@symcore.Expr] {
+) -> Array[Expr] {
   let base = circuit_factors(circuit)
   if choices.is_empty() {
     return base
@@ -370,7 +370,7 @@ pub fn random_insert(
   let (loc, next_cursor) = seed_pick(base.length() + 1, seed, 0)
   let (choice_index, _) = seed_pick(choices.length(), seed, next_cursor)
   let inserted = circuit_factors(choices[choice_index])
-  let out : Array[@symcore.Expr] = []
+  let out : Array[Expr] = []
   for idx in 0..<loc {
     out.push(base[idx])
   }

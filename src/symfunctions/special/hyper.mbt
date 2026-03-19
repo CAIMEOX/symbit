@@ -3,11 +3,11 @@
 
 ///|
 pub fn hyper(
-  a : Array[@symcore.Expr],
-  b : Array[@symcore.Expr],
-  z : @symcore.Expr,
-) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = Array::new()
+  a : Array[Expr],
+  b : Array[Expr],
+  z : Expr,
+) -> Expr {
+  let args : Array[Expr] = Array::new()
   args.push(@symcore.function("Tuple", a))
   args.push(@symcore.function("Tuple", b))
   args.push(z)
@@ -16,13 +16,13 @@ pub fn hyper(
 
 ///|
 pub fn meijerg(
-  a1 : Array[@symcore.Expr],
-  a2 : Array[@symcore.Expr],
-  b1 : Array[@symcore.Expr],
-  b2 : Array[@symcore.Expr],
-  z : @symcore.Expr,
-) -> @symcore.Expr {
-  let args : Array[@symcore.Expr] = Array::new()
+  a1 : Array[Expr],
+  a2 : Array[Expr],
+  b1 : Array[Expr],
+  b2 : Array[Expr],
+  z : Expr,
+) -> Expr {
+  let args : Array[Expr] = Array::new()
   let a = @symcore.function("Tuple", [
     @symcore.function("Tuple", a1),
     @symcore.function("Tuple", a2),
@@ -39,12 +39,12 @@ pub fn meijerg(
 
 ///|
 pub fn appellf1(
-  a : @symcore.Expr,
-  b1 : @symcore.Expr,
-  b2 : @symcore.Expr,
-  c : @symcore.Expr,
-  x : @symcore.Expr,
-  y : @symcore.Expr,
-) -> @symcore.Expr {
+  a : Expr,
+  b1 : Expr,
+  b2 : Expr,
+  c : Expr,
+  x : Expr,
+  y : Expr,
+) -> Expr {
   @symcore.function("appellf1", [a, b1, b2, c, x, y])
 }

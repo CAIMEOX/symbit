@@ -1,27 +1,27 @@
 ///|
 /// Simplify Bessel-function expressions.
-pub fn besselsimp(expr : @symcore.Expr, max_passes? : Int = 8) -> @symcore.Expr {
+pub fn besselsimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_compat(expr, rewrite_besselsimp, max_passes~)
 }
 
 ///|
 /// Simplify Kronecker-delta expressions.
 pub fn kroneckersimp(
-  expr : @symcore.Expr,
+  expr : Expr,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   fixpoint_compat(expr, rewrite_kroneckersimp, max_passes~)
 }
 
 ///|
 /// Convert numeric expressions to exact symbolic forms when recognized.
 pub fn nsimplify(
-  expr : @symcore.Expr,
-  constants? : Array[@symcore.Expr] = [],
+  expr : Expr,
+  constants? : Array[Expr] = [],
   full? : Bool = false,
   rational? : Bool = true,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   let _ = constants
   let _ = full
   let _ = rational
@@ -30,10 +30,10 @@ pub fn nsimplify(
 
 ///|
 fn fixpoint_compat(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
+  expr : Expr,
+  rule : (Expr) -> Expr,
   max_passes? : Int = 8,
-) -> @symcore.Expr {
+) -> Expr {
   let passes = if max_passes <= 0 { 1 } else { max_passes }
   let mut cur = expr
   for _ in 0..<passes {
@@ -48,9 +48,9 @@ fn fixpoint_compat(
 
 ///|
 fn rewrite_bottom_up_compat(
-  expr : @symcore.Expr,
-  rule : (@symcore.Expr) -> @symcore.Expr,
-) -> @symcore.Expr {
+  expr : Expr,
+  rule : (Expr) -> Expr,
+) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_compat(child, rule)
   })
@@ -58,9 +58,9 @@ fn rewrite_bottom_up_compat(
 }
 
 ///|
-fn rewrite_besselsimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_besselsimp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, [nu, z]) => {
+    Expr::Function(name, [nu, z]) => {
       if !is_zero_number(z) {
         return expr
       }
@@ -69,8 +69,8 @@ fn rewrite_besselsimp(expr : @symcore.Expr) -> @symcore.Expr {
       }
       let n = integer_expr_value(nu)
       match name {
-        "besselj" => if n == 0 { @symcore.int(1) } else { @symcore.int(0) }
-        "besseli" => if n == 0 { @symcore.int(1) } else { @symcore.int(0) }
+        "besselj" => if n == 0 { int(1) } else { int(0) }
+        "besseli" => if n == 0 { int(1) } else { int(0) }
         _ => expr
       }
     }
@@ -79,20 +79,20 @@ fn rewrite_besselsimp(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn rewrite_kroneckersimp(expr : @symcore.Expr) -> @symcore.Expr {
+fn rewrite_kroneckersimp(expr : Expr) -> Expr {
   match expr {
-    @symcore.Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
+    Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
       simplify_delta(a, b)
-    @symcore.Expr::Mul(args) => {
-      let env : Map[String, @symcore.Expr] = {}
-      let kept : Array[@symcore.Expr] = Array::new()
+    Expr::Mul(args) => {
+      let env : Map[String, Expr] = {}
+      let kept : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          @symcore.Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
+          Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
             match simplify_delta(a, b) {
-              @symcore.Expr::Number(n) if n.is_zero() => return @symcore.int(0)
-              @symcore.Expr::Number(n) if n.is_one() => ()
-              @symcore.Expr::Function(_, _) =>
+              Expr::Number(n) if n.is_zero() => return int(0)
+              Expr::Number(n) if n.is_one() => ()
+              Expr::Function(_, _) =>
                 if try_bind_delta(env, a, b) {
                   ()
                 } else {
@@ -111,16 +111,16 @@ fn rewrite_kroneckersimp(expr : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn simplify_delta(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
+fn simplify_delta(a : Expr, b : Expr) -> Expr {
   if a == b {
-    return @symcore.int(1)
+    return int(1)
   }
   match (a, b) {
-    (@symcore.Expr::Number(x), @symcore.Expr::Number(y)) =>
+    (Expr::Number(x), Expr::Number(y)) =>
       if x == y {
-        @symcore.int(1)
+        int(1)
       } else {
-        @symcore.int(0)
+        int(0)
       }
     _ => @symcore.function("KroneckerDelta", [a, b])
   }
@@ -128,22 +128,22 @@ fn simplify_delta(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn try_bind_delta(
-  env : Map[String, @symcore.Expr],
-  a : @symcore.Expr,
-  b : @symcore.Expr,
+  env : Map[String, Expr],
+  a : Expr,
+  b : Expr,
 ) -> Bool {
   match (a, b) {
-    (@symcore.Expr::Symbol(name), value) => bind_symbol(env, name, value)
-    (value, @symcore.Expr::Symbol(name)) => bind_symbol(env, name, value)
+    (Expr::Symbol(name), value) => bind_symbol(env, name, value)
+    (value, Expr::Symbol(name)) => bind_symbol(env, name, value)
     _ => false
   }
 }
 
 ///|
 fn bind_symbol(
-  env : Map[String, @symcore.Expr],
+  env : Map[String, Expr],
   name : String,
-  value : @symcore.Expr,
+  value : Expr,
 ) -> Bool {
   match env.get(name) {
     Some(v) => v == value
@@ -155,25 +155,25 @@ fn bind_symbol(
 }
 
 ///|
-fn is_zero_number(expr : @symcore.Expr) -> Bool {
+fn is_zero_number(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
+    Expr::Number(n) => n.is_zero()
     _ => false
   }
 }
 
 ///|
-fn is_nonnegative_integer_expr(expr : @symcore.Expr) -> Bool {
+fn is_nonnegative_integer_expr(expr : Expr) -> Bool {
   match expr {
-    @symcore.Expr::Number(n) => n.is_integral() && n.numerator().to_int() >= 0
+    Expr::Number(n) => n.is_integral() && n.numerator().to_int() >= 0
     _ => false
   }
 }
 
 ///|
-fn integer_expr_value(expr : @symcore.Expr) -> Int {
+fn integer_expr_value(expr : Expr) -> Int {
   match expr {
-    @symcore.Expr::Number(n) => n.numerator().to_int()
+    Expr::Number(n) => n.numerator().to_int()
     _ => 0
   }
 }
