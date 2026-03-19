@@ -130,8 +130,8 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   let ac = "AC"
   let cd = "CD"
   let p = @symcore.symbol("P")
-  let quarter = try! @symcore.rational_from_ints(1, 4)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let quarter = @symcore.rational_from_ints(1, 4)
+  let half = @symcore.rational_from_ints(1, 2)
 
   let t = truss()
   guard t.nodes().is_empty() else { fail("initial nodes") }
@@ -141,7 +141,7 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   guard t.reaction_loads().is_empty() else { fail("initial reaction loads") }
   guard t.internal_forces().is_empty() else { fail("initial internal forces") }
 
-  try! t.add_node([
+  t.add_node([
     (a, @symcore.int(0), @symcore.int(0)),
     (b, @symcore.int(2), @symcore.int(2)),
     (c, @symcore.int(3), @symcore.int(0)),
@@ -156,11 +156,11 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
     fail("node positions after add")
   }
 
-  try! t.remove_node([c])
+  t.remove_node([c])
   guard t.node_labels() == [a, b] else { fail("node labels after remove") }
-  try! t.add_node([(c, @symcore.int(3), @symcore.int(0))])
+  t.add_node([(c, @symcore.int(3), @symcore.int(0))])
 
-  try! t.add_member([(ab, a, b), (bc, b, c), (ac, a, c)])
+  t.add_member([(ab, a, b), (bc, b, c), (ac, a, c)])
   guard t.members()[ab] == [a, b] else { fail("AB member endpoints") }
   guard t.members()[bc] == [b, c] else { fail("BC member endpoints") }
   guard t.members()[ac] == [a, c] else { fail("AC member endpoints") }
@@ -168,11 +168,11 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
     fail("AB internal force init")
   }
 
-  try! t.remove_member([bc])
+  t.remove_member([bc])
   guard t.members().get(bc) is None else { fail("BC removed") }
-  try! t.add_member([(bc, b, c)])
+  t.add_member([(bc, b, c)])
 
-  try! t.change_node_label([(b, d)])
+  t.change_node_label([(b, d)])
   guard t.node_labels() == [a, d, c] else { fail("node labels after rename") }
   guard t.members()[ab] == [a, d] else {
     fail("AB endpoints after node rename")
@@ -180,14 +180,14 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   guard t.members()[bc] == [d, c] else {
     fail("BC endpoints after node rename")
   }
-  try! t.change_member_label([(bc, cd)])
+  t.change_member_label([(bc, cd)])
   guard t.members().get(bc) is None else { fail("old member label removed") }
   guard t.members()[cd] == [d, c] else { fail("new member label inserted") }
   guard t.internal_forces()[cd] == @symcore.int(0) else {
     fail("renamed member force init")
   }
 
-  try! t.apply_load([
+  t.apply_load([
     (a, p, @symcore.int(90)),
     (a, p * quarter, @symcore.int(90)),
     (a, @symcore.int(2) * p, @symcore.int(45)),
@@ -196,21 +196,21 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   guard t.loads()[a].length() == 3 else { fail("A loads count after apply") }
   guard t.loads()[d].length() == 1 else { fail("D loads count after apply") }
 
-  try! t.remove_load([(a, p * quarter, @symcore.int(90))])
+  t.remove_load([(a, p * quarter, @symcore.int(90))])
   guard t.loads()[a].length() == 2 else { fail("A loads count after remove") }
 
-  try! t.apply_support([(a, "pinned"), (d, "roller")])
+  t.apply_support([(a, "pinned"), (d, "roller")])
   guard t.supports()[a] == "pinned" else { fail("A support") }
   guard t.supports()[d] == "roller" else { fail("D support") }
   guard t.loads()[a].length() == 4 else { fail("A loads include reactions") }
   guard t.loads()[d].length() == 2 else { fail("D loads include reactions") }
 
-  try! t.remove_support([a])
+  t.remove_support([a])
   guard t.supports().get(a) is None else { fail("A support removed") }
   guard t.loads()[a].length() == 2 else { fail("A reaction loads removed") }
-  try! t.apply_support([(a, "pinned")])
+  t.apply_support([(a, "pinned")])
 
-  try! t.solve()
+  t.solve()
   let rx = t.reaction_loads()["R_A_x"]
   let ry = t.reaction_loads()["R_A_y"]
   let rdy = t.reaction_loads()["R_D_y"]
@@ -239,25 +239,25 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
 
 ///|
 test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero member forces" {
-  let third = try! @symcore.rational_from_ints(1, 3)
+  let third = @symcore.rational_from_ints(1, 3)
   let t = truss()
-  try! t.add_node([
+  t.add_node([
     ("node_1", @symcore.int(0), @symcore.int(0)),
     ("node_2", @symcore.int(6), @symcore.int(0)),
     ("node_3", @symcore.int(2), @symcore.int(2)),
     ("node_4", @symcore.int(2), @symcore.int(0)),
   ])
-  try! t.add_member([
+  t.add_member([
     ("member_1", "node_1", "node_4"),
     ("member_2", "node_2", "node_4"),
     ("member_3", "node_1", "node_3"),
     ("member_4", "node_2", "node_3"),
     ("member_5", "node_3", "node_4"),
   ])
-  try! t.apply_load([("node_4", @symcore.int(10), @symcore.int(270))])
-  try! t.apply_support([("node_1", "pinned"), ("node_2", "roller")])
+  t.apply_load([("node_4", @symcore.int(10), @symcore.int(270))])
+  t.apply_support([("node_1", "pinned"), ("node_2", "roller")])
 
-  try! t.solve()
+  t.solve()
   let member_1_force = t.internal_forces()["member_1"]
 
   guard cm_expr_eq(t.reaction_loads()["R_node_1_x"], @symcore.int(0)) else {
@@ -295,18 +295,18 @@ test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero
 ///|
 test "physics.continuum_mechanics.truss: validation errors" {
   let t = truss()
-  try! t.add_node([("A", @symcore.int(0), @symcore.int(0))])
+  t.add_node([("A", @symcore.int(0), @symcore.int(0))])
   guard (try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_) else {
     fail("duplicate node label should fail")
   }
   guard (try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_) else {
     fail("duplicate node position should fail")
   }
-  try! t.add_node([("B", @symcore.int(1), @symcore.int(0))])
+  t.add_node([("B", @symcore.int(1), @symcore.int(0))])
   guard (try? t.add_member([("AB", "A", "A")])) is Err(_) else {
     fail("self-edge member should fail")
   }
-  try! t.add_member([("AB", "A", "B")])
+  t.add_member([("AB", "A", "B")])
   guard (try? t.remove_node(["A"])) is Err(_) else {
     fail("removing attached node should fail")
   }

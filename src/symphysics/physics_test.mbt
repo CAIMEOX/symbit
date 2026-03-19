@@ -22,14 +22,14 @@ fn physics_matrix_expr_equal(
 ///|
 test "physics: Pauli and Dirac matrices satisfy core identities" {
   let i = @symcore.symbol("I")
-  let sigma1 = try! msigma(1)
-  let sigma2 = try! msigma(2)
-  let sigma3 = try! msigma(3)
-  let gamma0 = try! mgamma(0)
-  let gamma1 = try! mgamma(1)
-  let gamma2 = try! mgamma(2)
-  let gamma3 = try! mgamma(3)
-  let gamma5 = try! mgamma(5)
+  let sigma1 = msigma(1)
+  let sigma2 = msigma(2)
+  let sigma3 = msigma(3)
+  let gamma0 = mgamma(0)
+  let gamma1 = mgamma(1)
+  let gamma2 = mgamma(2)
+  let gamma3 = mgamma(3)
+  let gamma5 = mgamma(5)
 
   guard sigma1.mul(sigma2) == sigma3.scale(i) else {
     fail("sigma1*sigma2 should equal I*sigma3")
@@ -97,12 +97,12 @@ test "physics: hydrogen formulas and quantum-number guards" {
   let phi = @symcore.symbol("phi")
   let theta = @symcore.symbol("theta")
 
-  try! physics_assert_expr_equal(
-    try! hydrogen_e_nl(@symcore.int(1)),
+  physics_assert_expr_equal(
+    hydrogen_e_nl(@symcore.int(1)),
     "-1/2",
     "hydrogen ground-state energy",
   )
-  try! physics_assert_expr_equal(
+  physics_assert_expr_equal(
     hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r),
     "2*exp(-r)",
     "hydrogen radial ground state",
@@ -133,8 +133,8 @@ test "physics: wigner coefficients obey core examples and guards" {
   let half = physics_frac(1, 2)
   let three_half = physics_frac(3, 2)
 
-  try! physics_assert_expr_equal(
-    try! wigner_3j(
+  physics_assert_expr_equal(
+    wigner_3j(
       @symcore.int(2),
       @symcore.int(6),
       @symcore.int(4),
@@ -145,8 +145,8 @@ test "physics: wigner coefficients obey core examples and guards" {
     "sqrt(715)/143",
     "wigner_3j docs",
   )
-  try! physics_assert_expr_equal(
-    try! clebsch_gordan(
+  physics_assert_expr_equal(
+    clebsch_gordan(
       three_half,
       half,
       @symcore.int(2),
@@ -157,15 +157,8 @@ test "physics: wigner coefficients obey core examples and guards" {
     "1",
     "clebsch_gordan docs",
   )
-  try! physics_assert_expr_equal(
-    try! clebsch_gordan(
-      half,
-      half,
-      @symcore.int(1),
-      half,
-      half,
-      @symcore.int(0),
-    ),
+  physics_assert_expr_equal(
+    clebsch_gordan(half, half, @symcore.int(1), half, half, @symcore.int(0)),
     "0",
     "clebsch_gordan zero",
   )
@@ -185,8 +178,8 @@ test "physics: wigner coefficients obey core examples and guards" {
 
 ///|
 test "physics: gaunt examples and guards" {
-  try! physics_assert_expr_equal(
-    try! gaunt(
+  physics_assert_expr_equal(
+    gaunt(
       @symcore.int(1),
       @symcore.int(0),
       @symcore.int(1),
@@ -197,8 +190,8 @@ test "physics: gaunt examples and guards" {
     "-1/(2*sqrt(pi))",
     "gaunt example",
   )
-  try! physics_assert_expr_equal(
-    try! gaunt(
+  physics_assert_expr_equal(
+    gaunt(
       @symcore.int(1),
       @symcore.int(1),
       @symcore.int(0),
@@ -224,8 +217,8 @@ test "physics: gaunt examples and guards" {
 ///|
 test "physics: higher wigner examples and guards" {
   let half = physics_frac(1, 2)
-  try! physics_assert_expr_equal(
-    try! wigner_6j(
+  physics_assert_expr_equal(
+    wigner_6j(
       @symcore.int(5),
       @symcore.int(5),
       @symcore.int(5),
@@ -236,8 +229,8 @@ test "physics: higher wigner examples and guards" {
     "1/52",
     "wigner_6j example",
   )
-  try! physics_assert_expr_equal(
-    try! wigner_6j(
+  physics_assert_expr_equal(
+    wigner_6j(
       @symcore.int(3),
       @symcore.int(3),
       @symcore.int(3),
@@ -248,7 +241,7 @@ test "physics: higher wigner examples and guards" {
     "-1/14",
     "wigner_6j 3",
   )
-  try! physics_assert_expr_equal(
+  physics_assert_expr_equal(
     racah(
       @symcore.int(3),
       @symcore.int(3),
@@ -260,8 +253,8 @@ test "physics: higher wigner examples and guards" {
     "-1/14",
     "racah example",
   )
-  try! physics_assert_expr_equal(
-    try! wigner_9j(
+  physics_assert_expr_equal(
+    wigner_9j(
       @symcore.int(0),
       @symcore.int(0),
       @symcore.int(0),
@@ -275,8 +268,8 @@ test "physics: higher wigner examples and guards" {
     "1/2",
     "wigner_9j half example",
   )
-  try! physics_assert_expr_equal(
-    try! wigner_9j(
+  physics_assert_expr_equal(
+    wigner_9j(
       @symcore.int(1),
       @symcore.int(2),
       @symcore.int(3),
@@ -290,8 +283,8 @@ test "physics: higher wigner examples and guards" {
     "-4*sqrt(70)/11025",
     "wigner_9j exact example",
   )
-  try! physics_assert_expr_equal(
-    try! wigner_9j(
+  physics_assert_expr_equal(
+    wigner_9j(
       half,
       half,
       @symcore.int(1),
@@ -309,8 +302,8 @@ test "physics: higher wigner examples and guards" {
 
 ///|
 test "physics: real gaunt examples and zeros" {
-  try! physics_assert_expr_equal(
-    try! real_gaunt(
+  physics_assert_expr_equal(
+    real_gaunt(
       @symcore.int(1),
       @symcore.int(1),
       @symcore.int(2),
@@ -321,8 +314,8 @@ test "physics: real gaunt examples and zeros" {
     "-sqrt(15)/(10*sqrt(pi))",
     "real_gaunt example",
   )
-  try! physics_assert_expr_equal(
-    try! real_gaunt(
+  physics_assert_expr_equal(
+    real_gaunt(
       @symcore.int(2),
       @symcore.int(2),
       @symcore.int(2),
@@ -333,8 +326,8 @@ test "physics: real gaunt examples and zeros" {
     "sqrt(15)/(14*sqrt(pi))",
     "real_gaunt 222",
   )
-  try! physics_assert_expr_equal(
-    try! real_gaunt(
+  physics_assert_expr_equal(
+    real_gaunt(
       @symcore.int(-2),
       @symcore.int(1),
       @symcore.int(0),
@@ -356,8 +349,8 @@ test "physics: rotational harmonic examples" {
   let beta = @symcore.symbol("beta")
   let gamma = @symcore.symbol("gamma")
 
-  try! physics_assert_expr_equal(
-    try! dot_rot_grad_ynm(
+  physics_assert_expr_equal(
+    dot_rot_grad_ynm(
       @symcore.int(3),
       @symcore.int(2),
       @symcore.int(2),
@@ -368,8 +361,8 @@ test "physics: rotational harmonic examples" {
     "3*sqrt(55)*Ynm(5, 2, theta, phi)/(11*sqrt(pi))",
     "dot_rot_grad example",
   )
-  try! physics_assert_expr_equal(
-    try! dot_rot_grad_ynm(
+  physics_assert_expr_equal(
+    dot_rot_grad_ynm(
       @symcore.int(1),
       @symcore.int(5),
       @symcore.int(1),
@@ -382,29 +375,29 @@ test "physics: rotational harmonic examples" {
   )
 
   guard physics_matrix_expr_equal(
-    try! wigner_d_small(half, @symcore.int(0)),
+    wigner_d_small(half, @symcore.int(0)),
     explicit_matrix_eye(2),
   ) else {
     fail("wigner_d_small(1/2, 0) should be identity")
   }
 
-  let d = try! wigner_d(half, alpha, beta, gamma)
-  try! physics_assert_expr_equal(
+  let d = wigner_d(half, alpha, beta, gamma)
+  physics_assert_expr_equal(
     d.rows[0][0],
     "exp(I*alpha/2)*exp(I*gamma/2)*cos(beta/2)",
     "wigner_d(0,0)",
   )
-  try! physics_assert_expr_equal(
+  physics_assert_expr_equal(
     d.rows[0][1],
     "exp(I*alpha/2)*exp(-I*gamma/2)*sin(beta/2)",
     "wigner_d(0,1)",
   )
-  try! physics_assert_expr_equal(
+  physics_assert_expr_equal(
     d.rows[1][0],
     "-exp(-I*alpha/2)*exp(I*gamma/2)*sin(beta/2)",
     "wigner_d(1,0)",
   )
-  try! physics_assert_expr_equal(
+  physics_assert_expr_equal(
     d.rows[1][1],
     "exp(-I*alpha/2)*exp(-I*gamma/2)*cos(beta/2)",
     "wigner_d(1,1)",

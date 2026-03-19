@@ -34,7 +34,7 @@ fn arch_is_close(expr : @symcore.Expr, value : Double) -> Bool {
 
 ///|
 test "physics.continuum_mechanics.arch: init and force queries" {
-  let a = try! arch(
+  let a = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(10), @symcore.int(0)),
     @symcore.int(5),
@@ -42,7 +42,7 @@ test "physics.continuum_mechanics.arch: init and force queries" {
   )
   let expected_shape = @symcore.int(5) +
     ((@symcore.symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
-    (try! @symcore.rational_from_ints(-1, 5))
+    @symcore.rational_from_ints(-1, 5)
   guard cm_numeric_expr_eq(a.get_shape_eqn(), expected_shape) else {
     fail("shape eqn mismatch: \{@symprint.to_string(a.get_shape_eqn())}")
   }
@@ -50,39 +50,39 @@ test "physics.continuum_mechanics.arch: init and force queries" {
     fail("default supports")
   }
 
-  let a2 = try! arch(
+  let a2 = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(10), @symcore.int(1)),
     @symcore.int(6),
   )
-  try! a2.change_support_type(left_support=Some("roller"))
-  try! a2.add_member(try! @symcore.rational_from_ints(1, 2))
+  a2.change_support_type(left_support=Some("roller"))
+  a2.add_member(@symcore.rational_from_ints(1, 2))
   guard a2.supports()["left"] == "roller" else { fail("support type change") }
 }
 
 ///|
 test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
-  let a = try! arch(
+  let a = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(40), @symcore.int(0)),
     @symcore.int(20),
     crown_y=Some(@symcore.int(12)),
   )
-  try! a.apply_load(
+  a.apply_load(
     -1,
     "C",
     @symcore.int(8),
     @symcore.int(150),
     angle=Some(@symcore.int(270)),
   )
-  try! a.apply_load(
+  a.apply_load(
     0,
     "D",
     @symcore.int(20),
     @symcore.int(-4),
     end=Some(@symcore.int(40)),
   )
-  try! a.solve()
+  a.solve()
   guard arch_is_close(a.reaction_force()["R_A_x"], 83.33333333333333) else {
     fail("R_A_x")
   }
@@ -91,50 +91,44 @@ test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
     fail("R_B_x")
   }
   guard arch_is_close(a.reaction_force()["R_B_y"], 90.0) else { fail("R_B_y") }
-  let near_eight = try! @symcore.rational_from_ints(7_999_999, 1_000_000)
-  guard arch_is_close(
-    try! a.axial_force_at(pos=Some(near_eight)),
-    149.430523405935,
-  ) else {
+  let near_eight = @symcore.rational_from_ints(7_999_999, 1_000_000)
+  guard arch_is_close(a.axial_force_at(pos=Some(near_eight)), 149.430523405935) else {
     fail("axial near x=8")
   }
-  guard arch_is_close(
-    try! a.shear_force_at(pos=Some(near_eight)),
-    64.9227473161196,
-  ) else {
+  guard arch_is_close(a.shear_force_at(pos=Some(near_eight)), 64.9227473161196) else {
     fail("shear near x=8")
   }
 
-  let b = try! arch(
+  let b = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(40), @symcore.int(0)),
     @symcore.int(20),
     crown_y=Some(@symcore.int(15)),
   )
-  try! b.change_support_type(right_support=Some("roller"))
-  try! b.add_member(@symcore.int(0))
-  try! b.apply_load(
+  b.change_support_type(right_support=Some("roller"))
+  b.add_member(@symcore.int(0))
+  b.apply_load(
     -1,
     "D",
     @symcore.int(12),
     @symcore.int(3),
     angle=Some(@symcore.int(270)),
   )
-  try! b.apply_load(
+  b.apply_load(
     -1,
     "E",
     @symcore.int(6),
     @symcore.int(4),
     angle=Some(@symcore.int(270)),
   )
-  try! b.apply_load(
+  b.apply_load(
     -1,
     "C",
     @symcore.int(30),
     @symcore.int(5),
     angle=Some(@symcore.int(270)),
   )
-  try! b.solve()
+  b.solve()
   guard arch_is_close(b.reaction_force()["R_A_x"], 0.0) else {
     fail("member R_A_x")
   }
@@ -149,19 +143,19 @@ test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
   }
 
   let t = @symcore.symbol("t")
-  let c = try! arch(
+  let c = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(16), @symcore.int(0)),
     @symcore.int(8),
     crown_y=Some(@symcore.int(5)),
   )
-  try! c.apply_load(0, "C", @symcore.int(3), t, end=Some(@symcore.int(5)))
-  try! c.solve()
+  c.apply_load(0, "C", @symcore.int(3), t, end=Some(@symcore.int(5)))
+  c.solve()
   let c_rax = c.reaction_force()["R_A_x"]
   let c_ray = c.reaction_force()["R_A_y"]
   let c_rbx = c.reaction_force()["R_B_x"]
   let c_rby = c.reaction_force()["R_B_y"]
-  let c_bm = try! c.bending_moment_at(pos=Some(@symcore.int(4)))
+  let c_bm = c.bending_moment_at(pos=Some(@symcore.int(4)))
   guard cm_numeric_expr_eq(c_rax, @symcore.int(-4) * t * cm_rat_expr(1, 5)) else {
     fail("symbolic R_A_x mismatch: \{@symprint.to_string(c_rax)}")
   }

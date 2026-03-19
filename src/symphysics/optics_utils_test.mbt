@@ -54,8 +54,8 @@ test "physics.optics.utils: scalar formulas" {
   let n = @symcore.symbol("N")
   let c = @symcore.symbol("c")
 
-  try! optics_assert_expr_equal(
-    try! refraction_angle(
+  optics_assert_expr_equal(
+    refraction_angle(
       theta,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
@@ -63,16 +63,16 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5)",
     "refraction_angle",
   )
-  guard (try! fresnel_coefficients(
+  guard fresnel_coefficients(
       theta,
       optics_index_arg(one),
       optics_index_arg(four_thirds),
-    )).length() ==
+    ).length() ==
     4 else {
     fail("fresnel_coefficients length")
   }
-  try! optics_assert_expr_equal(
-    try! deviation(
+  optics_assert_expr_equal(
+    deviation(
       theta,
       optics_index_arg(six_fifths),
       optics_index_arg(three_halves),
@@ -80,25 +80,25 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5) - pi/6",
     "deviation",
   )
-  guard (try! fresnel_coefficients(
+  guard fresnel_coefficients(
       test_pi_expr() * test_rational_expr(3, 10),
       optics_index_arg(@symcore.int(2)),
       optics_index_arg(@symcore.int(1)),
-    )).length() ==
+    ).length() ==
     2 else {
     fail("fresnel_coefficients tir length")
   }
-  try! optics_assert_expr_equal(
+  optics_assert_expr_equal(
     brewster_angle(optics_index_arg(one), optics_index_arg(four_thirds)),
     "atan(4/3)",
     "brewster_angle",
   )
-  try! optics_assert_expr_equal(
-    try! critical_angle(optics_index_arg(four_thirds), optics_index_arg(one)),
+  optics_assert_expr_equal(
+    critical_angle(optics_index_arg(four_thirds), optics_index_arg(one)),
     "asin(3/4)",
     "critical_angle",
   )
-  try! optics_assert_expr_equal(
+  optics_assert_expr_equal(
     lens_makers_formula(
       optics_index_arg(four_thirds),
       optics_index_arg(one),
@@ -108,7 +108,7 @@ test "physics.optics.utils: scalar formulas" {
     "15",
     "lens_makers_formula thin",
   )
-  try! optics_assert_expr_equal(
+  optics_assert_expr_equal(
     lens_makers_formula(
       optics_index_arg(four_thirds),
       optics_index_arg(one),
@@ -118,33 +118,33 @@ test "physics.optics.utils: scalar formulas" {
     "30",
     "lens_makers_formula plano",
   )
-  try! optics_assert_expr_equal(
-    try! mirror_formula(focal_length=Some(f), u=Some(u)),
+  optics_assert_expr_equal(
+    mirror_formula(focal_length=Some(f), u=Some(u)),
     "f*u/(-f + u)",
     "mirror_formula",
   )
-  try! optics_assert_expr_equal(
-    try! lens_formula(focal_length=Some(f), u=Some(u)),
+  optics_assert_expr_equal(
+    lens_formula(focal_length=Some(f), u=Some(u)),
     "f*u/(f + u)",
     "lens_formula",
   )
-  try! optics_assert_expr_equal(
+  optics_assert_expr_equal(
     hyperfocal_distance(f, n, c),
     "f**2/(N*c)",
     "hyperfocal_distance",
   )
-  try! optics_assert_expr_equal(
+  optics_assert_expr_equal(
     transverse_magnification(@symcore.int(30), @symcore.int(15)),
     "-2",
     "transverse_magnification",
   )
-  try! optics_assert_expr_equal(
-    try! mirror_formula(u=Some(test_oo_expr()), v=Some(v)),
+  optics_assert_expr_equal(
+    mirror_formula(u=Some(test_oo_expr()), v=Some(v)),
     "v",
     "mirror_formula oo",
   )
-  try! optics_assert_expr_equal(
-    try! lens_formula(focal_length=Some(test_oo_expr()), v=Some(v)),
+  optics_assert_expr_equal(
+    lens_formula(focal_length=Some(test_oo_expr()), v=Some(v)),
     "v",
     "lens_formula oo",
   )

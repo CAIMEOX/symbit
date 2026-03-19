@@ -31,10 +31,10 @@ test "branch tools canon" {
   ])
   let brl_posdec = @strategies_branch.canon([br_posdec_expr])
   let res_posdec = brl_posdec(expr).map(expr_str)
-  let oracle_posdec = try! @sympy_strategies.branch_canon_posdec(expr)
+  let oracle_posdec = @sympy_strategies.branch_canon_posdec(expr)
   assert_set_str_eq(res_posdec, oracle_posdec, "canon posdec")
   let brl_branch5 = @strategies_branch.canon([br_branch5_expr])
   let res_branch5 = brl_branch5(expr).map(expr_str)
-  let oracle_branch5 = try! @sympy_strategies.branch_canon_branch5(expr)
+  let oracle_branch5 = @sympy_strategies.branch_canon_branch5(expr)
   assert_set_str_eq(res_branch5, oracle_branch5, "canon branch5")
 }

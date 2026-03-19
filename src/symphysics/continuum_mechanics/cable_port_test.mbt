@@ -1,30 +1,30 @@
 ///|
 test "physics.continuum_mechanics.cable: oracle parity" {
-  let c = try! cable(
+  let c = cable(
     ("A", @symcore.int(0), @symcore.int(10)),
-    ("B", try! @symcore.rational_from_ints(11, 2), @symcore.int(8)),
+    ("B", @symcore.rational_from_ints(11, 2), @symcore.int(8)),
   )
-  try! c.apply_point_load(
+  c.apply_point_load(
     (
       "Z",
       @symcore.int(2),
-      try! @symcore.rational_from_ints(363, 50),
+      @symcore.rational_from_ints(363, 50),
       @symcore.int(3),
       @symcore.int(270),
     ),
   )
-  try! c.apply_point_load(
+  c.apply_point_load(
     ("X", @symcore.int(4), @symcore.int(6), @symcore.int(8), @symcore.int(270)),
   )
-  try! c.solve()
+  c.solve()
 
-  let d = try! cable(
+  let d = cable(
     ("A", @symcore.int(0), @symcore.int(40)),
     ("B", @symcore.int(100), @symcore.int(20)),
   )
-  try! d.apply_distributed_load("X", @symcore.int(850))
-  try! d.solve(
-    lowest_x=Some(try! @symcore.rational_from_ints(2929, 50)),
+  d.apply_distributed_load("X", @symcore.int(850))
+  d.solve(
+    lowest_x=Some(@symcore.rational_from_ints(2929, 50)),
     lowest_y=Some(@symcore.int(0)),
   )
 

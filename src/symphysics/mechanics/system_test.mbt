@@ -10,21 +10,17 @@ fn system_bodies_summary(bodies : Array[BodyLike]) -> String {
 
 ///|
 test "physics.mechanics system core" {
-  let n = try! @symvector.reference_frame("SN")
-  let origin = try! @symvector.point("SO")
+  let n = @symvector.reference_frame("SN")
+  let origin = @symvector.point("SO")
   origin.set_vel(n, @symvector.vector_zero())
-  let rail = try! rigid_body("rail", masscenter=Some(origin), frame=Some(n))
-  let cart = try! rigid_body("cart")
-  let bob = try! particle("bob")
-  let bob_frame = try! @symvector.reference_frame("bob_frame")
+  let rail = rigid_body("rail", masscenter=Some(origin), frame=Some(n))
+  let cart = rigid_body("cart")
+  let bob = particle("bob")
+  let bob_frame = @symvector.reference_frame("bob_frame")
 
   let sys = system_from_newtonian(rail.as_bodylike())
-  let slider = try! prismatic_joint(
-    "slider",
-    rail.as_bodylike(),
-    cart.as_bodylike(),
-  )
-  let pin = try! pin_joint(
+  let slider = prismatic_joint("slider", rail.as_bodylike(), cart.as_bodylike())
+  let pin = pin_joint(
     "pin",
     cart.as_bodylike(),
     bob.as_bodylike(),
@@ -34,7 +30,7 @@ test "physics.mechanics system core" {
     ),
     joint_axis=Some(cart.frame().z()),
   )
-  try! sys.add_joints([slider.as_joint(), pin.as_joint()])
+  sys.add_joints([slider.as_joint(), pin.as_joint()])
   sys.apply_uniform_gravity(n.y().scale(@symcore.symbol("g")).neg())
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
@@ -63,15 +59,15 @@ test "physics.mechanics system core" {
 
 ///|
 test "physics.mechanics system backend equations" {
-  let wall = try! rigid_body("wall")
-  let bob = try! particle("bob", mass=Some(@symcore.symbol("m")))
+  let wall = rigid_body("wall")
+  let bob = particle("bob", mass=Some(@symcore.symbol("m")))
   bob.set_potential_energy(
     @symcore.symbol("k") *
     (@symvector.dynamicsymbol("q") ^ @symcore.int(2)) *
-    (try! @symcore.rational_from_ints(1, 2)),
+    @symcore.rational_from_ints(1, 2),
   )
   let sys = system_from_newtonian(wall.as_bodylike())
-  let joint = try! prismatic_joint(
+  let joint = prismatic_joint(
     "slide",
     wall.as_bodylike(),
     bob.as_bodylike(),
@@ -83,7 +79,7 @@ test "physics.mechanics system backend equations" {
       ),
     ]),
   )
-  try! sys.add_joints([joint.as_joint()])
+  sys.add_joints([joint.as_joint()])
   sys.add_loads([
     force_load(
       bob.point(),
@@ -99,67 +95,67 @@ test "physics.mechanics system backend equations" {
     ),
   ])
 
-  ignore(try! sys.form_eoms(use_lagrange=true))
-  inspect(@symprint.to_string(try! sys.mass_matrix().get(0, 0)), content="m")
-  let forcing_expr = try! sys.forcing().get(0, 0)
-  guard (try! @sympy_physics.mechanics_expr_equal(
+  ignore(sys.form_eoms(use_lagrange=true))
+  inspect(@symprint.to_string(sys.mass_matrix().get(0, 0)), content="m")
+  let forcing_expr = sys.forcing().get(0, 0)
+  guard @sympy_physics.mechanics_expr_equal(
     @symprint.to_string(forcing_expr),
     "b*Derivative(q(t), t) - k*q(t)",
-  )) else {
+  ) else {
     fail("system lagrange forcing mismatch")
   }
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! (try! sys.rhs()).get(1, 0)),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(sys.rhs().get(1, 0)),
     "(b*Derivative(q(t), t) - k*q(t))/m",
-  )) else {
+  ) else {
     fail("system lagrange rhs mismatch")
   }
 }
 
 ///|
 test "physics.mechanics system validation semantics" {
-  let n = try! @symvector.reference_frame("SVN")
-  let origin = try! @symvector.point("SVO")
+  let n = @symvector.reference_frame("SVN")
+  let origin = @symvector.point("SVO")
   origin.set_vel(n, @symvector.vector_zero())
-  let wall = try! rigid_body("wall", masscenter=Some(origin), frame=Some(n))
-  let bob = try! particle("bob", mass=Some(@symcore.symbol("m")))
+  let wall = rigid_body("wall", masscenter=Some(origin), frame=Some(n))
+  let bob = particle("bob", mass=Some(@symcore.symbol("m")))
   let q = @symvector.dynamicsymbol("q")
   let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
 
   let valid_lagrange = system_from_newtonian(wall.as_bodylike())
-  let lag_joint = try! prismatic_joint(
+  let lag_joint = prismatic_joint(
     "slide_l",
     wall.as_bodylike(),
     bob.as_bodylike(),
     coordinates=Some([q]),
     speeds=Some([qd]),
   )
-  try! valid_lagrange.add_joints([lag_joint.as_joint()])
-  try! valid_lagrange.validate_system(use_lagrange=true)
+  valid_lagrange.add_joints([lag_joint.as_joint()])
+  valid_lagrange.validate_system(use_lagrange=true)
 
   let missing_kde = system_from_newtonian(wall.as_bodylike())
-  let kane_joint = try! prismatic_joint(
+  let kane_joint = prismatic_joint(
     "slide_k",
     wall.as_bodylike(),
     bob.as_bodylike(),
   )
   missing_kde.add_bodies([wall.as_bodylike(), bob.as_bodylike()])
-  try! missing_kde.add_coordinates(kane_joint.coordinates())
-  try! missing_kde.add_speeds(kane_joint.speeds())
+  missing_kde.add_coordinates(kane_joint.coordinates())
+  missing_kde.add_speeds(kane_joint.speeds())
   let bad_kane : Result[Unit, @symphysics.PhysicsError] = try? missing_kde.validate_system()
   guard bad_kane is Err(@symphysics.PhysicsError::ValueError(_)) else {
     fail("system validation should reject missing joint kdes")
   }
 
   let invalid_lagrange = system_from_newtonian(wall.as_bodylike())
-  let bad_joint = try! prismatic_joint(
+  let bad_joint = prismatic_joint(
     "slide_bad",
     wall.as_bodylike(),
     bob.as_bodylike(),
     coordinates=Some([q]),
     speeds=Some([@symvector.dynamicsymbol("u_bad")]),
   )
-  try! invalid_lagrange.add_joints([bad_joint.as_joint()])
+  invalid_lagrange.add_joints([bad_joint.as_joint()])
   let bad_lagrange : Result[Unit, @symphysics.PhysicsError] = try? invalid_lagrange.validate_system(
     use_lagrange=true,
   )

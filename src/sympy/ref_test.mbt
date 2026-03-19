@@ -31,28 +31,28 @@ test "sympy ref: symbols get" {
 ///|
 test "sympy ref: expr_to_sympy add/mul" {
   let expr = @symcore.int(2) * @symcore.symbol("x") + @symcore.symbol("y")
-  let obj = try! expr_to_sympy(expr)
+  let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="2*x + y")
 }
 
 ///|
 test "sympy ref: expr_to_sympy pow" {
   let expr = @symcore.symbol("x") ^ @symcore.int(3)
-  let obj = try! expr_to_sympy(expr)
+  let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="x**3")
 }
 
 ///|
 test "sympy ref: expr_to_sympy rational" {
   let expr = @symcore.rational_from_ints(1, 3)
-  let obj = try! expr_to_sympy(expr)
+  let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="1/3")
 }
 
 ///|
 test "sympy ref: expr_to_sympy function call" {
   let expr = @symcore.function("sin", [@symcore.symbol("x")])
-  let obj = try! expr_to_sympy(expr)
+  let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="sin(x)")
 }
 

@@ -59,20 +59,20 @@ fn physics_frac(num : Int, den : Int) -> @symcore.Expr {
 test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
   for i in [1, 2, 3] {
     physics_assert_matrix_equiv(
-      try! msigma(i),
-      try! @sympy_physics.msigma(i),
+      msigma(i),
+      @sympy_physics.msigma(i),
       "msigma(\{i})",
     )
   }
   for mu in [0, 1, 2, 3, 5] {
     physics_assert_matrix_equiv(
-      try! mgamma(mu),
-      try! @sympy_physics.mgamma(mu),
+      mgamma(mu),
+      @sympy_physics.mgamma(mu),
       "mgamma(\{mu})",
     )
     physics_assert_matrix_equiv(
-      try! mgamma(mu, lower=true),
-      try! @sympy_physics.mgamma(mu, lower=true),
+      mgamma(mu, lower=true),
+      @sympy_physics.mgamma(mu, lower=true),
       "mgamma(\{mu}, lower=true)",
     )
   }
@@ -80,7 +80,7 @@ test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
   let two = @symcore.int(2)
   physics_assert_matrix_equiv(
     pat_matrix(two, @symcore.int(1), @symcore.int(0), @symcore.int(0)),
-    try! @sympy_physics.pat_matrix(
+    @sympy_physics.pat_matrix(
       two,
       @symcore.int(1),
       @symcore.int(0),
@@ -90,15 +90,11 @@ test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
   )
   physics_assert_matrix_equiv(
     minkowski_tensor,
-    try! @sympy_physics.minkowski_tensor(),
+    @sympy_physics.minkowski_tensor(),
     "minkowski_tensor",
   )
   for n in [1, 2, 4] {
-    physics_assert_matrix_equiv(
-      try! mdft(n),
-      try! @sympy_physics.mdft(n),
-      "mdft(\{n})",
-    )
+    physics_assert_matrix_equiv(mdft(n), @sympy_physics.mdft(n), "mdft(\{n})")
   }
 }
 
@@ -111,18 +107,18 @@ test "physics: qho, sho, and pring parity" {
   for n in 0..<4 {
     physics_assert_expr_equal(
       psi_n(@symcore.int(n), x, m, omega),
-      try! @sympy_physics.psi_n(@symcore.int(n), x, m, omega),
+      @sympy_physics.psi_n(@symcore.int(n), x, m, omega),
       "psi_n(\{n})",
     )
   }
   physics_assert_expr_equal(
     e_n(@symcore.symbol("n"), omega),
-    try! @sympy_physics.e_n(@symcore.symbol("n"), omega),
+    @sympy_physics.e_n(@symcore.symbol("n"), omega),
     "E_n",
   )
   physics_assert_expr_equal(
     coherent_state(@symcore.int(3), alpha),
-    try! @sympy_physics.coherent_state(@symcore.int(3), alpha),
+    @sympy_physics.coherent_state(@symcore.int(3), alpha),
     "coherent_state",
   )
 
@@ -130,12 +126,12 @@ test "physics: qho, sho, and pring parity" {
   let nu = @symcore.symbol("nu")
   physics_assert_expr_equal(
     r_nl(@symcore.int(0), @symcore.int(0), nu, r),
-    try! @sympy_physics.r_nl(@symcore.int(0), @symcore.int(0), nu, r),
+    @sympy_physics.r_nl(@symcore.int(0), @symcore.int(0), nu, r),
     "R_nl",
   )
   physics_assert_expr_equal(
     e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
-    try! @sympy_physics.e_nl(
+    @sympy_physics.e_nl(
       @symcore.symbol("n"),
       @symcore.symbol("l"),
       @symcore.symbol("hw"),
@@ -145,12 +141,12 @@ test "physics: qho, sho, and pring parity" {
 
   physics_assert_expr_equal(
     wavefunction(@symcore.int(2), x),
-    try! @sympy_physics.wavefunction(@symcore.int(2), x),
+    @sympy_physics.wavefunction(@symcore.int(2), x),
     "pring.wavefunction",
   )
   physics_assert_expr_equal(
-    try! energy(@symcore.int(2), m, r),
-    try! @sympy_physics.energy(@symcore.int(2), m, r),
+    energy(@symcore.int(2), m, r),
+    @sympy_physics.energy(@symcore.int(2), m, r),
     "pring.energy",
   )
 }
@@ -164,56 +160,31 @@ test "physics: hydrogen parity" {
 
   physics_assert_expr_equal(
     hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r, z=zsym),
-    try! @sympy_physics.hydrogen_r_nl(
-      @symcore.int(1),
-      @symcore.int(0),
-      r,
-      z=zsym,
-    ),
+    @sympy_physics.hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r, z=zsym),
     "hydrogen.R_nl(1,0)",
   )
   physics_assert_expr_equal(
     hydrogen_r_nl(@symcore.int(2), @symcore.int(1), r, z=zsym),
-    try! @sympy_physics.hydrogen_r_nl(
-      @symcore.int(2),
-      @symcore.int(1),
-      r,
-      z=zsym,
-    ),
+    @sympy_physics.hydrogen_r_nl(@symcore.int(2), @symcore.int(1), r, z=zsym),
     "hydrogen.R_nl(2,1)",
   )
   physics_assert_expr_equal(
     hydrogen_y_lm(@symcore.int(1), @symcore.int(0), phi, theta),
-    try! @sympy_physics.hydrogen_y_lm(
-      @symcore.int(1),
-      @symcore.int(0),
-      phi,
-      theta,
-    ),
+    @sympy_physics.hydrogen_y_lm(@symcore.int(1), @symcore.int(0), phi, theta),
     "hydrogen.Y_lm(1,0)",
   )
   physics_assert_expr_equal(
     hydrogen_y_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
-    try! @sympy_physics.hydrogen_y_lm(
-      @symcore.int(2),
-      @symcore.int(-1),
-      phi,
-      theta,
-    ),
+    @sympy_physics.hydrogen_y_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
     "hydrogen.Y_lm(2,-1)",
   )
   physics_assert_expr_equal(
     hydrogen_z_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
-    try! @sympy_physics.hydrogen_z_lm(
-      @symcore.int(2),
-      @symcore.int(-1),
-      phi,
-      theta,
-    ),
+    @sympy_physics.hydrogen_z_lm(@symcore.int(2), @symcore.int(-1), phi, theta),
     "hydrogen.Z_lm(2,-1)",
   )
   physics_assert_expr_equal(
-    try! hydrogen_psi_nlm(
+    hydrogen_psi_nlm(
       @symcore.int(2),
       @symcore.int(1),
       @symcore.int(1),
@@ -222,7 +193,7 @@ test "physics: hydrogen parity" {
       theta,
       z=zsym,
     ),
-    try! @sympy_physics.hydrogen_psi_nlm(
+    @sympy_physics.hydrogen_psi_nlm(
       @symcore.int(2),
       @symcore.int(1),
       @symcore.int(1),
@@ -234,20 +205,20 @@ test "physics: hydrogen parity" {
     "hydrogen.Psi_nlm(2,1,1)",
   )
   physics_assert_expr_equal(
-    try! hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
-    try! @sympy_physics.hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
+    hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
+    @sympy_physics.hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
     "hydrogen.E_nl",
   )
   let c = physics_dirac_c()
   physics_assert_expr_equal(
-    try! hydrogen_e_nl_dirac(
+    hydrogen_e_nl_dirac(
       @symcore.int(2),
       @symcore.int(1),
       spin_up=false,
       z=zsym,
       c~,
     ),
-    try! @sympy_physics.hydrogen_e_nl_dirac(
+    @sympy_physics.hydrogen_e_nl_dirac(
       @symcore.int(2),
       @symcore.int(1),
       spin_up=false,
@@ -293,8 +264,8 @@ test "physics: wigner parity" {
         "wigner_3j zero triangle",
       ),
     ] {
-    let ours = try! wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = try! @sympy_physics.wigner_3j(
+    let ours = wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = @sympy_physics.wigner_3j(
       case.0,
       case.1,
       case.2,
@@ -327,15 +298,8 @@ test "physics: wigner parity" {
       ),
       (half, half, @symcore.int(1), half, half, @symcore.int(0), "cg zero"),
     ] {
-    let ours = try! clebsch_gordan(
-      case.0,
-      case.1,
-      case.2,
-      case.3,
-      case.4,
-      case.5,
-    )
-    let oracle = try! @sympy_physics.clebsch_gordan(
+    let ours = clebsch_gordan(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = @sympy_physics.clebsch_gordan(
       case.0,
       case.1,
       case.2,
@@ -379,8 +343,8 @@ test "physics: gaunt parity" {
         "gaunt zero",
       ),
     ] {
-    let ours = try! gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = try! @sympy_physics.gaunt(
+    let ours = gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = @sympy_physics.gaunt(
       case.0,
       case.1,
       case.2,
@@ -416,8 +380,8 @@ test "physics: higher wigner parity" {
         "wigner_6j zero mixed half",
       ),
     ] {
-    let ours = try! wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = try! @sympy_physics.wigner_6j(
+    let ours = wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = @sympy_physics.wigner_6j(
       case.0,
       case.1,
       case.2,
@@ -436,7 +400,7 @@ test "physics: higher wigner parity" {
       @symcore.int(3),
       @symcore.int(3),
     ),
-    try! @sympy_physics.racah(
+    @sympy_physics.racah(
       @symcore.int(3),
       @symcore.int(3),
       @symcore.int(3),
@@ -473,7 +437,7 @@ test "physics: higher wigner parity" {
         "wigner_9j exact",
       ),
     ] {
-    let ours = try! wigner_9j(
+    let ours = wigner_9j(
       case.0,
       case.1,
       case.2,
@@ -484,7 +448,7 @@ test "physics: higher wigner parity" {
       case.7,
       case.8,
     )
-    let oracle = try! @sympy_physics.wigner_9j(
+    let oracle = @sympy_physics.wigner_9j(
       case.0,
       case.1,
       case.2,
@@ -531,8 +495,8 @@ test "physics: real gaunt parity" {
         "real_gaunt zero",
       ),
     ] {
-    let ours = try! real_gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = try! @sympy_physics.real_gaunt(
+    let ours = real_gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
+    let oracle = @sympy_physics.real_gaunt(
       case.0,
       case.1,
       case.2,
@@ -554,7 +518,7 @@ test "physics: rotational harmonic parity" {
   let gamma = @symcore.symbol("gamma")
 
   physics_assert_expr_equal(
-    try! dot_rot_grad_ynm(
+    dot_rot_grad_ynm(
       @symcore.int(3),
       @symcore.int(2),
       @symcore.int(2),
@@ -562,7 +526,7 @@ test "physics: rotational harmonic parity" {
       theta,
       phi,
     ),
-    try! @sympy_physics.dot_rot_grad_ynm(
+    @sympy_physics.dot_rot_grad_ynm(
       @symcore.int(3),
       @symcore.int(2),
       @symcore.int(2),
@@ -573,7 +537,7 @@ test "physics: rotational harmonic parity" {
     "dot_rot_grad_ynm(3,2,2,0)",
   )
   physics_assert_expr_equal(
-    try! dot_rot_grad_ynm(
+    dot_rot_grad_ynm(
       @symcore.int(1),
       @symcore.int(5),
       @symcore.int(1),
@@ -581,7 +545,7 @@ test "physics: rotational harmonic parity" {
       @symcore.int(1),
       @symcore.int(2),
     ),
-    try! @sympy_physics.dot_rot_grad_ynm(
+    @sympy_physics.dot_rot_grad_ynm(
       @symcore.int(1),
       @symcore.int(5),
       @symcore.int(1),
@@ -593,21 +557,21 @@ test "physics: rotational harmonic parity" {
   )
 
   physics_assert_matrix_equiv(
-    try! wigner_d_small(half, beta),
-    try! @sympy_physics.wigner_d_small(half, beta),
+    wigner_d_small(half, beta),
+    @sympy_physics.wigner_d_small(half, beta),
     "wigner_d_small(1/2,beta)",
   )
   physics_assert_matrix_equiv(
-    try! wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
-    try! @sympy_physics.wigner_d_small(
+    wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
+    @sympy_physics.wigner_d_small(
       half,
       @symcore.symbol("pi") * physics_frac(1, 2),
     ),
     "wigner_d_small(1/2,pi/2)",
   )
   physics_assert_matrix_equiv(
-    try! wigner_d(half, alpha, beta, gamma),
-    try! @sympy_physics.wigner_d(half, alpha, beta, gamma),
+    wigner_d(half, alpha, beta, gamma),
+    @sympy_physics.wigner_d(half, alpha, beta, gamma),
     "wigner_d(1/2,alpha,beta,gamma)",
   )
 }

@@ -49,23 +49,23 @@ fn pathway_assert_force(
 
 ///|
 test "physics.mechanics parity pathways" {
-  let n = try! @symvector.reference_frame("QPN")
-  let p_a = try! @symvector.point("QpA")
-  let p_b = try! @symvector.point("QpB")
+  let n = @symvector.reference_frame("QPN")
+  let p_a = @symvector.point("QpA")
+  let p_b = @symvector.point("QpB")
   let q = @symvector.dynamicsymbol("q")
   let f = @symcore.symbol("F")
   p_b.set_pos(p_a, n.x().scale(q))
   let linear = linear_pathway(p_a, p_b)
-  let linear_length_oracle = try! @sympy_physics.mechanics_summary(
+  let linear_length_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('QPN'); pA=Point('QpA'); pB=Point('QpB'); q=dynamicsymbols('q'); pB.set_pos(pA, q*N.x); LinearPathway(pA, pB).length",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! linear.length()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(linear.length()),
     linear_length_oracle,
-  )) else {
+  ) else {
     fail("linear pathway length parity")
   }
-  let linear_loads = try! linear.to_loads(f)
+  let linear_loads = linear.to_loads(f)
   pathway_assert_force(
     linear_loads[0],
     "QpA",
@@ -85,19 +85,19 @@ test "physics.mechanics parity pathways" {
     "linear load 1 parity",
   )
 
-  let p_c = try! @symvector.point("QpC")
+  let p_c = @symvector.point("QpC")
   p_c.set_pos(p_b, n.y())
-  let obstacle = try! obstacle_set_pathway([p_a, p_b, p_c])
-  let obstacle_length_oracle = try! @sympy_physics.mechanics_summary(
+  let obstacle = obstacle_set_pathway([p_a, p_b, p_c])
+  let obstacle_length_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('QPN'); pA=Point('QpA'); pB=Point('QpB'); pC=Point('QpC'); q=dynamicsymbols('q'); pB.set_pos(pA, q*N.x); pC.set_pos(pB, N.y); ObstacleSetPathway(pA, pB, pC).length",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! obstacle.length()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(obstacle.length()),
     obstacle_length_oracle,
-  )) else {
+  ) else {
     fail("obstacle pathway length parity")
   }
-  let obstacle_loads = try! obstacle.to_loads(f)
+  let obstacle_loads = obstacle.to_loads(f)
   pathway_assert_force(
     obstacle_loads[0],
     "QpA",

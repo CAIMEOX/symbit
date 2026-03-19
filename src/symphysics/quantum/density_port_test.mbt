@@ -8,42 +8,38 @@ test "physics.quantum.density: parity" {
   let rho = density([(k0, half), (k1, half)])
   let rho_txt = @symprint.to_string(rho.as_expr())
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.states())),
-    try! @sympy_physics.quantum_density_states_str(rho_txt),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.states())),
+    @sympy_physics.quantum_density_states_str(rho_txt),
     "density states parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.probs())),
-    try! @sympy_physics.quantum_density_probs_str(rho_txt),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.probs())),
+    @sympy_physics.quantum_density_probs_str(rho_txt),
     "density probs parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(try! rho.get_state(1)),
-    ),
-    try! @sympy_physics.quantum_density_get_state_str(rho_txt, 1),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.get_state(1))),
+    @sympy_physics.quantum_density_get_state_str(rho_txt, 1),
     "density get_state parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(try! rho.get_prob(0)),
-    ),
-    try! @sympy_physics.quantum_density_get_prob_str(rho_txt, 0),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.get_prob(0))),
+    @sympy_physics.quantum_density_get_prob_str(rho_txt, 0),
     "density get_prob parity",
   )
 
   let a = operator([@symcore.symbol("A")]).as_expr()
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(rho.apply_op(a).as_expr()),
     ),
-    try! @sympy_physics.quantum_density_apply_op_str(rho_txt, "Operator(A)"),
+    @sympy_physics.quantum_density_apply_op_str(rho_txt, "Operator(A)"),
     "density apply_op parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
-    try! @sympy_physics.quantum_doit_str(rho_txt),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
+    @sympy_physics.quantum_doit_str(rho_txt),
     "density doit parity",
   )
 }
@@ -57,49 +53,49 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
   let pure_up = density([(up, @symcore.int(1))])
   let pure_down = density([(down, @symcore.int(1))])
 
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(mixed.as_expr(), spin_j=half),
-    try! @sympy_physics.physics_eval_matrix(
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(mixed.as_expr(), spin_j=half),
+    @sympy_physics.physics_eval_matrix(
       "represent(Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2))))",
     ),
     2,
     2,
     "density represent parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(try! entropy(mixed.as_expr(), spin_j=half)),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @symprint.to_string(entropy(mixed.as_expr(), spin_j=half)),
     ),
-    try! @sympy_physics.quantum_entropy_str(
+    @sympy_physics.quantum_entropy_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),
     "density entropy parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        try! fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
+        fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
       ),
     ),
-    try! @sympy_physics.quantum_fidelity_str(
+    @sympy_physics.quantum_fidelity_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))", "Density((JzKet(Rational(1, 2), Rational(-1, 2)), 1))",
     ),
     "density fidelity parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
-        try! fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
+        fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
       ),
     ),
-    try! @sympy_physics.quantum_fidelity_str(
+    @sympy_physics.quantum_fidelity_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), 1))", "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),
     "density pure-vs-mixed fidelity parity",
   )
 
-  let q0 = (try! qubit("0")).as_expr()
-  let q1 = (try! qubit("1")).as_expr()
+  let q0 = qubit("0").as_expr()
+  let q1 = qubit("1").as_expr()
   let plus = quantum_test_frac(1, 2) *
     @symcore.raw_function("sqrt", [@symcore.int(2)]) *
     (q0 + q1)
@@ -107,14 +103,14 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
   let rho_right = density([(plus, half), (q1, half)])
   let rho_left_txt = "Density((sqrt(2)*(Qubit(0) + Qubit(1))/2, Rational(1, 2)), (Qubit(0), Rational(1, 2)))"
   let rho_right_txt = "Density((sqrt(2)*(Qubit(0) + Qubit(1))/2, Rational(1, 2)), (Qubit(1), Rational(1, 2)))"
-  try! quantum_test_assert_expr_equal(
-    try! entropy(rho_left.as_expr(), nqubits=1),
-    try! @sympy_physics.quantum_entropy_str(rho_left_txt),
+  quantum_test_assert_expr_equal(
+    entropy(rho_left.as_expr(), nqubits=1),
+    @sympy_physics.quantum_entropy_str(rho_left_txt),
     "density general 2x2 entropy parity",
   )
-  try! quantum_test_assert_expr_equal(
-    try! fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
-    try! @sympy_physics.quantum_fidelity_str(rho_left_txt, rho_right_txt),
+  quantum_test_assert_expr_equal(
+    fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
+    @sympy_physics.quantum_fidelity_str(rho_left_txt, rho_right_txt),
     "density general 2x2 fidelity parity",
   )
 }
@@ -129,21 +125,19 @@ test "physics.quantum.density: tensor-product trace parity" {
   let rho = density([(tp, @symcore.int(1))])
   let rho_txt = @symprint.to_string(rho.as_expr())
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
-    try! @sympy_physics.quantum_doit_str(rho_txt),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.doit())),
+    @sympy_physics.quantum_doit_str(rho_txt),
     "density tensor-product doit parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(rho.trace())),
-    try! @sympy_physics.quantum_eval_str("Tr(\{rho_txt}).doit()"),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.trace())),
+    @sympy_physics.quantum_eval_str("Tr(\{rho_txt}).doit()"),
     "density tensor-product trace parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(rho.trace(indices=[1])),
-    ),
-    try! @sympy_physics.quantum_doit_str("Tr(\{rho_txt}, [1])"),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(rho.trace(indices=[1]))),
+    @sympy_physics.quantum_doit_str("Tr(\{rho_txt}, [1])"),
     "density tensor-product partial trace parity",
   )
 }

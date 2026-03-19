@@ -8,6 +8,10 @@ import {
 }
 
 // Values
+pub fn _linear_eq_to_dict(Array[@symcore.Expr], Array[String]) -> (Array[Map[String, @symcore.Expr]], Array[@symcore.Expr]) raise PolyError
+
+pub fn _linsolve(Array[@symcore.Expr], Array[String]) -> Map[String, @symcore.Expr]? raise PolyError
+
 pub fn add_columns(DDM, Int, Int, FieldElem, FieldElem, FieldElem, FieldElem) -> DDM raise PolyError
 
 pub fn alg_ext_spec(Domain, String, Poly) -> AlgExtSpec

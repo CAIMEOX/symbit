@@ -48,9 +48,9 @@ test "euler_equations: harmonic oscillator" {
   let term2 = @symcore.mul([half, @symcore.pow(xt, euler_expr_int(2))])
   let lagrangian = term1 - term2
   let eqs = euler_equations(lagrangian, [xt], [t])
-  let oracle = try! @sympy_calculus.euler_equations_str(lagrangian, [xt], [t])
+  let oracle = @sympy_calculus.euler_equations_str(lagrangian, [xt], [t])
   guard eqs.length() == oracle.length() else { fail("eq length mismatch") }
   for i in 0..<eqs.length() {
-    try! euler_assert_expr_equal(eqs[i], oracle[i])
+    euler_assert_expr_equal(eqs[i], oracle[i])
   }
 }

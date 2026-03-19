@@ -8,12 +8,12 @@ test "physics.quantum.represent: integrate_result collapses cartesian unities" {
     @symcore.raw_function("DiracDelta", [x - x1]) *
     @symcore.raw_function("DiracDelta", [x1 - x2])
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     integrate_result(original, result, unities=[1]),
     "x*DiracDelta(x - x_2)",
     "integrate_result cartesian collapse",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     integrate_result(original, result),
     "x*DiracDelta(x - x_1)*DiracDelta(x_1 - x_2)",
     "integrate_result without unities is noop",

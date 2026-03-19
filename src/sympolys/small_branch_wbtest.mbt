@@ -16,7 +16,7 @@ fn sb_bi(n : Int) -> BigInt {
 ///|
 test "small branches: core/domain paths" {
   let half = sb_rat(1, 2)
-  let frac_coeff = try! ensure_coeff_domain(half, Domain::Frac(Domain::QQ))
+  let frac_coeff = ensure_coeff_domain(half, Domain::Frac(Domain::QQ))
   guard frac_coeff.to_string() == "1/2" else {
     fail("Frac ensure_coeff_domain mismatch")
   }
@@ -25,7 +25,7 @@ test "small branches: core/domain paths" {
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [
     (a ^ @symcore.int(2)) + @symcore.int(1),
   ])
-  let alg_coeff = try! ensure_coeff_domain(half, alg_domain)
+  let alg_coeff = ensure_coeff_domain(half, alg_domain)
   guard alg_coeff is FieldElem::AlgExt(_, _, _, _) else {
     fail("AlgExt ensure_coeff_domain should produce AlgExt coefficient")
   }
@@ -93,7 +93,7 @@ test "small branches: domain_utils normalize_mod paths" {
     fail("1/5 over GF(5) should raise DivisionByZero")
   }
 
-  let frac_norm = try! normalize_mod(sb_rat(8, 3), Domain::Frac(Domain::GF(7)))
+  let frac_norm = normalize_mod(sb_rat(8, 3), Domain::Frac(Domain::GF(7)))
   guard frac_norm.to_string() == "5" else {
     fail("Frac(GF(7)) normalization mismatch: \{frac_norm.to_string()}")
   }
@@ -143,7 +143,7 @@ test "small branches: dense conversion guard branches" {
     domain: Domain::QQ,
     order: TermOrder::Lex,
   }
-  let malformed_dense = try! to_dense_multi(malformed_poly, [1, 1])
+  let malformed_dense = to_dense_multi(malformed_poly, [1, 1])
   guard malformed_dense.all(c => fe_is_zero(c)) else {
     fail("malformed exponent length should be skipped")
   }
@@ -156,7 +156,7 @@ test "small branches: dense conversion guard branches" {
     domain: Domain::QQ,
     order: TermOrder::Lex,
   }
-  let out_of_range_dense = try! to_dense_multi(out_of_range_poly, [1, 1])
+  let out_of_range_dense = to_dense_multi(out_of_range_poly, [1, 1])
   guard out_of_range_dense.all(c => fe_is_zero(c)) else {
     fail("out-of-range exponent should be skipped")
   }
@@ -184,7 +184,7 @@ test "small branches: dense conversion guard branches" {
 
 ///|
 test "small branches: lll helper branches" {
-  let (empty_reduced, empty_transform) = try! lll_reduce([])
+  let (empty_reduced, empty_transform) = lll_reduce([])
   guard empty_reduced.length() == 0 && empty_transform.length() == 0 else {
     fail("lll_reduce([]) should return empty matrices")
   }
@@ -200,7 +200,7 @@ test "small branches: lll helper branches" {
     [sb_bi(1), sb_bi(0), sb_bi(0)],
     [sb_bi(0), sb_bi(1), sb_bi(0)],
   ]
-  let (reduced, transform) = try! lll_reduce(basis, delta=sb_rat(4, 5))
+  let (reduced, transform) = lll_reduce(basis, delta=sb_rat(4, 5))
   guard reduced.length() == 3 && transform.length() == 3 else {
     fail("lll_reduce with explicit delta should preserve matrix shape")
   }

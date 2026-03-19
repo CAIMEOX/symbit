@@ -11,20 +11,20 @@ test "physics.quantum.spin: local uncoupled Jz basis" {
     content="JzBra(1, 0)",
   )
 
-  let (_, half_vals) = try! m_values(half)
+  let (_, half_vals) = m_values(half)
   inspect(half_vals.map(@symprint.to_string).join(","), content="1/2,-1/2")
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jz(), jz_ket(one, @symcore.int(1)).as_expr()])),
     "hbar*JzKet(1, 1)",
     "Jz action",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jplus(), jz_ket(one, @symcore.int(0)).as_expr()])),
     "sqrt(2)*hbar*JzKet(1, 1)",
     "Jplus action",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(
       @symcore.raw_mul([jx(), jz_ket(half, quantum_test_frac(-1, 2)).as_expr()]),
     ),
@@ -32,15 +32,15 @@ test "physics.quantum.spin: local uncoupled Jz basis" {
     "Jx action on spin-half",
   )
 
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(jz(), spin_j=half),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(jz(), spin_j=half),
     ["hbar/2", "0", "0", "-hbar/2"],
     2,
     2,
     "represent Jz",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(jz_ket(one, @symcore.int(0)).as_expr()),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(jz_ket(one, @symcore.int(0)).as_expr()),
     ["0", "1", "0"],
     3,
     1,
@@ -63,23 +63,23 @@ test "physics.quantum.spin: local rotations and Wigner D" {
     content="d(1,1,0,beta)",
   )
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     dagger(rotation(alpha, beta, gamma).as_expr()),
     "Rotation(-gamma, -beta, -alpha)",
     "rotation dagger",
   )
   let wigner_d_value = @symprint.to_string(
-    try! rotation_d(
+    rotation_d(
       @symcore.int(1),
       @symcore.int(1),
       @symcore.int(0),
       @symcore.symbol("pi") * quantum_test_frac(1, 2),
     ).doit(),
   )
-  guard (try! @sympy_physics.expr_equal(wigner_d_value, "-sqrt(2)/2")) else {
+  guard @sympy_physics.expr_equal(wigner_d_value, "-sqrt(2)/2") else {
     fail("Wigner d doit: \{wigner_d_value}")
   }
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(
       @symcore.raw_mul([
         rotation(@symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
@@ -89,8 +89,8 @@ test "physics.quantum.spin: local rotations and Wigner D" {
     "JzKet(1, 1)",
     "rotation identity action",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(
       rotation(@symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),
       spin_j=@symcore.int(1),
     ),
@@ -109,17 +109,17 @@ test "physics.quantum.spin: local Jx/Jy bases" {
   inspect(jx_ket(one, @symcore.int(1)).to_string(), content="|1,1>")
   inspect(jy_bra(one, @symcore.int(-1)).to_string(), content="<1,-1|")
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jx(), jx_ket(one, @symcore.int(1)).as_expr()])),
     "hbar*JxKet(1, 1)",
     "Jx eigen action",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jz(), jx_ket(one, @symcore.int(1)).as_expr()])),
     "-sqrt(2)*hbar*JxKet(1, 0)/2",
     "Jz on JxKet",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     inner_product(
       jx_bra(one, @symcore.int(1)).as_expr(),
       jz_ket(one, @symcore.int(1)).as_expr(),
@@ -128,44 +128,41 @@ test "physics.quantum.spin: local Jx/Jy bases" {
     "JxBra/JzKet inner product",
   )
 
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(jx_ket(half, half).as_expr(), basis=Some(jz())),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(jx_ket(half, half).as_expr(), basis=Some(jz())),
     ["sqrt(2)/2", "sqrt(2)/2"],
     2,
     1,
     "represent JxKet in Jz basis",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(
-      jy_ket(one, @symcore.int(1)).as_expr(),
-      basis=Some(jz()),
-    ),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(jy_ket(one, @symcore.int(1)).as_expr(), basis=Some(jz())),
     ["1/2", "sqrt(2)*I/2", "-1/2"],
     3,
     1,
     "represent JyKet in Jz basis",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(jx(), basis=Some(jx()), spin_j=one),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(jx(), basis=Some(jx()), spin_j=one),
     ["hbar", "0", "0", "0", "0", "0", "0", "0", "-hbar"],
     3,
     3,
     "represent Jx in Jx basis",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(jx_ket(one, one).rewrite(jz())),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2",
     ),
     "rewrite JxKet to Jz",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(jy_ket(one, one).rewrite(jx())),
     ),
-    try! @sympy_physics.quantum_eval_str("-I*JxKet(1, 1)"),
+    @sympy_physics.quantum_eval_str("-I*JxKet(1, 1)"),
     "rewrite JyKet to Jx",
   )
 }
@@ -182,29 +179,29 @@ test "physics.quantum.spin: local coupled Jz states" {
 
   inspect(coupled.to_string(), content="|1,0,j1=1/2,j2=1/2>")
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "sqrt(2)*hbar*JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         qapply(@symcore.raw_mul([jplus(), coupled.as_expr()])),
       ),
     ),
     "Jplus on JzKetCoupled",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "sqrt(2)*TensorProduct(JzKet(Rational(1, 2), Rational(-1, 2)), JzKet(Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*TensorProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzKet(Rational(1, 2), Rational(-1, 2)))/2",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(uncouple(coupled.as_expr())),
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(uncouple(coupled.as_expr())),
     ),
     "uncouple spin-half triplet",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         couple(
           tensor_product([
             jz_ket(half, half).as_expr(),
@@ -213,7 +210,7 @@ test "physics.quantum.spin: local coupled Jz states" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "sqrt(2)*JzKetCoupled(0, 0, (Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2",
     ),
     "couple spin-half product",
@@ -230,9 +227,9 @@ test "physics.quantum.spin: local coupled Jz states" {
   let m4 = @symcore.symbol("m4")
   let j13 = @symcore.symbol("j13")
   let j24 = @symcore.symbol("j24")
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         couple(
           tensor_product([
             jz_ket(j1v, m1).as_expr(),
@@ -242,14 +239,14 @@ test "physics.quantum.spin: local coupled Jz states" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Sum(CG(j1, m1, j2, m2, j12, m1 + m2)*CG(j12, m1 + m2, j3, m3, j, m1 + m2 + m3)*JzKetCoupled(j, m1 + m2 + m3, (j1, j2, j3), ((1, 2, j12), (1, 3, j))), (j12, m1 + m2, j1 + j2), (j, m1 + m2 + m3, j12 + j3))",
     ),
     "symbolic three-spin couple",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         couple(
           tensor_product([
             jz_ket(j1v, m1).as_expr(),
@@ -265,25 +262,25 @@ test "physics.quantum.spin: local coupled Jz states" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Sum(CG(j1, m1, j3, m3, j13, m1 + m3)*CG(j2, m2, j4, m4, j24, m2 + m4)*CG(j13, m1 + m3, j24, m2 + m4, j, m1 + m2 + m3 + m4)*JzKetCoupled(j, m1 + m2 + m3 + m4, (j1, j2, j3, j4), ((1, 3, j13), (2, 4, j24), (1, 2, j))), (j13, m1 + m3, j1 + j3), (j24, m2 + m4, j2 + j4), (j, m1 + m2 + m3 + m4, j13 + j24))",
     ),
     "symbolic four-spin custom couple",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         uncouple(jz_ket_coupled(j, m, [j1v, j2v, j3v]).as_expr()),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Sum(CG(j1, m1, j2, m2, j1 + j2, m1 + m2)*CG(j1 + j2, m1 + m2, j3, m3, j, m)*TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3)), (m1, -j1, j1), (m2, -j2, j2), (m3, -j3, j3))",
     ),
     "symbolic three-spin uncouple",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         uncouple(
           jz_ket_coupled(j, m, [j1v, j2v, j3v, j4v], coupling=[
             spin_coupling(1, 3, j13),
@@ -293,55 +290,55 @@ test "physics.quantum.spin: local coupled Jz states" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Sum(CG(j1, m1, j3, m3, j13, m1 + m3)*CG(j2, m2, j4, m4, j24, m2 + m4)*CG(j13, m1 + m3, j24, m2 + m4, j, m)*TensorProduct(JzKet(j1, m1), JzKet(j2, m2), JzKet(j3, m3), JzKet(j4, m4)), (m1, -j1, j1), (m2, -j2, j2), (m3, -j3, j3), (m4, -j4, j4))",
     ),
     "symbolic four-spin custom uncouple",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(x_coupled.as_expr(), basis=Some(jz())),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(x_coupled.as_expr(), basis=Some(jz())),
     ["0", "1/2", "sqrt(2)/2", "1/2"],
     4,
     1,
     "represent JxKetCoupled in Jz basis",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + JzKetCoupled(1, -1, (Rational(1, 2), Rational(1, 2)))/2",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(x_coupled.rewrite(jz())),
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(x_coupled.rewrite(jz())),
     ),
     "rewrite JxKetCoupled to Jz",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "-sqrt(2)*hbar*JxKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + hbar*JxKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         qapply(@symcore.raw_mul([jplus(), x_coupled.as_expr()])),
       ),
     ),
     "Jplus on JxKetCoupled",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "sqrt(2)*hbar*JyKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + I*hbar*JyKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         qapply(@symcore.raw_mul([jplus(), y_coupled.as_expr()])),
       ),
     ),
     "Jplus on JyKetCoupled",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))",
     ),
-    try! @sympy_physics.quantum_eval_str(
-      try! @sympy_physics.physics_expr_str(
+    @sympy_physics.quantum_eval_str(
+      @sympy_physics.physics_expr_str(
         qapply(
           @symcore.raw_mul([
             rotation(@symcore.int(0), @symcore.int(0), @symcore.int(0)).as_expr(),

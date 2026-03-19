@@ -52,7 +52,7 @@ test "symconcrete summation polynomial symbolic" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "n*(n + 1)*(2*n + 1)/6"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -65,7 +65,7 @@ test "symconcrete summation geometric symbolic" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "(r**(n + 1) - 1)/(r - 1)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -81,7 +81,7 @@ test "symconcrete summation telescoping symbolic" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "(n + 1)**2"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -93,7 +93,7 @@ test "symconcrete summation binomial hyper" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "2**n"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -106,7 +106,7 @@ test "symconcrete summation binomial weighted" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "(1 + a)**n"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -119,7 +119,7 @@ test "symconcrete summation binomial k weighted" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "n*a*(1 + a)**(n - 1)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -131,7 +131,7 @@ test "symconcrete summation harmonic finite" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "harmonic(n)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -142,7 +142,7 @@ test "symconcrete summation zeta infinite" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "zeta(2)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -167,5 +167,5 @@ test "symconcrete summation weighted geometric" {
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "(r - (n + 1)*r**(n + 1) + n*r**(n + 2))/(1 - r)**2"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }

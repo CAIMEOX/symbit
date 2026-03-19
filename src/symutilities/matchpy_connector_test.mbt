@@ -16,7 +16,7 @@ test "replacer handles fixed-size wildcards" {
     @symcore.raw_add([@symcore.raw_mul([@symcore.int(3), x]), @symcore.int(4)]),
   )
   let fn0 = lambdify([], result)
-  assert_eq(try! fn0.call([]), 1.0)
+  assert_eq(fn0.call([]), 1.0)
 }
 
 ///|

@@ -13,31 +13,31 @@ test "physics.quantum.density: local semantics" {
   guard @symprint.to_string(rho.probs()) == "Tuple(1/2, 1/2)" else {
     fail("density probs")
   }
-  try! quantum_test_assert_expr_equal(
-    try! rho.get_state(1),
+  quantum_test_assert_expr_equal(
+    rho.get_state(1),
     "Ket(1)",
     "density get_state",
   )
-  try! quantum_test_assert_expr_equal(
-    try! rho.get_prob(0),
+  quantum_test_assert_expr_equal(
+    rho.get_prob(0),
     "Rational(1, 2)",
     "density get_prob",
   )
 
   let a = operator([@symcore.symbol("A")]).as_expr()
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     rho.apply_op(a).as_expr(),
     "Density(Tuple(Operator(A)*Ket(0), Rational(1, 2)), Tuple(Operator(A)*Ket(1), Rational(1, 2)))",
     "density apply_op",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     rho.doit(),
     "Rational(1, 2)*OuterProduct(Ket(0), Bra(0)) + Rational(1, 2)*OuterProduct(Ket(1), Bra(1))",
     "density doit",
   )
 
   let plus = @symcore.raw_add([k0, k1])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     density([(plus, half)]).doit(),
     "Rational(1, 2)*(OuterProduct(Ket(0), Bra(0)) + OuterProduct(Ket(0), Bra(1)) + OuterProduct(Ket(1), Bra(0)) + OuterProduct(Ket(1), Bra(1)))",
     "density superposition expansion",
@@ -53,66 +53,58 @@ test "physics.quantum.density: matrix entropy and fidelity" {
   let pure_up = density([(up, @symcore.int(1))])
   let pure_down = density([(down, @symcore.int(1))])
 
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(mixed.as_expr(), spin_j=half),
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(mixed.as_expr(), spin_j=half),
     ["1/2", "0", "0", "1/2"],
     2,
     2,
     "density represent matrix",
   )
-  try! quantum_test_assert_expr_equal(
-    try! entropy(mixed.as_expr(), spin_j=half),
+  quantum_test_assert_expr_equal(
+    entropy(mixed.as_expr(), spin_j=half),
     "log(2)/2",
     "density entropy",
   )
-  try! quantum_test_assert_expr_equal(
-    try! entropy(pure_up.as_expr(), spin_j=half),
+  quantum_test_assert_expr_equal(
+    entropy(pure_up.as_expr(), spin_j=half),
     "0",
     "pure density entropy",
   )
-  try! quantum_test_assert_expr_equal(
-    try! fidelity(pure_up.as_expr(), pure_up.as_expr(), spin_j=half),
+  quantum_test_assert_expr_equal(
+    fidelity(pure_up.as_expr(), pure_up.as_expr(), spin_j=half),
     "1",
     "density fidelity self",
   )
-  try! quantum_test_assert_expr_equal(
-    try! fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
+  quantum_test_assert_expr_equal(
+    fidelity(pure_up.as_expr(), pure_down.as_expr(), spin_j=half),
     "0",
     "density fidelity orthogonal",
   )
-  try! quantum_test_assert_expr_equal(
-    try! fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
+  quantum_test_assert_expr_equal(
+    fidelity(pure_up.as_expr(), mixed.as_expr(), spin_j=half),
     "sqrt(2)/2",
     "density fidelity pure-vs-mixed",
   )
 
-  let q0 = (try! qubit("0")).as_expr()
-  let q1 = (try! qubit("1")).as_expr()
+  let q0 = qubit("0").as_expr()
+  let q1 = qubit("1").as_expr()
   let plus = quantum_test_frac(1, 2) *
     @symcore.raw_function("sqrt", [@symcore.int(2)]) *
     (q0 + q1)
   let rho_left = density([(plus, half), (q0, half)])
   let rho_right = density([(plus, half), (q1, half)])
-  try! quantum_test_assert_expr_equal(
-    try! entropy(rho_left.as_expr(), nqubits=1),
+  quantum_test_assert_expr_equal(
+    entropy(rho_left.as_expr(), nqubits=1),
     "-(sqrt(2)/4 + Rational(1, 2))*log(sqrt(2)/4 + Rational(1, 2)) - (Rational(1, 2) - sqrt(2)/4)*log(Rational(1, 2) - sqrt(2)/4)",
     "density general 2x2 entropy",
   )
-  try! quantum_test_assert_expr_equal(
-    try! fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
+  quantum_test_assert_expr_equal(
+    fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1),
     "sqrt(3)/2",
     "density general 2x2 fidelity",
   )
-  let fidelity_lr = try! fidelity(
-    rho_left.as_expr(),
-    rho_right.as_expr(),
-    nqubits=1,
-  )
-  let fidelity_rl = try! fidelity(
-    rho_right.as_expr(),
-    rho_left.as_expr(),
-    nqubits=1,
-  )
+  let fidelity_lr = fidelity(rho_left.as_expr(), rho_right.as_expr(), nqubits=1)
+  let fidelity_rl = fidelity(rho_right.as_expr(), rho_left.as_expr(), nqubits=1)
   guard fidelity_lr == fidelity_rl else { fail("density fidelity symmetry") }
 }
 
@@ -125,17 +117,17 @@ test "physics.quantum.density: tensor-product trace semantics" {
   ]).as_expr()
   let rho = density([(tp, @symcore.int(1))])
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     rho.doit(),
     "TensorProduct(OuterProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzBra(Rational(1, 2), Rational(1, 2))), OuterProduct(JzKet(Rational(1, 2), Rational(-1, 2)), JzBra(Rational(1, 2), Rational(-1, 2))))",
     "density tensor-product doit",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     rho.trace(),
     "1",
     "density tensor-product trace",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     rho.trace(indices=[1]),
     "OuterProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzBra(Rational(1, 2), Rational(1, 2)))",
     "density tensor-product partial trace",

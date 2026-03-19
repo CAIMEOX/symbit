@@ -110,9 +110,9 @@ test "coverage: core helpers and leading-term API" {
   )
   guard !p.is_zero() else { fail("is_zero false positive") }
 
-  let p_scaled = try! p.scale_coeff(cov_fezz(3))
+  let p_scaled = p.scale_coeff(cov_fezz(3))
   let scaled = cov_poly_norm(p_scaled)
-  let expected_scaled = (try! @sympy_polys.sympy_normalize("3*x**2 + 6*x + 3"))
+  let expected_scaled = @sympy_polys.sympy_normalize("3*x**2 + 6*x + 3")
     .trim()
     .to_string()
   guard scaled == expected_scaled else {
@@ -129,9 +129,7 @@ test "coverage: core helpers and leading-term API" {
   }
 
   let as_expr = p.to_expr_with_order(TermOrder::Lex)
-  let expr_norm = (try! @sympy_polys.sympy_normalize(
-      @symprint.to_string(as_expr),
-    ))
+  let expr_norm = @sympy_polys.sympy_normalize(@symprint.to_string(as_expr))
     .trim()
     .to_string()
   let poly_norm = cov_poly_norm(p)
@@ -146,14 +144,14 @@ test "coverage: dup_add_mul and dup_sub_mul consistency" {
   let g = cov_dup_from_ints([2, 0, 1])
   let h = cov_dup_from_ints([1, -1])
 
-  let add_mul = try! dup_add_mul(f, g, h, Domain::ZZ)
-  let add_ref = try! dup_add(f, try! dup_mul(g, h, Domain::ZZ), Domain::ZZ)
+  let add_mul = dup_add_mul(f, g, h, Domain::ZZ)
+  let add_ref = dup_add(f, dup_mul(g, h, Domain::ZZ), Domain::ZZ)
   guard cov_dup_repr(add_mul) == cov_dup_repr(add_ref) else {
     fail("dup_add_mul mismatch")
   }
 
-  let sub_mul = try! dup_sub_mul(f, g, h, Domain::ZZ)
-  let sub_ref = try! dup_sub(f, try! dup_mul(g, h, Domain::ZZ), Domain::ZZ)
+  let sub_mul = dup_sub_mul(f, g, h, Domain::ZZ)
+  let sub_ref = dup_sub(f, dup_mul(g, h, Domain::ZZ), Domain::ZZ)
   guard cov_dup_repr(sub_mul) == cov_dup_repr(sub_ref) else {
     fail("dup_sub_mul mismatch")
   }
@@ -163,17 +161,17 @@ test "coverage: dup_add_mul and dup_sub_mul consistency" {
 test "coverage: dup_pdiv/prem/pquo and pseudo-division identity" {
   let f = cov_dup_from_ints([2, 0, -2, 4])
   let g = cov_dup_from_ints([3, -3, 0])
-  let (q, r) = try! dup_pdiv(f, g, Domain::ZZ)
-  let prem = try! dup_prem(f, g, Domain::ZZ)
-  let pquo = try! dup_pquo(f, g, Domain::ZZ)
+  let (q, r) = dup_pdiv(f, g, Domain::ZZ)
+  let prem = dup_prem(f, g, Domain::ZZ)
+  let pquo = dup_pquo(f, g, Domain::ZZ)
   guard cov_dup_repr(r) == cov_dup_repr(prem) else { fail("dup_prem mismatch") }
   guard cov_dup_repr(q) == cov_dup_repr(pquo) else { fail("dup_pquo mismatch") }
 
   // Check lc(g)^n * f = q*g + r.
   let n = dup_degree(f) - dup_degree(g) + 1
-  let c = cov_fe_pow(try! dup_LC(g), n)
-  let lhs = try! dup_mul_term(f, c, 0, Domain::ZZ)
-  let rhs = try! dup_add(try! dup_mul(q, g, Domain::ZZ), r, Domain::ZZ)
+  let c = cov_fe_pow(dup_LC(g), n)
+  let lhs = dup_mul_term(f, c, 0, Domain::ZZ)
+  let rhs = dup_add(dup_mul(q, g, Domain::ZZ), r, Domain::ZZ)
   guard cov_dup_repr(lhs) == cov_dup_repr(rhs) else {
     fail("dup_pdiv identity mismatch")
   }
@@ -183,10 +181,10 @@ test "coverage: dup_pdiv/prem/pquo and pseudo-division identity" {
 test "coverage: root upper/lower bound wrapper consistency" {
   let f = [1, 0, -2, 1]
   let poly = cov_dup_from_ints(f)
-  let up = try! dup_root_upper_bound(poly, Domain::ZZ)
-  let lo = try! dup_root_lower_bound(poly, Domain::ZZ)
-  let up_ref = try! dup_cauchy_upper_bound(poly, Domain::ZZ)
-  let lo_ref = try! dup_cauchy_lower_bound(poly, Domain::ZZ)
+  let up = dup_root_upper_bound(poly, Domain::ZZ)
+  let lo = dup_root_lower_bound(poly, Domain::ZZ)
+  let up_ref = dup_cauchy_upper_bound(poly, Domain::ZZ)
+  let lo_ref = dup_cauchy_lower_bound(poly, Domain::ZZ)
   guard up.to_string() == up_ref.to_string() else {
     fail("dup_root_upper_bound wrapper mismatch")
   }
@@ -201,14 +199,14 @@ test "coverage: galoistools scalar helpers" {
   guard gf_LC([0, 2, 3]) == 0 else { fail("gf_LC mismatch") }
   guard gf_TC([0, 2, 3]) == 3 else { fail("gf_TC mismatch") }
 
-  let monic = try! gf_monic([2, 4, 2], 5)
+  let monic = gf_monic([2, 4, 2], 5)
   guard "\{monic}" == "[1, 2, 1]" else { fail("gf_monic mismatch: \{monic}") }
 
   let f = [1, 0, 1]
   let g = [1, 1]
-  let (q, r) = try! gf_div(f, g, 5)
-  let quo = try! gf_quo(f, g, 5)
-  let rem = try! gf_rem(f, g, 5)
+  let (q, r) = gf_div(f, g, 5)
+  let quo = gf_quo(f, g, 5)
+  let rem = gf_rem(f, g, 5)
   guard "\{q}" == "\{quo}" else { fail("gf_quo mismatch") }
   guard "\{r}" == "\{rem}" else { fail("gf_rem mismatch") }
 }
@@ -218,15 +216,13 @@ test "coverage: qq_utils clear_denominators" {
   let x = @symcore.symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let poly = b.from_expr(cov_expr_rat(1, 2) * x + cov_expr_rat(1, 3))
-  let lifted = try! clear_denominators(poly)
+  let lifted = clear_denominators(poly)
   match lifted.domain {
     Domain::ZZ => ()
     _ => fail("clear_denominators should lift to ZZ")
   }
   let ours = cov_poly_norm(lifted)
-  let expected = (try! @sympy_polys.sympy_normalize("3*x + 2"))
-    .trim()
-    .to_string()
+  let expected = @sympy_polys.sympy_normalize("3*x + 2").trim().to_string()
   guard ours == expected else {
     fail("clear_denominators mismatch: ours=\{ours}, expected=\{expected}")
   }
@@ -239,7 +235,7 @@ test "coverage: lll_reduce transform reconstructs reduced basis" {
     [BigInt::from_int(-1), BigInt::from_int(0), BigInt::from_int(2)],
     [BigInt::from_int(3), BigInt::from_int(5), BigInt::from_int(6)],
   ]
-  let (reduced, transform) = try! lll_reduce(basis)
+  let (reduced, transform) = lll_reduce(basis)
   guard reduced.length() == basis.length() else {
     fail("lll row count mismatch")
   }
@@ -269,14 +265,14 @@ test "coverage: groebner_expr parity" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let exprs = [x * y - @symcore.int(1), y - @symcore.int(1)]
-  let ours_basis = try! groebner_expr(
+  let ours_basis = groebner_expr(
     exprs,
     gens=["x", "y"],
     domain=Domain::QQ,
     order=TermOrder::Lex,
   )
   let ours = cov_norm_basis(cov_groebner_basis_str(ours_basis))
-  let oracle = cov_norm_basis(try! @sympy_polys.groebner(exprs, order="lex"))
+  let oracle = cov_norm_basis(@sympy_polys.groebner(exprs, order="lex"))
   guard ours == oracle else {
     fail("groebner_expr mismatch: ours=\{ours}, oracle=\{oracle}")
   }
@@ -289,20 +285,18 @@ test "coverage: resultant_poly multivariate output parity" {
   let b = PolyBuilder::new(["x", "y"], Domain::QQ)
   let f = b.from_expr(x + y)
   let g = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
-  let ours_poly = try! f.resultant_poly(g, 0)
+  let ours_poly = f.resultant_poly(g, 0)
   let ours = cov_poly_norm(ours_poly)
-  let oracle = (try! @sympy_polys.resultant(
+  let oracle = @sympy_polys.resultant(
       f.to_expr(),
       g.to_expr(),
       x="x",
       gens=["x", "y"],
       domain="QQ",
-    ))
+    )
     .trim()
     .to_string()
-  let oracle_norm = (try! @sympy_polys.sympy_normalize(oracle))
-    .trim()
-    .to_string()
+  let oracle_norm = @sympy_polys.sympy_normalize(oracle).trim().to_string()
   guard ours == oracle_norm else {
     fail("resultant_poly mismatch: ours=\{ours}, oracle=\{oracle_norm}")
   }
@@ -314,13 +308,13 @@ test "coverage: subresultants PG aliases" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
-  let pg = try! subresultants_pg(p, q)
-  let eu = try! euclid_q(p, q)
+  let pg = subresultants_pg(p, q)
+  let eu = euclid_q(p, q)
   guard cov_poly_list_str(pg) == cov_poly_list_str(eu) else {
     fail("subresultants_pg alias mismatch")
   }
-  let mpg = try! modified_subresultants_pg(p, q)
-  let st = try! sturm_q(p, q)
+  let mpg = modified_subresultants_pg(p, q)
+  let st = sturm_q(p, q)
   guard cov_poly_list_str(mpg) == cov_poly_list_str(st) else {
     fail("modified_subresultants_pg alias mismatch")
   }
@@ -329,8 +323,8 @@ test "coverage: subresultants PG aliases" {
 ///|
 test "coverage: dense conversions and raw dict helpers" {
   let dense = cov_dup_from_ints([1, 0, -2])
-  let poly = try! from_dense(dense, ["x"], Domain::ZZ)
-  let back = try! to_dense(poly, degree=2)
+  let poly = from_dense(dense, ["x"], Domain::ZZ)
+  let back = to_dense(poly, degree=2)
   guard cov_dup_repr(back) == cov_dup_repr(dense) else {
     fail("from_dense/to_dense roundtrip mismatch")
   }
@@ -361,8 +355,8 @@ test "coverage: monomial and field-element helper APIs" {
   let m1 = monomial_from_array([2, 1])
   let m2 = monomial_from_array([3, 2])
   let m3 = monomial_from_array([1, 3])
-  let div12 = try! monomial_divides(m1, m2)
-  let div21 = try! monomial_divides(m2, m1)
+  let div12 = monomial_divides(m1, m2)
+  let div21 = monomial_divides(m2, m1)
   guard div12 else { fail("monomial_divides true failed") }
   guard !div21 else { fail("monomial_divides false failed") }
   guard compare_monomial_order(m1, m3, TermOrder::Lex) > 0 else {
@@ -380,10 +374,10 @@ test "coverage: monomial and field-element helper APIs" {
   guard fe_is_positive(pos) && !fe_is_negative(pos) else {
     fail("fe sign mismatch (pos)")
   }
-  let inv2 = try! fe_inv(cov_fezz(2))
-  let one = try! fe_mul(cov_fezz(2), inv2)
+  let inv2 = fe_inv(cov_fezz(2))
+  let one = fe_mul(cov_fezz(2), inv2)
   guard fe_is_one(one) else { fail("fe_inv/fe_mul mismatch") }
-  let sub = try! fe_sub(cov_fezz(5), cov_fezz(2))
+  let sub = fe_sub(cov_fezz(5), cov_fezz(2))
   let neg_sub = fe_neg(sub)
   guard sub.to_string() == "3" && neg_sub.to_string() == "-3" else {
     fail("fe_sub/fe_neg mismatch")
@@ -399,11 +393,11 @@ test "coverage: core neg/sub APIs" {
   )
   let q = b.from_expr(@symcore.int(3) * x - @symcore.int(1))
   let neg_p = cov_poly_norm(p.neg())
-  let sub_pq = cov_poly_norm(try! p.sub(q))
-  let expect_neg = (try! @sympy_polys.sympy_normalize("-x**2 - 2*x - 3"))
+  let sub_pq = cov_poly_norm(p.sub(q))
+  let expect_neg = @sympy_polys.sympy_normalize("-x**2 - 2*x - 3")
     .trim()
     .to_string()
-  let expect_sub = (try! @sympy_polys.sympy_normalize("x**2 - x + 4"))
+  let expect_sub = @sympy_polys.sympy_normalize("x**2 - x + 4")
     .trim()
     .to_string()
   guard neg_p == expect_neg else { fail("Poly::neg mismatch: \{neg_p}") }
@@ -419,12 +413,12 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
     @symcore.int(9) * x +
     @symcore.int(3),
   )
-  let content = try! f.content()
+  let content = f.content()
   guard content.to_string() == "3" else {
     fail("Poly::content mismatch: \{content.to_string()}")
   }
-  let primitive = try! f.primitive_part()
-  let expect_primitive = (try! @sympy_polys.sympy_normalize("2*x**2 + 3*x + 1"))
+  let primitive = f.primitive_part()
+  let expect_primitive = @sympy_polys.sympy_normalize("2*x**2 + 3*x + 1")
     .trim()
     .to_string()
   guard cov_poly_norm(primitive) == expect_primitive else {
@@ -432,13 +426,13 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
   }
 
   let g = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
-  let (pq, pr, steps) = try! f.pseudo_div_univar_int(g)
+  let (pq, pr, steps) = f.pseudo_div_univar_int(g)
   let lc = match g.leading_term() {
     Some((_, c)) => c
     None => fail("unexpected zero divisor")
   }
-  let scaled_f = try! f.scale_coeff(cov_fe_pow(lc, steps))
-  let rhs = try! (try! pq.mul(g)).add(pr)
+  let scaled_f = f.scale_coeff(cov_fe_pow(lc, steps))
+  let rhs = pq.mul(g).add(pr)
   guard cov_poly_norm(scaled_f) == cov_poly_norm(rhs) else {
     fail("pseudo_div_univar_int identity mismatch")
   }
@@ -452,22 +446,22 @@ test "coverage: algebraic-extension public helpers" {
     @symcore.int(2) * (x ^ @symcore.int(2)) + @symcore.int(1),
   )
   let spec = alg_ext_spec(Domain::QQ, "x", raw)
-  let normalized = try! normalize_alg_ext_spec(spec)
+  let normalized = normalize_alg_ext_spec(spec)
   let minpoly_norm = cov_poly_norm(normalized.minpoly)
-  let expect_minpoly = (try! @sympy_polys.sympy_normalize("x**2 + 1/2"))
+  let expect_minpoly = @sympy_polys.sympy_normalize("x**2 + 1/2")
     .trim()
     .to_string()
   guard minpoly_norm == expect_minpoly else {
     fail("normalize_alg_ext_spec mismatch: \{minpoly_norm}")
   }
-  let ext = try! build_alg_extension(spec)
+  let ext = build_alg_extension(spec)
   match ext {
     Domain::AlgExt(base, gens, rels) => {
       guard base is Domain::QQ else {
         fail("build_alg_extension base mismatch")
       }
       guard gens == ["x"] else { fail("build_alg_extension gens mismatch") }
-      let rel = (try! @sympy_polys.sympy_normalize(@symprint.to_string(rels[0])))
+      let rel = @sympy_polys.sympy_normalize(@symprint.to_string(rels[0]))
         .trim()
         .to_string()
       guard rel == expect_minpoly else {

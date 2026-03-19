@@ -1,16 +1,16 @@
 ///|
 test "physics.quantum.qapply: parity extensions" {
-  let zero = (try! qubit("0")).as_expr()
-  let one = (try! qubit("1")).as_expr()
-  let zero_bra = (try! qubit_bra("0")).as_expr()
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let zero = qubit("0").as_expr()
+  let one = qubit("1").as_expr()
+  let zero_bra = qubit_bra("0").as_expr()
+  let half = @symcore.rational_from_ints(1, 2)
   let n = @symcore.symbol("n")
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str(
       "TensorProduct(XGate(0), IdentityGate(0))*TensorProduct(Qubit(0), Qubit(1))",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(
           @symcore.raw_mul([
@@ -23,11 +23,11 @@ test "physics.quantum.qapply: parity extensions" {
     "tensor-product pair qapply parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str(
       "TensorProduct(XGate(0)*Qubit(0), IdentityGate(0)*Qubit(1))",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(
           tensor_product([
@@ -40,11 +40,11 @@ test "physics.quantum.qapply: parity extensions" {
     "tensor-product raw qapply parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str(
       "Density((XGate(0)*Qubit(0), Rational(1, 2)))",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(
           density([(@symcore.raw_mul([x_gate(0).as_expr(), zero]), half)]).as_expr(),
@@ -54,9 +54,9 @@ test "physics.quantum.qapply: parity extensions" {
     "density qapply parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str("XGate(0)**2*Qubit(0)"),
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str("XGate(0)**2*Qubit(0)"),
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(@symcore.raw_mul([x_gate(0).as_expr() ^ @symcore.int(2), zero])),
       ),
@@ -64,9 +64,9 @@ test "physics.quantum.qapply: parity extensions" {
     "power qapply parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str("QubitBra(0)*XGate(0)", dagger=true),
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str("QubitBra(0)*XGate(0)", dagger=true),
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(@symcore.raw_mul([zero_bra, x_gate(0).as_expr()]), dagger=true),
       ),
@@ -74,9 +74,9 @@ test "physics.quantum.qapply: parity extensions" {
     "dagger qapply parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str("Sum(XGate(0)*Qubit(0), (n, 0, 2))"),
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str("Sum(XGate(0)*Qubit(0), (n, 0, 2))"),
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(
           @symcore.raw_function("Sum", [
@@ -93,20 +93,20 @@ test "physics.quantum.qapply: parity extensions" {
 ///|
 test "physics.quantum.qapply: spin and (anti)commutator parity" {
   let one = @symcore.int(1)
-  let zero_state = (try! qubit("0")).as_expr()
+  let zero_state = qubit("0").as_expr()
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_srepr("Jx*JzKet(1, 0)"),
-    try! @sympy_physics.quantum_qapply_srepr(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_srepr("Jx*JzKet(1, 0)"),
+    @sympy_physics.quantum_qapply_srepr(
       @symprint.to_string(
         qapply(@symcore.raw_mul([jx(), jz_ket(one, @symcore.int(0)).as_expr()])),
       ),
     ),
     "Jx qapply parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_srepr("Jminus*Jminus*JzKet(1, 1)"),
-    try! @sympy_physics.quantum_qapply_srepr(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_srepr("Jminus*Jminus*JzKet(1, 1)"),
+    @sympy_physics.quantum_qapply_srepr(
       @symprint.to_string(
         qapply(
           @symcore.raw_mul([jminus(), jminus(), jz_ket(one, one).as_expr()]),
@@ -115,11 +115,11 @@ test "physics.quantum.qapply: spin and (anti)commutator parity" {
     ),
     "double lowering parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_srepr(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_srepr(
       "AntiCommutator(XGate(0), ZGate(0))*Qubit(0)",
     ),
-    try! @sympy_physics.quantum_qapply_srepr(
+    @sympy_physics.quantum_qapply_srepr(
       @symprint.to_string(
         qapply(
           @symcore.raw_mul([

@@ -63,7 +63,7 @@ test "galoistools wb: edge-case branches" {
   guard gf_mul([], [1], 5).length() == 0 else {
     fail("gf_mul with empty input should be []")
   }
-  guard (try! gf_monic([], 5)).length() == 0 else {
+  guard gf_monic([], 5).length() == 0 else {
     fail("gf_monic([]) should stay []")
   }
 
@@ -76,12 +76,12 @@ test "galoistools wb: edge-case branches" {
     fail("gf_div by zero polynomial should raise DivisionByZero")
   }
 
-  let (q0, r0) = try! gf_div([], [1, 1], 5)
+  let (q0, r0) = gf_div([], [1, 1], 5)
   guard q0.length() == 0 && r0.length() == 0 else {
     fail("gf_div empty dividend branch mismatch")
   }
 
-  let (q1, r1) = try! gf_div([1, 2], [1, 0, 1], 5)
+  let (q1, r1) = gf_div([1, 2], [1, 0, 1], 5)
   guard q1.length() == 0 && r1.length() > 0 else {
     fail("gf_div low-degree dividend branch mismatch")
   }
@@ -122,7 +122,7 @@ test "monomial wb: mismatch/error/order branches" {
     fail("monomial_gcd length mismatch should raise DomainMismatch")
   }
 
-  let gcd_ok = try! monomial_gcd(
+  let gcd_ok = monomial_gcd(
     monomial_from_array([1, 5]),
     monomial_from_array([2, 3]),
   )
@@ -158,7 +158,7 @@ test "monomial wb: mismatch/error/order branches" {
     fail("compare_exps_lex mismatch should raise DomainMismatch")
   }
 
-  guard (try! compare_exps_grlex([1, 0], [0, 1])) == 1 else {
+  guard compare_exps_grlex([1, 0], [0, 1]) == 1 else {
     fail("compare_exps_grlex equal-degree lex-fallback mismatch")
   }
   let grlex_mismatch : Result[Int, PolyError] = try? compare_exps_grlex([1], [
@@ -175,7 +175,7 @@ test "monomial wb: mismatch/error/order branches" {
   guard grevlex_mismatch is Err(PolyError::DomainMismatch) else {
     fail("compare_exps_grevlex mismatch should raise DomainMismatch")
   }
-  guard (try! compare_exps_grevlex([2, 0], [1, 0])) == 1 else {
+  guard compare_exps_grevlex([2, 0], [1, 0]) == 1 else {
     fail("compare_exps_grevlex degree-compare branch mismatch")
   }
 }

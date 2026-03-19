@@ -13,7 +13,7 @@ fn cable_is_close(expr : @symcore.Expr, value : Double) -> Bool {
 
 ///|
 test "physics.continuum_mechanics.cable: point loads and distributed loads" {
-  let c0 = try! cable(
+  let c0 = cable(
     ("A", @symcore.int(0), @symcore.int(10)),
     ("B", @symcore.int(10), @symcore.int(10)),
   )
@@ -27,7 +27,7 @@ test "physics.continuum_mechanics.cable: point loads and distributed loads" {
     fail("right support order")
   }
 
-  try! c0.change_support("A", ("C", @symcore.int(12), @symcore.int(3)))
+  c0.change_support("A", ("C", @symcore.int(12), @symcore.int(3)))
   guard c0.supports().get("A") is None else {
     fail("support rename remove old")
   }
@@ -35,23 +35,23 @@ test "physics.continuum_mechanics.cable: point loads and distributed loads" {
     fail("support rename insert new")
   }
 
-  let c = try! cable(
+  let c = cable(
     ("A", @symcore.int(0), @symcore.int(10)),
-    ("B", try! @symcore.rational_from_ints(11, 2), @symcore.int(8)),
+    ("B", @symcore.rational_from_ints(11, 2), @symcore.int(8)),
   )
-  try! c.apply_point_load(
+  c.apply_point_load(
     (
       "Z",
       @symcore.int(2),
-      try! @symcore.rational_from_ints(363, 50),
+      @symcore.rational_from_ints(363, 50),
       @symcore.int(3),
       @symcore.int(270),
     ),
   )
-  try! c.apply_point_load(
+  c.apply_point_load(
     ("X", @symcore.int(4), @symcore.int(6), @symcore.int(8), @symcore.int(270)),
   )
-  try! c.solve()
+  c.solve()
   guard cable_is_close(c.tension()["A_Z"], 6.89488895397307) else {
     fail("A_Z tension")
   }
@@ -77,13 +77,13 @@ test "physics.continuum_mechanics.cable: point loads and distributed loads" {
     fail("cable length")
   }
 
-  let d = try! cable(
+  let d = cable(
     ("A", @symcore.int(0), @symcore.int(40)),
     ("B", @symcore.int(100), @symcore.int(20)),
   )
-  try! d.apply_distributed_load("X", @symcore.int(850))
-  try! d.solve(
-    lowest_x=Some(try! @symcore.rational_from_ints(2929, 50)),
+  d.apply_distributed_load("X", @symcore.int(850))
+  d.solve(
+    lowest_x=Some(@symcore.rational_from_ints(2929, 50)),
     lowest_y=Some(@symcore.int(0)),
   )
   guard cable_is_close(d.tension_at(@symcore.int(0)), 61717.4130533677) else {

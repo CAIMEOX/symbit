@@ -89,12 +89,12 @@ test "symassume facts normalization" {
 ///|
 test "symassume numeric predicate parity" {
   let env = empty_env()
-  try! assert_all_predicates(@symcore.int(0), env, "zero")
-  try! assert_all_predicates(@symcore.int(2), env, "two")
-  let half = try! @symcore.rational_from_ints(1, 2)
-  try! assert_all_predicates(half, env, "half")
+  assert_all_predicates(@symcore.int(0), env, "zero")
+  assert_all_predicates(@symcore.int(2), env, "two")
+  let half = @symcore.rational_from_ints(1, 2)
+  assert_all_predicates(half, env, "half")
   let expr = @symcore.mul([@symcore.int(-3), half])
-  try! assert_all_predicates(expr, env, "mul")
+  assert_all_predicates(expr, env, "mul")
 }
 
 ///|
@@ -111,15 +111,11 @@ test "symassume symbolic parity basic algebra" {
   let n = @symcore.symbol("n")
   let nz = @symcore.symbol("nz")
 
-  try! assert_all_predicates(x, env, "x")
-  try! assert_all_predicates(
-    @symcore.add([x, @symcore.int(1)]),
-    env,
-    "x_plus_1",
-  )
-  try! assert_all_predicates(@symcore.pow(p, @symcore.int(2)), env, "p_sq")
-  try! assert_all_predicates(@symcore.pow(n, @symcore.int(2)), env, "n_sq")
-  try! assert_all_predicates(@symcore.pow(nz, @symcore.int(-1)), env, "inv_nz")
+  assert_all_predicates(x, env, "x")
+  assert_all_predicates(@symcore.add([x, @symcore.int(1)]), env, "x_plus_1")
+  assert_all_predicates(@symcore.pow(p, @symcore.int(2)), env, "p_sq")
+  assert_all_predicates(@symcore.pow(n, @symcore.int(2)), env, "n_sq")
+  assert_all_predicates(@symcore.pow(nz, @symcore.int(-1)), env, "inv_nz")
 }
 
 ///|
@@ -135,8 +131,8 @@ test "symassume symbolic parity elementary functions" {
   let r = @symcore.symbol("r")
   let nz = @symcore.symbol("nz")
 
-  try! assert_all_predicates(@symcore.function("exp", [r]), env, "exp_r")
-  try! assert_all_predicates(@symcore.function("log", [p]), env, "log_p")
-  try! assert_all_predicates(@symcore.function("sqrt", [n]), env, "sqrt_n")
-  try! assert_all_predicates(@symcore.function("Abs", [nz]), env, "abs_nz")
+  assert_all_predicates(@symcore.function("exp", [r]), env, "exp_r")
+  assert_all_predicates(@symcore.function("log", [p]), env, "log_p")
+  assert_all_predicates(@symcore.function("sqrt", [n]), env, "sqrt_n")
+  assert_all_predicates(@symcore.function("Abs", [nz]), env, "abs_nz")
 }

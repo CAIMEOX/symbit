@@ -6,7 +6,7 @@ test "lambdify evaluates common scalar expressions" {
     @symcore.pow(x, @symcore.int(2)),
   ])
   let fn0 = lambdify(["x"], expr)
-  let value = try! fn0.call([0.5])
+  let value = fn0.call([0.5])
   assert_true(value.is_close(@math.sin(0.5) + 0.25))
 }
 
@@ -19,7 +19,7 @@ test "lambdify accepts map arguments" {
   let env : Map[String, Double] = {}
   env["x"] = 2.0
   env["y"] = 3.5
-  assert_eq(try! fn0.call_map(env), 7.0)
+  assert_eq(fn0.call_map(env), 7.0)
 }
 
 ///|
@@ -28,7 +28,7 @@ test "implemented_function integrates with lambdify" {
   let x = @symcore.symbol("x")
   let expr = f.apply([x]) + x
   let fn0 = lambdify(["x"], expr)
-  assert_eq(try! fn0.call([3.0]), 13.0)
+  assert_eq(fn0.call([3.0]), 13.0)
 }
 
 ///|

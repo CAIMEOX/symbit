@@ -5,19 +5,13 @@ fn expr_rat_du(n : Int, d : Int) -> @symcore.Expr {
 
 ///|
 test "domain_utils: normalize_mod parity over GF(p)" {
-  let r1 = try! @symnum.BigRational::new(
-    BigInt::from_int(3),
-    BigInt::from_int(2),
-  )
+  let r1 = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let got1 = normalize_mod(r1, Domain::GF(5)).to_string()
   let oracle1 = @sympy_polys.mod_rational(3, 2, 5).trim().to_string()
   guard got1 == oracle1 else {
     fail("normalize_mod GF(5) mismatch: ours=\{got1}, oracle=\{oracle1}")
   }
-  let r2 = try! @symnum.BigRational::new(
-    BigInt::from_int(-7),
-    BigInt::from_int(3),
-  )
+  let r2 = @symnum.BigRational::new(BigInt::from_int(-7), BigInt::from_int(3))
   let got2 = normalize_mod(r2, Domain::GF(5)).to_string()
   let oracle2 = @sympy_polys.mod_rational(-7, 3, 5).trim().to_string()
   guard got2 == oracle2 else {
@@ -27,10 +21,7 @@ test "domain_utils: normalize_mod parity over GF(p)" {
 
 ///|
 test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
-  let r = try! @symnum.BigRational::new(
-    BigInt::from_int(5),
-    BigInt::from_int(7),
-  )
+  let r = @symnum.BigRational::new(BigInt::from_int(5), BigInt::from_int(7))
   let got_q = normalize_mod(r, Domain::QQ).to_string()
   let oracle_q = @sympy_polys.poly_expr(
       expr_rat_du(5, 7),
@@ -42,10 +33,7 @@ test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
   guard got_q == oracle_q else {
     fail("normalize_mod QQ mismatch: ours=\{got_q}, oracle=\{oracle_q}")
   }
-  let r2 = try! @symnum.BigRational::new(
-    BigInt::from_int(4),
-    BigInt::from_int(1),
-  )
+  let r2 = @symnum.BigRational::new(BigInt::from_int(4), BigInt::from_int(1))
   let got_z = normalize_mod(r2, Domain::ZZ).to_string()
   let oracle_z = @sympy_polys.poly_expr(
       @symcore.int(4),

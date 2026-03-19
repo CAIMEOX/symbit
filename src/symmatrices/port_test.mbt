@@ -37,84 +37,81 @@ fn local_matrix_list_text(m : Matrix) -> String {
 
 ///|
 test "matrices parity basic arithmetic" {
-  let a = try! matrix([
+  let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  let b = try! matrix([
+  let b = matrix([
     [@symcore.int(5), @symcore.int(6)],
     [@symcore.int(7), @symcore.int(8)],
   ])
   assert_eq(
     local_matrix_list_text(a + b),
-    try! py_matrix_list_text(py_matrix_expr(a) + " + " + py_matrix_expr(b)),
+    py_matrix_list_text(py_matrix_expr(a) + " + " + py_matrix_expr(b)),
   )
   assert_eq(
     local_matrix_list_text(a * b),
-    try! py_matrix_list_text(py_matrix_expr(a) + " * " + py_matrix_expr(b)),
+    py_matrix_list_text(py_matrix_expr(a) + " * " + py_matrix_expr(b)),
   )
   assert_eq(
-    local_matrix_list_text(try! a.transpose()),
-    try! py_matrix_list_text(py_matrix_expr(a) + ".T"),
+    local_matrix_list_text(a.transpose()),
+    py_matrix_list_text(py_matrix_expr(a) + ".T"),
   )
 }
 
 ///|
 test "matrices parity determinant inverse rref" {
-  let a = try! matrix([
+  let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
   assert_eq(
-    @symprint.to_string(try! a.det()),
-    try! py_list_text("sympy.sstr(" + py_matrix_expr(a) + ".det())"),
+    @symprint.to_string(a.det()),
+    py_list_text("sympy.sstr(" + py_matrix_expr(a) + ".det())"),
   )
   assert_eq(
     local_matrix_list_text(a.inv()),
-    try! py_matrix_list_text(py_matrix_expr(a) + ".inv()"),
+    py_matrix_list_text(py_matrix_expr(a) + ".inv()"),
   )
-  let b = try! matrix([
+  let b = matrix([
     [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
     [@symcore.int(2), @symcore.int(4), @symcore.int(6)],
   ])
   assert_eq(
     local_matrix_list_text(b.rref().0),
-    try! py_matrix_list_text(py_matrix_expr(b) + ".rref()[0]"),
+    py_matrix_list_text(py_matrix_expr(b) + ".rref()[0]"),
   )
 }
 
 ///|
 test "matrices parity structural helpers" {
-  let a = try! matrix([
+  let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  let row = try! matrix([[@symcore.int(9), @symcore.int(8)]])
-  let col = try! matrix([[@symcore.int(7)], [@symcore.int(6)]])
+  let row = matrix([[@symcore.int(9), @symcore.int(8)]])
+  let col = matrix([[@symcore.int(7)], [@symcore.int(6)]])
   assert_eq(
-    local_matrix_list_text(try! a.row_join(row.transpose())),
-    try! py_matrix_list_text(
-      py_matrix_expr(a) +
-      ".row_join(" +
-      py_matrix_expr(try! row.transpose()) +
-      ")",
+    local_matrix_list_text(a.row_join(row.transpose())),
+    py_matrix_list_text(
+      py_matrix_expr(a) + ".row_join(" + py_matrix_expr(row.transpose()) + ")",
     ),
   )
   assert_eq(
-    local_matrix_list_text(try! a.col_join(row)),
-    try! py_matrix_list_text(
+    local_matrix_list_text(a.col_join(row)),
+    py_matrix_list_text(
       py_matrix_expr(a) + ".col_join(" + py_matrix_expr(row) + ")",
     ),
   )
   assert_eq(
-    local_matrix_list_text(try! a.row_insert(1, row)),
-    try! py_matrix_list_text(
+    local_matrix_list_text(a.row_insert(1, row)),
+    py_matrix_list_text(
       py_matrix_expr(a) + ".row_insert(1, " + py_matrix_expr(row) + ")",
     ),
   )
   assert_eq(
-    local_matrix_list_text(try! a.col_insert(1, col)),
-    try! py_matrix_list_text(
+    local_matrix_list_text(a.col_insert(1, col)),
+    py_matrix_list_text(
       py_matrix_expr(a) + ".col_insert(1, " + py_matrix_expr(col) + ")",
     ),
   )
@@ -122,17 +119,17 @@ test "matrices parity structural helpers" {
 
 ///|
 test "matrices parity adjugate and echelon" {
-  let a = try! matrix([
+  let a = matrix([
     [@symcore.int(1), @symcore.int(2), @symcore.int(3)],
     [@symcore.int(0), @symcore.int(4), @symcore.int(5)],
     [@symcore.int(1), @symcore.int(0), @symcore.int(6)],
   ])
   assert_eq(
-    local_matrix_list_text(try! a.adjugate()),
-    try! py_matrix_list_text(py_matrix_expr(a) + ".adjugate()"),
+    local_matrix_list_text(a.adjugate()),
+    py_matrix_list_text(py_matrix_expr(a) + ".adjugate()"),
   )
   assert_eq(
     local_matrix_list_text(a.echelon_form()),
-    try! py_matrix_list_text(py_matrix_expr(a) + ".echelon_form()"),
+    py_matrix_list_text(py_matrix_expr(a) + ".echelon_form()"),
   )
 }

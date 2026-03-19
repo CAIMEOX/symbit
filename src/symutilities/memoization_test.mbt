@@ -16,15 +16,15 @@ test "memoization recurrence sequence" {
   let f = (n : Int) => {
     factorial.apply(n, (i, prev) => i * prev[prev.length() - 1])
   }
-  assert_eq(try! f(4), 24)
+  assert_eq(f(4), 24)
   assert_eq(factorial.cache_length(), 5)
-  assert_eq(try! factorial.fetch_item(3), 6)
+  assert_eq(factorial.fetch_item(3), 6)
 }
 
 ///|
 test "memoization associated recurrence sequence" {
   let memo : AssocRecurrenceMemo[Int] = assoc_recurrence_memo()
-  let value = try! memo.apply(3, 2, (_ : Int) => 1, (n, m, cache) => {
+  let value = memo.apply(3, 2, (_ : Int) => 1, (n, m, cache) => {
     if m == n {
       1
     } else {

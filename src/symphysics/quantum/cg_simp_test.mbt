@@ -17,7 +17,7 @@ test "physics.quantum.cg_simp: core sum identities" {
       @symcore.int(-1) * a,
       a,
     )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq1),
     "x*(2*a + 1)*KroneckerDelta(b, 0)",
     "cg_simp eq1",
@@ -30,7 +30,7 @@ test "physics.quantum.cg_simp: core sum identities" {
     @symcore.int(-1) * a,
     a,
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq2),
     "sqrt(2*a + 1)*KroneckerDelta(c, 0)",
     "cg_simp eq2",
@@ -46,7 +46,7 @@ test "physics.quantum.cg_simp: core sum identities" {
     @symcore.int(-1) * b,
     b,
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq4),
     "KroneckerDelta(c, cp)*KroneckerDelta(gamma, gammap)",
     "cg_simp eq4",
@@ -68,7 +68,7 @@ test "physics.quantum.cg_simp: square orthogonality identity" {
     @symcore.int(-1) * half,
     half,
   )
-  try! quantum_test_assert_expr_equal(cg_simp(expr), "1", "cg_simp square")
+  quantum_test_assert_expr_equal(cg_simp(expr), "1", "cg_simp square")
 }
 
 ///|
@@ -90,7 +90,7 @@ test "physics.quantum.cg_simp: additive identities" {
       @symcore.int(-1) * half,
     ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq1),
     "2*KroneckerDelta(j, 0) + CG(1/2, 1/2, j, 0, 1/2, 1/2)",
     "cg_simp additive eq1",
@@ -125,7 +125,7 @@ test "physics.quantum.cg_simp: additive identities" {
       @symcore.int(0),
     ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq2),
     "sqrt(3)",
     "cg_simp additive eq2",
@@ -156,12 +156,12 @@ test "physics.quantum.cg_simp: additive eq9 square families" {
       @symcore.int(0),
     ).as_expr() ^
     @symcore.int(2)
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(a + b),
     "1",
     "cg_simp eq9 square numeric",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(
       @symcore.add([
         @symcore.mul([@symcore.int(5), a]),
@@ -180,12 +180,12 @@ test "physics.quantum.cg_simp: additive eq9 square families" {
     @symcore.int(2)
   let s4 = cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr() ^
     @symcore.int(2)
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(@symcore.add([s1, s2, s3, s4])),
     "1",
     "cg_simp eq9 square symbolic",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(
       @symcore.add([
         @symcore.mul([@symcore.int(3), s1]),
@@ -243,7 +243,7 @@ test "physics.quantum.cg_simp: additive eq9 cross families" {
       @symcore.int(0),
     ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(a + b),
     "0",
     "cg_simp eq9 cross numeric",
@@ -265,7 +265,7 @@ test "physics.quantum.cg_simp: additive eq9 cross families" {
     cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr(),
     cg(half, m1p, half, m2p, @symcore.int(0), @symcore.int(0)).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(@symcore.add([s1, s2, s3, s4])),
     "KroneckerDelta(m1, m1p)*KroneckerDelta(m2, m2p)",
     "cg_simp eq9 cross symbolic",

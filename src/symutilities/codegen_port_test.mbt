@@ -23,8 +23,8 @@ test "codegen c parity on scalar routine" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
-  let ours = try! codegen([("test", (x + y) * z)], "C89", "file")[0].1
-  let oracle = try! codegen_source_from_oracle(
+  let ours = codegen([("test", (x + y) * z)], "C89", "file")[0].1
+  let oracle = codegen_source_from_oracle(
     "test", "sympy.Symbol('z')*(sympy.Symbol('x') + sympy.Symbol('y'))", "C89",
   )
   assert_eq(ours, oracle)

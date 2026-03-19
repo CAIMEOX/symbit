@@ -409,13 +409,9 @@ test "compat aliases p/e/h and where_" {
   let x = @symcore.symbol("X")
   let rv = die("X", sides=6)
   let pe = p(eq(x, @symcore.int(1)), rv~)
-  assert_true(
-    try! @sympy_stats.stats_expr_equiv(@symprint.to_string(pe), "1/6"),
-  )
+  assert_true(@sympy_stats.stats_expr_equiv(@symprint.to_string(pe), "1/6"))
   let ee = e(x, rvs=[rv])
-  assert_true(
-    try! @sympy_stats.stats_expr_equiv(@symprint.to_string(ee), "7/2"),
-  )
+  assert_true(@sympy_stats.stats_expr_equiv(@symprint.to_string(ee), "7/2"))
   let he = h(x)
   assert_eq(@symprint.to_string(he), "entropy(X)")
   let w = where_(ge(x, @symcore.int(2)))
@@ -427,13 +423,13 @@ test "compat uniform parity density cdf moments quantile" {
   let u = uniform("U", params=[@symcore.int(0), @symcore.int(2)])
   let x = @symcore.symbol("x")
   let d = density(u, x)
-  let d_oracle = try! @sympy_stats.stats_eval_str(
+  let d_oracle = @sympy_stats.stats_eval_str(
     "(lambda U, x: density(U)(x))(stats.Uniform('U', 0, 2), x)",
   )
   assert_true(expr_equiv_to(d, d_oracle))
 
   let c = cdf(u, x)
-  let c_oracle = try! @sympy_stats.stats_eval_str(
+  let c_oracle = @sympy_stats.stats_eval_str(
     "(lambda U, x: cdf(U)(x))(stats.Uniform('U', 0, 2), x)",
   )
   assert_true(expr_equiv_to(c, c_oracle))
@@ -444,7 +440,7 @@ test "compat uniform parity density cdf moments quantile" {
   let v = variance(su, rvs=[u])
   assert_true(expr_equiv_to(v, "1/3"))
 
-  let q = quantile(su, try! @symcore.rational_from_ints(1, 4), rvs=[u])
+  let q = quantile(su, @symcore.rational_from_ints(1, 4), rvs=[u])
   assert_true(expr_equiv_to(q, "1/2"))
 }
 
@@ -488,18 +484,18 @@ test "compat distribution constructors symbolic fallback" {
 
 ///|
 test "compat mgf and characteristic function parity" {
-  let b = binomial("B", @symcore.int(5), try! @symcore.rational_from_ints(1, 3))
+  let b = binomial("B", @symcore.int(5), @symcore.rational_from_ints(1, 3))
   let sb = @symcore.symbol("B")
   let t = @symcore.symbol("t")
 
   let mgf = moment_generating_function(sb, t, rvs=[b])
-  let mgf_oracle = try! @sympy_stats.stats_eval_str(
+  let mgf_oracle = @sympy_stats.stats_eval_str(
     "(lambda B, t: moment_generating_function(B)(t))(Binomial('B', 5, Rational(1, 3)), t)",
   )
   assert_true(expr_equiv_to(mgf, mgf_oracle))
 
   let cf = characteristic_function(sb, t, rvs=[b])
-  let cf_oracle = try! @sympy_stats.stats_eval_str(
+  let cf_oracle = @sympy_stats.stats_eval_str(
     "(lambda B, t: characteristic_function(B)(t))(Binomial('B', 5, Rational(1, 3)), t)",
   )
   assert_true(expr_equiv_to(cf, cf_oracle))
@@ -511,7 +507,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let sb = @symcore.symbol("B")
   let t = @symcore.symbol("t")
   let b_mgf = moment_generating_function(sb, t, rvs=[b])
-  let b_mgf_oracle = try! @sympy_stats.stats_eval_str(
+  let b_mgf_oracle = @sympy_stats.stats_eval_str(
     "(lambda B, t: moment_generating_function(B)(t))(stats.Beta('B', 2, 5), t)",
   )
   assert_true(expr_equiv_to(b_mgf, b_mgf_oracle))
@@ -519,7 +515,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
     !@symprint.to_string(b_mgf).contains("moment_generating_function("),
   )
   let b_cf = characteristic_function(sb, t, rvs=[b])
-  let b_cf_oracle = try! @sympy_stats.stats_eval_str(
+  let b_cf_oracle = @sympy_stats.stats_eval_str(
     "(lambda B, t: characteristic_function(B)(t))(stats.Beta('B', 2, 5), t)",
   )
   assert_true(expr_equiv_to(b_cf, b_cf_oracle))
@@ -528,7 +524,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let ccf = cauchy("CCF", params=[@symcore.int(0), @symcore.int(2)])
   let sccf = @symcore.symbol("CCF")
   let ccf_expr = characteristic_function(sccf, t, rvs=[ccf])
-  let ccf_oracle = try! @sympy_stats.stats_eval_str(
+  let ccf_oracle = @sympy_stats.stats_eval_str(
     "(lambda CCF, t: characteristic_function(CCF)(t))(stats.Cauchy('CCF', 0, 2), t)",
   )
   assert_true(expr_equiv_to(ccf_expr, ccf_oracle))
@@ -536,7 +532,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
 
   let l = logistic("L", params=[@symcore.int(0), @symcore.int(2)])
   let sl = @symcore.symbol("L")
-  let q = quantile(sl, try! @symcore.rational_from_ints(1, 4), rvs=[l])
+  let q = quantile(sl, @symcore.rational_from_ints(1, 4), rvs=[l])
   assert_true(expr_equiv_to(q, "-2*log(3)"))
   assert_true(!@symprint.to_string(q).contains("quantile("))
 
@@ -545,7 +541,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let aq_d = density(aq, @symcore.int(2))
   assert_true(expr_equiv_to(aq_d, "sqrt(3)/(3*pi)"))
   let aq_c = cdf(aq, x)
-  let aq_c_oracle = try! @sympy_stats.stats_eval_str(
+  let aq_c_oracle = @sympy_stats.stats_eval_str(
     "(lambda Aq, x: cdf(Aq)(x))(stats.Arcsin('Aq', 1, 5), x)",
   )
   assert_true(expr_equiv_to(aq_c, aq_c_oracle))
@@ -554,7 +550,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(aq_m, "3"))
   let aq_v = variance(saq, rvs=[aq])
   assert_true(expr_equiv_to(aq_v, "2"))
-  let aq_q = quantile(saq, try! @symcore.rational_from_ints(1, 4), rvs=[aq])
+  let aq_q = quantile(saq, @symcore.rational_from_ints(1, 4), rvs=[aq])
   assert_true(expr_equiv_to(aq_q, "3 - sqrt(2)"))
   assert_true(!@symprint.to_string(aq_q).contains("ArcsinQuantile("))
   let aq_e = entropy(saq, rvs=[aq])
@@ -567,25 +563,25 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(kq_m, "3*beta(3/2, 3)"))
   let kq_v = variance(skq, rvs=[kq])
   assert_true(expr_equiv_to(kq_v, "3*beta(2, 3) - 9*beta(3/2, 3)**2"))
-  let kq_q = quantile(skq, try! @symcore.rational_from_ints(1, 4), rvs=[kq])
+  let kq_q = quantile(skq, @symcore.rational_from_ints(1, 4), rvs=[kq])
   assert_true(expr_equiv_to(kq_q, "sqrt(1 - (3/4)**(1/3))"))
   assert_true(!@symprint.to_string(kq_q).contains("KumaraswamyQuantile("))
 
   let bq = beta("Bq", params=[@symcore.int(2), @symcore.int(5)])
   let sbq = @symcore.symbol("Bq")
-  let bq_expr = quantile(sbq, try! @symcore.rational_from_ints(1, 4), rvs=[bq])
+  let bq_expr = quantile(sbq, @symcore.rational_from_ints(1, 4), rvs=[bq])
   assert_true(expr_equiv_to(bq_expr, "betaincinv(2, 5, 1/4)"))
   assert_true(!@symprint.to_string(bq_expr).contains("BetaQuantile("))
 
   let ch = chi("Ch", params=[@symcore.int(5)])
   let ch_cdf = cdf(ch, @symcore.int(2))
-  let ch_cdf_oracle = try! @sympy_stats.stats_eval_str(
+  let ch_cdf_oracle = @sympy_stats.stats_eval_str(
     "(lambda Ch: cdf(Ch)(2))(stats.Chi('Ch', 5))",
   )
   assert_true(expr_equiv_to(ch_cdf, ch_cdf_oracle))
   assert_true(!@symprint.to_string(ch_cdf).contains("ChiCDF("))
   let sch = @symcore.symbol("Ch")
-  let ch_q = quantile(sch, try! @symcore.rational_from_ints(1, 4), rvs=[ch])
+  let ch_q = quantile(sch, @symcore.rational_from_ints(1, 4), rvs=[ch])
   assert_true(expr_equiv_to(ch_q, "sqrt(2*gammaincinv(5/2, 1/4))"))
   assert_true(!@symprint.to_string(ch_q).contains("ChiQuantile("))
   let ch_e = entropy(sch, rvs=[ch])
@@ -596,7 +592,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
 
   let csq = chi_squared("Csq", params=[@symcore.int(5)])
   let scsq = @symcore.symbol("Csq")
-  let csq_q = quantile(scsq, try! @symcore.rational_from_ints(1, 4), rvs=[csq])
+  let csq_q = quantile(scsq, @symcore.rational_from_ints(1, 4), rvs=[csq])
   assert_true(expr_equiv_to(csq_q, "2*gammaincinv(5/2, 1/4)"))
   assert_true(!@symprint.to_string(csq_q).contains("ChiSquaredQuantile("))
   let csq_e = entropy(scsq, rvs=[csq])
@@ -607,7 +603,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
 
   let erq = erlang("Erq", params=[@symcore.int(3), @symcore.int(2)])
   let serq = @symcore.symbol("Erq")
-  let erq_q = quantile(serq, try! @symcore.rational_from_ints(1, 4), rvs=[erq])
+  let erq_q = quantile(serq, @symcore.rational_from_ints(1, 4), rvs=[erq])
   assert_true(expr_equiv_to(erq_q, "gammaincinv(3, 1/4)/2"))
   assert_true(!@symprint.to_string(erq_q).contains("ErlangQuantile("))
   let erq_e = entropy(serq, rvs=[erq])
@@ -617,7 +613,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let u = uniform("Ue", params=[@symcore.int(1), @symcore.int(3)])
   let su = @symcore.symbol("Ue")
   let ue = entropy(su, rvs=[u])
-  let ue_oracle = try! @sympy_stats.stats_eval_str(
+  let ue_oracle = @sympy_stats.stats_eval_str(
     "(lambda Ue: entropy(Ue))(stats.Uniform('Ue', 1, 3))",
   )
   assert_true(expr_equiv_to(ue, ue_oracle))
@@ -625,31 +621,31 @@ test "compat symbolic mgf cf quantile entropy parity" {
 
   let gwe = gumbel("Gwe", params=[@symcore.int(2), @symcore.int(0)])
   let sgwe = @symcore.symbol("Gwe")
-  let gwe_q = quantile(sgwe, try! @symcore.rational_from_ints(1, 4), rvs=[gwe])
+  let gwe_q = quantile(sgwe, @symcore.rational_from_ints(1, 4), rvs=[gwe])
   assert_true(expr_equiv_to(gwe_q, "-2*log(log(4))"))
   assert_true(!@symprint.to_string(gwe_q).contains("quantile("))
 
   let moq = moyal("Moq", params=[@symcore.int(0), @symcore.int(1)])
   let smoq = @symcore.symbol("Moq")
-  let moq_c = cdf(moq, try! @symcore.rational_from_ints(1, 2))
-  let moq_c_oracle = try! @sympy_stats.stats_eval_str(
+  let moq_c = cdf(moq, @symcore.rational_from_ints(1, 2))
+  let moq_c_oracle = @sympy_stats.stats_eval_str(
     "(lambda Moq: cdf(Moq)(Rational(1, 2)))(stats.Moyal('Moq', 0, 1))",
   )
   assert_true(expr_equiv_to(moq_c, moq_c_oracle))
   assert_true(!@symprint.to_string(moq_c).contains("MoyalCDF("))
-  let moq_q = quantile(smoq, try! @symcore.rational_from_ints(1, 4), rvs=[moq])
+  let moq_q = quantile(smoq, @symcore.rational_from_ints(1, 4), rvs=[moq])
   assert_true(expr_equiv_to(moq_q, "-2*log(sqrt(2)*erfcinv(1/4))"))
   assert_true(!@symprint.to_string(moq_q).contains("MoyalQuantile("))
 
   let goq = gompertz("Goq", params=[@symcore.int(2), @symcore.int(3)])
   let sgoq = @symcore.symbol("Goq")
-  let goq_q = quantile(sgoq, try! @symcore.rational_from_ints(1, 4), rvs=[goq])
+  let goq_q = quantile(sgoq, @symcore.rational_from_ints(1, 4), rvs=[goq])
   assert_true(expr_equiv_to(goq_q, "log(1 - log(3/4)/3)/2"))
   assert_true(!@symprint.to_string(goq_q).contains("GompertzQuantile("))
 
   let laq = laplace("Laq", params=[@symcore.int(0), @symcore.int(2)])
   let slaq = @symcore.symbol("Laq")
-  let laq_q = quantile(slaq, try! @symcore.rational_from_ints(1, 4), rvs=[laq])
+  let laq_q = quantile(slaq, @symcore.rational_from_ints(1, 4), rvs=[laq])
   assert_true(expr_equiv_to(laq_q, "-2*log(2)"))
 
   let tq = triangular("Tq", params=[
@@ -658,7 +654,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
     @symcore.int(1),
   ])
   let stq = @symcore.symbol("Tq")
-  let tq_q = quantile(stq, try! @symcore.rational_from_ints(1, 4), rvs=[tq])
+  let tq_q = quantile(stq, @symcore.rational_from_ints(1, 4), rvs=[tq])
   assert_true(expr_equiv_to(tq_q, "sqrt(2)/2"))
 
   let pq = power_function("Pq", params=[
@@ -667,7 +663,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
     @symcore.int(3),
   ])
   let spq = @symcore.symbol("Pq")
-  let pq_q = quantile(spq, try! @symcore.rational_from_ints(1, 4), rvs=[pq])
+  let pq_q = quantile(spq, @symcore.rational_from_ints(1, 4), rvs=[pq])
   assert_true(expr_equiv_to(pq_q, "3/2"))
 
   let trq = trapezoidal("Trq", params=[
@@ -677,19 +673,17 @@ test "compat symbolic mgf cf quantile entropy parity" {
     @symcore.int(4),
   ])
   let strq = @symcore.symbol("Trq")
-  let trq_q = quantile(strq, try! @symcore.rational_from_ints(1, 4), rvs=[trq])
+  let trq_q = quantile(strq, @symcore.rational_from_ints(1, 4), rvs=[trq])
   assert_true(expr_equiv_to(trq_q, "9/8"))
 
   let stq2 = student_t("Stq", params=[@symcore.int(5)])
   let sstq2 = @symcore.symbol("Stq")
-  let stq2_q = quantile(sstq2, try! @symcore.rational_from_ints(1, 2), rvs=[
-    stq2,
-  ])
+  let stq2_q = quantile(sstq2, @symcore.rational_from_ints(1, 2), rvs=[stq2])
   assert_true(expr_equiv_to(stq2_q, "0"))
 
   let vmq = von_mises("Vmq", params=[@symcore.int(0), @symcore.int(2)])
   let svmq = @symcore.symbol("Vmq")
-  let vmq_q = quantile(svmq, try! @symcore.rational_from_ints(1, 4), rvs=[vmq])
+  let vmq_q = quantile(svmq, @symcore.rational_from_ints(1, 4), rvs=[vmq])
   let vmq_s = @symprint.to_string(vmq_q)
   assert_true(vmq_s.contains("ConditionSet"))
   assert_true(vmq_s.contains("Integral("))
@@ -699,19 +693,19 @@ test "compat symbolic mgf cf quantile entropy parity" {
 
   let rcq = reciprocal("Rcq", params=[@symcore.int(1), @symcore.int(3)])
   let srcq = @symcore.symbol("Rcq")
-  let rcq_q = quantile(srcq, try! @symcore.rational_from_ints(1, 2), rvs=[rcq])
+  let rcq_q = quantile(srcq, @symcore.rational_from_ints(1, 2), rvs=[rcq])
   assert_true(expr_equiv_to(rcq_q, "sqrt(3)"))
   assert_true(!@symprint.to_string(rcq_q).contains("ReciprocalQuantile("))
 
   let lvq = levy("Lvq", params=[@symcore.int(0), @symcore.int(1)])
   let slvq = @symcore.symbol("Lvq")
-  let lvq_q = quantile(slvq, try! @symcore.rational_from_ints(1, 4), rvs=[lvq])
+  let lvq_q = quantile(slvq, @symcore.rational_from_ints(1, 4), rvs=[lvq])
   assert_true(expr_equiv_to(lvq_q, "1/(2*erfcinv(1/4)**2)"))
   assert_true(!@symprint.to_string(lvq_q).contains("LevyQuantile("))
 
   let lmq = lomax("Lmq", params=[@symcore.int(2), @symcore.int(3)])
   let slmq = @symcore.symbol("Lmq")
-  let lmq_q = quantile(slmq, try! @symcore.rational_from_ints(1, 4), rvs=[lmq])
+  let lmq_q = quantile(slmq, @symcore.rational_from_ints(1, 4), rvs=[lmq])
   assert_true(expr_equiv_to(lmq_q, "-3 + 2*sqrt(3)"))
   assert_true(!@symprint.to_string(lmq_q).contains("LomaxQuantile("))
 
@@ -721,7 +715,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
     @symcore.int(9),
   ])
   let sbpq = @symcore.symbol("Bpq")
-  let bpq_q = quantile(sbpq, try! @symcore.rational_from_ints(1, 4), rvs=[bpq])
+  let bpq_q = quantile(sbpq, @symcore.rational_from_ints(1, 4), rvs=[bpq])
   // SymPy returns a singleton set for bounded Pareto quantile.
   assert_true(expr_equiv_to(bpq_q, "9*sqrt(7)/7"))
   assert_true(!@symprint.to_string(bpq_q).contains("BoundedParetoQuantile("))
@@ -736,7 +730,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let rwe = rayleigh("Rwe", params=[@symcore.int(2)])
   let srwe = @symcore.symbol("Rwe")
   let rwe_e = entropy(srwe, rvs=[rwe])
-  let rwe_oracle = try! @sympy_stats.stats_eval_str(
+  let rwe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Rwe: entropy(Rwe))(stats.Rayleigh('Rwe', 2))",
   )
   assert_true(expr_equiv_to(rwe_e, rwe_oracle))
@@ -744,7 +738,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let wwe = weibull("Wwe", params=[@symcore.int(3), @symcore.int(5)])
   let swwe = @symcore.symbol("Wwe")
   let wwe_e = entropy(swwe, rvs=[wwe])
-  let wwe_oracle = try! @sympy_stats.stats_eval_str(
+  let wwe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Wwe: entropy(Wwe))(stats.Weibull('Wwe', 3, 5))",
   )
   assert_true(expr_equiv_to(wwe_e, wwe_oracle))
@@ -761,7 +755,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   ])
   let stwe_twe = @symcore.symbol("Twe")
   let twe_e = entropy(stwe_twe, rvs=[twe])
-  let twe_oracle = try! @sympy_stats.stats_eval_str(
+  let twe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Twe: entropy(Twe))(stats.Triangular('Twe', 0, 2, 1))",
   )
   assert_true(expr_equiv_to(twe_e, twe_oracle))
@@ -773,7 +767,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   ])
   let spwe = @symcore.symbol("Pwe")
   let pwe_e = entropy(spwe, rvs=[pwe])
-  let pwe_oracle = try! @sympy_stats.stats_eval_str(
+  let pwe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Pwe: entropy(Pwe))(stats.PowerFunction('Pwe', 2, 0, 3))",
   )
   assert_true(expr_equiv_to(pwe_e, pwe_oracle))
@@ -803,7 +797,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
     @symcore.int(4),
   ])
   let strwe = @symcore.symbol("Trwe")
-  let trwe_cdf = cdf(trwe, try! @symcore.rational_from_ints(3, 2))
+  let trwe_cdf = cdf(trwe, @symcore.rational_from_ints(3, 2))
   assert_true(expr_equiv_to(trwe_cdf, "2/5"))
   assert_true(!@symprint.to_string(trwe_cdf).contains("TrapezoidalCDF("))
   let trwe_m = expectation(strwe, rvs=[trwe])
@@ -822,7 +816,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let goe = gompertz("Goe", params=[@symcore.int(2), @symcore.int(3)])
   let sgoe = @symcore.symbol("Goe")
   let goe_e = entropy(sgoe, rvs=[goe])
-  let goe_oracle = try! @sympy_stats.stats_eval_str(
+  let goe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Goe: entropy(Goe))(stats.Gompertz('Goe', 2, 3))",
   )
   assert_true(expr_equiv_to(goe_e, goe_oracle))
@@ -831,7 +825,7 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let lve = levy("Lve", params=[@symcore.int(0), @symcore.int(2)])
   let slve = @symcore.symbol("Lve")
   let lve_e = entropy(slve, rvs=[lve])
-  let lve_oracle = try! @sympy_stats.stats_eval_str(
+  let lve_oracle = @sympy_stats.stats_eval_str(
     "(lambda Lve: entropy(Lve))(stats.Levy('Lve', 0, 2))",
   )
   assert_true(expr_equiv_to(lve_e, lve_oracle))
@@ -840,14 +834,14 @@ test "compat symbolic mgf cf quantile entropy parity" {
   let lmwe = lomax("Lmwe", params=[@symcore.int(2), @symcore.int(3)])
   let slmwe = @symcore.symbol("Lmwe")
   let lmwe_e = entropy(slmwe, rvs=[lmwe])
-  let lmwe_oracle = try! @sympy_stats.stats_eval_str(
+  let lmwe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Lmwe: entropy(Lmwe))(stats.Lomax('Lmwe', 2, 3))",
   )
   assert_true(expr_equiv_to(lmwe_e, lmwe_oracle))
   assert_true(!@symprint.to_string(lmwe_e).contains("LomaxEntropy("))
 
   let bpe = entropy(sbpq, rvs=[bpq])
-  let bpe_oracle = try! @sympy_stats.stats_eval_str(
+  let bpe_oracle = @sympy_stats.stats_eval_str(
     "(lambda Bpq: entropy(Bpq))(stats.BoundedPareto('Bpq', 2, 3, 9))",
   )
   assert_true(expr_equiv_to(bpe, bpe_oracle))
@@ -863,12 +857,12 @@ test "compat generated discrete parity batch" {
   ])
   let sh = @symcore.symbol("H")
   let h_pmf = density(h, @symcore.int(3))
-  let h_pmf_oracle = try! @sympy_stats.stats_eval_str(
+  let h_pmf_oracle = @sympy_stats.stats_eval_str(
     "(lambda H: density(H)(3))(stats.Hypergeometric('H', 20, 7, 12))",
   )
   assert_true(expr_equiv_to(h_pmf, h_pmf_oracle))
   let h_cdf = probability(le(sh, @symcore.int(3)), rv=h)
-  let h_cdf_oracle = try! @sympy_stats.stats_eval_str(
+  let h_cdf_oracle = @sympy_stats.stats_eval_str(
     "(lambda H: P(H <= 3))(stats.Hypergeometric('H', 20, 7, 12))",
   )
   assert_true(expr_equiv_to(h_cdf, h_cdf_oracle))
@@ -877,34 +871,34 @@ test "compat generated discrete parity batch" {
   let h_var = variance(sh, rvs=[h])
   assert_true(expr_equiv_to(h_var, "546/475"))
 
-  let f = flory_schulz("F", params=[try! @symcore.rational_from_ints(1, 3)])
+  let f = flory_schulz("F", params=[@symcore.rational_from_ints(1, 3)])
   let sf = @symcore.symbol("F")
   let t = @symcore.symbol("t")
   let f_mean = expectation(sf, rvs=[f])
-  let f_mean_oracle = try! @sympy_stats.stats_eval_str(
+  let f_mean_oracle = @sympy_stats.stats_eval_str(
     "(lambda F: E(F))(stats.FlorySchulz('F', Rational(1, 3)))",
   )
   assert_true(expr_equiv_to(f_mean, f_mean_oracle))
   let f_var = variance(sf, rvs=[f])
-  let f_var_oracle = try! @sympy_stats.stats_eval_str(
+  let f_var_oracle = @sympy_stats.stats_eval_str(
     "(lambda F: variance(F))(stats.FlorySchulz('F', Rational(1, 3)))",
   )
   assert_true(expr_equiv_to(f_var, f_var_oracle))
   let f_mgf = moment_generating_function(sf, t, rvs=[f])
-  let f_mgf_oracle = try! @sympy_stats.stats_eval_str(
+  let f_mgf_oracle = @sympy_stats.stats_eval_str(
     "(lambda F, t: moment_generating_function(F)(t))(stats.FlorySchulz('F', Rational(1, 3)), t)",
   )
   assert_true(expr_equiv_to(f_mgf, f_mgf_oracle))
 
-  let l = logarithmic("Lx", params=[try! @symcore.rational_from_ints(1, 3)])
+  let l = logarithmic("Lx", params=[@symcore.rational_from_ints(1, 3)])
   let sl = @symcore.symbol("Lx")
   let l_pmf = density(l, @symcore.int(2))
-  let l_pmf_oracle = try! @sympy_stats.stats_eval_str(
+  let l_pmf_oracle = @sympy_stats.stats_eval_str(
     "(lambda Lx: density(Lx)(2))(stats.Logarithmic('Lx', Rational(1, 3)))",
   )
   assert_true(expr_equiv_to(l_pmf, l_pmf_oracle))
   let l_mean = expectation(sl, rvs=[l])
-  let l_mean_oracle = try! @sympy_stats.stats_eval_str(
+  let l_mean_oracle = @sympy_stats.stats_eval_str(
     "(lambda Lx: E(Lx))(stats.Logarithmic('Lx', Rational(1, 3)))",
   )
   assert_true(expr_equiv_to(l_mean, l_mean_oracle))
@@ -916,7 +910,7 @@ test "compat generated discrete parity batch" {
     expr_equiv_to(s_pmf, "sqrt(2)*sqrt(3)**-1*exp(-5)*besseli(1, 2*sqrt(6))"),
   )
   let s_cf = characteristic_function(ssx, t, rvs=[s])
-  let s_cf_oracle = try! @sympy_stats.stats_eval_str(
+  let s_cf_oracle = @sympy_stats.stats_eval_str(
     "(lambda Sx, t: characteristic_function(Sx)(t))(stats.Skellam('Sx', 2, 3), t)",
   )
   assert_true(expr_equiv_to(s_cf, s_cf_oracle))
@@ -924,12 +918,12 @@ test "compat generated discrete parity batch" {
   let y = yule_simon("Yx", params=[@symcore.int(3)])
   let sy = @symcore.symbol("Yx")
   let y_pmf = density(y, @symcore.int(2))
-  let y_pmf_oracle = try! @sympy_stats.stats_eval_str(
+  let y_pmf_oracle = @sympy_stats.stats_eval_str(
     "(lambda Yx: density(Yx)(2))(stats.YuleSimon('Yx', 3))",
   )
   assert_true(expr_equiv_to(y_pmf, y_pmf_oracle))
   let y_mean = expectation(sy, rvs=[y])
-  let y_mean_oracle = try! @sympy_stats.stats_eval_str(
+  let y_mean_oracle = @sympy_stats.stats_eval_str(
     "(lambda Yx: E(Yx))(stats.YuleSimon('Yx', 3))",
   )
   assert_true(expr_equiv_to(y_mean, y_mean_oracle))
@@ -937,10 +931,10 @@ test "compat generated discrete parity batch" {
 
 ///|
 test "compat density parity for nine residual families" {
-  let half = try! @symcore.rational_from_ints(1, 2)
-  let third = try! @symcore.rational_from_ints(1, 3)
-  let quarter = try! @symcore.rational_from_ints(1, 4)
-  let fifth = try! @symcore.rational_from_ints(1, 5)
+  let half = @symcore.rational_from_ints(1, 2)
+  let third = @symcore.rational_from_ints(1, 3)
+  let quarter = @symcore.rational_from_ints(1, 4)
+  let fifth = @symcore.rational_from_ints(1, 5)
 
   let bnc = beta_noncentral("BNC", params=[
     @symcore.int(2),
@@ -948,15 +942,15 @@ test "compat density parity for nine residual families" {
     @symcore.int(4),
   ])
   let bnc_d = density(bnc, half)
-  let bnc_oracle = try! @sympy_stats.stats_eval_str(
+  let bnc_oracle = @sympy_stats.stats_eval_str(
     "(lambda BNC: density(BNC)(Rational(1, 2)))(stats.BetaNoncentral('BNC', 2, 3, 4))",
   )
   assert_true(expr_equiv_to(bnc_d, bnc_oracle))
   assert_true(!@symprint.to_string(bnc_d).contains("BetaNoncentralDensity("))
 
   let us = uniform_sum("US", params=[@symcore.int(3)])
-  let us_d = density(us, try! @symcore.rational_from_ints(3, 2))
-  let us_oracle = try! @sympy_stats.stats_eval_str(
+  let us_d = density(us, @symcore.rational_from_ints(3, 2))
+  let us_oracle = @sympy_stats.stats_eval_str(
     "(lambda US: density(US)(Rational(3, 2)))(stats.UniformSum('US', 3))",
   )
   assert_true(expr_equiv_to(us_d, us_oracle))
@@ -964,7 +958,7 @@ test "compat density parity for nine residual families" {
 
   let he = hermite("HE", params=[@symcore.int(2), @symcore.int(3)])
   let he_d = density(he, @symcore.int(4))
-  let he_oracle = try! @sympy_stats.stats_eval_str(
+  let he_oracle = @sympy_stats.stats_eval_str(
     "(lambda HE: density(HE)(4))(stats.Hermite('HE', 2, 3))",
   )
   assert_true(expr_equiv_to(he_d, he_oracle))
@@ -972,7 +966,7 @@ test "compat density parity for nine residual families" {
 
   let iso = ideal_soliton("ISO", params=[@symcore.int(6)])
   let iso_d = density(iso, @symcore.int(2))
-  let iso_oracle = try! @sympy_stats.stats_eval_str(
+  let iso_oracle = @sympy_stats.stats_eval_str(
     "(lambda ISO: density(ISO)(2))(stats.IdealSoliton('ISO', 6))",
   )
   assert_true(expr_equiv_to(iso_d, iso_oracle))
@@ -984,22 +978,22 @@ test "compat density parity for nine residual families" {
     fifth,
   ])
   let rso_d = density(rso, @symcore.int(2))
-  let rso_oracle = try! @sympy_stats.stats_eval_str(
+  let rso_oracle = @sympy_stats.stats_eval_str(
     "(lambda RSO: density(RSO)(2))(stats.RobustSoliton('RSO', 6, 1, Rational(1, 5)))",
   )
-  let rso_num_close = try! @sympy_stats.stats_eval_str(
+  let rso_num_close = @sympy_stats.stats_eval_str(
     "abs(sympy.N(\{@symprint.to_string(rso_d)}, 50) - sympy.N(\{rso_oracle}, 50)) < 1e-15",
   )
   assert_eq(rso_num_close, "True")
   assert_true(!@symprint.to_string(rso_d).contains("RobustSolitonPMF("))
 
-  let two_thirds = try! @symcore.rational_from_ints(2, 3)
+  let two_thirds = @symcore.rational_from_ints(2, 3)
   let mn = multinomial("MN", params=[@symcore.int(3), third, two_thirds])
   let mn_d = density(
     mn,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let mn_oracle = try! @sympy_stats.stats_eval_str(
+  let mn_oracle = @sympy_stats.stats_eval_str(
     "(lambda MN: density(MN)(1, 2))(stats.Multinomial('MN', 3, Rational(1, 3), Rational(2, 3)))",
   )
   assert_true(expr_equiv_to(mn_d, mn_oracle))
@@ -1010,7 +1004,7 @@ test "compat density parity for nine residual families" {
     nm,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let nm_oracle = try! @sympy_stats.stats_eval_str(
+  let nm_oracle = @sympy_stats.stats_eval_str(
     "(lambda NM: density(NM)(1, 2))(stats.NegativeMultinomial('NM', 2, Rational(1, 4), Rational(1, 3)))",
   )
   assert_true(expr_equiv_to(nm_d, nm_oracle))
@@ -1038,22 +1032,22 @@ test "compat weibull parity ordering" {
   let x = @symcore.symbol("x")
   let sw = @symcore.symbol("W0")
   let d = density(w, x)
-  let d_oracle = try! @sympy_stats.stats_eval_str(
+  let d_oracle = @sympy_stats.stats_eval_str(
     "(lambda W0, x: Piecewise((density(W0)(x), Ge(x, 0)), (0, True)))(stats.Weibull('W0', 3, 5), x)",
   )
   assert_true(expr_equiv_to(d, d_oracle))
   let c = cdf(w, x)
-  let c_oracle = try! @sympy_stats.stats_eval_str(
+  let c_oracle = @sympy_stats.stats_eval_str(
     "(lambda W0, x: cdf(W0)(x))(stats.Weibull('W0', 3, 5), x)",
   )
   assert_true(expr_equiv_to(c, c_oracle))
   let m = expectation(sw, rvs=[w])
-  let m_oracle = try! @sympy_stats.stats_eval_str(
+  let m_oracle = @sympy_stats.stats_eval_str(
     "(lambda W0: E(W0))(stats.Weibull('W0', 3, 5))",
   )
   assert_true(expr_equiv_to(m, m_oracle))
   let v = variance(sw, rvs=[w])
-  let v_oracle = try! @sympy_stats.stats_eval_str(
+  let v_oracle = @sympy_stats.stats_eval_str(
     "(lambda W0: variance(W0))(stats.Weibull('W0', 3, 5))",
   )
   assert_true(expr_equiv_to(v, v_oracle))
@@ -1063,7 +1057,7 @@ test "compat weibull parity ordering" {
 test "compat special constructors keep concrete behavior" {
   let g = gamma("G", @symcore.int(3), @symcore.int(2))
   let ge = expectation(@symcore.symbol("G"), rvs=[g])
-  assert_true(try! @sympy_stats.stats_expr_equiv(@symprint.to_string(ge), "6"))
+  assert_true(@sympy_stats.stats_expr_equiv(@symprint.to_string(ge), "6"))
   let w = wishart("W", @symcore.int(4), @symcore.symbol("Sigma"))
   let wd = matrix_density(w, @symcore.symbol("X"))
   match wd {
@@ -1078,10 +1072,10 @@ test "compat symbolic families and rademacher parity" {
   let sr = @symcore.symbol("R")
   let re = expectation(sr, rvs=[r])
   let rv = variance(sr, rvs=[r])
-  let re_oracle = try! @sympy_stats.stats_eval_str(
+  let re_oracle = @sympy_stats.stats_eval_str(
     "(lambda R: E(R))(stats.Rayleigh('R', 2))",
   )
-  let rv_oracle = try! @sympy_stats.stats_eval_str(
+  let rv_oracle = @sympy_stats.stats_eval_str(
     "(lambda R: variance(R))(stats.Rayleigh('R', 2))",
   )
   assert_true(expr_equiv_to(re, re_oracle))
@@ -1114,12 +1108,12 @@ test "compat non-fallback symbolic families" {
     @symcore.int(3),
   ])
   let bb_pmf = density(bb, @symcore.int(2))
-  let bb_pmf_oracle = try! @sympy_stats.stats_eval_str(
+  let bb_pmf_oracle = @sympy_stats.stats_eval_str(
     "(lambda BB: density(BB)(2))(stats.BetaBinomial('BB', 10, 2, 3))",
   )
   assert_true(expr_equiv_to(bb_pmf, bb_pmf_oracle))
   let bb_cdf = cdf(bb, @symcore.int(2))
-  let bb_cdf_oracle = try! @sympy_stats.stats_eval_str(
+  let bb_cdf_oracle = @sympy_stats.stats_eval_str(
     "(lambda BB: P(BB <= 2))(stats.BetaBinomial('BB', 10, 2, 3))",
   )
   assert_true(expr_equiv_to(bb_cdf, bb_cdf_oracle))
@@ -1149,11 +1143,11 @@ test "compat non-fallback symbolic families" {
   let d_density = density(
     d,
     @symcore.function("Tuple", [
-      try! @symcore.rational_from_ints(1, 3),
-      try! @symcore.rational_from_ints(2, 3),
+      @symcore.rational_from_ints(1, 3),
+      @symcore.rational_from_ints(2, 3),
     ]),
   )
-  let d_density_oracle = try! @sympy_stats.stats_eval_str(
+  let d_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda D: density(D)(Rational(1, 3), Rational(2, 3)))(stats.Dirichlet('D', [2, 3]))",
   )
   assert_true(expr_equiv_to(d_density, d_density_oracle))
@@ -1174,11 +1168,11 @@ test "compat non-fallback symbolic families" {
   let mb_density = density(
     mb,
     @symcore.function("Tuple", [
-      try! @symcore.rational_from_ints(1, 3),
-      try! @symcore.rational_from_ints(2, 3),
+      @symcore.rational_from_ints(1, 3),
+      @symcore.rational_from_ints(2, 3),
     ]),
   )
-  let mb_density_oracle = try! @sympy_stats.stats_eval_str(
+  let mb_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda MB: density(MB)(Rational(1, 3), Rational(2, 3)))(stats.MultivariateBeta('MB', [2, 3]))",
   )
   assert_true(expr_equiv_to(mb_density, mb_density_oracle))
@@ -1188,8 +1182,8 @@ test "compat non-fallback symbolic families" {
 
   let mn = multinomial("MN", params=[
     @symcore.int(5),
-    try! @symcore.rational_from_ints(1, 3),
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(1, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   let smn = @symcore.symbol("MN")
   let mn_mean = expectation(smn, rvs=[mn])
@@ -1203,8 +1197,8 @@ test "compat non-fallback symbolic families" {
 
   let nm = negative_multinomial("NM", params=[
     @symcore.int(3),
-    try! @symcore.rational_from_ints(1, 5),
-    try! @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 5),
+    @symcore.rational_from_ints(1, 10),
   ])
   let snm = @symcore.symbol("NM")
   let nm_mean = expectation(snm, rvs=[nm])
@@ -1254,7 +1248,7 @@ test "compat non-fallback symbolic families" {
     mvn,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let mvn_density_oracle = try! @sympy_stats.stats_eval_str(
+  let mvn_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda MVN: density(MVN)(1, 2))(stats.MultivariateNormal('MVN', [1, 2], [[2, 1], [1, 3]]))",
   )
   assert_true(expr_equiv_to(mvn_density, mvn_density_oracle))
@@ -1274,7 +1268,7 @@ test "compat non-fallback symbolic families" {
     mvt,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let mvt_density_oracle = try! @sympy_stats.stats_eval_str(
+  let mvt_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda MVT: density(MVT)(1, 2))(stats.MultivariateT('MVT', [1, 2], [[2, 1], [1, 3]], 5))",
   )
   assert_true(expr_equiv_to(mvt_density, mvt_density_oracle))
@@ -1308,7 +1302,7 @@ test "compat non-fallback symbolic families" {
     mvl,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let mvl_density_oracle = try! @sympy_stats.stats_eval_str(
+  let mvl_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda MVL: density(MVL)(1, 2))(stats.MultivariateLaplace('MVL', [1, 2], [[2, 1], [1, 3]]))",
   )
   assert_true(expr_equiv_to(mvl_density, mvl_density_oracle))
@@ -1333,7 +1327,7 @@ test "compat non-fallback symbolic families" {
     ng,
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
-  let ng_density_oracle = try! @sympy_stats.stats_eval_str(
+  let ng_density_oracle = @sympy_stats.stats_eval_str(
     "(lambda NG: density(NG)(1, 2))(stats.NormalGamma('NG', 0, 2, 3, 4))",
   )
   assert_true(expr_equiv_to(ng_density, ng_density_oracle))
@@ -1372,7 +1366,7 @@ test "compat non-fallback symbolic families" {
 
   let tau = @symcore.symbol("tau")
   let z = @symcore.symbol("z")
-  let q1 = try! @symcore.rational_from_ints(1, 4)
+  let q1 = @symcore.rational_from_ints(1, 4)
   let sp = stochastic_process("SPX")
   let dtsp = discrete_time_stochastic_process("DTSPX")
   let spx = @symcore.function("SPX", [tau])
@@ -1505,7 +1499,7 @@ test "compat non-fallback symbolic families" {
   ])
   match matrix_density(gue, xmat) {
     Some(v) => {
-      let ok = try! @sympy_stats.stats_expr_equiv(
+      let ok = @sympy_stats.stats_expr_equiv(
         @symprint.to_string(v),
         "density(stats.GaussianUnitaryEnsemble('GUE', 3))(sympy.MatrixSymbol(X, 3, 3))",
       )
@@ -1524,10 +1518,10 @@ test "compat non-fallback symbolic families" {
   ])
   match matrix_density(goe, xmat2) {
     Some(v) => {
-      let ours = try! @sympy_stats.stats_eval_str(
+      let ours = @sympy_stats.stats_eval_str(
         "sympy.nsimplify(\{@symprint.to_string(v)})",
       )
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "density(stats.GaussianOrthogonalEnsemble('GOE', 2))(sympy.MatrixSymbol(X, 2, 2))",
       )
       assert_eq(ours, oracle)
@@ -1540,10 +1534,10 @@ test "compat non-fallback symbolic families" {
   let gse = gaussian_symplectic_ensemble("GSE", params=[@symcore.int(2)])
   match matrix_density(gse, xmat2) {
     Some(v) => {
-      let ours = try! @sympy_stats.stats_eval_str(
+      let ours = @sympy_stats.stats_eval_str(
         "sympy.nsimplify(\{@symprint.to_string(v)})",
       )
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "density(stats.GaussianSymplecticEnsemble('GSE', 2))(sympy.MatrixSymbol(X, 2, 2))",
       )
       assert_eq(ours, oracle)
@@ -1612,7 +1606,7 @@ test "compat non-fallback symbolic families" {
   let gue2 = gaussian_unitary_ensemble("GUE2", params=[@symcore.int(2)])
   match joint_eigen_distribution_of(gue2) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianUnitaryEnsemble('GUE2', 2)))(1, 2)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1622,7 +1616,7 @@ test "compat non-fallback symbolic families" {
   let cue2 = circular_unitary_ensemble("CUE2", params=[@symcore.int(2)])
   match joint_eigen_distribution_of(cue2) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularUnitaryEnsemble('CUE2', 2)))(0, 1)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1631,7 +1625,7 @@ test "compat non-fallback symbolic families" {
   }
   match joint_eigen_distribution_of(goe) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianOrthogonalEnsemble('GOE', 2)))(1, 2)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1640,7 +1634,7 @@ test "compat non-fallback symbolic families" {
   }
   match joint_eigen_distribution_of(gse) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(1, 2) / ((stats.joint_eigen_distribution(stats.GaussianSymplecticEnsemble('GSE', 2)))(1, 2)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1650,7 +1644,7 @@ test "compat non-fallback symbolic families" {
   let coe2 = circular_orthogonal_ensemble("COE2", params=[@symcore.int(2)])
   match joint_eigen_distribution_of(coe2) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularOrthogonalEnsemble('COE2', 2)))(0, 1)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1660,7 +1654,7 @@ test "compat non-fallback symbolic families" {
   let cse2 = circular_symplectic_ensemble("CSE2", params=[@symcore.int(2)])
   match joint_eigen_distribution_of(cse2) {
     Some(v) => {
-      let ratio = try! @sympy_stats.stats_eval_str(
+      let ratio = @sympy_stats.stats_eval_str(
         "sympy.simplify((\{@symprint.to_string(v)})(0, 1) / ((stats.joint_eigen_distribution(stats.CircularSymplecticEnsemble('CSE2', 2)))(0, 1)))",
       )
       assert_true(ratio_matches_one(ratio))
@@ -1669,10 +1663,10 @@ test "compat non-fallback symbolic families" {
   }
   match level_spacing_distribution_of(gue2) {
     Some(v) => {
-      let ours = try! @sympy_stats.stats_eval_str(
+      let ours = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
       )
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianUnitaryEnsemble('GUE2', 2)))(Rational(1, 2)))",
       )
       assert_eq(ours, oracle)
@@ -1681,10 +1675,10 @@ test "compat non-fallback symbolic families" {
   }
   match level_spacing_distribution_of(goe) {
     Some(v) => {
-      let ours = try! @sympy_stats.stats_eval_str(
+      let ours = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
       )
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianOrthogonalEnsemble('GOE', 2)))(Rational(1, 2)))",
       )
       assert_eq(ours, oracle)
@@ -1693,10 +1687,10 @@ test "compat non-fallback symbolic families" {
   }
   match level_spacing_distribution_of(gse) {
     Some(v) => {
-      let ours = try! @sympy_stats.stats_eval_str(
+      let ours = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((\{@symprint.to_string(v)})(Rational(1, 2)))",
       )
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "sympy.nsimplify((stats.level_spacing_distribution(stats.GaussianSymplecticEnsemble('GSE', 2)))(Rational(1, 2)))",
       )
       assert_eq(ours, oracle)
@@ -1736,20 +1730,20 @@ test "compat non-fallback symbolic families" {
   let lsd_direct = level_spacing_distribution("LSDD", params=[
     @symcore.function("GaussianOrthogonalEnsemble", [@symcore.int(2)]),
   ])
-  let lsd_direct_d = density(lsd_direct, try! @symcore.rational_from_ints(1, 2))
+  let lsd_direct_d = density(lsd_direct, @symcore.rational_from_ints(1, 2))
   assert_true(!@symprint.to_string(lsd_direct_d).contains("density(LSDD,"))
   match
     level_spacing_distribution_of(
       gaussian_orthogonal_ensemble("LG", params=[@symcore.int(2)]),
     ) {
     Some(lam) =>
-      match lambda_apply_local(lam, [try! @symcore.rational_from_ints(1, 2)]) {
+      match lambda_apply_local(lam, [@symcore.rational_from_ints(1, 2)]) {
         Some(expected) => assert_true(lsd_direct_d == expected)
         None => fail("failed to apply level spacing lambda")
       }
     None => fail("missing level spacing distribution")
   }
-  let lsd_direct_c = cdf(lsd_direct, try! @symcore.rational_from_ints(1, 2))
+  let lsd_direct_c = cdf(lsd_direct, @symcore.rational_from_ints(1, 2))
   assert_true(@symprint.to_string(lsd_direct_c).contains("Integral("))
   assert_true(
     !@symprint.to_string(lsd_direct_c).contains(
@@ -1757,9 +1751,7 @@ test "compat non-fallback symbolic families" {
     ),
   )
 
-  let bp = bernoulli_process("BP", params=[
-    try! @symcore.rational_from_ints(1, 3),
-  ])
+  let bp = bernoulli_process("BP", params=[@symcore.rational_from_ints(1, 3)])
   let t = @symcore.symbol("t")
   match process_mean_at(bp, t) {
     Some(v) => assert_true(expr_equiv_to(v, "1/3"))
@@ -1817,7 +1809,7 @@ test "compat non-fallback symbolic families" {
   let gp = gamma_process("GP", params=[@symcore.int(2), @symcore.int(3)])
   match process_mean_at(gp, t) {
     Some(v) => {
-      let o = try! @sympy_stats.stats_eval_str(
+      let o = @sympy_stats.stats_eval_str(
         "(lambda GP, t: E(GP(t)))(stats.GammaProcess('GP', 2, 3), t)",
       )
       assert_true(expr_equiv_to(v, o))
@@ -1826,7 +1818,7 @@ test "compat non-fallback symbolic families" {
   }
   match process_variance_at(gp, t) {
     Some(v) => {
-      let o = try! @sympy_stats.stats_eval_str(
+      let o = @sympy_stats.stats_eval_str(
         "(lambda GP, t: variance(GP(t)))(stats.GammaProcess('GP', 2, 3), t)",
       )
       assert_true(expr_equiv_to(v, o))
@@ -1867,7 +1859,7 @@ test "compat handmade and joint families concrete density paths" {
   let t = @symcore.symbol("t")
   let t1 = @symcore.symbol("t1")
   let t2 = @symcore.symbol("t2")
-  let q = try! @symcore.rational_from_ints(1, 4)
+  let q = @symcore.rational_from_ints(1, 4)
   let xh = @symcore.symbol("xh")
   let ch_pdf = @symcore.function("Lambda", [
     xh,
@@ -1883,7 +1875,7 @@ test "compat handmade and joint families concrete density paths" {
   ])
   let ch = continuous_rv("CH", params=[ch_pdf])
   let ch_d = density(ch, @symcore.int(2))
-  let ch_d_s = try! @sympy_stats.stats_eval_str(
+  let ch_d_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(ch_d)})",
   )
   assert_eq(ch_d_s, "exp(-2)")
@@ -1919,11 +1911,11 @@ test "compat handmade and joint families concrete density paths" {
     kh,
     @symcore.function("Piecewise", [
       @symcore.function("Tuple", [
-        try! @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(1, 2),
         @symcore.function("Eq", [kh, @symcore.int(0)]),
       ]),
       @symcore.function("Tuple", [
-        try! @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(1, 2),
         @symcore.function("Eq", [kh, @symcore.int(1)]),
       ]),
       @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
@@ -1931,7 +1923,7 @@ test "compat handmade and joint families concrete density paths" {
   ])
   let dh = discrete_rv("DH", params=[dh_pmf])
   let dh_d = density(dh, @symcore.int(1))
-  let dh_d_s = try! @sympy_stats.stats_eval_str(
+  let dh_d_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(dh_d)})",
   )
   assert_eq(dh_d_s, "1/2")
@@ -1967,35 +1959,35 @@ test "compat handmade and joint families concrete density paths" {
   let fh_pairs = @symcore.function("Tuple", [
     @symcore.function("Tuple", [
       @symcore.int(0),
-      try! @symcore.rational_from_ints(1, 4),
+      @symcore.rational_from_ints(1, 4),
     ]),
     @symcore.function("Tuple", [
       @symcore.int(1),
-      try! @symcore.rational_from_ints(3, 4),
+      @symcore.rational_from_ints(3, 4),
     ]),
   ])
   let fh = finite_distribution_handmade("FH", params=[fh_pairs])
   let fh_d = density(fh, @symcore.int(1))
-  let fh_d_s = try! @sympy_stats.stats_eval_str(
+  let fh_d_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(fh_d)})",
   )
   assert_eq(fh_d_s, "3/4")
   let sfh = @symcore.symbol("FH")
-  let fh_m_s = try! @sympy_stats.stats_eval_str(
+  let fh_m_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(expectation(sfh, rvs=[fh]))})",
   )
   assert_eq(fh_m_s, "3/4")
-  let fh_v_s = try! @sympy_stats.stats_eval_str(
+  let fh_v_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(variance(sfh, rvs=[fh]))})",
   )
   assert_eq(fh_v_s, "3/16")
   let fh_c = cdf(fh, @symcore.int(0))
-  let fh_c_oracle = try! @sympy_stats.stats_eval_str(
+  let fh_c_oracle = @sympy_stats.stats_eval_str(
     "(lambda F: P(F <= 0))(stats.FiniteRV('F', {0: Rational(1, 4), 1: Rational(3, 4)}))",
   )
   assert_true(expr_equiv_to(fh_c, fh_c_oracle))
   let fh_p = probability(eq(sfh, @symcore.int(1)), rv=fh)
-  let fh_p_oracle = try! @sympy_stats.stats_eval_str(
+  let fh_p_oracle = @sympy_stats.stats_eval_str(
     "(lambda F: P(Eq(F, 1)))(stats.FiniteRV('F', {0: Rational(1, 4), 1: Rational(3, 4)}))",
   )
   assert_true(expr_equiv_to(fh_p, fh_p_oracle))
@@ -2028,7 +2020,7 @@ test "compat handmade and joint families concrete density paths" {
     jh,
     @symcore.function("Tuple", [@symcore.int(3), @symcore.int(4)]),
   )
-  let jh_d_s = try! @sympy_stats.stats_eval_str(
+  let jh_d_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(jh_d)})",
   )
   assert_eq(jh_d_s, "11")
@@ -2085,13 +2077,13 @@ test "compat handmade and joint families concrete density paths" {
     ew,
     @symcore.function("Tuple", [@symcore.int(2), @symcore.int(0)]),
   )
-  let ew_oracle = try! @sympy_stats.stats_eval_str(
+  let ew_oracle = @sympy_stats.stats_eval_str(
     "(lambda EW: density(EW)(2, 0))(stats.MultivariateEwens('EW', 2, 1))",
   )
-  let ew_d_s = try! @sympy_stats.stats_eval_str(
+  let ew_d_s = @sympy_stats.stats_eval_str(
     "sympy.nsimplify(\{@symprint.to_string(ew_d)})",
   )
-  let ew_o_s = try! @sympy_stats.stats_eval_str("sympy.nsimplify(\{ew_oracle})")
+  let ew_o_s = @sympy_stats.stats_eval_str("sympy.nsimplify(\{ew_oracle})")
   assert_eq(ew_d_s, ew_o_s)
   assert_true(!@symprint.to_string(ew_d).contains("density(EW,"))
   let sew = @symcore.symbol("EW")
@@ -2129,15 +2121,15 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(@symprint.to_string(ew_q).contains("ConditionSet("))
   assert_true(!@symprint.to_string(ew_q).contains("quantile("))
 
-  let t11 = try! @symcore.rational_from_ints(1, 1)
-  let t12 = try! @symcore.rational_from_ints(1, 2)
+  let t11 = @symcore.rational_from_ints(1, 1)
+  let t12 = @symcore.rational_from_ints(1, 2)
   let omega = @symcore.function("Tuple", [
     @symcore.function("Tuple", [t11, t12]),
     @symcore.function("Tuple", [t12, t11]),
   ])
   let ones = @symcore.function("Tuple", [@symcore.int(1), @symcore.int(1)])
   let gmlg = generalized_multivariate_log_gamma("GMLG2", params=[
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 2),
     @symcore.int(1),
     ones,
     ones,
@@ -2146,7 +2138,7 @@ test "compat handmade and joint families concrete density paths" {
     gmlg,
     @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
   )
-  let gmlg_oracle = try! @sympy_stats.stats_eval_str(
+  let gmlg_oracle = @sympy_stats.stats_eval_str(
     "(lambda GMLG2: density(GMLG2)(0, 0))(stats.GeneralizedMultivariateLogGamma('GMLG2', Rational(1, 2), 1, [1, 1], [1, 1]))",
   )
   assert_true(expr_equiv_to(gmlg_d, gmlg_oracle))
@@ -2163,7 +2155,7 @@ test "compat handmade and joint families concrete density paths" {
     eq(sgmlg, @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)])),
     rv=gmlg,
   )
-  let gmlg_p_eq_oracle = try! @sympy_stats.stats_eval_str(
+  let gmlg_p_eq_oracle = @sympy_stats.stats_eval_str(
     "(lambda GMLG2: P(Eq(GMLG2, Tuple(0, 0))))(stats.GeneralizedMultivariateLogGamma('GMLG2', Rational(1, 2), 1, [1, 1], [1, 1]))",
   )
   assert_true(expr_equiv_to(gmlg_p_eq, gmlg_p_eq_oracle))
@@ -2220,7 +2212,7 @@ test "compat handmade and joint families concrete density paths" {
     gmlgo,
     @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
   )
-  let gmlgo_oracle = try! @sympy_stats.stats_eval_str(
+  let gmlgo_oracle = @sympy_stats.stats_eval_str(
     "(lambda GMLGO2: density(GMLGO2)(0, 0))(stats.GeneralizedMultivariateLogGammaOmega('GMLGO2', sympy.Matrix([[1, Rational(1, 2)], [Rational(1, 2), 1]]), 1, [1, 1], [1, 1]))",
   )
   assert_true(expr_equiv_to(gmlgo_d, gmlgo_oracle))
@@ -2334,12 +2326,12 @@ test "compat cdf coverage for residual families" {
 
   let rs = robust_soliton("RSc", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 2),
   ])
   assert_true(!@symprint.to_string(cdf(rs, x)).contains("RobustSolitonCDF("))
 
-  let lg = logarithmic("LGc", params=[try! @symcore.rational_from_ints(1, 3)])
+  let lg = logarithmic("LGc", params=[@symcore.rational_from_ints(1, 3)])
   assert_true(!@symprint.to_string(cdf(lg, x)).contains("LogarithmicCDF("))
 
   let sk = skellam("SKc", params=[@symcore.int(2), @symcore.int(3)])
@@ -2350,8 +2342,8 @@ test "compat cdf coverage for residual families" {
 
   let mn = multinomial("MNc", params=[
     @symcore.int(5),
-    try! @symcore.rational_from_ints(1, 3),
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(1, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   assert_true(
     !@symprint.to_string(
@@ -2361,8 +2353,8 @@ test "compat cdf coverage for residual families" {
 
   let nmn = negative_multinomial("NMNc", params=[
     @symcore.int(2),
-    try! @symcore.rational_from_ints(1, 4),
-    try! @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
   ])
   assert_true(
     !@symprint.to_string(
@@ -2370,9 +2362,7 @@ test "compat cdf coverage for residual families" {
     ).contains("NegativeMultinomialCDF("),
   )
 
-  let bp = bernoulli_process("BPc", params=[
-    try! @symcore.rational_from_ints(1, 3),
-  ])
+  let bp = bernoulli_process("BPc", params=[@symcore.rational_from_ints(1, 3)])
   let bp_c0 = cdf(bp, @symcore.int(0))
   assert_true(expr_equiv_to(bp_c0, "2/3"))
   assert_true(!@symprint.to_string(bp_c0).contains("BernoulliProcessCDF("))
@@ -2564,8 +2554,8 @@ test "compat mean coverage for residual families" {
 
   let rso = robust_soliton("RSm", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 2),
   ])
   assert_mean_not_placeholder(rso, "RobustSoliton")
 
@@ -2708,8 +2698,8 @@ test "compat variance coverage for residual families" {
 
   let rso = robust_soliton("RSv", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 2),
   ])
   assert_variance_not_placeholder(rso, "RobustSoliton")
 
@@ -2772,9 +2762,7 @@ test "compat mgf coverage for residual families" {
   ])
   assert_mgf_not_placeholder(ben, "Benini", t)
 
-  let bp = bernoulli_process("BPg", params=[
-    try! @symcore.rational_from_ints(1, 3),
-  ])
+  let bp = bernoulli_process("BPg", params=[@symcore.rational_from_ints(1, 3)])
   let bp_mgf = @symprint.to_string(
     moment_generating_function(@symcore.symbol("BPg"), t, rvs=[bp]),
   )
@@ -2924,8 +2912,8 @@ test "compat mgf coverage for residual families" {
 
   let mn = multinomial("MNg", params=[
     @symcore.int(5),
-    try! @symcore.rational_from_ints(1, 3),
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(1, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   assert_mgf_not_placeholder(mn, "Multinomial", tvec)
 
@@ -2947,8 +2935,8 @@ test "compat mgf coverage for residual families" {
 
   let nmn = negative_multinomial("NMNg", params=[
     @symcore.int(2),
-    try! @symcore.rational_from_ints(1, 4),
-    try! @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
   ])
   assert_mgf_not_placeholder(nmn, "NegativeMultinomial", tvec)
 
@@ -2969,8 +2957,8 @@ test "compat mgf coverage for residual families" {
 
   let rs = robust_soliton("RSg", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 2),
   ])
   assert_mgf_not_placeholder(rs, "RobustSoliton", t)
 
@@ -3013,9 +3001,7 @@ test "compat cf coverage for residual families" {
   ])
   assert_cf_not_placeholder(ben, "Benini", t)
 
-  let bp = bernoulli_process("BPcf", params=[
-    try! @symcore.rational_from_ints(1, 3),
-  ])
+  let bp = bernoulli_process("BPcf", params=[@symcore.rational_from_ints(1, 3)])
   assert_cf_not_placeholder(bp, "BernoulliProcess", t)
 
   let bb = beta_binomial("BBcf", params=[
@@ -3128,8 +3114,8 @@ test "compat cf coverage for residual families" {
 
   let mn = multinomial("MNcf", params=[
     @symcore.int(5),
-    try! @symcore.rational_from_ints(1, 3),
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(1, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   assert_cf_not_placeholder(mn, "Multinomial", tvec)
 
@@ -3151,8 +3137,8 @@ test "compat cf coverage for residual families" {
 
   let nmn = negative_multinomial("NMNcf", params=[
     @symcore.int(2),
-    try! @symcore.rational_from_ints(1, 4),
-    try! @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
   ])
   assert_cf_not_placeholder(nmn, "NegativeMultinomial", tvec)
 
@@ -3173,8 +3159,8 @@ test "compat cf coverage for residual families" {
 
   let rs = robust_soliton("RScf", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 2),
   ])
   assert_cf_not_placeholder(rs, "RobustSoliton", t)
 
@@ -3198,9 +3184,9 @@ test "compat cf coverage for residual families" {
 
 ///|
 test "compat quantile coverage for residual families" {
-  let q = try! @symcore.rational_from_ints(1, 4)
-  let third = try! @symcore.rational_from_ints(1, 3)
-  let fifth = try! @symcore.rational_from_ints(1, 5)
+  let q = @symcore.rational_from_ints(1, 4)
+  let third = @symcore.rational_from_ints(1, 3)
+  let fifth = @symcore.rational_from_ints(1, 5)
 
   let ben = benini("BENq", params=[
     @symcore.int(2),
@@ -3336,7 +3322,7 @@ test "compat quantile coverage for residual families" {
   let mn = multinomial("MNq", params=[
     @symcore.int(5),
     third,
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   assert_quantile_not_placeholder(mn, "Multinomial", q)
 
@@ -3376,8 +3362,8 @@ test "compat quantile coverage for residual families" {
 
   let nmn = negative_multinomial("NMNq", params=[
     @symcore.int(2),
-    try! @symcore.rational_from_ints(1, 4),
-    try! @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
   ])
   assert_quantile_not_placeholder(nmn, "NegativeMultinomial", q)
 
@@ -3397,7 +3383,7 @@ test "compat quantile coverage for residual families" {
 
   let rs = robust_soliton("RSq", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 10),
     fifth,
   ])
   assert_quantile_not_placeholder(rs, "RobustSoliton", q)
@@ -3426,7 +3412,7 @@ test "compat quantile coverage for residual families" {
 
 ///|
 test "compat entropy coverage residual A" {
-  let third = try! @symcore.rational_from_ints(1, 3)
+  let third = @symcore.rational_from_ints(1, 3)
 
   let ben = benini("BENe", params=[
     @symcore.int(2),
@@ -3530,14 +3516,14 @@ test "compat entropy coverage residual B2b log_cauchy" {
 
 ///|
 test "compat entropy coverage residual B2b logarithmic" {
-  let third = try! @symcore.rational_from_ints(1, 3)
+  let third = @symcore.rational_from_ints(1, 3)
   let lgr = logarithmic("LGe", params=[third])
   assert_entropy_not_placeholder(lgr, "Logarithmic")
 }
 
 ///|
 test "compat entropy coverage residual C" {
-  let third = try! @symcore.rational_from_ints(1, 3)
+  let third = @symcore.rational_from_ints(1, 3)
 
   let lgn = logit_normal("LNe", params=[@symcore.int(0), @symcore.int(1)])
   assert_entropy_not_placeholder(lgn, "LogitNormal")
@@ -3559,7 +3545,7 @@ test "compat entropy coverage residual C" {
   let mn = multinomial("MNe", params=[
     @symcore.int(5),
     third,
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(2, 3),
   ])
   assert_entropy_not_placeholder(mn, "Multinomial")
   let mb = multivariate_beta("MBe", params=[@symcore.int(2), @symcore.int(3)])
@@ -3584,7 +3570,7 @@ test "compat entropy coverage residual C" {
 
 ///|
 test "compat entropy coverage residual D" {
-  let fifth = try! @symcore.rational_from_ints(1, 5)
+  let fifth = @symcore.rational_from_ints(1, 5)
 
   let mvt = multivariate_t("MVTe", params=[
     @symcore.function("Tuple", [@symcore.int(0), @symcore.int(0)]),
@@ -3599,8 +3585,8 @@ test "compat entropy coverage residual D" {
   assert_entropy_not_placeholder(nak, "Nakagami")
   let nmn = negative_multinomial("NMNe", params=[
     @symcore.int(2),
-    try! @symcore.rational_from_ints(1, 4),
-    try! @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
+    @symcore.rational_from_ints(1, 4),
   ])
   assert_entropy_not_placeholder(nmn, "NegativeMultinomial")
   let ng = normal_gamma("NGe", params=[
@@ -3616,7 +3602,7 @@ test "compat entropy coverage residual D" {
   assert_entropy_not_placeholder(rc, "RaisedCosine")
   let rs = robust_soliton("RSe", params=[
     @symcore.int(10),
-    try! @symcore.rational_from_ints(1, 10),
+    @symcore.rational_from_ints(1, 10),
     fifth,
   ])
   assert_entropy_not_placeholder(rs, "RobustSoliton")

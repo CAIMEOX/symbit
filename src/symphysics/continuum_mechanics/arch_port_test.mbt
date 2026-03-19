@@ -1,37 +1,37 @@
 ///|
 test "physics.continuum_mechanics.arch: oracle parity" {
-  let a = try! arch(
+  let a = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(40), @symcore.int(0)),
     @symcore.int(20),
     crown_y=Some(@symcore.int(12)),
   )
-  try! a.apply_load(
+  a.apply_load(
     -1,
     "C",
     @symcore.int(8),
     @symcore.int(150),
     angle=Some(@symcore.int(270)),
   )
-  try! a.apply_load(
+  a.apply_load(
     0,
     "D",
     @symcore.int(20),
     @symcore.int(-4),
     end=Some(@symcore.int(40)),
   )
-  try! a.solve()
+  a.solve()
 
-  let b = try! arch(
+  let b = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(16), @symcore.int(0)),
     @symcore.int(8),
     crown_y=Some(@symcore.int(5)),
   )
   let t = @symcore.symbol("t")
-  try! b.apply_load(0, "C", @symcore.int(3), t, end=Some(@symcore.int(5)))
-  try! b.solve()
-  let near_eight = try! @symcore.rational_from_ints(7_999_999, 1_000_000)
+  b.apply_load(0, "C", @symcore.int(3), t, end=Some(@symcore.int(5)))
+  b.solve()
+  let near_eight = @symcore.rational_from_ints(7_999_999, 1_000_000)
 
   let oracle = continuum_oracle_lines(
     "a = Arch((0, 0), (40, 0), crown_x=20, crown_y=12)\n" +
@@ -66,16 +66,10 @@ test "physics.continuum_mechanics.arch: oracle parity" {
   guard continuum_expr_eq(a.reaction_force()["R_B_y"], oracle[3]) else {
     fail("arch R_B_y")
   }
-  guard continuum_expr_eq(
-    try! a.axial_force_at(pos=Some(near_eight)),
-    oracle[4],
-  ) else {
+  guard continuum_expr_eq(a.axial_force_at(pos=Some(near_eight)), oracle[4]) else {
     fail("arch axial")
   }
-  guard continuum_expr_eq(
-    try! a.shear_force_at(pos=Some(near_eight)),
-    oracle[5],
-  ) else {
+  guard continuum_expr_eq(a.shear_force_at(pos=Some(near_eight)), oracle[5]) else {
     fail("arch shear")
   }
   guard continuum_expr_eq(b.reaction_force()["R_A_x"], oracle[6]) else {
@@ -91,7 +85,7 @@ test "physics.continuum_mechanics.arch: oracle parity" {
     fail("arch symbolic R_B_y")
   }
   guard continuum_expr_eq(
-    try! b.bending_moment_at(pos=Some(@symcore.int(4))),
+    b.bending_moment_at(pos=Some(@symcore.int(4))),
     oracle[10],
   ) else {
     fail("arch symbolic moment")

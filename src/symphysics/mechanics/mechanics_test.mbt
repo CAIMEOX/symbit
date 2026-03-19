@@ -11,7 +11,7 @@ fn mechanics_assert_expr(
 
 ///|
 test "physics.mechanics inertia core" {
-  let n = try! @symvector.reference_frame("MN")
+  let n = @symvector.reference_frame("MN")
   let ixx = @symcore.symbol("ixx")
   let iyy = @symcore.symbol("iyy")
   let izz = @symcore.symbol("izz")
@@ -26,13 +26,13 @@ test "physics.mechanics inertia core" {
 
   let r = @symcore.symbol("r")
   let m = @symcore.symbol("m")
-  let point_mass = try! inertia_of_point_mass(m, n.x().scale(r), n)
+  let point_mass = inertia_of_point_mass(m, n.x().scale(r), n)
   inspect(
     @symvector.vsprint_dyadic(point_mass),
     content="m*r**2*(MN.y|MN.y) + m*r**2*(MN.z|MN.z)",
   )
 
-  let o = try! @symvector.point("MO")
+  let o = @symvector.point("MO")
   let iobj = inertia_tuple(inertia(n, ixx, iyy, izz), o)
   inspect(
     iobj.repr(),
@@ -42,77 +42,72 @@ test "physics.mechanics inertia core" {
 
 ///|
 test "physics.mechanics particle and rigidbody core" {
-  let n = try! @symvector.reference_frame("PN")
-  let o = try! @symvector.point("PO")
-  let p = try! o.locatenew("PP", n.x().scale(@symcore.symbol("r")))
+  let n = @symvector.reference_frame("PN")
+  let o = @symvector.point("PO")
+  let p = o.locatenew("PP", n.x().scale(@symcore.symbol("r")))
   p.set_vel(
     n,
     n.x().scale(@symcore.symbol("v1")) + n.z().scale(@symcore.symbol("v3")),
   )
 
-  let part = try! particle("pa", point=Some(p), mass=Some(@symcore.symbol("m")))
+  let part = particle("pa", point=Some(p), mass=Some(@symcore.symbol("m")))
   inspect(part.repr(), content="Particle('pa', masscenter=PP, mass=m)")
   inspect(
-    @symvector.vsprint(try! part.linear_momentum(n)),
+    @symvector.vsprint(part.linear_momentum(n)),
     content="m*v1*PN.x + m*v3*PN.z",
   )
   inspect(
-    @symvector.vsprint(try! part.angular_momentum(o, n)),
+    @symvector.vsprint(part.angular_momentum(o, n)),
     content="-m*r*v3*PN.y",
   )
 
-  let b = try! @symvector.reference_frame("PB")
+  let b = @symvector.reference_frame("PB")
   b.set_ang_vel(n, b.x().scale(@symcore.symbol("omega")))
-  let rb = try! rigid_body(
+  let rb = rigid_body(
     "B",
     masscenter=Some(p),
     frame=Some(b),
     mass=Some(@symcore.symbol("m")),
-    inertia=Some(inertia_tuple(try! @symvector.outer(b.x(), b.x()), p)),
+    inertia=Some(inertia_tuple(@symvector.outer(b.x(), b.x()), p)),
   )
   inspect(
     rb.repr(),
     content="RigidBody('B', masscenter=PP, frame=PB, mass=m, inertia=Inertia(dyadic=(PB.x|PB.x), point=PP))",
   )
-  inspect(
-    @symvector.vsprint(try! rb.angular_momentum(p, n)),
-    content="omega*PB.x",
-  )
+  inspect(@symvector.vsprint(rb.angular_momentum(p, n)), content="omega*PB.x")
 }
 
 ///|
 test "physics.mechanics wrapper functions and substitutions" {
-  let n = try! @symvector.reference_frame("FN")
-  let o = try! @symvector.point("FO")
+  let n = @symvector.reference_frame("FN")
+  let o = @symvector.point("FO")
   o.set_vel(n, @symvector.vector_zero())
-  let p = try! o.locatenew("FP", n.x())
+  let p = o.locatenew("FP", n.x())
   p.set_vel(n, n.x().scale(@symcore.int(10)))
-  let pa = try! particle("Pa", point=Some(p), mass=Some(@symcore.int(1)))
+  let pa = particle("Pa", point=Some(p), mass=Some(@symcore.int(1)))
   pa.set_potential_energy(@symcore.symbol("g") * @symcore.symbol("h"))
 
-  let ac = try! o.locatenew("FAc", n.y().scale(@symcore.int(2)))
+  let ac = o.locatenew("FAc", n.y().scale(@symcore.int(2)))
   ac.set_vel(n, n.y().scale(@symcore.int(5)))
-  let a = try! @symvector.reference_frame("Fa")
+  let a = @symvector.reference_frame("Fa")
   a.set_ang_vel(n, n.z().scale(@symcore.int(10)))
-  let rb = try! rigid_body(
+  let rb = rigid_body(
     "A",
     masscenter=Some(ac),
     frame=Some(a),
     mass=Some(@symcore.int(20)),
-    inertia=Some(inertia_tuple(try! @symvector.outer(n.z(), n.z()), ac)),
+    inertia=Some(inertia_tuple(@symvector.outer(n.z(), n.z()), ac)),
   )
   rb.set_potential_energy(
     @symcore.symbol("M") * @symcore.symbol("g") * @symcore.symbol("h"),
   )
 
   inspect(
-    @symvector.vsprint(
-      try! linear_momentum(n, [rb.as_bodylike(), pa.as_bodylike()]),
-    ),
+    @symvector.vsprint(linear_momentum(n, [rb.as_bodylike(), pa.as_bodylike()])),
     content="10*FN.x + 100*FN.y",
   )
   mechanics_assert_expr(
-    try! kinetic_energy(n, [pa.as_bodylike(), rb.as_bodylike()]),
+    kinetic_energy(n, [pa.as_bodylike(), rb.as_bodylike()]),
     "350",
     "kinetic_energy",
   )
@@ -121,9 +116,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     content="M*g*h + g*h",
   )
   inspect(
-    @symvector.vsprint(
-      try! center_of_mass(o, [pa.as_bodylike(), rb.as_bodylike()]),
-    ),
+    @symvector.vsprint(center_of_mass(o, [pa.as_bodylike(), rb.as_bodylike()])),
     content="1/21*FN.x + 40/21*FN.y",
   )
 
@@ -135,7 +128,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     expr,
     [
       (x, @symcore.int(0)),
-      (y, try! (@symcore.rational_from_ints(1, 2) * @symcore.symbol("pi"))),
+      (y, @symcore.rational_from_ints(1, 2) * @symcore.symbol("pi")),
       (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(1)),
     ],
     smart=true,
@@ -154,11 +147,11 @@ test "physics.mechanics wrapper functions and substitutions" {
 
 ///|
 test "physics.mechanics body loads and helpers" {
-  let n = try! @symvector.reference_frame("BN")
-  let b1 = try! body("B1")
-  let b2 = try! body("B2")
-  let p1 = try! @symvector.point("P1")
-  let p2 = try! @symvector.point("P2")
+  let n = @symvector.reference_frame("BN")
+  let b1 = body("B1")
+  let b2 = body("B2")
+  let p1 = @symvector.point("P1")
+  let p2 = @symvector.point("P2")
   p1.set_vel(b1.frame(), b1.x())
   p2.set_vel(b2.frame(), b2.x())
   let f = n.z().scale(@symcore.symbol("f"))

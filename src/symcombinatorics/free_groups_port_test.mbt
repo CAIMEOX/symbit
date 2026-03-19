@@ -6,7 +6,7 @@ test "free groups basic operations parity" {
   let form_b : Array[(Int, Int)] = [(1, 2), (0, -1)]
   let w1 = free_group_element_from_form(free_group, form_a)
   let w2 = free_group_element_from_form(free_group, form_b)
-  let prod = try! w1.mul(w2)
+  let prod = w1.mul(w2)
   assert_oracle(
     try? @sympy_combinatorics.free_group_mul_equiv(
       symbols,
@@ -23,7 +23,7 @@ test "free groups basic operations parity" {
       inv.array_form(),
     ),
   )
-  let pow = try! w1.pow(3)
+  let pow = w1.pow(3)
   assert_oracle(
     try? @sympy_combinatorics.free_group_pow_equiv(
       symbols,
@@ -32,7 +32,7 @@ test "free groups basic operations parity" {
       pow.array_form(),
     ),
   )
-  let sub = try! w1.subword(1, 3)
+  let sub = w1.subword(1, 3)
   assert_oracle(
     try? @sympy_combinatorics.free_group_subword_equiv(
       symbols,

@@ -1,6 +1,6 @@
 ///|
 test "physics.mechanics models core" {
-  let chain = try! multi_mass_spring_damper(
+  let chain = multi_mass_spring_damper(
     n=2,
     apply_gravity=true,
     apply_external_forces=true,
@@ -19,7 +19,7 @@ test "physics.mechanics models core" {
     fail("spring-damper model explicit loads")
   }
 
-  let pendulum = try! n_link_pendulum_on_cart(
+  let pendulum = n_link_pendulum_on_cart(
     n=2,
     cart_force=true,
     joint_torques=true,

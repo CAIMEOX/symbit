@@ -16,8 +16,8 @@ test "physics.quantum.wavefunction: parity" {
     f_of_x,
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_doit_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_doit_str(
       "InnerProduct(OrthogonalBra(n), OrthogonalKet(n))",
     ),
     @symprint.to_string(
@@ -28,8 +28,8 @@ test "physics.quantum.wavefunction: parity" {
     ),
     "orthogonal equal parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_doit_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_doit_str(
       "InnerProduct(OrthogonalBra(n), OrthogonalKet(n + 1))",
     ),
     @symprint.to_string(
@@ -40,46 +40,42 @@ test "physics.quantum.wavefunction: parity" {
     ),
     "orthogonal shifted parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str("Dagger(Wavefunction(x**2, x))"),
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(dagger(wf.as_expr())),
-    ),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str("Dagger(Wavefunction(x**2, x))"),
+    @sympy_physics.quantum_eval_str(@symprint.to_string(dagger(wf.as_expr()))),
     "wavefunction dagger parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str("Wavefunction(x**2, x).prob()"),
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(wf.prob().as_expr()),
-    ),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str("Wavefunction(x**2, x).prob()"),
+    @sympy_physics.quantum_eval_str(@symprint.to_string(wf.prob().as_expr())),
     "wavefunction prob parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str(
       "DifferentialOperator(Derivative(wf(x), x), wf(x))*Wavefunction(x**2, x)",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(@symcore.raw_mul([dop.as_expr(), wf.as_expr()])),
       ),
     ),
     "differential operator qapply parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str(
       "DifferentialOperator(x**(-1)*Derivative(wf(x), x), wf(x))*Wavefunction(x**2, x)",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         qapply(@symcore.raw_mul([dop2.as_expr(), wf.as_expr()])),
       ),
     ),
     "scaled differential operator qapply parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str("represent(Wavefunction(x**2, x))"),
-    try! @sympy_physics.quantum_eval_str(
-      matrix_scalar_value_to_string(try! represent(wf.as_expr())),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str("represent(Wavefunction(x**2, x))"),
+    @sympy_physics.quantum_eval_str(
+      matrix_scalar_value_to_string(represent(wf.as_expr())),
     ),
     "represent wavefunction parity",
   )
@@ -96,11 +92,11 @@ test "physics.quantum.wavefunction: norm parity" {
       @symcore.raw_function("Tuple", [y, @symcore.int(0), @symcore.int(2)]),
     ],
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "Wavefunction(x**2*y + y**2*x, (x, 0, 1), (y, 0, 2)).norm",
     ),
-    try! @sympy_physics.quantum_eval_str(@symprint.to_string(finite.norm())),
+    @sympy_physics.quantum_eval_str(@symprint.to_string(finite.norm())),
     "wavefunction finite norm parity",
   )
 
@@ -108,11 +104,11 @@ test "physics.quantum.wavefunction: norm parity" {
     @symcore.raw_function("sqrt", [@symcore.int(5)]) * (x ^ @symcore.int(2)),
     [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       "Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()",
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(normalized_wf.normalize().as_expr()),
     ),
     "wavefunction normalize parity",

@@ -488,12 +488,12 @@ test "domains: alias constructors and parser coverage" {
     domain_to_sympy_string(expression_raw_domain()) else {
     fail("ExpressionRawDomain alias mismatch")
   }
-  let ff7 = try! ff_domain(7)
+  let ff7 = ff_domain(7)
   guard domain_to_sympy_string(domain_from_string("FF(7)")) ==
     domain_to_sympy_string(ff7) else {
     fail("FF alias mismatch")
   }
-  let ff11 = try! finite_field_domain(11)
+  let ff11 = finite_field_domain(11)
   guard domain_to_sympy_string(domain_from_string("FiniteField(11)")) ==
     domain_to_sympy_string(ff11) else {
     fail("FiniteField alias mismatch")
@@ -569,7 +569,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
     let gens = item.1
     let domain = domain_from_string(spec)
 
-    let poly_ours = domain_to_sympy_string(try! domain.poly_ring(gens))
+    let poly_ours = domain_to_sympy_string(domain.poly_ring(gens))
     let poly_oracle = @sympy_polys.domain_poly_ring(spec, gens)
     guard trim_ws(poly_ours) == trim_ws(poly_oracle) else {
       fail(
@@ -577,7 +577,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
       )
     }
 
-    let frac_ours = domain_to_sympy_string(try! domain.frac_field(gens))
+    let frac_ours = domain_to_sympy_string(domain.frac_field(gens))
     let frac_oracle = @sympy_polys.domain_frac_field(spec, gens)
     guard trim_ws(frac_ours) == trim_ws(frac_oracle) else {
       fail(
@@ -585,7 +585,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
       )
     }
 
-    let old_poly_ours = domain_to_sympy_string(try! domain.old_poly_ring(gens))
+    let old_poly_ours = domain_to_sympy_string(domain.old_poly_ring(gens))
     let old_poly_oracle = @sympy_polys.domain_old_poly_ring(spec, gens)
     guard trim_ws(old_poly_ours) == trim_ws(old_poly_oracle) else {
       fail(
@@ -593,7 +593,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
       )
     }
 
-    let old_frac_ours = domain_to_sympy_string(try! domain.old_frac_field(gens))
+    let old_frac_ours = domain_to_sympy_string(domain.old_frac_field(gens))
     let old_frac_oracle = @sympy_polys.domain_old_frac_field(spec, gens)
     guard trim_ws(old_frac_ours) == trim_ws(old_frac_oracle) else {
       fail(
@@ -602,7 +602,7 @@ test "domains: method constructor parity for poly/frac old/new rings" {
     }
   }
 
-  let quotient = try! quotient_ring_domain(Domain::QQ, ["x"], [
+  let quotient = quotient_ring_domain(Domain::QQ, ["x"], [
     @symcore.add([
       @symcore.pow(@symcore.symbol("x"), @symcore.int(2)),
       @symcore.int(1),
@@ -668,7 +668,7 @@ test "domains: set_domain and unify_with_symbols parity" {
     let lhs = item.0
     let rhs = item.1
     let ours = domain_to_sympy_string(
-      try! domain_from_string(lhs).unify_composite(domain_from_string(rhs)),
+      domain_from_string(lhs).unify_composite(domain_from_string(rhs)),
     )
     let oracle = @sympy_polys.domain_unify_composite(lhs, rhs)
     guard trim_ws(ours) == trim_ws(oracle) else {
@@ -689,9 +689,7 @@ test "domains: inject and drop parity across simple and nested composites" {
   for item in inject_cases {
     let spec = item.0
     let gens = item.1
-    let ours = domain_to_sympy_string(
-      try! domain_from_string(spec).inject(gens),
-    )
+    let ours = domain_to_sympy_string(domain_from_string(spec).inject(gens))
     let oracle = @sympy_polys.domain_inject(spec, gens)
     guard trim_ws(ours) == trim_ws(oracle) else {
       fail("inject mismatch for \{spec}: ours=\{ours}, oracle=\{oracle}")
@@ -745,7 +743,7 @@ test "domains: algebraic_field parity and Domain methods" {
     let ext_exprs = item.1
     let ext_specs = item.2
     let ours = domain_to_sympy_string(
-      try! domain_from_string(spec).algebraic_field(ext_exprs),
+      domain_from_string(spec).algebraic_field(ext_exprs),
     )
     let oracle = @sympy_polys.domain_algebraic_field(spec, ext_specs)
     guard trim_ws(ours) == trim_ws(oracle) else {
@@ -765,15 +763,12 @@ test "domains: algebraic_field parity and Domain methods" {
     let gen = item.2
     let ext_alias = item.3
     let poly = Poly::from_expr(
-      try! small_univar_poly_expr(poly_expr, gen),
+      small_univar_poly_expr(poly_expr, gen),
       [gen],
       domain_from_string(spec),
     )
     let ours = domain_to_sympy_string(
-      try! domain_from_string(spec).alg_field_from_poly(
-        poly,
-        alias=Some(ext_alias),
-      ),
+      domain_from_string(spec).alg_field_from_poly(poly, alias=Some(ext_alias)),
     )
     let oracle = @sympy_polys.domain_alg_field_from_poly(
       spec,
@@ -800,12 +795,12 @@ test "domains: algebraic_field parity and Domain methods" {
     let gen = item.2
     let root_index = item.3
     let poly = Poly::from_expr(
-      try! small_univar_poly_expr(poly_expr, gen),
+      small_univar_poly_expr(poly_expr, gen),
       [gen],
       domain_from_string(spec),
     )
     let ours = domain_to_sympy_string(
-      try! domain_from_string(spec).alg_field_from_poly(poly, root_index~),
+      domain_from_string(spec).alg_field_from_poly(poly, root_index~),
     )
     let oracle = @sympy_polys.domain_alg_field_from_poly(
       spec,
@@ -820,7 +815,7 @@ test "domains: algebraic_field parity and Domain methods" {
     }
   }
 
-  let direct_alg_field = try! domain_from_string("QQ").alg_field_from_poly(
+  let direct_alg_field = domain_from_string("QQ").alg_field_from_poly(
     Poly::from_expr((x ^ @symcore.int(2)) - @symcore.int(2), ["x"], Domain::QQ),
     alias=Some("a"),
   )
@@ -850,7 +845,7 @@ test "domains: algebraic_field parity and Domain methods" {
     let ext_alias = item.3
     let gen_opt = item.4
     let ours = domain_to_sympy_string(
-      try! domain_from_string(spec).cyclotomic_field(
+      domain_from_string(spec).cyclotomic_field(
         n,
         ss~,
         alias=ext_alias,
@@ -871,7 +866,7 @@ test "domains: algebraic_field parity and Domain methods" {
     }
   }
 
-  let direct_cyclo = try! domain_from_string("QQ").cyclotomic_field(
+  let direct_cyclo = domain_from_string("QQ").cyclotomic_field(
     5,
     alias="a",
     gen=Some("t"),
@@ -896,16 +891,16 @@ test "domains: algebraic_field parity and Domain methods" {
     "QQ[x]" else {
     fail("Domain::get_exact mismatch")
   }
-  guard domain_to_sympy_string(try! domain_from_string("ZZ[x]").get_field()) ==
+  guard domain_to_sympy_string(domain_from_string("ZZ[x]").get_field()) ==
     "ZZ(x)" else {
     fail("Domain::get_field mismatch")
   }
-  guard domain_to_sympy_string(try! domain_from_string("QQ(x)").get_ring()) ==
+  guard domain_to_sympy_string(domain_from_string("QQ(x)").get_ring()) ==
     "QQ[x]" else {
     fail("Domain::get_ring mismatch")
   }
   guard domain_to_sympy_string(
-      try! domain_from_string("ZZ").unify(domain_from_string("QQ")),
+      domain_from_string("ZZ").unify(domain_from_string("QQ")),
     ) ==
     "QQ" else {
     fail("Domain::unify mismatch")
@@ -923,8 +918,8 @@ test "domains: contains_expr parity for constants polynomials and rational funct
 
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(3), "3"),
-    ("ZZ", try! @symcore.rational_from_ints(3, 2), "3/2"),
-    ("QQ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+    ("ZZ", @symcore.rational_from_ints(3, 2), "3/2"),
+    ("QQ", @symcore.rational_from_ints(3, 2), "3/2"),
     ("RR", sqrt2, "sqrt(2)"),
     ("CC", i, "I"),
     ("QQ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
@@ -938,7 +933,7 @@ test "domains: contains_expr parity for constants polynomials and rational funct
     ("ZZ[x]", (x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), "x**2 + y**2"),
     ("QQ(x)", inv_x, "1/x"),
     ("QQ(1/x,y)", x + y, "x + y"),
-    ("QQ(1/x)", (try! @symcore.rational_from_ints(2, 3)) * x, "2*x/3"),
+    ("QQ(1/x)", @symcore.rational_from_ints(2, 3) * x, "2*x/3"),
     ("QQ[x]", inv_x, "1/x"),
     ("QQ[x][y]", x + y, "x + y"),
   ]
@@ -967,13 +962,13 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let conversion_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
-    ("QQ", try! @symcore.rational_from_ints(6, 8), "6/8"),
+    ("QQ", @symcore.rational_from_ints(6, 8), "6/8"),
     ("GF(5)", @symcore.int(7), "7"),
     (
       "QQ_I",
       @symcore.add([
-        try! @symcore.rational_from_ints(1, 2),
-        (try! @symcore.rational_from_ints(1, 3)) * i,
+        @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(1, 3) * i,
       ]),
       "1/2 + I/3",
     ),
@@ -1018,14 +1013,14 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
   let convert_cases : Array[(String, String, @symcore.Expr, String)] = [
     ("QQ", "ZZ", @symcore.int(7), "7"),
     ("ZZ", "QQ", @symcore.int(4), "4"),
-    ("ZZ", "QQ", try! @symcore.rational_from_ints(1, 2), "1/2"),
+    ("ZZ", "QQ", @symcore.rational_from_ints(1, 2), "1/2"),
     ("QQ_I", "ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
     ("QQ[x]", "ZZ[x]", x + @symcore.int(1), "x + 1"),
     ("ZZ[x]", "QQ[x]", @symcore.int(2) * x + @symcore.int(1), "2*x + 1"),
-    ("ZZ[x]", "QQ[x]", (try! @symcore.rational_from_ints(1, 2)) * x, "x/2"),
+    ("ZZ[x]", "QQ[x]", @symcore.rational_from_ints(1, 2) * x, "x/2"),
     ("QQ(x)", "ZZ[x]", (x ^ @symcore.int(2)) + @symcore.int(1), "x**2 + 1"),
     ("QQ[x]", "QQ(x)", x + @symcore.int(1), "x + 1"),
-    ("QQ<sqrt(2)>", "QQ", try! @symcore.rational_from_ints(3, 2), "3/2"),
+    ("QQ<sqrt(2)>", "QQ", @symcore.rational_from_ints(3, 2), "3/2"),
     ("QQ", "QQ(x)", @symcore.int(2), "2"),
     ("QQ<sqrt(2)>", "QQ(x)", @symcore.int(2), "2"),
   ]
@@ -1052,7 +1047,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
 
   let direct_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("GF(5)", @symcore.int(7), "7"),
     ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
     ("QQ[x]", x + @symcore.int(1), "x + 1"),
@@ -1083,9 +1078,9 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
     (
       "QQ",
       [
-        try! @symcore.rational_from_ints(1, 2),
-        try! @symcore.rational_from_ints(1, 3),
-        try! @symcore.rational_from_ints(1, 6),
+        @symcore.rational_from_ints(1, 2),
+        @symcore.rational_from_ints(1, 3),
+        @symcore.rational_from_ints(1, 6),
       ],
       ["1/2", "1/3", "1/6"],
     ),
@@ -1128,7 +1123,7 @@ test "domains: from_* conversion hook parity on representative base families" {
     (
       "from_algebraic_field",
       "QQ",
-      try! @symcore.rational_from_ints(3, 2),
+      @symcore.rational_from_ints(3, 2),
       "QQ<sqrt(2)>",
       "3/2",
     ),
@@ -1138,14 +1133,14 @@ test "domains: from_* conversion hook parity on representative base families" {
     (
       "from_expression_domain",
       "QQ",
-      try! @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(1, 2),
       "EX",
       "1/2",
     ),
     (
       "from_expression_raw_domain",
       "QQ",
-      try! @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(1, 2),
       "EXRAW",
       "1/2",
     ),
@@ -1260,7 +1255,7 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let i = @symcore.symbol("I")
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let cases : Array[(String, String, @symcore.Expr, String, String, String)] = [
     ("from_zz", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
     ("from_zz_python", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
@@ -1477,7 +1472,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
     fail("poly new_expr should preserve the polynomial expression")
   }
 
-  let mapped = try! gf.map_expr_tree([
+  let mapped = gf.map_expr_tree([
     domain_expr_tree_elem(@symcore.int(6)),
     domain_expr_tree_list([
       domain_expr_tree_elem(@symcore.int(7)),
@@ -1488,7 +1483,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
     fail("map_expr_tree should recurse and normalize each leaf")
   }
 
-  let zz_mapped = try! domain_from_string("ZZ").map_expr_tree([
+  let zz_mapped = domain_from_string("ZZ").map_expr_tree([
     domain_expr_tree_list([
       domain_expr_tree_elem(@symcore.int(1)),
       domain_expr_tree_elem(@symcore.int(2)),
@@ -1507,11 +1502,11 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-1), "-1"),
     ("ZZ", @symcore.int(2), "2"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("QQ", @symcore.int(0), "0"),
     ("ZZ[x]", @symcore.int(1), "1"),
     ("ZZ[x]", x, "x"),
-    ("QQ[x]", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ[x]", @symcore.rational_from_ints(2, 3), "2/3"),
     ("QQ[x]", x, "x"),
     ("QQ(x)", x, "x"),
     ("QQ(x)", @symcore.int(0), "0"),
@@ -1604,8 +1599,8 @@ test "domains: zero/one and arithmetic wrapper parity" {
   ] = [
     (
       "QQ",
-      try! @symcore.rational_from_ints(1, 2),
-      try! @symcore.rational_from_ints(1, 3),
+      @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(1, 3),
       "1/2",
       "1/3",
     ),
@@ -1662,8 +1657,8 @@ test "domains: zero/one and arithmetic wrapper parity" {
   }
 
   let pow_cases : Array[(String, @symcore.Expr, Int, String)] = [
-    ("QQ", try! @symcore.rational_from_ints(2, 3), 3, "2/3"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), -2, "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), 3, "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), -2, "2/3"),
     ("GF(5)", @symcore.int(2), -1, "2"),
     ("QQ_I", @symcore.add([@symcore.int(1), i]), 2, "1 + I"),
     ("QQ(x)", (x + @symcore.int(1)) * (x ^ @symcore.int(-1)), -1, "(x + 1)/x"),
@@ -1726,8 +1721,8 @@ test "domains: gcdex/invert/revert wrapper parity" {
     }
   }
 
-  let qq_left = try! @symcore.rational_from_ints(2, 3)
-  let qq_right = try! @symcore.rational_from_ints(4, 9)
+  let qq_left = @symcore.rational_from_ints(2, 3)
+  let qq_right = @symcore.rational_from_ints(4, 9)
   guard render_expr_pair_result(
       try? domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
     ) ==
@@ -1744,17 +1739,17 @@ test "domains: gcdex/invert/revert wrapper parity" {
   let zzi_left = @symcore.add([@symcore.int(2), i])
   let zzi_right = @symcore.add([@symcore.int(1), @symcore.int(-1) * i])
   let zzi = domain_from_string("ZZ_I")
-  let zzi_half = try! zzi.half_gcdex_expr(zzi_left, zzi_right)
+  let zzi_half = zzi.half_gcdex_expr(zzi_left, zzi_right)
   guard render_expr_result(Ok(zzi_half.1)) == "1" else {
     fail("ZZ_I half_gcdex gcd mismatch")
   }
-  let zzi_full = try! zzi.gcdex_expr(zzi_left, zzi_right)
+  let zzi_full = zzi.gcdex_expr(zzi_left, zzi_right)
   guard render_expr_result(Ok(zzi_full.2)) == "1" else {
     fail("ZZ_I gcdex gcd mismatch")
   }
-  let zzi_bezout = try! zzi.add_expr(
-    try! zzi.mul_expr(zzi_left, zzi_full.0),
-    try! zzi.mul_expr(zzi_right, zzi_full.1),
+  let zzi_bezout = zzi.add_expr(
+    zzi.mul_expr(zzi_left, zzi_full.0),
+    zzi.mul_expr(zzi_right, zzi_full.1),
   )
   guard render_expr_result(Ok(zzi_bezout)) == "1" else {
     fail("ZZ_I gcdex Bezout mismatch")
@@ -1763,17 +1758,17 @@ test "domains: gcdex/invert/revert wrapper parity" {
   let qqx_left = (x ^ @symcore.int(2)) - @symcore.int(1)
   let qqx_right = x - @symcore.int(1)
   let qqx = domain_from_string("QQ[x]")
-  let qqx_half = try! qqx.half_gcdex_expr(qqx_left, qqx_right)
+  let qqx_half = qqx.half_gcdex_expr(qqx_left, qqx_right)
   guard render_expr_result(Ok(qqx_half.1)) == "x-1" else {
     fail("QQ[x] half_gcdex gcd mismatch")
   }
-  let qqx_full = try! qqx.gcdex_expr(qqx_left, qqx_right)
+  let qqx_full = qqx.gcdex_expr(qqx_left, qqx_right)
   guard render_expr_result(Ok(qqx_full.2)) == "x-1" else {
     fail("QQ[x] gcdex gcd mismatch")
   }
-  let qqx_bezout = try! qqx.add_expr(
-    try! qqx.mul_expr(qqx_left, qqx_full.0),
-    try! qqx.mul_expr(qqx_right, qqx_full.1),
+  let qqx_bezout = qqx.add_expr(
+    qqx.mul_expr(qqx_left, qqx_full.0),
+    qqx.mul_expr(qqx_right, qqx_full.1),
   )
   guard render_expr_result(Ok(qqx_bezout)) == "x-1" else {
     fail("QQ[x] gcdex Bezout mismatch")
@@ -1810,7 +1805,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
   }
 
   let revert_cases : Array[(String, @symcore.Expr, String)] = [
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("GF(5)", @symcore.int(2), "2"),
     ("QQ(x)", (x + @symcore.int(1)) * (x ^ @symcore.int(-1)), "(x + 1)/x"),
     ("ZZ", @symcore.int(1), "1"),
@@ -1841,7 +1836,7 @@ test "domains: sign predicate parity on ordered and composite domains" {
   let neg_x = @symcore.mul([@symcore.int(-1), x])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("CC", @symcore.int(2), "2"),
     ("GF(5)", @symcore.int(2), "2"),
     ("ZZ_I", i, "I"),
@@ -1913,7 +1908,7 @@ test "domains: canonical_unit parity on scalar and composite domains" {
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
-    ("QQ", try! @symcore.rational_from_ints(-2, 3), "-2/3"),
+    ("QQ", @symcore.rational_from_ints(-2, 3), "-2/3"),
     ("ZZ_I", i, "I"),
     ("ZZ_I", @symcore.add([@symcore.int(1), @symcore.int(-1) * i]), "1 - I"),
     ("QQ_I", @symcore.int(2), "2"),
@@ -1942,9 +1937,7 @@ test "domains: canonical_unit parity on scalar and composite domains" {
 
   let zz_series = domain_from_string("ZZ[[x]](prec=5)")
   guard trim_ws(
-      @symprint.to_string(
-        try! zz_series.canonical_unit_expr(@symcore.int(-1) + x),
-      ),
+      @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
     ) ==
     "-1" else {
     fail("power-series canonical_unit should follow constant coefficient")
@@ -1957,7 +1950,7 @@ test "domains: abs parity on supported/error domains" {
   let i = @symcore.symbol("I")
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
-    ("QQ", try! @symcore.rational_from_ints(-2, 3), "-2/3"),
+    ("QQ", @symcore.rational_from_ints(-2, 3), "-2/3"),
     ("EX", @symcore.int(-1) * x, "-x"),
     ("EX", @symcore.add([@symcore.int(2), i]), "2 + I"),
     ("ZZ_I", @symcore.add([@symcore.int(2), i]), "2 + I"),
@@ -1987,9 +1980,9 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
     ("ZZ", @symcore.int(6), "6", @symcore.int(4), "4"),
     (
       "QQ",
-      try! @symcore.rational_from_ints(2, 3),
+      @symcore.rational_from_ints(2, 3),
       "2/3",
-      try! @symcore.rational_from_ints(4, 9),
+      @symcore.rational_from_ints(4, 9),
       "4/9",
     ),
     (
@@ -2011,9 +2004,9 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
     ("QQ[x]", x, "x", @symcore.int(2), "2"),
     (
       "QQ(x)",
-      try! (@symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1))),
+      @symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1)),
       "2/x",
-      try! (@symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2))),
+      @symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2)),
       "4/x**2",
     ),
     (
@@ -2066,12 +2059,11 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
-    ("QQ", try! @symcore.rational_from_ints(7, 3), "7/3"),
+    ("QQ", @symcore.rational_from_ints(7, 3), "7/3"),
     ("ZZ_I", @symcore.add([@symcore.int(3), i]), "3 + I"),
     (
       "QQ_I",
-      try! (@symcore.rational_from_ints(1, 2) +
-      (try! (@symcore.rational_from_ints(1, 3) * i))),
+      @symcore.rational_from_ints(1, 2) + @symcore.rational_from_ints(1, 3) * i,
       "1/2 + I/3",
     ),
     ("EX", x, "x"),
@@ -2113,9 +2105,9 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
     ("ZZ", @symcore.int(7), "7", @symcore.int(3), "3"),
     (
       "QQ",
-      try! @symcore.rational_from_ints(7, 3),
+      @symcore.rational_from_ints(7, 3),
       "7/3",
-      try! @symcore.rational_from_ints(2, 3),
+      @symcore.rational_from_ints(2, 3),
       "2/3",
     ),
     (
@@ -2136,9 +2128,9 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
     ("QQ[x]", x, "x", @symcore.int(2), "2"),
     (
       "QQ(x)",
-      try! (@symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1))),
+      @symcore.rational_from_ints(2, 1) * (x ^ @symcore.int(-1)),
       "2/x",
-      try! (@symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2))),
+      @symcore.rational_from_ints(4, 1) * (x ^ @symcore.int(-2)),
       "4/x**2",
     ),
   ]
@@ -2270,8 +2262,8 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   let parity_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(4), "4"),
     ("ZZ", @symcore.int(2), "2"),
-    ("QQ", try! @symcore.rational_from_ints(4, 9), "4/9"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(4, 9), "4/9"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("GF(7)", @symcore.int(4), "4"),
     ("GF(7)", @symcore.int(3), "3"),
   ]
@@ -2305,7 +2297,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
 
   let zz_i = domain_from_string("ZZ_I")
   let zz_i_square = @symcore.add([@symcore.int(3), @symcore.int(4) * i])
-  guard (try! zz_i.is_square_expr(zz_i_square)) else {
+  guard zz_i.is_square_expr(zz_i_square) else {
     fail("3 + 4*I should be a square in ZZ_I")
   }
   guard render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)) ==
@@ -2314,8 +2306,8 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   }
 
   let qq_i = domain_from_string("QQ_I")
-  let qq_i_square = (try! @symcore.rational_from_ints(-3, 4)) + i
-  guard (try! qq_i.is_square_expr(qq_i_square)) else {
+  let qq_i_square = @symcore.rational_from_ints(-3, 4) + i
+  guard qq_i.is_square_expr(qq_i_square) else {
     fail("-3/4 + I should be a square in QQ_I")
   }
   guard render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)) ==
@@ -2328,13 +2320,13 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     normalize_expr_text("sqrt(2)") else {
     fail("RR exsqrt should stay symbolic for non-rational roots")
   }
-  guard !(try! rr.is_square_expr(@symcore.int(-1))) else {
+  guard !rr.is_square_expr(@symcore.int(-1)) else {
     fail("negative reals are not squares in RR")
   }
 
   let cc = domain_from_string("CC")
   let cc_expr = @symcore.add([@symcore.int(2), i])
-  guard (try! cc.is_square_expr(cc_expr)) else {
+  guard cc.is_square_expr(cc_expr) else {
     fail("all complex numbers should be squares in CC")
   }
   guard render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)) ==
@@ -2349,13 +2341,12 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
   let x = @symcore.symbol("x")
   let component_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("GF(5)", @symcore.int(3), "3"),
     ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I"),
     (
       "QQ_I",
-      (try! @symcore.rational_from_ints(1, 2)) +
-      (try! @symcore.rational_from_ints(1, 3)) * i,
+      @symcore.rational_from_ints(1, 2) + @symcore.rational_from_ints(1, 3) * i,
       "1/2 + I/3",
     ),
     ("QQ[x]", x + @symcore.int(1), "x + 1"),
@@ -2392,16 +2383,16 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     ("ZZ", @symcore.int(2), "2", @symcore.int(3), "3"),
     (
       "QQ",
-      try! @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(1, 2),
       "1/2",
-      try! @symcore.rational_from_ints(2, 4),
+      @symcore.rational_from_ints(2, 4),
       "2/4",
     ),
     (
       "QQ",
-      try! @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(1, 2),
       "1/2",
-      try! @symcore.rational_from_ints(2, 3),
+      @symcore.rational_from_ints(2, 3),
       "2/3",
     ),
     (
@@ -2446,10 +2437,10 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
 
   let qq = domain_from_string("QQ")
   guard qq.almosteq_expr(
-    try! @symcore.rational_from_ints(1, 2),
-    try! @symcore.rational_from_ints(2, 3),
+    @symcore.rational_from_ints(1, 2),
+    @symcore.rational_from_ints(2, 3),
     tolerance=Some(
-      try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
+      @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
     ),
   ) else {
     fail("QQ almosteq should honor explicit tolerance")
@@ -2458,9 +2449,9 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
   let qq_i = domain_from_string("QQ_I")
   guard qq_i.almosteq_expr(
     @symcore.add([@symcore.int(1), i]),
-    @symcore.add([@symcore.int(1), (try! @symcore.rational_from_ints(1, 2)) * i]),
+    @symcore.add([@symcore.int(1), @symcore.rational_from_ints(1, 2) * i]),
     tolerance=Some(
-      try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
+      @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
     ),
   ) else {
     fail("QQ_I almosteq should compare component-wise within tolerance")
@@ -2468,7 +2459,7 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
 
   let evalf_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),
-    ("QQ", try! @symcore.rational_from_ints(2, 3), "2/3"),
+    ("QQ", @symcore.rational_from_ints(2, 3), "2/3"),
     ("ZZ_I", @symcore.add([@symcore.int(1), i]), "1 + I"),
     ("QQ[x]", x + @symcore.int(1), "x + 1"),
   ]

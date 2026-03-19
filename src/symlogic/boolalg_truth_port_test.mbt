@@ -20,32 +20,32 @@ test "boolalg minterm/maxterm/monomial parity" {
   let min_bits = bool_minterm(BitPattern::Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(min_bits),
-    try! @sympy_logic.boolalg_bool_minterm_bits(["x", "y", "z"], [1, 0, 1]),
+    @sympy_logic.boolalg_bool_minterm_bits(["x", "y", "z"], [1, 0, 1]),
   )
   let min_idx = bool_minterm(BitPattern::Index(6), vars)
   assert_eq(
     to_string(min_idx),
-    try! @sympy_logic.boolalg_bool_minterm_int(["x", "y", "z"], 6),
+    @sympy_logic.boolalg_bool_minterm_int(["x", "y", "z"], 6),
   )
   let max_bits = bool_maxterm(BitPattern::Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(max_bits),
-    try! @sympy_logic.boolalg_bool_maxterm_bits(["x", "y", "z"], [1, 0, 1]),
+    @sympy_logic.boolalg_bool_maxterm_bits(["x", "y", "z"], [1, 0, 1]),
   )
   let max_idx = bool_maxterm(BitPattern::Index(6), vars)
   assert_eq(
     to_string(max_idx),
-    try! @sympy_logic.boolalg_bool_maxterm_int(["x", "y", "z"], 6),
+    @sympy_logic.boolalg_bool_maxterm_int(["x", "y", "z"], 6),
   )
   let mono_bits = bool_monomial(BitPattern::Bits([1, 0, 1]), vars)
   assert_eq(
     to_string(mono_bits),
-    try! @sympy_logic.boolalg_bool_monomial_bits(["x", "y", "z"], [1, 0, 1]),
+    @sympy_logic.boolalg_bool_monomial_bits(["x", "y", "z"], [1, 0, 1]),
   )
   let mono_idx = bool_monomial(BitPattern::Index(6), vars)
   assert_eq(
     to_string(mono_idx),
-    try! @sympy_logic.boolalg_bool_monomial_int(["x", "y", "z"], 6),
+    @sympy_logic.boolalg_bool_monomial_int(["x", "y", "z"], 6),
   )
 }
 

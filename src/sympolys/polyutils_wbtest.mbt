@@ -164,7 +164,7 @@ test "polyutils wb: symbol collection and inferred gens" {
     )
   }
 
-  let auto_dict = try! dict_from_expr(x + y * @symcore.int(2))
+  let auto_dict = dict_from_expr(x + y * @symcore.int(2))
   guard auto_dict.contains("\"x1\"") && auto_dict.contains("\"y2\"") else {
     fail("dict_from_expr should infer gens when omitted")
   }

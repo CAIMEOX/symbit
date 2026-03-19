@@ -23,10 +23,10 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
   )
 
   let wf = wavefunction(x ^ @symcore.int(2), [x])
-  inspect(@symprint.to_string(try! wf.call([@symcore.int(2)])), content="4")
+  inspect(@symprint.to_string(wf.call([@symcore.int(2)])), content="4")
   inspect(
     @symprint.to_string(
-      try! wavefunction(x ^ @symcore.int(2), [
+      wavefunction(x ^ @symcore.int(2), [
         @symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)]),
       ]).call([@symcore.int(2)]),
     ),
@@ -63,7 +63,7 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     content="Wavefunction(2, x)",
   )
   inspect(
-    matrix_scalar_value_to_string(try! represent(wf.as_expr())),
+    matrix_scalar_value_to_string(represent(wf.as_expr())),
     content="Wavefunction((x**2), x)",
   )
 }
@@ -79,7 +79,7 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
       @symcore.raw_function("Tuple", [y, @symcore.int(0), @symcore.int(2)]),
     ],
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     finite.norm(),
     "sqrt(42)/3",
     "wavefunction finite-box norm",
@@ -92,14 +92,14 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
   guard normalized_wf.is_normalized() else {
     fail("wavefunction normalized predicate")
   }
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     normalized_wf.normalize().as_expr(),
     @symprint.to_string(normalized_wf.as_expr()),
     "wavefunction normalize leaves normalized state unchanged",
   )
 
   let divergent = wavefunction(x ^ @symcore.int(2), [x])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     divergent.norm(),
     "oo",
     "wavefunction divergent norm",

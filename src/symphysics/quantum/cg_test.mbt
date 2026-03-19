@@ -50,8 +50,8 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
     fail("CG string form mismatch")
   }
 
-  try! quantum_test_assert_expr_equal(
-    try! wigner3j(
+  quantum_test_assert_expr_equal(
+    wigner3j(
       half,
       @symcore.int(-1) * half,
       half,
@@ -62,8 +62,8 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
     "-sqrt(2)/2",
     "Wigner3j.doit",
   )
-  try! quantum_test_assert_expr_equal(
-    try! cg(
+  quantum_test_assert_expr_equal(
+    cg(
       half,
       half,
       half,
@@ -74,8 +74,8 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
     "sqrt(2)/2",
     "CG.doit",
   )
-  try! quantum_test_assert_expr_equal(
-    try! wigner6j(
+  quantum_test_assert_expr_equal(
+    wigner6j(
       @symcore.int(1),
       @symcore.int(2),
       @symcore.int(3),
@@ -86,8 +86,8 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
     "sqrt(21)/105",
     "Wigner6j.doit",
   )
-  try! quantum_test_assert_expr_equal(
-    try! wigner9j(
+  quantum_test_assert_expr_equal(
+    wigner9j(
       @symcore.int(2),
       @symcore.int(1),
       @symcore.int(1),

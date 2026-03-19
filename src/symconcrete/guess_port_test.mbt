@@ -44,7 +44,7 @@ test "symconcrete rinterp polynomial" {
   }
   let ours_str = @symprint.to_string(expr)
   let expected = "2*x + 1"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -62,7 +62,7 @@ test "symconcrete rinterp symbolic fallback" {
   }
   let ours_str = @symprint.to_string(expr)
   let expected = "a + x"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -82,7 +82,7 @@ test "symconcrete guess_generating_function_rational geometric" {
   }
   let ours_str = @symprint.to_string(expr)
   let expected = "1/(1 - 2*x)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|

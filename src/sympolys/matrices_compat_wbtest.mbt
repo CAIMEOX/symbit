@@ -7,7 +7,7 @@ test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
     @symcore.int(2) * (x + @symcore.int(1)) + @symcore.int(3) * y,
   ]
   let syms = ["x", "y"]
-  let (coeffs, ind) = try! _linear_eq_to_dict(eqs, syms)
+  let (coeffs, ind) = _linear_eq_to_dict(eqs, syms)
   guard coeffs.length() == 2 && ind.length() == 2 else {
     fail("_linear_eq_to_dict should return one sparse row per equation")
   }
@@ -51,7 +51,7 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
   ]
   let syms = ["x", "y"]
 
-  let unique_sol = try! _linsolve(unique, syms)
+  let unique_sol = _linsolve(unique, syms)
   match unique_sol {
     Some(values) =>
       if values.get("x").map(@symprint.to_string) == Some("3/2") &&
@@ -63,7 +63,7 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
     None => fail("_linsolve should find a unique solution for the 2x2 system")
   }
 
-  let under_sol = try! _linsolve(under, syms)
+  let under_sol = _linsolve(under, syms)
   match under_sol {
     Some(values) =>
       match (values.get("x"), values.get("y")) {
@@ -85,7 +85,7 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
       )
   }
 
-  let inconsistent_sol = try! _linsolve(inconsistent, syms)
+  let inconsistent_sol = _linsolve(inconsistent, syms)
   guard inconsistent_sol is None else {
     fail("_linsolve should return None for inconsistent systems")
   }

@@ -246,7 +246,7 @@ fn _lin_eq2dict(
 
 ///|
 /// Convert Expr/Eq equations into coefficient dicts plus symbol-free terms.
-fn _linear_eq_to_dict(
+pub fn _linear_eq_to_dict(
   eqs : Array[@symcore.Expr],
   syms : Array[String],
 ) -> (Array[Map[String, @symcore.Expr]], Array[@symcore.Expr]) raise PolyError {
@@ -281,7 +281,7 @@ fn _linear_eq_to_dict(
 
 ///|
 /// Solve Expr/Eq systems using the same sparse-domain path as SymPy `_linsolve`.
-fn _linsolve(
+pub fn _linsolve(
   eqs : Array[@symcore.Expr],
   syms : Array[String],
 ) -> Map[String, @symcore.Expr]? raise PolyError {

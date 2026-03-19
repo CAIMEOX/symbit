@@ -1,9 +1,9 @@
 ///|
 test "densetools dup integrate/diff/eval" {
   let f = [
-    try! fe_from_int(3, Domain::QQ),
-    try! fe_from_int(2, Domain::QQ),
-    try! fe_from_int(1, Domain::QQ),
+    fe_from_int(3, Domain::QQ),
+    fe_from_int(2, Domain::QQ),
+    fe_from_int(1, Domain::QQ),
   ]
   let ours_i = dup_repr(dup_integrate(f, 1, Domain::QQ))
   let oracle_i = @sympy_polys.dup_integrate(dup_to_rats(f), 1, domain="QQ")
@@ -17,7 +17,7 @@ test "densetools dup integrate/diff/eval" {
   let ours_d2 = dup_repr(dup_diff(f, 2, Domain::QQ))
   let oracle_d2 = @sympy_polys.dup_diff(dup_to_rats(f), 2, domain="QQ")
   guard ours_d2 == oracle_d2 else { fail("dup_diff m=2 mismatch") }
-  let a = try! fe_from_int(2, Domain::QQ)
+  let a = fe_from_int(2, Domain::QQ)
   let ours_eval = dup_eval(f, a, Domain::QQ).to_string()
   let oracle_eval = @sympy_polys.dup_eval(
     dup_to_rats(f),

@@ -1,6 +1,6 @@
 ///|
 test "exceptions full message formatting" {
-  let warning = try! sympy_deprecation_warning(
+  let warning = sympy_deprecation_warning(
     "feature is deprecated", "1.10", "active-deprecations",
   )
   assert_true(warning.full_message().contains("feature is deprecated"))

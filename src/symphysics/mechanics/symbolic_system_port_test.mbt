@@ -50,7 +50,7 @@ test "physics.mechanics parity symbolic system forms" {
     bodies,
     loads,
   ) = symbolic_system_fixture()
-  let symsystem2 = try! symbolic_system(
+  let symsystem2 = symbolic_system(
     coordinates,
     comb_implicit_rhs,
     speeds=Some(speeds),
@@ -60,10 +60,10 @@ test "physics.mechanics parity symbolic system forms" {
     bodies=Some(bodies),
     loads=Some(loads),
   )
-  try! symsystem2.compute_explicit_form()
-  let symsystem1 = try! symbolic_system(
+  symsystem2.compute_explicit_form()
+  let symsystem1 = symbolic_system(
     states,
-    try! symsystem2.comb_explicit_rhs(),
+    symsystem2.comb_explicit_rhs(),
     alg_con=Some([4]),
     output_eqns~,
     coord_idxs=Some([0, 1]),
@@ -71,7 +71,7 @@ test "physics.mechanics parity symbolic system forms" {
     bodies=Some(bodies),
     loads=Some(loads),
   )
-  let symsystem3 = try! symbolic_system(
+  let symsystem3 = symbolic_system(
     states,
     dyn_implicit_rhs,
     mass_matrix=Some(dyn_implicit_mat),
@@ -84,45 +84,45 @@ test "physics.mechanics parity symbolic system forms" {
   )
 
   let prefix = symbolic_system_oracle_prefix()
-  guard (try! @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(try! symsystem1.coordinates()),
+  guard @sympy_physics.mechanics_matrix_equal(
+    @symphysics.explicit_matrix_rows_string(symsystem1.coordinates()),
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), comb_explicit_rhs, alg_con=[4], output_eqns=out_eqns, coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.coordinates",
-  )) else {
+  ) else {
     fail("symbolic system form 1 coordinates parity mismatch")
   }
   let ours_states = symbolic_system_entries_string(symsystem2.states())
-  let oracle_states = try! @sympy_physics.mechanics_summary(
+  let oracle_states = @sympy_physics.mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, lam), comb_implicit_rhs, speeds=(u, v), mass_matrix=comb_implicit_mat, alg_con=[4], output_eqns=out_eqns, bodies=[Pa], loads=[(O, g*m*N.x)]); [str(x) for x in symsystem.states]",
   )
   guard ours_states == oracle_states else {
     fail("symbolic system form 2 states parity mismatch")
   }
-  guard (try! @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(try! symsystem3.dyn_implicit_mat()),
+  guard @sympy_physics.mechanics_matrix_equal(
+    @symphysics.explicit_matrix_rows_string(symsystem3.dyn_implicit_mat()),
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.dyn_implicit_mat",
-  )) else {
+  ) else {
     fail("symbolic system form 3 dynamic mass parity mismatch")
   }
-  guard (try! @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(try! symsystem3.comb_implicit_mat()),
+  guard @sympy_physics.mechanics_matrix_equal(
+    @symphysics.explicit_matrix_rows_string(symsystem3.comb_implicit_mat()),
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.comb_implicit_mat",
-  )) else {
+  ) else {
     fail("symbolic system form 3 combined mass parity mismatch")
   }
-  try! symsystem3.compute_explicit_form()
-  guard (try! @sympy_physics.mechanics_matrix_equal(
-    @symphysics.explicit_matrix_rows_string(try! symsystem3.comb_explicit_rhs()),
+  symsystem3.compute_explicit_form()
+  guard @sympy_physics.mechanics_matrix_equal(
+    @symphysics.explicit_matrix_rows_string(symsystem3.comb_explicit_rhs()),
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.compute_explicit_form(); symsystem.comb_explicit_rhs",
-  )) else {
+  ) else {
     fail("symbolic system explicit rhs parity mismatch")
   }
   let ours_dyn_items = symsystem3.dynamic_symbols().map(@symprint.to_string)
-  let oracle_dyn = try! @sympy_physics.mechanics_summary(
+  let oracle_dyn = @sympy_physics.mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); sorted(str(x) for x in symsystem.dynamic_symbols())",
   )
@@ -134,7 +134,7 @@ test "physics.mechanics parity symbolic system forms" {
   let ours_const_items = symsystem3.constant_symbols().map(@symprint.to_string)
   ours_const_items.sort_by((a, b) => a.compare(b))
   let ours_consts = "[" + ours_const_items.join(", ") + "]"
-  let oracle_consts = try! @sympy_physics.mechanics_summary(
+  let oracle_consts = @sympy_physics.mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); sorted(str(x) for x in symsystem.constant_symbols())",
   )
@@ -144,11 +144,11 @@ test "physics.mechanics parity symbolic system forms" {
   guard symsystem2.alg_con() == Some([4]) && symsystem3.alg_con() == Some([4]) else {
     fail("symbolic system algebraic constraint parity mismatch")
   }
-  let oracle_body_name = try! @sympy_physics.mechanics_summary(
+  let oracle_body_name = @sympy_physics.mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, lam), comb_implicit_rhs, speeds=(u, v), mass_matrix=comb_implicit_mat, alg_con=[4], output_eqns=out_eqns, bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.bodies[0].name",
   )
-  guard (try! symsystem2.bodies())[0].name() == oracle_body_name else {
+  guard symsystem2.bodies()[0].name() == oracle_body_name else {
     fail("symbolic system bodies parity mismatch")
   }
 }

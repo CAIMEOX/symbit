@@ -12,13 +12,13 @@ fn pauli_port_assert_expr_equal(
 test "physics.paulialgebra: delta and epsilon parity" {
   for case in [(1, 1, 1), (2, 3, 0)] {
     guard delta(case.0, case.1) ==
-      (try! @sympy_physics.paulialgebra_delta(case.0, case.1)) else {
+      @sympy_physics.paulialgebra_delta(case.0, case.1) else {
       fail("delta parity \{case.0},\{case.1}")
     }
   }
   for case in [(1, 2, 3, 1), (1, 3, 2, -1), (1, 1, 2, 0)] {
     guard epsilon(case.0, case.1, case.2) ==
-      (try! @sympy_physics.paulialgebra_epsilon(case.0, case.1, case.2)) else {
+      @sympy_physics.paulialgebra_epsilon(case.0, case.1, case.2) else {
       fail("epsilon parity \{case.0},\{case.1},\{case.2}")
     }
   }
@@ -27,11 +27,11 @@ test "physics.paulialgebra: delta and epsilon parity" {
 ///|
 test "physics.paulialgebra: evaluate parity" {
   let i = @symcore.symbol("I")
-  let sigma1 = try! pauli(1)
-  let sigma2 = try! pauli(2)
-  let sigma3 = try! pauli(3)
-  let tau1 = try! pauli(1, label="tau")
-  let tau2 = try! pauli(2, label="tau")
+  let sigma1 = pauli(1)
+  let sigma2 = pauli(2)
+  let sigma3 = pauli(3)
+  let tau1 = pauli(1, label="tau")
+  let tau2 = pauli(2, label="tau")
 
   for
     case in [
@@ -66,7 +66,7 @@ test "physics.paulialgebra: evaluate parity" {
     ] {
     pauli_port_assert_expr_equal(
       case.0,
-      try! @sympy_physics.paulialgebra_evaluate_srepr(case.1),
+      @sympy_physics.paulialgebra_evaluate_srepr(case.1),
       case.1,
     )
   }

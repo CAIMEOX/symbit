@@ -11,11 +11,11 @@ test "physics.quantum.dagger: symbolic and matrix behaviors" {
     fail("product dagger should reverse order")
   }
 
-  let mat = try! @symphysics.explicit_matrix_from_rows([
+  let mat = @symphysics.explicit_matrix_from_rows([
     [@symcore.symbol("I"), @symcore.int(2) * @symcore.symbol("I")],
     [@symcore.int(0), @symcore.int(1)],
   ])
-  try! quantum_test_assert_matrix_expr_equal(
+  quantum_test_assert_matrix_expr_equal(
     matrix_dagger(mat),
     ["-I", "0", "-2*I", "1"],
     2,
@@ -37,9 +37,9 @@ test "physics.quantum.tensorproduct: symbolic wrapper and matrix behavior" {
     fail("tensor-product dagger")
   }
 
-  let sigma_x = try! @symphysics.msigma(1)
-  try! quantum_test_assert_matrix_equal(
-    try! tensor_product_matrix([sigma_x, matrix_eye(2)]),
+  let sigma_x = @symphysics.msigma(1)
+  quantum_test_assert_matrix_equal(
+    tensor_product_matrix([sigma_x, matrix_eye(2)]),
     [
       "0", "0", "1", "0", "0", "0", "0", "1", "1", "0", "0", "0", "0", "1", "0",
       "0",

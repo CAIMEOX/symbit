@@ -7,11 +7,11 @@ fn column_test_sf(start : @symcore.Expr, order : Int) -> @symcore.Expr {
 test "physics.continuum_mechanics.column: loads and reactions" {
   let e = @symcore.symbol("E")
   let a = @symcore.symbol("A")
-  let c = try! column(@symcore.int(10), e, a)
-  let r0 = try! c.apply_support(@symcore.int(0))
-  let r10 = try! c.apply_support(@symcore.int(10))
-  try! c.apply_load(@symcore.int(-1), @symcore.int(5), -1)
-  try! c.solve_for_reaction_loads(reactions=[r0, r10])
+  let c = column(@symcore.int(10), e, a)
+  let r0 = c.apply_support(@symcore.int(0))
+  let r10 = c.apply_support(@symcore.int(10))
+  c.apply_load(@symcore.int(-1), @symcore.int(5), -1)
+  c.solve_for_reaction_loads(reactions=[r0, r10])
   let col_r0 = c.reaction_loads()["R_0"]
   let col_r10 = c.reaction_loads()["R_10"]
 
@@ -41,20 +41,10 @@ test "physics.continuum_mechanics.column: loads and reactions" {
 test "physics.continuum_mechanics.column: distributed and ramp loads" {
   let e = @symcore.symbol("E")
   let a = @symcore.symbol("A")
-  let c = try! column(@symcore.int(10), e, a)
-  try! c.apply_load(@symcore.int(5), @symcore.int(0), -1)
-  try! c.apply_load(
-    @symcore.int(5),
-    @symcore.int(2),
-    0,
-    end=Some(@symcore.int(4)),
-  )
-  try! c.apply_load(
-    @symcore.int(5),
-    @symcore.int(4),
-    1,
-    end=Some(@symcore.int(6)),
-  )
+  let c = column(@symcore.int(10), e, a)
+  c.apply_load(@symcore.int(5), @symcore.int(0), -1)
+  c.apply_load(@symcore.int(5), @symcore.int(2), 0, end=Some(@symcore.int(4)))
+  c.apply_load(@symcore.int(5), @symcore.int(4), 1, end=Some(@symcore.int(6)))
 
   let expected = @symcore.int(5) * column_test_sf(@symcore.int(0), -1) +
     @symcore.int(5) * column_test_sf(@symcore.int(2), 0) +
@@ -66,12 +56,7 @@ test "physics.continuum_mechanics.column: distributed and ramp loads" {
     fail("distributed load mismatch: \{@symprint.to_string(c.load())}")
   }
 
-  try! c.remove_load(
-    @symcore.int(5),
-    @symcore.int(4),
-    1,
-    end=Some(@symcore.int(6)),
-  )
+  c.remove_load(@symcore.int(5), @symcore.int(4), 1, end=Some(@symcore.int(6)))
   let after_remove = @symcore.int(5) * column_test_sf(@symcore.int(0), -1) +
     @symcore.int(5) * column_test_sf(@symcore.int(2), 0) +
     @symcore.int(-5) * column_test_sf(@symcore.int(4), 0)

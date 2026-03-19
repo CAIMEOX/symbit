@@ -1,28 +1,28 @@
 ///|
 test "geometry.parabola vertex axis and line intersection" {
-  let pa = try! parabola(
-    try! point2d(@symcore.int(0), @symcore.int(0)),
-    try! line(
-      try! point2d(@symcore.int(-2), @symcore.int(-2)),
-      try! point2d(@symcore.int(2), @symcore.int(-2)),
+  let pa = parabola(
+    point2d(@symcore.int(0), @symcore.int(0)),
+    line(
+      point2d(@symcore.int(-2), @symcore.int(-2)),
+      point2d(@symcore.int(2), @symcore.int(-2)),
     ),
   )
-  assert_eq((try! pa.vertex()).repr(), "Point2D(0, -1)")
-  guard (try! @sympy_geometry.geometry_expr_equal(
-    @symprint.to_string(try! pa.p_parameter()),
+  assert_eq(pa.vertex().repr(), "Point2D(0, -1)")
+  guard @sympy_geometry.geometry_expr_equal(
+    @symprint.to_string(pa.p_parameter()),
     "1",
-  )) else {
+  ) else {
     fail("parabola p parameter")
   }
-  let hits = try! pa.intersection(
+  let hits = pa.intersection(
     geometry_line(
-      try! line(
-        try! point2d(@symcore.int(-3), @symcore.int(3)),
-        try! point2d(@symcore.int(3), @symcore.int(3)),
+      line(
+        point2d(@symcore.int(-3), @symcore.int(3)),
+        point2d(@symcore.int(3), @symcore.int(3)),
       ),
     ),
   )
-  try! geometry_assert_point_set_equal(
+  geometry_assert_point_set_equal(
     hits,
     [("-4", "3"), ("4", "3")],
     "parabola-line intersection",
@@ -32,17 +32,17 @@ test "geometry.parabola vertex axis and line intersection" {
 ///|
 test "geometry.curve arbitrary point transforms and length shell" {
   let s = @symcore.symbol("s")
-  let c = try! curve(
+  let c = curve(
     [@symcore.int(2) * s, s ^ @symcore.int(2)],
     s,
     @symcore.int(0),
     @symcore.int(2),
   )
-  let ap = try! c.arbitrary_point()
-  assert_eq(@symprint.to_string(try! ap.x()), "2*s")
-  assert_eq(@symprint.to_string(try! ap.y()), "s**2")
+  let ap = c.arbitrary_point()
+  assert_eq(@symprint.to_string(ap.x()), "2*s")
+  assert_eq(@symprint.to_string(ap.y()), "s**2")
   assert_eq(
-    (try! c.translate([@symcore.int(1), @symcore.int(3)])).repr(),
+    c.translate([@symcore.int(1), @symcore.int(3)]).repr(),
     "Curve((2*s + 1, s**2 + 3), (s, 0, 2))",
   )
   assert_eq(
@@ -55,7 +55,7 @@ test "geometry.curve arbitrary point transforms and length shell" {
 test "geometry.curve parameter helpers" {
   let t = @symcore.symbol("t")
   let z = @symcore.symbol("z")
-  let c = try! curve(
+  let c = curve(
     [@symcore.int(2) * t, t ^ @symcore.int(2)],
     t,
     @symcore.int(0),
@@ -78,6 +78,6 @@ test "geometry.curve free symbol helpers" {
   let t = @symcore.symbol("t")
   let a = @symcore.symbol("a")
   let b = @symcore.symbol("b")
-  let c = try! curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
+  let c = curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
   assert_eq(expr_set_summary(c.free_symbols()), "{a, b}")
 }

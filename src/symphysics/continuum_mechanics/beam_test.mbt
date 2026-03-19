@@ -11,16 +11,16 @@ test "physics.continuum_mechanics.beam: reactions and fields" {
   let r1 = @symcore.symbol("R1")
   let r2 = @symcore.symbol("R2")
 
-  let b = try! beam(@symcore.int(30), e, i, area=a)
+  let b = beam(@symcore.int(30), e, i, area=a)
   b.set_bc_deflection([
     (@symcore.int(10), @symcore.int(0)),
     (@symcore.int(30), @symcore.int(0)),
   ])
-  try! b.apply_load(@symcore.int(-8), @symcore.int(0), -1)
-  try! b.apply_load(r1, @symcore.int(10), -1)
-  try! b.apply_load(r2, @symcore.int(30), -1)
-  try! b.apply_load(@symcore.int(120), @symcore.int(30), -2)
-  try! b.solve_for_reaction_loads(reactions=[r1, r2])
+  b.apply_load(@symcore.int(-8), @symcore.int(0), -1)
+  b.apply_load(r1, @symcore.int(10), -1)
+  b.apply_load(r2, @symcore.int(30), -1)
+  b.apply_load(@symcore.int(120), @symcore.int(30), -2)
+  b.solve_for_reaction_loads(reactions=[r1, r2])
   let beam_r1 = b.reaction_loads()["R1"]
   let beam_r2 = b.reaction_loads()["R2"]
 
@@ -65,17 +65,12 @@ test "physics.continuum_mechanics.beam: reactions and fields" {
 test "physics.continuum_mechanics.beam: distributed end load and support application" {
   let e = @symcore.symbol("E")
   let i = @symcore.symbol("I")
-  let b = try! beam(@symcore.int(9), e, i, area=@symcore.int(2))
-  let supports = try! b.apply_support(@symcore.int(0), kind="fixed")
+  let b = beam(@symcore.int(9), e, i, area=@symcore.int(2))
+  let supports = b.apply_support(@symcore.int(0), kind="fixed")
   guard supports.length() == 2 else {
     fail("fixed support should add force and moment")
   }
-  try! b.apply_load(
-    @symcore.int(-2),
-    @symcore.int(2),
-    2,
-    end=Some(@symcore.int(3)),
-  )
+  b.apply_load(@symcore.int(-2), @symcore.int(2), 2, end=Some(@symcore.int(3)))
 
   let expected_load = @symcore.int(-2) * beam_test_sf(@symcore.int(2), 2) +
     @symcore.int(2) * beam_test_sf(@symcore.int(3), 0) +
@@ -87,12 +82,7 @@ test "physics.continuum_mechanics.beam: distributed end load and support applica
     fail("end load mismatch: \{@symprint.to_string(b.load())}")
   }
 
-  try! b.remove_load(
-    @symcore.int(-2),
-    @symcore.int(2),
-    2,
-    end=Some(@symcore.int(3)),
-  )
+  b.remove_load(@symcore.int(-2), @symcore.int(2), 2, end=Some(@symcore.int(3)))
   let support_only = supports[0] * beam_test_sf(@symcore.int(0), -1) +
     supports[1] * beam_test_sf(@symcore.int(0), -2)
   guard cm_numeric_expr_eq(b.load(), support_only) else {

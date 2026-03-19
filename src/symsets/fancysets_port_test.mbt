@@ -12,7 +12,7 @@ fn setbool_str_fancy(val : SetBool) -> String {
 test "symsets fancy sets contains parity" {
   let one = @symcore.int(1)
   let zero = @symcore.int(0)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let nset = naturals()
   assert_eq(
     setbool_str_fancy(contains(nset, one)),
@@ -51,6 +51,6 @@ test "symsets fancy sets contains parity" {
 ///|
 test "symsets complement with fancy sets" {
   let res = complement(reals(), integers())
-  let sympy = try! @sympy_sets.complement_str(reals(), integers())
+  let sympy = @sympy_sets.complement_str(reals(), integers())
   assert_eq(to_string(res), sympy)
 }

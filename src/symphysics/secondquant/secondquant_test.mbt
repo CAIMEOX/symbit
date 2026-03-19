@@ -59,17 +59,17 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
   ])
   inspect(state.len(), content="5")
   inspect(state.repr(), content="FockState((0, 1, 2, 3, 4))")
-  inspect((try! state.get(3)) |> @symprint.to_string, content="3")
-  inspect((try! state.up(0)).repr(), content="FockState((1, 1, 2, 3, 4))")
+  inspect(state.get(3) |> @symprint.to_string, content="3")
+  inspect(state.up(0).repr(), content="FockState((1, 1, 2, 3, 4))")
   inspect(
-    match (try! state.down(4)) {
+    match state.down(4) {
       Some(v) => v.repr()
       None => "0"
     },
     content="FockState((0, 1, 2, 3, 3))",
   )
   inspect(
-    match (try! state.down(0)) {
+    match state.down(0) {
       Some(v) => v.repr()
       None => "0"
     },
@@ -141,7 +141,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     variable.to_string(),
     content="[FockState((0,)), FockState((1,)), FockState((2,)), FockState((3,)), FockState((4,))]",
   )
-  let matrix_a = try! secondquant_matrix_rep(b0.as_expr(), variable.as_basis())
+  let matrix_a = secondquant_matrix_rep(b0.as_expr(), variable.as_basis())
   sq_assert_matrix_expr_equal(
     matrix_a,
     [
@@ -152,10 +152,7 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     5,
     "annihilator matrix",
   )
-  let matrix_ad = try! secondquant_matrix_rep(
-    bd0.as_expr(),
-    variable.as_basis(),
-  )
+  let matrix_ad = secondquant_matrix_rep(bd0.as_expr(), variable.as_basis())
   sq_assert_matrix_expr_equal(
     matrix_ad,
     [
@@ -173,11 +170,11 @@ test "physics.secondquant: boson dagger, apply, basis, matrix" {
     content="[FockState((2, 0)), FockState((1, 1)), FockState((0, 2))]",
   )
   inspect(
-    @symprint.to_string(try! fixed.state(1)),
+    @symprint.to_string(fixed.state(1)),
     content="FockStateBosonKet(Tuple(1, 1))",
   )
   inspect(
-    (try! fixed.index(boson_ket([@symcore.int(1), @symcore.int(1)]))).to_string(),
+    fixed.index(boson_ket([@symcore.int(1), @symcore.int(1)])).to_string(),
     content="1",
   )
 }

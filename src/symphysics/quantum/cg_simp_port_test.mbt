@@ -17,9 +17,9 @@ test "physics.quantum.cg_simp: sum parity" {
       @symcore.int(-1) * a,
       a,
     )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq1),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
     "cg_simp eq1",
   )
 
@@ -30,9 +30,9 @@ test "physics.quantum.cg_simp: sum parity" {
     @symcore.int(-1) * a,
     a,
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq2),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq2)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(eq2)),
     "cg_simp eq2",
   )
 
@@ -46,9 +46,9 @@ test "physics.quantum.cg_simp: sum parity" {
     @symcore.int(-1) * b,
     b,
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq4),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq4)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(eq4)),
     "cg_simp eq4",
   )
 }
@@ -69,9 +69,9 @@ test "physics.quantum.cg_simp: square-sum parity" {
     @symcore.int(-1) * half,
     half,
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(expr),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(expr)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(expr)),
     "cg_simp square",
   )
 }
@@ -95,9 +95,9 @@ test "physics.quantum.cg_simp: additive parity" {
       @symcore.int(-1) * half,
     ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq1),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(eq1)),
     "cg_simp additive eq1",
   )
 
@@ -130,9 +130,9 @@ test "physics.quantum.cg_simp: additive parity" {
       @symcore.int(0),
     ).as_expr(),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(eq2),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(eq2)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(eq2)),
     "cg_simp additive eq2",
   )
 }
@@ -162,18 +162,18 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
     ).as_expr() ^
     @symcore.int(2)
   let numeric = @symcore.add([a, b])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(numeric),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric)),
     "cg_simp eq9 square numeric",
   )
   let numeric_weighted = @symcore.add([
     @symcore.mul([@symcore.int(5), a]),
     @symcore.mul([@symcore.int(3), b]),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(numeric_weighted),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric_weighted)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric_weighted)),
     "cg_simp eq9 square weighted numeric",
   )
 
@@ -186,9 +186,9 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
   let s4 = cg(half, m1, half, m2, @symcore.int(0), @symcore.int(0)).as_expr() ^
     @symcore.int(2)
   let symbolic = @symcore.add([s1, s2, s3, s4])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(symbolic),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic)),
     "cg_simp eq9 square symbolic",
   )
   let symbolic_weighted = @symcore.add([
@@ -197,9 +197,9 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
     @symcore.mul([@symcore.int(3), s3]),
     @symcore.mul([@symcore.int(4), s4]),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(symbolic_weighted),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic_weighted)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic_weighted)),
     "cg_simp eq9 square weighted symbolic",
   )
 }
@@ -268,14 +268,14 @@ test "physics.quantum.cg_simp: additive eq9 cross parity" {
       cg(half, m1p, half, m2p, @symcore.int(0), @symcore.int(0)).as_expr(),
     ]),
   ])
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(numeric),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(numeric)),
     "cg_simp eq9 cross numeric",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     cg_simp(symbolic),
-    try! @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic)),
+    @sympy_physics.quantum_cg_simp(@symprint.to_string(symbolic)),
     "cg_simp eq9 cross symbolic",
   )
 }

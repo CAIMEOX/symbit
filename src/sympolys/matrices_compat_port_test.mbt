@@ -119,7 +119,7 @@ fn ddm_clear_denoms_rowwise_repr(
 test "matrices: DDM add/matmul/scalarmul/det/rref parity" {
   let a = ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
-  let two = try! fe_from_int(2, Domain::QQ)
+  let two = fe_from_int(2, Domain::QQ)
 
   let ours_add = a.add(b).to_string()
   let ours_matmul = a.matmul(b).to_string()
@@ -383,7 +383,7 @@ test "matrices: DomainMatrix LLL and transform parity" {
 
   let reduced = a.lll()
   let hnf_orig = @sympy_polys.matrix_hnf_code(rows)
-  let hnf_reduced = @sympy_polys.matrix_hnf_code(try! ddm_to_int_rows(reduced))
+  let hnf_reduced = @sympy_polys.matrix_hnf_code(ddm_to_int_rows(reduced))
   guard hnf_orig == hnf_reduced else {
     fail(
       "lll lattice mismatch: hnf(orig)=\{hnf_orig}, hnf(reduced)=\{hnf_reduced}",
@@ -395,9 +395,7 @@ test "matrices: DomainMatrix LLL and transform parity" {
   guard mx_trim(recomposed) == mx_trim(reduced2.to_string()) else {
     fail("lll transform reconstruction mismatch")
   }
-  let hnf_reduced2 = @sympy_polys.matrix_hnf_code(
-    try! ddm_to_int_rows(reduced2),
-  )
+  let hnf_reduced2 = @sympy_polys.matrix_hnf_code(ddm_to_int_rows(reduced2))
   guard hnf_orig == hnf_reduced2 else { fail("lll transform lattice mismatch") }
 }
 
@@ -406,7 +404,7 @@ test "matrices: HNF parity on integer cases" {
   let cases = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]
   for rows in cases {
     let a = ddm_from_ints(rows, Domain::ZZ)
-    let ours_rows = try! ddm_to_int_rows(a.hermite_normal_form())
+    let ours_rows = ddm_to_int_rows(a.hermite_normal_form())
     let oracle_code = @sympy_polys.matrix_hnf_code(rows)
     let ours_code = @sympy_polys.matrix_hnf_code(ours_rows)
     guard ours_code == oracle_code else {
@@ -450,10 +448,10 @@ test "matrices: Smith normal form parity on integer cases" {
 
 ///|
 test "matrices: SDM add/matmul/scalarmul and dense conversion" {
-  let two = try! fe_from_int(2, Domain::ZZ)
-  let one = try! fe_from_int(1, Domain::ZZ)
-  let three = try! fe_from_int(3, Domain::ZZ)
-  let four = try! fe_from_int(4, Domain::ZZ)
+  let two = fe_from_int(2, Domain::ZZ)
+  let one = fe_from_int(1, Domain::ZZ)
+  let three = fe_from_int(3, Domain::ZZ)
+  let four = fe_from_int(4, Domain::ZZ)
 
   let s = sdm_from_entries(2, 2, [(0, 1, two), (1, 0, one)], Domain::ZZ)
   let t = sdm_from_entries(2, 2, [(0, 0, three), (1, 1, four)], Domain::ZZ)
@@ -478,12 +476,12 @@ test "matrices: SDM add/matmul/scalarmul and dense conversion" {
 
 ///|
 test "matrices: SDM rref_den and nullspace_from_rref parity" {
-  let one = try! fe_from_int(1, Domain::ZZ)
-  let two = try! fe_from_int(2, Domain::ZZ)
-  let three = try! fe_from_int(3, Domain::ZZ)
-  let four = try! fe_from_int(4, Domain::ZZ)
-  let five = try! fe_from_int(5, Domain::ZZ)
-  let six = try! fe_from_int(6, Domain::ZZ)
+  let one = fe_from_int(1, Domain::ZZ)
+  let two = fe_from_int(2, Domain::ZZ)
+  let three = fe_from_int(3, Domain::ZZ)
+  let four = fe_from_int(4, Domain::ZZ)
+  let five = fe_from_int(5, Domain::ZZ)
+  let six = fe_from_int(6, Domain::ZZ)
   let a = sdm_from_entries(
     2,
     3,
@@ -516,9 +514,9 @@ test "matrices: SDM rref_den and nullspace_from_rref parity" {
     2,
     [
       (0, 0, six),
-      (0, 1, try! fe_from_int(-3, Domain::ZZ)),
+      (0, 1, fe_from_int(-3, Domain::ZZ)),
       (1, 0, four),
-      (1, 1, try! fe_from_int(-2, Domain::ZZ)),
+      (1, 1, fe_from_int(-2, Domain::ZZ)),
     ],
     Domain::ZZ,
   )
@@ -544,8 +542,8 @@ test "matrices: DDM and SDM particular wrappers" {
     fail("ddm particular mismatch: \{ddm_particular}")
   }
 
-  let one = try! fe_from_int(1, Domain::QQ)
-  let two = try! fe_from_int(2, Domain::QQ)
+  let one = fe_from_int(1, Domain::QQ)
+  let two = fe_from_int(2, Domain::QQ)
   let sdm_aug = sdm_from_entries(
     2,
     3,
@@ -554,7 +552,7 @@ test "matrices: DDM and SDM particular wrappers" {
       (0, 1, two),
       (0, 2, one),
       (1, 0, two),
-      (1, 1, try! fe_from_int(4, Domain::QQ)),
+      (1, 1, fe_from_int(4, Domain::QQ)),
       (1, 2, two),
     ],
     Domain::QQ,
@@ -572,8 +570,8 @@ test "matrices: DDM and SDM particular wrappers" {
 
 ///|
 test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
-  let zero = try! fe_from_int(0, Domain::QQ)
-  let oneq = try! fe_from_int(1, Domain::QQ)
+  let zero = fe_from_int(0, Domain::QQ)
+  let oneq = fe_from_int(1, Domain::QQ)
   let a = sdm_from_entries(
     2,
     2,
@@ -592,11 +590,11 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
     2,
     [
       (0, 0, oneq),
-      (0, 1, try! fe_from_int(2, Domain::QQ)),
-      (1, 0, try! fe_from_int(3, Domain::QQ)),
-      (1, 1, try! fe_from_int(4, Domain::QQ)),
-      (2, 0, try! fe_from_int(5, Domain::QQ)),
-      (2, 1, try! fe_from_int(6, Domain::QQ)),
+      (0, 1, fe_from_int(2, Domain::QQ)),
+      (1, 0, fe_from_int(3, Domain::QQ)),
+      (1, 1, fe_from_int(4, Domain::QQ)),
+      (2, 0, fe_from_int(5, Domain::QQ)),
+      (2, 1, fe_from_int(6, Domain::QQ)),
     ],
     Domain::QQ,
   ).qr()
@@ -619,9 +617,9 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
     2,
     [
       (0, 0, oneq),
-      (0, 1, try! fe_from_int(2, Domain::QQ)),
-      (1, 0, try! fe_from_int(3, Domain::QQ)),
-      (1, 1, try! fe_from_int(4, Domain::QQ)),
+      (0, 1, fe_from_int(2, Domain::QQ)),
+      (1, 0, fe_from_int(3, Domain::QQ)),
+      (1, 1, fe_from_int(4, Domain::QQ)),
     ],
     Domain::QQ,
   )
@@ -651,10 +649,10 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
     2,
     2,
     [
-      (0, 0, try! fe_from_int(1, Domain::ZZ)),
-      (0, 1, try! fe_from_int(2, Domain::ZZ)),
-      (1, 0, try! fe_from_int(3, Domain::ZZ)),
-      (1, 1, try! fe_from_int(4, Domain::ZZ)),
+      (0, 0, fe_from_int(1, Domain::ZZ)),
+      (0, 1, fe_from_int(2, Domain::ZZ)),
+      (1, 0, fe_from_int(3, Domain::ZZ)),
+      (1, 1, fe_from_int(4, Domain::ZZ)),
     ],
     Domain::ZZ,
   )
@@ -712,7 +710,7 @@ test "matrices: DDM and SDM structural wrappers" {
   }
   guard mx_trim(
       DDM::diag(
-        [try! fe_from_int(1, Domain::ZZ), try! fe_from_int(4, Domain::ZZ)],
+        [fe_from_int(1, Domain::ZZ), fe_from_int(4, Domain::ZZ)],
         Domain::ZZ,
       ).to_string(),
     ) ==
@@ -735,7 +733,7 @@ test "matrices: DDM and SDM structural wrappers" {
   guard ddm.to_dod().length() == 2 && ddm.to_dok().length() == 2 else {
     fail("ddm dod/dok mismatch")
   }
-  let ddm_two = try! fe_from_int(2, Domain::ZZ)
+  let ddm_two = fe_from_int(2, Domain::ZZ)
   guard mx_trim(
       ddm
       .applyfunc(fn(value : FieldElem) raise PolyError {
@@ -763,7 +761,7 @@ test "matrices: DDM and SDM structural wrappers" {
   guard mx_trim(ddm.mul_elementwise(ddm).to_string()) == "[[1,0],[0,16]]" else {
     fail("ddm mul_elementwise mismatch")
   }
-  guard mx_trim(ddm.rmul(try! fe_from_int(2, Domain::ZZ)).to_string()) ==
+  guard mx_trim(ddm.rmul(fe_from_int(2, Domain::ZZ)).to_string()) ==
     "[[2,0],[0,8]]" else {
     fail("ddm rmul mismatch")
   }
@@ -772,8 +770,8 @@ test "matrices: DDM and SDM structural wrappers" {
     fail("ddm to_sdm roundtrip mismatch")
   }
 
-  let one = try! fe_from_int(1, Domain::QQ)
-  let four = try! fe_from_int(4, Domain::QQ)
+  let one = fe_from_int(1, Domain::QQ)
+  let four = fe_from_int(4, Domain::QQ)
   let sdm = sdm_from_entries(2, 2, [(0, 0, one), (1, 1, four)], Domain::QQ)
   guard mx_trim(
       SDM::from_list_flat(sdm.to_list_flat(), (2, 2), Domain::QQ)
@@ -818,7 +816,7 @@ test "matrices: DDM and SDM structural wrappers" {
   guard sdm.to_dod().length() == 2 && sdm.to_dok().length() == 2 else {
     fail("sdm dod/dok mismatch")
   }
-  let sdm_two = try! fe_from_int(2, Domain::QQ)
+  let sdm_two = fe_from_int(2, Domain::QQ)
   guard mx_trim(
       sdm
       .applyfunc(fn(value : FieldElem) raise PolyError {
@@ -853,9 +851,7 @@ test "matrices: DDM and SDM structural wrappers" {
     "[[1,0],[0,16]]" else {
     fail("sdm mul_elementwise mismatch")
   }
-  guard mx_trim(
-      sdm.rmul(try! fe_from_int(2, Domain::QQ)).to_dense().to_string(),
-    ) ==
+  guard mx_trim(sdm.rmul(fe_from_int(2, Domain::QQ)).to_dense().to_string()) ==
     "[[2,0],[0,8]]" else {
     fail("sdm rmul mismatch")
   }
@@ -872,9 +868,9 @@ test "matrices: DDM and SDM structural wrappers" {
     3,
     3,
     [
-      (0, 0, try! fe_from_int(1, Domain::ZZ)),
-      (1, 1, try! fe_from_int(1, Domain::ZZ)),
-      (2, 2, try! fe_from_int(1, Domain::ZZ)),
+      (0, 0, fe_from_int(1, Domain::ZZ)),
+      (1, 1, fe_from_int(1, Domain::ZZ)),
+      (2, 2, fe_from_int(1, Domain::ZZ)),
     ],
     Domain::ZZ,
   )
@@ -885,7 +881,7 @@ test "matrices: DDM and SDM structural wrappers" {
     [0, 0, 1],
   ])
   let sparse_hnf_reduced = @sympy_polys.matrix_hnf_code(
-    try! ddm_to_int_rows(sparse_reduced.to_dense()),
+    ddm_to_int_rows(sparse_reduced.to_dense()),
   )
   guard sparse_hnf_orig == sparse_hnf_reduced else {
     fail("sdm lll lattice mismatch")
@@ -900,7 +896,7 @@ test "matrices: DDM and SDM structural wrappers" {
     fail("sdm lll_transform reconstruction mismatch")
   }
   let sparse_hnf_transformed = @sympy_polys.matrix_hnf_code(
-    try! ddm_to_int_rows(sparse_lll_transform.0.to_dense()),
+    ddm_to_int_rows(sparse_lll_transform.0.to_dense()),
   )
   guard sparse_hnf_orig == sparse_hnf_transformed else {
     fail("sdm lll_transform lattice mismatch")
@@ -911,26 +907,26 @@ test "matrices: DDM and SDM structural wrappers" {
 test "matrices: DDM and SDM constructor/accessor helpers" {
   let rows = [
     [
-      try! fe_from_int(1, Domain::ZZ),
-      try! fe_from_int(2, Domain::ZZ),
-      try! fe_from_int(3, Domain::ZZ),
+      fe_from_int(1, Domain::ZZ),
+      fe_from_int(2, Domain::ZZ),
+      fe_from_int(3, Domain::ZZ),
     ],
     [
-      try! fe_from_int(4, Domain::ZZ),
-      try! fe_from_int(5, Domain::ZZ),
-      try! fe_from_int(6, Domain::ZZ),
+      fe_from_int(4, Domain::ZZ),
+      fe_from_int(5, Domain::ZZ),
+      fe_from_int(6, Domain::ZZ),
     ],
     [
-      try! fe_from_int(7, Domain::ZZ),
-      try! fe_from_int(8, Domain::ZZ),
-      try! fe_from_int(9, Domain::ZZ),
+      fe_from_int(7, Domain::ZZ),
+      fe_from_int(8, Domain::ZZ),
+      fe_from_int(9, Domain::ZZ),
     ],
   ]
   let ddm = DDM::from_list(rows, (3, 3), Domain::ZZ)
   guard fe_to_string(ddm.getitem(1, -2)) == "5" else {
     fail("ddm getitem mismatch")
   }
-  let ddm_set = ddm.setitem(-1, -1, try! fe_from_int(10, Domain::ZZ))
+  let ddm_set = ddm.setitem(-1, -1, fe_from_int(10, Domain::ZZ))
   guard ddm_set.to_domain_matrix().getitem(-1, -1).to_string() == "10" else {
     fail("ddm setitem mismatch")
   }
@@ -955,13 +951,13 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
 
   let dod : DomainMatrixDOD = Map::new()
   let row0 : Map[Int, FieldElem] = Map::new()
-  row0[1] = try! fe_from_int(1, Domain::ZZ)
+  row0[1] = fe_from_int(1, Domain::ZZ)
   dod[0] = row0
   let sdm = SDM::new(dod, (2, 2), Domain::ZZ)
   guard fe_to_string(sdm.getitem(-2, -1)) == "1" else {
     fail("sdm getitem mismatch")
   }
-  let sdm_set = sdm.setitem(1, 0, try! fe_from_int(2, Domain::ZZ))
+  let sdm_set = sdm.setitem(1, 0, fe_from_int(2, Domain::ZZ))
   guard sdm_set
     .extract_slice(
       row_start=Some(1),
@@ -977,8 +973,8 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
   }
   let sdm_from_list = SDM::from_list(
     [
-      [try! fe_from_int(1, Domain::ZZ), try! fe_from_int(0, Domain::ZZ)],
-      [try! fe_from_int(0, Domain::ZZ), try! fe_from_int(1, Domain::ZZ)],
+      [fe_from_int(1, Domain::ZZ), fe_from_int(0, Domain::ZZ)],
+      [fe_from_int(0, Domain::ZZ), fe_from_int(1, Domain::ZZ)],
     ],
     (2, 2),
     Domain::ZZ,
@@ -1011,7 +1007,7 @@ test "matrices: DFM fallback and scalar sympy helpers" {
     fail("sdm to_dfm_or_ddm fallback mismatch")
   }
 
-  let scalar = DomainScalar::from_sympy(try! @symcore.rational_from_ints(1, 2))
+  let scalar = DomainScalar::from_sympy(@symcore.rational_from_ints(1, 2))
   let oracle_scalar = @sympy_polys.domainscalar_from_expr("1/2")
   let ours_scalar = "\{scalar.to_string()}@\{domain_to_sympy_string(scalar.domain)}"
   guard mx_trim(ours_scalar) == mx_trim(oracle_scalar) else {
@@ -1022,10 +1018,7 @@ test "matrices: DFM fallback and scalar sympy helpers" {
   guard @symprint.to_string(scalar.to_sympy()) == "1/2" else {
     fail("domainscalar to_sympy mismatch")
   }
-  let scalar_new = DomainScalar::new(
-    try! fe_from_int(3, Domain::ZZ),
-    Domain::ZZ,
-  )
+  let scalar_new = DomainScalar::new(fe_from_int(3, Domain::ZZ), Domain::ZZ)
   guard scalar_new.to_string() == "3" else { fail("domainscalar new mismatch") }
 }
 

@@ -48,7 +48,7 @@ test "groebnertools: grevlex ordering changes basis" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let f1 = b.from_expr((x ^ @symcore.int(2)) + y)
-  let f2 = try! b.from_expr(x - @symcore.int(1))
+  let f2 = b.from_expr(x - @symcore.int(1))
   expect_groebner_same([f1, f2], TermOrder::Grevlex)
 }
 
@@ -60,7 +60,7 @@ test "groebnertools: lex basis for x^2 + 2*x*y^2, x*y + 2*y^3 - 1" {
   let f = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x * (y ^ @symcore.int(2)),
   )
-  let g = try! b.from_expr(
+  let g = b.from_expr(
     x * y + @symcore.int(2) * (y ^ @symcore.int(3)) - @symcore.int(1),
   )
   expect_groebner_same([f, g], TermOrder::Lex)
@@ -72,7 +72,7 @@ test "groebnertools: grlex basis for x^3-2*x*y, x^2*y + x - 2*y^2" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let f = b.from_expr((x ^ @symcore.int(3)) + @symcore.int(-2) * x * y)
-  let g = try! b.from_expr(
+  let g = b.from_expr(
     (x ^ @symcore.int(2)) * y + x + @symcore.int(-2) * (y ^ @symcore.int(2)),
   )
   expect_groebner_same([f, g], TermOrder::Grlex)
@@ -85,7 +85,7 @@ test "groebnertools: lex basis for x - z^2, y - z^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(x - (z ^ @symcore.int(2)))
-  let g = try! b.from_expr(y - (z ^ @symcore.int(3)))
+  let g = b.from_expr(y - (z ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Lex)
 }
 
@@ -96,7 +96,7 @@ test "groebnertools: grlex basis for x - z^2, y - z^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(x - (z ^ @symcore.int(2)))
-  let g = try! b.from_expr(y - (z ^ @symcore.int(3)))
+  let g = b.from_expr(y - (z ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Grlex)
 }
 
@@ -107,7 +107,7 @@ test "groebnertools: lex basis for y - x^2, z - x^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(y - (x ^ @symcore.int(2)))
-  let g = try! b.from_expr(z - (x ^ @symcore.int(3)))
+  let g = b.from_expr(z - (x ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Lex)
 }
 
@@ -118,7 +118,7 @@ test "groebnertools: grlex basis for y - x^2, z - x^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(y - (x ^ @symcore.int(2)))
-  let g = try! b.from_expr(z - (x ^ @symcore.int(3)))
+  let g = b.from_expr(z - (x ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Grlex)
 }
 
@@ -132,7 +132,7 @@ test "groebnertools: grevlex basis for x*y + z, x - z, y - z" {
   let z = @symcore.symbol("z")
   let f1 = b.from_expr(x * y + z)
   let f2 = b.from_expr(x - z)
-  let f3 = try! b.from_expr(y - z)
+  let f3 = b.from_expr(y - z)
   expect_groebner_same([f1, f2, f3], TermOrder::Grevlex)
 }
 
@@ -149,7 +149,7 @@ test "groebnertools: lex basis for sphere constraints" {
     @symcore.int(-1),
   )
   let f2 = b.from_expr(x - y)
-  let f3 = try! b.from_expr(y - z)
+  let f3 = b.from_expr(y - z)
   expect_groebner_same([f1, f2, f3], TermOrder::Lex)
 }
 
@@ -160,7 +160,7 @@ test "groebnertools: lex basis for z - x^2, y - x^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(z - (x ^ @symcore.int(2)))
-  let g = try! b.from_expr(y - (x ^ @symcore.int(3)))
+  let g = b.from_expr(y - (x ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Lex)
 }
 
@@ -171,6 +171,6 @@ test "groebnertools: grlex basis for x - y^2, z - y^3" {
   let y = @symcore.symbol("y")
   let z = @symcore.symbol("z")
   let f = b.from_expr(x - (y ^ @symcore.int(2)))
-  let g = try! b.from_expr(z - (y ^ @symcore.int(3)))
+  let g = b.from_expr(z - (y ^ @symcore.int(3)))
   expect_groebner_same([f, g], TermOrder::Grlex)
 }

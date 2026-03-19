@@ -71,7 +71,7 @@ test "symsets productset parity" {
   let res1 = contains(prod_int, tuple)
   let sympy1 = sympy_contains_str_adv(prod_int, tuple)
   assert_eq(setbool_str_adv(res1), sympy1)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let tuple2 = @symcore.function("Tuple", [@symcore.int(1), half])
   let res2 = contains(prod_int, tuple2)
   let sympy2 = sympy_contains_str_adv(prod_int, tuple2)

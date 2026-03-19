@@ -96,15 +96,15 @@ fn actuator_assert_torque_load(
 
 ///|
 test "physics.mechanics parity actuators" {
-  let n = try! @symvector.reference_frame("APN")
-  let p_a = try! @symvector.point("Ap1")
-  let p_b = try! @symvector.point("Ap2")
+  let n = @symvector.reference_frame("APN")
+  let p_a = @symvector.point("Ap1")
+  let p_b = @symvector.point("Ap2")
   let q = @symvector.dynamicsymbol("q")
   p_b.set_pos(p_a, n.x().scale(q))
   let pathway = linear_pathway(p_a, p_b).as_pathway()
 
   let actuator = force_actuator(@symcore.symbol("F"), pathway)
-  let force_loads = try! actuator.to_loads()
+  let force_loads = actuator.to_loads()
   actuator_assert_force_load(
     force_loads[0],
     "Ap1",
@@ -129,24 +129,24 @@ test "physics.mechanics parity actuators" {
     pathway,
     equilibrium_length=@symcore.symbol("l"),
   )
-  let spring_force_oracle = try! @sympy_physics.mechanics_summary(
+  let spring_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k,l=symbols('k l'); pB.set_pos(pA, q*N.x); LinearSpring(k, LinearPathway(pA, pB), equilibrium_length=l).force",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! spring.force()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(spring.force()),
     spring_force_oracle,
-  )) else {
+  ) else {
     fail("linear spring force parity")
   }
 
   let damper = linear_damper(@symcore.symbol("c"), pathway)
-  let damper_force_oracle = try! @sympy_physics.mechanics_summary(
+  let damper_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); c=symbols('c'); pB.set_pos(pA, q*N.x); LinearDamper(c, LinearPathway(pA, pB)).force",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! damper.force()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(damper.force()),
     damper_force_oracle,
-  )) else {
+  ) else {
     fail("linear damper force parity")
   }
 
@@ -155,13 +155,13 @@ test "physics.mechanics parity actuators" {
     @symcore.symbol("k_nl"),
     pathway,
   )
-  let duffing_force_oracle = try! @sympy_physics.mechanics_summary(
+  let duffing_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); k_lin,k_nl=symbols('k_lin k_nl'); pB.set_pos(pA, q*N.x); DuffingSpring(k_lin, k_nl, LinearPathway(pA, pB)).force",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! duffing.force()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(duffing.force()),
     duffing_force_oracle,
-  )) else {
+  ) else {
     fail("duffing spring force parity")
   }
 
@@ -171,19 +171,19 @@ test "physics.mechanics parity actuators" {
     pathway,
     sigma=@symcore.symbol("sigma"),
   )
-  let friction_force_oracle = try! @sympy_physics.mechanics_summary(
+  let friction_force_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('APN'); pA=Point('Ap1'); pB=Point('Ap2'); q=dynamicsymbols('q'); mu_k,Nf,sigma=symbols('mu_k Nf sigma'); pB.set_pos(pA, q*N.x); CoulombKineticFriction(mu_k, Nf, LinearPathway(pA, pB), sigma=sigma).force",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! friction.force()),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(friction.force()),
     friction_force_oracle,
-  )) else {
+  ) else {
     fail("coulomb friction force parity")
   }
 
-  let target = try! @symvector.reference_frame("TA")
-  let reaction = try! @symvector.reference_frame("RA")
-  let torque = try! torque_actuator(
+  let target = @symvector.reference_frame("TA")
+  let reaction = @symvector.reference_frame("RA")
+  let torque = torque_actuator(
     @symcore.symbol("T"),
     n.z(),
     target,

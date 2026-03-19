@@ -42,7 +42,7 @@ test "symconcrete product ratio telescoping" {
   let ours = product(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "n + 1"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -55,7 +55,7 @@ test "symconcrete product geometric symbolic" {
   let ours = product(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "r**(n*(n + 1)/2)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -66,7 +66,7 @@ test "symconcrete product factorial" {
   let ours = product(k, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "factorial(n)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -79,7 +79,7 @@ test "symconcrete product rising_factorial" {
   let ours = product(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "RisingFactorial(a, n + 1)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }
 
 ///|
@@ -96,5 +96,5 @@ test "symconcrete product linear ratio" {
   let ours = product(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "RisingFactorial(a, n + 1)/RisingFactorial(b, n + 1)"
-  assert_true(try! @sympy_concrete.sympy_equiv_str(ours_str, expected))
+  assert_true(@sympy_concrete.sympy_equiv_str(ours_str, expected))
 }

@@ -121,7 +121,7 @@ test "subresultants_qq_zz: error and QQ domain branches" {
   // lift_pair_to_qq -> Domain::QQ branch
   let pqq = bqq.from_expr((x ^ @symcore.int(3)) + x + @symcore.int(1))
   let qqq2 = bqq.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
-  let seq = try! euclid_q(pqq, qqq2)
+  let seq = euclid_q(pqq, qqq2)
   guard seq.length() >= 2 else { fail("euclid_q over QQ should produce PRS") }
 
   // lift_pair_to_qq -> fallback DomainMismatch branch for unsupported domains.

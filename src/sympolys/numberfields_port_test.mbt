@@ -37,7 +37,7 @@ fn nf_reps_norm(reps : Array[Array[@symnum.BigRational]]) -> String {
 
 ///|
 test "numberfields: minpoly parity for rationals and radicals" {
-  let q = try! @symcore.rational_from_ints(3, 2)
+  let q = @symcore.rational_from_ints(3, 2)
   let q_mp = minpoly(q, gen="x")
   let q_ours = nf_norm(q_mp.to_expr())
   let q_oracle = nf_oracle_minpoly("3/2", gen="x")
@@ -45,7 +45,7 @@ test "numberfields: minpoly parity for rationals and radicals" {
     fail("minpoly(3/2) mismatch: ours=\{q_ours}, oracle=\{q_oracle}")
   }
 
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let s_mp = minpoly(sqrt2, gen="x")
   let s_ours = nf_norm(s_mp.to_expr())
@@ -57,8 +57,8 @@ test "numberfields: minpoly parity for rationals and radicals" {
 
 ///|
 test "numberfields: affine radical minpoly parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
-  let one_third = try! @symcore.rational_from_ints(1, 3)
+  let half = @symcore.rational_from_ints(1, 2)
+  let one_third = @symcore.rational_from_ints(1, 3)
   let sqrt2 = @symcore.int(2) ^ half
 
   let shifted = @symcore.int(1) + sqrt2
@@ -82,7 +82,7 @@ test "numberfields: affine radical minpoly parity" {
 
 ///|
 test "numberfields: multiquadratic minpoly parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
   let sqrt6 = @symcore.int(6) ^ half
@@ -108,8 +108,8 @@ test "numberfields: multiquadratic minpoly parity" {
 
 ///|
 test "numberfields: perfect-power radicals reduce to true minpoly" {
-  let third = try! @symcore.rational_from_ints(1, 3)
-  let quarter = try! @symcore.rational_from_ints(1, 4)
+  let third = @symcore.rational_from_ints(1, 3)
+  let quarter = @symcore.rational_from_ints(1, 4)
 
   let cbrt8 = @symcore.int(8) ^ third
   let mp_cbrt8 = nf_norm(minpoly(cbrt8, gen="x").to_expr())
@@ -127,7 +127,7 @@ test "numberfields: perfect-power radicals reduce to true minpoly" {
     )
   }
 
-  let one_sixteenth = try! @symcore.rational_from_ints(1, 16)
+  let one_sixteenth = @symcore.rational_from_ints(1, 16)
   let fourth_small = one_sixteenth ^ quarter
   let mp_small = nf_norm(minpoly(fourth_small, gen="x").to_expr())
   let oracle_small = nf_oracle_minpoly("(1/16)**(1/4)", gen="x")
@@ -140,7 +140,7 @@ test "numberfields: perfect-power radicals reduce to true minpoly" {
 
 ///|
 test "numberfields: to_number_field(expr, theta) coeff parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
   let sqrt5 = @symcore.int(5) ^ half
@@ -177,7 +177,7 @@ test "numberfields: to_number_field(expr, theta) coeff parity" {
 
 ///|
 test "numberfields: to_number_field and primitive_element parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
   let k = to_number_field(sqrt2, gen="a")
@@ -215,7 +215,7 @@ test "numberfields: to_number_field and primitive_element parity" {
 
 ///|
 test "numberfields: primitive_element ex reps parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
 
@@ -251,7 +251,7 @@ test "numberfields: primitive_element ex reps parity" {
 
 ///|
 test "numberfields: field_isomorphic parity for simple algebraic fields" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
 
@@ -279,7 +279,7 @@ test "numberfields: field_isomorphic parity for simple algebraic fields" {
 
 ///|
 test "numberfields: subfield field_isomorphism coefficient parity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt8 = @symcore.int(8) ^ half
   let sqrt3 = @symcore.int(3) ^ half
@@ -298,12 +298,12 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
     (sqrt3, sqrt2 + sqrt3, "sqrt(3)", "sqrt(2) + sqrt(3)"),
     (
       sqrt2,
-      @symcore.int(4) ^ (try! @symcore.rational_from_ints(1, 4)),
+      @symcore.int(4) ^ @symcore.rational_from_ints(1, 4),
       "sqrt(2)",
       "4**(1/4)",
     ),
-    (try! @symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
-    (sqrt2, try! @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
+    (@symcore.rational_from_ints(3, 2), sqrt2, "3/2", "sqrt(2)"),
+    (sqrt2, @symcore.rational_from_ints(3, 2), "sqrt(2)", "3/2"),
     (sqrt2, sqrt3, "sqrt(2)", "sqrt(3)"),
   ]
 
@@ -326,7 +326,7 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
 
 ///|
 test "numberfields: is_isomorphism_possible basic sanity" {
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
   let sqrt2 = @symcore.int(2) ^ half
   let sqrt3 = @symcore.int(3) ^ half
   let sqrt8 = @symcore.int(8) ^ half
@@ -341,7 +341,7 @@ test "numberfields: is_isomorphism_possible basic sanity" {
   guard is_isomorphism_possible(sqrt2, theta) else {
     fail("sqrt2 -> sqrt2+sqrt3 should pass multiquadratic degree pre-check")
   }
-  guard is_isomorphism_possible(try! @symcore.rational_from_ints(3, 2), sqrt2) else {
+  guard is_isomorphism_possible(@symcore.rational_from_ints(3, 2), sqrt2) else {
     fail("rationals should pass degree pre-check")
   }
 }

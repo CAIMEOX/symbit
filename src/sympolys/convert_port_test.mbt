@@ -55,7 +55,7 @@ test "convert: explicit order and leading helpers cover option branches" {
     fail("explicit to_string(order=...) should stay expression-equivalent")
   }
 
-  let lc = try! poly.lc(order=TermOrder::Lex)
+  let lc = poly.lc(order=TermOrder::Lex)
   guard lc.to_string() == "1" else { fail("lc(order=...) mismatch") }
   guard poly.lm(order=TermOrder::Lex) is Some(_) else {
     fail("lm(order=...) should be present")
@@ -65,7 +65,7 @@ test "convert: explicit order and leading helpers cover option branches" {
   }
 
   let z = Poly::zero(["x"], Domain::QQ)
-  guard (try! z.lc()).to_string() == "0" else { fail("zero lc should be 0") }
+  guard z.lc().to_string() == "0" else { fail("zero lc should be 0") }
   guard z.lm() is None else { fail("zero lm should be None") }
   guard z.lt() is None else { fail("zero lt should be None") }
 

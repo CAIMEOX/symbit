@@ -11,10 +11,7 @@ test "core wb: add_term merges to zero" {
 
 ///|
 test "core wb: ensure_coeff_domain maps rationals into GF representatives" {
-  let c = try! @symnum.BigRational::new(
-    BigInt::from_int(3),
-    BigInt::from_int(2),
-  )
+  let c = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let fe = ensure_coeff_domain(c, Domain::GF(5))
   guard fe.to_string() == "4" else {
     fail("3/2 over GF(5) should normalize to 4")
@@ -23,10 +20,7 @@ test "core wb: ensure_coeff_domain maps rationals into GF representatives" {
 
 ///|
 test "core wb: ensure_coeff_domain rejects non-integral in ZZ" {
-  let c = try! @symnum.BigRational::new(
-    BigInt::from_int(1),
-    BigInt::from_int(2),
-  )
+  let c = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
   let res : Result[FieldElem, PolyError] = try? ensure_coeff_domain(
     c,
     Domain::ZZ,

@@ -1,14 +1,10 @@
 ///|
 test "physics.continuum_mechanics.column: oracle parity" {
-  let c = try! column(
-    @symcore.int(10),
-    @symcore.symbol("E"),
-    @symcore.symbol("A"),
-  )
-  ignore(try! c.apply_support(@symcore.int(0)))
-  ignore(try! c.apply_support(@symcore.int(10)))
-  try! c.apply_load(@symcore.int(-1), @symcore.int(5), -1)
-  try! c.solve_for_reaction_loads()
+  let c = column(@symcore.int(10), @symcore.symbol("E"), @symcore.symbol("A"))
+  ignore(c.apply_support(@symcore.int(0)))
+  ignore(c.apply_support(@symcore.int(10)))
+  c.apply_load(@symcore.int(-1), @symcore.int(5), -1)
+  c.solve_for_reaction_loads()
 
   let oracle = continuum_oracle_lines(
     "c = Column(10, E, A)\n" +

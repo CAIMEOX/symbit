@@ -40,25 +40,25 @@ fn wrapping_assert_vector(
 
 ///|
 test "physics.mechanics parity wrapping geometry" {
-  let n = try! @symvector.reference_frame("GWN")
-  let p_o = try! @symvector.point("GpO")
+  let n = @symvector.reference_frame("GWN")
+  let p_o = @symvector.point("GpO")
   let r = @symcore.int(2)
 
   let sphere = wrapping_sphere(r, p_o)
-  let p_1 = try! @symvector.point("Gp1")
-  let p_2 = try! @symvector.point("Gp2")
+  let p_1 = @symvector.point("Gp1")
+  let p_2 = @symvector.point("Gp2")
   p_1.set_pos(p_o, n.x().scale(r))
   p_2.set_pos(p_o, n.y().scale(r))
-  let sphere_len_oracle = try! @sympy_physics.mechanics_summary(
+  let sphere_len_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('GWN'); pO=Point('GpO'); p1=Point('Gp1'); p2=Point('Gp2'); r=2; p1.set_pos(pO, r*N.x); p2.set_pos(pO, r*N.y); WrappingSphere(r, pO).geodesic_length(p1, p2)",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! sphere.geodesic_length(p_1, p_2)),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
     sphere_len_oracle,
-  )) else {
+  ) else {
     fail("sphere geodesic length parity")
   }
-  let (sv1, sv2) = try! sphere.geodesic_end_vectors(p_1, p_2)
+  let (sv1, sv2) = sphere.geodesic_end_vectors(p_1, p_2)
   wrapping_assert_vector(
     sv1.simplify(),
     n,
@@ -76,19 +76,19 @@ test "physics.mechanics parity wrapping geometry" {
     "sphere geodesic end vector 1 parity",
   )
 
-  let cylinder = try! wrapping_cylinder(r, p_o, n.z())
-  let p_3 = try! @symvector.point("Gp3")
+  let cylinder = wrapping_cylinder(r, p_o, n.z())
+  let p_3 = @symvector.point("Gp3")
   p_3.set_pos(p_o, n.y().scale(r))
-  let cylinder_len_oracle = try! @sympy_physics.mechanics_summary(
+  let cylinder_len_oracle = @sympy_physics.mechanics_summary(
     "N=ReferenceFrame('GWN'); pO=Point('GpO'); p1=Point('Gp1'); p3=Point('Gp3'); r=2; p1.set_pos(pO, r*N.x); p3.set_pos(pO, r*N.y); WrappingCylinder(r, pO, N.z).geodesic_length(p1, p3)",
   )
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! cylinder.geodesic_length(p_1, p_3)),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
     cylinder_len_oracle,
-  )) else {
+  ) else {
     fail("cylinder geodesic length parity")
   }
-  let (cv1, cv2) = try! cylinder.geodesic_end_vectors(p_1, p_3)
+  let (cv1, cv2) = cylinder.geodesic_end_vectors(p_1, p_3)
   wrapping_assert_vector(
     cv1.simplify(),
     n,

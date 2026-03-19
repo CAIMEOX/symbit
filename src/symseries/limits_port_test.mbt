@@ -13,8 +13,8 @@ fn normalize_limit_str(s : String) -> String {
 test "symseries limit finite point" {
   let x = @symcore.symbol("x")
   let expr = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
-  let ours = try! limit(expr, x, @symcore.int(0))
-  let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.int(0))
+  let ours = limit(expr, x, @symcore.int(0))
+  let sympy = @sympy_series.limit_str(expr, "x", @symcore.int(0))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -27,8 +27,8 @@ test "symseries limit infinity rational" {
   ])
   let den = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let expr = @symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])
-  let ours = try! limit(expr, x, @symcore.symbol("oo"))
-  let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.symbol("oo"))
+  let ours = limit(expr, x, @symcore.symbol("oo"))
+  let sympy = @sympy_series.limit_str(expr, "x", @symcore.symbol("oo"))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -36,8 +36,8 @@ test "symseries limit infinity rational" {
 test "symseries limit infinity zero" {
   let x = @symcore.symbol("x")
   let expr = @symcore.mul([@symcore.int(1), @symcore.pow(x, @symcore.int(-1))])
-  let ours = try! limit(expr, x, @symcore.symbol("oo"))
-  let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.symbol("oo"))
+  let ours = limit(expr, x, @symcore.symbol("oo"))
+  let sympy = @sympy_series.limit_str(expr, "x", @symcore.symbol("oo"))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -46,8 +46,8 @@ test "symseries Limit struct doit" {
   let x = @symcore.symbol("x")
   let expr = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let lim = Limit::{ expr, variable: x, point: @symcore.int(0), dir: "+" }
-  let ours = try! lim.doit()
-  let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.int(0))
+  let ours = lim.doit()
+  let sympy = @sympy_series.limit_str(expr, "x", @symcore.int(0))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -56,8 +56,8 @@ test "symseries limit direction parity" {
   let x = @symcore.symbol("x")
   let denom = @symcore.add([x, @symcore.int(-1)])
   let expr = @symcore.pow(denom, @symcore.int(-1))
-  let ours = try! limit(expr, x, @symcore.int(1), dir="-")
-  let sympy = try! @sympy_series.limit_str(expr, "x", @symcore.int(1), dir="-")
+  let ours = limit(expr, x, @symcore.int(1), dir="-")
+  let sympy = @sympy_series.limit_str(expr, "x", @symcore.int(1), dir="-")
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
@@ -66,8 +66,8 @@ test "symseries limit higher-order pole parity" {
   let x = @symcore.symbol("x")
 
   let even_pole = @symcore.pow(x, @symcore.int(-2))
-  let even_left = try! limit(even_pole, x, @symcore.int(0), dir="-")
-  let even_left_sympy = try! @sympy_series.limit_str(
+  let even_left = limit(even_pole, x, @symcore.int(0), dir="-")
+  let even_left_sympy = @sympy_series.limit_str(
     even_pole,
     "x",
     @symcore.int(0),
@@ -79,8 +79,8 @@ test "symseries limit higher-order pole parity" {
   )
 
   let odd_pole = @symcore.pow(x, @symcore.int(-3))
-  let odd_left = try! limit(odd_pole, x, @symcore.int(0), dir="-")
-  let odd_left_sympy = try! @sympy_series.limit_str(
+  let odd_left = limit(odd_pole, x, @symcore.int(0), dir="-")
+  let odd_left_sympy = @sympy_series.limit_str(
     odd_pole,
     "x",
     @symcore.int(0),
@@ -88,8 +88,8 @@ test "symseries limit higher-order pole parity" {
   )
   assert_eq(normalize_limit_expr(odd_left), normalize_limit_str(odd_left_sympy))
 
-  let odd_two_sided = try! limit(odd_pole, x, @symcore.int(0), dir="+-")
-  let odd_two_sided_sympy = try! @sympy_series.limit_str(
+  let odd_two_sided = limit(odd_pole, x, @symcore.int(0), dir="+-")
+  let odd_two_sided_sympy = @sympy_series.limit_str(
     odd_pole,
     "x",
     @symcore.int(0),

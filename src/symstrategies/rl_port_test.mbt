@@ -59,17 +59,17 @@ test "rl rm_id" {
   let expr3 = basic([@symcore.int(2), @symcore.int(1)])
   assert_expr_str_eq(
     rmzeros(expr1),
-    try! @sympy_strategies.rl_rm_id(expr1),
+    @sympy_strategies.rl_rm_id(expr1),
     "rm_id 01",
   )
   assert_expr_str_eq(
     rmzeros(expr2),
-    try! @sympy_strategies.rl_rm_id(expr2),
+    @sympy_strategies.rl_rm_id(expr2),
     "rm_id 00",
   )
   assert_expr_str_eq(
     rmzeros(expr3),
-    try! @sympy_strategies.rl_rm_id(expr3),
+    @sympy_strategies.rl_rm_id(expr3),
     "rm_id 21",
   )
 }
@@ -86,7 +86,7 @@ test "rl glom" {
   ])
   let rl = @strategies_rl.glom(key_coeff, count_coeff, combine_coeff)
   let result = rl(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_glom(expr), "glom")
+  assert_expr_str_eq(result, @sympy_strategies.rl_glom(expr), "glom")
 }
 
 ///|
@@ -97,7 +97,7 @@ test "rl flatten" {
     basic([@symcore.int(3), @symcore.int(4)]),
   ])
   let result = @strategies_rl.flatten(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_flatten(expr), "flatten")
+  assert_expr_str_eq(result, @sympy_strategies.rl_flatten(expr), "flatten")
 }
 
 ///|
@@ -106,12 +106,12 @@ test "rl unpack" {
   let expr2 = basic([@symcore.int(2), @symcore.int(3)])
   assert_expr_str_eq(
     @strategies_rl.unpack(expr1),
-    try! @sympy_strategies.rl_unpack(expr1),
+    @sympy_strategies.rl_unpack(expr1),
     "unpack1",
   )
   assert_expr_str_eq(
     @strategies_rl.unpack(expr2),
-    try! @sympy_strategies.rl_unpack(expr2),
+    @sympy_strategies.rl_unpack(expr2),
     "unpack2",
   )
 }
@@ -121,7 +121,7 @@ test "rl sort" {
   let expr = basic([@symcore.int(3), @symcore.int(1), @symcore.int(2)])
   let rl = @strategies_rl.sort(expr => @symprint.to_string(expr))
   let result = rl(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_sort(expr), "sort")
+  assert_expr_str_eq(result, @sympy_strategies.rl_sort(expr), "sort")
 }
 
 ///|
@@ -139,7 +139,7 @@ test "rl distribute custom" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.rl_distribute_custom(),
+    @sympy_strategies.rl_distribute_custom(),
     "distribute custom",
   )
 }
@@ -156,7 +156,7 @@ test "rl distribute add/mul" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.rl_distribute_add_mul(expr),
+    @sympy_strategies.rl_distribute_add_mul(expr),
     "distribute add/mul",
   )
 }
@@ -168,12 +168,12 @@ test "rl subs" {
   let expr2 = @symcore.int(3)
   assert_expr_str_eq(
     rl(expr1),
-    try! @sympy_strategies.rl_subs(expr1, @symcore.int(1), @symcore.int(2)),
+    @sympy_strategies.rl_subs(expr1, @symcore.int(1), @symcore.int(2)),
     "subs1",
   )
   assert_expr_str_eq(
     rl(expr2),
-    try! @sympy_strategies.rl_subs(expr2, @symcore.int(1), @symcore.int(2)),
+    @sympy_strategies.rl_subs(expr2, @symcore.int(1), @symcore.int(2)),
     "subs2",
   )
 }
@@ -185,5 +185,5 @@ test "rl rebuild" {
     @symcore.int(2),
   ])
   let result = @strategies_rl.rebuild(expr)
-  assert_expr_str_eq(result, try! @sympy_strategies.rl_rebuild(expr), "rebuild")
+  assert_expr_str_eq(result, @sympy_strategies.rl_rebuild(expr), "rebuild")
 }

@@ -49,10 +49,10 @@ test "physics.control.routh_table: parity" {
     b2 * (z ^ @symcore.int(2)) +
     b1 * z +
     b0
-  let t1 = try! routh_hurwitz(p1, z)
-  try! control_assert_matrix_expr_equal(
+  let t1 = routh_hurwitz(p1, z)
+  control_assert_matrix_expr_equal(
     t1.matrix(),
-    try! @sympy_physics.control_routh_table_matrix(p1, z),
+    @sympy_physics.control_routh_table_matrix(p1, z),
     5,
     3,
     "generic table parity",
@@ -66,16 +66,16 @@ test "physics.control.routh_table: parity" {
     @symcore.int(3) * (z ^ @symcore.int(2)) +
     @symcore.int(3) * z +
     @symcore.int(3)
-  let t2 = try! routh_hurwitz(p2, z)
-  try! control_assert_matrix_expr_equal(
+  let t2 = routh_hurwitz(p2, z)
+  control_assert_matrix_expr_equal(
     t2.matrix(),
-    try! @sympy_physics.control_routh_table_matrix(p2, z),
+    @sympy_physics.control_routh_table_matrix(p2, z),
     5,
     3,
     "zero-column parity",
   )
   guard t2.zero_col_infos().to_string() ==
-    (try! @sympy_physics.control_routh_zero_col_infos(p2, z)) else {
+    @sympy_physics.control_routh_zero_col_infos(p2, z) else {
     fail("zero_col_infos parity")
   }
 
@@ -86,21 +86,21 @@ test "physics.control.routh_table: parity" {
     @symcore.int(20) * (z ^ @symcore.int(2)) +
     @symcore.int(16) * z +
     @symcore.int(16)
-  let t3 = try! routh_hurwitz(p3, z)
-  try! control_assert_matrix_expr_equal(
+  let t3 = routh_hurwitz(p3, z)
+  control_assert_matrix_expr_equal(
     t3.matrix(),
-    try! @sympy_physics.control_routh_table_matrix(p3, z),
+    @sympy_physics.control_routh_table_matrix(p3, z),
     7,
     4,
     "zero-row parity",
   )
   guard t3.zero_row_case() ==
-    ((try! @sympy_physics.control_routh_zero_row_case(p3, z)) == "True") else {
+    (@sympy_physics.control_routh_zero_row_case(p3, z) == "True") else {
     fail("zero_row_case parity")
   }
-  try! control_assert_expr_equal(
+  control_assert_expr_equal(
     t3.auxiliary_polynomials()[0],
-    try! @sympy_physics.control_routh_auxiliary_expr(p3, z, 0),
+    @sympy_physics.control_routh_auxiliary_expr(p3, z, 0),
     "auxiliary polynomial parity",
   )
 }

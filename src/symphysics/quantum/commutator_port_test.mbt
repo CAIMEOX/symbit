@@ -6,75 +6,73 @@ test "physics.quantum.commutator: parity" {
   let b_op = @symcore.symbol("B")
   let c_op = @symcore.symbol("C")
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
-      @symprint.to_string(commutator(b_op, a_op)),
-    ),
-    try! @sympy_physics.quantum_eval_str("Commutator(B, A)"),
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(@symprint.to_string(commutator(b_op, a_op))),
+    @sympy_physics.quantum_eval_str("Commutator(B, A)"),
     "commutator canonical parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         commutator(@symcore.raw_mul([a, a_op]), @symcore.raw_mul([b, b_op])),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str("Commutator(a*A, b*B)"),
+    @sympy_physics.quantum_eval_str("Commutator(a*A, b*B)"),
     "commutator scalar factor parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         commutator_expand(
           commutator(@symcore.raw_mul([a_op, b_op]), c_op, evaluate=false),
         ),
       ),
     ),
-    try! @sympy_physics.quantum_expand_commutator_str("Commutator(A*B, C)"),
+    @sympy_physics.quantum_expand_commutator_str("Commutator(A*B, C)"),
     "commutator expand parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(anticommutator(b_op, a_op)),
     ),
-    try! @sympy_physics.quantum_eval_str("AntiCommutator(B, A)"),
+    @sympy_physics.quantum_eval_str("AntiCommutator(B, A)"),
     "anticommutator parity",
   )
 }
 
 ///|
 test "physics.quantum.(anti)commutator: gate parity" {
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(commutator(x_gate(0).as_expr(), y_gate(1).as_expr())),
     ),
-    try! @sympy_physics.quantum_doit_str("Commutator(XGate(0), YGate(1))"),
+    @sympy_physics.quantum_doit_str("Commutator(XGate(0), YGate(1))"),
     "disjoint one-qubit commutator parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         commutator(cnot_gate(0, 1).as_expr(), z_gate(0).as_expr()),
       ),
     ),
-    try! @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), ZGate(0))"),
+    @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), ZGate(0))"),
     "CNOT/Z commutator parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         commutator(cnot_gate(0, 1).as_expr(), x_gate(1).as_expr()),
       ),
     ),
-    try! @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), XGate(1))"),
+    @sympy_physics.quantum_doit_str("Commutator(CNotGate(0, 1), XGate(1))"),
     "CNOT/X commutator parity",
   )
-  try! quantum_test_assert_matrix_expr_equal(
-    try! represent_matrix(
+  quantum_test_assert_matrix_expr_equal(
+    represent_matrix(
       anticommutator(hadamard_gate(0).as_expr(), z_gate(1).as_expr()),
       nqubits=2,
     ),
-    try! @sympy_physics.physics_eval_matrix(
+    @sympy_physics.physics_eval_matrix(
       "represent(AntiCommutator(HadamardGate(0), ZGate(1)).doit(), nqubits=2)",
     ),
     4,

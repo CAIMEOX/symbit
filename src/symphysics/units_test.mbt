@@ -31,12 +31,8 @@ test "physics.units: prefix arithmetic and quantity derivation" {
     fail("1/dodeca")
   }
 
-  try! units_assert_expr_equal(
-    milli.mul_quantity(watt),
-    "watt/1000",
-    "milli*watt",
-  )
-  try! units_assert_expr_equal(
+  units_assert_expr_equal(milli.mul_quantity(watt), "watt/1000", "milli*watt")
+  units_assert_expr_equal(
     dodeca.mul_quantity(meter),
     "12*meter",
     "dodeca*meter",
@@ -62,17 +58,17 @@ test "physics.units: prefix arithmetic and quantity derivation" {
 test "physics.units: constants and dimensions" {
   guard kilo.base == 10 else { fail("kilo.base") }
   guard kibi.base == 2 else { fail("kibi.base") }
-  let doubled_length = try! length.add(length)
+  let doubled_length = length.add(length)
   guard doubled_length == length else { fail("length+length") }
   let velocity = length.div(time_dimension)
   inspect(@symprint.to_string(velocity.name), content="time**-1*length")
-  try! units_assert_expr_equal(
+  units_assert_expr_equal(
     speed_of_light, "299792458*meter/second", "speed_of_light",
   )
-  try! units_assert_expr_equal(
+  units_assert_expr_equal(
     u0, "pi*kilogram*meter/(2500000*ampere**2*second**2)", "u0",
   )
-  try! units_assert_expr_equal(
+  units_assert_expr_equal(
     e0, "625000*ampere**2*second**4/(22468879468420441*pi*kilogram*meter**3)", "e0",
   )
 }

@@ -19,12 +19,12 @@ fn control_py(parts : Array[String]) -> String {
 ///|
 test "physics.control.control_plots: pole-zero parity" {
   let s = @symcore.symbol("s")
-  let tf = (try! transfer_function(
+  let tf = transfer_function(
     (s ^ @symcore.int(2)) + @symcore.int(1),
     (s ^ @symcore.int(2)) + s + @symcore.int(2),
     s,
-  )).as_system()
-  let ours = try! pole_zero_numerical_data(tf)
+  ).as_system()
+  let ours = pole_zero_numerical_data(tf)
   let sections = control_split_sections(
     control_oracle_lines(
       control_py([
@@ -55,9 +55,9 @@ test "physics.control.control_plots: pole-zero parity" {
 ///|
 test "physics.control.control_plots: response parity" {
   let s = @symcore.symbol("s")
-  let tf = (try! transfer_function(@symcore.int(1), s + @symcore.int(1), s)).as_system()
+  let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
-  let step = try! step_response_numerical_data(
+  let step = step_response_numerical_data(
     tf,
     lower_limit=0.0,
     upper_limit=2.0,
@@ -87,7 +87,7 @@ test "physics.control.control_plots: response parity" {
     fail("step y parity")
   }
 
-  let impulse = try! impulse_response_numerical_data(
+  let impulse = impulse_response_numerical_data(
     tf,
     lower_limit=0.0,
     upper_limit=2.0,
@@ -110,7 +110,7 @@ test "physics.control.control_plots: response parity" {
     fail("impulse y parity")
   }
 
-  let ramp = try! ramp_response_numerical_data(
+  let ramp = ramp_response_numerical_data(
     tf,
     lower_limit=0.0,
     upper_limit=2.0,
@@ -137,9 +137,9 @@ test "physics.control.control_plots: response parity" {
 ///|
 test "physics.control.control_plots: bode parity" {
   let s = @symcore.symbol("s")
-  let tf = (try! transfer_function(@symcore.int(1), s + @symcore.int(1), s)).as_system()
+  let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
-  let mag = try! bode_magnitude_numerical_data(
+  let mag = bode_magnitude_numerical_data(
     tf,
     initial_exp=-1.0,
     final_exp=1.0,
@@ -169,7 +169,7 @@ test "physics.control.control_plots: bode parity" {
     fail("bode mag y parity")
   }
 
-  let phase = try! bode_phase_numerical_data(
+  let phase = bode_phase_numerical_data(
     tf,
     initial_exp=-1.0,
     final_exp=1.0,
@@ -197,9 +197,9 @@ test "physics.control.control_plots: bode parity" {
 ///|
 test "physics.control.control_plots: expr parity" {
   let s = @symcore.symbol("s")
-  let tf = (try! transfer_function(@symcore.int(1), s + @symcore.int(1), s)).as_system()
+  let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
-  let nyquist = try! nyquist_plot_expr(tf)
+  let nyquist = nyquist_plot_expr(tf)
   let nyquist_lines = control_oracle_lines(
     control_py([
       "from sympy.physics.control.control_plots import *\n", "tf = TransferFunction(1, s + 1, s)\n",
@@ -214,7 +214,7 @@ test "physics.control.control_plots: expr parity" {
     fail("nyquist imag parity")
   }
 
-  let nichols = try! nichols_plot_expr(tf)
+  let nichols = nichols_plot_expr(tf)
   let nichols_lines = control_oracle_lines(
     control_py([
       "from sympy.physics.control.control_plots import *\n", "tf = TransferFunction(1, s + 1, s)\n",

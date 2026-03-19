@@ -66,12 +66,12 @@ test "periodicity: trig linear" {
   let p1 = periodicity(expr1, x)
   let p2 = periodicity(expr2, x)
   let p3 = periodicity(expr3, x)
-  let o1 = try! util_oracle_periodicity(expr1, x, "expr1")
-  let o2 = try! util_oracle_periodicity(expr2, x, "expr2")
-  let o3 = try! util_oracle_periodicity(expr3, x, "expr3")
-  try! util_assert_period(p1, o1)
-  try! util_assert_period(p2, o2)
-  try! util_assert_period(p3, o3)
+  let o1 = util_oracle_periodicity(expr1, x, "expr1")
+  let o2 = util_oracle_periodicity(expr2, x, "expr2")
+  let o3 = util_oracle_periodicity(expr3, x, "expr3")
+  util_assert_period(p1, o1)
+  util_assert_period(p2, o2)
+  util_assert_period(p3, o3)
 }
 
 ///|
@@ -79,6 +79,6 @@ test "periodicity: none" {
   let x = util_expr_symbol("x")
   let expr = util_expr_func("exp", [x])
   let p = periodicity(expr, x)
-  let o = try! util_oracle_periodicity(expr, x, "exp")
-  try! util_assert_period(p, o)
+  let o = util_oracle_periodicity(expr, x, "exp")
+  util_assert_period(p, o)
 }

@@ -1,7 +1,7 @@
 ///|
 test "magic pollute updates explicit scope" {
   let scope : Ref[Map[String, Int]] = { val: {} }
-  try! pollute(["x", "y"], [2, 3], scope)
+  pollute(["x", "y"], [2, 3], scope)
   assert_eq(scope.val["x"], 2)
   assert_eq(scope.val["y"], 3)
 }

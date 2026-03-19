@@ -6,82 +6,70 @@ test "physics.quantum.trace: parity" {
   let c_op = @symcore.symbol("C")
   let d_op = @symcore.symbol("D")
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(tr(@symcore.raw_mul([a, a_op]))),
     ),
-    try! @sympy_physics.quantum_eval_str("Tr(a*A)"),
+    @sympy_physics.quantum_eval_str("Tr(a*A)"),
     "trace scalar parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(tr(@symcore.raw_mul([a_op, b_op]), indices=[2])),
     ),
-    try! @sympy_physics.quantum_eval_str("Tr(A*B, (2,))"),
+    @sympy_physics.quantum_eval_str("Tr(A*B, (2,))"),
     "trace tuple parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tr_permute(tr(@symcore.raw_mul([a_op, b_op, c_op, d_op])), 2),
       ),
     ),
-    try! @sympy_physics.quantum_trace_permute_str("Tr(A*B*C*D)", 2),
+    @sympy_physics.quantum_trace_permute_str("Tr(A*B*C*D)", 2),
     "trace permute parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tr_doit(
           tr(
             tensor_product([
-              outer_product(
-                (try! qubit("0")).as_expr(),
-                (try! qubit("0")).dual().as_expr(),
-              ),
-              outer_product(
-                (try! qubit("1")).as_expr(),
-                (try! qubit("1")).dual().as_expr(),
-              ),
+              outer_product(qubit("0").as_expr(), qubit("0").dual().as_expr()),
+              outer_product(qubit("1").as_expr(), qubit("1").dual().as_expr()),
             ]).as_expr(),
           ),
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Tr(TensorProduct(OuterProduct(Qubit(0), QubitBra(0)), OuterProduct(Qubit(1), QubitBra(1)))).doit()",
     ),
     "trace tensor product parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tr_doit(
           tr(
             tensor_product([
-              outer_product(
-                (try! qubit("0")).as_expr(),
-                (try! qubit("0")).dual().as_expr(),
-              ),
-              outer_product(
-                (try! qubit("1")).as_expr(),
-                (try! qubit("1")).dual().as_expr(),
-              ),
+              outer_product(qubit("0").as_expr(), qubit("0").dual().as_expr()),
+              outer_product(qubit("1").as_expr(), qubit("1").dual().as_expr()),
             ]).as_expr(),
             indices=[1],
           ),
         ),
       ),
     ),
-    try! @sympy_physics.quantum_doit_str(
+    @sympy_physics.quantum_doit_str(
       "Tr(TensorProduct(OuterProduct(Qubit(0), QubitBra(0)), OuterProduct(Qubit(1), QubitBra(1))), [1])",
     ),
     "trace tensor product partial parity",
   )
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tr_doit(
           tr(
@@ -102,22 +90,19 @@ test "physics.quantum.trace: parity" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "Tr(Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))).doit()",
     ),
     "trace density parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tr_doit(
           tr(
             density([
               (
-                tensor_product([
-                  (try! qubit("0")).as_expr(),
-                  (try! qubit("1")).as_expr(),
-                ]).as_expr(),
+                tensor_product([qubit("0").as_expr(), qubit("1").as_expr()]).as_expr(),
                 @symcore.int(1),
               ),
             ]).as_expr(),
@@ -126,7 +111,7 @@ test "physics.quantum.trace: parity" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_doit_str(
+    @sympy_physics.quantum_doit_str(
       "Tr(Density((TensorProduct(Qubit(0), Qubit(1)), 1)), [1])",
     ),
     "trace density partial parity",

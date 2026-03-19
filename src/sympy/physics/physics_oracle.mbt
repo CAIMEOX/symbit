@@ -30,8 +30,34 @@ fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
 }
 
 ///|
-fn ensure_repo_sympy_path() -> Unit {
-  ()
+fn ensure_repo_sympy_path() -> Unit raise {
+  let builtins = match @py.pyimport("builtins") {
+    Some(v) => v
+    None => fail("python-missing:builtins")
+  }
+  let globals = @py.PyDict::new()
+  globals.set("__builtins__", builtins.obj())
+  let exec_fn = resolve_method_callable(builtins.obj(), "exec")
+  let script = [
+    "from pathlib import Path\n", "import sys\n", "_cwd = Path.cwd().resolve()\n",
+    "_seen = set()\n", "_added = False\n", "for _base in [_cwd, *_cwd.parents]:\n",
+    "    for _candidate in (_base / 'sympy', _base.parent / 'sympy'):\n", "        if _candidate in _seen:\n",
+    "            continue\n", "        _seen.add(_candidate)\n", "        if (_candidate / 'sympy').is_dir():\n",
+    "            _path = str(_candidate)\n", "            if _path not in sys.path:\n",
+    "                sys.path.insert(0, _path)\n", "            _added = True\n",
+    "            break\n", "    if _added:\n", "        break\n",
+  ].join("")
+  ignore(
+    exec_fn.invoke(
+      args=@sympy.py_pack_args([
+        OracleArg::Str(script),
+        OracleArg::PyObj(globals.obj()),
+        OracleArg::PyObj(globals.obj()),
+      ]),
+      kwargs=@sympy.py_pack_kwargs({}),
+      print_err=true,
+    ),
+  )
 }
 
 ///|
@@ -76,20 +102,6 @@ fn resolve_method_callable(
 fn py_call_noargs(callable : @py.PyCallable) -> @py.PyObjectEnum raise {
   let tup = @sympy.py_pack_args([])
   match @sympy.py_call_object(callable, tup, print_err=true) {
-    Some(obj) => obj
-    None => fail("sympy-oracle-call-none")
-  }
-}
-
-///|
-fn py_call(
-  callable : @py.PyCallable,
-  args : Array[OracleArg],
-  kwargs? : Map[String, OracleArg] = {},
-) -> @py.PyObjectEnum raise {
-  let tup = @sympy.py_pack_args(args)
-  let py_kwargs = @sympy.py_pack_kwargs(kwargs)
-  match callable.invoke(args=tup, kwargs=py_kwargs, print_err=true) {
     Some(obj) => obj
     None => fail("sympy-oracle-call-none")
   }
@@ -146,32 +158,19 @@ fn try_bind_name(
 }
 
 ///|
-fn control_routh_loader_script() -> String {
-  "import importlib.util as _iu\n_path = '/Users/caimeo/code/learning/sym-workspace/sympy/sympy/physics/control/routh_table.py'\n_spec = _iu.spec_from_file_location('_symbit_repo_routh_table', _path)\n_mod = _iu.module_from_spec(_spec)\n_spec.loader.exec_module(_mod)\n__symbit_routh_ctor__ = _mod.RouthHurwitz"
-}
-
-///|
 fn control_routh_ctor() -> @py.PyCallable raise {
-  let builtins = match @py.pyimport("builtins") {
+  ensure_repo_sympy_path()
+  let control_mod = match @py.pyimport("sympy.physics.control.routh_table") {
     Some(v) => v
-    None => fail("python-missing:builtins")
+    None => fail("python-missing:sympy.physics.control.routh_table")
   }
-  let globals = @py.PyDict::new()
-  globals.set("__builtins__", builtins.obj())
-  let exec_fn = resolve_method_callable(builtins.obj(), "exec")
-  let exec_args = @sympy.py_pack_args([
-    OracleArg::Str(control_routh_loader_script()),
-    OracleArg::PyObj(globals.obj()),
-  ])
-  let exec_kwargs = @sympy.py_pack_kwargs({})
-  ignore(exec_fn.invoke(args=exec_args, kwargs=exec_kwargs, print_err=true))
-  match globals.get("__symbit_routh_ctor__") {
+  match control_mod.get_attr("RouthHurwitz", print_err=false) {
     Some(PyCallable(callable)) => callable
     Some(other) =>
       @py.PyCallable::create(objenum_to_obj(other)) catch {
         _ => fail("sympy-oracle-callable")
       }
-    None => fail("sympy-oracle-missing:__symbit_routh_ctor__")
+    None => fail("sympy-oracle-missing:RouthHurwitz")
   }
 }
 
@@ -1332,9 +1331,8 @@ pub fn quantum_cg_simp(expr : String) -> String raise {
 ///|
 fn quantum_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.quantum import *\n", "from sympy.physics.quantum.qexpr import QExpr\n",
-    "from sympy.physics.quantum.identitysearch import generate_gate_rules, generate_equivalent_ids, GateIdentity, bfs_identity_search, random_identity_search, is_scalar_sparse_matrix, is_scalar_nonsparse_matrix, is_degenerate, is_reducible\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.quantum import *\n",
+    "from sympy.physics.quantum.qexpr import QExpr\n", "from sympy.physics.quantum.identitysearch import generate_gate_rules, generate_equivalent_ids, GateIdentity, bfs_identity_search, random_identity_search, is_scalar_sparse_matrix, is_scalar_nonsparse_matrix, is_degenerate, is_reducible\n",
     "from sympy.physics.quantum.state import Ket, Bra, TimeDepKet, TimeDepBra, OrthogonalKet, OrthogonalBra, Wavefunction\n",
     "from sympy.physics.quantum.operator import Operator, HermitianOperator, UnitaryOperator, IdentityOperator, OuterProduct, DifferentialOperator\n",
     "from sympy.physics.quantum.boson import BosonOp, BosonFockKet, BosonFockBra, BosonCoherentKet, BosonCoherentBra\n",
@@ -1364,7 +1362,7 @@ fn quantum_subprocess_prelude() -> String {
 
 ///|
 pub fn quantum_eval_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -1376,7 +1374,7 @@ pub fn quantum_eval_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_srepr_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(srepr(sympify(",
@@ -1388,7 +1386,7 @@ pub fn quantum_srepr_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_doit_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -1400,7 +1398,7 @@ pub fn quantum_doit_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_decompose_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -1417,7 +1415,7 @@ pub fn quantum_qapply_str(
   ip_doit? : Bool = true,
   sum_doit? : Bool = false,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(qapply(sympify(",
@@ -1452,7 +1450,7 @@ pub fn quantum_qapply_srepr(
   ip_doit? : Bool = true,
   sum_doit? : Bool = false,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(srepr(qapply(sympify(",
@@ -1499,7 +1497,7 @@ pub fn quantum_measure_all_oneshot_str(
   expr : String,
   sample : Double,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "import random\n",
@@ -1523,7 +1521,7 @@ pub fn quantum_measure_partial_oneshot_str(
   bits : Array[Int],
   sample : Double,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "import random\n",
@@ -1548,7 +1546,7 @@ pub fn quantum_hadamard_normalized_qapply(
   normalize : Bool,
   expr : String,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "from sympy.physics.quantum.gate import normalized\n",
@@ -1572,7 +1570,7 @@ pub fn quantum_hadamard_normalized_qapply(
 
 ///|
 pub fn quantum_shor_ratioize(items : Array[Int], n : Int) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(ratioize(",
@@ -1586,7 +1584,7 @@ pub fn quantum_shor_ratioize(items : Array[Int], n : Int) -> String raise {
 
 ///|
 pub fn quantum_shor_getr(x : Int, y : Int, n : Int) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(getr(",
@@ -1602,7 +1600,7 @@ pub fn quantum_shor_getr(x : Int, y : Int, n : Int) -> String raise {
 
 ///|
 pub fn quantum_qasm_fixcommand(command : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(fixcommand(",
@@ -1614,7 +1612,7 @@ pub fn quantum_qasm_fixcommand(command : String) -> String raise {
 
 ///|
 pub fn quantum_qasm_stripquotes(text : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(stripquotes(",
@@ -1626,7 +1624,7 @@ pub fn quantum_qasm_stripquotes(text : String) -> String raise {
 
 ///|
 pub fn quantum_qasm_trim(text : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(trim(",
@@ -1641,7 +1639,7 @@ pub fn quantum_qasm_index(
   target : String,
   labels : Array[String],
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(get_index(",
@@ -1658,7 +1656,7 @@ pub fn quantum_qasm_indices(
   targets : Array[String],
   labels : Array[String],
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(chr(31).join(str(v) for v in get_indices(",
@@ -1689,7 +1687,7 @@ pub fn quantum_render_label(
       "}"
     None => "{}"
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(render_label(",
@@ -1703,7 +1701,7 @@ pub fn quantum_render_label(
 
 ///|
 pub fn quantum_labeller(n : Int, symbol? : String = "q") -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(chr(31).join(labeller(",
@@ -1730,7 +1728,7 @@ pub fn quantum_create_one_qubit_gate_str(
     Some(value) => ", " + python_string_literal(value)
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(CreateOneQubitGate(",
@@ -1754,7 +1752,7 @@ pub fn quantum_create_cgate_str(
     Some(value) => ", " + python_string_literal(value)
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(CreateCGate(",
@@ -1775,7 +1773,7 @@ pub fn quantum_circuitplot_summary(
   nqubits : Int,
   labels? : Array[String] = [],
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "plot = CircuitPlot(sympify(",
@@ -1795,7 +1793,7 @@ pub fn quantum_circuitplot_summary(
 
 ///|
 pub fn quantum_qasm_circuit(lines : Array[String]) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(Qasm(*",
@@ -1807,7 +1805,7 @@ pub fn quantum_qasm_circuit(lines : Array[String]) -> String raise {
 
 ///|
 pub fn quantum_qasm_labels(lines : Array[String]) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(chr(31).join(Qasm(*",
@@ -1831,7 +1829,7 @@ pub fn quantum_represent_str(
     Some(value) => ", basis=" + value
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(represent(sympify(",
@@ -1849,7 +1847,7 @@ pub fn quantum_represent_matrix(
   basis : String,
   ndim : Int,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "mat = represent(sympify(",
@@ -1884,7 +1882,7 @@ pub fn quantum_get_basis_str(
       ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(get_basis(sympify(",
@@ -1902,7 +1900,7 @@ pub fn quantum_enumerate_states_str(
   start_index : Int,
   count : Int,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "states = enumerate_states(sympify(",
@@ -1927,7 +1925,7 @@ pub fn quantum_rep_innerproduct_str(
       ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(rep_innerproduct(sympify(",
@@ -1949,7 +1947,7 @@ pub fn quantum_rep_expectation_str(
       ", basis=sympify(" + python_string_literal(value) + ", locals=locals())"
     None => ""
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(rep_expectation(sympify(",
@@ -1968,7 +1966,7 @@ pub fn quantum_integrate_result_str(
   basis? : String? = None,
   unities? : Array[Int] = [],
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "kwargs = {'unities': ",
@@ -1994,7 +1992,7 @@ pub fn quantum_integrate_result_str(
 pub fn quantum_identitysearch_rules_summary(
   gates : Array[String],
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "_seq = [sympify(item, locals=locals()) for item in ",
@@ -2017,7 +2015,7 @@ pub fn quantum_identitysearch_rules_summary(
 pub fn quantum_identitysearch_equivalent_ids(
   gates : Array[String],
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "_seq = [sympify(item, locals=locals()) for item in ",
@@ -2041,7 +2039,7 @@ pub fn quantum_identitysearch_bfs_summary(
   max_depth : Int,
   identity_only : Bool,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "_gates = [sympify(item, locals=locals()) for item in ",
@@ -2074,7 +2072,7 @@ pub fn quantum_identitysearch_is_scalar(
   nqubits : Int,
   identity_only : Bool,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "_seq = [sympify(item, locals=locals()) for item in ",
@@ -2095,7 +2093,7 @@ pub fn quantum_identitysearch_is_scalar(
 
 ///|
 pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "mat = matrix_cache.get_matrix(",
@@ -2115,7 +2113,7 @@ pub fn quantum_matrixcache_matrix(name : String) -> Array[String] raise {
 
 ///|
 pub fn quantum_circuitutils_kmp_table(expr : String) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "word = sympify(",
@@ -2144,7 +2142,7 @@ pub fn quantum_circuitutils_find_subcircuit(
   start? : Int = 0,
   end? : Int = 0,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(find_subcircuit(sympify(",
@@ -2172,7 +2170,7 @@ pub fn quantum_circuitutils_replace_subcircuit(
       "sympify(" + python_string_literal(expr) + ", locals=locals())"
     None => "None"
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "out = replace_subcircuit(sympify(",
@@ -2193,7 +2191,7 @@ pub fn quantum_circuitutils_replace_subcircuit(
 pub fn quantum_circuitutils_convert_to_symbolic(
   expr : String,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "seq = sympify(",
@@ -2217,7 +2215,7 @@ pub fn quantum_circuitutils_convert_to_real(
   expr : String,
   mapping_code : String,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "out = convert_to_real_indices(sympify(",
@@ -2239,7 +2237,7 @@ fn grover_marks_literal(marks : Array[Int]) -> String {
 pub fn quantum_grover_superposition_matrix(
   nqubits : Int,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "mat = represent(superposition_basis(",
@@ -2264,7 +2262,7 @@ pub fn quantum_grover_oracle_matrix(
   nqubits : Int,
   marks : Array[Int],
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "mat = represent(grover_oracle_from_marks(",
@@ -2288,7 +2286,7 @@ pub fn quantum_grover_oracle_matrix(
 
 ///|
 pub fn quantum_grover_w_matrix(nqubits : Int) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "from sympy import Matrix\n",
@@ -2323,7 +2321,7 @@ pub fn quantum_grover_oracle_state_matrix(
   marks : Array[Int],
   state : Int,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "op = grover_oracle_from_marks(",
@@ -2356,7 +2354,7 @@ pub fn quantum_grover_w_state_matrix(
   nqubits : Int,
   state : Int,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "state = IntQubit(",
@@ -2387,7 +2385,7 @@ pub fn quantum_grover_apply_matrix(
   marks : Array[Int],
   iterations : Int,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "oracle = lambda qubits: any(qubits == IntQubit(idx, nqubits=",
@@ -2416,7 +2414,7 @@ pub fn quantum_grover_apply_matrix(
 
 ///|
 pub fn quantum_kind_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2428,7 +2426,7 @@ pub fn quantum_kind_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_density_states_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2440,7 +2438,7 @@ pub fn quantum_density_states_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_density_probs_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2455,7 +2453,7 @@ pub fn quantum_density_get_state_str(
   expr : String,
   index : Int,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2469,7 +2467,7 @@ pub fn quantum_density_get_state_str(
 
 ///|
 pub fn quantum_density_get_prob_str(expr : String, index : Int) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2483,7 +2481,7 @@ pub fn quantum_density_get_prob_str(expr : String, index : Int) -> String raise 
 
 ///|
 pub fn quantum_density_apply_op_str(expr : String, op : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "obj = sympify(",
@@ -2498,7 +2496,7 @@ pub fn quantum_density_apply_op_str(expr : String, op : String) -> String raise 
 
 ///|
 pub fn quantum_entropy_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(entropy(sympify(",
@@ -2510,7 +2508,7 @@ pub fn quantum_entropy_str(expr : String) -> String raise {
 
 ///|
 pub fn quantum_fidelity_str(lhs : String, rhs : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(fidelity(sympify(",
@@ -2524,7 +2522,7 @@ pub fn quantum_fidelity_str(lhs : String, rhs : String) -> String raise {
 
 ///|
 pub fn quantum_expand_commutator_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2545,7 +2543,7 @@ pub fn quantum_normal_order_str(
   } else {
     "normal_order"
   }
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "from sympy.physics.quantum.operatorordering import normal_order, normal_ordered_form\n",
@@ -2566,7 +2564,7 @@ pub fn quantum_normal_order_str(
 
 ///|
 pub fn quantum_trace_permute_str(expr : String, pos : Int) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       quantum_subprocess_prelude(),
       "print(sympify(",
@@ -2657,7 +2655,7 @@ pub fn optics_polarization_matrix(
       "sympify(" + python_string_literal(@symprint.to_string(arg)) + ")",
     )
   }
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       "from sympy import sympify\n",
       "from sympy.physics.optics.polarization import ",
@@ -2688,43 +2686,52 @@ fn python_string_literal(value : String) -> String {
 }
 
 ///|
-fn python_subprocess_stdout(script : String) -> String raise {
-  let subprocess_mod = match @py.pyimport("subprocess") {
-    Some(mod) => mod
-    None => fail("python-missing:subprocess")
+fn python_script_stdout(script : String) -> String raise {
+  ensure_repo_sympy_path()
+  let builtins = match @py.pyimport("builtins") {
+    Some(v) => v
+    None => fail("python-missing:builtins")
   }
-  let check_output = resolve_method_callable(
-    subprocess_mod.obj(),
-    "check_output",
-  )
-  let out = objenum_to_obj(
-    py_call(
-      check_output,
-      [
-        OracleArg::StrList(["/Users/caimeo/miniconda3/bin/python", "-c", script]),
-      ],
-      kwargs={ "text": OracleArg::Bool(true) },
+  let globals = @py.PyDict::new()
+  globals.set("__builtins__", builtins.obj())
+  globals.set("__symbit_script__", @py.PyString::from(script).obj())
+  let exec_fn = resolve_method_callable(builtins.obj(), "exec")
+  let wrapped = [
+    "import io\n", "import sys\n", "__symbit_stdout__ = io.StringIO()\n", "__symbit_prev_stdout__ = sys.stdout\n",
+    "sys.stdout = __symbit_stdout__\n", "try:\n", "    exec(__symbit_script__, globals(), locals())\n",
+    "finally:\n", "    sys.stdout = __symbit_prev_stdout__\n", "__symbit_out__ = __symbit_stdout__.getvalue()\n",
+  ].join("")
+  ignore(
+    exec_fn.invoke(
+      args=@sympy.py_pack_args([
+        OracleArg::Str(wrapped),
+        OracleArg::PyObj(globals.obj()),
+        OracleArg::PyObj(globals.obj()),
+      ]),
+      kwargs=@sympy.py_pack_kwargs({}),
+      print_err=true,
     ),
   )
-  py_str_obj(out).trim().to_string()
+  match globals.get("__symbit_out__") {
+    Some(value) => py_str_obj(objenum_to_obj(value)).trim().to_string()
+    None => ""
+  }
 }
 
 ///|
 fn secondquant_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.secondquant import *\n", "from sympy.physics.quantum.operatorordering import normal_ordered_form\n",
-    "a, b, c, d = symbols('a b c d', above_fermi=True)\n", "i, j, k, l, m, n = symbols('i j k l m n', below_fermi=True)\n",
-    "p, q, r, s = symbols('p q r s')\n", "v = Symbol('v')\n", "T = Function('T')\n",
-    "f = Function('f')\n", "g = Function('g')\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.secondquant import *\n",
+    "from sympy.physics.quantum.operatorordering import normal_ordered_form\n", "a, b, c, d = symbols('a b c d', above_fermi=True)\n",
+    "i, j, k, l, m, n = symbols('i j k l m n', below_fermi=True)\n", "p, q, r, s = symbols('p q r s')\n",
+    "v = Symbol('v')\n", "T = Function('T')\n", "f = Function('f')\n", "g = Function('g')\n",
   ].join("")
 }
 
 ///|
 fn continuum_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.continuum_mechanics.beam import Beam\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.continuum_mechanics.beam import Beam\n",
     "from sympy.physics.continuum_mechanics.column import Column\n", "from sympy.physics.continuum_mechanics.cable import Cable\n",
     "from sympy.physics.continuum_mechanics.arch import Arch\n", "x = Symbol('x')\n",
     "y = Symbol('y')\n", "t = Symbol('t')\n", "E = Symbol('E')\n", "I = Symbol('I')\n",
@@ -2734,12 +2741,12 @@ fn continuum_subprocess_prelude() -> String {
 
 ///|
 pub fn continuum_exec_stdout(script : String) -> String raise {
-  python_subprocess_stdout(continuum_subprocess_prelude() + script)
+  python_script_stdout(continuum_subprocess_prelude() + script)
 }
 
 ///|
 pub fn secondquant_eval_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "print(sympify(",
@@ -2751,7 +2758,7 @@ pub fn secondquant_eval_str(expr : String) -> String raise {
 
 ///|
 pub fn secondquant_exec_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "print(eval(",
@@ -2763,7 +2770,7 @@ pub fn secondquant_exec_str(expr : String) -> String raise {
 
 ///|
 pub fn secondquant_apply_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "print(apply_operators(sympify(",
@@ -2775,7 +2782,7 @@ pub fn secondquant_apply_str(expr : String) -> String raise {
 
 ///|
 pub fn secondquant_normal_order_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "print(normal_ordered_form(sympify(",
@@ -2787,7 +2794,7 @@ pub fn secondquant_normal_order_str(expr : String) -> String raise {
 
 ///|
 pub fn secondquant_basis_str(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "print(sympify(",
@@ -2802,7 +2809,7 @@ pub fn secondquant_matrix_rows(
   op_expr : String,
   basis_expr : String,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       secondquant_subprocess_prelude(),
       "m = matrix_rep(sympify(",
@@ -2823,14 +2830,14 @@ pub fn secondquant_matrix_rows(
 ///|
 fn control_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.control.lti import *\n", "a, b, c, d, s, p, g, k, tau, zeta, wn, T, z, x, y = symbols('a b c d s p g k tau zeta wn T z x y')\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.control.lti import *\n",
+    "a, b, c, d, s, p, g, k, tau, zeta, wn, T, z, x, y = symbols('a b c d s p g k tau zeta wn T z x y')\n",
   ].join("")
 }
 
 ///|
 pub fn control_exec_stdout(script : String) -> String raise {
-  python_subprocess_stdout(control_subprocess_prelude() + script)
+  python_script_stdout(control_subprocess_prelude() + script)
 }
 
 ///|
@@ -2843,7 +2850,6 @@ fn control_routh_script(
   let var_txt = @symprint.to_string(variable)
   [
     "import sys\n",
-    "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
     "from sympy import Symbol, sympify\n",
     "from sympy.physics.control.routh_table import RouthHurwitz\n",
     "var = Symbol(",
@@ -2864,7 +2870,7 @@ pub fn control_routh_table_matrix(
   polynomial : @symcore.Expr,
   variable : @symcore.Expr,
 ) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     control_routh_script(
       polynomial, variable, "print(chr(31).join(str(c) for row in obj.tolist() for c in row))",
     ),
@@ -2881,7 +2887,7 @@ pub fn control_routh_zero_col_infos(
   polynomial : @symcore.Expr,
   variable : @symcore.Expr,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     control_routh_script(polynomial, variable, "print(obj.zero_col_infos)"),
   )
 }
@@ -2891,7 +2897,7 @@ pub fn control_routh_zero_row_case(
   polynomial : @symcore.Expr,
   variable : @symcore.Expr,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     control_routh_script(polynomial, variable, "print(obj.zero_row_case)"),
   )
 }
@@ -2902,7 +2908,7 @@ pub fn control_routh_auxiliary_expr(
   variable : @symcore.Expr,
   index : Int,
 ) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     control_routh_script(
       polynomial,
       variable,
@@ -2914,10 +2920,9 @@ pub fn control_routh_auxiliary_expr(
 ///|
 pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise {
   let lhs_txt = @symprint.to_string(lhs)
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       "import sys\n",
-      "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
       "from sympy import N, Symbol, simplify, sympify\n",
       "names = ['z', 'b0', 'b1', 'b2', 'b3', 'b4', 'f', 'u', 'v', 'N', 'c', 'x', 'y', 'n']\n",
       "locals_map = {name: Symbol(name) for name in names}\n",
@@ -2945,10 +2950,9 @@ pub fn control_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise 
 ///|
 pub fn physics_expr_equivalent(lhs : @symcore.Expr, rhs : String) -> Bool raise {
   let lhs_txt = @symprint.to_string(lhs)
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       "import sys\n",
-      "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
       "from sympy import N, simplify, sympify\n",
       "lhs = sympify(",
       python_string_literal(lhs_txt),
@@ -3011,7 +3015,7 @@ pub fn optics_medium_property(
 
 ///|
 pub fn optics_utils_eval(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       "from sympy import *\n", "from sympy.physics.optics.utils import *\n", "from sympy.physics.optics.medium import Medium\n",
       "from sympy.physics.units import e0\n", "f, u, v, N, c, n = symbols('f u v N c n')\n",
@@ -3022,7 +3026,7 @@ pub fn optics_utils_eval(expr : String) -> String raise {
 
 ///|
 pub fn optics_waves_eval(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       "from sympy import *\n", "from sympy.physics.optics.waves import TWave\n",
       "from sympy.physics.units import meter, second, speed_of_light\n", "A, A1, A2, phi, phi1, phi2, f, n = symbols('A A1 A2 phi phi1 phi2 f n')\n",
@@ -3033,7 +3037,7 @@ pub fn optics_waves_eval(expr : String) -> String raise {
 
 ///|
 pub fn optics_gaussopt_eval(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     [
       "from sympy import *\n", "from sympy.physics.optics.gaussopt import *\n", "d, f, h, angle, n1, n2, R, w, wavelen, z_r, a, b, s_in, z_r_in, l, w_i, w_o, z, w_0 = symbols('d f h angle n1 n2 R w wavelen z_r a b s_in z_r_in l w_i w_o z w_0')\n",
       "print(", expr, ")\n",
@@ -3043,7 +3047,7 @@ pub fn optics_gaussopt_eval(expr : String) -> String raise {
 
 ///|
 pub fn optics_gaussopt_matrix(expr : String) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     [
       "from sympy import *\n", "from sympy.physics.optics.gaussopt import *\n", "d, f, h, angle, n1, n2, R, w, wavelen, z_r, a, b, s_in, z_r_in, l, w_i, w_o, z, w_0 = symbols('d f h angle n1 n2 R w wavelen z_r a b s_in z_r_in l w_i w_o z w_0')\n",
       "obj = ", expr, "\n", "print(chr(31).join(str(c) for row in obj.tolist() for c in row))\n",
@@ -3059,9 +3063,9 @@ pub fn optics_gaussopt_matrix(expr : String) -> Array[String] raise {
 ///|
 fn vector_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.vector import *\n", "from sympy.physics.vector.fieldfunctions import *\n",
-    "t = dynamicsymbols._t\n", "def _symbit_vector_summary(obj):\n", "    if isinstance(obj, (Vector, Dyadic)):\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.vector import *\n",
+    "from sympy.physics.vector.fieldfunctions import *\n", "t = dynamicsymbols._t\n",
+    "def _symbit_vector_summary(obj):\n", "    if isinstance(obj, (Vector, Dyadic)):\n",
     "        return vsprint(obj)\n", "    if isinstance(obj, list):\n", "        return '[' + ', '.join(_symbit_vector_summary(x) for x in obj) + ']'\n",
     "    if isinstance(obj, tuple):\n", "        items = ', '.join(_symbit_vector_summary(x) for x in obj)\n",
     "        if len(obj) == 1:\n", "            items += ','\n", "        return '(' + items + ')'\n",
@@ -3072,12 +3076,11 @@ fn vector_subprocess_prelude() -> String {
 ///|
 fn mechanics_subprocess_prelude() -> String {
   [
-    "import sys\n", "sys.path.insert(0, '/Users/caimeo/code/learning/sym-workspace/sympy')\n",
-    "from sympy import *\n", "from sympy.physics.vector import *\n", "from sympy.physics.vector.fieldfunctions import *\n",
-    "from sympy.physics.mechanics import *\n", "from sympy.physics.mechanics.functions import *\n",
-    "from sympy.physics.mechanics.loads import *\n", "t = dynamicsymbols._t\n", "def _symbit_mechanics_summary(obj):\n",
-    "    if isinstance(obj, (Vector, Dyadic)):\n", "        return vsprint(obj)\n",
-    "    if isinstance(obj, (Particle, RigidBody, Body, Inertia, Force, Torque)):\n",
+    "import sys\n", "from sympy import *\n", "from sympy.physics.vector import *\n",
+    "from sympy.physics.vector.fieldfunctions import *\n", "from sympy.physics.mechanics import *\n",
+    "from sympy.physics.mechanics.functions import *\n", "from sympy.physics.mechanics.loads import *\n",
+    "t = dynamicsymbols._t\n", "def _symbit_mechanics_summary(obj):\n", "    if isinstance(obj, (Vector, Dyadic)):\n",
+    "        return vsprint(obj)\n", "    if isinstance(obj, (Particle, RigidBody, Body, Inertia, Force, Torque)):\n",
     "        return repr(obj)\n", "    if isinstance(obj, list):\n", "        return '[' + ', '.join(_symbit_mechanics_summary(x) for x in obj) + ']'\n",
     "    if isinstance(obj, tuple):\n", "        items = ', '.join(_symbit_mechanics_summary(x) for x in obj)\n",
     "        if len(obj) == 1:\n", "            items += ','\n", "        return '(' + items + ')'\n",
@@ -3141,24 +3144,24 @@ fn mechanics_python_result_script(
 
 ///|
 pub fn vector_eval(expr : String) -> String raise {
-  python_subprocess_stdout(vector_python_result_script(expr, "print(", ")"))
+  python_script_stdout(vector_python_result_script(expr, "print(", ")"))
 }
 
 ///|
 pub fn vector_summary(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     vector_python_result_script(expr, "print(_symbit_vector_summary(", "))"),
   )
 }
 
 ///|
 pub fn mechanics_eval(expr : String) -> String raise {
-  python_subprocess_stdout(mechanics_python_result_script(expr, "print(", ")"))
+  python_script_stdout(mechanics_python_result_script(expr, "print(", ")"))
 }
 
 ///|
 pub fn mechanics_summary(expr : String) -> String raise {
-  python_subprocess_stdout(
+  python_script_stdout(
     mechanics_python_result_script(
       expr, "print(_symbit_mechanics_summary(", "))",
     ),
@@ -3185,7 +3188,7 @@ pub fn mechanics_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise 
     "ok = simplify(expand_func(lhs - rhs)) == 0\n",
     "print(ok)\n",
   ]
-  python_subprocess_stdout(body.join("")) == "True"
+  python_script_stdout(body.join("")) == "True"
 }
 
 ///|
@@ -3230,7 +3233,7 @@ pub fn vector_expr_equal(lhs_expr : String, rhs_expr : String) -> Bool raise {
   body.push("else:\n")
   body.push("    ok = simplify(delta) == 0\n")
   body.push("print(ok)\n")
-  python_subprocess_stdout(body.join("")) == "True"
+  python_script_stdout(body.join("")) == "True"
 }
 
 ///|
@@ -3240,7 +3243,7 @@ pub fn vector_bool(expr : String) -> Bool raise {
 
 ///|
 pub fn vector_matrix_rows(expr : String) -> Array[String] raise {
-  let txt = python_subprocess_stdout(
+  let txt = python_script_stdout(
     vector_python_result_script(expr, "m = ", "") +
     "print(chr(31).join('[' + ', '.join(str(c) for c in row) + ']' for row in m.tolist()))\n",
   )
@@ -3285,7 +3288,7 @@ pub fn vector_matrix_equal(lhs_rows : String, rhs_expr : String) -> Bool raise {
     "ok = lhs.shape == rhs.shape and all(simplify(lhs[i, j] - rhs[i, j]) == 0 for i in range(lhs.rows) for j in range(lhs.cols))\n",
   )
   body.push("print(ok)\n")
-  python_subprocess_stdout(body.join("")) == "True"
+  python_script_stdout(body.join("")) == "True"
 }
 
 ///|
@@ -3325,5 +3328,5 @@ pub fn mechanics_matrix_equal(
     "ok = lhs.shape == rhs.shape and all(simplify(lhs[i, j] - rhs[i, j]) == 0 for i in range(lhs.rows) for j in range(lhs.cols))\n",
   )
   body.push("print(ok)\n")
-  python_subprocess_stdout(body.join("")) == "True"
+  python_script_stdout(body.join("")) == "True"
 }

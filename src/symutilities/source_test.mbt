@@ -10,5 +10,5 @@ test "source get_mod_func parity" {
 test "source get_class uses explicit registry" {
   let registry : Map[String, Int] = {}
   registry["demo.Value"] = 42
-  assert_eq(try! get_class("demo.Value", registry), 42)
+  assert_eq(get_class("demo.Value", registry), 42)
 }

@@ -4,10 +4,10 @@ test "field_elem: expect_rational projects constant extensions" {
     @symnum.BigRational::from_int(3),
     @symnum.BigRational::zero(),
   )
-  inspect(try! fe_expect_rational(cc).to_string(), content="3")
+  inspect(fe_expect_rational(cc).to_string(), content="3")
 
   let gf_const = FieldElem::GFExt(5, [7], [1, 0, 1])
-  inspect(try! fe_expect_rational(gf_const).to_string(), content="7")
+  inspect(fe_expect_rational(gf_const).to_string(), content="7")
 
   let a = @symcore.symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
@@ -19,7 +19,7 @@ test "field_elem: expect_rational projects constant extensions" {
     minpoly,
     "a",
   )
-  inspect(try! fe_expect_rational(alg_const).to_string(), content="5")
+  inspect(fe_expect_rational(alg_const).to_string(), content="5")
 }
 
 ///|
@@ -55,10 +55,10 @@ test "field_elem: expect_rational rejects non-constant extensions" {
 
 ///|
 test "field_elem: from_int embeds into Frac(base)" {
-  let q = try! fe_from_int(4, Domain::Frac(Domain::QQ))
+  let q = fe_from_int(4, Domain::Frac(Domain::QQ))
   inspect(fe_to_string(q), content="4")
 
-  let gf = try! fe_from_int(-3, Domain::Frac(Domain::GF(5)))
+  let gf = fe_from_int(-3, Domain::Frac(Domain::GF(5)))
   inspect(fe_to_string(gf), content="2")
 }
 
@@ -88,7 +88,7 @@ test "field_elem wb: helper branches and domain mismatches" {
   }
   inspect(fe_mod_inv_int(2, 4), content="0")
 
-  let pow_neg = try! fe_pow(
+  let pow_neg = fe_pow(
     FieldElem::CC(
       @symnum.BigRational::from_int(2),
       @symnum.BigRational::from_int(0),
@@ -114,7 +114,7 @@ test "field_elem wb: helper branches and domain mismatches" {
   }
 
   let a = @symcore.symbol("a")
-  let minpoly = try! fe_wb_minpoly(
+  let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),
     Domain::QQ,
@@ -172,7 +172,7 @@ test "field_elem wb: inverses and conversion guard paths" {
   }
 
   let x = @symcore.symbol("x")
-  let minpoly = try! fe_wb_minpoly("x", x ^ @symcore.int(2), Domain::QQ)
+  let minpoly = fe_wb_minpoly("x", x ^ @symcore.int(2), Domain::QQ)
   let inv_alg_nonfield : Result[Array[FieldElem], PolyError] = try? fe_alg_poly_inv(
     [
       FieldElem::QQ(@symnum.BigRational::zero()),
@@ -192,10 +192,7 @@ test "field_elem wb: inverses and conversion guard paths" {
     fail("fe_from_rational(1/2, ZZ) should reject non-integers")
   }
 
-  let frac_gf = try! fe_from_rational(
-    fe_wb_rat(8, 3),
-    Domain::Frac(Domain::GF(7)),
-  )
+  let frac_gf = fe_from_rational(fe_wb_rat(8, 3), Domain::Frac(Domain::GF(7)))
   inspect(fe_to_string(frac_gf), content="5")
 
   let bad_loader_gen : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
@@ -229,27 +226,27 @@ test "field_elem wb: inverses and conversion guard paths" {
 ///|
 test "field_elem wb: algebraic helpers and string formatting branches" {
   let a = @symcore.symbol("a")
-  let minpoly = try! fe_wb_minpoly(
+  let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),
     Domain::QQ,
   )
 
-  let add_res = try! fe_alg_poly_add([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
+  let add_res = fe_alg_poly_add([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
   ])
   guard add_res.length() == 2 && add_res[0].to_string() == "3" else {
     fail("fe_alg_poly_add padding branch mismatch")
   }
 
-  let sub_res = try! fe_alg_poly_sub([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
+  let sub_res = fe_alg_poly_sub([fe_wb_qq(1, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
   ])
   guard sub_res.length() == 2 && sub_res[0].to_string() == "-1" else {
     fail("fe_alg_poly_sub padding branch mismatch")
   }
 
-  let non_monic = try! fe_wb_minpoly(
+  let non_monic = fe_wb_minpoly(
     "a",
     @symcore.int(2) * a + @symcore.int(1),
     Domain::QQ,
@@ -262,14 +259,14 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
     fail("fe_alg_poly_mod should reject non-monic minimal polynomial")
   }
 
-  let div_zero = try! fe_alg_poly_divmod([fe_wb_qq(3, 1), fe_wb_qq(1, 1)], [
+  let div_zero = fe_alg_poly_divmod([fe_wb_qq(3, 1), fe_wb_qq(1, 1)], [
     fe_wb_qq(0, 1),
   ])
   guard div_zero.0.length() == 1 && div_zero.1.length() == 2 else {
     fail("fe_alg_poly_divmod zero divisor branch mismatch")
   }
 
-  let div_short = try! fe_alg_poly_divmod([fe_wb_qq(1, 1)], [
+  let div_short = fe_alg_poly_divmod([fe_wb_qq(1, 1)], [
     fe_wb_qq(1, 1),
     fe_wb_qq(1, 1),
   ])
@@ -308,10 +305,10 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
     fail("fe_expect_rational should reject non-real CC")
   }
 
-  let gfext_empty = try! fe_expect_rational(FieldElem::GFExt(5, [], [1, 0, 1]))
+  let gfext_empty = fe_expect_rational(FieldElem::GFExt(5, [], [1, 0, 1]))
   inspect(gfext_empty.to_string(), content="0")
 
-  let algext_empty = try! fe_expect_rational(
+  let algext_empty = fe_expect_rational(
     FieldElem::AlgExt(Domain::QQ, [], minpoly, "a"),
   )
   inspect(algext_empty.to_string(), content="0")
@@ -324,13 +321,13 @@ test "field_elem wb: remaining branch sweep" {
     fail("fe_poly_add should keep max input length")
   }
 
-  let qpow = try! fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
+  let qpow = fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
   inspect(fe_to_string(qpow), content="8")
-  let gpow = try! fe_pow(FieldElem::GFp(5, 3), 4)
+  let gpow = fe_pow(FieldElem::GFp(5, 3), 4)
   inspect(fe_to_string(gpow), content="1")
 
   let a = @symcore.symbol("a")
-  let minpoly = try! fe_wb_minpoly(
+  let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),
     Domain::QQ,
@@ -344,7 +341,7 @@ test "field_elem wb: remaining branch sweep" {
     minpoly,
     "a",
   )
-  let apow = try! fe_pow(alg, 2)
+  let apow = fe_pow(alg, 2)
   guard apow is FieldElem::AlgExt(_, _, _, _) else {
     fail("fe_pow should preserve AlgExt shape")
   }
@@ -393,8 +390,8 @@ test "field_elem wb: remaining branch sweep" {
       "fe_poly_mod should pop zero-leading residue in degenerate modulus case",
     )
   }
-  let mp_const = try! fe_wb_minpoly("a", @symcore.int(1), Domain::QQ)
-  let alg_mod_edge = try! fe_alg_poly_mod(
+  let mp_const = fe_wb_minpoly("a", @symcore.int(1), Domain::QQ)
+  let alg_mod_edge = fe_alg_poly_mod(
     [FieldElem::QQ(@symnum.BigRational::zero())],
     mp_const,
   )
@@ -406,7 +403,7 @@ test "field_elem wb: remaining branch sweep" {
 
   inspect(
     fe_to_string(
-      try! fe_add(
+      fe_add(
         FieldElem::CC(
           @symnum.BigRational::from_int(2),
           @symnum.BigRational::from_int(1),
@@ -418,7 +415,7 @@ test "field_elem wb: remaining branch sweep" {
   )
   inspect(
     fe_to_string(
-      try! fe_add(
+      fe_add(
         FieldElem::QQ(@symnum.BigRational::from_int(3)),
         FieldElem::CC(
           @symnum.BigRational::from_int(2),
@@ -438,7 +435,7 @@ test "field_elem wb: remaining branch sweep" {
 
   inspect(
     fe_to_string(
-      try! fe_mul(
+      fe_mul(
         FieldElem::CC(
           @symnum.BigRational::from_int(2),
           @symnum.BigRational::from_int(1),
@@ -450,7 +447,7 @@ test "field_elem wb: remaining branch sweep" {
   )
   inspect(
     fe_to_string(
-      try! fe_mul(
+      fe_mul(
         FieldElem::QQ(@symnum.BigRational::from_int(3)),
         FieldElem::CC(
           @symnum.BigRational::from_int(2),
@@ -494,9 +491,9 @@ test "field_elem wb: remaining branch sweep" {
     fail("fe_inv should reject zero AlgExt elements")
   }
 
-  let cc_from_rat = try! fe_from_rational(fe_wb_rat(7, 2), Domain::CC)
+  let cc_from_rat = fe_from_rational(fe_wb_rat(7, 2), Domain::CC)
   inspect(fe_to_string(cc_from_rat), content="7/2")
-  let gfext_from_rat = try! fe_from_rational(
+  let gfext_from_rat = fe_from_rational(
     fe_wb_rat(8, 3),
     Domain::GFExt(7, 2, [1, 0, 1]),
   )
@@ -529,7 +526,7 @@ test "field_elem wb: remaining branch sweep" {
   guard fe_alg_poly_trim([]).length() == 1 else {
     fail("fe_alg_poly_trim([]) should canonicalize to [0]")
   }
-  let padded = try! fe_alg_poly_add([fe_wb_qq(1, 1)], [
+  let padded = fe_alg_poly_add([fe_wb_qq(1, 1)], [
     fe_wb_qq(2, 1),
     fe_wb_qq(3, 1),
   ])

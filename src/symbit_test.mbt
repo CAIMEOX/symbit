@@ -7,6 +7,6 @@ test "prelude constructors round trip through printers" {
 
 ///|
 test "rational helper" {
-  let expr = try! rational(1, 3)
+  let expr = rational(1, 3)
   inspect(debug_repr(expr), content="1/3")
 }

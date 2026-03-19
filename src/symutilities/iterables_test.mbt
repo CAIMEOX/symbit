@@ -7,8 +7,8 @@ test "iterables flatten behavior" {
       nested_items([nested_atom(3), nested_atom(4)]),
     ]),
   ]
-  assert_eq(try! flatten(tree), [1, 2, 3, 4])
-  assert_eq(try! flatten(tree, levels=1), [1, 2, 3, 4])
+  assert_eq(flatten(tree), [1, 2, 3, 4])
+  assert_eq(flatten(tree, levels=1), [1, 2, 3, 4])
 }
 
 ///|

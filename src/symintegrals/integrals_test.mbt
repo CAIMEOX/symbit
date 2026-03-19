@@ -179,14 +179,14 @@ test "symintegrals line integrate and delta symbolic bounds keep stage 1 objects
   let t = @symcore.symbol("t")
   let a = @symcore.symbol("a")
   let b = @symcore.symbol("b")
-  let c = try! @symgeometry.curve(
+  let c = @symgeometry.curve(
     [@symelem.exp(t) + @symcore.int(1), @symelem.exp(t) + @symcore.int(-1)],
     t,
     @symcore.int(0),
     @symelem.log(@symcore.int(2)),
   )
   inspect(
-    @symprint.to_string(try! line_integrate(x + y, c, [x, y])),
+    @symprint.to_string(line_integrate(x + y, c, [x, y])),
     content="3*sqrt(2)",
   )
   inspect(
@@ -209,8 +209,8 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   let r = @symcore.symbol("r")
   let k = @symcore.symbol("k")
   let a = @symcore.symbol("a")
-  let third = try! @symcore.rational_from_ints(1, 3)
-  let two_thirds = try! @symcore.rational_from_ints(2, 3)
+  let third = @symcore.rational_from_ints(1, 3)
+  let two_thirds = @symcore.rational_from_ints(2, 3)
   let shifted_gaussian = @symelem.exp(
     @symcore.int(-1) * ((x - @symcore.int(1)) ^ @symcore.int(2)),
   )
@@ -642,7 +642,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   let bp = @symcore.symbol("bp")
   let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
 
   guard !@symprint.to_string(
     doit(
@@ -1814,7 +1814,7 @@ test "symintegrals Laplace special-function rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
-  let neg_half = try! @symcore.rational_from_ints(-1, 2)
+  let neg_half = @symcore.rational_from_ints(-1, 2)
 
   guard !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
     "LaplaceTransform",
@@ -2248,7 +2248,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
 
 ///|
 test "symintegrals quadrature and intpoly exact stage 6 paths" {
-  let (leg_nodes, leg_weights) = try! gauss_legendre(3, n_digits=5)
+  let (leg_nodes, leg_weights) = gauss_legendre(3, n_digits=5)
   guard leg_nodes.length() == 3 && leg_weights.length() == 3 else {
     fail("gauss_legendre size mismatch")
   }
@@ -2263,7 +2263,7 @@ test "symintegrals quadrature and intpoly exact stage 6 paths" {
     fail("gauss_legendre weights mismatch")
   }
 
-  let (lob_nodes, lob_weights) = try! gauss_lobatto(4, n_digits=5)
+  let (lob_nodes, lob_weights) = gauss_lobatto(4, n_digits=5)
   guard approx_double(lob_nodes[0], -1.0, eps=1.0e-8) &&
     approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
     approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
@@ -2276,31 +2276,29 @@ test "symintegrals quadrature and intpoly exact stage 6 paths" {
   let square = unit_square_polygon()
   assert_eq(
     @symprint.to_string(
-      try! polytope_integrate(square, @symcore.int(1), vars=[x, y]),
+      polytope_integrate(square, @symcore.int(1), vars=[x, y]),
     ),
     "1",
   )
   assert_eq(
-    @symprint.to_string(try! polytope_integrate(square, x * y, vars=[x, y])),
+    @symprint.to_string(polytope_integrate(square, x * y, vars=[x, y])),
     "1/4",
   )
-  let bulk = try! polytope_integrate_many(
-    square,
-    [@symcore.int(1), x, y, x * y],
-    vars=[x, y],
-  )
+  let bulk = polytope_integrate_many(square, [@symcore.int(1), x, y, x * y], vars=[
+    x, y,
+  ])
   assert_eq(@symprint.to_string(bulk[x]), "1/2")
   assert_eq(@symprint.to_string(bulk[y]), "1/2")
-  let upto = try! polytope_integrate_upto(square, 2, vars=[x, y])
+  let upto = polytope_integrate_upto(square, 2, vars=[x, y])
   assert_eq(@symprint.to_string(upto[x ^ @symcore.int(2)]), "1/3")
   assert_eq(@symprint.to_string(upto[y ^ @symcore.int(2)]), "1/3")
 
-  let seg = try! @symgeometry.segment(
-    try! @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
-    try! @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
+  let seg = @symgeometry.segment(
+    @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
+    @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
   )
   assert_eq(
-    @symprint.to_string(try! segment_integrate(seg, x + y, vars=[x, y])),
+    @symprint.to_string(segment_integrate(seg, x + y, vars=[x, y])),
     "sqrt(2)",
   )
 }

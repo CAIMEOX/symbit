@@ -15,7 +15,7 @@ test "physics.optics.waves: twave properties and rewrites" {
   let amp = @symcore.symbol("A")
   let phi = @symcore.symbol("phi")
   let freq = @symcore.symbol("f")
-  let wave = try! t_wave(amp, frequency=Some(freq), phase=phi)
+  let wave = t_wave(amp, frequency=Some(freq), phase=phi)
 
   guard wave.to_string() == "TWave(A, f, phi, 1/f, n)" else {
     fail("twave repr")
@@ -47,9 +47,9 @@ test "physics.optics.waves: superposition and scaling" {
   let phi1 = @symcore.symbol("phi1")
   let phi2 = @symcore.symbol("phi2")
   let freq = @symcore.symbol("f")
-  let w1 = try! t_wave(amp1, frequency=Some(freq), phase=phi1)
-  let w2 = try! t_wave(amp2, frequency=Some(freq), phase=phi2)
-  let summed = try! w1.superpose(w2)
+  let w1 = t_wave(amp1, frequency=Some(freq), phase=phi1)
+  let w2 = t_wave(amp2, frequency=Some(freq), phase=phi2)
+  let summed = w1.superpose(w2)
 
   waves_assert_expr_equal(
     summed.amplitude,
@@ -62,7 +62,7 @@ test "physics.optics.waves: superposition and scaling" {
     "twave superpose phase",
   )
   waves_assert_expr_equal(
-    (try! w1.scale(@symcore.int(3))).amplitude,
+    w1.scale(@symcore.int(3)).amplitude,
     "3*A1",
     "twave scale",
   )

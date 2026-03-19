@@ -124,8 +124,8 @@ test "symsimplify compat api basics" {
 
   let n = nsimplify(
     @symcore.add([
-      try! @symcore.rational_from_ints(1, 3),
-      try! @symcore.rational_from_ints(1, 6),
+      @symcore.rational_from_ints(1, 3),
+      @symcore.rational_from_ints(1, 6),
     ]),
   )
   inspect(@symprint.debug_repr(n), content="1/2")
@@ -209,7 +209,7 @@ test "symsimplify fu rules smoke" {
     @symprint.debug_repr(
       tr4(
         @symcore.function("sin", [
-          @symcore.mul([try! @symcore.rational_from_ints(1, 6), pi]),
+          @symcore.mul([@symcore.rational_from_ints(1, 6), pi]),
         ]),
       ),
     ),

@@ -86,10 +86,7 @@ test "stage2 finite die parity" {
 
 ///|
 test "stage2 finite bernoulli mean variance parity" {
-  let p = try! @symnum.BigRational::new(
-    BigInt::from_int(1),
-    BigInt::from_int(3),
-  )
+  let p = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(3))
   let x = bernoulli("X", p)
   let sx = @symcore.symbol("X")
   let ours_e = expectation(sx, rvs=[x])
@@ -134,7 +131,7 @@ test "stage3 symbolic wrappers keep canonical form" {
 ///|
 test "stage4 binomial parity" {
   let n = @symcore.int(5)
-  let p = try! @symcore.rational_from_ints(1, 3)
+  let p = @symcore.rational_from_ints(1, 3)
   let x = binomial("X", n, p)
   let sx = @symcore.symbol("X")
   let ours_mean = expectation(sx, rvs=[x])
@@ -157,7 +154,7 @@ test "stage4 binomial parity" {
 
 ///|
 test "stage4 geometric and negbin parity" {
-  let p = try! @symcore.rational_from_ints(1, 2)
+  let p = @symcore.rational_from_ints(1, 2)
   let g = geometric("G", p)
   let event = le(@symcore.symbol("G"), @symcore.int(3))
   let ours = probability(event, rv=g)
@@ -177,7 +174,7 @@ test "stage5 normal and exponential parity" {
   let n01 = normal("X", @symcore.int(0), @symcore.int(1))
   let x = @symcore.symbol("x")
   let ours_pdf = density(n01, x)
-  let oracle_pdf = try! @sympy_stats.stats_eval_str(
+  let oracle_pdf = @sympy_stats.stats_eval_str(
     "(lambda X, x: density(X)(x))(Normal('X', 0, 1), x)",
   )
   assert_true(expr_equiv(ours_pdf, oracle_pdf))
@@ -189,7 +186,7 @@ test "stage5 normal and exponential parity" {
   let e = exponential("Y", @symcore.int(2))
   let y = @symcore.symbol("y")
   let ours_cdf = cdf(e, y)
-  let oracle_cdf = try! @sympy_stats.stats_eval_str(
+  let oracle_cdf = @sympy_stats.stats_eval_str(
     "(lambda Y, y: cdf(Y)(y))(Exponential('Y', 2), y)",
   )
   assert_true(expr_equiv(ours_cdf, oracle_cdf))
@@ -217,7 +214,7 @@ test "stage6 joint independent parity" {
     eq(@symcore.symbol("Y"), @symcore.int(1)),
   ])
   let ours = probability(event, rv=j)
-  let oracle = try! @sympy_stats.stats_eval_str(
+  let oracle = @sympy_stats.stats_eval_str(
     "(lambda X, Y: P(Eq(X, 1) & Eq(Y, 1)))(Die('X', 6), Die('Y', 6))",
   )
   assert_true(expr_equiv(ours, oracle))
@@ -227,18 +224,15 @@ test "stage6 joint independent parity" {
 
 ///|
 test "stage7 compound and variance_prop" {
-  let half = try! @symnum.BigRational::new(
-    BigInt::from_int(1),
-    BigInt::from_int(2),
-  )
+  let half = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
   let d = die("A", sides=6)
   let b = bernoulli("B", half)
   let z = compound_rv("Z", [(half, d), (half, b)])
   let sz = @symcore.symbol("Z")
   let mean_z = expectation(sz, rvs=[z])
-  assert_true(try! @sympy_stats.stats_expr_equiv(expr_str(mean_z), "2"))
+  assert_true(@sympy_stats.stats_expr_equiv(expr_str(mean_z), "2"))
   let var_z = variance(sz, rvs=[z])
-  assert_true(try! @sympy_stats.stats_expr_equiv(expr_str(var_z), "23/6"))
+  assert_true(@sympy_stats.stats_expr_equiv(expr_str(var_z), "23/6"))
 
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
@@ -263,7 +257,7 @@ test "stage8 process and matrix starter parity" {
   let ours = process_mean_at(n, t)
   match ours {
     Some(v) => {
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "(lambda N, t: E(N(t)))(PoissonProcess('N', 1), t)",
       )
       assert_true(expr_equiv(v, oracle))
@@ -273,7 +267,7 @@ test "stage8 process and matrix starter parity" {
   let w = wiener_process("W")
   match process_variance_at(w, t) {
     Some(v) => {
-      let oracle = try! @sympy_stats.stats_eval_str(
+      let oracle = @sympy_stats.stats_eval_str(
         "(lambda W, t: variance(W(t)))(WienerProcess('W'), t)",
       )
       assert_true(expr_equiv(v, oracle))

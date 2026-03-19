@@ -41,7 +41,7 @@ test "physics.quantum.circuitutils: search parity" {
   ])
   guard kmp_table(circuit_factors(pattern)) ==
     circuit_oracle_ints(
-      try! @sympy_physics.quantum_circuitutils_kmp_table(
+      @sympy_physics.quantum_circuitutils_kmp_table(
         @symprint.to_string(pattern),
       ),
     ) else {
@@ -58,13 +58,13 @@ test "physics.quantum.circuitutils: search parity" {
   ])
   let subcircuit = @symcore.raw_mul([z_gate(0).as_expr(), y_gate(0).as_expr()])
   guard find_subcircuit(circuit, subcircuit, start=2) ==
-    (try! @strconv.parse_int(
-      try! @sympy_physics.quantum_circuitutils_find_subcircuit(
+    @strconv.parse_int(
+      @sympy_physics.quantum_circuitutils_find_subcircuit(
         @symprint.to_string(circuit),
         @symprint.to_string(subcircuit),
         start=2,
       ),
-    )) else {
+    ) else {
     fail("find_subcircuit parity")
   }
 
@@ -77,12 +77,12 @@ test "physics.quantum.circuitutils: search parity" {
       replace_subcircuit(circuit, subcircuit, replace=Some(replacement)),
     ),
   )
-  guard (try! @sympy_physics.physics_srepr(local_replace)) ==
-    (try! @sympy_physics.quantum_circuitutils_replace_subcircuit(
+  guard @sympy_physics.physics_srepr(local_replace) ==
+    @sympy_physics.quantum_circuitutils_replace_subcircuit(
       @symprint.to_string(circuit),
       @symprint.to_string(subcircuit),
       replace=Some(@symprint.to_string(replacement)),
-    )) else {
+    ) else {
     fail("replace_subcircuit parity")
   }
 }
@@ -96,15 +96,15 @@ test "physics.quantum.circuitutils: symbolic index parity" {
     cgate([5], x_gate(2).as_expr()),
   ])
   let symbolic = convert_to_symbolic_indices(circuit)
-  let oracle_summary = try! @sympy_physics.quantum_circuitutils_convert_to_symbolic(
+  let oracle_summary = @sympy_physics.quantum_circuitutils_convert_to_symbolic(
     @symprint.to_string(circuit),
   )
   guard !oracle_summary.is_empty() else {
     fail("missing symbolic oracle summary")
   }
-  guard (try! @sympy_physics.physics_srepr(
+  guard @sympy_physics.physics_srepr(
       @symprint.to_string(@symcore.raw_mul(symbolic.circuit)),
-    )) ==
+    ) ==
     oracle_summary[0] else {
     fail("convert_to_symbolic_indices circuit parity")
   }
@@ -118,13 +118,13 @@ test "physics.quantum.circuitutils: symbolic index parity" {
     @symcore.raw_mul(symbolic.circuit),
     symbolic.qubit_map,
   )
-  guard (try! @sympy_physics.physics_srepr(
+  guard @sympy_physics.physics_srepr(
       @symprint.to_string(@symcore.raw_mul(local_real)),
-    )) ==
-    (try! @sympy_physics.quantum_circuitutils_convert_to_real(
+    ) ==
+    @sympy_physics.quantum_circuitutils_convert_to_real(
       @symprint.to_string(@symcore.raw_mul(symbolic.circuit)),
       "{i0: 2, i1: 5}",
-    )) else {
+    ) else {
     fail("convert_to_real_indices parity")
   }
 }

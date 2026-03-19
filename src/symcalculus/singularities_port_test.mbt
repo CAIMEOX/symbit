@@ -36,8 +36,8 @@ test "singularities: simple pole" {
     sing_expr_int(-1),
   )
   let ours = singularities(expr, x)
-  let oracle = try! @sympy_calculus.singularities_str(expr, x)
-  try! sing_expr_equal(ours, oracle)
+  let oracle = @sympy_calculus.singularities_str(expr, x)
+  sing_expr_equal(ours, oracle)
 }
 
 ///|
@@ -45,8 +45,8 @@ test "singularities: log" {
   let x = sing_expr_symbol("x")
   let expr = @symcore.function("log", [x])
   let ours = singularities(expr, x)
-  let oracle = try! @sympy_calculus.singularities_str(expr, x)
-  try! sing_expr_equal(ours, oracle)
+  let oracle = @sympy_calculus.singularities_str(expr, x)
+  sing_expr_equal(ours, oracle)
 }
 
 ///|
@@ -54,6 +54,6 @@ test "singularities: none" {
   let x = sing_expr_symbol("x")
   let expr = @symcore.add([@symcore.pow(x, sing_expr_int(2)), sing_expr_int(1)])
   let ours = singularities(expr, x)
-  let oracle = try! @sympy_calculus.singularities_str(expr, x)
-  try! sing_expr_equal(ours, oracle)
+  let oracle = @sympy_calculus.singularities_str(expr, x)
+  sing_expr_equal(ours, oracle)
 }

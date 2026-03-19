@@ -112,7 +112,7 @@ test "physics.mechanics symbolic system forms" {
     bodies,
     loads,
   ) = symbolic_system_fixture()
-  let symsystem2 = try! symbolic_system(
+  let symsystem2 = symbolic_system(
     coordinates,
     comb_implicit_rhs,
     speeds=Some(speeds),
@@ -122,10 +122,10 @@ test "physics.mechanics symbolic system forms" {
     bodies=Some(bodies),
     loads=Some(loads),
   )
-  try! symsystem2.compute_explicit_form()
-  let symsystem1 = try! symbolic_system(
+  symsystem2.compute_explicit_form()
+  let symsystem1 = symbolic_system(
     states,
-    try! symsystem2.comb_explicit_rhs(),
+    symsystem2.comb_explicit_rhs(),
     alg_con=Some([4]),
     output_eqns~,
     coord_idxs=Some([0, 1]),
@@ -133,7 +133,7 @@ test "physics.mechanics symbolic system forms" {
     bodies=Some(bodies),
     loads=Some(loads),
   )
-  let symsystem3 = try! symbolic_system(
+  let symsystem3 = symbolic_system(
     states,
     dyn_implicit_rhs,
     mass_matrix=Some(dyn_implicit_mat),
@@ -145,13 +145,13 @@ test "physics.mechanics symbolic system forms" {
     loads=Some(loads),
   )
 
-  guard (try! symsystem1.coordinates()).height() == 2 else {
+  guard symsystem1.coordinates().height() == 2 else {
     fail("form 1 should expose inferred coordinates")
   }
   guard symsystem2.states().height() == 5 else {
     fail("form 2 should expose combined states")
   }
-  guard (try! symsystem3.kin_explicit_rhs()).height() == 2 else {
+  guard symsystem3.kin_explicit_rhs().height() == 2 else {
     fail("form 3 should expose kinematic rhs")
   }
   guard symsystem3.alg_con() == Some([4]) else {
@@ -165,8 +165,7 @@ test "physics.mechanics symbolic system forms" {
     symsystem3.constant_symbols().map(@symprint.to_string).join(","),
     content="g,l,m",
   )
-  guard (try! symsystem2.bodies()).length() == 1 &&
-    (try! symsystem2.loads()).length() == 1 else {
+  guard symsystem2.bodies().length() == 1 && symsystem2.loads().length() == 1 else {
     fail("symbolic system should preserve bodies and loads")
   }
   guard symsystem2.output_eqns().length() == 1 else {
@@ -192,8 +191,8 @@ test "physics.mechanics symbolic system errors" {
     _bodies,
     _loads,
   ) = symbolic_system_fixture()
-  let symsystem = try! symbolic_system(states, comb_implicit_rhs)
-  let implicit_system = try! symbolic_system(
+  let symsystem = symbolic_system(states, comb_implicit_rhs)
+  let implicit_system = symbolic_system(
     [states[0], states[1], states[4]],
     comb_implicit_rhs,
     speeds=Some([states[2], states[3]]),

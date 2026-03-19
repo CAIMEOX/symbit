@@ -15,15 +15,15 @@ fn kane_matrix_entry_summary(matrix : @symphysics.ExplicitMatrix) -> String {
 test "physics.mechanics kane: spring mass damper" {
   let q = @symvector.dynamicsymbol("q")
   let u = @symvector.dynamicsymbol("u")
-  let n = try! @symvector.reference_frame("KN")
-  let p = try! @symvector.point("KP")
+  let n = @symvector.reference_frame("KN")
+  let p = @symvector.point("KP")
   p.set_vel(n, n.x().scale(u))
-  let pa = try! particle("KPa", point=Some(p), mass=Some(@symcore.symbol("m")))
-  let km = try! kanes_method(n, [q], [u], [
+  let pa = particle("KPa", point=Some(p), mass=Some(@symcore.symbol("m")))
+  let km = kanes_method(n, [q], [u], [
     @symcalculus.diff(q, @symvector.dynamicsymbols_t) - u,
   ])
   ignore(
-    try! km.kanes_equations([pa.as_bodylike()], [
+    km.kanes_equations([pa.as_bodylike()], [
       force_load(
         p,
         n
@@ -36,26 +36,26 @@ test "physics.mechanics kane: spring mass damper" {
     ]),
   )
   inspect(kane_matrix_entry_summary(km.mass_matrix()), content="[[m]]")
-  let rhs = try! km.rhs()
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! rhs.get(1, 0)),
+  let rhs = km.rhs()
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(rhs.get(1, 0)),
     "-(k*q(t) + c*u(t))/m",
-  )) else {
+  ) else {
     fail("kane acceleration mismatch")
   }
-  let a = (try! km.linearize(a_and_b=true)).0
-  inspect(@symprint.to_string(try! a.get(0, 0)), content="0")
-  inspect(@symprint.to_string(try! a.get(0, 1)), content="1")
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! a.get(1, 0)),
+  let a = km.linearize(a_and_b=true).0
+  inspect(@symprint.to_string(a.get(0, 0)), content="0")
+  inspect(@symprint.to_string(a.get(0, 1)), content="1")
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(a.get(1, 0)),
     "-k/m",
-  )) else {
+  ) else {
     fail("kane linearized A(1,0) mismatch")
   }
-  guard (try! @sympy_physics.mechanics_expr_equal(
-    @symprint.to_string(try! a.get(1, 1)),
+  guard @sympy_physics.mechanics_expr_equal(
+    @symprint.to_string(a.get(1, 1)),
     "-c/m",
-  )) else {
+  ) else {
     fail("kane linearized A(1,1) mismatch")
   }
 }

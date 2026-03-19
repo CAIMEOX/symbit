@@ -34,76 +34,76 @@ fn assert_expr_equal_str(ours : Expr, oracle : String) -> Unit raise {
 
 ///|
 test "accum_bounds: construct/delta/mid" {
-  let b = try! accum_bounds(expr_int(1), expr_int(2))
-  try! assert_expr_equal(b, "AccumBounds(1, 2)")
+  let b = accum_bounds(expr_int(1), expr_int(2))
+  assert_expr_equal(b, "AccumBounds(1, 2)")
   let delta = match accum_delta(b) {
     Some(v) => v
     None => fail("delta none")
   }
-  let delta_oracle = try! @sympy_calculus.accum_delta(expr_int(1), expr_int(2))
-  try! assert_expr_equal(delta, delta_oracle)
+  let delta_oracle = @sympy_calculus.accum_delta(expr_int(1), expr_int(2))
+  assert_expr_equal(delta, delta_oracle)
   let mid = match accum_mid(b) {
     Some(v) => v
     None => fail("mid none")
   }
-  let mid_oracle = try! @sympy_calculus.accum_mid(expr_int(1), expr_int(2))
-  try! assert_expr_equal(mid, mid_oracle)
-  let collapsed = try! accum_bounds(expr_int(1), expr_int(1))
-  try! assert_expr_equal_str(collapsed, "1")
+  let mid_oracle = @sympy_calculus.accum_mid(expr_int(1), expr_int(2))
+  assert_expr_equal(mid, mid_oracle)
+  let collapsed = accum_bounds(expr_int(1), expr_int(1))
+  assert_expr_equal_str(collapsed, "1")
 }
 
 ///|
 test "accum_bounds: add/sub/neg" {
-  let a = try! accum_bounds(expr_int(1), expr_int(2))
-  let b = try! accum_bounds(expr_int(2), expr_int(3))
+  let a = accum_bounds(expr_int(1), expr_int(2))
+  let b = accum_bounds(expr_int(2), expr_int(3))
   let add = accum_add(a, b)
-  let add_oracle = try! @sympy_calculus.accum_add(
+  let add_oracle = @sympy_calculus.accum_add(
     expr_int(1),
     expr_int(2),
     expr_int(2),
     expr_int(3),
   )
-  try! assert_expr_equal(add, add_oracle)
+  assert_expr_equal(add, add_oracle)
   let sub = accum_sub(b, a)
-  let sub_oracle = try! @sympy_calculus.accum_sub(
+  let sub_oracle = @sympy_calculus.accum_sub(
     expr_int(2),
     expr_int(3),
     expr_int(1),
     expr_int(2),
   )
-  try! assert_expr_equal(sub, sub_oracle)
+  assert_expr_equal(sub, sub_oracle)
   let neg = accum_neg(a)
-  try! assert_expr_equal(neg, "AccumBounds(-2, -1)")
+  assert_expr_equal(neg, "AccumBounds(-2, -1)")
 }
 
 ///|
 test "accum_bounds: mul/div/pow/abs" {
-  let a = try! accum_bounds(expr_int(1), expr_int(2))
-  let b = try! accum_bounds(expr_int(2), expr_int(3))
+  let a = accum_bounds(expr_int(1), expr_int(2))
+  let b = accum_bounds(expr_int(2), expr_int(3))
   let mul = accum_mul(a, b)
-  let mul_oracle = try! @sympy_calculus.accum_mul(
+  let mul_oracle = @sympy_calculus.accum_mul(
     expr_int(1),
     expr_int(2),
     expr_int(2),
     expr_int(3),
   )
-  try! assert_expr_equal(mul, mul_oracle)
+  assert_expr_equal(mul, mul_oracle)
   let div = accum_div(b, a)
-  let div_oracle = try! @sympy_calculus.accum_div(
+  let div_oracle = @sympy_calculus.accum_div(
     expr_int(2),
     expr_int(3),
     expr_int(1),
     expr_int(2),
   )
-  try! assert_expr_equal(div, div_oracle)
+  assert_expr_equal(div, div_oracle)
   let pow = accum_pow(a, expr_int(2))
-  let pow_oracle = try! @sympy_calculus.accum_pow(
+  let pow_oracle = @sympy_calculus.accum_pow(
     expr_int(1),
     expr_int(2),
     expr_int(2),
   )
-  try! assert_expr_equal(pow, pow_oracle)
-  let abs = accum_abs(try! accum_bounds(expr_int(-2), expr_int(1)))
+  assert_expr_equal(pow, pow_oracle)
+  let abs = accum_abs(accum_bounds(expr_int(-2), expr_int(1)))
   let abs_oracle_res : Result[String, Error] = try? @sympy_calculus.accum_abs(
     expr_int(-2),
     expr_int(1),
@@ -112,5 +112,5 @@ test "accum_bounds: mul/div/pow/abs" {
     Ok(v) => v
     Err(e) => fail("accum_abs oracle error: \{e}")
   }
-  try! assert_expr_equal(abs, abs_oracle)
+  assert_expr_equal(abs, abs_oracle)
 }

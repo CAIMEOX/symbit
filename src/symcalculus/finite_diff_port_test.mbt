@@ -65,7 +65,7 @@ test "finite_diff_weights: small grid" {
   let weights = finite_diff_weights(1, x_list, x0=fd_br_int(0))
   let ours = fd_strip_spaces(fd_weights_repr(weights))
   let oracle = fd_strip_spaces(
-    try! @sympy_calculus.finite_diff_weights_str(1, x_list, x0=fd_br_int(0)),
+    @sympy_calculus.finite_diff_weights_str(1, x_list, x0=fd_br_int(0)),
   )
   guard ours == oracle else {
     println("weights mismatch: ours=\{ours} oracle=\{oracle}")
@@ -77,12 +77,12 @@ test "finite_diff_weights: small grid" {
 test "apply_finite_diff: quadratic" {
   let x_list = [fd_br_int(-1), fd_br_int(0), fd_br_int(1)]
   let y_list = [fd_expr_int(1), fd_expr_int(0), fd_expr_int(1)]
-  let ours = try! apply_finite_diff(2, x_list, y_list, x0=fd_br_int(0))
-  let oracle = try! @sympy_calculus.apply_finite_diff_str(
+  let ours = apply_finite_diff(2, x_list, y_list, x0=fd_br_int(0))
+  let oracle = @sympy_calculus.apply_finite_diff_str(
     2,
     x_list,
     y_list,
     x0=fd_br_int(0),
   )
-  try! fd_assert_expr_equal(ours, oracle)
+  fd_assert_expr_equal(ours, oracle)
 }

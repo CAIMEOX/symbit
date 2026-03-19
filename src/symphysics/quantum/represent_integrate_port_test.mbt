@@ -8,13 +8,13 @@ test "physics.quantum.represent: integrate_result parity" {
     @symcore.raw_function("DiracDelta", [x - x1]) *
     @symcore.raw_function("DiracDelta", [x1 - x2])
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_integrate_result_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_integrate_result_str(
       "XOp()*XKet()",
       "x*DiracDelta(x - x_1)*DiracDelta(x_1 - x_2)",
       unities=[1],
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(integrate_result(original, result, unities=[1])),
     ),
     "integrate_result parity",

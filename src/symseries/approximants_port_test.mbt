@@ -42,8 +42,8 @@ test "symseries pade approximant parity" {
     @symcore.mul([@symcore.int(-1), x]),
   ])
   let expr = @symcore.pow(denom, @symcore.int(-1))
-  let ours = try! pade_approximant(expr, x, m=1, n=1)
-  let sympy_list = try! @sympy_series.approximants_str([1, 1, 1, 1, 1, 1], "x")
+  let ours = pade_approximant(expr, x, m=1, n=1)
+  let sympy_list = @sympy_series.approximants_str([1, 1, 1, 1, 1, 1], "x")
   let items = split_list_items(sympy_list)
   guard items.length() > 1 else { fail("sympy approximants missing entry") }
   assert_true(sympy_equiv_expr_str(ours, items[1]))
@@ -60,12 +60,12 @@ test "symseries approximants list parity" {
     @symcore.int(1),
     @symcore.int(1),
   ]
-  let ours = try! approximants(coeffs_expr, x~)
+  let ours = approximants(coeffs_expr, x~)
   let ours_norm : Array[String] = Array::new()
   for v in ours {
     ours_norm.push(normalize_appr(v))
   }
-  let sympy_list = try! @sympy_series.approximants_str([1, 1, 1, 1, 1, 1], "x")
+  let sympy_list = @sympy_series.approximants_str([1, 1, 1, 1, 1, 1], "x")
   let items = split_list_items(sympy_list)
   assert_eq(ours_norm.length(), items.length())
   for i in 0..<ours_norm.length() {
@@ -81,8 +81,8 @@ test "symseries pade approximant nonzero center parity" {
     @symcore.mul([@symcore.int(-1), x]),
   ])
   let expr = @symcore.pow(denom, @symcore.int(-1))
-  let ours = try! pade_approximant(expr, x, x0=@symcore.int(2), m=1, n=1)
-  let ours_ser = try! series(ours, x~, x0=@symcore.int(2), n=3)
-  let expr_ser = try! series(expr, x~, x0=@symcore.int(2), n=3)
+  let ours = pade_approximant(expr, x, x0=@symcore.int(2), m=1, n=1)
+  let ours_ser = series(ours, x~, x0=@symcore.int(2), n=3)
+  let expr_ser = series(expr, x~, x0=@symcore.int(2), n=3)
   assert_eq(normalize_appr(ours_ser), normalize_appr(expr_ser))
 }

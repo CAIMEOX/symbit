@@ -17,37 +17,37 @@ test "physics.quantum.cartesian: parity" {
   let px = @symcore.symbol("px")
   let py = @symcore.symbol("py")
 
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_qapply_str("XOp()*XKet(x)"),
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_qapply_str("XOp()*XKet(x)"),
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(qapply(@symcore.raw_mul([x_op(), x_ket(position=x)]))),
     ),
     "XOp qapply parity",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     inner_product(x_bra(position=y), x_ket(position=x)),
-    try! @sympy_physics.quantum_doit_str("XBra(y)*XKet(x)"),
+    @sympy_physics.quantum_doit_str("XBra(y)*XKet(x)"),
     "XBra/XKet parity",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     inner_product(px_bra(momentum=px), x_ket(position=x)),
-    try! @sympy_physics.quantum_doit_str("PxBra(px)*XKet(x)"),
+    @sympy_physics.quantum_doit_str("PxBra(px)*XKet(x)"),
     "PxBra/XKet parity",
   )
-  try! quantum_test_assert_expr_equal(
-    try! quantum_port_scalar_repr(
+  quantum_test_assert_expr_equal(
+    quantum_port_scalar_repr(
       represent(px_ket(momentum=py), basis=Some(x_op())),
       "represent PxKet",
     ),
-    try! @sympy_physics.quantum_represent_str("PxKet(py)", basis=Some("XOp()")),
+    @sympy_physics.quantum_represent_str("PxKet(py)", basis=Some("XOp()")),
     "represent PxKet parity",
   )
-  try! quantum_test_assert_expr_equal(
-    try! quantum_port_scalar_repr(
+  quantum_test_assert_expr_equal(
+    quantum_port_scalar_repr(
       represent(px_op(), basis=Some(x_op())),
       "represent PxOp",
     ),
-    try! @sympy_physics.quantum_represent_str("PxOp()", basis=Some("XOp()")),
+    @sympy_physics.quantum_represent_str("PxOp()", basis=Some("XOp()")),
     "represent PxOp parity",
   )
 }

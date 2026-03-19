@@ -74,7 +74,7 @@ test "symintegrals parity core indefinite families" {
   ]
   for item in cases {
     let ours = integrate(item.1, limits=[integral_limit([x])])
-    let oracle = try! @sympy_integrals.integrals_eval_str(
+    let oracle = @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.trigsimp(sympy.simplify((" +
       py_expr(ours) +
       ") - sympy.integrate(" +
@@ -92,7 +92,7 @@ test "symintegrals parity definite delta and singularity paths" {
   let b = @symcore.symbol("b")
   let delta_expr = @symspec.dirac_delta(x - @symcore.int(2)) * x
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.simplify((" +
       py_expr(
         integrate(delta_expr, limits=[
@@ -104,7 +104,7 @@ test "symintegrals parity definite delta and singularity paths" {
     content="0",
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x, a: sympy.sstr(sympy.simplify((" +
       py_expr(
         integrate(@symspec.singularity_function(x, a, @symcore.int(0)), limits=[
@@ -116,7 +116,7 @@ test "symintegrals parity definite delta and singularity paths" {
     content="0",
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x, a, b: sympy.sstr(sympy.simplify((" +
       py_expr(
         integrate(@symspec.dirac_delta(x - a) * x, limits=[
@@ -134,22 +134,22 @@ test "symintegrals parity line_integrate and heurisch wrapper" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let t = @symcore.symbol("t")
-  let c = try! @symgeometry.curve(
+  let c = @symgeometry.curve(
     [@symelem.exp(t) + @symcore.int(1), @symelem.exp(t) + @symcore.int(-1)],
     t,
     @symcore.int(0),
     @symelem.log(@symcore.int(2)),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x, y, t: sympy.sstr(sympy.simplify((" +
-      py_expr(try! line_integrate(x + y, c, [x, y])) +
+      py_expr(line_integrate(x + y, c, [x, y])) +
       ") - sympy.line_integrate(x + y, sympy.Curve([sympy.exp(t) + 1, sympy.exp(t) - 1], (t, 0, sympy.log(2))), [x, y]))))(sympy.Symbol('x'), sympy.Symbol('y'), sympy.Symbol('t'))",
     ),
     content="0",
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.simplify((" +
       py_expr(heurisch_wrapper(x * @symelem.exp(x), "x")) +
       ") - sympy.integrals.heurisch.heurisch_wrapper(x*sympy.exp(x), x))))(sympy.Symbol('x'))",
@@ -180,7 +180,7 @@ test "symintegrals parity transforms forward/inverse family" {
   ]
   for item in lp_cases {
     let ours = doit(laplace_transform(item.1, x, s))
-    let oracle = try! @sympy_integrals.integrals_eval_str(
+    let oracle = @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours) +
       ") - (sympy.laplace_transform(sympy.sympify('" +
@@ -192,11 +192,11 @@ test "symintegrals parity transforms forward/inverse family" {
 
   let ft = @symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(2)))
   let a = @symcore.symbol("a")
-  let third = try! @symcore.rational_from_ints(1, 3)
-  let two_thirds = try! @symcore.rational_from_ints(2, 3)
-  let three_halves = try! @symcore.rational_from_ints(3, 2)
+  let third = @symcore.rational_from_ints(1, 3)
+  let two_thirds = @symcore.rational_from_ints(2, 3)
+  let three_halves = @symcore.rational_from_ints(3, 2)
   let ours_ft = doit(fourier_transform(ft, x, k))
-  let oracle_ft = try! @sympy_integrals.integrals_eval_str(
+  let oracle_ft = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
     py_expr(ours_ft) +
     ") - (sympy.fourier_transform(sympy.exp(-sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k')))))",
@@ -204,7 +204,7 @@ test "symintegrals parity transforms forward/inverse family" {
   inspect(oracle_ft, content="0")
 
   let ours_ift = doit(inverse_fourier_transform(ours_ft, k, x))
-  let oracle_ift = try! @sympy_integrals.integrals_eval_str(
+  let oracle_ift = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
     py_expr(ours_ift) +
     ") - (sympy.exp(-sympy.Symbol('x')**2))))",
@@ -218,7 +218,7 @@ test "symintegrals parity transforms forward/inverse family" {
       k,
     ),
   )
-  let shifted_ft_oracle = try! @sympy_integrals.integrals_eval_str(
+  let shifted_ft_oracle = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify(sympy.expand(((" +
     py_expr(shifted_ft) +
     ") - (sympy.fourier_transform(sympy.exp(-(sympy.Symbol('x') - 1)**2), sympy.Symbol('x'), sympy.Symbol('k')))).rewrite(sympy.exp))))",
@@ -226,7 +226,7 @@ test "symintegrals parity transforms forward/inverse family" {
   inspect(shifted_ft_oracle, content="0")
 
   let shifted_ift = doit(inverse_fourier_transform(shifted_ft, k, x))
-  let shifted_ift_oracle = try! @sympy_integrals.integrals_eval_str(
+  let shifted_ift_oracle = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify(sympy.expand(((" +
     py_expr(shifted_ift) +
     ") - (sympy.exp(-(sympy.Symbol('x') - 1)**2))).rewrite(sympy.exp))))",
@@ -241,7 +241,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_ft) +
       ") - sympy.fourier_transform(sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -250,7 +250,7 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let half_line_ift = doit(inverse_fourier_transform(half_line_ft, k, x))
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_ift) +
       ") - (sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
@@ -266,7 +266,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_x_ft) +
       ") - sympy.fourier_transform(sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -275,7 +275,7 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let half_line_x_ift = doit(inverse_fourier_transform(half_line_x_ft, k, x))
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_x_ift) +
       ") - (sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
@@ -293,7 +293,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_sin_ft) +
       ") - sympy.fourier_transform(sympy.exp(-2*sympy.Symbol('x'))*sympy.sin(3*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -304,7 +304,7 @@ test "symintegrals parity transforms forward/inverse family" {
     inverse_fourier_transform(half_line_sin_ft, k, x),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(half_line_sin_ift) +
       ") - (sympy.exp(-2*sympy.Symbol('x'))*sympy.sin(3*sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
@@ -316,7 +316,7 @@ test "symintegrals parity transforms forward/inverse family" {
     fourier_transform(@symelem.exp(@symcore.int(-2) * @symelem.abs(x)), x, k),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(abs_decay_ft) +
       ") - sympy.fourier_transform(sympy.exp(-2*sympy.Abs(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -325,7 +325,7 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let abs_decay_ift = doit(inverse_fourier_transform(abs_decay_ft, k, x))
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(abs_decay_ift) +
       ") - sympy.exp(-2*sympy.Abs(sympy.Symbol('x')))))",
@@ -341,7 +341,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(box_window_ft) +
       ") - sympy.fourier_transform(sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -350,7 +350,7 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let box_window_ift = doit(inverse_fourier_transform(box_window_ft, k, x))
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(box_window_ift) +
       ") - sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))))",
@@ -369,7 +369,7 @@ test "symintegrals parity transforms forward/inverse family" {
   let triangle_samples = ["sympy.Integer(1)", "sympy.Integer(2)"]
   for sample in triangle_samples {
     inspect(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.simplify(((" +
         py_expr(triangle_window_ft) +
         ").subs(sympy.Symbol('k'), " +
@@ -385,7 +385,7 @@ test "symintegrals parity transforms forward/inverse family" {
     inverse_fourier_transform(triangle_window_ft, k, x),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(triangle_window_ift) +
       ") - (sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))*(1 - sympy.Abs(2*sympy.Symbol('x'))))))",
@@ -400,7 +400,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(direct_sinc_box_ift) +
       ") - sympy.Heaviside(1 - sympy.Abs(3*sympy.Symbol('x')))))",
@@ -415,7 +415,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(direct_sinc_triangle_ift) +
       ") - (sympy.Heaviside(1 - sympy.Abs(3*sympy.Symbol('x')))*(1 - sympy.Abs(3*sympy.Symbol('x'))))))",
@@ -430,7 +430,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(direct_symbolic_sinc_box_ift) +
       ") - sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('a')*sympy.Symbol('x')))))",
@@ -446,7 +446,7 @@ test "symintegrals parity transforms forward/inverse family" {
     ),
   )
   inspect(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(direct_symbolic_sinc_triangle_ift) +
       ") - (sympy.Heaviside(1 - sympy.Abs(sympy.Symbol('a')*sympy.Symbol('x')))*(1 - sympy.Abs(sympy.Symbol('a')*sympy.Symbol('x'))))))",
@@ -645,7 +645,7 @@ test "symintegrals parity transforms forward/inverse family" {
   ]
   for item in inverse_lp_cases {
     let ours = doit(item.1)
-    let oracle = try! @sympy_integrals.integrals_eval_str(
+    let oracle = @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(sympy.trigsimp(sympy.expand(((" +
       py_expr(ours) +
       ") - (sympy.inverse_laplace_transform(sympy.sympify('" +
@@ -665,7 +665,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let bp = @symcore.symbol("bp")
   let rho = @symcore.symbol("rho")
   let f_of_x = @symcore.raw_function("f", [x])
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
 
   let mt_cases : Array[(Expr, String)] = [
     (
@@ -683,7 +683,7 @@ test "symintegrals parity Mellin forward and inverse" {
   ]
   for item in mt_cases {
     let ours = do_mellin_doit(item.0, x, s).unwrap()
-    let oracle = try! @sympy_integrals.integrals_eval_str(
+    let oracle = @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" + py_expr(ours) + ") - (" + item.1 + ")))",
     )
     inspect(oracle, content="0")
@@ -694,7 +694,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
     s,
   ).unwrap()
-  let inv_exp_oracle = try! @sympy_integrals.integrals_eval_str(
+  let inv_exp_oracle = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.simplify((" +
     py_expr(exp_inv) +
     ") - (sympy.mellin_transform(sympy.exp(-sympy.Symbol('x') ** -1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
@@ -707,7 +707,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(shifted_power_mellin) +
       ")[0]) - sympy.mellin_transform((1 + sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -715,13 +715,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(shifted_power_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(shifted_power_mellin) + ")[1])[1])",
     ),
     "re(rho)",
@@ -733,7 +733,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(difference_quotient_mellin) +
       ")[0]) - sympy.mellin_transform((sympy.Symbol('x')**sympy.Symbol('a') - sympy.Symbol('bp')**sympy.Symbol('a'))/(sympy.Symbol('x') - sympy.Symbol('bp')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -741,13 +741,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(difference_quotient_mellin) + ")[1])[0])",
     ),
     "Max(0, -re(a))",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(difference_quotient_mellin) + ")[1])[1])",
     ),
     "Min(1, 1 - re(a))",
@@ -756,7 +756,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let sqrt_shift = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
   let sqrt_shift_mellin = mellin_transform_eval(sqrt_shift ^ a, x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(sympy.simplify((((" +
       py_expr(sqrt_shift_mellin) +
       ")[0]).subs(sympy.Symbol('bp'), bp) - sympy.mellin_transform((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a'), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))))(sympy.Symbol('bp', positive=True))",
@@ -764,7 +764,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(((((" +
       py_expr(sqrt_shift_mellin) +
       ")[1])[0]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
@@ -772,7 +772,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(((((" +
       py_expr(sqrt_shift_mellin) +
       ")[1])[1]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
@@ -787,7 +787,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(sympy.simplify((((" +
       py_expr(sqrt_shift_recip_mellin) +
       ")[0]).subs(sympy.Symbol('bp'), bp) - sympy.mellin_transform((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a')/sympy.sqrt(sympy.Symbol('x') + bp**2), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))))(sympy.Symbol('bp', positive=True))",
@@ -795,7 +795,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(((((" +
       py_expr(sqrt_shift_recip_mellin) +
       ")[1])[0]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
@@ -803,7 +803,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(((((" +
       py_expr(sqrt_shift_recip_mellin) +
       ")[1])[1]).subs(sympy.Symbol('bp'), bp))))(sympy.Symbol('bp', positive=True))",
@@ -818,7 +818,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(left_beta_mellin) +
       ")[0]) - sympy.mellin_transform((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1)*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -826,22 +826,22 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(left_beta_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(left_beta_mellin) + ")[1])[1])",
     ),
     "oo",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(left_beta_mellin) + ")[2])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1)*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
   )
@@ -853,7 +853,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(right_beta_mellin) +
       ")[0]) - sympy.mellin_transform((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -861,22 +861,22 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(right_beta_mellin) + ")[1])[0])",
     ),
     "-oo",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(right_beta_mellin) + ")[1])[1])",
     ),
     "1 - re(b)",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(right_beta_mellin) + ")[2])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
   )
@@ -887,7 +887,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(erf_sqrt_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.erf(sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -895,13 +895,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[0])",
     ),
     "-1/2",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[1])",
     ),
     "0",
@@ -913,7 +913,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(abs_one_minus_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.Abs(1 - sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -921,22 +921,22 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(abs_one_minus_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(abs_one_minus_mellin) + ")[1])[1])",
     ),
     "re(rho)",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(abs_one_minus_mellin) + ")[2])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform(sympy.Abs(1 - sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
   )
@@ -948,7 +948,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_left_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x'))**4*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -956,13 +956,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[1])",
     ),
     "oo",
@@ -975,7 +975,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_right_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x'))**3*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -983,13 +983,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_right_mellin) + ")[1])[0])",
     ),
     "-oo",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_right_mellin) + ")[1])[1])",
     ),
     "0",
@@ -1001,7 +1001,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_one_plus_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(sympy.Symbol('x') + 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1009,13 +1009,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_one_plus_mellin) + ")[1])[0])",
     ),
     "-1",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_one_plus_mellin) + ")[1])[1])",
     ),
     "0",
@@ -1027,7 +1027,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_one_plus_inverse_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(1/sympy.Symbol('x') + 1), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1035,13 +1035,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_one_plus_inverse_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_one_plus_inverse_mellin) + ")[1])[1])",
     ),
     "1",
@@ -1053,7 +1053,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_abs_left_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(sympy.Abs(1 - sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1061,13 +1061,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_abs_left_mellin) + ")[1])[0])",
     ),
     "-1",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_abs_left_mellin) + ")[1])[1])",
     ),
     "0",
@@ -1079,7 +1079,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(log_abs_inverse_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.log(sympy.Abs(1 - 1/sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1087,13 +1087,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_abs_inverse_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(log_abs_inverse_mellin) + ")[1])[1])",
     ),
     "1",
@@ -1101,7 +1101,7 @@ test "symintegrals parity Mellin forward and inverse" {
 
   let e1_mellin = mellin_transform_eval(@symspec.e1(x), x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(e1_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.E1(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1109,13 +1109,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[1])",
     ),
     "oo",
@@ -1127,7 +1127,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(expint2_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.expint(2, sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1135,13 +1135,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[1])",
     ),
     "oo",
@@ -1149,7 +1149,7 @@ test "symintegrals parity Mellin forward and inverse" {
 
   let si_mellin = mellin_transform_eval(@symspec.si(x), x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(si_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.Si(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1157,13 +1157,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(si_mellin) + ")[1])[0])",
     ),
     "-1",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(si_mellin) + ")[1])[1])",
     ),
     "0",
@@ -1175,7 +1175,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(ci_sqrt_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.Ci(sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1183,13 +1183,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[1])",
     ),
     "1",
@@ -1201,7 +1201,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1209,13 +1209,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[0])",
     ),
     "-re(a)/2",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[1])",
     ),
     "3/4",
@@ -1227,7 +1227,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(bessely_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.bessely(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1235,13 +1235,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[0])",
     ),
     "Max(-re(a)/2, re(a)/2)",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[1])",
     ),
     "3/4",
@@ -1253,7 +1253,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselk_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselk(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1261,13 +1261,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[0])",
     ),
     "Max(-re(a)/2, re(a)/2)",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[1])",
     ),
     "oo",
@@ -1280,7 +1280,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besseli_besselk_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besseli(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1288,15 +1288,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besseli_besselk_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besseli(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besseli_besselk_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1308,7 +1308,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_sq_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))**2, sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1316,13 +1316,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_sq_mellin) + ")[1])[0])",
     ),
     "-re(a)",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_sq_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1335,7 +1335,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_neg_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(-sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1343,13 +1343,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_neg_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_neg_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1362,7 +1362,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_bessely_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1370,15 +1370,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_bessely_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_bessely_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1391,7 +1391,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_adjacent_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a') - 1, sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1399,15 +1399,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_adjacent_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besselj(sympy.Symbol('a') - 1, sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_adjacent_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1420,7 +1420,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_general_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1428,15 +1428,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_general_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_general_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1449,7 +1449,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj_bessely_general_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1457,15 +1457,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_bessely_general_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besselj_bessely_general_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1478,7 +1478,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besseli_besselk_general_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.besseli(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1486,15 +1486,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besseli_besselk_general_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.besseli(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselk(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(besseli_besselk_general_mellin) + ")[1])[1])",
     ),
     "1/2",
@@ -1506,7 +1506,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(sin_besselj_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1514,15 +1514,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(sin_besselj_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(sin_besselj_mellin) + ")[1])[1])",
     ),
     "1/4",
@@ -1534,7 +1534,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(cos_besselj_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1542,15 +1542,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(cos_besselj_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(cos_besselj_mellin) + ")[1])[1])",
     ),
     "1/4",
@@ -1562,7 +1562,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(sin_bessely_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1570,15 +1570,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(sin_bessely_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(sin_bessely_mellin) + ")[1])[1])",
     ),
     "1/4",
@@ -1590,7 +1590,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(cos_bessely_mellin) +
       ")[0]) - sympy.mellin_transform(sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -1598,15 +1598,15 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(cos_bessely_mellin) + ")[1])[0])",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((sympy.mellin_transform(sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s'))[1])[0])",
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(cos_bessely_mellin) + ")[1])[1])",
     ),
     "1/4",
@@ -1614,10 +1614,10 @@ test "symintegrals parity Mellin forward and inverse" {
 
   let generic_mellin = mellin_transform_eval(f_of_x, x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.mellin_transform(sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(generic_mellin) + ")",
     ),
   )
@@ -1628,7 +1628,7 @@ test "symintegrals parity Mellin forward and inverse" {
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(partial_generic_mellin) +
       ")[0]) - (sympy.MellinTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')) + sympy.mellin_transform(sympy.exp(-sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True))))",
@@ -1636,13 +1636,13 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(partial_generic_mellin) + ")[1])[0])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(((" + py_expr(partial_generic_mellin) + ")[1])[1])",
     ),
     "oo",
@@ -1669,7 +1669,7 @@ test "symintegrals parity Mellin forward and inverse" {
   for item in imt_cases {
     match do_inverse_mellin_doit(item.0, s, x) {
       Some(ours) => {
-        let inv = try! @sympy_integrals.integrals_eval_str(
+        let inv = @sympy_integrals.integrals_eval_str(
           "sympy.sstr(sympy.simplify((" +
           py_expr(ours) +
           ") - (" +
@@ -1693,7 +1693,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(gamma_shift_inverse) +
       ") - (sympy.exp(-sympy.Symbol('x'))/sympy.Symbol('x'))))",
@@ -1707,7 +1707,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(gamma_sum_inverse) +
       ") - ((sympy.Symbol('x') + 1)*sympy.exp(-sympy.Symbol('x'))/sympy.Symbol('x'))))",
@@ -1723,7 +1723,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(beta_left_inverse) +
       ") - (((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1))*sympy.Heaviside(1 - sympy.Symbol('x')))))",
@@ -1739,7 +1739,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(beta_right_inverse) +
       ") - (((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1))*sympy.Heaviside(sympy.Symbol('x') - 1))))",
@@ -1755,7 +1755,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(shifted_power_inverse) +
       ") - ((1 + sympy.Symbol('x'))**(-sympy.Symbol('rho')))))",
@@ -1775,7 +1775,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(difference_quotient_inverse) +
       ") - ((sympy.Symbol('x')**sympy.Symbol('a') - sympy.Symbol('bp')**sympy.Symbol('a'))/(sympy.Symbol('x') - sympy.Symbol('bp')))))",
@@ -1795,7 +1795,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(sympy.simplify((" +
       py_expr(sqrt_shift_inverse) +
       ").subs(sympy.Symbol('bp'), bp) - (sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a'))))(sympy.Symbol('bp', positive=True))",
@@ -1813,7 +1813,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda bp: sympy.sstr(sympy.simplify((" +
       py_expr(sqrt_shift_recip_inverse) +
       ").subs(sympy.Symbol('bp'), bp) - ((sympy.sqrt(sympy.Symbol('x') + bp**2) + bp)**sympy.Symbol('a')/sympy.sqrt(sympy.Symbol('x') + bp**2)))))(sympy.Symbol('bp', positive=True))",
@@ -1822,7 +1822,7 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(e1_inverse) +
       ") - sympy.E1(sympy.Symbol('x'))))",
@@ -1836,7 +1836,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(expint2_inverse) +
       ") - sympy.expint(2, sympy.Symbol('x'))))",
@@ -1861,7 +1861,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(si_inverse) +
       ") - sympy.Si(sympy.Symbol('x'))))",
@@ -1880,7 +1880,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ci_sqrt_inverse) +
       ") - sympy.Ci(sympy.sqrt(sympy.Symbol('x')))))",
@@ -1896,7 +1896,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(erf_sqrt_inverse) +
       ") - sympy.erf(sympy.sqrt(sympy.Symbol('x')))))",
@@ -1910,7 +1910,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(log_left_inverse) +
       ") - (sympy.log(sympy.Symbol('x'))**4*sympy.Heaviside(1 - sympy.Symbol('x')))))",
@@ -1924,7 +1924,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(log_right_inverse) +
       ") - (sympy.log(sympy.Symbol('x'))**3*sympy.Heaviside(sympy.Symbol('x') - 1))))",
@@ -1939,7 +1939,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(log_quadratic_inverse) +
       ") - sympy.log(sympy.Symbol('x')**2 + 1)))",
@@ -1954,7 +1954,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sec_inverse) +
       ") - (sympy.sqrt(sympy.Symbol('x'))/(sympy.Symbol('x') + 1))))",
@@ -1969,7 +1969,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(log_piecewise_inverse) +
       ") - ((sympy.log(1 + sympy.Symbol('x'))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(1 + sympy.Symbol('x')**-1)*sympy.Heaviside(sympy.Symbol('x') - 1)))))",
@@ -1987,7 +1987,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sqrt_piecewise_inverse) +
       ") - ((sympy.log(1 + sympy.sqrt(sympy.Symbol('x')))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(1 + sympy.sqrt(sympy.Symbol('x'))**-1)*sympy.Heaviside(sympy.Symbol('x') - 1)))))",
@@ -2003,7 +2003,7 @@ test "symintegrals parity Mellin forward and inverse" {
   ).unwrap()
   let tan_piecewise_target = "((sympy.log(1 - sympy.Symbol('x'))*sympy.Heaviside(1 - sympy.Symbol('x'))) + (sympy.log(sympy.Symbol('x') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1)))"
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(tan_piecewise_inverse) +
       ") - " +
@@ -2021,7 +2021,7 @@ test "symintegrals parity Mellin forward and inverse" {
     x,
   ).unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cot_piecewise_inverse) +
       ") - " +
@@ -2041,7 +2041,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_inverse = besselj_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_inverse) +
       ") - sympy.besselj(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
@@ -2062,7 +2062,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let bessely_inverse = bessely_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(bessely_inverse) +
       ") - sympy.bessely(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
@@ -2081,7 +2081,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselk_inverse = besselk_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselk_inverse) +
       ") - sympy.besselk(sympy.Symbol('a'), 2*sympy.sqrt(sympy.Symbol('x')))))",
@@ -2106,7 +2106,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let sin_besselj_inverse = sin_besselj_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sin_besselj_inverse) +
       ") - sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2131,7 +2131,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let cos_besselj_inverse = cos_besselj_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cos_besselj_inverse) +
       ") - sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2157,7 +2157,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let sin_bessely_inverse = sin_bessely_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sin_bessely_inverse) +
       ") - sympy.sin(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2183,7 +2183,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let cos_bessely_inverse = cos_bessely_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cos_bessely_inverse) +
       ") - sympy.cos(sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2207,7 +2207,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_sq_inverse = besselj_sq_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_sq_inverse) +
       ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))**2))",
@@ -2231,7 +2231,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_pm_inverse = besselj_pm_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_pm_inverse) +
       ") - sympy.besselj(-sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2254,7 +2254,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_ab_inverse = besselj_ab_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_ab_inverse) +
       ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2282,7 +2282,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_bessely_inverse = besselj_bessely_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_bessely_inverse) +
       ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2309,7 +2309,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let besselj_bessely_same_inverse = besselj_bessely_same_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(besselj_bessely_same_inverse) +
       ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.bessely(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
@@ -2331,7 +2331,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let exp_subst_inverse = exp_subst_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(exp_subst_inverse) +
       ") - sympy.exp(-sympy.Symbol('b')*sympy.Symbol('x')**sympy.Symbol('a'))))",
@@ -2354,7 +2354,7 @@ test "symintegrals parity Mellin forward and inverse" {
   }
   let xpow_exp_subst_inverse = xpow_exp_subst_inverse_opt.unwrap()
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(xpow_exp_subst_inverse) +
       ") - (sympy.Symbol('x')**sympy.Symbol('a')*sympy.exp(-sympy.Symbol('x')**sympy.Symbol('b')))))",
@@ -2372,17 +2372,17 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   let a = @symcore.symbol("a")
   let m = @symcore.symbol("m")
   let nu = @symcore.symbol("nu")
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = @symcore.rational_from_ints(1, 2)
 
   let ours_laplace = laplace_transform_eval(
     @symelem.exp(@symcore.int(2) * x),
     x,
     s,
   )
-  let ours_laplace_txt = try! @sympy_integrals.integrals_eval_str(
+  let ours_laplace_txt = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(" + py_expr(ours_laplace) + ")",
   )
-  let sympy_laplace_txt = try! @sympy_integrals.integrals_eval_str(
+  let sympy_laplace_txt = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.laplace_transform(sympy.exp(2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')))",
   )
   assert_eq(ours_laplace_txt, sympy_laplace_txt)
@@ -2392,17 +2392,17 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     x,
     s,
   )
-  let ours_mellin_txt = try! @sympy_integrals.integrals_eval_str(
+  let ours_mellin_txt = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(" + py_expr(ours_mellin) + ")",
   )
-  let sympy_mellin_txt = try! @sympy_integrals.integrals_eval_str(
+  let sympy_mellin_txt = @sympy_integrals.integrals_eval_str(
     "sympy.sstr(sympy.mellin_transform(sympy.Symbol('x')*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')))",
   )
   assert_eq(ours_mellin_txt, sympy_mellin_txt)
 
   let ours_sine = sine_transform_eval(@symelem.exp(@symcore.int(-2) * x), x, k)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_sine) +
       ") - sympy.sine_transform(sympy.exp(-2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2413,7 +2413,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_half_power) +
       ") - sympy.sine_transform(1/sympy.sqrt(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2424,7 +2424,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_sine_transform(@symelem.sqrt(k) ^ @symcore.int(-1), k, x),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_sine_half_power) +
       ") - 1/sympy.sqrt(sympy.Symbol('x'))))",
@@ -2435,7 +2435,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     sine_transform(@symelem.sqrt(x) ^ @symcore.int(-1) ^ @symcore.int(3), x, k),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_three_halves) +
       ") - sympy.sine_transform((1/sympy.sqrt(sympy.Symbol('x')))**3, sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2446,7 +2446,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     sine_transform(@symelem.log(x) * (x ^ @symcore.int(-1)), x, k),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_log_over_x) +
       ") - sympy.sine_transform(sympy.log(sympy.Symbol('x'))/sympy.Symbol('x'), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2461,7 +2461,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_gaussian) +
       ") - sympy.sine_transform(sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2470,7 +2470,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let inverse_sine_gaussian = doit(inverse_sine_transform(sine_gaussian, k, x))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_sine_gaussian) +
       ") - sympy.Symbol('x')*sympy.exp(-2*sympy.Symbol('x')**2)))",
@@ -2479,7 +2479,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let sine_power = doit(sine_transform(x ^ (@symcore.int(-1) * a), x, k))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(sine_power) +
       ") - sympy.sine_transform(sympy.Symbol('x')**(-sympy.Symbol('a')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2488,7 +2488,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let inverse_sine_power = doit(inverse_sine_transform(sine_power, k, x))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_sine_power) +
       ") - sympy.Symbol('x')**(-sympy.Symbol('a'))))",
@@ -2501,7 +2501,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     k,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_cosine) +
       ") - sympy.cosine_transform(sympy.exp(-2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2510,7 +2510,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let inv_cosine_linear = doit(inverse_cosine_transform(ours_cosine, k, x))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_linear) +
       ") - sympy.exp(-2*sympy.Symbol('x'))))",
@@ -2521,7 +2521,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     cosine_transform(@symelem.sqrt(x) ^ @symcore.int(-1), x, k),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_half_power) +
       ") - sympy.cosine_transform(1/sympy.sqrt(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2532,7 +2532,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_cosine_transform(@symelem.sqrt(k) ^ @symcore.int(-1), k, x),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_half_power) +
       ") - 1/sympy.sqrt(sympy.Symbol('x'))))",
@@ -2541,7 +2541,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let cosine_power = doit(cosine_transform(x ^ (@symcore.int(-1) * a), x, k))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_power) +
       ") - sympy.cosine_transform(sympy.Symbol('x')**(-sympy.Symbol('a')), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2550,7 +2550,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
   )
   let inverse_cosine_power = doit(inverse_cosine_transform(cosine_power, k, x))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_cosine_power) +
       ") - sympy.Symbol('x')**(-sympy.Symbol('a'))))",
@@ -2565,7 +2565,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_recip_quadratic) +
       ") - sympy.cosine_transform(1/(sympy.Symbol('x')**2 + 4), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2576,7 +2576,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_cosine_transform(cosine_recip_quadratic, k, x),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_recip_quadratic) +
       ") - 1/(sympy.Symbol('x')**2 + 4)))",
@@ -2587,7 +2587,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     cosine_transform((x + @symcore.int(2)) ^ @symcore.int(-1), x, k),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_shifted_recip) +
       ") - sympy.cosine_transform(1/(sympy.Symbol('x') + 2), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2610,7 +2610,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_cosine_shifted_recip) +
       ") - 1/(sympy.Symbol('x') + 2)))",
@@ -2625,7 +2625,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_sqrt_recip) +
       ") - sympy.cosine_transform(1/sympy.sqrt(sympy.Symbol('x')**2 + 4), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2651,7 +2651,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inverse_cosine_sqrt_recip) +
       ") - 1/(sympy.Symbol('x')*sympy.sqrt(4/sympy.Symbol('x')**2 + 1))))",
@@ -2667,7 +2667,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_sqrt_decay) +
       ") - sympy.cosine_transform(sympy.exp(-2*sympy.sqrt(sympy.Symbol('x')))*sympy.cos(2*sympy.sqrt(sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2681,7 +2681,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     @symcore.int(1),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_hankel) +
       ") - sympy.hankel_transform(sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), 1)))",
@@ -2692,7 +2692,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(ours_hankel, k, r, @symcore.int(1)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_linear) +
       ") - sympy.Symbol('r')*sympy.exp(-2*sympy.Symbol('r'))))",
@@ -2703,7 +2703,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     hankel_transform(r ^ @symcore.int(-1), r, k, @symcore.int(0)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(hankel_recip) +
       ") - sympy.hankel_transform(1/sympy.Symbol('r'), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
@@ -2714,7 +2714,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(k ^ @symcore.int(-1), k, r, @symcore.int(0)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_recip) +
       ") - 1/sympy.Symbol('r'))) ",
@@ -2725,7 +2725,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     hankel_transform(r ^ (@symcore.int(-1) * m), r, k, @symcore.int(0)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(hankel_power_zero) +
       ") - sympy.hankel_transform(sympy.Symbol('r')**(-sympy.Symbol('m')), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
@@ -2736,7 +2736,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(hankel_power_zero, k, r, @symcore.int(0)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_power_zero) +
       ") - sympy.Symbol('r')**(-sympy.Symbol('m'))))",
@@ -2747,7 +2747,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     hankel_transform(r ^ (@symcore.int(-1) * m), r, k, nu),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(hankel_power_generic) +
       ") - sympy.hankel_transform(sympy.Symbol('r')**(-sympy.Symbol('m')), sympy.Symbol('r'), sympy.Symbol('k'), sympy.Symbol('nu'))))",
@@ -2758,7 +2758,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(hankel_power_generic, k, r, nu),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_power_generic) +
       ") - sympy.Symbol('r')**(-sympy.Symbol('m'))))",
@@ -2774,7 +2774,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(hankel_exp_generic) +
       ") - sympy.hankel_transform(sympy.Symbol('r')**sympy.Symbol('nu')*sympy.exp(-sympy.Symbol('a')*sympy.Symbol('r')), sympy.Symbol('r'), sympy.Symbol('k'), sympy.Symbol('nu'))))",
@@ -2785,7 +2785,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(hankel_exp_generic, k, r, nu),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_exp_generic) +
       ") - (sympy.Symbol('r')**sympy.Symbol('nu')*sympy.exp(-sympy.Symbol('a')*sympy.Symbol('r')))))",
@@ -2801,7 +2801,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(cosine_gaussian) +
       ") - sympy.cosine_transform(sympy.exp(-2*sympy.Symbol('x')**2), sympy.Symbol('x'), sympy.Symbol('k'))))",
@@ -2812,7 +2812,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_cosine_transform(cosine_gaussian, k, x),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_cosine_gaussian) +
       ") - sympy.exp(-2*sympy.Symbol('x')**2)))",
@@ -2829,7 +2829,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(hankel_gaussian) +
       ") - sympy.hankel_transform(sympy.exp(-2*sympy.Symbol('r')**2), sympy.Symbol('r'), sympy.Symbol('k'), 0)))",
@@ -2840,7 +2840,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
     inverse_hankel_transform(hankel_gaussian, k, r, @symcore.int(0)),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(inv_hankel_gaussian) +
       ") - sympy.exp(-2*sympy.Symbol('r')**2)))",
@@ -2864,10 +2864,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(delta_eval) + ")",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
   )
@@ -2878,10 +2878,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(heaviside_eval) + ")",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform(sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
   )
@@ -2892,10 +2892,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(shifted_poly_eval) + ")",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform((sympy.Symbol('x') - 2)*sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
   )
@@ -2906,10 +2906,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(deriv1_eval) + ")",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
   )
@@ -2919,32 +2919,32 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     x,
     s,
   )
-  let neg_half = try! @symcore.rational_from_ints(-1, 2)
+  let neg_half = @symcore.rational_from_ints(-1, 2)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(deriv2_eval) + ")",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), (x, 2)), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
   )
 
   let generic_eval = laplace_transform_eval(f_of_x, x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(generic_eval) + ")",
     ),
   )
 
   let scaled_generic_eval = laplace_transform_eval(a * f_of_x, x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Symbol('a')*sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(scaled_generic_eval) + ")",
     ),
   )
@@ -2955,20 +2955,20 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s')), -sympy.re(sympy.Symbol('a')) - sympy.oo, True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(shifted_generic_eval) + ")",
     ),
   )
 
   let x_generic_eval = laplace_transform_eval(x * f_of_x, x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(-sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), sympy.Symbol('s')), -sympy.oo, True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(x_generic_eval) + ")",
     ),
   )
@@ -2979,10 +2979,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.Symbol('a')*sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), (sympy.Symbol('s'), 2)) - sympy.Symbol('b')*sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), sympy.Symbol('s')) + sympy.Symbol('c')*sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), -sympy.oo, True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(poly_generic_eval) + ")",
     ),
   )
@@ -2993,10 +2993,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.Symbol('a') + sympy.Symbol('s'))/2 - sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.re(sympy.Symbol('a')) - sympy.oo, sympy.re(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(sinh_generic_eval) + ")",
     ),
   )
@@ -3007,10 +3007,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.Symbol('a') + sympy.Symbol('s'))/2 + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.re(sympy.Symbol('a')) - sympy.oo, sympy.re(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(cosh_generic_eval) + ")",
     ),
   )
@@ -3021,10 +3021,10 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.I*(-sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.I*sympy.Symbol('a') + sympy.Symbol('s')) + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.I*sympy.Symbol('a') + sympy.Symbol('s')))/2, sympy.Max(-sympy.im(sympy.Symbol('a')) - sympy.oo, sympy.im(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(sin_generic_eval) + ")",
     ),
   )
@@ -3035,17 +3035,17 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.I*sympy.Symbol('a') + sympy.Symbol('s'))/2 + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.I*sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.im(sympy.Symbol('a')) - sympy.oo, sympy.im(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(" + py_expr(cos_generic_eval) + ")",
     ),
   )
 
   let ci_laplace = doit(laplace_transform(@symspec.ci(x), x, s))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ci_laplace) +
       ") - sympy.laplace_transform(sympy.Ci(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3056,7 +3056,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let si_laplace = doit(laplace_transform(@symspec.si(x), x, s))
   for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
     assert_eq(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.Abs(sympy.N(((" +
         py_expr(si_laplace) +
         ").subs(sympy.Symbol('s'), " +
@@ -3072,7 +3072,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let shi_laplace = laplace_transform_eval(@symspec.shi(x), x, s)
   for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
     assert_eq(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.Abs(sympy.N(((" +
         py_expr(shi_laplace) +
         ")[0]).subs(sympy.Symbol('s'), " +
@@ -3085,13 +3085,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(shi_laplace) + ")[1])",
     ),
     "-oo",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(shi_laplace) + ")[2])",
     ),
     "s**2 > 1",
@@ -3100,7 +3100,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let chi_laplace = laplace_transform_eval(@symspec.chi(x), x, s)
   for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
     assert_eq(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.Abs(sympy.N(((" +
         py_expr(chi_laplace) +
         ")[0]).subs(sympy.Symbol('s'), " +
@@ -3113,13 +3113,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(chi_laplace) + ")[1])",
     ),
     "-oo",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(chi_laplace) + ")[2])",
     ),
     "s**2 > 1",
@@ -3127,7 +3127,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
 
   let e1_laplace = doit(laplace_transform(@symspec.e1(x), x, s))
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(e1_laplace) +
       ") - sympy.laplace_transform(sympy.E1(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3139,7 +3139,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     laplace_transform(@symspec.expint(@symcore.int(2), x), x, s),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(expint2_laplace) +
       ") - sympy.laplace_transform(sympy.expint(2, sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3148,7 +3148,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   )
   let expinta_laplace = laplace_transform_eval(@symspec.expint(a, x), x, s)
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(expinta_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.expint(sympy.Symbol('a'), sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), simplify=True, noconds=True)))",
@@ -3156,13 +3156,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(expinta_laplace) + ")[1])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(expinta_laplace) + ")[2])",
     ),
     "re(a) > 0",
@@ -3174,7 +3174,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(erf_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.erf(2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3182,13 +3182,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(erf_laplace) + ")[1])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(erf_laplace) + ")[2])",
     ),
     "True",
@@ -3200,7 +3200,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besselj0_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.besselj(0, 2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3213,7 +3213,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(xbesselj0_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.Symbol('x')*sympy.besselj(0, 2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3227,7 +3227,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(besseli0_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.besseli(0, 2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3235,7 +3235,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(besseli0_laplace) + ")[1])",
     ),
     "2",
@@ -3246,7 +3246,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify(((" +
       py_expr(xbesseli0_laplace) +
       ")[0]) - sympy.laplace_transform(sympy.Symbol('x')*sympy.besseli(0, 2*sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'), noconds=True)))",
@@ -3254,7 +3254,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(xbesseli0_laplace) + ")[1])",
     ),
     "2",
@@ -3263,7 +3263,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let fresnels_laplace = laplace_transform_eval(@symspec.fresnels(x), x, s)
   for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
     assert_eq(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.Abs(sympy.N(((" +
         py_expr(fresnels_laplace) +
         ")[0]).subs(sympy.Symbol('s'), " +
@@ -3276,13 +3276,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(fresnels_laplace) + ")[1])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(fresnels_laplace) + ")[2])",
     ),
     "True",
@@ -3290,7 +3290,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let fresnelc_laplace = laplace_transform_eval(@symspec.fresnelc(x), x, s)
   for sample in ["sympy.Integer(2)", "sympy.Integer(3)"] {
     assert_eq(
-      try! @sympy_integrals.integrals_eval_str(
+      @sympy_integrals.integrals_eval_str(
         "sympy.sstr(sympy.Abs(sympy.N(((" +
         py_expr(fresnelc_laplace) +
         ")[0]).subs(sympy.Symbol('s'), " +
@@ -3303,13 +3303,13 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(fresnelc_laplace) + ")[1])",
     ),
     "0",
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr((" + py_expr(fresnelc_laplace) + ")[2])",
     ),
     "True",
@@ -3325,7 +3325,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ci_inverse) +
       ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.Ci(sympy.Symbol('x')))))",
@@ -3341,7 +3341,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(e1_inverse) +
       ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.E1(sympy.Symbol('x')))))",
@@ -3357,7 +3357,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(expint2_inverse) +
       ") - (sympy.Heaviside(sympy.Symbol('x'))*sympy.expint(2, sympy.Symbol('x')))))",
@@ -3374,7 +3374,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(delayed_inverse) +
       ") - sympy.inverse_laplace_transform(sympy.exp(-2*sympy.Symbol('s'))/(sympy.Symbol('s') + 1)**2, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
@@ -3390,7 +3390,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(linear_power_inverse) +
       ") - sympy.inverse_laplace_transform((2*sympy.Symbol('s') + 4)**-3, sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
@@ -3407,7 +3407,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(shifted_quad_inverse) +
       ") - sympy.inverse_laplace_transform(1/((sympy.Symbol('s') + 1)**2 + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
@@ -3427,7 +3427,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     ),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(shifted_quad_num_inverse) +
       ") - sympy.inverse_laplace_transform((sympy.Symbol('s') + 1)/((sympy.Symbol('s') + 1)**2 + 4), sympy.Symbol('s'), sympy.Symbol('x'), noconds=True)))",
@@ -3441,7 +3441,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     inverse_laplace_transform(laplace_transform(f_t, t, s), s, x),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ilt_roundtrip) +
       ") - (sympy.Function('f')(sympy.Symbol('x'))*sympy.Heaviside(sympy.Symbol('x')))))",
@@ -3452,7 +3452,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     inverse_laplace_transform(laplace_transform(f_t, t, s), x, t),
   )
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ilt_wrong) +
       ") - (sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('t')), sympy.Symbol('t'), sympy.Symbol('s'))*sympy.DiracDelta(sympy.Symbol('t')))))",
@@ -3466,20 +3466,20 @@ test "symintegrals parity intpoly square moments" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let square = unit_square_polygon()
-  let ours_xy = try! polytope_integrate(square, x * y, vars=[x, y])
+  let ours_xy = polytope_integrate(square, x * y, vars=[x, y])
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_xy) +
       ") - (__import__('sympy.integrals.intpoly', fromlist=['polytope_integrate']).polytope_integrate(sympy.Polygon(sympy.Point(0, 0), sympy.Point(0, 1), sympy.Point(1, 1), sympy.Point(1, 0)), sympy.Symbol('x')*sympy.Symbol('y')))))",
     ),
     "0",
   )
-  let ours_x2y = try! polytope_integrate(square, (x ^ @symcore.int(2)) * y, vars=[
+  let ours_x2y = polytope_integrate(square, (x ^ @symcore.int(2)) * y, vars=[
     x, y,
   ])
   assert_eq(
-    try! @sympy_integrals.integrals_eval_str(
+    @sympy_integrals.integrals_eval_str(
       "sympy.sstr(sympy.simplify((" +
       py_expr(ours_x2y) +
       ") - (__import__('sympy.integrals.intpoly', fromlist=['polytope_integrate']).polytope_integrate(sympy.Polygon(sympy.Point(0, 0), sympy.Point(0, 1), sympy.Point(1, 1), sympy.Point(1, 0)), sympy.Symbol('x')**2*sympy.Symbol('y')))))",

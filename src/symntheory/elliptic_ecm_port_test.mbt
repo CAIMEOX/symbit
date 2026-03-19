@@ -32,15 +32,15 @@ test "ntheory elliptic curve points parity" {
     a3=bi_ec(1),
     modulus=bi_ec(5),
   )
-  let pts = try! curve.points()
+  let pts = curve.points()
   assert_eq(
     pair_list_to_pylist(pts),
-    try! @sympy_nt.elliptic_curve_points_str(1, 1, a1=1, a2=1, a3=1, modulus=5),
+    @sympy_nt.elliptic_curve_points_str(1, 1, a1=1, a2=1, a3=1, modulus=5),
   )
 }
 
 ///|
 test "ntheory ecm parity" {
   let f1 = ecm(bi_ec(91))
-  assert_eq(bigint_list_to_pylist(f1), try! @sympy_nt.ecm_factors_str(91))
+  assert_eq(bigint_list_to_pylist(f1), @sympy_nt.ecm_factors_str(91))
 }

@@ -1,10 +1,10 @@
 ///|
 test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
-  let zero = (try! qubit("0")).as_expr()
-  let one = (try! qubit("1")).as_expr()
-  let zero_bra = (try! qubit_bra("0")).as_expr()
-  let one_bra = (try! qubit_bra("1")).as_expr()
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let zero = qubit("0").as_expr()
+  let one = qubit("1").as_expr()
+  let zero_bra = qubit_bra("0").as_expr()
+  let one_bra = qubit_bra("1").as_expr()
+  let half = @symcore.rational_from_ints(1, 2)
   let n = @symcore.symbol("n")
 
   let tensor_mul = @symcore.raw_mul([
@@ -57,7 +57,7 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
     content="Sum(Qubit(1), Tuple(n, 0, 2))",
   )
 
-  try! quantum_test_assert_string_equal(
+  quantum_test_assert_string_equal(
     @symprint.to_string(
       qapply(@symcore.raw_mul([zero_bra, x_gate(0).as_expr()]), dagger=true),
     ),
@@ -69,26 +69,26 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
 ///|
 test "physics.quantum.qapply: spin ladders and (anti)commutator action" {
   let one = @symcore.int(1)
-  let zero_state = (try! qubit("0")).as_expr()
+  let zero_state = qubit("0").as_expr()
   let z = jz_ket(one, @symcore.int(0)).as_expr()
   let po = jz_ket(one, one).as_expr()
 
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jx(), z])),
     "sqrt(2)/2*hbar*JzKet(1, 1) + sqrt(2)/2*hbar*JzKet(1, -1)",
     "Jx action on JzKet(1, 0)",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([jminus(), jminus(), po])),
     "2*hbar**2*JzKet(1, -1)",
     "double lowering",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([commutator(jx(), jy(), evaluate=false), jz(), po])),
     "I*hbar**3*JzKet(1, 1)",
     "commutator action",
   )
-  try! quantum_test_assert_expr_equal(
+  quantum_test_assert_expr_equal(
     qapply(
       @symcore.raw_mul([
         anticommutator(x_gate(0).as_expr(), z_gate(0).as_expr(), evaluate=false),

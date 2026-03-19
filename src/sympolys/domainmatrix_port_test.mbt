@@ -218,7 +218,7 @@ fn dm_to_int_rows(dm : DomainMatrix) -> Array[Array[Int]] raise PolyError {
 test "domainmatrix: add/matmul/scalarmul parity over QQ" {
   let a = domain_matrix_from_ints([[1, 2], [3, 4]], Domain::QQ)
   let b = domain_matrix_from_ints([[5, 6], [7, 8]], Domain::QQ)
-  let two = try! fe_from_int(2, Domain::QQ)
+  let two = fe_from_int(2, Domain::QQ)
 
   let ours_add = a.add(b).to_matrix_string()
   let ours_matmul = a.matmul(b).to_matrix_string()
@@ -572,7 +572,7 @@ test "domainmatrix: structural helper parity" {
     )
   }
 
-  let two_zz = try! fe_from_int(2, Domain::ZZ)
+  let two_zz = fe_from_int(2, Domain::ZZ)
   let applied = diag_case.applyfunc(fn(value : FieldElem) raise PolyError {
     fe_mul(value, two_zz)
   })
@@ -627,7 +627,7 @@ test "domainmatrix: structural helper parity" {
   let lattice = domain_matrix_from_ints(lattice_rows, Domain::ZZ)
   let reduced = lattice.lll()
   let hnf_orig = @sympy_polys.matrix_hnf_code(lattice_rows)
-  let hnf_reduced = @sympy_polys.matrix_hnf_code(try! dm_to_int_rows(reduced))
+  let hnf_reduced = @sympy_polys.matrix_hnf_code(dm_to_int_rows(reduced))
   guard hnf_orig == hnf_reduced else {
     fail("domainmatrix lll lattice mismatch")
   }
@@ -637,7 +637,7 @@ test "domainmatrix: structural helper parity" {
     fail("domainmatrix lll_transform reconstruction mismatch")
   }
   let hnf_transformed = @sympy_polys.matrix_hnf_code(
-    try! dm_to_int_rows(lll_transform.0),
+    dm_to_int_rows(lll_transform.0),
   )
   guard hnf_orig == hnf_transformed else {
     fail("domainmatrix lll_transform lattice mismatch")
@@ -648,19 +648,19 @@ test "domainmatrix: structural helper parity" {
 test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
   let rows = [
     [
-      try! fe_from_int(1, Domain::ZZ),
-      try! fe_from_int(2, Domain::ZZ),
-      try! fe_from_int(3, Domain::ZZ),
+      fe_from_int(1, Domain::ZZ),
+      fe_from_int(2, Domain::ZZ),
+      fe_from_int(3, Domain::ZZ),
     ],
     [
-      try! fe_from_int(4, Domain::ZZ),
-      try! fe_from_int(5, Domain::ZZ),
-      try! fe_from_int(6, Domain::ZZ),
+      fe_from_int(4, Domain::ZZ),
+      fe_from_int(5, Domain::ZZ),
+      fe_from_int(6, Domain::ZZ),
     ],
     [
-      try! fe_from_int(7, Domain::ZZ),
-      try! fe_from_int(8, Domain::ZZ),
-      try! fe_from_int(9, Domain::ZZ),
+      fe_from_int(7, Domain::ZZ),
+      fe_from_int(8, Domain::ZZ),
+      fe_from_int(9, Domain::ZZ),
     ],
   ]
   let a = DomainMatrix::from_list(rows, Domain::ZZ)
@@ -683,7 +683,7 @@ test "domainmatrix: constructor, accessors, slicing, and unify_eq" {
     "Matrix([[7, 8, 9], [4, 5, 6], [1, 2, 3]])" else {
     fail("domainmatrix reverse slice mismatch: \{reversed.to_matrix_string()}")
   }
-  let updated = a.setitem(-1, -1, try! fe_from_int(10, Domain::ZZ))
+  let updated = a.setitem(-1, -1, fe_from_int(10, Domain::ZZ))
   guard updated.getitem(-1, -1).to_string() == "10" else {
     fail("domainmatrix setitem mismatch")
   }
@@ -852,15 +852,11 @@ test "domainmatrix: truediv parity and scalar fast paths" {
     )
   }
 
-  guard dm_trim(
-      dm_summary(sparse_zz._scalarmul(try! fe_from_int(1, Domain::ZZ))),
-    ) ==
+  guard dm_trim(dm_summary(sparse_zz._scalarmul(fe_from_int(1, Domain::ZZ)))) ==
     dm_trim(dm_summary(sparse_zz)) else {
     fail("domainmatrix _scalarmul(1) should return an unchanged copy")
   }
-  guard dm_trim(
-      dm_summary(sparse_zz._scalarmul(try! fe_from_int(0, Domain::ZZ))),
-    ) ==
+  guard dm_trim(dm_summary(sparse_zz._scalarmul(fe_from_int(0, Domain::ZZ)))) ==
     dm_trim("Matrix([[0, 0], [0, 0]])@ZZ|sparse") else {
     fail("domainmatrix _scalarmul(0) should preserve sparse zero format")
   }
@@ -873,7 +869,7 @@ test "domainmatrix: truediv parity and scalar fast paths" {
 ///|
 test "domainmatrix: sympy-style constructor and conversion parity" {
   let expr_rows : MatrixExpr = [
-    [try! @symcore.rational_from_ints(1, 2), @symcore.int(2)],
+    [@symcore.rational_from_ints(1, 2), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ]
   let ours_from_list = DomainMatrix::from_list_sympy(2, 2, expr_rows)
@@ -974,7 +970,7 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
 
   let zz_rows = [["4", "6"]]
   let zz = domain_matrix_from_ints([[4, 6]], Domain::ZZ)
-  let ours_cancel = zz.cancel_denom(try! fe_from_int(12, Domain::ZZ))
+  let ours_cancel = zz.cancel_denom(fe_from_int(12, Domain::ZZ))
   let ours_cancel_text = "\{ours_cancel.0.to_matrix_string()}||\{fe_to_string(ours_cancel.1)}"
   let oracle_cancel = @sympy_polys.domainmatrix_cancel_denom_expr(
     zz_rows, "12", "ZZ",
@@ -985,9 +981,7 @@ test "domainmatrix: content primitive cancel and charpoly-solve parity" {
     )
   }
 
-  let ours_cancel_elt = zz.cancel_denom_elementwise(
-    try! fe_from_int(12, Domain::ZZ),
-  )
+  let ours_cancel_elt = zz.cancel_denom_elementwise(fe_from_int(12, Domain::ZZ))
   let ours_cancel_elt_text = "\{ours_cancel_elt.0.to_matrix_string()}||\{ours_cancel_elt.1.to_matrix_string()}"
   let oracle_cancel_elt = @sympy_polys.domainmatrix_cancel_denom_elementwise_expr(
     zz_rows, "12", "ZZ",
@@ -1127,7 +1121,7 @@ test "domainmatrix: smith normal form parity over ZZ" {
     fail("domainmatrix smith_normal_form should satisfy smith predicate")
   }
   guard @sympy_polys.domainmatrix_is_smith_normal_form(
-    try! dm_to_int_rows(smf),
+    dm_to_int_rows(smf),
     "ZZ",
   ) else {
     fail("oracle smith predicate should accept smith normal form")

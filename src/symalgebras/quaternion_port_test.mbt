@@ -63,20 +63,10 @@ fn matrix_flat_str(m : Matrix) -> Array[String] {
 
 ///|
 test "quaternion: add/mul parity" {
-  let q1 = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(3),
-    expr_int(4),
-  )
-  let q2 = try! Quaternion::new(
-    expr_int(5),
-    expr_int(6),
-    expr_int(7),
-    expr_int(8),
-  )
+  let q1 = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
+  let q2 = Quaternion::new(expr_int(5), expr_int(6), expr_int(7), expr_int(8))
   let add = q1.add(q2)
-  let add_oracle = try! @sympy_algebras.quat_add(
+  let add_oracle = @sympy_algebras.quat_add(
     q1.a(),
     q1.b(),
     q1.c(),
@@ -86,9 +76,9 @@ test "quaternion: add/mul parity" {
     q2.c(),
     q2.d(),
   )
-  try! assert_quat_components(add, add_oracle)
+  assert_quat_components(add, add_oracle)
   let mul = q1.mul(q2)
-  let mul_oracle = try! @sympy_algebras.quat_mul(
+  let mul_oracle = @sympy_algebras.quat_mul(
     q1.a(),
     q1.b(),
     q1.c(),
@@ -98,19 +88,14 @@ test "quaternion: add/mul parity" {
     q2.c(),
     q2.d(),
   )
-  try! assert_quat_components(mul, mul_oracle)
+  assert_quat_components(mul, mul_oracle)
 }
 
 ///|
 test "quaternion: scalar add/mul parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(3),
-    expr_int(4),
-  )
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
   let add = q.add_scalar(expr_int(5))
-  let add_oracle = try! @sympy_algebras.quat_add(
+  let add_oracle = @sympy_algebras.quat_add(
     q.a(),
     q.b(),
     q.c(),
@@ -120,9 +105,9 @@ test "quaternion: scalar add/mul parity" {
     expr_zero(),
     expr_zero(),
   )
-  try! assert_quat_components(add, add_oracle)
+  assert_quat_components(add, add_oracle)
   let mul = q.mul_scalar(expr_int(2))
-  let mul_oracle = try! @sympy_algebras.quat_mul(
+  let mul_oracle = @sympy_algebras.quat_mul(
     q.a(),
     q.b(),
     q.c(),
@@ -132,37 +117,22 @@ test "quaternion: scalar add/mul parity" {
     expr_zero(),
     expr_zero(),
   )
-  try! assert_quat_components(mul, mul_oracle)
+  assert_quat_components(mul, mul_oracle)
 }
 
 ///|
 test "quaternion: conjugate parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(3),
-    expr_int(4),
-  )
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
   let conj = q.conjugate()
-  let conj_oracle = try! @sympy_algebras.quat_conjugate(
-    q.a(),
-    q.b(),
-    q.c(),
-    q.d(),
-  )
-  try! assert_quat_components(conj, conj_oracle)
+  let conj_oracle = @sympy_algebras.quat_conjugate(q.a(), q.b(), q.c(), q.d())
+  assert_quat_components(conj, conj_oracle)
 }
 
 ///|
 test "quaternion: norm parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(3),
-    expr_int(4),
-  )
-  let norm_oracle = try! @sympy_algebras.quat_norm(q.a(), q.b(), q.c(), q.d())
-  guard (try! expr_equal_expr(q.norm(), norm_oracle)) else {
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
+  let norm_oracle = @sympy_algebras.quat_norm(q.a(), q.b(), q.c(), q.d())
+  guard expr_equal_expr(q.norm(), norm_oracle) else {
     fail(
       "norm mismatch: ours=\{@symprint.to_string(q.norm())}, oracle=\{norm_oracle}",
     )
@@ -171,54 +141,34 @@ test "quaternion: norm parity" {
 
 ///|
 test "quaternion: inverse parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(3),
-    expr_int(4),
-  )
-  let inv = try! q.inverse()
-  let inv_oracle = try! @sympy_algebras.quat_inverse(q.a(), q.b(), q.c(), q.d())
-  try! assert_quat_components(inv, inv_oracle)
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(3), expr_int(4))
+  let inv = q.inverse()
+  let inv_oracle = @sympy_algebras.quat_inverse(q.a(), q.b(), q.c(), q.d())
+  assert_quat_components(inv, inv_oracle)
 }
 
 ///|
 test "quaternion: pow parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(0),
-    expr_int(0),
-  )
-  let pow = try! q.pow(2)
-  let pow_oracle = try! @sympy_algebras.quat_pow(q.a(), q.b(), q.c(), q.d(), 2)
-  try! assert_quat_components(pow, pow_oracle)
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(0), expr_int(0))
+  let pow = q.pow(2)
+  let pow_oracle = @sympy_algebras.quat_pow(q.a(), q.b(), q.c(), q.d(), 2)
+  assert_quat_components(pow, pow_oracle)
 }
 
 ///|
 test "quaternion: exp parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(0),
-    expr_int(0),
-  )
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(0), expr_int(0))
   let expq = q.exp()
-  let exp_oracle = try! @sympy_algebras.quat_exp(q.a(), q.b(), q.c(), q.d())
-  try! assert_quat_components(expq, exp_oracle)
+  let exp_oracle = @sympy_algebras.quat_exp(q.a(), q.b(), q.c(), q.d())
+  assert_quat_components(expq, exp_oracle)
 }
 
 ///|
 test "quaternion: log parity" {
-  let q = try! Quaternion::new(
-    expr_int(1),
-    expr_int(2),
-    expr_int(0),
-    expr_int(0),
-  )
-  let logq = try! q.log()
-  let log_oracle = try! @sympy_algebras.quat_log(q.a(), q.b(), q.c(), q.d())
-  try! assert_quat_components(logq, log_oracle)
+  let q = Quaternion::new(expr_int(1), expr_int(2), expr_int(0), expr_int(0))
+  let logq = q.log()
+  let log_oracle = @sympy_algebras.quat_log(q.a(), q.b(), q.c(), q.d())
+  assert_quat_components(logq, log_oracle)
 }
 
 ///|
@@ -238,9 +188,9 @@ test "quaternion: axis-angle parity" {
     Ok(v) => v
     Err(e) => fail("quat_from_axis_angle error: \{e}")
   }
-  try! assert_quat_components(q, oracle)
-  let axis_angle = try! q.to_axis_angle()
-  let oracle_axis = try! @sympy_algebras.quat_to_axis_angle(
+  assert_quat_components(q, oracle)
+  let axis_angle = q.to_axis_angle()
+  let oracle_axis = @sympy_algebras.quat_to_axis_angle(
     q.a(),
     q.b(),
     q.c(),
@@ -269,7 +219,7 @@ test "quaternion: rotation matrix parity" {
     angle,
   )
   let mat = q.to_rotation_matrix()
-  let oracle = try! @sympy_algebras.quat_to_rotation_matrix(
+  let oracle = @sympy_algebras.quat_to_rotation_matrix(
     q.a(),
     q.b(),
     q.c(),
@@ -278,7 +228,7 @@ test "quaternion: rotation matrix parity" {
   let ours = matrix_flat_str(mat)
   guard ours.length() == oracle.length() else { fail("matrix size mismatch") }
   for i in 0..<ours.length() {
-    guard (try! @sympy_algebras.expr_equal(ours[i], oracle[i])) else {
+    guard @sympy_algebras.expr_equal(ours[i], oracle[i]) else {
       fail("matrix mismatch at \{i}: ours=\{ours[i]} oracle=\{oracle[i]}")
     }
   }

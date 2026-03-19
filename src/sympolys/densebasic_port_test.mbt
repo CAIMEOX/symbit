@@ -1166,7 +1166,7 @@ test "densebasic: dup_random range/degree" {
   let f0 = dup_random(0, -10, 10, Domain::ZZ)
   inspect(dup_degree(f0), content="0")
   for c in f0 {
-    let r = try! fe_expect_rational(c)
+    let r = fe_expect_rational(c)
     guard r.compare(br_int(-10)) >= 0 && r.compare(br_int(10)) <= 0 else {
       fail("dup_random bounds")
     }

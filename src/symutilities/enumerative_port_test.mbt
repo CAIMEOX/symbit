@@ -18,7 +18,7 @@ test "enumerative taocp parity" {
   let ours = string_tensor3_json(
     states_to_string_partitions(multiset_partitions_taocp(mult), components),
   )
-  let oracle = try! @sympy_utilities.utilities_eval_str(
+  let oracle = @sympy_utilities.utilities_eval_str(
     enumerative_states_expr(
       "sympy.utilities.enumerative.multiset_partitions_taocp(" +
       int_array_json(mult) +
@@ -38,7 +38,7 @@ test "enumerative constrained parity" {
   let ours_small = string_tensor3_json(
     states_to_string_partitions(traverser.enum_small(mult, 2), components),
   )
-  let oracle_small = try! @sympy_utilities.utilities_eval_str(
+  let oracle_small = @sympy_utilities.utilities_eval_str(
     enumerative_states_expr(
       "sympy.utilities.enumerative.MultisetPartitionTraverser().enum_small(" +
       int_array_json(mult) +
@@ -51,7 +51,7 @@ test "enumerative constrained parity" {
   let ours_range = string_tensor3_json(
     states_to_string_partitions(traverser.enum_range(mult, 1, 2), components),
   )
-  let oracle_range = try! @sympy_utilities.utilities_eval_str(
+  let oracle_range = @sympy_utilities.utilities_eval_str(
     enumerative_states_expr(
       "sympy.utilities.enumerative.MultisetPartitionTraverser().enum_range(" +
       int_array_json(mult) +
@@ -67,7 +67,7 @@ test "enumerative counting parity" {
   let ours = MultisetPartitionTraverser::new()
     .count_partitions([9, 8, 2])
     .to_string()
-  let oracle = try! @sympy_utilities.utilities_eval_str(
+  let oracle = @sympy_utilities.utilities_eval_str(
     "str(sympy.utilities.enumerative.MultisetPartitionTraverser().count_partitions([9, 8, 2]))",
   )
   assert_eq(ours, oracle)

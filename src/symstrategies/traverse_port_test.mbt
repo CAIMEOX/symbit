@@ -29,7 +29,7 @@ test "traverse sall" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.traverse_sall_zero_symbols(expr),
+    @sympy_strategies.traverse_sall_zero_symbols(expr),
     "sall",
   )
 }
@@ -44,7 +44,7 @@ test "traverse top_down" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.traverse_top_down_zero_symbols(expr),
+    @sympy_strategies.traverse_top_down_zero_symbols(expr),
     "top_down",
   )
 }
@@ -59,7 +59,7 @@ test "traverse bottom_up" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.traverse_bottom_up_zero_symbols(expr),
+    @sympy_strategies.traverse_bottom_up_zero_symbols(expr),
     "bottom_up",
   )
 }
@@ -73,7 +73,7 @@ test "traverse top_down_once" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.traverse_top_down_once(expr),
+    @sympy_strategies.traverse_top_down_once(expr),
     "top_down_once",
   )
 }
@@ -87,7 +87,7 @@ test "traverse bottom_up_once" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! @sympy_strategies.traverse_bottom_up_once(expr),
+    @sympy_strategies.traverse_bottom_up_once(expr),
     "bottom_up_once",
   )
 }
@@ -111,7 +111,7 @@ test "traverse expr_fns" {
     fns=@strategies_util.basic_fns,
   )(expr)
   let rebuilt = @strategies_rl.rebuild(b)
-  let oracle = try! @sympy_strategies.traverse_expr_fns(expr)
+  let oracle = @sympy_strategies.traverse_expr_fns(expr)
   assert_expr_str_eq(e, oracle, "expr_fns e")
   assert_expr_str_eq(rebuilt, oracle, "expr_fns rebuild")
 }

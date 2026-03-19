@@ -72,34 +72,34 @@ test "symparse stage-1 comparisons lower to symbolic heads" {
 test "symparse evaluate false preserves flat raw operators" {
   let options = evaluate_false_options()
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("1 + 2 + x", options)),
+    @symprint.debug_repr(parse_expr_with("1 + 2 + x", options)),
     content="(+ 1 2 sym:x)",
   )
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("a*b*c", options)),
+    @symprint.debug_repr(parse_expr_with("a*b*c", options)),
     content="(* sym:a sym:b sym:c)",
   )
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("x/y/z", options)),
+    @symprint.debug_repr(parse_expr_with("x/y/z", options)),
     content="(* sym:x (^ sym:y -1) (^ sym:z -1))",
   )
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("x-y-z", options)),
+    @symprint.debug_repr(parse_expr_with("x-y-z", options)),
     content="(+ sym:x (* -1 sym:y) (* -1 sym:z))",
   )
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("x==x", options)),
+    @symprint.debug_repr(parse_expr_with("x==x", options)),
     content="(call Eq sym:x sym:x)",
   )
   inspect(
-    @symprint.debug_repr(try! parse_expr_with("x<y<z", options)),
+    @symprint.debug_repr(parse_expr_with("x<y<z", options)),
     content="(call Lt sym:x sym:y)",
   )
 }
 
 ///|
 test "symparse lexer exposes typed tokens" {
-  let tokens = try! lex("f(x, 2**y)")
+  let tokens = lex("f(x, 2**y)")
   inspect(
     tokens.map(tok => token_kind_name(tok.kind)),
     content="[\"identifier\", \"`(`\", \"identifier\", \"`,`\", \"integer\", \"`**`\", \"identifier\", \"`)`\", \"end of input\"]",

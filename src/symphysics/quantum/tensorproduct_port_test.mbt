@@ -2,17 +2,17 @@
 test "physics.quantum.tensorproduct: parity" {
   let m1 = @symphysics.explicit_matrix_from_ints([[1, 2], [3, 4]])
   let m2 = @symphysics.explicit_matrix_from_ints([[1, 0], [0, 1]])
-  try! quantum_test_assert_matrix_expr_equal(
-    try! tensor_product_matrix([m1, m2]),
-    try! @sympy_physics.physics_eval_matrix(
+  quantum_test_assert_matrix_expr_equal(
+    tensor_product_matrix([m1, m2]),
+    @sympy_physics.physics_eval_matrix(
       "TensorProduct(Matrix([[1, 2], [3, 4]]), Matrix([[1, 0], [0, 1]]))",
     ),
     4,
     4,
     "tensorproduct matrix parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tensor_product([
           @symcore.symbol("x") * operator([@symcore.symbol("A")]).as_expr(),
@@ -20,13 +20,13 @@ test "physics.quantum.tensorproduct: parity" {
         ]).as_expr(),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "TensorProduct(x*Operator(A), 2*Operator(B))",
     ),
     "tensorproduct scalar normalization parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tensor_product_expand(
           tensor_product([
@@ -38,13 +38,13 @@ test "physics.quantum.tensorproduct: parity" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "TensorProduct(Operator(A) + Operator(B), Operator(B) + Operator(C)).expand(tensorproduct=True)",
     ),
     "tensorproduct additive expansion parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tensor_product_simp(
           @symcore.raw_mul([
@@ -64,13 +64,13 @@ test "physics.quantum.tensorproduct: parity" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "tensor_product_simp(x*TensorProduct(Operator(A), Operator(B))**2*TensorProduct(Operator(C), Operator(D)))",
     ),
     "tensorproduct simp mul/pow parity",
   )
-  try! quantum_test_assert_string_equal(
-    try! @sympy_physics.quantum_eval_str(
+  quantum_test_assert_string_equal(
+    @sympy_physics.quantum_eval_str(
       @symprint.to_string(
         tensor_product_simp(
           tensor_product([
@@ -87,7 +87,7 @@ test "physics.quantum.tensorproduct: parity" {
         ),
       ),
     ),
-    try! @sympy_physics.quantum_eval_str(
+    @sympy_physics.quantum_eval_str(
       "TensorProduct(Operator(A), Operator(B)) - TensorProduct(Operator(C)**y, Operator(D)**y)",
     ),
     "tensorproduct simp add parity",

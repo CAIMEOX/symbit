@@ -56,7 +56,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
 
   // Degree-3 polynomial with a linear and an irreducible quadratic factor.
   let cubic = b.from_expr(x * ((x ^ @symcore.int(2)) + @symcore.int(1)))
-  let cubic_roots = try! roots_cubic(cubic)
+  let cubic_roots = roots_cubic(cubic)
   guard cubic_roots.length() == 3 else {
     fail("roots_cubic should return three roots with multiplicity")
   }
@@ -67,7 +67,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
     (x + @symcore.int(2)) *
     ((x ^ @symcore.int(2)) + @symcore.int(1)),
   )
-  let quartic_roots = try! roots_quartic(quartic)
+  let quartic_roots = roots_quartic(quartic)
   guard quartic_roots.length() == 4 else {
     fail("roots_quartic should return four roots with multiplicity")
   }
@@ -79,27 +79,25 @@ test "polyroots wb: roots_for_factor and zero-root handling" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
 
   let const_poly = b.from_expr(@symcore.int(7))
-  guard (try! roots_for_factor(const_poly, true)).length() == 0 else {
+  guard roots_for_factor(const_poly, true).length() == 0 else {
     fail("roots_for_factor should return [] for constants")
   }
 
   let quadratic = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
-  guard (try! roots_for_factor(quadratic, true)).length() == 2 else {
+  guard roots_for_factor(quadratic, true).length() == 2 else {
     fail("roots_for_factor degree-2 branch mismatch")
   }
 
   let cubic = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
-  guard (try! roots_for_factor(cubic, true)).length() == 3 else {
+  guard roots_for_factor(cubic, true).length() == 3 else {
     fail("roots_for_factor degree-3 radicals branch mismatch")
   }
 
   let quartic = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
-  guard (try! roots_for_factor(quartic, true)).length() == 4 else {
+  guard roots_for_factor(quartic, true).length() == 4 else {
     fail("roots_for_factor degree-4 radicals branch mismatch")
   }
 
   let zero = Poly::zero(["x"], Domain::QQ)
-  guard (try! roots(zero)).length() == 0 else {
-    fail("roots(0) should return []")
-  }
+  guard roots(zero).length() == 0 else { fail("roots(0) should return []") }
 }
