@@ -1161,6 +1161,28 @@ test "symintegrals Mellin special-function rules evaluate" {
       x,
     ),
   )
+  let inv_besselj_sq = doit(
+    inverse_mellin_transform(
+      (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+      @symspec.gamma(a + s) *
+      @symspec.gamma(half - s) *
+      (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)) *
+      (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let inv_besselj_pm = doit(
+    inverse_mellin_transform(
+      (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+      @symspec.gamma(s) *
+      @symspec.gamma(half - s) *
+      (@symspec.gamma(@symcore.int(1) - s - a) ^ @symcore.int(-1)) *
+      (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1319,6 +1341,14 @@ test "symintegrals Mellin special-function rules evaluate" {
   }
   guard !@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform") else {
     fail("cos(sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform") else {
+    fail("besselj(a, sqrt(x))^2 inverse Mellin stayed unevaluated")
+  }
+  guard !@symprint.to_string(inv_besselj_pm).contains("InverseMellinTransform") else {
+    fail(
+      "besselj(-a, sqrt(x))*besselj(a, sqrt(x)) inverse Mellin stayed unevaluated",
+    )
   }
 }
 

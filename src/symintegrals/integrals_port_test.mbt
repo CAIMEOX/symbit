@@ -1974,6 +1974,54 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let besselj_sq_input = (
+      @symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)
+    ) *
+    @symspec.gamma(a + s) *
+    @symspec.gamma(half - s) *
+    (@symspec.gamma(@symcore.int(1) - s) ^ @symcore.int(-1)) *
+    (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1))
+  let besselj_sq_inverse_opt = do_inverse_mellin_doit(besselj_sq_input, s, x)
+  guard besselj_sq_inverse_opt is Some(_) else {
+    fail(
+      "besselj^2 inverse stayed None for " +
+      @symprint.debug_repr(besselj_sq_input),
+    )
+  }
+  let besselj_sq_inverse = besselj_sq_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselj_sq_inverse) +
+      ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))**2))",
+    ),
+    "0",
+  )
+
+  let besselj_pm_input = (
+      @symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)
+    ) *
+    @symspec.gamma(s) *
+    @symspec.gamma(half - s) *
+    (@symspec.gamma(@symcore.int(1) - s - a) ^ @symcore.int(-1)) *
+    (@symspec.gamma(@symcore.int(1) + a - s) ^ @symcore.int(-1))
+  let besselj_pm_inverse_opt = do_inverse_mellin_doit(besselj_pm_input, s, x)
+  guard besselj_pm_inverse_opt is Some(_) else {
+    fail(
+      "besselj(-a)*besselj(a) inverse stayed None for " +
+      @symprint.debug_repr(besselj_pm_input),
+    )
+  }
+  let besselj_pm_inverse = besselj_pm_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselj_pm_inverse) +
+      ") - sympy.besselj(-sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
 }
 
 ///|
