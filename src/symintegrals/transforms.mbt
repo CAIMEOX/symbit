@@ -5693,6 +5693,7 @@ fn inverse_mellin_besselj_product_term(
     _ => return None
   }
   let mut coeff = expr_one()
+  let mut s_scale = expr_one()
   let gamma_num_args : Array[Expr] = []
   let gamma_den_args : Array[Expr] = []
   for factor in factors {
@@ -5704,6 +5705,14 @@ fn inverse_mellin_besselj_product_term(
         } else {
           return None
         }
+      @symcore.Expr::Pow(base, exp) =>
+        if expr_eq(exp, s_sym) && !expr_depends_on(base, s_name) {
+          s_scale = expr_mul(s_scale, factor)
+        } else if expr_depends_on(factor, s_name) {
+          return None
+        } else {
+          coeff = expr_mul(coeff, factor)
+        }
       other =>
         if expr_depends_on(other, s_name) {
           return None
@@ -5712,10 +5721,7 @@ fn inverse_mellin_besselj_product_term(
         }
     }
   }
-  if gamma_num_args.length() != 2 || gamma_den_args.length() != 2 {
-    return None
-  }
-  if !expr_same_simplified(coeff, expr_div(expr_one(), sqrt_pi())) {
+  if gamma_num_args.length() != 2 {
     return None
   }
   let num_linears : Array[(Expr, Expr)] = []
@@ -5733,25 +5739,46 @@ fn inverse_mellin_besselj_product_term(
     }
   }
   let sqrt_x = @symelem.sqrt(x)
-  match inverse_mellin_same_order_besselj_product(num_linears, den_linears) {
-    Some(order) =>
-      return Some(
-        expr_simplify(expr_pow(@symspec.besselj(order, sqrt_x), expr_int(2))),
-      )
-    None => ()
-  }
-  match inverse_mellin_pm_order_besselj_product(num_linears, den_linears) {
-    Some(order) =>
-      Some(
-        expr_simplify(
-          expr_mul(
-            @symspec.besselj(expr_mul(expr_int(-1), order), sqrt_x),
-            @symspec.besselj(order, sqrt_x),
+  if expr_same_simplified(s_scale, expr_one()) &&
+    gamma_den_args.length() == 2 &&
+    expr_same_simplified(coeff, expr_div(expr_one(), sqrt_pi())) {
+    match inverse_mellin_same_order_besselj_product(num_linears, den_linears) {
+      Some(order) =>
+        return Some(
+          expr_simplify(expr_pow(@symspec.besselj(order, sqrt_x), expr_int(2))),
+        )
+      None => ()
+    }
+    match inverse_mellin_pm_order_besselj_product(num_linears, den_linears) {
+      Some(order) =>
+        return Some(
+          expr_simplify(
+            expr_mul(
+              @symspec.besselj(expr_mul(expr_int(-1), order), sqrt_x),
+              @symspec.besselj(order, sqrt_x),
+            ),
           ),
-        ),
-      )
-    None => None
+        )
+      None => ()
+    }
   }
+  if expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) &&
+    gamma_den_args.length() == 3 &&
+    expr_same_simplified(coeff, expr_one()) {
+    match inverse_mellin_general_besselj_product(num_linears, den_linears) {
+      Some((order1, order2)) =>
+        return Some(
+          expr_simplify(
+            expr_mul(
+              @symspec.besselj(order1, sqrt_x),
+              @symspec.besselj(order2, sqrt_x),
+            ),
+          ),
+        )
+      None => ()
+    }
+  }
+  None
 }
 
 ///|
@@ -5828,6 +5855,55 @@ fn inverse_mellin_pm_order_besselj_product(
     return None
   }
   Some(expr_simplify(expr_sub(offset2, expr_one())))
+}
+
+///|
+fn inverse_mellin_general_besselj_product(
+  num_linears : Array[(Expr, Expr)],
+  den_linears : Array[(Expr, Expr)],
+) -> (Expr, Expr)? {
+  if num_linears.length() != 2 || den_linears.length() != 3 {
+    return None
+  }
+  let mut half_sum : Expr? = None
+  let mut saw_gamma_one_minus_2s = false
+  for item in num_linears {
+    if expr_same_simplified(item.0, expr_int(-2)) &&
+      expr_same_simplified(item.1, expr_one()) {
+      saw_gamma_one_minus_2s = true
+    } else if expr_same_simplified(item.0, expr_one()) {
+      half_sum = Some(item.1)
+    } else {
+      return None
+    }
+  }
+  let half_sum = match half_sum {
+    Some(v) if saw_gamma_one_minus_2s => v
+    _ => return None
+  }
+  let mut saw_sum_den = false
+  let diff_offsets : Array[Expr] = []
+  let sum_offset = expr_simplify(expr_add(expr_one(), half_sum))
+  for item in den_linears {
+    if !expr_same_simplified(item.0, expr_int(-1)) {
+      return None
+    }
+    if expr_same_simplified(item.1, sum_offset) {
+      saw_sum_den = true
+    } else {
+      diff_offsets.push(item.1)
+    }
+  }
+  if !saw_sum_den || diff_offsets.length() != 2 {
+    return None
+  }
+  let diff_half = expr_simplify(expr_sub(diff_offsets[0], expr_one()))
+  Some(
+    (
+      expr_simplify(expr_add(half_sum, diff_half)),
+      expr_simplify(expr_sub(half_sum, diff_half)),
+    ),
+  )
 }
 
 ///|

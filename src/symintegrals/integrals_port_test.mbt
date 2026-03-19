@@ -2022,6 +2022,29 @@ test "symintegrals parity Mellin forward and inverse" {
     ),
     "0",
   )
+
+  let besselj_ab_input = (@symcore.int(4) ^ s) *
+    @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s) *
+    @symspec.gamma((a + b) * half + s) *
+    (@symspec.gamma(@symcore.int(1) + (b - a) * half - s) ^ @symcore.int(-1)) *
+    (@symspec.gamma(@symcore.int(1) + (a - b) * half - s) ^ @symcore.int(-1)) *
+    (@symspec.gamma(@symcore.int(1) + (a + b) * half - s) ^ @symcore.int(-1))
+  let besselj_ab_inverse_opt = do_inverse_mellin_doit(besselj_ab_input, s, x)
+  guard besselj_ab_inverse_opt is Some(_) else {
+    fail(
+      "besselj(a)*besselj(b) inverse stayed None for " +
+      @symprint.debug_repr(besselj_ab_input),
+    )
+  }
+  let besselj_ab_inverse = besselj_ab_inverse_opt.unwrap()
+  assert_eq(
+    try! @sympy_integrals.integrals_eval_str(
+      "sympy.sstr(sympy.simplify((" +
+      py_expr(besselj_ab_inverse) +
+      ") - sympy.besselj(sympy.Symbol('a'), sympy.sqrt(sympy.Symbol('x')))*sympy.besselj(sympy.Symbol('b'), sympy.sqrt(sympy.Symbol('x')))))",
+    ),
+    "0",
+  )
 }
 
 ///|
