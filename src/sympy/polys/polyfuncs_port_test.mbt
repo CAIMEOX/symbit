@@ -1,10 +1,10 @@
 ///|
-fn expr_norm(expr : @symcore.Expr) -> String {
-  try! sympy_normalize(@symprint.to_string(expr))
+fn expr_norm(expr : @symcore.Expr) -> String raise {
+  sympy_normalize(@symprint.to_string(expr))
 }
 
 ///|
-fn symmetrize_to_string(res : SymmetrizeResult, formal : Bool) -> String {
+fn symmetrize_to_string(res : SymmetrizeResult, formal : Bool) -> String raise {
   let sym_str = expr_norm(res.sym)
   let rem_str = expr_norm(res.rem)
   if !formal {
@@ -26,7 +26,7 @@ fn symmetrize_to_string(res : SymmetrizeResult, formal : Bool) -> String {
 fn symmetrize_list_to_string(
   res : SymmetrizeListResult,
   formal : Bool,
-) -> String {
+) -> String raise {
   let parts : Array[String] = Array::new()
   for item in res.items {
     let sym_str = expr_norm(item.sym)
@@ -51,7 +51,7 @@ fn symmetrize_list_to_string(
 }
 
 ///|
-fn viete_to_string(pairs : Array[(@symcore.Expr, @symcore.Expr)]) -> String {
+fn viete_to_string(pairs : Array[(@symcore.Expr, @symcore.Expr)]) -> String raise {
   let parts : Array[String] = Array::new()
   for pair in pairs {
     let lhs = expr_norm(pair.0)

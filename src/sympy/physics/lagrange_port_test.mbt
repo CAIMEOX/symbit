@@ -2,11 +2,12 @@
 fn lagrange_port_matrix_entry_summary(
   matrix : @symphysics.ExplicitMatrix,
 ) -> String {
+  let entries = matrix.rows_copy()
   let rows : Array[String] = []
   for i in 0..<matrix.height() {
     let row : Array[String] = []
     for j in 0..<matrix.width() {
-      row.push(@symprint.to_string(try! matrix.get(i, j)))
+      row.push(@symprint.to_string(entries[i][j]))
     }
     rows.push("[" + row.join(", ") + "]")
   }

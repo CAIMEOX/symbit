@@ -1,15 +1,15 @@
 ///|
-fn normalize_appr(expr : @symcore.Expr) -> String {
+fn normalize_appr(expr : @symcore.Expr) -> String raise {
   let s = @symprint.to_string(expr)
-  try! sympy_normalize_str(s)
+  sympy_normalize_str(s)
 }
 
 ///|
 
 ///|
-fn sympy_equiv_expr_str(expr : @symcore.Expr, other : String) -> Bool {
+fn sympy_equiv_expr_str(expr : @symcore.Expr, other : String) -> Bool raise {
   let s = @symprint.to_string(expr)
-  try! sympy_equiv_str(s, other)
+  sympy_equiv_str(s, other)
 }
 
 ///|

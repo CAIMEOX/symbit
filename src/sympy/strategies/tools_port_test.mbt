@@ -16,7 +16,7 @@ test "tools subs" {
   let result = rl(expr)
   assert_expr_str_eq(
     result,
-    try! tools_subs(expr, mapping),
+    tools_subs(expr, mapping),
     "tools subs",
   )
 }

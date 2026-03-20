@@ -1,6 +1,6 @@
 ///|
-fn fd_br(num : Int, den : Int) -> BigRational {
-  try! BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+fn fd_br(num : Int, den : Int) -> BigRational raise {
+  BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
 }
 
 ///|

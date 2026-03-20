@@ -1,6 +1,6 @@
 ///|
-fn factory_sympy_norm(s : String) -> String {
-  try! sympy_normalize(s).trim().to_string()
+fn factory_sympy_norm(s : String) -> String raise {
+  sympy_normalize(s).trim().to_string()
 }
 
 ///|

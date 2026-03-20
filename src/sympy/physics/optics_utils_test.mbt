@@ -4,7 +4,7 @@ fn optics_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  assert_true((try! control_expr_equivalent(lhs, rhs)))
+  assert_true((control_expr_equivalent(lhs, rhs)))
 }
 
 ///|
@@ -15,13 +15,15 @@ fn optics_assert_expr_list_equal(
 ) -> Unit raise {
   assert_eq(lhs.length(), rhs.length())
   for idx in 0..<lhs.length() {
-    try! optics_assert_expr_equal(lhs[idx], rhs[idx], "\{context}[\{idx}]")
+    optics_assert_expr_equal(lhs[idx], rhs[idx], "\{context}[\{idx}]")
   }
 }
 
 ///|
 fn test_rational_expr(num : Int, den : Int) -> @symcore.Expr {
-  try! @symcore.rational_from_ints(num, den)
+  @symcore.number(
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+  )
 }
 
 ///|

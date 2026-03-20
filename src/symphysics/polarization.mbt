@@ -51,8 +51,8 @@ pub fn jones_2_stokes(e : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
   guard e.height() == 2 && e.width() == 1 else {
     raise PhysicsError::ShapeError("jones_2_stokes expects a 2x1 Jones vector")
   }
-  let ex = try! e.get(0, 0)
-  let ey = try! e.get(1, 0)
+  let ex = e.get(0, 0)
+  let ey = e.get(1, 0)
   let eyc = @symelem.conjugate(ey)
   optics_column([
     (@symelem.abs(ex) ^ int(2)) + (@symelem.abs(ey) ^ int(2)),
@@ -84,7 +84,7 @@ pub fn phase_retarder(
   delta? : Expr = int(0),
 ) -> ExplicitMatrix {
   let phase = @symelem.exp(i_expr() * delta)
-  let mat = try! explicit_matrix_from_rows([
+  let mat = ExplicitMatrix::{ rows: [
     [
       (@symelem.cos(theta) ^ int(2)) +
       phase * (@symelem.sin(theta) ^ int(2)),
@@ -95,7 +95,7 @@ pub fn phase_retarder(
       (@symelem.sin(theta) ^ int(2)) +
       phase * (@symelem.cos(theta) ^ int(2)),
     ],
-  ])
+  ] }
   mat.scale(
     @symelem.exp(int(-1) * i_expr() * delta * rational_expr(1, 2)),
   )
@@ -137,10 +137,10 @@ pub fn mueller_matrix(j : ExplicitMatrix) -> ExplicitMatrix raise PhysicsError {
   }
   let i = i_expr()
   let half = rational_expr(1, 2)
-  let a = try! j.get(0, 0)
-  let b = try! j.get(0, 1)
-  let c = try! j.get(1, 0)
-  let d = try! j.get(1, 1)
+  let a = j.get(0, 0)
+  let b = j.get(0, 1)
+  let c = j.get(1, 0)
+  let d = j.get(1, 1)
   let ac = @symelem.conjugate(a)
   let bc = @symelem.conjugate(b)
   let cc = @symelem.conjugate(c)

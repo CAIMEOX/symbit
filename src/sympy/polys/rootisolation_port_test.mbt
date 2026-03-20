@@ -61,22 +61,22 @@ fn refine_repr(
   steps? : Int,
   eps? : @symnum.BigRational,
   disjoint? : @symnum.BigRational,
-) -> String {
+) -> String raise {
   match (steps, eps, disjoint) {
     (None, None, None) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ)
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ)
       interval_repr(a, b)
     }
     (Some(k), None, None) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ, steps=k)
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ, steps=k)
       interval_repr(a, b)
     }
     (None, Some(e), None) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ, eps=e)
+      let (a, b) = @sympolys.dup_refine_real_root(coeffs, s, t, Domain::QQ, eps=e)
       interval_repr(a, b)
     }
     (None, None, Some(d)) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(
+      let (a, b) = @sympolys.dup_refine_real_root(
         coeffs,
         s,
         t,
@@ -86,7 +86,7 @@ fn refine_repr(
       interval_repr(a, b)
     }
     (Some(k), Some(e), None) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(
+      let (a, b) = @sympolys.dup_refine_real_root(
         coeffs,
         s,
         t,
@@ -97,7 +97,7 @@ fn refine_repr(
       interval_repr(a, b)
     }
     (Some(k), None, Some(d)) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(
+      let (a, b) = @sympolys.dup_refine_real_root(
         coeffs,
         s,
         t,
@@ -108,7 +108,7 @@ fn refine_repr(
       interval_repr(a, b)
     }
     (None, Some(e), Some(d)) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(
+      let (a, b) = @sympolys.dup_refine_real_root(
         coeffs,
         s,
         t,
@@ -119,7 +119,7 @@ fn refine_repr(
       interval_repr(a, b)
     }
     (Some(k), Some(e), Some(d)) => {
-      let (a, b) = try! @sympolys.dup_refine_real_root(
+      let (a, b) = @sympolys.dup_refine_real_root(
         coeffs,
         s,
         t,

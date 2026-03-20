@@ -4,13 +4,13 @@ fn approx_double(lhs : Double, rhs : Double, eps? : Double = 1.0e-4) -> Bool {
 }
 
 ///|
-fn unit_square_polygon() -> @symgeometry.Polygon {
+fn unit_square_polygon() -> @symgeometry.Polygon raise {
   match
-    (try! @symgeometry.polygon([
-      try! @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
-      try! @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
-      try! @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
-      try! @symgeometry.point2d(@symcore.int(1), @symcore.int(0)),
+    (@symgeometry.polygon([
+      @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
+      @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
+      @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
+      @symgeometry.point2d(@symcore.int(1), @symcore.int(0)),
     ])) {
     @symgeometry.GeometryEntity::Polygon(poly) => poly
     _ => panic()

@@ -14,9 +14,9 @@ using @symcm {
 }
 
 ///|
-fn continuum_oracle_lines(script : String) -> Array[String] {
+fn continuum_oracle_lines(script : String) -> Array[String] raise {
   Array::from_iter(
-    (try! continuum_exec_stdout(script)).trim().split("\n"),
+    (continuum_exec_stdout(script)).trim().split("\n"),
   )
   .map(line => line.trim().to_string())
   .filter(line => line != "")

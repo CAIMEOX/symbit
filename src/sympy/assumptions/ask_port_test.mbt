@@ -72,9 +72,9 @@ fn assert_unary_keys_parity(
   keys : Array[PredicateKey],
   expr : @symcore.Expr,
   assumptions? : Query = query_true(),
-) -> Unit {
+) -> Unit raise {
   for key in keys {
-    try! assert_ask_parity(q1(key, expr), assumptions~)
+    assert_ask_parity(q1(key, expr), assumptions~)
   }
 }
 

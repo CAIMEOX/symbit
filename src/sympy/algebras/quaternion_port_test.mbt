@@ -9,8 +9,8 @@ fn expr_zero() -> Expr {
 }
 
 ///|
-fn expr_rational(num : Int, den : Int) -> Expr {
-  try! @symcore.rational_from_ints(num, den)
+fn expr_rational(num : Int, den : Int) -> Expr raise {
+  @symcore.rational_from_ints(num, den)
 }
 
 ///|

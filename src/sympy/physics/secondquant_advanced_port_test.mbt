@@ -4,8 +4,8 @@ fn sq_adv_assert_port(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = try! secondquant_eval_str(@symprint.to_string(lhs))
-  let expected = try! secondquant_exec_str(rhs)
+  let ours = secondquant_eval_str(@symprint.to_string(lhs))
+  let expected = secondquant_exec_str(rhs)
   assert_eq(ours, expected)
 }
 

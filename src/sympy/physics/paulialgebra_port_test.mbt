@@ -4,7 +4,7 @@ fn pauli_port_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = try! physics_srepr(@symprint.to_string(lhs))
+  let ours = physics_srepr(@symprint.to_string(lhs))
   assert_eq(ours, rhs)
 }
 

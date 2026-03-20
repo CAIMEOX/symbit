@@ -302,25 +302,25 @@ pub fn Plane::angle_between(
     GeometryEntity::Line(line_obj) =>
       @symelem.asin(
         geo_div(
-          geo_dot(self.normal_, try! line_obj.direction().with_dim(3).coords()),
+          geo_dot(self.normal_, line_obj.direction().with_dim(3).coords()),
           geo_norm(self.normal_) *
-          geo_norm(try! line_obj.direction().with_dim(3).coords()),
+          geo_norm(line_obj.direction().with_dim(3).coords()),
         ),
       )
     GeometryEntity::Ray(ray_obj) =>
       @symelem.asin(
         geo_div(
-          geo_dot(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
+          geo_dot(self.normal_, ray_obj.direction().with_dim(3).coords()),
           geo_norm(self.normal_) *
-          geo_norm(try! ray_obj.direction().with_dim(3).coords()),
+          geo_norm(ray_obj.direction().with_dim(3).coords()),
         ),
       )
     GeometryEntity::Segment(seg_obj) =>
       @symelem.asin(
         geo_div(
-          geo_dot(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
+          geo_dot(self.normal_, seg_obj.direction().with_dim(3).coords()),
           geo_norm(self.normal_) *
-          geo_norm(try! seg_obj.direction().with_dim(3).coords()),
+          geo_norm(seg_obj.direction().with_dim(3).coords()),
         ),
       )
     GeometryEntity::Plane(plane_obj) =>
@@ -430,20 +430,20 @@ pub fn Plane::perpendicular_plane(
   let p1 = items[0]
   let p2 = items[1]
   let candidate_line = line(p1, p2)
-  let along_normal = try! self.perpendicular_line(p1)
+  let along_normal = self.perpendicular_line(p1)
   let p3 = if along_normal.contains(p2) {
     let mut axis_point = if geo_expr_is_zero(self.normal_[0]) &&
       geo_expr_is_zero(self.normal_[1]) {
-      try! point3d(geo_zero(), geo_one(), geo_zero())
+      point3d(geo_zero(), geo_one(), geo_zero())
     } else {
-      try! point3d(geo_zero(), geo_zero(), geo_one())
+      point3d(geo_zero(), geo_zero(), geo_one())
     }
     if candidate_line.contains(axis_point) {
       axis_point = axis_point.mul(geo_int(2))
     }
     axis_point
   } else {
-    try! point(geo_add_coords(p1.coords_, self.normal_), dim=3)
+    point(geo_add_coords(p1.coords_, self.normal_), dim=3)
   }
   plane_from_points(p1, p2, p3)
 }
@@ -455,30 +455,30 @@ pub fn Plane::projection_line(
 ) -> GeometryEntity raise GeometryError {
   match other {
     GeometryEntity::Line(line_obj) => {
-      let a = try! self.projection(line_obj.p1_)
-      let b = try! self.projection(line_obj.p2_)
+      let a = self.projection(line_obj.p1_)
+      let b = self.projection(line_obj.p2_)
       if a.equals(b) {
         geometry_point(a)
       } else {
-        geometry_line(try! line(a, b))
+        geometry_line(line(a, b))
       }
     }
     GeometryEntity::Ray(ray_obj) => {
-      let a = try! self.projection(ray_obj.p1_)
-      let b = try! self.projection(ray_obj.p2_)
+      let a = self.projection(ray_obj.p1_)
+      let b = self.projection(ray_obj.p2_)
       if a.equals(b) {
         geometry_point(a)
       } else {
-        geometry_ray(try! ray(a, b))
+        geometry_ray(ray(a, b))
       }
     }
     GeometryEntity::Segment(seg_obj) => {
-      let a = try! self.projection(seg_obj.p1_)
-      let b = try! self.projection(seg_obj.p2_)
+      let a = self.projection(seg_obj.p1_)
+      let b = self.projection(seg_obj.p2_)
       if a.equals(b) {
         geometry_point(a)
       } else {
-        geometry_segment(try! segment(a, b))
+        geometry_segment(segment(a, b))
       }
     }
     _ =>

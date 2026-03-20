@@ -27,9 +27,9 @@ using @symcontrol {
 }
 
 ///|
-fn control_oracle_lines(script : String) -> Array[String] {
+fn control_oracle_lines(script : String) -> Array[String] raise {
   Array::from_iter(
-    (try! control_exec_stdout(script)).trim().split("\n"),
+    (control_exec_stdout(script)).trim().split("\n"),
   )
   .map(line => line.trim().to_string())
   .filter(line => line != "")
@@ -43,12 +43,12 @@ fn control_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
 }
 
 ///|
-fn control_parse_double(text : String) -> Double {
-  try! @strconv.parse_double(text.trim().to_string())
+fn control_parse_double(text : String) -> Double raise {
+  @strconv.parse_double(text.trim().to_string())
 }
 
 ///|
-fn control_parse_complex(text : String) -> ControlComplex {
+fn control_parse_complex(text : String) -> ControlComplex raise {
   let parts = Array::from_iter(text.trim().split(","))
   guard parts.length() == 2 else { panic() }
   (
@@ -110,11 +110,19 @@ fn control_complex_array_close(
 }
 
 ///|
-fn control_parse_double_lines(lines : Array[String]) -> Array[Double] {
-  lines.map(control_parse_double)
+fn control_parse_double_lines(lines : Array[String]) -> Array[Double] raise {
+  let out : Array[Double] = []
+  for line in lines {
+    out.push(control_parse_double(line))
+  }
+  out
 }
 
 ///|
-fn control_parse_complex_lines(lines : Array[String]) -> Array[ControlComplex] {
-  lines.map(control_parse_complex)
+fn control_parse_complex_lines(lines : Array[String]) -> Array[ControlComplex] raise {
+  let out : Array[ControlComplex] = []
+  for line in lines {
+    out.push(control_parse_complex(line))
+  }
+  out
 }

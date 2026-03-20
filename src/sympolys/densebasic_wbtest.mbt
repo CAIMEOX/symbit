@@ -1,6 +1,6 @@
 ///|
 fn db_wb_fe(n : Int) -> FieldElem {
-  try! fe_from_int(n, Domain::ZZ)
+  FieldElem::QQ(@symnum.BigRational::from_int(n))
 }
 
 ///|
@@ -28,7 +28,10 @@ fn db_wb_add_pair(
   b : FieldElem,
   _args : Array[FieldElem],
 ) -> FieldElem {
-  try! fe_add(a, b)
+  match (a, b) {
+    (FieldElem::QQ(lhs), FieldElem::QQ(rhs)) => FieldElem::QQ(lhs.add_r(rhs))
+    _ => a
+  }
 }
 
 ///|

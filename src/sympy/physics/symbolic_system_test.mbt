@@ -11,7 +11,7 @@ fn symbolic_system_fixture() -> (
   Array[OutputEquation],
   Array[BodyLike],
   Array[Load],
-) {
+) raise {
   let x = @symvector.dynamicsymbol("x")
   let y = @symvector.dynamicsymbol("y")
   let u = @symvector.dynamicsymbol("u")
@@ -21,18 +21,18 @@ fn symbolic_system_fixture() -> (
   let l = @symcore.symbol("l")
   let g = @symcore.symbol("g")
   let inv_m = m ^ @symcore.int(-1)
-  let dyn_implicit_mat = try! @symphysics.explicit_matrix_from_rows([
+  let dyn_implicit_mat = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(1), @symcore.int(0), @symcore.int(-1) * x * inv_m],
     [@symcore.int(0), @symcore.int(1), @symcore.int(-1) * y * inv_m],
     [@symcore.int(0), @symcore.int(0), (l ^ @symcore.int(2)) * inv_m],
   ])
   let dyn_rhs_last = (u ^ @symcore.int(2)) + (v ^ @symcore.int(2)) - g * y
-  let dyn_implicit_rhs = try! @symphysics.explicit_matrix_from_rows([
+  let dyn_implicit_rhs = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(0)],
     [@symcore.int(0)],
     [dyn_rhs_last],
   ])
-  let comb_implicit_mat = try! @symphysics.explicit_matrix_from_rows([
+  let comb_implicit_mat = @symphysics.explicit_matrix_from_rows([
     [
       @symcore.int(1),
       @symcore.int(0),
@@ -69,18 +69,18 @@ fn symbolic_system_fixture() -> (
       (l ^ @symcore.int(2)) * inv_m,
     ],
   ])
-  let comb_implicit_rhs = try! @symphysics.explicit_matrix_from_rows([
+  let comb_implicit_rhs = @symphysics.explicit_matrix_from_rows([
     [u],
     [v],
     [@symcore.int(0)],
     [@symcore.int(0)],
     [dyn_rhs_last],
   ])
-  let kin_explicit_rhs = try! @symphysics.explicit_matrix_from_rows([[u], [v]])
-  let n = try! @symvector.reference_frame("SSN")
-  let o = try! @symvector.point("SSO")
+  let kin_explicit_rhs = @symphysics.explicit_matrix_from_rows([[u], [v]])
+  let n = @symvector.reference_frame("SSN")
+  let o = @symvector.point("SSO")
   o.set_vel(n, @symvector.vector_zero())
-  let pa = try! particle("Pa", point=Some(o), mass=Some(m))
+  let pa = particle("Pa", point=Some(o), mass=Some(m))
   let loads = [force_load(o, n.x().scale(g * m))]
   (
     [x, y, lam],

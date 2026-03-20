@@ -77,9 +77,9 @@ fn expr_to_sympy_str(expr : BoolExpr) -> String {
 }
 
 ///|
-fn oracle_lra_sat(expr : BoolExpr) -> String {
+fn oracle_lra_sat(expr : BoolExpr) -> String raise {
   let expr_str = expr_to_sympy_str(expr)
-  let raw = try! inference_satisfiable_str(
+  let raw = inference_satisfiable_str(
     expr_str,
     algorithm="dpll2",
     use_lra_theory=true,

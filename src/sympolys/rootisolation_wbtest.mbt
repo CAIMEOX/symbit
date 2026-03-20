@@ -1,6 +1,6 @@
 ///|
 fn ri_wb_rat(n : Int, d : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(n), BigInt::from_int(d))
+  @symnum.BigRational::from_int(n).div_r(@symnum.BigRational::from_int(d))
 }
 
 ///|

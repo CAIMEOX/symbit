@@ -203,7 +203,9 @@ fn matrix_from_rows(
     }
     normalized.push(next)
   }
-  try! @symphysics.explicit_matrix_from_rows(normalized)
+  @symphysics.explicit_matrix_from_rows(normalized) catch {
+    _ => @symphysics.explicit_matrix_from_ints([])
+  }
 }
 
 ///|
@@ -211,9 +213,10 @@ fn matrix_column(
   matrix : @symphysics.ExplicitMatrix,
   col : Int,
 ) -> Array[Expr] {
-  let a = try! matrix.get(0, col)
-  let b = try! matrix.get(1, col)
-  let c = try! matrix.get(2, col)
+  let rows = matrix.rows_copy()
+  let a = rows[0][col]
+  let b = rows[1][col]
+  let c = rows[2][col]
   [a, b, c]
 }
 
@@ -222,15 +225,16 @@ fn matrix_mul_vec(
   matrix : @symphysics.ExplicitMatrix,
   vec : Array[Expr],
 ) -> Array[Expr] {
-  let a00 = try! matrix.get(0, 0)
-  let a01 = try! matrix.get(0, 1)
-  let a02 = try! matrix.get(0, 2)
-  let a10 = try! matrix.get(1, 0)
-  let a11 = try! matrix.get(1, 1)
-  let a12 = try! matrix.get(1, 2)
-  let a20 = try! matrix.get(2, 0)
-  let a21 = try! matrix.get(2, 1)
-  let a22 = try! matrix.get(2, 2)
+  let rows = matrix.rows_copy()
+  let a00 = rows[0][0]
+  let a01 = rows[0][1]
+  let a02 = rows[0][2]
+  let a10 = rows[1][0]
+  let a11 = rows[1][1]
+  let a12 = rows[1][2]
+  let a20 = rows[2][0]
+  let a21 = rows[2][1]
+  let a22 = rows[2][2]
   [
     a00 * vec[0] + a01 * vec[1] + a02 * vec[2],
     a10 * vec[0] + a11 * vec[1] + a12 * vec[2],

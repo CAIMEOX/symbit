@@ -191,7 +191,7 @@ fn dm_is_upper(dm : DomainMatrix) -> Bool raise PolyError {
 ///|
 fn dm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
   @sympolys.fe_from_rational(
-    try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
     Domain::QQ,
   )
 }

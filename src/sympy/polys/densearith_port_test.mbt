@@ -1,15 +1,14 @@
 ///|
-fn fezz(n : Int) -> FieldElem {
-  try! @sympolys.fe_from_int(n, Domain::ZZ)
+fn fezz(n : Int) -> FieldElem raise PolyError {
+  @sympolys.fe_from_int(n, Domain::ZZ)
 }
 
 ///|
-fn feqq(num : Int, den : Int) -> FieldElem {
-  let br = try! @symnum.BigRational::new(
-    BigInt::from_int(num),
-    BigInt::from_int(den),
+fn feqq(num : Int, den : Int) -> FieldElem raise PolyError {
+  @sympolys.fe_from_rational(
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+    Domain::QQ,
   )
-  try! @sympolys.fe_from_rational(br, Domain::QQ)
 }
 
 ///|
@@ -21,10 +20,10 @@ fn dup_repr_tuple(pair : (Array[FieldElem], Array[FieldElem])) -> String {
 }
 
 ///|
-fn dup_to_rats(coeffs : Array[FieldElem]) -> Array[@symnum.BigRational] {
+fn dup_to_rats(coeffs : Array[FieldElem]) -> Array[@symnum.BigRational] raise PolyError {
   let out : Array[@symnum.BigRational] = Array::new()
   for c in coeffs {
-    out.push(try! @sympolys.fe_expect_rational(c))
+    out.push(@sympolys.fe_expect_rational(c))
   }
   out
 }
@@ -32,7 +31,7 @@ fn dup_to_rats(coeffs : Array[FieldElem]) -> Array[@symnum.BigRational] {
 ///|
 fn dup_list_to_rats(
   polys : Array[Array[FieldElem]],
-) -> Array[Array[@symnum.BigRational]] {
+) -> Array[Array[@symnum.BigRational]] raise PolyError {
   let out : Array[Array[@symnum.BigRational]] = Array::new()
   for f in polys {
     out.push(dup_to_rats(f))
@@ -43,7 +42,7 @@ fn dup_list_to_rats(
 ///|
 
 ///|
-fn poly_int(vals : Array[Int]) -> DensePoly {
+fn poly_int(vals : Array[Int]) -> DensePoly raise PolyError {
   let items : Array[DensePoly] = Array::new()
   for v in vals {
     items.push(@sympolys.dense_coef(fezz(v)))
@@ -88,7 +87,7 @@ fn dmp_pair_repr(pair : (DensePoly, DensePoly)) -> String {
 ///|
 
 ///|
-fn dense_data_list(polys : Array[DensePoly]) -> Array[DenseData] {
+fn dense_data_list(polys : Array[DensePoly]) -> Array[DenseData] raise PolyError {
   let out : Array[DenseData] = Array::new()
   for p in polys {
     out.push(dense_data_of(p))

@@ -1,11 +1,11 @@
 ///|
-fn cov_fezz(n : Int) -> FieldElem {
-  try! @sympolys.fe_from_int(n, Domain::ZZ)
+fn cov_fezz(n : Int) -> FieldElem raise {
+  @sympolys.fe_from_int(n, Domain::ZZ)
 }
 
 ///|
 fn cov_brat(num : Int, den : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
 }
 
 ///|
@@ -14,7 +14,7 @@ fn cov_expr_rat(num : Int, den : Int) -> @symcore.Expr {
 }
 
 ///|
-fn cov_dup_from_ints(xs : Array[Int]) -> Array[FieldElem] {
+fn cov_dup_from_ints(xs : Array[Int]) -> Array[FieldElem] raise {
   let out : Array[FieldElem] = Array::new()
   for x in xs {
     out.push(cov_fezz(x))
@@ -44,8 +44,8 @@ fn cov_dense_repr(p : DensePoly) -> String {
 }
 
 ///|
-fn cov_poly_norm(poly : Poly) -> String {
-  (try! sympy_normalize(poly.to_string())).trim().to_string()
+fn cov_poly_norm(poly : Poly) -> String raise {
+  (sympy_normalize(poly.to_string())).trim().to_string()
 }
 
 ///|
@@ -73,7 +73,7 @@ fn cov_groebner_basis_str(basis : Array[Poly]) -> String {
 }
 
 ///|
-fn cov_poly_list_str(polys : Array[Poly]) -> String {
+fn cov_poly_list_str(polys : Array[Poly]) -> String raise {
   let parts : Array[String] = Array::new()
   for p in polys {
     parts.push(cov_poly_norm(p))
@@ -93,10 +93,10 @@ fn cov_lt_repr(v : (Monomial, FieldElem)?) -> String {
 }
 
 ///|
-fn cov_fe_pow(base : FieldElem, exp : Int) -> FieldElem {
+fn cov_fe_pow(base : FieldElem, exp : Int) -> FieldElem raise {
   let mut out = cov_fezz(1)
   for _ in 0..<exp {
-    out = try! @sympolys.fe_mul(out, base)
+    out = @sympolys.fe_mul(out, base)
   }
   out
 }

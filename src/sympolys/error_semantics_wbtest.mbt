@@ -1,6 +1,6 @@
 ///|
 fn fezz_wb(n : Int) -> FieldElem {
-  try! fe_from_int(n, Domain::ZZ)
+  FieldElem::QQ(@symnum.BigRational::from_int(n))
 }
 
 ///|

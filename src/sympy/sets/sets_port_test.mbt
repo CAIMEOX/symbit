@@ -9,23 +9,23 @@ fn sympy_set_str(set : Set) -> String {
 }
 
 ///|
-fn sympy_union_str(sets : Array[Set]) -> String {
-  try! union_str(sets)
+fn sympy_union_str(sets : Array[Set]) -> String raise {
+  union_str(sets)
 }
 
 ///|
-fn sympy_intersection_str(sets : Array[Set]) -> String {
-  try! intersection_str(sets)
+fn sympy_intersection_str(sets : Array[Set]) -> String raise {
+  intersection_str(sets)
 }
 
 ///|
-fn sympy_complement_str(a : Set, b : Set) -> String {
-  try! complement_str(a, b)
+fn sympy_complement_str(a : Set, b : Set) -> String raise {
+  complement_str(a, b)
 }
 
 ///|
-fn sympy_contains_str(set : Set, elem : @symcore.Expr) -> String {
-  try! contains_str(set, elem)
+fn sympy_contains_str(set : Set, elem : @symcore.Expr) -> String raise {
+  contains_str(set, elem)
 }
 
 ///|

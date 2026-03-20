@@ -7,12 +7,12 @@ fn wrapping_assert_vector(
   _context : String,
 ) -> Unit raise {
   let comps = lhs.to_matrix(frame)
-  let ours_x = @symprint.to_string(try! comps.get(0, 0))
-  let ours_y = @symprint.to_string(try! comps.get(1, 0))
-  let ours_z = @symprint.to_string(try! comps.get(2, 0))
-  assert_true((try! mechanics_expr_equal(ours_x, rhs_x)))
-  assert_true((try! mechanics_expr_equal(ours_y, rhs_y)))
-  assert_true((try! mechanics_expr_equal(ours_z, rhs_z)))
+  let ours_x = @symprint.to_string(comps.get(0, 0))
+  let ours_y = @symprint.to_string(comps.get(1, 0))
+  let ours_z = @symprint.to_string(comps.get(2, 0))
+  assert_true((mechanics_expr_equal(ours_x, rhs_x)))
+  assert_true((mechanics_expr_equal(ours_y, rhs_y)))
+  assert_true((mechanics_expr_equal(ours_z, rhs_z)))
 }
 
 ///|

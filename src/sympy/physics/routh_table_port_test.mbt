@@ -4,7 +4,7 @@ fn control_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let equal = try! control_expr_equivalent(lhs, rhs)
+  let equal = control_expr_equivalent(lhs, rhs)
   assert_true(equal)
 }
 
@@ -21,7 +21,7 @@ fn control_assert_matrix_expr_equal(
   let mut idx = 0
   for i in 0..<rows {
     for j in 0..<cols {
-      try! control_assert_expr_equal(
+      control_assert_expr_equal(
         lhs.get(i, j),
         rhs[idx],
         "\{_context}[\{idx}]",

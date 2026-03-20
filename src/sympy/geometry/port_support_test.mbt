@@ -111,11 +111,11 @@ fn geometry_assert_point_set_equal(
       if used[i] {
         continue
       }
-      let ok_x = try! geometry_expr_equal(
+      let ok_x = geometry_expr_equal(
         geometry_py_expr_text(pt.x()),
         expected[i].0,
       )
-      let ok_y = try! geometry_expr_equal(
+      let ok_y = geometry_expr_equal(
         geometry_py_expr_text(pt.y()),
         expected[i].1,
       )

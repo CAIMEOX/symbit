@@ -7,8 +7,13 @@ fn wigner_expr_from_bigint(value : BigInt) -> Expr {
 }
 
 ///|
+fn wigner_rational(num : BigInt, den : BigInt) -> @symnum.BigRational {
+  @symnum.BigRational::from_bigint(num).div_r(@symnum.BigRational::from_bigint(den))
+}
+
+///|
 fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr {
-  @symcore.number(try! @symnum.BigRational::new(num, den))
+  @symcore.number(wigner_rational(num, den))
 }
 
 ///|
@@ -186,7 +191,7 @@ pub fn clebsch_gordan(
   let phase = wigner_phase_expr((dj1 - dj2 + dm3) / 2)
   phase *
   @symelem.sqrt(int(2) * j_3 + int(1)) *
-  (try! wigner_3j(j_1, j_2, j_3, m_1, m_2, int(-1) * m_3))
+  wigner_3j(j_1, j_2, j_3, m_1, m_2, int(-1) * m_3)
 }
 
 ///|
@@ -261,14 +266,24 @@ pub fn racah(
   ee : Expr,
   ff : Expr,
 ) -> Expr {
-  let res = try! wigner_6j(aa, bb, ee, dd, cc, ff)
+  let res = wigner_6j(aa, bb, ee, dd, cc, ff) catch {
+    _ => return @symcore.function("racah", [aa, bb, cc, dd, ee, ff])
+  }
   match expr_number_value(res) {
     Some(n) if n.is_zero() => int(0)
     _ => {
-      let daa = try! wigner_doubled_int(aa)
-      let dbb = try! wigner_doubled_int(bb)
-      let dcc = try! wigner_doubled_int(cc)
-      let ddd = try! wigner_doubled_int(dd)
+      let daa = wigner_doubled_int(aa) catch {
+        _ => return @symcore.function("racah", [aa, bb, cc, dd, ee, ff])
+      }
+      let dbb = wigner_doubled_int(bb) catch {
+        _ => return @symcore.function("racah", [aa, bb, cc, dd, ee, ff])
+      }
+      let dcc = wigner_doubled_int(cc) catch {
+        _ => return @symcore.function("racah", [aa, bb, cc, dd, ee, ff])
+      }
+      let ddd = wigner_doubled_int(dd) catch {
+        _ => return @symcore.function("racah", [aa, bb, cc, dd, ee, ff])
+      }
       let phase = wigner_phase_expr((daa + dbb + dcc + ddd) / 2)
       phase * res
     }
@@ -422,7 +437,7 @@ pub fn dot_rot_grad_ynm(
   let upper = li + ji
   for k in lower..<(upper + 1) {
     let k_expr = int(k)
-    let alpha = @symelem.sqrt(
+      let alpha = @symelem.sqrt(
         expr_div(
           (int(2) * l + int(1)) *
           (int(2) * j + int(1)) *
@@ -430,15 +445,15 @@ pub fn dot_rot_grad_ynm(
           int(4) * pi_expr(),
         ),
       ) *
-      (try! wigner_3j(
+      wigner_3j(
         j,
         l,
         k_expr,
         int(0),
         int(0),
         int(0),
-      )) *
-      (try! wigner_3j(j, l, k_expr, p, m, int(-1) * (m + p)))
+      ) *
+      wigner_3j(j, l, k_expr, p, m, int(-1) * (m + p))
     let coeff = alpha *
       rational_expr(1, 2) *
       (
@@ -505,7 +520,7 @@ pub fn wigner_d(
   beta : Expr,
   gamma : Expr,
 ) -> ExplicitMatrix raise PhysicsError {
-  let d_small = try! wigner_d_small(j_tot, beta)
+  let d_small = wigner_d_small(j_tot, beta)
   let dJ = wigner_doubled_int(j_tot)
   let size = dJ + 1
   let rows : Array[Array[Expr]] = Array::new()

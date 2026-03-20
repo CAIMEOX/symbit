@@ -1,6 +1,6 @@
 ///|
 fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
-  let g = try! p.gcd_univar(q)
+  let g = p.gcd_univar(q)
   let ours = sympy_normalize(g.to_string()).trim().to_string()
   let oracle = gcd(p.to_expr(), q.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
@@ -8,7 +8,7 @@ fn expect_gcd_oracle(p : Poly, q : Poly) -> Unit raise {
 
 ///|
 fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
-  let (quo, rem) = try! p.divmod_univar(q)
+  let (quo, rem) = p.divmod_univar(q)
   let ours = div_pair_to_string(quo, rem).trim().to_string()
   let oracle = div(p.to_expr(), q.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
@@ -16,7 +16,7 @@ fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
 
 ///|
 fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
-  let res = try! p.resultant(q, 0)
+  let res = p.resultant(q, 0)
   let ours = sympy_normalize(res.to_string()).trim().to_string()
   let oracle = resultant(p.to_expr(), q.to_expr(), x="x")
     .trim()
@@ -25,8 +25,8 @@ fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
 }
 
 ///|
-fn expr_rat(n : Int, d : Int) -> @symcore.Expr {
-  try! @symcore.rational_from_ints(n, d)
+fn expr_rat(n : Int, d : Int) -> @symcore.Expr raise {
+  @symcore.rational_from_ints(n, d)
 }
 
 ///|

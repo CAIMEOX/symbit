@@ -11,12 +11,12 @@ fn actuator_assert_force_load(
     Load::ForceLoad(value) => {
       assert_eq(value.point.name(), point_name)
       let comps = value.force.to_matrix(frame)
-      let ours_x = @symprint.to_string(try! comps.get(0, 0))
-      let ours_y = @symprint.to_string(try! comps.get(1, 0))
-      let ours_z = @symprint.to_string(try! comps.get(2, 0))
-      assert_true((try! mechanics_expr_equal(ours_x, rhs_x)))
-      assert_true((try! mechanics_expr_equal(ours_y, rhs_y)))
-      assert_true((try! mechanics_expr_equal(ours_z, rhs_z)))
+      let ours_x = @symprint.to_string(comps.get(0, 0))
+      let ours_y = @symprint.to_string(comps.get(1, 0))
+      let ours_z = @symprint.to_string(comps.get(2, 0))
+      assert_true((mechanics_expr_equal(ours_x, rhs_x)))
+      assert_true((mechanics_expr_equal(ours_y, rhs_y)))
+      assert_true((mechanics_expr_equal(ours_z, rhs_z)))
     }
     _ => fail(context + ": expected force load")
   }
@@ -36,12 +36,12 @@ fn actuator_assert_torque_load(
     Load::TorqueLoad(value) => {
       assert_eq(value.frame.name(), frame_name)
       let comps = value.torque.to_matrix(basis_frame)
-      let ours_x = @symprint.to_string(try! comps.get(0, 0))
-      let ours_y = @symprint.to_string(try! comps.get(1, 0))
-      let ours_z = @symprint.to_string(try! comps.get(2, 0))
-      assert_true((try! mechanics_expr_equal(ours_x, rhs_x)))
-      assert_true((try! mechanics_expr_equal(ours_y, rhs_y)))
-      assert_true((try! mechanics_expr_equal(ours_z, rhs_z)))
+      let ours_x = @symprint.to_string(comps.get(0, 0))
+      let ours_y = @symprint.to_string(comps.get(1, 0))
+      let ours_z = @symprint.to_string(comps.get(2, 0))
+      assert_true((mechanics_expr_equal(ours_x, rhs_x)))
+      assert_true((mechanics_expr_equal(ours_y, rhs_y)))
+      assert_true((mechanics_expr_equal(ours_z, rhs_z)))
     }
     _ => fail(context + ": expected torque load")
   }

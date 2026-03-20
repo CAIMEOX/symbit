@@ -1,6 +1,6 @@
 ///|
-fn py_str_obj(obj : @py.PyObject) -> String {
-  try! @qc_pyext.py_str(obj)
+fn py_str_obj(obj : @py.PyObject) -> String raise {
+  @qc_pyext.py_str(obj)
 }
 
 ///|

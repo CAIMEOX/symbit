@@ -1,13 +1,13 @@
 ///|
-fn nf_norm(expr : @symcore.Expr) -> String {
-  (try! sympy_normalize(@symprint.to_string(expr))
+fn nf_norm(expr : @symcore.Expr) -> String raise {
+  (sympy_normalize(@symprint.to_string(expr))
   .trim()
   .to_string()).replace_all(old=" ", new="")
 }
 
 ///|
-fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String {
-  (try! sympy_normalize(
+fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String raise {
+  (sympy_normalize(
     numberfield_minpoly(expr, gen~),
   )
   .trim()

@@ -5,7 +5,7 @@ fn medium_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  assert_true((try! expr_equal(ours, rhs)))
+  assert_true((expr_equal(ours, rhs)))
 }
 
 ///|

@@ -2,9 +2,9 @@
 ///\
 test "boolalg atoms" {
   let x = bool_symbol("x")
-  assert_eq(to_string(x), try! boolalg_str("x"))
-  assert_eq(to_string(bool_true()), try! boolalg_str("True"))
-  assert_eq(to_string(bool_false()), try! boolalg_str("False"))
+  assert_eq(to_string(x), boolalg_str("x"))
+  assert_eq(to_string(bool_true()), boolalg_str("True"))
+  assert_eq(to_string(bool_false()), boolalg_str("False"))
 }
 
 ///|

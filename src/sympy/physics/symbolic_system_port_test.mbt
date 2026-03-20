@@ -2,10 +2,11 @@
 fn symbolic_system_entries_string(
   matrix : @symphysics.ExplicitMatrix,
 ) -> String {
+  let rows = matrix.rows_copy()
   let items : Array[String] = []
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {
-      items.push(@symprint.to_string(try! matrix.get(i, j)))
+      items.push(@symprint.to_string(rows[i][j]))
     }
   }
   "[" + items.join(", ") + "]"

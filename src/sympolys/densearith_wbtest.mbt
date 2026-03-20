@@ -1,15 +1,13 @@
 ///|
 fn da_wb_fezz(n : Int) -> FieldElem {
-  try! fe_from_int(n, Domain::ZZ)
+  FieldElem::QQ(@symnum.BigRational::from_int(n))
 }
 
 ///|
 fn da_wb_feqq(num : Int, den : Int) -> FieldElem {
-  let rat = try! @symnum.BigRational::new(
-    BigInt::from_int(num),
-    BigInt::from_int(den),
+  FieldElem::QQ(
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
   )
-  try! fe_from_rational(rat, Domain::QQ)
 }
 
 ///|

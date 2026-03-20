@@ -1,28 +1,28 @@
 ///|
-fn roots_repr(roots : Array[@symcore.Expr]) -> String {
+fn roots_repr(roots : Array[@symcore.Expr]) -> String raise {
   let parts : Array[String] = Array::new()
   for r in roots {
-    parts.push(try! sympy_normalize(@symprint.to_string(r)))
+    parts.push(sympy_normalize(@symprint.to_string(r)))
   }
   let joined = parts.join(",")
-  try! sympy_normalize("[\{joined}]")
+  sympy_normalize("[\{joined}]")
 }
 
 ///|
-fn normalize_root_list(raw : String) -> String {
-  try! sympy_normalize(raw)
+fn normalize_root_list(raw : String) -> String raise {
+  sympy_normalize(raw)
 }
 
 ///|
-fn rootof_list(expr : @symcore.Expr, deg : Int) -> String {
+fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
   let parts : Array[String] = Array::new()
   for i in 0..<deg {
     parts.push(
-      try! sympy_normalize(try! rootof(expr, i, radicals=false)),
+      sympy_normalize(rootof(expr, i, radicals=false)),
     )
   }
   let joined = parts.join(",")
-  try! sympy_normalize("[\{joined}]")
+  sympy_normalize("[\{joined}]")
 }
 
 ///|

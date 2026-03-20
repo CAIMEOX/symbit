@@ -22,6 +22,16 @@ pub struct DensityExpr {
 } derive(Eq)
 
 ///|
+fn density_exact_rational(num : Int, den : Int) -> Expr {
+  let exact : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match exact {
+    Ok(value) => value
+    Err(_) => int(num) * (@symcore.pow(int(den), int(-1)))
+  }
+}
+
+///|
 fn density_tuple_expr(term : DensityTerm) -> Expr {
   @symcore.raw_function("Tuple", [term.state, term.prob])
 }
@@ -187,7 +197,12 @@ pub fn DensityExpr::doit(self : DensityExpr) -> Expr {
     let expanded = density_expand_terms(entry.state)
     for left in expanded {
       for right in expanded {
-        terms.push(entry.prob * (try! density_generate_outer_prod(left, right)))
+        let outer = try density_generate_outer_prod(left, right) catch {
+          _ => quantum_mul_from_args_preserve([left, dagger(right)])
+        } noraise {
+          value => value
+        }
+        terms.push(entry.prob * outer)
       }
     }
   }
@@ -333,12 +348,12 @@ fn density_matrix(
         "Density representation currently expects ket-like column states",
       )
     }
-    let contrib = (try! state_matrix.mul(matrix_dagger(state_matrix))).scale(
+    let contrib = (state_matrix.mul(matrix_dagger(state_matrix))).scale(
       term.prob,
     )
     acc = Some(
       match acc {
-        Some(current) => try! current.add(contrib)
+        Some(current) => current.add(contrib)
         None => contrib
       },
     )
@@ -354,7 +369,7 @@ pub fn DensityExpr::represent(
   self : DensityExpr,
   basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = density_exact_rational(1, 2),
   ndim? : Int = 4,
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   density_matrix(self, basis, nqubits, spin_j, ndim)
@@ -448,10 +463,10 @@ fn matrix_det_2x2(
 fn density_matrix_eigenvalues_2x2(
   matrix : @symphysics.ExplicitMatrix,
 ) -> Array[Expr] raise @symphysics.PhysicsError {
-  let trace_value = try! matrix_trace(matrix)
-  let det_value = try! matrix_det_2x2(matrix)
+  let trace_value = matrix_trace(matrix)
+  let det_value = matrix_det_2x2(matrix)
   let discr = expr_sqrt(trace_value * trace_value - int(4) * det_value)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = density_exact_rational(1, 2)
   [half * (trace_value + discr), half * (trace_value - discr)]
 }
 
@@ -463,13 +478,15 @@ fn entropy_from_eigenvalues(
 }
 
 ///|
-fn matrix_is_rank_one_projector(matrix : @symphysics.ExplicitMatrix) -> Bool {
+fn matrix_is_rank_one_projector(
+  matrix : @symphysics.ExplicitMatrix,
+) -> Bool raise @symphysics.PhysicsError {
   guard matrix_is_square(matrix) else { return false }
-  let trace_value = try! matrix_trace(matrix)
+  let trace_value = matrix_trace(matrix)
   if trace_value != int(1) {
     return false
   }
-  let product = try! matrix.mul(matrix)
+  let product = matrix.mul(matrix)
   product == matrix
 }
 
@@ -505,16 +522,16 @@ pub fn entropy(
   expr : Expr,
   basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = density_exact_rational(1, 2),
   ndim? : Int = 4,
 ) -> Expr raise @symphysics.PhysicsError {
-  let matrix = try! density_matrix_from_expr(expr, basis, nqubits, spin_j, ndim)
-  if (try! matrix_is_diagonal(matrix)) {
-    entropy_from_diagonal_entries(try! matrix_diagonal_entries(matrix))
+  let matrix = density_matrix_from_expr(expr, basis, nqubits, spin_j, ndim)
+  if matrix_is_diagonal(matrix) {
+    entropy_from_diagonal_entries(matrix_diagonal_entries(matrix))
   } else if matrix_is_rank_one_projector(matrix) {
     int(0)
   } else if matrix_is_2x2(matrix) {
-    entropy_from_eigenvalues(try! density_matrix_eigenvalues_2x2(matrix))
+    entropy_from_eigenvalues(density_matrix_eigenvalues_2x2(matrix))
   } else {
     raise @symphysics.PhysicsError::ValueError(
       "entropy currently expects a diagonal density matrix, a rank-one projector, or a 2x2 density matrix",
@@ -527,7 +544,7 @@ pub fn DensityExpr::entropy(
   self : DensityExpr,
   basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = density_exact_rational(1, 2),
   ndim? : Int = 4,
 ) -> Expr raise @symphysics.PhysicsError {
   entropy(self.as_expr(), basis~, nqubits~, spin_j~, ndim~)
@@ -537,9 +554,9 @@ pub fn DensityExpr::entropy(
 fn fidelity_from_diagonal(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> Expr {
-  let left_diag = try! matrix_diagonal_entries(left)
-  let right_diag = try! matrix_diagonal_entries(right)
+) -> Expr raise @symphysics.PhysicsError {
+  let left_diag = matrix_diagonal_entries(left)
+  let right_diag = matrix_diagonal_entries(right)
   let terms : Array[Expr] = []
   for idx in 0..<left_diag.length() {
     terms.push(expr_sqrt(left_diag[idx] * right_diag[idx]))
@@ -551,21 +568,21 @@ fn fidelity_from_diagonal(
 fn projector_overlap(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> Expr {
-  let product = try! left.mul(right)
-  expr_sqrt(try! matrix_trace(product))
+) -> Expr raise @symphysics.PhysicsError {
+  let product = left.mul(right)
+  expr_sqrt(matrix_trace(product))
 }
 
 ///|
 fn fidelity_2x2(
   left : @symphysics.ExplicitMatrix,
   right : @symphysics.ExplicitMatrix,
-) -> Expr {
-  let product = try! left.mul(right)
+) -> Expr raise @symphysics.PhysicsError {
+  let product = left.mul(right)
   expr_sqrt(
-    try! (matrix_trace(product) +
+    matrix_trace(product) +
     int(2) *
-    expr_sqrt((try! matrix_det_2x2(left)) * (try! matrix_det_2x2(right)))),
+    expr_sqrt((matrix_det_2x2(left)) * (matrix_det_2x2(right))),
   )
 }
 
@@ -575,11 +592,11 @@ pub fn fidelity(
   rhs : Expr,
   basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = density_exact_rational(1, 2),
   ndim? : Int = 4,
 ) -> Expr raise @symphysics.PhysicsError {
-  let left = try! density_matrix_from_expr(lhs, basis, nqubits, spin_j, ndim)
-  let right = try! density_matrix_from_expr(rhs, basis, nqubits, spin_j, ndim)
+  let left = density_matrix_from_expr(lhs, basis, nqubits, spin_j, ndim)
+  let right = density_matrix_from_expr(rhs, basis, nqubits, spin_j, ndim)
   guard left.height() == right.height() &&
     left.width() == right.width() &&
     matrix_is_square(left) else {
@@ -587,7 +604,7 @@ pub fn fidelity(
       "fidelity expects equal square density matrices",
     )
   }
-  if (try! matrix_is_diagonal(left)) && (try! matrix_is_diagonal(right)) {
+  if matrix_is_diagonal(left) && matrix_is_diagonal(right) {
     fidelity_from_diagonal(left, right)
   } else if matrix_is_rank_one_projector(left) &&
     matrix_is_rank_one_projector(right) {
@@ -610,7 +627,7 @@ pub fn DensityExpr::fidelity(
   other : DensityExpr,
   basis? : Expr? = None,
   nqubits? : Int = 0,
-  spin_j? : Expr = try! @symcore.rational_from_ints(1, 2),
+  spin_j? : Expr = density_exact_rational(1, 2),
   ndim? : Int = 4,
 ) -> Expr raise @symphysics.PhysicsError {
   fidelity(self.as_expr(), other.as_expr(), basis~, nqubits~, spin_j~, ndim~)

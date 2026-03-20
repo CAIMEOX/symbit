@@ -1,6 +1,6 @@
 ///|
-fn expr_rat_du(n : Int, d : Int) -> @symcore.Expr {
-  try! @symcore.rational_from_ints(n, d)
+fn expr_rat_du(n : Int, d : Int) -> @symcore.Expr raise {
+  @symcore.rational_from_ints(n, d)
 }
 
 ///|

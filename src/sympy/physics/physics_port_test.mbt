@@ -1,6 +1,8 @@
 ///|
 fn physics_expr_equal(lhs : @symcore.Expr, rhs : String) -> Bool {
-  try! expr_equal(@symprint.to_string(lhs), rhs)
+  try expr_equal(@symprint.to_string(lhs), rhs) catch {
+    _ => false
+  }
 }
 
 ///|
@@ -10,10 +12,10 @@ fn physics_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  if (try! expr_equal(ours, rhs)) {
+  if (expr_equal(ours, rhs)) {
     return
   }
-  if (try! physics_srepr(ours)) == (try! physics_srepr(rhs)) {
+  if (physics_srepr(ours)) == (physics_srepr(rhs)) {
     return
   }
   println("expr mismatch [\{context}]: ours=\{ours} oracle=\{rhs}")
@@ -41,9 +43,10 @@ fn physics_assert_matrix_equiv(
 ///|
 fn physics_dirac_c() -> @symcore.Expr {
   @symcore.number(
-    try! @symnum.BigRational::new(
+    @symnum.BigRational::from_bigint(
       @bigint.BigInt::from_string("137035999037"),
-      @bigint.BigInt::from_int(1000000000),
+    ).div_r(
+      @symnum.BigRational::from_bigint(@bigint.BigInt::from_int(1000000000)),
     ),
   )
 }
@@ -51,10 +54,7 @@ fn physics_dirac_c() -> @symcore.Expr {
 ///|
 fn physics_frac(num : Int, den : Int) -> @symcore.Expr {
   @symcore.number(
-    try! @symnum.BigRational::new(
-      @bigint.BigInt::from_int(num),
-      @bigint.BigInt::from_int(den),
-    ),
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
   )
 }
 

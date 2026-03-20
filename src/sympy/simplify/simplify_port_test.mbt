@@ -4,7 +4,7 @@ fn assert_srepr_parity(
   ours : @symcore.Expr,
   oracle : String,
 ) -> Unit raise {
-  let ours_srepr = try! expr_srepr(ours)
+  let ours_srepr = expr_srepr(ours)
   assert_eq(ours_srepr, oracle)
 }
 

@@ -4,8 +4,8 @@ fn euler_expr_int(n : Int) -> Expr {
 }
 
 ///|
-fn euler_expr_rat(num : Int, den : Int) -> Expr {
-  try! @symcore.rational_from_ints(num, den)
+fn euler_expr_rat(num : Int, den : Int) -> Expr raise {
+  @symcore.rational_from_ints(num, den)
 }
 
 ///|

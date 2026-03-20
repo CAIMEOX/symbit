@@ -60,7 +60,7 @@ test "field_elem: from_int embeds into Frac(base)" {
 
 ///|
 fn fe_wb_rat(num : Int, den : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
 }
 
 ///|

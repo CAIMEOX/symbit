@@ -7,8 +7,8 @@ fn mx_trim(s : String) -> String {
 }
 
 ///|
-fn mx_expr_norm(e : @symcore.Expr) -> String {
-  (try! sympy_normalize(@symprint.to_string(e)).trim().to_string()).replace_all(
+fn mx_expr_norm(e : @symcore.Expr) -> String raise {
+  (sympy_normalize(@symprint.to_string(e)).trim().to_string()).replace_all(
     old=" ",
     new="",
   )
@@ -94,7 +94,7 @@ fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
 ///|
 fn ddm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
   @sympolys.fe_from_rational(
-    try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
     Domain::QQ,
   )
 }

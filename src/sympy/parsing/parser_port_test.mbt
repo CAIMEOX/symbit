@@ -28,7 +28,7 @@ fn assert_sympy_parse_matches_stage3(
 ) -> Unit raise {
   let bindings : Map[String, @symcore.Expr] = {}
   for i in 0..<binding_names.length() {
-    bindings[binding_names[i]] = try! parse_expr(binding_exprs[i])
+    bindings[binding_names[i]] = parse_expr(binding_exprs[i])
   }
   let ours = @symprint.to_string(
     parse_expr_in(

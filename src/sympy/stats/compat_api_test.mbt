@@ -1,6 +1,6 @@
 ///|
-fn expr_equiv_to(ours : @symcore.Expr, oracle_expr : String) -> Bool {
-  try! stats_expr_equiv(@symprint.to_string(ours), oracle_expr)
+fn expr_equiv_to(ours : @symcore.Expr, oracle_expr : String) -> Bool raise {
+  stats_expr_equiv(@symprint.to_string(ours), oracle_expr)
 }
 
 ///|
@@ -107,7 +107,7 @@ fn lambda_apply_local(
 fn assert_opaque_symbolic_metrics(rv : RandomVar) -> Unit raise {
   let s = @symcore.symbol(rv.name)
   let t = @symcore.symbol("t")
-  let q = try! @symcore.rational_from_ints(1, 4)
+  let q = @symcore.rational_from_ints(1, 4)
   assert_eq(@symprint.to_string(expectation(s, rvs=[rv])), rv.name)
   assert_eq(@symprint.to_string(variance(s, rvs=[rv])), "Variance(\{rv.name})")
   assert_eq(

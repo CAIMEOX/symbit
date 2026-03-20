@@ -1,6 +1,8 @@
 ///|
 fn control_test_rat(num : Int, den : Int) -> @symcore.Expr {
-  try! @symcore.rational_from_ints(num, den)
+  @symcore.number(
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+  )
 }
 
 ///|

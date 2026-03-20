@@ -4,8 +4,8 @@ fn sq_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  let ours = try! secondquant_eval_str(@symprint.to_string(lhs))
-  let expected = try! secondquant_eval_str(rhs)
+  let ours = secondquant_eval_str(@symprint.to_string(lhs))
+  let expected = secondquant_eval_str(rhs)
   assert_eq(ours, expected)
 }
 
@@ -19,10 +19,10 @@ fn sq_assert_matrix_expr_equal(
 ) -> Unit raise {
   assert_eq(lhs.height(), rows)
   assert_eq(lhs.width(), cols)
-  let flat = try! @symquant.matrix_flat_strings(lhs)
+  let flat = @symquant.matrix_flat_strings(lhs)
   assert_eq(flat.length(), rhs.length())
   for idx in 0..<flat.length() {
-    assert_true((try! expr_equal(flat[idx], rhs[idx])))
+    assert_true((expr_equal(flat[idx], rhs[idx])))
   }
 }
 

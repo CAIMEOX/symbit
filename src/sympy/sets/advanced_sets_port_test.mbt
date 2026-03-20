@@ -4,8 +4,8 @@ fn sympy_set_str_adv(set : Set) -> String {
 }
 
 ///|
-fn sympy_contains_str_adv(set : Set, elem : @symcore.Expr) -> String {
-  try! contains_str(set, elem)
+fn sympy_contains_str_adv(set : Set, elem : @symcore.Expr) -> String raise {
+  contains_str(set, elem)
 }
 
 ///|

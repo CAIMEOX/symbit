@@ -159,7 +159,7 @@ pub fn is_scalar_nonsparse_matrix(
       return true
     }
   }
-  let matrix = try! gate_scalar_matrix_from_expr(simplified, nqubits)
+  let matrix = gate_scalar_matrix_from_expr(simplified, nqubits)
   matrix_is_scalar_multiple(matrix, identity_only)
 }
 
@@ -270,10 +270,10 @@ pub fn generate_gate_rules(
     let (left, right, ops) = queue[head]
     head += 1
     let candidates : Array[GateRule?] = [
-      try! ll_op(left, right),
-      try! lr_op(left, right),
-      try! rl_op(left, right),
-      try! rr_op(left, right),
+      ll_op(left, right),
+      lr_op(left, right),
+      rl_op(left, right),
+      rr_op(left, right),
     ]
     for candidate in candidates {
       match candidate {
@@ -321,8 +321,8 @@ pub fn generate_equivalent_ids(
 pub fn build_gate_identity(
   gate_seq : Array[Expr],
 ) -> GateIdentity raise @symphysics.PhysicsError {
-  let rules = try! generate_gate_rules(gate_seq)
-  let equivalent_ids = try! generate_equivalent_ids(gate_seq)
+  let rules = generate_gate_rules(gate_seq)
+  let equivalent_ids = generate_equivalent_ids(gate_seq)
   GateIdentity::{
     sequence: gate_seq.copy(),
     rules,
@@ -428,7 +428,7 @@ pub fn is_reducible(
       next_current.push(item)
     }
     current = next_current
-    let is_scalar = try! is_scalar_matrix(current, nqubits, false)
+    let is_scalar = is_scalar_matrix(current, nqubits, false)
     if is_scalar {
       return true
     }
@@ -459,13 +459,13 @@ pub fn bfs_identity_search(
       let next = current.copy()
       next.push(gate)
       let reducible = if next.length() > 1 {
-        try! is_reducible(next, nqubits, 1, next.length())
+        is_reducible(next, nqubits, 1, next.length())
       } else {
         false
       }
-      let is_scalar = try! is_scalar_matrix(next, nqubits, identity_only)
+      let is_scalar = is_scalar_matrix(next, nqubits, identity_only)
       if !reducible && is_scalar && !is_degenerate(ids, next) {
-        ids.push(try! build_gate_identity(next))
+        ids.push(build_gate_identity(next))
       } else if !reducible && next.length() < effective_depth {
         queue.push(next)
       }
@@ -510,7 +510,7 @@ pub fn random_identity_search(
   for _ in 0..<numgates {
     circuit.push(gate_list[rng.int(limit=gate_list.length())])
   }
-  let is_scalar = try! is_scalar_matrix(circuit, nqubits, false)
+  let is_scalar = is_scalar_matrix(circuit, nqubits, false)
   if is_scalar {
     Some(circuit)
   } else {

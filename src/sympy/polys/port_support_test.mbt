@@ -40,13 +40,13 @@ fn expr_int(n : Int) -> @symcore.Expr {
 }
 
 ///|
-fn sort_factor_repr(repr_str : String) -> String {
-  try! sympy_sort_factor_repr(repr_str)
+fn sort_factor_repr(repr_str : String) -> String raise {
+  sympy_sort_factor_repr(repr_str)
 }
 
 ///|
-fn poly_canon_str(p : Poly) -> String {
-  try! sympy_normalize(p.to_string())
+fn poly_canon_str(p : Poly) -> String raise {
+  sympy_normalize(p.to_string())
 }
 
 ///|
@@ -101,17 +101,17 @@ fn groebner_to_string(basis : Array[Poly]) -> String {
 }
 
 ///|
-fn poly_list_to_string(polys : Array[Poly]) -> String {
+fn poly_list_to_string(polys : Array[Poly]) -> String raise {
   polys.map(p => poly_canon_str(p)).join(" | ")
 }
 
 ///|
-fn reduced_pair_to_string(qs : Array[Poly], rem : Poly) -> String {
+fn reduced_pair_to_string(qs : Array[Poly], rem : Poly) -> String raise {
   "\{poly_list_to_string(qs)}||\{poly_canon_str(rem)}"
 }
 
 ///|
-fn div_pair_to_string(quo : Poly, rem : Poly) -> String {
+fn div_pair_to_string(quo : Poly, rem : Poly) -> String raise {
   "\{poly_canon_str(quo)}||\{poly_canon_str(rem)}"
 }
 

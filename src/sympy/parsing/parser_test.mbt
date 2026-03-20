@@ -1,6 +1,6 @@
 ///|
-fn parse_repr(src : String) -> String {
-  @symprint.debug_repr(try! parse_expr(src))
+fn parse_repr(src : String) -> String raise {
+  @symprint.debug_repr(parse_expr(src))
 }
 
 ///|
@@ -14,8 +14,8 @@ fn stage2_options() -> ParseOptions {
 }
 
 ///|
-fn parse_repr_stage2(src : String) -> String {
-  @symprint.debug_repr(try! parse_expr_with(src, stage2_options()))
+fn parse_repr_stage2(src : String) -> String raise {
+  @symprint.debug_repr(parse_expr_with(src, stage2_options()))
 }
 
 ///|
@@ -23,8 +23,8 @@ fn parse_repr_with(
   src : String,
   options : ParseOptions,
   context : ParseContext,
-) -> String {
-  @symprint.debug_repr(try! parse_expr_in(src, options, context))
+) -> String raise {
+  @symprint.debug_repr(parse_expr_in(src, options, context))
 }
 
 ///|
@@ -37,7 +37,7 @@ fn stage3_context() -> ParseContext {
 }
 
 ///|
-fn parse_repr_stage3(src : String) -> String {
+fn parse_repr_stage3(src : String) -> String raise {
   parse_repr_with(src, stage2_options(), stage3_context())
 }
 

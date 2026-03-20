@@ -1,12 +1,12 @@
 ///|
-fn normalize_limit_expr(expr : @symcore.Expr) -> String {
+fn normalize_limit_expr(expr : @symcore.Expr) -> String raise {
   let s = @symprint.to_string(expr)
-  try! sympy_normalize_str(s)
+  sympy_normalize_str(s)
 }
 
 ///|
-fn normalize_limit_str(s : String) -> String {
-  try! sympy_normalize_str(s)
+fn normalize_limit_str(s : String) -> String raise {
+  sympy_normalize_str(s)
 }
 
 ///|

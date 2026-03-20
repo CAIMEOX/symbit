@@ -4,8 +4,8 @@ fn sq_adv_assert_expr_oracle(
   oracle_expr : String,
   _context : String,
 ) -> Unit raise {
-  let ours = try! secondquant_eval_str(@symprint.to_string(expr))
-  let expected = try! secondquant_exec_str(oracle_expr)
+  let ours = secondquant_eval_str(@symprint.to_string(expr))
+  let expected = secondquant_exec_str(oracle_expr)
   assert_eq(ours, expected)
 }
 

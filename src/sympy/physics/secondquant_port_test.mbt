@@ -17,14 +17,14 @@ fn sq_assert_matrix_oracle_equal(
 ) -> Unit raise {
   assert_eq(lhs.height(), rows)
   assert_eq(lhs.width(), cols)
-  let flat = try! @symquant.matrix_flat_strings(lhs)
+  let flat = @symquant.matrix_flat_strings(lhs)
   let expected = rhs.join("\u001f").split("\u001f").to_array()
   assert_eq(flat.length(), rows * cols)
   let mut idx = 0
   for row in expected {
     let inner = row[1:row.length() - 1].to_string().split(", ").to_array()
     for item in inner {
-      assert_true((try! expr_equal(flat[idx], item.to_string())))
+      assert_true((expr_equal(flat[idx], item.to_string())))
       idx += 1
     }
   }

@@ -1,6 +1,6 @@
 ///|
-fn fez(n : Int) -> FieldElem {
-  try! @sympolys.fe_from_int(n, Domain::ZZ)
+fn fez(n : Int) -> FieldElem raise PolyError {
+  @sympolys.fe_from_int(n, Domain::ZZ)
 }
 
 ///|
@@ -10,7 +10,7 @@ fn br_int(n : Int) -> @symnum.BigRational {
 
 ///|
 fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
 }
 
 ///|
@@ -49,10 +49,10 @@ fn term_list_repr(terms : Array[(Array[Int], FieldElem)]) -> String {
 }
 
 ///|
-fn dense_data_of(p : DensePoly) -> DenseData {
+fn dense_data_of(p : DensePoly) -> DenseData raise PolyError {
   match p {
     DensePoly::Coef(c) =>
-      DenseData::Coef(try! @sympolys.fe_expect_rational(c))
+      DenseData::Coef(@sympolys.fe_expect_rational(c))
     DensePoly::Poly(items) => {
       let out : Array[DenseData] = Array::new()
       for it in items {
@@ -102,7 +102,7 @@ fn dpp_repr(p : DensePolyPoly) -> String {
 }
 
 ///|
-fn coef(n : Int) -> DensePoly {
+fn coef(n : Int) -> DensePoly raise PolyError {
   @sympolys.dense_coef(fez(n))
 }
 
@@ -112,7 +112,7 @@ fn poly(xs : Array[DensePoly]) -> DensePoly {
 }
 
 ///|
-fn monom_poly(exps : Array[Int]) -> DensePoly {
+fn monom_poly(exps : Array[Int]) -> DensePoly raise PolyError {
   if exps.length() == 0 {
     return coef(1)
   }
@@ -1112,7 +1112,9 @@ test "densebasic: dmp_list_terms parity" {
 
 ///|
 fn h_mul(a : FieldElem, b : FieldElem, _args : Array[FieldElem]) -> FieldElem {
-  try! @sympolys.fe_mul(a, b)
+  let lhs = @sympolys.fe_expect_rational(a) catch { _ => return a }
+  let rhs = @sympolys.fe_expect_rational(b) catch { _ => return a }
+  @sympolys.fe_from_rational(lhs.mul_r(rhs), Domain::ZZ) catch { _ => a }
 }
 
 ///|
