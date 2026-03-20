@@ -6,3 +6,8 @@ import {
   "Kaida-Amethyst/python" @py,
   "Kaida-Amethyst/python/cpython" @cpython,
 }
+
+import {
+  "CAIMEOX/symbit/sympolys" @sympolys,
+  "CAIMEOX/symbit/symprint",
+} for "test"

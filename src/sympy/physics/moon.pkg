@@ -6,3 +6,21 @@ import {
   "Kaida-Amethyst/python" @py,
   "Kaida-Amethyst/python/cpython" @cpython,
 }
+
+import {
+  "moonbitlang/core/bigint" @bigint,
+  "moonbitlang/core/math" @math,
+  "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symcalculus" @symcalculus,
+  "CAIMEOX/symbit/symfunctions/elementary" @symelem,
+  "CAIMEOX/symbit/symphysics" @symphysics,
+  "CAIMEOX/symbit/symphysics/control" @symcontrol,
+  "CAIMEOX/symbit/symphysics/continuum_mechanics" @symcm,
+  "CAIMEOX/symbit/symphysics/mechanics" @symmech,
+  "CAIMEOX/symbit/symphysics/quantum" @symquant,
+  "CAIMEOX/symbit/symphysics/secondquant" @symsecondquant,
+  "CAIMEOX/symbit/symphysics/vector" @symvector,
+  "CAIMEOX/symbit/symnum" @symnum,
+  "CAIMEOX/symbit/symprint",
+  "CAIMEOX/symbit/symsimplify" @symsimplify,
+} for "test"

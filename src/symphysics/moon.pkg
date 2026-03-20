@@ -9,7 +9,3 @@ import {
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symfunctions/special" @symspec,
 }
-
-import {
-  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
-} for "test"

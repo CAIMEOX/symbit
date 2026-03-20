@@ -5,8 +5,3 @@ import {
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
 }
-
-import {
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
-} for "test"

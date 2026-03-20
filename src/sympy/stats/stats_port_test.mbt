@@ -120,7 +120,7 @@ test "stage3 symbolic wrappers keep canonical form" {
   let event = and_event([ge(x, @symcore.int(0)), le(x, @symcore.int(2))])
   inspect(
     expr_str(probability(event)),
-    content="Probability(And(Ge(X, 0), Le(X, 2)))",
+    content="Probability(And(X >= 0, X <= 2))",
   )
   inspect(
     expr_str(expectation(@symcore.add([x, y]))),

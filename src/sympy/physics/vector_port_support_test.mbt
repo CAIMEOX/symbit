@@ -1,0 +1,23 @@
+///|
+using @symvector {
+  type Vector,
+  cross,
+  curl,
+  divergence,
+  dot,
+  dynamicsymbol,
+  get_motion_params,
+  gradient,
+  is_conservative,
+  is_solenoidal,
+  kinematic_equations,
+  orient_axis,
+  partial_velocity,
+  point,
+  reference_frame,
+  scalar_potential,
+  scalar_potential_difference_field,
+  vector_zero,
+  vsprint,
+  vsprint_dyadic,
+}

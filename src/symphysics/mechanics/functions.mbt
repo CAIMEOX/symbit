@@ -8,7 +8,7 @@ pub fn linear_momentum(
 ) -> @symvector.Vector raise @symvector.VectorError {
   let mut out = @symvector.vector_zero()
   for body in bodies {
-    out = out + (try! mech_bodylike_linear_momentum(body, frame))
+    out = out + (mech_bodylike_linear_momentum(body, frame))
   }
   out
 }
@@ -21,7 +21,7 @@ pub fn angular_momentum(
 ) -> @symvector.Vector raise @symvector.VectorError {
   let mut out = @symvector.vector_zero()
   for body in bodies {
-    out = out + (try! mech_bodylike_angular_momentum(body, point, frame))
+    out = out + (mech_bodylike_angular_momentum(body, point, frame))
   }
   out
 }
@@ -34,7 +34,7 @@ pub fn kinetic_energy(
   let mut out = mech_zero_expr()
   for body in bodies {
     out = mech_simplify_expr(
-      out + (try! mech_bodylike_kinetic_energy(body, frame)),
+      out + (mech_bodylike_kinetic_energy(body, frame)),
     )
   }
   out

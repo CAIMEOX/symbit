@@ -7,10 +7,3 @@ import {
   "CAIMEOX/symbit/symphysics" @symphysics,
   "moonbitlang/core/strconv",
 }
-
-import {
-  "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/symphysics" @symphysics,
-  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
-} for "test"

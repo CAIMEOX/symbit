@@ -10,14 +10,3 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symprint",
 }
-
-import {
-  "moonbitlang/core/bigint",
-  "moonbitlang/core/random",
-  "moonbitlang/core/strconv",
-  "CAIMEOX/symbit/symcore",
-  "CAIMEOX/symbit/symphysics" @symphysics,
-  "CAIMEOX/symbit/symnum",
-  "CAIMEOX/symbit/symprint",
-  "CAIMEOX/symbit/sympy/physics" @sympy_physics,
-} for "test"

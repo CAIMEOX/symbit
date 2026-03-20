@@ -4,7 +4,3 @@ import {
   "CAIMEOX/symbit/symprint",
   "moonbitlang/core/strconv" @strconv,
 }
-
-import {
-  "CAIMEOX/symbit/sympy/polys" @sympy_polys,
-} for "test"
