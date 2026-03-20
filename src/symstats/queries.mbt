@@ -1071,7 +1071,7 @@ fn symbolic_joint_density(
           let lamda = params[1]
           let alpha = params[2]
           let beta = params[3]
-          let half = try! @symcore.rational_from_ints(1, 2)
+          let half = stats_exact_rational(1, 2)
           let tau_power = eval_arith(
             @symcore.pow(
               tau,
@@ -1140,7 +1140,7 @@ fn symbolic_joint_density(
               ),
             ]),
           )
-          let half = try! @symcore.rational_from_ints(1, 2)
+          let half = stats_exact_rational(1, 2)
           let quad = eval_arith(
             @symcore.mul([quad_num, @symcore.pow(det, @symcore.int(-1))]),
           )
@@ -1264,7 +1264,7 @@ fn symbolic_joint_density(
               ),
             ]),
           )
-          let half = try! @symcore.rational_from_ints(1, 2)
+          let half = stats_exact_rational(1, 2)
           let nu_half = eval_arith(@symcore.mul([half, nu]))
           let shape = eval_arith(@symcore.add([nu_half, @symcore.int(1)]))
           let quad = eval_arith(

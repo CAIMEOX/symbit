@@ -533,7 +533,7 @@ fn symbolic_continuous_density(
           @symcore.function("gamma", [
             eval_arith(
               @symcore.mul([
-                try! @symcore.rational_from_ints(1, 2),
+                stats_exact_rational(1, 2),
                 @symcore.add([nu, @symcore.int(1)]),
               ]),
             ),
@@ -546,7 +546,7 @@ fn symbolic_continuous_density(
                 ]),
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([try! @symcore.rational_from_ints(1, 2), nu]),
+                    @symcore.mul([stats_exact_rational(1, 2), nu]),
                   ),
                 ]),
               ]),
@@ -572,7 +572,7 @@ fn symbolic_continuous_density(
             ),
             eval_arith(
               @symcore.mul([
-                try! @symcore.rational_from_ints(-1, 2),
+                stats_exact_rational(-1, 2),
                 @symcore.add([nu, @symcore.int(1)]),
               ]),
             ),
@@ -586,7 +586,7 @@ fn symbolic_continuous_density(
       let beta = params[1]
       let lamda = params[2]
       let kk = @symcore.symbol("_k")
-      let half = try! @symcore.rational_from_ints(1, 2)
+      let half = stats_exact_rational(1, 2)
       let summand = eval_arith(
         @symcore.mul([
           @symcore.function("exp", [
@@ -728,7 +728,7 @@ fn symbolic_continuous_cdf(
           (
             eval_arith(
               @symcore.mul([
-                try! @symcore.rational_from_ints(2, 1),
+                stats_exact_rational(2, 1),
                 @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
                 @symcore.function("asin", [@symcore.function("sqrt", [ratio])]),
               ]),
@@ -761,7 +761,7 @@ fn symbolic_continuous_cdf(
       let b = params[1]
       let left = eval_arith(
         @symcore.mul([
-          try! @symcore.rational_from_ints(1, 2),
+          stats_exact_rational(1, 2),
           @symcore.function("exp", [
             eval_arith(
               @symcore.mul([
@@ -776,7 +776,7 @@ fn symbolic_continuous_cdf(
         @symcore.add([
           @symcore.int(1),
           @symcore.mul([
-            try! @symcore.rational_from_ints(-1, 2),
+            stats_exact_rational(-1, 2),
             @symcore.function("exp", [
               eval_arith(
                 @symcore.mul([
@@ -802,7 +802,7 @@ fn symbolic_continuous_cdf(
       Some(
         eval_arith(
           @symcore.add([
-            try! @symcore.rational_from_ints(1, 2),
+            stats_exact_rational(1, 2),
             eval_arith(
               @symcore.mul([
                 @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
@@ -908,7 +908,7 @@ fn symbolic_continuous_cdf(
         ]),
       )
       let body = eval_arith(
-        @symcore.add([try! @symcore.rational_from_ints(1, 2), term1, term2]),
+        @symcore.add([stats_exact_rational(1, 2), term1, term2]),
       )
       Some(
         cont_piecewise([
@@ -922,7 +922,7 @@ fn symbolic_continuous_cdf(
     }
     "Chi" if params.length() == 1 => {
       let k = params[0]
-      let half = try! @symcore.rational_from_ints(1, 2)
+      let half = stats_exact_rational(1, 2)
       let shape = eval_arith(@symcore.mul([half, k]))
       let z = eval_arith(@symcore.mul([half, @symcore.pow(x, @symcore.int(2))]))
       Some(
@@ -963,10 +963,10 @@ fn symbolic_continuous_cdf(
           (
             eval_arith(
               @symcore.add([
-                try! @symcore.rational_from_ints(1, 2),
+                stats_exact_rational(1, 2),
                 eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 2),
+                    stats_exact_rational(1, 2),
                     @symcore.function("erf", [arg]),
                   ]),
                 ),
@@ -1608,14 +1608,14 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                   "Arcsin" if params.length() == 2 =>
                     eval_arith(
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(1, 2),
+                        stats_exact_rational(1, 2),
                         @symcore.add([params[0], params[1]]),
                       ]),
                     )
                   "Uniform" if params.length() == 2 =>
                     eval_arith(
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(1, 2),
+                        stats_exact_rational(1, 2),
                         @symcore.add([params[0], params[1]]),
                       ]),
                     )
@@ -1664,7 +1664,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                         @symcore.function("sqrt", [
                           @symcore.mul([
                             @symcore.symbol("pi"),
-                            try! @symcore.rational_from_ints(1, 2),
+                            stats_exact_rational(1, 2),
                           ]),
                         ]),
                       ]),
@@ -1676,7 +1676,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           @symcore.add([
                             params[0],
                             @symcore.mul([
-                              try! @symcore.rational_from_ints(1, 2),
+                              stats_exact_rational(1, 2),
                               @symcore.pow(params[1], @symcore.int(2)),
                             ]),
                           ]),
@@ -1705,7 +1705,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                     let d = params[3]
                     eval_arith(
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(1, 3),
+                        stats_exact_rational(1, 3),
                         eval_arith(
                           @symcore.add([
                             @symcore.pow(
@@ -1774,11 +1774,11 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
           None => {
             let raw = match name {
               "Arcsin" if params.length() == 0 =>
-                try! @symcore.rational_from_ints(1, 8)
+                stats_exact_rational(1, 8)
               "Arcsin" if params.length() == 2 =>
                 eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 8),
+                    stats_exact_rational(1, 8),
                     @symcore.pow(
                       cont_expr_sub(params[1], params[0]),
                       @symcore.int(2),
@@ -1788,7 +1788,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
               "Uniform" if params.length() == 2 =>
                 eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 12),
+                    stats_exact_rational(1, 12),
                     @symcore.pow(
                       cont_expr_sub(params[1], params[0]),
                       @symcore.int(2),
@@ -1998,7 +1998,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
               "Rayleigh" if params.length() == 1 =>
                 eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 2),
+                    stats_exact_rational(1, 2),
                     @symcore.add([
                       @symcore.int(4),
                       @symcore.mul([@symcore.int(-1), @symcore.symbol("pi")]),
@@ -2133,14 +2133,14 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                 )
                 let e1 = eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 3),
+                    stats_exact_rational(1, 3),
                     @symcore.pow(abcd, @symcore.int(-1)),
                     m_num,
                   ]),
                 )
                 let e2 = eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(1, 6),
+                    stats_exact_rational(1, 6),
                     @symcore.pow(abcd, @symcore.int(-1)),
                     eval_arith(
                       @symcore.add([

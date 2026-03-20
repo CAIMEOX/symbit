@@ -627,7 +627,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
               @symcore.int(0),
               @symcore.function("floor", [
                 eval_arith(
-                  @symcore.mul([try! @symcore.rational_from_ints(1, 2), k]),
+                  @symcore.mul([stats_exact_rational(1, 2), k]),
                 ),
               ]),
             ]),

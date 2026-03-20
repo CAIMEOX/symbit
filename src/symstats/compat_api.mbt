@@ -122,7 +122,7 @@ pub fn median(
   expr : @symcore.Expr,
   rvs? : Array[RandomVar] = [],
 ) -> @symcore.Expr {
-  quantile(expr, try! @symcore.rational_from_ints(1, 2), rvs~)
+  quantile(expr, stats_exact_rational(1, 2), rvs~)
 }
 
 ///|
@@ -696,7 +696,7 @@ fn symbolic_joint_mgf_special(
               beta,
               @symcore.mul([@symcore.int(-1), t2]),
               @symcore.mul([
-                try! @symcore.rational_from_ints(-1, 2),
+                stats_exact_rational(-1, 2),
                 @symcore.pow(lamda, @symcore.int(-1)),
                 @symcore.pow(t1, @symcore.int(2)),
               ]),
@@ -1471,7 +1471,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
           @symcore.function("exp", [
             eval_arith(
               @symcore.mul([
-                try! @symcore.rational_from_ints(1, 2),
+                stats_exact_rational(1, 2),
                 @symcore.pow(t, @symcore.int(2)),
               ]),
             ),
@@ -1504,7 +1504,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                   compat_tuple2(t),
                 ) {
                 (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let lin = compat_dot2(t1, t2, mu1, mu2)
                   let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
                   Some(
@@ -1530,7 +1530,7 @@ fn mgf_of_rv(rv : RandomVar, t : @symcore.Expr) -> @symcore.Expr? {
                   compat_tuple2(t),
                 ) {
                 (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let lin = compat_dot2(t1, t2, mu1, mu2)
                   let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
                   let denom = eval_arith(
@@ -1691,7 +1691,7 @@ pub fn characteristic_function(
               )
             "StudentT" if params.length() == 1 => {
               let nu = params[0]
-              let half = try! @symcore.rational_from_ints(1, 2)
+              let half = stats_exact_rational(1, 2)
               let nu_half = eval_arith(@symcore.mul([half, nu]))
               let arg = eval_arith(
                 @symcore.mul([
@@ -1736,7 +1736,7 @@ pub fn characteristic_function(
                   compat_tuple2(t),
                 ) {
                 (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let lin = compat_dot2(t1, t2, mu1, mu2)
                   let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
                   Some(
@@ -1764,7 +1764,7 @@ pub fn characteristic_function(
                   compat_tuple2(t),
                 ) {
                 (Some((mu1, mu2)), Some((s00, s01, s10, s11)), Some((t1, t2))) => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let lin = compat_dot2(t1, t2, mu1, mu2)
                   let quad = compat_quad2(s00, s01, s10, s11, t1, t2)
                   let denom = eval_arith(
@@ -1868,7 +1868,7 @@ fn process_mgf_at(
           @symcore.function("exp", [
             eval_arith(
               @symcore.mul([
-                try! @symcore.rational_from_ints(1, 2),
+                stats_exact_rational(1, 2),
                 time,
                 @symcore.pow(t, @symcore.int(2)),
               ]),
@@ -1978,7 +1978,7 @@ fn process_cf_at(
               @symcore.function("exp", [
                 eval_arith(
                   @symcore.mul([
-                    try! @symcore.rational_from_ints(-1, 2),
+                    stats_exact_rational(-1, 2),
                     time,
                     @symcore.pow(t, @symcore.int(2)),
                   ]),
@@ -2310,7 +2310,7 @@ pub fn entropy(
                 "MultivariateNormal" if params.length() >= 2 =>
                   match compat_matrix2x2(params[1]) {
                     Some((s00, s01, s10, s11)) => {
-                      let half = try! @symcore.rational_from_ints(1, 2)
+                      let half = stats_exact_rational(1, 2)
                       let det = eval_arith(
                         @symcore.add([
                           eval_arith(@symcore.mul([s00, s11])),
@@ -2366,7 +2366,7 @@ pub fn entropy(
                     ]),
                   )
                 "ChiSquared" if params.length() == 1 => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let shape = eval_arith(@symcore.mul([half, params[0]]))
                   eval_arith(
                     @symcore.add([
@@ -2392,7 +2392,7 @@ pub fn entropy(
                   )
                 }
                 "Chi" if params.length() == 1 => {
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let shape = eval_arith(@symcore.mul([half, params[0]]))
                   eval_arith(
                     @symcore.add([
@@ -2407,7 +2407,7 @@ pub fn entropy(
                         @symcore.function("digamma", [shape]),
                       ]),
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(-1, 2),
+                        stats_exact_rational(-1, 2),
                         @symcore.function("log", [@symcore.int(2)]),
                       ]),
                     ]),
@@ -2495,12 +2495,12 @@ pub fn entropy(
                     @symcore.add([
                       @symcore.int(1),
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(1, 2),
+                        stats_exact_rational(1, 2),
                         @symcore.symbol("EulerGamma"),
                       ]),
                       @symcore.function("log", [params[0]]),
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(-1, 2),
+                        stats_exact_rational(-1, 2),
                         @symcore.function("log", [@symcore.int(2)]),
                       ]),
                     ]),
@@ -2541,7 +2541,7 @@ pub fn entropy(
                   eval_arith(
                     @symcore.add([
                       params[0],
-                      try! @symcore.rational_from_ints(1, 2),
+                      stats_exact_rational(1, 2),
                       @symcore.function("log", [
                         eval_arith(
                           @symcore.mul([
@@ -2578,13 +2578,13 @@ pub fn entropy(
                   let c = params[1]
                   eval_arith(
                     @symcore.add([
-                      try! @symcore.rational_from_ints(1, 2),
+                      stats_exact_rational(1, 2),
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(3, 2),
+                        stats_exact_rational(3, 2),
                         @symcore.symbol("EulerGamma"),
                       ]),
                       @symcore.mul([
-                        try! @symcore.rational_from_ints(1, 2),
+                        stats_exact_rational(1, 2),
                         @symcore.function("log", [
                           eval_arith(
                             @symcore.mul([
@@ -2637,11 +2637,11 @@ pub fn entropy(
                 "Triangular" if params.length() == 3 =>
                   eval_arith(
                     @symcore.add([
-                      try! @symcore.rational_from_ints(1, 2),
+                      stats_exact_rational(1, 2),
                       @symcore.function("log", [
                         eval_arith(
                           @symcore.mul([
-                            try! @symcore.rational_from_ints(1, 2),
+                            stats_exact_rational(1, 2),
                             eval_arith(
                               @symcore.add([
                                 params[1],
@@ -2681,7 +2681,7 @@ pub fn entropy(
                     eval_arith(
                       @symcore.mul([
                         @symcore.symbol("pi"),
-                        try! @symcore.rational_from_ints(1, 4),
+                        stats_exact_rational(1, 4),
                       ]),
                     ),
                   ])
@@ -2690,7 +2690,7 @@ pub fn entropy(
                     eval_arith(
                       @symcore.mul([
                         @symcore.symbol("pi"),
-                        try! @symcore.rational_from_ints(1, 4),
+                        stats_exact_rational(1, 4),
                         eval_arith(
                           @symcore.add([
                             params[1],
@@ -2702,7 +2702,7 @@ pub fn entropy(
                   ])
                 "StudentT" if params.length() == 1 => {
                   let nu = params[0]
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let nu_half = eval_arith(@symcore.mul([half, nu]))
                   let nu1_half = eval_arith(
                     @symcore.mul([half, @symcore.add([nu, @symcore.int(1)])]),
@@ -2761,7 +2761,7 @@ pub fn entropy(
                   let b = params[1]
                   let c = params[2]
                   let d = params[3]
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let span = eval_arith(
                     @symcore.add([
                       d,
@@ -3048,7 +3048,7 @@ pub fn quantile(
                           @symcore.mul([
                             @symcore.symbol("pi"),
                             q,
-                            try! @symcore.rational_from_ints(1, 2),
+                            stats_exact_rational(1, 2),
                           ]),
                         ),
                       ]),
@@ -3078,7 +3078,7 @@ pub fn quantile(
                                 @symcore.mul([
                                   @symcore.symbol("pi"),
                                   q,
-                                  try! @symcore.rational_from_ints(1, 2),
+                                  stats_exact_rational(1, 2),
                                 ]),
                               ),
                             ]),
@@ -3139,7 +3139,7 @@ pub fn quantile(
                           @symcore.function("gammaincinv", [
                             eval_arith(
                               @symcore.mul([
-                                try! @symcore.rational_from_ints(1, 2),
+                                stats_exact_rational(1, 2),
                                 params[0],
                               ]),
                             ),
@@ -3162,7 +3162,7 @@ pub fn quantile(
                         @symcore.function("gammaincinv", [
                           eval_arith(
                             @symcore.mul([
-                              try! @symcore.rational_from_ints(1, 2),
+                              stats_exact_rational(1, 2),
                               params[0],
                             ]),
                           ),
@@ -3221,7 +3221,7 @@ pub fn quantile(
                                 eval_arith(
                                   @symcore.add([
                                     q,
-                                    try! @symcore.rational_from_ints(-1, 2),
+                                    stats_exact_rational(-1, 2),
                                   ]),
                                 ),
                               ]),
@@ -3295,7 +3295,7 @@ pub fn quantile(
                     left,
                     @symcore.function("Le", [
                       q,
-                      try! @symcore.rational_from_ints(1, 2),
+                      stats_exact_rational(1, 2),
                     ]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
@@ -3497,7 +3497,7 @@ pub fn quantile(
                   )
                   let mid = eval_arith(
                     @symcore.mul([
-                      try! @symcore.rational_from_ints(1, 2),
+                      stats_exact_rational(1, 2),
                       eval_arith(
                         @symcore.add([eval_arith(@symcore.mul([q, span])), a, b]),
                       ),
@@ -3602,7 +3602,7 @@ pub fn quantile(
                 }
                 "StudentT" if params.length() == 1 => {
                   let nu = params[0]
-                  let half = try! @symcore.rational_from_ints(1, 2)
+                  let half = stats_exact_rational(1, 2)
                   let a = eval_arith(@symcore.mul([half, nu]))
                   let left_beta = @symcore.function("betaincinv", [
                     a,
@@ -4097,12 +4097,11 @@ pub fn rademacher(
   name : String,
   params? : Array[@symcore.Expr] = [],
 ) -> RandomVar {
-  ignore(params)
-  let half = try! @symnum.BigRational::new(
-    BigInt::from_int(1),
-    BigInt::from_int(2),
-  )
-  finite_rv(name, [(@symcore.int(-1), half), (@symcore.int(1), half)])
+  match stats_exact_big_rational(1, 2) {
+    Some(half) =>
+      finite_rv(name, [(@symcore.int(-1), half), (@symcore.int(1), half)])
+    None => symbolic_rv(name, "Rademacher", params)
+  }
 }
 
 ///|

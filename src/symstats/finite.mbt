@@ -3,12 +3,18 @@
 
 ///|
 fn half_rational() -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
+  match stats_exact_big_rational(1, 2) {
+    Some(value) => value
+    None => @symnum.BigRational::zero()
+  }
 }
 
 ///|
 fn one_over(n : Int) -> @symnum.BigRational {
-  try! @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(n))
+  match stats_exact_big_rational(1, n) {
+    Some(value) => value
+    None => @symnum.BigRational::zero()
+  }
 }
 
 ///|

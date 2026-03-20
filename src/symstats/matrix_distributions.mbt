@@ -59,8 +59,8 @@ fn matrix_indexed(base : String, idx : @symcore.Expr) -> @symcore.Expr {
 fn gaussian_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let beta_e = @symcore.int(beta)
   let n_e = @symcore.int(n)
-  let half = try! @symcore.rational_from_ints(1, 2)
-  let quarter = try! @symcore.rational_from_ints(1, 4)
+  let half = stats_exact_rational(1, 2)
+  let quarter = stats_exact_rational(1, 4)
   let gamma_den = @symcore.function("gamma", [
     eval_arith(
       @symcore.add([@symcore.int(1), eval_arith(@symcore.mul([half, beta_e]))]),
@@ -120,7 +120,7 @@ fn gaussian_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
 fn circular_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let beta_e = @symcore.int(beta)
   let n_e = @symcore.int(n)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = stats_exact_rational(1, 2)
   let term1 = eval_arith(
     @symcore.pow(
       eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")])),
@@ -250,7 +250,7 @@ pub fn joint_eigen_distribution_of(rv : RandomVar) -> @symcore.Expr? {
           let numer = if circular {
             pair
           } else {
-            let half = try! @symcore.rational_from_ints(1, 2)
+            let half = stats_exact_rational(1, 2)
             let n_e = @symcore.int(n)
             let squares = vars.map(v => {
               eval_arith(@symcore.pow(v, @symcore.int(2)))
@@ -289,8 +289,8 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
         None
       } else {
         let s = @symcore.symbol("_s")
-        let half = try! @symcore.rational_from_ints(1, 2)
-        let quarter = try! @symcore.rational_from_ints(1, 4)
+        let half = stats_exact_rational(1, 2)
+        let quarter = stats_exact_rational(1, 4)
         let density = match beta {
           1 =>
             eval_arith(
@@ -375,7 +375,7 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       match name {
         "GaussianUnitaryEnsemble" if params.length() == 1 => {
           let n = params[0]
-          let half = try! @symcore.rational_from_ints(1, 2)
+          let half = stats_exact_rational(1, 2)
           let trace_x2 = @symcore.function("Trace", [
             @symcore.pow(x, @symcore.int(2)),
           ])
@@ -404,7 +404,7 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
         }
         "GaussianOrthogonalEnsemble" if params.length() == 1 => {
           let n = params[0]
-          let quarter = try! @symcore.rational_from_ints(1, 4)
+          let quarter = stats_exact_rational(1, 4)
           let h = @symcore.function("MatrixSymbol", [
             @symcore.symbol("_H"),
             n,
