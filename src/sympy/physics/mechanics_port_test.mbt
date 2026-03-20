@@ -7,7 +7,7 @@ fn mechanics_compact(text : String) -> String {
 fn mechanics_assert_summary(
   lhs : String,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   assert_eq(mechanics_compact(lhs), mechanics_compact(rhs))
 }

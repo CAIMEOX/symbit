@@ -318,7 +318,7 @@ pub fn Ellipse::vradius(self : Ellipse) -> Expr {
 }
 
 ///|
-pub fn Ellipse::ambient_dimension(self : Ellipse) -> Int {
+pub fn Ellipse::ambient_dimension(_self : Ellipse) -> Int {
   2
 }
 
@@ -505,7 +505,7 @@ pub fn Ellipse::bounds(self : Ellipse) -> (Point, Point) raise GeometryError {
 
 ///|
 pub fn Ellipse::plot_interval(
-  self : Ellipse,
+  _self : Ellipse,
   parameter? : Expr = symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero() - geo_pi(), geo_pi()]
@@ -737,7 +737,7 @@ pub fn Circle::vradius(self : Circle) -> Expr {
 }
 
 ///|
-pub fn Circle::ambient_dimension(self : Circle) -> Int {
+pub fn Circle::ambient_dimension(_self : Circle) -> Int {
   2
 }
 
@@ -772,7 +772,7 @@ pub fn Circle::bounds(self : Circle) -> (Point, Point) raise GeometryError {
 
 ///|
 pub fn Circle::plot_interval(
-  self : Circle,
+  _self : Circle,
   parameter? : Expr = symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero() - geo_pi(), geo_pi()]

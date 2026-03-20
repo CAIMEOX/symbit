@@ -111,9 +111,10 @@ fn mechanics_rational_pow(
     return Some(@symnum.BigRational::one())
   }
   if exponent < 0 {
-    match (try? base.reciprocal()) {
-      Ok(recip) => return mechanics_rational_pow(recip, -exponent)
-      Err(_) => return None
+    try base.reciprocal() catch {
+      _ => return None
+    } noraise {
+      recip => return mechanics_rational_pow(recip, -exponent)
     }
   }
   let mut acc = @symnum.BigRational::one()
@@ -158,9 +159,10 @@ fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
           } else {
             match mechanics_rational_pow(base_value, num.neg().to_int()) {
               Some(value) =>
-                match (try? value.reciprocal()) {
-                  Ok(recip) => Some(recip)
-                  Err(_) => None
+                try value.reciprocal() catch {
+                  _ => None
+                } noraise {
+                  recip => Some(recip)
                 }
               None => None
             }

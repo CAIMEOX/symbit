@@ -404,19 +404,21 @@ pub fn SymbolicSystem::dynamic_symbols(
     Some(value) => symbolic_system_flatten(value)
     None => {
       let out : Array[Expr] = []
-      match (try? self.comb_implicit_mat()) {
-        Ok(matrix) =>
+      try self.comb_implicit_mat() catch {
+        _ => ()
+      } noraise {
+        matrix =>
           for item in symbolic_system_flatten(matrix) {
             out.push(item)
           }
-        Err(_) => ()
       }
-      match (try? self.comb_implicit_rhs()) {
-        Ok(matrix) =>
+      try self.comb_implicit_rhs() catch {
+        _ => ()
+      } noraise {
+        matrix =>
           for item in symbolic_system_flatten(matrix) {
             out.push(item)
           }
-        Err(_) => ()
       }
       out
     }
@@ -444,19 +446,21 @@ pub fn SymbolicSystem::constant_symbols(
     Some(value) => symbolic_system_flatten(value)
     None => {
       let out : Array[Expr] = []
-      match (try? self.comb_implicit_mat()) {
-        Ok(matrix) =>
+      try self.comb_implicit_mat() catch {
+        _ => ()
+      } noraise {
+        matrix =>
           for item in symbolic_system_flatten(matrix) {
             out.push(item)
           }
-        Err(_) => ()
       }
-      match (try? self.comb_implicit_rhs()) {
-        Ok(matrix) =>
+      try self.comb_implicit_rhs() catch {
+        _ => ()
+      } noraise {
+        matrix =>
           for item in symbolic_system_flatten(matrix) {
             out.push(item)
           }
-        Err(_) => ()
       }
       out
     }

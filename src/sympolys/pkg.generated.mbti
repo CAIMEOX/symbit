@@ -272,7 +272,7 @@ pub fn domain_abs_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
 
 pub fn domain_add_expr(Domain, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
 
-pub fn domain_alg_field_from_poly(Domain, Poly, alias? : String?, root_index? : Int) -> Domain raise PolyError
+pub fn domain_alg_field_from_poly(Domain, Poly, extension_name? : String?, root_index? : Int) -> Domain raise PolyError
 
 pub fn domain_algebraic_field(Domain, Array[@symcore.Expr]) -> Domain raise PolyError
 
@@ -290,7 +290,7 @@ pub fn domain_convert_expr(Domain, @symcore.Expr, base? : Domain?) -> @symcore.E
 
 pub fn domain_convert_from_expr(Domain, @symcore.Expr, Domain) -> @symcore.Expr raise PolyError
 
-pub fn domain_cyclotomic_field(Domain, Int, ss? : Bool, alias? : String, gen? : String?, root_index? : Int) -> Domain raise PolyError
+pub fn domain_cyclotomic_field(Domain, Int, ss? : Bool, extension_name? : String, gen? : String?, root_index? : Int) -> Domain raise PolyError
 
 pub fn domain_denom_expr(Domain, @symcore.Expr) -> @symcore.Expr raise PolyError
 
@@ -1056,7 +1056,7 @@ pub(all) enum Domain {
 }
 pub fn Domain::abs_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::add_expr(Self, @symcore.Expr, @symcore.Expr) -> @symcore.Expr raise PolyError
-pub fn Domain::alg_field_from_poly(Self, Poly, alias? : String?, root_index? : Int) -> Self raise PolyError
+pub fn Domain::alg_field_from_poly(Self, Poly, extension_name? : String?, root_index? : Int) -> Self raise PolyError
 pub fn Domain::algebraic_field(Self, Array[@symcore.Expr]) -> Self raise PolyError
 pub fn Domain::almosteq_expr(Self, @symcore.Expr, @symcore.Expr, tolerance? : @symnum.BigRational?) -> Bool
 pub fn Domain::canonical_unit_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
@@ -1065,7 +1065,7 @@ pub fn Domain::cofactors_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.E
 pub fn Domain::contains_expr(Self, @symcore.Expr) -> Bool
 pub fn Domain::convert_expr(Self, @symcore.Expr, base? : Self?) -> @symcore.Expr raise PolyError
 pub fn Domain::convert_from_expr(Self, @symcore.Expr, Self) -> @symcore.Expr raise PolyError
-pub fn Domain::cyclotomic_field(Self, Int, ss? : Bool, alias? : String, gen? : String?, root_index? : Int) -> Self raise PolyError
+pub fn Domain::cyclotomic_field(Self, Int, ss? : Bool, extension_name? : String, gen? : String?, root_index? : Int) -> Self raise PolyError
 pub fn Domain::denom_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
 pub fn Domain::div_expr(Self, @symcore.Expr, @symcore.Expr) -> (@symcore.Expr, @symcore.Expr) raise PolyError
 pub fn Domain::drop(Self, Array[String]) -> Self raise PolyError

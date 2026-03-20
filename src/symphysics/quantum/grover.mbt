@@ -190,7 +190,7 @@ fn grover_oracle_apply(
 fn grover_w_apply(
   w_expr : WGateExpr,
   ket : QubitExpr,
-  ket_expr : Expr,
+  _ket_expr : Expr,
 ) -> Expr raise @symphysics.PhysicsError {
   guard ket.nqubits() == w_expr.nqubits else {
     raise @symphysics.PhysicsError::ShapeError(

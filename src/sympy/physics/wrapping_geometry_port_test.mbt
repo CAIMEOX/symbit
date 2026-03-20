@@ -1,25 +1,10 @@
-///|
-fn wrapping_compact(text : String) -> String {
-  text.replace(old=" ", new="")
-}
-
-///|
-fn wrapping_assert_summary(
-  lhs : String,
-  rhs : String,
-  context : String,
-) -> Unit raise {
-  assert_eq(wrapping_compact(lhs), wrapping_compact(rhs))
-}
-
-///|
 fn wrapping_assert_vector(
   lhs : @symvector.Vector,
   frame : @symvector.ReferenceFrame,
   rhs_x : String,
   rhs_y : String,
   rhs_z : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let comps = lhs.to_matrix(frame)
   let ours_x = @symprint.to_string(try! comps.get(0, 0))

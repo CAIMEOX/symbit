@@ -262,16 +262,19 @@ fn control_poly_degree(
   expr : Expr,
   variable_name : String,
 ) -> Int raise ControlError {
-  match (try? poly_from_expr(expr, variable_name)) {
-    Ok(poly) => coeff_array(poly).0
-    Err(_) => {
+  let poly = try Some(poly_from_expr(expr, variable_name)) catch {
+    _ =>
       if control_expr_depends_on_symbol(expr, variable_name) {
         raise ControlError::NotImplemented(
           "requires polynomial numerator/denominator",
         )
+      } else {
+        None
       }
-      0
-    }
+  }
+  match poly {
+    Some(poly) => coeff_array(poly).0
+    None => 0
   }
 }
 
@@ -340,7 +343,7 @@ fn control_unit_like(
       )
     _ =>
       SISOLinearTimeInvariant::TF(
-        transfer_function(int(1), int(1), system.var()),
+        transfer_function(int(1), int(1), system.variable()),
       )
   }
 }
@@ -468,9 +471,9 @@ fn control_add_base(
 pub fn transfer_function(
   numerator : Expr,
   denominator : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> TransferFunction raise ControlError {
-  guard var is Expr::Symbol(_) else {
+  guard variable is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
@@ -482,7 +485,7 @@ pub fn transfer_function(
   TransferFunction::{
     num_: control_normalize(numerator),
     den_: den_norm,
-    var_: var,
+    var_: variable,
   }
 }
 
@@ -490,10 +493,10 @@ pub fn transfer_function(
 pub fn discrete_transfer_function(
   numerator : Expr,
   denominator : Expr,
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
-  guard var is Expr::Symbol(_) else {
+  guard variable is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
   let den_norm = control_normalize(denominator)
@@ -505,7 +508,7 @@ pub fn discrete_transfer_function(
   DiscreteTransferFunction::{
     num_: control_normalize(numerator),
     den_: den_norm,
-    var_: var,
+    var_: variable,
     sampling_time_: control_normalize(sampling_time),
   }
 }
@@ -514,14 +517,21 @@ pub fn discrete_transfer_function(
 pub fn create_transfer_function(
   numerator : Expr,
   denominator : Expr,
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(0),
 ) -> SISOLinearTimeInvariant raise ControlError {
   if control_expr_is_zero(sampling_time) {
-    SISOLinearTimeInvariant::TF(transfer_function(numerator, denominator, var))
+    SISOLinearTimeInvariant::TF(
+      transfer_function(numerator, denominator, variable),
+    )
   } else {
     SISOLinearTimeInvariant::DTF(
-      discrete_transfer_function(numerator, denominator, var, sampling_time~),
+      discrete_transfer_function(
+        numerator,
+        denominator,
+        variable,
+        sampling_time~,
+      ),
     )
   }
 }
@@ -529,9 +539,9 @@ pub fn create_transfer_function(
 ///|
 pub fn TransferFunction::from_rational_expression(
   expr : Expr,
-  var? : Expr,
+  variable? : Expr,
 ) -> TransferFunction raise ControlError {
-  let resolved_var = match var {
+  let resolved_variable = match variable {
     Some(value) => value
     None => {
       let seen : Map[String, Bool] = {}
@@ -548,12 +558,12 @@ pub fn TransferFunction::from_rational_expression(
       symbol(names[0])
     }
   }
-  let variable_name = control_var_name(resolved_var)
+  let variable_name = control_var_name(resolved_variable)
   let parts = control_rational_parts(control_normalize(expr), variable_name)
   transfer_function(
     control_normalize(control_expand_expr(parts.0)),
     control_normalize(control_expand_expr(parts.1)),
-    resolved_var,
+    resolved_variable,
   )
 }
 
@@ -561,7 +571,7 @@ pub fn TransferFunction::from_rational_expression(
 pub fn TransferFunction::from_coeff_lists(
   numerator_coeffs : Array[Expr],
   denominator_coeffs : Array[Expr],
-  var : Expr,
+  variable : Expr,
 ) -> TransferFunction raise ControlError {
   guard !denominator_coeffs.all(coeff => control_expr_is_zero(coeff)) else {
     raise ControlError::ValueError(
@@ -569,9 +579,9 @@ pub fn TransferFunction::from_coeff_lists(
     )
   }
   transfer_function(
-    control_expr_from_coeffs(numerator_coeffs, var),
-    control_expr_from_coeffs(denominator_coeffs, var),
-    var,
+    control_expr_from_coeffs(numerator_coeffs, variable),
+    control_expr_from_coeffs(denominator_coeffs, variable),
+    variable,
   )
 }
 
@@ -580,17 +590,17 @@ pub fn TransferFunction::from_zpk(
   zeros : Array[Expr],
   poles : Array[Expr],
   gain : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> TransferFunction raise ControlError {
   let mut numerator = gain
   for zero in zeros {
-    numerator = numerator * (var - zero)
+    numerator = numerator * (variable - zero)
   }
   let mut denominator = int(1)
   for pole in poles {
-    denominator = denominator * (var - pole)
+    denominator = denominator * (variable - pole)
   }
-  transfer_function(numerator, denominator, var)
+  transfer_function(numerator, denominator, variable)
 }
 
 ///|
@@ -604,7 +614,7 @@ pub fn TransferFunction::den(self : TransferFunction) -> Expr {
 }
 
 ///|
-pub fn TransferFunction::var(self : TransferFunction) -> Expr {
+pub fn TransferFunction::variable(self : TransferFunction) -> Expr {
   self.var_
 }
 
@@ -615,7 +625,7 @@ pub fn TransferFunction::args(self : TransferFunction) -> Array[Expr] {
 
 ///|
 pub fn TransferFunction::sampling_time(
-  self : TransferFunction,
+  _self : TransferFunction,
 ) -> Expr {
   int(0)
 }
@@ -650,7 +660,7 @@ pub fn TransferFunction::simplify(
   let reduced = @symsimplify.ratsimp(self.to_expr(), max_passes=8)
   TransferFunction::from_rational_expression(
     control_normalize(reduced),
-    var=self.var_,
+    variable=self.var_,
   )
 }
 
@@ -731,12 +741,17 @@ pub fn TransferFunction::is_biproper(
 pub fn TransferFunction::is_stable(
   self : TransferFunction,
 ) -> Bool? raise ControlError {
-  let coeffs = match
-    (try? control_poly_coeffs_as_doubles(self.den_, control_var_name(self.var_))) {
-    Ok(Some(value)) => value
-    Ok(None) => return None
-    Err(_) => return None
-  }
+  let coeffs = try
+      control_poly_coeffs_as_doubles(self.den_, control_var_name(self.var_))
+    catch {
+      _ => return None
+    } noraise {
+      result =>
+        match result {
+          Some(value) => value
+          None => return None
+        }
+    }
   let roots = match control_poly_numeric_roots(coeffs) {
     Some(value) => value
     None => return None
@@ -802,13 +817,13 @@ pub impl Neg for TransferFunction with neg(self) {
 pub fn discrete_transfer_function_from_coeff_lists(
   numerator_coeffs : Array[Expr],
   denominator_coeffs : Array[Expr],
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   discrete_transfer_function(
-    control_expr_from_coeffs(numerator_coeffs, var),
-    control_expr_from_coeffs(denominator_coeffs, var),
-    var,
+    control_expr_from_coeffs(numerator_coeffs, variable),
+    control_expr_from_coeffs(denominator_coeffs, variable),
+    variable,
     sampling_time~,
   )
 }
@@ -816,27 +831,27 @@ pub fn discrete_transfer_function_from_coeff_lists(
 ///|
 pub fn DiscreteTransferFunction::from_rational_expression(
   expr : Expr,
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   let parts = control_rational_parts(
     control_normalize(expr),
-    control_var_name(var),
+    control_var_name(variable),
   )
-  discrete_transfer_function(parts.0, parts.1, var, sampling_time~)
+  discrete_transfer_function(parts.0, parts.1, variable, sampling_time~)
 }
 
 ///|
 pub fn DiscreteTransferFunction::from_coeff_lists(
   numerator_coeffs : Array[Expr],
   denominator_coeffs : Array[Expr],
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
   discrete_transfer_function_from_coeff_lists(
     numerator_coeffs,
     denominator_coeffs,
-    var,
+    variable,
     sampling_time~,
   )
 }
@@ -846,11 +861,11 @@ pub fn DiscreteTransferFunction::from_zpk(
   zeros : Array[Expr],
   poles : Array[Expr],
   gain : Expr,
-  var : Expr,
+  variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
-  let tf = try! TransferFunction::from_zpk(zeros, poles, gain, var)
-  discrete_transfer_function(tf.num_, tf.den_, var, sampling_time~)
+  let tf = try! TransferFunction::from_zpk(zeros, poles, gain, variable)
+  discrete_transfer_function(tf.num_, tf.den_, variable, sampling_time~)
 }
 
 ///|
@@ -948,13 +963,13 @@ pub fn DiscreteTransferFunction::from_gbt(
   cont_tf : TransferFunction,
   sampling_time : Expr,
   alpha : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   let result = gbt(cont_tf, sampling_time, alpha)
   discrete_transfer_function(
-    control_expr_from_coeffs(result.0, var),
-    control_expr_from_coeffs(result.1, var),
-    var,
+    control_expr_from_coeffs(result.0, variable),
+    control_expr_from_coeffs(result.1, variable),
+    variable,
     sampling_time~,
   )
 }
@@ -963,13 +978,13 @@ pub fn DiscreteTransferFunction::from_gbt(
 pub fn DiscreteTransferFunction::from_bilinear(
   cont_tf : TransferFunction,
   sampling_time : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
     try! @symcore.rational_from_ints(1, 2),
-    var,
+    variable,
   )
 }
 
@@ -977,13 +992,13 @@ pub fn DiscreteTransferFunction::from_bilinear(
 pub fn DiscreteTransferFunction::from_forward_diff(
   cont_tf : TransferFunction,
   sampling_time : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
     int(0),
-    var,
+    variable,
   )
 }
 
@@ -991,13 +1006,13 @@ pub fn DiscreteTransferFunction::from_forward_diff(
 pub fn DiscreteTransferFunction::from_backward_diff(
   cont_tf : TransferFunction,
   sampling_time : Expr,
-  var : Expr,
+  variable : Expr,
 ) -> DiscreteTransferFunction raise ControlError {
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
     int(1),
-    var,
+    variable,
   )
 }
 
@@ -1037,7 +1052,7 @@ pub fn DiscreteTransferFunction::den(
 }
 
 ///|
-pub fn DiscreteTransferFunction::var(
+pub fn DiscreteTransferFunction::variable(
   self : DiscreteTransferFunction,
 ) -> Expr {
   self.var_
@@ -1172,12 +1187,17 @@ pub fn DiscreteTransferFunction::is_biproper(
 pub fn DiscreteTransferFunction::is_stable(
   self : DiscreteTransferFunction,
 ) -> Bool? raise ControlError {
-  let coeffs = match
-    (try? control_poly_coeffs_as_doubles(self.den_, control_var_name(self.var_))) {
-    Ok(Some(value)) => value
-    Ok(None) => return None
-    Err(_) => return None
-  }
+  let coeffs = try
+      control_poly_coeffs_as_doubles(self.den_, control_var_name(self.var_))
+    catch {
+      _ => return None
+    } noraise {
+      result =>
+        match result {
+          Some(value) => value
+          None => return None
+        }
+    }
   let roots = match control_poly_numeric_roots(coeffs) {
     Some(value) => value
     None => return None
@@ -1215,12 +1235,12 @@ pub fn pid_controller(
   ki? : Expr = symbol("ki"),
   kd? : Expr = symbol("kd"),
   tf? : Expr = int(0),
-  var? : Expr = symbol("s"),
+  variable? : Expr = symbol("s"),
 ) -> PIDController raise ControlError {
-  guard var is Expr::Symbol(_) else {
+  guard variable is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")
   }
-  PIDController::{ kp_: kp, ki_: ki, kd_: kd, tf_: tf, var_: var }
+  PIDController::{ kp_: kp, ki_: ki, kd_: kd, tf_: tf, var_: variable }
 }
 
 ///|
@@ -1244,7 +1264,7 @@ pub fn PIDController::tf(self : PIDController) -> Expr {
 }
 
 ///|
-pub fn PIDController::var(self : PIDController) -> Expr {
+pub fn PIDController::variable(self : PIDController) -> Expr {
   self.var_
 }
 
@@ -1314,7 +1334,7 @@ pub fn Series::args(self : Series) -> Array[SISOLinearTimeInvariant] {
 }
 
 ///|
-pub fn Series::var(self : Series) -> Expr raise ControlError {
+pub fn Series::variable(self : Series) -> Expr raise ControlError {
   control_lti_time_signature(self.args_[0]).0
 }
 
@@ -1367,7 +1387,7 @@ pub fn Parallel::args(self : Parallel) -> Array[SISOLinearTimeInvariant] {
 }
 
 ///|
-pub fn Parallel::var(self : Parallel) -> Expr raise ControlError {
+pub fn Parallel::variable(self : Parallel) -> Expr raise ControlError {
   control_lti_time_signature(self.args_[0]).0
 }
 
@@ -1430,7 +1450,7 @@ pub fn Feedback::sign(self : Feedback) -> Int {
 }
 
 ///|
-pub fn Feedback::var(self : Feedback) -> Expr raise ControlError {
+pub fn Feedback::variable(self : Feedback) -> Expr raise ControlError {
   control_lti_time_signature(self.sys1_).0
 }
 
@@ -1509,16 +1529,16 @@ pub fn Feedback::to_expr(self : Feedback) -> Expr raise ControlError {
 }
 
 ///|
-pub fn SISOLinearTimeInvariant::var(
+pub fn SISOLinearTimeInvariant::variable(
   self : SISOLinearTimeInvariant,
 ) -> Expr raise ControlError {
   match self {
     SISOLinearTimeInvariant::TF(tf) => tf.var_
     SISOLinearTimeInvariant::DTF(tf) => tf.var_
     SISOLinearTimeInvariant::PID(pid) => pid.var_
-    SISOLinearTimeInvariant::SeriesLTI(series) => series.var()
-    SISOLinearTimeInvariant::ParallelLTI(parallel) => parallel.var()
-    SISOLinearTimeInvariant::FeedbackLTI(feedback) => feedback.var()
+    SISOLinearTimeInvariant::SeriesLTI(series) => series.variable()
+    SISOLinearTimeInvariant::ParallelLTI(parallel) => parallel.variable()
+    SISOLinearTimeInvariant::FeedbackLTI(feedback) => feedback.variable()
   }
 }
 

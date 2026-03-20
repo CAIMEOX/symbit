@@ -507,14 +507,14 @@ pub fn domain_alg_field_from_poly(
   spec : String,
   poly_expr : String,
   gen : String,
-  alias? : String? = None,
+  extension_name? : String? = None,
   root_index? : Int = -1,
 ) -> String raise {
   let domain_obj = oracle_domain_from_spec(spec)
   let poly_obj = sympy_poly_from_expr(poly_expr, [gen])
   let call = resolve_method_callable(domain_obj, "alg_field_from_poly")
   let kwargs = py_dict_new()
-  match alias {
+  match extension_name {
     Some(name) if name != "" =>
       py_dict_set_obj(kwargs, "alias", py_string_obj(name))
     _ => ()
@@ -531,7 +531,7 @@ pub fn domain_cyclotomic_field(
   spec : String,
   n : Int,
   ss? : Bool = false,
-  alias? : String = "zeta",
+  extension_name? : String = "zeta",
   gen? : String? = None,
   root_index? : Int = -1,
 ) -> String raise {
@@ -539,7 +539,7 @@ pub fn domain_cyclotomic_field(
   let call = resolve_method_callable(domain_obj, "cyclotomic_field")
   let kwargs = py_dict_new()
   py_dict_set_obj(kwargs, "ss", py_bool_obj(ss))
-  py_dict_set_obj(kwargs, "alias", py_string_obj(alias))
+  py_dict_set_obj(kwargs, "alias", py_string_obj(extension_name))
   match gen {
     Some(name) if name != "" =>
       py_dict_set_obj(kwargs, "gen", sympy_symbol_obj(name))
@@ -3669,7 +3669,7 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-gf:\{spec}")
     }
-    let raw = (try! text[left + 1:text.length() - 1]).to_string()
+    let raw = text[left + 1:text.length() - 1].to_string()
     let parsed = parse_gf_descriptor_oracle(raw, spec)
     let p = parsed.0
     let ext_opt = parsed.1
@@ -3687,8 +3687,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-alg")
     }
-    let base = (try! text[:left]).to_string()
-    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base = text[:left].to_string()
+    let gens = text[left + 1:text.length() - 1].to_string()
     let base_obj = oracle_domain_from_spec(base)
     let ext_items = split_names(gens)
     let ext_objs : Array[@py.PyObject] = Array::new()
@@ -3704,8 +3704,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-old-poly")
     }
-    let base = (try! text[:left]).to_string()
-    let gens = (try! text[left + 15:text.length() - 1]).to_string()
+    let base = text[:left].to_string()
+    let gens = text[left + 15:text.length() - 1].to_string()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let ring_method = resolve_method_callable(base_obj, "old_poly_ring")
@@ -3717,8 +3717,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-old-frac")
     }
-    let base = (try! text[:left]).to_string()
-    let gens = (try! text[left + 16:text.length() - 1]).to_string()
+    let base = text[:left].to_string()
+    let gens = text[left + 16:text.length() - 1].to_string()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let frac_method = resolve_method_callable(base_obj, "old_frac_field")
@@ -3730,8 +3730,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-poly")
     }
-    let base = (try! text[:left]).to_string()
-    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base = text[:left].to_string()
+    let gens = text[left + 1:text.length() - 1].to_string()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let ring_method = resolve_method_callable(base_obj, "poly_ring")
@@ -3743,8 +3743,8 @@ fn oracle_domain_from_spec(spec : String) -> @py.PyObject raise {
       Some(i) => i
       None => fail("domain-spec-frac")
     }
-    let base = (try! text[:left]).to_string()
-    let gens = (try! text[left + 1:text.length() - 1]).to_string()
+    let base = text[:left].to_string()
+    let gens = text[left + 1:text.length() - 1].to_string()
     let base_obj = oracle_domain_from_spec(base)
     let symbols = sympy_exprs_from_texts(split_names(gens))
     let frac_method = resolve_method_callable(base_obj, "frac_field")
@@ -3789,7 +3789,7 @@ fn find_substring_oracle(text : String, needle : String) -> Int? {
   }
   let mut i = 0
   while i + width <= text.length() {
-    if (try! text[i:i + width]).to_string() == needle {
+    if text[i:i + width].to_string() == needle {
       return Some(i)
     }
     i += 1

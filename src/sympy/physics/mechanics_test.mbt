@@ -2,7 +2,7 @@
 fn mechanics_assert_expr(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   assert_true((try! expr_equal(@symprint.to_string(lhs), rhs)))
 }

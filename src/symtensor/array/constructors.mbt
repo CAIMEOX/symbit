@@ -59,7 +59,7 @@ pub fn eye(n : Int) -> NDimArray {
   let shape = [n, n]
   let size = n * n
   let data : Array[@symcore.Expr] = Array::new()
-  for i in 0..<size {
+  for _ in 0..<size {
     data.push(@symcore.int(0))
   }
   for i in 0..<n {

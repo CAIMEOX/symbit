@@ -2,9 +2,8 @@
 fn waves_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
-  let lhs_txt = @symprint.to_string(lhs)
   assert_true((try! physics_expr_equivalent(lhs, rhs)))
 }
 

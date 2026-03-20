@@ -2,7 +2,7 @@
 fn optics_matrix_assert_expr_equal(
   lhs : ExplicitMatrix,
   rhs : Array[String],
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let mut idx = 0
   for i in 0..<lhs.height() {

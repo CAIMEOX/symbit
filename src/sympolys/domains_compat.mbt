@@ -1291,7 +1291,7 @@ fn default_algext_gen(poly : Poly, root_index : Int) -> String raise PolyError {
 pub fn domain_alg_field_from_poly(
   domain : Domain,
   poly : Poly,
-  alias? : String? = None,
+  extension_name? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
   ignore(root_index)
@@ -1299,7 +1299,7 @@ pub fn domain_alg_field_from_poly(
     Domain::ZZ => Domain::QQ
     _ => domain
   }
-  let gen = match alias {
+  let gen = match extension_name {
     Some(name) if name != "" => name
     _ => default_algext_gen(poly, root_index)
   }
@@ -1329,17 +1329,22 @@ pub fn domain_cyclotomic_field(
   domain : Domain,
   n : Int,
   ss? : Bool = false,
-  alias? : String = "zeta",
+  extension_name? : String = "zeta",
   gen? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
-  let ext_alias = if ss { "\{alias}\{n}" } else { alias }
+  let ext_alias = if ss { "\{extension_name}\{n}" } else { extension_name }
   let poly_gen = match gen {
     Some(name) => name
     None => ext_alias
   }
   let poly = cyclotomic_poly_domain(n, poly_gen)
-  domain_alg_field_from_poly(domain, poly, alias=Some(ext_alias), root_index~)
+  domain_alg_field_from_poly(
+    domain,
+    poly,
+    extension_name=Some(ext_alias),
+    root_index~,
+  )
 }
 
 ///|
@@ -5863,10 +5868,10 @@ pub fn Domain::algebraic_field(
 pub fn Domain::alg_field_from_poly(
   self : Domain,
   poly : Poly,
-  alias? : String? = None,
+  extension_name? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
-  domain_alg_field_from_poly(self, poly, alias~, root_index~)
+  domain_alg_field_from_poly(self, poly, extension_name~, root_index~)
 }
 
 ///|
@@ -5874,11 +5879,11 @@ pub fn Domain::cyclotomic_field(
   self : Domain,
   n : Int,
   ss? : Bool = false,
-  alias? : String = "zeta",
+  extension_name? : String = "zeta",
   gen? : String? = None,
   root_index? : Int = -1,
 ) -> Domain raise PolyError {
-  domain_cyclotomic_field(self, n, ss~, alias~, gen~, root_index~)
+  domain_cyclotomic_field(self, n, ss~, extension_name~, gen~, root_index~)
 }
 
 ///|

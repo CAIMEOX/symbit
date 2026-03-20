@@ -444,34 +444,6 @@ fn segment_perpendicular_from_point(
   segment(pt.with_dim(2), try! base.projection(pt))
 }
 
-///|
-fn expr_cmp(lhs : Expr, rhs : Expr) -> Int {
-  match geo_expr_sign(lhs - rhs) {
-    Some(sign) if sign < 0 => -1
-    Some(sign) if sign > 0 => 1
-    _ => geo_expr_text(lhs).compare(geo_expr_text(rhs))
-  }
-}
-
-///|
-fn sort_exprs(items : Array[Expr]) -> Array[Expr] {
-  let out : Array[Expr] = []
-  for item in items {
-    out.push(item)
-  }
-  for i in 0..<out.length() {
-    for j in (i + 1)..<out.length() {
-      if expr_cmp(out[i], out[j]) > 0 {
-        let tmp = out[i]
-        out[i] = out[j]
-        out[j] = tmp
-      }
-    }
-  }
-  out
-}
-
-///|
 fn polygon_bisectors_map(
   vertices : Array[Point],
   angles : Map[Point, Expr],
@@ -574,7 +546,7 @@ pub fn Polygon::repr(self : Polygon) -> String {
 }
 
 ///|
-pub fn Polygon::ambient_dimension(self : Polygon) -> Int {
+pub fn Polygon::ambient_dimension(_self : Polygon) -> Int {
   2
 }
 
@@ -645,7 +617,7 @@ pub fn Polygon::encloses(
 
 ///|
 pub fn Polygon::plot_interval(
-  self : Polygon,
+  _self : Polygon,
   parameter? : Expr = symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero(), geo_one()]
@@ -855,7 +827,7 @@ pub fn RegularPolygon::repr(self : RegularPolygon) -> String {
 }
 
 ///|
-pub fn RegularPolygon::ambient_dimension(self : RegularPolygon) -> Int {
+pub fn RegularPolygon::ambient_dimension(_self : RegularPolygon) -> Int {
   2
 }
 
@@ -1088,7 +1060,7 @@ pub fn Triangle::repr(self : Triangle) -> String {
 }
 
 ///|
-pub fn Triangle::ambient_dimension(self : Triangle) -> Int {
+pub fn Triangle::ambient_dimension(_self : Triangle) -> Int {
   2
 }
 
@@ -1295,7 +1267,7 @@ pub fn Triangle::circumradius(
 
 ///|
 pub fn Triangle::circumcircle(self : Triangle) -> Circle raise GeometryError {
-  Circle::{ center_: self.circumcenter(), radius_: try! self.circumradius() }
+  Circle::{ center_: self.circumcenter(), radius_: self.circumradius() }
 }
 
 ///|

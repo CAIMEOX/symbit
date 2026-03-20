@@ -450,7 +450,6 @@ test "domains: set_domain and unify_with_symbols parity" {
     let lhs = item.0
     let rhs = item.1
     let symbols = item.2
-    let symbols_text = symbols.join(",")
     let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(lhs).unify_with_symbols(
       @sympolys.domain_from_string(rhs),
       symbols,
@@ -555,13 +554,15 @@ test "domains: algebraic_field parity and Domain methods" {
       @sympolys.domain_from_string(spec),
     )
     let ours = @sympolys.domain_to_sympy_string(
-      @sympolys.domain_from_string(spec).alg_field_from_poly(poly, alias=Some(ext_alias)),
+      @sympolys.domain_from_string(
+        spec,
+      ).alg_field_from_poly(poly, extension_name=Some(ext_alias)),
     )
     let oracle = domain_alg_field_from_poly(
       spec,
       poly_expr,
       gen,
-      alias=Some(ext_alias),
+      extension_name=Some(ext_alias),
     )
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
@@ -596,7 +597,7 @@ test "domains: algebraic_field parity and Domain methods" {
 
   let direct_alg_field = @sympolys.domain_from_string("QQ").alg_field_from_poly(
     Poly::from_expr((x ^ @symcore.int(2)) - @symcore.int(2), ["x"], Domain::QQ),
-    alias=Some("a"),
+    extension_name=Some("a"),
   )
   match direct_alg_field {
     Domain::AlgExt(_, gens, rels) => {
@@ -621,7 +622,7 @@ test "domains: algebraic_field parity and Domain methods" {
       @sympolys.domain_from_string(spec).cyclotomic_field(
         n,
         ss~,
-        alias=ext_alias,
+        extension_name=ext_alias,
         gen=gen_opt,
       ),
     )
@@ -629,7 +630,7 @@ test "domains: algebraic_field parity and Domain methods" {
       spec,
       n,
       ss~,
-      alias=ext_alias,
+      extension_name=ext_alias,
       gen=gen_opt,
     )
     assert_eq(trim_ws(ours), trim_ws(oracle))
@@ -637,7 +638,7 @@ test "domains: algebraic_field parity and Domain methods" {
 
   let direct_cyclo = @sympolys.domain_from_string("QQ").cyclotomic_field(
     5,
-    alias="a",
+    extension_name="a",
     gen=Some("t"),
   )
   match direct_cyclo {

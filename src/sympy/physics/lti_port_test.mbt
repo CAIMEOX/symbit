@@ -5,7 +5,7 @@ test "physics.control.lti: transfer function parity" {
     @symcore.int(3) *
     s *
     (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1))
-  let tf = TransferFunction::from_rational_expression(expr, var=s)
+  let tf = TransferFunction::from_rational_expression(expr, variable=s)
   assert_true(
     control_expr_eq(
       tf.to_expr(),

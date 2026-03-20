@@ -82,23 +82,6 @@ fn kane_generalized_forces(
   out
 }
 
-///|
-fn kane_kinetic_lagrangian(
-  frame : @symvector.ReferenceFrame,
-  q_ind : Array[Expr],
-  u_ind : Array[Expr],
-  bodies : Array[BodyLike],
-) -> Expr raise @symvector.VectorError {
-  let qdots = kane_qdots(q_ind)
-  let to_qdots : Array[Substitution] = []
-  for i in 0..<u_ind.length() {
-    to_qdots.push((u_ind[i], qdots[i]))
-  }
-  let kinetic = try! kinetic_energy(frame, bodies)
-  msubs_expr(kinetic, to_qdots)
-}
-
-///|
 pub fn kanes_method(
   frame : @symvector.ReferenceFrame,
   q_ind : Array[Expr],
@@ -360,7 +343,7 @@ pub fn KanesMethod::to_linearizer(
 
 ///|
 pub fn KanesMethod::auxiliary_eqs(
-  self : KanesMethod,
+  _self : KanesMethod,
 ) -> @symphysics.ExplicitMatrix {
   mechanics_zero_column(0)
 }

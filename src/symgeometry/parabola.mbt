@@ -38,7 +38,7 @@ pub fn Parabola::repr(self : Parabola) -> String raise GeometryError {
 }
 
 ///|
-pub fn Parabola::ambient_dimension(self : Parabola) -> Int {
+pub fn Parabola::ambient_dimension(_self : Parabola) -> Int {
   2
 }
 
@@ -53,7 +53,7 @@ pub fn Parabola::directrix(self : Parabola) -> Line {
 }
 
 ///|
-pub fn Parabola::eccentricity(self : Parabola) -> Expr {
+pub fn Parabola::eccentricity(_self : Parabola) -> Expr {
   geo_one()
 }
 

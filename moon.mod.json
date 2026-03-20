@@ -1,6 +1,6 @@
 {
   "name": "CAIMEOX/symbit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "deps": {
     "CAIMEOX/qc_pyext": "0.1.1",
     "Kaida-Amethyst/python": "0.1.7",
@@ -9,9 +9,8 @@
   "readme": "README.mbt.md",
   "repository": "https://github.com/CAIMEOX/symbit.git",
   "license": "Apache-2.0",
-  "keywords": ["symbolic", "math", "algebra", "polynomials"],
+  "keywords": ["symbolic", "math", "algebra", "polynomials", "physics"],
   "description": "A symbolic mathematics library for Moonbit.",
   "source": "src",
-  "exclude": ["src/sympy", "*test.mbt"],
-  "preferred-target": "native"
+  "exclude": ["src/sympy"]
 }

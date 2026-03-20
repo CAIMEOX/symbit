@@ -2,7 +2,7 @@
 fn gaussopt_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
   assert_true((try! expr_equal(ours, rhs)))
@@ -12,7 +12,7 @@ fn gaussopt_assert_expr_equal(
 fn gaussopt_assert_matrix_equal(
   lhs : ExplicitMatrix,
   rhs : Array[String],
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let mut idx = 0
   for i in 0..<lhs.height() {

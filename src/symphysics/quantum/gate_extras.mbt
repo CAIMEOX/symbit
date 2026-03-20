@@ -8,7 +8,7 @@
 /// - `zx_basis_transform()` / `zy_basis_transform()` using the cached matrices.
 
 ///|
-struct GateNormalizationState {
+priv struct GateNormalizationState {
   mut normalized : Bool
 }
 

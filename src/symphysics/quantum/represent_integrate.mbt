@@ -203,9 +203,12 @@ pub fn integrate_result(
     return result
   }
   match represent_resolve_integration_basis(orig_expr, basis) {
-    Some(basis_state) =>
-      match (try? enumerate_states(basis_state, index_list=unities)) {
-        Ok(states) => {
+    Some(basis_state) => {
+      let states = try Some(enumerate_states(basis_state, index_list=unities)) catch {
+        _ => None
+      }
+      match states {
+        Some(states) => {
           let mut out = result
           for state in states {
             for coord_name in represent_state_coordinates(state) {
@@ -214,8 +217,9 @@ pub fn integrate_result(
           }
           out
         }
-        Err(_) => result
+        None => result
       }
+    }
     None => result
   }
 }

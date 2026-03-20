@@ -46,7 +46,7 @@ pub fn cartan_type_from_string(ct : String) -> CartanType raise {
   if len <= 1 {
     fail("Argument must be a string like 'A3'")
   }
-  let num_str = (try! ct[1:len]).to_string()
+  let num_str = ct[1:len].to_string()
   let n = @strconv.parse_int(num_str, base=10)
   cartan_type_from_parts(series, n)
 }
@@ -311,7 +311,7 @@ fn dynkin_type_a(n : Int) -> String {
 fn dynkin_type_b(n : Int) -> String {
   let zeros : Array[String] = Array::new()
   let nums : Array[String] = Array::new()
-  for i in 1..<n {
+  for _ in 1..<n {
     zeros.push("0")
   }
   for i in 1..<=n {
@@ -327,7 +327,7 @@ fn dynkin_type_b(n : Int) -> String {
 fn dynkin_type_c(n : Int) -> String {
   let zeros : Array[String] = Array::new()
   let nums : Array[String] = Array::new()
-  for i in 1..<n {
+  for _ in 1..<n {
     zeros.push("0")
   }
   for i in 1..<=n {

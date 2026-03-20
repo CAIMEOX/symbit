@@ -307,38 +307,43 @@ pub fn Column::solve_for_reaction_loads(
     eqs.push(cm_right_limit_at(axial_force, x_name, loc))
   }
   let unknowns = applied_supports + self.applied_hinges_ + [c_n, c_u]
-  match (try? cm_linear_solve(eqs, unknowns)) {
-    Ok(Some(solution)) => {
-      self.reaction_loads_ = {}
-      for reaction in applied_supports {
-        match reaction {
-          @symcore.Expr::Symbol(name) =>
-            self.reaction_loads_[name] = cm_simplify(
-              solution.get(name).unwrap_or(@symcore.int(0)),
-            )
-          _ => ()
-        }
-      }
-      self.hinge_extensions_ = {}
-      for hinge in self.applied_hinges_ {
-        match hinge {
-          @symcore.Expr::Symbol(name) =>
-            self.hinge_extensions_[name] = cm_simplify(
-              solution.get(name).unwrap_or(@symcore.int(0)),
-            )
-          _ => ()
-        }
-      }
-      self.integration_constants_ = {}
-      self.integration_constants_["C_N"] = cm_simplify(
-        solution.get("C_N").unwrap_or(@symcore.int(0)),
-      )
-      self.integration_constants_["C_u"] = cm_simplify(
-        solution.get("C_u").unwrap_or(@symcore.int(0)),
-      )
-      self.is_solved_ = true
-    }
+  try cm_linear_solve(eqs, unknowns) catch {
     _ => raise ColumnError::SolveError("unable to solve column reactions")
+  } noraise {
+    result =>
+      match result {
+        Some(solution) => {
+          self.reaction_loads_ = {}
+          for reaction in applied_supports {
+            match reaction {
+              @symcore.Expr::Symbol(name) =>
+                self.reaction_loads_[name] = cm_simplify(
+                  solution.get(name).unwrap_or(@symcore.int(0)),
+                )
+              _ => ()
+            }
+          }
+          self.hinge_extensions_ = {}
+          for hinge in self.applied_hinges_ {
+            match hinge {
+              @symcore.Expr::Symbol(name) =>
+                self.hinge_extensions_[name] = cm_simplify(
+                  solution.get(name).unwrap_or(@symcore.int(0)),
+                )
+              _ => ()
+            }
+          }
+          self.integration_constants_ = {}
+          self.integration_constants_["C_N"] = cm_simplify(
+            solution.get("C_N").unwrap_or(@symcore.int(0)),
+          )
+          self.integration_constants_["C_u"] = cm_simplify(
+            solution.get("C_u").unwrap_or(@symcore.int(0)),
+          )
+          self.is_solved_ = true
+        }
+        None => raise ColumnError::SolveError("unable to solve column reactions")
+      }
   }
 }
 

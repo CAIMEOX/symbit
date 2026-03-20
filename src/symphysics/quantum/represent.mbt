@@ -233,9 +233,11 @@ pub fn represent(
                       match qft_represent(expr, nqubits) {
                         Some(value) => value
                         None =>
-                          match (try? shor_represent(expr, nqubits)) {
-                            Ok(Some(value)) => value
-                            _ =>
+                          match (try shor_represent(expr, nqubits) catch {
+                            _ => None
+                          }) {
+                            Some(value) => value
+                            None =>
                               match density_from_expr(expr) {
                                 Some(d) =>
                                   try! density_matrix(
@@ -260,15 +262,17 @@ pub fn represent(
                                                 ),
                                               )
                                             None =>
-                                              match
-                                                (try? represent_spin_rotation(
-                                                  expr, spin_j,
-                                                )) {
-                                                Ok(Some(matrix)) =>
+                                              match (try represent_spin_rotation(
+                                                expr,
+                                                spin_j,
+                                              ) catch {
+                                                _ => None
+                                              }) {
+                                                Some(matrix) =>
                                                   MatrixScalarValue::Matrix(
                                                     matrix,
                                                   )
-                                                _ =>
+                                                None =>
                                                   match qubit_from_expr(expr) {
                                                     Some(_) =>
                                                       MatrixScalarValue::Matrix(

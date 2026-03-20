@@ -494,39 +494,27 @@ fn quantum_apply_operator_pair(
               match cartesian_apply_operator_to_ket(lhs, rhs) {
                 Some(applied) => Some(applied)
                 None =>
-                  match (try? grover_apply_operator_to_ket(lhs, rhs)) {
-                    Ok(Some(applied)) => Some(applied)
-                    _ =>
-                      match (try? qft_apply_operator_to_ket(lhs, rhs)) {
-                        Ok(Some(applied)) => Some(applied)
-                        _ =>
-                          match (try? shor_apply_operator_to_ket(lhs, rhs)) {
-                            Ok(Some(applied)) => Some(applied)
-                            _ =>
-                              match pauli_apply_operator_to_ket(lhs, rhs) {
+                  match qapply_try_special_operator_to_ket(lhs, rhs) {
+                    Some(applied) => Some(applied)
+                    None =>
+                      match pauli_apply_operator_to_ket(lhs, rhs) {
+                        Some(applied) => Some(applied)
+                        None =>
+                          match piab_apply_operator_to_ket(lhs, rhs) {
+                            Some(applied) => Some(applied)
+                            None =>
+                              match sho_apply_operator_to_ket(lhs, rhs) {
                                 Some(applied) => Some(applied)
                                 None =>
-                                  match piab_apply_operator_to_ket(lhs, rhs) {
+                                  match boson_apply_operator_to_ket(lhs, rhs) {
                                     Some(applied) => Some(applied)
                                     None =>
-                                      match
-                                        sho_apply_operator_to_ket(lhs, rhs) {
+                                      match fermion_apply_operator_to_ket(
+                                        lhs,
+                                        rhs,
+                                      ) {
                                         Some(applied) => Some(applied)
-                                        None =>
-                                          match
-                                            boson_apply_operator_to_ket(
-                                              lhs, rhs,
-                                            ) {
-                                            Some(applied) => Some(applied)
-                                            None =>
-                                              match
-                                                fermion_apply_operator_to_ket(
-                                                  lhs, rhs,
-                                                ) {
-                                                Some(applied) => Some(applied)
-                                                None => None
-                                              }
-                                          }
+                                        None => None
                                       }
                                   }
                               }
@@ -541,6 +529,22 @@ fn quantum_apply_operator_pair(
       quantum_is_bra_expr(lhs) &&
       quantum_is_operator_expr(rhs) => boson_apply_operator_to_bra(lhs, rhs)
     _ => None
+  }
+}
+
+///|
+fn qapply_try_special_operator_to_ket(
+  lhs : Expr,
+  rhs : Expr,
+) -> Expr? {
+  try grover_apply_operator_to_ket(lhs, rhs) catch {
+    _ =>
+      try qft_apply_operator_to_ket(lhs, rhs) catch {
+        _ =>
+          try shor_apply_operator_to_ket(lhs, rhs) catch {
+            _ => None
+          }
+      }
   }
 }
 

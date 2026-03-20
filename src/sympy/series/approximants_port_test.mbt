@@ -18,10 +18,7 @@ fn split_list_items(list_str : String) -> Array[String] {
   if trimmed.length() < 2 {
     return []
   }
-  let inner_view = try trimmed[1:trimmed.length() - 1] catch {
-    _ => return []
-  }
-  let inner = inner_view.to_string()
+  let inner = trimmed[1:trimmed.length() - 1].to_string()
   if inner.trim().length() == 0 {
     return []
   }

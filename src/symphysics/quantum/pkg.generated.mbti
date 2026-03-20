@@ -715,8 +715,6 @@ pub enum GateKind {
 }
 pub impl Eq for GateKind
 
-type GateNormalizationState
-
 pub struct GateRule {
   left : Array[@symcore.Expr]
   right : Array[@symcore.Expr]

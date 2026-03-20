@@ -1,7 +1,6 @@
 ///|
 using @symgeometry {
   type GeometryEntity,
-  type GeometryError,
   type Point,
   are_coplanar,
   are_similar,
@@ -48,7 +47,7 @@ fn geometry_py_expr_text(expr : @symcore.Expr) -> String {
 fn geometry_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
   assert_true((try! geometry_expr_equal(ours, rhs)))
@@ -59,7 +58,7 @@ fn geometry_assert_expr_close(
   lhs : @symcore.Expr,
   rhs : String,
   tol : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
   assert_eq((try! geometry_eval_str(
@@ -132,33 +131,12 @@ fn geometry_assert_point_set_equal(
 ///|
 fn geometry_entities_summary(
   items : Array[GeometryEntity],
-) -> String raise GeometryError {
+) -> String raise {
   let parts : Array[String] = []
   for item in items {
     parts.push(item.repr())
   }
   "[" + parts.join(", ") + "]"
-}
-
-///|
-fn geometry_entity_set_summary(
-  items : Array[GeometryEntity],
-) -> String raise GeometryError {
-  let parts : Array[String] = []
-  for item in items {
-    parts.push(item.repr())
-  }
-  let n = parts.length()
-  for i in 0..<n {
-    for j in (i + 1)..<n {
-      if parts[i].compare(parts[j]) > 0 {
-        let tmp = parts[i]
-        parts[i] = parts[j]
-        parts[j] = tmp
-      }
-    }
-  }
-  "{" + parts.join(", ") + "}"
 }
 
 ///|

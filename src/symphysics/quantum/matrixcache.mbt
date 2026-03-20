@@ -21,9 +21,10 @@ pub let sqrt2_inv : Expr = @symcore.raw_pow(
 fn cached_matrix(
   rows : Array[Array[Expr]],
 ) -> @symphysics.ExplicitMatrix {
-  match (try? @symphysics.explicit_matrix_from_rows(rows)) {
-    Ok(matrix) => matrix
-    Err(_) => panic()
+  try @symphysics.explicit_matrix_from_rows(rows) catch {
+    _ => panic()
+  } noraise {
+    matrix => matrix
   }
 }
 

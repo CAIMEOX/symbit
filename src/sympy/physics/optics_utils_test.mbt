@@ -2,9 +2,8 @@
 fn optics_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
-  let lhs_txt = try! physics_expr_str(lhs)
   assert_true((try! control_expr_equivalent(lhs, rhs)))
 }
 

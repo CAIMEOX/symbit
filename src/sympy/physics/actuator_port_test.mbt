@@ -1,32 +1,3 @@
-///|
-fn actuator_compact(text : String) -> String {
-  text.replace(old=" ", new="")
-}
-
-///|
-fn actuator_assert_summary(
-  lhs : String,
-  rhs : String,
-  context : String,
-) -> Unit raise {
-  assert_eq(actuator_compact(lhs), actuator_compact(rhs))
-}
-
-///|
-fn actuator_load_summary(loads : Array[Load]) -> String {
-  "[" +
-  loads
-  .map(fn(load) {
-    match load {
-      Load::ForceLoad(value) => value.repr()
-      Load::TorqueLoad(value) => value.repr()
-    }
-  })
-  .join(", ") +
-  "]"
-}
-
-///|
 fn actuator_assert_force_load(
   load : Load,
   point_name : String,

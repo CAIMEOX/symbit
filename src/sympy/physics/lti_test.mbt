@@ -10,7 +10,7 @@ test "physics.control.lti: transfer function surface" {
     @symcore.int(3) *
     s *
     (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-1))
-  let tf = TransferFunction::from_rational_expression(expr, var=s)
+  let tf = TransferFunction::from_rational_expression(expr, variable=s)
   let expected_tf = transfer_function(
     @symcore.int(2) * (s ^ @symcore.int(2)) +
     @symcore.int(3) * s +
@@ -113,7 +113,7 @@ test "physics.control.lti: pid and create_transfer_function" {
   let ki = @symcore.symbol("ki")
   let kd = @symcore.symbol("kd")
   let tfilt = @symcore.symbol("tf")
-  let pid = pid_controller(kp~, ki~, kd~, tf=tfilt, var=s)
+  let pid = pid_controller(kp~, ki~, kd~, tf=tfilt, variable=s)
   let pid_doit = pid.doit()
   let pid_expected = transfer_function(
     kp * tfilt * (s ^ @symcore.int(2)) +

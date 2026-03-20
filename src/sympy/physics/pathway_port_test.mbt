@@ -1,23 +1,3 @@
-///|
-fn pathway_compact(text : String) -> String {
-  text.replace(old=" ", new="")
-}
-
-///|
-fn pathway_assert_summary(
-  lhs : String,
-  rhs : String,
-  context : String,
-) -> Unit raise {
-  assert_eq(pathway_compact(lhs), pathway_compact(rhs))
-}
-
-///|
-fn pathway_force_summary(loads : Array[Force]) -> String {
-  "[" + loads.map(fn(load) { load.repr() }).join(", ") + "]"
-}
-
-///|
 fn pathway_assert_force(
   load : Force,
   point_name : String,
@@ -25,7 +5,7 @@ fn pathway_assert_force(
   rhs_x : String,
   rhs_y : String,
   rhs_z : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   assert_eq(load.point.name(), point_name)
   let comps = load.force.to_matrix(frame)

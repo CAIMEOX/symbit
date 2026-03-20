@@ -1,7 +1,7 @@
 ///|
 fn symbolic_system_entries_string(
   matrix : @symphysics.ExplicitMatrix,
-) -> String raise @symphysics.PhysicsError {
+) -> String {
   let items : Array[String] = []
   for i in 0..<matrix.height() {
     for j in 0..<matrix.width() {

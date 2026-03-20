@@ -165,10 +165,10 @@ pub fn lagranges_method(
   hol_coneqs? : Array[Expr] = [],
 ) -> LagrangesMethod raise @symphysics.PhysicsError {
   try! validate_coordinates(coordinates~, is_dynamicsymbols=true)
-  let chosen_frame = match
-    (try? lagrange_default_frame(frame, bodies, forcelist)) {
-    Ok(value) => Some(value)
-    Err(_) => None
+  let chosen_frame = try lagrange_default_frame(frame, bodies, forcelist) catch {
+    _ => None
+  } noraise {
+    value => Some(value)
   }
   let lambda_syms = lagrange_lambda_symbols(hol_coneqs.length())
   LagrangesMethod::{

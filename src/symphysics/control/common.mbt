@@ -4,12 +4,6 @@
 ///|
 pub type ControlComplex = (Double, Double)
 
-///|
-fn control_complex(re : Double, im : Double) -> ControlComplex {
-  (re, im)
-}
-
-///|
 fn control_expr_number(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
     @symcore.Expr::Number(n) => Some(n)
@@ -427,16 +421,6 @@ fn control_poly_eval_complex(
   acc
 }
 
-///|
-fn control_poly_eval_real(coeffs : Array[Double], x : Double) -> Double {
-  let mut acc = 0.0
-  for coeff in coeffs {
-    acc = acc * x + coeff
-  }
-  acc
-}
-
-///|
 fn control_trim_leading_zeros(coeffs : Array[Double]) -> Array[Double] {
   let mut idx = 0
   while idx < coeffs.length() - 1 && coeffs[idx].abs() <= 1.0e-16 {

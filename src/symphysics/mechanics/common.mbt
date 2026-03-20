@@ -84,11 +84,6 @@ fn mech_half_expr() -> Expr {
 }
 
 ///|
-fn mech_neg(expr : Expr) -> Expr {
-  int(-1) * expr
-}
-
-///|
 fn mech_simplify_expr(expr : Expr) -> Expr {
   @symsimplify.ratsimp(@symsimplify.simplify(expr, max_passes=6), max_passes=4)
 }
@@ -348,15 +343,6 @@ fn mech_load_at_frame(load : Load, frame : @symvector.ReferenceFrame) -> Bool {
   }
 }
 
-///|
-fn mech_load_vector(load : Load) -> @symvector.Vector {
-  match load {
-    Load::ForceLoad(value) => value.force
-    Load::TorqueLoad(value) => value.torque
-  }
-}
-
-///|
 pub fn Particle::as_bodylike(self : Particle) -> BodyLike {
   BodyLike::ParticleLike(self)
 }

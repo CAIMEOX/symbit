@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {int, symbol}
 
 ///|
 test "factor_list x^4 - 1 over ZZ" {

@@ -2,7 +2,7 @@
 fn units_port_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
   assert_true((try! expr_equal(ours, rhs)))

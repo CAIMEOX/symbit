@@ -2,7 +2,7 @@
 fn pauli_port_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = try! physics_srepr(@symprint.to_string(lhs))
   assert_eq(ours, rhs)

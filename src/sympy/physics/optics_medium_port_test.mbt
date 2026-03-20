@@ -2,7 +2,7 @@
 fn medium_port_assert_expr_equal(
   lhs : @symcore.Expr,
   rhs : String,
-  context : String,
+  _context : String,
 ) -> Unit raise {
   let ours = try! physics_eval_str(@symprint.to_string(lhs))
   assert_eq(ours, rhs)
