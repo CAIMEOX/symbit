@@ -109,6 +109,16 @@ fn rk_from_expr(expr : Expr) -> RkExpr? {
 }
 
 ///|
+fn qft_exact_rational(num : Int, den : Int) -> Expr {
+  let result : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match result {
+    Ok(value) => value
+    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  }
+}
+
+///|
 fn rk_phase(k : Int) -> Expr {
   let sign = if k > 0 {
     int(1)
@@ -139,7 +149,7 @@ fn rk_target_matrix(
 
 ///|
 fn qft_norm(size : Int) -> Expr {
-  @symcore.raw_pow(int(size), try! @symcore.rational_from_ints(-1, 2))
+  @symcore.raw_pow(int(size), qft_exact_rational(-1, 2))
 }
 
 ///|
@@ -257,7 +267,7 @@ pub fn qft_represent(
       let core = qft_core_matrix(fourier)
       Some(
         MatrixScalarValue::Matrix(
-          try! embed_gate_matrix(
+          embed_gate_matrix(
             core,
             fourier.start,
             fourier.finish,
@@ -276,8 +286,8 @@ pub fn qft_represent(
           }
           Some(
             MatrixScalarValue::Matrix(
-              try! embed_gate_matrix(
-                try! rk_target_matrix(rk_expr),
+              embed_gate_matrix(
+                rk_target_matrix(rk_expr),
                 rk_expr.target,
                 rk_expr.target + 1,
                 effective_nqubits,
@@ -297,12 +307,12 @@ pub fn qft_apply_operator_to_ket(
 ) -> Expr? raise @symphysics.PhysicsError {
   match (fourier_from_expr(op_expr), qubit_from_expr(ket_expr)) {
     (Some(_), Some(q)) => {
-      let matrix = match qft_represent(op_expr, q.nqubits()) {
-        Some(MatrixScalarValue::Matrix(matrix)) => matrix
-        _ => return None
-      }
+        let matrix = match qft_represent(op_expr, q.nqubits()) {
+          Some(MatrixScalarValue::Matrix(matrix)) => matrix
+          _ => return None
+        }
       let vec = qubit_to_matrix(ket_expr, nqubits=q.nqubits())
-      Some(matrix_to_qubit(try! matrix.mul(vec)))
+      Some(matrix_to_qubit(matrix.mul(vec)))
     }
     (None, Some(q)) =>
       match rk_from_expr(op_expr) {
@@ -312,7 +322,7 @@ pub fn qft_apply_operator_to_ket(
               "Rk target index out of range",
             )
           }
-          if (try! q.bit(rk_expr.target)) == 0 {
+          if q.bit(rk_expr.target) == 0 {
             Some(ket_expr)
           } else {
             Some(

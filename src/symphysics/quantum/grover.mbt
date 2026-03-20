@@ -49,14 +49,24 @@ fn grover_marked_values(expr : Expr) -> Array[Int]? {
 }
 
 ///|
+fn grover_exact_rational(num : Int, den : Int) -> Expr {
+  let result : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match result {
+    Ok(value) => value
+    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  }
+}
+
+///|
 fn grover_superposition_amplitude(nqubits : Int) -> Expr {
   let size = 1 << nqubits
-  @symcore.raw_pow(int(size), try! @symcore.rational_from_ints(-1, 2))
+  @symcore.raw_pow(int(size), grover_exact_rational(-1, 2))
 }
 
 ///|
 fn grover_diffusion_weight(nqubits : Int) -> Expr {
-  try! @symcore.rational_from_ints(2, 1 << nqubits)
+  grover_exact_rational(2, 1 << nqubits)
 }
 
 ///|
@@ -96,8 +106,8 @@ pub fn oracle_gate(
   nqubits : Int,
   marked : Array[Int],
 ) -> Expr raise @symphysics.PhysicsError {
-  try! grover_validate_nqubits(nqubits)
-  try! grover_validate_marked(marked, nqubits)
+  grover_validate_nqubits(nqubits)
+  grover_validate_marked(marked, nqubits)
   @symcore.raw_function("OracleGate", [
     int(nqubits),
     grover_marked_tuple(marked),
@@ -106,7 +116,7 @@ pub fn oracle_gate(
 
 ///|
 pub fn w_gate(nqubits : Int) -> Expr raise @symphysics.PhysicsError {
-  try! grover_validate_nqubits(nqubits)
+  grover_validate_nqubits(nqubits)
   @symcore.raw_function("WGate", [int(nqubits)])
 }
 
@@ -152,12 +162,12 @@ fn w_gate_from_expr(expr : Expr) -> WGateExpr? {
 pub fn superposition_basis(
   nqubits : Int,
 ) -> Expr raise @symphysics.PhysicsError {
-  try! grover_validate_nqubits(nqubits)
+  grover_validate_nqubits(nqubits)
   let amp = grover_superposition_amplitude(nqubits)
   let terms : Array[Expr] = []
   for value in 0..<(1 << nqubits) {
-    let bits = try! int_to_bits(value, nqubits)
-    let state = (try! qubit_from_bits(bits)).as_expr()
+    let bits = int_to_bits(value, nqubits)
+    let state = qubit_from_bits(bits).as_expr()
     terms.push(amp * state)
   }
   quantum_add_from_args_preserve(terms)
@@ -206,8 +216,8 @@ fn grover_w_apply(
     } else {
       weight
     }
-    let bits = try! int_to_bits(value, w_expr.nqubits)
-    let state = (try! qubit_from_bits(bits)).as_expr()
+    let bits = int_to_bits(value, w_expr.nqubits)
+    let state = qubit_from_bits(bits).as_expr()
     if coeff == int(1) {
       terms.push(state)
     } else {
@@ -225,11 +235,10 @@ pub fn grover_apply_operator_to_ket(
   match qubit_from_expr(ket_expr) {
     Some(ket) =>
       match oracle_gate_from_expr(op_expr) {
-        Some(oracle_expr) =>
-          Some(try! grover_oracle_apply(oracle_expr, ket, ket_expr))
+        Some(oracle_expr) => Some(grover_oracle_apply(oracle_expr, ket, ket_expr))
         None =>
           match w_gate_from_expr(op_expr) {
-            Some(w_expr) => Some(try! grover_w_apply(w_expr, ket, ket_expr))
+            Some(w_expr) => Some(grover_w_apply(w_expr, ket, ket_expr))
             None => None
           }
       }
@@ -287,11 +296,11 @@ pub fn grover_represent(
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   match oracle_gate_from_expr(expr) {
     Some(oracle_expr) =>
-      Some(MatrixScalarValue::Matrix(try! grover_oracle_matrix(oracle_expr)))
+      Some(MatrixScalarValue::Matrix(grover_oracle_matrix(oracle_expr)))
     None =>
       match w_gate_from_expr(expr) {
         Some(w_expr) =>
-          Some(MatrixScalarValue::Matrix(try! grover_w_matrix(w_expr)))
+          Some(MatrixScalarValue::Matrix(grover_w_matrix(w_expr)))
         None =>
           if quantum_expr_has_name(expr, "Qubit") ||
             quantum_expr_has_name(expr, "QubitBra") {
@@ -316,7 +325,7 @@ pub fn grover_iteration(
       )
   }
   quantum_mul_from_args_preserve([
-    try! w_gate(oracle.nqubits),
+    w_gate(oracle.nqubits),
     oracle_expr,
     qstate,
   ])
@@ -328,18 +337,18 @@ pub fn apply_grover(
   nqubits : Int,
   iterations? : Int = -1,
 ) -> Expr raise @symphysics.PhysicsError {
-  try! grover_validate_nqubits(nqubits)
-  try! grover_validate_marked(marked, nqubits)
+  grover_validate_nqubits(nqubits)
+  grover_validate_marked(marked, nqubits)
   let total_iterations = if iterations >= 0 {
     iterations
   } else {
     grover_default_iterations(nqubits)
   }
-  let oracle_expr = try! oracle_gate(nqubits, marked)
-  let mut iterated = try! superposition_basis(nqubits)
+  let oracle_expr = oracle_gate(nqubits, marked)
+  let mut iterated = superposition_basis(nqubits)
   for _ in 0..<total_iterations {
-    let stepped = qapply(try! grover_iteration(iterated, oracle_expr))
-    iterated = try! matrix_to_qubit(try! qubit_to_matrix(stepped, nqubits~))
+    let stepped = qapply(grover_iteration(iterated, oracle_expr))
+    iterated = matrix_to_qubit(qubit_to_matrix(stepped, nqubits~))
   }
   iterated
 }

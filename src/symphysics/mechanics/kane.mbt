@@ -66,14 +66,11 @@ fn kane_generalized_forces(
       match load {
         Load::ForceLoad(value) =>
           total = mech_simplify_expr(
-            total +
-            (try! value.point.partial_velocity(frame, speed).dot(value.force)),
+            total + value.point.partial_velocity(frame, speed).dot(value.force),
           )
         Load::TorqueLoad(value) => {
-          let partials = try! value.frame.partial_velocity(frame, [speed])
-          total = mech_simplify_expr(
-            total + (try! partials[0].dot(value.torque)),
-          )
+          let partials = value.frame.partial_velocity(frame, [speed])
+          total = mech_simplify_expr(total + partials[0].dot(value.torque))
         }
       }
     }
@@ -91,8 +88,8 @@ pub fn kanes_method(
   forcelist? : Array[Load] = [],
   explicit_kinematics? : Bool = true,
 ) -> KanesMethod raise @symphysics.PhysicsError {
-  try! validate_coordinates(coordinates=q_ind, speeds=u_ind)
-  ignore(try! kane_identity_kdes(q_ind, u_ind, kd_eqs))
+  validate_coordinates(coordinates=q_ind, speeds=u_ind)
+  ignore(kane_identity_kdes(q_ind, u_ind, kd_eqs))
   KanesMethod::{
     frame_: frame,
     q_ind_: q_ind.copy(),
@@ -209,15 +206,15 @@ pub fn KanesMethod::kanes_equations(
   bodies : Array[BodyLike],
   loads : Array[Load],
 ) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise {
-  let kd_subs = try! self.kindiffdict()
+  let kd_subs = self.kindiffdict()
   self.bodies_ = bodies.copy()
   self.loads_ = loads.copy()
 
   let lagrangian_expr = msubs_expr(
-    try! lagrangian(self.frame_, bodies),
+    lagrangian(self.frame_, bodies),
     kd_subs,
   )
-  let generalized = try! kane_generalized_forces(
+  let generalized = kane_generalized_forces(
     self.frame_,
     self.u_ind_,
     loads,
@@ -242,22 +239,24 @@ pub fn KanesMethod::kanes_equations(
   self.forcing_ = mechanics_matrix_column(
     mechanics_matrix_negative_residual(dynamic_eqs, udots),
   )
-
-  let top_rows : Array[Array[Expr]] = []
-  for i in 0..<self.q_ind_.length() {
-    let row = Array::make(
-      self.q_ind_.length() + self.u_ind_.length(),
-      int(0),
-    )
-    row[i] = int(1)
-    top_rows.push(row)
-  }
-  let lower = mechanics_matrix_entries(self.mass_matrix_)
-  let full_rows = top_rows +
-    lower.map(fn(row) {
-      Array::make(self.q_ind_.length(), int(0)) + row
-    })
-  self.full_mass_matrix_ = try! @symphysics.explicit_matrix_from_rows(full_rows)
+  let top = @symphysics.explicit_matrix_horizontal_concat(
+    mechanics_identity(self.q_ind_.length()),
+    @symphysics.explicit_matrix_zeros(
+      self.q_ind_.length(),
+      self.u_ind_.length(),
+    ),
+  )
+  let bottom = @symphysics.explicit_matrix_horizontal_concat(
+    @symphysics.explicit_matrix_zeros(
+      self.mass_matrix_.height(),
+      self.q_ind_.length(),
+    ),
+    self.mass_matrix_,
+  )
+  self.full_mass_matrix_ = @symphysics.explicit_matrix_vertical_concat(
+    top,
+    bottom,
+  )
   self.full_forcing_ = mechanics_matrix_column(
     self.u_ind_ +
     mechanics_matrix_entries(self.forcing_).map(fn(row) { row[0] }),
@@ -280,7 +279,7 @@ pub fn KanesMethod::rhs(
 pub fn KanesMethod::linearizer(
   self : KanesMethod,
 ) -> Linearizer raise @symphysics.PhysicsError {
-  let rhs = try! self.rhs()
+  let rhs = self.rhs()
   let rhs_terms = mechanics_matrix_entries(rhs).map(fn(row) { row[0] })
   let qdots = kane_qdots(self.q_ind_)
   let udots = kane_udots(self.u_ind_)
@@ -288,22 +287,22 @@ pub fn KanesMethod::linearizer(
     rhs_terms,
     self.q_ind_ + self.u_ind_ + qdots + udots,
   )
-  let f_2 = try! self.mass_matrix_.mul(mechanics_matrix_column(udots))
-  let top_rows : Array[Array[Expr]] = []
-  for i in 0..<self.q_ind_.length() {
-    let row = Array::make(
-      self.q_ind_.length() + self.u_ind_.length(),
-      int(0),
-    )
-    row[i] = int(1)
-    top_rows.push(row)
-  }
-  let lower_rows = mechanics_matrix_entries(self.mass_matrix_).map(fn(row) {
-    Array::make(self.q_ind_.length(), int(0)) +
-    row.map(fn(item) { mech_simplify_expr(int(-1) * item) })
-  })
-  let implicit_mass = try! @symphysics.explicit_matrix_from_rows(
-    top_rows + lower_rows,
+  let f_2 = self.mass_matrix_.mul(mechanics_matrix_column(udots))
+  let implicit_mass = @symphysics.explicit_matrix_vertical_concat(
+    @symphysics.explicit_matrix_horizontal_concat(
+      mechanics_identity(self.q_ind_.length()),
+      @symphysics.explicit_matrix_zeros(
+        self.q_ind_.length(),
+        self.u_ind_.length(),
+      ),
+    ),
+    @symphysics.explicit_matrix_horizontal_concat(
+      @symphysics.explicit_matrix_zeros(
+        self.mass_matrix_.height(),
+        self.q_ind_.length(),
+      ),
+      self.mass_matrix_.neg(),
+    ),
   )
   let implicit_forcing = mechanics_matrix_column(
     self.u_ind_ +
@@ -355,5 +354,5 @@ pub fn KanesMethod::linearize(
   a_and_b? : Bool = false,
   simplify? : Bool = false,
 ) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError {
-  (try! self.linearizer()).linearize(op_point~, a_and_b~, simplify~)
+  self.linearizer().linearize(op_point~, a_and_b~, simplify~)
 }

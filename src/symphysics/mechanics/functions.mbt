@@ -62,7 +62,7 @@ pub fn center_of_mass(
   for body in bodies {
     let mass = mech_bodylike_mass(body)
     total_mass = mech_simplify_expr(total_mass + mass)
-    let offset = try! mech_bodylike_masscenter(body).pos_from(point)
+    let offset = mech_bodylike_masscenter(body).pos_from(point)
     acc = acc + offset.scale(mass)
   }
   acc.truediv(total_mass)
@@ -73,9 +73,7 @@ pub fn lagrangian(
   frame : @symvector.ReferenceFrame,
   bodies : Array[BodyLike],
 ) -> Expr raise @symvector.VectorError {
-  mech_simplify_expr(
-    (try! kinetic_energy(frame, bodies)) - potential_energy(bodies),
-  )
+  mech_simplify_expr(kinetic_energy(frame, bodies) - potential_energy(bodies))
 }
 
 ///|
@@ -104,9 +102,9 @@ pub fn find_dynamicsymbols_vector(
 ) -> Array[Expr] raise @symvector.VectorError {
   let comps = expr.to_matrix(reference_frame)
   let found : Map[String, Expr] = {}
-  for i in 0..<comps.height() {
-    for j in 0..<comps.width() {
-      mech_find_dynamicsymbols_go(try! comps.get(i, j), found)
+  for row in comps.rows_copy() {
+    for value in row {
+      mech_find_dynamicsymbols_go(value, found)
     }
   }
   for item in exclude {

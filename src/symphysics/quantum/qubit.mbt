@@ -144,6 +144,16 @@ fn int_to_minimal_bits(
 }
 
 ///|
+fn qubit_exact_rational(num : Int, den : Int) -> Expr {
+  let result : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match result {
+    Ok(value) => value
+    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  }
+}
+
+///|
 pub fn QubitExpr::as_expr(self : QubitExpr) -> Expr {
   if self.int_form {
     let class_name = if self.is_bra { "IntQubitBra" } else { "IntQubit" }
@@ -244,12 +254,19 @@ pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
       args.length() == 1 =>
       match args[0] {
         Expr::Number(n) if n.is_integral() &&
-          n.numerator().to_int() >= 0 =>
-          Some(QubitExpr::{
-            bits: try! int_to_minimal_bits(n.numerator().to_int()),
-            is_bra: name == "IntQubitBra",
-            int_form: true,
-          })
+          n.numerator().to_int() >= 0 => {
+          let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try?
+            int_to_minimal_bits(n.numerator().to_int())
+          match bits_result {
+            Ok(bits) =>
+              Some(QubitExpr::{
+                bits,
+                is_bra: name == "IntQubitBra",
+                int_form: true,
+              })
+            Err(_) => None
+          }
+        }
         _ => None
       }
     _ => None
@@ -345,11 +362,11 @@ pub fn qubit_to_matrix(
       guard !args.is_empty() else {
         raise @symphysics.PhysicsError::ValueError("Empty qubit sum")
       }
-      let mut acc = try! qubit_to_matrix(args[0], nqubits=effective_nqubits)
+      let mut acc = qubit_to_matrix(args[0], nqubits=effective_nqubits)
       for idx in 1..<args.length() {
-        acc = try! matrix_add_or_scalar(
+        acc = matrix_add_or_scalar(
           acc,
-          try! qubit_to_matrix(args[idx], nqubits=effective_nqubits),
+          qubit_to_matrix(args[idx], nqubits=effective_nqubits),
         )
       }
       acc
@@ -433,7 +450,7 @@ fn qubit_normalize_matrix(
   if norm_sq == int(0) || norm_sq == int(1) {
     matrix
   } else {
-    let half = try! @symcore.rational_from_ints(-1, 2)
+    let half = qubit_exact_rational(-1, 2)
     matrix.scale(@symcore.raw_pow(norm_sq, half))
   }
 }
@@ -507,7 +524,7 @@ fn qubit_probability_terms(
   for idx in 0..<size {
     let coeff = matrix.get(idx, 0)
     if coeff != int(0) {
-      let state = (try! qubit_from_bits(int_to_bits(idx, nqubits))).as_expr()
+      let state = qubit_from_bits(int_to_bits(idx, nqubits)).as_expr()
       out.push((state, expr_conjugate(coeff) * coeff))
     }
   }

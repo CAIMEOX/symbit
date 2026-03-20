@@ -16,7 +16,7 @@ pub fn center_of_mass(@vector.Point, Array[BodyLike]) -> @vector.Vector raise @v
 
 pub fn coulomb_kinetic_friction(@symcore.Expr, @symcore.Expr, PathwayLike, v_s? : @symcore.Expr, sigma? : @symcore.Expr, mu_s? : @symcore.Expr) -> CoulombKineticFriction
 
-pub fn cylindrical_joint(String, BodyLike, BodyLike, rotation_coordinate? : @symcore.Expr?, translation_coordinate? : @symcore.Expr?, rotation_speed? : @symcore.Expr?, translation_speed? : @symcore.Expr?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> CylindricalJoint raise @vector.VectorError
+pub fn cylindrical_joint(String, BodyLike, BodyLike, rotation_coordinate? : @symcore.Expr?, translation_coordinate? : @symcore.Expr?, rotation_speed? : @symcore.Expr?, translation_speed? : @symcore.Expr?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> CylindricalJoint raise
 
 pub fn duffing_spring(@symcore.Expr, @symcore.Expr, PathwayLike, equilibrium_length? : @symcore.Expr) -> DuffingSpring
 
@@ -34,7 +34,7 @@ pub fn force_on_body(BodyLike, @vector.Vector) -> Force
 
 pub fn gravity(@vector.Vector, Array[BodyLike]) -> Array[Force]
 
-pub fn inertia(@vector.ReferenceFrame, @symcore.Expr, @symcore.Expr, @symcore.Expr, ixy? : @symcore.Expr, iyz? : @symcore.Expr, izx? : @symcore.Expr) -> @vector.Dyadic
+pub fn inertia(@vector.ReferenceFrame, @symcore.Expr, @symcore.Expr, @symcore.Expr, ixy? : @symcore.Expr, iyz? : @symcore.Expr, izx? : @symcore.Expr) -> @vector.Dyadic raise @vector.VectorError
 
 pub fn inertia_of_point_mass(@symcore.Expr, @vector.Vector, @vector.ReferenceFrame) -> @vector.Dyadic raise @vector.VectorError
 
@@ -92,17 +92,17 @@ pub fn obstacle_set_pathway(Array[@vector.Point]) -> ObstacleSetPathway raise @s
 
 pub fn particle(String, point? : @vector.Point?, mass? : @symcore.Expr?) -> Particle raise @vector.VectorError
 
-pub fn pin_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> PinJoint raise @vector.VectorError
+pub fn pin_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> PinJoint raise
 
-pub fn planar_joint(String, BodyLike, BodyLike, rotation_coordinate? : @symcore.Expr?, planar_coordinates? : Array[@symcore.Expr]?, rotation_speed? : @symcore.Expr?, planar_speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?) -> PlanarJoint raise @vector.VectorError
+pub fn planar_joint(String, BodyLike, BodyLike, rotation_coordinate? : @symcore.Expr?, planar_coordinates? : Array[@symcore.Expr]?, rotation_speed? : @symcore.Expr?, planar_speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?) -> PlanarJoint raise
 
 pub fn potential_energy(Array[BodyLike]) -> @symcore.Expr
 
-pub fn prismatic_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> PrismaticJoint raise @vector.VectorError
+pub fn prismatic_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, joint_axis? : @vector.Vector?) -> PrismaticJoint raise
 
 pub fn rigid_body(String, masscenter? : @vector.Point?, frame? : @vector.ReferenceFrame?, mass? : @symcore.Expr?, inertia? : Inertia?) -> RigidBody raise @vector.VectorError
 
-pub fn spherical_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, rot_type? : String, rot_order? : String) -> SphericalJoint raise @vector.VectorError
+pub fn spherical_joint(String, BodyLike, BodyLike, coordinates? : Array[@symcore.Expr]?, speeds? : Array[@symcore.Expr]?, parent_point? : JointAttachment?, child_point? : JointAttachment?, parent_interframe? : JointInterframe?, child_interframe? : JointInterframe?, rot_type? : String, rot_order? : String) -> SphericalJoint raise
 
 pub fn symbolic_system(Array[@symcore.Expr], @symphysics.ExplicitMatrix, speeds? : Array[@symcore.Expr]?, mass_matrix? : @symphysics.ExplicitMatrix?, coordinate_derivatives? : @symphysics.ExplicitMatrix?, alg_con? : Array[Int]?, output_eqns? : Array[(@symcore.Expr, @symcore.Expr)], coord_idxs? : Array[Int]?, speed_idxs? : Array[Int]?, bodies? : Array[BodyLike]?, loads? : Array[Load]?) -> SymbolicSystem raise @symphysics.PhysicsError
 
@@ -142,7 +142,7 @@ pub enum ActuatorLike {
   Torque(TorqueActuator)
 }
 pub fn ActuatorLike::repr(Self) -> String
-pub fn ActuatorLike::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn ActuatorLike::to_loads(Self) -> Array[Load] raise
 pub impl Eq for ActuatorLike
 
 pub struct Body {
@@ -179,7 +179,7 @@ pub fn Body::potential_energy(Self) -> @symcore.Expr
 pub fn Body::remove_load(Self, about? : @vector.Point?) -> Unit
 pub fn Body::repr(Self) -> String
 pub fn Body::set_central_inertia(Self, @vector.Dyadic) -> Unit
-pub fn Body::set_inertia(Self, Inertia) -> Unit
+pub fn Body::set_inertia(Self, Inertia) -> Unit raise @vector.VectorError
 pub fn Body::set_potential_energy(Self, @symcore.Expr) -> Unit
 pub fn Body::x(Self) -> @vector.Vector
 pub fn Body::y(Self) -> @vector.Vector
@@ -205,9 +205,9 @@ pub struct CoulombKineticFriction {
   sigma_ : @symcore.Expr
 }
 pub fn CoulombKineticFriction::as_actuator(Self) -> ActuatorLike
-pub fn CoulombKineticFriction::force(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn CoulombKineticFriction::force(Self) -> @symcore.Expr raise
 pub fn CoulombKineticFriction::repr(Self) -> String
-pub fn CoulombKineticFriction::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn CoulombKineticFriction::to_loads(Self) -> Array[Load] raise
 pub impl Eq for CoulombKineticFriction
 
 pub struct CylindricalJoint {
@@ -253,9 +253,9 @@ pub struct DuffingSpring {
   equilibrium_length_ : @symcore.Expr
 }
 pub fn DuffingSpring::as_actuator(Self) -> ActuatorLike
-pub fn DuffingSpring::force(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn DuffingSpring::force(Self) -> @symcore.Expr raise
 pub fn DuffingSpring::repr(Self) -> String
-pub fn DuffingSpring::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn DuffingSpring::to_loads(Self) -> Array[Load] raise
 pub impl Eq for DuffingSpring
 
 pub struct Force {
@@ -273,14 +273,14 @@ pub fn ForceActuator::as_actuator(Self) -> ActuatorLike
 pub fn ForceActuator::force(Self) -> @symcore.Expr
 pub fn ForceActuator::pathway(Self) -> PathwayLike
 pub fn ForceActuator::repr(Self) -> String
-pub fn ForceActuator::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn ForceActuator::to_loads(Self) -> Array[Load] raise
 pub impl Eq for ForceActuator
 
 pub struct Inertia {
   dyadic : @vector.Dyadic
   point : @vector.Point
 }
-pub fn Inertia::from_inertia_scalars(@vector.Point, @vector.ReferenceFrame, @symcore.Expr, @symcore.Expr, @symcore.Expr, ixy? : @symcore.Expr, iyz? : @symcore.Expr, izx? : @symcore.Expr) -> Self
+pub fn Inertia::from_inertia_scalars(@vector.Point, @vector.ReferenceFrame, @symcore.Expr, @symcore.Expr, @symcore.Expr, ixy? : @symcore.Expr, iyz? : @symcore.Expr, izx? : @symcore.Expr) -> Self raise @vector.VectorError
 pub fn Inertia::repr(Self) -> String
 pub impl Eq for Inertia
 
@@ -340,7 +340,7 @@ pub fn JointsMethod::loads(Self) -> Array[Load]
 pub fn JointsMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
 pub fn JointsMethod::q(Self) -> @symphysics.ExplicitMatrix
-pub fn JointsMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn JointsMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise
 pub fn JointsMethod::set_loads(Self, Array[Load]) -> Unit
 pub fn JointsMethod::u(Self) -> @symphysics.ExplicitMatrix
 pub impl Eq for JointsMethod
@@ -404,15 +404,15 @@ pub fn LagrangesMethod::forcing(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::forcing_full(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::form_lagranges_equations(Self) -> @symphysics.ExplicitMatrix raise
 pub fn LagrangesMethod::lam_vec(Self) -> @symphysics.ExplicitMatrix
-pub fn LagrangesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
-pub fn LagrangesMethod::linearizer(Self) -> Linearizer raise @symphysics.PhysicsError
+pub fn LagrangesMethod::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise
+pub fn LagrangesMethod::linearizer(Self) -> Linearizer raise
 pub fn LagrangesMethod::loads(Self) -> Array[Load]
 pub fn LagrangesMethod::mass_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::mass_matrix_full(Self) -> @symphysics.ExplicitMatrix
 pub fn LagrangesMethod::q(Self) -> Array[@symcore.Expr]
-pub fn LagrangesMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
-pub fn LagrangesMethod::solve_multipliers(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)]) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
-pub fn LagrangesMethod::to_linearizer(Self) -> Linearizer raise @symphysics.PhysicsError
+pub fn LagrangesMethod::rhs(Self) -> @symphysics.ExplicitMatrix raise
+pub fn LagrangesMethod::solve_multipliers(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)]) -> @symphysics.ExplicitMatrix raise
+pub fn LagrangesMethod::to_linearizer(Self) -> Linearizer raise
 pub fn LagrangesMethod::u(Self) -> Array[@symcore.Expr]
 pub impl Eq for LagrangesMethod
 
@@ -422,10 +422,10 @@ pub struct LinearDamper {
 }
 pub fn LinearDamper::as_actuator(Self) -> ActuatorLike
 pub fn LinearDamper::damping(Self) -> @symcore.Expr
-pub fn LinearDamper::force(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn LinearDamper::force(Self) -> @symcore.Expr raise
 pub fn LinearDamper::pathway(Self) -> PathwayLike
 pub fn LinearDamper::repr(Self) -> String
-pub fn LinearDamper::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn LinearDamper::to_loads(Self) -> Array[Load] raise
 pub impl Eq for LinearDamper
 
 pub struct LinearPathway {
@@ -447,11 +447,11 @@ pub struct LinearSpring {
 }
 pub fn LinearSpring::as_actuator(Self) -> ActuatorLike
 pub fn LinearSpring::equilibrium_length(Self) -> @symcore.Expr
-pub fn LinearSpring::force(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn LinearSpring::force(Self) -> @symcore.Expr raise
 pub fn LinearSpring::pathway(Self) -> PathwayLike
 pub fn LinearSpring::repr(Self) -> String
 pub fn LinearSpring::stiffness(Self) -> @symcore.Expr
-pub fn LinearSpring::to_loads(Self) -> Array[Load] raise @vector.VectorError
+pub fn LinearSpring::to_loads(Self) -> Array[Load] raise
 pub impl Eq for LinearSpring
 
 pub struct Linearizer {
@@ -489,7 +489,7 @@ pub fn Linearizer::f_v(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::inputs(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::lams(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::linearize(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], a_and_b? : Bool, simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
-pub fn Linearizer::linearize_mab(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix)
+pub fn Linearizer::linearize_mab(Self, op_point? : Array[(@symcore.Expr, @symcore.Expr)], simplify? : Bool) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError
 pub fn Linearizer::permutation_matrix(Self) -> @symphysics.ExplicitMatrix
 pub fn Linearizer::q(Self) -> Array[@symcore.Expr]
 pub fn Linearizer::q_d(Self) -> Array[@symcore.Expr]
@@ -551,10 +551,10 @@ pub enum PathwayLike {
   Obstacle(ObstacleSetPathway)
   Wrapping(WrappingPathway)
 }
-pub fn PathwayLike::extension_velocity(Self) -> @symcore.Expr raise @vector.VectorError
-pub fn PathwayLike::length(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn PathwayLike::extension_velocity(Self) -> @symcore.Expr raise
+pub fn PathwayLike::length(Self) -> @symcore.Expr raise
 pub fn PathwayLike::repr(Self) -> String
-pub fn PathwayLike::to_loads(Self, @symcore.Expr) -> Array[Force] raise @vector.VectorError
+pub fn PathwayLike::to_loads(Self, @symcore.Expr) -> Array[Force] raise
 pub impl Eq for PathwayLike
 
 pub struct PinJoint {
@@ -682,10 +682,10 @@ pub fn RigidBody::parallel_axis(Self, @vector.Point, frame? : @vector.ReferenceF
 pub fn RigidBody::potential_energy(Self) -> @symcore.Expr
 pub fn RigidBody::repr(Self) -> String
 pub fn RigidBody::set_central_inertia(Self, @vector.Dyadic) -> Unit
-pub fn RigidBody::set_frame(Self, @vector.ReferenceFrame) -> Unit
-pub fn RigidBody::set_inertia(Self, Inertia) -> Unit
-pub fn RigidBody::set_mass(Self, @symcore.Expr) -> Unit
-pub fn RigidBody::set_masscenter(Self, @vector.Point) -> Unit
+pub fn RigidBody::set_frame(Self, @vector.ReferenceFrame) -> Unit raise @vector.VectorError
+pub fn RigidBody::set_inertia(Self, Inertia) -> Unit raise @vector.VectorError
+pub fn RigidBody::set_mass(Self, @symcore.Expr) -> Unit raise @vector.VectorError
+pub fn RigidBody::set_masscenter(Self, @vector.Point) -> Unit raise @vector.VectorError
 pub fn RigidBody::set_potential_energy(Self, @symcore.Expr) -> Unit
 pub fn RigidBody::x(Self) -> @vector.Vector
 pub fn RigidBody::y(Self) -> @vector.Vector
@@ -791,7 +791,7 @@ pub fn System::eom_method(Self) -> MechanicsBackend?
 pub fn System::fixed_point(Self) -> @vector.Point
 pub fn System::forcing(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
 pub fn System::forcing_full(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
-pub fn System::form_eoms(Self, use_lagrange? : Bool) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn System::form_eoms(Self, use_lagrange? : Bool) -> @symphysics.ExplicitMatrix raise
 pub fn System::frame(Self) -> @vector.ReferenceFrame
 pub fn System::get_body(Self, String) -> BodyLike?
 pub fn System::get_joint(Self, String) -> JointLike?
@@ -806,7 +806,7 @@ pub fn System::q(Self) -> Array[@symcore.Expr]
 pub fn System::q_dep(Self) -> Array[@symcore.Expr]
 pub fn System::q_ind(Self) -> Array[@symcore.Expr]
 pub fn System::repr(Self) -> String
-pub fn System::rhs(Self) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError
+pub fn System::rhs(Self) -> @symphysics.ExplicitMatrix raise
 pub fn System::set_q_dep(Self, Array[@symcore.Expr]) -> Unit raise @symphysics.PhysicsError
 pub fn System::set_q_ind(Self, Array[@symcore.Expr]) -> Unit raise @symphysics.PhysicsError
 pub fn System::set_u_aux(Self, Array[@symcore.Expr]) -> Unit raise @symphysics.PhysicsError
@@ -881,8 +881,8 @@ pub fn WrappingCone::alpha(Self) -> @symcore.Expr
 pub fn WrappingCone::apex(Self) -> @vector.Point
 pub fn WrappingCone::as_geometry(Self) -> WrappingGeometryLike
 pub fn WrappingCone::axis(Self) -> @vector.Vector
-pub fn WrappingCone::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise @vector.VectorError
-pub fn WrappingCone::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise @vector.VectorError
+pub fn WrappingCone::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
+pub fn WrappingCone::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
 pub fn WrappingCone::point(Self) -> @vector.Point
 pub fn WrappingCone::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingCone::repr(Self) -> String
@@ -895,8 +895,8 @@ pub struct WrappingCylinder {
 }
 pub fn WrappingCylinder::as_geometry(Self) -> WrappingGeometryLike
 pub fn WrappingCylinder::axis(Self) -> @vector.Vector
-pub fn WrappingCylinder::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise @vector.VectorError
-pub fn WrappingCylinder::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise @vector.VectorError
+pub fn WrappingCylinder::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
+pub fn WrappingCylinder::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
 pub fn WrappingCylinder::point(Self) -> @vector.Point
 pub fn WrappingCylinder::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingCylinder::radius(Self) -> @symcore.Expr
@@ -908,8 +908,8 @@ pub enum WrappingGeometryLike {
   Cylinder(WrappingCylinder)
   Cone(WrappingCone)
 }
-pub fn WrappingGeometryLike::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise @vector.VectorError
-pub fn WrappingGeometryLike::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise @vector.VectorError
+pub fn WrappingGeometryLike::geodesic_end_vectors(Self, @vector.Point, @vector.Point) -> (@vector.Vector, @vector.Vector) raise
+pub fn WrappingGeometryLike::geodesic_length(Self, @vector.Point, @vector.Point) -> @symcore.Expr raise
 pub fn WrappingGeometryLike::point(Self) -> @vector.Point
 pub fn WrappingGeometryLike::point_on_surface(Self, @vector.Point) -> @symcore.Expr raise @vector.VectorError
 pub fn WrappingGeometryLike::repr(Self) -> String
@@ -922,11 +922,11 @@ pub struct WrappingPathway {
 }
 pub fn WrappingPathway::as_pathway(Self) -> PathwayLike
 pub fn WrappingPathway::attachments(Self) -> Array[@vector.Point]
-pub fn WrappingPathway::extension_velocity(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn WrappingPathway::extension_velocity(Self) -> @symcore.Expr raise
 pub fn WrappingPathway::geometry(Self) -> WrappingGeometryLike
-pub fn WrappingPathway::length(Self) -> @symcore.Expr raise @vector.VectorError
+pub fn WrappingPathway::length(Self) -> @symcore.Expr raise
 pub fn WrappingPathway::repr(Self) -> String
-pub fn WrappingPathway::to_loads(Self, @symcore.Expr) -> Array[Force] raise @vector.VectorError
+pub fn WrappingPathway::to_loads(Self, @symcore.Expr) -> Array[Force] raise
 pub impl Eq for WrappingPathway
 
 pub struct WrappingSphere {

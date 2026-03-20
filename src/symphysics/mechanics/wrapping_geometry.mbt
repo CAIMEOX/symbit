@@ -94,7 +94,12 @@ fn mechanics_rational_exact_sqrt(
     (Some(num_root), Some(den_root)) =>
       if num_root.mul(num_root).compare(value.numerator()) == 0 &&
         den_root.mul(den_root).compare(value.denominator()) == 0 {
-        Some(try! @symnum.BigRational::new(num_root, den_root))
+        let rat : Result[@symnum.BigRational, @symnum.RationalError] = try?
+          @symnum.BigRational::new(num_root, den_root)
+        match rat {
+          Ok(value) => Some(value)
+          Err(_) => None
+        }
       } else {
         None
       }
@@ -195,9 +200,11 @@ fn mechanics_directional_atan(
       }
       if den.is_zero() {
         if num.compare(@symnum.BigRational::zero()) > 0 {
-          return try! (@symcore.rational_from_ints(1, 2) * mechanics_pi_expr())
+          return mech_simplify_expr(mech_half_expr() * mechanics_pi_expr())
         } else {
-          return try! (@symcore.rational_from_ints(3, 2) * mechanics_pi_expr())
+          return mech_simplify_expr(
+            int(3) * mech_half_expr() * mechanics_pi_expr(),
+          )
         }
       }
       if num.is_zero() {
@@ -267,7 +274,7 @@ pub fn WrappingSphere::point_on_surface(
   point : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
   let point_vector = point.pos_from(self.point_)
-  let point_radius_squared = try! point_vector.dot(point_vector)
+  let point_radius_squared = point_vector.dot(point_vector)
   mechanics_eq_expr(point_radius_squared, self.radius_ ^ mechanics_two_expr())
 }
 
@@ -277,9 +284,9 @@ pub fn WrappingSphere::geodesic_length(
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
-  let point_1_vector = try! point_1.pos_from(self.point_).normalize()
-  let point_2_vector = try! point_2.pos_from(self.point_).normalize()
-  let central_angle = @symelem.acos(try! point_2_vector.dot(point_1_vector))
+  let point_1_vector = point_1.pos_from(self.point_).normalize()
+  let point_2_vector = point_2.pos_from(self.point_).normalize()
+  let central_angle = @symelem.acos(point_2_vector.dot(point_1_vector))
   mech_simplify_expr(self.radius_ * central_angle)
 }
 
@@ -289,19 +296,17 @@ pub fn WrappingSphere::geodesic_end_vectors(
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
 ) -> (@symvector.Vector, @symvector.Vector) raise @symvector.VectorError {
-  let p_a_vec = try! point_1.pos_from(self.point_)
-  let p_b_vec = try! point_2.pos_from(self.point_)
-  if (try! p_a_vec.cross(p_b_vec)).is_zero() {
-    let impossible = try! @symvector.vector_zero().normalize()
+  let p_a_vec = point_1.pos_from(self.point_)
+  let p_b_vec = point_2.pos_from(self.point_)
+  if p_a_vec.cross(p_b_vec).is_zero() {
+    let impossible = @symvector.vector_zero().normalize()
     return (impossible, impossible)
   }
+  let tangent_1 = p_a_vec.cross(point_2.pos_from(point_1))
+  let tangent_2 = p_b_vec.cross(point_1.pos_from(point_2))
   (
-    try! (try! p_a_vec.cross(try! point_2.pos_from(point_1)))
-    .cross(p_a_vec)
-    .normalize(),
-    try! (try! p_b_vec.cross(try! point_1.pos_from(point_2)))
-    .cross(p_b_vec)
-    .normalize(),
+    tangent_1.cross(p_a_vec).normalize(),
+    tangent_2.cross(p_b_vec).normalize(),
   )
 }
 
@@ -330,7 +335,7 @@ pub fn wrapping_cylinder(
   WrappingCylinder::{
     radius_: radius,
     point_: point,
-    axis_: try! axis.normalize(),
+    axis_: axis.normalize(),
   }
 }
 
@@ -354,11 +359,11 @@ pub fn WrappingCylinder::point_on_surface(
   self : WrappingCylinder,
   point : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
-  let relative_position = try! point.pos_from(self.point_)
-  let parallel = self.axis_.scale(try! relative_position.dot(self.axis_))
+  let relative_position = point.pos_from(self.point_)
+  let parallel = self.axis_.scale(relative_position.dot(self.axis_))
   let point_vector = relative_position - parallel
   let point_radius_squared = @symsimplify.trigsimp(
-    try! point_vector.dot(point_vector),
+    point_vector.dot(point_vector),
     max_passes=8,
   )
   mechanics_eq_expr(point_radius_squared, self.radius_ ^ mechanics_two_expr())
@@ -369,27 +374,30 @@ pub fn WrappingCylinder::geodesic_length(
   self : WrappingCylinder,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> Expr raise @symvector.VectorError {
-  let relative_position = try! point_2.pos_from(point_1)
-  let parallel_length = try! relative_position.dot(self.axis_)
+) -> Expr raise {
+  let relative_position = point_2.pos_from(point_1)
+  let parallel_length = relative_position.dot(self.axis_)
 
-  let point_1_relative_position = try! point_1.pos_from(self.point_)
-  let point_1_perpendicular_vector = try! (point_1_relative_position -
-  self.axis_.scale(try! point_1_relative_position.dot(self.axis_))).normalize()
+  let point_1_relative_position = point_1.pos_from(self.point_)
+  let point_1_perpendicular_vector = (
+    point_1_relative_position -
+    self.axis_.scale(point_1_relative_position.dot(self.axis_))
+  ).normalize()
 
-  let point_2_relative_position = try! point_2.pos_from(self.point_)
-  let point_2_perpendicular_vector = try! (point_2_relative_position -
-  self.axis_.scale(try! point_2_relative_position.dot(self.axis_))).normalize()
+  let point_2_relative_position = point_2.pos_from(self.point_)
+  let point_2_perpendicular_vector = (
+    point_2_relative_position -
+    self.axis_.scale(point_2_relative_position.dot(self.axis_))
+  ).normalize()
 
-  let central_angle = try! mechanics_directional_atan(
+  let cross = point_1_perpendicular_vector.cross(point_2_perpendicular_vector)
+  let central_angle = mechanics_directional_atan(
     @symsimplify.simplify(
-      try! (try! point_1_perpendicular_vector.cross(
-        point_2_perpendicular_vector,
-      )).dot(self.axis_),
+      cross.dot(self.axis_),
       max_passes=8,
     ),
     @symsimplify.simplify(
-      try! point_1_perpendicular_vector.dot(point_2_perpendicular_vector),
+      point_1_perpendicular_vector.dot(point_2_perpendicular_vector),
       max_passes=8,
     ),
   )
@@ -407,46 +415,46 @@ pub fn WrappingCylinder::geodesic_end_vectors(
   self : WrappingCylinder,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> (@symvector.Vector, @symvector.Vector) raise @symvector.VectorError {
-  let point_1_from_origin_point = try! point_1.pos_from(self.point_)
-  let point_2_from_origin_point = try! point_2.pos_from(self.point_)
+) -> (@symvector.Vector, @symvector.Vector) raise {
+  let point_1_from_origin_point = point_1.pos_from(self.point_)
+  let point_2_from_origin_point = point_2.pos_from(self.point_)
   if point_1_from_origin_point == point_2_from_origin_point {
-    let impossible = try! @symvector.vector_zero().normalize()
+    let impossible = @symvector.vector_zero().normalize()
     return (impossible, impossible)
   }
 
-  let point_1_parallel = self.axis_.scale(
-    try! point_1_from_origin_point.dot(self.axis_),
-  )
-  let point_2_parallel = self.axis_.scale(
-    try! point_2_from_origin_point.dot(self.axis_),
-  )
+  let point_1_parallel = self.axis_.scale(point_1_from_origin_point.dot(self.axis_))
+  let point_2_parallel = self.axis_.scale(point_2_from_origin_point.dot(self.axis_))
   let point_1_normal = point_1_from_origin_point - point_1_parallel
   let point_2_normal = point_2_from_origin_point - point_2_parallel
 
   let point_1_perpendicular = if point_1_normal == point_2_normal {
     @symvector.vector_zero()
   } else {
-    try! self.axis_.cross(point_1_normal).normalize()
+    self.axis_.cross(point_1_normal).normalize()
   }
   let point_2_perpendicular = if point_1_normal == point_2_normal {
     @symvector.vector_zero()
   } else {
-    try! self.axis_.cross(point_2_normal).normalize().neg()
+    self.axis_.cross(point_2_normal).normalize().neg()
   }
 
-  let geodesic_length = try! self.geodesic_length(point_1, point_2)
-  let relative_position = try! point_2.pos_from(point_1)
-  let parallel_length = try! relative_position.dot(self.axis_)
+  let geodesic_length = self.geodesic_length(point_1, point_2)
+  let relative_position = point_2.pos_from(point_1)
+  let parallel_length = relative_position.dot(self.axis_)
   let planar_arc_length = @symelem.sqrt(
     (geodesic_length ^ mechanics_two_expr()) -
     (parallel_length ^ mechanics_two_expr()),
   )
 
-  let point_1_vector = try! (point_1_perpendicular.scale(planar_arc_length) +
-  self.axis_.scale(parallel_length)).normalize()
-  let point_2_vector = try! (point_2_perpendicular.scale(planar_arc_length) -
-  self.axis_.scale(parallel_length)).normalize()
+  let point_1_vector = (
+    point_1_perpendicular.scale(planar_arc_length) +
+    self.axis_.scale(parallel_length)
+  ).normalize()
+  let point_2_vector = (
+    point_2_perpendicular.scale(planar_arc_length) -
+    self.axis_.scale(parallel_length)
+  ).normalize()
   (point_1_vector, point_2_vector)
 }
 
@@ -474,7 +482,7 @@ pub fn wrapping_cone(
   apex : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCone raise @symvector.VectorError {
-  WrappingCone::{ alpha_: alpha, apex_: apex, axis_: try! axis.normalize() }
+  WrappingCone::{ alpha_: alpha, apex_: apex, axis_: axis.normalize() }
 }
 
 ///|
@@ -502,11 +510,11 @@ pub fn WrappingCone::point_on_surface(
   self : WrappingCone,
   point : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
-  let position = try! point.pos_from(self.apex_)
-  let axis_component = self.axis_.scale(try! position.dot(self.axis_))
+  let position = point.pos_from(self.apex_)
+  let axis_component = self.axis_.scale(position.dot(self.axis_))
   let radial_component = position - axis_component
-  let lhs = try! radial_component.dot(radial_component)
-  let rhs = (try! axis_component.dot(axis_component)) *
+  let lhs = radial_component.dot(radial_component)
+  let rhs = axis_component.dot(axis_component) *
     (@symelem.tan(self.alpha_) ^ mechanics_two_expr())
   mechanics_eq_expr(lhs, rhs)
 }
@@ -516,25 +524,26 @@ pub fn WrappingCone::geodesic_length(
   self : WrappingCone,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> Expr raise @symvector.VectorError {
-  let pos1 = try! point_1.pos_from(self.apex_)
-  let pos2 = try! point_2.pos_from(self.apex_)
-  let z1 = try! pos1.dot(self.axis_)
-  let z2 = try! pos2.dot(self.axis_)
+) -> Expr raise {
+  let pos1 = point_1.pos_from(self.apex_)
+  let pos2 = point_2.pos_from(self.apex_)
+  let z1 = pos1.dot(self.axis_)
+  let z2 = pos2.dot(self.axis_)
   let s1 = mech_simplify_expr(
     z1 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
   )
   let s2 = mech_simplify_expr(
     z2 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
   )
-  let n1 = try! (pos1 - self.axis_.scale(z1)).normalize()
-  let n2 = try! (pos2 - self.axis_.scale(z2)).normalize()
-  let central = try! mechanics_directional_atan(
+  let n1 = (pos1 - self.axis_.scale(z1)).normalize()
+  let n2 = (pos2 - self.axis_.scale(z2)).normalize()
+  let cross = n1.cross(n2)
+  let central = mechanics_directional_atan(
     @symsimplify.simplify(
-      try! (try! n1.cross(n2)).dot(self.axis_),
+      cross.dot(self.axis_),
       max_passes=8,
     ),
-    @symsimplify.simplify(try! n1.dot(n2), max_passes=8),
+    @symsimplify.simplify(n1.dot(n2), max_passes=8),
   )
   let delta_u = mech_simplify_expr(central * @symelem.sin(self.alpha_))
   mech_simplify_expr(
@@ -551,45 +560,46 @@ pub fn WrappingCone::geodesic_end_vectors(
   self : WrappingCone,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> (@symvector.Vector, @symvector.Vector) raise @symvector.VectorError {
-  let pos1 = try! point_1.pos_from(self.apex_)
-  let pos2 = try! point_2.pos_from(self.apex_)
+) -> (@symvector.Vector, @symvector.Vector) raise {
+  let pos1 = point_1.pos_from(self.apex_)
+  let pos2 = point_2.pos_from(self.apex_)
   if pos1 == pos2 {
-    let impossible = try! @symvector.vector_zero().normalize()
+    let impossible = @symvector.vector_zero().normalize()
     return (impossible, impossible)
   }
   if pos1.is_zero() {
-    let v = try! pos2.normalize()
+    let v = pos2.normalize()
     return (v, v.neg())
   }
   if pos2.is_zero() {
-    let v = try! pos1.normalize()
+    let v = pos1.normalize()
     return (v.neg(), v)
   }
 
-  let z1 = try! pos1.dot(self.axis_)
-  let z2 = try! pos2.dot(self.axis_)
+  let z1 = pos1.dot(self.axis_)
+  let z2 = pos2.dot(self.axis_)
   let s1 = mech_simplify_expr(
     z1 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
   )
   let s2 = mech_simplify_expr(
     z2 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
   )
-  let l = try! self.geodesic_length(point_1, point_2)
-  let n1 = try! (pos1 - self.axis_.scale(z1)).normalize()
-  let n2 = try! (pos2 - self.axis_.scale(z2)).normalize()
-  let central = try! mechanics_directional_atan(
+  let l = self.geodesic_length(point_1, point_2)
+  let n1 = (pos1 - self.axis_.scale(z1)).normalize()
+  let n2 = (pos2 - self.axis_.scale(z2)).normalize()
+  let cross = n1.cross(n2)
+  let central = mechanics_directional_atan(
     @symsimplify.simplify(
-      try! (try! n1.cross(n2)).dot(self.axis_),
+      cross.dot(self.axis_),
       max_passes=8,
     ),
-    @symsimplify.simplify(try! n1.dot(n2), max_passes=8),
+    @symsimplify.simplify(n1.dot(n2), max_passes=8),
   )
   let delta_u = mech_simplify_expr(central * @symelem.sin(self.alpha_))
-  let g1 = try! pos1.normalize()
-  let c1 = try! self.axis_.cross(n1)
-  let g2 = try! pos2.normalize()
-  let c2 = try! self.axis_.cross(n2)
+  let g1 = pos1.normalize()
+  let c1 = self.axis_.cross(n1)
+  let g2 = pos2.normalize()
+  let c2 = self.axis_.cross(n2)
 
   let v1 = g1.scale(
       mech_simplify_expr(
@@ -661,7 +671,7 @@ pub fn WrappingGeometryLike::geodesic_length(
   self : WrappingGeometryLike,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> Expr raise @symvector.VectorError {
+) -> Expr raise {
   match self {
     WrappingGeometryLike::Sphere(value) =>
       value.geodesic_length(point_1, point_2)
@@ -676,7 +686,7 @@ pub fn WrappingGeometryLike::geodesic_end_vectors(
   self : WrappingGeometryLike,
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
-) -> (@symvector.Vector, @symvector.Vector) raise @symvector.VectorError {
+) -> (@symvector.Vector, @symvector.Vector) raise {
   match self {
     WrappingGeometryLike::Sphere(value) =>
       value.geodesic_end_vectors(point_1, point_2)

@@ -86,7 +86,7 @@ fn ellipse_normal_boundary_points_numeric(
   let rounded_digits = if digits < 0 { 12 } else { digits }
   for pair in numeric_points {
     out.push(
-      try! point2d(
+      point2d(
         geo_decimal_expr_from_double(pair.0, rounded_digits),
         geo_decimal_expr_from_double(pair.1, rounded_digits),
       ),
@@ -167,17 +167,17 @@ fn ellipse_normal_axis_lines(
   let out : Array[Line] = []
   if geo_expr_is_zero(pt.coords_[0] - center.coords_[0]) {
     out.push(
-      try! line(
+      line(
         center,
-        try! point2d(center.coords_[0], center.coords_[1] + geo_one()),
+        point2d(center.coords_[0], center.coords_[1] + geo_one()),
       ),
     )
   }
   if geo_expr_is_zero(pt.coords_[1] - center.coords_[1]) {
     out.push(
-      try! line(
+      line(
         center,
-        try! point2d(center.coords_[0] + geo_one(), center.coords_[1]),
+        point2d(center.coords_[0] + geo_one(), center.coords_[1]),
       ),
     )
   }
@@ -191,7 +191,7 @@ pub fn Ellipse::normal_lines(
   prec? : Int? = None,
 ) -> Array[Line] raise GeometryError {
   let point_obj = p.with_dim(2)
-  let axis_lines = try! ellipse_normal_axis_lines(self.center_, point_obj)
+  let axis_lines = ellipse_normal_axis_lines(self.center_, point_obj)
   if !axis_lines.is_empty() {
     return axis_lines
   }

@@ -62,13 +62,19 @@ pub let exa : Prefix
 
 pub let exbi : Prefix
 
+pub fn explicit_matrix_column(Array[@symcore.Expr]) -> ExplicitMatrix
+
 pub fn explicit_matrix_eye(Int) -> ExplicitMatrix
 
 pub fn explicit_matrix_from_ints(Array[Array[Int]]) -> ExplicitMatrix
 
 pub fn explicit_matrix_from_rows(Array[Array[@symcore.Expr]]) -> ExplicitMatrix raise PhysicsError
 
+pub fn explicit_matrix_horizontal_concat(ExplicitMatrix, ExplicitMatrix) -> ExplicitMatrix raise PhysicsError
+
 pub fn explicit_matrix_rows_string(ExplicitMatrix) -> String
+
+pub fn explicit_matrix_vertical_concat(ExplicitMatrix, ExplicitMatrix) -> ExplicitMatrix raise PhysicsError
 
 pub fn explicit_matrix_zeros(Int, Int) -> ExplicitMatrix
 
@@ -321,6 +327,7 @@ pub fn ExplicitMatrix::height(Self) -> Int
 pub fn ExplicitMatrix::map(Self, (@symcore.Expr) -> @symcore.Expr) -> Self
 pub fn ExplicitMatrix::mul(Self, Self) -> Self raise PhysicsError
 pub fn ExplicitMatrix::neg(Self) -> Self
+pub fn ExplicitMatrix::rows_copy(Self) -> Array[Array[@symcore.Expr]]
 pub fn ExplicitMatrix::scale(Self, @symcore.Expr) -> Self
 pub fn ExplicitMatrix::sub(Self, Self) -> Self raise PhysicsError
 pub fn ExplicitMatrix::transpose(Self) -> Self

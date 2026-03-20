@@ -50,7 +50,7 @@ fn geometry_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
-  assert_true((try! geometry_expr_equal(ours, rhs)))
+  assert_true(geometry_expr_equal(ours, rhs))
 }
 
 ///|
@@ -61,9 +61,10 @@ fn geometry_assert_expr_close(
   _context : String,
 ) -> Unit raise {
   let ours = geometry_py_expr_text(lhs)
-  assert_eq((try! geometry_eval_str(
-          "abs((" + ours + ") - (" + rhs + ")) < (" + tol + ")",
-        )), "True")
+  assert_eq(
+    geometry_eval_str("abs((" + ours + ") - (" + rhs + ")) < (" + tol + ")"),
+    "True",
+  )
 }
 
 ///|
@@ -73,8 +74,8 @@ fn geometry_assert_point_equal(
   rhs_y : String,
   context : String,
 ) -> Unit raise {
-  try! geometry_assert_expr_equal(lhs.x(), rhs_x, context + ".x")
-  try! geometry_assert_expr_equal(lhs.y(), rhs_y, context + ".y")
+  geometry_assert_expr_equal(lhs.x(), rhs_x, context + ".x")
+  geometry_assert_expr_equal(lhs.y(), rhs_y, context + ".y")
 }
 
 ///|
@@ -85,8 +86,8 @@ fn geometry_assert_point_close(
   tol : String,
   context : String,
 ) -> Unit raise {
-  try! geometry_assert_expr_close(lhs.x(), rhs_x, tol, context + ".x")
-  try! geometry_assert_expr_close(lhs.y(), rhs_y, tol, context + ".y")
+  geometry_assert_expr_close(lhs.x(), rhs_x, tol, context + ".x")
+  geometry_assert_expr_close(lhs.y(), rhs_y, tol, context + ".y")
 }
 
 ///|

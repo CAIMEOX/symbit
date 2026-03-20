@@ -409,13 +409,13 @@ pub fn Ellipse::foci(self : Ellipse) -> Array[Point] raise GeometryError {
   let fd = self.focus_distance()
   if ellipse_major_on_x(self.hradius_, self.vradius_) {
     [
-      try! point2d(self.center_.coords_[0] - fd, self.center_.coords_[1]),
-      try! point2d(self.center_.coords_[0] + fd, self.center_.coords_[1]),
+      point2d(self.center_.coords_[0] - fd, self.center_.coords_[1]),
+      point2d(self.center_.coords_[0] + fd, self.center_.coords_[1]),
     ]
   } else {
     [
-      try! point2d(self.center_.coords_[0], self.center_.coords_[1] - fd),
-      try! point2d(self.center_.coords_[0], self.center_.coords_[1] + fd),
+      point2d(self.center_.coords_[0], self.center_.coords_[1] - fd),
+      point2d(self.center_.coords_[0], self.center_.coords_[1] + fd),
     ]
   }
 }
@@ -492,11 +492,11 @@ pub fn Ellipse::encloses_point(
 ///|
 pub fn Ellipse::bounds(self : Ellipse) -> (Point, Point) raise GeometryError {
   (
-    try! point2d(
+    point2d(
       self.center_.coords_[0] - self.hradius_,
       self.center_.coords_[1] - self.vradius_,
     ),
-    try! point2d(
+    point2d(
       self.center_.coords_[0] + self.hradius_,
       self.center_.coords_[1] + self.vradius_,
     ),
@@ -759,11 +759,11 @@ pub fn Circle::circumference(self : Circle) -> Expr {
 ///|
 pub fn Circle::bounds(self : Circle) -> (Point, Point) raise GeometryError {
   (
-    try! point2d(
+    point2d(
       self.center_.coords_[0] - self.radius_,
       self.center_.coords_[1] - self.radius_,
     ),
-    try! point2d(
+    point2d(
       self.center_.coords_[0] + self.radius_,
       self.center_.coords_[1] + self.radius_,
     ),

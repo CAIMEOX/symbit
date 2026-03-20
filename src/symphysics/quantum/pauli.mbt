@@ -103,8 +103,18 @@ fn pauli_name_equal(lhs : Expr?, rhs : Expr?) -> Bool {
 }
 
 ///|
+fn pauli_exact_rational(num : Int, den : Int) -> Expr {
+  let result : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match result {
+    Ok(value) => value
+    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  }
+}
+
+///|
 fn pauli_half() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  pauli_exact_rational(1, 2)
 }
 
 ///|
@@ -205,21 +215,24 @@ pub fn pauli_apply_operator_to_ket(
             },
           )
         PauliKind::X =>
-          Some((try! sigma_z_ket(if state.n == 0 { 1 } else { 0 })).as_expr())
+          Some(
+            SigmaZState::{ n: if state.n == 0 { 1 } else { 0 }, is_bra: false }
+            .as_expr(),
+          )
         PauliKind::Y =>
           Some(
             if state.n == 0 {
-              symbol("I") * (try! sigma_z_ket(1)).as_expr()
+              symbol("I") * SigmaZState::{ n: 1, is_bra: false }.as_expr()
             } else {
               int(-1) *
               symbol("I") *
-              (try! sigma_z_ket(0)).as_expr()
+              SigmaZState::{ n: 0, is_bra: false }.as_expr()
             },
           )
         PauliKind::Minus =>
           Some(
             if state.n == 0 {
-              (try! sigma_z_ket(1)).as_expr()
+              SigmaZState::{ n: 1, is_bra: false }.as_expr()
             } else {
               int(0)
             },
@@ -229,7 +242,7 @@ pub fn pauli_apply_operator_to_ket(
             if state.n == 0 {
               int(0)
             } else {
-              (try! sigma_z_ket(0)).as_expr()
+              SigmaZState::{ n: 0, is_bra: false }.as_expr()
             },
           )
       }

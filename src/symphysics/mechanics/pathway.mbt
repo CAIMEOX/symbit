@@ -49,7 +49,7 @@ fn point_pair_length(
   point_1 : @symvector.Point,
   point_2 : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
-  try! point_pair_relative_position(point_1, point_2).magnitude()
+  point_pair_relative_position(point_1, point_2).magnitude()
 }
 
 ///|
@@ -58,7 +58,7 @@ fn point_pair_extension_velocity(
   point_2 : @symvector.Point,
 ) -> Expr raise @symvector.VectorError {
   @symcalculus.diff(
-    try! point_pair_length(point_1, point_2),
+    point_pair_length(point_1, point_2),
     @symvector.dynamicsymbols_t,
   )
 }
@@ -98,19 +98,19 @@ pub fn LinearPathway::to_loads(
   self : LinearPathway,
   force_value : Expr,
 ) -> Array[Force] raise @symvector.VectorError {
-  let relative_position = try! point_pair_relative_position(
+  let relative_position = point_pair_relative_position(
     self.attachment_1_,
     self.attachment_2_,
   )
-  let length = try! self.length()
+  let length = self.length()
   [
     force(
       self.attachment_1_,
-      try! relative_position.truediv(length).scale(force_value).neg(),
+      relative_position.truediv(length).scale(force_value).neg(),
     ),
     force(
       self.attachment_2_,
-      try! relative_position.truediv(length).scale(force_value),
+      relative_position.truediv(length).scale(force_value),
     ),
   ]
 }
@@ -156,7 +156,7 @@ pub fn ObstacleSetPathway::length(
   for i in 0..<(self.attachments_.length() - 1) {
     total = mech_simplify_expr(
       total +
-      (try! point_pair_length(self.attachments_[i], self.attachments_[i + 1])),
+      point_pair_length(self.attachments_[i], self.attachments_[i + 1]),
     )
   }
   total
@@ -170,10 +170,10 @@ pub fn ObstacleSetPathway::extension_velocity(
   for i in 0..<(self.attachments_.length() - 1) {
     total = mech_simplify_expr(
       total +
-      (try! point_pair_extension_velocity(
+      point_pair_extension_velocity(
         self.attachments_[i],
         self.attachments_[i + 1],
-      )),
+      ),
     )
   }
   total
@@ -188,13 +188,13 @@ pub fn ObstacleSetPathway::to_loads(
   for i in 0..<(self.attachments_.length() - 1) {
     let p0 = self.attachments_[i]
     let p1 = self.attachments_[i + 1]
-    let relative_position = try! point_pair_relative_position(p0, p1)
-    let length = try! point_pair_length(p0, p1)
+    let relative_position = point_pair_relative_position(p0, p1)
+    let length = point_pair_length(p0, p1)
     loads.push(
-      force(p0, try! relative_position.truediv(length).scale(force_value).neg()),
+      force(p0, relative_position.truediv(length).scale(force_value).neg()),
     )
     loads.push(
-      force(p1, try! relative_position.truediv(length).scale(force_value)),
+      force(p1, relative_position.truediv(length).scale(force_value)),
     )
   }
   loads
@@ -243,26 +243,26 @@ pub fn WrappingPathway::geometry(
 ///|
 pub fn WrappingPathway::length(
   self : WrappingPathway,
-) -> Expr raise @symvector.VectorError {
+) -> Expr raise {
   self.geometry_.geodesic_length(self.attachment_1_, self.attachment_2_)
 }
 
 ///|
 pub fn WrappingPathway::extension_velocity(
   self : WrappingPathway,
-) -> Expr raise @symvector.VectorError {
-  @symcalculus.diff(try! self.length(), @symvector.dynamicsymbols_t)
+) -> Expr raise {
+  @symcalculus.diff(self.length(), @symvector.dynamicsymbols_t)
 }
 
 ///|
 pub fn WrappingPathway::to_loads(
   self : WrappingPathway,
   force_value : Expr,
-) -> Array[Force] raise @symvector.VectorError {
+) -> Array[Force] raise {
   let p0 = self.attachment_1_
   let p1 = self.attachment_2_
   let origin = self.geometry_.point()
-  let (end0, end1) = try! self.geometry_.geodesic_end_vectors(p0, p1)
+  let (end0, end1) = self.geometry_.geodesic_end_vectors(p0, p1)
   let center = (end0 + end1).neg()
   [
     force(p0, end0.scale(force_value)),
@@ -290,7 +290,7 @@ pub fn WrappingPathway::as_pathway(self : WrappingPathway) -> PathwayLike {
 ///|
 pub fn PathwayLike::length(
   self : PathwayLike,
-) -> Expr raise @symvector.VectorError {
+) -> Expr raise {
   match self {
     PathwayLike::Linear(value) => value.length()
     PathwayLike::Obstacle(value) => value.length()
@@ -301,7 +301,7 @@ pub fn PathwayLike::length(
 ///|
 pub fn PathwayLike::extension_velocity(
   self : PathwayLike,
-) -> Expr raise @symvector.VectorError {
+) -> Expr raise {
   match self {
     PathwayLike::Linear(value) => value.extension_velocity()
     PathwayLike::Obstacle(value) => value.extension_velocity()
@@ -313,7 +313,7 @@ pub fn PathwayLike::extension_velocity(
 pub fn PathwayLike::to_loads(
   self : PathwayLike,
   force_value : Expr,
-) -> Array[Force] raise @symvector.VectorError {
+) -> Array[Force] raise {
   match self {
     PathwayLike::Linear(value) => value.to_loads(force_value)
     PathwayLike::Obstacle(value) => value.to_loads(force_value)

@@ -360,7 +360,7 @@ fn polygon_bounds(
       max_y = item.coords_[1]
     }
   }
-  (try! point2d(min_x, min_y), try! point2d(max_x, max_y))
+  (point2d(min_x, min_y), point2d(max_x, max_y))
 }
 
 ///|
@@ -393,7 +393,9 @@ fn polygon_angles_map(
     let a = vertices[(i + n - 1) % n]
     let b = vertices[i]
     let c = vertices[(i + 1) % n]
-    let reflex = try! line(b, a).angle_between(geometry_line(try! line(b, c)))
+    let lhs = line(b, a)
+    let rhs = line(b, c)
+    let reflex = lhs.angle_between(geometry_line(rhs))
     let turn = match geo_expr_sign(hull_orientation(a, b, c)) {
       Some(sign) => sign
       None => 0
@@ -418,20 +420,19 @@ fn perpendicular_line_through(
   base : Line,
   pt : Point,
 ) -> Line raise GeometryError {
-  let direction = try! geo_perp2(base.direction().coords())
-  line(
-    pt.with_dim(2),
-    try! point2d(
-      geo_simplify(pt.with_dim(2).coords_[0] + direction[0]),
-      geo_simplify(pt.with_dim(2).coords_[1] + direction[1]),
-    ),
+  let point_obj = pt.with_dim(2)
+  let direction = geo_perp2(base.direction().coords())
+  let next_pt = point2d(
+    geo_simplify(point_obj.coords_[0] + direction[0]),
+    geo_simplify(point_obj.coords_[1] + direction[1]),
   )
+  line(point_obj, next_pt)
 }
 
 ///|
 fn segment_perpendicular_bisector(seg : Segment) -> Line raise GeometryError {
-  let mid = try! seg.midpoint()
-  let base = try! line_from_segment(seg)
+  let mid = seg.midpoint()
+  let base = line_from_segment(seg)
   perpendicular_line_through(base, mid)
 }
 
@@ -440,8 +441,8 @@ fn segment_perpendicular_from_point(
   seg : Segment,
   pt : Point,
 ) -> Segment raise GeometryError {
-  let base = try! line_from_segment(seg)
-  segment(pt.with_dim(2), try! base.projection(pt))
+  let base = line_from_segment(seg)
+  segment(pt.with_dim(2), base.projection(pt))
 }
 
 fn polygon_bisectors_map(
@@ -454,7 +455,7 @@ fn polygon_bisectors_map(
   }
   closed.push(vertices[0])
   let mut pts = closed
-  if (try! polygon_turn_is_clockwise(pts[0], pts[1], pts[2])) {
+  if polygon_turn_is_clockwise(pts[0], pts[1], pts[2]) {
     let rev : Array[Point] = []
     for i in 0..<pts.length() {
       rev.push(pts[pts.length() - 1 - i])
@@ -478,14 +479,14 @@ fn polygon_bisectors_map(
     guard idx >= 0 && idx + 1 < pts.length() else {
       raise GeometryError::ValueError("vertex missing from polygon cycle")
     }
-    let base_ray = try! ray(pts[idx], pts[idx + 1])
-    let rotated = try! base_ray.rotate(
+    let base_ray = ray(pts[idx], pts[idx + 1])
+    let rotated = base_ray.rotate(
       geo_div(angle, geo_int(2)),
       pt=Some(vertex),
     )
     let direction = rotated.direction()
-    let unit = direction.truediv(try! direction.abs())
-    out.set(vertex, try! ray(rotated.p1(), rotated.p1() + unit))
+    let unit = direction.truediv(direction.abs())
+    out.set(vertex, ray(rotated.p1(), rotated.p1() + unit))
   }
   out
 }
@@ -497,7 +498,7 @@ fn polygon_distance_to_polygon(
 ) -> Expr raise GeometryError {
   let lhs_poly = Polygon::{ vertices_: lhs_vertices }
   let rhs_poly = Polygon::{ vertices_: rhs_vertices }
-  if !(try! lhs_poly.intersection(geometry_polygon(rhs_poly))).is_empty() ||
+  if !lhs_poly.intersection(geometry_polygon(rhs_poly)).is_empty() ||
     lhs_poly.contains_point(rhs_vertices[0]) ||
     rhs_poly.contains_point(lhs_vertices[0]) {
     return geo_zero()
@@ -628,13 +629,13 @@ pub fn Polygon::arbitrary_point(
   self : Polygon,
   parameter? : Expr = symbol("t"),
 ) -> Point raise GeometryError {
-  let perimeter = try! self.perimeter()
+  let perimeter = self.perimeter()
   let x_cases : Array[Expr] = []
   let y_cases : Array[Expr] = []
   let mut start = geo_zero()
-  let sides = try! self.sides()
+  let sides = self.sides()
   for side in sides {
-    let side_len = try! side.length()
+    let side_len = side.length()
     let frac = geo_div(side_len, perimeter)
     let end_ = geo_simplify(start + frac)
     let u = geo_div(parameter - start, frac)
@@ -676,19 +677,19 @@ pub fn Polygon::parameter_value(
   t : Expr,
 ) -> Map[Expr, Expr] raise GeometryError {
   let point_obj = other.with_dim(2)
-  let perimeter = try! self.perimeter()
+  let perimeter = self.perimeter()
   let out : Map[Expr, Expr] = {}
   let mut start = geo_zero()
-  let sides = try! self.sides()
+  let sides = self.sides()
   for side in sides {
     if side.contains(point_obj) {
-      let side_len = try! side.length()
+      let side_len = side.length()
       let frac = geo_div(side_len, perimeter)
-      let u = try! linear_param_for_point(geometry_segment(side), point_obj)
+      let u = linear_param_for_point(geometry_segment(side), point_obj)
       out.set(t, geo_simplify(start + u * frac))
       return out
     }
-    start = geo_simplify(start + geo_div(try! side.length(), perimeter))
+    start = geo_simplify(start + geo_div(side.length(), perimeter))
   }
   raise GeometryError::ValueError("point is not on polygon")
 }
@@ -712,7 +713,7 @@ pub fn Polygon::distance(
         geo_zero()
       } else {
         let mut best : Expr? = None
-        let sides = try! self.sides()
+        let sides = self.sides()
         for side in sides {
           let d = side.distance(point_obj)
           match best {
@@ -732,7 +733,7 @@ pub fn Polygon::distance(
     GeometryEntity::Polygon(poly_obj) =>
       polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
     GeometryEntity::RegularPolygon(poly_obj) =>
-      polygon_distance_to_polygon(self.vertices_, try! poly_obj.vertices())
+      polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
     GeometryEntity::Triangle(poly_obj) =>
       polygon_distance_to_polygon(self.vertices_, poly_obj.vertices())
     _ =>
@@ -746,7 +747,7 @@ pub fn Polygon::distance(
 pub fn Polygon::bisectors(
   self : Polygon,
 ) -> Map[Point, Ray] raise GeometryError {
-  let angles = try! self.angles()
+  let angles = self.angles()
   polygon_bisectors_map(self.vertices_, angles)
 }
 
@@ -755,9 +756,11 @@ pub fn Polygon::translate(
   self : Polygon,
   offsets : Array[Expr],
 ) -> Polygon raise GeometryError {
-  Polygon::{
-    vertices_: self.vertices_.map(fn(pt) { try! pt.translate(offsets) }),
+  let vertices : Array[Point] = []
+  for pt in self.vertices_ {
+    vertices.push(pt.translate(offsets))
   }
+  Polygon::{ vertices_: vertices }
 }
 
 ///|
@@ -766,9 +769,11 @@ pub fn Polygon::rotate(
   angle : Expr,
   pt? : Point? = None,
 ) -> Polygon raise GeometryError {
-  Polygon::{
-    vertices_: self.vertices_.map(fn(vertex) { try! vertex.rotate(angle, pt~) }),
+  let vertices : Array[Point] = []
+  for vertex in self.vertices_ {
+    vertices.push(vertex.rotate(angle, pt~))
   }
+  Polygon::{ vertices_: vertices }
 }
 
 ///|
@@ -777,9 +782,11 @@ pub fn Polygon::scale(
   factors : Array[Expr],
   pt? : Point? = None,
 ) -> Polygon raise GeometryError {
-  Polygon::{
-    vertices_: self.vertices_.map(fn(vertex) { try! vertex.scale(factors, pt~) }),
+  let vertices : Array[Point] = []
+  for vertex in self.vertices_ {
+    vertices.push(vertex.scale(factors, pt~))
   }
+  Polygon::{ vertices_: vertices }
 }
 
 ///|
@@ -793,7 +800,7 @@ fn regular_polygon_vertices_of(
       geo_div(geo_int(2 * i), geo_int(poly.n_)) * symbol("pi"),
     )
     out.push(
-      try! point2d(
+      point2d(
         geo_simplify(
           poly.center_.coords_[0] + poly.radius_ * @symelem.cos(angle),
         ),
@@ -934,7 +941,7 @@ pub fn RegularPolygon::angles(
 ) -> Map[Point, Expr] raise GeometryError {
   let out : Map[Point, Expr] = {}
   let ang = self.interior_angle()
-  let vertices = try! self.vertices()
+  let vertices = self.vertices()
   for vertex in vertices {
     out.set(vertex, ang)
   }
@@ -954,14 +961,14 @@ pub fn RegularPolygon::encloses_point(
       match geo_expr_sign(dist - self.circumradius()) {
         Some(inner) =>
           inner < 0 &&
-          (try! regular_polygon_as_polygon(self).encloses_point(point_obj))
+          regular_polygon_as_polygon(self).encloses_point(point_obj)
         None =>
           raise GeometryError::Undecidable(
             "cannot decide regular polygon containment",
           )
       }
     Some(_) => false
-    None => try! regular_polygon_as_polygon(self).encloses_point(point_obj)
+    None => regular_polygon_as_polygon(self).encloses_point(point_obj)
   }
 }
 
@@ -1127,9 +1134,11 @@ pub fn Triangle::translate(
   self : Triangle,
   offsets : Array[Expr],
 ) -> Triangle raise GeometryError {
-  Triangle::{
-    vertices_: self.vertices_.map(fn(vertex) { try! vertex.translate(offsets) }),
+  let vertices : Array[Point] = []
+  for vertex in self.vertices_ {
+    vertices.push(vertex.translate(offsets))
   }
+  Triangle::{ vertices_: vertices }
 }
 
 ///|
@@ -1138,9 +1147,11 @@ pub fn Triangle::rotate(
   angle : Expr,
   pt? : Point? = None,
 ) -> Triangle raise GeometryError {
-  Triangle::{
-    vertices_: self.vertices_.map(fn(vertex) { try! vertex.rotate(angle, pt~) }),
+  let vertices : Array[Point] = []
+  for vertex in self.vertices_ {
+    vertices.push(vertex.rotate(angle, pt~))
   }
+  Triangle::{ vertices_: vertices }
 }
 
 ///|
@@ -1149,9 +1160,11 @@ pub fn Triangle::scale(
   factors : Array[Expr],
   pt? : Point? = None,
 ) -> Triangle raise GeometryError {
-  Triangle::{
-    vertices_: self.vertices_.map(fn(vertex) { try! vertex.scale(factors, pt~) }),
+  let vertices : Array[Point] = []
+  for vertex in self.vertices_ {
+    vertices.push(vertex.scale(factors, pt~))
   }
+  Triangle::{ vertices_: vertices }
 }
 
 ///|
@@ -1196,11 +1209,11 @@ pub fn Triangle::is_isosceles(self : Triangle) -> Bool raise GeometryError {
 
 ///|
 pub fn Triangle::is_scalene(self : Triangle) -> Bool raise GeometryError {
-  !(try! self.is_isosceles())
+  !self.is_isosceles()
 }
 
 ///|
-pub fn Triangle::is_right(self : Triangle) -> Bool raise GeometryError {
+pub fn Triangle::is_right(self : Triangle) -> Bool {
   let pts = self.vertices_
   for i in 0..<3 {
     let a = pts[i]
@@ -1224,8 +1237,8 @@ pub fn Triangle::is_similar(
     GeometryEntity::Triangle(value) => value
     _ => return false
   }
-  let lhs = try! triangle_angles_of(self)
-  let rhs_angles = try! triangle_angles_of(rhs)
+  let lhs = triangle_angles_of(self)
+  let rhs_angles = triangle_angles_of(rhs)
   let rhs0 = rhs_angles[0]
   let rhs1 = rhs_angles[1]
   let rhs2 = rhs_angles[2]
@@ -1246,10 +1259,10 @@ pub fn Triangle::is_similar(
 
 ///|
 pub fn Triangle::circumcenter(self : Triangle) -> Point raise GeometryError {
-  let sides = try! self.sides()
-  let a = try! segment_perpendicular_bisector(sides[0])
-  let b = try! segment_perpendicular_bisector(sides[1])
-  match (try! a.intersection(geometry_line(b))) {
+  let sides = self.sides()
+  let a = segment_perpendicular_bisector(sides[0])
+  let b = segment_perpendicular_bisector(sides[1])
+  match a.intersection(geometry_line(b)) {
     [GeometryEntity::Point(pt), ..] => pt
     _ =>
       raise GeometryError::ValueError(
@@ -1297,38 +1310,38 @@ pub fn Triangle::inradius(self : Triangle) -> Expr raise GeometryError {
 
 ///|
 pub fn Triangle::incircle(self : Triangle) -> Circle raise GeometryError {
-  Circle::{ center_: self.incenter(), radius_: try! self.inradius() }
+  Circle::{ center_: self.incenter(), radius_: self.inradius() }
 }
 
 ///|
 pub fn Triangle::altitudes(
   self : Triangle,
 ) -> Map[Point, Segment] raise GeometryError {
-  let sides = try! self.sides()
+  let sides = self.sides()
   let vertices = self.vertices_
   let out : Map[Point, Segment] = {}
   out.set(
     vertices[0],
-    try! segment_perpendicular_from_point(sides[1], vertices[0]),
+    segment_perpendicular_from_point(sides[1], vertices[0]),
   )
   out.set(
     vertices[1],
-    try! segment_perpendicular_from_point(sides[2], vertices[1]),
+    segment_perpendicular_from_point(sides[2], vertices[1]),
   )
   out.set(
     vertices[2],
-    try! segment_perpendicular_from_point(sides[0], vertices[2]),
+    segment_perpendicular_from_point(sides[0], vertices[2]),
   )
   out
 }
 
 ///|
 pub fn Triangle::orthocenter(self : Triangle) -> Point raise GeometryError {
-  let altitudes = try! self.altitudes()
+  let altitudes = self.altitudes()
   let vertices = self.vertices_
-  let a = try! line_from_segment(altitudes[vertices[0]])
-  let b = try! line_from_segment(altitudes[vertices[1]])
-  match (try! a.intersection(geometry_line(b))) {
+  let a = line_from_segment(altitudes[vertices[0]])
+  let b = line_from_segment(altitudes[vertices[1]])
+  match a.intersection(geometry_line(b)) {
     [GeometryEntity::Point(pt), ..] => pt
     _ =>
       raise GeometryError::ValueError(
@@ -1341,34 +1354,34 @@ pub fn Triangle::orthocenter(self : Triangle) -> Point raise GeometryError {
 pub fn Triangle::bisectors(
   self : Triangle,
 ) -> Map[Point, Segment] raise GeometryError {
-  let sides = try! self.sides()
+  let sides = self.sides()
   let vertices = self.vertices_
-  let center = try! self.incenter()
+  let center = self.incenter()
   let out : Map[Point, Segment] = {}
   let hit0 = match
-    (try! (try! line(vertices[0], center)).intersection(
-      geometry_line(try! line_from_segment(sides[1])),
-    )) {
+    line(vertices[0], center).intersection(
+      geometry_line(line_from_segment(sides[1])),
+    ) {
     [GeometryEntity::Point(pt), ..] => pt
     _ => center
   }
   let hit1 = match
-    (try! (try! line(vertices[1], center)).intersection(
-      geometry_line(try! line_from_segment(sides[2])),
-    )) {
+    line(vertices[1], center).intersection(
+      geometry_line(line_from_segment(sides[2])),
+    ) {
     [GeometryEntity::Point(pt), ..] => pt
     _ => center
   }
   let hit2 = match
-    (try! (try! line(vertices[2], center)).intersection(
-      geometry_line(try! line_from_segment(sides[0])),
-    )) {
+    line(vertices[2], center).intersection(
+      geometry_line(line_from_segment(sides[0])),
+    ) {
     [GeometryEntity::Point(pt), ..] => pt
     _ => center
   }
-  out.set(vertices[0], try! segment(vertices[0], hit0))
-  out.set(vertices[1], try! segment(vertices[1], hit1))
-  out.set(vertices[2], try! segment(vertices[2], hit2))
+  out.set(vertices[0], segment(vertices[0], hit0))
+  out.set(vertices[1], segment(vertices[1], hit1))
+  out.set(vertices[2], segment(vertices[2], hit2))
   out
 }
 
@@ -1376,10 +1389,10 @@ pub fn Triangle::bisectors(
 pub fn Triangle::exradii(
   self : Triangle,
 ) -> Map[Segment, Expr] raise GeometryError {
-  let sides = try! self.sides()
-  let a = try! sides[0].length()
-  let b = try! sides[1].length()
-  let c = try! sides[2].length()
+  let sides = self.sides()
+  let a = sides[0].length()
+  let b = sides[1].length()
+  let c = sides[2].length()
   let s = geo_div(a + b + c, geo_int(2))
   let area = self.area()
   let out : Map[Segment, Expr] = {}
@@ -1393,11 +1406,11 @@ pub fn Triangle::exradii(
 pub fn Triangle::excenters(
   self : Triangle,
 ) -> Map[Segment, Point] raise GeometryError {
-  let sides = try! self.sides()
+  let sides = self.sides()
   let vertices = self.vertices_
-  let a = try! sides[1].length()
-  let b = try! sides[2].length()
-  let c = try! sides[0].length()
+  let a = sides[1].length()
+  let b = sides[2].length()
+  let c = sides[0].length()
   let x0 = vertices[0].coords_[0]
   let x1 = vertices[1].coords_[0]
   let x2 = vertices[2].coords_[0]
@@ -1407,7 +1420,7 @@ pub fn Triangle::excenters(
   let out : Map[Segment, Point] = {}
   out.set(
     sides[0],
-    try! point2d(
+    point2d(
       geo_simplify(
         geo_div((geo_zero() - a) * x0 + b * x1 + c * x2, geo_zero() - a + b + c),
       ),
@@ -1418,14 +1431,14 @@ pub fn Triangle::excenters(
   )
   out.set(
     sides[1],
-    try! point2d(
+    point2d(
       geo_simplify(geo_div(a * x0 - b * x1 + c * x2, a - b + c)),
       geo_simplify(geo_div(a * y0 - b * y1 + c * y2, a - b + c)),
     ),
   )
   out.set(
     sides[2],
-    try! point2d(
+    point2d(
       geo_simplify(geo_div(a * x0 + b * x1 - c * x2, a + b - c)),
       geo_simplify(geo_div(a * y0 + b * y1 - c * y2, a + b - c)),
     ),
@@ -1437,22 +1450,22 @@ pub fn Triangle::excenters(
 pub fn Triangle::medians(
   self : Triangle,
 ) -> Map[Point, Segment] raise GeometryError {
-  let sides = try! self.sides()
+  let sides = self.sides()
   let vertices = self.vertices_
   let out : Map[Point, Segment] = {}
-  out.set(vertices[0], try! segment(vertices[0], try! sides[1].midpoint()))
-  out.set(vertices[1], try! segment(vertices[1], try! sides[2].midpoint()))
-  out.set(vertices[2], try! segment(vertices[2], try! sides[0].midpoint()))
+  out.set(vertices[0], segment(vertices[0], sides[1].midpoint()))
+  out.set(vertices[1], segment(vertices[1], sides[2].midpoint()))
+  out.set(vertices[2], segment(vertices[2], sides[0].midpoint()))
   out
 }
 
 ///|
 pub fn Triangle::medial(self : Triangle) -> Triangle raise GeometryError {
-  let sides = try! self.sides()
+  let sides = self.sides()
   triangle(
-    try! sides[0].midpoint(),
-    try! sides[1].midpoint(),
-    try! sides[2].midpoint(),
+    sides[0].midpoint(),
+    sides[1].midpoint(),
+    sides[2].midpoint(),
   )
 }
 
@@ -1460,7 +1473,7 @@ pub fn Triangle::medial(self : Triangle) -> Triangle raise GeometryError {
 pub fn Triangle::nine_point_circle(
   self : Triangle,
 ) -> Circle raise GeometryError {
-  let medial = try! self.medial()
+  let medial = self.medial()
   medial.circumcircle()
 }
 
@@ -1468,8 +1481,8 @@ pub fn Triangle::nine_point_circle(
 pub fn Triangle::eulerline(
   self : Triangle,
 ) -> GeometryEntity raise GeometryError {
-  if (try! self.is_equilateral()) {
-    return geometry_point(try! self.orthocenter())
+  if self.is_equilateral() {
+    return geometry_point(self.orthocenter())
   }
-  geometry_line(try! line(try! self.orthocenter(), try! self.circumcenter()))
+  geometry_line(line(self.orthocenter(), self.circumcenter()))
 }

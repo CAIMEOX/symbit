@@ -28,10 +28,10 @@ pub fn multi_mass_spring_damper(
     )
   }
 
-  let n_frame = try! @symvector.reference_frame("N")
-  let origin = try! @symvector.point("origin")
+  let n_frame = @symvector.reference_frame("N")
+  let origin = @symvector.point("origin")
   origin.set_vel(n_frame, @symvector.vector_zero())
-  let ground = try! rigid_body(
+  let ground = rigid_body(
     "ground",
     masscenter=Some(origin),
     frame=Some(n_frame),
@@ -46,10 +46,10 @@ pub fn multi_mass_spring_damper(
 
   for i in 0..<n {
     let body_name = "block" + i.to_string()
-    let body = try! rigid_body(body_name, mass=Some(model_symbol("m", i)))
+    let body = rigid_body(body_name, mass=Some(model_symbol("m", i)))
     let q = model_dynamicsymbol("x", i)
     let u = model_dynamicsymbol("v", i)
-    let joint = try! prismatic_joint(
+    let joint = prismatic_joint(
       "J" + i.to_string(),
       parent_body,
       body.as_bodylike(),
@@ -69,7 +69,7 @@ pub fn multi_mass_spring_damper(
       )
     }
     bodies.push(body.as_bodylike())
-    try! sys.add_joints([joint.as_joint()])
+    sys.add_joints([joint.as_joint()])
     parent_body = body.as_bodylike()
     parent_point = body.masscenter()
   }
@@ -80,7 +80,7 @@ pub fn multi_mass_spring_damper(
   if apply_gravity {
     sys.apply_uniform_gravity(n_frame.y().scale(symbol("g")).neg())
   }
-  try! sys.validate_system()
+  sys.validate_system()
   sys
 }
 
@@ -96,18 +96,18 @@ pub fn n_link_pendulum_on_cart(
     )
   }
 
-  let i_frame = try! @symvector.reference_frame("I")
-  let origin = try! @symvector.point("O")
+  let i_frame = @symvector.reference_frame("I")
+  let origin = @symvector.point("O")
   origin.set_vel(i_frame, @symvector.vector_zero())
-  let rail = try! rigid_body(
+  let rail = rigid_body(
     "rail",
     masscenter=Some(origin),
     frame=Some(i_frame),
   )
-  let cart = try! rigid_body("cart", mass=Some(model_symbol("m", 0)))
+  let cart = rigid_body("cart", mass=Some(model_symbol("m", 0)))
   let sys = system_from_newtonian(rail.as_bodylike())
 
-  let slider = try! prismatic_joint(
+  let slider = prismatic_joint(
     "slider",
     rail.as_bodylike(),
     cart.as_bodylike(),
@@ -115,7 +115,7 @@ pub fn n_link_pendulum_on_cart(
     speeds=Some([model_dynamicsymbol("u", 0)]),
     joint_axis=Some(i_frame.x()),
   )
-  try! sys.add_joints([slider.as_joint()])
+  sys.add_joints([slider.as_joint()])
 
   let bodies : Array[BodyLike] = [cart.as_bodylike()]
   let loads : Array[Load] = []
@@ -123,13 +123,13 @@ pub fn n_link_pendulum_on_cart(
   let mut parent_joint_frame = i_frame
 
   for i in 0..<n {
-    let bob = try! particle(
+    let bob = particle(
       "bob" + i.to_string(),
       mass=Some(model_symbol("m", i + 1)),
     )
-    let bob_frame = try! @symvector.reference_frame("B" + i.to_string())
+    let bob_frame = @symvector.reference_frame("B" + i.to_string())
     let length = model_symbol("l", i)
-    let pin = try! pin_joint(
+    let pin = pin_joint(
       "pin" + i.to_string(),
       parent_body,
       bob.as_bodylike(),
@@ -142,7 +142,7 @@ pub fn n_link_pendulum_on_cart(
       child_interframe=Some(joint_interframe_frame(bob_frame)),
       joint_axis=Some(parent_joint_frame.z()),
     )
-    try! sys.add_joints([pin.as_joint()])
+    sys.add_joints([pin.as_joint()])
     bodies.push(bob.as_bodylike())
     if joint_torques {
       let torque_symbol = model_dynamicsymbol("T", i)
@@ -174,6 +174,6 @@ pub fn n_link_pendulum_on_cart(
     ])
   }
   sys.add_loads(loads)
-  try! sys.validate_system()
+  sys.validate_system()
   sys
 }

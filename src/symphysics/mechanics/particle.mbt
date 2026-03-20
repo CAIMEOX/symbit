@@ -7,7 +7,7 @@ pub fn particle(
   point? : @symvector.Point? = None,
   mass? : Expr? = None,
 ) -> Particle raise @symvector.VectorError {
-  let p = point.unwrap_or(try! @symvector.point(name + "_masscenter"))
+  let p = point.unwrap_or(@symvector.point(name + "_masscenter"))
   let m = mass.unwrap_or(symbol(name + "_mass"))
   Particle::{
     name_: name,
@@ -91,7 +91,7 @@ pub fn Particle::kinetic_energy(
   frame : @symvector.ReferenceFrame,
 ) -> Expr raise @symvector.VectorError {
   let v = self.point_.vel(frame)
-  mech_half_expr() * self.mass_ * (try! v.dot(v))
+  mech_half_expr() * self.mass_ * v.dot(v)
 }
 
 ///|
@@ -100,5 +100,5 @@ pub fn Particle::parallel_axis(
   point : @symvector.Point,
   frame : @symvector.ReferenceFrame,
 ) -> @symvector.Dyadic raise @symvector.VectorError {
-  inertia_of_point_mass(self.mass_, try! self.point_.pos_from(point), frame)
+  inertia_of_point_mass(self.mass_, self.point_.pos_from(point), frame)
 }

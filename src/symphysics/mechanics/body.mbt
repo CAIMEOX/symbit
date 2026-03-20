@@ -10,8 +10,8 @@ pub fn body(
   frame? : @symvector.ReferenceFrame? = None,
   central_inertia? : @symvector.Dyadic? = None,
 ) -> Body raise @symvector.VectorError {
-  let fr = frame.unwrap_or(try! @symvector.reference_frame(name + "_frame"))
-  let mc = masscenter.unwrap_or(try! @symvector.point(name + "_masscenter"))
+  let fr = frame.unwrap_or(@symvector.reference_frame(name + "_frame"))
+  let mc = masscenter.unwrap_or(@symvector.point(name + "_masscenter"))
   let m = mass.unwrap_or(symbol(name + "_mass"))
   mc.set_vel(fr, @symvector.vector_zero())
   let default_inertia = Inertia::from_inertia_scalars(
@@ -131,9 +131,12 @@ pub fn Body::set_central_inertia(
 }
 
 ///|
-pub fn Body::set_inertia(self : Body, value : Inertia) -> Unit {
+pub fn Body::set_inertia(
+  self : Body,
+  value : Inertia,
+) -> Unit raise @symvector.VectorError {
   self.inertia_ = value
-  self.central_inertia_ = try! rigidbody_central_inertia(
+  self.central_inertia_ = rigidbody_central_inertia(
     self.mass_,
     self.masscenter_,
     self.frame_,
@@ -186,15 +189,15 @@ pub fn Body::angular_momentum(
   frame : @symvector.ReferenceFrame,
 ) -> @symvector.Vector raise @symvector.VectorError {
   if self.is_rigidbody_ {
-    let spin = try! self.central_inertia_.dot_vector(
+    let spin = self.central_inertia_.dot_vector(
       self.frame_.ang_vel_in(frame),
     )
     let r = self.masscenter_.pos_from(point)
-    let p = try! self.linear_momentum(frame)
-    spin + (try! r.cross(p))
+    let p = self.linear_momentum(frame)
+    spin + r.cross(p)
   } else {
     let r = self.masscenter_.pos_from(point)
-    let p = try! self.linear_momentum(frame)
+    let p = self.linear_momentum(frame)
     r.cross(p)
   }
 }
@@ -209,14 +212,14 @@ pub fn Body::kinetic_energy(
     mech_simplify_expr(
       mech_half_expr() *
       self.mass_ *
-      (try! self.masscenter_.vel(frame).dot(self.masscenter_.vel(frame))) +
+      self.masscenter_.vel(frame).dot(self.masscenter_.vel(frame)) +
       mech_half_expr() *
-      (try! omega.dot(try! self.central_inertia_.dot_vector(omega))),
+      omega.dot(self.central_inertia_.dot_vector(omega)),
     )
   } else {
     mech_half_expr() *
     self.mass_ *
-    (try! self.masscenter_.vel(frame).dot(self.masscenter_.vel(frame)))
+    self.masscenter_.vel(frame).dot(self.masscenter_.vel(frame))
   }
 }
 
@@ -340,11 +343,11 @@ pub fn Body::parallel_axis(
   if self.is_rigidbody_ {
     let fr = frame.unwrap_or(self.frame_)
     self.central_inertia_ +
-    inertia_of_point_mass(self.mass_, try! self.masscenter_.pos_from(point), fr)
+    inertia_of_point_mass(self.mass_, self.masscenter_.pos_from(point), fr)
   } else {
     inertia_of_point_mass(
       self.mass_,
-      try! self.masscenter_.pos_from(point),
+      self.masscenter_.pos_from(point),
       frame.unwrap_or(self.frame_),
     )
   }

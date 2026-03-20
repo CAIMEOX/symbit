@@ -85,14 +85,11 @@ fn lagrange_generalized_forces(
       match load {
         Load::ForceLoad(value) =>
           total = mech_simplify_expr(
-            total +
-            (try! value.point.partial_velocity(frame, qd).dot(value.force)),
+            total + value.point.partial_velocity(frame, qd).dot(value.force),
           )
         Load::TorqueLoad(value) => {
-          let partials = try! value.frame.partial_velocity(frame, [qd])
-          total = mech_simplify_expr(
-            total + (try! partials[0].dot(value.torque)),
-          )
+          let partials = value.frame.partial_velocity(frame, [qd])
+          total = mech_simplify_expr(total + partials[0].dot(value.torque))
         }
       }
     }
@@ -164,7 +161,7 @@ pub fn lagranges_method(
   frame? : @symvector.ReferenceFrame? = None,
   hol_coneqs? : Array[Expr] = [],
 ) -> LagrangesMethod raise @symphysics.PhysicsError {
-  try! validate_coordinates(coordinates~, is_dynamicsymbols=true)
+  validate_coordinates(coordinates~, is_dynamicsymbols=true)
   let chosen_frame = try lagrange_default_frame(frame, bodies, forcelist) catch {
     _ => None
   } noraise {
@@ -261,7 +258,7 @@ pub fn LagrangesMethod::form_lagranges_equations(
   self : LagrangesMethod,
 ) -> @symphysics.ExplicitMatrix raise {
   let frame = lagrange_default_frame(self.frame_, self.bodies_, self.forcelist_)
-  let generalized = try! lagrange_generalized_forces(
+  let generalized = lagrange_generalized_forces(
     frame,
     self.coordinates_,
     self.forcelist_,
@@ -295,9 +292,9 @@ pub fn LagrangesMethod::form_lagranges_equations(
 ///|
 pub fn LagrangesMethod::rhs(
   self : LagrangesMethod,
-) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+) -> @symphysics.ExplicitMatrix raise {
   if self.eom_.is_empty() {
-    ignore(try! self.form_lagranges_equations())
+    ignore(self.form_lagranges_equations())
   }
   let qdots = lagrange_qdots(self.coordinates_)
   let rhs_terms = mechanics_linear_solve(
@@ -315,9 +312,9 @@ pub fn LagrangesMethod::rhs(
 pub fn LagrangesMethod::solve_multipliers(
   self : LagrangesMethod,
   op_point? : Array[Substitution] = [],
-) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+) -> @symphysics.ExplicitMatrix raise {
   if self.eom_.is_empty() {
-    ignore(try! self.form_lagranges_equations())
+    ignore(self.form_lagranges_equations())
   }
   if self.lam_vec_.is_empty() {
     return mechanics_zero_column(0)
@@ -337,8 +334,8 @@ pub fn LagrangesMethod::solve_multipliers(
 ///|
 pub fn LagrangesMethod::linearizer(
   self : LagrangesMethod,
-) -> Linearizer raise @symphysics.PhysicsError {
-  let rhs = try! self.rhs()
+) -> Linearizer raise {
+  let rhs = self.rhs()
   let rhs_terms = mechanics_matrix_entries(rhs).map(fn(row) { row[0] })
   let qdots = lagrange_qdots(self.coordinates_)
   let qddots = lagrange_qddots(self.coordinates_)
@@ -362,7 +359,7 @@ pub fn LagrangesMethod::linearizer(
       Array::make(self.coordinates_.length(), int(0)) + row
     })
     implicit_mass = Some(
-      try! @symphysics.explicit_matrix_from_rows(top_rows + lower_rows),
+      @symphysics.explicit_matrix_from_rows(top_rows + lower_rows),
     )
     implicit_forcing = Some(
       mechanics_matrix_column(
@@ -384,7 +381,7 @@ pub fn LagrangesMethod::linearizer(
     f_1=mechanics_matrix_column(
       qdots.map(fn(qd) { mech_simplify_expr(int(-1) * qd) }),
     ),
-    f_2=try! self.mass_matrix_.mul(
+    f_2=self.mass_matrix_.mul(
       mechanics_matrix_column(qddots + self.lam_vec_),
     ),
     f_3=self.forcing_.neg(),
@@ -402,7 +399,7 @@ pub fn LagrangesMethod::linearizer(
 ///|
 pub fn LagrangesMethod::to_linearizer(
   self : LagrangesMethod,
-) -> Linearizer raise @symphysics.PhysicsError {
+) -> Linearizer raise {
   self.linearizer()
 }
 
@@ -417,6 +414,6 @@ pub fn LagrangesMethod::linearize(
   op_point? : Array[Substitution] = [],
   a_and_b? : Bool = false,
   simplify? : Bool = false,
-) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise @symphysics.PhysicsError {
-  (try! self.linearizer()).linearize(op_point~, a_and_b~, simplify~)
+) -> (@symphysics.ExplicitMatrix, @symphysics.ExplicitMatrix) raise {
+  self.linearizer().linearize(op_point~, a_and_b~, simplify~)
 }

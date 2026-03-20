@@ -34,6 +34,15 @@ pub fn explicit_matrix_from_ints(rows : Array[Array[Int]]) -> ExplicitMatrix {
 }
 
 ///|
+pub fn explicit_matrix_column(exprs : Array[Expr]) -> ExplicitMatrix {
+  let rows : Array[Array[Expr]] = Array::new()
+  for expr in exprs {
+    rows.push([expr])
+  }
+  ExplicitMatrix::{ rows, }
+}
+
+///|
 pub fn explicit_matrix_eye(n : Int) -> ExplicitMatrix {
   let rows : Array[Array[Expr]] = Array::new()
   for i in 0..<n {
@@ -54,6 +63,32 @@ pub fn explicit_matrix_zeros(rows : Int, cols : Int) -> ExplicitMatrix {
 }
 
 ///|
+pub fn explicit_matrix_horizontal_concat(
+  lhs : ExplicitMatrix,
+  rhs : ExplicitMatrix,
+) -> ExplicitMatrix raise PhysicsError {
+  if lhs.height() != rhs.height() {
+    raise PhysicsError::ShapeError("matrix row join requires equal heights")
+  }
+  let rows : Array[Array[Expr]] = Array::new()
+  for i in 0..<lhs.height() {
+    rows.push(lhs.rows[i].copy() + rhs.rows[i].copy())
+  }
+  ExplicitMatrix::{ rows, }
+}
+
+///|
+pub fn explicit_matrix_vertical_concat(
+  top : ExplicitMatrix,
+  bottom : ExplicitMatrix,
+) -> ExplicitMatrix raise PhysicsError {
+  if top.width() != bottom.width() {
+    raise PhysicsError::ShapeError("matrix column join requires equal widths")
+  }
+  ExplicitMatrix::{ rows: top.rows_copy() + bottom.rows_copy() }
+}
+
+///|
 pub fn ExplicitMatrix::height(self : ExplicitMatrix) -> Int {
   self.rows.length()
 }
@@ -65,6 +100,15 @@ pub fn ExplicitMatrix::width(self : ExplicitMatrix) -> Int {
   } else {
     self.rows[0].length()
   }
+}
+
+///|
+pub fn ExplicitMatrix::rows_copy(self : ExplicitMatrix) -> Array[Array[Expr]] {
+  let out : Array[Array[Expr]] = Array::new()
+  for row in self.rows {
+    out.push(row.copy())
+  }
+  out
 }
 
 ///|

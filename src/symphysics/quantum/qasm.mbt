@@ -94,7 +94,7 @@ pub fn get_indices(
 ) -> Array[Int] raise @symphysics.PhysicsError {
   let out : Array[Int] = []
   for target in targets {
-    out.push(try! get_index(target, labels))
+    out.push(get_index(target, labels))
   }
   out
 }
@@ -174,13 +174,13 @@ pub fn Qasm::add(
   lines : Array[String],
 ) -> Unit raise @symphysics.PhysicsError {
   for line in qasm_nonblank(lines) {
-    let (command, rest) = try! qasm_fullsplit(line)
+    let (command, rest) = qasm_fullsplit(line)
     match self.defs.get(command) {
       Some(definition) => {
-        let indices = try! self.indices(rest)
-        self.circuit.push(try! qasm_apply_definition(definition, indices))
+        let indices = self.indices(rest)
+        self.circuit.push(qasm_apply_definition(definition, indices))
       }
-      None => try! qasm_apply_builtin(self, command, rest)
+      None => qasm_apply_builtin(self, command, rest)
     }
   }
 }
@@ -224,43 +224,43 @@ fn qasm_apply_builtin(
       )
     "nop" => ()
     "x" =>
-      parser.circuit.push(qasm_builtin_gate("X", [try! parser.index(rest[0])]))
+      parser.circuit.push(qasm_builtin_gate("X", [parser.index(rest[0])]))
     "z" =>
-      parser.circuit.push(qasm_builtin_gate("Z", [try! parser.index(rest[0])]))
+      parser.circuit.push(qasm_builtin_gate("Z", [parser.index(rest[0])]))
     "h" =>
-      parser.circuit.push(qasm_builtin_gate("H", [try! parser.index(rest[0])]))
+      parser.circuit.push(qasm_builtin_gate("H", [parser.index(rest[0])]))
     "s" =>
-      parser.circuit.push(qasm_builtin_gate("S", [try! parser.index(rest[0])]))
+      parser.circuit.push(qasm_builtin_gate("S", [parser.index(rest[0])]))
     "t" =>
-      parser.circuit.push(qasm_builtin_gate("T", [try! parser.index(rest[0])]))
+      parser.circuit.push(qasm_builtin_gate("T", [parser.index(rest[0])]))
     "measure" =>
-      parser.circuit.push(qasm_measure_gate(try! parser.index(rest[0])))
+      parser.circuit.push(qasm_measure_gate(parser.index(rest[0])))
     "cnot" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(qasm_builtin_gate("CNOT", indices))
     }
     "swap" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(qasm_builtin_gate("SWAP", indices))
     }
     "cphase" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(cphase(indices[0], indices[1]))
     }
     "toffoli" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(
         cgate(indices[:2].to_array(), qasm_builtin_gate("X", [indices[2]])),
       )
     }
     "cx" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(
         cgate([indices[0]], qasm_builtin_gate("X", [indices[1]])),
       )
     }
     "cz" => {
-      let indices = try! parser.indices(rest)
+      let indices = parser.indices(rest)
       parser.circuit.push(
         cgate([indices[0]], qasm_builtin_gate("Z", [indices[1]])),
       )

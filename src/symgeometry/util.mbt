@@ -74,7 +74,7 @@ fn sort_points_lex(points : Array[Point]) -> Array[Point] raise GeometryError {
   let n = out.length()
   for i in 0..<n {
     for j in (i + 1)..<n {
-      if (try! point_order_cmp(out[i], out[j])) > 0 {
+      if point_order_cmp(out[i], out[j]) > 0 {
         let tmp = out[i]
         out[i] = out[j]
         out[j] = tmp
@@ -86,7 +86,7 @@ fn sort_points_lex(points : Array[Point]) -> Array[Point] raise GeometryError {
 
 ///|
 fn ordered_pair(pair : (Point, Point)) -> (Point, Point) raise GeometryError {
-  if (try! point_order_cmp(pair.0, pair.1)) <= 0 {
+  if point_order_cmp(pair.0, pair.1) <= 0 {
     pair
   } else {
     (pair.1, pair.0)
@@ -359,10 +359,11 @@ fn sort_point_pairs(
     for j in (i + 1)..<n {
       let lhs = out[i]
       let rhs = out[j]
-      let swap = if (try! point_order_cmp(lhs.0, rhs.0)) > 0 {
+      let first_cmp = point_order_cmp(lhs.0, rhs.0)
+      let swap = if first_cmp > 0 {
         true
-      } else if (try! point_order_cmp(lhs.0, rhs.0)) == 0 {
-        (try! point_order_cmp(lhs.1, rhs.1)) > 0
+      } else if first_cmp == 0 {
+        point_order_cmp(lhs.1, rhs.1) > 0
       } else {
         false
       }

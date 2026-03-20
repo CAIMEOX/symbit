@@ -41,33 +41,21 @@ fn mechanics_expr_div(
 fn mechanics_matrix_column(
   exprs : Array[Expr],
 ) -> @symphysics.ExplicitMatrix {
-  let rows : Array[Array[Expr]] = []
-  for expr in exprs {
-    rows.push([expr])
-  }
-  try! @symphysics.explicit_matrix_from_rows(rows)
+  @symphysics.explicit_matrix_column(exprs)
 }
 
 ///|
 fn mechanics_matrix_entries(
   matrix : @symphysics.ExplicitMatrix,
 ) -> Array[Array[Expr]] {
-  let rows : Array[Array[Expr]] = []
-  for i in 0..<matrix.height() {
-    let row : Array[Expr] = []
-    for j in 0..<matrix.width() {
-      row.push(try! matrix.get(i, j))
-    }
-    rows.push(row)
-  }
-  rows
+  matrix.rows_copy()
 }
 
 ///|
 fn mechanics_matrix_jacobian(
   exprs : Array[Expr],
   vars : Array[Expr],
-) -> @symphysics.ExplicitMatrix {
+) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   let rows : Array[Array[Expr]] = []
   for expr in exprs {
     let row : Array[Expr] = []
@@ -76,7 +64,7 @@ fn mechanics_matrix_jacobian(
     }
     rows.push(row)
   }
-  try! @symphysics.explicit_matrix_from_rows(rows)
+  @symphysics.explicit_matrix_from_rows(rows)
 }
 
 ///|
@@ -181,12 +169,13 @@ fn mechanics_matrix_linear_solve(
     )
   }
   let solved_columns : Array[Array[Expr]] = []
+  let rhs_rows = rhs.rows_copy()
   for j in 0..<rhs.width() {
     let column : Array[Expr] = []
     for i in 0..<rhs.height() {
-      column.push(try! rhs.get(i, j))
+      column.push(rhs_rows[i][j])
     }
-    solved_columns.push(try! mechanics_linear_solve(coeff, column))
+    solved_columns.push(mechanics_linear_solve(coeff, column))
   }
   let rows : Array[Array[Expr]] = []
   for i in 0..<coeff.width() {
@@ -196,7 +185,7 @@ fn mechanics_matrix_linear_solve(
     }
     rows.push(row)
   }
-  try! @symphysics.explicit_matrix_from_rows(rows)
+  @symphysics.explicit_matrix_from_rows(rows)
 }
 
 ///|
@@ -432,7 +421,7 @@ pub fn Linearizer::linearize_mab(
   @symphysics.ExplicitMatrix,
   @symphysics.ExplicitMatrix,
   @symphysics.ExplicitMatrix,
-) {
+) raise @symphysics.PhysicsError {
   let mass = match self.implicit_mass_ {
     Some(value) => value
     None => mechanics_identity(self.states_.length())
@@ -483,16 +472,12 @@ pub fn Linearizer::linearize(
     let a_solved = if a.height() == 0 || a.width() == 0 {
       @symphysics.explicit_matrix_zeros(self.states_.length(), a.width())
     } else {
-      try! self.perm_mat_
-      .transpose()
-      .mul(try! mechanics_matrix_linear_solve(m, a))
+      self.perm_mat_.transpose().mul(mechanics_matrix_linear_solve(m, a))
     }
     let b_solved = if b.height() == 0 {
       b
     } else {
-      try! self.perm_mat_
-      .transpose()
-      .mul(try! mechanics_matrix_linear_solve(m, b))
+      self.perm_mat_.transpose().mul(mechanics_matrix_linear_solve(m, b))
     }
     let a_final = mechanics_matrix_simplify(a_solved)
     let b_final = mechanics_matrix_simplify(b_solved)

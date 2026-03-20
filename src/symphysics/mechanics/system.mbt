@@ -107,10 +107,10 @@ pub fn system(
   fixed_point? : @symvector.Point? = None,
 ) -> System raise @symvector.VectorError {
   let inertial_frame = frame.unwrap_or(
-    try! @symvector.reference_frame("inertial_frame"),
+    @symvector.reference_frame("inertial_frame"),
   )
   let inertial_point = fixed_point.unwrap_or(
-    try! @symvector.point("inertial_point"),
+    @symvector.point("inertial_point"),
   )
   inertial_point.set_vel(inertial_frame, @symvector.vector_zero())
   System::{
@@ -284,7 +284,7 @@ pub fn System::set_q_ind(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=exprs,
     speeds=self.u(),
     u_auxiliary=self.u_aux_,
@@ -297,7 +297,7 @@ pub fn System::set_q_dep(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q_ind_ + exprs,
     speeds=self.u(),
     u_auxiliary=self.u_aux_,
@@ -310,7 +310,7 @@ pub fn System::set_u_ind(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=exprs + self.u_dep_,
     u_auxiliary=self.u_aux_,
@@ -323,7 +323,7 @@ pub fn System::set_u_dep(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=self.u_ind_ + exprs,
     u_auxiliary=self.u_aux_,
@@ -336,7 +336,7 @@ pub fn System::set_u_aux(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=self.u(),
     u_auxiliary=exprs,
@@ -360,7 +360,7 @@ pub fn System::add_coordinates(
   } else {
     self.q_dep_.copy() + coordinates.copy()
   }
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=next_ind + next_dep,
     speeds=self.u(),
     u_auxiliary=self.u_aux_,
@@ -389,7 +389,7 @@ pub fn System::add_speeds(
   } else {
     self.u_dep_.copy() + speeds.copy()
   }
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=next_ind + next_dep,
     u_auxiliary=self.u_aux_,
@@ -407,7 +407,7 @@ pub fn System::add_auxiliary_speeds(
   self : System,
   speeds : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=self.u(),
     u_auxiliary=self.u_aux_ + speeds.copy(),
@@ -485,8 +485,8 @@ pub fn System::add_joints(
   for joint in joints {
     system_append_joints_unique(self.joints_, [joint])
     self.add_bodies([joint.parent(), joint.child()])
-    try! self.add_coordinates(joint.coordinates())
-    try! self.add_speeds(joint.speeds())
+    self.add_coordinates(joint.coordinates())
+    self.add_speeds(joint.speeds())
     self.add_kdes(joint.kdes())
   }
   self.eom_method_ = None
@@ -518,7 +518,7 @@ pub fn System::validate_system(
   use_lagrange? : Bool = false,
   check_duplicates? : Bool = false,
 ) -> Unit raise @symphysics.PhysicsError {
-  try! validate_coordinates(
+  validate_coordinates(
     coordinates=self.q(),
     speeds=self.u(),
     u_auxiliary=self.u_aux_,
@@ -702,10 +702,10 @@ pub fn System::validate_system(
 ///|
 fn System::system_effective_loads(
   self : System,
-) -> Array[Load] raise @symvector.VectorError {
+) -> Array[Load] raise {
   let out = self.loads_.copy()
   for actuator in self.actuators_ {
-    system_append_loads_unique(out, try! actuator.to_loads())
+    system_append_loads_unique(out, actuator.to_loads())
   }
   out
 }
@@ -714,9 +714,9 @@ fn System::system_effective_loads(
 pub fn System::form_eoms(
   self : System,
   use_lagrange? : Bool = false,
-) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  try! self.validate_system(use_lagrange~)
-  let loads = try! self.system_effective_loads()
+) -> @symphysics.ExplicitMatrix raise {
+  self.validate_system(use_lagrange~)
+  let loads = self.system_effective_loads()
   if use_lagrange {
     let q_all = self.q()
     let qdots = q_all.map(fn(q) {
@@ -732,7 +732,7 @@ pub fn System::form_eoms(
     for i in 0..<q_all.length() {
       subs.push((u_all[i], qdots[i]))
     }
-    let lagr = msubs_expr(try! lagrangian(self.frame_, self.bodies_), subs)
+    let lagr = msubs_expr(lagrangian(self.frame_, self.bodies_), subs)
     let lagrange_loads : Array[Load] = []
     for load in loads {
       match load {
@@ -748,7 +748,7 @@ pub fn System::form_eoms(
           )
       }
     }
-    let backend = try! lagranges_method(
+    let backend = lagranges_method(
       lagr,
       q_all,
       bodies=self.bodies_,
@@ -756,11 +756,11 @@ pub fn System::form_eoms(
       frame=Some(self.frame_),
       hol_coneqs=self.holonomic_constraints_,
     )
-    let eom = try! backend.form_lagranges_equations()
+    let eom = backend.form_lagranges_equations()
     self.eom_method_ = Some(MechanicsBackend::Lagrange(backend))
     eom
   } else {
-    let backend = try! kanes_method(
+    let backend = kanes_method(
       self.frame_,
       self.q_ind_,
       self.u_ind_,
@@ -768,7 +768,7 @@ pub fn System::form_eoms(
       bodies=self.bodies_,
       forcelist=loads,
     )
-    let (_, fr) = try! backend.kanes_equations(self.bodies_, loads)
+    let (_, fr) = backend.kanes_equations(self.bodies_, loads)
     self.eom_method_ = Some(MechanicsBackend::Kane(backend))
     fr
   }
@@ -777,7 +777,7 @@ pub fn System::form_eoms(
 ///|
 pub fn System::rhs(
   self : System,
-) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+) -> @symphysics.ExplicitMatrix raise {
   match self.eom_method_ {
     Some(MechanicsBackend::Kane(value)) => value.rhs()
     Some(MechanicsBackend::Lagrange(value)) => value.rhs()

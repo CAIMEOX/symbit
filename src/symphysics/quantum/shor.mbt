@@ -94,7 +94,7 @@ pub fn ratioize(items : Array[Int], n : Int) -> Int {
 
 ///|
 pub fn getr(x : Int, y : Int, n : Int) -> Int raise @symphysics.PhysicsError {
-  ratioize(try! shor_continued_fraction_terms(x, y), n)
+  ratioize(shor_continued_fraction_terms(x, y), n)
 }
 
 ///|
@@ -162,7 +162,7 @@ fn cmod_apply(
     exponent += (1 << i) * ket.bit(op.t + i)
   }
   let out = shor_pow_mod(op.a, exponent, op.modulus)
-  let out_bits = try! int_to_bits(out, op.t)
+  let out_bits = int_to_bits(out, op.t)
   let result_bits : Array[Int] = []
   for idx in 0..<op.t {
     result_bits.push(ket.bits[idx])
@@ -172,7 +172,7 @@ fn cmod_apply(
   }
   // `CMod` acts on a fixed-width register, so preserve the explicit bit-width
   // instead of collapsing back to `IntQubit`'s minimal-width encoding.
-  (try! qubit_from_bits(result_bits, bra=ket.is_bra)).as_expr()
+  qubit_from_bits(result_bits, bra=ket.is_bra).as_expr()
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn shor_apply_operator_to_ket(
   ket_expr : Expr,
 ) -> Expr? raise @symphysics.PhysicsError {
   match (cmod_from_expr(op_expr), qubit_from_expr(ket_expr)) {
-    (Some(op), Some(ket)) => Some(try! cmod_apply(op, ket))
+    (Some(op), Some(ket)) => Some(cmod_apply(op, ket))
     _ => None
   }
 }
@@ -196,9 +196,9 @@ fn cmod_matrix(
     rows.push(Array::make(size, int(0)))
   }
   for col in 0..<size {
-    let bits = try! int_to_bits(col, 2 * op.t)
-    let input = try! qubit_from_bits(bits)
-    let out = try! cmod_apply(op, input)
+    let bits = int_to_bits(col, 2 * op.t)
+    let input = qubit_from_bits(bits)
+    let out = cmod_apply(op, input)
     let q = match qubit_from_expr(out) {
       Some(value) => value
       None =>
@@ -224,7 +224,7 @@ pub fn shor_represent(
           "CMod representation size mismatch",
         )
       }
-      Some(MatrixScalarValue::Matrix(try! cmod_matrix(op)))
+      Some(MatrixScalarValue::Matrix(cmod_matrix(op)))
     }
     None => None
   }
@@ -280,7 +280,7 @@ pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
     if divisor != 1 {
       return int(divisor)
     }
-    let r = try! period_find(a, n)
+    let r = period_find(a, n)
     if (r & 1) == 1 {
       continue
     }

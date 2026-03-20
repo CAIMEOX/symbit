@@ -437,7 +437,7 @@ pub fn Segment::ambient_dimension(Self) -> Int
 pub fn Segment::contains(Self, Point) -> Bool raise GeometryError
 pub fn Segment::direction(Self) -> Point
 pub fn Segment::distance(Self, Point) -> @symcore.Expr raise GeometryError
-pub fn Segment::equals(Self, GeometryEntity) -> Bool raise GeometryError
+pub fn Segment::equals(Self, GeometryEntity) -> Bool
 pub fn Segment::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Segment::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Segment::length(Self) -> @symcore.Expr raise GeometryError
@@ -476,7 +476,7 @@ pub fn Triangle::inradius(Self) -> @symcore.Expr raise GeometryError
 pub fn Triangle::intersection(Self, GeometryEntity) -> Array[GeometryEntity] raise GeometryError
 pub fn Triangle::is_equilateral(Self) -> Bool raise GeometryError
 pub fn Triangle::is_isosceles(Self) -> Bool raise GeometryError
-pub fn Triangle::is_right(Self) -> Bool raise GeometryError
+pub fn Triangle::is_right(Self) -> Bool
 pub fn Triangle::is_scalene(Self) -> Bool raise GeometryError
 pub fn Triangle::is_similar(Self, GeometryEntity) -> Bool raise GeometryError
 pub fn Triangle::medial(Self) -> Self raise GeometryError

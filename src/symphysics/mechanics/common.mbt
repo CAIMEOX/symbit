@@ -80,7 +80,7 @@ fn mech_one_expr() -> Expr {
 
 ///|
 fn mech_half_expr() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  mech_simplify_expr(mech_one_expr() * (int(2) ^ int(-1)))
 }
 
 ///|
@@ -283,7 +283,7 @@ pub fn Inertia::from_inertia_scalars(
   ixy? : Expr = int(0),
   iyz? : Expr = int(0),
   izx? : Expr = int(0),
-) -> Inertia {
+) -> Inertia raise @symvector.VectorError {
   inertia_tuple(inertia(frame, ixx, iyy, izz, ixy~, iyz~, izx~), point)
 }
 

@@ -77,7 +77,7 @@ pub fn joints_method(
     system_append_exprs_unique(u, joint.speeds())
     system_append_exprs_unique(kdes, joint.kdes())
   }
-  try! validate_coordinates(coordinates=q, speeds=u)
+  validate_coordinates(coordinates=q, speeds=u)
   let bodies = joints_collect_bodies(root, joints)
   JointsMethod::{
     frame_: frame,
@@ -153,7 +153,7 @@ pub fn JointsMethod::form_eoms(
         (self.u_[i], @symcalculus.diff(self.q_[i], @symvector.dynamicsymbols_t)),
       )
     }
-    let lagr = msubs_expr(try! lagrangian(self.frame_, self.bodies_), subs)
+    let lagr = msubs_expr(lagrangian(self.frame_, self.bodies_), subs)
     let lagrange_loads : Array[Load] = []
     for load in self.loads_ {
       match load {
@@ -169,18 +169,18 @@ pub fn JointsMethod::form_eoms(
           )
       }
     }
-    let backend = try! lagranges_method(
+    let backend = lagranges_method(
       lagr,
       self.q_,
       bodies=self.bodies_,
       forcelist=lagrange_loads,
       frame=Some(self.frame_),
     )
-    let eom = try! backend.form_lagranges_equations()
+    let eom = backend.form_lagranges_equations()
     self.backend_ = Some(MechanicsBackend::Lagrange(backend))
     eom
   } else {
-    let backend = try! kanes_method(
+    let backend = kanes_method(
       self.frame_,
       self.q_,
       self.u_,
@@ -188,7 +188,7 @@ pub fn JointsMethod::form_eoms(
       bodies=self.bodies_,
       forcelist=self.loads_,
     )
-    let (_, fr) = try! backend.kanes_equations(self.bodies_, self.loads_)
+    let (_, fr) = backend.kanes_equations(self.bodies_, self.loads_)
     self.backend_ = Some(MechanicsBackend::Kane(backend))
     fr
   }
@@ -239,7 +239,7 @@ pub fn JointsMethod::forcing_full(
 ///|
 pub fn JointsMethod::rhs(
   self : JointsMethod,
-) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
+) -> @symphysics.ExplicitMatrix raise {
   match self.backend_ {
     Some(MechanicsBackend::Kane(value)) => value.rhs()
     Some(MechanicsBackend::Lagrange(value)) => value.rhs()

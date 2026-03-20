@@ -34,23 +34,7 @@ fn symbolic_system_join_rows(
   lhs : @symphysics.ExplicitMatrix,
   rhs : @symphysics.ExplicitMatrix,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  guard lhs.height() == rhs.height() else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "matrix row join requires equal heights",
-    )
-  }
-  let rows : Array[Array[Expr]] = []
-  for i in 0..<lhs.height() {
-    let row : Array[Expr] = []
-    for j in 0..<lhs.width() {
-      row.push(try! lhs.get(i, j))
-    }
-    for j in 0..<rhs.width() {
-      row.push(try! rhs.get(i, j))
-    }
-    rows.push(row)
-  }
-  try! @symphysics.explicit_matrix_from_rows(rows)
+  @symphysics.explicit_matrix_horizontal_concat(lhs, rhs)
 }
 
 ///|
@@ -58,13 +42,7 @@ fn symbolic_system_join_cols(
   top : @symphysics.ExplicitMatrix,
   bottom : @symphysics.ExplicitMatrix,
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
-  guard top.width() == bottom.width() else {
-    raise @symphysics.PhysicsError::ShapeError(
-      "matrix column join requires equal widths",
-    )
-  }
-  let rows = mechanics_matrix_entries(top) + mechanics_matrix_entries(bottom)
-  try! @symphysics.explicit_matrix_from_rows(rows)
+  @symphysics.explicit_matrix_vertical_concat(top, bottom)
 }
 
 ///|
@@ -156,7 +134,7 @@ pub fn symbolic_system(
       let coord_matrix = symbolic_system_column(coord_states)
       let speed_value_matrix = symbolic_system_column(speed_values)
       (
-        try! symbolic_system_join_cols(coord_matrix, speed_value_matrix),
+        symbolic_system_join_cols(coord_matrix, speed_value_matrix),
         Some(coord_matrix),
         Some(speed_value_matrix),
       )
@@ -299,12 +277,12 @@ pub fn SymbolicSystem::comb_implicit_mat(
             dyn_rhs.height(),
             kin_rhs.height(),
           )
-          let inter1 = try! symbolic_system_join_rows(
+          let inter1 = symbolic_system_join_rows(
             @symphysics.explicit_matrix_eye(kin_rhs.height()),
             zeros1,
           )
-          let inter2 = try! symbolic_system_join_rows(zeros2, dyn_mat)
-          let value = try! symbolic_system_join_cols(inter1, inter2)
+          let inter2 = symbolic_system_join_rows(zeros2, dyn_mat)
+          let value = symbolic_system_join_cols(inter1, inter2)
           self.comb_implicit_mat_ = Some(value)
           value
         }
@@ -325,7 +303,7 @@ pub fn SymbolicSystem::comb_implicit_rhs(
     None =>
       match (self.kin_explicit_rhs_, self.dyn_implicit_rhs_) {
         (Some(kin_rhs), Some(dyn_rhs)) => {
-          let value = try! symbolic_system_join_cols(kin_rhs, dyn_rhs)
+          let value = symbolic_system_join_cols(kin_rhs, dyn_rhs)
           self.comb_implicit_rhs_ = Some(value)
           value
         }
@@ -353,16 +331,16 @@ pub fn SymbolicSystem::compute_explicit_form(
         dyn_mat,
         symbolic_system_flatten(dyn_rhs),
       )
-      try! symbolic_system_join_cols(
+      symbolic_system_join_cols(
         kin_rhs,
         symbolic_system_column(dyn_solution),
       )
     }
     _ => {
-      let comb_mat = try! self.comb_implicit_mat()
-      let comb_rhs = try! self.comb_implicit_rhs()
+      let comb_mat = self.comb_implicit_mat()
+      let comb_rhs = self.comb_implicit_rhs()
       symbolic_system_column(
-        try! mechanics_linear_solve(comb_mat, symbolic_system_flatten(comb_rhs)),
+        mechanics_linear_solve(comb_mat, symbolic_system_flatten(comb_rhs)),
       )
     }
   }

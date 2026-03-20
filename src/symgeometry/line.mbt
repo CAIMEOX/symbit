@@ -805,7 +805,7 @@ pub fn Segment::direction(self : Segment) -> Point {
 pub fn Segment::equals(
   self : Segment,
   other : GeometryEntity,
-) -> Bool raise GeometryError {
+) -> Bool {
   match other {
     GeometryEntity::Segment(seg_obj) =>
       (self.p1_.equals(seg_obj.p1_) && self.p2_.equals(seg_obj.p2_)) ||

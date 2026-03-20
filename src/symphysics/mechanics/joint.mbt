@@ -172,7 +172,7 @@ fn joint_default_frame(
   body : BodyLike,
   suffix : String,
 ) -> @symvector.ReferenceFrame raise @symvector.VectorError {
-  try! @symvector.reference_frame(
+  @symvector.reference_frame(
     joint_name + "_" + mech_bodylike_name(body) + "_" + suffix,
   )
 }
@@ -188,7 +188,7 @@ fn joint_locate_attachment(
   match attachment {
     Some(JointAttachment::Point(point)) => point
     Some(JointAttachment::Offset(offset)) =>
-      try! masscenter.locatenew(
+      masscenter.locatenew(
         joint_name + "_" + mech_bodylike_name(body) + "_" + role,
         offset,
       )
@@ -207,14 +207,14 @@ fn joint_locate_interframe(
   match interframe {
     Some(JointInterframe::Frame(value)) => value
     Some(JointInterframe::Axis(axis)) => {
-      let aligned = try! @symvector.reference_frame(
+      let aligned = @symvector.reference_frame(
         joint_name + "_" + mech_bodylike_name(body) + "_" + role + "_interframe",
       )
-      let axis_unit = try! axis.normalize()
+      let axis_unit = axis.normalize()
       let base_x = frame.x()
-      let rotation_axis = try! base_x.cross(axis_unit)
+      let rotation_axis = base_x.cross(axis_unit)
       if rotation_axis.is_zero() {
-        let dot = try! base_x.dot(axis_unit)
+        let dot = base_x.dot(axis_unit)
         if mech_expr_is_zero(dot + int(1)) {
           aligned.orient_axis(frame, frame.y(), symbol("pi"))
         } else {
@@ -224,7 +224,7 @@ fn joint_locate_interframe(
         aligned.orient_axis(
           frame,
           rotation_axis,
-          @symelem.acos(try! base_x.dot(axis_unit)),
+          @symelem.acos(base_x.dot(axis_unit)),
         )
       }
       aligned
@@ -298,10 +298,10 @@ fn joint_omega_from_dcm_in_child(
   child : @symvector.ReferenceFrame,
   dcm : @symphysics.ExplicitMatrix,
 ) -> @symvector.Vector raise @symphysics.PhysicsError {
-  let skew = (try! joint_matrix_time_diff(dcm).mul(dcm.transpose())).neg()
-  let wx = try! skew.get(2, 1)
-  let wy = try! skew.get(0, 2)
-  let wz = try! skew.get(1, 0)
+  let skew = joint_matrix_time_diff(dcm).mul(dcm.transpose()).neg()
+  let wx = skew.get(2, 1)
+  let wy = skew.get(0, 2)
+  let wz = skew.get(1, 0)
   child.x().scale(wx) + child.y().scale(wy) + child.z().scale(wz)
 }
 
@@ -328,28 +328,28 @@ pub fn pin_joint(
   parent_interframe? : JointInterframe? = None,
   child_interframe? : JointInterframe? = None,
   joint_axis? : @symvector.Vector? = None,
-) -> PinJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+) -> PinJoint raise {
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
   let coord_list = coordinates.unwrap_or([joint_default_coordinate(name)])
   let speed_list = speeds.unwrap_or([joint_default_speed(name)])
-  try! validate_coordinates(coordinates=coord_list, speeds=speed_list)
+  validate_coordinates(coordinates=coord_list, speeds=speed_list)
   let kdes = joint_kdes(coord_list, speed_list)
   let resolved_axis = joint_resolve_axis(joint_axis, resolved_parent_interframe)
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
 
@@ -366,7 +366,7 @@ pub fn pin_joint(
   parent_joint_point.set_vel(parent_frame, @symvector.vector_zero())
   child_joint_point.set_vel(child_frame, @symvector.vector_zero())
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       parent_joint_point, parent_frame, child_frame,
     ),
   )
@@ -482,28 +482,28 @@ pub fn prismatic_joint(
   parent_interframe? : JointInterframe? = None,
   child_interframe? : JointInterframe? = None,
   joint_axis? : @symvector.Vector? = None,
-) -> PrismaticJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+) -> PrismaticJoint raise {
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
   let coord_list = coordinates.unwrap_or([joint_default_coordinate(name)])
   let speed_list = speeds.unwrap_or([joint_default_speed(name)])
-  try! validate_coordinates(coordinates=coord_list, speeds=speed_list)
+  validate_coordinates(coordinates=coord_list, speeds=speed_list)
   let kdes = joint_kdes(coord_list, speed_list)
   let resolved_axis = joint_resolve_axis(joint_axis, resolved_parent_interframe).normalize()
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
 
@@ -524,7 +524,7 @@ pub fn prismatic_joint(
   child_joint_point.set_vel(child_frame, @symvector.vector_zero())
   child_joint_point.set_vel(parent_frame, resolved_axis.scale(speed_list[0]))
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       child_joint_point, parent_frame, child_frame,
     ),
   )
@@ -650,17 +650,17 @@ pub fn cylindrical_joint(
   parent_interframe? : JointInterframe? = None,
   child_interframe? : JointInterframe? = None,
   joint_axis? : @symvector.Vector? = None,
-) -> CylindricalJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+) -> CylindricalJoint raise {
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
   let coordinates = [
@@ -671,13 +671,13 @@ pub fn cylindrical_joint(
     rotation_speed.unwrap_or(joint_default_speed_index(name, 0)),
     translation_speed.unwrap_or(joint_default_speed_index(name, 1)),
   ]
-  try! validate_coordinates(coordinates~, speeds~)
+  validate_coordinates(coordinates~, speeds~)
   let kdes = joint_kdes(coordinates, speeds)
   let resolved_axis = joint_resolve_axis(joint_axis, resolved_parent_interframe).normalize()
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
 
@@ -698,7 +698,7 @@ pub fn cylindrical_joint(
   child_joint_point.set_vel(child_frame, @symvector.vector_zero())
   child_joint_point.set_vel(parent_frame, resolved_axis.scale(speeds[1]))
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       child_joint_point, parent_frame, child_frame,
     ),
   )
@@ -859,17 +859,17 @@ pub fn planar_joint(
   child_point? : JointAttachment? = None,
   parent_interframe? : JointInterframe? = None,
   child_interframe? : JointInterframe? = None,
-) -> PlanarJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+) -> PlanarJoint raise {
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
   let planar_coords = planar_coordinates.unwrap_or([
@@ -886,17 +886,17 @@ pub fn planar_joint(
     planar_coords
   let speeds = [rotation_speed.unwrap_or(joint_default_speed_index(name, 0))] +
     planar_speed_values
-  try! validate_coordinates(coordinates~, speeds~)
+  validate_coordinates(coordinates~, speeds~)
   let kdes = joint_kdes(coordinates, speeds)
   let rotation_axis = resolved_parent_interframe.x().normalize()
   let planar_vectors = [
     resolved_parent_interframe.y().normalize(),
     resolved_parent_interframe.z().normalize(),
   ]
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
 
@@ -921,7 +921,7 @@ pub fn planar_joint(
     planar_vectors[0].scale(speeds[1]) + planar_vectors[1].scale(speeds[2]),
   )
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       child_joint_point, parent_frame, child_frame,
     ),
   )
@@ -1074,17 +1074,17 @@ pub fn spherical_joint(
   child_interframe? : JointInterframe? = None,
   rot_type? : String = "BODY",
   rot_order? : String = "123",
-) -> SphericalJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+) -> SphericalJoint raise {
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
   let coordinate_values = coordinates.unwrap_or([
@@ -1097,12 +1097,12 @@ pub fn spherical_joint(
     joint_default_speed_index(name, 1),
     joint_default_speed_index(name, 2),
   ])
-  try! validate_coordinates(coordinates=coordinate_values, speeds=speed_values)
+  validate_coordinates(coordinates=coordinate_values, speeds=speed_values)
   let kdes = joint_kdes(coordinate_values, speed_values)
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
   let rotation_kind = rot_type.to_lower()
@@ -1116,9 +1116,9 @@ pub fn spherical_joint(
     )
   }
   let omega = msubs_vector(
-    try! joint_omega_from_dcm_in_child(
+    joint_omega_from_dcm_in_child(
       resolved_child_interframe,
-      try! resolved_child_interframe.dcm(resolved_parent_interframe),
+      resolved_child_interframe.dcm(resolved_parent_interframe),
     ),
     joint_qdot_subs(coordinate_values, speed_values),
   )
@@ -1127,7 +1127,7 @@ pub fn spherical_joint(
   parent_joint_point.set_vel(parent_frame, @symvector.vector_zero())
   child_joint_point.set_vel(child_frame, @symvector.vector_zero())
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       parent_joint_point, parent_frame, child_frame,
     ),
   )
@@ -1245,22 +1245,22 @@ pub fn weld_joint(
   parent_interframe? : JointInterframe? = None,
   child_interframe? : JointInterframe? = None,
 ) -> WeldJoint raise @symvector.VectorError {
-  let parent_frame = try! joint_resolve_frame(
+  let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = try! joint_resolve_frame(
+  let child_frame = joint_resolve_frame(
     name, child, "child", child_interframe,
   )
-  let resolved_parent_interframe = try! joint_locate_interframe(
+  let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
-  let resolved_child_interframe = try! joint_locate_interframe(
+  let resolved_child_interframe = joint_locate_interframe(
     name, child, "child", child_frame, child_interframe,
   )
-  let parent_joint_point = try! joint_locate_attachment(
+  let parent_joint_point = joint_locate_attachment(
     name, parent, "parent_point", parent_point,
   )
-  let child_joint_point = try! joint_locate_attachment(
+  let child_joint_point = joint_locate_attachment(
     name, child, "child_point", child_point,
   )
   resolved_child_interframe.orient_axis(
@@ -1276,7 +1276,7 @@ pub fn weld_joint(
   parent_joint_point.set_vel(parent_frame, @symvector.vector_zero())
   child_joint_point.set_vel(child_frame, @symvector.vector_zero())
   ignore(
-    try! mech_bodylike_masscenter(child).v2pt_theory(
+    mech_bodylike_masscenter(child).v2pt_theory(
       parent_joint_point, parent_frame, child_frame,
     ),
   )

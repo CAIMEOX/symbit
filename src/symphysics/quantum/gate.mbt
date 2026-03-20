@@ -235,6 +235,16 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
 }
 
 ///|
+fn gate_exact_rational(num : Int, den : Int) -> Expr {
+  let result : Result[Expr, @symnum.RationalError] = try?
+    @symcore.rational_from_ints(num, den)
+  match result {
+    Ok(value) => value
+    Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
+  }
+}
+
+///|
 pub fn u_gate(
   targets : Array[Int],
   matrix : @symphysics.ExplicitMatrix,
@@ -247,7 +257,7 @@ pub fn u_gate(
   }
   @symcore.raw_function("UGate", [
     gate_tuple_expr(targets),
-    try! gate_matrix_expr(matrix),
+    gate_matrix_expr(matrix),
   ])
 }
 
@@ -256,7 +266,7 @@ pub fn u_gate_single(
   target : Int,
   matrix : @symphysics.ExplicitMatrix,
 ) -> Expr raise @symphysics.PhysicsError {
-  try! u_gate([target], matrix)
+  u_gate([target], matrix)
 }
 
 ///|
@@ -298,13 +308,12 @@ pub fn GateExpr::repr(self : GateExpr) -> String {
 
 ///|
 fn sqrt2_over_2() -> Expr {
-  try! (@symcore.rational_from_ints(1, 2) *
-  @symcore.raw_function("sqrt", [int(2)]))
+  gate_exact_rational(1, 2) * @symcore.raw_function("sqrt", [int(2)])
 }
 
 ///|
 fn gate_phase_t() -> Expr {
-  let quarter = try! @symcore.rational_from_ints(1, 4)
+  let quarter = gate_exact_rational(1, 4)
   @symcore.raw_function("exp", [
     symbol("I") * symbol("pi") * quarter,
   ])
@@ -408,7 +417,7 @@ fn gate_apply_single_qubit(
   q : QubitExpr,
   target : Int,
 ) -> Expr raise @symphysics.PhysicsError {
-  let current = try! q.bit(target)
+  let current = q.bit(target)
   let pos = q.bits.length() - 1 - target
   let terms : Array[Expr] = []
   for row in 0..<2 {
@@ -416,7 +425,7 @@ fn gate_apply_single_qubit(
     if coeff != int(0) {
       let bits = q.bits.copy()
       bits[pos] = row
-      let next_q = try! qubit_from_bits(bits, bra=q.is_bra)
+      let next_q = qubit_from_bits(bits, bra=q.is_bra)
       if coeff == int(1) {
         terms.push(next_q.as_expr())
       } else {
@@ -448,9 +457,7 @@ fn gate_apply_concrete(
     | GateKind::Z
     | GateKind::Phase
     | GateKind::T =>
-      Some(
-        try! gate_apply_single_qubit(try! gate.target_matrix(), q, gate.args[0]),
-      )
+      Some(gate_apply_single_qubit(gate.target_matrix(), q, gate.args[0]))
     GateKind::Swap => {
       let left = q.bits.length() - 1 - gate.args[0]
       let right = q.bits.length() - 1 - gate.args[1]
@@ -458,16 +465,14 @@ fn gate_apply_concrete(
       let tmp = bits[left]
       bits[left] = bits[right]
       bits[right] = tmp
-      Some(
-        (try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)).as_expr(),
-      )
+      Some(qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form).as_expr())
     }
     GateKind::CNot => {
-      let control = try! q.bit(gate.args[0])
+      let control = q.bit(gate.args[0])
       if control == 0 {
         Some(qubit_expr)
       } else {
-        Some((try! q.flip(gate.args[1])).as_expr())
+        Some(q.flip(gate.args[1]).as_expr())
       }
     }
   }
@@ -524,7 +529,7 @@ fn gate_apply_custom(
   }
   let mut input_col = 0
   for idx in 0..<targets.length() {
-    input_col += (1 << idx) * (try! q.bit(targets[idx]))
+    input_col += (1 << idx) * q.bit(targets[idx])
   }
   let terms : Array[Expr] = []
   for row in 0..<dim {
@@ -535,7 +540,7 @@ fn gate_apply_custom(
         let pos = bits.length() - 1 - targets[idx]
         bits[pos] = (row >> idx) & 1
       }
-      let next_q = try! qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)
+      let next_q = qubit_from_bits(bits, bra=q.is_bra, int_form=q.int_form)
       if coeff == int(1) {
         terms.push(next_q.as_expr())
       } else {
@@ -554,7 +559,7 @@ pub fn gate_apply_to_qubit_expr(
   match qubit_from_expr(qubit_expr) {
     Some(q) =>
       match ugate_from_expr(gate_expr) {
-        Some((targets, matrix)) => try! gate_apply_custom(targets, matrix, q)
+        Some((targets, matrix)) => gate_apply_custom(targets, matrix, q)
         None =>
           match gate_from_expr(gate_expr) {
             Some(gate) => gate_apply_concrete(gate, q, qubit_expr)
@@ -572,13 +577,12 @@ pub fn gate_apply_to_qubit_expr(
                       }
                       let mut active = true
                       for control in controls {
-                        active = active && (try! (q.bit(control) == 1))
+                        active = active && (q.bit(control) == 1)
                       }
                       if active {
                         match gate_apply_to_qubit_expr(args[1], qubit_expr) {
                           Some(applied) => Some(applied)
-                          None =>
-                            try! qft_apply_operator_to_ket(args[1], qubit_expr)
+                          None => qft_apply_operator_to_ket(args[1], qubit_expr)
                         }
                       } else {
                         Some(qubit_expr)
@@ -605,7 +609,7 @@ pub fn represent_gate_expr_zbasis(
     rows.push(Array::make(size, int(0)))
   }
   for col in 0..<size {
-    let basis_expr = (try! qubit_from_bits(int_to_bits(col, nqubits))).as_expr()
+    let basis_expr = qubit_from_bits(int_to_bits(col, nqubits)).as_expr()
     let maybe_applied = gate_apply_to_qubit_expr(gate_expr, basis_expr)
     let applied = maybe_applied.unwrap_or_else(() => basis_expr)
     let vec = qubit_to_matrix(applied, nqubits~)

@@ -99,7 +99,7 @@ fn plane_point_with_basis(
 fn plane_basis_coeffs(
   plane_obj : Plane,
   target : Point,
-) -> (Expr, Expr)? raise GeometryError {
+) -> (Expr, Expr)? {
   let delta = geo_sub_coords(target.coords_, plane_obj.point_.coords_)
   let (basis1, basis2) = plane_basis_vectors(plane_obj)
   let pairs = [(0, 1), (0, 2), (1, 2)]
@@ -343,18 +343,18 @@ pub fn Plane::is_parallel(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) =>
-      geo_expr_is_zero(
-        geo_dot(self.normal_, try! line_obj.direction().with_dim(3).coords()),
-      )
-    GeometryEntity::Ray(ray_obj) =>
-      geo_expr_is_zero(
-        geo_dot(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
-      )
-    GeometryEntity::Segment(seg_obj) =>
-      geo_expr_is_zero(
-        geo_dot(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
-      )
+    GeometryEntity::Line(line_obj) => {
+      let direction = line_obj.direction().with_dim(3).coords()
+      geo_expr_is_zero(geo_dot(self.normal_, direction))
+    }
+    GeometryEntity::Ray(ray_obj) => {
+      let direction = ray_obj.direction().with_dim(3).coords()
+      geo_expr_is_zero(geo_dot(self.normal_, direction))
+    }
+    GeometryEntity::Segment(seg_obj) => {
+      let direction = seg_obj.direction().with_dim(3).coords()
+      geo_expr_is_zero(geo_dot(self.normal_, direction))
+    }
     GeometryEntity::Plane(plane_obj) =>
       geo_all_zero(geo_cross3(self.normal_, plane_obj.normal_))
     _ => false
@@ -367,18 +367,18 @@ pub fn Plane::is_perpendicular(
   other : GeometryEntity,
 ) -> Bool raise GeometryError {
   match other {
-    GeometryEntity::Line(line_obj) =>
-      geo_all_zero(
-        geo_cross3(self.normal_, try! line_obj.direction().with_dim(3).coords()),
-      )
-    GeometryEntity::Ray(ray_obj) =>
-      geo_all_zero(
-        geo_cross3(self.normal_, try! ray_obj.direction().with_dim(3).coords()),
-      )
-    GeometryEntity::Segment(seg_obj) =>
-      geo_all_zero(
-        geo_cross3(self.normal_, try! seg_obj.direction().with_dim(3).coords()),
-      )
+    GeometryEntity::Line(line_obj) => {
+      let direction = line_obj.direction().with_dim(3).coords()
+      geo_all_zero(geo_cross3(self.normal_, direction))
+    }
+    GeometryEntity::Ray(ray_obj) => {
+      let direction = ray_obj.direction().with_dim(3).coords()
+      geo_all_zero(geo_cross3(self.normal_, direction))
+    }
+    GeometryEntity::Segment(seg_obj) => {
+      let direction = seg_obj.direction().with_dim(3).coords()
+      geo_all_zero(geo_cross3(self.normal_, direction))
+    }
     GeometryEntity::Plane(plane_obj) =>
       geo_expr_is_zero(geo_dot(self.normal_, plane_obj.normal_))
     _ => false
