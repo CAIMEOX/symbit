@@ -103,7 +103,7 @@ pub fn matrix_tensor_product(
   }
   let mut acc = product[0]
   for idx in 1..<product.length() {
-    acc = try! kronecker_pair(acc, product[idx])
+    acc = kronecker_pair(acc, product[idx])
   }
   acc
 }

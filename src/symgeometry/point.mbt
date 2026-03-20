@@ -19,17 +19,25 @@ fn geo_point_eq(lhs : Point, rhs : Point) -> Bool {
 
 ///|
 pub impl Add for Point with add(self, other : Point) {
-  let normalized = try! geo_normalize_dim([self, other])
-  let lhs = normalized[0]
-  let rhs = normalized[1]
+  let dim = if self.ambient_dimension() > other.ambient_dimension() {
+    self.ambient_dimension()
+  } else {
+    other.ambient_dimension()
+  }
+  let lhs = self.with_dim(dim) catch { _ => self }
+  let rhs = other.with_dim(dim) catch { _ => other }
   geo_point_from_coords(geo_add_coords(lhs.coords_, rhs.coords_))
 }
 
 ///|
 pub impl Sub for Point with sub(self, other : Point) {
-  let normalized = try! geo_normalize_dim([self, other])
-  let lhs = normalized[0]
-  let rhs = normalized[1]
+  let dim = if self.ambient_dimension() > other.ambient_dimension() {
+    self.ambient_dimension()
+  } else {
+    other.ambient_dimension()
+  }
+  let lhs = self.with_dim(dim) catch { _ => self }
+  let rhs = other.with_dim(dim) catch { _ => other }
   geo_point_from_coords(geo_sub_coords(lhs.coords_, rhs.coords_))
 }
 
@@ -242,7 +250,7 @@ pub fn Point::dot(
 
 ///|
 pub fn Point::abs(self : Point) -> Expr raise GeometryError {
-  self.distance(try! point_origin(self.ambient_dimension()))
+  self.distance(geo_point_from_coords(geo_zero_coords(self.ambient_dimension())))
 }
 
 ///|
@@ -409,8 +417,8 @@ pub fn Point::is_concyclic(
   for i in 0..<unique.length() {
     for j in (i + 1)..<unique.length() {
       for k in (j + 1)..<unique.length() {
-        if !(try! point_are_collinear([unique[i], unique[j], unique[k]])) {
-          seed = Some(try! triangle(unique[i], unique[j], unique[k]))
+        if !point_are_collinear([unique[i], unique[j], unique[k]]) {
+          seed = Some(triangle(unique[i], unique[j], unique[k]))
           break
         }
       }
@@ -425,7 +433,7 @@ pub fn Point::is_concyclic(
   match seed {
     None => false
     Some(tri) => {
-      let circle_obj = try! tri.circumcircle()
+      let circle_obj = tri.circumcircle()
       for item in unique {
         if !circle_obj.contains_point(item) {
           return false

@@ -105,6 +105,13 @@ fn int_expr(value : Int) -> Expr {
 }
 
 ///|
+fn rational_expr(num : Int, den : Int) -> Expr {
+  @symcore.rational_from_ints(num, den) catch {
+    _ => int_expr(num) * (int_expr(den) ^ int_expr(-1))
+  }
+}
+
+///|
 fn simplify_expr(expr : Expr) -> Expr {
   @symsimplify.ratsimp(@symsimplify.simplify(expr, max_passes=6), max_passes=4)
 }

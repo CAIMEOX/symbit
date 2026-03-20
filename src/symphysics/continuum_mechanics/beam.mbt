@@ -384,7 +384,7 @@ pub fn Beam::remove_load(
   self.applied_loads_ = []
   self.load_ = @symcore.int(0)
   for item in kept {
-    try! self.apply_load(item.0, item.1, item.2, end=item.3)
+    self.apply_load(item.0, item.1, item.2, end=item.3)
   }
 }
 
@@ -399,12 +399,12 @@ pub fn Beam::apply_support(
   }
   let force = beam_support_symbol(loc, "R_")
   self.applied_support_symbols_.push(force)
-  try! self.apply_load(force, loc, -1)
+  self.apply_load(force, loc, -1)
   self.bc_deflection_.push((loc, @symcore.int(0)))
   if kind == "fixed" {
     let moment = beam_support_symbol(loc, "M_")
     self.applied_support_symbols_.push(moment)
-    try! self.apply_load(moment, loc, -2)
+    self.apply_load(moment, loc, -2)
     self.bc_slope_.push((loc, @symcore.int(0)))
     [force, moment]
   } else {

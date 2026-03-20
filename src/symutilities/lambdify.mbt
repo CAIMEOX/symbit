@@ -19,9 +19,16 @@ let implemented_registry : Ref[Map[String, (Array[Double]) -> Double]] = {
 }
 
 ///|
-fn expr_number_to_double(n : @symnum.BigRational) -> Double {
-  let num = try! @strconv.parse_double(n.numerator().to_string())
-  let den = try! @strconv.parse_double(n.denominator().to_string())
+fn expr_number_to_double(
+  n : @symnum.BigRational,
+) -> Double raise UtilitiesError {
+  let num = @strconv.parse_double(n.numerator().to_string()) catch {
+    _ => raise UtilitiesError::InvalidArgument("cannot parse rational numerator")
+  }
+  let den = @strconv.parse_double(n.denominator().to_string()) catch {
+    _ =>
+      raise UtilitiesError::InvalidArgument("cannot parse rational denominator")
+  }
   num / den
 }
 

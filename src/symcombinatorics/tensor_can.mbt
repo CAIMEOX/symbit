@@ -1110,9 +1110,9 @@ pub fn get_symmetric_group_sgs(
 /// Minimal BSGS data for the monoterm symmetries of the Riemann tensor.
 pub let riemann_bsgs : (Array[Int], Array[Permutation]) = {
   let base : Array[Int] = [0, 2]
-  let g1 = try! Permutation::from_cycles([[0, 1], [4, 5]], size=6)
-  let g2 = try! Permutation::from_cycles([[2, 3], [4, 5]], size=6)
-  let g3 = try! Permutation::from_cycles([[0, 2], [1, 3], [5]], size=6)
+  let g1 = make_perm([1, 0, 2, 3, 5, 4])
+  let g2 = make_perm([0, 1, 3, 2, 5, 4])
+  let g3 = make_perm([2, 3, 0, 1, 4, 5])
   (base, [g1, g2, g3])
 }
 

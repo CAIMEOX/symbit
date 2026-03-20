@@ -1301,7 +1301,7 @@ fn make_signed_rational(
   sign : Int,
 ) -> @symnum.BigRational {
   let signed = if sign < 0 { numer.neg() } else { numer }
-  try! @symnum.BigRational::new(signed, denom)
+  @symnum.BigRational::from_bigint(signed).div_r(@symnum.BigRational::from_bigint(denom))
 }
 
 ///|
@@ -2078,7 +2078,9 @@ fn coeff_eq(a : @symnum.BigRational, b : @symnum.BigRational) -> Bool {
 
 ///|
 fn half_const() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  @symcore.rational_from_ints(1, 2) catch {
+    _ => @symcore.int(1) * (@symcore.int(2) ^ @symcore.int(-1))
+  }
 }
 
 ///|

@@ -11,7 +11,9 @@ pub fn cm_int_expr(value : Int) -> Expr {
 
 ///|
 pub fn cm_rat_expr(num : Int, den : Int) -> Expr {
-  try! @symcore.rational_from_ints(num, den)
+  @symcore.rational_from_ints(num, den) catch {
+    _ => cm_int_expr(num) * (cm_int_expr(den) ^ cm_int_expr(-1))
+  }
 }
 
 ///|

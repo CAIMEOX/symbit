@@ -230,7 +230,11 @@ pub fn inner_product(
       if bra_alpha == ket_alpha {
         int(1)
       } else {
-        let half = try! @symcore.rational_from_ints(1, 2)
+        let half = @symcore.number(
+          @symnum.BigRational::from_int(1).div_r(
+            @symnum.BigRational::from_int(2),
+          ),
+        )
         let exponent = int(-1) *
           half *
           (

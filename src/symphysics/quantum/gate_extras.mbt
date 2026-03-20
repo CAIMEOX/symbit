@@ -125,7 +125,7 @@ pub fn random_circuit(
   let gates : Array[Expr] = []
   for _ in 0..<ngates {
     let index = rng.int(limit=gate_space.length())
-    gates.push(try! random_gate_expr(gate_space[index], nqubits, rng))
+    gates.push(random_gate_expr(gate_space[index], nqubits, rng))
   }
   quantum_mul_from_args_preserve(gates)
 }

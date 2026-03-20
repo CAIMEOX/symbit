@@ -10,7 +10,7 @@ pub type SympyEigenvects = Array[(Expr, Int, MatrixExpr)]
 /// Functional wrapper matching SymPy `polys.matrices.lll.ddm_lll`.
 pub fn ddm_lll(
   x : DDM,
-  delta? : @symnum.BigRational = try! default_lll_delta(),
+  delta? : @symnum.BigRational = @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)),
 ) -> DDM raise PolyError {
   x.lll(delta~)
 }
@@ -19,7 +19,7 @@ pub fn ddm_lll(
 /// Functional wrapper matching SymPy `polys.matrices.lll.ddm_lll_transform`.
 pub fn ddm_lll_transform(
   x : DDM,
-  delta? : @symnum.BigRational = try! default_lll_delta(),
+  delta? : @symnum.BigRational = @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)),
 ) -> (DDM, DDM) raise PolyError {
   x.lll_transform(delta~)
 }

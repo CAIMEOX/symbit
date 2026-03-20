@@ -32,7 +32,7 @@ pub fn RootSystem::simple_roots(self : RootSystem) -> Map[Int, RootVector] {
   let n = self.cartan_type.rank()
   let roots : Map[Int, RootVector] = {}
   for i in 1..<=n {
-    roots[i] = try! self.cartan_type.simple_root(i)
+    roots[i] = self.cartan_type.simple_root(i) catch { _ => [] }
   }
   roots
 }

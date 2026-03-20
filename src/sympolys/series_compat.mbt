@@ -139,7 +139,7 @@ fn series_require_zero_constant(
   if !domain_is_field_pred(s.ring.domain) {
     raise PolyError::DomainNotField
   }
-  if !fe_is_zero(try! s.coeff(0)) {
+  if !fe_is_zero(s.coeff(0)) {
     raise PolyError::BadGenerator(op)
   }
 }
@@ -635,7 +635,7 @@ pub fn SeriesElem::compose(
   if self.ring != other.ring {
     raise PolyError::DomainMismatch
   }
-  if !fe_is_zero(try! other.coeff(0)) {
+  if !fe_is_zero(other.coeff(0)) {
     raise PolyError::BadExponent
   }
   let mut out = self.ring.zero()

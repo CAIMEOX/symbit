@@ -137,7 +137,7 @@ pub fn arch(
 ) -> Arch raise ArchError {
   let left = [left_support.0, left_support.1]
   let right = [right_support.0, right_support.1]
-  let (a, cy) = try! arch_recompute_shape(left, right, crown_x, crown_y~)
+  let (a, cy) = arch_recompute_shape(left, right, crown_x, crown_y~)
   let reactions : Map[String, Expr] = {
     "R_A_x": int(0),
     "R_A_y": int(0),
@@ -418,7 +418,7 @@ pub fn Arch::change_support_position(
     Some(v) => self.right_support_ = [v.0, v.1]
     None => ()
   }
-  let (a, cy) = try! arch_recompute_shape(
+  let (a, cy) = arch_recompute_shape(
     self.left_support_,
     self.right_support_,
     self.crown_x_,
@@ -442,7 +442,7 @@ pub fn Arch::change_crown_position(
     Some(v) => Some(v)
     None => Some(self.crown_y_)
   }
-  let (a, cy) = try! arch_recompute_shape(
+  let (a, cy) = arch_recompute_shape(
     self.left_support_,
     self.right_support_,
     self.crown_x_,

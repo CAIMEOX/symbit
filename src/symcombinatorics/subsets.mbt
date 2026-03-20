@@ -241,7 +241,7 @@ pub fn[T : Eq] Subset::rank_gray(self : Subset[T]) -> Int {
     Some(r) => r
     None => {
       let bits = Subset::bitlist_from_subset(self.subset, self.superset)
-      (try! GrayCode::new(bits.length(), start=bits)).rank()
+      (GrayCode::new(bits.length(), start=bits) catch { _ => return 0 }).rank()
     }
   }
 }

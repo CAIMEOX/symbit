@@ -129,7 +129,7 @@ pub fn[T] permutations(Array[T], size? : Int) -> Array[Array[T]]
 
 pub fn permute_signs(Array[Int]) -> Array[Array[Int]]
 
-pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning
+pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError
 
 pub fn[T] pollute(Array[String], Array[T], @ref.Ref[Map[String, T]]) -> Unit raise UtilitiesError
 
@@ -139,9 +139,9 @@ pub fn[T] prefixes(Array[T]) -> Array[Array[T]]
 
 pub fn[T] public(T, @ref.Ref[Array[String]], String) -> T
 
-pub fn pytest_deprecation_warning() -> SymPyDeprecationWarning
+pub fn pytest_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError
 
-pub fn randtest_deprecation_warning() -> SymPyDeprecationWarning
+pub fn randtest_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError
 
 pub fn rawlines(String) -> String
 
@@ -167,7 +167,7 @@ pub fn[T : Compare] runs(Array[T]) -> Array[Array[T]]
 
 pub fn[T] runs_by(Array[T], (T, T) -> Bool) -> Array[Array[T]]
 
-pub fn runtests_deprecation_warning() -> SymPyDeprecationWarning
+pub fn runtests_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError
 
 pub fn[T] sequence_partitions(Array[T], Int) -> Array[Array[Array[T]]]
 
@@ -203,7 +203,7 @@ pub fn timed(() -> Unit, limit? : Int?) -> TimedResult
 
 pub fn[T, U] timethis(String, enabled? : Bool, reporter? : (TimethisReport) -> Unit, (T) -> U) -> (T) -> U
 
-pub fn tmpfiles_deprecation_warning() -> SymPyDeprecationWarning
+pub fn tmpfiles_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError
 
 pub fn[T : Compare + Eq + Hash] topological_sort(Array[T], Array[(T, T)]) -> Array[T] raise UtilitiesError
 

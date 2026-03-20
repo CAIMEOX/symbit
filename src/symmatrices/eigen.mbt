@@ -423,7 +423,12 @@ fn matrix_exact_eigenvects(
   }
   let out : Array[EigenVectData] = []
   for item in rational {
-    let eigenvalue = (try! @sympolys.DomainScalar::new(item.1, item.0)).to_sympy()
+    let eigenvalue = (@sympolys.DomainScalar::new(item.1, item.0) catch {
+      _ =>
+        raise MatrixError::ValueError(
+          "exact rational eigenvalue could not be converted back to an expression",
+        )
+    }).to_sympy()
     let basis_rows = item.3.to_Matrix() catch {
       _ =>
         raise MatrixError::ValueError(
@@ -507,7 +512,9 @@ pub fn Matrix::eigenvals(
     let det = self.det()
     let disc = expr_sub(expr_mul(tr, tr), expr_mul(@symcore.int(4), det))
     let sqrt_disc = expr_simplify(@symcore.function("sqrt", [disc]))
-    let half = try! @symcore.rational_from_ints(1, 2)
+    let half = @symcore.rational_from_ints(1, 2) catch {
+      _ => expr_mul(@symcore.int(1), @symcore.pow(@symcore.int(2), @symcore.int(-1)))
+    }
     let r1 = expr_simplify(expr_mul(half, expr_sub(tr, sqrt_disc)))
     let r2 = expr_simplify(expr_mul(half, expr_add(tr, sqrt_disc)))
     if expr_eq(r1, r2) {

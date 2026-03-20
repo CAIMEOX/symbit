@@ -167,7 +167,7 @@ pub fn RayTransferMatrix::apply_matrix(
   self : RayTransferMatrix,
   other : RayTransferMatrix,
 ) -> RayTransferMatrix raise PhysicsError {
-  ray_transfer_matrix_from_matrix(try! self.matrix_.mul(other.matrix_))
+  ray_transfer_matrix_from_matrix(self.matrix_.mul(other.matrix_))
 }
 
 ///|
@@ -175,7 +175,7 @@ pub fn RayTransferMatrix::apply_geometric_ray(
   self : RayTransferMatrix,
   ray : GeometricRay,
 ) -> GeometricRay raise PhysicsError {
-  geometric_ray_from_matrix(try! self.matrix_.mul(ray.matrix_))
+  geometric_ray_from_matrix(self.matrix_.mul(ray.matrix_))
 }
 
 ///|

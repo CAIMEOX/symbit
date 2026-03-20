@@ -810,7 +810,7 @@ pub fn TransferFunction::xreplace(
 
 ///|
 pub impl Neg for TransferFunction with neg(self) {
-  try! transfer_function(int(-1) * self.num_, self.den_, self.var_)
+  TransferFunction::{ num_: int(-1) * self.num_, den_: self.den_, var_: self.var_ }
 }
 
 ///|
@@ -864,7 +864,7 @@ pub fn DiscreteTransferFunction::from_zpk(
   variable : Expr,
   sampling_time? : Expr = int(1),
 ) -> DiscreteTransferFunction raise ControlError {
-  let tf = try! TransferFunction::from_zpk(zeros, poles, gain, variable)
+  let tf = TransferFunction::from_zpk(zeros, poles, gain, variable)
   discrete_transfer_function(tf.num_, tf.den_, variable, sampling_time~)
 }
 
@@ -939,7 +939,13 @@ pub fn bilinear(
   cont_tf : TransferFunction,
   sampling_time : Expr,
 ) -> (Array[Expr], Array[Expr]) raise ControlError {
-  gbt(cont_tf, sampling_time, try! @symcore.rational_from_ints(1, 2))
+  gbt(
+    cont_tf,
+    sampling_time,
+    @symcore.number(
+      @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
+    ),
+  )
 }
 
 ///|
@@ -983,7 +989,9 @@ pub fn DiscreteTransferFunction::from_bilinear(
   DiscreteTransferFunction::from_gbt(
     cont_tf,
     sampling_time,
-    try! @symcore.rational_from_ints(1, 2),
+    @symcore.number(
+      @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
+    ),
     variable,
   )
 }
@@ -1221,12 +1229,12 @@ pub fn DiscreteTransferFunction::is_stable(
 
 ///|
 pub impl Neg for DiscreteTransferFunction with neg(self) {
-  try! discrete_transfer_function(
-    int(-1) * self.num_,
-    self.den_,
-    self.var_,
-    sampling_time=self.sampling_time_,
-  )
+  DiscreteTransferFunction::{
+    num_: int(-1) * self.num_,
+    den_: self.den_,
+    var_: self.var_,
+    sampling_time_: self.sampling_time_,
+  }
 }
 
 ///|

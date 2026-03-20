@@ -85,12 +85,9 @@ fn quantum_expr_from_doubled_int(value : Int) -> Expr {
   if value % 2 == 0 {
     int(value / 2)
   } else {
-    @symcore.number(
-      try! @symnum.BigRational::new(
-        @bigint.BigInt::from_int(value),
-        @bigint.BigInt::from_int(2),
-      ),
-    )
+    @symcore.rational_from_ints(value, 2) catch {
+      _ => int(value) * (int(2) ^ int(-1))
+    }
   }
 }
 

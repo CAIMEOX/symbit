@@ -99,7 +99,7 @@ pub fn RewritingSystem::new(
     rules: {},
     rules_cache: Array::new(),
   }
-  try! rs._init_rules()
+  rs._init_rules() catch { _ => return rs }
   // Disable automaton construction for now to avoid unstable state during porting.
   rs.reduction_automaton = None
   rs

@@ -202,7 +202,7 @@ pub fn Cable::loads_position(Self) -> Map[String, Array[@symcore.Expr]]
 pub fn Cable::reaction_loads(Self) -> Map[String, @symcore.Expr]
 pub fn Cable::remove_loads(Self, Array[String]) -> Unit raise CableError
 pub fn Cable::right_support(Self) -> Array[@symcore.Expr]
-pub fn Cable::solve(Self, lowest_x? : @symcore.Expr?, lowest_y? : @symcore.Expr?) -> Unit raise CableError
+pub fn Cable::solve(Self, lowest_x? : @symcore.Expr?, lowest_y? : @symcore.Expr?) -> Unit raise
 pub fn Cable::supports(Self) -> Map[String, Array[@symcore.Expr]]
 pub fn Cable::tension(Self) -> Map[String, @symcore.Expr]
 pub fn Cable::tension_at(Self, @symcore.Expr) -> @symcore.Expr raise CableError

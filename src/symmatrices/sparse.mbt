@@ -500,8 +500,8 @@ pub fn SparseMatrix::extract(
   row_ids : Array[Int],
   col_ids : Array[Int],
 ) -> SparseMatrix raise MatrixError {
-  let rows = row_ids.map(fn(index) { try! normalize_index(index, self.rows) })
-  let cols = col_ids.map(fn(index) { try! normalize_index(index, self.cols) })
+  let rows = row_ids.map(index => normalize_index(index, self.rows))
+  let cols = col_ids.map(index => normalize_index(index, self.cols))
   let out : Map[(Int, Int), Expr] = {}
   for i in 0..<rows.length() {
     for j in 0..<cols.length() {
@@ -734,7 +734,7 @@ pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
   }
-  self.solve(try! eye(self.rows))
+  self.solve(eye(self.rows))
 }
 
 ///|

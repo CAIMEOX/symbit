@@ -14,7 +14,11 @@ fn is_vacuum_pair(ep : Expr, mu : Expr) -> Bool {
 
 ///|
 fn vacuum_impedance_expr() -> Expr {
-  (try! @symcore.rational_from_ints(149896229, 1250000)) *
+  @symcore.number(
+    @symnum.BigRational::from_int(149896229).div_r(
+      @symnum.BigRational::from_int(1250000),
+    ),
+  ) *
   pi_expr() *
   (ampere.symbol_expr() ^ int(-2)) *
   kilogram.symbol_expr() *

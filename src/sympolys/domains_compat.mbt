@@ -2304,7 +2304,7 @@ fn expr_terms_mul(
       if domain_is_zero_expr(coeff_domain, rcoeff) {
         continue
       }
-      let mono = try! monomial_mul(lmono, rmono)
+      let mono = monomial_mul(lmono, rmono) catch { _ => continue }
       let coeff = @symcore.mul([lcoeff, rcoeff])
       if domain_is_zero_expr(coeff_domain, coeff) {
         continue
@@ -2927,7 +2927,8 @@ fn domain_rational_exsqrt(value : @symnum.BigRational) -> @symnum.BigRational? {
   let num = domain_bigint_exsqrt(value.numerator())
   let den = domain_bigint_exsqrt(value.denominator())
   match (num, den) {
-    (Some(n), Some(d)) => Some(try! @symnum.BigRational::new(n, d))
+    (Some(n), Some(d)) =>
+      Some(@symnum.BigRational::new(n, d) catch { _ => return None })
     _ => None
   }
 }

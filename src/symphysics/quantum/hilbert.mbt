@@ -198,7 +198,7 @@ pub fn HilbertSpace::dimension(
     HilbertSpace::TensorProduct(args) => {
       let mut out = int(1)
       for arg in args {
-        let dim = try! arg.dimension()
+        let dim = arg.dimension()
         if dim == oo_expr() {
           return oo_expr()
         }
@@ -209,7 +209,7 @@ pub fn HilbertSpace::dimension(
     HilbertSpace::DirectSum(args) => {
       let mut out = int(0)
       for arg in args {
-        let dim = try! arg.dimension()
+        let dim = arg.dimension()
         if dim == oo_expr() {
           return oo_expr()
         }
@@ -218,7 +218,7 @@ pub fn HilbertSpace::dimension(
       out
     }
     HilbertSpace::TensorPower(base, exp) => {
-      let dim = try! base.dimension()
+      let dim = base.dimension()
       if dim == oo_expr() {
         oo_expr()
       } else {
@@ -324,5 +324,7 @@ pub impl Add for HilbertSpace with add(self, other : HilbertSpace) {
 
 ///|
 pub impl Mul for HilbertSpace with mul(self, other : HilbertSpace) {
-  try! tensor_product_space([self, other])
+  tensor_product_space([self, other]) catch {
+    _ => HilbertSpace::TensorProduct([self, other])
+  }
 }

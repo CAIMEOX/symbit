@@ -138,9 +138,9 @@ pub fn Ellipse::reflect(
   line_obj : Line,
 ) -> GeometryEntity raise GeometryError {
   let direction = line_obj.direction().with_dim(2)
-  if geo_expr_is_zero(try! direction.y()) ||
-    geo_expr_is_zero(try! direction.x()) {
-    let center = try! reflect_point_across_line_2d(self.center_, line_obj)
+  if geo_expr_is_zero(direction.y()) ||
+    geo_expr_is_zero(direction.x()) {
+    let center = reflect_point_across_line_2d(self.center_, line_obj)
     return geometry_ellipse(Ellipse::{
       center_: center,
       hradius_: geo_simplify(geo_zero() - self.hradius_),

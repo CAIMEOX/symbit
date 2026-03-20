@@ -363,6 +363,50 @@ fn polyhedron_from_ints(
 }
 
 ///|
+fn canonical_polyhedron(
+  corners : Array[Int],
+  faces : Array[Array[Int]],
+  pgroup_arrays : Array[Array[Int]],
+) -> Polyhedron {
+  let corner_exprs = ints_to_exprs(corners)
+  let gens : Array[Permutation] = Array::new()
+  for arr in pgroup_arrays {
+    gens.push(make_perm(clone_int_array(arr)))
+  }
+  if gens.is_empty() {
+    gens.push(Permutation::identity(corners.length()))
+  }
+  let mut degree = 0
+  for g in gens {
+    if g.size() > degree {
+      degree = g.size()
+    }
+  }
+  let group = {
+    generators: gens,
+    degree,
+    elements_cache: None,
+    order_cache: None,
+    is_abelian_cache: None,
+    is_transitive_cache: None,
+    is_dihedral_cache: None,
+    is_symmetric_cache: None,
+    is_alternating_cache: None,
+    is_nilpotent_cache: None,
+    is_solvable_cache: None,
+    is_cyclic_cache: None,
+  }
+  {
+    original_corners: clone_expr_array(corner_exprs),
+    corners: clone_expr_array(corner_exprs),
+    faces: canonical_faces(faces),
+    pgroup_generators: gens,
+    pgroup: group,
+    edges_cache: None,
+  }
+}
+
+///|
 // tetrahedron
 let tetrahedron_corners : Array[Int] = [0, 1, 2, 3]
 
@@ -571,30 +615,40 @@ let icosahedron_pgroup : Array[Array[Int]] = [
 
 ///|
 /// Canonical tetrahedron instance with its rotational symmetry group.
-pub let tetrahedron : Polyhedron = try! polyhedron_from_ints(
-  tetrahedron_corners, tetrahedron_faces, tetrahedron_pgroup,
+pub let tetrahedron : Polyhedron = canonical_polyhedron(
+  tetrahedron_corners,
+  tetrahedron_faces,
+  tetrahedron_pgroup,
 )
 
 ///|
 /// Canonical cube instance with its rotational symmetry group.
-pub let cube : Polyhedron = try! polyhedron_from_ints(
-  cube_corners, cube_faces, cube_pgroup,
+pub let cube : Polyhedron = canonical_polyhedron(
+  cube_corners,
+  cube_faces,
+  cube_pgroup,
 )
 
 ///|
 /// Canonical octahedron instance with its rotational symmetry group.
-pub let octahedron : Polyhedron = try! polyhedron_from_ints(
-  octahedron_corners, octahedron_faces, octahedron_pgroup,
+pub let octahedron : Polyhedron = canonical_polyhedron(
+  octahedron_corners,
+  octahedron_faces,
+  octahedron_pgroup,
 )
 
 ///|
 /// Canonical dodecahedron instance with its rotational symmetry group.
-pub let dodecahedron : Polyhedron = try! polyhedron_from_ints(
-  dodecahedron_corners, dodecahedron_faces, dodecahedron_pgroup,
+pub let dodecahedron : Polyhedron = canonical_polyhedron(
+  dodecahedron_corners,
+  dodecahedron_faces,
+  dodecahedron_pgroup,
 )
 
 ///|
 /// Canonical icosahedron instance with its rotational symmetry group.
-pub let icosahedron : Polyhedron = try! polyhedron_from_ints(
-  icosahedron_corners, icosahedron_faces, icosahedron_pgroup,
+pub let icosahedron : Polyhedron = canonical_polyhedron(
+  icosahedron_corners,
+  icosahedron_faces,
+  icosahedron_pgroup,
 )

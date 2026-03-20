@@ -64,7 +64,7 @@ fn int_expr(value : Int) -> @symcore.Expr {
 
 ///|
 fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
-  try! @symcore.rational_from_ints(num, den)
+  cm_rat_expr(num, den)
 }
 
 ///|

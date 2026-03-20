@@ -246,7 +246,7 @@ pub fn Curve::rotate(
     Some(value) => value.with_dim(2)
     None => point_origin(2)
   }
-  let coords = try! geo_rotate_coords_2d(self.functions_, angle, pivot.coords_)
+  let coords = geo_rotate_coords_2d(self.functions_, angle, pivot.coords_)
   curve(coords, self.parameter_, self.start_, self.end_)
 }
 

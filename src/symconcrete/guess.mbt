@@ -348,7 +348,7 @@ fn solve_linear_system(
       rhs[pivot] = t2
     }
     let pivot_val = mat[i][i]
-    let inv = try! pivot_val.reciprocal()
+    let inv = pivot_val.reciprocal() catch { _ => return None }
     let mut j = i
     while j < n {
       mat[i][j] = mat[i][j].mul_r(inv)
@@ -415,7 +415,9 @@ fn lagrange_poly(
         continue
       }
       let num = expr_sub(x, @symcore.int(j))
-      let inv = try! @symcore.rational_from_ints(1, i - j)
+      let inv = @symcore.rational_from_ints(1, i - j) catch {
+        _ => @symcore.int(1) * (@symcore.int(i - j) ^ @symcore.int(-1))
+      }
       term = expr_mul(term, expr_mul(num, inv))
     }
     terms.push(term)

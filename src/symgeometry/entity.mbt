@@ -228,12 +228,12 @@ pub fn GeometryEntity::parameter_value(
   let out : Map[Expr, Expr] = {}
   match self {
     GeometryEntity::Line(line_obj) => {
-      let value = try! linear_param_for_point(geometry_line(line_obj), other)
+      let value = linear_param_for_point(geometry_line(line_obj), other)
       out.set(t, geo_simplify(value))
       out
     }
     GeometryEntity::Ray(ray_obj) => {
-      let value = try! linear_param_for_point(geometry_ray(ray_obj), other)
+      let value = linear_param_for_point(geometry_ray(ray_obj), other)
       if !linear_param_ok(LinearKind::Ray, value) {
         raise GeometryError::ValueError("point is not on ray")
       }
@@ -241,7 +241,7 @@ pub fn GeometryEntity::parameter_value(
       out
     }
     GeometryEntity::Segment(seg_obj) => {
-      let value = try! linear_param_for_point(geometry_segment(seg_obj), other)
+      let value = linear_param_for_point(geometry_segment(seg_obj), other)
       if !linear_param_ok(LinearKind::Segment, value) {
         raise GeometryError::ValueError("point is not on segment")
       }

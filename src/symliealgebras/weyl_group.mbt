@@ -31,7 +31,7 @@ fn parse_reflections(weylelt : String) -> Array[Int] {
       continue
     }
     let num_str = token[1:token.length()].to_string()
-    out.push(try! @strconv.parse_int(num_str, base=10))
+    out.push(@strconv.parse_int(num_str, base=10) catch { _ => continue })
   }
   out
 }

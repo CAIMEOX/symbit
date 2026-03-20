@@ -150,7 +150,10 @@ pub fn BigRational::div_r(
   self : BigRational,
   other : BigRational,
 ) -> BigRational {
-  self.mul_r(try! other.reciprocal())
+  if other.is_zero() {
+    abort("BigRational::div_r division by zero")
+  }
+  normalize(self.num.mul(other.den), self.den.mul(other.num))
 }
 
 ///|

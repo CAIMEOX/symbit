@@ -15,7 +15,7 @@ pub fn br_int(value : Int) -> @symnum.BigRational {
 pub fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
   let n = @bigint.BigInt::from_int(num)
   let d = @bigint.BigInt::from_int(den)
-  try! @symnum.BigRational::new(n, d)
+  @symnum.BigRational::from_bigint(n).div_r(@symnum.BigRational::from_bigint(d))
 }
 
 ///|

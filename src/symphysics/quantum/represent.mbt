@@ -95,7 +95,9 @@ fn represent_pow_nonnegative(
 
 ///|
 fn default_spin_j() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  @symcore.number(
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
+  )
 }
 
 ///|
@@ -240,7 +242,7 @@ pub fn represent(
                             None =>
                               match density_from_expr(expr) {
                                 Some(d) =>
-                                  try! density_matrix(
+                                  density_matrix(
                                     d, basis, nqubits, spin_j, ndim,
                                   )
                                 None =>
@@ -251,13 +253,13 @@ pub fn represent(
                                       match sigma_z_state_from_expr(expr) {
                                         Some(_) =>
                                           MatrixScalarValue::Matrix(
-                                            try! represent_pauli_state(expr),
+                                            represent_pauli_state(expr),
                                           )
                                         None =>
                                           match pauli_from_expr(expr) {
                                             Some(_) =>
                                               MatrixScalarValue::Matrix(
-                                                try! represent_pauli_operator(
+                                                represent_pauli_operator(
                                                   expr,
                                                 ),
                                               )
@@ -289,14 +291,14 @@ pub fn represent(
                                                         Some(state) =>
                                                           if state.is_coupled() {
                                                             MatrixScalarValue::Matrix(
-                                                              try! represent_spin_coupled_state(
+                                                              represent_spin_coupled_state(
                                                                 expr,
                                                                 basis~,
                                                               ),
                                                             )
                                                           } else {
                                                             MatrixScalarValue::Matrix(
-                                                              try! represent_spin_state(
+                                                              represent_spin_state(
                                                                 expr,
                                                                 basis~,
                                                               ),
@@ -307,7 +309,7 @@ pub fn represent(
                                                             gate_support(expr) {
                                                             Some(_) =>
                                                               MatrixScalarValue::Matrix(
-                                                                try! represent_gate_expr_zbasis(
+                                                                represent_gate_expr_zbasis(
                                                                   expr, nqubits,
                                                                 ),
                                                               )
@@ -324,7 +326,7 @@ pub fn represent(
                                                                       name,
                                                                     ) {
                                                                     MatrixScalarValue::Matrix(
-                                                                      try! represent_spin_operator(
+                                                                      represent_spin_operator(
                                                                         expr,
                                                                         spin_j,
                                                                         basis~,

@@ -198,7 +198,7 @@ pub fn Cable::change_support(
     .iter()
     .to_array()
     .map(item => (item.0, item.1[0], item.1[1]))
-  let rebuilt = try! cable(entries[0], entries[1])
+  let rebuilt = cable(entries[0], entries[1])
   self.supports_ = rebuilt.supports_
   self.support_labels_ = rebuilt.support_labels_
   self.left_support_ = rebuilt.left_support_
@@ -296,7 +296,7 @@ pub fn Cable::solve(
   self : Cable,
   lowest_x? : @symcore.Expr? = None,
   lowest_y? : @symcore.Expr? = None,
-) -> Unit raise CableError {
+) -> Unit raise {
   self.tension_ = {}
   if !self.loads_position_.is_empty() {
     let nodes = cable_ordered_nodes(self)
@@ -402,7 +402,7 @@ pub fn Cable::solve(
     self.lowest_x_ = x0
     let left_dx = self.left_support_[0] - x0
     let right_dx = self.right_support_[0] - x0
-    let coeffs = try! cm_linear_solve(
+    let coeffs = cm_linear_solve(
       [
         @symcore.symbol("A") * (left_dx ^ @symcore.int(2)) +
         @symcore.symbol("c") -
@@ -437,7 +437,7 @@ pub fn Cable::solve(
     let right_slope = cm_simplify(
       @symcore.int(2) * a_coeff * (self.right_support_[0] - x0),
     )
-    let left_tension = try! self.tension_at(self.left_support_[0])
+    let left_tension = self.tension_at(self.left_support_[0])
     self.reaction_loads_["R_" + self.support_labels_[0] + "_x"] = cm_simplify(h)
     self.reaction_loads_["R_" + self.support_labels_[0] + "_y"] = cm_simplify(
       h * left_slope,

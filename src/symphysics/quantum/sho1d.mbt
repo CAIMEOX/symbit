@@ -53,7 +53,9 @@ pub fn sho_bra(n : Expr) -> Expr {
 
 ///|
 fn sho_half() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  @symcore.number(
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
+  )
 }
 
 ///|
@@ -162,7 +164,7 @@ pub fn sho_apply_operator_to_ket(
       Expr::Function("SHOKet", args),
     ) if args.length() == 1 => {
       let n = args[0]
-      let half = try! @symcore.rational_from_ints(1, 2)
+      let half = sho_half()
       Some(hbar * sho_omega * (n + half) * ket_expr)
     }
     _ => None
@@ -218,7 +220,7 @@ fn sho_number_basis_matrix(
       @symphysics.explicit_matrix_from_rows(rows)
     }
     Expr::Function("Hamiltonian", _) => {
-      let half = try! @symcore.rational_from_ints(1, 2)
+      let half = sho_half()
       for i in 0..<ndim {
         rows[i][i] = hbar * sho_omega * (int(i) + half)
       }

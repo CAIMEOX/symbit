@@ -685,12 +685,7 @@ fn rational_sqrt(v : @symnum.BigRational) -> @symnum.BigRational? {
     let den = v.denominator().to_int()
     match (int_sqrt_if_square(num), int_sqrt_if_square(den)) {
       (Some(sn), Some(sd)) =>
-        Some(
-          try! @symnum.BigRational::new(
-            BigInt::from_int(sn),
-            BigInt::from_int(sd),
-          ),
-        )
+        Some(@symnum.BigRational::new(BigInt::from_int(sn), BigInt::from_int(sd)) catch { _ => return None })
       _ => None
     }
   } else {

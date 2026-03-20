@@ -47,7 +47,9 @@ fn expr_int(n : Int) -> Expr {
 
 ///|
 fn expr_rational(num : Int, den : Int) -> Expr {
-  try! @symcore.rational_from_ints(num, den)
+  @symcore.number(
+    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+  )
 }
 
 ///|

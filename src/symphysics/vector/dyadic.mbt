@@ -252,8 +252,8 @@ fn dyadic_equal(lhs : Dyadic, rhs : Dyadic) -> Bool {
   }
   for i in 0..<3 {
     for j in 0..<3 {
-      let lhs_cell = try! lm.get(i, j)
-      let rhs_cell = try! rm.get(i, j)
+      let lhs_cell = lm.get(i, j) catch { _ => return false }
+      let rhs_cell = rm.get(i, j) catch { _ => return false }
       if !expr_eq(lhs_cell, rhs_cell) {
         return false
       }

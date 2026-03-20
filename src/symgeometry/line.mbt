@@ -851,14 +851,14 @@ pub fn Segment::perpendicular_bisector(
   self : Segment,
   p? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
-  let midpoint = try! self.midpoint()
-  let direction = try! self.direction().orthogonal_direction()
-  let bisector = try! line(midpoint, midpoint + direction)
+  let midpoint = self.midpoint()
+  let direction = self.direction().orthogonal_direction()
+  let bisector = line(midpoint, midpoint + direction)
   match p {
     Some(point_obj) => {
       let point_obj = point_obj.with_dim(midpoint.ambient_dimension())
       if bisector.contains(point_obj) {
-        return geometry_segment(try! segment(point_obj, midpoint))
+        return geometry_segment(segment(point_obj, midpoint))
       }
       geometry_line(bisector)
     }

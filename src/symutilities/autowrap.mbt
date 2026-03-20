@@ -135,7 +135,12 @@ pub fn binary_function(
   args? : Array[String]? = None,
 ) -> BinaryFunction raise UtilitiesError {
   let wrapped = autowrap(expr, language~, backend~, tempdir~, args~, name~)
-  ignore(implemented_function(name, values => try! wrapped.call(values)))
+  ignore(
+    implemented_function(
+      name,
+      values => wrapped.call(values) catch { _ => 0.0 },
+    ),
+  )
   { name, wrapped }
 }
 

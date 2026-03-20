@@ -25,6 +25,7 @@ fn motion_integral_scalar(
   lower : Expr,
   upper : Expr,
 ) -> Expr {
+  let half = rational_expr(1, 2)
   if expr_is_zero(expr) {
     return zero_expr()
   }
@@ -62,10 +63,8 @@ fn motion_integral_scalar(
         motion_integral_symbolic(expr, lower, upper)
       }
     }
-    Expr::Symbol(name) if name == "t" => {
-      let half = try! @symcore.rational_from_ints(1, 2)
+    Expr::Symbol(name) if name == "t" =>
       simplify_expr(half * ((upper ^ int_expr(2)) - (lower ^ int_expr(2))))
-    }
     Expr::Pow(base, exp) if @symcore.compare_expr(
         base, dynamicsymbols_t,
       ) ==
@@ -77,7 +76,7 @@ fn motion_integral_scalar(
             motion_integral_symbolic(expr, lower, upper)
           } else {
             let next = power + 1
-            let coeff = try! @symcore.rational_from_ints(1, next)
+            let coeff = rational_expr(1, next)
             simplify_expr(
               coeff * ((upper ^ int_expr(next)) - (lower ^ int_expr(next))),
             )
@@ -362,7 +361,7 @@ pub fn kinematic_equations(
   let q1d = @symcalculus.diff(q1, dynamicsymbols_t)
   let q2d = @symcalculus.diff(q2, dynamicsymbols_t)
   let q3d = @symcalculus.diff(q3, dynamicsymbols_t)
-  let half = try! @symcore.rational_from_ints(1, 2)
+  let half = rational_expr(1, 2)
   [
     q1d - half * q0 * speeds[0] - half * q2 * speeds[2] + half * q3 * speeds[1],
     q2d - half * q0 * speeds[1] + half * q1 * speeds[2] - half * q3 * speeds[0],

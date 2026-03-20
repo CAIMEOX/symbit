@@ -248,7 +248,7 @@ pub fn Column::remove_load(
   self.bc_extension_ = []
   self.bc_hinge_ = []
   for item in kept {
-    try! self.apply_load(item.0, item.1, item.2, end=item.3)
+    self.apply_load(item.0, item.1, item.2, end=item.3)
   }
   self.applied_supports_ = supports
   self.applied_hinges_ = hinges

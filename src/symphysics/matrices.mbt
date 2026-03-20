@@ -6,7 +6,7 @@ pub fn msigma(i : Int) -> ExplicitMatrix raise PhysicsError {
   match i {
     1 => explicit_matrix_from_ints([[0, 1], [1, 0]])
     2 =>
-      try! explicit_matrix_from_rows([
+      explicit_matrix_from_rows([
         [int(0), int(-1) * i_expr()],
         [i_expr(), int(0)],
       ])
@@ -28,11 +28,13 @@ pub fn pat_matrix(
   let dxdx = dx ^ int(2)
   let dydy = dy ^ int(2)
   let dzdz = dz ^ int(2)
-  (try! explicit_matrix_from_rows([
+  (explicit_matrix_from_rows([
     [dydy + dzdz, dxdy, dzdx],
     [dxdy, dxdx + dzdz, dydz],
     [dzdx, dydz, dydy + dxdx],
-  ])).scale(m)
+  ]) catch {
+    _ => explicit_matrix_from_ints([])
+  }).scale(m)
 }
 
 ///|
@@ -56,7 +58,7 @@ pub fn mgamma(
         [-1, 0, 0, 0],
       ])
     2 =>
-      try! explicit_matrix_from_rows([
+      explicit_matrix_from_rows([
         [
           int(0),
           int(0),

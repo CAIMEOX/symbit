@@ -176,7 +176,7 @@ pub fn fresnel_coefficients(
     )
     return [rp, rs]
   }
-  let angle_of_refraction = try! refraction_angle(
+  let angle_of_refraction = refraction_angle(
     angle_of_incidence, medium1, medium2,
   )
   let sum_angle = angle_of_incidence + angle_of_refraction
@@ -207,7 +207,7 @@ pub fn deviation(
   medium1 : OpticsMediumArg,
   medium2 : OpticsMediumArg,
 ) -> Expr raise PhysicsError {
-  try! (refraction_angle(incident, medium1, medium2) - incident)
+  refraction_angle(incident, medium1, medium2) - incident
 }
 
 ///|

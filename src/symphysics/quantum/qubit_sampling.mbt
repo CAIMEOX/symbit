@@ -163,7 +163,7 @@ fn choose_measurement_state(
       "measurement produced no possible outcomes",
     )
   }
-  let cutoff = try! oneshot_sample_value(sample)
+  let cutoff = oneshot_sample_value(sample)
   let mut total = 0.0
   for item in states {
     let prob = match expr_real_probability(item.1) {
@@ -188,7 +188,7 @@ pub fn measure_partial_oneshot(
   nqubits? : Int = 0,
   sample? : Double = -1.0,
 ) -> Expr raise @symphysics.PhysicsError {
-  choose_measurement_state(try! measure_partial(expr, bits, nqubits~), sample)
+  choose_measurement_state(measure_partial(expr, bits, nqubits~), sample)
 }
 
 ///|
@@ -197,5 +197,5 @@ pub fn measure_all_oneshot(
   nqubits? : Int = 0,
   sample? : Double = -1.0,
 ) -> Expr raise @symphysics.PhysicsError {
-  choose_measurement_state(try! measure_all(expr, nqubits~), sample)
+  choose_measurement_state(measure_all(expr, nqubits~), sample)
 }

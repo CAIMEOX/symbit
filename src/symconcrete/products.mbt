@@ -356,7 +356,12 @@ fn geometric_product(
       let count = expr_add(expr_sub(upper, lower), @symcore.int(1))
       let sum_exp = expr_mul(
         expr_add(lower, upper),
-        expr_mul(count, try! @symcore.rational_from_ints(1, 2)),
+        expr_mul(
+          count,
+          @symcore.rational_from_ints(1, 2) catch {
+            _ => @symcore.int(1) * (@symcore.int(2) ^ @symcore.int(-1))
+          },
+        ),
       )
       let base_pow = @symcore.pow(base, sum_exp)
       let coeff_pow = @symcore.pow(coeff, count)

@@ -81,7 +81,7 @@ pub fn fermion_apply_operator_to_ket(
       if is_ann {
         Some(
           if n == int(1) {
-            try! fermion_fock_ket(int(0))
+            @symcore.raw_function("FermionFockKet", [int(0)])
           } else {
             int(0)
           },
@@ -89,7 +89,7 @@ pub fn fermion_apply_operator_to_ket(
       } else {
         Some(
           if n == int(0) {
-            try! fermion_fock_ket(int(1))
+            @symcore.raw_function("FermionFockKet", [int(1)])
           } else {
             int(0)
           },

@@ -137,21 +137,21 @@ fn ellipse_normal_lines_numeric(
         let x_rel = x - cx
         let y_rel = y - cy
         let next_pt = if x_rel.abs() <= tol {
-          try! point2d(
+          point2d(
             boundary.coords_[0],
             geo_simplify(boundary.coords_[1] + geo_one()),
-          )
+          ) catch { _ => return None }
         } else {
           let slope = a * a * y_rel / (b * b * x_rel)
-          try! point2d(
+          point2d(
             geo_simplify(boundary.coords_[0] + geo_one()),
             geo_simplify(
               boundary.coords_[1] +
               geo_decimal_expr_from_double(slope, rounded_digits),
             ),
-          )
+          ) catch { _ => return None }
         }
-        lines.push(try! line(boundary, next_pt))
+        lines.push(line(boundary, next_pt) catch { _ => return None })
       }
       Some(lines)
     }

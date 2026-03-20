@@ -21,8 +21,8 @@ fn join_resource_path(base_dir : String, identifier : String) -> String {
 }
 
 ///|
-pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning {
-  try! sympy_deprecation_warning(
+pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesError {
+  sympy_deprecation_warning(
     "The sympy.utilities.pkgdata module and its get_resource function are deprecated. Use the stdlib importlib.resources module instead.",
     "1.12", "pkgdata",
   )
@@ -33,6 +33,6 @@ pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning {
 /// not expose Python-style loader file objects, this returns the resolved path
 /// string after emitting the deprecation warning.
 pub fn get_resource(identifier : String, pkg_dir : String) -> String {
-  ignore(pkgdata_deprecation_warning())
+  ignore(pkgdata_deprecation_warning() catch { _ => return join_resource_path(pkg_dir, identifier) })
   join_resource_path(pkg_dir, identifier)
 }

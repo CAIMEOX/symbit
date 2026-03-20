@@ -210,7 +210,10 @@ fn solve_constant_ode_coefficients(
         let ak = nk.div_r(fk)
         a.push(@symcore.number(ak))
       }
-      None => a.push(expr_mul(yk, @symcore.number(try! fk.reciprocal())))
+      None => {
+        let inv = fk.reciprocal() catch { _ => return None }
+        a.push(expr_mul(yk, @symcore.number(inv)))
+      }
     }
   }
   while a.length() < terms {
@@ -270,10 +273,10 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
                 let ak = v.div_r(fk)
                 init.push(@symcore.number(ak))
               }
-              None =>
-                init.push(
-                  expr_mul(hf.y0[k], @symcore.number(try! fk.reciprocal())),
-                )
+              None => {
+                let inv = fk.reciprocal() catch { _ => return None }
+                init.push(expr_mul(hf.y0[k], @symcore.number(inv)))
+              }
             }
           }
           Some(holonomic_sequence(rec, u0=init))
@@ -402,10 +405,10 @@ fn integrate_expr(expr : Expr, x : Expr) -> Expr {
       match expr_int(exp) {
         Some(e) if e >= 0 => {
           let n1 = e + 1
-          expr_mul(
-            @symcore.pow(x, int(n1)),
-            @symcore.number(try! @symnum.BigRational::from_int(n1).reciprocal()),
-          )
+          let inv = @symnum.BigRational::from_int(n1).reciprocal() catch {
+            _ => return @symcore.function("Integral", [expr, x])
+          }
+          expr_mul(@symcore.pow(x, int(n1)), @symcore.number(inv))
         }
         _ => @symcore.function("Integral", [expr, x])
       }

@@ -58,7 +58,7 @@ pub fn Wigner3j::doit(
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.wigner_3j(
+  @symphysics.wigner_3j(
     self.j1,
     self.j2,
     self.j3,
@@ -105,7 +105,7 @@ pub fn CG::doit(self : CG) -> Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.clebsch_gordan(
+  @symphysics.clebsch_gordan(
     self.j1,
     self.j2,
     self.j3,
@@ -161,7 +161,7 @@ pub fn Wigner6j::doit(
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.wigner_6j(
+  @symphysics.wigner_6j(
     self.j1,
     self.j2,
     self.j12,
@@ -236,7 +236,7 @@ pub fn Wigner9j::doit(
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  try! @symphysics.wigner_9j(
+  @symphysics.wigner_9j(
     self.j1,
     self.j2,
     self.j12,

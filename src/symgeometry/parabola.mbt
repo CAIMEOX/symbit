@@ -59,7 +59,7 @@ pub fn Parabola::eccentricity(_self : Parabola) -> Expr {
 
 ///|
 pub fn Parabola::vertex(self : Parabola) -> Point raise GeometryError {
-  self.focus_.midpoint(try! self.directrix_.projection(self.focus_))
+  self.focus_.midpoint(self.directrix_.projection(self.focus_))
 }
 
 ///|

@@ -88,10 +88,8 @@ pub fn hydrogen_e_nl(
 ///|
 fn hydrogen_dirac_default_c() -> Expr {
   @symcore.number(
-    try! @symnum.BigRational::new(
-      @bigint.BigInt::from_string("137035999037"),
-      @bigint.BigInt::from_int(1000000000),
-    ),
+    @symnum.BigRational::from_bigint(@bigint.BigInt::from_string("137035999037"))
+      .div_r(@symnum.BigRational::from_int(1000000000)),
   )
 }
 

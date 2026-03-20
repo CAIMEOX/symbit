@@ -54,7 +54,9 @@ fn block_same_layout(
       return false
     }
     for j in 0..<lhs[i].length() {
-      if (try! lhs[i][j].shape()) != (try! rhs[i][j].shape()) {
+      let lhs_shape = lhs[i][j].shape() catch { _ => return false }
+      let rhs_shape = rhs[i][j].shape() catch { _ => return false }
+      if lhs_shape != rhs_shape {
         return false
       }
     }
@@ -71,8 +73,8 @@ fn block_mul_compatible(
     return false
   }
   for k in 0..<rhs.length() {
-    let left_shape = try! lhs[0][k].shape()
-    let right_shape = try! rhs[k][0].shape()
+    let left_shape = lhs[0][k].shape() catch { _ => return false }
+    let right_shape = rhs[k][0].shape() catch { _ => return false }
     if left_shape.1 != right_shape.0 {
       return false
     }

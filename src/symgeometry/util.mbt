@@ -409,27 +409,31 @@ pub fn are_coplanar(items : Array[GeometryEntity]) -> Bool raise GeometryError {
           return false
         }
       GeometryEntity::Ellipse(ellipse_obj) =>
-        points.push(try! ellipse_obj.center().with_dim(3))
+        points.push(ellipse_obj.center().with_dim(3) catch { _ => return false })
       GeometryEntity::Circle(circle_obj) =>
-        points.push(try! circle_obj.center().with_dim(3))
+        points.push(circle_obj.center().with_dim(3) catch { _ => return false })
       GeometryEntity::Polygon(polygon_obj) =>
         for pt in polygon_obj.vertices() {
-          points.push(try! pt.with_dim(3))
+          points.push(pt.with_dim(3) catch { _ => return false })
         }
       GeometryEntity::RegularPolygon(poly_obj) => {
         let vertices = poly_obj.vertices()
         for pt in vertices {
-          points.push(try! pt.with_dim(3))
+          points.push(pt.with_dim(3) catch { _ => return false })
         }
       }
       GeometryEntity::Triangle(triangle_obj) =>
         for pt in triangle_obj.vertices() {
-          points.push(try! pt.with_dim(3))
+          points.push(pt.with_dim(3) catch { _ => return false })
         }
       GeometryEntity::Parabola(parabola_obj) =>
-        points.push(try! parabola_obj.focus().with_dim(3))
+        points.push(parabola_obj.focus().with_dim(3) catch { _ => return false })
       GeometryEntity::Curve(curve_obj) =>
-        points.push(try! curve_obj.arbitrary_point().with_dim(3))
+        points.push(
+          (curve_obj.arbitrary_point() catch { _ => return false }).with_dim(3) catch {
+            _ => return false
+          },
+        )
     }
   }
   point_are_coplanar(points)
@@ -522,7 +526,7 @@ pub fn intersection(
       GeometryEntity::RegularPolygon(poly_obj),
       GeometryEntity::Point(point_obj),
     ) =>
-      if (try! regular_polygon_as_polygon(poly_obj).contains_point(point_obj)) {
+      if (regular_polygon_as_polygon(poly_obj) catch { _ => return [] }).contains_point(point_obj) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []

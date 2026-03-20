@@ -367,7 +367,9 @@ fn gosper_geometric(
     Some((coeff, base)) => {
       if base == @symcore.int(1) {
         let k = sym
-        let half = try! @symcore.rational_from_ints(1, 2)
+        let half = @symcore.rational_from_ints(1, 2) catch {
+          _ => @symcore.int(1) * (@symcore.int(2) ^ @symcore.int(-1))
+        }
         let g = expr_mul(half, expr_mul(k, expr_add(k, @symcore.int(-1))))
         return Some(expr_mul(coeff, g))
       }
@@ -979,7 +981,9 @@ fn sum_powers(n : @symcore.Expr, p : Int) -> @symcore.Expr {
     let power = @symcore.pow(n1, @symcore.int(p + 1 - j))
     acc.push(expr_mul(coeff, expr_mul(bern, power)))
   }
-  let inv = try! @symcore.rational_from_ints(1, p + 1)
+  let inv = @symcore.rational_from_ints(1, p + 1) catch {
+    _ => @symcore.int(1) * (@symcore.int(p + 1) ^ @symcore.int(-1))
+  }
   expr_mul(inv, @symcore.add(acc))
 }
 

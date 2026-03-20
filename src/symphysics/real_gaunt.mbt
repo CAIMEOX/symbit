@@ -169,7 +169,7 @@ pub fn real_gaunt(
         _ =>
           acc = acc +
             coeff_expr *
-            (try! gaunt(
+            (gaunt(
               l_1,
               l_2,
               l_3,

@@ -226,7 +226,7 @@ fn polygon_encloses_impl(
     GeometryEntity::Circle(circle_obj) =>
       poly.encloses_point(circle_obj.center()) &&
       poly.encloses_point(
-        try! point2d(
+        point2d(
           circle_obj.center().coords_[0] + circle_obj.radius(),
           circle_obj.center().coords_[1],
         ),
@@ -235,7 +235,7 @@ fn polygon_encloses_impl(
     GeometryEntity::Ellipse(ellipse_obj) =>
       poly.encloses_point(ellipse_obj.center()) &&
       poly.encloses_point(
-        try! point2d(
+        point2d(
           ellipse_obj.center().coords_[0] + ellipse_obj.hradius(),
           ellipse_obj.center().coords_[1],
         ),
@@ -248,7 +248,7 @@ fn polygon_encloses_impl(
       polygon_intersection_impl(vertices, geometry_polygon(poly_obj)).is_empty()
     GeometryEntity::RegularPolygon(poly_obj) =>
       poly.encloses_point(poly_obj.center()) &&
-      (try! poly_obj.vertices()).all(fn(vertex) {
+      poly_obj.vertices().all(fn(vertex) {
         poly.encloses_point(vertex) catch {
           _ => false
         }

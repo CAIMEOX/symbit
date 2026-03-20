@@ -141,7 +141,7 @@ pub fn matrix_trace(
   }
   let mut acc = int(0)
   for idx in 0..<matrix.height() {
-    acc = acc + (try! matrix.get(idx, idx))
+    acc = acc + matrix.get(idx, idx)
   }
   acc
 }

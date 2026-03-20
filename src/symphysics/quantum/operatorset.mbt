@@ -17,7 +17,9 @@ fn quantum_default_operator() -> Expr {
 
 ///|
 fn operatorset_half() -> Expr {
-  try! @symcore.rational_from_ints(1, 2)
+  @symcore.number(
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
+  )
 }
 
 ///|

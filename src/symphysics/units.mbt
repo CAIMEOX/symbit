@@ -103,9 +103,8 @@ fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
     @symcore.number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
     @symcore.number(
-      try! @symnum.BigRational::new(
-        BigInt::from_int(1),
-        int_pow(base, -exponent),
+      @symnum.BigRational::from_bigint(BigInt::from_int(1)).div_r(
+        @symnum.BigRational::from_bigint(int_pow(base, -exponent)),
       ),
     )
   }
@@ -116,7 +115,9 @@ fn expr_inverse(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) =>
       @symcore.number(
-        try! @symnum.BigRational::new(n.denominator(), n.numerator()),
+        @symnum.BigRational::from_bigint(n.denominator()).div_r(
+          @symnum.BigRational::from_bigint(n.numerator()),
+        ),
       )
     _ => expr ^ int(-1)
   }
@@ -375,9 +376,10 @@ pub let speed_of_light : Expr = int(299792458) *
 
 ///|
 pub let e0 : Expr = @symcore.number(
-    try! @symnum.BigRational::new(
-      BigInt::from_int(625000),
-      BigInt::from_string("22468879468420441"),
+    @symnum.BigRational::from_bigint(BigInt::from_int(625000)).div_r(
+      @symnum.BigRational::from_bigint(
+        BigInt::from_string("22468879468420441"),
+      ),
     ),
   ) *
   (ampere.symbol_expr() ^ int(2)) *
@@ -388,7 +390,9 @@ pub let e0 : Expr = @symcore.number(
 
 ///|
 pub let u0 : Expr = pi_expr() *
-  (try! @symcore.rational_from_ints(1, 2500000)) *
+  @symcore.number(
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2500000)),
+  ) *
   kilogram.symbol_expr() *
   meter.symbol_expr() *
   (ampere.symbol_expr() ^ int(-2)) *

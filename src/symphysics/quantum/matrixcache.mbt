@@ -14,7 +14,9 @@ pub struct MatrixCache {
 ///|
 pub let sqrt2_inv : Expr = @symcore.raw_pow(
   int(2),
-  try! @symcore.rational_from_ints(-1, 2),
+  @symcore.number(
+    @symnum.BigRational::from_int(-1).div_r(@symnum.BigRational::from_int(2)),
+  ),
 )
 
 ///|
@@ -31,7 +33,9 @@ fn cached_matrix(
 ///|
 pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   let cache = MatrixCache::{ dtype, entries: {} }
-  let quarter = try! @symcore.rational_from_ints(1, 4)
+  let quarter = @symcore.number(
+    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(4)),
+  )
   cache.cache_matrix(
     "eye2",
     cached_matrix([

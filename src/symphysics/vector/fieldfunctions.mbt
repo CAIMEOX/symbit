@@ -35,7 +35,7 @@ fn integrate_scalar(
   }
   if @symcore.compare_expr(expr, wrt) == 0 {
     return simplify_expr(
-      (wrt ^ int_expr(2)) * (try! @symcore.rational_from_ints(1, 2)),
+      (wrt ^ int_expr(2)) * rational_expr(1, 2),
     )
   }
   match expr {
@@ -72,7 +72,7 @@ fn integrate_scalar(
           raise VectorError::ValueError("log antiderivative not implemented")
         Some(n) => {
           let next = n + 1
-          let coeff = try! @symcore.rational_from_ints(1, next)
+          let coeff = rational_expr(1, next)
           simplify_expr(coeff * (wrt ^ int_expr(next)))
         }
         None =>

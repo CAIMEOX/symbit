@@ -192,7 +192,7 @@ pub fn TWave::neg(self : TWave) -> TWave raise PhysicsError {
 
 ///|
 pub fn TWave::sub(self : TWave, other : TWave) -> TWave raise PhysicsError {
-  self.superpose(try! other.neg())
+  self.superpose(other.neg())
 }
 
 ///|

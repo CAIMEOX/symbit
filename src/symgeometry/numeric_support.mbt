@@ -84,7 +84,9 @@ fn geo_decimal_expr_from_double(value : Double, digits : Int) -> Expr {
   let prec = if digits < 0 { 0 } else { digits }
   let denom = geo_int_pow10(prec)
   let numer = geo_round_to_int(value * denom.to_double())
-  try! @symcore.rational_from_ints(numer, denom)
+  @symcore.number(
+    @symnum.BigRational::from_int(numer).div_r(@symnum.BigRational::from_int(denom)),
+  )
 }
 
 ///|
