@@ -327,24 +327,17 @@ pub fn SparseMatrix::todok(self : SparseMatrix) -> Map[(Int, Int), Expr] {
 }
 
 ///|
-pub fn SparseMatrix::to_list(
-  self : SparseMatrix,
-) -> Array[Array[Expr]] {
+pub fn SparseMatrix::to_list(self : SparseMatrix) -> Array[Array[Expr]] {
   self.to_dense().to_list()
 }
 
 ///|
-pub fn SparseMatrix::tolist(
-  self : SparseMatrix,
-) -> Array[Array[Expr]] {
+pub fn SparseMatrix::tolist(self : SparseMatrix) -> Array[Array[Expr]] {
   self.to_list()
 }
 
 ///|
-pub fn SparseMatrix::equals(
-  self : SparseMatrix,
-  other : SparseMatrix,
-) -> Bool {
+pub fn SparseMatrix::equals(self : SparseMatrix, other : SparseMatrix) -> Bool {
   self.to_dense().equals(other.to_dense())
 }
 

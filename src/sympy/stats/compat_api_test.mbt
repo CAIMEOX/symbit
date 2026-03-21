@@ -197,7 +197,7 @@ fn assert_cf_not_placeholder(
 ///|
 fn rv_symbolic_name(rv : RandomVar) -> String? {
   match rv.kind {
-    RVKind::Symbolic(tag~, ..) => Some(symbolic_tag_name(tag))
+    RVKind::Symbolic(kind~, ..) => Some(symbolic_kind_name(kind))
     _ => None
   }
 }
@@ -205,8 +205,8 @@ fn rv_symbolic_name(rv : RandomVar) -> String? {
 ///|
 fn rv_symbolic_ctor(rv : RandomVar) -> String? {
   match rv.kind {
-    RVKind::Symbolic(tag~, params~) => {
-      let name = symbolic_tag_name(tag)
+    RVKind::Symbolic(kind~, params~) => {
+      let name = symbolic_kind_name(kind)
       let args : Array[String] = ["'\{rv.name}'"]
       for p in params {
         args.push(@symprint.to_string(p))
@@ -415,7 +415,7 @@ test "compat aliases p/e/h and where_" {
   let he = h(x)
   assert_eq(@symprint.to_string(he), "entropy(X)")
   let w = where_(ge(x, @symcore.int(2)))
-  assert_eq(@symprint.to_string(w), "where(Ge(X, 2))")
+  assert_true(stats_expr_equiv(@symprint.to_string(w), "where(Ge(X, 2))"))
 }
 
 ///|
@@ -449,9 +449,11 @@ test "compat distribution constructors symbolic fallback" {
   let a = beta("A", params=[@symcore.int(2), @symcore.int(5)])
   let x = @symcore.symbol("x")
   let d = density(a, x)
-  assert_eq(
-    @symprint.to_string(d),
-    "Piecewise(Tuple((x*beta(2, 5)**-1*(-1*x + 1)**4), And(Le(0, x), Le(x, 1))), Tuple(0, True))",
+  assert_true(
+    stats_expr_equiv(
+      @symprint.to_string(d),
+      "Piecewise(Tuple((x*beta(2, 5)**-1*(-1*x + 1)**4), And(Le(0, x), Le(x, 1))), Tuple(0, True))",
+    ),
   )
 
   let m = matrix_student_t("M", params=[

@@ -89,30 +89,30 @@ fn cont_param_condition(
   name : String,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
-  match name {
-    "Arcsin" if params.length() == 2 =>
+  match continuous_tag_from_name(name) {
+    ContinuousTag::Arcsin if params.length() == 2 =>
       Some(cont_rel("Lt", params[0], params[1]))
-    "Uniform" if params.length() == 2 =>
+    ContinuousTag::Uniform if params.length() == 2 =>
       Some(cont_rel("Lt", params[0], params[1]))
-    "Beta" if params.length() == 2 =>
+    ContinuousTag::Beta if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    "Laplace" if params.length() == 2 =>
+    ContinuousTag::Laplace if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    "Cauchy" if params.length() == 2 =>
+    ContinuousTag::Cauchy if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    "Pareto" if params.length() == 2 =>
+    ContinuousTag::Pareto if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    "BoundedPareto" if params.length() == 3 =>
+    ContinuousTag::BoundedPareto if params.length() == 3 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
@@ -122,38 +122,38 @@ fn cont_param_condition(
           ),
         ),
       )
-    "Kumaraswamy" if params.length() == 2 =>
+    ContinuousTag::Kumaraswamy if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    "Rayleigh" if params.length() == 1 =>
+    ContinuousTag::Rayleigh if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    "LogNormal" if params.length() == 2 =>
+    ContinuousTag::LogNormal if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    "Weibull" if params.length() == 2 =>
+    ContinuousTag::Weibull if params.length() == 2 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Gt", params[1], @symcore.int(0)),
         ),
       )
-    "PowerFunction" if params.length() == 3 =>
+    ContinuousTag::PowerFunction if params.length() == 3 =>
       Some(
         cont_and(
           cont_rel("Gt", params[0], @symcore.int(0)),
           cont_rel("Lt", params[1], params[2]),
         ),
       )
-    "StudentT" if params.length() == 1 =>
+    ContinuousTag::StudentT if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    "Moyal" if params.length() == 2 =>
+    ContinuousTag::Moyal if params.length() == 2 =>
       Some(cont_rel("Gt", params[1], @symcore.int(0)))
-    "WignerSemicircle" if params.length() == 1 =>
+    ContinuousTag::WignerSemicircle if params.length() == 1 =>
       Some(cont_rel("Gt", params[0], @symcore.int(0)))
-    "Trapezoidal" if params.length() == 4 =>
+    ContinuousTag::Trapezoidal if params.length() == 4 =>
       Some(
         cont_and(
           cont_and(
@@ -201,22 +201,26 @@ fn cont_bool_and(a : Bool?, b : Bool?) -> Bool? {
 
 ///|
 fn cont_known_valid(name : String, params : Array[@symcore.Expr]) -> Bool? {
-  match name {
-    "Arcsin" if params.length() == 2 => cont_numeric_lt(params[0], params[1])
-    "Uniform" if params.length() == 2 => cont_numeric_lt(params[0], params[1])
-    "Beta" if params.length() == 2 =>
+  match continuous_tag_from_name(name) {
+    ContinuousTag::Arcsin if params.length() == 2 =>
+      cont_numeric_lt(params[0], params[1])
+    ContinuousTag::Uniform if params.length() == 2 =>
+      cont_numeric_lt(params[0], params[1])
+    ContinuousTag::Beta if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    "Laplace" if params.length() == 2 => cont_numeric_gt_zero(params[1])
-    "Cauchy" if params.length() == 2 => cont_numeric_gt_zero(params[1])
-    "Pareto" if params.length() == 2 =>
+    ContinuousTag::Laplace if params.length() == 2 =>
+      cont_numeric_gt_zero(params[1])
+    ContinuousTag::Cauchy if params.length() == 2 =>
+      cont_numeric_gt_zero(params[1])
+    ContinuousTag::Pareto if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    "BoundedPareto" if params.length() == 3 =>
+    ContinuousTag::BoundedPareto if params.length() == 3 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_bool_and(
@@ -224,28 +228,32 @@ fn cont_known_valid(name : String, params : Array[@symcore.Expr]) -> Bool? {
           cont_numeric_lt(params[1], params[2]),
         ),
       )
-    "Kumaraswamy" if params.length() == 2 =>
+    ContinuousTag::Kumaraswamy if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    "Rayleigh" if params.length() == 1 => cont_numeric_gt_zero(params[0])
-    "LogNormal" if params.length() == 2 => cont_numeric_gt_zero(params[1])
-    "Weibull" if params.length() == 2 =>
+    ContinuousTag::Rayleigh if params.length() == 1 =>
+      cont_numeric_gt_zero(params[0])
+    ContinuousTag::LogNormal if params.length() == 2 =>
+      cont_numeric_gt_zero(params[1])
+    ContinuousTag::Weibull if params.length() == 2 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_gt_zero(params[1]),
       )
-    "PowerFunction" if params.length() == 3 =>
+    ContinuousTag::PowerFunction if params.length() == 3 =>
       cont_bool_and(
         cont_numeric_gt_zero(params[0]),
         cont_numeric_lt(params[1], params[2]),
       )
-    "StudentT" if params.length() == 1 => cont_numeric_gt_zero(params[0])
-    "Moyal" if params.length() == 2 => cont_numeric_gt_zero(params[1])
-    "WignerSemicircle" if params.length() == 1 =>
+    ContinuousTag::StudentT if params.length() == 1 =>
       cont_numeric_gt_zero(params[0])
-    "Trapezoidal" if params.length() == 4 =>
+    ContinuousTag::Moyal if params.length() == 2 =>
+      cont_numeric_gt_zero(params[1])
+    ContinuousTag::WignerSemicircle if params.length() == 1 =>
+      cont_numeric_gt_zero(params[0])
+    ContinuousTag::Trapezoidal if params.length() == 4 =>
       cont_bool_and(
         cont_bool_and(
           cont_numeric_lt(params[0], params[1]),
@@ -1196,53 +1204,58 @@ fn symbolic_continuous_mean_bounds(
   name : String,
   params : Array[@symcore.Expr],
 ) -> (@symcore.Expr, @symcore.Expr)? {
-  match name {
-    "Benini" if params.length() == 3 => Some((params[2], @symcore.symbol("oo")))
-    "BetaNoncentral" if params.length() == 3 =>
+  match continuous_tag_from_name(name) {
+    ContinuousTag::Benini if params.length() == 3 =>
+      Some((params[2], @symcore.symbol("oo")))
+    ContinuousTag::BetaNoncentral if params.length() == 3 =>
       Some((@symcore.int(0), @symcore.int(1)))
-    "BetaPrime" if params.length() == 2 =>
+    ContinuousTag::BetaPrime if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "ChiNoncentral" if params.length() == 2 =>
+    ContinuousTag::ChiNoncentral if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "Dagum" if params.length() == 3 =>
+    ContinuousTag::Dagum if params.length() == 3 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "Davis" if params.length() == 3 => Some((params[2], @symcore.symbol("oo")))
-    "ExponentialPower" if params.length() == 3 =>
+    ContinuousTag::Davis if params.length() == 3 =>
+      Some((params[2], @symcore.symbol("oo")))
+    ContinuousTag::ExponentialPower if params.length() == 3 =>
       Some(
         (
           eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
           @symcore.symbol("oo"),
         ),
       )
-    "FDistribution" if params.length() == 2 =>
+    ContinuousTag::FDistribution if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "FisherZ" if params.length() == 2 =>
+    ContinuousTag::FisherZ if params.length() == 2 =>
       Some(
         (
           eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
           @symcore.symbol("oo"),
         ),
       )
-    "Frechet" if params.length() == 1 =>
+    ContinuousTag::Frechet if params.length() == 1 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "GammaInverse" if params.length() == 2 =>
+    ContinuousTag::GammaInverse if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "Levy" if params.length() == 2 => Some((params[0], @symcore.symbol("oo")))
-    "LogCauchy" if params.length() == 2 =>
+    ContinuousTag::Levy if params.length() == 2 =>
+      Some((params[0], @symcore.symbol("oo")))
+    ContinuousTag::LogCauchy if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "LogitNormal" if params.length() == 2 =>
+    ContinuousTag::LogitNormal if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.int(1)))
-    "Lomax" if params.length() == 2 =>
+    ContinuousTag::Lomax if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "Maxwell" if params.length() == 1 =>
+    ContinuousTag::Maxwell if params.length() == 1 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "Nakagami" if params.length() == 2 =>
+    ContinuousTag::Nakagami if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "PowerFunction" if params.length() == 3 => Some((params[1], params[2]))
-    "QuadraticU" if params.length() == 2 => Some((params[0], params[1]))
-    "ShiftedGompertz" if params.length() == 2 =>
+    ContinuousTag::PowerFunction if params.length() == 3 =>
+      Some((params[1], params[2]))
+    ContinuousTag::QuadraticU if params.length() == 2 =>
+      Some((params[0], params[1]))
+    ContinuousTag::ShiftedGompertz if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.symbol("oo")))
-    "VonMises" if params.length() == 2 =>
+    ContinuousTag::VonMises if params.length() == 2 =>
       Some(
         (
           @symcore.int(0),
@@ -1290,8 +1303,8 @@ fn symbolic_continuous_variance_via_integral(
 ) -> @symcore.Expr? {
   match symbolic_continuous_mean_bounds(name, params) {
     Some((lower, upper)) => {
-      let tag = "C:\{name}"
-      let rv = random_var("_X", RVKind::Symbolic(tag~, params~))
+      let kind = symbolic_kind_from_name(name)
+      let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
       let mean_expr = match continuous_mean(rv) {
         Some(v) => v
         None => symbolic_stat_expr(name, "Mean", params)
@@ -1397,30 +1410,31 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
         ]),
       )
     }
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "C" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        if name == "ContinuousRV" || name == "ContinuousDistributionHandmade" {
-          return None
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Continuous(
+          ContinuousTag::ContinuousRV
+          | ContinuousTag::ContinuousDistributionHandmade
+        ) => None
+        SymbolicKind::Continuous(tag) => {
+          let name = continuous_tag_name(tag)
+          match symbolic_continuous_density(name, params, x) {
+            Some(v) => Some(cont_guard_params(name, params, v))
+            None =>
+              match generated_density(name, params, x) {
+                Some(v) => Some(cont_guard_params(name, params, v))
+                None =>
+                  Some(
+                    cont_guard_params(
+                      name,
+                      params,
+                      symbolic_density_expr(name, params, x),
+                    ),
+                  )
+              }
+          }
         }
-        // Prefer curated formulas that already encode support as Piecewise.
-        match symbolic_continuous_density(name, params, x) {
-          Some(v) => Some(cont_guard_params(name, params, v))
-          None =>
-            match generated_density(name, params, x) {
-              Some(v) => Some(cont_guard_params(name, params, v))
-              None =>
-                Some(
-                  cont_guard_params(
-                    name,
-                    params,
-                    symbolic_density_expr(name, params, x),
-                  ),
-                )
-            }
-        }
+        _ => None
       }
     _ => None
   }
@@ -1487,30 +1501,31 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
           ),
         ]),
       )
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "C" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        if name == "ContinuousRV" || name == "ContinuousDistributionHandmade" {
-          return None
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Continuous(
+          ContinuousTag::ContinuousRV
+          | ContinuousTag::ContinuousDistributionHandmade
+        ) => None
+        SymbolicKind::Continuous(tag) => {
+          let name = continuous_tag_name(tag)
+          match symbolic_continuous_cdf(name, params, x) {
+            Some(v) => Some(cont_guard_params(name, params, v))
+            None =>
+              match generated_cdf(name, params, x) {
+                Some(v) => Some(cont_guard_params(name, params, v))
+                None =>
+                  Some(
+                    cont_guard_params(
+                      name,
+                      params,
+                      symbolic_cdf_expr(name, params, x),
+                    ),
+                  )
+              }
+          }
         }
-        // Prefer curated formulas that preserve expected branch structure.
-        match symbolic_continuous_cdf(name, params, x) {
-          Some(v) => Some(cont_guard_params(name, params, v))
-          None =>
-            match generated_cdf(name, params, x) {
-              Some(v) => Some(cont_guard_params(name, params, v))
-              None =>
-                Some(
-                  cont_guard_params(
-                    name,
-                    params,
-                    symbolic_cdf_expr(name, params, x),
-                  ),
-                )
-            }
-        }
+        _ => None
       }
     _ => None
   }
@@ -1590,160 +1605,163 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
       Some(eval_arith(@symcore.pow(rate, @symcore.int(-1))))
     RVKind::Gamma(shape~, scale~) =>
       Some(eval_arith(@symcore.mul([shape, scale])))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "C" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        match generated_mean(name, params) {
-          Some(v) => Some(cont_guard_params(name, params, v))
-          None => {
-            let raw = match
-              symbolic_continuous_mean_via_integral(name, params) {
-              Some(v) => v
-              None =>
-                match name {
-                  "Arcsin" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(1, 2),
-                        @symcore.add([params[0], params[1]]),
-                      ]),
-                    )
-                  "Uniform" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(1, 2),
-                        @symcore.add([params[0], params[1]]),
-                      ]),
-                    )
-                  "Beta" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        params[0],
-                        @symcore.pow(
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Continuous(tag) => {
+          let name = continuous_tag_name(tag)
+          match generated_mean(name, params) {
+            Some(v) => Some(cont_guard_params(name, params, v))
+            None => {
+              let raw = match
+                symbolic_continuous_mean_via_integral(name, params) {
+                Some(v) => v
+                None =>
+                  match tag {
+                    ContinuousTag::Arcsin if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
+                          stats_exact_rational(1, 2),
                           @symcore.add([params[0], params[1]]),
-                          @symcore.int(-1),
-                        ),
-                      ]),
-                    )
-                  "Kumaraswamy" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        params[1],
-                        @symcore.function("beta", [
-                          eval_arith(
-                            @symcore.add([
-                              @symcore.int(1),
-                              @symcore.pow(params[0], @symcore.int(-1)),
-                            ]),
+                        ]),
+                      )
+                    ContinuousTag::Uniform if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
+                          stats_exact_rational(1, 2),
+                          @symcore.add([params[0], params[1]]),
+                        ]),
+                      )
+                    ContinuousTag::Beta if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
+                          params[0],
+                          @symcore.pow(
+                            @symcore.add([params[0], params[1]]),
+                            @symcore.int(-1),
                           ),
+                        ]),
+                      )
+                    ContinuousTag::Kumaraswamy if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
                           params[1],
-                        ]),
-                      ]),
-                    )
-                  "Laplace" if params.length() == 2 => params[0]
-                  "Cauchy" if params.length() == 2 => @symcore.symbol("nan")
-                  "Pareto" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        params[1],
-                        params[0],
-                        @symcore.pow(
-                          @symcore.add([params[1], @symcore.int(-1)]),
-                          @symcore.int(-1),
-                        ),
-                      ]),
-                    )
-                  "Rayleigh" if params.length() == 1 =>
-                    eval_arith(
-                      @symcore.mul([
-                        params[0],
-                        @symcore.function("sqrt", [
-                          @symcore.mul([
-                            @symcore.symbol("pi"),
-                            stats_exact_rational(1, 2),
+                          @symcore.function("beta", [
+                            eval_arith(
+                              @symcore.add([
+                                @symcore.int(1),
+                                @symcore.pow(params[0], @symcore.int(-1)),
+                              ]),
+                            ),
+                            params[1],
                           ]),
                         ]),
-                      ]),
-                    )
-                  "LogNormal" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.function("exp", [
-                        eval_arith(
-                          @symcore.add([
-                            params[0],
+                      )
+                    ContinuousTag::Laplace if params.length() == 2 => params[0]
+                    ContinuousTag::Cauchy if params.length() == 2 =>
+                      @symcore.symbol("nan")
+                    ContinuousTag::Pareto if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
+                          params[1],
+                          params[0],
+                          @symcore.pow(
+                            @symcore.add([params[1], @symcore.int(-1)]),
+                            @symcore.int(-1),
+                          ),
+                        ]),
+                      )
+                    ContinuousTag::Rayleigh if params.length() == 1 =>
+                      eval_arith(
+                        @symcore.mul([
+                          params[0],
+                          @symcore.function("sqrt", [
                             @symcore.mul([
+                              @symcore.symbol("pi"),
                               stats_exact_rational(1, 2),
-                              @symcore.pow(params[1], @symcore.int(2)),
                             ]),
                           ]),
-                        ),
-                      ]),
-                    )
-                  "Weibull" if params.length() == 2 =>
-                    eval_arith(
-                      @symcore.mul([
-                        params[0],
-                        @symcore.function("gamma", [
+                        ]),
+                      )
+                    ContinuousTag::LogNormal if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.function("exp", [
                           eval_arith(
                             @symcore.add([
-                              @symcore.int(1),
-                              @symcore.pow(params[1], @symcore.int(-1)),
+                              params[0],
+                              @symcore.mul([
+                                stats_exact_rational(1, 2),
+                                @symcore.pow(params[1], @symcore.int(2)),
+                              ]),
                             ]),
                           ),
                         ]),
-                      ]),
-                    )
-                  "StudentT" if params.length() == 1 => @symcore.int(0)
-                  "Trapezoidal" if params.length() == 4 => {
-                    let a = params[0]
-                    let b = params[1]
-                    let c = params[2]
-                    let d = params[3]
-                    eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(1, 3),
-                        eval_arith(
-                          @symcore.add([
-                            @symcore.pow(
-                              eval_arith(
-                                @symcore.add([
-                                  a,
-                                  b,
-                                  @symcore.mul([@symcore.int(-1), c]),
-                                  @symcore.mul([@symcore.int(-1), d]),
-                                ]),
-                              ),
-                              @symcore.int(-1),
+                      )
+                    ContinuousTag::Weibull if params.length() == 2 =>
+                      eval_arith(
+                        @symcore.mul([
+                          params[0],
+                          @symcore.function("gamma", [
+                            eval_arith(
+                              @symcore.add([
+                                @symcore.int(1),
+                                @symcore.pow(params[1], @symcore.int(-1)),
+                              ]),
                             ),
                           ]),
-                        ),
-                        eval_arith(
-                          @symcore.add([
-                            @symcore.pow(a, @symcore.int(2)),
-                            @symcore.mul([a, b]),
-                            @symcore.pow(b, @symcore.int(2)),
-                            @symcore.mul([
-                              @symcore.int(-1),
-                              @symcore.pow(c, @symcore.int(2)),
+                        ]),
+                      )
+                    ContinuousTag::StudentT if params.length() == 1 =>
+                      @symcore.int(0)
+                    ContinuousTag::Trapezoidal if params.length() == 4 => {
+                      let a = params[0]
+                      let b = params[1]
+                      let c = params[2]
+                      let d = params[3]
+                      eval_arith(
+                        @symcore.mul([
+                          stats_exact_rational(1, 3),
+                          eval_arith(
+                            @symcore.add([
+                              @symcore.pow(
+                                eval_arith(
+                                  @symcore.add([
+                                    a,
+                                    b,
+                                    @symcore.mul([@symcore.int(-1), c]),
+                                    @symcore.mul([@symcore.int(-1), d]),
+                                  ]),
+                                ),
+                                @symcore.int(-1),
+                              ),
                             ]),
-                            @symcore.mul([@symcore.int(-1), c, d]),
-                            @symcore.mul([
-                              @symcore.int(-1),
-                              @symcore.pow(d, @symcore.int(2)),
+                          ),
+                          eval_arith(
+                            @symcore.add([
+                              @symcore.pow(a, @symcore.int(2)),
+                              @symcore.mul([a, b]),
+                              @symcore.pow(b, @symcore.int(2)),
+                              @symcore.mul([
+                                @symcore.int(-1),
+                                @symcore.pow(c, @symcore.int(2)),
+                              ]),
+                              @symcore.mul([@symcore.int(-1), c, d]),
+                              @symcore.mul([
+                                @symcore.int(-1),
+                                @symcore.pow(d, @symcore.int(2)),
+                              ]),
                             ]),
-                          ]),
-                        ),
-                      ]),
-                    )
+                          ),
+                        ]),
+                      )
+                    }
+                    _ => symbolic_stat_expr(name, "Mean", params)
                   }
-                  _ => symbolic_stat_expr(name, "Mean", params)
-                }
+              }
+              Some(cont_guard_params(name, params, raw))
             }
-            Some(cont_guard_params(name, params, raw))
           }
         }
+        _ => None
       }
     _ => None
   }
@@ -1762,166 +1780,156 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
       Some(
         eval_arith(@symcore.mul([shape, @symcore.pow(scale, @symcore.int(2))])),
       )
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "C" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        match generated_variance(name, params) {
-          Some(v) => Some(cont_guard_params(name, params, v))
-          None => {
-            let raw = match name {
-              "Arcsin" if params.length() == 0 => stats_exact_rational(1, 8)
-              "Arcsin" if params.length() == 2 =>
-                eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 8),
-                    @symcore.pow(
-                      cont_expr_sub(params[1], params[0]),
-                      @symcore.int(2),
-                    ),
-                  ]),
-                )
-              "Uniform" if params.length() == 2 =>
-                eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 12),
-                    @symcore.pow(
-                      cont_expr_sub(params[1], params[0]),
-                      @symcore.int(2),
-                    ),
-                  ]),
-                )
-              "Beta" if params.length() == 2 => {
-                let a = params[0]
-                let b = params[1]
-                eval_arith(
-                  @symcore.mul([
-                    a,
-                    b,
-                    @symcore.pow(@symcore.add([a, b]), @symcore.int(-2)),
-                    @symcore.pow(
-                      @symcore.add([a, b, @symcore.int(1)]),
-                      @symcore.int(-1),
-                    ),
-                  ]),
-                )
-              }
-              "Kumaraswamy" if params.length() == 2 => {
-                let a = params[0]
-                let b = params[1]
-                let m1 = eval_arith(
-                  @symcore.mul([
-                    b,
-                    @symcore.function("beta", [
-                      eval_arith(
-                        @symcore.add([
-                          @symcore.int(1),
-                          @symcore.pow(a, @symcore.int(-1)),
-                        ]),
-                      ),
-                      b,
-                    ]),
-                  ]),
-                )
-                let m2 = eval_arith(
-                  @symcore.mul([
-                    b,
-                    @symcore.function("beta", [
-                      eval_arith(
-                        @symcore.add([
-                          @symcore.int(1),
-                          eval_arith(
-                            @symcore.mul([
-                              @symcore.int(2),
-                              @symcore.pow(a, @symcore.int(-1)),
-                            ]),
-                          ),
-                        ]),
-                      ),
-                      b,
-                    ]),
-                  ]),
-                )
-                eval_arith(
-                  @symcore.add([
-                    m2,
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Continuous(tag) => {
+          let name = continuous_tag_name(tag)
+          match generated_variance(name, params) {
+            Some(v) => Some(cont_guard_params(name, params, v))
+            None => {
+              let raw = match tag {
+                ContinuousTag::Arcsin if params.length() == 0 =>
+                  stats_exact_rational(1, 8)
+                ContinuousTag::Arcsin if params.length() == 2 =>
+                  eval_arith(
                     @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.pow(m1, @symcore.int(2)),
-                    ]),
-                  ]),
-                )
-              }
-              "Laplace" if params.length() == 2 =>
-                eval_arith(
-                  @symcore.mul([
-                    @symcore.int(2),
-                    @symcore.pow(params[1], @symcore.int(2)),
-                  ]),
-                )
-              "Cauchy" if params.length() == 2 => @symcore.symbol("nan")
-              "Pareto" if params.length() == 2 => {
-                let xm = params[0]
-                let a = params[1]
-                eval_arith(
-                  @symcore.mul([
-                    @symcore.pow(xm, @symcore.int(2)),
-                    a,
-                    @symcore.pow(
-                      @symcore.add([a, @symcore.int(-2)]),
-                      @symcore.int(-1),
-                    ),
-                    @symcore.pow(
-                      @symcore.add([a, @symcore.int(-1)]),
-                      @symcore.int(-2),
-                    ),
-                  ]),
-                )
-              }
-              "BoundedPareto" if params.length() == 3 => {
-                let a = params[0]
-                let l = params[1]
-                let h = params[2]
-                let one_minus = eval_arith(
-                  @symcore.add([
-                    @symcore.int(1),
-                    @symcore.mul([
-                      @symcore.int(-1),
+                      stats_exact_rational(1, 8),
                       @symcore.pow(
-                        eval_arith(
-                          @symcore.mul([l, @symcore.pow(h, @symcore.int(-1))]),
-                        ),
-                        a,
+                        cont_expr_sub(params[1], params[0]),
+                        @symcore.int(2),
                       ),
                     ]),
-                  ]),
-                )
-                let common = eval_arith(
-                  @symcore.mul([
-                    a,
-                    @symcore.pow(l, a),
-                    @symcore.pow(one_minus, @symcore.int(-1)),
-                  ]),
-                )
-                let e1 = eval_arith(
-                  @symcore.mul([
-                    common,
-                    eval_arith(
-                      @symcore.add([
-                        @symcore.pow(
-                          h,
-                          eval_arith(
-                            @symcore.add([
-                              @symcore.int(1),
-                              @symcore.mul([@symcore.int(-1), a]),
-                            ]),
-                          ),
+                  )
+                ContinuousTag::Uniform if params.length() == 2 =>
+                  eval_arith(
+                    @symcore.mul([
+                      stats_exact_rational(1, 12),
+                      @symcore.pow(
+                        cont_expr_sub(params[1], params[0]),
+                        @symcore.int(2),
+                      ),
+                    ]),
+                  )
+                ContinuousTag::Beta if params.length() == 2 => {
+                  let a = params[0]
+                  let b = params[1]
+                  eval_arith(
+                    @symcore.mul([
+                      a,
+                      b,
+                      @symcore.pow(@symcore.add([a, b]), @symcore.int(-2)),
+                      @symcore.pow(
+                        @symcore.add([a, b, @symcore.int(1)]),
+                        @symcore.int(-1),
+                      ),
+                    ]),
+                  )
+                }
+                ContinuousTag::Kumaraswamy if params.length() == 2 => {
+                  let a = params[0]
+                  let b = params[1]
+                  let m1 = eval_arith(
+                    @symcore.mul([
+                      b,
+                      @symcore.function("beta", [
+                        eval_arith(
+                          @symcore.add([
+                            @symcore.int(1),
+                            @symcore.pow(a, @symcore.int(-1)),
+                          ]),
                         ),
-                        @symcore.mul([
-                          @symcore.int(-1),
+                        b,
+                      ]),
+                    ]),
+                  )
+                  let m2 = eval_arith(
+                    @symcore.mul([
+                      b,
+                      @symcore.function("beta", [
+                        eval_arith(
+                          @symcore.add([
+                            @symcore.int(1),
+                            eval_arith(
+                              @symcore.mul([
+                                @symcore.int(2),
+                                @symcore.pow(a, @symcore.int(-1)),
+                              ]),
+                            ),
+                          ]),
+                        ),
+                        b,
+                      ]),
+                    ]),
+                  )
+                  eval_arith(
+                    @symcore.add([
+                      m2,
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(m1, @symcore.int(2)),
+                      ]),
+                    ]),
+                  )
+                }
+                ContinuousTag::Laplace if params.length() == 2 =>
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.int(2),
+                      @symcore.pow(params[1], @symcore.int(2)),
+                    ]),
+                  )
+                ContinuousTag::Cauchy if params.length() == 2 =>
+                  @symcore.symbol("nan")
+                ContinuousTag::Pareto if params.length() == 2 => {
+                  let xm = params[0]
+                  let a = params[1]
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.pow(xm, @symcore.int(2)),
+                      a,
+                      @symcore.pow(
+                        @symcore.add([a, @symcore.int(-2)]),
+                        @symcore.int(-1),
+                      ),
+                      @symcore.pow(
+                        @symcore.add([a, @symcore.int(-1)]),
+                        @symcore.int(-2),
+                      ),
+                    ]),
+                  )
+                }
+                ContinuousTag::BoundedPareto if params.length() == 3 => {
+                  let a = params[0]
+                  let l = params[1]
+                  let h = params[2]
+                  let one_minus = eval_arith(
+                    @symcore.add([
+                      @symcore.int(1),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(
+                          eval_arith(
+                            @symcore.mul([l, @symcore.pow(h, @symcore.int(-1))]),
+                          ),
+                          a,
+                        ),
+                      ]),
+                    ]),
+                  )
+                  let common = eval_arith(
+                    @symcore.mul([
+                      a,
+                      @symcore.pow(l, a),
+                      @symcore.pow(one_minus, @symcore.int(-1)),
+                    ]),
+                  )
+                  let e1 = eval_arith(
+                    @symcore.mul([
+                      common,
+                      eval_arith(
+                        @symcore.add([
                           @symcore.pow(
-                            l,
+                            h,
                             eval_arith(
                               @symcore.add([
                                 @symcore.int(1),
@@ -1929,38 +1937,38 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                               ]),
                             ),
                           ),
-                        ]),
-                      ]),
-                    ),
-                    @symcore.pow(
-                      eval_arith(
-                        @symcore.add([
-                          @symcore.int(1),
-                          @symcore.mul([@symcore.int(-1), a]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(
+                              l,
+                              eval_arith(
+                                @symcore.add([
+                                  @symcore.int(1),
+                                  @symcore.mul([@symcore.int(-1), a]),
+                                ]),
+                              ),
+                            ),
+                          ]),
                         ]),
                       ),
-                      @symcore.int(-1),
-                    ),
-                  ]),
-                )
-                let e2 = eval_arith(
-                  @symcore.mul([
-                    common,
-                    eval_arith(
-                      @symcore.add([
-                        @symcore.pow(
-                          h,
-                          eval_arith(
-                            @symcore.add([
-                              @symcore.int(2),
-                              @symcore.mul([@symcore.int(-1), a]),
-                            ]),
-                          ),
+                      @symcore.pow(
+                        eval_arith(
+                          @symcore.add([
+                            @symcore.int(1),
+                            @symcore.mul([@symcore.int(-1), a]),
+                          ]),
                         ),
-                        @symcore.mul([
-                          @symcore.int(-1),
+                        @symcore.int(-1),
+                      ),
+                    ]),
+                  )
+                  let e2 = eval_arith(
+                    @symcore.mul([
+                      common,
+                      eval_arith(
+                        @symcore.add([
                           @symcore.pow(
-                            l,
+                            h,
                             eval_arith(
                               @symcore.add([
                                 @symcore.int(2),
@@ -1968,224 +1976,238 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                               ]),
                             ),
                           ),
-                        ]),
-                      ]),
-                    ),
-                    @symcore.pow(
-                      eval_arith(
-                        @symcore.add([
-                          @symcore.int(2),
-                          @symcore.mul([@symcore.int(-1), a]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(
+                              l,
+                              eval_arith(
+                                @symcore.add([
+                                  @symcore.int(2),
+                                  @symcore.mul([@symcore.int(-1), a]),
+                                ]),
+                              ),
+                            ),
+                          ]),
                         ]),
                       ),
-                      @symcore.int(-1),
-                    ),
-                  ]),
-                )
-                eval_arith(
-                  @symcore.add([
-                    e2,
-                    @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.pow(e1, @symcore.int(2)),
-                    ]),
-                  ]),
-                )
-              }
-              "Rayleigh" if params.length() == 1 =>
-                eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    @symcore.add([
-                      @symcore.int(4),
-                      @symcore.mul([@symcore.int(-1), @symcore.symbol("pi")]),
-                    ]),
-                    @symcore.pow(params[0], @symcore.int(2)),
-                  ]),
-                )
-              "LogNormal" if params.length() == 2 => {
-                let mu = params[0]
-                let sigma = params[1]
-                eval_arith(
-                  @symcore.mul([
-                    eval_arith(
-                      @symcore.add([
-                        @symcore.function("exp", [
-                          @symcore.pow(sigma, @symcore.int(2)),
-                        ]),
+                      @symcore.pow(
+                        eval_arith(
+                          @symcore.add([
+                            @symcore.int(2),
+                            @symcore.mul([@symcore.int(-1), a]),
+                          ]),
+                        ),
                         @symcore.int(-1),
-                      ]),
-                    ),
-                    @symcore.function("exp", [
-                      eval_arith(
-                        @symcore.add([
-                          @symcore.mul([@symcore.int(2), mu]),
-                          @symcore.pow(sigma, @symcore.int(2)),
-                        ]),
                       ),
                     ]),
-                  ]),
-                )
-              }
-              "Weibull" if params.length() == 2 => {
-                let lam = params[0]
-                let k = params[1]
-                let g1 = @symcore.function("gamma", [
+                  )
                   eval_arith(
                     @symcore.add([
-                      @symcore.int(1),
-                      @symcore.pow(k, @symcore.int(-1)),
-                    ]),
-                  ),
-                ])
-                let g2 = @symcore.function("gamma", [
-                  eval_arith(
-                    @symcore.add([
-                      @symcore.int(1),
-                      eval_arith(
-                        @symcore.mul([
-                          @symcore.int(2),
-                          @symcore.pow(k, @symcore.int(-1)),
-                        ]),
-                      ),
-                    ]),
-                  ),
-                ])
-                eval_arith(
-                  @symcore.mul([
-                    @symcore.pow(lam, @symcore.int(2)),
-                    eval_arith(
-                      @symcore.add([
-                        g2,
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          @symcore.pow(g1, @symcore.int(2)),
-                        ]),
+                      e2,
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(e1, @symcore.int(2)),
                       ]),
-                    ),
-                  ]),
-                )
-              }
-              "StudentT" if params.length() == 1 =>
-                eval_arith(
-                  @symcore.mul([
-                    params[0],
-                    @symcore.pow(
-                      @symcore.add([params[0], @symcore.int(-2)]),
-                      @symcore.int(-1),
-                    ),
-                  ]),
-                )
-              "PowerFunction" if params.length() == 3 =>
-                eval_arith(
-                  @symcore.mul([
-                    params[0],
-                    @symcore.pow(
-                      eval_arith(
-                        @symcore.add([
-                          params[2],
-                          @symcore.mul([@symcore.int(-1), params[1]]),
-                        ]),
-                      ),
-                      @symcore.int(2),
-                    ),
-                    @symcore.pow(
-                      eval_arith(@symcore.add([params[0], @symcore.int(2)])),
-                      @symcore.int(-1),
-                    ),
-                    @symcore.pow(
-                      eval_arith(@symcore.add([params[0], @symcore.int(1)])),
-                      @symcore.int(-2),
-                    ),
-                  ]),
-                )
-              "Trapezoidal" if params.length() == 4 => {
-                let a = params[0]
-                let b = params[1]
-                let c = params[2]
-                let d = params[3]
-                let abcd = eval_arith(
-                  @symcore.add([
-                    a,
-                    b,
-                    @symcore.mul([@symcore.int(-1), c]),
-                    @symcore.mul([@symcore.int(-1), d]),
-                  ]),
-                )
-                let m_num = eval_arith(
-                  @symcore.add([
-                    @symcore.pow(a, @symcore.int(2)),
-                    @symcore.mul([a, b]),
-                    @symcore.pow(b, @symcore.int(2)),
-                    @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.pow(c, @symcore.int(2)),
                     ]),
-                    @symcore.mul([@symcore.int(-1), c, d]),
-                    @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.pow(d, @symcore.int(2)),
-                    ]),
-                  ]),
-                )
-                let e1 = eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 3),
-                    @symcore.pow(abcd, @symcore.int(-1)),
-                    m_num,
-                  ]),
-                )
-                let e2 = eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 6),
-                    @symcore.pow(abcd, @symcore.int(-1)),
-                    eval_arith(
-                      @symcore.add([
-                        @symcore.pow(a, @symcore.int(3)),
-                        @symcore.mul([@symcore.pow(a, @symcore.int(2)), b]),
-                        @symcore.mul([a, @symcore.pow(b, @symcore.int(2))]),
-                        @symcore.pow(b, @symcore.int(3)),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          @symcore.pow(c, @symcore.int(3)),
-                        ]),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          @symcore.pow(c, @symcore.int(2)),
-                          d,
-                        ]),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          c,
-                          @symcore.pow(d, @symcore.int(2)),
-                        ]),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          @symcore.pow(d, @symcore.int(3)),
-                        ]),
-                      ]),
-                    ),
-                  ]),
-                )
-                eval_arith(
-                  @symcore.add([
-                    e2,
-                    @symcore.mul([
-                      @symcore.int(-1),
-                      @symcore.pow(e1, @symcore.int(2)),
-                    ]),
-                  ]),
-                )
-              }
-              _ =>
-                match symbolic_continuous_variance_via_integral(name, params) {
-                  Some(v) => v
-                  None => symbolic_stat_expr(name, "Variance", params)
+                  )
                 }
+                ContinuousTag::Rayleigh if params.length() == 1 =>
+                  eval_arith(
+                    @symcore.mul([
+                      stats_exact_rational(1, 2),
+                      @symcore.add([
+                        @symcore.int(4),
+                        @symcore.mul([@symcore.int(-1), @symcore.symbol("pi")]),
+                      ]),
+                      @symcore.pow(params[0], @symcore.int(2)),
+                    ]),
+                  )
+                ContinuousTag::LogNormal if params.length() == 2 => {
+                  let mu = params[0]
+                  let sigma = params[1]
+                  eval_arith(
+                    @symcore.mul([
+                      eval_arith(
+                        @symcore.add([
+                          @symcore.function("exp", [
+                            @symcore.pow(sigma, @symcore.int(2)),
+                          ]),
+                          @symcore.int(-1),
+                        ]),
+                      ),
+                      @symcore.function("exp", [
+                        eval_arith(
+                          @symcore.add([
+                            @symcore.mul([@symcore.int(2), mu]),
+                            @symcore.pow(sigma, @symcore.int(2)),
+                          ]),
+                        ),
+                      ]),
+                    ]),
+                  )
+                }
+                ContinuousTag::Weibull if params.length() == 2 => {
+                  let lam = params[0]
+                  let k = params[1]
+                  let g1 = @symcore.function("gamma", [
+                    eval_arith(
+                      @symcore.add([
+                        @symcore.int(1),
+                        @symcore.pow(k, @symcore.int(-1)),
+                      ]),
+                    ),
+                  ])
+                  let g2 = @symcore.function("gamma", [
+                    eval_arith(
+                      @symcore.add([
+                        @symcore.int(1),
+                        eval_arith(
+                          @symcore.mul([
+                            @symcore.int(2),
+                            @symcore.pow(k, @symcore.int(-1)),
+                          ]),
+                        ),
+                      ]),
+                    ),
+                  ])
+                  eval_arith(
+                    @symcore.mul([
+                      @symcore.pow(lam, @symcore.int(2)),
+                      eval_arith(
+                        @symcore.add([
+                          g2,
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(g1, @symcore.int(2)),
+                          ]),
+                        ]),
+                      ),
+                    ]),
+                  )
+                }
+                ContinuousTag::StudentT if params.length() == 1 =>
+                  eval_arith(
+                    @symcore.mul([
+                      params[0],
+                      @symcore.pow(
+                        @symcore.add([params[0], @symcore.int(-2)]),
+                        @symcore.int(-1),
+                      ),
+                    ]),
+                  )
+                ContinuousTag::PowerFunction if params.length() == 3 =>
+                  eval_arith(
+                    @symcore.mul([
+                      params[0],
+                      @symcore.pow(
+                        eval_arith(
+                          @symcore.add([
+                            params[2],
+                            @symcore.mul([@symcore.int(-1), params[1]]),
+                          ]),
+                        ),
+                        @symcore.int(2),
+                      ),
+                      @symcore.pow(
+                        eval_arith(@symcore.add([params[0], @symcore.int(2)])),
+                        @symcore.int(-1),
+                      ),
+                      @symcore.pow(
+                        eval_arith(@symcore.add([params[0], @symcore.int(1)])),
+                        @symcore.int(-2),
+                      ),
+                    ]),
+                  )
+                ContinuousTag::Trapezoidal if params.length() == 4 => {
+                  let a = params[0]
+                  let b = params[1]
+                  let c = params[2]
+                  let d = params[3]
+                  let abcd = eval_arith(
+                    @symcore.add([
+                      a,
+                      b,
+                      @symcore.mul([@symcore.int(-1), c]),
+                      @symcore.mul([@symcore.int(-1), d]),
+                    ]),
+                  )
+                  let m_num = eval_arith(
+                    @symcore.add([
+                      @symcore.pow(a, @symcore.int(2)),
+                      @symcore.mul([a, b]),
+                      @symcore.pow(b, @symcore.int(2)),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(c, @symcore.int(2)),
+                      ]),
+                      @symcore.mul([@symcore.int(-1), c, d]),
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(d, @symcore.int(2)),
+                      ]),
+                    ]),
+                  )
+                  let e1 = eval_arith(
+                    @symcore.mul([
+                      stats_exact_rational(1, 3),
+                      @symcore.pow(abcd, @symcore.int(-1)),
+                      m_num,
+                    ]),
+                  )
+                  let e2 = eval_arith(
+                    @symcore.mul([
+                      stats_exact_rational(1, 6),
+                      @symcore.pow(abcd, @symcore.int(-1)),
+                      eval_arith(
+                        @symcore.add([
+                          @symcore.pow(a, @symcore.int(3)),
+                          @symcore.mul([@symcore.pow(a, @symcore.int(2)), b]),
+                          @symcore.mul([a, @symcore.pow(b, @symcore.int(2))]),
+                          @symcore.pow(b, @symcore.int(3)),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(c, @symcore.int(3)),
+                          ]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(c, @symcore.int(2)),
+                            d,
+                          ]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            c,
+                            @symcore.pow(d, @symcore.int(2)),
+                          ]),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            @symcore.pow(d, @symcore.int(3)),
+                          ]),
+                        ]),
+                      ),
+                    ]),
+                  )
+                  eval_arith(
+                    @symcore.add([
+                      e2,
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        @symcore.pow(e1, @symcore.int(2)),
+                      ]),
+                    ]),
+                  )
+                }
+                _ =>
+                  match
+                    symbolic_continuous_variance_via_integral(name, params) {
+                    Some(v) => v
+                    None => symbolic_stat_expr(name, "Variance", params)
+                  }
+              }
+              Some(cont_guard_params(name, params, raw))
             }
-            Some(cont_guard_params(name, params, raw))
           }
         }
+        _ => None
       }
     _ => None
   }

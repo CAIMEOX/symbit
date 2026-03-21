@@ -177,6 +177,7 @@ pub impl Show for FreeGroup with to_string(self) -> String {
   }
 }
 
+///|
 pub impl Show for FreeGroup with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
@@ -386,6 +387,7 @@ pub impl Show for FreeGroupElement with to_string(self) -> String {
   s
 }
 
+///|
 pub impl Show for FreeGroupElement with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

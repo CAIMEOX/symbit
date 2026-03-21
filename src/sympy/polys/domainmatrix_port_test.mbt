@@ -58,9 +58,7 @@ fn dm_dom_eigenvects_text(
 ) -> String raise PolyError {
   let parts : Array[String] = Array::new()
   for item in values.0 {
-    parts.push(
-      "r:\{item.1.to_string()}:\{item.2}:\{item.3.to_matrix_string()}",
-    )
+    parts.push("r:\{item.1.to_string()}:\{item.2}:\{item.3.to_matrix_string()}")
   }
   for item in values.1 {
     parts.push(

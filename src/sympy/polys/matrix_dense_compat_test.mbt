@@ -107,10 +107,7 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
     Domain::ZZ,
   )
   let (bareiss, det) = @sympolys.ddm_idet(det_source)
-  assert_eq(
-    det.to_string(),
-    det_source.det().to_string(),
-  )
+  assert_eq(det.to_string(), det_source.det().to_string())
   let oracle_det = domainmatrix_det([[1, 2, 3], [4, 5, 6], [7, 8, 9]], "ZZ")
   assert_eq(det.to_string(), oracle_det)
   let bareiss_diag_text = bareiss.diagonal().map(fe_to_string).join(", ")

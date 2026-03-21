@@ -554,10 +554,7 @@ pub impl Show for IntegerPartition with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for IntegerPartition with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for IntegerPartition with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

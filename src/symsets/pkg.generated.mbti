@@ -70,6 +70,7 @@ pub(all) enum Set {
 pub impl Compare for Set
 pub impl Eq for Set
 pub impl Hash for Set
+pub impl Show for Set
 
 pub enum SetBool {
   True
@@ -77,6 +78,7 @@ pub enum SetBool {
   Unknown
 }
 pub impl Eq for SetBool
+pub impl Show for SetBool
 
 // Type aliases
 

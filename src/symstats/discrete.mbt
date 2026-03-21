@@ -278,8 +278,8 @@ fn symbolic_discrete_cdf_by_pmf_sum(
       if ki < 0 {
         return Some(@symcore.int(0))
       }
-      let upper = match name {
-        "BetaBinomial" if params.length() == 3 =>
+      let upper = match discrete_tag_from_name(name) {
+        DiscreteTag::BetaBinomial if params.length() == 3 =>
           match expr_as_int(params[0]) {
             Some(n) => if ki > n { n } else { ki }
             None => ki
@@ -309,8 +309,8 @@ fn symbolic_discrete_pmf_for(
   params : Array[@symcore.Expr],
   k : @symcore.Expr,
 ) -> @symcore.Expr? {
-  let tag = "D:\{name}"
-  let rv = random_var("_X", RVKind::Symbolic(tag~, params~))
+  let kind = symbolic_kind_from_name(name)
+  let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
   discrete_pmf(rv, k)
 }
 
@@ -367,8 +367,8 @@ fn symbolic_discrete_cdf_formula(
 ) -> @symcore.Expr? {
   let kk = @symcore.symbol("_k")
   let fk = @symcore.function("floor", [k])
-  match name {
-    "BetaBinomial" if params.length() == 3 =>
+  match discrete_tag_from_name(name) {
+    DiscreteTag::BetaBinomial if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
@@ -395,7 +395,7 @@ fn symbolic_discrete_cdf_formula(
         }
         None => None
       }
-    "Hypergeometric" if params.length() == 3 =>
+    DiscreteTag::Hypergeometric if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let pop = params[0]
@@ -429,7 +429,7 @@ fn symbolic_discrete_cdf_formula(
         }
         None => None
       }
-    "IdealSoliton" if params.length() == 1 =>
+    DiscreteTag::IdealSoliton if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
@@ -456,7 +456,7 @@ fn symbolic_discrete_cdf_formula(
         }
         None => None
       }
-    "RobustSoliton" if params.length() == 3 =>
+    DiscreteTag::RobustSoliton if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
           let n = params[0]
@@ -483,7 +483,7 @@ fn symbolic_discrete_cdf_formula(
         }
         None => None
       }
-    "Hermite" if params.length() == 2 =>
+    DiscreteTag::Hermite if params.length() == 2 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -503,7 +503,7 @@ fn symbolic_discrete_cdf_formula(
           )
         None => None
       }
-    "Logarithmic" if params.length() == 1 =>
+    DiscreteTag::Logarithmic if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -523,7 +523,7 @@ fn symbolic_discrete_cdf_formula(
           )
         None => None
       }
-    "Skellam" if params.length() == 2 =>
+    DiscreteTag::Skellam if params.length() == 2 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -540,7 +540,7 @@ fn symbolic_discrete_cdf_formula(
           )
         None => None
       }
-    "Zeta" if params.length() == 1 =>
+    DiscreteTag::Zeta if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -560,9 +560,9 @@ fn symbolic_discrete_cdf_formula(
           )
         None => None
       }
-    "Multinomial" if params.length() >= 2 =>
+    DiscreteTag::Multinomial if params.length() >= 2 =>
       symbolic_discrete_joint_box_cdf(name, params, k)
-    "NegativeMultinomial" if params.length() >= 2 =>
+    DiscreteTag::NegativeMultinomial if params.length() >= 2 =>
       symbolic_discrete_joint_box_cdf(name, params, k)
     _ => None
   }
@@ -577,79 +577,119 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
     RVKind::Geometric(p~) => Some(geometric_pmf_expr(p, k))
     RVKind::NegativeBinomial(r~, p~) =>
       Some(negative_binomial_pmf_expr(r, p, k))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "D" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        if name == "DiscreteRV" ||
-          name == "DiscreteDistributionHandmade" ||
-          name == "FiniteDistributionHandmade" {
-          return None
-        }
-        if name == "Hermite" && params.length() == 2 {
-          let a1 = params[0]
-          let a2 = params[1]
-          let jj = @symcore.symbol("_j")
-          let summand = eval_arith(
-            @symcore.mul([
-              @symcore.pow(
-                a1,
-                eval_arith(
-                  discrete_expr_sub(
-                    k,
-                    eval_arith(@symcore.mul([@symcore.int(2), jj])),
-                  ),
-                ),
-              ),
-              @symcore.pow(a2, jj),
-              @symcore.pow(
-                @symcore.function("factorial", [
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Discrete(
+          DiscreteTag::DiscreteRV
+          | DiscreteTag::DiscreteDistributionHandmade
+          | DiscreteTag::FiniteDistributionHandmade
+        ) => None
+        SymbolicKind::Discrete(tag) => {
+          let name = discrete_tag_name(tag)
+          if tag == DiscreteTag::Hermite && params.length() == 2 {
+            let a1 = params[0]
+            let a2 = params[1]
+            let jj = @symcore.symbol("_j")
+            let summand = eval_arith(
+              @symcore.mul([
+                @symcore.pow(
+                  a1,
                   eval_arith(
                     discrete_expr_sub(
                       k,
                       eval_arith(@symcore.mul([@symcore.int(2), jj])),
                     ),
                   ),
-                ]),
-                @symcore.int(-1),
-              ),
-              @symcore.pow(
-                @symcore.function("factorial", [jj]),
-                @symcore.int(-1),
-              ),
-            ]),
-          )
-          let sum_expr = @symcore.function("Sum", [
-            summand,
-            discrete_tuple_expr([
-              jj,
-              @symcore.int(0),
-              @symcore.function("floor", [
-                eval_arith(@symcore.mul([stats_exact_rational(1, 2), k])),
+                ),
+                @symcore.pow(a2, jj),
+                @symcore.pow(
+                  @symcore.function("factorial", [
+                    eval_arith(
+                      discrete_expr_sub(
+                        k,
+                        eval_arith(@symcore.mul([@symcore.int(2), jj])),
+                      ),
+                    ),
+                  ]),
+                  @symcore.int(-1),
+                ),
+                @symcore.pow(
+                  @symcore.function("factorial", [jj]),
+                  @symcore.int(-1),
+                ),
               ]),
-            ]),
-          ])
-          return Some(
-            eval_arith(
-              @symcore.mul([
-                @symcore.function("exp", [
+            )
+            let sum_expr = @symcore.function("Sum", [
+              summand,
+              discrete_tuple_expr([
+                jj,
+                @symcore.int(0),
+                @symcore.function("floor", [
+                  eval_arith(@symcore.mul([stats_exact_rational(1, 2), k])),
+                ]),
+              ]),
+            ])
+            return Some(
+              eval_arith(
+                @symcore.mul([
+                  @symcore.function("exp", [
+                    eval_arith(
+                      @symcore.mul([
+                        @symcore.int(-1),
+                        eval_arith(@symcore.add([a1, a2])),
+                      ]),
+                    ),
+                  ]),
+                  sum_expr,
+                ]),
+              ),
+            )
+          }
+          if tag == DiscreteTag::IdealSoliton && params.length() == 1 {
+            let kk = params[0]
+            return Some(
+              @symcore.function("Piecewise", [
+                discrete_tuple_expr([
+                  eval_arith(@symcore.pow(kk, @symcore.int(-1))),
+                  @symcore.function("Eq", [k, @symcore.int(1)]),
+                ]),
+                discrete_tuple_expr([
                   eval_arith(
-                    @symcore.mul([
+                    @symcore.pow(
+                      eval_arith(
+                        @symcore.mul([
+                          k,
+                          eval_arith(discrete_expr_sub(k, @symcore.int(1))),
+                        ]),
+                      ),
                       @symcore.int(-1),
-                      eval_arith(@symcore.add([a1, a2])),
-                    ]),
+                    ),
+                  ),
+                  @symcore.function("And", [
+                    @symcore.function("Ge", [k, @symcore.int(1)]),
+                    @symcore.function("Le", [k, kk]),
+                  ]),
+                ]),
+                discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+              ]),
+            )
+          }
+          if tag == DiscreteTag::RobustSoliton && params.length() == 3 {
+            let kk = params[0]
+            let delta = params[1]
+            let c = params[2]
+            let r = eval_arith(
+              @symcore.mul([
+                c,
+                @symcore.function("log", [
+                  eval_arith(
+                    @symcore.mul([kk, @symcore.pow(delta, @symcore.int(-1))]),
                   ),
                 ]),
-                sum_expr,
+                @symcore.function("sqrt", [kk]),
               ]),
-            ),
-          )
-        }
-        if name == "IdealSoliton" && params.length() == 1 {
-          let kk = params[0]
-          return Some(
-            @symcore.function("Piecewise", [
+            )
+            let rho = @symcore.function("Piecewise", [
               discrete_tuple_expr([
                 eval_arith(@symcore.pow(kk, @symcore.int(-1))),
                 @symcore.function("Eq", [k, @symcore.int(1)]),
@@ -672,248 +712,215 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                 ]),
               ]),
               discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
-            ]),
-          )
-        }
-        if name == "RobustSoliton" && params.length() == 3 {
-          let kk = params[0]
-          let delta = params[1]
-          let c = params[2]
-          let r = eval_arith(
-            @symcore.mul([
-              c,
-              @symcore.function("log", [
+            ])
+            let tau = @symcore.function("Piecewise", [
+              discrete_tuple_expr([
                 eval_arith(
-                  @symcore.mul([kk, @symcore.pow(delta, @symcore.int(-1))]),
-                ),
-              ]),
-              @symcore.function("sqrt", [kk]),
-            ]),
-          )
-          let rho = @symcore.function("Piecewise", [
-            discrete_tuple_expr([
-              eval_arith(@symcore.pow(kk, @symcore.int(-1))),
-              @symcore.function("Eq", [k, @symcore.int(1)]),
-            ]),
-            discrete_tuple_expr([
-              eval_arith(
-                @symcore.pow(
-                  eval_arith(
-                    @symcore.mul([
-                      k,
-                      eval_arith(discrete_expr_sub(k, @symcore.int(1))),
-                    ]),
-                  ),
-                  @symcore.int(-1),
-                ),
-              ),
-              @symcore.function("And", [
-                @symcore.function("Ge", [k, @symcore.int(1)]),
-                @symcore.function("Le", [k, kk]),
-              ]),
-            ]),
-            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
-          ])
-          let tau = @symcore.function("Piecewise", [
-            discrete_tuple_expr([
-              eval_arith(
-                @symcore.mul([
-                  r,
-                  @symcore.pow(
-                    eval_arith(@symcore.mul([kk, k])),
-                    @symcore.int(-1),
-                  ),
-                ]),
-              ),
-              @symcore.function("And", [
-                @symcore.function("Ge", [k, @symcore.int(1)]),
-                @symcore.function("Le", [
-                  k,
-                  eval_arith(
-                    discrete_expr_sub(
-                      @symcore.function("round", [
-                        eval_arith(
-                          @symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]),
-                        ),
-                      ]),
-                      @symcore.int(1),
-                    ),
-                  ),
-                ]),
-              ]),
-            ]),
-            discrete_tuple_expr([
-              eval_arith(
-                @symcore.mul([
-                  r,
-                  @symcore.function("log", [
-                    eval_arith(
-                      @symcore.mul([r, @symcore.pow(delta, @symcore.int(-1))]),
+                  @symcore.mul([
+                    r,
+                    @symcore.pow(
+                      eval_arith(@symcore.mul([kk, k])),
+                      @symcore.int(-1),
                     ),
                   ]),
-                  @symcore.pow(kk, @symcore.int(-1)),
-                ]),
-              ),
-              @symcore.function("Eq", [
-                k,
-                @symcore.function("round", [
-                  eval_arith(
-                    @symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]),
-                  ),
+                ),
+                @symcore.function("And", [
+                  @symcore.function("Ge", [k, @symcore.int(1)]),
+                  @symcore.function("Le", [
+                    k,
+                    eval_arith(
+                      discrete_expr_sub(
+                        @symcore.function("round", [
+                          eval_arith(
+                            @symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]),
+                          ),
+                        ]),
+                        @symcore.int(1),
+                      ),
+                    ),
+                  ]),
                 ]),
               ]),
-            ]),
-            discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
-          ])
-          let ii = @symcore.symbol("_i")
-          let harmonic = @symcore.function("Sum", [
-            @symcore.pow(ii, @symcore.int(-1)),
-            discrete_tuple_expr([
-              ii,
-              @symcore.int(1),
-              eval_arith(
-                discrete_expr_sub(
+              discrete_tuple_expr([
+                eval_arith(
+                  @symcore.mul([
+                    r,
+                    @symcore.function("log", [
+                      eval_arith(
+                        @symcore.mul([r, @symcore.pow(delta, @symcore.int(-1))]),
+                      ),
+                    ]),
+                    @symcore.pow(kk, @symcore.int(-1)),
+                  ]),
+                ),
+                @symcore.function("Eq", [
+                  k,
                   @symcore.function("round", [
                     eval_arith(
                       @symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]),
                     ),
                   ]),
-                  @symcore.int(1),
-                ),
-              ),
-            ]),
-          ])
-          let z = eval_arith(
-            @symcore.add([
-              @symcore.int(1),
-              eval_arith(
-                @symcore.mul([
-                  r,
-                  @symcore.pow(kk, @symcore.int(-1)),
-                  eval_arith(
-                    @symcore.add([
-                      harmonic,
-                      @symcore.function("log", [
-                        eval_arith(
-                          @symcore.mul([
-                            r,
-                            @symcore.pow(delta, @symcore.int(-1)),
-                          ]),
-                        ),
-                      ]),
-                    ]),
-                  ),
                 ]),
-              ),
-            ]),
-          )
-          return Some(
-            eval_arith(
-              @symcore.mul([
-                eval_arith(@symcore.add([rho, tau])),
-                @symcore.pow(z, @symcore.int(-1)),
               ]),
-            ),
-          )
-        }
-        if name == "Multinomial" && params.length() >= 2 {
-          match discrete_tuple_items(k) {
-            Some(ks) if ks.length() == params.length() - 1 => {
-              let n = params[0]
-              let body_terms : Array[@symcore.Expr] = [
-                @symcore.function("factorial", [n]),
-              ]
-              let sum_terms : Array[@symcore.Expr] = Array::new()
-              for i in 0..<ks.length() {
-                let ki = ks[i]
-                sum_terms.push(ki)
-                body_terms.push(
-                  @symcore.pow(
-                    @symcore.function("factorial", [ki]),
-                    @symcore.int(-1),
-                  ),
-                )
-                body_terms.push(@symcore.pow(params[i + 1], ki))
-              }
-              let sum_k = if sum_terms.is_empty() {
-                @symcore.int(0)
-              } else {
-                eval_arith(@symcore.add(sum_terms))
-              }
-              let body = eval_arith(@symcore.mul(body_terms))
-              return Some(
-                @symcore.function("Piecewise", [
-                  discrete_tuple_expr([
-                    body,
-                    @symcore.function("Eq", [sum_k, n]),
-                  ]),
-                  discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
-                ]),
-              )
-            }
-            _ => ()
-          }
-        }
-        if name == "NegativeMultinomial" && params.length() >= 2 {
-          match discrete_tuple_items(k) {
-            Some(ks) if ks.length() == params.length() - 1 => {
-              let k0 = params[0]
-              let sum_k = if ks.is_empty() {
-                @symcore.int(0)
-              } else {
-                eval_arith(@symcore.add(ks))
-              }
-              let ps : Array[@symcore.Expr] = Array::new()
-              for i in 1..<params.length() {
-                ps.push(params[i])
-              }
-              let q = eval_arith(
-                @symcore.add([
-                  @symcore.int(1),
-                  @symcore.mul([@symcore.int(-1), eval_arith(@symcore.add(ps))]),
-                ]),
-              )
-              let term_1 = eval_arith(
-                @symcore.mul([
-                  @symcore.function("gamma", [
-                    eval_arith(@symcore.add([k0, sum_k])),
-                  ]),
-                  @symcore.pow(
-                    @symcore.function("gamma", [k0]),
-                    @symcore.int(-1),
-                  ),
-                  @symcore.pow(q, k0),
-                ]),
-              )
-              let term_2_factors : Array[@symcore.Expr] = Array::new()
-              for i in 0..<ks.length() {
-                let ki = ks[i]
-                term_2_factors.push(
-                  eval_arith(
-                    @symcore.mul([
-                      @symcore.pow(params[i + 1], ki),
-                      @symcore.pow(
-                        @symcore.function("factorial", [ki]),
-                        @symcore.int(-1),
+              discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+            ])
+            let ii = @symcore.symbol("_i")
+            let harmonic = @symcore.function("Sum", [
+              @symcore.pow(ii, @symcore.int(-1)),
+              discrete_tuple_expr([
+                ii,
+                @symcore.int(1),
+                eval_arith(
+                  discrete_expr_sub(
+                    @symcore.function("round", [
+                      eval_arith(
+                        @symcore.mul([kk, @symcore.pow(r, @symcore.int(-1))]),
                       ),
                     ]),
+                    @symcore.int(1),
                   ),
+                ),
+              ]),
+            ])
+            let z = eval_arith(
+              @symcore.add([
+                @symcore.int(1),
+                eval_arith(
+                  @symcore.mul([
+                    r,
+                    @symcore.pow(kk, @symcore.int(-1)),
+                    eval_arith(
+                      @symcore.add([
+                        harmonic,
+                        @symcore.function("log", [
+                          eval_arith(
+                            @symcore.mul([
+                              r,
+                              @symcore.pow(delta, @symcore.int(-1)),
+                            ]),
+                          ),
+                        ]),
+                      ]),
+                    ),
+                  ]),
+                ),
+              ]),
+            )
+            return Some(
+              eval_arith(
+                @symcore.mul([
+                  eval_arith(@symcore.add([rho, tau])),
+                  @symcore.pow(z, @symcore.int(-1)),
+                ]),
+              ),
+            )
+          }
+          if tag == DiscreteTag::Multinomial && params.length() >= 2 {
+            match discrete_tuple_items(k) {
+              Some(ks) if ks.length() == params.length() - 1 => {
+                let n = params[0]
+                let body_terms : Array[@symcore.Expr] = [
+                  @symcore.function("factorial", [n]),
+                ]
+                let sum_terms : Array[@symcore.Expr] = Array::new()
+                for i in 0..<ks.length() {
+                  let ki = ks[i]
+                  sum_terms.push(ki)
+                  body_terms.push(
+                    @symcore.pow(
+                      @symcore.function("factorial", [ki]),
+                      @symcore.int(-1),
+                    ),
+                  )
+                  body_terms.push(@symcore.pow(params[i + 1], ki))
+                }
+                let sum_k = if sum_terms.is_empty() {
+                  @symcore.int(0)
+                } else {
+                  eval_arith(@symcore.add(sum_terms))
+                }
+                let body = eval_arith(@symcore.mul(body_terms))
+                return Some(
+                  @symcore.function("Piecewise", [
+                    discrete_tuple_expr([
+                      body,
+                      @symcore.function("Eq", [sum_k, n]),
+                    ]),
+                    discrete_tuple_expr([
+                      @symcore.int(0),
+                      @symcore.symbol("True"),
+                    ]),
+                  ]),
                 )
               }
-              let term_2 = if term_2_factors.is_empty() {
-                @symcore.int(1)
-              } else {
-                eval_arith(@symcore.mul(term_2_factors))
-              }
-              return Some(eval_arith(@symcore.mul([term_1, term_2])))
+              _ => ()
             }
-            _ => ()
+          }
+          if tag == DiscreteTag::NegativeMultinomial && params.length() >= 2 {
+            match discrete_tuple_items(k) {
+              Some(ks) if ks.length() == params.length() - 1 => {
+                let k0 = params[0]
+                let sum_k = if ks.is_empty() {
+                  @symcore.int(0)
+                } else {
+                  eval_arith(@symcore.add(ks))
+                }
+                let ps : Array[@symcore.Expr] = Array::new()
+                for i in 1..<params.length() {
+                  ps.push(params[i])
+                }
+                let q = eval_arith(
+                  @symcore.add([
+                    @symcore.int(1),
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      eval_arith(@symcore.add(ps)),
+                    ]),
+                  ]),
+                )
+                let term_1 = eval_arith(
+                  @symcore.mul([
+                    @symcore.function("gamma", [
+                      eval_arith(@symcore.add([k0, sum_k])),
+                    ]),
+                    @symcore.pow(
+                      @symcore.function("gamma", [k0]),
+                      @symcore.int(-1),
+                    ),
+                    @symcore.pow(q, k0),
+                  ]),
+                )
+                let term_2_factors : Array[@symcore.Expr] = Array::new()
+                for i in 0..<ks.length() {
+                  let ki = ks[i]
+                  term_2_factors.push(
+                    eval_arith(
+                      @symcore.mul([
+                        @symcore.pow(params[i + 1], ki),
+                        @symcore.pow(
+                          @symcore.function("factorial", [ki]),
+                          @symcore.int(-1),
+                        ),
+                      ]),
+                    ),
+                  )
+                }
+                let term_2 = if term_2_factors.is_empty() {
+                  @symcore.int(1)
+                } else {
+                  eval_arith(@symcore.mul(term_2_factors))
+                }
+                return Some(eval_arith(@symcore.mul([term_1, term_2])))
+              }
+              _ => ()
+            }
+          }
+          match symbolic_discrete_generated_pmf(name, params, k) {
+            Some(v) => Some(v)
+            None => Some(symbolic_discrete_expr(name, "PMF", params, k~))
           }
         }
-        match symbolic_discrete_generated_pmf(name, params, k) {
-          Some(v) => Some(v)
-          None => Some(symbolic_discrete_expr(name, "PMF", params, k~))
-        }
+        _ => None
       }
     _ => None
   }
@@ -939,28 +946,30 @@ pub fn discrete_cdf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
     RVKind::Geometric(p~) => Some(geometric_cdf_expr(p, k))
     RVKind::NegativeBinomial(r~, p~) =>
       Some(negative_binomial_cdf_expr(r, p, k))
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "D" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        if name == "DiscreteRV" ||
-          name == "DiscreteDistributionHandmade" ||
-          name == "FiniteDistributionHandmade" {
-          return None
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Discrete(
+          DiscreteTag::DiscreteRV
+          | DiscreteTag::DiscreteDistributionHandmade
+          | DiscreteTag::FiniteDistributionHandmade
+        ) => None
+        SymbolicKind::Discrete(tag) => {
+          let name = discrete_tag_name(tag)
+          match generated_cdf(name, params, k) {
+            Some(v) => Some(v)
+            None =>
+              match symbolic_discrete_cdf_by_pmf_sum(name, params, k) {
+                Some(v) => Some(v)
+                None =>
+                  match symbolic_discrete_cdf_formula(name, params, k) {
+                    Some(v) => Some(v)
+                    None =>
+                      Some(symbolic_discrete_expr(name, "CDF", params, k~))
+                  }
+              }
+          }
         }
-        match generated_cdf(name, params, k) {
-          Some(v) => Some(v)
-          None =>
-            match symbolic_discrete_cdf_by_pmf_sum(name, params, k) {
-              Some(v) => Some(v)
-              None =>
-                match symbolic_discrete_cdf_formula(name, params, k) {
-                  Some(v) => Some(v)
-                  None => Some(symbolic_discrete_expr(name, "CDF", params, k~))
-                }
-            }
-        }
+        _ => None
       }
     _ => None
   }
@@ -1030,8 +1039,8 @@ fn symbolic_discrete_mean_by_sum(
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
   let kk = @symcore.symbol("_k")
-  match name {
-    "IdealSoliton" if params.length() == 1 =>
+  match discrete_tag_from_name(name) {
+    DiscreteTag::IdealSoliton if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -1044,7 +1053,7 @@ fn symbolic_discrete_mean_by_sum(
           )
         None => None
       }
-    "RobustSoliton" if params.length() == 3 =>
+    DiscreteTag::RobustSoliton if params.length() == 3 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) =>
           Some(
@@ -1067,11 +1076,12 @@ fn symbolic_discrete_variance_by_sum(
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
   let kk = @symcore.symbol("_k")
-  let bounds = match name {
-    "IdealSoliton" if params.length() == 1 => Some((@symcore.int(1), params[0]))
-    "RobustSoliton" if params.length() == 3 =>
+  let bounds = match discrete_tag_from_name(name) {
+    DiscreteTag::IdealSoliton if params.length() == 1 =>
       Some((@symcore.int(1), params[0]))
-    "YuleSimon" if params.length() == 1 =>
+    DiscreteTag::RobustSoliton if params.length() == 3 =>
+      Some((@symcore.int(1), params[0]))
+    DiscreteTag::YuleSimon if params.length() == 1 =>
       Some((@symcore.int(1), @symcore.symbol("oo")))
     _ => None
   }
@@ -1079,8 +1089,8 @@ fn symbolic_discrete_variance_by_sum(
     Some((lower, upper)) =>
       match symbolic_discrete_pmf_for(name, params, kk) {
         Some(pmf) => {
-          let tag = "D:\{name}"
-          let rv = random_var("_X", RVKind::Symbolic(tag~, params~))
+          let kind = symbolic_kind_from_name(name)
+          let rv = random_var("_X", RVKind::Symbolic(kind~, params~))
           let mean_expr = match discrete_mean(rv) {
             Some(v) => v
             None => symbolic_discrete_expr(name, "Mean", params)
@@ -1125,75 +1135,80 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "D" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        match generated_mean(name, params) {
-          Some(v) => Some(v)
-          None =>
-            match symbolic_discrete_mean_by_sum(name, params) {
-              Some(v) => Some(v)
-              None =>
-                match name {
-                  "Multinomial" if params.length() >= 2 => {
-                    let n = params[0]
-                    let means : Array[@symcore.Expr] = Array::new()
-                    for i in 1..<params.length() {
-                      means.push(eval_arith(@symcore.mul([n, params[i]])))
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Discrete(tag) => {
+          let name = discrete_tag_name(tag)
+          match generated_mean(name, params) {
+            Some(v) => Some(v)
+            None =>
+              match symbolic_discrete_mean_by_sum(name, params) {
+                Some(v) => Some(v)
+                None =>
+                  match tag {
+                    DiscreteTag::Multinomial if params.length() >= 2 => {
+                      let n = params[0]
+                      let means : Array[@symcore.Expr] = Array::new()
+                      for i in 1..<params.length() {
+                        means.push(eval_arith(@symcore.mul([n, params[i]])))
+                      }
+                      Some(discrete_tuple_expr(means))
                     }
-                    Some(discrete_tuple_expr(means))
-                  }
-                  "NegativeMultinomial" if params.length() >= 2 => {
-                    let k0 = params[0]
-                    let probs : Array[@symcore.Expr] = Array::new()
-                    for i in 1..<params.length() {
-                      probs.push(params[i])
-                    }
-                    let q = eval_arith(
-                      @symcore.add([
-                        @symcore.int(1),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          eval_arith(@symcore.add(probs)),
-                        ]),
-                      ]),
-                    )
-                    let means = probs.map(pi => {
-                      eval_arith(
-                        @symcore.mul([k0, pi, @symcore.pow(q, @symcore.int(-1))]),
-                      )
-                    })
-                    Some(discrete_tuple_expr(means))
-                  }
-                  "BetaBinomial" if params.length() == 3 =>
-                    Some(
-                      eval_arith(
-                        @symcore.mul([
-                          params[0],
-                          params[1],
-                          @symcore.pow(
-                            eval_arith(@symcore.add([params[1], params[2]])),
+                    DiscreteTag::NegativeMultinomial if params.length() >= 2 => {
+                      let k0 = params[0]
+                      let probs : Array[@symcore.Expr] = Array::new()
+                      for i in 1..<params.length() {
+                        probs.push(params[i])
+                      }
+                      let q = eval_arith(
+                        @symcore.add([
+                          @symcore.int(1),
+                          @symcore.mul([
                             @symcore.int(-1),
-                          ),
+                            eval_arith(@symcore.add(probs)),
+                          ]),
                         ]),
-                      ),
-                    )
-                  "Hypergeometric" if params.length() == 3 =>
-                    Some(
-                      eval_arith(
-                        @symcore.mul([
-                          params[2],
-                          params[1],
-                          @symcore.pow(params[0], @symcore.int(-1)),
-                        ]),
-                      ),
-                    )
-                  _ => Some(symbolic_discrete_expr(name, "Mean", params))
-                }
-            }
+                      )
+                      let means = probs.map(pi => {
+                        eval_arith(
+                          @symcore.mul([
+                            k0,
+                            pi,
+                            @symcore.pow(q, @symcore.int(-1)),
+                          ]),
+                        )
+                      })
+                      Some(discrete_tuple_expr(means))
+                    }
+                    DiscreteTag::BetaBinomial if params.length() == 3 =>
+                      Some(
+                        eval_arith(
+                          @symcore.mul([
+                            params[0],
+                            params[1],
+                            @symcore.pow(
+                              eval_arith(@symcore.add([params[1], params[2]])),
+                              @symcore.int(-1),
+                            ),
+                          ]),
+                        ),
+                      )
+                    DiscreteTag::Hypergeometric if params.length() == 3 =>
+                      Some(
+                        eval_arith(
+                          @symcore.mul([
+                            params[2],
+                            params[1],
+                            @symcore.pow(params[0], @symcore.int(-1)),
+                          ]),
+                        ),
+                      )
+                    _ => Some(symbolic_discrete_expr(name, "Mean", params))
+                  }
+              }
+          }
         }
+        _ => None
       }
     _ => None
   }
@@ -1225,159 +1240,160 @@ pub fn discrete_variance(rv : RandomVar) -> @symcore.Expr? {
           ]),
         ),
       )
-    RVKind::Symbolic(tag~, params~) =>
-      if symbolic_tag_family(tag) != "D" {
-        None
-      } else {
-        let name = symbolic_tag_name(tag)
-        match generated_variance(name, params) {
-          Some(v) => Some(v)
-          None =>
-            match symbolic_discrete_variance_by_sum(name, params) {
-              Some(v) => Some(v)
-              None =>
-                match name {
-                  "Multinomial" if params.length() >= 2 => {
-                    let n = params[0]
-                    let ps : Array[@symcore.Expr] = Array::new()
-                    for i in 1..<params.length() {
-                      ps.push(params[i])
-                    }
-                    let rows : Array[Array[@symcore.Expr]] = Array::new()
-                    for i in 0..<ps.length() {
-                      let row : Array[@symcore.Expr] = Array::new()
-                      let pi = ps[i]
-                      for j in 0..<ps.length() {
-                        let pj = ps[j]
-                        if i == j {
-                          row.push(
-                            eval_arith(
-                              @symcore.mul([n, pi, discrete_one_minus(pi)]),
-                            ),
-                          )
-                        } else {
-                          row.push(
-                            eval_arith(
-                              @symcore.mul([@symcore.int(-1), n, pi, pj]),
-                            ),
-                          )
-                        }
+    RVKind::Symbolic(kind~, params~) =>
+      match kind {
+        SymbolicKind::Discrete(tag) => {
+          let name = discrete_tag_name(tag)
+          match generated_variance(name, params) {
+            Some(v) => Some(v)
+            None =>
+              match symbolic_discrete_variance_by_sum(name, params) {
+                Some(v) => Some(v)
+                None =>
+                  match tag {
+                    DiscreteTag::Multinomial if params.length() >= 2 => {
+                      let n = params[0]
+                      let ps : Array[@symcore.Expr] = Array::new()
+                      for i in 1..<params.length() {
+                        ps.push(params[i])
                       }
-                      rows.push(row)
+                      let rows : Array[Array[@symcore.Expr]] = Array::new()
+                      for i in 0..<ps.length() {
+                        let row : Array[@symcore.Expr] = Array::new()
+                        let pi = ps[i]
+                        for j in 0..<ps.length() {
+                          let pj = ps[j]
+                          if i == j {
+                            row.push(
+                              eval_arith(
+                                @symcore.mul([n, pi, discrete_one_minus(pi)]),
+                              ),
+                            )
+                          } else {
+                            row.push(
+                              eval_arith(
+                                @symcore.mul([@symcore.int(-1), n, pi, pj]),
+                              ),
+                            )
+                          }
+                        }
+                        rows.push(row)
+                      }
+                      Some(discrete_tuple_matrix(rows))
                     }
-                    Some(discrete_tuple_matrix(rows))
-                  }
-                  "NegativeMultinomial" if params.length() >= 2 => {
-                    let k0 = params[0]
-                    let ps : Array[@symcore.Expr] = Array::new()
-                    for i in 1..<params.length() {
-                      ps.push(params[i])
-                    }
-                    let q = eval_arith(
-                      @symcore.add([
-                        @symcore.int(1),
-                        @symcore.mul([
-                          @symcore.int(-1),
-                          eval_arith(@symcore.add(ps)),
+                    DiscreteTag::NegativeMultinomial if params.length() >= 2 => {
+                      let k0 = params[0]
+                      let ps : Array[@symcore.Expr] = Array::new()
+                      for i in 1..<params.length() {
+                        ps.push(params[i])
+                      }
+                      let q = eval_arith(
+                        @symcore.add([
+                          @symcore.int(1),
+                          @symcore.mul([
+                            @symcore.int(-1),
+                            eval_arith(@symcore.add(ps)),
+                          ]),
                         ]),
-                      ]),
-                    )
-                    let rows : Array[Array[@symcore.Expr]] = Array::new()
-                    for i in 0..<ps.length() {
-                      let row : Array[@symcore.Expr] = Array::new()
-                      let pi = ps[i]
-                      for j in 0..<ps.length() {
-                        let pj = ps[j]
-                        if i == j {
-                          row.push(
+                      )
+                      let rows : Array[Array[@symcore.Expr]] = Array::new()
+                      for i in 0..<ps.length() {
+                        let row : Array[@symcore.Expr] = Array::new()
+                        let pi = ps[i]
+                        for j in 0..<ps.length() {
+                          let pj = ps[j]
+                          if i == j {
+                            row.push(
+                              eval_arith(
+                                @symcore.mul([
+                                  k0,
+                                  pi,
+                                  eval_arith(@symcore.add([q, pi])),
+                                  @symcore.pow(q, @symcore.int(-2)),
+                                ]),
+                              ),
+                            )
+                          } else {
+                            row.push(
+                              eval_arith(
+                                @symcore.mul([
+                                  k0,
+                                  pi,
+                                  pj,
+                                  @symcore.pow(q, @symcore.int(-2)),
+                                ]),
+                              ),
+                            )
+                          }
+                        }
+                        rows.push(row)
+                      }
+                      Some(discrete_tuple_matrix(rows))
+                    }
+                    DiscreteTag::BetaBinomial if params.length() == 3 => {
+                      let n = params[0]
+                      let alpha = params[1]
+                      let beta = params[2]
+                      let ab = eval_arith(@symcore.add([alpha, beta]))
+                      Some(
+                        eval_arith(
+                          @symcore.mul([
+                            n,
+                            alpha,
+                            beta,
+                            eval_arith(@symcore.add([ab, n])),
+                            @symcore.pow(ab, @symcore.int(-2)),
+                            @symcore.pow(
+                              eval_arith(@symcore.add([ab, @symcore.int(1)])),
+                              @symcore.int(-1),
+                            ),
+                          ]),
+                        ),
+                      )
+                    }
+                    DiscreteTag::Hypergeometric if params.length() == 3 => {
+                      let population = params[0]
+                      let success = params[1]
+                      let draws = params[2]
+                      let p = eval_arith(
+                        @symcore.mul([
+                          success,
+                          @symcore.pow(population, @symcore.int(-1)),
+                        ]),
+                      )
+                      Some(
+                        eval_arith(
+                          @symcore.mul([
+                            draws,
+                            p,
                             eval_arith(
-                              @symcore.mul([
-                                k0,
-                                pi,
-                                eval_arith(@symcore.add([q, pi])),
-                                @symcore.pow(q, @symcore.int(-2)),
+                              @symcore.add([
+                                @symcore.int(1),
+                                @symcore.mul([@symcore.int(-1), p]),
                               ]),
                             ),
-                          )
-                        } else {
-                          row.push(
                             eval_arith(
-                              @symcore.mul([
-                                k0,
-                                pi,
-                                pj,
-                                @symcore.pow(q, @symcore.int(-2)),
+                              @symcore.add([
+                                population,
+                                @symcore.mul([@symcore.int(-1), draws]),
                               ]),
                             ),
-                          )
-                        }
-                      }
-                      rows.push(row)
-                    }
-                    Some(discrete_tuple_matrix(rows))
-                  }
-                  "BetaBinomial" if params.length() == 3 => {
-                    let n = params[0]
-                    let alpha = params[1]
-                    let beta = params[2]
-                    let ab = eval_arith(@symcore.add([alpha, beta]))
-                    Some(
-                      eval_arith(
-                        @symcore.mul([
-                          n,
-                          alpha,
-                          beta,
-                          eval_arith(@symcore.add([ab, n])),
-                          @symcore.pow(ab, @symcore.int(-2)),
-                          @symcore.pow(
-                            eval_arith(@symcore.add([ab, @symcore.int(1)])),
-                            @symcore.int(-1),
-                          ),
-                        ]),
-                      ),
-                    )
-                  }
-                  "Hypergeometric" if params.length() == 3 => {
-                    let population = params[0]
-                    let success = params[1]
-                    let draws = params[2]
-                    let p = eval_arith(
-                      @symcore.mul([
-                        success,
-                        @symcore.pow(population, @symcore.int(-1)),
-                      ]),
-                    )
-                    Some(
-                      eval_arith(
-                        @symcore.mul([
-                          draws,
-                          p,
-                          eval_arith(
-                            @symcore.add([
-                              @symcore.int(1),
-                              @symcore.mul([@symcore.int(-1), p]),
-                            ]),
-                          ),
-                          eval_arith(
-                            @symcore.add([
-                              population,
-                              @symcore.mul([@symcore.int(-1), draws]),
-                            ]),
-                          ),
-                          @symcore.pow(
-                            eval_arith(
-                              @symcore.add([population, @symcore.int(-1)]),
+                            @symcore.pow(
+                              eval_arith(
+                                @symcore.add([population, @symcore.int(-1)]),
+                              ),
+                              @symcore.int(-1),
                             ),
-                            @symcore.int(-1),
-                          ),
-                        ]),
-                      ),
-                    )
+                          ]),
+                        ),
+                      )
+                    }
+                    _ => Some(symbolic_discrete_expr(name, "Variance", params))
                   }
-                  _ => Some(symbolic_discrete_expr(name, "Variance", params))
-                }
-            }
+              }
+          }
         }
+        _ => None
       }
     _ => None
   }

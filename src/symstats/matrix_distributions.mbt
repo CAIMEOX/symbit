@@ -158,15 +158,15 @@ fn matrix_ensemble_spec(rv : RandomVar) -> (Int, @symcore.Expr, Bool)? {
   match rv.kind {
     RVKind::Matrix(MatrixKind::GOE(size~)) => Some((1, size, false))
     RVKind::Matrix(MatrixKind::GUE(size~)) => Some((2, size, false))
-    RVKind::Symbolic(tag~, params~) =>
+    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Matrix(tag) =>
       if params.length() == 1 {
-        match symbolic_tag_name(tag) {
-          "GaussianOrthogonalEnsemble" => Some((1, params[0], false))
-          "GaussianUnitaryEnsemble" => Some((2, params[0], false))
-          "GaussianSymplecticEnsemble" => Some((4, params[0], false))
-          "CircularOrthogonalEnsemble" => Some((1, params[0], true))
-          "CircularUnitaryEnsemble" => Some((2, params[0], true))
-          "CircularSymplecticEnsemble" => Some((4, params[0], true))
+        match tag {
+          MatrixTag::GaussianOrthogonalEnsemble => Some((1, params[0], false))
+          MatrixTag::GaussianUnitaryEnsemble => Some((2, params[0], false))
+          MatrixTag::GaussianSymplecticEnsemble => Some((4, params[0], false))
+          MatrixTag::CircularOrthogonalEnsemble => Some((1, params[0], true))
+          MatrixTag::CircularUnitaryEnsemble => Some((2, params[0], true))
+          MatrixTag::CircularSymplecticEnsemble => Some((4, params[0], true))
           _ => None
         }
       } else {
@@ -369,11 +369,9 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       Some(@symcore.function("GOEDensity", [x, size]))
     RVKind::Matrix(MatrixKind::GUE(size~)) =>
       Some(@symcore.function("GUEDensity", [x, size]))
-    RVKind::Symbolic(tag~, params~) => {
-      let name = symbolic_tag_name(tag)
-      let family = symbolic_tag_family(tag)
-      match name {
-        "GaussianUnitaryEnsemble" if params.length() == 1 => {
+    RVKind::Symbolic(kind~, params~) if kind is SymbolicKind::Matrix(tag) =>
+      match tag {
+        MatrixTag::GaussianUnitaryEnsemble if params.length() == 1 => {
           let n = params[0]
           let half = stats_exact_rational(1, 2)
           let trace_x2 = @symcore.function("Trace", [
@@ -402,7 +400,7 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
             ),
           )
         }
-        "GaussianOrthogonalEnsemble" if params.length() == 1 => {
+        MatrixTag::GaussianOrthogonalEnsemble if params.length() == 1 => {
           let n = params[0]
           let quarter = stats_exact_rational(1, 4)
           let h = @symcore.function("MatrixSymbol", [
@@ -434,7 +432,7 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
             ),
           )
         }
-        "GaussianSymplecticEnsemble" if params.length() == 1 => {
+        MatrixTag::GaussianSymplecticEnsemble if params.length() == 1 => {
           let n = params[0]
           let h = @symcore.function("MatrixSymbol", [
             @symcore.symbol("_H"),
@@ -465,46 +463,43 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
             ),
           )
         }
-        "MatrixStudentT" if params.length() == 4 => {
+        MatrixTag::MatrixStudentT if params.length() == 4 => {
           let args : Array[@symcore.Expr] = [x]
           for p in params {
             args.push(p)
           }
           Some(@symcore.function("MatrixStudentTDensity", args))
         }
-        "MatrixStudentT" =>
+        MatrixTag::MatrixStudentT =>
           Some(
             @symcore.function("MatrixStudentTDensity", [
               x,
               @symcore.symbol(rv.name),
             ]),
           )
-        "MatrixGamma" if params.length() == 3 => {
+        MatrixTag::MatrixGamma if params.length() == 3 => {
           let args : Array[@symcore.Expr] = [x]
           for p in params {
             args.push(p)
           }
           Some(@symcore.function("MatrixGammaDensity", args))
         }
-        "MatrixGamma" =>
+        MatrixTag::MatrixGamma =>
           Some(
             @symcore.function("MatrixGammaDensity", [
               x,
               @symcore.symbol(rv.name),
             ]),
           )
-        _ =>
-          if family == "M" {
-            let args : Array[@symcore.Expr] = [x]
-            for p in params {
-              args.push(p)
-            }
-            Some(@symcore.function("\{name}Density", args))
-          } else {
-            None
+        _ => {
+          let name = matrix_tag_name(tag)
+          let args : Array[@symcore.Expr] = [x]
+          for p in params {
+            args.push(p)
           }
+          Some(@symcore.function("\{name}Density", args))
+        }
       }
-    }
     _ => None
   }
 }

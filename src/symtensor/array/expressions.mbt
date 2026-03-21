@@ -63,7 +63,9 @@ pub impl Show for ArrayExpr with to_string(self) -> String {
     ArrayExpr::Element(base, indices) =>
       base.to_string() + "[" + expr_list_to_string(indices) + "]"
     ArrayExpr::TensorProduct(items) =>
-      "ArrayTensorProduct(" + items.map(item => item.to_string()).join(", ") + ")"
+      "ArrayTensorProduct(" +
+      items.map(item => item.to_string()).join(", ") +
+      ")"
     ArrayExpr::Contraction(base, axes) => {
       let pairs = axes.map(pair => {
         "(" + pair.0.to_string() + ", " + pair.1.to_string() + ")"

@@ -145,10 +145,7 @@ pub impl Show for RayTransferMatrix with to_string(self) {
 }
 
 ///|
-pub impl Show for RayTransferMatrix with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for RayTransferMatrix with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

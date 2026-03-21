@@ -59,7 +59,7 @@ pub(all) enum RVKind {
   Compound(Array[(@symnum.BigRational, RandomVar)])
   StochasticProcess(ProcessKind)
   Matrix(MatrixKind)
-  Symbolic(tag~ : String, params~ : Array[@symcore.Expr])
+  Symbolic(kind~ : SymbolicKind, params~ : Array[@symcore.Expr])
 }
 
 ///|
@@ -74,60 +74,12 @@ pub fn random_var(name : String, kind : RVKind) -> RandomVar {
 }
 
 ///|
-pub fn symbolic_rv_data(rv : RandomVar) -> (String, Array[@symcore.Expr])? {
+pub fn symbolic_rv_data(
+  rv : RandomVar,
+) -> (SymbolicKind, Array[@symcore.Expr])? {
   match rv.kind {
-    RVKind::Symbolic(tag~, params~) => Some((tag, params))
+    RVKind::Symbolic(kind~, params~) => Some((kind, params))
     _ => None
-  }
-}
-
-///|
-fn symbolic_tag_parts(tag : String) -> (String, String) {
-  let parts = tag.split(":").to_array()
-  if parts.length() >= 2 {
-    (parts[0].to_string(), parts[1].to_string())
-  } else {
-    ("", tag)
-  }
-}
-
-///|
-pub fn symbolic_tag_family(tag : String) -> String {
-  symbolic_tag_parts(tag).0
-}
-
-///|
-pub fn symbolic_tag_name(tag : String) -> String {
-  symbolic_tag_parts(tag).1
-}
-
-///|
-pub fn symbolic_opaque_stats_name(name : String) -> Bool {
-  match name {
-    "StochasticProcess"
-    | "DiscreteTimeStochasticProcess"
-    | "DiscreteMarkovChain"
-    | "ContinuousMarkovChain"
-    | "CircularEnsemble"
-    | "CircularUnitaryEnsemble"
-    | "CircularOrthogonalEnsemble"
-    | "CircularSymplecticEnsemble"
-    | "GaussianEnsemble"
-    | "GaussianUnitaryEnsemble"
-    | "GaussianOrthogonalEnsemble"
-    | "GaussianSymplecticEnsemble"
-    | "JointEigenDistribution"
-    | "level_spacing_distribution"
-    | "JointRV"
-    | "GeneralizedMultivariateLogGamma"
-    | "GeneralizedMultivariateLogGammaOmega"
-    | "MultivariateEwens"
-    | "ContinuousRV"
-    | "DiscreteRV"
-    | "FiniteDistributionHandmade"
-    | "ContinuousDistributionHandmade"
-    | "DiscreteDistributionHandmade" => true
-    _ => false
   }
 }
 

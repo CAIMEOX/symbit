@@ -18,10 +18,7 @@ pub impl Show for MatrixScalarValue with to_string(self) {
 }
 
 ///|
-pub impl Show for MatrixScalarValue with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for MatrixScalarValue with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

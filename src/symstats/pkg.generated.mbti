@@ -421,13 +421,19 @@ pub fn student_t(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn substitute_symbol(@symcore.Expr, String, @symcore.Expr) -> @symcore.Expr
 
-pub fn symbolic_opaque_stats_name(String) -> Bool
+pub fn symbolic_kind_family(SymbolicKind) -> SymbolicFamily
 
-pub fn symbolic_rv_data(RandomVar) -> (String, Array[@symcore.Expr])?
+pub fn symbolic_kind_from_name(String) -> SymbolicKind
 
-pub fn symbolic_tag_family(String) -> String
+pub fn symbolic_kind_is_opaque(SymbolicKind) -> Bool
 
-pub fn symbolic_tag_name(String) -> String
+pub fn symbolic_kind_name(SymbolicKind) -> String
+
+pub fn symbolic_name_family(String) -> SymbolicFamily
+
+pub fn symbolic_name_is_opaque(String) -> Bool
+
+pub fn symbolic_rv_data(RandomVar) -> (SymbolicKind, Array[@symcore.Expr])?
 
 pub fn transition_matrix_of(@symcore.Expr) -> @symcore.Expr
 
@@ -476,6 +482,85 @@ pub fn zeta(String, params? : Array[@symcore.Expr]) -> RandomVar
 // Errors
 
 // Types and methods
+pub(all) enum ContinuousTag {
+  Arcsin
+  Benini
+  Beta
+  BetaNoncentral
+  BetaPrime
+  BoundedPareto
+  Cauchy
+  Chi
+  ChiNoncentral
+  ChiSquared
+  ContinuousRV
+  ContinuousDistributionHandmade
+  Dagum
+  Davis
+  Exponential
+  Erlang
+  ExGaussian
+  ExponentialPower
+  FDistribution
+  FisherZ
+  Frechet
+  GammaInverse
+  GaussianInverse
+  Gompertz
+  Gumbel
+  Kumaraswamy
+  Laplace
+  Levy
+  LogCauchy
+  LogLogistic
+  LogNormal
+  Logarithmic
+  Logistic
+  LogitNormal
+  Lomax
+  Maxwell
+  Moyal
+  Nakagami
+  Named(name~ : String)
+  Pareto
+  PowerFunction
+  QuadraticU
+  RaisedCosine
+  Rayleigh
+  Reciprocal
+  ShiftedGompertz
+  StudentT
+  Trapezoidal
+  Triangular
+  Uniform
+  UniformSum
+  VonMises
+  Wald
+  Weibull
+  WignerSemicircle
+}
+pub impl Eq for ContinuousTag
+
+pub(all) enum DiscreteTag {
+  BetaBinomial
+  DiscreteRV
+  DiscreteDistributionHandmade
+  FiniteDistributionHandmade
+  FlorySchulz
+  Hermite
+  Hypergeometric
+  IdealSoliton
+  Logarithmic
+  RobustSoliton
+  Skellam
+  Multinomial
+  NegativeMultinomial
+  YuleSimon
+  Zeta
+  Named(name~ : String)
+}
+pub impl Eq for DiscreteTag
+
 pub(all) enum Event {
   Bool(Bool)
   Rel(op~ : RelOp, lhs~ : @symcore.Expr, rhs~ : @symcore.Expr)
@@ -484,6 +569,21 @@ pub(all) enum Event {
   Or(Array[Event])
 }
 
+pub(all) enum JointTag {
+  JointRV
+  Dirichlet
+  GeneralizedMultivariateLogGamma
+  GeneralizedMultivariateLogGammaOmega
+  MultivariateBeta
+  MultivariateEwens
+  MultivariateT
+  NormalGamma
+  MultivariateNormal
+  MultivariateLaplace
+  Named(name~ : String)
+}
+pub impl Eq for JointTag
+
 pub(all) enum MatrixKind {
   Wishart(df~ : @symcore.Expr, scale~ : @symcore.Expr)
   MatrixNormal(mean~ : @symcore.Expr, rowcov~ : @symcore.Expr, colcov~ : @symcore.Expr)
@@ -491,10 +591,38 @@ pub(all) enum MatrixKind {
   GUE(size~ : @symcore.Expr)
 }
 
+pub(all) enum MatrixTag {
+  JointEigenDistribution
+  LevelSpacingDistribution
+  MatrixGamma
+  MatrixStudentT
+  CircularEnsemble
+  CircularUnitaryEnsemble
+  CircularOrthogonalEnsemble
+  CircularSymplecticEnsemble
+  GaussianEnsemble
+  GaussianUnitaryEnsemble
+  GaussianOrthogonalEnsemble
+  GaussianSymplecticEnsemble
+  Named(name~ : String)
+}
+pub impl Eq for MatrixTag
+
 pub(all) enum ProcessKind {
   PoissonProcess(rate~ : @symcore.Expr, time_symbol~ : String)
   WienerProcess(time_symbol~ : String)
 }
+
+pub(all) enum ProcessTag {
+  StochasticProcess
+  DiscreteTimeStochasticProcess
+  DiscreteMarkovChain
+  ContinuousMarkovChain
+  BernoulliProcess
+  GammaProcess
+  Named(name~ : String)
+}
+pub impl Eq for ProcessTag
 
 pub(all) enum RVKind {
   Finite(Array[(@symcore.Expr, @symnum.BigRational)])
@@ -509,7 +637,7 @@ pub(all) enum RVKind {
   Compound(Array[(@symnum.BigRational, RandomVar)])
   StochasticProcess(ProcessKind)
   Matrix(MatrixKind)
-  Symbolic(tag~ : String, params~ : Array[@symcore.Expr])
+  Symbolic(kind~ : SymbolicKind, params~ : Array[@symcore.Expr])
 }
 
 pub struct RandomVar {
@@ -525,6 +653,24 @@ pub(all) enum RelOp {
   Gt
   Ge
 }
+
+pub(all) enum SymbolicFamily {
+  Continuous
+  Discrete
+  Joint
+  Process
+  Matrix
+}
+pub impl Eq for SymbolicFamily
+
+pub(all) enum SymbolicKind {
+  Continuous(ContinuousTag)
+  Discrete(DiscreteTag)
+  Joint(JointTag)
+  Process(ProcessTag)
+  Matrix(MatrixTag)
+}
+pub impl Eq for SymbolicKind
 
 pub enum TriBool {
   True

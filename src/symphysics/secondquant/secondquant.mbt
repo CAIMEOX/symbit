@@ -263,10 +263,7 @@ pub impl Show for BosonicOperatorExpr with to_string(self) {
 }
 
 ///|
-pub impl Show for BosonicOperatorExpr with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for BosonicOperatorExpr with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -370,10 +367,7 @@ pub impl Show for VarBosonicBasis with to_string(self) {
 }
 
 ///|
-pub impl Show for VarBosonicBasis with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for VarBosonicBasis with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -424,10 +418,7 @@ pub impl Show for FixedBosonicBasis with to_string(self) {
 }
 
 ///|
-pub impl Show for FixedBosonicBasis with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for FixedBosonicBasis with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
@@ -480,10 +471,7 @@ pub impl Show for BosonicBasisSet with to_string(self) {
 }
 
 ///|
-pub impl Show for BosonicBasisSet with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for BosonicBasisSet with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 

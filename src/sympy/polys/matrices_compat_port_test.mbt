@@ -886,10 +886,7 @@ test "matrices: linsolve unique/no-solution/parametric" {
   match @sympolys.linear_solve(a, b) {
     LinearSolveResult::Unique(sol) => {
       assert_eq(sol.length(), 2)
-      assert_true(
-        sol[0].to_string() == "1" &&
-        sol[1].to_string() == "2",
-      )
+      assert_true(sol[0].to_string() == "1" && sol[1].to_string() == "2")
     }
     _ => fail("expected unique solution")
   }

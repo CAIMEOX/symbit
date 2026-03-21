@@ -126,7 +126,7 @@ using @symstats {
   skellam,
   stochastic_process,
   student_t,
-  symbolic_tag_name,
+  symbolic_kind_name,
   trapezoidal,
   triangular,
   uniform,

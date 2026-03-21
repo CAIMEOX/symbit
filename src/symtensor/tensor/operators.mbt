@@ -26,9 +26,6 @@ pub impl Show for PartialDerivative with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for PartialDerivative with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for PartialDerivative with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

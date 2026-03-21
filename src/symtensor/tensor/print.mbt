@@ -16,10 +16,7 @@ pub impl Show for TensorIndexType with to_string(self) -> String {
 }
 
 ///|
-pub impl Show for TensorIndexType with output(
-  self,
-  logger : &Logger,
-) -> Unit {
+pub impl Show for TensorIndexType with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
 
