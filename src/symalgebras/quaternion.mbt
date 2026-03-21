@@ -318,7 +318,7 @@ fn split_sign(expr : Expr) -> (Bool, Expr) {
 }
 
 ///|
-pub fn Quaternion::to_string(self : Quaternion) -> String {
+pub impl Show for Quaternion with to_string(self) {
   let a_str = @symprint.to_string(self.a)
   let (b_neg, b_abs) = split_sign(self.b)
   let (c_neg, c_abs) = split_sign(self.c)

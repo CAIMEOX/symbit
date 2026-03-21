@@ -199,8 +199,13 @@ pub fn BosonState::as_bra_expr(self : BosonState) -> Expr {
 }
 
 ///|
-pub fn BosonState::to_string(self : BosonState) -> String {
+pub impl Show for BosonState with to_string(self) {
   sq_tuple_string(self.occupations)
+}
+
+///|
+pub impl Show for BosonState with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -249,12 +254,20 @@ pub fn BosonicOperatorExpr::as_expr(self : BosonicOperatorExpr) -> Expr {
 }
 
 ///|
-pub fn BosonicOperatorExpr::to_string(self : BosonicOperatorExpr) -> String {
+pub impl Show for BosonicOperatorExpr with to_string(self) {
   if self.is_annihilation {
     "b(\{@symprint.to_string(self.index)})"
   } else {
     "b+(\{@symprint.to_string(self.index)})"
   }
+}
+
+///|
+pub impl Show for BosonicOperatorExpr with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -352,8 +365,16 @@ pub fn VarBosonicBasis::index(
 }
 
 ///|
-pub fn VarBosonicBasis::to_string(self : VarBosonicBasis) -> String {
+pub impl Show for VarBosonicBasis with to_string(self) {
   sq_boson_basis_list_string(self.basis)
+}
+
+///|
+pub impl Show for VarBosonicBasis with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -398,8 +419,16 @@ pub fn FixedBosonicBasis::index(
 }
 
 ///|
-pub fn FixedBosonicBasis::to_string(self : FixedBosonicBasis) -> String {
+pub impl Show for FixedBosonicBasis with to_string(self) {
   sq_boson_basis_list_string(self.basis)
+}
+
+///|
+pub impl Show for FixedBosonicBasis with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -443,11 +472,19 @@ pub fn BosonicBasisSet::index(
 }
 
 ///|
-pub fn BosonicBasisSet::to_string(self : BosonicBasisSet) -> String {
+pub impl Show for BosonicBasisSet with to_string(self) {
   match self {
     BosonicBasisSet::Var(basis) => basis.to_string()
     BosonicBasisSet::Fixed(basis) => basis.to_string()
   }
+}
+
+///|
+pub impl Show for BosonicBasisSet with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

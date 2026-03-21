@@ -143,7 +143,7 @@ pub fn canonicalize(expr : TensorExpr) -> TensorExpr raise {
       let n = canon_items.length()
       for i in 0..<n {
         for j in (i + 1)..<n {
-          if to_string(canon_items[j]) < to_string(canon_items[i]) {
+          if canon_items[j].to_string() < canon_items[i].to_string() {
             let tmp = canon_items[i]
             canon_items[i] = canon_items[j]
             canon_items[j] = tmp

@@ -71,7 +71,6 @@ pub fn Quaternion::to_axis_angle(Self) -> ((@symcore.Expr, @symcore.Expr, @symco
 pub fn Quaternion::to_euler(Self, String, angle_addition? : Bool, avoid_square_root? : Bool) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr) raise QuaternionError
 pub fn Quaternion::to_matrix(Self, vector_only? : Bool) -> Array[Array[@symcore.Expr]]
 pub fn Quaternion::to_rotation_matrix(Self, v? : (@symcore.Expr, @symcore.Expr, @symcore.Expr), homogeneous? : Bool) -> Array[Array[@symcore.Expr]]
-pub fn Quaternion::to_string(Self) -> String
 pub fn Quaternion::vector_coplanar(Self, Self, Self) -> Bool? raise QuaternionError
 pub fn Quaternion::vector_part(Self) -> Self
 pub fn Quaternion::with_norm(Self, @symcore.Expr?) -> Self raise QuaternionError

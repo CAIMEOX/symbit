@@ -117,5 +117,5 @@ fn div_pair_to_string(quo : Poly, rem : Poly) -> String raise {
 
 ///|
 fn fe_to_string(value : FieldElem) -> String {
-  @sympolys.fe_to_string(value)
+  value.to_string()
 }

@@ -4,10 +4,10 @@ test "field_elem: expect_rational projects constant extensions" {
     @symnum.BigRational::from_int(3),
     @symnum.BigRational::zero(),
   )
-  inspect(fe_expect_rational(cc).to_string(), content="3")
+  inspect(fe_expect_rational(cc), content="3")
 
   let gf_const = FieldElem::GFExt(5, [7], [1, 0, 1])
-  inspect(fe_expect_rational(gf_const).to_string(), content="7")
+  inspect(fe_expect_rational(gf_const), content="7")
 
   let a = @symcore.symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
@@ -19,7 +19,7 @@ test "field_elem: expect_rational projects constant extensions" {
     minpoly,
     "a",
   )
-  inspect(fe_expect_rational(alg_const).to_string(), content="5")
+  inspect(fe_expect_rational(alg_const), content="5")
 }
 
 ///|
@@ -52,10 +52,10 @@ test "field_elem: expect_rational rejects non-constant extensions" {
 ///|
 test "field_elem: from_int embeds into Frac(base)" {
   let q = fe_from_int(4, Domain::Frac(Domain::QQ))
-  inspect(fe_to_string(q), content="4")
+  inspect(q, content="4")
 
   let gf = fe_from_int(-3, Domain::Frac(Domain::GF(5)))
-  inspect(fe_to_string(gf), content="2")
+  inspect(gf, content="2")
 }
 
 ///|
@@ -91,7 +91,7 @@ test "field_elem wb: helper branches and domain mismatches" {
     ),
     -1,
   )
-  inspect(fe_to_string(pow_neg), content="1/2")
+  inspect(pow_neg, content="1/2")
 
   let gf_add_bad : Result[FieldElem, PolyError] = try? fe_add(
     FieldElem::GFp(5, 1),
@@ -169,7 +169,7 @@ test "field_elem wb: inverses and conversion guard paths" {
   assert_true(bad_zz is Err(PolyError::CoefficientNotInteger))
 
   let frac_gf = fe_from_rational(fe_wb_rat(8, 3), Domain::Frac(Domain::GF(7)))
-  inspect(fe_to_string(frac_gf), content="5")
+  inspect(frac_gf, content="5")
 
   let bad_loader_gen : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
     Domain::QQ,
@@ -240,12 +240,10 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
   )
   assert_true(inv_zero is Err(PolyError::DivisionByZero))
 
-  let cc_str = fe_to_string(
-    FieldElem::CC(
-      @symnum.BigRational::from_int(2),
-      @symnum.BigRational::from_int(-3),
-    ),
-  )
+  let cc_str = FieldElem::CC(
+    @symnum.BigRational::from_int(2),
+    @symnum.BigRational::from_int(-3),
+  ).to_string()
   inspect(cc_str, content="2 - 3i")
 
   let alg_pretty = fe_algext_to_string(
@@ -262,12 +260,12 @@ test "field_elem wb: algebraic helpers and string formatting branches" {
   assert_true(bad_cc_proj is Err(PolyError::DomainMismatch))
 
   let gfext_empty = fe_expect_rational(FieldElem::GFExt(5, [], [1, 0, 1]))
-  inspect(gfext_empty.to_string(), content="0")
+  inspect(gfext_empty, content="0")
 
   let algext_empty = fe_expect_rational(
     FieldElem::AlgExt(Domain::QQ, [], minpoly, "a"),
   )
-  inspect(algext_empty.to_string(), content="0")
+  inspect(algext_empty, content="0")
 }
 
 ///|
@@ -276,9 +274,9 @@ test "field_elem wb: remaining branch sweep" {
   assert_eq(poly_add.length(), 2)
 
   let qpow = fe_pow(FieldElem::QQ(@symnum.BigRational::from_int(2)), 3)
-  inspect(fe_to_string(qpow), content="8")
+  inspect(qpow, content="8")
   let gpow = fe_pow(FieldElem::GFp(5, 3), 4)
-  inspect(fe_to_string(gpow), content="1")
+  inspect(gpow, content="1")
 
   let a = @symcore.symbol("a")
   let minpoly = fe_wb_minpoly(
@@ -337,25 +335,21 @@ test "field_elem wb: remaining branch sweep" {
   assert_eq(alg_mod_edge.length(), 0)
 
   inspect(
-    fe_to_string(
-      fe_add(
-        FieldElem::CC(
-          @symnum.BigRational::from_int(2),
-          @symnum.BigRational::from_int(1),
-        ),
-        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+    fe_add(
+      FieldElem::CC(
+        @symnum.BigRational::from_int(2),
+        @symnum.BigRational::from_int(1),
       ),
+      FieldElem::QQ(@symnum.BigRational::from_int(3)),
     ),
     content="5 + 1i",
   )
   inspect(
-    fe_to_string(
-      fe_add(
-        FieldElem::QQ(@symnum.BigRational::from_int(3)),
-        FieldElem::CC(
-          @symnum.BigRational::from_int(2),
-          @symnum.BigRational::from_int(1),
-        ),
+    fe_add(
+      FieldElem::QQ(@symnum.BigRational::from_int(3)),
+      FieldElem::CC(
+        @symnum.BigRational::from_int(2),
+        @symnum.BigRational::from_int(1),
       ),
     ),
     content="5 + 1i",
@@ -367,25 +361,21 @@ test "field_elem wb: remaining branch sweep" {
   assert_true(add_default_bad is Err(PolyError::DomainMismatch))
 
   inspect(
-    fe_to_string(
-      fe_mul(
-        FieldElem::CC(
-          @symnum.BigRational::from_int(2),
-          @symnum.BigRational::from_int(1),
-        ),
-        FieldElem::QQ(@symnum.BigRational::from_int(3)),
+    fe_mul(
+      FieldElem::CC(
+        @symnum.BigRational::from_int(2),
+        @symnum.BigRational::from_int(1),
       ),
+      FieldElem::QQ(@symnum.BigRational::from_int(3)),
     ),
     content="6 + 3i",
   )
   inspect(
-    fe_to_string(
-      fe_mul(
-        FieldElem::QQ(@symnum.BigRational::from_int(3)),
-        FieldElem::CC(
-          @symnum.BigRational::from_int(2),
-          @symnum.BigRational::from_int(1),
-        ),
+    fe_mul(
+      FieldElem::QQ(@symnum.BigRational::from_int(3)),
+      FieldElem::CC(
+        @symnum.BigRational::from_int(2),
+        @symnum.BigRational::from_int(1),
       ),
     ),
     content="6 + 3i",
@@ -417,7 +407,7 @@ test "field_elem wb: remaining branch sweep" {
   assert_true(inv_alg_zero is Err(PolyError::DivisionByZero))
 
   let cc_from_rat = fe_from_rational(fe_wb_rat(7, 2), Domain::CC)
-  inspect(fe_to_string(cc_from_rat), content="7/2")
+  inspect(cc_from_rat, content="7/2")
   let gfext_from_rat = fe_from_rational(
     fe_wb_rat(8, 3),
     Domain::GFExt(7, 2, [1, 0, 1]),
@@ -427,25 +417,21 @@ test "field_elem wb: remaining branch sweep" {
   }
 
   inspect(
-    fe_to_string(
-      FieldElem::CC(
-        @symnum.BigRational::from_int(2),
-        @symnum.BigRational::from_int(3),
-      ),
+    FieldElem::CC(
+      @symnum.BigRational::from_int(2),
+      @symnum.BigRational::from_int(3),
     ),
     content="2 + 3i",
   )
-  let alg_str = fe_to_string(
-    FieldElem::AlgExt(
-      Domain::QQ,
-      [
-        FieldElem::QQ(@symnum.BigRational::one()),
-        FieldElem::QQ(@symnum.BigRational::one()),
-      ],
-      minpoly,
-      "a",
-    ),
-  )
+  let alg_str = FieldElem::AlgExt(
+    Domain::QQ,
+    [
+      FieldElem::QQ(@symnum.BigRational::one()),
+      FieldElem::QQ(@symnum.BigRational::one()),
+    ],
+    minpoly,
+    "a",
+  ).to_string()
   inspect(alg_str, content="1 + a")
 
   assert_eq(fe_alg_poly_trim([]).length(), 1)

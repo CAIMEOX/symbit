@@ -26,7 +26,7 @@ fn md_column_coeffs_text(column : DDM) -> String raise PolyError {
     if row.length() != 1 {
       raise PolyError::DomainMismatch
     }
-    parts.push(@sympolys.fe_to_string(row[0]))
+    parts.push(row[0].to_string())
   }
   let joined = parts.join(", ")
   "[\{joined}]"
@@ -88,7 +88,7 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   let (rref_den_method, den_method, den_pivots_method) = zz.rref_den()
   assert_true(
     den_pivots_wrap == den_pivots_method &&
-    @sympolys.fe_to_string(den_wrap) == @sympolys.fe_to_string(den_method),
+    den_wrap.to_string() == den_method.to_string(),
   )
   assert_eq(
     md_trim(rref_den_wrap.to_string()),
@@ -97,7 +97,7 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   let oracle_rref_den = domainmatrix_rref_den([[2, 4], [6, 8]], "ZZ")
   assert_eq(
     md_trim(
-      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{@sympolys.fe_to_string(den_wrap)}||\{den_pivots_wrap.to_string()}",
+      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{den_wrap.to_string()}||\{den_pivots_wrap.to_string()}",
     ),
     md_trim(oracle_rref_den),
   )
@@ -108,11 +108,11 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   )
   let (bareiss, det) = @sympolys.ddm_idet(det_source)
   assert_eq(
-    @sympolys.fe_to_string(det),
-    @sympolys.fe_to_string(det_source.det()),
+    det.to_string(),
+    det_source.det().to_string(),
   )
   let oracle_det = domainmatrix_det([[1, 2, 3], [4, 5, 6], [7, 8, 9]], "ZZ")
-  assert_eq(@sympolys.fe_to_string(det), oracle_det)
+  assert_eq(det.to_string(), oracle_det)
   let bareiss_diag_text = bareiss.diagonal().map(fe_to_string).join(", ")
   let bareiss_diag = "[\{bareiss_diag_text}]"
   assert_eq(md_trim(bareiss_diag), md_trim("[1, -3, 0]"))

@@ -26,12 +26,17 @@ pub fn BosonOpExpr::as_expr(self : BosonOpExpr) -> Expr {
 }
 
 ///|
-pub fn BosonOpExpr::to_string(self : BosonOpExpr) -> String {
+pub impl Show for BosonOpExpr with to_string(self) {
   if self.is_annihilation {
     @symprint.to_string(self.name)
   } else {
     "Dagger(\{@symprint.to_string(self.name)})"
   }
+}
+
+///|
+pub impl Show for BosonOpExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

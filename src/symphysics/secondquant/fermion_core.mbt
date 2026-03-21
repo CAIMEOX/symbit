@@ -404,8 +404,13 @@ pub fn FermionState::repr(self : FermionState) -> String {
 }
 
 ///|
-pub fn FermionState::to_string(self : FermionState) -> String {
+pub impl Show for FermionState with to_string(self) {
   sq_tuple_string(self.orbitals)
+}
+
+///|
+pub impl Show for FermionState with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -459,12 +464,20 @@ pub fn FermionicOperatorExpr::dagger(
 }
 
 ///|
-pub fn FermionicOperatorExpr::to_string(self : FermionicOperatorExpr) -> String {
+pub impl Show for FermionicOperatorExpr with to_string(self) {
   if self.is_annihilation {
     "f(\{@symprint.to_string(self.index)})"
   } else {
     "f+(\{@symprint.to_string(self.index)})"
   }
+}
+
+///|
+pub impl Show for FermionicOperatorExpr with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

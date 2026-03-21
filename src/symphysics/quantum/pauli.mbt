@@ -74,11 +74,16 @@ pub fn PauliExpr::repr(self : PauliExpr) -> String {
 }
 
 ///|
-pub fn PauliExpr::to_string(self : PauliExpr) -> String {
+pub impl Show for PauliExpr with to_string(self) {
   match self.name {
     Some(name) => "\{pauli_class_name(self.kind)}(\{@symprint.to_string(name)})"
     None => "\{pauli_class_name(self.kind)}()"
   }
+}
+
+///|
+pub impl Show for PauliExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -164,12 +169,17 @@ pub fn SigmaZState::as_expr(self : SigmaZState) -> Expr {
 }
 
 ///|
-pub fn SigmaZState::to_string(self : SigmaZState) -> String {
+pub impl Show for SigmaZState with to_string(self) {
   if self.is_bra {
     "<\{self.n.to_string()}|"
   } else {
     "|\{self.n.to_string()}>"
   }
+}
+
+///|
+pub impl Show for SigmaZState with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

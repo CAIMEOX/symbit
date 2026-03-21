@@ -11,6 +11,22 @@ pub(all) enum RelOp {
 } derive(Eq)
 
 ///|
+impl Show for RelOp with to_string(self) {
+  match self {
+    RelOp::Le => "<="
+    RelOp::Ge => ">="
+    RelOp::Lt => "<"
+    RelOp::Gt => ">"
+    RelOp::Eq => "=="
+  }
+}
+
+///|
+impl Show for RelOp with output(self, logger) {
+  logger.write_string(self.to_string())
+}
+
+///|
 pub struct LinearConstraint {
   coeffs : Map[String, @symnum.BigRational]
   rhs : @symnum.BigRational
@@ -456,22 +472,21 @@ fn linear_lhs_to_string(coeffs : Map[String, @symnum.BigRational]) -> String {
 }
 
 ///|
-pub fn linear_constraint_to_string(constraint : LinearConstraint) -> String {
-  let lhs = linear_lhs_to_string(constraint.coeffs)
-  let rhs = constraint.rhs.to_string()
-  let op = match constraint.op {
-    RelOp::Le => "<="
-    RelOp::Ge => ">="
-    RelOp::Lt => "<"
-    RelOp::Gt => ">"
-    RelOp::Eq => "=="
-  }
+pub impl Show for LinearConstraint with to_string(self) {
+  let lhs = linear_lhs_to_string(self.coeffs)
+  let rhs = self.rhs.to_string()
+  let op = self.op.to_string()
   "\{lhs} \{op} \{rhs}"
 }
 
 ///|
+pub impl Show for LinearConstraint with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 pub fn linear_constraint_key(constraint : LinearConstraint) -> String {
-  linear_constraint_to_string(constraint)
+  constraint.to_string()
 }
 
 ///|

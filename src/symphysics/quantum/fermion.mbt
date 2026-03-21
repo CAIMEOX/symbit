@@ -26,12 +26,17 @@ pub fn FermionOpExpr::as_expr(self : FermionOpExpr) -> Expr {
 }
 
 ///|
-pub fn FermionOpExpr::to_string(self : FermionOpExpr) -> String {
+pub impl Show for FermionOpExpr with to_string(self) {
   if self.is_annihilation {
     @symprint.to_string(self.name)
   } else {
     "Dagger(\{@symprint.to_string(self.name)})"
   }
+}
+
+///|
+pub impl Show for FermionOpExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

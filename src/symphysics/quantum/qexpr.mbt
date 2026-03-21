@@ -60,8 +60,13 @@ pub fn QExpr::as_expr(self : QExpr) -> Expr {
 }
 
 ///|
-pub fn QExpr::to_string(self : QExpr) -> String {
+pub impl Show for QExpr with to_string(self) {
   quantum_join_label(self.args)
+}
+
+///|
+pub impl Show for QExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

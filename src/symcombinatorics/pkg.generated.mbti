@@ -139,8 +139,6 @@ pub fn[T] graycode_subsets(Array[T]) -> Array[Array[T]] raise CombinatoricsError
 
 pub fn group_isomorphism(HomGroup, HomGroup, isomorphism? : Bool) -> (Bool, GroupHomomorphism?) raise CombinatoricsError
 
-pub fn group_order_to_string(GroupOrder) -> String
-
 pub fn groups_count(Int) -> @bigint.BigInt raise CombinatoricsError
 
 pub fn homomorphism(HomGroup, HomGroup, Array[HomElement], images? : Array[HomElement], check? : Bool) -> GroupHomomorphism raise CombinatoricsError
@@ -333,7 +331,7 @@ pub fn CosetTable::scan_c(Self, Int, FreeGroupElement) -> Unit raise Combinatori
 pub fn CosetTable::scan_check(Self, Int, FreeGroupElement) -> Bool
 pub fn CosetTable::standardize(Self) -> Unit
 pub fn CosetTable::switch(Self, Int, Int) -> Unit
-pub fn CosetTable::to_string(Self) -> String
+pub impl Show for CosetTable
 
 pub struct Cycle {
   mapping : Map[Int, Int]
@@ -372,7 +370,7 @@ pub fn FpGroup::random(Self) -> FreeGroupElement raise CombinatoricsError
 pub fn FpGroup::reduce(Self, FreeGroupElement) -> FreeGroupElement raise CombinatoricsError
 pub fn FpGroup::standardize_coset_table(Self) -> Unit
 pub fn FpGroup::subgroup(Self, Array[FreeGroupElement], draft? : CosetTable) -> Self raise CombinatoricsError
-pub fn FpGroup::to_string(Self) -> String
+pub impl Show for FpGroup
 
 pub struct FpSubgroup {
   parent : SubgroupParent
@@ -385,7 +383,7 @@ pub fn FpSubgroup::contains(Self, FreeGroupElement) -> Bool raise CombinatoricsE
 pub fn FpSubgroup::new(SubgroupParent, Array[FreeGroupElement], normal? : Bool) -> Self
 pub fn FpSubgroup::order(Self) -> GroupOrder raise CombinatoricsError
 pub fn FpSubgroup::to_fp_group(Self) -> FpGroup raise CombinatoricsError
-pub fn FpSubgroup::to_string(Self) -> String
+pub impl Show for FpSubgroup
 
 pub struct FreeGroup {
   symbols : Array[String]
@@ -401,7 +399,6 @@ pub fn FreeGroup::is_abelian(Self) -> Bool
 pub fn FreeGroup::new(Array[String]) -> Self
 pub fn FreeGroup::order(Self) -> GroupOrder
 pub fn FreeGroup::symbols(Self) -> Array[String]
-pub fn FreeGroup::to_string(Self) -> String
 pub impl Eq for FreeGroup
 pub impl Hash for FreeGroup
 pub impl Show for FreeGroup
@@ -450,7 +447,6 @@ pub fn FreeGroupElement::sub_syllables(Self, Int, Int) -> Self raise Combinatori
 pub fn FreeGroupElement::substituted_word(Self, Int, Int, Self) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::subword(Self, Int, Int, strict? : Bool) -> Self raise CombinatoricsError
 pub fn FreeGroupElement::subword_index(Self, Self, start? : Int) -> Int raise CombinatoricsError
-pub fn FreeGroupElement::to_string(Self) -> String
 pub impl Compare for FreeGroupElement
 pub impl Eq for FreeGroupElement
 pub impl Hash for FreeGroupElement
@@ -534,7 +530,7 @@ pub fn IntegerPartition::lt(Self, Self) -> Bool
 pub fn IntegerPartition::new(Array[Int], integer? : Int) -> Self raise CombinatoricsError
 pub fn IntegerPartition::next_lex(Self) -> Self raise CombinatoricsError
 pub fn IntegerPartition::prev_lex(Self) -> Self raise CombinatoricsError
-pub fn IntegerPartition::to_string(Self) -> String
+pub impl Show for IntegerPartition
 
 type MinWord
 pub impl Eq for MinWord

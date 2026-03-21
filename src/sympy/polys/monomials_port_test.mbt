@@ -29,6 +29,6 @@ test "monomial min/max and count" {
   json_inspect(maxm.to_array(), content=[6, 5, 9])
   let minm = @sympolys.monomial_min([m1, m2, m3])
   json_inspect(minm.to_array(), content=[0, 3, 1])
-  inspect(@sympolys.monomial_count(2, 2).to_string(), content="6")
-  inspect(@sympolys.monomial_count(2, 3).to_string(), content="10")
+  inspect(@sympolys.monomial_count(2, 2), content="6")
+  inspect(@sympolys.monomial_count(2, 3), content="10")
 }

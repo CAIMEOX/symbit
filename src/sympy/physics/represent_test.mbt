@@ -1,18 +1,14 @@
 ///|
 test "physics.quantum.represent: gate powers, (anti)commutators, and outer products" {
   inspect(
-    matrix_scalar_value_to_string(
-      represent(x_gate(0).as_expr() ^ @symcore.int(2), nqubits=1),
-    ),
+    represent(x_gate(0).as_expr() ^ @symcore.int(2), nqubits=1).to_string(),
     content="1",
   )
   inspect(
-    matrix_scalar_value_to_string(
-      represent(
-        @symcore.raw_mul([x_gate(0).as_expr(), x_gate(0).as_expr()]),
-        nqubits=1,
-      ),
-    ),
+    represent(
+      @symcore.raw_mul([x_gate(0).as_expr(), x_gate(0).as_expr()]),
+      nqubits=1,
+    ).to_string(),
     content="1",
   )
 

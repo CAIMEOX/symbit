@@ -329,14 +329,14 @@ pub fn SparseMatrix::todok(self : SparseMatrix) -> Map[(Int, Int), Expr] {
 ///|
 pub fn SparseMatrix::to_list(
   self : SparseMatrix,
-) -> Array[Array[Expr]] raise MatrixError {
+) -> Array[Array[Expr]] {
   self.to_dense().to_list()
 }
 
 ///|
 pub fn SparseMatrix::tolist(
   self : SparseMatrix,
-) -> Array[Array[Expr]] raise MatrixError {
+) -> Array[Array[Expr]] {
   self.to_list()
 }
 
@@ -344,7 +344,7 @@ pub fn SparseMatrix::tolist(
 pub fn SparseMatrix::equals(
   self : SparseMatrix,
   other : SparseMatrix,
-) -> Bool raise MatrixError {
+) -> Bool {
   self.to_dense().equals(other.to_dense())
 }
 
@@ -381,9 +381,11 @@ pub fn SparseMatrix::setitem(
 }
 
 ///|
-pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix raise MatrixError {
-  let out = zeros(self.rows, cols=Some(self.cols))
-  let data = clone_expr_rows(out.data)
+pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix {
+  let data : Array[Array[Expr]] = Array::new()
+  for _ in 0..<self.rows {
+    data.push(Array::make(self.cols, expr_zero()))
+  }
   for key, value in self.entries {
     data[key.0][key.1] = value
   }
@@ -413,8 +415,13 @@ pub fn SparseMatrix::transpose(self : SparseMatrix) -> SparseMatrix {
 }
 
 ///|
-pub fn SparseMatrix::to_string(self : SparseMatrix) -> String raise MatrixError {
+pub impl Show for SparseMatrix with to_string(self) {
   self.to_dense().to_string()
+}
+
+///|
+pub impl Show for SparseMatrix with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

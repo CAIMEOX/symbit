@@ -20,7 +20,7 @@ fn basis_to_sympy_text(basis : Array[Array[FieldElem]]) -> String {
   for vec in basis {
     let rows : Array[String] = Array::new()
     for v in vec {
-      rows.push("[\{@sympolys.fe_to_string(v)}]")
+      rows.push("[\{v.to_string()}]")
     }
     let rows_joined = rows.join(",")
     cols.push("Matrix([\{rows_joined}])")
@@ -62,7 +62,7 @@ fn field_tuple_text(values : Array[FieldElem]) -> String {
     return "()"
   }
   if values.length() == 1 {
-    return "(\{@sympolys.fe_to_string(values[0])},)"
+    return "(\{values[0].to_string()},)"
   }
   let joined = values.map(fe_to_string).join(", ")
   "(\{joined})"
@@ -126,7 +126,7 @@ test "matrices: DDM add/matmul/scalarmul/det/rref parity" {
   let ours_add = a.add(b).to_string()
   let ours_matmul = a.matmul(b).to_string()
   let ours_mul = a.mul(two).to_string()
-  let ours_det = @sympolys.fe_to_string(a.det())
+  let ours_det = a.det().to_string()
   let (r, pivots) = a.rref()
   let pivot_text = pivots.map(i => i.to_string()).join(",")
   let ours_rref = "\{r.to_string()}||[\{pivot_text}]"
@@ -192,9 +192,9 @@ test "matrices: DDM exact denominator parity" {
   let solve_den = zz.solve_den(rhs)
 
   let ours_adjugate = "Matrix(\{zz.adjugate().to_string()})"
-  let ours_adj_det = "Matrix(\{adj_det.0.to_string()})||\{@sympolys.fe_to_string(adj_det.1)}"
-  let ours_inv_den = "Matrix(\{inv_den.0.to_string()})||\{@sympolys.fe_to_string(inv_den.1)}"
-  let ours_solve_den = "Matrix(\{solve_den.0.to_string()})||\{@sympolys.fe_to_string(solve_den.1)}"
+  let ours_adj_det = "Matrix(\{adj_det.0.to_string()})||\{adj_det.1.to_string()}"
+  let ours_inv_den = "Matrix(\{inv_den.0.to_string()})||\{inv_den.1.to_string()}"
+  let ours_solve_den = "Matrix(\{solve_den.0.to_string()})||\{solve_den.1.to_string()}"
 
   let oracle_adjugate = domainmatrix_adjugate([[1, 2], [3, 4]], "ZZ")
   let oracle_adj_det = domainmatrix_adj_det([[1, 2], [3, 4]], "ZZ")
@@ -217,7 +217,7 @@ test "matrices: DDM rref_den/nullspace/solve_den_rref parity" {
   let a = @sympolys.ddm_from_ints(rows, Domain::ZZ)
   let rref_den = a.rref_den(rref_method="FF")
   let pivots = rref_den.2.map(i => i.to_string()).join(",")
-  let ours_rref_den = "Matrix(\{rref_den.0.to_string()})||\{@sympolys.fe_to_string(rref_den.1)}||[\{pivots}]"
+  let ours_rref_den = "Matrix(\{rref_den.0.to_string()})||\{rref_den.1.to_string()}||[\{pivots}]"
   let oracle_rref_den = domainmatrix_rref_den(rows, "ZZ", rref_method="FF")
   assert_eq(mx_trim(ours_rref_den), mx_trim(oracle_rref_den))
 
@@ -229,7 +229,7 @@ test "matrices: DDM rref_den/nullspace/solve_den_rref parity" {
   let sys_a = @sympolys.ddm_from_ints([[2, 0], [0, 3], [2, 3]], Domain::ZZ)
   let sys_b = @sympolys.ddm_from_ints([[1], [1], [2]], Domain::ZZ)
   let ours_solve = sys_a.solve_den_rref(sys_b)
-  let ours_solve_text = "Matrix(\{ours_solve.0.to_string()})||\{@sympolys.fe_to_string(ours_solve.1)}"
+  let ours_solve_text = "Matrix(\{ours_solve.0.to_string()})||\{ours_solve.1.to_string()}"
   let oracle_solve = domainmatrix_solve_den_rref(
     [[2, 0], [0, 3], [2, 3]],
     [[1], [1], [2]],
@@ -399,7 +399,7 @@ test "matrices: SDM rref_den and nullspace_from_rref parity" {
   )
   let rref_den = a.rref_den(rref_method="FF")
   let pivots = rref_den.2.map(i => i.to_string()).join(",")
-  let ours_rref_den = "\{rref_den.0.to_dense().to_domain_matrix().to_matrix_string()}||\{@sympolys.fe_to_string(rref_den.1)}||[\{pivots}]"
+  let ours_rref_den = "\{rref_den.0.to_dense().to_domain_matrix().to_matrix_string()}||\{rref_den.1.to_string()}||[\{pivots}]"
   let oracle_rref_den = domainmatrix_rref_den(
     [[1, 2, 3], [4, 5, 6]],
     "ZZ",
@@ -704,7 +704,7 @@ test "matrices: DDM and SDM structural wrappers" {
     ),
     "[[2,0],[0,8]]",
   )
-  assert_eq(@sympolys.fe_to_string(sdm.det()), "4")
+  assert_eq(sdm.det().to_string(), "4")
   assert_eq(mx_trim(sdm.inv().to_dense().to_string()), "[[1,0],[0,1/4]]")
   assert_eq(sdm.scc().to_string(), "[[0], [1]]")
   assert_eq(mx_trim(sdm.to_ddm().to_string()), "[[1,0],[0,4]]")
@@ -760,7 +760,7 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
     ],
   ]
   let ddm = DDM::from_list(rows, (3, 3), Domain::ZZ)
-  assert_eq(@sympolys.fe_to_string(ddm.getitem(1, -2)), "5")
+  assert_eq(ddm.getitem(1, -2).to_string(), "5")
   let ddm_set = ddm.setitem(-1, -1, @sympolys.fe_from_int(10, Domain::ZZ))
   assert_eq(ddm_set.to_domain_matrix().getitem(-1, -1).to_string(), "10")
   let ddm_slice = ddm.extract_slice(
@@ -782,7 +782,7 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
   row0[1] = @sympolys.fe_from_int(1, Domain::ZZ)
   dod[0] = row0
   let sdm = SDM::new(dod, (2, 2), Domain::ZZ)
-  assert_eq(@sympolys.fe_to_string(sdm.getitem(-2, -1)), "1")
+  assert_eq(sdm.getitem(-2, -1).to_string(), "1")
   let sdm_set = sdm.setitem(1, 0, @sympolys.fe_from_int(2, Domain::ZZ))
   assert_eq(
     sdm_set
@@ -887,8 +887,8 @@ test "matrices: linsolve unique/no-solution/parametric" {
     LinearSolveResult::Unique(sol) => {
       assert_eq(sol.length(), 2)
       assert_true(
-        @sympolys.fe_to_string(sol[0]) == "1" &&
-        @sympolys.fe_to_string(sol[1]) == "2",
+        sol[0].to_string() == "1" &&
+        sol[1].to_string() == "2",
       )
     }
     _ => fail("expected unique solution")

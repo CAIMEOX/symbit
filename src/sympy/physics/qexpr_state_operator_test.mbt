@@ -123,7 +123,7 @@ test "physics.quantum.operator/state: operator simplification hooks" {
     "qapply removes right identity on operators",
   )
   inspect(
-    matrix_scalar_value_to_string(represent(id3)),
+    represent(id3).to_string(),
     content="[[1, 0, 0], [0, 1, 0], [0, 0, 1]]",
   )
 }

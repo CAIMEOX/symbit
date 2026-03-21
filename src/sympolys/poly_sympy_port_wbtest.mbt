@@ -4,12 +4,12 @@ test "from_expr_defaults infers gens and QQ domain" {
   let y = @symcore.symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
-  inspect(poly.gens.to_string(), content="[\"x\", \"y\"]")
+  inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
   }
-  inspect(poly.to_string(), content="x*y + 1/2")
+  inspect(poly, content="x*y + 1/2")
 }
 
 ///|
@@ -64,7 +64,7 @@ test "resolve_domain gf extension builds default modulus poly" {
     Domain::GFExt(p, k, poly) => {
       inspect("\{p}", content="3")
       inspect("\{k}", content="2")
-      inspect(poly.to_string(), content="[1, 0, 1]")
+      inspect(poly, content="[1, 0, 1]")
     }
     _ => fail("expected GFExt")
   }
@@ -87,7 +87,7 @@ test "resolve_domain builds algebraic extension" {
         Domain::QQ => ()
         _ => fail("expected QQ base")
       }
-      inspect(gens.to_string(), content="[\"alpha\"]")
+      inspect(gens, content="[\"alpha\"]")
       inspect("\{rels.length()}", content="1")
     }
     _ => fail("expected AlgExt")
@@ -103,8 +103,8 @@ test "integer polynomial division matches sympy" {
   )
   let d = builder.from_expr(x + @symcore.int(1))
   let (q, r) = p.divmod_univar(d)
-  inspect(q.to_string(), content="x + 1")
-  inspect(r.to_string(), content="0")
+  inspect(q, content="x + 1")
+  inspect(r, content="0")
 }
 
 ///|

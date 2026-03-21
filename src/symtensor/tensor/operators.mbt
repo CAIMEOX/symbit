@@ -16,11 +16,19 @@ pub fn partial_derivative(
 }
 
 ///|
-pub fn partial_to_string(pd : PartialDerivative) -> String {
+pub impl Show for PartialDerivative with to_string(self) -> String {
   let args : Array[String] = Array::new()
-  args.push(to_string(pd.expr))
-  for v in pd.variables {
-    args.push(to_string(v))
+  args.push(self.expr.to_string())
+  for v in self.variables {
+    args.push(v.to_string())
   }
   "PartialDerivative(" + args.join(", ") + ")"
+}
+
+///|
+pub impl Show for PartialDerivative with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }

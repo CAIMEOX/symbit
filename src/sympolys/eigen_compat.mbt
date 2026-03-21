@@ -122,25 +122,25 @@ test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
   }
   let dense = shifted.to_dense()
   let pivot = dense[0][0]
-  let pivot_text = fe_to_string(pivot)
+  let pivot_text = pivot.to_string()
   let inv = fe_inv(pivot)
-  guard fe_to_string(pivot) == pivot_text else {
+  guard pivot.to_string() == pivot_text else {
     fail("algebraic inversion should not mutate the source element")
   }
   let pivot_prod = fe_mul(pivot, inv)
   guard fe_is_one(pivot_prod) else {
     fail(
-      "unexpected pivot inverse product: pivot=\{fe_to_string(pivot)}, inv=\{fe_to_string(inv)}, prod=\{fe_to_string(pivot_prod)}",
+      "unexpected pivot inverse product: pivot=\{pivot.to_string()}, inv=\{inv.to_string()}, prod=\{pivot_prod.to_string()}",
     )
   }
   let row0_col1 = fe_mul(dense[0][1], inv)
-  guard fe_to_string(row0_col1) == "-1*_lambda" else {
-    fail("unexpected scaled pivot row entry: \{fe_to_string(row0_col1)}")
+  guard row0_col1.to_string() == "-1*_lambda" else {
+    fail("unexpected scaled pivot row entry: \{row0_col1.to_string()}")
   }
   let factor = dense[1][0]
   let elim = fe_sub(dense[1][1], fe_mul(factor, row0_col1))
   guard fe_is_zero(elim) else {
-    fail("unexpected elimination residue: \{fe_to_string(elim)}")
+    fail("unexpected elimination residue: \{elim.to_string()}")
   }
   let (rref, pivots) = shifted.rref()
   guard pivots == [0] else {

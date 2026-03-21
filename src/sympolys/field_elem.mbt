@@ -451,8 +451,8 @@ pub fn fe_from_rational(
 
 ///|
 /// Render a field element as a readable symbolic string.
-pub fn fe_to_string(a : FieldElem) -> String {
-  match a {
+pub impl Show for FieldElem with to_string(self) -> String {
+  match self {
     FieldElem::QQ(x) => x.to_string()
     FieldElem::CC(a, b) => {
       let sb = StringBuilder::new()
@@ -494,7 +494,7 @@ fn fe_algext_to_string(
       sb.write_string(" + ")
     }
     first = false
-    let coeff_str = fe_to_string(c)
+    let coeff_str = c.to_string()
     if i == 0 {
       sb.write_string(coeff_str)
     } else {
@@ -759,16 +759,16 @@ fn load_algext_minpoly(
 
 ///|
 pub impl Show for FieldElem with output(self, logger : &Logger) -> Unit {
-  logger.write_string(fe_to_string(self))
+  logger.write_string(self.to_string())
 }
 
 ///|
 test "GF(p) arithmetic basics" {
   let a = FieldElem::GFp(5, 2)
   let b = FieldElem::GFp(5, 4)
-  inspect(fe_add(a, b).to_string(), content="1")
-  inspect(fe_mul(a, b).to_string(), content="3")
-  inspect(fe_inv(a).to_string(), content="3")
+  inspect(fe_add(a, b), content="1")
+  inspect(fe_mul(a, b), content="3")
+  inspect(fe_inv(a), content="3")
 }
 
 ///|
@@ -778,7 +778,7 @@ test "GF(p^2) multiplication and inverse" {
   let a = FieldElem::GFExt(3, [1, 1], m) // 1 + x
   let b = FieldElem::GFExt(3, [2, 1], m) // 2 + x
   let prod = fe_mul(a, b)
-  inspect(prod.to_string(), content="[1]")
+  inspect(prod, content="[1]")
   let inv = fe_inv(a)
-  inspect(fe_mul(a, inv).to_string(), content="[1]")
+  inspect(fe_mul(a, inv), content="[1]")
 }

@@ -7,7 +7,7 @@ test "factor_list x^4 - 1 over ZZ" {
   let x = symbol("x")
   let poly = builder.from_expr((x ^ int(4)) - int(1))
   let (content, factors) = poly.factor_list()
-  inspect(content.to_string(), content="1")
+  inspect(content, content="1")
   let reprs = factors.map(pair => "(\{pair.0.to_string()}, \{pair.1})")
   reprs.sort()
   let joined = reprs.join(" | ")
@@ -33,7 +33,7 @@ test "gcd_univar matches x^2-1 and x^2-x" {
   let p = builder.from_expr((x ^ int(2)) - int(1))
   let q = builder.from_expr((x ^ int(2)) - x)
   let g = p.gcd_univar(q)
-  inspect(g.to_string(), content="x + -1")
+  inspect(g, content="x + -1")
 }
 
 ///|
@@ -43,8 +43,8 @@ test "divmod_univar gives quotient and remainder in ZZ" {
   let p = builder.from_expr((x ^ int(2)) + int(1))
   let d = builder.from_expr(x + int(1))
   let (q, r) = p.divmod_univar(d)
-  inspect(q.to_string(), content="x + -1")
-  inspect(r.to_string(), content="2")
+  inspect(q, content="x + -1")
+  inspect(r, content="2")
 }
 
 ///|
@@ -53,7 +53,7 @@ test "sqf_part removes repeated factors" {
   let x = symbol("x")
   let poly = builder.from_expr(((x - int(1)) ^ int(2)) * (x + int(2)))
   let sqf = poly.sqf_part()
-  inspect(sqf.to_string(), content="x**2 + x + -2")
+  inspect(sqf, content="x**2 + x + -2")
 }
 
 ///|
@@ -596,7 +596,7 @@ test "polytools: discriminant parity over ZZ" {
   let x = symbol("x")
   let f = b.from_expr((x ^ int(2)) - int(1))
   let disc = @sympolys.discriminant(f)
-  let ours = @sympolys.fe_to_string(disc).trim().to_string()
+  let ours = disc.to_string().trim().to_string()
   let oracle = discriminant(f.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }

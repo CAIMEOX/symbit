@@ -9,6 +9,23 @@ pub enum MatrixScalarValue {
 } derive(Eq)
 
 ///|
+pub impl Show for MatrixScalarValue with to_string(self) {
+  match self {
+    MatrixScalarValue::Matrix(matrix) =>
+      @symphysics.explicit_matrix_rows_string(matrix)
+    MatrixScalarValue::Scalar(expr) => @symprint.to_string(expr)
+  }
+}
+
+///|
+pub impl Show for MatrixScalarValue with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 pub fn matrix_eye(n : Int) -> @symphysics.ExplicitMatrix {
   @symphysics.explicit_matrix_eye(n)
 }
@@ -106,13 +123,4 @@ pub fn matrix_tensor_product(
     acc = kronecker_pair(acc, product[idx])
   }
   acc
-}
-
-///|
-pub fn matrix_scalar_value_to_string(value : MatrixScalarValue) -> String {
-  match value {
-    MatrixScalarValue::Matrix(matrix) =>
-      @symphysics.explicit_matrix_rows_string(matrix)
-    MatrixScalarValue::Scalar(expr) => @symprint.to_string(expr)
-  }
 }

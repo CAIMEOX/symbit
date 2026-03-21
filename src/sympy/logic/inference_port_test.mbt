@@ -12,7 +12,7 @@ test "inference satisfiable parity" {
   let a = bool_symbol("A")
   let b = bool_symbol("B")
   let expr = bool_and([a, bool_not(b)])
-  let ours = satresult_to_string(satisfiable(expr, algorithm="dpll2"))
+  let ours = satisfiable(expr, algorithm="dpll2").to_string()
   let oracle = normalize_model_string(
     inference_satisfiable_str(to_string(expr), algorithm="dpll2"),
   )
@@ -24,9 +24,7 @@ test "inference satisfiable all_models parity" {
   let a = bool_symbol("A")
   let b = bool_symbol("B")
   let expr = bool_equivalent([a, b])
-  let ours = satresult_to_string(
-    satisfiable(expr, algorithm="dpll2", all_models=true),
-  )
+  let ours = satisfiable(expr, algorithm="dpll2", all_models=true).to_string()
   let oracle_raw = inference_satisfiable_str(
     to_string(expr),
     algorithm="dpll2",

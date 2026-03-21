@@ -15,7 +15,6 @@ using @symsets {
   product_set,
   rationals,
   reals,
-  setbool_to_string,
   to_string,
   intersection,
   union,

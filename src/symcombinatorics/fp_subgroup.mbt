@@ -259,11 +259,16 @@ pub fn FpSubgroup::to_fp_group(
 
 ///|
 /// Return a readable subgroup description.
-pub fn FpSubgroup::to_string(self : FpSubgroup) -> String {
+pub impl Show for FpSubgroup with to_string(self) -> String {
   if self.generators.length() > 30 {
     "<fp subgroup with \{self.generators.length()} generators>"
   } else {
     let gens = self.generators.map(g => g.to_string()).join(", ")
     "<fp subgroup on the generators (\{gens})>"
   }
+}
+
+///|
+pub impl Show for FpSubgroup with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }

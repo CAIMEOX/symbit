@@ -10,7 +10,7 @@ fn sympy_contains_str_adv(set : Set, elem : @symcore.Expr) -> String raise {
 
 ///|
 fn setbool_str_adv(val : SetBool) -> String {
-  setbool_to_string(val)
+  val.to_string()
 }
 
 ///|

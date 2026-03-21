@@ -557,8 +557,13 @@ pub fn FpGroup::subgroup(
 
 ///|
 /// Return a readable description of the finitely presented group.
-pub fn FpGroup::to_string(self : FpGroup) -> String {
+pub impl Show for FpGroup with to_string(self) -> String {
   fp_group_name(self.free_group, self.generators)
+}
+
+///|
+pub impl Show for FpGroup with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

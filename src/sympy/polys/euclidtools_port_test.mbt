@@ -160,7 +160,7 @@ test "euclidtools: divmod dense arrays (x^5+1) / (x+1)" {
   inspect(q_dense.map(c => c.to_string()).join(","), content="1,-1,1,-1,1")
   inspect(r_dense.map(c => c.to_string()).join(","), content="0")
   let pair = div_pair_to_string(q, r)
-  inspect(pair.trim().to_string(), content="x**4 - x**3 + x**2 - x + 1||0")
+  inspect(pair.trim(), content="x**4 - x**3 + x**2 - x + 1||0")
 }
 
 ///|

@@ -8,11 +8,16 @@ pub enum SatResult {
 }
 
 ///|
-pub fn satresult_to_string(res : SatResult) -> String {
-  match res {
+pub impl Show for SatResult with to_string(self) {
+  match self {
     SatResult::Single(model) => model_to_string(model)
     SatResult::All(models) => models_to_string(models)
   }
+}
+
+///|
+pub impl Show for SatResult with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

@@ -12,7 +12,7 @@ pub fn rootof(poly : Poly, index : Int) -> RootOf {
 
 ///|
 /// Render this symbolic root in `CRootOf(poly, index)` form.
-pub fn RootOf::to_string(self : RootOf) -> String {
+pub impl Show for RootOf with to_string(self) -> String {
   let expr_str = @symprint.to_string(self.poly.to_expr())
   "CRootOf(\{expr_str}, \{self.index})"
 }

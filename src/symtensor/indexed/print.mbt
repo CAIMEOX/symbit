@@ -10,20 +10,35 @@ fn index_to_string(index : Index) -> String {
 }
 
 ///|
-pub fn idx_to_string(item : Idx) -> String {
-  item.name
+pub impl Show for Idx with to_string(self) -> String {
+  self.name
 }
 
 ///|
-pub fn indexed_base_to_string(base : IndexedBase) -> String {
-  base.name
+pub impl Show for Idx with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
-pub fn indexed_to_string(item : Indexed) -> String {
-  let base_str = indexed_base_to_string(item.base)
-  let indices = item.indices.map(index_to_string)
+pub impl Show for IndexedBase with to_string(self) -> String {
+  self.name
+}
+
+///|
+pub impl Show for IndexedBase with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for Indexed with to_string(self) -> String {
+  let base_str = self.base.to_string()
+  let indices = self.indices.map(index_to_string)
   base_str + "[" + indices.join(", ") + "]"
+}
+
+///|
+pub impl Show for Indexed with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -35,7 +50,7 @@ fn format_expr(expr : IndexedExpr, parent_prec : Int) -> String {
   }
   let body = match expr {
     IndexedExpr::Scalar(e) => @symprint.to_string(e)
-    IndexedExpr::Atom(i) => indexed_to_string(i)
+    IndexedExpr::Atom(i) => i.to_string()
     IndexedExpr::Add(items) =>
       items.map(item => format_expr(item, prec)).join(" + ")
     IndexedExpr::Mul(items) =>
@@ -49,6 +64,11 @@ fn format_expr(expr : IndexedExpr, parent_prec : Int) -> String {
 }
 
 ///|
-pub fn indexed_expr_to_string(expr : IndexedExpr) -> String {
-  format_expr(expr, 0)
+pub impl Show for IndexedExpr with to_string(self) -> String {
+  format_expr(self, 0)
+}
+
+///|
+pub impl Show for IndexedExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }

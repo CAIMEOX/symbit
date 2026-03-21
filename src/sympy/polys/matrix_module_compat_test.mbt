@@ -53,9 +53,9 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   let ours_invs = if invs.is_empty() {
     "()"
   } else if invs.length() == 1 {
-    "(\{@sympolys.fe_to_string(invs[0])},)"
+    "(\{invs[0].to_string()},)"
   } else {
-    let joined = invs.map(@sympolys.fe_to_string).join(", ")
+    let joined = invs.map(fe_to_string).join(", ")
     "(\{joined})"
   }
   let oracle_invs = domainmatrix_invariant_factors(rows, "ZZ")
@@ -83,10 +83,10 @@ test "matrix module wrappers: eigen wrappers preserve method data" {
   let wrapped = @sympolys.dom_eigenvects(dm)
   let expected = dm.dom_eigenvects()
   let wrapped_rational = wrapped.0.map(item => {
-    (@sympolys.fe_to_string(item.1), item.2, item.3.to_matrix_string())
+    (item.1.to_string(), item.2, item.3.to_matrix_string())
   })
   let expected_rational = expected.0.map(item => {
-    (@sympolys.fe_to_string(item.1), item.2, item.3.to_matrix_string())
+    (item.1.to_string(), item.2, item.3.to_matrix_string())
   })
   assert_eq(wrapped_rational, expected_rational)
   let sympy_view = @sympolys.dom_eigenvects_to_sympy(wrapped.0, wrapped.1)
@@ -123,10 +123,10 @@ test "matrix module wrappers: dup_factor_list exposes dense factors for charpoly
     @sympolys.fe_from_int(-2, Domain::ZZ),
   ]
   let (content, factors) = @sympolys.dup_factor_list(f, Domain::ZZ)
-  assert_eq(@sympolys.fe_to_string(content), "1")
+  assert_eq(content.to_string(), "1")
   let parts : Array[String] = Array::new()
   for factor in factors {
-    let coeffs = factor.0.map(@sympolys.fe_to_string).join(", ")
+    let coeffs = factor.0.map(fe_to_string).join(", ")
     parts.push("[\{coeffs}]^\{factor.1}")
   }
   parts.sort()

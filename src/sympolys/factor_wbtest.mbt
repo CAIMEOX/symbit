@@ -56,10 +56,10 @@ test "factor wb: extension and univariate guard branches" {
 ///|
 test "factor wb: determinant/resultant helper branches" {
   let d0 = poly_det([], Domain::QQ, "x")
-  inspect(d0.to_string(), content="1")
+  inspect(d0, content="1")
 
   let d1 = poly_det([[fw_const(2, Domain::QQ)]], Domain::QQ, "x")
-  inspect(d1.to_string(), content="2")
+  inspect(d1, content="2")
 
   let singular = poly_det(
     [
@@ -69,7 +69,7 @@ test "factor wb: determinant/resultant helper branches" {
     Domain::QQ,
     "x",
   )
-  inspect(singular.to_string(), content="0")
+  inspect(singular, content="0")
 
   let swapped = poly_det(
     [
@@ -79,7 +79,7 @@ test "factor wb: determinant/resultant helper branches" {
     Domain::QQ,
     "x",
   )
-  inspect(swapped.to_string(), content="-1")
+  inspect(swapped, content="-1")
 
   let d3 = poly_det(
     [
@@ -110,7 +110,7 @@ test "factor wb: determinant/resultant helper branches" {
     Domain::QQ,
     "x",
   )
-  inspect(rz.to_string(), content="0")
+  inspect(rz, content="0")
 }
 
 ///|

@@ -549,8 +549,16 @@ pub fn IntegerPartition::le(
 
 ///|
 /// Return the canonical string representation of the partition.
-pub fn IntegerPartition::to_string(self : IntegerPartition) -> String {
+pub impl Show for IntegerPartition with to_string(self) -> String {
   "\{self.partition}"
+}
+
+///|
+pub impl Show for IntegerPartition with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

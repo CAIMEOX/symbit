@@ -507,7 +507,7 @@ fn format_expr(expr : BoolExpr, parent_prec : Int) -> String {
     BoolExpr::True => "True"
     BoolExpr::False => "False"
     BoolExpr::Symbol(name) => name
-    BoolExpr::LRA(constraint) => linear_constraint_to_string(constraint)
+    BoolExpr::LRA(constraint) => constraint.to_string()
     BoolExpr::Not(inner) => {
       let inner_str = format_expr(inner, 0)
       let wrapped = if precedence(inner) < prec {

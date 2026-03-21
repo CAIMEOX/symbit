@@ -17,18 +17,17 @@ pub enum GroupOrder {
 } derive(Eq)
 
 ///|
-/// Format a group order using SymPy's `oo` notation for infinity.
-pub fn group_order_to_string(order : GroupOrder) -> String {
-  match order {
+/// Display finite orders as integers and infinite order as `oo`.
+pub impl Show for GroupOrder with to_string(self) -> String {
+  match self {
     GroupOrder::Finite(n) => n.to_string()
     GroupOrder::Infinite => "oo"
   }
 }
 
 ///|
-/// Display finite orders as integers and infinite order as `oo`.
 pub impl Show for GroupOrder with output(self, logger : &Logger) -> Unit {
-  logger.write_string(group_order_to_string(self))
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -169,7 +168,7 @@ pub fn FreeGroup::center(self : FreeGroup) -> Array[FreeGroupElement] {
 
 ///|
 /// Return a readable description of the free group and its generators.
-pub fn FreeGroup::to_string(self : FreeGroup) -> String {
+pub impl Show for FreeGroup with to_string(self) -> String {
   if self.rank > 30 {
     "<free group with \{self.rank} generators>"
   } else {
@@ -178,8 +177,6 @@ pub fn FreeGroup::to_string(self : FreeGroup) -> String {
   }
 }
 
-///|
-/// Render the free group using the same descriptive form as `to_string()`.
 pub impl Show for FreeGroup with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }
@@ -370,7 +367,7 @@ pub fn FreeGroupElement::length(self : FreeGroupElement) -> Int {
 
 ///|
 /// Return a multiplicative expression such as `x*y**-2*z`.
-pub fn FreeGroupElement::to_string(self : FreeGroupElement) -> String {
+pub impl Show for FreeGroupElement with to_string(self) -> String {
   if self.is_identity() {
     return "<identity>"
   }
@@ -389,8 +386,6 @@ pub fn FreeGroupElement::to_string(self : FreeGroupElement) -> String {
   s
 }
 
-///|
-/// Render the reduced word in multiplicative notation.
 pub impl Show for FreeGroupElement with output(self, logger : &Logger) -> Unit {
   logger.write_string(self.to_string())
 }

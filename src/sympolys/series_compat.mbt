@@ -51,7 +51,7 @@ fn series_coeffs_equal(lhs : Array[FieldElem], rhs : Array[FieldElem]) -> Bool {
     return false
   }
   for i in 0..<lhs.length() {
-    if fe_to_string(lhs[i]) != fe_to_string(rhs[i]) {
+    if lhs[i].to_string() != rhs[i].to_string() {
       return false
     }
   }

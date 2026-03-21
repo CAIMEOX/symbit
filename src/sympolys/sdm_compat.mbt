@@ -513,7 +513,7 @@ pub fn SDM::to_string(self : SDM) -> String raise PolyError {
   for r in row_ids {
     let cells = by_row[r]
     cells.sort_by((a, b) => a.0 - b.0)
-    let cell_text = cells.map(p => "\{p.0}: \{fe_to_string(p.1)}").join(", ")
+    let cell_text = cells.map(p => "\{p.0}: \{p.1.to_string()}").join(", ")
     row_parts.push("\{r}: {\{cell_text}}")
   }
   let body = row_parts.join(", ")

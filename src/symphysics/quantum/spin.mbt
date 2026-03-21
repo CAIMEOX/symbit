@@ -388,8 +388,13 @@ pub fn RotationExpr::as_expr(self : RotationExpr) -> Expr {
 }
 
 ///|
-pub fn RotationExpr::to_string(self : RotationExpr) -> String {
+pub impl Show for RotationExpr with to_string(self) {
   "R(\{@symprint.to_string(self.alpha)},\{@symprint.to_string(self.beta)},\{@symprint.to_string(self.gamma)})"
+}
+
+///|
+pub impl Show for RotationExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -410,7 +415,7 @@ pub fn WignerDExpr::as_expr(self : WignerDExpr) -> Expr {
 }
 
 ///|
-pub fn WignerDExpr::to_string(self : WignerDExpr) -> String {
+pub impl Show for WignerDExpr with to_string(self) {
   if self.alpha == int(0) && self.gamma == int(0) {
     "d(\{@symprint.to_string(self.j)},\{@symprint.to_string(self.m)},\{@symprint.to_string(self.mp)},\{@symprint.to_string(self.beta)})"
   } else {
@@ -419,7 +424,12 @@ pub fn WignerDExpr::to_string(self : WignerDExpr) -> String {
 }
 
 ///|
-pub fn JzState::to_string(self : JzState) -> String {
+pub impl Show for WignerDExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for JzState with to_string(self) {
   let parts : Array[String] = [
     @symprint.to_string(self.j),
     @symprint.to_string(self.m),
@@ -445,6 +455,11 @@ pub fn JzState::to_string(self : JzState) -> String {
   } else {
     "|\{contents}>"
   }
+}
+
+///|
+pub impl Show for JzState with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

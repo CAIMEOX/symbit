@@ -12,8 +12,6 @@ pub fn array_contraction(ArrayExpr, Array[(Int, Int)]) -> ArrayExpr
 
 pub fn array_element(ArrayExpr, Array[@symcore.Expr]) -> ArrayExpr
 
-pub fn array_expr_to_string(ArrayExpr) -> String
-
 pub fn array_mul(Array[ArrayExpr]) -> ArrayExpr
 
 pub fn array_symbol(String, shape? : Array[@symcore.Expr]) -> ArrayExpr
@@ -57,6 +55,7 @@ pub enum ArrayExpr {
   Add(Array[ArrayExpr])
   Mul(Array[ArrayExpr])
 }
+pub impl Show for ArrayExpr
 
 pub(all) struct DenseArray {
   shape : Array[Int]

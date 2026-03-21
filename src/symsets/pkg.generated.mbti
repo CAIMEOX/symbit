@@ -39,8 +39,6 @@ pub fn rationals() -> Set
 
 pub fn reals() -> Set
 
-pub fn setbool_to_string(SetBool) -> String
-
 pub fn sort_sets_in_place(Array[Set]) -> Unit
 
 pub fn to_string(Set) -> String

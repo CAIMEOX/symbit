@@ -10,14 +10,14 @@ fn units_assert_expr_equal(
 
 ///|
 test "physics.units: prefix arithmetic and quantity derivation" {
-  assert_eq(prefix_value_to_string(milli.mul_prefix(kilo)), "1")
-  assert_eq(prefix_value_to_string(kilo.mul_prefix(kilo)), "M")
-  assert_eq(prefix_value_to_string(milli.rdiv_one()), "k")
-  assert_eq(prefix_value_to_string(kilo.div_prefix(milli)), "M")
+  assert_eq(milli.mul_prefix(kilo).to_string(), "1")
+  assert_eq(kilo.mul_prefix(kilo).to_string(), "M")
+  assert_eq(milli.rdiv_one().to_string(), "k")
+  assert_eq(kilo.div_prefix(milli).to_string(), "M")
 
   let dodeca = prefix("dodeca", "dd", 1, base=12)
-  assert_eq(prefix_value_to_string(dodeca.mul_prefix(dodeca)), "144")
-  assert_eq(prefix_value_to_string(dodeca.rdiv_one()), "1/12")
+  assert_eq(dodeca.mul_prefix(dodeca).to_string(), "144")
+  assert_eq(dodeca.rdiv_one().to_string(), "1/12")
 
   units_assert_expr_equal(milli.mul_quantity(watt), "watt/1000", "milli*watt")
   units_assert_expr_equal(

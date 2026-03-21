@@ -9,7 +9,7 @@ test "factory: from_expr_defaults infers gens/domain QQ" {
   let y = @symcore.symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
-  inspect(poly.gens.to_string(), content="[\"x\", \"y\"]")
+  inspect(poly.gens, content="[\"x\", \"y\"]")
   match poly.domain {
     Domain::QQ => ()
     _ => fail("expected QQ domain")
@@ -50,5 +50,5 @@ test "factory: explicit gens order preserved" {
   let y = @symcore.symbol("y")
   let expr = x + y
   let poly = Poly::from_expr_defaults(expr, gens=["y", "x"])
-  inspect(poly.gens.to_string(), content="[\"y\", \"x\"]")
+  inspect(poly.gens, content="[\"y\", \"x\"]")
 }

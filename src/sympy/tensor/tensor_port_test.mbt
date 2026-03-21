@@ -5,7 +5,7 @@ test "tensor basic expression" {
   let j = tensor_index("j", l, is_up=false)
   let a = tensor_head("A", [l, l])
   let expr = a.call([i, j])
-  let s = @symtensor_tensor.to_string(expr)
+  let s = expr.to_string()
   assert_eq(s, "A(i, -j)")
   assert_oracle(try? tensor_str(expr), s)
 }

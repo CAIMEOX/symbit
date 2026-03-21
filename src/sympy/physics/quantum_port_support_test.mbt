@@ -96,7 +96,6 @@ using @symquant {
   matrix_dagger,
   matrix_eye,
   matrix_flat_strings,
-  matrix_scalar_value_to_string,
   matrix_tensor_product,
   matrix_to_qubit,
   matrix_to_zero,

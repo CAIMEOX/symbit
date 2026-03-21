@@ -167,8 +167,13 @@ pub fn Matrix::tolist(self : Matrix) -> Array[Array[Expr]] {
 }
 
 ///|
-pub fn Matrix::to_string(self : Matrix) -> String {
+pub impl Show for Matrix with to_string(self) {
   matrix_string(self.data)
+}
+
+///|
+pub impl Show for Matrix with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

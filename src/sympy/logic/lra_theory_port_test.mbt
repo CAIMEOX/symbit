@@ -9,9 +9,9 @@ fn satresult_to_bool_string(res : SatResult) -> String {
 ///|
 fn constraint_to_sympy_str(constraint : LinearConstraint) -> String {
   if constraint.op != RelOp::Eq {
-    return linear_constraint_to_string(constraint)
+    return constraint.to_string()
   }
-  let raw = linear_constraint_to_string(constraint)
+  let raw = constraint.to_string()
   let parts : Array[String] = Array::new()
   for part in raw.split(" == ") {
     parts.push(part.to_string())
@@ -27,7 +27,7 @@ fn constraint_eq_parts(constraint : LinearConstraint) -> (String, String)? {
   if constraint.op != RelOp::Eq {
     return None
   }
-  let raw = linear_constraint_to_string(constraint)
+  let raw = constraint.to_string()
   let parts : Array[String] = Array::new()
   for part in raw.split(" == ") {
     parts.push(part.to_string())

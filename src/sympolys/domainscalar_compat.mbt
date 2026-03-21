@@ -213,8 +213,13 @@ pub fn DomainScalar::is_one(self : DomainScalar) -> Bool {
 }
 
 ///|
-pub fn DomainScalar::to_string(self : DomainScalar) -> String {
-  fe_to_string(self.element)
+pub impl Show for DomainScalar with to_string(self) -> String {
+  self.element.to_string()
+}
+
+///|
+pub impl Show for DomainScalar with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

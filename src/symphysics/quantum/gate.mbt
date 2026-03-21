@@ -291,9 +291,14 @@ pub fn GateExpr::as_expr(self : GateExpr) -> Expr {
 }
 
 ///|
-pub fn GateExpr::to_string(self : GateExpr) -> String {
+pub impl Show for GateExpr with to_string(self) {
   let rendered = self.args.map(arg => arg.to_string()).join(",")
   "\{gate_alias_name(self.kind)}(\{rendered})"
+}
+
+///|
+pub impl Show for GateExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

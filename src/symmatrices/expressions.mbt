@@ -735,7 +735,7 @@ pub fn MatrixExpr::shape(self : MatrixExpr) -> (Int, Int) raise MatrixError {
 }
 
 ///|
-pub fn MatrixExpr::to_string(self : MatrixExpr) -> String {
+pub impl Show for MatrixExpr with to_string(self) {
   match self {
     MatrixExpr::Concrete(m) => m.to_string()
     MatrixExpr::Symbol(name, _, _) => name
@@ -760,6 +760,11 @@ pub fn MatrixExpr::to_string(self : MatrixExpr) -> String {
     MatrixExpr::Inverse(inner) => inner.to_string() + "^-1"
     MatrixExpr::Pow(inner, exp) => inner.to_string() + "^" + exp.to_string()
   }
+}
+
+///|
+pub impl Show for MatrixExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

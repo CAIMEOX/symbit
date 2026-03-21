@@ -85,6 +85,19 @@ pub enum PrefixValue {
 } derive(Eq)
 
 ///|
+pub impl Show for PrefixValue with to_string(self) {
+  match self {
+    PrefixValue::Prefix(p) => p.abbrev
+    PrefixValue::Expr(expr) => @symprint.to_string(expr)
+  }
+}
+
+///|
+pub impl Show for PrefixValue with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
 fn int_pow(base : Int, exp : Int) -> BigInt {
   let mut out = BigInt::from_int(1)
   let b = BigInt::from_int(base)
@@ -177,14 +190,6 @@ pub fn Prefix::mul_quantity(self : Prefix, other : Quantity) -> Expr {
 ///|
 pub fn Prefix::div_quantity(self : Prefix, other : Quantity) -> Expr {
   self.scale_factor() * expr_inverse(other.symbol_expr())
-}
-
-///|
-pub fn prefix_value_to_string(value : PrefixValue) -> String {
-  match value {
-    PrefixValue::Prefix(p) => p.abbrev
-    PrefixValue::Expr(expr) => @symprint.to_string(expr)
-  }
 }
 
 ///|

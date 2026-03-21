@@ -53,30 +53,35 @@ fn expr_list_to_string(items : Array[@symcore.Expr]) -> String {
 }
 
 ///|
-pub fn array_expr_to_string(expr : ArrayExpr) -> String {
-  match expr {
+pub impl Show for ArrayExpr with to_string(self) -> String {
+  match self {
     ArrayExpr::Symbol(name, shape) =>
       match shape {
         None => name
         Some(shp) => name + "(" + expr_list_to_string(shp) + ")"
       }
     ArrayExpr::Element(base, indices) =>
-      array_expr_to_string(base) + "[" + expr_list_to_string(indices) + "]"
+      base.to_string() + "[" + expr_list_to_string(indices) + "]"
     ArrayExpr::TensorProduct(items) =>
-      "ArrayTensorProduct(" + items.map(array_expr_to_string).join(", ") + ")"
+      "ArrayTensorProduct(" + items.map(item => item.to_string()).join(", ") + ")"
     ArrayExpr::Contraction(base, axes) => {
       let pairs = axes.map(pair => {
         "(" + pair.0.to_string() + ", " + pair.1.to_string() + ")"
       })
       "ArrayContraction(" +
-      array_expr_to_string(base) +
+      base.to_string() +
       ", " +
       "[" +
       pairs.join(", ") +
       "]" +
       ")"
     }
-    ArrayExpr::Add(items) => items.map(array_expr_to_string).join(" + ")
-    ArrayExpr::Mul(items) => items.map(array_expr_to_string).join("*")
+    ArrayExpr::Add(items) => items.map(item => item.to_string()).join(" + ")
+    ArrayExpr::Mul(items) => items.map(item => item.to_string()).join("*")
   }
+}
+
+///|
+pub impl Show for ArrayExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }

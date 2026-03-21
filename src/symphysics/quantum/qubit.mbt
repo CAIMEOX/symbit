@@ -170,7 +170,7 @@ pub fn QubitExpr::as_expr(self : QubitExpr) -> Expr {
 }
 
 ///|
-pub fn QubitExpr::to_string(self : QubitExpr) -> String {
+pub impl Show for QubitExpr with to_string(self) {
   let contents = if self.int_form {
     bits_to_int(self.bits).to_string()
   } else {
@@ -181,6 +181,11 @@ pub fn QubitExpr::to_string(self : QubitExpr) -> String {
   } else {
     "|\{contents}>"
   }
+}
+
+///|
+pub impl Show for QubitExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

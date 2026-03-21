@@ -11,19 +11,19 @@ fn units_port_assert_expr_equal(
 ///|
 test "physics.units: prefix parity" {
   assert_eq(
-    prefix_value_to_string(milli.mul_prefix(kilo)),
+    milli.mul_prefix(kilo).to_string(),
     physics_eval_str("milli*kilo"),
   )
   assert_eq(
-    prefix_value_to_string(kilo.mul_prefix(kilo)),
+    kilo.mul_prefix(kilo).to_string(),
     physics_eval_str("kilo*kilo"),
   )
   assert_eq(
-    prefix_value_to_string(milli.rdiv_one()),
+    milli.rdiv_one().to_string(),
     physics_eval_str("1/milli"),
   )
   assert_eq(
-    prefix_value_to_string(kilo.div_prefix(milli)),
+    kilo.div_prefix(milli).to_string(),
     physics_eval_str("kilo/milli"),
   )
   units_port_assert_expr_equal(

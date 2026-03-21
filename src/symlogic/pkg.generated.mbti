@@ -102,8 +102,6 @@ pub fn linear_constraint_key(LinearConstraint) -> String
 
 pub fn linear_constraint_negate(LinearConstraint) -> Array[LinearConstraint]
 
-pub fn linear_constraint_to_string(LinearConstraint) -> String
-
 pub fn literal_symbol(BoolExpr) -> BoolExpr
 
 pub fn lra_check_with_conflict(Array[LraAssumption]) -> Array[LraConflictLit]?
@@ -121,8 +119,6 @@ pub fn pl_true_int_repr(Array[Int], Map[Int, Bool]) -> Bool?
 pub fn pos_form(Array[BoolExpr], Array[TermInput], dontcares? : Array[TermInput]) -> BoolExpr
 
 pub fn satisfiable(BoolExpr, algorithm? : String, all_models? : Bool, minimal? : Bool, use_lra_theory? : Bool) -> SatResult
-
-pub fn satresult_to_string(SatResult) -> String
 
 pub fn simplify_logic(BoolExpr, form? : String, deep? : Bool, force? : Bool, dontcare? : BoolExpr) -> BoolExpr
 
@@ -192,6 +188,7 @@ pub struct LinearConstraint {
   rhs : @symnum.BigRational
   op : RelOp
 }
+pub impl Show for LinearConstraint
 
 pub(all) struct LraAssumption {
   constraint : LinearConstraint
@@ -228,6 +225,7 @@ pub enum SatResult {
   Single(Map[String, Bool]?)
   All(Array[Map[String, Bool]?])
 }
+pub impl Show for SatResult
 
 pub(all) enum TermInput {
   IntTerm(Int)

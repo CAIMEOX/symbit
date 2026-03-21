@@ -202,8 +202,6 @@ pub fn prefix(String, String, Int, base? : Int, latex_repr? : String?) -> Prefix
 
 pub fn prefix_unit(Quantity, Map[String, Prefix]) -> Array[Quantity]
 
-pub fn prefix_value_to_string(PrefixValue) -> String
-
 pub let prefixes : Map[String, Prefix]
 
 pub fn psi_n(@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
@@ -299,7 +297,6 @@ pub fn BeamParameter::gouy(Self) -> @symcore.Expr
 pub fn BeamParameter::n(Self) -> @symcore.Expr
 pub fn BeamParameter::q(Self) -> @symcore.Expr
 pub fn BeamParameter::radius(Self) -> @symcore.Expr
-pub fn BeamParameter::to_string(Self) -> String
 pub fn BeamParameter::w(Self) -> @symcore.Expr
 pub fn BeamParameter::w_0(Self) -> @symcore.Expr
 pub fn BeamParameter::waist_approximation_limit(Self) -> @symcore.Expr
@@ -307,6 +304,7 @@ pub fn BeamParameter::wavelen(Self) -> @symcore.Expr
 pub fn BeamParameter::z(Self) -> @symcore.Expr
 pub fn BeamParameter::z_r(Self) -> @symcore.Expr
 pub impl Eq for BeamParameter
+pub impl Show for BeamParameter
 
 pub struct Dimension {
   name : @symcore.Expr
@@ -340,8 +338,8 @@ pub struct GeometricRay {
 pub fn GeometricRay::angle(Self) -> @symcore.Expr
 pub fn GeometricRay::height(Self) -> @symcore.Expr
 pub fn GeometricRay::matrix(Self) -> ExplicitMatrix
-pub fn GeometricRay::to_string(Self) -> String
 pub impl Eq for GeometricRay
+pub impl Show for GeometricRay
 
 pub enum Medium {
   MediumN(String, @symcore.Expr)
@@ -382,6 +380,7 @@ pub enum PrefixValue {
   Expr(@symcore.Expr)
 }
 pub impl Eq for PrefixValue
+pub impl Show for PrefixValue
 
 pub struct Quantity {
   name : String
@@ -405,8 +404,8 @@ pub fn RayTransferMatrix::b(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::c(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::d(Self) -> @symcore.Expr
 pub fn RayTransferMatrix::matrix(Self) -> ExplicitMatrix
-pub fn RayTransferMatrix::to_string(Self) -> String
 pub impl Eq for RayTransferMatrix
+pub impl Show for RayTransferMatrix
 
 pub struct TWave {
   amplitude : @symcore.Expr
@@ -431,10 +430,10 @@ pub fn TWave::speed(Self) -> @symcore.Expr
 pub fn TWave::sub(Self, Self) -> Self raise PhysicsError
 pub fn TWave::superpose(Self, Self) -> Self raise PhysicsError
 pub fn TWave::time_period_expr(Self) -> @symcore.Expr
-pub fn TWave::to_string(Self) -> String
 pub fn TWave::wavelength(Self) -> @symcore.Expr
 pub fn TWave::wavenumber(Self) -> @symcore.Expr
 pub impl Eq for TWave
+pub impl Show for TWave
 
 // Type aliases
 

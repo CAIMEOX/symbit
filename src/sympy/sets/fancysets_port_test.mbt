@@ -5,7 +5,7 @@ fn sympy_contains_str_fancy(set : Set, elem : @symcore.Expr) -> String raise {
 
 ///|
 fn setbool_str_fancy(val : SetBool) -> String {
-  setbool_to_string(val)
+  val.to_string()
 }
 
 ///|

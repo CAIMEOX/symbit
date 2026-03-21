@@ -561,7 +561,7 @@ pub fn DDM::to_string(self : DDM) -> String raise PolyError {
   let rows = self.to_list()
   let row_parts : Array[String] = Array::new()
   for row in rows {
-    let row_text = row.map(fe_to_string).join(", ")
+    let row_text = row.map(v => v.to_string()).join(", ")
     row_parts.push("[\{row_text}]")
   }
   let matrix_text = row_parts.join(", ")

@@ -11,13 +11,26 @@ fn index_to_string(index : TensorIndex) -> String {
 }
 
 ///|
-pub fn index_type_to_string(index_type : TensorIndexType) -> String {
-  index_type.name
+pub impl Show for TensorIndexType with to_string(self) -> String {
+  self.name
 }
 
 ///|
-pub fn head_to_string(head : TensorHead) -> String {
-  head.name
+pub impl Show for TensorIndexType with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
+}
+
+///|
+pub impl Show for TensorHead with to_string(self) -> String {
+  self.name
+}
+
+///|
+pub impl Show for TensorHead with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -31,7 +44,7 @@ fn format_expr(expr : TensorExpr, parent_prec : Int) -> String {
     TensorExpr::Scalar(e) => @symprint.to_string(e)
     TensorExpr::Tensor(head, indices) => {
       let args = indices.map(index_to_string).join(", ")
-      head_to_string(head) + "(" + args + ")"
+      head.to_string() + "(" + args + ")"
     }
     TensorExpr::Add(items) =>
       items.map(item => format_expr(item, prec)).join(" + ")
@@ -46,6 +59,11 @@ fn format_expr(expr : TensorExpr, parent_prec : Int) -> String {
 }
 
 ///|
-pub fn to_string(expr : TensorExpr) -> String {
-  format_expr(expr, 0)
+pub impl Show for TensorExpr with to_string(self) -> String {
+  format_expr(self, 0)
+}
+
+///|
+pub impl Show for TensorExpr with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }

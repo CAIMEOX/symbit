@@ -53,7 +53,7 @@ test "errors: normalize_mod on AlgExt reduces in base domain" {
   let d = Domain::AlgExt(Domain::QQ, ["alpha"], [rel])
   let value = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))
   let got = normalize_mod(value, d)
-  inspect(got.to_string(), content="3/2")
+  inspect(got, content="3/2")
 }
 
 ///|
@@ -61,8 +61,8 @@ test "rr: coefficients are no longer QQ-backed" {
   let half = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
   match ensure_coeff_domain(half, Domain::RR) {
     FieldElem::CC(real, imag) => {
-      inspect(real.to_string(), content="1/2")
-      inspect(imag.to_string(), content="0")
+      inspect(real, content="1/2")
+      inspect(imag, content="0")
     }
     _ => fail("RR coefficients should use CC(real, 0) storage")
   }
@@ -71,8 +71,8 @@ test "rr: coefficients are no longer QQ-backed" {
   let rr_one = fe_from_int(1, Domain::RR)
   match fe_add(rr_half, rr_one) {
     FieldElem::CC(real, imag) => {
-      inspect(real.to_string(), content="3/2")
-      inspect(imag.to_string(), content="0")
+      inspect(real, content="3/2")
+      inspect(imag, content="0")
     }
     _ => fail("RR arithmetic should stay in the RR/CC representation")
   }

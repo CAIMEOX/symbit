@@ -708,8 +708,6 @@ pub fn fe_neg(FieldElem) -> FieldElem
 
 pub fn fe_sub(FieldElem, FieldElem) -> FieldElem raise PolyError
 
-pub fn fe_to_string(FieldElem) -> String
-
 pub fn ff_domain(Int) -> Domain raise PolyError
 
 pub fn field_isomorphic(Domain, Domain) -> Bool
@@ -1297,9 +1295,9 @@ pub fn DomainScalar::pos(Self) -> Self raise PolyError
 pub fn DomainScalar::pow(Self, Int) -> Self raise PolyError
 pub fn DomainScalar::sub(Self, Self) -> Self raise PolyError
 pub fn DomainScalar::to_domain(Self, Domain) -> Self raise PolyError
-pub fn DomainScalar::to_string(Self) -> String
 pub fn DomainScalar::to_sympy(Self) -> @symcore.Expr
 pub fn DomainScalar::unify(Self, Self) -> (Self, Self) raise PolyError
+pub impl Show for DomainScalar
 
 pub enum FieldElem {
   QQ(@symnum.BigRational)
@@ -1405,7 +1403,6 @@ pub struct RootOf {
   poly : Poly
   index : Int
 }
-pub fn RootOf::to_string(Self) -> String
 pub impl Show for RootOf
 
 pub struct SDM {

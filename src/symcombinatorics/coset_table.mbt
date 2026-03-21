@@ -187,8 +187,13 @@ pub fn CosetTable::copy(self : CosetTable) -> CosetTable {
 
 ///|
 /// Return a readable textual rendering of the coset table.
-pub fn CosetTable::to_string(self : CosetTable) -> String {
+pub impl Show for CosetTable with to_string(self) -> String {
   "Coset Table on \{self.group_name} with \{self.subgroup.length()} as subgroup generators"
+}
+
+///|
+pub impl Show for CosetTable with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

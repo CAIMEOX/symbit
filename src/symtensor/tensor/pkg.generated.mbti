@@ -17,17 +17,11 @@ pub fn get_free_indices(TensorExpr) -> Array[TensorIndex]
 
 pub fn get_indices(TensorExpr) -> TensorIndexInfo
 
-pub fn head_to_string(TensorHead) -> String
-
-pub fn index_type_to_string(TensorIndexType) -> String
-
 pub fn mul(Array[TensorExpr]) -> TensorExpr
 
 pub fn neg_index(TensorIndex) -> TensorIndex
 
 pub fn partial_derivative(TensorExpr, Array[TensorExpr]) -> PartialDerivative
-
-pub fn partial_to_string(PartialDerivative) -> String
 
 pub fn scalar_expr(@symcore.Expr) -> TensorExpr
 
@@ -43,8 +37,6 @@ pub fn tensor_indices(Array[String], TensorIndexType) -> Array[TensorIndex]
 
 pub fn tensor_symmetry(Int, Array[@symcombinatorics.Permutation], sign? : Int) -> TensorSymmetry
 
-pub fn to_string(TensorExpr) -> String
-
 // Errors
 
 // Types and methods
@@ -52,6 +44,7 @@ pub struct PartialDerivative {
   expr : TensorExpr
   variables : Array[TensorExpr]
 }
+pub impl Show for PartialDerivative
 
 pub enum TensorExpr {
   Scalar(@symcore.Expr)
@@ -59,6 +52,7 @@ pub enum TensorExpr {
   Add(Array[TensorExpr])
   Mul(Array[TensorExpr])
 }
+pub impl Show for TensorExpr
 
 pub(all) struct TensorHead {
   name : String
@@ -66,6 +60,7 @@ pub(all) struct TensorHead {
   symmetry : TensorSymmetry?
 }
 pub fn TensorHead::call(Self, Array[TensorIndex]) -> TensorExpr raise
+pub impl Show for TensorHead
 
 pub(all) struct TensorIndex {
   name : String
@@ -84,6 +79,7 @@ pub(all) struct TensorIndexType {
   dim : @symcore.Expr?
   metric_symmetry : Int
 }
+pub impl Show for TensorIndexType
 
 pub(all) struct TensorSymmetry {
   rank : Int

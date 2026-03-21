@@ -18,7 +18,7 @@ fn expr_str(expr : Expr) -> String {
 }
 
 ///|
-pub fn setbool_to_string(val : SetBool) -> String {
+fn setbool_str(val : SetBool) -> String {
   match val {
     SetBool::True => "True"
     SetBool::False => "False"
@@ -88,21 +88,21 @@ pub fn to_string(set : Set) -> String {
 }
 
 ///|
-impl Show for Set with to_string(self) {
+pub impl Show for Set with to_string(self) {
   to_string(self)
 }
 
 ///|
-impl Show for Set with output(self, logger) {
+pub impl Show for Set with output(self, logger) {
   logger.write_string(self.to_string())
 }
 
 ///|
-impl Show for SetBool with to_string(self) {
-  setbool_to_string(self)
+pub impl Show for SetBool with to_string(self) {
+  setbool_str(self)
 }
 
 ///|
-impl Show for SetBool with output(self, logger) {
+pub impl Show for SetBool with output(self, logger) {
   logger.write_string(self.to_string())
 }

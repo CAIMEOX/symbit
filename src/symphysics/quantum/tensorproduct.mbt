@@ -203,7 +203,7 @@ fn tensor_product_needs_parens(expr : Expr) -> Bool {
 }
 
 ///|
-pub fn TensorProductExpr::to_string(self : TensorProductExpr) -> String {
+pub impl Show for TensorProductExpr with to_string(self) {
   let out : Array[String] = Array::new()
   for arg in self.args {
     let rendered = @symprint.to_string(arg)
@@ -214,6 +214,14 @@ pub fn TensorProductExpr::to_string(self : TensorProductExpr) -> String {
     }
   }
   out.join("x")
+}
+
+///|
+pub impl Show for TensorProductExpr with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

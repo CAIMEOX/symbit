@@ -70,7 +70,7 @@ test "physics.quantum.wavefunction: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("represent(Wavefunction(x**2, x))"),
-    quantum_eval_str(matrix_scalar_value_to_string(represent(wf.as_expr()))),
+    quantum_eval_str(represent(wf.as_expr()).to_string()),
     "represent wavefunction parity",
   )
 }

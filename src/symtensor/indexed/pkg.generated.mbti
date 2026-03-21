@@ -16,8 +16,6 @@ pub fn idx(String, upper? : @symcore.Expr, lower? : @symcore.Expr) -> Idx
 
 pub fn idx_expr(Idx) -> @symcore.Expr
 
-pub fn idx_to_string(Idx) -> String
-
 pub fn index_expr(@symcore.Expr) -> Index
 
 pub fn index_idx(Idx) -> Index
@@ -26,15 +24,9 @@ pub fn indexed(IndexedBase, Array[Index]) -> Indexed raise
 
 pub fn indexed_base(String, shape? : Array[@symcore.Expr]) -> IndexedBase
 
-pub fn indexed_base_to_string(IndexedBase) -> String
-
 pub fn indexed_expr(Indexed) -> IndexedExpr
 
-pub fn indexed_expr_to_string(IndexedExpr) -> String
-
 pub fn indexed_name(String, Array[Index]) -> Indexed raise
-
-pub fn indexed_to_string(Indexed) -> String
 
 pub fn mul(Array[IndexedExpr]) -> IndexedExpr
 
@@ -48,6 +40,7 @@ pub(all) struct Idx {
   lower : @symcore.Expr
   upper : @symcore.Expr?
 }
+pub impl Show for Idx
 
 pub enum Index {
   Expr(@symcore.Expr)
@@ -63,12 +56,14 @@ pub(all) struct Indexed {
   base : IndexedBase
   indices : Array[Index]
 }
+pub impl Show for Indexed
 
 pub(all) struct IndexedBase {
   name : String
   shape : Array[@symcore.Expr]?
 }
 pub fn IndexedBase::at(Self, Array[Index]) -> Indexed raise
+pub impl Show for IndexedBase
 
 pub enum IndexedExpr {
   Scalar(@symcore.Expr)
@@ -76,6 +71,7 @@ pub enum IndexedExpr {
   Add(Array[IndexedExpr])
   Mul(Array[IndexedExpr])
 }
+pub impl Show for IndexedExpr
 
 // Type aliases
 

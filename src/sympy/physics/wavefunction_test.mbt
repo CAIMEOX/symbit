@@ -63,7 +63,7 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
     content="Wavefunction(2, x)",
   )
   inspect(
-    matrix_scalar_value_to_string(represent(wf.as_expr())),
+    represent(wf.as_expr()).to_string(),
     content="Wavefunction((x**2), x)",
   )
 }

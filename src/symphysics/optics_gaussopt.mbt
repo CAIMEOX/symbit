@@ -140,8 +140,16 @@ pub fn RayTransferMatrix::d(self : RayTransferMatrix) -> Expr {
 }
 
 ///|
-pub fn RayTransferMatrix::to_string(self : RayTransferMatrix) -> String {
+pub impl Show for RayTransferMatrix with to_string(self) {
   explicit_matrix_rows_string(self.matrix_)
+}
+
+///|
+pub impl Show for RayTransferMatrix with output(
+  self,
+  logger : &Logger,
+) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -209,8 +217,13 @@ pub fn GeometricRay::angle(self : GeometricRay) -> Expr {
 }
 
 ///|
-pub fn GeometricRay::to_string(self : GeometricRay) -> String {
+pub impl Show for GeometricRay with to_string(self) {
   explicit_matrix_rows_string(self.matrix_)
+}
+
+///|
+pub impl Show for GeometricRay with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -289,7 +302,7 @@ pub fn BeamParameter::waist_approximation_limit(self : BeamParameter) -> Expr {
 }
 
 ///|
-pub fn BeamParameter::to_string(self : BeamParameter) -> String {
+pub impl Show for BeamParameter with to_string(self) {
   [
     "BeamParameter(",
     @symprint.to_string(self.wavelen_),
@@ -301,6 +314,11 @@ pub fn BeamParameter::to_string(self : BeamParameter) -> String {
     @symprint.to_string(self.n_),
     ")",
   ].join("")
+}
+
+///|
+pub impl Show for BeamParameter with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|

@@ -48,7 +48,6 @@ using @symphysics {
   pauli_product,
   prefix,
   prefix_unit,
-  prefix_value_to_string,
   quantity,
   ray_transfer_matrix,
   ray_transfer_matrix_from_matrix,

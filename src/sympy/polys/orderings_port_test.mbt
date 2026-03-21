@@ -24,22 +24,22 @@ test "orderings: lex/grlex/grevlex keys and comparisons" {
     cmp_to_ord(@sympolys.compare_exps_lex(a, b)).to_string(),
     content="-1",
   )
-  inspect(cmp_to_ord(@sympolys.compare_exps_lex(b, a)).to_string(), content="1")
-  inspect(cmp_to_ord(@sympolys.compare_exps_lex(a, a)).to_string(), content="0")
+  inspect(cmp_to_ord(@sympolys.compare_exps_lex(b, a)), content="1")
+  inspect(cmp_to_ord(@sympolys.compare_exps_lex(a, a)), content="0")
 
   // grlex compares total degree then lex
-  inspect(@sympolys.compare_exps_grlex(b, a).to_string(), content="1")
-  inspect(@sympolys.compare_exps_grlex(c, a).to_string(), content="1")
-  inspect(@sympolys.compare_exps_grlex(d, a).to_string(), content="1")
-  inspect(@sympolys.compare_exps_grlex(e, a).to_string(), content="-1")
-  inspect(@sympolys.compare_exps_grlex(f, a).to_string(), content="-1")
-  inspect(@sympolys.compare_exps_grlex(g, a).to_string(), content="-1")
+  inspect(@sympolys.compare_exps_grlex(b, a), content="1")
+  inspect(@sympolys.compare_exps_grlex(c, a), content="1")
+  inspect(@sympolys.compare_exps_grlex(d, a), content="1")
+  inspect(@sympolys.compare_exps_grlex(e, a), content="-1")
+  inspect(@sympolys.compare_exps_grlex(f, a), content="-1")
+  inspect(@sympolys.compare_exps_grlex(g, a), content="-1")
 
   // grevlex reverses tie-breaker
-  inspect(@sympolys.compare_exps_grevlex(b, d).to_string(), content="1")
-  inspect(@sympolys.compare_exps_grevlex(c, d).to_string(), content="1")
-  inspect(@sympolys.compare_exps_grevlex(e, g).to_string(), content="-1")
-  inspect(@sympolys.compare_exps_grevlex(f, g).to_string(), content="-1")
+  inspect(@sympolys.compare_exps_grevlex(b, d), content="1")
+  inspect(@sympolys.compare_exps_grevlex(c, d), content="1")
+  inspect(@sympolys.compare_exps_grevlex(e, g), content="-1")
+  inspect(@sympolys.compare_exps_grevlex(f, g), content="-1")
 }
 
 ///|
@@ -47,6 +47,6 @@ test "orderings: inverse lex and grlex flip comparisons" {
   let p = [1, 2, 3]
   let q = [2, 0, 3]
   let r = [0, 2, 3]
-  inspect(@sympolys.compare_exps_ilex(p, q).to_string(), content="1")
-  inspect(@sympolys.compare_exps_igrlex(p, r).to_string(), content="-1")
+  inspect(@sympolys.compare_exps_ilex(p, q), content="1")
+  inspect(@sympolys.compare_exps_igrlex(p, r), content="-1")
 }

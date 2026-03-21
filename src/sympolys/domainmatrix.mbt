@@ -509,7 +509,7 @@ fn _collect_factors(
   let keys : Array[String] = Array::new()
   let out : Array[(Array[FieldElem], Int)] = Array::new()
   for factor_pair in factors {
-    let key = factor_pair.0.map(fe_to_string).join(",")
+    let key = factor_pair.0.map(v => v.to_string()).join(",")
     let mut found = -1
     for i in 0..<keys.length() {
       if keys[i] == key {
@@ -3210,7 +3210,7 @@ pub fn DomainMatrix::to_matrix_string(
   let rows = self.to_dense()
   let row_parts : Array[String] = Array::new()
   for row in rows {
-    let values = row.map(v => fe_to_string(v)).join(", ")
+    let values = row.map(v => v.to_string()).join(", ")
     row_parts.push("[\{values}]")
   }
   let joined_rows = row_parts.join(", ")

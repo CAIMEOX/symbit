@@ -4,7 +4,7 @@ test "from_expr to_expr roundtrip" {
   let y = @symcore.symbol("y")
   let expr = @symcore.int(2) * (x ^ @symcore.int(2)) + y
   let poly = PolyBuilder::new(["x", "y"], Domain::ZZ).from_expr(expr)
-  inspect(poly.to_string(), content="2*x**2 + y")
+  inspect(poly, content="2*x**2 + y")
 }
 
 ///|
@@ -12,7 +12,7 @@ test "polynomial multiplication and degree" {
   let x = @symcore.symbol("x")
   let p = PolyBuilder::new(["x"], Domain::ZZ).from_expr(x + @symcore.int(1))
   let prod = p.mul(p)
-  inspect(prod.to_string(), content="x**2 + 2*x + 1")
+  inspect(prod, content="x**2 + 2*x + 1")
   inspect("\{prod.degree(0)}", content="2")
 }
 
@@ -43,7 +43,7 @@ test "gcd univariate over QQ" {
   let p = builder.from_expr((x ^ @symcore.int(3)) + @symcore.int(-1) * x)
   let q = builder.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let g = p.gcd_univar(q)
-  inspect(g.to_string(), content="x**2 + -1")
+  inspect(g, content="x**2 + -1")
 }
 
 ///|
@@ -52,7 +52,7 @@ test "term order grlex sorts by total degree" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let poly = builder.from_expr((x ^ @symcore.int(2)) + y)
-  inspect(poly.to_string(), content="x**2 + y")
+  inspect(poly, content="x**2 + y")
 }
 
 ///|
@@ -70,7 +70,7 @@ test "GF(p) arithmetic in factors" {
   let builder = PolyBuilder::new(["x"], Domain::GF(5))
   let x = @symcore.symbol("x")
   let poly = builder.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
-  inspect(poly.to_string(), content="x**2 + 1")
+  inspect(poly, content="x**2 + 1")
   let factors = poly.factor()
   let repr = factors.map(pair => pair.0.to_string()).join(", ")
   inspect(repr, content="x + 3, x + 2")
@@ -98,8 +98,8 @@ test "multivariate division lex order" {
   )
   let d = builder.from_expr(x * y)
   let (quotients, rem) = f.divmod_multivar([d])
-  inspect(rem.to_string(), content="0")
-  inspect(quotients[0].to_string(), content="x + y")
+  inspect(rem, content="0")
+  inspect(quotients[0], content="x + y")
 }
 
 ///|
@@ -147,7 +147,7 @@ test "hensel+CRT factor over ZZ" {
 test "modular reconstruction with two primes" {
   let images : Array[(Int, Array[Int])] = [(3, [1, 1, 0]), (5, [2, 0, 1])]
   let coeffs = @sympolys.reconstruct_coeffs(images, 20)
-  inspect(coeffs.to_string(), content="[7, -5, 6]")
+  inspect(coeffs, content="[7, -5, 6]")
 }
 
 ///|
@@ -159,9 +159,9 @@ test "dense multivariate conversions" {
     x + @symcore.int(2) * y + @symcore.int(3) * x * y,
   )
   let dense = @sympolys.to_dense_multi(poly, [1, 1])
-  inspect(dense.to_string(), content="[0, 1, 2, 3]")
+  inspect(dense, content="[0, 1, 2, 3]")
   let sparse = @sympolys.from_dense_multi(dense, ["x", "y"], Domain::QQ, [1, 1])
-  inspect(sparse.to_string(), content="2*y + 3*x*y + x")
+  inspect(sparse, content="2*y + 3*x*y + x")
 }
 
 ///|
@@ -173,7 +173,7 @@ test "leading data helpers" {
     @symcore.int(3) * (x ^ @symcore.int(2)) * y +
     @symcore.int(5) * (y ^ @symcore.int(2)),
   )
-  inspect(poly.lc().to_string(), content="3")
+  inspect(poly.lc(), content="3")
   match poly.lm() {
     Some(m) => inspect(m.exps, content="[2, 1]")
     None => fail("expected lm")
@@ -181,7 +181,7 @@ test "leading data helpers" {
   match poly.lt() {
     Some((m, c)) => {
       inspect(m.exps, content="[2, 1]")
-      inspect(c.to_string(), content="3")
+      inspect(c, content="3")
     }
     None => fail("expected lt")
   }
@@ -195,7 +195,7 @@ test "factor_list separates content" {
     @symcore.int(6) * (x ^ @symcore.int(2)) - @symcore.int(6),
   )
   let (content, factors) = poly.factor_list()
-  inspect(content.to_string(), content="6")
+  inspect(content, content="6")
   let reprs = factors.map(pair => "(\{pair.0.to_string()}, \{pair.1})")
   reprs.sort()
   let repr = reprs.join(" | ")
@@ -211,11 +211,11 @@ test "sqf_list and sqf_part" {
     ((x + @symcore.int(2)) ^ @symcore.int(3)),
   )
   let (content, parts) = poly.sqf_list()
-  inspect(content.to_string(), content="1")
+  inspect(content, content="1")
   let reprs = parts.map(pair => "(\{pair.0.to_string()}, \{pair.1})")
   reprs.sort()
   let repr = reprs.join(" | ")
   inspect(repr, content="(x + 2, 3) | (x + -1, 2)")
   let sqf = poly.sqf_part()
-  inspect(sqf.to_string(), content="x**2 + x + -2")
+  inspect(sqf, content="x**2 + x + -2")
 }

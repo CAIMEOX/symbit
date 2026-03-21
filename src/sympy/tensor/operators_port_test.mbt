@@ -18,7 +18,7 @@ test "partial derivative string" {
   let b = tensor_head("B", [l])
   let expr = a.call([i])
   let pd = partial_derivative(expr, [b.call([j])])
-  let s = partial_to_string(pd)
+  let s = pd.to_string()
   assert_eq(s, "PartialDerivative(A(i), B(-j))")
   assert_oracle_pd(try? partial_derivative_str(pd), s)
 }

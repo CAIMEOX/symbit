@@ -347,8 +347,13 @@ pub fn GateRule::right_expr(self : GateRule) -> Expr {
 }
 
 ///|
-pub fn GateRule::to_string(self : GateRule) -> String {
+pub impl Show for GateRule with to_string(self) {
   gate_rule_key(self)
+}
+
+///|
+pub impl Show for GateRule with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
@@ -388,8 +393,13 @@ pub fn GateIdentity::equivalent_id_exprs(self : GateIdentity) -> Array[Expr] {
 }
 
 ///|
-pub fn GateIdentity::to_string(self : GateIdentity) -> String {
+pub impl Show for GateIdentity with to_string(self) {
   @symprint.to_string(self.circuit())
+}
+
+///|
+pub impl Show for GateIdentity with output(self, logger : &Logger) -> Unit {
+  logger.write_string(self.to_string())
 }
 
 ///|
