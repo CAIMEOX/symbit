@@ -11,13 +11,13 @@ test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
   assert_true(coeffs.length() == 2 && ind.length() == 2)
   assert_true(
     coeffs[0].get("x").map(@symprint.to_string) == Some("1") &&
-        coeffs[0].get("y").map(@symprint.to_string) == Some("1") &&
-        @symprint.to_string(ind[0]) == "-1"
+    coeffs[0].get("y").map(@symprint.to_string) == Some("1") &&
+    @symprint.to_string(ind[0]) == "-1",
   )
   assert_true(
     coeffs[1].get("x").map(@symprint.to_string) == Some("2") &&
-        coeffs[1].get("y").map(@symprint.to_string) == Some("3") &&
-        @symprint.to_string(ind[1]) == "2"
+    coeffs[1].get("y").map(@symprint.to_string) == Some("3") &&
+    @symprint.to_string(ind[1]) == "2",
   )
 }
 
@@ -66,7 +66,9 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
         (Some(x_expr), Some(y_expr)) => {
           let x_text = @symprint.to_string(x_expr)
           let y_text = @symprint.to_string(y_expr)
-        assert_true(y_text == "y" && x_text.contains("y") && x_text.contains("-"))
+          assert_true(
+            y_text == "y" && x_text.contains("y") && x_text.contains("-"),
+          )
         }
         _ =>
           fail("_linsolve should bind both x and y in the parametric solution")

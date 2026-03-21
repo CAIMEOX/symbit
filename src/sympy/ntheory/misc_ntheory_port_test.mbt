@@ -101,23 +101,9 @@ test "ntheory digits parity" {
   let cd = count_digits(bi_misc(1111339))
   assert_eq(map_pairs_string_int(cd), count_digits_pairs_str(1111339))
   let pal1 = is_palindromic(bi_misc(-11))
-  assert_eq(
-    if pal1 {
-      "True"
-    } else {
-      "False"
-    },
-    is_palindromic_str(-11),
-  )
+  assert_eq(if pal1 { "True" } else { "False" }, is_palindromic_str(-11))
   let pal2 = is_palindromic(bi_misc(88), b=bi_misc(8))
-  assert_eq(
-    if pal2 {
-      "True"
-    } else {
-      "False"
-    },
-    is_palindromic_str(88, b=8),
-  )
+  assert_eq(if pal2 { "True" } else { "False" }, is_palindromic_str(88, b=8))
 }
 
 ///|
@@ -128,10 +114,7 @@ test "ntheory multinomial parity" {
   let bcd = binomial_coefficients(5)
   assert_eq(tuple_array_to_string(bcd), binomial_coefficients_str(5))
   let mc = multinomial_coefficients(3, 2)
-  assert_eq(
-    tuple_array_to_string(mc),
-    multinomial_coefficients_str(3, 2),
-  )
+  assert_eq(tuple_array_to_string(mc), multinomial_coefficients_str(3, 2))
 }
 
 ///|
@@ -145,15 +128,9 @@ test "ntheory partitions parity" {
 ///|
 test "ntheory continued fraction parity" {
   let cf = continued_fraction(bi_misc(43), den=bi_misc(19))
-  assert_eq(
-    array_int_to_pylist(cf),
-    continued_fraction_str(43, den=19),
-  )
+  assert_eq(array_int_to_pylist(cf), continued_fraction_str(43, den=19))
   let cfp = continued_fraction_periodic(bi_misc(4), bi_misc(3))
-  assert_eq(
-    array_int_to_pylist(cfp),
-    continued_fraction_periodic_str(4, 3),
-  )
+  assert_eq(array_int_to_pylist(cfp), continued_fraction_periodic_str(4, 3))
   let reduced = continued_fraction_reduce([1, 2])
   assert_eq(
     rational_string(reduced.0, reduced.1),

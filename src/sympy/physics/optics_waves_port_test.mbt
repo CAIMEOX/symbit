@@ -60,16 +60,12 @@ test "physics.optics.waves: parity" {
   )
   waves_assert_expr_equal(
     sum_wave.amplitude,
-    optics_waves_eval(
-      "(TWave(A1, f, phi1) + TWave(A2, f, phi2)).amplitude",
-    ),
+    optics_waves_eval("(TWave(A1, f, phi1) + TWave(A2, f, phi2)).amplitude"),
     "twave add amplitude parity",
   )
   waves_assert_expr_equal(
     sum_wave.phase,
-    optics_waves_eval(
-      "(TWave(A1, f, phi1) + TWave(A2, f, phi2)).phase",
-    ),
+    optics_waves_eval("(TWave(A1, f, phi1) + TWave(A2, f, phi2)).phase"),
     "twave add phase parity",
   )
 }

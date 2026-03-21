@@ -24,7 +24,7 @@ fn sq_assert_matrix_oracle_equal(
   for row in expected {
     let inner = row[1:row.length() - 1].to_string().split(", ").to_array()
     for item in inner {
-      assert_true((expr_equal(flat[idx], item.to_string())))
+      assert_true(expr_equal(flat[idx], item.to_string()))
       idx += 1
     }
   }
@@ -84,9 +84,7 @@ test "physics.secondquant: boson parity" {
     "composed boson apply parity",
   )
   sq_assert_string_equal(
-    secondquant_eval_str(
-      "InnerProduct(BBra([i, j]), BKet([k, l]))",
-    ),
+    secondquant_eval_str("InnerProduct(BBra([i, j]), BKet([k, l]))"),
     secondquant_eval_str(
       @symprint.to_string(
         secondquant_inner_product(

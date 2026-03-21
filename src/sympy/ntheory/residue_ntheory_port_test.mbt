@@ -90,10 +90,7 @@ test "ntheory residue quadratic parity" {
   for pair in sqrt_cases {
     let (a, n) = pair
     let res = sqrt_mod(bi_r(a), bi_r(n), all_roots=true)
-    assert_eq(
-      array_to_pylist(res),
-      sqrt_mod_str(a, n, all_roots=true),
-    )
+    assert_eq(array_to_pylist(res), sqrt_mod_str(a, n, all_roots=true))
   }
 }
 
@@ -103,10 +100,7 @@ test "ntheory residue nth roots parity" {
   for triple in nth_cases {
     let (a, n, m) = triple
     let res = nthroot_mod(bi_r(a), bi_r(n), bi_r(m), all_roots=true)
-    assert_eq(
-      array_to_pylist(res),
-      nthroot_mod_str(a, n, m, all_roots=true),
-    )
+    assert_eq(array_to_pylist(res), nthroot_mod_str(a, n, m, all_roots=true))
     let ok = is_nthpow_residue(bi_r(a), bi_r(n), bi_r(m))
     assert_eq(bool_to_py(ok), is_nthpow_residue_str(a, n, m))
   }
@@ -123,28 +117,19 @@ test "ntheory residue misc parity" {
   for triple in dl_cases {
     let (modulus, a, base) = triple
     let res = discrete_log(bi_r(modulus), bi_r(a), bi_r(base))
-    assert_eq(
-      option_bigint_string(res),
-      discrete_log_str(modulus, a, base),
-    )
+    assert_eq(option_bigint_string(res), discrete_log_str(modulus, a, base))
   }
   let quad_cases = [(1, 0, -1, 11), (2, 3, 1, 7)]
   for quad in quad_cases {
     let (a, b, c, n) = quad
     let res = quadratic_congruence(bi_r(a), bi_r(b), bi_r(c), bi_r(n))
-    assert_eq(
-      array_to_pylist(res),
-      quadratic_congruence_str(a, b, c, n),
-    )
+    assert_eq(array_to_pylist(res), quadratic_congruence_str(a, b, c, n))
   }
   let poly_cases = [([1, 0, -1], 11), ([1, 0, 0, -1], 7)]
   for pair in poly_cases {
     let (coeffs, m) = pair
     let res = polynomial_congruence(bi_array_r(coeffs), bi_r(m))
-    assert_eq(
-      array_to_pylist(res),
-      polynomial_congruence_str(coeffs, m),
-    )
+    assert_eq(array_to_pylist(res), polynomial_congruence_str(coeffs, m))
   }
   let binom_cases = [(10, 3, 7), (12, 6, 5)]
   for triple in binom_cases {

@@ -169,11 +169,7 @@ fn arch_shape_slope(a : Arch, x : Expr) -> Expr {
 }
 
 ///|
-fn arch_interval_contains(
-  lower : Expr,
-  upper : Expr,
-  point : Expr,
-) -> Bool {
+fn arch_interval_contains(lower : Expr, upper : Expr, point : Expr) -> Bool {
   let lhs_ok = cm_sign_of_difference(lower, point)
     .map(v => v <= 0)
     .unwrap_or(false)
@@ -269,10 +265,7 @@ fn arch_total_force_and_moment(
 }
 
 ///|
-fn arch_left_force_and_moment_at(
-  arch : Arch,
-  pos : Expr,
-) -> (Expr, Expr, Expr) {
+fn arch_left_force_and_moment_at(arch : Arch, pos : Expr) -> (Expr, Expr, Expr) {
   let y_cut = arch_shape_value(arch, pos)
   let rax = arch.reaction_force_["R_A_x"]
   let ray = arch.reaction_force_["R_A_y"]
@@ -319,9 +312,7 @@ pub fn Arch::get_shape_eqn(self : Arch) -> Expr {
 }
 
 ///|
-pub fn Arch::get_loads(
-  self : Arch,
-) -> Map[String, Map[String, Array[Expr]]] {
+pub fn Arch::get_loads(self : Arch) -> Map[String, Map[String, Array[Expr]]] {
   { "distributed": self.distributed_loads_, "concentrated": self.point_loads_ }
 }
 
@@ -630,7 +621,7 @@ pub fn Arch::solve(self : Arch) -> Unit raise ArchError {
       "arch solve currently requires hinge/hinge or one roller support with a member",
     )
   }
-  let solution = try cm_linear_solve(eqs, unknowns) catch {
+  let solution = cm_linear_solve(eqs, unknowns) catch {
     _ => raise ArchError::SolveError("unable to solve arch reactions")
   }
   match solution {

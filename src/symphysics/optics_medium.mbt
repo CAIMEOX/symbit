@@ -14,11 +14,7 @@ fn is_vacuum_pair(ep : Expr, mu : Expr) -> Bool {
 
 ///|
 fn vacuum_impedance_expr() -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(149896229).div_r(
-      @symnum.BigRational::from_int(1250000),
-    ),
-  ) *
+  rational_expr(149896229, 1250000) *
   pi_expr() *
   (ampere.symbol_expr() ^ int(-2)) *
   kilogram.symbol_expr() *
@@ -40,16 +36,12 @@ pub fn medium(
           Medium::MediumPP(
             name,
             ep,
-            (index ^ int(2)) *
-            (speed_of_light ^ int(-2)) *
-            (ep ^ int(-1)),
+            (index ^ int(2)) * (speed_of_light ^ int(-2)) * (ep ^ int(-1)),
           )
         (None, Some(mu)) =>
           Medium::MediumPP(
             name,
-            (index ^ int(2)) *
-            (speed_of_light ^ int(-2)) *
-            (mu ^ int(-1)),
+            (index ^ int(2)) * (speed_of_light ^ int(-2)) * (mu ^ int(-1)),
             mu,
           )
         (Some(_), Some(_)) =>
@@ -134,9 +126,7 @@ pub fn Medium::permeability(self : Medium) -> Expr raise PhysicsError {
 }
 
 ///|
-pub fn Medium::intrinsic_impedance(
-  self : Medium,
-) -> Expr raise PhysicsError {
+pub fn Medium::intrinsic_impedance(self : Medium) -> Expr raise PhysicsError {
   match self {
     Medium::MediumPP(_, ep, mu) =>
       if is_vacuum_pair(ep, mu) {

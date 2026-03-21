@@ -3,10 +3,7 @@
 /// `sympy.physics.quantum.commutator`.
 
 ///|
-fn quantum_commutator_raw(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn quantum_commutator_raw(lhs : Expr, rhs : Expr) -> Expr {
   @symcore.raw_function("Commutator", [lhs, rhs])
 }
 
@@ -43,10 +40,7 @@ fn gate_commutator_zero(lhs_gate : GateExpr, rhs_gate : GateExpr) -> Bool {
 }
 
 ///|
-fn quantum_make_commutator(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
   if lhs == int(0) || rhs == int(0) {
     return int(0)
   }
@@ -99,32 +93,27 @@ fn quantum_make_commutator(
             (PauliKind::X, PauliKind::Minus) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Y) =>
-              return symbol("I") *
-                sigma_z(name=lhs_pauli.name).as_expr()
+              return symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Minus) =>
               return int(-1) *
                 symbol("I") *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Z) =>
-              return int(2) *
-                sigma_minus(name=lhs_pauli.name).as_expr()
+              return int(2) * sigma_minus(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Minus) =>
-              return int(-2) *
-                sigma_minus(name=lhs_pauli.name).as_expr()
+              return int(-2) * sigma_minus(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::X) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Plus) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Y) =>
-              return symbol("I") *
-                sigma_z(name=lhs_pauli.name).as_expr()
+              return symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Plus) =>
               return int(-1) *
                 symbol("I") *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Z) =>
-              return int(-2) *
-                sigma_plus(name=lhs_pauli.name).as_expr()
+              return int(-2) * sigma_plus(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Plus) =>
               return int(2) * sigma_plus(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Minus) =>
@@ -150,23 +139,15 @@ fn quantum_make_commutator(
       match (nlhs, nrhs) {
         (Expr::Symbol(lhs_name), Expr::Symbol(rhs_name)) =>
           match (lhs_name, rhs_name) {
-            ("Jx", "Jy") =>
-              return symbol("I") * hbar * symbol("Jz")
-            ("Jy", "Jz") =>
-              return symbol("I") * hbar * symbol("Jx")
-            ("Jz", "Jx") =>
-              return symbol("I") * hbar * symbol("Jy")
-            ("Jplus", "Jminus") =>
-              return int(2) * hbar * symbol("Jz")
+            ("Jx", "Jy") => return symbol("I") * hbar * symbol("Jz")
+            ("Jy", "Jz") => return symbol("I") * hbar * symbol("Jx")
+            ("Jz", "Jx") => return symbol("I") * hbar * symbol("Jy")
+            ("Jplus", "Jminus") => return int(2) * hbar * symbol("Jz")
             ("Jz", "Jplus") => return hbar * symbol("Jplus")
-            ("Jz", "Jminus") =>
-              return int(-1) * hbar * symbol("Jminus")
+            ("Jz", "Jminus") => return int(-1) * hbar * symbol("Jminus")
             _ => ()
           }
-        (
-          Expr::Function("BosonOp", largs),
-          Expr::Function("BosonOp", rargs),
-        ) =>
+        (Expr::Function("BosonOp", largs), Expr::Function("BosonOp", rargs)) =>
           if largs.length() == 2 &&
             rargs.length() == 2 &&
             largs[0] == rargs[0] &&
@@ -184,66 +165,38 @@ fn quantum_make_commutator(
           Expr::Function("AnnihilateBoson", rargs),
         ) if largs.length() == 1 && rargs.length() == 1 && largs[0] == rargs[0] =>
           return int(-1)
-        (
-          Expr::Function("FermionOp", _),
-          Expr::Function("BosonOp", _),
-        ) => return int(0)
-        (
-          Expr::Function("AnnihilateBoson", _),
-          Expr::Function("FermionOp", _),
-        ) => return int(0)
-        (
-          Expr::Function("CreateBoson", _),
-          Expr::Function("FermionOp", _),
-        ) => return int(0)
-        (
-          Expr::Function("FermionOp", _),
-          Expr::Function("AnnihilateBoson", _),
-        ) => return int(0)
-        (
-          Expr::Function("FermionOp", _),
-          Expr::Function("CreateBoson", _),
-        ) => return int(0)
-        (
-          Expr::Function("BosonOp", _),
-          Expr::Function("FermionOp", _),
-        ) => return int(0)
+        (Expr::Function("FermionOp", _), Expr::Function("BosonOp", _)) =>
+          return int(0)
+        (Expr::Function("AnnihilateBoson", _), Expr::Function("FermionOp", _)) =>
+          return int(0)
+        (Expr::Function("CreateBoson", _), Expr::Function("FermionOp", _)) =>
+          return int(0)
+        (Expr::Function("FermionOp", _), Expr::Function("AnnihilateBoson", _)) =>
+          return int(0)
+        (Expr::Function("FermionOp", _), Expr::Function("CreateBoson", _)) =>
+          return int(0)
+        (Expr::Function("BosonOp", _), Expr::Function("FermionOp", _)) =>
+          return int(0)
         (Expr::Function("XOp", _), Expr::Function("PxOp", _)) =>
           return symbol("I") * hbar
         (Expr::Function("PxOp", _), Expr::Function("XOp", _)) =>
           return int(-1) * symbol("I") * hbar
-        (
-          Expr::Function("RaisingOp", _),
-          Expr::Function("LoweringOp", _),
-        ) => return int(-1)
-        (
-          Expr::Function("LoweringOp", _),
-          Expr::Function("RaisingOp", _),
-        ) => return int(1)
-        (
-          Expr::Function("RaisingOp", _),
-          Expr::Function("NumberOp", _),
-        ) => return int(-1) * nlhs
-        (
-          Expr::Function("LoweringOp", _),
-          Expr::Function("NumberOp", _),
-        ) => return nlhs
-        (
-          Expr::Function("NumberOp", _),
-          Expr::Function("RaisingOp", _),
-        ) => return nrhs
-        (
-          Expr::Function("NumberOp", _),
-          Expr::Function("LoweringOp", _),
-        ) => return int(-1) * nrhs
-        (
-          Expr::Function("NumberOp", _),
-          Expr::Function("Hamiltonian", _),
-        ) => return int(0)
-        (
-          Expr::Function("Hamiltonian", _),
-          Expr::Function("NumberOp", _),
-        ) => return int(0)
+        (Expr::Function("RaisingOp", _), Expr::Function("LoweringOp", _)) =>
+          return int(-1)
+        (Expr::Function("LoweringOp", _), Expr::Function("RaisingOp", _)) =>
+          return int(1)
+        (Expr::Function("RaisingOp", _), Expr::Function("NumberOp", _)) =>
+          return int(-1) * nlhs
+        (Expr::Function("LoweringOp", _), Expr::Function("NumberOp", _)) =>
+          return nlhs
+        (Expr::Function("NumberOp", _), Expr::Function("RaisingOp", _)) =>
+          return nrhs
+        (Expr::Function("NumberOp", _), Expr::Function("LoweringOp", _)) =>
+          return int(-1) * nrhs
+        (Expr::Function("NumberOp", _), Expr::Function("Hamiltonian", _)) =>
+          return int(0)
+        (Expr::Function("Hamiltonian", _), Expr::Function("NumberOp", _)) =>
+          return int(0)
         _ => ()
       }
       if lhs.compare(rhs) > 0 {
@@ -256,11 +209,7 @@ fn quantum_make_commutator(
 }
 
 ///|
-pub fn commutator(
-  lhs : Expr,
-  rhs : Expr,
-  evaluate? : Bool = true,
-) -> Expr {
+pub fn commutator(lhs : Expr, rhs : Expr, evaluate? : Bool = true) -> Expr {
   if evaluate {
     quantum_make_commutator(lhs, rhs)
   } else {
@@ -305,15 +254,11 @@ fn quantum_expand_pow_commutator(
             let right_power = idx
             let parts : Array[Expr] = []
             if left_power > 0 {
-              parts.push(
-                @symcore.raw_pow(effective_base, int(left_power)),
-              )
+              parts.push(@symcore.raw_pow(effective_base, int(left_power)))
             }
             parts.push(comm)
             if right_power > 0 {
-              parts.push(
-                @symcore.raw_pow(effective_base, int(right_power)),
-              )
+              parts.push(@symcore.raw_pow(effective_base, int(right_power)))
             }
             terms.push(quantum_mul_from_args_preserve(parts))
           }
@@ -380,8 +325,7 @@ pub fn commutator_expand(expr : Expr) -> Expr {
                 ]),
               ])
             }
-            Expr::Pow(_, _) =>
-              quantum_expand_pow_commutator(rhs, lhs, -1)
+            Expr::Pow(_, _) => quantum_expand_pow_commutator(rhs, lhs, -1)
             _ => expr
           }
       }

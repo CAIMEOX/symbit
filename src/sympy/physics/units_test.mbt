@@ -5,7 +5,7 @@ fn units_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  assert_true((expr_equal(ours, rhs)))
+  assert_true(expr_equal(ours, rhs))
 }
 
 ///|
@@ -32,13 +32,13 @@ test "physics.units: prefix arithmetic and quantity derivation" {
   assert_eq(derived.length(), 3)
   assert_true(
     derived[0].name == "millifake_meter" &&
-        derived[1].name == "centifake_meter" &&
-        derived[2].name == "decifake_meter"
+    derived[1].name == "centifake_meter" &&
+    derived[2].name == "decifake_meter",
   )
   assert_true(
     derived[0].abbrev == "mm" &&
-        derived[1].abbrev == "cm" &&
-        derived[2].abbrev == "dm"
+    derived[1].abbrev == "cm" &&
+    derived[2].abbrev == "dm",
   )
 }
 

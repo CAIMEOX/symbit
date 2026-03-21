@@ -27,11 +27,7 @@ test "traverse sall" {
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.sall(zero_symbols)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    traverse_sall_zero_symbols(expr),
-    "sall",
-  )
+  assert_expr_str_eq(result, traverse_sall_zero_symbols(expr), "sall")
 }
 
 ///|
@@ -42,11 +38,7 @@ test "traverse top_down" {
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.top_down(zero_symbols)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    traverse_top_down_zero_symbols(expr),
-    "top_down",
-  )
+  assert_expr_str_eq(result, traverse_top_down_zero_symbols(expr), "top_down")
 }
 
 ///|
@@ -57,11 +49,7 @@ test "traverse bottom_up" {
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.bottom_up(zero_symbols)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    traverse_bottom_up_zero_symbols(expr),
-    "bottom_up",
-  )
+  assert_expr_str_eq(result, traverse_bottom_up_zero_symbols(expr), "bottom_up")
 }
 
 ///|
@@ -71,11 +59,7 @@ test "traverse top_down_once" {
   let expr = basic([x, y, basic([@symcore.int(3), @symcore.int(4)])])
   let rl = @strategies_traverse.top_down_once(promote_basic2)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    traverse_top_down_once(expr),
-    "top_down_once",
-  )
+  assert_expr_str_eq(result, traverse_top_down_once(expr), "top_down_once")
 }
 
 ///|
@@ -85,11 +69,7 @@ test "traverse bottom_up_once" {
   let expr = basic([@symcore.int(1), @symcore.int(2), basic([x, y])])
   let rl = @strategies_traverse.bottom_up_once(promote_basic2)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    traverse_bottom_up_once(expr),
-    "bottom_up_once",
-  )
+  assert_expr_str_eq(result, traverse_bottom_up_once(expr), "bottom_up_once")
 }
 
 ///|

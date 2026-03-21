@@ -5,7 +5,7 @@ fn gaussopt_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  assert_true((expr_equal(ours, rhs)))
+  assert_true(expr_equal(ours, rhs))
 }
 
 ///|
@@ -18,7 +18,7 @@ fn gaussopt_assert_matrix_equal(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(lhs.get(i, j))
-      assert_true((expr_equal(ours, rhs[idx])))
+      assert_true(expr_equal(ours, rhs[idx]))
       idx = idx + 1
     }
   }
@@ -26,9 +26,9 @@ fn gaussopt_assert_matrix_equal(
 
 ///|
 fn gaussopt_rational(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  }
 }
 
 ///|

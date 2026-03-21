@@ -22,21 +22,15 @@ fn wavefunction_coord_var(coord : Expr) -> Expr {
 }
 
 ///|
-fn wavefunction_coord_limit(
-  coord : Expr,
-) -> (Expr, Expr) {
+fn wavefunction_coord_limit(coord : Expr) -> (Expr, Expr) {
   match coord {
-    Expr::Function("Tuple", args) if args.length() == 3 =>
-      (args[1], args[2])
+    Expr::Function("Tuple", args) if args.length() == 3 => (args[1], args[2])
     _ => (symbol("-oo"), symbol("oo"))
   }
 }
 
 ///|
-pub fn wavefunction(
-  expr : Expr,
-  coords : Array[Expr],
-) -> WavefunctionExpr {
+pub fn wavefunction(expr : Expr, coords : Array[Expr]) -> WavefunctionExpr {
   WavefunctionExpr::{ expr, coords }
 }
 
@@ -50,9 +44,7 @@ pub fn WavefunctionExpr::as_expr(self : WavefunctionExpr) -> Expr {
 }
 
 ///|
-pub fn WavefunctionExpr::variables(
-  self : WavefunctionExpr,
-) -> Array[Expr] {
+pub fn WavefunctionExpr::variables(self : WavefunctionExpr) -> Array[Expr] {
   self.coords.map(wavefunction_coord_var)
 }
 
@@ -185,8 +177,7 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
 fn wavefunction_simplify_expr(expr : Expr) -> Expr {
   match expr {
     Expr::Number(_) | Expr::Symbol(_) => expr
-    Expr::Add(args) =>
-      @symcore.add(args.map(wavefunction_simplify_expr))
+    Expr::Add(args) => @symcore.add(args.map(wavefunction_simplify_expr))
     Expr::Mul(args) =>
       wavefunction_simplify_mul(args.map(wavefunction_simplify_expr))
     Expr::Pow(base, exp) => {
@@ -268,15 +259,10 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
 }
 
 ///|
-fn wavefunction_expr_contains_symbol(
-  expr : Expr,
-  name : String,
-) -> Bool {
+fn wavefunction_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
     Expr::Symbol(sym) => sym == name
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(arg => wavefunction_expr_contains_symbol(arg, name))
     Expr::Pow(base, exp) =>
       wavefunction_expr_contains_symbol(base, name) ||
@@ -373,10 +359,7 @@ fn wavefunction_is_infinite_bound(expr : Expr) -> Bool {
 }
 
 ///|
-fn wavefunction_poly_term(
-  expr : Expr,
-  var_name : String,
-) -> (Expr, Int)? {
+fn wavefunction_poly_term(expr : Expr, var_name : String) -> (Expr, Int)? {
   match expr {
     Expr::Number(_) => Some((expr, 0))
     Expr::Symbol(name) =>
@@ -517,10 +500,7 @@ pub fn WavefunctionExpr::normalize(self : WavefunctionExpr) -> WavefunctionExpr 
   if norm == int(1) {
     return self
   }
-  wavefunction(
-    @symcore.raw_pow(norm, int(-1)) * self.expr,
-    self.coords,
-  )
+  wavefunction(@symcore.raw_pow(norm, int(-1)) * self.expr, self.coords)
 }
 
 ///|
@@ -615,8 +595,7 @@ fn quantum_replace_exact(
 fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
   match expr {
     Expr::Number(_) | Expr::Symbol(_) => expr
-    Expr::Add(args) =>
-      @symcore.add(args.map(wavefunction_eval_derivatives))
+    Expr::Add(args) => @symcore.add(args.map(wavefunction_eval_derivatives))
     Expr::Mul(args) =>
       wavefunction_simplify_mul(args.map(wavefunction_eval_derivatives))
     Expr::Pow(base, exp) =>
@@ -632,8 +611,7 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
       let mut last_var : Expr? = None
       for idx in 1..<args.length() {
         match args[idx] {
-          Expr::Number(n) if n.is_integral() &&
-            n.numerator().to_int() >= 0 =>
+          Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 =>
             match last_var {
               Some(diff_var) =>
                 for _ in 1..<n.numerator().to_int() {

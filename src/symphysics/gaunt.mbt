@@ -33,13 +33,6 @@ pub fn gaunt(
       int(4) * pi_expr(),
     ),
   ) *
-  (wigner_3j(
-    l_1,
-    l_2,
-    l_3,
-    int(0),
-    int(0),
-    int(0),
-  )) *
-  (wigner_3j(l_1, l_2, l_3, m_1, m_2, m_3))
+  wigner_3j(l_1, l_2, l_3, int(0), int(0), int(0)) *
+  wigner_3j(l_1, l_2, l_3, m_1, m_2, m_3)
 }

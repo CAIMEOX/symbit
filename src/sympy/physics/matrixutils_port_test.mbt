@@ -10,8 +10,14 @@ test "physics.quantum.matrixutils: parity" {
     "matrix_tensor_product parity",
   )
 
-  assert_eq(matrix_scalar_value_to_string(
-          flatten_scalar(@symphysics.explicit_matrix_from_ints([[3]])),
-        ), physics_eval_str("flatten_scalar(Matrix([[3]]))"))
-  assert_eq(matrix_scalar_value_to_string(matrix_to_zero(matrix_zeros(2, 2))), physics_eval_str("matrix_to_zero(zeros(2, 2))"))
+  assert_eq(
+    matrix_scalar_value_to_string(
+      flatten_scalar(@symphysics.explicit_matrix_from_ints([[3]])),
+    ),
+    physics_eval_str("flatten_scalar(Matrix([[3]]))"),
+  )
+  assert_eq(
+    matrix_scalar_value_to_string(matrix_to_zero(matrix_zeros(2, 2))),
+    physics_eval_str("matrix_to_zero(zeros(2, 2))"),
+  )
 }

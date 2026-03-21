@@ -14,17 +14,15 @@ pub struct MatrixCache {
 ///|
 pub let sqrt2_inv : Expr = @symcore.raw_pow(
   int(2),
-  @symcore.number(
-    @symnum.BigRational::from_int(-1).div_r(@symnum.BigRational::from_int(2)),
-  ),
+  @symcore.rational_from_ints(-1, 2) catch {
+    _ => @symcore.function("Rational", [int(-1), int(2)])
+  },
 )
 
 ///|
-fn cached_matrix(
-  rows : Array[Array[Expr]],
-) -> @symphysics.ExplicitMatrix {
+fn cached_matrix(rows : Array[Array[Expr]]) -> @symphysics.ExplicitMatrix {
   try @symphysics.explicit_matrix_from_rows(rows) catch {
-    _ => panic()
+    _ => abort("matrix cache rows must have equal length")
   } noraise {
     matrix => matrix
   }
@@ -33,71 +31,38 @@ fn cached_matrix(
 ///|
 pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   let cache = MatrixCache::{ dtype, entries: {} }
-  let quarter = @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(4)),
-  )
+  let quarter = @symcore.rational_from_ints(1, 4) catch {
+    _ => @symcore.function("Rational", [int(1), int(4)])
+  }
   cache.cache_matrix(
     "eye2",
-    cached_matrix([
-      [int(1), int(0)],
-      [int(0), int(1)],
-    ]),
+    cached_matrix([[int(1), int(0)], [int(0), int(1)]]),
   )
   cache.cache_matrix(
     "op11",
-    cached_matrix([
-      [int(0), int(0)],
-      [int(0), int(1)],
-    ]),
+    cached_matrix([[int(0), int(0)], [int(0), int(1)]]),
   )
   cache.cache_matrix(
     "op00",
-    cached_matrix([
-      [int(1), int(0)],
-      [int(0), int(0)],
-    ]),
+    cached_matrix([[int(1), int(0)], [int(0), int(0)]]),
   )
   cache.cache_matrix(
     "op10",
-    cached_matrix([
-      [int(0), int(0)],
-      [int(1), int(0)],
-    ]),
+    cached_matrix([[int(0), int(0)], [int(1), int(0)]]),
   )
   cache.cache_matrix(
     "op01",
-    cached_matrix([
-      [int(0), int(1)],
-      [int(0), int(0)],
-    ]),
+    cached_matrix([[int(0), int(1)], [int(0), int(0)]]),
   )
-  cache.cache_matrix(
-    "X",
-    cached_matrix([
-      [int(0), int(1)],
-      [int(1), int(0)],
-    ]),
-  )
+  cache.cache_matrix("X", cached_matrix([[int(0), int(1)], [int(1), int(0)]]))
   cache.cache_matrix(
     "Y",
-    cached_matrix([
-      [int(0), int(-1) * symbol("I")],
-      [symbol("I"), int(0)],
-    ]),
+    cached_matrix([[int(0), int(-1) * symbol("I")], [symbol("I"), int(0)]]),
   )
-  cache.cache_matrix(
-    "Z",
-    cached_matrix([
-      [int(1), int(0)],
-      [int(0), int(-1)],
-    ]),
-  )
+  cache.cache_matrix("Z", cached_matrix([[int(1), int(0)], [int(0), int(-1)]]))
   cache.cache_matrix(
     "S",
-    cached_matrix([
-      [int(1), int(0)],
-      [int(0), symbol("I")],
-    ]),
+    cached_matrix([[int(1), int(0)], [int(0), symbol("I")]]),
   )
   cache.cache_matrix(
     "T",
@@ -105,25 +70,17 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
       [int(1), int(0)],
       [
         int(0),
-        @symcore.raw_function("exp", [
-          symbol("I") * symbol("pi") * quarter,
-        ]),
+        @symcore.raw_function("exp", [symbol("I") * symbol("pi") * quarter]),
       ],
     ]),
   )
   cache.cache_matrix(
     "H",
-    cached_matrix([
-      [sqrt2_inv, sqrt2_inv],
-      [sqrt2_inv, int(-1) * sqrt2_inv],
-    ]),
+    cached_matrix([[sqrt2_inv, sqrt2_inv], [sqrt2_inv, int(-1) * sqrt2_inv]]),
   )
   cache.cache_matrix(
     "Hsqrt2",
-    cached_matrix([
-      [int(1), int(1)],
-      [int(1), int(-1)],
-    ]),
+    cached_matrix([[int(1), int(1)], [int(1), int(-1)]]),
   )
   cache.cache_matrix(
     "SWAP",
@@ -136,17 +93,11 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   )
   cache.cache_matrix(
     "ZX",
-    cached_matrix([
-      [sqrt2_inv, sqrt2_inv],
-      [sqrt2_inv, int(-1) * sqrt2_inv],
-    ]),
+    cached_matrix([[sqrt2_inv, sqrt2_inv], [sqrt2_inv, int(-1) * sqrt2_inv]]),
   )
   cache.cache_matrix(
     "ZY",
-    cached_matrix([
-      [symbol("I"), int(0)],
-      [int(0), int(-1) * symbol("I")],
-    ]),
+    cached_matrix([[symbol("I"), int(0)], [int(0), int(-1) * symbol("I")]]),
   )
   cache
 }

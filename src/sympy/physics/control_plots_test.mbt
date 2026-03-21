@@ -7,7 +7,9 @@ test "physics.control.control_plots: pole-zero numerical data" {
     s,
   ).as_system()
   let data = pole_zero_numerical_data(tf)
-  assert_true(control_complex_array_close(data.0, [(0.0, -1.0), (0.0, 1.0)], tol=1.0e-5),)
+  assert_true(
+    control_complex_array_close(data.0, [(0.0, -1.0), (0.0, 1.0)], tol=1.0e-5),
+  )
   assert_true(
     control_complex_array_close(
       data.1,
@@ -17,7 +19,9 @@ test "physics.control.control_plots: pole-zero numerical data" {
   )
 
   let plot = pole_zero_plot(tf)
-  assert_true(plot.title.contains("Poles and Zeros") && plot.grid && plot.show_axes,)
+  assert_true(
+    plot.title.contains("Poles and Zeros") && plot.grid && plot.show_axes,
+  )
 }
 
 ///|
@@ -112,5 +116,7 @@ test "physics.control.control_plots: plot records" {
   assert_true(nyquist.mirror_x is Some(_) && nyquist.mirror_y is Some(_))
 
   let nichols = nichols_plot(tf, initial_omega=0.1, final_omega=1.0, n=5)
-  assert_true(nichols.xlabel == "Phase [deg]" && nichols.ylabel == "Magnitude [dB]",)
+  assert_true(
+    nichols.xlabel == "Phase [deg]" && nichols.ylabel == "Magnitude [dB]",
+  )
 }

@@ -22,14 +22,8 @@ test "holonomic differential: weyl commutation parity" {
   let left2 = dx * differential_operator([@symcore.pow(x, @symcore.int(2))], r)
   let left3 = dx.pow(2) *
     differential_operator([@symcore.pow(x, @symcore.int(2))], r)
-  assert_eq(
-    differential_srepr_local(left1),
-    differential_expr_srepr("Dx*x"),
-  )
-  assert_eq(
-    differential_srepr_local(left2),
-    differential_expr_srepr("Dx*x**2"),
-  )
+  assert_eq(differential_srepr_local(left1), differential_expr_srepr("Dx*x"))
+  assert_eq(differential_srepr_local(left2), differential_expr_srepr("Dx*x**2"))
   assert_eq(
     differential_srepr_local(left3),
     differential_expr_srepr("Dx**2*x**2"),

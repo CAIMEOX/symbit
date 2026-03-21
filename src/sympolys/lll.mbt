@@ -21,8 +21,7 @@ pub fn lll_reduce(
   let transform = identity(basis_work.length())
   let d = match delta {
     Some(v) => v
-    None =>
-      @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4))
+    None => poly_rational_from_ints(3, 4)
   }
   let mut k = 1
   while k < basis_work.length() {
@@ -85,7 +84,9 @@ fn gram_schmidt(
       let coeff = if dot_bb.is_zero() {
         @symnum.BigRational::zero()
       } else {
-        dot_ib.div_r(dot_bb)
+        dot_ib.div_r(dot_bb) catch {
+          _ => abort("unexpected zero Gram-Schmidt norm in LLL")
+        }
       }
       mu[i].set(j, coeff)
       let proj = bstar[j].map(x => x.mul_r(coeff))

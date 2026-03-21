@@ -27,9 +27,7 @@ fn default_operator_label() -> Array[Expr] {
 }
 
 ///|
-fn normalize_operator_label(
-  label : Array[Expr],
-) -> Array[Expr] {
+fn normalize_operator_label(label : Array[Expr]) -> Array[Expr] {
   if label.is_empty() {
     default_operator_label()
   } else {
@@ -127,18 +125,12 @@ pub fn OperatorExpr::inverse(self : OperatorExpr) -> Expr {
 }
 
 ///|
-fn outer_product_raw(
-  ket_expr : Expr,
-  bra_expr : Expr,
-) -> Expr {
+fn outer_product_raw(ket_expr : Expr, bra_expr : Expr) -> Expr {
   @symcore.raw_function("OuterProduct", [ket_expr, bra_expr])
 }
 
 ///|
-pub fn outer_product(
-  ket_expr : Expr,
-  bra_expr : Expr,
-) -> Expr {
+pub fn outer_product(ket_expr : Expr, bra_expr : Expr) -> Expr {
   match ket_expr {
     Expr::Add(args) =>
       quantum_add_from_args_preserve(
@@ -182,11 +174,7 @@ pub fn operator_from_expr(expr : Expr) -> OperatorExpr? {
         "HermitianOperator" => Some(hermitian_operator(args))
         "UnitaryOperator" => Some(unitary_operator(args))
         "IdentityOperator" => {
-          let dimension = if args.is_empty() {
-            symbol("oo")
-          } else {
-            args[0]
-          }
+          let dimension = if args.is_empty() { symbol("oo") } else { args[0] }
           Some(identity_operator(dimension~))
         }
         _ => None

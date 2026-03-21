@@ -42,13 +42,10 @@ test "holonomic function: sequence conversion for constant-coefficient ode" {
   assert_eq(seq_sin.length(), 1)
   let sin_coeffs = seq_sin[0].recurrence().coefficients()
   assert_eq(sin_coeffs.length(), 3)
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[0]), "1"),)
-  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[1]), "0"),)
+  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[0]), "1"))
+  assert_true(sympy_equiv_str(@symprint.to_string(sin_coeffs[1]), "0"))
   assert_true(
-    sympy_equiv_str(
-      @symprint.to_string(sin_coeffs[2]),
-      "n**2 + 3*n + 2",
-    ),
+    sympy_equiv_str(@symprint.to_string(sin_coeffs[2]), "n**2 + 3*n + 2"),
   )
   let sin_u0 = seq_sin[0].initial_values()
   assert_eq(sin_u0.length(), 2)
@@ -62,9 +59,7 @@ test "holonomic function: series and evalf pipeline" {
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
   let series_expr = @symprint.to_string(hf_exp.series(n=6))
   assert_true(
-    sympy_equiv_str(
-      series_expr, "1 + x + x**2/2 + x**3/6 + x**4/24 + x**5/120",
-    ),
+    sympy_equiv_str(series_expr, "1 + x + x**2/2 + x**3/6 + x**4/24 + x**5/120"),
   )
   let eval = @symprint.to_string(
     hf_exp.evalf(@symnum.BigRational::from_int(1), terms=6),

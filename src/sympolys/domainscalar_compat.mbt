@@ -81,9 +81,7 @@ pub fn domain_scalar_from_int(
 }
 
 ///|
-pub fn DomainScalar::from_sympy(
-  expr : Expr,
-) -> DomainScalar raise PolyError {
+pub fn DomainScalar::from_sympy(expr : Expr) -> DomainScalar raise PolyError {
   let domain = infer_expr_items_domain([expr])
   let element = field_elem_from_scalar_expr(expr, domain)
   domain_scalar_new(element, domain)

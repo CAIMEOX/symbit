@@ -14,7 +14,10 @@ test "physics.quantum.qapply: parity extensions" {
       @symprint.to_string(
         qapply(
           @symcore.raw_mul([
-            @symquant.tensor_product([x_gate(0).as_expr(), identity_gate(0).as_expr()]).as_expr(),
+            @symquant.tensor_product([
+              x_gate(0).as_expr(),
+              identity_gate(0).as_expr(),
+            ]).as_expr(),
             @symquant.tensor_product([zero, one]).as_expr(),
           ]),
         ),
@@ -41,9 +44,7 @@ test "physics.quantum.qapply: parity extensions" {
   )
 
   quantum_test_assert_string_equal(
-    quantum_qapply_str(
-      "Density((XGate(0)*Qubit(0), Rational(1, 2)))",
-    ),
+    quantum_qapply_str("Density((XGate(0)*Qubit(0), Rational(1, 2)))"),
     quantum_eval_str(
       @symprint.to_string(
         qapply(
@@ -116,9 +117,7 @@ test "physics.quantum.qapply: spin and (anti)commutator parity" {
     "double lowering parity",
   )
   quantum_test_assert_string_equal(
-    quantum_qapply_srepr(
-      "AntiCommutator(XGate(0), ZGate(0))*Qubit(0)",
-    ),
+    quantum_qapply_srepr("AntiCommutator(XGate(0), ZGate(0))*Qubit(0)"),
     quantum_qapply_srepr(
       @symprint.to_string(
         qapply(

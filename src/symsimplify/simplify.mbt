@@ -85,10 +85,7 @@ pub fn apply_patterns_once(
 }
 
 ///|
-fn rewrite_bottom_up(
-  expr : Expr,
-  pattern : SimplifyPattern,
-) -> Expr {
+fn rewrite_bottom_up(expr : Expr, pattern : SimplifyPattern) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up(child, pattern)
   })
@@ -97,10 +94,7 @@ fn rewrite_bottom_up(
 
 ///|
 /// Apply one simplify pattern at the current node.
-pub fn apply_pattern(
-  pattern : SimplifyPattern,
-  expr : Expr,
-) -> Expr {
+pub fn apply_pattern(pattern : SimplifyPattern, expr : Expr) -> Expr {
   match pattern {
     SimplifyPattern::FoldConstants => fold_constants(expr)
     SimplifyPattern::AddLikeTerms => add_like_terms(expr)
@@ -174,9 +168,7 @@ fn add_like_terms(expr : Expr) -> Expr {
 }
 
 ///|
-fn split_add_term(
-  term : Expr,
-) -> (@symnum.BigRational, Expr?) {
+fn split_add_term(term : Expr) -> (@symnum.BigRational, Expr?) {
   match term {
     Expr::Number(n) => (n, None)
     Expr::Mul(args) => {
@@ -269,10 +261,8 @@ fn mul_like_bases(expr : Expr) -> Expr {
 ///|
 fn pow_denest(expr : Expr) -> Expr {
   match expr {
-    Expr::Pow(
-      Expr::Pow(base, Expr::Number(a)),
-      Expr::Number(b)
-    ) => @symcore.pow(base, @symcore.number(a.mul_r(b)))
+    Expr::Pow(Expr::Pow(base, Expr::Number(a)), Expr::Number(b)) =>
+      @symcore.pow(base, @symcore.number(a.mul_r(b)))
     Expr::Pow(Expr::Number(base), Expr::Number(exp)) =>
       match eval_numeric_pow(base, exp) {
         Some(v) => @symcore.number(v)
@@ -302,7 +292,13 @@ fn eval_numeric_pow(
   if n >= 0 {
     Some(out)
   } else {
-    Some(@symnum.BigRational::one().div_r(out))
+    match
+      (
+        try? @symnum.BigRational::one().div_r(out) :
+        Result[@symnum.BigRational, @symnum.RationalError]) {
+      Ok(value) => Some(value)
+      Err(_) => None
+    }
   }
 }
 
@@ -356,10 +352,7 @@ fn trig_pythagorean(expr : Expr) -> Expr {
 ///|
 fn trig_square_arg(term : Expr, name : String) -> Expr? {
   match term {
-    Expr::Pow(
-      Expr::Function(func, [arg]),
-      Expr::Number(exp)
-    ) =>
+    Expr::Pow(Expr::Function(func, [arg]), Expr::Number(exp)) =>
       if func == name && exp.compare(@symnum.BigRational::from_int(2)) == 0 {
         Some(arg)
       } else {

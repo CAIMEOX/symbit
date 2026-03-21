@@ -1,6 +1,6 @@
 ///|
 fn physics_expr_equal(lhs : @symcore.Expr, rhs : String) -> Bool {
-  try expr_equal(@symprint.to_string(lhs), rhs) catch {
+  expr_equal(@symprint.to_string(lhs), rhs) catch {
     _ => false
   }
 }
@@ -12,10 +12,10 @@ fn physics_assert_expr_equal(
   context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  if (expr_equal(ours, rhs)) {
+  if expr_equal(ours, rhs) {
     return
   }
-  if (physics_srepr(ours)) == (physics_srepr(rhs)) {
+  if physics_srepr(ours) == physics_srepr(rhs) {
     return
   }
   println("expr mismatch [\{context}]: ours=\{ours} oracle=\{rhs}")
@@ -43,19 +43,20 @@ fn physics_assert_matrix_equiv(
 ///|
 fn physics_dirac_c() -> @symcore.Expr {
   @symcore.number(
-    @symnum.BigRational::from_bigint(
+    @symnum.BigRational::new(
       @bigint.BigInt::from_string("137035999037"),
-    ).div_r(
-      @symnum.BigRational::from_bigint(@bigint.BigInt::from_int(1000000000)),
-    ),
+      @bigint.BigInt::from_int(1000000000),
+    ) catch {
+      _ => abort("invalid exact rational for the Dirac constant")
+    },
   )
 }
 
 ///|
 fn physics_frac(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  }
 }
 
 ///|
@@ -82,13 +83,13 @@ test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
 
   let two = @symcore.int(2)
   physics_assert_matrix_equiv(
-    @symphysics.pat_matrix(two, @symcore.int(1), @symcore.int(0), @symcore.int(0)),
-    pat_matrix(
+    @symphysics.pat_matrix(
       two,
       @symcore.int(1),
       @symcore.int(0),
       @symcore.int(0),
     ),
+    pat_matrix(two, @symcore.int(1), @symcore.int(0), @symcore.int(0)),
     "pat_matrix",
   )
   physics_assert_matrix_equiv(
@@ -133,12 +134,12 @@ test "physics: qho, sho, and pring parity" {
     "R_nl",
   )
   physics_assert_expr_equal(
-    @symphysics.e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
-    e_nl(
+    @symphysics.e_nl(
       @symcore.symbol("n"),
       @symcore.symbol("l"),
       @symcore.symbol("hw"),
     ),
+    e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
     "E_nl",
   )
 
@@ -267,8 +268,7 @@ test "physics: wigner parity" {
         "wigner_3j zero triangle",
       ),
     ] {
-    let ours = @symphysics.wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = wigner_3j(
+    let ours = @symphysics.wigner_3j(
       case.0,
       case.1,
       case.2,
@@ -276,6 +276,7 @@ test "physics: wigner parity" {
       case.4,
       case.5,
     )
+    let oracle = wigner_3j(case.0, case.1, case.2, case.3, case.4, case.5)
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 
@@ -301,8 +302,7 @@ test "physics: wigner parity" {
       ),
       (half, half, @symcore.int(1), half, half, @symcore.int(0), "cg zero"),
     ] {
-    let ours = @symphysics.clebsch_gordan(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = clebsch_gordan(
+    let ours = @symphysics.clebsch_gordan(
       case.0,
       case.1,
       case.2,
@@ -310,6 +310,7 @@ test "physics: wigner parity" {
       case.4,
       case.5,
     )
+    let oracle = clebsch_gordan(case.0, case.1, case.2, case.3, case.4, case.5)
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 }
@@ -347,14 +348,7 @@ test "physics: gaunt parity" {
       ),
     ] {
     let ours = @symphysics.gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = gaunt(
-      case.0,
-      case.1,
-      case.2,
-      case.3,
-      case.4,
-      case.5,
-    )
+    let oracle = gaunt(case.0, case.1, case.2, case.3, case.4, case.5)
     physics_assert_expr_equal(ours, oracle, case.6)
   }
 }
@@ -383,8 +377,7 @@ test "physics: higher wigner parity" {
         "wigner_6j zero mixed half",
       ),
     ] {
-    let ours = @symphysics.wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
-    let oracle = wigner_6j(
+    let ours = @symphysics.wigner_6j(
       case.0,
       case.1,
       case.2,
@@ -392,6 +385,7 @@ test "physics: higher wigner parity" {
       case.4,
       case.5,
     )
+    let oracle = wigner_6j(case.0, case.1, case.2, case.3, case.4, case.5)
     physics_assert_expr_equal(ours, oracle, case.6)
   }
   physics_assert_expr_equal(
@@ -582,10 +576,7 @@ test "physics: rotational harmonic parity" {
   )
   physics_assert_matrix_equiv(
     @symphysics.wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
-    wigner_d_small(
-      half,
-      @symcore.symbol("pi") * physics_frac(1, 2),
-    ),
+    wigner_d_small(half, @symcore.symbol("pi") * physics_frac(1, 2)),
     "wigner_d_small(1/2,pi/2)",
   )
   physics_assert_matrix_equiv(

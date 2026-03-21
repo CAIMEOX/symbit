@@ -1,8 +1,5 @@
 ///|
-fn make_add(
-  args : Array[Expr],
-  options : ParseOptions,
-) -> Expr {
+fn make_add(args : Array[Expr], options : ParseOptions) -> Expr {
   if options.evaluate {
     @symcore.add(args)
   } else {
@@ -11,10 +8,7 @@ fn make_add(
 }
 
 ///|
-fn make_mul(
-  args : Array[Expr],
-  options : ParseOptions,
-) -> Expr {
+fn make_mul(args : Array[Expr], options : ParseOptions) -> Expr {
   if options.evaluate {
     @symcore.mul(args)
   } else {
@@ -23,11 +17,7 @@ fn make_mul(
 }
 
 ///|
-fn make_pow(
-  base : Expr,
-  exp : Expr,
-  options : ParseOptions,
-) -> Expr {
+fn make_pow(base : Expr, exp : Expr, options : ParseOptions) -> Expr {
   if options.evaluate {
     @symcore.pow(base, exp)
   } else {
@@ -170,9 +160,7 @@ fn lower_raw_mul_factors(
     Ast::Binary(span~, BinaryOp::Div, lhs, rhs) => {
       ignore(span)
       let out = lower_raw_mul_factors(lhs, options, context)
-      out.push(
-        make_pow(lower_ast_in(rhs, options, context), int(-1), options),
-      )
+      out.push(make_pow(lower_ast_in(rhs, options, context), int(-1), options))
       out
     }
     _ => [lower_ast_in(ast, options, context)]
@@ -334,10 +322,7 @@ pub fn lower_ast_in(
     }
     Ast::Unary(span~, UnaryOp::Minus, operand) => {
       ignore(span)
-      make_mul(
-        [int(-1), lower_ast_in(operand, options, context)],
-        options,
-      )
+      make_mul([int(-1), lower_ast_in(operand, options, context)], options)
     }
     Ast::Binary(span~, BinaryOp::Add, lhs, rhs) => {
       ignore(span)
@@ -359,10 +344,7 @@ pub fn lower_ast_in(
         make_add(
           [
             lower_ast_in(lhs, options, context),
-            make_mul(
-              [int(-1), lower_ast_in(rhs, options, context)],
-              options,
-            ),
+            make_mul([int(-1), lower_ast_in(rhs, options, context)], options),
           ],
           options,
         )
@@ -390,11 +372,7 @@ pub fn lower_ast_in(
         make_mul(
           [
             lower_ast_in(lhs, options, context),
-            make_pow(
-              lower_ast_in(rhs, options, context),
-              int(-1),
-              options,
-            ),
+            make_pow(lower_ast_in(rhs, options, context), int(-1), options),
           ],
           options,
         )

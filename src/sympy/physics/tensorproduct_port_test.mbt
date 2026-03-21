@@ -20,9 +20,7 @@ test "physics.quantum.tensorproduct: parity" {
         ]).as_expr(),
       ),
     ),
-    quantum_eval_str(
-      "TensorProduct(x*Operator(A), 2*Operator(B))",
-    ),
+    quantum_eval_str("TensorProduct(x*Operator(A), 2*Operator(B))"),
     "tensorproduct scalar normalization parity",
   )
   quantum_test_assert_string_equal(

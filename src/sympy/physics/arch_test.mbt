@@ -44,7 +44,9 @@ test "physics.continuum_mechanics.arch: init and force queries" {
     ((@symcore.symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
     @symcore.rational_from_ints(-1, 5)
   assert_true(cm_numeric_expr_eq(a.get_shape_eqn(), expected_shape))
-  assert_true(a.supports()["left"] == "hinge" && a.supports()["right"] == "hinge")
+  assert_true(
+    a.supports()["left"] == "hinge" && a.supports()["right"] == "hinge",
+  )
 
   let a2 = arch(
     (@symcore.int(0), @symcore.int(0)),
@@ -84,8 +86,12 @@ test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
   assert_true(arch_is_close(a.reaction_force()["R_B_x"], -83.33333333333333))
   assert_true(arch_is_close(a.reaction_force()["R_B_y"], 90.0))
   let near_eight = @symcore.rational_from_ints(7_999_999, 1_000_000)
-  assert_true(arch_is_close(a.axial_force_at(pos=Some(near_eight)), 149.430523405935))
-  assert_true(arch_is_close(a.shear_force_at(pos=Some(near_eight)), 64.9227473161196))
+  assert_true(
+    arch_is_close(a.axial_force_at(pos=Some(near_eight)), 149.430523405935),
+  )
+  assert_true(
+    arch_is_close(a.shear_force_at(pos=Some(near_eight)), 64.9227473161196),
+  )
 
   let b = arch(
     (@symcore.int(0), @symcore.int(0)),
@@ -136,9 +142,19 @@ test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
   let c_rbx = c.reaction_force()["R_B_x"]
   let c_rby = c.reaction_force()["R_B_y"]
   let c_bm = c.bending_moment_at(pos=Some(@symcore.int(4)))
-  assert_true(cm_numeric_expr_eq(c_rax, @symcore.int(-4) * t * cm_rat_expr(1, 5)))
-  assert_true(cm_numeric_expr_eq(c_ray, @symcore.int(-3) * t * cm_rat_expr(1, 2)))
-  assert_true(cm_numeric_expr_eq(c_rbx, @symcore.int(4) * t * cm_rat_expr(1, 5)))
-  assert_true(cm_numeric_expr_eq(c_rby, @symcore.int(-1) * t * cm_rat_expr(1, 2)))
-  assert_true(cm_numeric_expr_eq(c_bm, @symcore.int(-5) * t * cm_rat_expr(1, 2)))
+  assert_true(
+    cm_numeric_expr_eq(c_rax, @symcore.int(-4) * t * cm_rat_expr(1, 5)),
+  )
+  assert_true(
+    cm_numeric_expr_eq(c_ray, @symcore.int(-3) * t * cm_rat_expr(1, 2)),
+  )
+  assert_true(
+    cm_numeric_expr_eq(c_rbx, @symcore.int(4) * t * cm_rat_expr(1, 5)),
+  )
+  assert_true(
+    cm_numeric_expr_eq(c_rby, @symcore.int(-1) * t * cm_rat_expr(1, 2)),
+  )
+  assert_true(
+    cm_numeric_expr_eq(c_bm, @symcore.int(-5) * t * cm_rat_expr(1, 2)),
+  )
 }

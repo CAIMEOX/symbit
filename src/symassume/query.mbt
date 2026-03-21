@@ -152,11 +152,7 @@ pub fn q1(key : PredicateKey, arg : Expr) -> Query {
 }
 
 ///|
-pub fn q2(
-  key : PredicateKey,
-  lhs : Expr,
-  rhs : Expr,
-) -> Query {
+pub fn q2(key : PredicateKey, lhs : Expr, rhs : Expr) -> Query {
   pred(key, [lhs, rhs])
 }
 
@@ -560,10 +556,7 @@ pub fn query_to_sympy(expr : Query) -> String {
 }
 
 ///|
-pub fn query_atom_key(
-  key : PredicateKey,
-  args : Array[Expr],
-) -> String {
+pub fn query_atom_key(key : PredicateKey, args : Array[Expr]) -> String {
   let rendered = args.map(arg => @symprint.to_string(arg)).join(",")
   "\{predicate_name(key)}:\{rendered}"
 }

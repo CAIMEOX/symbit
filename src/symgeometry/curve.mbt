@@ -56,9 +56,7 @@ pub fn Curve::parameter(self : Curve) -> Expr {
 }
 
 ///|
-pub fn Curve::limits(
-  self : Curve,
-) -> (Expr, Expr, Expr) {
+pub fn Curve::limits(self : Curve) -> (Expr, Expr, Expr) {
   (self.parameter_, self.start_, self.end_)
 }
 

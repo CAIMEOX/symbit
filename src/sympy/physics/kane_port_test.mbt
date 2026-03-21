@@ -42,33 +42,28 @@ test "physics.mechanics parity kane spring mass damper" {
   let oracle_mass = mechanics_summary(
     prefix + "[[str(x) for x in row] for row in KM.mass_matrix.tolist()]",
   )
-  assert_eq(kane_port_matrix_entry_summary(km.mass_matrix()).replace(
-          old=" ",
-          new="",
-        ), oracle_mass.replace(old=" ", new=""))
+  assert_eq(
+    kane_port_matrix_entry_summary(km.mass_matrix()).replace(old=" ", new=""),
+    oracle_mass.replace(old=" ", new=""),
+  )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(km.forcing().get(0, 0)),
-        "-c*u(t) - k*q(t)",
-      )
+      @symprint.to_string(km.forcing().get(0, 0)),
+      "-c*u(t) - k*q(t)",
+    ),
   )
   let rhs = km.rhs()
+  assert_true(mechanics_expr_equal(@symprint.to_string(rhs.get(0, 0)), "u(t)"))
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(rhs.get(0, 0)),
-        "u(t)",
-      )
-  )
-  assert_true(
-    mechanics_expr_equal(
-        @symprint.to_string(rhs.get(1, 0)),
-        "-(k*q(t) + c*u(t))/m",
-      )
+      @symprint.to_string(rhs.get(1, 0)),
+      "-(k*q(t) + c*u(t))/m",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        @symphysics.explicit_matrix_rows_string(km.linearize(a_and_b=true).0),
-        prefix + "KM.linearize(A_and_B=True)[0]",
-      )
+      @symphysics.explicit_matrix_rows_string(km.linearize(a_and_b=true).0),
+      prefix + "KM.linearize(A_and_B=True)[0]",
+    ),
   )
 }

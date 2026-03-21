@@ -22,10 +22,7 @@ pub struct System {
 } derive(Eq)
 
 ///|
-fn system_contains_expr(
-  items : Array[Expr],
-  expr : Expr,
-) -> Bool {
+fn system_contains_expr(items : Array[Expr], expr : Expr) -> Bool {
   items.any(fn(item) { @symcore.compare_expr(item, expr) == 0 })
 }
 
@@ -109,9 +106,7 @@ pub fn system(
   let inertial_frame = frame.unwrap_or(
     @symvector.reference_frame("inertial_frame"),
   )
-  let inertial_point = fixed_point.unwrap_or(
-    @symvector.point("inertial_point"),
-  )
+  let inertial_point = fixed_point.unwrap_or(@symvector.point("inertial_point"))
   inertial_point.set_vel(inertial_frame, @symvector.vector_zero())
   System::{
     frame_: inertial_frame,
@@ -336,11 +331,7 @@ pub fn System::set_u_aux(
   self : System,
   exprs : Array[Expr],
 ) -> Unit raise @symphysics.PhysicsError {
-  validate_coordinates(
-    coordinates=self.q(),
-    speeds=self.u(),
-    u_auxiliary=exprs,
-  )
+  validate_coordinates(coordinates=self.q(), speeds=self.u(), u_auxiliary=exprs)
   self.u_aux_ = exprs.copy()
 }
 
@@ -417,10 +408,7 @@ pub fn System::add_auxiliary_speeds(
 }
 
 ///|
-pub fn System::add_kdes(
-  self : System,
-  equations : Array[Expr],
-) -> Unit {
+pub fn System::add_kdes(self : System, equations : Array[Expr]) -> Unit {
   system_append_exprs_unique(self.kdes_, equations)
   self.eom_method_ = None
 }
@@ -700,9 +688,7 @@ pub fn System::validate_system(
 }
 
 ///|
-fn System::system_effective_loads(
-  self : System,
-) -> Array[Load] raise {
+fn System::system_effective_loads(self : System) -> Array[Load] raise {
   let out = self.loads_.copy()
   for actuator in self.actuators_ {
     system_append_loads_unique(out, actuator.to_loads())
@@ -775,9 +761,7 @@ pub fn System::form_eoms(
 }
 
 ///|
-pub fn System::rhs(
-  self : System,
-) -> @symphysics.ExplicitMatrix raise {
+pub fn System::rhs(self : System) -> @symphysics.ExplicitMatrix raise {
   match self.eom_method_ {
     Some(MechanicsBackend::Kane(value)) => value.rhs()
     Some(MechanicsBackend::Lagrange(value)) => value.rhs()

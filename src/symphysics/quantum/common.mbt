@@ -134,8 +134,7 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
   match expr {
     Expr::Number(_) => true
     Expr::Symbol(name) => quantum_symbol_is_scalar(name)
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.all(quantum_is_scalar_like)
+    Expr::Add(args) | Expr::Mul(args) => args.all(quantum_is_scalar_like)
     Expr::Pow(base, exp) =>
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
     Expr::Function(name, args) =>
@@ -158,10 +157,7 @@ fn quantum_inverse_base(expr : Expr) -> Expr? {
 }
 
 ///|
-fn quantum_operator_pair_simplify(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr? {
+fn quantum_operator_pair_simplify(lhs : Expr, rhs : Expr) -> Expr? {
   if quantum_expr_has_name(lhs, "IdentityOperator") {
     return Some(rhs)
   }
@@ -197,11 +193,7 @@ fn quantum_add_from_args_preserve(args : Array[Expr]) -> Expr {
 }
 
 ///|
-fn quantum_mul_slice(
-  args : Array[Expr],
-  start : Int,
-  stop : Int,
-) -> Expr {
+fn quantum_mul_slice(args : Array[Expr], start : Int, stop : Int) -> Expr {
   let out : Array[Expr] = []
   for idx in start..<stop {
     out.push(args[idx])
@@ -223,9 +215,7 @@ fn quantum_tuple_expr(items : Array[Int]) -> Expr {
 }
 
 ///|
-fn quantum_split_scalar_factors(
-  expr : Expr,
-) -> (Expr, Expr?) {
+fn quantum_split_scalar_factors(expr : Expr) -> (Expr, Expr?) {
   if quantum_is_scalar_like(expr) {
     return (expr, None)
   }

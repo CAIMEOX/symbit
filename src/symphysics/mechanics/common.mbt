@@ -104,9 +104,7 @@ fn mech_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(fn(arg) { mech_expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       mech_expr_depends_on(base, wrt) || mech_expr_depends_on(exp, wrt)
@@ -243,17 +241,12 @@ fn mech_apply_subs_exact(
 }
 
 ///|
-fn mech_find_dynamicsymbols_go(
-  expr : Expr,
-  seen : Map[String, Expr],
-) -> Unit {
+fn mech_find_dynamicsymbols_go(expr : Expr, seen : Map[String, Expr]) -> Unit {
   if mech_is_dynamicsymbol(expr) {
     seen.set(mech_expr_key(expr), expr)
   }
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         mech_find_dynamicsymbols_go(arg, seen)
       }
@@ -343,6 +336,7 @@ fn mech_load_at_frame(load : Load, frame : @symvector.ReferenceFrame) -> Bool {
   }
 }
 
+///|
 pub fn Particle::as_bodylike(self : Particle) -> BodyLike {
   BodyLike::ParticleLike(self)
 }

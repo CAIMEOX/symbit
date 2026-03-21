@@ -218,8 +218,7 @@ fn has_fractional_coeff(expr : Expr) -> Bool {
       args.any(child => has_fractional_coeff(child))
     Expr::Pow(base, exp) =>
       has_fractional_coeff(base) || has_fractional_coeff(exp)
-    Expr::Function(_, args) =>
-      args.any(child => has_fractional_coeff(child))
+    Expr::Function(_, args) => args.any(child => has_fractional_coeff(child))
     _ => false
   }
 }

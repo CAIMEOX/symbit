@@ -82,8 +82,7 @@ fn pauli_power_atom(expr : Expr) -> (Int, String)? {
 ///|
 fn ncsymbol_expr_name(expr : Expr) -> String? {
   match expr {
-    Expr::Function("NCSymbol", [Expr::Symbol(name)]) =>
-      Some(name)
+    Expr::Function("NCSymbol", [Expr::Symbol(name)]) => Some(name)
     _ => None
   }
 }
@@ -159,11 +158,7 @@ fn pauli_flush_segment(
 }
 
 ///|
-fn pauli_absorb_atom(
-  basis : Int,
-  coeff : Expr,
-  next : Int,
-) -> (Int, Expr) {
+fn pauli_absorb_atom(basis : Int, coeff : Expr, next : Int) -> (Int, Expr) {
   if basis == 0 {
     (next, coeff)
   } else if basis == next {
@@ -181,10 +176,7 @@ fn pauli_absorb_atom(
 }
 
 ///|
-pub fn pauli(
-  index : Int,
-  label? : String = "sigma",
-) -> Expr raise PhysicsError {
+pub fn pauli(index : Int, label? : String = "sigma") -> Expr raise PhysicsError {
   guard index == 1 || index == 2 || index == 3 else {
     raise PhysicsError::IndexError("Invalid Pauli index")
   }
@@ -240,11 +232,7 @@ pub fn pauli_mul(lhs : Expr, rhs : Expr) -> Expr {
         while k <= 3 {
           let sign = epsilon(i, j, k)
           if sign != 0 {
-            return @symcore.mul([
-              i_expr(),
-              int(sign),
-              pauli_symbol_expr(k, li),
-            ])
+            return @symcore.mul([i_expr(), int(sign), pauli_symbol_expr(k, li)])
           }
           k = k + 1
         }

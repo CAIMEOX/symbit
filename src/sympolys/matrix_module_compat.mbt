@@ -1,27 +1,29 @@
 ///|
-fn default_lll_delta() -> @symnum.BigRational raise @symnum.RationalError {
-  @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(4))
-}
-
-///|
 pub type SympyEigenvects = Array[(Expr, Int, MatrixExpr)]
 
 ///|
 /// Functional wrapper matching SymPy `polys.matrices.lll.ddm_lll`.
-pub fn ddm_lll(
-  x : DDM,
-  delta? : @symnum.BigRational = @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)),
-) -> DDM raise PolyError {
-  x.lll(delta~)
+pub fn ddm_lll(x : DDM, delta? : @symnum.BigRational) -> DDM raise PolyError {
+  x.lll(
+    delta=match delta {
+      Some(value) => value
+      None => poly_rational_from_ints(3, 4)
+    },
+  )
 }
 
 ///|
 /// Functional wrapper matching SymPy `polys.matrices.lll.ddm_lll_transform`.
 pub fn ddm_lll_transform(
   x : DDM,
-  delta? : @symnum.BigRational = @symnum.BigRational::from_int(3).div_r(@symnum.BigRational::from_int(4)),
+  delta? : @symnum.BigRational,
 ) -> (DDM, DDM) raise PolyError {
-  x.lll_transform(delta~)
+  x.lll_transform(
+    delta=match delta {
+      Some(value) => value
+      None => poly_rational_from_ints(3, 4)
+    },
+  )
 }
 
 ///|

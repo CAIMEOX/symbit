@@ -365,15 +365,21 @@ fn pow_int_nonneg(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational 
 }
 
 ///|
-fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
+fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational? {
   if exp == 0 {
-    return @symnum.BigRational::one()
+    return Some(@symnum.BigRational::one())
   }
   if exp > 0 {
-    return pow_int_nonneg(base, exp)
+    return Some(pow_int_nonneg(base, exp))
   }
   let pos = pow_int_nonneg(base, -exp)
-  @symnum.BigRational::one().div_r(pos)
+  match
+    (
+      try? @symnum.BigRational::one().div_r(pos) :
+      Result[@symnum.BigRational, @symnum.RationalError]) {
+    Ok(value) => Some(value)
+    Err(_) => None
+  }
 }
 
 ///|
@@ -420,7 +426,10 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       match (b, e) {
         (@symcore.Expr::Number(nb), @symcore.Expr::Number(ne)) =>
           if ne.is_integral() {
-            @symcore.number(pow_int(nb, ne.numerator().to_int()))
+            match pow_int(nb, ne.numerator().to_int()) {
+              Some(value) => @symcore.number(value)
+              None => @symcore.pow(b, e)
+            }
           } else {
             @symcore.pow(b, e)
           }

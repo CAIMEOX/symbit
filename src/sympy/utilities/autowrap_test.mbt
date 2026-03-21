@@ -18,6 +18,25 @@ test "binary_function registers implementation for lambdify" {
 }
 
 ///|
+test "binary_function preserves autowrap evaluation errors" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let bf = binary_function(
+    "f_bad",
+    x * y + @symcore.int(1),
+    args=Some(["x", "y"]),
+  )
+  let fn0 = lambdify(["x"], bf.apply([x]))
+  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([
+    1.0,
+  ])
+  inspect(
+    result,
+    content="Err(InvalidArgument(\"lambdify argument count mismatch\"))",
+  )
+}
+
+///|
 test "ufuncify respects explicit arguments" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")

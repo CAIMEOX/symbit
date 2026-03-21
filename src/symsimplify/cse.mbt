@@ -12,9 +12,7 @@ pub fn CseResult::replacement_count(self : CseResult) -> Int {
 
 ///|
 /// Return a copy of the extracted substitution list.
-pub fn CseResult::replacements_copy(
-  self : CseResult,
-) -> Array[(String, Expr)] {
+pub fn CseResult::replacements_copy(self : CseResult) -> Array[(String, Expr)] {
   self.replacements.map(item => item)
 }
 
@@ -172,11 +170,7 @@ fn count_occurrences(expr : Expr, key : String) -> Int {
 }
 
 ///|
-fn replace_exact(
-  expr : Expr,
-  key : String,
-  replacement : Expr,
-) -> Expr {
+fn replace_exact(expr : Expr, key : String, replacement : Expr) -> Expr {
   if @symprint.debug_repr(expr) == key {
     return replacement
   }

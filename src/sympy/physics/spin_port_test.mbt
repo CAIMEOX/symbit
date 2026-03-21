@@ -115,9 +115,7 @@ test "physics.quantum.spin: Jx/Jy basis parity" {
     "Jz on JxKet parity",
   )
   quantum_test_assert_string_equal(
-    physics_srepr(
-      "InnerProduct(JxBra(1, 1), JzKet(1, 1)).doit()",
-    ),
+    physics_srepr("InnerProduct(JxBra(1, 1), JzKet(1, 1)).doit()"),
     physics_expr_srepr(
       inner_product(jx_bra(one, one).as_expr(), jz_ket(one, one).as_expr()),
     ),
@@ -147,19 +145,13 @@ test "physics.quantum.spin: Jx/Jy basis parity" {
     "represent JzKet in Jx basis parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2",
-    ),
-    quantum_eval_str(
-      physics_expr_str(jx_ket(one, one).rewrite(jz())),
-    ),
+    quantum_eval_str("JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2"),
+    quantum_eval_str(physics_expr_str(jx_ket(one, one).rewrite(jz()))),
     "rewrite JxKet parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("-I*JxKet(1, 1)"),
-    quantum_eval_str(
-      physics_expr_str(jy_ket(one, one).rewrite(jx())),
-    ),
+    quantum_eval_str(physics_expr_str(jy_ket(one, one).rewrite(jx()))),
     "rewrite JyKet parity",
   )
 }
@@ -211,9 +203,7 @@ test "physics.quantum.spin: coupled Jz parity" {
     "uncouple parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "hbar**2*j*(j + 1)*JzKetCoupled(j, m, (j1, j2))",
-    ),
+    quantum_eval_str("hbar**2*j*(j + 1)*JzKetCoupled(j, m, (j1, j2))"),
     quantum_eval_str(
       physics_expr_str(
         qapply(
@@ -240,13 +230,14 @@ test "physics.quantum.spin: coupled Jz parity" {
     "couple parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "couple(TensorProduct(JzKet(j1, m1), JzKet(j2, m2)))",
-    ),
+    quantum_eval_str("couple(TensorProduct(JzKet(j1, m1), JzKet(j2, m2)))"),
     quantum_eval_str(
       physics_expr_str(
         couple(
-          @symquant.tensor_product([jz_ket(j1v, m1).as_expr(), jz_ket(j2v, m2).as_expr()]).as_expr(),
+          @symquant.tensor_product([
+            jz_ket(j1v, m1).as_expr(),
+            jz_ket(j2v, m2).as_expr(),
+          ]).as_expr(),
         ),
       ),
     ),
@@ -255,9 +246,7 @@ test "physics.quantum.spin: coupled Jz parity" {
   quantum_test_assert_string_equal(
     quantum_eval_str("uncouple(JzKetCoupled(j, m, (j1, j2)))"),
     quantum_eval_str(
-      physics_expr_str(
-        uncouple(jz_ket_coupled(j, m, [j1v, j2v]).as_expr()),
-      ),
+      physics_expr_str(uncouple(jz_ket_coupled(j, m, [j1v, j2v]).as_expr())),
     ),
     "symbolic uncouple parity",
   )
@@ -302,9 +291,7 @@ test "physics.quantum.spin: coupled Jz parity" {
     "symbolic four-spin custom couple parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "uncouple(JzKetCoupled(j, m, (j1, j2, j3)))",
-    ),
+    quantum_eval_str("uncouple(JzKetCoupled(j, m, (j1, j2, j3)))"),
     quantum_eval_str(
       physics_expr_str(
         uncouple(jz_ket_coupled(j, m, [j1v, j2v, j3v]).as_expr()),
@@ -358,9 +345,7 @@ test "physics.quantum.spin: coupled Jz parity" {
       "JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + JzKetCoupled(1, -1, (Rational(1, 2), Rational(1, 2)))/2",
     ),
     quantum_eval_str(
-      physics_expr_str(
-        jx_ket_coupled(one, one, [half, half]).rewrite(jz()),
-      ),
+      physics_expr_str(jx_ket_coupled(one, one, [half, half]).rewrite(jz())),
     ),
     "rewrite JxKetCoupled parity",
   )

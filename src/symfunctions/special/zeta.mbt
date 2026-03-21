@@ -12,11 +12,7 @@ pub fn dirichlet_eta(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn lerchphi(
-  z : Expr,
-  s : Expr,
-  a : Expr,
-) -> Expr {
+pub fn lerchphi(z : Expr, s : Expr, a : Expr) -> Expr {
   @symcore.function("lerchphi", [z, s, a])
 }
 

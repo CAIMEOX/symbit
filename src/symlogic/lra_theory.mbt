@@ -70,7 +70,9 @@ fn br_div(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
 ) -> @symnum.BigRational {
-  a.div_r(b)
+  a.div_r(b) catch {
+    _ => abort("unexpected division by zero in LRA elimination")
+  }
 }
 
 ///|

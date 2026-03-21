@@ -148,11 +148,12 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   ])
   assert_eq(t.node_labels(), [a, b, c])
   assert_true(
-    t.node_positions() == [
+    t.node_positions() ==
+    [
       (@symcore.int(0), @symcore.int(0)),
       (@symcore.int(2), @symcore.int(2)),
       (@symcore.int(3), @symcore.int(0)),
-    ]
+    ],
   )
 
   t.remove_node([c])
@@ -205,12 +206,11 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   let rx = t.reaction_loads()["R_A_x"]
   let ry = t.reaction_loads()["R_A_y"]
   let rdy = t.reaction_loads()["R_D_y"]
-  assert_true(cm_expr_eq(rx, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p))
   assert_true(
-    cm_expr_eq(
-        ry,
-        @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p - p,
-      )
+    cm_expr_eq(rx, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p),
+  )
+  assert_true(
+    cm_expr_eq(ry, @symcore.int(-1) * @symelem.sqrt(@symcore.int(2)) * p - p),
   )
   assert_true(cm_expr_eq(rdy, @symcore.int(-1) * p * half))
   assert_true(cm_expr_eq(t.internal_forces()[ab], @symcore.int(0)))
@@ -242,21 +242,27 @@ test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero
   let member_1_force = t.internal_forces()["member_1"]
 
   assert_true(cm_expr_eq(t.reaction_loads()["R_node_1_x"], @symcore.int(0)))
-  assert_true(cm_expr_eq(t.reaction_loads()["R_node_1_y"], @symcore.int(20) * third))
-  assert_true(cm_expr_eq(t.reaction_loads()["R_node_2_y"], @symcore.int(10) * third))
-  assert_true(cm_expr_eq(member_1_force, @symcore.int(20) * third))
-  assert_true(cm_expr_eq(t.internal_forces()["member_2"], @symcore.int(20) * third))
   assert_true(
-    cm_expr_eq(
-        t.internal_forces()["member_3"],
-        @symcore.int(-20) * @symelem.sqrt(@symcore.int(2)) * third,
-      )
+    cm_expr_eq(t.reaction_loads()["R_node_1_y"], @symcore.int(20) * third),
+  )
+  assert_true(
+    cm_expr_eq(t.reaction_loads()["R_node_2_y"], @symcore.int(10) * third),
+  )
+  assert_true(cm_expr_eq(member_1_force, @symcore.int(20) * third))
+  assert_true(
+    cm_expr_eq(t.internal_forces()["member_2"], @symcore.int(20) * third),
   )
   assert_true(
     cm_expr_eq(
-        t.internal_forces()["member_4"],
-        @symcore.int(-10) * @symelem.sqrt(@symcore.int(5)) * third,
-      )
+      t.internal_forces()["member_3"],
+      @symcore.int(-20) * @symelem.sqrt(@symcore.int(2)) * third,
+    ),
+  )
+  assert_true(
+    cm_expr_eq(
+      t.internal_forces()["member_4"],
+      @symcore.int(-10) * @symelem.sqrt(@symcore.int(5)) * third,
+    ),
   )
   assert_true(cm_expr_eq(t.internal_forces()["member_5"], @symcore.int(10)))
 }
@@ -265,8 +271,12 @@ test "physics.continuum_mechanics.truss: solves a determinate truss with nonzero
 test "physics.continuum_mechanics.truss: validation errors" {
   let t = truss()
   t.add_node([("A", @symcore.int(0), @symcore.int(0))])
-  assert_true((try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_))
-  assert_true((try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_))
+  assert_true(
+    (try? t.add_node([("A", @symcore.int(1), @symcore.int(0))])) is Err(_),
+  )
+  assert_true(
+    (try? t.add_node([("B", @symcore.int(0), @symcore.int(0))])) is Err(_),
+  )
   t.add_node([("B", @symcore.int(1), @symcore.int(0))])
   assert_true((try? t.add_member([("AB", "A", "A")])) is Err(_))
   t.add_member([("AB", "A", "B")])

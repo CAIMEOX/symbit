@@ -87,10 +87,10 @@ test "physics.mechanics parity symbolic system forms" {
   let prefix = symbolic_system_oracle_prefix()
   assert_true(
     mechanics_matrix_equal(
-        @symphysics.explicit_matrix_rows_string(symsystem1.coordinates()),
-        prefix +
-        "symsystem = SymbolicSystem((x, y, u, v, lam), comb_explicit_rhs, alg_con=[4], output_eqns=out_eqns, coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.coordinates",
-      )
+      @symphysics.explicit_matrix_rows_string(symsystem1.coordinates()),
+      prefix +
+      "symsystem = SymbolicSystem((x, y, u, v, lam), comb_explicit_rhs, alg_con=[4], output_eqns=out_eqns, coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.coordinates",
+    ),
   )
   let ours_states = symbolic_system_entries_string(symsystem2.states())
   let oracle_states = mechanics_summary(
@@ -100,25 +100,25 @@ test "physics.mechanics parity symbolic system forms" {
   assert_eq(ours_states, oracle_states)
   assert_true(
     mechanics_matrix_equal(
-        @symphysics.explicit_matrix_rows_string(symsystem3.dyn_implicit_mat()),
-        prefix +
-        "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.dyn_implicit_mat",
-      )
+      @symphysics.explicit_matrix_rows_string(symsystem3.dyn_implicit_mat()),
+      prefix +
+      "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.dyn_implicit_mat",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        @symphysics.explicit_matrix_rows_string(symsystem3.comb_implicit_mat()),
-        prefix +
-        "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.comb_implicit_mat",
-      )
+      @symphysics.explicit_matrix_rows_string(symsystem3.comb_implicit_mat()),
+      prefix +
+      "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.comb_implicit_mat",
+    ),
   )
   symsystem3.compute_explicit_form()
   assert_true(
     mechanics_matrix_equal(
-        @symphysics.explicit_matrix_rows_string(symsystem3.comb_explicit_rhs()),
-        prefix +
-        "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.compute_explicit_form(); symsystem.comb_explicit_rhs",
-      )
+      @symphysics.explicit_matrix_rows_string(symsystem3.comb_explicit_rhs()),
+      prefix +
+      "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.compute_explicit_form(); symsystem.comb_explicit_rhs",
+    ),
   )
   let ours_dyn_items = symsystem3.dynamic_symbols().map(@symprint.to_string)
   let oracle_dyn = mechanics_summary(
@@ -128,7 +128,7 @@ test "physics.mechanics parity symbolic system forms" {
   let oracle_dyn_items = symbolic_system_summary_items(oracle_dyn)
   assert_true(
     ours_dyn_items.length() == oracle_dyn_items.length() &&
-        ours_dyn_items.all(fn(item) { oracle_dyn_items.contains(item) })
+    ours_dyn_items.all(fn(item) { oracle_dyn_items.contains(item) }),
   )
   let ours_const_items = symsystem3.constant_symbols().map(@symprint.to_string)
   ours_const_items.sort_by((a, b) => a.compare(b))
@@ -138,7 +138,9 @@ test "physics.mechanics parity symbolic system forms" {
     "symsystem = SymbolicSystem((x, y, u, v, lam), dyn_implicit_rhs, mass_matrix=dyn_implicit_mat, coordinate_derivatives=kin_explicit_rhs, alg_con=[2], coord_idxs=(0, 1), speed_idxs=(2, 3), bodies=[Pa], loads=[(O, g*m*N.x)]); sorted(str(x) for x in symsystem.constant_symbols())",
   )
   assert_eq(ours_consts, oracle_consts)
-  assert_true(symsystem2.alg_con() == Some([4]) && symsystem3.alg_con() == Some([4]))
+  assert_true(
+    symsystem2.alg_con() == Some([4]) && symsystem3.alg_con() == Some([4]),
+  )
   let oracle_body_name = mechanics_summary(
     prefix +
     "symsystem = SymbolicSystem((x, y, lam), comb_implicit_rhs, speeds=(u, v), mass_matrix=comb_implicit_mat, alg_con=[4], output_eqns=out_eqns, bodies=[Pa], loads=[(O, g*m*N.x)]); symsystem.bodies[0].name",

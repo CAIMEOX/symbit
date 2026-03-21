@@ -46,22 +46,22 @@ test "physics.mechanics parity lagrange simple pendulum" {
   let oracle_rhs = mechanics_summary(
     prefix + "[[str(x) for x in row] for row in LM.rhs().tolist()]",
   )
-  assert_eq(lagrange_port_matrix_entry_summary(lm.mass_matrix()).replace(
-          old=" ",
-          new="",
-        ), oracle_mass.replace(old=" ", new=""))
+  assert_eq(
+    lagrange_port_matrix_entry_summary(lm.mass_matrix()).replace(
+      old=" ",
+      new="",
+    ),
+    oracle_mass.replace(old=" ", new=""),
+  )
   let rhs = lm.rhs()
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(rhs.get(0, 0)),
-        "Derivative(q(t), t)",
-      )
+      @symprint.to_string(rhs.get(0, 0)),
+      "Derivative(q(t), t)",
+    ),
   )
   assert_true(
     oracle_rhs.contains("-g*sin(q(t))/l") &&
-        mechanics_expr_equal(
-          @symprint.to_string(rhs.get(1, 0)),
-          "-g*sin(q(t))/l",
-        )
+    mechanics_expr_equal(@symprint.to_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
   )
 }

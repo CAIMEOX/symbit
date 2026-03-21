@@ -141,11 +141,7 @@ fn diff_n(expr : Expr, sym : Expr, n : Int) -> Expr {
 }
 
 ///|
-fn shift_symbol(
-  expr : Expr,
-  sym : Expr,
-  by : Int,
-) -> Expr {
+fn shift_symbol(expr : Expr, sym : Expr, by : Int) -> Expr {
   let name = require_symbol_name(sym)
   let env : Map[String, Expr] = {}
   env[name] = @symcore.add([sym, int(by)])

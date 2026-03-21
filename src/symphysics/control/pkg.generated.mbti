@@ -71,7 +71,6 @@ pub fn transfer_function(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> Transfe
 pub suberror ControlError {
   ValueError(String)
   TypeError(String)
-  ShapeError(String)
   NotImplemented(String)
 }
 pub impl Eq for ControlError
@@ -107,7 +106,7 @@ pub fn DiscreteTransferFunction::from_rational_expression(@symcore.Expr, @symcor
 pub fn DiscreteTransferFunction::from_zpk(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, @symcore.Expr, sampling_time? : @symcore.Expr) -> Self raise ControlError
 pub fn DiscreteTransferFunction::is_biproper(Self) -> Bool raise ControlError
 pub fn DiscreteTransferFunction::is_proper(Self) -> Bool raise ControlError
-pub fn DiscreteTransferFunction::is_stable(Self) -> Bool? raise ControlError
+pub fn DiscreteTransferFunction::is_stable(Self) -> Bool?
 pub fn DiscreteTransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
 pub fn DiscreteTransferFunction::num(Self) -> @symcore.Expr
 pub fn DiscreteTransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError
@@ -270,7 +269,7 @@ pub fn TransferFunction::from_rational_expression(@symcore.Expr, variable? : @sy
 pub fn TransferFunction::from_zpk(Array[@symcore.Expr], Array[@symcore.Expr], @symcore.Expr, @symcore.Expr) -> Self raise ControlError
 pub fn TransferFunction::is_biproper(Self) -> Bool raise ControlError
 pub fn TransferFunction::is_proper(Self) -> Bool raise ControlError
-pub fn TransferFunction::is_stable(Self) -> Bool? raise ControlError
+pub fn TransferFunction::is_stable(Self) -> Bool?
 pub fn TransferFunction::is_strictly_proper(Self) -> Bool raise ControlError
 pub fn TransferFunction::num(Self) -> @symcore.Expr
 pub fn TransferFunction::poles(Self) -> Array[@symcore.Expr] raise ControlError

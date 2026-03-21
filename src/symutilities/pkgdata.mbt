@@ -33,6 +33,10 @@ pub fn pkgdata_deprecation_warning() -> SymPyDeprecationWarning raise UtilitiesE
 /// not expose Python-style loader file objects, this returns the resolved path
 /// string after emitting the deprecation warning.
 pub fn get_resource(identifier : String, pkg_dir : String) -> String {
-  ignore(pkgdata_deprecation_warning() catch { _ => return join_resource_path(pkg_dir, identifier) })
+  ignore(
+    pkgdata_deprecation_warning() catch {
+      _ => return join_resource_path(pkg_dir, identifier)
+    },
+  )
   join_resource_path(pkg_dir, identifier)
 }

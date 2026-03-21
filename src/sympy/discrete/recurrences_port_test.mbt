@@ -103,12 +103,7 @@ test "discrete linrec parity" {
   )
   let res6 = linrec([], [@symcore.int(1), @symcore.int(1)], 20)
   assert_oracle(
-    try? linrec_equiv(
-      [],
-      [@symcore.int(1), @symcore.int(1)],
-      20,
-      res6,
-    ),
+    try? linrec_equiv([], [@symcore.int(1), @symcore.int(1)], 20, res6),
   )
 }
 

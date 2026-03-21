@@ -545,9 +545,7 @@ fn symbolic_continuous_density(
                   eval_arith(@symcore.mul([nu, @symcore.symbol("pi")])),
                 ]),
                 @symcore.function("gamma", [
-                  eval_arith(
-                    @symcore.mul([stats_exact_rational(1, 2), nu]),
-                  ),
+                  eval_arith(@symcore.mul([stats_exact_rational(1, 2), nu])),
                 ]),
               ]),
             ),
@@ -1773,8 +1771,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
           Some(v) => Some(cont_guard_params(name, params, v))
           None => {
             let raw = match name {
-              "Arcsin" if params.length() == 0 =>
-                stats_exact_rational(1, 8)
+              "Arcsin" if params.length() == 0 => stats_exact_rational(1, 8)
               "Arcsin" if params.length() == 2 =>
                 eval_arith(
                   @symcore.mul([

@@ -185,9 +185,7 @@ pub fn Column::apply_load(
   self.load_ = self.load_ + value * cm_singularity(self.variable_, start, order)
   match end {
     Some(stop) => {
-      let terms = try
-        beam_end_terms(value, start, order, stop, self.variable_)
-      catch {
+      let terms = beam_end_terms(value, start, order, stop, self.variable_) catch {
         BeamError::ValueError(message) => raise ColumnError::ValueError(message)
         BeamError::TypeError(message) => raise ColumnError::TypeError(message)
         BeamError::SolveError(message) => raise ColumnError::SolveError(message)
@@ -342,7 +340,8 @@ pub fn Column::solve_for_reaction_loads(
           )
           self.is_solved_ = true
         }
-        None => raise ColumnError::SolveError("unable to solve column reactions")
+        None =>
+          raise ColumnError::SolveError("unable to solve column reactions")
       }
   }
 }

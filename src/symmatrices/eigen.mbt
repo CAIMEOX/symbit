@@ -513,7 +513,11 @@ pub fn Matrix::eigenvals(
     let disc = expr_sub(expr_mul(tr, tr), expr_mul(@symcore.int(4), det))
     let sqrt_disc = expr_simplify(@symcore.function("sqrt", [disc]))
     let half = @symcore.rational_from_ints(1, 2) catch {
-      _ => expr_mul(@symcore.int(1), @symcore.pow(@symcore.int(2), @symcore.int(-1)))
+      _ =>
+        expr_mul(
+          @symcore.int(1),
+          @symcore.pow(@symcore.int(2), @symcore.int(-1)),
+        )
     }
     let r1 = expr_simplify(expr_mul(half, expr_sub(tr, sqrt_disc)))
     let r2 = expr_simplify(expr_mul(half, expr_add(tr, sqrt_disc)))

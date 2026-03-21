@@ -121,10 +121,7 @@ fn linear_repr(entity : GeometryEntity) -> String raise GeometryError {
 }
 
 ///|
-fn linear_param_ok(
-  kind : LinearKind,
-  value : Expr,
-) -> Bool raise GeometryError {
+fn linear_param_ok(kind : LinearKind, value : Expr) -> Bool raise GeometryError {
   match kind {
     LinearKind::Line => true
     LinearKind::Ray =>
@@ -479,10 +476,7 @@ pub fn Line::contains(self : Line, other : Point) -> Bool raise GeometryError {
 }
 
 ///|
-pub fn Line::distance(
-  self : Line,
-  other : Point,
-) -> Expr raise GeometryError {
+pub fn Line::distance(self : Line, other : Point) -> Expr raise GeometryError {
   let point_obj = other.with_dim(self.ambient_dimension())
   let diff = geo_sub_coords(point_obj.coords_, self.p1_.coords_)
   let direction = geo_sub_coords(self.p2_.coords_, self.p1_.coords_)
@@ -750,10 +744,7 @@ pub fn Ray::rotate(
 }
 
 ///|
-pub fn Ray::distance(
-  self : Ray,
-  other : Point,
-) -> Expr raise GeometryError {
+pub fn Ray::distance(self : Ray, other : Point) -> Expr raise GeometryError {
   let target = other.with_dim(self.ambient_dimension())
   let direction = self.direction().coords_
   let diff = geo_sub_coords(target.coords_, self.p1_.coords_)
@@ -802,10 +793,7 @@ pub fn Segment::direction(self : Segment) -> Point {
 }
 
 ///|
-pub fn Segment::equals(
-  self : Segment,
-  other : GeometryEntity,
-) -> Bool {
+pub fn Segment::equals(self : Segment, other : GeometryEntity) -> Bool {
   match other {
     GeometryEntity::Segment(seg_obj) =>
       (self.p1_.equals(seg_obj.p1_) && self.p2_.equals(seg_obj.p2_)) ||

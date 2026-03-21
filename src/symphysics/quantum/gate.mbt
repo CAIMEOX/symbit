@@ -112,8 +112,7 @@ fn gate_tuple_ints(expr : Expr) -> Array[Int]? {
       let out : Array[Int] = []
       for arg in args {
         match arg {
-          Expr::Number(n) if n.is_integral() =>
-            out.push(n.numerator().to_int())
+          Expr::Number(n) if n.is_integral() => out.push(n.numerator().to_int())
           _ => return None
         }
       }
@@ -228,16 +227,16 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
   match expr {
     Expr::Function("ImmutableDenseMatrix", args) if args.length() == 1 =>
       parse_rows(args[0])
-    Expr::Function("Matrix", args) if args.length() == 1 =>
-      parse_rows(args[0])
+    Expr::Function("Matrix", args) if args.length() == 1 => parse_rows(args[0])
     _ => None
   }
 }
 
 ///|
 fn gate_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match result {
     Ok(value) => value
     Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
@@ -270,14 +269,11 @@ pub fn u_gate_single(
 }
 
 ///|
-fn ugate_from_expr(
-  expr : Expr,
-) -> (Array[Int], @symphysics.ExplicitMatrix)? {
+fn ugate_from_expr(expr : Expr) -> (Array[Int], @symphysics.ExplicitMatrix)? {
   match expr {
     Expr::Function("UGate", args) if args.length() == 2 => {
       let targets = match args[0] {
-        Expr::Number(n) if n.is_integral() =>
-          Some([n.numerator().to_int()])
+        Expr::Number(n) if n.is_integral() => Some([n.numerator().to_int()])
         _ => gate_tuple_ints(args[0])
       }
       match (targets, gate_matrix_from_expr(args[1])) {
@@ -314,9 +310,7 @@ fn sqrt2_over_2() -> Expr {
 ///|
 fn gate_phase_t() -> Expr {
   let quarter = gate_exact_rational(1, 4)
-  @symcore.raw_function("exp", [
-    symbol("I") * symbol("pi") * quarter,
-  ])
+  @symcore.raw_function("exp", [symbol("I") * symbol("pi") * quarter])
 }
 
 ///|
@@ -325,25 +319,16 @@ pub fn GateExpr::target_matrix(
 ) -> @symphysics.ExplicitMatrix raise @symphysics.PhysicsError {
   match self.kind {
     GateKind::Identity =>
-      @symphysics.explicit_matrix_from_rows([
-        [int(1), int(0)],
-        [int(0), int(1)],
-      ])
+      @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), int(1)]])
     GateKind::Hadamard => {
       let s = gate_hadamard_factor()
       @symphysics.explicit_matrix_from_rows([[s, s], [s, int(-1) * s]])
     }
     GateKind::X =>
-      @symphysics.explicit_matrix_from_rows([
-        [int(0), int(1)],
-        [int(1), int(0)],
-      ])
+      @symphysics.explicit_matrix_from_rows([[int(0), int(1)], [int(1), int(0)]])
     GateKind::Y => {
       let i = symbol("I")
-      @symphysics.explicit_matrix_from_rows([
-        [int(0), int(-1) * i],
-        [i, int(0)],
-      ])
+      @symphysics.explicit_matrix_from_rows([[int(0), int(-1) * i], [i, int(0)]])
     }
     GateKind::Z =>
       @symphysics.explicit_matrix_from_rows([
@@ -352,10 +337,7 @@ pub fn GateExpr::target_matrix(
       ])
     GateKind::Phase => {
       let i = symbol("I")
-      @symphysics.explicit_matrix_from_rows([
-        [int(1), int(0)],
-        [int(0), i],
-      ])
+      @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), i]])
     }
     GateKind::T =>
       @symphysics.explicit_matrix_from_rows([
@@ -577,7 +559,7 @@ pub fn gate_apply_to_qubit_expr(
                       }
                       let mut active = true
                       for control in controls {
-                        active = active && (q.bit(control) == 1)
+                        active = active && q.bit(control) == 1
                       }
                       if active {
                         match gate_apply_to_qubit_expr(args[1], qubit_expr) {
@@ -631,8 +613,7 @@ pub fn GateExpr::represent_zbasis(
 ///|
 fn gate_is_identity_expr(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 =>
-      true
+    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => true
     Expr::Function("IdentityGate", _) => true
     _ => false
   }
@@ -728,10 +709,7 @@ fn gate_sort_pair_sign(lhs : Expr, rhs : Expr) -> Int? {
 }
 
 ///|
-fn gate_compose_pair(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr? {
+fn gate_compose_pair(lhs : Expr, rhs : Expr) -> Expr? {
   if gate_is_identity_expr(lhs) {
     return Some(rhs)
   }
@@ -751,10 +729,7 @@ fn gate_compose_pair(
 }
 
 ///|
-pub fn gate_pow_simplify(
-  gate_expr : Expr,
-  exp : Int,
-) -> Expr? {
+pub fn gate_pow_simplify(gate_expr : Expr, exp : Int) -> Expr? {
   if exp == 0 {
     return Some(int(1))
   }
@@ -933,11 +908,7 @@ pub fn gate_sort(expr : Expr) -> Expr {
                 Some(sign) => {
                   let lhs = factors[idx]
                   let rhs = factors[idx + 1]
-                  factors[idx] = if sign == -1 {
-                    int(-1) * rhs
-                  } else {
-                    rhs
-                  }
+                  factors[idx] = if sign == -1 { int(-1) * rhs } else { rhs }
                   factors[idx + 1] = lhs
                   changed = true
                 }

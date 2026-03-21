@@ -238,9 +238,7 @@ fn coeff_content(poly : Poly) -> @symnum.BigRational raise PolyError {
   if poly.coeffs.is_empty() || g_num.is_zero() {
     return @symnum.BigRational::zero()
   }
-  let num_r = @symnum.BigRational::from_bigint(g_num)
-  let den_r = @symnum.BigRational::from_bigint(lcm_den)
-  num_r.div_r(den_r)
+  poly_rational_from_bigints(g_num, lcm_den)
 }
 
 ///|

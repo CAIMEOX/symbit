@@ -29,3 +29,12 @@ test "arithmetic closure" {
     content="3/5",
   )
 }
+
+///|
+test "division by zero raises rational error" {
+  let a = BigRational::from_int(1)
+  let result : Result[BigRational, RationalError] = try? a.div_r(
+    BigRational::zero(),
+  )
+  inspect(result, content="Err(ZeroDenominator)")
+}

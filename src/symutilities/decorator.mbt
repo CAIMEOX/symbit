@@ -27,14 +27,9 @@ fn[T] thread_container(value : Threadable[T], rule : (T) -> T) -> Threadable[T] 
 }
 
 ///|
-fn thread_expr(
-  expr : Expr,
-  use_add : Bool,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn thread_expr(expr : Expr, use_add : Bool, rule : (Expr) -> Expr) -> Expr {
   match expr {
-    Expr::Add(args) if use_add =>
-      @symcore.add(args.map(arg => rule(arg)))
+    Expr::Add(args) if use_add => @symcore.add(args.map(arg => rule(arg)))
     _ => rule(expr)
   }
 }
@@ -60,9 +55,7 @@ pub fn threaded(
 pub fn xthreaded(
   rule : (Expr) -> Expr,
 ) -> (Threadable[Expr]) -> Threadable[Expr] {
-  (value : Threadable[Expr]) => {
-    thread_container(value, expr => rule(expr))
-  }
+  (value : Threadable[Expr]) => thread_container(value, expr => rule(expr))
 }
 
 ///|

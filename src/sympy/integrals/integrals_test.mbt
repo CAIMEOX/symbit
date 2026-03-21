@@ -6,14 +6,14 @@ fn approx_double(lhs : Double, rhs : Double, eps? : Double = 1.0e-4) -> Bool {
 ///|
 fn unit_square_polygon() -> @symgeometry.Polygon raise {
   match
-    (@symgeometry.polygon([
+    @symgeometry.polygon([
       @symgeometry.point2d(@symcore.int(0), @symcore.int(0)),
       @symgeometry.point2d(@symcore.int(0), @symcore.int(1)),
       @symgeometry.point2d(@symcore.int(1), @symcore.int(1)),
       @symgeometry.point2d(@symcore.int(1), @symcore.int(0)),
-    ])) {
+    ]) {
     @symgeometry.GeometryEntity::Polygon(poly) => poly
-    _ => panic()
+    _ => fail("expected polygon from unit square vertices")
   }
 }
 
@@ -505,9 +505,7 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   )
   assert_true(!triangle_window_fourier_eval.contains("FourierTransform"))
   assert_true(
-    !triangle_window_inverse_fourier_eval.contains(
-        "InverseFourierTransform",
-      )
+    !triangle_window_inverse_fourier_eval.contains("InverseFourierTransform"),
   )
   assert_eq(
     @symcore.compare_expr(
@@ -568,7 +566,9 @@ test "symintegrals auxiliary transforms evaluate and stay out of unevaluated obj
   assert_true(!inverse_sine_gaussian_eval.contains("InverseSineTransform"))
   assert_true(!cosine_gaussian_eval.contains("CosineTransform"))
   assert_true(!inverse_cosine_gaussian_eval.contains("InverseCosineTransform"))
-  assert_true(!inverse_cosine_sqrt_recip_eval.contains("InverseCosineTransform"))
+  assert_true(
+    !inverse_cosine_sqrt_recip_eval.contains("InverseCosineTransform"),
+  )
   assert_true(!sine_log_over_x_eval.contains("SineTransform"))
   assert_true(!cosine_sqrt_decay_eval.contains("CosineTransform"))
   assert_true(!hankel_gaussian_eval.contains("HankelTransform"))
@@ -588,329 +588,329 @@ test "symintegrals Mellin special-function rules evaluate" {
 
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho), x, s),
+      doit(
+        mellin_transform((x + @symcore.int(1)) ^ (@symcore.int(-1) * rho), x, s),
+      ),
+    ).contains("MellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(
+      doit(
+        mellin_transform(
+          ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
+          @symspec.heaviside(@symcore.int(1) - x),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            ((@symcore.int(1) - x) ^ (b - @symcore.int(1))) *
-            @symspec.heaviside(@symcore.int(1) - x),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
+          @symspec.heaviside(x - @symcore.int(1)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            ((x - @symcore.int(1)) ^ (b - @symcore.int(1))) *
-            @symspec.heaviside(x - @symcore.int(1)),
-            x,
-            s,
-          ),
+      doit(mellin_transform(@symspec.erf(@symelem.sqrt(x)), x, s)),
+    ).contains("MellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(
+      doit(
+        mellin_transform(
+          @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(mellin_transform(@symspec.erf(@symelem.sqrt(x)), x, s)),
-      ).contains("MellinTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.abs(@symcore.int(1) - x) ^ (@symcore.int(-1) * rho),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          (@symelem.log(x) ^ @symcore.int(4)) *
+          @symspec.heaviside(@symcore.int(1) - x),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            (@symelem.log(x) ^ @symcore.int(4)) *
-            @symspec.heaviside(@symcore.int(1) - x),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          (@symelem.log(x) ^ @symcore.int(3)) *
+          @symspec.heaviside(x - @symcore.int(1)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            (@symelem.log(x) ^ @symcore.int(3)) *
-            @symspec.heaviside(x - @symcore.int(1)),
-            x,
-            s,
-          ),
+      doit(mellin_transform(@symelem.log(x + @symcore.int(1)), x, s)),
+    ).contains("MellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(
+      doit(
+        mellin_transform(
+          @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(mellin_transform(@symelem.log(x + @symcore.int(1)), x, s)),
-      ).contains("MellinTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.log((x ^ @symcore.int(-1)) + @symcore.int(1)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          mellin_transform(
-            ((x ^ a) - (bp ^ a)) * ((x - bp) ^ @symcore.int(-1)),
-            x,
-            s,
-          ),
-        ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   let sqrt_shift = @symelem.sqrt(x + (bp ^ @symcore.int(2))) + bp
   assert_true(
     !@symprint.to_string(doit(mellin_transform(sqrt_shift ^ a, x, s))).contains(
-        "MellinTransform",
-      )
+      "MellinTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            (sqrt_shift ^ a) *
-            (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          (sqrt_shift ^ a) *
+          (@symelem.sqrt(x + (bp ^ @symcore.int(2))) ^ @symcore.int(-1)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(@symelem.log(@symelem.abs(@symcore.int(1) - x)), x, s),
-        ),
-      ).contains("MellinTransform")
+      doit(
+        mellin_transform(@symelem.log(@symelem.abs(@symcore.int(1) - x)), x, s),
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symelem.log(@symelem.abs(@symcore.int(1) - (x ^ @symcore.int(-1)))),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(doit(mellin_transform(@symspec.e1(x), x, s))).contains(
-        "MellinTransform",
-      )
+      "MellinTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(
-        doit(mellin_transform(@symspec.expint(@symcore.int(2), x), x, s)),
-      ).contains("MellinTransform")
+      doit(mellin_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(doit(mellin_transform(@symspec.si(x), x, s))).contains(
-        "MellinTransform",
-      )
+      "MellinTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(
-        doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
-      ).contains("MellinTransform")
+      doit(mellin_transform(@symspec.ci(@symelem.sqrt(x)), x, s)),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symcore.int(2) * @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.bessely(a, @symcore.int(2) * @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselk(a, @symcore.int(2) * @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besseli(a, @symelem.sqrt(x)) *
-            @symspec.besselk(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besseli(a, @symelem.sqrt(x)) *
+          @symspec.besselk(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symelem.sqrt(x)) ^ @symcore.int(2),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symelem.sqrt(x)) ^ @symcore.int(2),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symelem.sqrt(x)) *
-            @symspec.besselj(@symcore.int(-1) * a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symelem.sqrt(x)) *
+          @symspec.besselj(@symcore.int(-1) * a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symelem.sqrt(x)) *
-            @symspec.bessely(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symelem.sqrt(x)) *
+          @symspec.bessely(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symelem.sqrt(x)) *
-            @symspec.besselj(b, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symelem.sqrt(x)) *
+          @symspec.besselj(b, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a - @symcore.int(1), @symelem.sqrt(x)) *
-            @symspec.besselj(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a - @symcore.int(1), @symelem.sqrt(x)) *
+          @symspec.besselj(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besselj(a, @symelem.sqrt(x)) *
-            @symspec.bessely(b, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besselj(a, @symelem.sqrt(x)) *
+          @symspec.bessely(b, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symspec.besseli(b, @symelem.sqrt(x)) *
-            @symspec.besselk(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symspec.besseli(b, @symelem.sqrt(x)) *
+          @symspec.besselk(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.sin(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symelem.sin(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.cos(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symelem.cos(@symelem.sqrt(x)) * @symspec.besselj(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.sin(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symelem.sin(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          mellin_transform(
-            @symelem.cos(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
-            x,
-            s,
-          ),
+      doit(
+        mellin_transform(
+          @symelem.cos(@symelem.sqrt(x)) * @symspec.bessely(a, @symelem.sqrt(x)),
+          x,
+          s,
         ),
-      ).contains("MellinTransform")
+      ),
+    ).contains("MellinTransform"),
   )
 
   let generic_mellin_eval = @symprint.to_string(
@@ -923,7 +923,7 @@ test "symintegrals Mellin special-function rules evaluate" {
   )
   assert_true(
     partial_generic_mellin_eval.contains("MellinTransform(f(x), x, s)") &&
-        partial_generic_mellin_eval.contains("gamma(s)")
+    partial_generic_mellin_eval.contains("gamma(s)"),
   )
 
   let inv_e1 = doit(
@@ -1438,53 +1438,73 @@ test "symintegrals Mellin special-function rules evaluate" {
     0,
   )
   assert_true(@symprint.to_string(inv_sqrt_shift_recip).contains("sqrt"))
-  assert_true(!@symprint.to_string(inv_besselj).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_bessely).contains("InverseMellinTransform"))
+  assert_true(
+    !@symprint.to_string(inv_besselj).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_bessely).contains("InverseMellinTransform"),
+  )
   assert_true(@symprint.to_string(inv_bessely).contains("bessely"))
-  assert_true(!@symprint.to_string(inv_besselk).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_sin_besselj).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_sin_bessely).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_cos_bessely).contains("InverseMellinTransform"))
+  assert_true(
+    !@symprint.to_string(inv_besselk).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_sin_besselj).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_cos_besselj).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_sin_bessely).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_cos_bessely).contains("InverseMellinTransform"),
+  )
   assert_true(
     @symprint.to_string(inv_sin_bessely).contains("sin") &&
-        @symprint.to_string(inv_sin_bessely).contains("bessely")
+    @symprint.to_string(inv_sin_bessely).contains("bessely"),
   )
   assert_true(
     @symprint.to_string(inv_cos_bessely).contains("cos") &&
-        @symprint.to_string(inv_cos_bessely).contains("bessely")
+    @symprint.to_string(inv_cos_bessely).contains("bessely"),
   )
-  assert_true(!@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_besselj_pm).contains("InverseMellinTransform"))
-  assert_true(!@symprint.to_string(inv_besselj_ab).contains("InverseMellinTransform"))
   assert_true(
-    !@symprint.to_string(inv_besselj_bessely).contains(
-        "InverseMellinTransform",
-      )
+    !@symprint.to_string(inv_besselj_sq).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_besselj_pm).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_besselj_ab).contains("InverseMellinTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(inv_besselj_bessely).contains("InverseMellinTransform"),
   )
   assert_true(
     !@symprint.to_string(inv_besselj_bessely_same).contains(
-        "InverseMellinTransform",
-      )
+      "InverseMellinTransform",
+    ),
   )
   assert_true(
     @symprint.to_string(inv_besselj_bessely_same).contains("besselj") &&
-        @symprint.to_string(inv_besselj_bessely_same).contains("bessely")
+    @symprint.to_string(inv_besselj_bessely_same).contains("bessely"),
   )
   assert_true(
     @symprint.to_string(inv_besselj_bessely).contains("besselj") &&
-        @symprint.to_string(inv_besselj_bessely).contains("bessely")
+    @symprint.to_string(inv_besselj_bessely).contains("bessely"),
   )
   assert_true(
     !@symprint.to_string(inv_difference_quotient).contains(
-        "InverseMellinTransform",
-      )
+      "InverseMellinTransform",
+    ),
   )
-  assert_true(!@symprint.to_string(inv_sqrt_shift).contains("InverseMellinTransform"))
+  assert_true(
+    !@symprint.to_string(inv_sqrt_shift).contains("InverseMellinTransform"),
+  )
   assert_true(
     !@symprint.to_string(inv_sqrt_shift_recip).contains(
-        "InverseMellinTransform",
-      )
+      "InverseMellinTransform",
+    ),
   )
   assert_eq(
     @symcore.compare_expr(
@@ -1546,33 +1566,33 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
 
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symelem.sinh(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symelem.cosh(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(x * @symelem.sin(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(x * @symelem.cos(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
-    !@symprint.to_string(
-        doit(laplace_transform(x * @symelem.sinh(x), x, s)),
-      ).contains("LaplaceTransform")
+    !@symprint.to_string(doit(laplace_transform(x * @symelem.sinh(x), x, s))).contains(
+      "LaplaceTransform",
+    ),
   )
   assert_true(
-    !@symprint.to_string(
-        doit(laplace_transform(x * @symelem.cosh(x), x, s)),
-      ).contains("LaplaceTransform")
+    !@symprint.to_string(doit(laplace_transform(x * @symelem.cosh(x), x, s))).contains(
+      "LaplaceTransform",
+    ),
   )
 
   let generic_eval = @symprint.to_string(laplace_transform_eval(f_of_x, x, s))
@@ -1593,16 +1613,18 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   assert_true(
     shifted_generic_eval.contains("LaplaceTransform(f(x), x,") &&
-        (
-          shifted_generic_eval.contains("a + s)") ||
-          shifted_generic_eval.contains("s + a)")
-        )
+    (
+      shifted_generic_eval.contains("a + s)") ||
+      shifted_generic_eval.contains("s + a)")
+    ),
   )
 
   let x_generic_eval = @symprint.to_string(
     laplace_transform_eval(x * f_of_x, x, s),
   )
-  assert_true(x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)"))
+  assert_true(
+    x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)"),
+  )
 
   let poly_generic_eval = @symprint.to_string(
     laplace_transform_eval(
@@ -1617,17 +1639,13 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
   )
   assert_true(
+    poly_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s, 2)") ||
     poly_generic_eval.contains(
-          "Derivative(LaplaceTransform(f(x), x, s), s, 2)",
-        ) ||
-        poly_generic_eval.contains(
-          "Derivative(LaplaceTransform(f(x), x, s), (s, 2))",
-        )
+      "Derivative(LaplaceTransform(f(x), x, s), (s, 2))",
+    ),
   )
   assert_true(
-    poly_generic_eval.contains(
-        "Derivative(LaplaceTransform(f(x), x, s), s)",
-      )
+    poly_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)"),
   )
 
   let sinh_generic_eval = @symprint.to_string(
@@ -1657,8 +1675,8 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .length()
   assert_true(
     sin_transform_count >= 3 &&
-        sin_generic_eval.contains("I") &&
-        sin_generic_eval.contains("a")
+    sin_generic_eval.contains("I") &&
+    sin_generic_eval.contains("a"),
   )
 
   let cos_generic_eval = @symprint.to_string(
@@ -1670,8 +1688,8 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     .length()
   assert_true(
     cos_transform_count >= 3 &&
-        cos_generic_eval.contains("I") &&
-        cos_generic_eval.contains("a")
+    cos_generic_eval.contains("I") &&
+    cos_generic_eval.contains("a"),
   )
 }
 
@@ -1684,97 +1702,97 @@ test "symintegrals Laplace special-function rules evaluate" {
 
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symspec.ci(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symspec.si(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symspec.shi(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symspec.chi(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(doit(laplace_transform(@symspec.e1(x), x, s))).contains(
-        "LaplaceTransform",
-      )
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(
-        doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
-      ).contains("LaplaceTransform")
+      doit(laplace_transform(@symspec.expint(@symcore.int(2), x), x, s)),
+    ).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(doit(laplace_transform(@symspec.expint(a, x), x, s))).contains(
+      "LaplaceTransform",
+    ),
   )
   assert_true(
     !@symprint.to_string(
-        doit(laplace_transform(@symspec.expint(a, x), x, s)),
-      ).contains("LaplaceTransform")
+      doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(laplace_transform(@symspec.erf(@symcore.int(2) * x), x, s)),
-      ).contains("LaplaceTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          laplace_transform(
-            @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
-            x,
-            s,
-          ),
+      doit(
+        laplace_transform(
+          @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+          x,
+          s,
         ),
-      ).contains("LaplaceTransform")
+      ),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          laplace_transform(
-            x * @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
-            x,
-            s,
-          ),
+      doit(
+        laplace_transform(
+          x * @symspec.besselj(@symcore.int(0), @symcore.int(2) * x),
+          x,
+          s,
         ),
-      ).contains("LaplaceTransform")
+      ),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          laplace_transform(
-            @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
-            x,
-            s,
-          ),
+      doit(
+        laplace_transform(
+          @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+          x,
+          s,
         ),
-      ).contains("LaplaceTransform")
+      ),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          laplace_transform(
-            x * @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
-            x,
-            s,
-          ),
+      doit(
+        laplace_transform(
+          x * @symspec.besseli(@symcore.int(0), @symcore.int(2) * x),
+          x,
+          s,
         ),
-      ).contains("LaplaceTransform")
+      ),
+    ).contains("LaplaceTransform"),
   )
   assert_true(
-    !@symprint.to_string(
-        doit(laplace_transform(@symspec.fresnels(x), x, s)),
-      ).contains("LaplaceTransform")
+    !@symprint.to_string(doit(laplace_transform(@symspec.fresnels(x), x, s))).contains(
+      "LaplaceTransform",
+    ),
   )
   assert_true(
-    !@symprint.to_string(
-        doit(laplace_transform(@symspec.fresnelc(x), x, s)),
-      ).contains("LaplaceTransform")
+    !@symprint.to_string(doit(laplace_transform(@symspec.fresnelc(x), x, s))).contains(
+      "LaplaceTransform",
+    ),
   )
 
   let inv_ci = doit(
@@ -1803,7 +1821,9 @@ test "symintegrals Laplace special-function rules evaluate" {
 
   assert_true(!@symprint.to_string(inv_ci).contains("InverseLaplaceTransform"))
   assert_true(!@symprint.to_string(inv_e1).contains("InverseLaplaceTransform"))
-  assert_true(!@symprint.to_string(inv_expint2).contains("InverseLaplaceTransform"))
+  assert_true(
+    !@symprint.to_string(inv_expint2).contains("InverseLaplaceTransform"),
+  )
 
   assert_eq(
     @symcore.compare_expr(
@@ -1912,7 +1932,7 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   )
   assert_true(
     !shifted_quad.contains("InverseLaplaceTransform") &&
-        shifted_quad.contains("Heaviside")
+    shifted_quad.contains("Heaviside"),
   )
 
   let shifted_quad_num = @symprint.to_string(
@@ -1930,171 +1950,172 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   )
   assert_true(
     !shifted_quad_num.contains("InverseLaplaceTransform") &&
-        shifted_quad_num.contains("Heaviside")
+    shifted_quad_num.contains("Heaviside"),
   )
 
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
+      doit(
+        inverse_laplace_transform(
+          (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+          @symcore.int(-1),
+          s,
+          x,
+        ),
+      ),
+    ).contains("InverseLaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(
+      doit(
+        inverse_laplace_transform(
+          (s + @symcore.int(1)) *
+          (
             (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-            @symcore.int(-1),
-            s,
-            x,
+            @symcore.int(-1)
           ),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            (s + @symcore.int(1)) *
-            (
-              (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-              @symcore.int(-1)
-            ),
-            s,
-            x,
-          ),
-        ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
 
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-1),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            ((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          ((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            s * (((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1)),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          s *
+          (((s + @symcore.int(1)) * (s + @symcore.int(2))) ^ @symcore.int(-1)),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            ((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          ((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            s * (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2)),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          s * (((s ^ @symcore.int(2)) + @symcore.int(1)) ^ @symcore.int(-2)),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          ((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            s * (((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2)),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          s * (((s ^ @symcore.int(2)) - @symcore.int(1)) ^ @symcore.int(-2)),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
+      doit(
+        inverse_laplace_transform(
+          (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
+          @symcore.int(2) ^
+          @symcore.int(-1),
+          s,
+          x,
+        ),
+      ),
+    ).contains("InverseLaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(
+      doit(
+        inverse_laplace_transform(
+          s *
+          (
             (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
             @symcore.int(2) ^
-            @symcore.int(-1),
-            s,
-            x,
+            @symcore.int(-1)
           ),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            s *
-            (
-              (((s + @symcore.int(1)) ^ @symcore.int(2)) - @symcore.int(4)) ^
-              @symcore.int(2) ^
-              @symcore.int(-1)
-            ),
-            s,
-            x,
-          ),
+      doit(
+        inverse_laplace_transform(
+          (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
+          @symcore.int(2) ^
+          @symcore.int(-1),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
   assert_true(
     !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
+      doit(
+        inverse_laplace_transform(
+          s *
+          (
             (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
             @symcore.int(2) ^
-            @symcore.int(-1),
-            s,
-            x,
+            @symcore.int(-1)
           ),
+          s,
+          x,
         ),
-      ).contains("InverseLaplaceTransform")
-  )
-  assert_true(
-    !@symprint.to_string(
-        doit(
-          inverse_laplace_transform(
-            s *
-            (
-              (((s + @symcore.int(1)) ^ @symcore.int(2)) + @symcore.int(4)) ^
-              @symcore.int(2) ^
-              @symcore.int(-1)
-            ),
-            s,
-            x,
-          ),
-        ),
-      ).contains("InverseLaplaceTransform")
+      ),
+    ).contains("InverseLaplaceTransform"),
   )
 }
 
@@ -2104,21 +2125,21 @@ test "symintegrals quadrature and intpoly exact stage 6 paths" {
   assert_true(leg_nodes.length() == 3 && leg_weights.length() == 3)
   assert_true(
     approx_double(leg_nodes[0], -0.7746, eps=1.0e-3) &&
-        approx_double(leg_nodes[1], 0.0, eps=1.0e-8) &&
-        approx_double(leg_nodes[2], 0.7746, eps=1.0e-3)
+    approx_double(leg_nodes[1], 0.0, eps=1.0e-8) &&
+    approx_double(leg_nodes[2], 0.7746, eps=1.0e-3),
   )
   assert_true(
     approx_double(leg_weights[0], 0.55556, eps=1.0e-4) &&
-        approx_double(leg_weights[1], 0.88889, eps=1.0e-4) &&
-        approx_double(leg_weights[2], 0.55556, eps=1.0e-4)
+    approx_double(leg_weights[1], 0.88889, eps=1.0e-4) &&
+    approx_double(leg_weights[2], 0.55556, eps=1.0e-4),
   )
 
   let (lob_nodes, lob_weights) = gauss_lobatto(4, n_digits=5)
   assert_true(
     approx_double(lob_nodes[0], -1.0, eps=1.0e-8) &&
-        approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
-        approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
-        approx_double(lob_weights[3], 1.0 / 6.0, eps=1.0e-4)
+    approx_double(lob_nodes[3], 1.0, eps=1.0e-8) &&
+    approx_double(lob_weights[0], 1.0 / 6.0, eps=1.0e-4) &&
+    approx_double(lob_weights[3], 1.0 / 6.0, eps=1.0e-4),
   )
 
   let x = @symcore.symbol("x")

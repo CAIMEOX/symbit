@@ -54,16 +54,12 @@ test "physics.quantum.anticommutator: constructor and doit" {
   let b_op = @symcore.symbol("B")
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(anticommutator(a, b_op)),
-    ),
+    quantum_eval_str(@symprint.to_string(anticommutator(a, b_op))),
     quantum_eval_str("AntiCommutator(a, B)"),
     "anticommutator scalar",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(anticommutator(b_op, a_op)),
-    ),
+    quantum_eval_str(@symprint.to_string(anticommutator(b_op, a_op))),
     quantum_eval_str("AntiCommutator(B, A)"),
     "anticommutator canonical order",
   )

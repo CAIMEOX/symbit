@@ -57,21 +57,9 @@ test "rl rm_id" {
   let expr1 = basic([@symcore.int(0), @symcore.int(1)])
   let expr2 = basic([@symcore.int(0), @symcore.int(0)])
   let expr3 = basic([@symcore.int(2), @symcore.int(1)])
-  assert_expr_str_eq(
-    rmzeros(expr1),
-    rl_rm_id(expr1),
-    "rm_id 01",
-  )
-  assert_expr_str_eq(
-    rmzeros(expr2),
-    rl_rm_id(expr2),
-    "rm_id 00",
-  )
-  assert_expr_str_eq(
-    rmzeros(expr3),
-    rl_rm_id(expr3),
-    "rm_id 21",
-  )
+  assert_expr_str_eq(rmzeros(expr1), rl_rm_id(expr1), "rm_id 01")
+  assert_expr_str_eq(rmzeros(expr2), rl_rm_id(expr2), "rm_id 00")
+  assert_expr_str_eq(rmzeros(expr3), rl_rm_id(expr3), "rm_id 21")
 }
 
 ///|
@@ -104,16 +92,8 @@ test "rl flatten" {
 test "rl unpack" {
   let expr1 = basic([@symcore.int(2)])
   let expr2 = basic([@symcore.int(2), @symcore.int(3)])
-  assert_expr_str_eq(
-    @strategies_rl.unpack(expr1),
-    rl_unpack(expr1),
-    "unpack1",
-  )
-  assert_expr_str_eq(
-    @strategies_rl.unpack(expr2),
-    rl_unpack(expr2),
-    "unpack2",
-  )
+  assert_expr_str_eq(@strategies_rl.unpack(expr1), rl_unpack(expr1), "unpack1")
+  assert_expr_str_eq(@strategies_rl.unpack(expr2), rl_unpack(expr2), "unpack2")
 }
 
 ///|
@@ -137,11 +117,7 @@ test "rl distribute custom" {
     @strategies_util.ExprOp::Function("T2"),
   )
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    rl_distribute_custom(),
-    "distribute custom",
-  )
+  assert_expr_str_eq(result, rl_distribute_custom(), "distribute custom")
 }
 
 ///|
@@ -154,11 +130,7 @@ test "rl distribute add/mul" {
     @strategies_util.ExprOp::Add,
   )
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    rl_distribute_add_mul(expr),
-    "distribute add/mul",
-  )
+  assert_expr_str_eq(result, rl_distribute_add_mul(expr), "distribute add/mul")
 }
 
 ///|

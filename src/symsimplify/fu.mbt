@@ -40,11 +40,7 @@ pub fn tr4(expr : Expr) -> Expr {
 
 ///|
 /// Apply Fu trigonometric rewrite rule `TR5`.
-pub fn tr5(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+pub fn tr5(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => {
     rewrite_tr56(node, "sin", "cos", max~, pow~, plus=false)
   })
@@ -52,11 +48,7 @@ pub fn tr5(
 
 ///|
 /// Apply Fu trigonometric rewrite rule `TR6`.
-pub fn tr6(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+pub fn tr6(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => {
     rewrite_tr56(node, "cos", "sin", max~, pow~, plus=false)
   })
@@ -144,21 +136,13 @@ pub fn tr14(expr : Expr) -> Expr {
 
 ///|
 /// Apply Fu trigonometric rewrite rule `TR15`.
-pub fn tr15(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+pub fn tr15(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr15(node, max~, pow~))
 }
 
 ///|
 /// Apply Fu trigonometric rewrite rule `TR16`.
-pub fn tr16(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+pub fn tr16(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr16(node, max~, pow~))
 }
 
@@ -170,11 +154,7 @@ pub fn tr111(expr : Expr) -> Expr {
 
 ///|
 /// Apply Fu trigonometric rewrite rule `TR22`.
-pub fn tr22(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+pub fn tr22(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   rewrite_bottom_up_fu(expr, node => rewrite_tr22(node, max~, pow~))
 }
 
@@ -224,10 +204,7 @@ fn futrig_once(expr : Expr) -> Expr {
 }
 
 ///|
-fn rewrite_bottom_up_fu(
-  expr : Expr,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn rewrite_bottom_up_fu(expr : Expr, rule : (Expr) -> Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_fu(child, rule)
   })
@@ -235,11 +212,7 @@ fn rewrite_bottom_up_fu(
 }
 
 ///|
-fn fixpoint_fu(
-  expr : Expr,
-  f : (Expr) -> Expr,
-  max_passes? : Int = 8,
-) -> Expr {
+fn fixpoint_fu(expr : Expr, f : (Expr) -> Expr, max_passes? : Int = 8) -> Expr {
   let passes = if max_passes <= 0 { 1 } else { max_passes }
   let mut cur = expr
   for _ in 0..<passes {
@@ -344,10 +317,7 @@ fn rewrite_tr2i(expr : Expr, half? : Bool = false) -> Expr {
         if p != 0 {
           tan_terms.push(
             make_pow(
-              @symcore.add([
-                int(1),
-                @symcore.function("cos", [arg_expr]),
-              ]),
+              @symcore.add([int(1), @symcore.function("cos", [arg_expr])]),
               p,
             ),
           )
@@ -402,25 +372,18 @@ fn rewrite_tr56(
   plus? : Bool = false,
 ) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      src =>
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == src =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
           if pow && !is_power_of_two(e) {
             return expr
           }
           if e == 2 {
-            let base = @symcore.pow(
-              @symcore.function(dst, [arg]),
-              int(2),
-            )
+            let base = @symcore.pow(@symcore.function(dst, [arg]), int(2))
             if plus {
               @symcore.add([int(1), base])
             } else {
-              @symcore.add([
-                int(1),
-                @symcore.mul([int(-1), base]),
-              ])
+              @symcore.add([int(1), @symcore.mul([int(-1), base])])
             }
           } else if e % 2 == 0 {
             let inner = rewrite_tr56(
@@ -456,8 +419,7 @@ fn rewrite_tr56(
 ///|
 fn rewrite_tr7(expr : Expr) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      "cos" &&
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" &&
       parse_int(exp_expr) == Some(2) =>
       @symcore.mul([
         half_const(),
@@ -573,8 +535,7 @@ fn rewrite_tr10(expr : Expr) -> Expr {
   match expr {
     Expr::Function(name, [arg]) if name == "sin" || name == "cos" =>
       match arg {
-        Expr::Add(args) if args.length() >= 2 =>
-          expand_trig_sum(name, args)
+        Expr::Add(args) if args.length() >= 2 => expand_trig_sum(name, args)
         _ => expr
       }
     _ => expr
@@ -650,9 +611,7 @@ fn rewrite_tr11(expr : Expr) -> Expr {
         Some(inner) =>
           @symcore.add([
             @symcore.pow(@symcore.function("cos", [inner]), int(2)),
-            neg_expr(
-              @symcore.pow(@symcore.function("sin", [inner]), int(2)),
-            ),
+            neg_expr(@symcore.pow(@symcore.function("sin", [inner]), int(2))),
           ])
         None => expr
       }
@@ -799,19 +758,13 @@ fn rewrite_tr14(expr : Expr) -> Expr {
                   if name_i == "cos" {
                     out.push(
                       neg_expr(
-                        @symcore.pow(
-                          @symcore.function("sin", [arg_i]),
-                          int(2),
-                        ),
+                        @symcore.pow(@symcore.function("sin", [arg_i]), int(2)),
                       ),
                     )
                   } else {
                     out.push(
                       neg_expr(
-                        @symcore.pow(
-                          @symcore.function("cos", [arg_i]),
-                          int(2),
-                        ),
+                        @symcore.pow(@symcore.function("cos", [arg_i]), int(2)),
                       ),
                     )
                   }
@@ -838,14 +791,9 @@ fn rewrite_tr14(expr : Expr) -> Expr {
 }
 
 ///|
-fn rewrite_tr15(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+fn rewrite_tr15(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      "sin" =>
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "sin" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -866,10 +814,7 @@ fn rewrite_tr15(
           } else if pe % 2 == 1 {
             @symcore.mul([
               rewrite_tr15(
-                @symcore.pow(
-                  @symcore.function("sin", [arg]),
-                  int(e + 1),
-                ),
+                @symcore.pow(@symcore.function("sin", [arg]), int(e + 1)),
                 max~,
                 pow~,
               ),
@@ -886,14 +831,9 @@ fn rewrite_tr15(
 }
 
 ///|
-fn rewrite_tr16(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+fn rewrite_tr16(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      "cos" =>
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -914,10 +854,7 @@ fn rewrite_tr16(
           } else if pe % 2 == 1 {
             @symcore.mul([
               rewrite_tr16(
-                @symcore.pow(
-                  @symcore.function("cos", [arg]),
-                  int(e + 1),
-                ),
+                @symcore.pow(@symcore.function("cos", [arg]), int(e + 1)),
                 max~,
                 pow~,
               ),
@@ -952,14 +889,9 @@ fn rewrite_tr111(expr : Expr) -> Expr {
 }
 
 ///|
-fn rewrite_tr22(
-  expr : Expr,
-  max? : Int = 4,
-  pow? : Bool = false,
-) -> Expr {
+fn rewrite_tr22(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      "tan" ||
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "tan" ||
       name == "cot" =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
@@ -991,8 +923,7 @@ fn rewrite_tr22(
 ///|
 fn rewrite_trpower(expr : Expr) -> Expr {
   match expr {
-    Expr::Pow(Expr::Function(name, [x]), exp_expr) if name ==
-      "sin" ||
+    Expr::Pow(Expr::Function(name, [x]), exp_expr) if name == "sin" ||
       name == "cos" =>
       match parse_int(exp_expr) {
         Some(n) if n > 1 => trpower_expand(name, x, n)
@@ -1078,10 +1009,8 @@ fn rewrite_trmorrie(expr : Expr) -> Expr {
 ///|
 fn parse_morrie_factor(expr : Expr) -> MorrieFactor? {
   match expr {
-    Expr::Function(name, [arg]) if name == "cos" =>
-      make_morrie_factor(arg, 1)
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name ==
-      "cos" =>
+    Expr::Function(name, [arg]) if name == "cos" => make_morrie_factor(arg, 1)
+    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
       match parse_int(exp_expr) {
         Some(e) if e > 0 => make_morrie_factor(arg, e)
         _ => None
@@ -1113,9 +1042,7 @@ fn make_morrie_factor(arg : Expr, exp : Int) -> MorrieFactor? {
 }
 
 ///|
-fn rewrite_morrie_bucket(
-  bucket : Array[MorrieFactor],
-) -> (Array[Expr], Bool) {
+fn rewrite_morrie_bucket(bucket : Array[MorrieFactor]) -> (Array[Expr], Bool) {
   let powers : Map[String, MorrieCoeff] = {}
   let core = bucket[0].core
   for factor in bucket {
@@ -1257,10 +1184,7 @@ fn morrie_factor(
 }
 
 ///|
-fn scale_arg_with_coeff(
-  core : Expr,
-  coeff : @symnum.BigRational,
-) -> Expr {
+fn scale_arg_with_coeff(core : Expr, coeff : @symnum.BigRational) -> Expr {
   if coeff.is_one() {
     core
   } else {
@@ -1301,14 +1225,13 @@ fn make_signed_rational(
   sign : Int,
 ) -> @symnum.BigRational {
   let signed = if sign < 0 { numer.neg() } else { numer }
-  @symnum.BigRational::from_bigint(signed).div_r(@symnum.BigRational::from_bigint(denom))
+  @symnum.BigRational::new(signed, denom) catch {
+    _ => abort("invalid exact rational in trigonometric expansion")
+  }
 }
 
 ///|
-fn scale_expr_rational(
-  coeff : @symnum.BigRational,
-  expr : Expr,
-) -> Expr {
+fn scale_expr_rational(coeff : @symnum.BigRational, expr : Expr) -> Expr {
   if coeff.is_zero() {
     int(0)
   } else if coeff.is_one() {
@@ -1371,8 +1294,7 @@ fn split_fraction_fu(expr : Expr) -> (Expr, Expr) {
   match expr {
     Expr::Pow(base, exp_expr) =>
       match parse_int(exp_expr) {
-        Some(e) if e < 0 =>
-          (int(1), @symcore.pow(base, int(-e)))
+        Some(e) if e < 0 => (int(1), @symcore.pow(base, int(-e)))
         _ => (expr, int(1))
       }
     Expr::Mul(args) => {
@@ -1583,9 +1505,7 @@ fn parse_trig_product_term(
 }
 
 ///|
-fn split_num_coeff_trig(
-  expr : Expr,
-) -> (@symnum.BigRational, String, Expr)? {
+fn split_num_coeff_trig(expr : Expr) -> (@symnum.BigRational, String, Expr)? {
   let (coeff, factors) = split_numeric_coeff(expr)
   if factors.length() != 1 {
     return None
@@ -1597,9 +1517,7 @@ fn split_num_coeff_trig(
 }
 
 ///|
-fn split_numeric_coeff(
-  expr : Expr,
-) -> (@symnum.BigRational, Array[Expr]) {
+fn split_numeric_coeff(expr : Expr) -> (@symnum.BigRational, Array[Expr]) {
   match expr {
     Expr::Number(n) => (n, [])
     Expr::Mul(args) => {
@@ -1627,17 +1545,14 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
       let mut sign = 0
       for arg in args {
         match arg {
-          Expr::Function(name, [inner]) if name == "sin" ||
-            name == "cos" => {
+          Expr::Function(name, [inner]) if name == "sin" || name == "cos" => {
             trig_name = name
             trig_arg = inner
             has_trig = true
           }
           Expr::Number(n) if n.is_one() => sign = 1
-          Expr::Number(n) if n.compare(
-              @symnum.BigRational::from_int(-1),
-            ) ==
-            0 => sign = -1
+          Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+            sign = -1
           _ => ()
         }
       }
@@ -1777,11 +1692,7 @@ fn special_trig_value(name : String, p_raw : Int, q : Int) -> Expr? {
 ///|
 fn special_sin(p : Int, q : Int) -> Expr? {
   if q == 1 {
-    return if p % 2 == 0 {
-      Some(int(0))
-    } else {
-      Some(int(0))
-    }
+    return if p % 2 == 0 { Some(int(0)) } else { Some(int(0)) }
   }
   if q == 2 {
     return match p {
@@ -1839,11 +1750,7 @@ fn special_sin(p : Int, q : Int) -> Expr? {
 ///|
 fn special_cos(p : Int, q : Int) -> Expr? {
   if q == 1 {
-    return if p % 2 == 0 {
-      Some(int(1))
-    } else {
-      Some(int(-1))
-    }
+    return if p % 2 == 0 { Some(int(1)) } else { Some(int(-1)) }
   }
   if q == 2 {
     return match p {

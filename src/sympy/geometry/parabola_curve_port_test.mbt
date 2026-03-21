@@ -45,15 +45,15 @@ test "geometry.curve parity repr arbitrary point and rotation" {
   let ap = c.arbitrary_point(parameter=@symcore.symbol("z"))
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(ap.x()),
-        "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).x",
-      )
+      @symprint.to_string(ap.x()),
+      "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).x",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(ap.y()),
-        "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).y",
-      )
+      @symprint.to_string(ap.y()),
+      "Curve((2*s, s**2), (s, 0, 2)).arbitrary_point(z).y",
+    ),
   )
   let rotated = c.rotate(
     @symcore.symbol("pi") * (@symcore.int(2) ^ @symcore.int(-1)),
@@ -61,15 +61,15 @@ test "geometry.curve parity repr arbitrary point and rotation" {
   let rot_pt = rotated.arbitrary_point(parameter=@symcore.symbol("z"))
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(rot_pt.x()),
-        "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).x",
-      )
+      @symprint.to_string(rot_pt.x()),
+      "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).x",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(rot_pt.y()),
-        "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).y",
-      )
+      @symprint.to_string(rot_pt.y()),
+      "Curve((2*s, s**2), (s, 0, 2)).rotate(pi/2).arbitrary_point(z).y",
+    ),
   )
 }
 
@@ -97,9 +97,7 @@ test "geometry.curve parity free symbol helpers" {
   assert_eq(
     expr_set_summary(c.free_symbols()),
     string_set_summary(
-      geometry_eval_str(
-        "Curve((t + a, t**2), (t, b, 2)).free_symbols",
-      ),
+      geometry_eval_str("Curve((t + a, t**2), (t, b, 2)).free_symbols"),
     ),
   )
 }

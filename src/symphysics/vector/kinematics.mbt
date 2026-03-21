@@ -8,11 +8,7 @@ fn vector_substitute_time(vec : Vector, value : Expr) -> Vector {
 }
 
 ///|
-fn motion_integral_symbolic(
-  expr : Expr,
-  lower : Expr,
-  upper : Expr,
-) -> Expr {
+fn motion_integral_symbolic(expr : Expr, lower : Expr, upper : Expr) -> Expr {
   @symcore.function("Integral", [
     expr,
     @symcore.function("Tuple", [dynamicsymbols_t, lower, upper]),
@@ -20,11 +16,7 @@ fn motion_integral_symbolic(
 }
 
 ///|
-fn motion_integral_scalar(
-  expr : Expr,
-  lower : Expr,
-  upper : Expr,
-) -> Expr {
+fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
   let half = rational_expr(1, 2)
   if expr_is_zero(expr) {
     return zero_expr()
@@ -65,10 +57,7 @@ fn motion_integral_scalar(
     }
     Expr::Symbol(name) if name == "t" =>
       simplify_expr(half * ((upper ^ int_expr(2)) - (lower ^ int_expr(2))))
-    Expr::Pow(base, exp) if @symcore.compare_expr(
-        base, dynamicsymbols_t,
-      ) ==
-      0 =>
+    Expr::Pow(base, exp) if @symcore.compare_expr(base, dynamicsymbols_t) == 0 =>
       match exp {
         Expr::Number(n) if n.is_integral() => {
           let power = n.numerator().to_int()

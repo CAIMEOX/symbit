@@ -149,7 +149,9 @@ test "domains: basic constructor/repr parity" {
 ///|
 test "domains: polynomial/fraction descriptors parity" {
   let poly_domain = @sympolys.poly_ring_domain(Domain::ZZ, ["x", "y"])
-  let frac_domain = @sympolys.rational_function_field_domain(Domain::QQ, ["x", "y"])
+  let frac_domain = @sympolys.rational_function_field_domain(Domain::QQ, [
+    "x", "y",
+  ])
 
   let poly_ours = @sympolys.domain_to_sympy_string(poly_domain)
   let frac_ours = @sympolys.domain_to_sympy_string(frac_domain)
@@ -180,7 +182,10 @@ test "domains: predicate parity (field/ring/exact/finite)" {
     assert_eq(@sympolys.domain_is_field_pred(domain), domain_is_field(spec))
     assert_eq(@sympolys.domain_is_ring_pred(domain), domain_is_ring(spec))
     assert_eq(@sympolys.domain_is_exact_pred(domain), domain_is_exact(spec))
-    assert_eq(@sympolys.domain_is_finite_pred(domain), domain_is_finite_field(spec))
+    assert_eq(
+      @sympolys.domain_is_finite_pred(domain),
+      domain_is_finite_field(spec),
+    )
   }
 }
 
@@ -268,19 +273,58 @@ test "domains: extended predicate parity (module-level tags)" {
   ]
   for spec in specs {
     let domain = @sympolys.domain_from_string(spec)
-    assert_eq(@sympolys.domain_is_composite_pred(domain), domain_attr_bool_query(spec, "is_Composite"))
-    assert_eq(@sympolys.domain_is_simple_pred(domain), domain_attr_bool_query(spec, "is_Simple"))
-    assert_eq(@sympolys.domain_is_numerical_pred(domain), domain_attr_bool_query(spec, "is_Numerical"))
-    assert_eq(@sympolys.domain_has_assoc_ring_pred(domain), domain_attr_bool_query(spec, "has_assoc_Ring"))
-    assert_eq(@sympolys.domain_is_pid_pred(domain), domain_attr_bool_query(spec, "is_PID"))
-    assert_eq(@sympolys.domain_is_integer_ring_pred(domain), domain_attr_bool_query(spec, "is_IntegerRing"))
-    assert_eq(@sympolys.domain_is_rational_field_pred(domain), domain_attr_bool_query(spec, "is_RationalField"))
-    assert_eq(@sympolys.domain_is_real_field_pred(domain), domain_attr_bool_query(spec, "is_RealField"))
-    assert_eq(@sympolys.domain_is_complex_field_pred(domain), domain_attr_bool_query(spec, "is_ComplexField"))
-    assert_eq(@sympolys.domain_is_gaussian_ring_pred(domain), domain_attr_bool_query(spec, "is_GaussianRing"))
-    assert_eq(@sympolys.domain_is_gaussian_field_pred(domain), domain_attr_bool_query(spec, "is_GaussianField"))
-    assert_eq(@sympolys.domain_is_expression_domain_pred(domain), domain_attr_bool_query(spec, "is_EX"))
-    assert_eq(@sympolys.domain_is_expression_raw_domain_pred(domain), domain_attr_bool_query(spec, "is_EXRAW"))
+    assert_eq(
+      @sympolys.domain_is_composite_pred(domain),
+      domain_attr_bool_query(spec, "is_Composite"),
+    )
+    assert_eq(
+      @sympolys.domain_is_simple_pred(domain),
+      domain_attr_bool_query(spec, "is_Simple"),
+    )
+    assert_eq(
+      @sympolys.domain_is_numerical_pred(domain),
+      domain_attr_bool_query(spec, "is_Numerical"),
+    )
+    assert_eq(
+      @sympolys.domain_has_assoc_ring_pred(domain),
+      domain_attr_bool_query(spec, "has_assoc_Ring"),
+    )
+    assert_eq(
+      @sympolys.domain_is_pid_pred(domain),
+      domain_attr_bool_query(spec, "is_PID"),
+    )
+    assert_eq(
+      @sympolys.domain_is_integer_ring_pred(domain),
+      domain_attr_bool_query(spec, "is_IntegerRing"),
+    )
+    assert_eq(
+      @sympolys.domain_is_rational_field_pred(domain),
+      domain_attr_bool_query(spec, "is_RationalField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_real_field_pred(domain),
+      domain_attr_bool_query(spec, "is_RealField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_complex_field_pred(domain),
+      domain_attr_bool_query(spec, "is_ComplexField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_gaussian_ring_pred(domain),
+      domain_attr_bool_query(spec, "is_GaussianRing"),
+    )
+    assert_eq(
+      @sympolys.domain_is_gaussian_field_pred(domain),
+      domain_attr_bool_query(spec, "is_GaussianField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_expression_domain_pred(domain),
+      domain_attr_bool_query(spec, "is_EX"),
+    )
+    assert_eq(
+      @sympolys.domain_is_expression_raw_domain_pred(domain),
+      domain_attr_bool_query(spec, "is_EXRAW"),
+    )
   }
 }
 
@@ -292,25 +336,82 @@ test "domains: advanced predicate parity (meta/family tags)" {
   ]
   for spec in specs {
     let domain = @sympolys.domain_from_string(spec)
-    assert_eq(@sympolys.domain_is_algebraic_pred(domain), domain_attr_bool_query(spec, "is_Algebraic"))
-    assert_eq(@sympolys.domain_is_algebraic_field_pred(domain), domain_attr_bool_query(spec, "is_AlgebraicField"))
-    assert_eq(@sympolys.domain_is_symbolic_domain_pred(domain), domain_attr_bool_query(spec, "is_SymbolicDomain"))
-    assert_eq(@sympolys.domain_has_assoc_field_pred(domain), domain_attr_bool_query(spec, "has_assoc_Field"))
-    assert_eq(@sympolys.domain_has_characteristic_zero_pred(domain), domain_attr_bool_query(spec, "has_CharacteristicZero"))
-    assert_eq(@sympolys.domain_is_finite_extension_pred(domain), domain_attr_bool_query(spec, "is_FiniteExtension"))
-    assert_eq(@sympolys.domain_is_zz_pred(domain), domain_attr_bool_query(spec, "is_ZZ"))
-    assert_eq(@sympolys.domain_is_qq_pred(domain), domain_attr_bool_query(spec, "is_QQ"))
-    assert_eq(@sympolys.domain_is_zz_i_pred(domain), domain_attr_bool_query(spec, "is_ZZ_I"))
-    assert_eq(@sympolys.domain_is_qq_i_pred(domain), domain_attr_bool_query(spec, "is_QQ_I"))
-    assert_eq(@sympolys.domain_is_cc_pred(domain), domain_attr_bool_query(spec, "is_CC"))
-    assert_eq(@sympolys.domain_is_rr_pred(domain), domain_attr_bool_query(spec, "is_RR"))
-    assert_eq(@sympolys.domain_is_ff_pred(domain), domain_attr_bool_query(spec, "is_FF"))
-    assert_eq(@sympolys.domain_is_frac_pred(domain), domain_attr_bool_query(spec, "is_Frac"))
-    assert_eq(@sympolys.domain_is_fraction_field_pred(domain), domain_attr_bool_query(spec, "is_FractionField"))
-    assert_eq(@sympolys.domain_is_poly_pred(domain), domain_attr_bool_query(spec, "is_Poly"))
-    assert_eq(@sympolys.domain_is_polynomial_ring_pred(domain), domain_attr_bool_query(spec, "is_PolynomialRing"))
-    assert_eq(@sympolys.domain_is_symbolic_raw_domain_pred(domain), domain_attr_bool_query(spec, "is_SymbolicRawDomain"))
-    assert_eq(@sympolys.domain_has_default_precision_pred(domain), domain_attr_bool_or_false(spec, "has_default_precision"))
+    assert_eq(
+      @sympolys.domain_is_algebraic_pred(domain),
+      domain_attr_bool_query(spec, "is_Algebraic"),
+    )
+    assert_eq(
+      @sympolys.domain_is_algebraic_field_pred(domain),
+      domain_attr_bool_query(spec, "is_AlgebraicField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_symbolic_domain_pred(domain),
+      domain_attr_bool_query(spec, "is_SymbolicDomain"),
+    )
+    assert_eq(
+      @sympolys.domain_has_assoc_field_pred(domain),
+      domain_attr_bool_query(spec, "has_assoc_Field"),
+    )
+    assert_eq(
+      @sympolys.domain_has_characteristic_zero_pred(domain),
+      domain_attr_bool_query(spec, "has_CharacteristicZero"),
+    )
+    assert_eq(
+      @sympolys.domain_is_finite_extension_pred(domain),
+      domain_attr_bool_query(spec, "is_FiniteExtension"),
+    )
+    assert_eq(
+      @sympolys.domain_is_zz_pred(domain),
+      domain_attr_bool_query(spec, "is_ZZ"),
+    )
+    assert_eq(
+      @sympolys.domain_is_qq_pred(domain),
+      domain_attr_bool_query(spec, "is_QQ"),
+    )
+    assert_eq(
+      @sympolys.domain_is_zz_i_pred(domain),
+      domain_attr_bool_query(spec, "is_ZZ_I"),
+    )
+    assert_eq(
+      @sympolys.domain_is_qq_i_pred(domain),
+      domain_attr_bool_query(spec, "is_QQ_I"),
+    )
+    assert_eq(
+      @sympolys.domain_is_cc_pred(domain),
+      domain_attr_bool_query(spec, "is_CC"),
+    )
+    assert_eq(
+      @sympolys.domain_is_rr_pred(domain),
+      domain_attr_bool_query(spec, "is_RR"),
+    )
+    assert_eq(
+      @sympolys.domain_is_ff_pred(domain),
+      domain_attr_bool_query(spec, "is_FF"),
+    )
+    assert_eq(
+      @sympolys.domain_is_frac_pred(domain),
+      domain_attr_bool_query(spec, "is_Frac"),
+    )
+    assert_eq(
+      @sympolys.domain_is_fraction_field_pred(domain),
+      domain_attr_bool_query(spec, "is_FractionField"),
+    )
+    assert_eq(
+      @sympolys.domain_is_poly_pred(domain),
+      domain_attr_bool_query(spec, "is_Poly"),
+    )
+    assert_eq(
+      @sympolys.domain_is_polynomial_ring_pred(domain),
+      domain_attr_bool_query(spec, "is_PolynomialRing"),
+    )
+    assert_eq(
+      @sympolys.domain_is_symbolic_raw_domain_pred(domain),
+      domain_attr_bool_query(spec, "is_SymbolicRawDomain"),
+    )
+    assert_eq(
+      @sympolys.domain_has_default_precision_pred(domain),
+      domain_attr_bool_or_false(spec, "has_default_precision"),
+    )
   }
 }
 
@@ -331,18 +432,64 @@ test "domains: get_exact parity across core/coercion domains" {
 
 ///|
 test "domains: alias constructors and parser coverage" {
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("IntegerRing")), @sympolys.domain_to_sympy_string(@sympolys.integer_ring_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("RationalField")), @sympolys.domain_to_sympy_string(@sympolys.rational_field_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("RealField")), @sympolys.domain_to_sympy_string(@sympolys.real_field_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("ComplexField")), @sympolys.domain_to_sympy_string(@sympolys.complex_field_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("GaussianIntegerRing")), @sympolys.domain_to_sympy_string(@sympolys.gaussian_integer_ring_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("GaussianRationalField")), @sympolys.domain_to_sympy_string(@sympolys.gaussian_rational_field_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("ExpressionDomain")), @sympolys.domain_to_sympy_string(@sympolys.expression_domain()))
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("ExpressionRawDomain")), @sympolys.domain_to_sympy_string(@sympolys.expression_raw_domain()))
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("IntegerRing"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.integer_ring_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("RationalField"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.rational_field_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(@sympolys.domain_from_string("RealField")),
+    @sympolys.domain_to_sympy_string(@sympolys.real_field_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("ComplexField"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.complex_field_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("GaussianIntegerRing"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.gaussian_integer_ring_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("GaussianRationalField"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.gaussian_rational_field_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("ExpressionDomain"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.expression_domain()),
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("ExpressionRawDomain"),
+    ),
+    @sympolys.domain_to_sympy_string(@sympolys.expression_raw_domain()),
+  )
   let ff7 = @sympolys.ff_domain(7)
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("FF(7)")), @sympolys.domain_to_sympy_string(ff7))
+  assert_eq(
+    @sympolys.domain_to_sympy_string(@sympolys.domain_from_string("FF(7)")),
+    @sympolys.domain_to_sympy_string(ff7),
+  )
   let ff11 = @sympolys.finite_field_domain(11)
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("FiniteField(11)")), @sympolys.domain_to_sympy_string(ff11))
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("FiniteField(11)"),
+    ),
+    @sympolys.domain_to_sympy_string(ff11),
+  )
   let gfext = @sympolys.domain_from_string("GF(5,2)")
   assert_eq(@sympolys.domain_to_sympy_string(gfext), "GF(5**2)")
   let gfext_ff = @sympolys.domain_from_string("FF(7,3)")
@@ -376,7 +523,9 @@ test "domains: oracle GF descriptor parser handles extension forms" {
 test "domains: nested composite parser handles recursive suffix forms" {
   let cases = ["ZZ[x][y]", "QQ(x)[y]", "ZZ[x](y)", "QQ(x)(y)"]
   for spec in cases {
-    let ours = @sympolys.domain_to_sympy_string(@sympolys.domain_from_string(spec))
+    let ours = @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string(spec),
+    )
     let oracle = domain_repr(spec)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
@@ -404,11 +553,15 @@ test "domains: method constructor parity for poly/frac old/new rings" {
     let frac_oracle = domain_frac_field(spec, gens)
     assert_eq(trim_ws(frac_ours), trim_ws(frac_oracle))
 
-    let old_poly_ours = @sympolys.domain_to_sympy_string(domain.old_poly_ring(gens))
+    let old_poly_ours = @sympolys.domain_to_sympy_string(
+      domain.old_poly_ring(gens),
+    )
     let old_poly_oracle = domain_old_poly_ring(spec, gens)
     assert_eq(trim_ws(old_poly_ours), trim_ws(old_poly_oracle))
 
-    let old_frac_ours = @sympolys.domain_to_sympy_string(domain.old_frac_field(gens))
+    let old_frac_ours = @sympolys.domain_to_sympy_string(
+      domain.old_frac_field(gens),
+    )
     let old_frac_oracle = domain_old_frac_field(spec, gens)
     assert_eq(trim_ws(old_frac_ours), trim_ws(old_frac_oracle))
   }
@@ -435,7 +588,9 @@ test "domains: set_domain and unify_with_symbols parity" {
     let spec = item.0
     let ground = item.1
     let ours = @sympolys.domain_to_sympy_string(
-      @sympolys.domain_from_string(spec).set_domain(@sympolys.domain_from_string(ground)),
+      @sympolys.domain_from_string(spec).set_domain(
+        @sympolys.domain_from_string(ground),
+      ),
     )
     let oracle = domain_set_domain(spec, ground)
     assert_eq(trim_ws(ours), trim_ws(oracle))
@@ -450,10 +605,9 @@ test "domains: set_domain and unify_with_symbols parity" {
     let lhs = item.0
     let rhs = item.1
     let symbols = item.2
-    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(lhs).unify_with_symbols(
-      @sympolys.domain_from_string(rhs),
-      symbols,
-    )
+    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
+      lhs,
+    ).unify_with_symbols(@sympolys.domain_from_string(rhs), symbols)
     let ours = render_domain_result(ours_try)
     let oracle = domain_unify_with_symbols(lhs, rhs, symbols)
     assert_eq(trim_ws(ours), trim_ws(oracle))
@@ -468,7 +622,9 @@ test "domains: set_domain and unify_with_symbols parity" {
     let lhs = item.0
     let rhs = item.1
     let ours = @sympolys.domain_to_sympy_string(
-      @sympolys.domain_from_string(lhs).unify_composite(@sympolys.domain_from_string(rhs)),
+      @sympolys.domain_from_string(lhs).unify_composite(
+        @sympolys.domain_from_string(rhs),
+      ),
     )
     let oracle = domain_unify_composite(lhs, rhs)
     assert_eq(trim_ws(ours), trim_ws(oracle))
@@ -485,15 +641,16 @@ test "domains: inject and drop parity across simple and nested composites" {
   for item in inject_cases {
     let spec = item.0
     let gens = item.1
-    let ours = @sympolys.domain_to_sympy_string(@sympolys.domain_from_string(spec).inject(gens))
+    let ours = @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string(spec).inject(gens),
+    )
     let oracle = domain_inject(spec, gens)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
-  let overlap_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string("ZZ[x]").inject([
-      "x",
-    ],
-  )
+  let overlap_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
+    "ZZ[x]",
+  ).inject(["x"])
   assert_eq(render_domain_result(overlap_try), "ERROR")
 
   let drop_cases = [
@@ -509,9 +666,9 @@ test "domains: inject and drop parity across simple and nested composites" {
   for item in drop_cases {
     let spec = item.0
     let gens = item.1
-    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(spec).drop(
-      gens,
-    )
+    let ours_try : Result[Domain, PolyError] = try? @sympolys.domain_from_string(
+      spec,
+    ).drop(gens)
     let ours = render_domain_result(ours_try)
     let oracle = domain_drop(spec, gens)
     assert_eq(trim_ws(ours), trim_ws(oracle))
@@ -554,9 +711,10 @@ test "domains: algebraic_field parity and Domain methods" {
       @sympolys.domain_from_string(spec),
     )
     let ours = @sympolys.domain_to_sympy_string(
-      @sympolys.domain_from_string(
-        spec,
-      ).alg_field_from_poly(poly, extension_name=Some(ext_alias)),
+      @sympolys.domain_from_string(spec).alg_field_from_poly(
+        poly,
+        extension_name=Some(ext_alias),
+      ),
     )
     let oracle = domain_alg_field_from_poly(
       spec,
@@ -586,12 +744,7 @@ test "domains: algebraic_field parity and Domain methods" {
     let ours = @sympolys.domain_to_sympy_string(
       @sympolys.domain_from_string(spec).alg_field_from_poly(poly, root_index~),
     )
-    let oracle = domain_alg_field_from_poly(
-      spec,
-      poly_expr,
-      gen,
-      root_index~,
-    )
+    let oracle = domain_alg_field_from_poly(spec, poly_expr, gen, root_index~)
     assert_eq(trim_ws(ours), trim_ws(oracle))
   }
 
@@ -644,18 +797,41 @@ test "domains: algebraic_field parity and Domain methods" {
   match direct_cyclo {
     Domain::AlgExt(_, gens, rels) => {
       assert_true(gens.equal(["a"]))
-      assert_eq(normalize_expr_text(@symprint.to_string(rels[0])), "a**4+a**3+a**2+a+1")
+      assert_eq(
+        normalize_expr_text(@symprint.to_string(rels[0])),
+        "a**4+a**3+a**2+a+1",
+      )
     }
     _ => fail("expected AlgExt from cyclotomic_field")
   }
 
   assert_eq(@sympolys.domain_from_string("GF(5)").characteristic(), 5)
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("RR[x]").get_exact()), "QQ[x]")
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("ZZ[x]").get_field()), "ZZ(x)")
-  assert_eq(@sympolys.domain_to_sympy_string(@sympolys.domain_from_string("QQ(x)").get_ring()), "QQ[x]")
-  assert_eq(@sympolys.domain_to_sympy_string(
-          @sympolys.domain_from_string("ZZ").unify(@sympolys.domain_from_string("QQ")),
-        ), "QQ")
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("RR[x]").get_exact(),
+    ),
+    "QQ[x]",
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("ZZ[x]").get_field(),
+    ),
+    "ZZ(x)",
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("QQ(x)").get_ring(),
+    ),
+    "QQ[x]",
+  )
+  assert_eq(
+    @sympolys.domain_to_sympy_string(
+      @sympolys.domain_from_string("ZZ").unify(
+        @sympolys.domain_from_string("QQ"),
+      ),
+    ),
+    "QQ",
+  )
 }
 
 ///|
@@ -741,9 +917,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     )
     assert_eq(ours_from, oracle_from)
     let ours_to = render_expr_result(try? domain.to_sympy_expr(expr))
-    let oracle_to = normalize_expr_text(
-      domain_to_sympy_expr(spec, expr_text),
-    )
+    let oracle_to = normalize_expr_text(domain_to_sympy_expr(spec, expr_text))
     assert_eq(ours_to, oracle_to)
   }
 
@@ -792,9 +966,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
     let ours = render_expr_result(
       try? @sympolys.domain_from_string(target).convert_expr(expr),
     )
-    let oracle = normalize_expr_text(
-      domain_convert_expr(target, expr_text),
-    )
+    let oracle = normalize_expr_text(domain_convert_expr(target, expr_text))
     assert_eq(ours, oracle)
   }
 }
@@ -824,10 +996,10 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
     let spec = item.0
     let exprs = item.1
     let expr_texts = item.2
-    let ours = render_expr_result(try? @sympolys.domain_from_string(spec).sum_expr(exprs))
-    let oracle = normalize_expr_text(
-      domain_sum_expr(spec, expr_texts),
+    let ours = render_expr_result(
+      try? @sympolys.domain_from_string(spec).sum_expr(exprs),
     )
+    let oracle = normalize_expr_text(domain_sum_expr(spec, expr_texts))
     assert_eq(ours, oracle)
   }
 }
@@ -917,9 +1089,7 @@ test "domains: from_* conversion hook parity on representative base families" {
     }
     let oracle = match family {
       "from_ff" =>
-        normalize_expr_text(
-          domain_from_ff_expr(target, expr_text, base),
-        )
+        normalize_expr_text(domain_from_ff_expr(target, expr_text, base))
       "from_real_field" =>
         normalize_expr_text(
           domain_from_real_field_expr(target, expr_text, base),
@@ -942,29 +1112,28 @@ test "domains: from_* conversion hook parity on representative base families" {
         )
       "from_expression_domain" =>
         normalize_expr_text(
-          domain_from_expression_domain_expr(
-            target, expr_text, base,
-          ),
+          domain_from_expression_domain_expr(target, expr_text, base),
         )
       "from_expression_raw_domain" =>
         normalize_expr_text(
-          domain_from_expression_raw_domain_expr(
-            target, expr_text, base,
-          ),
+          domain_from_expression_raw_domain_expr(target, expr_text, base),
         )
       _ => "ERROR"
     }
     assert_eq(ours, oracle)
   }
 
-  assert_eq(render_optional_expr_result(
-          Ok(
-            @sympolys.domain_from_string("QQ").from_fraction_field_expr(
-              @symcore.int(2),
-              @sympolys.domain_from_string("QQ(x)"),
-            ),
-          ),
-        ), "NONE")
+  assert_eq(
+    render_optional_expr_result(
+      Ok(
+        @sympolys.domain_from_string("QQ").from_fraction_field_expr(
+          @symcore.int(2),
+          @sympolys.domain_from_string("QQ(x)"),
+        ),
+      ),
+    ),
+    "NONE",
+  )
   ignore(sqrt2)
 }
 
@@ -1075,28 +1244,20 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
     }
     let oracle = match family {
       "from_zz" =>
-        normalize_expr_text(
-          domain_from_zz_expr(target, expr_text, oracle_base),
-        )
+        normalize_expr_text(domain_from_zz_expr(target, expr_text, oracle_base))
       "from_zz_python" =>
         normalize_expr_text(
-          domain_from_zz_python_expr(
-            target, expr_text, oracle_base,
-          ),
+          domain_from_zz_python_expr(target, expr_text, oracle_base),
         )
       "from_zz_gmpy" =>
         normalize_expr_text(
           domain_from_zz_gmpy_expr(target, expr_text, oracle_base),
         )
       "from_qq" =>
-        normalize_expr_text(
-          domain_from_qq_expr(target, expr_text, oracle_base),
-        )
+        normalize_expr_text(domain_from_qq_expr(target, expr_text, oracle_base))
       "from_qq_python" =>
         normalize_expr_text(
-          domain_from_qq_python_expr(
-            target, expr_text, oracle_base,
-          ),
+          domain_from_qq_python_expr(target, expr_text, oracle_base),
         )
       "from_qq_gmpy" =>
         normalize_expr_text(
@@ -1104,9 +1265,7 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
         )
       "from_ff_python" =>
         normalize_expr_text(
-          domain_from_ff_python_expr(
-            target, expr_text, oracle_base,
-          ),
+          domain_from_ff_python_expr(target, expr_text, oracle_base),
         )
       "from_ff_gmpy" =>
         normalize_expr_text(
@@ -1114,9 +1273,7 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
         )
       "from_gaussian_integer_ring" =>
         normalize_expr_text(
-          domain_from_gaussian_integer_ring_expr(
-            target, expr_text, oracle_base,
-          ),
+          domain_from_gaussian_integer_ring_expr(target, expr_text, oracle_base),
         )
       "from_gaussian_rational_field" =>
         normalize_expr_text(
@@ -1141,22 +1298,28 @@ test "domains: extended conversion hook parity for ground, gaussian, and legacy-
     assert_eq(ours, oracle)
   }
 
-  assert_eq(render_optional_expr_result(
-          Ok(
-            @sympolys.domain_from_string("QQ").from_global_polynomial_ring_expr(
-              x + @symcore.int(1),
-              @sympolys.domain_from_string("QQ[x]"),
-            ),
-          ),
-        ), "NONE")
-  assert_eq(render_optional_expr_result(
-          Ok(
-            @sympolys.domain_from_string("QQ").from_monogenic_finite_extension_expr(
-              @symcore.int(2),
-              @sympolys.domain_from_string("QQ<sqrt(2)>"),
-            ),
-          ),
-        ), "2")
+  assert_eq(
+    render_optional_expr_result(
+      Ok(
+        @sympolys.domain_from_string("QQ").from_global_polynomial_ring_expr(
+          x + @symcore.int(1),
+          @sympolys.domain_from_string("QQ[x]"),
+        ),
+      ),
+    ),
+    "NONE",
+  )
+  assert_eq(
+    render_optional_expr_result(
+      Ok(
+        @sympolys.domain_from_string("QQ").from_monogenic_finite_extension_expr(
+          @symcore.int(2),
+          @sympolys.domain_from_string("QQ<sqrt(2)>"),
+        ),
+      ),
+    ),
+    "2",
+  )
 }
 
 ///|
@@ -1165,9 +1328,12 @@ test "domains: new/normal constructors and recursive map stay normalized" {
   let gf = @sympolys.domain_from_string("GF(5)")
   assert_eq(render_expr_result(try? gf.new_expr(@symcore.int(7))), "2")
   assert_eq(render_expr_result(try? gf.normal_expr(@symcore.int(12))), "2")
-  assert_eq(render_expr_result(
-          try? @sympolys.domain_from_string("QQ[x]").new_expr(x + @symcore.int(1)),
-        ), "x+1")
+  assert_eq(
+    render_expr_result(
+      try? @sympolys.domain_from_string("QQ[x]").new_expr(x + @symcore.int(1)),
+    ),
+    "x+1",
+  )
 
   let mapped = gf.map_expr_tree([
     @sympolys.domain_expr_tree_elem(@symcore.int(6)),
@@ -1250,14 +1416,10 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
     let ours_pos = render_expr_result(try? domain.pos_expr(expr))
-    let oracle_pos = normalize_expr_text(
-      domain_pos_expr(spec, expr_text),
-    )
+    let oracle_pos = normalize_expr_text(domain_pos_expr(spec, expr_text))
     assert_eq(ours_pos, oracle_pos)
     let ours_neg = render_expr_result(try? domain.neg_expr(expr))
-    let oracle_neg = normalize_expr_text(
-      domain_neg_expr(spec, expr_text),
-    )
+    let oracle_neg = normalize_expr_text(domain_neg_expr(spec, expr_text))
     assert_eq(ours_neg, oracle_neg)
   }
 
@@ -1327,9 +1489,7 @@ test "domains: zero/one and arithmetic wrapper parity" {
     let ours = render_expr_result(
       try? @sympolys.domain_from_string(spec).pow_expr(expr, exp),
     )
-    let oracle = normalize_expr_text(
-      domain_pow_expr(spec, expr_text, exp),
-    )
+    let oracle = normalize_expr_text(domain_pow_expr(spec, expr_text, exp))
     assert_eq(ours, oracle)
   }
 }
@@ -1366,12 +1526,18 @@ test "domains: gcdex/invert/revert wrapper parity" {
 
   let qq_left = @symcore.rational_from_ints(2, 3)
   let qq_right = @symcore.rational_from_ints(4, 9)
-  assert_eq(render_expr_pair_result(
-          try? @sympolys.domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
-        ), "(1/3,2/9)")
-  assert_eq(render_expr_triple_result(
-          try? @sympolys.domain_from_string("QQ").gcdex_expr(qq_left, qq_right),
-        ), "(1/3,0,2/9)")
+  assert_eq(
+    render_expr_pair_result(
+      try? @sympolys.domain_from_string("QQ").half_gcdex_expr(qq_left, qq_right),
+    ),
+    "(1/3,2/9)",
+  )
+  assert_eq(
+    render_expr_triple_result(
+      try? @sympolys.domain_from_string("QQ").gcdex_expr(qq_left, qq_right),
+    ),
+    "(1/3,0,2/9)",
+  )
 
   let zzi_left = @symcore.add([@symcore.int(2), i])
   let zzi_right = @symcore.add([@symcore.int(1), @symcore.int(-1) * i])
@@ -1442,9 +1608,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
     let ours = render_expr_result(
       try? @sympolys.domain_from_string(spec).revert_expr(expr),
     )
-    let oracle = normalize_expr_text(
-      domain_revert_expr(spec, expr_text),
-    )
+    let oracle = normalize_expr_text(domain_revert_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }
 }
@@ -1480,12 +1644,8 @@ test "domains: sign predicate parity on ordered and composite domains" {
     let ours_nonnegative = domain.is_nonnegative_expr(expr)
     let oracle_positive = domain_is_positive_expr(spec, expr_text)
     let oracle_negative = domain_is_negative_expr(spec, expr_text)
-    let oracle_nonpositive = domain_is_nonpositive_expr(
-      spec, expr_text,
-    )
-    let oracle_nonnegative = domain_is_nonnegative_expr(
-      spec, expr_text,
-    )
+    let oracle_nonpositive = domain_is_nonpositive_expr(spec, expr_text)
+    let oracle_nonnegative = domain_is_nonnegative_expr(spec, expr_text)
     assert_eq(ours_positive, oracle_positive)
     assert_eq(ours_negative, oracle_negative)
     assert_eq(ours_nonpositive, oracle_nonpositive)
@@ -1493,14 +1653,16 @@ test "domains: sign predicate parity on ordered and composite domains" {
   }
 
   let minus_one = @symcore.int(-1)
-  assert_true(@sympolys.domain_from_string("ZZ").is_negative_one_expr(minus_one))
+  assert_true(
+    @sympolys.domain_from_string("ZZ").is_negative_one_expr(minus_one),
+  )
 
   let zz_series = @sympolys.domain_from_string("ZZ[[x]](prec=5)")
   assert_true(
     !zz_series.is_positive_expr(x) &&
-        !zz_series.is_negative_expr(x) &&
-        zz_series.is_nonpositive_expr(x) &&
-        zz_series.is_nonnegative_expr(x)
+    !zz_series.is_negative_expr(x) &&
+    zz_series.is_nonpositive_expr(x) &&
+    zz_series.is_nonnegative_expr(x),
   )
 }
 
@@ -1535,9 +1697,12 @@ test "domains: canonical_unit parity on scalar and composite domains" {
   }
 
   let zz_series = @sympolys.domain_from_string("ZZ[[x]](prec=5)")
-  assert_eq(trim_ws(
-          @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
-        ), "-1")
+  assert_eq(
+    trim_ws(
+      @symprint.to_string(zz_series.canonical_unit_expr(@symcore.int(-1) + x)),
+    ),
+    "-1",
+  )
 }
 
 ///|
@@ -1555,10 +1720,10 @@ test "domains: abs parity on supported/error domains" {
     let spec = item.0
     let expr = item.1
     let expr_text = item.2
-    let ours = render_expr_result(try? @sympolys.domain_from_string(spec).abs_expr(expr))
-    let oracle = normalize_expr_text(
-      domain_abs_expr(spec, expr_text),
+    let ours = render_expr_result(
+      try? @sympolys.domain_from_string(spec).abs_expr(expr),
     )
+    let oracle = normalize_expr_text(domain_abs_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }
 }
@@ -1666,12 +1831,8 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
     let domain = @sympolys.domain_from_string(spec)
     let ours_num = render_expr_result(try? domain.numer_expr(expr))
     let ours_den = render_expr_result(try? domain.denom_expr(expr))
-    let oracle_num = normalize_expr_text(
-      domain_numer_expr(spec, expr_text),
-    )
-    let oracle_den = normalize_expr_text(
-      domain_denom_expr(spec, expr_text),
-    )
+    let oracle_num = normalize_expr_text(domain_numer_expr(spec, expr_text))
+    let oracle_den = normalize_expr_text(domain_denom_expr(spec, expr_text))
     assert_eq(ours_num, oracle_num)
     assert_eq(ours_den, oracle_den)
   }
@@ -1744,7 +1905,10 @@ test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
   }
 
   let exact_fail = render_expr_result(
-    try? @sympolys.domain_from_string("ZZ").exquo_expr(@symcore.int(7), @symcore.int(3)),
+    try? @sympolys.domain_from_string("ZZ").exquo_expr(
+      @symcore.int(7),
+      @symcore.int(3),
+    ),
   )
   assert_eq(exact_fail, "ERROR")
 }
@@ -1761,9 +1925,7 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
     let ours = render_expr_result(
       try? @sympolys.domain_from_string("ZZ").factorial_expr(expr),
     )
-    let oracle = normalize_expr_text(
-      domain_factorial_expr("ZZ", expr_text),
-    )
+    let oracle = normalize_expr_text(domain_factorial_expr("ZZ", expr_text))
     assert_eq(ours, oracle)
   }
 
@@ -1794,16 +1956,19 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
   for item in sqrt_cases {
     let expr = item.0
     let expr_text = item.1
-    let ours = render_expr_result(try? @sympolys.domain_from_string("ZZ").sqrt_expr(expr))
-    let oracle = normalize_expr_text(
-      domain_sqrt_expr("ZZ", expr_text),
+    let ours = render_expr_result(
+      try? @sympolys.domain_from_string("ZZ").sqrt_expr(expr),
     )
+    let oracle = normalize_expr_text(domain_sqrt_expr("ZZ", expr_text))
     assert_eq(ours, oracle)
   }
 
   let zzx = @sympolys.domain_from_string("ZZ[x]")
   assert_eq(render_expr_result(try? zzx.factorial_expr(@symcore.int(5))), "120")
-  assert_eq(render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))), "3")
+  assert_eq(
+    render_expr_result(try? zzx.log_expr(@symcore.int(8), @symcore.int(2))),
+    "3",
+  )
   assert_eq(render_expr_result(try? zzx.sqrt_expr(@symcore.int(8))), "2")
 }
 
@@ -1823,9 +1988,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
     let expr = item.1
     let expr_text = item.2
     let domain = @sympolys.domain_from_string(spec)
-    let ours_square = try domain.is_square_expr(expr) catch {
-      _ => false
-    }
+    let ours_square = domain.is_square_expr(expr) catch { _ => false }
     let oracle_square = domain_is_square_expr(spec, expr_text)
     assert_eq(ours_square, oracle_square)
     let ours_root = render_optional_expr_result(try? domain.exsqrt_expr(expr))
@@ -1841,21 +2004,33 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
   let zz_i = @sympolys.domain_from_string("ZZ_I")
   let zz_i_square = @symcore.add([@symcore.int(3), @symcore.int(4) * i])
   assert_true(zz_i.is_square_expr(zz_i_square))
-  assert_eq(render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)), normalize_expr_text("2 + I"))
+  assert_eq(
+    render_optional_expr_result(try? zz_i.exsqrt_expr(zz_i_square)),
+    normalize_expr_text("2 + I"),
+  )
 
   let qq_i = @sympolys.domain_from_string("QQ_I")
   let qq_i_square = @symcore.rational_from_ints(-3, 4) + i
   assert_true(qq_i.is_square_expr(qq_i_square))
-  assert_eq(render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)), normalize_expr_text("1/2 + I"))
+  assert_eq(
+    render_optional_expr_result(try? qq_i.exsqrt_expr(qq_i_square)),
+    normalize_expr_text("1/2 + I"),
+  )
 
   let rr = @sympolys.domain_from_string("RR")
-  assert_eq(render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))), normalize_expr_text("sqrt(2)"))
+  assert_eq(
+    render_optional_expr_result(try? rr.exsqrt_expr(@symcore.int(2))),
+    normalize_expr_text("sqrt(2)"),
+  )
   assert_true(!rr.is_square_expr(@symcore.int(-1)))
 
   let cc = @sympolys.domain_from_string("CC")
   let cc_expr = @symcore.add([@symcore.int(2), i])
   assert_true(cc.is_square_expr(cc_expr))
-  assert_eq(render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)), normalize_expr_text("sqrt(2 + I)"))
+  assert_eq(
+    render_optional_expr_result(try? cc.exsqrt_expr(cc_expr)),
+    normalize_expr_text("sqrt(2 + I)"),
+  )
 }
 
 ///|
@@ -1881,12 +2056,8 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let domain = @sympolys.domain_from_string(spec)
     let ours_real = render_expr_result(try? domain.real_expr(expr))
     let ours_imag = render_expr_result(try? domain.imag_expr(expr))
-    let oracle_real = normalize_expr_text(
-      domain_real_expr(spec, expr_text),
-    )
-    let oracle_imag = normalize_expr_text(
-      domain_imag_expr(spec, expr_text),
-    )
+    let oracle_real = normalize_expr_text(domain_real_expr(spec, expr_text))
+    let oracle_imag = normalize_expr_text(domain_imag_expr(spec, expr_text))
     assert_eq(ours_real, oracle_real)
     assert_eq(ours_imag, oracle_imag)
   }
@@ -1949,23 +2120,23 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
   let qq = @sympolys.domain_from_string("QQ")
   assert_true(
     qq.almosteq_expr(
-        @symcore.rational_from_ints(1, 2),
-        @symcore.rational_from_ints(2, 3),
-        tolerance=Some(
-          @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
-        ),
-      )
+      @symcore.rational_from_ints(1, 2),
+      @symcore.rational_from_ints(2, 3),
+      tolerance=Some(
+        @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(4)),
+      ),
+    ),
   )
 
   let qq_i = @sympolys.domain_from_string("QQ_I")
   assert_true(
     qq_i.almosteq_expr(
-        @symcore.add([@symcore.int(1), i]),
-        @symcore.add([@symcore.int(1), @symcore.rational_from_ints(1, 2) * i]),
-        tolerance=Some(
-          @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
-        ),
-      )
+      @symcore.add([@symcore.int(1), i]),
+      @symcore.add([@symcore.int(1), @symcore.rational_from_ints(1, 2) * i]),
+      tolerance=Some(
+        @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)),
+      ),
+    ),
   )
 
   let evalf_cases : Array[(String, @symcore.Expr, String)] = [
@@ -1981,9 +2152,7 @@ test "domains: real/imag/almosteq parity and tolerance semantics" {
     let ours = render_expr_result(
       try? @sympolys.domain_from_string(spec).evalf_expr(expr),
     )
-    let oracle = normalize_expr_text(
-      domain_evalf_expr(spec, expr_text),
-    )
+    let oracle = normalize_expr_text(domain_evalf_expr(spec, expr_text))
     assert_eq(ours, oracle)
   }
 }

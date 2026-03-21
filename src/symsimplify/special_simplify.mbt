@@ -6,10 +6,7 @@ pub fn combsimp(expr : Expr, max_passes? : Int = 6) -> Expr {
 
 ///|
 /// Expand hypergeometric functions into equivalent closed forms when known.
-pub fn hyperexpand(
-  expr : Expr,
-  max_passes? : Int = 6,
-) -> Expr {
+pub fn hyperexpand(expr : Expr, max_passes? : Int = 6) -> Expr {
   fixpoint_special(expr, rewrite_hyperexpand, max_passes~)
 }
 
@@ -32,10 +29,7 @@ fn fixpoint_special(
 }
 
 ///|
-fn rewrite_bottom_up_special(
-  expr : Expr,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn rewrite_bottom_up_special(expr : Expr, rule : (Expr) -> Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_special(child, rule)
   })
@@ -45,8 +39,7 @@ fn rewrite_bottom_up_special(
 ///|
 fn rewrite_combsimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Function(name, args) =>
-      rewrite_combinatorial_call(name, args, expr)
+    Expr::Function(name, args) => rewrite_combinatorial_call(name, args, expr)
     Expr::Mul(args) => reduce_factorial_ratios(args)
     _ => expr
   }
@@ -122,11 +115,7 @@ fn reduce_factorial_ratios(args : Array[Expr]) -> Expr {
 }
 
 ///|
-fn strip_factor_pair(
-  args : Array[Expr],
-  idx_a : Int,
-  idx_b : Int,
-) -> Expr {
+fn strip_factor_pair(args : Array[Expr], idx_a : Int, idx_b : Int) -> Expr {
   let kept : Array[Expr] = Array::new()
   for i in 0..<args.length() {
     if i == idx_a || i == idx_b {
@@ -148,10 +137,7 @@ fn factorial_arg(expr : Expr) -> Expr? {
 ///|
 fn inverse_factorial_arg(expr : Expr) -> Expr? {
   match expr {
-    Expr::Pow(
-      Expr::Function(name, [arg]),
-      Expr::Number(exp)
-    ) =>
+    Expr::Pow(Expr::Function(name, [arg]), Expr::Number(exp)) =>
       if name == "factorial" &&
         exp.is_integral() &&
         exp.numerator().to_int() == -1 {
@@ -174,10 +160,7 @@ fn rewrite_hyperexpand(expr : Expr) -> Expr {
             (1, 1) if a[0] == b[0] => @symcore.function("exp", [z])
             (1, 0) if a[0] == int(1) =>
               @symcore.pow(
-                @symcore.add([
-                  int(1),
-                  @symcore.mul([int(-1), z]),
-                ]),
+                @symcore.add([int(1), @symcore.mul([int(-1), z])]),
                 int(-1),
               )
             _ => expr
@@ -191,8 +174,7 @@ fn rewrite_hyperexpand(expr : Expr) -> Expr {
 ///|
 fn parse_tuple(expr : Expr) -> Array[Expr]? {
   match expr {
-    Expr::Function(name, args) if name == "Tuple" =>
-      Some(args.map(x => x))
+    Expr::Function(name, args) if name == "Tuple" => Some(args.map(x => x))
     _ => None
   }
 }

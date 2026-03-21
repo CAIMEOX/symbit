@@ -99,11 +99,7 @@ pub fn n_link_pendulum_on_cart(
   let i_frame = @symvector.reference_frame("I")
   let origin = @symvector.point("O")
   origin.set_vel(i_frame, @symvector.vector_zero())
-  let rail = rigid_body(
-    "rail",
-    masscenter=Some(origin),
-    frame=Some(i_frame),
-  )
+  let rail = rigid_body("rail", masscenter=Some(origin), frame=Some(i_frame))
   let cart = rigid_body("cart", mass=Some(model_symbol("m", 0)))
   let sys = system_from_newtonian(rail.as_bodylike())
 

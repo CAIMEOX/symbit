@@ -7,9 +7,7 @@ test "physics.quantum.trace: parity" {
   let d_op = @symcore.symbol("D")
 
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(tr(@symcore.raw_mul([a, a_op]))),
-    ),
+    quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),
     quantum_eval_str("Tr(a*A)"),
     "trace scalar parity",
   )
@@ -102,7 +100,10 @@ test "physics.quantum.trace: parity" {
           tr(
             density([
               (
-                @symquant.tensor_product([qubit("0").as_expr(), qubit("1").as_expr()]).as_expr(),
+                @symquant.tensor_product([
+                  qubit("0").as_expr(),
+                  qubit("1").as_expr(),
+                ]).as_expr(),
                 @symcore.int(1),
               ),
             ]).as_expr(),
@@ -111,9 +112,7 @@ test "physics.quantum.trace: parity" {
         ),
       ),
     ),
-    quantum_doit_str(
-      "Tr(Density((TensorProduct(Qubit(0), Qubit(1)), 1)), [1])",
-    ),
+    quantum_doit_str("Tr(Density((TensorProduct(Qubit(0), Qubit(1)), 1)), [1])"),
     "trace density partial parity",
   )
 }

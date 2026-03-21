@@ -23,11 +23,10 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
     Expr::Function("PxKet", _)
     | Expr::Function("PxBra", _)
     | Expr::Function("PxOp", _) => Some(px_ket())
-    Expr::Function("PositionKet3D", _)
-    | Expr::Function("PositionBra3D", _) => Some(position_ket_3d())
-    Expr::Function("JzKet", args)
-    | Expr::Function("JzBra", args) if args.length() == 2 =>
-      Some(jz_ket(args[0], symbol("m")).as_expr())
+    Expr::Function("PositionKet3D", _) | Expr::Function("PositionBra3D", _) =>
+      Some(position_ket_3d())
+    Expr::Function("JzKet", args) | Expr::Function("JzBra", args) if args.length() ==
+      2 => Some(jz_ket(args[0], symbol("m")).as_expr())
     _ =>
       match state_from_expr(expr) {
         Some(state) =>
@@ -35,12 +34,7 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
             StateFlavor::Ket | StateFlavor::Bra =>
               Some(ket([symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
-              Some(
-                time_dep_ket(
-                  [symbol("psi")],
-                  time=symbol("t"),
-                ).as_expr(),
-              )
+              Some(time_dep_ket([symbol("psi")], time=symbol("t")).as_expr())
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
               Some(orthogonal_ket([symbol("n")]).as_expr())
           }
@@ -55,23 +49,15 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
 }
 
 ///|
-fn represent_index_symbol(
-  label : Expr,
-  index : Int,
-  fallback : String,
-) -> Expr {
+fn represent_index_symbol(label : Expr, index : Int, fallback : String) -> Expr {
   match label {
-    Expr::Symbol(name) =>
-      symbol("\{name}_\{index.to_string()}")
+    Expr::Symbol(name) => symbol("\{name}_\{index.to_string()}")
     _ => symbol("\{fallback}_\{index.to_string()}")
   }
 }
 
 ///|
-fn represent_enumerate_with_index(
-  state_expr : Expr,
-  index : Int,
-) -> Expr? {
+fn represent_enumerate_with_index(state_expr : Expr, index : Int) -> Expr? {
   match state_expr {
     Expr::Function("Ket", args) =>
       Some(
@@ -237,10 +223,7 @@ pub fn rep_innerproduct(
 }
 
 ///|
-fn rep_contract_bra_state(
-  bra_expr : Expr,
-  state_expr : Expr,
-) -> Expr {
+fn rep_contract_bra_state(bra_expr : Expr, state_expr : Expr) -> Expr {
   match state_expr {
     Expr::Add(args) =>
       quantum_add_from_args_preserve(

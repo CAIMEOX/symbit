@@ -1,4 +1,9 @@
 ///|
+suberror FiniteDiffError {
+  DuplicateGridPoint
+} derive(Show, Eq)
+
+///|
 fn fd_rat_zero() -> BigRational {
   BigRational::zero()
 }
@@ -24,8 +29,13 @@ fn fd_rat_mul(a : BigRational, b : BigRational) -> BigRational {
 }
 
 ///|
-fn fd_rat_div(a : BigRational, b : BigRational) -> BigRational {
-  a.div_r(b)
+fn fd_rat_div(
+  a : BigRational,
+  b : BigRational,
+) -> BigRational raise FiniteDiffError {
+  a.div_r(b) catch {
+    _ => raise FiniteDiffError::DuplicateGridPoint
+  }
 }
 
 ///|
@@ -33,7 +43,7 @@ pub fn finite_diff_weights(
   order : Int,
   x_list : Array[BigRational],
   x0? : BigRational = BigRational::zero(),
-) -> Array[Array[Array[BigRational]]] {
+) -> Array[Array[Array[BigRational]]] raise FiniteDiffError {
   let n_max = x_list.length() - 1
   let delta : Array[Array[Array[BigRational]]] = Array::makei(order + 1, _ => {
     Array::makei(n_max + 1, _ => Array::makei(n_max + 1, _ => fd_rat_zero()))

@@ -2,12 +2,7 @@
 /// Three-dimensional isotropic harmonic oscillator formulas.
 
 ///|
-pub fn r_nl(
-  n : Expr,
-  l : Expr,
-  nu : Expr,
-  r : Expr,
-) -> Expr {
+pub fn r_nl(n : Expr, l : Expr, nu : Expr, r : Expr) -> Expr {
   let n1 = n + int(1)
   let coeff = @symelem.sqrt(
     expr_div(
@@ -15,9 +10,7 @@ pub fn r_nl(
       (int(2) ^ (n1 + l + int(1))) *
       @symcomb.factorial(n1 + int(-1)),
       @symelem.sqrt(pi_expr()) *
-      @symcomb.factorial2(
-        int(2) * n1 + int(2) * l + int(-1),
-      ),
+      @symcomb.factorial2(int(2) * n1 + int(2) * l + int(-1)),
     ),
   )
   coeff *
@@ -31,10 +24,6 @@ pub fn r_nl(
 }
 
 ///|
-pub fn e_nl(
-  n : Expr,
-  l : Expr,
-  hw : Expr,
-) -> Expr {
+pub fn e_nl(n : Expr, l : Expr, hw : Expr) -> Expr {
   (int(2) * n + l + rational_expr(3, 2)) * hw
 }

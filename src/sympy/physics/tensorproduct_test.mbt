@@ -3,7 +3,10 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
   let a = operator([@symcore.symbol("A")]).as_expr()
   let b = operator([@symcore.symbol("B")]).as_expr()
   let c = operator([@symcore.symbol("C")]).as_expr()
-  inspect(@symquant.tensor_product([a, b]).to_string(), content="Operator(A)xOperator(B)")
+  inspect(
+    @symquant.tensor_product([a, b]).to_string(),
+    content="Operator(A)xOperator(B)",
+  )
   inspect(
     @symquant.tensor_product([a + b, c]).to_string(),
     content="(Operator(A) + Operator(B))xOperator(C)",
@@ -27,7 +30,10 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
   quantum_test_assert_expr_equal(
     tensor_product_simp(
       @symcore.raw_mul([
-        @symcore.raw_pow(@symquant.tensor_product([a, b]).as_expr(), @symcore.int(2)),
+        @symcore.raw_pow(
+          @symquant.tensor_product([a, b]).as_expr(),
+          @symcore.int(2),
+        ),
         @symquant.tensor_product([c, operator([@symcore.symbol("D")]).as_expr()]).as_expr(),
         x,
       ]),

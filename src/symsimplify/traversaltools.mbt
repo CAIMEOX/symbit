@@ -10,11 +10,7 @@ pub fn apply_at_level(
 }
 
 ///|
-fn use_at(
-  expr : Expr,
-  func : (Expr) -> Expr,
-  depth : Int,
-) -> Expr {
+fn use_at(expr : Expr, func : (Expr) -> Expr, depth : Int) -> Expr {
   if depth <= 0 {
     return func(expr)
   }

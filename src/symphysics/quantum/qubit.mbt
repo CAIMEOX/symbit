@@ -145,8 +145,9 @@ fn int_to_minimal_bits(
 
 ///|
 fn qubit_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match result {
     Ok(value) => value
     Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
@@ -248,15 +249,13 @@ pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
       }
       Some(QubitExpr::{ bits, is_bra: name == "QubitBra", int_form: false })
     }
-    Expr::Function(name, args) if (
-        name == "IntQubit" || name == "IntQubitBra"
-      ) &&
+    Expr::Function(name, args) if (name == "IntQubit" || name == "IntQubitBra") &&
       args.length() == 1 =>
       match args[0] {
-        Expr::Number(n) if n.is_integral() &&
-          n.numerator().to_int() >= 0 => {
-          let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try?
-            int_to_minimal_bits(n.numerator().to_int())
+        Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
+          let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try? int_to_minimal_bits(
+            n.numerator().to_int(),
+          )
           match bits_result {
             Ok(bits) =>
               Some(QubitExpr::{
@@ -291,13 +290,7 @@ fn qubit_basis_vector(
   } else {
     let rows : Array[Array[Expr]] = []
     for idx in 0..<size {
-      rows.push([
-        if idx == bits_to_int(q.bits) {
-          int(1)
-        } else {
-          int(0)
-        },
-      ])
+      rows.push([if idx == bits_to_int(q.bits) { int(1) } else { int(0) }])
     }
     @symphysics.explicit_matrix_from_rows(rows)
   }
@@ -493,13 +486,7 @@ fn qubit_partial_outcome_matrix(
         key = key | (1 << pos)
       }
     }
-    rows.push([
-      if key == outcome {
-        matrix.get(idx, 0)
-      } else {
-        int(0)
-      },
-    ])
+    rows.push([if key == outcome { matrix.get(idx, 0) } else { int(0) }])
   }
   @symphysics.explicit_matrix_from_rows(rows)
 }

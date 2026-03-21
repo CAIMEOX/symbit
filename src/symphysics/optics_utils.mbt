@@ -161,18 +161,15 @@ pub fn fresnel_coefficients(
     let n2 = refractive_index_of_medium(medium2)
     let n = expr_div(n2, n1)
     let radical = @symelem.sqrt(
-      (@symelem.sin(angle_of_incidence) ^ int(2)) -
-      (n ^ int(2)),
+      (@symelem.sin(angle_of_incidence) ^ int(2)) - (n ^ int(2)),
     )
     let rs = expr_div(
       @symelem.cos(angle_of_incidence) - i_expr() * radical,
       @symelem.cos(angle_of_incidence) + i_expr() * radical,
     )
     let rp = expr_div(
-      (n ^ int(2)) * @symelem.cos(angle_of_incidence) -
-      i_expr() * radical,
-      (n ^ int(2)) * @symelem.cos(angle_of_incidence) +
-      i_expr() * radical,
+      (n ^ int(2)) * @symelem.cos(angle_of_incidence) - i_expr() * radical,
+      (n ^ int(2)) * @symelem.cos(angle_of_incidence) + i_expr() * radical,
     )
     return [rp, rs]
   }
@@ -181,10 +178,7 @@ pub fn fresnel_coefficients(
   )
   let sum_angle = angle_of_incidence + angle_of_refraction
   let diff_angle = angle_of_incidence - angle_of_refraction
-  let rs = expr_div(
-    int(-1) * @symelem.sin(diff_angle),
-    @symelem.sin(sum_angle),
-  )
+  let rs = expr_div(int(-1) * @symelem.sin(diff_angle), @symelem.sin(sum_angle))
   let rp = expr_div(@symelem.tan(diff_angle), @symelem.tan(sum_angle))
   let ts = expr_div(
     int(2) *
@@ -350,18 +344,11 @@ pub fn lens_formula(
 }
 
 ///|
-pub fn hyperfocal_distance(
-  f : Expr,
-  n : Expr,
-  c : Expr,
-) -> Expr {
+pub fn hyperfocal_distance(f : Expr, n : Expr, c : Expr) -> Expr {
   expr_div(f ^ int(2), n * c)
 }
 
 ///|
-pub fn transverse_magnification(
-  si : Expr,
-  so : Expr,
-) -> Expr {
+pub fn transverse_magnification(si : Expr, so : Expr) -> Expr {
   int(-1) * expr_div(si, so)
 }

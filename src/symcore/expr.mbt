@@ -64,9 +64,7 @@ pub fn rational_from_ints(
   num : Int,
   den : Int,
 ) -> Expr raise @symnum.RationalError {
-  Expr::Number(
-    @symnum.BigRational::new(BigInt::from_int(num), BigInt::from_int(den)),
-  )
+  Expr::Number(@symnum.BigRational::from_ints(num, den))
 }
 
 ///|

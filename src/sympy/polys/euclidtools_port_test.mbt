@@ -18,9 +18,7 @@ fn expect_div_oracle(p : Poly, q : Poly) -> Unit raise {
 fn expect_resultant_oracle(p : Poly, q : Poly) -> Unit raise {
   let res = p.resultant(q, 0)
   let ours = sympy_normalize(res.to_string()).trim().to_string()
-  let oracle = resultant(p.to_expr(), q.to_expr(), x="x")
-    .trim()
-    .to_string()
+  let oracle = resultant(p.to_expr(), q.to_expr(), x="x").trim().to_string()
   assert_eq(ours, oracle)
 }
 

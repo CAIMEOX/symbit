@@ -52,20 +52,11 @@ pub fn Wigner3j::is_symbolic(self : Wigner3j) -> Bool {
 }
 
 ///|
-pub fn Wigner3j::doit(
-  self : Wigner3j,
-) -> Expr raise @symphysics.PhysicsError {
+pub fn Wigner3j::doit(self : Wigner3j) -> Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  @symphysics.wigner_3j(
-    self.j1,
-    self.j2,
-    self.j3,
-    self.m1,
-    self.m2,
-    self.m3,
-  )
+  @symphysics.wigner_3j(self.j1, self.j2, self.j3, self.m1, self.m2, self.m3)
 }
 
 ///|
@@ -155,20 +146,11 @@ pub fn Wigner6j::is_symbolic(self : Wigner6j) -> Bool {
 }
 
 ///|
-pub fn Wigner6j::doit(
-  self : Wigner6j,
-) -> Expr raise @symphysics.PhysicsError {
+pub fn Wigner6j::doit(self : Wigner6j) -> Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }
-  @symphysics.wigner_6j(
-    self.j1,
-    self.j2,
-    self.j12,
-    self.j3,
-    self.j,
-    self.j23,
-  )
+  @symphysics.wigner_6j(self.j1, self.j2, self.j12, self.j3, self.j, self.j23)
 }
 
 ///|
@@ -230,9 +212,7 @@ pub fn Wigner9j::is_symbolic(self : Wigner9j) -> Bool {
 }
 
 ///|
-pub fn Wigner9j::doit(
-  self : Wigner9j,
-) -> Expr raise @symphysics.PhysicsError {
+pub fn Wigner9j::doit(self : Wigner9j) -> Expr raise @symphysics.PhysicsError {
   guard !self.is_symbolic() else {
     raise @symphysics.PhysicsError::ValueError("Coefficients must be numerical")
   }

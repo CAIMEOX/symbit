@@ -7,9 +7,7 @@
 /// MoonBit port.
 
 ///|
-fn quantum_expand_powers(
-  factors : Array[Expr],
-) -> Array[Expr] {
+fn quantum_expand_powers(factors : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = Array::new()
   for factor in factors {
     match factor {
@@ -30,8 +28,8 @@ fn quantum_expand_powers(
 ///|
 fn quantum_op_sort_key(expr : Expr) -> (Int, String) {
   match expr {
-    Expr::Function("BosonOp", args)
-    | Expr::Function("FermionOp", args) if args.length() == 2 => {
+    Expr::Function("BosonOp", args) | Expr::Function("FermionOp", args) if args.length() ==
+      2 => {
       let annihilation_rank = if args[1] == int(0) { 0 } else { 1 }
       (annihilation_rank, @symprint.to_string(args[0]))
     }
@@ -46,8 +44,7 @@ fn quantum_op_sort_key(expr : Expr) -> (Int, String) {
 ///|
 fn quantum_same_species(lhs : Expr, rhs : Expr) -> Bool {
   match (lhs, rhs) {
-    (Expr::Function(name1, _), Expr::Function(name2, _)) =>
-      name1 == name2
+    (Expr::Function(name1, _), Expr::Function(name2, _)) => name1 == name2
     _ => false
   }
 }
@@ -74,8 +71,7 @@ fn quantum_operatorordering_pair(
   }
   let same_species = quantum_same_species(current, next)
   let same_name = match (current, next) {
-    (Expr::Function(_, cargs), Expr::Function(_, nargs)) if cargs.length() >=
-      1 &&
+    (Expr::Function(_, cargs), Expr::Function(_, nargs)) if cargs.length() >= 1 &&
       nargs.length() >= 1 => cargs[0] == nargs[0]
     _ => false
   }

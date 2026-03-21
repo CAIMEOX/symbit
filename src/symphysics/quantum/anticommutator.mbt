@@ -3,18 +3,12 @@
 /// `sympy.physics.quantum.anticommutator`.
 
 ///|
-fn quantum_anticommutator_raw(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn quantum_anticommutator_raw(lhs : Expr, rhs : Expr) -> Expr {
   @symcore.raw_function("AntiCommutator", [lhs, rhs])
 }
 
 ///|
-fn quantum_make_anticommutator(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
   if lhs == int(0) || rhs == int(0) {
     return int(0)
   }
@@ -55,8 +49,7 @@ fn quantum_make_anticommutator(
             | (PauliKind::Minus, PauliKind::Plus)
             | (PauliKind::Plus, PauliKind::Minus) => return int(1)
             (PauliKind::Minus, PauliKind::Y)
-            | (PauliKind::Y, PauliKind::Minus) =>
-              return int(-1) * symbol("I")
+            | (PauliKind::Y, PauliKind::Minus) => return int(-1) * symbol("I")
             (PauliKind::Plus, PauliKind::Y) | (PauliKind::Y, PauliKind::Plus) =>
               return symbol("I")
             _ => ()
@@ -64,10 +57,7 @@ fn quantum_make_anticommutator(
         _ => ()
       }
       match (nlhs, nrhs) {
-        (
-          Expr::Function("FermionOp", largs),
-          Expr::Function("FermionOp", rargs),
-        ) =>
+        (Expr::Function("FermionOp", largs), Expr::Function("FermionOp", rargs)) =>
           if largs.length() == 2 &&
             rargs.length() == 2 &&
             largs[0] == rargs[0] &&
@@ -75,14 +65,10 @@ fn quantum_make_anticommutator(
             rargs[1] != int(0) {
             return int(1)
           }
-        (
-          Expr::Function("FermionOp", _),
-          Expr::Function("BosonOp", _),
-        ) => return int(2) * nlhs * nrhs
-        (
-          Expr::Function("BosonOp", _),
-          Expr::Function("FermionOp", _),
-        ) => return int(2) * nlhs * nrhs
+        (Expr::Function("FermionOp", _), Expr::Function("BosonOp", _)) =>
+          return int(2) * nlhs * nrhs
+        (Expr::Function("BosonOp", _), Expr::Function("FermionOp", _)) =>
+          return int(2) * nlhs * nrhs
         _ => ()
       }
       match (gate_support(nlhs), gate_support(nrhs)) {
@@ -101,11 +87,7 @@ fn quantum_make_anticommutator(
 }
 
 ///|
-pub fn anticommutator(
-  lhs : Expr,
-  rhs : Expr,
-  evaluate? : Bool = true,
-) -> Expr {
+pub fn anticommutator(lhs : Expr, rhs : Expr, evaluate? : Bool = true) -> Expr {
   if evaluate {
     quantum_make_anticommutator(lhs, rhs)
   } else {

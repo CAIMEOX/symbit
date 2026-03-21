@@ -93,6 +93,36 @@ fn add_term(
 }
 
 ///|
+fn poly_rational_from_ints(
+  num : Int,
+  den : Int,
+) -> @symnum.BigRational raise PolyError {
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => raise PolyError::DivisionByZero
+  }
+}
+
+///|
+fn poly_rational_from_bigints(
+  num : BigInt,
+  den : BigInt,
+) -> @symnum.BigRational raise PolyError {
+  @symnum.BigRational::new(num, den) catch {
+    _ => raise PolyError::DivisionByZero
+  }
+}
+
+///|
+fn poly_rational_div(
+  lhs : @symnum.BigRational,
+  rhs : @symnum.BigRational,
+) -> @symnum.BigRational raise PolyError {
+  lhs.div_r(rhs) catch {
+    _ => raise PolyError::DivisionByZero
+  }
+}
+
+///|
 /// Multiply all coefficients by `factor`.
 pub fn Poly::scale_coeff(
   self : Poly,

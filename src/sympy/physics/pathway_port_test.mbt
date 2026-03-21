@@ -1,3 +1,4 @@
+///|
 fn pathway_assert_force(
   load : Force,
   point_name : String,
@@ -12,9 +13,9 @@ fn pathway_assert_force(
   let ours_x = @symprint.to_string(comps.get(0, 0))
   let ours_y = @symprint.to_string(comps.get(1, 0))
   let ours_z = @symprint.to_string(comps.get(2, 0))
-  assert_true((mechanics_expr_equal(ours_x, rhs_x)))
-  assert_true((mechanics_expr_equal(ours_y, rhs_y)))
-  assert_true((mechanics_expr_equal(ours_z, rhs_z)))
+  assert_true(mechanics_expr_equal(ours_x, rhs_x))
+  assert_true(mechanics_expr_equal(ours_y, rhs_y))
+  assert_true(mechanics_expr_equal(ours_z, rhs_z))
 }
 
 ///|
@@ -31,9 +32,9 @@ test "physics.mechanics parity pathways" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(linear.length()),
-        linear_length_oracle,
-      )
+      @symprint.to_string(linear.length()),
+      linear_length_oracle,
+    ),
   )
   let linear_loads = linear.to_loads(f)
   pathway_assert_force(
@@ -63,9 +64,9 @@ test "physics.mechanics parity pathways" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(obstacle.length()),
-        obstacle_length_oracle,
-      )
+      @symprint.to_string(obstacle.length()),
+      obstacle_length_oracle,
+    ),
   )
   let obstacle_loads = obstacle.to_loads(f)
   pathway_assert_force(

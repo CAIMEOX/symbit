@@ -6,12 +6,8 @@ test "elementary exp/log simplifications" {
   let log1 = log(one)
   assert_eq(@symprint.to_string(exp0), "1")
   assert_eq(@symprint.to_string(log1), "0")
-  assert_oracle(
-    try? expr_str_eq(@symprint.to_string(exp0), "1"),
-  )
-  assert_oracle(
-    try? expr_str_eq(@symprint.to_string(log1), "0"),
-  )
+  assert_oracle(try? expr_str_eq(@symprint.to_string(exp0), "1"))
+  assert_oracle(try? expr_str_eq(@symprint.to_string(log1), "0"))
 }
 
 ///|
@@ -39,12 +35,8 @@ test "elementary sqrt/abs/sign" {
   assert_eq(@symprint.to_string(sgn), "-1")
   assert_eq(@symprint.to_string(s0), "0")
   assert_eq(@symprint.to_string(s1), "1")
-  assert_oracle(
-    try? expr_str_eq(@symprint.to_string(abs2), "2"),
-  )
-  assert_oracle(
-    try? expr_str_eq(@symprint.to_string(sgn), "-1"),
-  )
+  assert_oracle(try? expr_str_eq(@symprint.to_string(abs2), "2"))
+  assert_oracle(try? expr_str_eq(@symprint.to_string(sgn), "-1"))
 }
 
 ///|

@@ -92,7 +92,7 @@ pub impl Eq for VectorError
 pub impl Show for VectorError
 
 // Types and methods
-pub enum AxisName {
+pub(all) enum AxisName {
   X
   Y
   Z

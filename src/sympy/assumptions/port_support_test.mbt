@@ -75,57 +75,36 @@ using @symassume {
 }
 
 ///|
-fn assume_is_zero(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_zero(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_zero(expr, env~)
 }
 
 ///|
-fn assume_is_nonzero(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_nonzero(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_nonzero(expr, env~)
 }
 
 ///|
-fn assume_is_integer(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_integer(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_integer(expr, env~)
 }
 
 ///|
-fn assume_is_rational(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_rational(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_rational(expr, env~)
 }
 
 ///|
-fn assume_is_real(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_real(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_real(expr, env~)
 }
 
 ///|
-fn assume_is_positive(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_positive(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_positive(expr, env~)
 }
 
 ///|
-fn assume_is_nonnegative(
-  expr : @symcore.Expr,
-  env? : AssumeEnv = {},
-) -> Tri {
+fn assume_is_nonnegative(expr : @symcore.Expr, env? : AssumeEnv = {}) -> Tri {
   @symassume.is_nonnegative(expr, env~)
 }

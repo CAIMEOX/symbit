@@ -8,7 +8,7 @@ fn optics_matrix_assert_expr_equal(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(lhs.get(i, j))
-      assert_true((expr_equal(ours, rhs[idx])))
+      assert_true(expr_equal(ours, rhs[idx]))
       idx = idx + 1
     }
   }

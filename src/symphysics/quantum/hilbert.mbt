@@ -27,8 +27,7 @@ fn hilbert_expr_repr(expr : Expr) -> String {
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
     Expr::Symbol(name) if name == "oo" => "oo"
     Expr::Symbol(name) => "Symbol('\{name}')"
-    Expr::Function(name, args) if name == "Interval" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
       "Interval(\{hilbert_expr_repr(args[0])}, \{hilbert_expr_repr(args[1])})"
     _ => @symprint.to_string(expr)
   }
@@ -51,8 +50,7 @@ pub fn complex_space(
   match dimension {
     Expr::Number(n) if n.is_integral() && n.numerator().to_int() > 0 =>
       HilbertSpace::Complex(dimension)
-    Expr::Symbol(name) if name == "oo" =>
-      HilbertSpace::Complex(dimension)
+    Expr::Symbol(name) if name == "oo" => HilbertSpace::Complex(dimension)
     Expr::Symbol(_) => HilbertSpace::Complex(dimension)
     _ =>
       raise @symphysics.PhysicsError::ValueError(
@@ -66,8 +64,8 @@ pub fn l2_space(
   interval_expr : Expr,
 ) -> HilbertSpace raise @symphysics.PhysicsError {
   match interval_expr {
-    Expr::Function(name, args) if name == "Interval" &&
-      args.length() == 2 => HilbertSpace::L2(interval_expr)
+    Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
+      HilbertSpace::L2(interval_expr)
     _ =>
       raise @symphysics.PhysicsError::ValueError(
         "L2 expects Interval(start, stop)",

@@ -58,16 +58,20 @@ test "physics.continuum_mechanics.arch: oracle parity" {
   assert_true(continuum_expr_eq(a.reaction_force()["R_A_y"], oracle[1]))
   assert_true(continuum_expr_eq(a.reaction_force()["R_B_x"], oracle[2]))
   assert_true(continuum_expr_eq(a.reaction_force()["R_B_y"], oracle[3]))
-  assert_true(continuum_expr_eq(a.axial_force_at(pos=Some(near_eight)), oracle[4]))
-  assert_true(continuum_expr_eq(a.shear_force_at(pos=Some(near_eight)), oracle[5]))
+  assert_true(
+    continuum_expr_eq(a.axial_force_at(pos=Some(near_eight)), oracle[4]),
+  )
+  assert_true(
+    continuum_expr_eq(a.shear_force_at(pos=Some(near_eight)), oracle[5]),
+  )
   assert_true(continuum_expr_eq(b.reaction_force()["R_A_x"], oracle[6]))
   assert_true(continuum_expr_eq(b.reaction_force()["R_A_y"], oracle[7]))
   assert_true(continuum_expr_eq(b.reaction_force()["R_B_x"], oracle[8]))
   assert_true(continuum_expr_eq(b.reaction_force()["R_B_y"], oracle[9]))
   assert_true(
     continuum_expr_eq(
-        b.bending_moment_at(pos=Some(@symcore.int(4))),
-        oracle[10],
-      )
+      b.bending_moment_at(pos=Some(@symcore.int(4))),
+      oracle[10],
+    ),
   )
 }

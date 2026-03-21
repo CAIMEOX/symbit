@@ -36,8 +36,7 @@ fn expr_depends_on(expr : Expr, name : String) -> Bool {
       args.any(child => expr_depends_on(child, name))
     Expr::Pow(base, exp) =>
       expr_depends_on(base, name) || expr_depends_on(exp, name)
-    Expr::Function(_, args) =>
-      args.any(child => expr_depends_on(child, name))
+    Expr::Function(_, args) => args.any(child => expr_depends_on(child, name))
     _ => false
   }
 }
@@ -256,14 +255,7 @@ fn dedup_sets(items : Array[Set]) -> Array[Set] {
 ///|
 fn interval_numeric(
   set : Set,
-) -> (
-  @symnum.BigRational,
-  @symnum.BigRational,
-  Bool,
-  Bool,
-  Expr,
-  Expr,
-)? {
+) -> (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr)? {
   match set {
     Set::Interval(left~, right~, left_open~, right_open~) =>
       match (expr_number_value(left), expr_number_value(right)) {
@@ -294,30 +286,9 @@ fn interval_overlap_or_touch(
 
 ///|
 fn merge_interval_pair(
-  a : (
-    @symnum.BigRational,
-    @symnum.BigRational,
-    Bool,
-    Bool,
-    Expr,
-    Expr,
-  ),
-  b : (
-    @symnum.BigRational,
-    @symnum.BigRational,
-    Bool,
-    Bool,
-    Expr,
-    Expr,
-  ),
-) -> (
-  @symnum.BigRational,
-  @symnum.BigRational,
-  Bool,
-  Bool,
-  Expr,
-  Expr,
-) {
+  a : (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
+  b : (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
+) -> (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr) {
   let (al, ar, alo, aro, aleft, aright) = a
   let (bl, br, _blo, bro, _bleft, bright) = b
   let left_val = al
@@ -343,14 +314,7 @@ fn merge_interval_pair(
 ///|
 fn merge_intervals(intervals : Array[Set]) -> Array[Set] {
   let numeric : Array[
-    (
-      @symnum.BigRational,
-      @symnum.BigRational,
-      Bool,
-      Bool,
-      Expr,
-      Expr,
-    ),
+    (@symnum.BigRational, @symnum.BigRational, Bool, Bool, Expr, Expr),
   ] = Array::new()
   let others : Array[Set] = Array::new()
   for item in intervals {
@@ -497,10 +461,7 @@ fn interval_intersection(a : Set, b : Set) -> Set? {
 }
 
 ///|
-fn intersect_finite_sets(
-  a : Array[Expr],
-  b : Array[Expr],
-) -> Array[Expr] {
+fn intersect_finite_sets(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = Array::new()
   for item in a {
     let mut found = false
@@ -749,10 +710,7 @@ fn interval_contains(set : Set, elem : Expr) -> SetBool {
 }
 
 ///|
-fn finite_contains(
-  items : Array[Expr],
-  elem : Expr,
-) -> SetBool {
+fn finite_contains(items : Array[Expr], elem : Expr) -> SetBool {
   for item in items {
     if @symcore.compare_expr(item, elem) == 0 {
       return SetBool::True

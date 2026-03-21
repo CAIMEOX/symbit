@@ -4,7 +4,7 @@ fn optics_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  assert_true((control_expr_equivalent(lhs, rhs)))
+  assert_true(control_expr_equivalent(lhs, rhs))
 }
 
 ///|
@@ -21,9 +21,9 @@ fn optics_assert_expr_list_equal(
 
 ///|
 fn test_rational_expr(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  }
 }
 
 ///|
@@ -58,11 +58,14 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5)",
     "refraction_angle",
   )
-  assert_eq(fresnel_coefficients(
-          theta,
-          optics_index_arg(one),
-          optics_index_arg(four_thirds),
-        ).length(), 4)
+  assert_eq(
+    fresnel_coefficients(
+      theta,
+      optics_index_arg(one),
+      optics_index_arg(four_thirds),
+    ).length(),
+    4,
+  )
   optics_assert_expr_equal(
     deviation(
       theta,
@@ -72,11 +75,14 @@ test "physics.optics.utils: scalar formulas" {
     "asin(2/5) - pi/6",
     "deviation",
   )
-  assert_eq(fresnel_coefficients(
-          test_pi_expr() * test_rational_expr(3, 10),
-          optics_index_arg(@symcore.int(2)),
-          optics_index_arg(@symcore.int(1)),
-        ).length(), 2)
+  assert_eq(
+    fresnel_coefficients(
+      test_pi_expr() * test_rational_expr(3, 10),
+      optics_index_arg(@symcore.int(2)),
+      optics_index_arg(@symcore.int(1)),
+    ).length(),
+    2,
+  )
   optics_assert_expr_equal(
     brewster_angle(optics_index_arg(one), optics_index_arg(four_thirds)),
     "atan(4/3)",

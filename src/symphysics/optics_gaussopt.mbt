@@ -67,25 +67,12 @@ pub fn ray_transfer_matrix_from_matrix(
 
 ///|
 pub fn free_space(distance : Expr) -> RayTransferMatrix {
-  ray_transfer_matrix(
-    int(1),
-    distance,
-    int(0),
-    int(1),
-  )
+  ray_transfer_matrix(int(1), distance, int(0), int(1))
 }
 
 ///|
-pub fn flat_refraction(
-  n1 : Expr,
-  n2 : Expr,
-) -> RayTransferMatrix {
-  ray_transfer_matrix(
-    int(1),
-    int(0),
-    int(0),
-    expr_div(n1, n2),
-  )
+pub fn flat_refraction(n1 : Expr, n2 : Expr) -> RayTransferMatrix {
+  ray_transfer_matrix(int(1), int(0), int(0), expr_div(n1, n2))
 }
 
 ///|
@@ -104,12 +91,7 @@ pub fn curved_refraction(
 
 ///|
 pub fn flat_mirror() -> RayTransferMatrix {
-  ray_transfer_matrix(
-    int(1),
-    int(0),
-    int(0),
-    int(1),
-  )
+  ray_transfer_matrix(int(1), int(0), int(0), int(1))
 }
 
 ///|
@@ -188,24 +170,16 @@ pub fn RayTransferMatrix::apply_beam(
   let z_r = beam.z_r_
   let c_z = c * z
   let c_z_r = c * z_r
-  let den = optics_simplify(
-    ((c_z + d) ^ int(2)) + (c_z_r ^ int(2)),
-  )
+  let den = optics_simplify(((c_z + d) ^ int(2)) + (c_z_r ^ int(2)))
   let z_out = optics_simplify(
-    ((a * z + b) * (c_z + d) + a * c * (z_r ^ int(2))) *
-    (den ^ int(-1)),
+    ((a * z + b) * (c_z + d) + a * c * (z_r ^ int(2))) * (den ^ int(-1)),
   )
-  let z_r_out = optics_simplify(
-    z_r * ray_transfer_det(self) * (den ^ int(-1)),
-  )
+  let z_r_out = optics_simplify(z_r * ray_transfer_det(self) * (den ^ int(-1)))
   beam_parameter(beam.wavelen_, z_out, z_r=Some(z_r_out), n=beam.n_)
 }
 
 ///|
-pub fn geometric_ray(
-  height : Expr,
-  angle : Expr,
-) -> GeometricRay {
+pub fn geometric_ray(height : Expr, angle : Expr) -> GeometricRay {
   GeometricRay::{ matrix_: ExplicitMatrix::{ rows: [[height], [angle]] } }
 }
 
@@ -284,21 +258,14 @@ pub fn BeamParameter::q(self : BeamParameter) -> Expr {
 ///|
 pub fn BeamParameter::radius(self : BeamParameter) -> Expr {
   optics_simplify(
-    self.z_ *
-    (
-      int(1) +
-      ((self.z_r_ * (self.z_ ^ int(-1))) ^ int(2))
-    ),
+    self.z_ * (int(1) + ((self.z_r_ * (self.z_ ^ int(-1))) ^ int(2))),
   )
 }
 
 ///|
 pub fn BeamParameter::w(self : BeamParameter) -> Expr {
   self.w_0() *
-  @symelem.sqrt(
-    int(1) +
-    ((self.z_ * (self.z_r_ ^ int(-1))) ^ int(2)),
-  )
+  @symelem.sqrt(int(1) + ((self.z_ * (self.z_r_ ^ int(-1))) ^ int(2)))
 }
 
 ///|
@@ -317,9 +284,7 @@ pub fn BeamParameter::gouy(self : BeamParameter) -> Expr {
 }
 
 ///|
-pub fn BeamParameter::waist_approximation_limit(
-  self : BeamParameter,
-) -> Expr {
+pub fn BeamParameter::waist_approximation_limit(self : BeamParameter) -> Expr {
   optics_simplify(expr_div(int(2) * self.wavelen_, pi_expr()))
 }
 
@@ -339,19 +304,12 @@ pub fn BeamParameter::to_string(self : BeamParameter) -> String {
 }
 
 ///|
-pub fn waist2rayleigh(
-  waist : Expr,
-  wavelen : Expr,
-  n? : Expr = int(1),
-) -> Expr {
+pub fn waist2rayleigh(waist : Expr, wavelen : Expr, n? : Expr = int(1)) -> Expr {
   optics_simplify(expr_div((waist ^ int(2)) * n * pi_expr(), wavelen))
 }
 
 ///|
-pub fn rayleigh2waist(
-  z_r : Expr,
-  wavelen : Expr,
-) -> Expr {
+pub fn rayleigh2waist(z_r : Expr, wavelen : Expr) -> Expr {
   optics_simplify(@symelem.sqrt(expr_div(z_r * wavelen, pi_expr())))
 }
 
@@ -387,11 +345,7 @@ pub fn gaussian_conj(
   let s_out = optics_simplify(
     expr_div(
       int(1),
-      int(-1) *
-      expr_div(
-        int(1),
-        s_in + expr_div(z_r_in ^ int(2), s_in - f),
-      ) +
+      int(-1) * expr_div(int(1), s_in + expr_div(z_r_in ^ int(2), s_in - f)) +
       expr_div(int(1), f),
     ),
   )
@@ -426,8 +380,7 @@ pub fn conjugate_gauss_beams(
     (
       int(1) -
       @symelem.sqrt(
-        (magnification ^ int(-2)) -
-        ((z * (focal ^ int(-1))) ^ int(2)),
+        (magnification ^ int(-2)) - ((z * (focal ^ int(-1))) ^ int(2)),
       )
     ),
   )

@@ -114,20 +114,12 @@ pub fn cmod(
       "CMod expects modulus to fit in t output qubits",
     )
   }
-  @symcore.raw_function("CMod", [
-    int(t),
-    int(a),
-    int(modulus),
-  ])
+  @symcore.raw_function("CMod", [int(t), int(a), int(modulus)])
 }
 
 ///|
 pub fn CModExpr::as_expr(self : CModExpr) -> Expr {
-  @symcore.raw_function("CMod", [
-    int(self.t),
-    int(self.a),
-    int(self.modulus),
-  ])
+  @symcore.raw_function("CMod", [int(self.t), int(self.a), int(self.modulus)])
 }
 
 ///|
@@ -286,10 +278,7 @@ pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
     }
     let factors = shor_factor_pair(a, r, n)
     if factors.0 > 1 && factors.0 < n && factors.1 > 1 && factors.1 < n {
-      return @symcore.raw_function("Tuple", [
-        int(factors.0),
-        int(factors.1),
-      ])
+      return @symcore.raw_function("Tuple", [int(factors.0), int(factors.1)])
     }
   }
   raise @symphysics.PhysicsError::ValueError(

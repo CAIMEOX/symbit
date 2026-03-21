@@ -199,9 +199,7 @@ test "physics.vector parity points and fieldfunctions" {
   let scalar = rx * ry * rz
   assert_eq(
     vsprint(gradient(scalar, r)),
-    vector_eval(
-      "R=ReferenceFrame('QR'); gradient(R[0]*R[1]*R[2], R)",
-    ),
+    vector_eval("R=ReferenceFrame('QR'); gradient(R[0]*R[1]*R[2], R)"),
   )
   assert_eq(
     @symprint.to_string(

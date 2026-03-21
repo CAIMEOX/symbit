@@ -59,9 +59,7 @@ pub fn anti_symmetric_tensor(
 }
 
 ///|
-fn sq_extract_secondquant_mul(
-  expr : Expr,
-) -> (Array[Expr], Array[Expr]) {
+fn sq_extract_secondquant_mul(expr : Expr) -> (Array[Expr], Array[Expr]) {
   let scalar : Array[Expr] = []
   let ops : Array[Expr] = []
   match expr {
@@ -228,11 +226,7 @@ fn sq_wicks_sequence(
           }
           let tail = sq_wicks_sequence(remaining, keep_only_fully_contracted)
           if tail != int(0) {
-            let sign = if (j - 1) % 2 == 0 {
-              int(1)
-            } else {
-              int(-1)
-            }
+            let sign = if (j - 1) % 2 == 0 { int(1) } else { int(-1) }
             terms.push(sq_raw_mul([sign, c, tail]))
           }
         }
@@ -243,16 +237,10 @@ fn sq_wicks_sequence(
 }
 
 ///|
-fn sq_collect_symbol_counts(
-  expr : Expr,
-  counts : Map[String, Int],
-) -> Unit {
+fn sq_collect_symbol_counts(expr : Expr, counts : Map[String, Int]) -> Unit {
   match expr {
-    Expr::Symbol(name) =>
-      counts.set(name, counts.get(name).unwrap_or(0) + 1)
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Symbol(name) => counts.set(name, counts.get(name).unwrap_or(0) + 1)
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         sq_collect_symbol_counts(arg, counts)
       }
@@ -265,10 +253,7 @@ fn sq_collect_symbol_counts(
 }
 
 ///|
-fn sq_preferred_index(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn sq_preferred_index(lhs : Expr, rhs : Expr) -> Expr {
   let lg = sq_index_group(lhs, 0)
   let rg = sq_index_group(rhs, 0)
   if lg < rg {
@@ -283,11 +268,7 @@ fn sq_preferred_index(
 }
 
 ///|
-fn sq_subst_one(
-  expr : Expr,
-  name : String,
-  value : Expr,
-) -> Expr {
+fn sq_subst_one(expr : Expr, name : String, value : Expr) -> Expr {
   let env : Map[String, Expr] = {}
   env.set(name, value)
   @symcore.subst(expr, env)
@@ -305,8 +286,7 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
       let mut out = sq_raw_mul(args)
       for arg in args {
         match arg {
-          Expr::Function("KroneckerDelta", dargs) if dargs.length() ==
-            2 =>
+          Expr::Function("KroneckerDelta", dargs) if dargs.length() == 2 =>
             match (dargs[0], dargs[1]) {
               (Expr::Symbol(lhs), Expr::Symbol(rhs)) => {
                 let preferred = sq_preferred_index(dargs[0], dargs[1])
@@ -327,9 +307,7 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
 }
 
 ///|
-fn sq_term_scalar_and_body(
-  expr : Expr,
-) -> (Expr, Expr) {
+fn sq_term_scalar_and_body(expr : Expr) -> (Expr, Expr) {
   match expr {
     Expr::Mul(args) => {
       let scalar : Array[Expr] = []
@@ -363,9 +341,7 @@ fn sq_collect_symbols_by_group(
           _ => if !general.contains(name) { general.push(name) }
         }
       }
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         sq_collect_symbols_by_group(arg, above, below, general)
       }
@@ -542,10 +518,7 @@ pub fn wicks(
 }
 
 ///|
-pub fn permutation_operator(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+pub fn permutation_operator(lhs : Expr, rhs : Expr) -> Expr {
   if @symcore.compare_expr(lhs, rhs) <= 0 {
     @symcore.raw_function("PermutationOperator", [lhs, rhs])
   } else {
@@ -554,28 +527,17 @@ pub fn permutation_operator(
 }
 
 ///|
-fn sq_swap_indices(
-  expr : Expr,
-  lhs : String,
-  rhs : String,
-) -> Expr {
+fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
   let tmp = "__perm_tmp__"
   sq_subst_one(
-    sq_subst_one(
-      sq_subst_one(expr, lhs, symbol(tmp)),
-      rhs,
-      symbol(lhs),
-    ),
+    sq_subst_one(sq_subst_one(expr, lhs, symbol(tmp)), rhs, symbol(lhs)),
     tmp,
     symbol(rhs),
   )
 }
 
 ///|
-fn sq_permuted_term(
-  perm : Expr,
-  expr : Expr,
-) -> Expr? {
+fn sq_permuted_term(perm : Expr, expr : Expr) -> Expr? {
   match perm {
     Expr::Function("PermutationOperator", args) if args.length() == 2 =>
       match (args[0], args[1]) {

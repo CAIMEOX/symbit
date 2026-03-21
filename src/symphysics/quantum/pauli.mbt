@@ -104,8 +104,9 @@ fn pauli_name_equal(lhs : Expr?, rhs : Expr?) -> Bool {
 
 ///|
 fn pauli_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match result {
     Ok(value) => value
     Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
@@ -179,9 +180,7 @@ pub fn SigmaZState::dual(self : SigmaZState) -> SigmaZState {
 ///|
 pub fn sigma_z_state_from_expr(expr : Expr) -> SigmaZState? {
   match expr {
-    Expr::Function(name, args) if (
-        name == "SigmaZKet" || name == "SigmaZBra"
-      ) &&
+    Expr::Function(name, args) if (name == "SigmaZKet" || name == "SigmaZBra") &&
       args.length() == 1 =>
       match args[0] {
         Expr::Number(n) if n.is_integral() => {
@@ -199,25 +198,15 @@ pub fn sigma_z_state_from_expr(expr : Expr) -> SigmaZState? {
 }
 
 ///|
-pub fn pauli_apply_operator_to_ket(
-  op_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn pauli_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match (pauli_from_expr(op_expr), sigma_z_state_from_expr(ket_expr)) {
     (Some(op), Some(state)) if !state.is_bra =>
       match op.kind {
         PauliKind::Z =>
-          Some(
-            if state.n == 0 {
-              ket_expr
-            } else {
-              int(-1) * ket_expr
-            },
-          )
+          Some(if state.n == 0 { ket_expr } else { int(-1) * ket_expr })
         PauliKind::X =>
           Some(
-            SigmaZState::{ n: if state.n == 0 { 1 } else { 0 }, is_bra: false }
-            .as_expr(),
+            SigmaZState::{ n: if state.n == 0 { 1 } else { 0 }, is_bra: false }.as_expr(),
           )
         PauliKind::Y =>
           Some(
@@ -387,8 +376,7 @@ fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> Expr {
 ///|
 pub fn qsimplify_pauli(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
-      quantum_add_from_args_preserve(args.map(qsimplify_pauli))
+    Expr::Add(args) => quantum_add_from_args_preserve(args.map(qsimplify_pauli))
     Expr::Pow(base, exp) =>
       @symcore.raw_pow(qsimplify_pauli(base), qsimplify_pauli(exp))
     Expr::Function(name, args) if name == "exp" =>

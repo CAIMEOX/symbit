@@ -10,9 +10,28 @@ fn i_expr() -> Expr {
 
 ///|
 fn rational_expr(num : Int, den : Int) -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  match
+    (
+      try? @symcore.rational_from_ints(num, den) :
+      Result[Expr, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) => @symcore.function("Rational", [int(num), int(den)])
+  }
+}
+
+///|
+fn rational_expr_bigint(num : BigInt, den : BigInt) -> Expr {
+  match
+    (
+      try? @symnum.BigRational::new(num, den) :
+      Result[@symnum.BigRational, @symnum.RationalError]) {
+    Ok(value) => @symcore.number(value)
+    Err(_) =>
+      @symcore.function("Rational", [
+        @symcore.number(@symnum.BigRational::from_bigint(num)),
+        @symcore.number(@symnum.BigRational::from_bigint(den)),
+      ])
+  }
 }
 
 ///|

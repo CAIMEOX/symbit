@@ -62,9 +62,7 @@ pub fn Plane::repr(self : Plane) -> String {
 }
 
 ///|
-fn plane_basis_vectors(
-  plane_obj : Plane,
-) -> (Array[Expr], Array[Expr]) {
+fn plane_basis_vectors(plane_obj : Plane) -> (Array[Expr], Array[Expr]) {
   let x = plane_obj.normal_[0]
   let y = plane_obj.normal_[1]
   let z = plane_obj.normal_[2]
@@ -96,10 +94,7 @@ fn plane_point_with_basis(
 }
 
 ///|
-fn plane_basis_coeffs(
-  plane_obj : Plane,
-  target : Point,
-) -> (Expr, Expr)? {
+fn plane_basis_coeffs(plane_obj : Plane, target : Point) -> (Expr, Expr)? {
   let delta = geo_sub_coords(target.coords_, plane_obj.point_.coords_)
   let (basis1, basis2) = plane_basis_vectors(plane_obj)
   let pairs = [(0, 1), (0, 2), (1, 2)]
@@ -224,10 +219,7 @@ pub fn Plane::contains(
 }
 
 ///|
-pub fn Plane::distance(
-  self : Plane,
-  other : Point,
-) -> Expr raise GeometryError {
+pub fn Plane::distance(self : Plane, other : Point) -> Expr raise GeometryError {
   let pt = other.with_dim(3)
   geo_div(
     @symelem.abs(

@@ -47,7 +47,10 @@ test "polyutils wb: parity for internal helper APIs" {
 
   let suffix_gens = ["x0", "x1", "x2", "x10", "x11", "x12", "x20", "x21", "x22"]
   let suffix_ours = _sort_gens(suffix_gens)
-  assert_eq(pu_wb_repr_strs(suffix_ours), "[\"x0\",\"x1\",\"x2\",\"x10\",\"x11\",\"x12\",\"x20\",\"x21\",\"x22\"]")
+  assert_eq(
+    pu_wb_repr_strs(suffix_ours),
+    "[\"x0\",\"x1\",\"x2\",\"x10\",\"x11\",\"x12\",\"x20\",\"x21\",\"x22\"]",
+  )
 
   let a = ["x", "y", "z"]
   let b = ["t", "x", "p", "q", "z"]
@@ -68,7 +71,10 @@ test "polyutils wb: parity for internal helper APIs" {
 
   let factors_multi = [([2, 2], 1), ([1, 2, 3], 1), ([1, 2], 2), ([1], 1)]
   let factors_multi_ours = _sort_factors_multiple(factors_multi)
-  assert_eq(pu_wb_repr_int_list_pairs(factors_multi_ours), "[([1],1),([2,2],1),([1,2],2),([1,2,3],1)]")
+  assert_eq(
+    pu_wb_repr_int_list_pairs(factors_multi_ours),
+    "[([1],1),([2,2],1),([1,2],2),([1,2,3],1)]",
+  )
 }
 
 ///|
@@ -100,7 +106,9 @@ test "polyutils wb: nested gens and factor tie ordering" {
   assert_eq(pu_wb_repr_strs(nested), "[\"x\",\"y\",\"z\"]")
 
   let sorted = _sort_factors_multiple([([2, 1], 1), ([1, 2], 1), ([9], 3)])
-  assert_true(sorted[0].0.length() == 1 && sorted[1].0[0] == 1 && sorted[2].0[0] == 2)
+  assert_true(
+    sorted[0].0.length() == 1 && sorted[1].0[0] == 1 && sorted[2].0[0] == 2,
+  )
 }
 
 ///|

@@ -1,6 +1,8 @@
 ///|
 fn conv_wb_rat(num : Int, den : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("whitebox test rational expects a nonzero denominator")
+  }
 }
 
 ///|
@@ -25,7 +27,9 @@ test "convert wb: fe_to_expr_const covers CC branch variants" {
     FieldElem::CC(conv_wb_rat(2, 1), conv_wb_rat(3, 1)),
   )
   let full_s = @symprint.to_string(full)
-  assert_true(full_s.contains("I") && full_s.contains("2") && full_s.contains("3"))
+  assert_true(
+    full_s.contains("I") && full_s.contains("2") && full_s.contains("3"),
+  )
 }
 
 ///|
@@ -44,7 +48,9 @@ test "convert wb: fe_ext_to_expr handles empty/sparse/mixed terms" {
     content="alpha_p5_m1_0_2**2",
   )
   let mix = @symprint.to_string(fe_ext_to_expr(5, [0, 1, 3, 0], mod_poly))
-  assert_true(mix.contains("alpha_p5_m1_0_2") && mix.contains("3*alpha_p5_m1_0_2**2"))
+  assert_true(
+    mix.contains("alpha_p5_m1_0_2") && mix.contains("3*alpha_p5_m1_0_2**2"),
+  )
 }
 
 ///|

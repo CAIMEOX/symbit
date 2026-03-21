@@ -1,6 +1,8 @@
 ///|
 fn ri_wb_rat(n : Int, d : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(n).div_r(@symnum.BigRational::from_int(d))
+  @symnum.BigRational::from_ints(n, d) catch {
+    _ => abort("whitebox test rational expects a nonzero denominator")
+  }
 }
 
 ///|
@@ -33,7 +35,9 @@ test "rootisolation wb: helper/error branches" {
 
   let sturm_const = dup_sturm([ri_wb_feqq(7, 1)], Domain::QQ)
   assert_eq(sturm_const.length(), 1)
-  assert_true(sturm_const[0].length() == 1 && sturm_const[0][0].to_string() == "1")
+  assert_true(
+    sturm_const[0].length() == 1 && sturm_const[0][0].to_string() == "1",
+  )
 
   assert_eq(ceil_pos_rational(ri_wb_rat(3, 2)), 2)
   assert_eq(rat_mid(ri_wb_rat(1, 3), ri_wb_rat(2, 3)).to_string(), "1/2")

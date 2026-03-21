@@ -1,9 +1,7 @@
 ///|
 test "physics.quantum.qexpr/state/operator: parity" {
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(qexpr([@symcore.int(0)]).as_expr()),
-    ),
+    quantum_eval_str(@symprint.to_string(qexpr([@symcore.int(0)]).as_expr())),
     "0",
     "QExpr str",
   )
@@ -83,16 +81,12 @@ test "physics.quantum.operator/state: default constructors parity" {
     "Bra() default parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(time_dep_ket([]).as_expr()),
-    ),
+    quantum_eval_str(@symprint.to_string(time_dep_ket([]).as_expr())),
     quantum_eval_str("TimeDepKet()"),
     "TimeDepKet() default parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(time_dep_bra([]).as_expr()),
-    ),
+    quantum_eval_str(@symprint.to_string(time_dep_bra([]).as_expr())),
     quantum_eval_str("TimeDepBra()"),
     "TimeDepBra() default parity",
   )
@@ -155,16 +149,12 @@ test "physics.quantum.operator/state: operator simplification parity" {
   )
   quantum_test_assert_string_equal(
     quantum_qapply_str("IdentityOperator(3)*Operator(A)"),
-    quantum_eval_str(
-      @symprint.to_string(qapply(@symcore.raw_mul([id3, a]))),
-    ),
+    quantum_eval_str(@symprint.to_string(qapply(@symcore.raw_mul([id3, a])))),
     "qapply left identity parity",
   )
   quantum_test_assert_string_equal(
     quantum_qapply_str("Operator(A)*IdentityOperator(3)"),
-    quantum_eval_str(
-      @symprint.to_string(qapply(@symcore.raw_mul([a, id3]))),
-    ),
+    quantum_eval_str(@symprint.to_string(qapply(@symcore.raw_mul([a, id3])))),
     "qapply right identity parity",
   )
   let represented_id = represent(id3)
@@ -189,9 +179,7 @@ test "physics.quantum.operator/state: outer product trace parity" {
   let one = @symcore.int(1)
   let op = outer_product(jz_ket(one, one).as_expr(), jz_bra(one, one).as_expr())
   quantum_test_assert_string_equal(
-    quantum_doit_str(
-      "Tr(OuterProduct(JzKet(1, 1), JzBra(1, 1)))",
-    ),
+    quantum_doit_str("Tr(OuterProduct(JzKet(1, 1), JzBra(1, 1)))"),
     quantum_eval_str(@symprint.to_string(tr_doit(tr(op)))),
     "trace outer product parity",
   )

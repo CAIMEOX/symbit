@@ -19,9 +19,7 @@ pub fn parabola(
 }
 
 ///|
-fn line_coeffs_2d(
-  line_obj : Line,
-) -> (Expr, Expr, Expr) {
+fn line_coeffs_2d(line_obj : Line) -> (Expr, Expr, Expr) {
   let p1 = line_obj.p1()
   let p2 = line_obj.p2()
   let a = geo_simplify(p1.coords_[1] - p2.coords_[1])
@@ -80,16 +78,12 @@ pub fn Parabola::axis_of_symmetry(self : Parabola) -> Line raise GeometryError {
 }
 
 ///|
-pub fn Parabola::focal_length(
-  self : Parabola,
-) -> Expr raise GeometryError {
+pub fn Parabola::focal_length(self : Parabola) -> Expr raise GeometryError {
   self.focus_.distance(self.vertex())
 }
 
 ///|
-pub fn Parabola::p_parameter(
-  self : Parabola,
-) -> Expr raise GeometryError {
+pub fn Parabola::p_parameter(self : Parabola) -> Expr raise GeometryError {
   let foot = self.directrix_.projection(self.focus_)
   let dx = geo_simplify(self.focus_.coords_[0] - foot.coords_[0])
   let dy = geo_simplify(self.focus_.coords_[1] - foot.coords_[1])

@@ -162,7 +162,9 @@ pub fn lagranges_method(
   hol_coneqs? : Array[Expr] = [],
 ) -> LagrangesMethod raise @symphysics.PhysicsError {
   validate_coordinates(coordinates~, is_dynamicsymbols=true)
-  let chosen_frame = try lagrange_default_frame(frame, bodies, forcelist) catch {
+  let chosen_frame = try
+    lagrange_default_frame(frame, bodies, forcelist)
+  catch {
     _ => None
   } noraise {
     value => Some(value)
@@ -185,9 +187,7 @@ pub fn lagranges_method(
 }
 
 ///|
-pub fn LagrangesMethod::coordinates(
-  self : LagrangesMethod,
-) -> Array[Expr] {
+pub fn LagrangesMethod::coordinates(self : LagrangesMethod) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
@@ -332,9 +332,7 @@ pub fn LagrangesMethod::solve_multipliers(
 }
 
 ///|
-pub fn LagrangesMethod::linearizer(
-  self : LagrangesMethod,
-) -> Linearizer raise {
+pub fn LagrangesMethod::linearizer(self : LagrangesMethod) -> Linearizer raise {
   let rhs = self.rhs()
   let rhs_terms = mechanics_matrix_entries(rhs).map(fn(row) { row[0] })
   let qdots = lagrange_qdots(self.coordinates_)
@@ -381,9 +379,7 @@ pub fn LagrangesMethod::linearizer(
     f_1=mechanics_matrix_column(
       qdots.map(fn(qd) { mech_simplify_expr(int(-1) * qd) }),
     ),
-    f_2=self.mass_matrix_.mul(
-      mechanics_matrix_column(qddots + self.lam_vec_),
-    ),
+    f_2=self.mass_matrix_.mul(mechanics_matrix_column(qddots + self.lam_vec_)),
     f_3=self.forcing_.neg(),
     f_c=mechanics_matrix_column(self.hol_coneqs_),
     f_v=mechanics_matrix_column(velocity_constraints),

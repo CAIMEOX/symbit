@@ -6,7 +6,9 @@ fn da_wb_fezz(n : Int) -> FieldElem {
 ///|
 fn da_wb_feqq(num : Int, den : Int) -> FieldElem {
   FieldElem::QQ(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+    @symnum.BigRational::from_ints(num, den) catch {
+      _ => abort("whitebox test rational expects a nonzero denominator")
+    },
   )
 }
 

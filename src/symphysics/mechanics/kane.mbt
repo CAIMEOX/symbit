@@ -79,6 +79,7 @@ fn kane_generalized_forces(
   out
 }
 
+///|
 pub fn kanes_method(
   frame : @symvector.ReferenceFrame,
   q_ind : Array[Expr],
@@ -210,15 +211,8 @@ pub fn KanesMethod::kanes_equations(
   self.bodies_ = bodies.copy()
   self.loads_ = loads.copy()
 
-  let lagrangian_expr = msubs_expr(
-    lagrangian(self.frame_, bodies),
-    kd_subs,
-  )
-  let generalized = kane_generalized_forces(
-    self.frame_,
-    self.u_ind_,
-    loads,
-  )
+  let lagrangian_expr = msubs_expr(lagrangian(self.frame_, bodies), kd_subs)
+  let generalized = kane_generalized_forces(self.frame_, self.u_ind_, loads)
   let udots = kane_udots(self.u_ind_)
   let dynamic_eqs : Array[Expr] = []
   for i in 0..<self.u_ind_.length() {
@@ -254,8 +248,7 @@ pub fn KanesMethod::kanes_equations(
     self.mass_matrix_,
   )
   self.full_mass_matrix_ = @symphysics.explicit_matrix_vertical_concat(
-    top,
-    bottom,
+    top, bottom,
   )
   self.full_forcing_ = mechanics_matrix_column(
     self.u_ind_ +

@@ -343,7 +343,7 @@ fn nullspace_vector(
     let pivot_val = r[row][col]
     for j in col..<cols {
       let v = r[row][j]
-      r[row].set(j, v.div_r(pivot_val))
+      r[row].set(j, poly_rational_div(v, pivot_val))
     }
     for i in 0..<rows {
       if i == row {
@@ -423,10 +423,7 @@ fn infer_gens_expr(expr : Expr) -> Array[String] {
 }
 
 ///|
-fn collect_symbols_expr_pf(
-  expr : Expr,
-  seen : Map[String, Bool],
-) -> Unit {
+fn collect_symbols_expr_pf(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
     Expr::Add(args) | Expr::Mul(args) =>
@@ -577,10 +574,7 @@ fn symmetrize_poly(
 }
 
 ///|
-fn horner_poly(
-  poly : Poly,
-  gens : Array[String],
-) -> Expr raise PolyError {
+fn horner_poly(poly : Poly, gens : Array[String]) -> Expr raise PolyError {
   if poly.is_zero() {
     return @symcore.number(@symnum.BigRational::zero())
   }
@@ -699,10 +693,7 @@ fn build_sym_expr_terms(
 }
 
 ///|
-fn field_elem_to_expr(
-  fe : FieldElem,
-  domain : Domain,
-) -> Expr raise PolyError {
+fn field_elem_to_expr(fe : FieldElem, domain : Domain) -> Expr raise PolyError {
   let coeffs : Map[Monomial, FieldElem] = Map::new()
   let mono = monomial_one(1)
   add_term(coeffs, mono, fe, domain)

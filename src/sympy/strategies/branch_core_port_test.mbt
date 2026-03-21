@@ -38,21 +38,9 @@ fn br_one_to_n(n : Int) -> Array[Int] {
 ///|
 test "branch core exhaust" {
   let brl = @strategies_branch.exhaust(br_branch5)
-  assert_set_int_eq(
-    brl(3),
-    branch_exhaust_branch5(3),
-    "exhaust 3",
-  )
-  assert_set_int_eq(
-    brl(7),
-    branch_exhaust_branch5(7),
-    "exhaust 7",
-  )
-  assert_set_int_eq(
-    brl(5),
-    branch_exhaust_branch5(5),
-    "exhaust 5",
-  )
+  assert_set_int_eq(brl(3), branch_exhaust_branch5(3), "exhaust 3")
+  assert_set_int_eq(brl(7), branch_exhaust_branch5(7), "exhaust 7")
+  assert_set_int_eq(brl(5), branch_exhaust_branch5(5), "exhaust 5")
 }
 
 ///|
@@ -69,62 +57,30 @@ test "branch core debug" {
 ///|
 test "branch core multiplex" {
   let brl = @strategies_branch.multiplex([br_posdec, br_branch5])
-  assert_set_int_eq(
-    brl(3),
-    branch_multiplex_posdec_branch5(3),
-    "multiplex 3",
-  )
-  assert_set_int_eq(
-    brl(7),
-    branch_multiplex_posdec_branch5(7),
-    "multiplex 7",
-  )
-  assert_set_int_eq(
-    brl(5),
-    branch_multiplex_posdec_branch5(5),
-    "multiplex 5",
-  )
+  assert_set_int_eq(brl(3), branch_multiplex_posdec_branch5(3), "multiplex 3")
+  assert_set_int_eq(brl(7), branch_multiplex_posdec_branch5(7), "multiplex 7")
+  assert_set_int_eq(brl(5), branch_multiplex_posdec_branch5(5), "multiplex 5")
 }
 
 ///|
 test "branch core condition" {
   let brl = @strategies_branch.condition(x => x % 2 == 0, br_branch5)
-  assert_set_int_eq(
-    brl(4),
-    branch_condition_even_branch5(4),
-    "condition 4",
-  )
-  assert_set_int_eq(
-    brl(5),
-    branch_condition_even_branch5(5),
-    "condition 5",
-  )
+  assert_set_int_eq(brl(4), branch_condition_even_branch5(4), "condition 4")
+  assert_set_int_eq(brl(5), branch_condition_even_branch5(5), "condition 5")
 }
 
 ///|
 test "branch core sfilter" {
   let brl = @strategies_branch.sfilter(x => x % 2 == 0, br_one_to_n)
-  assert_set_int_eq(
-    brl(10),
-    branch_sfilter_even_one_to_n(10),
-    "sfilter",
-  )
+  assert_set_int_eq(brl(10), branch_sfilter_even_one_to_n(10), "sfilter")
 }
 
 ///|
 test "branch core notempty" {
   let ident_if_even = (x : Int) => if x % 2 == 0 { [x] } else { [] }
   let brl = @strategies_branch.notempty(ident_if_even)
-  assert_set_int_eq(
-    brl(4),
-    branch_notempty_even_only(4),
-    "notempty even",
-  )
-  assert_set_int_eq(
-    brl(5),
-    branch_notempty_even_only(5),
-    "notempty odd",
-  )
+  assert_set_int_eq(brl(4), branch_notempty_even_only(4), "notempty even")
+  assert_set_int_eq(brl(5), branch_notempty_even_only(5), "notempty odd")
 }
 
 ///|
@@ -175,25 +131,13 @@ test "branch core onaction" {
 ///|
 test "branch core yieldify" {
   let yinc = @strategies_branch.yieldify(x => x + 1)
-  assert_set_int_eq(
-    yinc(3),
-    branch_yieldify_inc(3),
-    "yieldify",
-  )
+  assert_set_int_eq(yinc(3), branch_yieldify_inc(3), "yieldify")
 }
 
 ///|
 test "branch core do_one" {
   let brl = @strategies_branch.do_one([br_inc])
-  assert_set_int_eq(
-    brl(3),
-    branch_do_one_inc_posdec(3),
-    "do_one inc",
-  )
+  assert_set_int_eq(brl(3), branch_do_one_inc_posdec(3), "do_one inc")
   let brl2 = @strategies_branch.do_one([br_inc, br_posdec])
-  assert_set_int_eq(
-    brl2(3),
-    branch_do_one_inc_posdec(3),
-    "do_one inc posdec",
-  )
+  assert_set_int_eq(brl2(3), branch_do_one_inc_posdec(3), "do_one inc posdec")
 }

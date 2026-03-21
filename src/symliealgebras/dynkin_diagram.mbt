@@ -3,7 +3,7 @@
 
 ///|
 /// Render a Dynkin diagram from a Cartan type string.
-pub fn dynkin_diagram(ct : CartanType) -> String raise {
+pub fn dynkin_diagram(ct : CartanType) -> String {
   ct.dynkin_diagram()
 }
 

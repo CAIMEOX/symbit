@@ -94,23 +94,9 @@ test "ntheory factorint classification parity" {
   let df15 = is_deficient(bi_f(15))
   assert_eq(if df15 { "True" } else { "False" }, is_deficient_str(15))
   let am = is_amicable(bi_f(220), bi_f(284))
-  assert_eq(
-    if am {
-      "True"
-    } else {
-      "False"
-    },
-    is_amicable_str(220, 284),
-  )
+  assert_eq(if am { "True" } else { "False" }, is_amicable_str(220, 284))
   let carm = is_carmichael(bi_f(561))
-  assert_eq(
-    if carm {
-      "True"
-    } else {
-      "False"
-    },
-    is_carmichael_str(561),
-  )
+  assert_eq(if carm { "True" } else { "False" }, is_carmichael_str(561))
 }
 
 ///|

@@ -178,12 +178,7 @@ test "quaternion: axis-angle parity" {
   }
   assert_quat_components(q, oracle)
   let axis_angle = q.to_axis_angle()
-  let oracle_axis = quat_to_axis_angle(
-    q.a(),
-    q.b(),
-    q.c(),
-    q.d(),
-  )
+  let oracle_axis = quat_to_axis_angle(q.a(), q.b(), q.c(), q.d())
   assert_eq(oracle_axis.length(), 4)
   assert_true(expr_equal_expr(axis_angle.0.0, oracle_axis[0]))
   assert_true(expr_equal_expr(axis_angle.0.1, oracle_axis[1]))
@@ -199,12 +194,7 @@ test "quaternion: rotation matrix parity" {
     angle,
   )
   let mat = q.to_rotation_matrix()
-  let oracle = quat_to_rotation_matrix(
-    q.a(),
-    q.b(),
-    q.c(),
-    q.d(),
-  )
+  let oracle = quat_to_rotation_matrix(q.a(), q.b(), q.c(), q.d())
   let ours = matrix_flat_str(mat)
   assert_eq(ours.length(), oracle.length())
   for i in 0..<ours.length() {

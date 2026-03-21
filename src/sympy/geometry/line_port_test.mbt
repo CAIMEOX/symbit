@@ -8,10 +8,7 @@ test "geometry.line parity repr and unique intersection" {
     point2d(@symcore.int(0), @symcore.int(2)),
     point2d(@symcore.int(2), @symcore.int(0)),
   )
-  assert_eq(
-    l1.repr(),
-    geometry_eval_repr("Line(Point2D(0, 0), Point2D(2, 2))"),
-  )
+  assert_eq(l1.repr(), geometry_eval_repr("Line(Point2D(0, 0), Point2D(2, 2))"))
   assert_eq(
     intersection(geometry_line(l1), geometry_line(l2))[0].repr(),
     geometry_eval_repr(
@@ -28,15 +25,15 @@ test "geometry.line parity transforms and distance" {
   )
   assert_eq(
     seg.translate([@symcore.int(0), @symcore.int(1)]).repr(),
-    geometry_eval_repr(
-      "Segment(Point2D(0,0), Point2D(4,0)).translate(0, 1)",
-    ),
+    geometry_eval_repr("Segment(Point2D(0,0), Point2D(4,0)).translate(0, 1)"),
   )
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(seg.distance(point2d(@symcore.int(1), @symcore.int(2)))),
-        "Segment(Point2D(0,0), Point2D(4,0)).distance(Point2D(1,2))",
-      )
+      @symprint.to_string(
+        seg.distance(point2d(@symcore.int(1), @symcore.int(2))),
+      ),
+      "Segment(Point2D(0,0), Point2D(4,0)).distance(Point2D(1,2))",
+    ),
   )
 }
 
@@ -48,9 +45,7 @@ test "geometry.line parity plotting and bisector helpers" {
   )
   assert_eq(
     "[" + l.plot_interval().map(geometry_py_expr_text).join(", ") + "]",
-    geometry_eval_str(
-      "Line(Point2D(0, 0), Point2D(5, 3)).plot_interval()",
-    ),
+    geometry_eval_str("Line(Point2D(0, 0), Point2D(5, 3)).plot_interval()"),
   )
   let r = ray(
     point2d(@symcore.int(0), @symcore.int(0)),
@@ -58,15 +53,11 @@ test "geometry.line parity plotting and bisector helpers" {
   )
   assert_eq(
     "[" + r.plot_interval().map(geometry_py_expr_text).join(", ") + "]",
-    geometry_eval_str(
-      "Ray(Point2D(0, 0), Point2D(4, 1)).plot_interval()",
-    ),
+    geometry_eval_str("Ray(Point2D(0, 0), Point2D(4, 1)).plot_interval()"),
   )
   assert_eq(
     r.source().repr(),
-    geometry_eval_repr(
-      "Ray(Point2D(0, 0), Point2D(4, 1)).source",
-    ),
+    geometry_eval_repr("Ray(Point2D(0, 0), Point2D(4, 1)).source"),
   )
   let seg = segment(
     point2d(@symcore.int(0), @symcore.int(0)),
@@ -74,9 +65,7 @@ test "geometry.line parity plotting and bisector helpers" {
   )
   assert_eq(
     "[" + seg.plot_interval().map(geometry_py_expr_text).join(", ") + "]",
-    geometry_eval_str(
-      "Segment(Point2D(0, 0), Point2D(6, 6)).plot_interval()",
-    ),
+    geometry_eval_str("Segment(Point2D(0, 0), Point2D(6, 6)).plot_interval()"),
   )
   assert_eq(
     seg.perpendicular_bisector().repr(),

@@ -23,7 +23,8 @@ fn normalize_mixture(
   let out : Array[(@symnum.BigRational, RandomVar)] = Array::new()
   for pair in kept {
     let (w, rv) = pair
-    out.push((w.div_r(total), rv))
+    let weight = w.div_r(total) catch { _ => return kept }
+    out.push((weight, rv))
   }
   out
 }

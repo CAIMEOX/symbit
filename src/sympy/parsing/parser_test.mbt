@@ -100,10 +100,10 @@ test "symparse evaluate false preserves flat raw operators" {
 ///|
 test "symparse lexer exposes typed tokens" {
   let tokens = lex("f(x, 2**y)")
-  json_inspect(
-    tokens.map(tok => token_kind_name(tok.kind)),
-    content=(["identifier","`(`","identifier","`,`","integer","`**`","identifier","`)`","end of input"]),
-  )
+  json_inspect(tokens.map(tok => token_kind_name(tok.kind)), content=[
+    "identifier", "`(`", "identifier", "`,`", "integer", "`**`", "identifier", "`)`",
+    "end of input",
+  ])
 }
 
 ///|

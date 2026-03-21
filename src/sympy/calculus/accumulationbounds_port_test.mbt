@@ -8,9 +8,7 @@ fn assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? sympy_normalize(
     @symprint.to_string(ours),
   )
-  let oracle_norm : Result[String, Error] = try? sympy_normalize(
-    oracle_str,
-  )
+  let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
   match (ours_norm, oracle_norm) {
     (Ok(a), Ok(b)) => {
       guard a == b else {
@@ -57,20 +55,10 @@ test "accum_bounds: add/sub/neg" {
   let a = accum_bounds(expr_int(1), expr_int(2))
   let b = accum_bounds(expr_int(2), expr_int(3))
   let add = calc_accum_add(a, b)
-  let add_oracle = accum_add(
-    expr_int(1),
-    expr_int(2),
-    expr_int(2),
-    expr_int(3),
-  )
+  let add_oracle = accum_add(expr_int(1), expr_int(2), expr_int(2), expr_int(3))
   assert_expr_equal(add, add_oracle)
   let sub = calc_accum_sub(b, a)
-  let sub_oracle = accum_sub(
-    expr_int(2),
-    expr_int(3),
-    expr_int(1),
-    expr_int(2),
-  )
+  let sub_oracle = accum_sub(expr_int(2), expr_int(3), expr_int(1), expr_int(2))
   assert_expr_equal(sub, sub_oracle)
   let neg = accum_neg(a)
   assert_expr_equal(neg, "AccumBounds(-2, -1)")
@@ -81,27 +69,13 @@ test "accum_bounds: mul/div/pow/abs" {
   let a = accum_bounds(expr_int(1), expr_int(2))
   let b = accum_bounds(expr_int(2), expr_int(3))
   let mul = calc_accum_mul(a, b)
-  let mul_oracle = accum_mul(
-    expr_int(1),
-    expr_int(2),
-    expr_int(2),
-    expr_int(3),
-  )
+  let mul_oracle = accum_mul(expr_int(1), expr_int(2), expr_int(2), expr_int(3))
   assert_expr_equal(mul, mul_oracle)
   let div = calc_accum_div(b, a)
-  let div_oracle = accum_div(
-    expr_int(2),
-    expr_int(3),
-    expr_int(1),
-    expr_int(2),
-  )
+  let div_oracle = accum_div(expr_int(2), expr_int(3), expr_int(1), expr_int(2))
   assert_expr_equal(div, div_oracle)
   let pow = calc_accum_pow(a, expr_int(2))
-  let pow_oracle = accum_pow(
-    expr_int(1),
-    expr_int(2),
-    expr_int(2),
-  )
+  let pow_oracle = accum_pow(expr_int(1), expr_int(2), expr_int(2))
   assert_expr_equal(pow, pow_oracle)
   let abs = calc_accum_abs(accum_bounds(expr_int(-2), expr_int(1)))
   let abs_oracle_res : Result[String, Error] = try? accum_abs(

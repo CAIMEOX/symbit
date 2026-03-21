@@ -99,11 +99,6 @@ fn rat_one() -> BigRational {
 }
 
 ///|
-fn rat_half() -> BigRational {
-  BigRational::one().div_r(BigRational::from_int(2))
-}
-
-///|
 fn rat_add(a : BigRational, b : BigRational) -> BigRational {
   a.add_r(b)
 }
@@ -115,11 +110,8 @@ fn rat_mul(a : BigRational, b : BigRational) -> BigRational {
 
 ///|
 fn rat_div(a : BigRational, b : BigRational) -> BigRational? {
-  if b.is_zero() {
-    None
-  } else {
-    Some(a.div_r(b))
-  }
+  guard !b.is_zero() else { None }
+  (try? a.div_r(b) : Result[BigRational, @symnum.RationalError]).to_option()
 }
 
 ///|
@@ -253,7 +245,13 @@ pub fn accum_delta(expr : Expr) -> Expr? {
 pub fn accum_mid(expr : Expr) -> Expr? {
   match accum_unpack(expr) {
     Some((min, max)) => {
-      let half = @symcore.number(rat_half())
+      let half = @symcore.rational_from_ints(1, 2) catch {
+        _ =>
+          @symcore.mul([
+            @symcore.int(1),
+            @symcore.pow(@symcore.int(2), @symcore.int(-1)),
+          ])
+      }
       Some(@symcore.mul([half, @symcore.add([min, max])]))
     }
     None => None
@@ -491,7 +489,10 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
             }
             let min_pow = rat_min(lo_pow, hi_pow)
             let max_pow = rat_max(lo_pow, hi_pow)
-            return accum_bounds_ordered(expr_finite(min_pow), expr_finite(max_pow))
+            return accum_bounds_ordered(
+              expr_finite(min_pow),
+              expr_finite(max_pow),
+            )
           } else {
             let lo_pow = match pow_rational(lo, n_int) {
               Some(v) => v
@@ -503,7 +504,10 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
             }
             let min_pow = rat_min(lo_pow, hi_pow)
             let max_pow = rat_max(lo_pow, hi_pow)
-            return accum_bounds_ordered(expr_finite(min_pow), expr_finite(max_pow))
+            return accum_bounds_ordered(
+              expr_finite(min_pow),
+              expr_finite(max_pow),
+            )
           }
         } else {
           if interval_contains_zero(lo, hi) {
@@ -519,7 +523,10 @@ pub fn accum_pow(base : Expr, exp : Expr) -> Expr {
           }
           let min_pow = rat_min(lo_pow, hi_pow)
           let max_pow = rat_max(lo_pow, hi_pow)
-          return accum_bounds_ordered(expr_finite(min_pow), expr_finite(max_pow))
+          return accum_bounds_ordered(
+            expr_finite(min_pow),
+            expr_finite(max_pow),
+          )
         }
       }
       @symcore.pow(base, exp)
@@ -547,7 +554,10 @@ pub fn accum_abs(expr : Expr) -> Expr {
           return expr
         }
         let max_abs = rat_max(rat_abs(lo), rat_abs(hi))
-        return accum_bounds_ordered(expr_finite(rat_zero()), expr_finite(max_abs))
+        return accum_bounds_ordered(
+          expr_finite(rat_zero()),
+          expr_finite(max_abs),
+        )
       }
       @symcore.function("Abs", [expr])
     }

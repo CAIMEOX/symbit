@@ -32,9 +32,14 @@ fn expr_rational(num : Int, den : Int) -> Expr {
   if den == 1 {
     return expr_int(num)
   }
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  match
+    (
+      try? @symcore.rational_from_ints(num, den) :
+      Result[Expr, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) =>
+      @symcore.mul([expr_int(num), @symcore.pow(expr_int(den), expr_neg_one())])
+  }
 }
 
 ///|

@@ -9,10 +9,7 @@ pub struct FermionOpExpr {
 } derive(Eq)
 
 ///|
-pub fn fermion_op(
-  name : Expr,
-  annihilation? : Bool = true,
-) -> FermionOpExpr {
+pub fn fermion_op(name : Expr, annihilation? : Bool = true) -> FermionOpExpr {
   FermionOpExpr::{ name, is_annihilation: annihilation }
 }
 
@@ -43,9 +40,7 @@ pub fn FermionOpExpr::dagger(self : FermionOpExpr) -> FermionOpExpr {
 }
 
 ///|
-pub fn fermion_fock_ket(
-  n : Expr,
-) -> Expr raise @symphysics.PhysicsError {
+pub fn fermion_fock_ket(n : Expr) -> Expr raise @symphysics.PhysicsError {
   guard n == int(0) || n == int(1) else {
     raise @symphysics.PhysicsError::ValueError(
       "FermionFockKet expects occupation 0 or 1",
@@ -55,9 +50,7 @@ pub fn fermion_fock_ket(
 }
 
 ///|
-pub fn fermion_fock_bra(
-  n : Expr,
-) -> Expr raise @symphysics.PhysicsError {
+pub fn fermion_fock_bra(n : Expr) -> Expr raise @symphysics.PhysicsError {
   guard n == int(0) || n == int(1) else {
     raise @symphysics.PhysicsError::ValueError(
       "FermionFockBra expects occupation 0 or 1",
@@ -67,14 +60,9 @@ pub fn fermion_fock_bra(
 }
 
 ///|
-pub fn fermion_apply_operator_to_ket(
-  op_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn fermion_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match (op_expr, ket_expr) {
-    (
-      Expr::Function("FermionOp", oargs),
-      Expr::Function("FermionFockKet", kargs),
+    (Expr::Function("FermionOp", oargs), Expr::Function("FermionFockKet", kargs)
     ) if oargs.length() == 2 && kargs.length() == 1 => {
       let is_ann = oargs[1] != int(0)
       let n = kargs[0]

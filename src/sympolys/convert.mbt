@@ -1,9 +1,6 @@
 ///|
 /// Convert a polynomial to an expression, sorting terms by `order`.
-pub fn Poly::to_expr_with_order(
-  self : Poly,
-  order : TermOrder,
-) -> Expr {
+pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
   let terms = self.coeffs.to_array()
   terms.sort_by((lhs, rhs) => compare_monomial_order(lhs.0, rhs.0, order))
   let expr_terms : Array[Expr] = Array::new()
@@ -124,11 +121,7 @@ fn fe_to_expr_const(c : FieldElem) -> Expr {
 }
 
 ///|
-fn fe_ext_to_expr(
-  p : Int,
-  coeffs : Array[Int],
-  mod_poly : Array[Int],
-) -> Expr {
+fn fe_ext_to_expr(p : Int, coeffs : Array[Int], mod_poly : Array[Int]) -> Expr {
   let alpha = symbol(fe_ext_symbol_name(p, mod_poly))
   let terms : Array[Expr] = Array::new()
   for i in 0..<coeffs.length() {

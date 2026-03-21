@@ -9,10 +9,7 @@ pub struct BosonOpExpr {
 } derive(Eq)
 
 ///|
-pub fn boson_op(
-  name : Expr,
-  annihilation? : Bool = true,
-) -> BosonOpExpr {
+pub fn boson_op(name : Expr, annihilation? : Bool = true) -> BosonOpExpr {
   BosonOpExpr::{ name, is_annihilation: annihilation }
 }
 
@@ -62,8 +59,7 @@ fn boson_secondquant_tuple_state(
 ) -> Array[Expr]? {
   let expected = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
   match expr {
-    Expr::Function(name, args) if name == expected &&
-      args.length() == 1 =>
+    Expr::Function(name, args) if name == expected && args.length() == 1 =>
       match args[0] {
         Expr::Function("Tuple", items) => Some(items)
         _ => None
@@ -102,10 +98,7 @@ pub fn boson_coherent_bra(alpha : Expr) -> Expr {
 }
 
 ///|
-pub fn boson_apply_operator_to_ket(
-  op_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn boson_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match
     (
       boson_secondquant_operator(op_expr),
@@ -145,17 +138,13 @@ pub fn boson_apply_operator_to_ket(
     _ => ()
   }
   match (op_expr, ket_expr) {
-    (
-      Expr::Function("BosonOp", oargs),
-      Expr::Function("BosonFockKet", kargs),
-    ) if oargs.length() == 2 && kargs.length() == 1 => {
+    (Expr::Function("BosonOp", oargs), Expr::Function("BosonFockKet", kargs)) if oargs.length() ==
+      2 &&
+      kargs.length() == 1 => {
       let is_ann = oargs[1] != int(0)
       let n = kargs[0]
       if is_ann {
-        Some(
-          @symcore.raw_function("sqrt", [n]) *
-          boson_fock_ket(n - int(1)),
-        )
+        Some(@symcore.raw_function("sqrt", [n]) * boson_fock_ket(n - int(1)))
       } else {
         Some(
           @symcore.raw_function("sqrt", [n + int(1)]) *
@@ -163,9 +152,7 @@ pub fn boson_apply_operator_to_ket(
         )
       }
     }
-    (
-      Expr::Function("BosonOp", oargs),
-      Expr::Function("BosonCoherentKet", kargs),
+    (Expr::Function("BosonOp", oargs), Expr::Function("BosonCoherentKet", kargs)
     ) if oargs.length() == 2 && kargs.length() == 1 => {
       let is_ann = oargs[1] != int(0)
       if is_ann {
@@ -179,14 +166,9 @@ pub fn boson_apply_operator_to_ket(
 }
 
 ///|
-pub fn boson_apply_operator_to_bra(
-  bra_expr : Expr,
-  op_expr : Expr,
-) -> Expr? {
+pub fn boson_apply_operator_to_bra(bra_expr : Expr, op_expr : Expr) -> Expr? {
   match (bra_expr, op_expr) {
-    (
-      Expr::Function("BosonCoherentBra", bargs),
-      Expr::Function("BosonOp", oargs),
+    (Expr::Function("BosonCoherentBra", bargs), Expr::Function("BosonOp", oargs)
     ) if bargs.length() == 1 && oargs.length() == 2 => {
       let is_ann = oargs[1] != int(0)
       if !is_ann {

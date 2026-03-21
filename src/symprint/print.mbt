@@ -5,8 +5,7 @@ pub fn debug_repr(expr : Expr) -> String {
     Expr::Symbol(name) => "sym:\{name}"
     Expr::Add(args) => wrap_variadic("+", args)
     Expr::Mul(args) => wrap_variadic("*", args)
-    Expr::Pow(base, exp) =>
-      "(^ \{debug_repr(base)} \{debug_repr(exp)})"
+    Expr::Pow(base, exp) => "(^ \{debug_repr(base)} \{debug_repr(exp)})"
     Expr::Function(name, args) => {
       let rendered_args = args.map(debug_repr)
       let suffix = if rendered_args.is_empty() {
@@ -40,10 +39,8 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
   let body = match expr {
     Expr::Number(n) => n.to_string()
     Expr::Symbol(name) => name
-    Expr::Add(args) =>
-      args.map(child => format_expr(child, prec)).join(" + ")
-    Expr::Mul(args) =>
-      args.map(child => format_expr(child, prec)).join("*")
+    Expr::Add(args) => args.map(child => format_expr(child, prec)).join(" + ")
+    Expr::Mul(args) => args.map(child => format_expr(child, prec)).join("*")
     Expr::Pow(base, exp) => {
       let base_str = format_expr(base, prec)
       let exp_str = format_expr(exp, prec)

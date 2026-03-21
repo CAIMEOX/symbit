@@ -72,12 +72,12 @@ fn pow2(n : Int) -> @symnum.BigRational {
 /// Return the finite Weyl group order when known.
 pub fn WeylGroup::group_order(self : WeylGroup) -> @symnum.BigRational {
   let n = self.cartan_type.rank()
-  match self.cartan_type.series() {
-    "A" => factorial(n + 1)
-    "B" => factorial(n) * pow2(n)
-    "C" => factorial(n) * pow2(n)
-    "D" => factorial(n) * pow2(n - 1)
-    "E" =>
+  match self.cartan_type.series_kind() {
+    CartanSeries::A => factorial(n + 1)
+    CartanSeries::B => factorial(n) * pow2(n)
+    CartanSeries::C => factorial(n) * pow2(n)
+    CartanSeries::D => factorial(n) * pow2(n - 1)
+    CartanSeries::E =>
       if n == 6 {
         br_int(51840)
       } else if n == 7 {
@@ -85,9 +85,8 @@ pub fn WeylGroup::group_order(self : WeylGroup) -> @symnum.BigRational {
       } else {
         br_int(696729600)
       }
-    "F" => br_int(1152)
-    "G" => br_int(12)
-    _ => panic()
+    CartanSeries::F => br_int(1152)
+    CartanSeries::G => br_int(12)
   }
 }
 
@@ -95,25 +94,25 @@ pub fn WeylGroup::group_order(self : WeylGroup) -> @symnum.BigRational {
 /// Return conventional group-name text.
 pub fn WeylGroup::group_name(self : WeylGroup) -> String {
   let n = self.cartan_type.rank()
-  match self.cartan_type.series() {
-    "A" => {
+  match self.cartan_type.series_kind() {
+    CartanSeries::A => {
       let dim = n + 1
       let dim_str = dim.to_string()
       "S\{dim_str}: the symmetric group acting on \{dim_str} elements."
     }
-    "B" => {
+    CartanSeries::B => {
       let dim = 2 * n
       let dim_str = dim.to_string()
       "The hyperoctahedral group acting on \{dim_str} elements."
     }
-    "C" => {
+    CartanSeries::C => {
       let dim = 2 * n
       let dim_str = dim.to_string()
       "The hyperoctahedral group acting on \{dim_str} elements."
     }
-    "D" =>
+    CartanSeries::D =>
       "The symmetry group of the \{n.to_string()}-dimensional demihypercube."
-    "E" =>
+    CartanSeries::E =>
       if n == 6 {
         "The symmetry group of the 6-polytope."
       } else if n == 7 {
@@ -121,10 +120,9 @@ pub fn WeylGroup::group_name(self : WeylGroup) -> String {
       } else {
         "The symmetry group of the 8-polytope."
       }
-    "F" => "The symmetry group of the 24-cell, or icositetrachoron."
-    "G" =>
+    CartanSeries::F => "The symmetry group of the 24-cell, or icositetrachoron."
+    CartanSeries::G =>
       "D6, the dihedral group of order 12, and symmetry group of the hexagon."
-    _ => panic()
   }
 }
 
@@ -158,14 +156,14 @@ fn delete_doubles(reflections : Array[Int]) -> Array[Int] {
 /// Compute the order of a group element expression.
 pub fn WeylGroup::element_order(self : WeylGroup, weylelt : String) -> Int {
   let n = self.cartan_type.rank()
-  match self.cartan_type.series() {
-    "A" => matrix_order(self, weylelt, n + 1)
-    "D" => matrix_order(self, weylelt, n)
-    "E" => matrix_order(self, weylelt, 8)
-    "F" => matrix_order(self, weylelt, 4)
-    "B" => matrix_order(self, weylelt, n)
-    "C" => matrix_order(self, weylelt, n)
-    "G" => {
+  match self.cartan_type.series_kind() {
+    CartanSeries::A => matrix_order(self, weylelt, n + 1)
+    CartanSeries::D => matrix_order(self, weylelt, n)
+    CartanSeries::E => matrix_order(self, weylelt, 8)
+    CartanSeries::F => matrix_order(self, weylelt, 4)
+    CartanSeries::B => matrix_order(self, weylelt, n)
+    CartanSeries::C => matrix_order(self, weylelt, n)
+    CartanSeries::G => {
       let reflections = parse_reflections(weylelt)
       let mut m = delete_doubles(reflections)
       while vec_equal_int_list(delete_doubles(m), m) == false {
@@ -183,7 +181,6 @@ pub fn WeylGroup::element_order(self : WeylGroup, weylelt : String) -> Int {
         lcm / half_len
       }
     }
-    _ => panic()
   }
 }
 
@@ -217,8 +214,8 @@ fn igcd(a : Int, b : Int) -> Int {
 pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
   let reflections = parse_reflections(weylelt)
   let n = self.cartan_type.rank()
-  match self.cartan_type.series() {
-    "A" => {
+  match self.cartan_type.series_kind() {
+    CartanSeries::A => {
       let mut matrixform = matrix_eye(n + 1)
       for a in reflections {
         let mat = matrix_eye(n + 1)
@@ -230,7 +227,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "D" => {
+    CartanSeries::D => {
       let mut matrixform = matrix_eye(n)
       for a in reflections {
         let mat = matrix_eye(n)
@@ -249,7 +246,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "G" => {
+    CartanSeries::G => {
       let mut matrixform = matrix_eye(3)
       let two_thirds = br_rat(2, 3)
       let neg_third = br_rat(-1, 3)
@@ -272,7 +269,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "F" => {
+    CartanSeries::F => {
       let mut matrixform = matrix_eye(4)
       let half = br_rat(1, 2)
       let neg_half = br_rat(-1, 2)
@@ -310,7 +307,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "E" => {
+    CartanSeries::E => {
       let mut matrixform = matrix_eye(8)
       let q1 = br_rat(1, 4)
       let q3 = br_rat(3, 4)
@@ -347,7 +344,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "B" => {
+    CartanSeries::B => {
       let mut matrixform = matrix_eye(n)
       for a in reflections {
         let mat = matrix_eye(n)
@@ -363,7 +360,7 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    "C" => {
+    CartanSeries::C => {
       let mut matrixform = matrix_eye(n)
       for a in reflections {
         let mat = matrix_eye(n)
@@ -379,19 +376,18 @@ pub fn WeylGroup::matrix_form(self : WeylGroup, weylelt : String) -> Matrix {
       }
       matrixform
     }
-    _ => panic()
   }
 }
 
 ///|
 /// Return the Coxeter diagram for this Weyl group.
-pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String raise {
+pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String {
   let n = self.cartan_type.rank()
-  match self.cartan_type.series() {
-    "A" => self.cartan_type.dynkin_diagram()
-    "D" => self.cartan_type.dynkin_diagram()
-    "E" => self.cartan_type.dynkin_diagram()
-    "B" => {
+  match self.cartan_type.series_kind() {
+    CartanSeries::A => self.cartan_type.dynkin_diagram()
+    CartanSeries::D => self.cartan_type.dynkin_diagram()
+    CartanSeries::E => self.cartan_type.dynkin_diagram()
+    CartanSeries::B => {
       let zeros : Array[String] = Array::new()
       for _ in 1..<n {
         zeros.push("0")
@@ -405,7 +401,7 @@ pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String raise {
       let bottom = nums.join("   ")
       "\{top}\n\{bottom}"
     }
-    "C" => {
+    CartanSeries::C => {
       let zeros : Array[String] = Array::new()
       for _ in 1..<n {
         zeros.push("0")
@@ -419,7 +415,7 @@ pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String raise {
       let bottom = nums.join("   ")
       "\{top}\n\{bottom}"
     }
-    "F" => {
+    CartanSeries::F => {
       let mut diag = "0---0===0---0\n"
       let nums : Array[String] = Array::new()
       for i in 1..<=4 {
@@ -428,7 +424,6 @@ pub fn WeylGroup::coxeter_diagram(self : WeylGroup) -> String raise {
       diag = diag + nums.join("   ")
       diag
     }
-    "G" => "0≡≡≡0\n1   2"
-    _ => panic()
+    CartanSeries::G => "0≡≡≡0\n1   2"
   }
 }

@@ -43,9 +43,7 @@ test "physics.quantum.qft: represent and dagger parity" {
     "rk represent parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(dagger(qft(0, 2).as_expr())),
-    ),
+    quantum_eval_str(@symprint.to_string(dagger(qft(0, 2).as_expr()))),
     quantum_eval_str("IQFT(0, 2)"),
     "dagger qft parity",
   )

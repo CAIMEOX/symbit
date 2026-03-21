@@ -11,12 +11,7 @@ test "division: univariate div parity over ZZ (exact)" {
   let q = b.from_expr(x - @symcore.int(1))
   let (quo, rem) = p.divmod_univar(q)
   let ours = div_pair_to_string(quo, rem).trim().to_string()
-  let oracle = div(
-      p.to_expr(),
-      q.to_expr(),
-      gens=["x"],
-      domain="ZZ",
-    )
+  let oracle = div(p.to_expr(), q.to_expr(), gens=["x"], domain="ZZ")
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -30,12 +25,7 @@ test "division: univariate div parity over ZZ (remainder)" {
   let q = b.from_expr(x + @symcore.int(1))
   let (quo, rem) = p.divmod_univar(q)
   let ours = div_pair_to_string(quo, rem).trim().to_string()
-  let oracle = div(
-      p.to_expr(),
-      q.to_expr(),
-      gens=["x"],
-      domain="ZZ",
-    )
+  let oracle = div(p.to_expr(), q.to_expr(), gens=["x"], domain="ZZ")
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -51,12 +41,7 @@ test "division: univariate div parity over QQ" {
   let q = b.from_expr(x + @symcore.int(1))
   let (quo, rem) = p.divmod_univar(q)
   let ours = div_pair_to_string(quo, rem).trim().to_string()
-  let oracle = div(
-      p.to_expr(),
-      q.to_expr(),
-      gens=["x"],
-      domain="QQ",
-    )
+  let oracle = div(p.to_expr(), q.to_expr(), gens=["x"], domain="QQ")
     .trim()
     .to_string()
   assert_eq(ours, oracle)

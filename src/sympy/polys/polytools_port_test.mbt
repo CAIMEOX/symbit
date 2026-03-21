@@ -51,9 +51,7 @@ test "divmod_univar gives quotient and remainder in ZZ" {
 test "sqf_part removes repeated factors" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
   let x = symbol("x")
-  let poly = builder.from_expr(
-    ((x - int(1)) ^ int(2)) * (x + int(2)),
-  )
+  let poly = builder.from_expr(((x - int(1)) ^ int(2)) * (x + int(2)))
   let sqf = poly.sqf_part()
   inspect(sqf.to_string(), content="x**2 + x + -2")
 }
@@ -86,9 +84,7 @@ test "polytools: gcd/div/resultant parity with SymPy" {
   assert_eq(ours_div, oracle_div)
   let res = p.resultant(q, 0)
   let ours_res = sympy_normalize(res.to_string()).trim().to_string()
-  let oracle_res = resultant(p.to_expr(), q.to_expr(), x="x")
-    .trim()
-    .to_string()
+  let oracle_res = resultant(p.to_expr(), q.to_expr(), x="x").trim().to_string()
   assert_eq(ours_res, oracle_res)
 }
 
@@ -101,12 +97,7 @@ test "polytools: gcd_multivar parity over QQ" {
   let q = b.from_expr(x * (x + int(2)))
   let g = p.gcd_multivar(q)
   let ours = sympy_normalize(g.to_string()).trim().to_string()
-  let oracle = gcd(
-      p.to_expr(),
-      q.to_expr(),
-      gens=["x", "y"],
-      domain="QQ",
-    )
+  let oracle = gcd(p.to_expr(), q.to_expr(), gens=["x", "y"], domain="QQ")
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -116,15 +107,11 @@ test "polytools: gcd_multivar parity over QQ" {
 test "polytools: factor_list parity over QQ" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let x = symbol("x")
-  let poly = b.from_expr(
-    expr_rat(1, 3) * ((x ^ int(2)) - int(1)),
-  )
+  let poly = b.from_expr(expr_rat(1, 3) * ((x ^ int(2)) - int(1)))
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(factor_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -132,16 +119,11 @@ test "polytools: factor_list parity over QQ" {
 test "polytools: sqf_list parity over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x - int(2)) ^ int(2)) *
-    ((x + int(3)) ^ int(3)),
-  )
+  let poly = b.from_expr(((x - int(2)) ^ int(2)) * ((x + int(3)) ^ int(3)))
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(sqf_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -149,15 +131,11 @@ test "polytools: sqf_list parity over ZZ" {
 test "polytools: factor_list parity over GF(2)" {
   let b = PolyBuilder::new(["x"], Domain::GF(2))
   let x = symbol("x")
-  let poly = b.from_expr(
-    (x ^ int(6)) + (x ^ int(3)) + int(1),
-  )
+  let poly = b.from_expr((x ^ int(6)) + (x ^ int(3)) + int(1))
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(
-      factor_list(poly.to_expr(), modulus=2),
-    )
+  let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=2))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -183,9 +161,7 @@ test "polytools: factor_list parity over GF(5) simple" {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(
-      factor_list(poly.to_expr(), modulus=5),
-    )
+  let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=5))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -199,9 +175,7 @@ test "polytools: factor_list parity over GF(7) simple" {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(
-      factor_list(poly.to_expr(), modulus=7),
-    )
+  let oracle = sort_factor_repr(factor_list(poly.to_expr(), modulus=7))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -245,9 +219,7 @@ test "polytools: gcd/div parity over GFExt(5^2) extra" {
   let domain = Domain::GFExt(5, 2, [1, 0, 1])
   let b = PolyBuilder::new(["x"], domain)
   let x = symbol("x")
-  let p = b.from_expr(
-    (x ^ int(3)) + int(2) * x + int(1),
-  )
+  let p = b.from_expr((x ^ int(3)) + int(2) * x + int(1))
   let q = b.from_expr((x ^ int(2)) + int(1))
   let g = p.gcd_univar(q)
   let ours_g = sympy_normalize(g.to_string()).trim().to_string()
@@ -280,9 +252,7 @@ test "polytools: sqf_list parity over GFExt(5^2)" {
   let domain = Domain::GFExt(5, 2, [1, 0, 1])
   let b = PolyBuilder::new(["x"], domain)
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x + int(1)) ^ int(2)) * (x + int(2)),
-  )
+  let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
@@ -304,10 +274,7 @@ test "polytools: sqf_list parity over GFExt(5^2) extra" {
   let domain = Domain::GFExt(5, 2, [1, 0, 1])
   let b = PolyBuilder::new(["x"], domain)
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x + int(2)) ^ int(3)) *
-    ((x ^ int(2)) + x + int(1)),
-  )
+  let poly = b.from_expr(((x + int(2)) ^ int(3)) * ((x ^ int(2)) + x + int(1)))
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
@@ -329,9 +296,7 @@ test "polytools: factor_list GFExt self-consistent" {
   let domain = Domain::GFExt(5, 2, [1, 0, 1])
   let b = PolyBuilder::new(["x"], domain)
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x + int(1)) ^ int(2)) * (x + int(2)),
-  )
+  let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, factors) = poly.factor_list()
   assert_true(content.is_one())
   let mut acc = Poly::one(poly.gens, poly.domain)
@@ -352,16 +317,11 @@ test "polytools: factor_list GFExt self-consistent" {
 test "polytools: factor_list parity over QQ with repeated factor" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let x = symbol("x")
-  let poly = b.from_expr(
-    expr_rat(1, 6) *
-    ((x ^ int(2)) - int(2) * x + int(1)),
-  )
+  let poly = b.from_expr(expr_rat(1, 6) * ((x ^ int(2)) - int(2) * x + int(1)))
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(factor_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -371,15 +331,11 @@ test "polytools: groebner_list parity for multivariate QQ" {
   let x = symbol("x")
   let y = symbol("y")
   let f1 = b.from_expr(x * y - int(1))
-  let f2 = b.from_expr(
-    (x ^ int(2)) + (y ^ int(2)) - int(1),
-  )
+  let f2 = b.from_expr((x ^ int(2)) + (y ^ int(2)) - int(1))
   let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
   let ours = normalize_basis_str_local(groebner_to_string(basis))
   let exprs = [f1.to_expr(), f2.to_expr()]
-  let oracle = normalize_basis_str_local(
-    groebner(exprs, order="lex"),
-  )
+  let oracle = normalize_basis_str_local(groebner(exprs, order="lex"))
   assert_eq(ours, oracle)
 }
 
@@ -390,7 +346,9 @@ test "polytools: gcd_list parity over ZZ" {
   let f = b.from_expr((x ^ int(2)) - int(1))
   let g = b.from_expr((x ^ int(2)) - x)
   let h = b.from_expr((x ^ int(2)) - int(4))
-  let ours = sympy_normalize(@sympolys.gcd_list([f, g, h]).to_string()).trim().to_string()
+  let ours = sympy_normalize(@sympolys.gcd_list([f, g, h]).to_string())
+    .trim()
+    .to_string()
   let oracle = gcd_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
@@ -404,7 +362,9 @@ test "polytools: lcm_list parity over ZZ" {
   let f = b.from_expr((x ^ int(2)) - int(1))
   let g = b.from_expr((x ^ int(2)) - x)
   let h = b.from_expr((x ^ int(2)) - int(4))
-  let ours = sympy_normalize(@sympolys.lcm_list([f, g, h]).to_string()).trim().to_string()
+  let ours = sympy_normalize(@sympolys.lcm_list([f, g, h]).to_string())
+    .trim()
+    .to_string()
   let oracle = lcm_list([f.to_expr(), g.to_expr(), h.to_expr()])
     .trim()
     .to_string()
@@ -417,10 +377,11 @@ test "polytools: terms_gcd parity over ZZ" {
   let x = symbol("x")
   let y = symbol("y")
   let f = b.from_expr(
-    int(2) * (x ^ int(2)) * (y ^ int(3)) +
-    int(4) * x * (y ^ int(2)),
+    int(2) * (x ^ int(2)) * (y ^ int(3)) + int(4) * x * (y ^ int(2)),
   )
-  let ours = sympy_normalize(@sympolys.terms_gcd(f).to_string()).trim().to_string()
+  let ours = sympy_normalize(@sympolys.terms_gcd(f).to_string())
+    .trim()
+    .to_string()
   let oracle = terms_gcd(f.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }
@@ -429,15 +390,11 @@ test "polytools: terms_gcd parity over ZZ" {
 test "polytools: sqf_list parity over GF(5)" {
   let b = PolyBuilder::new(["x"], Domain::GF(5))
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x + int(1)) ^ int(2)) * (x + int(2)),
-  )
+  let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(
-      sqf_list(poly.to_expr(), modulus=5),
-    )
+  let oracle = sort_factor_repr(sqf_list(poly.to_expr(), modulus=5))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -447,15 +404,11 @@ test "polytools: sqf_list parity over GF(5)" {
 test "polytools: sqf_list parity over GF(7)" {
   let b = PolyBuilder::new(["x"], Domain::GF(7))
   let x = symbol("x")
-  let poly = b.from_expr(
-    ((x + int(1)) ^ int(2)) * (x + int(2)),
-  )
+  let poly = b.from_expr(((x + int(1)) ^ int(2)) * (x + int(2)))
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(
-      sqf_list(poly.to_expr(), modulus=7),
-    )
+  let oracle = sort_factor_repr(sqf_list(poly.to_expr(), modulus=7))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -469,9 +422,7 @@ test "polytools: cancel parity over ZZ" {
   let den = b.from_expr(x - int(1))
   let (n2, d2) = @sympolys.cancel(num, den)
   let ours = div_pair_to_string(n2, d2).trim().to_string()
-  let oracle = cancel(num.to_expr(), den.to_expr())
-    .trim()
-    .to_string()
+  let oracle = cancel(num.to_expr(), den.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -484,9 +435,7 @@ test "polytools: cancel parity multivariate (no common factor)" {
   let den = b.from_expr(x + y + int(1))
   let (n2, d2) = @sympolys.cancel(num, den)
   let ours = div_pair_to_string(n2, d2).trim().to_string()
-  let oracle = cancel(num.to_expr(), den.to_expr())
-    .trim()
-    .to_string()
+  let oracle = cancel(num.to_expr(), den.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -499,9 +448,7 @@ test "polytools: cancel parity multivariate with common x+y factor" {
   let den = b.from_expr(x + y)
   let (n2, d2) = @sympolys.cancel(num, den)
   let ours = div_pair_to_string(n2, d2).trim().to_string()
-  let oracle = cancel(num.to_expr(), den.to_expr())
-    .trim()
-    .to_string()
+  let oracle = cancel(num.to_expr(), den.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -513,9 +460,7 @@ test "polytools: reduced parity over ZZ" {
   let g = b.from_expr(x - int(1))
   let (qs, r) = @sympolys.reduced(f, [g])
   let ours = reduced_pair_to_string(qs, r).trim().to_string()
-  let oracle = reduced(f.to_expr(), [g.to_expr()])
-    .trim()
-    .to_string()
+  let oracle = reduced(f.to_expr(), [g.to_expr()]).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -664,8 +609,6 @@ test "polytools: subresultants parity over ZZ" {
   let g = b.from_expr(x - int(1))
   let seq = @sympolys.subresultants(f, g)
   let ours = seq.map(p => sympy_normalize(p.to_string())).join(" | ")
-  let oracle = subresultants(f.to_expr(), g.to_expr())
-    .trim()
-    .to_string()
+  let oracle = subresultants(f.to_expr(), g.to_expr()).trim().to_string()
   assert_eq(ours, oracle)
 }

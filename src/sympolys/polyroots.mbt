@@ -52,9 +52,9 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
   let disc = @symcore.add([b2, @symcore.mul([int(-1), ac4])])
   // SymPy reference: sympy/polys/polyroots.py::roots_quadratic.
   // Keep discriminant under symbolic square root (disc**(1/2)).
-  let half = @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
-  )
+  let half = @symcore.rational_from_ints(1, 2) catch {
+    _ => @symcore.function("Rational", [int(1), int(2)])
+  }
   let sqrt_disc = @symcore.pow(disc, half)
   let neg_b = @symcore.mul([int(-1), b])
   let denom = @symcore.mul([two, a])
@@ -68,11 +68,7 @@ pub fn roots_quadratic(poly : Poly) -> Array[Expr] raise PolyError {
 }
 
 ///|
-fn append_roots(
-  out : Array[Expr],
-  roots : Array[Expr],
-  mult : Int,
-) -> Unit {
+fn append_roots(out : Array[Expr], roots : Array[Expr], mult : Int) -> Unit {
   for _ in 0..<mult {
     for r in roots {
       out.push(r)

@@ -17,9 +17,7 @@ test "physics.quantum.wavefunction: parity" {
   )
 
   quantum_test_assert_string_equal(
-    quantum_doit_str(
-      "InnerProduct(OrthogonalBra(n), OrthogonalKet(n))",
-    ),
+    quantum_doit_str("InnerProduct(OrthogonalBra(n), OrthogonalKet(n))"),
     @symprint.to_string(
       inner_product(
         orthogonal_bra([n]).as_expr(),
@@ -29,9 +27,7 @@ test "physics.quantum.wavefunction: parity" {
     "orthogonal equal parity",
   )
   quantum_test_assert_string_equal(
-    quantum_doit_str(
-      "InnerProduct(OrthogonalBra(n), OrthogonalKet(n + 1))",
-    ),
+    quantum_doit_str("InnerProduct(OrthogonalBra(n), OrthogonalKet(n + 1))"),
     @symprint.to_string(
       inner_product(
         orthogonal_bra([n]).as_expr(),
@@ -74,9 +70,7 @@ test "physics.quantum.wavefunction: parity" {
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("represent(Wavefunction(x**2, x))"),
-    quantum_eval_str(
-      matrix_scalar_value_to_string(represent(wf.as_expr())),
-    ),
+    quantum_eval_str(matrix_scalar_value_to_string(represent(wf.as_expr()))),
     "represent wavefunction parity",
   )
 }
@@ -93,9 +87,7 @@ test "physics.quantum.wavefunction: norm parity" {
     ],
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "Wavefunction(x**2*y + y**2*x, (x, 0, 1), (y, 0, 2)).norm",
-    ),
+    quantum_eval_str("Wavefunction(x**2*y + y**2*x, (x, 0, 1), (y, 0, 2)).norm"),
     quantum_eval_str(@symprint.to_string(finite.norm())),
     "wavefunction finite norm parity",
   )
@@ -105,12 +97,8 @@ test "physics.quantum.wavefunction: norm parity" {
     [@symcore.raw_function("Tuple", [x, @symcore.int(0), @symcore.int(1)])],
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()",
-    ),
-    quantum_eval_str(
-      @symprint.to_string(normalized_wf.normalize().as_expr()),
-    ),
+    quantum_eval_str("Wavefunction(sqrt(5)*x**2, (x, 0, 1)).normalize()"),
+    quantum_eval_str(@symprint.to_string(normalized_wf.normalize().as_expr())),
     "wavefunction normalize parity",
   )
 }

@@ -15,12 +15,12 @@ test "physics.quantum.kind: local kinds" {
   assert_true(quantum_kind(dagger(k)) == QuantumKind::QBra)
   assert_true(
     quantum_kind(
-          commutator(a, operator([@symcore.symbol("B")]).as_expr(), evaluate=false),
-        ) ==
-        QuantumKind::QOperator
+      commutator(a, operator([@symcore.symbol("B")]).as_expr(), evaluate=false),
+    ) ==
+    QuantumKind::QOperator,
   )
   assert_true(
     quantum_kind(@symcore.raw_function("TensorProduct", [k, k])) ==
-        QuantumKind::QKet
+    QuantumKind::QKet,
   )
 }

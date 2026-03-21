@@ -21,11 +21,7 @@ fn control_assert_matrix_expr_equal(
   let mut idx = 0
   for i in 0..<rows {
     for j in 0..<cols {
-      control_assert_expr_equal(
-        lhs.get(i, j),
-        rhs[idx],
-        "\{_context}[\{idx}]",
-      )
+      control_assert_expr_equal(lhs.get(i, j), rhs[idx], "\{_context}[\{idx}]")
       idx += 1
     }
   }
@@ -68,8 +64,7 @@ test "physics.control.routh_table: parity" {
     "zero-column parity",
   )
   assert_true(
-    t2.zero_col_infos().to_string() ==
-    control_routh_zero_col_infos(p2, z),
+    t2.zero_col_infos().to_string() == control_routh_zero_col_infos(p2, z),
   )
 
   let p3 = (z ^ @symcore.int(6)) +
@@ -88,8 +83,7 @@ test "physics.control.routh_table: parity" {
     "zero-row parity",
   )
   assert_true(
-    t3.zero_row_case() ==
-    (control_routh_zero_row_case(p3, z) == "True"),
+    t3.zero_row_case() == (control_routh_zero_row_case(p3, z) == "True"),
   )
   control_assert_expr_equal(
     t3.auxiliary_polynomials()[0],

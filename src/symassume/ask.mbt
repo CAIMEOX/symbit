@@ -555,10 +555,7 @@ fn known_fact_formulas(expr : Expr) -> Array[Query] {
 }
 
 ///|
-fn known_atom_formulas(
-  _key : PredicateKey,
-  args : Array[Expr],
-) -> Array[Query] {
+fn known_atom_formulas(_key : PredicateKey, args : Array[Expr]) -> Array[Query] {
   let f : Array[Query] = Array::new()
   if args.length() != 2 {
     return f
@@ -600,8 +597,7 @@ fn push_exclusive_pairs(out : Array[Query], atoms : Array[Query]) -> Unit {
 ///|
 fn is_matrix_symbol_expr(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(name, args) =>
-      name == "MatrixSymbol" && args.length() == 3
+    Expr::Function(name, args) => name == "MatrixSymbol" && args.length() == 3
     _ => false
   }
 }
@@ -615,11 +611,7 @@ fn is_symbol_expr(expr : Expr) -> Bool {
 }
 
 ///|
-fn eval_atom(
-  key : PredicateKey,
-  args : Array[Expr],
-  env : AssumeEnv,
-) -> Tri {
+fn eval_atom(key : PredicateKey, args : Array[Expr], env : AssumeEnv) -> Tri {
   match key {
     PredicateKey::Eq
     | PredicateKey::Ne
@@ -912,11 +904,7 @@ fn eval_unary_atom(
 }
 
 ///|
-fn eval_from_expr(
-  key : PredicateKey,
-  expr : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn eval_from_expr(key : PredicateKey, expr : Expr, env : AssumeEnv) -> Tri {
   match expr {
     Expr::Number(_) => eval_number_predicate(key, expr)
     Expr::Symbol(name) => eval_symbol_predicate(key, name, env)

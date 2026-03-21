@@ -9,10 +9,7 @@ test "geometry.ellipse parity repr equation and intersections" {
     GeometryEntity::Ellipse(value) => value
     _ => fail("expected ellipse")
   }
-  assert_eq(
-    e.repr(),
-    geometry_eval_repr("Ellipse(Point2D(0, 0), 2, 1)"),
-  )
+  assert_eq(e.repr(), geometry_eval_repr("Ellipse(Point2D(0, 0), 2, 1)"))
   geometry_assert_point_set_equal(
     e.intersection(
       geometry_line(
@@ -34,10 +31,7 @@ test "geometry.ellipse parity repr equation and intersections" {
 ///|
 test "geometry.circle parity repr and intersections" {
   let c = circle(point2d(@symcore.int(0), @symcore.int(0)), @symcore.int(1))
-  assert_eq(
-    c.repr(),
-    geometry_eval_repr("Circle(Point2D(0, 0), 1)"),
-  )
+  assert_eq(c.repr(), geometry_eval_repr("Circle(Point2D(0, 0), 1)"))
   geometry_assert_point_set_equal(
     c.intersection(
       geometry_circle(
@@ -188,16 +182,12 @@ test "geometry.ellipse parity formula helpers" {
   let section = e.section_modulus()
   geometry_assert_expr_equal(
     section.0,
-    geometry_eval_str(
-      "(Ellipse(Point2D(0, 0), 5, 4).section_modulus())[0]",
-    ),
+    geometry_eval_str("(Ellipse(Point2D(0, 0), 5, 4).section_modulus())[0]"),
     "ellipse section modulus parity.0",
   )
   geometry_assert_expr_equal(
     section.1,
-    geometry_eval_str(
-      "(Ellipse(Point2D(0, 0), 5, 4).section_modulus())[1]",
-    ),
+    geometry_eval_str("(Ellipse(Point2D(0, 0), 5, 4).section_modulus())[1]"),
     "ellipse section modulus parity.1",
   )
   geometry_assert_expr_equal(
@@ -216,9 +206,7 @@ test "geometry.ellipse parity formula helpers" {
   }
   assert_eq(
     symbolic.auxiliary_circle().repr(),
-    geometry_eval_repr(
-      "Ellipse(Point2D(1, 2), a, b).auxiliary_circle()",
-    ),
+    geometry_eval_repr("Ellipse(Point2D(1, 2), a, b).auxiliary_circle()"),
   )
   let director = symbolic.director_circle()
   assert_eq(director.center().repr(), "Point2D(1, 2)")

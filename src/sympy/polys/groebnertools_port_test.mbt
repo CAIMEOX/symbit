@@ -24,9 +24,7 @@ fn expect_groebner_same(polys : Array[Poly], order : TermOrder) -> Unit raise {
   let basis = Poly::groebner(polys, order~)
   let ours = normalize_basis_str(groebner_to_string(basis))
   let exprs = polys.map(p => p.to_expr())
-  let oracle = normalize_basis_str(
-    groebner(exprs, order=order_to_sympy(order)),
-  )
+  let oracle = normalize_basis_str(groebner(exprs, order=order_to_sympy(order)))
   assert_eq(ours, oracle)
 }
 

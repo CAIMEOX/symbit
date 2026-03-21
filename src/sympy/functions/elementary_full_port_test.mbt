@@ -9,9 +9,7 @@ fn check_expr(
     println("mismatch [\{label}]: ours=\{ours} expected=\{expected}")
     fail("expr mismatch")
   }
-  let oracle : Result[Bool, Error] = try? expr_str_eq(
-    ours, expected,
-  )
+  let oracle : Result[Bool, Error] = try? expr_str_eq(ours, expected)
   match oracle {
     Ok(true) => ()
     Ok(false) => {

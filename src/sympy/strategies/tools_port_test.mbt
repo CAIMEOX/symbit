@@ -14,11 +14,7 @@ test "tools subs" {
   let expr = basic([a, basic([b, c]), basic([d, basic([e])])])
   let rl = @strategies_tools.subs(mapping)
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    tools_subs(expr, mapping),
-    "tools subs",
-  )
+  assert_expr_str_eq(result, tools_subs(expr, mapping), "tools subs")
 }
 
 ///|
@@ -26,11 +22,7 @@ test "tools subs empty" {
   let expr = basic([@symcore.int(1), @symcore.int(2)])
   let rl = @strategies_tools.subs(Map::new())
   let result = rl(expr)
-  assert_expr_str_eq(
-    result,
-    tools_subs_empty(expr),
-    "tools subs empty",
-  )
+  assert_expr_str_eq(result, tools_subs_empty(expr), "tools subs empty")
 }
 
 ///|

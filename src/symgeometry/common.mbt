@@ -100,9 +100,7 @@ fn geo_expr_sign(expr : Expr) -> Int? {
 fn geo_collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         geo_collect_symbols(arg, seen)
       }
@@ -120,9 +118,7 @@ fn geo_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       geo_expr_depends_on(base, wrt) || geo_expr_depends_on(exp, wrt)
@@ -139,10 +135,7 @@ fn geo_expr_int_value(expr : Expr) -> Int? {
 }
 
 ///|
-fn geo_poly_deg2_add(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn geo_poly_deg2_add(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   [
     geo_simplify(lhs[0] + rhs[0]),
     geo_simplify(lhs[1] + rhs[1]),
@@ -151,10 +144,7 @@ fn geo_poly_deg2_add(
 }
 
 ///|
-fn geo_poly_deg2_mul(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr]? {
+fn geo_poly_deg2_mul(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr]? {
   let out = [geo_zero(), geo_zero(), geo_zero()]
   for i in 0..<3 {
     for j in 0..<3 {
@@ -171,10 +161,7 @@ fn geo_poly_deg2_mul(
 }
 
 ///|
-fn geo_poly_deg2_pow(
-  coeffs : Array[Expr],
-  exp : Int,
-) -> Array[Expr]? {
+fn geo_poly_deg2_pow(coeffs : Array[Expr], exp : Int) -> Array[Expr]? {
   let mut out = [geo_one(), geo_zero(), geo_zero()]
   for _ in 0..<exp {
     match geo_poly_deg2_mul(out, coeffs) {
@@ -186,10 +173,7 @@ fn geo_poly_deg2_pow(
 }
 
 ///|
-fn geo_poly_deg2_coeffs(
-  expr : Expr,
-  wrt : Expr,
-) -> Array[Expr]? {
+fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
   match geo_simplify(expr) {
     Expr::Number(_) => Some([expr, geo_zero(), geo_zero()])
     Expr::Symbol(_) =>
@@ -245,10 +229,7 @@ fn geo_poly_deg2_coeffs(
 }
 
 ///|
-fn geo_solve_univar_deg2(
-  expr : Expr,
-  wrt : Expr,
-) -> Array[Expr]? {
+fn geo_solve_univar_deg2(expr : Expr, wrt : Expr) -> Array[Expr]? {
   match geo_poly_deg2_coeffs(expr, wrt) {
     Some(coeffs) => Some(quadratic_roots(coeffs[2], coeffs[1], coeffs[0]))
     None => None
@@ -316,10 +297,7 @@ fn geo_zero_coords(dim : Int) -> Array[Expr] {
 }
 
 ///|
-fn geo_add_coords(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn geo_add_coords(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<lhs.length() {
     out.push(geo_simplify(lhs[i] + rhs[i]))
@@ -328,10 +306,7 @@ fn geo_add_coords(
 }
 
 ///|
-fn geo_sub_coords(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn geo_sub_coords(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<lhs.length() {
     out.push(geo_simplify(lhs[i] - rhs[i]))
@@ -340,10 +315,7 @@ fn geo_sub_coords(
 }
 
 ///|
-fn geo_scale_coords(
-  coords : Array[Expr],
-  factor : Expr,
-) -> Array[Expr] {
+fn geo_scale_coords(coords : Array[Expr], factor : Expr) -> Array[Expr] {
   let out : Array[Expr] = []
   for item in coords {
     out.push(geo_simplify(item * factor))
@@ -369,10 +341,7 @@ fn geo_scale_coords_axis(
 }
 
 ///|
-fn geo_dot(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Expr {
+fn geo_dot(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   let mut acc = geo_zero()
   for i in 0..<lhs.length() {
     acc = geo_simplify(acc + lhs[i] * rhs[i])
@@ -381,17 +350,12 @@ fn geo_dot(
 }
 
 ///|
-fn geo_cross2(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Expr {
+fn geo_cross2(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   geo_simplify(lhs[0] * rhs[1] - lhs[1] * rhs[0])
 }
 
 ///|
-fn geo_perp2(
-  coords : Array[Expr],
-) -> Array[Expr] raise GeometryError {
+fn geo_perp2(coords : Array[Expr]) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 {
     raise GeometryError::ValueError("perp2 is only defined for planar vectors")
   }
@@ -399,10 +363,7 @@ fn geo_perp2(
 }
 
 ///|
-fn geo_cross3(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn geo_cross3(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   [
     geo_simplify(lhs[1] * rhs[2] - lhs[2] * rhs[1]),
     geo_simplify(lhs[2] * rhs[0] - lhs[0] * rhs[2]),
@@ -472,10 +433,7 @@ fn geo_rotate_coords_2d(
 }
 
 ///|
-fn geo_midpoint_coords(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn geo_midpoint_coords(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   let two = geo_int(2)
   let out : Array[Expr] = []
   for i in 0..<lhs.length() {

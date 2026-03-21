@@ -29,7 +29,10 @@ fn mm_sympy_eigen_text(items : SympyEigenvects) -> String {
 ///|
 test "matrix module wrappers: lll wrappers align with methods" {
   let a = @sympolys.ddm_from_ints([[1, 0, 0], [0, 1, 0], [1, 1, 1]], Domain::ZZ)
-  assert_eq(mm_trim(@sympolys.ddm_lll(a).to_string()), mm_trim(a.lll().to_string()))
+  assert_eq(
+    mm_trim(@sympolys.ddm_lll(a).to_string()),
+    mm_trim(a.lll().to_string()),
+  )
   let ours = @sympolys.ddm_lll_transform(a)
   let methods = a.lll_transform()
   assert_eq(mm_trim(ours.0.to_string()), mm_trim(methods.0.to_string()))
@@ -40,9 +43,12 @@ test "matrix module wrappers: lll wrappers align with methods" {
 test "matrix module wrappers: normalform wrappers match methods and oracle" {
   let rows = [[12, 6, 4], [3, 9, 6], [2, 16, 14]]
   let dm = @sympolys.domain_matrix_from_ints(rows, Domain::ZZ)
-  assert_eq(mm_trim(@sympolys.hermite_normal_form(dm).to_matrix_string()), mm_trim(
-          dm.to_ddm().hermite_normal_form().to_domain_matrix().to_matrix_string(),
-        ))
+  assert_eq(
+    mm_trim(@sympolys.hermite_normal_form(dm).to_matrix_string()),
+    mm_trim(
+      dm.to_ddm().hermite_normal_form().to_domain_matrix().to_matrix_string(),
+    ),
+  )
   let invs = @sympolys.invariant_factors(dm)
   let ours_invs = if invs.is_empty() {
     "()"
@@ -59,13 +65,16 @@ test "matrix module wrappers: normalform wrappers match methods and oracle" {
   assert_eq(mm_trim(smf.to_matrix_string()), mm_trim(oracle_smf))
   assert_true(@sympolys.is_smith_normal_form(smf))
   let decomp = @sympolys.smith_normal_decomp(dm)
-  assert_eq(mm_trim(
-          decomp.1
-          .to_field()
-          .matmul(dm.to_field())
-          .matmul(decomp.2.to_field())
-          .to_matrix_string(),
-        ), mm_trim(decomp.0.to_field().to_matrix_string()))
+  assert_eq(
+    mm_trim(
+      decomp.1
+      .to_field()
+      .matmul(dm.to_field())
+      .matmul(decomp.2.to_field())
+      .to_matrix_string(),
+    ),
+    mm_trim(decomp.0.to_field().to_matrix_string()),
+  )
 }
 
 ///|
@@ -81,7 +90,10 @@ test "matrix module wrappers: eigen wrappers preserve method data" {
   })
   assert_eq(wrapped_rational, expected_rational)
   let sympy_view = @sympolys.dom_eigenvects_to_sympy(wrapped.0, wrapped.1)
-  assert_eq(mm_sympy_eigen_text(sympy_view), "1:1:Matrix([[1, 0]])||2:1:Matrix([[0, 1]])")
+  assert_eq(
+    mm_sympy_eigen_text(sympy_view),
+    "1:1:Matrix([[1, 0]])||2:1:Matrix([[0, 1]])",
+  )
 }
 
 ///|
@@ -97,7 +109,10 @@ test "matrix module wrappers: add_columns and symmetric_residue helpers" {
     @sympolys.fe_from_int(1, Domain::ZZ),
   )
   assert_eq(mm_trim(out.to_string()), mm_trim("[[3, 2], [7, 4]]"))
-  assert_eq(@sympolys.symmetric_residue(BigInt::from_int(4), BigInt::from_int(5)).to_int(), -1)
+  assert_eq(
+    @sympolys.symmetric_residue(BigInt::from_int(4), BigInt::from_int(5)).to_int(),
+    -1,
+  )
 }
 
 ///|

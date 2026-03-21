@@ -355,10 +355,7 @@ fn infer_gens_expr_local(expr : Expr) -> Array[String] {
 }
 
 ///|
-fn collect_symbols_local(
-  expr : Expr,
-  seen : Map[String, Bool],
-) -> Unit {
+fn collect_symbols_local(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
     Expr::Add(args) | Expr::Mul(args) =>

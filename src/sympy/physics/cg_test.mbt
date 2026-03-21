@@ -4,45 +4,51 @@ test "physics.quantum.cg: symbolic forms and numeric evaluation" {
 
   assert_true(
     !wigner3j(
+      @symcore.int(6),
+      @symcore.int(0),
+      @symcore.int(4),
+      @symcore.int(0),
+      @symcore.int(2),
+      @symcore.int(0),
+    ).is_symbolic(),
+  )
+  assert_true(
+    cg(
+      @symcore.symbol("j1"),
+      @symcore.int(0),
+      @symcore.int(1),
+      @symcore.int(0),
+      @symcore.int(1),
+      @symcore.int(0),
+    ).is_symbolic(),
+  )
+
+  assert_eq(
+    @symprint.to_string(
+      wigner3j(
         @symcore.int(6),
         @symcore.int(0),
         @symcore.int(4),
         @symcore.int(0),
         @symcore.int(2),
         @symcore.int(0),
-      ).is_symbolic()
+      ).as_expr(),
+    ),
+    "Wigner3j(6, 0, 4, 0, 2, 0)",
   )
-  assert_true(
-    cg(
-        @symcore.symbol("j1"),
-        @symcore.int(0),
+  assert_eq(
+    @symprint.to_string(
+      cg(
+        half,
+        half,
+        half,
+        @symcore.int(-1) * half,
         @symcore.int(1),
         @symcore.int(0),
-        @symcore.int(1),
-        @symcore.int(0),
-      ).is_symbolic()
+      ).as_expr(),
+    ),
+    "CG(1/2, 1/2, 1/2, -1/2, 1, 0)",
   )
-
-  assert_eq(@symprint.to_string(
-          wigner3j(
-            @symcore.int(6),
-            @symcore.int(0),
-            @symcore.int(4),
-            @symcore.int(0),
-            @symcore.int(2),
-            @symcore.int(0),
-          ).as_expr(),
-        ), "Wigner3j(6, 0, 4, 0, 2, 0)")
-  assert_eq(@symprint.to_string(
-          cg(
-            half,
-            half,
-            half,
-            @symcore.int(-1) * half,
-            @symcore.int(1),
-            @symcore.int(0),
-          ).as_expr(),
-        ), "CG(1/2, 1/2, 1/2, -1/2, 1, 0)")
 
   quantum_test_assert_expr_equal(
     wigner3j(

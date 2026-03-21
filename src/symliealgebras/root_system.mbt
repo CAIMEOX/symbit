@@ -113,12 +113,12 @@ pub fn RootSystem::add_as_roots(
 
 ///|
 /// Return the Cartan matrix of this root system.
-pub fn RootSystem::cartan_matrix(self : RootSystem) -> Matrix raise {
+pub fn RootSystem::cartan_matrix(self : RootSystem) -> Matrix {
   self.cartan_type.cartan_matrix()
 }
 
 ///|
 /// Return the Dynkin diagram of this root system.
-pub fn RootSystem::dynkin_diagram(self : RootSystem) -> String raise {
+pub fn RootSystem::dynkin_diagram(self : RootSystem) -> String {
   self.cartan_type.dynkin_diagram()
 }

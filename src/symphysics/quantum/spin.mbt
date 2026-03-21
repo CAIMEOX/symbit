@@ -33,11 +33,12 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
 
 ///|
 fn spin_exact_rational(num : Int, den : Int) -> Expr {
-  let exact : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let exact : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match exact {
     Ok(value) => value
-    Err(_) => int(num) * (@symcore.pow(int(den), int(-1)))
+    Err(_) => int(num) * @symcore.pow(int(den), int(-1))
   }
 }
 
@@ -58,9 +59,8 @@ fn spin_coupled_state_expr_name(basis_name : String, is_bra : Bool) -> String {
 ///|
 fn spin_basis_name_from_expr(expr : Expr?) -> String? {
   match expr {
-    Some(Expr::Symbol(name)) if name == "Jx" ||
-      name == "Jy" ||
-      name == "Jz" => Some(name)
+    Some(Expr::Symbol(name)) if name == "Jx" || name == "Jy" || name == "Jz" =>
+      Some(name)
     _ => None
   }
 }
@@ -340,29 +340,13 @@ pub fn jz_bra_coupled(
 }
 
 ///|
-pub fn rotation(
-  alpha : Expr,
-  beta : Expr,
-  gamma : Expr,
-) -> RotationExpr {
+pub fn rotation(alpha : Expr, beta : Expr, gamma : Expr) -> RotationExpr {
   RotationExpr::{ alpha, beta, gamma }
 }
 
 ///|
-pub fn rotation_d(
-  j : Expr,
-  m : Expr,
-  mp : Expr,
-  beta : Expr,
-) -> WignerDExpr {
-  WignerDExpr::{
-    j,
-    m,
-    mp,
-    alpha: int(0),
-    beta,
-    gamma: int(0),
-  }
+pub fn rotation_d(j : Expr, m : Expr, mp : Expr, beta : Expr) -> WignerDExpr {
+  WignerDExpr::{ j, m, mp, alpha: int(0), beta, gamma: int(0) }
 }
 
 ///|
@@ -386,17 +370,9 @@ pub fn JzState::as_expr(self : JzState) -> Expr {
     )
   }
   let coupling_args = self.coupling.map(c => {
-    @symcore.function("Tuple", [
-      int(c.left_index),
-      int(c.right_index),
-      c.j,
-    ])
+    @symcore.function("Tuple", [int(c.left_index), int(c.right_index), c.j])
   })
-  let args : Array[Expr] = [
-    self.j,
-    self.m,
-    @symcore.function("Tuple", self.jn),
-  ]
+  let args : Array[Expr] = [self.j, self.m, @symcore.function("Tuple", self.jn)]
   if !coupling_args.is_empty() {
     args.push(@symcore.function("Tuple", coupling_args))
   }
@@ -418,11 +394,7 @@ pub fn RotationExpr::to_string(self : RotationExpr) -> String {
 
 ///|
 pub fn RotationExpr::inverse(self : RotationExpr) -> RotationExpr {
-  rotation(
-    int(-1) * self.gamma,
-    int(-1) * self.beta,
-    int(-1) * self.alpha,
-  )
+  rotation(int(-1) * self.gamma, int(-1) * self.beta, int(-1) * self.alpha)
 }
 
 ///|
@@ -498,9 +470,7 @@ pub fn JzState::rewrite(self : JzState, basis : Expr) -> Expr {
 }
 
 ///|
-pub fn m_values(
-  j : Expr,
-) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
+pub fn m_values(j : Expr) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
   let size_expr = int(2) * j + int(1)
   match size_expr {
     Expr::Number(n) if n.is_integral() && n.numerator().to_int() > 0 => {
@@ -679,10 +649,7 @@ pub fn wigner_d_from_expr(expr : Expr) -> WignerDExpr? {
 }
 
 ///|
-fn spin_m_index(
-  j : Expr,
-  value : Expr,
-) -> Int raise @symphysics.PhysicsError {
+fn spin_m_index(j : Expr, value : Expr) -> Int raise @symphysics.PhysicsError {
   let (_, values) = m_values(j)
   for idx in 0..<values.length() {
     if values[idx] == value {
@@ -699,9 +666,7 @@ fn spin_wigner_d_value(
   item : WignerDExpr,
   evaluate? : Bool = false,
 ) -> Expr raise @symphysics.PhysicsError {
-  if item.alpha == int(0) &&
-    item.beta == int(0) &&
-    item.gamma == int(0) {
+  if item.alpha == int(0) && item.beta == int(0) && item.gamma == int(0) {
     if item.m == item.mp {
       return int(1)
     } else {
@@ -711,12 +676,7 @@ fn spin_wigner_d_value(
   if !evaluate {
     return item.as_expr()
   }
-  let matrix = @symphysics.wigner_d(
-    item.j,
-    item.alpha,
-    item.beta,
-    item.gamma,
-  )
+  let matrix = @symphysics.wigner_d(item.j, item.alpha, item.beta, item.gamma)
   let row = spin_m_index(item.j, item.mp)
   let col = spin_m_index(item.j, item.m)
   matrix.get(row, col)
@@ -754,12 +714,7 @@ fn spin_basis_transform_coeff(
 }
 
 ///|
-fn spin_sum_expr(
-  body : Expr,
-  sym : Expr,
-  lower : Expr,
-  upper : Expr,
-) -> Expr {
+fn spin_sum_expr(body : Expr, sym : Expr, lower : Expr, upper : Expr) -> Expr {
   @symcore.function("Sum", [
     body,
     @symcore.function("Tuple", [sym, lower, upper]),
@@ -807,23 +762,23 @@ fn spin_rewrite_single_state(
           state.j,
         )
       }
-      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] =
-        try? m_values(state.j)
+      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] = try? m_values(
+        state.j,
+      )
       let mvals = match mvals_result {
         Ok((_, values)) => values
         Err(_) => return state_expr
       }
       let terms : Array[Expr] = []
       for mp in mvals {
-        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try?
-          spin_basis_transform_coeff(
-            state.j,
-            state.m,
-            mp,
-            state.basis_name,
-            target_basis,
-            evaluate,
-          )
+        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_basis_transform_coeff(
+          state.j,
+          state.m,
+          mp,
+          state.basis_name,
+          target_basis,
+          evaluate,
+        )
         let coeff = match coeff_result {
           Ok(value) => value
           Err(_) => return state_expr
@@ -1019,10 +974,7 @@ fn spin_resolve_couplings(
 }
 
 ///|
-fn spin_sum_by_indices(
-  values : Array[Expr],
-  indices : Array[Int],
-) -> Expr {
+fn spin_sum_by_indices(values : Array[Expr], indices : Array[Int]) -> Expr {
   let mut total = int(0)
   for idx in indices {
     total = total + values[idx - 1]
@@ -1104,14 +1056,13 @@ fn spin_map_tensor_products(
       }
       quantum_mul_from_args_preserve(mapped)
     }
-    Expr::Function(name, args) =>
-      {
-        let mapped : Array[Expr] = []
-        for arg in args {
-          mapped.push(spin_map_tensor_products(arg, f))
-        }
-        @symcore.raw_function(name, mapped)
+    Expr::Function(name, args) => {
+      let mapped : Array[Expr] = []
+      for arg in args {
+        mapped.push(spin_map_tensor_products(arg, f))
       }
+      @symcore.raw_function(name, mapped)
+    }
     _ => expr
   }
 }
@@ -1139,14 +1090,13 @@ fn spin_map_states(
           }
           quantum_mul_from_args_preserve(mapped)
         }
-        Expr::Function(name, args) =>
-          {
-            let mapped : Array[Expr] = []
-            for arg in args {
-              mapped.push(spin_map_states(arg, f))
-            }
-            @symcore.raw_function(name, mapped)
+        Expr::Function(name, args) => {
+          let mapped : Array[Expr] = []
+          for arg in args {
+            mapped.push(spin_map_states(arg, f))
           }
+          @symcore.raw_function(name, mapped)
+        }
         _ => expr
       }
   }
@@ -1277,9 +1227,7 @@ fn spin_couple_tensor_product(
         )
         let factors = coeffs.copy()
         factors.push(coupled_state.as_expr())
-        let sum_args : Array[Expr] = [
-          quantum_mul_from_args_preserve(factors),
-        ]
+        let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]
         for spec in sum_specs {
           sum_args.push(spec)
         }
@@ -1366,14 +1314,14 @@ fn spin_uncouple_state_expr(
           let m2 = spin_sum_by_indices(chosen, item.right_ns)
           let m3 = m1 + m2
           coeff = coeff *
-            (cg(
+            cg(
               j_values[item.left_ns[0] - 1],
               m1,
               j_values[item.right_ns[0] - 1],
               m2,
               item.j,
               m3,
-            ).doit())
+            ).doit()
           if coeff == int(0) {
             return
           }
@@ -1440,9 +1388,7 @@ fn spin_uncouple_state_expr(
         ]),
       )
     }
-    let sum_args : Array[Expr] = [
-      quantum_mul_from_args_preserve(factors),
-    ]
+    let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]
     for spec in sum_specs {
       sum_args.push(spec)
     }
@@ -1485,42 +1431,31 @@ fn spin_linear_combination_from_vector(
 }
 
 ///|
-fn spin_ladder_coeff(
-  j : Expr,
-  m : Expr,
-  step : Int,
-) -> Expr {
+fn spin_ladder_coeff(j : Expr, m : Expr, step : Int) -> Expr {
   if step > 0 {
-    @symcore.raw_function("sqrt", [
-      j * (j + int(1)) - m * (m + int(1)),
-    ])
+    @symcore.raw_function("sqrt", [j * (j + int(1)) - m * (m + int(1))])
   } else {
-    @symcore.raw_function("sqrt", [
-      j * (j + int(1)) - m * (m - int(1)),
-    ])
+    @symcore.raw_function("sqrt", [j * (j + int(1)) - m * (m - int(1))])
   }
 }
 
 ///|
-pub fn spin_apply_operator_to_ket(
-  op_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match (rotation_from_expr(op_expr), spin_state_from_expr(ket_expr)) {
     (Some(op), Some(state)) if !state.is_bra => {
-      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] =
-        try? m_values(state.j)
+      let mvals_result : Result[(Int, Array[Expr]), @symphysics.PhysicsError] = try? m_values(
+        state.j,
+      )
       let mvals = match mvals_result {
         Ok((_, values)) => values
         Err(_) => return None
       }
       let terms : Array[Expr] = []
       for mp in mvals {
-        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try?
-          spin_wigner_d_value(
-            rotation_D(state.j, state.m, mp, op.alpha, op.beta, op.gamma),
-            evaluate=true,
-          )
+        let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_wigner_d_value(
+          rotation_D(state.j, state.m, mp, op.alpha, op.beta, op.gamma),
+          evaluate=true,
+        )
         let coeff = match coeff_result {
           Ok(value) => value
           Err(_) => return None
@@ -1544,10 +1479,7 @@ pub fn spin_apply_operator_to_ket(
             _ => ()
           }
           match name {
-            "J2" =>
-              Some(
-                (hbar ^ int(2)) * j * (j + int(1)) * ket_expr,
-              )
+            "J2" => Some((hbar ^ int(2)) * j * (j + int(1)) * ket_expr)
             "Jplus" if state.basis_name == "Jz" =>
               if m == j {
                 Some(int(0))
@@ -1643,8 +1575,9 @@ pub fn spin_apply_operator_to_ket(
                   Ok(value) => value
                   Err(_) => return None
                 }
-                let state_result : Result[Expr, @symphysics.PhysicsError] = try?
-                  spin_linear_combination_from_vector(state, product)
+                let state_result : Result[Expr, @symphysics.PhysicsError] = try? spin_linear_combination_from_vector(
+                  state, product,
+                )
                 match state_result {
                   Ok(value) => Some(value)
                   Err(_) => None
@@ -1973,10 +1906,7 @@ pub fn represent_spin_rotation(
 }
 
 ///|
-pub fn spin_inner_product(
-  bra_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn spin_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
   match (spin_state_from_expr(bra_expr), spin_state_from_expr(ket_expr)) {
     (Some(bra), Some(ket)) if bra.is_bra && !ket.is_bra => {
       if bra.is_coupled() != ket.is_coupled() {
@@ -2006,15 +1936,14 @@ pub fn spin_inner_product(
           j_factor * @symcore.raw_function("KroneckerDelta", [bra.m, ket.m]),
         )
       }
-      let coeff_result : Result[Expr, @symphysics.PhysicsError] = try?
-        spin_basis_transform_coeff(
-          ket.j,
-          ket.m,
-          bra.m,
-          ket.basis_name,
-          bra.basis_name,
-          spin_numeric_args([ket.j]),
-        )
+      let coeff_result : Result[Expr, @symphysics.PhysicsError] = try? spin_basis_transform_coeff(
+        ket.j,
+        ket.m,
+        bra.m,
+        ket.basis_name,
+        bra.basis_name,
+        spin_numeric_args([ket.j]),
+      )
       match coeff_result {
         Ok(coeff) => Some(j_factor * coeff)
         Err(_) => None

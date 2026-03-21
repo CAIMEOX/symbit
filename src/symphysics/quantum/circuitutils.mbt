@@ -38,8 +38,7 @@ fn circuit_from_factors(factors : Array[Expr]) -> Expr {
 pub fn circuit_factors(expr : Expr) -> Array[Expr] {
   match expr {
     Expr::Mul(args) => args.copy()
-    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 =>
-      []
+    Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => []
     _ => [expr]
   }
 }
@@ -268,10 +267,7 @@ pub fn convert_to_symbolic_indices(
 }
 
 ///|
-fn real_index_expr(
-  expr : Expr,
-  qubit_map : Map[String, Int],
-) -> Expr {
+fn real_index_expr(expr : Expr, qubit_map : Map[String, Int]) -> Expr {
   match expr {
     Expr::Symbol(name) =>
       match qubit_map.get(name) {

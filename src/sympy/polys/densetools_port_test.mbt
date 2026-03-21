@@ -19,11 +19,7 @@ test "densetools dup integrate/diff/eval" {
   assert_eq(ours_d2, oracle_d2)
   let a = @sympolys.fe_from_int(2, Domain::QQ)
   let ours_eval = @sympolys.dup_eval(f, a, Domain::QQ).to_string()
-  let oracle_eval = dup_eval(
-    dup_to_rats(f),
-    br_int(2),
-    domain="QQ",
-  )
+  let oracle_eval = dup_eval(dup_to_rats(f), br_int(2), domain="QQ")
   assert_eq(ours_eval, oracle_eval)
 }
 
@@ -38,43 +34,20 @@ test "densetools dmp integrate/diff/eval" {
   let oracle_i = dmp_integrate(dense_data_of(f), 1, 1, domain="QQ")
   assert_eq(ours_i, oracle_i)
   let ours_i1 = dmp_repr(@sympolys.dmp_integrate_in(f, 1, 1, 1, Domain::QQ))
-  let oracle_i1 = dmp_integrate_in(
-    dense_data_of(f),
-    1,
-    1,
-    1,
-    domain="QQ",
-  )
+  let oracle_i1 = dmp_integrate_in(dense_data_of(f), 1, 1, 1, domain="QQ")
   assert_eq(ours_i1, oracle_i1)
   let ours_d = dmp_repr(@sympolys.dmp_diff(f, 1, 1, Domain::QQ))
   let oracle_d = dmp_diff(dense_data_of(f), 1, 1, domain="QQ")
   assert_eq(ours_d, oracle_d)
   let ours_d1 = dmp_repr(@sympolys.dmp_diff_in(f, 1, 1, 1, Domain::QQ))
-  let oracle_d1 = dmp_diff_in(
-    dense_data_of(f),
-    1,
-    1,
-    1,
-    domain="QQ",
-  )
+  let oracle_d1 = dmp_diff_in(dense_data_of(f), 1, 1, 1, domain="QQ")
   assert_eq(ours_d1, oracle_d1)
   let a = feqq(2, 1)
   let ours_eval = dmp_repr(@sympolys.dmp_eval(f, a, 1, Domain::QQ))
-  let oracle_eval = dmp_eval(
-    dense_data_of(f),
-    br_int(2),
-    1,
-    domain="QQ",
-  )
+  let oracle_eval = dmp_eval(dense_data_of(f), br_int(2), 1, domain="QQ")
   assert_eq(ours_eval, oracle_eval)
   let ours_eval1 = dmp_repr(@sympolys.dmp_eval_in(f, a, 1, 1, Domain::QQ))
-  let oracle_eval1 = dmp_eval_in(
-    dense_data_of(f),
-    br_int(2),
-    1,
-    1,
-    domain="QQ",
-  )
+  let oracle_eval1 = dmp_eval_in(dense_data_of(f), br_int(2), 1, 1, domain="QQ")
   assert_eq(ours_eval1, oracle_eval1)
 }
 

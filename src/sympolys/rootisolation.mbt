@@ -74,7 +74,7 @@ pub fn dup_cauchy_upper_bound(
   let mut max_ratio = @symnum.BigRational::zero()
   for i in 1..<f.length() {
     let ai = abs_rational(fe_expect_rational(f[i]))
-    let ratio = ai.div_r(abs_rational(lc))
+    let ratio = poly_rational_div(ai, abs_rational(lc))
     if ratio.compare(max_ratio) > 0 {
       max_ratio = ratio
     }
@@ -129,7 +129,7 @@ pub fn dup_mignotte_sep_bound_squared(
   if denom.is_zero() {
     raise PolyError::DivisionByZero
   }
-  let bound = num.div_r(denom)
+  let bound = poly_rational_div(num, denom)
   fe_from_rational(bound, Domain::QQ)
 }
 
@@ -184,7 +184,7 @@ fn rat_mediant(
 fn rat_mid(
   a : @symnum.BigRational,
   b : @symnum.BigRational,
-) -> @symnum.BigRational {
+) -> @symnum.BigRational raise PolyError {
   if a.is_integral() && b.is_integral() {
     let ai = a.numerator().to_int()
     let bi = b.numerator().to_int()
@@ -193,9 +193,9 @@ fn rat_mid(
       return @symnum.BigRational::from_int(mid)
     }
   }
-  let two = @symnum.BigRational::from_int(2)
+  let half = poly_rational_from_ints(1, 2)
   let sum = a.add_r(b)
-  sum.div_r(two)
+  sum.mul_r(half)
 }
 
 ///|

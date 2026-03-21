@@ -23,9 +23,7 @@ pub struct SymbolicSystem {
 } derive(Eq)
 
 ///|
-fn symbolic_system_column(
-  exprs : Array[Expr],
-) -> @symphysics.ExplicitMatrix {
+fn symbolic_system_column(exprs : Array[Expr]) -> @symphysics.ExplicitMatrix {
   mechanics_matrix_column(exprs)
 }
 
@@ -46,9 +44,7 @@ fn symbolic_system_join_cols(
 }
 
 ///|
-fn symbolic_system_flatten(
-  matrix : @symphysics.ExplicitMatrix,
-) -> Array[Expr] {
+fn symbolic_system_flatten(matrix : @symphysics.ExplicitMatrix) -> Array[Expr] {
   let out : Array[Expr] = []
   for row in mechanics_matrix_entries(matrix) {
     for value in row {
@@ -101,9 +97,7 @@ fn symbolic_system_collect_free_symbols(
 ) -> Unit {
   match expr {
     Expr::Symbol(_) => seen.set(mech_expr_key(expr), expr)
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         symbolic_system_collect_free_symbols(arg, seen)
       }
@@ -331,10 +325,7 @@ pub fn SymbolicSystem::compute_explicit_form(
         dyn_mat,
         symbolic_system_flatten(dyn_rhs),
       )
-      symbolic_system_join_cols(
-        kin_rhs,
-        symbolic_system_column(dyn_solution),
-      )
+      symbolic_system_join_cols(kin_rhs, symbolic_system_column(dyn_solution))
     }
     _ => {
       let comb_mat = self.comb_implicit_mat()
@@ -374,9 +365,7 @@ pub fn SymbolicSystem::kin_explicit_rhs(
 }
 
 ///|
-pub fn SymbolicSystem::dynamic_symbols(
-  self : SymbolicSystem,
-) -> Array[Expr] {
+pub fn SymbolicSystem::dynamic_symbols(self : SymbolicSystem) -> Array[Expr] {
   let seen : Map[String, Expr] = {}
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)
@@ -416,9 +405,7 @@ pub fn SymbolicSystem::dynamic_symbols(
 }
 
 ///|
-pub fn SymbolicSystem::constant_symbols(
-  self : SymbolicSystem,
-) -> Array[Expr] {
+pub fn SymbolicSystem::constant_symbols(self : SymbolicSystem) -> Array[Expr] {
   let seen : Map[String, Expr] = {}
   let eom_exprs = match self.comb_explicit_rhs_ {
     Some(value) => symbolic_system_flatten(value)

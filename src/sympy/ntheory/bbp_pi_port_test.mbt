@@ -4,10 +4,7 @@ test "ntheory bbp pi parity" {
   assert_eq(pi_hex_digits(0, prec=3), pi_hex_digits_str(0, prec=3))
   assert_eq(pi_hex_digits(1), pi_hex_digits_str(1))
   assert_eq(pi_hex_digits(13), pi_hex_digits_str(13))
-  assert_eq(
-    pi_hex_digits(100, prec=8),
-    pi_hex_digits_str(100, prec=8),
-  )
+  assert_eq(pi_hex_digits(100, prec=8), pi_hex_digits_str(100, prec=8))
 }
 
 ///|

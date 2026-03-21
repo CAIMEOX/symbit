@@ -40,23 +40,13 @@ test "physics.mechanics kane: spring mass damper" {
   let rhs = km.rhs()
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(rhs.get(1, 0)),
-        "-(k*q(t) + c*u(t))/m",
-      )
+      @symprint.to_string(rhs.get(1, 0)),
+      "-(k*q(t) + c*u(t))/m",
+    ),
   )
   let a = km.linearize(a_and_b=true).0
   inspect(@symprint.to_string(a.get(0, 0)), content="0")
   inspect(@symprint.to_string(a.get(0, 1)), content="1")
-  assert_true(
-    mechanics_expr_equal(
-        @symprint.to_string(a.get(1, 0)),
-        "-k/m",
-      )
-  )
-  assert_true(
-    mechanics_expr_equal(
-        @symprint.to_string(a.get(1, 1)),
-        "-c/m",
-      )
-  )
+  assert_true(mechanics_expr_equal(@symprint.to_string(a.get(1, 0)), "-k/m"))
+  assert_true(mechanics_expr_equal(@symprint.to_string(a.get(1, 1)), "-c/m"))
 }

@@ -14,16 +14,17 @@ pub struct ImplementedFunction {
 } derive(Eq)
 
 ///|
-let implemented_registry : Ref[Map[String, (Array[Double]) -> Double]] = {
-  val: {},
-}
+let implemented_registry : Ref[
+  Map[String, (Array[Double]) -> Double raise UtilitiesError],
+] = { val: {} }
 
 ///|
 fn expr_number_to_double(
   n : @symnum.BigRational,
 ) -> Double raise UtilitiesError {
   let num = @strconv.parse_double(n.numerator().to_string()) catch {
-    _ => raise UtilitiesError::InvalidArgument("cannot parse rational numerator")
+    _ =>
+      raise UtilitiesError::InvalidArgument("cannot parse rational numerator")
   }
   let den = @strconv.parse_double(n.denominator().to_string()) catch {
     _ =>
@@ -117,9 +118,7 @@ fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
     Expr::Add(_) => 0
     Expr::Mul(_) => 1
     Expr::Pow(_, _) => 2
-    Expr::Number(_)
-    | Expr::Symbol(_)
-    | Expr::Function(_, _) => 3
+    Expr::Number(_) | Expr::Symbol(_) | Expr::Function(_, _) => 3
   }
   let text = match expr {
     Expr::Number(n) =>
@@ -159,7 +158,7 @@ pub fn lambdastr(args : Array[String], expr : Expr) -> String {
 ///|
 pub fn implemented_function(
   name : String,
-  implementation : (Array[Double]) -> Double,
+  implementation : (Array[Double]) -> Double raise UtilitiesError,
 ) -> ImplementedFunction {
   implemented_registry.val[name] = implementation
   { name, }

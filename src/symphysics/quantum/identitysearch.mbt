@@ -329,8 +329,7 @@ pub fn build_gate_identity(
     equivalent_ids: equivalent_ids.map(expr => {
       match expr {
         Expr::Mul(args) => args.copy()
-        Expr::Number(n) if n.is_integral() &&
-          n.numerator().to_int() == 1 => []
+        Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => []
         _ => [expr]
       }
     }),
@@ -366,9 +365,7 @@ pub fn GateIdentity::circuit(self : GateIdentity) -> Expr {
 }
 
 ///|
-pub fn GateIdentity::sequence_exprs(
-  self : GateIdentity,
-) -> Array[Expr] {
+pub fn GateIdentity::sequence_exprs(self : GateIdentity) -> Array[Expr] {
   if self.sequence.is_empty() {
     if self.equivalent_ids.is_empty() {
       []
@@ -386,9 +383,7 @@ pub fn GateIdentity::gate_rules(self : GateIdentity) -> Array[GateRule] {
 }
 
 ///|
-pub fn GateIdentity::equivalent_id_exprs(
-  self : GateIdentity,
-) -> Array[Expr] {
+pub fn GateIdentity::equivalent_id_exprs(self : GateIdentity) -> Array[Expr] {
   self.equivalent_ids.map(gate_sequence_expr)
 }
 

@@ -8,10 +8,10 @@ fn mx_trim(s : String) -> String {
 
 ///|
 fn mx_expr_norm(e : @symcore.Expr) -> String raise {
-  (sympy_normalize(@symprint.to_string(e)).trim().to_string()).replace_all(
-    old=" ",
-    new="",
-  )
+  sympy_normalize(@symprint.to_string(e))
+  .trim()
+  .to_string()
+  .replace_all(old=" ", new="")
 }
 
 ///|
@@ -94,7 +94,9 @@ fn ddm_to_int_rows(ddm : DDM) -> Array[Array[Int]] raise PolyError {
 ///|
 fn ddm_rat(num : Int, den : Int) -> FieldElem raise PolyError {
   @sympolys.fe_from_rational(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+    @symnum.BigRational::from_ints(num, den) catch {
+      _ => raise PolyError::DivisionByZero
+    },
     Domain::QQ,
   )
 }
@@ -129,16 +131,8 @@ test "matrices: DDM add/matmul/scalarmul/det/rref parity" {
   let pivot_text = pivots.map(i => i.to_string()).join(",")
   let ours_rref = "\{r.to_string()}||[\{pivot_text}]"
 
-  let oracle_add = ddm_add(
-    [[1, 2], [3, 4]],
-    [[5, 6], [7, 8]],
-    "QQ",
-  )
-  let oracle_matmul = ddm_matmul(
-    [[1, 2], [3, 4]],
-    [[5, 6], [7, 8]],
-    "QQ",
-  )
+  let oracle_add = ddm_add([[1, 2], [3, 4]], [[5, 6], [7, 8]], "QQ")
+  let oracle_matmul = ddm_matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]], "QQ")
   let oracle_mul = ddm_mul([[1, 2], [3, 4]], 2, "QQ")
   let oracle_det = ddm_det([[1, 2], [3, 4]], "QQ")
   let oracle_rref = ddm_rref([[1, 2], [3, 4]], "QQ")
@@ -183,9 +177,7 @@ test "matrices: DDM exact denominator parity" {
   )
 
   let expr_rows = [["1/2", "1/3", "1/4"], ["1/5", "1/6", "1/7"]]
-  let oracle_clear = domainmatrix_clear_denoms_expr(
-    expr_rows, "QQ",
-  )
+  let oracle_clear = domainmatrix_clear_denoms_expr(expr_rows, "QQ")
   let oracle_clear_rowwise = domainmatrix_clear_denoms_rowwise_expr(
     expr_rows, "QQ",
   )
@@ -204,10 +196,7 @@ test "matrices: DDM exact denominator parity" {
   let ours_inv_den = "Matrix(\{inv_den.0.to_string()})||\{@sympolys.fe_to_string(inv_den.1)}"
   let ours_solve_den = "Matrix(\{solve_den.0.to_string()})||\{@sympolys.fe_to_string(solve_den.1)}"
 
-  let oracle_adjugate = domainmatrix_adjugate(
-    [[1, 2], [3, 4]],
-    "ZZ",
-  )
+  let oracle_adjugate = domainmatrix_adjugate([[1, 2], [3, 4]], "ZZ")
   let oracle_adj_det = domainmatrix_adj_det([[1, 2], [3, 4]], "ZZ")
   let oracle_inv_den = domainmatrix_inv_den([[1, 2], [3, 4]], "ZZ")
   let oracle_solve_den = domainmatrix_solve_den(
@@ -229,11 +218,7 @@ test "matrices: DDM rref_den/nullspace/solve_den_rref parity" {
   let rref_den = a.rref_den(rref_method="FF")
   let pivots = rref_den.2.map(i => i.to_string()).join(",")
   let ours_rref_den = "Matrix(\{rref_den.0.to_string()})||\{@sympolys.fe_to_string(rref_den.1)}||[\{pivots}]"
-  let oracle_rref_den = domainmatrix_rref_den(
-    rows,
-    "ZZ",
-    rref_method="FF",
-  )
+  let oracle_rref_den = domainmatrix_rref_den(rows, "ZZ", rref_method="FF")
   assert_eq(mx_trim(ours_rref_den), mx_trim(oracle_rref_den))
 
   let zz_ns = @sympolys.ddm_from_ints([[6, -3], [4, -2]], Domain::ZZ)
@@ -266,7 +251,10 @@ test "matrices: DDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   let qr_left = qr.0.to_domain_matrix()
   let qr_right = qr.1.to_domain_matrix()
   let recomposed = qr_left.matmul(qr_right).to_matrix_string()
-  assert_eq(mx_trim(recomposed), mx_trim(qr_case.to_domain_matrix().to_matrix_string()))
+  assert_eq(
+    mx_trim(recomposed),
+    mx_trim(qr_case.to_domain_matrix().to_matrix_string()),
+  )
   assert_true(dm_is_diagonal(qr_left.transpose().matmul(qr_left)))
   assert_true(dm_is_upper(qr_right))
 
@@ -294,15 +282,15 @@ test "matrices: DDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
     .to_domain_matrix()
     .to_field()
     .matmul(zz.to_domain_matrix().to_field())
-  assert_eq(mx_trim(fflu_left.to_matrix_string()), mx_trim(fflu_right.to_matrix_string()))
+  assert_eq(
+    mx_trim(fflu_left.to_matrix_string()),
+    mx_trim(fflu_right.to_matrix_string()),
+  )
   assert_true(dm_is_diagonal(fflu.2.to_domain_matrix()))
   assert_true(dm_is_upper(fflu.3.to_domain_matrix()))
 
   let ours_charpoly = coeffs_text(zz.charpoly())
-  let oracle_charpoly = domainmatrix_charpoly(
-    [[1, 2], [3, 4]],
-    "ZZ",
-  )
+  let oracle_charpoly = domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
   assert_eq(mx_trim(ours_charpoly), mx_trim(oracle_charpoly))
 }
 
@@ -363,8 +351,18 @@ test "matrices: SDM add/matmul/scalarmul and dense conversion" {
   let three = @sympolys.fe_from_int(3, Domain::ZZ)
   let four = @sympolys.fe_from_int(4, Domain::ZZ)
 
-  let s = @sympolys.sdm_from_entries(2, 2, [(0, 1, two), (1, 0, one)], Domain::ZZ)
-  let t = @sympolys.sdm_from_entries(2, 2, [(0, 0, three), (1, 1, four)], Domain::ZZ)
+  let s = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [(0, 1, two), (1, 0, one)],
+    Domain::ZZ,
+  )
+  let t = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [(0, 0, three), (1, 1, four)],
+    Domain::ZZ,
+  )
 
   let add = s.add(t)
   let scaled = s.mul(two)
@@ -490,8 +488,14 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   ).qr()
   let q_left = qr.0.to_dense().to_domain_matrix()
   let q_right = qr.1.to_dense().to_domain_matrix()
-  let orig_qr = @sympolys.domain_matrix_from_ints([[1, 2], [3, 4], [5, 6]], Domain::QQ)
-  assert_eq(mx_trim(q_left.matmul(q_right).to_matrix_string()), mx_trim(orig_qr.to_matrix_string()))
+  let orig_qr = @sympolys.domain_matrix_from_ints(
+    [[1, 2], [3, 4], [5, 6]],
+    Domain::QQ,
+  )
+  assert_eq(
+    mx_trim(q_left.matmul(q_right).to_matrix_string()),
+    mx_trim(orig_qr.to_matrix_string()),
+  )
   assert_true(dm_is_diagonal(q_left.transpose().matmul(q_left)))
   assert_true(dm_is_upper(q_right))
 
@@ -552,43 +556,55 @@ test "matrices: SDM lu/lu_solve/charpoly parity and qr/fflu invariants" {
   assert_true(dm_is_upper(fflu.3.to_dense().to_domain_matrix()))
 
   let ours_charpoly = coeffs_text(zz.charpoly())
-  let oracle_charpoly = domainmatrix_charpoly(
-    [[1, 2], [3, 4]],
-    "ZZ",
-  )
+  let oracle_charpoly = domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
   assert_eq(mx_trim(ours_charpoly), mx_trim(oracle_charpoly))
 }
 
 ///|
 test "matrices: DDM and SDM structural wrappers" {
   let ddm = @sympolys.ddm_from_ints([[1, 0], [0, 4]], Domain::ZZ)
-  assert_eq(mx_trim(
-          DDM::from_list_flat(ddm.to_list_flat(), (2, 2), Domain::ZZ).to_string(),
-        ), mx_trim(ddm.to_string()))
+  assert_eq(
+    mx_trim(
+      DDM::from_list_flat(ddm.to_list_flat(), (2, 2), Domain::ZZ).to_string(),
+    ),
+    mx_trim(ddm.to_string()),
+  )
   assert_eq(mx_trim(DDM::zeros(2, 2, Domain::ZZ).to_string()), "[[0,0],[0,0]]")
   assert_eq(mx_trim(DDM::ones(2, 2, Domain::ZZ).to_string()), "[[1,1],[1,1]]")
   assert_eq(mx_trim(DDM::eye(2, Domain::ZZ).to_string()), "[[1,0],[0,1]]")
-  assert_eq(mx_trim(
-          DDM::diag(
-            [@sympolys.fe_from_int(1, Domain::ZZ), @sympolys.fe_from_int(4, Domain::ZZ)],
-            Domain::ZZ,
-          ).to_string(),
-        ), mx_trim(ddm.to_string()))
+  assert_eq(
+    mx_trim(
+      DDM::diag(
+        [
+          @sympolys.fe_from_int(1, Domain::ZZ),
+          @sympolys.fe_from_int(4, Domain::ZZ),
+        ],
+        Domain::ZZ,
+      ).to_string(),
+    ),
+    mx_trim(ddm.to_string()),
+  )
   assert_eq(coeffs_text(ddm.diagonal()), "[1, 4]")
   assert_eq(coeffs_text(ddm.to_list_flat()), "[1, 0, 0, 4]")
   let ddm_flat_nz = ddm.to_flat_nz()
-  assert_eq(mx_trim(
-          ddm.from_flat_nz(ddm_flat_nz.0, ddm_flat_nz.1, Domain::ZZ).to_string(),
-        ), mx_trim(ddm.to_string()))
+  assert_eq(
+    mx_trim(
+      ddm.from_flat_nz(ddm_flat_nz.0, ddm_flat_nz.1, Domain::ZZ).to_string(),
+    ),
+    mx_trim(ddm.to_string()),
+  )
   assert_true(ddm.to_dod().length() == 2 && ddm.to_dok().length() == 2)
   let ddm_two = @sympolys.fe_from_int(2, Domain::ZZ)
-  assert_eq(mx_trim(
-          ddm
-          .applyfunc(fn(value : FieldElem) raise PolyError {
-            @sympolys.fe_mul(value, ddm_two)
-          })
-          .to_string(),
-        ), "[[2,0],[0,8]]")
+  assert_eq(
+    mx_trim(
+      ddm
+      .applyfunc(fn(value : FieldElem) raise PolyError {
+        @sympolys.fe_mul(value, ddm_two)
+      })
+      .to_string(),
+    ),
+    "[[2,0],[0,8]]",
+  )
   assert_eq(mx_trim(ddm.to_ddm().to_string()), mx_trim(ddm.to_string()))
   assert_eq(ddm.nnz(), 2)
   assert_true(ddm.is_diagonal() && ddm.is_upper() && ddm.is_lower())
@@ -596,49 +612,98 @@ test "matrices: DDM and SDM structural wrappers" {
   assert_eq(mx_trim(ddm.hstack(ddm).to_string()), "[[1,0,1,0],[0,4,0,4]]")
   assert_eq(mx_trim(ddm.vstack(ddm).to_string()), "[[1,0],[0,4],[1,0],[0,4]]")
   assert_eq(mx_trim(ddm.mul_elementwise(ddm).to_string()), "[[1,0],[0,16]]")
-  assert_eq(mx_trim(ddm.rmul(@sympolys.fe_from_int(2, Domain::ZZ)).to_string()), "[[2,0],[0,8]]")
+  assert_eq(
+    mx_trim(ddm.rmul(@sympolys.fe_from_int(2, Domain::ZZ)).to_string()),
+    "[[2,0],[0,8]]",
+  )
   assert_eq(ddm.scc().to_string(), "[[0], [1]]")
-  assert_eq(mx_trim(ddm.to_sdm().to_dense().to_string()), mx_trim(ddm.to_string()))
+  assert_eq(
+    mx_trim(ddm.to_sdm().to_dense().to_string()),
+    mx_trim(ddm.to_string()),
+  )
 
   let one = @sympolys.fe_from_int(1, Domain::QQ)
   let four = @sympolys.fe_from_int(4, Domain::QQ)
-  let sdm = @sympolys.sdm_from_entries(2, 2, [(0, 0, one), (1, 1, four)], Domain::QQ)
-  assert_eq(mx_trim(
-          SDM::from_list_flat(sdm.to_list_flat(), (2, 2), Domain::QQ)
-          .to_dense()
-          .to_string(),
-        ), mx_trim(sdm.to_dense().to_string()))
-  assert_eq(mx_trim(SDM::zeros(2, 2, Domain::QQ).to_dense().to_string()), "[[0,0],[0,0]]")
-  assert_eq(mx_trim(SDM::ones(2, 2, Domain::QQ).to_dense().to_string()), "[[1,1],[1,1]]")
-  assert_eq(mx_trim(SDM::eye(2, Domain::QQ).to_dense().to_string()), "[[1,0],[0,1]]")
-  assert_eq(mx_trim(SDM::diag([one, four], Domain::QQ).to_dense().to_string()), mx_trim(sdm.to_dense().to_string()))
+  let sdm = @sympolys.sdm_from_entries(
+    2,
+    2,
+    [(0, 0, one), (1, 1, four)],
+    Domain::QQ,
+  )
+  assert_eq(
+    mx_trim(
+      SDM::from_list_flat(sdm.to_list_flat(), (2, 2), Domain::QQ)
+      .to_dense()
+      .to_string(),
+    ),
+    mx_trim(sdm.to_dense().to_string()),
+  )
+  assert_eq(
+    mx_trim(SDM::zeros(2, 2, Domain::QQ).to_dense().to_string()),
+    "[[0,0],[0,0]]",
+  )
+  assert_eq(
+    mx_trim(SDM::ones(2, 2, Domain::QQ).to_dense().to_string()),
+    "[[1,1],[1,1]]",
+  )
+  assert_eq(
+    mx_trim(SDM::eye(2, Domain::QQ).to_dense().to_string()),
+    "[[1,0],[0,1]]",
+  )
+  assert_eq(
+    mx_trim(SDM::diag([one, four], Domain::QQ).to_dense().to_string()),
+    mx_trim(sdm.to_dense().to_string()),
+  )
   assert_eq(coeffs_text(sdm.diagonal()), "[1, 4]")
   assert_eq(coeffs_text(sdm.to_list_flat()), "[1, 0, 0, 4]")
   let sdm_flat_nz = sdm.to_flat_nz()
-  assert_eq(mx_trim(
-          sdm
-          .from_flat_nz(sdm_flat_nz.0, sdm_flat_nz.1, Domain::QQ)
-          .to_dense()
-          .to_string(),
-        ), mx_trim(sdm.to_dense().to_string()))
+  assert_eq(
+    mx_trim(
+      sdm
+      .from_flat_nz(sdm_flat_nz.0, sdm_flat_nz.1, Domain::QQ)
+      .to_dense()
+      .to_string(),
+    ),
+    mx_trim(sdm.to_dense().to_string()),
+  )
   assert_true(sdm.to_dod().length() == 2 && sdm.to_dok().length() == 2)
   let sdm_two = @sympolys.fe_from_int(2, Domain::QQ)
-  assert_eq(mx_trim(
-          sdm
-          .applyfunc(fn(value : FieldElem) raise PolyError {
-            @sympolys.fe_mul(value, sdm_two)
-          })
-          .to_dense()
-          .to_string(),
-        ), "[[2,0],[0,8]]")
-  assert_eq(mx_trim(sdm.to_sdm().to_dense().to_string()), mx_trim(sdm.to_dense().to_string()))
+  assert_eq(
+    mx_trim(
+      sdm
+      .applyfunc(fn(value : FieldElem) raise PolyError {
+        @sympolys.fe_mul(value, sdm_two)
+      })
+      .to_dense()
+      .to_string(),
+    ),
+    "[[2,0],[0,8]]",
+  )
+  assert_eq(
+    mx_trim(sdm.to_sdm().to_dense().to_string()),
+    mx_trim(sdm.to_dense().to_string()),
+  )
   assert_eq(sdm.nnz(), 2)
   assert_true(sdm.is_diagonal() && sdm.is_upper() && sdm.is_lower())
   assert_eq(mx_trim(sdm.transpose().to_dense().to_string()), "[[1,0],[0,4]]")
-  assert_eq(mx_trim(sdm.hstack(sdm).to_dense().to_string()), "[[1,0,1,0],[0,4,0,4]]")
-  assert_eq(mx_trim(sdm.vstack(sdm).to_dense().to_string()), "[[1,0],[0,4],[1,0],[0,4]]")
-  assert_eq(mx_trim(sdm.mul_elementwise(sdm).to_dense().to_string()), "[[1,0],[0,16]]")
-  assert_eq(mx_trim(sdm.rmul(@sympolys.fe_from_int(2, Domain::QQ)).to_dense().to_string()), "[[2,0],[0,8]]")
+  assert_eq(
+    mx_trim(sdm.hstack(sdm).to_dense().to_string()),
+    "[[1,0,1,0],[0,4,0,4]]",
+  )
+  assert_eq(
+    mx_trim(sdm.vstack(sdm).to_dense().to_string()),
+    "[[1,0],[0,4],[1,0],[0,4]]",
+  )
+  assert_eq(
+    mx_trim(sdm.mul_elementwise(sdm).to_dense().to_string()),
+    "[[1,0],[0,16]]",
+  )
+  assert_eq(
+    mx_trim(
+      sdm.rmul(@sympolys.fe_from_int(2, Domain::QQ)).to_dense().to_string(),
+    ),
+    "[[2,0],[0,8]]",
+  )
   assert_eq(@sympolys.fe_to_string(sdm.det()), "4")
   assert_eq(mx_trim(sdm.inv().to_dense().to_string()), "[[1,0],[0,1/4]]")
   assert_eq(sdm.scc().to_string(), "[[0], [1]]")
@@ -655,11 +720,7 @@ test "matrices: DDM and SDM structural wrappers" {
     Domain::ZZ,
   )
   let sparse_reduced = zz_sparse.lll()
-  let sparse_hnf_orig = matrix_hnf_code([
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ])
+  let sparse_hnf_orig = matrix_hnf_code([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
   let sparse_hnf_reduced = matrix_hnf_code(
     ddm_to_int_rows(sparse_reduced.to_dense()),
   )
@@ -669,7 +730,10 @@ test "matrices: DDM and SDM structural wrappers" {
     .to_dense()
     .matmul(zz_sparse.to_dense())
     .to_string()
-  assert_eq(mx_trim(sparse_recomposed), mx_trim(sparse_lll_transform.0.to_dense().to_string()))
+  assert_eq(
+    mx_trim(sparse_recomposed),
+    mx_trim(sparse_lll_transform.0.to_dense().to_string()),
+  )
   let sparse_hnf_transformed = matrix_hnf_code(
     ddm_to_int_rows(sparse_lll_transform.0.to_dense()),
   )
@@ -704,7 +768,10 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
     row_stop=Some(3),
     col_stop=Some(-2),
   )
-  assert_eq(ddm_slice.to_domain_matrix().to_matrix_string(), "Matrix([[4], [7]])")
+  assert_eq(
+    ddm_slice.to_domain_matrix().to_matrix_string(),
+    "Matrix([[4], [7]])",
+  )
   let ddm_flat = Array::from_iter(ddm.flatiter()).map(fe_to_string).join(",")
   assert_eq(ddm_flat, "1,2,3,4,5,6,7,8,9")
   let ddm_copy = DDM::from_ddm(ddm)
@@ -717,25 +784,37 @@ test "matrices: DDM and SDM constructor/accessor helpers" {
   let sdm = SDM::new(dod, (2, 2), Domain::ZZ)
   assert_eq(@sympolys.fe_to_string(sdm.getitem(-2, -1)), "1")
   let sdm_set = sdm.setitem(1, 0, @sympolys.fe_from_int(2, Domain::ZZ))
-  assert_eq(sdm_set
-        .extract_slice(
-          row_start=Some(1),
-          row_stop=Some(2),
-          col_start=Some(0),
-          col_stop=Some(1),
-        )
-        .to_dense()
-        .to_domain_matrix()
-        .to_matrix_string(), "Matrix([[2]])")
+  assert_eq(
+    sdm_set
+    .extract_slice(
+      row_start=Some(1),
+      row_stop=Some(2),
+      col_start=Some(0),
+      col_stop=Some(1),
+    )
+    .to_dense()
+    .to_domain_matrix()
+    .to_matrix_string(),
+    "Matrix([[2]])",
+  )
   let sdm_from_list = SDM::from_list(
     [
-      [@sympolys.fe_from_int(1, Domain::ZZ), @sympolys.fe_from_int(0, Domain::ZZ)],
-      [@sympolys.fe_from_int(0, Domain::ZZ), @sympolys.fe_from_int(1, Domain::ZZ)],
+      [
+        @sympolys.fe_from_int(1, Domain::ZZ),
+        @sympolys.fe_from_int(0, Domain::ZZ),
+      ],
+      [
+        @sympolys.fe_from_int(0, Domain::ZZ),
+        @sympolys.fe_from_int(1, Domain::ZZ),
+      ],
     ],
     (2, 2),
     Domain::ZZ,
   )
-  assert_eq(mx_trim(sdm_from_list.to_dense().to_domain_matrix().to_matrix_string()), mx_trim("Matrix([[1, 0], [0, 1]])"))
+  assert_eq(
+    mx_trim(sdm_from_list.to_dense().to_domain_matrix().to_matrix_string()),
+    mx_trim("Matrix([[1, 0], [0, 1]])"),
+  )
 }
 
 ///|
@@ -745,7 +824,10 @@ test "matrices: DFM fallback and scalar sympy helpers" {
   assert_eq(mx_trim(ddm.to_dfm_or_ddm().to_string()), mx_trim(ddm.to_string()))
 
   let sdm = SDM::from_ddm(ddm)
-  assert_eq(mx_trim(sdm.to_domain_matrix().to_matrix_string()), mx_trim("Matrix([[1, 2], [3, 4]])"))
+  assert_eq(
+    mx_trim(sdm.to_domain_matrix().to_matrix_string()),
+    mx_trim("Matrix([[1, 2], [3, 4]])"),
+  )
   assert_eq(mx_trim(sdm.to_dfm().to_string()), mx_trim(ddm.to_string()))
   assert_eq(mx_trim(sdm.to_dfm_or_ddm().to_string()), mx_trim(ddm.to_string()))
 
@@ -754,7 +836,10 @@ test "matrices: DFM fallback and scalar sympy helpers" {
   let ours_scalar = "\{scalar.to_string()}@\{@sympolys.domain_to_sympy_string(scalar.domain)}"
   assert_eq(mx_trim(ours_scalar), mx_trim(oracle_scalar))
   assert_eq(@symprint.to_string(scalar.to_sympy()), "1/2")
-  let scalar_new = DomainScalar::new(@sympolys.fe_from_int(3, Domain::ZZ), Domain::ZZ)
+  let scalar_new = DomainScalar::new(
+    @sympolys.fe_from_int(3, Domain::ZZ),
+    Domain::ZZ,
+  )
   assert_eq(scalar_new.to_string(), "3")
 }
 
@@ -781,24 +866,39 @@ test "matrices: DomainScalar coercion and arithmetic" {
     @sympolys.domain_scalar_from_int(3, Domain::ZZ),
   )
   assert_true(qr.0.to_string() == "2" && qr.1.to_string() == "1")
-  assert_eq(@sympolys.domain_scalar_from_int(2, Domain::ZZ).pos().to_string(), "2")
-  assert_eq(@sympolys.domain_scalar_from_int(2, Domain::ZZ).neg().to_string(), "-2")
+  assert_eq(
+    @sympolys.domain_scalar_from_int(2, Domain::ZZ).pos().to_string(),
+    "2",
+  )
+  assert_eq(
+    @sympolys.domain_scalar_from_int(2, Domain::ZZ).neg().to_string(),
+    "-2",
+  )
 }
 
 ///|
 test "matrices: linsolve unique/no-solution/parametric" {
   let a = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
-  let b = [@sympolys.fe_from_int(5, Domain::QQ), @sympolys.fe_from_int(11, Domain::QQ)]
+  let b = [
+    @sympolys.fe_from_int(5, Domain::QQ),
+    @sympolys.fe_from_int(11, Domain::QQ),
+  ]
   match @sympolys.linear_solve(a, b) {
     LinearSolveResult::Unique(sol) => {
       assert_eq(sol.length(), 2)
-      assert_true(@sympolys.fe_to_string(sol[0]) == "1" && @sympolys.fe_to_string(sol[1]) == "2")
+      assert_true(
+        @sympolys.fe_to_string(sol[0]) == "1" &&
+        @sympolys.fe_to_string(sol[1]) == "2",
+      )
     }
     _ => fail("expected unique solution")
   }
 
   let a2 = @sympolys.ddm_from_ints([[1, 1], [1, 1]], Domain::QQ)
-  let b2 = [@sympolys.fe_from_int(1, Domain::QQ), @sympolys.fe_from_int(2, Domain::QQ)]
+  let b2 = [
+    @sympolys.fe_from_int(1, Domain::QQ),
+    @sympolys.fe_from_int(2, Domain::QQ),
+  ]
   assert_true(@sympolys.linear_solve(a2, b2) is LinearSolveResult::NoSolution)
 
   let a3 = @sympolys.ddm_from_ints([[1, 1]], Domain::QQ)
@@ -808,7 +908,9 @@ test "matrices: linsolve unique/no-solution/parametric" {
       assert_eq(params.length(), 1)
       assert_eq(params[0], "t1")
       assert_eq(exprs.length(), 2)
-      assert_true(mx_expr_norm(exprs[0]) == "-t1" && mx_expr_norm(exprs[1]) == "t1")
+      assert_true(
+        mx_expr_norm(exprs[0]) == "-t1" && mx_expr_norm(exprs[1]) == "t1",
+      )
     }
     _ => fail("expected parametric solution")
   }

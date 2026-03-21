@@ -44,7 +44,7 @@ test "physics.vector frame/vector core" {
   let by_txt = @symprint.to_string(mapping["B_y"])
   assert_true(
     by_txt == "-N_x*sin(q(t)) + N_y*cos(q(t))" ||
-        by_txt == "N_y*cos(q(t)) + -1*N_x*sin(q(t))"
+    by_txt == "N_y*cos(q(t)) + -1*N_x*sin(q(t))",
   )
 }
 
@@ -60,9 +60,7 @@ test "physics.vector named orientation APIs" {
   assert_true(b.item(0) == b0)
   assert_eq(b.iter_basis().length(), 3)
   assert_true(
-    @symphysics.explicit_matrix_rows_string(n.dcm(b)).contains(
-        "cos(oq1(t))",
-      )
+    @symphysics.explicit_matrix_rows_string(n.dcm(b)).contains("cos(oq1(t))"),
   )
 
   let dcm_rows = [
@@ -152,7 +150,7 @@ test "physics.vector kinematics helpers" {
   let motion_pos_txt = vsprint(motion.2)
   assert_true(
     motion_pos_txt == "sx*t*KVN.x + sy*t*KVN.y" ||
-        motion_pos_txt == "t*sx*KVN.x + t*sy*KVN.y"
+    motion_pos_txt == "t*sx*KVN.x + t*sy*KVN.y",
   )
 }
 

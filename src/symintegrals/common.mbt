@@ -31,9 +31,13 @@ fn expr_from_num(value : @symnum.BigRational) -> Expr {
 
 ///|
 fn expr_rat(num : Int, den : Int) -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  match
+    (
+      try? @symcore.rational_from_ints(num, den) :
+      Result[Expr, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) => @symcore.function("Rational", [expr_int(num), expr_int(den)])
+  }
 }
 
 ///|

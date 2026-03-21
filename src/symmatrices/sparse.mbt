@@ -699,7 +699,7 @@ pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
 }
 
 ///|
-pub fn SparseMatrix::rank(self : SparseMatrix) -> Int raise MatrixError {
+pub fn SparseMatrix::rank(self : SparseMatrix) -> Int {
   self.rref().1.length()
 }
 
@@ -738,25 +738,19 @@ pub fn SparseMatrix::inv(self : SparseMatrix) -> Matrix raise MatrixError {
 }
 
 ///|
-pub fn SparseMatrix::echelon_form(
-  self : SparseMatrix,
-) -> Matrix raise MatrixError {
+pub fn SparseMatrix::echelon_form(self : SparseMatrix) -> Matrix {
   let (rows, _) = sparse_echelon_internal(self)
   sparse_row_maps_to_dense(rows, self.cols)
 }
 
 ///|
-pub fn SparseMatrix::rref(
-  self : SparseMatrix,
-) -> (Matrix, Array[Int]) raise MatrixError {
+pub fn SparseMatrix::rref(self : SparseMatrix) -> (Matrix, Array[Int]) {
   let (rows, pivots) = sparse_rref_internal(self)
   (sparse_row_maps_to_dense(rows, self.cols), pivots)
 }
 
 ///|
-pub fn SparseMatrix::rowspace(
-  self : SparseMatrix,
-) -> Array[Array[Expr]] raise MatrixError {
+pub fn SparseMatrix::rowspace(self : SparseMatrix) -> Array[Array[Expr]] {
   let (rref, _) = self.rref()
   let out : Array[Array[Expr]] = []
   for row in rref.data {
@@ -772,15 +766,18 @@ pub fn SparseMatrix::rowspace(
 }
 
 ///|
-pub fn SparseMatrix::columnspace(
-  self : SparseMatrix,
-) -> Array[Array[Expr]] raise MatrixError {
+pub fn SparseMatrix::columnspace(self : SparseMatrix) -> Array[Array[Expr]] {
   let (_, pivots) = self.rref()
   let out : Array[Array[Expr]] = []
   for pivot in pivots {
     let col : Array[Expr] = []
     for i in 0..<self.rows {
-      col.push(self.getitem(i, pivot))
+      col.push(
+        match self.entries.get((i, pivot)) {
+          Some(value) => value
+          None => expr_zero()
+        },
+      )
     }
     out.push(col)
   }
@@ -788,9 +785,7 @@ pub fn SparseMatrix::columnspace(
 }
 
 ///|
-pub fn SparseMatrix::nullspace(
-  self : SparseMatrix,
-) -> Array[Array[Expr]] raise MatrixError {
+pub fn SparseMatrix::nullspace(self : SparseMatrix) -> Array[Array[Expr]] {
   let (rref, pivots) = self.rref()
   let pivot_set : Map[Int, Bool] = {}
   for pivot in pivots {

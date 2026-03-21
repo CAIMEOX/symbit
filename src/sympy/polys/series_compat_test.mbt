@@ -1,8 +1,9 @@
 ///|
 fn sp_norm(expr : @symcore.Expr) -> String raise {
-  (sympy_normalize(@symprint.to_string(expr))
+  sympy_normalize(@symprint.to_string(expr))
   .trim()
-  .to_string()).replace_all(old=" ", new="")
+  .to_string()
+  .replace_all(old=" ", new="")
 }
 
 ///|
@@ -78,7 +79,10 @@ test "series: powers and analytic functions over QQ" {
   assert_eq(sp_norm(expx.to_expr()), "x**5/120+x**4/24+x**3/6+x**2/2+x+1")
 
   let sqrt1mx = one.sub(x).sqrt()
-  assert_eq(sp_norm(sqrt1mx.to_expr()), "-7*x**5/256-5*x**4/128-x**3/16-x**2/8-x/2+1")
+  assert_eq(
+    sp_norm(sqrt1mx.to_expr()),
+    "-7*x**5/256-5*x**4/128-x**3/16-x**2/8-x/2+1",
+  )
 
   let sinx = x.sin()
   assert_eq(sp_norm(sinx.to_expr()), "x**5/120-x**3/6+x")

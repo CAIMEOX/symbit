@@ -1,17 +1,17 @@
 ///|
 fn nf_norm(expr : @symcore.Expr) -> String raise {
-  (sympy_normalize(@symprint.to_string(expr))
+  sympy_normalize(@symprint.to_string(expr))
   .trim()
-  .to_string()).replace_all(old=" ", new="")
+  .to_string()
+  .replace_all(old=" ", new="")
 }
 
 ///|
 fn nf_oracle_minpoly(expr : String, gen? : String = "x") -> String raise {
-  (sympy_normalize(
-    numberfield_minpoly(expr, gen~),
-  )
+  sympy_normalize(numberfield_minpoly(expr, gen~))
   .trim()
-  .to_string()).replace_all(old=" ", new="")
+  .to_string()
+  .replace_all(old=" ", new="")
 }
 
 ///|
@@ -120,13 +120,17 @@ test "numberfields: @sympolys.to_number_field(expr, theta) coeff parity" {
   let sqrt5 = @symcore.int(5) ^ half
   let theta = sqrt2 + sqrt3
 
-  let ours_s2 = nf_coeffs_norm(Some(@sympolys.to_number_field_coeffs(sqrt2, theta)))
+  let ours_s2 = nf_coeffs_norm(
+    Some(@sympolys.to_number_field_coeffs(sqrt2, theta)),
+  )
   let oracle_s2 = numberfield_to_number_field_coeffs(
     "sqrt(2)", "sqrt(2) + sqrt(3)",
   ).replace_all(old=" ", new="")
   assert_eq(ours_s2, oracle_s2)
 
-  let ours_s3 = nf_coeffs_norm(Some(@sympolys.to_number_field_coeffs(sqrt3, theta)))
+  let ours_s3 = nf_coeffs_norm(
+    Some(@sympolys.to_number_field_coeffs(sqrt3, theta)),
+  )
   let oracle_s3 = numberfield_to_number_field_coeffs(
     "sqrt(3)", "sqrt(2) + sqrt(3)",
   ).replace_all(old=" ", new="")
@@ -184,10 +188,10 @@ test "numberfields: primitive_element ex reps parity" {
   assert_eq(coeffs, oracle_coeffs)
 
   let ours_reps = nf_reps_norm(reps)
-  let oracle_reps = numberfield_primitive_reps(
-    ["sqrt(2)", "sqrt(3)"],
-    gen="x",
-  ).replace_all(old=" ", new="")
+  let oracle_reps = numberfield_primitive_reps(["sqrt(2)", "sqrt(3)"], gen="x").replace_all(
+    old=" ",
+    new="",
+  )
   assert_eq(ours_reps, oracle_reps)
 }
 
@@ -204,12 +208,8 @@ test "numberfields: field_isomorphic parity for simple algebraic fields" {
   let ours_same = @sympolys.field_isomorphic(qa, qb)
   let ours_diff = @sympolys.field_isomorphic(qa, qc)
 
-  let oracle_same = numberfield_field_isomorphic(
-    "sqrt(2)", "sqrt(2)",
-  )
-  let oracle_diff = numberfield_field_isomorphic(
-    "sqrt(2)", "sqrt(3)",
-  )
+  let oracle_same = numberfield_field_isomorphic("sqrt(2)", "sqrt(2)")
+  let oracle_diff = numberfield_field_isomorphic("sqrt(2)", "sqrt(3)")
 
   assert_eq(ours_same, oracle_same)
   assert_eq(ours_diff, oracle_diff)
@@ -251,9 +251,10 @@ test "numberfields: subfield field_isomorphism coefficient parity" {
     let lhs_str = item.2
     let rhs_str = item.3
     let ours = nf_coeffs_norm(@sympolys.field_isomorphism(lhs, rhs))
-    let oracle = numberfield_field_isomorphism_coeffs(
-      lhs_str, rhs_str,
-    ).replace_all(old=" ", new="")
+    let oracle = numberfield_field_isomorphism_coeffs(lhs_str, rhs_str).replace_all(
+      old=" ",
+      new="",
+    )
     assert_eq(ours, oracle)
   }
 }
@@ -269,5 +270,7 @@ test "numberfields: is_isomorphism_possible basic sanity" {
   assert_true(@sympolys.is_isomorphism_possible(sqrt2, sqrt8))
   assert_true(@sympolys.is_isomorphism_possible(sqrt2, sqrt3))
   assert_true(@sympolys.is_isomorphism_possible(sqrt2, theta))
-  assert_true(@sympolys.is_isomorphism_possible(@symcore.rational_from_ints(3, 2), sqrt2))
+  assert_true(
+    @sympolys.is_isomorphism_possible(@symcore.rational_from_ints(3, 2), sqrt2),
+  )
 }

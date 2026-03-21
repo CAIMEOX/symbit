@@ -189,9 +189,7 @@ pub fn Body::angular_momentum(
   frame : @symvector.ReferenceFrame,
 ) -> @symvector.Vector raise @symvector.VectorError {
   if self.is_rigidbody_ {
-    let spin = self.central_inertia_.dot_vector(
-      self.frame_.ang_vel_in(frame),
-    )
+    let spin = self.central_inertia_.dot_vector(self.frame_.ang_vel_in(frame))
     let r = self.masscenter_.pos_from(point)
     let p = self.linear_momentum(frame)
     spin + r.cross(p)
@@ -213,8 +211,7 @@ pub fn Body::kinetic_energy(
       mech_half_expr() *
       self.mass_ *
       self.masscenter_.vel(frame).dot(self.masscenter_.vel(frame)) +
-      mech_half_expr() *
-      omega.dot(self.central_inertia_.dot_vector(omega)),
+      mech_half_expr() * omega.dot(self.central_inertia_.dot_vector(omega)),
     )
   } else {
     mech_half_expr() *

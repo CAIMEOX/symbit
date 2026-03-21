@@ -108,9 +108,7 @@ test "eigen_compat: shifted algebraic matrix rref over QQ extension" {
   let minpoly = PolyBuilder::new(["_lambda"], Domain::QQ).from_expr(
     (x ^ int(2)) - int(2),
   )
-  let field = build_alg_extension(
-    alg_ext_spec(Domain::QQ, "_lambda", minpoly),
-  )
+  let field = build_alg_extension(alg_ext_spec(Domain::QQ, "_lambda", minpoly))
   let eigenval = algext_generator_elem(Domain::QQ, minpoly, "_lambda")
   guard fe_is_one(fe_mul(fe_neg(eigenval), fe_inv(fe_neg(eigenval)))) else {
     fail("expected algebraic inverse to normalize")

@@ -1,3 +1,4 @@
+///|
 fn actuator_assert_force_load(
   load : Load,
   point_name : String,
@@ -14,9 +15,9 @@ fn actuator_assert_force_load(
       let ours_x = @symprint.to_string(comps.get(0, 0))
       let ours_y = @symprint.to_string(comps.get(1, 0))
       let ours_z = @symprint.to_string(comps.get(2, 0))
-      assert_true((mechanics_expr_equal(ours_x, rhs_x)))
-      assert_true((mechanics_expr_equal(ours_y, rhs_y)))
-      assert_true((mechanics_expr_equal(ours_z, rhs_z)))
+      assert_true(mechanics_expr_equal(ours_x, rhs_x))
+      assert_true(mechanics_expr_equal(ours_y, rhs_y))
+      assert_true(mechanics_expr_equal(ours_z, rhs_z))
     }
     _ => fail(context + ": expected force load")
   }
@@ -39,9 +40,9 @@ fn actuator_assert_torque_load(
       let ours_x = @symprint.to_string(comps.get(0, 0))
       let ours_y = @symprint.to_string(comps.get(1, 0))
       let ours_z = @symprint.to_string(comps.get(2, 0))
-      assert_true((mechanics_expr_equal(ours_x, rhs_x)))
-      assert_true((mechanics_expr_equal(ours_y, rhs_y)))
-      assert_true((mechanics_expr_equal(ours_z, rhs_z)))
+      assert_true(mechanics_expr_equal(ours_x, rhs_x))
+      assert_true(mechanics_expr_equal(ours_y, rhs_y))
+      assert_true(mechanics_expr_equal(ours_z, rhs_z))
     }
     _ => fail(context + ": expected torque load")
   }
@@ -87,9 +88,9 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(spring.force()),
-        spring_force_oracle,
-      )
+      @symprint.to_string(spring.force()),
+      spring_force_oracle,
+    ),
   )
 
   let damper = linear_damper(@symcore.symbol("c"), pathway)
@@ -98,9 +99,9 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(damper.force()),
-        damper_force_oracle,
-      )
+      @symprint.to_string(damper.force()),
+      damper_force_oracle,
+    ),
   )
 
   let duffing = duffing_spring(
@@ -113,9 +114,9 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(duffing.force()),
-        duffing_force_oracle,
-      )
+      @symprint.to_string(duffing.force()),
+      duffing_force_oracle,
+    ),
   )
 
   let friction = coulomb_kinetic_friction(
@@ -129,9 +130,9 @@ test "physics.mechanics parity actuators" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(friction.force()),
-        friction_force_oracle,
-      )
+      @symprint.to_string(friction.force()),
+      friction_force_oracle,
+    ),
   )
 
   let target = @symvector.reference_frame("TA")

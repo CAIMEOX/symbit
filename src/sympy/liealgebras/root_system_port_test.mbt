@@ -30,19 +30,15 @@ test "liealgebras root_system parity" {
   let ours_add = add_as_roots_string(
     rs.add_as_roots(vec_from_ints([1, 0, -1, 0]), vec_from_ints([0, 0, 1, -1])),
   )
-  let oracle_add = root_system_add_as_roots_str(
-    "A3",
-    [1, 0, -1, 0],
-    [0, 0, 1, -1],
-  )
+  let oracle_add = root_system_add_as_roots_str("A3", [1, 0, -1, 0], [
+    0, 0, 1, -1,
+  ])
   assert_eq(ours_add, oracle_add)
   let ours_fail = add_as_roots_string(
     rs.add_as_roots(vec_from_ints([1, -1, 0, 0]), vec_from_ints([0, 0, -1, 1])),
   )
-  let oracle_fail = root_system_add_as_roots_str(
-    "A3",
-    [1, -1, 0, 0],
-    [0, 0, -1, 1],
-  )
+  let oracle_fail = root_system_add_as_roots_str("A3", [1, -1, 0, 0], [
+    0, 0, -1, 1,
+  ])
   assert_eq(ours_fail, oracle_fail)
 }

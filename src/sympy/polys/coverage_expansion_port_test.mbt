@@ -5,7 +5,9 @@ fn cov_fezz(n : Int) -> FieldElem raise {
 
 ///|
 fn cov_brat(num : Int, den : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("test rational expects a nonzero denominator")
+  }
 }
 
 ///|
@@ -45,7 +47,7 @@ fn cov_dense_repr(p : DensePoly) -> String {
 
 ///|
 fn cov_poly_norm(poly : Poly) -> String raise {
-  (sympy_normalize(poly.to_string())).trim().to_string()
+  sympy_normalize(poly.to_string()).trim().to_string()
 }
 
 ///|
@@ -112,9 +114,7 @@ test "coverage: core helpers and leading-term API" {
 
   let p_scaled = p.scale_coeff(cov_fezz(3))
   let scaled = cov_poly_norm(p_scaled)
-  let expected_scaled = sympy_normalize("3*x**2 + 6*x + 3")
-    .trim()
-    .to_string()
+  let expected_scaled = sympy_normalize("3*x**2 + 6*x + 3").trim().to_string()
   assert_eq(scaled, expected_scaled)
 
   let p_grev = p.with_order(TermOrder::Grevlex)
@@ -139,11 +139,19 @@ test "coverage: dup_add_mul and dup_sub_mul consistency" {
   let h = cov_dup_from_ints([1, -1])
 
   let add_mul = @sympolys.dup_add_mul(f, g, h, Domain::ZZ)
-  let add_ref = @sympolys.dup_add(f, @sympolys.dup_mul(g, h, Domain::ZZ), Domain::ZZ)
+  let add_ref = @sympolys.dup_add(
+    f,
+    @sympolys.dup_mul(g, h, Domain::ZZ),
+    Domain::ZZ,
+  )
   assert_eq(cov_dup_repr(add_mul), cov_dup_repr(add_ref))
 
   let sub_mul = @sympolys.dup_sub_mul(f, g, h, Domain::ZZ)
-  let sub_ref = @sympolys.dup_sub(f, @sympolys.dup_mul(g, h, Domain::ZZ), Domain::ZZ)
+  let sub_ref = @sympolys.dup_sub(
+    f,
+    @sympolys.dup_mul(g, h, Domain::ZZ),
+    Domain::ZZ,
+  )
   assert_eq(cov_dup_repr(sub_mul), cov_dup_repr(sub_ref))
 }
 
@@ -161,7 +169,11 @@ test "coverage: dup_pdiv/prem/pquo and pseudo-division identity" {
   let n = @sympolys.dup_degree(f) - @sympolys.dup_degree(g) + 1
   let c = cov_fe_pow(@sympolys.dup_LC(g), n)
   let lhs = @sympolys.dup_mul_term(f, c, 0, Domain::ZZ)
-  let rhs = @sympolys.dup_add(@sympolys.dup_mul(q, g, Domain::ZZ), r, Domain::ZZ)
+  let rhs = @sympolys.dup_add(
+    @sympolys.dup_mul(q, g, Domain::ZZ),
+    r,
+    Domain::ZZ,
+  )
   assert_eq(cov_dup_repr(lhs), cov_dup_repr(rhs))
 }
 
@@ -293,7 +305,10 @@ test "coverage: dense conversions and raw dict helpers" {
   let back = @sympolys.to_dense(poly, degree=2)
   assert_eq(cov_dup_repr(back), cov_dup_repr(dense))
 
-  let child_hi = @sympolys.dense_poly([@sympolys.dense_coef(cov_fezz(1)), @sympolys.dense_coef(cov_fezz(0))])
+  let child_hi = @sympolys.dense_poly([
+    @sympolys.dense_coef(cov_fezz(1)),
+    @sympolys.dense_coef(cov_fezz(0)),
+  ])
   let child_lo = @sympolys.dense_poly([@sympolys.dense_coef(cov_fezz(2))])
   let dmp = @sympolys.dense_poly([child_hi, child_lo])
   let raw = @sympolys.dmp_to_raw_dict(dmp, 1, Domain::ZZ)
@@ -350,12 +365,8 @@ test "coverage: core neg/sub APIs" {
   let q = b.from_expr(@symcore.int(3) * x - @symcore.int(1))
   let neg_p = cov_poly_norm(p.neg())
   let sub_pq = cov_poly_norm(p.sub(q))
-  let expect_neg = sympy_normalize("-x**2 - 2*x - 3")
-    .trim()
-    .to_string()
-  let expect_sub = sympy_normalize("x**2 - x + 4")
-    .trim()
-    .to_string()
+  let expect_neg = sympy_normalize("-x**2 - 2*x - 3").trim().to_string()
+  let expect_sub = sympy_normalize("x**2 - x + 4").trim().to_string()
   assert_eq(neg_p, expect_neg)
   assert_eq(sub_pq, expect_sub)
 }
@@ -372,9 +383,7 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
   let content = f.content()
   assert_eq(content.to_string(), "3")
   let primitive = f.primitive_part()
-  let expect_primitive = sympy_normalize("2*x**2 + 3*x + 1")
-    .trim()
-    .to_string()
+  let expect_primitive = sympy_normalize("2*x**2 + 3*x + 1").trim().to_string()
   assert_eq(cov_poly_norm(primitive), expect_primitive)
 
   let g = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
@@ -398,18 +407,14 @@ test "coverage: algebraic-extension public helpers" {
   let spec = @sympolys.alg_ext_spec(Domain::QQ, "x", raw)
   let normalized = @sympolys.normalize_alg_ext_spec(spec)
   let minpoly_norm = cov_poly_norm(normalized.minpoly)
-  let expect_minpoly = sympy_normalize("x**2 + 1/2")
-    .trim()
-    .to_string()
+  let expect_minpoly = sympy_normalize("x**2 + 1/2").trim().to_string()
   assert_eq(minpoly_norm, expect_minpoly)
   let ext = @sympolys.build_alg_extension(spec)
   match ext {
     Domain::AlgExt(base, gens, rels) => {
       assert_true(base is Domain::QQ)
       assert_eq(gens, ["x"])
-      let rel = sympy_normalize(@symprint.to_string(rels[0]))
-        .trim()
-        .to_string()
+      let rel = sympy_normalize(@symprint.to_string(rels[0])).trim().to_string()
       assert_eq(rel, expect_minpoly)
     }
     _ => fail("expected Domain::AlgExt")

@@ -7,13 +7,15 @@ fn wigner_expr_from_bigint(value : BigInt) -> Expr {
 }
 
 ///|
-fn wigner_rational(num : BigInt, den : BigInt) -> @symnum.BigRational {
-  @symnum.BigRational::from_bigint(num).div_r(@symnum.BigRational::from_bigint(den))
-}
-
-///|
-fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr {
-  @symcore.number(wigner_rational(num, den))
+fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr raise PhysicsError {
+  @symcore.number(
+    @symnum.BigRational::new(num, den) catch {
+      _ =>
+        raise PhysicsError::ValueError(
+          "invalid exact rational in Wigner evaluation",
+        )
+    },
+  )
 }
 
 ///|
@@ -437,7 +439,7 @@ pub fn dot_rot_grad_ynm(
   let upper = li + ji
   for k in lower..<(upper + 1) {
     let k_expr = int(k)
-      let alpha = @symelem.sqrt(
+    let alpha = @symelem.sqrt(
         expr_div(
           (int(2) * l + int(1)) *
           (int(2) * j + int(1)) *
@@ -445,25 +447,11 @@ pub fn dot_rot_grad_ynm(
           int(4) * pi_expr(),
         ),
       ) *
-      wigner_3j(
-        j,
-        l,
-        k_expr,
-        int(0),
-        int(0),
-        int(0),
-      ) *
+      wigner_3j(j, l, k_expr, int(0), int(0), int(0)) *
       wigner_3j(j, l, k_expr, p, m, int(-1) * (m + p))
     let coeff = alpha *
       rational_expr(1, 2) *
-      (
-        (k_expr ^ int(2)) -
-        (j ^ int(2)) -
-        (l ^ int(2)) +
-        k_expr -
-        j -
-        l
-      )
+      ((k_expr ^ int(2)) - (j ^ int(2)) - (l ^ int(2)) + k_expr - j - l)
     acc = acc +
       wigner_phase_expr(mi + pi) *
       @symspec.ynm(k_expr, m + p, theta, phi) *
@@ -501,10 +489,7 @@ pub fn wigner_d_small(
         let cos_exp = 2 * s + dJ - i - j
         let sin_exp = i + j - 2 * s
         terms = terms +
-          phase *
-          coeff *
-          (cos_half ^ int(cos_exp)) *
-          (sin_half ^ int(sin_exp))
+          phase * coeff * (cos_half ^ int(cos_exp)) * (sin_half ^ int(sin_exp))
       }
       row.push(dij * terms)
     }

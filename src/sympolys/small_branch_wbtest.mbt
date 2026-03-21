@@ -1,6 +1,8 @@
 ///|
 fn sb_rat(num : Int, den : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("whitebox test rational expects a nonzero denominator")
+  }
 }
 
 ///|
@@ -167,7 +169,9 @@ test "small branches: lll helper branches" {
 
   let swap_m : Matrix = [[sb_bi(1), sb_bi(2)], [sb_bi(3), sb_bi(4)]]
   swap_rows(swap_m, 0, 1)
-  assert_true(swap_m[0][0].to_string() == "3" && swap_m[1][0].to_string() == "1")
+  assert_true(
+    swap_m[0][0].to_string() == "3" && swap_m[1][0].to_string() == "1",
+  )
 
   let gs_basis : Matrix = [
     [sb_bi(1), sb_bi(0)],

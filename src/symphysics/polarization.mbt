@@ -3,9 +3,7 @@
 /// `sympy.physics.optics.polarization`.
 
 ///|
-fn optics_column(
-  values : Array[Expr],
-) -> ExplicitMatrix raise PhysicsError {
+fn optics_column(values : Array[Expr]) -> ExplicitMatrix raise PhysicsError {
   let rows : Array[Array[Expr]] = Array::new()
   for value in values {
     rows.push([value])
@@ -67,14 +65,8 @@ pub fn linear_polarizer(
   theta? : Expr = int(0),
 ) -> ExplicitMatrix raise PhysicsError {
   explicit_matrix_from_rows([
-    [
-      @symelem.cos(theta) ^ int(2),
-      @symelem.sin(theta) * @symelem.cos(theta),
-    ],
-    [
-      @symelem.sin(theta) * @symelem.cos(theta),
-      @symelem.sin(theta) ^ int(2),
-    ],
+    [@symelem.cos(theta) ^ int(2), @symelem.sin(theta) * @symelem.cos(theta)],
+    [@symelem.sin(theta) * @symelem.cos(theta), @symelem.sin(theta) ^ int(2)],
   ])
 }
 
@@ -84,21 +76,19 @@ pub fn phase_retarder(
   delta? : Expr = int(0),
 ) -> ExplicitMatrix {
   let phase = @symelem.exp(i_expr() * delta)
-  let mat = ExplicitMatrix::{ rows: [
-    [
-      (@symelem.cos(theta) ^ int(2)) +
-      phase * (@symelem.sin(theta) ^ int(2)),
-      (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
+  let mat = ExplicitMatrix::{
+    rows: [
+      [
+        (@symelem.cos(theta) ^ int(2)) + phase * (@symelem.sin(theta) ^ int(2)),
+        (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
+      ],
+      [
+        (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
+        (@symelem.sin(theta) ^ int(2)) + phase * (@symelem.cos(theta) ^ int(2)),
+      ],
     ],
-    [
-      (int(1) - phase) * @symelem.cos(theta) * @symelem.sin(theta),
-      (@symelem.sin(theta) ^ int(2)) +
-      phase * (@symelem.cos(theta) ^ int(2)),
-    ],
-  ] }
-  mat.scale(
-    @symelem.exp(int(-1) * i_expr() * delta * rational_expr(1, 2)),
-  )
+  }
+  mat.scale(@symelem.exp(int(-1) * i_expr() * delta * rational_expr(1, 2)))
 }
 
 ///|
@@ -112,22 +102,15 @@ pub fn quarter_wave_retarder(theta : Expr) -> ExplicitMatrix {
 }
 
 ///|
-pub fn transmissive_filter(
-  t : Expr,
-) -> ExplicitMatrix raise PhysicsError {
+pub fn transmissive_filter(t : Expr) -> ExplicitMatrix raise PhysicsError {
   let s = @symelem.sqrt(t)
   explicit_matrix_from_rows([[s, int(0)], [int(0), s]])
 }
 
 ///|
-pub fn reflective_filter(
-  r : Expr,
-) -> ExplicitMatrix raise PhysicsError {
+pub fn reflective_filter(r : Expr) -> ExplicitMatrix raise PhysicsError {
   let s = @symelem.sqrt(r)
-  explicit_matrix_from_rows([
-    [s, int(0)],
-    [int(0), int(-1) * s],
-  ])
+  explicit_matrix_from_rows([[s, int(0)], [int(0), int(-1) * s]])
 }
 
 ///|
@@ -183,33 +166,17 @@ pub fn polarizing_beam_splitter(
   phib? : Expr = int(0),
 ) -> ExplicitMatrix raise PhysicsError {
   explicit_matrix_from_rows([
-    [
-      @symelem.sqrt(tp),
-      int(0),
-      i_expr() * @symelem.sqrt(rp),
-      int(0),
-    ],
+    [@symelem.sqrt(tp), int(0), i_expr() * @symelem.sqrt(rp), int(0)],
     [
       int(0),
       @symelem.sqrt(ts),
       int(0),
-      int(-1) *
-      i_expr() *
-      @symelem.sqrt(rs) *
-      @symelem.exp(i_expr() * phia),
+      int(-1) * i_expr() * @symelem.sqrt(rs) * @symelem.exp(i_expr() * phia),
     ],
-    [
-      i_expr() * @symelem.sqrt(rp),
-      int(0),
-      @symelem.sqrt(tp),
-      int(0),
-    ],
+    [i_expr() * @symelem.sqrt(rp), int(0), @symelem.sqrt(tp), int(0)],
     [
       int(0),
-      int(-1) *
-      i_expr() *
-      @symelem.sqrt(rs) *
-      @symelem.exp(i_expr() * phib),
+      int(-1) * i_expr() * @symelem.sqrt(rs) * @symelem.exp(i_expr() * phib),
       int(0),
       @symelem.sqrt(ts),
     ],

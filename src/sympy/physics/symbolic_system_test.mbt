@@ -157,9 +157,14 @@ test "physics.mechanics symbolic system forms" {
     symsystem3.constant_symbols().map(@symprint.to_string).join(","),
     content="g,l,m",
   )
-  assert_true(symsystem2.bodies().length() == 1 && symsystem2.loads().length() == 1)
+  assert_true(
+    symsystem2.bodies().length() == 1 && symsystem2.loads().length() == 1,
+  )
   assert_eq(symsystem2.output_eqns().length(), 1)
-  assert_eq(@symprint.to_string(symsystem2.output_eqns()[0].1), "g*m*(l + y(t))")
+  assert_eq(
+    @symprint.to_string(symsystem2.output_eqns()[0].1),
+    "g*m*(l + y(t))",
+  )
 }
 
 ///|

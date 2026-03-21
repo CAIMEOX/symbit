@@ -43,9 +43,7 @@ test "physics.quantum.transforms: parity" {
         quantum_canonical_mul(@symcore.raw_mul([a, @symcore.raw_add([b, c])])),
       ),
     ),
-    quantum_eval_str(
-      "expand(Operator(A)*(Operator(B) + Operator(C)))",
-    ),
+    quantum_eval_str("expand(Operator(A)*(Operator(B) + Operator(C)))"),
     "operator left distribution parity",
   )
   quantum_test_assert_string_equal(
@@ -90,9 +88,7 @@ test "physics.quantum.transforms: parity" {
         quantum_canonical_pow(cgate([1], x_gate(0).as_expr()), @symcore.int(2)),
       ),
     ),
-    quantum_eval_str(
-      "gate_simp(CGate((1,), XGate(0))*CGate((1,), XGate(0)))",
-    ),
+    quantum_eval_str("gate_simp(CGate((1,), XGate(0))*CGate((1,), XGate(0)))"),
     "controlled involution power parity",
   )
   quantum_test_assert_string_equal(

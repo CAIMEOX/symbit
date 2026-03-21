@@ -66,19 +66,12 @@ pub fn point(
 }
 
 ///|
-pub fn point2d(
-  x : Expr,
-  y : Expr,
-) -> Point raise GeometryError {
+pub fn point2d(x : Expr, y : Expr) -> Point raise GeometryError {
   point([x, y], dim=2)
 }
 
 ///|
-pub fn point3d(
-  x : Expr,
-  y : Expr,
-  z : Expr,
-) -> Point raise GeometryError {
+pub fn point3d(x : Expr, y : Expr, z : Expr) -> Point raise GeometryError {
   point([x, y, z], dim=3)
 }
 
@@ -126,10 +119,7 @@ pub fn Point::with_dim(self : Point, dim : Int) -> Point raise GeometryError {
 }
 
 ///|
-pub fn Point::get(
-  self : Point,
-  index : Int,
-) -> Expr raise GeometryError {
+pub fn Point::get(self : Point, index : Int) -> Expr raise GeometryError {
   if index < 0 || index >= self.coords_.length() {
     raise GeometryError::ValueError("point coordinate index out of range")
   }
@@ -208,10 +198,7 @@ pub fn Point::rotate(
 }
 
 ///|
-pub fn Point::distance(
-  self : Point,
-  other : Point,
-) -> Expr raise GeometryError {
+pub fn Point::distance(self : Point, other : Point) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -238,10 +225,7 @@ pub fn Point::midpoint(
 }
 
 ///|
-pub fn Point::dot(
-  self : Point,
-  other : Point,
-) -> Expr raise GeometryError {
+pub fn Point::dot(self : Point, other : Point) -> Expr raise GeometryError {
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
@@ -250,7 +234,9 @@ pub fn Point::dot(
 
 ///|
 pub fn Point::abs(self : Point) -> Expr raise GeometryError {
-  self.distance(geo_point_from_coords(geo_zero_coords(self.ambient_dimension())))
+  self.distance(
+    geo_point_from_coords(geo_zero_coords(self.ambient_dimension())),
+  )
 }
 
 ///|

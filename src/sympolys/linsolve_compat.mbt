@@ -75,10 +75,7 @@ fn expr_is_zero(expr : Expr) -> Bool {
 }
 
 ///|
-fn expr_depends_on_syms(
-  expr : Expr,
-  symset : Map[String, Bool],
-) -> Bool {
+fn expr_depends_on_syms(expr : Expr, symset : Map[String, Bool]) -> Bool {
   match expr {
     Expr::Symbol(name) => symset.get(name) is Some(_)
     Expr::Add(args) | Expr::Mul(args) =>

@@ -9,9 +9,7 @@ test "geometry.util parity are_coplanar centroid intersection" {
     Some(pt) =>
       assert_eq(
         pt.repr(),
-        geometry_eval_repr(
-          "centroid(Point2D(0,0), Point2D(2,0), Point2D(2,2))",
-        ),
+        geometry_eval_repr("centroid(Point2D(0,0), Point2D(2,0), Point2D(2,2))"),
       )
     None => fail("expected centroid")
   }

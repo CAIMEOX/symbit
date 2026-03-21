@@ -130,9 +130,7 @@ fn geometry_assert_point_set_equal(
 }
 
 ///|
-fn geometry_entities_summary(
-  items : Array[GeometryEntity],
-) -> String raise {
+fn geometry_entities_summary(items : Array[GeometryEntity]) -> String raise {
   let parts : Array[String] = []
   for item in items {
     parts.push(item.repr())

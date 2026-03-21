@@ -838,9 +838,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "oo",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(left_beta_mellin) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(left_beta_mellin) + ")[2])"),
     integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform((1 - sympy.Symbol('x'))**(sympy.Symbol('b') - 1)*sympy.Heaviside(1 - sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
@@ -873,9 +871,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "1 - re(b)",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(right_beta_mellin) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(right_beta_mellin) + ")[2])"),
     integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform((sympy.Symbol('x') - 1)**(sympy.Symbol('b') - 1)*sympy.Heaviside(sympy.Symbol('x') - 1), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
@@ -895,15 +891,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[0])"),
     "-1/2",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(erf_sqrt_mellin) + ")[1])[1])"),
     "0",
   )
 
@@ -933,9 +925,7 @@ test "symintegrals parity Mellin forward and inverse" {
     "re(rho)",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(abs_one_minus_mellin) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(abs_one_minus_mellin) + ")[2])"),
     integrals_eval_str(
       "sympy.sstr(sympy.mellin_transform(sympy.Abs(1 - sympy.Symbol('x'))**(-sympy.Symbol('rho')), sympy.Symbol('x'), sympy.Symbol('s'))[2])",
     ),
@@ -956,15 +946,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[0])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(log_left_mellin) + ")[1])[1])"),
     "oo",
   )
 
@@ -1109,15 +1095,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[0])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(e1_mellin) + ")[1])[1])"),
     "oo",
   )
 
@@ -1135,15 +1117,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[0])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(expint2_mellin) + ")[1])[1])"),
     "oo",
   )
 
@@ -1157,15 +1135,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(si_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(si_mellin) + ")[1])[0])"),
     "-1",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(si_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(si_mellin) + ")[1])[1])"),
     "0",
   )
 
@@ -1183,15 +1157,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[0])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(ci_sqrt_mellin) + ")[1])[1])"),
     "1",
   )
 
@@ -1209,15 +1179,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[0])"),
     "-re(a)/2",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(besselj_mellin) + ")[1])[1])"),
     "3/4",
   )
 
@@ -1235,15 +1201,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[0])"),
     "Max(-re(a)/2, re(a)/2)",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(bessely_mellin) + ")[1])[1])"),
     "3/4",
   )
 
@@ -1261,15 +1223,11 @@ test "symintegrals parity Mellin forward and inverse" {
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[0])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[0])"),
     "Max(-re(a)/2, re(a)/2)",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[1])",
-    ),
+    integrals_eval_str("sympy.sstr(((" + py_expr(besselk_mellin) + ")[1])[1])"),
     "oo",
   )
 
@@ -1617,9 +1575,7 @@ test "symintegrals parity Mellin forward and inverse" {
     integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.mellin_transform(sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(generic_mellin) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(generic_mellin) + ")"),
   )
 
   let partial_generic_mellin = mellin_transform_eval(
@@ -2797,9 +2753,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(delta_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_eval) + ")"),
     integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
@@ -2811,9 +2765,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(heaviside_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(heaviside_eval) + ")"),
     integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform(sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
@@ -2825,9 +2777,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(shifted_poly_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(shifted_poly_eval) + ")"),
     integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform((sympy.Symbol('x') - 2)*sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
@@ -2839,9 +2789,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     s,
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(deriv1_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(deriv1_eval) + ")"),
     integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
@@ -2854,9 +2802,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   )
   let neg_half = @symcore.rational_from_ints(-1, 2)
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(deriv2_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(deriv2_eval) + ")"),
     integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Derivative(sympy.Function('f')(x), (x, 2)), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
@@ -2867,9 +2813,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(generic_eval) + ")"),
   )
 
   let scaled_generic_eval = laplace_transform_eval(a * f_of_x, x, s)
@@ -2877,9 +2821,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "(lambda x: sympy.sstr(sympy.laplace_transform(sympy.Symbol('a')*sympy.Function('f')(x), x, sympy.Symbol('s'))))(sympy.Symbol('x'))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(scaled_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(scaled_generic_eval) + ")"),
   )
 
   let shifted_generic_eval = laplace_transform_eval(
@@ -2891,9 +2833,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s')), -sympy.re(sympy.Symbol('a')) - sympy.oo, True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(shifted_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(shifted_generic_eval) + ")"),
   )
 
   let x_generic_eval = laplace_transform_eval(x * f_of_x, x, s)
@@ -2901,9 +2841,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(-sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), sympy.Symbol('s')), -sympy.oo, True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(x_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(x_generic_eval) + ")"),
   )
 
   let poly_generic_eval = laplace_transform_eval(
@@ -2915,9 +2853,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.Symbol('a')*sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), (sympy.Symbol('s'), 2)) - sympy.Symbol('b')*sympy.Derivative(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), sympy.Symbol('s')) + sympy.Symbol('c')*sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), -sympy.oo, True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(poly_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(poly_generic_eval) + ")"),
   )
 
   let sinh_generic_eval = laplace_transform_eval(
@@ -2929,9 +2865,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.Symbol('a') + sympy.Symbol('s'))/2 - sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.re(sympy.Symbol('a')) - sympy.oo, sympy.re(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(sinh_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(sinh_generic_eval) + ")"),
   )
 
   let cosh_generic_eval = laplace_transform_eval(
@@ -2943,9 +2877,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.Symbol('a') + sympy.Symbol('s'))/2 + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.re(sympy.Symbol('a')) - sympy.oo, sympy.re(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(cosh_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(cosh_generic_eval) + ")"),
   )
 
   let sin_generic_eval = laplace_transform_eval(
@@ -2957,9 +2889,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.I*(-sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.I*sympy.Symbol('a') + sympy.Symbol('s')) + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.I*sympy.Symbol('a') + sympy.Symbol('s')))/2, sympy.Max(-sympy.im(sympy.Symbol('a')) - sympy.oo, sympy.im(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(sin_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(sin_generic_eval) + ")"),
   )
 
   let cos_generic_eval = laplace_transform_eval(
@@ -2971,9 +2901,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str(
       "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), -sympy.I*sympy.Symbol('a') + sympy.Symbol('s'))/2 + sympy.LaplaceTransform(sympy.Function('f')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.I*sympy.Symbol('a') + sympy.Symbol('s'))/2, sympy.Max(-sympy.im(sympy.Symbol('a')) - sympy.oo, sympy.im(sympy.Symbol('a')) - sympy.oo), True))",
     ),
-    integrals_eval_str(
-      "sympy.sstr(" + py_expr(cos_generic_eval) + ")",
-    ),
+    integrals_eval_str("sympy.sstr(" + py_expr(cos_generic_eval) + ")"),
   )
 
   let ci_laplace = doit(laplace_transform(@symspec.ci(x), x, s))
@@ -3018,15 +2946,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(shi_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(shi_laplace) + ")[1])"),
     "-oo",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(shi_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(shi_laplace) + ")[2])"),
     "s**2 > 1",
   )
 
@@ -3046,15 +2970,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(chi_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(chi_laplace) + ")[1])"),
     "-oo",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(chi_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(chi_laplace) + ")[2])"),
     "s**2 > 1",
   )
 
@@ -3089,15 +3009,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(expinta_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(expinta_laplace) + ")[1])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(expinta_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(expinta_laplace) + ")[2])"),
     "re(a) > 0",
   )
 
@@ -3115,15 +3031,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(erf_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(erf_laplace) + ")[1])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(erf_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(erf_laplace) + ")[2])"),
     "True",
   )
 
@@ -3168,9 +3080,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(besseli0_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(besseli0_laplace) + ")[1])"),
     "2",
   )
   let xbesseli0_laplace = laplace_transform_eval(
@@ -3187,9 +3097,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(xbesseli0_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(xbesseli0_laplace) + ")[1])"),
     "2",
   )
 
@@ -3209,15 +3117,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(fresnels_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(fresnels_laplace) + ")[1])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(fresnels_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(fresnels_laplace) + ")[2])"),
     "True",
   )
   let fresnelc_laplace = laplace_transform_eval(@symspec.fresnelc(x), x, s)
@@ -3236,15 +3140,11 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     )
   }
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(fresnelc_laplace) + ")[1])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(fresnelc_laplace) + ")[1])"),
     "0",
   )
   assert_eq(
-    integrals_eval_str(
-      "sympy.sstr((" + py_expr(fresnelc_laplace) + ")[2])",
-    ),
+    integrals_eval_str("sympy.sstr((" + py_expr(fresnelc_laplace) + ")[2])"),
     "True",
   )
 

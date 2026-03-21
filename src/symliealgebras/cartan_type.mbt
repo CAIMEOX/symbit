@@ -1,34 +1,84 @@
 ///|
-/// Cartan types for simple Lie algebras.
+pub enum CartanSeries {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+} derive(Eq)
 
 ///|
-pub struct CartanType {
-  series : String
-  n : Int
+fn cartan_series_string(series : CartanSeries) -> String {
+  match series {
+    CartanSeries::A => "A"
+    CartanSeries::B => "B"
+    CartanSeries::C => "C"
+    CartanSeries::D => "D"
+    CartanSeries::E => "E"
+    CartanSeries::F => "F"
+    CartanSeries::G => "G"
+  }
 }
 
 ///|
-fn cartan_type_validate(series : String, n : Int) -> Unit raise {
-  if n < 0 {
-    fail("Lie algebra rank cannot be negative")
-  }
+pub impl Show for CartanSeries with to_string(self) {
+  cartan_series_string(self)
+}
+
+///|
+pub impl Show for CartanSeries with output(self, logger : &Logger) -> Unit {
+  logger.write_string(cartan_series_string(self))
+}
+
+///|
+fn cartan_series_from_string(series : String) -> CartanSeries raise {
   match series {
-    "A" => if n < 1 { fail("n cannot be less than 1") }
-    "B" => if n < 2 { fail("n cannot be less than 2") }
-    "C" => if n < 3 { fail("n cannot be less than 3") }
-    "D" => if n < 3 { fail("n cannot be less than 3") }
-    "E" => if n < 6 || n > 8 { fail("Invalid value of n") }
-    "F" => if n != 4 { fail("n should be 4") }
-    "G" => if n != 2 { fail("n should be 2") }
+    "A" => CartanSeries::A
+    "B" => CartanSeries::B
+    "C" => CartanSeries::C
+    "D" => CartanSeries::D
+    "E" => CartanSeries::E
+    "F" => CartanSeries::F
+    "G" => CartanSeries::G
     _ => fail("Unknown Cartan series")
   }
 }
 
 ///|
-/// Build a validated Cartan type from series letter and rank.
-pub fn cartan_type_from_parts(series : String, n : Int) -> CartanType raise {
+/// Cartan types for simple Lie algebras.
+pub struct CartanType {
+  series : CartanSeries
+  n : Int
+}
+
+///|
+fn cartan_type_validate(series : CartanSeries, n : Int) -> Unit raise {
+  if n < 0 {
+    fail("Lie algebra rank cannot be negative")
+  }
+  match series {
+    CartanSeries::A => if n < 1 { fail("n cannot be less than 1") }
+    CartanSeries::B => if n < 2 { fail("n cannot be less than 2") }
+    CartanSeries::C => if n < 3 { fail("n cannot be less than 3") }
+    CartanSeries::D => if n < 3 { fail("n cannot be less than 3") }
+    CartanSeries::E => if n < 6 || n > 8 { fail("Invalid value of n") }
+    CartanSeries::F => if n != 4 { fail("n should be 4") }
+    CartanSeries::G => if n != 2 { fail("n should be 2") }
+  }
+}
+
+///|
+fn cartan_type_from_series(series : CartanSeries, n : Int) -> CartanType raise {
   cartan_type_validate(series, n)
   CartanType::{ series, n }
+}
+
+///|
+/// Build a validated Cartan type from series letter and rank.
+pub fn cartan_type_from_parts(series : String, n : Int) -> CartanType raise {
+  cartan_type_from_series(cartan_series_from_string(series), n)
 }
 
 ///|
@@ -48,7 +98,7 @@ pub fn cartan_type_from_string(ct : String) -> CartanType raise {
   }
   let num_str = ct[1:len].to_string()
   let n = @strconv.parse_int(num_str, base=10)
-  cartan_type_from_parts(series, n)
+  cartan_type_from_series(cartan_series_from_string(series), n)
 }
 
 ///|
@@ -60,6 +110,11 @@ pub fn CartanType::rank(self : CartanType) -> Int {
 ///|
 /// Return the series letter (`A`..`G`).
 pub fn CartanType::series(self : CartanType) -> String {
+  cartan_series_string(self.series)
+}
+
+///|
+pub fn CartanType::series_kind(self : CartanType) -> CartanSeries {
   self.series
 }
 
@@ -67,14 +122,13 @@ pub fn CartanType::series(self : CartanType) -> String {
 /// Dimension of the ambient vector space for this root realization.
 pub fn CartanType::dimension(self : CartanType) -> Int {
   match self.series {
-    "A" => type_a_dimension(self.n)
-    "B" => type_b_dimension(self.n)
-    "C" => type_c_dimension(self.n)
-    "D" => type_d_dimension(self.n)
-    "E" => type_e_dimension(self.n)
-    "F" => type_f_dimension(self.n)
-    "G" => type_g_dimension(self.n)
-    _ => panic()
+    CartanSeries::A => type_a_dimension(self.n)
+    CartanSeries::B => type_b_dimension(self.n)
+    CartanSeries::C => type_c_dimension(self.n)
+    CartanSeries::D => type_d_dimension(self.n)
+    CartanSeries::E => type_e_dimension(self.n)
+    CartanSeries::F => type_f_dimension(self.n)
+    CartanSeries::G => type_g_dimension(self.n)
   }
 }
 
@@ -82,14 +136,13 @@ pub fn CartanType::dimension(self : CartanType) -> Int {
 /// Return the `i`-th simple root in the chosen coordinate realization.
 pub fn CartanType::simple_root(self : CartanType, i : Int) -> RootVector raise {
   match self.series {
-    "A" => type_a_simple_root(self.n, i)
-    "B" => type_b_simple_root(self.n, i)
-    "C" => type_c_simple_root(self.n, i)
-    "D" => type_d_simple_root(self.n, i)
-    "E" => type_e_simple_root(self.n, i)
-    "F" => type_f_simple_root(self.n, i)
-    "G" => type_g_simple_root(self.n, i)
-    _ => fail("Unknown Cartan series")
+    CartanSeries::A => type_a_simple_root(self.n, i)
+    CartanSeries::B => type_b_simple_root(self.n, i)
+    CartanSeries::C => type_c_simple_root(self.n, i)
+    CartanSeries::D => type_d_simple_root(self.n, i)
+    CartanSeries::E => type_e_simple_root(self.n, i)
+    CartanSeries::F => type_f_simple_root(self.n, i)
+    CartanSeries::G => type_g_simple_root(self.n, i)
   }
 }
 
@@ -97,14 +150,13 @@ pub fn CartanType::simple_root(self : CartanType, i : Int) -> RootVector raise {
 /// Enumerate all positive roots indexed from `1`.
 pub fn CartanType::positive_roots(self : CartanType) -> Map[Int, RootVector] {
   match self.series {
-    "A" => type_a_positive_roots(self.n)
-    "B" => type_b_positive_roots(self.n)
-    "C" => type_c_positive_roots(self.n)
-    "D" => type_d_positive_roots(self.n)
-    "E" => type_e_positive_roots(self.n)
-    "F" => type_f_positive_roots(self.n)
-    "G" => type_g_positive_roots(self.n)
-    _ => panic()
+    CartanSeries::A => type_a_positive_roots(self.n)
+    CartanSeries::B => type_b_positive_roots(self.n)
+    CartanSeries::C => type_c_positive_roots(self.n)
+    CartanSeries::D => type_d_positive_roots(self.n)
+    CartanSeries::E => type_e_positive_roots(self.n)
+    CartanSeries::F => type_f_positive_roots(self.n)
+    CartanSeries::G => type_g_positive_roots(self.n)
   }
 }
 
@@ -112,7 +164,7 @@ pub fn CartanType::positive_roots(self : CartanType) -> Map[Int, RootVector] {
 /// Highest root for series where this helper is currently implemented.
 pub fn CartanType::highest_root(self : CartanType) -> RootVector raise {
   match self.series {
-    "A" => type_a_highest_root(self.n)
+    CartanSeries::A => type_a_highest_root(self.n)
     _ => fail("highest root only defined for A series")
   }
 }
@@ -121,14 +173,13 @@ pub fn CartanType::highest_root(self : CartanType) -> RootVector raise {
 /// Total number of roots in the root system.
 pub fn CartanType::roots(self : CartanType) -> Int {
   match self.series {
-    "A" => type_a_roots(self.n)
-    "B" => type_b_roots(self.n)
-    "C" => type_c_roots(self.n)
-    "D" => type_d_roots(self.n)
-    "E" => type_e_roots(self.n)
-    "F" => type_f_roots(self.n)
-    "G" => type_g_roots(self.n)
-    _ => panic()
+    CartanSeries::A => type_a_roots(self.n)
+    CartanSeries::B => type_b_roots(self.n)
+    CartanSeries::C => type_c_roots(self.n)
+    CartanSeries::D => type_d_roots(self.n)
+    CartanSeries::E => type_e_roots(self.n)
+    CartanSeries::F => type_f_roots(self.n)
+    CartanSeries::G => type_g_roots(self.n)
   }
 }
 
@@ -136,56 +187,53 @@ pub fn CartanType::roots(self : CartanType) -> Int {
 /// Dimension of the Lie algebra (number of basis elements).
 pub fn CartanType::basis(self : CartanType) -> Int {
   match self.series {
-    "A" => type_a_basis(self.n)
-    "B" => type_b_basis(self.n)
-    "C" => type_c_basis(self.n)
-    "D" => type_d_basis(self.n)
-    "E" => type_e_basis(self.n)
-    "F" => type_f_basis(self.n)
-    "G" => type_g_basis(self.n)
-    _ => panic()
+    CartanSeries::A => type_a_basis(self.n)
+    CartanSeries::B => type_b_basis(self.n)
+    CartanSeries::C => type_c_basis(self.n)
+    CartanSeries::D => type_d_basis(self.n)
+    CartanSeries::E => type_e_basis(self.n)
+    CartanSeries::F => type_f_basis(self.n)
+    CartanSeries::G => type_g_basis(self.n)
   }
 }
 
 ///|
 /// Conventional Lie algebra name, e.g. `su(n+1)` for type `A_n`.
-pub fn CartanType::lie_algebra(self : CartanType) -> String {
+pub fn CartanType::lie_algebra(self : CartanType) -> String raise {
   match self.series {
-    "A" => type_a_lie_algebra(self.n)
-    "B" => type_b_lie_algebra(self.n)
-    "C" => type_c_lie_algebra(self.n)
-    "D" => type_d_lie_algebra(self.n)
-    _ => panic()
+    CartanSeries::A => type_a_lie_algebra(self.n)
+    CartanSeries::B => type_b_lie_algebra(self.n)
+    CartanSeries::C => type_c_lie_algebra(self.n)
+    CartanSeries::D => type_d_lie_algebra(self.n)
+    _ => fail("lie_algebra only defined for A-D series")
   }
 }
 
 ///|
 /// Cartan matrix associated with the selected type.
-pub fn CartanType::cartan_matrix(self : CartanType) -> Matrix raise {
+pub fn CartanType::cartan_matrix(self : CartanType) -> Matrix {
   match self.series {
-    "A" => cartan_matrix_type_a(self.n)
-    "B" => cartan_matrix_type_b(self.n)
-    "C" => cartan_matrix_type_c(self.n)
-    "D" => cartan_matrix_type_d(self.n)
-    "E" => cartan_matrix_type_e(self.n)
-    "F" => cartan_matrix_type_f()
-    "G" => cartan_matrix_type_g()
-    _ => fail("Unknown Cartan series")
+    CartanSeries::A => cartan_matrix_type_a(self.n)
+    CartanSeries::B => cartan_matrix_type_b(self.n)
+    CartanSeries::C => cartan_matrix_type_c(self.n)
+    CartanSeries::D => cartan_matrix_type_d(self.n)
+    CartanSeries::E => cartan_matrix_type_e(self.n)
+    CartanSeries::F => cartan_matrix_type_f()
+    CartanSeries::G => cartan_matrix_type_g()
   }
 }
 
 ///|
 /// Dynkin diagram rendered as a textual diagram.
-pub fn CartanType::dynkin_diagram(self : CartanType) -> String raise {
+pub fn CartanType::dynkin_diagram(self : CartanType) -> String {
   match self.series {
-    "A" => dynkin_type_a(self.n)
-    "B" => dynkin_type_b(self.n)
-    "C" => dynkin_type_c(self.n)
-    "D" => dynkin_type_d(self.n)
-    "E" => dynkin_type_e(self.n)
-    "F" => dynkin_type_f()
-    "G" => dynkin_type_g()
-    _ => fail("Unknown Cartan series")
+    CartanSeries::A => dynkin_type_a(self.n)
+    CartanSeries::B => dynkin_type_b(self.n)
+    CartanSeries::C => dynkin_type_c(self.n)
+    CartanSeries::D => dynkin_type_d(self.n)
+    CartanSeries::E => dynkin_type_e(self.n)
+    CartanSeries::F => dynkin_type_f()
+    CartanSeries::G => dynkin_type_g()
   }
 }
 

@@ -60,17 +60,13 @@ pub fn cm_depends_on(expr : Expr, var_name : String) -> Bool {
       args.any(arg => cm_depends_on(arg, var_name))
     Expr::Pow(base, exp) =>
       cm_depends_on(base, var_name) || cm_depends_on(exp, var_name)
-    Expr::Function(_, args) =>
-      args.any(arg => cm_depends_on(arg, var_name))
+    Expr::Function(_, args) => args.any(arg => cm_depends_on(arg, var_name))
     _ => false
   }
 }
 
 ///|
-pub fn cm_collect_symbols(
-  expr : Expr,
-  names : Map[String, Bool],
-) -> Unit {
+pub fn cm_collect_symbols(expr : Expr, names : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => names[name] = true
     Expr::Add(args) | Expr::Mul(args) =>
@@ -246,20 +242,12 @@ pub fn cm_numeric_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
 }
 
 ///|
-pub fn cm_singularity(
-  var_expr : Expr,
-  start : Expr,
-  order : Int,
-) -> Expr {
+pub fn cm_singularity(var_expr : Expr, start : Expr, order : Int) -> Expr {
   @symspec.singularity_function(var_expr, start, cm_int_expr(order))
 }
 
 ///|
-pub fn cm_subst(
-  expr : Expr,
-  name : String,
-  value : Expr,
-) -> Expr {
+pub fn cm_subst(expr : Expr, name : String, value : Expr) -> Expr {
   let env : Map[String, Expr] = {}
   env[name] = value
   @symcore.subst(expr, env)
@@ -330,8 +318,7 @@ pub fn cm_integrate(expr : Expr, var_name : String) -> Expr {
               }
               _ => ()
             }
-          Expr::Add(_) =>
-            return coeff * cm_integrate(dep_item, var_name)
+          Expr::Add(_) => return coeff * cm_integrate(dep_item, var_name)
           _ => ()
         }
         return coeff * cm_integrate(dep_item, var_name)
@@ -345,11 +332,7 @@ pub fn cm_integrate(expr : Expr, var_name : String) -> Expr {
 }
 
 ///|
-pub fn cm_eval_singularity_exact(
-  at : Expr,
-  start : Expr,
-  order : Int,
-) -> Expr {
+pub fn cm_eval_singularity_exact(at : Expr, start : Expr, order : Int) -> Expr {
   match cm_sign_of_difference(at, start) {
     Some(sign) =>
       if sign < 0 {
@@ -418,11 +401,7 @@ pub fn cm_eval_singularity_right_limit(
 }
 
 ///|
-pub fn cm_eval_at(
-  expr : Expr,
-  var_name : String,
-  at : Expr,
-) -> Expr {
+pub fn cm_eval_at(expr : Expr, var_name : String, at : Expr) -> Expr {
   match expr {
     Expr::Symbol(name) => if name == var_name { at } else { expr }
     Expr::Add(args) =>
@@ -453,11 +432,7 @@ pub fn cm_eval_at(
 }
 
 ///|
-pub fn cm_left_limit_at(
-  expr : Expr,
-  var_name : String,
-  at : Expr,
-) -> Expr {
+pub fn cm_left_limit_at(expr : Expr, var_name : String, at : Expr) -> Expr {
   match expr {
     Expr::Symbol(name) => if name == var_name { at } else { expr }
     Expr::Add(args) =>
@@ -491,11 +466,7 @@ pub fn cm_left_limit_at(
 }
 
 ///|
-pub fn cm_right_limit_at(
-  expr : Expr,
-  var_name : String,
-  at : Expr,
-) -> Expr {
+pub fn cm_right_limit_at(expr : Expr, var_name : String, at : Expr) -> Expr {
   match expr {
     Expr::Symbol(name) => if name == var_name { at } else { expr }
     Expr::Add(args) =>

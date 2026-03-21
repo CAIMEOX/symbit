@@ -60,16 +60,16 @@ test "physics.quantum.sho1d: symbolic rewrites and symbolic ladder action" {
   let k = @symcore.symbol("k")
   assert_true(
     sho_rewrite_as_a(number_op()) ==
-    @symcore.raw_mul([raising_op(), lowering_op()])
+    @symcore.raw_mul([raising_op(), lowering_op()]),
   )
   assert_true(
     sho_rewrite_as_h(number_op()) ==
     sho_hamiltonian() * @symcore.raw_pow(hbar * sho_omega, @symcore.int(-1)) -
-    quantum_test_frac(1, 2)
+    quantum_test_frac(1, 2),
   )
   assert_true(
     sho_rewrite_as_n(sho_hamiltonian()) ==
-    hbar * sho_omega * (number_op() + quantum_test_frac(1, 2))
+    hbar * sho_omega * (number_op() + quantum_test_frac(1, 2)),
   )
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([raising_op(), sho_ket(k)])),

@@ -14,7 +14,10 @@ test "physics.paulialgebra: delta and epsilon parity" {
     assert_eq(delta(case.0, case.1), paulialgebra_delta(case.0, case.1))
   }
   for case in [(1, 2, 3, 1), (1, 3, 2, -1), (1, 1, 2, 0)] {
-    assert_eq(epsilon(case.0, case.1, case.2), paulialgebra_epsilon(case.0, case.1, case.2))
+    assert_eq(
+      epsilon(case.0, case.1, case.2),
+      paulialgebra_epsilon(case.0, case.1, case.2),
+    )
   }
 }
 

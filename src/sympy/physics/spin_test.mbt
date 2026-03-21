@@ -148,18 +148,12 @@ test "physics.quantum.spin: local Jx/Jy bases" {
     "represent Jx in Jx basis",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(jx_ket(one, one).rewrite(jz())),
-    ),
-    quantum_eval_str(
-      "JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2",
-    ),
+    quantum_eval_str(@symprint.to_string(jx_ket(one, one).rewrite(jz()))),
+    quantum_eval_str("JzKet(1, 1)/2 + sqrt(2)*JzKet(1, 0)/2 + JzKet(1, -1)/2"),
     "rewrite JxKet to Jz",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(jy_ket(one, one).rewrite(jx())),
-    ),
+    quantum_eval_str(@symprint.to_string(jy_ket(one, one).rewrite(jx()))),
     quantum_eval_str("-I*JxKet(1, 1)"),
     "rewrite JyKet to Jx",
   )
@@ -182,9 +176,7 @@ test "physics.quantum.spin: local coupled Jz states" {
       "sqrt(2)*hbar*JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
     quantum_eval_str(
-      physics_expr_str(
-        qapply(@symcore.raw_mul([jplus(), coupled.as_expr()])),
-      ),
+      physics_expr_str(qapply(@symcore.raw_mul([jplus(), coupled.as_expr()]))),
     ),
     "Jplus on JzKetCoupled",
   )
@@ -192,9 +184,7 @@ test "physics.quantum.spin: local coupled Jz states" {
     quantum_eval_str(
       "sqrt(2)*TensorProduct(JzKet(Rational(1, 2), Rational(-1, 2)), JzKet(Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*TensorProduct(JzKet(Rational(1, 2), Rational(1, 2)), JzKet(Rational(1, 2), Rational(-1, 2)))/2",
     ),
-    quantum_eval_str(
-      physics_expr_str(uncouple(coupled.as_expr())),
-    ),
+    quantum_eval_str(physics_expr_str(uncouple(coupled.as_expr()))),
     "uncouple spin-half triplet",
   )
   quantum_test_assert_string_equal(
@@ -304,9 +294,7 @@ test "physics.quantum.spin: local coupled Jz states" {
     quantum_eval_str(
       "JzKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))/2 + sqrt(2)*JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + JzKetCoupled(1, -1, (Rational(1, 2), Rational(1, 2)))/2",
     ),
-    quantum_eval_str(
-      physics_expr_str(x_coupled.rewrite(jz())),
-    ),
+    quantum_eval_str(physics_expr_str(x_coupled.rewrite(jz()))),
     "rewrite JxKetCoupled to Jz",
   )
   quantum_test_assert_string_equal(
@@ -314,9 +302,7 @@ test "physics.quantum.spin: local coupled Jz states" {
       "-sqrt(2)*hbar*JxKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + hbar*JxKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
     quantum_eval_str(
-      physics_expr_str(
-        qapply(@symcore.raw_mul([jplus(), x_coupled.as_expr()])),
-      ),
+      physics_expr_str(qapply(@symcore.raw_mul([jplus(), x_coupled.as_expr()]))),
     ),
     "Jplus on JxKetCoupled",
   )
@@ -325,16 +311,12 @@ test "physics.quantum.spin: local coupled Jz states" {
       "sqrt(2)*hbar*JyKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))/2 + I*hbar*JyKetCoupled(1, 1, (Rational(1, 2), Rational(1, 2)))",
     ),
     quantum_eval_str(
-      physics_expr_str(
-        qapply(@symcore.raw_mul([jplus(), y_coupled.as_expr()])),
-      ),
+      physics_expr_str(qapply(@symcore.raw_mul([jplus(), y_coupled.as_expr()]))),
     ),
     "Jplus on JyKetCoupled",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))",
-    ),
+    quantum_eval_str("JzKetCoupled(1, 0, (Rational(1, 2), Rational(1, 2)))"),
     quantum_eval_str(
       physics_expr_str(
         qapply(

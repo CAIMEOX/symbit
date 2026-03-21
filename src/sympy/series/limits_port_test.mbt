@@ -67,12 +67,7 @@ test "symseries limit higher-order pole parity" {
 
   let even_pole = @symcore.pow(x, @symcore.int(-2))
   let even_left = limit(even_pole, x, @symcore.int(0), dir="-")
-  let even_left_sympy = limit_str(
-    even_pole,
-    "x",
-    @symcore.int(0),
-    dir="-",
-  )
+  let even_left_sympy = limit_str(even_pole, "x", @symcore.int(0), dir="-")
   assert_eq(
     normalize_limit_expr(even_left),
     normalize_limit_str(even_left_sympy),
@@ -80,21 +75,11 @@ test "symseries limit higher-order pole parity" {
 
   let odd_pole = @symcore.pow(x, @symcore.int(-3))
   let odd_left = limit(odd_pole, x, @symcore.int(0), dir="-")
-  let odd_left_sympy = limit_str(
-    odd_pole,
-    "x",
-    @symcore.int(0),
-    dir="-",
-  )
+  let odd_left_sympy = limit_str(odd_pole, "x", @symcore.int(0), dir="-")
   assert_eq(normalize_limit_expr(odd_left), normalize_limit_str(odd_left_sympy))
 
   let odd_two_sided = limit(odd_pole, x, @symcore.int(0), dir="+-")
-  let odd_two_sided_sympy = limit_str(
-    odd_pole,
-    "x",
-    @symcore.int(0),
-    dir="+-",
-  )
+  let odd_two_sided_sympy = limit_str(odd_pole, "x", @symcore.int(0), dir="+-")
   assert_eq(
     normalize_limit_expr(odd_two_sided),
     normalize_limit_str(odd_two_sided_sympy),

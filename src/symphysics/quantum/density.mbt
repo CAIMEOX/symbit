@@ -23,11 +23,12 @@ pub struct DensityExpr {
 
 ///|
 fn density_exact_rational(num : Int, den : Int) -> Expr {
-  let exact : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let exact : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match exact {
     Ok(value) => value
-    Err(_) => int(num) * (@symcore.pow(int(den), int(-1)))
+    Err(_) => int(num) * @symcore.pow(int(den), int(-1))
   }
 }
 
@@ -96,10 +97,7 @@ pub fn DensityExpr::get_prob(
 }
 
 ///|
-pub fn DensityExpr::apply_op(
-  self : DensityExpr,
-  op : Expr,
-) -> DensityExpr {
+pub fn DensityExpr::apply_op(self : DensityExpr, op : Expr) -> DensityExpr {
   let terms : Array[DensityTerm] = []
   for term in self.terms {
     terms.push(DensityTerm::{
@@ -111,10 +109,7 @@ pub fn DensityExpr::apply_op(
 }
 
 ///|
-fn density_mul_flatten(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn density_mul_flatten(lhs : Expr, rhs : Expr) -> Expr {
   let args : Array[Expr] = []
   match lhs {
     Expr::Mul(lhs_args) =>
@@ -240,9 +235,7 @@ fn density_infer_nqubits_expr(expr : Expr) -> Int {
     Some(q) => q.nqubits()
     None =>
       match expr {
-        Expr::Add(args)
-        | Expr::Mul(args)
-        | Expr::Function(_, args) => {
+        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
           let mut inferred = 0
           for arg in args {
             let next = density_infer_nqubits_expr(arg)
@@ -272,9 +265,7 @@ fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
     Some(state) => Some(state.j)
     None =>
       match expr {
-        Expr::Add(args)
-        | Expr::Mul(args)
-        | Expr::Function(_, args) => {
+        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
           for arg in args {
             match density_infer_spin_j_expr(arg) {
               Some(value) => return Some(value)
@@ -294,10 +285,7 @@ fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
 }
 
 ///|
-fn density_infer_spin_j(
-  density_expr : DensityExpr,
-  fallback : Expr,
-) -> Expr {
+fn density_infer_spin_j(density_expr : DensityExpr, fallback : Expr) -> Expr {
   for term in density_expr.terms {
     match density_infer_spin_j_expr(term.state) {
       Some(value) => return value
@@ -348,9 +336,7 @@ fn density_matrix(
         "Density representation currently expects ket-like column states",
       )
     }
-    let contrib = (state_matrix.mul(matrix_dagger(state_matrix))).scale(
-      term.prob,
-    )
+    let contrib = state_matrix.mul(matrix_dagger(state_matrix)).scale(term.prob)
     acc = Some(
       match acc {
         Some(current) => current.add(contrib)
@@ -417,9 +403,7 @@ fn expr_sqrt(expr : Expr) -> Expr {
 }
 
 ///|
-fn entropy_from_diagonal_entries(
-  entries : Array[Expr],
-) -> Expr {
+fn entropy_from_diagonal_entries(entries : Array[Expr]) -> Expr {
   let unique : Array[Expr] = []
   for entry in entries {
     if entry != int(0) && !unique.contains(entry) {
@@ -471,9 +455,7 @@ fn density_matrix_eigenvalues_2x2(
 }
 
 ///|
-fn entropy_from_eigenvalues(
-  eigenvalues : Array[Expr],
-) -> Expr {
+fn entropy_from_eigenvalues(eigenvalues : Array[Expr]) -> Expr {
   quantum_add_from_args_preserve(eigenvalues.map(entry => entropy_term(entry)))
 }
 
@@ -581,8 +563,7 @@ fn fidelity_2x2(
   let product = left.mul(right)
   expr_sqrt(
     matrix_trace(product) +
-    int(2) *
-    expr_sqrt((matrix_det_2x2(left)) * (matrix_det_2x2(right))),
+    int(2) * expr_sqrt(matrix_det_2x2(left) * matrix_det_2x2(right)),
   )
 }
 

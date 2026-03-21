@@ -11,9 +11,7 @@ test "physics.quantum.qubit/gate/represent: base parity" {
     "Qubit srepr parity",
   )
   quantum_test_assert_string_equal(
-    quantum_srepr_str(
-      @symprint.to_string(int_qubit(5, 3).as_expr()),
-    ),
+    quantum_srepr_str(@symprint.to_string(int_qubit(5, 3).as_expr())),
     quantum_srepr_str("IntQubit(5)"),
     "IntQubit srepr parity",
   )
@@ -196,9 +194,7 @@ test "physics.quantum.gate: ugate parity" {
     quantum_eval_str(
       @symprint.to_string(qapply(@symcore.raw_mul([u0, qubit("0").as_expr()]))),
     ),
-    quantum_qapply_str(
-      "UGate((0,), Matrix([[a, b], [c, d]]))*Qubit(0)",
-    ),
+    quantum_qapply_str("UGate((0,), Matrix([[a, b], [c, d]]))*Qubit(0)"),
     "UGate qapply |0> parity",
   )
   quantum_test_assert_matrix_expr_equal(
@@ -323,9 +319,7 @@ test "physics.quantum.gate: decomposition parity" {
   )
   quantum_test_assert_matrix_expr_equal(
     represent_matrix(gate_decompose(swap_gate(1, 0).as_expr()), nqubits=2),
-    physics_eval_matrix(
-      "represent(SwapGate(1, 0).decompose(), nqubits=2)",
-    ),
+    physics_eval_matrix("represent(SwapGate(1, 0).decompose(), nqubits=2)"),
     4,
     4,
     "SWAP decompose parity",
@@ -402,9 +396,7 @@ test "physics.quantum.gate: normalization and basis-transform parity" {
         ),
       ),
     ),
-    quantum_hadamard_normalized_qapply(
-      false, "HadamardGate(0)*Qubit(0)",
-    ),
+    quantum_hadamard_normalized_qapply(false, "HadamardGate(0)*Qubit(0)"),
     "normalized(false) parity",
   )
   normalized(true)

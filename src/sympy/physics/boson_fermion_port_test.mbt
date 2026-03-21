@@ -6,18 +6,14 @@ test "physics.quantum.boson/fermion: parity" {
     quantum_eval_str(
       @symprint.to_string(commutator(a.as_expr(), a.dagger().as_expr())),
     ),
-    quantum_doit_str(
-      "Commutator(BosonOp(a), Dagger(BosonOp(a)))",
-    ),
+    quantum_doit_str("Commutator(BosonOp(a), Dagger(BosonOp(a)))"),
     "boson commutator parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str(
       @symprint.to_string(anticommutator(c.as_expr(), c.dagger().as_expr())),
     ),
-    quantum_doit_str(
-      "AntiCommutator(FermionOp(c), Dagger(FermionOp(c)))",
-    ),
+    quantum_doit_str("AntiCommutator(FermionOp(c), Dagger(FermionOp(c)))"),
     "fermion anticommutator parity",
   )
   quantum_test_assert_string_equal(

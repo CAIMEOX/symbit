@@ -264,10 +264,7 @@ fn generated_density(
                   @symcore.add([
                     @symcore.int(1),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -283,10 +280,7 @@ fn generated_density(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -313,10 +307,7 @@ fn generated_density(
               @symcore.pow(
                 eval_arith(@symcore.mul([params[1], x])),
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(-1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                 ),
               ),
             ),
@@ -325,10 +316,7 @@ fn generated_density(
                 @symcore.add([
                   @symcore.int(-1),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
               ),
@@ -363,10 +351,7 @@ fn generated_density(
               @symcore.pow(
                 @symcore.int(2),
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(-1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                 ),
               ),
             ),
@@ -377,10 +362,7 @@ fn generated_density(
                   @symcore.add([
                     @symcore.int(-1),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -390,19 +372,14 @@ fn generated_density(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
               ),
             ),
             @symcore.function("exp", [
-              eval_arith(
-                @symcore.mul([stats_exact_rational(-1, 2), x]),
-              ),
+              eval_arith(@symcore.mul([stats_exact_rational(-1, 2), x])),
             ]),
           ]),
         ),
@@ -562,10 +539,7 @@ fn generated_density(
                 @symcore.mul([
                   stats_exact_rational(1, 2),
                   eval_arith(
-                    @symcore.pow(
-                      @symcore.int(2),
-                      stats_exact_rational(1, 2),
-                    ),
+                    @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                   ),
                   eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                   eval_arith(
@@ -698,16 +672,10 @@ fn generated_density(
               @symcore.pow(
                 @symcore.function("beta", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[1],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -725,10 +693,7 @@ fn generated_density(
               @symcore.pow(
                 params[0],
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
               ),
             ),
@@ -736,10 +701,7 @@ fn generated_density(
               @symcore.pow(
                 params[1],
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[1],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                 ),
               ),
             ),
@@ -761,16 +723,10 @@ fn generated_density(
                 eval_arith(
                   @symcore.add([
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[1],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[1]]),
                     ),
                   ]),
                 ),
@@ -780,16 +736,10 @@ fn generated_density(
               @symcore.pow(
                 @symcore.function("beta", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[1],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -891,16 +841,10 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(
               @symcore.pow(
@@ -1097,20 +1041,12 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
-            eval_arith(
-              @symcore.pow(params[1], stats_exact_rational(1, 2)),
-            ),
+            eval_arith(@symcore.pow(params[1], stats_exact_rational(1, 2))),
             eval_arith(
               @symcore.pow(
                 eval_arith(
@@ -1229,16 +1165,10 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
             eval_arith(@symcore.pow(x, @symcore.int(-1))),
@@ -1326,16 +1256,10 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(-1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(@symcore.pow(x, @symcore.int(-1))),
             eval_arith(
@@ -1422,16 +1346,10 @@ fn generated_density(
         eval_arith(
           @symcore.mul([
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(@symcore.pow(params[0], @symcore.int(-3))),
             eval_arith(@symcore.pow(x, @symcore.int(2))),
@@ -1453,16 +1371,10 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
             @symcore.function("exp", [
@@ -1782,9 +1694,7 @@ fn generated_density(
                     eval_arith(@symcore.pow(params[1], @symcore.int(-1))),
                   ]),
                 ),
-                eval_arith(
-                  @symcore.mul([stats_exact_rational(1, 2), x]),
-                ),
+                eval_arith(@symcore.mul([stats_exact_rational(1, 2), x])),
               ),
             ),
             @symcore.function("besseli", [
@@ -1816,9 +1726,7 @@ fn generated_density(
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(
-              @symcore.pow(params[0], stats_exact_rational(-1, 2)),
-            ),
+            eval_arith(@symcore.pow(params[0], stats_exact_rational(-1, 2))),
             eval_arith(
               @symcore.pow(
                 eval_arith(
@@ -1836,10 +1744,7 @@ fn generated_density(
                   @symcore.add([
                     stats_exact_rational(-1, 2),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -1850,10 +1755,7 @@ fn generated_density(
                 @symcore.function("beta", [
                   stats_exact_rational(1, 2),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -2141,16 +2043,10 @@ fn generated_density(
           @symcore.mul([
             stats_exact_rational(1, 2),
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             eval_arith(
               @symcore.pow(
@@ -2308,9 +2204,7 @@ fn generated_cdf(
                   @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
                 ),
                 @symcore.function("asin", [
-                  eval_arith(
-                    @symcore.pow(x, stats_exact_rational(1, 2)),
-                  ),
+                  eval_arith(@symcore.pow(x, stats_exact_rational(1, 2))),
                 ]),
               ]),
             ),
@@ -2694,10 +2588,7 @@ fn generated_cdf(
                   @symcore.pow(
                     @symcore.function("gamma", [
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                     @symcore.int(-1),
@@ -2705,14 +2596,9 @@ fn generated_cdf(
                 ),
                 @symcore.function("lowergamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
-                  eval_arith(
-                    @symcore.mul([stats_exact_rational(1, 2), x]),
-                  ),
+                  eval_arith(@symcore.mul([stats_exact_rational(1, 2), x])),
                 ]),
               ]),
             ),
@@ -3410,10 +3296,7 @@ fn generated_cdf(
             @symcore.mul([
               stats_exact_rational(1, 2),
               eval_arith(
-                @symcore.pow(
-                  @symcore.int(2),
-                  stats_exact_rational(1, 2),
-                ),
+                @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
               ),
               eval_arith(
                 @symcore.pow(
@@ -3743,10 +3626,7 @@ fn generated_cdf(
                 @symcore.int(-1),
                 x,
                 eval_arith(
-                  @symcore.pow(
-                    @symcore.int(2),
-                    stats_exact_rational(1, 2),
-                  ),
+                  @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                 ),
                 eval_arith(
                   @symcore.pow(
@@ -3772,10 +3652,7 @@ fn generated_cdf(
                   stats_exact_rational(1, 2),
                   x,
                   eval_arith(
-                    @symcore.pow(
-                      @symcore.int(2),
-                      stats_exact_rational(1, 2),
-                    ),
+                    @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                   ),
                   eval_arith(@symcore.pow(params[0], @symcore.int(-1))),
                 ]),
@@ -4378,12 +4255,7 @@ fn generated_cdf(
                     stats_exact_rational(-1, 2),
                   ),
                 ),
-                eval_arith(
-                  @symcore.pow(
-                    params[0],
-                    stats_exact_rational(1, 2),
-                  ),
-                ),
+                eval_arith(@symcore.pow(params[0], stats_exact_rational(1, 2))),
                 eval_arith(
                   @symcore.pow(
                     @symcore.function("gamma", [
@@ -4391,10 +4263,7 @@ fn generated_cdf(
                         @symcore.add([
                           @symcore.int(1),
                           eval_arith(
-                            @symcore.mul([
-                              stats_exact_rational(1, 2),
-                              params[0],
-                            ]),
+                            @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                           ),
                         ]),
                       ),
@@ -4407,10 +4276,7 @@ fn generated_cdf(
                     @symcore.add([
                       stats_exact_rational(1, 2),
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                   ),
@@ -4422,17 +4288,12 @@ fn generated_cdf(
                       @symcore.add([
                         stats_exact_rational(1, 2),
                         eval_arith(
-                          @symcore.mul([
-                            stats_exact_rational(1, 2),
-                            params[0],
-                          ]),
+                          @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                         ),
                       ]),
                     ),
                   ]),
-                  @symcore.function("Tuple", [
-                    stats_exact_rational(3, 2),
-                  ]),
+                  @symcore.function("Tuple", [stats_exact_rational(3, 2)]),
                   eval_arith(
                     @symcore.mul([
                       eval_arith(@symcore.pow(params[0], @symcore.int(-1))),
@@ -5122,10 +4983,7 @@ fn generated_pmf(
                   @symcore.add([
                     @symcore.int(1),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -5141,10 +4999,7 @@ fn generated_pmf(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -5169,10 +5024,7 @@ fn generated_pmf(
               @symcore.pow(
                 @symcore.int(2),
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(-1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                 ),
               ),
             ),
@@ -5183,10 +5035,7 @@ fn generated_pmf(
                   @symcore.add([
                     @symcore.int(-1),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -5196,19 +5045,14 @@ fn generated_pmf(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
               ),
             ),
             @symcore.function("exp", [
-              eval_arith(
-                @symcore.mul([stats_exact_rational(-1, 2), k]),
-              ),
+              eval_arith(@symcore.mul([stats_exact_rational(-1, 2), k])),
             ]),
           ]),
         ),
@@ -5422,16 +5266,10 @@ fn generated_pmf(
               @symcore.pow(
                 @symcore.function("beta", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[1],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -5449,10 +5287,7 @@ fn generated_pmf(
               @symcore.pow(
                 params[0],
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
               ),
             ),
@@ -5460,10 +5295,7 @@ fn generated_pmf(
               @symcore.pow(
                 params[1],
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[1],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                 ),
               ),
             ),
@@ -5485,16 +5317,10 @@ fn generated_pmf(
                 eval_arith(
                   @symcore.add([
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[1],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[1]]),
                     ),
                   ]),
                 ),
@@ -5504,16 +5330,10 @@ fn generated_pmf(
               @symcore.pow(
                 @symcore.function("beta", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[1],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -5719,9 +5539,7 @@ fn generated_pmf(
       Some(
         eval_arith(
           @symcore.mul([
-            eval_arith(
-              @symcore.pow(params[0], stats_exact_rational(-1, 2)),
-            ),
+            eval_arith(@symcore.pow(params[0], stats_exact_rational(-1, 2))),
             eval_arith(
               @symcore.pow(
                 eval_arith(
@@ -5739,10 +5557,7 @@ fn generated_pmf(
                   @symcore.add([
                     stats_exact_rational(-1, 2),
                     eval_arith(
-                      @symcore.mul([
-                        stats_exact_rational(-1, 2),
-                        params[0],
-                      ]),
+                      @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
                     ),
                   ]),
                 ),
@@ -5753,10 +5568,7 @@ fn generated_pmf(
                 @symcore.function("beta", [
                   stats_exact_rational(1, 2),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -6200,19 +6012,13 @@ fn generated_mean(
         eval_arith(
           @symcore.mul([
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-1),
@@ -6223,10 +6029,7 @@ fn generated_mean(
                 @symcore.add([
                   stats_exact_rational(1, 2),
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
               ),
@@ -6557,16 +6360,10 @@ fn generated_mean(
             eval_arith(
               @symcore.add([
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[1],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[1]]),
                 ),
               ]),
             ),
@@ -6583,16 +6380,10 @@ fn generated_mean(
             stats_exact_rational(1, 2),
             params[0],
             eval_arith(
-              @symcore.pow(
-                @symcore.int(2),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(1, 2)),
             ),
           ]),
         ),
@@ -6639,15 +6430,9 @@ fn generated_mean(
       Some(
         eval_arith(
           @symcore.add([
-            eval_arith(
-              @symcore.mul([stats_exact_rational(1, 3), params[0]]),
-            ),
-            eval_arith(
-              @symcore.mul([stats_exact_rational(1, 3), params[1]]),
-            ),
-            eval_arith(
-              @symcore.mul([stats_exact_rational(1, 3), params[2]]),
-            ),
+            eval_arith(@symcore.mul([stats_exact_rational(1, 3), params[0]])),
+            eval_arith(@symcore.mul([stats_exact_rational(1, 3), params[1]])),
+            eval_arith(@symcore.mul([stats_exact_rational(1, 3), params[2]])),
           ]),
         ),
       )
@@ -6655,21 +6440,13 @@ fn generated_mean(
       Some(
         eval_arith(
           @symcore.add([
-            eval_arith(
-              @symcore.mul([stats_exact_rational(1, 2), params[0]]),
-            ),
-            eval_arith(
-              @symcore.mul([stats_exact_rational(1, 2), params[1]]),
-            ),
+            eval_arith(@symcore.mul([stats_exact_rational(1, 2), params[0]])),
+            eval_arith(@symcore.mul([stats_exact_rational(1, 2), params[1]])),
           ]),
         ),
       )
     ("UniformSum", 1) =>
-      Some(
-        eval_arith(
-          @symcore.mul([stats_exact_rational(1, 2), params[0]]),
-        ),
-      )
+      Some(eval_arith(@symcore.mul([stats_exact_rational(1, 2), params[0]])))
     ("Wald", 2) => Some(params[0])
     ("WignerSemicircle", 1) => Some(@symcore.int(0))
     ("YuleSimon", 1) =>
@@ -6760,10 +6537,7 @@ fn generated_variance(
               @symcore.pow(
                 @symcore.function("gamma", [
                   eval_arith(
-                    @symcore.mul([
-                      stats_exact_rational(1, 2),
-                      params[0],
-                    ]),
+                    @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                   ),
                 ]),
                 @symcore.int(-2),
@@ -6798,10 +6572,7 @@ fn generated_variance(
                   @symcore.mul([
                     @symcore.function("gamma", [
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                     @symcore.function("gamma", [
@@ -6809,10 +6580,7 @@ fn generated_variance(
                         @symcore.add([
                           @symcore.int(1),
                           eval_arith(
-                            @symcore.mul([
-                              stats_exact_rational(1, 2),
-                              params[0],
-                            ]),
+                            @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                           ),
                         ]),
                       ),
@@ -7205,25 +6973,13 @@ fn generated_variance(
               ]),
             ),
             eval_arith(
-              @symcore.mul([
-                stats_exact_rational(-1, 18),
-                params[0],
-                params[1],
-              ]),
+              @symcore.mul([stats_exact_rational(-1, 18), params[0], params[1]]),
             ),
             eval_arith(
-              @symcore.mul([
-                stats_exact_rational(-1, 18),
-                params[0],
-                params[2],
-              ]),
+              @symcore.mul([stats_exact_rational(-1, 18), params[0], params[2]]),
             ),
             eval_arith(
-              @symcore.mul([
-                stats_exact_rational(-1, 18),
-                params[1],
-                params[2],
-              ]),
+              @symcore.mul([stats_exact_rational(-1, 18), params[1], params[2]]),
             ),
           ]),
         ),
@@ -7245,21 +7001,13 @@ fn generated_variance(
               ]),
             ),
             eval_arith(
-              @symcore.mul([
-                stats_exact_rational(-1, 6),
-                params[0],
-                params[1],
-              ]),
+              @symcore.mul([stats_exact_rational(-1, 6), params[0], params[1]]),
             ),
           ]),
         ),
       )
     ("UniformSum", 1) =>
-      Some(
-        eval_arith(
-          @symcore.mul([stats_exact_rational(1, 12), params[0]]),
-        ),
-      )
+      Some(eval_arith(@symcore.mul([stats_exact_rational(1, 12), params[0]])))
     ("Wald", 2) =>
       Some(
         eval_arith(
@@ -7456,19 +7204,13 @@ fn generated_mgf(
               @symcore.mul([
                 t,
                 eval_arith(
-                  @symcore.pow(
-                    @symcore.int(2),
-                    stats_exact_rational(1, 2),
-                  ),
+                  @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                 ),
                 eval_arith(
                   @symcore.pow(
                     @symcore.function("gamma", [
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                     @symcore.int(-1),
@@ -7479,10 +7221,7 @@ fn generated_mgf(
                     @symcore.add([
                       stats_exact_rational(1, 2),
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                   ),
@@ -7493,17 +7232,12 @@ fn generated_mgf(
                       @symcore.add([
                         stats_exact_rational(1, 2),
                         eval_arith(
-                          @symcore.mul([
-                            stats_exact_rational(1, 2),
-                            params[0],
-                          ]),
+                          @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                         ),
                       ]),
                     ),
                   ]),
-                  @symcore.function("Tuple", [
-                    stats_exact_rational(3, 2),
-                  ]),
+                  @symcore.function("Tuple", [stats_exact_rational(3, 2)]),
                   eval_arith(
                     @symcore.mul([
                       stats_exact_rational(1, 2),
@@ -7516,15 +7250,10 @@ fn generated_mgf(
             @symcore.function("hyper", [
               @symcore.function("Tuple", [
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
               ]),
-              @symcore.function("Tuple", [
-                stats_exact_rational(1, 2),
-              ]),
+              @symcore.function("Tuple", [stats_exact_rational(1, 2)]),
               eval_arith(
                 @symcore.mul([
                   stats_exact_rational(1, 2),
@@ -7545,9 +7274,7 @@ fn generated_mgf(
                 eval_arith(@symcore.mul([@symcore.int(-2), t])),
               ]),
             ),
-            eval_arith(
-              @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
-            ),
+            eval_arith(@symcore.mul([stats_exact_rational(-1, 2), params[0]])),
           ),
         ),
       )
@@ -7845,10 +7572,7 @@ fn generated_mgf(
               ),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             @symcore.function("exp", [eval_arith(@symcore.mul([params[0], t]))]),
             @symcore.function("gamma", [
@@ -8020,10 +7744,7 @@ fn generated_mgf(
                 params[0],
                 t,
                 eval_arith(
-                  @symcore.pow(
-                    @symcore.int(2),
-                    stats_exact_rational(1, 2),
-                  ),
+                  @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                 ),
                 eval_arith(
                   @symcore.pow(
@@ -8556,19 +8277,13 @@ fn generated_cf(
                 @symcore.symbol("I"),
                 t,
                 eval_arith(
-                  @symcore.pow(
-                    @symcore.int(2),
-                    stats_exact_rational(1, 2),
-                  ),
+                  @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                 ),
                 eval_arith(
                   @symcore.pow(
                     @symcore.function("gamma", [
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                     @symcore.int(-1),
@@ -8579,10 +8294,7 @@ fn generated_cf(
                     @symcore.add([
                       stats_exact_rational(1, 2),
                       eval_arith(
-                        @symcore.mul([
-                          stats_exact_rational(1, 2),
-                          params[0],
-                        ]),
+                        @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                       ),
                     ]),
                   ),
@@ -8593,17 +8305,12 @@ fn generated_cf(
                       @symcore.add([
                         stats_exact_rational(1, 2),
                         eval_arith(
-                          @symcore.mul([
-                            stats_exact_rational(1, 2),
-                            params[0],
-                          ]),
+                          @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                         ),
                       ]),
                     ),
                   ]),
-                  @symcore.function("Tuple", [
-                    stats_exact_rational(3, 2),
-                  ]),
+                  @symcore.function("Tuple", [stats_exact_rational(3, 2)]),
                   eval_arith(
                     @symcore.mul([
                       stats_exact_rational(-1, 2),
@@ -8616,15 +8323,10 @@ fn generated_cf(
             @symcore.function("hyper", [
               @symcore.function("Tuple", [
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
               ]),
-              @symcore.function("Tuple", [
-                stats_exact_rational(1, 2),
-              ]),
+              @symcore.function("Tuple", [stats_exact_rational(1, 2)]),
               eval_arith(
                 @symcore.mul([
                   stats_exact_rational(-1, 2),
@@ -8647,9 +8349,7 @@ fn generated_cf(
                 ),
               ]),
             ),
-            eval_arith(
-              @symcore.mul([stats_exact_rational(-1, 2), params[0]]),
-            ),
+            eval_arith(@symcore.mul([stats_exact_rational(-1, 2), params[0]])),
           ),
         ),
       )
@@ -8761,10 +8461,7 @@ fn generated_cf(
                   ]),
                 ),
                 eval_arith(
-                  @symcore.mul([
-                    stats_exact_rational(1, 2),
-                    params[0],
-                  ]),
+                  @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                 ),
               ),
             ),
@@ -8953,10 +8650,7 @@ fn generated_cf(
                 @symcore.mul([
                   @symcore.int(-1),
                   eval_arith(
-                    @symcore.pow(
-                      @symcore.int(2),
-                      stats_exact_rational(1, 2),
-                    ),
+                    @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                   ),
                   eval_arith(
                     @symcore.pow(
@@ -9064,10 +8758,7 @@ fn generated_cf(
               ),
             ),
             eval_arith(
-              @symcore.pow(
-                @symcore.symbol("pi"),
-                stats_exact_rational(-1, 2),
-              ),
+              @symcore.pow(@symcore.symbol("pi"), stats_exact_rational(-1, 2)),
             ),
             @symcore.function("exp", [
               eval_arith(@symcore.mul([@symcore.symbol("I"), params[0], t])),
@@ -9300,10 +8991,7 @@ fn generated_cf(
                     params[0],
                     t,
                     eval_arith(
-                      @symcore.pow(
-                        @symcore.int(2),
-                        stats_exact_rational(1, 2),
-                      ),
+                      @symcore.pow(@symcore.int(2), stats_exact_rational(1, 2)),
                     ),
                     eval_arith(
                       @symcore.pow(

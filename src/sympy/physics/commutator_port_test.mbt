@@ -32,9 +32,7 @@ test "physics.quantum.commutator: parity" {
     "commutator expand parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(anticommutator(b_op, a_op)),
-    ),
+    quantum_eval_str(@symprint.to_string(anticommutator(b_op, a_op))),
     quantum_eval_str("AntiCommutator(B, A)"),
     "anticommutator parity",
   )

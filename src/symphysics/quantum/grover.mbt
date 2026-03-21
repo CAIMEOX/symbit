@@ -50,8 +50,9 @@ fn grover_marked_values(expr : Expr) -> Array[Int]? {
 
 ///|
 fn grover_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match result {
     Ok(value) => value
     Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
@@ -211,11 +212,7 @@ fn grover_w_apply(
   let marked_value = bits_to_int(ket.bits)
   let terms : Array[Expr] = []
   for value in 0..<(1 << w_expr.nqubits) {
-    let coeff = if value == marked_value {
-      weight - int(1)
-    } else {
-      weight
-    }
+    let coeff = if value == marked_value { weight - int(1) } else { weight }
     let bits = int_to_bits(value, w_expr.nqubits)
     let state = qubit_from_bits(bits).as_expr()
     if coeff == int(1) {
@@ -235,7 +232,8 @@ pub fn grover_apply_operator_to_ket(
   match qubit_from_expr(ket_expr) {
     Some(ket) =>
       match oracle_gate_from_expr(op_expr) {
-        Some(oracle_expr) => Some(grover_oracle_apply(oracle_expr, ket, ket_expr))
+        Some(oracle_expr) =>
+          Some(grover_oracle_apply(oracle_expr, ket, ket_expr))
         None =>
           match w_gate_from_expr(op_expr) {
             Some(w_expr) => Some(grover_w_apply(w_expr, ket, ket_expr))
@@ -299,8 +297,7 @@ pub fn grover_represent(
       Some(MatrixScalarValue::Matrix(grover_oracle_matrix(oracle_expr)))
     None =>
       match w_gate_from_expr(expr) {
-        Some(w_expr) =>
-          Some(MatrixScalarValue::Matrix(grover_w_matrix(w_expr)))
+        Some(w_expr) => Some(MatrixScalarValue::Matrix(grover_w_matrix(w_expr)))
         None =>
           if quantum_expr_has_name(expr, "Qubit") ||
             quantum_expr_has_name(expr, "QubitBra") {
@@ -324,11 +321,7 @@ pub fn grover_iteration(
         "grover_iteration expects an OracleGate expression",
       )
   }
-  quantum_mul_from_args_preserve([
-    w_gate(oracle.nqubits),
-    oracle_expr,
-    qstate,
-  ])
+  quantum_mul_from_args_preserve([w_gate(oracle.nqubits), oracle_expr, qstate])
 }
 
 ///|

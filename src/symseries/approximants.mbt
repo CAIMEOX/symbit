@@ -99,7 +99,11 @@ fn br_div(
   if b.is_zero() {
     None
   } else {
-    Some(a.div_r(b))
+    match
+      (try? a.div_r(b) : Result[@symnum.BigRational, @symnum.RationalError]) {
+      Ok(value) => Some(value)
+      Err(_) => None
+    }
   }
 }
 

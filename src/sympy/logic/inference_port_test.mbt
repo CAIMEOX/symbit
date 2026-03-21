@@ -63,9 +63,7 @@ test "inference pl_true parity" {
   let expr = bool_and([a, b])
   let model : Map[String, Bool?] = { "A": Some(true), "B": Some(false) }
   let ours = bool_option_to_string(pl_true(expr, model~))
-  let oracle = inference_pl_true(to_string(expr), ["A", "B"], [
-    true, false,
-  ])
+  let oracle = inference_pl_true(to_string(expr), ["A", "B"], [true, false])
   assert_eq(ours, oracle)
 }
 

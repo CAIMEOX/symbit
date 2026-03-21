@@ -76,9 +76,7 @@ pub fn ForceActuator::pathway(self : ForceActuator) -> PathwayLike {
 }
 
 ///|
-pub fn ForceActuator::to_loads(
-  self : ForceActuator,
-) -> Array[Load] raise {
+pub fn ForceActuator::to_loads(self : ForceActuator) -> Array[Load] raise {
   self.pathway_.to_loads(self.force_).map(fn(load) { Load::ForceLoad(load) })
 }
 
@@ -125,9 +123,7 @@ pub fn LinearSpring::equilibrium_length(self : LinearSpring) -> Expr {
 }
 
 ///|
-pub fn LinearSpring::force(
-  self : LinearSpring,
-) -> Expr raise {
+pub fn LinearSpring::force(self : LinearSpring) -> Expr raise {
   mech_simplify_expr(
     int(-1) *
     self.stiffness_ *
@@ -136,12 +132,8 @@ pub fn LinearSpring::force(
 }
 
 ///|
-pub fn LinearSpring::to_loads(
-  self : LinearSpring,
-) -> Array[Load] raise {
-  self.pathway_
-  .to_loads(self.force())
-  .map(fn(load) { Load::ForceLoad(load) })
+pub fn LinearSpring::to_loads(self : LinearSpring) -> Array[Load] raise {
+  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
 }
 
 ///|
@@ -166,10 +158,7 @@ pub fn LinearSpring::as_actuator(self : LinearSpring) -> ActuatorLike {
 }
 
 ///|
-pub fn linear_damper(
-  damping : Expr,
-  pathway : PathwayLike,
-) -> LinearDamper {
+pub fn linear_damper(damping : Expr, pathway : PathwayLike) -> LinearDamper {
   LinearDamper::{ damping_: damping, pathway_: pathway }
 }
 
@@ -184,21 +173,15 @@ pub fn LinearDamper::pathway(self : LinearDamper) -> PathwayLike {
 }
 
 ///|
-pub fn LinearDamper::force(
-  self : LinearDamper,
-) -> Expr raise {
+pub fn LinearDamper::force(self : LinearDamper) -> Expr raise {
   mech_simplify_expr(
     int(-1) * self.damping_ * self.pathway_.extension_velocity(),
   )
 }
 
 ///|
-pub fn LinearDamper::to_loads(
-  self : LinearDamper,
-) -> Array[Load] raise {
-  self.pathway_
-  .to_loads(self.force())
-  .map(fn(load) { Load::ForceLoad(load) })
+pub fn LinearDamper::to_loads(self : LinearDamper) -> Array[Load] raise {
+  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
 }
 
 ///|
@@ -231,9 +214,7 @@ pub fn duffing_spring(
 }
 
 ///|
-pub fn DuffingSpring::force(
-  self : DuffingSpring,
-) -> Expr raise {
+pub fn DuffingSpring::force(self : DuffingSpring) -> Expr raise {
   let displacement = mech_simplify_expr(
     self.pathway_.length() - self.equilibrium_length_,
   )
@@ -244,12 +225,8 @@ pub fn DuffingSpring::force(
 }
 
 ///|
-pub fn DuffingSpring::to_loads(
-  self : DuffingSpring,
-) -> Array[Load] raise {
-  self.pathway_
-  .to_loads(self.force())
-  .map(fn(load) { Load::ForceLoad(load) })
+pub fn DuffingSpring::to_loads(self : DuffingSpring) -> Array[Load] raise {
+  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
 }
 
 ///|
@@ -299,25 +276,18 @@ pub fn CoulombKineticFriction::force(
   let stribeck = mech_simplify_expr(
     (f_max - f_c) *
     @symelem.exp(
-      mech_simplify_expr(
-        int(-1) *
-        ((v * (self.v_s_ ^ int(-1))) ^ int(2)),
-      ),
+      mech_simplify_expr(int(-1) * ((v * (self.v_s_ ^ int(-1))) ^ int(2))),
     ),
   )
   let viscous = self.sigma_ * v
-  mech_simplify_expr(
-    int(-1) * (f_c + stribeck) * @symelem.sign(v) - viscous,
-  )
+  mech_simplify_expr(int(-1) * (f_c + stribeck) * @symelem.sign(v) - viscous)
 }
 
 ///|
 pub fn CoulombKineticFriction::to_loads(
   self : CoulombKineticFriction,
 ) -> Array[Load] raise {
-  self.pathway_
-  .to_loads(self.force())
-  .map(fn(load) { Load::ForceLoad(load) })
+  self.pathway_.to_loads(self.force()).map(fn(load) { Load::ForceLoad(load) })
 }
 
 ///|
@@ -419,9 +389,7 @@ pub fn TorqueActuator::as_actuator(self : TorqueActuator) -> ActuatorLike {
 }
 
 ///|
-pub fn ActuatorLike::to_loads(
-  self : ActuatorLike,
-) -> Array[Load] raise {
+pub fn ActuatorLike::to_loads(self : ActuatorLike) -> Array[Load] raise {
   match self {
     ActuatorLike::Force(value) => value.to_loads()
     ActuatorLike::Spring(value) => value.to_loads()

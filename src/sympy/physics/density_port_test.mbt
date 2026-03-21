@@ -31,9 +31,7 @@ test "physics.quantum.density: parity" {
 
   let a = operator([@symcore.symbol("A")]).as_expr()
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(rho.apply_op(a).as_expr()),
-    ),
+    quantum_eval_str(@symprint.to_string(rho.apply_op(a).as_expr())),
     quantum_density_apply_op_str(rho_txt, "Operator(A)"),
     "density apply_op parity",
   )
@@ -63,9 +61,7 @@ test "physics.quantum.density: matrix entropy fidelity parity" {
     "density represent parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(entropy(mixed.as_expr(), spin_j=half)),
-    ),
+    quantum_eval_str(@symprint.to_string(entropy(mixed.as_expr(), spin_j=half))),
     quantum_entropy_str(
       "Density((JzKet(Rational(1, 2), Rational(1, 2)), Rational(1, 2)), (JzKet(Rational(1, 2), Rational(-1, 2)), Rational(1, 2)))",
     ),

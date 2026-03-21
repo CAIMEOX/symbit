@@ -48,10 +48,7 @@ pub fn Particle::potential_energy(self : Particle) -> Expr {
 }
 
 ///|
-pub fn Particle::set_potential_energy(
-  self : Particle,
-  value : Expr,
-) -> Unit {
+pub fn Particle::set_potential_energy(self : Particle, value : Expr) -> Unit {
   self.potential_energy_ = value
 }
 

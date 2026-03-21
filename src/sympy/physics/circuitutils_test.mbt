@@ -44,7 +44,9 @@ test "physics.quantum.circuitutils: search and replace" {
   assert_eq(find_subcircuit(circuit, subcircuit, start=2), 4)
 
   let removed = replace_subcircuit(circuit, subcircuit)
-  assert_eq(circuit_factor_strings(removed), ["XGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)"])
+  assert_eq(circuit_factor_strings(removed), [
+    "XGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)",
+  ])
 
   let replacement = @symcore.raw_mul([
     hadamard_gate(0).as_expr(),
@@ -56,8 +58,8 @@ test "physics.quantum.circuitutils: search and replace" {
     replace=Some(replacement),
   )
   assert_eq(circuit_factor_strings(replaced), [
-          "XGate(0)", "HadamardGate(0)", "ZGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)",
-        ])
+    "XGate(0)", "HadamardGate(0)", "ZGate(0)", "HadamardGate(0)", "ZGate(0)", "YGate(0)",
+  ])
 }
 
 ///|
@@ -70,8 +72,8 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
   ])
   let symbolic = convert_to_symbolic_indices(circuit)
   assert_eq(circuit_factor_strings(symbolic.circuit), [
-          "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate(Tuple(i1), XGate(i0))",
-        ])
+    "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate(Tuple(i1), XGate(i0))",
+  ])
   assert_eq(circuit_map_strings(symbolic.qubit_map), ["i0=2", "i1=5"])
   assert_eq(symbolic.next_index, 2)
 
@@ -79,7 +81,10 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
     @symcore.raw_mul(symbolic.circuit),
     symbolic.qubit_map,
   )
-  assert_eq(circuit_factor_strings(roundtrip), circuit_factor_strings(circuit_factors(circuit)))
+  assert_eq(
+    circuit_factor_strings(roundtrip),
+    circuit_factor_strings(circuit_factors(circuit)),
+  )
 
   let identities = [
     gate_identity([
@@ -103,5 +108,7 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
     [@symcore.raw_mul([hadamard_gate(1).as_expr(), y_gate(1).as_expr()])],
     seed=[1, 0],
   )
-  assert_eq(circuit_factor_strings(inserted), ["XGate(0)", "HadamardGate(1)", "YGate(1)", "ZGate(0)"])
+  assert_eq(circuit_factor_strings(inserted), [
+    "XGate(0)", "HadamardGate(1)", "YGate(1)", "ZGate(0)",
+  ])
 }

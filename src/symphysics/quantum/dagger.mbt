@@ -15,8 +15,8 @@ pub fn expr_conjugate(expr : Expr) -> Expr {
     Expr::Add(args) => @symcore.add(args.map(expr_conjugate))
     Expr::Mul(args) => @symcore.mul(args.map(expr_conjugate))
     Expr::Pow(base, exp) => expr_conjugate(base) ^ exp
-    Expr::Function(name, args) if name == "conjugate" &&
-      args.length() == 1 => args[0]
+    Expr::Function(name, args) if name == "conjugate" && args.length() == 1 =>
+      args[0]
     _ => @symcore.raw_function("conjugate", [expr])
   }
 }
@@ -92,16 +92,15 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
       @symcore.raw_function("SigmaZBra", args)
     Expr::Function(name, args) if name == "SigmaZBra" =>
       @symcore.raw_function("SigmaZKet", args)
-    Expr::Function(name, args) if name == "Wavefunction" &&
-      args.length() >= 2 => {
+    Expr::Function(name, args) if name == "Wavefunction" && args.length() >= 2 => {
       let out = [expr_conjugate(args[0])]
       for idx in 1..<args.length() {
         out.push(args[idx])
       }
       @symcore.raw_function("Wavefunction", out)
     }
-    Expr::Function(name, args) if name == "Operator" &&
-      args.length() == 1 => @symcore.raw_function("Dagger", [args[0]])
+    Expr::Function(name, args) if name == "Operator" && args.length() == 1 =>
+      @symcore.raw_function("Dagger", [args[0]])
     Expr::Function(name, _) if name == "SigmaX" ||
       name == "SigmaY" ||
       name == "SigmaZ" => expr
@@ -149,8 +148,7 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
       name == "PhaseGate" ||
       name == "TGate" ||
       name == "Rotation" => @symcore.raw_pow(expr, int(-1))
-    Expr::Function(name, args) if name == "BosonOp" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "BosonOp" && args.length() == 2 =>
       @symcore.raw_function("BosonOp", [
         args[0],
         if args[1] == int(0) {
@@ -161,14 +159,13 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
       ])
     Expr::Function(name, args) if name == "AnnihilateBoson" &&
       args.length() == 1 => @symcore.raw_function("CreateBoson", args)
-    Expr::Function(name, args) if name == "CreateBoson" &&
-      args.length() == 1 => @symcore.raw_function("AnnihilateBoson", args)
+    Expr::Function(name, args) if name == "CreateBoson" && args.length() == 1 =>
+      @symcore.raw_function("AnnihilateBoson", args)
     Expr::Function(name, args) if name == "FockStateBosonKet" &&
       args.length() == 1 => @symcore.raw_function("FockStateBosonBra", args)
     Expr::Function(name, args) if name == "FockStateBosonBra" &&
       args.length() == 1 => @symcore.raw_function("FockStateBosonKet", args)
-    Expr::Function(name, args) if name == "FermionOp" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "FermionOp" && args.length() == 2 =>
       @symcore.raw_function("FermionOp", [
         args[0],
         if args[1] == int(0) {
@@ -177,20 +174,16 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
           int(0)
         },
       ])
-    Expr::Function(name, args) if name == "OuterProduct" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "OuterProduct" && args.length() == 2 =>
       @symcore.raw_function("OuterProduct", [dagger(args[1]), dagger(args[0])])
-    Expr::Function(name, args) if name == "InnerProduct" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "InnerProduct" && args.length() == 2 =>
       inner_product(dagger(args[1]), dagger(args[0]), evaluate=false)
     Expr::Function(name, args) if name == "TensorProduct" =>
       @symcore.raw_function("TensorProduct", args.map(arg => dagger(arg)))
-    Expr::Function(name, args) if name == "Commutator" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "Commutator" && args.length() == 2 =>
       int(-1) *
       @symcore.raw_function("Commutator", [dagger(args[1]), dagger(args[0])])
-    Expr::Function(name, args) if name == "AntiCommutator" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "AntiCommutator" && args.length() == 2 =>
       @symcore.raw_function("AntiCommutator", [dagger(args[0]), dagger(args[1])])
     Expr::Symbol(name) if name == "Jplus" || name == "Jminus" =>
       @symcore.raw_function("Dagger", [expr])

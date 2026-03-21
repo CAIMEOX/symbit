@@ -408,8 +408,7 @@ pub fn as_int(
       }
       n
     }
-    IntLike::Expr(Expr::Number(n)) if n.is_integral() =>
-      n.numerator().to_int()
+    IntLike::Expr(Expr::Number(n)) if n.is_integral() => n.numerator().to_int()
     IntLike::Expr(expr) =>
       raise UtilitiesError::InvalidArgument(
         @symprint.to_string(expr) + " is not an integer",

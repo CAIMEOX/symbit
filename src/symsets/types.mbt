@@ -6,17 +6,8 @@ pub(all) enum Set {
   EmptySet
   UniversalSet
   FiniteSet(Array[Expr])
-  Interval(
-    left~ : Expr,
-    right~ : Expr,
-    left_open~ : Bool,
-    right_open~ : Bool
-  )
-  ConditionSet(
-    symbol~ : Expr,
-    condition~ : @symlogic.BoolExpr,
-    base~ : Set
-  )
+  Interval(left~ : Expr, right~ : Expr, left_open~ : Bool, right_open~ : Bool)
+  ConditionSet(symbol~ : Expr, condition~ : @symlogic.BoolExpr, base~ : Set)
   ImageSet(symbol~ : Expr, expr~ : Expr, base~ : Set)
   ProductSet(Array[Set])
   Union(Array[Set])
@@ -244,10 +235,7 @@ fn compare_exprs(a : Expr, b : Expr) -> Int {
 }
 
 ///|
-fn compare_expr_arrays(
-  xs : Array[Expr],
-  ys : Array[Expr],
-) -> Int {
+fn compare_expr_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
   let len_x = xs.length()
   let len_y = ys.length()
   let min_len = if len_x < len_y { len_x } else { len_y }

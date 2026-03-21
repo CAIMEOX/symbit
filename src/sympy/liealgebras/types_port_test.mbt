@@ -1,10 +1,7 @@
 ///|
 test "liealgebras type A parity" {
   let ct = cartan_type_from_string("A3")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("A3"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("A3"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("A3"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("A3"))
   assert_eq(
@@ -26,10 +23,7 @@ test "liealgebras type A parity" {
 ///|
 test "liealgebras type B parity" {
   let ct = cartan_type_from_string("B3")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("B3"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("B3"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("B3"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("B3"))
   assert_eq(
@@ -47,10 +41,7 @@ test "liealgebras type B parity" {
 ///|
 test "liealgebras type C parity" {
   let ct = cartan_type_from_string("C4")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("C4"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("C4"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("C4"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("C4"))
   assert_eq(
@@ -85,10 +76,7 @@ test "liealgebras type D parity" {
 ///|
 test "liealgebras type E parity" {
   let ct = cartan_type_from_string("E6")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("E6"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("E6"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("E6"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("E6"))
   assert_eq(
@@ -105,10 +93,7 @@ test "liealgebras type E parity" {
 ///|
 test "liealgebras type F parity" {
   let ct = cartan_type_from_string("F4")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("F4"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("F4"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("F4"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("F4"))
   assert_eq(
@@ -125,10 +110,7 @@ test "liealgebras type F parity" {
 ///|
 test "liealgebras type G parity" {
   let ct = cartan_type_from_string("G2")
-  assert_eq(
-    ct.dimension().to_string(),
-    cartan_type_dimension_str("G2"),
-  )
+  assert_eq(ct.dimension().to_string(), cartan_type_dimension_str("G2"))
   assert_eq(ct.basis().to_string(), cartan_type_basis_str("G2"))
   assert_eq(ct.roots().to_string(), cartan_type_roots_str("G2"))
   assert_eq(

@@ -30,17 +30,12 @@ pub struct Linearizer {
 } derive(Eq)
 
 ///|
-fn mechanics_expr_div(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+fn mechanics_expr_div(lhs : Expr, rhs : Expr) -> Expr {
   mech_simplify_expr(lhs * (rhs ^ int(-1)))
 }
 
 ///|
-fn mechanics_matrix_column(
-  exprs : Array[Expr],
-) -> @symphysics.ExplicitMatrix {
+fn mechanics_matrix_column(exprs : Array[Expr]) -> @symphysics.ExplicitMatrix {
   @symphysics.explicit_matrix_column(exprs)
 }
 

@@ -13,14 +13,7 @@ fn range_array(start : Int, end : Int) -> Array[Int] {
 test "tensor_can dummy_sgs parity" {
   let dummies = [2, 3, 4, 5, 6, 7]
   let res = dummy_sgs(dummies, Some(0), 8)
-  assert_oracle(
-    try? tensor_can_dummy_sgs_equiv(
-      dummies,
-      Some(0),
-      8,
-      res,
-    ),
-  )
+  assert_oracle(try? tensor_can_dummy_sgs_equiv(dummies, Some(0), 8, res))
 }
 
 ///|
@@ -29,32 +22,18 @@ test "tensor_can min_dummies parity" {
   let sym = [Some(0)]
   let indices = range_array(0, 10)
   let res = _min_dummies(dummies, sym, indices)
-  assert_oracle(
-    try? tensor_can_min_dummies_equiv(
-      dummies, sym, indices, res,
-    ),
-  )
+  assert_oracle(try? tensor_can_min_dummies_equiv(dummies, sym, indices, res))
 }
 
 ///|
 test "tensor_can symmetric group sgs parity" {
   let (base0, gens0) = get_symmetric_group_sgs(3)
   assert_oracle(
-    try? tensor_can_symmetric_group_equiv(
-      3,
-      false,
-      base0,
-      array_forms(gens0),
-    ),
+    try? tensor_can_symmetric_group_equiv(3, false, base0, array_forms(gens0)),
   )
   let (base1, gens1) = get_symmetric_group_sgs(3, antisym=true)
   assert_oracle(
-    try? tensor_can_symmetric_group_equiv(
-      3,
-      true,
-      base1,
-      array_forms(gens1),
-    ),
+    try? tensor_can_symmetric_group_equiv(3, true, base1, array_forms(gens1)),
   )
 }
 
@@ -64,17 +43,13 @@ test "tensor_can perm_af_direct_product parity" {
   let gens2 = [[1, 0]]
   let res = perm_af_direct_product(gens1, gens2, signed=false)
   assert_oracle(
-    try? tensor_can_perm_af_direct_product_equiv(
-      gens1, gens2, false, res,
-    ),
+    try? tensor_can_perm_af_direct_product_equiv(gens1, gens2, false, res),
   )
   let gens1b = [[1, 0, 2, 3, 5, 4], [0, 1, 3, 2, 4, 5]]
   let gens2b = [[1, 0, 2, 3]]
   let res2 = perm_af_direct_product(gens1b, gens2b, signed=true)
   assert_oracle(
-    try? tensor_can_perm_af_direct_product_equiv(
-      gens1b, gens2b, true, res2,
-    ),
+    try? tensor_can_perm_af_direct_product_equiv(gens1b, gens2b, true, res2),
   )
 }
 

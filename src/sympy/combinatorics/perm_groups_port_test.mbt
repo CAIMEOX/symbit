@@ -5,15 +5,8 @@ test "combinatorics permutation group elements/order parity (S3)" {
   let group = PermutationGroup::new([gen1, gen2])
   let gens = array_forms(group.generators())
   let elems = array_forms(group.elements())
-  assert_oracle(
-    try? perm_group_elements_equiv_from_gens(gens, elems),
-  )
-  assert_oracle(
-    try? perm_group_order_equiv_from_gens(
-      gens,
-      group.order(),
-    ),
-  )
+  assert_oracle(try? perm_group_elements_equiv_from_gens(gens, elems))
+  assert_oracle(try? perm_group_order_equiv_from_gens(gens, group.order()))
 }
 
 ///|
@@ -22,13 +15,6 @@ test "combinatorics permutation group elements/order parity (cyclic)" {
   let group = PermutationGroup::new([gen])
   let gens = array_forms(group.generators())
   let elems = array_forms(group.elements())
-  assert_oracle(
-    try? perm_group_elements_equiv_from_gens(gens, elems),
-  )
-  assert_oracle(
-    try? perm_group_order_equiv_from_gens(
-      gens,
-      group.order(),
-    ),
-  )
+  assert_oracle(try? perm_group_elements_equiv_from_gens(gens, elems))
+  assert_oracle(try? perm_group_order_equiv_from_gens(gens, group.order()))
 }

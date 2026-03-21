@@ -134,14 +134,13 @@ test "factor wb: GF splitting and seed helpers" {
     Domain::GFExt(3, 3, [1, 0, 0, 1]),
   )
   match seeded {
-    FieldElem::GFExt(_, coeffs, mod_poly) => {
+    FieldElem::GFExt(_, coeffs, mod_poly) =>
       assert_true(
         coeffs.length() == 3 &&
-                coeffs[0] == 1 &&
-                coeffs[1] == 2 &&
-                mod_poly.length() == 0
+        coeffs[0] == 1 &&
+        coeffs[1] == 2 &&
+        mod_poly.length() == 0,
       )
-    }
     _ => fail("field_elem_from_seed should build GFExt coefficient")
   }
 

@@ -29,10 +29,7 @@ pub fn ratsimpmodprime(
 
 ///|
 /// Return `expr` with terms having common square roots collected together.
-pub fn collect_sqrt(
-  expr : Expr,
-  evaluate? : Bool = true,
-) -> Expr {
+pub fn collect_sqrt(expr : Expr, evaluate? : Bool = true) -> Expr {
   let _ = evaluate
   collect_function_terms(expr, "sqrt")
 }
@@ -45,10 +42,7 @@ pub fn collect_abs(expr : Expr) -> Expr {
 
 ///|
 /// Rationalize `num/den` by removing square roots in the denominator.
-pub fn rad_rationalize(
-  num : Expr,
-  den : Expr,
-) -> (Expr, Expr) {
+pub fn rad_rationalize(num : Expr, den : Expr) -> (Expr, Expr) {
   match rationalized_denominator(den) {
     Some((mul_num, new_den)) => (@symcore.mul([num, mul_num]), new_den)
     None => (num, den)
@@ -94,9 +88,7 @@ pub fn denom_expand(expr : Expr) -> Expr {
 
 ///|
 /// Split surd terms by a shared square-free rational factor for denesting.
-pub fn split_surds(
-  expr : Expr,
-) -> (Expr, Expr, Expr) {
+pub fn split_surds(expr : Expr) -> (Expr, Expr, Expr) {
   let terms = match expr {
     Expr::Add(args) => args
     _ => [expr]
@@ -128,9 +120,7 @@ pub fn split_surds(
       let inner = int(rad / g)
       a_terms.push(@symcore.mul([coeff, @symcore.function("sqrt", [inner])]))
     } else {
-      b_terms.push(
-        @symcore.mul([coeff, @symcore.function("sqrt", [int(rad)])]),
-      )
+      b_terms.push(@symcore.mul([coeff, @symcore.function("sqrt", [int(rad)])]))
     }
   }
   (int(g), @symcore.add(a_terms), @symcore.add(b_terms))
@@ -161,10 +151,7 @@ fn fixpoint_rewrite(
 }
 
 ///|
-fn rewrite_bottom_up_rational(
-  expr : Expr,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn rewrite_bottom_up_rational(expr : Expr, rule : (Expr) -> Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_rational(child, rule)
   })
@@ -186,9 +173,7 @@ fn rewrite_radsimp(expr : Expr) -> Expr {
 }
 
 ///|
-fn rationalized_denominator(
-  den : Expr,
-) -> (Expr, Expr)? {
+fn rationalized_denominator(den : Expr) -> (Expr, Expr)? {
   match den {
     _ if is_radical(den) =>
       match radical_square(den) {
@@ -198,28 +183,12 @@ fn rationalized_denominator(
     Expr::Add([a, b]) =>
       match (parse_signed_radical(a), parse_signed_radical(b)) {
         (Some((sa, ra)), Some((sb, rb))) => {
-          let a_term = if sa > 0 {
-            ra
-          } else {
-            @symcore.mul([int(-1), ra])
-          }
-          let b_term = if sb > 0 {
-            rb
-          } else {
-            @symcore.mul([int(-1), rb])
-          }
-          let conj = @symcore.add([
-            a_term,
-            @symcore.mul([int(-1), b_term]),
-          ])
+          let a_term = if sa > 0 { ra } else { @symcore.mul([int(-1), ra]) }
+          let b_term = if sb > 0 { rb } else { @symcore.mul([int(-1), rb]) }
+          let conj = @symcore.add([a_term, @symcore.mul([int(-1), b_term])])
           match (radical_square(ra), radical_square(rb)) {
             (Some(a_sq), Some(b_sq)) =>
-              Some(
-                (
-                  conj,
-                  @symcore.add([a_sq, @symcore.mul([int(-1), b_sq])]),
-                ),
-              )
+              Some((conj, @symcore.add([a_sq, @symcore.mul([int(-1), b_sq])])))
             _ => None
           }
         }
@@ -282,12 +251,12 @@ fn try_denest_quadratic_surds(arg : Expr) -> Expr? {
     None => return None
   }
   let four = @symnum.BigRational::from_int(4)
-  let two = @symnum.BigRational::from_int(2)
   let disc = a.mul_r(a).add_r(b.mul_r(four).neg_r())
   match rational_sqrt(disc) {
     Some(sdisc) => {
-      let m = a.add_r(sdisc).div_r(two)
-      let n = a.add_r(sdisc.neg_r()).div_r(two)
+      let half = @symnum.BigRational::from_ints(1, 2) catch { _ => return None }
+      let m = a.add_r(sdisc).mul_r(half)
+      let n = a.add_r(sdisc.neg_r()).mul_r(half)
       if m.compare(@symnum.BigRational::zero()) < 0 ||
         n.compare(@symnum.BigRational::zero()) < 0 {
         return None
@@ -345,8 +314,7 @@ fn parse_two_sqrt_term(term : Expr) -> @symnum.BigRational? {
 ///|
 fn radical_radicand_as_rational(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Function(name, [Expr::Number(b)]) if name == "sqrt" =>
-      Some(b)
+    Expr::Function(name, [Expr::Number(b)]) if name == "sqrt" => Some(b)
     Expr::Pow(Expr::Number(b), Expr::Number(e)) =>
       if is_half(e) {
         Some(b)
@@ -443,10 +411,7 @@ fn flatten_mul_factors(expr : Expr) -> Array[Expr] {
 }
 
 ///|
-fn collect_function_terms(
-  expr : Expr,
-  target_name : String,
-) -> Expr {
+fn collect_function_terms(expr : Expr, target_name : String) -> Expr {
   match expr {
     Expr::Add(args) => {
       let grouped : Map[String, Array[Expr]] = {}
@@ -500,8 +465,7 @@ fn parse_coeff_times_named_unary(
       let coeff_factors : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          Expr::Function(name, [inner]) if matches_target(name) &&
-            !seen => {
+          Expr::Function(name, [inner]) if matches_target(name) && !seen => {
             seen = true
             inner_expr = inner
           }
@@ -521,10 +485,8 @@ fn parse_coeff_times_named_unary(
 ///|
 fn expand_mul_expr(expr : Expr) -> Expr {
   match expr {
-    Expr::Add(args) =>
-      @symcore.add(args.map(term => expand_mul_expr(term)))
-    Expr::Mul(args) =>
-      expand_mul_sequence(args.map(f => expand_mul_expr(f)))
+    Expr::Add(args) => @symcore.add(args.map(term => expand_mul_expr(term)))
+    Expr::Mul(args) => expand_mul_sequence(args.map(f => expand_mul_expr(f)))
     Expr::Pow(base, exp) =>
       @symcore.pow(expand_mul_expr(base), expand_mul_expr(exp))
     Expr::Function(name, args) =>
@@ -575,9 +537,7 @@ fn parse_coeff_sqrt_int(expr : Expr) -> (Expr, Int)? {
       let coeff_factors : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          Expr::Function(name, [Expr::Number(n)]) if name ==
-            "sqrt" &&
-            !found =>
+          Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" && !found =>
             if n.is_integral() && n.numerator().to_int() > 0 {
               found = true
               rad = n.numerator().to_int()
@@ -685,7 +645,11 @@ fn rational_sqrt(v : @symnum.BigRational) -> @symnum.BigRational? {
     let den = v.denominator().to_int()
     match (int_sqrt_if_square(num), int_sqrt_if_square(den)) {
       (Some(sn), Some(sd)) =>
-        Some(@symnum.BigRational::new(BigInt::from_int(sn), BigInt::from_int(sd)) catch { _ => return None })
+        Some(
+          @symnum.BigRational::new(BigInt::from_int(sn), BigInt::from_int(sd)) catch {
+            _ => return None
+          },
+        )
       _ => None
     }
   } else {

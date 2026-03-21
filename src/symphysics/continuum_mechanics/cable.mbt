@@ -17,7 +17,6 @@ pub type CablePointLoadSpec = (
 ///|
 pub suberror CableError {
   ValueError(String)
-  SolveError(String)
 } derive(Show, Eq)
 
 ///|

@@ -1157,10 +1157,7 @@ fn extension_names(extension : Array[Expr]) -> Array[String] {
 }
 
 ///|
-fn append_unique_exprs(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn append_unique_exprs(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   let out = lhs.copy()
   for expr in rhs {
     if !out.contains(expr) {
@@ -1202,12 +1199,7 @@ fn expr_replace_symbol(
 ) -> Expr {
   match expr {
     Expr::Number(_) => expr
-    Expr::Symbol(name) =>
-      if name == old_name {
-        symbol(new_name)
-      } else {
-        expr
-      }
+    Expr::Symbol(name) => if name == old_name { symbol(new_name) } else { expr }
     Expr::Add(args) =>
       @symcore.add(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
@@ -1311,11 +1303,7 @@ pub fn domain_alg_field_from_poly(
 fn cyclotomic_poly_domain(n : Int, gen : String) -> Poly raise PolyError {
   guard n > 0 else { raise PolyError::BadExponent }
   let x = symbol(gen)
-  let mut poly = Poly::from_expr(
-    (x ^ int(n)) - int(1),
-    [gen],
-    Domain::QQ,
-  )
+  let mut poly = Poly::from_expr((x ^ int(n)) - int(1), [gen], Domain::QQ)
   for d in 1..<n {
     if n % d == 0 {
       poly = poly.div_exact_univar(cyclotomic_poly_domain(d, gen))
@@ -1518,9 +1506,7 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
   match expr {
     Expr::Number(_) => false
     Expr::Symbol(name) => if allow_i { name != "I" } else { true }
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
     Expr::Pow(base, exp) =>
       expr_has_forbidden_symbol(base, allow_i) ||
@@ -1771,18 +1757,12 @@ pub fn domain_to_sympy_expr(
 }
 
 ///|
-pub fn domain_new_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_new_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
-pub fn domain_normal_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_normal_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_new_expr(domain, expr)
 }
 
@@ -2134,16 +2114,11 @@ pub fn domain_map_expr_tree(
 }
 
 ///|
-fn expr_depends_on_symbols(
-  expr : Expr,
-  symbols : Array[String],
-) -> Bool {
+fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
   match expr {
     Expr::Number(_) => false
     Expr::Symbol(name) => symbols.contains(name)
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
     Expr::Pow(base, exp) =>
       expr_depends_on_symbols(base, symbols) ||
@@ -2175,17 +2150,13 @@ fn domain_expr_is_one(expr : Expr) -> Bool {
 ///|
 fn domain_expr_is_minus_one(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(n) =>
-      n.compare(@symnum.BigRational::from_int(-1)) == 0
+    Expr::Number(n) => n.compare(@symnum.BigRational::from_int(-1)) == 0
     _ => false
   }
 }
 
 ///|
-fn expr_constant_term(
-  expr : Expr,
-  symbols : Array[String],
-) -> Expr? {
+fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
   if !expr_depends_on_symbols(expr, symbols) {
     return Some(expr)
   }
@@ -2683,10 +2654,7 @@ pub fn domain_is_one_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_negative_one_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Bool {
+pub fn domain_is_negative_one_expr(domain : Domain, expr : Expr) -> Bool {
   domain_contains_expr(domain, expr) && domain_expr_is_minus_one(expr)
 }
 
@@ -2740,10 +2708,7 @@ pub fn domain_is_negative_expr(domain : Domain, expr : Expr) -> Bool {
 }
 
 ///|
-pub fn domain_is_nonpositive_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Bool {
+pub fn domain_is_nonpositive_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v <= 0
     None => false
@@ -2751,10 +2716,7 @@ pub fn domain_is_nonpositive_expr(
 }
 
 ///|
-pub fn domain_is_nonnegative_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Bool {
+pub fn domain_is_nonnegative_expr(domain : Domain, expr : Expr) -> Bool {
   match domain_expr_sign(domain, expr) {
     Some(v) => v >= 0
     None => false
@@ -3287,11 +3249,10 @@ fn gaussian_rat_numer_denom(
 fn gaussian_rat_from_numer_denom(
   numer : GaussianIntCompat,
   den : BigInt,
-) -> GaussianRatCompat {
-  let den_rat = @symnum.BigRational::from_bigint(den)
+) -> GaussianRatCompat raise PolyError {
   GaussianRatCompat::{
-    re: @symnum.BigRational::from_bigint(numer.re).div_r(den_rat),
-    im: @symnum.BigRational::from_bigint(numer.im).div_r(den_rat),
+    re: poly_rational_from_bigints(numer.re, den),
+    im: poly_rational_from_bigints(numer.im, den),
   }
 }
 
@@ -3315,8 +3276,8 @@ fn gaussian_rat_inv(
     raise PolyError::DivisionByZero
   }
   GaussianRatCompat::{
-    re: value.re.div_r(norm),
-    im: value.im.neg_r().div_r(norm),
+    re: poly_rational_div(value.re, norm),
+    im: poly_rational_div(value.im.neg_r(), norm),
   }
 }
 
@@ -3382,9 +3343,9 @@ fn gaussian_rat_exsqrt(value : GaussianRatCompat) -> GaussianRatCompat? {
   match t {
     None => None
     Some(total) => {
-      let half = @symnum.BigRational::from_int(2)
-      let u = total.add_r(value.re).div_r(half)
-      let v = total.add_r(value.re.neg_r()).div_r(half)
+      let half = poly_rational_from_ints(1, 2) catch { _ => return None }
+      let u = total.add_r(value.re).mul_r(half)
+      let v = total.add_r(value.re.neg_r()).mul_r(half)
       match (domain_rational_exsqrt(u), domain_rational_exsqrt(v)) {
         (Some(a), Some(b0)) => {
           let b = if value.im.compare(@symnum.BigRational::zero()) < 0 {
@@ -3508,13 +3469,7 @@ fn expr_strip_leading_minus(expr : Expr) -> Expr? {
         }
       }
       if removed {
-        Some(
-          if updated.is_empty() {
-            int(1)
-          } else {
-            @symcore.mul(updated)
-          },
-        )
+        Some(if updated.is_empty() { int(1) } else { @symcore.mul(updated) })
       } else {
         None
       }
@@ -3685,11 +3640,7 @@ fn domain_scalar_gcd_expr(
       }
       let num = @symnum.gcd_bigint(lhs.numerator(), rhs.numerator())
       let den = domain_bigint_lcm(lhs.denominator(), rhs.denominator())
-      @symcore.number(
-        @symnum.BigRational::from_bigint(num).div_r(
-          @symnum.BigRational::from_bigint(den),
-        ),
-      )
+      @symcore.number(poly_rational_from_bigints(num, den))
     }
     Domain::ZZ_I => {
       let lhs = gaussian_int_from_expr(domain, left)
@@ -3770,11 +3721,7 @@ fn domain_scalar_lcm_expr(
       } else {
         let num = domain_bigint_lcm(lhs.numerator(), rhs.numerator())
         let den = @symnum.gcd_bigint(lhs.denominator(), rhs.denominator())
-        @symcore.number(
-          @symnum.BigRational::from_bigint(num).div_r(
-            @symnum.BigRational::from_bigint(den),
-          ),
-        )
+        @symcore.number(poly_rational_from_bigints(num, den))
       }
     }
     Domain::ZZ_I => {
@@ -4015,21 +3962,13 @@ pub fn domain_canonical_unit_expr(
             Some(coeff) => domain_canonical_unit_expr(base, coeff)
             None => int(1)
           }
-        None =>
-          if expr_has_leading_minus(expr) {
-            int(-1)
-          } else {
-            int(1)
-          }
+        None => if expr_has_leading_minus(expr) { int(-1) } else { int(1) }
       }
   }
 }
 
 ///|
-pub fn domain_abs_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_abs_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4140,7 +4079,8 @@ pub fn domain_cofactors_expr(
       }
     Domain::QQ =>
       match (expr_rational_value(left), expr_rational_value(gcd)) {
-        (Some(lhs), Some(g)) if !g.is_zero() => expr_from_rational(lhs.div_r(g))
+        (Some(lhs), Some(g)) if !g.is_zero() =>
+          expr_from_rational(poly_rational_div(lhs, g))
         _ => raise PolyError::ExactQuotientFailed
       }
     Domain::ZZ_I => {
@@ -4215,7 +4155,8 @@ pub fn domain_cofactors_expr(
       }
     Domain::QQ =>
       match (expr_rational_value(right), expr_rational_value(gcd)) {
-        (Some(rhs), Some(g)) if !g.is_zero() => expr_from_rational(rhs.div_r(g))
+        (Some(rhs), Some(g)) if !g.is_zero() =>
+          expr_from_rational(poly_rational_div(rhs, g))
         _ => raise PolyError::ExactQuotientFailed
       }
     Domain::ZZ_I => {
@@ -4449,10 +4390,7 @@ pub fn domain_invert_expr(
 }
 
 ///|
-pub fn domain_revert_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_revert_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   if domain_is_field_pred(domain) {
     guard !domain_is_zero_expr(domain, expr) else {
       raise PolyError::DivisionByZero
@@ -4544,10 +4482,7 @@ pub fn domain_log_expr(
 }
 
 ///|
-pub fn domain_sqrt_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_sqrt_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4677,10 +4612,7 @@ pub fn domain_is_square_expr(
 }
 
 ///|
-pub fn domain_real_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_real_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4688,10 +4620,7 @@ pub fn domain_real_expr(
 }
 
 ///|
-pub fn domain_imag_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_imag_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4807,19 +4736,13 @@ pub fn domain_one_expr(domain : Domain) -> Expr raise PolyError {
 
 ///|
 /// Unary plus over domain elements.
-pub fn domain_pos_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_pos_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   domain_from_sympy_expr(domain, expr)
 }
 
 ///|
 /// Unary minus over domain elements.
-pub fn domain_neg_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_neg_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -4921,10 +4844,7 @@ pub fn domain_pow_expr(
 }
 
 ///|
-fn domain_field_elem_to_expr(
-  domain : Domain,
-  elem : FieldElem,
-) -> Expr {
+fn domain_field_elem_to_expr(domain : Domain, elem : FieldElem) -> Expr {
   match (domain, elem) {
     (Domain::GF(p), FieldElem::GFp(_, value)) => {
       let symm = if value > p / 2 { value - p } else { value }
@@ -4979,10 +4899,7 @@ fn domain_poly_div_expr(
 }
 
 ///|
-pub fn domain_numer_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_numer_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -5023,10 +4940,7 @@ pub fn domain_numer_expr(
 }
 
 ///|
-pub fn domain_denom_expr(
-  domain : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn domain_denom_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
   guard domain_contains_expr(domain, expr) else {
     raise PolyError::DomainMismatch
   }
@@ -5076,7 +4990,7 @@ pub fn domain_quo_expr(
     Domain::QQ =>
       match (expr_rational_value(left), expr_rational_value(right)) {
         (Some(lhs), Some(rhs)) if !rhs.is_zero() =>
-          expr_from_rational(lhs.div_r(rhs))
+          expr_from_rational(poly_rational_div(lhs, rhs))
         _ => raise PolyError::DomainMismatch
       }
     Domain::ZZ_I =>
@@ -5236,18 +5150,12 @@ pub fn Domain::from_sympy_expr(
 }
 
 ///|
-pub fn Domain::new_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::new_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_new_expr(self, expr)
 }
 
 ///|
-pub fn Domain::normal_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::normal_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_normal_expr(self, expr)
 }
 
@@ -5294,11 +5202,7 @@ pub fn Domain::map_expr_tree(
 }
 
 ///|
-pub fn Domain::from_ff_expr(
-  self : Domain,
-  expr : Expr,
-  base : Domain,
-) -> Expr? {
+pub fn Domain::from_ff_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_ff_expr(self, expr, base)
 }
 
@@ -5312,11 +5216,7 @@ pub fn Domain::from_ff_python_expr(
 }
 
 ///|
-pub fn Domain::from_zz_expr(
-  self : Domain,
-  expr : Expr,
-  base : Domain,
-) -> Expr? {
+pub fn Domain::from_zz_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_zz_expr(self, expr, base)
 }
 
@@ -5330,11 +5230,7 @@ pub fn Domain::from_zz_python_expr(
 }
 
 ///|
-pub fn Domain::from_qq_expr(
-  self : Domain,
-  expr : Expr,
-  base : Domain,
-) -> Expr? {
+pub fn Domain::from_qq_expr(self : Domain, expr : Expr, base : Domain) -> Expr? {
   domain_from_qq_expr(self, expr, base)
 }
 
@@ -5496,10 +5392,7 @@ pub fn Domain::is_one_expr(self : Domain, expr : Expr) -> Bool {
 }
 
 ///|
-pub fn Domain::is_negative_one_expr(
-  self : Domain,
-  expr : Expr,
-) -> Bool {
+pub fn Domain::is_negative_one_expr(self : Domain, expr : Expr) -> Bool {
   domain_is_negative_one_expr(self, expr)
 }
 
@@ -5537,10 +5430,7 @@ pub fn Domain::canonical_unit_expr(
 }
 
 ///|
-pub fn Domain::abs_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::abs_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_abs_expr(self, expr)
 }
 
@@ -5572,18 +5462,12 @@ pub fn Domain::cofactors_expr(
 }
 
 ///|
-pub fn Domain::numer_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::numer_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_numer_expr(self, expr)
 }
 
 ///|
-pub fn Domain::denom_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::denom_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_denom_expr(self, expr)
 }
 
@@ -5651,10 +5535,7 @@ pub fn Domain::invert_expr(
 }
 
 ///|
-pub fn Domain::revert_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::revert_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_revert_expr(self, expr)
 }
 
@@ -5676,10 +5557,7 @@ pub fn Domain::log_expr(
 }
 
 ///|
-pub fn Domain::sqrt_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::sqrt_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_sqrt_expr(self, expr)
 }
 
@@ -5692,26 +5570,17 @@ pub fn Domain::is_square_expr(
 }
 
 ///|
-pub fn Domain::exsqrt_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr? raise PolyError {
+pub fn Domain::exsqrt_expr(self : Domain, expr : Expr) -> Expr? raise PolyError {
   domain_exsqrt_expr(self, expr)
 }
 
 ///|
-pub fn Domain::real_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::real_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_real_expr(self, expr)
 }
 
 ///|
-pub fn Domain::imag_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::imag_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_imag_expr(self, expr)
 }
 
@@ -5735,18 +5604,12 @@ pub fn Domain::evalf_expr(
 }
 
 ///|
-pub fn Domain::pos_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::pos_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_pos_expr(self, expr)
 }
 
 ///|
-pub fn Domain::neg_expr(
-  self : Domain,
-  expr : Expr,
-) -> Expr raise PolyError {
+pub fn Domain::neg_expr(self : Domain, expr : Expr) -> Expr raise PolyError {
   domain_neg_expr(self, expr)
 }
 

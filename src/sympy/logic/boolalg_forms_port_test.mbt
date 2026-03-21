@@ -18,25 +18,13 @@ test "boolalg eliminate_implications/to_nnf/to_cnf/to_dnf" {
     boolalg_eliminate_implications("Implies(x, y)"),
   )
   let nnf_expr = bool_not(bool_or([x, bool_and([y, z])]))
-  assert_eq(
-    to_string(to_nnf(nnf_expr)),
-    boolalg_to_nnf("~(x | (y & z))"),
-  )
+  assert_eq(to_string(to_nnf(nnf_expr)), boolalg_to_nnf("~(x | (y & z))"))
   let xor_expr = bool_xor([x, y, z])
-  assert_eq(
-    to_string(to_nnf(xor_expr)),
-    boolalg_to_nnf("Xor(x, y, z)"),
-  )
+  assert_eq(to_string(to_nnf(xor_expr)), boolalg_to_nnf("Xor(x, y, z)"))
   let cnf_expr = bool_or([bool_not(bool_or([x, y])), z])
-  assert_eq(
-    to_string(to_cnf(cnf_expr)),
-    boolalg_to_cnf("~(x | y) | z"),
-  )
+  assert_eq(to_string(to_cnf(cnf_expr)), boolalg_to_cnf("~(x | y) | z"))
   let dnf_expr = bool_and([y, bool_or([x, z])])
-  assert_eq(
-    to_string(to_dnf(dnf_expr)),
-    boolalg_to_dnf("y & (x | z)"),
-  )
+  assert_eq(to_string(to_dnf(dnf_expr)), boolalg_to_dnf("y & (x | z)"))
 }
 
 ///|
@@ -73,18 +61,9 @@ test "boolalg distribute helpers" {
   let dist1 = distribute_and_over_or(
     bool_or([x, bool_and([bool_not(y), bool_not(z)])]),
   )
-  assert_eq(
-    to_string(dist1),
-    boolalg_distribute_and_over_or("x | (~y & ~z)"),
-  )
+  assert_eq(to_string(dist1), boolalg_distribute_and_over_or("x | (~y & ~z)"))
   let dist2 = distribute_or_over_and(bool_and([bool_or([bool_not(x), y]), z]))
-  assert_eq(
-    to_string(dist2),
-    boolalg_distribute_or_over_and("(~x | y) & z"),
-  )
+  assert_eq(to_string(dist2), boolalg_distribute_or_over_and("(~x | y) & z"))
   let dist3 = distribute_xor_over_and(bool_and([bool_xor([bool_not(x), y]), z]))
-  assert_eq(
-    to_string(dist3),
-    boolalg_distribute_xor_over_and("Xor(~x, y) & z"),
-  )
+  assert_eq(to_string(dist3), boolalg_distribute_xor_over_and("Xor(~x, y) & z"))
 }

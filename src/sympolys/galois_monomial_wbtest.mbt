@@ -11,43 +11,43 @@ test "galoistools wb: edge-case branches" {
   let add_empty_left = gf_add([], [6, 7], 5)
   assert_true(
     add_empty_left.length() == 2 &&
-        add_empty_left[0] == 1 &&
-        add_empty_left[1] == 2
+    add_empty_left[0] == 1 &&
+    add_empty_left[1] == 2,
   )
   let add_empty_right = gf_add([6, 7], [], 5)
   assert_true(
     add_empty_right.length() == 2 &&
-        add_empty_right[0] == 1 &&
-        add_empty_right[1] == 2
+    add_empty_right[0] == 1 &&
+    add_empty_right[1] == 2,
   )
   let add_mixed = gf_add([1], [1, 2], 5)
   assert_true(add_mixed.length() == 2 && add_mixed[0] == 1 && add_mixed[1] == 3)
   let add_mixed_rev = gf_add([1, 2], [1], 5)
   assert_true(
     add_mixed_rev.length() == 2 &&
-        add_mixed_rev[0] == 1 &&
-        add_mixed_rev[1] == 3
+    add_mixed_rev[0] == 1 &&
+    add_mixed_rev[1] == 3,
   )
 
   let sub_empty_left = gf_sub([], [1, 2], 5)
   assert_true(
     sub_empty_left.length() == 2 &&
-        sub_empty_left[0] == 4 &&
-        sub_empty_left[1] == 3
+    sub_empty_left[0] == 4 &&
+    sub_empty_left[1] == 3,
   )
   let sub_empty_right = gf_sub([6, 7], [], 5)
   assert_true(
     sub_empty_right.length() == 2 &&
-        sub_empty_right[0] == 1 &&
-        sub_empty_right[1] == 2
+    sub_empty_right[0] == 1 &&
+    sub_empty_right[1] == 2,
   )
   let sub_mixed = gf_sub([1], [1, 2], 5)
   assert_true(sub_mixed.length() == 2 && sub_mixed[0] == 4 && sub_mixed[1] == 4)
   let sub_mixed_rev = gf_sub([1, 2], [1], 5)
   assert_true(
     sub_mixed_rev.length() == 2 &&
-        sub_mixed_rev[0] == 1 &&
-        sub_mixed_rev[1] == 1
+    sub_mixed_rev[0] == 1 &&
+    sub_mixed_rev[1] == 1,
   )
 
   assert_eq(gf_mul([], [1], 5).length(), 0)

@@ -2,18 +2,12 @@
 /// Hydrogen-atom radial, angular, and energy formulas.
 
 ///|
-pub fn hydrogen_r_nl(
-  n : Expr,
-  l : Expr,
-  r : Expr,
-  z? : Expr = int(1),
-) -> Expr {
+pub fn hydrogen_r_nl(n : Expr, l : Expr, r : Expr, z? : Expr = int(1)) -> Expr {
   let n_r = n - l - int(1)
   let r0 = expr_div(int(2) * z * r, n)
   let coeff = @symelem.sqrt(
     expr_div(
-      (expr_div(int(2) * z, n) ^ int(3)) *
-      @symcomb.factorial(n_r),
+      (expr_div(int(2) * z, n) ^ int(3)) * @symcomb.factorial(n_r),
       int(2) * n * @symcomb.factorial(n + l),
     ),
   )
@@ -24,22 +18,12 @@ pub fn hydrogen_r_nl(
 }
 
 ///|
-pub fn hydrogen_y_lm(
-  l : Expr,
-  m : Expr,
-  phi : Expr,
-  theta : Expr,
-) -> Expr {
+pub fn hydrogen_y_lm(l : Expr, m : Expr, phi : Expr, theta : Expr) -> Expr {
   @symspec.ynm(l, m, theta, phi)
 }
 
 ///|
-pub fn hydrogen_z_lm(
-  l : Expr,
-  m : Expr,
-  phi : Expr,
-  theta : Expr,
-) -> Expr {
+pub fn hydrogen_z_lm(l : Expr, m : Expr, phi : Expr, theta : Expr) -> Expr {
   @symspec.znm(l, m, theta, phi)
 }
 
@@ -72,24 +56,20 @@ pub fn hydrogen_psi_nlm(
 }
 
 ///|
-pub fn hydrogen_e_nl(
-  n : Expr,
-  z? : Expr = int(1),
-) -> Expr raise PhysicsError {
+pub fn hydrogen_e_nl(n : Expr, z? : Expr = int(1)) -> Expr raise PhysicsError {
   match expr_integer_value(n) {
     Some(ni) if ni < 1 =>
       raise PhysicsError::ValueError("'n' must be positive integer")
     _ => ()
   }
-  int(-1) *
-  expr_div(z ^ int(2), int(2) * (n ^ int(2)))
+  int(-1) * expr_div(z ^ int(2), int(2) * (n ^ int(2)))
 }
 
 ///|
 fn hydrogen_dirac_default_c() -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_bigint(@bigint.BigInt::from_string("137035999037"))
-      .div_r(@symnum.BigRational::from_int(1000000000)),
+  rational_expr_bigint(
+    @bigint.BigInt::from_string("137035999037"),
+    @bigint.BigInt::from_int(1000000000),
   )
 }
 
@@ -116,23 +96,13 @@ pub fn hydrogen_e_nl_dirac(
       raise PhysicsError::ValueError("Spin must be up for l==0.")
     _ => ()
   }
-  let skappa = if spin_up {
-    int(-1) * l - int(1)
-  } else {
-    int(-1) * l
-  }
+  let skappa = if spin_up { int(-1) * l - int(1) } else { int(-1) * l }
   let c2 = c ^ int(2)
-  let beta = @symelem.sqrt(
-    (skappa ^ int(2)) - expr_div(z ^ int(2), c2),
-  )
+  let beta = @symelem.sqrt((skappa ^ int(2)) - expr_div(z ^ int(2), c2))
   expr_div(
     c2,
     @symelem.sqrt(
-      int(1) +
-      expr_div(
-        z ^ int(2),
-        ((n + skappa + beta) ^ int(2)) * c2,
-      ),
+      int(1) + expr_div(z ^ int(2), ((n + skappa + beta) ^ int(2)) * c2),
     ),
   ) -
   c2

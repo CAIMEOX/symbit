@@ -1,8 +1,5 @@
 ///|
-fn ellipse_auxiliary_radius(
-  hradius : Expr,
-  vradius : Expr,
-) -> Expr {
+fn ellipse_auxiliary_radius(hradius : Expr, vradius : Expr) -> Expr {
   match (geo_expr_sign(hradius), geo_expr_sign(vradius)) {
     (Some(hs), Some(vs)) if hs >= 0 && vs >= 0 =>
       @symelem.max([hradius, vradius])
@@ -138,8 +135,7 @@ pub fn Ellipse::reflect(
   line_obj : Line,
 ) -> GeometryEntity raise GeometryError {
   let direction = line_obj.direction().with_dim(2)
-  if geo_expr_is_zero(direction.y()) ||
-    geo_expr_is_zero(direction.x()) {
+  if geo_expr_is_zero(direction.y()) || geo_expr_is_zero(direction.x()) {
     let center = reflect_point_across_line_2d(self.center_, line_obj)
     return geometry_ellipse(Ellipse::{
       center_: center,

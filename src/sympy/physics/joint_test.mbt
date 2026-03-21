@@ -89,8 +89,7 @@ test "physics.mechanics advanced joints core" {
     content="0",
   )
   assert_true(
-    spherical.coordinates().length() == 3 &&
-        spherical.speeds().length() == 3
+    spherical.coordinates().length() == 3 && spherical.speeds().length() == 3,
   )
 
   let weld_child = rigid_body("AW")

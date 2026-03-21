@@ -17,11 +17,7 @@ test "physics.quantum.circuitplot: summary parity" {
   let cnot = circuit_plot(cnot_gate(1, 0).as_expr(), 2, labels=labeller(2))
   quantum_test_assert_string_equal(
     circuitplot_summary(cnot),
-    quantum_circuitplot_summary(
-      "CNotGate(1, 0)",
-      2,
-      labels=labeller(2),
-    ),
+    quantum_circuitplot_summary("CNotGate(1, 0)", 2, labels=labeller(2)),
     "cnot summary parity",
   )
 
@@ -63,11 +59,7 @@ test "physics.quantum.circuitplot: summary parity" {
   let measured_expr = @symcore.raw_mul([mz(0), hadamard_gate(0).as_expr()])
   quantum_test_assert_string_equal(
     circuitplot_summary(circuit_plot(measured_expr, 1, labels=labeller(1))),
-    quantum_circuitplot_summary(
-      "Mz(0)*HadamardGate(0)",
-      1,
-      labels=labeller(1),
-    ),
+    quantum_circuitplot_summary("Mz(0)*HadamardGate(0)", 1, labels=labeller(1)),
     "measurement summary parity",
   )
 }

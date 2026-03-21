@@ -168,15 +168,7 @@ pub fn real_gaunt(
         Some(n) if n.is_zero() => ()
         _ =>
           acc = acc +
-            coeff_expr *
-            (gaunt(
-              l_1,
-              l_2,
-              l_3,
-              int(m1),
-              int(m2),
-              int(m3),
-            ))
+            coeff_expr * gaunt(l_1, l_2, l_3, int(m1), int(m2), int(m3))
       }
     }
   }

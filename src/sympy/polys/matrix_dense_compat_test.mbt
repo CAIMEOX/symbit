@@ -38,13 +38,34 @@ test "matrix dense wrappers: arithmetic helpers match DDM methods" {
   let b = @sympolys.ddm_from_ints([[5, 6], [7, 8]], Domain::QQ)
   let acc = @sympolys.ddm_from_ints([[1, 0], [0, 1]], Domain::QQ)
   let two = @sympolys.fe_from_int(2, Domain::QQ)
-  assert_eq(md_trim(@sympolys.ddm_transpose(a).to_string()), md_trim(a.transpose().to_string()))
-  assert_eq(md_trim(@sympolys.ddm_iadd(a, b).to_string()), md_trim(a.add(b).to_string()))
-  assert_eq(md_trim(@sympolys.ddm_isub(a, b).to_string()), md_trim(a.sub(b).to_string()))
-  assert_eq(md_trim(@sympolys.ddm_ineg(a).to_string()), md_trim(a.neg().to_string()))
-  assert_eq(md_trim(@sympolys.ddm_imul(a, two).to_string()), md_trim(a.mul(two).to_string()))
-  assert_eq(md_trim(@sympolys.ddm_irmul(a, two).to_string()), md_trim(a.rmul(two).to_string()))
-  assert_eq(md_trim(@sympolys.ddm_imatmul(acc, a, b).to_string()), md_trim(acc.add(a.matmul(b)).to_string()))
+  assert_eq(
+    md_trim(@sympolys.ddm_transpose(a).to_string()),
+    md_trim(a.transpose().to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_iadd(a, b).to_string()),
+    md_trim(a.add(b).to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_isub(a, b).to_string()),
+    md_trim(a.sub(b).to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_ineg(a).to_string()),
+    md_trim(a.neg().to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_imul(a, two).to_string()),
+    md_trim(a.mul(two).to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_irmul(a, two).to_string()),
+    md_trim(a.rmul(two).to_string()),
+  )
+  assert_eq(
+    md_trim(@sympolys.ddm_imatmul(acc, a, b).to_string()),
+    md_trim(acc.add(a.matmul(b)).to_string()),
+  )
 }
 
 ///|
@@ -55,33 +76,42 @@ test "matrix dense wrappers: elimination and determinant helpers match methods a
   assert_eq(pivots_wrap, pivots_method)
   assert_eq(md_trim(rref_wrap.to_string()), md_trim(rref_method.to_string()))
   let oracle_rref = domainmatrix_rref([[1, 2, 3], [4, 5, 6]], "QQ")
-  assert_eq(md_trim(
-          "\{rref_wrap.to_domain_matrix().to_matrix_string()}||\{pivots_wrap.to_string()}",
-        ), md_trim(oracle_rref))
+  assert_eq(
+    md_trim(
+      "\{rref_wrap.to_domain_matrix().to_matrix_string()}||\{pivots_wrap.to_string()}",
+    ),
+    md_trim(oracle_rref),
+  )
 
   let zz = @sympolys.ddm_from_ints([[2, 4], [6, 8]], Domain::ZZ)
   let (rref_den_wrap, den_wrap, den_pivots_wrap) = @sympolys.ddm_irref_den(zz)
   let (rref_den_method, den_method, den_pivots_method) = zz.rref_den()
   assert_true(
     den_pivots_wrap == den_pivots_method &&
-        @sympolys.fe_to_string(den_wrap) == @sympolys.fe_to_string(den_method)
+    @sympolys.fe_to_string(den_wrap) == @sympolys.fe_to_string(den_method),
   )
-  assert_eq(md_trim(rref_den_wrap.to_string()), md_trim(rref_den_method.to_string()))
-  let oracle_rref_den = domainmatrix_rref_den(
-    [[2, 4], [6, 8]],
-    "ZZ",
+  assert_eq(
+    md_trim(rref_den_wrap.to_string()),
+    md_trim(rref_den_method.to_string()),
   )
-  assert_eq(md_trim(
-          "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{@sympolys.fe_to_string(den_wrap)}||\{den_pivots_wrap.to_string()}",
-        ), md_trim(oracle_rref_den))
+  let oracle_rref_den = domainmatrix_rref_den([[2, 4], [6, 8]], "ZZ")
+  assert_eq(
+    md_trim(
+      "\{rref_den_wrap.to_domain_matrix().to_matrix_string()}||\{@sympolys.fe_to_string(den_wrap)}||\{den_pivots_wrap.to_string()}",
+    ),
+    md_trim(oracle_rref_den),
+  )
 
-  let det_source = @sympolys.ddm_from_ints([[1, 2, 3], [4, 5, 6], [7, 8, 9]], Domain::ZZ)
-  let (bareiss, det) = @sympolys.ddm_idet(det_source)
-  assert_eq(@sympolys.fe_to_string(det), @sympolys.fe_to_string(det_source.det()))
-  let oracle_det = domainmatrix_det(
+  let det_source = @sympolys.ddm_from_ints(
     [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
-    "ZZ",
+    Domain::ZZ,
   )
+  let (bareiss, det) = @sympolys.ddm_idet(det_source)
+  assert_eq(
+    @sympolys.fe_to_string(det),
+    @sympolys.fe_to_string(det_source.det()),
+  )
+  let oracle_det = domainmatrix_det([[1, 2, 3], [4, 5, 6], [7, 8, 9]], "ZZ")
   assert_eq(@sympolys.fe_to_string(det), oracle_det)
   let bareiss_diag_text = bareiss.diagonal().map(fe_to_string).join(", ")
   let bareiss_diag = "[\{bareiss_diag_text}]"
@@ -96,17 +126,25 @@ test "matrix dense wrappers: LU, inverse, and berkowitz helpers line up" {
   assert_eq(swaps, split_swaps)
   assert_eq(md_trim(packed.to_string()), md_trim(md_pack_lu(l, u).to_string()))
   let rhs = @sympolys.ddm_from_ints([[5], [6]], Domain::QQ)
-  assert_eq(md_trim(@sympolys.ddm_ilu_solve(l, u, swaps, rhs).to_string()), md_trim(a.lu_solve(rhs).to_string()))
-  assert_eq(md_trim(@sympolys.ddm_iinv(a).to_string()), md_trim(a.inv().to_string()))
-  let oracle_inv = domainmatrix_inv([[1, 2], [3, 4]], "QQ")
-  assert_eq(md_trim(@sympolys.ddm_iinv(a).to_domain_matrix().to_matrix_string()), md_trim(oracle_inv))
-
-  let berk = @sympolys.ddm_berk(@sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ))
-  assert_eq(md_trim(md_column_coeffs_text(berk)), md_trim("[1, -5, -2]"))
-  let oracle_charpoly = domainmatrix_charpoly(
-    [[1, 2], [3, 4]],
-    "ZZ",
+  assert_eq(
+    md_trim(@sympolys.ddm_ilu_solve(l, u, swaps, rhs).to_string()),
+    md_trim(a.lu_solve(rhs).to_string()),
   )
+  assert_eq(
+    md_trim(@sympolys.ddm_iinv(a).to_string()),
+    md_trim(a.inv().to_string()),
+  )
+  let oracle_inv = domainmatrix_inv([[1, 2], [3, 4]], "QQ")
+  assert_eq(
+    md_trim(@sympolys.ddm_iinv(a).to_domain_matrix().to_matrix_string()),
+    md_trim(oracle_inv),
+  )
+
+  let berk = @sympolys.ddm_berk(
+    @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::ZZ),
+  )
+  assert_eq(md_trim(md_column_coeffs_text(berk)), md_trim("[1, -5, -2]"))
+  let oracle_charpoly = domainmatrix_charpoly([[1, 2], [3, 4]], "ZZ")
   assert_eq(md_trim(md_column_coeffs_text(berk)), md_trim(oracle_charpoly))
 }
 
@@ -124,12 +162,12 @@ test "matrix dense wrappers: internal DDM helpers stay aligned" {
   let other_domain = @sympolys.ddm_from_ints([[1, 2], [3, 4]], Domain::QQ)
   assert_true(
     (try? zz._check("+", other_domain, zz.shape(), other_domain.shape()))
-        is Err(PolyError::DomainMismatch)
+    is Err(PolyError::DomainMismatch),
   )
 
   let wrong_shape = @sympolys.ddm_from_ints([[1, 2]], Domain::ZZ)
   assert_true(
     (try? zz._check("+", wrong_shape, zz.shape(), wrong_shape.shape()))
-        is Err(PolyError::DomainMismatch)
+    is Err(PolyError::DomainMismatch),
   )
 }

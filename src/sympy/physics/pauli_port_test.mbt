@@ -52,9 +52,7 @@ test "physics.quantum.pauli: parity" {
     "commutator parity",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      "AntiCommutator(SigmaMinus(), SigmaPlus()).doit()",
-    ),
+    quantum_eval_str("AntiCommutator(SigmaMinus(), SigmaPlus()).doit()"),
     quantum_eval_str(
       @symprint.to_string(anticommutator(sm.as_expr(), sp.as_expr())),
     ),

@@ -7,9 +7,7 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(fn(arg) { expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
@@ -26,17 +24,12 @@ fn expr_int_value(expr : Expr) -> Int? {
 }
 
 ///|
-fn integrate_scalar(
-  expr : Expr,
-  wrt : Expr,
-) -> Expr raise VectorError {
+fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
   if !expr_depends_on(expr, wrt) {
     return simplify_expr(expr * wrt)
   }
   if @symcore.compare_expr(expr, wrt) == 0 {
-    return simplify_expr(
-      (wrt ^ int_expr(2)) * rational_expr(1, 2),
-    )
+    return simplify_expr((wrt ^ int_expr(2)) * rational_expr(1, 2))
   }
   match expr {
     Expr::Add(args) => {

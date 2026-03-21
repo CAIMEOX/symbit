@@ -10,7 +10,7 @@ pub fn br_int(Int) -> @symnum.BigRational
 
 pub fn br_rat(Int, Int) -> @symnum.BigRational
 
-pub fn cartan_matrix(CartanType) -> Matrix raise
+pub fn cartan_matrix(CartanType) -> Matrix
 
 pub fn cartan_matrix_from_parts(String, Int) -> Matrix raise
 
@@ -20,7 +20,7 @@ pub fn cartan_type_from_parts(String, Int) -> CartanType raise
 
 pub fn cartan_type_from_string(String) -> CartanType raise
 
-pub fn dynkin_diagram(CartanType) -> String raise
+pub fn dynkin_diagram(CartanType) -> String
 
 pub fn dynkin_diagram_from_parts(String, Int) -> String raise
 
@@ -169,20 +169,33 @@ pub fn weyl_group_from_string(String) -> WeylGroup raise
 // Errors
 
 // Types and methods
+pub enum CartanSeries {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+}
+pub impl Eq for CartanSeries
+pub impl Show for CartanSeries
+
 pub struct CartanType {
-  series : String
+  series : CartanSeries
   n : Int
 }
 pub fn CartanType::basis(Self) -> Int
-pub fn CartanType::cartan_matrix(Self) -> Matrix raise
+pub fn CartanType::cartan_matrix(Self) -> Matrix
 pub fn CartanType::dimension(Self) -> Int
-pub fn CartanType::dynkin_diagram(Self) -> String raise
+pub fn CartanType::dynkin_diagram(Self) -> String
 pub fn CartanType::highest_root(Self) -> Array[@symnum.BigRational] raise
-pub fn CartanType::lie_algebra(Self) -> String
+pub fn CartanType::lie_algebra(Self) -> String raise
 pub fn CartanType::positive_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
 pub fn CartanType::rank(Self) -> Int
 pub fn CartanType::roots(Self) -> Int
 pub fn CartanType::series(Self) -> String
+pub fn CartanType::series_kind(Self) -> CartanSeries
 pub fn CartanType::simple_root(Self, Int) -> Array[@symnum.BigRational] raise
 
 pub struct Matrix {
@@ -201,9 +214,9 @@ pub struct RootSystem {
 pub fn RootSystem::add_as_roots(Self, Array[@symnum.BigRational], Array[@symnum.BigRational]) -> Result[Array[@symnum.BigRational], String]
 pub fn RootSystem::add_simple_roots(Self, Int, Int) -> Array[@symnum.BigRational] raise
 pub fn RootSystem::all_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
-pub fn RootSystem::cartan_matrix(Self) -> Matrix raise
+pub fn RootSystem::cartan_matrix(Self) -> Matrix
 pub fn RootSystem::cartan_type(Self) -> CartanType
-pub fn RootSystem::dynkin_diagram(Self) -> String raise
+pub fn RootSystem::dynkin_diagram(Self) -> String
 pub fn RootSystem::root_space(Self) -> String
 pub fn RootSystem::simple_roots(Self) -> Map[Int, Array[@symnum.BigRational]]
 
@@ -211,7 +224,7 @@ pub struct WeylGroup {
   cartan_type : CartanType
 }
 pub fn WeylGroup::cartan_type(Self) -> CartanType
-pub fn WeylGroup::coxeter_diagram(Self) -> String raise
+pub fn WeylGroup::coxeter_diagram(Self) -> String
 pub fn WeylGroup::element_order(Self, String) -> Int
 pub fn WeylGroup::generators(Self) -> Array[String]
 pub fn WeylGroup::group_name(Self) -> String

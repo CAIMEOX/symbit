@@ -2,11 +2,7 @@
 /// Hypergeometric and Meijer G functions.
 
 ///|
-pub fn hyper(
-  a : Array[Expr],
-  b : Array[Expr],
-  z : Expr,
-) -> Expr {
+pub fn hyper(a : Array[Expr], b : Array[Expr], z : Expr) -> Expr {
   let args : Array[Expr] = Array::new()
   args.push(@symcore.function("Tuple", a))
   args.push(@symcore.function("Tuple", b))

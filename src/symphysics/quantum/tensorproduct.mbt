@@ -8,9 +8,7 @@ pub struct TensorProductExpr {
 } derive(Eq)
 
 ///|
-fn tensor_product_scalar_body(
-  expr : Expr,
-) -> (Expr, Expr?) {
+fn tensor_product_scalar_body(expr : Expr) -> (Expr, Expr?) {
   let (scalar, body) = quantum_split_scalar_factors(expr)
   match body {
     Some(Expr::Function("TensorProduct", inner)) => {
@@ -132,9 +130,7 @@ fn tensor_product_pow_items(expr : Expr) -> Array[Expr]? {
 }
 
 ///|
-fn tensor_product_merge_factors(
-  factors : Array[Expr],
-) -> Expr {
+fn tensor_product_merge_factors(factors : Array[Expr]) -> Expr {
   let mut saw_other = false
   let simplified_factors : Array[Expr] = []
   let scalar_factors : Array[Expr] = []
@@ -201,8 +197,7 @@ pub fn tensor_product_simp(expr : Expr) -> Expr {
 ///|
 fn tensor_product_needs_parens(expr : Expr) -> Bool {
   match expr {
-    Expr::Add(_) | Expr::Mul(_) | Expr::Pow(_, _) =>
-      true
+    Expr::Add(_) | Expr::Mul(_) | Expr::Pow(_, _) => true
     _ => false
   }
 }

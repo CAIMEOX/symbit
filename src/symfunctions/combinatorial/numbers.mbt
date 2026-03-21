@@ -67,20 +67,27 @@ fn tribonacci_bigint(n : Int) -> BigInt {
 }
 
 ///|
-fn combinatorial_rational(num : Int, den : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
+fn combinatorial_rational(num : Int, den : Int) -> @symnum.BigRational? {
+  try @symnum.BigRational::from_ints(num, den) catch {
+    _ => None
+  } noraise {
+    value => Some(value)
+  }
 }
 
 ///|
-fn harmonic_rational(n : Int) -> @symnum.BigRational {
+fn harmonic_rational(n : Int) -> @symnum.BigRational? {
   let mut acc = @symnum.BigRational::zero()
   let mut k = 1
   while k <= n {
-    let term = combinatorial_rational(1, k)
+    let term = match combinatorial_rational(1, k) {
+      Some(value) => value
+      None => return None
+    }
     acc = acc.add_r(term)
     k = k + 1
   }
-  acc
+  Some(acc)
 }
 
 ///|
@@ -88,16 +95,16 @@ fn bernoulli_small(n : Int) -> @symnum.BigRational? {
   // B0..B10
   match n {
     0 => Some(@symnum.BigRational::from_int(1))
-    1 => Some(combinatorial_rational(-1, 2))
-    2 => Some(combinatorial_rational(1, 6))
+    1 => combinatorial_rational(-1, 2)
+    2 => combinatorial_rational(1, 6)
     3 => Some(@symnum.BigRational::from_int(0))
-    4 => Some(combinatorial_rational(-1, 30))
+    4 => combinatorial_rational(-1, 30)
     5 => Some(@symnum.BigRational::from_int(0))
-    6 => Some(combinatorial_rational(1, 42))
+    6 => combinatorial_rational(1, 42)
     7 => Some(@symnum.BigRational::from_int(0))
-    8 => Some(combinatorial_rational(-1, 30))
+    8 => combinatorial_rational(-1, 30)
     9 => Some(@symnum.BigRational::from_int(0))
-    10 => Some(combinatorial_rational(5, 66))
+    10 => combinatorial_rational(5, 66)
     _ => None
   }
 }
@@ -155,7 +162,10 @@ pub fn harmonic(n : Expr) -> Expr {
       if ni <= 0 {
         @symcore.function("harmonic", [n])
       } else {
-        @symcore.number(harmonic_rational(ni))
+        match harmonic_rational(ni) {
+          Some(value) => @symcore.number(value)
+          None => @symcore.function("harmonic", [n])
+        }
       }
     }
     None => @symcore.function("harmonic", [n])
@@ -207,10 +217,7 @@ pub fn partition(n : Expr) -> Expr {
 }
 
 ///|
-pub fn divisor_sigma(
-  n : Expr,
-  k? : Expr = int(1),
-) -> Expr {
+pub fn divisor_sigma(n : Expr, k? : Expr = int(1)) -> Expr {
   match (int_value(n), int_value(k)) {
     (Some(ni), Some(ki)) => {
       let res = @symntheory.divisor_sigma(ni, k=ki.to_int())
@@ -221,10 +228,7 @@ pub fn divisor_sigma(
 }
 
 ///|
-pub fn udivisor_sigma(
-  n : Expr,
-  k? : Expr = int(1),
-) -> Expr {
+pub fn udivisor_sigma(n : Expr, k? : Expr = int(1)) -> Expr {
   @symcore.function("udivisor_sigma", [n, k])
 }
 
@@ -232,9 +236,11 @@ pub fn udivisor_sigma(
 pub fn legendre_symbol(a : Expr, p : Expr) -> Expr {
   match (int_value(a), int_value(p)) {
     (Some(ai), Some(pi)) =>
-      expr_from_int(@symntheory.legendre_symbol(ai, pi) catch {
-        _ => return @symcore.function("legendre_symbol", [a, p])
-      })
+      expr_from_int(
+        @symntheory.legendre_symbol(ai, pi) catch {
+          _ => return @symcore.function("legendre_symbol", [a, p])
+        },
+      )
     _ => @symcore.function("legendre_symbol", [a, p])
   }
 }
@@ -243,9 +249,11 @@ pub fn legendre_symbol(a : Expr, p : Expr) -> Expr {
 pub fn jacobi_symbol(a : Expr, n : Expr) -> Expr {
   match (int_value(a), int_value(n)) {
     (Some(ai), Some(ni)) =>
-      expr_from_int(@symntheory.jacobi_symbol(ai, ni) catch {
-        _ => return @symcore.function("jacobi_symbol", [a, n])
-      })
+      expr_from_int(
+        @symntheory.jacobi_symbol(ai, ni) catch {
+          _ => return @symcore.function("jacobi_symbol", [a, n])
+        },
+      )
     _ => @symcore.function("jacobi_symbol", [a, n])
   }
 }
@@ -259,9 +267,11 @@ pub fn kronecker_symbol(a : Expr, n : Expr) -> Expr {
 pub fn mobius(n : Expr) -> Expr {
   match int_value(n) {
     Some(ni) =>
-      expr_from_int(@symntheory.mobius(ni) catch {
-        _ => return @symcore.function("mobius", [n])
-      })
+      expr_from_int(
+        @symntheory.mobius(ni) catch {
+          _ => return @symcore.function("mobius", [n])
+        },
+      )
     None => @symcore.function("mobius", [n])
   }
 }

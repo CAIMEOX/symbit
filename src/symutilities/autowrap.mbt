@@ -43,10 +43,7 @@ fn wrap_backend_from_string(name : String) -> WrapBackend raise UtilitiesError {
 }
 
 ///|
-fn infer_wrap_args(
-  expr : Expr,
-  args : Array[String]?,
-) -> Array[String] {
+fn infer_wrap_args(expr : Expr, args : Array[String]?) -> Array[String] {
   match args {
     Some(values) => values
     None => free_symbols(expr)
@@ -75,10 +72,7 @@ pub fn WrappedBinary::files(self : WrappedBinary) -> Array[(String, String)] {
 }
 
 ///|
-pub fn BinaryFunction::apply(
-  self : BinaryFunction,
-  args : Array[Expr],
-) -> Expr {
+pub fn BinaryFunction::apply(self : BinaryFunction, args : Array[Expr]) -> Expr {
   @symcore.function(self.name, args)
 }
 
@@ -135,12 +129,7 @@ pub fn binary_function(
   args? : Array[String]? = None,
 ) -> BinaryFunction raise UtilitiesError {
   let wrapped = autowrap(expr, language~, backend~, tempdir~, args~, name~)
-  ignore(
-    implemented_function(
-      name,
-      values => wrapped.call(values) catch { _ => 0.0 },
-    ),
-  )
+  ignore(implemented_function(name, values => wrapped.call(values)))
   { name, wrapped }
 }
 

@@ -56,10 +56,7 @@ test "ntheory modular crt parity" {
   let m2 = [656, 350]
   let v2b = [811, 133]
   let res5 = crt(bi_array(m2), bi_array(v2b), symmetric=true)
-  assert_eq(
-    option_pair_string(res5),
-    crt_str(m2, v2b, symmetric=true),
-  )
+  assert_eq(option_pair_string(res5), crt_str(m2, v2b, symmetric=true))
 }
 
 ///|

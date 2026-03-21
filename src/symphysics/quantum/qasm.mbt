@@ -223,18 +223,12 @@ fn qasm_apply_builtin(
         init=if rest.length() >= 2 { Some(rest[1]) } else { None },
       )
     "nop" => ()
-    "x" =>
-      parser.circuit.push(qasm_builtin_gate("X", [parser.index(rest[0])]))
-    "z" =>
-      parser.circuit.push(qasm_builtin_gate("Z", [parser.index(rest[0])]))
-    "h" =>
-      parser.circuit.push(qasm_builtin_gate("H", [parser.index(rest[0])]))
-    "s" =>
-      parser.circuit.push(qasm_builtin_gate("S", [parser.index(rest[0])]))
-    "t" =>
-      parser.circuit.push(qasm_builtin_gate("T", [parser.index(rest[0])]))
-    "measure" =>
-      parser.circuit.push(qasm_measure_gate(parser.index(rest[0])))
+    "x" => parser.circuit.push(qasm_builtin_gate("X", [parser.index(rest[0])]))
+    "z" => parser.circuit.push(qasm_builtin_gate("Z", [parser.index(rest[0])]))
+    "h" => parser.circuit.push(qasm_builtin_gate("H", [parser.index(rest[0])]))
+    "s" => parser.circuit.push(qasm_builtin_gate("S", [parser.index(rest[0])]))
+    "t" => parser.circuit.push(qasm_builtin_gate("T", [parser.index(rest[0])]))
+    "measure" => parser.circuit.push(qasm_measure_gate(parser.index(rest[0])))
     "cnot" => {
       let indices = parser.indices(rest)
       parser.circuit.push(qasm_builtin_gate("CNOT", indices))

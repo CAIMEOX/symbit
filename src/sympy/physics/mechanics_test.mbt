@@ -4,7 +4,7 @@ fn mechanics_assert_expr(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  assert_true((expr_equal(@symprint.to_string(lhs), rhs)))
+  assert_true(expr_equal(@symprint.to_string(lhs), rhs))
 }
 
 ///|

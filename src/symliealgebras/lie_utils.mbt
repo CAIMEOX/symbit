@@ -13,9 +13,9 @@ pub fn br_int(value : Int) -> @symnum.BigRational {
 ///|
 /// Construct a rational from numerator and denominator.
 pub fn br_rat(num : Int, den : Int) -> @symnum.BigRational {
-  let n = @bigint.BigInt::from_int(num)
-  let d = @bigint.BigInt::from_int(den)
-  @symnum.BigRational::from_bigint(n).div_r(@symnum.BigRational::from_bigint(d))
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("br_rat expects a nonzero denominator")
+  }
 }
 
 ///|

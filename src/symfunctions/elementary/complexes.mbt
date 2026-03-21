@@ -49,10 +49,7 @@ pub fn polar_lift(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn periodic_argument(
-  expr : Expr,
-  period : Expr,
-) -> Expr {
+pub fn periodic_argument(expr : Expr, period : Expr) -> Expr {
   @symcore.function("periodic_argument", [expr, period])
 }
 
@@ -62,10 +59,7 @@ pub fn unbranched_argument(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn principal_branch(
-  expr : Expr,
-  period : Expr,
-) -> Expr {
+pub fn principal_branch(expr : Expr, period : Expr) -> Expr {
   @symcore.function("principal_branch", [expr, period])
 }
 

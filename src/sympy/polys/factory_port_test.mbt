@@ -15,9 +15,7 @@ test "factory: from_expr_defaults infers gens/domain QQ" {
     _ => fail("expected QQ domain")
   }
   let ours = factory_sympy_norm(poly.to_string())
-  let oracle = factory_sympy_norm(
-    poly_expr(expr, gens=["x", "y"], domain="QQ"),
-  )
+  let oracle = factory_sympy_norm(poly_expr(expr, gens=["x", "y"], domain="QQ"))
   assert_eq(ours, oracle)
 }
 
@@ -31,9 +29,7 @@ test "factory: modulus selects GF domain" {
     _ => fail("expected GF(5)")
   }
   let ours = factory_sympy_norm(poly.to_string())
-  let oracle = factory_sympy_norm(
-    poly_expr(expr, gens=["x"], modulus=5),
-  )
+  let oracle = factory_sympy_norm(poly_expr(expr, gens=["x"], modulus=5))
   assert_eq(ours, oracle)
 }
 

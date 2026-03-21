@@ -22,7 +22,7 @@ fn sq_assert_matrix_expr_equal(
   let flat = @symquant.matrix_flat_strings(lhs)
   assert_eq(flat.length(), rhs.length())
   for idx in 0..<flat.length() {
-    assert_true((expr_equal(flat[idx], rhs[idx])))
+    assert_true(expr_equal(flat[idx], rhs[idx]))
   }
 }
 

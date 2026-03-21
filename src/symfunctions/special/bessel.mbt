@@ -77,10 +77,6 @@ pub fn airybiprime(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn marcumq(
-  m : Expr,
-  a : Expr,
-  b : Expr,
-) -> Expr {
+pub fn marcumq(m : Expr, a : Expr, b : Expr) -> Expr {
   @symcore.function("marcumq", [m, a, b])
 }

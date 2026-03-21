@@ -170,9 +170,7 @@ fn parse_affine_radical(expr : Expr) -> AffineRadical? {
 }
 
 ///|
-fn parse_linear_radical(
-  expr : Expr,
-) -> (@symnum.BigRational, RadicalAtom)? {
+fn parse_linear_radical(expr : Expr) -> (@symnum.BigRational, RadicalAtom)? {
   match parse_radical_atom(expr) {
     Some(atom) => Some((@symnum.BigRational::one(), atom))
     None =>
@@ -352,10 +350,7 @@ fn normalize_minpoly_qq(poly : Poly) -> Poly raise PolyError {
 
 ///|
 /// Alias of `minimal_polynomial` for SymPy-compatible naming.
-pub fn minpoly(
-  expr : Expr,
-  gen? : String = "x",
-) -> Poly raise PolyError {
+pub fn minpoly(expr : Expr, gen? : String = "x") -> Poly raise PolyError {
   minimal_polynomial(expr, gen~)
 }
 
@@ -644,7 +639,13 @@ fn mq_find_equivalent_atom(
   rad : @symnum.BigRational,
 ) -> (Int, @symnum.BigRational)? {
   for i in 0..<atoms.length() {
-    let ratio = rad.div_r(atoms[i])
+    let ratio = match
+      (
+        try? rad.div_r(atoms[i]) :
+        Result[@symnum.BigRational, @symnum.RationalError]) {
+      Ok(value) => value
+      Err(_) => continue
+    }
     match rational_exact_nth_root(ratio, 2) {
       Some(scale) => return Some((i, scale))
       None => ()
@@ -673,7 +674,17 @@ fn mq_find_atom_mask(
             prod = prod.mul_r(atoms[i])
           }
         }
-        match rational_exact_nth_root(rad.div_r(prod), 2) {
+        let ratio = match
+          (
+            try? rad.div_r(prod) :
+            Result[@symnum.BigRational, @symnum.RationalError]) {
+          Ok(value) => value
+          Err(_) => {
+            mask = mask + 1
+            continue
+          }
+        }
+        match rational_exact_nth_root(ratio, 2) {
           Some(scale) => return Some((mask, scale))
           None => ()
         }
@@ -685,10 +696,7 @@ fn mq_find_atom_mask(
 }
 
 ///|
-fn mq_collect_atoms(
-  expr : Expr,
-  atoms : Array[@symnum.BigRational],
-) -> Bool {
+fn mq_collect_atoms(expr : Expr, atoms : Array[@symnum.BigRational]) -> Bool {
   match expr {
     Expr::Number(_) => true
     Expr::Add(args) => {
@@ -888,7 +896,16 @@ fn mq_solve_linear(
     let pv = aug[row][col]
     let mut j = col
     while j <= cols {
-      aug[row].set(j, aug[row][j].div_r(pv))
+      aug[row].set(
+        j,
+        match
+          (
+            try? aug[row][j].div_r(pv) :
+            Result[@symnum.BigRational, @symnum.RationalError]) {
+          Ok(value) => value
+          Err(_) => return None
+        },
+      )
       j = j + 1
     }
     let mut r = 0
@@ -1103,10 +1120,7 @@ pub fn is_isomorphism_possible(a : Expr, b : Expr) -> Bool {
 /// - rational constants (`[a]`)
 /// - affine radical embeddings between `a + b*q**(1/n)` forms (`[k, c]`)
 /// - low-degree multiquadratic embeddings (up to 3 independent square roots).
-pub fn field_isomorphism(
-  a : Expr,
-  b : Expr,
-) -> Array[@symnum.BigRational]? {
+pub fn field_isomorphism(a : Expr, b : Expr) -> Array[@symnum.BigRational]? {
   match as_rational_constant(a) {
     Some(q) => return Some([q])
     None => ()
@@ -1137,12 +1151,24 @@ fn affine_embedding_coeffs(
   if aff_a.atom.n != aff_b.atom.n {
     return None
   }
-  let ratio = aff_a.atom.rad.div_r(aff_b.atom.rad)
+  let ratio = match
+    (
+      try? aff_a.atom.rad.div_r(aff_b.atom.rad) :
+      Result[@symnum.BigRational, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) => return None
+  }
   let t = match rational_exact_nth_root(ratio, aff_a.atom.n) {
     Some(root) => root
     None => return None
   }
-  let k = aff_a.scale.mul_r(t).div_r(aff_b.scale)
+  let k = match
+    (
+      try? aff_a.scale.mul_r(t).div_r(aff_b.scale) :
+      Result[@symnum.BigRational, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) => return None
+  }
   let c = aff_a.shift.add_r(k.mul_r(aff_b.shift).neg_r())
   Some([k, c])
 }

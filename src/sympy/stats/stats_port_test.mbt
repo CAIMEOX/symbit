@@ -11,9 +11,7 @@ fn event_str(event : Event) -> String {
 ///|
 fn expr_equiv(ours : @symcore.Expr, oracle_expr : String) -> Bool {
   let ours_str = expr_str(ours)
-  let res : Result[Bool, Error] = try? stats_expr_equiv(
-    ours_str, oracle_expr,
-  )
+  let res : Result[Bool, Error] = try? stats_expr_equiv(ours_str, oracle_expr)
   match res {
     Ok(ok) => ok
     Err(_) => false

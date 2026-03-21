@@ -50,9 +50,7 @@ fn dyadic_key(coeff : (Expr, Int, Int, Int, Int)) -> String {
 }
 
 ///|
-fn dyadic_normalize(
-  items : Array[(Expr, Int, Int, Int, Int)],
-) -> Dyadic {
+fn dyadic_normalize(items : Array[(Expr, Int, Int, Int, Int)]) -> Dyadic {
   let combined : Map[String, (Expr, Int, Int, Int, Int)] = {}
   for item in items {
     let key = dyadic_key(item)

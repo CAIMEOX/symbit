@@ -3,10 +3,7 @@
 /// `sympy.physics.quantum.trace`.
 
 ///|
-fn quantum_trace_raw(
-  expr : Expr,
-  indices : Array[Int],
-) -> Expr {
+fn quantum_trace_raw(expr : Expr, indices : Array[Int]) -> Expr {
   if indices.is_empty() {
     @symcore.raw_function("Tr", [expr])
   } else {

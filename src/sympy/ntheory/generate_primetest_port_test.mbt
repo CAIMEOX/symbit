@@ -46,26 +46,12 @@ test "ntheory primetest parity" {
   for pair in gauss_cases {
     let (a, b) = pair
     let res = is_gaussian_prime(bi_g(a), b=bi_g(b))
-    assert_eq(
-      if res {
-        "True"
-      } else {
-        "False"
-      },
-      is_gaussian_prime_str(a, b~),
-    )
+    assert_eq(if res { "True" } else { "False" }, is_gaussian_prime_str(a, b~))
   }
   let mersenne_cases = [3, 7, 15, 31, 63]
   for n in mersenne_cases {
     let res = is_mersenne_prime(bi_g(n))
-    assert_eq(
-      if res {
-        "True"
-      } else {
-        "False"
-      },
-      is_mersenne_prime_str(n),
-    )
+    assert_eq(if res { "True" } else { "False" }, is_mersenne_prime_str(n))
   }
 }
 

@@ -5,7 +5,7 @@
 pub type CoordinateSym = Expr
 
 ///|
-pub enum AxisName {
+pub(all) enum AxisName {
   X
   Y
   Z
@@ -158,34 +158,22 @@ fn basis_components(axis : Int) -> Array[Expr] {
 }
 
 ///|
-fn components_add(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn components_add(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   [lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2]]
 }
 
 ///|
-fn components_scale(
-  scalar : Expr,
-  comps : Array[Expr],
-) -> Array[Expr] {
+fn components_scale(scalar : Expr, comps : Array[Expr]) -> Array[Expr] {
   [scalar * comps[0], scalar * comps[1], scalar * comps[2]]
 }
 
 ///|
-fn components_dot(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Expr {
+fn components_dot(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
 }
 
 ///|
-fn components_cross(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Array[Expr] {
+fn components_cross(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
   [
     lhs[1] * rhs[2] - lhs[2] * rhs[1],
     lhs[2] * rhs[0] - lhs[0] * rhs[2],
@@ -199,9 +187,7 @@ fn components_norm_sq(comps : Array[Expr]) -> Expr {
 }
 
 ///|
-fn matrix_from_rows(
-  rows : Array[Array[Expr]],
-) -> @symphysics.ExplicitMatrix {
+fn matrix_from_rows(rows : Array[Array[Expr]]) -> @symphysics.ExplicitMatrix {
   let normalized : Array[Array[Expr]] = []
   for row in rows {
     let next : Array[Expr] = []
@@ -216,10 +202,7 @@ fn matrix_from_rows(
 }
 
 ///|
-fn matrix_column(
-  matrix : @symphysics.ExplicitMatrix,
-  col : Int,
-) -> Array[Expr] {
+fn matrix_column(matrix : @symphysics.ExplicitMatrix, col : Int) -> Array[Expr] {
   let rows = matrix.rows_copy()
   let a = rows[0][col]
   let b = rows[1][col]
@@ -250,10 +233,7 @@ fn matrix_mul_vec(
 }
 
 ///|
-fn rotation_matrix(
-  axis : Int,
-  angle : Expr,
-) -> @symphysics.ExplicitMatrix {
+fn rotation_matrix(axis : Int, angle : Expr) -> @symphysics.ExplicitMatrix {
   let c = @symelem.cos(angle)
   let s = @symelem.sin(angle)
   match axis {
@@ -380,9 +360,7 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
 fn collect_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       for arg in args {
         collect_symbol_names(arg, seen)
       }
@@ -410,18 +388,12 @@ pub fn orient_dcm(matrix : @symphysics.ExplicitMatrix) -> OrientationSpec {
 }
 
 ///|
-pub fn orient_body(
-  angles : Array[Expr],
-  order : String,
-) -> OrientationSpec {
+pub fn orient_body(angles : Array[Expr], order : String) -> OrientationSpec {
   BodySpec(angles, order)
 }
 
 ///|
-pub fn orient_space(
-  angles : Array[Expr],
-  order : String,
-) -> OrientationSpec {
+pub fn orient_space(angles : Array[Expr], order : String) -> OrientationSpec {
   SpaceSpec(angles, order)
 }
 

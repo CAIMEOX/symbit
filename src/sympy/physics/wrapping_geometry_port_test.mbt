@@ -1,3 +1,4 @@
+///|
 fn wrapping_assert_vector(
   lhs : @symvector.Vector,
   frame : @symvector.ReferenceFrame,
@@ -10,9 +11,9 @@ fn wrapping_assert_vector(
   let ours_x = @symprint.to_string(comps.get(0, 0))
   let ours_y = @symprint.to_string(comps.get(1, 0))
   let ours_z = @symprint.to_string(comps.get(2, 0))
-  assert_true((mechanics_expr_equal(ours_x, rhs_x)))
-  assert_true((mechanics_expr_equal(ours_y, rhs_y)))
-  assert_true((mechanics_expr_equal(ours_z, rhs_z)))
+  assert_true(mechanics_expr_equal(ours_x, rhs_x))
+  assert_true(mechanics_expr_equal(ours_y, rhs_y))
+  assert_true(mechanics_expr_equal(ours_z, rhs_z))
 }
 
 ///|
@@ -31,9 +32,9 @@ test "physics.mechanics parity wrapping geometry" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
-        sphere_len_oracle,
-      )
+      @symprint.to_string(sphere.geodesic_length(p_1, p_2)),
+      sphere_len_oracle,
+    ),
   )
   let (sv1, sv2) = sphere.geodesic_end_vectors(p_1, p_2)
   wrapping_assert_vector(
@@ -61,9 +62,9 @@ test "physics.mechanics parity wrapping geometry" {
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
-        cylinder_len_oracle,
-      )
+      @symprint.to_string(cylinder.geodesic_length(p_1, p_3)),
+      cylinder_len_oracle,
+    ),
   )
   let (cv1, cv2) = cylinder.geodesic_end_vectors(p_1, p_3)
   wrapping_assert_vector(

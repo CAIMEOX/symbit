@@ -65,10 +65,7 @@ pub fn Quantity::symbol_expr(self : Quantity) -> Expr {
 }
 
 ///|
-pub fn Quantity::with_scale(
-  self : Quantity,
-  scale_factor : Expr,
-) -> Quantity {
+pub fn Quantity::with_scale(self : Quantity, scale_factor : Expr) -> Quantity {
   Quantity::{ ..self, scale_factor, }
 }
 
@@ -102,23 +99,14 @@ fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
   if exponent >= 0 {
     @symcore.number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
-    @symcore.number(
-      @symnum.BigRational::from_bigint(BigInt::from_int(1)).div_r(
-        @symnum.BigRational::from_bigint(int_pow(base, -exponent)),
-      ),
-    )
+    rational_expr_bigint(BigInt::from_int(1), int_pow(base, -exponent))
   }
 }
 
 ///|
 fn expr_inverse(expr : Expr) -> Expr {
   match expr {
-    Expr::Number(n) =>
-      @symcore.number(
-        @symnum.BigRational::from_bigint(n.denominator()).div_r(
-          @symnum.BigRational::from_bigint(n.numerator()),
-        ),
-      )
+    Expr::Number(n) => rational_expr_bigint(n.denominator(), n.numerator())
     _ => expr ^ int(-1)
   }
 }
@@ -375,12 +363,9 @@ pub let speed_of_light : Expr = int(299792458) *
   (second.symbol_expr() ^ int(-1))
 
 ///|
-pub let e0 : Expr = @symcore.number(
-    @symnum.BigRational::from_bigint(BigInt::from_int(625000)).div_r(
-      @symnum.BigRational::from_bigint(
-        BigInt::from_string("22468879468420441"),
-      ),
-    ),
+pub let e0 : Expr = rational_expr_bigint(
+    BigInt::from_int(625000),
+    BigInt::from_string("22468879468420441"),
   ) *
   (ampere.symbol_expr() ^ int(2)) *
   (second.symbol_expr() ^ int(4)) *
@@ -390,9 +375,7 @@ pub let e0 : Expr = @symcore.number(
 
 ///|
 pub let u0 : Expr = pi_expr() *
-  @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2500000)),
-  ) *
+  rational_expr(1, 2500000) *
   kilogram.symbol_expr() *
   meter.symbol_expr() *
   (ampere.symbol_expr() ^ int(-2)) *

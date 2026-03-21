@@ -6,10 +6,7 @@ pub fn besselsimp(expr : Expr, max_passes? : Int = 8) -> Expr {
 
 ///|
 /// Simplify Kronecker-delta expressions.
-pub fn kroneckersimp(
-  expr : Expr,
-  max_passes? : Int = 8,
-) -> Expr {
+pub fn kroneckersimp(expr : Expr, max_passes? : Int = 8) -> Expr {
   fixpoint_compat(expr, rewrite_kroneckersimp, max_passes~)
 }
 
@@ -47,10 +44,7 @@ fn fixpoint_compat(
 }
 
 ///|
-fn rewrite_bottom_up_compat(
-  expr : Expr,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn rewrite_bottom_up_compat(expr : Expr, rule : (Expr) -> Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_compat(child, rule)
   })
@@ -116,22 +110,13 @@ fn simplify_delta(a : Expr, b : Expr) -> Expr {
     return int(1)
   }
   match (a, b) {
-    (Expr::Number(x), Expr::Number(y)) =>
-      if x == y {
-        int(1)
-      } else {
-        int(0)
-      }
+    (Expr::Number(x), Expr::Number(y)) => if x == y { int(1) } else { int(0) }
     _ => @symcore.function("KroneckerDelta", [a, b])
   }
 }
 
 ///|
-fn try_bind_delta(
-  env : Map[String, Expr],
-  a : Expr,
-  b : Expr,
-) -> Bool {
+fn try_bind_delta(env : Map[String, Expr], a : Expr, b : Expr) -> Bool {
   match (a, b) {
     (Expr::Symbol(name), value) => bind_symbol(env, name, value)
     (value, Expr::Symbol(name)) => bind_symbol(env, name, value)
@@ -140,11 +125,7 @@ fn try_bind_delta(
 }
 
 ///|
-fn bind_symbol(
-  env : Map[String, Expr],
-  name : String,
-  value : Expr,
-) -> Bool {
+fn bind_symbol(env : Map[String, Expr], name : String, value : Expr) -> Bool {
   match env.get(name) {
     Some(v) => v == value
     None => {

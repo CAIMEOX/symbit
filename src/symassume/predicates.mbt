@@ -78,8 +78,7 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 ///|
 pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    Expr::Number(n) =>
-      tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
+    Expr::Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
     Expr::Symbol(name) => env_get(env, name).is_positive
     Expr::Add(args) => add_is_positive(args, env)
     Expr::Mul(args) => mul_is_positive(args, env)
@@ -91,22 +90,17 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
 ///|
 pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
   match expr {
-    Expr::Number(n) =>
-      tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
+    Expr::Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
     Expr::Symbol(name) => env_get(env, name).is_nonnegative
     Expr::Add(args) => add_is_nonnegative(args, env)
     Expr::Mul(args) => mul_is_nonnegative(args, env)
     Expr::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
-    Expr::Function(name, args) =>
-      function_is_nonnegative(name, args, env)
+    Expr::Function(name, args) => function_is_nonnegative(name, args, env)
   }
 }
 
 ///|
-fn all_predicate(
-  args : Array[Expr],
-  pred : (Expr) -> Tri,
-) -> Tri {
+fn all_predicate(args : Array[Expr], pred : (Expr) -> Tri) -> Tri {
   let mut saw_unknown = false
   for arg in args {
     match pred(arg) {
@@ -180,11 +174,7 @@ fn mul_is_zero(args : Array[Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn pow_is_zero(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_zero(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
     Expr::Number(n) if n.is_zero() => return Tri::False
     _ => ()
@@ -253,11 +243,7 @@ fn mul_is_nonzero(args : Array[Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn pow_is_nonzero(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_nonzero(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
     Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
@@ -273,11 +259,7 @@ fn pow_is_nonzero(
 }
 
 ///|
-fn pow_is_integer(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_integer(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   let exp_is_integer = is_integer(exp, env~)
   if exp_is_integer == Tri::False {
     return Tri::False
@@ -303,11 +285,7 @@ fn pow_is_integer(
 }
 
 ///|
-fn pow_is_rational(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_rational(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   if is_integer(exp, env~) == Tri::False {
     return Tri::False
   }
@@ -328,11 +306,7 @@ fn pow_is_rational(
 }
 
 ///|
-fn pow_is_real(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_real(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   let base_real = is_real(base, env~)
   if base_real == Tri::False {
     return Tri::False
@@ -416,11 +390,7 @@ fn mul_is_positive(args : Array[Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn pow_is_positive(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_positive(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
     Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
@@ -493,11 +463,7 @@ fn mul_is_nonnegative(args : Array[Expr], env : AssumeEnv) -> Tri {
 }
 
 ///|
-fn pow_is_nonnegative(
-  base : Expr,
-  exp : Expr,
-  env : AssumeEnv,
-) -> Tri {
+fn pow_is_nonnegative(base : Expr, exp : Expr, env : AssumeEnv) -> Tri {
   match exp {
     Expr::Number(n) if n.is_zero() => return Tri::True
     _ => ()
@@ -522,11 +488,7 @@ fn pow_is_nonnegative(
 }
 
 ///|
-fn function_is_zero(
-  name : String,
-  args : Array[Expr],
-  env : AssumeEnv,
-) -> Tri {
+fn function_is_zero(name : String, args : Array[Expr], env : AssumeEnv) -> Tri {
   match (name, args.length()) {
     ("exp", 1) => Tri::False
     ("Abs", 1) | ("abs", 1) => is_zero(args[0], env~)
@@ -575,11 +537,7 @@ fn function_is_rational(
 }
 
 ///|
-fn function_is_real(
-  name : String,
-  args : Array[Expr],
-  env : AssumeEnv,
-) -> Tri {
+fn function_is_real(name : String, args : Array[Expr], env : AssumeEnv) -> Tri {
   match (name, args.length()) {
     ("Abs", 1) | ("abs", 1) => Tri::True
     ("sqrt", 1) =>

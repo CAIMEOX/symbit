@@ -26,10 +26,7 @@ pub fn EPath::new(path : String) -> EPath {
 
 ///|
 /// Select all subexpressions matched by this path.
-pub fn EPath::select(
-  self : EPath,
-  expr : Expr,
-) -> Array[Expr] {
+pub fn EPath::select(self : EPath, expr : Expr) -> Array[Expr] {
   let out : Array[Expr] = Array::new()
   select_at(self.selectors, 0, expr, out)
   out
@@ -37,11 +34,7 @@ pub fn EPath::select(
 
 ///|
 /// Apply `f` to every subexpression matched by this path.
-pub fn EPath::apply(
-  self : EPath,
-  expr : Expr,
-  f : (Expr) -> Expr,
-) -> Expr {
+pub fn EPath::apply(self : EPath, expr : Expr, f : (Expr) -> Expr) -> Expr {
   apply_at(self.selectors, 0, expr, f)
 }
 
@@ -53,11 +46,7 @@ pub fn epath(path : String, expr : Expr) -> Array[Expr] {
 
 ///|
 /// Convenience wrapper for `EPath::apply`.
-pub fn epath_apply(
-  path : String,
-  expr : Expr,
-  f : (Expr) -> Expr,
-) -> Expr {
+pub fn epath_apply(path : String, expr : Expr, f : (Expr) -> Expr) -> Expr {
   EPath::new(path).apply(expr, f)
 }
 
@@ -309,19 +298,15 @@ fn epath_is_atom(expr : Expr) -> Bool {
 ///|
 fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) => args.map(x => x)
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+      args.map(x => x)
     Expr::Pow(a, b) => [a, b]
     _ => []
   }
 }
 
 ///|
-fn rebuild_expr(
-  expr : Expr,
-  args : Array[Expr],
-) -> Expr {
+fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
   match expr {
     Expr::Add(_) => @symcore.raw_add(args)
     Expr::Mul(_) => @symcore.raw_mul(args)

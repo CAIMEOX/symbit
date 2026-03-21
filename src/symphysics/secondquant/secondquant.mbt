@@ -237,9 +237,7 @@ pub fn boson_creator(index : Expr) -> BosonicOperatorExpr {
 }
 
 ///|
-pub fn BosonicOperatorExpr::as_expr(
-  self : BosonicOperatorExpr,
-) -> Expr {
+pub fn BosonicOperatorExpr::as_expr(self : BosonicOperatorExpr) -> Expr {
   @symcore.raw_function(
     if self.is_annihilation {
       "AnnihilateBoson"
@@ -461,10 +459,7 @@ pub fn secondquant_dagger(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn secondquant_inner_product(
-  bra : Expr,
-  ket : Expr,
-) -> Expr {
+pub fn secondquant_inner_product(bra : Expr, ket : Expr) -> Expr {
   match sq_secondquant_inner_product_local(bra, ket) {
     Some(value) => value
     None => @symquant.inner_product(bra, ket)
@@ -486,10 +481,7 @@ pub fn secondquant_apply_operators(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn secondquant_commutator(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+pub fn secondquant_commutator(lhs : Expr, rhs : Expr) -> Expr {
   @symquant.commutator(lhs, rhs)
 }
 
@@ -499,10 +491,7 @@ pub fn secondquant_no(expr : Expr) -> Expr {
 }
 
 ///|
-pub fn secondquant_contraction(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+pub fn secondquant_contraction(lhs : Expr, rhs : Expr) -> Expr {
   contraction(lhs, rhs)
 }
 
@@ -538,10 +527,7 @@ pub fn secondquant_wicks(
 }
 
 ///|
-pub fn secondquant_permutation_operator(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr {
+pub fn secondquant_permutation_operator(lhs : Expr, rhs : Expr) -> Expr {
   permutation_operator(lhs, rhs)
 }
 
@@ -565,8 +551,7 @@ fn sq_is_boson_annihilator(expr : Expr) -> Expr? {
 ///|
 fn sq_is_boson_creator(expr : Expr) -> Expr? {
   match expr {
-    Expr::Function("CreateBoson", args) if args.length() == 1 =>
-      Some(args[0])
+    Expr::Function("CreateBoson", args) if args.length() == 1 => Some(args[0])
     _ => None
   }
 }
@@ -603,8 +588,7 @@ fn sq_normal_order_product(expr : Expr) -> Expr {
             for item in prefix {
               leading.push(item)
             }
-            if comm_term != int(1) ||
-              prefix.length() + suffix.length() > 0 {
+            if comm_term != int(1) || prefix.length() + suffix.length() > 0 {
               if comm_term != int(1) {
                 leading.push(comm_term)
               }
@@ -644,10 +628,7 @@ pub fn secondquant_normal_ordered_form(
 }
 
 ///|
-fn sq_scale_inner_product(
-  bra : Expr,
-  expr : Expr,
-) -> Expr {
+fn sq_scale_inner_product(bra : Expr, expr : Expr) -> Expr {
   match expr {
     Expr::Add(args) =>
       @symcore.raw_add(args.map(term => sq_scale_inner_product(bra, term)))

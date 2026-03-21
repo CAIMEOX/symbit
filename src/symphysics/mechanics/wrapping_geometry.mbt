@@ -94,8 +94,9 @@ fn mechanics_rational_exact_sqrt(
     (Some(num_root), Some(den_root)) =>
       if num_root.mul(num_root).compare(value.numerator()) == 0 &&
         den_root.mul(den_root).compare(value.denominator()) == 0 {
-        let rat : Result[@symnum.BigRational, @symnum.RationalError] = try?
-          @symnum.BigRational::new(num_root, den_root)
+        let rat : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+          num_root, den_root,
+        )
         match rat {
           Ok(value) => Some(value)
           Err(_) => None
@@ -304,10 +305,7 @@ pub fn WrappingSphere::geodesic_end_vectors(
   }
   let tangent_1 = p_a_vec.cross(point_2.pos_from(point_1))
   let tangent_2 = p_b_vec.cross(point_1.pos_from(point_2))
-  (
-    tangent_1.cross(p_a_vec).normalize(),
-    tangent_2.cross(p_b_vec).normalize(),
-  )
+  (tangent_1.cross(p_a_vec).normalize(), tangent_2.cross(p_b_vec).normalize())
 }
 
 ///|
@@ -332,11 +330,7 @@ pub fn wrapping_cylinder(
   point : @symvector.Point,
   axis : @symvector.Vector,
 ) -> WrappingCylinder raise @symvector.VectorError {
-  WrappingCylinder::{
-    radius_: radius,
-    point_: point,
-    axis_: axis.normalize(),
-  }
+  WrappingCylinder::{ radius_: radius, point_: point, axis_: axis.normalize() }
 }
 
 ///|
@@ -379,23 +373,16 @@ pub fn WrappingCylinder::geodesic_length(
   let parallel_length = relative_position.dot(self.axis_)
 
   let point_1_relative_position = point_1.pos_from(self.point_)
-  let point_1_perpendicular_vector = (
-    point_1_relative_position -
-    self.axis_.scale(point_1_relative_position.dot(self.axis_))
-  ).normalize()
+  let point_1_perpendicular_vector = (point_1_relative_position -
+  self.axis_.scale(point_1_relative_position.dot(self.axis_))).normalize()
 
   let point_2_relative_position = point_2.pos_from(self.point_)
-  let point_2_perpendicular_vector = (
-    point_2_relative_position -
-    self.axis_.scale(point_2_relative_position.dot(self.axis_))
-  ).normalize()
+  let point_2_perpendicular_vector = (point_2_relative_position -
+  self.axis_.scale(point_2_relative_position.dot(self.axis_))).normalize()
 
   let cross = point_1_perpendicular_vector.cross(point_2_perpendicular_vector)
   let central_angle = mechanics_directional_atan(
-    @symsimplify.simplify(
-      cross.dot(self.axis_),
-      max_passes=8,
-    ),
+    @symsimplify.simplify(cross.dot(self.axis_), max_passes=8),
     @symsimplify.simplify(
       point_1_perpendicular_vector.dot(point_2_perpendicular_vector),
       max_passes=8,
@@ -423,8 +410,12 @@ pub fn WrappingCylinder::geodesic_end_vectors(
     return (impossible, impossible)
   }
 
-  let point_1_parallel = self.axis_.scale(point_1_from_origin_point.dot(self.axis_))
-  let point_2_parallel = self.axis_.scale(point_2_from_origin_point.dot(self.axis_))
+  let point_1_parallel = self.axis_.scale(
+    point_1_from_origin_point.dot(self.axis_),
+  )
+  let point_2_parallel = self.axis_.scale(
+    point_2_from_origin_point.dot(self.axis_),
+  )
   let point_1_normal = point_1_from_origin_point - point_1_parallel
   let point_2_normal = point_2_from_origin_point - point_2_parallel
 
@@ -447,14 +438,10 @@ pub fn WrappingCylinder::geodesic_end_vectors(
     (parallel_length ^ mechanics_two_expr()),
   )
 
-  let point_1_vector = (
-    point_1_perpendicular.scale(planar_arc_length) +
-    self.axis_.scale(parallel_length)
-  ).normalize()
-  let point_2_vector = (
-    point_2_perpendicular.scale(planar_arc_length) -
-    self.axis_.scale(parallel_length)
-  ).normalize()
+  let point_1_vector = (point_1_perpendicular.scale(planar_arc_length) +
+  self.axis_.scale(parallel_length)).normalize()
+  let point_2_vector = (point_2_perpendicular.scale(planar_arc_length) -
+  self.axis_.scale(parallel_length)).normalize()
   (point_1_vector, point_2_vector)
 }
 
@@ -539,10 +526,7 @@ pub fn WrappingCone::geodesic_length(
   let n2 = (pos2 - self.axis_.scale(z2)).normalize()
   let cross = n1.cross(n2)
   let central = mechanics_directional_atan(
-    @symsimplify.simplify(
-      cross.dot(self.axis_),
-      max_passes=8,
-    ),
+    @symsimplify.simplify(cross.dot(self.axis_), max_passes=8),
     @symsimplify.simplify(n1.dot(n2), max_passes=8),
   )
   let delta_u = mech_simplify_expr(central * @symelem.sin(self.alpha_))
@@ -589,10 +573,7 @@ pub fn WrappingCone::geodesic_end_vectors(
   let n2 = (pos2 - self.axis_.scale(z2)).normalize()
   let cross = n1.cross(n2)
   let central = mechanics_directional_atan(
-    @symsimplify.simplify(
-      cross.dot(self.axis_),
-      max_passes=8,
-    ),
+    @symsimplify.simplify(cross.dot(self.axis_), max_passes=8),
     @symsimplify.simplify(n1.dot(n2), max_passes=8),
   )
   let delta_u = mech_simplify_expr(central * @symelem.sin(self.alpha_))

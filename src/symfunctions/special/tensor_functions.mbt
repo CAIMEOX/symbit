@@ -2,11 +2,7 @@
 /// Tensor-related special functions.
 
 ///|
-pub fn eijk(
-  i : Expr,
-  j : Expr,
-  k : Expr,
-) -> Expr {
+pub fn eijk(i : Expr, j : Expr, k : Expr) -> Expr {
   @symcore.function("Eijk", [i, j, k])
 }
 

@@ -375,10 +375,7 @@ fn field_elems_content(
   if numer_gcd.is_zero() {
     return fe_from_int(0, domain)
   }
-  fe_from_rational(
-    @symnum.BigRational::from_bigint(numer_gcd).div_r(@symnum.BigRational::from_bigint(denom_lcm)),
-    domain,
-  )
+  fe_from_rational(poly_rational_from_bigints(numer_gcd, denom_lcm), domain)
 }
 
 ///|

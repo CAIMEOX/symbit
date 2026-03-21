@@ -40,21 +40,21 @@ test "physics: Pauli and Dirac matrices satisfy core identities" {
 
   assert_true(
     physics_matrix_expr_equal(
-        gamma0.mul(gamma1).mul(gamma2).mul(gamma3).scale(i),
-        gamma5,
-      )
+      gamma0.mul(gamma1).mul(gamma2).mul(gamma3).scale(i),
+      gamma5,
+    ),
   )
   assert_true(
     physics_matrix_expr_equal(
-        gamma0.mul(gamma0),
-        @symphysics.explicit_matrix_eye(4).scale(int(1)),
-      )
+      gamma0.mul(gamma0),
+      @symphysics.explicit_matrix_eye(4).scale(int(1)),
+    ),
   )
   assert_true(
     physics_matrix_expr_equal(
-        gamma2.mul(gamma2),
-        @symphysics.explicit_matrix_eye(4).scale(int(-1)),
-      )
+      gamma2.mul(gamma2),
+      @symphysics.explicit_matrix_eye(4).scale(int(-1)),
+    ),
   )
 }
 
@@ -125,14 +125,7 @@ test "physics: wigner coefficients obey core examples and guards" {
   let three_half = physics_frac(3, 2)
 
   physics_assert_expr_equal(
-    @symphysics.wigner_3j(
-      int(2),
-      int(6),
-      int(4),
-      int(0),
-      int(0),
-      int(0),
-    ),
+    @symphysics.wigner_3j(int(2), int(6), int(4), int(0), int(0), int(0)),
     "sqrt(715)/143",
     "wigner_3j docs",
   )
@@ -168,26 +161,12 @@ test "physics: wigner coefficients obey core examples and guards" {
 ///|
 test "physics: gaunt examples and guards" {
   physics_assert_expr_equal(
-    @symphysics.gaunt(
-      int(1),
-      int(0),
-      int(1),
-      int(1),
-      int(0),
-      int(-1),
-    ),
+    @symphysics.gaunt(int(1), int(0), int(1), int(1), int(0), int(-1)),
     "-1/(2*sqrt(pi))",
     "gaunt example",
   )
   physics_assert_expr_equal(
-    @symphysics.gaunt(
-      int(1),
-      int(1),
-      int(0),
-      int(0),
-      int(2),
-      int(-2),
-    ),
+    @symphysics.gaunt(int(1), int(1), int(0), int(0), int(2), int(-2)),
     "0",
     "gaunt zero",
   )
@@ -207,38 +186,17 @@ test "physics: gaunt examples and guards" {
 test "physics: higher wigner examples and guards" {
   let half = physics_frac(1, 2)
   physics_assert_expr_equal(
-    @symphysics.wigner_6j(
-      int(5),
-      int(5),
-      int(5),
-      int(5),
-      int(5),
-      int(5),
-    ),
+    @symphysics.wigner_6j(int(5), int(5), int(5), int(5), int(5), int(5)),
     "1/52",
     "wigner_6j example",
   )
   physics_assert_expr_equal(
-    @symphysics.wigner_6j(
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-    ),
+    @symphysics.wigner_6j(int(3), int(3), int(3), int(3), int(3), int(3)),
     "-1/14",
     "wigner_6j 3",
   )
   physics_assert_expr_equal(
-    @symphysics.racah(
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-      int(3),
-    ),
+    @symphysics.racah(int(3), int(3), int(3), int(3), int(3), int(3)),
     "-1/14",
     "racah example",
   )
@@ -292,38 +250,17 @@ test "physics: higher wigner examples and guards" {
 ///|
 test "physics: real gaunt examples and zeros" {
   physics_assert_expr_equal(
-    @symphysics.real_gaunt(
-      int(1),
-      int(1),
-      int(2),
-      int(-1),
-      int(1),
-      int(-2),
-    ),
+    @symphysics.real_gaunt(int(1), int(1), int(2), int(-1), int(1), int(-2)),
     "-sqrt(15)/(10*sqrt(pi))",
     "real_gaunt example",
   )
   physics_assert_expr_equal(
-    @symphysics.real_gaunt(
-      int(2),
-      int(2),
-      int(2),
-      int(1),
-      int(1),
-      int(2),
-    ),
+    @symphysics.real_gaunt(int(2), int(2), int(2), int(1), int(1), int(2)),
     "sqrt(15)/(14*sqrt(pi))",
     "real_gaunt 222",
   )
   physics_assert_expr_equal(
-    @symphysics.real_gaunt(
-      int(-2),
-      int(1),
-      int(0),
-      int(1),
-      int(1),
-      int(1),
-    ),
+    @symphysics.real_gaunt(int(-2), int(1), int(0), int(1), int(1), int(1)),
     "0",
     "real_gaunt zero",
   )
@@ -339,35 +276,21 @@ test "physics: rotational harmonic examples" {
   let gamma = symbol("gamma")
 
   physics_assert_expr_equal(
-    @symphysics.dot_rot_grad_ynm(
-      int(3),
-      int(2),
-      int(2),
-      int(0),
-      theta,
-      phi,
-    ),
+    @symphysics.dot_rot_grad_ynm(int(3), int(2), int(2), int(0), theta, phi),
     "3*sqrt(55)*Ynm(5, 2, theta, phi)/(11*sqrt(pi))",
     "dot_rot_grad example",
   )
   physics_assert_expr_equal(
-    @symphysics.dot_rot_grad_ynm(
-      int(1),
-      int(5),
-      int(1),
-      int(1),
-      int(1),
-      int(2),
-    ),
+    @symphysics.dot_rot_grad_ynm(int(1), int(5), int(1), int(1), int(1), int(2)),
     "0",
     "dot_rot_grad zero",
   )
 
   assert_true(
     physics_matrix_expr_equal(
-        @symphysics.wigner_d_small(half, int(0)),
-        @symphysics.explicit_matrix_eye(2),
-      )
+      @symphysics.wigner_d_small(half, int(0)),
+      @symphysics.explicit_matrix_eye(2),
+    ),
   )
 
   let d = @symphysics.wigner_d(half, alpha, beta, gamma)

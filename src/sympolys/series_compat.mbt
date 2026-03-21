@@ -159,7 +159,7 @@ fn series_inv_factorial_with_sign(
   negate : Bool,
   domain : Domain,
 ) -> FieldElem raise PolyError {
-  let mut q = @symnum.BigRational::one().div_r(series_factorial(n))
+  let mut q = poly_rational_div(@symnum.BigRational::one(), series_factorial(n))
   if negate {
     q = q.neg_r()
   }

@@ -3161,10 +3161,7 @@ pub fn quantile(
                         @symcore.int(2),
                         @symcore.function("gammaincinv", [
                           eval_arith(
-                            @symcore.mul([
-                              stats_exact_rational(1, 2),
-                              params[0],
-                            ]),
+                            @symcore.mul([stats_exact_rational(1, 2), params[0]]),
                           ),
                           q,
                         ]),
@@ -3219,10 +3216,7 @@ pub fn quantile(
                               @symcore.mul([
                                 @symcore.symbol("pi"),
                                 eval_arith(
-                                  @symcore.add([
-                                    q,
-                                    stats_exact_rational(-1, 2),
-                                  ]),
+                                  @symcore.add([q, stats_exact_rational(-1, 2)]),
                                 ),
                               ]),
                             ),
@@ -3293,10 +3287,7 @@ pub fn quantile(
                   )
                   compat_piecewise3(
                     left,
-                    @symcore.function("Le", [
-                      q,
-                      stats_exact_rational(1, 2),
-                    ]),
+                    @symcore.function("Le", [q, stats_exact_rational(1, 2)]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
                     @symcore.symbol("nan"),

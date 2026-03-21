@@ -7,11 +7,7 @@ pub fn legendre(n : Expr, x : Expr) -> Expr {
 }
 
 ///|
-pub fn assoc_legendre(
-  n : Expr,
-  m : Expr,
-  x : Expr,
-) -> Expr {
+pub fn assoc_legendre(n : Expr, m : Expr, x : Expr) -> Expr {
   @symcore.function("assoc_legendre", [n, m, x])
 }
 
@@ -51,39 +47,21 @@ pub fn laguerre(n : Expr, x : Expr) -> Expr {
 }
 
 ///|
-pub fn assoc_laguerre(
-  n : Expr,
-  m : Expr,
-  x : Expr,
-) -> Expr {
+pub fn assoc_laguerre(n : Expr, m : Expr, x : Expr) -> Expr {
   @symcore.function("assoc_laguerre", [n, m, x])
 }
 
 ///|
-pub fn gegenbauer(
-  n : Expr,
-  a : Expr,
-  x : Expr,
-) -> Expr {
+pub fn gegenbauer(n : Expr, a : Expr, x : Expr) -> Expr {
   @symcore.function("gegenbauer", [n, a, x])
 }
 
 ///|
-pub fn jacobi(
-  n : Expr,
-  a : Expr,
-  b : Expr,
-  x : Expr,
-) -> Expr {
+pub fn jacobi(n : Expr, a : Expr, b : Expr, x : Expr) -> Expr {
   @symcore.function("jacobi", [n, a, b, x])
 }
 
 ///|
-pub fn jacobi_normalized(
-  n : Expr,
-  a : Expr,
-  b : Expr,
-  x : Expr,
-) -> Expr {
+pub fn jacobi_normalized(n : Expr, a : Expr, b : Expr, x : Expr) -> Expr {
   @symcore.function("jacobi_normalized", [n, a, b, x])
 }

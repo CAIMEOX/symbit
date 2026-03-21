@@ -59,6 +59,12 @@ pub fn BigRational::from_int(n : Int) -> Self {
 }
 
 ///|
+/// Construct an exact rational from integer numerator and denominator.
+pub fn BigRational::from_ints(num : Int, den : Int) -> Self raise RationalError {
+  BigRational::new(BigInt::from_int(num), BigInt::from_int(den))
+}
+
+///|
 /// Construct an exact rational from a `BigInt`.
 pub fn BigRational::from_bigint(n : BigInt) -> Self {
   normalize(n, BigInt::from_int(1))
@@ -149,11 +155,8 @@ pub fn BigRational::reciprocal(
 pub fn BigRational::div_r(
   self : BigRational,
   other : BigRational,
-) -> BigRational {
-  if other.is_zero() {
-    abort("BigRational::div_r division by zero")
-  }
-  normalize(self.num.mul(other.den), self.den.mul(other.num))
+) -> BigRational raise RationalError {
+  self.mul_r(other.reciprocal())
 }
 
 ///|

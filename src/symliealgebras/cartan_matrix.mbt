@@ -3,7 +3,7 @@
 
 ///|
 /// Compute the Cartan matrix for a Cartan type string such as `A3`.
-pub fn cartan_matrix(ct : CartanType) -> Matrix raise {
+pub fn cartan_matrix(ct : CartanType) -> Matrix {
   ct.cartan_matrix()
 }
 

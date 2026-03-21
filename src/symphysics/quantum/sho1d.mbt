@@ -14,30 +14,22 @@ pub let sho_omega : Expr = symbol("omega")
 pub let sho_mass : Expr = symbol("m")
 
 ///|
-pub fn raising_op(
-  label? : Expr = symbol("a"),
-) -> Expr {
+pub fn raising_op(label? : Expr = symbol("a")) -> Expr {
   @symcore.raw_function("RaisingOp", [label])
 }
 
 ///|
-pub fn lowering_op(
-  label? : Expr = symbol("a"),
-) -> Expr {
+pub fn lowering_op(label? : Expr = symbol("a")) -> Expr {
   @symcore.raw_function("LoweringOp", [label])
 }
 
 ///|
-pub fn number_op(
-  label? : Expr = symbol("N"),
-) -> Expr {
+pub fn number_op(label? : Expr = symbol("N")) -> Expr {
   @symcore.raw_function("NumberOp", [label])
 }
 
 ///|
-pub fn sho_hamiltonian(
-  label? : Expr = symbol("H"),
-) -> Expr {
+pub fn sho_hamiltonian(label? : Expr = symbol("H")) -> Expr {
   @symcore.raw_function("Hamiltonian", [label])
 }
 
@@ -53,9 +45,9 @@ pub fn sho_bra(n : Expr) -> Expr {
 
 ///|
 fn sho_half() -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
-  )
+  @symcore.rational_from_ints(1, 2) catch {
+    _ => @symcore.function("Rational", [int(1), int(2)])
+  }
 }
 
 ///|
@@ -76,14 +68,10 @@ pub fn sho_rewrite_as_xp(expr : Expr) -> Expr {
     Expr::Function("LoweringOp", _) => xp_scale * (x_term + px_term)
     Expr::Function("NumberOp", _) =>
       (px_sq + x_sq) *
-      @symcore.raw_pow(
-        int(2) * sho_mass * hbar * sho_omega,
-        int(-1),
-      ) -
+      @symcore.raw_pow(int(2) * sho_mass * hbar * sho_omega, int(-1)) -
       sho_half()
     Expr::Function("Hamiltonian", _) =>
-      (px_sq + x_sq) *
-      @symcore.raw_pow(int(2) * sho_mass, int(-1))
+      (px_sq + x_sq) * @symcore.raw_pow(int(2) * sho_mass, int(-1))
     _ => expr
   }
 }
@@ -126,25 +114,15 @@ fn sho_is_zero_state(n : Expr) -> Bool {
 }
 
 ///|
-pub fn sho_apply_operator_to_ket(
-  op_expr : Expr,
-  ket_expr : Expr,
-) -> Expr? {
+pub fn sho_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
   match (op_expr, ket_expr) {
-    (
-      Expr::Function("RaisingOp", _),
-      Expr::Function("SHOKet", args),
-    ) if args.length() == 1 => {
+    (Expr::Function("RaisingOp", _), Expr::Function("SHOKet", args)) if args.length() ==
+      1 => {
       let n = args[0]
-      Some(
-        @symcore.raw_function("sqrt", [n + int(1)]) *
-        sho_ket(n + int(1)),
-      )
+      Some(@symcore.raw_function("sqrt", [n + int(1)]) * sho_ket(n + int(1)))
     }
-    (
-      Expr::Function("LoweringOp", _),
-      Expr::Function("SHOKet", args),
-    ) if args.length() == 1 => {
+    (Expr::Function("LoweringOp", _), Expr::Function("SHOKet", args)) if args.length() ==
+      1 => {
       let n = args[0]
       if sho_is_zero_state(n) {
         Some(int(0))
@@ -152,17 +130,13 @@ pub fn sho_apply_operator_to_ket(
         Some(@symcore.raw_function("sqrt", [n]) * sho_ket(n - int(1)))
       }
     }
-    (
-      Expr::Function("NumberOp", _),
-      Expr::Function("SHOKet", args),
-    ) if args.length() == 1 => {
+    (Expr::Function("NumberOp", _), Expr::Function("SHOKet", args)) if args.length() ==
+      1 => {
       let n = args[0]
       Some(n * ket_expr)
     }
-    (
-      Expr::Function("Hamiltonian", _),
-      Expr::Function("SHOKet", args),
-    ) if args.length() == 1 => {
+    (Expr::Function("Hamiltonian", _), Expr::Function("SHOKet", args)) if args.length() ==
+      1 => {
       let n = args[0]
       let half = sho_half()
       Some(hbar * sho_omega * (n + half) * ket_expr)

@@ -28,7 +28,10 @@ pub fn find_simple_recurrence_vector(
       None => return [@symcore.int(0)]
     }
   }
-  let coeffs = berlekamp_massey(data)
+  let coeffs = match berlekamp_massey(data) {
+    Some(values) => values
+    None => return [@symcore.int(0)]
+  }
   let out : Array[@symcore.Expr] = Array::new()
   for c in coeffs {
     out.push(from_rational(c))
@@ -251,7 +254,7 @@ pub fn rationalize(x : @symcore.Expr, maxcoeff? : Int = 10000) -> @symcore.Expr 
 ///|
 fn berlekamp_massey(
   seq : Array[@symnum.BigRational],
-) -> Array[@symnum.BigRational] {
+) -> Array[@symnum.BigRational]? {
   let n = seq.length()
   let c : Array[@symnum.BigRational] = [@symnum.BigRational::one()]
   let b : Array[@symnum.BigRational] = [@symnum.BigRational::one()]
@@ -273,7 +276,7 @@ fn berlekamp_massey(
     for v in c {
       t.push(v)
     }
-    let coef = d.div_r(bb)
+    let coef = d.div_r(bb) catch { _ => return None }
     let need = b.length() + m
     while c.length() < need {
       c.push(@symnum.BigRational::zero())
@@ -294,7 +297,7 @@ fn berlekamp_massey(
       m = m + 1
     }
   }
-  c
+  Some(c)
 }
 
 ///|
@@ -318,7 +321,7 @@ fn bm_coeffs(seq : Array[@symcore.Expr]) -> Array[@symnum.BigRational]? {
       None => return None
     }
   }
-  Some(berlekamp_massey(values))
+  berlekamp_massey(values)
 }
 
 ///|

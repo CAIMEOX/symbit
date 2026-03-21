@@ -17,9 +17,9 @@ fn quantum_default_operator() -> Expr {
 
 ///|
 fn operatorset_half() -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
-  )
+  @symcore.rational_from_ints(1, 2) catch {
+    _ => @symcore.function("Rational", [int(1), int(2)])
+  }
 }
 
 ///|
@@ -41,9 +41,7 @@ pub fn operators_to_state(operator_expr : Expr) -> Expr? {
 }
 
 ///|
-pub fn operators_to_state_many(
-  operator_exprs : Array[Expr],
-) -> Expr? {
+pub fn operators_to_state_many(operator_exprs : Array[Expr]) -> Expr? {
   if operator_exprs.length() == 1 {
     return operators_to_state(operator_exprs[0])
   }
@@ -82,12 +80,12 @@ pub fn state_to_operators(state_expr : Expr) -> Array[Expr]? {
       match state_expr {
         Expr::Function("Ket", _) | Expr::Function("Bra", _) =>
           Some([quantum_default_operator()])
-        Expr::Function("JxKet", _)
-        | Expr::Function("JxBra", _) => Some([j2(), jx()])
-        Expr::Function("JyKet", _)
-        | Expr::Function("JyBra", _) => Some([j2(), jy()])
-        Expr::Function("JzKet", _)
-        | Expr::Function("JzBra", _) => Some([j2(), jz()])
+        Expr::Function("JxKet", _) | Expr::Function("JxBra", _) =>
+          Some([j2(), jx()])
+        Expr::Function("JyKet", _) | Expr::Function("JyBra", _) =>
+          Some([j2(), jy()])
+        Expr::Function("JzKet", _) | Expr::Function("JzBra", _) =>
+          Some([j2(), jz()])
         _ => None
       }
   }

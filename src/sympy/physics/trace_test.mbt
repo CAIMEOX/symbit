@@ -13,9 +13,7 @@ test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
     "tr scalar add",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(tr(@symcore.raw_mul([a, a_op]))),
-    ),
+    quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),
     quantum_eval_str("a*Tr(A)"),
     "tr scalar factor",
   )

@@ -98,15 +98,15 @@ test "physics.mechanics system backend equations" {
   let forcing_expr = sys.forcing().get(0, 0)
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(forcing_expr),
-        "b*Derivative(q(t), t) - k*q(t)",
-      )
+      @symprint.to_string(forcing_expr),
+      "b*Derivative(q(t), t) - k*q(t)",
+    ),
   )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(sys.rhs().get(1, 0)),
-        "(b*Derivative(q(t), t) - k*q(t))/m",
-      )
+      @symprint.to_string(sys.rhs().get(1, 0)),
+      "(b*Derivative(q(t), t) - k*q(t))/m",
+    ),
   )
 }
 

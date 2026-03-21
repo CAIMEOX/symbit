@@ -4,7 +4,7 @@ fn waves_assert_expr_equal(
   rhs : String,
   _context : String,
 ) -> Unit raise {
-  assert_true((physics_expr_equivalent(lhs, rhs)))
+  assert_true(physics_expr_equivalent(lhs, rhs))
 }
 
 ///|

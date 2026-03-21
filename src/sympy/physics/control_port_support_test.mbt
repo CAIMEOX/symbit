@@ -28,16 +28,14 @@ using @symcontrol {
 
 ///|
 fn control_oracle_lines(script : String) -> Array[String] raise {
-  Array::from_iter(
-    (control_exec_stdout(script)).trim().split("\n"),
-  )
+  Array::from_iter(control_exec_stdout(script).trim().split("\n"))
   .map(line => line.trim().to_string())
   .filter(line => line != "")
 }
 
 ///|
 fn control_expr_eq(ours : @symcore.Expr, oracle : String) -> Bool {
-  try control_expr_equivalent(ours, oracle) catch {
+  control_expr_equivalent(ours, oracle) catch {
     _ => false
   }
 }
@@ -50,7 +48,9 @@ fn control_parse_double(text : String) -> Double raise {
 ///|
 fn control_parse_complex(text : String) -> ControlComplex raise {
   let parts = Array::from_iter(text.trim().split(","))
-  guard parts.length() == 2 else { panic() }
+  guard parts.length() == 2 else {
+    fail("expected oracle complex line as 're,im'")
+  }
   (
     control_parse_double(parts[0].to_string()),
     control_parse_double(parts[1].to_string()),
@@ -119,7 +119,9 @@ fn control_parse_double_lines(lines : Array[String]) -> Array[Double] raise {
 }
 
 ///|
-fn control_parse_complex_lines(lines : Array[String]) -> Array[ControlComplex] raise {
+fn control_parse_complex_lines(
+  lines : Array[String],
+) -> Array[ControlComplex] raise {
   let out : Array[ControlComplex] = []
   for line in lines {
     out.push(control_parse_complex(line))

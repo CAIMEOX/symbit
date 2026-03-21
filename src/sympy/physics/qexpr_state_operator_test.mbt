@@ -113,16 +113,12 @@ test "physics.quantum.operator/state: operator simplification hooks" {
     "canonical unitary cancellation",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(qapply(@symcore.raw_mul([id3, a]))),
-    ),
+    quantum_eval_str(@symprint.to_string(qapply(@symcore.raw_mul([id3, a])))),
     "A",
     "qapply removes left identity on operators",
   )
   quantum_test_assert_string_equal(
-    quantum_eval_str(
-      @symprint.to_string(qapply(@symcore.raw_mul([a, id3]))),
-    ),
+    quantum_eval_str(@symprint.to_string(qapply(@symcore.raw_mul([a, id3])))),
     "A",
     "qapply removes right identity on operators",
   )

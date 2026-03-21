@@ -251,10 +251,7 @@ fn joint_resolve_frame(
 }
 
 ///|
-fn joint_kdes(
-  coordinates : Array[Expr],
-  speeds : Array[Expr],
-) -> Array[Expr] {
+fn joint_kdes(coordinates : Array[Expr], speeds : Array[Expr]) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<coordinates.length() {
     out.push(
@@ -332,9 +329,7 @@ pub fn pin_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
@@ -486,9 +481,7 @@ pub fn prismatic_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
@@ -562,9 +555,7 @@ pub fn PrismaticJoint::child(self : PrismaticJoint) -> BodyLike {
 }
 
 ///|
-pub fn PrismaticJoint::coordinates(
-  self : PrismaticJoint,
-) -> Array[Expr] {
+pub fn PrismaticJoint::coordinates(self : PrismaticJoint) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
@@ -654,9 +645,7 @@ pub fn cylindrical_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
@@ -736,16 +725,12 @@ pub fn CylindricalJoint::child(self : CylindricalJoint) -> BodyLike {
 }
 
 ///|
-pub fn CylindricalJoint::coordinates(
-  self : CylindricalJoint,
-) -> Array[Expr] {
+pub fn CylindricalJoint::coordinates(self : CylindricalJoint) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
 ///|
-pub fn CylindricalJoint::speeds(
-  self : CylindricalJoint,
-) -> Array[Expr] {
+pub fn CylindricalJoint::speeds(self : CylindricalJoint) -> Array[Expr] {
   self.speeds_.copy()
 }
 
@@ -804,9 +789,7 @@ pub fn CylindricalJoint::joint_axis(
 }
 
 ///|
-pub fn CylindricalJoint::rotation_coordinate(
-  self : CylindricalJoint,
-) -> Expr {
+pub fn CylindricalJoint::rotation_coordinate(self : CylindricalJoint) -> Expr {
   self.coordinates_[0]
 }
 
@@ -818,16 +801,12 @@ pub fn CylindricalJoint::translation_coordinate(
 }
 
 ///|
-pub fn CylindricalJoint::rotation_speed(
-  self : CylindricalJoint,
-) -> Expr {
+pub fn CylindricalJoint::rotation_speed(self : CylindricalJoint) -> Expr {
   self.speeds_[0]
 }
 
 ///|
-pub fn CylindricalJoint::translation_speed(
-  self : CylindricalJoint,
-) -> Expr {
+pub fn CylindricalJoint::translation_speed(self : CylindricalJoint) -> Expr {
   self.speeds_[1]
 }
 
@@ -863,9 +842,7 @@ pub fn planar_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
@@ -1018,9 +995,7 @@ pub fn PlanarJoint::rotation_coordinate(self : PlanarJoint) -> Expr {
 }
 
 ///|
-pub fn PlanarJoint::planar_coordinates(
-  self : PlanarJoint,
-) -> Array[Expr] {
+pub fn PlanarJoint::planar_coordinates(self : PlanarJoint) -> Array[Expr] {
   [self.coordinates_[1], self.coordinates_[2]]
 }
 
@@ -1078,9 +1053,7 @@ pub fn spherical_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )
@@ -1166,9 +1139,7 @@ pub fn SphericalJoint::child(self : SphericalJoint) -> BodyLike {
 }
 
 ///|
-pub fn SphericalJoint::coordinates(
-  self : SphericalJoint,
-) -> Array[Expr] {
+pub fn SphericalJoint::coordinates(self : SphericalJoint) -> Array[Expr] {
   self.coordinates_.copy()
 }
 
@@ -1248,9 +1219,7 @@ pub fn weld_joint(
   let parent_frame = joint_resolve_frame(
     name, parent, "parent", parent_interframe,
   )
-  let child_frame = joint_resolve_frame(
-    name, child, "child", child_interframe,
-  )
+  let child_frame = joint_resolve_frame(name, child, "child", child_interframe)
   let resolved_parent_interframe = joint_locate_interframe(
     name, parent, "parent", parent_frame, parent_interframe,
   )

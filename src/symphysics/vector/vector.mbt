@@ -152,10 +152,7 @@ pub fn Vector::express(
 }
 
 ///|
-pub fn Vector::dot(
-  self : Vector,
-  other : Vector,
-) -> Expr raise VectorError {
+pub fn Vector::dot(self : Vector, other : Vector) -> Expr raise VectorError {
   if self.is_zero() || other.is_zero() {
     return zero_expr()
   }
@@ -240,10 +237,7 @@ pub fn Vector::subs(self : Vector, env : Map[String, Expr]) -> Vector {
 }
 
 ///|
-pub fn Vector::applyfunc(
-  self : Vector,
-  f : (Expr) -> Expr,
-) -> Vector {
+pub fn Vector::applyfunc(self : Vector, f : (Expr) -> Expr) -> Vector {
   let out : Array[(Int, Array[Expr])] = []
   for item in self.args {
     let frame_id = item.0

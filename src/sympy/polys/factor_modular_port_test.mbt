@@ -9,9 +9,7 @@ test "factor_modular: hensel/crt parity with linear + quadratic factors" {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(factor_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -26,9 +24,7 @@ test "factor_modular: hensel/crt parity with mixed factors" {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(factor_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -41,8 +37,6 @@ test "factor_modular: zassenhaus parity (no linear factors)" {
   let (content, factors) = poly.factor_list()
   let ours_raw = factor_list_to_string(content.to_string(), factors)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(factor_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(factor_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }

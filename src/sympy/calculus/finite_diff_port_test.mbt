@@ -44,9 +44,7 @@ fn fd_assert_expr_equal(ours : Expr, oracle_str : String) -> Unit raise {
   let ours_norm : Result[String, Error] = try? sympy_normalize(
     @symprint.to_string(ours),
   )
-  let oracle_norm : Result[String, Error] = try? sympy_normalize(
-    oracle_str,
-  )
+  let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
   match (ours_norm, oracle_norm) {
     (Ok(a), Ok(b)) => {
       guard a == b else {
@@ -78,11 +76,6 @@ test "apply_finite_diff: quadratic" {
   let x_list = [fd_br_int(-1), fd_br_int(0), fd_br_int(1)]
   let y_list = [fd_expr_int(1), fd_expr_int(0), fd_expr_int(1)]
   let ours = apply_finite_diff(2, x_list, y_list, x0=fd_br_int(0))
-  let oracle = apply_finite_diff_str(
-    2,
-    x_list,
-    y_list,
-    x0=fd_br_int(0),
-  )
+  let oracle = apply_finite_diff_str(2, x_list, y_list, x0=fd_br_int(0))
   fd_assert_expr_equal(ours, oracle)
 }

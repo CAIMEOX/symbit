@@ -22,10 +22,7 @@ fn ellipse_major_on_x(hr : Expr, vr : Expr) -> Bool {
 }
 
 ///|
-fn ellipse_focus_distance_expr(
-  hr : Expr,
-  vr : Expr,
-) -> Expr {
+fn ellipse_focus_distance_expr(hr : Expr, vr : Expr) -> Expr {
   if ellipse_major_on_x(hr, vr) {
     @symelem.sqrt(hr * hr - vr * vr)
   } else {
@@ -34,11 +31,7 @@ fn ellipse_focus_distance_expr(
 }
 
 ///|
-fn quadratic_roots(
-  a : Expr,
-  b : Expr,
-  c : Expr,
-) -> Array[Expr] {
+fn quadratic_roots(a : Expr, b : Expr, c : Expr) -> Array[Expr] {
   let out : Array[Expr] = []
   if geo_expr_is_zero(a) {
     if geo_expr_is_zero(b) {
@@ -129,8 +122,7 @@ fn ellipse_tangent_lines_from_point(
   let d2 = geo_simplify(u[0] * u[0] + u[1] * u[1])
   match geo_expr_sign(d2 - geo_one()) {
     Some(sign) if sign < 0 => []
-    Some(0) =>
-      [tangent_line_at_boundary_point(center, hradius, vradius, pt)]
+    Some(0) => [tangent_line_at_boundary_point(center, hradius, vradius, pt)]
     Some(_) => {
       let scale = geo_div(@symelem.sqrt(d2 - geo_one()), d2)
       let base = [geo_div(u[0], d2), geo_div(u[1], d2)]
@@ -143,12 +135,8 @@ fn ellipse_tangent_lines_from_point(
         geo_simplify(base[0] - perp[0] * scale),
         geo_simplify(base[1] - perp[1] * scale),
       ]
-      let t1 = ellipse_tangent_point_from_unit(
-        center, hradius, vradius, q1,
-      )
-      let t2 = ellipse_tangent_point_from_unit(
-        center, hradius, vradius, q2,
-      )
+      let t1 = ellipse_tangent_point_from_unit(center, hradius, vradius, q1)
+      let t2 = ellipse_tangent_point_from_unit(center, hradius, vradius, q2)
       if t1 == t2 {
         [line(pt, t1)]
       } else {
@@ -291,10 +279,7 @@ pub fn ellipse(
 }
 
 ///|
-pub fn circle(
-  center : Point,
-  radius : Expr,
-) -> Circle raise GeometryError {
+pub fn circle(center : Point, radius : Expr) -> Circle raise GeometryError {
   let center = center.with_dim(2)
   if geo_expr_is_zero(radius) {
     raise GeometryError::ValueError("circle radius must be nonzero")

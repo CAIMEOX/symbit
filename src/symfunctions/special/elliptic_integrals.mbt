@@ -17,10 +17,6 @@ pub fn elliptic_e(phi : Expr, m : Expr) -> Expr {
 }
 
 ///|
-pub fn elliptic_pi(
-  n : Expr,
-  phi : Expr,
-  m : Expr,
-) -> Expr {
+pub fn elliptic_pi(n : Expr, phi : Expr, m : Expr) -> Expr {
   @symcore.function("elliptic_pi", [n, phi, m])
 }

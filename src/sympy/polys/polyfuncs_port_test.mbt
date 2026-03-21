@@ -51,7 +51,9 @@ fn symmetrize_list_to_string(
 }
 
 ///|
-fn viete_to_string(pairs : Array[(@symcore.Expr, @symcore.Expr)]) -> String raise {
+fn viete_to_string(
+  pairs : Array[(@symcore.Expr, @symcore.Expr)],
+) -> String raise {
   let parts : Array[String] = Array::new()
   for pair in pairs {
     let lhs = expr_norm(pair.0)
@@ -139,9 +141,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2)" {
   }
   let (num, den) = @sympolys.rational_interpolate(pts, 2, "x", Domain::QQ)
   let ours = div_pair_to_string(num, den).trim().to_string()
-  let oracle = rational_interpolate(pts, 2, x="x")
-    .trim()
-    .to_string()
+  let oracle = rational_interpolate(pts, 2, x="x").trim().to_string()
   inspect(ours, content="60*x**2 + 60||x")
   assert_eq(ours, oracle)
 }
@@ -161,9 +161,7 @@ test "polyfuncs: rational_interpolate parity (degnum=3)" {
   }
   let (num, den) = @sympolys.rational_interpolate(pts, 3, "x", Domain::QQ)
   let ours = div_pair_to_string(num, den).trim().to_string()
-  let oracle = rational_interpolate(pts, 3, x="x")
-    .trim()
-    .to_string()
+  let oracle = rational_interpolate(pts, 3, x="x").trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -181,9 +179,7 @@ test "polyfuncs: rational_interpolate parity (degnum=5, larger data)" {
   }
   let (num, den) = @sympolys.rational_interpolate(pts, 5, "x", Domain::QQ)
   let ours = div_pair_to_string(num, den).trim().to_string()
-  let oracle = rational_interpolate(pts, 5, x="x")
-    .trim()
-    .to_string()
+  let oracle = rational_interpolate(pts, 5, x="x").trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -202,9 +198,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2, y)" {
   }
   let (num, den) = @sympolys.rational_interpolate(pts, 2, "y", Domain::QQ)
   let ours = div_pair_to_string(num, den).trim().to_string()
-  let oracle = rational_interpolate(pts, 2, x="y")
-    .trim()
-    .to_string()
+  let oracle = rational_interpolate(pts, 2, x="y").trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -215,15 +209,11 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
   let one = @symcore.int(1)
   let res0 = @sympolys.symmetrize(zero, gens=["x", "y", "z"])
   let ours0 = symmetrize_to_string(res0, false).trim().to_string()
-  let oracle0 = symmetrize(zero, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oracle0 = symmetrize(zero, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(ours0, oracle0)
   let res1 = @sympolys.symmetrize(one, gens=["x", "y", "z"])
   let ours1 = symmetrize_to_string(res1, false).trim().to_string()
-  let oracle1 = symmetrize(one, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oracle1 = symmetrize(one, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(ours1, oracle1)
   let resx = @sympolys.symmetrize(x, gens=["x", "y"])
   let oursx = symmetrize_to_string(resx, false).trim().to_string()
@@ -231,9 +221,7 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
   assert_eq(oursx, oraclex)
   let resx1 = @sympolys.symmetrize(x + one, gens=["x", "y", "z"])
   let oursx1 = symmetrize_to_string(resx1, false).trim().to_string()
-  let oraclex1 = symmetrize(x + one, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oraclex1 = symmetrize(x + one, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(oursx1, oraclex1)
   let res_xy = @sympolys.symmetrize(x, gens=["x", "y"])
   let ours_xy = symmetrize_to_string(res_xy, false).trim().to_string()
@@ -241,15 +229,11 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
   assert_eq(ours_xy, oracle_xy)
   let res_x1 = @sympolys.symmetrize(x + one, gens=["x", "y"])
   let ours_x1 = symmetrize_to_string(res_x1, false).trim().to_string()
-  let oracle_x1 = symmetrize(x + one, gens=["x", "y"])
-    .trim()
-    .to_string()
+  let oracle_x1 = symmetrize(x + one, gens=["x", "y"]).trim().to_string()
   assert_eq(ours_x1, oracle_x1)
   let res_xxyz = @sympolys.symmetrize(x, gens=["x", "y", "z"])
   let ours_xxyz = symmetrize_to_string(res_xxyz, false).trim().to_string()
-  let oracle_xxyz = symmetrize(x, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oracle_xxyz = symmetrize(x, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(ours_xxyz, oracle_xxyz)
   let res_x1xyz = @sympolys.symmetrize(x + one, gens=["x", "y", "z"])
   let ours_x1xyz = symmetrize_to_string(res_x1xyz, false).trim().to_string()
@@ -267,12 +251,9 @@ test "polyfuncs: symmetrize formal mapping u0/u1/u2" {
     "u0", "u1", "u2",
   ])
   let ours = symmetrize_to_string(res, true).trim().to_string()
-  let oracle = symmetrize(
-      expr,
-      gens=["x", "y", "z"],
-      formal=true,
-      symbols=["u0", "u1", "u2"],
-    )
+  let oracle = symmetrize(expr, gens=["x", "y", "z"], formal=true, symbols=[
+      "u0", "u1", "u2",
+    ])
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -285,18 +266,16 @@ test "polyfuncs: symmetrize parity higher-degree in 3 vars" {
   let expr = x ^ @symcore.int(2)
   let res = @sympolys.symmetrize(expr, gens=["x", "y", "z"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
-  let oracle = symmetrize(expr, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oracle = symmetrize(expr, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(ours, oracle)
-  let res_xy2 = @sympolys.symmetrize((x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), gens=[
-    "x", "y",
-  ])
+  let res_xy2 = @sympolys.symmetrize(
+    (x ^ @symcore.int(2)) + (y ^ @symcore.int(2)),
+    gens=["x", "y"],
+  )
   let ours_xy2 = symmetrize_to_string(res_xy2, false).trim().to_string()
-  let oracle_xy2 = symmetrize(
-      (x ^ @symcore.int(2)) + (y ^ @symcore.int(2)),
-      gens=["x", "y"],
-    )
+  let oracle_xy2 = symmetrize((x ^ @symcore.int(2)) + (y ^ @symcore.int(2)), gens=[
+      "x", "y",
+    ])
     .trim()
     .to_string()
   assert_eq(ours_xy2, oracle_xy2)
@@ -362,7 +341,9 @@ test "polyfuncs: symmetrize parity formal mapping" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
   let expr = x + y
-  let res = @sympolys.symmetrize(expr, gens=["x", "y"], formal=true, symbols=["u0", "u1"])
+  let res = @sympolys.symmetrize(expr, gens=["x", "y"], formal=true, symbols=[
+    "u0", "u1",
+  ])
   let ours = symmetrize_to_string(res, true).trim().to_string()
   let oracle = symmetrize(expr, gens=["x", "y"], formal=true, symbols=[
       "u0", "u1",
@@ -382,9 +363,7 @@ test "polyfuncs: symmetrize parity x^2 + y^2 + z^2" {
     (z ^ @symcore.int(2))
   let res = @sympolys.symmetrize(expr, gens=["x", "y", "z"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
-  let oracle = symmetrize(expr, gens=["x", "y", "z"])
-    .trim()
-    .to_string()
+  let oracle = symmetrize(expr, gens=["x", "y", "z"]).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -396,9 +375,7 @@ test "polyfuncs: symmetrize parity mixed ordering gens" {
   let expr = x + y + z
   let res = @sympolys.symmetrize(expr, gens=["z", "x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
-  let oracle = symmetrize(expr, gens=["z", "x", "y"])
-    .trim()
-    .to_string()
+  let oracle = symmetrize(expr, gens=["z", "x", "y"]).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -412,12 +389,9 @@ test "polyfuncs: symmetrize parity mixed ordering formal" {
     "t1", "t2", "t3",
   ])
   let ours = symmetrize_to_string(res, true).trim().to_string()
-  let oracle = symmetrize(
-      expr,
-      gens=["y", "z", "x"],
-      formal=true,
-      symbols=["t1", "t2", "t3"],
-    )
+  let oracle = symmetrize(expr, gens=["y", "z", "x"], formal=true, symbols=[
+      "t1", "t2", "t3",
+    ])
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -430,26 +404,18 @@ test "polyfuncs: symmetrize parity list cases" {
   let list1 = [@symcore.int(1), @symcore.int(2), @symcore.int(3)]
   let res1 = @sympolys.symmetrize_list(list1, gens=["x", "y"])
   let ours1 = symmetrize_list_to_string(res1, false).trim().to_string()
-  let oracle1 = symmetrize_list(list1, gens=["x", "y"])
-    .trim()
-    .to_string()
+  let oracle1 = symmetrize_list(list1, gens=["x", "y"]).trim().to_string()
   assert_eq(ours1, oracle1)
   let res1f = @sympolys.symmetrize_list(list1, gens=["x", "y"], formal=true)
   let ours1f = symmetrize_list_to_string(res1f, true).trim().to_string()
-  let oracle1f = symmetrize_list(
-      list1,
-      gens=["x", "y"],
-      formal=true,
-    )
+  let oracle1f = symmetrize_list(list1, gens=["x", "y"], formal=true)
     .trim()
     .to_string()
   assert_eq(ours1f, oracle1f)
   let list2 = [x + y, x - y]
   let res2 = @sympolys.symmetrize_list(list2, gens=["x", "y"])
   let ours2 = symmetrize_list_to_string(res2, false).trim().to_string()
-  let oracle2 = symmetrize_list(list2, gens=["x", "y"])
-    .trim()
-    .to_string()
+  let oracle2 = symmetrize_list(list2, gens=["x", "y"]).trim().to_string()
   assert_eq(ours2, oracle2)
 }
 
@@ -462,9 +428,7 @@ test "polyfuncs: horner parity univariate" {
     @symcore.int(6) * x +
     @symcore.int(5)
   let ours = expr_norm(@sympolys.horner(expr, gens=["x"])).trim().to_string()
-  let oracle = sympy_normalize(horner(expr, gens=["x"]))
-    .trim()
-    .to_string()
+  let oracle = sympy_normalize(horner(expr, gens=["x"])).trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -476,7 +440,9 @@ test "polyfuncs: horner parity multivariate wrt=y" {
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
     x * y
-  let ours = @symprint.to_string(@sympolys.horner(expr, gens=["x", "y"], wrt="y"))
+  let ours = @symprint.to_string(
+    @sympolys.horner(expr, gens=["x", "y"], wrt="y"),
+  )
   let oracle = horner(expr, gens=["x", "y"], wrt="y")
   assert_true(expr_equal(ours, oracle))
 }
@@ -505,9 +471,7 @@ test "polyfuncs: horner parity multivariate wrt" {
   let ours = expr_norm(@sympolys.horner(expr, gens=["x", "y"], wrt="x"))
     .trim()
     .to_string()
-  let oracle = sympy_normalize(
-      horner(expr, gens=["x", "y"], wrt="x"),
-    )
+  let oracle = sympy_normalize(horner(expr, gens=["x", "y"], wrt="x"))
     .trim()
     .to_string()
   assert_eq(ours, oracle)
@@ -520,9 +484,7 @@ test "polyfuncs: viete parity quadratic" {
   let ours = viete_to_string(@sympolys.viete(expr, roots=["r1", "r2"], gen="x"))
     .trim()
     .to_string()
-  let oracle = viete(expr, roots=["r1", "r2"], gen="x")
-    .trim()
-    .to_string()
+  let oracle = viete(expr, roots=["r1", "r2"], gen="x").trim().to_string()
   assert_eq(ours, oracle)
 }
 
@@ -533,12 +495,12 @@ test "polyfuncs: viete parity cubic" {
     @symcore.int(2) * (x ^ @symcore.int(2)) +
     @symcore.int(3) * x +
     @symcore.int(4)
-  let ours = viete_to_string(@sympolys.viete(expr, roots=["r1", "r2", "r3"], gen="x"))
+  let ours = viete_to_string(
+      @sympolys.viete(expr, roots=["r1", "r2", "r3"], gen="x"),
+    )
     .trim()
     .to_string()
-  let oracle = viete(expr, roots=["r1", "r2", "r3"], gen="x")
-    .trim()
-    .to_string()
+  let oracle = viete(expr, roots=["r1", "r2", "r3"], gen="x").trim().to_string()
   assert_eq(ours, oracle)
 }
 

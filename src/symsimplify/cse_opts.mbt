@@ -11,10 +11,7 @@ pub fn sub_post(expr : Expr) -> Expr {
 }
 
 ///|
-fn rewrite_bottom_up_cseopts(
-  expr : Expr,
-  rule : (Expr) -> Expr,
-) -> Expr {
+fn rewrite_bottom_up_cseopts(expr : Expr, rule : (Expr) -> Expr) -> Expr {
   let rewritten = @symcore.map_children(expr, child => {
     rewrite_bottom_up_cseopts(child, rule)
   })
@@ -28,15 +25,9 @@ fn rewrite_sub_pre(expr : Expr) -> Expr {
       let (sa, pa) = split_sign(a)
       let (sb, pb) = split_sign(b)
       if sa < 0 && sb > 0 {
-        @symcore.mul([
-          int(-1),
-          @symcore.add([pa, @symcore.mul([int(-1), pb])]),
-        ])
+        @symcore.mul([int(-1), @symcore.add([pa, @symcore.mul([int(-1), pb])])])
       } else if sb < 0 && sa > 0 {
-        @symcore.mul([
-          int(-1),
-          @symcore.add([pb, @symcore.mul([int(-1), pa])]),
-        ])
+        @symcore.mul([int(-1), @symcore.add([pb, @symcore.mul([int(-1), pa])])])
       } else {
         expr
       }
@@ -57,10 +48,8 @@ fn rewrite_sub_post(expr : Expr) -> Expr {
       for arg in args {
         match arg {
           Expr::Number(n) if n.is_one() => ()
-          Expr::Number(n) if n.compare(
-              @symnum.BigRational::from_int(-1),
-            ) ==
-            0 => neg_count = neg_count + 1
+          Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+            neg_count = neg_count + 1
           _ => filtered.push(arg)
         }
       }

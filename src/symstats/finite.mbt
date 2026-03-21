@@ -41,7 +41,8 @@ fn normalize_atoms(
   let normalized : Array[(@symcore.Expr, @symnum.BigRational)] = Array::new()
   for item in out {
     let (value, p) = item
-    normalized.push((value, p.div_r(total)))
+    let prob = p.div_r(total) catch { _ => return out }
+    normalized.push((value, prob))
   }
   normalized
 }

@@ -14,11 +14,7 @@ test "combinatorics subsets parity" {
   )
   let next = s.next_binary().subset()
   let prev = s.prev_binary().subset()
-  assert_oracle(
-    try? subset_next_prev_equiv(
-      subset, superset, next, prev,
-    ),
-  )
+  assert_oracle(try? subset_next_prev_equiv(subset, superset, next, prev))
   let ks = ksubsets([1, 2, 3, 4], 2)
   assert_oracle(try? ksubsets_equiv([1, 2, 3, 4], 2, ks))
 }

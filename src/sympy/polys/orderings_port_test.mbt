@@ -20,7 +20,10 @@ test "orderings: lex/grlex/grevlex keys and comparisons" {
   let g = [1, 2, 2]
 
   // lex
-  inspect(cmp_to_ord(@sympolys.compare_exps_lex(a, b)).to_string(), content="-1")
+  inspect(
+    cmp_to_ord(@sympolys.compare_exps_lex(a, b)).to_string(),
+    content="-1",
+  )
   inspect(cmp_to_ord(@sympolys.compare_exps_lex(b, a)).to_string(), content="1")
   inspect(cmp_to_ord(@sympolys.compare_exps_lex(a, a)).to_string(), content="0")
 

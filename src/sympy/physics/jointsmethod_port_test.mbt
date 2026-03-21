@@ -35,18 +35,18 @@ test "physics.mechanics parity jointsmethod simple pendulum" {
   let jm = joints_method(ceiling.as_bodylike(), [joint.as_joint()])
   ignore(jm.form_eoms(use_lagrange=true))
   assert_eq(jointsmethod_matrix_entry_summary(jm.q()), "[[q(t)]]")
-  assert_eq(jointsmethod_matrix_entry_summary(jm.u()), "[[Derivative(q(t), t)]]")
+  assert_eq(
+    jointsmethod_matrix_entry_summary(jm.u()),
+    "[[Derivative(q(t), t)]]",
+  )
   assert_true(
     mechanics_expr_equal(
-        @symprint.to_string(jm.mass_matrix().get(0, 0)),
-        "l**2*m",
-      )
+      @symprint.to_string(jm.mass_matrix().get(0, 0)),
+      "l**2*m",
+    ),
   )
   let rhs = jm.rhs()
   assert_true(
-    mechanics_expr_equal(
-        @symprint.to_string(rhs.get(1, 0)),
-        "-g*sin(q(t))/l",
-      )
+    mechanics_expr_equal(@symprint.to_string(rhs.get(1, 0)), "-g*sin(q(t))/l"),
   )
 }

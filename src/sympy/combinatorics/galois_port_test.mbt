@@ -7,10 +7,7 @@ test "combinatorics galois group constructors parity" {
     ),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "M20",
-      array_forms(m20().elements()),
-    ),
+    try? galois_group_elements_equiv("M20", array_forms(m20().elements())),
   )
   assert_oracle(
     try? galois_group_elements_equiv(
@@ -25,64 +22,34 @@ test "combinatorics galois group constructors parity" {
     ),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "S4m",
-      array_forms(s4m().elements()),
-    ),
+    try? galois_group_elements_equiv("S4m", array_forms(s4m().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "S4p",
-      array_forms(s4p().elements()),
-    ),
+    try? galois_group_elements_equiv("S4p", array_forms(s4p().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "A4xC2",
-      array_forms(a4xc2().elements()),
-    ),
+    try? galois_group_elements_equiv("A4xC2", array_forms(a4xc2().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "S4xC2",
-      array_forms(s4xc2().elements()),
-    ),
+    try? galois_group_elements_equiv("S4xC2", array_forms(s4xc2().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "G18",
-      array_forms(g18().elements()),
-    ),
+    try? galois_group_elements_equiv("G18", array_forms(g18().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "G36m",
-      array_forms(g36m().elements()),
-    ),
+    try? galois_group_elements_equiv("G36m", array_forms(g36m().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "G36p",
-      array_forms(g36p().elements()),
-    ),
+    try? galois_group_elements_equiv("G36p", array_forms(g36p().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "G72",
-      array_forms(g72().elements()),
-    ),
+    try? galois_group_elements_equiv("G72", array_forms(g72().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "PSL2F5",
-      array_forms(psl2f5().elements()),
-    ),
+    try? galois_group_elements_equiv("PSL2F5", array_forms(psl2f5().elements())),
   )
   assert_oracle(
-    try? galois_group_elements_equiv(
-      "PGL2F5",
-      array_forms(pgl2f5().elements()),
-    ),
+    try? galois_group_elements_equiv("PGL2F5", array_forms(pgl2f5().elements())),
   )
 }
 

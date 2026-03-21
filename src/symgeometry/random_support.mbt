@@ -14,7 +14,15 @@ fn geo_random_symmetric_rational(
 ) -> Expr {
   let denom = if scale <= 0 { 1_000_000 } else { scale }
   let numer = rng.int(limit=2 * denom + 1) - denom
-  @symcore.number(
-    @symnum.BigRational::from_int(numer).div_r(@symnum.BigRational::from_int(denom)),
-  )
+  match
+    (
+      try? @symcore.rational_from_ints(numer, denom) :
+      Result[Expr, @symnum.RationalError]) {
+    Ok(value) => value
+    Err(_) =>
+      @symcore.mul([
+        @symcore.int(numer),
+        @symcore.pow(@symcore.int(denom), @symcore.int(-1)),
+      ])
+  }
 }

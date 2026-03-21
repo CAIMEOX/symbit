@@ -5,9 +5,9 @@ test "geometry.point parity repr and distance" {
   assert_eq(p.repr(), geometry_eval_repr("Point2D(x, 2)"))
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(p.distance(q)),
-        "Point2D(x, 2).distance(Point2D(1, 5))",
-      )
+      @symprint.to_string(p.distance(q)),
+      "Point2D(x, 2).distance(Point2D(1, 5))",
+    ),
   )
 }
 
@@ -21,15 +21,15 @@ test "geometry.point parity translate rotate scale" {
   let rotated = p.rotate(@symcore.symbol("pi"))
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(rotated.x()),
-        "Point2D(2, 1).rotate(pi).x",
-      )
+      @symprint.to_string(rotated.x()),
+      "Point2D(2, 1).rotate(pi).x",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(rotated.y()),
-        "Point2D(2, 1).rotate(pi).y",
-      )
+      @symprint.to_string(rotated.y()),
+      "Point2D(2, 1).rotate(pi).y",
+    ),
   )
   assert_eq(
     p.scale([@symcore.int(3), @symcore.int(2)]).repr(),
@@ -41,10 +41,7 @@ test "geometry.point parity translate rotate scale" {
 test "geometry.point parity projection and norm helpers" {
   let p = point2d(@symcore.int(1), @symcore.int(2))
   let q = point2d(@symcore.int(2), @symcore.int(5))
-  assert_eq(
-    p.origin().repr(),
-    geometry_eval_repr("Point2D(1, 2).origin"),
-  )
+  assert_eq(p.origin().repr(), geometry_eval_repr("Point2D(1, 2).origin"))
   assert_eq(
     p.orthogonal_direction().repr(),
     geometry_eval_repr("Point2D(1, 2).orthogonal_direction"),
@@ -52,44 +49,44 @@ test "geometry.point parity projection and norm helpers" {
   let projected = p.project(q)
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(projected.x()),
-        "Point.project(Point2D(1, 2), Point2D(2, 5)).x",
-      )
+      geometry_py_expr_text(projected.x()),
+      "Point.project(Point2D(1, 2), Point2D(2, 5)).x",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(projected.y()),
-        "Point.project(Point2D(1, 2), Point2D(2, 5)).y",
-      )
+      geometry_py_expr_text(projected.y()),
+      "Point.project(Point2D(1, 2), Point2D(2, 5)).y",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(
-          p.taxicab_distance(point2d(@symcore.int(3), @symcore.int(3))),
-        ),
-        "Point2D(1, 2).taxicab_distance(Point2D(3, 3))",
-      )
+      geometry_py_expr_text(
+        p.taxicab_distance(point2d(@symcore.int(3), @symcore.int(3))),
+      ),
+      "Point2D(1, 2).taxicab_distance(Point2D(3, 3))",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(
-          p.canberra_distance(point2d(@symcore.int(3), @symcore.int(3))),
-        ),
-        "Point2D(1, 2).canberra_distance(Point2D(3, 3))",
-      )
+      geometry_py_expr_text(
+        p.canberra_distance(point2d(@symcore.int(3), @symcore.int(3))),
+      ),
+      "Point2D(1, 2).canberra_distance(Point2D(3, 3))",
+    ),
   )
   let unit_pt = point2d(@symcore.int(3), @symcore.int(4)).unit()
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(unit_pt.x()),
-        "Point2D(3, 4).unit.x",
-      )
+      geometry_py_expr_text(unit_pt.x()),
+      "Point2D(3, 4).unit.x",
+    ),
   )
   assert_true(
     geometry_expr_equal(
-        geometry_py_expr_text(unit_pt.y()),
-        "Point2D(3, 4).unit.y",
-      )
+      geometry_py_expr_text(unit_pt.y()),
+      "Point2D(3, 4).unit.y",
+    ),
   )
   assert_eq(
     p.is_nonzero().to_string().to_lower(),
@@ -110,9 +107,7 @@ test "geometry.point parity equals intersection and cyclic helpers" {
     .is_scalar_multiple(point2d(@symcore.int(2), @symcore.int(2)))
     .to_string()
     .to_lower(),
-    geometry_eval_str(
-      "Point2D(1, 1).is_scalar_multiple(Point2D(2, 2))",
-    ).to_lower(),
+    geometry_eval_str("Point2D(1, 1).is_scalar_multiple(Point2D(2, 2))").to_lower(),
   )
   assert_eq(
     point2d(@symcore.int(1), @symcore.int(0))

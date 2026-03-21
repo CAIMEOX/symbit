@@ -155,8 +155,7 @@ pub fn ObstacleSetPathway::length(
   let mut total = int(0)
   for i in 0..<(self.attachments_.length() - 1) {
     total = mech_simplify_expr(
-      total +
-      point_pair_length(self.attachments_[i], self.attachments_[i + 1]),
+      total + point_pair_length(self.attachments_[i], self.attachments_[i + 1]),
     )
   }
   total
@@ -193,9 +192,7 @@ pub fn ObstacleSetPathway::to_loads(
     loads.push(
       force(p0, relative_position.truediv(length).scale(force_value).neg()),
     )
-    loads.push(
-      force(p1, relative_position.truediv(length).scale(force_value)),
-    )
+    loads.push(force(p1, relative_position.truediv(length).scale(force_value)))
   }
   loads
 }
@@ -241,9 +238,7 @@ pub fn WrappingPathway::geometry(
 }
 
 ///|
-pub fn WrappingPathway::length(
-  self : WrappingPathway,
-) -> Expr raise {
+pub fn WrappingPathway::length(self : WrappingPathway) -> Expr raise {
   self.geometry_.geodesic_length(self.attachment_1_, self.attachment_2_)
 }
 
@@ -288,9 +283,7 @@ pub fn WrappingPathway::as_pathway(self : WrappingPathway) -> PathwayLike {
 }
 
 ///|
-pub fn PathwayLike::length(
-  self : PathwayLike,
-) -> Expr raise {
+pub fn PathwayLike::length(self : PathwayLike) -> Expr raise {
   match self {
     PathwayLike::Linear(value) => value.length()
     PathwayLike::Obstacle(value) => value.length()
@@ -299,9 +292,7 @@ pub fn PathwayLike::length(
 }
 
 ///|
-pub fn PathwayLike::extension_velocity(
-  self : PathwayLike,
-) -> Expr raise {
+pub fn PathwayLike::extension_velocity(self : PathwayLike) -> Expr raise {
   match self {
     PathwayLike::Linear(value) => value.extension_velocity()
     PathwayLike::Obstacle(value) => value.extension_velocity()

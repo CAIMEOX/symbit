@@ -6,17 +6,15 @@ test "geometry.plane parity repr distance and line intersection" {
   )
   assert_eq(
     pl.repr(),
-    geometry_eval_repr(
-      "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1))",
-    ),
+    geometry_eval_repr("Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1))"),
   )
   assert_true(
     geometry_expr_equal(
-        @symprint.to_string(
-          pl.distance(point3d(@symcore.int(0), @symcore.int(0), @symcore.int(4))),
-        ),
-        "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1)).distance(Point3D(0,0,4))",
-      )
+      @symprint.to_string(
+        pl.distance(point3d(@symcore.int(0), @symcore.int(0), @symcore.int(4))),
+      ),
+      "Plane(Point3D(0, 0, 1), normal_vector=(0, 0, 1)).distance(Point3D(0,0,4))",
+    ),
   )
   let line_obj = line(
     point3d(@symcore.int(0), @symcore.int(0), @symcore.int(0)),
@@ -162,9 +160,7 @@ test "geometry.plane parity remaining public helpers" {
   )
   assert_eq(
     a.p1().repr(),
-    geometry_eval_repr(
-      "Plane(Point3D(5, 0, 0), normal_vector=(1, -1, 1)).p1",
-    ),
+    geometry_eval_repr("Plane(Point3D(5, 0, 0), normal_vector=(1, -1, 1)).p1"),
   )
   assert_eq(
     plane_are_concurrent([a, b]).to_string().to_lower(),

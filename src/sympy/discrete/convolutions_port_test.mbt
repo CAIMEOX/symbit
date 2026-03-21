@@ -139,8 +139,5 @@ test "discrete convolution_int parity" {
   let a = [1, 2, 3]
   let b = [4, 5, 6]
   let ours = convolution_int(a, b)
-  assert_oracle_named(
-    "convolution_int",
-    try? convolution_int_equiv(a, b, ours),
-  )
+  assert_oracle_named("convolution_int", try? convolution_int_equiv(a, b, ours))
 }

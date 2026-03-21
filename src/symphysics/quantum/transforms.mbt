@@ -160,9 +160,7 @@ pub fn quantum_canonical_mul(
         for idx in 0..<(transformed.length() - 1) {
           result.push(transformed[idx])
         }
-        let rebuilt : Array[Expr] = [
-          transformed[transformed.length() - 1],
-        ]
+        let rebuilt : Array[Expr] = [transformed[transformed.length() - 1]]
         for idx in 2..<work.length() {
           rebuilt.push(work[idx])
         }
@@ -208,8 +206,7 @@ pub fn quantum_canonical_pow(
       raise @symphysics.PhysicsError::ValueError(
         "Negative powers of fermion operators are undefined",
       )
-    Some(power) if base is Expr::Function("FermionOp", _) && power > 1 =>
-      int(0)
+    Some(power) if base is Expr::Function("FermionOp", _) && power > 1 => int(0)
     Some(power) =>
       match gate_pow_simplify(base, power) {
         Some(simplified) if simplified != @symcore.raw_pow(base, exp) =>

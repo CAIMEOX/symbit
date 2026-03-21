@@ -19,21 +19,13 @@ test "domain_utils: normalize_mod parity over GF(p)" {
 test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
   let r = @symnum.BigRational::new(BigInt::from_int(5), BigInt::from_int(7))
   let got_q = @sympolys.normalize_mod(r, Domain::QQ).to_string()
-  let oracle_q = poly_expr(
-      expr_rat_du(5, 7),
-      gens=["x"],
-      domain="QQ",
-    )
+  let oracle_q = poly_expr(expr_rat_du(5, 7), gens=["x"], domain="QQ")
     .trim()
     .to_string()
   assert_eq(got_q, oracle_q)
   let r2 = @symnum.BigRational::new(BigInt::from_int(4), BigInt::from_int(1))
   let got_z = @sympolys.normalize_mod(r2, Domain::ZZ).to_string()
-  let oracle_z = poly_expr(
-      @symcore.int(4),
-      gens=["x"],
-      domain="ZZ",
-    )
+  let oracle_z = poly_expr(@symcore.int(4), gens=["x"], domain="ZZ")
     .trim()
     .to_string()
   assert_eq(got_z, oracle_z)
@@ -52,9 +44,7 @@ test "domain_utils: GF/QQ/ZZ coercions align with SymPy" {
   assert_eq(gf_ours, gf_oracle)
   let qq_poly = PolyBuilder::new(["x"], Domain::QQ).from_expr(expr)
   let qq_ours = sympy_normalize(qq_poly.to_string()).trim().to_string()
-  let qq_oracle = poly_expr(expr, gens=["x"], domain="QQ")
-    .trim()
-    .to_string()
+  let qq_oracle = poly_expr(expr, gens=["x"], domain="QQ").trim().to_string()
   assert_eq(qq_ours, qq_oracle)
   let zz_poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),

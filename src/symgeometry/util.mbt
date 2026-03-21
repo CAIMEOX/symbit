@@ -1,9 +1,6 @@
 ///|
 /// Find the unique symbol named `x` inside `equation`.
-pub fn find(
-  x : String,
-  equation : Expr,
-) -> Expr raise GeometryError {
+pub fn find(x : String, equation : Expr) -> Expr raise GeometryError {
   let seen : Map[String, Bool] = {}
   geo_collect_symbols(equation, seen)
   let matches : Array[String] = []
@@ -409,7 +406,11 @@ pub fn are_coplanar(items : Array[GeometryEntity]) -> Bool raise GeometryError {
           return false
         }
       GeometryEntity::Ellipse(ellipse_obj) =>
-        points.push(ellipse_obj.center().with_dim(3) catch { _ => return false })
+        points.push(
+          ellipse_obj.center().with_dim(3) catch {
+            _ => return false
+          },
+        )
       GeometryEntity::Circle(circle_obj) =>
         points.push(circle_obj.center().with_dim(3) catch { _ => return false })
       GeometryEntity::Polygon(polygon_obj) =>
@@ -427,7 +428,11 @@ pub fn are_coplanar(items : Array[GeometryEntity]) -> Bool raise GeometryError {
           points.push(pt.with_dim(3) catch { _ => return false })
         }
       GeometryEntity::Parabola(parabola_obj) =>
-        points.push(parabola_obj.focus().with_dim(3) catch { _ => return false })
+        points.push(
+          parabola_obj.focus().with_dim(3) catch {
+            _ => return false
+          },
+        )
       GeometryEntity::Curve(curve_obj) =>
         points.push(
           (curve_obj.arbitrary_point() catch { _ => return false }).with_dim(3) catch {
@@ -526,7 +531,9 @@ pub fn intersection(
       GeometryEntity::RegularPolygon(poly_obj),
       GeometryEntity::Point(point_obj),
     ) =>
-      if (regular_polygon_as_polygon(poly_obj) catch { _ => return [] }).contains_point(point_obj) {
+      if (regular_polygon_as_polygon(poly_obj) catch { _ => return [] }).contains_point(
+          point_obj,
+        ) {
         [geometry_point(point_obj.with_dim(2))]
       } else {
         []

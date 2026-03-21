@@ -5,11 +5,7 @@ using @symcore {type Expr, int, symbol}
 /// Series expansion entry point (limited to polynomial/rational, x0=0).
 
 ///|
-fn poly_to_expr(
-  poly : Array[Expr],
-  x : Expr,
-  n : Int,
-) -> Expr {
+fn poly_to_expr(poly : Array[Expr], x : Expr, n : Int) -> Expr {
   let terms : Array[Expr] = Array::new()
   let limit = if n < poly.length() { n } else { poly.length() }
   for k in 0..<limit {
@@ -47,22 +43,13 @@ fn split_num_den(expr : Expr) -> (Expr, Expr) {
           _ => num.push(arg)
         }
       }
-      let num_expr = if num.is_empty() {
-        int(1)
-      } else {
-        @symcore.mul(num)
-      }
-      let den_expr = if den.is_empty() {
-        int(1)
-      } else {
-        @symcore.mul(den)
-      }
+      let num_expr = if num.is_empty() { int(1) } else { @symcore.mul(num) }
+      let den_expr = if den.is_empty() { int(1) } else { @symcore.mul(den) }
       (num_expr, den_expr)
     }
     Expr::Pow(base, exp) =>
       match int_exp(exp) {
-        Some(e) if e < 0 =>
-          (int(1), @symcore.pow(base, int(-e)))
+        Some(e) if e < 0 => (int(1), @symcore.pow(base, int(-e)))
         _ => (expr, int(1))
       }
     _ => (expr, int(1))
@@ -70,11 +57,7 @@ fn split_num_den(expr : Expr) -> (Expr, Expr) {
 }
 
 ///|
-fn series_rational(
-  expr : Expr,
-  x : Expr,
-  n : Int,
-) -> (Expr, Bool)? {
+fn series_rational(expr : Expr, x : Expr, n : Int) -> (Expr, Bool)? {
   let (num_expr, den_expr) = split_num_den(expr)
   let num_poly = poly_from_expr(num_expr, x)
   let den_poly = poly_from_expr(den_expr, x)
@@ -198,11 +181,7 @@ fn poly_truncate(poly : Array[Expr], n : Int) -> Array[Expr] {
 }
 
 ///|
-fn poly_mul_trunc(
-  a : Array[Expr],
-  b : Array[Expr],
-  n : Int,
-) -> Array[Expr] {
+fn poly_mul_trunc(a : Array[Expr], b : Array[Expr], n : Int) -> Array[Expr] {
   if a.is_empty() || b.is_empty() {
     return []
   }
@@ -223,11 +202,7 @@ fn poly_mul_trunc(
 }
 
 ///|
-fn poly_pow_trunc(
-  base : Array[Expr],
-  exp : Int,
-  n : Int,
-) -> Array[Expr] {
+fn poly_pow_trunc(base : Array[Expr], exp : Int, n : Int) -> Array[Expr] {
   if exp == 0 {
     return [one_expr()]
   }
@@ -259,14 +234,14 @@ fn factorial_bigint(n : Int) -> BigInt {
 
 ///|
 fn safe_rational(num : BigInt, den : BigInt) -> @symnum.BigRational {
-  try @symnum.BigRational::new(num, den) catch {
+  @symnum.BigRational::new(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
 }
 
 ///|
 fn rational_expr(num : Int, den : Int) -> Expr {
-  try @symcore.rational_from_ints(num, den) catch {
+  @symcore.rational_from_ints(num, den) catch {
     _ => @symcore.function("Rational", [int(num), int(den)])
   }
 }
@@ -289,11 +264,7 @@ fn series_substitute_symbol(
 }
 
 ///|
-fn taylor_series_expr(
-  expr : Expr,
-  x : Expr,
-  n : Int,
-) -> Expr {
+fn taylor_series_expr(expr : Expr, x : Expr, n : Int) -> Expr {
   let x_name = match x {
     Expr::Symbol(name) => name
     _ => return expr
@@ -301,11 +272,7 @@ fn taylor_series_expr(
   let mut current = expr
   let terms : Array[Expr] = Array::new()
   for k in 0..<n {
-    let value_at_zero = series_substitute_symbol(
-      current,
-      x_name,
-      int(0),
-    )
+    let value_at_zero = series_substitute_symbol(current, x_name, int(0))
     if !is_zero_expr(value_at_zero) {
       let coeff = expr_mul(value_at_zero, inv_factorial_expr(k))
       let term = if k == 0 {
@@ -497,7 +464,9 @@ fn binomial_coeff(alpha : @symnum.BigRational, k : Int) -> @symnum.BigRational {
   while i < k {
     let shift = alpha.add_r(@symnum.BigRational::from_int(-i))
     coeff = coeff.mul_r(shift)
-    coeff = coeff.div_r(@symnum.BigRational::from_int(i + 1))
+    coeff = coeff.mul_r(
+      safe_rational(BigInt::from_int(1), BigInt::from_int(i + 1)),
+    )
     i = i + 1
   }
   coeff
@@ -550,9 +519,7 @@ fn series_atan_zero(u : Array[Expr], n : Int) -> Array[Expr] {
 }
 
 ///|
-fn split_const(
-  poly : Array[Expr],
-) -> (Expr, Array[Expr]) {
+fn split_const(poly : Array[Expr]) -> (Expr, Array[Expr]) {
   if poly.is_empty() {
     return (zero_expr(), [])
   }
@@ -563,10 +530,7 @@ fn split_const(
 }
 
 ///|
-fn series_log_one_plus(
-  v : Array[Expr],
-  n : Int,
-) -> Array[Expr] {
+fn series_log_one_plus(v : Array[Expr], n : Int) -> Array[Expr] {
   let mut out : Array[Expr] = []
   let mut term = v
   let mut k = 1
@@ -581,11 +545,7 @@ fn series_log_one_plus(
 }
 
 ///|
-fn replace_expr(
-  expr : Expr,
-  target : Expr,
-  replacement : Expr,
-) -> Expr {
+fn replace_expr(expr : Expr, target : Expr, replacement : Expr) -> Expr {
   if expr == target {
     return replacement
   }
@@ -609,10 +569,7 @@ fn replace_expr(
 }
 
 ///|
-fn simplify_tan_coeff(
-  expr : Expr,
-  tan_c0 : Expr,
-) -> Expr {
+fn simplify_tan_coeff(expr : Expr, tan_c0 : Expr) -> Expr {
   let sym = symbol("__tan_c0")
   let replaced = replace_expr(expr, tan_c0, sym)
   match poly_from_expr(replaced, sym) {
@@ -625,11 +582,7 @@ fn simplify_tan_coeff(
 }
 
 ///|
-fn series_poly(
-  expr : Expr,
-  x : Expr,
-  n : Int,
-) -> (Array[Expr], Bool)? {
+fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
   match expr {
     Expr::Number(_) => Some(([expr], false))
     Expr::Symbol(_) =>
@@ -844,9 +797,7 @@ fn series_poly(
           }
         "sqrt" => {
           let half = @symcore.number(
-            try
-              @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2))
-            catch {
+            @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)) catch {
               _ => @symnum.BigRational::zero()
             },
           )

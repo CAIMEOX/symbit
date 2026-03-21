@@ -95,10 +95,7 @@ pub fn quantum_expr_has_name(expr : Expr, name : String) -> Bool {
 }
 
 ///|
-pub fn quantum_expr_has_any_name(
-  expr : Expr,
-  names : Array[String],
-) -> Bool {
+pub fn quantum_expr_has_any_name(expr : Expr, names : Array[String]) -> Bool {
   match quantum_expr_name(expr) {
     Some(name) => names.contains(name)
     None => false

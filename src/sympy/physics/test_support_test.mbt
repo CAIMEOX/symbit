@@ -14,7 +14,7 @@ fn quantum_test_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  assert_true((expr_equal(ours, rhs)))
+  assert_true(expr_equal(ours, rhs))
 }
 
 ///|
@@ -52,7 +52,7 @@ fn quantum_test_assert_matrix_expr_equal(
   let flat = matrix_flat_strings(lhs)
   assert_eq(flat.length(), rhs.length())
   for idx in 0..<flat.length() {
-    assert_true((expr_equal(flat[idx], rhs[idx])))
+    assert_true(expr_equal(flat[idx], rhs[idx]))
   }
 }
 
@@ -72,9 +72,9 @@ fn quantum_measurements_to_expr_string(
 
 ///|
 fn quantum_test_frac(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
-  )
+  @symcore.rational_from_ints(num, den) catch {
+    _ => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
+  }
 }
 
 ///|

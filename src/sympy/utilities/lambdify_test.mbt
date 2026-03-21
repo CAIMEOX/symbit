@@ -32,6 +32,19 @@ test "implemented_function integrates with lambdify" {
 }
 
 ///|
+test "implemented_function errors propagate through lambdify" {
+  let f = implemented_function("boom", _ => {
+    raise @symutilities.UtilitiesError::InvalidArgument("boom")
+  })
+  let x = @symcore.symbol("x")
+  let fn0 = lambdify(["x"], f.apply([x]))
+  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([
+    3.0,
+  ])
+  inspect(result, content="Err(InvalidArgument(\"boom\"))")
+}
+
+///|
 test "lambdastr renders python-style lambda text" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")

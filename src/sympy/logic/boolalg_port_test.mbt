@@ -53,10 +53,7 @@ test "boolalg xor" {
 test "boolalg implies" {
   let x = bool_symbol("x")
   let y = bool_symbol("y")
-  assert_eq(
-    to_string(bool_implies(x, y)),
-    boolalg_str("Implies(x, y)"),
-  )
+  assert_eq(to_string(bool_implies(x, y)), boolalg_str("Implies(x, y)"))
   assert_eq(
     to_string(bool_implies(bool_true(), x)),
     boolalg_str("Implies(True, x)"),
@@ -74,22 +71,13 @@ test "boolalg equivalent" {
   let expr = bool_equivalent([y, x, x])
   assert_eq(to_string(expr), boolalg_str("Equivalent(y, x, x)"))
   let expr2 = bool_equivalent([bool_true(), x, y])
-  assert_eq(
-    to_string(expr2),
-    boolalg_str("Equivalent(True, x, y)"),
-  )
+  assert_eq(to_string(expr2), boolalg_str("Equivalent(True, x, y)"))
   let expr3 = bool_equivalent([bool_false(), x, y])
-  assert_eq(
-    to_string(expr3),
-    boolalg_str("Equivalent(False, x, y)"),
-  )
+  assert_eq(to_string(expr3), boolalg_str("Equivalent(False, x, y)"))
   let expr4 = bool_equivalent([x])
   assert_eq(to_string(expr4), boolalg_str("Equivalent(x)"))
   let expr5 = bool_equivalent([bool_true(), bool_false()])
-  assert_eq(
-    to_string(expr5),
-    boolalg_str("Equivalent(True, False)"),
-  )
+  assert_eq(to_string(expr5), boolalg_str("Equivalent(True, False)"))
 }
 
 ///|

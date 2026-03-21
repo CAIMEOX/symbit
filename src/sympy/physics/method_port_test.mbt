@@ -44,48 +44,48 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   assert_eq(method_expr_list_summary(klin.r()), oracle_kr)
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(klin.f_0()),
-        kprefix + "; klin.f_0",
-      )
+      method_matrix_rows(klin.f_0()),
+      kprefix + "; klin.f_0",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(klin.f_1()),
-        kprefix + "; klin.f_1",
-      )
+      method_matrix_rows(klin.f_1()),
+      kprefix + "; klin.f_1",
+    ),
   )
   let (km_m, km_a) = klin.linearize()
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(km_m),
-        kprefix + "; klin.linearize()[0]",
-      )
+      method_matrix_rows(km_m),
+      kprefix + "; klin.linearize()[0]",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(km_a),
-        kprefix + "; klin.linearize()[1]",
-      )
+      method_matrix_rows(km_a),
+      kprefix + "; klin.linearize()[1]",
+    ),
   )
   let (_, _, km_b) = klin.linearize_mab()
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(km_b),
-        kprefix + "; klin.linearize()[2]",
-      )
+      method_matrix_rows(km_b),
+      kprefix + "; klin.linearize()[2]",
+    ),
   )
   let (km_ae, km_be) = klin.linearize(a_and_b=true)
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(km_ae),
-        kprefix + "; klin.linearize(A_and_B=True)[0]",
-      )
+      method_matrix_rows(km_ae),
+      kprefix + "; klin.linearize(A_and_B=True)[0]",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(km_be),
-        kprefix + "; klin.linearize(A_and_B=True)[1]",
-      )
+      method_matrix_rows(km_be),
+      kprefix + "; klin.linearize(A_and_B=True)[1]",
+    ),
   )
 
   let lprefix = [
@@ -133,27 +133,27 @@ test "physics.mechanics parity linearizer from kane and lagrange" {
   let (lm_m, lm_a) = llin.linearize()
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(lm_m),
-        lprefix + "; llin.linearize()[0]",
-      )
+      method_matrix_rows(lm_m),
+      lprefix + "; llin.linearize()[0]",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(lm_a),
-        lprefix + "; llin.linearize()[1]",
-      )
+      method_matrix_rows(lm_a),
+      lprefix + "; llin.linearize()[1]",
+    ),
   )
   let (lm_ae, lm_be) = llin.linearize(a_and_b=true)
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(lm_ae),
-        lprefix + "; llin.linearize(A_and_B=True)[0]",
-      )
+      method_matrix_rows(lm_ae),
+      lprefix + "; llin.linearize(A_and_B=True)[0]",
+    ),
   )
   assert_true(
     mechanics_matrix_equal(
-        method_matrix_rows(lm_be),
-        lprefix + "; llin.linearize(A_and_B=True)[1]",
-      )
+      method_matrix_rows(lm_be),
+      lprefix + "; llin.linearize(A_and_B=True)[1]",
+    ),
   )
 }

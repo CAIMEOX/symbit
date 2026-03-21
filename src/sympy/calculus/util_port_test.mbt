@@ -25,12 +25,8 @@ fn util_assert_period(ours : Expr?, oracle_str : String) -> Unit raise {
       fail("periodicity mismatch")
     }
   } else {
-    let oracle_norm : Result[String, Error] = try? sympy_normalize(
-      oracle_str,
-    )
-    let ours_norm : Result[String, Error] = try? sympy_normalize(
-      ours_str,
-    )
+    let oracle_norm : Result[String, Error] = try? sympy_normalize(oracle_str)
+    let ours_norm : Result[String, Error] = try? sympy_normalize(ours_str)
     match (ours_norm, oracle_norm) {
       (Ok(a), Ok(b)) => {
         guard a == b else {
@@ -50,7 +46,7 @@ fn util_oracle_periodicity(
   sym : Expr,
   label : String,
 ) -> String raise {
-  try periodicity_str(expr, sym) catch {
+  periodicity_str(expr, sym) catch {
     err => fail("oracle periodicity \{label} error: \{err}")
   }
 }

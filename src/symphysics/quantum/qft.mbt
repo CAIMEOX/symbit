@@ -28,8 +28,7 @@ pub fn rk_gate(target : Int, k : Int) -> Expr {
     1 => z_gate(target).as_expr()
     2 => phase_gate(target).as_expr()
     3 => t_gate(target).as_expr()
-    _ =>
-      @symcore.raw_function("RkGate", [int(target), int(k)])
+    _ => @symcore.raw_function("RkGate", [int(target), int(k)])
   }
 }
 
@@ -67,10 +66,7 @@ pub fn iqft(
 ///|
 pub fn FourierExpr::as_expr(self : FourierExpr) -> Expr {
   let name = if self.inverse { "IQFT" } else { "QFT" }
-  @symcore.raw_function(name, [
-    int(self.start),
-    int(self.finish),
-  ])
+  @symcore.raw_function(name, [int(self.start), int(self.finish)])
 }
 
 ///|
@@ -110,8 +106,9 @@ fn rk_from_expr(expr : Expr) -> RkExpr? {
 
 ///|
 fn qft_exact_rational(num : Int, den : Int) -> Expr {
-  let result : Result[Expr, @symnum.RationalError] = try?
-    @symcore.rational_from_ints(num, den)
+  let result : Result[Expr, @symnum.RationalError] = try? @symcore.rational_from_ints(
+    num, den,
+  )
   match result {
     Ok(value) => value
     Err(_) => int(num) * @symcore.raw_pow(int(den), int(-1))
@@ -120,13 +117,7 @@ fn qft_exact_rational(num : Int, den : Int) -> Expr {
 
 ///|
 fn rk_phase(k : Int) -> Expr {
-  let sign = if k > 0 {
-    int(1)
-  } else if k < 0 {
-    int(-1)
-  } else {
-    int(0)
-  }
+  let sign = if k > 0 { int(1) } else if k < 0 { int(-1) } else { int(0) }
   let two = int(2)
   let denom = @symcore.raw_pow(two, int(Int::abs(k)))
   let angle = sign *
@@ -176,9 +167,7 @@ fn qft_core_matrix(
   for row in 0..<size {
     let entries : Array[Expr] = []
     for col in 0..<size {
-      entries.push(
-        norm * @symcore.raw_pow(omega, int(row * col % size)),
-      )
+      entries.push(norm * @symcore.raw_pow(omega, int(row * col % size)))
     }
     rows.push(entries)
   }
@@ -307,10 +296,10 @@ pub fn qft_apply_operator_to_ket(
 ) -> Expr? raise @symphysics.PhysicsError {
   match (fourier_from_expr(op_expr), qubit_from_expr(ket_expr)) {
     (Some(_), Some(q)) => {
-        let matrix = match qft_represent(op_expr, q.nqubits()) {
-          Some(MatrixScalarValue::Matrix(matrix)) => matrix
-          _ => return None
-        }
+      let matrix = match qft_represent(op_expr, q.nqubits()) {
+        Some(MatrixScalarValue::Matrix(matrix)) => matrix
+        _ => return None
+      }
       let vec = qubit_to_matrix(ket_expr, nqubits=q.nqubits())
       Some(matrix_to_qubit(matrix.mul(vec)))
     }

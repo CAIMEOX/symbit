@@ -60,7 +60,9 @@ test "field_elem: from_int embeds into Frac(base)" {
 
 ///|
 fn fe_wb_rat(num : Int, den : Int) -> @symnum.BigRational {
-  @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den))
+  @symnum.BigRational::from_ints(num, den) catch {
+    _ => abort("whitebox test rational expects a nonzero denominator")
+  }
 }
 
 ///|
@@ -298,16 +300,19 @@ test "field_elem wb: remaining branch sweep" {
 
   assert_true(
     fe_is_negative(
-        FieldElem::CC(
-          @symnum.BigRational::from_int(-2),
-          @symnum.BigRational::zero(),
-        ),
-      )
+      FieldElem::CC(
+        @symnum.BigRational::from_int(-2),
+        @symnum.BigRational::zero(),
+      ),
+    ),
   )
   assert_true(
     fe_is_positive(
-        FieldElem::CC(@symnum.BigRational::from_int(3), @symnum.BigRational::zero()),
-      )
+      FieldElem::CC(
+        @symnum.BigRational::from_int(3),
+        @symnum.BigRational::zero(),
+      ),
+    ),
   )
   assert_true(!fe_is_negative(FieldElem::GFp(5, 4)))
   assert_true(!fe_is_positive(FieldElem::GFp(5, 4)))

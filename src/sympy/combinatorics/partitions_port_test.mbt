@@ -2,21 +2,12 @@
 test "combinatorics integer partitions parity" {
   let ip = IntegerPartition::new([6, 3, 3, 2, 1])
   assert_oracle(
-    try? integer_partition_conjugate_equiv(
-      ip.partition,
-      ip.conjugate(),
-    ),
+    try? integer_partition_conjugate_equiv(ip.partition, ip.conjugate()),
   )
   let ip2 = IntegerPartition::new([3, 1])
   let nxt = ip2.next_lex().partition
   let prv = ip2.prev_lex().partition
-  assert_oracle(
-    try? integer_partition_next_prev_equiv(
-      ip2.partition,
-      nxt,
-      prv,
-    ),
-  )
+  assert_oracle(try? integer_partition_next_prev_equiv(ip2.partition, nxt, prv))
 }
 
 ///|
@@ -31,7 +22,5 @@ test "combinatorics rgs parity" {
 test "combinatorics partition parity" {
   let blocks = [[1, 2], [3], [4, 5]]
   let p = Partition::new(blocks)
-  assert_oracle(
-    try? partition_rgs_equiv(blocks, p.rgs(), p.rank()),
-  )
+  assert_oracle(try? partition_rgs_equiv(blocks, p.rgs(), p.rank()))
 }

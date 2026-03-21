@@ -70,9 +70,7 @@ fn encode_wildcard(
 }
 
 ///|
-fn decode_wildcard(
-  expr : Expr,
-) -> (WildcardKind, String, Expr?)? {
+fn decode_wildcard(expr : Expr) -> (WildcardKind, String, Expr?)? {
   match expr {
     Expr::Function(name, args) => {
       let kind = match name {
@@ -94,26 +92,17 @@ fn decode_wildcard(
 }
 
 ///|
-pub fn wild_dot(
-  variable_name : String,
-  optional? : Expr? = None,
-) -> Expr {
+pub fn wild_dot(variable_name : String, optional? : Expr? = None) -> Expr {
   encode_wildcard(WildcardKind::Dot, variable_name, optional)
 }
 
 ///|
-pub fn wild_plus(
-  variable_name : String,
-  optional? : Expr? = None,
-) -> Expr {
+pub fn wild_plus(variable_name : String, optional? : Expr? = None) -> Expr {
   encode_wildcard(WildcardKind::Plus, variable_name, optional)
 }
 
 ///|
-pub fn wild_star(
-  variable_name : String,
-  optional? : Expr? = None,
-) -> Expr {
+pub fn wild_star(variable_name : String, optional? : Expr? = None) -> Expr {
   encode_wildcard(WildcardKind::Star, variable_name, optional)
 }
 
@@ -127,12 +116,9 @@ pub fn get_srepr(expr : Expr) -> String {
       }
     None =>
       match expr {
-        Expr::Number(_) | Expr::Symbol(_) =>
-          @symprint.to_string(expr)
-        Expr::Add(args) =>
-          "Add(" + args.map(get_srepr).join(", ") + ")"
-        Expr::Mul(args) =>
-          "Mul(" + args.map(get_srepr).join(", ") + ")"
+        Expr::Number(_) | Expr::Symbol(_) => @symprint.to_string(expr)
+        Expr::Add(args) => "Add(" + args.map(get_srepr).join(", ") + ")"
+        Expr::Mul(args) => "Mul(" + args.map(get_srepr).join(", ") + ")"
         Expr::Pow(base, exp) =>
           "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
         Expr::Function(name, args) =>
@@ -241,18 +227,14 @@ fn match_expr(
           } else {
             None
           }
-        (Expr::Add(pa), Expr::Add(ea))
-        | (Expr::Mul(pa), Expr::Mul(ea)) =>
+        (Expr::Add(pa), Expr::Add(ea)) | (Expr::Mul(pa), Expr::Mul(ea)) =>
           match_expr_list(pa, ea, 0, 0, bindings)
         (Expr::Pow(pb, pe), Expr::Pow(eb, ee)) =>
           match match_expr(pb, eb, bindings) {
             Some(next) => match_expr(pe, ee, next)
             None => None
           }
-        (
-          Expr::Function(pname, pargs),
-          Expr::Function(ename, eargs),
-        ) =>
+        (Expr::Function(pname, pargs), Expr::Function(ename, eargs)) =>
           if pname == ename {
             match_expr_list(pargs, eargs, 0, 0, bindings)
           } else {
@@ -365,10 +347,7 @@ fn substitute_expr_list(
 }
 
 ///|
-fn substitute_expr(
-  expr : Expr,
-  bindings : Map[String, WildBinding],
-) -> Expr {
+fn substitute_expr(expr : Expr, bindings : Map[String, WildBinding]) -> Expr {
   match resolve_binding(expr, bindings) {
     Some(WildBinding::Single(value)) => value
     Some(WildBinding::Sequence(values)) =>

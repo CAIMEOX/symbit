@@ -628,11 +628,7 @@ fn distinct_degree_decompose(
 ) -> Array[Poly] raise PolyError {
   let res : Array[Poly] = Array::new()
   let mut f = make_monic(poly)
-  let x_poly = Poly::from_expr(
-    symbol(poly.gens[0]),
-    poly.gens,
-    poly.domain,
-  )
+  let x_poly = Poly::from_expr(symbol(poly.gens[0]), poly.gens, poly.domain)
   let mut pow = x_poly
   let mut i = 1
   while 2 * i <= f.degree(0) {
@@ -664,11 +660,7 @@ fn equal_degree_factor(
   let res : Array[Poly] = Array::new()
   let stack : Array[Poly] = Array::new()
   stack.push(poly)
-  let x_poly = Poly::from_expr(
-    symbol(poly.gens[0]),
-    poly.gens,
-    poly.domain,
-  )
+  let x_poly = Poly::from_expr(symbol(poly.gens[0]), poly.gens, poly.domain)
   let mut rng = seed
   while true {
     match stack.pop() {

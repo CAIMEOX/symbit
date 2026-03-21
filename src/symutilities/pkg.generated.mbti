@@ -71,7 +71,7 @@ pub fn ibin_all_str(Int) -> Array[String]
 
 pub fn ibin_str(Int, bits? : Int) -> String
 
-pub fn implemented_function(String, (Array[Double]) -> Double) -> ImplementedFunction
+pub fn implemented_function(String, (Array[Double]) -> Double raise UtilitiesError) -> ImplementedFunction
 
 pub fn int_like_bool(Bool) -> IntLike
 

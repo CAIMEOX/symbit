@@ -85,10 +85,7 @@ fn sq_expr_text(expr : Expr) -> String {
 }
 
 ///|
-fn sq_tuple_inner_product(
-  lhs : Array[Expr],
-  rhs : Array[Expr],
-) -> Expr {
+fn sq_tuple_inner_product(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
   if lhs.length() != rhs.length() {
     return int(0)
   }
@@ -96,8 +93,7 @@ fn sq_tuple_inner_product(
   for idx in 0..<lhs.length() {
     if lhs[idx] == rhs[idx] {
       ()
-    } else if lhs[idx] is Expr::Number(_) &&
-      rhs[idx] is Expr::Number(_) {
+    } else if lhs[idx] is Expr::Number(_) && rhs[idx] is Expr::Number(_) {
       return int(0)
     } else {
       out = out * @symcore.raw_function("KroneckerDelta", [lhs[idx], rhs[idx]])
@@ -150,11 +146,7 @@ fn sq_index_group(expr : Expr, fermi_level : Int) -> Int {
 }
 
 ///|
-fn sq_compare_fermion_indices(
-  lhs : Expr,
-  rhs : Expr,
-  fermi_level : Int,
-) -> Int {
+fn sq_compare_fermion_indices(lhs : Expr, rhs : Expr, fermi_level : Int) -> Int {
   let group_l = sq_index_group(lhs, fermi_level)
   let group_r = sq_index_group(rhs, fermi_level)
   if group_l != group_r {
@@ -195,10 +187,7 @@ fn sq_sort_fermion_indices(
 }
 
 ///|
-fn sq_fermion_hole_count(
-  orbitals : Array[Expr],
-  fermi_level : Int,
-) -> Int {
+fn sq_fermion_hole_count(orbitals : Array[Expr], fermi_level : Int) -> Int {
   let mut total = 0
   for orbital in orbitals {
     if sq_index_group(orbital, fermi_level) == 1 {
@@ -333,9 +322,7 @@ fn sq_apply_fermion_operator_to_state(
     None => return None
   }
   match state_expr {
-    Expr::Function(name, args) if (
-        ket && name == "FockStateFermionKet"
-      ) ||
+    Expr::Function(name, args) if (ket && name == "FockStateFermionKet") ||
       (!ket && name == "FockStateFermionBra") => {
       guard args.length() == 1 else { return None }
       match args[0] {
@@ -390,10 +377,7 @@ pub fn FermionState::as_bra_expr(self : FermionState) -> Expr {
 }
 
 ///|
-pub fn FermionState::up(
-  self : FermionState,
-  orbital : Expr,
-) -> Expr {
+pub fn FermionState::up(self : FermionState, orbital : Expr) -> Expr {
   sq_apply_fermion_op_to_items(
     orbital,
     false,
@@ -404,10 +388,7 @@ pub fn FermionState::up(
 }
 
 ///|
-pub fn FermionState::down(
-  self : FermionState,
-  orbital : Expr,
-) -> Expr {
+pub fn FermionState::down(self : FermionState, orbital : Expr) -> Expr {
   sq_apply_fermion_op_to_items(
     orbital,
     true,
@@ -436,18 +417,12 @@ pub fn fermion_state_from_expr(expr : Expr) -> FermionState? {
 }
 
 ///|
-pub fn fermion_ket(
-  orbitals : Array[Expr],
-  fermi_level? : Int = 0,
-) -> Expr {
+pub fn fermion_ket(orbitals : Array[Expr], fermi_level? : Int = 0) -> Expr {
   sq_fermion_state_expr(orbitals, true, fermi_level)
 }
 
 ///|
-pub fn fermion_bra(
-  orbitals : Array[Expr],
-  fermi_level? : Int = 0,
-) -> Expr {
+pub fn fermion_bra(orbitals : Array[Expr], fermi_level? : Int = 0) -> Expr {
   sq_fermion_state_expr(orbitals, false, fermi_level)
 }
 
@@ -462,9 +437,7 @@ pub fn fermion_creator(index : Expr) -> FermionicOperatorExpr {
 }
 
 ///|
-pub fn FermionicOperatorExpr::as_expr(
-  self : FermionicOperatorExpr,
-) -> Expr {
+pub fn FermionicOperatorExpr::as_expr(self : FermionicOperatorExpr) -> Expr {
   @symcore.raw_function(
     if self.is_annihilation {
       "AnnihilateFermion"
@@ -571,10 +544,7 @@ fn sq_secondquant_dagger_local(expr : Expr) -> Expr? {
 }
 
 ///|
-fn sq_secondquant_inner_product_local(
-  bra : Expr,
-  ket : Expr,
-) -> Expr? {
+fn sq_secondquant_inner_product_local(bra : Expr, ket : Expr) -> Expr? {
   match (sq_fermion_items_from_expr(bra), sq_fermion_items_from_expr(ket)) {
     (Some(bitems), Some(kitems)) => Some(sq_tuple_inner_product(bitems, kitems))
     _ => None

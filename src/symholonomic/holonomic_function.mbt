@@ -22,8 +22,7 @@ fn depends_on(expr : Expr, x : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(arg => depends_on(arg, x))
+    Expr::Add(args) | Expr::Mul(args) => args.any(arg => depends_on(arg, x))
     Expr::Pow(base, exp) => depends_on(base, x) || depends_on(exp, x)
     Expr::Function(_, args) => args.any(arg => depends_on(arg, x))
     _ => false
@@ -68,10 +67,7 @@ fn rising_factorial_expr(n : Expr, k : Int) -> Expr {
 }
 
 ///|
-fn split_linear_in_x(
-  expr : Expr,
-  x : Expr,
-) -> (@symnum.BigRational, Expr)? {
+fn split_linear_in_x(expr : Expr, x : Expr) -> (@symnum.BigRational, Expr)? {
   if expr == x {
     return Some((@symnum.BigRational::one(), int(0)))
   }
@@ -134,9 +130,7 @@ fn infer_expr_from_operator(hf : HolonomicFunction) -> Expr? {
     Some(op) => {
       let coeffs = op.coefficients()
       if coeffs.length() == 2 {
-        if coeffs[0] == int(-1) &&
-          coeffs[1] == int(1) &&
-          hf.y0.length() >= 1 {
+        if coeffs[0] == int(-1) && coeffs[1] == int(1) && hf.y0.length() >= 1 {
           if hf.y0[0] == int(1) {
             return Some(@symcore.function("exp", [hf.x]))
           }
@@ -144,9 +138,7 @@ fn infer_expr_from_operator(hf : HolonomicFunction) -> Expr? {
             @symcore.mul([hf.y0[0], @symcore.function("exp", [hf.x])]),
           )
         }
-        if coeffs[0] == int(0) &&
-          coeffs[1] == int(1) &&
-          hf.y0.length() >= 1 {
+        if coeffs[0] == int(0) && coeffs[1] == int(1) && hf.y0.length() >= 1 {
           return Some(hf.y0[0])
         }
       }
@@ -207,7 +199,13 @@ fn solve_constant_ode_coefficients(
     let fk = factorial_rat(k)
     match to_number(yk) {
       Some(nk) => {
-        let ak = nk.div_r(fk)
+        let ak = match
+          (
+            try? nk.div_r(fk) :
+            Result[@symnum.BigRational, @symnum.RationalError]) {
+          Ok(value) => value
+          Err(_) => return None
+        }
         a.push(@symcore.number(ak))
       }
       None => {
@@ -227,7 +225,13 @@ fn solve_constant_ode_coefficients(
       let num = factorial_bigint(n + k)
       let den = factorial_bigint(n + r)
       let ratio = @symnum.BigRational::new(num, den) catch { _ => return None }
-      let scale = ck.mul_r(ratio).div_r(cr)
+      let scale = match
+        (
+          try? ck.mul_r(ratio).div_r(cr) :
+          Result[@symnum.BigRational, @symnum.RationalError]) {
+        Ok(value) => value
+        Err(_) => return None
+      }
       let term = expr_mul(@symcore.number(scale), a[n + k])
       sum = expr_add(sum, term)
     }
@@ -270,7 +274,13 @@ fn sequence_from_constant_ode(hf : HolonomicFunction) -> HolonomicSequence? {
             let fk = factorial_rat(k)
             match to_number(hf.y0[k]) {
               Some(v) => {
-                let ak = v.div_r(fk)
+                let ak = match
+                  (
+                    try? v.div_r(fk) :
+                    Result[@symnum.BigRational, @symnum.RationalError]) {
+                  Ok(value) => value
+                  Err(_) => return None
+                }
                 init.push(@symcore.number(ak))
               }
               None => {
@@ -462,11 +472,7 @@ pub fn HolonomicFunction::to_sympy_str(self : HolonomicFunction) -> String {
 }
 
 ///|
-fn fallback_from_expr(
-  expr : Expr,
-  x : Expr,
-  x0 : Expr,
-) -> HolonomicFunction {
+fn fallback_from_expr(expr : Expr, x : Expr, x0 : Expr) -> HolonomicFunction {
   make_hf(None, x, x0, [], Some(expr))
 }
 

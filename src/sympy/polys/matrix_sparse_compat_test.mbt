@@ -27,11 +27,17 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
   let (rref, pivots, nonzero_cols) = @sympolys.sdm_irref(a)
   let (expected_rref, expected_pivots) = a.rref()
   assert_eq(pivots, expected_pivots)
-  assert_eq(ms_trim(rref.to_dense().to_string()), ms_trim(expected_rref.to_dense().to_string()))
+  assert_eq(
+    ms_trim(rref.to_dense().to_string()),
+    ms_trim(expected_rref.to_dense().to_string()),
+  )
   let oracle_rref = domainmatrix_rref([[1, 2, 3], [0, 1, 1]], "QQ")
-  assert_eq(ms_trim(
-          "\{rref.to_domain_matrix().to_matrix_string()}||\{pivots.to_string()}",
-        ), ms_trim(oracle_rref))
+  assert_eq(
+    ms_trim(
+      "\{rref.to_domain_matrix().to_matrix_string()}||\{pivots.to_string()}",
+    ),
+    ms_trim(oracle_rref),
+  )
   assert_eq(ms_trim(ms_nonzero_cols_text(nonzero_cols)), ms_trim("{2: [0, 1]}"))
 
   let (nullspace, nonpivots) = @sympolys.sdm_nullspace_from_rref(
@@ -45,10 +51,16 @@ test "matrix sparse wrappers: sdm_irref and RREF helpers align with methods" {
     pivots~,
   )
   assert_eq(nonpivots, expected_nonpivots)
-  assert_eq(ms_trim(nullspace.to_dense().to_string()), ms_trim(expected_nullspace.to_dense().to_string()))
+  assert_eq(
+    ms_trim(nullspace.to_dense().to_string()),
+    ms_trim(expected_nullspace.to_dense().to_string()),
+  )
 
   let particular = @sympolys.sdm_particular_from_rref(rref, 3, pivots)
-  assert_eq(ms_trim(particular.to_dense().to_string()), ms_trim(rref.particular(pivots~).to_dense().to_string()))
+  assert_eq(
+    ms_trim(particular.to_dense().to_string()),
+    ms_trim(rref.particular(pivots~).to_dense().to_string()),
+  )
 }
 
 ///|

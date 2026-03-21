@@ -171,13 +171,9 @@ pub fn TWave::superpose(
 }
 
 ///|
-pub fn TWave::scale(
-  self : TWave,
-  factor : Expr,
-) -> TWave raise PhysicsError {
+pub fn TWave::scale(self : TWave, factor : Expr) -> TWave raise PhysicsError {
   match factor {
-    Expr::Number(_) =>
-      TWave::{ ..self, amplitude: self.amplitude * factor }
+    Expr::Number(_) => TWave::{ ..self, amplitude: self.amplitude * factor }
     _ =>
       raise PhysicsError::ValueError(
         "Only scalar numeric factors are supported.",

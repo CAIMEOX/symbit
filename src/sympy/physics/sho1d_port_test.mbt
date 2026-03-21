@@ -41,16 +41,12 @@ test "physics.quantum.sho1d: parity" {
 test "physics.quantum.sho1d: symbolic parity" {
   quantum_test_assert_string_equal(
     quantum_eval_str("RaisingOp(a).rewrite(\"xp\").doit()"),
-    quantum_eval_str(
-      @symprint.to_string(sho_rewrite_as_xp(raising_op())),
-    ),
+    quantum_eval_str(@symprint.to_string(sho_rewrite_as_xp(raising_op()))),
     "raising rewrite xp parity",
   )
   quantum_test_assert_string_equal(
     quantum_eval_str("LoweringOp(a).rewrite(\"xp\").doit()"),
-    quantum_eval_str(
-      @symprint.to_string(sho_rewrite_as_xp(lowering_op())),
-    ),
+    quantum_eval_str(@symprint.to_string(sho_rewrite_as_xp(lowering_op()))),
     "lowering rewrite xp parity",
   )
   quantum_test_assert_string_equal(

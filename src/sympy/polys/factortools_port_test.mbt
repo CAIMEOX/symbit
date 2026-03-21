@@ -43,9 +43,7 @@ test "factortools: sqf_list compares with SymPy" {
   let (content, parts) = poly.sqf_list()
   let ours_raw = factor_list_to_string(content.to_string(), parts)
   let ours = sort_factor_repr(ours_raw).trim().to_string()
-  let oracle = sort_factor_repr(sqf_list(poly.to_expr()))
-    .trim()
-    .to_string()
+  let oracle = sort_factor_repr(sqf_list(poly.to_expr())).trim().to_string()
   assert_eq(ours, oracle)
 }
 

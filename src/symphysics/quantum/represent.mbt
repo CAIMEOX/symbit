@@ -95,9 +95,9 @@ fn represent_pow_nonnegative(
 
 ///|
 fn default_spin_j() -> Expr {
-  @symcore.number(
-    @symnum.BigRational::from_int(1).div_r(@symnum.BigRational::from_int(2)),
-  )
+  @symcore.rational_from_ints(1, 2) catch {
+    _ => @symcore.function("Rational", [int(1), int(2)])
+  }
 }
 
 ///|
@@ -110,9 +110,7 @@ pub fn represent(
 ) -> MatrixScalarValue raise @symphysics.PhysicsError {
   match expr {
     Expr::Add(args) => {
-      guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(int(0))
-      }
+      guard !args.is_empty() else { return MatrixScalarValue::Scalar(int(0)) }
       let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
         acc = represent_add(
@@ -129,9 +127,7 @@ pub fn represent(
           None => ()
         }
       }
-      guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(int(1))
-      }
+      guard !args.is_empty() else { return MatrixScalarValue::Scalar(int(1)) }
       let mut acc = represent(args[0], basis~, nqubits~, spin_j~, ndim~)
       for idx in 1..<args.length() {
         acc = represent_mul(
@@ -178,9 +174,7 @@ pub fn represent(
     Expr::Function("AntiCommutator", args) if args.length() == 2 =>
       represent(anticommutator_doit(expr), basis~, nqubits~, spin_j~, ndim~)
     Expr::Function(name, args) if name == "TensorProduct" => {
-      guard !args.is_empty() else {
-        return MatrixScalarValue::Scalar(int(1))
-      }
+      guard !args.is_empty() else { return MatrixScalarValue::Scalar(int(1)) }
       let matrices : Array[@symphysics.ExplicitMatrix] = []
       let mut scalar = int(1)
       for arg in args {
@@ -201,8 +195,7 @@ pub fn represent(
         MatrixScalarValue::Matrix(matrix.scale(scalar))
       }
     }
-    Expr::Function(name, args) if name == "OuterProduct" &&
-      args.length() == 2 =>
+    Expr::Function(name, args) if name == "OuterProduct" && args.length() == 2 =>
       represent_mul(
         represent(args[0], basis~, nqubits~, spin_j~, ndim~),
         represent(args[1], basis~, nqubits~, spin_j~, ndim~),
@@ -235,9 +228,8 @@ pub fn represent(
                       match qft_represent(expr, nqubits) {
                         Some(value) => value
                         None =>
-                          match (try shor_represent(expr, nqubits) catch {
-                            _ => None
-                          }) {
+                          match
+                            (shor_represent(expr, nqubits) catch { _ => None }) {
                             Some(value) => value
                             None =>
                               match density_from_expr(expr) {
@@ -259,17 +251,15 @@ pub fn represent(
                                           match pauli_from_expr(expr) {
                                             Some(_) =>
                                               MatrixScalarValue::Matrix(
-                                                represent_pauli_operator(
-                                                  expr,
-                                                ),
+                                                represent_pauli_operator(expr),
                                               )
                                             None =>
-                                              match (try represent_spin_rotation(
-                                                expr,
-                                                spin_j,
-                                              ) catch {
-                                                _ => None
-                                              }) {
+                                              match
+                                                (represent_spin_rotation(
+                                                  expr, spin_j,
+                                                ) catch {
+                                                  _ => None
+                                                }) {
                                                 Some(matrix) =>
                                                   MatrixScalarValue::Matrix(
                                                     matrix,

@@ -54,9 +54,7 @@ fn quantum_qapply_density_expr(
 }
 
 ///|
-fn quantum_sum_limits(
-  args : Array[Expr],
-) -> Array[@symconcrete.LimitSpec]? {
+fn quantum_sum_limits(args : Array[Expr]) -> Array[@symconcrete.LimitSpec]? {
   let limits : Array[@symconcrete.LimitSpec] = []
   for arg in args {
     match arg {
@@ -207,10 +205,7 @@ fn quantum_sum_resolution_kernel(
 }
 
 ///|
-fn quantum_sum_state_term(
-  expr : Expr,
-  sum_name : String,
-) -> (Expr, String)? {
+fn quantum_sum_state_term(expr : Expr, sum_name : String) -> (Expr, String)? {
   let coeffs : Array[Expr] = []
   let mut ket_name : String? = None
   match expr {
@@ -249,9 +244,7 @@ fn quantum_apply_discrete_sum_to_ket(
     Some(spec) => spec
     None => return None
   }
-  guard lower == int(0) && quantum_symbolic_infinite(upper) else {
-    return None
-  }
+  guard lower == int(0) && quantum_symbolic_infinite(upper) else { return None }
   let (coeff, ket_name) = match
     quantum_sum_resolution_kernel(sum_args[0], sum_name) {
     Some(info) => info
@@ -279,9 +272,7 @@ fn quantum_project_discrete_bra_against_sum(
     Some(spec) => spec
     None => return None
   }
-  guard lower == int(0) && quantum_symbolic_infinite(upper) else {
-    return None
-  }
+  guard lower == int(0) && quantum_symbolic_infinite(upper) else { return None }
   let (lhs_name, lhs_label) = match quantum_discrete_bra_info(lhs) {
     Some(info) => info
     None => return None
@@ -509,10 +500,8 @@ fn quantum_apply_operator_pair(
                                   match boson_apply_operator_to_ket(lhs, rhs) {
                                     Some(applied) => Some(applied)
                                     None =>
-                                      match fermion_apply_operator_to_ket(
-                                        lhs,
-                                        rhs,
-                                      ) {
+                                      match
+                                        fermion_apply_operator_to_ket(lhs, rhs) {
                                         Some(applied) => Some(applied)
                                         None => None
                                       }
@@ -533,17 +522,11 @@ fn quantum_apply_operator_pair(
 }
 
 ///|
-fn qapply_try_special_operator_to_ket(
-  lhs : Expr,
-  rhs : Expr,
-) -> Expr? {
-  try grover_apply_operator_to_ket(lhs, rhs) catch {
+fn qapply_try_special_operator_to_ket(lhs : Expr, rhs : Expr) -> Expr? {
+  grover_apply_operator_to_ket(lhs, rhs) catch {
     _ =>
-      try qft_apply_operator_to_ket(lhs, rhs) catch {
-        _ =>
-          try shor_apply_operator_to_ket(lhs, rhs) catch {
-            _ => None
-          }
+      qft_apply_operator_to_ket(lhs, rhs) catch {
+        _ => shor_apply_operator_to_ket(lhs, rhs) catch { _ => None }
       }
   }
 }
@@ -650,8 +633,7 @@ pub fn qapply(
         out
       }
     }
-    Expr::Function("InnerProduct", _) if ip_doit =>
-      inner_product_doit(expr)
+    Expr::Function("InnerProduct", _) if ip_doit => inner_product_doit(expr)
     _ => expr
   }
 }

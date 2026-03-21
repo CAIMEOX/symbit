@@ -17,9 +17,7 @@ fn normalize_root_list(raw : String) -> String raise {
 fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
   let parts : Array[String] = Array::new()
   for i in 0..<deg {
-    parts.push(
-      sympy_normalize(rootof(expr, i, radicals=false)),
-    )
+    parts.push(sympy_normalize(rootof(expr, i, radicals=false)))
   }
   let joined = parts.join(",")
   sympy_normalize("[\{joined}]")
@@ -37,9 +35,7 @@ test "polyroots: linear/quadratic parity" {
     (x ^ @symcore.int(2)) - @symcore.int(3) * x + @symcore.int(2),
   )
   let ours_quad = roots_repr(@sympolys.roots_quadratic(g))
-  let oracle_quad = normalize_root_list(
-    roots_quadratic(g.to_expr()),
-  )
+  let oracle_quad = normalize_root_list(roots_quadratic(g.to_expr()))
   assert_eq(ours_quad, oracle_quad)
 }
 
@@ -53,9 +49,7 @@ test "polyroots: cubic/quartic parity (factorable)" {
   assert_eq(ours_cubic, oracle_cubic)
   let g = b.from_expr(x ^ @symcore.int(4))
   let ours_quartic = roots_repr(@sympolys.roots_quartic(g))
-  let oracle_quartic = normalize_root_list(
-    roots_quartic(g.to_expr()),
-  )
+  let oracle_quartic = normalize_root_list(roots_quartic(g.to_expr()))
   assert_eq(ours_quartic, oracle_quartic)
 }
 

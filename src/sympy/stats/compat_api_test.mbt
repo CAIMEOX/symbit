@@ -511,7 +511,9 @@ test "compat symbolic mgf cf quantile entropy parity" {
     "(lambda B, t: moment_generating_function(B)(t))(stats.Beta('B', 2, 5), t)",
   )
   assert_true(expr_equiv_to(b_mgf, b_mgf_oracle))
-  assert_true(!@symprint.to_string(b_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(b_mgf).contains("moment_generating_function("),
+  )
   let b_cf = characteristic_function(sb, t, rvs=[b])
   let b_cf_oracle = stats_eval_str(
     "(lambda B, t: characteristic_function(B)(t))(stats.Beta('B', 2, 5), t)",
@@ -583,7 +585,9 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(ch_q, "sqrt(2*gammaincinv(5/2, 1/4))"))
   assert_true(!@symprint.to_string(ch_q).contains("ChiQuantile("))
   let ch_e = entropy(sch, rvs=[ch])
-  assert_true(expr_equiv_to(ch_e, "log(gamma(5/2)) + 5/2 - 2*digamma(5/2) - log(2)/2"),)
+  assert_true(
+    expr_equiv_to(ch_e, "log(gamma(5/2)) + 5/2 - 2*digamma(5/2) - log(2)/2"),
+  )
   assert_true(!@symprint.to_string(ch_e).contains("ChiEntropy("))
 
   let csq = chi_squared("Csq", params=[@symcore.int(5)])
@@ -592,7 +596,9 @@ test "compat symbolic mgf cf quantile entropy parity" {
   assert_true(expr_equiv_to(csq_q, "2*gammaincinv(5/2, 1/4)"))
   assert_true(!@symprint.to_string(csq_q).contains("ChiSquaredQuantile("))
   let csq_e = entropy(scsq, rvs=[csq])
-  assert_true(expr_equiv_to(csq_e, "5/2 + log(2*gamma(5/2)) - 3*digamma(5/2)/2"),)
+  assert_true(
+    expr_equiv_to(csq_e, "5/2 + log(2*gamma(5/2)) - 3*digamma(5/2)/2"),
+  )
   assert_true(!@symprint.to_string(csq_e).contains("ChiSquaredEntropy("))
 
   let erq = erlang("Erq", params=[@symcore.int(3), @symcore.int(2)])
@@ -900,7 +906,9 @@ test "compat generated discrete parity batch" {
   let s = skellam("Sx", params=[@symcore.int(2), @symcore.int(3)])
   let ssx = @symcore.symbol("Sx")
   let s_pmf = density(s, @symcore.int(1))
-  assert_true(expr_equiv_to(s_pmf, "sqrt(2)*sqrt(3)**-1*exp(-5)*besseli(1, 2*sqrt(6))"),)
+  assert_true(
+    expr_equiv_to(s_pmf, "sqrt(2)*sqrt(3)**-1*exp(-5)*besseli(1, 2*sqrt(6))"),
+  )
   let s_cf = characteristic_function(ssx, t, rvs=[s])
   let s_cf_oracle = stats_eval_str(
     "(lambda Sx, t: characteristic_function(Sx)(t))(stats.Skellam('Sx', 2, 3), t)",
@@ -1034,9 +1042,7 @@ test "compat weibull parity ordering" {
   )
   assert_true(expr_equiv_to(c, c_oracle))
   let m = expectation(sw, rvs=[w])
-  let m_oracle = stats_eval_str(
-    "(lambda W0: E(W0))(stats.Weibull('W0', 3, 5))",
-  )
+  let m_oracle = stats_eval_str("(lambda W0: E(W0))(stats.Weibull('W0', 3, 5))")
   assert_true(expr_equiv_to(m, m_oracle))
   let v = variance(sw, rvs=[w])
   let v_oracle = stats_eval_str(
@@ -1064,9 +1070,7 @@ test "compat symbolic families and rademacher parity" {
   let sr = @symcore.symbol("R")
   let re = expectation(sr, rvs=[r])
   let rv = variance(sr, rvs=[r])
-  let re_oracle = stats_eval_str(
-    "(lambda R: E(R))(stats.Rayleigh('R', 2))",
-  )
+  let re_oracle = stats_eval_str("(lambda R: E(R))(stats.Rayleigh('R', 2))")
   let rv_oracle = stats_eval_str(
     "(lambda R: variance(R))(stats.Rayleigh('R', 2))",
   )
@@ -1121,7 +1125,9 @@ test "compat non-fallback symbolic families" {
   assert_true(expr_equiv_to(d_mean, "Tuple(2/5, 3/5)"))
   assert_true(!@symprint.to_string(d_mean).contains("DirichletMean("))
   let d_var = variance(sd, rvs=[d])
-  assert_true(expr_equiv_to(d_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"),)
+  assert_true(
+    expr_equiv_to(d_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"),
+  )
   assert_true(!@symprint.to_string(d_var).contains("DirichletVariance("))
   let d_entropy = entropy(sd, rvs=[d])
   assert_true(
@@ -1149,8 +1155,12 @@ test "compat non-fallback symbolic families" {
   assert_true(expr_equiv_to(mb_mean, "Tuple(2/5, 3/5)"))
   assert_true(!@symprint.to_string(mb_mean).contains("MultivariateBetaMean("))
   let mb_var = variance(smb, rvs=[mb])
-  assert_true(expr_equiv_to(mb_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"),)
-  assert_true(!@symprint.to_string(mb_var).contains("MultivariateBetaVariance("),)
+  assert_true(
+    expr_equiv_to(mb_var, "Tuple(Tuple(1/25, -1/25), Tuple(-1/25, 1/25))"),
+  )
+  assert_true(
+    !@symprint.to_string(mb_var).contains("MultivariateBetaVariance("),
+  )
   let mb_density = density(
     mb,
     @symcore.function("Tuple", [
@@ -1162,7 +1172,9 @@ test "compat non-fallback symbolic families" {
     "(lambda MB: density(MB)(Rational(1, 3), Rational(2, 3)))(stats.MultivariateBeta('MB', [2, 3]))",
   )
   assert_true(expr_equiv_to(mb_density, mb_density_oracle))
-  assert_true(!@symprint.to_string(mb_density).contains("MultivariateBetaDensity("),)
+  assert_true(
+    !@symprint.to_string(mb_density).contains("MultivariateBetaDensity("),
+  )
 
   let mn = multinomial("MN", params=[
     @symcore.int(5),
@@ -1174,7 +1186,9 @@ test "compat non-fallback symbolic families" {
   assert_true(expr_equiv_to(mn_mean, "Tuple(5/3, 10/3)"))
   assert_true(!@symprint.to_string(mn_mean).contains("MultinomialMean("))
   let mn_var = variance(smn, rvs=[mn])
-  assert_true(expr_equiv_to(mn_var, "Tuple(Tuple(10/9, -10/9), Tuple(-10/9, 10/9))"),)
+  assert_true(
+    expr_equiv_to(mn_var, "Tuple(Tuple(10/9, -10/9), Tuple(-10/9, 10/9))"),
+  )
   assert_true(!@symprint.to_string(mn_var).contains("MultinomialVariance("))
 
   let nm = negative_multinomial("NM", params=[
@@ -1185,10 +1199,16 @@ test "compat non-fallback symbolic families" {
   let snm = @symcore.symbol("NM")
   let nm_mean = expectation(snm, rvs=[nm])
   assert_true(expr_equiv_to(nm_mean, "Tuple(6/7, 3/7)"))
-  assert_true(!@symprint.to_string(nm_mean).contains("NegativeMultinomialMean("),)
+  assert_true(
+    !@symprint.to_string(nm_mean).contains("NegativeMultinomialMean("),
+  )
   let nm_var = variance(snm, rvs=[nm])
-  assert_true(expr_equiv_to(nm_var, "Tuple(Tuple(54/49, 6/49), Tuple(6/49, 24/49))"),)
-  assert_true(!@symprint.to_string(nm_var).contains("NegativeMultinomialVariance("),)
+  assert_true(
+    expr_equiv_to(nm_var, "Tuple(Tuple(54/49, 6/49), Tuple(6/49, 24/49))"),
+  )
+  assert_true(
+    !@symprint.to_string(nm_var).contains("NegativeMultinomialVariance("),
+  )
 
   let mvn_mu = @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)])
   let mvn_sigma = @symcore.function("Tuple", [
@@ -1199,18 +1219,26 @@ test "compat non-fallback symbolic families" {
   let smvn = @symcore.symbol("MVN")
   let mvn_mean = expectation(smvn, rvs=[mvn])
   assert_true(expr_equiv_to(mvn_mean, "Tuple(1, 2)"))
-  assert_true(!@symprint.to_string(mvn_mean).contains("MultivariateNormalMean("),)
+  assert_true(
+    !@symprint.to_string(mvn_mean).contains("MultivariateNormalMean("),
+  )
   let mvn_var = variance(smvn, rvs=[mvn])
   assert_true(expr_equiv_to(mvn_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
-  assert_true(!@symprint.to_string(mvn_var).contains("MultivariateNormalVariance("),)
+  assert_true(
+    !@symprint.to_string(mvn_var).contains("MultivariateNormalVariance("),
+  )
   let t1 = @symcore.symbol("t1")
   let t2 = @symcore.symbol("t2")
   let tvec = @symcore.function("Tuple", [t1, t2])
   let mvn_mgf = moment_generating_function(smvn, tvec, rvs=[mvn])
-  assert_true(expr_equiv_to(mvn_mgf, "exp(t1 + 2*t2 + t1**2 + t1*t2 + 3*t2**2/2)"),)
+  assert_true(
+    expr_equiv_to(mvn_mgf, "exp(t1 + 2*t2 + t1**2 + t1*t2 + 3*t2**2/2)"),
+  )
   assert_true(!@symprint.to_string(mvn_mgf).contains("MultivariateNormalMGF("))
   let mvn_cf = characteristic_function(smvn, tvec, rvs=[mvn])
-  assert_true(expr_equiv_to(mvn_cf, "exp(I*(t1 + 2*t2) - t1**2 - t1*t2 - 3*t2**2/2)"),)
+  assert_true(
+    expr_equiv_to(mvn_cf, "exp(I*(t1 + 2*t2) - t1**2 - t1*t2 - 3*t2**2/2)"),
+  )
   assert_true(!@symprint.to_string(mvn_cf).contains("MultivariateNormalCF("))
   let mvn_density = density(
     mvn,
@@ -1220,7 +1248,9 @@ test "compat non-fallback symbolic families" {
     "(lambda MVN: density(MVN)(1, 2))(stats.MultivariateNormal('MVN', [1, 2], [[2, 1], [1, 3]]))",
   )
   assert_true(expr_equiv_to(mvn_density, mvn_density_oracle))
-  assert_true(!@symprint.to_string(mvn_density).contains("MultivariateNormalDensity("),)
+  assert_true(
+    !@symprint.to_string(mvn_density).contains("MultivariateNormalDensity("),
+  )
 
   let mvt = multivariate_t("MVT", params=[mvn_mu, mvn_sigma, @symcore.int(5)])
   let smvt = @symcore.symbol("MVT")
@@ -1238,21 +1268,31 @@ test "compat non-fallback symbolic families" {
     "(lambda MVT: density(MVT)(1, 2))(stats.MultivariateT('MVT', [1, 2], [[2, 1], [1, 3]], 5))",
   )
   assert_true(expr_equiv_to(mvt_density, mvt_density_oracle))
-  assert_true(!@symprint.to_string(mvt_density).contains("MultivariateTDensity("),)
+  assert_true(
+    !@symprint.to_string(mvt_density).contains("MultivariateTDensity("),
+  )
 
   let mvl = multivariate_laplace("MVL", params=[mvn_mu, mvn_sigma])
   let smvl = @symcore.symbol("MVL")
   let mvl_mean = expectation(smvl, rvs=[mvl])
   assert_true(expr_equiv_to(mvl_mean, "Tuple(1, 2)"))
-  assert_true(!@symprint.to_string(mvl_mean).contains("MultivariateLaplaceMean("),)
+  assert_true(
+    !@symprint.to_string(mvl_mean).contains("MultivariateLaplaceMean("),
+  )
   let mvl_var = variance(smvl, rvs=[mvl])
   assert_true(expr_equiv_to(mvl_var, "Tuple(Tuple(2, 1), Tuple(1, 3))"))
-  assert_true(!@symprint.to_string(mvl_var).contains("MultivariateLaplaceVariance("),)
+  assert_true(
+    !@symprint.to_string(mvl_var).contains("MultivariateLaplaceVariance("),
+  )
   let mvl_mgf = moment_generating_function(smvl, tvec, rvs=[mvl])
-  assert_true(expr_equiv_to(mvl_mgf, "exp(t1 + 2*t2)/(1 - t1**2 - t1*t2 - 3*t2**2/2)"),)
+  assert_true(
+    expr_equiv_to(mvl_mgf, "exp(t1 + 2*t2)/(1 - t1**2 - t1*t2 - 3*t2**2/2)"),
+  )
   assert_true(!@symprint.to_string(mvl_mgf).contains("MultivariateLaplaceMGF("))
   let mvl_cf = characteristic_function(smvl, tvec, rvs=[mvl])
-  assert_true(expr_equiv_to(mvl_cf, "exp(I*(t1 + 2*t2))/(1 + t1**2 + t1*t2 + 3*t2**2/2)"),)
+  assert_true(
+    expr_equiv_to(mvl_cf, "exp(I*(t1 + 2*t2))/(1 + t1**2 + t1*t2 + 3*t2**2/2)"),
+  )
   assert_true(!@symprint.to_string(mvl_cf).contains("MultivariateLaplaceCF("))
   let mvl_density = density(
     mvl,
@@ -1262,7 +1302,9 @@ test "compat non-fallback symbolic families" {
     "(lambda MVL: density(MVL)(1, 2))(stats.MultivariateLaplace('MVL', [1, 2], [[2, 1], [1, 3]]))",
   )
   assert_true(expr_equiv_to(mvl_density, mvl_density_oracle))
-  assert_true(!@symprint.to_string(mvl_density).contains("MultivariateLaplaceDensity("),)
+  assert_true(
+    !@symprint.to_string(mvl_density).contains("MultivariateLaplaceDensity("),
+  )
 
   let ng = normal_gamma("NG", params=[
     @symcore.int(0),
@@ -1416,7 +1458,9 @@ test "compat non-fallback symbolic families" {
     rv=mc,
   )
   let mc_joint_s = @symprint.to_string(mc_joint)
-  assert_true(mc_joint_s.contains("DiscreteMarkovChainProbabilityAt(t0, i, Tmat)"),)
+  assert_true(
+    mc_joint_s.contains("DiscreteMarkovChainProbabilityAt(t0, i, Tmat)"),
+  )
   assert_true(mc_joint_s.contains("MatrixElement"))
   assert_true(!mc_joint_s.contains("Probability("))
 
@@ -1435,8 +1479,12 @@ test "compat non-fallback symbolic families" {
 
   let wp = wiener_process("WP")
   let wpx = @symcore.function("WP", [tau])
-  assert_true(expr_equiv_to(characteristic_function(wpx, z, rvs=[wp]), "exp(-tau*z**2/2)"),)
-  assert_true(expr_equiv_to(quantile(wpx, q1, rvs=[wp]), "sqrt(2*tau)*erfinv(-1/2)"),)
+  assert_true(
+    expr_equiv_to(characteristic_function(wpx, z, rvs=[wp]), "exp(-tau*z**2/2)"),
+  )
+  assert_true(
+    expr_equiv_to(quantile(wpx, q1, rvs=[wp]), "sqrt(2*tau)*erfinv(-1/2)"),
+  )
   assert_true(expr_equiv_to(probability(eq(wpx, @symcore.int(0)), rv=wp), "0"))
 
   let gue = gaussian_unitary_ensemble("GUE", params=[@symcore.int(3)])
@@ -1452,7 +1500,9 @@ test "compat non-fallback symbolic families" {
         "density(stats.GaussianUnitaryEnsemble('GUE', 3))(sympy.MatrixSymbol(X, 3, 3))",
       )
       assert_true(ok)
-      assert_true(!@symprint.to_string(v).contains("GaussianUnitaryEnsembleDensity("),)
+      assert_true(
+        !@symprint.to_string(v).contains("GaussianUnitaryEnsembleDensity("),
+      )
     }
     None => fail("missing symbolic matrix density")
   }
@@ -1464,28 +1514,28 @@ test "compat non-fallback symbolic families" {
   ])
   match matrix_density(goe, xmat2) {
     Some(v) => {
-      let ours = stats_eval_str(
-        "sympy.nsimplify(\{@symprint.to_string(v)})",
-      )
+      let ours = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(v)})")
       let oracle = stats_eval_str(
         "density(stats.GaussianOrthogonalEnsemble('GOE', 2))(sympy.MatrixSymbol(X, 2, 2))",
       )
       assert_eq(ours, oracle)
-      assert_true(!@symprint.to_string(v).contains("GaussianOrthogonalEnsembleDensity("),)
+      assert_true(
+        !@symprint.to_string(v).contains("GaussianOrthogonalEnsembleDensity("),
+      )
     }
     None => fail("missing symbolic matrix density")
   }
   let gse = gaussian_symplectic_ensemble("GSE", params=[@symcore.int(2)])
   match matrix_density(gse, xmat2) {
     Some(v) => {
-      let ours = stats_eval_str(
-        "sympy.nsimplify(\{@symprint.to_string(v)})",
-      )
+      let ours = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(v)})")
       let oracle = stats_eval_str(
         "density(stats.GaussianSymplecticEnsemble('GSE', 2))(sympy.MatrixSymbol(X, 2, 2))",
       )
       assert_eq(ours, oracle)
-      assert_true(!@symprint.to_string(v).contains("GaussianSymplecticEnsembleDensity("),)
+      assert_true(
+        !@symprint.to_string(v).contains("GaussianSymplecticEnsembleDensity("),
+      )
     }
     None => fail("missing symbolic matrix density")
   }
@@ -1665,7 +1715,9 @@ test "compat non-fallback symbolic families" {
     @symcore.function("Tuple", [@symcore.int(1), @symcore.int(2)]),
   )
   assert_true(@symprint.to_string(jed_direct_c).contains("Integral("))
-  assert_true(!@symprint.to_string(jed_direct_c).contains("JointEigenDistributionCDF("),)
+  assert_true(
+    !@symprint.to_string(jed_direct_c).contains("JointEigenDistributionCDF("),
+  )
 
   let lsd_direct = level_spacing_distribution("LSDD", params=[
     @symcore.function("GaussianOrthogonalEnsemble", [@symcore.int(2)]),
@@ -1815,9 +1867,7 @@ test "compat handmade and joint families concrete density paths" {
   ])
   let ch = continuous_rv("CH", params=[ch_pdf])
   let ch_d = density(ch, @symcore.int(2))
-  let ch_d_s = stats_eval_str(
-    "sympy.nsimplify(\{@symprint.to_string(ch_d)})",
-  )
+  let ch_d_s = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(ch_d)})")
   assert_eq(ch_d_s, "exp(-2)")
   assert_true(!@symprint.to_string(ch_d).contains("density(CH,"))
   let sch = @symcore.symbol("CH")
@@ -1836,7 +1886,9 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(@symprint.to_string(ch_m).contains("Integral("))
   assert_true(@symprint.to_string(ch_v).contains("Integral("))
   assert_true(@symprint.to_string(ch_mgf).contains("Integral("))
-  assert_true(!@symprint.to_string(ch_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(ch_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(ch_cf).contains("Integral("))
   assert_true(!@symprint.to_string(ch_cf).contains("characteristic_function("))
   assert_true(@symprint.to_string(ch_h).contains("Integral("))
@@ -1861,9 +1913,7 @@ test "compat handmade and joint families concrete density paths" {
   ])
   let dh = discrete_rv("DH", params=[dh_pmf])
   let dh_d = density(dh, @symcore.int(1))
-  let dh_d_s = stats_eval_str(
-    "sympy.nsimplify(\{@symprint.to_string(dh_d)})",
-  )
+  let dh_d_s = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(dh_d)})")
   assert_eq(dh_d_s, "1/2")
   assert_true(!@symprint.to_string(dh_d).contains("density(DH,"))
   let sdh = @symcore.symbol("DH")
@@ -1884,7 +1934,9 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(@symprint.to_string(dh_m).contains("Sum("))
   assert_true(@symprint.to_string(dh_v).contains("Sum("))
   assert_true(@symprint.to_string(dh_mgf).contains("Sum("))
-  assert_true(!@symprint.to_string(dh_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(dh_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(dh_cf).contains("Sum("))
   assert_true(!@symprint.to_string(dh_cf).contains("characteristic_function("))
   assert_true(@symprint.to_string(dh_h).contains("Sum("))
@@ -1904,9 +1956,7 @@ test "compat handmade and joint families concrete density paths" {
   ])
   let fh = finite_distribution_handmade("FH", params=[fh_pairs])
   let fh_d = density(fh, @symcore.int(1))
-  let fh_d_s = stats_eval_str(
-    "sympy.nsimplify(\{@symprint.to_string(fh_d)})",
-  )
+  let fh_d_s = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(fh_d)})")
   assert_eq(fh_d_s, "3/4")
   let sfh = @symcore.symbol("FH")
   let fh_m_s = stats_eval_str(
@@ -1930,7 +1980,9 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(!@symprint.to_string(fh_p).contains("Probability("))
   let fh_mgf = moment_generating_function(sfh, t, rvs=[fh])
   assert_true(@symprint.to_string(fh_mgf).contains("exp("))
-  assert_true(!@symprint.to_string(fh_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(fh_mgf).contains("moment_generating_function("),
+  )
   let fh_cf = characteristic_function(sfh, t, rvs=[fh])
   assert_true(@symprint.to_string(fh_cf).contains("exp("))
   assert_true(!@symprint.to_string(fh_cf).contains("characteristic_function("))
@@ -1954,9 +2006,7 @@ test "compat handmade and joint families concrete density paths" {
     jh,
     @symcore.function("Tuple", [@symcore.int(3), @symcore.int(4)]),
   )
-  let jh_d_s = stats_eval_str(
-    "sympy.nsimplify(\{@symprint.to_string(jh_d)})",
-  )
+  let jh_d_s = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(jh_d)})")
   assert_eq(jh_d_s, "11")
   assert_true(!@symprint.to_string(jh_d).contains("density(JH,"))
   let sjh = @symcore.symbol("JH")
@@ -1998,7 +2048,9 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(@symprint.to_string(jh_v).contains("Integral("))
   assert_true(!@symprint.to_string(jh_v).contains("JointRVVariance("))
   assert_true(@symprint.to_string(jh_mgf).contains("Integral("))
-  assert_true(!@symprint.to_string(jh_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(jh_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(jh_h).contains("Integral("))
   assert_true(!@symprint.to_string(jh_h).contains("entropy("))
   assert_true(@symprint.to_string(jh_q).contains("ConditionSet("))
@@ -2012,9 +2064,7 @@ test "compat handmade and joint families concrete density paths" {
   let ew_oracle = stats_eval_str(
     "(lambda EW: density(EW)(2, 0))(stats.MultivariateEwens('EW', 2, 1))",
   )
-  let ew_d_s = stats_eval_str(
-    "sympy.nsimplify(\{@symprint.to_string(ew_d)})",
-  )
+  let ew_d_s = stats_eval_str("sympy.nsimplify(\{@symprint.to_string(ew_d)})")
   let ew_o_s = stats_eval_str("sympy.nsimplify(\{ew_oracle})")
   assert_eq(ew_d_s, ew_o_s)
   assert_true(!@symprint.to_string(ew_d).contains("density(EW,"))
@@ -2045,7 +2095,9 @@ test "compat handmade and joint families concrete density paths" {
   assert_true(@symprint.to_string(ew_v).contains("Sum("))
   assert_true(!@symprint.to_string(ew_v).contains("MultivariateEwensVariance("))
   assert_true(@symprint.to_string(ew_mgf).contains("Sum("))
-  assert_true(!@symprint.to_string(ew_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(ew_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(ew_h).contains("Sum("))
   assert_true(!@symprint.to_string(ew_h).contains("entropy("))
   assert_true(@symprint.to_string(ew_q).contains("ConditionSet("))
@@ -2124,7 +2176,9 @@ test "compat handmade and joint families concrete density paths" {
     ),
   )
   assert_true(@symprint.to_string(gmlg_mgf).contains("Integral("))
-  assert_true(!@symprint.to_string(gmlg_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(gmlg_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(gmlg_h).contains("Integral("))
   assert_true(!@symprint.to_string(gmlg_h).contains("entropy("))
   assert_true(@symprint.to_string(gmlg_q).contains("ConditionSet("))
@@ -2185,7 +2239,9 @@ test "compat handmade and joint families concrete density paths" {
     ),
   )
   assert_true(@symprint.to_string(gmlgo_mgf).contains("Integral("))
-  assert_true(!@symprint.to_string(gmlgo_mgf).contains("moment_generating_function("),)
+  assert_true(
+    !@symprint.to_string(gmlgo_mgf).contains("moment_generating_function("),
+  )
   assert_true(@symprint.to_string(gmlgo_h).contains("Integral("))
   assert_true(!@symprint.to_string(gmlgo_h).contains("entropy("))
   assert_true(@symprint.to_string(gmlgo_q).contains("ConditionSet("))
@@ -2366,13 +2422,19 @@ test "compat cdf coverage for residual families" {
   )
 
   let goe = gaussian_orthogonal_ensemble("GOEc", params=[@symcore.int(2)])
-  assert_true(!@symprint.to_string(cdf(goe, x)).contains("GaussianOrthogonalEnsembleCDF("),)
+  assert_true(
+    !@symprint.to_string(cdf(goe, x)).contains("GaussianOrthogonalEnsembleCDF("),
+  )
 
   let gue = gaussian_unitary_ensemble("GUEc", params=[@symcore.int(2)])
-  assert_true(!@symprint.to_string(cdf(gue, x)).contains("GaussianUnitaryEnsembleCDF("),)
+  assert_true(
+    !@symprint.to_string(cdf(gue, x)).contains("GaussianUnitaryEnsembleCDF("),
+  )
 
   let gse = gaussian_symplectic_ensemble("GSEc", params=[@symcore.int(2)])
-  assert_true(!@symprint.to_string(cdf(gse, x)).contains("GaussianSymplecticEnsembleCDF("),)
+  assert_true(
+    !@symprint.to_string(cdf(gse, x)).contains("GaussianSymplecticEnsembleCDF("),
+  )
 
   let mg = matrix_gamma("MGc", params=[
     @symcore.int(2),

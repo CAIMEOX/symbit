@@ -126,10 +126,7 @@ pub fn RigidBody::potential_energy(self : RigidBody) -> Expr {
 }
 
 ///|
-pub fn RigidBody::set_potential_energy(
-  self : RigidBody,
-  value : Expr,
-) -> Unit {
+pub fn RigidBody::set_potential_energy(self : RigidBody, value : Expr) -> Unit {
   self.potential_energy_ = value
 }
 
@@ -210,9 +207,7 @@ pub fn RigidBody::angular_momentum(
   point : @symvector.Point,
   frame : @symvector.ReferenceFrame,
 ) -> @symvector.Vector raise @symvector.VectorError {
-  let spin = self.central_inertia_.dot_vector(
-    self.frame_.ang_vel_in(frame),
-  )
+  let spin = self.central_inertia_.dot_vector(self.frame_.ang_vel_in(frame))
   let r = self.masscenter_.pos_from(point)
   let p = self.linear_momentum(frame)
   spin + r.cross(p)

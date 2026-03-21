@@ -6,7 +6,9 @@ fn fezz(n : Int) -> FieldElem raise PolyError {
 ///|
 fn feqq(num : Int, den : Int) -> FieldElem raise PolyError {
   @sympolys.fe_from_rational(
-    @symnum.BigRational::from_int(num).div_r(@symnum.BigRational::from_int(den)),
+    @symnum.BigRational::from_ints(num, den) catch {
+      _ => raise PolyError::DivisionByZero
+    },
     Domain::QQ,
   )
 }
@@ -20,7 +22,9 @@ fn dup_repr_tuple(pair : (Array[FieldElem], Array[FieldElem])) -> String {
 }
 
 ///|
-fn dup_to_rats(coeffs : Array[FieldElem]) -> Array[@symnum.BigRational] raise PolyError {
+fn dup_to_rats(
+  coeffs : Array[FieldElem],
+) -> Array[@symnum.BigRational] raise PolyError {
   let out : Array[@symnum.BigRational] = Array::new()
   for c in coeffs {
     out.push(@sympolys.fe_expect_rational(c))
@@ -87,7 +91,9 @@ fn dmp_pair_repr(pair : (DensePoly, DensePoly)) -> String {
 ///|
 
 ///|
-fn dense_data_list(polys : Array[DensePoly]) -> Array[DenseData] raise PolyError {
+fn dense_data_list(
+  polys : Array[DensePoly],
+) -> Array[DenseData] raise PolyError {
   let out : Array[DenseData] = Array::new()
   for p in polys {
     out.push(dense_data_of(p))
@@ -153,11 +159,10 @@ test "densearith: dup_shift parity" {
   let ours_l = dup_repr(@sympolys.dup_lshift(f, 2, Domain::ZZ))
   let oracle_l = dup_lshift(dup_to_rats(f), 2)
   assert_eq(ours_l, oracle_l)
-  let ours_r = dup_repr(@sympolys.dup_rshift([fezz(1), fezz(0), fezz(1)], 1, Domain::ZZ))
-  let oracle_r = dup_rshift(
-    dup_to_rats([fezz(1), fezz(0), fezz(1)]),
-    1,
+  let ours_r = dup_repr(
+    @sympolys.dup_rshift([fezz(1), fezz(0), fezz(1)], 1, Domain::ZZ),
   )
+  let oracle_r = dup_rshift(dup_to_rats([fezz(1), fezz(0), fezz(1)]), 1)
   assert_eq(ours_r, oracle_r)
 }
 
@@ -208,32 +213,16 @@ test "densearith: dup_div family parity" {
   let fq = [feqq(1, 1), feqq(0, 1), feqq(1, 1)]
   let gq = [feqq(2, 1), feqq(-4, 1)]
   let ours_ff = dup_repr_tuple(@sympolys.dup_ff_div(fq, gq, Domain::QQ))
-  let oracle_ff = dup_ff_div(
-    dup_to_rats(fq),
-    dup_to_rats(gq),
-    domain="QQ",
-  )
+  let oracle_ff = dup_ff_div(dup_to_rats(fq), dup_to_rats(gq), domain="QQ")
   assert_eq(ours_ff, oracle_ff)
   let ours_div = dup_repr_tuple(@sympolys.dup_div(fq, gq, Domain::QQ))
-  let oracle_div = dup_div(
-    dup_to_rats(fq),
-    dup_to_rats(gq),
-    domain="QQ",
-  )
+  let oracle_div = dup_div(dup_to_rats(fq), dup_to_rats(gq), domain="QQ")
   assert_eq(ours_div, oracle_div)
   let ours_rem = dup_repr(@sympolys.dup_rem(fq, gq, Domain::QQ))
-  let oracle_rem = dup_rem(
-    dup_to_rats(fq),
-    dup_to_rats(gq),
-    domain="QQ",
-  )
+  let oracle_rem = dup_rem(dup_to_rats(fq), dup_to_rats(gq), domain="QQ")
   assert_eq(ours_rem, oracle_rem)
   let ours_quo = dup_repr(@sympolys.dup_quo(fq, gq, Domain::QQ))
-  let oracle_quo = dup_quo(
-    dup_to_rats(fq),
-    dup_to_rats(gq),
-    domain="QQ",
-  )
+  let oracle_quo = dup_quo(dup_to_rats(fq), dup_to_rats(gq), domain="QQ")
   assert_eq(ours_quo, oracle_quo)
 }
 
@@ -251,15 +240,12 @@ test "densearith: dmp_add_term parity" {
   let f = @sympolys.dense_poly([poly_int([1, 2]), poly_int([3])])
   let c = poly_int([1])
   let ours = dmp_repr(@sympolys.dmp_add_term(f, c, 2, 1, Domain::ZZ))
-  let oracle = dmp_add_term(
-    dense_data_of(f),
-    dense_data_of(c),
-    2,
-    1,
-  )
+  let oracle = dmp_add_term(dense_data_of(f), dense_data_of(c), 2, 1)
   assert_eq(ours, oracle)
   let zero_term = @sympolys.dmp_zero(0)
-  let ours_zero = dmp_repr(@sympolys.dmp_add_term(f, zero_term, 3, 1, Domain::ZZ))
+  let ours_zero = dmp_repr(
+    @sympolys.dmp_add_term(f, zero_term, 3, 1, Domain::ZZ),
+  )
   let oracle_zero = dmp_add_term(
     dense_data_of(f),
     dense_data_of(zero_term),
@@ -274,12 +260,7 @@ test "densearith: dmp_sub_term parity" {
   let f = @sympolys.dense_poly([poly_int([1, 2]), poly_int([3])])
   let c = poly_int([2])
   let ours = dmp_repr(@sympolys.dmp_sub_term(f, c, 1, 1, Domain::ZZ))
-  let oracle = dmp_sub_term(
-    dense_data_of(f),
-    dense_data_of(c),
-    1,
-    1,
-  )
+  let oracle = dmp_sub_term(dense_data_of(f), dense_data_of(c), 1, 1)
   assert_eq(ours, oracle)
 }
 
@@ -288,12 +269,7 @@ test "densearith: dmp_mul_term parity" {
   let f = @sympolys.dense_poly([poly_int([1, 2]), poly_int([3])])
   let c = poly_int([2])
   let ours = dmp_repr(@sympolys.dmp_mul_term(f, c, 1, 1, Domain::ZZ))
-  let oracle = dmp_mul_term(
-    dense_data_of(f),
-    dense_data_of(c),
-    1,
-    1,
-  )
+  let oracle = dmp_mul_term(dense_data_of(f), dense_data_of(c), 1, 1)
   assert_eq(ours, oracle)
 }
 
@@ -313,7 +289,9 @@ test "densearith: dmp_ground ops parity" {
     poly_fe([feqq(1, 5), feqq(2, 5)]),
     poly_fe([feqq(3, 5)]),
   ])
-  let ours_mul_q = dmp_repr(@sympolys.dmp_mul_ground(fqq, feqq(2, 3), 1, Domain::QQ))
+  let ours_mul_q = dmp_repr(
+    @sympolys.dmp_mul_ground(fqq, feqq(2, 3), 1, Domain::QQ),
+  )
   let oracle_mul_q = dmp_mul_ground(
     dense_data_of(fqq),
     br_rat(2, 3),
@@ -427,17 +405,17 @@ test "densearith: dmp_pdiv/prem/pquo/pexquo parity" {
   let oracle_pquo = dmp_pquo(dense_data_of(f), dense_data_of(g), 1)
   assert_eq(ours_pquo, oracle_pquo)
   let ours_pex = dmp_repr(@sympolys.dmp_pexquo(f, g, 1, Domain::ZZ))
-  let oracle_pex = dmp_pexquo(
-    dense_data_of(f),
-    dense_data_of(g),
-    1,
-  )
+  let oracle_pex = dmp_pexquo(dense_data_of(f), dense_data_of(g), 1)
   assert_eq(ours_pex, oracle_pex)
 }
 
 ///|
 test "densearith: dmp_rr/ff/div family parity" {
-  let f = @sympolys.dense_poly([poly_int([1, 0, 0]), poly_int([0]), poly_int([1])])
+  let f = @sympolys.dense_poly([
+    poly_int([1, 0, 0]),
+    poly_int([0]),
+    poly_int([1]),
+  ])
   let g = @sympolys.dense_poly([poly_int([1, 0]), poly_int([-1])])
   let ours_rr = dmp_pair_repr(@sympolys.dmp_rr_div(f, g, 1, Domain::ZZ))
   let oracle_rr = dmp_rr_div(dense_data_of(f), dense_data_of(g), 1)
@@ -453,28 +431,13 @@ test "densearith: dmp_rr/ff/div family parity" {
   )
   assert_eq(ours_ff, oracle_ff)
   let ours_div = dmp_pair_repr(@sympolys.dmp_div(fq, gq, 0, Domain::QQ))
-  let oracle_div = dmp_div(
-    dense_data_of(fq),
-    dense_data_of(gq),
-    0,
-    domain="QQ",
-  )
+  let oracle_div = dmp_div(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ")
   assert_eq(ours_div, oracle_div)
   let ours_rem = dmp_repr(@sympolys.dmp_rem(fq, gq, 0, Domain::QQ))
-  let oracle_rem = dmp_rem(
-    dense_data_of(fq),
-    dense_data_of(gq),
-    0,
-    domain="QQ",
-  )
+  let oracle_rem = dmp_rem(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ")
   assert_eq(ours_rem, oracle_rem)
   let ours_quo = dmp_repr(@sympolys.dmp_quo(fq, gq, 0, Domain::QQ))
-  let oracle_quo = dmp_quo(
-    dense_data_of(fq),
-    dense_data_of(gq),
-    0,
-    domain="QQ",
-  )
+  let oracle_quo = dmp_quo(dense_data_of(fq), dense_data_of(gq), 0, domain="QQ")
   assert_eq(ours_quo, oracle_quo)
   let ours_ex = dmp_repr(@sympolys.dmp_exquo(fq, gq, 0, Domain::QQ))
   let oracle_ex = dmp_exquo(
@@ -488,19 +451,17 @@ test "densearith: dmp_rr/ff/div family parity" {
 
 ///|
 test "densearith: dmp_ff_div QQ multivariate u=1" {
-  let g = @sympolys.dense_poly([poly_fe([feqq(1, 1)]), poly_fe([feqq(1, 1), feqq(0, 1)])])
+  let g = @sympolys.dense_poly([
+    poly_fe([feqq(1, 1)]),
+    poly_fe([feqq(1, 1), feqq(0, 1)]),
+  ])
   let f = @sympolys.dense_poly([
     poly_fe([feqq(1, 1)]),
     poly_fe([feqq(2, 1), feqq(0, 1)]),
     poly_fe([feqq(1, 1), feqq(0, 1), feqq(0, 1)]),
   ])
   let ours = dmp_pair_repr(@sympolys.dmp_ff_div(f, g, 1, Domain::QQ))
-  let oracle = dmp_ff_div(
-    dense_data_of(f),
-    dense_data_of(g),
-    1,
-    domain="QQ",
-  )
+  let oracle = dmp_ff_div(dense_data_of(f), dense_data_of(g), 1, domain="QQ")
   assert_eq(ours, oracle)
 }
 

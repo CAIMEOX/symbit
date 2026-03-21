@@ -12,9 +12,7 @@
 fn represent_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
     Expr::Symbol(sym) => sym == name
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
       args.any(arg => represent_expr_contains_symbol(arg, name))
     Expr::Pow(base, exp) =>
       represent_expr_contains_symbol(base, name) ||
@@ -24,10 +22,7 @@ fn represent_expr_contains_symbol(expr : Expr, name : String) -> Bool {
 }
 
 ///|
-fn represent_linear_term_expr(
-  base : Expr,
-  coeff : @symnum.BigRational,
-) -> Expr {
+fn represent_linear_term_expr(base : Expr, coeff : @symnum.BigRational) -> Expr {
   if coeff.is_one() {
     base
   } else if coeff.neg_r().is_one() {
@@ -55,18 +50,14 @@ fn represent_linear_sum_expr(
 }
 
 ///|
-fn represent_delta_replacement(
-  coord_name : String,
-  arg : Expr,
-) -> Expr? {
+fn represent_delta_replacement(coord_name : String, arg : Expr) -> Expr? {
   match quantum_collect_linear_terms(arg) {
     Some((terms, const_coeff)) => {
       let others : Array[(Expr, @symnum.BigRational)] = []
       let mut coord_coeff : @symnum.BigRational? = None
       for term in terms {
         match term.0 {
-          Expr::Symbol(name) if name == coord_name =>
-            coord_coeff = Some(term.1)
+          Expr::Symbol(name) if name == coord_name => coord_coeff = Some(term.1)
           _ => others.push(term)
         }
       }
@@ -95,8 +86,7 @@ fn represent_integrate_coord_once(
     Expr::Mul(args) => {
       for idx in 0..<args.length() {
         match args[idx] {
-          Expr::Function("DiracDelta", delta_args) if delta_args.length() ==
-            1 =>
+          Expr::Function("DiracDelta", delta_args) if delta_args.length() == 1 =>
             match represent_delta_replacement(coord_name, delta_args[0]) {
               Some(replacement) => {
                 let rebuilt : Array[Expr] = []
@@ -124,10 +114,7 @@ fn represent_integrate_coord_once(
 }
 
 ///|
-fn represent_integrate_coord(
-  expr : Expr,
-  coord_name : String,
-) -> Expr {
+fn represent_integrate_coord(expr : Expr, coord_name : String) -> Expr {
   if !represent_expr_contains_symbol(expr, coord_name) {
     return expr
   }
@@ -204,7 +191,7 @@ pub fn integrate_result(
   }
   match represent_resolve_integration_basis(orig_expr, basis) {
     Some(basis_state) => {
-      let states = try Some(enumerate_states(basis_state, index_list=unities)) catch {
+      let states = Some(enumerate_states(basis_state, index_list=unities)) catch {
         _ => None
       }
       match states {

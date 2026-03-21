@@ -5,7 +5,7 @@ fn gaussopt_port_assert_expr_equal(
   _context : String,
 ) -> Unit raise {
   let ours = @symprint.to_string(lhs)
-  assert_true((expr_equal(ours, rhs)))
+  assert_true(expr_equal(ours, rhs))
 }
 
 ///|
@@ -18,7 +18,7 @@ fn gaussopt_port_assert_matrix_equal(
   for i in 0..<lhs.height() {
     for j in 0..<lhs.width() {
       let ours = @symprint.to_string(lhs.get(i, j))
-      assert_true((expr_equal(ours, rhs[idx])))
+      assert_true(expr_equal(ours, rhs[idx]))
       idx = idx + 1
     }
   }
@@ -120,9 +120,7 @@ test "physics.optics.gaussopt: beam property parity" {
   )
   gaussopt_port_assert_expr_equal(
     beam.radius(),
-    optics_gaussopt_eval(
-      "BeamParameter(wavelen, z, w=w_0).radius",
-    ),
+    optics_gaussopt_eval("BeamParameter(wavelen, z, w=w_0).radius"),
     "BeamParameter.radius parity",
   )
   gaussopt_port_assert_expr_equal(
@@ -137,9 +135,7 @@ test "physics.optics.gaussopt: beam property parity" {
   )
   gaussopt_port_assert_expr_equal(
     beam.divergence(),
-    optics_gaussopt_eval(
-      "BeamParameter(wavelen, z, w=w_0).divergence",
-    ),
+    optics_gaussopt_eval("BeamParameter(wavelen, z, w=w_0).divergence"),
     "BeamParameter.divergence parity",
   )
   gaussopt_port_assert_expr_equal(
@@ -166,23 +162,17 @@ test "physics.optics.gaussopt: beam transform parity" {
   let pushed = thin_lens(@symcore.int(2)).apply_beam(beam)
   gaussopt_port_assert_expr_equal(
     pushed.q(),
-    optics_gaussopt_eval(
-      "(ThinLens(2)*BeamParameter(3, 4, z_r=5)).q",
-    ),
+    optics_gaussopt_eval("(ThinLens(2)*BeamParameter(3, 4, z_r=5)).q"),
     "ThinLens*BeamParameter q parity",
   )
   gaussopt_port_assert_expr_equal(
     pushed.z(),
-    optics_gaussopt_eval(
-      "(ThinLens(2)*BeamParameter(3, 4, z_r=5)).z",
-    ),
+    optics_gaussopt_eval("(ThinLens(2)*BeamParameter(3, 4, z_r=5)).z"),
     "ThinLens*BeamParameter z parity",
   )
   gaussopt_port_assert_expr_equal(
     pushed.z_r(),
-    optics_gaussopt_eval(
-      "(ThinLens(2)*BeamParameter(3, 4, z_r=5)).z_r",
-    ),
+    optics_gaussopt_eval("(ThinLens(2)*BeamParameter(3, 4, z_r=5)).z_r"),
     "ThinLens*BeamParameter z_r parity",
   )
 }
@@ -234,23 +224,17 @@ test "physics.optics.gaussopt: utility parity" {
   let gb = conjugate_gauss_beams(l, w_i, w_o, f=Some(f))
   gaussopt_port_assert_expr_equal(
     gb.0,
-    optics_gaussopt_eval(
-      "conjugate_gauss_beams(l, w_i, w_o, f=f)[0]",
-    ),
+    optics_gaussopt_eval("conjugate_gauss_beams(l, w_i, w_o, f=f)[0]"),
     "conjugate_gauss_beams[0] parity",
   )
   gaussopt_port_assert_expr_equal(
     gb.1,
-    optics_gaussopt_eval(
-      "conjugate_gauss_beams(l, w_i, w_o, f=f)[1]",
-    ),
+    optics_gaussopt_eval("conjugate_gauss_beams(l, w_i, w_o, f=f)[1]"),
     "conjugate_gauss_beams[1] parity",
   )
   gaussopt_port_assert_expr_equal(
     gb.2,
-    optics_gaussopt_eval(
-      "conjugate_gauss_beams(l, w_i, w_o, f=f)[2]",
-    ),
+    optics_gaussopt_eval("conjugate_gauss_beams(l, w_i, w_o, f=f)[2]"),
     "conjugate_gauss_beams[2] parity",
   )
 }
