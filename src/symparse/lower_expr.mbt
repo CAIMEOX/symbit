@@ -48,6 +48,7 @@ fn options_with_evaluate(
     evaluate,
     implicit_multiplication: options.implicit_multiplication,
     implicit_application: options.implicit_application,
+    function_exponentiation: options.function_exponentiation,
     factorial_notation: options.factorial_notation,
     convert_equals_signs: options.convert_equals_signs,
   }
@@ -56,6 +57,42 @@ fn options_with_evaluate(
 ///|
 fn lookup_binding(context : ParseContext, name : String) -> Expr? {
   context.bindings.get(name)
+}
+
+///|
+fn lookup_global_binding(context : ParseContext, name : String) -> Expr? {
+  context.global_bindings.get(name)
+}
+
+///|
+fn lookup_effective_binding(context : ParseContext, name : String) -> Expr? {
+  match lookup_binding(context, name) {
+    Some(bound) => Some(bound)
+    None => lookup_global_binding(context, name)
+  }
+}
+
+///|
+fn lookup_callable_target_name(context : ParseContext, name : String) -> String {
+  match lookup_binding(context, name) {
+    Some(Expr::Symbol(target_name)) =>
+      if context_has_callable_name(context, name) {
+        target_name
+      } else {
+        name
+      }
+    Some(_) => name
+    None =>
+      match lookup_global_binding(context, name) {
+        Some(Expr::Symbol(target_name)) =>
+          if context_has_global_callable_name(context, name) {
+            target_name
+          } else {
+            name
+          }
+        Some(_) | None => name
+      }
+  }
 }
 
 ///|
@@ -311,7 +348,7 @@ pub fn lower_ast_in(
     Ast::Number(span~, text) => number_from_literal(text, span)
     Ast::Symbol(span~, name) => {
       ignore(span)
-      match lookup_binding(context, name) {
+      match lookup_effective_binding(context, name) {
         Some(bound) => bound
         None => symbol(name)
       }
@@ -392,17 +429,8 @@ pub fn lower_ast_in(
       match callee {
         Ast::Symbol(span~, name) => {
           ignore(span)
-          let function_name = match lookup_binding(context, name) {
-            Some(Expr::Symbol(target_name)) =>
-              if context_has_callable_name(context, name) {
-                target_name
-              } else {
-                name
-              }
-            _ => name
-          }
           make_function(
-            function_name,
+            lookup_callable_target_name(context, name),
             args.map(arg => lower_ast_in(arg, options, context)),
             options,
           )

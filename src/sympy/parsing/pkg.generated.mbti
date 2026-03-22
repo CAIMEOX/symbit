@@ -10,13 +10,13 @@ pub fn parse_expr_equiv(String, String) -> String raise
 
 pub fn parse_expr_equiv_stage2(String, String) -> String raise
 
-pub fn parse_expr_equiv_stage3(String, String, Array[String], binding_names? : Array[String], binding_exprs? : Array[String]) -> String raise
+pub fn parse_expr_equiv_stage3(String, String, Array[String], binding_names? : Array[String], binding_exprs? : Array[String], global_callable_names? : Array[String], global_binding_names? : Array[String], global_binding_exprs? : Array[String]) -> String raise
 
 pub fn parse_expr_sstr(String, evaluate? : Bool) -> String raise
 
 pub fn parse_expr_sstr_stage2(String, evaluate? : Bool) -> String raise
 
-pub fn parse_expr_sstr_stage3(String, Array[String], binding_names? : Array[String], binding_exprs? : Array[String], evaluate? : Bool) -> String raise
+pub fn parse_expr_sstr_stage3(String, Array[String], binding_names? : Array[String], binding_exprs? : Array[String], global_callable_names? : Array[String], global_binding_names? : Array[String], global_binding_exprs? : Array[String], evaluate? : Bool) -> String raise
 
 pub fn parsing_eval(String) -> @python.PyObjectEnum raise
 

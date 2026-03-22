@@ -8,6 +8,7 @@ fn stage2_options() -> ParseOptions {
   parse_options(
     implicit_multiplication=true,
     implicit_application=true,
+    function_exponentiation=true,
     factorial_notation=true,
     convert_equals_signs=true,
   )
@@ -39,6 +40,15 @@ fn stage3_context() -> ParseContext {
 ///|
 fn parse_repr_stage3(src : String) -> String raise {
   parse_repr_with(src, stage2_options(), stage3_context())
+}
+
+///|
+fn stage3_global_context() -> ParseContext {
+  parse_context(global_callable_names=["f", "sin"], global_bindings={
+    "a": @symcore.symbol("t"),
+    "f": @symcore.symbol("g"),
+    "sin": @symcore.symbol("g"),
+  })
 }
 
 ///|
@@ -135,6 +145,12 @@ test "symparse stage-2 implicit multiplication" {
     content="(* (+ sym:x 1) (+ sym:y 1))",
   )
   inspect(parse_repr_stage2("2sin(x)"), content="(* 2 (call sin sym:x))")
+  inspect(parse_repr_stage2("sin**2(x)"), content="(^ (call sin sym:x) 2)")
+  inspect(parse_repr_stage2("sin**2 x"), content="(^ (call sin sym:x) 2)")
+  inspect(
+    parse_repr_stage2("2sin**2 x**2"),
+    content="(* 2 (^ (call sin (^ sym:x 2)) 2))",
+  )
 }
 
 ///|
@@ -207,5 +223,42 @@ test "symparse stage-3 local bindings resolve symbols and override builtins" {
   inspect(
     parse_repr_with("sin x", stage2_options(), symbol_override),
     content="(* sym:x sym:z)",
+  )
+}
+
+///|
+test "symparse stage-3 global bindings participate in name resolution" {
+  inspect(
+    parse_repr_with("a + b", stage2_options(), stage3_global_context()),
+    content="(+ sym:b sym:t)",
+  )
+  inspect(
+    parse_repr_with("f(x)", stage2_options(), stage3_global_context()),
+    content="(call g sym:x)",
+  )
+  inspect(
+    parse_repr_with("f x", stage2_options(), stage3_global_context()),
+    content="(call g sym:x)",
+  )
+  inspect(
+    parse_repr_with("sin x", stage2_options(), stage3_global_context()),
+    content="(call g sym:x)",
+  )
+}
+
+///|
+test "symparse stage-3 local names shadow global names" {
+  let context = parse_context(
+    bindings={ "a": @symcore.symbol("z"), "sin": @symcore.symbol("w") },
+    global_callable_names=["sin"],
+    global_bindings={ "a": @symcore.symbol("t"), "sin": @symcore.symbol("g") },
+  )
+  inspect(
+    parse_repr_with("a + b", stage2_options(), context),
+    content="(+ sym:b sym:z)",
+  )
+  inspect(
+    parse_repr_with("sin x", stage2_options(), context),
+    content="(* sym:w sym:x)",
   )
 }

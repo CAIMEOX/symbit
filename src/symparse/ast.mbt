@@ -53,6 +53,7 @@ pub struct ParseOptions {
   evaluate : Bool
   implicit_multiplication : Bool
   implicit_application : Bool
+  function_exponentiation : Bool
   factorial_notation : Bool
   convert_equals_signs : Bool
 } derive(Eq, Show)
@@ -61,6 +62,8 @@ pub struct ParseOptions {
 pub struct ParseContext {
   callable_names : Array[String]
   bindings : Map[String, Expr]
+  global_callable_names : Array[String]
+  global_bindings : Map[String, Expr]
 } derive(Eq)
 
 ///|
@@ -70,6 +73,7 @@ pub fn default_parse_options() -> ParseOptions {
     evaluate: true,
     implicit_multiplication: false,
     implicit_application: false,
+    function_exponentiation: false,
     factorial_notation: false,
     convert_equals_signs: false,
   }
@@ -77,15 +81,27 @@ pub fn default_parse_options() -> ParseOptions {
 
 ///|
 pub fn default_parse_context() -> ParseContext {
-  ParseContext::{ callable_names: [], bindings: {} }
+  ParseContext::{
+    callable_names: [],
+    bindings: {},
+    global_callable_names: [],
+    global_bindings: {},
+  }
 }
 
 ///|
 pub fn parse_context(
   callable_names? : Array[String] = [],
   bindings? : Map[String, Expr] = {},
+  global_callable_names? : Array[String] = [],
+  global_bindings? : Map[String, Expr] = {},
 ) -> ParseContext {
-  ParseContext::{ callable_names, bindings }
+  ParseContext::{
+    callable_names,
+    bindings,
+    global_callable_names,
+    global_bindings,
+  }
 }
 
 ///|
@@ -94,6 +110,7 @@ pub fn parse_options(
   evaluate? : Bool = true,
   implicit_multiplication? : Bool = false,
   implicit_application? : Bool = false,
+  function_exponentiation? : Bool = false,
   factorial_notation? : Bool = false,
   convert_equals_signs? : Bool = false,
 ) -> ParseOptions {
@@ -102,6 +119,7 @@ pub fn parse_options(
     evaluate,
     implicit_multiplication,
     implicit_application,
+    function_exponentiation,
     factorial_notation,
     convert_equals_signs,
   }

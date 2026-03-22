@@ -25,16 +25,30 @@ fn assert_sympy_parse_matches_stage3(
   callable_names : Array[String],
   binding_names? : Array[String] = [],
   binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
 ) -> Unit raise {
   let bindings : Map[String, @symcore.Expr] = {}
   for i in 0..<binding_names.length() {
     bindings[binding_names[i]] = parse_expr(binding_exprs[i])
   }
+  let global_bindings : Map[String, @symcore.Expr] = {}
+  for i in 0..<global_binding_names.length() {
+    global_bindings[global_binding_names[i]] = parse_expr(
+      global_binding_exprs[i],
+    )
+  }
   let ours = @symprint.to_string(
     parse_expr_in(
       src,
       stage2_options(),
-      parse_context(callable_names~, bindings~),
+      parse_context(
+        callable_names~,
+        bindings~,
+        global_callable_names~,
+        global_bindings~,
+      ),
     ),
   )
   let oracle = parse_expr_sstr_stage3(
@@ -42,6 +56,9 @@ fn assert_sympy_parse_matches_stage3(
     callable_names,
     binding_names~,
     binding_exprs~,
+    global_callable_names~,
+    global_binding_names~,
+    global_binding_exprs~,
   )
   inspect(ours, content=oracle)
 }
@@ -61,6 +78,9 @@ test "symparse parity stage-2 transformed syntax" {
   assert_sympy_parse_matches_stage2("2x")
   assert_sympy_parse_matches_stage2("x(y + 1)")
   assert_sympy_parse_matches_stage2("2sin(x)")
+  assert_sympy_parse_matches_stage2("sin**2(x)")
+  assert_sympy_parse_matches_stage2("sin**2 x")
+  assert_sympy_parse_matches_stage2("2sin**2 x**2")
   assert_sympy_parse_matches_stage2("sin x")
   assert_sympy_parse_matches_stage2("sin x y")
   assert_sympy_parse_matches_stage2("x!")
@@ -93,6 +113,32 @@ test "symparse parity stage-3 callable context" {
   assert_sympy_parse_matches_stage3("sin x", [], binding_names=["sin"], binding_exprs=[
     "z",
   ])
+  assert_sympy_parse_matches_stage3("a + b", [], global_binding_names=["a"], global_binding_exprs=[
+    "t",
+  ])
+  assert_sympy_parse_matches_stage3(
+    "f(x)",
+    [],
+    global_callable_names=["f"],
+    global_binding_names=["f"],
+    global_binding_exprs=["g"],
+  )
+  assert_sympy_parse_matches_stage3(
+    "f x",
+    [],
+    global_callable_names=["f"],
+    global_binding_names=["f"],
+    global_binding_exprs=["g"],
+  )
+  assert_sympy_parse_matches_stage3(
+    "sin x",
+    [],
+    binding_names=["sin"],
+    binding_exprs=["w"],
+    global_callable_names=["sin"],
+    global_binding_names=["sin"],
+    global_binding_exprs=["g"],
+  )
 }
 
 ///|

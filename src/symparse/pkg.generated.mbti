@@ -26,7 +26,7 @@ pub fn parse_ast_in(String, ParseOptions, ParseContext) -> Ast raise ParseError
 
 pub fn parse_ast_with(String, ParseOptions) -> Ast raise ParseError
 
-pub fn parse_context(callable_names? : Array[String], bindings? : Map[String, @symcore.Expr]) -> ParseContext
+pub fn parse_context(callable_names? : Array[String], bindings? : Map[String, @symcore.Expr], global_callable_names? : Array[String], global_bindings? : Map[String, @symcore.Expr]) -> ParseContext
 
 pub fn parse_expr(String) -> @symcore.Expr raise ParseError
 
@@ -34,7 +34,7 @@ pub fn parse_expr_in(String, ParseOptions, ParseContext) -> @symcore.Expr raise 
 
 pub fn parse_expr_with(String, ParseOptions) -> @symcore.Expr raise ParseError
 
-pub fn parse_options(caret_as_power? : Bool, evaluate? : Bool, implicit_multiplication? : Bool, implicit_application? : Bool, factorial_notation? : Bool, convert_equals_signs? : Bool) -> ParseOptions
+pub fn parse_options(caret_as_power? : Bool, evaluate? : Bool, implicit_multiplication? : Bool, implicit_application? : Bool, function_exponentiation? : Bool, factorial_notation? : Bool, convert_equals_signs? : Bool) -> ParseOptions
 
 pub fn span(Int, Int) -> Span
 
@@ -90,6 +90,8 @@ pub impl Show for CompareOp
 pub struct ParseContext {
   callable_names : Array[String]
   bindings : Map[String, @symcore.Expr]
+  global_callable_names : Array[String]
+  global_bindings : Map[String, @symcore.Expr]
 }
 pub impl Eq for ParseContext
 
@@ -98,6 +100,7 @@ pub struct ParseOptions {
   evaluate : Bool
   implicit_multiplication : Bool
   implicit_application : Bool
+  function_exponentiation : Bool
   factorial_notation : Bool
   convert_equals_signs : Bool
 }

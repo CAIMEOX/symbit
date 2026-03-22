@@ -158,7 +158,7 @@ fn binding_lookup(
 }
 
 ///|
-fn locals_literal(
+fn dict_literal(
   callable_names : Array[String],
   binding_names : Array[String],
   binding_exprs : Array[String],
@@ -186,6 +186,7 @@ fn parse_expr_sstr_with(
   src : String,
   transformations : String,
   local_dict_literal : String,
+  global_dict_literal : String,
   evaluate : Bool,
 ) -> String raise {
   let evaluate_text = if evaluate { "True" } else { "False" }
@@ -194,12 +195,20 @@ fn parse_expr_sstr_with(
   } else {
     ", local_dict=" + local_dict_literal
   }
+  let global_dict_clause = if global_dict_literal == "{}" {
+    ""
+  } else {
+    ", global_dict=dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")"
+  }
   parsing_eval_str(
     "sympy.sstr(sympy.parsing.sympy_parser.parse_expr(" +
     python_string_literal(src) +
     ", transformations=" +
     transformations +
     local_dict_clause +
+    global_dict_clause +
     ", evaluate=" +
     evaluate_text +
     "))",
@@ -213,13 +222,19 @@ pub fn parse_expr_equiv_stage3(
   callable_names : Array[String],
   binding_names? : Array[String] = [],
   binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
 ) -> String raise {
   let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
     "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
     "sympy.parsing.sympy_parser.factorial_notation, " +
     "sympy.parsing.sympy_parser.convert_equals_signs)"
-  let local_dict_literal = locals_literal(
+  let local_dict_literal = dict_literal(
     callable_names, binding_names, binding_exprs,
+  )
+  let global_dict_literal = dict_literal(
+    global_callable_names, global_binding_names, global_binding_exprs,
   )
   parsing_eval_str(
     "sympy.sstr(sympy.simplify(" +
@@ -229,12 +244,20 @@ pub fn parse_expr_equiv_stage3(
     transforms +
     ", local_dict=" +
     local_dict_literal +
+    ", global_dict=" +
+    "dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")" +
     ") - sympy.parsing.sympy_parser.parse_expr(" +
     python_string_literal(rhs_src) +
     ", transformations=" +
     transforms +
     ", local_dict=" +
     local_dict_literal +
+    ", global_dict=" +
+    "dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")" +
     ")))",
   )
 }
@@ -248,7 +271,7 @@ pub fn parse_expr_sstr_stage2(
     "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
     "sympy.parsing.sympy_parser.factorial_notation, " +
     "sympy.parsing.sympy_parser.convert_equals_signs)"
-  parse_expr_sstr_with(src, transforms, "{}", evaluate)
+  parse_expr_sstr_with(src, transforms, "{}", "{}", evaluate)
 }
 
 ///|
@@ -257,6 +280,9 @@ pub fn parse_expr_sstr_stage3(
   callable_names : Array[String],
   binding_names? : Array[String] = [],
   binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
   evaluate? : Bool = true,
 ) -> String raise {
   let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
@@ -266,7 +292,10 @@ pub fn parse_expr_sstr_stage3(
   parse_expr_sstr_with(
     src,
     transforms,
-    locals_literal(callable_names, binding_names, binding_exprs),
+    dict_literal(callable_names, binding_names, binding_exprs),
+    dict_literal(
+      global_callable_names, global_binding_names, global_binding_exprs,
+    ),
     evaluate,
   )
 }

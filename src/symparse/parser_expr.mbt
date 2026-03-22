@@ -155,8 +155,26 @@ fn context_has_callable_name(context : ParseContext, name : String) -> Bool {
 }
 
 ///|
+fn context_has_global_callable_name(
+  context : ParseContext,
+  name : String,
+) -> Bool {
+  for callable_name in context.global_callable_names {
+    if callable_name == name {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn context_has_binding(context : ParseContext, name : String) -> Bool {
   context.bindings.get(name) is Some(_)
+}
+
+///|
+fn context_has_global_binding(context : ParseContext, name : String) -> Bool {
+  context.global_bindings.get(name) is Some(_)
 }
 
 ///|
@@ -166,9 +184,14 @@ fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
       ignore(span)
       if context_has_binding(context, name) {
         context_has_callable_name(context, name)
+      } else if context_has_callable_name(context, name) {
+        true
+      } else if context_has_global_binding(context, name) {
+        context_has_global_callable_name(context, name)
+      } else if context_has_global_callable_name(context, name) {
+        true
       } else {
-        is_builtin_callable_name(name) ||
-        context_has_callable_name(context, name)
+        is_builtin_callable_name(name)
       }
     }
     _ => false
@@ -284,6 +307,40 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
 }
 
 ///|
+fn Parser::match_power_token(self : Parser) -> Token? {
+  match self.peek().kind {
+    TokenKind::Pow => Some(self.advance())
+    TokenKind::Caret if self.options.caret_as_power => Some(self.advance())
+    _ => None
+  }
+}
+
+///|
+fn Parser::parse_function_exponentiation(
+  self : Parser,
+  base : Ast,
+) -> Ast raise ParseError {
+  let exponent = self.parse_binary(40)
+  let called = self.parse_postfix(base)
+  match called {
+    Ast::Call(span~, _, _) =>
+      Ast::Binary(
+        span=span_merge(span, ast_span(exponent)),
+        BinaryOp::Pow,
+        called,
+        exponent,
+      )
+    _ =>
+      Ast::Binary(
+        span=span_merge(ast_span(base), ast_span(exponent)),
+        BinaryOp::Pow,
+        base,
+        exponent,
+      )
+  }
+}
+
+///|
 fn Parser::parse_prefix(self : Parser) -> Ast raise ParseError {
   let tok = self.peek()
   match tok.kind {
@@ -315,7 +372,14 @@ fn Parser::parse_prefix(self : Parser) -> Ast raise ParseError {
     }
     TokenKind::Ident(name) => {
       ignore(self.advance())
-      self.parse_postfix(Ast::Symbol(span=tok.span, name))
+      let base = Ast::Symbol(span=tok.span, name)
+      if self.options.function_exponentiation &&
+        ast_is_known_callable(base, self.context) &&
+        self.match_power_token() is Some(_) {
+        self.parse_function_exponentiation(base)
+      } else {
+        self.parse_postfix(base)
+      }
     }
     TokenKind::LParen => {
       let start = self.advance()
