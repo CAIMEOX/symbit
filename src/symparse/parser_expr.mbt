@@ -81,9 +81,11 @@ fn binary_info(
 }
 
 ///|
-fn compare_op(kind : TokenKind) -> CompareOp? {
+fn compare_op(kind : TokenKind, options : ParseOptions) -> CompareOp? {
   match kind {
+    TokenKind::Eq if options.convert_equals_signs => Some(CompareOp::Eq)
     TokenKind::EqEq => Some(CompareOp::EqEq)
+    TokenKind::Ne => Some(CompareOp::Ne)
     TokenKind::Lt => Some(CompareOp::Lt)
     TokenKind::Le => Some(CompareOp::Le)
     TokenKind::Gt => Some(CompareOp::Gt)
@@ -126,6 +128,7 @@ fn is_builtin_callable_name(name : String) -> Bool {
     | "sqrt"
     | "Abs"
     | "factorial"
+    | "factorial2"
     | "gamma"
     | "erf"
     | "erfc"
@@ -259,7 +262,36 @@ fn Parser::should_parse_explicit_call(self : Parser, callee : Ast) -> Bool {
   if !self.options.implicit_multiplication {
     return true
   }
-  ast_is_known_callable(callee, self.context)
+  ast_is_known_callable(callee, self.context) ||
+  self.parenthesized_args_require_call()
+}
+
+///|
+fn Parser::parenthesized_args_require_call(self : Parser) -> Bool {
+  let mut depth = 0
+  let mut i = self.index
+  while i < self.tokens.length() {
+    match self.tokens[i].kind {
+      TokenKind::LParen => {
+        depth += 1
+        if depth == 1 &&
+          i + 1 < self.tokens.length() &&
+          token_tag_eq(self.tokens[i + 1].kind, TokenKind::RParen) {
+          return true
+        }
+      }
+      TokenKind::RParen => {
+        depth -= 1
+        if depth == 0 {
+          return false
+        }
+      }
+      TokenKind::Comma if depth == 1 => return true
+      _ => ()
+    }
+    i += 1
+  }
+  false
 }
 
 ///|
@@ -290,6 +322,10 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
       let args = self.parse_call_args()
       let end_span = self.tokens[self.index - 1].span
       expr = Ast::Call(span=span_merge(ast_span(expr), end_span), expr, args)
+    } else if self.options.factorial_notation &&
+      self.match_kind(TokenKind::BangBang) is Some(tok) {
+      let callee = Ast::Symbol(span=tok.span, "factorial2")
+      expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
     } else if self.options.factorial_notation &&
       self.match_kind(TokenKind::Bang) is Some(tok) {
       let callee = Ast::Symbol(span=tok.span, "factorial")
@@ -424,14 +460,14 @@ fn Parser::parse_binary(self : Parser, min_prec : Int) -> Ast raise ParseError {
 ///|
 fn Parser::parse_compare(self : Parser) -> Ast raise ParseError {
   let first = self.parse_binary(0)
-  if !token_is_compare(self.peek().kind) {
+  if compare_op(self.peek().kind, self.options) is None {
     return first
   }
   let exprs : Array[Ast] = [first]
   let ops : Array[CompareOp] = []
   let mut end_span = ast_span(first)
   while true {
-    match compare_op(self.peek().kind) {
+    match compare_op(self.peek().kind, self.options) {
       Some(op) => {
         ignore(self.advance())
         let rhs = self.parse_binary(0)
@@ -467,19 +503,6 @@ pub fn parse_ast_in(
   let p = parser(lex(src), options, context)
   let expr = p.parse_compare()
   match p.peek().kind {
-    TokenKind::Eq if options.convert_equals_signs => {
-      ignore(p.advance())
-      let rhs = p.parse_compare()
-      match p.peek().kind {
-        TokenKind::Eof =>
-          Ast::Compare(
-            span=span_merge(ast_span(expr), ast_span(rhs)),
-            [expr, rhs],
-            [CompareOp::Eq],
-          )
-        _ => raise unexpected_token(p.peek(), "end of input")
-      }
-    }
     TokenKind::Eof => expr
     _ => raise unexpected_token(p.peek(), "end of input")
   }

@@ -10,11 +10,13 @@ pub enum TokenKind {
   Pow
   Caret
   Bang
+  BangBang
   LParen
   RParen
   Comma
   Eq
   EqEq
+  Ne
   Lt
   Le
   Gt
@@ -46,11 +48,13 @@ pub fn token_kind_name(kind : TokenKind) -> String {
     TokenKind::Pow => "`**`"
     TokenKind::Caret => "`^`"
     TokenKind::Bang => "`!`"
+    TokenKind::BangBang => "`!!`"
     TokenKind::LParen => "`(`"
     TokenKind::RParen => "`)`"
     TokenKind::Comma => "`,`"
     TokenKind::Eq => "`=`"
     TokenKind::EqEq => "`==`"
+    TokenKind::Ne => "`!=`"
     TokenKind::Lt => "`<`"
     TokenKind::Le => "`<=`"
     TokenKind::Gt => "`>`"
@@ -62,16 +66,4 @@ pub fn token_kind_name(kind : TokenKind) -> String {
 ///|
 fn token_tag_eq(lhs : TokenKind, rhs : TokenKind) -> Bool {
   token_kind_name(lhs) == token_kind_name(rhs)
-}
-
-///|
-fn token_is_compare(kind : TokenKind) -> Bool {
-  match kind {
-    TokenKind::EqEq
-    | TokenKind::Lt
-    | TokenKind::Le
-    | TokenKind::Gt
-    | TokenKind::Ge => true
-    _ => false
-  }
 }

@@ -1,5 +1,6 @@
 ///|
 using @symparse {
+  default_parse_options,
   type ParseContext,
   type ParseError,
   type ParseOptions,

@@ -53,6 +53,15 @@ fn python_string_literal(value : String) -> String {
 }
 
 ///|
+fn full_transformations() -> String {
+  "sympy.parsing.sympy_parser.standard_transformations + " +
+  "(sympy.parsing.sympy_parser.convert_xor, " +
+  "sympy.parsing.sympy_parser.implicit_multiplication_application, " +
+  "sympy.parsing.sympy_parser.factorial_notation, " +
+  "sympy.parsing.sympy_parser.convert_equals_signs)"
+}
+
+///|
 pub fn parsing_eval(expr : String) -> @py.PyObjectEnum raise {
   let state = py_gil_ensure()
   let res = try {
@@ -94,53 +103,6 @@ pub fn parsing_eval(expr : String) -> @py.PyObjectEnum raise {
 ///|
 pub fn parsing_eval_str(expr : String) -> String raise {
   py_str_obj(objenum_to_obj(parsing_eval(expr)))
-}
-
-///|
-pub fn parse_expr_sstr(src : String, evaluate? : Bool = true) -> String raise {
-  let evaluate_text = if evaluate { "True" } else { "False" }
-  parsing_eval_str(
-    "sympy.sstr(sympy.parsing.sympy_parser.parse_expr(" +
-    python_string_literal(src) +
-    ", evaluate=" +
-    evaluate_text +
-    "))",
-  )
-}
-
-///|
-pub fn parse_expr_equiv(lhs_src : String, rhs_src : String) -> String raise {
-  parsing_eval_str(
-    "sympy.sstr(sympy.simplify(" +
-    "sympy.parsing.sympy_parser.parse_expr(" +
-    python_string_literal(lhs_src) +
-    ") - sympy.parsing.sympy_parser.parse_expr(" +
-    python_string_literal(rhs_src) +
-    ")))",
-  )
-}
-
-///|
-pub fn parse_expr_equiv_stage2(
-  lhs_src : String,
-  rhs_src : String,
-) -> String raise {
-  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
-    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
-    "sympy.parsing.sympy_parser.factorial_notation, " +
-    "sympy.parsing.sympy_parser.convert_equals_signs)"
-  parsing_eval_str(
-    "sympy.sstr(sympy.simplify(" +
-    "sympy.parsing.sympy_parser.parse_expr(" +
-    python_string_literal(lhs_src) +
-    ", transformations=" +
-    transforms +
-    ") - sympy.parsing.sympy_parser.parse_expr(" +
-    python_string_literal(rhs_src) +
-    ", transformations=" +
-    transforms +
-    ")))",
-  )
 }
 
 ///|
@@ -216,7 +178,29 @@ fn parse_expr_sstr_with(
 }
 
 ///|
-pub fn parse_expr_equiv_stage3(
+pub fn parse_expr_sstr(src : String, evaluate? : Bool = true) -> String raise {
+  parse_expr_sstr_with(src, full_transformations(), "{}", "{}", evaluate)
+}
+
+///|
+pub fn parse_expr_equiv(lhs_src : String, rhs_src : String) -> String raise {
+  let transforms = full_transformations()
+  parsing_eval_str(
+    "sympy.sstr(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ")))",
+  )
+}
+
+///|
+pub fn parse_expr_equiv_in(
   lhs_src : String,
   rhs_src : String,
   callable_names : Array[String],
@@ -226,10 +210,7 @@ pub fn parse_expr_equiv_stage3(
   global_binding_names? : Array[String] = [],
   global_binding_exprs? : Array[String] = [],
 ) -> String raise {
-  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
-    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
-    "sympy.parsing.sympy_parser.factorial_notation, " +
-    "sympy.parsing.sympy_parser.convert_equals_signs)"
+  let transforms = full_transformations()
   let local_dict_literal = dict_literal(
     callable_names, binding_names, binding_exprs,
   )
@@ -263,19 +244,7 @@ pub fn parse_expr_equiv_stage3(
 }
 
 ///|
-pub fn parse_expr_sstr_stage2(
-  src : String,
-  evaluate? : Bool = true,
-) -> String raise {
-  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
-    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
-    "sympy.parsing.sympy_parser.factorial_notation, " +
-    "sympy.parsing.sympy_parser.convert_equals_signs)"
-  parse_expr_sstr_with(src, transforms, "{}", "{}", evaluate)
-}
-
-///|
-pub fn parse_expr_sstr_stage3(
+pub fn parse_expr_sstr_in(
   src : String,
   callable_names : Array[String],
   binding_names? : Array[String] = [],
@@ -285,13 +254,9 @@ pub fn parse_expr_sstr_stage3(
   global_binding_exprs? : Array[String] = [],
   evaluate? : Bool = true,
 ) -> String raise {
-  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
-    "(sympy.parsing.sympy_parser.implicit_multiplication_application, " +
-    "sympy.parsing.sympy_parser.factorial_notation, " +
-    "sympy.parsing.sympy_parser.convert_equals_signs)"
   parse_expr_sstr_with(
     src,
-    transforms,
+    full_transformations(),
     dict_literal(callable_names, binding_names, binding_exprs),
     dict_literal(
       global_callable_names, global_binding_names, global_binding_exprs,

@@ -17,6 +17,7 @@ pub enum BinaryOp {
 pub enum CompareOp {
   Eq
   EqEq
+  Ne
   Lt
   Le
   Gt
@@ -71,11 +72,11 @@ pub fn default_parse_options() -> ParseOptions {
   ParseOptions::{
     caret_as_power: true,
     evaluate: true,
-    implicit_multiplication: false,
-    implicit_application: false,
-    function_exponentiation: false,
-    factorial_notation: false,
-    convert_equals_signs: false,
+    implicit_multiplication: true,
+    implicit_application: true,
+    function_exponentiation: true,
+    factorial_notation: true,
+    convert_equals_signs: true,
   }
 }
 
@@ -108,11 +109,11 @@ pub fn parse_context(
 pub fn parse_options(
   caret_as_power? : Bool = true,
   evaluate? : Bool = true,
-  implicit_multiplication? : Bool = false,
-  implicit_application? : Bool = false,
-  function_exponentiation? : Bool = false,
-  factorial_notation? : Bool = false,
-  convert_equals_signs? : Bool = false,
+  implicit_multiplication? : Bool = true,
+  implicit_application? : Bool = true,
+  function_exponentiation? : Bool = true,
+  factorial_notation? : Bool = true,
+  convert_equals_signs? : Bool = true,
 ) -> ParseOptions {
   ParseOptions::{
     caret_as_power,

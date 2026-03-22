@@ -131,6 +131,7 @@ fn negate_expr(expr : Expr, options : ParseOptions) -> Expr {
 fn relation_name(op : CompareOp) -> String {
   match op {
     CompareOp::Eq | CompareOp::EqEq => "Eq"
+    CompareOp::Ne => "Ne"
     CompareOp::Lt => "Lt"
     CompareOp::Le => "Le"
     CompareOp::Gt => "Gt"
@@ -147,6 +148,7 @@ fn compare_numeric(
   let cmp = lhs.compare(rhs)
   match op {
     CompareOp::Eq | CompareOp::EqEq => cmp == 0
+    CompareOp::Ne => cmp != 0
     CompareOp::Lt => cmp < 0
     CompareOp::Le => cmp <= 0
     CompareOp::Gt => cmp > 0
@@ -222,6 +224,13 @@ fn lower_compare_pair(
       return bool_expr(lhs_eval == rhs_eval)
     } else {
       return make_function("Eq", [lhs, rhs], options)
+    }
+  }
+  if op is CompareOp::Ne {
+    if options.evaluate {
+      return bool_expr(lhs_eval != rhs_eval)
+    } else {
+      return make_function("Ne", [lhs, rhs], options)
     }
   }
   if op is CompareOp::Eq {
@@ -305,32 +314,90 @@ fn pow10(count : Int) -> BigInt {
 }
 
 ///|
+fn split_exponent_literal(text : String) -> (String, String)? {
+  match text.split_once("e") {
+    Some((mantissa, exponent)) =>
+      Some((mantissa.to_string(), exponent.to_string()))
+    None =>
+      match text.split_once("E") {
+        Some((mantissa, exponent)) =>
+          Some((mantissa.to_string(), exponent.to_string()))
+        None => None
+      }
+  }
+}
+
+///|
+fn decimal_rational_from_literal(
+  text : String,
+  source_span : Span,
+) -> @symnum.BigRational raise ParseError {
+  let (whole_s0, frac_s, repeat_s) = decimal_parts(text)
+  let whole_s = if whole_s0 == "" { "0" } else { whole_s0 }
+  let (numerator, denominator) = if repeat_s == "" {
+    let digits = whole_s + frac_s
+    (BigInt::from_string(digits), pow10(frac_s.length()))
+  } else {
+    let prefix_digits = whole_s + frac_s
+    let expanded_digits = prefix_digits + repeat_s
+    let repeated_scale = pow10(repeat_s.length()) - BigInt::from_int(1)
+    (
+      BigInt::from_string(expanded_digits) - BigInt::from_string(prefix_digits),
+      pow10(frac_s.length()) * repeated_scale,
+    )
+  }
+  @symnum.BigRational::new(numerator, denominator) catch {
+    _ => raise ParseError::InvalidNumber(span=source_span, text)
+  }
+}
+
+///|
+fn scale_rational_by_pow10(
+  value : @symnum.BigRational,
+  exponent : Int,
+  source_span : Span,
+  text : String,
+) -> @symnum.BigRational raise ParseError {
+  if exponent == 0 {
+    return value
+  }
+  let factor = pow10(exponent.abs())
+  if exponent > 0 {
+    @symnum.BigRational::new(value.numerator() * factor, value.denominator()) catch {
+      _ => raise ParseError::InvalidNumber(span=source_span, text)
+    }
+  } else {
+    @symnum.BigRational::new(value.numerator(), value.denominator() * factor) catch {
+      _ => raise ParseError::InvalidNumber(span=source_span, text)
+    }
+  }
+}
+
+///|
 fn number_from_literal(
   text : String,
   source_span : Span,
 ) -> Expr raise ParseError {
-  if text.contains(".") {
-    let (whole_s0, frac_s, repeat_s) = decimal_parts(text)
-    let whole_s = if whole_s0 == "" { "0" } else { whole_s0 }
-    let (numerator, denominator) = if repeat_s == "" {
-      let digits = whole_s + frac_s
-      (BigInt::from_string(digits), pow10(frac_s.length()))
-    } else {
-      let prefix_digits = whole_s + frac_s
-      let expanded_digits = prefix_digits + repeat_s
-      let repeated_scale = pow10(repeat_s.length()) - BigInt::from_int(1)
-      (
-        BigInt::from_string(expanded_digits) -
-        BigInt::from_string(prefix_digits),
-        pow10(frac_s.length()) * repeated_scale,
-      )
+  let value = match split_exponent_literal(text) {
+    Some((mantissa_text, exponent_text)) => {
+      let exponent = @strconv.parse_int(exponent_text, base=10) catch {
+        _ => raise ParseError::InvalidNumber(span=source_span, text)
+      }
+      let mantissa = if mantissa_text.contains(".") {
+        decimal_rational_from_literal(mantissa_text, source_span)
+      } else {
+        @symnum.BigRational::from_bigint(BigInt::from_string(mantissa_text))
+      }
+      scale_rational_by_pow10(mantissa, exponent, source_span, text)
     }
-    @symcore.number(@symnum.BigRational::new(numerator, denominator)) catch {
-      _ => raise ParseError::InvalidNumber(span=source_span, text)
-    }
-  } else {
-    @symcore.number(@symnum.BigRational::from_bigint(BigInt::from_string(text)))
+    None =>
+      if text.contains(".") {
+        decimal_rational_from_literal(text, source_span)
+      } else {
+        @symnum.BigRational::from_bigint(BigInt::from_string(text))
+      }
   }
+  @symcore.number(value)
 }
 
 ///|
@@ -438,7 +505,7 @@ pub fn lower_ast_in(
         _ =>
           raise ParseError::UnsupportedConstruct(
             span~,
-            "stage-1 call lowering only accepts a simple function name",
+            "call lowering only accepts a simple function name",
           )
       }
     Ast::Tuple(span~, items) => {

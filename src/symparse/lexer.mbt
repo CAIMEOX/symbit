@@ -25,6 +25,7 @@ fn is_ascii_digit_at(src : String, index : Int) -> Bool {
 fn scan_number(src : String, start : Int) -> (TokenKind, Int) {
   let mut i = start
   let mut has_dot = false
+  let mut has_exponent = false
   if char_at(src, i) is Some('.') {
     has_dot = true
     i += 1
@@ -48,7 +49,28 @@ fn scan_number(src : String, start : Int) -> (TokenKind, Int) {
       i = j + 1
     }
   }
-  if has_dot {
+  match char_at(src, i) {
+    Some('e') | Some('E') => {
+      let exponent_start = i
+      let mut j = i + 1
+      match char_at(src, j) {
+        Some('+') | Some('-') => j += 1
+        _ => ()
+      }
+      let digit_start = j
+      while is_ascii_digit_at(src, j) {
+        j += 1
+      }
+      if j > digit_start {
+        has_exponent = true
+        i = j
+      } else {
+        i = exponent_start
+      }
+    }
+    _ => ()
+  }
+  if has_dot || has_exponent {
     (TokenKind::DecimalLit(src.unsafe_substring(start~, end=i)), i)
   } else {
     (TokenKind::IntLit(src.unsafe_substring(start~, end=i)), i)
@@ -118,7 +140,12 @@ pub fn lex(src : String) -> Array[Token] raise ParseError {
       ')' => (TokenKind::RParen, index + 1)
       ',' => (TokenKind::Comma, index + 1)
       '^' => (TokenKind::Caret, index + 1)
-      '!' => (TokenKind::Bang, index + 1)
+      '!' =>
+        match char_at(src, index + 1) {
+          Some('=') => (TokenKind::Ne, index + 2)
+          Some('!') => (TokenKind::BangBang, index + 2)
+          _ => (TokenKind::Bang, index + 1)
+        }
       '<' =>
         match char_at(src, index + 1) {
           Some('=') => (TokenKind::Le, index + 2)

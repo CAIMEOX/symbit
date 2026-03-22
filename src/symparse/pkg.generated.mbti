@@ -79,6 +79,7 @@ pub impl Show for BinaryOp
 pub enum CompareOp {
   Eq
   EqEq
+  Ne
   Lt
   Le
   Gt
@@ -132,11 +133,13 @@ pub enum TokenKind {
   Pow
   Caret
   Bang
+  BangBang
   LParen
   RParen
   Comma
   Eq
   EqEq
+  Ne
   Lt
   Le
   Gt

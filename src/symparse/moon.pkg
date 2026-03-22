@@ -1,4 +1,9 @@
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/strconv" @strconv,
 }
+
+import {
+  "CAIMEOX/symbit/symprint",
+} for "test"
