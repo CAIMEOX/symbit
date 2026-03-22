@@ -8,3 +8,10 @@ import {
 import {
   "CAIMEOX/qc_pyext",
 } for "test"
+
+options(
+  targets: {
+    "*.mbt": ["native"]
+  },
+  supported_targets : "native"
+)
