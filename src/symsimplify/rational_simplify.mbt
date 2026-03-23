@@ -212,16 +212,11 @@ fn rewrite_ratsimp(expr : Expr) -> Expr {
         nums.push(n)
         dens.push(d)
       }
-      let common_den = @symcore.mul(dens)
+      let common_den = lcm_denominator(dens)
       let num_terms : Array[Expr] = Array::new()
       for i in 0..<nums.length() {
-        let rest_dens : Array[Expr] = Array::new()
-        for j in 0..<dens.length() {
-          if i != j {
-            rest_dens.push(dens[j])
-          }
-        }
-        num_terms.push(@symcore.mul([nums[i], @symcore.mul(rest_dens)]))
+        let quotient = denominator_quotient(common_den, dens[i])
+        num_terms.push(@symcore.mul([nums[i], quotient]))
       }
       let num_sum = @symcore.add(num_terms)
       cancel_common_factors(
@@ -230,6 +225,89 @@ fn rewrite_ratsimp(expr : Expr) -> Expr {
     }
     _ => cancel_common_factors(expr)
   }
+}
+
+///|
+fn lcm_denominator(dens : Array[Expr]) -> Expr {
+  let counts : Map[String, Int] = {}
+  let factors : Map[String, Expr] = {}
+  for den in dens {
+    let local_counts = factor_count_map(den)
+    for key, count in local_counts {
+      match counts.get(key) {
+        Some(prev) => if count > prev { counts[key] = count }
+        None => counts[key] = count
+      }
+      factors[key] = factor_expr_by_key(den, key)
+    }
+  }
+  factors_from_counts(counts, factors)
+}
+
+///|
+fn denominator_quotient(common_den : Expr, den : Expr) -> Expr {
+  let common_counts = factor_count_map(common_den)
+  let common_factors = factor_expr_map(common_den)
+  let local_counts = factor_count_map(den)
+  let out_counts : Map[String, Int] = {}
+  for key, total in common_counts {
+    let used = match local_counts.get(key) {
+      Some(count) => count
+      None => 0
+    }
+    let remain = total - used
+    if remain > 0 {
+      out_counts[key] = remain
+    }
+  }
+  factors_from_counts(out_counts, common_factors)
+}
+
+///|
+fn factor_count_map(expr : Expr) -> Map[String, Int] {
+  let counts : Map[String, Int] = {}
+  for factor in flatten_mul_nonunit(expr) {
+    let key = @symprint.debug_repr(factor)
+    match counts.get(key) {
+      Some(prev) => counts[key] = prev + 1
+      None => counts[key] = 1
+    }
+  }
+  counts
+}
+
+///|
+fn factor_expr_map(expr : Expr) -> Map[String, Expr] {
+  let factors : Map[String, Expr] = {}
+  for factor in flatten_mul_nonunit(expr) {
+    let key = @symprint.debug_repr(factor)
+    factors[key] = factor
+  }
+  factors
+}
+
+///|
+fn factor_expr_by_key(expr : Expr, key : String) -> Expr {
+  for factor in flatten_mul_nonunit(expr) {
+    if @symprint.debug_repr(factor) == key {
+      return factor
+    }
+  }
+  expr
+}
+
+///|
+fn factors_from_counts(
+  counts : Map[String, Int],
+  factors : Map[String, Expr],
+) -> Expr {
+  let out : Array[Expr] = Array::new()
+  for key, count in counts {
+    for _ in 0..<count {
+      out.push(factors[key])
+    }
+  }
+  @symcore.mul(out)
 }
 
 ///|
@@ -360,11 +438,19 @@ fn split_fraction(expr : Expr) -> (Expr, Expr) {
 ///|
 fn cancel_common_factors(expr : Expr) -> Expr {
   let (num, den) = split_fraction(expr)
-  let nfs = flatten_mul_factors(num)
-  let dfs = flatten_mul_factors(den)
+  let simp_num = factor_terms_simple(
+    signsimp(expand_mul_expr(num), max_passes=2),
+  )
+  let simp_den = factor_terms_simple(
+    signsimp(expand_mul_expr(den), max_passes=2),
+  )
+  let nfs = flatten_mul_nonunit(simp_num)
+  let dfs = flatten_mul_nonunit(simp_den)
   let den_count : Map[String, Int] = {}
+  let den_factor : Map[String, Expr] = {}
   for f in dfs {
     let key = @symprint.debug_repr(f)
+    den_factor[key] = f
     match den_count.get(key) {
       Some(c) => den_count[key] = c + 1
       None => den_count[key] = 1
@@ -383,13 +469,8 @@ fn cancel_common_factors(expr : Expr) -> Expr {
     if c <= 0 {
       continue
     }
-    // Rebuild factors from key by preserving original exact nodes from den list.
-    let mut left = c
-    for f in dfs {
-      if @symprint.debug_repr(f) == key && left > 0 {
-        kept_den.push(f)
-        left = left - 1
-      }
+    for _ in 0..<c {
+      kept_den.push(den_factor[key])
     }
   }
   let num_out = @symcore.mul(kept_num)
@@ -398,15 +479,6 @@ fn cancel_common_factors(expr : Expr) -> Expr {
     num_out
   } else {
     @symcore.mul([num_out, @symcore.pow(den_out, int(-1))])
-  }
-}
-
-///|
-fn flatten_mul_factors(expr : Expr) -> Array[Expr] {
-  match expr {
-    Expr::Mul(args) => args.map(x => x)
-    Expr::Number(n) if n.is_one() => []
-    _ => [expr]
   }
 }
 

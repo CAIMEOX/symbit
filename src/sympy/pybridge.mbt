@@ -70,7 +70,15 @@ fn sympy_constant_obj(name : String) -> @py.PyObject? {
 ///|
 fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
   match name {
-    "I" | "E" | "pi" | "oo" | "zoo" | "nan" =>
+    "I"
+    | "E"
+    | "pi"
+    | "oo"
+    | "zoo"
+    | "nan"
+    | "GoldenRatio"
+    | "EulerGamma"
+    | "Catalan" =>
       match sympy_constant_obj(name) {
         Some(obj) => obj
         None => sympy_symbol_obj(name)

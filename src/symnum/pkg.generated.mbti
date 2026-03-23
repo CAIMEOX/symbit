@@ -2,11 +2,281 @@
 package "CAIMEOX/symbit/symnum"
 
 import {
+  "CAIMEOX/moon_floating/ctx/mp",
+  "CAIMEOX/moon_floating/libmp/gammazeta",
+  "CAIMEOX/moon_floating/libmp/intmath",
+  "CAIMEOX/moon_floating/libmp/libelefun",
+  "CAIMEOX/moon_floating/libmp/libhyper",
+  "CAIMEOX/moon_floating/libmp/libmpi",
+  "CAIMEOX/moon_floating/libmp/mpc",
+  "CAIMEOX/moon_floating/libmp/mpf",
   "moonbitlang/core/bigint",
 }
 
 // Values
+pub fn diff((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, n? : Int, direction? : Int, algo? : String, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn dps_to_prec(Int) -> Int
+
+pub let fhalf : @mpf.RawMpf
+
+pub fn findroot((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, x1? : @mpf.RawMpf, tol? : @mpf.RawMpf, max_steps? : Int, solver? : String, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub let finf : @mpf.RawMpf
+
+pub let fnan : @mpf.RawMpf
+
+pub let fninf : @mpf.RawMpf
+
+pub let fnone : @mpf.RawMpf
+
+pub let fone : @mpf.RawMpf
+
+pub fn format_mpf(@mpf.RawMpf, String, dps? : Int) -> String raise @mpf.MpfError
+
+pub fn from_float(Double, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn from_int(Int) -> @mpf.RawMpf
+
+pub fn from_man_exp(@bigint.BigInt, Int, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn from_rational(@bigint.BigInt, @bigint.BigInt, Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub let fzero : @mpf.RawMpf
+
 pub fn gcd_bigint(@bigint.BigInt, @bigint.BigInt) -> @bigint.BigInt
+
+pub fn giant_steps(Int, Int, n? : Int) -> Array[Int]
+
+pub fn identify(@mpf.RawMpf, constants? : Map[String, @mpf.RawMpf], prec? : Int, rounding? : @mpf.RoundMode) -> String raise @mp.MPError
+
+pub fn ifac(Int) -> @bigint.BigInt raise @intmath.IntMathError
+
+pub fn ifib(Int) -> @bigint.BigInt raise @intmath.IntMathError
+
+pub let inf : @mpf.RawMpf
+
+pub fn interval_context(Int) -> MPIntervalContext
+
+pub fn is_finite(@mpf.RawMpf) -> Bool
+
+pub fn is_inf(@mpf.RawMpf) -> Bool
+
+pub fn is_nan(@mpf.RawMpf) -> Bool
+
+pub fn is_zero(@mpf.RawMpf) -> Bool
+
+pub fn isqrt(@bigint.BigInt) -> @bigint.BigInt raise @intmath.IntMathError
+
+pub fn limit((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, direction? : Int, max_steps? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn[T] local_workdps(Int, (@mp.MPContext) -> T, rounding? : @mpf.RoundMode) -> T
+
+pub fn[T] local_workprec(Int, (@mp.MPContext) -> T, rounding? : @mpf.RoundMode) -> T
+
+pub fn make_mpc(@mpf.RawMpf, imag? : @mpf.RawMpf) -> @mpc.RawMpc
+
+pub fn make_mpf(String, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mp(prec? : Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
+
+pub fn mp_dps(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
+
+pub fn mpc_abs(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpc_add(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_arg(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpc_conjugate(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_cos(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_div(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_exp(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_is_inf(@mpc.RawMpc) -> Bool
+
+pub fn mpc_is_infnan(@mpc.RawMpc) -> Bool
+
+pub fn mpc_log(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc raise @mpc.MpcError
+
+pub fn mpc_mul(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_neg(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_pos(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_pow(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc raise @mpc.MpcError
+
+pub fn mpc_pow_int(@mpc.RawMpc, Int, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_sin(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_sqrt(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_sub(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_tan(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
+pub fn mpc_to_str(@mpc.RawMpc, dps? : Int) -> String
+
+pub fn mpf_abs(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_add(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_atan(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_atan2(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_besseljn(Int, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_ceil(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_ci(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @libhyper.LibHyperError
+
+pub fn mpf_cmp(@mpf.RawMpf, @mpf.RawMpf) -> Int
+
+pub fn mpf_cos(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_cosh(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_div(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mpf_e(Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_e1(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @libhyper.LibHyperError
+
+pub fn mpf_eq(@mpf.RawMpf, @mpf.RawMpf) -> Bool
+
+pub fn mpf_erf(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_erfc(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_exp(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_expint(Int, @mpf.RawMpf, Int, @mpf.RoundMode, gamma? : Bool) -> @mpf.RawMpf raise @libhyper.LibHyperError
+
+pub fn mpf_factorial(Int, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpf_floor(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_frac(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_gamma(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpf_ge(@mpf.RawMpf, @mpf.RawMpf) -> Bool
+
+pub fn mpf_gt(@mpf.RawMpf, @mpf.RawMpf) -> Bool
+
+pub fn mpf_le(@mpf.RawMpf, @mpf.RawMpf) -> Bool
+
+pub fn mpf_ln(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @libelefun.LibElefunError
+
+pub fn mpf_log(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @libelefun.LibElefunError
+
+pub fn mpf_loggamma(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpf_lt(@mpf.RawMpf, @mpf.RawMpf) -> Bool
+
+pub fn mpf_mod(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mpf_mul(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_mul_int(@mpf.RawMpf, Int, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_neg(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_nint(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_normalize(Int, @bigint.BigInt, Int, Int, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_pi(Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_pos(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_pow(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise
+
+pub fn mpf_pow_int(@mpf.RawMpf, Int, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mpf_psi(Int, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpf_rdiv_int(Int, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mpf_rgamma(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpf_shift(@mpf.RawMpf, Int) -> @mpf.RawMpf
+
+pub fn mpf_si(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_sign(@mpf.RawMpf) -> Int
+
+pub fn mpf_sin(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_sinh(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_sqrt(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
+
+pub fn mpf_sub(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_tan(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_tanh(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_zeta(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @gammazeta.GammaZetaError
+
+pub fn mpi(@mpf.RawMpf, @mpf.RawMpf) -> @libmpi.RawMpi
+
+pub fn mpi_from_str(String, prec? : Int) -> @libmpi.RawMpi raise @libmpi.MpiError
+
+pub let mpz_one : @bigint.BigInt
+
+pub let ninf : @mpf.RawMpf
+
+pub fn nprod((Int) -> @mpf.RawMpf, Int, stop? : Int, algo? : String, tol? : @mpf.RawMpf, max_terms? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn nsum((Int) -> @mpf.RawMpf, Int, stop? : Int, algo? : String, tol? : @mpf.RawMpf, max_terms? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn polyroots(ArrayView[@mpf.RawMpf], asc? : Bool, max_steps? : Int, cleanup? : Bool, extraprec? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> Array[@mpc.RawMpc] raise @mp.MPError
+
+pub fn prec_to_dps(Int) -> Int
+
+pub fn quad((@mpf.RawMpf) -> @mpf.RawMpf, ArrayView[@mpf.RawMpf], max_steps? : Int, max_degree? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn quadgl((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, @mpf.RawMpf, max_steps? : Int, max_degree? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn quadts((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, @mpf.RawMpf, max_steps? : Int, max_degree? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn repr_dps(Int) -> Int
+
+pub let round_ceiling : @mpf.RoundMode
+
+pub let round_down : @mpf.RoundMode
+
+pub let round_floor : @mpf.RoundMode
+
+pub let round_nearest : @mpf.RoundMode
+
+pub let round_up : @mpf.RoundMode
+
+pub fn sqrtrem(@bigint.BigInt) -> (@bigint.BigInt, @bigint.BigInt) raise @intmath.IntMathError
+
+pub fn summation((Int) -> @mpf.RawMpf, Int, Int, step? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn to_float(@mpf.RawMpf, strict? : Bool, rnd? : @mpf.RoundMode) -> Double raise @mpf.MpfError
+
+pub fn to_int(@mpf.RawMpf, rnd? : @mpf.RoundMode) -> @bigint.BigInt raise @mpf.MpfError
+
+pub fn to_rational(@mpf.RawMpf) -> (@bigint.BigInt, @bigint.BigInt) raise @mpf.MpfError
+
+pub fn to_str(@mpf.RawMpf, dps? : Int, base? : Int, binary_exp? : Bool) -> String raise @mpf.MpfError
+
+pub fn workdps(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
+
+pub fn workprec(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
 
 // Errors
 pub(all) suberror RationalError {
@@ -43,7 +313,55 @@ pub impl Mul for BigRational
 pub impl Neg for BigRational
 pub impl Show for BigRational
 
+pub struct MPIntervalContext {
+  prec : Int
+}
+pub fn MPIntervalContext::abs(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
+pub fn MPIntervalContext::add(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
+pub fn MPIntervalContext::cos(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::div(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::exp(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
+pub fn MPIntervalContext::gamma(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::log(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::make_float(Self, String) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::make_interval(Self, @mpf.RawMpf, @mpf.RawMpf) -> @libmpi.RawMpi
+pub fn MPIntervalContext::mul(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::neg(Self, @libmpi.RawMpi) -> @libmpi.RawMpi
+pub fn MPIntervalContext::precision(Self) -> Int
+pub fn MPIntervalContext::sin(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::sqrt(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::sub(Self, @libmpi.RawMpi, @libmpi.RawMpi) -> @libmpi.RawMpi
+pub fn MPIntervalContext::tan(Self, @libmpi.RawMpi) -> @libmpi.RawMpi raise @libmpi.MpiError
+pub fn MPIntervalContext::to_string(Self, @libmpi.RawMpi, dps? : Int) -> String raise @libmpi.MpiError
+pub impl Eq for MPIntervalContext
+pub impl Show for MPIntervalContext
+
 // Type aliases
+pub using @intmath {type IntMathError}
+
+pub using @mp {type MPContext}
+
+pub using @mp {type MPError}
+
+pub using @bigint {type BigInt as MPZ}
+
+pub using @mpc {type RawMpc as Mpc}
+
+pub using @mpc {type MpcError}
+
+pub using @mpf {type RawMpf as Mpf}
+
+pub using @mpf {type MpfError}
+
+pub using @libmpi {type RawMpi as Mpi}
+
+pub using @libmpi {type MpiError}
+
+pub using @mpf {type RoundMode}
+
+pub type SeriesTermFn = (Int) -> @mpf.RawMpf
+
+pub type UnaryMpfFn = (@mpf.RawMpf) -> @mpf.RawMpf
 
 // Traits
 

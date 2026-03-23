@@ -1,10 +1,3 @@
-options(
-  targets: {
-    "*.mbt": ["native"]
-  },
-  supported_targets : "native"
-)
-
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
@@ -13,3 +6,9 @@ import {
   "Kaida-Amethyst/python" @py,
   "Kaida-Amethyst/python/cpython" @cpython,
 }
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)

@@ -37,6 +37,65 @@ test "symsimplify function identities" {
 }
 
 ///|
+test "symsimplify dispatcher handles composite heuristics" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let i = @symcore.symbol("I")
+
+  let numerator = @symcore.add([x, @symcore.pow(x, @symcore.int(2))])
+  let denominator = @symcore.add([
+    @symcore.mul([
+      x,
+      @symcore.pow(@symcore.function("sin", [y]), @symcore.int(2)),
+    ]),
+    @symcore.mul([
+      x,
+      @symcore.pow(@symcore.function("cos", [y]), @symcore.int(2)),
+    ]),
+  ])
+  let rational_trig = @symcore.mul([
+    numerator,
+    @symcore.pow(denominator, @symcore.int(-1)),
+  ])
+  inspect(@symprint.debug_repr(simplify(rational_trig)), content="(+ sym:x 1)")
+
+  let exp_trig = @symcore.add([
+    @symcore.function("exp", [@symcore.mul([i, x])]),
+    @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
+  ])
+  inspect(
+    @symprint.debug_repr(simplify(exp_trig)),
+    content="(* 2 (call cos sym:x))",
+  )
+}
+
+///|
+test "symsimplify dispatcher handles special heuristics" {
+  let x = @symcore.symbol("x")
+
+  let logs = @symcore.add([
+    @symcore.function("log", [x]),
+    @symcore.function("log", [@symcore.int(2)]),
+  ])
+  inspect(
+    @symprint.debug_repr(simplify(logs)),
+    content="(call log (* 2 sym:x))",
+  )
+
+  let gamma_expr = @symcore.function("gamma", [@symcore.int(6)])
+  inspect(@symprint.debug_repr(simplify(gamma_expr)), content="120")
+
+  let kd = @symcore.function("KroneckerDelta", [
+    @symcore.int(2),
+    @symcore.int(3),
+  ])
+  inspect(@symprint.debug_repr(simplify(kd)), content="0")
+
+  let bj = @symcore.function("besselj", [@symcore.int(0), @symcore.int(0)])
+  inspect(@symprint.debug_repr(simplify(bj)), content="1")
+}
+
+///|
 test "symsimplify numeric power denest" {
   let x = @symcore.symbol("x")
   let expr = @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3))
@@ -160,6 +219,118 @@ test "symsimplify compat api basics" {
     ]),
   )
   inspect(@symprint.debug_repr(split.0), content="2")
+}
+
+///|
+test "symsimplify compat api advanced cases" {
+  let a = @symcore.symbol("a")
+  let i = @symcore.symbol("i")
+  let j = @symcore.symbol("j")
+  let x = @symcore.symbol("x")
+  let z = @symcore.symbol("z")
+  let half = @symcore.rational_from_ints(1, 2)
+  let minus_half = @symcore.rational_from_ints(-1, 2)
+  let pi = @symcore.symbol("pi")
+
+  let kd_cancel = kroneckersimp(
+    @symcore.add([
+      @symcore.int(1),
+      @symcore.mul([
+        @symcore.function("KroneckerDelta", [@symcore.int(0), i]),
+        @symcore.function("KroneckerDelta", [@symcore.int(1), i]),
+      ]),
+    ]),
+  )
+  assert_true(kd_cancel == @symcore.int(1))
+
+  let kd_subst = kroneckersimp(
+    @symcore.mul([
+      @symcore.function("KroneckerDelta", [i, j]),
+      @symcore.function("KroneckerDelta", [j, @symcore.int(1)]),
+      @symcore.function("f", [i]),
+    ]),
+  )
+  assert_true(kd_subst == @symcore.function("f", [@symcore.int(1)]))
+
+  let bj_half = besselsimp(@symcore.function("besselj", [half, z]))
+  assert_true(
+    bj_half ==
+    @symcore.mul([
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.function("sin", [z]),
+      @symcore.pow(
+        @symcore.mul([
+          @symcore.function("sqrt", [pi]),
+          @symcore.function("sqrt", [z]),
+        ]),
+        @symcore.int(-1),
+      ),
+    ]),
+  )
+
+  let bi_half = besselsimp(@symcore.function("besseli", [minus_half, z]))
+  assert_true(
+    bi_half ==
+    @symcore.mul([
+      @symcore.function("sqrt", [@symcore.int(2)]),
+      @symcore.function("cosh", [z]),
+      @symcore.pow(
+        @symcore.mul([
+          @symcore.function("sqrt", [pi]),
+          @symcore.function("sqrt", [z]),
+        ]),
+        @symcore.int(-1),
+      ),
+    ]),
+  )
+
+  let recurrence = besselsimp(
+    @symcore.add([
+      @symcore.function("besselj", [@symcore.add([a, @symcore.int(-1)]), x]),
+      @symcore.function("besselj", [@symcore.add([a, @symcore.int(1)]), x]),
+      @symcore.mul([
+        @symcore.int(-2),
+        a,
+        @symcore.function("besselj", [a, x]),
+        @symcore.pow(x, @symcore.int(-1)),
+      ]),
+    ]),
+  )
+  assert_true(recurrence == @symcore.int(0))
+
+  let exact_ns = nsimplify(
+    @symcore.add([
+      @symcore.pow(@symcore.int(27), @symcore.rational_from_ints(1, 3)),
+      @symcore.pow(@symcore.int(16), @symcore.rational_from_ints(-1, 2)),
+    ]),
+  )
+  assert_true(exact_ns == @symcore.rational_from_ints(13, 4))
+
+  let trig_ns = nsimplify(
+    @symcore.add([
+      @symcore.function("sin", [
+        @symcore.mul([pi, @symcore.rational_from_ints(1, 6)]),
+      ]),
+      @symcore.function("cos", [
+        @symcore.mul([pi, @symcore.rational_from_ints(1, 3)]),
+      ]),
+      @symcore.function("sqrt", [@symcore.int(4)]),
+    ]),
+  )
+  assert_true(trig_ns == @symcore.int(3))
+
+  let golden = @symcore.symbol("GoldenRatio")
+  let golden_ns = nsimplify(
+    @symcore.add([
+      @symcore.function("sqrt", [@symcore.int(5)]),
+      @symcore.int(-1),
+    ]),
+    constants=[golden],
+  )
+  assert_true(
+    golden_ns ==
+    @symcore.add([@symcore.mul([@symcore.int(2), golden]), @symcore.int(-2)]),
+  )
 }
 
 ///|

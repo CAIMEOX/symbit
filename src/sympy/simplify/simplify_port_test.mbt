@@ -30,6 +30,68 @@ test "symsimplify simplify parity basic" {
 }
 
 ///|
+test "symsimplify simplify parity composite heuristics" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let i = @symcore.symbol("I")
+
+  let rational_trig = @symcore.mul([
+    @symcore.add([x, @symcore.pow(x, @symcore.int(2))]),
+    @symcore.pow(
+      @symcore.add([
+        @symcore.mul([
+          x,
+          @symcore.pow(@symcore.function("sin", [y]), @symcore.int(2)),
+        ]),
+        @symcore.mul([
+          x,
+          @symcore.pow(@symcore.function("cos", [y]), @symcore.int(2)),
+        ]),
+      ]),
+      @symcore.int(-1),
+    ),
+  ])
+  assert_srepr_parity(
+    "simplify",
+    simplify(rational_trig),
+    simplify_srepr(rational_trig),
+  )
+
+  let exp_trig = @symcore.add([
+    @symcore.function("exp", [@symcore.mul([i, x])]),
+    @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
+  ])
+  assert_srepr_parity("simplify", simplify(exp_trig), simplify_srepr(exp_trig))
+}
+
+///|
+test "symsimplify simplify parity special heuristics" {
+  let x = @symcore.symbol("x")
+  let exprs = [
+    @symcore.add([
+      @symcore.function("log", [x]),
+      @symcore.function("log", [@symcore.int(2)]),
+    ]),
+    @symcore.function("gamma", [@symcore.int(6)]),
+    @symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]),
+    @symcore.function("besselj", [@symcore.int(0), @symcore.int(0)]),
+  ]
+  for expr in exprs {
+    assert_srepr_parity("simplify", simplify(expr), simplify_srepr(expr))
+  }
+  let radical = @symcore.function("sqrt", [
+    @symcore.add([
+      @symcore.int(3),
+      @symcore.mul([
+        @symcore.int(2),
+        @symcore.function("sqrt", [@symcore.int(2)]),
+      ]),
+    ]),
+  ])
+  assert_true(sqrtdenest_equivalent(radical, simplify(radical)))
+}
+
+///|
 test "symsimplify powsimp parity" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
@@ -280,6 +342,77 @@ test "symsimplify compat simplify parity" {
   let gens = [x]
   let rm_ours = ratsimpmodprime(rm_expr, basis~, gens~)
   assert_true(ratsimpmodprime_equivalent(rm_expr, basis, gens, rm_ours))
+}
+
+///|
+test "symsimplify compat simplify advanced parity" {
+  let a = @symcore.symbol("a")
+  let golden = @symcore.symbol("GoldenRatio")
+  let i = @symcore.symbol("i")
+  let pi = @symcore.symbol("pi")
+  let x = @symcore.symbol("x")
+  let z = @symcore.symbol("z")
+  let half = @symcore.rational_from_ints(1, 2)
+  let minus_half = @symcore.rational_from_ints(-1, 2)
+
+  let kd_cancel_expr = @symcore.add([
+    @symcore.int(1),
+    @symcore.mul([
+      @symcore.function("KroneckerDelta", [@symcore.int(0), i]),
+      @symcore.function("KroneckerDelta", [@symcore.int(1), i]),
+    ]),
+  ])
+  let kd_cancel_ours = kroneckersimp(kd_cancel_expr)
+  assert_true(kroneckersimp_equivalent(kd_cancel_expr, kd_cancel_ours))
+
+  let bj_half_expr = @symcore.function("besselj", [half, z])
+  let bj_half_ours = besselsimp(bj_half_expr)
+  assert_true(besselsimp_equivalent(bj_half_expr, bj_half_ours))
+
+  let bi_half_expr = @symcore.function("besseli", [minus_half, z])
+  let bi_half_ours = besselsimp(bi_half_expr)
+  assert_true(besselsimp_equivalent(bi_half_expr, bi_half_ours))
+
+  let recurrence_expr = @symcore.add([
+    @symcore.function("besselj", [@symcore.add([a, @symcore.int(-1)]), x]),
+    @symcore.function("besselj", [@symcore.add([a, @symcore.int(1)]), x]),
+    @symcore.mul([
+      @symcore.int(-2),
+      a,
+      @symcore.function("besselj", [a, x]),
+      @symcore.pow(x, @symcore.int(-1)),
+    ]),
+  ])
+  let recurrence_ours = besselsimp(recurrence_expr)
+  assert_true(besselsimp_equivalent(recurrence_expr, recurrence_ours))
+
+  let exact_ns_expr = @symcore.add([
+    @symcore.pow(@symcore.int(27), @symcore.rational_from_ints(1, 3)),
+    @symcore.pow(@symcore.int(16), @symcore.rational_from_ints(-1, 2)),
+  ])
+  let exact_ns_ours = nsimplify(exact_ns_expr)
+  assert_true(nsimplify_equivalent(exact_ns_expr, exact_ns_ours))
+
+  let trig_ns_expr = @symcore.add([
+    @symcore.function("sin", [
+      @symcore.mul([pi, @symcore.rational_from_ints(1, 6)]),
+    ]),
+    @symcore.function("cos", [
+      @symcore.mul([pi, @symcore.rational_from_ints(1, 3)]),
+    ]),
+    @symcore.function("sqrt", [@symcore.int(4)]),
+  ])
+  let trig_ns_ours = nsimplify(trig_ns_expr)
+  assert_true(nsimplify_equivalent(trig_ns_expr, trig_ns_ours))
+
+  let golden_expr = @symcore.add([
+    @symcore.function("sqrt", [@symcore.int(5)]),
+    @symcore.int(-1),
+  ])
+  let golden_ours = nsimplify(golden_expr, constants=[golden])
+  assert_true(
+    nsimplify_equivalent_with_constants(golden_expr, [golden], golden_ours),
+  )
 }
 
 ///|

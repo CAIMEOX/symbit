@@ -1,13 +1,12 @@
-options(
-  targets: {
-    "*.mbt": ["native"]
-  },
-  supported_targets : "native"
-)
-
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symmatrices" @symmatrices,
   "CAIMEOX/symbit/sympy/utilities" @sympy_utilities,
 } for "test"
+
+supported_targets = "native"
+
+options(
+  targets: { "*.mbt": [ "native" ] },
+)

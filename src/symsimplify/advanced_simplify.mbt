@@ -517,8 +517,148 @@ fn rewrite_gammasimp(expr : Expr) -> Expr {
       } else {
         expr
       }
-    Expr::Mul(args) => combsimp(@symcore.mul(args))
+    Expr::Mul(args) => simplify_gamma_ratio_mul(args)
     _ => expr
+  }
+}
+
+///|
+fn simplify_gamma_ratio_mul(args : Array[Expr]) -> Expr {
+  let numer_gamma : Array[Expr] = Array::new()
+  let denom_gamma : Array[Expr] = Array::new()
+  let others : Array[Expr] = Array::new()
+  for arg in args {
+    match gamma_numerator_arg(arg) {
+      Some(value) => numer_gamma.push(value)
+      None =>
+        match gamma_denominator_arg(arg) {
+          Some(value) => denom_gamma.push(value)
+          None => others.push(arg)
+        }
+    }
+  }
+  if numer_gamma.is_empty() || denom_gamma.is_empty() {
+    return combsimp(@symcore.mul(args))
+  }
+
+  let used_den : Array[Bool] = Array::make(denom_gamma.length(), false)
+  let out = others.map(x => x)
+  for num_arg in numer_gamma {
+    let mut matched = false
+    for j in 0..<denom_gamma.length() {
+      if used_den[j] {
+        continue
+      }
+      let den_arg = denom_gamma[j]
+      match gamma_integer_shift(num_arg, den_arg) {
+        Some(steps) => {
+          out.push(rising_product_from(den_arg, steps))
+          used_den[j] = true
+          matched = true
+          break
+        }
+        None =>
+          match gamma_integer_shift(den_arg, num_arg) {
+            Some(steps) => {
+              out.push(
+                @symcore.pow(rising_product_from(num_arg, steps), int(-1)),
+              )
+              used_den[j] = true
+              matched = true
+              break
+            }
+            None => ()
+          }
+      }
+    }
+    if !matched {
+      out.push(@symcore.function("gamma", [num_arg]))
+    }
+  }
+
+  for j in 0..<denom_gamma.length() {
+    if !used_den[j] {
+      out.push(
+        @symcore.pow(@symcore.function("gamma", [denom_gamma[j]]), int(-1)),
+      )
+    }
+  }
+  combsimp(@symcore.mul(out))
+}
+
+///|
+fn gamma_numerator_arg(expr : Expr) -> Expr? {
+  match expr {
+    Expr::Function(name, [arg]) if name == "gamma" => Some(arg)
+    _ => None
+  }
+}
+
+///|
+fn gamma_denominator_arg(expr : Expr) -> Expr? {
+  match expr {
+    Expr::Pow(Expr::Function(name, [arg]), Expr::Number(exp)) =>
+      if name == "gamma" && exp.is_integral() && exp.numerator().to_int() == -1 {
+        Some(arg)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn gamma_integer_shift(target : Expr, base : Expr) -> Int? {
+  let (target_norm, target_shift) = split_expr_integer_shift(target)
+  let (base_norm, base_shift) = split_expr_integer_shift(base)
+  if target_norm != base_norm {
+    return None
+  }
+  let diff = target_shift - base_shift
+  if diff > 0 {
+    Some(diff)
+  } else {
+    None
+  }
+}
+
+///|
+fn split_expr_integer_shift(expr : Expr) -> (Expr, Int) {
+  match expr {
+    Expr::Add(args) => {
+      let mut shift = 0
+      let rest : Array[Expr] = Array::new()
+      for arg in args {
+        match arg {
+          Expr::Number(n) if n.is_integral() => shift += n.numerator().to_int()
+          _ => rest.push(arg)
+        }
+      }
+      (if rest.is_empty() { int(0) } else { @symcore.add(rest) }, shift)
+    }
+    Expr::Number(n) if n.is_integral() => (int(0), n.numerator().to_int())
+    _ => (expr, 0)
+  }
+}
+
+///|
+fn rising_product_from(start : Expr, steps : Int) -> Expr {
+  if steps <= 0 {
+    return int(1)
+  }
+  let factors : Array[Expr] = Array::new()
+  for i in 0..<steps {
+    factors.push(add_small_int(start, i))
+  }
+  @symcore.mul(factors)
+}
+
+///|
+fn add_small_int(expr : Expr, offset : Int) -> Expr {
+  if offset == 0 {
+    expr
+  } else {
+    @symcore.add([expr, int(offset)])
   }
 }
 
@@ -538,7 +678,8 @@ fn rewrite_logcombine(expr : Expr) -> Expr {
       if log_pows.is_empty() {
         expr
       } else {
-        let combined = @symcore.function("log", [@symcore.mul(log_pows)])
+        let combined_arg = simplify_rational_structure(@symcore.mul(log_pows))
+        let combined = @symcore.function("log", [combined_arg])
         let merged : Array[Expr] = [combined]
         for item in others {
           merged.push(item)

@@ -101,16 +101,8 @@ test "symparse evaluate false preserves raw operators" {
 test "symparse lexer exposes typed tokens" {
   let tokens = lex("f(x!!, 2e-3 != y)")
   json_inspect(tokens.map(tok => token_kind_name(tok.kind)), content=[
-    "identifier",
-    "`(`",
-    "identifier",
-    "`!!`",
-    "`,`",
-    "decimal",
-    "`!=`",
-    "identifier",
-    "`)`",
-    "end of input",
+    "identifier", "`(`", "identifier", "`!!`", "`,`", "decimal", "`!=`", "identifier",
+    "`)`", "end of input",
   ])
 }
 
@@ -131,10 +123,7 @@ test "symparse error paths" {
 test "symparse default parser handles implicit multiplication" {
   inspect(parse_repr("2x"), content="(* 2 sym:x)")
   inspect(parse_repr("x(y + 1)"), content="(* sym:x (+ sym:y 1))")
-  inspect(
-    parse_repr("(x + 1)(y + 1)"),
-    content="(* (+ sym:x 1) (+ sym:y 1))",
-  )
+  inspect(parse_repr("(x + 1)(y + 1)"), content="(* (+ sym:x 1) (+ sym:y 1))")
   inspect(parse_repr("2sin(x)"), content="(* 2 (call sin sym:x))")
   inspect(parse_repr("sin**2(x)"), content="(^ (call sin sym:x) 2)")
   inspect(parse_repr("sin**2 x"), content="(^ (call sin sym:x) 2)")

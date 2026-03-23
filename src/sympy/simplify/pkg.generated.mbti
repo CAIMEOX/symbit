@@ -67,7 +67,11 @@ pub fn logcombine_srepr(@symcore.Expr) -> String raise
 
 pub fn nsimplify_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
 
+pub fn nsimplify_equivalent_with_constants(@symcore.Expr, Array[@symcore.Expr], @symcore.Expr) -> Bool raise
+
 pub fn nsimplify_srepr(@symcore.Expr) -> String raise
+
+pub fn nsimplify_with_constants_srepr(@symcore.Expr, Array[@symcore.Expr]) -> String raise
 
 pub fn numer_expand_equivalent(@symcore.Expr, @symcore.Expr) -> Bool raise
 

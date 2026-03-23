@@ -1,1 +1,11 @@
-
+import {
+  "moonbitlang/core/math",
+  "CAIMEOX/moon_floating/ctx/mp",
+  "CAIMEOX/moon_floating/libmp/gammazeta",
+  "CAIMEOX/moon_floating/libmp/intmath",
+  "CAIMEOX/moon_floating/libmp/libelefun",
+  "CAIMEOX/moon_floating/libmp/libhyper",
+  "CAIMEOX/moon_floating/libmp/libmpi",
+  "CAIMEOX/moon_floating/libmp/mpc",
+  "CAIMEOX/moon_floating/libmp/mpf",
+}

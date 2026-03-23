@@ -280,6 +280,18 @@ pub fn nsimplify_srepr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn nsimplify_with_constants_srepr(
+  expr : @symcore.Expr,
+  constants : Array[@symcore.Expr],
+) -> String raise {
+  let out = sympy_call_must("sympy.nsimplify", [
+    OracleArg::PyObj(expr_to_sympy(expr)),
+    expr_list_arg(constants),
+  ])
+  srepr_obj(objenum_to_obj(out))
+}
+
+///|
 pub fn collect_sqrt_srepr(expr : @symcore.Expr) -> String raise {
   unary_simplify_srepr("sympy.simplify.radsimp.collect_sqrt", expr)
 }
@@ -358,6 +370,32 @@ pub fn nsimplify_equivalent(
   candidate : @symcore.Expr,
 ) -> Bool raise {
   unary_equivalent("sympy.nsimplify", input_expr, candidate)
+}
+
+///|
+pub fn nsimplify_equivalent_with_constants(
+  input_expr : @symcore.Expr,
+  constants : Array[@symcore.Expr],
+  candidate : @symcore.Expr,
+) -> Bool raise {
+  let oracle_enum = sympy_call_must("sympy.nsimplify", [
+    OracleArg::PyObj(expr_to_sympy(input_expr)),
+    expr_list_arg(constants),
+  ])
+  let oracle_obj = objenum_to_obj(oracle_enum)
+  let cand_obj = expr_to_sympy(candidate)
+  let neg_oracle = sympy_call_must("sympy.Mul", [
+    OracleArg::Int(-1),
+    OracleArg::PyObj(oracle_obj),
+  ])
+  let diff = sympy_call_must("sympy.Add", [
+    OracleArg::PyObj(cand_obj),
+    OracleArg::PyObj(objenum_to_obj(neg_oracle)),
+  ])
+  let simp = sympy_call_must("sympy.simplify", [
+    OracleArg::PyObj(objenum_to_obj(diff)),
+  ])
+  srepr_obj(objenum_to_obj(simp)) == "Integer(0)"
 }
 
 ///|
