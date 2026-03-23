@@ -324,6 +324,89 @@ fn build_gen_index(gens : Array[String]) -> Map[String, Int] {
 }
 
 ///|
+fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
+  match expr {
+    Expr::Number(n) => Some(n)
+    Expr::Float(f) =>
+      if !f.is_finite() {
+        None
+      } else {
+        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
+        match pair_res {
+          Ok((num, den)) => {
+            let rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+              num, den,
+            )
+            match rat_res {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          }
+          Err(_) => None
+        }
+      }
+    Expr::ComplexFloat(z) =>
+      if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
+        None
+      } else {
+        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        match pair_res {
+          Ok((num, den)) =>
+            match (try? @symnum.BigRational::new(num, den) : Result[
+              @symnum.BigRational,
+              @symnum.RationalError,
+            ]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
+  match expr {
+    Expr::ComplexFloat(z) =>
+      if !z.is_finite() {
+        None
+      } else {
+        let pair_res : Result[((BigInt, BigInt), (BigInt, BigInt)), @symnum.MpfError] = try? z.to_rational_parts()
+        match pair_res {
+          Ok((re_pair, im_pair)) => {
+            let real_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+              re_pair.0,
+              re_pair.1,
+            )
+            let imag_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+              im_pair.0,
+              im_pair.1,
+            )
+            match (real_res, imag_res) {
+              (Ok(real), Ok(imag)) =>
+                match domain {
+                  Domain::CC => Some(FieldElem::CC(real, imag))
+                  Domain::RR if imag.is_zero() =>
+                    Some(ensure_coeff_domain(real, domain) catch { _ => return None })
+                  _ => None
+                }
+              _ => None
+            }
+          }
+          Err(_) => None
+        }
+      }
+    _ =>
+      match expr_coeff_rational_value(expr) {
+        Some(value) => Some(ensure_coeff_domain(value, domain) catch { _ => return None })
+        None => None
+      }
+  }
+}
+
+///|
 fn parse_expr(
   expr : Expr,
   gens : Array[String],
@@ -331,8 +414,11 @@ fn parse_expr(
   domain : Domain,
 ) -> Poly raise PolyError {
   match expr {
-    Expr::Number(n) => {
-      let coeff = ensure_coeff_domain(n, domain)
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => {
+      let coeff = match expr_coeff_field_elem_value(expr, domain) {
+        Some(value) => value
+        None => raise PolyError::NonPolynomial
+      }
       let mono = monomial_one(gens.length())
       let coeffs : Map[Monomial, FieldElem] = Map::new()
       add_term(coeffs, mono, coeff, domain)
@@ -366,9 +452,9 @@ fn parse_expr(
       acc
     }
     Expr::Pow(base, exp) => {
-      let exp_num = match exp {
-        Expr::Number(r) => r
-        _ => raise PolyError::BadExponent
+      let exp_num = match expr_coeff_rational_value(exp) {
+        Some(value) => value
+        None => raise PolyError::BadExponent
       }
       if !exp_num.is_integral() {
         raise PolyError::BadExponent

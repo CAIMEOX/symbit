@@ -3,6 +3,7 @@ package "CAIMEOX/symbit"
 
 import {
   "CAIMEOX/symbit/symcore",
+  "CAIMEOX/symbit/symmatrices",
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symsimplify",
 }
@@ -24,6 +25,8 @@ pub fn collect_sqrt(@symcore.Expr) -> @symcore.Expr
 
 pub fn combsimp(@symcore.Expr) -> @symcore.Expr
 
+pub fn complex_float(@symcore.ComplexFloat) -> @symcore.Expr
+
 pub fn cse(Array[@symcore.Expr]) -> @symsimplify.CseResult
 
 pub fn cse_reconstruct(@symsimplify.CseResult) -> Array[@symcore.Expr]
@@ -34,11 +37,19 @@ pub fn denom(@symcore.Expr) -> @symcore.Expr
 
 pub fn denom_expand(@symcore.Expr) -> @symcore.Expr
 
+pub fn diag(Array[@symcore.Expr], rows? : Int?, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
 pub fn epath(String, @symcore.Expr) -> Array[@symcore.Expr]
 
 pub fn epath_apply(String, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @symcore.Expr
 
+pub fn evalf(@symcore.Expr, prec? : Int) -> @symcore.Expr
+
 pub fn exptrigsimp(@symcore.Expr) -> @symcore.Expr
+
+pub fn eye(Int) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
+pub fn float(@symcore.Float) -> @symcore.Expr
 
 pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 
@@ -62,6 +73,8 @@ pub fn kroneckersimp(@symcore.Expr) -> @symcore.Expr
 
 pub fn logcombine(@symcore.Expr) -> @symcore.Expr
 
+pub fn matrix(Array[Array[@symcore.Expr]]) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
 pub fn mul(Array[@symcore.Expr]) -> @symcore.Expr
 
 pub fn nsimplify(@symcore.Expr, constants? : Array[@symcore.Expr], full? : Bool, rational? : Bool) -> @symcore.Expr
@@ -69,6 +82,8 @@ pub fn nsimplify(@symcore.Expr, constants? : Array[@symcore.Expr], full? : Bool,
 pub fn numer(@symcore.Expr) -> @symcore.Expr
 
 pub fn numer_expand(@symcore.Expr) -> @symcore.Expr
+
+pub fn ones(Int, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 
 pub fn posify(@symcore.Expr) -> (@symcore.Expr, Map[String, @symcore.Expr])
 
@@ -97,6 +112,8 @@ pub fn signsimp(@symcore.Expr) -> @symcore.Expr
 pub fn simplify(@symcore.Expr) -> @symcore.Expr
 
 pub fn simplify_with_patterns(@symcore.Expr, Array[@symsimplify.SimplifyPattern], max_passes? : Int) -> @symcore.Expr
+
+pub fn sparse_matrix(Int, Int, Map[(Int, Int), @symcore.Expr]) -> @symmatrices.SparseMatrix raise @symmatrices.MatrixError
 
 pub fn split_surds(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr)
 
@@ -160,6 +177,8 @@ pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
 
 pub fn trpower(@symcore.Expr) -> @symcore.Expr
 
+pub fn zeros(Int, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
 // Errors
 
 // Types and methods
@@ -167,15 +186,25 @@ pub fn trpower(@symcore.Expr) -> @symcore.Expr
 // Type aliases
 pub using @symnum {type BigRational}
 
+pub using @symcore {type ComplexFloat}
+
 pub using @symsimplify {type CseResult}
 
 pub using @symsimplify {type EPath}
 
 pub using @symcore {type Expr}
 
+pub using @symcore {type Float}
+
+pub using @symmatrices {type Matrix}
+
+pub using @symmatrices {type MatrixError}
+
 pub using @symsimplify {type SimplifyPattern}
 
 pub using @symsimplify {type SimplifyPlan}
+
+pub using @symmatrices {type SparseMatrix}
 
 // Traits
 

@@ -4,6 +4,37 @@ fn py_str_obj(obj : @py.PyObject) -> String raise {
 }
 
 ///|
+fn ref_exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> @symcore.Expr {
+  let rat = @symnum.BigRational::from_ints(num, den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  @symcore.float(
+    @symcore.Float::from_exact(rat, prec=prec) catch {
+      _ => @symcore.Float::from_int(0, prec=prec)
+    },
+  )
+}
+
+///|
+fn ref_exact_complex_float_expr(
+  real_num : Int,
+  real_den : Int,
+  imag_num : Int,
+  imag_den : Int,
+  prec? : Int = 90,
+) -> @symcore.Expr {
+  let real = @symnum.BigRational::from_ints(real_num, real_den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  @symcore.complex_float(
+    @symcore.ComplexFloat::from_exact_parts(real, imag, prec=prec),
+  )
+}
+
+///|
 test "sympy ref: import and poly attr" {
   guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   assert_true(sympy.get_attr("poly") is Some(PyCallable(_)))
@@ -45,6 +76,20 @@ test "sympy ref: expr_to_sympy rational" {
   let expr = @symcore.rational_from_ints(1, 3)
   let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="1/3")
+}
+
+///|
+test "sympy ref: expr_to_sympy float" {
+  let expr = ref_exact_float_expr(1, 2)
+  let obj = expr_to_sympy(expr)
+  inspect(py_str_obj(obj), content="0.500000000000000")
+}
+
+///|
+test "sympy ref: expr_to_sympy complex float" {
+  let expr = ref_exact_complex_float_expr(1, 2, 3, 4)
+  let obj = expr_to_sympy(expr)
+  inspect(py_str_obj(obj), content="0.5 + 0.75*I")
 }
 
 ///|

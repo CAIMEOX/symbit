@@ -90,6 +90,63 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
 
 ///|
 pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {
+  let numeric_prec = expr_numeric_precision(self.data)
+  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
+    let data = clone_expr_rows(self.data).map(row => row.map(cell => {
+      @symcore.evalf(cell, prec=numeric_prec)
+    }))
+    let pivots : Array[Int] = []
+    let mut row = 0
+    let mut col = 0
+    while row < self.rows && col < self.cols {
+      let mut pivot_row = row
+      let mut pivot_measure = expr_numeric_abs(data[row][col], numeric_prec)
+      for candidate in (row + 1)..<self.rows {
+        match (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
+          (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          (Some(measure), None) => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          _ => ()
+        }
+      }
+      if expr_numeric_zero(data[pivot_row][col], numeric_prec) {
+        col += 1
+        continue
+      }
+      if pivot_row != row {
+        swap_dense_rows(data, pivot_row, row)
+      }
+      let pivot = data[row][col]
+      for j in col..<self.cols {
+        data[row][j] = expr_numeric_div(data[row][j], pivot, numeric_prec)
+      }
+      for i in 0..<self.rows {
+        if i == row {
+          continue
+        }
+        let factor = data[i][col]
+        if expr_numeric_zero(factor, numeric_prec) {
+          continue
+        }
+        for j in col..<self.cols {
+          data[i][j] = expr_numeric_sub(
+            data[i][j],
+            expr_numeric_mul(factor, data[row][j], numeric_prec),
+            numeric_prec,
+          )
+        }
+      }
+      pivots.push(col)
+      row += 1
+      col += 1
+    }
+    return ({ rows: self.rows, cols: self.cols, data }, pivots)
+  }
   let (data, pivots) = matrix_rref_internal(self)
   ({ rows: self.rows, cols: self.cols, data }, pivots)
 }
@@ -144,6 +201,56 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
   }
   if self.rows == 0 {
     return expr_one()
+  }
+  let numeric_prec = expr_numeric_precision(self.data)
+  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
+    let data = clone_expr_rows(self.evalf(prec=numeric_prec).data)
+    let mut sign = expr_one()
+    let mut col = 0
+    while col < self.rows {
+      let mut pivot_row = col
+      let mut pivot_measure = expr_numeric_abs(data[col][col], numeric_prec)
+      for candidate in (col + 1)..<self.rows {
+        match (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
+          (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          (Some(measure), None) => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          _ => ()
+        }
+      }
+      if expr_numeric_zero(data[pivot_row][col], numeric_prec) {
+        return expr_zero()
+      }
+      if pivot_row != col {
+        swap_dense_rows(data, pivot_row, col)
+        sign = expr_numeric_mul(sign, expr_neg(expr_one()), numeric_prec)
+      }
+      let pivot = data[col][col]
+      for row in (col + 1)..<self.rows {
+        if expr_numeric_zero(data[row][col], numeric_prec) {
+          continue
+        }
+        let factor = expr_numeric_div(data[row][col], pivot, numeric_prec)
+        for j in col..<self.cols {
+          data[row][j] = expr_numeric_sub(
+            data[row][j],
+            expr_numeric_mul(factor, data[col][j], numeric_prec),
+            numeric_prec,
+          )
+        }
+      }
+      col += 1
+    }
+    let mut det = sign
+    for i in 0..<self.rows {
+      det = expr_numeric_mul(det, data[i][i], numeric_prec)
+    }
+    return det
   }
   let data = clone_expr_rows(self.data)
   let mut sign = expr_one()
@@ -236,6 +343,62 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
     raise MatrixError::NonSquareMatrixError("inverse requires a square matrix")
   }
   let n = self.rows
+  let numeric_prec = expr_numeric_precision(self.data)
+  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
+    let left = clone_expr_rows(self.evalf(prec=numeric_prec).data)
+    let right = clone_expr_rows(eye(n).evalf(prec=numeric_prec).data)
+    for col in 0..<n {
+      let mut pivot_row = col
+      let mut pivot_measure = expr_numeric_abs(left[col][col], numeric_prec)
+      for candidate in (col + 1)..<n {
+        match (expr_numeric_abs(left[candidate][col], numeric_prec), pivot_measure) {
+          (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          (Some(measure), None) => {
+            pivot_row = candidate
+            pivot_measure = Some(measure)
+          }
+          _ => ()
+        }
+      }
+      if expr_numeric_zero(left[pivot_row][col], numeric_prec) {
+        raise MatrixError::SingularMatrixError("matrix is singular")
+      }
+      if pivot_row != col {
+        swap_dense_rows(left, pivot_row, col)
+        swap_dense_rows(right, pivot_row, col)
+      }
+      let pivot = left[col][col]
+      for j in 0..<n {
+        left[col][j] = expr_numeric_div(left[col][j], pivot, numeric_prec)
+        right[col][j] = expr_numeric_div(right[col][j], pivot, numeric_prec)
+      }
+      for i in 0..<n {
+        if i == col {
+          continue
+        }
+        let factor = left[i][col]
+        if expr_numeric_zero(factor, numeric_prec) {
+          continue
+        }
+        for j in 0..<n {
+          left[i][j] = expr_numeric_sub(
+            left[i][j],
+            expr_numeric_mul(factor, left[col][j], numeric_prec),
+            numeric_prec,
+          )
+          right[i][j] = expr_numeric_sub(
+            right[i][j],
+            expr_numeric_mul(factor, right[col][j], numeric_prec),
+            numeric_prec,
+          )
+        }
+      }
+    }
+    return { rows: n, cols: n, data: right }
+  }
   let left = clone_expr_rows(self.data)
   let right = clone_expr_rows(eye(n).data)
   for col in 0..<n {
@@ -419,15 +582,35 @@ pub fn Matrix::lower_triangular_solve(
       "lower_triangular_solve expects a square lhs and matching rhs rows",
     )
   }
+  let numeric_prec = {
+    let lhs_prec = expr_numeric_precision(self.data)
+    let rhs_prec = expr_numeric_precision(rhs.data)
+    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+  }
+  let numeric_mode = (matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)) &&
+    matrix_all_numeric(self.data, numeric_prec) &&
+    matrix_all_numeric(rhs.data, numeric_prec)
   let out = zeros(self.rows, cols=Some(rhs.cols))
   let data = clone_expr_rows(out.data)
   for j in 0..<rhs.cols {
     for i in 0..<self.rows {
       let mut acc = rhs.data[i][j]
       for k in 0..<i {
-        acc = expr_sub(acc, expr_mul(self.data[i][k], data[k][j]))
+        acc = if numeric_mode {
+          expr_numeric_sub(
+            acc,
+            expr_numeric_mul(self.data[i][k], data[k][j], numeric_prec),
+            numeric_prec,
+          )
+        } else {
+          expr_sub(acc, expr_mul(self.data[i][k], data[k][j]))
+        }
       }
-      data[i][j] = expr_div(acc, self.data[i][i])
+      data[i][j] = if numeric_mode {
+        expr_numeric_div(acc, self.data[i][i], numeric_prec)
+      } else {
+        expr_div(acc, self.data[i][i])
+      }
     }
   }
   { rows: self.rows, cols: rhs.cols, data }
@@ -443,6 +626,14 @@ pub fn Matrix::upper_triangular_solve(
       "upper_triangular_solve expects a square lhs and matching rhs rows",
     )
   }
+  let numeric_prec = {
+    let lhs_prec = expr_numeric_precision(self.data)
+    let rhs_prec = expr_numeric_precision(rhs.data)
+    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+  }
+  let numeric_mode = (matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)) &&
+    matrix_all_numeric(self.data, numeric_prec) &&
+    matrix_all_numeric(rhs.data, numeric_prec)
   let out = zeros(self.rows, cols=Some(rhs.cols))
   let data = clone_expr_rows(out.data)
   for j in 0..<rhs.cols {
@@ -450,9 +641,21 @@ pub fn Matrix::upper_triangular_solve(
     while true {
       let mut acc = rhs.data[i][j]
       for k in (i + 1)..<self.cols {
-        acc = expr_sub(acc, expr_mul(self.data[i][k], data[k][j]))
+        acc = if numeric_mode {
+          expr_numeric_sub(
+            acc,
+            expr_numeric_mul(self.data[i][k], data[k][j], numeric_prec),
+            numeric_prec,
+          )
+        } else {
+          expr_sub(acc, expr_mul(self.data[i][k], data[k][j]))
+        }
       }
-      data[i][j] = expr_div(acc, self.data[i][i])
+      data[i][j] = if numeric_mode {
+        expr_numeric_div(acc, self.data[i][i], numeric_prec)
+      } else {
+        expr_div(acc, self.data[i][i])
+      }
       if i == 0 {
         break
       }
@@ -472,16 +675,35 @@ pub fn Matrix::cholesky(self : Matrix) -> Matrix raise MatrixError {
   let n = self.rows
   let out = zeros(n, cols=Some(n))
   let l = clone_expr_rows(out.data)
+  let numeric_prec = expr_numeric_precision(self.data)
+  let numeric_mode = matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec)
   for i in 0..<n {
     for j in 0..<=i {
       let mut acc = self.data[i][j]
       for k in 0..<j {
-        acc = expr_sub(acc, expr_mul(l[i][k], l[j][k]))
+        acc = if numeric_mode {
+          expr_numeric_sub(
+            acc,
+            expr_numeric_mul(l[i][k], l[j][k], numeric_prec),
+            numeric_prec,
+          )
+        } else {
+          expr_sub(acc, expr_mul(l[i][k], l[j][k]))
+        }
       }
       if i == j {
-        l[i][j] = expr_simplify(@symcore.function("sqrt", [acc]))
+        l[i][j] = if numeric_mode {
+          expr_numeric_sqrt(acc, numeric_prec)
+        } else {
+          expr_simplify(@symcore.function("sqrt", [acc]))
+        }
       } else {
-        l[i][j] = expr_div(acc, l[j][j])
+        l[i][j] = if numeric_mode {
+          expr_numeric_div(acc, l[j][j], numeric_prec)
+        } else {
+          expr_div(acc, l[j][j])
+        }
       }
     }
   }
@@ -503,18 +725,49 @@ pub fn Matrix::ldl(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   for i in 0..<n {
     l[i][i] = expr_one()
   }
+  let numeric_prec = expr_numeric_precision(self.data)
+  let numeric_mode = matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec)
   for j in 0..<n {
     let mut diag = self.data[j][j]
     for k in 0..<j {
-      diag = expr_sub(diag, expr_mul(expr_mul(l[j][k], l[j][k]), d[k][k]))
+      diag = if numeric_mode {
+        expr_numeric_sub(
+          diag,
+          expr_numeric_mul(
+            expr_numeric_mul(l[j][k], l[j][k], numeric_prec),
+            d[k][k],
+            numeric_prec,
+          ),
+          numeric_prec,
+        )
+      } else {
+        expr_sub(diag, expr_mul(expr_mul(l[j][k], l[j][k]), d[k][k]))
+      }
     }
     d[j][j] = diag
     for i in (j + 1)..<n {
       let mut value = self.data[i][j]
       for k in 0..<j {
-        value = expr_sub(value, expr_mul(expr_mul(l[i][k], l[j][k]), d[k][k]))
+        value = if numeric_mode {
+          expr_numeric_sub(
+            value,
+            expr_numeric_mul(
+              expr_numeric_mul(l[i][k], l[j][k], numeric_prec),
+              d[k][k],
+              numeric_prec,
+            ),
+            numeric_prec,
+          )
+        } else {
+          expr_sub(value, expr_mul(expr_mul(l[i][k], l[j][k]), d[k][k]))
+        }
       }
-      l[i][j] = expr_div(value, d[j][j])
+      l[i][j] = if numeric_mode {
+        expr_numeric_div(value, d[j][j], numeric_prec)
+      } else {
+        expr_div(value, d[j][j])
+      }
     }
   }
   ({ rows: n, cols: n, data: l }, { rows: n, cols: n, data: d })
@@ -528,6 +781,9 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
       zeros(self.cols, cols=Some(self.cols)),
     )
   }
+  let numeric_prec = expr_numeric_precision(self.data)
+  let numeric_mode = matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec)
   let qcols : Array[Array[Expr]] = []
   let r = Array::make(self.cols, Array::make(self.cols, expr_zero()))
   for j in 0..<self.cols {
@@ -536,22 +792,54 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
       let qi = qcols[i]
       let mut dot = expr_zero()
       for k in 0..<self.rows {
-        dot = expr_add(dot, expr_mul(qi[k], v[k]))
+        dot = if numeric_mode {
+          expr_numeric_add(
+            dot,
+            expr_numeric_mul(qi[k], v[k], numeric_prec),
+            numeric_prec,
+          )
+        } else {
+          expr_add(dot, expr_mul(qi[k], v[k]))
+        }
       }
       r[i][j] = dot
       for k in 0..<self.rows {
-        v[k] = expr_sub(v[k], expr_mul(dot, qi[k]))
+        v[k] = if numeric_mode {
+          expr_numeric_sub(
+            v[k],
+            expr_numeric_mul(dot, qi[k], numeric_prec),
+            numeric_prec,
+          )
+        } else {
+          expr_sub(v[k], expr_mul(dot, qi[k]))
+        }
       }
     }
     let mut norm_sq = expr_zero()
     for k in 0..<self.rows {
-      norm_sq = expr_add(norm_sq, expr_mul(v[k], v[k]))
+      norm_sq = if numeric_mode {
+        expr_numeric_add(
+          norm_sq,
+          expr_numeric_mul(v[k], v[k], numeric_prec),
+          numeric_prec,
+        )
+      } else {
+        expr_add(norm_sq, expr_mul(v[k], v[k]))
+      }
     }
-    let norm = expr_simplify(@symcore.function("sqrt", [norm_sq]))
+    let norm = if numeric_mode {
+      expr_numeric_sqrt(norm_sq, numeric_prec)
+    } else {
+      expr_simplify(@symcore.function("sqrt", [norm_sq]))
+    }
     r[j][j] = norm
     let qj : Array[Expr] = []
     for k in 0..<self.rows {
-      qj.push(expr_div(v[k], norm))
+      qj.push(if numeric_mode {
+        expr_numeric_div(v[k], norm, numeric_prec)
+      } else {
+        expr_div(v[k], norm)
+      })
     }
     qcols.push(qj)
   }

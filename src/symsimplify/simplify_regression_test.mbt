@@ -21,6 +21,21 @@ fn rational_trig_fixture() -> @symcore.Expr {
 }
 
 ///|
+fn simplify_exact_float_expr(
+  num : Int,
+  den : Int,
+  prec? : Int = 90,
+) -> @symcore.Expr {
+  let rat = @symnum.BigRational::from_ints(num, den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  let value = @symcore.Float::from_exact(rat, prec=prec) catch {
+    _ => @symcore.Float::from_int(0, prec=prec)
+  }
+  @symcore.float(value)
+}
+
+///|
 test "symsimplify trigsimp after factoring regression" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
@@ -165,4 +180,36 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
     @symcore.mul([@symcore.int(-1), @symcore.function("log", [@symcore.int(2)])]),
   ])
   inspect(@symprint.debug_repr(simplify(log_ratio)), content="(call log sym:x)")
+}
+
+///|
+test "symsimplify handles float numeric leaf identities and powers" {
+  let zero_f = simplify_exact_float_expr(0, 1, prec=70)
+  let one_f = simplify_exact_float_expr(1, 1, prec=70)
+  let minus_half_f = simplify_exact_float_expr(-1, 2, prec=70)
+  let four_f = simplify_exact_float_expr(4, 1, prec=70)
+  let half = match (try? @symcore.rational_from_ints(1, 2) : Result[
+    @symcore.Expr,
+    @symnum.RationalError,
+  ]) {
+    Ok(value) => value
+    Err(_) => fail("half")
+  }
+
+  match simplify(@symcore.function("sin", [zero_f])) {
+    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (0N, 1N))
+    _ => fail("expected float zero")
+  }
+  match simplify(@symcore.function("sqrt", [one_f])) {
+    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (1N, 1N))
+    _ => fail("expected float one")
+  }
+  match simplify(@symcore.function("Abs", [minus_half_f])) {
+    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (1N, 2N))
+    _ => fail("expected float abs")
+  }
+  match simplify(@symcore.pow(four_f, half)) {
+    @symcore.Expr::Float(f) => assert_eq(f.to_rational(), (2N, 1N))
+    _ => fail("expected float pow")
+  }
 }

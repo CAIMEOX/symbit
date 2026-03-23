@@ -82,3 +82,68 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
   let inconsistent_sol = _linsolve(inconsistent, syms)
   assert_true(inconsistent_sol is None)
 }
+
+///|
+test "matrices wb: _linsolve uses numeric complex solve path for float coefficients" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let coeff = @symcore.complex_float(
+    @symcore.ComplexFloat::from_exact_parts(
+      @symnum.BigRational::from_int(1),
+      @symnum.BigRational::from_int(1),
+      prec=90,
+    ),
+  )
+  let two_thirds = @symcore.float(
+    @symcore.Float::from_exact(
+      @symnum.BigRational::from_ints(2, 3) catch { _ => fail("two_thirds") },
+      prec=90,
+    ) catch {
+      _ => fail("two_thirds")
+    },
+  )
+  let system = [
+    @symcore.function("Eq", [coeff * x, coeff]),
+    @symcore.function("Eq", [y, two_thirds]),
+  ]
+  let sol = match _linsolve(system, ["x", "y"]) {
+    Some(values) => values
+    None => fail("numeric complex _linsolve")
+  }
+  match sol.get("x") {
+    Some(@symcore.Expr::Float(value)) =>
+      assert_true(value.format(dps=12).has_prefix("1.0"))
+    Some(@symcore.Expr::ComplexFloat(value)) => {
+      assert_true(value.real_part().format(dps=12).has_prefix("1.0"))
+      assert_true(@symnum.is_zero(value.to_mpc().imag))
+    }
+    _ => fail("expected numeric x solution")
+  }
+  match sol.get("y") {
+    Some(@symcore.Expr::Float(value)) =>
+      assert_true(value.format(dps=12).has_prefix("0.666666666"))
+    _ => fail("expected numeric y solution")
+  }
+}
+
+///|
+test "matrices wb: DomainMatrix infers CC from complex float entries" {
+  let z = @symcore.ComplexFloat::from_exact_parts(
+    @symnum.BigRational::from_int(1),
+    @symnum.BigRational::from_int(2),
+    prec=90,
+  )
+  let dm_res : Result[DomainMatrix, PolyError] = try? DomainMatrix::from_Matrix(
+    [[@symcore.complex_float(z), @symcore.int(0)]],
+    fmt="dense",
+    field=true,
+  )
+  let dm = match dm_res {
+    Ok(value) => value
+    Err(_) => fail("domain matrix")
+  }
+  match dm.domain {
+    Domain::CC => ()
+    _ => fail("expected CC domain")
+  }
+}

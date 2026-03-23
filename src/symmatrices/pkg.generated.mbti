@@ -126,6 +126,7 @@ pub fn Matrix::echelon_form_with_pivots(Self) -> (Self, Array[Int])
 pub fn Matrix::eigenvals(Self) -> Array[(@symcore.Expr, Int)] raise MatrixError
 pub fn Matrix::eigenvects(Self) -> Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])] raise MatrixError
 pub fn Matrix::equals(Self, Self) -> Bool
+pub fn Matrix::evalf(Self, prec? : Int) -> Self
 pub fn Matrix::extract(Self, Array[Int], Array[Int]) -> Self raise MatrixError
 pub fn Matrix::getitem(Self, Int, Int) -> @symcore.Expr raise MatrixError
 pub fn Matrix::inv(Self) -> Self raise MatrixError
@@ -217,6 +218,7 @@ pub fn SparseMatrix::echelon_form(Self) -> Matrix
 pub fn SparseMatrix::eigenvals(Self) -> Array[(@symcore.Expr, Int)] raise MatrixError
 pub fn SparseMatrix::eigenvects(Self) -> Array[(@symcore.Expr, Int, Array[Array[@symcore.Expr]])] raise MatrixError
 pub fn SparseMatrix::equals(Self, Self) -> Bool
+pub fn SparseMatrix::evalf(Self, prec? : Int) -> Matrix
 pub fn SparseMatrix::extract(Self, Array[Int], Array[Int]) -> Self raise MatrixError
 pub fn SparseMatrix::getitem(Self, Int, Int) -> @symcore.Expr raise MatrixError
 pub fn SparseMatrix::inv(Self) -> Matrix raise MatrixError

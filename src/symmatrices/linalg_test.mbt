@@ -8,6 +8,57 @@ fn vecs_to_string(values : Array[Array[Expr]]) -> String {
 }
 
 ///|
+fn expr_symbolically_equal(lhs : Expr, rhs : Expr) -> Bool {
+  @symsimplify.simplify(lhs + (@symcore.int(-1) * rhs)) == @symcore.int(0)
+}
+
+///|
+fn matrix_symbolically_equal(lhs : Matrix, rhs : Matrix) -> Bool {
+  if lhs.shape() != rhs.shape() {
+    return false
+  }
+  for i in 0..<lhs.rows {
+    for j in 0..<lhs.cols {
+      if !expr_symbolically_equal(lhs.data[i][j], rhs.data[i][j]) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
+fn exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
+  let rat = @symnum.BigRational::from_ints(num, den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  @symcore.float(
+    @symcore.Float::from_exact(rat, prec=prec) catch {
+      _ => @symcore.Float::from_int(0, prec=prec)
+    },
+  )
+}
+
+///|
+fn exact_complex_float_expr(
+  real_num : Int,
+  real_den : Int,
+  imag_num : Int,
+  imag_den : Int,
+  prec? : Int = 90,
+) -> Expr {
+  let real = @symnum.BigRational::from_ints(real_num, real_den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
+    _ => @symnum.BigRational::zero()
+  }
+  @symcore.complex_float(
+    @symcore.ComplexFloat::from_exact_parts(real, imag, prec=prec),
+  )
+}
+
+///|
 test "matrices determinant inverse and solve" {
   let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
@@ -98,9 +149,14 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
   let vars = matrix([[@symcore.symbol("r1")], [@symcore.symbol("r2")]])
   let (rref_lhs, rref_rhs) = coeff.rref_rhs(vars)
   inspect(rref_lhs.to_string(), content="Matrix([[1, 0], [0, 1]])")
-  inspect(
-    rref_rhs.to_string(),
-    content="Matrix([[-1*r1 + r2], [-1*(-2*r1 + r2)]])",
+  assert_true(
+    matrix_symbolically_equal(
+      rref_rhs,
+      matrix([
+        [@symcore.int(-1) * @symcore.symbol("r1") + @symcore.symbol("r2")],
+        [@symcore.int(-1) * (@symcore.int(-2) * @symcore.symbol("r1") + @symcore.symbol("r2"))],
+      ]),
+    ),
   )
   let spd = matrix([
     [@symcore.int(4), @symcore.int(2)],
@@ -110,4 +166,47 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
   let (l, d) = spd.ldl()
   assert_eq(l.shape(), (2, 2))
   assert_eq(d.shape(), (2, 2))
+}
+
+///|
+test "matrices numeric backend keeps float and complex-float results" {
+  let half = exact_float_expr(1, 2)
+  let two = exact_float_expr(2, 1)
+  let zero = exact_float_expr(0, 1)
+  let a = matrix([[half, zero], [zero, two]])
+  let inv = a.inv()
+  match (inv.getitem(0, 0), inv.getitem(1, 1)) {
+    (@symcore.Expr::Float(f0), @symcore.Expr::Float(f1)) => {
+      assert_true(f0.format(dps=12).has_prefix("2.0"))
+      assert_true(f1.format(dps=12).has_prefix("0.5"))
+    }
+    _ => fail("expected float inverse entries")
+  }
+  let (rref, pivots) = a.rref()
+  inspect(pivots, content="[0, 1]")
+  match rref.getitem(0, 0) {
+    @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("1.0"))
+    _ => fail("expected float rref pivot")
+  }
+
+  let i = exact_complex_float_expr(0, 1, 1, 1)
+  let one = exact_float_expr(1, 1)
+  let rhs = matrix([[one], [one]])
+  let cm = matrix([[one, i], [one, exact_float_expr(-1, 1)]])
+  let sol = cm.solve(rhs)
+  match sol.getitem(0, 0) {
+    @symcore.Expr::ComplexFloat(z) => assert_true(z.is_finite())
+    @symcore.Expr::Float(f) => assert_true(f.is_finite())
+    _ => fail("expected numeric complex solution")
+  }
+
+  let spd = matrix([
+    [exact_float_expr(4, 1), exact_float_expr(1, 1)],
+    [exact_float_expr(1, 1), exact_float_expr(3, 1)],
+  ])
+  let chol = spd.cholesky()
+  match chol.getitem(0, 0) {
+    @symcore.Expr::Float(f) => assert_true(f.format(dps=8).has_prefix("2.0"))
+    _ => fail("expected float cholesky diagonal")
+  }
 }

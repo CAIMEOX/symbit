@@ -219,7 +219,98 @@ fn intpoly_primitive_x(
   expr : Expr,
   x_name : String,
 ) -> Expr raise IntegralError {
-  let primitive = integrate(expr, limits=[@symcore.symbol(x_name)])
+  let x = @symcore.symbol(x_name)
+
+  fn split_polynomial_x_term(term : Expr) -> (Expr, Int)? {
+    match expr_simplify(term) {
+      @symcore.Expr::Symbol(name) =>
+        if name == x_name {
+          Some((expr_one(), 1))
+        } else {
+          Some((term, 0))
+        }
+      @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == x_name =>
+        match expr_is_int_value(exp) {
+          Some(power) if power >= 0 => Some((expr_one(), power))
+          _ => None
+        }
+      @symcore.Expr::Mul(args) => {
+        let mut coeff = expr_one()
+        let mut power = 0
+        for arg in args {
+          match expr_simplify(arg) {
+            @symcore.Expr::Symbol(name) =>
+              if name == x_name {
+                power += 1
+              } else if expr_depends_on(arg, x_name) {
+                return None
+              } else {
+                coeff = expr_mul(coeff, arg)
+              }
+            @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name ==
+              x_name =>
+              match expr_is_int_value(exp) {
+                Some(value) if value >= 0 => power += value
+                _ => return None
+              }
+            simplified =>
+              if expr_depends_on(simplified, x_name) {
+                return None
+              } else {
+                coeff = expr_mul(coeff, simplified)
+              }
+          }
+        }
+        Some((coeff, power))
+      }
+      simplified =>
+        if expr_depends_on(simplified, x_name) {
+          None
+        } else {
+          Some((simplified, 0))
+        }
+    }
+  }
+
+  fn primitive_term(term : Expr) -> Expr? {
+    match split_polynomial_x_term(term) {
+      Some((coeff, power)) =>
+        Some(
+          expr_simplify(
+            expr_mul(
+              coeff,
+              expr_div(expr_pow(x, expr_int(power + 1)), expr_int(power + 1)),
+            ),
+          ),
+        )
+      None => None
+    }
+  }
+
+  let expanded = @symsimplify.numer_expand(expr_simplify(expr))
+  let primitive = match expanded {
+    @symcore.Expr::Add(args) => {
+      let out : Array[Expr] = []
+      for arg in args {
+        match primitive_term(arg) {
+          Some(value) => out.push(value)
+          None =>
+            raise IntegralError::ValueError(
+              "failed to construct an exact polynomial primitive for intpoly",
+            )
+        }
+      }
+      expr_simplify(@symcore.add(out))
+    }
+    _ =>
+      match primitive_term(expanded) {
+        Some(value) => value
+        None =>
+          raise IntegralError::ValueError(
+            "failed to construct an exact polynomial primitive for intpoly",
+          )
+      }
+  }
   if intpoly_has_unevaluated_integral(primitive) {
     raise IntegralError::ValueError(
       "failed to construct an exact polynomial primitive for intpoly",

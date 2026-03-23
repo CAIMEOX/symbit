@@ -933,6 +933,20 @@ pub struct AlgExtSpec {
   minpoly : Poly
 }
 
+pub struct ComplexField {
+  precision : Int
+}
+pub fn ComplexField::contains_expr(Self, @symcore.Expr) -> Bool
+pub fn ComplexField::domain(Self) -> Domain
+pub fn ComplexField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::from_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn ComplexField::new(precision? : Int) -> Self
+pub fn ComplexField::one(Self) -> @symcore.Expr
+pub fn ComplexField::precision(Self) -> Int
+pub fn ComplexField::zero(Self) -> @symcore.Expr
+pub impl Eq for ComplexField
+pub impl Show for ComplexField
+
 pub struct DDM {
   dm : DomainMatrix
 }
@@ -1389,6 +1403,20 @@ pub struct PolyBuilder {
 pub fn PolyBuilder::from_expr(Self, @symcore.Expr) -> Poly raise PolyError
 pub fn PolyBuilder::new(Array[String], Domain) -> Self
 pub fn PolyBuilder::order(Self, TermOrder) -> Self
+
+pub struct RealField {
+  precision : Int
+}
+pub fn RealField::contains_expr(Self, @symcore.Expr) -> Bool
+pub fn RealField::domain(Self) -> Domain
+pub fn RealField::evalf_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::from_expr(Self, @symcore.Expr) -> @symcore.Expr raise PolyError
+pub fn RealField::new(precision? : Int) -> Self
+pub fn RealField::one(Self) -> @symcore.Expr
+pub fn RealField::precision(Self) -> Int
+pub fn RealField::zero(Self) -> @symcore.Expr
+pub impl Eq for RealField
+pub impl Show for RealField
 
 pub struct RingHomomorphism {
   source_gens : Array[String]

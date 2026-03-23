@@ -370,10 +370,7 @@ fn parse_a_plus_two_sqrt_b(
 
 ///|
 fn parse_numeric_term(term : Expr) -> @symnum.BigRational? {
-  match term {
-    Expr::Number(n) => Some(n)
-    _ => None
-  }
+  exact_numeric_value(term)
 }
 
 ///|
@@ -392,12 +389,15 @@ fn parse_two_sqrt_term(term : Expr) -> @symnum.BigRational? {
 ///|
 fn radical_radicand_as_rational(expr : Expr) -> @symnum.BigRational? {
   match expr {
-    Expr::Function(name, [Expr::Number(b)]) if name == "sqrt" => Some(b)
-    Expr::Pow(Expr::Number(b), Expr::Number(e)) =>
-      if is_half(e) {
-        Some(b)
-      } else {
-        None
+    Expr::Function(name, [arg]) if name == "sqrt" =>
+      match exact_numeric_value(arg) {
+        Some(value) => Some(value)
+        None => None
+      }
+    Expr::Pow(base, exp) =>
+      match (exact_numeric_value(base), exact_numeric_value(exp)) {
+        (Some(b), Some(e)) if is_half(e) => Some(b)
+        _ => None
       }
     _ => None
   }

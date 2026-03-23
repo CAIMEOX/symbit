@@ -7,6 +7,51 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::Function(_, _) => 3
     Expr::Add(_) => 4
     Expr::Number(_) => 5
+    Expr::Float(_) => 6
+    Expr::ComplexFloat(_) => 7
+  }
+}
+
+///|
+fn compare_float(a : Float, b : Float) -> Int {
+  if a == b {
+    0
+  } else {
+    let cmp = @symnum.mpf_cmp(a.to_mpf(), b.to_mpf())
+    if cmp != 0 {
+      cmp
+    } else {
+      let prec_cmp = cmp_int(a.precision(), b.precision())
+      if prec_cmp != 0 {
+        prec_cmp
+      } else {
+        a.format().compare(b.format())
+      }
+    }
+  }
+}
+
+///|
+fn compare_complex_float(a : ComplexFloat, b : ComplexFloat) -> Int {
+  if a == b {
+    0
+  } else {
+    let real_cmp = @symnum.mpf_cmp(a.to_mpc().real, b.to_mpc().real)
+    if real_cmp != 0 {
+      real_cmp
+    } else {
+      let imag_cmp = @symnum.mpf_cmp(a.to_mpc().imag, b.to_mpc().imag)
+      if imag_cmp != 0 {
+        imag_cmp
+      } else {
+        let prec_cmp = cmp_int(a.precision(), b.precision())
+        if prec_cmp != 0 {
+          prec_cmp
+        } else {
+          a.format().compare(b.format())
+        }
+      }
+    }
   }
 }
 
@@ -37,6 +82,16 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Number(na) =>
       match b {
         Expr::Number(nb) => na.compare(nb)
+        _ => 0
+      }
+    Expr::Float(fa) =>
+      match b {
+        Expr::Float(fb) => compare_float(fa, fb)
+        _ => 0
+      }
+    Expr::ComplexFloat(za) =>
+      match b {
+        Expr::ComplexFloat(zb) => compare_complex_float(za, zb)
         _ => 0
       }
     Expr::Symbol(sa) =>
@@ -147,6 +202,14 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
   hasher.combine_int(variant_rank(self))
   match self {
     Expr::Number(n) => n.hash_combine(hasher)
+    Expr::Float(f) => {
+      hasher.combine_int(f.precision())
+      hasher.combine_string(f.format())
+    }
+    Expr::ComplexFloat(z) => {
+      hasher.combine_int(z.precision())
+      hasher.combine_string(z.format())
+    }
     Expr::Symbol(name) => hasher.combine_string(name)
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)

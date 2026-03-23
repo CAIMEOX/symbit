@@ -199,7 +199,11 @@ fn infer_expr_items_domain(
   let mut domain = match modulus {
     Some(p) => if p <= 1 { raise PolyError::BadModulus } else { Domain::GF(p) }
     None =>
-      if items.any(expr => has_fractional_coeff(expr)) {
+      if items.any(expr => has_complex_float_coeff(expr)) {
+        Domain::CC
+      } else if items.any(expr => has_float_coeff(expr)) {
+        Domain::RR
+      } else if items.any(expr => has_fractional_coeff(expr)) {
         Domain::QQ
       } else {
         Domain::ZZ

@@ -155,7 +155,7 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     return @symcore.int(1)
   }
   match expr {
-    Expr::Number(_) => @symcore.int(0)
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => @symcore.int(0)
     Expr::Symbol(_) => @symcore.int(0)
     Expr::Add(args) => diff_add(args, wrt)
     Expr::Mul(args) => diff_mul(args, wrt)

@@ -64,10 +64,35 @@ fn geo_expr_text(expr : Expr) -> String {
 }
 
 ///|
+fn geo_exact_value(expr : Expr) -> @symnum.BigRational? {
+  match geo_simplify(expr) {
+    Expr::Number(n) => Some(n)
+    Expr::Float(f) =>
+      if !f.is_finite() {
+        None
+      } else {
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
+        match pair {
+          Ok((num, den)) =>
+            match (try? @symnum.BigRational::new(num, den) : Result[
+              @symnum.BigRational,
+              @symnum.RationalError,
+            ]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
 fn geo_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
-  match geo_simplify(lhs - rhs) {
-    Expr::Number(n) => n.is_zero()
-    _ => false
+  match geo_exact_value(lhs - rhs) {
+    Some(value) => value.is_zero()
+    None => false
   }
 }
 
@@ -83,8 +108,8 @@ fn geo_expr_is_zero(expr : Expr) -> Bool {
 
 ///|
 fn geo_expr_sign(expr : Expr) -> Int? {
-  match geo_simplify(expr) {
-    Expr::Number(n) =>
+  match geo_exact_value(expr) {
+    Some(n) =>
       if n.is_zero() {
         Some(0)
       } else if n.compare(@symnum.BigRational::zero()) < 0 {
@@ -128,8 +153,8 @@ fn geo_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
 
 ///|
 fn geo_expr_int_value(expr : Expr) -> Int? {
-  match geo_simplify(expr) {
-    Expr::Number(n) if n.is_integral() => Some(n.numerator().to_int())
+  match geo_exact_value(expr) {
+    Some(n) if n.is_integral() => Some(n.numerator().to_int())
     _ => None
   }
 }
@@ -175,7 +200,8 @@ fn geo_poly_deg2_pow(coeffs : Array[Expr], exp : Int) -> Array[Expr]? {
 ///|
 fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
   match geo_simplify(expr) {
-    Expr::Number(_) => Some([expr, geo_zero(), geo_zero()])
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
+      Some([expr, geo_zero(), geo_zero()])
     Expr::Symbol(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
         Some([geo_zero(), geo_one(), geo_zero()])

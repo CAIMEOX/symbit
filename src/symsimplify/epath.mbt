@@ -250,6 +250,9 @@ fn selector_matches(sel : ESelector, expr : Expr) -> Bool {
 fn has_type(expr : Expr, t : String) -> Bool {
   match expr {
     Expr::Number(_) => t == "Number" || t == "Expr"
+    Expr::Float(_) => t == "Float" || t == "Number" || t == "Expr"
+    Expr::ComplexFloat(_) =>
+      t == "ComplexFloat" || t == "Float" || t == "Number" || t == "Expr"
     Expr::Symbol(_) => t == "Symbol" || t == "Expr"
     Expr::Add(_) => t == "Add" || t == "Expr"
     Expr::Mul(_) => t == "Mul" || t == "Expr"

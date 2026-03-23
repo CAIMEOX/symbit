@@ -337,7 +337,10 @@ fn pow_int(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational? {
 ///|
 pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => expr
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::Symbol(_) => expr
     @symcore.Expr::Function(name, args) =>
       @symcore.function(name, args.map(item => eval_arith(item)))
     @symcore.Expr::Add(args) => {

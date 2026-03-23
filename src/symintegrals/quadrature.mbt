@@ -2,44 +2,14 @@
 /// Numerical Gaussian quadrature families aligned with `sympy.integrals.quadrature`.
 
 ///|
-fn quad_rational_to_double(value : @symnum.BigRational) -> Double {
-  value.numerator().to_int().to_double() /
-  value.denominator().to_int().to_double()
-}
-
-///|
-fn quad_expr_real_double(expr : Expr) -> Double? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Number(value) => Some(quad_rational_to_double(value))
-    @symcore.Expr::Add(args) => {
-      let mut acc = 0.0
-      for arg in args {
-        match quad_expr_real_double(arg) {
-          Some(value) => acc += value
-          None => return None
-        }
-      }
-      Some(acc)
-    }
-    @symcore.Expr::Mul(args) => {
-      let mut acc = 1.0
-      for arg in args {
-        match quad_expr_real_double(arg) {
-          Some(value) => acc *= value
-          None => return None
-        }
-      }
-      Some(acc)
-    }
-    @symcore.Expr::Pow(base, exp) =>
-      match (quad_expr_real_double(base), quad_expr_real_double(exp)) {
-        (Some(lhs), Some(rhs)) => Some(@math.pow(lhs, rhs))
-        _ => None
-      }
-    @symcore.Expr::Function("sqrt", [arg]) =>
-      match quad_expr_real_double(arg) {
-        Some(value) if value >= 0.0 => Some(value.sqrt())
-        _ => None
+fn quad_expr_real_float(expr : Expr, prec? : Int = 160) -> @symcore.Float? {
+  match @symcore.evalf(expr_simplify(expr), prec~) {
+    @symcore.Expr::Float(value) => Some(value)
+    @symcore.Expr::ComplexFloat(value) =>
+      if @symnum.is_zero(value.to_mpc().imag) {
+        Some(value.real_part())
+      } else {
+        None
       }
     _ => None
   }
@@ -50,8 +20,14 @@ fn quad_require_real_double(
   expr : Expr,
   label : String,
 ) -> Double raise IntegralError {
-  match quad_expr_real_double(expr) {
-    Some(value) => value
+  match quad_expr_real_float(expr) {
+    Some(value) =>
+      value.to_double() catch {
+        _ =>
+          raise IntegralError::ValueError(
+            label + " must be a real numeric expression",
+          )
+      }
     None =>
       raise IntegralError::ValueError(
         label + " must be a real numeric expression",

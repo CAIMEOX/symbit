@@ -897,6 +897,17 @@ pub fn SparseMatrix::solve(
       "solve expects rhs with the same number of rows",
     )
   }
+  let dense = self.to_dense()
+  let numeric_prec = {
+    let lhs_prec = expr_numeric_precision(dense.data)
+    let rhs_prec = expr_numeric_precision(rhs.data)
+    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+  }
+  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+    matrix_all_numeric(dense.data, numeric_prec) &&
+    matrix_all_numeric(rhs.data, numeric_prec) {
+    return dense.solve(rhs)
+  }
   let (l, u, swaps) = self.lu()
   let rhs_swapped = sparse_apply_row_swaps_rhs(rhs, swaps)
   u.upper_triangular_solve(l.lower_triangular_solve(rhs_swapped))
@@ -927,6 +938,17 @@ pub fn SparseMatrix::lower_triangular_solve(
     raise MatrixError::ShapeError(
       "lower_triangular_solve expects matching row counts",
     )
+  }
+  let dense = self.to_dense()
+  let numeric_prec = {
+    let lhs_prec = expr_numeric_precision(dense.data)
+    let rhs_prec = expr_numeric_precision(rhs.data)
+    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+  }
+  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+    matrix_all_numeric(dense.data, numeric_prec) &&
+    matrix_all_numeric(rhs.data, numeric_prec) {
+    return dense.lower_triangular_solve(rhs)
   }
   let row_entries = sparse_row_entries(self)
   let out = zeros(self.rows, cols=Some(rhs.cols))
@@ -973,6 +995,17 @@ pub fn SparseMatrix::upper_triangular_solve(
       "upper_triangular_solve expects matching row counts",
     )
   }
+  let dense = self.to_dense()
+  let numeric_prec = {
+    let lhs_prec = expr_numeric_precision(dense.data)
+    let rhs_prec = expr_numeric_precision(rhs.data)
+    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+  }
+  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+    matrix_all_numeric(dense.data, numeric_prec) &&
+    matrix_all_numeric(rhs.data, numeric_prec) {
+    return dense.upper_triangular_solve(rhs)
+  }
   let row_entries = sparse_row_entries(self)
   let out = zeros(self.rows, cols=Some(rhs.cols))
   let data = clone_expr_rows(out.data)
@@ -1011,6 +1044,12 @@ pub fn SparseMatrix::cholesky(self : SparseMatrix) -> Matrix raise MatrixError {
       "cholesky decomposition requires a square matrix",
     )
   }
+  let dense = self.to_dense()
+  let numeric_prec = expr_numeric_precision(dense.data)
+  if matrix_has_floating_leaf(dense.data) &&
+    matrix_all_numeric(dense.data, numeric_prec) {
+    return dense.cholesky()
+  }
   let n = self.rows
   let out = zeros(n, cols=Some(n))
   let l = clone_expr_rows(out.data)
@@ -1038,6 +1077,12 @@ pub fn SparseMatrix::ldl(
     raise MatrixError::NonSquareMatrixError(
       "LDL decomposition requires a square matrix",
     )
+  }
+  let dense = self.to_dense()
+  let numeric_prec = expr_numeric_precision(dense.data)
+  if matrix_has_floating_leaf(dense.data) &&
+    matrix_all_numeric(dense.data, numeric_prec) {
+    return dense.ldl()
   }
   let n = self.rows
   let l0 = zeros(n, cols=Some(n))
@@ -1073,6 +1118,12 @@ pub fn SparseMatrix::qr(
       zeros(self.rows, cols=Some(self.cols)),
       zeros(self.cols, cols=Some(self.cols)),
     )
+  }
+  let dense = self.to_dense()
+  let numeric_prec = expr_numeric_precision(dense.data)
+  if matrix_has_floating_leaf(dense.data) &&
+    matrix_all_numeric(dense.data, numeric_prec) {
+    return dense.qr()
   }
   let qcols : Array[Array[Expr]] = []
   let r = Array::make(self.cols, Array::make(self.cols, expr_zero()))

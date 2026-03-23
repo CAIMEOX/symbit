@@ -63,3 +63,59 @@ test "interval context parses and combines intervals" {
   let text = ictx.to_string(c, dps=20)
   assert_true(text.contains("[3.0"))
 }
+
+///|
+test "compat surface exposes sqrt factorial and matrix helpers" {
+  let root2 = sqrt(from_int(2), prec=100)
+  let root2_sq = mpf_mul(root2, root2, 100, round_nearest)
+  let diff0 = mpf_abs(
+    mpf_sub(root2_sq, from_int(2), 100, round_nearest),
+    100,
+    round_nearest,
+  )
+  assert_true(
+    mpf_lt(diff0, from_str("1e-20", prec=100) catch { _ => fail("tol") }),
+  )
+
+  let fac5 = fac(from_int(5), prec=120) catch { _ => fail("fac") }
+  assert_eq(to_rational(fac5), (120N, 1N))
+
+  let (ch, sh) = mpf_cosh_sinh(fzero, 80, round_nearest)
+  assert_eq(ch, fone)
+  assert_eq(sh, fzero)
+
+  let mat = _matrix([[from_int(1), from_int(2)], [from_int(3), from_int(4)]]) catch {
+    _ => fail("matrix")
+  }
+  inspect(
+    mat
+    .tolist()
+    .map(row => row.map(x => to_rational(x) catch { _ => fail("rat") })),
+    content="[[(1, 1), (2, 1)], [(3, 1), (4, 1)]]",
+  )
+}
+
+///|
+test "fixed constants reconstruct high precision values" {
+  let prec = 80
+  let phi_bits = phi_fixed(prec) catch { _ => fail("phi_fixed") }
+  let phi = from_man_exp(phi_bits, -prec)
+  let sqrt5 = sqrt(from_int(5), prec=120) catch { _ => fail("sqrt5") }
+  let expected_phi = mpf_shift(
+    mpf_add(sqrt5, from_int(1), 120, round_nearest),
+    -1,
+  )
+  let phi_err = mpf_abs(
+    mpf_sub(phi, expected_phi, 120, round_nearest),
+    120,
+    round_nearest,
+  )
+  assert_true(
+    mpf_lt(phi_err, from_str("1e-20", prec=120) catch { _ => fail("tol") }),
+  )
+
+  let euler_bits = euler_fixed(prec) catch { _ => fail("euler_fixed") }
+  let catalan_bits = catalan_fixed(prec) catch { _ => fail("catalan_fixed") }
+  assert_true(euler_bits > 0N)
+  assert_true(catalan_bits > 0N)
+}

@@ -92,10 +92,39 @@ fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
 
 ///|
 fn infer_domain(expr : Expr) -> Domain {
-  if has_fractional_coeff(expr) {
+  if has_complex_float_coeff(expr) {
+    Domain::CC
+  } else if has_float_coeff(expr) {
+    Domain::RR
+  } else if has_fractional_coeff(expr) {
     Domain::QQ
   } else {
     Domain::ZZ
+  }
+}
+
+///|
+fn has_complex_float_coeff(expr : Expr) -> Bool {
+  match expr {
+    Expr::ComplexFloat(z) => !@symnum.is_zero(z.to_mpc().imag)
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.any(child => has_complex_float_coeff(child))
+    Expr::Pow(base, exp) =>
+      has_complex_float_coeff(base) || has_complex_float_coeff(exp)
+    Expr::Function(_, args) => args.any(child => has_complex_float_coeff(child))
+    _ => false
+  }
+}
+
+///|
+fn has_float_coeff(expr : Expr) -> Bool {
+  match expr {
+    Expr::Float(_) | Expr::ComplexFloat(_) => true
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.any(child => has_float_coeff(child))
+    Expr::Pow(base, exp) => has_float_coeff(base) || has_float_coeff(exp)
+    Expr::Function(_, args) => args.any(child => has_float_coeff(child))
+    _ => false
   }
 }
 
@@ -214,6 +243,7 @@ fn gfext_default_poly(k : Int) -> Array[Int] {
 fn has_fractional_coeff(expr : Expr) -> Bool {
   match expr {
     Expr::Number(n) => !n.is_integral()
+    Expr::Float(_) | Expr::ComplexFloat(_) => false
     Expr::Add(args) | Expr::Mul(args) =>
       args.any(child => has_fractional_coeff(child))
     Expr::Pow(base, exp) =>

@@ -31,7 +31,7 @@ fn rational_pow(base : @symnum.BigRational, exp : Int) -> @symnum.BigRational {
 
 ///|
 fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
-  match expr {
+  let rebuilt = match expr {
     @symcore.Expr::Number(_) => expr
     @symcore.Expr::Add(args) => @symcore.add(args.map(eval_numeric))
     @symcore.Expr::Mul(args) => @symcore.mul(args.map(eval_numeric))
@@ -58,6 +58,11 @@ fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.Expr::Function(name, args) =>
       @symcore.function(name, args.map(eval_numeric))
     _ => expr
+  }
+  let numeric = @symcore.evalf(rebuilt, prec=80)
+  match numeric {
+    @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) => numeric
+    _ => rebuilt
   }
 }
 

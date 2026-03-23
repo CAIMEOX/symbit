@@ -8,20 +8,16 @@ fn integrate_linear_power(
   exp_value : Expr,
   var_name : String,
 ) -> Expr? {
-  match (linear_coeffs(base, var_name), expr_num_value(exp_value)) {
-    (Some((a, _)), Some(power)) if !expr_is_zero(a) &&
-      power.compare(@symnum.BigRational::from_int(-1)) != 0 => {
-      let next = power.add_r(@symnum.BigRational::one())
-      Some(
-        expr_div(
-          expr_pow(base, expr_from_num(next)),
-          expr_mul(a, expr_from_num(next)),
-        ),
-      )
-    }
-    (Some((a, _)), Some(power)) if !expr_is_zero(a) &&
-      power.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+  if expr_depends_on(exp_value, var_name) {
+    return None
+  }
+  match linear_coeffs(base, var_name) {
+    Some((a, _)) if !expr_is_zero(a) && expr_eq(exp_value, expr_neg_one()) =>
       Some(expr_div(@symelem.log(base), a))
+    Some((a, _)) if !expr_is_zero(a) => {
+      let next = expr_add(exp_value, expr_one())
+      Some(expr_div(expr_pow(base, next), expr_mul(a, next)))
+    }
     _ => None
   }
 }
@@ -91,16 +87,14 @@ fn reciprocal_sqrt_quadratic(inner : Expr, var_name : String) -> Expr? {
 
 ///|
 fn integrate_exp_power(base : Expr, exp : Expr, var_name : String) -> Expr? {
-  match (base, expr_num_value(exp)) {
-    (@symcore.Expr::Function("exp", [arg]), Some(power)) =>
+  if expr_depends_on(exp, var_name) || expr_is_zero(exp) {
+    return None
+  }
+  match base {
+    @symcore.Expr::Function("exp", [arg]) =>
       match linear_coeffs(arg, var_name) {
-        Some((a, _)) if !expr_is_zero(a) && !power.is_zero() =>
-          Some(
-            expr_div(
-              @symelem.exp(expr_mul(expr_from_num(power), arg)),
-              expr_mul(expr_from_num(power), a),
-            ),
-          )
+        Some((a, _)) if !expr_is_zero(a) =>
+          Some(expr_div(expr_pow(base, exp), expr_mul(exp, a)))
         _ => None
       }
     _ => None

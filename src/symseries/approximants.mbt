@@ -108,6 +108,193 @@ fn br_div(
 }
 
 ///|
+fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
+  match expr {
+    @symcore.Expr::Float(f) => f.precision()
+    @symcore.Expr::ComplexFloat(z) => z.precision()
+    @symcore.Expr::Number(_) | @symcore.Expr::Symbol("I") => 80
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+      let mut best = 0
+      for arg in args {
+        let p = approx_numeric_prec_expr(arg)
+        if p > best {
+          best = p
+        }
+      }
+      best
+    }
+    @symcore.Expr::Pow(base, exp) => {
+      let pb = approx_numeric_prec_expr(base)
+      let pe = approx_numeric_prec_expr(exp)
+      if pb > pe { pb } else { pe }
+    }
+    @symcore.Expr::Function(_, args) => {
+      let mut best = 0
+      for arg in args {
+        let p = approx_numeric_prec_expr(arg)
+        if p > best {
+          best = p
+        }
+      }
+      best
+    }
+    _ => 0
+  }
+}
+
+///|
+fn approx_expr_to_complex(
+  expr : @symcore.Expr,
+  prec : Int,
+) -> @symcore.ComplexFloat? {
+  match @symcore.evalf(expr, prec=prec) {
+    @symcore.Expr::Number(n) =>
+      Some(
+        @symcore.ComplexFloat::from_exact_parts(
+          n,
+          @symnum.BigRational::zero(),
+          prec=prec,
+        ),
+      )
+    @symcore.Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
+    @symcore.Expr::ComplexFloat(z) => Some(z)
+    _ => None
+  }
+}
+
+///|
+fn approx_complex_to_expr(value : @symcore.ComplexFloat) -> @symcore.Expr {
+  if @symnum.is_zero(value.to_mpc().imag) {
+    @symcore.float(value.real_part())
+  } else {
+    @symcore.complex_float(value)
+  }
+}
+
+///|
+fn approx_complex_abs(value : @symcore.ComplexFloat, prec : Int) -> @symnum.Mpf {
+  @symnum.mpc_abs(value.to_mpc(), prec, @symnum.round_nearest)
+}
+
+///|
+fn approx_complex_is_zero(value : @symcore.ComplexFloat, prec : Int) -> Bool {
+  let tol_exp = if prec / 2 > 4 { -(prec / 2) } else { -4 }
+  let tol = @symnum.from_man_exp(
+    1N,
+    tol_exp,
+    prec=prec,
+    rnd=@symnum.round_nearest,
+  )
+  @symnum.mpf_cmp(approx_complex_abs(value, prec), tol) <= 0
+}
+
+///|
+fn solve_linear_expr_numeric(
+  mat_in : Array[Array[@symcore.Expr]],
+  rhs_in : Array[@symcore.Expr],
+) -> Array[@symcore.Expr]? {
+  let mut prec = 80
+  for row in mat_in {
+    for value in row {
+      let p = approx_numeric_prec_expr(value)
+      if p > prec {
+        prec = p
+      }
+    }
+  }
+  for value in rhs_in {
+    let p = approx_numeric_prec_expr(value)
+    if p > prec {
+      prec = p
+    }
+  }
+  let mat : Array[Array[@symcore.ComplexFloat]] = Array::new()
+  for row in mat_in {
+    let converted : Array[@symcore.ComplexFloat] = Array::new()
+    for value in row {
+      match approx_expr_to_complex(value, prec) {
+        Some(z) => converted.push(z)
+        None => return None
+      }
+    }
+    mat.push(converted)
+  }
+  let rhs : Array[@symcore.ComplexFloat] = Array::new()
+  for value in rhs_in {
+    match approx_expr_to_complex(value, prec) {
+      Some(z) => rhs.push(z)
+      None => return None
+    }
+  }
+  let n = rhs.length()
+  let mut i = 0
+  while i < n {
+    let mut pivot = i
+    let mut pivot_measure = approx_complex_abs(mat[i][i], prec)
+    let mut row = i + 1
+    while row < n {
+      let measure = approx_complex_abs(mat[row][i], prec)
+      if @symnum.mpf_cmp(measure, pivot_measure) > 0 {
+        pivot = row
+        pivot_measure = measure
+      }
+      row += 1
+    }
+    if approx_complex_is_zero(mat[pivot][i], prec) {
+      return None
+    }
+    if pivot != i {
+      let tmp_row = mat[i]
+      mat[i] = mat[pivot]
+      mat[pivot] = tmp_row
+      let tmp_rhs = rhs[i]
+      rhs[i] = rhs[pivot]
+      rhs[pivot] = tmp_rhs
+    }
+    let pivot_inv = mat[i][i].reciprocal()
+    let mut j = i + 1
+    while j < n {
+      if !approx_complex_is_zero(mat[j][i], prec) {
+        let factor = mat[j][i] * pivot_inv
+        let mut k = i
+        while k < n {
+          mat[j][k] = mat[j][k] + -(factor * mat[i][k])
+          k += 1
+        }
+        rhs[j] = rhs[j] + -(factor * rhs[i])
+      }
+      j += 1
+    }
+    i += 1
+  }
+  let sol : Array[@symcore.Expr] = Array::new()
+  for _ in 0..<n {
+    sol.push(zero_expr())
+  }
+  let mut r = n - 1
+  while true {
+    let mut acc = rhs[r]
+    let mut c = r + 1
+    while c < n {
+      match approx_expr_to_complex(sol[c], prec) {
+        Some(value) => acc = acc + -(mat[r][c] * value)
+        None => return None
+      }
+      c += 1
+    }
+    if approx_complex_is_zero(mat[r][r], prec) {
+      return None
+    }
+    sol[r] = approx_complex_to_expr(acc * mat[r][r].reciprocal())
+    if r == 0 {
+      break
+    }
+    r -= 1
+  }
+  Some(sol)
+}
+
+///|
 fn solve_linear(
   mat_in : Array[Array[@symnum.BigRational]],
   rhs_in : Array[@symnum.BigRational],
@@ -236,6 +423,10 @@ fn solve_linear_expr(
   mat_in : Array[Array[@symcore.Expr]],
   rhs_in : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr]? {
+  match solve_linear_expr_numeric(mat_in, rhs_in) {
+    Some(sol) => return Some(sol)
+    None => ()
+  }
   let n = rhs_in.length()
   let mat : Array[Array[@symcore.Expr]] = Array::new()
   for row in mat_in {

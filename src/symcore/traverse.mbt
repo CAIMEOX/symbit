@@ -26,6 +26,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
         Some(value) => value
         None => expr
       }
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => expr
     _ => map_children(expr, child => subst(child, env))
   }
 }

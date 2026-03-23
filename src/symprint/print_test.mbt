@@ -12,6 +12,30 @@ test "pretty to_string respects precedence" {
 }
 
 ///|
+test "pretty to_string prints Float leaves" {
+  let exact_res : Result[@symcore.Float, @symnum.MpfError] = try? @symcore.Float::from_str(
+    "0.125",
+    prec=90,
+  )
+  let exact = match exact_res {
+    Ok(value) => value
+    Err(_) => fail("float")
+  }
+  inspect(to_string(@symcore.float(exact)), content="0.125")
+}
+
+///|
+test "pretty to_string wraps complex float leaves inside products" {
+  let value = @symcore.ComplexFloat::from_exact_parts(
+    @symnum.BigRational::from_int(1),
+    @symnum.BigRational::from_int(2),
+    prec=80,
+  )
+  let expr = @symcore.mul([@symcore.complex_float(value), @symcore.symbol("x")])
+  inspect(to_string(expr), content="(1.0 + 2.0*I)*x")
+}
+
+///|
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)

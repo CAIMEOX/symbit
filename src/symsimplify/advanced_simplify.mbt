@@ -744,7 +744,7 @@ fn collect_symbols(expr : Expr, out : Map[String, Bool]) -> Unit {
 fn is_rational_form(expr : Expr, k_name : String) -> Bool {
   ignore(k_name)
   match expr {
-    Expr::Number(_) => true
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => true
     Expr::Symbol(_) => true
     Expr::Add(args) | Expr::Mul(args) => {
       for arg in args {

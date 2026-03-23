@@ -2,7 +2,9 @@
 package "CAIMEOX/symbit/symcore"
 
 import {
+  "CAIMEOX/moon_floating/libmp/mpf",
   "CAIMEOX/symbit/symnum",
+  "moonbitlang/core/bigint",
   "moonbitlang/quickcheck",
 }
 
@@ -16,6 +18,16 @@ pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
 pub fn children(Expr) -> ArrayView[Expr]
 
 pub fn compare_expr(Expr, Expr) -> Int
+
+pub fn evalf(Expr, prec? : Int) -> Expr
+
+pub fn float(Float) -> Expr
+
+pub fn float_from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Float
+
+pub fn float_from_exact(@symnum.BigRational, prec? : Int, rnd? : @mpf.RoundMode) -> Float raise @mpf.MpfError
+
+pub fn float_from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Float raise @mpf.MpfError
 
 pub fn function(String, Array[Expr]) -> Expr
 
@@ -50,6 +62,7 @@ pub fn symbol(String) -> Expr
 // Types and methods
 pub enum Expr {
   Number(@symnum.BigRational)
+  Float(Float)
   Symbol(String)
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -63,6 +76,25 @@ pub impl Eq for Expr
 pub impl Hash for Expr
 pub impl Mul for Expr
 pub impl Sub for Expr
+
+pub struct Float {
+  value : @mpf.RawMpf
+  prec : Int
+}
+pub fn Float::format(Self, dps? : Int) -> String
+pub fn Float::from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Self
+pub fn Float::from_exact(@symnum.BigRational, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
+pub fn Float::from_int(Int, prec? : Int) -> Self
+pub fn Float::from_mpf(@mpf.RawMpf, prec? : Int) -> Self
+pub fn Float::from_rational(@bigint.BigInt, @bigint.BigInt, Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
+pub fn Float::from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
+pub fn Float::is_finite(Self) -> Bool
+pub fn Float::precision(Self) -> Int
+pub fn Float::to_double(Self, strict? : Bool, rnd? : @mpf.RoundMode) -> Double raise @mpf.MpfError
+pub fn Float::to_mpf(Self) -> @mpf.RawMpf
+pub fn Float::to_rational(Self) -> (@bigint.BigInt, @bigint.BigInt) raise @mpf.MpfError
+pub impl Eq for Float
+pub impl Show for Float
 
 // Type aliases
 

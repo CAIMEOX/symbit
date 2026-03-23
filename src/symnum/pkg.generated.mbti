@@ -14,9 +14,17 @@ import {
 }
 
 // Values
+pub fn _matrix(ArrayView[Array[@mpf.RawMpf]], prec? : Int, rounding? : @mpf.RoundMode) -> @mp.MpfMatrix raise @mp.MPError
+
+pub fn catalan_fixed(Int) -> @bigint.BigInt raise @mpf.MpfError
+
 pub fn diff((@mpf.RawMpf) -> @mpf.RawMpf, @mpf.RawMpf, n? : Int, direction? : Int, algo? : String, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
 
 pub fn dps_to_prec(Int) -> Int
+
+pub fn euler_fixed(Int) -> @bigint.BigInt raise @mpf.MpfError
+
+pub fn fac(@mpf.RawMpf, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
 
 pub let fhalf : @mpf.RawMpf
 
@@ -60,11 +68,15 @@ pub let inf : @mpf.RawMpf
 
 pub fn interval_context(Int) -> MPIntervalContext
 
+pub fn is_complex_result(@mp.MPError) -> Bool
+
 pub fn is_finite(@mpf.RawMpf) -> Bool
 
 pub fn is_inf(@mpf.RawMpf) -> Bool
 
 pub fn is_nan(@mpf.RawMpf) -> Bool
+
+pub fn is_no_convergence(@mp.MPError) -> Bool
 
 pub fn is_zero(@mpf.RawMpf) -> Bool
 
@@ -83,6 +95,8 @@ pub fn make_mpf(String, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise
 pub fn mp(prec? : Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
 
 pub fn mp_dps(Int, rounding? : @mpf.RoundMode) -> @mp.MPContext
+
+pub fn mpc(@mpf.RawMpf, imag? : @mpf.RawMpf) -> @mpc.RawMpc
 
 pub fn mpc_abs(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpf.RawMpf
 
@@ -114,6 +128,8 @@ pub fn mpc_pow(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc rai
 
 pub fn mpc_pow_int(@mpc.RawMpc, Int, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
+pub fn mpc_pow_mpf(@mpc.RawMpc, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpc.RawMpc
+
 pub fn mpc_sin(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_sqrt(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
@@ -123,6 +139,8 @@ pub fn mpc_sub(@mpc.RawMpc, @mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 pub fn mpc_tan(@mpc.RawMpc, Int, @mpf.RoundMode) -> @mpc.RawMpc
 
 pub fn mpc_to_str(@mpc.RawMpc, dps? : Int) -> String
+
+pub fn mpf(String, prec? : Int, rnd? : @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
 
 pub fn mpf_abs(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
 
@@ -143,6 +161,8 @@ pub fn mpf_cmp(@mpf.RawMpf, @mpf.RawMpf) -> Int
 pub fn mpf_cos(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
 
 pub fn mpf_cosh(@mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
+pub fn mpf_cosh_sinh(@mpf.RawMpf, Int, @mpf.RoundMode) -> (@mpf.RawMpf, @mpf.RawMpf)
 
 pub fn mpf_div(@mpf.RawMpf, @mpf.RawMpf, Int, @mpf.RoundMode) -> @mpf.RawMpf raise @mpf.MpfError
 
@@ -236,9 +256,13 @@ pub let mpz_one : @bigint.BigInt
 
 pub let ninf : @mpf.RawMpf
 
+pub fn normalize(Int, @bigint.BigInt, Int, Int, Int, @mpf.RoundMode) -> @mpf.RawMpf
+
 pub fn nprod((Int) -> @mpf.RawMpf, Int, stop? : Int, algo? : String, tol? : @mpf.RawMpf, max_terms? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
 
 pub fn nsum((Int) -> @mpf.RawMpf, Int, stop? : Int, algo? : String, tol? : @mpf.RawMpf, max_terms? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
+
+pub fn phi_fixed(Int) -> @bigint.BigInt raise @mpf.MpfError
 
 pub fn polyroots(ArrayView[@mpf.RawMpf], asc? : Bool, max_steps? : Int, cleanup? : Bool, extraprec? : Int, prec? : Int, rounding? : @mpf.RoundMode) -> Array[@mpc.RawMpc] raise @mp.MPError
 
@@ -261,6 +285,8 @@ pub let round_floor : @mpf.RoundMode
 pub let round_nearest : @mpf.RoundMode
 
 pub let round_up : @mpf.RoundMode
+
+pub fn sqrt(@mpf.RawMpf, prec? : Int, rounding? : @mpf.RoundMode) -> @mpf.RawMpf raise @mp.MPError
 
 pub fn sqrtrem(@bigint.BigInt) -> (@bigint.BigInt, @bigint.BigInt) raise @intmath.IntMathError
 
@@ -352,6 +378,8 @@ pub using @mpc {type MpcError}
 pub using @mpf {type RawMpf as Mpf}
 
 pub using @mpf {type MpfError}
+
+pub using @mp {type MpfMatrix}
 
 pub using @libmpi {type RawMpi as Mpi}
 

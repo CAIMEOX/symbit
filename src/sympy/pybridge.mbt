@@ -4,6 +4,8 @@
 pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
   match expr {
     @symcore.Expr::Number(n) => sympy_number_obj(n)
+    @symcore.Expr::Float(value) => sympy_float_obj(value)
+    @symcore.Expr::ComplexFloat(value) => sympy_complex_float_obj(value)
     @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
     @symcore.Expr::Add(args) => sympy_nary_obj("sympy.Add", args, "0")
     @symcore.Expr::Mul(args) => sympy_nary_obj("sympy.Mul", args, "1")
@@ -50,6 +52,31 @@ pub fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
     sympy_call_obj("sympy.Rational", [
       OracleArg::Str(num_str),
       OracleArg::Str(den_str),
+    ])
+  }
+}
+
+///|
+fn sympy_float_obj(value : @symcore.Float) -> @py.PyObject raise {
+  sympy_call_obj("sympy.Float", [OracleArg::Str(value.format())])
+}
+
+///|
+fn sympy_complex_float_obj(value : @symcore.ComplexFloat) -> @py.PyObject raise {
+  let real = sympy_float_obj(value.real_part())
+  let imag = sympy_float_obj(value.imag_part())
+  let imag_term = sympy_call_obj("sympy.Mul", [
+    OracleArg::PyObj(imag),
+    OracleArg::PyObj(sympy_symbol_or_const_obj("I")),
+  ])
+  if @symnum.is_zero(value.to_mpc().imag) {
+    real
+  } else if @symnum.is_zero(value.to_mpc().real) {
+    imag_term
+  } else {
+    sympy_call_obj("sympy.Add", [
+      OracleArg::PyObj(real),
+      OracleArg::PyObj(imag_term),
     ])
   }
 }

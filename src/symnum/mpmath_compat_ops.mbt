@@ -442,6 +442,81 @@ pub fn mpc_tan(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
 }
 
 ///|
+pub fn mpc_sinh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_sinh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_cosh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_cosh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_tanh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_tanh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_atan(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_atan(z, prec, rnd)
+}
+
+///|
+pub fn mpc_asin(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_asin(z, prec, rnd)
+}
+
+///|
+pub fn mpc_acos(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_acos(z, prec, rnd)
+}
+
+///|
+pub fn mpc_asinh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_asinh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_acosh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_acosh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_atanh(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_atanh(z, prec, rnd)
+}
+
+///|
+pub fn mpc_e1(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_e1(z, prec, rnd)
+}
+
+///|
+pub fn mpc_ci(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_ci(z, prec, rnd)
+}
+
+///|
+pub fn mpc_si(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_si(z, prec, rnd)
+}
+
+///|
+pub fn mpc_gamma(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_gamma(z, prec, rnd)
+}
+
+///|
+pub fn mpc_loggamma(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_loggamma(z, prec, rnd)
+}
+
+///|
+pub fn mpc_zeta(z : Mpc, prec : Int, rnd : RoundMode) -> Mpc {
+  @mpc.mpc_zeta(z, prec, rnd)
+}
+
+///|
 pub fn mpc_to_str(z : Mpc, dps? : Int = 15) -> String {
   @mpc.mpc_to_str(z, dps~)
 }

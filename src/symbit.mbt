@@ -2,6 +2,21 @@
 pub type Expr = @symcore.Expr
 
 ///|
+pub type Matrix = @symmatrices.Matrix
+
+///|
+pub type SparseMatrix = @symmatrices.SparseMatrix
+
+///|
+pub type MatrixError = @symmatrices.MatrixError
+
+///|
+pub type Float = @symcore.Float
+
+///|
+pub type ComplexFloat = @symcore.ComplexFloat
+
+///|
 pub type BigRational = @symnum.BigRational
 
 ///|
@@ -32,6 +47,62 @@ pub fn integer(value : Int) -> Expr {
 /// Create an exact rational expression `num/den`.
 pub fn rational(num : Int, den : Int) -> Expr raise @symnum.RationalError {
   @symcore.rational_from_ints(num, den)
+}
+
+///|
+/// Embed a core arbitrary-precision floating literal as an expression.
+pub fn float(value : Float) -> Expr {
+  @symcore.float(value)
+}
+
+///|
+/// Embed a core arbitrary-precision complex floating literal as an expression.
+pub fn complex_float(value : ComplexFloat) -> Expr {
+  @symcore.complex_float(value)
+}
+
+///|
+/// Create a dense symbolic matrix.
+pub fn matrix(rows : Array[Array[Expr]]) -> Matrix raise MatrixError {
+  @symmatrices.matrix(rows)
+}
+
+///|
+/// Create a sparse symbolic matrix from DOK-style entries.
+pub fn sparse_matrix(
+  rows : Int,
+  cols : Int,
+  entries : Map[(Int, Int), Expr],
+) -> SparseMatrix raise MatrixError {
+  @symmatrices.sparse_matrix(rows, cols, entries)
+}
+
+///|
+/// Create an all-zero matrix.
+pub fn zeros(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
+  @symmatrices.zeros(rows, cols~)
+}
+
+///|
+/// Create an all-one matrix.
+pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
+  @symmatrices.ones(rows, cols~)
+}
+
+///|
+/// Create the identity matrix.
+pub fn eye(n : Int) -> Matrix raise MatrixError {
+  @symmatrices.eye(n)
+}
+
+///|
+/// Create a diagonal matrix from the supplied diagonal entries.
+pub fn diag(
+  values : Array[Expr],
+  rows? : Int? = None,
+  cols? : Int? = None,
+) -> Matrix raise MatrixError {
+  @symmatrices.diag(values, rows~, cols~)
 }
 
 ///|
@@ -78,6 +149,12 @@ pub fn debug_repr(expr : Expr) -> String {
 /// Return the default pretty string form for an expression.
 pub fn to_string(expr : Expr) -> String {
   @symprint.to_string(expr)
+}
+
+///|
+/// Numerically evaluate exact numeric leaves and common constants/functions.
+pub fn evalf(expr : Expr, prec? : Int = 53) -> Expr {
+  @symcore.evalf(expr, prec~)
 }
 
 ///|

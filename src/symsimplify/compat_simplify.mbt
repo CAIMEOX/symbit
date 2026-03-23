@@ -762,24 +762,18 @@ fn compat_half_rational() -> @symnum.BigRational {
 
 ///|
 fn compat_is_zero_number(expr : Expr) -> Bool {
-  match expr {
-    Expr::Number(n) => n.is_zero()
-    _ => false
-  }
+  numeric_zero_pred(expr)
 }
 
 ///|
 fn compat_is_nonnegative_integer_expr(expr : Expr) -> Bool {
-  match expr {
-    Expr::Number(n) => n.is_integral() && n.numerator().to_int() >= 0
-    _ => false
+  match exact_integer_value(expr) {
+    Some(value) => value >= 0
+    None => false
   }
 }
 
 ///|
 fn compat_integer_expr_value(expr : Expr) -> Int {
-  match expr {
-    Expr::Number(n) => n.numerator().to_int()
-    _ => 0
-  }
+  exact_integer_value(expr).unwrap_or(0)
 }

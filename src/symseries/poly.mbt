@@ -12,18 +12,84 @@ fn one_expr() -> @symcore.Expr {
 }
 
 ///|
-fn is_zero_expr(expr : @symcore.Expr) -> Bool {
+fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
-    @symcore.Expr::Number(n) => n.is_zero()
-    _ => false
+    @symcore.Expr::Number(n) => Some(n)
+    @symcore.Expr::Float(f) =>
+      if !f.is_finite() {
+        None
+      } else {
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
+        match pair {
+          Ok((num, den)) =>
+            match (try? @symnum.BigRational::new(num, den) : Result[
+              @symnum.BigRational,
+              @symnum.RationalError,
+            ]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
+    @symcore.Expr::ComplexFloat(z) =>
+      if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
+        None
+      } else {
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        match pair {
+          Ok((num, den)) =>
+            match (try? @symnum.BigRational::new(num, den) : Result[
+              @symnum.BigRational,
+              @symnum.RationalError,
+            ]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn expr_preserve_numeric_like(
+  source : @symcore.Expr,
+  exact : @symnum.BigRational,
+) -> @symcore.Expr {
+  match source {
+    @symcore.Expr::Float(f) =>
+      @symcore.float(
+        @symcore.Float::from_exact(exact, prec=f.precision()) catch {
+          _ => @symcore.Float::from_mpf(@symnum.fnan, prec=f.precision())
+        },
+      )
+    @symcore.Expr::ComplexFloat(z) =>
+      @symcore.complex_float(
+        @symcore.ComplexFloat::from_exact_parts(
+          exact,
+          @symnum.BigRational::zero(),
+          prec=z.precision(),
+        ),
+      )
+    _ => @symcore.number(exact)
+  }
+}
+
+///|
+fn is_zero_expr(expr : @symcore.Expr) -> Bool {
+  match expr_exact_value(expr) {
+    Some(value) => value.is_zero()
+    None => false
   }
 }
 
 ///|
 fn is_one_expr(expr : @symcore.Expr) -> Bool {
-  match expr {
-    @symcore.Expr::Number(n) => n.is_one()
-    _ => false
+  match expr_exact_value(expr) {
+    Some(value) => value.is_one()
+    None => false
   }
 }
 
@@ -63,18 +129,18 @@ fn expr_sub(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_inv(expr : @symcore.Expr) -> @symcore.Expr? {
-  match expr {
-    @symcore.Expr::Number(n) =>
+  match expr_exact_value(expr) {
+    Some(n) =>
       if n.is_zero() {
         None
       } else {
         try n.reciprocal() catch {
           _ => None
         } noraise {
-          v => Some(@symcore.number(v))
+          v => Some(expr_preserve_numeric_like(expr, v))
         }
       }
-    _ => Some(@symcore.pow(expr, @symcore.int(-1)))
+    None => Some(@symcore.pow(expr, @symcore.int(-1)))
   }
 }
 
@@ -169,8 +235,8 @@ fn poly_pow(base : Array[@symcore.Expr], exp : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn int_exp(expr : @symcore.Expr) -> Int? {
-  match expr {
-    @symcore.Expr::Number(n) if n.is_integral() => {
+  match expr_exact_value(expr) {
+    Some(n) if n.is_integral() => {
       let num = n.numerator()
       if num.bit_length() > 30 {
         None
@@ -188,7 +254,7 @@ fn poly_from_expr(
   x : @symcore.Expr,
 ) -> Array[@symcore.Expr]? {
   match expr {
-    @symcore.Expr::Number(_) => Some([expr])
+    @symcore.Expr::Number(_) | @symcore.Expr::Float(_) => Some([expr])
     @symcore.Expr::Symbol(_) =>
       if expr == x {
         Some([zero_expr(), one_expr()])

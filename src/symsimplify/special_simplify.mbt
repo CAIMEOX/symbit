@@ -52,34 +52,49 @@ fn rewrite_combinatorial_call(
   original : Expr,
 ) -> Expr {
   match (name, args) {
-    ("factorial", [Expr::Number(n)]) =>
-      match to_nonnegative_int(n) {
-        Some(k) => @symcore.number(int_factorial_rational(k))
+    ("factorial", [arg]) =>
+      match exact_numeric_value(arg) {
+        Some(value) =>
+          match to_nonnegative_int(value) {
+            Some(k) => @symcore.number(int_factorial_rational(k))
+            None => original
+          }
         None => original
       }
-    ("gamma", [Expr::Number(n)]) =>
-      match to_positive_int(n) {
-        Some(k) => @symcore.number(int_factorial_rational(k - 1))
+    ("gamma", [arg]) =>
+      match exact_numeric_value(arg) {
+        Some(value) =>
+          match to_positive_int(value) {
+            Some(k) => @symcore.number(int_factorial_rational(k - 1))
+            None => original
+          }
         None => original
       }
-    ("binomial", [Expr::Number(n), Expr::Number(k)]) =>
-      match (to_nonnegative_int(n), to_nonnegative_int(k)) {
+    ("binomial", [n_expr, k_expr]) =>
+      match (
+        match exact_numeric_value(n_expr) {
+          Some(value) => to_nonnegative_int(value)
+          None => None
+        },
+        match exact_numeric_value(k_expr) {
+          Some(value) => to_nonnegative_int(value)
+          None => None
+        }
+      ) {
         (Some(ni), Some(ki)) =>
           if ki > ni {
             int(0)
           } else if ki == 0 || ki == ni {
             int(1)
           } else if ki == 1 {
-            @symcore.number(n)
+            @symcore.number(
+              exact_numeric_value(n_expr).unwrap_or(@symnum.BigRational::zero()),
+            )
           } else {
             @symcore.number(int_binomial_rational(ni, ki))
           }
-        _ => original
-      }
-    ("binomial", [n, Expr::Number(k)]) =>
-      match to_nonnegative_int(k) {
-        Some(0) => int(1)
-        Some(1) => n
+        (None, Some(0)) => int(1)
+        (None, Some(1)) => n_expr
         _ => original
       }
     _ => original

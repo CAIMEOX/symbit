@@ -11,6 +11,22 @@ fn geo_rational_to_double(value : @symnum.BigRational) -> Double {
 fn geo_expr_real_double(expr : Expr) -> Double? {
   match geo_simplify(expr) {
     Expr::Number(value) => Some(geo_rational_to_double(value))
+    Expr::Float(value) =>
+      value.to_double() catch {
+        _ => None
+      } noraise {
+        out => Some(out)
+      }
+    Expr::ComplexFloat(value) =>
+      if @symnum.is_zero(value.to_mpc().imag) {
+        value.real_part().to_double() catch {
+          _ => None
+        } noraise {
+          out => Some(out)
+        }
+      } else {
+        None
+      }
     Expr::Symbol(name) =>
       match name {
         "pi" => Some(@math.PI)

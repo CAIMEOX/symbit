@@ -75,6 +75,221 @@ fn expr_is_zero(expr : Expr) -> Bool {
 }
 
 ///|
+fn expr_has_floating_leaf(expr : Expr) -> Bool {
+  match expr {
+    Expr::Float(_) | Expr::ComplexFloat(_) => true
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+      args.any(expr_has_floating_leaf)
+    Expr::Pow(base, exp) =>
+      expr_has_floating_leaf(base) || expr_has_floating_leaf(exp)
+    _ => false
+  }
+}
+
+///|
+fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
+  match expr {
+    Expr::Float(f) => f.precision()
+    Expr::ComplexFloat(z) => z.precision()
+    Expr::Number(_) | Expr::Symbol("I") | Expr::Symbol("pi") | Expr::Symbol("Pi")
+    | Expr::Symbol("E") | Expr::Symbol("EulerGamma") | Expr::Symbol("GoldenRatio")
+    | Expr::Symbol("Catalan") => 80
+    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
+      let mut best = 0
+      for arg in args {
+        let p = linsolve_numeric_prec_expr(arg)
+        if p > best {
+          best = p
+        }
+      }
+      best
+    }
+    Expr::Pow(base, exp) => {
+      let pb = linsolve_numeric_prec_expr(base)
+      let pe = linsolve_numeric_prec_expr(exp)
+      if pb > pe { pb } else { pe }
+    }
+    _ => 0
+  }
+}
+
+///|
+fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
+  match @symcore.evalf(expr, prec=prec) {
+    Expr::Number(n) =>
+      Some(
+        @symcore.ComplexFloat::from_exact_parts(
+          n,
+          @symnum.BigRational::zero(),
+          prec=prec,
+        ),
+      )
+    Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
+    Expr::ComplexFloat(z) => Some(z)
+    _ => None
+  }
+}
+
+///|
+fn linsolve_complex_to_expr(value : @symcore.ComplexFloat) -> Expr {
+  if @symnum.is_zero(value.to_mpc().imag) {
+    @symcore.float(value.real_part())
+  } else {
+    @symcore.complex_float(value)
+  }
+}
+
+///|
+fn linsolve_complex_zero(value : @symcore.ComplexFloat, prec : Int) -> Bool {
+  let tol_exp = if prec / 2 > 4 { -(prec / 2) } else { -4 }
+  let tol = @symnum.from_man_exp(
+    1N,
+    tol_exp,
+    prec=prec,
+    rnd=@symnum.round_nearest,
+  )
+  let abs = @symnum.mpc_abs(value.to_mpc(), prec, @symnum.round_nearest)
+  @symnum.mpf_cmp(abs, tol) <= 0
+}
+
+///|
+priv enum NumericExprLinsolveResult {
+  Unsupported
+  NoSolution
+  Unique(Map[String, Expr])
+}
+
+///|
+fn numeric_expr_linsolve(
+  eqs_coeffs : Array[Map[String, Expr]],
+  eqs_rhs : Array[Expr],
+  syms : Array[String],
+) -> NumericExprLinsolveResult {
+  if eqs_coeffs.length() != eqs_rhs.length() || eqs_coeffs.length() < syms.length() {
+    return NumericExprLinsolveResult::Unsupported
+  }
+  let mut has_floating = false
+  for row in eqs_coeffs {
+    for _, coeff in row {
+      if expr_has_floating_leaf(coeff) {
+        has_floating = true
+      }
+    }
+  }
+  for rhs in eqs_rhs {
+    if expr_has_floating_leaf(rhs) {
+      has_floating = true
+    }
+  }
+  if !has_floating {
+    return NumericExprLinsolveResult::Unsupported
+  }
+  let mut prec = 80
+  for row in eqs_coeffs {
+    for _, coeff in row {
+      let p = linsolve_numeric_prec_expr(coeff)
+      if p > prec {
+        prec = p
+      }
+    }
+  }
+  for rhs in eqs_rhs {
+    let p = linsolve_numeric_prec_expr(rhs)
+    if p > prec {
+      prec = p
+    }
+  }
+  let mat : Array[Array[@symcore.ComplexFloat]] = Array::new()
+  for i in 0..<eqs_coeffs.length() {
+    let row : Array[@symcore.ComplexFloat] = Array::new()
+    for sym in syms {
+      let expr = match eqs_coeffs[i].get(sym) {
+        Some(coeff) => coeff
+        None => int(0)
+      }
+      match linsolve_expr_to_complex(expr, prec) {
+        Some(value) => row.push(value)
+        None => return NumericExprLinsolveResult::Unsupported
+      }
+    }
+    match linsolve_expr_to_complex(int(0) - eqs_rhs[i], prec) {
+      Some(value) => row.push(value)
+      None => return NumericExprLinsolveResult::Unsupported
+    }
+    mat.push(row)
+  }
+  let m = mat.length()
+  let n = syms.length()
+  let mut row = 0
+  let pivots : Array[Int] = Array::new()
+  for col in 0..<n {
+    if row >= m {
+      break
+    }
+    let mut pivot = row
+    let mut pivot_measure = @symnum.mpc_abs(
+      mat[row][col].to_mpc(),
+      prec,
+      @symnum.round_nearest,
+    )
+    for candidate in (row + 1)..<m {
+      let measure = @symnum.mpc_abs(
+        mat[candidate][col].to_mpc(),
+        prec,
+        @symnum.round_nearest,
+      )
+      if @symnum.mpf_cmp(measure, pivot_measure) > 0 {
+        pivot = candidate
+        pivot_measure = measure
+      }
+    }
+    if linsolve_complex_zero(mat[pivot][col], prec) {
+      continue
+    }
+    if pivot != row {
+      let tmp = mat[row]
+      mat[row] = mat[pivot]
+      mat[pivot] = tmp
+    }
+    let pivot_inv = mat[row][col].reciprocal()
+    for j in col..<=n {
+      mat[row][j] = mat[row][j] * pivot_inv
+    }
+    for i in 0..<m {
+      if i == row || linsolve_complex_zero(mat[i][col], prec) {
+        continue
+      }
+      let factor = mat[i][col]
+      for j in col..<=n {
+        mat[i][j] = mat[i][j] + -(factor * mat[row][j])
+      }
+    }
+    pivots.push(col)
+    row += 1
+  }
+  for i in 0..<m {
+    let mut all_zero = true
+    for j in 0..<n {
+      if !linsolve_complex_zero(mat[i][j], prec) {
+        all_zero = false
+        break
+      }
+    }
+    if all_zero && !linsolve_complex_zero(mat[i][n], prec) {
+      return NumericExprLinsolveResult::NoSolution
+    }
+  }
+  if pivots.length() != n {
+    return NumericExprLinsolveResult::Unsupported
+  }
+  let sol : Map[String, Expr] = Map::new()
+  for i in 0..<n {
+    sol[syms[pivots[i]]] = linsolve_complex_to_expr(mat[i][n])
+  }
+  NumericExprLinsolveResult::Unique(sol)
+}
+
+///|
 fn expr_depends_on_syms(expr : Expr, symset : Map[String, Bool]) -> Bool {
   match expr {
     Expr::Symbol(name) => symset.get(name) is Some(_)
@@ -284,6 +499,11 @@ pub fn _linsolve(
 ) -> Map[String, Expr]? raise PolyError {
   let nsyms = syms.length()
   let (eqsdict, const_terms) = _linear_eq_to_dict(eqs, syms)
+  match numeric_expr_linsolve(eqsdict, const_terms, syms) {
+    NumericExprLinsolveResult::NoSolution => return None
+    NumericExprLinsolveResult::Unique(sol) => return Some(sol)
+    NumericExprLinsolveResult::Unsupported => ()
+  }
   let aaug = sympy_dict_to_dm(eqsdict, const_terms, syms)
   let (arref, pivots, nzcols) = if domain_is_real_field_pred(aaug.domain()) ||
     domain_is_complex_field_pred(aaug.domain()) {

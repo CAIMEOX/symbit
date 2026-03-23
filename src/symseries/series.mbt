@@ -292,10 +292,23 @@ fn taylor_series_expr(expr : Expr, x : Expr, n : Int) -> Expr {
 }
 
 ///|
+fn numeric_constant_function(name : String, expr : Expr) -> Expr? {
+  let evaluated = @symcore.evalf(@symcore.function(name, [expr]), prec=80)
+  match evaluated {
+    Expr::Float(_) | Expr::ComplexFloat(_) => Some(evaluated)
+    _ => None
+  }
+}
+
+///|
 fn const_sin(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(0)
-    _ => @symcore.function("sin", [expr])
+    _ =>
+      match numeric_constant_function("sin", expr) {
+        Some(value) => value
+        None => @symcore.function("sin", [expr])
+      }
   }
 }
 
@@ -303,7 +316,11 @@ fn const_sin(expr : Expr) -> Expr {
 fn const_cos(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(1)
-    _ => @symcore.function("cos", [expr])
+    _ =>
+      match numeric_constant_function("cos", expr) {
+        Some(value) => value
+        None => @symcore.function("cos", [expr])
+      }
   }
 }
 
@@ -311,7 +328,11 @@ fn const_cos(expr : Expr) -> Expr {
 fn const_tan(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(0)
-    _ => @symcore.function("tan", [expr])
+    _ =>
+      match numeric_constant_function("tan", expr) {
+        Some(value) => value
+        None => @symcore.function("tan", [expr])
+      }
   }
 }
 
@@ -319,7 +340,11 @@ fn const_tan(expr : Expr) -> Expr {
 fn const_exp(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(1)
-    _ => @symcore.function("exp", [expr])
+    _ =>
+      match numeric_constant_function("exp", expr) {
+        Some(value) => value
+        None => @symcore.function("exp", [expr])
+      }
   }
 }
 
@@ -327,7 +352,11 @@ fn const_exp(expr : Expr) -> Expr {
 fn const_sinh(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(0)
-    _ => @symcore.function("sinh", [expr])
+    _ =>
+      match numeric_constant_function("sinh", expr) {
+        Some(value) => value
+        None => @symcore.function("sinh", [expr])
+      }
   }
 }
 
@@ -335,7 +364,11 @@ fn const_sinh(expr : Expr) -> Expr {
 fn const_cosh(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(1)
-    _ => @symcore.function("cosh", [expr])
+    _ =>
+      match numeric_constant_function("cosh", expr) {
+        Some(value) => value
+        None => @symcore.function("cosh", [expr])
+      }
   }
 }
 
@@ -343,7 +376,11 @@ fn const_cosh(expr : Expr) -> Expr {
 fn const_tanh(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_zero() => int(0)
-    _ => @symcore.function("tanh", [expr])
+    _ =>
+      match numeric_constant_function("tanh", expr) {
+        Some(value) => value
+        None => @symcore.function("tanh", [expr])
+      }
   }
 }
 
@@ -351,7 +388,11 @@ fn const_tanh(expr : Expr) -> Expr {
 fn const_log(expr : Expr) -> Expr {
   match expr {
     Expr::Number(n) if n.is_one() => int(0)
-    _ => @symcore.function("log", [expr])
+    _ =>
+      match numeric_constant_function("log", expr) {
+        Some(value) => value
+        None => @symcore.function("log", [expr])
+      }
   }
 }
 
@@ -584,7 +625,8 @@ fn simplify_tan_coeff(expr : Expr, tan_c0 : Expr) -> Expr {
 ///|
 fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
   match expr {
-    Expr::Number(_) => Some(([expr], false))
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
+      Some(([expr], false))
     Expr::Symbol(_) =>
       if expr == x {
         Some(([zero_expr(), one_expr()], false))

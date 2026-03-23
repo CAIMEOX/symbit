@@ -27,18 +27,56 @@ fn eigenvects_text(items : Array[EigenVectData]) -> String {
 }
 
 ///|
+fn eigen_expr_equal(lhs : Expr, rhs : Expr) -> Bool {
+  @symsimplify.simplify(lhs + (@symcore.int(-1) * rhs)) == @symcore.int(0)
+}
+
+///|
+fn eigen_matrix_equal(lhs : Matrix, rhs : Matrix) -> Bool {
+  if lhs.shape() != rhs.shape() {
+    return false
+  }
+  for i in 0..<lhs.rows {
+    for j in 0..<lhs.cols {
+      if !eigen_expr_equal(lhs.data[i][j], rhs.data[i][j]) {
+        return false
+      }
+    }
+  }
+  true
+}
+
+///|
 test "matrices charpoly and eigenvals" {
   let a = matrix([
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  inspect(
-    @symprint.to_string(a.charpoly()),
-    content="lambda**2 + -5*lambda + -2",
+  assert_true(
+    eigen_expr_equal(
+      a.charpoly(),
+      (@symcore.symbol("lambda") ^ @symcore.int(2)) +
+      (@symcore.int(-5) * @symcore.symbol("lambda")) +
+      @symcore.int(-2),
+    ),
   )
-  inspect(
-    eigenvals_text(a.eigenvals()),
-    content="[(1/2*(-1*sqrt(33) + 5), 1), (1/2*(sqrt(33) + 5), 1)]",
+  let eigenvals = a.eigenvals()
+  assert_eq(eigenvals.length(), 2)
+  assert_true(
+    eigenvals[0].1 == 1 &&
+    eigen_expr_equal(
+      eigenvals[0].0,
+      @symcore.rational_from_ints(1, 2) *
+      ((@symcore.int(-1) * @symcore.function("sqrt", [@symcore.int(33)])) + @symcore.int(5)),
+    ),
+  )
+  assert_true(
+    eigenvals[1].1 == 1 &&
+    eigen_expr_equal(
+      eigenvals[1].0,
+      @symcore.rational_from_ints(1, 2) *
+      (@symcore.function("sqrt", [@symcore.int(33)]) + @symcore.int(5)),
+    ),
   )
 }
 
@@ -168,19 +206,27 @@ test "matrices exact eigen path supports general non-companion algebraic 3x3" {
     [@symcore.int(1), @symcore.int(1), @symcore.int(1)],
     [@symcore.int(0), @symcore.int(1), @symcore.int(1)],
   ])
-  inspect(
-    eigenvals_text(algebraic.eigenvals()),
-    content="[(1, 1), (1/2*(-1*8**(1/2) + 2), 1), (1/2*(8**(1/2) + 2), 1)]",
+  let eigenvals = algebraic.eigenvals()
+  assert_eq(eigenvals.length(), 3)
+  assert_true(eigenvals[0].1 == 1 && eigen_expr_equal(eigenvals[0].0, @symcore.int(1)))
+  assert_true(
+    eigenvals[1].1 == 1 &&
+    eigen_expr_equal(
+      eigenvals[1].0,
+      @symcore.rational_from_ints(1, 2) *
+      ((@symcore.int(-1) * (@symcore.int(8) ^ @symcore.rational_from_ints(1, 2))) + @symcore.int(2)),
+    ),
+  )
+  assert_true(
+    eigenvals[2].1 == 1 &&
+    eigen_expr_equal(
+      eigenvals[2].0,
+      @symcore.rational_from_ints(1, 2) *
+      ((@symcore.int(8) ^ @symcore.rational_from_ints(1, 2)) + @symcore.int(2)),
+    ),
   )
   let (p, d) = algebraic.diagonalize()
-  inspect(
-    p.to_string(),
-    content="Matrix([[-1, 1, 1], [0, 1/2*(-1*8**(1/2) + 2) + -1, 1/2*(8**(1/2) + 2) + -1], [1, 1, 1]])",
-  )
-  inspect(
-    d.to_string(),
-    content="Matrix([[1, 0, 0], [0, 1/2*(-1*8**(1/2) + 2), 0], [0, 0, 1/2*(8**(1/2) + 2)]])",
-  )
+  assert_true(eigen_matrix_equal(algebraic * p, p * d))
 }
 
 ///|

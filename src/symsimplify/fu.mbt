@@ -1933,18 +1933,12 @@ fn neg_term(expr : Expr) -> Expr {
 
 ///|
 fn is_zero_expr(expr : Expr) -> Bool {
-  match expr {
-    Expr::Number(n) => n.is_zero()
-    _ => false
-  }
+  numeric_zero_pred(expr)
 }
 
 ///|
 fn is_one_expr(expr : Expr) -> Bool {
-  match expr {
-    Expr::Number(n) => n.is_one()
-    _ => false
-  }
+  numeric_one_pred(expr)
 }
 
 ///|

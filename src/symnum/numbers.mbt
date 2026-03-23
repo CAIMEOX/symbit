@@ -31,7 +31,7 @@ fn abs_bigint(x : BigInt) -> BigInt {
 }
 
 ///|
-fn normalize(num : BigInt, den : BigInt) -> BigRational {
+fn normalize_rational(num : BigInt, den : BigInt) -> BigRational {
   let sign_flip = den.op_lt(BigInt::from_int(0))
   let mut n = if sign_flip { num.neg() } else { num }
   let mut d = if sign_flip { den.neg() } else { den }
@@ -49,13 +49,13 @@ pub fn BigRational::new(num : BigInt, den : BigInt) -> Self raise RationalError 
   if den.is_zero() {
     raise RationalError::ZeroDenominator
   }
-  normalize(num, den)
+  normalize_rational(num, den)
 }
 
 ///|
 /// Construct an exact rational from an `Int`.
 pub fn BigRational::from_int(n : Int) -> Self {
-  normalize(BigInt::from_int(n), BigInt::from_int(1))
+  normalize_rational(BigInt::from_int(n), BigInt::from_int(1))
 }
 
 ///|
@@ -67,17 +67,17 @@ pub fn BigRational::from_ints(num : Int, den : Int) -> Self raise RationalError 
 ///|
 /// Construct an exact rational from a `BigInt`.
 pub fn BigRational::from_bigint(n : BigInt) -> Self {
-  normalize(n, BigInt::from_int(1))
+  normalize_rational(n, BigInt::from_int(1))
 }
 
 ///|
 pub fn BigRational::zero() -> Self {
-  normalize(BigInt::from_int(0), BigInt::from_int(1))
+  normalize_rational(BigInt::from_int(0), BigInt::from_int(1))
 }
 
 ///|
 pub fn BigRational::one() -> Self {
-  normalize(BigInt::from_int(1), BigInt::from_int(1))
+  normalize_rational(BigInt::from_int(1), BigInt::from_int(1))
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn BigRational::add_r(
 ) -> BigRational {
   let num = self.num.mul(other.den).add(other.num.mul(self.den))
   let den = self.den.mul(other.den)
-  normalize(num, den)
+  normalize_rational(num, den)
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn BigRational::mul_r(
 ) -> BigRational {
   let num = self.num.mul(other.num)
   let den = self.den.mul(other.den)
-  normalize(num, den)
+  normalize_rational(num, den)
 }
 
 ///|
@@ -147,7 +147,7 @@ pub fn BigRational::reciprocal(
   if self.is_zero() {
     raise RationalError::ZeroDenominator
   }
-  normalize(self.den, self.num)
+  normalize_rational(self.den, self.num)
 }
 
 ///|

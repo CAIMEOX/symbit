@@ -62,10 +62,13 @@ fn expr_eval_special(expr : Expr) -> Expr {
           let mut numeric : @symnum.BigRational? = None
           let mut logged : Expr? = None
           for arg in args {
-            match arg {
-              @symcore.Expr::Number(n) => numeric = Some(n)
-              @symcore.Expr::Function("log", [base]) => logged = Some(base)
-              _ => ()
+            match expr_num_value(arg) {
+              Some(value) => numeric = Some(value)
+              None =>
+                match arg {
+                  @symcore.Expr::Function("log", [base]) => logged = Some(base)
+                  _ => ()
+                }
             }
           }
           match (numeric, logged) {
@@ -125,6 +128,42 @@ fn expr_eq(lhs : Expr, rhs : Expr) -> Bool {
 fn expr_num_value(expr : Expr) -> @symnum.BigRational? {
   match expr_simplify(expr) {
     @symcore.Expr::Number(n) => Some(n)
+    @symcore.Expr::Float(f) =>
+      if !f.is_finite() {
+        None
+      } else {
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
+        match pair {
+          Ok((num, den)) =>
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
+    @symcore.Expr::ComplexFloat(z) =>
+      if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
+        None
+      } else {
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
+          .real_part()
+          .to_rational()
+        match pair {
+          Ok((num, den)) =>
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
+              Ok(value) => Some(value)
+              Err(_) => None
+            }
+          Err(_) => None
+        }
+      }
     _ => None
   }
 }
@@ -202,7 +241,8 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
       let rest : Array[Expr] = []
       for arg in args {
         match arg {
-          @symcore.Expr::Number(_) => numeric = expr_mul(numeric, arg)
+          _ if expr_num_value(arg) is Some(_) =>
+            numeric = expr_mul(numeric, arg)
           @symcore.Expr::Pow(@symcore.Expr::Function("exp", [inner]), exp) =>
             if expr_eq(exp, expr_int(2)) && exp_square is None {
               exp_square = Some(@symelem.exp(inner))
@@ -300,7 +340,9 @@ fn parse_limit(limit : Expr) -> LimitSpec? {
 ///|
 fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
   match expr_simplify(expr) {
-    @symcore.Expr::Number(_) =>
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_) =>
       Some([expr_simplify(expr), expr_zero(), expr_zero()])
     @symcore.Expr::Symbol(name) =>
       if name == var_name {

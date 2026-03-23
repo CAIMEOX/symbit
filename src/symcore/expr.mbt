@@ -1,6 +1,8 @@
 ///|
 pub enum Expr {
   Number(@symnum.BigRational)
+  Float(Float)
+  ComplexFloat(ComplexFloat)
   Symbol(String)
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -12,6 +14,8 @@ pub enum Expr {
 impl Show for Expr with to_string(self) {
   match self {
     Expr::Number(n) => n.to_string()
+    Expr::Float(f) => f.to_string()
+    Expr::ComplexFloat(z) => z.to_string()
     Expr::Symbol(s) => s
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
@@ -55,6 +59,16 @@ pub fn number(value : @symnum.BigRational) -> Expr {
 }
 
 ///|
+pub fn float(value : Float) -> Expr {
+  Expr::Float(value)
+}
+
+///|
+pub fn complex_float(value : ComplexFloat) -> Expr {
+  Expr::ComplexFloat(value)
+}
+
+///|
 pub fn int(value : Int) -> Expr {
   Expr::Number(@symnum.BigRational::from_int(value))
 }
@@ -73,30 +87,306 @@ pub fn symbol(name : String) -> Expr {
 }
 
 ///|
+fn float_from_exact_unchecked(value : @symnum.BigRational, prec : Int) -> Float {
+  Float::from_rational(value.numerator(), value.denominator(), prec) catch {
+    _ => Float::from_mpf(@symnum.fnan, prec~)
+  }
+}
+
+///|
+fn float_with_prec(value : Float, prec : Int) -> Float {
+  let p = if prec > value.precision() { prec } else { value.precision() }
+  if p == value.precision() {
+    value
+  } else {
+    Float::from_mpf(
+      @symnum.mpf_pos(value.to_mpf(), p, @symnum.round_nearest),
+      prec=p,
+    )
+  }
+}
+
+///|
+fn add_float(lhs : Float, rhs : Float) -> Float {
+  let p = if lhs.precision() > rhs.precision() {
+    lhs.precision()
+  } else {
+    rhs.precision()
+  }
+  let left = float_with_prec(lhs, p)
+  let right = float_with_prec(rhs, p)
+  Float::from_mpf(
+    @symnum.mpf_add(left.to_mpf(), right.to_mpf(), p, @symnum.round_nearest),
+    prec=p,
+  )
+}
+
+///|
+fn mul_float(lhs : Float, rhs : Float) -> Float {
+  let p = if lhs.precision() > rhs.precision() {
+    lhs.precision()
+  } else {
+    rhs.precision()
+  }
+  let left = float_with_prec(lhs, p)
+  let right = float_with_prec(rhs, p)
+  Float::from_mpf(
+    @symnum.mpf_mul(left.to_mpf(), right.to_mpf(), p, @symnum.round_nearest),
+    prec=p,
+  )
+}
+
+///|
+fn add_exact_to_float(lhs : Float, rhs : @symnum.BigRational) -> Float {
+  add_float(lhs, float_from_exact_unchecked(rhs, lhs.precision()))
+}
+
+///|
+fn mul_exact_to_float(lhs : Float, rhs : @symnum.BigRational) -> Float {
+  mul_float(lhs, float_from_exact_unchecked(rhs, lhs.precision()))
+}
+
+///|
+fn complex_from_exact_unchecked(
+  value : @symnum.BigRational,
+  prec : Int,
+) -> ComplexFloat {
+  ComplexFloat::from_exact_parts(value, @symnum.BigRational::zero(), prec=prec)
+}
+
+///|
+fn complex_from_float(value : Float) -> ComplexFloat {
+  ComplexFloat::from_real(value)
+}
+
+///|
+fn complex_with_prec(value : ComplexFloat, prec : Int) -> ComplexFloat {
+  let p = if prec > value.precision() { prec } else { value.precision() }
+  if p == value.precision() {
+    value
+  } else {
+    ComplexFloat::from_parts(
+      @symnum.mpf_pos(value.to_mpc().real, p, @symnum.round_nearest),
+      @symnum.mpf_pos(value.to_mpc().imag, p, @symnum.round_nearest),
+      prec=p,
+    )
+  }
+}
+
+///|
+fn add_complex(lhs : ComplexFloat, rhs : ComplexFloat) -> ComplexFloat {
+  let p = if lhs.precision() > rhs.precision() {
+    lhs.precision()
+  } else {
+    rhs.precision()
+  }
+  let left = complex_with_prec(lhs, p)
+  let right = complex_with_prec(rhs, p)
+  ComplexFloat::from_mpc(
+    @symnum.mpc_add(left.to_mpc(), right.to_mpc(), p, @symnum.round_nearest),
+    prec=p,
+  )
+}
+
+///|
+fn mul_complex(lhs : ComplexFloat, rhs : ComplexFloat) -> ComplexFloat {
+  let p = if lhs.precision() > rhs.precision() {
+    lhs.precision()
+  } else {
+    rhs.precision()
+  }
+  let left = complex_with_prec(lhs, p)
+  let right = complex_with_prec(rhs, p)
+  ComplexFloat::from_mpc(
+    @symnum.mpc_mul(left.to_mpc(), right.to_mpc(), p, @symnum.round_nearest),
+    prec=p,
+  )
+}
+
+///|
+fn add_exact_to_complex(
+  lhs : ComplexFloat,
+  rhs : @symnum.BigRational,
+) -> ComplexFloat {
+  add_complex(lhs, complex_from_exact_unchecked(rhs, lhs.precision()))
+}
+
+///|
+fn add_float_to_complex(lhs : ComplexFloat, rhs : Float) -> ComplexFloat {
+  add_complex(lhs, complex_from_float(rhs))
+}
+
+///|
+fn mul_exact_to_complex(
+  lhs : ComplexFloat,
+  rhs : @symnum.BigRational,
+) -> ComplexFloat {
+  mul_complex(lhs, complex_from_exact_unchecked(rhs, lhs.precision()))
+}
+
+///|
+fn mul_float_to_complex(lhs : ComplexFloat, rhs : Float) -> ComplexFloat {
+  mul_complex(lhs, complex_from_float(rhs))
+}
+
+///|
 pub fn add(args : Array[Expr]) -> Expr {
   let flat : Array[Expr] = Array::new()
   let mut const_sum = @symnum.BigRational::zero()
+  let mut float_sum : Float? = None
+  let mut complex_sum : ComplexFloat? = None
   for arg in args {
     match arg {
       Expr::Add(inner) =>
         for child in inner {
           match child {
-            Expr::Number(n) => const_sum = const_sum.add_r(n)
+            Expr::Number(n) =>
+              match complex_sum {
+                Some(current) =>
+                  complex_sum = Some(add_exact_to_complex(current, n))
+                None =>
+                  match float_sum {
+                    Some(current) =>
+                      float_sum = Some(add_exact_to_float(current, n))
+                    None => const_sum = const_sum.add_r(n)
+                  }
+              }
+            Expr::Float(f) =>
+              match complex_sum {
+                Some(current) =>
+                  complex_sum = Some(add_float_to_complex(current, f))
+                None =>
+                  match float_sum {
+                    Some(current) => float_sum = Some(add_float(current, f))
+                    None => {
+                      let seeded = if const_sum.is_zero() {
+                        f
+                      } else {
+                        add_exact_to_float(f, const_sum)
+                      }
+                      const_sum = @symnum.BigRational::zero()
+                      float_sum = Some(seeded)
+                    }
+                  }
+              }
+            Expr::ComplexFloat(z) =>
+              match complex_sum {
+                Some(current) => complex_sum = Some(add_complex(current, z))
+                None => {
+                  let seeded = match float_sum {
+                    Some(current) => add_float_to_complex(z, current)
+                    None =>
+                      if const_sum.is_zero() {
+                        z
+                      } else {
+                        add_exact_to_complex(z, const_sum)
+                      }
+                  }
+                  const_sum = @symnum.BigRational::zero()
+                  float_sum = None
+                  complex_sum = Some(seeded)
+                }
+              }
             _ => flat.push(child)
           }
         }
-      Expr::Number(n) => const_sum = const_sum.add_r(n)
+      Expr::Number(n) =>
+        match complex_sum {
+          Some(current) => complex_sum = Some(add_exact_to_complex(current, n))
+          None =>
+            match float_sum {
+              Some(current) => float_sum = Some(add_exact_to_float(current, n))
+              None => const_sum = const_sum.add_r(n)
+            }
+        }
+      Expr::Float(f) =>
+        match complex_sum {
+          Some(current) => complex_sum = Some(add_float_to_complex(current, f))
+          None =>
+            match float_sum {
+              Some(current) => float_sum = Some(add_float(current, f))
+              None => {
+                let seeded = if const_sum.is_zero() {
+                  f
+                } else {
+                  add_exact_to_float(f, const_sum)
+                }
+                const_sum = @symnum.BigRational::zero()
+                float_sum = Some(seeded)
+              }
+            }
+        }
+      Expr::ComplexFloat(z) =>
+        match complex_sum {
+          Some(current) => complex_sum = Some(add_complex(current, z))
+          None => {
+            let seeded = match float_sum {
+              Some(current) => add_float_to_complex(z, current)
+              None =>
+                if const_sum.is_zero() {
+                  z
+                } else {
+                  add_exact_to_complex(z, const_sum)
+                }
+            }
+            const_sum = @symnum.BigRational::zero()
+            float_sum = None
+            complex_sum = Some(seeded)
+          }
+        }
       _ => flat.push(arg)
     }
   }
   sort_exprs_in_place(flat)
-  if !const_sum.is_zero() {
-    flat.push(Expr::Number(const_sum))
+  match complex_sum {
+    Some(value) =>
+      if !(@symnum.is_zero(value.to_mpc().real) && @symnum.is_zero(value.to_mpc().imag)) {
+        flat.push(Expr::ComplexFloat(value))
+      }
+    None =>
+      match float_sum {
+        Some(value) =>
+          if !@symnum.is_zero(value.to_mpf()) {
+            flat.push(Expr::Float(value))
+          }
+        None => if !const_sum.is_zero() { flat.push(Expr::Number(const_sum)) }
+      }
   }
   match flat.length() {
-    0 => Expr::Number(@symnum.BigRational::zero())
+    0 =>
+      match complex_sum {
+        Some(value) => Expr::ComplexFloat(value)
+        None =>
+          match float_sum {
+            Some(value) => Expr::Float(value)
+            None => Expr::Number(@symnum.BigRational::zero())
+          }
+      }
     1 => flat[0]
     _ => Expr::Add(flat)
+  }
+}
+
+///|
+fn expr_is_zero(expr : Expr) -> Bool {
+  match expr {
+    Expr::Number(n) => n.is_zero()
+    Expr::Float(f) => @symnum.is_zero(f.to_mpf())
+    Expr::ComplexFloat(z) =>
+      @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
+    _ => false
+  }
+}
+
+///|
+fn expr_is_one(expr : Expr) -> Bool {
+  match expr {
+    Expr::Number(n) => n.is_one()
+    Expr::Float(f) => @symnum.mpf_eq(f.to_mpf(), @symnum.fone)
+    Expr::ComplexFloat(z) =>
+      @symnum.mpf_eq(z.to_mpc().real, @symnum.fone) &&
+      @symnum.is_zero(z.to_mpc().imag)
+    _ => false
   }
 }
 
@@ -104,65 +394,250 @@ pub fn add(args : Array[Expr]) -> Expr {
 pub fn mul(args : Array[Expr]) -> Expr {
   let flat : Array[Expr] = Array::new()
   let mut const_prod = @symnum.BigRational::one()
+  let mut float_prod : Float? = None
+  let mut complex_prod : ComplexFloat? = None
   for arg in args {
     match arg {
       Expr::Mul(inner) =>
         for child in inner {
           match child {
-            Expr::Number(n) => {
-              if n.is_zero() {
-                return Expr::Number(@symnum.BigRational::zero())
+            Expr::Number(n) =>
+              match complex_prod {
+                Some(current) =>
+                  if n.is_zero() {
+                    return Expr::ComplexFloat(complex_from_exact_unchecked(n, current.precision()))
+                  } else {
+                    complex_prod = Some(mul_exact_to_complex(current, n))
+                  }
+                None =>
+                  match float_prod {
+                    Some(current) =>
+                      if n.is_zero() {
+                        return Expr::Number(@symnum.BigRational::zero())
+                      } else {
+                        float_prod = Some(mul_exact_to_float(current, n))
+                      }
+                    None => {
+                      if n.is_zero() {
+                        return Expr::Number(@symnum.BigRational::zero())
+                      }
+                      const_prod = const_prod.mul_r(n)
+                    }
+                  }
               }
-              const_prod = const_prod.mul_r(n)
-            }
+            Expr::Float(f) =>
+              if @symnum.is_zero(f.to_mpf()) {
+                return Expr::Float(f)
+              } else {
+                match complex_prod {
+                  Some(current) =>
+                    complex_prod = Some(mul_float_to_complex(current, f))
+                  None =>
+                    match float_prod {
+                      Some(current) => float_prod = Some(mul_float(current, f))
+                      None => {
+                        let seeded = if const_prod.is_one() {
+                          f
+                        } else {
+                          mul_exact_to_float(f, const_prod)
+                        }
+                        const_prod = @symnum.BigRational::one()
+                        float_prod = Some(seeded)
+                      }
+                    }
+                }
+              }
+            Expr::ComplexFloat(z) =>
+              if expr_is_zero(Expr::ComplexFloat(z)) {
+                return Expr::ComplexFloat(z)
+              } else {
+                match complex_prod {
+                  Some(current) => complex_prod = Some(mul_complex(current, z))
+                  None => {
+                    let seeded = match float_prod {
+                      Some(current) => mul_float_to_complex(z, current)
+                      None =>
+                        if const_prod.is_one() {
+                          z
+                        } else {
+                          mul_exact_to_complex(z, const_prod)
+                        }
+                    }
+                    const_prod = @symnum.BigRational::one()
+                    float_prod = None
+                    complex_prod = Some(seeded)
+                  }
+                }
+              }
             _ => flat.push(child)
           }
         }
-      Expr::Number(n) => {
-        if n.is_zero() {
-          return Expr::Number(@symnum.BigRational::zero())
+      Expr::Number(n) =>
+        match complex_prod {
+          Some(current) =>
+            if n.is_zero() {
+              return Expr::ComplexFloat(complex_from_exact_unchecked(n, current.precision()))
+            } else {
+              complex_prod = Some(mul_exact_to_complex(current, n))
+            }
+          None =>
+            match float_prod {
+              Some(current) =>
+                if n.is_zero() {
+                  return Expr::Number(@symnum.BigRational::zero())
+                } else {
+                  float_prod = Some(mul_exact_to_float(current, n))
+                }
+              None => {
+                if n.is_zero() {
+                  return Expr::Number(@symnum.BigRational::zero())
+                }
+                const_prod = const_prod.mul_r(n)
+              }
+            }
         }
-        const_prod = const_prod.mul_r(n)
-      }
+      Expr::Float(f) =>
+        if @symnum.is_zero(f.to_mpf()) {
+          return Expr::Float(f)
+        } else {
+          match complex_prod {
+            Some(current) => complex_prod = Some(mul_float_to_complex(current, f))
+            None =>
+              match float_prod {
+                Some(current) => float_prod = Some(mul_float(current, f))
+                None => {
+                  let seeded = if const_prod.is_one() {
+                    f
+                  } else {
+                    mul_exact_to_float(f, const_prod)
+                  }
+                  const_prod = @symnum.BigRational::one()
+                  float_prod = Some(seeded)
+                }
+              }
+          }
+        }
+      Expr::ComplexFloat(z) =>
+        if expr_is_zero(Expr::ComplexFloat(z)) {
+          return Expr::ComplexFloat(z)
+        } else {
+          match complex_prod {
+            Some(current) => complex_prod = Some(mul_complex(current, z))
+            None => {
+              let seeded = match float_prod {
+                Some(current) => mul_float_to_complex(z, current)
+                None =>
+                  if const_prod.is_one() {
+                    z
+                  } else {
+                    mul_exact_to_complex(z, const_prod)
+                  }
+              }
+              const_prod = @symnum.BigRational::one()
+              float_prod = None
+              complex_prod = Some(seeded)
+            }
+          }
+        }
       _ => flat.push(arg)
     }
   }
   sort_exprs_in_place(flat)
-  if flat.is_empty() {
-    if const_prod.is_one() {
-      Expr::Number(@symnum.BigRational::one())
-    } else {
-      Expr::Number(const_prod)
-    }
-  } else if const_prod.is_one() {
-    match flat.length() {
-      1 => flat[0]
-      _ => Expr::Mul(flat)
-    }
-  } else {
-    let out : Array[Expr] = Array::new()
-    out.push(Expr::Number(const_prod))
-    for v in flat {
-      out.push(v)
-    }
-    match out.length() {
-      1 => out[0]
-      _ => Expr::Mul(out)
-    }
+  match complex_prod {
+    Some(value) =>
+      if flat.is_empty() {
+        Expr::ComplexFloat(value)
+      } else if expr_is_one(Expr::ComplexFloat(value)) {
+        match flat.length() {
+          1 => flat[0]
+          _ => Expr::Mul(flat)
+        }
+      } else {
+        let out : Array[Expr] = Array::new()
+        out.push(Expr::ComplexFloat(value))
+        for v in flat {
+          out.push(v)
+        }
+        match out.length() {
+          1 => out[0]
+          _ => Expr::Mul(out)
+        }
+      }
+    None =>
+      match float_prod {
+        Some(value) =>
+          if flat.is_empty() {
+            Expr::Float(value)
+          } else if expr_is_one(Expr::Float(value)) {
+            match flat.length() {
+              1 => flat[0]
+              _ => Expr::Mul(flat)
+            }
+          } else {
+            let out : Array[Expr] = Array::new()
+            out.push(Expr::Float(value))
+            for v in flat {
+              out.push(v)
+            }
+            match out.length() {
+              1 => out[0]
+              _ => Expr::Mul(out)
+            }
+          }
+        None =>
+          if flat.is_empty() {
+            if const_prod.is_one() {
+              Expr::Number(@symnum.BigRational::one())
+            } else {
+              Expr::Number(const_prod)
+            }
+          } else if const_prod.is_one() {
+            match flat.length() {
+              1 => flat[0]
+              _ => Expr::Mul(flat)
+            }
+          } else {
+            let out : Array[Expr] = Array::new()
+            out.push(Expr::Number(const_prod))
+            for v in flat {
+              out.push(v)
+            }
+            match out.length() {
+              1 => out[0]
+              _ => Expr::Mul(out)
+            }
+          }
+      }
+  }
+}
+
+///|
+fn is_zero_base_expr(expr : Expr) -> Bool {
+  match expr {
+    Expr::Number(n) => n.is_zero()
+    Expr::Float(f) => @symnum.is_zero(f.to_mpf())
+    Expr::ComplexFloat(z) =>
+      @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
+    _ => false
   }
 }
 
 ///|
 pub fn pow(base : Expr, exp : Expr) -> Expr {
-  match exp {
-    Expr::Number(n) if n.is_zero() => Expr::Number(@symnum.BigRational::one())
-    Expr::Number(n) if n.is_one() => base
-    _ =>
-      match base {
-        Expr::Number(n) if n.is_zero() =>
-          Expr::Number(@symnum.BigRational::zero())
-        _ => Expr::Pow(base, exp)
-      }
+  if expr_is_zero(exp) {
+    Expr::Number(@symnum.BigRational::one())
+  } else if expr_is_one(exp) {
+    base
+  } else {
+    match base {
+      _ if is_zero_base_expr(base) =>
+        match base {
+          Expr::ComplexFloat(z) => Expr::ComplexFloat(z)
+          Expr::Float(f) => Expr::Float(f)
+          _ => Expr::Number(@symnum.BigRational::zero())
+        }
+      _ => Expr::Pow(base, exp)
+    }
   }
 }
 

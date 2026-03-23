@@ -21,6 +21,27 @@ L0 (numbers/domains) and the lower half of L1 (Expr kernel + canonicalization).
     `from_int`, `from_bigint`.
   - errors: `RationalError::ZeroDenominator` on invalid construction.
 - helpers: `gcd_bigint(a, b)` using Euclidean algorithm on absolute values.
+- floating backend bridge:
+  - `symnum` now exposes an mpmath-style compatibility layer over
+    `CAIMEOX/moon_floating` (`Mpf`, `Mpc`, precision helpers, interval context,
+    raw ops, high-level numeric wrappers).
+  - this is the intended backend for future `Float`/`evalf` work; exact
+    `BigRational` remains the canonical exact-number layer.
+
+## Floating sketch (`symcore.Float`)
+
+- `symcore.Float` is intentionally **not** an `Expr` variant yet.
+  - Reason: adding a new `Expr` constructor today would require widening
+    exhaustive matches across the entire repository.
+  - Instead, the first step is a dedicated core wrapper around `symnum.Mpf`
+    with tracked binary precision.
+- current surface:
+  - constructors from string / `Double` / exact rational / `BigRational`
+  - `to_mpf`, `to_rational`, `to_double`, `precision`, `is_finite`
+  - stable `Show`/`format` using the `symnum` mpmath-compatible printer
+- next step:
+  - once enough downstream packages are ready, `Expr::Float` can be introduced
+    in a controlled repo-wide refactor instead of a partial break.
 
 ## Expr kernel (symcore)
 
@@ -83,4 +104,3 @@ added later without changing public shape.
 - Ordering tests: `compare_expr` sorts mixed numbers/symbols/functions
   deterministically.
 - Printing snapshots via `debug_repr` for stability.
-

@@ -920,12 +920,27 @@ fn mul_like_bases(expr : Expr) -> Expr {
 ///|
 fn pow_denest(expr : Expr) -> Expr {
   match expr {
-    Expr::Pow(Expr::Pow(base, Expr::Number(a)), Expr::Number(b)) =>
-      @symcore.pow(base, @symcore.number(a.mul_r(b)))
-    Expr::Pow(Expr::Number(base), Expr::Number(exp)) =>
-      match eval_numeric_pow(base, exp) {
-        Some(v) => @symcore.number(v)
-        None => expr
+    Expr::Pow(Expr::Pow(base, inner_exp), outer_exp) =>
+      match (exact_numeric_value(inner_exp), exact_numeric_value(outer_exp)) {
+        (Some(a), Some(b)) =>
+          @symcore.pow(base, @symcore.number(a.mul_r(b)))
+        _ => expr
+      }
+    Expr::Pow(base, exp) =>
+      match (exact_numeric_value(base), exact_numeric_value(exp)) {
+        (Some(base_value), Some(exp_value)) =>
+          match eval_numeric_pow(base_value, exp_value) {
+            Some(v) => numeric_result_like(expr, @symcore.number(v))
+            None =>
+              match float_source_precision(expr) {
+                Some(prec) => {
+                  let evaled = @symcore.evalf(expr, prec=prec)
+                  if evaled == expr { expr } else { evaled }
+                }
+                None => expr
+              }
+          }
+        _ => expr
       }
     _ => expr
   }
@@ -965,28 +980,36 @@ fn eval_numeric_pow(
 fn function_identities(expr : Expr) -> Expr {
   match expr {
     Expr::Function(name, [arg]) =>
-      match (name, arg) {
-        ("sin", Expr::Number(n)) if n.is_zero() => int(0)
-        ("cos", Expr::Number(n)) if n.is_zero() => int(1)
-        ("tan", Expr::Number(n)) if n.is_zero() => int(0)
-        ("exp", Expr::Number(n)) if n.is_zero() => int(1)
-        ("log", Expr::Number(n)) if n.is_one() => int(0)
-        ("log", Expr::Symbol(name)) if name == "E" => int(1)
-        ("sqrt", Expr::Number(n)) if n.is_zero() => int(0)
-        ("sqrt", Expr::Number(n)) if n.is_one() => int(1)
-        ("Abs", Expr::Number(n)) =>
-          if n.compare(@symnum.BigRational::zero()) < 0 {
-            @symcore.number(n.neg_r())
-          } else {
-            @symcore.number(n)
+      match exact_numeric_value(arg) {
+        Some(numeric) =>
+          match name {
+            "sin" | "tan" if numeric.is_zero() =>
+              numeric_result_like(arg, int(0))
+            "cos" | "exp" if numeric.is_zero() =>
+              numeric_result_like(arg, int(1))
+            "log" if numeric.is_one() =>
+              numeric_result_like(arg, int(0))
+            "sqrt" if numeric.is_zero() =>
+              numeric_result_like(arg, int(0))
+            "sqrt" if numeric.is_one() =>
+              numeric_result_like(arg, int(1))
+            "Abs" | "abs" =>
+              if numeric.compare(@symnum.BigRational::zero()) < 0 {
+                numeric_result_like(arg, @symcore.number(numeric.neg_r()))
+              } else {
+                numeric_result_like(arg, @symcore.number(numeric))
+              }
+            _ =>
+              match (name, arg) {
+                ("log", Expr::Symbol(sym_name)) if sym_name == "E" => int(1)
+                _ => expr
+              }
           }
-        ("abs", Expr::Number(n)) =>
-          if n.compare(@symnum.BigRational::zero()) < 0 {
-            @symcore.number(n.neg_r())
-          } else {
-            @symcore.number(n)
+        None =>
+          match (name, arg) {
+            ("log", Expr::Symbol(sym_name)) if sym_name == "E" => int(1)
+            _ => expr
           }
-        _ => expr
       }
     _ => expr
   }

@@ -2,6 +2,8 @@
 pub fn debug_repr(expr : Expr) -> String {
   match expr {
     Expr::Number(n) => n.to_string()
+    Expr::Float(f) => f.to_string()
+    Expr::ComplexFloat(z) => z.to_string()
     Expr::Symbol(name) => "sym:\{name}"
     Expr::Add(args) => wrap_variadic("+", args)
     Expr::Mul(args) => wrap_variadic("*", args)
@@ -38,6 +40,13 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
   let prec = precedence(expr)
   let body = match expr {
     Expr::Number(n) => n.to_string()
+    Expr::Float(f) => f.to_string()
+    Expr::ComplexFloat(z) =>
+      if @symnum.is_zero(z.to_mpc().imag) || parent_prec == 0 {
+        z.to_string()
+      } else {
+        "(\{z.to_string()})"
+      }
     Expr::Symbol(name) => name
     Expr::Add(args) => args.map(child => format_expr(child, prec)).join(" + ")
     Expr::Mul(args) => args.map(child => format_expr(child, prec)).join("*")
@@ -48,10 +57,13 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
         Expr::Pow(_, _) => "(\{base_str})"
         Expr::Number(n) if !n.is_integral() ||
           n.numerator().op_lt(BigInt::from_int(0)) => "(\{base_str})"
+        Expr::Float(f) if @symnum.mpf_sign(f.to_mpf()) < 0 => "(\{base_str})"
+        Expr::ComplexFloat(_) => "(\{base_str})"
         _ => base_str
       }
       let wrapped_exp = match exp {
         Expr::Number(n) if !n.is_integral() => "(\{exp_str})"
+        Expr::Float(_) | Expr::ComplexFloat(_) => "(\{exp_str})"
         _ => exp_str
       }
       "\{wrapped_base}**\{wrapped_exp}"
