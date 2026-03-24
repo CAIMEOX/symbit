@@ -411,7 +411,12 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
               }
             None => None
           }
-        _ => None
+        _ =>
+          if expr_depends_on(expr, var_name) {
+            None
+          } else {
+            Some([expr, expr_zero(), expr_zero()])
+          }
       }
     _ =>
       if expr_depends_on(expr, var_name) {

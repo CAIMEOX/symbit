@@ -37,11 +37,77 @@ test "symintegrals integral constructors and doit" {
 }
 
 ///|
+test "symintegrals Laplace helper utilities align with SymPy helper semantics" {
+  let t = @symcore.symbol("t")
+  let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let y_t = @symcore.raw_function("y", [t])
+  let exp_poly = @symelem.exp((t + a) * (t + b))
+  let nested = @symspec.besselj(
+    @symcore.int(2),
+    @symelem.exp((t + a) * (t + b) - (t ^ @symcore.int(2))),
+  )
+  let deep_collected = @symintegrals._laplace_deep_collect(exp_poly + nested, t)
+  let expected_collect = @symelem.exp(
+      a * b + (t ^ @symcore.int(2)) + t * (a + b),
+    ) +
+    @symspec.besselj(@symcore.int(2), @symelem.exp(a * b + t * (a + b)))
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(deep_collected - expected_collect),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
+  let mut third_deriv = y_t
+  for _ in 0..<3 {
+    third_deriv = @symcalculus.diff(third_deriv, t)
+  }
+  let transformed = laplace_transform_eval(third_deriv, t, s, noconds=true)
+  let correspondence : Map[String, String] = {}
+  correspondence["y"] = "Y"
+  let transformed_named = @symintegrals.laplace_correspondence(
+    transformed, correspondence,
+  )
+  let initial_conds : Map[String, Array[Expr]] = {}
+  initial_conds["y"] = [
+    @symcore.int(2),
+    @symcore.int(4),
+    @symcore.int(8),
+    @symcore.int(16),
+    @symcore.int(32),
+  ]
+  let with_ics = @symintegrals.laplace_initial_conds(
+    transformed_named, t, initial_conds,
+  )
+  let expected = (s ^ @symcore.int(3)) * @symcore.raw_function("Y", [s]) -
+    @symcore.int(2) * (s ^ @symcore.int(2)) -
+    @symcore.int(4) * s -
+    @symcore.int(8)
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(with_ics - expected),
+      @symcore.int(0),
+    ),
+    0,
+  )
+
+  let inverse_named = @symintegrals.laplace_correspondence(
+    inverse_laplace_transform(@symcore.raw_function("Y", [s]), s, t),
+    correspondence,
+  )
+  assert_eq(@symcore.compare_expr(inverse_named, y_t), 0)
+}
+
+///|
 test "symintegrals integrate main entrypoint handles core indefinite families" {
   let x = @symcore.symbol("x")
-  inspect(
-    @symprint.to_string(integrate(x, limits=[integral_limit([x])])),
-    content="1/2*x**2",
+  let int_x = integrate(x, limits=[integral_limit([x])])
+  assert_eq(
+    @symcore.compare_expr(int_x, @symcore.rational_from_ints(1, 2) * x * x),
+    0,
   )
   inspect(
     @symprint.to_string(
@@ -1527,7 +1593,11 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
   let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let np = @symcore.symbol("np")
+  let y = @symcore.symbol("y")
   let f_of_x = @symcore.raw_function("f", [x])
+  let g_of_x = @symcore.raw_function("g", [x])
 
   inspect(
     @symprint.to_string(
@@ -1679,11 +1749,205 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     ),
   )
 
+  let neg_heaviside_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      a *
+      @symspec.heaviside(x + @symcore.int(1)) *
+      @symcore.raw_function("f", [x + @symcore.int(1)]),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    neg_heaviside_generic_eval.contains("a*LaplaceTransform(f(x + 1), x, s)") ||
+    neg_heaviside_generic_eval.contains("a*LaplaceTransform(f(1 + x), x, s)") ||
+    neg_heaviside_generic_eval.contains("a*LaplaceTransform(f((x + 1)), x, s)"),
+  )
+
+  let pos_heaviside_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      a *
+      @symspec.heaviside(x - @symcore.int(1)) *
+      @symcore.raw_function("f", [x - @symcore.int(1)]),
+      x,
+      s,
+    ),
+  )
+  assert_true(pos_heaviside_generic_eval.contains("exp((-1*s))"))
+  assert_true(
+    pos_heaviside_generic_eval.contains("LaplaceTransform(f(x), x, s)"),
+  )
+
+  let scaled_arg_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      b * @symcore.raw_function("f", [x * (a ^ @symcore.int(-1))]),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    scaled_arg_generic_eval.contains("b*LaplaceTransform(f((a**-1*x)), x, s)") ||
+    scaled_arg_generic_eval.contains("b*LaplaceTransform(f(x/a), x, s)"),
+  )
+  assert_true(
+    scaled_arg_generic_eval.contains("Tuple(") &&
+    scaled_arg_generic_eval.contains("True"),
+  )
+
+  let scaled_numeric_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      b * @symcore.raw_function("f", [@symcore.int(2) * x]),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    scaled_numeric_generic_eval.contains(
+      "b*LaplaceTransform(f(x), x, (2**-1*s))/2",
+    ) ||
+    scaled_numeric_generic_eval.contains("b*LaplaceTransform(f(x), x, (s/2))/2") ||
+    scaled_numeric_generic_eval.contains(
+      "1/2*b*LaplaceTransform(f(x), x, (1/2*s))",
+    ),
+  )
+
+  let scaled_numeric_sum_eval = @symprint.to_string(
+    laplace_transform_eval(
+      a * @symcore.raw_function("f", [@symcore.int(2) * x]) +
+      @symcore.raw_function("g", [@symcore.int(3) * x]),
+      x,
+      s,
+    ),
+  )
+  assert_true(scaled_numeric_sum_eval.contains("LaplaceTransform(f(x), x,"))
+  assert_true(scaled_numeric_sum_eval.contains("LaplaceTransform(g(x), x,"))
+
+  let heaviside_pos_affine_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(2) * x - @symcore.int(4)),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    heaviside_pos_affine_eval.contains("exp((-2*s))") &&
+    (
+      heaviside_pos_affine_eval.contains("s**-1") ||
+      heaviside_pos_affine_eval.contains("1/s")
+    ),
+  )
+
+  let heaviside_pos_past_zero_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(2) * x + @symcore.int(4)),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    heaviside_pos_past_zero_eval.contains("s**-1") ||
+    heaviside_pos_past_zero_eval.contains("1/s"),
+  )
+
+  let heaviside_neg_affine_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(-2) * x + @symcore.int(4)),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    heaviside_neg_affine_eval.contains("exp((-1*(2*s)))") ||
+    heaviside_neg_affine_eval.contains("exp((-2*s))"),
+  )
+  assert_true(
+    heaviside_neg_affine_eval.contains("s**-1") ||
+    heaviside_neg_affine_eval.contains("1/s"),
+  )
+
+  let lower_window_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(2) * x - @symcore.int(4)) * g_of_x,
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    lower_window_generic_eval.contains("LaplaceTransform") &&
+    lower_window_generic_eval.contains("Heaviside") &&
+    lower_window_generic_eval.contains("g(x)"),
+  )
+
+  let upper_window_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(-1) * x + @symcore.int(2)) * g_of_x,
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    upper_window_generic_eval.contains("LaplaceTransform(g(x), x, s)"),
+  )
+  assert_true(upper_window_generic_eval.contains("exp((-2*s))"))
+
+  let upper_window_zero_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symspec.heaviside(@symcore.int(-1) * x - @symcore.int(2)) * g_of_x,
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    upper_window_zero_eval.contains("Tuple(0, 0, True)") ||
+    upper_window_zero_eval.contains("Tuple((0), 0, True)"),
+  )
+
   let x_generic_eval = @symprint.to_string(
     laplace_transform_eval(x * f_of_x, x, s),
   )
   assert_true(
     x_generic_eval.contains("Derivative(LaplaceTransform(f(x), x, s), s)"),
+  )
+  let xn_generic_eval = @symprint.to_string(
+    laplace_transform_eval((x ^ np) * g_of_x, x, s),
+  )
+  assert_true(
+    xn_generic_eval.contains("LaplaceTransform(g(x), x, s)") &&
+    xn_generic_eval.contains("Derivative") &&
+    xn_generic_eval.contains("np"),
+  )
+
+  let external_exp_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      @symelem.exp(@symcore.int(-1) * @symcore.raw_function("f", [y]) * x),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    external_exp_generic_eval.contains("(s + f(y))") ||
+    external_exp_generic_eval.contains("(f(y) + s)"),
+  )
+  assert_true(
+    external_exp_generic_eval.contains("-re(f(y))") ||
+    external_exp_generic_eval.contains("0 + -re(f(y))") ||
+    external_exp_generic_eval.contains("re((-1*f(y)))"),
+  )
+
+  let sin_sq_generic_eval = @symprint.to_string(
+    laplace_transform_eval(
+      (@symelem.sin(a * x + b) ^ @symcore.int(2)) * f_of_x,
+      x,
+      s,
+    ),
+  )
+  assert_true(sin_sq_generic_eval.contains("LaplaceTransform(f(x), x, s)"))
+  assert_true(
+    sin_sq_generic_eval.contains("exp((2*I*b))") &&
+    (
+      sin_sq_generic_eval.contains("exp(((-2*I)*b))") ||
+      sin_sq_generic_eval.contains("exp((-2*I*b))")
+    ),
   )
 
   let poly_generic_eval = @symprint.to_string(
@@ -1751,6 +2015,38 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
     cos_generic_eval.contains("I") &&
     cos_generic_eval.contains("a"),
   )
+
+  let mt = @symmatrices.matrix([
+    [@symelem.exp(x), x * @symelem.exp(@symcore.int(-1) * x)],
+    [x * @symelem.exp(@symcore.int(-1) * x), @symelem.exp(x)],
+  ]) catch {
+    _ => fail("matrix lt failed")
+  }
+  let (matrix_laplace, matrix_plane, matrix_cond) = @symintegrals.laplace_transform_matrix_result(
+    mt, x, s,
+  ) catch {
+    _ => fail("matrix lt result failed")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_laplace.getitem(0, 0) catch {
+        _ => fail("getitem failed")
+      },
+      (@symcore.int(-1) + s) ^ @symcore.int(-1),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_laplace.getitem(0, 1) catch {
+        _ => fail("getitem failed")
+      },
+      (@symcore.int(1) + s) ^ @symcore.int(-2),
+    ),
+    0,
+  )
+  assert_eq(@symcore.compare_expr(matrix_plane, @symcore.int(1)), 0)
+  assert_eq(@symcore.compare_expr(matrix_cond, @symcore.symbol("True")), 0)
 }
 
 ///|
@@ -1795,6 +2091,122 @@ test "symintegrals Laplace special-function rules evaluate" {
     !@symprint.to_string(doit(laplace_transform(@symspec.expint(a, x), x, s))).contains(
       "LaplaceTransform",
     ),
+  )
+  let gaussian_laplace = doit(
+    laplace_transform(
+      @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2))),
+      x,
+      s,
+    ),
+  )
+  let x_gaussian_laplace = doit(
+    laplace_transform(
+      x * @symelem.exp(@symcore.int(-2) * (x ^ @symcore.int(2))),
+      x,
+      s,
+    ),
+  )
+  let x2_gaussian_laplace = doit(
+    laplace_transform(
+      (x ^ @symcore.int(2)) *
+      @symelem.exp(@symcore.int(-1) * (x ^ @symcore.int(2))),
+      x,
+      s,
+    ),
+  )
+  let sin_sq_phase_laplace = doit(
+    laplace_transform(@symelem.sin(a * x + b) ^ @symcore.int(2), x, s),
+  )
+  let cos_sq_laplace = doit(
+    laplace_transform(@symelem.cos(@symcore.int(2) * x) ^ @symcore.int(2), x, s),
+  )
+  let sinh_sq_laplace = doit(
+    laplace_transform(
+      @symelem.sinh(@symcore.int(2) * x) ^ @symcore.int(2),
+      x,
+      s,
+    ),
+  )
+  let cosh_sq_laplace = doit(
+    laplace_transform(
+      @symelem.cosh(@symcore.int(2) * x) ^ @symcore.int(2),
+      x,
+      s,
+    ),
+  )
+  let sin_fourth_laplace = doit(
+    laplace_transform(@symelem.sin(@symcore.int(2) * x) ^ @symcore.int(4), x, s),
+  )
+  let sinh_cosh_laplace = doit(
+    laplace_transform(
+      @symelem.sinh(@symcore.int(2) * x) * @symelem.cosh(@symcore.int(2) * x),
+      x,
+      s,
+    ),
+  )
+  let sin_cubic_cosh_laplace = doit(
+    laplace_transform(
+      (@symelem.sin(@symcore.int(2) * x) ^ @symcore.int(3)) *
+      @symelem.cosh(@symcore.int(3) * x),
+      x,
+      s,
+    ),
+  )
+  let abs_sin_laplace = doit(
+    laplace_transform(@symelem.abs(@symelem.sin(@symcore.int(2) * x)), x, s),
+  )
+  let sin_sq_over_x_laplace = doit(
+    laplace_transform(
+      (@symelem.sin(@symcore.int(2) * x) ^ @symcore.int(2)) *
+      (x ^ @symcore.int(-1)),
+      x,
+      s,
+    ),
+  )
+  let sin_sq_over_x2_laplace = doit(
+    laplace_transform(
+      (@symelem.sin(@symcore.int(2) * x) ^ @symcore.int(2)) *
+      (x ^ @symcore.int(-2)),
+      x,
+      s,
+    ),
+  )
+  assert_true(
+    !@symprint.to_string(gaussian_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(x_gaussian_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(x2_gaussian_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sin_sq_phase_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(!@symprint.to_string(cos_sq_laplace).contains("LaplaceTransform"))
+  assert_true(
+    !@symprint.to_string(sinh_sq_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(cosh_sq_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sin_fourth_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sinh_cosh_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sin_cubic_cosh_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(abs_sin_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sin_sq_over_x_laplace).contains("LaplaceTransform"),
+  )
+  assert_true(
+    !@symprint.to_string(sin_sq_over_x2_laplace).contains("LaplaceTransform"),
   )
   let log_laplace = doit(laplace_transform(@symelem.log(x), x, s))
   let log_one_plus_laplace = doit(
@@ -2164,6 +2576,11 @@ test "symintegrals inverse Laplace transform objects roundtrip" {
 test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   let x = @symcore.symbol("x")
   let s = @symcore.symbol("s")
+  let a = @symcore.symbol("a")
+  let b = @symcore.symbol("b")
+  let k = @symcore.symbol("k")
+  let f_big_of_s = @symcore.raw_function("F", [s])
+  let generic_fdict : Map[String, String] = { "f": "F" }
 
   let delayed = @symprint.to_string(
     doit(
@@ -2177,6 +2594,143 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
   )
   assert_true(delayed.contains("Heaviside"))
   assert_true(delayed.contains("x + -2"))
+
+  let generic_delay = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(
+        @symelem.exp(@symcore.int(-1) * a * s) * f_big_of_s,
+        s,
+        x,
+      ),
+    ),
+    generic_fdict,
+  )
+  assert_eq(
+    @symcore.compare_expr(generic_delay, @symcore.raw_function("f", [x - a])),
+    0,
+  )
+
+  let generic_shift = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(k * @symcore.raw_function("F", [s - a]), s, x),
+    ),
+    generic_fdict,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      @symsimplify.simplify(generic_shift),
+      @symsimplify.simplify(
+        k *
+        @symelem.exp(@symcore.int(-1) * a * x) *
+        @symcore.raw_function("f", [x]),
+      ),
+    ),
+    0,
+  )
+
+  let generic_diff3 = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(
+        @symcore.raw_function("Derivative", [f_big_of_s, s, @symcore.int(3)]),
+        s,
+        x,
+      ),
+    ),
+    generic_fdict,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      generic_diff3,
+      @symcore.int(-1) * (x ^ @symcore.int(3)) * @symcore.raw_function("f", [x]),
+    ),
+    0,
+  )
+
+  let generic_diff4 = @symintegrals.laplace_correspondence(
+    doit(
+      inverse_laplace_transform(
+        @symcore.raw_function("Derivative", [f_big_of_s, s, @symcore.int(4)]),
+        s,
+        x,
+      ),
+    ),
+    generic_fdict,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      generic_diff4,
+      (x ^ @symcore.int(4)) * @symcore.raw_function("f", [x]),
+    ),
+    0,
+  )
+
+  let symbolic_power = doit(
+    inverse_laplace_transform(s ^ (@symcore.int(-1) * b), s, x),
+  )
+  let symbolic_power_str = @symprint.to_string(symbolic_power)
+  assert_true(
+    !symbolic_power_str.contains("InverseLaplaceTransform") &&
+    symbolic_power_str.contains("gamma") &&
+    symbolic_power_str.contains("Heaviside"),
+  )
+
+  let delayed_symbolic_power = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * s) * (s ^ (@symcore.int(-1) * b)),
+      s,
+      x,
+    ),
+  )
+  let delayed_symbolic_power_str = @symprint.to_string(delayed_symbolic_power)
+  assert_true(
+    !delayed_symbolic_power_str.contains("InverseLaplaceTransform") &&
+    delayed_symbolic_power_str.contains("gamma") &&
+    delayed_symbolic_power_str.contains("Heaviside"),
+  )
+
+  let bessel_i_branch = doit(
+    inverse_laplace_transform(
+      (a ^ b) *
+      (
+        (s + @symelem.sqrt((s ^ @symcore.int(2)) - (a ^ @symcore.int(2)))) ^
+        (@symcore.int(-1) * b)
+      ) *
+      (
+        @symelem.sqrt((s ^ @symcore.int(2)) - (a ^ @symcore.int(2))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let bessel_i_branch_str = @symprint.to_string(bessel_i_branch)
+  assert_true(
+    !bessel_i_branch_str.contains("InverseLaplaceTransform") &&
+    bessel_i_branch_str.contains("besseli") &&
+    bessel_i_branch_str.contains("Heaviside"),
+  )
+
+  let bessel_j_branch = doit(
+    inverse_laplace_transform(
+      (a ^ b) *
+      (
+        (s + @symelem.sqrt((s ^ @symcore.int(2)) + (a ^ @symcore.int(2)))) ^
+        (@symcore.int(-1) * b)
+      ) *
+      (
+        @symelem.sqrt((s ^ @symcore.int(2)) + (a ^ @symcore.int(2))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  let bessel_j_branch_str = @symprint.to_string(bessel_j_branch)
+  assert_true(
+    !bessel_j_branch_str.contains("InverseLaplaceTransform") &&
+    bessel_j_branch_str.contains("besselj") &&
+    bessel_j_branch_str.contains("Heaviside"),
+  )
 
   let repeated_linear = doit(
     inverse_laplace_transform(
@@ -2481,11 +3035,68 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     reciprocal_sqrt_shifted_linear_str.contains("Heaviside"),
   )
 
+  let reciprocal_sqrt_shifted_over_s = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s + @symcore.int(1)) ^ @symcore.int(-1)) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_sqrt_shifted_over_s_str = @symprint.to_string(
+    reciprocal_sqrt_shifted_over_s,
+  )
+  assert_true(
+    !reciprocal_sqrt_shifted_over_s_str.contains("InverseLaplaceTransform") &&
+    reciprocal_sqrt_shifted_over_s_str.contains("erf") &&
+    reciprocal_sqrt_shifted_over_s_str.contains("Heaviside"),
+  )
+
+  let reciprocal_sqrt_affine_linear = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symcore.int(3) * s + @symcore.int(-2)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_sqrt_affine_linear_str = @symprint.to_string(
+    reciprocal_sqrt_affine_linear,
+  )
+  assert_true(
+    !reciprocal_sqrt_affine_linear_str.contains("InverseLaplaceTransform") &&
+    reciprocal_sqrt_affine_linear_str.contains("erf") &&
+    reciprocal_sqrt_affine_linear_str.contains("Heaviside"),
+  )
+
+  let reciprocal_sqrt_affine_linear_over_s = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(@symcore.int(5) * s) ^ @symcore.int(-1)) *
+      ((@symcore.int(3) * s + @symcore.int(-2)) ^ @symcore.int(-1)) *
+      (s ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let reciprocal_sqrt_affine_linear_over_s_str = @symprint.to_string(
+    reciprocal_sqrt_affine_linear_over_s,
+  )
+  assert_true(
+    !reciprocal_sqrt_affine_linear_over_s_str.contains(
+      "InverseLaplaceTransform",
+    ) &&
+    reciprocal_sqrt_affine_linear_over_s_str.contains("erf") &&
+    reciprocal_sqrt_affine_linear_over_s_str.contains("Heaviside"),
+  )
+
   let scaled_sqrt_over_s = doit(
     inverse_laplace_transform(
       @symcore.int(2) *
       (s ^ @symcore.int(-1)) *
-      ((@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-1)),
+      (
+        (@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(2)) ^
+        @symcore.int(-1)
+      ),
       s,
       x,
     ),
@@ -2497,11 +3108,33 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     scaled_sqrt_over_s_str.contains("Heaviside"),
   )
 
+  let sqrt_linear_over_s_three_halves = doit(
+    inverse_laplace_transform(
+      (a ^ @symcore.int(2)) *
+      (s ^ @symcore.int(-1)) *
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + a) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_over_s_three_halves_str = @symprint.to_string(
+    sqrt_linear_over_s_three_halves,
+  )
+  assert_true(
+    !sqrt_linear_over_s_three_halves_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_over_s_three_halves_str.contains("erfc") &&
+    sqrt_linear_over_s_three_halves_str.contains("Heaviside"),
+  )
+
   let scaled_sqrt_ratio = doit(
     inverse_laplace_transform(
       (@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(-2)) *
       (s ^ @symcore.int(-1)) *
-      ((@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-1)),
+      (
+        (@symcore.int(3) * @symelem.sqrt(s) + @symcore.int(2)) ^
+        @symcore.int(-1)
+      ),
       s,
       x,
     ),
@@ -2511,6 +3144,441 @@ test "symintegrals inverse Laplace stage 5 delay and repeated linear poles" {
     !scaled_sqrt_ratio_str.contains("InverseLaplaceTransform") &&
     scaled_sqrt_ratio_str.contains("erfc") &&
     scaled_sqrt_ratio_str.contains("Heaviside"),
+  )
+
+  let mixed_sqrt_shifted_linear = doit(
+    inverse_laplace_transform(
+      (a - b) *
+      @symelem.sqrt(s) *
+      ((@symelem.sqrt(s) + @symelem.sqrt(a)) ^ @symcore.int(-1)) *
+      ((s - b) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let mixed_sqrt_shifted_linear_str = @symprint.to_string(
+    mixed_sqrt_shifted_linear,
+  )
+  assert_true(
+    !mixed_sqrt_shifted_linear_str.contains("InverseLaplaceTransform") &&
+    (
+      mixed_sqrt_shifted_linear_str.contains("erf") ||
+      mixed_sqrt_shifted_linear_str.contains("erfc")
+    ) &&
+    mixed_sqrt_shifted_linear_str.contains("Heaviside"),
+  )
+
+  let mixed_recip_sqrt_shifted_linear = doit(
+    inverse_laplace_transform(
+      (a - b) *
+      @symelem.sqrt(b) *
+      ((s - b) ^ @symcore.int(-1)) *
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symelem.sqrt(a)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let mixed_recip_sqrt_shifted_linear_str = @symprint.to_string(
+    mixed_recip_sqrt_shifted_linear,
+  )
+  assert_true(
+    !mixed_recip_sqrt_shifted_linear_str.contains("InverseLaplaceTransform") &&
+    (
+      mixed_recip_sqrt_shifted_linear_str.contains("erf") ||
+      mixed_recip_sqrt_shifted_linear_str.contains("erfc")
+    ) &&
+    mixed_recip_sqrt_shifted_linear_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_squared = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-2),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_squared_str = @symprint.to_string(sqrt_linear_squared)
+  assert_true(
+    !sqrt_linear_squared_str.contains("InverseLaplaceTransform") &&
+    (
+      sqrt_linear_squared_str.contains("erf") ||
+      sqrt_linear_squared_str.contains("erfc")
+    ) &&
+    sqrt_linear_squared_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_squared_over_s = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_squared_over_s_str = @symprint.to_string(
+    sqrt_linear_squared_over_s,
+  )
+  assert_true(
+    !sqrt_linear_squared_over_s_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_squared_over_s_str.contains("erfc") &&
+    sqrt_linear_squared_over_s_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_squared_over_sqrt = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_squared_over_sqrt_str = @symprint.to_string(
+    sqrt_linear_squared_over_sqrt,
+  )
+  assert_true(
+    !sqrt_linear_squared_over_sqrt_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_squared_over_sqrt_str.contains("erfc") &&
+    sqrt_linear_squared_over_sqrt_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_cubed = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-3),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_cubed_str = @symprint.to_string(sqrt_linear_cubed)
+  assert_true(
+    !sqrt_linear_cubed_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_cubed_str.contains("erfc") &&
+    sqrt_linear_cubed_str.contains("Heaviside"),
+  )
+
+  let sqrt_over_sqrt_linear_cubed = doit(
+    inverse_laplace_transform(
+      @symelem.sqrt(s) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-3)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_over_sqrt_linear_cubed_str = @symprint.to_string(
+    sqrt_over_sqrt_linear_cubed,
+  )
+  assert_true(
+    !sqrt_over_sqrt_linear_cubed_str.contains("InverseLaplaceTransform") &&
+    sqrt_over_sqrt_linear_cubed_str.contains("erfc") &&
+    sqrt_over_sqrt_linear_cubed_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_cubed_over_sqrt = doit(
+    inverse_laplace_transform(
+      (@symelem.sqrt(s) ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-3)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_cubed_over_sqrt_str = @symprint.to_string(
+    sqrt_linear_cubed_over_sqrt,
+  )
+  assert_true(
+    !sqrt_linear_cubed_over_sqrt_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_cubed_over_sqrt_str.contains("erfc") &&
+    sqrt_linear_cubed_over_sqrt_str.contains("Heaviside"),
+  )
+
+  let sqrt_linear_quartic = doit(
+    inverse_laplace_transform(
+      @symcore.int(3) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-4)),
+      s,
+      x,
+    ),
+  )
+  let sqrt_linear_quartic_str = @symprint.to_string(sqrt_linear_quartic)
+  assert_true(
+    !sqrt_linear_quartic_str.contains("InverseLaplaceTransform") &&
+    sqrt_linear_quartic_str.contains("erfc") &&
+    sqrt_linear_quartic_str.contains("Heaviside"),
+  )
+
+  let shifted_sqrt_over_linear = doit(
+    inverse_laplace_transform(
+      @symelem.sqrt(s + @symcore.int(3)) *
+      ((s + @symcore.int(1)) ^ @symcore.int(-1)),
+      s,
+      x,
+    ),
+  )
+  let shifted_sqrt_over_linear_str = @symprint.to_string(
+    shifted_sqrt_over_linear,
+  )
+  assert_true(
+    !shifted_sqrt_over_linear_str.contains("InverseLaplaceTransform") &&
+    shifted_sqrt_over_linear_str.contains("Heaviside") &&
+    (
+      shifted_sqrt_over_linear_str.contains("erf") ||
+      shifted_sqrt_over_linear_str.contains("sqrt")
+    ),
+  )
+
+  let scaled_sqrt_ratio_squared = doit(
+    inverse_laplace_transform(
+      ((@symelem.sqrt(s) + @symcore.int(-2)) ^ @symcore.int(2)) *
+      (s ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-2)),
+      s,
+      x,
+    ),
+  )
+  let scaled_sqrt_ratio_squared_str = @symprint.to_string(
+    scaled_sqrt_ratio_squared,
+  )
+  assert_true(
+    !scaled_sqrt_ratio_squared_str.contains("InverseLaplaceTransform") &&
+    scaled_sqrt_ratio_squared_str.contains("erfc") &&
+    scaled_sqrt_ratio_squared_str.contains("Heaviside"),
+  )
+
+  let scaled_sqrt_ratio_cubed = doit(
+    inverse_laplace_transform(
+      ((@symelem.sqrt(s) + @symcore.int(-2)) ^ @symcore.int(3)) *
+      (s ^ @symcore.int(-1)) *
+      ((@symelem.sqrt(s) + @symcore.int(2)) ^ @symcore.int(-3)),
+      s,
+      x,
+    ),
+  )
+  let scaled_sqrt_ratio_cubed_str = @symprint.to_string(scaled_sqrt_ratio_cubed)
+  assert_true(
+    !scaled_sqrt_ratio_cubed_str.contains("InverseLaplaceTransform") &&
+    scaled_sqrt_ratio_cubed_str.contains("erfc") &&
+    scaled_sqrt_ratio_cubed_str.contains("Heaviside"),
+  )
+
+  let f_of_s = @symcore.raw_function("f", [s])
+  let delayed_constant_inverse = doit(
+    inverse_laplace_transform(a * @symelem.exp(@symcore.int(-3) * s), s, x),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      delayed_constant_inverse,
+      a * @symcore.raw_function("DiracDelta", [x - @symcore.int(3)]),
+    ),
+    0,
+  )
+
+  let polynomial_delta_inverse = doit(
+    inverse_laplace_transform(
+      @symcore.int(1) +
+      @symcore.int(2) * s +
+      @symcore.int(3) * (s ^ @symcore.int(2)) +
+      @symcore.int(5) * (s ^ @symcore.int(3)),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      polynomial_delta_inverse,
+      @symspec.dirac_delta(x) +
+      @symcore.int(2) *
+      @symcore.raw_function("DiracDelta", [x, @symcore.int(1)]) +
+      @symcore.int(3) *
+      @symcore.raw_function("DiracDelta", [x, @symcore.int(2)]) +
+      @symcore.int(5) *
+      @symcore.raw_function("DiracDelta", [x, @symcore.int(3)]),
+    ),
+    0,
+  )
+
+  let time_diff_inverse = doit(
+    inverse_laplace_transform((s ^ @symcore.int(42)) * f_of_s, s, x),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      time_diff_inverse,
+      @symcore.raw_function("Derivative", [
+        inverse_laplace_transform(f_of_s, s, x),
+        x,
+        @symcore.int(42),
+      ]),
+    ),
+    0,
+  )
+
+  let delayed_bessel_inverse = doit(
+    inverse_laplace_transform(
+      @symelem.exp(@symcore.int(-1) * a * s) *
+      (
+        @symelem.sqrt(@symcore.int(1) + (s ^ @symcore.int(2))) ^
+        @symcore.int(-1)
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      delayed_bessel_inverse,
+      @symspec.heaviside(@symcore.int(-1) * a + x) *
+      @symspec.besselj(@symcore.int(0), @symcore.int(-1) * a + x),
+    ),
+    0,
+  )
+
+  let eye2 = @symmatrices.eye(2) catch { _ => fail("eye failed") }
+  let diagm = @symmatrices.matrix([
+    [@symcore.int(1), @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(2)],
+  ]) catch {
+    _ => fail("matrix failed")
+  }
+  let resolvent = (eye2.scalar_mul(s) - diagm).inv() catch {
+    _ => fail("inverse failed")
+  }
+  let matrix_inverse = @symintegrals.inverse_laplace_transform_matrix(
+    resolvent, s, x,
+  ) catch {
+    _ => fail("matrix ilt failed")
+  }
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_inverse.getitem(0, 0) catch {
+        _ => fail("getitem failed")
+      },
+      @symelem.exp(x) * @symspec.heaviside(x),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_inverse.getitem(0, 1) catch {
+        _ => fail("getitem failed")
+      },
+      @symcore.int(0),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_inverse.getitem(1, 0) catch {
+        _ => fail("getitem failed")
+      },
+      @symcore.int(0),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      matrix_inverse.getitem(1, 1) catch {
+        _ => fail("getitem failed")
+      },
+      @symelem.exp(@symcore.int(2) * x) * @symspec.heaviside(x),
+    ),
+    0,
+  )
+
+  let r = @symcore.symbol("r")
+  let positive_shift_object = doit(
+    inverse_laplace_transform(@symelem.exp(@symcore.int(2) * s), s, x),
+  )
+  assert_true(
+    @symprint.to_string(positive_shift_object).contains(
+      "InverseLaplaceTransform",
+    ),
+  )
+
+  let symbolic_shift_object = doit(
+    inverse_laplace_transform(@symelem.exp(r * s), s, x),
+  )
+  assert_true(
+    @symprint.to_string(symbolic_shift_object).contains(
+      "InverseLaplaceTransform",
+    ),
+  )
+
+  let symbolic_shift_noconds = @symintegrals.inverse_laplace_transform_eval(
+    @symelem.exp(r * s),
+    s,
+    x,
+  )
+  match symbolic_shift_noconds {
+    @symcore.Expr::Function("Tuple", [value, cond]) => {
+      assert_true(
+        @symprint.to_string(value).contains("InverseLaplaceTransform"),
+      )
+      assert_eq(@symcore.compare_expr(cond, @symcore.symbol("True")), 0)
+    }
+    _ =>
+      fail("expected Tuple from inverse_laplace_transform_eval noconds=false")
+  }
+
+  let cos_object = doit(inverse_laplace_transform(@symelem.cos(s), s, x))
+  assert_true(
+    @symprint.to_string(cos_object).contains("InverseLaplaceTransform"),
+  )
+
+  let z = @symcore.symbol("z")
+  let generic_complex_shift = doit(
+    inverse_laplace_transform(@symelem.exp(z * s), s, x),
+  )
+  assert_true(
+    @symprint.to_string(generic_complex_shift).contains(
+      "InverseLaplaceTransform",
+    ),
+  )
+
+  let mixed_shift_sum = doit(
+    inverse_laplace_transform(
+      @symcore.int(2) * @symelem.exp(@symcore.int(3) * s) +
+      @symcore.int(-5) * @symelem.exp(@symcore.int(-7) * s),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      mixed_shift_sum,
+      @symcore.int(2) *
+      inverse_laplace_transform(@symelem.exp(@symcore.int(3) * s), s, x) +
+      @symcore.int(-5) *
+      @symcore.raw_function("DiracDelta", [@symcore.int(-7) + x]),
+    ),
+    0,
+  )
+
+  let additive_time_diff = doit(
+    inverse_laplace_transform(
+      (s ^ @symcore.int(2)) *
+      (
+        f_of_s +
+        (((a ^ @symcore.int(2)) + (s ^ @symcore.int(2))) ^ @symcore.int(-1))
+      ),
+      s,
+      x,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      additive_time_diff,
+      @symcore.raw_function("Derivative", [
+        inverse_laplace_transform(f_of_s, s, x),
+        x,
+        @symcore.int(2),
+      ]) +
+      (
+        @symcore.raw_function("DiracDelta", [x]) +
+        @symcore.int(-1) *
+        @symelem.sqrt(a ^ @symcore.int(2)) *
+        @symelem.sin(x * @symelem.sqrt(a ^ @symcore.int(2))) *
+        @symspec.heaviside(x)
+      ),
+    ),
+    0,
   )
 }
 

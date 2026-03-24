@@ -4,9 +4,11 @@ import {
 }
 
 import {
+  "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symgeometry",
   "CAIMEOX/symbit/symintegrals" @symintegrals,
+  "CAIMEOX/symbit/symmatrices" @symmatrices,
   "CAIMEOX/symbit/symprint",
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,

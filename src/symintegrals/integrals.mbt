@@ -26,6 +26,16 @@ pub fn inverse_laplace_transform(expr : Expr, s : Expr, t : Expr) -> Expr {
 }
 
 ///|
+fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr {
+  @symcore.raw_function("InverseLaplaceTransform", [
+    expr,
+    s,
+    t,
+    @symcore.symbol("_None"),
+  ])
+}
+
+///|
 pub fn fourier_transform(expr : Expr, x : Expr, k : Expr) -> Expr {
   @symcore.raw_function("FourierTransform", [expr, x, k])
 }
@@ -224,6 +234,23 @@ pub fn laplace_transform_eval(
 }
 
 ///|
+pub fn inverse_laplace_transform_eval(
+  expr : Expr,
+  s : Expr,
+  t : Expr,
+  noconds? : Bool = false,
+) -> Expr {
+  let value = do_inverse_laplace_doit(expr, s, t).unwrap_or(
+    inverse_laplace_transform_with_none(expr, s, t),
+  )
+  if noconds {
+    value
+  } else {
+    tuple_expr([value, @symcore.symbol("True")])
+  }
+}
+
+///|
 pub fn mellin_transform_eval(
   expr : Expr,
   x : Expr,
@@ -307,7 +334,8 @@ pub fn doit(expr : Expr) -> Expr {
         Some(res) => res
         None => expr
       }
-    @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t]) =>
+    @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t])
+    | @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t, _]) =>
       match do_inverse_laplace_doit(inner, s, t) {
         Some(res) => res
         None => expr

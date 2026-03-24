@@ -42,6 +42,35 @@ pub fn laplace_transform_result(
 }
 
 ///|
+pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
+  match symbol_name(t) {
+    Some(t_name) => laplace_deep_collect(expr, t_name)
+    None => expr
+  }
+}
+
+///|
+pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr {
+  if fdict.is_empty() {
+    expr
+  } else {
+    laplace_correspondence_walk(expr, fdict)
+  }
+}
+
+///|
+pub fn laplace_initial_conds(
+  expr : Expr,
+  t : Expr,
+  fdict : Map[String, Array[Expr]],
+) -> Expr {
+  match symbol_name(t) {
+    Some(t_name) => laplace_initial_conds_walk(expr, t_name, fdict)
+    None => expr
+  }
+}
+
+///|
 fn laplace_info_doit(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
   match expr {
     @symcore.Expr::Add(terms) => laplace_add_info(terms, t_name, s)
@@ -53,6 +82,458 @@ fn laplace_info_doit(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         None => None
       }
     }
+  }
+}
+
+///|
+fn laplace_deep_collect(expr : Expr, t_name : String) -> Expr {
+  let rebuilt = match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.raw_add(args.map(fn(arg) { laplace_deep_collect(arg, t_name) }))
+    @symcore.Expr::Mul(args) =>
+      @symcore.raw_mul(args.map(fn(arg) { laplace_deep_collect(arg, t_name) }))
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.raw_pow(
+        laplace_deep_collect(base, t_name),
+        laplace_deep_collect(exp, t_name),
+      )
+    @symcore.Expr::Function(name, args) =>
+      @symcore.raw_function(
+        name,
+        args.map(fn(arg) { laplace_deep_collect(arg, t_name) }),
+      )
+    _ => expr
+  }
+  match poly_coeffs_general(rebuilt, t_name) {
+    Some(coeffs) => polynomial_from_coeffs(coeffs, t_name)
+    None => rebuilt
+  }
+}
+
+///|
+fn laplace_correspondence_walk(
+  expr : Expr,
+  fdict : Map[String, String],
+) -> Expr {
+  match expr {
+    @symcore.Expr::Function(
+      "LaplaceTransform",
+      [@symcore.Expr::Function(source_name, [arg]), source_t, source_s]
+    ) =>
+      if @symcore.compare_expr(arg, source_t) == 0 {
+        match fdict.get(source_name) {
+          Some(target_name) =>
+            @symcore.raw_function(target_name, [
+              laplace_correspondence_walk(source_s, fdict),
+            ])
+          None =>
+            @symcore.raw_function("LaplaceTransform", [
+              laplace_correspondence_walk(
+                @symcore.raw_function(source_name, [arg]),
+                fdict,
+              ),
+              laplace_correspondence_walk(source_t, fdict),
+              laplace_correspondence_walk(source_s, fdict),
+            ])
+        }
+      } else {
+        @symcore.raw_function("LaplaceTransform", [
+          laplace_correspondence_walk(
+            @symcore.raw_function(source_name, [arg]),
+            fdict,
+          ),
+          laplace_correspondence_walk(source_t, fdict),
+          laplace_correspondence_walk(source_s, fdict),
+        ])
+      }
+    @symcore.Expr::Function(
+      "InverseLaplaceTransform",
+      [@symcore.Expr::Function(target_name, [arg]), source_s, source_t]
+    )
+    | @symcore.Expr::Function(
+      "InverseLaplaceTransform",
+      [@symcore.Expr::Function(target_name, [arg]), source_s, source_t, _]
+    ) =>
+      if @symcore.compare_expr(arg, source_s) == 0 {
+        match find_inverse_laplace_source(target_name, fdict) {
+          Some(source_name) =>
+            @symcore.raw_function(source_name, [
+              laplace_correspondence_walk(source_t, fdict),
+            ])
+          None =>
+            @symcore.raw_function("InverseLaplaceTransform", [
+              laplace_correspondence_walk(
+                @symcore.raw_function(target_name, [arg]),
+                fdict,
+              ),
+              laplace_correspondence_walk(source_s, fdict),
+              laplace_correspondence_walk(source_t, fdict),
+            ])
+        }
+      } else {
+        @symcore.raw_function("InverseLaplaceTransform", [
+          laplace_correspondence_walk(
+            @symcore.raw_function(target_name, [arg]),
+            fdict,
+          ),
+          laplace_correspondence_walk(source_s, fdict),
+          laplace_correspondence_walk(source_t, fdict),
+        ])
+      }
+    @symcore.Expr::Add(args) =>
+      @symcore.raw_add(
+        args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
+      )
+    @symcore.Expr::Mul(args) =>
+      @symcore.raw_mul(
+        args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
+      )
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.raw_pow(
+        laplace_correspondence_walk(base, fdict),
+        laplace_correspondence_walk(exp, fdict),
+      )
+    @symcore.Expr::Function(name, args) =>
+      @symcore.raw_function(
+        name,
+        args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
+      )
+    _ => expr
+  }
+}
+
+///|
+fn find_inverse_laplace_source(
+  target_name : String,
+  fdict : Map[String, String],
+) -> String? {
+  for source_name, mapped_name in fdict {
+    if mapped_name == target_name {
+      return Some(source_name)
+    }
+  }
+  None
+}
+
+///|
+fn laplace_initial_conds_walk(
+  expr : Expr,
+  t_name : String,
+  fdict : Map[String, Array[Expr]],
+) -> Expr {
+  match match_initial_condition(expr, t_name, fdict) {
+    Some(value) => value
+    None =>
+      match expr {
+        @symcore.Expr::Add(args) =>
+          @symcore.raw_add(
+            args.map(fn(arg) { laplace_initial_conds_walk(arg, t_name, fdict) }),
+          )
+        @symcore.Expr::Mul(args) =>
+          @symcore.raw_mul(
+            args.map(fn(arg) { laplace_initial_conds_walk(arg, t_name, fdict) }),
+          )
+        @symcore.Expr::Pow(base, exp) =>
+          @symcore.raw_pow(
+            laplace_initial_conds_walk(base, t_name, fdict),
+            laplace_initial_conds_walk(exp, t_name, fdict),
+          )
+        @symcore.Expr::Function(name, args) =>
+          @symcore.raw_function(
+            name,
+            args.map(fn(arg) { laplace_initial_conds_walk(arg, t_name, fdict) }),
+          )
+        _ => expr
+      }
+  }
+}
+
+///|
+fn match_initial_condition(
+  expr : Expr,
+  t_name : String,
+  fdict : Map[String, Array[Expr]],
+) -> Expr? {
+  for func_name, values in fdict {
+    match initial_condition_order(expr, func_name, t_name) {
+      Some(order) if order >= 0 && order < values.length() =>
+        return Some(values[order])
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn initial_condition_order(
+  expr : Expr,
+  func_name : String,
+  t_name : String,
+) -> Int? {
+  match expr {
+    @symcore.Expr::Function(func, [arg]) =>
+      if func == func_name && expr_is_zero(arg) {
+        Some(0)
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", _) =>
+      derivative_at_zero_order(expr, func_name)
+    @symcore.Expr::Function("Subs", [inner, sub_var, value]) =>
+      if @symcore.compare_expr(sub_var, @symcore.symbol(t_name)) == 0 &&
+        expr_is_zero(value) {
+        derivative_ic_order(inner, func_name, t_name)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn derivative_at_zero_order(expr : Expr, func_name : String) -> Int? {
+  match expr {
+    @symcore.Expr::Function(func, [arg]) =>
+      if func == func_name && expr_is_zero(arg) {
+        Some(0)
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", [inner, wrt]) =>
+      if expr_is_zero(wrt) {
+        match derivative_at_zero_order(inner, func_name) {
+          Some(order) => Some(order + 1)
+          None => None
+        }
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", [inner, wrt, order]) =>
+      if expr_is_zero(wrt) {
+        match
+          (derivative_at_zero_order(inner, func_name), expr_is_int_value(order)) {
+          (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn derivative_ic_order(
+  expr : Expr,
+  func_name : String,
+  t_name : String,
+) -> Int? {
+  match expr {
+    @symcore.Expr::Function("Derivative", [inner, wrt]) =>
+      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+        match derivative_chain_order(inner, func_name, t_name) {
+          Some(order) => Some(order + 1)
+          None => None
+        }
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", [inner, wrt, order]) =>
+      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+        match
+          (
+            derivative_chain_order(inner, func_name, t_name),
+            expr_is_int_value(order),
+          ) {
+          (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn derivative_chain_order(
+  expr : Expr,
+  func_name : String,
+  t_name : String,
+) -> Int? {
+  match expr {
+    @symcore.Expr::Function(func, [arg]) =>
+      if func == func_name &&
+        @symcore.compare_expr(arg, @symcore.symbol(t_name)) == 0 {
+        Some(0)
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", [inner, wrt]) =>
+      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+        match derivative_chain_order(inner, func_name, t_name) {
+          Some(order) => Some(order + 1)
+          None => None
+        }
+      } else {
+        None
+      }
+    @symcore.Expr::Function("Derivative", [inner, wrt, order]) =>
+      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+        match
+          (
+            derivative_chain_order(inner, func_name, t_name),
+            expr_is_int_value(order),
+          ) {
+          (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
+  match expr {
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_) => Some([expr])
+    @symcore.Expr::Symbol(name) =>
+      if name == var_name {
+        Some([expr_zero(), expr_one()])
+      } else {
+        Some([expr])
+      }
+    @symcore.Expr::Add(args) => {
+      let acc : Array[Expr] = [expr_zero()]
+      for arg in args {
+        match poly_coeffs_general(arg, var_name) {
+          Some(coeffs) => poly_accum_add(acc, coeffs)
+          None => return None
+        }
+      }
+      Some(poly_trim_general(acc))
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut acc : Array[Expr] = [expr_one()]
+      for arg in args {
+        match poly_coeffs_general(arg, var_name) {
+          Some(coeffs) => acc = poly_mul_general(acc, coeffs)
+          None => return None
+        }
+      }
+      Some(poly_trim_general(acc))
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power >= 0 =>
+          match poly_coeffs_general(base, var_name) {
+            Some(coeffs) => Some(poly_pow_general(coeffs, power))
+            None => None
+          }
+        _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
+      }
+    @symcore.Expr::Function(_, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
+  }
+}
+
+///|
+fn poly_accum_add(acc : Array[Expr], coeffs : Array[Expr]) -> Unit {
+  if coeffs.length() > acc.length() {
+    let mut idx = acc.length()
+    while idx < coeffs.length() {
+      acc.push(expr_zero())
+      idx += 1
+    }
+  }
+  for i in 0..<coeffs.length() {
+    acc[i] = expr_add(acc[i], coeffs[i])
+  }
+}
+
+///|
+fn poly_mul_general(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
+  if lhs.is_empty() || rhs.is_empty() {
+    return []
+  }
+  let out : Array[Expr] = []
+  for _ in 0..<(lhs.length() + rhs.length() - 1) {
+    out.push(expr_zero())
+  }
+  for i in 0..<lhs.length() {
+    for j in 0..<rhs.length() {
+      out[i + j] = expr_add(out[i + j], expr_mul(lhs[i], rhs[j]))
+    }
+  }
+  poly_trim_general(out)
+}
+
+///|
+fn poly_pow_general(base : Array[Expr], exp : Int) -> Array[Expr] {
+  if exp == 0 {
+    return [expr_one()]
+  }
+  let mut result : Array[Expr] = [expr_one()]
+  let mut factor = base
+  let mut n = exp
+  while n > 0 {
+    if n % 2 == 1 {
+      result = poly_mul_general(result, factor)
+    }
+    n = n / 2
+    if n > 0 {
+      factor = poly_mul_general(factor, factor)
+    }
+  }
+  poly_trim_general(result)
+}
+
+///|
+fn poly_trim_general(poly : Array[Expr]) -> Array[Expr] {
+  let mut end = poly.length()
+  while end > 0 && expr_is_zero(poly[end - 1]) {
+    end -= 1
+  }
+  let out : Array[Expr] = []
+  for i in 0..<end {
+    out.push(poly[i])
+  }
+  out
+}
+
+///|
+fn polynomial_from_coeffs(coeffs : Array[Expr], var_name : String) -> Expr {
+  if coeffs.is_empty() {
+    return expr_zero()
+  }
+  let terms : Array[Expr] = []
+  let poly_var = @symcore.symbol(var_name)
+  for i in 0..<coeffs.length() {
+    let coeff = coeffs[i]
+    if expr_is_zero(coeff) {
+      continue
+    }
+    let term = if i == 0 {
+      coeff
+    } else if i == 1 {
+      expr_mul(coeff, poly_var)
+    } else {
+      expr_mul(coeff, expr_pow(poly_var, expr_int(i)))
+    }
+    terms.push(term)
+  }
+  if terms.is_empty() {
+    expr_zero()
+  } else {
+    expr_simplify(@symcore.add(terms))
   }
 }
 
@@ -135,15 +616,35 @@ fn laplace_mul_term(
       match exp_coeff {
         Some(a) => {
           let shifted_plane = if expr_eq(plane, neg_oo_expr()) {
-            expr_add(plane, @symelem.re(a))
+            expr_add(plane, laplace_plane_shift_expr(a))
           } else {
-            expr_add(plane, a)
+            expr_add(plane, laplace_plane_shift_expr(a))
           }
           Some((expr_mul(@symelem.exp(exp_const), value), shifted_plane, cond))
         }
         None => Some((value, plane, cond))
       }
-    None => None
+    None =>
+      if expr_depends_on(expr_simplify(factors_expr(factors)), t_name) {
+        Some(
+          generic_laplace_object(
+            expr_simplify(factors_expr(factors)),
+            t_name,
+            s,
+          ),
+        )
+      } else {
+        None
+      }
+  }
+}
+
+///|
+fn laplace_plane_shift_expr(a : Expr) -> Expr {
+  match a {
+    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => a
+    @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) => @symelem.re(a)
+    _ => @symelem.re(a)
   }
 }
 
@@ -189,11 +690,74 @@ fn laplace_rest_term(
     Some(info) => return Some(info)
     None => ()
   }
+  match laplace_power_product_identity_term(factors, t_name, shifted_s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match laplace_identity_product_term(factors, t_name, shifted_s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match laplace_gaussian_mul_term(factors, t_name, shifted_s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match symbol_name(s) {
     Some(_) =>
-      match laplace_power_times_term(factors, t_name, shifted_s, s) {
+      match laplace_symbolic_power_times_term(factors, t_name, shifted_s, s) {
         Some(info) => Some(info)
-        None => laplace_generic_shifted_term(factors, t_name, shifted_s)
+        None =>
+          match laplace_power_times_term(factors, t_name, shifted_s, s) {
+            Some(info) => Some(info)
+            None => laplace_generic_shifted_term(factors, t_name, shifted_s)
+          }
+      }
+    None => None
+  }
+}
+
+///|
+fn laplace_symbolic_power_times_term(
+  factors : Array[Expr],
+  t_name : String,
+  shifted_s : Expr,
+  s : Expr,
+) -> LaplaceInfo? {
+  let mut symbolic_power : Expr? = None
+  let rest : Array[Expr] = []
+  for factor in factors {
+    match parse_power_factor(factor, t_name) {
+      Some(power) if expr_is_constant(power, t_name) &&
+        expr_is_int_value(power) == None =>
+        if symbolic_power is None {
+          symbolic_power = Some(power)
+        } else {
+          return None
+        }
+      Some(_) => rest.push(factor)
+      None => rest.push(factor)
+    }
+  }
+  if symbolic_power is None || rest.length() != 1 {
+    return None
+  }
+  let power = symbolic_power.unwrap()
+  match laplace_base_term(rest[0], t_name, shifted_s) {
+    Some((value, plane, cond)) =>
+      match value {
+        @symcore.Expr::Function("LaplaceTransform", _)
+        | @symcore.Expr::Function("Derivative", _) =>
+          Some(
+            (
+              expr_mul(
+                expr_pow(expr_neg_one(), power),
+                @symcore.raw_function("Derivative", [value, s, power]),
+              ),
+              plane,
+              cond,
+            ),
+          )
+        _ => None
       }
     None => None
   }
@@ -324,15 +888,15 @@ fn laplace_heaviside_shift_term(
   t_name : String,
   s : Expr,
 ) -> LaplaceInfo? {
-  let mut shift : Expr? = None
+  let mut window : (Expr, Bool)? = None
   let rest : Array[Expr] = []
   for factor in factors {
     match factor {
       @symcore.Expr::Function("Heaviside", [arg]) =>
         match parse_heaviside_limit(arg, t_name) {
           Some((bound, is_le)) =>
-            if shift is None && !is_le {
-              shift = Some(bound)
+            if window is None {
+              window = Some((bound, is_le))
             } else {
               return None
             }
@@ -341,39 +905,83 @@ fn laplace_heaviside_shift_term(
       _ => rest.push(factor)
     }
   }
-  match shift {
-    Some(bound) =>
-      if expr_is_negative(bound) {
-        None
-      } else {
-        let shift_name = if t_name == "_laplace_u" {
-          "_laplace_v"
+  let rest_expr = expr_simplify(factors_expr(rest))
+  match window {
+    Some((bound, is_upper)) =>
+      if is_upper {
+        if expr_is_negative(bound) || expr_is_zero(bound) {
+          Some((expr_zero(), expr_zero(), true_expr()))
         } else {
-          "_laplace_u"
+          match laplace_info_doit(rest_expr, t_name, s) {
+            Some((full_value, full_plane, full_cond)) =>
+              match
+                laplace_heaviside_shifted_rest(rest_expr, t_name, s, bound) {
+                Some((shifted_value, shifted_plane, shifted_cond)) =>
+                  Some(
+                    (
+                      expr_simplify(expr_sub(full_value, shifted_value)),
+                      max_expr(full_plane, shifted_plane),
+                      and_expr(full_cond, shifted_cond),
+                    ),
+                  )
+                None => None
+              }
+            None => None
+          }
         }
-        let shift_var = @symcore.symbol(shift_name)
-        let shifted = subst_symbol(
-          factors_expr(rest),
-          t_name,
-          expr_add(shift_var, bound),
-        )
-        match laplace_info_doit(expr_simplify(shifted), shift_name, s) {
-          Some((value, plane, cond)) =>
-            Some(
-              (
-                expr_simplify(
-                  expr_mul(
-                    @symelem.exp(expr_mul(expr_neg_one(), expr_mul(bound, s))),
-                    value,
-                  ),
-                ),
-                plane,
-                and_expr(cond, nonnegative_condition(bound)),
-              ),
-            )
-          None => None
-        }
+      } else if expr_is_negative(bound) || expr_is_zero(bound) {
+        laplace_info_doit(rest_expr, t_name, s)
+      } else {
+        laplace_heaviside_shifted_rest(rest_expr, t_name, s, bound)
       }
+    None => None
+  }
+}
+
+///|
+fn laplace_heaviside_shifted_rest(
+  rest_expr : Expr,
+  t_name : String,
+  s : Expr,
+  bound : Expr,
+) -> LaplaceInfo? {
+  let shift_name = if t_name == "_laplace_u" {
+    "_laplace_v"
+  } else {
+    "_laplace_u"
+  }
+  let shift_var = @symcore.symbol(shift_name)
+  let shifted = subst_symbol(rest_expr, t_name, expr_add(shift_var, bound))
+  match laplace_info_doit(expr_simplify(shifted), shift_name, s) {
+    Some((value, plane, cond)) => {
+      let restored_value = subst_symbol(
+        value,
+        shift_name,
+        @symcore.symbol(t_name),
+      )
+      let restored_plane = subst_symbol(
+        plane,
+        shift_name,
+        @symcore.symbol(t_name),
+      )
+      let restored_cond = subst_symbol(
+        cond,
+        shift_name,
+        @symcore.symbol(t_name),
+      )
+      Some(
+        (
+          expr_simplify(
+            expr_mul(
+              @symelem.exp(expr_mul(expr_neg_one(), expr_mul(bound, s))),
+              restored_value,
+            ),
+          ),
+          restored_plane,
+          and_expr(restored_cond, nonnegative_condition(bound)),
+        ),
+      )
+    }
     None => None
   }
 }
@@ -395,6 +1003,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       } else {
         None
       }
+    @symcore.Expr::Function("exp", [inner]) =>
+      laplace_gaussian_base_term(inner, t_name, s)
     @symcore.Expr::Function("log", [inner]) =>
       laplace_log_term(inner, t_name, s)
     @symcore.Expr::Function("Piecewise", args) =>
@@ -407,47 +1017,54 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         Some(2) => laplace_log_squared_term(inner, t_name, s)
         _ => None
       }
-    @symcore.Expr::Pow(base, exp) => {
-      let base_name = symbol_name(base)
-      if base_name == None {
-        None
-      } else {
-        let name = match base_name {
-          Some(v) => v
-          None => ""
-        }
-        match expr_is_int_value(exp) {
-          Some(power) =>
-            if name == t_name && power >= 0 {
-              Some(
-                (
-                  expr_div(
-                    factorial_expr(expr_int(power)),
-                    expr_pow(s, expr_int(power + 1)),
-                  ),
-                  expr_zero(),
-                  true_expr(),
-                ),
-              )
-            } else {
-              None
+    @symcore.Expr::Pow(base, exp) =>
+      match laplace_function_power_base_term(base, exp, t_name, s) {
+        Some(info) => Some(info)
+        None => {
+          let base_name = symbol_name(base)
+          if base_name == None {
+            None
+          } else {
+            let name = match base_name {
+              Some(v) => v
+              None => ""
             }
-          None =>
-            if name == t_name && expr_is_constant(exp, t_name) {
-              let gamma_arg = expr_add(exp, expr_one())
-              Some(
-                (
-                  expr_div(@symspec.gamma(gamma_arg), expr_pow(s, gamma_arg)),
-                  expr_zero(),
-                  @symcore.function("Gt", [@symelem.re(exp), expr_neg_one()]),
-                ),
-              )
-            } else {
-              None
+            match expr_is_int_value(exp) {
+              Some(power) =>
+                if name == t_name && power >= 0 {
+                  Some(
+                    (
+                      expr_div(
+                        factorial_expr(expr_int(power)),
+                        expr_pow(s, expr_int(power + 1)),
+                      ),
+                      expr_zero(),
+                      true_expr(),
+                    ),
+                  )
+                } else {
+                  None
+                }
+              None =>
+                if name == t_name && expr_is_constant(exp, t_name) {
+                  let gamma_arg = expr_add(exp, expr_one())
+                  Some(
+                    (
+                      expr_div(
+                        @symspec.gamma(gamma_arg),
+                        expr_pow(s, gamma_arg),
+                      ),
+                      expr_zero(),
+                      @symcore.function("Gt", [@symelem.re(exp), expr_neg_one()]),
+                    ),
+                  )
+                } else {
+                  None
+                }
             }
+          }
         }
       }
-    }
     @symcore.Expr::Function("sin", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some(pair) => {
@@ -462,6 +1079,33 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             }
           }
         }
+        None => None
+      }
+    @symcore.Expr::Function("Abs", [@symcore.Expr::Function("sin", [arg])]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((a, b)) =>
+          if expr_is_zero(a) || !expr_is_zero(b) {
+            None
+          } else {
+            Some(
+              (
+                expr_div(
+                  expr_mul(
+                    a,
+                    @symelem.coth(
+                      expr_div(
+                        expr_mul(@symcore.symbol("pi"), s),
+                        expr_mul(expr_int(2), a),
+                      ),
+                    ),
+                  ),
+                  expr_add(expr_pow(a, expr_int(2)), expr_pow(s, expr_int(2))),
+                ),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          }
         None => None
       }
     @symcore.Expr::Function("cos", [arg]) =>
@@ -489,7 +1133,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             None
           } else {
             match laplace_hyperbolic_term(a, b, s, true) {
-              Some(v) => Some((v, expr_zero(), true_expr()))
+              Some(v) => Some((v, hyperbolic_laplace_plane(a), true_expr()))
               None => None
             }
           }
@@ -505,13 +1149,15 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             None
           } else {
             match laplace_hyperbolic_term(a, b, s, false) {
-              Some(v) => Some((v, expr_zero(), true_expr()))
+              Some(v) => Some((v, hyperbolic_laplace_plane(a), true_expr()))
               None => None
             }
           }
         }
         None => None
       }
+    @symcore.Expr::Function("Heaviside", [arg]) =>
+      laplace_numeric_heaviside_base_term(arg, t_name, s)
     @symcore.Expr::Function("erf", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
@@ -835,12 +1481,434 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       }
     @symcore.Expr::Function("Derivative", args) =>
       laplace_derivative_term(args, t_name, s)
+    @symcore.Expr::Function(name, [arg]) =>
+      match linear_coeffs(arg, t_name) {
+        Some((coeff, offset)) =>
+          if expr_is_positive(coeff) && expr_is_zero(offset) {
+            Some(
+              (
+                expr_simplify(
+                  expr_div(
+                    @symcore.raw_function("LaplaceTransform", [
+                      @symcore.raw_function(name, [@symcore.symbol(t_name)]),
+                      @symcore.symbol(t_name),
+                      expr_div(s, coeff),
+                    ]),
+                    coeff,
+                  ),
+                ),
+                neg_oo_expr(),
+                true_expr(),
+              ),
+            )
+          } else if expr_depends_on(arg, t_name) {
+            Some(generic_laplace_object(expr, t_name, s))
+          } else {
+            None
+          }
+        _ =>
+          if expr_depends_on(arg, t_name) {
+            Some(generic_laplace_object(expr, t_name, s))
+          } else {
+            None
+          }
+      }
     _ =>
       if expr_depends_on(expr, t_name) {
         Some(generic_laplace_object(expr, t_name, s))
       } else {
         None
       }
+  }
+}
+
+///|
+fn laplace_gaussian_mul_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  let mut scale : Expr? = None
+  let mut total_power = 0
+  for factor in factors {
+    match factor {
+      @symcore.Expr::Function("exp", [inner]) =>
+        match parse_negative_quadratic_exp(inner, t_name) {
+          Some(parsed_scale) =>
+            if scale is None {
+              scale = Some(parsed_scale)
+            } else {
+              return None
+            }
+          None => return None
+        }
+      _ =>
+        match parse_power_factor(factor, t_name) {
+          Some(power_expr) =>
+            match expr_is_int_value(power_expr) {
+              Some(power) if power >= 0 => total_power += power
+              _ => return None
+            }
+          None => return None
+        }
+    }
+  }
+  match scale {
+    Some(parsed_scale) if total_power >= 0 && total_power <= 2 =>
+      Some(
+        (
+          laplace_gaussian_value(parsed_scale, s, total_power),
+          expr_zero(),
+          gaussian_laplace_condition(parsed_scale),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn laplace_gaussian_base_term(
+  inner : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  match parse_negative_quadratic_exp(inner, t_name) {
+    Some(scale) =>
+      Some(
+        (
+          laplace_gaussian_value(scale, s, 0),
+          expr_zero(),
+          gaussian_laplace_condition(scale),
+        ),
+      )
+    None => None
+  }
+}
+
+///|
+fn laplace_gaussian_value(scale : Expr, s : Expr, power : Int) -> Expr {
+  let sqrt_scale = expr_sqrt_positive(scale)
+  let erfc_arg = expr_div(s, expr_mul(expr_int(2), sqrt_scale))
+  let erfc_term = @symspec.erfc(erfc_arg)
+  let exp_term = @symelem.exp(
+    expr_div(expr_pow(s, expr_int(2)), expr_mul(expr_int(4), scale)),
+  )
+  let common = expr_mul(sqrt_pi(), expr_mul(exp_term, erfc_term))
+  match power {
+    0 => expr_div(common, expr_mul(expr_int(2), sqrt_scale))
+    1 =>
+      expr_sub(
+        expr_div(expr_one(), expr_mul(expr_int(2), scale)),
+        expr_div(
+          expr_mul(s, erfc_term),
+          expr_mul(
+            expr_int(4),
+            expr_mul(sqrt_pi(), expr_pow(scale, expr_rat(3, 2))),
+          ),
+        ),
+      )
+    2 =>
+      expr_add(
+        expr_mul(
+          expr_neg_one(),
+          expr_div(s, expr_mul(expr_int(4), expr_pow(scale, expr_int(2)))),
+        ),
+        expr_add(
+          expr_div(
+            common,
+            expr_mul(expr_int(4), expr_pow(scale, expr_rat(3, 2))),
+          ),
+          expr_div(
+            expr_mul(common, expr_pow(s, expr_int(2))),
+            expr_mul(expr_int(8), expr_pow(scale, expr_rat(5, 2))),
+          ),
+        ),
+      )
+    _ => expr_zero()
+  }
+}
+
+///|
+fn gaussian_laplace_condition(scale : Expr) -> Expr {
+  if expr_is_positive(scale) {
+    true_expr()
+  } else {
+    @symcore.function("Le", [
+      @symelem.abs(@symelem.arg(scale)),
+      expr_div(@symcore.symbol("pi"), expr_int(2)),
+    ])
+  }
+}
+
+///|
+fn hyperbolic_laplace_plane(scale : Expr) -> Expr {
+  expr_simplify(@symelem.abs(@symelem.re(scale)))
+}
+
+///|
+fn laplace_function_power_base_term(
+  base : Expr,
+  exp : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  let power = match expr_is_int_value(exp) {
+    Some(v) => v
+    None => return None
+  }
+  match base {
+    @symcore.Expr::Function("sin", [arg]) if power == 2 =>
+      laplace_info_doit(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_sub(expr_one(), @symelem.cos(expr_mul(expr_int(2), arg))),
+        ),
+        t_name,
+        s,
+      )
+    @symcore.Expr::Function("sin", [arg]) if power == 4 =>
+      laplace_info_doit(
+        expr_mul(
+          expr_rat(1, 8),
+          expr_add(
+            expr_int(3),
+            expr_add(
+              expr_mul(expr_int(-4), @symelem.cos(expr_mul(expr_int(2), arg))),
+              @symelem.cos(expr_mul(expr_int(4), arg)),
+            ),
+          ),
+        ),
+        t_name,
+        s,
+      )
+    @symcore.Expr::Function("cos", [arg]) if power == 2 =>
+      laplace_info_doit(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_add(expr_one(), @symelem.cos(expr_mul(expr_int(2), arg))),
+        ),
+        t_name,
+        s,
+      )
+    @symcore.Expr::Function("sinh", [arg]) if power == 2 =>
+      laplace_info_doit(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_sub(@symelem.cosh(expr_mul(expr_int(2), arg)), expr_one()),
+        ),
+        t_name,
+        s,
+      )
+    @symcore.Expr::Function("cosh", [arg]) if power == 2 =>
+      laplace_info_doit(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_add(@symelem.cosh(expr_mul(expr_int(2), arg)), expr_one()),
+        ),
+        t_name,
+        s,
+      )
+    _ => None
+  }
+}
+
+///|
+fn laplace_power_product_identity_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  match (factors[0], factors[1]) {
+    (
+      @symcore.Expr::Pow(@symcore.Expr::Function("sin", [arg]), exp),
+      @symcore.Expr::Function("cosh", [other_arg]),
+    )
+    | (
+      @symcore.Expr::Function("cosh", [other_arg]),
+      @symcore.Expr::Pow(@symcore.Expr::Function("sin", [arg]), exp),
+    ) =>
+      match
+        (
+          expr_is_int_value(exp),
+          linear_coeffs(arg, t_name),
+          linear_coeffs(other_arg, t_name),
+        ) {
+        (Some(3), Some((a, offset_a)), Some((b, offset_b))) if expr_is_zero(
+            offset_a,
+          ) &&
+          expr_is_zero(offset_b) =>
+          Some(
+            (
+              expr_mul(
+                expr_div(expr_mul(expr_int(3), a), expr_int(8)),
+                expr_sub(
+                  expr_add(
+                    expr_pow(
+                      expr_add(
+                        expr_pow(expr_add(s, b), expr_int(2)),
+                        expr_pow(a, expr_int(2)),
+                      ),
+                      expr_int(-1),
+                    ),
+                    expr_pow(
+                      expr_add(
+                        expr_pow(expr_sub(s, b), expr_int(2)),
+                        expr_pow(a, expr_int(2)),
+                      ),
+                      expr_int(-1),
+                    ),
+                  ),
+                  expr_add(
+                    expr_pow(
+                      expr_add(
+                        expr_pow(expr_add(s, b), expr_int(2)),
+                        expr_mul(expr_int(9), expr_pow(a, expr_int(2))),
+                      ),
+                      expr_int(-1),
+                    ),
+                    expr_pow(
+                      expr_add(
+                        expr_pow(expr_sub(s, b), expr_int(2)),
+                        expr_mul(expr_int(9), expr_pow(a, expr_int(2))),
+                      ),
+                      expr_int(-1),
+                    ),
+                  ),
+                ),
+              ),
+              hyperbolic_laplace_plane(b),
+              true_expr(),
+            ),
+          )
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn laplace_identity_product_term(
+  factors : Array[Expr],
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  if factors.length() != 2 {
+    return None
+  }
+  let rewrite = match (factors[0], factors[1]) {
+    (@symcore.Expr::Function("sin", [u]), @symcore.Expr::Function("sin", [v])) =>
+      Some(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_sub(@symelem.cos(expr_sub(u, v)), @symelem.cos(expr_add(u, v))),
+        ),
+      )
+    (@symcore.Expr::Function("cos", [u]), @symcore.Expr::Function("cos", [v])) =>
+      Some(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_add(@symelem.cos(expr_sub(u, v)), @symelem.cos(expr_add(u, v))),
+        ),
+      )
+    (@symcore.Expr::Function("cos", [u]), @symcore.Expr::Function("sin", [v]))
+    | (@symcore.Expr::Function("sin", [v]), @symcore.Expr::Function("cos", [u])) =>
+      Some(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_add(@symelem.sin(expr_add(u, v)), @symelem.sin(expr_sub(v, u))),
+        ),
+      )
+    (@symcore.Expr::Function("sinh", [u]), @symcore.Expr::Function("cosh", [v]))
+    | (
+      @symcore.Expr::Function("cosh", [v]),
+      @symcore.Expr::Function("sinh", [u]),
+    ) =>
+      Some(
+        expr_mul(
+          expr_rat(1, 2),
+          expr_add(@symelem.sinh(expr_add(u, v)), @symelem.sinh(expr_sub(u, v))),
+        ),
+      )
+    (@symcore.Expr::Function("sin", [u]), @symcore.Expr::Function("cosh", [v]))
+    | (@symcore.Expr::Function("cosh", [v]), @symcore.Expr::Function("sin", [u])
+    ) =>
+      match (linear_coeffs(u, t_name), linear_coeffs(v, t_name)) {
+        (Some((a, bu)), Some((b, bv))) if expr_is_zero(bu) && expr_is_zero(bv) =>
+          Some(
+            expr_mul(
+              expr_rat(1, 2),
+              expr_add(
+                expr_div(
+                  a,
+                  expr_add(
+                    expr_pow(expr_sub(s, b), expr_int(2)),
+                    expr_pow(a, expr_int(2)),
+                  ),
+                ),
+                expr_div(
+                  a,
+                  expr_add(
+                    expr_pow(expr_add(s, b), expr_int(2)),
+                    expr_pow(a, expr_int(2)),
+                  ),
+                ),
+              ),
+            ),
+          )
+        _ => None
+      }
+    _ => None
+  }
+  match rewrite {
+    Some(expr) => laplace_info_doit(expr_simplify(expr), t_name, s)
+    None => None
+  }
+}
+
+///|
+fn laplace_numeric_heaviside_base_term(
+  arg : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  match linear_coeffs(arg, t_name) {
+    Some((coeff, offset)) =>
+      if expr_is_zero(coeff) || !expr_is_constant(offset, t_name) {
+        None
+      } else {
+        let bound = expr_simplify(
+          expr_div(expr_mul(expr_neg_one(), offset), coeff),
+        )
+        let value = if expr_is_positive(coeff) {
+          if expr_is_negative(bound) || expr_is_zero(bound) {
+            expr_div(expr_one(), s)
+          } else {
+            expr_div(
+              @symelem.exp(expr_mul(expr_neg_one(), expr_mul(bound, s))),
+              s,
+            )
+          }
+        } else if expr_is_negative(coeff) {
+          if expr_is_negative(bound) || expr_is_zero(bound) {
+            expr_zero()
+          } else {
+            expr_sub(
+              expr_div(expr_one(), s),
+              expr_div(
+                @symelem.exp(expr_mul(expr_neg_one(), expr_mul(bound, s))),
+                s,
+              ),
+            )
+          }
+        } else {
+          return None
+        }
+        Some((expr_simplify(value), expr_zero(), true_expr()))
+      }
+    _ => None
   }
 }
 
@@ -1037,9 +2105,86 @@ fn laplace_generic_shifted_term(
   }
   let first = factors[0]
   let second = factors[1]
+  match laplace_generic_trig_power_term(first, second, t_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
+  match laplace_generic_trig_power_term(second, first, t_name, s) {
+    Some(info) => return Some(info)
+    None => ()
+  }
   match laplace_generic_trig_term(first, second, t_name, s) {
     Some(info) => Some(info)
     None => laplace_generic_trig_term(second, first, t_name, s)
+  }
+}
+
+///|
+fn laplace_generic_trig_power_term(
+  trig_factor : Expr,
+  other : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  if !expr_depends_on(other, t_name) {
+    return None
+  }
+  match trig_factor {
+    @symcore.Expr::Pow(@symcore.Expr::Function("sin", [arg]), exp) =>
+      match expr_is_int_value(exp) {
+        Some(2) =>
+          match linear_coeffs(arg, t_name) {
+            Some((a, b)) if expr_is_constant(a, t_name) &&
+              expr_is_constant(b, t_name) => {
+              let ia2 = expr_mul(expr_mul(expr_int(2), @symcore.symbol("I")), a)
+              let value = expr_sub(
+                expr_mul(
+                  expr_rat(1, 2),
+                  @symcore.raw_function("LaplaceTransform", [
+                    other,
+                    @symcore.symbol(t_name),
+                    s,
+                  ]),
+                ),
+                expr_add(
+                  expr_mul(
+                    expr_rat(1, 4),
+                    expr_mul(
+                      @symelem.exp(
+                        expr_mul(expr_mul(expr_int(2), @symcore.symbol("I")), b),
+                      ),
+                      @symcore.raw_function("LaplaceTransform", [
+                        other,
+                        @symcore.symbol(t_name),
+                        expr_sub(s, ia2),
+                      ]),
+                    ),
+                  ),
+                  expr_mul(
+                    expr_rat(1, 4),
+                    expr_mul(
+                      @symelem.exp(
+                        expr_mul(
+                          expr_mul(expr_int(-2), @symcore.symbol("I")),
+                          b,
+                        ),
+                      ),
+                      @symcore.raw_function("LaplaceTransform", [
+                        other,
+                        @symcore.symbol(t_name),
+                        expr_add(s, ia2),
+                      ]),
+                    ),
+                  ),
+                ),
+              )
+              Some((expr_simplify(value), neg_oo_expr(), true_expr()))
+            }
+            _ => None
+          }
+        _ => None
+      }
+    _ => None
   }
 }
 
@@ -1256,11 +2401,16 @@ fn laplace_inverse_power_trig_term(
   if factors.length() != 2 {
     return None
   }
-  let mut inverse_power = false
+  let mut inverse_power : Int? = None
   let mut trig_factor : Expr? = None
   for factor in factors {
     match parse_negative_power(factor, t_name) {
-      Some(power) if expr_is_one(power) => inverse_power = true
+      Some(power) =>
+        match expr_is_int_value(power) {
+          Some(value) if value >= 1 && inverse_power is None =>
+            inverse_power = Some(value)
+          _ => ()
+        }
       _ =>
         if trig_factor is None {
           trig_factor = Some(factor)
@@ -1269,29 +2419,75 @@ fn laplace_inverse_power_trig_term(
         }
     }
   }
-  if !inverse_power {
+  if inverse_power is None {
     return None
   }
+  let power = inverse_power.unwrap()
   match trig_factor {
     Some(@symcore.Expr::Function("sin", [arg])) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if !expr_is_zero(a) && expr_is_zero(b) =>
-          Some((@symelem.atan(expr_div(a, s)), expr_zero(), true_expr()))
+          if power == 1 {
+            Some((@symelem.atan(expr_div(a, s)), expr_zero(), true_expr()))
+          } else {
+            None
+          }
+        _ => None
+      }
+    Some(@symcore.Expr::Pow(@symcore.Expr::Function("sin", [arg]), exp)) =>
+      match (expr_is_int_value(exp), linear_coeffs(arg, t_name)) {
+        (Some(2), Some((a, b))) if !expr_is_zero(a) && expr_is_zero(b) => {
+          let log_term = expr_mul(
+            expr_rat(1, 4),
+            @symelem.log(
+              expr_add(
+                expr_one(),
+                expr_div(
+                  expr_mul(expr_int(4), expr_pow(a, expr_int(2))),
+                  expr_pow(s, expr_int(2)),
+                ),
+              ),
+            ),
+          )
+          if power == 1 {
+            Some((log_term, expr_zero(), true_expr()))
+          } else if power == 2 {
+            Some(
+              (
+                expr_sub(
+                  expr_mul(
+                    a,
+                    @symelem.atan(expr_div(expr_mul(expr_int(2), a), s)),
+                  ),
+                  expr_mul(s, log_term),
+                ),
+                expr_zero(),
+                true_expr(),
+              ),
+            )
+          } else {
+            None
+          }
+        }
         _ => None
       }
     Some(@symcore.Expr::Function("sinh", [arg])) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if !expr_is_zero(a) && expr_is_zero(b) =>
-          Some(
-            (
-              expr_mul(
-                expr_rat(1, 2),
-                @symelem.log(expr_div(expr_add(a, s), expr_sub(s, a))),
+          if power == 1 {
+            Some(
+              (
+                expr_mul(
+                  expr_rat(1, 2),
+                  @symelem.log(expr_div(expr_add(a, s), expr_sub(s, a))),
+                ),
+                hyperbolic_laplace_plane(a),
+                true_expr(),
               ),
-              a,
-              true_expr(),
-            ),
-          )
+            )
+          } else {
+            None
+          }
         _ => None
       }
     _ => None
@@ -1457,10 +2653,7 @@ pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
 ///|
 fn inverse_laplace_doit(expr : Expr, s_name : String, t : Expr) -> Expr? {
   match expr {
-    @symcore.Expr::Add(terms) =>
-      transform_add(terms, s_name, fn(term) {
-        inverse_laplace_doit(term, s_name, t)
-      })
+    @symcore.Expr::Add(terms) => inverse_laplace_add_termwise(terms, s_name, t)
     _ =>
       match inverse_laplace_special_term(expr_simplify(expr), s_name, t) {
         Some(v) => Some(v)
@@ -1494,6 +2687,18 @@ fn inverse_laplace_special_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
+  match inverse_laplace_constant_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_dirac_polynomial_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_time_diff_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_transform_object_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
@@ -1518,11 +2723,131 @@ fn inverse_laplace_special_term(
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_laplace_power_law_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_bessel_branch_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_square_over_quadratic_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_irrational_algebraic_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
   }
+  match inverse_laplace_generic_head_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   inverse_laplace_ci_term(expr, s_name, t)
+}
+
+///|
+fn inverse_laplace_constant_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  if expr_depends_on(expr, s_name) {
+    None
+  } else {
+    Some(expr_simplify(expr * @symspec.dirac_delta(t)))
+  }
+}
+
+///|
+fn inverse_laplace_dirac_polynomial_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (_, den_opt) = split_division(expr)
+  if den_opt is Some(_) {
+    return None
+  }
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() == 0 {
+    return None
+  }
+  let mut order = 0
+  for factor in factors {
+    match parse_power_factor(factor, s_name) {
+      Some(power) =>
+        match expr_is_int_value(power) {
+          Some(n) if n > 0 => order += n
+          _ => return None
+        }
+      None => return None
+    }
+  }
+  if order <= 0 {
+    return None
+  }
+  Some(
+    expr_simplify(
+      coeff * @symcore.raw_function("DiracDelta", [t, expr_int(order)]),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_time_diff_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (_, den_opt) = split_division(expr)
+  if den_opt is Some(_) {
+    return None
+  }
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() == 0 {
+    return None
+  }
+  let rest : Array[Expr] = []
+  let mut order = 0
+  let mut removed = false
+  for factor in factors {
+    match parse_power_factor(factor, s_name) {
+      Some(power) =>
+        match expr_is_int_value(power) {
+          Some(n) if n > 0 => {
+            order += n
+            removed = true
+          }
+          _ => rest.push(factor)
+        }
+      None => rest.push(factor)
+    }
+  }
+  if !removed || rest.length() == 0 {
+    return None
+  }
+  let reduced = expr_simplify(expr_mul(coeff, factors_expr(rest)))
+  let power_factor = @symcore.symbol(s_name) ^ expr_int(order)
+  match reduced {
+    @symcore.Expr::Add(terms) => {
+      let mapped : Array[Expr] = []
+      for term in terms {
+        let lifted = expr_simplify(coeff * power_factor * term)
+        match inverse_laplace_doit(lifted, s_name, t) {
+          Some(v) => mapped.push(v)
+          None => mapped.push(make_inverse_laplace_object(lifted, s_name, t))
+        }
+      }
+      return Some(expr_simplify(@symcore.add(mapped)))
+    }
+    _ => ()
+  }
+  let base = match inverse_laplace_doit(reduced, s_name, t) {
+    Some(v) => v
+    None => make_inverse_laplace_object(reduced, s_name, t)
+  }
+  Some(make_expr_derivative(base, t, order))
 }
 
 ///|
@@ -1550,6 +2875,36 @@ fn inverse_laplace_transform_object_term(
     }
     _ => None
   }
+}
+
+///|
+fn inverse_laplace_add_termwise(
+  terms : Array[Expr],
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let mapped : Array[Expr] = []
+  for term in terms {
+    match inverse_laplace_doit(term, s_name, t) {
+      Some(v) => mapped.push(v)
+      None => mapped.push(make_inverse_laplace_object(term, s_name, t))
+    }
+  }
+  Some(expr_simplify(@symcore.add(mapped)))
+}
+
+///|
+fn make_inverse_laplace_object(expr : Expr, s_name : String, t : Expr) -> Expr {
+  let (coeff, factors) = split_mul(expr, s_name)
+  let core = factors_expr(factors)
+  expr_simplify(
+    coeff *
+    @symcore.raw_function("InverseLaplaceTransform", [
+      core,
+      @symcore.symbol(s_name),
+      t,
+    ]),
+  )
 }
 
 ///|
@@ -1756,6 +3111,373 @@ fn inverse_laplace_sinh_over_t_term(
 }
 
 ///|
+fn inverse_laplace_power_law_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() == 2 {
+    let mut delay : Expr? = None
+    let mut power : Expr? = None
+    for factor in factors {
+      match factor {
+        @symcore.Expr::Function("exp", [inner]) =>
+          match parse_negative_linear_exp_raw(inner, s_name) {
+            Some(v) if delay is None => delay = Some(v)
+            _ => return None
+          }
+        _ =>
+          match parse_symbol_negative_power(factor, s_name) {
+            Some(v) if power is None => power = Some(v)
+            _ => return None
+          }
+      }
+    }
+    match (delay, power) {
+      (Some(amount), Some(parsed_power)) =>
+        return Some(
+          expr_simplify(
+            @symspec.heaviside(t - amount) *
+            expr_mul(
+              coeff,
+              expr_div(
+                expr_pow(t - amount, expr_simplify(parsed_power - expr_one())),
+                @symspec.gamma(parsed_power),
+              ),
+            ),
+          ),
+        )
+      _ => return None
+    }
+  }
+  if factors.length() != 1 {
+    return None
+  }
+  let power = match parse_symbol_negative_power(factors[0], s_name) {
+    Some(v) => v
+    None => return None
+  }
+  let exponent = expr_simplify(expr_sub(power, expr_one()))
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_mul(coeff, expr_div(expr_pow(t, exponent), @symspec.gamma(power))),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_generic_head_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match inverse_laplace_generic_head_core(expr_simplify(expr), s_name, t) {
+    Some(v) => Some(v)
+    None =>
+      match expr_simplify(expr) {
+        @symcore.Expr::Mul(args) => {
+          let t_name = match symbol_name(t) {
+            Some(v) => v
+            None => return None
+          }
+          let mut delay : Expr? = None
+          let mut exp_const = expr_zero()
+          let rest : Array[Expr] = []
+          for factor in args {
+            match factor {
+              @symcore.Expr::Function("exp", [inner]) =>
+                match linear_coeffs(inner, s_name) {
+                  Some((coeff, offset)) =>
+                    match extract_explicit_negative_factor(coeff) {
+                      Some(amount) =>
+                        if delay is None {
+                          delay = Some(amount)
+                          exp_const = offset
+                        } else {
+                          return None
+                        }
+                      None => rest.push(factor)
+                    }
+                  _ => rest.push(factor)
+                }
+              _ => rest.push(factor)
+            }
+          }
+          match delay {
+            Some(amount) => {
+              let reduced = expr_simplify(
+                expr_mul(@symelem.exp(exp_const), factors_expr(rest)),
+              )
+              match inverse_laplace_generic_head_core(reduced, s_name, t) {
+                Some(base) =>
+                  Some(expr_simplify(subst_symbol(base, t_name, t - amount)))
+                None => None
+              }
+            }
+            None => None
+          }
+        }
+        _ => None
+      }
+  }
+}
+
+///|
+fn inverse_laplace_generic_head_core(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (coeff, factors) = split_mul(expr, s_name)
+  if factors.length() != 1 {
+    return None
+  }
+  match inverse_laplace_generic_head_factor(factors[0], s_name, t) {
+    Some(v) => Some(expr_simplify(coeff * v))
+    None => None
+  }
+}
+
+///|
+fn inverse_laplace_generic_head_factor(
+  factor : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match factor {
+    @symcore.Expr::Function(name, [arg]) =>
+      inverse_laplace_generic_function_term(name, arg, s_name, t)
+    @symcore.Expr::Function("Derivative", args) =>
+      inverse_laplace_generic_derivative_term(args, s_name, t)
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_generic_function_term(
+  name : String,
+  arg : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  match linear_coeffs(arg, s_name) {
+    Some((coeff, offset)) if expr_is_one(coeff) => {
+      let base = @symcore.raw_function("InverseLaplaceTransform", [
+        @symcore.raw_function(name, [@symcore.symbol(s_name)]),
+        @symcore.symbol(s_name),
+        t,
+      ])
+      if expr_is_zero(offset) {
+        Some(base)
+      } else {
+        Some(expr_simplify(@symelem.exp(offset * t) * base))
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_generic_derivative_term(
+  args : Array[Expr],
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let order = match inverse_laplace_generic_derivative_order(args, s_name) {
+    Some(v) if v > 0 => v
+    _ => return None
+  }
+  let base = match inverse_laplace_generic_head_factor(args[0], s_name, t) {
+    Some(v) => v
+    None => return None
+  }
+  let sign = if order % 2 == 0 { expr_one() } else { expr_neg_one() }
+  Some(expr_simplify(sign * (t ^ expr_int(order)) * base))
+}
+
+///|
+fn inverse_laplace_generic_derivative_order(
+  args : Array[Expr],
+  s_name : String,
+) -> Int? {
+  if args.length() < 2 {
+    return None
+  }
+  let mut order = 0
+  for idx in 1..<args.length() {
+    match args[idx] {
+      @symcore.Expr::Symbol(name) if name == s_name => order += 1
+      @symcore.Expr::Number(_) if idx > 1 =>
+        match args[idx - 1] {
+          @symcore.Expr::Symbol(name) if name == s_name =>
+            match expr_is_int_value(args[idx]) {
+              Some(v) if v > 0 => order += v - 1
+              _ => return None
+            }
+          _ => return None
+        }
+      _ => return None
+    }
+  }
+  Some(order)
+}
+
+///|
+fn inverse_laplace_bessel_branch_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let factors = match expr_simplify(expr) {
+    @symcore.Expr::Mul(args) => args
+    _ => return None
+  }
+  let mut coeff = expr_one()
+  let mut order : Expr? = None
+  let mut kernel_sq : Expr? = None
+  let mut is_diff : Bool? = None
+  for factor in factors {
+    match parse_reciprocal_sqrt_quadratic(factor, s_name) {
+      Some(constant) =>
+        match extract_explicit_negative_factor(constant) {
+          Some(pos_constant) =>
+            if kernel_sq is None {
+              kernel_sq = Some(pos_constant)
+              is_diff = Some(true)
+            } else {
+              return None
+            }
+          None =>
+            if kernel_sq is None {
+              kernel_sq = Some(constant)
+              is_diff = Some(false)
+            } else {
+              return None
+            }
+        }
+      None =>
+        match parse_general_negative_power_base(factor) {
+          Some((base, parsed_order)) =>
+            match parse_symbol_plus_sqrt_quadratic(base, s_name) {
+              Some((branch_kernel_sq, branch_is_diff)) =>
+                if order is None && kernel_sq is None {
+                  order = Some(parsed_order)
+                  kernel_sq = Some(branch_kernel_sq)
+                  is_diff = Some(branch_is_diff)
+                } else if order is None {
+                  let expected_kernel_sq = kernel_sq.unwrap()
+                  let expected_diff = is_diff.unwrap()
+                  if expr_same_simplified(branch_kernel_sq, expected_kernel_sq) &&
+                    branch_is_diff == expected_diff {
+                    order = Some(parsed_order)
+                  } else {
+                    return None
+                  }
+                } else {
+                  return None
+                }
+              None =>
+                if expr_depends_on(factor, s_name) {
+                  return None
+                } else {
+                  coeff = expr_mul(coeff, factor)
+                }
+            }
+          None =>
+            if expr_depends_on(factor, s_name) {
+              return None
+            } else {
+              coeff = expr_mul(coeff, factor)
+            }
+        }
+    }
+  }
+  let parsed_order = match order {
+    Some(v) => v
+    None => return None
+  }
+  let parsed_kernel_sq = match kernel_sq {
+    Some(v) => v
+    None => return None
+  }
+  let parsed_is_diff = match is_diff {
+    Some(v) => v
+    None => return None
+  }
+  let kernel = match parse_coeff_power_with_order(coeff, parsed_order) {
+    Some(v) if expr_same_simplified(expr_mul(v, v), parsed_kernel_sq) => v
+    _ => return None
+  }
+  let arg = expr_mul(kernel, t)
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      (if parsed_is_diff {
+        @symspec.besseli(parsed_order, arg)
+      } else {
+        @symspec.besselj(parsed_order, arg)
+      }),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_square_over_quadratic_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let (coeff, num_var_opt) = split_mul_factor(num, s_name)
+  let num_var = match num_var_opt {
+    Some(v) => v
+    None => return None
+  }
+  match parse_pure_symbol_positive_int_power(num_var, s_name) {
+    Some(2) => ()
+    _ => return None
+  }
+  let coeffs = match poly_coeffs_upto2(expr_simplify(den), s_name) {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_is_zero(coeffs[1]) ||
+    expr_depends_on(coeffs[0], s_name) ||
+    expr_depends_on(coeffs[2], s_name) ||
+    expr_is_zero(coeffs[2]) {
+    return None
+  }
+  let lead = coeffs[2]
+  let delta_coeff = expr_div(coeff, lead)
+  let ratio = expr_div(coeffs[0], lead)
+  let wave = if expr_is_negative(ratio) {
+    let freq = expr_sqrt_positive(expr_mul(expr_neg_one(), ratio))
+    expr_mul(
+      expr_div(expr_mul(coeff, freq), lead),
+      @symelem.sinh(expr_mul(freq, t)),
+    )
+  } else {
+    let freq = expr_sqrt_positive(ratio)
+    expr_mul(
+      expr_div(expr_mul(expr_neg_one(), expr_mul(coeff, freq)), lead),
+      @symelem.sin(expr_mul(freq, t)),
+    )
+  }
+  Some(
+    expr_simplify(
+      delta_coeff * @symcore.raw_function("DiracDelta", [t]) +
+      @symspec.heaviside(t) * wave,
+    ),
+  )
+}
+
+///|
 fn inverse_laplace_irrational_algebraic_term(
   expr : Expr,
   s_name : String,
@@ -1774,7 +3496,28 @@ fn inverse_laplace_irrational_algebraic_term(
     Some(v) => return Some(v)
     None => ()
   }
+  match
+    inverse_laplace_sqrt_linear_over_s_pow_three_halves_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
   match inverse_laplace_scaled_sqrt_ratio_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    inverse_laplace_sqrt_over_sqrt_linear_shifted_linear_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    inverse_laplace_reciprocal_sqrt_sqrt_linear_shifted_linear_term(
+      expr, s_name, t,
+    ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_shifted_sqrt_over_linear_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
   }
@@ -1786,6 +3529,15 @@ fn inverse_laplace_irrational_algebraic_term(
     inverse_laplace_reciprocal_sqrt_times_sqrt_linear_plus_const_term(
       expr, s_name, t,
     ) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match inverse_laplace_reciprocal_sqrt_shifted_over_s_term(expr, s_name, t) {
+    Some(v) => return Some(v)
+    None => ()
+  }
+  match
+    inverse_laplace_reciprocal_sqrt_shifted_linear_over_s_term(expr, s_name, t) {
     Some(v) => return Some(v)
     None => ()
   }
@@ -1948,6 +3700,84 @@ fn inverse_laplace_s_over_scaled_sqrt_linear_term(
 }
 
 ///|
+fn inverse_laplace_sqrt_linear_over_s_pow_three_halves_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 3 => args
+    _ => return None
+  }
+  let mut saw_s = false
+  let mut saw_sqrt_s = false
+  let mut constant : Expr? = None
+  for factor in factors {
+    match split_linear_power_denom(factor, s_name) {
+      Some((coeff, offset, 1)) =>
+        if expr_same_simplified(coeff, expr_one()) &&
+          expr_is_zero(offset) &&
+          !saw_s {
+          saw_s = true
+        } else {
+          return None
+        }
+      _ =>
+        match parse_sqrt_linear(factor, s_name) {
+          Some(scale) if expr_same_simplified(scale, expr_one()) && !saw_sqrt_s =>
+            saw_sqrt_s = true
+          _ =>
+            match parse_scaled_sqrt_linear_plus_const(factor, s_name) {
+              Some((scale, parsed_const)) =>
+                if expr_same_simplified(scale, expr_one()) && constant is None {
+                  constant = Some(parsed_const)
+                } else {
+                  return None
+                }
+              None => return None
+            }
+        }
+    }
+  }
+  let parsed_const = match constant {
+    Some(v) if saw_s && saw_sqrt_s => v
+    _ => return None
+  }
+  let scale_factor = expr_simplify(
+    expr_div(numerator, expr_pow(parsed_const, expr_int(2))),
+  )
+  let sqrt_t = @symelem.sqrt(t)
+  let c2t = expr_mul(expr_pow(parsed_const, expr_int(2)), t)
+  Some(
+    expr_simplify(
+      scale_factor *
+      (
+        @symspec.heaviside(t) *
+        expr_add(
+          expr_add(
+            expr_div(
+              expr_mul(expr_int(2), expr_mul(parsed_const, sqrt_t)),
+              sqrt_pi(),
+            ),
+            expr_mul(
+              @symelem.exp(c2t),
+              @symspec.erfc(expr_mul(parsed_const, sqrt_t)),
+            ),
+          ),
+          expr_neg_one(),
+        )
+      ),
+    ),
+  )
+}
+
+///|
 fn inverse_laplace_scaled_sqrt_ratio_term(
   expr : Expr,
   s_name : String,
@@ -2020,6 +3850,720 @@ fn inverse_laplace_scaled_sqrt_ratio_term(
       }
     _ => None
   }
+}
+
+///|
+fn inverse_laplace_sqrt_over_sqrt_linear_shifted_linear_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let numerator_coeff = match parse_sqrt_linear(numerator, s_name) {
+    Some(v) => v
+    None => return None
+  }
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 2 => args
+    _ => return None
+  }
+  let mut alpha : Expr? = None
+  let mut beta_sq : Expr? = None
+  for factor in factors {
+    match parse_scaled_sqrt_linear_plus_const(factor, s_name) {
+      Some((scale, parsed_const)) =>
+        if expr_same_simplified(scale, expr_one()) && alpha is None {
+          alpha = Some(parsed_const)
+        } else {
+          return None
+        }
+      None =>
+        match split_linear_power_denom(factor, s_name) {
+          Some((coeff, offset, 1)) if expr_same_simplified(coeff, expr_one()) =>
+            match extract_explicit_negative_factor(offset) {
+              Some(v) if beta_sq is None => beta_sq = Some(v)
+              _ => return None
+            }
+          _ => return None
+        }
+    }
+  }
+  let parsed_alpha = match alpha {
+    Some(v) => v
+    None => return None
+  }
+  let parsed_beta_sq = match beta_sq {
+    Some(v) => v
+    None => return None
+  }
+  let parsed_alpha_sq = expr_simplify(expr_mul(parsed_alpha, parsed_alpha))
+  let scale_factor = expr_simplify(
+    expr_div(numerator_coeff, expr_sub(parsed_alpha_sq, parsed_beta_sq)),
+  )
+  let parsed_beta = preferred_positive_sqrt(parsed_beta_sq)
+  let sqrt_t = @symelem.sqrt(t)
+  Some(
+    expr_simplify(
+      scale_factor *
+      (
+        @symspec.heaviside(t) *
+        expr_add(
+          expr_add(
+            expr_mul(
+              expr_mul(parsed_alpha, parsed_beta),
+              expr_mul(
+                @symelem.exp(expr_mul(parsed_beta_sq, t)),
+                @symspec.erfc(expr_mul(parsed_beta, sqrt_t)),
+              ),
+            ),
+            expr_mul(
+              parsed_alpha_sq,
+              expr_mul(
+                @symelem.exp(expr_mul(parsed_alpha_sq, t)),
+                @symspec.erfc(expr_mul(parsed_alpha, sqrt_t)),
+              ),
+            ),
+          ),
+          expr_mul(
+            expr_neg_one(),
+            expr_mul(parsed_beta_sq, @symelem.exp(expr_mul(parsed_beta_sq, t))),
+          ),
+        )
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_reciprocal_sqrt_sqrt_linear_shifted_linear_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 3 => args
+    _ => return None
+  }
+  let mut alpha : Expr? = None
+  let mut beta_sq : Expr? = None
+  let mut saw_sqrt_s = false
+  for factor in factors {
+    match parse_scaled_sqrt_linear_plus_const(factor, s_name) {
+      Some((scale, parsed_const)) =>
+        if expr_same_simplified(scale, expr_one()) && alpha is None {
+          alpha = Some(parsed_const)
+        } else {
+          return None
+        }
+      None =>
+        match parse_sqrt_linear(factor, s_name) {
+          Some(scale) if expr_same_simplified(scale, expr_one()) && !saw_sqrt_s =>
+            saw_sqrt_s = true
+          _ =>
+            match split_linear_power_denom(factor, s_name) {
+              Some((coeff, offset, 1)) if expr_same_simplified(
+                  coeff,
+                  expr_one(),
+                ) =>
+                match extract_explicit_negative_factor(offset) {
+                  Some(v) if beta_sq is None => beta_sq = Some(v)
+                  _ => return None
+                }
+              _ => return None
+            }
+        }
+    }
+  }
+  let parsed_alpha = match alpha {
+    Some(v) if saw_sqrt_s => v
+    _ => return None
+  }
+  let parsed_beta_sq = match beta_sq {
+    Some(v) => v
+    None => return None
+  }
+  let parsed_alpha_sq = expr_simplify(expr_mul(parsed_alpha, parsed_alpha))
+  let parsed_beta = preferred_positive_sqrt(parsed_beta_sq)
+  let scale_factor = expr_simplify(
+    expr_div(
+      numerator,
+      expr_mul(expr_sub(parsed_alpha_sq, parsed_beta_sq), parsed_beta),
+    ),
+  )
+  let sqrt_t = @symelem.sqrt(t)
+  Some(
+    expr_simplify(
+      scale_factor *
+      (
+        @symspec.heaviside(t) *
+        expr_add(
+          expr_add(
+            expr_mul(
+              parsed_alpha,
+              expr_mul(
+                @symelem.exp(expr_mul(parsed_beta_sq, t)),
+                @symspec.erf(expr_mul(parsed_beta, sqrt_t)),
+              ),
+            ),
+            expr_mul(
+              parsed_beta,
+              expr_mul(
+                @symelem.exp(expr_mul(parsed_alpha_sq, t)),
+                @symspec.erfc(expr_mul(parsed_alpha, sqrt_t)),
+              ),
+            ),
+          ),
+          expr_mul(
+            expr_neg_one(),
+            expr_mul(parsed_beta, @symelem.exp(expr_mul(parsed_beta_sq, t))),
+          ),
+        )
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_shifted_sqrt_over_linear_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let (num_scale, num_offset) = match parse_sqrt_affine(numerator, s_name) {
+    Some(v) => v
+    None => return None
+  }
+  if !expr_same_simplified(num_scale, expr_one()) {
+    return None
+  }
+  match split_linear_power_denom(den, s_name) {
+    Some((coeff, offset, 1)) => {
+      if !expr_same_simplified(coeff, expr_one()) ||
+        expr_depends_on(offset, s_name) {
+        return None
+      }
+      let diff = expr_simplify(expr_sub(num_offset, offset))
+      let sqrt_t = @symelem.sqrt(t)
+      Some(
+        expr_simplify(
+          @symspec.heaviside(t) *
+          expr_add(
+            expr_mul(
+              @symelem.exp(expr_mul(expr_neg_one(), expr_mul(num_offset, t))),
+              expr_div(expr_one(), expr_mul(sqrt_pi(), sqrt_t)),
+            ),
+            expr_mul(
+              preferred_positive_sqrt(diff),
+              expr_mul(
+                @symelem.exp(expr_mul(expr_neg_one(), expr_mul(offset, t))),
+                @symspec.erf(expr_mul(preferred_positive_sqrt(diff), sqrt_t)),
+              ),
+            ),
+          ),
+        ),
+      )
+    }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_linear_power_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  let numerator = factors_expr(num)
+  let unit_numerator = num.length() == 0 ||
+    (num.length() == 1 && expr_is_one(num[0]))
+  match parse_scaled_sqrt_linear_plus_const_power(den, s_name) {
+    Some((scale, constant, 2)) =>
+      if unit_numerator && expr_same_simplified(scale, expr_one()) {
+        return inverse_laplace_sqrt_linear_squared_family(constant, t)
+      }
+    Some((scale, constant, 3)) =>
+      if unit_numerator && expr_same_simplified(scale, expr_one()) {
+        return inverse_laplace_sqrt_linear_cubed_family(constant, t)
+      }
+    Some((scale, constant, 4)) =>
+      if expr_same_simplified(scale, expr_one()) &&
+        !expr_depends_on(numerator, s_name) {
+        return match inverse_laplace_sqrt_linear_quartic_family(constant, t) {
+          Some(value) => Some(expr_simplify(numerator * value))
+          None => None
+        }
+      }
+    _ => ()
+  }
+  match parse_scaled_sqrt_linear_plus_const_power(den, s_name) {
+    Some((scale, constant, 3)) if expr_same_simplified(scale, expr_one()) =>
+      match parse_sqrt_linear(numerator, s_name) {
+        Some(num_scale) if expr_same_simplified(num_scale, expr_one()) =>
+          return inverse_laplace_sqrt_over_sqrt_linear_cubed_family(constant, t)
+        _ => ()
+      }
+    _ => ()
+  }
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 2 => args
+    _ => return None
+  }
+  let mut power_info : (Expr, Int)? = None
+  let mut saw_s = false
+  let mut saw_sqrt_s = false
+  for factor in factors {
+    match parse_scaled_sqrt_linear_plus_const_power(factor, s_name) {
+      Some((scale, constant, power)) =>
+        if expr_same_simplified(scale, expr_one()) && power_info is None {
+          power_info = Some((constant, power))
+        } else {
+          return None
+        }
+      None =>
+        match split_linear_power_denom(factor, s_name) {
+          Some((coeff, offset, 1)) =>
+            if expr_same_simplified(coeff, expr_one()) && expr_is_zero(offset) {
+              saw_s = true
+            } else {
+              return None
+            }
+          _ =>
+            match parse_sqrt_linear(factor, s_name) {
+              Some(scale) if expr_same_simplified(scale, expr_one()) =>
+                saw_sqrt_s = true
+              _ => return None
+            }
+        }
+    }
+  }
+  match power_info {
+    Some((constant, 2)) =>
+      if saw_s {
+        match parse_scaled_sqrt_linear_plus_const_power(numerator, s_name) {
+          Some((num_scale, num_const, 2)) =>
+            if expr_same_simplified(num_scale, expr_one()) &&
+              expr_same_simplified(
+                num_const,
+                expr_mul(expr_neg_one(), constant),
+              ) {
+              inverse_laplace_scaled_sqrt_ratio_squared_family(constant, t)
+            } else if unit_numerator {
+              inverse_laplace_sqrt_linear_squared_over_s_family(constant, t)
+            } else {
+              None
+            }
+          Some((num_scale, num_const, 3)) =>
+            if expr_same_simplified(num_scale, expr_one()) &&
+              expr_same_simplified(
+                num_const,
+                expr_mul(expr_neg_one(), constant),
+              ) {
+              inverse_laplace_scaled_sqrt_ratio_cubed_family(constant, t)
+            } else if unit_numerator {
+              inverse_laplace_sqrt_linear_squared_over_s_family(constant, t)
+            } else {
+              None
+            }
+          _ =>
+            if unit_numerator {
+              inverse_laplace_sqrt_linear_squared_over_s_family(constant, t)
+            } else {
+              None
+            }
+        }
+      } else if saw_sqrt_s && unit_numerator {
+        inverse_laplace_sqrt_linear_squared_over_sqrt_family(constant, t)
+      } else {
+        None
+      }
+    Some((constant, 3)) =>
+      if saw_s {
+        match parse_scaled_sqrt_linear_plus_const_power(numerator, s_name) {
+          Some((num_scale, num_const, 3)) =>
+            if expr_same_simplified(num_scale, expr_one()) &&
+              expr_same_simplified(
+                num_const,
+                expr_mul(expr_neg_one(), constant),
+              ) {
+              inverse_laplace_scaled_sqrt_ratio_cubed_family(constant, t)
+            } else {
+              None
+            }
+          _ => None
+        }
+      } else if saw_sqrt_s && unit_numerator {
+        inverse_laplace_sqrt_linear_cubed_over_sqrt_family(constant, t)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn inverse_laplace_sqrt_linear_squared_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let c2t = expr_mul(expr_pow(constant, expr_int(2)), t)
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_one(),
+        expr_add(
+          expr_mul(
+            expr_sub(expr_one(), expr_mul(expr_int(2), c2t)),
+            expr_mul(
+              expr_add(@symspec.erf(expr_mul(constant, sqrt_t)), expr_neg_one()),
+              @symelem.exp(c2t),
+            ),
+          ),
+          expr_mul(
+            expr_neg_one(),
+            expr_div(
+              expr_mul(expr_int(2), expr_mul(constant, sqrt_t)),
+              sqrt_pi(),
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_scaled_sqrt_ratio_squared_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let c2t = expr_mul(expr_pow(constant, expr_int(2)), t)
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_one(),
+        expr_add(
+          expr_mul(
+            expr_int(8),
+            expr_mul(
+              c2t,
+              expr_mul(
+                @symelem.exp(c2t),
+                @symspec.erfc(expr_mul(constant, sqrt_t)),
+              ),
+            ),
+          ),
+          expr_mul(
+            expr_neg_one(),
+            expr_div(
+              expr_mul(expr_int(8), expr_mul(constant, sqrt_t)),
+              sqrt_pi(),
+            ),
+          ),
+        ),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_scaled_sqrt_ratio_cubed_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let c2 = expr_pow(constant, expr_int(2))
+  let c2t = expr_mul(c2, t)
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_add(
+          expr_mul(
+            expr_int(2),
+            expr_mul(
+              expr_add(
+                expr_mul(
+                  expr_int(8),
+                  expr_mul(expr_pow(c2, expr_int(2)), expr_pow(t, expr_int(2))),
+                ),
+                expr_add(expr_mul(expr_int(8), c2t), expr_one()),
+              ),
+              e_term,
+            ),
+          ),
+          expr_mul(
+            expr_neg_one(),
+            expr_div(
+              expr_mul(
+                expr_int(8),
+                expr_mul(
+                  constant,
+                  expr_mul(
+                    sqrt_t,
+                    expr_add(expr_mul(expr_int(2), c2t), expr_one()),
+                  ),
+                ),
+              ),
+              sqrt_pi(),
+            ),
+          ),
+        ),
+        expr_neg_one(),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_linear_squared_over_s_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(constant) {
+    return None
+  }
+  let sqrt_t = @symelem.sqrt(t)
+  let c2 = expr_pow(constant, expr_int(2))
+  let c2t = expr_mul(c2, t)
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_add(
+          expr_mul(
+            expr_add(
+              expr_mul(expr_int(2), t),
+              expr_mul(expr_neg_one(), expr_pow(c2, expr_int(-1))),
+            ),
+            e_term,
+          ),
+          expr_pow(c2, expr_int(-1)),
+        ),
+        expr_mul(
+          expr_neg_one(),
+          expr_div(expr_mul(expr_int(2), sqrt_t), expr_mul(sqrt_pi(), constant)),
+        ),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_linear_squared_over_sqrt_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let e_term = expr_mul(
+    @symelem.exp(expr_mul(expr_pow(constant, expr_int(2)), t)),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_mul(
+          expr_neg_one(),
+          expr_mul(expr_int(2), expr_mul(constant, expr_mul(t, e_term))),
+        ),
+        expr_div(expr_mul(expr_int(2), sqrt_t), sqrt_pi()),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_linear_cubed_family(constant : Expr, t : Expr) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let c2 = expr_pow(constant, expr_int(2))
+  let c2t = expr_mul(c2, t)
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_mul(
+          expr_neg_one(),
+          expr_mul(
+            expr_mul(constant, t),
+            expr_mul(expr_add(expr_mul(expr_int(2), c2t), expr_int(3)), e_term),
+          ),
+        ),
+        expr_div(
+          expr_mul(expr_int(2), expr_mul(sqrt_t, expr_add(c2t, expr_one()))),
+          sqrt_pi(),
+        ),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_linear_quartic_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  let sqrt_t = @symelem.sqrt(t)
+  let c2 = expr_pow(constant, expr_int(2))
+  let c2t = expr_mul(c2, t)
+  let c4 = expr_pow(constant, expr_int(4))
+  let t2 = expr_pow(t, expr_int(2))
+  let t2_sqrt_t = expr_mul(t2, sqrt_t)
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  let poly = expr_add(
+    expr_add(
+      expr_mul(expr_int(4), expr_mul(c4, t2)),
+      expr_mul(expr_int(12), c2t),
+    ),
+    expr_int(3),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_add(
+        expr_div(expr_mul(t, expr_mul(poly, e_term)), expr_int(3)),
+        expr_mul(
+          expr_neg_one(),
+          expr_div(
+            expr_mul(
+              expr_int(2),
+              expr_mul(
+                expr_pow(constant, expr_int(3)),
+                expr_mul(
+                  t2_sqrt_t,
+                  expr_add(expr_mul(expr_int(2), c2t), expr_int(5)),
+                ),
+              ),
+            ),
+            expr_mul(expr_int(3), sqrt_pi()),
+          ),
+        ),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_linear_cubed_over_sqrt_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(constant) {
+    return None
+  }
+  let sqrt_t = @symelem.sqrt(t)
+  let c2t = expr_mul(expr_pow(constant, expr_int(2)), t)
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  let scaled_erfc = expr_sub(
+    expr_mul(sqrt_pi(), expr_mul(constant, expr_mul(sqrt_t, e_term))),
+    expr_one(),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_div(
+        expr_mul(
+          sqrt_t,
+          expr_add(
+            expr_mul(
+              expr_add(expr_mul(expr_int(2), c2t), expr_one()),
+              scaled_erfc,
+            ),
+            expr_one(),
+          ),
+        ),
+        expr_mul(sqrt_pi(), constant),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_sqrt_over_sqrt_linear_cubed_family(
+  constant : Expr,
+  t : Expr,
+) -> Expr? {
+  if expr_is_zero(constant) {
+    return None
+  }
+  let sqrt_t = @symelem.sqrt(t)
+  let c2t = expr_mul(expr_pow(constant, expr_int(2)), t)
+  let c2t2 = expr_pow(c2t, expr_int(2))
+  let e_term = expr_mul(
+    @symelem.exp(c2t),
+    @symspec.erfc(expr_mul(constant, sqrt_t)),
+  )
+  let scaled_erfc = expr_sub(
+    expr_mul(sqrt_pi(), expr_mul(constant, expr_mul(sqrt_t, e_term))),
+    expr_one(),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_div(
+        expr_add(
+          expr_add(
+            c2t,
+            expr_mul(
+              scaled_erfc,
+              expr_add(
+                expr_add(
+                  expr_mul(expr_int(2), c2t2),
+                  expr_mul(expr_int(5), c2t),
+                ),
+                expr_one(),
+              ),
+            ),
+          ),
+          expr_one(),
+        ),
+        expr_mul(sqrt_pi(), expr_mul(constant, sqrt_t)),
+      ),
+    ),
+  )
 }
 
 ///|
@@ -2111,12 +4655,15 @@ fn inverse_laplace_reciprocal_sqrt_shifted_linear_term(
     @symcore.Expr::Mul(args) if args.length() == 2 => args
     _ => return None
   }
+  let mut root_scale : Expr? = None
   let mut root_offset : Expr? = None
+  let mut linear_coeff : Expr? = None
   let mut linear_offset : Expr? = None
   for factor in factors {
     match parse_sqrt_affine(factor, s_name) {
       Some((scale, offset)) =>
-        if expr_same_simplified(scale, expr_one()) && root_offset is None {
+        if !expr_is_zero(scale) && root_offset is None {
+          root_scale = Some(scale)
           root_offset = Some(offset)
         } else {
           return None
@@ -2124,7 +4671,8 @@ fn inverse_laplace_reciprocal_sqrt_shifted_linear_term(
       None =>
         match split_linear_power_denom(factor, s_name) {
           Some((coeff, offset, 1)) =>
-            if expr_same_simplified(coeff, expr_one()) && linear_offset is None {
+            if linear_offset is None {
+              linear_coeff = Some(coeff)
               linear_offset = Some(offset)
             } else {
               return None
@@ -2137,24 +4685,206 @@ fn inverse_laplace_reciprocal_sqrt_shifted_linear_term(
     Some(v) => v
     None => return None
   }
+  let parsed_root_scale = match root_scale {
+    Some(v) if !expr_is_zero(v) => v
+    _ => return None
+  }
+  let parsed_linear_coeff = match linear_coeff {
+    Some(v) if !expr_is_zero(v) => v
+    _ => return None
+  }
   let parsed_linear_offset = match linear_offset {
     Some(v) => v
     None => return None
   }
-  let diff = expr_simplify(expr_sub(parsed_root_offset, parsed_linear_offset))
+  let normalized_root_offset = expr_simplify(
+    expr_div(parsed_root_offset, parsed_root_scale),
+  )
+  let normalized_linear_offset = expr_simplify(
+    expr_div(parsed_linear_offset, parsed_linear_coeff),
+  )
+  let diff = expr_simplify(
+    expr_sub(normalized_root_offset, normalized_linear_offset),
+  )
   if expr_is_zero(diff) {
     return None
   }
   let sqrt_diff = preferred_positive_sqrt(diff)
+  let sqrt_root_scale = preferred_positive_sqrt(parsed_root_scale)
   let sqrt_t = @symelem.sqrt(t)
   Some(
     expr_simplify(
       @symspec.heaviside(t) *
       expr_mul(
-        @symelem.exp(
-          expr_mul(expr_neg_one(), expr_mul(parsed_linear_offset, t)),
+        expr_div(expr_one(), expr_mul(parsed_linear_coeff, sqrt_root_scale)),
+        expr_mul(
+          @symelem.exp(
+            expr_mul(expr_neg_one(), expr_mul(normalized_linear_offset, t)),
+          ),
+          expr_div(@symspec.erf(expr_mul(sqrt_diff, sqrt_t)), sqrt_diff),
         ),
-        expr_div(@symspec.erf(expr_mul(sqrt_diff, sqrt_t)), sqrt_diff),
+      ),
+    ),
+  )
+}
+
+///|
+fn inverse_laplace_reciprocal_sqrt_shifted_over_s_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if !(num.length() == 0 || (num.length() == 1 && expr_is_one(num[0]))) {
+    return None
+  }
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 2 => args
+    _ => return None
+  }
+  let mut root_scale : Expr? = None
+  let mut root_offset : Expr? = None
+  let mut saw_s = false
+  for factor in factors {
+    match parse_sqrt_affine(factor, s_name) {
+      Some((scale, offset)) =>
+        if !expr_is_zero(scale) && root_scale is None {
+          root_scale = Some(scale)
+          root_offset = Some(offset)
+        } else {
+          return None
+        }
+      None =>
+        match split_linear_power_denom(factor, s_name) {
+          Some((coeff, offset, 1)) =>
+            if expr_same_simplified(coeff, expr_one()) &&
+              expr_is_zero(offset) &&
+              !saw_s {
+              saw_s = true
+            } else {
+              return None
+            }
+          _ => return None
+        }
+    }
+  }
+  let parsed_root_scale = match root_scale {
+    Some(v) if !expr_is_zero(v) && saw_s => v
+    _ => return None
+  }
+  let parsed_root_offset = match root_offset {
+    Some(v) => v
+    None => return None
+  }
+  let sqrt_t = @symelem.sqrt(t)
+  let sqrt_scale = preferred_positive_sqrt(parsed_root_scale)
+  let body = if expr_is_zero(parsed_root_offset) {
+    expr_div(expr_mul(expr_int(2), sqrt_t), expr_mul(sqrt_pi(), sqrt_scale))
+  } else {
+    let normalized_offset = expr_simplify(
+      expr_div(parsed_root_offset, parsed_root_scale),
+    )
+    let sqrt_offset = preferred_positive_sqrt(normalized_offset)
+    expr_div(
+      @symspec.erf(expr_mul(sqrt_offset, sqrt_t)),
+      expr_mul(sqrt_scale, sqrt_offset),
+    )
+  }
+  Some(expr_simplify(@symspec.heaviside(t) * body))
+}
+
+///|
+fn inverse_laplace_reciprocal_sqrt_shifted_linear_over_s_term(
+  expr : Expr,
+  s_name : String,
+  t : Expr,
+) -> Expr? {
+  let (num, den_opt) = split_division(expr)
+  let den = match den_opt {
+    Some(v) => v
+    None => return None
+  }
+  if !(num.length() == 0 || (num.length() == 1 && expr_is_one(num[0]))) {
+    return None
+  }
+  let factors = match expr_simplify(den) {
+    @symcore.Expr::Mul(args) if args.length() == 3 => args
+    _ => return None
+  }
+  let mut root_scale : Expr? = None
+  let mut linear_coeff : Expr? = None
+  let mut linear_offset : Expr? = None
+  let mut saw_s = false
+  for factor in factors {
+    match parse_sqrt_affine(factor, s_name) {
+      Some((scale, offset)) =>
+        if expr_is_zero(offset) && !expr_is_zero(scale) && root_scale is None {
+          root_scale = Some(scale)
+        } else {
+          return None
+        }
+      None =>
+        match split_linear_power_denom(factor, s_name) {
+          Some((coeff, offset, 1)) =>
+            if expr_same_simplified(coeff, expr_one()) &&
+              expr_is_zero(offset) &&
+              !saw_s {
+              saw_s = true
+            } else if linear_coeff is None {
+              linear_coeff = Some(coeff)
+              linear_offset = Some(offset)
+            } else {
+              return None
+            }
+          _ => return None
+        }
+    }
+  }
+  let parsed_root_scale = match root_scale {
+    Some(v) if !expr_is_zero(v) && saw_s => v
+    _ => return None
+  }
+  let parsed_linear_coeff = match linear_coeff {
+    Some(v) if !expr_is_zero(v) => v
+    _ => return None
+  }
+  let parsed_linear_offset = match linear_offset {
+    Some(v) => v
+    None => return None
+  }
+  let diff = expr_simplify(
+    expr_mul(
+      expr_neg_one(),
+      expr_div(parsed_linear_offset, parsed_linear_coeff),
+    ),
+  )
+  if expr_is_zero(diff) {
+    return None
+  }
+  let sqrt_root_scale = preferred_positive_sqrt(parsed_root_scale)
+  let sqrt_diff = preferred_positive_sqrt(diff)
+  let sqrt_t = @symelem.sqrt(t)
+  let exp_erf_term = expr_div(
+    expr_mul(
+      @symelem.exp(expr_mul(diff, t)),
+      @symspec.erf(expr_mul(sqrt_diff, sqrt_t)),
+    ),
+    expr_mul(diff, sqrt_diff),
+  )
+  let sqrt_term = expr_mul(
+    expr_neg_one(),
+    expr_div(expr_mul(expr_int(2), sqrt_t), expr_mul(sqrt_pi(), diff)),
+  )
+  Some(
+    expr_simplify(
+      @symspec.heaviside(t) *
+      expr_mul(
+        expr_div(expr_one(), expr_mul(parsed_linear_coeff, sqrt_root_scale)),
+        expr_add(exp_erf_term, sqrt_term),
       ),
     ),
   )
@@ -2187,6 +4917,123 @@ fn parse_scaled_inverse_symbol(expr : Expr, var_name : String) -> Expr? {
     None
   } else {
     Some(numerator)
+  }
+}
+
+///|
+fn parse_symbol_negative_power(expr : Expr, var_name : String) -> Expr? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(@symcore.Expr::Symbol(name), power) if name == var_name =>
+      extract_explicit_negative_factor(power)
+    _ => None
+  }
+}
+
+///|
+fn parse_general_negative_power_base(expr : Expr) -> (Expr, Expr)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, power) =>
+      match extract_explicit_negative_factor(power) {
+        Some(v) => Some((base, v))
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
+fn parse_pure_symbol_positive_int_power(expr : Expr, var_name : String) -> Int? {
+  let (_, factors) = split_mul(expr, var_name)
+  if factors.length() == 0 {
+    return None
+  }
+  let mut total = 0
+  for factor in factors {
+    match parse_power_factor(factor, var_name) {
+      Some(power) =>
+        match expr_is_int_value(power) {
+          Some(n) if n > 0 => total += n
+          _ => return None
+        }
+      None => return None
+    }
+  }
+  if total > 0 {
+    Some(total)
+  } else {
+    None
+  }
+}
+
+///|
+fn parse_coeff_power_with_order(coeff : Expr, order : Expr) -> Expr? {
+  match expr_simplify(coeff) {
+    @symcore.Expr::Pow(base, exp) if expr_same_simplified(exp, order) =>
+      Some(base)
+    _ => None
+  }
+}
+
+///|
+fn parse_symbol_plus_sqrt_quadratic(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Bool)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Add(args) if args.length() == 2 => {
+      let mut saw_symbol = false
+      let mut kernel_sq : Expr? = None
+      let mut is_diff : Bool? = None
+      for arg in args {
+        match arg {
+          @symcore.Expr::Symbol(name) if name == var_name => saw_symbol = true
+          @symcore.Expr::Function("sqrt", [inner]) =>
+            match poly_coeffs_upto2(inner, var_name) {
+              Some(coeffs) =>
+                if expr_is_zero(coeffs[1]) &&
+                  expr_is_one(coeffs[2]) &&
+                  !expr_depends_on(coeffs[0], var_name) {
+                  match extract_explicit_negative_factor(coeffs[0]) {
+                    Some(v) =>
+                      if kernel_sq is None {
+                        kernel_sq = Some(v)
+                        is_diff = Some(true)
+                      } else {
+                        return None
+                      }
+                    None =>
+                      if kernel_sq is None {
+                        kernel_sq = Some(coeffs[0])
+                        is_diff = Some(false)
+                      } else {
+                        return None
+                      }
+                  }
+                } else {
+                  return None
+                }
+              None => return None
+            }
+          _ => return None
+        }
+      }
+      match (saw_symbol, kernel_sq, is_diff) {
+        (true, Some(v), Some(diff)) => Some((v, diff))
+        _ => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn make_expr_derivative(expr : Expr, wrt : Expr, order : Int) -> Expr {
+  if order <= 0 {
+    expr
+  } else if order == 1 {
+    @symcore.raw_function("Derivative", [expr, wrt])
+  } else {
+    @symcore.raw_function("Derivative", [expr, wrt, expr_int(order)])
   }
 }
 
@@ -2268,12 +5115,7 @@ fn parse_scaled_sqrt_linear_plus_const(
       let mut constant : Expr? = None
       for arg in args {
         match parse_sqrt_linear(arg, var_name) {
-          Some(v) =>
-            if scale is None {
-              scale = Some(v)
-            } else {
-              return None
-            }
+          Some(v) => if scale is None { scale = Some(v) } else { return None }
           None =>
             if expr_depends_on(arg, var_name) || !(constant is None) {
               return None
@@ -2283,10 +5125,30 @@ fn parse_scaled_sqrt_linear_plus_const(
         }
       }
       match (scale, constant) {
-        (Some(parsed_scale), Some(parsed_const)) => Some((parsed_scale, parsed_const))
+        (Some(parsed_scale), Some(parsed_const)) =>
+          Some((parsed_scale, parsed_const))
         _ => None
       }
     }
+    _ => None
+  }
+}
+
+///|
+fn parse_scaled_sqrt_linear_plus_const_power(
+  expr : Expr,
+  var_name : String,
+) -> (Expr, Expr, Int)? {
+  match expr_simplify(expr) {
+    @symcore.Expr::Pow(base, exp) =>
+      match expr_is_int_value(exp) {
+        Some(power) if power > 0 =>
+          match parse_scaled_sqrt_linear_plus_const(base, var_name) {
+            Some((scale, constant)) => Some((scale, constant, power))
+            None => None
+          }
+        _ => None
+      }
     _ => None
   }
 }
@@ -2330,12 +5192,16 @@ fn inverse_laplace_delay_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     match factor {
       @symcore.Expr::Function("exp", [inner]) =>
         match linear_coeffs(inner, s_name) {
-          Some((coeff, offset)) if expr_is_negative(coeff) =>
-            if delay is None {
-              delay = Some(expr_mul(expr_neg_one(), coeff))
-              exp_const = offset
-            } else {
-              return None
+          Some((coeff, offset)) =>
+            match extract_explicit_negative_factor(coeff) {
+              Some(amount) =>
+                if delay is None {
+                  delay = Some(amount)
+                  exp_const = offset
+                } else {
+                  return None
+                }
+              None => rest.push(factor)
             }
           _ => rest.push(factor)
         }
@@ -9478,27 +12344,43 @@ fn and_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn max_expr(lhs : Expr, rhs : Expr) -> Expr {
-  match (expr_num_value(lhs), expr_num_value(rhs)) {
-    (Some(ln), Some(rn)) => if ln.compare(rn) >= 0 { lhs } else { rhs }
-    _ =>
-      if expr_eq(lhs, rhs) {
-        lhs
-      } else {
-        @symcore.function("Max", [lhs, rhs])
-      }
+  if expr_eq(lhs, oo_expr()) || expr_eq(rhs, oo_expr()) {
+    oo_expr()
+  } else if expr_eq(lhs, neg_oo_expr()) {
+    rhs
+  } else if expr_eq(rhs, neg_oo_expr()) {
+    lhs
+  } else {
+    match (expr_num_value(lhs), expr_num_value(rhs)) {
+      (Some(ln), Some(rn)) => if ln.compare(rn) >= 0 { lhs } else { rhs }
+      _ =>
+        if expr_eq(lhs, rhs) {
+          lhs
+        } else {
+          @symcore.function("Max", [lhs, rhs])
+        }
+    }
   }
 }
 
 ///|
 fn min_expr(lhs : Expr, rhs : Expr) -> Expr {
-  match (expr_num_value(lhs), expr_num_value(rhs)) {
-    (Some(ln), Some(rn)) => if ln.compare(rn) <= 0 { lhs } else { rhs }
-    _ =>
-      if expr_eq(lhs, rhs) {
-        lhs
-      } else {
-        @symcore.function("Min", [lhs, rhs])
-      }
+  if expr_eq(lhs, neg_oo_expr()) || expr_eq(rhs, neg_oo_expr()) {
+    neg_oo_expr()
+  } else if expr_eq(lhs, oo_expr()) {
+    rhs
+  } else if expr_eq(rhs, oo_expr()) {
+    lhs
+  } else {
+    match (expr_num_value(lhs), expr_num_value(rhs)) {
+      (Some(ln), Some(rn)) => if ln.compare(rn) <= 0 { lhs } else { rhs }
+      _ =>
+        if expr_eq(lhs, rhs) {
+          lhs
+        } else {
+          @symcore.function("Min", [lhs, rhs])
+        }
+    }
   }
 }
 
@@ -10067,4 +12949,9 @@ fn expr_is_positive(expr : Expr) -> Bool {
 ///|
 fn neg_oo_expr() -> Expr {
   @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
+}
+
+///|
+fn oo_expr() -> Expr {
+  @symcore.symbol("oo")
 }

@@ -4,9 +4,12 @@ package "CAIMEOX/symbit/symintegrals"
 import {
   "CAIMEOX/symbit/symcore",
   "CAIMEOX/symbit/symgeometry",
+  "CAIMEOX/symbit/symmatrices",
 }
 
 // Values
+pub fn _laplace_deep_collect(@symcore.Expr, @symcore.Expr) -> @symcore.Expr
+
 pub fn change_mul(@symcore.Expr, String) -> (@symcore.Expr?, @symcore.Expr?)
 
 pub fn components(@symcore.Expr, String) -> Array[@symcore.Expr]
@@ -95,15 +98,27 @@ pub fn inverse_hankel_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr
 
 pub fn inverse_laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn inverse_laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
+
+pub fn inverse_laplace_transform_matrix(@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
 pub fn inverse_mellin_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn inverse_sine_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn inverse_sine_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
+pub fn laplace_correspondence(@symcore.Expr, Map[String, String]) -> @symcore.Expr
+
+pub fn laplace_initial_conds(@symcore.Expr, @symcore.Expr, Map[String, Array[@symcore.Expr]]) -> @symcore.Expr
+
 pub fn laplace_transform(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> @symcore.Expr
 
 pub fn laplace_transform_eval(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
+
+pub fn laplace_transform_matrix(@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) -> @symmatrices.Matrix raise @symmatrices.MatrixError
+
+pub fn laplace_transform_matrix_result(@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) -> (@symmatrices.Matrix, @symcore.Expr, @symcore.Expr) raise @symmatrices.MatrixError
 
 pub fn laplace_transform_result(@symcore.Expr, @symcore.Expr, @symcore.Expr, noconds? : Bool) -> @symcore.Expr
 

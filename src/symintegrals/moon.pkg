@@ -4,6 +4,7 @@ import {
   "CAIMEOX/symbit/symnum",
   "CAIMEOX/symbit/symcalculus",
   "CAIMEOX/symbit/symgeometry",
+  "CAIMEOX/symbit/symmatrices" @symmatrices,
   "CAIMEOX/symbit/symsimplify",
   "CAIMEOX/symbit/symfunctions/elementary" @symelem,
   "CAIMEOX/symbit/symfunctions/special" @symspec,
