@@ -253,7 +253,10 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Float(_) => t == "Float" || t == "Number" || t == "Expr"
     Expr::ComplexFloat(_) =>
       t == "ComplexFloat" || t == "Float" || t == "Number" || t == "Expr"
+    Expr::NumberSymbol(_) => t == "NumberSymbol" || t == "Number" || t == "Expr"
     Expr::Boolean(_) => t == "Boolean" || t == "Expr"
+    Expr::Dummy(_, _) => t == "Dummy" || t == "Symbol" || t == "Expr"
+    Expr::Wild(_) => t == "Wild" || t == "Symbol" || t == "Expr"
     Expr::Symbol(_) => t == "Symbol" || t == "Expr"
     Expr::Add(_) => t == "Add" || t == "Expr"
     Expr::Mul(_) => t == "Mul" || t == "Expr"
@@ -311,8 +314,10 @@ fn epath_is_atom(expr : Expr) -> Bool {
 ///|
 fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
-      args.map(x => x)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Tuple(args)
+    | Expr::Function(_, args) => args.map(x => x)
     Expr::Pow(a, b) => [a, b]
     Expr::Relational(_, lhs, rhs) => [lhs, rhs]
     Expr::Derivative(inner, deriv_args) => {

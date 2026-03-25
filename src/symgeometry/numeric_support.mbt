@@ -12,20 +12,30 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
   match geo_simplify(expr) {
     Expr::Number(value) => Some(geo_rational_to_double(value))
     Expr::Float(value) =>
-      value.to_double() catch {
+      try value.to_double() catch {
         _ => None
       } noraise {
         out => Some(out)
       }
     Expr::ComplexFloat(value) =>
       if @symnum.is_zero(value.to_mpc().imag) {
-        value.real_part().to_double() catch {
+        try value.real_part().to_double() catch {
           _ => None
         } noraise {
           out => Some(out)
         }
       } else {
         None
+      }
+    Expr::Dummy(_, _) | Expr::Wild(_) => None
+    Expr::NumberSymbol(kind) =>
+      match kind {
+        @symcore.NumberSymbolKind::Pi => Some(@math.PI)
+        @symcore.NumberSymbolKind::Exp1 => Some(2.718281828459045)
+        @symcore.NumberSymbolKind::EulerGamma => Some(0.5772156649015329)
+        @symcore.NumberSymbolKind::GoldenRatio => Some(1.618033988749895)
+        @symcore.NumberSymbolKind::Catalan => Some(0.915965594177219)
+        _ => None
       }
     Expr::Symbol(name) =>
       match name {
@@ -74,9 +84,12 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
           _ => None
         }
       }
-    Expr::Boolean(_) | Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Derivative(_, _) |
-    Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
-      None
+    Expr::Boolean(_)
+    | Expr::Tuple(_)
+    | Expr::Relational(_, _, _)
+    | Expr::Derivative(_, _)
+    | Expr::Subs(_, _, _)
+    | Expr::Lambda(_, _) => None
   }
 }
 

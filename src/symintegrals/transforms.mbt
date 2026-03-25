@@ -439,6 +439,7 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
   match expr {
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
+    | @symcore.Expr::NumberSymbol(_)
     | @symcore.Expr::ComplexFloat(_) => Some([expr])
     @symcore.Expr::Symbol(name) =>
       if name == var_name {
@@ -446,6 +447,7 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
       } else {
         Some([expr])
       }
+    @symcore.Expr::Dummy(_, _) | @symcore.Expr::Wild(_) => Some([expr])
     @symcore.Expr::Add(args) => {
       let acc : Array[Expr] = [expr_zero()]
       for arg in args {
@@ -475,16 +477,18 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
           }
         _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
       }
-    @symcore.Expr::Function(_, _) | @symcore.Expr::Derivative(_, _) |
-    @symcore.Expr::Subs(_, _, _) =>
+    @symcore.Expr::Function(_, _)
+    | @symcore.Expr::Derivative(_, _)
+    | @symcore.Expr::Subs(_, _, _) =>
       if expr_depends_on(expr, var_name) {
         None
       } else {
         Some([expr])
       }
-    @symcore.Expr::Boolean(_) | @symcore.Expr::Tuple(_) |
-    @symcore.Expr::Relational(_, _, _) | @symcore.Expr::Lambda(_, _) =>
-      None
+    @symcore.Expr::Boolean(_)
+    | @symcore.Expr::Tuple(_)
+    | @symcore.Expr::Relational(_, _, _)
+    | @symcore.Expr::Lambda(_, _) => None
   }
 }
 
@@ -1638,7 +1642,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                         expr_simplify(
                           expr_div(
                             @symcore.raw_function("LaplaceTransform", [
-                              @symcore.raw_function(name, [@symcore.symbol(t_name)]),
+                              @symcore.raw_function(name, [
+                                @symcore.symbol(t_name),
+                              ]),
                               @symcore.symbol(t_name),
                               expr_div(s, coeff),
                             ]),

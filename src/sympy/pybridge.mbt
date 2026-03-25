@@ -2,17 +2,33 @@
 /// Convert a MoonBit `Expr` into a live SymPy object by directly
 /// constructing SymPy objects (no expression string parsing).
 pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
+  let dummy_cache : Map[Int, @py.PyObject] = {}
+  let wild_cache : Map[String, @py.PyObject] = {}
+  expr_to_sympy_cached(expr, dummy_cache, wild_cache)
+}
+
+///|
+fn expr_to_sympy_cached(
+  expr : @symcore.Expr,
+  dummy_cache : Map[Int, @py.PyObject],
+  wild_cache : Map[String, @py.PyObject],
+) -> @py.PyObject raise {
   match expr {
     @symcore.Expr::Number(n) => sympy_number_obj(n)
     @symcore.Expr::Float(value) => sympy_float_obj(value)
     @symcore.Expr::ComplexFloat(value) => sympy_complex_float_obj(value)
+    @symcore.Expr::NumberSymbol(kind) => sympy_number_symbol_obj(kind)
     @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
+    @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
+    @symcore.Expr::Wild(name) => sympy_wild_obj(name, wild_cache)
     @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
-    @symcore.Expr::Add(args) => sympy_nary_obj("sympy.Add", args, "0")
-    @symcore.Expr::Mul(args) => sympy_nary_obj("sympy.Mul", args, "1")
+    @symcore.Expr::Add(args) =>
+      sympy_nary_obj("sympy.Add", args, "0", dummy_cache, wild_cache)
+    @symcore.Expr::Mul(args) =>
+      sympy_nary_obj("sympy.Mul", args, "1", dummy_cache, wild_cache)
     @symcore.Expr::Pow(base, exp) => {
-      let base_obj = expr_to_sympy(base)
-      let exp_obj = expr_to_sympy(exp)
+      let base_obj = expr_to_sympy_cached(base, dummy_cache, wild_cache)
+      let exp_obj = expr_to_sympy_cached(exp, dummy_cache, wild_cache)
       sympy_call_obj("sympy.Pow", [
         OracleArg::PyObj(base_obj),
         OracleArg::PyObj(exp_obj),
@@ -21,7 +37,9 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
     @symcore.Expr::Tuple(args) => {
       let packed : Array[OracleArg] = []
       for arg in args {
-        packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+        packed.push(
+          OracleArg::PyObj(expr_to_sympy_cached(arg, dummy_cache, wild_cache)),
+        )
       }
       sympy_call_obj("sympy.Tuple", packed)
     }
@@ -35,29 +53,36 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
         @symcore.RelOp::Ge => "sympy.Ge"
       }
       sympy_call_obj(path, [
-        OracleArg::PyObj(expr_to_sympy(lhs)),
-        OracleArg::PyObj(expr_to_sympy(rhs)),
+        OracleArg::PyObj(expr_to_sympy_cached(lhs, dummy_cache, wild_cache)),
+        OracleArg::PyObj(expr_to_sympy_cached(rhs, dummy_cache, wild_cache)),
       ])
     }
     @symcore.Expr::Derivative(inner, deriv_args) => {
-      let packed : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(inner))]
+      let packed : Array[OracleArg] = [
+        OracleArg::PyObj(expr_to_sympy_cached(inner, dummy_cache, wild_cache)),
+      ]
       for arg in deriv_args {
-        packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+        packed.push(
+          OracleArg::PyObj(expr_to_sympy_cached(arg, dummy_cache, wild_cache)),
+        )
       }
       sympy_call_obj("sympy.Derivative", packed)
     }
     @symcore.Expr::Subs(inner, variable, value) =>
       sympy_call_obj("sympy.Subs", [
-        OracleArg::PyObj(expr_to_sympy(inner)),
-        OracleArg::PyObj(expr_to_sympy(variable)),
-        OracleArg::PyObj(expr_to_sympy(value)),
+        OracleArg::PyObj(expr_to_sympy_cached(inner, dummy_cache, wild_cache)),
+        OracleArg::PyObj(
+          expr_to_sympy_cached(variable, dummy_cache, wild_cache),
+        ),
+        OracleArg::PyObj(expr_to_sympy_cached(value, dummy_cache, wild_cache)),
       ])
     @symcore.Expr::Lambda(vars, body) =>
       sympy_call_obj("sympy.Lambda", [
-        OracleArg::PyObj(expr_to_sympy(vars)),
-        OracleArg::PyObj(expr_to_sympy(body)),
+        OracleArg::PyObj(expr_to_sympy_cached(vars, dummy_cache, wild_cache)),
+        OracleArg::PyObj(expr_to_sympy_cached(body, dummy_cache, wild_cache)),
       ])
-    @symcore.Expr::Function(name, args) => sympy_function_obj(name, args)
+    @symcore.Expr::Function(name, args) =>
+      sympy_function_obj(name, args, dummy_cache, wild_cache)
   }
 }
 
@@ -107,6 +132,17 @@ fn sympy_bool_obj(value : Bool) -> @py.PyObject raise {
     sympy_call_obj("sympy.sympify", [OracleArg::Str("True")])
   } else {
     sympy_call_obj("sympy.sympify", [OracleArg::Str("False")])
+  }
+}
+
+///|
+fn sympy_number_symbol_obj(
+  kind : @symcore.NumberSymbolKind,
+) -> @py.PyObject raise {
+  let name = @symcore.number_symbol_name(kind)
+  match sympy_constant_obj(name) {
+    Some(obj) => obj
+    None => sympy_symbol_obj(name)
   }
 }
 
@@ -169,17 +205,52 @@ fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
 }
 
 ///|
+fn sympy_dummy_obj(
+  name : String,
+  id : Int,
+  dummy_cache : Map[Int, @py.PyObject],
+) -> @py.PyObject raise {
+  match dummy_cache.get(id) {
+    Some(obj) => obj
+    None => {
+      let obj = sympy_call_obj("sympy.Dummy", [OracleArg::Str(name)])
+      dummy_cache.set(id, obj)
+      obj
+    }
+  }
+}
+
+///|
+fn sympy_wild_obj(
+  name : String,
+  wild_cache : Map[String, @py.PyObject],
+) -> @py.PyObject raise {
+  match wild_cache.get(name) {
+    Some(obj) => obj
+    None => {
+      let obj = sympy_call_obj("sympy.Wild", [OracleArg::Str(name)])
+      wild_cache.set(name, obj)
+      obj
+    }
+  }
+}
+
+///|
 fn sympy_nary_obj(
   path : String,
   args : Array[@symcore.Expr],
   identity : String,
+  dummy_cache : Map[Int, @py.PyObject],
+  wild_cache : Map[String, @py.PyObject],
 ) -> @py.PyObject raise {
   if args.is_empty() {
     return sympy_call_obj("sympy.Integer", [OracleArg::Str(identity)])
   }
   let packed : Array[OracleArg] = Array::new()
   for arg in args {
-    packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+    packed.push(
+      OracleArg::PyObj(expr_to_sympy_cached(arg, dummy_cache, wild_cache)),
+    )
   }
   sympy_call_obj(path, packed)
 }
@@ -228,10 +299,12 @@ fn sympy_attr_callable(name : String) -> @py.PyCallable? {
 fn sympy_function_obj(
   name : String,
   args : Array[@symcore.Expr],
+  dummy_cache : Map[Int, @py.PyObject],
+  wild_cache : Map[String, @py.PyObject],
 ) -> @py.PyObject raise {
   let arg_objs : Array[@py.PyObject] = Array::new()
   for arg in args {
-    arg_objs.push(expr_to_sympy(arg))
+    arg_objs.push(expr_to_sympy_cached(arg, dummy_cache, wild_cache))
   }
   match sympy_attr_callable(name) {
     Some(callable) => call_callable(callable, arg_objs)

@@ -1,4 +1,18 @@
 ///|
+pub enum NumberSymbolKind {
+  ImaginaryUnit
+  Pi
+  Exp1
+  EulerGamma
+  GoldenRatio
+  Catalan
+  Infinity
+  NegativeInfinity
+  ComplexInfinity
+  NaN
+}
+
+///|
 pub enum RelOp {
   Eq
   Ne
@@ -13,6 +27,7 @@ pub enum ExprForm {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
   Symbol(String)
   Boolean(Bool)
   Add(Array[Expr])
@@ -24,6 +39,112 @@ pub enum ExprForm {
   Subs(Expr, Expr, Expr)
   Lambda(Expr, Expr)
   Applied(String, Array[Expr])
+}
+
+///|
+pub fn number_symbol_name(kind : NumberSymbolKind) -> String {
+  match kind {
+    NumberSymbolKind::ImaginaryUnit => "I"
+    NumberSymbolKind::Pi => "pi"
+    NumberSymbolKind::Exp1 => "E"
+    NumberSymbolKind::EulerGamma => "EulerGamma"
+    NumberSymbolKind::GoldenRatio => "GoldenRatio"
+    NumberSymbolKind::Catalan => "Catalan"
+    NumberSymbolKind::Infinity => "oo"
+    NumberSymbolKind::NegativeInfinity => "-oo"
+    NumberSymbolKind::ComplexInfinity => "zoo"
+    NumberSymbolKind::NaN => "nan"
+  }
+}
+
+///|
+pub fn dummy_display_name(name : String) -> String {
+  if name.has_prefix("_") {
+    name
+  } else {
+    "_\{name}"
+  }
+}
+
+///|
+pub fn wild_display_name(name : String) -> String {
+  if name.has_suffix("_") {
+    name
+  } else {
+    "\{name}_"
+  }
+}
+
+///|
+pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
+  match name {
+    "I" => Some(NumberSymbolKind::ImaginaryUnit)
+    "pi" | "Pi" => Some(NumberSymbolKind::Pi)
+    "E" => Some(NumberSymbolKind::Exp1)
+    "EulerGamma" => Some(NumberSymbolKind::EulerGamma)
+    "GoldenRatio" => Some(NumberSymbolKind::GoldenRatio)
+    "Catalan" => Some(NumberSymbolKind::Catalan)
+    "oo" => Some(NumberSymbolKind::Infinity)
+    "-oo" => Some(NumberSymbolKind::NegativeInfinity)
+    "zoo" => Some(NumberSymbolKind::ComplexInfinity)
+    "nan" | "NaN" => Some(NumberSymbolKind::NaN)
+    _ => None
+  }
+}
+
+///|
+pub fn number_symbol(kind : NumberSymbolKind) -> Expr {
+  Expr::NumberSymbol(kind)
+}
+
+///|
+pub fn imag_unit() -> Expr {
+  number_symbol(NumberSymbolKind::ImaginaryUnit)
+}
+
+///|
+pub fn pi() -> Expr {
+  number_symbol(NumberSymbolKind::Pi)
+}
+
+///|
+pub fn exp1() -> Expr {
+  number_symbol(NumberSymbolKind::Exp1)
+}
+
+///|
+pub fn euler_gamma() -> Expr {
+  number_symbol(NumberSymbolKind::EulerGamma)
+}
+
+///|
+pub fn golden_ratio() -> Expr {
+  number_symbol(NumberSymbolKind::GoldenRatio)
+}
+
+///|
+pub fn catalan() -> Expr {
+  number_symbol(NumberSymbolKind::Catalan)
+}
+
+///|
+pub fn oo() -> Expr {
+  number_symbol(NumberSymbolKind::Infinity)
+}
+
+///|
+pub fn neg_oo() -> Expr {
+  number_symbol(NumberSymbolKind::NegativeInfinity)
+}
+
+///|
+pub fn zoo() -> Expr {
+  number_symbol(NumberSymbolKind::ComplexInfinity)
+}
+
+///|
+pub fn nan_expr() -> Expr {
+  number_symbol(NumberSymbolKind::NaN)
 }
 
 ///|
@@ -101,10 +222,17 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Number(n) => ExprForm::Number(n)
     Expr::Float(f) => ExprForm::Float(f)
     Expr::ComplexFloat(z) => ExprForm::ComplexFloat(z)
+    Expr::NumberSymbol(kind) => ExprForm::NumberSymbol(kind)
     Expr::Boolean(value) => ExprForm::Boolean(value)
+    Expr::Dummy(name, _) => ExprForm::Symbol(dummy_display_name(name))
+    Expr::Wild(name) => ExprForm::Symbol(wild_display_name(name))
     Expr::Symbol("True") => ExprForm::Boolean(true)
     Expr::Symbol("False") => ExprForm::Boolean(false)
-    Expr::Symbol(name) => ExprForm::Symbol(name)
+    Expr::Symbol(name) =>
+      match number_symbol_kind_from_name(name) {
+        Some(kind) => ExprForm::NumberSymbol(kind)
+        None => ExprForm::Symbol(name)
+      }
     Expr::Add(args) => ExprForm::Add(args)
     Expr::Mul(args) => ExprForm::Mul(args)
     Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
@@ -112,8 +240,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
     Expr::Derivative(inner, deriv_args) =>
       ExprForm::Derivative(inner, deriv_args)
-    Expr::Subs(inner, variable, value) =>
-      ExprForm::Subs(inner, variable, value)
+    Expr::Subs(inner, variable, value) => ExprForm::Subs(inner, variable, value)
     Expr::Lambda(vars, body) => ExprForm::Lambda(vars, body)
     Expr::Function("Tuple", args) => ExprForm::Tuple(args)
     Expr::Function("Eq", [lhs, rhs]) =>
@@ -158,7 +285,10 @@ pub fn is_false(expr : Expr) -> Bool {
 ///|
 pub fn is_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
-    ExprForm::Number(_) | ExprForm::Float(_) | ExprForm::ComplexFloat(_) => true
+    ExprForm::Number(_)
+    | ExprForm::Float(_)
+    | ExprForm::ComplexFloat(_)
+    | ExprForm::NumberSymbol(_) => true
     _ => false
   }
 }
@@ -167,8 +297,16 @@ pub fn is_number_atom(expr : Expr) -> Bool {
 pub fn is_real_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
     ExprForm::Number(_) | ExprForm::Float(_) => true
-    ExprForm::ComplexFloat(z) =>
-      @symnum.is_zero(z.to_mpc().imag)
+    ExprForm::NumberSymbol(kind) =>
+      match kind {
+        NumberSymbolKind::Pi
+        | NumberSymbolKind::Exp1
+        | NumberSymbolKind::EulerGamma
+        | NumberSymbolKind::GoldenRatio
+        | NumberSymbolKind::Catalan => true
+        _ => false
+      }
+    ExprForm::ComplexFloat(z) => @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
 }
@@ -187,6 +325,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     ExprForm::Number(_)
     | ExprForm::Float(_)
     | ExprForm::ComplexFloat(_)
+    | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
     | ExprForm::Boolean(_) => true
     ExprForm::Applied(_, args) => args.is_empty()
@@ -200,6 +339,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Number(_) => "Number"
     ExprForm::Float(_) => "Float"
     ExprForm::ComplexFloat(_) => "ComplexFloat"
+    ExprForm::NumberSymbol(kind) => number_symbol_name(kind)
     ExprForm::Symbol(name) => name
     ExprForm::Boolean(true) => "True"
     ExprForm::Boolean(false) => "False"
@@ -227,6 +367,22 @@ pub fn head_name(expr : Expr) -> String {
 pub fn tuple_items(expr : Expr) -> Array[Expr]? {
   match expr_form(expr) {
     ExprForm::Tuple(items) => Some(items)
+    _ => None
+  }
+}
+
+///|
+pub fn dummy_parts(expr : Expr) -> (String, Int)? {
+  match expr {
+    Expr::Dummy(name, id) => Some((name, id))
+    _ => None
+  }
+}
+
+///|
+pub fn wild_name(expr : Expr) -> String? {
+  match expr {
+    Expr::Wild(name) => Some(name)
     _ => None
   }
 }
@@ -299,6 +455,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     ExprForm::Number(_)
     | ExprForm::Float(_)
     | ExprForm::ComplexFloat(_)
+    | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
     | ExprForm::Boolean(_) => []
     ExprForm::Add(items)
@@ -321,24 +478,49 @@ pub fn args(expr : Expr) -> Array[Expr] {
 
 ///|
 fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
-  match expr_form(expr) {
-    ExprForm::Symbol(name) => ignore(out.remove(name))
-    ExprForm::Tuple(items) =>
+  match expr {
+    Expr::Symbol(name) => ignore(out.remove("sym:\{name}"))
+    Expr::Dummy(_, id) => ignore(out.remove("dummy:\{id}"))
+    Expr::Wild(name) => ignore(out.remove("wild:\{name}"))
+    Expr::Tuple(items) =>
       for item in items {
         remove_bound_symbol(out, item)
       }
-    _ => ()
+    _ =>
+      match expr_form(expr) {
+        ExprForm::Tuple(items) =>
+          for item in items {
+            remove_bound_symbol(out, item)
+          }
+        _ => ()
+      }
   }
 }
 
 ///|
 fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
+  match expr {
+    Expr::Symbol(name) => {
+      out.set("sym:\{name}", expr)
+      return
+    }
+    Expr::Dummy(_, id) => {
+      out.set("dummy:\{id}", expr)
+      return
+    }
+    Expr::Wild(name) => {
+      out.set("wild:\{name}", expr)
+      return
+    }
+    _ => ()
+  }
   match expr_form(expr) {
     ExprForm::Number(_)
     | ExprForm::Float(_)
     | ExprForm::ComplexFloat(_)
+    | ExprForm::NumberSymbol(_)
     | ExprForm::Boolean(_) => ()
-    ExprForm::Symbol(name) => out.set(name, expr)
+    ExprForm::Symbol(name) => out.set("sym:\{name}", expr)
     ExprForm::Add(items)
     | ExprForm::Mul(items)
     | ExprForm::Tuple(items)
@@ -356,15 +538,14 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     }
     ExprForm::Derivative(inner, deriv_args) => {
       free_symbol_map(inner, out)
-      if deriv_args.length() >= 1 {
-        let bound = deriv_args[0]
-        match expr_form(bound) {
-          ExprForm::Symbol(name) => ignore(out.remove(name))
-          _ => free_symbol_map(bound, out)
+      let pair_count = deriv_args.length() / 2
+      for i in 0..<pair_count {
+        let wrt = deriv_args[i * 2]
+        remove_bound_symbol(out, wrt)
+        let order_idx = i * 2 + 1
+        if order_idx < deriv_args.length() {
+          free_symbol_map(deriv_args[order_idx], out)
         }
-      }
-      if deriv_args.length() >= 2 {
-        free_symbol_map(deriv_args[1], out)
       }
     }
     ExprForm::Subs(inner, variable, value) => {

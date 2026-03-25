@@ -158,12 +158,16 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     Expr::Number(_)
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => @symcore.int(0)
-    Expr::Symbol(_) => @symcore.int(0)
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => @symcore.int(0)
     Expr::Add(args) => diff_add(args, wrt)
     Expr::Mul(args) => diff_mul(args, wrt)
     Expr::Pow(base, exp) => diff_pow(base, exp, wrt)
-    Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
+    Expr::Tuple(_)
+    | Expr::Relational(_, _, _)
+    | Expr::Subs(_, _, _)
+    | Expr::Lambda(_, _) =>
       if expr_depends_on(expr, wrt) {
         derivative_expr(expr, [wrt])
       } else {

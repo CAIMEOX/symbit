@@ -3,8 +3,11 @@ pub enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
   Boolean(Bool)
   Symbol(String)
+  Dummy(String, Int)
+  Wild(String)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
@@ -22,9 +25,12 @@ impl Show for Expr with to_string(self) {
     Expr::Number(n) => n.to_string()
     Expr::Float(f) => f.to_string()
     Expr::ComplexFloat(z) => z.to_string()
+    Expr::NumberSymbol(kind) => number_symbol_name(kind)
     Expr::Boolean(true) => "True"
     Expr::Boolean(false) => "False"
     Expr::Symbol(s) => s
+    Expr::Dummy(name, _) => dummy_display_name(name)
+    Expr::Wild(name) => wild_display_name(name)
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
     Expr::Mul(args) =>
@@ -120,8 +126,46 @@ pub fn rational_from_ints(
 }
 
 ///|
-pub fn symbol(name : String) -> Expr {
+pub fn raw_symbol(name : String) -> Expr {
   Expr::Symbol(name)
+}
+
+///|
+let dummy_id_counter_ref : Ref[Int] = { val: 0 }
+
+///|
+fn next_dummy_id() -> Int {
+  let id = dummy_id_counter_ref.val
+  dummy_id_counter_ref.val = id + 1
+  id
+}
+
+///|
+pub fn symbol(name : String) -> Expr {
+  match name {
+    "True" => true_()
+    "False" => false_()
+    _ =>
+      match number_symbol_kind_from_name(name) {
+        Some(kind) => Expr::NumberSymbol(kind)
+        None => Expr::Symbol(name)
+      }
+  }
+}
+
+///|
+pub fn raw_dummy(name : String, id : Int) -> Expr {
+  Expr::Dummy(name, id)
+}
+
+///|
+pub fn dummy(name? : String = "Dummy") -> Expr {
+  Expr::Dummy(name, next_dummy_id())
+}
+
+///|
+pub fn wild(name : String) -> Expr {
+  Expr::Wild(name)
 }
 
 ///|
@@ -510,6 +554,10 @@ pub fn mul(args : Array[Expr]) -> Expr {
                   }
                 }
               }
+            Expr::NumberSymbol(NumberSymbolKind::Infinity)
+            | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+            | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
+            | Expr::NumberSymbol(NumberSymbolKind::NaN) => flat.push(child)
             _ => flat.push(child)
           }
         }
@@ -583,6 +631,10 @@ pub fn mul(args : Array[Expr]) -> Expr {
             }
           }
         }
+      Expr::NumberSymbol(NumberSymbolKind::Infinity)
+      | Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+      | Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)
+      | Expr::NumberSymbol(NumberSymbolKind::NaN) => flat.push(arg)
       _ => flat.push(arg)
     }
   }
@@ -593,7 +645,7 @@ pub fn mul(args : Array[Expr]) -> Expr {
     let factor = flat[idx]
     let mut count = 1
     while idx + count < flat.length() &&
-      compare_expr(flat[idx + count], factor) == 0 {
+          compare_expr(flat[idx + count], factor) == 0 {
       count += 1
     }
     if count == 1 {
@@ -602,6 +654,15 @@ pub fn mul(args : Array[Expr]) -> Expr {
       merged.push(pow(factor, int(count)))
     }
     idx += count
+  }
+  if const_prod == @symnum.BigRational::from_int(-1) && merged.length() == 1 {
+    match merged[0] {
+      Expr::NumberSymbol(NumberSymbolKind::Infinity) =>
+        return Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+      Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity) =>
+        return Expr::NumberSymbol(NumberSymbolKind::Infinity)
+      _ => ()
+    }
   }
   match complex_prod {
     Some(value) =>
@@ -749,10 +810,8 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
     ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
     ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
-    ("Derivative", [expr, wrt]) =>
-      Expr::Derivative(expr, [wrt, int(1)])
-    ("Derivative", [expr, wrt, order]) =>
-      Expr::Derivative(expr, [wrt, order])
+    ("Derivative", [expr, wrt]) => Expr::Derivative(expr, [wrt, int(1)])
+    ("Derivative", [expr, wrt, order]) => Expr::Derivative(expr, [wrt, order])
     ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
     ("Lambda", [vars, body]) => Expr::Lambda(vars, body)
     _ => Expr::Function(name, args.map(child => child))

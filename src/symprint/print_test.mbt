@@ -50,6 +50,21 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 }
 
 ///|
+test "pretty printers understand number symbols" {
+  inspect(debug_repr(@symcore.symbol("pi")), content="const:pi")
+  inspect(to_string(@symcore.symbol("I")), content="I")
+  inspect(to_string(@symcore.symbol("oo")), content="oo")
+}
+
+///|
+test "pretty printers render dummy and wild names like SymPy" {
+  inspect(to_string(@symcore.dummy(name="x")), content="_x")
+  inspect(debug_repr(@symcore.dummy(name="x")), content="sym:_x")
+  inspect(to_string(@symcore.wild("x")), content="x_")
+  inspect(debug_repr(@symcore.wild("x")), content="sym:x_")
+}
+
+///|
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)

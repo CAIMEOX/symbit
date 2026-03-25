@@ -340,8 +340,11 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::NumberSymbol(_)
     | @symcore.Expr::Boolean(_)
-    | @symcore.Expr::Symbol(_) => expr
+    | @symcore.Expr::Symbol(_)
+    | @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_) => expr
     @symcore.Expr::Tuple(args) =>
       @symcore.tuple_expr(args.map(item => eval_arith(item)))
     @symcore.Expr::Relational(op, lhs, rhs) =>
@@ -362,7 +365,11 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       @symcore.raw_function("Derivative", out)
     }
     @symcore.Expr::Subs(inner, variable, value) =>
-      @symcore.subs_expr(eval_arith(inner), eval_arith(variable), eval_arith(value))
+      @symcore.subs_expr(
+        eval_arith(inner),
+        eval_arith(variable),
+        eval_arith(value),
+      )
     @symcore.Expr::Lambda(vars, body) =>
       @symcore.lambda_expr(eval_arith(vars), eval_arith(body))
     @symcore.Expr::Function(name, args) =>

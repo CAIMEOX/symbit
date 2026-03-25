@@ -1201,7 +1201,9 @@ fn expr_replace_symbol(
     Expr::Number(_)
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::Symbol(name) => if name == old_name { symbol(new_name) } else { expr }
     Expr::Add(args) =>
       @symcore.add(
@@ -1562,10 +1564,29 @@ fn expr_is_nonnegative_integer(expr : Expr) -> Bool {
 ///|
 fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      false
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::Boolean(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) => true
+    Expr::NumberSymbol(kind) =>
+      match kind {
+        @symcore.NumberSymbolKind::ImaginaryUnit => !allow_i
+        @symcore.NumberSymbolKind::Pi
+        | @symcore.NumberSymbolKind::Exp1
+        | @symcore.NumberSymbolKind::EulerGamma
+        | @symcore.NumberSymbolKind::GoldenRatio
+        | @symcore.NumberSymbolKind::Catalan => false
+        @symcore.NumberSymbolKind::Infinity
+        | @symcore.NumberSymbolKind::NegativeInfinity
+        | @symcore.NumberSymbolKind::ComplexInfinity
+        | @symcore.NumberSymbolKind::NaN => true
+      }
     Expr::Symbol(name) => if allow_i { name != "I" } else { true }
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Tuple(args)
+    | Expr::Function(_, args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
     Expr::Relational(_, lhs, rhs) =>
       expr_has_forbidden_symbol(lhs, allow_i) ||
@@ -1590,8 +1611,10 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
 fn expr_has_nonzero_complex_float(expr : Expr) -> Bool {
   match expr {
     Expr::ComplexFloat(z) => !@symnum.is_zero(z.to_mpc().imag)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
-      args.any(expr_has_nonzero_complex_float)
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Tuple(args)
+    | Expr::Function(_, args) => args.any(expr_has_nonzero_complex_float)
     Expr::Relational(_, lhs, rhs) =>
       expr_has_nonzero_complex_float(lhs) || expr_has_nonzero_complex_float(rhs)
     Expr::Derivative(inner, deriv_args) =>
@@ -1602,9 +1625,11 @@ fn expr_has_nonzero_complex_float(expr : Expr) -> Bool {
       expr_has_nonzero_complex_float(variable) ||
       expr_has_nonzero_complex_float(value)
     Expr::Lambda(vars, body) =>
-      expr_has_nonzero_complex_float(vars) || expr_has_nonzero_complex_float(body)
+      expr_has_nonzero_complex_float(vars) ||
+      expr_has_nonzero_complex_float(body)
     Expr::Pow(base, exp) =>
-      expr_has_nonzero_complex_float(base) || expr_has_nonzero_complex_float(exp)
+      expr_has_nonzero_complex_float(base) ||
+      expr_has_nonzero_complex_float(exp)
     _ => false
   }
 }
@@ -1612,6 +1637,7 @@ fn expr_has_nonzero_complex_float(expr : Expr) -> Bool {
 ///|
 fn expr_is_imaginary_unit(expr : Expr) -> Bool {
   match expr {
+    Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) => true
     Expr::Symbol(name) => name == "I"
     _ => false
   }
@@ -1688,9 +1714,12 @@ fn expr_in_polynomial_domain(
   }
   let symbols = generator_symbol_names(gens)
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
-      domain_contains_expr(base, expr)
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_polynomial_domain(base, gens, item))
@@ -1717,9 +1746,12 @@ fn expr_in_fraction_domain(
   }
   let symbols = generator_symbol_names(gens)
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
-      domain_contains_expr(base, expr)
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_fraction_domain(base, gens, item))
@@ -1746,7 +1778,8 @@ pub fn domain_contains_expr(domain : Domain, expr : Expr) -> Bool {
       }
     Domain::QQ => expr_rational_value(expr) is Some(_)
     Domain::RR =>
-      !expr_has_forbidden_symbol(expr, false) && !expr_has_nonzero_complex_float(expr)
+      !expr_has_forbidden_symbol(expr, false) &&
+      !expr_has_nonzero_complex_float(expr)
     Domain::CC => !expr_has_forbidden_symbol(expr, true)
     Domain::ZZ_I =>
       match expr {
@@ -2226,10 +2259,17 @@ pub fn domain_map_expr_tree(
 ///|
 fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      false
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::Boolean(_) => false
+    Expr::NumberSymbol(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) => false
     Expr::Symbol(name) => symbols.contains(name)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Tuple(args)
+    | Expr::Function(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
     Expr::Relational(_, lhs, rhs) =>
       expr_depends_on_symbols(lhs, symbols) ||
@@ -2285,8 +2325,12 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
     return Some(expr)
   }
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      Some(expr)
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
+    | Expr::Boolean(_) => Some(expr)
+    Expr::Dummy(_, _) | Expr::Wild(_) => Some(expr)
     Expr::Symbol(name) =>
       if symbols.contains(name) {
         Some(expr_zero())
@@ -3073,7 +3117,9 @@ fn expr_rational_value(expr : Expr) -> @symnum.BigRational? {
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
+          .real_part()
+          .to_rational()
         match pair_res {
           Ok((num, den)) => {
             let rat_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
@@ -3308,14 +3354,16 @@ fn gaussian_rat_from_expr(
         if !z.is_finite() {
           raise PolyError::DomainMismatch
         } else {
-          let parts = z.to_rational_parts() catch { _ => raise PolyError::DomainMismatch }
+          let parts = z.to_rational_parts() catch {
+            _ => raise PolyError::DomainMismatch
+          }
           let real_pair = parts.0
           let imag_pair = parts.1
-          let real = @symnum.BigRational::new(real_pair.0, real_pair.1) catch { _ =>
-            raise PolyError::DomainMismatch
+          let real = @symnum.BigRational::new(real_pair.0, real_pair.1) catch {
+            _ => raise PolyError::DomainMismatch
           }
-          let imag = @symnum.BigRational::new(imag_pair.0, imag_pair.1) catch { _ =>
-            raise PolyError::DomainMismatch
+          let imag = @symnum.BigRational::new(imag_pair.0, imag_pair.1) catch {
+            _ => raise PolyError::DomainMismatch
           }
           return GaussianRatCompat::{ re: real, im: imag }
         }
@@ -3323,11 +3371,16 @@ fn gaussian_rat_from_expr(
         if !f.is_finite() {
           raise PolyError::DomainMismatch
         } else {
-          let pair = f.to_rational() catch { _ => raise PolyError::DomainMismatch }
-          let real = @symnum.BigRational::new(pair.0, pair.1) catch { _ =>
-            raise PolyError::DomainMismatch
+          let pair = f.to_rational() catch {
+            _ => raise PolyError::DomainMismatch
           }
-          return GaussianRatCompat::{ re: real, im: @symnum.BigRational::zero() }
+          let real = @symnum.BigRational::new(pair.0, pair.1) catch {
+            _ => raise PolyError::DomainMismatch
+          }
+          return GaussianRatCompat::{
+            re: real,
+            im: @symnum.BigRational::zero(),
+          }
         }
       _ => ()
     }
@@ -4906,7 +4959,11 @@ pub fn domain_evalf_expr(
       let numeric = @symcore.evalf(expr, prec=p)
       match numeric {
         Expr::Float(_) | Expr::ComplexFloat(_) => numeric
-        _ => complex_float_expr_from_gaussian(gaussian_rat_from_expr(domain, expr), p)
+        _ =>
+          complex_float_expr_from_gaussian(
+            gaussian_rat_from_expr(domain, expr),
+            p,
+          )
       }
     }
     _ => domain_to_sympy_expr(domain, expr)

@@ -39,6 +39,8 @@ pub fn denom_expand(@symcore.Expr) -> @symcore.Expr
 
 pub fn diag(Array[@symcore.Expr], rows? : Int?, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 
+pub fn dummy(name? : String) -> @symcore.Expr
+
 pub fn epath(String, @symcore.Expr) -> Array[@symcore.Expr]
 
 pub fn epath_apply(String, @symcore.Expr, (@symcore.Expr) -> @symcore.Expr) -> @symcore.Expr
@@ -176,6 +178,8 @@ pub fn trigsimp(@symcore.Expr) -> @symcore.Expr
 pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
 
 pub fn trpower(@symcore.Expr) -> @symcore.Expr
+
+pub fn wild(String) -> @symcore.Expr
 
 pub fn zeros(Int, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 

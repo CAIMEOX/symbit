@@ -38,6 +38,18 @@ pub fn symbol(name : String) -> Expr {
 }
 
 ///|
+/// Create a fresh dummy symbol with identity distinct from its printed name.
+pub fn dummy(name? : String = "Dummy") -> Expr {
+  @symcore.dummy(name~)
+}
+
+///|
+/// Create a wildcard symbol for pattern-style matching.
+pub fn wild(name : String) -> Expr {
+  @symcore.wild(name)
+}
+
+///|
 /// Create an exact integer expression.
 pub fn integer(value : Int) -> Expr {
   @symcore.int(value)

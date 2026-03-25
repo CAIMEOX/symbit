@@ -58,3 +58,70 @@ test "free_symbols respects bound variables" {
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
 }
+
+///|
+test "number symbols are structured constants" {
+  let pi_expr = symbol("pi")
+  let imag = symbol("I")
+  let inf = symbol("oo")
+  match expr_form(pi_expr) {
+    ExprForm::NumberSymbol(NumberSymbolKind::Pi) => ()
+    _ => fail("expected pi number symbol")
+  }
+  match expr_form(imag) {
+    ExprForm::NumberSymbol(NumberSymbolKind::ImaginaryUnit) => ()
+    _ => fail("expected I number symbol")
+  }
+  match expr_form(inf) {
+    ExprForm::NumberSymbol(NumberSymbolKind::Infinity) => ()
+    _ => fail("expected oo number symbol")
+  }
+  json_inspect(
+    free_symbols(add([pi_expr, imag, symbol("x")])).map(@symprint.to_string),
+    content=["x"],
+  )
+  inspect(@symprint.to_string(mul([int(-1), inf])), content="-oo")
+}
+
+///|
+test "dummy and wild are distinct structured symbols" {
+  let d1 = dummy(name="x")
+  let d2 = dummy(name="x")
+  let w = wild("x")
+  assert_false(d1 == d2)
+  inspect(@symprint.to_string(d1), content="_x")
+  inspect(@symprint.to_string(w), content="x_")
+  match dummy_parts(d1) {
+    Some((name, _)) => inspect(name, content="x")
+    None => fail("expected dummy parts")
+  }
+  match wild_name(w) {
+    Some(name) => inspect(name, content="x")
+    None => fail("expected wild name")
+  }
+}
+
+///|
+test "free_symbols tracks dummy identity and bound dummy removal" {
+  let d1 = dummy(name="x")
+  let d2 = dummy(name="x")
+  let expr = add([d1, d2])
+  inspect(free_symbols(expr).length(), content="2")
+  let lam = lambda_expr(tuple_expr([d1]), add([d1, d2, symbol("y")]))
+  let free = free_symbols(lam)
+  inspect(free.length(), content="2")
+  assert_true(free.contains(symbol("y")))
+  assert_true(free.contains(d2))
+  assert_false(free.contains(d1))
+}
+
+///|
+test "derivative free symbols remove dummy variables but keep order symbols" {
+  let d = dummy(name="x")
+  let order = symbol("n")
+  let expr = derivative(function("f", [d, order]), d, order~)
+  let free = free_symbols(expr)
+  inspect(free.length(), content="1")
+  assert_true(free.contains(order))
+  assert_false(free.contains(d))
+}

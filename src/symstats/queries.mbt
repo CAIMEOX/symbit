@@ -199,8 +199,11 @@ fn query_replace_expr(
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::NumberSymbol(_)
     | @symcore.Expr::Boolean(_)
-    | @symcore.Expr::Symbol(_) => expr
+    | @symcore.Expr::Symbol(_)
+    | @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_) => expr
     @symcore.Expr::Add(args) =>
       eval_arith(
         @symcore.add(
@@ -1606,8 +1609,9 @@ fn expectation_eval_independent(
   map : Map[String, RandomVar],
 ) -> @symcore.Expr? {
   match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Float(_) | @symcore.Expr::ComplexFloat(_) =>
-      Some(expr)
+    @symcore.Expr::Number(_)
+    | @symcore.Expr::Float(_)
+    | @symcore.Expr::ComplexFloat(_) => Some(expr)
     @symcore.Expr::Symbol(name) =>
       match map.get(name) {
         Some(rv) => expectation_of_rv(rv, @symcore.symbol(name))

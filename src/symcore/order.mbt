@@ -3,19 +3,25 @@ fn variant_rank(expr : Expr) -> Int {
   match expr {
     Expr::Pow(_, _) => 0
     Expr::Mul(_) => 1
-    Expr::Symbol(_) => 2
-    Expr::Boolean(_) => 3
-    Expr::Tuple(_) => 4
-    Expr::Relational(_, _, _) => 5
-    Expr::Derivative(_, _) => 6
-    Expr::Subs(_, _, _) => 7
-    Expr::Lambda(_, _) => 8
-    Expr::Function(_, _) => 9
-    Expr::Add(_) => 10
-    Expr::Number(_) => 11
-    Expr::Float(_) => 12
-    Expr::ComplexFloat(_) => 13
+    Expr::NumberSymbol(_) => 2
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 3
+    Expr::Boolean(_) => 4
+    Expr::Tuple(_) => 5
+    Expr::Relational(_, _, _) => 6
+    Expr::Derivative(_, _) => 7
+    Expr::Subs(_, _, _) => 8
+    Expr::Lambda(_, _) => 9
+    Expr::Function(_, _) => 10
+    Expr::Add(_) => 11
+    Expr::Number(_) => 12
+    Expr::Float(_) => 13
+    Expr::ComplexFloat(_) => 14
   }
+}
+
+///|
+fn compare_number_symbol(a : NumberSymbolKind, b : NumberSymbolKind) -> Int {
+  number_symbol_name(a).compare(number_symbol_name(b))
 }
 
 ///|
@@ -86,8 +92,59 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       }
       return -1
     }
+    (Expr::Pow(base_a, _), Expr::Dummy(name_b, id_b)) => {
+      let base_cmp = compare_expr(base_a, Expr::Dummy(name_b, id_b))
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return -1
+    }
+    (Expr::Pow(base_a, _), Expr::Wild(name_b)) => {
+      let base_cmp = compare_expr(base_a, Expr::Wild(name_b))
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return -1
+    }
     (Expr::Symbol(sa), Expr::Pow(base_b, _)) => {
       let base_cmp = compare_symbol_base(sa, base_b)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return 1
+    }
+    (Expr::Dummy(name_a, id_a), Expr::Pow(base_b, _)) => {
+      let base_cmp = compare_symbol_base(dummy_display_name(name_a), base_b)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      match base_b {
+        Expr::Dummy(name_b, id_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            return name_cmp
+          }
+          return cmp_int(id_a, id_b)
+        }
+        _ => return 1
+      }
+    }
+    (Expr::Wild(name_a), Expr::Pow(base_b, _)) => {
+      let base_cmp = compare_symbol_base(wild_display_name(name_a), base_b)
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return 1
+    }
+    (Expr::Pow(base_a, _), Expr::NumberSymbol(nb)) => {
+      let base_cmp = compare_expr(base_a, Expr::NumberSymbol(nb))
+      if base_cmp != 0 {
+        return base_cmp
+      }
+      return -1
+    }
+    (Expr::NumberSymbol(na), Expr::Pow(base_b, _)) => {
+      let base_cmp = compare_number_symbol_base(na, base_b)
       if base_cmp != 0 {
         return base_cmp
       }
@@ -117,12 +174,49 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
       }
     Expr::Boolean(ba) =>
       match b {
-        Expr::Boolean(bb) => cmp_int(if ba { 1 } else { 0 }, if bb { 1 } else { 0 })
+        Expr::Boolean(bb) =>
+          cmp_int(if ba { 1 } else { 0 }, if bb { 1 } else { 0 })
+        _ => 0
+      }
+    Expr::NumberSymbol(na) =>
+      match b {
+        Expr::NumberSymbol(nb) => compare_number_symbol(na, nb)
+        Expr::Symbol(sb) => number_symbol_name(na).compare(sb)
         _ => 0
       }
     Expr::Symbol(sa) =>
       match b {
+        Expr::NumberSymbol(nb) => sa.compare(number_symbol_name(nb))
         Expr::Symbol(sb) => sa.compare(sb)
+        Expr::Dummy(name_b, _) => sa.compare(dummy_display_name(name_b))
+        Expr::Wild(name_b) => sa.compare(wild_display_name(name_b))
+        _ => 0
+      }
+    Expr::Dummy(name_a, id_a) =>
+      match b {
+        Expr::NumberSymbol(nb) =>
+          dummy_display_name(name_a).compare(number_symbol_name(nb))
+        Expr::Symbol(sb) => dummy_display_name(name_a).compare(sb)
+        Expr::Dummy(name_b, id_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            name_cmp
+          } else {
+            cmp_int(id_a, id_b)
+          }
+        }
+        Expr::Wild(name_b) =>
+          dummy_display_name(name_a).compare(wild_display_name(name_b))
+        _ => 0
+      }
+    Expr::Wild(name_a) =>
+      match b {
+        Expr::NumberSymbol(nb) =>
+          wild_display_name(name_a).compare(number_symbol_name(nb))
+        Expr::Symbol(sb) => wild_display_name(name_a).compare(sb)
+        Expr::Dummy(name_b, _) =>
+          wild_display_name(name_a).compare(dummy_display_name(name_b))
+        Expr::Wild(name_b) => name_a.compare(name_b)
         _ => 0
       }
     Expr::Pow(base_a, exp_a) =>
@@ -228,6 +322,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
 ///|
 fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
   match expr {
+    Expr::NumberSymbol(kind) => sym_name.compare(number_symbol_name(kind))
     Expr::Boolean(value) =>
       if value {
         compare_expr(Expr::Symbol("True"), expr)
@@ -235,9 +330,16 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
         compare_expr(Expr::Symbol("False"), expr)
       }
     Expr::Symbol(sb) => sym_name.compare(sb)
+    Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
+    Expr::Wild(name) => sym_name.compare(wild_display_name(name))
     Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
     _ => compare_expr(Expr::Symbol(sym_name), expr)
   }
+}
+
+///|
+fn compare_number_symbol_base(kind : NumberSymbolKind, expr : Expr) -> Int {
+  compare_symbol_base(number_symbol_name(kind), expr)
 }
 
 ///|
@@ -305,8 +407,14 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       hasher.combine_int(z.precision())
       hasher.combine_string(z.format())
     }
+    Expr::NumberSymbol(kind) => hasher.combine_string(number_symbol_name(kind))
     Expr::Boolean(value) => hasher.combine_bool(value)
     Expr::Symbol(name) => hasher.combine_string(name)
+    Expr::Dummy(name, id) => {
+      hasher.combine_string(name)
+      hasher.combine_int(id)
+    }
+    Expr::Wild(name) => hasher.combine_string(name)
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)
       exp.hash_combine(hasher)

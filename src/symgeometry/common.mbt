@@ -74,10 +74,10 @@ fn geo_exact_value(expr : Expr) -> @symnum.BigRational? {
         let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
         match pair {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }
@@ -200,9 +200,11 @@ fn geo_poly_deg2_pow(coeffs : Array[Expr], exp : Int) -> Array[Expr]? {
 ///|
 fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
   match geo_simplify(expr) {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) =>
-      Some([expr, geo_zero(), geo_zero()])
-    Expr::Symbol(_) =>
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_) => Some([expr, geo_zero(), geo_zero()])
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
         Some([geo_zero(), geo_one(), geo_zero()])
       } else {
@@ -251,8 +253,10 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       } else {
         Some([expr, geo_zero(), geo_zero()])
       }
-    Expr::Boolean(_) | Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Lambda(_, _) =>
-      None
+    Expr::Boolean(_)
+    | Expr::Tuple(_)
+    | Expr::Relational(_, _, _)
+    | Expr::Lambda(_, _) => None
   }
 }
 

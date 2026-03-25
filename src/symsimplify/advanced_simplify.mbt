@@ -733,6 +733,7 @@ fn rewrite_separatevars(expr : Expr, force? : Bool = false) -> Expr {
 fn collect_symbols(expr : Expr, out : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => out[name] = true
+    Expr::NumberSymbol(_) => ()
     _ =>
       for child in @symcore.children(expr) {
         collect_symbols(child, out)
@@ -744,9 +745,12 @@ fn collect_symbols(expr : Expr, out : Map[String, Bool]) -> Unit {
 fn is_rational_form(expr : Expr, k_name : String) -> Bool {
   ignore(k_name)
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      true
-    Expr::Symbol(_) => true
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
+    | Expr::Boolean(_) => true
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => true
     Expr::Add(args) | Expr::Mul(args) => {
       for arg in args {
         if !is_rational_form(arg, k_name) {
@@ -770,8 +774,10 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
 ///|
 fn contains_function(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(_, _) | Expr::Derivative(_, _) | Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
-      true
+    Expr::Function(_, _)
+    | Expr::Derivative(_, _)
+    | Expr::Subs(_, _, _)
+    | Expr::Lambda(_, _) => true
     _ => {
       for child in @symcore.children(expr) {
         if contains_function(child) {

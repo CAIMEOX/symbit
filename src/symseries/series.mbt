@@ -625,9 +625,12 @@ fn simplify_tan_coeff(expr : Expr, tan_c0 : Expr) -> Expr {
 ///|
 fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      Some(([expr], false))
-    Expr::Symbol(_) =>
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
+    | Expr::Boolean(_) => Some(([expr], false))
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) =>
       if expr == x {
         Some(([zero_expr(), one_expr()], false))
       } else {

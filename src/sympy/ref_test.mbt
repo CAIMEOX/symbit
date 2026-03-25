@@ -4,13 +4,17 @@ fn py_str_obj(obj : @py.PyObject) -> String raise {
 }
 
 ///|
-fn ref_exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> @symcore.Expr {
+fn ref_exact_float_expr(
+  num : Int,
+  den : Int,
+  prec? : Int = 90,
+) -> @symcore.Expr {
   let rat = @symnum.BigRational::from_ints(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
   @symcore.float(
-    @symcore.Float::from_exact(rat, prec=prec) catch {
-      _ => @symcore.Float::from_int(0, prec=prec)
+    @symcore.Float::from_exact(rat, prec~) catch {
+      _ => @symcore.Float::from_int(0, prec~)
     },
   )
 }
@@ -30,7 +34,7 @@ fn ref_exact_complex_float_expr(
     _ => @symnum.BigRational::zero()
   }
   @symcore.complex_float(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec=prec),
+    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
 
@@ -97,6 +101,14 @@ test "sympy ref: expr_to_sympy function call" {
   let expr = @symcore.function("sin", [@symcore.symbol("x")])
   let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="sin(x)")
+}
+
+///|
+test "sympy ref: expr_to_sympy dummy and wild" {
+  let dummy_expr = @symcore.dummy(name="x")
+  let wild_expr = @symcore.wild("x")
+  inspect(py_str_obj(expr_to_sympy(dummy_expr)), content="_x")
+  inspect(py_str_obj(expr_to_sympy(wild_expr)), content="x_")
 }
 
 ///|

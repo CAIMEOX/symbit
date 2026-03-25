@@ -81,7 +81,9 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
       } else {
         None
       }
+    Expr::NumberSymbol(kind) => evalf_number_symbol_constant(kind, prec)
     Expr::Boolean(_) => None
+    Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -95,7 +97,17 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
     Expr::Float(f) =>
       Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
     Expr::ComplexFloat(z) => Some(promote_complex_evalf(z, prec))
+    Expr::NumberSymbol(kind) =>
+      match kind {
+        NumberSymbolKind::ImaginaryUnit => Some(complex_imag_unit(prec))
+        _ =>
+          match evalf_number_symbol_constant(kind, prec) {
+            Some(value) => Some(ComplexFloat::from_real(value))
+            None => None
+          }
+      }
     Expr::Boolean(_) => None
+    Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -125,14 +137,25 @@ fn fixed_constant_to_float(
 
 ///|
 fn evalf_symbol_constant(name : String, prec : Int) -> Float? {
-  match name {
-    "pi" | "Pi" =>
+  match number_symbol_kind_from_name(name) {
+    Some(kind) => evalf_number_symbol_constant(kind, prec)
+    None => None
+  }
+}
+
+///|
+fn evalf_number_symbol_constant(kind : NumberSymbolKind, prec : Int) -> Float? {
+  match kind {
+    NumberSymbolKind::Pi =>
       Some(Float::from_mpf(@symnum.mpf_pi(prec, @symnum.round_nearest), prec~))
-    "E" =>
+    NumberSymbolKind::Exp1 =>
       Some(Float::from_mpf(@symnum.mpf_e(prec, @symnum.round_nearest), prec~))
-    "EulerGamma" => fixed_constant_to_float(@symnum.euler_fixed, prec)
-    "GoldenRatio" => fixed_constant_to_float(@symnum.phi_fixed, prec)
-    "Catalan" => fixed_constant_to_float(@symnum.catalan_fixed, prec)
+    NumberSymbolKind::EulerGamma =>
+      fixed_constant_to_float(@symnum.euler_fixed, prec)
+    NumberSymbolKind::GoldenRatio =>
+      fixed_constant_to_float(@symnum.phi_fixed, prec)
+    NumberSymbolKind::Catalan =>
+      fixed_constant_to_float(@symnum.catalan_fixed, prec)
     _ => None
   }
 }
@@ -654,7 +677,18 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::Number(n) => Expr::Float(float_from_exact_evalf(n, prec))
     Expr::Float(f) => Expr::Float(promote_float_evalf(f, prec))
     Expr::ComplexFloat(z) => Expr::ComplexFloat(promote_complex_evalf(z, prec))
+    Expr::NumberSymbol(kind) =>
+      match kind {
+        NumberSymbolKind::ImaginaryUnit =>
+          Expr::ComplexFloat(complex_imag_unit(prec))
+        _ =>
+          match evalf_number_symbol_constant(kind, prec) {
+            Some(value) => Expr::Float(value)
+            None => expr
+          }
+      }
     Expr::Boolean(_) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))

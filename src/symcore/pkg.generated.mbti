@@ -12,6 +12,8 @@ import {
 // Values
 pub fn add(Array[Expr]) -> Expr
 
+pub fn applied_parts(Expr) -> (String, Array[Expr])?
+
 pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Array[T]]
 
 pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
@@ -19,6 +21,8 @@ pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
 pub fn args(Expr) -> Array[Expr]
 
 pub fn bool_expr(Bool) -> Expr
+
+pub fn catalan() -> Expr
 
 pub fn children(Expr) -> ArrayView[Expr]
 
@@ -30,9 +34,21 @@ pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, 
 
 pub fn derivative(Expr, Expr, order? : Expr) -> Expr
 
+pub fn derivative_parts(Expr) -> (Expr, Array[Expr])?
+
+pub fn dummy(name? : String) -> Expr
+
+pub fn dummy_display_name(String) -> String
+
+pub fn dummy_parts(Expr) -> (String, Int)?
+
 pub fn eq(Expr, Expr) -> Expr
 
+pub fn euler_gamma() -> Expr
+
 pub fn evalf(Expr, prec? : Int) -> Expr
+
+pub fn exp1() -> Expr
 
 pub fn expr_form(Expr) -> ExprForm
 
@@ -52,17 +68,33 @@ pub fn function(String, Array[Expr]) -> Expr
 
 pub fn ge(Expr, Expr) -> Expr
 
+pub fn golden_ratio() -> Expr
+
 pub fn gt(Expr, Expr) -> Expr
 
 pub fn has(Expr, Expr) -> Bool
 
+pub fn head_name(Expr) -> String
+
+pub fn imag_unit() -> Expr
+
 pub fn int(Int) -> Expr
 
+pub fn is_atomic(Expr) -> Bool
+
+pub fn is_complex_number_atom(Expr) -> Bool
+
 pub fn is_false(Expr) -> Bool
+
+pub fn is_number_atom(Expr) -> Bool
+
+pub fn is_real_number_atom(Expr) -> Bool
 
 pub fn is_true(Expr) -> Bool
 
 pub fn lambda_expr(Expr, Expr) -> Expr
+
+pub fn lambda_parts(Expr) -> (Expr, Expr)?
 
 pub fn le(Expr, Expr) -> Expr
 
@@ -72,9 +104,23 @@ pub fn map_children(Expr, (Expr) -> Expr) -> Expr
 
 pub fn mul(Array[Expr]) -> Expr
 
+pub fn nan_expr() -> Expr
+
 pub fn ne(Expr, Expr) -> Expr
 
+pub fn neg_oo() -> Expr
+
 pub fn number(@symnum.BigRational) -> Expr
+
+pub fn number_symbol(NumberSymbolKind) -> Expr
+
+pub fn number_symbol_kind_from_name(String) -> NumberSymbolKind?
+
+pub fn number_symbol_name(NumberSymbolKind) -> String
+
+pub fn oo() -> Expr
+
+pub fn pi() -> Expr
 
 pub fn pow(Expr, Expr) -> Expr
 
@@ -82,15 +128,23 @@ pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 
 pub fn raw_add(Array[Expr]) -> Expr
 
+pub fn raw_dummy(String, Int) -> Expr
+
 pub fn raw_function(String, Array[Expr]) -> Expr
 
 pub fn raw_mul(Array[Expr]) -> Expr
 
 pub fn raw_pow(Expr, Expr) -> Expr
 
+pub fn raw_symbol(String) -> Expr
+
+pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
+
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
 pub fn subs_expr(Expr, Expr, Expr) -> Expr
+
+pub fn subs_parts(Expr) -> (Expr, Expr, Expr)?
 
 pub fn subst(Expr, Map[String, Expr]) -> Expr
 
@@ -99,6 +153,16 @@ pub fn symbol(String) -> Expr
 pub fn true_() -> Expr
 
 pub fn tuple_expr(Array[Expr]) -> Expr
+
+pub fn tuple_items(Expr) -> Array[Expr]?
+
+pub fn wild(String) -> Expr
+
+pub fn wild_display_name(String) -> String
+
+pub fn wild_name(Expr) -> String?
+
+pub fn zoo() -> Expr
 
 // Errors
 
@@ -129,10 +193,19 @@ pub enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
+  Boolean(Bool)
   Symbol(String)
+  Dummy(String, Int)
+  Wild(String)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Tuple(Array[Expr])
+  Relational(RelOp, Expr, Expr)
+  Derivative(Expr, Array[Expr])
+  Subs(Expr, Expr, Expr)
+  Lambda(Expr, Expr)
   Function(String, Array[Expr])
 }
 pub impl Add for Expr
@@ -147,6 +220,7 @@ pub enum ExprForm {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
   Symbol(String)
   Boolean(Bool)
   Add(Array[Expr])
@@ -182,6 +256,19 @@ pub impl Eq for Float
 pub impl Mul for Float
 pub impl Neg for Float
 pub impl Show for Float
+
+pub enum NumberSymbolKind {
+  ImaginaryUnit
+  Pi
+  Exp1
+  EulerGamma
+  GoldenRatio
+  Catalan
+  Infinity
+  NegativeInfinity
+  ComplexInfinity
+  NaN
+}
 
 pub enum RelOp {
   Eq

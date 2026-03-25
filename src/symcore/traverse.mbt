@@ -1,8 +1,10 @@
 ///|
 pub fn children(expr : Expr) -> ArrayView[Expr] {
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
-      args[:]
+    Expr::Add(args)
+    | Expr::Mul(args)
+    | Expr::Tuple(args)
+    | Expr::Function(_, args) => args[:]
     Expr::Pow(base, exp) => [base, exp][:]
     Expr::Relational(_, lhs, rhs) => [lhs, rhs][:]
     Expr::Derivative(inner, deriv_args) => {
@@ -57,8 +59,12 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
         Some(value) => value
         None => expr
       }
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
-      expr
+    Expr::Dummy(_, _) | Expr::Wild(_) => expr
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_)
+    | Expr::Boolean(_) => expr
     _ => map_children(expr, child => subst(child, env))
   }
 }
