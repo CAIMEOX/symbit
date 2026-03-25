@@ -119,12 +119,18 @@ fn quantum_single_symbolic_limit(
 
 ///|
 fn quantum_discrete_ket_info(expr : Expr) -> (String, Expr)? {
-  match expr {
-    Expr::Function(name, args) if args.length() == 1 =>
-      if ["BosonFockKet", "FermionFockKet", "PIABKet", "SHOKet"].contains(name) {
-        Some((name, args[0]))
-      } else {
-        None
+  match @symcore.application_parts(expr) {
+    Some((head, [arg])) =>
+      match @symcore.function_head_name(head) {
+        Some(name) =>
+          if ["BosonFockKet", "FermionFockKet", "PIABKet", "SHOKet"].contains(
+              name,
+            ) {
+            Some((name, arg))
+          } else {
+            None
+          }
+        _ => None
       }
     _ => None
   }
@@ -132,12 +138,18 @@ fn quantum_discrete_ket_info(expr : Expr) -> (String, Expr)? {
 
 ///|
 fn quantum_discrete_bra_info(expr : Expr) -> (String, Expr)? {
-  match expr {
-    Expr::Function(name, args) if args.length() == 1 =>
-      if ["BosonFockBra", "FermionFockBra", "PIABBra", "SHOBra"].contains(name) {
-        Some((name, args[0]))
-      } else {
-        None
+  match @symcore.application_parts(expr) {
+    Some((head, [arg])) =>
+      match @symcore.function_head_name(head) {
+        Some(name) =>
+          if ["BosonFockBra", "FermionFockBra", "PIABBra", "SHOBra"].contains(
+              name,
+            ) {
+            Some((name, arg))
+          } else {
+            None
+          }
+        _ => None
       }
     _ => None
   }
@@ -332,96 +344,115 @@ fn quantum_apply_operator_pair(
           }
         _ => None
       }
-    (Expr::Function("Commutator", args), _) if args.length() == 2 &&
+    _ if @symcore.application_has_name(lhs, "Commutator", arity=2) &&
       quantum_is_ket_expr(rhs) =>
-      Some(
-        quantum_add_from_args_preserve([
-          qapply(
-            quantum_mul_from_args_preserve([args[0], args[1], rhs]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-          int(-1) *
-          qapply(
-            quantum_mul_from_args_preserve([args[1], args[0], rhs]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-        ]),
-      )
-    (Expr::Function("AntiCommutator", args), _) if args.length() == 2 &&
-      quantum_is_ket_expr(rhs) =>
-      Some(
-        quantum_add_from_args_preserve([
-          qapply(
-            quantum_mul_from_args_preserve([args[0], args[1], rhs]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-          qapply(
-            quantum_mul_from_args_preserve([args[1], args[0], rhs]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-        ]),
-      )
-    (
-      Expr::Function("TensorProduct", left_args),
-      Expr::Function("TensorProduct", right_args),
-    ) if left_args.length() == right_args.length() => {
-      let factors : Array[Expr] = []
-      for idx in 0..<left_args.length() {
-        factors.push(
-          qapply(
-            quantum_mul_from_args_preserve([left_args[idx], right_args[idx]]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-        )
-      }
-      Some(@symcore.raw_function("TensorProduct", factors))
-    }
-    (Expr::Function("Sum", args), _) if sum_doit =>
-      match quantum_apply_discrete_sum_to_ket(args, rhs) {
-        Some(applied) => Some(applied)
+      match @symcore.application_args(lhs) {
+        Some(args) =>
+          Some(
+            quantum_add_from_args_preserve([
+              qapply(
+                quantum_mul_from_args_preserve([args[0], args[1], rhs]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+              int(-1) *
+              qapply(
+                quantum_mul_from_args_preserve([args[1], args[0], rhs]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+            ]),
+          )
         None => None
       }
-    (_, Expr::Function("Sum", args)) if sum_doit =>
-      match quantum_project_discrete_bra_against_sum(lhs, args) {
-        Some(applied) => Some(applied)
+    _ if @symcore.application_has_name(lhs, "AntiCommutator", arity=2) &&
+      quantum_is_ket_expr(rhs) =>
+      match @symcore.application_args(lhs) {
+        Some(args) =>
+          Some(
+            quantum_add_from_args_preserve([
+              qapply(
+                quantum_mul_from_args_preserve([args[0], args[1], rhs]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+              qapply(
+                quantum_mul_from_args_preserve([args[1], args[0], rhs]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+            ]),
+          )
         None => None
       }
-    (Expr::Function("Sum", args), _) if !args.is_empty() =>
-      Some(
-        quantum_sum_expr(
-          qapply(
-            quantum_mul_from_args_preserve([args[0], rhs]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-          args[1:args.length()].to_array(),
-          sum_doit,
-        ),
-      )
-    (_, Expr::Function("Sum", args)) if !args.is_empty() =>
-      Some(
-        quantum_sum_expr(
-          qapply(
-            quantum_mul_from_args_preserve([lhs, args[0]]),
-            dagger=dagger_mode,
-            ip_doit~,
-            sum_doit~,
-          ),
-          args[1:args.length()].to_array(),
-          sum_doit,
-        ),
-      )
+    _ if @symcore.application_has_name(lhs, "TensorProduct") &&
+      @symcore.application_has_name(rhs, "TensorProduct") =>
+      match (@symcore.application_args(lhs), @symcore.application_args(rhs)) {
+        (Some(left_args), Some(right_args)) if left_args.length() ==
+          right_args.length() => {
+          let factors : Array[Expr] = []
+          for idx in 0..<left_args.length() {
+            factors.push(
+              qapply(
+                quantum_mul_from_args_preserve([left_args[idx], right_args[idx]]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+            )
+          }
+          Some(@symcore.raw_function("TensorProduct", factors))
+        }
+        _ => None
+      }
+    _ if @symcore.application_has_name(lhs, "Sum") && sum_doit =>
+      match @symcore.application_args(lhs) {
+        Some(args) => quantum_apply_discrete_sum_to_ket(args, rhs)
+        None => None
+      }
+    _ if @symcore.application_has_name(rhs, "Sum") && sum_doit =>
+      match @symcore.application_args(rhs) {
+        Some(args) => quantum_project_discrete_bra_against_sum(lhs, args)
+        None => None
+      }
+    _ if @symcore.application_has_name(lhs, "Sum") =>
+      match @symcore.application_args(lhs) {
+        Some(args) if !args.is_empty() =>
+          Some(
+            quantum_sum_expr(
+              qapply(
+                quantum_mul_from_args_preserve([args[0], rhs]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+              args[1:args.length()].to_array(),
+              sum_doit,
+            ),
+          )
+        _ => None
+      }
+    _ if @symcore.application_has_name(rhs, "Sum") =>
+      match @symcore.application_args(rhs) {
+        Some(args) if !args.is_empty() =>
+          Some(
+            quantum_sum_expr(
+              qapply(
+                quantum_mul_from_args_preserve([lhs, args[0]]),
+                dagger=dagger_mode,
+                ip_doit~,
+                sum_doit~,
+              ),
+              args[1:args.length()].to_array(),
+              sum_doit,
+            ),
+          )
+        _ => None
+      }
     _ if quantum_is_operator_expr(lhs) && quantum_is_scalar_like(rhs) =>
       Some(quantum_mul_from_args_preserve([rhs, lhs]))
     (_, Expr::Mul(_)) if quantum_is_operator_expr(lhs) &&
@@ -456,20 +487,26 @@ fn quantum_apply_operator_pair(
     _ if quantum_expr_has_name(lhs, "DifferentialOperator") &&
       quantum_expr_has_name(rhs, "Wavefunction") =>
       differential_operator_apply_to_wavefunction(lhs, rhs)
-    (Expr::Function("OuterProduct", args), _) if args.length() == 2 &&
-      quantum_is_ket_expr(args[0]) &&
-      quantum_is_bra_expr(args[1]) &&
-      quantum_is_ket_expr(rhs) => {
-      let ip = inner_product(args[1], rhs, evaluate=ip_doit)
-      Some(quantum_mul_from_args_preserve([ip, args[0]]))
-    }
-    (_, Expr::Function("OuterProduct", args)) if args.length() == 2 &&
-      quantum_is_bra_expr(lhs) &&
-      quantum_is_ket_expr(args[0]) &&
-      quantum_is_bra_expr(args[1]) => {
-      let ip = inner_product(lhs, args[0], evaluate=ip_doit)
-      Some(quantum_mul_from_args_preserve([ip, args[1]]))
-    }
+    _ if @symcore.application_has_name(lhs, "OuterProduct", arity=2) &&
+      quantum_is_ket_expr(rhs) =>
+      match @symcore.application_args(lhs) {
+        Some(args) if quantum_is_ket_expr(args[0]) &&
+          quantum_is_bra_expr(args[1]) => {
+          let ip = inner_product(args[1], rhs, evaluate=ip_doit)
+          Some(quantum_mul_from_args_preserve([ip, args[0]]))
+        }
+        _ => None
+      }
+    _ if @symcore.application_has_name(rhs, "OuterProduct", arity=2) &&
+      quantum_is_bra_expr(lhs) =>
+      match @symcore.application_args(rhs) {
+        Some(args) if quantum_is_ket_expr(args[0]) &&
+          quantum_is_bra_expr(args[1]) => {
+          let ip = inner_product(lhs, args[0], evaluate=ip_doit)
+          Some(quantum_mul_from_args_preserve([ip, args[1]]))
+        }
+        _ => None
+      }
     _ if quantum_is_bra_expr(lhs) && quantum_is_ket_expr(rhs) =>
       Some(inner_product(lhs, rhs, evaluate=ip_doit))
     _ if quantum_is_operator_expr(lhs) && quantum_is_ket_expr(rhs) => {
@@ -600,16 +637,24 @@ pub fn qapply(
   sum_doit? : Bool = false,
 ) -> Expr {
   match expr {
-    Expr::Function("Density", _) =>
+    _ if @symcore.application_has_name(expr, "Density") =>
       quantum_qapply_density_expr(expr, dagger, ip_doit, sum_doit)
-    Expr::Function("TensorProduct", args) =>
-      quantum_qapply_tensorproduct_args(args, dagger, ip_doit, sum_doit)
-    Expr::Function("Sum", args) if !args.is_empty() =>
-      quantum_sum_expr(
-        qapply(args[0], dagger~, ip_doit~, sum_doit~),
-        args[1:args.length()].to_array(),
-        sum_doit,
-      )
+    _ if @symcore.application_has_name(expr, "TensorProduct") =>
+      match @symcore.application_args(expr) {
+        Some(args) =>
+          quantum_qapply_tensorproduct_args(args, dagger, ip_doit, sum_doit)
+        None => expr
+      }
+    _ if @symcore.application_has_name(expr, "Sum") =>
+      match @symcore.application_args(expr) {
+        Some(args) if !args.is_empty() =>
+          quantum_sum_expr(
+            qapply(args[0], dagger~, ip_doit~, sum_doit~),
+            args[1:args.length()].to_array(),
+            sum_doit,
+          )
+        _ => expr
+      }
     Expr::Pow(base, exp) =>
       @symcore.raw_pow(qapply(base, dagger~, ip_doit~, sum_doit~), exp)
     Expr::Add(args) =>
@@ -633,7 +678,8 @@ pub fn qapply(
         out
       }
     }
-    Expr::Function("InnerProduct", _) if ip_doit => inner_product_doit(expr)
+    _ if @symcore.application_has_name(expr, "InnerProduct") && ip_doit =>
+      inner_product_doit(expr)
     _ => expr
   }
 }

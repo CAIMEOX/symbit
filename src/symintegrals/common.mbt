@@ -54,43 +54,61 @@ fn expr_eval_special(expr : Expr) -> Expr {
       expr_simplify(@symcore.mul(args.map(expr_eval_special)))
     @symcore.Expr::Pow(base, exp) =>
       expr_simplify(expr_eval_special(base) ^ expr_eval_special(exp))
-    @symcore.Expr::Function("exp", [inner]) => {
-      let inner = expr_eval_special(inner)
-      match inner {
-        @symcore.Expr::Function("log", [arg]) => expr_eval_special(arg)
-        @symcore.Expr::Mul(args) if args.length() == 2 => {
-          let mut numeric : @symnum.BigRational? = None
-          let mut logged : Expr? = None
-          for arg in args {
-            match expr_num_value(arg) {
-              Some(value) => numeric = Some(value)
-              None =>
-                match arg {
-                  @symcore.Expr::Function("log", [base]) => logged = Some(base)
-                  _ => ()
-                }
-            }
-          }
-          match (numeric, logged) {
-            (Some(power), Some(base)) =>
-              match expr_num_value(base) {
-                Some(base_value) =>
-                  if base_value.compare(@symnum.BigRational::zero()) > 0 {
-                    expr_simplify(base ^ expr_from_num(power))
-                  } else {
-                    @symelem.exp(inner)
+    _ if @symcore.application_has_name(expr, "exp", arity=1) =>
+      match @symcore.application_args(expr) {
+        Some([inner]) => {
+          let inner = expr_eval_special(inner)
+          match @symcore.application_parts(inner) {
+            Some((head, [arg])) if @symcore.function_head_name(head) ==
+              Some("log") => expr_eval_special(arg)
+            _ =>
+              match inner {
+                @symcore.Expr::Mul(args) if args.length() == 2 => {
+                  let mut numeric : @symnum.BigRational? = None
+                  let mut logged : Expr? = None
+                  for arg in args {
+                    match expr_num_value(arg) {
+                      Some(value) => numeric = Some(value)
+                      None =>
+                        match @symcore.application_parts(arg) {
+                          Some((head, [base])) =>
+                            if @symcore.function_head_name(head) == Some("log") {
+                              logged = Some(base)
+                            }
+                          _ => ()
+                        }
+                    }
                   }
+                  match (numeric, logged) {
+                    (Some(power), Some(base)) =>
+                      match expr_num_value(base) {
+                        Some(base_value) =>
+                          if base_value.compare(@symnum.BigRational::zero()) > 0 {
+                            expr_simplify(base ^ expr_from_num(power))
+                          } else {
+                            @symelem.exp(inner)
+                          }
+                        _ => @symelem.exp(inner)
+                      }
+                    _ => @symelem.exp(inner)
+                  }
+                }
                 _ => @symelem.exp(inner)
               }
-            _ => @symelem.exp(inner)
           }
         }
-        _ => @symelem.exp(inner)
+        _ => expr_simplify(expr)
       }
-    }
-    @symcore.Expr::Function(name, args) =>
-      @symcore.raw_function(name, args.map(expr_eval_special))
-    _ => expr_simplify(expr)
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.function_head_name(head) {
+            Some(name) =>
+              @symcore.raw_function(name, args.map(expr_eval_special))
+            None => expr_simplify(expr)
+          }
+        None => expr_simplify(expr)
+      }
   }
 }
 
@@ -231,10 +249,12 @@ fn expr_exact_sqrt(expr : Expr) -> Expr {
 ///|
 fn expr_sqrt_positive(expr : Expr) -> Expr {
   match expr_simplify(expr) {
-    @symcore.Expr::Pow(@symcore.Expr::Function("exp", [arg]), exp) if expr_eq(
-        exp,
-        expr_int(2),
-      ) => @symelem.exp(arg)
+    @symcore.Expr::Pow(base, exp) if expr_eq(exp, expr_int(2)) &&
+      @symcore.application_has_name(base, "exp", arity=1) =>
+      match @symcore.application_args(base) {
+        Some([arg]) => @symelem.exp(arg)
+        _ => @symelem.sqrt(expr)
+      }
     @symcore.Expr::Mul(args) => {
       let mut numeric = expr_one()
       let mut exp_square : Expr? = None
@@ -243,9 +263,14 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
         match arg {
           _ if expr_num_value(arg) is Some(_) =>
             numeric = expr_mul(numeric, arg)
-          @symcore.Expr::Pow(@symcore.Expr::Function("exp", [inner]), exp) =>
-            if expr_eq(exp, expr_int(2)) && exp_square is None {
-              exp_square = Some(@symelem.exp(inner))
+          @symcore.Expr::Pow(base, exp) =>
+            if expr_eq(exp, expr_int(2)) &&
+              exp_square is None &&
+              @symcore.application_has_name(base, "exp", arity=1) {
+              match @symcore.application_args(base) {
+                Some([inner]) => exp_square = Some(@symelem.exp(inner))
+                _ => rest.push(arg)
+              }
             } else {
               rest.push(arg)
             }

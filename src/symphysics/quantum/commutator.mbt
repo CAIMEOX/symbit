@@ -149,57 +149,92 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
             ("Jz", "Jminus") => return int(-1) * hbar * symbol("Jminus")
             _ => ()
           }
-        (Expr::Function("BosonOp", largs), Expr::Function("BosonOp", rargs)) =>
-          if largs.length() == 2 &&
+        _ => ()
+      }
+      if quantum_expr_has_name(nlhs, "BosonOp") &&
+        quantum_expr_has_name(nrhs, "BosonOp") {
+        match (quantum_expr_args(nlhs), quantum_expr_args(nrhs)) {
+          (Some(largs), Some(rargs)) if largs.length() == 2 &&
             rargs.length() == 2 &&
             largs[0] == rargs[0] &&
             largs[1] == int(0) &&
-            rargs[1] != int(0) {
-            return int(-1)
-          }
+            rargs[1] != int(0) => return int(-1)
+          _ => ()
+        }
+      }
+      if quantum_expr_has_name(nlhs, "AnnihilateBoson") &&
+        quantum_expr_has_name(nrhs, "CreateBoson") {
+        match (quantum_expr_args(nlhs), quantum_expr_args(nrhs)) {
+          (Some(largs), Some(rargs)) if largs.length() == 1 &&
+            rargs.length() == 1 &&
+            largs[0] == rargs[0] => return int(1)
+          _ => ()
+        }
+      }
+      if quantum_expr_has_name(nlhs, "CreateBoson") &&
+        quantum_expr_has_name(nrhs, "AnnihilateBoson") {
+        match (quantum_expr_args(nlhs), quantum_expr_args(nrhs)) {
+          (Some(largs), Some(rargs)) if largs.length() == 1 &&
+            rargs.length() == 1 &&
+            largs[0] == rargs[0] => return int(-1)
+          _ => ()
+        }
+      }
+      if (
+          quantum_expr_has_name(nlhs, "FermionOp") &&
+          quantum_expr_has_any_name(nrhs, [
+            "BosonOp", "AnnihilateBoson", "CreateBoson",
+          ])
+        ) ||
         (
-          Expr::Function("AnnihilateBoson", largs),
-          Expr::Function("CreateBoson", rargs),
-        ) if largs.length() == 1 && rargs.length() == 1 && largs[0] == rargs[0] =>
-          return int(1)
+          quantum_expr_has_name(nrhs, "FermionOp") &&
+          quantum_expr_has_any_name(nlhs, [
+            "BosonOp", "AnnihilateBoson", "CreateBoson",
+          ])
+        ) {
+        return int(0)
+      }
+      if quantum_expr_has_name(nlhs, "XOp") &&
+        quantum_expr_has_name(nrhs, "PxOp") {
+        return @symcore.imag_unit() * hbar
+      }
+      if quantum_expr_has_name(nlhs, "PxOp") &&
+        quantum_expr_has_name(nrhs, "XOp") {
+        return int(-1) * @symcore.imag_unit() * hbar
+      }
+      if quantum_expr_has_name(nlhs, "RaisingOp") &&
+        quantum_expr_has_name(nrhs, "LoweringOp") {
+        return int(-1)
+      }
+      if quantum_expr_has_name(nlhs, "LoweringOp") &&
+        quantum_expr_has_name(nrhs, "RaisingOp") {
+        return int(1)
+      }
+      if quantum_expr_has_name(nlhs, "RaisingOp") &&
+        quantum_expr_has_name(nrhs, "NumberOp") {
+        return int(-1) * nlhs
+      }
+      if quantum_expr_has_name(nlhs, "LoweringOp") &&
+        quantum_expr_has_name(nrhs, "NumberOp") {
+        return nlhs
+      }
+      if quantum_expr_has_name(nlhs, "NumberOp") &&
+        quantum_expr_has_name(nrhs, "RaisingOp") {
+        return nrhs
+      }
+      if quantum_expr_has_name(nlhs, "NumberOp") &&
+        quantum_expr_has_name(nrhs, "LoweringOp") {
+        return int(-1) * nrhs
+      }
+      if (
+          quantum_expr_has_name(nlhs, "NumberOp") &&
+          quantum_expr_has_name(nrhs, "Hamiltonian")
+        ) ||
         (
-          Expr::Function("CreateBoson", largs),
-          Expr::Function("AnnihilateBoson", rargs),
-        ) if largs.length() == 1 && rargs.length() == 1 && largs[0] == rargs[0] =>
-          return int(-1)
-        (Expr::Function("FermionOp", _), Expr::Function("BosonOp", _)) =>
-          return int(0)
-        (Expr::Function("AnnihilateBoson", _), Expr::Function("FermionOp", _)) =>
-          return int(0)
-        (Expr::Function("CreateBoson", _), Expr::Function("FermionOp", _)) =>
-          return int(0)
-        (Expr::Function("FermionOp", _), Expr::Function("AnnihilateBoson", _)) =>
-          return int(0)
-        (Expr::Function("FermionOp", _), Expr::Function("CreateBoson", _)) =>
-          return int(0)
-        (Expr::Function("BosonOp", _), Expr::Function("FermionOp", _)) =>
-          return int(0)
-        (Expr::Function("XOp", _), Expr::Function("PxOp", _)) =>
-          return @symcore.imag_unit() * hbar
-        (Expr::Function("PxOp", _), Expr::Function("XOp", _)) =>
-          return int(-1) * @symcore.imag_unit() * hbar
-        (Expr::Function("RaisingOp", _), Expr::Function("LoweringOp", _)) =>
-          return int(-1)
-        (Expr::Function("LoweringOp", _), Expr::Function("RaisingOp", _)) =>
-          return int(1)
-        (Expr::Function("RaisingOp", _), Expr::Function("NumberOp", _)) =>
-          return int(-1) * nlhs
-        (Expr::Function("LoweringOp", _), Expr::Function("NumberOp", _)) =>
-          return nlhs
-        (Expr::Function("NumberOp", _), Expr::Function("RaisingOp", _)) =>
-          return nrhs
-        (Expr::Function("NumberOp", _), Expr::Function("LoweringOp", _)) =>
-          return int(-1) * nrhs
-        (Expr::Function("NumberOp", _), Expr::Function("Hamiltonian", _)) =>
-          return int(0)
-        (Expr::Function("Hamiltonian", _), Expr::Function("NumberOp", _)) =>
-          return int(0)
-        _ => ()
+          quantum_expr_has_name(nlhs, "Hamiltonian") &&
+          quantum_expr_has_name(nrhs, "NumberOp")
+        ) {
+        return int(0)
       }
       if lhs.compare(rhs) > 0 {
         return int(-1) * quantum_make_commutator(rhs, lhs)
@@ -221,8 +256,9 @@ pub fn commutator(lhs : Expr, rhs : Expr, evaluate? : Bool = true) -> Expr {
 
 ///|
 pub fn commutator_doit(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("Commutator", args) if args.length() == 2 =>
+  match quantum_expr_args(expr) {
+    Some(args) if quantum_expr_has_name(expr, "Commutator") &&
+      args.length() == 2 =>
       quantum_add_from_args_preserve([
         quantum_mul_from_args_preserve([args[0], args[1]]),
         quantum_mul_from_args_preserve([int(-1), args[1], args[0]]),
