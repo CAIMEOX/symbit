@@ -210,6 +210,36 @@ test "atoms collects unique atomic leaves in canonical order" {
 }
 
 ///|
+test "preorder and postorder traversal stay structural" {
+  let x = symbol("x")
+  let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
+  json_inspect(preorder(expr).map(@symprint.to_string), content=[
+    "Mod(x, 2) + Derivative(f(x), x, 1)",
+    "Mod(x, 2)",
+    "x",
+    "2",
+    "Derivative(f(x), x, 1)",
+    "f(x)",
+    "x",
+    "(x, 1)",
+    "x",
+    "1",
+  ])
+  json_inspect(postorder(expr).map(@symprint.to_string), content=[
+    "x",
+    "2",
+    "Mod(x, 2)",
+    "x",
+    "f(x)",
+    "x",
+    "1",
+    "(x, 1)",
+    "Derivative(f(x), x, 1)",
+    "Mod(x, 2) + Derivative(f(x), x, 1)",
+  ])
+}
+
+///|
 test "xreplace performs exact structural replacement" {
   let x = symbol("x")
   let y = symbol("y")

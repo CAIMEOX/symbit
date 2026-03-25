@@ -224,3 +224,20 @@ test "symcore parity free_symbols for wild undefined applications and dict" {
     content="('x', 'y', 'z')",
   )
 }
+
+///|
+test "symcore parity preorder and postorder traversals" {
+  let x = @symcore.symbol("x")
+  let expr = @symcore.add([
+    @symcore.derivative(@symcore.function("f", [x]), x),
+    @symcore.mod_expr(x, @symcore.int(2)),
+  ])
+  inspect(
+    core_preorder_sstr(expr),
+    content="('Mod(x, 2) + Derivative(f(x), x)', 'Derivative(f(x), x)', 'f(x)', 'x', '(x, 1)', 'x', '1', 'Mod(x, 2)', 'x', '2')",
+  )
+  inspect(
+    core_postorder_sstr(expr),
+    content="('x', 'f(x)', 'x', '1', '(x, 1)', 'Derivative(f(x), x)', 'x', '2', 'Mod(x, 2)', 'Mod(x, 2) + Derivative(f(x), x)')",
+  )
+}

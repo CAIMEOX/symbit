@@ -19,8 +19,15 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     Expr::Relational(_, lhs, rhs) => [lhs, rhs][:]
     Expr::Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
-      for arg in deriv_args {
-        out.push(arg)
+      let pair_count = deriv_args.length() / 2
+      for i in 0..<pair_count {
+        let wrt = deriv_args[i * 2]
+        let order_idx = i * 2 + 1
+        if order_idx < deriv_args.length() {
+          out.push(tuple_expr([wrt, deriv_args[order_idx]]))
+        } else {
+          out.push(tuple_expr([wrt, int(1)]))
+        }
       }
       out[:]
     }
@@ -28,6 +35,29 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     Expr::Lambda(vars, body) => [vars, body][:]
     _ => [][:]
   }
+}
+
+///|
+pub fn preorder(expr : Expr) -> Array[Expr] {
+  let out : Array[Expr] = [expr]
+  for child in children(expr) {
+    for item in preorder(child) {
+      out.push(item)
+    }
+  }
+  out
+}
+
+///|
+pub fn postorder(expr : Expr) -> Array[Expr] {
+  let out : Array[Expr] = []
+  for child in children(expr) {
+    for item in postorder(child) {
+      out.push(item)
+    }
+  }
+  out.push(expr)
+  out
 }
 
 ///|

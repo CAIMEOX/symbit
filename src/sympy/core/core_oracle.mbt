@@ -170,3 +170,27 @@ pub fn core_evalf_sstr(expr : @symcore.Expr) -> String raise {
   globals.set("expr", @sympy.expr_to_sympy(expr))
   py_str_obj(core_eval_with_globals("sympy.sstr(expr.evalf())", globals))
 }
+
+///|
+pub fn core_preorder_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(
+    core_eval_with_globals(
+      "tuple(sympy.sstr(v) for v in sympy.preorder_traversal(expr))",
+      globals,
+    ),
+  )
+}
+
+///|
+pub fn core_postorder_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(
+    core_eval_with_globals(
+      "tuple(sympy.sstr(v) for v in sympy.postorder_traversal(expr))",
+      globals,
+    ),
+  )
+}
