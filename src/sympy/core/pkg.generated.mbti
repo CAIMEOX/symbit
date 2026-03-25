@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "CAIMEOX/symbit/sympy/core"
+
+import {
+  "CAIMEOX/symbit/symcore",
+}
+
+// Values
+pub fn core_expr_srepr(@symcore.Expr) -> String raise
+
+pub fn core_expr_sstr(@symcore.Expr) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
