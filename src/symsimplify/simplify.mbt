@@ -922,8 +922,7 @@ fn pow_denest(expr : Expr) -> Expr {
   match expr {
     Expr::Pow(Expr::Pow(base, inner_exp), outer_exp) =>
       match (exact_numeric_value(inner_exp), exact_numeric_value(outer_exp)) {
-        (Some(a), Some(b)) =>
-          @symcore.pow(base, @symcore.number(a.mul_r(b)))
+        (Some(a), Some(b)) => @symcore.pow(base, @symcore.number(a.mul_r(b)))
         _ => expr
       }
     Expr::Pow(base, exp) =>
@@ -934,8 +933,12 @@ fn pow_denest(expr : Expr) -> Expr {
             None =>
               match float_source_precision(expr) {
                 Some(prec) => {
-                  let evaled = @symcore.evalf(expr, prec=prec)
-                  if evaled == expr { expr } else { evaled }
+                  let evaled = @symcore.evalf(expr, prec~)
+                  if evaled == expr {
+                    expr
+                  } else {
+                    evaled
+                  }
                 }
                 None => expr
               }
@@ -987,12 +990,9 @@ fn function_identities(expr : Expr) -> Expr {
               numeric_result_like(arg, int(0))
             "cos" | "exp" if numeric.is_zero() =>
               numeric_result_like(arg, int(1))
-            "log" if numeric.is_one() =>
-              numeric_result_like(arg, int(0))
-            "sqrt" if numeric.is_zero() =>
-              numeric_result_like(arg, int(0))
-            "sqrt" if numeric.is_one() =>
-              numeric_result_like(arg, int(1))
+            "log" if numeric.is_one() => numeric_result_like(arg, int(0))
+            "sqrt" if numeric.is_zero() => numeric_result_like(arg, int(0))
+            "sqrt" if numeric.is_one() => numeric_result_like(arg, int(1))
             "Abs" | "abs" =>
               if numeric.compare(@symnum.BigRational::zero()) < 0 {
                 numeric_result_like(arg, @symcore.number(numeric.neg_r()))

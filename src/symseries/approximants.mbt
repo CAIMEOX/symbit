@@ -126,7 +126,11 @@ fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
     @symcore.Expr::Pow(base, exp) => {
       let pb = approx_numeric_prec_expr(base)
       let pe = approx_numeric_prec_expr(exp)
-      if pb > pe { pb } else { pe }
+      if pb > pe {
+        pb
+      } else {
+        pe
+      }
     }
     @symcore.Expr::Function(_, args) => {
       let mut best = 0
@@ -147,13 +151,13 @@ fn approx_expr_to_complex(
   expr : @symcore.Expr,
   prec : Int,
 ) -> @symcore.ComplexFloat? {
-  match @symcore.evalf(expr, prec=prec) {
+  match @symcore.evalf(expr, prec~) {
     @symcore.Expr::Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
           @symnum.BigRational::zero(),
-          prec=prec,
+          prec~,
         ),
       )
     @symcore.Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
@@ -179,12 +183,7 @@ fn approx_complex_abs(value : @symcore.ComplexFloat, prec : Int) -> @symnum.Mpf 
 ///|
 fn approx_complex_is_zero(value : @symcore.ComplexFloat, prec : Int) -> Bool {
   let tol_exp = if prec / 2 > 4 { -(prec / 2) } else { -4 }
-  let tol = @symnum.from_man_exp(
-    1N,
-    tol_exp,
-    prec=prec,
-    rnd=@symnum.round_nearest,
-  )
+  let tol = @symnum.from_man_exp(1N, tol_exp, prec~, rnd=@symnum.round_nearest)
   @symnum.mpf_cmp(approx_complex_abs(value, prec), tol) <= 0
 }
 

@@ -12,10 +12,10 @@ fn exact_numeric_value(expr : Expr) -> @symnum.BigRational? {
         let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
         match pair {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }
@@ -26,13 +26,15 @@ fn exact_numeric_value(expr : Expr) -> @symnum.BigRational? {
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
+          .real_part()
+          .to_rational()
         match pair {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }
@@ -68,10 +70,12 @@ fn float_source_precision(expr : Expr) -> Int? {
       for arg in args {
         match float_source_precision(arg) {
           Some(prec) =>
-            best = Some(match best {
-              Some(current) if current > prec => current
-              _ => prec
-            })
+            best = Some(
+              match best {
+                Some(current) if current > prec => current
+                _ => prec
+              },
+            )
           None => ()
         }
       }
@@ -91,7 +95,7 @@ fn float_source_precision(expr : Expr) -> Int? {
 ///|
 fn numeric_result_like(source : Expr, exact_result : Expr) -> Expr {
   match float_source_precision(source) {
-    Some(prec) => @symcore.evalf(exact_result, prec=prec)
+    Some(prec) => @symcore.evalf(exact_result, prec~)
     None => exact_result
   }
 }

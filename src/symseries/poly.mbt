@@ -22,10 +22,10 @@ fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
         let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? f.to_rational()
         match pair {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }
@@ -36,13 +36,15 @@ fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        let pair : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
+          .real_part()
+          .to_rational()
         match pair {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }

@@ -71,16 +71,17 @@ fn rewrite_combinatorial_call(
         None => original
       }
     ("binomial", [n_expr, k_expr]) =>
-      match (
-        match exact_numeric_value(n_expr) {
-          Some(value) => to_nonnegative_int(value)
-          None => None
-        },
-        match exact_numeric_value(k_expr) {
-          Some(value) => to_nonnegative_int(value)
-          None => None
-        }
-      ) {
+      match
+        (
+          match exact_numeric_value(n_expr) {
+            Some(value) => to_nonnegative_int(value)
+            None => None
+          },
+          match exact_numeric_value(k_expr) {
+            Some(value) => to_nonnegative_int(value)
+            None => None
+          },
+        ) {
         (Some(ni), Some(ki)) =>
           if ki > ni {
             int(0)

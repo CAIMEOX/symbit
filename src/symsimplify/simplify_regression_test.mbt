@@ -29,8 +29,8 @@ fn simplify_exact_float_expr(
   let rat = @symnum.BigRational::from_ints(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
-  let value = @symcore.Float::from_exact(rat, prec=prec) catch {
-    _ => @symcore.Float::from_int(0, prec=prec)
+  let value = @symcore.Float::from_exact(rat, prec~) catch {
+    _ => @symcore.Float::from_int(0, prec~)
   }
   @symcore.float(value)
 }
@@ -188,10 +188,10 @@ test "symsimplify handles float numeric leaf identities and powers" {
   let one_f = simplify_exact_float_expr(1, 1, prec=70)
   let minus_half_f = simplify_exact_float_expr(-1, 2, prec=70)
   let four_f = simplify_exact_float_expr(4, 1, prec=70)
-  let half = match (try? @symcore.rational_from_ints(1, 2) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let half = match
+    (
+      try? @symcore.rational_from_ints(1, 2) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("half")
   }

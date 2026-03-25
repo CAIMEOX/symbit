@@ -7,8 +7,8 @@ fn series_exact_float_expr(
   let rat = @symnum.BigRational::from_ints(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
-  let value = @symcore.Float::from_exact(rat, prec=prec) catch {
-    _ => @symcore.Float::from_int(0, prec=prec)
+  let value = @symcore.Float::from_exact(rat, prec~) catch {
+    _ => @symcore.Float::from_int(0, prec~)
   }
   @symcore.float(value)
 }
@@ -28,7 +28,7 @@ fn series_exact_complex_float_expr(
     _ => @symnum.BigRational::zero()
   }
   @symcore.complex_float(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec=prec),
+    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
 
@@ -44,10 +44,14 @@ fn series_contains_float_leaf(expr : @symcore.Expr) -> Bool {
 fn series_contains_function_named(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
     @symcore.Expr::Function(found, _) if found == name => true
-    _ => @symcore.children(expr).any(child => series_contains_function_named(child, name))
+    _ =>
+      @symcore.children(expr).any(child => {
+        series_contains_function_named(child, name)
+      })
   }
 }
 
+///|
 fn series_eval_finite(
   expr : @symcore.Expr,
   var_name : String,
@@ -56,7 +60,7 @@ fn series_eval_finite(
 ) -> Bool {
   let env : Map[String, @symcore.Expr] = {}
   env[var_name] = sample
-  match @symcore.evalf(@symcore.subst(expr, env), prec=prec) {
+  match @symcore.evalf(@symcore.subst(expr, env), prec~) {
     @symcore.Expr::Number(_) => true
     @symcore.Expr::Float(value) => value.is_finite()
     @symcore.Expr::ComplexFloat(value) => value.is_finite()
@@ -77,10 +81,7 @@ test "symseries fps handles float geometric coefficients" {
   let x = @symcore.symbol("x")
   let half = series_exact_float_expr(1, 2, prec=80)
   let expr = @symcore.pow(
-    @symcore.add([
-      @symcore.int(1),
-      @symcore.mul([@symcore.int(-1), half, x]),
-    ]),
+    @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), half, x])]),
     @symcore.int(-1),
   )
   let res = fps(expr, x~)
@@ -114,8 +115,12 @@ test "symseries pade approximant handles complex float rates" {
   let approx = pade_approximant(expr, x, m=1, n=1)
   let approx_ser = series(approx, x~, n=3)
   assert_true(series_contains_float_leaf(approx_ser))
-  assert_true(series_eval_finite(approx, "x", series_exact_float_expr(1, 10, prec=120)))
-  assert_true(series_eval_finite(approx, "x", series_exact_float_expr(-1, 10, prec=120)))
+  assert_true(
+    series_eval_finite(approx, "x", series_exact_float_expr(1, 10, prec=120)),
+  )
+  assert_true(
+    series_eval_finite(approx, "x", series_exact_float_expr(-1, 10, prec=120)),
+  )
 }
 
 ///|
