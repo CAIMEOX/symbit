@@ -171,3 +171,29 @@ test "sympify lifts typed tuple and dict inputs" {
   ])
   inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
 }
+
+///|
+test "atoms collects unique atomic leaves in canonical order" {
+  let expr = add([
+    function("f", [symbol("x")]),
+    mul([int(2), symbol("x")]),
+    tuple_expr([symbol("y"), int(1)]),
+  ])
+  json_inspect(atoms(expr).map(@symprint.to_string), content=[
+    "x", "y", "1", "2",
+  ])
+}
+
+///|
+test "xreplace performs exact structural replacement" {
+  let x = symbol("x")
+  let y = symbol("y")
+  let fx = function("f", [x])
+  let expr = add([fx, x, y])
+  let replaced = xreplace(expr, [(x, int(2)), (fx, symbol("z"))])
+  inspect(@symprint.debug_repr(replaced), content="(+ sym:y sym:z 2)")
+  inspect(
+    @symprint.debug_repr(xreplace(function("f", [x]), [(x, int(2))])),
+    content="(call f 2)",
+  )
+}

@@ -55,3 +55,29 @@ test "symcore parity sympify typed inputs" {
     content="{x: 2}",
   )
 }
+
+///|
+test "symcore parity free_symbols and atoms helpers" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let expr = @symcore.add([
+    @symcore.function("f", [x]),
+    @symcore.mul([@symcore.int(2), x]),
+    @symcore.tuple_expr([y, @symcore.int(1)]),
+  ])
+  inspect(core_free_symbols_sstr(expr), content="('x', 'y')")
+  inspect(core_atoms_sstr(expr), content="('1', '2', 'x', 'y')")
+}
+
+///|
+test "symcore parity xreplace exact structural replacement" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let fx = @symcore.function("f", [x])
+  let expr = @symcore.add([fx, x, y])
+  inspect(
+    core_xreplace_sstr(expr, fx, @symcore.symbol("z")),
+    content="x + y + z",
+  )
+  inspect(core_xreplace_sstr(expr, x, @symcore.int(2)), content="y + f(2) + 2")
+}

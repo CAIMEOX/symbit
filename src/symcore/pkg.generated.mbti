@@ -20,6 +20,8 @@ pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
 
 pub fn args(Expr) -> Array[Expr]
 
+pub fn atoms(Expr) -> Array[Expr]
+
 pub fn bool_expr(Bool) -> Expr
 
 pub fn catalan() -> Expr
@@ -191,6 +193,8 @@ pub fn wild(String) -> Expr
 pub fn wild_display_name(String) -> String
 
 pub fn wild_name(Expr) -> String?
+
+pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
 
 pub fn zoo() -> Expr
 

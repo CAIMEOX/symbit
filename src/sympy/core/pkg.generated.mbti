@@ -6,9 +6,15 @@ import {
 }
 
 // Values
+pub fn core_atoms_sstr(@symcore.Expr) -> String raise
+
 pub fn core_expr_srepr(@symcore.Expr) -> String raise
 
 pub fn core_expr_sstr(@symcore.Expr) -> String raise
+
+pub fn core_free_symbols_sstr(@symcore.Expr) -> String raise
+
+pub fn core_xreplace_sstr(@symcore.Expr, @symcore.Expr, @symcore.Expr) -> String raise
 
 // Errors
 

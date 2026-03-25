@@ -85,3 +85,14 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     _ => map_children(expr, child => subst(child, env))
   }
 }
+
+///|
+pub fn xreplace(expr : Expr, rules : Array[(Expr, Expr)]) -> Expr {
+  for rule in rules {
+    let (old_expr, new_expr) = rule
+    if expr == old_expr {
+      return new_expr
+    }
+  }
+  map_children(expr, child => xreplace(child, rules))
+}

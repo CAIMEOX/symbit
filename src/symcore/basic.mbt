@@ -657,3 +657,32 @@ pub fn has(expr : Expr, needle : Expr) -> Bool {
   }
   false
 }
+
+///|
+fn push_unique_sorted(out : Array[Expr], expr : Expr) -> Unit {
+  for item in out {
+    if compare_expr(item, expr) == 0 {
+      return
+    }
+  }
+  out.push(expr)
+  out.mut_view().sort_by((a, b) => compare_expr(a, b))
+}
+
+///|
+fn collect_atoms(expr : Expr, out : Array[Expr]) -> Unit {
+  if is_atomic(expr) {
+    push_unique_sorted(out, expr)
+    return
+  }
+  for child in args(expr) {
+    collect_atoms(child, out)
+  }
+}
+
+///|
+pub fn atoms(expr : Expr) -> Array[Expr] {
+  let out : Array[Expr] = []
+  collect_atoms(expr, out)
+  out
+}
