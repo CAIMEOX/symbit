@@ -216,6 +216,15 @@ pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
 }
 
 ///|
+pub fn raw_derivative(expr : Expr, deriv_args : ArrayView[Expr]) -> Expr {
+  let out : Array[Expr] = []
+  for arg in deriv_args {
+    out.push(arg)
+  }
+  Expr::Derivative(expr, out)
+}
+
+///|
 pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
   Expr::Subs(expr, variable, value)
 }

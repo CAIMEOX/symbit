@@ -340,7 +340,7 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
       for arg in deriv_args {
         args.push(wavefunction_simplify_expr(arg))
       }
-      @symcore.raw_function("Derivative", args)
+      @symcore.raw_derivative(args[0], args[1:])
     }
     @symcore.ExprForm::Subs(inner, variable, value) =>
       @symcore.subs_expr(
@@ -404,7 +404,7 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
     let (lower, upper) = wavefunction_coord_limit(coord)
     integrand = @symcore.raw_function("Integral", [
       integrand,
-      @symcore.raw_function("Tuple", [coord_var, lower, upper]),
+      @symcore.tuple_expr([coord_var, lower, upper]),
     ])
   }
   @symcore.raw_function("sqrt", [integrand])
@@ -815,7 +815,7 @@ fn quantum_replace_exact(
       for arg in deriv_args {
         args.push(quantum_replace_exact(arg, needle, replacement))
       }
-      @symcore.raw_function("Derivative", args)
+      @symcore.raw_derivative(args[0], args[1:])
     }
     @symcore.ExprForm::Subs(inner, variable, value) =>
       @symcore.subs_expr(
@@ -892,9 +892,7 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
         }
         wavefunction_simplify_expr(out)
       } else {
-        @symcore.raw_function("Derivative", [
-          wavefunction_eval_derivatives(inner),
-        ])
+        @symcore.raw_derivative(wavefunction_eval_derivatives(inner), [])
       }
     @symcore.ExprForm::Tuple(args) =>
       @symcore.tuple_expr(args.map(wavefunction_eval_derivatives))

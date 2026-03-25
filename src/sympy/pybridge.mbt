@@ -145,7 +145,14 @@ pub fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
 
 ///|
 fn sympy_float_obj(value : @symcore.Float) -> @py.PyObject raise {
-  sympy_call_obj("sympy.Float", [OracleArg::Str(value.format())])
+  if value.precision() <= 53 {
+    let dbl = value.to_double() catch { _ => fail("pybridge-float-double") }
+    sympy_call_obj("sympy.Float", [
+      OracleArg::PyObj(@py.PyFloat::from(dbl).obj()),
+    ])
+  } else {
+    sympy_call_obj("sympy.Float", [OracleArg::Str(value.format())])
+  }
 }
 
 ///|

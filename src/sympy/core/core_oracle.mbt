@@ -147,3 +147,26 @@ pub fn core_subst_symbol_sstr(
   globals.set("new", @sympy.expr_to_sympy(new_expr))
   py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
 }
+
+///|
+pub fn core_sorted_sstr(exprs : Array[@symcore.Expr]) -> String raise {
+  let list = @py.PyList::new()
+  for expr in exprs {
+    list.append(@sympy.expr_to_sympy(expr))
+  }
+  let globals = @py.PyDict::new()
+  globals.set("exprs", list.obj())
+  py_str_obj(
+    core_eval_with_globals(
+      "tuple(sympy.sstr(v) for v in sorted(exprs, key=sympy.default_sort_key))",
+      globals,
+    ),
+  )
+}
+
+///|
+pub fn core_evalf_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(core_eval_with_globals("sympy.sstr(expr.evalf())", globals))
+}

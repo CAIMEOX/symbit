@@ -239,7 +239,7 @@ pub fn TWave::rewrite_as_pde(self : TWave) -> Expr {
   let t = symbol("t")
   let e = @symcore.raw_function("E", [x, t])
   @symcore.raw_add([
-    @symcore.raw_function("Derivative", [e, x, int(2)]),
-    mu * epsilon * @symcore.raw_function("Derivative", [e, t, int(2)]),
+    @symcore.raw_derivative(e, [x, int(2)]),
+    mu * epsilon * @symcore.raw_derivative(e, [t, int(2)]),
   ])
 }

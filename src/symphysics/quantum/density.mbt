@@ -34,7 +34,7 @@ fn density_exact_rational(num : Int, den : Int) -> Expr {
 
 ///|
 fn density_tuple_expr(term : DensityTerm) -> Expr {
-  @symcore.raw_function("Tuple", [term.state, term.prob])
+  @symcore.tuple_expr([term.state, term.prob])
 }
 
 ///|
@@ -62,12 +62,12 @@ pub fn DensityExpr::as_expr(self : DensityExpr) -> Expr {
 
 ///|
 pub fn DensityExpr::states(self : DensityExpr) -> Expr {
-  @symcore.raw_function("Tuple", self.terms.map(term => term.state))
+  @symcore.tuple_expr(self.terms.map(term => term.state))
 }
 
 ///|
 pub fn DensityExpr::probs(self : DensityExpr) -> Expr {
-  @symcore.raw_function("Tuple", self.terms.map(term => term.prob))
+  @symcore.tuple_expr(self.terms.map(term => term.prob))
 }
 
 ///|

@@ -102,7 +102,7 @@ pub fn cnot_gate(control : Int, target : Int) -> GateExpr {
 
 ///|
 fn gate_tuple_expr(items : Array[Int]) -> Expr {
-  @symcore.raw_function("Tuple", items.map(@symcore.int))
+  @symcore.tuple_expr(items.map(@symcore.int))
 }
 
 ///|
@@ -195,11 +195,9 @@ fn gate_matrix_expr(
     for col in 0..<matrix.width() {
       items.push(matrix.get(row, col))
     }
-    rows.push(@symcore.function("Tuple", items))
+    rows.push(@symcore.tuple_expr(items))
   }
-  @symcore.raw_function("ImmutableDenseMatrix", [
-    @symcore.function("Tuple", rows),
-  ])
+  @symcore.raw_function("ImmutableDenseMatrix", [@symcore.tuple_expr(rows)])
 }
 
 ///|

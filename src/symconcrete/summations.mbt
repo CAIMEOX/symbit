@@ -505,14 +505,14 @@ fn piecewise_expr3(
   cond : @symcore.Expr,
   default : @symcore.Expr,
 ) -> @symcore.Expr {
-  let pair1 = @symcore.function("Tuple", [expr, cond])
-  let pair2 = @symcore.function("Tuple", [default, @symcore.symbol("True")])
+  let pair1 = @symcore.tuple_expr([expr, cond])
+  let pair2 = @symcore.tuple_expr([default, @symcore.true_()])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 
 ///|
 fn rel_lt(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.function("Lt", [left, right])
+  @symcore.lt(left, right)
 }
 
 ///|

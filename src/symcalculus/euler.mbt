@@ -5,7 +5,7 @@ pub fn derivative_expr(expr : Expr, vars : Array[Expr]) -> Expr {
   for v in vars {
     args.push(v)
   }
-  @symcore.function("Derivative", args)
+  @symcore.raw_derivative(expr, args[1:])
 }
 
 ///|
@@ -316,7 +316,7 @@ pub fn euler_equations(
         eq = @symcore.add([eq, signed])
       }
     }
-    let eq_expr = @symcore.function("Eq", [eq, @symcore.int(0)])
+    let eq_expr = @symcore.eq(eq, @symcore.int(0))
     eqns.push(eq_expr)
   }
   eqns

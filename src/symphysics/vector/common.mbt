@@ -308,7 +308,7 @@ fn dynamicsymbol_single(name : String, level : Int) -> Expr {
     for _ in 0..<level {
       args.push(dynamicsymbols_t)
     }
-    @symcore.raw_function("Derivative", args)
+    @symcore.raw_derivative(base, args[1:])
   }
 }
 

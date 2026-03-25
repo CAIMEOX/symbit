@@ -119,8 +119,7 @@ test "sympy ref: expr_to_sympy undefined function head" {
     _ => fail("expected undefined function head to be callable")
   }
   let args = @sympy.py_tuple_from_objects([expr_to_sympy(@symcore.symbol("x"))])
-  guard @sympy.py_call_object(f_callable, args, print_err=true) is Some(applied)
-  else {
+  guard @sympy.py_call_object(f_callable, args, print_err=true) is Some(applied) else {
     fail("expected undefined function head to apply")
   }
   inspect(py_str_obj(objenum_to_obj(applied)), content="f(x)")

@@ -28,7 +28,7 @@ pub struct WGateExpr {
 
 ///|
 fn grover_marked_tuple(marked : Array[Int]) -> Expr {
-  @symcore.raw_function("Tuple", marked.map(@symcore.int))
+  @symcore.tuple_expr(marked.map(@symcore.int))
 }
 
 ///|

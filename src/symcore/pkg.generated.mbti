@@ -138,6 +138,8 @@ pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 
 pub fn raw_add(Array[Expr]) -> Expr
 
+pub fn raw_derivative(Expr, ArrayView[Expr]) -> Expr
+
 pub fn raw_dict_expr(Array[(Expr, Expr)]) -> Expr
 
 pub fn raw_dummy(String, Int) -> Expr

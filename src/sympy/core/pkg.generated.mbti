@@ -8,11 +8,15 @@ import {
 // Values
 pub fn core_atoms_sstr(@symcore.Expr) -> String raise
 
+pub fn core_evalf_sstr(@symcore.Expr) -> String raise
+
 pub fn core_expr_srepr(@symcore.Expr) -> String raise
 
 pub fn core_expr_sstr(@symcore.Expr) -> String raise
 
 pub fn core_free_symbols_sstr(@symcore.Expr) -> String raise
+
+pub fn core_sorted_sstr(Array[@symcore.Expr]) -> String raise
 
 pub fn core_subst_symbol_sstr(@symcore.Expr, String, @symcore.Expr) -> String raise
 

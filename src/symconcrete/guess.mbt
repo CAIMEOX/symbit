@@ -227,9 +227,9 @@ pub fn guess(
   let gf = guess_generating_function_rational(seq)
   if all {
     match (rec, gf) {
-      (Some(r), Some(g)) => Some(@symcore.function("Tuple", [r, g]))
-      (Some(r), None) => Some(@symcore.function("Tuple", [r]))
-      (None, Some(g)) => Some(@symcore.function("Tuple", [g]))
+      (Some(r), Some(g)) => Some(@symcore.tuple_expr([r, g]))
+      (Some(r), None) => Some(@symcore.tuple_expr([r]))
+      (None, Some(g)) => Some(@symcore.tuple_expr([g]))
       _ => None
     }
   } else if evaluate {

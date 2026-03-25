@@ -202,6 +202,36 @@ test "xreplace performs exact structural replacement" {
 }
 
 ///|
+test "evalf keeps undefined applications exact and evaluates Mod numerically" {
+  inspect(
+    @symprint.to_string(evalf(applied_undefined_function("f", [pi()]))),
+    content="f(pi)",
+  )
+  inspect(
+    @symprint.to_string(evalf(mod_expr(pi(), int(2)))).has_prefix(
+      "1.14159265358979",
+    ),
+    content="true",
+  )
+}
+
+///|
+test "compare_expr follows function symbol and mod ordering" {
+  let exprs : Array[Expr] = [
+    symbol("x"),
+    pi(),
+    applied_undefined_function("f", [symbol("x")]),
+    undefined_function("f"),
+    dummy(name="x"),
+    mod_expr(symbol("x"), int(2)),
+  ]
+  sort_exprs_in_place(exprs)
+  json_inspect(exprs.map(@symprint.to_string), content=[
+    "f", "_x", "pi", "x", "f(x)", "Mod(x, 2)",
+  ])
+}
+
+///|
 test "mod is a first-class structured core node" {
   let expr = mod_expr(add([symbol("x"), int(1)]), int(3))
   inspect(head_name(expr), content="Mod")

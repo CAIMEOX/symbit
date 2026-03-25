@@ -3,23 +3,24 @@ fn variant_rank(expr : Expr) -> Int {
   match expr {
     Expr::Pow(_, _) => 0
     Expr::Mul(_) => 1
-    Expr::Mod(_, _) => 2
-    Expr::NumberSymbol(_) => 3
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 4
-    Expr::UndefinedFunction(_) => 5
+    Expr::UndefinedFunction(_) => 2
+    Expr::Dummy(_, _) | Expr::Wild(_) => 3
+    Expr::NumberSymbol(_) => 4
+    Expr::Symbol(_) => 5
     Expr::AppliedUndef(_, _) => 6
-    Expr::Boolean(_) => 7
-    Expr::Tuple(_) => 8
-    Expr::Dict(_) => 9
-    Expr::Relational(_, _, _) => 10
-    Expr::Derivative(_, _) => 11
-    Expr::Subs(_, _, _) => 12
-    Expr::Lambda(_, _) => 13
-    Expr::Function(_, _) => 14
-    Expr::Add(_) => 15
-    Expr::Number(_) => 16
-    Expr::Float(_) => 17
-    Expr::ComplexFloat(_) => 18
+    Expr::Function(_, _) => 7
+    Expr::Mod(_, _) => 8
+    Expr::Boolean(_) => 9
+    Expr::Tuple(_) => 10
+    Expr::Dict(_) => 11
+    Expr::Relational(_, _, _) => 12
+    Expr::Derivative(_, _) => 13
+    Expr::Subs(_, _, _) => 14
+    Expr::Lambda(_, _) => 15
+    Expr::Add(_) => 16
+    Expr::Number(_) => 17
+    Expr::Float(_) => 18
+    Expr::ComplexFloat(_) => 19
   }
 }
 

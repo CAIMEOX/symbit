@@ -105,7 +105,7 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
       for arg in deriv_args {
         args.push(control_normalize(arg))
       }
-      @symcore.raw_function("Derivative", args)
+      @symcore.raw_derivative(args[0], args[1:])
     }
     @symcore.ExprForm::Subs(inner, variable, value) =>
       @symcore.subs_expr(

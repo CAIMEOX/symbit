@@ -370,11 +370,11 @@ pub fn JzState::as_expr(self : JzState) -> Expr {
     )
   }
   let coupling_args = self.coupling.map(c => {
-    @symcore.function("Tuple", [int(c.left_index), int(c.right_index), c.j])
+    @symcore.tuple_expr([int(c.left_index), int(c.right_index), c.j])
   })
-  let args : Array[Expr] = [self.j, self.m, @symcore.function("Tuple", self.jn)]
+  let args : Array[Expr] = [self.j, self.m, @symcore.tuple_expr(self.jn)]
   if !coupling_args.is_empty() {
-    args.push(@symcore.function("Tuple", coupling_args))
+    args.push(@symcore.tuple_expr(coupling_args))
   }
   @symcore.raw_function(
     spin_coupled_state_expr_name(self.basis_name, self.is_bra),
@@ -727,10 +727,7 @@ fn spin_basis_transform_coeff(
 
 ///|
 fn spin_sum_expr(body : Expr, sym : Expr, lower : Expr, upper : Expr) -> Expr {
-  @symcore.function("Sum", [
-    body,
-    @symcore.function("Tuple", [sym, lower, upper]),
-  ])
+  @symcore.function("Sum", [body, @symcore.tuple_expr([sym, lower, upper])])
 }
 
 ///|
@@ -1226,7 +1223,7 @@ fn spin_couple_tensor_product(
             right_index: scheme[step].right_index,
             j: j3,
           })
-          sum_specs.push(@symcore.function("Tuple", [j3, m3, j1 + j2]))
+          sum_specs.push(@symcore.tuple_expr([j3, m3, j1 + j2]))
           current_j[merged[0] - 1] = j3
         }
         let coupled_state = spin_state_make(
@@ -1393,11 +1390,7 @@ fn spin_uncouple_state_expr(
     let sum_specs : Array[Expr] = []
     for idx in 0..<j_values.length() {
       sum_specs.push(
-        @symcore.function("Tuple", [
-          mvars[idx],
-          int(-1) * j_values[idx],
-          j_values[idx],
-        ]),
+        @symcore.tuple_expr([mvars[idx], int(-1) * j_values[idx], j_values[idx]]),
       )
     }
     let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]

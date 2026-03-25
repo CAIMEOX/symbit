@@ -171,3 +171,56 @@ test "symcore parity subst respects derivative binding and capture" {
     content="Subs(Derivative(y + f(x), x), y, x)",
   )
 }
+
+///|
+test "symcore parity default sort order around functions symbols and mod" {
+  let x = @symcore.symbol("x")
+  inspect(
+    core_sorted_sstr([
+      x,
+      @symcore.pi(),
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.undefined_function("f"),
+      @symcore.dummy(name="x"),
+      @symcore.mod_expr(x, @symcore.int(2)),
+    ]),
+    content="('f', '_x', 'pi', 'x', 'f(x)', 'Mod(x, 2)')",
+  )
+}
+
+///|
+test "symcore parity evalf for mod relationals and undefined applications" {
+  let x = @symcore.symbol("x")
+  inspect(
+    core_evalf_sstr(@symcore.mod_expr(@symcore.pi(), @symcore.int(2))),
+    content="1.14159265358979",
+  )
+  inspect(
+    core_evalf_sstr(@symcore.eq(@symcore.pi(), x)),
+    content="Eq(3.14159265358979, x)",
+  )
+  inspect(
+    core_evalf_sstr(@symcore.applied_undefined_function("f", [@symcore.pi()])),
+    content="f(pi)",
+  )
+}
+
+///|
+test "symcore parity free_symbols for wild undefined applications and dict" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  inspect(
+    core_free_symbols_sstr(@symcore.undefined_function("f")),
+    content="()",
+  )
+  inspect(
+    core_free_symbols_sstr(@symcore.applied_undefined_function("f", [x])),
+    content="('x',)",
+  )
+  inspect(core_free_symbols_sstr(@symcore.wild("w")), content="('w_',)")
+  inspect(
+    core_free_symbols_sstr(@symcore.dict_expr([(x, y), (@symcore.int(1), z)])),
+    content="('x', 'y', 'z')",
+  )
+}

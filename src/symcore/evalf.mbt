@@ -694,8 +694,7 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::Boolean(_) => expr
     Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::UndefinedFunction(_) => expr
-    Expr::AppliedUndef(name, args) =>
-      applied_undefined_function(name, args.map(arg => evalf_impl(arg, prec)))
+    Expr::AppliedUndef(_, _) => expr
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))
@@ -715,8 +714,27 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         None => pow(eval_base, eval_exp)
       }
     }
-    Expr::Mod(lhs, rhs) =>
-      mod_expr(evalf_impl(lhs, prec), evalf_impl(rhs, prec))
+    Expr::Mod(lhs, rhs) => {
+      let lhs_eval = evalf_impl(lhs, prec)
+      let rhs_eval = evalf_impl(rhs, prec)
+      match (lhs_eval, rhs_eval) {
+        (Expr::Float(x), Expr::Float(y)) =>
+          Expr::Float(
+            Float::from_mpf(
+              @symnum.mpf_mod(
+                x.to_mpf(),
+                y.to_mpf(),
+                prec,
+                @symnum.round_nearest,
+              ),
+              prec~,
+            ),
+          ) catch {
+            _ => mod_expr(lhs_eval, rhs_eval)
+          }
+        _ => mod_expr(lhs_eval, rhs_eval)
+      }
+    }
     Expr::Tuple(args) => tuple_expr(args.map(arg => evalf_impl(arg, prec)))
     Expr::Dict(items) => {
       let out : Array[(Expr, Expr)] = []

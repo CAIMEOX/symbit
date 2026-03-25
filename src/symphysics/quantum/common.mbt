@@ -232,7 +232,7 @@ fn quantum_integer_value(expr : Expr) -> Int? {
 
 ///|
 fn quantum_tuple_expr(items : Array[Int]) -> Expr {
-  @symcore.raw_function("Tuple", items.map(@symcore.int))
+  @symcore.tuple_expr(items.map(@symcore.int))
 }
 
 ///|

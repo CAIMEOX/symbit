@@ -11,7 +11,7 @@ fn vector_substitute_time(vec : Vector, value : Expr) -> Vector {
 fn motion_integral_symbolic(expr : Expr, lower : Expr, upper : Expr) -> Expr {
   @symcore.function("Integral", [
     expr,
-    @symcore.function("Tuple", [dynamicsymbols_t, lower, upper]),
+    @symcore.tuple_expr([dynamicsymbols_t, lower, upper]),
   ])
 }
 

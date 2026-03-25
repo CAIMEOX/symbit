@@ -54,10 +54,10 @@ pub fn limit_bounds(spec : LimitSpec) -> (@symcore.Expr?, @symcore.Expr?) {
 ///|
 fn limit_to_tuple(spec : LimitSpec) -> @symcore.Expr {
   match spec {
-    LimitSpec::Var(sym) => @symcore.function("Tuple", [sym])
-    LimitSpec::Lower(sym, lower) => @symcore.function("Tuple", [sym, lower])
+    LimitSpec::Var(sym) => @symcore.tuple_expr([sym])
+    LimitSpec::Lower(sym, lower) => @symcore.tuple_expr([sym, lower])
     LimitSpec::Range(sym, lower, upper) =>
-      @symcore.function("Tuple", [sym, lower, upper])
+      @symcore.tuple_expr([sym, lower, upper])
   }
 }
 
