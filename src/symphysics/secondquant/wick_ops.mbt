@@ -102,7 +102,11 @@ fn sq_no_from_ops(ops : Array[Expr]) -> Expr {
 pub fn no(expr : Expr) -> Expr {
   match expr {
     Expr::Add(args) => sq_raw_add(args.map(no))
-    Expr::Function("NO", args) if args.length() == 1 => no(args[0])
+    _ if @symquant.quantum_expr_has_name(expr, "NO") =>
+      match @symquant.quantum_expr_args(expr) {
+        Some([arg]) => no(arg)
+        _ => expr
+      }
     _ => {
       let (scalar, ops0) = sq_extract_secondquant_mul(expr)
       if ops0.is_empty() {
@@ -114,16 +118,20 @@ pub fn no(expr : Expr) -> Expr {
       }
       let expanded : Array[Expr] = []
       for op in ops0 {
-        match op {
-          Expr::Function("NO", args) if args.length() == 1 =>
-            match args[0] {
-              Expr::Mul(inner) =>
-                for item in inner {
-                  expanded.push(item)
-                }
-              _ => expanded.push(args[0])
-            }
-          _ => expanded.push(op)
+        if @symquant.quantum_expr_has_name(op, "NO") {
+          match @symquant.quantum_expr_args(op) {
+            Some([arg]) =>
+              match arg {
+                Expr::Mul(inner) =>
+                  for item in inner {
+                    expanded.push(item)
+                  }
+                _ => expanded.push(arg)
+              }
+            _ => expanded.push(op)
+          }
+        } else {
+          expanded.push(op)
         }
       }
       let sorted = expanded.copy()
@@ -444,14 +452,9 @@ pub fn wicks(
     return int(0)
   }
   match expr {
-    Expr::Function("NO", _)
-    | Expr::Function("AnnihilateFermion", _)
-    | Expr::Function("CreateFermion", _) =>
-      if keep_only_fully_contracted {
-        int(0)
-      } else {
-        expr
-      }
+    _ if @symquant.quantum_expr_has_any_name(expr, [
+        "NO", "AnnihilateFermion", "CreateFermion",
+      ]) => if keep_only_fully_contracted { int(0) } else { expr }
     Expr::Add(args) => {
       let summed = sq_raw_add(
         args.map(term => {
@@ -538,14 +541,14 @@ fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
 
 ///|
 fn sq_permuted_term(perm : Expr, expr : Expr) -> Expr? {
-  match perm {
-    Expr::Function("PermutationOperator", args) if args.length() == 2 =>
-      match (args[0], args[1]) {
-        (Expr::Symbol(lhs), Expr::Symbol(rhs)) =>
-          Some(int(-1) * sq_swap_indices(expr, lhs, rhs))
-        _ => None
-      }
-    _ => None
+  if @symquant.quantum_expr_has_name(perm, "PermutationOperator") {
+    match @symquant.quantum_expr_args(perm) {
+      Some([Expr::Symbol(lhs), Expr::Symbol(rhs)]) =>
+        Some(int(-1) * sq_swap_indices(expr, lhs, rhs))
+      _ => None
+    }
+  } else {
+    None
   }
 }
 

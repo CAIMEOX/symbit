@@ -63,15 +63,15 @@ fn sq_fermion_bra_expr(items : Array[Expr]) -> Expr {
 
 ///|
 fn sq_fermion_items_from_expr(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function(name, args) if (
-        name == "FockStateFermionKet" ||
-        name == "FockStateFermionBra" ||
-        name == "FockStateKet" ||
-        name == "FockStateBra"
-      ) &&
-      args.length() == 1 => @symcore.tuple_items(args[0])
-    _ => None
+  if @symquant.quantum_expr_has_any_name(expr, [
+      "FockStateFermionKet", "FockStateFermionBra", "FockStateKet", "FockStateBra",
+    ]) {
+    match @symquant.quantum_expr_args(expr) {
+      Some([arg]) => @symcore.tuple_items(arg)
+      _ => None
+    }
+  } else {
+    None
   }
 }
 
@@ -222,13 +222,14 @@ fn sq_fermion_state_from_items(
 
 ///|
 fn sq_fermion_operator_parts(expr : Expr) -> (Expr, Bool)? {
-  match expr {
-    Expr::Function("AnnihilateFermion", args) if args.length() == 1 =>
-      Some((args[0], true))
-    Expr::Function("CreateFermion", args) if args.length() == 1 =>
-      Some((args[0], false))
-    Expr::Function("FermionOp", args) if args.length() == 2 =>
-      Some((args[0], args[1] != int(0)))
+  match @symquant.quantum_expr_args(expr) {
+    Some([arg]) if @symquant.quantum_expr_has_name(expr, "AnnihilateFermion") =>
+      Some((arg, true))
+    Some([arg]) if @symquant.quantum_expr_has_name(expr, "CreateFermion") =>
+      Some((arg, false))
+    Some([arg, dagger_flag]) if @symquant.quantum_expr_has_name(
+        expr, "FermionOp",
+      ) => Some((arg, dagger_flag != int(0)))
     _ => None
   }
 }
@@ -536,14 +537,18 @@ pub fn fbra(items : Array[Expr]) -> Expr {
 
 ///|
 fn sq_secondquant_dagger_local(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("AnnihilateFermion", args) if args.length() == 1 =>
+  match @symquant.quantum_expr_args(expr) {
+    Some(args) if args.length() == 1 &&
+      @symquant.quantum_expr_has_name(expr, "AnnihilateFermion") =>
       Some(@symcore.raw_function("CreateFermion", args))
-    Expr::Function("CreateFermion", args) if args.length() == 1 =>
+    Some(args) if args.length() == 1 &&
+      @symquant.quantum_expr_has_name(expr, "CreateFermion") =>
       Some(@symcore.raw_function("AnnihilateFermion", args))
-    Expr::Function("FockStateFermionKet", args) if args.length() == 1 =>
+    Some(args) if args.length() == 1 &&
+      @symquant.quantum_expr_has_name(expr, "FockStateFermionKet") =>
       Some(@symcore.raw_function("FockStateFermionBra", args))
-    Expr::Function("FockStateFermionBra", args) if args.length() == 1 =>
+    Some(args) if args.length() == 1 &&
+      @symquant.quantum_expr_has_name(expr, "FockStateFermionBra") =>
       Some(@symcore.raw_function("FockStateFermionKet", args))
     _ => None
   }

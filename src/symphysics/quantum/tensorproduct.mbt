@@ -11,21 +11,25 @@ pub struct TensorProductExpr {
 fn tensor_product_scalar_body(expr : Expr) -> (Expr, Expr?) {
   let (scalar, body) = quantum_split_scalar_factors(expr)
   match body {
-    Some(Expr::Function("TensorProduct", inner)) => {
-      let scalar_factors : Array[Expr] = [scalar]
-      let items : Array[Expr] = []
-      for item in inner {
-        let (item_scalar, item_body) = tensor_product_scalar_body(item)
-        if item_scalar != int(1) {
-          scalar_factors.push(item_scalar)
+    Some(core) if quantum_expr_has_name(core, "TensorProduct") =>
+      match quantum_expr_args(core) {
+        Some(inner) => {
+          let scalar_factors : Array[Expr] = [scalar]
+          let items : Array[Expr] = []
+          for item in inner {
+            let (item_scalar, item_body) = tensor_product_scalar_body(item)
+            if item_scalar != int(1) {
+              scalar_factors.push(item_scalar)
+            }
+            items.push(item_body.unwrap_or(int(1)))
+          }
+          (
+            quantum_mul_from_args_preserve(scalar_factors),
+            Some(tensor_product(items).as_expr()),
+          )
         }
-        items.push(item_body.unwrap_or(int(1)))
+        None => (scalar, body)
       }
-      (
-        quantum_mul_from_args_preserve(scalar_factors),
-        Some(tensor_product(items).as_expr()),
-      )
-    }
     _ => (scalar, body)
   }
 }
@@ -43,9 +47,13 @@ fn tensor_product_as_expr(args : Array[Expr]) -> Expr {
       scalar_factors.push(scalar)
     }
     match body {
-      Some(Expr::Function("TensorProduct", inner)) =>
-        for item in inner {
-          normalized.push(item)
+      Some(core) if quantum_expr_has_name(core, "TensorProduct") =>
+        match quantum_expr_args(core) {
+          Some(inner) =>
+            for item in inner {
+              normalized.push(item)
+            }
+          None => normalized.push(core)
         }
       Some(core) => normalized.push(core)
       None => normalized.push(int(1))
@@ -79,25 +87,29 @@ pub fn TensorProductExpr::as_expr(self : TensorProductExpr) -> Expr {
 ///|
 pub fn tensor_product_expand(expr : Expr) -> Expr {
   match expr {
-    Expr::Function("TensorProduct", args) => {
-      for idx in 0..<args.length() {
-        match args[idx] {
-          Expr::Add(terms) => {
-            let expanded : Array[Expr] = []
-            for term in terms {
-              let rebuilt = args.copy()
-              rebuilt[idx] = term
-              expanded.push(
-                tensor_product_expand(tensor_product(rebuilt).as_expr()),
-              )
+    _ if quantum_expr_has_name(expr, "TensorProduct") =>
+      match quantum_expr_args(expr) {
+        Some(args) => {
+          for idx in 0..<args.length() {
+            match args[idx] {
+              Expr::Add(terms) => {
+                let expanded : Array[Expr] = []
+                for term in terms {
+                  let rebuilt = args.copy()
+                  rebuilt[idx] = term
+                  expanded.push(
+                    tensor_product_expand(tensor_product(rebuilt).as_expr()),
+                  )
+                }
+                return quantum_add_from_args_preserve(expanded)
+              }
+              _ => ()
             }
-            return quantum_add_from_args_preserve(expanded)
           }
-          _ => ()
+          tensor_product(args).as_expr()
         }
+        None => expr
       }
-      tensor_product(args).as_expr()
-    }
     Expr::Add(args) =>
       quantum_add_from_args_preserve(
         args.map(arg => tensor_product_expand(arg)),
@@ -108,9 +120,10 @@ pub fn tensor_product_expand(expr : Expr) -> Expr {
 
 ///|
 fn tensor_product_items(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function("TensorProduct", args) => Some(args.copy())
-    _ => None
+  if quantum_expr_has_name(expr, "TensorProduct") {
+    quantum_expr_args(expr)
+  } else {
+    None
   }
 }
 

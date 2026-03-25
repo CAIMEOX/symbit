@@ -105,42 +105,35 @@ fn cartesian_lowercase_label(label : Expr, fallback : String) -> Expr {
 
 ///|
 pub fn cartesian_operator_to_state(op_expr : Expr) -> Expr? {
-  match op_expr {
-    Expr::Function("XOp", args) => {
-      let label = if args.is_empty() {
-        cartesian_default_label("x")
-      } else {
-        cartesian_lowercase_label(args[0], "x")
-      }
-      Some(x_ket(position=label))
+  if quantum_expr_has_name(op_expr, "XOp") {
+    let label = match quantum_expr_args(op_expr) {
+      Some(args) if !args.is_empty() => cartesian_lowercase_label(args[0], "x")
+      _ => cartesian_default_label("x")
     }
-    Expr::Function("PxOp", args) => {
-      let label = if args.is_empty() {
-        cartesian_default_label("px")
-      } else {
-        cartesian_lowercase_label(args[0], "px")
-      }
-      Some(px_ket(momentum=label))
-    }
-    _ => None
+    return Some(x_ket(position=label))
   }
+  if quantum_expr_has_name(op_expr, "PxOp") {
+    let label = match quantum_expr_args(op_expr) {
+      Some(args) if !args.is_empty() => cartesian_lowercase_label(args[0], "px")
+      _ => cartesian_default_label("px")
+    }
+    return Some(px_ket(momentum=label))
+  }
+  None
 }
 
 ///|
 pub fn cartesian_state_to_operator(state_expr : Expr) -> Array[Expr]? {
-  match state_expr {
-    Expr::Function("XKet", args) | Expr::Function("XBra", args) => {
-      ignore(args)
-      Some([x_op()])
-    }
-    Expr::Function("PxKet", args) | Expr::Function("PxBra", args) => {
-      ignore(args)
-      Some([px_op()])
-    }
-    Expr::Function("PositionKet3D", _) | Expr::Function("PositionBra3D", _) =>
-      Some([x_op(), y_op(), z_op()])
-    _ => None
+  if quantum_expr_has_any_name(state_expr, ["XKet", "XBra"]) {
+    return Some([x_op()])
   }
+  if quantum_expr_has_any_name(state_expr, ["PxKet", "PxBra"]) {
+    return Some([px_op()])
+  }
+  if quantum_expr_has_any_name(state_expr, ["PositionKet3D", "PositionBra3D"]) {
+    return Some([x_op(), y_op(), z_op()])
+  }
+  None
 }
 
 ///|
@@ -148,64 +141,99 @@ pub fn cartesian_apply_operator_to_ket(
   op_expr : Expr,
   ket_expr : Expr,
 ) -> Expr? {
-  match (op_expr, ket_expr) {
-    (Expr::Function("XOp", _), Expr::Function("XKet", args)) if args.length() ==
-      1 => Some(args[0] * ket_expr)
-    (Expr::Function("PxOp", _), Expr::Function("PxKet", args)) if args.length() ==
-      1 => Some(args[0] * ket_expr)
-    (Expr::Function("XOp", _), Expr::Function("PositionKet3D", args)) if args.length() ==
-      3 => Some(args[0] * ket_expr)
-    (Expr::Function("YOp", _), Expr::Function("PositionKet3D", args)) if args.length() ==
-      3 => Some(args[1] * ket_expr)
-    (Expr::Function("ZOp", _), Expr::Function("PositionKet3D", args)) if args.length() ==
-      3 => Some(args[2] * ket_expr)
-    _ => None
+  if quantum_expr_has_name(op_expr, "XOp") &&
+    quantum_expr_has_name(ket_expr, "XKet") {
+    match quantum_expr_args(ket_expr) {
+      Some(args) if args.length() == 1 => return Some(args[0] * ket_expr)
+      _ => ()
+    }
   }
+  if quantum_expr_has_name(op_expr, "PxOp") &&
+    quantum_expr_has_name(ket_expr, "PxKet") {
+    match quantum_expr_args(ket_expr) {
+      Some(args) if args.length() == 1 => return Some(args[0] * ket_expr)
+      _ => ()
+    }
+  }
+  if quantum_expr_has_any_name(op_expr, ["XOp", "YOp", "ZOp"]) &&
+    quantum_expr_has_name(ket_expr, "PositionKet3D") {
+    match quantum_expr_args(ket_expr) {
+      Some(args) if args.length() == 3 =>
+        if quantum_expr_has_name(op_expr, "XOp") {
+          return Some(args[0] * ket_expr)
+        } else if quantum_expr_has_name(op_expr, "YOp") {
+          return Some(args[1] * ket_expr)
+        } else {
+          return Some(args[2] * ket_expr)
+        }
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
 pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
-  match (bra_expr, ket_expr) {
-    (Expr::Function("XBra", bargs), Expr::Function("XKet", kargs)) if bargs.length() ==
-      1 &&
-      kargs.length() == 1 => Some(cartesian_delta(kargs[0], bargs[0]))
-    (Expr::Function("PxBra", bargs), Expr::Function("PxKet", kargs)) if bargs.length() ==
-      1 &&
-      kargs.length() == 1 => Some(cartesian_delta(kargs[0], bargs[0]))
-    (Expr::Function("XBra", bargs), Expr::Function("PxKet", kargs)) if bargs.length() ==
-      1 &&
-      kargs.length() == 1 =>
-      Some(
-        cartesian_plane_wave(
-          @symcore.imag_unit() *
-          bargs[0] *
-          kargs[0] *
-          @symcore.raw_pow(hbar, int(-1)),
-        ),
-      )
-    (Expr::Function("PxBra", bargs), Expr::Function("XKet", kargs)) if bargs.length() ==
-      1 &&
-      kargs.length() == 1 =>
-      Some(
-        cartesian_plane_wave(
-          int(-1) *
-          @symcore.imag_unit() *
-          kargs[0] *
-          bargs[0] *
-          @symcore.raw_pow(hbar, int(-1)),
-        ),
-      )
-    (
-      Expr::Function("PositionBra3D", bargs),
-      Expr::Function("PositionKet3D", kargs),
-    ) if bargs.length() == 3 && kargs.length() == 3 =>
-      Some(
-        cartesian_delta(kargs[0], bargs[0]) *
-        cartesian_delta(kargs[1], bargs[1]) *
-        cartesian_delta(kargs[2], bargs[2]),
-      )
-    _ => None
+  if quantum_expr_has_name(bra_expr, "XBra") &&
+    quantum_expr_has_name(ket_expr, "XKet") {
+    match (quantum_expr_args(bra_expr), quantum_expr_args(ket_expr)) {
+      (Some(bargs), Some(kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+        return Some(cartesian_delta(kargs[0], bargs[0]))
+      _ => ()
+    }
   }
+  if quantum_expr_has_name(bra_expr, "PxBra") &&
+    quantum_expr_has_name(ket_expr, "PxKet") {
+    match (quantum_expr_args(bra_expr), quantum_expr_args(ket_expr)) {
+      (Some(bargs), Some(kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+        return Some(cartesian_delta(kargs[0], bargs[0]))
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(bra_expr, "XBra") &&
+    quantum_expr_has_name(ket_expr, "PxKet") {
+    match (quantum_expr_args(bra_expr), quantum_expr_args(ket_expr)) {
+      (Some(bargs), Some(kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+        return Some(
+          cartesian_plane_wave(
+            @symcore.imag_unit() *
+            bargs[0] *
+            kargs[0] *
+            @symcore.raw_pow(hbar, int(-1)),
+          ),
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(bra_expr, "PxBra") &&
+    quantum_expr_has_name(ket_expr, "XKet") {
+    match (quantum_expr_args(bra_expr), quantum_expr_args(ket_expr)) {
+      (Some(bargs), Some(kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
+        return Some(
+          cartesian_plane_wave(
+            int(-1) *
+            @symcore.imag_unit() *
+            kargs[0] *
+            bargs[0] *
+            @symcore.raw_pow(hbar, int(-1)),
+          ),
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(bra_expr, "PositionBra3D") &&
+    quantum_expr_has_name(ket_expr, "PositionKet3D") {
+    match (quantum_expr_args(bra_expr), quantum_expr_args(ket_expr)) {
+      (Some(bargs), Some(kargs)) if bargs.length() == 3 && kargs.length() == 3 =>
+        return Some(
+          cartesian_delta(kargs[0], bargs[0]) *
+          cartesian_delta(kargs[1], bargs[1]) *
+          cartesian_delta(kargs[2], bargs[2]),
+        )
+      _ => ()
+    }
+  }
+  None
 }
 
 ///|
@@ -213,14 +241,12 @@ fn cartesian_basis_family(basis : Expr?) -> String {
   match basis {
     None => "default"
     Some(expr) =>
-      match expr {
-        Expr::Function(name, _) if name == "XOp" ||
-          name == "XKet" ||
-          name == "XBra" => "x"
-        Expr::Function(name, _) if name == "PxOp" ||
-          name == "PxKet" ||
-          name == "PxBra" => "px"
-        _ => "default"
+      if quantum_expr_has_any_name(expr, ["XOp", "XKet", "XBra"]) {
+        "x"
+      } else if quantum_expr_has_any_name(expr, ["PxOp", "PxKet", "PxBra"]) {
+        "px"
+      } else {
+        "default"
       }
   }
 }
@@ -237,93 +263,112 @@ fn cartesian_basis_symbol(basis_name : String) -> Expr {
 pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
   let basis_name = cartesian_basis_family(basis)
   let coord = cartesian_basis_symbol(basis_name)
-  match expr {
-    Expr::Function("XKet", args) if args.length() == 1 =>
-      Some(
-        if basis_name == "px" {
-          cartesian_plane_wave(
-            int(-1) *
-            @symcore.imag_unit() *
-            args[0] *
-            coord *
-            @symcore.raw_pow(hbar, int(-1)),
-          )
-        } else {
-          cartesian_delta(coord, args[0])
-        },
-      )
-    Expr::Function("XBra", args) if args.length() == 1 =>
-      Some(
-        if basis_name == "px" {
-          cartesian_plane_wave(
-            @symcore.imag_unit() *
-            args[0] *
-            coord *
-            @symcore.raw_pow(hbar, int(-1)),
-          )
-        } else {
-          cartesian_delta(coord, args[0])
-        },
-      )
-    Expr::Function("PxKet", args) if args.length() == 1 =>
-      Some(
-        if basis_name == "x" {
-          cartesian_plane_wave(
-            @symcore.imag_unit() *
-            coord *
-            args[0] *
-            @symcore.raw_pow(hbar, int(-1)),
-          )
-        } else {
-          cartesian_delta(coord, args[0])
-        },
-      )
-    Expr::Function("PxBra", args) if args.length() == 1 =>
-      Some(
-        if basis_name == "x" {
-          cartesian_plane_wave(
-            int(-1) *
-            @symcore.imag_unit() *
-            coord *
-            args[0] *
-            @symcore.raw_pow(hbar, int(-1)),
-          )
-        } else {
-          cartesian_delta(coord, args[0])
-        },
-      )
-    Expr::Function("PositionKet3D", args) if args.length() == 3 =>
-      Some(
-        cartesian_delta(cartesian_symbol("x", idx=1), args[0]) *
-        cartesian_delta(cartesian_symbol("y", idx=1), args[1]) *
-        cartesian_delta(cartesian_symbol("z", idx=1), args[2]),
-      )
-    Expr::Function("PositionBra3D", args) if args.length() == 3 =>
-      Some(
-        cartesian_delta(cartesian_symbol("x", idx=1), args[0]) *
-        cartesian_delta(cartesian_symbol("y", idx=1), args[1]) *
-        cartesian_delta(cartesian_symbol("z", idx=1), args[2]),
-      )
-    Expr::Function("XOp", _) =>
-      Some(
-        if basis_name == "px" {
-          let px1 = cartesian_symbol("px", idx=1)
-          let px2 = cartesian_symbol("px", idx=2)
-          @symcore.imag_unit() * hbar * cartesian_delta(px1, px2) * px1
-        } else {
-          coord
-        },
-      )
-    Expr::Function("PxOp", _) =>
-      Some(
-        if basis_name == "x" || basis_name == "default" {
-          let x1 = cartesian_symbol("x", idx=1)
-          let x2 = cartesian_symbol("x", idx=2)
-          int(-1) * @symcore.imag_unit() * hbar * cartesian_delta(x1, x2) * x1
-        } else {
-          coord
-        },
-      )
-    _ => None
+  if quantum_expr_has_name(expr, "XKet") {
+    match quantum_expr_args(expr) {
+      Some(args) if args.length() == 1 =>
+        return Some(
+          if basis_name == "px" {
+            cartesian_plane_wave(
+              int(-1) *
+              @symcore.imag_unit() *
+              args[0] *
+              coord *
+              @symcore.raw_pow(hbar, int(-1)),
+            )
+          } else {
+            cartesian_delta(coord, args[0])
+          },
+        )
+      _ => ()
+    }
   }
+  if quantum_expr_has_name(expr, "XBra") {
+    match quantum_expr_args(expr) {
+      Some(args) if args.length() == 1 =>
+        return Some(
+          if basis_name == "px" {
+            cartesian_plane_wave(
+              @symcore.imag_unit() *
+              args[0] *
+              coord *
+              @symcore.raw_pow(hbar, int(-1)),
+            )
+          } else {
+            cartesian_delta(coord, args[0])
+          },
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(expr, "PxKet") {
+    match quantum_expr_args(expr) {
+      Some(args) if args.length() == 1 =>
+        return Some(
+          if basis_name == "x" {
+            cartesian_plane_wave(
+              @symcore.imag_unit() *
+              coord *
+              args[0] *
+              @symcore.raw_pow(hbar, int(-1)),
+            )
+          } else {
+            cartesian_delta(coord, args[0])
+          },
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(expr, "PxBra") {
+    match quantum_expr_args(expr) {
+      Some(args) if args.length() == 1 =>
+        return Some(
+          if basis_name == "x" {
+            cartesian_plane_wave(
+              int(-1) *
+              @symcore.imag_unit() *
+              coord *
+              args[0] *
+              @symcore.raw_pow(hbar, int(-1)),
+            )
+          } else {
+            cartesian_delta(coord, args[0])
+          },
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_any_name(expr, ["PositionKet3D", "PositionBra3D"]) {
+    match quantum_expr_args(expr) {
+      Some(args) if args.length() == 3 =>
+        return Some(
+          cartesian_delta(cartesian_symbol("x", idx=1), args[0]) *
+          cartesian_delta(cartesian_symbol("y", idx=1), args[1]) *
+          cartesian_delta(cartesian_symbol("z", idx=1), args[2]),
+        )
+      _ => ()
+    }
+  }
+  if quantum_expr_has_name(expr, "XOp") {
+    return Some(
+      if basis_name == "px" {
+        let px1 = cartesian_symbol("px", idx=1)
+        let px2 = cartesian_symbol("px", idx=2)
+        @symcore.imag_unit() * hbar * cartesian_delta(px1, px2) * px1
+      } else {
+        coord
+      },
+    )
+  }
+  if quantum_expr_has_name(expr, "PxOp") {
+    return Some(
+      if basis_name == "x" || basis_name == "default" {
+        let x1 = cartesian_symbol("x", idx=1)
+        let x2 = cartesian_symbol("x", idx=2)
+        int(-1) * @symcore.imag_unit() * hbar * cartesian_delta(x1, x2) * x1
+      } else {
+        coord
+      },
+    )
+  }
+  None
 }

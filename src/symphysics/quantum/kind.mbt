@@ -76,33 +76,41 @@ pub fn quantum_kind(expr : Expr) -> QuantumKind {
       }
       acc
     }
-    Expr::Function("Dagger", args) if args.length() == 1 =>
-      match quantum_kind(args[0]) {
-        QuantumKind::QKet => QuantumKind::QBra
-        QuantumKind::QBra => QuantumKind::QKet
-        other => other
+    _ if quantum_expr_has_name(expr, "Dagger") =>
+      match quantum_expr_args(expr) {
+        Some([arg]) =>
+          match quantum_kind(arg) {
+            QuantumKind::QKet => QuantumKind::QBra
+            QuantumKind::QBra => QuantumKind::QKet
+            other => other
+          }
+        _ => QuantumKind::QUndefined
       }
-    Expr::Function("InnerProduct", _) => QuantumKind::QNumber
-    Expr::Function("OuterProduct", _) => QuantumKind::QOperator
-    Expr::Function("Commutator", _) | Expr::Function("AntiCommutator", _) =>
-      QuantumKind::QOperator
-    Expr::Function("TensorProduct", args) => {
-      let mut out = QuantumKind::QNumber
-      for arg in args {
-        let kind = quantum_kind(arg)
-        match kind {
-          QuantumKind::QNumber => ()
-          QuantumKind::QUndefined => return QuantumKind::QUndefined
-          _ =>
-            match out {
-              QuantumKind::QNumber => out = kind
-              _ if out == kind => ()
-              _ => return QuantumKind::QUndefined
+    _ if quantum_expr_has_name(expr, "InnerProduct") => QuantumKind::QNumber
+    _ if quantum_expr_has_any_name(expr, [
+        "OuterProduct", "Commutator", "AntiCommutator",
+      ]) => QuantumKind::QOperator
+    _ if quantum_expr_has_name(expr, "TensorProduct") =>
+      match quantum_expr_args(expr) {
+        Some(args) => {
+          let mut out = QuantumKind::QNumber
+          for arg in args {
+            let kind = quantum_kind(arg)
+            match kind {
+              QuantumKind::QNumber => ()
+              QuantumKind::QUndefined => return QuantumKind::QUndefined
+              _ =>
+                match out {
+                  QuantumKind::QNumber => out = kind
+                  _ if out == kind => ()
+                  _ => return QuantumKind::QUndefined
+                }
             }
+          }
+          out
         }
+        None => QuantumKind::QUndefined
       }
-      out
-    }
     _ => QuantumKind::QUndefined
   }
 }

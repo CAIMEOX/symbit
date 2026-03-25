@@ -70,14 +70,15 @@ fn sq_boson_bra_expr(items : Array[Expr]) -> Expr {
 
 ///|
 fn sq_boson_items_from_expr(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function(name, args) if (
-        name == "FockStateBosonKet" ||
-        name == "FockStateBosonBra" ||
-        name == "FockState"
-      ) &&
-      args.length() == 1 => @symcore.tuple_items(args[0])
-    _ => None
+  if @symquant.quantum_expr_has_any_name(expr, [
+      "FockStateBosonKet", "FockStateBosonBra", "FockState",
+    ]) {
+    match @symquant.quantum_expr_args(expr) {
+      Some([arg]) => @symcore.tuple_items(arg)
+      _ => None
+    }
+  } else {
+    None
   }
 }
 
@@ -562,17 +563,18 @@ pub fn secondquant_simplify_index_permutations(
 
 ///|
 fn sq_is_boson_annihilator(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("AnnihilateBoson", args) if args.length() == 1 =>
-      Some(args[0])
+  match @symquant.quantum_expr_args(expr) {
+    Some([arg]) if @symquant.quantum_expr_has_name(expr, "AnnihilateBoson") =>
+      Some(arg)
     _ => None
   }
 }
 
 ///|
 fn sq_is_boson_creator(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("CreateBoson", args) if args.length() == 1 => Some(args[0])
+  match @symquant.quantum_expr_args(expr) {
+    Some([arg]) if @symquant.quantum_expr_has_name(expr, "CreateBoson") =>
+      Some(arg)
     _ => None
   }
 }
