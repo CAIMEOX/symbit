@@ -77,10 +77,7 @@ fn sq_boson_items_from_expr(expr : Expr) -> Array[Expr]? {
         name == "FockState"
       ) &&
       args.length() == 1 =>
-      match args[0] {
-        Expr::Function("Tuple", items) => Some(items)
-        _ => None
-      }
+      @symcore.tuple_items(args[0])
     _ => None
   }
 }

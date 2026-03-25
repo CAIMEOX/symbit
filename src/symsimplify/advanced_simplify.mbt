@@ -744,7 +744,8 @@ fn collect_symbols(expr : Expr, out : Map[String, Bool]) -> Unit {
 fn is_rational_form(expr : Expr, k_name : String) -> Bool {
   ignore(k_name)
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => true
+    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) | Expr::Boolean(_) =>
+      true
     Expr::Symbol(_) => true
     Expr::Add(args) | Expr::Mul(args) => {
       for arg in args {
@@ -757,14 +758,20 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     Expr::Pow(base, Expr::Number(e)) =>
       e.is_integral() && is_rational_form(base, k_name)
     Expr::Pow(_, _) => false
-    Expr::Function(_, _) => false
+    Expr::Tuple(_)
+    | Expr::Relational(_, _, _)
+    | Expr::Derivative(_, _)
+    | Expr::Subs(_, _, _)
+    | Expr::Lambda(_, _)
+    | Expr::Function(_, _) => false
   }
 }
 
 ///|
 fn contains_function(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(_, _) => true
+    Expr::Function(_, _) | Expr::Derivative(_, _) | Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
+      true
     _ => {
       for child in @symcore.children(expr) {
         if contains_function(child) {

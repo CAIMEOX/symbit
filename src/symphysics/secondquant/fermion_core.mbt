@@ -71,10 +71,7 @@ fn sq_fermion_items_from_expr(expr : Expr) -> Array[Expr]? {
         name == "FockStateBra"
       ) &&
       args.length() == 1 =>
-      match args[0] {
-        Expr::Function("Tuple", items) => Some(items)
-        _ => None
-      }
+      @symcore.tuple_items(args[0])
     _ => None
   }
 }
@@ -325,8 +322,8 @@ fn sq_apply_fermion_operator_to_state(
     Expr::Function(name, args) if (ket && name == "FockStateFermionKet") ||
       (!ket && name == "FockStateFermionBra") => {
       guard args.length() == 1 else { return None }
-      match args[0] {
-        Expr::Function("Tuple", items) =>
+      match @symcore.tuple_items(args[0]) {
+        Some(items) =>
           match index {
             Expr::Number(_) =>
               Some(
@@ -341,7 +338,7 @@ fn sq_apply_fermion_operator_to_state(
                 None
               }
           }
-        _ => None
+        None => None
       }
     }
     _ => None

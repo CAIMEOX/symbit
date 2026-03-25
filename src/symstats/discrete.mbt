@@ -51,10 +51,7 @@ fn discrete_tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
 
 ///|
 fn discrete_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
-  match expr {
-    @symcore.Expr::Function("Tuple", items) => Some(items)
-    _ => None
-  }
+  @symcore.tuple_items(expr)
 }
 
 ///|

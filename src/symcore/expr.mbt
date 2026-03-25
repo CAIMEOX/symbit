@@ -3,10 +3,16 @@ pub enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
+  Boolean(Bool)
   Symbol(String)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Tuple(Array[Expr])
+  Relational(RelOp, Expr, Expr)
+  Derivative(Expr, Array[Expr])
+  Subs(Expr, Expr, Expr)
+  Lambda(Expr, Expr)
   Function(String, Array[Expr])
 }
 
@@ -16,6 +22,8 @@ impl Show for Expr with to_string(self) {
     Expr::Number(n) => n.to_string()
     Expr::Float(f) => f.to_string()
     Expr::ComplexFloat(z) => z.to_string()
+    Expr::Boolean(true) => "True"
+    Expr::Boolean(false) => "False"
     Expr::Symbol(s) => s
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
@@ -23,6 +31,36 @@ impl Show for Expr with to_string(self) {
       "(" + args.map(child => child.to_string()).join(" * ") + ")"
     Expr::Pow(base, exp) =>
       "(" + base.to_string() + " ** " + exp.to_string() + ")"
+    Expr::Tuple(args) =>
+      "Tuple(" + args.map(child => child.to_string()).join(", ") + ")"
+    Expr::Relational(op, lhs, rhs) => {
+      let name = match op {
+        RelOp::Eq => "Eq"
+        RelOp::Ne => "Ne"
+        RelOp::Lt => "Lt"
+        RelOp::Le => "Le"
+        RelOp::Gt => "Gt"
+        RelOp::Ge => "Ge"
+      }
+      name + "(" + lhs.to_string() + ", " + rhs.to_string() + ")"
+    }
+    Expr::Derivative(inner, deriv_args) => {
+      let args : Array[String] = [inner.to_string()]
+      for arg in deriv_args {
+        args.push(arg.to_string())
+      }
+      "Derivative(" + args.join(", ") + ")"
+    }
+    Expr::Subs(inner, variable, value) =>
+      "Subs(" +
+      inner.to_string() +
+      ", " +
+      variable.to_string() +
+      ", " +
+      value.to_string() +
+      ")"
+    Expr::Lambda(vars, body) =>
+      "Lambda(" + vars.to_string() + ", " + body.to_string() + ")"
     Expr::Function(name, args) =>
       name + "(" + args.map(child => child.to_string()).join(", ") + ")"
   }
@@ -549,19 +587,35 @@ pub fn mul(args : Array[Expr]) -> Expr {
     }
   }
   sort_exprs_in_place(flat)
+  let merged : Array[Expr] = Array::new()
+  let mut idx = 0
+  while idx < flat.length() {
+    let factor = flat[idx]
+    let mut count = 1
+    while idx + count < flat.length() &&
+      compare_expr(flat[idx + count], factor) == 0 {
+      count += 1
+    }
+    if count == 1 {
+      merged.push(factor)
+    } else {
+      merged.push(pow(factor, int(count)))
+    }
+    idx += count
+  }
   match complex_prod {
     Some(value) =>
-      if flat.is_empty() {
+      if merged.is_empty() {
         Expr::ComplexFloat(value)
       } else if expr_is_one(Expr::ComplexFloat(value)) {
-        match flat.length() {
-          1 => flat[0]
-          _ => Expr::Mul(flat)
+        match merged.length() {
+          1 => merged[0]
+          _ => Expr::Mul(merged)
         }
       } else {
         let out : Array[Expr] = Array::new()
         out.push(Expr::ComplexFloat(value))
-        for v in flat {
+        for v in merged {
           out.push(v)
         }
         match out.length() {
@@ -572,17 +626,17 @@ pub fn mul(args : Array[Expr]) -> Expr {
     None =>
       match float_prod {
         Some(value) =>
-          if flat.is_empty() {
+          if merged.is_empty() {
             Expr::Float(value)
           } else if expr_is_one(Expr::Float(value)) {
-            match flat.length() {
-              1 => flat[0]
-              _ => Expr::Mul(flat)
+            match merged.length() {
+              1 => merged[0]
+              _ => Expr::Mul(merged)
             }
           } else {
             let out : Array[Expr] = Array::new()
             out.push(Expr::Float(value))
-            for v in flat {
+            for v in merged {
               out.push(v)
             }
             match out.length() {
@@ -591,21 +645,21 @@ pub fn mul(args : Array[Expr]) -> Expr {
             }
           }
         None =>
-          if flat.is_empty() {
+          if merged.is_empty() {
             if const_prod.is_one() {
               Expr::Number(@symnum.BigRational::one())
             } else {
               Expr::Number(const_prod)
             }
           } else if const_prod.is_one() {
-            match flat.length() {
-              1 => flat[0]
-              _ => Expr::Mul(flat)
+            match merged.length() {
+              1 => merged[0]
+              _ => Expr::Mul(merged)
             }
           } else {
             let out : Array[Expr] = Array::new()
             out.push(Expr::Number(const_prod))
-            for v in flat {
+            for v in merged {
               out.push(v)
             }
             match out.length() {
@@ -688,6 +742,19 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
     ("True", []) => true_()
     ("False", []) => false_()
+    ("Tuple", _) => Expr::Tuple(args.map(child => child))
+    ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
+    ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
+    ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)
+    ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
+    ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
+    ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
+    ("Derivative", [expr, wrt]) =>
+      Expr::Derivative(expr, [wrt, int(1)])
+    ("Derivative", [expr, wrt, order]) =>
+      Expr::Derivative(expr, [wrt, order])
+    ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
+    ("Lambda", [vars, body]) => Expr::Lambda(vars, body)
     _ => Expr::Function(name, args.map(child => child))
   }
 }

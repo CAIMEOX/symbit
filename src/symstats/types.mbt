@@ -340,7 +340,31 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::Boolean(_)
     | @symcore.Expr::Symbol(_) => expr
+    @symcore.Expr::Tuple(args) =>
+      @symcore.tuple_expr(args.map(item => eval_arith(item)))
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      match op {
+        @symcore.RelOp::Eq => @symcore.eq(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Ne => @symcore.ne(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Lt => @symcore.lt(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Le => @symcore.le(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Gt => @symcore.gt(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Ge => @symcore.ge(eval_arith(lhs), eval_arith(rhs))
+      }
+    @symcore.Expr::Derivative(inner, deriv_args) => {
+      let out : Array[@symcore.Expr] = []
+      out.push(eval_arith(inner))
+      for arg in deriv_args {
+        out.push(eval_arith(arg))
+      }
+      @symcore.raw_function("Derivative", out)
+    }
+    @symcore.Expr::Subs(inner, variable, value) =>
+      @symcore.subs_expr(eval_arith(inner), eval_arith(variable), eval_arith(value))
+    @symcore.Expr::Lambda(vars, body) =>
+      @symcore.lambda_expr(eval_arith(vars), eval_arith(body))
     @symcore.Expr::Function(name, args) =>
       @symcore.function(name, args.map(item => eval_arith(item)))
     @symcore.Expr::Add(args) => {

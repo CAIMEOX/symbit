@@ -104,10 +104,7 @@ fn quantum_difference_is_zero(lhs : Expr, rhs : Expr) -> Bool? {
 fn quantum_secondquant_tuple_args(expr : Expr) -> Array[Expr]? {
   match expr {
     Expr::Function(_, args) if args.length() == 1 =>
-      match args[0] {
-        Expr::Function("Tuple", items) => Some(items)
-        _ => None
-      }
+      @symcore.tuple_items(args[0])
     _ => None
   }
 }

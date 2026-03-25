@@ -44,20 +44,20 @@ fn scale_tuple_matrix(
   mat : @symcore.Expr,
   scale : @symcore.Expr,
 ) -> @symcore.Expr {
-  match mat {
-    @symcore.Expr::Function("Tuple", rows) =>
+  match @symcore.tuple_items(mat) {
+    Some(rows) =>
       tuple_expr(
         rows.map(row => {
-          match row {
-            @symcore.Expr::Function("Tuple", cols) =>
+          match @symcore.tuple_items(row) {
+            Some(cols) =>
               tuple_expr(
                 cols.map(col => eval_arith(@symcore.mul([scale, col]))),
               )
-            _ => eval_arith(@symcore.mul([scale, row]))
+            None => eval_arith(@symcore.mul([scale, row]))
           }
         }),
       )
-    _ => eval_arith(@symcore.mul([scale, mat]))
+    None => eval_arith(@symcore.mul([scale, mat]))
   }
 }
 
@@ -175,10 +175,7 @@ fn symbolic_joint_variance(
 
 ///|
 fn query_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
-  match expr {
-    @symcore.Expr::Function("Tuple", items) => Some(items)
-    _ => None
-  }
+  @symcore.tuple_items(expr)
 }
 
 ///|
@@ -202,6 +199,7 @@ fn query_replace_expr(
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_)
+    | @symcore.Expr::Boolean(_)
     | @symcore.Expr::Symbol(_) => expr
     @symcore.Expr::Add(args) =>
       eval_arith(
@@ -221,6 +219,62 @@ fn query_replace_expr(
           query_replace_expr(base, target, replacement),
           query_replace_expr(exp, target, replacement),
         ),
+      )
+    @symcore.Expr::Tuple(args) =>
+      @symcore.tuple_expr(
+        args.map(arg => query_replace_expr(arg, target, replacement)),
+      )
+    @symcore.Expr::Relational(op, lhs, rhs) =>
+      match op {
+        @symcore.RelOp::Eq =>
+          @symcore.eq(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+        @symcore.RelOp::Ne =>
+          @symcore.ne(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+        @symcore.RelOp::Lt =>
+          @symcore.lt(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+        @symcore.RelOp::Le =>
+          @symcore.le(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+        @symcore.RelOp::Gt =>
+          @symcore.gt(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+        @symcore.RelOp::Ge =>
+          @symcore.ge(
+            query_replace_expr(lhs, target, replacement),
+            query_replace_expr(rhs, target, replacement),
+          )
+      }
+    @symcore.Expr::Derivative(inner, deriv_args) => {
+      let out : Array[@symcore.Expr] = []
+      out.push(query_replace_expr(inner, target, replacement))
+      for arg in deriv_args {
+        out.push(query_replace_expr(arg, target, replacement))
+      }
+      @symcore.raw_function("Derivative", out)
+    }
+    @symcore.Expr::Subs(inner, variable, value) =>
+      @symcore.subs_expr(
+        query_replace_expr(inner, target, replacement),
+        query_replace_expr(variable, target, replacement),
+        query_replace_expr(value, target, replacement),
+      )
+    @symcore.Expr::Lambda(vars, body) =>
+      @symcore.lambda_expr(
+        query_replace_expr(vars, target, replacement),
+        query_replace_expr(body, target, replacement),
       )
     @symcore.Expr::Function(name, args) =>
       @symcore.function(
@@ -251,33 +305,36 @@ fn query_lambda_apply(
   args : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
   match template {
-    @symcore.Expr::Function("Lambda", lambda_args) if lambda_args.length() == 2 => {
-      let vars = lambda_args[0]
-      let body = lambda_args[1]
-      match vars {
-        @symcore.Expr::Symbol(v) =>
-          if args.length() == 1 {
-            let env : Map[String, @symcore.Expr] = {}
-            env[v] = args[0]
-            Some(eval_arith(@symcore.subst(body, env)))
-          } else {
-            None
-          }
-        @symcore.Expr::Function("Tuple", vs) =>
-          if vs.length() == args.length() {
-            let mut out = body
-            for i in 0..<vs.length() {
-              out = query_replace_expr(out, vs[i], args[i])
-            }
-            Some(eval_arith(out))
-          } else {
-            None
-          }
-        _ => None
-      }
-    }
     @symcore.Expr::Symbol(name) => Some(@symcore.function(name, args))
-    _ => None
+    _ =>
+      match @symcore.lambda_parts(template) {
+        Some((vars, body)) =>
+          match vars {
+            @symcore.Expr::Symbol(v) =>
+              if args.length() == 1 {
+                let env : Map[String, @symcore.Expr] = {}
+                env[v] = args[0]
+                Some(eval_arith(@symcore.subst(body, env)))
+              } else {
+                None
+              }
+            _ =>
+              match @symcore.tuple_items(vars) {
+                Some(vs) =>
+                  if vs.length() == args.length() {
+                    let mut out = body
+                    for i in 0..<vs.length() {
+                      out = query_replace_expr(out, vs[i], args[i])
+                    }
+                    Some(eval_arith(out))
+                  } else {
+                    None
+                  }
+                None => None
+              }
+          }
+        None => None
+      }
   }
 }
 
@@ -2068,19 +2125,19 @@ fn symbolic_matrix_cdf(
 fn query_lambda_tuple_signature(
   template : @symcore.Expr,
 ) -> (Array[@symcore.Expr], @symcore.Expr)? {
-  match template {
-    @symcore.Expr::Function("Lambda", lambda_args) if lambda_args.length() == 2 =>
-      match lambda_args[0] {
-        @symcore.Expr::Function("Tuple", vars) => {
+  match @symcore.lambda_parts(template) {
+    Some((vars_expr, body)) =>
+      match @symcore.tuple_items(vars_expr) {
+        Some(vars) => {
           for v in vars {
             match v {
               @symcore.Expr::Symbol(_) => ()
               _ => return None
             }
           }
-          Some((vars, lambda_args[1]))
+          Some((vars, body))
         }
-        _ => None
+        None => None
       }
     _ => None
   }

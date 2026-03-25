@@ -107,8 +107,8 @@ fn gate_tuple_expr(items : Array[Int]) -> Expr {
 
 ///|
 fn gate_tuple_ints(expr : Expr) -> Array[Int]? {
-  match expr {
-    Expr::Function("Tuple", args) => {
+  match @symcore.tuple_items(expr) {
+    Some(args) => {
       let out : Array[Int] = []
       for arg in args {
         match arg {
@@ -118,7 +118,7 @@ fn gate_tuple_ints(expr : Expr) -> Array[Int]? {
       }
       Some(out)
     }
-    _ => None
+    None => None
   }
 }
 
@@ -205,13 +205,13 @@ fn gate_matrix_expr(
 ///|
 fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
   fn parse_rows(arg : Expr) -> @symphysics.ExplicitMatrix? {
-    match arg {
-      Expr::Function("Tuple", row_args) => {
+    match @symcore.tuple_items(arg) {
+      Some(row_args) => {
         let rows : Array[Array[Expr]] = []
         for row_arg in row_args {
-          match row_arg {
-            Expr::Function("Tuple", items) => rows.push(items.copy())
-            _ => return None
+          match @symcore.tuple_items(row_arg) {
+            Some(items) => rows.push(items.copy())
+            None => return None
           }
         }
         try @symphysics.explicit_matrix_from_rows(rows) catch {
@@ -220,7 +220,7 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
           matrix => Some(matrix)
         }
       }
-      _ => None
+      None => None
     }
   }
 

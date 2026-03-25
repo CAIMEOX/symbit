@@ -28,12 +28,12 @@ pub enum ExprForm {
 
 ///|
 pub fn true_() -> Expr {
-  symbol("True")
+  Expr::Boolean(true)
 }
 
 ///|
 pub fn false_() -> Expr {
-  symbol("False")
+  Expr::Boolean(false)
 }
 
 ///|
@@ -47,56 +47,52 @@ pub fn bool_expr(value : Bool) -> Expr {
 
 ///|
 pub fn tuple_expr(items : Array[Expr]) -> Expr {
-  raw_function("Tuple", items)
+  Expr::Tuple(items.map(item => item))
 }
 
 ///|
 pub fn eq(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Eq", [lhs, rhs])
+  Expr::Relational(RelOp::Eq, lhs, rhs)
 }
 
 ///|
 pub fn ne(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Ne", [lhs, rhs])
+  Expr::Relational(RelOp::Ne, lhs, rhs)
 }
 
 ///|
 pub fn lt(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Lt", [lhs, rhs])
+  Expr::Relational(RelOp::Lt, lhs, rhs)
 }
 
 ///|
 pub fn le(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Le", [lhs, rhs])
+  Expr::Relational(RelOp::Le, lhs, rhs)
 }
 
 ///|
 pub fn gt(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Gt", [lhs, rhs])
+  Expr::Relational(RelOp::Gt, lhs, rhs)
 }
 
 ///|
 pub fn ge(lhs : Expr, rhs : Expr) -> Expr {
-  raw_function("Ge", [lhs, rhs])
+  Expr::Relational(RelOp::Ge, lhs, rhs)
 }
 
 ///|
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
-  if order == int(1) {
-    raw_function("Derivative", [expr, wrt])
-  } else {
-    raw_function("Derivative", [expr, wrt, order])
-  }
+  Expr::Derivative(expr, [wrt, order])
 }
 
 ///|
 pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
-  raw_function("Subs", [expr, variable, value])
+  Expr::Subs(expr, variable, value)
 }
 
 ///|
 pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
-  raw_function("Lambda", [vars, body])
+  Expr::Lambda(vars, body)
 }
 
 ///|
@@ -105,12 +101,20 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Number(n) => ExprForm::Number(n)
     Expr::Float(f) => ExprForm::Float(f)
     Expr::ComplexFloat(z) => ExprForm::ComplexFloat(z)
+    Expr::Boolean(value) => ExprForm::Boolean(value)
     Expr::Symbol("True") => ExprForm::Boolean(true)
     Expr::Symbol("False") => ExprForm::Boolean(false)
     Expr::Symbol(name) => ExprForm::Symbol(name)
     Expr::Add(args) => ExprForm::Add(args)
     Expr::Mul(args) => ExprForm::Mul(args)
     Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
+    Expr::Tuple(args) => ExprForm::Tuple(args)
+    Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
+    Expr::Derivative(inner, deriv_args) =>
+      ExprForm::Derivative(inner, deriv_args)
+    Expr::Subs(inner, variable, value) =>
+      ExprForm::Subs(inner, variable, value)
+    Expr::Lambda(vars, body) => ExprForm::Lambda(vars, body)
     Expr::Function("Tuple", args) => ExprForm::Tuple(args)
     Expr::Function("Eq", [lhs, rhs]) =>
       ExprForm::Relational(RelOp::Eq, lhs, rhs)

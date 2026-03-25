@@ -7,6 +7,7 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
     @symcore.Expr::Float(value) => sympy_float_obj(value)
     @symcore.Expr::ComplexFloat(value) => sympy_complex_float_obj(value)
     @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
+    @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
     @symcore.Expr::Add(args) => sympy_nary_obj("sympy.Add", args, "0")
     @symcore.Expr::Mul(args) => sympy_nary_obj("sympy.Mul", args, "1")
     @symcore.Expr::Pow(base, exp) => {
@@ -17,6 +18,45 @@ pub fn expr_to_sympy(expr : @symcore.Expr) -> @py.PyObject raise {
         OracleArg::PyObj(exp_obj),
       ])
     }
+    @symcore.Expr::Tuple(args) => {
+      let packed : Array[OracleArg] = []
+      for arg in args {
+        packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+      }
+      sympy_call_obj("sympy.Tuple", packed)
+    }
+    @symcore.Expr::Relational(op, lhs, rhs) => {
+      let path = match op {
+        @symcore.RelOp::Eq => "sympy.Eq"
+        @symcore.RelOp::Ne => "sympy.Ne"
+        @symcore.RelOp::Lt => "sympy.Lt"
+        @symcore.RelOp::Le => "sympy.Le"
+        @symcore.RelOp::Gt => "sympy.Gt"
+        @symcore.RelOp::Ge => "sympy.Ge"
+      }
+      sympy_call_obj(path, [
+        OracleArg::PyObj(expr_to_sympy(lhs)),
+        OracleArg::PyObj(expr_to_sympy(rhs)),
+      ])
+    }
+    @symcore.Expr::Derivative(inner, deriv_args) => {
+      let packed : Array[OracleArg] = [OracleArg::PyObj(expr_to_sympy(inner))]
+      for arg in deriv_args {
+        packed.push(OracleArg::PyObj(expr_to_sympy(arg)))
+      }
+      sympy_call_obj("sympy.Derivative", packed)
+    }
+    @symcore.Expr::Subs(inner, variable, value) =>
+      sympy_call_obj("sympy.Subs", [
+        OracleArg::PyObj(expr_to_sympy(inner)),
+        OracleArg::PyObj(expr_to_sympy(variable)),
+        OracleArg::PyObj(expr_to_sympy(value)),
+      ])
+    @symcore.Expr::Lambda(vars, body) =>
+      sympy_call_obj("sympy.Lambda", [
+        OracleArg::PyObj(expr_to_sympy(vars)),
+        OracleArg::PyObj(expr_to_sympy(body)),
+      ])
     @symcore.Expr::Function(name, args) => sympy_function_obj(name, args)
   }
 }
@@ -59,6 +99,15 @@ pub fn sympy_number_obj(n : @symnum.BigRational) -> @py.PyObject raise {
 ///|
 fn sympy_float_obj(value : @symcore.Float) -> @py.PyObject raise {
   sympy_call_obj("sympy.Float", [OracleArg::Str(value.format())])
+}
+
+///|
+fn sympy_bool_obj(value : Bool) -> @py.PyObject raise {
+  if value {
+    sympy_call_obj("sympy.sympify", [OracleArg::Str("True")])
+  } else {
+    sympy_call_obj("sympy.sympify", [OracleArg::Str("False")])
+  }
 }
 
 ///|

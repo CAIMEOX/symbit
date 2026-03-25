@@ -13,8 +13,8 @@ fn quantum_trace_raw(expr : Expr, indices : Array[Int]) -> Expr {
 
 ///|
 fn trace_indices_from_expr(expr : Expr) -> Array[Int]? {
-  match expr {
-    Expr::Function("Tuple", args) => {
+  match @symcore.tuple_items(expr) {
+    Some(args) => {
       let out : Array[Int] = []
       for arg in args {
         match quantum_integer_value(arg) {
@@ -24,7 +24,7 @@ fn trace_indices_from_expr(expr : Expr) -> Array[Int]? {
       }
       Some(out)
     }
-    _ =>
+    None =>
       match quantum_integer_value(expr) {
         Some(idx) => Some([idx])
         None => None

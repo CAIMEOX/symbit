@@ -126,14 +126,16 @@ fn mech_is_dynamicsymbol(expr : Expr) -> Bool {
     Expr::Function(name, args) if args.length() == 1 &&
       @symcore.compare_expr(args[0], @symvector.dynamicsymbols_t) == 0 =>
       !mech_builtin_function(name)
-    Expr::Function("Derivative", args) if args.length() >= 2 => {
-      let head = args[0]
-      let only_t = args[1:].all(fn(arg) {
-        @symcore.compare_expr(arg, @symvector.dynamicsymbols_t) == 0
-      })
-      only_t && mech_expr_depends_on(head, @symvector.dynamicsymbols_t)
-    }
-    _ => false
+    _ =>
+      match @symcore.derivative_parts(expr) {
+        Some((head, deriv_args)) if deriv_args.length() >= 1 => {
+          let only_t = deriv_args.all(fn(arg) {
+            @symcore.compare_expr(arg, @symvector.dynamicsymbols_t) == 0
+          })
+          only_t && mech_expr_depends_on(head, @symvector.dynamicsymbols_t)
+        }
+        _ => false
+      }
   }
 }
 

@@ -466,10 +466,10 @@ pub fn _linear_eq_to_dict(
   let coeffs : Array[Map[String, Expr]] = Array::new()
   let ind : Array[Expr] = Array::new()
   for eq in eqs {
-    match eq {
-      Expr::Function("Eq", args) if args.length() == 2 => {
-        let (lhs_const, lhs_terms) = lin_eq2dict_impl(args[0], symset)
-        let (rhs_const, rhs_terms) = lin_eq2dict_impl(args[1], symset)
+    match @symcore.relational_parts(eq) {
+      Some((@symcore.RelOp::Eq, lhs, rhs)) => {
+        let (lhs_const, lhs_terms) = lin_eq2dict_impl(lhs, symset)
+        let (rhs_const, rhs_terms) = lin_eq2dict_impl(rhs, symset)
         let merged : Map[String, Expr] = Map::new()
         for sym, coeff in lhs_terms {
           add_linear_coeff(merged, sym, coeff)
@@ -480,8 +480,8 @@ pub fn _linear_eq_to_dict(
         coeffs.push(merged)
         ind.push(lhs_const - rhs_const)
       }
-      Expr::Function("Eq", _) => raise PolyError::NonPolynomial
-      _ => {
+      Some(_) => raise PolyError::NonPolynomial
+      None => {
         let (const_part, terms_part) = lin_eq2dict_impl(eq, symset)
         coeffs.push(terms_part)
         ind.push(const_part)

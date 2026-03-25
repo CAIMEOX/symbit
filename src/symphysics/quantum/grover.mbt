@@ -33,8 +33,8 @@ fn grover_marked_tuple(marked : Array[Int]) -> Expr {
 
 ///|
 fn grover_marked_values(expr : Expr) -> Array[Int]? {
-  match expr {
-    Expr::Function("Tuple", args) => {
+  match @symcore.tuple_items(expr) {
+    Some(args) => {
       let out : Array[Int] = []
       for arg in args {
         match quantum_integer_value(arg) {
@@ -44,7 +44,7 @@ fn grover_marked_values(expr : Expr) -> Array[Int]? {
       }
       Some(out)
     }
-    _ => None
+    None => None
   }
 }
 

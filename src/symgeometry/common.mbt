@@ -245,12 +245,14 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
           _ => None
         }
       }
-    Expr::Function(_, _) =>
+    Expr::Function(_, _) | Expr::Derivative(_, _) | Expr::Subs(_, _, _) =>
       if geo_expr_depends_on(expr, wrt) {
         None
       } else {
         Some([expr, geo_zero(), geo_zero()])
       }
+    Expr::Boolean(_) | Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Lambda(_, _) =>
+      None
   }
 }
 

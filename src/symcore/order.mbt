@@ -4,12 +4,33 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::Pow(_, _) => 0
     Expr::Mul(_) => 1
     Expr::Symbol(_) => 2
-    Expr::Function(_, _) => 3
-    Expr::Add(_) => 4
-    Expr::Number(_) => 5
-    Expr::Float(_) => 6
-    Expr::ComplexFloat(_) => 7
+    Expr::Boolean(_) => 3
+    Expr::Tuple(_) => 4
+    Expr::Relational(_, _, _) => 5
+    Expr::Derivative(_, _) => 6
+    Expr::Subs(_, _, _) => 7
+    Expr::Lambda(_, _) => 8
+    Expr::Function(_, _) => 9
+    Expr::Add(_) => 10
+    Expr::Number(_) => 11
+    Expr::Float(_) => 12
+    Expr::ComplexFloat(_) => 13
   }
+}
+
+///|
+fn compare_relop(a : RelOp, b : RelOp) -> Int {
+  let rank = fn(op : RelOp) -> Int {
+    match op {
+      RelOp::Eq => 0
+      RelOp::Ne => 1
+      RelOp::Lt => 2
+      RelOp::Le => 3
+      RelOp::Gt => 4
+      RelOp::Ge => 5
+    }
+  }
+  cmp_int(rank(a), rank(b))
 }
 
 ///|
@@ -94,6 +115,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::ComplexFloat(zb) => compare_complex_float(za, zb)
         _ => 0
       }
+    Expr::Boolean(ba) =>
+      match b {
+        Expr::Boolean(bb) => cmp_int(if ba { 1 } else { 0 }, if bb { 1 } else { 0 })
+        _ => 0
+      }
     Expr::Symbol(sa) =>
       match b {
         Expr::Symbol(sb) => sa.compare(sb)
@@ -121,6 +147,69 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Add(ys) => compare_arrays(xs, ys)
         _ => 0
       }
+    Expr::Tuple(xs) =>
+      match b {
+        Expr::Tuple(ys) => compare_arrays(xs, ys)
+        _ => 0
+      }
+    Expr::Relational(op_a, lhs_a, rhs_a) =>
+      match b {
+        Expr::Relational(op_b, lhs_b, rhs_b) => {
+          let op_cmp = compare_relop(op_a, op_b)
+          if op_cmp != 0 {
+            op_cmp
+          } else {
+            let lhs_cmp = compare_expr(lhs_a, lhs_b)
+            if lhs_cmp != 0 {
+              lhs_cmp
+            } else {
+              compare_expr(rhs_a, rhs_b)
+            }
+          }
+        }
+        _ => 0
+      }
+    Expr::Derivative(inner_a, deriv_args_a) =>
+      match b {
+        Expr::Derivative(inner_b, deriv_args_b) => {
+          let inner_cmp = compare_expr(inner_a, inner_b)
+          if inner_cmp != 0 {
+            inner_cmp
+          } else {
+            compare_arrays(deriv_args_a, deriv_args_b)
+          }
+        }
+        _ => 0
+      }
+    Expr::Subs(inner_a, variable_a, value_a) =>
+      match b {
+        Expr::Subs(inner_b, variable_b, value_b) => {
+          let inner_cmp = compare_expr(inner_a, inner_b)
+          if inner_cmp != 0 {
+            inner_cmp
+          } else {
+            let variable_cmp = compare_expr(variable_a, variable_b)
+            if variable_cmp != 0 {
+              variable_cmp
+            } else {
+              compare_expr(value_a, value_b)
+            }
+          }
+        }
+        _ => 0
+      }
+    Expr::Lambda(vars_a, body_a) =>
+      match b {
+        Expr::Lambda(vars_b, body_b) => {
+          let vars_cmp = compare_expr(vars_a, vars_b)
+          if vars_cmp != 0 {
+            vars_cmp
+          } else {
+            compare_expr(body_a, body_b)
+          }
+        }
+        _ => 0
+      }
     Expr::Function(name_a, args_a) =>
       match b {
         Expr::Function(name_b, args_b) => {
@@ -139,6 +228,12 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
 ///|
 fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
   match expr {
+    Expr::Boolean(value) =>
+      if value {
+        compare_expr(Expr::Symbol("True"), expr)
+      } else {
+        compare_expr(Expr::Symbol("False"), expr)
+      }
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
     _ => compare_expr(Expr::Symbol(sym_name), expr)
@@ -210,15 +305,36 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       hasher.combine_int(z.precision())
       hasher.combine_string(z.format())
     }
+    Expr::Boolean(value) => hasher.combine_bool(value)
     Expr::Symbol(name) => hasher.combine_string(name)
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)
       exp.hash_combine(hasher)
     }
-    Expr::Mul(args) | Expr::Add(args) =>
+    Expr::Mul(args) | Expr::Add(args) | Expr::Tuple(args) =>
       for child in args {
         child.hash_combine(hasher)
       }
+    Expr::Relational(op, lhs, rhs) => {
+      hasher.combine_int(compare_relop(op, RelOp::Eq))
+      lhs.hash_combine(hasher)
+      rhs.hash_combine(hasher)
+    }
+    Expr::Derivative(inner, deriv_args) => {
+      inner.hash_combine(hasher)
+      for arg in deriv_args {
+        arg.hash_combine(hasher)
+      }
+    }
+    Expr::Subs(inner, variable, value) => {
+      inner.hash_combine(hasher)
+      variable.hash_combine(hasher)
+      value.hash_combine(hasher)
+    }
+    Expr::Lambda(vars, body) => {
+      vars.hash_combine(hasher)
+      body.hash_combine(hasher)
+    }
     Expr::Function(name, args) => {
       hasher.combine_string(name)
       for child in args {

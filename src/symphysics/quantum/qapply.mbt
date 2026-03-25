@@ -57,8 +57,8 @@ fn quantum_qapply_density_expr(
 fn quantum_sum_limits(args : Array[Expr]) -> Array[@symconcrete.LimitSpec]? {
   let limits : Array[@symconcrete.LimitSpec] = []
   for arg in args {
-    match arg {
-      Expr::Function("Tuple", items) =>
+    match @symcore.tuple_items(arg) {
+      Some(items) =>
         match items.length() {
           1 => limits.push(@symconcrete.limit_var(items[0]))
           2 => limits.push(@symconcrete.limit_lower(items[0], items[1]))
@@ -66,7 +66,7 @@ fn quantum_sum_limits(args : Array[Expr]) -> Array[@symconcrete.LimitSpec]? {
             limits.push(@symconcrete.limit_range(items[0], items[1], items[2]))
           _ => return None
         }
-      _ => return None
+      None => return None
     }
   }
   Some(limits)
@@ -107,8 +107,8 @@ fn quantum_single_symbolic_limit(
   limit_args : Array[Expr],
 ) -> (String, Expr, Expr)? {
   guard limit_args.length() == 1 else { return None }
-  match limit_args[0] {
-    Expr::Function("Tuple", items) if items.length() == 3 =>
+  match @symcore.tuple_items(limit_args[0]) {
+    Some(items) if items.length() == 3 =>
       match items[0] {
         Expr::Symbol(name) => Some((name, items[1], items[2]))
         _ => None

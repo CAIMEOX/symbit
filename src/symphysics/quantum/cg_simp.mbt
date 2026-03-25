@@ -4,8 +4,8 @@
 
 ///|
 fn quantum_tuple3(expr : Expr) -> (Expr, Expr, Expr)? {
-  match expr {
-    Expr::Function("Tuple", [a, b, c]) => Some((a, b, c))
+  match @symcore.tuple_items(expr) {
+    Some([a, b, c]) => Some((a, b, c))
     _ => None
   }
 }

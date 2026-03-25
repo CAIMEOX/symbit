@@ -74,6 +74,9 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
           _ => None
         }
       }
+    Expr::Boolean(_) | Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Derivative(_, _) |
+    Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
+      None
   }
 }
 

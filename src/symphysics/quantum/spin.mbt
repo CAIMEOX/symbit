@@ -506,10 +506,7 @@ pub fn m_values(j : Expr) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
 ///|
 fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
   fn parse_tuple_items(expr : Expr) -> Array[Expr]? {
-    match expr {
-      Expr::Function("Tuple", args) => Some(args)
-      _ => None
-    }
+    @symcore.tuple_items(expr)
   }
 
   fn parse_coupling_items(expr : Expr) -> Array[SpinCoupling]? {
@@ -517,8 +514,8 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
       Some(items) => {
         let couplings : Array[SpinCoupling] = []
         for item in items {
-          match item {
-            Expr::Function("Tuple", [left, right, j]) =>
+          match @symcore.tuple_items(item) {
+            Some([left, right, j]) =>
               match
                 (quantum_integer_value(left), quantum_integer_value(right)) {
                 (Some(left_index), Some(right_index)) =>

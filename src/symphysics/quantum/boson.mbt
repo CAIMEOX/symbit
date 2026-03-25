@@ -65,10 +65,7 @@ fn boson_secondquant_tuple_state(
   let expected = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
   match expr {
     Expr::Function(name, args) if name == expected && args.length() == 1 =>
-      match args[0] {
-        Expr::Function("Tuple", items) => Some(items)
-        _ => None
-      }
+      @symcore.tuple_items(args[0])
     _ => None
   }
 }

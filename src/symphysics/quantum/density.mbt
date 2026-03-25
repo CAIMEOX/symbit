@@ -39,8 +39,8 @@ fn density_tuple_expr(term : DensityTerm) -> Expr {
 
 ///|
 fn density_term_from_expr(expr : Expr) -> DensityTerm? {
-  match expr {
-    Expr::Function("Tuple", args) if args.length() == 2 =>
+  match @symcore.tuple_items(expr) {
+    Some(args) if args.length() == 2 =>
       Some(DensityTerm::{ state: args[0], prob: args[1] })
     _ => None
   }

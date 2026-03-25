@@ -253,10 +253,16 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Float(_) => t == "Float" || t == "Number" || t == "Expr"
     Expr::ComplexFloat(_) =>
       t == "ComplexFloat" || t == "Float" || t == "Number" || t == "Expr"
+    Expr::Boolean(_) => t == "Boolean" || t == "Expr"
     Expr::Symbol(_) => t == "Symbol" || t == "Expr"
     Expr::Add(_) => t == "Add" || t == "Expr"
     Expr::Mul(_) => t == "Mul" || t == "Expr"
     Expr::Pow(_, _) => t == "Pow" || t == "Expr"
+    Expr::Tuple(_) => t == "Tuple" || t == "Expr"
+    Expr::Relational(_, _, _) => t == "Relational" || t == "Expr"
+    Expr::Derivative(_, _) => t == "Derivative" || t == "Expr"
+    Expr::Subs(_, _, _) => t == "Subs" || t == "Expr"
+    Expr::Lambda(_, _) => t == "Lambda" || t == "Expr"
     Expr::Function(_, _) => t == "Function" || t == "Expr"
   }
 }
@@ -293,7 +299,11 @@ fn has_attr(expr : Expr, a : String) -> Bool {
 ///|
 fn epath_is_atom(expr : Expr) -> Bool {
   match expr {
-    Expr::Number(_) | Expr::Symbol(_) => true
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::Boolean(_)
+    | Expr::Symbol(_) => true
     _ => false
   }
 }
@@ -301,9 +311,19 @@ fn epath_is_atom(expr : Expr) -> Bool {
 ///|
 fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) | Expr::Function(_, args) =>
       args.map(x => x)
     Expr::Pow(a, b) => [a, b]
+    Expr::Relational(_, lhs, rhs) => [lhs, rhs]
+    Expr::Derivative(inner, deriv_args) => {
+      let out : Array[Expr] = [inner]
+      for arg in deriv_args {
+        out.push(arg)
+      }
+      out
+    }
+    Expr::Subs(inner, variable, value) => [inner, variable, value]
+    Expr::Lambda(vars, body) => [vars, body]
     _ => []
   }
 }
@@ -313,6 +333,38 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
   match expr {
     Expr::Add(_) => @symcore.raw_add(args)
     Expr::Mul(_) => @symcore.raw_mul(args)
+    Expr::Tuple(_) => @symcore.tuple_expr(args)
+    Expr::Relational(op, _, _) =>
+      if args.length() == 2 {
+        match op {
+          @symcore.RelOp::Eq => @symcore.eq(args[0], args[1])
+          @symcore.RelOp::Ne => @symcore.ne(args[0], args[1])
+          @symcore.RelOp::Lt => @symcore.lt(args[0], args[1])
+          @symcore.RelOp::Le => @symcore.le(args[0], args[1])
+          @symcore.RelOp::Gt => @symcore.gt(args[0], args[1])
+          @symcore.RelOp::Ge => @symcore.ge(args[0], args[1])
+        }
+      } else {
+        expr
+      }
+    Expr::Derivative(_, _) =>
+      if args.length() >= 2 {
+        @symcore.raw_function("Derivative", args)
+      } else {
+        expr
+      }
+    Expr::Subs(_, _, _) =>
+      if args.length() == 3 {
+        @symcore.subs_expr(args[0], args[1], args[2])
+      } else {
+        expr
+      }
+    Expr::Lambda(_, _) =>
+      if args.length() == 2 {
+        @symcore.lambda_expr(args[0], args[1])
+      } else {
+        expr
+      }
     Expr::Function(name, _) => @symcore.raw_function(name, args)
     Expr::Pow(_, _) =>
       if args.length() == 2 {

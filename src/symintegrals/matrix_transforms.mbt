@@ -30,12 +30,15 @@ pub fn laplace_transform_matrix_result(
   let mut cond = true_expr()
   let values = mat.applyfunc(fn(cell) {
     match laplace_transform_result(cell, t, s) {
-      @symcore.Expr::Function("Tuple", [value, roc, term_cond]) => {
-        plane = max_expr(plane, roc)
-        cond = and_expr(cond, term_cond)
-        value
-      }
-      other => other
+      expr =>
+        match @symcore.tuple_items(expr) {
+          Some([value, roc, term_cond]) => {
+            plane = max_expr(plane, roc)
+            cond = and_expr(cond, term_cond)
+            value
+          }
+          _ => expr
+        }
     }
   })
   (values, plane, cond)

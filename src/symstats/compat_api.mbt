@@ -123,10 +123,7 @@ fn compat_tuple_expr(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn compat_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
-  match expr {
-    @symcore.Expr::Function("Tuple", items) => Some(items)
-    _ => None
-  }
+  @symcore.tuple_items(expr)
 }
 
 ///|

@@ -155,11 +155,26 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     return @symcore.int(1)
   }
   match expr {
-    Expr::Number(_) | Expr::Float(_) | Expr::ComplexFloat(_) => @symcore.int(0)
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::Boolean(_) => @symcore.int(0)
     Expr::Symbol(_) => @symcore.int(0)
     Expr::Add(args) => diff_add(args, wrt)
     Expr::Mul(args) => diff_mul(args, wrt)
     Expr::Pow(base, exp) => diff_pow(base, exp, wrt)
+    Expr::Tuple(_) | Expr::Relational(_, _, _) | Expr::Subs(_, _, _) | Expr::Lambda(_, _) =>
+      if expr_depends_on(expr, wrt) {
+        derivative_expr(expr, [wrt])
+      } else {
+        @symcore.int(0)
+      }
+    Expr::Derivative(_, _) =>
+      if expr_is_symbol(wrt) {
+        derivative_expr(expr, [wrt])
+      } else {
+        @symcore.int(0)
+      }
     Expr::Function(name, args) =>
       if name == "Derivative" {
         if expr_is_symbol(wrt) {

@@ -81,6 +81,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
       } else {
         None
       }
+    Expr::Boolean(_) => None
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -94,6 +95,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
     Expr::Float(f) =>
       Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
     Expr::ComplexFloat(z) => Some(promote_complex_evalf(z, prec))
+    Expr::Boolean(_) => None
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -652,6 +654,7 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::Number(n) => Expr::Float(float_from_exact_evalf(n, prec))
     Expr::Float(f) => Expr::Float(promote_float_evalf(f, prec))
     Expr::ComplexFloat(z) => Expr::ComplexFloat(promote_complex_evalf(z, prec))
+    Expr::Boolean(_) => expr
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))
@@ -671,6 +674,34 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         None => pow(eval_base, eval_exp)
       }
     }
+    Expr::Tuple(args) => tuple_expr(args.map(arg => evalf_impl(arg, prec)))
+    Expr::Relational(op, lhs, rhs) => {
+      let lhs_eval = evalf_impl(lhs, prec)
+      let rhs_eval = evalf_impl(rhs, prec)
+      match op {
+        RelOp::Eq => eq(lhs_eval, rhs_eval)
+        RelOp::Ne => ne(lhs_eval, rhs_eval)
+        RelOp::Lt => lt(lhs_eval, rhs_eval)
+        RelOp::Le => le(lhs_eval, rhs_eval)
+        RelOp::Gt => gt(lhs_eval, rhs_eval)
+        RelOp::Ge => ge(lhs_eval, rhs_eval)
+      }
+    }
+    Expr::Derivative(inner, deriv_args) => {
+      let out : Array[Expr] = []
+      for arg in deriv_args {
+        out.push(evalf_impl(arg, prec))
+      }
+      Expr::Derivative(evalf_impl(inner, prec), out)
+    }
+    Expr::Subs(inner, variable, value) =>
+      subs_expr(
+        evalf_impl(inner, prec),
+        evalf_impl(variable, prec),
+        evalf_impl(value, prec),
+      )
+    Expr::Lambda(vars, body) =>
+      lambda_expr(evalf_impl(vars, prec), evalf_impl(body, prec))
     Expr::Function(name, args) => {
       let eval_args = args.map(arg => evalf_impl(arg, prec))
       match evalf_nary_function(name, eval_args, prec) {

@@ -327,13 +327,13 @@ fn infer_single_symbol(expr : Expr) -> String? {
 fn parse_limit(limit : Expr) -> LimitSpec? {
   match limit {
     @symcore.Expr::Symbol(name) => Some((name, None, None))
-    @symcore.Expr::Function("Tuple", [@symcore.Expr::Symbol(name)]) =>
-      Some((name, None, None))
-    @symcore.Expr::Function(
-      "Tuple",
-      [@symcore.Expr::Symbol(name), lower, upper]
-    ) => Some((name, Some(lower), Some(upper)))
-    _ => None
+    _ =>
+      match @symcore.tuple_items(limit) {
+        Some([@symcore.Expr::Symbol(name)]) => Some((name, None, None))
+        Some([@symcore.Expr::Symbol(name), lower, upper]) =>
+          Some((name, Some(lower), Some(upper)))
+        _ => None
+      }
   }
 }
 
