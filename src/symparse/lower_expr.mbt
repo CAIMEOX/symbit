@@ -118,6 +118,20 @@ fn lookup_effective_binding(context : ParseContext, name : String) -> Expr? {
 }
 
 ///|
+fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
+  match lookup_effective_binding(context, name) {
+    Some(bound) => bound
+    None =>
+      if context_has_callable_name(context, name) ||
+        context_has_global_callable_name(context, name) {
+        @symcore.undefined_function(name)
+      } else {
+        symbol(name)
+      }
+  }
+}
+
+///|
 fn lookup_callable_target_name(context : ParseContext, name : String) -> String {
   match lookup_binding(context, name) {
     Some(Expr::Symbol(target_name)) =>
@@ -449,10 +463,7 @@ pub fn lower_ast_in(
     Ast::Number(span~, text) => number_from_literal(text, span)
     Ast::Symbol(span~, name) => {
       ignore(span)
-      match lookup_effective_binding(context, name) {
-        Some(bound) => bound
-        None => symbol(name)
-      }
+      lower_symbol_name(context, name)
     }
     Ast::Unary(span~, UnaryOp::Plus, operand) => {
       ignore(span)

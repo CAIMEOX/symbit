@@ -65,6 +65,26 @@ test "pretty printers render dummy and wild names like SymPy" {
 }
 
 ///|
+test "pretty printers distinguish undefined function heads" {
+  let f = @symcore.undefined_function("f")
+  inspect(to_string(f), content="f")
+  inspect(debug_repr(f), content="ufunc:f")
+}
+
+///|
+test "pretty printers render dict containers" {
+  let expr = @symcore.dict_expr([
+    (@symcore.symbol("x"), @symcore.symbol("y")),
+    (@symcore.int(1), @symcore.symbol("z")),
+  ])
+  inspect(
+    debug_repr(expr),
+    content="(call Dict (call Tuple sym:x sym:y) (call Tuple 1 sym:z))",
+  )
+  inspect(to_string(expr), content="{x: y, 1: z}")
+}
+
+///|
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)

@@ -36,6 +36,10 @@ pub fn derivative(Expr, Expr, order? : Expr) -> Expr
 
 pub fn derivative_parts(Expr) -> (Expr, Array[Expr])?
 
+pub fn dict_expr(Array[(Expr, Expr)]) -> Expr
+
+pub fn dict_items(Expr) -> Array[(Expr, Expr)]?
+
 pub fn dummy(name? : String) -> Expr
 
 pub fn dummy_display_name(String) -> String
@@ -128,6 +132,8 @@ pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 
 pub fn raw_add(Array[Expr]) -> Expr
 
+pub fn raw_dict_expr(Array[(Expr, Expr)]) -> Expr
+
 pub fn raw_dummy(String, Int) -> Expr
 
 pub fn raw_function(String, Array[Expr]) -> Expr
@@ -150,11 +156,35 @@ pub fn subst(Expr, Map[String, Expr]) -> Expr
 
 pub fn symbol(String) -> Expr
 
+pub fn sympify(SympifyInput) -> Expr
+
+pub fn sympify_bool_input(Bool) -> SympifyInput
+
+pub fn sympify_complex_float_input(ComplexFloat) -> SympifyInput
+
+pub fn sympify_dict(Array[(SympifyInput, SympifyInput)]) -> Expr
+
+pub fn sympify_expr_input(Expr) -> SympifyInput
+
+pub fn sympify_float_input(Float) -> SympifyInput
+
+pub fn sympify_int_input(Int) -> SympifyInput
+
+pub fn sympify_name(String) -> Expr
+
+pub fn sympify_rational_input(@symnum.BigRational) -> SympifyInput
+
+pub fn sympify_symbol_input(String) -> SympifyInput
+
+pub fn sympify_tuple(Array[SympifyInput]) -> Expr
+
 pub fn true_() -> Expr
 
 pub fn tuple_expr(Array[Expr]) -> Expr
 
 pub fn tuple_items(Expr) -> Array[Expr]?
+
+pub fn undefined_function(String) -> Expr
 
 pub fn wild(String) -> Expr
 
@@ -198,10 +228,12 @@ pub enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  UndefinedFunction(String)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
   Tuple(Array[Expr])
+  Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
   Derivative(Expr, Array[Expr])
   Subs(Expr, Expr, Expr)
@@ -222,11 +254,13 @@ pub enum ExprForm {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
+  UndefinedFunction(String)
   Boolean(Bool)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
   Tuple(Array[Expr])
+  Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
   Derivative(Expr, Array[Expr])
   Subs(Expr, Expr, Expr)
@@ -277,6 +311,18 @@ pub enum RelOp {
   Le
   Gt
   Ge
+}
+
+pub enum SympifyInput {
+  FromExpr(Expr)
+  FromBool(Bool)
+  FromInt(Int)
+  FromRational(@symnum.BigRational)
+  FromFloat(Float)
+  FromComplexFloat(ComplexFloat)
+  SymbolName(String)
+  Tuple(Array[SympifyInput])
+  Dict(Array[(SympifyInput, SympifyInput)])
 }
 
 // Type aliases

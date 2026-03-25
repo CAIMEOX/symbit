@@ -4,7 +4,10 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Number(n) => n.to_string()
     @symcore.ExprForm::Float(f) => f.to_string()
     @symcore.ExprForm::ComplexFloat(z) => z.to_string()
+    @symcore.ExprForm::NumberSymbol(kind) =>
+      "const:\{@symcore.number_symbol_name(kind)}"
     @symcore.ExprForm::Symbol(name) => "sym:\{name}"
+    @symcore.ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
     @symcore.ExprForm::Boolean(true) => "sym:True"
     @symcore.ExprForm::Boolean(false) => "sym:False"
     @symcore.ExprForm::Add(args) => wrap_variadic("+", args)
@@ -12,6 +15,14 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Pow(base, exp) =>
       "(^ \{debug_repr(base)} \{debug_repr(exp)})"
     @symcore.ExprForm::Tuple(args) => wrap_call("Tuple", args)
+    @symcore.ExprForm::Dict(items) => {
+      let args : Array[Expr] = []
+      for item in items {
+        let (key, value) = item
+        args.push(@symcore.tuple_expr([key, value]))
+      }
+      wrap_call("Dict", args)
+    }
     @symcore.ExprForm::Relational(op, lhs, rhs) => {
       let name = match op {
         @symcore.RelOp::Eq => "Eq"
@@ -75,7 +86,9 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       } else {
         "(\{z.to_string()})"
       }
+    @symcore.ExprForm::NumberSymbol(kind) => @symcore.number_symbol_name(kind)
     @symcore.ExprForm::Symbol(name) => name
+    @symcore.ExprForm::UndefinedFunction(name) => name
     @symcore.ExprForm::Boolean(true) => "True"
     @symcore.ExprForm::Boolean(false) => "False"
     @symcore.ExprForm::Add(args) =>
@@ -105,6 +118,15 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Tuple(args) => {
       let rendered = args.map(child => format_expr(child, 0)).join(", ")
       "(\{rendered})"
+    }
+    @symcore.ExprForm::Dict(items) => {
+      let rendered : Array[String] = []
+      for item in items {
+        let (key, value) = item
+        rendered.push("\{format_expr(key, 0)}: \{format_expr(value, 0)}")
+      }
+      let joined = rendered.join(", ")
+      "{\{joined}}"
     }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {

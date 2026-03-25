@@ -20,6 +20,9 @@ pub type ComplexFloat = @symcore.ComplexFloat
 pub type BigRational = @symnum.BigRational
 
 ///|
+pub type SympifyInput = @symcore.SympifyInput
+
+///|
 pub type SimplifyPattern = @symsimplify.SimplifyPattern
 
 ///|
@@ -47,6 +50,36 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 /// Create a wildcard symbol for pattern-style matching.
 pub fn wild(name : String) -> Expr {
   @symcore.wild(name)
+}
+
+///|
+/// Create an undefined function head object.
+pub fn undefined_function(name : String) -> Expr {
+  @symcore.undefined_function(name)
+}
+
+///|
+/// Coerce a symbolic name through the core `sympify` pipeline.
+pub fn sympify_name(name : String) -> Expr {
+  @symcore.sympify_name(name)
+}
+
+///|
+/// Coerce a typed MoonBit payload into a core symbolic expression.
+pub fn sympify(value : SympifyInput) -> Expr {
+  @symcore.sympify(value)
+}
+
+///|
+/// Lift tuple-shaped inputs into a symbolic tuple.
+pub fn sympify_tuple(items : Array[SympifyInput]) -> Expr {
+  @symcore.sympify_tuple(items)
+}
+
+///|
+/// Lift key/value pairs into a symbolic dict container.
+pub fn sympify_dict(items : Array[(SympifyInput, SympifyInput)]) -> Expr {
+  @symcore.sympify_dict(items)
 }
 
 ///|

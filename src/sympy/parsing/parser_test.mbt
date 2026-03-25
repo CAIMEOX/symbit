@@ -204,6 +204,7 @@ test "symparse repeated decimals leading-dot decimals and scientific notation" {
 
 ///|
 test "symparse context overrides implicit multiplication heuristic" {
+  inspect(parse_repr_in_local_context("f"), content="ufunc:f")
   inspect(parse_repr_in_local_context("f(x)"), content="(call f sym:x)")
   inspect(parse_repr_in_local_context("f x"), content="(call f sym:x)")
   inspect(

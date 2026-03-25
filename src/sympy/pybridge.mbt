@@ -21,6 +21,7 @@ fn expr_to_sympy_cached(
     @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
     @symcore.Expr::Wild(name) => sympy_wild_obj(name, wild_cache)
+    @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)
     @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
     @symcore.Expr::Add(args) =>
       sympy_nary_obj("sympy.Add", args, "0", dummy_cache, wild_cache)
@@ -42,6 +43,20 @@ fn expr_to_sympy_cached(
         )
       }
       sympy_call_obj("sympy.Tuple", packed)
+    }
+    @symcore.Expr::Dict(items) => {
+      let packed : Array[OracleArg] = []
+      for item in items {
+        let (key, value) = item
+        let key_obj = expr_to_sympy_cached(key, dummy_cache, wild_cache)
+        let value_obj = expr_to_sympy_cached(value, dummy_cache, wild_cache)
+        let pair = sympy_call_obj("sympy.Tuple", [
+          OracleArg::PyObj(key_obj),
+          OracleArg::PyObj(value_obj),
+        ])
+        packed.push(OracleArg::PyObj(pair))
+      }
+      sympy_call_obj("sympy.Dict", packed)
     }
     @symcore.Expr::Relational(op, lhs, rhs) => {
       let path = match op {
@@ -233,6 +248,11 @@ fn sympy_wild_obj(
       obj
     }
   }
+}
+
+///|
+fn sympy_undefined_function_obj(name : String) -> @py.PyObject raise {
+  sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
 }
 
 ///|

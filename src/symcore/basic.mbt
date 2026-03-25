@@ -29,11 +29,13 @@ pub enum ExprForm {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
+  UndefinedFunction(String)
   Boolean(Bool)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
   Tuple(Array[Expr])
+  Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
   Derivative(Expr, Array[Expr])
   Subs(Expr, Expr, Expr)
@@ -172,6 +174,11 @@ pub fn tuple_expr(items : Array[Expr]) -> Expr {
 }
 
 ///|
+pub fn dict_expr(items : Array[(Expr, Expr)]) -> Expr {
+  Expr::Dict(items.map(item => item))
+}
+
+///|
 pub fn eq(lhs : Expr, rhs : Expr) -> Expr {
   Expr::Relational(RelOp::Eq, lhs, rhs)
 }
@@ -226,6 +233,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Boolean(value) => ExprForm::Boolean(value)
     Expr::Dummy(name, _) => ExprForm::Symbol(dummy_display_name(name))
     Expr::Wild(name) => ExprForm::Symbol(wild_display_name(name))
+    Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
     Expr::Symbol("True") => ExprForm::Boolean(true)
     Expr::Symbol("False") => ExprForm::Boolean(false)
     Expr::Symbol(name) =>
@@ -237,6 +245,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Mul(args) => ExprForm::Mul(args)
     Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
     Expr::Tuple(args) => ExprForm::Tuple(args)
+    Expr::Dict(items) => ExprForm::Dict(items)
     Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
     Expr::Derivative(inner, deriv_args) =>
       ExprForm::Derivative(inner, deriv_args)
@@ -262,6 +271,16 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Function("Subs", [inner, variable, value]) =>
       ExprForm::Subs(inner, variable, value)
     Expr::Function("Lambda", [vars, body]) => ExprForm::Lambda(vars, body)
+    Expr::Function("Dict", args) => {
+      let items : Array[(Expr, Expr)] = []
+      for arg in args {
+        match expr_form(arg) {
+          ExprForm::Tuple([key, value]) => items.push((key, value))
+          _ => return ExprForm::Applied("Dict", args)
+        }
+      }
+      ExprForm::Dict(items)
+    }
     Expr::Function(name, args) => ExprForm::Applied(name, args)
   }
 }
@@ -327,6 +346,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
+    | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => true
     ExprForm::Applied(_, args) => args.is_empty()
     _ => false
@@ -341,12 +361,14 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::ComplexFloat(_) => "ComplexFloat"
     ExprForm::NumberSymbol(kind) => number_symbol_name(kind)
     ExprForm::Symbol(name) => name
+    ExprForm::UndefinedFunction(name) => name
     ExprForm::Boolean(true) => "True"
     ExprForm::Boolean(false) => "False"
     ExprForm::Add(_) => "Add"
     ExprForm::Mul(_) => "Mul"
     ExprForm::Pow(_, _) => "Pow"
     ExprForm::Tuple(_) => "Tuple"
+    ExprForm::Dict(_) => "Dict"
     ExprForm::Relational(op, _, _) =>
       match op {
         RelOp::Eq => "Eq"
@@ -367,6 +389,14 @@ pub fn head_name(expr : Expr) -> String {
 pub fn tuple_items(expr : Expr) -> Array[Expr]? {
   match expr_form(expr) {
     ExprForm::Tuple(items) => Some(items)
+    _ => None
+  }
+}
+
+///|
+pub fn dict_items(expr : Expr) -> Array[(Expr, Expr)]? {
+  match expr_form(expr) {
+    ExprForm::Dict(items) => Some(items)
     _ => None
   }
 }
@@ -423,6 +453,14 @@ pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
 pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
   match expr_form(expr) {
     ExprForm::Tuple(items) => Some(("Tuple", items))
+    ExprForm::Dict(items) => {
+      let args : Array[Expr] = []
+      for item in items {
+        let (key, value) = item
+        args.push(tuple_expr([key, value]))
+      }
+      Some(("Dict", args))
+    }
     ExprForm::Relational(op, lhs, rhs) => {
       let name = match op {
         RelOp::Eq => "Eq"
@@ -457,11 +495,20 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
+    | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => []
     ExprForm::Add(items)
     | ExprForm::Mul(items)
     | ExprForm::Tuple(items)
     | ExprForm::Applied(_, items) => items.copy()
+    ExprForm::Dict(items) => {
+      let out : Array[Expr] = []
+      for item in items {
+        let (key, value) = item
+        out.push(tuple_expr([key, value]))
+      }
+      out
+    }
     ExprForm::Pow(base, exp) => [base, exp]
     ExprForm::Relational(_, lhs, rhs) => [lhs, rhs]
     ExprForm::Derivative(inner, deriv_args) => {
@@ -486,11 +533,23 @@ fn remove_bound_symbol(out : Map[String, Expr], expr : Expr) -> Unit {
       for item in items {
         remove_bound_symbol(out, item)
       }
+    Expr::Dict(items) =>
+      for item in items {
+        let (key, value) = item
+        remove_bound_symbol(out, key)
+        remove_bound_symbol(out, value)
+      }
     _ =>
       match expr_form(expr) {
         ExprForm::Tuple(items) =>
           for item in items {
             remove_bound_symbol(out, item)
+          }
+        ExprForm::Dict(items) =>
+          for item in items {
+            let (key, value) = item
+            remove_bound_symbol(out, key)
+            remove_bound_symbol(out, value)
           }
         _ => ()
       }
@@ -519,6 +578,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::Float(_)
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
+    | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => ()
     ExprForm::Symbol(name) => out.set("sym:\{name}", expr)
     ExprForm::Add(items)
@@ -527,6 +587,12 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::Applied(_, items) =>
       for item in items {
         free_symbol_map(item, out)
+      }
+    ExprForm::Dict(items) =>
+      for item in items {
+        let (key, value) = item
+        free_symbol_map(key, out)
+        free_symbol_map(value, out)
       }
     ExprForm::Pow(base, exp) => {
       free_symbol_map(base, out)

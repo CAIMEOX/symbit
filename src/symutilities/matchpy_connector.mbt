@@ -119,7 +119,9 @@ pub fn get_srepr(expr : Expr) -> String {
         @symcore.ExprForm::Number(_)
         | @symcore.ExprForm::Float(_)
         | @symcore.ExprForm::ComplexFloat(_)
+        | @symcore.ExprForm::NumberSymbol(_)
         | @symcore.ExprForm::Symbol(_)
+        | @symcore.ExprForm::UndefinedFunction(_)
         | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
         @symcore.ExprForm::Add(args) =>
           "Add(" + args.map(get_srepr).join(", ") + ")"
@@ -129,6 +131,16 @@ pub fn get_srepr(expr : Expr) -> String {
           "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
         @symcore.ExprForm::Tuple(args) =>
           "Tuple(" + args.map(get_srepr).join(", ") + ")"
+        @symcore.ExprForm::Dict(items) => {
+          let rendered : Array[String] = []
+          for item in items {
+            let (key, value) = item
+            rendered.push(
+              "Tuple(" + get_srepr(key) + ", " + get_srepr(value) + ")",
+            )
+          }
+          "Dict(" + rendered.join(", ") + ")"
+        }
         @symcore.ExprForm::Relational(_, lhs, rhs) =>
           @symcore.head_name(expr) +
           "(" +

@@ -751,6 +751,7 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => true
     Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => true
+    Expr::UndefinedFunction(_) => false
     Expr::Add(args) | Expr::Mul(args) => {
       for arg in args {
         if !is_rational_form(arg, k_name) {
@@ -763,6 +764,7 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
       e.is_integral() && is_rational_form(base, k_name)
     Expr::Pow(_, _) => false
     Expr::Tuple(_)
+    | Expr::Dict(_)
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)

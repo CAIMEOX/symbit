@@ -213,6 +213,12 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
           simplified.push(kept[idx])
         }
       }
+      Expr::Pow(Expr::Function("sqrt", args), Expr::Number(n)) =>
+        if args.length() == 1 && n.is_integral() && n.numerator().to_int() == 2 {
+          simplified.push(args[0])
+        } else {
+          simplified.push(kept[idx])
+        }
       _ => simplified.push(kept[idx])
     }
   }
@@ -225,7 +231,9 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
     | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::Add(args) =>
       @symcore.add(args.map(wavefunction_simplify_expr))
@@ -235,6 +243,26 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
       let sbase = wavefunction_simplify_expr(base)
       let sexp = wavefunction_simplify_expr(exp)
       match (sbase, sexp) {
+        (Expr::Pow(inner_base, Expr::Number(inner_exp)), Expr::Number(outer_exp)
+        ) =>
+          if inner_exp.is_integral() && outer_exp.is_integral() {
+            @symcore.pow(
+              inner_base,
+              int(
+                inner_exp.numerator().to_int() * outer_exp.numerator().to_int(),
+              ),
+            )
+          } else {
+            @symcore.pow(sbase, sexp)
+          }
+        (Expr::Function("sqrt", args), Expr::Number(e)) =>
+          if args.length() == 1 &&
+            e.is_integral() &&
+            e.numerator().to_int() == 2 {
+            args[0]
+          } else {
+            @symcore.pow(sbase, sexp)
+          }
         (Expr::Number(b), Expr::Number(e)) =>
           if e.is_integral() && e.numerator().to_int() >= 0 {
             @symcore.number(wavefunction_numeric_pow(b, e.numerator().to_int()))
@@ -254,6 +282,16 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
     }
     @symcore.ExprForm::Tuple(args) =>
       @symcore.tuple_expr(args.map(wavefunction_simplify_expr))
+    @symcore.ExprForm::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (wavefunction_simplify_expr(key), wavefunction_simplify_expr(value)),
+        )
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
@@ -595,13 +633,20 @@ pub fn WavefunctionExpr::norm(self : WavefunctionExpr) -> Expr {
 
 ///|
 pub fn WavefunctionExpr::is_normalized(self : WavefunctionExpr) -> Bool {
-  self.norm() == int(1)
+  let simplified_norm = wavefunction_simplify_expr(self.norm())
+  if simplified_norm == int(1) {
+    return true
+  }
+  match wavefunction_norm_sq_of(self) {
+    Some(value) => wavefunction_simplify_expr(value) == int(1)
+    None => false
+  }
 }
 
 ///|
 pub fn WavefunctionExpr::normalize(self : WavefunctionExpr) -> WavefunctionExpr {
-  let norm = self.norm()
-  if norm == int(1) {
+  let norm = wavefunction_simplify_expr(self.norm())
+  if self.is_normalized() {
     return self
   }
   wavefunction(@symcore.raw_pow(norm, int(-1)) * self.expr, self.coords)
@@ -676,7 +721,9 @@ fn quantum_replace_exact(
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
     | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::Add(args) =>
       @symcore.raw_add(
@@ -695,6 +742,19 @@ fn quantum_replace_exact(
       @symcore.tuple_expr(
         args.map(arg => quantum_replace_exact(arg, needle, replacement)),
       )
+    @symcore.ExprForm::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            quantum_replace_exact(key, needle, replacement),
+            quantum_replace_exact(value, needle, replacement),
+          ),
+        )
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
@@ -762,7 +822,9 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
     | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::Add(args) =>
       @symcore.add(args.map(wavefunction_eval_derivatives))
@@ -804,6 +866,19 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
       }
     @symcore.ExprForm::Tuple(args) =>
       @symcore.tuple_expr(args.map(wavefunction_eval_derivatives))
+    @symcore.ExprForm::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            wavefunction_eval_derivatives(key),
+            wavefunction_eval_derivatives(value),
+          ),
+        )
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>

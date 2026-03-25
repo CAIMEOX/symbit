@@ -5,17 +5,19 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::Mul(_) => 1
     Expr::NumberSymbol(_) => 2
     Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 3
-    Expr::Boolean(_) => 4
-    Expr::Tuple(_) => 5
-    Expr::Relational(_, _, _) => 6
-    Expr::Derivative(_, _) => 7
-    Expr::Subs(_, _, _) => 8
-    Expr::Lambda(_, _) => 9
-    Expr::Function(_, _) => 10
-    Expr::Add(_) => 11
-    Expr::Number(_) => 12
-    Expr::Float(_) => 13
-    Expr::ComplexFloat(_) => 14
+    Expr::UndefinedFunction(_) => 4
+    Expr::Boolean(_) => 5
+    Expr::Tuple(_) => 6
+    Expr::Dict(_) => 7
+    Expr::Relational(_, _, _) => 8
+    Expr::Derivative(_, _) => 9
+    Expr::Subs(_, _, _) => 10
+    Expr::Lambda(_, _) => 11
+    Expr::Function(_, _) => 12
+    Expr::Add(_) => 13
+    Expr::Number(_) => 14
+    Expr::Float(_) => 15
+    Expr::ComplexFloat(_) => 16
   }
 }
 
@@ -217,6 +219,17 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Dummy(name_b, _) =>
           wild_display_name(name_a).compare(dummy_display_name(name_b))
         Expr::Wild(name_b) => name_a.compare(name_b)
+        Expr::UndefinedFunction(name_b) =>
+          wild_display_name(name_a).compare(name_b)
+        _ => 0
+      }
+    Expr::UndefinedFunction(name_a) =>
+      match b {
+        Expr::NumberSymbol(nb) => name_a.compare(number_symbol_name(nb))
+        Expr::Symbol(sb) => name_a.compare(sb)
+        Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
+        Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
+        Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
       }
     Expr::Pow(base_a, exp_a) =>
@@ -244,6 +257,11 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Tuple(xs) =>
       match b {
         Expr::Tuple(ys) => compare_arrays(xs, ys)
+        _ => 0
+      }
+    Expr::Dict(xs) =>
+      match b {
+        Expr::Dict(ys) => compare_dict_items(xs, ys)
         _ => 0
       }
     Expr::Relational(op_a, lhs_a, rhs_a) =>
@@ -332,6 +350,7 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
     Expr::Wild(name) => sym_name.compare(wild_display_name(name))
+    Expr::UndefinedFunction(name) => sym_name.compare(name)
     Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
     _ => compare_expr(Expr::Symbol(sym_name), expr)
   }
@@ -351,6 +370,29 @@ fn compare_arrays(xs : Array[Expr], ys : Array[Expr]) -> Int {
     let cmp = compare_expr(xs[i], ys[i])
     if cmp != 0 {
       return cmp
+    }
+  }
+  cmp_int(len_x, len_y)
+}
+
+///|
+fn compare_dict_items(
+  xs : Array[(Expr, Expr)],
+  ys : Array[(Expr, Expr)],
+) -> Int {
+  let len_x = xs.length()
+  let len_y = ys.length()
+  let min_len = if len_x < len_y { len_x } else { len_y }
+  for i in 0..<min_len {
+    let (xk, xv) = xs[i]
+    let (yk, yv) = ys[i]
+    let key_cmp = compare_expr(xk, yk)
+    if key_cmp != 0 {
+      return key_cmp
+    }
+    let value_cmp = compare_expr(xv, yv)
+    if value_cmp != 0 {
+      return value_cmp
     }
   }
   cmp_int(len_x, len_y)
@@ -415,6 +457,7 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       hasher.combine_int(id)
     }
     Expr::Wild(name) => hasher.combine_string(name)
+    Expr::UndefinedFunction(name) => hasher.combine_string(name)
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)
       exp.hash_combine(hasher)
@@ -422,6 +465,12 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     Expr::Mul(args) | Expr::Add(args) | Expr::Tuple(args) =>
       for child in args {
         child.hash_combine(hasher)
+      }
+    Expr::Dict(items) =>
+      for item in items {
+        let (key, value) = item
+        key.hash_combine(hasher)
+        value.hash_combine(hasher)
       }
     Expr::Relational(op, lhs, rhs) => {
       hasher.combine_int(compare_relop(op, RelOp::Eq))

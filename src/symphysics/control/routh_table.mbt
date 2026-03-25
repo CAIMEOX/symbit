@@ -53,7 +53,9 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
     | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::Add(args) => @symcore.add(args.map(control_normalize))
     @symcore.ExprForm::Mul(args) => @symcore.mul(args.map(control_normalize))
@@ -69,15 +71,30 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
         _ => @symcore.pow(base_norm, exp_norm)
       }
     }
-    @symcore.ExprForm::Tuple(args) => @symcore.tuple_expr(args.map(control_normalize))
+    @symcore.ExprForm::Tuple(args) =>
+      @symcore.tuple_expr(args.map(control_normalize))
+    @symcore.ExprForm::Dict(items) => {
+      let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push((control_normalize(key), control_normalize(value)))
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq => @symcore.eq(control_normalize(lhs), control_normalize(rhs))
-        @symcore.RelOp::Ne => @symcore.ne(control_normalize(lhs), control_normalize(rhs))
-        @symcore.RelOp::Lt => @symcore.lt(control_normalize(lhs), control_normalize(rhs))
-        @symcore.RelOp::Le => @symcore.le(control_normalize(lhs), control_normalize(rhs))
-        @symcore.RelOp::Gt => @symcore.gt(control_normalize(lhs), control_normalize(rhs))
-        @symcore.RelOp::Ge => @symcore.ge(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Eq =>
+          @symcore.eq(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Ne =>
+          @symcore.ne(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Lt =>
+          @symcore.lt(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Le =>
+          @symcore.le(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Gt =>
+          @symcore.gt(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Ge =>
+          @symcore.ge(control_normalize(lhs), control_normalize(rhs))
       }
     @symcore.ExprForm::Derivative(inner, deriv_args) => {
       let args : Array[@symcore.Expr] = [control_normalize(inner)]
@@ -116,13 +133,12 @@ fn expr_depends_on(expr : @symcore.Expr, variable : String) -> Bool {
       expr_depends_on(base, variable) || expr_depends_on(exp, variable)
     @symcore.ExprForm::Relational(_, lhs, rhs) =>
       expr_depends_on(lhs, variable) || expr_depends_on(rhs, variable)
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+    @symcore.ExprForm::Derivative(inner, deriv_args) =>
       if expr_depends_on(inner, variable) {
         true
       } else {
         deriv_args.any(arg => expr_depends_on(arg, variable))
       }
-    }
     @symcore.ExprForm::Subs(inner, sub_var, value) =>
       expr_depends_on(inner, variable) ||
       expr_depends_on(sub_var, variable) ||

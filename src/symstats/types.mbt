@@ -344,9 +344,18 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.Expr::Boolean(_)
     | @symcore.Expr::Symbol(_)
     | @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_) => expr
+    | @symcore.Expr::Wild(_)
+    | @symcore.Expr::UndefinedFunction(_) => expr
     @symcore.Expr::Tuple(args) =>
       @symcore.tuple_expr(args.map(item => eval_arith(item)))
+    @symcore.Expr::Dict(items) => {
+      let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push((eval_arith(key), eval_arith(value)))
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq => @symcore.eq(eval_arith(lhs), eval_arith(rhs))

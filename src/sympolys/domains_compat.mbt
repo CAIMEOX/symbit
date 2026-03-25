@@ -1203,7 +1203,7 @@ fn expr_replace_symbol(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => expr
-    Expr::Dummy(_, _) | Expr::Wild(_) => expr
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => expr
     Expr::Symbol(name) => if name == old_name { symbol(new_name) } else { expr }
     Expr::Add(args) =>
       @symcore.add(
@@ -1220,6 +1220,19 @@ fn expr_replace_symbol(
       @symcore.tuple_expr(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
+    Expr::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            expr_replace_symbol(key, old_name, new_name),
+            expr_replace_symbol(value, old_name, new_name),
+          ),
+        )
+      }
+      @symcore.dict_expr(out)
+    }
     Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
@@ -1568,7 +1581,7 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
     | Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) => true
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => true
     Expr::NumberSymbol(kind) =>
       match kind {
         @symcore.NumberSymbolKind::ImaginaryUnit => !allow_i
@@ -1588,6 +1601,12 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     | Expr::Tuple(args)
     | Expr::Function(_, args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
+    Expr::Dict(items) =>
+      items.any(item => {
+        let (key, value) = item
+        expr_has_forbidden_symbol(key, allow_i) ||
+        expr_has_forbidden_symbol(value, allow_i)
+      })
     Expr::Relational(_, lhs, rhs) =>
       expr_has_forbidden_symbol(lhs, allow_i) ||
       expr_has_forbidden_symbol(rhs, allow_i)
@@ -1719,7 +1738,7 @@ fn expr_in_polynomial_domain(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_polynomial_domain(base, gens, item))
@@ -1727,6 +1746,7 @@ fn expr_in_polynomial_domain(
       expr_is_nonnegative_integer(exp) &&
       expr_in_polynomial_domain(base, gens, inner)
     Expr::Tuple(_)
+    | Expr::Dict(_)
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
@@ -1751,13 +1771,14 @@ fn expr_in_fraction_domain(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_fraction_domain(base, gens, item))
     Expr::Pow(inner, exp) =>
       expr_is_integer(exp) && expr_in_fraction_domain(base, gens, inner)
     Expr::Tuple(_)
+    | Expr::Dict(_)
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
@@ -2264,13 +2285,19 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     | Expr::ComplexFloat(_)
     | Expr::Boolean(_) => false
     Expr::NumberSymbol(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) => false
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args)
     | Expr::Mul(args)
     | Expr::Tuple(args)
     | Expr::Function(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
+    Expr::Dict(items) =>
+      items.any(item => {
+        let (key, value) = item
+        expr_depends_on_symbols(key, symbols) ||
+        expr_depends_on_symbols(value, symbols)
+      })
     Expr::Relational(_, lhs, rhs) =>
       expr_depends_on_symbols(lhs, symbols) ||
       expr_depends_on_symbols(rhs, symbols)
@@ -2330,7 +2357,7 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => Some(expr)
-    Expr::Dummy(_, _) | Expr::Wild(_) => Some(expr)
+    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => Some(expr)
     Expr::Symbol(name) =>
       if symbols.contains(name) {
         Some(expr_zero())
@@ -2367,6 +2394,7 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
         None
       }
     Expr::Tuple(_)
+    | Expr::Dict(_)
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)

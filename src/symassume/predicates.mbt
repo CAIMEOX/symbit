@@ -24,12 +24,14 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       tri_of_bool(
         @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag),
       )
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_zero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_zero
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(!value)
     @symcore.ExprForm::Add(args) => add_is_zero(args, env)
     @symcore.ExprForm::Mul(args) => mul_is_zero(args, env)
     @symcore.ExprForm::Pow(base, exp) => pow_is_zero(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_zero("Derivative", @symcore.args(expr), env)
@@ -50,12 +52,14 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       tri_of_bool(
         !(@symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)),
       )
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonzero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonzero
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
     @symcore.ExprForm::Add(args) => add_is_nonzero(args, env)
     @symcore.ExprForm::Mul(args) => mul_is_nonzero(args, env)
     @symcore.ExprForm::Pow(base, exp) => pow_is_nonzero(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::True
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::True
     @symcore.ExprForm::Relational(_, _, _) => Tri::True
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_nonzero("Derivative", @symcore.args(expr), env)
@@ -74,12 +78,14 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::Number(n) => tri_of_bool(n.is_integral())
     @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
       Tri::Unknown
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_integer(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_integer
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_integer(child, env~))
     @symcore.ExprForm::Pow(base, exp) => pow_is_integer(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_integer("Derivative", @symcore.args(expr), env)
@@ -98,12 +104,14 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::Number(_) => Tri::True
     @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
       Tri::Unknown
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_rational(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_rational
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_rational(child, env~))
     @symcore.ExprForm::Pow(base, exp) => pow_is_rational(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_rational("Derivative", @symcore.args(expr), env)
@@ -122,12 +130,14 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
     @symcore.ExprForm::Number(_) | @symcore.ExprForm::Float(_) => Tri::True
     @symcore.ExprForm::ComplexFloat(z) =>
       tri_of_bool(@symnum.is_zero(z.to_mpc().imag))
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_real(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_real
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_real(child, env~))
     @symcore.ExprForm::Pow(base, exp) => pow_is_real(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_real("Derivative", @symcore.args(expr), env)
@@ -151,12 +161,14 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       } else {
         Tri::False
       }
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_positive(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_positive
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
     @symcore.ExprForm::Add(args) => add_is_positive(args, env)
     @symcore.ExprForm::Mul(args) => mul_is_positive(args, env)
     @symcore.ExprForm::Pow(base, exp) => pow_is_positive(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_positive("Derivative", @symcore.args(expr), env)
@@ -182,12 +194,14 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       } else {
         Tri::False
       }
+    @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonnegative(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonnegative
+    @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) => add_is_nonnegative(args, env)
     @symcore.ExprForm::Mul(args) => mul_is_nonnegative(args, env)
     @symcore.ExprForm::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
-    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Tuple(_) | @symcore.ExprForm::Dict(_) => Tri::False
     @symcore.ExprForm::Relational(_, _, _) => Tri::False
     @symcore.ExprForm::Derivative(_, _) =>
       function_is_nonnegative("Derivative", @symcore.args(expr), env)
@@ -753,5 +767,93 @@ fn nonnegative_integer_or_unknown(expr : Expr, env : AssumeEnv) -> Tri {
       } else {
         Tri::False
       }
+  }
+}
+
+///|
+fn number_symbol_is_zero(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    _ => Tri::False
+  }
+}
+
+///|
+fn number_symbol_is_nonzero(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::Pi
+    | @symcore.NumberSymbolKind::Exp1
+    | @symcore.NumberSymbolKind::EulerGamma
+    | @symcore.NumberSymbolKind::GoldenRatio
+    | @symcore.NumberSymbolKind::Catalan
+    | @symcore.NumberSymbolKind::ImaginaryUnit => Tri::True
+    @symcore.NumberSymbolKind::Infinity
+    | @symcore.NumberSymbolKind::NegativeInfinity
+    | @symcore.NumberSymbolKind::ComplexInfinity
+    | @symcore.NumberSymbolKind::NaN => Tri::Unknown
+  }
+}
+
+///|
+fn number_symbol_is_integer(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    _ => Tri::False
+  }
+}
+
+///|
+fn number_symbol_is_rational(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+    _ => Tri::False
+  }
+}
+
+///|
+fn number_symbol_is_real(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::ImaginaryUnit
+    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
+    @symcore.NumberSymbolKind::Pi
+    | @symcore.NumberSymbolKind::Exp1
+    | @symcore.NumberSymbolKind::EulerGamma
+    | @symcore.NumberSymbolKind::GoldenRatio
+    | @symcore.NumberSymbolKind::Catalan
+    | @symcore.NumberSymbolKind::Infinity
+    | @symcore.NumberSymbolKind::NegativeInfinity => Tri::True
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+  }
+}
+
+///|
+fn number_symbol_is_positive(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::Pi
+    | @symcore.NumberSymbolKind::Exp1
+    | @symcore.NumberSymbolKind::EulerGamma
+    | @symcore.NumberSymbolKind::GoldenRatio
+    | @symcore.NumberSymbolKind::Catalan
+    | @symcore.NumberSymbolKind::Infinity => Tri::True
+    @symcore.NumberSymbolKind::ImaginaryUnit
+    | @symcore.NumberSymbolKind::NegativeInfinity
+    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
+  }
+}
+
+///|
+fn number_symbol_is_nonnegative(kind : @symcore.NumberSymbolKind) -> Tri {
+  match kind {
+    @symcore.NumberSymbolKind::Pi
+    | @symcore.NumberSymbolKind::Exp1
+    | @symcore.NumberSymbolKind::EulerGamma
+    | @symcore.NumberSymbolKind::GoldenRatio
+    | @symcore.NumberSymbolKind::Catalan
+    | @symcore.NumberSymbolKind::Infinity => Tri::True
+    @symcore.NumberSymbolKind::ImaginaryUnit
+    | @symcore.NumberSymbolKind::NegativeInfinity
+    | @symcore.NumberSymbolKind::ComplexInfinity => Tri::False
+    @symcore.NumberSymbolKind::NaN => Tri::Unknown
   }
 }

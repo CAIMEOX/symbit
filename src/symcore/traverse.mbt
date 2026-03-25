@@ -5,6 +5,14 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     | Expr::Mul(args)
     | Expr::Tuple(args)
     | Expr::Function(_, args) => args[:]
+    Expr::Dict(items) => {
+      let out : Array[Expr] = []
+      for item in items {
+        let (key, value) = item
+        out.push(tuple_expr([key, value]))
+      }
+      out[:]
+    }
     Expr::Pow(base, exp) => [base, exp][:]
     Expr::Relational(_, lhs, rhs) => [lhs, rhs][:]
     Expr::Derivative(inner, deriv_args) => {
@@ -27,6 +35,14 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Mul(args) => mul(args.map(f))
     Expr::Pow(base, exp) => pow(f(base), f(exp))
     Expr::Tuple(args) => tuple_expr(args.map(f))
+    Expr::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push((f(key), f(value)))
+      }
+      dict_expr(out)
+    }
     Expr::Relational(op, lhs, rhs) =>
       match op {
         RelOp::Eq => eq(f(lhs), f(rhs))
@@ -64,6 +80,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
+    | Expr::UndefinedFunction(_)
     | Expr::Boolean(_) => expr
     _ => map_children(expr, child => subst(child, env))
   }

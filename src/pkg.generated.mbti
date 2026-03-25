@@ -179,6 +179,8 @@ pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
 
 pub fn trpower(@symcore.Expr) -> @symcore.Expr
 
+pub fn undefined_function(String) -> @symcore.Expr
+
 pub fn wild(String) -> @symcore.Expr
 
 pub fn zeros(Int, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError

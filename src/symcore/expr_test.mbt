@@ -125,3 +125,49 @@ test "derivative free symbols remove dummy variables but keep order symbols" {
   assert_true(free.contains(order))
   assert_false(free.contains(d))
 }
+
+///|
+test "undefined function heads are distinct from applied functions" {
+  let f = undefined_function("f")
+  let fx = function("f", [symbol("x")])
+  match expr_form(f) {
+    ExprForm::UndefinedFunction(name) => inspect(name, content="f")
+    _ => fail("expected undefined function head")
+  }
+  inspect(args(f).length(), content="0")
+  inspect(args(fx).length(), content="1")
+  inspect(free_symbols(f).length(), content="0")
+}
+
+///|
+test "dict is a first-class container node" {
+  let d = dict_expr([(symbol("x"), symbol("y")), (int(1), symbol("z"))])
+  match expr_form(d) {
+    ExprForm::Dict(items) => inspect(items.length(), content="2")
+    _ => fail("expected dict form")
+  }
+  inspect(args(d).length(), content="2")
+  match dict_items(d) {
+    Some(items) => {
+      let (_, value) = items[1]
+      inspect(@symprint.to_string(value), content="z")
+    }
+    None => fail("expected dict items")
+  }
+  json_inspect(free_symbols(d).map(@symprint.to_string), content=["x", "y", "z"])
+}
+
+///|
+test "sympify lifts typed tuple and dict inputs" {
+  let expr = sympify_tuple([
+    sympify_int_input(1),
+    sympify_symbol_input("x"),
+    sympify_bool_input(true),
+  ])
+  inspect(@symprint.to_string(expr), content="(1, x, True)")
+  let dict_value = sympify_dict([
+    (sympify_symbol_input("x"), sympify_int_input(2)),
+    (sympify_symbol_input("y"), sympify_expr_input(undefined_function("f"))),
+  ])
+  inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
+}

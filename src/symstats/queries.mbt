@@ -203,7 +203,8 @@ fn query_replace_expr(
     | @symcore.Expr::Boolean(_)
     | @symcore.Expr::Symbol(_)
     | @symcore.Expr::Dummy(_, _)
-    | @symcore.Expr::Wild(_) => expr
+    | @symcore.Expr::Wild(_)
+    | @symcore.Expr::UndefinedFunction(_) => expr
     @symcore.Expr::Add(args) =>
       eval_arith(
         @symcore.add(
@@ -227,6 +228,19 @@ fn query_replace_expr(
       @symcore.tuple_expr(
         args.map(arg => query_replace_expr(arg, target, replacement)),
       )
+    @symcore.Expr::Dict(items) => {
+      let out : Array[(@symcore.Expr, @symcore.Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            query_replace_expr(key, target, replacement),
+            query_replace_expr(value, target, replacement),
+          ),
+        )
+      }
+      @symcore.dict_expr(out)
+    }
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>

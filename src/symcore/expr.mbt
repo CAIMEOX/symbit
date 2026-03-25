@@ -8,10 +8,12 @@ pub enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  UndefinedFunction(String)
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
   Tuple(Array[Expr])
+  Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
   Derivative(Expr, Array[Expr])
   Subs(Expr, Expr, Expr)
@@ -31,6 +33,7 @@ impl Show for Expr with to_string(self) {
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name) => wild_display_name(name)
+    Expr::UndefinedFunction(name) => name
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
     Expr::Mul(args) =>
@@ -39,6 +42,14 @@ impl Show for Expr with to_string(self) {
       "(" + base.to_string() + " ** " + exp.to_string() + ")"
     Expr::Tuple(args) =>
       "Tuple(" + args.map(child => child.to_string()).join(", ") + ")"
+    Expr::Dict(items) => {
+      let rendered : Array[String] = []
+      for item in items {
+        let (key, value) = item
+        rendered.push(key.to_string() + ": " + value.to_string())
+      }
+      "{" + rendered.join(", ") + "}"
+    }
     Expr::Relational(op, lhs, rhs) => {
       let name = match op {
         RelOp::Eq => "Eq"
@@ -166,6 +177,11 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 ///|
 pub fn wild(name : String) -> Expr {
   Expr::Wild(name)
+}
+
+///|
+pub fn undefined_function(name : String) -> Expr {
+  Expr::UndefinedFunction(name)
 }
 
 ///|
@@ -778,6 +794,16 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("Derivative", [expr, wrt, order]) => derivative(expr, wrt, order~)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
+    ("Dict", items) => {
+      let entries : Array[(Expr, Expr)] = []
+      for item in items {
+        match tuple_items(item) {
+          Some([key, value]) => entries.push((key, value))
+          _ => return Expr::Function(name, args.map(child => child))
+        }
+      }
+      dict_expr(entries)
+    }
     _ => Expr::Function(name, args.map(child => child))
   }
 }
@@ -799,6 +825,11 @@ pub fn raw_pow(base : Expr, exp : Expr) -> Expr {
 }
 
 ///|
+pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
+  Expr::Dict(items.map(item => item))
+}
+
+///|
 pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
     ("True", []) => true_()
@@ -814,6 +845,16 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Derivative", [expr, wrt, order]) => Expr::Derivative(expr, [wrt, order])
     ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
     ("Lambda", [vars, body]) => Expr::Lambda(vars, body)
+    ("Dict", items) => {
+      let entries : Array[(Expr, Expr)] = []
+      for item in items {
+        match tuple_items(item) {
+          Some([key, value]) => entries.push((key, value))
+          _ => return Expr::Function(name, args.map(child => child))
+        }
+      }
+      Expr::Dict(entries)
+    }
     _ => Expr::Function(name, args.map(child => child))
   }
 }

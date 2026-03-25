@@ -75,8 +75,10 @@ fn free_symbols(expr : Expr) -> Array[String] {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
     | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Boolean(_) => []
     @symcore.ExprForm::Symbol(name) => [name]
+    @symcore.ExprForm::UndefinedFunction(_) => []
     @symcore.ExprForm::Add(args)
     | @symcore.ExprForm::Mul(args)
     | @symcore.ExprForm::Tuple(args)
@@ -84,6 +86,19 @@ fn free_symbols(expr : Expr) -> Array[String] {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
+          out.push(name)
+        }
+      }
+      sort_unique_symbols(out)
+    }
+    @symcore.ExprForm::Dict(items) => {
+      let out : Array[String] = []
+      for item in items {
+        let (key, value) = item
+        for name in free_symbols(key) {
+          out.push(name)
+        }
+        for name in free_symbols(value) {
           out.push(name)
         }
       }
@@ -183,7 +198,10 @@ fn print_expr_prec(
     @symcore.ExprForm::Float(value) => expr_float_to_code(value)
     @symcore.ExprForm::ComplexFloat(value) =>
       expr_complex_float_to_code(value, language)
+    @symcore.ExprForm::NumberSymbol(kind) =>
+      sanitize_name(@symcore.number_symbol_name(kind), language)
     @symcore.ExprForm::Symbol(name) => sanitize_name(name, language)
+    @symcore.ExprForm::UndefinedFunction(name) => sanitize_name(name, language)
     @symcore.ExprForm::Boolean(true) => "true"
     @symcore.ExprForm::Boolean(false) => "false"
     @symcore.ExprForm::Add(args) => {
@@ -212,6 +230,7 @@ fn print_expr_prec(
     }
     @symcore.ExprForm::Tuple(args) =>
       "(" + args.map(arg => print_expr_prec(arg, language, 0)).join(", ") + ")"
+    @symcore.ExprForm::Dict(_) => print_lambda_like_expr(expr)
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       parenthesize_if_needed(
         print_relational_expr(op, lhs, rhs, language),

@@ -204,12 +204,16 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_) => Some([expr, geo_zero(), geo_zero()])
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) =>
+    Expr::Symbol(_)
+    | Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::UndefinedFunction(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
         Some([geo_zero(), geo_one(), geo_zero()])
       } else {
         Some([expr, geo_zero(), geo_zero()])
       }
+    Expr::Dict(_) => None
     Expr::Add(args) => {
       let mut out = [geo_zero(), geo_zero(), geo_zero()]
       for arg in args {

@@ -447,7 +447,9 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
       } else {
         Some([expr])
       }
-    @symcore.Expr::Dummy(_, _) | @symcore.Expr::Wild(_) => Some([expr])
+    @symcore.Expr::Dummy(_, _)
+    | @symcore.Expr::Wild(_)
+    | @symcore.Expr::UndefinedFunction(_) => Some([expr])
     @symcore.Expr::Add(args) => {
       let acc : Array[Expr] = [expr_zero()]
       for arg in args {
@@ -487,6 +489,7 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
       }
     @symcore.Expr::Boolean(_)
     | @symcore.Expr::Tuple(_)
+    | @symcore.Expr::Dict(_)
     | @symcore.Expr::Relational(_, _, _)
     | @symcore.Expr::Lambda(_, _) => None
   }

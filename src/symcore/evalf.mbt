@@ -84,6 +84,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
     Expr::NumberSymbol(kind) => evalf_number_symbol_constant(kind, prec)
     Expr::Boolean(_) => None
     Expr::Dummy(_, _) | Expr::Wild(_) => None
+    Expr::UndefinedFunction(_) => None
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -108,6 +109,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
       }
     Expr::Boolean(_) => None
     Expr::Dummy(_, _) | Expr::Wild(_) => None
+    Expr::UndefinedFunction(_) => None
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -689,6 +691,7 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       }
     Expr::Boolean(_) => expr
     Expr::Dummy(_, _) | Expr::Wild(_) => expr
+    Expr::UndefinedFunction(_) => expr
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))
@@ -709,6 +712,14 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       }
     }
     Expr::Tuple(args) => tuple_expr(args.map(arg => evalf_impl(arg, prec)))
+    Expr::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push((evalf_impl(key, prec), evalf_impl(value, prec)))
+      }
+      dict_expr(out)
+    }
     Expr::Relational(op, lhs, rhs) => {
       let lhs_eval = evalf_impl(lhs, prec)
       let rhs_eval = evalf_impl(rhs, prec)

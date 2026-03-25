@@ -112,6 +112,30 @@ test "sympy ref: expr_to_sympy dummy and wild" {
 }
 
 ///|
+test "sympy ref: expr_to_sympy undefined function head" {
+  let f = @symcore.undefined_function("f")
+  let f_obj = expr_to_sympy(f)
+  let f_callable = @py.PyCallable::create(f_obj) catch {
+    _ => fail("expected undefined function head to be callable")
+  }
+  let args = @sympy.py_tuple_from_objects([expr_to_sympy(@symcore.symbol("x"))])
+  guard @sympy.py_call_object(f_callable, args, print_err=true) is Some(applied)
+  else {
+    fail("expected undefined function head to apply")
+  }
+  inspect(py_str_obj(objenum_to_obj(applied)), content="f(x)")
+}
+
+///|
+test "sympy ref: expr_to_sympy dict" {
+  let expr = @symcore.dict_expr([
+    (@symcore.symbol("x"), @symcore.symbol("y")),
+    (@symcore.int(1), @symcore.symbol("z")),
+  ])
+  inspect(py_str_obj(expr_to_sympy(expr)), content="{1: z, x: y}")
+}
+
+///|
 test "sympy ref: sympify string" {
   guard @py.pyimport("sympy") is Some(sympy) else { fail("sympy missing") }
   guard sympy.get_attr("sympify") is Some(PyCallable(sympify)) else {
