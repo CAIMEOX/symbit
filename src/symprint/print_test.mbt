@@ -36,6 +36,20 @@ test "pretty to_string wraps complex float leaves inside products" {
 }
 
 ///|
+test "pretty printers understand relational tuple and lambda wrappers" {
+  let rel = @symcore.le(@symcore.symbol("x"), @symcore.int(2))
+  let tup = @symcore.tuple_expr([@symcore.symbol("x"), @symcore.int(2)])
+  let lam = @symcore.lambda_expr(
+    tup,
+    @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
+  )
+  inspect(debug_repr(rel), content="(call Le sym:x 2)")
+  inspect(to_string(rel), content="x <= 2")
+  inspect(to_string(tup), content="(x, 2)")
+  inspect(to_string(lam), content="Lambda((x, 2), x + 1)")
+}
+
+///|
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)

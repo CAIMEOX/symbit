@@ -31,7 +31,7 @@ fn float_promote(value : Float, prec : Int) -> Float {
   } else {
     Float::from_mpf(
       @symnum.mpf_pos(value.to_mpf(), prec, @symnum.round_nearest),
-      prec=prec,
+      prec~,
     )
   }
 }

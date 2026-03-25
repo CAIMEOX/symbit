@@ -32,7 +32,7 @@ fn complex_promote(value : ComplexFloat, prec : Int) -> ComplexFloat {
     ComplexFloat::from_parts(
       @symnum.mpf_pos(value.to_mpc().real, prec, @symnum.round_nearest),
       @symnum.mpf_pos(value.to_mpc().imag, prec, @symnum.round_nearest),
-      prec=prec,
+      prec~,
     )
   }
 }
@@ -52,7 +52,7 @@ pub fn ComplexFloat::from_parts(
   prec? : Int = 53,
 ) -> ComplexFloat {
   let p = complex_float_default_prec(prec)
-  { value: @symnum.make_mpc(real, imag=imag), prec: p }
+  { value: @symnum.make_mpc(real, imag~), prec: p }
 }
 
 ///|
@@ -152,9 +152,7 @@ pub fn ComplexFloat::format(self : ComplexFloat, dps? : Int) -> String {
 }
 
 ///|
-pub fn ComplexFloat::reciprocal(
-  self : ComplexFloat,
-) -> ComplexFloat {
+pub fn ComplexFloat::reciprocal(self : ComplexFloat) -> ComplexFloat {
   ComplexFloat::from_mpc(
     @symnum.mpc_div(
       @symnum.make_mpc(@symnum.fone, imag=@symnum.fzero),

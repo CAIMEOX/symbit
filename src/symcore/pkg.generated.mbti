@@ -2,6 +2,7 @@
 package "CAIMEOX/symbit/symcore"
 
 import {
+  "CAIMEOX/moon_floating/libmp/mpc",
   "CAIMEOX/moon_floating/libmp/mpf",
   "CAIMEOX/symbit/symnum",
   "moonbitlang/core/bigint",
@@ -15,11 +16,27 @@ pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Ar
 
 pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
 
+pub fn args(Expr) -> Array[Expr]
+
+pub fn bool_expr(Bool) -> Expr
+
 pub fn children(Expr) -> ArrayView[Expr]
 
 pub fn compare_expr(Expr, Expr) -> Int
 
+pub fn complex_float(ComplexFloat) -> Expr
+
+pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
+
+pub fn derivative(Expr, Expr, order? : Expr) -> Expr
+
+pub fn eq(Expr, Expr) -> Expr
+
 pub fn evalf(Expr, prec? : Int) -> Expr
+
+pub fn expr_form(Expr) -> ExprForm
+
+pub fn false_() -> Expr
 
 pub fn float(Float) -> Expr
 
@@ -29,13 +46,33 @@ pub fn float_from_exact(@symnum.BigRational, prec? : Int, rnd? : @mpf.RoundMode)
 
 pub fn float_from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Float raise @mpf.MpfError
 
+pub fn free_symbols(Expr) -> Array[Expr]
+
 pub fn function(String, Array[Expr]) -> Expr
 
+pub fn ge(Expr, Expr) -> Expr
+
+pub fn gt(Expr, Expr) -> Expr
+
+pub fn has(Expr, Expr) -> Bool
+
 pub fn int(Int) -> Expr
+
+pub fn is_false(Expr) -> Bool
+
+pub fn is_true(Expr) -> Bool
+
+pub fn lambda_expr(Expr, Expr) -> Expr
+
+pub fn le(Expr, Expr) -> Expr
+
+pub fn lt(Expr, Expr) -> Expr
 
 pub fn map_children(Expr, (Expr) -> Expr) -> Expr
 
 pub fn mul(Array[Expr]) -> Expr
+
+pub fn ne(Expr, Expr) -> Expr
 
 pub fn number(@symnum.BigRational) -> Expr
 
@@ -53,16 +90,45 @@ pub fn raw_pow(Expr, Expr) -> Expr
 
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
+pub fn subs_expr(Expr, Expr, Expr) -> Expr
+
 pub fn subst(Expr, Map[String, Expr]) -> Expr
 
 pub fn symbol(String) -> Expr
 
+pub fn true_() -> Expr
+
+pub fn tuple_expr(Array[Expr]) -> Expr
+
 // Errors
 
 // Types and methods
+pub struct ComplexFloat {
+  value : @mpc.RawMpc
+  prec : Int
+}
+pub fn ComplexFloat::format(Self, dps? : Int) -> String
+pub fn ComplexFloat::from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> Self
+pub fn ComplexFloat::from_mpc(@mpc.RawMpc, prec? : Int) -> Self
+pub fn ComplexFloat::from_parts(@mpf.RawMpf, @mpf.RawMpf, prec? : Int) -> Self
+pub fn ComplexFloat::from_real(Float, imag? : Float) -> Self
+pub fn ComplexFloat::imag_part(Self) -> Float
+pub fn ComplexFloat::is_finite(Self) -> Bool
+pub fn ComplexFloat::precision(Self) -> Int
+pub fn ComplexFloat::real_part(Self) -> Float
+pub fn ComplexFloat::reciprocal(Self) -> Self
+pub fn ComplexFloat::to_mpc(Self) -> @mpc.RawMpc
+pub fn ComplexFloat::to_rational_parts(Self) -> ((@bigint.BigInt, @bigint.BigInt), (@bigint.BigInt, @bigint.BigInt)) raise @mpf.MpfError
+pub impl Add for ComplexFloat
+pub impl Eq for ComplexFloat
+pub impl Mul for ComplexFloat
+pub impl Neg for ComplexFloat
+pub impl Show for ComplexFloat
+
 pub enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
+  ComplexFloat(ComplexFloat)
   Symbol(String)
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -77,6 +143,23 @@ pub impl Hash for Expr
 pub impl Mul for Expr
 pub impl Sub for Expr
 
+pub enum ExprForm {
+  Number(@symnum.BigRational)
+  Float(Float)
+  ComplexFloat(ComplexFloat)
+  Symbol(String)
+  Boolean(Bool)
+  Add(Array[Expr])
+  Mul(Array[Expr])
+  Pow(Expr, Expr)
+  Tuple(Array[Expr])
+  Relational(RelOp, Expr, Expr)
+  Derivative(Expr, Array[Expr])
+  Subs(Expr, Expr, Expr)
+  Lambda(Expr, Expr)
+  Applied(String, Array[Expr])
+}
+
 pub struct Float {
   value : @mpf.RawMpf
   prec : Int
@@ -90,11 +173,24 @@ pub fn Float::from_rational(@bigint.BigInt, @bigint.BigInt, Int, rnd? : @mpf.Rou
 pub fn Float::from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Self raise @mpf.MpfError
 pub fn Float::is_finite(Self) -> Bool
 pub fn Float::precision(Self) -> Int
+pub fn Float::reciprocal(Self) -> Self raise @mpf.MpfError
 pub fn Float::to_double(Self, strict? : Bool, rnd? : @mpf.RoundMode) -> Double raise @mpf.MpfError
 pub fn Float::to_mpf(Self) -> @mpf.RawMpf
 pub fn Float::to_rational(Self) -> (@bigint.BigInt, @bigint.BigInt) raise @mpf.MpfError
+pub impl Add for Float
 pub impl Eq for Float
+pub impl Mul for Float
+pub impl Neg for Float
 pub impl Show for Float
+
+pub enum RelOp {
+  Eq
+  Ne
+  Lt
+  Le
+  Gt
+  Ge
+}
 
 // Type aliases
 

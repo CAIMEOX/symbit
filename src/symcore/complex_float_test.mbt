@@ -13,6 +13,6 @@ test "complex float constructors preserve rational parts" {
 test "complex float formatting keeps cartesian form" {
   let real = Float::from_str("1.25", prec=80) catch { _ => fail("real") }
   let imag = Float::from_str("-0.5", prec=80) catch { _ => fail("imag") }
-  let value = ComplexFloat::from_real(real, imag=imag)
+  let value = ComplexFloat::from_real(real, imag~)
   inspect(value.format(dps=6), content="1.25 - 0.5*I")
 }

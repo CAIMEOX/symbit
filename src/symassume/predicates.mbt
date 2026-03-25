@@ -17,85 +17,186 @@ pub fn ask_predicate(
 
 ///|
 pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(n) => tri_of_bool(n.is_zero())
-    Expr::Symbol(name) => env_get(env, name).is_zero
-    Expr::Add(args) => add_is_zero(args, env)
-    Expr::Mul(args) => mul_is_zero(args, env)
-    Expr::Pow(base, exp) => pow_is_zero(base, exp, env)
-    Expr::Function(name, args) => function_is_zero(name, args, env)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) => tri_of_bool(n.is_zero())
+    @symcore.ExprForm::Float(f) => tri_of_bool(@symnum.is_zero(f.to_mpf()))
+    @symcore.ExprForm::ComplexFloat(z) =>
+      tri_of_bool(
+        @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag),
+      )
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_zero
+    @symcore.ExprForm::Boolean(value) => tri_of_bool(!value)
+    @symcore.ExprForm::Add(args) => add_is_zero(args, env)
+    @symcore.ExprForm::Mul(args) => mul_is_zero(args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_zero(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_zero("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_zero("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_zero("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) => function_is_zero(name, args, env)
   }
 }
 
 ///|
 pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(n) => tri_of_bool(!n.is_zero())
-    Expr::Symbol(name) => env_get(env, name).is_nonzero
-    Expr::Add(args) => add_is_nonzero(args, env)
-    Expr::Mul(args) => mul_is_nonzero(args, env)
-    Expr::Pow(base, exp) => pow_is_nonzero(base, exp, env)
-    Expr::Function(name, args) => function_is_nonzero(name, args, env)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) => tri_of_bool(!n.is_zero())
+    @symcore.ExprForm::Float(f) => tri_of_bool(!@symnum.is_zero(f.to_mpf()))
+    @symcore.ExprForm::ComplexFloat(z) =>
+      tri_of_bool(
+        !(@symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)),
+      )
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonzero
+    @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
+    @symcore.ExprForm::Add(args) => add_is_nonzero(args, env)
+    @symcore.ExprForm::Mul(args) => mul_is_nonzero(args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_nonzero(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::True
+    @symcore.ExprForm::Relational(_, _, _) => Tri::True
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_nonzero("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_nonzero("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_nonzero("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) =>
+      function_is_nonzero(name, args, env)
   }
 }
 
 ///|
 pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(n) => tri_of_bool(n.is_integral())
-    Expr::Symbol(name) => env_get(env, name).is_integer
-    Expr::Add(args) | Expr::Mul(args) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) => tri_of_bool(n.is_integral())
+    @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
+      Tri::Unknown
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_integer
+    @symcore.ExprForm::Boolean(_) => Tri::True
+    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_integer(child, env~))
-    Expr::Pow(base, exp) => pow_is_integer(base, exp, env)
-    Expr::Function(name, args) => function_is_integer(name, args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_integer(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_integer("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_integer("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_integer("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) =>
+      function_is_integer(name, args, env)
   }
 }
 
 ///|
 pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(_) => Tri::True
-    Expr::Symbol(name) => env_get(env, name).is_rational
-    Expr::Add(args) | Expr::Mul(args) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_) => Tri::True
+    @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
+      Tri::Unknown
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_rational
+    @symcore.ExprForm::Boolean(_) => Tri::True
+    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_rational(child, env~))
-    Expr::Pow(base, exp) => pow_is_rational(base, exp, env)
-    Expr::Function(name, args) => function_is_rational(name, args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_rational(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_rational("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_rational("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_rational("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) =>
+      function_is_rational(name, args, env)
   }
 }
 
 ///|
 pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(_) => Tri::True
-    Expr::Symbol(name) => env_get(env, name).is_real
-    Expr::Add(args) | Expr::Mul(args) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_) | @symcore.ExprForm::Float(_) => Tri::True
+    @symcore.ExprForm::ComplexFloat(z) =>
+      tri_of_bool(@symnum.is_zero(z.to_mpc().imag))
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_real
+    @symcore.ExprForm::Boolean(_) => Tri::True
+    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
       all_predicate(args, child => is_real(child, env~))
-    Expr::Pow(base, exp) => pow_is_real(base, exp, env)
-    Expr::Function(name, args) => function_is_real(name, args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_real(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_real("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_real("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_real("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) => function_is_real(name, args, env)
   }
 }
 
 ///|
 pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
-    Expr::Symbol(name) => env_get(env, name).is_positive
-    Expr::Add(args) => add_is_positive(args, env)
-    Expr::Mul(args) => mul_is_positive(args, env)
-    Expr::Pow(base, exp) => pow_is_positive(base, exp, env)
-    Expr::Function(name, args) => function_is_positive(name, args, env)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) =>
+      tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
+    @symcore.ExprForm::Float(f) => tri_of_bool(@symnum.mpf_sign(f.to_mpf()) > 0)
+    @symcore.ExprForm::ComplexFloat(z) =>
+      if @symnum.is_zero(z.to_mpc().imag) {
+        tri_of_bool(@symnum.mpf_sign(z.to_mpc().real) > 0)
+      } else {
+        Tri::False
+      }
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_positive
+    @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
+    @symcore.ExprForm::Add(args) => add_is_positive(args, env)
+    @symcore.ExprForm::Mul(args) => mul_is_positive(args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_positive(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_positive("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_positive("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_positive("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) =>
+      function_is_positive(name, args, env)
   }
 }
 
 ///|
 pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
-  match expr {
-    Expr::Number(n) => tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
-    Expr::Symbol(name) => env_get(env, name).is_nonnegative
-    Expr::Add(args) => add_is_nonnegative(args, env)
-    Expr::Mul(args) => mul_is_nonnegative(args, env)
-    Expr::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
-    Expr::Function(name, args) => function_is_nonnegative(name, args, env)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) =>
+      tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
+    @symcore.ExprForm::Float(f) =>
+      tri_of_bool(@symnum.mpf_sign(f.to_mpf()) >= 0)
+    @symcore.ExprForm::ComplexFloat(z) =>
+      if @symnum.is_zero(z.to_mpc().imag) {
+        tri_of_bool(@symnum.mpf_sign(z.to_mpc().real) >= 0)
+      } else {
+        Tri::False
+      }
+    @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonnegative
+    @symcore.ExprForm::Boolean(_) => Tri::True
+    @symcore.ExprForm::Add(args) => add_is_nonnegative(args, env)
+    @symcore.ExprForm::Mul(args) => mul_is_nonnegative(args, env)
+    @symcore.ExprForm::Pow(base, exp) => pow_is_nonnegative(base, exp, env)
+    @symcore.ExprForm::Tuple(_) => Tri::False
+    @symcore.ExprForm::Relational(_, _, _) => Tri::False
+    @symcore.ExprForm::Derivative(_, _) =>
+      function_is_nonnegative("Derivative", @symcore.args(expr), env)
+    @symcore.ExprForm::Subs(_, _, _) =>
+      function_is_nonnegative("Subs", @symcore.args(expr), env)
+    @symcore.ExprForm::Lambda(_, _) =>
+      function_is_nonnegative("Lambda", @symcore.args(expr), env)
+    @symcore.ExprForm::Applied(name, args) =>
+      function_is_nonnegative(name, args, env)
   }
 }
 

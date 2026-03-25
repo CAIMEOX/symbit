@@ -151,7 +151,7 @@ fn complex_from_exact_unchecked(
   value : @symnum.BigRational,
   prec : Int,
 ) -> ComplexFloat {
-  ComplexFloat::from_exact_parts(value, @symnum.BigRational::zero(), prec=prec)
+  ComplexFloat::from_exact_parts(value, @symnum.BigRational::zero(), prec~)
 }
 
 ///|
@@ -340,7 +340,8 @@ pub fn add(args : Array[Expr]) -> Expr {
   sort_exprs_in_place(flat)
   match complex_sum {
     Some(value) =>
-      if !(@symnum.is_zero(value.to_mpc().real) && @symnum.is_zero(value.to_mpc().imag)) {
+      if !(@symnum.is_zero(value.to_mpc().real) &&
+        @symnum.is_zero(value.to_mpc().imag)) {
         flat.push(Expr::ComplexFloat(value))
       }
     None =>
@@ -405,7 +406,9 @@ pub fn mul(args : Array[Expr]) -> Expr {
               match complex_prod {
                 Some(current) =>
                   if n.is_zero() {
-                    return Expr::ComplexFloat(complex_from_exact_unchecked(n, current.precision()))
+                    return Expr::ComplexFloat(
+                      complex_from_exact_unchecked(n, current.precision()),
+                    )
                   } else {
                     complex_prod = Some(mul_exact_to_complex(current, n))
                   }
@@ -476,7 +479,9 @@ pub fn mul(args : Array[Expr]) -> Expr {
         match complex_prod {
           Some(current) =>
             if n.is_zero() {
-              return Expr::ComplexFloat(complex_from_exact_unchecked(n, current.precision()))
+              return Expr::ComplexFloat(
+                complex_from_exact_unchecked(n, current.precision()),
+              )
             } else {
               complex_prod = Some(mul_exact_to_complex(current, n))
             }
@@ -501,7 +506,8 @@ pub fn mul(args : Array[Expr]) -> Expr {
           return Expr::Float(f)
         } else {
           match complex_prod {
-            Some(current) => complex_prod = Some(mul_float_to_complex(current, f))
+            Some(current) =>
+              complex_prod = Some(mul_float_to_complex(current, f))
             None =>
               match float_prod {
                 Some(current) => float_prod = Some(mul_float(current, f))
@@ -643,7 +649,22 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
-  Expr::Function(name, args.map(child => child))
+  match (name, args) {
+    ("True", []) => true_()
+    ("False", []) => false_()
+    ("Tuple", _) => tuple_expr(args)
+    ("Eq", [lhs, rhs]) => eq(lhs, rhs)
+    ("Ne", [lhs, rhs]) => ne(lhs, rhs)
+    ("Lt", [lhs, rhs]) => lt(lhs, rhs)
+    ("Le", [lhs, rhs]) => le(lhs, rhs)
+    ("Gt", [lhs, rhs]) => gt(lhs, rhs)
+    ("Ge", [lhs, rhs]) => ge(lhs, rhs)
+    ("Derivative", [expr, wrt]) => derivative(expr, wrt)
+    ("Derivative", [expr, wrt, order]) => derivative(expr, wrt, order~)
+    ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
+    ("Lambda", [vars, body]) => lambda_expr(vars, body)
+    _ => Expr::Function(name, args.map(child => child))
+  }
 }
 
 ///|
@@ -664,7 +685,11 @@ pub fn raw_pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
-  Expr::Function(name, args.map(child => child))
+  match (name, args) {
+    ("True", []) => true_()
+    ("False", []) => false_()
+    _ => Expr::Function(name, args.map(child => child))
+  }
 }
 
 ///|

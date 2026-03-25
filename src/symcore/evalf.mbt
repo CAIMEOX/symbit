@@ -20,7 +20,7 @@ fn complex_from_exact_evalf(
   imag : @symnum.BigRational,
   prec : Int,
 ) -> ComplexFloat {
-  ComplexFloat::from_exact_parts(real, imag, prec=prec)
+  ComplexFloat::from_exact_parts(real, imag, prec~)
 }
 
 ///|
@@ -43,19 +43,19 @@ fn promote_complex_evalf(value : ComplexFloat, prec : Int) -> ComplexFloat {
     ComplexFloat::from_parts(
       @symnum.mpf_pos(value.to_mpc().real, prec, @symnum.round_nearest),
       @symnum.mpf_pos(value.to_mpc().imag, prec, @symnum.round_nearest),
-      prec=prec,
+      prec~,
     )
   }
 }
 
 ///|
 fn complex_imag_unit(prec : Int) -> ComplexFloat {
-  ComplexFloat::from_parts(@symnum.fzero, @symnum.fone, prec=prec)
+  ComplexFloat::from_parts(@symnum.fzero, @symnum.fone, prec~)
 }
 
 ///|
 fn expr_from_mpf_evalf(value : @symnum.Mpf, prec : Int) -> Expr {
-  Expr::Float(Float::from_mpf(value, prec=prec))
+  Expr::Float(Float::from_mpf(value, prec~))
 }
 
 ///|
@@ -66,7 +66,7 @@ fn expr_from_mpc_evalf(value : @symnum.Mpc, prec : Int) -> Expr {
       prec,
     )
   } else {
-    Expr::ComplexFloat(ComplexFloat::from_mpc(value, prec=prec))
+    Expr::ComplexFloat(ComplexFloat::from_mpc(value, prec~))
   }
 }
 
@@ -91,7 +91,8 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
   match expr {
     Expr::Number(n) =>
       Some(complex_from_exact_evalf(n, @symnum.BigRational::zero(), prec))
-    Expr::Float(f) => Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
+    Expr::Float(f) =>
+      Some(ComplexFloat::from_real(promote_float_evalf(f, prec)))
     Expr::ComplexFloat(z) => Some(promote_complex_evalf(z, prec))
     Expr::Symbol(name) =>
       if name == "I" {
@@ -187,7 +188,11 @@ fn evalf_numeric_pow_expr(base : Expr, exp : Expr, prec : Int) -> Expr? {
             }
           }
         Ok((num, den)) if num == -1N && den == 2N => {
-          let root = @symnum.mpf_sqrt(base_value.to_mpf(), prec, @symnum.round_nearest) catch {
+          let root = @symnum.mpf_sqrt(
+            base_value.to_mpf(),
+            prec,
+            @symnum.round_nearest,
+          ) catch {
             _ => {
               let base_z = match expr_to_evalf_complex(base, prec) {
                 Some(value) => value
@@ -252,7 +257,8 @@ fn evalf_numeric_pow_expr(base : Expr, exp : Expr, prec : Int) -> Expr? {
         None => return None
       }
       let value = match evalf_integer_exponent(exp, prec) {
-        Some(n) => @symnum.mpc_pow_int(base_z.to_mpc(), n, prec, @symnum.round_nearest)
+        Some(n) =>
+          @symnum.mpc_pow_int(base_z.to_mpc(), n, prec, @symnum.round_nearest)
         None =>
           @symnum.mpc_pow(
             base_z.to_mpc(),
@@ -328,8 +334,20 @@ fn evalf_complex_unary_function(
 ) -> Expr? {
   let z = arg.to_mpc()
   let value = match name {
-    "sqrt" => return Some(expr_from_mpc_evalf(@symnum.mpc_sqrt(z, prec, @symnum.round_nearest), prec))
-    "exp" => return Some(expr_from_mpc_evalf(@symnum.mpc_exp(z, prec, @symnum.round_nearest), prec))
+    "sqrt" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_sqrt(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "exp" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_exp(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
     "log" | "ln" =>
       return Some(
         expr_from_mpc_evalf(
@@ -339,28 +357,148 @@ fn evalf_complex_unary_function(
           prec,
         ),
       )
-    "sin" => return Some(expr_from_mpc_evalf(@symnum.mpc_sin(z, prec, @symnum.round_nearest), prec))
-    "cos" => return Some(expr_from_mpc_evalf(@symnum.mpc_cos(z, prec, @symnum.round_nearest), prec))
-    "tan" => return Some(expr_from_mpc_evalf(@symnum.mpc_tan(z, prec, @symnum.round_nearest), prec))
-    "sinh" => return Some(expr_from_mpc_evalf(@symnum.mpc_sinh(z, prec, @symnum.round_nearest), prec))
-    "cosh" => return Some(expr_from_mpc_evalf(@symnum.mpc_cosh(z, prec, @symnum.round_nearest), prec))
-    "tanh" => return Some(expr_from_mpc_evalf(@symnum.mpc_tanh(z, prec, @symnum.round_nearest), prec))
-    "atan" => return Some(expr_from_mpc_evalf(@symnum.mpc_atan(z, prec, @symnum.round_nearest), prec))
-    "asin" => return Some(expr_from_mpc_evalf(@symnum.mpc_asin(z, prec, @symnum.round_nearest), prec))
-    "acos" => return Some(expr_from_mpc_evalf(@symnum.mpc_acos(z, prec, @symnum.round_nearest), prec))
-    "asinh" => return Some(expr_from_mpc_evalf(@symnum.mpc_asinh(z, prec, @symnum.round_nearest), prec))
-    "acosh" => return Some(expr_from_mpc_evalf(@symnum.mpc_acosh(z, prec, @symnum.round_nearest), prec))
-    "atanh" => return Some(expr_from_mpc_evalf(@symnum.mpc_atanh(z, prec, @symnum.round_nearest), prec))
-    "gamma" => return Some(expr_from_mpc_evalf(@symnum.mpc_gamma(z, prec, @symnum.round_nearest), prec))
-    "loggamma" => return Some(expr_from_mpc_evalf(@symnum.mpc_loggamma(z, prec, @symnum.round_nearest), prec))
-    "zeta" => return Some(expr_from_mpc_evalf(@symnum.mpc_zeta(z, prec, @symnum.round_nearest), prec))
-    "E1" | "e1" => return Some(expr_from_mpc_evalf(@symnum.mpc_e1(z, prec, @symnum.round_nearest), prec))
-    "Ci" | "ci" => return Some(expr_from_mpc_evalf(@symnum.mpc_ci(z, prec, @symnum.round_nearest), prec))
-    "Si" | "si" => return Some(expr_from_mpc_evalf(@symnum.mpc_si(z, prec, @symnum.round_nearest), prec))
+    "sin" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_sin(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "cos" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_cos(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "tan" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_tan(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "sinh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_sinh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "cosh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_cosh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "tanh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_tanh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "atan" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_atan(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "asin" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_asin(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "acos" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_acos(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "asinh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_asinh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "acosh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_acosh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "atanh" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_atanh(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "gamma" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_gamma(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "loggamma" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_loggamma(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "zeta" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_zeta(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "E1" | "e1" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_e1(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "Ci" | "ci" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_ci(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "Si" | "si" =>
+      return Some(
+        expr_from_mpc_evalf(
+          @symnum.mpc_si(z, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
     "Abs" | "abs" => @symnum.mpc_abs(z, prec, @symnum.round_nearest)
     "arg" => @symnum.mpc_arg(z, prec, @symnum.round_nearest)
-    "re" => return Some(expr_from_mpf_evalf(@symnum.mpf_pos(z.real, prec, @symnum.round_nearest), prec))
-    "im" => return Some(expr_from_mpf_evalf(@symnum.mpf_pos(z.imag, prec, @symnum.round_nearest), prec))
+    "re" =>
+      return Some(
+        expr_from_mpf_evalf(
+          @symnum.mpf_pos(z.real, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
+    "im" =>
+      return Some(
+        expr_from_mpf_evalf(
+          @symnum.mpf_pos(z.imag, prec, @symnum.round_nearest),
+          prec,
+        ),
+      )
     "conjugate" | "conj" =>
       return Some(
         expr_from_mpc_evalf(
@@ -392,18 +530,14 @@ fn evalf_binary_function(
       }
       Some(
         expr_from_mpf_evalf(
-          @symnum.mpf_atan2(
-            x.to_mpf(),
-            y.to_mpf(),
-            prec,
-            @symnum.round_nearest,
-          ),
+          @symnum.mpf_atan2(x.to_mpf(), y.to_mpf(), prec, @symnum.round_nearest),
           prec,
         ),
       )
     }
     "log" =>
-      match (expr_to_evalf_float(first, prec), expr_to_evalf_float(second, prec)) {
+      match
+        (expr_to_evalf_float(first, prec), expr_to_evalf_float(second, prec)) {
         (Some(x), Some(y)) => {
           let lx = @symnum.mpf_log(x.to_mpf(), prec, @symnum.round_nearest) catch {
             _ => return None

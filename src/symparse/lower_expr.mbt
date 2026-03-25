@@ -31,10 +31,55 @@ fn make_function(
   args : Array[Expr],
   options : ParseOptions,
 ) -> Expr {
-  if options.evaluate {
-    @symcore.function(name, args)
-  } else {
-    @symcore.raw_function(name, args)
+  match (name, args) {
+    ("Tuple", _) =>
+      if options.evaluate {
+        @symcore.tuple_expr(args)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Eq", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.eq(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Ne", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.ne(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Lt", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.lt(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Le", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.le(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Gt", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.gt(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    ("Ge", [lhs, rhs]) =>
+      if options.evaluate {
+        @symcore.ge(lhs, rhs)
+      } else {
+        @symcore.raw_function(name, args)
+      }
+    _ =>
+      if options.evaluate {
+        @symcore.function(name, args)
+      } else {
+        @symcore.raw_function(name, args)
+      }
   }
 }
 
@@ -97,9 +142,8 @@ fn lookup_callable_target_name(context : ParseContext, name : String) -> String 
 
 ///|
 fn bool_of_expr(expr : Expr) -> Bool? {
-  match expr {
-    Expr::Symbol("True") => Some(true)
-    Expr::Symbol("False") => Some(false)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Boolean(value) => Some(value)
     _ => None
   }
 }
@@ -125,18 +169,6 @@ fn raw_mul_or_identity(args : Array[Expr]) -> Expr {
 ///|
 fn negate_expr(expr : Expr, options : ParseOptions) -> Expr {
   make_mul([int(-1), expr], options)
-}
-
-///|
-fn relation_name(op : CompareOp) -> String {
-  match op {
-    CompareOp::Eq | CompareOp::EqEq => "Eq"
-    CompareOp::Ne => "Ne"
-    CompareOp::Lt => "Lt"
-    CompareOp::Le => "Le"
-    CompareOp::Gt => "Gt"
-    CompareOp::Ge => "Ge"
-  }
 }
 
 ///|
@@ -221,25 +253,25 @@ fn lower_compare_pair(
   let rhs_eval = lower_ast_in(rhs_ast, eval_options, context)
   if op is CompareOp::EqEq {
     if options.evaluate {
-      return bool_expr(lhs_eval == rhs_eval)
+      return @symcore.bool_expr(lhs_eval == rhs_eval)
     } else {
       return make_function("Eq", [lhs, rhs], options)
     }
   }
   if op is CompareOp::Ne {
     if options.evaluate {
-      return bool_expr(lhs_eval != rhs_eval)
+      return @symcore.bool_expr(lhs_eval != rhs_eval)
     } else {
       return make_function("Ne", [lhs, rhs], options)
     }
   }
   if op is CompareOp::Eq {
     if lhs_eval == rhs_eval {
-      return bool_expr(true)
+      return @symcore.bool_expr(true)
     }
     match (lhs_eval, rhs_eval) {
       (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return bool_expr(compare_numeric(op, lhs_num, rhs_num))
+        return @symcore.bool_expr(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
     return make_function("Eq", [lhs, rhs], options)
@@ -247,11 +279,18 @@ fn lower_compare_pair(
   if options.evaluate {
     match (lhs_eval, rhs_eval) {
       (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return bool_expr(compare_numeric(op, lhs_num, rhs_num))
+        return @symcore.bool_expr(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
   }
-  make_function(relation_name(op), [lhs, rhs], options)
+  match op {
+    CompareOp::Lt => make_function("Lt", [lhs, rhs], options)
+    CompareOp::Le => make_function("Le", [lhs, rhs], options)
+    CompareOp::Gt => make_function("Gt", [lhs, rhs], options)
+    CompareOp::Ge => make_function("Ge", [lhs, rhs], options)
+    CompareOp::Eq | CompareOp::EqEq => make_function("Eq", [lhs, rhs], options)
+    CompareOp::Ne => make_function("Ne", [lhs, rhs], options)
+  }
 }
 
 ///|
@@ -398,11 +437,6 @@ fn number_from_literal(
       }
   }
   @symcore.number(value)
-}
-
-///|
-fn bool_expr(value : Bool) -> Expr {
-  symbol(if value { "True" } else { "False" })
 }
 
 ///|

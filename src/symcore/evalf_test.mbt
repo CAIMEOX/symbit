@@ -86,7 +86,10 @@ test "evalf handles complex transcendental functions" {
     _ => fail("expected complex gamma")
   }
 
-  let abs_expr = evalf(function("Abs", [add([int(1), mul([int(2), symbol("I")])])]), prec=100)
+  let abs_expr = evalf(
+    function("Abs", [add([int(1), mul([int(2), symbol("I")])])]),
+    prec=100,
+  )
   match abs_expr {
     Expr::Float(f) => assert_true(f.format(dps=12).has_prefix("2.236067977"))
     _ => fail("expected real abs")
