@@ -18,6 +18,7 @@ test "symcore parity number symbols render as SymPy core singletons" {
 test "symcore parity dummy wild and undefined-function heads" {
   inspect(core_expr_sstr(@symcore.dummy(name="x")), content="_x")
   inspect(core_expr_sstr(@symcore.wild("x")), content="x_")
+  inspect(core_expr_sstr(@symcore.function_head("sin")), content="sin")
   inspect(core_expr_sstr(@symcore.undefined_function("f")), content="f")
   inspect(
     core_expr_sstr(
@@ -210,6 +211,28 @@ test "symcore parity evalf for mod relationals and undefined applications" {
     core_evalf_sstr(@symcore.applied_undefined_function("f", [@symcore.pi()])),
     content="f(pi)",
   )
+}
+
+///|
+test "symcore parity numeric singleton predicates" {
+  assert_true(@symcore.is_number_symbol(@symcore.pi()))
+  assert_true(@symcore.is_number_symbol(@symcore.oo()))
+  assert_true(@symcore.is_infinite(@symcore.oo()))
+  assert_true(@symcore.is_infinite(@symcore.neg_oo()))
+  assert_true(@symcore.is_infinite(@symcore.zoo()))
+  assert_false(@symcore.is_infinite(@symcore.pi()))
+  assert_true(@symcore.is_nan(@symcore.nan_expr()))
+  assert_false(@symcore.is_nan(@symcore.pi()))
+  assert_true(@symcore.is_zero(@symcore.int(0)))
+  assert_true(@symcore.is_one(@symcore.int(1)))
+  assert_true(@symcore.is_finite_number_atom(@symcore.pi()))
+  assert_false(@symcore.is_finite_number_atom(@symcore.oo()))
+  assert_false(@symcore.is_finite_number_atom(@symcore.nan_expr()))
+  assert_true(core_attr_bool(@symcore.oo(), "is_infinite"))
+  assert_true(core_attr_bool(@symcore.nan_expr(), "is_nan"))
+  assert_false(core_attr_bool(@symcore.pi(), "is_infinite"))
+  assert_true(core_attr_bool(@symcore.int(0), "is_zero"))
+  assert_true(core_attr_bool(@symcore.int(1), "is_one"))
 }
 
 ///|

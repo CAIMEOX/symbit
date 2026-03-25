@@ -26,7 +26,9 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       )
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_zero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_zero
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(!value)
     @symcore.ExprForm::Add(args) => add_is_zero(args, env)
@@ -58,7 +60,9 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       )
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonzero(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonzero
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
     @symcore.ExprForm::Add(args) => add_is_nonzero(args, env)
@@ -88,7 +92,9 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       Tri::Unknown
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_integer(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_integer
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
@@ -118,7 +124,9 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       Tri::Unknown
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_rational(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_rational
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
@@ -148,7 +156,9 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       tri_of_bool(@symnum.is_zero(z.to_mpc().imag))
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_real(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_real
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
@@ -183,7 +193,9 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       }
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_positive(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_positive
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(value) => tri_of_bool(value)
     @symcore.ExprForm::Add(args) => add_is_positive(args, env)
@@ -220,7 +232,9 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       }
     @symcore.ExprForm::NumberSymbol(kind) => number_symbol_is_nonnegative(kind)
     @symcore.ExprForm::Symbol(name) => env_get(env, name).is_nonnegative
-    @symcore.ExprForm::Dummy(_, _) | @symcore.ExprForm::Wild(_) => Tri::Unknown
+    @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
+    | @symcore.ExprForm::FunctionHead(_) => Tri::Unknown
     @symcore.ExprForm::UndefinedFunction(_) => Tri::Unknown
     @symcore.ExprForm::Boolean(_) => Tri::True
     @symcore.ExprForm::Add(args) => add_is_nonnegative(args, env)

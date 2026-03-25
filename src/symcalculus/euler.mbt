@@ -163,6 +163,7 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
     | Expr::Wild(_)
+    | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => @symcore.int(0)
     Expr::AppliedUndef(_, args) =>
       if args.any(arg => expr_depends_on(arg, wrt)) {

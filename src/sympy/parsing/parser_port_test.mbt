@@ -109,6 +109,7 @@ test "symparse parity equality and inequality string forms" {
 
 ///|
 test "symparse parity callable context" {
+  assert_sympy_parse_string("sin")
   assert_sympy_parse_matches_in("f", ["f"])
   assert_sympy_parse_matches_in("f(x)", ["f"])
   assert_sympy_parse_matches_in("f x", ["f"])

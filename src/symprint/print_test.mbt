@@ -69,8 +69,11 @@ test "pretty printers render dummy and wild names like SymPy" {
 ///|
 test "pretty printers distinguish undefined function heads" {
   let f = @symcore.undefined_function("f")
+  let sin_head = @symcore.function_head("sin")
   inspect(to_string(f), content="f")
   inspect(debug_repr(f), content="ufunc:f")
+  inspect(to_string(sin_head), content="sin")
+  inspect(debug_repr(sin_head), content="fhead:sin")
 }
 
 ///|

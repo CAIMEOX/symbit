@@ -750,7 +750,8 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => true
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => true
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) | Expr::FunctionHead(_) =>
+      true
     Expr::UndefinedFunction(_) => false
     Expr::AppliedUndef(_, args) => {
       for arg in args {

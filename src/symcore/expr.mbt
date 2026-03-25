@@ -8,6 +8,7 @@ pub enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Add(Array[Expr])
@@ -35,6 +36,7 @@ impl Show for Expr with to_string(self) {
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name) => wild_display_name(name)
+    Expr::FunctionHead(name) => name
     Expr::UndefinedFunction(name) => name
     Expr::AppliedUndef(name, args) =>
       name + "(" + args.map(child => child.to_string()).join(", ") + ")"
@@ -176,6 +178,11 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 ///|
 pub fn wild(name : String) -> Expr {
   Expr::Wild(name)
+}
+
+///|
+pub fn function_head(name : String) -> Expr {
+  Expr::FunctionHead(name)
 }
 
 ///|

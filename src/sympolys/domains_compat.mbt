@@ -1203,7 +1203,10 @@ fn expr_replace_symbol(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => expr
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => expr
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => expr
     Expr::AppliedUndef(name, args) =>
       @symcore.applied_undefined_function(
         name,
@@ -1591,7 +1594,10 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
     | Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => true
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => true
     Expr::AppliedUndef(_, args) =>
       args.any(arg => expr_has_forbidden_symbol(arg, allow_i))
     Expr::NumberSymbol(kind) =>
@@ -1753,7 +1759,10 @@ fn expr_in_polynomial_domain(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => false
     Expr::AppliedUndef(_, _) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
@@ -1788,7 +1797,10 @@ fn expr_in_fraction_domain(
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_) => domain_contains_expr(base, expr)
     Expr::Boolean(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => false
     Expr::AppliedUndef(_, _) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
@@ -2304,7 +2316,10 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     | Expr::ComplexFloat(_)
     | Expr::Boolean(_) => false
     Expr::NumberSymbol(_) => false
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => false
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => false
     Expr::AppliedUndef(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
     Expr::Symbol(name) => symbols.contains(name)
@@ -2381,7 +2396,10 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
     | Expr::Boolean(_) => Some(expr)
-    Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => Some(expr)
+    Expr::Dummy(_, _)
+    | Expr::Wild(_)
+    | Expr::FunctionHead(_)
+    | Expr::UndefinedFunction(_) => Some(expr)
     Expr::AppliedUndef(_, args) =>
       if args.any(item => expr_depends_on_symbols(item, symbols)) {
         None

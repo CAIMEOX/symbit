@@ -204,6 +204,7 @@ fn query_replace_expr(
     | @symcore.Expr::Symbol(_)
     | @symcore.Expr::Dummy(_, _)
     | @symcore.Expr::Wild(_)
+    | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => expr
     @symcore.Expr::AppliedUndef(name, args) =>
       @symcore.applied_undefined_function(

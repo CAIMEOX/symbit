@@ -126,6 +126,20 @@ test "sympy ref: expr_to_sympy undefined function head" {
 }
 
 ///|
+test "sympy ref: expr_to_sympy named function head" {
+  let sin_head = @symcore.function_head("sin")
+  let sin_obj = expr_to_sympy(sin_head)
+  let sin_callable = @py.PyCallable::create(sin_obj) catch {
+    _ => fail("expected named function head to be callable")
+  }
+  let args = @sympy.py_tuple_from_objects([expr_to_sympy(@symcore.symbol("x"))])
+  guard @sympy.py_call_object(sin_callable, args, print_err=true) is Some(applied) else {
+    fail("expected named function head to apply")
+  }
+  inspect(py_str_obj(objenum_to_obj(applied)), content="sin(x)")
+}
+
+///|
 test "sympy ref: expr_to_sympy applied undefined function" {
   let expr = @symcore.applied_undefined_function("f", [@symcore.symbol("x")])
   inspect(py_str_obj(expr_to_sympy(expr)), content="f(x)")

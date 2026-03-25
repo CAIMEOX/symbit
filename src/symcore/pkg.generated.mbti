@@ -28,6 +28,8 @@ pub fn bool_expr(Bool) -> Expr
 
 pub fn bool_value(Expr) -> Bool?
 
+pub fn canonical_derivative_args(ArrayView[Expr]) -> Array[Expr]
+
 pub fn catalan() -> Expr
 
 pub fn children(Expr) -> ArrayView[Expr]
@@ -76,6 +78,10 @@ pub fn free_symbols(Expr) -> Array[Expr]
 
 pub fn function(String, Array[Expr]) -> Expr
 
+pub fn function_head(String) -> Expr
+
+pub fn function_head_name(Expr) -> String?
+
 pub fn ge(Expr, Expr) -> Expr
 
 pub fn golden_ratio() -> Expr
@@ -96,11 +102,25 @@ pub fn is_complex_number_atom(Expr) -> Bool
 
 pub fn is_false(Expr) -> Bool
 
+pub fn is_finite_number_atom(Expr) -> Bool
+
+pub fn is_function_head(Expr) -> Bool
+
+pub fn is_infinite(Expr) -> Bool
+
+pub fn is_nan(Expr) -> Bool
+
 pub fn is_number_atom(Expr) -> Bool
+
+pub fn is_number_symbol(Expr) -> Bool
+
+pub fn is_one(Expr) -> Bool
 
 pub fn is_real_number_atom(Expr) -> Bool
 
 pub fn is_true(Expr) -> Bool
+
+pub fn is_zero(Expr) -> Bool
 
 pub fn lambda_expr(Expr, Expr) -> Expr
 
@@ -250,6 +270,7 @@ pub enum Expr {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Add(Array[Expr])
@@ -280,6 +301,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Boolean(Bool)

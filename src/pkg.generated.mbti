@@ -11,6 +11,8 @@ import {
 // Values
 pub fn add(Array[@symcore.Expr]) -> @symcore.Expr
 
+pub fn applied_undefined_function(String, Array[@symcore.Expr]) -> @symcore.Expr
+
 pub fn apply_at_level(@symcore.Expr, (@symcore.Expr) -> @symcore.Expr, level? : Int) -> @symcore.Expr
 
 pub fn besselsimp(@symcore.Expr) -> @symcore.Expr
@@ -58,6 +60,8 @@ pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 pub fn fraction_expand(@symcore.Expr) -> @symcore.Expr
 
 pub fn fu(@symcore.Expr) -> @symcore.Expr
+
+pub fn function_head(String) -> @symcore.Expr
 
 pub fn futrig(@symcore.Expr) -> @symcore.Expr
 
@@ -126,6 +130,14 @@ pub fn sub_post(@symcore.Expr) -> @symcore.Expr
 pub fn sub_pre(@symcore.Expr) -> @symcore.Expr
 
 pub fn symbol(String) -> @symcore.Expr
+
+pub fn sympify(@symcore.SympifyInput) -> @symcore.Expr
+
+pub fn sympify_dict(Array[(@symcore.SympifyInput, @symcore.SympifyInput)]) -> @symcore.Expr
+
+pub fn sympify_name(String) -> @symcore.Expr
+
+pub fn sympify_tuple(Array[@symcore.SympifyInput]) -> @symcore.Expr
 
 pub fn to_string(@symcore.Expr) -> String
 
@@ -211,6 +223,8 @@ pub using @symsimplify {type SimplifyPattern}
 pub using @symsimplify {type SimplifyPlan}
 
 pub using @symmatrices {type SparseMatrix}
+
+pub using @symcore {type SympifyInput}
 
 // Traits
 

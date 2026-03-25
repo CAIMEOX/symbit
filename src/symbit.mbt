@@ -53,6 +53,12 @@ pub fn wild(name : String) -> Expr {
 }
 
 ///|
+/// Create a first-class named function head for builtins like `sin` or `exp`.
+pub fn function_head(name : String) -> Expr {
+  @symcore.function_head(name)
+}
+
+///|
 /// Create an undefined function head object.
 pub fn undefined_function(name : String) -> Expr {
   @symcore.undefined_function(name)

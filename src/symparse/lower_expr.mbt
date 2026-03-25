@@ -92,6 +92,7 @@ fn make_application(
   match callee {
     @symcore.Expr::UndefinedFunction(name) =>
       @symcore.applied_undefined_function(name, args)
+    @symcore.Expr::FunctionHead(name) => make_function(name, args, options)
     @symcore.Expr::Symbol(name) => make_function(name, args, options)
     _ =>
       raise ParseError::UnsupportedConstruct(
@@ -143,6 +144,8 @@ fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
         @symcore.undefined_function(name)
+      } else if is_builtin_callable_name(name) {
+        @symcore.function_head(name)
       } else {
         symbol(name)
       }

@@ -257,6 +257,9 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Boolean(_) => t == "Boolean" || t == "Expr"
     Expr::Dummy(_, _) => t == "Dummy" || t == "Symbol" || t == "Expr"
     Expr::Wild(_) => t == "Wild" || t == "Symbol" || t == "Expr"
+    Expr::FunctionHead(_) =>
+      t == "FunctionHead" || t == "UndefinedFunction" || t == "Function" ||
+      t == "Expr"
     Expr::UndefinedFunction(_) =>
       t == "UndefinedFunction" || t == "Function" || t == "Expr"
     Expr::AppliedUndef(_, _) =>

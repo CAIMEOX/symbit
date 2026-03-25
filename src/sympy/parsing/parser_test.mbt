@@ -179,6 +179,7 @@ test "symparse relation chains follow python truthiness at evaluate=true" {
 
 ///|
 test "symparse default parser matches sympy callable heuristic" {
+  inspect(parse_repr("sin"), content="fhead:sin")
   inspect(parse_repr("f(x)"), content="(* sym:f sym:x)")
   inspect(parse_repr("f x"), content="(* sym:f sym:x)")
 }

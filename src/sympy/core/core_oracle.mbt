@@ -69,6 +69,27 @@ pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn core_attr_bool(expr : @symcore.Expr, attr : String) -> Bool raise {
+  let expr_obj = @sympy.expr_to_sympy(expr)
+  if attr == "is_nan" {
+    let globals = @py.PyDict::new()
+    globals.set("expr", expr_obj)
+    return py_str_obj(core_eval_with_globals("expr is sympy.nan", globals)) ==
+      "True"
+  }
+  if attr == "is_one" {
+    let globals = @py.PyDict::new()
+    globals.set("expr", expr_obj)
+    return py_str_obj(core_eval_with_globals("expr == sympy.Integer(1)", globals)) ==
+      "True"
+  }
+  match expr_obj.get_attr(attr, print_err=true) {
+    Some(value) => py_str_obj(objenum_to_obj(value)) == "True"
+    None => fail("sympy-attr-missing:\{attr}")
+  }
+}
+
+///|
 fn core_eval_with_globals(
   code : String,
   globals : @py.PyDict,

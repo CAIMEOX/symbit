@@ -97,6 +97,7 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Lambda(vars, body) => lambda_expr(f(vars), f(body))
     Expr::AppliedUndef(name, args) =>
       applied_undefined_function(name, args.map(f))
+    Expr::FunctionHead(name) => function_head(name)
     Expr::Function(name, args) => function(name, args.map(f))
     _ => expr
   }
@@ -297,6 +298,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
     | Expr::NumberSymbol(_)
+    | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_)
     | Expr::Boolean(_) => expr
     Expr::AppliedUndef(name, args) =>

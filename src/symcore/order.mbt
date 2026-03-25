@@ -3,24 +3,25 @@ fn variant_rank(expr : Expr) -> Int {
   match expr {
     Expr::Pow(_, _) => 0
     Expr::Mul(_) => 1
-    Expr::UndefinedFunction(_) => 2
-    Expr::Dummy(_, _) | Expr::Wild(_) => 3
-    Expr::NumberSymbol(_) => 4
-    Expr::Symbol(_) => 5
-    Expr::AppliedUndef(_, _) => 6
-    Expr::Function(_, _) => 7
-    Expr::Mod(_, _) => 8
-    Expr::Boolean(_) => 9
-    Expr::Tuple(_) => 10
-    Expr::Dict(_) => 11
-    Expr::Relational(_, _, _) => 12
-    Expr::Derivative(_, _) => 13
-    Expr::Subs(_, _, _) => 14
-    Expr::Lambda(_, _) => 15
-    Expr::Add(_) => 16
-    Expr::Number(_) => 17
-    Expr::Float(_) => 18
-    Expr::ComplexFloat(_) => 19
+    Expr::FunctionHead(_) => 2
+    Expr::UndefinedFunction(_) => 3
+    Expr::Dummy(_, _) | Expr::Wild(_) => 4
+    Expr::NumberSymbol(_) => 5
+    Expr::Symbol(_) => 6
+    Expr::AppliedUndef(_, _) => 7
+    Expr::Function(_, _) => 8
+    Expr::Mod(_, _) => 9
+    Expr::Boolean(_) => 10
+    Expr::Tuple(_) => 11
+    Expr::Dict(_) => 12
+    Expr::Relational(_, _, _) => 13
+    Expr::Derivative(_, _) => 14
+    Expr::Subs(_, _, _) => 15
+    Expr::Lambda(_, _) => 16
+    Expr::Add(_) => 17
+    Expr::Number(_) => 18
+    Expr::Float(_) => 19
+    Expr::ComplexFloat(_) => 20
   }
 }
 
@@ -222,8 +223,19 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Dummy(name_b, _) =>
           wild_display_name(name_a).compare(dummy_display_name(name_b))
         Expr::Wild(name_b) => name_a.compare(name_b)
+        Expr::FunctionHead(name_b) => wild_display_name(name_a).compare(name_b)
         Expr::UndefinedFunction(name_b) =>
           wild_display_name(name_a).compare(name_b)
+        _ => 0
+      }
+    Expr::FunctionHead(name_a) =>
+      match b {
+        Expr::NumberSymbol(nb) => name_a.compare(number_symbol_name(nb))
+        Expr::Symbol(sb) => name_a.compare(sb)
+        Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
+        Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
+        Expr::FunctionHead(name_b) => name_a.compare(name_b)
+        Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
       }
     Expr::UndefinedFunction(name_a) =>
@@ -232,6 +244,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::Symbol(sb) => name_a.compare(sb)
         Expr::Dummy(name_b, _) => name_a.compare(dummy_display_name(name_b))
         Expr::Wild(name_b) => name_a.compare(wild_display_name(name_b))
+        Expr::FunctionHead(name_b) => name_a.compare(name_b)
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
       }
@@ -377,6 +390,7 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
     Expr::Wild(name) => sym_name.compare(wild_display_name(name))
+    Expr::FunctionHead(name) => sym_name.compare(name)
     Expr::UndefinedFunction(name) => sym_name.compare(name)
     Expr::AppliedUndef(name, args) => {
       let name_cmp = sym_name.compare(name)
@@ -492,6 +506,7 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       hasher.combine_int(id)
     }
     Expr::Wild(name) => hasher.combine_string(name)
+    Expr::FunctionHead(name) => hasher.combine_string(name)
     Expr::UndefinedFunction(name) => hasher.combine_string(name)
     Expr::AppliedUndef(name, args) => {
       hasher.combine_string(name)

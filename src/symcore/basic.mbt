@@ -31,6 +31,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Boolean(Bool)
@@ -289,6 +290,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Boolean(value) => ExprForm::Boolean(value)
     Expr::Dummy(name, id) => ExprForm::Dummy(name, id)
     Expr::Wild(name) => ExprForm::Wild(name)
+    Expr::FunctionHead(name) => ExprForm::FunctionHead(name)
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
     Expr::AppliedUndef(name, args) => ExprForm::AppliedUndef(name, args)
     Expr::Symbol(name) => ExprForm::Symbol(name)
@@ -382,6 +384,72 @@ pub fn number_symbol_kind(expr : Expr) -> NumberSymbolKind? {
 }
 
 ///|
+pub fn is_number_symbol(expr : Expr) -> Bool {
+  match number_symbol_kind(expr) {
+    Some(_) => true
+    None => false
+  }
+}
+
+///|
+pub fn is_infinite(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::NumberSymbol(NumberSymbolKind::Infinity)
+    | ExprForm::NumberSymbol(NumberSymbolKind::NegativeInfinity)
+    | ExprForm::NumberSymbol(NumberSymbolKind::ComplexInfinity) => true
+    _ => false
+  }
+}
+
+///|
+pub fn is_nan(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::NumberSymbol(NumberSymbolKind::NaN) => true
+    _ => false
+  }
+}
+
+///|
+pub fn is_zero(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(n) => n.is_zero()
+    ExprForm::Float(f) => @symnum.is_zero(f.to_mpf())
+    ExprForm::ComplexFloat(z) =>
+      @symnum.is_zero(z.to_mpc().real) && @symnum.is_zero(z.to_mpc().imag)
+    _ => false
+  }
+}
+
+///|
+pub fn is_one(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(n) => n.is_one()
+    ExprForm::Float(f) => @symnum.mpf_cmp(
+        f.to_mpf(),
+        Float::from_int(1, prec=f.precision()).to_mpf(),
+      ) == 0
+    ExprForm::ComplexFloat(z) =>
+      @symnum.mpf_cmp(
+        z.to_mpc().real,
+        Float::from_int(1, prec=z.precision()).to_mpf(),
+      ) == 0 &&
+      @symnum.is_zero(z.to_mpc().imag)
+    _ => false
+  }
+}
+
+///|
+pub fn is_finite_number_atom(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(_) => true
+    ExprForm::Float(f) => f.is_finite()
+    ExprForm::ComplexFloat(z) => z.is_finite()
+    ExprForm::NumberSymbol(_) => !is_infinite(expr) && !is_nan(expr)
+    _ => false
+  }
+}
+
+///|
 pub fn is_real_number_atom(expr : Expr) -> Bool {
   match expr_form(expr) {
     ExprForm::Number(_) | ExprForm::Float(_) => true
@@ -417,6 +485,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => true
     ExprForm::AppliedUndef(_, args) | ExprForm::Applied(_, args) =>
@@ -435,6 +504,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Symbol(name) => name
     ExprForm::Dummy(name, _) => dummy_display_name(name)
     ExprForm::Wild(name) => wild_display_name(name)
+    ExprForm::FunctionHead(name) => name
     ExprForm::UndefinedFunction(name) => name
     ExprForm::Boolean(true) => "True"
     ExprForm::Boolean(false) => "False"
@@ -497,6 +567,23 @@ pub fn undefined_application_parts(expr : Expr) -> (String, Array[Expr])? {
   match expr {
     Expr::AppliedUndef(name, args) => Some((name, args))
     _ => None
+  }
+}
+
+///|
+pub fn function_head_name(expr : Expr) -> String? {
+  match expr_form(expr) {
+    ExprForm::FunctionHead(name) => Some(name)
+    ExprForm::UndefinedFunction(name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+pub fn is_function_head(expr : Expr) -> Bool {
+  match function_head_name(expr) {
+    Some(_) => true
+    None => false
   }
 }
 
@@ -582,6 +669,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::Symbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => []
     ExprForm::Add(items)
@@ -660,6 +748,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       out.set("wild:\{name}", expr)
       return
     }
+    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::Boolean(_) => return
     _ => ()
   }
   match expr_form(expr) {
@@ -669,6 +758,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::NumberSymbol(_)
     | ExprForm::Dummy(_, _)
     | ExprForm::Wild(_)
+    | ExprForm::FunctionHead(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => ()
     ExprForm::Symbol(name) => out.set("sym:\{name}", expr)

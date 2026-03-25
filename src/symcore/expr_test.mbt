@@ -164,17 +164,25 @@ test "derivative free symbols remove dummy variables but keep order symbols" {
 ///|
 test "undefined function heads are distinct from applied functions" {
   let f = undefined_function("f")
+  let sin_head = function_head("sin")
   let fx = applied_undefined_function("f", [symbol("x")])
   let sinx = function("sin", [symbol("x")])
   match expr_form(f) {
     ExprForm::UndefinedFunction(name) => inspect(name, content="f")
     _ => fail("expected undefined function head")
   }
+  match expr_form(sin_head) {
+    ExprForm::FunctionHead(name) => inspect(name, content="sin")
+    _ => fail("expected named function head")
+  }
   inspect(args(f).length(), content="0")
+  inspect(args(sin_head).length(), content="0")
   inspect(args(fx).length(), content="1")
+  inspect(head_name(sin_head), content="sin")
   inspect(head_name(fx), content="f")
   inspect(head_name(sinx), content="sin")
   inspect(free_symbols(f).length(), content="0")
+  inspect(free_symbols(sin_head).length(), content="0")
 }
 
 ///|
@@ -362,4 +370,25 @@ test "subst respects derivative binding and capture rules" {
     @symprint.to_string(subst(with_free, capture_env)),
     content="Subs(Derivative(y + f(x), x, 1), y, x)",
   )
+}
+
+///|
+test "numeric singleton predicates stay aligned with structured core atoms" {
+  assert_true(is_number_symbol(pi()))
+  assert_true(is_number_symbol(imag_unit()))
+  assert_true(is_number_symbol(oo()))
+  assert_true(is_number_symbol(nan_expr()))
+  assert_true(is_infinite(oo()))
+  assert_true(is_infinite(neg_oo()))
+  assert_true(is_infinite(zoo()))
+  assert_false(is_infinite(pi()))
+  assert_true(is_nan(nan_expr()))
+  assert_false(is_nan(pi()))
+  assert_true(is_zero(int(0)))
+  assert_true(is_zero(float(Float::from_int(0))))
+  assert_true(is_one(int(1)))
+  assert_true(is_one(float(Float::from_int(1))))
+  assert_true(is_finite_number_atom(pi()))
+  assert_false(is_finite_number_atom(oo()))
+  assert_false(is_finite_number_atom(nan_expr()))
 }

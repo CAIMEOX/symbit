@@ -123,6 +123,7 @@ pub fn get_srepr(expr : Expr) -> String {
         | @symcore.ExprForm::Symbol(_)
         | @symcore.ExprForm::Dummy(_, _)
         | @symcore.ExprForm::Wild(_)
+        | @symcore.ExprForm::FunctionHead(_)
         | @symcore.ExprForm::UndefinedFunction(_)
         | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
         @symcore.ExprForm::AppliedUndef(name, args) =>

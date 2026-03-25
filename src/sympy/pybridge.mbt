@@ -21,6 +21,7 @@ fn expr_to_sympy_cached(
     @symcore.Expr::Symbol(name) => sympy_symbol_obj(name)
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
     @symcore.Expr::Wild(name) => sympy_wild_obj(name, wild_cache)
+    @symcore.Expr::FunctionHead(name) => sympy_function_head_obj(name)
     @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)
     @symcore.Expr::AppliedUndef(name, args) =>
       sympy_applied_undefined_function_obj(name, args, dummy_cache, wild_cache)
@@ -231,6 +232,20 @@ fn sympy_symbol_or_const_obj(name : String) -> @py.PyObject raise {
 ///|
 fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
   sympy_call_obj("sympy.symbols", [OracleArg::Str(name)])
+}
+
+///|
+fn sympy_function_head_obj(name : String) -> @py.PyObject raise {
+  match sympy_constant_obj(name) {
+    Some(obj) => obj
+    None => {
+      let sympy = ensure_sympy_module()
+      match sympy.get_attr(name, print_err=false) {
+        Some(obj) => objenum_to_obj(obj)
+        None => sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
+      }
+    }
+  }
 }
 
 ///|

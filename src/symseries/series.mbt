@@ -633,6 +633,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
     | Expr::Wild(_)
+    | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) =>
       if expr == x {
         Some(([zero_expr(), one_expr()], false))
