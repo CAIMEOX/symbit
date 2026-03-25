@@ -93,7 +93,8 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
             (PauliKind::X, PauliKind::Minus) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Y) =>
-              return @symcore.imag_unit() * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.imag_unit() *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Minus) =>
               return int(-1) *
                 @symcore.imag_unit() *
@@ -107,7 +108,8 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
             (PauliKind::X, PauliKind::Plus) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Y) =>
-              return @symcore.imag_unit() * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.imag_unit() *
+                sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Plus) =>
               return int(-1) *
                 @symcore.imag_unit() *

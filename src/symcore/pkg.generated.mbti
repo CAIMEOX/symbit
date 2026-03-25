@@ -12,6 +12,12 @@ import {
 // Values
 pub fn add(Array[Expr]) -> Expr
 
+pub fn application_args(Expr) -> Array[Expr]?
+
+pub fn application_has_name(Expr, String, arity? : Int) -> Bool
+
+pub fn application_name(Expr) -> String?
+
 pub fn application_parts(Expr) -> (Expr, Array[Expr])?
 
 pub fn applied_parts(Expr) -> (String, Array[Expr])?

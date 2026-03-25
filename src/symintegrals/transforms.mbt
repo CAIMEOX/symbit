@@ -1456,10 +1456,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                   expr_mul(
                     expr_div(expr_sqrt_two(), expr_int(2)),
                     @symelem.sin(
-                      expr_add(
-                        phase,
-                        expr_div(@symcore.pi(), expr_int(4)),
-                      ),
+                      expr_add(phase, expr_div(@symcore.pi(), expr_int(4))),
                     ),
                   ),
                   expr_mul(
@@ -1497,10 +1494,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                   expr_mul(
                     expr_div(expr_sqrt_two(), expr_int(2)),
                     @symelem.cos(
-                      expr_add(
-                        phase,
-                        expr_div(@symcore.pi(), expr_int(4)),
-                      ),
+                      expr_add(phase, expr_div(@symcore.pi(), expr_int(4))),
                     ),
                   ),
                 ),
@@ -2595,10 +2589,7 @@ fn laplace_log_squared_term(
                 expr_add(@symelem.log(s), @symcore.euler_gamma()),
                 expr_int(2),
               ),
-              expr_mul(
-                expr_pow(@symcore.pi(), expr_int(2)),
-                expr_rat(1, 6),
-              ),
+              expr_mul(expr_pow(@symcore.pi(), expr_int(2)), expr_rat(1, 6)),
             ),
             s,
           ),
@@ -6466,9 +6457,7 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
       match linear_coeffs(arg, k_name) {
         Some((coeff, offset)) if expr_is_zero(offset) =>
           Some(
-            expr_simplify(
-              expr_div(expr_mul(expr_int(2), @symcore.pi()), coeff),
-            ),
+            expr_simplify(expr_div(expr_mul(expr_int(2), @symcore.pi()), coeff)),
           )
         _ => None
       }
@@ -6528,10 +6517,7 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
         ) =>
         match linear_coeffs(arg, k_name) {
           Some((freq, offset)) if expr_is_zero(offset) =>
-            if expr_eq(
-                expr_simplify(expr_mul(coeff, freq)),
-                @symcore.pi(),
-              ) {
+            if expr_eq(expr_simplify(expr_mul(coeff, freq)), @symcore.pi()) {
               scale = Some(coeff)
             } else {
               return None
@@ -7892,9 +7878,7 @@ fn mellin_difference_quotient_info(
               ),
               expr_mul(
                 @symelem.sin(expr_mul(@symcore.pi(), s)),
-                @symelem.sin(
-                  expr_mul(@symcore.pi(), expr_add(power, s)),
-                ),
+                @symelem.sin(expr_mul(@symcore.pi(), expr_add(power, s))),
               ),
             ),
           ),
@@ -7981,10 +7965,7 @@ fn mellin_abs_one_minus_power_info(
                   expr_int(2),
                   expr_mul(
                     @symelem.sin(
-                      expr_div(
-                        expr_mul(@symcore.pi(), rho),
-                        expr_int(2),
-                      ),
+                      expr_div(expr_mul(@symcore.pi(), rho), expr_int(2)),
                     ),
                     expr_mul(
                       @symspec.gamma(expr_sub(expr_one(), rho)),
@@ -8270,14 +8251,7 @@ fn mellin_mul_info(
     (None, Some((bound, is_le))) => {
       let value = mellin_heaviside_term(pow, bound, is_le, s)
       if is_le {
-        Some(
-          (
-            value,
-            expr_mul(expr_neg_one(), pow),
-            @symcore.oo(),
-            true_expr(),
-          ),
-        )
+        Some((value, expr_mul(expr_neg_one(), pow), @symcore.oo(), true_expr()))
       } else {
         Some(
           (
@@ -8601,10 +8575,7 @@ fn mellin_trig_bessel_info(
                         expr_pow(expr_int(4), s),
                         expr_mul(
                           @symelem.sin(
-                            expr_mul(
-                              @symcore.pi(),
-                              expr_sub(half_order, s),
-                            ),
+                            expr_mul(@symcore.pi(), expr_sub(half_order, s)),
                           ),
                           expr_mul(
                             @symspec.gamma(
@@ -8676,10 +8647,7 @@ fn mellin_trig_bessel_info(
                         expr_pow(expr_int(4), s),
                         expr_mul(
                           @symelem.cos(
-                            expr_mul(
-                              @symcore.pi(),
-                              expr_sub(half_order, s),
-                            ),
+                            expr_mul(@symcore.pi(), expr_sub(half_order, s)),
                           ),
                           expr_mul(
                             @symspec.gamma(expr_sub(s, half_order)),
@@ -9334,10 +9302,7 @@ fn mellin_exp_formula(pow : Expr, coef : Expr, degree : Int, s : Expr) -> Expr {
   if degree == 1 {
     if expr_is_positive(expr_simplify(coef)) {
       let phase = expr_mul(
-        expr_mul(
-          expr_mul(expr_neg_one(), @symcore.imag_unit()),
-          @symcore.pi(),
-        ),
+        expr_mul(expr_mul(expr_neg_one(), @symcore.imag_unit()), @symcore.pi()),
         shifted,
       )
       let gamma_factor = expr_pow(coef, expr_mul(expr_neg_one(), shifted))
@@ -9595,9 +9560,7 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     @symcore.pi(),
     expr_mul(
       s_sym,
-      @symelem.sin(
-        expr_div(expr_mul(@symcore.pi(), s_sym), expr_int(2)),
-      ),
+      @symelem.sin(expr_div(expr_mul(@symcore.pi(), s_sym), expr_int(2))),
     ),
   )
   if expr_eq(expr_simplify(expr), expr_simplify(log_quadratic_formula)) {
@@ -10493,10 +10456,7 @@ fn inverse_mellin_trig_bessely_term(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.sin(
-            expr_mul(
-              @symcore.pi(),
-              expr_sub(expr_mul(order, half), s_sym),
-            ),
+            expr_mul(@symcore.pi(), expr_sub(expr_mul(order, half), s_sym)),
           ),
           expr_mul(
             @symspec.gamma(expr_sub(half, expr_mul(expr_int(2), s_sym))),
@@ -10555,10 +10515,7 @@ fn inverse_mellin_trig_bessely_term(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.cos(
-            expr_mul(
-              @symcore.pi(),
-              expr_sub(expr_mul(order, half), s_sym),
-            ),
+            expr_mul(@symcore.pi(), expr_sub(expr_mul(order, half), s_sym)),
           ),
           expr_mul(
             @symspec.gamma(expr_sub(s_sym, expr_mul(order, half))),

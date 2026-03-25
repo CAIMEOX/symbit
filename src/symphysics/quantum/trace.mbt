@@ -81,22 +81,33 @@ pub fn tr_doit(expr : Expr) -> Expr {
       quantum_add_from_args_preserve(args.map(arg => tr_doit(arg)))
     Expr::Mul(args) =>
       quantum_mul_from_args_preserve(args.map(arg => tr_doit(arg)))
-    Expr::Function("Tr", args) if args.length() >= 1 => {
-      let indices = if args.length() >= 2 {
-        trace_indices_from_expr(args[1]).unwrap_or([])
-      } else {
-        []
-      }
-      match args[0] {
-        _ if density_from_expr(args[0]) is Some(density_expr) =>
-          density_expr.trace(indices~)
-        Expr::Function("OuterProduct", inner) if inner.length() == 2 &&
-          indices.is_empty() => inner_product(inner[1], inner[0])
-        Expr::Function("TensorProduct", items) =>
-          trace_tensor_product_items(items, indices)
+    _ if @symcore.application_has_name(expr, "Tr") =>
+      match @symcore.application_args(expr) {
+        Some(args) if args.length() >= 1 => {
+          let indices = if args.length() >= 2 {
+            trace_indices_from_expr(args[1]).unwrap_or([])
+          } else {
+            []
+          }
+          match args[0] {
+            _ if density_from_expr(args[0]) is Some(density_expr) =>
+              density_expr.trace(indices~)
+            _ if @symcore.application_has_name(args[0], "OuterProduct", arity=2) &&
+              indices.is_empty() =>
+              match @symcore.application_args(args[0]) {
+                Some(inner) => inner_product(inner[1], inner[0])
+                None => expr
+              }
+            _ if @symcore.application_has_name(args[0], "TensorProduct") =>
+              match @symcore.application_args(args[0]) {
+                Some(items) => trace_tensor_product_items(items, indices)
+                None => expr
+              }
+            _ => expr
+          }
+        }
         _ => expr
       }
-    }
     _ => expr
   }
 }
@@ -104,25 +115,32 @@ pub fn tr_doit(expr : Expr) -> Expr {
 ///|
 pub fn tr_permute(expr : Expr, pos : Int) -> Expr {
   match expr {
-    Expr::Function("Tr", args) if args.length() >= 1 =>
-      match args[0] {
-        Expr::Mul(body_args) if !body_args.is_empty() => {
-          let len = body_args.length()
-          let shift = if pos >= 0 { pos % len } else { len - -pos % len }
-          if shift == 0 {
-            expr
-          } else {
-            let rotated : Array[Expr] = []
-            for idx in 0..<len {
-              rotated.push(body_args[(len - shift + idx) % len])
+    _ if @symcore.application_has_name(expr, "Tr") =>
+      match @symcore.application_args(expr) {
+        Some(args) if args.length() >= 1 =>
+          match args[0] {
+            Expr::Mul(body_args) if !body_args.is_empty() => {
+              let len = body_args.length()
+              let shift = if pos >= 0 { pos % len } else { len - -pos % len }
+              if shift == 0 {
+                expr
+              } else {
+                let rotated : Array[Expr] = []
+                for idx in 0..<len {
+                  rotated.push(body_args[(len - shift + idx) % len])
+                }
+                if args.length() == 1 {
+                  @symcore.raw_function("Tr", [@symcore.raw_mul(rotated)])
+                } else {
+                  @symcore.raw_function("Tr", [
+                    @symcore.raw_mul(rotated),
+                    args[1],
+                  ])
+                }
+              }
             }
-            if args.length() == 1 {
-              @symcore.raw_function("Tr", [@symcore.raw_mul(rotated)])
-            } else {
-              @symcore.raw_function("Tr", [@symcore.raw_mul(rotated), args[1]])
-            }
+            _ => expr
           }
-        }
         _ => expr
       }
     _ => expr

@@ -177,7 +177,10 @@ pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
       kargs.length() == 1 =>
       Some(
         cartesian_plane_wave(
-          @symcore.imag_unit() * bargs[0] * kargs[0] * @symcore.raw_pow(hbar, int(-1)),
+          @symcore.imag_unit() *
+          bargs[0] *
+          kargs[0] *
+          @symcore.raw_pow(hbar, int(-1)),
         ),
       )
     (Expr::Function("PxBra", bargs), Expr::Function("XKet", kargs)) if bargs.length() ==
@@ -253,7 +256,10 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       Some(
         if basis_name == "px" {
           cartesian_plane_wave(
-            @symcore.imag_unit() * args[0] * coord * @symcore.raw_pow(hbar, int(-1)),
+            @symcore.imag_unit() *
+            args[0] *
+            coord *
+            @symcore.raw_pow(hbar, int(-1)),
           )
         } else {
           cartesian_delta(coord, args[0])
@@ -263,7 +269,10 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       Some(
         if basis_name == "x" {
           cartesian_plane_wave(
-            @symcore.imag_unit() * coord * args[0] * @symcore.raw_pow(hbar, int(-1)),
+            @symcore.imag_unit() *
+            coord *
+            args[0] *
+            @symcore.raw_pow(hbar, int(-1)),
           )
         } else {
           cartesian_delta(coord, args[0])

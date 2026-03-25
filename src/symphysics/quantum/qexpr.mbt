@@ -22,13 +22,20 @@ fn quantum_repr_expr(expr : Expr) -> String {
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
     Expr::Symbol(name) if name == "oo" => "oo"
     Expr::Symbol(name) => "Symbol('\{name}')"
-    Expr::Function(name, args) => {
-      let rendered = args.map(quantum_repr_expr).join(",")
-      "\{name}(\{rendered})"
-    }
     Expr::Pow(base, exp) =>
       "Pow(\{quantum_repr_expr(base)},\{quantum_repr_expr(exp)})"
-    _ => @symprint.to_string(expr)
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.function_head_name(head) {
+            Some(name) => {
+              let rendered = args.map(quantum_repr_expr).join(",")
+              "\{name}(\{rendered})"
+            }
+            None => @symprint.to_string(expr)
+          }
+        None => @symprint.to_string(expr)
+      }
   }
 }
 
@@ -77,26 +84,17 @@ pub fn QExpr::repr(self : QExpr) -> String {
 
 ///|
 pub fn quantum_expr_name(expr : Expr) -> String? {
-  match expr {
-    Expr::Function(name, _) => Some(name)
-    _ => None
-  }
+  @symcore.application_name(expr)
 }
 
 ///|
 pub fn quantum_expr_args(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function(_, args) => Some(args)
-    _ => None
-  }
+  @symcore.application_args(expr)
 }
 
 ///|
 pub fn quantum_expr_has_name(expr : Expr, name : String) -> Bool {
-  match expr {
-    Expr::Function(expr_name, _) => expr_name == name
-    _ => false
-  }
+  @symcore.application_has_name(expr, name)
 }
 
 ///|

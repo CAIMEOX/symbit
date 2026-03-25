@@ -380,78 +380,129 @@ pub fn inverse_hankel_transform_eval(
 /// This is the common `.doit()`-style entrypoint used throughout
 /// `symintegrals`.
 pub fn doit(expr : Expr) -> Expr {
-  match expr {
-    @symcore.Expr::Function("Integral", args) if !args.is_empty() =>
-      if args.length() == 1 {
-        integrate(args[0])
-      } else {
-        let limits : Array[Expr] = []
-        for i in 1..<args.length() {
-          limits.push(args[i])
-        }
-        integrate(args[0], limits~)
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match @symcore.function_head_name(head) {
+        Some("Integral") if !args.is_empty() =>
+          if args.length() == 1 {
+            integrate(args[0])
+          } else {
+            let limits : Array[Expr] = []
+            for i in 1..<args.length() {
+              limits.push(args[i])
+            }
+            integrate(args[0], limits~)
+          }
+        Some("LaplaceTransform") =>
+          match args {
+            [inner, t, s] =>
+              match do_laplace_doit(inner, t, s) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseLaplaceTransform") =>
+          match args {
+            [inner, s, t] | [inner, s, t, _] =>
+              match do_inverse_laplace_doit(inner, s, t) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("FourierTransform") =>
+          match args {
+            [inner, x, k] =>
+              match do_fourier_doit(inner, x, k) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseFourierTransform") =>
+          match args {
+            [inner, k, x] =>
+              match do_inverse_fourier_doit(inner, k, x) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("SineTransform") =>
+          match args {
+            [inner, x, k] =>
+              match do_sine_doit(inner, x, k) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseSineTransform") =>
+          match args {
+            [inner, k, x] =>
+              match do_inverse_sine_doit(inner, k, x) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("CosineTransform") =>
+          match args {
+            [inner, x, k] =>
+              match do_cosine_doit(inner, x, k) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseCosineTransform") =>
+          match args {
+            [inner, k, x] =>
+              match do_inverse_cosine_doit(inner, k, x) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("MellinTransform") =>
+          match args {
+            [inner, x, s] =>
+              match do_mellin_doit(inner, x, s) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseMellinTransform") =>
+          match args {
+            [inner, s, x] =>
+              match do_inverse_mellin_doit(inner, s, x) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("HankelTransform") =>
+          match args {
+            [inner, r, k, nu] =>
+              match do_hankel_doit(inner, r, k, nu) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        Some("InverseHankelTransform") =>
+          match args {
+            [inner, k, r, nu] =>
+              match do_inverse_hankel_doit(inner, k, r, nu) {
+                Some(res) => res
+                None => expr
+              }
+            _ => expr
+          }
+        _ => expr
       }
-    @symcore.Expr::Function("LaplaceTransform", [inner, t, s]) =>
-      match do_laplace_doit(inner, t, s) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t])
-    | @symcore.Expr::Function("InverseLaplaceTransform", [inner, s, t, _]) =>
-      match do_inverse_laplace_doit(inner, s, t) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("FourierTransform", [inner, x, k]) =>
-      match do_fourier_doit(inner, x, k) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseFourierTransform", [inner, k, x]) =>
-      match do_inverse_fourier_doit(inner, k, x) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("SineTransform", [inner, x, k]) =>
-      match do_sine_doit(inner, x, k) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseSineTransform", [inner, k, x]) =>
-      match do_inverse_sine_doit(inner, k, x) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("CosineTransform", [inner, x, k]) =>
-      match do_cosine_doit(inner, x, k) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseCosineTransform", [inner, k, x]) =>
-      match do_inverse_cosine_doit(inner, k, x) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("MellinTransform", [inner, x, s]) =>
-      match do_mellin_doit(inner, x, s) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseMellinTransform", [inner, s, x]) =>
-      match do_inverse_mellin_doit(inner, s, x) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("HankelTransform", [inner, r, k, nu]) =>
-      match do_hankel_doit(inner, r, k, nu) {
-        Some(res) => res
-        None => expr
-      }
-    @symcore.Expr::Function("InverseHankelTransform", [inner, k, r, nu]) =>
-      match do_inverse_hankel_doit(inner, k, r, nu) {
-        Some(res) => res
-        None => expr
-      }
-    _ => expr
+    None => expr
   }
 }

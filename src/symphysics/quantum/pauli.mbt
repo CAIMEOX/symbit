@@ -221,7 +221,8 @@ pub fn pauli_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
         PauliKind::Y =>
           Some(
             if state.n == 0 {
-              @symcore.imag_unit() * SigmaZState::{ n: 1, is_bra: false }.as_expr()
+              @symcore.imag_unit() *
+              SigmaZState::{ n: 1, is_bra: false }.as_expr()
             } else {
               int(-1) *
               @symcore.imag_unit() *

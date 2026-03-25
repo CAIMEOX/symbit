@@ -252,7 +252,8 @@ fn raw_derivative_args(deriv_args : ArrayView[Expr]) -> Array[Expr] {
   let mut i = 0
   while i < deriv_args.length() {
     let wrt = deriv_args[i]
-    if i + 1 < deriv_args.length() && is_explicit_derivative_order(deriv_args[i + 1]) {
+    if i + 1 < deriv_args.length() &&
+      is_explicit_derivative_order(deriv_args[i + 1]) {
       out.push(wrt)
       out.push(deriv_args[i + 1])
       i += 2
@@ -424,15 +425,18 @@ pub fn is_zero(expr : Expr) -> Bool {
 pub fn is_one(expr : Expr) -> Bool {
   match expr_form(expr) {
     ExprForm::Number(n) => n.is_one()
-    ExprForm::Float(f) => @symnum.mpf_cmp(
+    ExprForm::Float(f) =>
+      @symnum.mpf_cmp(
         f.to_mpf(),
         Float::from_int(1, prec=f.precision()).to_mpf(),
-      ) == 0
+      ) ==
+      0
     ExprForm::ComplexFloat(z) =>
       @symnum.mpf_cmp(
         z.to_mpc().real,
         Float::from_int(1, prec=z.precision()).to_mpf(),
-      ) == 0 &&
+      ) ==
+      0 &&
       @symnum.is_zero(z.to_mpc().imag)
     _ => false
   }
@@ -669,6 +673,39 @@ pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
 }
 
 ///|
+pub fn application_name(expr : Expr) -> String? {
+  match application_parts(expr) {
+    Some((head, _)) => function_head_name(head)
+    None => None
+  }
+}
+
+///|
+pub fn application_args(expr : Expr) -> Array[Expr]? {
+  match application_parts(expr) {
+    Some((_, args)) => Some(args)
+    None => None
+  }
+}
+
+///|
+pub fn application_has_name(
+  expr : Expr,
+  name : String,
+  arity? : Int = -1,
+) -> Bool {
+  match application_parts(expr) {
+    Some((head, args)) =>
+      match function_head_name(head) {
+        Some(head_name) =>
+          head_name == name && (arity < 0 || args.length() == arity)
+        None => false
+      }
+    None => false
+  }
+}
+
+///|
 pub fn args(expr : Expr) -> Array[Expr] {
   match expr_form(expr) {
     ExprForm::Number(_)
@@ -757,7 +794,8 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       out.set("wild:\{name}", expr)
       return
     }
-    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::Boolean(_) => return
+    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) | Expr::Boolean(_) =>
+      return
     _ => ()
   }
   match expr_form(expr) {

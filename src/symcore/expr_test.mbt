@@ -73,6 +73,7 @@ test "plain symbol names no longer coerce to core singletons" {
   }
 }
 
+///|
 test "number symbols are structured constants" {
   let pi_expr = pi()
   let imag = imag_unit()
@@ -191,7 +192,12 @@ test "formal application helpers roundtrip named and undefined heads" {
   let sin_head = function_head("sin")
   let f_head = undefined_function("f")
   match apply(sin_head, [x]) {
-    Some(expr) => inspect(@symprint.to_string(expr), content="sin(x)")
+    Some(expr) => {
+      inspect(@symprint.to_string(expr), content="sin(x)")
+      inspect(application_name(expr).unwrap_or(""), content="sin")
+      inspect(application_args(expr).unwrap_or([]).length(), content="1")
+      assert_true(application_has_name(expr, "sin", arity=1))
+    }
     None => fail("expected named head application")
   }
   match apply(f_head, [x]) {
@@ -200,6 +206,8 @@ test "formal application helpers roundtrip named and undefined heads" {
         Some((head, [arg])) => {
           inspect(@symprint.to_string(head), content="f")
           inspect(@symprint.to_string(arg), content="x")
+          inspect(application_name(expr).unwrap_or(""), content="f")
+          assert_true(application_has_name(expr, "f", arity=1))
         }
         _ => fail("expected application parts")
       }
@@ -258,27 +266,11 @@ test "preorder and postorder traversal stay structural" {
   let x = symbol("x")
   let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
   json_inspect(preorder(expr).map(@symprint.to_string), content=[
-    "Mod(x, 2) + Derivative(f(x), x, 1)",
-    "Mod(x, 2)",
-    "x",
-    "2",
-    "Derivative(f(x), x, 1)",
-    "f(x)",
-    "x",
-    "(x, 1)",
-    "x",
-    "1",
+    "Mod(x, 2) + Derivative(f(x), x, 1)", "Mod(x, 2)", "x", "2", "Derivative(f(x), x, 1)",
+    "f(x)", "x", "(x, 1)", "x", "1",
   ])
   json_inspect(postorder(expr).map(@symprint.to_string), content=[
-    "x",
-    "2",
-    "Mod(x, 2)",
-    "x",
-    "f(x)",
-    "x",
-    "1",
-    "(x, 1)",
-    "Derivative(f(x), x, 1)",
+    "x", "2", "Mod(x, 2)", "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x, 1)",
     "Mod(x, 2) + Derivative(f(x), x, 1)",
   ])
 }
