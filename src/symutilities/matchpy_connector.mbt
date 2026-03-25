@@ -115,13 +115,45 @@ pub fn get_srepr(expr : Expr) -> String {
         WildcardKind::Plus | WildcardKind::Star => "*" + variable_name
       }
     None =>
-      match expr {
-        Expr::Number(_) | Expr::Symbol(_) => @symprint.to_string(expr)
-        Expr::Add(args) => "Add(" + args.map(get_srepr).join(", ") + ")"
-        Expr::Mul(args) => "Mul(" + args.map(get_srepr).join(", ") + ")"
-        Expr::Pow(base, exp) =>
+      match @symcore.expr_form(expr) {
+        @symcore.ExprForm::Number(_)
+        | @symcore.ExprForm::Float(_)
+        | @symcore.ExprForm::ComplexFloat(_)
+        | @symcore.ExprForm::Symbol(_)
+        | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
+        @symcore.ExprForm::Add(args) =>
+          "Add(" + args.map(get_srepr).join(", ") + ")"
+        @symcore.ExprForm::Mul(args) =>
+          "Mul(" + args.map(get_srepr).join(", ") + ")"
+        @symcore.ExprForm::Pow(base, exp) =>
           "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
-        Expr::Function(name, args) =>
+        @symcore.ExprForm::Tuple(args) =>
+          "Tuple(" + args.map(get_srepr).join(", ") + ")"
+        @symcore.ExprForm::Relational(_, lhs, rhs) =>
+          @symcore.head_name(expr) +
+          "(" +
+          get_srepr(lhs) +
+          ", " +
+          get_srepr(rhs) +
+          ")"
+        @symcore.ExprForm::Derivative(inner, deriv_args) => {
+          let rendered : Array[String] = [get_srepr(inner)]
+          for arg in deriv_args {
+            rendered.push(get_srepr(arg))
+          }
+          "Derivative(" + rendered.join(", ") + ")"
+        }
+        @symcore.ExprForm::Subs(inner, variable, value) =>
+          "Subs(" +
+          get_srepr(inner) +
+          ", " +
+          get_srepr(variable) +
+          ", " +
+          get_srepr(value) +
+          ")"
+        @symcore.ExprForm::Lambda(vars, body) =>
+          "Lambda(" + get_srepr(vars) + ", " + get_srepr(body) + ")"
+        @symcore.ExprForm::Applied(name, args) =>
           name + "(" + args.map(get_srepr).join(", ") + ")"
       }
   }

@@ -49,11 +49,15 @@ fn rational_pow(value : @symnum.BigRational, exp : Int) -> @symnum.BigRational? 
 
 ///|
 fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
-  let folded = match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => expr
-    @symcore.Expr::Add(args) => @symcore.add(args.map(control_normalize))
-    @symcore.Expr::Mul(args) => @symcore.mul(args.map(control_normalize))
-    @symcore.Expr::Pow(base, exp_expr) => {
+  let folded = match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_)
+    | @symcore.ExprForm::Float(_)
+    | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::Boolean(_) => expr
+    @symcore.ExprForm::Add(args) => @symcore.add(args.map(control_normalize))
+    @symcore.ExprForm::Mul(args) => @symcore.mul(args.map(control_normalize))
+    @symcore.ExprForm::Pow(base, exp_expr) => {
       let base_norm = control_normalize(base)
       let exp_norm = control_normalize(exp_expr)
       match (base_norm, exp_norm) {
@@ -65,7 +69,32 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
         _ => @symcore.pow(base_norm, exp_norm)
       }
     }
-    @symcore.Expr::Function(name, args) =>
+    @symcore.ExprForm::Tuple(args) => @symcore.tuple_expr(args.map(control_normalize))
+    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+      match op {
+        @symcore.RelOp::Eq => @symcore.eq(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Ne => @symcore.ne(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Lt => @symcore.lt(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Le => @symcore.le(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Gt => @symcore.gt(control_normalize(lhs), control_normalize(rhs))
+        @symcore.RelOp::Ge => @symcore.ge(control_normalize(lhs), control_normalize(rhs))
+      }
+    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+      let args : Array[@symcore.Expr] = [control_normalize(inner)]
+      for arg in deriv_args {
+        args.push(control_normalize(arg))
+      }
+      @symcore.raw_function("Derivative", args)
+    }
+    @symcore.ExprForm::Subs(inner, variable, value) =>
+      @symcore.subs_expr(
+        control_normalize(inner),
+        control_normalize(variable),
+        control_normalize(value),
+      )
+    @symcore.ExprForm::Lambda(vars, body) =>
+      @symcore.lambda_expr(control_normalize(vars), control_normalize(body))
+    @symcore.ExprForm::Applied(name, args) =>
       @symcore.function(name, args.map(control_normalize))
   }
   @symsimplify.ratsimp(
@@ -76,14 +105,30 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_depends_on(expr : @symcore.Expr, variable : String) -> Bool {
-  match expr {
-    @symcore.Expr::Symbol(name) => name == variable
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Symbol(name) => name == variable
+    @symcore.ExprForm::Add(args)
+    | @symcore.ExprForm::Mul(args)
+    | @symcore.ExprForm::Tuple(args)
+    | @symcore.ExprForm::Applied(_, args) =>
       args.any(arg => expr_depends_on(arg, variable))
-    @symcore.Expr::Pow(base, exp) =>
+    @symcore.ExprForm::Pow(base, exp) =>
       expr_depends_on(base, variable) || expr_depends_on(exp, variable)
+    @symcore.ExprForm::Relational(_, lhs, rhs) =>
+      expr_depends_on(lhs, variable) || expr_depends_on(rhs, variable)
+    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+      if expr_depends_on(inner, variable) {
+        true
+      } else {
+        deriv_args.any(arg => expr_depends_on(arg, variable))
+      }
+    }
+    @symcore.ExprForm::Subs(inner, sub_var, value) =>
+      expr_depends_on(inner, variable) ||
+      expr_depends_on(sub_var, variable) ||
+      expr_depends_on(value, variable)
+    @symcore.ExprForm::Lambda(vars, body) =>
+      expr_depends_on(vars, variable) || expr_depends_on(body, variable)
     _ => false
   }
 }

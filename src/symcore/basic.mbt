@@ -152,6 +152,144 @@ pub fn is_false(expr : Expr) -> Bool {
 }
 
 ///|
+pub fn is_number_atom(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(_) | ExprForm::Float(_) | ExprForm::ComplexFloat(_) => true
+    _ => false
+  }
+}
+
+///|
+pub fn is_real_number_atom(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(_) | ExprForm::Float(_) => true
+    ExprForm::ComplexFloat(z) =>
+      @symnum.is_zero(z.to_mpc().imag)
+    _ => false
+  }
+}
+
+///|
+pub fn is_complex_number_atom(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::ComplexFloat(_) => true
+    _ => false
+  }
+}
+
+///|
+pub fn is_atomic(expr : Expr) -> Bool {
+  match expr_form(expr) {
+    ExprForm::Number(_)
+    | ExprForm::Float(_)
+    | ExprForm::ComplexFloat(_)
+    | ExprForm::Symbol(_)
+    | ExprForm::Boolean(_) => true
+    ExprForm::Applied(_, args) => args.is_empty()
+    _ => false
+  }
+}
+
+///|
+pub fn head_name(expr : Expr) -> String {
+  match expr_form(expr) {
+    ExprForm::Number(_) => "Number"
+    ExprForm::Float(_) => "Float"
+    ExprForm::ComplexFloat(_) => "ComplexFloat"
+    ExprForm::Symbol(name) => name
+    ExprForm::Boolean(true) => "True"
+    ExprForm::Boolean(false) => "False"
+    ExprForm::Add(_) => "Add"
+    ExprForm::Mul(_) => "Mul"
+    ExprForm::Pow(_, _) => "Pow"
+    ExprForm::Tuple(_) => "Tuple"
+    ExprForm::Relational(op, _, _) =>
+      match op {
+        RelOp::Eq => "Eq"
+        RelOp::Ne => "Ne"
+        RelOp::Lt => "Lt"
+        RelOp::Le => "Le"
+        RelOp::Gt => "Gt"
+        RelOp::Ge => "Ge"
+      }
+    ExprForm::Derivative(_, _) => "Derivative"
+    ExprForm::Subs(_, _, _) => "Subs"
+    ExprForm::Lambda(_, _) => "Lambda"
+    ExprForm::Applied(name, _) => name
+  }
+}
+
+///|
+pub fn tuple_items(expr : Expr) -> Array[Expr]? {
+  match expr_form(expr) {
+    ExprForm::Tuple(items) => Some(items)
+    _ => None
+  }
+}
+
+///|
+pub fn relational_parts(expr : Expr) -> (RelOp, Expr, Expr)? {
+  match expr_form(expr) {
+    ExprForm::Relational(op, lhs, rhs) => Some((op, lhs, rhs))
+    _ => None
+  }
+}
+
+///|
+pub fn derivative_parts(expr : Expr) -> (Expr, Array[Expr])? {
+  match expr_form(expr) {
+    ExprForm::Derivative(inner, deriv_args) => Some((inner, deriv_args))
+    _ => None
+  }
+}
+
+///|
+pub fn subs_parts(expr : Expr) -> (Expr, Expr, Expr)? {
+  match expr_form(expr) {
+    ExprForm::Subs(inner, variable, value) => Some((inner, variable, value))
+    _ => None
+  }
+}
+
+///|
+pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
+  match expr_form(expr) {
+    ExprForm::Lambda(vars, body) => Some((vars, body))
+    _ => None
+  }
+}
+
+///|
+pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
+  match expr_form(expr) {
+    ExprForm::Tuple(items) => Some(("Tuple", items))
+    ExprForm::Relational(op, lhs, rhs) => {
+      let name = match op {
+        RelOp::Eq => "Eq"
+        RelOp::Ne => "Ne"
+        RelOp::Lt => "Lt"
+        RelOp::Le => "Le"
+        RelOp::Gt => "Gt"
+        RelOp::Ge => "Ge"
+      }
+      Some((name, [lhs, rhs]))
+    }
+    ExprForm::Derivative(inner, deriv_args) => {
+      let args : Array[Expr] = [inner]
+      for arg in deriv_args {
+        args.push(arg)
+      }
+      Some(("Derivative", args))
+    }
+    ExprForm::Subs(inner, variable, value) =>
+      Some(("Subs", [inner, variable, value]))
+    ExprForm::Lambda(vars, body) => Some(("Lambda", [vars, body]))
+    ExprForm::Applied(name, args) => Some((name, args))
+    _ => None
+  }
+}
+
+///|
 pub fn args(expr : Expr) -> Array[Expr] {
   match expr_form(expr) {
     ExprForm::Number(_)

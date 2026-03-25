@@ -103,3 +103,21 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
     "wavefunction divergent norm",
   )
 }
+
+///|
+test "physics.quantum.wavefunction: floating interval bounds are treated numerically" {
+  let x = @symcore.symbol("x")
+  let lower = @symcore.float(
+    @symcore.Float::from_str("0.5", prec=80) catch {
+      _ => fail("lower bound")
+    },
+  )
+  let upper = @symcore.float(
+    @symcore.Float::from_str("1.5", prec=80) catch {
+      _ => fail("upper bound")
+    },
+  )
+  let wf = @symquant.wavefunction(x, [@symcore.tuple_expr([x, lower, upper])])
+  inspect(@symprint.to_string(wf.call([@symcore.int(1)])), content="1")
+  inspect(@symprint.to_string(wf.call([@symcore.int(2)])), content="0")
+}

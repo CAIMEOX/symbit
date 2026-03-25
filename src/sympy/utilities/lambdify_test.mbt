@@ -45,6 +45,40 @@ test "implemented_function errors propagate through lambdify" {
 }
 
 ///|
+test "lambdify handles Float and real ComplexFloat constants" {
+  let float_value = @symcore.Float::from_str("0.125", prec=80) catch {
+    _ => fail("float constant")
+  }
+  let float_const = @symcore.float(float_value)
+  let real_complex = @symcore.complex_float(
+    @symcore.ComplexFloat::from_real(
+      @symcore.Float::from_int(3),
+      imag=@symcore.Float::from_int(0),
+    ),
+  )
+  let float_fn = lambdify([], float_const)
+  let real_complex_fn = lambdify([], real_complex)
+  assert_true(float_fn.call([]).is_close(0.125))
+  assert_true(real_complex_fn.call([]).is_close(3.0))
+}
+
+///|
+test "lambdify rejects non-real ComplexFloat constants" {
+  let nonreal = @symcore.complex_float(
+    @symcore.ComplexFloat::from_real(
+      @symcore.Float::from_int(1),
+      imag=@symcore.Float::from_int(2),
+    ),
+  )
+  let fn0 = lambdify([], nonreal)
+  let result : Result[Double, @symutilities.UtilitiesError] = try? fn0.call([])
+  inspect(
+    result,
+    content="Err(Unsupported(\"lambdify does not yet support non-real complex constants\"))",
+  )
+}
+
+///|
 test "lambdastr renders python-style lambda text" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")

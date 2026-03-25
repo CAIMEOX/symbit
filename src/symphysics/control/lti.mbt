@@ -195,15 +195,18 @@ fn control_rational_parts(
   expr : Expr,
   variable_name : String,
 ) -> (Expr, Expr) raise ControlError {
-  match expr {
-    Expr::Number(_) => (expr, int(1))
-    Expr::Symbol(name) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_)
+    | @symcore.ExprForm::Float(_)
+    | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::Boolean(_) => (expr, int(1))
+    @symcore.ExprForm::Symbol(name) =>
       if name == variable_name {
         (expr, int(1))
       } else {
         (expr, int(1))
       }
-    Expr::Add(args) => {
+    @symcore.ExprForm::Add(args) => {
       let mut out = (int(0), int(1))
       for arg in args {
         out = control_fraction_add(
@@ -213,7 +216,7 @@ fn control_rational_parts(
       }
       out
     }
-    Expr::Mul(args) => {
+    @symcore.ExprForm::Mul(args) => {
       let mut out = (int(1), int(1))
       for arg in args {
         out = control_fraction_mul(
@@ -223,20 +226,26 @@ fn control_rational_parts(
       }
       out
     }
-    Expr::Pow(base, Expr::Number(n)) if n.is_integral() =>
-      control_fraction_pow(
-        control_rational_parts(base, variable_name),
-        n.numerator().to_int(),
-      )
-    Expr::Pow(_, _) => (expr, int(1))
-    Expr::Function("exp", [arg]) if control_expr_depends_on_symbol(
-        expr, variable_name,
-      ) =>
-      match control_negated_factor(arg) {
-        Some(inner) => (int(1), @symcore.function("exp", [inner]))
-        None => (expr, int(1))
+    @symcore.ExprForm::Pow(base, exp) =>
+      match exp {
+        Expr::Number(n) if n.is_integral() =>
+          control_fraction_pow(
+            control_rational_parts(base, variable_name),
+            n.numerator().to_int(),
+          )
+        _ => (expr, int(1))
       }
-    Expr::Function(_, _) => (expr, int(1))
+    @symcore.ExprForm::Applied(name, args) =>
+      if name == "exp" && args.length() == 1 &&
+        control_expr_depends_on_symbol(expr, variable_name) {
+        match control_negated_factor(args[0]) {
+          Some(inner) => (int(1), @symcore.function("exp", [inner]))
+          None => (expr, int(1))
+        }
+      } else {
+        (expr, int(1))
+      }
+    _ => (expr, int(1))
   }
 }
 

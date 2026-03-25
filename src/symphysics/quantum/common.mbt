@@ -118,8 +118,8 @@ fn quantum_symbol_is_scalar(name : String) -> Bool {
 
 ///|
 fn quantum_is_unitary_like_operator(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function(name, _) =>
+  match @symcore.applied_parts(expr) {
+    Some((name, _)) =>
       [
         "UnitaryOperator", "IdentityOperator", "Gate", "CGate", "UGate", "IdentityGate",
         "HadamardGate", "XGate", "YGate", "ZGate", "TGate", "PhaseGate", "SwapGate",
@@ -131,13 +131,28 @@ fn quantum_is_unitary_like_operator(expr : Expr) -> Bool {
 
 ///|
 fn quantum_is_scalar_like(expr : Expr) -> Bool {
-  match expr {
-    Expr::Number(_) => true
-    Expr::Symbol(name) => quantum_symbol_is_scalar(name)
-    Expr::Add(args) | Expr::Mul(args) => args.all(quantum_is_scalar_like)
-    Expr::Pow(base, exp) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_)
+    | @symcore.ExprForm::Float(_)
+    | @symcore.ExprForm::ComplexFloat(_) => true
+    @symcore.ExprForm::Symbol(name) => quantum_symbol_is_scalar(name)
+    @symcore.ExprForm::Boolean(_) => true
+    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>
+      args.all(quantum_is_scalar_like)
+    @symcore.ExprForm::Pow(base, exp) =>
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
-    Expr::Function(name, args) =>
+    @symcore.ExprForm::Tuple(args) => args.all(quantum_is_scalar_like)
+    @symcore.ExprForm::Relational(_, lhs, rhs) =>
+      quantum_is_scalar_like(lhs) && quantum_is_scalar_like(rhs)
+    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+      quantum_is_scalar_like(inner) && deriv_args.all(quantum_is_scalar_like)
+    @symcore.ExprForm::Subs(inner, sub_var, value) =>
+      quantum_is_scalar_like(inner) &&
+      quantum_is_scalar_like(sub_var) &&
+      quantum_is_scalar_like(value)
+    @symcore.ExprForm::Lambda(vars, body) =>
+      quantum_is_scalar_like(vars) && quantum_is_scalar_like(body)
+    @symcore.ExprForm::Applied(name, args) =>
       !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
   }
 }

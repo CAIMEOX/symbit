@@ -33,13 +33,16 @@ pub fn[K : Eq + Hash, V] assoc(m : Map[K, V], k : K, v : V) -> Map[K, V] {
 ///|
 /// Extract the operator for an Expr.
 pub fn expr_op(expr : @symcore.Expr) -> ExprOp {
-  match expr {
-    @symcore.Expr::Number(_) => ExprOp::Number
-    @symcore.Expr::Symbol(_) => ExprOp::Symbol
-    @symcore.Expr::Add(_) => ExprOp::Add
-    @symcore.Expr::Mul(_) => ExprOp::Mul
-    @symcore.Expr::Pow(_, _) => ExprOp::Pow
-    @symcore.Expr::Function(name, _) => ExprOp::Function(name)
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_)
+    | @symcore.ExprForm::Float(_)
+    | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::Boolean(_) => ExprOp::Number
+    @symcore.ExprForm::Symbol(_) => ExprOp::Symbol
+    @symcore.ExprForm::Add(_) => ExprOp::Add
+    @symcore.ExprForm::Mul(_) => ExprOp::Mul
+    @symcore.ExprForm::Pow(_, _) => ExprOp::Pow
+    _ => ExprOp::Function(@symcore.head_name(expr))
   }
 }
 
@@ -108,12 +111,7 @@ pub fn expr_children(expr : @symcore.Expr) -> ArrayView[@symcore.Expr] {
 ///|
 /// Leaf predicate for Expr traversal.
 pub fn expr_leaf(expr : @symcore.Expr) -> Bool {
-  match expr {
-    @symcore.Expr::Number(_) => true
-    @symcore.Expr::Symbol(_) => true
-    @symcore.Expr::Function(_, args) => args.is_empty()
-    _ => false
-  }
+  @symcore.is_atomic(expr)
 }
 
 ///|

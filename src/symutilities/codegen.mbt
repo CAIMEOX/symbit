@@ -71,10 +71,16 @@ fn string_upper(value : String) -> String {
 
 ///|
 fn free_symbols(expr : Expr) -> Array[String] {
-  match expr {
-    Expr::Number(_) => []
-    Expr::Symbol(name) => [name]
-    Expr::Add(args) | Expr::Mul(args) => {
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(_)
+    | @symcore.ExprForm::Float(_)
+    | @symcore.ExprForm::ComplexFloat(_)
+    | @symcore.ExprForm::Boolean(_) => []
+    @symcore.ExprForm::Symbol(name) => [name]
+    @symcore.ExprForm::Add(args)
+    | @symcore.ExprForm::Mul(args)
+    | @symcore.ExprForm::Tuple(args)
+    | @symcore.ExprForm::Applied(_, args) => {
       let out : Array[String] = []
       for arg in args {
         for name in free_symbols(arg) {
@@ -83,17 +89,143 @@ fn free_symbols(expr : Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
-    Expr::Pow(base, exp) =>
+    @symcore.ExprForm::Pow(base, exp) =>
       sort_unique_symbols(free_symbols(base) + free_symbols(exp))
-    Expr::Function(_, args) => {
-      let out : Array[String] = []
-      for arg in args {
+    @symcore.ExprForm::Relational(_, lhs, rhs) =>
+      sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
+    @symcore.ExprForm::Derivative(inner, deriv_args) => {
+      let out = free_symbols(inner)
+      for arg in deriv_args {
         for name in free_symbols(arg) {
           out.push(name)
         }
       }
       sort_unique_symbols(out)
     }
+    @symcore.ExprForm::Subs(inner, variable, value) =>
+      sort_unique_symbols(
+        free_symbols(inner) + free_symbols(variable) + free_symbols(value),
+      )
+    @symcore.ExprForm::Lambda(vars, body) =>
+      sort_unique_symbols(free_symbols(vars) + free_symbols(body))
+  }
+}
+
+///|
+fn expr_float_to_code(value : @symcore.Float) -> String {
+  value.format()
+}
+
+///|
+fn expr_complex_float_to_code(
+  value : @symcore.ComplexFloat,
+  language : TargetLanguage,
+) -> String raise UtilitiesError {
+  let mpc = value.to_mpc()
+  if @symnum.is_zero(mpc.imag) {
+    return @symcore.Float::from_mpf(mpc.real, prec=value.precision()).format()
+  }
+  match language {
+    TargetLanguage::Julia | TargetLanguage::Octave => value.format()
+    _ =>
+      raise UtilitiesError::Unsupported(
+        "codegen does not support complex floating literals for this target",
+      )
+  }
+}
+
+///|
+fn print_relational_expr(
+  op : @symcore.RelOp,
+  lhs : Expr,
+  rhs : Expr,
+  language : TargetLanguage,
+) -> String raise UtilitiesError {
+  let symbol = match op {
+    @symcore.RelOp::Eq => "=="
+    @symcore.RelOp::Ne => "!="
+    @symcore.RelOp::Lt => "<"
+    @symcore.RelOp::Le => "<="
+    @symcore.RelOp::Gt => ">"
+    @symcore.RelOp::Ge => ">="
+  }
+  print_expr_prec(lhs, language, 0) +
+  " " +
+  symbol +
+  " " +
+  print_expr_prec(rhs, language, 0)
+}
+
+///|
+fn print_derivative_expr(expr : Expr) -> String raise UtilitiesError {
+  raise UtilitiesError::Unsupported(
+    "codegen does not support derivative expressions yet: " +
+    @symprint.to_string(expr),
+  )
+}
+
+///|
+fn print_lambda_like_expr(expr : Expr) -> String raise UtilitiesError {
+  raise UtilitiesError::Unsupported(
+    "codegen does not support higher-order expressions yet: " +
+    @symprint.to_string(expr),
+  )
+}
+
+///|
+fn print_expr_prec(
+  expr : Expr,
+  language : TargetLanguage,
+  parent_prec : Int,
+) -> String raise UtilitiesError {
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) => expr_number_to_code(n)
+    @symcore.ExprForm::Float(value) => expr_float_to_code(value)
+    @symcore.ExprForm::ComplexFloat(value) =>
+      expr_complex_float_to_code(value, language)
+    @symcore.ExprForm::Symbol(name) => sanitize_name(name, language)
+    @symcore.ExprForm::Boolean(true) => "true"
+    @symcore.ExprForm::Boolean(false) => "false"
+    @symcore.ExprForm::Add(args) => {
+      let text = args.map(arg => print_expr_prec(arg, language, 0)).join(" + ")
+      parenthesize_if_needed(text, 0, parent_prec)
+    }
+    @symcore.ExprForm::Mul(args) => {
+      let text = args.map(arg => print_expr_prec(arg, language, 1)).join("*")
+      parenthesize_if_needed(text, 1, parent_prec)
+    }
+    @symcore.ExprForm::Pow(base, exp) => {
+      let text = match language {
+        TargetLanguage::Rust =>
+          print_expr_prec(base, language, 3) +
+          ".powf(" +
+          print_expr_prec(exp, language, 0) +
+          ")"
+        _ =>
+          "pow(" +
+          print_expr_prec(base, language, 0) +
+          ", " +
+          print_expr_prec(exp, language, 0) +
+          ")"
+      }
+      parenthesize_if_needed(text, 2, parent_prec)
+    }
+    @symcore.ExprForm::Tuple(args) =>
+      "(" + args.map(arg => print_expr_prec(arg, language, 0)).join(", ") + ")"
+    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+      parenthesize_if_needed(
+        print_relational_expr(op, lhs, rhs, language),
+        0,
+        parent_prec,
+      )
+    @symcore.ExprForm::Derivative(_, _) => print_derivative_expr(expr)
+    @symcore.ExprForm::Subs(_, _, _) | @symcore.ExprForm::Lambda(_, _) =>
+      print_lambda_like_expr(expr)
+    @symcore.ExprForm::Applied(name, args) =>
+      print_function_name(name, language) +
+      "(" +
+      args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
+      ")"
   }
 }
 
@@ -162,47 +294,6 @@ fn parenthesize_if_needed(
     "(" + text + ")"
   } else {
     text
-  }
-}
-
-///|
-fn print_expr_prec(
-  expr : Expr,
-  language : TargetLanguage,
-  parent_prec : Int,
-) -> String raise UtilitiesError {
-  match expr {
-    Expr::Number(n) => expr_number_to_code(n)
-    Expr::Symbol(name) => sanitize_name(name, language)
-    Expr::Add(args) => {
-      let text = args.map(arg => print_expr_prec(arg, language, 0)).join(" + ")
-      parenthesize_if_needed(text, 0, parent_prec)
-    }
-    Expr::Mul(args) => {
-      let text = args.map(arg => print_expr_prec(arg, language, 1)).join("*")
-      parenthesize_if_needed(text, 1, parent_prec)
-    }
-    Expr::Pow(base, exp) => {
-      let text = match language {
-        TargetLanguage::Rust =>
-          print_expr_prec(base, language, 3) +
-          ".powf(" +
-          print_expr_prec(exp, language, 0) +
-          ")"
-        _ =>
-          "pow(" +
-          print_expr_prec(base, language, 0) +
-          ", " +
-          print_expr_prec(exp, language, 0) +
-          ")"
-      }
-      parenthesize_if_needed(text, 2, parent_prec)
-    }
-    Expr::Function(name, args) =>
-      print_function_name(name, language) +
-      "(" +
-      args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
-      ")"
   }
 }
 

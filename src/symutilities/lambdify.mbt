@@ -64,9 +64,29 @@ fn eval_double(
   expr : Expr,
   env : Map[String, Double],
 ) -> Double raise UtilitiesError {
-  match expr {
-    Expr::Number(n) => expr_number_to_double(n)
-    Expr::Symbol(name) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) => expr_number_to_double(n)
+    @symcore.ExprForm::Float(value) =>
+      value.to_double() catch {
+        _ =>
+          raise UtilitiesError::InvalidArgument(
+            "cannot convert floating constant to Double",
+          )
+      }
+    @symcore.ExprForm::ComplexFloat(value) =>
+      if @symnum.is_zero(value.to_mpc().imag) {
+        @symcore.Float::from_mpf(value.to_mpc().real, prec=value.precision()).to_double() catch {
+          _ =>
+            raise UtilitiesError::InvalidArgument(
+              "cannot convert real complex constant to Double",
+            )
+        }
+      } else {
+        raise UtilitiesError::Unsupported(
+          "lambdify does not yet support non-real complex constants",
+        )
+      }
+    @symcore.ExprForm::Symbol(name) =>
       match env.get(name) {
         Some(v) => v
         None =>
@@ -74,23 +94,23 @@ fn eval_double(
             "missing numeric value for " + name,
           )
       }
-    Expr::Add(args) => {
+    @symcore.ExprForm::Add(args) => {
       let mut acc = 0.0
       for arg in args {
         acc += eval_double(arg, env)
       }
       acc
     }
-    Expr::Mul(args) => {
+    @symcore.ExprForm::Mul(args) => {
       let mut acc = 1.0
       for arg in args {
         acc *= eval_double(arg, env)
       }
       acc
     }
-    Expr::Pow(base, exp) =>
+    @symcore.ExprForm::Pow(base, exp) =>
       @math.pow(eval_double(base, env), eval_double(exp, env))
-    Expr::Function(name, args) => {
+    @symcore.ExprForm::Applied(name, args) => {
       let vals = args.map(arg => eval_double(arg, env))
       match eval_builtin_function(name, vals) {
         Some(value) => value
@@ -104,6 +124,10 @@ fn eval_double(
           }
       }
     }
+    _ =>
+      raise UtilitiesError::Unsupported(
+        "lambdify does not yet support expression " + @symprint.to_string(expr),
+      )
   }
 }
 
@@ -114,14 +138,14 @@ pub fn lambdify(args : Array[String], expr : Expr) -> LambdaFn {
 
 ///|
 fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
-  let current_prec = match expr {
-    Expr::Add(_) => 0
-    Expr::Mul(_) => 1
-    Expr::Pow(_, _) => 2
-    Expr::Number(_) | Expr::Symbol(_) | Expr::Function(_, _) => 3
+  let current_prec = match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Add(_) => 0
+    @symcore.ExprForm::Mul(_) => 1
+    @symcore.ExprForm::Pow(_, _) => 2
+    _ => 3
   }
-  let text = match expr {
-    Expr::Number(n) =>
+  let text = match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Number(n) =>
       if n.denominator().to_string() == "1" {
         n.numerator().to_string()
       } else {
@@ -131,17 +155,40 @@ fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
         n.denominator().to_string() +
         ")"
       }
-    Expr::Symbol(name) => name
-    Expr::Add(args) =>
+    @symcore.ExprForm::Float(value) => value.format()
+    @symcore.ExprForm::ComplexFloat(value) =>
+      if @symnum.is_zero(value.to_mpc().imag) {
+        @symcore.Float::from_mpf(value.to_mpc().real, prec=value.precision()).format()
+      } else {
+        value.format()
+      }
+    @symcore.ExprForm::Symbol(name) => name
+    @symcore.ExprForm::Boolean(true) => "True"
+    @symcore.ExprForm::Boolean(false) => "False"
+    @symcore.ExprForm::Add(args) =>
       args.map(arg => lambdastr_prec(arg, current_prec)).join(" + ")
-    Expr::Mul(args) =>
+    @symcore.ExprForm::Mul(args) =>
       args.map(arg => lambdastr_prec(arg, current_prec)).join("*")
-    Expr::Pow(base, exp) =>
+    @symcore.ExprForm::Pow(base, exp) =>
       lambdastr_prec(base, current_prec) +
       "**" +
       lambdastr_prec(exp, current_prec)
-    Expr::Function(name, args) =>
+    @symcore.ExprForm::Tuple(args) =>
+      "(" + args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
+    @symcore.ExprForm::Relational(op, lhs, rhs) => {
+      let symbol = match op {
+        @symcore.RelOp::Eq => "=="
+        @symcore.RelOp::Ne => "!="
+        @symcore.RelOp::Lt => "<"
+        @symcore.RelOp::Le => "<="
+        @symcore.RelOp::Gt => ">"
+        @symcore.RelOp::Ge => ">="
+      }
+      lambdastr_prec(lhs, 0) + " " + symbol + " " + lambdastr_prec(rhs, 0)
+    }
+    @symcore.ExprForm::Applied(name, args) =>
       name + "(" + args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
+    _ => @symprint.to_string(expr)
   }
   if current_prec < parent_prec {
     "(" + text + ")"

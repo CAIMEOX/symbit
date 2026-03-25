@@ -37,3 +37,31 @@ test "make_routine respects explicit argument order" {
   )
   inspect(routine.arguments, content="[\"y\", \"x\"]")
 }
+
+///|
+test "codegen prints Float literals and rejects complex literals on C targets" {
+  let x = @symcore.symbol("x")
+  let half = @symcore.float(
+    @symcore.Float::from_str("0.5", prec=80) catch {
+      _ => fail("float literal")
+    },
+  )
+  let c_out = codegen([("f", x + half)], "C89", "file")
+  assert_true(c_out[0].1.contains("0.5"))
+
+  let nonreal = @symcore.complex_float(
+    @symcore.ComplexFloat::from_real(
+      @symcore.Float::from_int(1),
+      imag=@symcore.Float::from_int(1),
+    ),
+  )
+  let result : Result[Array[(String, String)], @symutilities.UtilitiesError] = try? codegen(
+    [("g", nonreal)],
+    "C89",
+    "file",
+  )
+  inspect(
+    result,
+    content="Err(Unsupported(\"codegen does not support complex floating literals for this target\"))",
+  )
+}
