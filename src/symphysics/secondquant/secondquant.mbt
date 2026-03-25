@@ -76,8 +76,7 @@ fn sq_boson_items_from_expr(expr : Expr) -> Array[Expr]? {
         name == "FockStateBosonBra" ||
         name == "FockState"
       ) &&
-      args.length() == 1 =>
-      @symcore.tuple_items(args[0])
+      args.length() == 1 => @symcore.tuple_items(args[0])
     _ => None
   }
 }

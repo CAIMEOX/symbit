@@ -236,7 +236,8 @@ fn control_rational_parts(
         _ => (expr, int(1))
       }
     @symcore.ExprForm::Applied(name, args) =>
-      if name == "exp" && args.length() == 1 &&
+      if name == "exp" &&
+        args.length() == 1 &&
         control_expr_depends_on_symbol(expr, variable_name) {
         match control_negated_factor(args[0]) {
           Some(inner) => (int(1), @symcore.function("exp", [inner]))

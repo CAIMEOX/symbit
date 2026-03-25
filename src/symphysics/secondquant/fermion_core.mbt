@@ -70,8 +70,7 @@ fn sq_fermion_items_from_expr(expr : Expr) -> Array[Expr]? {
         name == "FockStateKet" ||
         name == "FockStateBra"
       ) &&
-      args.length() == 1 =>
-      @symcore.tuple_items(args[0])
+      args.length() == 1 => @symcore.tuple_items(args[0])
     _ => None
   }
 }
