@@ -55,6 +55,8 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.ExprForm::ComplexFloat(_)
     | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::AppliedUndef(name, args) =>

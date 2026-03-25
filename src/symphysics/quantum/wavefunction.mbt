@@ -233,6 +233,8 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
     | @symcore.ExprForm::ComplexFloat(_)
     | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::AppliedUndef(name, args) =>
@@ -733,6 +735,8 @@ fn quantum_replace_exact(
     | @symcore.ExprForm::ComplexFloat(_)
     | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::AppliedUndef(name, args) =>
@@ -844,6 +848,8 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
     | @symcore.ExprForm::ComplexFloat(_)
     | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Symbol(_)
+    | @symcore.ExprForm::Dummy(_, _)
+    | @symcore.ExprForm::Wild(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
     @symcore.ExprForm::AppliedUndef(name, args) =>

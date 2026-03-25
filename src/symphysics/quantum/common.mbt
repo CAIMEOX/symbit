@@ -137,6 +137,10 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
     | @symcore.ExprForm::ComplexFloat(_) => true
     @symcore.ExprForm::NumberSymbol(_) => true
     @symcore.ExprForm::Symbol(name) => quantum_symbol_is_scalar(name)
+    @symcore.ExprForm::Dummy(name, _) =>
+      quantum_symbol_is_scalar(@symcore.dummy_display_name(name))
+    @symcore.ExprForm::Wild(name) =>
+      quantum_symbol_is_scalar(@symcore.wild_display_name(name))
     @symcore.ExprForm::UndefinedFunction(_) => false
     @symcore.ExprForm::Boolean(_) => true
     @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) =>

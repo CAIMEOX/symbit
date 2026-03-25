@@ -29,6 +29,8 @@ pub enum ExprForm {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
+  Dummy(String, Int)
+  Wild(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Boolean(Bool)
@@ -242,8 +244,8 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::ComplexFloat(z) => ExprForm::ComplexFloat(z)
     Expr::NumberSymbol(kind) => ExprForm::NumberSymbol(kind)
     Expr::Boolean(value) => ExprForm::Boolean(value)
-    Expr::Dummy(name, _) => ExprForm::Symbol(dummy_display_name(name))
-    Expr::Wild(name) => ExprForm::Symbol(wild_display_name(name))
+    Expr::Dummy(name, id) => ExprForm::Dummy(name, id)
+    Expr::Wild(name) => ExprForm::Wild(name)
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
     Expr::AppliedUndef(name, args) => ExprForm::AppliedUndef(name, args)
     Expr::Symbol("True") => ExprForm::Boolean(true)
@@ -308,6 +310,14 @@ pub fn is_true(expr : Expr) -> Bool {
 }
 
 ///|
+pub fn bool_value(expr : Expr) -> Bool? {
+  match expr_form(expr) {
+    ExprForm::Boolean(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
 pub fn is_false(expr : Expr) -> Bool {
   match expr_form(expr) {
     ExprForm::Boolean(value) => !value
@@ -323,6 +333,14 @@ pub fn is_number_atom(expr : Expr) -> Bool {
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_) => true
     _ => false
+  }
+}
+
+///|
+pub fn number_symbol_kind(expr : Expr) -> NumberSymbolKind? {
+  match expr_form(expr) {
+    ExprForm::NumberSymbol(kind) => Some(kind)
+    _ => None
   }
 }
 
@@ -360,6 +378,8 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
+    | ExprForm::Dummy(_, _)
+    | ExprForm::Wild(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => true
     ExprForm::AppliedUndef(_, args) | ExprForm::Applied(_, args) =>
@@ -376,6 +396,8 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::ComplexFloat(_) => "ComplexFloat"
     ExprForm::NumberSymbol(kind) => number_symbol_name(kind)
     ExprForm::Symbol(name) => name
+    ExprForm::Dummy(name, _) => dummy_display_name(name)
+    ExprForm::Wild(name) => wild_display_name(name)
     ExprForm::UndefinedFunction(name) => name
     ExprForm::Boolean(true) => "True"
     ExprForm::Boolean(false) => "False"
@@ -521,6 +543,8 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
     | ExprForm::Symbol(_)
+    | ExprForm::Dummy(_, _)
+    | ExprForm::Wild(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => []
     ExprForm::Add(items)
@@ -606,6 +630,8 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     | ExprForm::Float(_)
     | ExprForm::ComplexFloat(_)
     | ExprForm::NumberSymbol(_)
+    | ExprForm::Dummy(_, _)
+    | ExprForm::Wild(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => ()
     ExprForm::Symbol(name) => out.set("sym:\{name}", expr)

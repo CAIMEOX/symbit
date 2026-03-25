@@ -91,6 +91,14 @@ test "dummy and wild are distinct structured symbols" {
   assert_false(d1 == d2)
   inspect(@symprint.to_string(d1), content="_x")
   inspect(@symprint.to_string(w), content="x_")
+  match expr_form(d1) {
+    ExprForm::Dummy(name, _) => inspect(name, content="x")
+    _ => fail("expected dummy expr form")
+  }
+  match expr_form(w) {
+    ExprForm::Wild(name) => inspect(name, content="x")
+    _ => fail("expected wild expr form")
+  }
   match dummy_parts(d1) {
     Some((name, _)) => inspect(name, content="x")
     None => fail("expected dummy parts")
@@ -98,6 +106,20 @@ test "dummy and wild are distinct structured symbols" {
   match wild_name(w) {
     Some(name) => inspect(name, content="x")
     None => fail("expected wild name")
+  }
+}
+
+///|
+test "boolean and number symbol helper accessors stay structured" {
+  inspect(bool_value(true_()).unwrap_or(false), content="true")
+  inspect(bool_value(symbol("True")).unwrap_or(false), content="true")
+  match number_symbol_kind(symbol("pi")) {
+    Some(NumberSymbolKind::Pi) => ()
+    _ => fail("expected pi kind")
+  }
+  match number_symbol_kind(symbol("I")) {
+    Some(NumberSymbolKind::ImaginaryUnit) => ()
+    _ => fail("expected I kind")
   }
 }
 

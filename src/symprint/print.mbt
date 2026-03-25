@@ -7,6 +7,9 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::NumberSymbol(kind) =>
       "const:\{@symcore.number_symbol_name(kind)}"
     @symcore.ExprForm::Symbol(name) => "sym:\{name}"
+    @symcore.ExprForm::Dummy(name, id) =>
+      "dummy:\{@symcore.dummy_display_name(name)}#\{id}"
+    @symcore.ExprForm::Wild(name) => "wild:\{@symcore.wild_display_name(name)}"
     @symcore.ExprForm::UndefinedFunction(name) => "ufunc:\{name}"
     @symcore.ExprForm::Boolean(true) => "sym:True"
     @symcore.ExprForm::Boolean(false) => "sym:False"
@@ -90,6 +93,8 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       }
     @symcore.ExprForm::NumberSymbol(kind) => @symcore.number_symbol_name(kind)
     @symcore.ExprForm::Symbol(name) => name
+    @symcore.ExprForm::Dummy(name, _) => @symcore.dummy_display_name(name)
+    @symcore.ExprForm::Wild(name) => @symcore.wild_display_name(name)
     @symcore.ExprForm::UndefinedFunction(name) => name
     @symcore.ExprForm::Boolean(true) => "True"
     @symcore.ExprForm::Boolean(false) => "False"

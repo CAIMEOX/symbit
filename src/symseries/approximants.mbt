@@ -109,40 +109,44 @@ fn br_div(
 
 ///|
 fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
-  match expr {
-    @symcore.Expr::Float(f) => f.precision()
-    @symcore.Expr::ComplexFloat(z) => z.precision()
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol("I") => 80
-    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
-      let mut best = 0
-      for arg in args {
-        let p = approx_numeric_prec_expr(arg)
-        if p > best {
-          best = p
+  match @symcore.number_symbol_kind(expr) {
+    Some(@symcore.NumberSymbolKind::ImaginaryUnit) => 80
+    _ =>
+      match expr {
+        @symcore.Expr::Float(f) => f.precision()
+        @symcore.Expr::ComplexFloat(z) => z.precision()
+        @symcore.Expr::Number(_) => 80
+        @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
+          let mut best = 0
+          for arg in args {
+            let p = approx_numeric_prec_expr(arg)
+            if p > best {
+              best = p
+            }
+          }
+          best
         }
-      }
-      best
-    }
-    @symcore.Expr::Pow(base, exp) => {
-      let pb = approx_numeric_prec_expr(base)
-      let pe = approx_numeric_prec_expr(exp)
-      if pb > pe {
-        pb
-      } else {
-        pe
-      }
-    }
-    @symcore.Expr::Function(_, args) => {
-      let mut best = 0
-      for arg in args {
-        let p = approx_numeric_prec_expr(arg)
-        if p > best {
-          best = p
+        @symcore.Expr::Pow(base, exp) => {
+          let pb = approx_numeric_prec_expr(base)
+          let pe = approx_numeric_prec_expr(exp)
+          if pb > pe {
+            pb
+          } else {
+            pe
+          }
         }
+        @symcore.Expr::Function(_, args) => {
+          let mut best = 0
+          for arg in args {
+            let p = approx_numeric_prec_expr(arg)
+            if p > best {
+              best = p
+            }
+          }
+          best
+        }
+        _ => 0
       }
-      best
-    }
-    _ => 0
   }
 }
 

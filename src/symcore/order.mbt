@@ -370,9 +370,9 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
     Expr::NumberSymbol(kind) => sym_name.compare(number_symbol_name(kind))
     Expr::Boolean(value) =>
       if value {
-        compare_expr(Expr::Symbol("True"), expr)
+        compare_expr(Expr::Boolean(true), expr)
       } else {
-        compare_expr(Expr::Symbol("False"), expr)
+        compare_expr(Expr::Boolean(false), expr)
       }
     Expr::Symbol(sb) => sym_name.compare(sb)
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))

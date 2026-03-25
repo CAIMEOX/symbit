@@ -78,6 +78,8 @@ fn free_symbols(expr : Expr) -> Array[String] {
     | @symcore.ExprForm::NumberSymbol(_)
     | @symcore.ExprForm::Boolean(_) => []
     @symcore.ExprForm::Symbol(name) => [name]
+    @symcore.ExprForm::Dummy(name, _) => [@symcore.dummy_display_name(name)]
+    @symcore.ExprForm::Wild(name) => [@symcore.wild_display_name(name)]
     @symcore.ExprForm::UndefinedFunction(_) => []
     @symcore.ExprForm::Add(args)
     | @symcore.ExprForm::Mul(args)
@@ -204,6 +206,10 @@ fn print_expr_prec(
     @symcore.ExprForm::NumberSymbol(kind) =>
       sanitize_name(@symcore.number_symbol_name(kind), language)
     @symcore.ExprForm::Symbol(name) => sanitize_name(name, language)
+    @symcore.ExprForm::Dummy(name, _) =>
+      sanitize_name(@symcore.dummy_display_name(name), language)
+    @symcore.ExprForm::Wild(name) =>
+      sanitize_name(@symcore.wild_display_name(name), language)
     @symcore.ExprForm::UndefinedFunction(name) => sanitize_name(name, language)
     @symcore.ExprForm::AppliedUndef(name, args) => {
       let rendered = args

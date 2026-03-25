@@ -58,10 +58,12 @@ test "pretty printers understand number symbols" {
 
 ///|
 test "pretty printers render dummy and wild names like SymPy" {
-  inspect(to_string(@symcore.dummy(name="x")), content="_x")
-  inspect(debug_repr(@symcore.dummy(name="x")), content="sym:_x")
-  inspect(to_string(@symcore.wild("x")), content="x_")
-  inspect(debug_repr(@symcore.wild("x")), content="sym:x_")
+  let d = @symcore.dummy(name="x")
+  let w = @symcore.wild("x")
+  inspect(to_string(d), content="_x")
+  assert_true(debug_repr(d).has_prefix("dummy:_x#"))
+  inspect(to_string(w), content="x_")
+  inspect(debug_repr(w), content="wild:x_")
 }
 
 ///|

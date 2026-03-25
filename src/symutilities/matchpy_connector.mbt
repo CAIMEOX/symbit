@@ -121,6 +121,8 @@ pub fn get_srepr(expr : Expr) -> String {
         | @symcore.ExprForm::ComplexFloat(_)
         | @symcore.ExprForm::NumberSymbol(_)
         | @symcore.ExprForm::Symbol(_)
+        | @symcore.ExprForm::Dummy(_, _)
+        | @symcore.ExprForm::Wild(_)
         | @symcore.ExprForm::UndefinedFunction(_)
         | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
         @symcore.ExprForm::AppliedUndef(name, args) =>

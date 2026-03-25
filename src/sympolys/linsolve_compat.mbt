@@ -88,37 +88,41 @@ fn expr_has_floating_leaf(expr : Expr) -> Bool {
 
 ///|
 fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
-  match expr {
-    Expr::Float(f) => f.precision()
-    Expr::ComplexFloat(z) => z.precision()
-    Expr::Number(_)
-    | Expr::Symbol("I")
-    | Expr::Symbol("pi")
-    | Expr::Symbol("Pi")
-    | Expr::Symbol("E")
-    | Expr::Symbol("EulerGamma")
-    | Expr::Symbol("GoldenRatio")
-    | Expr::Symbol("Catalan") => 80
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
-      let mut best = 0
-      for arg in args {
-        let p = linsolve_numeric_prec_expr(arg)
-        if p > best {
-          best = p
+  match @symcore.number_symbol_kind(expr) {
+    Some(
+      @symcore.NumberSymbolKind::ImaginaryUnit
+      | @symcore.NumberSymbolKind::Pi
+      | @symcore.NumberSymbolKind::Exp1
+      | @symcore.NumberSymbolKind::EulerGamma
+      | @symcore.NumberSymbolKind::GoldenRatio
+      | @symcore.NumberSymbolKind::Catalan
+    ) => 80
+    _ =>
+      match expr {
+        Expr::Float(f) => f.precision()
+        Expr::ComplexFloat(z) => z.precision()
+        Expr::Number(_) => 80
+        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
+          let mut best = 0
+          for arg in args {
+            let p = linsolve_numeric_prec_expr(arg)
+            if p > best {
+              best = p
+            }
+          }
+          best
         }
+        Expr::Pow(base, exp) => {
+          let pb = linsolve_numeric_prec_expr(base)
+          let pe = linsolve_numeric_prec_expr(exp)
+          if pb > pe {
+            pb
+          } else {
+            pe
+          }
+        }
+        _ => 0
       }
-      best
-    }
-    Expr::Pow(base, exp) => {
-      let pb = linsolve_numeric_prec_expr(base)
-      let pe = linsolve_numeric_prec_expr(exp)
-      if pb > pe {
-        pb
-      } else {
-        pe
-      }
-    }
-    _ => 0
   }
 }
 

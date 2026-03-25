@@ -180,19 +180,23 @@ fn control_frequency_value(
 
 ///|
 fn control_conjugate_i(expr : @symcore.Expr) -> @symcore.Expr {
-  match expr {
-    @symcore.Expr::Symbol("I") => @symcore.int(-1) * @symcore.symbol("I")
-    @symcore.Expr::Add(args) =>
-      control_normalize(@symcore.add(args.map(control_conjugate_i)))
-    @symcore.Expr::Mul(args) =>
-      control_normalize(@symcore.mul(args.map(control_conjugate_i)))
-    @symcore.Expr::Pow(base, exp) =>
-      control_normalize(
-        @symcore.pow(control_conjugate_i(base), control_conjugate_i(exp)),
-      )
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(control_conjugate_i))
-    _ => expr
+  match @symcore.number_symbol_kind(expr) {
+    Some(@symcore.NumberSymbolKind::ImaginaryUnit) =>
+      @symcore.int(-1) * @symcore.imag_unit()
+    _ =>
+      match expr {
+        @symcore.Expr::Add(args) =>
+          control_normalize(@symcore.add(args.map(control_conjugate_i)))
+        @symcore.Expr::Mul(args) =>
+          control_normalize(@symcore.mul(args.map(control_conjugate_i)))
+        @symcore.Expr::Pow(base, exp) =>
+          control_normalize(
+            @symcore.pow(control_conjugate_i(base), control_conjugate_i(exp)),
+          )
+        @symcore.Expr::Function(name, args) =>
+          @symcore.function(name, args.map(control_conjugate_i))
+        _ => expr
+      }
   }
 }
 

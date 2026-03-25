@@ -26,6 +26,8 @@ pub fn atoms(Expr) -> Array[Expr]
 
 pub fn bool_expr(Bool) -> Expr
 
+pub fn bool_value(Expr) -> Bool?
+
 pub fn catalan() -> Expr
 
 pub fn children(Expr) -> ArrayView[Expr]
@@ -123,6 +125,8 @@ pub fn neg_oo() -> Expr
 pub fn number(@symnum.BigRational) -> Expr
 
 pub fn number_symbol(NumberSymbolKind) -> Expr
+
+pub fn number_symbol_kind(Expr) -> NumberSymbolKind?
 
 pub fn number_symbol_kind_from_name(String) -> NumberSymbolKind?
 
@@ -270,6 +274,8 @@ pub enum ExprForm {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
+  Dummy(String, Int)
+  Wild(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
   Boolean(Bool)
