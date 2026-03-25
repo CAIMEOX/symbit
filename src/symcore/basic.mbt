@@ -660,6 +660,15 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
 }
 
 ///|
+pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
+  match expr_form(expr) {
+    ExprForm::AppliedUndef(name, args) => Some((undefined_function(name), args))
+    ExprForm::Applied(name, args) => Some((function_head(name), args))
+    _ => None
+  }
+}
+
+///|
 pub fn args(expr : Expr) -> Array[Expr] {
   match expr_form(expr) {
     ExprForm::Number(_)

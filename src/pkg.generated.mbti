@@ -13,6 +13,8 @@ pub fn add(Array[@symcore.Expr]) -> @symcore.Expr
 
 pub fn applied_undefined_function(String, Array[@symcore.Expr]) -> @symcore.Expr
 
+pub fn apply(@symcore.Expr, Array[@symcore.Expr]) -> @symcore.Expr?
+
 pub fn apply_at_level(@symcore.Expr, (@symcore.Expr) -> @symcore.Expr, level? : Int) -> @symcore.Expr
 
 pub fn besselsimp(@symcore.Expr) -> @symcore.Expr

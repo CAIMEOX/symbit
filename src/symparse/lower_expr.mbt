@@ -89,12 +89,14 @@ fn make_application(
   args : Array[Expr],
   options : ParseOptions,
 ) -> Expr raise ParseError {
-  match callee {
-    @symcore.Expr::UndefinedFunction(name) =>
-      @symcore.applied_undefined_function(name, args)
-    @symcore.Expr::FunctionHead(name) => make_function(name, args, options)
-    @symcore.Expr::Symbol(name) => make_function(name, args, options)
-    _ =>
+  let lowered = if options.evaluate {
+    @symcore.apply(callee, args)
+  } else {
+    @symcore.raw_apply(callee, args)
+  }
+  match lowered {
+    Some(expr) => expr
+    None =>
       raise ParseError::UnsupportedConstruct(
         span=span(0, 0),
         "call lowering only accepts a function head",

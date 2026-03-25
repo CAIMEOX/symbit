@@ -186,6 +186,29 @@ test "undefined function heads are distinct from applied functions" {
 }
 
 ///|
+test "formal application helpers roundtrip named and undefined heads" {
+  let x = symbol("x")
+  let sin_head = function_head("sin")
+  let f_head = undefined_function("f")
+  match apply(sin_head, [x]) {
+    Some(expr) => inspect(@symprint.to_string(expr), content="sin(x)")
+    None => fail("expected named head application")
+  }
+  match apply(f_head, [x]) {
+    Some(expr) =>
+      match application_parts(expr) {
+        Some((head, [arg])) => {
+          inspect(@symprint.to_string(head), content="f")
+          inspect(@symprint.to_string(arg), content="x")
+        }
+        _ => fail("expected application parts")
+      }
+    None => fail("expected undefined head application")
+  }
+  assert_false(apply(int(1), [x]) is Some(_))
+}
+
+///|
 test "dict is a first-class container node" {
   let d = dict_expr([(symbol("x"), symbol("y")), (int(1), symbol("z"))])
   match expr_form(d) {

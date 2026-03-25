@@ -12,9 +12,13 @@ import {
 // Values
 pub fn add(Array[Expr]) -> Expr
 
+pub fn application_parts(Expr) -> (Expr, Array[Expr])?
+
 pub fn applied_parts(Expr) -> (String, Array[Expr])?
 
 pub fn applied_undefined_function(String, Array[Expr]) -> Expr
+
+pub fn apply(Expr, Array[Expr]) -> Expr?
 
 pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Array[T]]
 
@@ -165,6 +169,8 @@ pub fn preorder(Expr) -> Array[Expr]
 pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 
 pub fn raw_add(Array[Expr]) -> Expr
+
+pub fn raw_apply(Expr, Array[Expr]) -> Expr?
 
 pub fn raw_derivative(Expr, ArrayView[Expr]) -> Expr
 

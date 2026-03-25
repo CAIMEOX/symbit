@@ -71,6 +71,13 @@ pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+/// Apply a first-class function head to arguments. Returns `None` when `head`
+/// is not a callable core head.
+pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
+  @symcore.apply(head, args)
+}
+
+///|
 /// Coerce a symbolic name through the core `sympify` pipeline.
 pub fn sympify_name(name : String) -> Expr {
   @symcore.sympify_name(name)

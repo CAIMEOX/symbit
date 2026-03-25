@@ -196,6 +196,28 @@ pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
 }
 
 ///|
+pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
+  match head {
+    Expr::UndefinedFunction(name) =>
+      Some(Expr::AppliedUndef(name, args.map(child => child)))
+    Expr::FunctionHead(name) => Some(raw_function(name, args))
+    Expr::Symbol(name) => Some(raw_function(name, args))
+    _ => None
+  }
+}
+
+///|
+pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
+  match head {
+    Expr::UndefinedFunction(name) =>
+      Some(applied_undefined_function(name, args))
+    Expr::FunctionHead(name) => Some(function(name, args))
+    Expr::Symbol(name) => Some(function(name, args))
+    _ => None
+  }
+}
+
+///|
 fn float_from_exact_unchecked(value : @symnum.BigRational, prec : Int) -> Float {
   Float::from_rational(value.numerator(), value.denominator(), prec) catch {
     _ => Float::from_mpf(@symnum.fnan, prec~)

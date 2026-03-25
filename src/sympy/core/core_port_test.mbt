@@ -29,6 +29,26 @@ test "symcore parity dummy wild and undefined-function heads" {
 }
 
 ///|
+test "symcore parity formal application helpers" {
+  let x = @symcore.symbol("x")
+  match @symcore.apply(@symcore.function_head("sin"), [x]) {
+    Some(expr) => inspect(core_expr_sstr(expr), content="sin(x)")
+    None => fail("expected named application")
+  }
+  match @symcore.apply(@symcore.undefined_function("f"), [x]) {
+    Some(expr) =>
+      match @symcore.application_parts(expr) {
+        Some((head, [arg])) => {
+          inspect(core_expr_sstr(head), content="f")
+          inspect(core_expr_sstr(arg), content="x")
+        }
+        _ => fail("expected application parts")
+      }
+    None => fail("expected undefined application")
+  }
+}
+
+///|
 test "symcore parity dict and tuple containers" {
   inspect(
     core_expr_sstr(@symcore.tuple_expr([@symcore.symbol("x"), @symcore.int(2)])),
