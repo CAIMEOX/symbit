@@ -134,3 +134,16 @@ pub fn core_xreplace_sstr(
     core_eval_with_globals("sympy.sstr(expr.xreplace({old: new}))", globals),
   )
 }
+
+///|
+pub fn core_subst_symbol_sstr(
+  expr : @symcore.Expr,
+  symbol_name : String,
+  new_expr : @symcore.Expr,
+) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  globals.set("old", @sympy.expr_to_sympy(@symcore.symbol(symbol_name)))
+  globals.set("new", @sympy.expr_to_sympy(new_expr))
+  py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
+}

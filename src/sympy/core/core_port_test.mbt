@@ -94,3 +94,78 @@ test "symcore parity Mod is a first-class core node" {
     content="Mod(x + 1, 3)",
   )
 }
+
+///|
+test "symcore parity subst respects lambda and Subs binders" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.lambda_expr(x, @symcore.add([x, y])),
+      "y",
+      @symcore.int(3),
+    ),
+    content="Lambda(x, x + 3)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.lambda_expr(x, @symcore.add([x, y])),
+      "x",
+      z,
+    ),
+    content="Lambda(z, y + z)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.lambda_expr(x, @symcore.add([x, y])),
+      "x",
+      y,
+    ),
+    content="Lambda(y, 2*y)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.subs_expr(@symcore.add([x, y]), x, z),
+      "x",
+      @symcore.int(2),
+    ),
+    content="Subs(x + y, x, z)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.subs_expr(@symcore.add([x, y]), x, z),
+      "z",
+      @symcore.int(4),
+    ),
+    content="Subs(x + y, x, 4)",
+  )
+}
+
+///|
+test "symcore parity subst respects derivative binding and capture" {
+  let x = @symcore.symbol("x")
+  let y = @symcore.symbol("y")
+  let z = @symcore.symbol("z")
+  let fx = @symcore.function("f", [x])
+  inspect(
+    core_subst_symbol_sstr(@symcore.derivative(fx, x), "x", z),
+    content="Derivative(f(z), z)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.derivative(@symcore.add([fx, y]), x),
+      "x",
+      @symcore.int(2),
+    ),
+    content="Subs(Derivative(y + f(x), x), x, 2)",
+  )
+  inspect(
+    core_subst_symbol_sstr(
+      @symcore.derivative(@symcore.add([fx, y]), x),
+      "y",
+      x,
+    ),
+    content="Subs(Derivative(y + f(x), x), y, x)",
+  )
+}

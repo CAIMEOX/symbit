@@ -205,3 +205,63 @@ test "mod is a first-class structured core node" {
   json_inspect(args(expr).map(@symprint.to_string), content=["x + 1", "3"])
   inspect(@symprint.debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
 }
+
+///|
+test "subst respects lambda bound variables" {
+  let x = symbol("x")
+  let y = symbol("y")
+  let z = symbol("z")
+  let expr = lambda_expr(x, add([x, y]))
+  let env : Map[String, Expr] = { "x": int(2), "y": int(3) }
+  inspect(@symprint.to_string(subst(expr, env)), content="Lambda(x, x + 3)")
+  let rename_env : Map[String, Expr] = { "x": z, "y": int(3) }
+  inspect(
+    @symprint.to_string(subst(expr, rename_env)),
+    content="Lambda(z, z + 3)",
+  )
+  let capture_env : Map[String, Expr] = { "x": y }
+  inspect(
+    @symprint.to_string(subst(expr, capture_env)),
+    content="Lambda(y, y + y)",
+  )
+}
+
+///|
+test "subst respects Subs bound variables" {
+  let x = symbol("x")
+  let y = symbol("y")
+  let z = symbol("z")
+  let expr = subs_expr(add([x, y]), x, z)
+  let env : Map[String, Expr] = { "x": int(2), "y": int(3), "z": int(4) }
+  inspect(@symprint.to_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
+}
+
+///|
+test "subst respects derivative binding and capture rules" {
+  let x = symbol("x")
+  let y = symbol("y")
+  let z = symbol("z")
+  let fx = function("f", [x])
+  let simple = derivative(fx, x)
+  let with_free = derivative(add([fx, y]), x)
+  let rename_env : Map[String, Expr] = { "x": z }
+  inspect(
+    @symprint.to_string(subst(simple, rename_env)),
+    content="Derivative(f(z), z, 1)",
+  )
+  let invalid_env : Map[String, Expr] = { "x": int(2) }
+  inspect(
+    @symprint.to_string(subst(with_free, invalid_env)),
+    content="Subs(Derivative(y + f(x), x, 1), x, 2)",
+  )
+  let safe_inner_env : Map[String, Expr] = { "y": int(3) }
+  inspect(
+    @symprint.to_string(subst(with_free, safe_inner_env)),
+    content="Derivative(f(x) + 3, x, 1)",
+  )
+  let capture_env : Map[String, Expr] = { "y": x }
+  inspect(
+    @symprint.to_string(subst(with_free, capture_env)),
+    content="Subs(Derivative(y + f(x), x, 1), y, x)",
+  )
+}
