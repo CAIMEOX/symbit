@@ -49,9 +49,9 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
             | (PauliKind::Minus, PauliKind::Plus)
             | (PauliKind::Plus, PauliKind::Minus) => return int(1)
             (PauliKind::Minus, PauliKind::Y)
-            | (PauliKind::Y, PauliKind::Minus) => return int(-1) * symbol("I")
+            | (PauliKind::Y, PauliKind::Minus) => return int(-1) * @symcore.imag_unit()
             (PauliKind::Plus, PauliKind::Y) | (PauliKind::Y, PauliKind::Plus) =>
-              return symbol("I")
+              return @symcore.imag_unit()
             _ => ()
           }
         _ => ()

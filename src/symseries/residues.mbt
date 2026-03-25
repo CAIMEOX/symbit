@@ -41,9 +41,9 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.symbol("oo") ||
-  expr == @symcore.symbol("zoo") ||
-  expr == @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
+  expr == @symcore.oo() ||
+  expr == @symcore.zoo() ||
+  expr == @symcore.mul([@symcore.int(-1), @symcore.oo()])
 }
 
 ///|

@@ -172,7 +172,7 @@ test "symassume ask: global assumptions parity" {
 
 ///|
 test "symassume ask: infinity predicate parity" {
-  let oo = @symcore.symbol("oo")
+  let oo = @symcore.oo()
   assert_ask_parity(q_infinite(oo))
   assert_ask_parity(q_finite(oo))
   assert_ask_parity(q_extended_real(oo))
@@ -234,7 +234,7 @@ test "symassume ask: symbolic implication surface parity" {
 ///|
 test "symassume ask: structural propagation parity" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   assert_ask_parity(
     q_complex(@symcore.add([x, @symcore.int(1)])),
     assumptions=q_real(x),

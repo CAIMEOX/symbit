@@ -10,7 +10,7 @@ fn geo_one() -> Expr {
 
 ///|
 fn geo_pi() -> Expr {
-  symbol("pi")
+  @symcore.pi()
 }
 
 ///|

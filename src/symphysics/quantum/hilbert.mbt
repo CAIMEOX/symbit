@@ -15,7 +15,7 @@ pub enum HilbertSpace {
 
 ///|
 fn oo_expr() -> Expr {
-  symbol("oo")
+  @symcore.oo()
 }
 
 ///|

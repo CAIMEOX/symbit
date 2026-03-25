@@ -118,7 +118,7 @@ fn expr_sign(x : Expr) -> Expr {
 
 ///|
 fn expr_pi() -> Expr {
-  @symcore.symbol("pi")
+  @symcore.pi()
 }
 
 ///|

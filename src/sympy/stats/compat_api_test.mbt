@@ -45,32 +45,108 @@ fn replace_expr_local(
   if expr == target {
     return replacement
   }
-  match expr {
-    @symcore.Expr::Number(_) | @symcore.Expr::Symbol(_) => expr
-    @symcore.Expr::Add(args) =>
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::Add(args) =>
       eval_arith(
         @symcore.add(
           args.map(arg => replace_expr_local(arg, target, replacement)),
         ),
       )
-    @symcore.Expr::Mul(args) =>
+    @symcore.ExprForm::Mul(args) =>
       eval_arith(
         @symcore.mul(
           args.map(arg => replace_expr_local(arg, target, replacement)),
         ),
       )
-    @symcore.Expr::Pow(base, exp) =>
+    @symcore.ExprForm::Pow(base, exp) =>
       eval_arith(
         @symcore.pow(
           replace_expr_local(base, target, replacement),
           replace_expr_local(exp, target, replacement),
         ),
       )
-    @symcore.Expr::Function(name, args) =>
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      @symcore.mod_expr(
+        replace_expr_local(lhs, target, replacement),
+        replace_expr_local(rhs, target, replacement),
+      )
+    @symcore.ExprForm::Tuple(args) =>
+      @symcore.tuple_expr(
+        args.map(arg => replace_expr_local(arg, target, replacement)),
+      )
+    @symcore.ExprForm::Dict(items) => {
+      let mapped : Array[(@symcore.Expr, @symcore.Expr)] = []
+      for item in items {
+        let (key, value) = item
+        mapped.push(
+          (
+            replace_expr_local(key, target, replacement),
+            replace_expr_local(value, target, replacement),
+          ),
+        )
+      }
+      @symcore.dict_expr(mapped)
+    }
+    @symcore.ExprForm::Relational(op, lhs, rhs) =>
+      match op {
+        @symcore.RelOp::Eq =>
+          @symcore.eq(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+        @symcore.RelOp::Ne =>
+          @symcore.ne(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+        @symcore.RelOp::Lt =>
+          @symcore.lt(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+        @symcore.RelOp::Le =>
+          @symcore.le(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+        @symcore.RelOp::Gt =>
+          @symcore.gt(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+        @symcore.RelOp::Ge =>
+          @symcore.ge(
+            replace_expr_local(lhs, target, replacement),
+            replace_expr_local(rhs, target, replacement),
+          )
+      }
+    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+      @symcore.raw_derivative(
+        replace_expr_local(inner, target, replacement),
+        deriv_args.map(arg => replace_expr_local(arg, target, replacement)),
+      )
+    @symcore.ExprForm::Subs(inner, variable, value) =>
+      @symcore.subs_expr(
+        replace_expr_local(inner, target, replacement),
+        replace_expr_local(variable, target, replacement),
+        replace_expr_local(value, target, replacement),
+      )
+    @symcore.ExprForm::Lambda(vars, body) =>
+      @symcore.lambda_expr(
+        replace_expr_local(vars, target, replacement),
+        replace_expr_local(body, target, replacement),
+      )
+    @symcore.ExprForm::AppliedUndef(name, args) =>
+      @symcore.applied_undefined_function(
+        name,
+        args.map(arg => replace_expr_local(arg, target, replacement)),
+      )
+    @symcore.ExprForm::Applied(name, args) =>
       @symcore.function(
         name,
         args.map(arg => replace_expr_local(arg, target, replacement)),
       )
+    _ => expr
   }
 }
 
@@ -79,17 +155,15 @@ fn lambda_apply_local(
   lam : @symcore.Expr,
   args : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
-  match lam {
-    @symcore.Expr::Function("Lambda", lambda_args) if lambda_args.length() == 2 => {
-      let vars = lambda_args[0]
-      let body = lambda_args[1]
-      match vars {
-        @symcore.Expr::Symbol(v) if args.length() == 1 => {
+  match @symcore.lambda_parts(lam) {
+    Some((vars, body)) =>
+      match @symcore.expr_form(vars) {
+        @symcore.ExprForm::Symbol(v) if args.length() == 1 => {
           let env : Map[String, @symcore.Expr] = {}
           env[v] = args[0]
           Some(eval_arith(@symcore.subst(body, env)))
         }
-        @symcore.Expr::Function("Tuple", vs) if vs.length() == args.length() => {
+        @symcore.ExprForm::Tuple(vs) if vs.length() == args.length() => {
           let mut out = body
           for i in 0..<vs.length() {
             out = replace_expr_local(out, vs[i], args[i])
@@ -98,7 +172,6 @@ fn lambda_apply_local(
         }
         _ => None
       }
-    }
     _ => None
   }
 }
@@ -1864,7 +1937,7 @@ test "compat handmade and joint families concrete density paths" {
         ]),
         @symcore.function("Ge", [xh, @symcore.int(0)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.true_()]),
     ]),
   ])
   let ch = continuous_rv("CH", params=[ch_pdf])
@@ -1910,7 +1983,7 @@ test "compat handmade and joint families concrete density paths" {
         @symcore.rational_from_ints(1, 2),
         @symcore.function("Eq", [kh, @symcore.int(1)]),
       ]),
-      @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+      @symcore.function("Tuple", [@symcore.int(0), @symcore.true_()]),
     ]),
   ])
   let dh = discrete_rv("DH", params=[dh_pmf])

@@ -35,7 +35,7 @@ fn expr_neg_one() -> Expr {
 
 ///|
 fn expr_oo() -> Expr {
-  @symcore.symbol("oo")
+  @symcore.oo()
 }
 
 ///|
@@ -45,7 +45,7 @@ fn expr_neg_oo() -> Expr {
 
 ///|
 fn expr_nan() -> Expr {
-  @symcore.symbol("nan")
+  @symcore.nan_expr()
 }
 
 ///|

@@ -30,7 +30,7 @@ fn arch_var() -> Expr {
 
 ///|
 fn arch_pi() -> Expr {
-  symbol("pi")
+  @symcore.pi()
 }
 
 ///|

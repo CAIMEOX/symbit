@@ -15,16 +15,16 @@ test "symseries gruntz growth parity" {
   let x = @symcore.symbol("x")
 
   let exp_pos = @symcore.function("exp", [x])
-  let ours_exp_pos = gruntz(exp_pos, x, @symcore.symbol("oo"))
-  let sympy_exp_pos = gruntz_str(exp_pos, "x", @symcore.symbol("oo"))
+  let ours_exp_pos = gruntz(exp_pos, x, @symcore.oo())
+  let sympy_exp_pos = gruntz_str(exp_pos, "x", @symcore.oo())
   assert_eq(
     normalize_series_expr(ours_exp_pos),
     normalize_series_str(sympy_exp_pos),
   )
 
   let exp_neg = @symcore.function("exp", [@symcore.mul([@symcore.int(-1), x])])
-  let ours_exp_neg = gruntz(exp_neg, x, @symcore.symbol("oo"))
-  let sympy_exp_neg = gruntz_str(exp_neg, "x", @symcore.symbol("oo"))
+  let ours_exp_neg = gruntz(exp_neg, x, @symcore.oo())
+  let sympy_exp_neg = gruntz_str(exp_neg, "x", @symcore.oo())
   assert_eq(
     normalize_series_expr(ours_exp_neg),
     normalize_series_str(sympy_exp_neg),

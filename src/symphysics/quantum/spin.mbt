@@ -27,7 +27,7 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
   if num == 0 {
     int(0)
   } else {
-    symbol("pi") * spin_exact_rational(num, den)
+    @symcore.pi() * spin_exact_rational(num, den)
   }
 }
 
@@ -1535,7 +1535,7 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
               Some(
                 spin_exact_rational(1, 2) *
                 int(-1) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 (
                   spin_apply_operator_to_ket(jplus(), ket_expr).unwrap_or(
                     int(0),
@@ -1640,7 +1640,7 @@ fn spin_op_matrix_element(
         "Jy" =>
           spin_exact_rational(1, 2) *
           int(-1) *
-          symbol("I") *
+          @symcore.imag_unit() *
           (
             spin_op_matrix_element(jplus(), j, m, mp) -
             spin_op_matrix_element(jminus(), j, m, mp)

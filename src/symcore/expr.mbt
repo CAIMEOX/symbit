@@ -68,6 +68,7 @@ impl Show for Expr with to_string(self) {
       name + "(" + lhs.to_string() + ", " + rhs.to_string() + ")"
     }
     Expr::Derivative(inner, deriv_args) => {
+      let deriv_args = canonical_derivative_args(deriv_args)
       let args : Array[String] = [inner.to_string()]
       for arg in deriv_args {
         args.push(arg.to_string())
@@ -159,15 +160,7 @@ fn next_dummy_id() -> Int {
 
 ///|
 pub fn symbol(name : String) -> Expr {
-  match name {
-    "True" => true_()
-    "False" => false_()
-    _ =>
-      match number_symbol_kind_from_name(name) {
-        Some(kind) => Expr::NumberSymbol(kind)
-        None => Expr::Symbol(name)
-      }
-  }
+  Expr::Symbol(name)
 }
 
 ///|

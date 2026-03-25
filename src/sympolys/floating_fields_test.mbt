@@ -16,7 +16,7 @@ test "CC evalf_expr returns complex float expressions" {
   }
   let expr = @symcore.add([
     half,
-    @symcore.mul([three_quarters, @symcore.symbol("I")]),
+    @symcore.mul([three_quarters, @symcore.imag_unit()]),
   ])
   let evaled = match
     (
@@ -79,7 +79,7 @@ test "ComplexField object evaluates gaussian rationals to complex float expressi
   }
   let expr = @symcore.add([
     quarter,
-    @symcore.mul([minus_half, @symcore.symbol("I")]),
+    @symcore.mul([minus_half, @symcore.imag_unit()]),
   ])
   let evaled = match
     (try? cc.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {

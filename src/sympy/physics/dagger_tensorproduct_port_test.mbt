@@ -6,7 +6,7 @@ test "physics.quantum.dagger and tensorproduct: parity" {
   )
 
   let mat = @symphysics.explicit_matrix_from_rows([
-    [@symcore.symbol("I"), @symcore.symbol("x") * @symcore.symbol("I")],
+    [@symcore.imag_unit(), @symcore.symbol("x") * @symcore.imag_unit()],
     [@symcore.int(2), @symcore.int(4)],
   ])
   quantum_test_assert_matrix_expr_equal(

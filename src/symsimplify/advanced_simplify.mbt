@@ -371,16 +371,16 @@ fn rewrite_exptrigsimp(expr : Expr) -> Expr {
           if sign == 1 {
             @symcore.mul([int(2), @symcore.function("cos", [x])])
           } else {
-            @symcore.mul([int(2), symbol("I"), @symcore.function("sin", [x])])
+            @symcore.mul([int(2), @symcore.imag_unit(), @symcore.function("sin", [x])])
           }
         None =>
           match parse_cos_i_sin_pair(a, b) {
             Some((x, sign)) =>
               if sign == 1 {
-                @symcore.function("exp", [@symcore.mul([symbol("I"), x])])
+                @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])])
               } else {
                 @symcore.function("exp", [
-                  @symcore.mul([int(-1), symbol("I"), x]),
+                  @symcore.mul([int(-1), @symcore.imag_unit(), x]),
                 ])
               }
             None => expr
@@ -414,9 +414,9 @@ fn parse_exp_i_pair(a : Expr, b : Expr) -> (Expr, Int)? {
 fn exp_i_arg(expr : Expr) -> Expr? {
   match expr {
     Expr::Function(name, [Expr::Mul([a, b])]) =>
-      if name == "exp" && a == symbol("I") {
+      if name == "exp" && a == @symcore.imag_unit() {
         Some(b)
-      } else if name == "exp" && b == symbol("I") {
+      } else if name == "exp" && b == @symcore.imag_unit() {
         Some(a)
       } else {
         None
@@ -429,11 +429,11 @@ fn exp_i_arg(expr : Expr) -> Expr? {
 fn exp_minus_i_arg(expr : Expr) -> Expr? {
   match expr {
     Expr::Function(name, [Expr::Mul(args)]) if name == "exp" =>
-      if args.length() == 3 && args[0] == int(-1) && args[1] == symbol("I") {
+      if args.length() == 3 && args[0] == int(-1) && args[1] == @symcore.imag_unit() {
         Some(args[2])
       } else if args.length() == 3 &&
         args[0] == int(-1) &&
-        args[2] == symbol("I") {
+        args[2] == @symcore.imag_unit() {
         Some(args[1])
       } else {
         None
@@ -479,20 +479,20 @@ fn cos_arg(expr : Expr) -> Expr? {
 fn i_sin_arg(expr : Expr) -> (Expr, Int)? {
   match expr {
     Expr::Mul([i, Expr::Function(name, [x])]) =>
-      if i == symbol("I") && name == "sin" {
+      if i == @symcore.imag_unit() && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
     Expr::Mul([Expr::Function(name, [x]), i]) =>
-      if i == symbol("I") && name == "sin" {
+      if i == @symcore.imag_unit() && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
     Expr::Mul([Expr::Number(c), i, Expr::Function(name, [x])]) =>
       if c.compare(@symnum.BigRational::from_int(-1)) == 0 &&
-        i == symbol("I") &&
+        i == @symcore.imag_unit() &&
         name == "sin" {
         Some((x, -1))
       } else {

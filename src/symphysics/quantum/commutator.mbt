@@ -66,37 +66,37 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
           match (lhs_pauli.kind, rhs_pauli.kind) {
             (PauliKind::X, PauliKind::Y) =>
               return int(2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::X) =>
               return int(-2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Z) =>
               return int(2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_x(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::Y) =>
               return int(-2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_x(name=lhs_pauli.name).as_expr()
             (PauliKind::Z, PauliKind::X) =>
               return int(2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_y(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Z) =>
               return int(-2) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_y(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::X) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::X, PauliKind::Minus) =>
               return sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Y) =>
-              return symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.imag_unit() * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Minus) =>
               return int(-1) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Minus, PauliKind::Z) =>
               return int(2) * sigma_minus(name=lhs_pauli.name).as_expr()
@@ -107,10 +107,10 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
             (PauliKind::X, PauliKind::Plus) =>
               return int(-1) * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Y) =>
-              return symbol("I") * sigma_z(name=lhs_pauli.name).as_expr()
+              return @symcore.imag_unit() * sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Y, PauliKind::Plus) =>
               return int(-1) *
-                symbol("I") *
+                @symcore.imag_unit() *
                 sigma_z(name=lhs_pauli.name).as_expr()
             (PauliKind::Plus, PauliKind::Z) =>
               return int(-2) * sigma_plus(name=lhs_pauli.name).as_expr()
@@ -139,9 +139,9 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
       match (nlhs, nrhs) {
         (Expr::Symbol(lhs_name), Expr::Symbol(rhs_name)) =>
           match (lhs_name, rhs_name) {
-            ("Jx", "Jy") => return symbol("I") * hbar * symbol("Jz")
-            ("Jy", "Jz") => return symbol("I") * hbar * symbol("Jx")
-            ("Jz", "Jx") => return symbol("I") * hbar * symbol("Jy")
+            ("Jx", "Jy") => return @symcore.imag_unit() * hbar * symbol("Jz")
+            ("Jy", "Jz") => return @symcore.imag_unit() * hbar * symbol("Jx")
+            ("Jz", "Jx") => return @symcore.imag_unit() * hbar * symbol("Jy")
             ("Jplus", "Jminus") => return int(2) * hbar * symbol("Jz")
             ("Jz", "Jplus") => return hbar * symbol("Jplus")
             ("Jz", "Jminus") => return int(-1) * hbar * symbol("Jminus")
@@ -178,9 +178,9 @@ fn quantum_make_commutator(lhs : Expr, rhs : Expr) -> Expr {
         (Expr::Function("BosonOp", _), Expr::Function("FermionOp", _)) =>
           return int(0)
         (Expr::Function("XOp", _), Expr::Function("PxOp", _)) =>
-          return symbol("I") * hbar
+          return @symcore.imag_unit() * hbar
         (Expr::Function("PxOp", _), Expr::Function("XOp", _)) =>
-          return int(-1) * symbol("I") * hbar
+          return int(-1) * @symcore.imag_unit() * hbar
         (Expr::Function("RaisingOp", _), Expr::Function("LoweringOp", _)) =>
           return int(-1)
         (Expr::Function("LoweringOp", _), Expr::Function("RaisingOp", _)) =>

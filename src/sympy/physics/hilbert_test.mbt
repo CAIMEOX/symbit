@@ -14,7 +14,7 @@ test "physics.quantum.hilbert: spaces and dimensions" {
   inspect(cn.repr(), content="ComplexSpace(Symbol('n'))")
   inspect(@symprint.to_string(cn.dimension()), content="n")
 
-  let l2s = l2_space(interval(@symcore.int(0), @symcore.symbol("oo")))
+  let l2s = l2_space(interval(@symcore.int(0), @symcore.oo()))
   inspect(l2s.to_string(), content="L2(Interval(0, oo))")
   inspect(@symprint.to_string(l2s.dimension()), content="oo")
 

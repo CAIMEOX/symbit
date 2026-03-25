@@ -99,7 +99,7 @@ fn fe_to_expr_const(c : FieldElem) -> Expr {
   match c {
     FieldElem::QQ(r) => @symcore.number(r)
     FieldElem::CC(a, b) => {
-      let i_sym = symbol("I")
+      let i_sym = @symcore.imag_unit()
       let imag = if b.is_zero() {
         @symcore.number(@symnum.BigRational::zero())
       } else {

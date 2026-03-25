@@ -1250,7 +1250,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     a,
                     @symelem.coth(
                       expr_div(
-                        expr_mul(@symcore.symbol("pi"), s),
+                        expr_mul(@symcore.pi(), s),
                         expr_mul(expr_int(2), a),
                       ),
                     ),
@@ -1396,7 +1396,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                 expr_mul(
                   expr_mul(
                     expr_rat(-2, 1),
-                    expr_pow(@symcore.symbol("pi"), expr_int(-1)),
+                    expr_pow(@symcore.pi(), expr_int(-1)),
                   ),
                   expr_div(
                     @symelem.asinh(expr_div(s, a)),
@@ -1440,9 +1440,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       if name == t_name {
         let phase = expr_div(
           expr_pow(s, expr_int(2)),
-          expr_mul(expr_int(2), @symcore.symbol("pi")),
+          expr_mul(expr_int(2), @symcore.pi()),
         )
-        let arg = expr_div(s, @symcore.symbol("pi"))
+        let arg = expr_div(s, @symcore.pi())
         Some(
           (
             expr_div(
@@ -1457,7 +1457,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     @symelem.sin(
                       expr_add(
                         phase,
-                        expr_div(@symcore.symbol("pi"), expr_int(4)),
+                        expr_div(@symcore.pi(), expr_int(4)),
                       ),
                     ),
                   ),
@@ -1480,9 +1480,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       if name == t_name {
         let phase = expr_div(
           expr_pow(s, expr_int(2)),
-          expr_mul(expr_int(2), @symcore.symbol("pi")),
+          expr_mul(expr_int(2), @symcore.pi()),
         )
-        let arg = expr_div(s, @symcore.symbol("pi"))
+        let arg = expr_div(s, @symcore.pi())
         Some(
           (
             expr_div(
@@ -1498,7 +1498,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     @symelem.cos(
                       expr_add(
                         phase,
-                        expr_div(@symcore.symbol("pi"), expr_int(4)),
+                        expr_div(@symcore.pi(), expr_int(4)),
                       ),
                     ),
                   ),
@@ -1620,7 +1620,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     expr_mul(
                       s,
                       @symelem.exp_polar(
-                        expr_mul(@symcore.symbol("I"), @symcore.symbol("pi")),
+                        expr_mul(@symcore.imag_unit(), @symcore.pi()),
                       ),
                     ),
                     expr_one(),
@@ -1851,7 +1851,7 @@ fn gaussian_laplace_condition(scale : Expr) -> Expr {
   } else {
     @symcore.function("Le", [
       @symelem.abs(@symelem.arg(scale)),
-      expr_div(@symcore.symbol("pi"), expr_int(2)),
+      expr_div(@symcore.pi(), expr_int(2)),
     ])
   }
 }
@@ -2353,7 +2353,7 @@ fn laplace_generic_trig_power_term(
           match linear_coeffs(arg, t_name) {
             Some((a, b)) if expr_is_constant(a, t_name) &&
               expr_is_constant(b, t_name) => {
-              let ia2 = expr_mul(expr_mul(expr_int(2), @symcore.symbol("I")), a)
+              let ia2 = expr_mul(expr_mul(expr_int(2), @symcore.imag_unit()), a)
               let value = expr_sub(
                 expr_mul(
                   expr_rat(1, 2),
@@ -2368,7 +2368,7 @@ fn laplace_generic_trig_power_term(
                     expr_rat(1, 4),
                     expr_mul(
                       @symelem.exp(
-                        expr_mul(expr_mul(expr_int(2), @symcore.symbol("I")), b),
+                        expr_mul(expr_mul(expr_int(2), @symcore.imag_unit()), b),
                       ),
                       @symcore.raw_function("LaplaceTransform", [
                         other,
@@ -2382,7 +2382,7 @@ fn laplace_generic_trig_power_term(
                     expr_mul(
                       @symelem.exp(
                         expr_mul(
-                          expr_mul(expr_int(-2), @symcore.symbol("I")),
+                          expr_mul(expr_int(-2), @symcore.imag_unit()),
                           b,
                         ),
                       ),
@@ -2468,11 +2468,11 @@ fn laplace_generic_trig_term(
     @symcore.Expr::Function("sin", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if expr_is_zero(b) => {
-          let ia = expr_mul(@symcore.symbol("I"), a)
+          let ia = expr_mul(@symcore.imag_unit(), a)
           Some(
             (
               expr_mul(
-                expr_div(@symcore.symbol("I"), expr_int(2)),
+                expr_div(@symcore.imag_unit(), expr_int(2)),
                 expr_sub(transform(expr_add(s, ia)), transform(expr_sub(s, ia))),
               ),
               max_expr(
@@ -2491,7 +2491,7 @@ fn laplace_generic_trig_term(
     @symcore.Expr::Function("cos", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if expr_is_zero(b) => {
-          let ia = expr_mul(@symcore.symbol("I"), a)
+          let ia = expr_mul(@symcore.imag_unit(), a)
           Some(
             (
               expr_mul(
@@ -2527,7 +2527,7 @@ fn laplace_log_term(inner : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             expr_div(
               expr_sub(
                 @symelem.log(coeff),
-                expr_add(@symelem.log(s), @symcore.symbol("EulerGamma")),
+                expr_add(@symelem.log(s), @symcore.euler_gamma()),
               ),
               s,
             ),
@@ -2591,11 +2591,11 @@ fn laplace_log_squared_term(
           expr_div(
             expr_add(
               expr_pow(
-                expr_add(@symelem.log(s), @symcore.symbol("EulerGamma")),
+                expr_add(@symelem.log(s), @symcore.euler_gamma()),
                 expr_int(2),
               ),
               expr_mul(
-                expr_pow(@symcore.symbol("pi"), expr_int(2)),
+                expr_pow(@symcore.pi(), expr_int(2)),
                 expr_rat(1, 6),
               ),
             ),
@@ -3215,7 +3215,7 @@ fn inverse_laplace_log_plain_term(
   let target = expr_div(
     expr_mul(
       expr_neg_one(),
-      expr_add(@symelem.log(s_sym), @symcore.symbol("EulerGamma")),
+      expr_add(@symelem.log(s_sym), @symcore.euler_gamma()),
     ),
     s_sym,
   )
@@ -6030,11 +6030,11 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
             expr_div(
               @symelem.sin(
                 expr_div(
-                  expr_mul(expr_int(2), expr_mul(@symcore.symbol("pi"), k)),
+                  expr_mul(expr_int(2), expr_mul(@symcore.pi(), k)),
                   scale,
                 ),
               ),
-              expr_mul(@symcore.symbol("pi"), k),
+              expr_mul(@symcore.pi(), k),
             ),
           )
         None => None
@@ -6050,7 +6050,7 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                 expr_mul(
                   expr_int(4),
                   expr_mul(
-                    expr_pow(@symcore.symbol("pi"), expr_int(2)),
+                    expr_pow(@symcore.pi(), expr_int(2)),
                     expr_pow(k, expr_int(2)),
                   ),
                 ),
@@ -6296,12 +6296,12 @@ fn fourier_triangle_term(
           expr_mul(
             c1,
             expr_pow(
-              @symelem.sin(expr_div(expr_mul(@symcore.symbol("pi"), k), c1)),
+              @symelem.sin(expr_div(expr_mul(@symcore.pi(), k), c1)),
               expr_int(2),
             ),
           ),
           expr_mul(
-            expr_pow(@symcore.symbol("pi"), expr_int(2)),
+            expr_pow(@symcore.pi(), expr_int(2)),
             expr_pow(k, expr_int(2)),
           ),
         ),
@@ -6316,14 +6316,14 @@ fn fourier_linear_shift(a : Expr, k : Expr) -> Expr {
     a,
     expr_mul(
       expr_int(2),
-      expr_mul(expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")), k),
+      expr_mul(expr_mul(@symcore.pi(), @symcore.imag_unit()), k),
     ),
   )
 }
 
 ///|
 fn fourier_linear_shift_coeff() -> Expr {
-  expr_mul(expr_int(2), expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")))
+  expr_mul(expr_int(2), expr_mul(@symcore.pi(), @symcore.imag_unit()))
 }
 
 ///|
@@ -6410,7 +6410,7 @@ fn parse_inverse_fourier_abs_decay_rate(
         !expr_is_zero(coeffs[2]) {
         let quad_base = expr_mul(
           expr_int(4),
-          expr_pow(@symcore.symbol("pi"), expr_int(2)),
+          expr_pow(@symcore.pi(), expr_int(2)),
         )
         let scale = expr_simplify(expr_div(coeffs[2], quad_base))
         if expr_depends_on(scale, k_name) || expr_is_zero(scale) {
@@ -6455,7 +6455,7 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
   }
   match linear_coeffs(den, k_name) {
     Some((coeff, offset)) =>
-      if !expr_eq(coeff, @symcore.symbol("pi")) || !expr_is_zero(offset) {
+      if !expr_eq(coeff, @symcore.pi()) || !expr_is_zero(offset) {
         return None
       }
     _ => return None
@@ -6466,7 +6466,7 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
         Some((coeff, offset)) if expr_is_zero(offset) =>
           Some(
             expr_simplify(
-              expr_div(expr_mul(expr_int(2), @symcore.symbol("pi")), coeff),
+              expr_div(expr_mul(expr_int(2), @symcore.pi()), coeff),
             ),
           )
         _ => None
@@ -6514,7 +6514,7 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
           Some(coeffs) =>
             if expr_is_zero(coeffs[0]) &&
               expr_is_zero(coeffs[1]) &&
-              expr_eq(coeffs[2], expr_pow(@symcore.symbol("pi"), expr_int(2))) {
+              expr_eq(coeffs[2], expr_pow(@symcore.pi(), expr_int(2))) {
               den_ok = true
             } else {
               return None
@@ -6529,7 +6529,7 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
           Some((freq, offset)) if expr_is_zero(offset) =>
             if expr_eq(
                 expr_simplify(expr_mul(coeff, freq)),
-                @symcore.symbol("pi"),
+                @symcore.pi(),
               ) {
               scale = Some(coeff)
             } else {
@@ -6729,7 +6729,7 @@ fn sine_log_over_x_term(
           expr_mul(expr_neg_one(), expr_mul(expr_sqrt_two(), sqrt_pi())),
           expr_add(
             @symelem.log(expr_pow(k, expr_int(2))),
-            expr_mul(expr_int(2), @symcore.symbol("EulerGamma")),
+            expr_mul(expr_int(2), @symcore.euler_gamma()),
           ),
         ),
         expr_int(4),
@@ -7012,7 +7012,7 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                           expr_mul(
                             expr_div(
                               expr_sub(
-                                @symcore.symbol("pi"),
+                                @symcore.pi(),
                                 expr_mul(
                                   expr_int(2),
                                   @symspec.si(expr_mul(a, k)),
@@ -7182,7 +7182,7 @@ fn inverse_cosine_meijerg_term(expr : Expr, k_name : String, x : Expr) -> Expr? 
     Some(a_sq) => {
       let expected = expr_div(
         expr_sqrt_two(),
-        expr_mul(expr_int(2), @symcore.symbol("pi")),
+        expr_mul(expr_int(2), @symcore.pi()),
       )
       if expr_eq(coeff, expected) {
         Some(expr_pow(expr_add(x, expr_sqrt_positive(a_sq)), expr_int(-1)))
@@ -7601,8 +7601,8 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
         Some(
           (
             expr_simplify(@symcore.add(values)),
-            lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.symbol("oo"))),
-            upper.unwrap_or(@symcore.symbol("oo")),
+            lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.oo())),
+            upper.unwrap_or(@symcore.oo()),
             cond,
           ),
         )
@@ -7715,7 +7715,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                     expr_neg_one(),
                     expr_mul(
                       @symelem.cos(
-                        expr_mul(@symcore.symbol("pi"), expr_sub(half_order, s)),
+                        expr_mul(@symcore.pi(), expr_sub(half_order, s)),
                       ),
                       expr_mul(
                         @symspec.gamma(expr_sub(s, half_order)),
@@ -7723,7 +7723,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                       ),
                     ),
                   ),
-                  @symcore.symbol("pi"),
+                  @symcore.pi(),
                 ),
               ),
               max_expr(
@@ -7763,7 +7763,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                 ),
                 expr_div(@symelem.re(order), expr_int(2)),
               ),
-              @symcore.symbol("oo"),
+              @symcore.oo(),
               true_expr(),
             ),
           )
@@ -7776,7 +7776,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
           (
             expr_div(@symspec.gamma(s), s),
             expr_zero(),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
             true_expr(),
           ),
         )
@@ -7789,7 +7789,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
           (
             expr_div(@symspec.gamma(s), expr_sub(expr_add(n, s), expr_one())),
             max_expr(expr_sub(expr_one(), n), expr_zero()),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
             true_expr(),
           ),
         )
@@ -7883,16 +7883,16 @@ fn mellin_difference_quotient_info(
           expr_simplify(
             expr_div(
               expr_mul(
-                @symcore.symbol("pi"),
+                @symcore.pi(),
                 expr_mul(
                   expr_pow(scale, expr_add(expr_sub(power, expr_one()), s)),
-                  @symelem.sin(expr_mul(@symcore.symbol("pi"), power)),
+                  @symelem.sin(expr_mul(@symcore.pi(), power)),
                 ),
               ),
               expr_mul(
-                @symelem.sin(expr_mul(@symcore.symbol("pi"), s)),
+                @symelem.sin(expr_mul(@symcore.pi(), s)),
                 @symelem.sin(
-                  expr_mul(@symcore.symbol("pi"), expr_add(power, s)),
+                  expr_mul(@symcore.pi(), expr_add(power, s)),
                 ),
               ),
             ),
@@ -7981,7 +7981,7 @@ fn mellin_abs_one_minus_power_info(
                   expr_mul(
                     @symelem.sin(
                       expr_div(
-                        expr_mul(@symcore.symbol("pi"), rho),
+                        expr_mul(@symcore.pi(), rho),
                         expr_int(2),
                       ),
                     ),
@@ -7990,7 +7990,7 @@ fn mellin_abs_one_minus_power_info(
                       expr_mul(
                         @symelem.cos(
                           expr_mul(
-                            @symcore.symbol("pi"),
+                            @symcore.pi(),
                             expr_sub(s, expr_div(rho, expr_int(2))),
                           ),
                         ),
@@ -8002,7 +8002,7 @@ fn mellin_abs_one_minus_power_info(
                     ),
                   ),
                 ),
-                @symcore.symbol("pi"),
+                @symcore.pi(),
               ),
               expr_zero(),
               @symelem.re(rho),
@@ -8027,8 +8027,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.symbol("pi"),
-              expr_mul(s, @symelem.sin(expr_mul(@symcore.symbol("pi"), s))),
+              @symcore.pi(),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.pi(), s))),
             ),
             expr_int(-1),
             expr_zero(),
@@ -8039,8 +8039,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.symbol("pi"),
-              expr_mul(s, @symelem.sin(expr_mul(@symcore.symbol("pi"), s))),
+              @symcore.pi(),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.pi(), s))),
             ),
             expr_zero(),
             expr_one(),
@@ -8051,8 +8051,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.symbol("pi"),
-              expr_mul(s, @symelem.tan(expr_mul(@symcore.symbol("pi"), s))),
+              @symcore.pi(),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.pi(), s))),
             ),
             expr_int(-1),
             expr_zero(),
@@ -8063,8 +8063,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.symbol("pi"),
-              expr_mul(s, @symelem.tan(expr_mul(@symcore.symbol("pi"), s))),
+              @symcore.pi(),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.pi(), s))),
             ),
             expr_zero(),
             expr_one(),
@@ -8273,7 +8273,7 @@ fn mellin_mul_info(
           (
             value,
             expr_mul(expr_neg_one(), pow),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
             true_expr(),
           ),
         )
@@ -8281,7 +8281,7 @@ fn mellin_mul_info(
         Some(
           (
             value,
-            expr_mul(expr_neg_one(), @symcore.symbol("oo")),
+            expr_mul(expr_neg_one(), @symcore.oo()),
             expr_mul(expr_neg_one(), pow),
             true_expr(),
           ),
@@ -8341,7 +8341,7 @@ fn mellin_beta_heaviside_info(
               @symspec.gamma(expr_add(beta, s)),
             ),
             expr_zero(),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
             @symcore.function("Gt", [@symelem.re(beta), expr_zero()]),
           ),
         )
@@ -8419,7 +8419,7 @@ fn mellin_log_heaviside_info(
         expr_mul(factorial_expr(expr_int(n)), expr_pow(s, expr_int(-(n + 1)))),
       )
       if is_le {
-        Some((value, expr_zero(), @symcore.symbol("oo"), true_expr()))
+        Some((value, expr_zero(), @symcore.oo(), true_expr()))
       } else {
         Some((value, neg_oo_expr(), expr_zero(), true_expr()))
       }
@@ -8601,7 +8601,7 @@ fn mellin_trig_bessel_info(
                         expr_mul(
                           @symelem.sin(
                             expr_mul(
-                              @symcore.symbol("pi"),
+                              @symcore.pi(),
                               expr_sub(half_order, s),
                             ),
                           ),
@@ -8676,7 +8676,7 @@ fn mellin_trig_bessel_info(
                         expr_mul(
                           @symelem.cos(
                             expr_mul(
-                              @symcore.symbol("pi"),
+                              @symcore.pi(),
                               expr_sub(half_order, s),
                             ),
                           ),
@@ -8984,7 +8984,7 @@ fn mellin_besselj_bessely_product_info(
                 expr_mul(
                   expr_neg_one(),
                   expr_mul(
-                    @symelem.cos(expr_mul(@symcore.symbol("pi"), s)),
+                    @symelem.cos(expr_mul(@symcore.pi(), s)),
                     expr_mul(
                       @symspec.gamma(s),
                       expr_mul(
@@ -8995,7 +8995,7 @@ fn mellin_besselj_bessely_product_info(
                   ),
                 ),
                 expr_mul(
-                  expr_mul(@symcore.symbol("pi"), sqrt_pi()),
+                  expr_mul(@symcore.pi(), sqrt_pi()),
                   @symspec.gamma(expr_add(expr_sub(order_j, s), expr_one())),
                 ),
               ),
@@ -9023,7 +9023,7 @@ fn mellin_besselj_bessely_product_info(
                     expr_pow(expr_int(4), s),
                     expr_mul(
                       @symelem.cos(
-                        expr_mul(@symcore.symbol("pi"), expr_add(half_diff, s)),
+                        expr_mul(@symcore.pi(), expr_add(half_diff, s)),
                       ),
                       expr_mul(
                         @symspec.gamma(
@@ -9038,7 +9038,7 @@ fn mellin_besselj_bessely_product_info(
                   ),
                 ),
                 expr_mul(
-                  @symcore.symbol("pi"),
+                  @symcore.pi(),
                   expr_mul(
                     @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_diff)),
                     @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_sum)),
@@ -9208,7 +9208,7 @@ fn mellin_exp_info(
         (
           mellin_exp_formula(pow, coef, degree, s),
           expr_mul(expr_neg_one(), pow),
-          @symcore.symbol("oo"),
+          @symcore.oo(),
           true_expr(),
         ),
       )
@@ -9219,7 +9219,7 @@ fn mellin_exp_info(
     Some(
       (
         mellin_exp_formula(pow, coef, degree, s),
-        expr_mul(expr_neg_one(), @symcore.symbol("oo")),
+        expr_mul(expr_neg_one(), @symcore.oo()),
         expr_mul(expr_neg_one(), pow),
         true_expr(),
       ),
@@ -9334,8 +9334,8 @@ fn mellin_exp_formula(pow : Expr, coef : Expr, degree : Int, s : Expr) -> Expr {
     if expr_is_positive(expr_simplify(coef)) {
       let phase = expr_mul(
         expr_mul(
-          expr_mul(expr_neg_one(), @symcore.symbol("I")),
-          @symcore.symbol("pi"),
+          expr_mul(expr_neg_one(), @symcore.imag_unit()),
+          @symcore.pi(),
         ),
         shifted,
       )
@@ -9584,18 +9584,18 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     return Some(@symspec.ci(@symelem.sqrt(x)))
   }
   let sec_formula = expr_div(
-    @symcore.symbol("pi"),
-    @symelem.cos(expr_mul(@symcore.symbol("pi"), s_sym)),
+    @symcore.pi(),
+    @symelem.cos(expr_mul(@symcore.pi(), s_sym)),
   )
   if expr_eq(expr_simplify(expr), expr_simplify(sec_formula)) {
     return Some(expr_div(@symelem.sqrt(x), expr_add(x, expr_one())))
   }
   let log_quadratic_formula = expr_div(
-    @symcore.symbol("pi"),
+    @symcore.pi(),
     expr_mul(
       s_sym,
       @symelem.sin(
-        expr_div(expr_mul(@symcore.symbol("pi"), s_sym), expr_int(2)),
+        expr_div(expr_mul(@symcore.pi(), s_sym), expr_int(2)),
       ),
     ),
   )
@@ -9694,7 +9694,7 @@ fn inverse_mellin_difference_quotient_term(
       expr_mul(
         expr_pow(scale, expr_add(expr_sub(s_sym, expr_one()), power)),
         expr_mul(
-          @symelem.sin(expr_mul(@symcore.symbol("pi"), power)),
+          @symelem.sin(expr_mul(@symcore.pi(), power)),
           expr_mul(
             @symspec.gamma(s_sym),
             expr_mul(
@@ -9707,7 +9707,7 @@ fn inverse_mellin_difference_quotient_term(
           ),
         ),
       ),
-      @symcore.symbol("pi"),
+      @symcore.pi(),
     ),
   )
   if !expr_same_simplified(expr, expected) {
@@ -10099,7 +10099,7 @@ fn inverse_mellin_piecewise_log_term(
   s_sym : Expr,
   x : Expr,
 ) -> Expr? {
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   let one = expr_one()
   let sin_pi_formula = expr_div(
     pi,
@@ -10486,14 +10486,14 @@ fn inverse_mellin_trig_bessely_term(
     expr_mul(
       expr_mul(
         expr_neg_one(),
-        expr_pow(@symelem.sqrt(@symcore.symbol("pi")), expr_int(-1)),
+        expr_pow(@symelem.sqrt(@symcore.pi()), expr_int(-1)),
       ),
       expr_mul(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.sin(
             expr_mul(
-              @symcore.symbol("pi"),
+              @symcore.pi(),
               expr_sub(expr_mul(order, half), s_sym),
             ),
           ),
@@ -10548,14 +10548,14 @@ fn inverse_mellin_trig_bessely_term(
     expr_mul(
       expr_mul(
         expr_neg_one(),
-        expr_pow(@symelem.sqrt(@symcore.symbol("pi")), expr_int(-1)),
+        expr_pow(@symelem.sqrt(@symcore.pi()), expr_int(-1)),
       ),
       expr_mul(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.cos(
             expr_mul(
-              @symcore.symbol("pi"),
+              @symcore.pi(),
               expr_sub(expr_mul(order, half), s_sym),
             ),
           ),
@@ -10923,7 +10923,7 @@ fn inverse_mellin_besselj_bessely_product_term(
       expr_mul(
         expr_neg_one(),
         expr_mul(
-          expr_pow(@symcore.symbol("pi"), expr_int(-1)),
+          expr_pow(@symcore.pi(), expr_int(-1)),
           expr_div(expr_one(), sqrt_pi()),
         ),
       ),
@@ -10950,7 +10950,7 @@ fn inverse_mellin_besselj_bessely_product_term(
     !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
     !expr_same_simplified(
       coeff,
-      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(-1))),
     ) ||
     trig_coeff != 1 {
     return None
@@ -11543,7 +11543,7 @@ fn inverse_mellin_bessely_single_term(
   if gamma_args.length() != 2 ||
     !expr_same_simplified(
       coeff,
-      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(-1))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(-1))),
     ) {
     return None
   }
@@ -11600,9 +11600,9 @@ fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? 
 
 ///|
 fn divide_by_pi_if_common(expr : Expr) -> Expr? {
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   match expr_simplify(expr) {
-    @symcore.Expr::Symbol(name) if name == "pi" => Some(expr_one())
+    expr if expr_same_simplified(expr, pi) => Some(expr_one())
     @symcore.Expr::Mul(args) => {
       let rest : Array[Expr] = []
       let mut removed = false
@@ -12462,7 +12462,7 @@ fn fourier_gaussian_exponent(
     expr_div(expr_pow(linear, expr_int(2)), expr_mul(expr_int(4), scale)),
   )
   let imag_coeff = expr_div(
-    expr_mul(expr_mul(@symcore.symbol("pi"), @symcore.symbol("I")), linear),
+    expr_mul(expr_mul(@symcore.pi(), @symcore.imag_unit()), linear),
     scale,
   )
   let linear_term = expr_mul(
@@ -12475,7 +12475,7 @@ fn fourier_gaussian_exponent(
   )
   let quad_term = expr_mul(
     expr_div(
-      expr_mul(expr_neg_one(), expr_pow(@symcore.symbol("pi"), expr_int(2))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(2))),
       scale,
     ),
     expr_pow(var_expr, expr_int(2)),
@@ -12548,7 +12548,7 @@ fn factorial_expr(n : Expr) -> Expr {
 
 ///|
 fn sqrt_pi() -> Expr {
-  @symelem.sqrt(@symcore.symbol("pi"))
+  @symelem.sqrt(@symcore.pi())
 }
 
 ///|
@@ -12566,12 +12566,12 @@ fn expr_sqrt_two() -> Expr {
 
 ///|
 fn true_expr() -> Expr {
-  @symcore.symbol("True")
+  @symcore.true_()
 }
 
 ///|
 fn false_expr() -> Expr {
-  @symcore.symbol("False")
+  @symcore.false_()
 }
 
 ///|
@@ -12591,43 +12591,133 @@ fn and_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn max_expr(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_eq(lhs, oo_expr()) || expr_eq(rhs, oo_expr()) {
-    oo_expr()
-  } else if expr_eq(lhs, neg_oo_expr()) {
-    rhs
-  } else if expr_eq(rhs, neg_oo_expr()) {
-    lhs
-  } else {
-    match (expr_num_value(lhs), expr_num_value(rhs)) {
-      (Some(ln), Some(rn)) => if ln.compare(rn) >= 0 { lhs } else { rhs }
-      _ =>
-        if expr_eq(lhs, rhs) {
-          lhs
-        } else {
-          @symcore.function("Max", [lhs, rhs])
-        }
+  let args = flatten_extrema_args("Max", [lhs, rhs])
+  if args.any(is_pos_infinity_expr) {
+    return oo_expr()
+  }
+  let filtered : Array[Expr] = []
+  for arg in args {
+    if !is_neg_infinity_expr(arg) &&
+      !filtered.any(fn(item) { expr_eq(item, arg) }) {
+      filtered.push(arg)
     }
+  }
+  if filtered.is_empty() {
+    return neg_oo_expr()
+  }
+  let mut numeric_best : Expr? = None
+  let nonnumeric : Array[Expr] = []
+  for arg in filtered {
+    match expr_num_value(arg) {
+      Some(value) =>
+        match numeric_best {
+          Some(best) =>
+            match expr_num_value(best) {
+              Some(best_value) =>
+                if value.compare(best_value) > 0 {
+                  numeric_best = Some(arg)
+                }
+              None => numeric_best = Some(arg)
+            }
+          None => numeric_best = Some(arg)
+        }
+      None => nonnumeric.push(arg)
+    }
+  }
+  let reduced : Array[Expr] = []
+  match numeric_best {
+    Some(best) => reduced.push(best)
+    None => ()
+  }
+  for arg in nonnumeric {
+    reduced.push(arg)
+  }
+  if reduced.length() == 1 {
+    reduced[0]
+  } else {
+    @symcore.function("Max", reduced)
   }
 }
 
 ///|
 fn min_expr(lhs : Expr, rhs : Expr) -> Expr {
-  if expr_eq(lhs, neg_oo_expr()) || expr_eq(rhs, neg_oo_expr()) {
-    neg_oo_expr()
-  } else if expr_eq(lhs, oo_expr()) {
-    rhs
-  } else if expr_eq(rhs, oo_expr()) {
-    lhs
-  } else {
-    match (expr_num_value(lhs), expr_num_value(rhs)) {
-      (Some(ln), Some(rn)) => if ln.compare(rn) <= 0 { lhs } else { rhs }
-      _ =>
-        if expr_eq(lhs, rhs) {
-          lhs
-        } else {
-          @symcore.function("Min", [lhs, rhs])
-        }
+  let args = flatten_extrema_args("Min", [lhs, rhs])
+  if args.any(is_neg_infinity_expr) {
+    return neg_oo_expr()
+  }
+  let filtered : Array[Expr] = []
+  for arg in args {
+    if !is_pos_infinity_expr(arg) &&
+      !filtered.any(fn(item) { expr_eq(item, arg) }) {
+      filtered.push(arg)
     }
+  }
+  if filtered.is_empty() {
+    return oo_expr()
+  }
+  let mut numeric_best : Expr? = None
+  let nonnumeric : Array[Expr] = []
+  for arg in filtered {
+    match expr_num_value(arg) {
+      Some(value) =>
+        match numeric_best {
+          Some(best) =>
+            match expr_num_value(best) {
+              Some(best_value) =>
+                if value.compare(best_value) < 0 {
+                  numeric_best = Some(arg)
+                }
+              None => numeric_best = Some(arg)
+            }
+          None => numeric_best = Some(arg)
+        }
+      None => nonnumeric.push(arg)
+    }
+  }
+  let reduced : Array[Expr] = []
+  match numeric_best {
+    Some(best) => reduced.push(best)
+    None => ()
+  }
+  for arg in nonnumeric {
+    reduced.push(arg)
+  }
+  if reduced.length() == 1 {
+    reduced[0]
+  } else {
+    @symcore.function("Min", reduced)
+  }
+}
+
+///|
+fn flatten_extrema_args(name : String, args : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = []
+  for arg in args {
+    match @symcore.applied_parts(arg) {
+      Some((head, inner)) if head == name =>
+        for item in inner {
+          out.push(item)
+        }
+      _ => out.push(arg)
+    }
+  }
+  out
+}
+
+///|
+fn is_pos_infinity_expr(expr : Expr) -> Bool {
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::NumberSymbol(@symcore.NumberSymbolKind::Infinity) => true
+    _ => false
+  }
+}
+
+///|
+fn is_neg_infinity_expr(expr : Expr) -> Bool {
+  match @symcore.expr_form(expr) {
+    @symcore.ExprForm::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity) =>
+      true
+    _ => false
   }
 }
 
@@ -13211,10 +13301,10 @@ fn expr_is_positive(expr : Expr) -> Bool {
 
 ///|
 fn neg_oo_expr() -> Expr {
-  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])
+  @symcore.mul([@symcore.int(-1), @symcore.oo()])
 }
 
 ///|
 fn oo_expr() -> Expr {
-  @symcore.symbol("oo")
+  @symcore.oo()
 }

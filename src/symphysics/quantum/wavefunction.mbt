@@ -25,7 +25,7 @@ fn wavefunction_coord_var(coord : Expr) -> Expr {
 fn wavefunction_coord_limit(coord : Expr) -> (Expr, Expr) {
   match @symcore.tuple_items(coord) {
     Some(args) if args.length() == 3 => (args[1], args[2])
-    _ => (symbol("-oo"), symbol("oo"))
+    _ => (@symcore.neg_oo(), @symcore.oo())
   }
 }
 
@@ -507,7 +507,7 @@ fn wavefunction_is_infinite_bound(expr : Expr) -> Bool {
   match expr {
     Expr::Symbol(name) => name == "oo" || name == "-oo"
     Expr::Mul(args) if args.length() == 2 =>
-      args[0] == int(-1) && args[1] == symbol("oo")
+      args[0] == int(-1) && args[1] == @symcore.oo()
     _ => false
   }
 }
@@ -576,7 +576,7 @@ fn wavefunction_integrate_poly_term(
   }
   if wavefunction_is_infinite_bound(lower) ||
     wavefunction_is_infinite_bound(upper) {
-    return Some(symbol("oo"))
+    return Some(@symcore.oo())
   }
   let next_power = power + 1
   let numerator = @symcore.raw_pow(upper, int(next_power)) -
@@ -636,7 +636,7 @@ fn wavefunction_norm_sq_of(wf : WavefunctionExpr) -> Expr? {
 ///|
 pub fn WavefunctionExpr::norm(self : WavefunctionExpr) -> Expr {
   match wavefunction_norm_sq_of(self) {
-    Some(value) if value == symbol("oo") => value
+    Some(value) if value == @symcore.oo() => value
     Some(value) =>
       wavefunction_simplify_expr(@symcore.raw_function("sqrt", [value]))
     None => self.norm_expr()

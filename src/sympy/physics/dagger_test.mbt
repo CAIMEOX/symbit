@@ -8,7 +8,7 @@ test "physics.quantum.dagger: symbolic and matrix subset" {
     content="conjugate(B)*conjugate(A)",
   )
 
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let matrix = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(1), i],
     [@symcore.int(2), @symcore.int(-1) * i],

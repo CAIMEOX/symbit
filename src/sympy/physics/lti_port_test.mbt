@@ -31,7 +31,7 @@ test "physics.control.lti: transfer function parity" {
   )
 
   let eval_frequency = simplified.eval_frequency(
-    @symcore.symbol("I") + @symcore.int(1),
+    @symcore.imag_unit() + @symcore.int(1),
   )
   assert_true(
     control_expr_eq(

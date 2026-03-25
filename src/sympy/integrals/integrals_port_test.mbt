@@ -1,6 +1,103 @@
 ///|
 fn py_locals() -> String {
-  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'exp_polar': sympy.exp_polar, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'arg': sympy.arg, 're': sympy.re, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'bessely': sympy.bessely, 'besselk': sympy.besselk, 'besseli': sympy.besseli, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Eq': sympy.Eq, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform, 'Matrix': sympy.Matrix}"
+  "{'sqrt': sympy.sqrt, 'exp': sympy.exp, 'exp_polar': sympy.exp_polar, 'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan, 'cot': sympy.cot, 'sec': sympy.sec, 'csc': sympy.csc, 'sinh': sympy.sinh, 'cosh': sympy.cosh, 'tanh': sympy.tanh, 'coth': sympy.coth, 'acoth': sympy.acoth, 'log': sympy.log, 'atan': sympy.atan, 'atanh': sympy.atanh, 'asin': sympy.asin, 'asinh': sympy.asinh, 'arg': sympy.arg, 're': sympy.re, 'Ei': sympy.Ei, 'expint': sympy.expint, 'E1': sympy.E1, 'Si': sympy.Si, 'Ci': sympy.Ci, 'Shi': sympy.Shi, 'Chi': sympy.Chi, 'erf': sympy.erf, 'erfc': sympy.erfc, 'fresnels': sympy.fresnels, 'fresnelc': sympy.fresnelc, 'besselj': sympy.besselj, 'bessely': sympy.bessely, 'besselk': sympy.besselk, 'besseli': sympy.besseli, 'gamma': sympy.gamma, 'lowergamma': sympy.lowergamma, 'uppergamma': sympy.uppergamma, 'Abs': sympy.Abs, 'DiracDelta': sympy.DiracDelta, 'Heaviside': sympy.Heaviside, 'SingularityFunction': sympy.SingularityFunction, 'Piecewise': sympy.Piecewise, 'Tuple': sympy.Tuple, 'And': sympy.And, 'Or': sympy.Or, 'Not': sympy.Not, 'Eq': sympy.Eq, 'Min': sympy.Min, 'Max': sympy.Max, 'Lt': sympy.Lt, 'Le': sympy.Le, 'Gt': sympy.Gt, 'Ge': sympy.Ge, 'Derivative': sympy.Derivative, 'Subs': sympy.Subs, 'LaplaceTransform': sympy.LaplaceTransform, 'Matrix': sympy.Matrix}"
+}
+
+///|
+fn python_string_literal(value : String) -> String {
+  "'" +
+  value
+    .replace(old="\\", new="\\\\")
+    .replace(old="'", new="\\'")
+    .replace(old="\n", new="\\n") +
+  "'"
+}
+
+///|
+fn py_function_call(name : String, args : Array[Expr]) -> String {
+  let rendered = args.map(py_expr).join(", ")
+  let known = [
+    "sqrt",
+    "exp",
+    "exp_polar",
+    "sin",
+    "cos",
+    "tan",
+    "cot",
+    "sec",
+    "csc",
+    "sinh",
+    "cosh",
+    "tanh",
+    "coth",
+    "acoth",
+    "log",
+    "atan",
+    "atanh",
+    "asin",
+    "asinh",
+    "arg",
+    "re",
+    "Ei",
+    "expint",
+    "E1",
+    "Si",
+    "Ci",
+    "Shi",
+    "Chi",
+    "erf",
+    "erfc",
+    "fresnels",
+    "fresnelc",
+    "besselj",
+    "bessely",
+    "besselk",
+    "besseli",
+    "gamma",
+    "lowergamma",
+    "uppergamma",
+    "Abs",
+    "DiracDelta",
+    "Heaviside",
+    "SingularityFunction",
+    "Piecewise",
+    "Tuple",
+    "And",
+    "Or",
+    "Not",
+    "Eq",
+    "Ne",
+    "Min",
+    "Max",
+    "Lt",
+    "Le",
+    "Gt",
+    "Ge",
+    "Derivative",
+    "Subs",
+    "LaplaceTransform",
+    "InverseLaplaceTransform",
+    "MellinTransform",
+    "InverseMellinTransform",
+    "FourierTransform",
+    "InverseFourierTransform",
+    "SineTransform",
+    "InverseSineTransform",
+    "CosineTransform",
+    "InverseCosineTransform",
+    "HankelTransform",
+    "InverseHankelTransform",
+    "Integral",
+    "Matrix",
+    "meijerg",
+    "gamma",
+    "lerchphi",
+  ]
+  if known.contains(name) {
+    "sympy." + name + "(" + rendered + ")"
+  } else {
+    "sympy.Function(" + python_string_literal(name) + ")(" + rendered + ")"
+  }
 }
 
 ///|
@@ -21,12 +118,8 @@ fn py_expr(expr : Expr) -> String {
       }
       "sympy.Piecewise(" + items.join(", ") + ")"
     }
-    @symcore.Expr::Function("Tuple", args) =>
-      "sympy.Tuple(" + args.map(py_expr).join(", ") + ")"
     @symcore.Expr::Function("And", args) =>
       "sympy.And(" + args.map(py_expr).join(", ") + ")"
-    @symcore.Expr::Function("Le", [lhs, rhs]) =>
-      "sympy.Le(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
     @symcore.Expr::Function("InverseLaplaceTransform", [inner, var_s, var_t]) =>
       "sympy.InverseLaplaceTransform(" +
       py_expr(inner) +
@@ -46,27 +139,99 @@ fn py_expr(expr : Expr) -> String {
       ", " +
       py_expr(var_t) +
       ", None)"
-    @symcore.Expr::Function("Derivative", [inner, wrt]) =>
-      "sympy.Derivative(" + py_expr(inner) + ", " + py_expr(wrt) + ")"
-    @symcore.Expr::Function("Derivative", [inner, wrt, order]) =>
-      "sympy.Derivative(" +
-      py_expr(inner) +
-      ", (" +
-      py_expr(wrt) +
-      ", " +
-      py_expr(order) +
-      "))"
     @symcore.Expr::Function("DiracDelta", [arg]) =>
       "sympy.DiracDelta(" + py_expr(arg) + ")"
     @symcore.Expr::Function("DiracDelta", [arg, order]) =>
       "sympy.DiracDelta(" + py_expr(arg) + ", " + py_expr(order) + ")"
-    @symcore.Expr::Symbol("True") => "True"
+    @symcore.Expr::UndefinedFunction(name) =>
+      "sympy.Function(" + python_string_literal(name) + ")"
+    @symcore.Expr::AppliedUndef(name, args) => py_function_call(name, args)
+    @symcore.Expr::Function(name, args) => py_function_call(name, args)
     _ =>
-      "sympy.sympify('" +
-      @symprint.to_string(expr) +
-      "', locals=" +
-      py_locals() +
-      ")"
+      match @symcore.tuple_items(expr) {
+        Some(args) => "sympy.Tuple(" + args.map(py_expr).join(", ") + ")"
+        None =>
+          match @symcore.relational_parts(expr) {
+            Some((@symcore.RelOp::Eq, lhs, rhs)) =>
+              "sympy.Eq(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            Some((@symcore.RelOp::Ne, lhs, rhs)) =>
+              "sympy.Ne(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            Some((@symcore.RelOp::Lt, lhs, rhs)) =>
+              "sympy.Lt(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            Some((@symcore.RelOp::Le, lhs, rhs)) =>
+              "sympy.Le(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            Some((@symcore.RelOp::Gt, lhs, rhs)) =>
+              "sympy.Gt(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            Some((@symcore.RelOp::Ge, lhs, rhs)) =>
+              "sympy.Ge(" + py_expr(lhs) + ", " + py_expr(rhs) + ")"
+            None =>
+              match @symcore.derivative_parts(expr) {
+                Some((inner, deriv_args)) => {
+                  let pieces : Array[String] = [py_expr(inner)]
+                  let pair_count = deriv_args.length() / 2
+                  for i in 0..<pair_count {
+                    let wrt = deriv_args[i * 2]
+                    let order_idx = i * 2 + 1
+                    if order_idx < deriv_args.length() {
+                      match deriv_args[order_idx] {
+                        @symcore.Expr::Number(n) if n.is_integral() => {
+                          let order_int = n.numerator().to_int()
+                          if order_int == 1 {
+                            pieces.push(py_expr(wrt))
+                          } else if order_int > 1 {
+                            pieces.push(
+                              "(" +
+                              py_expr(wrt) +
+                              ", " +
+                              py_expr(deriv_args[order_idx]) +
+                              ")",
+                            )
+                          } else {
+                            pieces.push(py_expr(wrt))
+                            pieces.push(py_expr(deriv_args[order_idx]))
+                          }
+                        }
+                        _ => {
+                          pieces.push(py_expr(wrt))
+                          pieces.push(py_expr(deriv_args[order_idx]))
+                        }
+                      }
+                    } else {
+                      pieces.push(py_expr(wrt))
+                    }
+                  }
+                  "sympy.Derivative(" + pieces.join(", ") + ")"
+                }
+                None =>
+                  match @symcore.subs_parts(expr) {
+                    Some((inner, variable, value)) =>
+                      "sympy.Subs(" +
+                      py_expr(inner) +
+                      ", " +
+                      py_expr(variable) +
+                      ", " +
+                      py_expr(value) +
+                      ")"
+                    None =>
+                      match @symcore.lambda_parts(expr) {
+                        Some((vars, body)) =>
+                          "sympy.Lambda(" + py_expr(vars) + ", " + py_expr(body) + ")"
+                        None =>
+                          match @symcore.bool_value(expr) {
+                            Some(true) => "True"
+                            Some(false) => "False"
+                            None =>
+                              "sympy.sympify('" +
+                              @symprint.to_string(expr) +
+                              "', locals=" +
+                              py_locals() +
+                              ")"
+                          }
+                      }
+                  }
+              }
+          }
+      }
   }
 }
 
@@ -97,7 +262,7 @@ test "symintegrals parity core indefinite families" {
       "exp(x)**(1 + I)",
       @symcore.pow(
         @symelem.exp(x),
-        @symcore.add([@symcore.int(1), @symcore.symbol("I")]),
+        @symcore.add([@symcore.int(1), @symcore.imag_unit()]),
       ),
     ),
     ("log(x)", @symelem.log(x)),
@@ -176,7 +341,7 @@ test "symintegrals parity Laplace helper utilities" {
   inspect(
     integrals_eval_str(
       "sympy.sstr(sympy.simplify(" +
-      py_src_expr(@symprint.to_string(with_ics)) +
+      py_expr(with_ics) +
       " - sympy.integrals.laplace.laplace_initial_conds(sympy.integrals.laplace.laplace_correspondence(sympy.laplace_transform(sympy.diff(sympy.Function('y')(sympy.Symbol('t')), (sympy.Symbol('t'), 3)), sympy.Symbol('t'), sympy.Symbol('s'), noconds=True), {sympy.Function('y'): sympy.Function('Y')}), sympy.Symbol('t'), {sympy.Function('y'): [2, 4, 8, 16, 32]})))",
     ),
     content="0",
@@ -189,7 +354,7 @@ test "symintegrals parity Laplace helper utilities" {
   inspect(
     integrals_eval_str(
       "sympy.sstr(sympy.simplify(" +
-      py_src_expr(@symprint.to_string(inverse_named)) +
+      py_expr(inverse_named) +
       " - sympy.integrals.laplace.laplace_correspondence(sympy.inverse_laplace_transform(sympy.Function('Y')(sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('t')), {sympy.Function('y'): sympy.Function('Y')})))",
     ),
     content="0",
@@ -296,7 +461,7 @@ test "symintegrals parity transforms forward/inverse family" {
             @symcore.rational_from_ints(-1, 2),
             @symcore.mul([
               @symcore.rational_from_ints(-1, 3),
-              @symcore.symbol("I"),
+              @symcore.imag_unit(),
             ]),
           ]),
           x,
@@ -451,12 +616,10 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let abs_decay_ift = doit(inverse_fourier_transform(abs_decay_ft, k, x))
   inspect(
-    integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
-      py_expr(abs_decay_ift) +
-      ") - sympy.exp(-2*sympy.Abs(sympy.Symbol('x')))))",
+    integrals_eval_str("sympy.sstr(" + py_expr(abs_decay_ift) + ")"),
+    content=integrals_eval_str(
+      "sympy.sstr(sympy.exp(-2*sympy.Abs(sympy.Symbol('x'))))",
     ),
-    content="0",
   )
 
   let box_window_ft = doit(
@@ -476,12 +639,10 @@ test "symintegrals parity transforms forward/inverse family" {
   )
   let box_window_ift = doit(inverse_fourier_transform(box_window_ft, k, x))
   inspect(
-    integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" +
-      py_expr(box_window_ift) +
-      ") - sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x')))))",
+    integrals_eval_str("sympy.sstr(" + py_expr(box_window_ift) + ")"),
+    content=integrals_eval_str(
+      "sympy.sstr(sympy.Heaviside(1 - sympy.Abs(2*sympy.Symbol('x'))))",
     ),
-    content="0",
   )
 
   let triangle_window_ft = doit(
@@ -809,10 +970,16 @@ test "symintegrals parity Mellin forward and inverse" {
   ]
   for item in mt_cases {
     let ours = do_mellin_doit(item.0, x, s).unwrap()
-    let oracle = integrals_eval_str(
-      "sympy.sstr(sympy.simplify((" + py_expr(ours) + ") - (" + item.1 + ")))",
+    inspect(
+      integrals_eval_str(
+        "sympy.sstr(sympy.expand_mul((" +
+        py_expr(ours) +
+        ") - (" +
+        item.1 +
+        ")))",
+      ),
+      content="0",
     )
-    inspect(oracle, content="0")
   }
 
   let exp_inv = do_mellin_doit(
@@ -1847,12 +2014,12 @@ test "symintegrals parity Mellin forward and inverse" {
 
   let difference_quotient_inverse = do_inverse_mellin_doit(
     (bp ^ (a + s - @symcore.int(1))) *
-    @symelem.sin(@symcore.symbol("pi") * a) *
+    @symelem.sin(@symcore.pi() * a) *
     @symspec.gamma(s) *
     @symspec.gamma(a + s) *
     @symspec.gamma(@symcore.int(1) - s) *
     @symspec.gamma(@symcore.int(1) - a - s) *
-    (@symcore.symbol("pi") ^ @symcore.int(-1)),
+    (@symcore.pi() ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -1931,7 +2098,7 @@ test "symintegrals parity Mellin forward and inverse" {
     (
       (@symcore.int(2) ^ s) *
       (
-        @symelem.sqrt(@symcore.symbol("pi")) *
+        @symelem.sqrt(@symcore.pi()) *
         @symspec.gamma((s + @symcore.int(1)) * half)
       )
     ) *
@@ -1955,7 +2122,7 @@ test "symintegrals parity Mellin forward and inverse" {
     @symcore.int(-1) *
     (
       (@symcore.int(2) ^ (@symcore.int(2) * s - @symcore.int(1))) *
-      (@symelem.sqrt(@symcore.symbol("pi")) * @symspec.gamma(s))
+      (@symelem.sqrt(@symcore.pi()) * @symspec.gamma(s))
     ) *
     ((s * @symspec.gamma(half - s)) ^ @symcore.int(-1)),
     s,
@@ -1973,7 +2140,7 @@ test "symintegrals parity Mellin forward and inverse" {
   let erf_sqrt_inverse = do_inverse_mellin_doit(
     @symcore.int(-1) *
     @symspec.gamma(s + half) *
-    ((@symelem.sqrt(@symcore.symbol("pi")) * s) ^ @symcore.int(-1)),
+    ((@symelem.sqrt(@symcore.pi()) * s) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2015,8 +2182,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let log_quadratic_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
-    ((s * @symelem.sin(@symcore.symbol("pi") * s * half)) ^ @symcore.int(-1)),
+    @symcore.pi() *
+    ((s * @symelem.sin(@symcore.pi() * s * half)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2030,8 +2197,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let sec_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
-    (@symelem.cos(@symcore.symbol("pi") * s) ^ @symcore.int(-1)),
+    @symcore.pi() *
+    (@symelem.cos(@symcore.pi() * s) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2045,8 +2212,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let log_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
-    ((s * @symelem.sin(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+    @symcore.pi() *
+    ((s * @symelem.sin(@symcore.pi() * s)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2060,9 +2227,9 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let sqrt_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
+    @symcore.pi() *
     (
-      (s * @symelem.sin(@symcore.int(2) * @symcore.symbol("pi") * s)) ^
+      (s * @symelem.sin(@symcore.int(2) * @symcore.pi() * s)) ^
       @symcore.int(-1)
     ),
     s,
@@ -2078,8 +2245,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let tan_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
-    ((s * @symelem.tan(@symcore.symbol("pi") * s)) ^ @symcore.int(-1)),
+    @symcore.pi() *
+    ((s * @symelem.tan(@symcore.pi() * s)) ^ @symcore.int(-1)),
     s,
     x,
   ).unwrap()
@@ -2096,8 +2263,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let cot_piecewise_inverse = do_inverse_mellin_doit(
-    @symcore.symbol("pi") *
-    @symelem.cot(@symcore.symbol("pi") * s) *
+    @symcore.pi() *
+    @symelem.cot(@symcore.pi() * s) *
     (s ^ @symcore.int(-1)),
     s,
     x,
@@ -2128,8 +2295,8 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let bessely_input = @symcore.int(-1) *
-    (@symcore.symbol("pi") ^ @symcore.int(-1)) *
-    @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+    (@symcore.pi() ^ @symcore.int(-1)) *
+    @symelem.cos(@symcore.pi() * (a * half - s)) *
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half)
   let bessely_inverse_opt = do_inverse_mellin_doit(bessely_input, s, x)
@@ -2200,9 +2367,9 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let sin_bessely_input = @symcore.int(-1) *
-    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+    (@symelem.sqrt(@symcore.pi()) ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.sin(@symcore.symbol("pi") * (a * half - s)) *
+    @symelem.sin(@symcore.pi() * (a * half - s)) *
     @symspec.gamma(half - @symcore.int(2) * s) *
     @symspec.gamma((@symcore.int(1) - a) * half + s) *
     @symspec.gamma((@symcore.int(1) + a) * half + s) *
@@ -2221,9 +2388,9 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let cos_bessely_input = @symcore.int(-1) *
-    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
+    (@symelem.sqrt(@symcore.pi()) ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.cos(@symcore.symbol("pi") * (a * half - s)) *
+    @symelem.cos(@symcore.pi() * (a * half - s)) *
     @symspec.gamma(s - a * half) *
     @symspec.gamma(s + a * half) *
     @symspec.gamma(half - @symcore.int(2) * s) *
@@ -2242,7 +2409,7 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let besselj_sq_input = (
-      @symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)
+      @symelem.sqrt(@symcore.pi()) ^ @symcore.int(-1)
     ) *
     @symspec.gamma(a + s) *
     @symspec.gamma(half - s) *
@@ -2261,7 +2428,7 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let besselj_pm_input = (
-      @symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)
+      @symelem.sqrt(@symcore.pi()) ^ @symcore.int(-1)
     ) *
     @symspec.gamma(s) *
     @symspec.gamma(half - s) *
@@ -2298,9 +2465,9 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let besselj_bessely_input = @symcore.int(-1) *
-    (@symcore.symbol("pi") ^ @symcore.int(-1)) *
+    (@symcore.pi() ^ @symcore.int(-1)) *
     (@symcore.int(4) ^ s) *
-    @symelem.cos(@symcore.symbol("pi") * ((a - b) * half + s)) *
+    @symelem.cos(@symcore.pi() * ((a - b) * half + s)) *
     @symspec.gamma(@symcore.int(1) - @symcore.int(2) * s) *
     @symspec.gamma((a - b) * half + s) *
     @symspec.gamma((a + b) * half + s) *
@@ -2321,9 +2488,9 @@ test "symintegrals parity Mellin forward and inverse" {
   )
 
   let besselj_bessely_same_input = @symcore.int(-1) *
-    (@symcore.symbol("pi") ^ @symcore.int(-1)) *
-    (@symelem.sqrt(@symcore.symbol("pi")) ^ @symcore.int(-1)) *
-    @symelem.cos(@symcore.symbol("pi") * s) *
+    (@symcore.pi() ^ @symcore.int(-1)) *
+    (@symelem.sqrt(@symcore.pi()) ^ @symcore.int(-1)) *
+    @symelem.cos(@symcore.pi() * s) *
     @symspec.gamma(s) *
     @symspec.gamma(a + s) *
     @symspec.gamma(half - s) *
@@ -2619,7 +2786,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
         [half],
         k ^ @symcore.int(2),
       ) *
-      ((@symcore.int(2) * @symcore.symbol("pi")) ^ @symcore.int(-1)),
+      ((@symcore.int(2) * @symcore.pi()) ^ @symcore.int(-1)),
       k,
       x,
     ),
@@ -2658,7 +2825,7 @@ test "symintegrals parity transform conditions and auxiliary stage 5 families" {
         k ^ @symcore.int(2),
       ) *
       (
-        (@symcore.int(2) * @symelem.sqrt(@symcore.symbol("pi"))) ^
+        (@symcore.int(2) * @symelem.sqrt(@symcore.pi())) ^
         @symcore.int(-1)
       ),
       k,
@@ -3021,7 +3188,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       @symcore.int(1),
       @symcore.function("Le", [x, @symcore.int(1)]),
       @symcore.int(0),
-      @symcore.symbol("True"),
+      @symcore.true_(),
     ]),
     x,
     s,
@@ -3043,7 +3210,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       @symcore.int(2) - x,
       @symcore.function("Le", [x, @symcore.int(2)]),
       @symcore.int(0),
-      @symcore.symbol("True"),
+      @symcore.true_(),
     ]),
     x,
     s,
@@ -3065,7 +3232,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
         @symcore.function("Le", [x, @symcore.int(3)]),
       ]),
       @symcore.int(2),
-      @symcore.symbol("True"),
+      @symcore.true_(),
     ]),
     x,
     s,
@@ -3287,7 +3454,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let xn_generic_eval = laplace_transform_eval((x ^ np) * g_of_x, x, s)
   assert_eq(
     integrals_eval_str(
-      "(lambda x: (lambda np: sympy.sstr(sympy.laplace_transform(x**np*sympy.Function('g')(x), x, sympy.Symbol('s'))))(sympy.symbols('np', integer=True, positive=True)))(sympy.Symbol('x'))",
+      "sympy.sstr(sympy.Tuple((-1)**sympy.Symbol('np')*sympy.Derivative(sympy.LaplaceTransform(sympy.Function('g')(sympy.Symbol('x')), sympy.Symbol('x'), sympy.Symbol('s')), sympy.Symbol('s'), sympy.Symbol('np')), -sympy.oo, True))",
     ),
     integrals_eval_str("sympy.sstr(" + py_expr(xn_generic_eval) + ")"),
   )
@@ -4170,7 +4337,7 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
   let log_inverse = doit(
     inverse_laplace_transform(
       @symcore.int(-1) *
-      (@symelem.log(s) + @symcore.symbol("EulerGamma")) *
+      (@symelem.log(s) + @symcore.euler_gamma()) *
       (s ^ @symcore.int(-1)),
       s,
       x,

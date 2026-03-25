@@ -328,7 +328,7 @@ fn symbolic_discrete_joint_box_cdf(
         guard_terms.push(@symcore.function("Ge", [bounds[i], @symcore.int(0)]))
       }
       let cond = if guard_terms.is_empty() {
-        @symcore.symbol("True")
+        @symcore.true_()
       } else {
         @symcore.function("And", guard_terms)
       }
@@ -345,7 +345,7 @@ fn symbolic_discrete_joint_box_cdf(
           Some(
             @symcore.function("Piecewise", [
               discrete_tuple_expr([sum_expr, cond]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
             ]),
           )
         }
@@ -386,7 +386,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
             ]),
           )
         }
@@ -420,7 +420,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, high]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
             ]),
           )
         }
@@ -447,7 +447,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
             ]),
           )
         }
@@ -474,7 +474,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
             ]),
           )
         }
@@ -494,7 +494,7 @@ fn symbolic_discrete_cdf_formula(
                   pmf,
                   discrete_tuple_expr([kk, @symcore.int(0), fk]),
                 ]),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )
@@ -514,7 +514,7 @@ fn symbolic_discrete_cdf_formula(
                   pmf,
                   discrete_tuple_expr([kk, @symcore.int(1), fk]),
                 ]),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )
@@ -529,7 +529,7 @@ fn symbolic_discrete_cdf_formula(
               discrete_tuple_expr([
                 kk,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
                 ),
                 fk,
               ]),
@@ -551,7 +551,7 @@ fn symbolic_discrete_cdf_formula(
                   pmf,
                   discrete_tuple_expr([kk, @symcore.int(1), fk]),
                 ]),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )
@@ -667,7 +667,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                     @symcore.function("Le", [k, kk]),
                   ]),
                 ]),
-                discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+                discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
               ]),
             )
           }
@@ -708,7 +708,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   @symcore.function("Le", [k, kk]),
                 ]),
               ]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
             ])
             let tau = @symcore.function("Piecewise", [
               discrete_tuple_expr([
@@ -759,7 +759,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   ]),
                 ]),
               ]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.symbol("True")]),
+              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
             ])
             let ii = @symcore.symbol("_i")
             let harmonic = @symcore.function("Sum", [
@@ -845,7 +845,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                     ]),
                     discrete_tuple_expr([
                       @symcore.int(0),
-                      @symcore.symbol("True"),
+                      @symcore.true_(),
                     ]),
                   ]),
                 )
@@ -1079,7 +1079,7 @@ fn symbolic_discrete_variance_by_sum(
     DiscreteTag::RobustSoliton if params.length() == 3 =>
       Some((@symcore.int(1), params[0]))
     DiscreteTag::YuleSimon if params.length() == 1 =>
-      Some((@symcore.int(1), @symcore.symbol("oo")))
+      Some((@symcore.int(1), @symcore.oo()))
     _ => None
   }
   match bounds {

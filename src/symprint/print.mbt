@@ -126,7 +126,11 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       "Mod(\{format_expr(lhs, 0)}, \{format_expr(rhs, 0)})"
     @symcore.ExprForm::Tuple(args) => {
       let rendered = args.map(child => format_expr(child, 0)).join(", ")
-      "(\{rendered})"
+      if args.length() == 1 {
+        "(\{rendered},)"
+      } else {
+        "(\{rendered})"
+      }
     }
     @symcore.ExprForm::Dict(items) => {
       let rendered : Array[String] = []

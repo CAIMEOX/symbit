@@ -1632,23 +1632,32 @@ fn parse_one_plus_cos(expr : Expr) -> Expr? {
 fn parse_pi_fraction(expr : Expr) -> (Int, Int)? {
   match expr {
     Expr::Number(n) if n.is_zero() => Some((0, 1))
-    Expr::Symbol(name) if name == "pi" => Some((1, 1))
-    Expr::Mul(args) => {
-      let mut coeff = @symnum.BigRational::one()
-      let mut has_pi = false
-      for arg in args {
-        match arg {
-          Expr::Number(n) => coeff = coeff.mul_r(n)
-          Expr::Symbol(name) if name == "pi" => has_pi = true
-          _ => return None
-        }
+    _ =>
+      match @symcore.number_symbol_kind(expr) {
+        Some(@symcore.NumberSymbolKind::Pi) => Some((1, 1))
+        _ =>
+          match expr {
+            Expr::Mul(args) => {
+              let mut coeff = @symnum.BigRational::one()
+              let mut has_pi = false
+              for arg in args {
+                match arg {
+                  Expr::Number(n) => coeff = coeff.mul_r(n)
+                  _ =>
+                    match @symcore.number_symbol_kind(arg) {
+                      Some(@symcore.NumberSymbolKind::Pi) => has_pi = true
+                      _ => return None
+                    }
+                }
+              }
+              if !has_pi {
+                return None
+              }
+              Some((coeff.numerator().to_int(), coeff.denominator().to_int()))
+            }
+            _ => None
+          }
       }
-      if !has_pi {
-        return None
-      }
-      Some((coeff.numerator().to_int(), coeff.denominator().to_int()))
-    }
-    _ => None
   }
 }
 

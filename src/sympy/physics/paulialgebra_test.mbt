@@ -47,7 +47,7 @@ test "physics.paulialgebra: core multiplication rules" {
 
 ///|
 test "physics.paulialgebra: evaluate ordered products" {
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sigma1 = pauli(1)
   let sigma2 = pauli(2)
   let sigma3 = pauli(3)
@@ -76,7 +76,7 @@ test "physics.paulialgebra: evaluate ordered products" {
 
 ///|
 test "physics.paulialgebra: evaluate additive and tensor expressions" {
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sigma1 = pauli(1)
   let sigma2 = pauli(2)
   let sigma3 = pauli(3)

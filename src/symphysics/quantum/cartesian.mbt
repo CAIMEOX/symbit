@@ -24,7 +24,7 @@ fn cartesian_delta(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn cartesian_plane_wave(phase : Expr) -> Expr {
-  let norm = @symcore.raw_function("sqrt", [int(2) * symbol("pi") * hbar])
+  let norm = @symcore.raw_function("sqrt", [int(2) * @symcore.pi() * hbar])
   @symcore.raw_function("exp", [phase]) * @symcore.raw_pow(norm, int(-1))
 }
 
@@ -177,7 +177,7 @@ pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
       kargs.length() == 1 =>
       Some(
         cartesian_plane_wave(
-          symbol("I") * bargs[0] * kargs[0] * @symcore.raw_pow(hbar, int(-1)),
+          @symcore.imag_unit() * bargs[0] * kargs[0] * @symcore.raw_pow(hbar, int(-1)),
         ),
       )
     (Expr::Function("PxBra", bargs), Expr::Function("XKet", kargs)) if bargs.length() ==
@@ -186,7 +186,7 @@ pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
       Some(
         cartesian_plane_wave(
           int(-1) *
-          symbol("I") *
+          @symcore.imag_unit() *
           kargs[0] *
           bargs[0] *
           @symcore.raw_pow(hbar, int(-1)),
@@ -240,7 +240,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         if basis_name == "px" {
           cartesian_plane_wave(
             int(-1) *
-            symbol("I") *
+            @symcore.imag_unit() *
             args[0] *
             coord *
             @symcore.raw_pow(hbar, int(-1)),
@@ -253,7 +253,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       Some(
         if basis_name == "px" {
           cartesian_plane_wave(
-            symbol("I") * args[0] * coord * @symcore.raw_pow(hbar, int(-1)),
+            @symcore.imag_unit() * args[0] * coord * @symcore.raw_pow(hbar, int(-1)),
           )
         } else {
           cartesian_delta(coord, args[0])
@@ -263,7 +263,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       Some(
         if basis_name == "x" {
           cartesian_plane_wave(
-            symbol("I") * coord * args[0] * @symcore.raw_pow(hbar, int(-1)),
+            @symcore.imag_unit() * coord * args[0] * @symcore.raw_pow(hbar, int(-1)),
           )
         } else {
           cartesian_delta(coord, args[0])
@@ -274,7 +274,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         if basis_name == "x" {
           cartesian_plane_wave(
             int(-1) *
-            symbol("I") *
+            @symcore.imag_unit() *
             coord *
             args[0] *
             @symcore.raw_pow(hbar, int(-1)),
@@ -300,7 +300,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         if basis_name == "px" {
           let px1 = cartesian_symbol("px", idx=1)
           let px2 = cartesian_symbol("px", idx=2)
-          symbol("I") * hbar * cartesian_delta(px1, px2) * px1
+          @symcore.imag_unit() * hbar * cartesian_delta(px1, px2) * px1
         } else {
           coord
         },
@@ -310,7 +310,7 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         if basis_name == "x" || basis_name == "default" {
           let x1 = cartesian_symbol("x", idx=1)
           let x2 = cartesian_symbol("x", idx=2)
-          int(-1) * symbol("I") * hbar * cartesian_delta(x1, x2) * x1
+          int(-1) * @symcore.imag_unit() * hbar * cartesian_delta(x1, x2) * x1
         } else {
           coord
         },

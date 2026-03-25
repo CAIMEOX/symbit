@@ -276,13 +276,13 @@ fn cont_guard_params(
 ) -> @symcore.Expr {
   match cont_known_valid(name, params) {
     Some(true) => expr
-    Some(false) => @symcore.symbol("nan")
+    Some(false) => @symcore.nan_expr()
     None =>
       match cont_param_condition(name, params) {
         Some(valid_cond) =>
           cont_piecewise([
             (expr, valid_cond),
-            (@symcore.symbol("nan"), @symcore.symbol("True")),
+            (@symcore.nan_expr(), @symcore.true_()),
           ])
         None => expr
       }
@@ -301,7 +301,7 @@ fn symbolic_continuous_density(
       let b = params[1]
       let denom = eval_arith(
         @symcore.mul([
-          @symcore.symbol("pi"),
+          @symcore.pi(),
           @symcore.function("sqrt", [
             eval_arith(
               @symcore.mul([
@@ -319,7 +319,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_and(cont_rel("Le", a, x), cont_rel("Le", x, b))),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -332,7 +332,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_and(cont_rel("Le", a, x), cont_rel("Le", x, b))),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -361,7 +361,7 @@ fn symbolic_continuous_density(
               cont_rel("Le", x, @symcore.int(1)),
             ),
           ),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -399,7 +399,7 @@ fn symbolic_continuous_density(
       )
       let denom = eval_arith(
         @symcore.mul([
-          @symcore.symbol("pi"),
+          @symcore.pi(),
           gamma,
           eval_arith(
             @symcore.add([@symcore.int(1), @symcore.pow(ratio, @symcore.int(2))]),
@@ -429,7 +429,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, xm)),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -461,7 +461,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -478,7 +478,7 @@ fn symbolic_continuous_density(
                 sigma,
                 @symcore.function("sqrt", [
                   eval_arith(
-                    @symcore.mul([@symcore.int(2), @symcore.symbol("pi")]),
+                    @symcore.mul([@symcore.int(2), @symcore.pi()]),
                   ),
                 ]),
               ]),
@@ -507,7 +507,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Gt", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -530,7 +530,7 @@ fn symbolic_continuous_density(
       Some(
         cont_piecewise([
           (body, cont_rel("Ge", x, @symcore.int(0))),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -550,7 +550,7 @@ fn symbolic_continuous_density(
             eval_arith(
               @symcore.mul([
                 @symcore.function("sqrt", [
-                  eval_arith(@symcore.mul([nu, @symcore.symbol("pi")])),
+                  eval_arith(@symcore.mul([nu, @symcore.pi()])),
                 ]),
                 @symcore.function("gamma", [
                   eval_arith(@symcore.mul([stats_exact_rational(1, 2), nu])),
@@ -623,7 +623,7 @@ fn symbolic_continuous_density(
           @symcore.function("Tuple", [
             kk,
             @symcore.int(0),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
           ]),
         ]),
       )
@@ -705,7 +705,7 @@ fn symbolic_continuous_integral_cdf(
   if guard_lower {
     cont_piecewise([
       (integral, cont_rel("Ge", x, lower)),
-      (@symcore.int(0), @symcore.symbol("True")),
+      (@symcore.int(0), @symcore.true_()),
     ])
   } else {
     integral
@@ -735,13 +735,13 @@ fn symbolic_continuous_cdf(
             eval_arith(
               @symcore.mul([
                 stats_exact_rational(2, 1),
-                @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
+                @symcore.pow(@symcore.pi(), @symcore.int(-1)),
                 @symcore.function("asin", [@symcore.function("sqrt", [ratio])]),
               ]),
             ),
             cont_rel("Le", x, b),
           ),
-          (@symcore.int(1), @symcore.symbol("True")),
+          (@symcore.int(1), @symcore.true_()),
         ]),
       )
     }
@@ -758,7 +758,7 @@ fn symbolic_continuous_cdf(
         cont_piecewise([
           (@symcore.int(0), cont_rel("Lt", x, a)),
           (mid, cont_rel("Le", x, b)),
-          (@symcore.int(1), @symcore.symbol("True")),
+          (@symcore.int(1), @symcore.true_()),
         ]),
       )
     }
@@ -798,7 +798,7 @@ fn symbolic_continuous_cdf(
       Some(
         cont_piecewise([
           (left, cont_rel("Lt", x, mu)),
-          (right, @symcore.symbol("True")),
+          (right, @symcore.true_()),
         ]),
       )
     }
@@ -811,7 +811,7 @@ fn symbolic_continuous_cdf(
             stats_exact_rational(1, 2),
             eval_arith(
               @symcore.mul([
-                @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
+                @symcore.pow(@symcore.pi(), @symcore.int(-1)),
                 @symcore.function("atan", [
                   eval_arith(
                     @symcore.mul([
@@ -847,7 +847,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -883,7 +883,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -899,7 +899,7 @@ fn symbolic_continuous_cdf(
           ]),
           @symcore.pow(
             eval_arith(
-              @symcore.mul([@symcore.int(2), @symcore.symbol("pi"), r2]),
+              @symcore.mul([@symcore.int(2), @symcore.pi(), r2]),
             ),
             @symcore.int(-1),
           ),
@@ -910,7 +910,7 @@ fn symbolic_continuous_cdf(
           @symcore.function("asin", [
             eval_arith(@symcore.mul([x, @symcore.pow(r, @symcore.int(-1))])),
           ]),
-          @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
+          @symcore.pow(@symcore.pi(), @symcore.int(-1)),
         ]),
       )
       let body = eval_arith(
@@ -922,7 +922,7 @@ fn symbolic_continuous_cdf(
             body,
             cont_rel("Ge", x, eval_arith(@symcore.mul([@symcore.int(-1), r]))),
           ),
-          (@symcore.int(0), @symcore.symbol("True")),
+          (@symcore.int(0), @symcore.true_()),
         ]),
       )
     }
@@ -944,7 +944,7 @@ fn symbolic_continuous_cdf(
                 ),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -978,7 +978,7 @@ fn symbolic_continuous_cdf(
                 ),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -1005,7 +1005,7 @@ fn symbolic_continuous_cdf(
                 ]),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -1088,7 +1088,7 @@ fn symbolic_continuous_cdf(
           (left, cont_rel("Le", x, b)),
           (mid, cont_rel("Le", x, c)),
           (right, cont_rel("Le", x, d)),
-          (@symcore.int(1), @symcore.symbol("True")),
+          (@symcore.int(1), @symcore.true_()),
         ]),
       )
     }
@@ -1129,7 +1129,7 @@ fn symbolic_continuous_cdf(
           "FisherZ",
           params,
           x,
-          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
+          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
           guard_lower=false,
         ),
       )
@@ -1165,7 +1165,7 @@ fn symbolic_continuous_cdf(
             ),
             cont_rel("Le", x, n),
           ),
-          (@symcore.int(1), @symcore.symbol("True")),
+          (@symcore.int(1), @symcore.true_()),
         ]),
       )
     }
@@ -1206,60 +1206,60 @@ fn symbolic_continuous_mean_bounds(
 ) -> (@symcore.Expr, @symcore.Expr)? {
   match continuous_tag_from_name(name) {
     ContinuousTag::Benini if params.length() == 3 =>
-      Some((params[2], @symcore.symbol("oo")))
+      Some((params[2], @symcore.oo()))
     ContinuousTag::BetaNoncentral if params.length() == 3 =>
       Some((@symcore.int(0), @symcore.int(1)))
     ContinuousTag::BetaPrime if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::ChiNoncentral if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::Dagum if params.length() == 3 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::Davis if params.length() == 3 =>
-      Some((params[2], @symcore.symbol("oo")))
+      Some((params[2], @symcore.oo()))
     ContinuousTag::ExponentialPower if params.length() == 3 =>
       Some(
         (
-          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-          @symcore.symbol("oo"),
+          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+          @symcore.oo(),
         ),
       )
     ContinuousTag::FDistribution if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::FisherZ if params.length() == 2 =>
       Some(
         (
-          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-          @symcore.symbol("oo"),
+          eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+          @symcore.oo(),
         ),
       )
     ContinuousTag::Frechet if params.length() == 1 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::GammaInverse if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::Levy if params.length() == 2 =>
-      Some((params[0], @symcore.symbol("oo")))
+      Some((params[0], @symcore.oo()))
     ContinuousTag::LogCauchy if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::LogitNormal if params.length() == 2 =>
       Some((@symcore.int(0), @symcore.int(1)))
     ContinuousTag::Lomax if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::Maxwell if params.length() == 1 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::Nakagami if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::PowerFunction if params.length() == 3 =>
       Some((params[1], params[2]))
     ContinuousTag::QuadraticU if params.length() == 2 =>
       Some((params[0], params[1]))
     ContinuousTag::ShiftedGompertz if params.length() == 2 =>
-      Some((@symcore.int(0), @symcore.symbol("oo")))
+      Some((@symcore.int(0), @symcore.oo()))
     ContinuousTag::VonMises if params.length() == 2 =>
       Some(
         (
           @symcore.int(0),
-          eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")])),
+          eval_arith(@symcore.mul([@symcore.int(2), @symcore.pi()])),
         ),
       )
     _ => None
@@ -1354,7 +1354,7 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Normal(mu~, sigma~) => {
       let two = @symcore.int(2)
-      let pi = @symcore.symbol("pi")
+      let pi = @symcore.pi()
       let diff = cont_expr_sub(x, mu)
       let numer = @symcore.function("exp", [
         @symcore.mul([
@@ -1384,7 +1384,7 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
-          (raw, @symcore.symbol("True")),
+          (raw, @symcore.true_()),
         ]),
       )
     }
@@ -1406,7 +1406,7 @@ pub fn continuous_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
       Some(
         cont_piecewise([
           (@symcore.int(0), @symcore.function("Lt", [x, @symcore.int(0)])),
-          (base, @symcore.symbol("True")),
+          (base, @symcore.true_()),
         ]),
       )
     }
@@ -1474,7 +1474,7 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
                 @symcore.mul([@symcore.int(-1), rate, x]),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -1497,7 +1497,7 @@ pub fn continuous_cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
                 ),
               ]),
             ),
-            @symcore.symbol("True"),
+            @symcore.true_(),
           ),
         ]),
       )
@@ -1658,7 +1658,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                       )
                     ContinuousTag::Laplace if params.length() == 2 => params[0]
                     ContinuousTag::Cauchy if params.length() == 2 =>
-                      @symcore.symbol("nan")
+                      @symcore.nan_expr()
                     ContinuousTag::Pareto if params.length() == 2 =>
                       eval_arith(
                         @symcore.mul([
@@ -1676,7 +1676,7 @@ pub fn continuous_mean(rv : RandomVar) -> @symcore.Expr? {
                           params[0],
                           @symcore.function("sqrt", [
                             @symcore.mul([
-                              @symcore.symbol("pi"),
+                              @symcore.pi(),
                               stats_exact_rational(1, 2),
                             ]),
                           ]),
@@ -1879,7 +1879,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                     ]),
                   )
                 ContinuousTag::Cauchy if params.length() == 2 =>
-                  @symcore.symbol("nan")
+                  @symcore.nan_expr()
                 ContinuousTag::Pareto if params.length() == 2 => {
                   let xm = params[0]
                   let a = params[1]
@@ -2017,7 +2017,7 @@ pub fn continuous_variance(rv : RandomVar) -> @symcore.Expr? {
                       stats_exact_rational(1, 2),
                       @symcore.add([
                         @symcore.int(4),
-                        @symcore.mul([@symcore.int(-1), @symcore.symbol("pi")]),
+                        @symcore.mul([@symcore.int(-1), @symcore.pi()]),
                       ]),
                       @symcore.pow(params[0], @symcore.int(2)),
                     ]),

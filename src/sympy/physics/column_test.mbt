@@ -5,7 +5,7 @@ fn column_test_sf(start : @symcore.Expr, order : Int) -> @symcore.Expr {
 
 ///|
 test "physics.continuum_mechanics.column: loads and reactions" {
-  let e = @symcore.symbol("E")
+  let e = @symcore.exp1()
   let a = @symcore.symbol("A")
   let c = column(@symcore.int(10), e, a)
   let r0 = c.apply_support(@symcore.int(0))
@@ -29,7 +29,7 @@ test "physics.continuum_mechanics.column: loads and reactions" {
 
 ///|
 test "physics.continuum_mechanics.column: distributed and ramp loads" {
-  let e = @symcore.symbol("E")
+  let e = @symcore.exp1()
   let a = @symcore.symbol("A")
   let c = column(@symcore.int(10), e, a)
   c.apply_load(@symcore.int(5), @symcore.int(0), -1)

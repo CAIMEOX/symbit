@@ -640,7 +640,7 @@ fn compat_rewrite_named_constants(expr : Expr, constants : Array[Expr]) -> Expr 
   }
   match compat_match_linear_sqrt5(expr) {
     Some((a, b)) if !b.is_zero() => {
-      let golden = @symcore.symbol("GoldenRatio")
+      let golden = @symcore.golden_ratio()
       let constant_part = a.add_r(b.neg_r())
       let golden_part = b.mul_r(@symnum.BigRational::from_int(2))
       compat_make_linear_expr(constant_part, golden_part, golden)
@@ -750,7 +750,7 @@ fn compat_sqrt_two() -> Expr {
 
 ///|
 fn compat_sqrt_pi() -> Expr {
-  @symcore.function("sqrt", [@symcore.symbol("pi")])
+  @symcore.function("sqrt", [@symcore.pi()])
 }
 
 ///|

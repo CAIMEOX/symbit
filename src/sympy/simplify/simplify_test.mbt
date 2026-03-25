@@ -40,7 +40,7 @@ test "symsimplify function identities" {
 test "symsimplify dispatcher handles composite heuristics" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
 
   let numerator = @symcore.add([x, @symcore.pow(x, @symcore.int(2))])
   let denominator = @symcore.add([
@@ -142,9 +142,9 @@ test "symsimplify advanced rewrites basics" {
   inspect(@symprint.debug_repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.symbol("I"), x])]),
+      @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x]),
+        @symcore.mul([@symcore.int(-1), @symcore.imag_unit(), x]),
       ]),
     ]),
   )
@@ -230,7 +230,7 @@ test "symsimplify compat api advanced cases" {
   let z = @symcore.symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
   let minus_half = @symcore.rational_from_ints(-1, 2)
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
 
   let kd_cancel = kroneckersimp(
     @symcore.add([
@@ -319,7 +319,7 @@ test "symsimplify compat api advanced cases" {
   )
   assert_true(trig_ns == @symcore.int(3))
 
-  let golden = @symcore.symbol("GoldenRatio")
+  let golden = @symcore.golden_ratio()
   let golden_ns = nsimplify(
     @symcore.add([
       @symcore.function("sqrt", [@symcore.int(5)]),
@@ -349,7 +349,7 @@ test "symsimplify traversal/cse_opts basics" {
 test "symsimplify fu rules smoke" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
 
   inspect(
     @symprint.debug_repr(tr1(@symcore.function("sec", [x]))),

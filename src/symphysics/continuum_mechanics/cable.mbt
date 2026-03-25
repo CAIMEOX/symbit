@@ -87,7 +87,7 @@ fn cable_segment_length(
 
 ///|
 fn cable_pi() -> @symcore.Expr {
-  @symcore.symbol("pi")
+  @symcore.pi()
 }
 
 ///|

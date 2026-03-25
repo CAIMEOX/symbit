@@ -10,7 +10,7 @@ pub enum OpticsMediumArg {
 
 ///|
 fn oo_expr() -> Expr {
-  symbol("oo")
+  @symcore.oo()
 }
 
 ///|

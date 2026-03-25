@@ -668,7 +668,7 @@ pub fn TransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    symbol("oo")
+    @symcore.oo()
   } else {
     control_normalize(num0 * @symcore.pow(den0, int(-1)))
   }
@@ -1110,7 +1110,7 @@ pub fn DiscreteTransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    symbol("oo")
+    @symcore.oo()
   } else {
     control_normalize(num1 * (den1 ^ int(-1)))
   }

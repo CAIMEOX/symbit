@@ -98,7 +98,7 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
           @symcore.raw_function("Tuple", [
             p,
             @symcore.int(0),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
           ]),
         ]),
         sho_ket(q),
@@ -117,7 +117,7 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
           @symcore.raw_function("Tuple", [
             n,
             @symcore.int(0),
-            @symcore.symbol("oo"),
+            @symcore.oo(),
           ]),
         ]),
       ]),

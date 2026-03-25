@@ -18,7 +18,7 @@ fn expr_to_sympy_cached(
     @symcore.Expr::Float(value) => sympy_float_obj(value)
     @symcore.Expr::ComplexFloat(value) => sympy_complex_float_obj(value)
     @symcore.Expr::NumberSymbol(kind) => sympy_number_symbol_obj(kind)
-    @symcore.Expr::Symbol(name) => sympy_symbol_or_const_obj(name)
+    @symcore.Expr::Symbol(name) => sympy_symbol_obj(name)
     @symcore.Expr::Dummy(name, id) => sympy_dummy_obj(name, id, dummy_cache)
     @symcore.Expr::Wild(name) => sympy_wild_obj(name, wild_cache)
     @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)

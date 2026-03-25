@@ -109,7 +109,7 @@ fn gaussian_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let term2 = eval_arith(@symcore.pow(ratio, ratio_pow))
   let term3 = eval_arith(
     @symcore.pow(
-      eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")])),
+      eval_arith(@symcore.mul([@symcore.int(2), @symcore.pi()])),
       eval_arith(@symcore.mul([half, n_e])),
     ),
   )
@@ -123,7 +123,7 @@ fn circular_joint_normalization(beta : Int, n : Int) -> @symcore.Expr {
   let half = stats_exact_rational(1, 2)
   let term1 = eval_arith(
     @symcore.pow(
-      eval_arith(@symcore.mul([@symcore.int(2), @symcore.symbol("pi")])),
+      eval_arith(@symcore.mul([@symcore.int(2), @symcore.pi()])),
       n_e,
     ),
   )
@@ -199,12 +199,12 @@ pub fn joint_eigen_distribution_of(rv : RandomVar) -> @symcore.Expr? {
                   eval_arith(
                     @symcore.add([
                       @symcore.function("exp", [
-                        eval_arith(@symcore.mul([@symcore.symbol("I"), tj])),
+                        eval_arith(@symcore.mul([@symcore.imag_unit(), tj])),
                       ]),
                       @symcore.mul([
                         @symcore.int(-1),
                         @symcore.function("exp", [
-                          eval_arith(@symcore.mul([@symcore.symbol("I"), tk])),
+                          eval_arith(@symcore.mul([@symcore.imag_unit(), tk])),
                         ]),
                       ]),
                     ]),
@@ -296,14 +296,14 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             eval_arith(
               @symcore.mul([
                 half,
-                @symcore.symbol("pi"),
+                @symcore.pi(),
                 s,
                 @symcore.function("exp", [
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-1),
                       quarter,
-                      @symcore.symbol("pi"),
+                      @symcore.pi(),
                       @symcore.pow(s, @symcore.int(2)),
                     ]),
                   ),
@@ -314,13 +314,13 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
             eval_arith(
               @symcore.mul([
                 @symcore.int(32),
-                @symcore.pow(@symcore.symbol("pi"), @symcore.int(-2)),
+                @symcore.pow(@symcore.pi(), @symcore.int(-2)),
                 @symcore.pow(s, @symcore.int(2)),
                 @symcore.function("exp", [
                   eval_arith(
                     @symcore.mul([
                       @symcore.int(-4),
-                      @symcore.pow(@symcore.symbol("pi"), @symcore.int(-1)),
+                      @symcore.pow(@symcore.pi(), @symcore.int(-1)),
                       @symcore.pow(s, @symcore.int(2)),
                     ]),
                   ),
@@ -332,7 +332,7 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
               @symcore.mul([
                 @symcore.pow(@symcore.int(2), @symcore.int(18)),
                 @symcore.pow(@symcore.int(3), @symcore.int(-6)),
-                @symcore.pow(@symcore.symbol("pi"), @symcore.int(-3)),
+                @symcore.pow(@symcore.pi(), @symcore.int(-3)),
                 @symcore.pow(s, @symcore.int(4)),
                 @symcore.function("exp", [
                   eval_arith(
@@ -340,7 +340,7 @@ pub fn level_spacing_distribution_of(rv : RandomVar) -> @symcore.Expr? {
                       @symcore.int(-64),
                       @symcore.pow(
                         eval_arith(
-                          @symcore.mul([@symcore.int(9), @symcore.symbol("pi")]),
+                          @symcore.mul([@symcore.int(9), @symcore.pi()]),
                         ),
                         @symcore.int(-1),
                       ),
@@ -384,7 +384,7 @@ pub fn matrix_density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr? {
             @symcore.mul([
               @symcore.pow(@symcore.int(2), eval_arith(@symcore.mul([half, n]))),
               @symcore.pow(
-                @symcore.symbol("pi"),
+                @symcore.pi(),
                 eval_arith(
                   @symcore.mul([half, @symcore.pow(n, @symcore.int(2))]),
                 ),

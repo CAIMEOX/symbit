@@ -5,8 +5,8 @@ fn beam_test_sf(start : @symcore.Expr, order : Int) -> @symcore.Expr {
 
 ///|
 test "physics.continuum_mechanics.beam: reactions and fields" {
-  let e = @symcore.symbol("E")
-  let i = @symcore.symbol("I")
+  let e = @symcore.exp1()
+  let i = @symcore.imag_unit()
   let a = @symcore.symbol("A")
   let r1 = @symcore.symbol("R1")
   let r2 = @symcore.symbol("R2")
@@ -51,8 +51,8 @@ test "physics.continuum_mechanics.beam: reactions and fields" {
 
 ///|
 test "physics.continuum_mechanics.beam: distributed end load and support application" {
-  let e = @symcore.symbol("E")
-  let i = @symcore.symbol("I")
+  let e = @symcore.exp1()
+  let i = @symcore.imag_unit()
   let b = beam(@symcore.int(9), e, i, area=@symcore.int(2))
   let supports = b.apply_support(@symcore.int(0), kind="fixed")
   assert_eq(supports.length(), 2)

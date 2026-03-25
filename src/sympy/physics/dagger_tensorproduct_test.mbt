@@ -12,7 +12,7 @@ test "physics.quantum.dagger: symbolic and matrix behaviors" {
   )
 
   let mat = @symphysics.explicit_matrix_from_rows([
-    [@symcore.symbol("I"), @symcore.int(2) * @symcore.symbol("I")],
+    [@symcore.imag_unit(), @symcore.int(2) * @symcore.imag_unit()],
     [@symcore.int(0), @symcore.int(1)],
   ])
   quantum_test_assert_matrix_expr_equal(

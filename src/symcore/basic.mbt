@@ -218,12 +218,55 @@ pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
 }
 
 ///|
-pub fn raw_derivative(expr : Expr, deriv_args : ArrayView[Expr]) -> Expr {
+fn is_explicit_derivative_order(expr : Expr) -> Bool {
+  match expr {
+    Expr::Number(n) => n.is_integral()
+    _ => false
+  }
+}
+
+///|
+pub fn canonical_derivative_args(deriv_args : ArrayView[Expr]) -> Array[Expr] {
+  if deriv_args.length() == 0 {
+    return []
+  }
+  if deriv_args.length() % 2 == 0 {
+    let out : Array[Expr] = []
+    for arg in deriv_args {
+      out.push(arg)
+    }
+    return out
+  }
   let out : Array[Expr] = []
   for arg in deriv_args {
     out.push(arg)
+    out.push(int(1))
   }
-  Expr::Derivative(expr, out)
+  out
+}
+
+///|
+fn raw_derivative_args(deriv_args : ArrayView[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = []
+  let mut i = 0
+  while i < deriv_args.length() {
+    let wrt = deriv_args[i]
+    if i + 1 < deriv_args.length() && is_explicit_derivative_order(deriv_args[i + 1]) {
+      out.push(wrt)
+      out.push(deriv_args[i + 1])
+      i += 2
+    } else {
+      out.push(wrt)
+      out.push(int(1))
+      i += 1
+    }
+  }
+  out
+}
+
+///|
+pub fn raw_derivative(expr : Expr, deriv_args : ArrayView[Expr]) -> Expr {
+  Expr::Derivative(expr, raw_derivative_args(deriv_args))
 }
 
 ///|
@@ -248,13 +291,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Wild(name) => ExprForm::Wild(name)
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
     Expr::AppliedUndef(name, args) => ExprForm::AppliedUndef(name, args)
-    Expr::Symbol("True") => ExprForm::Boolean(true)
-    Expr::Symbol("False") => ExprForm::Boolean(false)
-    Expr::Symbol(name) =>
-      match number_symbol_kind_from_name(name) {
-        Some(kind) => ExprForm::NumberSymbol(kind)
-        None => ExprForm::Symbol(name)
-      }
+    Expr::Symbol(name) => ExprForm::Symbol(name)
     Expr::Add(args) => ExprForm::Add(args)
     Expr::Mul(args) => ExprForm::Mul(args)
     Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
@@ -263,7 +300,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Dict(items) => ExprForm::Dict(items)
     Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
     Expr::Derivative(inner, deriv_args) =>
-      ExprForm::Derivative(inner, deriv_args)
+      ExprForm::Derivative(inner, canonical_derivative_args(deriv_args))
     Expr::Subs(inner, variable, value) => ExprForm::Subs(inner, variable, value)
     Expr::Lambda(vars, body) => ExprForm::Lambda(vars, body)
     Expr::Function("Tuple", args) => ExprForm::Tuple(args)

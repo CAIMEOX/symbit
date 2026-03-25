@@ -178,12 +178,12 @@ test "physics.optics.gaussopt: beam and conjugation formulas" {
     "geometric_conj_bf",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_ab(@symcore.symbol("oo"), @symcore.symbol("b")),
+    geometric_conj_ab(@symcore.oo(), @symcore.symbol("b")),
     "b",
     "geometric_conj_ab oo",
   )
   gaussopt_assert_expr_equal(
-    geometric_conj_ab(@symcore.symbol("a"), @symcore.symbol("oo")),
+    geometric_conj_ab(@symcore.symbol("a"), @symcore.oo()),
     "a",
     "geometric_conj_ab oo rhs",
   )

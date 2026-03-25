@@ -204,6 +204,7 @@ fn subst_derivative(
   deriv_args : Array[Expr],
   env : Map[String, Expr],
 ) -> Expr {
+  let deriv_args = canonical_derivative_args(deriv_args)
   let original_wrt_names = derivative_wrt_names(deriv_args)
   let original_free_names = expr_symbol_names(inner)
   let rename_env : Map[String, Expr] = {}

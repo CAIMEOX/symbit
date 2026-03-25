@@ -51,9 +51,9 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 
 ///|
 test "pretty printers understand number symbols" {
-  inspect(debug_repr(@symcore.symbol("pi")), content="const:pi")
-  inspect(to_string(@symcore.symbol("I")), content="I")
-  inspect(to_string(@symcore.symbol("oo")), content="oo")
+  inspect(debug_repr(@symcore.pi()), content="const:pi")
+  inspect(to_string(@symcore.imag_unit()), content="I")
+  inspect(to_string(@symcore.oo()), content="oo")
 }
 
 ///|

@@ -162,7 +162,7 @@ fn mech_rewrite_tan(expr : Expr) -> Expr {
 
 ///|
 fn mech_pi_half() -> Expr {
-  mech_half_expr() * symbol("pi")
+  mech_half_expr() * @symcore.pi()
 }
 
 ///|

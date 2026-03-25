@@ -838,7 +838,7 @@ test "domains: algebraic_field parity and Domain methods" {
 test "domains: contains_expr parity for constants polynomials and rational functions" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let sin1 = @symcore.function("sin", [@symcore.int(1)])
   let inv_x = @symcore.pow(x, @symcore.int(-1))
@@ -879,7 +879,7 @@ test "domains: contains_expr parity for constants polynomials and rational funct
 ///|
 test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let conversion_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
@@ -973,7 +973,7 @@ test "domains: from_sympy/to_sympy/convert_from parity on scalar and composite d
 
 ///|
 test "domains: sum_expr parity on scalar and gaussian domains" {
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let cases : Array[(String, Array[@symcore.Expr], Array[String])] = [
     ("ZZ", [@symcore.int(1), @symcore.int(2), @symcore.int(3)], ["1", "2", "3"]),
     (
@@ -1007,7 +1007,7 @@ test "domains: sum_expr parity on scalar and gaussian domains" {
 ///|
 test "domains: from_* conversion hook parity on representative base families" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, String, @symcore.Expr, String, String)] = [
     ("from_ff", "ZZ", @symcore.int(3), "GF(5)", "3"),
@@ -1141,7 +1141,7 @@ test "domains: from_* conversion hook parity on representative base families" {
 test "domains: extended conversion hook parity for ground, gaussian, and legacy-ring families" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let half = @symcore.rational_from_ints(1, 2)
   let cases : Array[(String, String, @symcore.Expr, String, String, String)] = [
     ("from_zz", "QQ", @symcore.int(2), "ZZ", "ZZ", "2"),
@@ -1356,7 +1356,7 @@ test "domains: new/normal constructors and recursive map stay normalized" {
 ///|
 test "domains: is_unit/is_zero/is_one parity on core domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-1), "-1"),
@@ -1391,7 +1391,7 @@ test "domains: is_unit/is_zero/is_one parity on core domains" {
 ///|
 test "domains: zero/one and arithmetic wrapper parity" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let zero_one_specs = [
     "ZZ", "QQ", "GF(5)", "QQ_I", "ZZ[x]", "QQ(x)", "QQ<sqrt(2)>",
   ]
@@ -1497,7 +1497,7 @@ test "domains: zero/one and arithmetic wrapper parity" {
 ///|
 test "domains: gcdex/invert/revert wrapper parity" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let gcdex_cases : Array[
     (String, @symcore.Expr, @symcore.Expr, String, String),
   ] = [("ZZ", @symcore.int(6), @symcore.int(15), "6", "15")]
@@ -1616,7 +1616,7 @@ test "domains: gcdex/invert/revert wrapper parity" {
 ///|
 test "domains: sign predicate parity on ordered and composite domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let neg_x = @symcore.mul([@symcore.int(-1), x])
   let cases : Array[(String, @symcore.Expr, String)] = [
@@ -1669,7 +1669,7 @@ test "domains: sign predicate parity on ordered and composite domains" {
 ///|
 test "domains: canonical_unit parity on scalar and composite domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
@@ -1708,7 +1708,7 @@ test "domains: canonical_unit parity on scalar and composite domains" {
 ///|
 test "domains: abs parity on supported/error domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(-2), "-2"),
     ("QQ", @symcore.rational_from_ints(-2, 3), "-2/3"),
@@ -1731,7 +1731,7 @@ test "domains: abs parity on supported/error domains" {
 ///|
 test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(6), "6", @symcore.int(4), "4"),
@@ -1804,7 +1804,7 @@ test "domains: gcd/lcm/cofactors parity on scalar and composite domains" {
 ///|
 test "domains: numer/denom parity on scalar and fraction-like domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let sqrt2 = @symcore.function("sqrt", [@symcore.int(2)])
   let cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7"),
@@ -1841,7 +1841,7 @@ test "domains: numer/denom parity on scalar and fraction-like domains" {
 ///|
 test "domains: quo/rem/div/exquo parity on scalar and composite domains" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let cases : Array[(String, @symcore.Expr, String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(7), "7", @symcore.int(3), "3"),
     (
@@ -1974,7 +1974,7 @@ test "domains: factorial/log/sqrt parity on integer-like domains" {
 
 ///|
 test "domains: is_square/exsqrt parity and exact root coverage" {
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let parity_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(4), "4"),
     ("ZZ", @symcore.int(2), "2"),
@@ -2035,7 +2035,7 @@ test "domains: is_square/exsqrt parity and exact root coverage" {
 
 ///|
 test "domains: real/imag/almosteq parity and tolerance semantics" {
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let x = @symcore.symbol("x")
   let component_cases : Array[(String, @symcore.Expr, String)] = [
     ("ZZ", @symcore.int(2), "2"),

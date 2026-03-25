@@ -295,7 +295,7 @@ pub fn inverse_laplace_transform_eval(
   if noconds {
     value
   } else {
-    tuple_expr([value, @symcore.symbol("True")])
+    tuple_expr([value, @symcore.true_()])
   }
 }
 

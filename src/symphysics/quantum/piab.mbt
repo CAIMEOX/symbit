@@ -34,7 +34,7 @@ pub fn piab_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
       1 => {
       let n = args[0]
       let coeff = (n ^ int(2)) *
-        (symbol("pi") ^ int(2)) *
+        (@symcore.pi() ^ int(2)) *
         (hbar ^ int(2)) *
         @symcore.raw_pow(int(2) * piab_m * (piab_l ^ int(2)), int(-1))
       Some(coeff * ket_expr)
@@ -55,7 +55,7 @@ pub fn piab_represent(expr : Expr) -> Expr? {
       Some(
         prefactor *
         @symcore.raw_function("sin", [
-          args[0] * symbol("pi") * x * @symcore.raw_pow(piab_l, int(-1)),
+          args[0] * @symcore.pi() * x * @symcore.raw_pow(piab_l, int(-1)),
         ]),
       )
     }

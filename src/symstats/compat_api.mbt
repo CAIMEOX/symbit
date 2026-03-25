@@ -190,7 +190,7 @@ fn compat_piecewise2(
 ) -> @symcore.Expr {
   @symcore.function("Piecewise", [
     compat_tuple_expr(v1, c1),
-    compat_tuple_expr(v2, @symcore.symbol("True")),
+    compat_tuple_expr(v2, @symcore.true_()),
   ])
 }
 
@@ -205,7 +205,7 @@ fn compat_piecewise3(
   @symcore.function("Piecewise", [
     compat_tuple_expr(v1, c1),
     compat_tuple_expr(v2, c2),
-    compat_tuple_expr(v3, @symcore.symbol("True")),
+    compat_tuple_expr(v3, @symcore.true_()),
   ])
 }
 
@@ -242,9 +242,9 @@ fn symbolic_opaque_mgf(
               @symcore.function("Tuple", [
                 x,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
                 ),
-                @symcore.symbol("oo"),
+                @symcore.oo(),
               ]),
             ]),
           ),
@@ -272,9 +272,9 @@ fn symbolic_opaque_mgf(
               @symcore.function("Tuple", [
                 k,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
                 ),
-                @symcore.symbol("oo"),
+                @symcore.oo(),
               ]),
             ]),
           ),
@@ -446,7 +446,7 @@ fn symbolic_opaque_cf(
     name,
     params,
     rv_name,
-    eval_arith(@symcore.mul([@symcore.symbol("I"), t])),
+    eval_arith(@symcore.mul([@symcore.imag_unit(), t])),
   )
 }
 
@@ -462,9 +462,9 @@ fn symbolic_continuous_mgf_via_integral(
   match continuous_density(rv, x) {
     Some(pdf) => {
       let lower = eval_arith(
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+        @symcore.mul([@symcore.int(-1), @symcore.oo()]),
       )
-      let upper = @symcore.symbol("oo")
+      let upper = @symcore.oo()
       Some(
         eval_arith(
           @symcore.function("Integral", [
@@ -499,7 +499,7 @@ fn symbolic_discrete_mgf_via_sum(
     DiscreteTag::RobustSoliton if params.length() == 3 =>
       Some((@symcore.int(1), params[0]))
     DiscreteTag::YuleSimon if params.length() == 1 =>
-      Some((@symcore.int(1), @symcore.symbol("oo")))
+      Some((@symcore.int(1), @symcore.oo()))
     _ => None
   }
   match bounds {
@@ -555,9 +555,9 @@ fn symbolic_joint_mgf_via_integral(
         eval_arith(@symcore.add(linear_terms))
       }
       let lower = eval_arith(
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+        @symcore.mul([@symcore.int(-1), @symcore.oo()]),
       )
-      let upper = @symcore.symbol("oo")
+      let upper = @symcore.oo()
       let mut expr = eval_arith(
         @symcore.mul([@symcore.function("exp", [lin]), dens]),
       )
@@ -701,16 +701,16 @@ fn symbolic_discrete_entropy_bounds(
     DiscreteTag::RobustSoliton if params.length() == 3 =>
       (@symcore.int(1), params[0])
     DiscreteTag::Logarithmic | DiscreteTag::YuleSimon | DiscreteTag::Zeta =>
-      (@symcore.int(1), @symcore.symbol("oo"))
+      (@symcore.int(1), @symcore.oo())
     DiscreteTag::Skellam =>
       (
-        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-        @symcore.symbol("oo"),
+        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+        @symcore.oo(),
       )
     _ =>
       (
-        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-        @symcore.symbol("oo"),
+        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+        @symcore.oo(),
       )
   }
 }
@@ -754,9 +754,9 @@ fn symbolic_continuous_entropy_via_integral(
   match continuous_density(rv, x) {
     Some(pdf) => {
       let lower = eval_arith(
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+        @symcore.mul([@symcore.int(-1), @symcore.oo()]),
       )
-      let upper = @symcore.symbol("oo")
+      let upper = @symcore.oo()
       Some(
         eval_arith(
           @symcore.function("Integral", [
@@ -833,7 +833,7 @@ fn symbolic_joint_entropy_via_sum(
       )
       let upper = match symbolic_kind_from_name(name) {
         SymbolicKind::Discrete(DiscreteTag::Multinomial) => params[0]
-        _ => @symcore.symbol("oo")
+        _ => @symcore.oo()
       }
       for v in vars {
         expr = eval_arith(
@@ -871,9 +871,9 @@ fn symbolic_joint_entropy_via_integral(
       let rv = symbolic_rv("_X", name, params)
       let dens = density(rv, point)
       let lower = eval_arith(
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+        @symcore.mul([@symcore.int(-1), @symcore.oo()]),
       )
-      let upper = @symcore.symbol("oo")
+      let upper = @symcore.oo()
       let mut expr = eval_arith(
         @symcore.mul([@symcore.int(-1), dens, @symcore.function("log", [dens])]),
       )
@@ -1000,9 +1000,9 @@ fn symbolic_opaque_entropy(
               @symcore.function("Tuple", [
                 x,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
                 ),
-                @symcore.symbol("oo"),
+                @symcore.oo(),
               ]),
             ]),
           ),
@@ -1031,9 +1031,9 @@ fn symbolic_opaque_entropy(
               @symcore.function("Tuple", [
                 k,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.symbol("oo")]),
+                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
                 ),
-                @symcore.symbol("oo"),
+                @symcore.oo(),
               ]),
             ]),
           ),
@@ -1132,7 +1132,7 @@ fn quantile_unit_interval_guard(
       @symcore.function("Ge", [q, @symcore.int(0)]),
       @symcore.function("Le", [q, @symcore.int(1)]),
     ]),
-    @symcore.symbol("nan"),
+    @symcore.nan_expr(),
   )
 }
 
@@ -1149,8 +1149,8 @@ fn symbolic_quantile_via_conditionset(
     SymbolicKind::Discrete(_) => @symcore.symbol("Integers")
     _ =>
       @symcore.function("Interval", [
-        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-        @symcore.symbol("oo"),
+        eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+        @symcore.oo(),
       ])
   }
   quantile_unit_interval_guard(
@@ -1179,8 +1179,8 @@ fn symbolic_joint_quantile_via_conditionset(
           @symcore.symbol("Integers")
         _ =>
           @symcore.function("Interval", [
-            eval_arith(@symcore.mul([@symcore.int(-1), @symcore.symbol("oo")])),
-            @symcore.symbol("oo"),
+            eval_arith(@symcore.mul([@symcore.int(-1), @symcore.oo()])),
+            @symcore.oo(),
           ])
       }
       let domain_args : Array[@symcore.Expr] = Array::new()
@@ -1245,7 +1245,7 @@ fn symbolic_opaque_quantile(
             )
           }
           piecewise_args.push(
-            compat_tuple_expr(last_value, @symcore.symbol("True")),
+            compat_tuple_expr(last_value, @symcore.true_()),
           )
           Some(
             quantile_unit_interval_guard(
@@ -1276,20 +1276,20 @@ fn symbolic_opaque_quantile(
           eval_arith(
             @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), p])]),
           ),
-          @symcore.symbol("True"),
+          @symcore.true_(),
         ),
       ])
       Some(
         @symcore.function("Piecewise", [
           compat_tuple_expr(
-            @symcore.symbol("nan"),
+            @symcore.nan_expr(),
             @symcore.function("Or", [
               @symcore.function("Lt", [q, @symcore.int(0)]),
               @symcore.function("Gt", [q, @symcore.int(1)]),
             ]),
           ),
           compat_tuple_expr(lower, @symcore.function("Le", [q, p_low])),
-          compat_tuple_expr(upper, @symcore.symbol("True")),
+          compat_tuple_expr(upper, @symcore.true_()),
         ]),
       )
     }
@@ -1680,7 +1680,7 @@ pub fn characteristic_function(
                     eval_arith(
                       @symcore.add([
                         eval_arith(
-                          @symcore.mul([@symcore.symbol("I"), params[0], t]),
+                          @symcore.mul([@symcore.imag_unit(), params[0], t]),
                         ),
                         @symcore.mul([
                           @symcore.int(-1),
@@ -1728,7 +1728,7 @@ pub fn characteristic_function(
                     @symcore.int(1),
                     @symcore.function("Eq", [t, @symcore.int(0)]),
                   ),
-                  compat_tuple_expr(core, @symcore.symbol("True")),
+                  compat_tuple_expr(core, @symcore.true_()),
                 ]),
               )
             }
@@ -1750,7 +1750,7 @@ pub fn characteristic_function(
                         eval_arith(
                           @symcore.add([
                             eval_arith(
-                              @symcore.mul([@symcore.symbol("I"), lin]),
+                              @symcore.mul([@symcore.imag_unit(), lin]),
                             ),
                             @symcore.mul([@symcore.int(-1), half, quad]),
                           ]),
@@ -1783,7 +1783,7 @@ pub fn characteristic_function(
                     eval_arith(
                       @symcore.mul([
                         @symcore.function("exp", [
-                          eval_arith(@symcore.mul([@symcore.symbol("I"), lin])),
+                          eval_arith(@symcore.mul([@symcore.imag_unit(), lin])),
                         ]),
                         @symcore.pow(denom, @symcore.int(-1)),
                       ]),
@@ -1803,7 +1803,7 @@ pub fn characteristic_function(
                   match
                     mgf_of_rv(
                       rv,
-                      eval_arith(@symcore.mul([@symcore.symbol("I"), t])),
+                      eval_arith(@symcore.mul([@symcore.imag_unit(), t])),
                     ) {
                     Some(v) => v
                     None => symbolic_metric_with_head(name, "CF", t, params)
@@ -1813,7 +1813,7 @@ pub fn characteristic_function(
         }
         _ =>
           match
-            mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.symbol("I"), t]))) {
+            mgf_of_rv(rv, eval_arith(@symcore.mul([@symcore.imag_unit(), t]))) {
             Some(v) => v
             None => @symcore.function("characteristic_function", [expr, t])
           }
@@ -1989,7 +1989,7 @@ fn process_cf_at(
     process_mgf_at(
       rv,
       time,
-      eval_arith(@symcore.mul([@symcore.symbol("I"), t])),
+      eval_arith(@symcore.mul([@symcore.imag_unit(), t])),
     ) {
     Some(v) =>
       match rv.kind {
@@ -2027,8 +2027,8 @@ fn process_entropy_at(rv : RandomVar, time : @symcore.Expr) -> @symcore.Expr? {
                 eval_arith(
                   @symcore.mul([
                     @symcore.int(2),
-                    @symcore.symbol("pi"),
-                    @symcore.symbol("E"),
+                    @symcore.pi(),
+                    @symcore.exp1(),
                     time,
                   ]),
                 ),
@@ -2242,8 +2242,8 @@ pub fn entropy(
                     eval_arith(
                       @symcore.mul([
                         @symcore.int(2),
-                        @symcore.symbol("pi"),
-                        @symcore.symbol("E"),
+                        @symcore.pi(),
+                        @symcore.exp1(),
                       ]),
                     ),
                   ]),
@@ -2358,8 +2358,8 @@ pub fn entropy(
                           eval_arith(
                             @symcore.mul([
                               @symcore.int(2),
-                              @symcore.symbol("pi"),
-                              @symcore.symbol("E"),
+                              @symcore.pi(),
+                              @symcore.exp1(),
                             ]),
                           ),
                           @symcore.int(2),
@@ -2521,7 +2521,7 @@ pub fn entropy(
                       eval_arith(
                         @symcore.mul([
                           @symcore.int(4),
-                          @symcore.symbol("pi"),
+                          @symcore.pi(),
                           params[1],
                         ]),
                       ),
@@ -2542,7 +2542,7 @@ pub fn entropy(
                       @symcore.int(1),
                       @symcore.mul([
                         stats_exact_rational(1, 2),
-                        @symcore.symbol("EulerGamma"),
+                        @symcore.euler_gamma(),
                       ]),
                       @symcore.function("log", [params[0]]),
                       @symcore.mul([
@@ -2564,7 +2564,7 @@ pub fn entropy(
                         ),
                       ]),
                       @symcore.mul([
-                        @symcore.symbol("EulerGamma"),
+                        @symcore.euler_gamma(),
                         @symcore.add([
                           @symcore.int(1),
                           @symcore.mul([
@@ -2581,7 +2581,7 @@ pub fn entropy(
                   eval_arith(
                     @symcore.add([
                       @symcore.int(1),
-                      @symcore.symbol("EulerGamma"),
+                      @symcore.euler_gamma(),
                       @symcore.function("log", [params[0]]),
                     ]),
                   )
@@ -2599,7 +2599,7 @@ pub fn entropy(
                               eval_arith(
                                 @symcore.mul([
                                   @symcore.int(2),
-                                  @symcore.symbol("pi"),
+                                  @symcore.pi(),
                                 ]),
                               ),
                             ]),
@@ -2632,7 +2632,7 @@ pub fn entropy(
                       stats_exact_rational(1, 2),
                       @symcore.mul([
                         stats_exact_rational(3, 2),
-                        @symcore.symbol("EulerGamma"),
+                        @symcore.euler_gamma(),
                       ]),
                       @symcore.mul([
                         stats_exact_rational(1, 2),
@@ -2640,7 +2640,7 @@ pub fn entropy(
                           eval_arith(
                             @symcore.mul([
                               @symcore.int(16),
-                              @symcore.symbol("pi"),
+                              @symcore.pi(),
                               @symcore.pow(c, @symcore.int(2)),
                             ]),
                           ),
@@ -2736,7 +2736,7 @@ pub fn entropy(
                   @symcore.function("log", [
                     eval_arith(
                       @symcore.mul([
-                        @symcore.symbol("pi"),
+                        @symcore.pi(),
                         stats_exact_rational(1, 4),
                       ]),
                     ),
@@ -2746,7 +2746,7 @@ pub fn entropy(
                   @symcore.function("log", [
                     eval_arith(
                       @symcore.mul([
-                        @symcore.symbol("pi"),
+                        @symcore.pi(),
                         stats_exact_rational(1, 4),
                         eval_arith(
                           @symcore.add([
@@ -2801,7 +2801,7 @@ pub fn entropy(
                         eval_arith(
                           @symcore.mul([
                             @symcore.int(2),
-                            @symcore.symbol("pi"),
+                            @symcore.pi(),
                             i0,
                           ]),
                         ),
@@ -2856,7 +2856,7 @@ pub fn entropy(
                   )
                 }
                 SymbolicKind::Continuous(ContinuousTag::Moyal) if params.length() ==
-                  2 => @symcore.symbol("oo")
+                  2 => @symcore.oo()
                 _ =>
                   match symbolic_process_entropy(name, params) {
                     Some(v) => v
@@ -3108,7 +3108,7 @@ pub fn quantile(
                       @symcore.function("sin", [
                         eval_arith(
                           @symcore.mul([
-                            @symcore.symbol("pi"),
+                            @symcore.pi(),
                             q,
                             stats_exact_rational(1, 2),
                           ]),
@@ -3120,7 +3120,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Arcsin) if params.length() ==
                   2 =>
@@ -3139,7 +3139,7 @@ pub fn quantile(
                             @symcore.function("sin", [
                               eval_arith(
                                 @symcore.mul([
-                                  @symcore.symbol("pi"),
+                                  @symcore.pi(),
                                   q,
                                   stats_exact_rational(1, 2),
                                 ]),
@@ -3154,7 +3154,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Beta) if params.length() ==
                   2 =>
@@ -3164,7 +3164,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Kumaraswamy) if params.length() ==
                   2 =>
@@ -3193,7 +3193,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Chi) if params.length() ==
                   1 =>
@@ -3218,7 +3218,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::ChiSquared) if params.length() ==
                   1 =>
@@ -3238,7 +3238,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Erlang) if params.length() ==
                   2 =>
@@ -3253,7 +3253,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Uniform) if params.length() ==
                   2 =>
@@ -3284,7 +3284,7 @@ pub fn quantile(
                           @symcore.function("tan", [
                             eval_arith(
                               @symcore.mul([
-                                @symcore.symbol("pi"),
+                                @symcore.pi(),
                                 eval_arith(
                                   @symcore.add([q, stats_exact_rational(-1, 2)]),
                                 ),
@@ -3298,7 +3298,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Rayleigh) if params.length() ==
                   1 =>
@@ -3362,7 +3362,7 @@ pub fn quantile(
                     @symcore.function("Le", [q, stats_exact_rational(1, 2)]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 }
                 SymbolicKind::Continuous(ContinuousTag::Weibull) if params.length() ==
@@ -3508,7 +3508,7 @@ pub fn quantile(
                     @symcore.function("Le", [q, pivot]),
                     right,
                     @symcore.function("Le", [q, @symcore.int(1)]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 }
                 SymbolicKind::Continuous(ContinuousTag::Trapezoidal) if params.length() ==
@@ -3607,8 +3607,8 @@ pub fn quantile(
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ),
                     compat_tuple_expr(
-                      @symcore.symbol("nan"),
-                      @symcore.symbol("True"),
+                      @symcore.nan_expr(),
+                      @symcore.true_(),
                     ),
                   ])
                 }
@@ -3638,7 +3638,7 @@ pub fn quantile(
                   let target = eval_arith(
                     @symcore.mul([
                       @symcore.int(2),
-                      @symcore.symbol("pi"),
+                      @symcore.pi(),
                       q,
                       @symcore.function("besseli", [@symcore.int(0), kappa]),
                     ]),
@@ -3657,7 +3657,7 @@ pub fn quantile(
                     @symcore.function("Interval", [
                       @symcore.int(0),
                       eval_arith(
-                        @symcore.mul([@symcore.int(2), @symcore.symbol("pi")]),
+                        @symcore.mul([@symcore.int(2), @symcore.pi()]),
                       ),
                     ]),
                   ])
@@ -3667,7 +3667,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 }
                 SymbolicKind::Continuous(ContinuousTag::StudentT) if params.length() ==
@@ -3739,8 +3739,8 @@ pub fn quantile(
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ),
                     compat_tuple_expr(
-                      @symcore.symbol("nan"),
-                      @symcore.symbol("True"),
+                      @symcore.nan_expr(),
+                      @symcore.true_(),
                     ),
                   ])
                 }
@@ -3793,7 +3793,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Pareto) if params.length() ==
                   2 =>
@@ -3843,7 +3843,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Reciprocal) if params.length() ==
                   2 =>
@@ -3866,7 +3866,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Gompertz) if params.length() ==
                   2 =>
@@ -3899,7 +3899,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::Levy) if params.length() ==
                   2 =>
@@ -3928,7 +3928,7 @@ pub fn quantile(
                       @symcore.function("Ge", [q, @symcore.int(0)]),
                       @symcore.function("Le", [q, @symcore.int(1)]),
                     ]),
-                    @symcore.symbol("nan"),
+                    @symcore.nan_expr(),
                   )
                 SymbolicKind::Continuous(ContinuousTag::LogNormal) if params.length() ==
                   2 =>

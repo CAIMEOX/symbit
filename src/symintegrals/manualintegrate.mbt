@@ -272,7 +272,7 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
       while i + 1 < args.length() {
         let branch = args[i]
         let cond = args[i + 1]
-        if cond == @symcore.symbol("True") {
+        if cond == @symcore.true_() {
           match manual_integrate(branch, var_name) {
             Some(item) => return Some(piecewise_expr(out_cases, default=item))
             None => return None

@@ -122,8 +122,8 @@ fn rk_phase(k : Int) -> Expr {
   let denom = @symcore.raw_pow(two, int(Int::abs(k)))
   let angle = sign *
     two *
-    symbol("pi") *
-    symbol("I") *
+    @symcore.pi() *
+    @symcore.imag_unit() *
     @symcore.raw_pow(denom, int(-1))
   @symcore.raw_function("exp", [angle])
 }
@@ -150,8 +150,8 @@ fn qft_omega(expr : FourierExpr) -> Expr {
   @symcore.raw_function("exp", [
     exponent *
     int(2) *
-    symbol("pi") *
-    symbol("I") *
+    @symcore.pi() *
+    @symcore.imag_unit() *
     @symcore.raw_pow(denom, int(-1)),
   ])
 }

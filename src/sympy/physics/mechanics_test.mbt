@@ -126,7 +126,7 @@ test "physics.mechanics wrapper functions and substitutions" {
     expr,
     [
       (x, @symcore.int(0)),
-      (y, @symcore.rational_from_ints(1, 2) * @symcore.symbol("pi")),
+      (y, @symcore.rational_from_ints(1, 2) * @symcore.pi()),
       (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(1)),
     ],
     smart=true,

@@ -1,11 +1,11 @@
 ///|
 fn pi_expr() -> Expr {
-  symbol("pi")
+  @symcore.pi()
 }
 
 ///|
 fn i_expr() -> Expr {
-  symbol("I")
+  @symcore.imag_unit()
 }
 
 ///|

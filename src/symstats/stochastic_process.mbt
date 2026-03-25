@@ -250,7 +250,7 @@ pub fn process_probability_at(
               ]),
               @symcore.function("Tuple", [
                 @symcore.int(0),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )
@@ -309,7 +309,7 @@ pub fn process_cdf_at(
               p,
               @symcore.function("Lt", [success, failure]),
             ]),
-            @symcore.function("Tuple", [one_minus_p, @symcore.symbol("True")]),
+            @symcore.function("Tuple", [one_minus_p, @symcore.true_()]),
           ])
           Some(
             @symcore.function("Piecewise", [
@@ -329,7 +329,7 @@ pub fn process_cdf_at(
               ]),
               @symcore.function("Tuple", [
                 @symcore.int(1),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )
@@ -378,7 +378,7 @@ pub fn process_transition_probability(
           @symcore.int(1),
           @symcore.function("Eq", [to, from]),
         ]),
-        @symcore.function("Tuple", [@symcore.int(0), @symcore.symbol("True")]),
+        @symcore.function("Tuple", [@symcore.int(0), @symcore.true_()]),
       ]),
     )
   }
@@ -462,7 +462,7 @@ pub fn process_transition_probability(
                 ]),
                 @symcore.function("Tuple", [
                   @symcore.int(0),
-                  @symcore.symbol("True"),
+                  @symcore.true_(),
                 ]),
               ]),
             ),
@@ -496,7 +496,7 @@ pub fn process_transition_probability(
               ]),
               @symcore.function("Tuple", [
                 @symcore.int(0),
-                @symcore.symbol("True"),
+                @symcore.true_(),
               ]),
             ]),
           )

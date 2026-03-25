@@ -112,7 +112,7 @@ pub fn periodicity(expr : Expr, sym : Expr) -> Expr? {
           }
           let abs_k = util_rat_abs(k)
           let inv = util_rat_div(util_rat_one(), abs_k)
-          let pi = @symcore.symbol("pi")
+          let pi = @symcore.pi()
           let base = match name {
             "sin" | "cos" => @symcore.mul([@symcore.int(2), pi])
             "tan" => pi

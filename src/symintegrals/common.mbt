@@ -278,7 +278,7 @@ fn piecewise_expr(
     args.push(item.1)
   }
   args.push(default)
-  args.push(@symcore.symbol("True"))
+  args.push(@symcore.true_())
   @symcore.raw_function("Piecewise", args)
 }
 

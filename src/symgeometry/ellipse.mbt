@@ -320,7 +320,7 @@ pub fn Ellipse::repr(self : Ellipse) -> String {
 
 ///|
 pub fn Ellipse::area(self : Ellipse) -> Expr {
-  geo_simplify(symbol("pi") * self.hradius_ * self.vradius_)
+  geo_simplify(@symcore.pi() * self.hradius_ * self.vradius_)
 }
 
 ///|
@@ -593,7 +593,7 @@ pub fn Ellipse::rotate(
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   let center = self.center_.rotate(angle, pt~)
-  let pi = symbol("pi")
+  let pi = @symcore.pi()
   let half_pi = geo_div(pi, geo_int(2))
   if geo_expr_is_zero(angle) ||
     geo_expr_eq(angle, pi) ||
@@ -733,12 +733,12 @@ pub fn Circle::repr(self : Circle) -> String {
 
 ///|
 pub fn Circle::area(self : Circle) -> Expr {
-  geo_simplify(symbol("pi") * self.radius_ * self.radius_)
+  geo_simplify(@symcore.pi() * self.radius_ * self.radius_)
 }
 
 ///|
 pub fn Circle::circumference(self : Circle) -> Expr {
-  geo_simplify(geo_int(2) * symbol("pi") * self.radius_)
+  geo_simplify(geo_int(2) * @symcore.pi() * self.radius_)
 }
 
 ///|

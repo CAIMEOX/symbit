@@ -60,7 +60,7 @@ fn sho_xp_prefactor() -> Expr {
 pub fn sho_rewrite_as_xp(expr : Expr) -> Expr {
   let xp_scale = sho_xp_prefactor()
   let x_term = sho_mass * sho_omega * x_op()
-  let px_term = symbol("I") * px_op()
+  let px_term = @symcore.imag_unit() * px_op()
   let px_sq = @symcore.raw_pow(px_op(), int(2))
   let x_sq = @symcore.raw_pow(sho_mass * sho_omega * x_op(), int(2))
   match expr {

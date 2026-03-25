@@ -6,7 +6,7 @@
 
 ///|
 fn oo_expr() -> @symcore.Expr {
-  @symcore.symbol("oo")
+  @symcore.oo()
 }
 
 ///|
@@ -16,7 +16,7 @@ fn neg_oo_expr() -> @symcore.Expr {
 
 ///|
 fn zoo_expr() -> @symcore.Expr {
-  @symcore.symbol("zoo")
+  @symcore.zoo()
 }
 
 ///|

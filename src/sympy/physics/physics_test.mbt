@@ -24,7 +24,7 @@ fn physics_matrix_expr_equal(
 
 ///|
 test "physics: Pauli and Dirac matrices satisfy core identities" {
-  let i = symbol("I")
+  let i = @symcore.imag_unit()
   let sigma1 = @symphysics.msigma(1)
   let sigma2 = @symphysics.msigma(2)
   let sigma3 = @symphysics.msigma(3)

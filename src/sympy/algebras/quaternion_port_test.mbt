@@ -15,7 +15,7 @@ fn expr_rational(num : Int, den : Int) -> Expr raise {
 
 ///|
 fn expr_pi() -> Expr {
-  @symcore.symbol("pi")
+  @symcore.pi()
 }
 
 ///|

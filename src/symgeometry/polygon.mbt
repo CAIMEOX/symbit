@@ -653,9 +653,9 @@ pub fn Polygon::arbitrary_point(
     start = end_
   }
   x_cases.push(self.vertices_[0].coords_[0])
-  x_cases.push(symbol("True"))
+  x_cases.push(@symcore.true_())
   y_cases.push(self.vertices_[0].coords_[1])
-  y_cases.push(symbol("True"))
+  y_cases.push(@symcore.true_())
   point2d(
     @symcore.raw_function("Piecewise", x_cases),
     @symcore.raw_function("Piecewise", y_cases),
@@ -788,7 +788,7 @@ fn regular_polygon_vertices_of(
   let out : Array[Point] = []
   for i in 0..<poly.n_ {
     let angle = geo_simplify(
-      poly.rotation_ + geo_div(geo_int(2 * i), geo_int(poly.n_)) * symbol("pi"),
+      poly.rotation_ + geo_div(geo_int(2 * i), geo_int(poly.n_)) * @symcore.pi(),
     )
     out.push(
       point2d(
@@ -862,7 +862,7 @@ pub fn RegularPolygon::area(self : RegularPolygon) -> Expr {
     geo_int(self.n_) *
     self.radius_ *
     self.radius_ *
-    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * symbol("pi")),
+    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * @symcore.pi()),
     geo_int(2),
   )
 }
@@ -872,7 +872,7 @@ pub fn RegularPolygon::length(self : RegularPolygon) -> Expr {
   geo_simplify(
     geo_int(2) *
     self.radius_ *
-    @symelem.sin(geo_div(symbol("pi"), geo_int(self.n_))),
+    @symelem.sin(geo_div(@symcore.pi(), geo_int(self.n_))),
   )
 }
 
@@ -884,7 +884,7 @@ pub fn RegularPolygon::perimeter(self : RegularPolygon) -> Expr {
 ///|
 pub fn RegularPolygon::apothem(self : RegularPolygon) -> Expr {
   geo_simplify(
-    self.radius_ * @symelem.cos(geo_div(symbol("pi"), geo_int(self.n_))),
+    self.radius_ * @symelem.cos(geo_div(@symcore.pi(), geo_int(self.n_))),
   )
 }
 

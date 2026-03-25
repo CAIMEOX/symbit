@@ -28,12 +28,12 @@ fn test_rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn test_pi_expr() -> @symcore.Expr {
-  @symcore.symbol("pi")
+  @symcore.pi()
 }
 
 ///|
 fn test_oo_expr() -> @symcore.Expr {
-  @symcore.symbol("oo")
+  @symcore.oo()
 }
 
 ///|

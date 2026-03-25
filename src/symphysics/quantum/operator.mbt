@@ -84,7 +84,7 @@ pub fn unitary_operator(
 
 ///|
 pub fn identity_operator(
-  dimension? : Expr = symbol("oo"),
+  dimension? : Expr = @symcore.oo(),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
   quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space~)
@@ -179,7 +179,7 @@ pub fn operator_from_expr(expr : Expr) -> OperatorExpr? {
         "HermitianOperator" => Some(hermitian_operator(args))
         "UnitaryOperator" => Some(unitary_operator(args))
         "IdentityOperator" => {
-          let dimension = if args.is_empty() { symbol("oo") } else { args[0] }
+          let dimension = if args.is_empty() { @symcore.oo() } else { args[0] }
           Some(identity_operator(dimension~))
         }
         _ => None

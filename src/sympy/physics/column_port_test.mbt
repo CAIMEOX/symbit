@@ -1,6 +1,6 @@
 ///|
 test "physics.continuum_mechanics.column: oracle parity" {
-  let c = column(@symcore.int(10), @symcore.symbol("E"), @symcore.symbol("A"))
+  let c = column(@symcore.int(10), @symcore.exp1(), @symcore.symbol("A"))
   ignore(c.apply_support(@symcore.int(0)))
   ignore(c.apply_support(@symcore.int(10)))
   c.apply_load(@symcore.int(-1), @symcore.int(5), -1)

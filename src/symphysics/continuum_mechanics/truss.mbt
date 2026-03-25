@@ -69,7 +69,7 @@ fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn pi_expr() -> @symcore.Expr {
-  @symcore.symbol("pi")
+  @symcore.pi()
 }
 
 ///|

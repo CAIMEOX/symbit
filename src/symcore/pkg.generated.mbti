@@ -136,7 +136,11 @@ pub fn oo() -> Expr
 
 pub fn pi() -> Expr
 
+pub fn postorder(Expr) -> Array[Expr]
+
 pub fn pow(Expr, Expr) -> Expr
+
+pub fn preorder(Expr) -> Array[Expr]
 
 pub fn rational_from_ints(Int, Int) -> Expr raise @symnum.RationalError
 

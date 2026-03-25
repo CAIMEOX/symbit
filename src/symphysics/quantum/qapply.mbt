@@ -99,7 +99,7 @@ fn quantum_sum_expr(
 
 ///|
 fn quantum_symbolic_infinite(expr : Expr) -> Bool {
-  expr == symbol("oo")
+  expr == @symcore.oo()
 }
 
 ///|

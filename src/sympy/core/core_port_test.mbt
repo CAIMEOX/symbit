@@ -1,4 +1,11 @@
 ///|
+test "symcore parity plain symbol names stay plain symbols" {
+  inspect(core_expr_srepr(@symcore.symbol("pi")), content="Symbol('pi')")
+  inspect(core_expr_srepr(@symcore.symbol("True")), content="Symbol('True')")
+  inspect(core_expr_srepr(@symcore.pi()), content="pi")
+  inspect(core_expr_srepr(@symcore.true_()), content="True")
+}
+
 test "symcore parity number symbols render as SymPy core singletons" {
   inspect(core_expr_sstr(@symcore.pi()), content="pi")
   inspect(core_expr_sstr(@symcore.imag_unit()), content="I")

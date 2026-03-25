@@ -33,7 +33,7 @@ test "symsimplify simplify parity basic" {
 test "symsimplify simplify parity composite heuristics" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
 
   let rational_trig = @symcore.mul([
     @symcore.add([x, @symcore.pow(x, @symcore.int(2))]),
@@ -249,14 +249,14 @@ test "symsimplify exptrigsimp parity" {
   let x = @symcore.symbol("x")
   let exprs = [
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.symbol("I"), x])]),
+      @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.symbol("I"), x]),
+        @symcore.mul([@symcore.int(-1), @symcore.imag_unit(), x]),
       ]),
     ]),
     @symcore.add([
       @symcore.function("cos", [x]),
-      @symcore.mul([@symcore.symbol("I"), @symcore.function("sin", [x])]),
+      @symcore.mul([@symcore.imag_unit(), @symcore.function("sin", [x])]),
     ]),
   ]
   for expr in exprs {
@@ -347,9 +347,9 @@ test "symsimplify compat simplify parity" {
 ///|
 test "symsimplify compat simplify advanced parity" {
   let a = @symcore.symbol("a")
-  let golden = @symcore.symbol("GoldenRatio")
+  let golden = @symcore.golden_ratio()
   let i = @symcore.symbol("i")
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   let x = @symcore.symbol("x")
   let z = @symcore.symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
@@ -467,7 +467,7 @@ test "symsimplify radsimp extras parity" {
 test "symsimplify fu rules parity" {
   let x = @symcore.symbol("x")
   let y = @symcore.symbol("y")
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   let pi6 = @symcore.mul([@symcore.rational_from_ints(1, 6), pi])
 
   assert_true(

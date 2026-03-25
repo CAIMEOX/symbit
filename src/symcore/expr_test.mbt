@@ -60,10 +60,23 @@ test "free_symbols respects bound variables" {
 }
 
 ///|
+test "plain symbol names no longer coerce to core singletons" {
+  inspect(@symprint.debug_repr(symbol("pi")), content="sym:pi")
+  inspect(@symprint.debug_repr(symbol("True")), content="sym:True")
+  match number_symbol_kind(symbol("pi")) {
+    Some(_) => fail("plain symbol pi should not be a number symbol")
+    None => ()
+  }
+  match bool_value(symbol("True")) {
+    Some(_) => fail("plain symbol True should not be a boolean atom")
+    None => ()
+  }
+}
+
 test "number symbols are structured constants" {
-  let pi_expr = symbol("pi")
-  let imag = symbol("I")
-  let inf = symbol("oo")
+  let pi_expr = pi()
+  let imag = imag_unit()
+  let inf = oo()
   match expr_form(pi_expr) {
     ExprForm::NumberSymbol(NumberSymbolKind::Pi) => ()
     _ => fail("expected pi number symbol")
@@ -112,12 +125,12 @@ test "dummy and wild are distinct structured symbols" {
 ///|
 test "boolean and number symbol helper accessors stay structured" {
   inspect(bool_value(true_()).unwrap_or(false), content="true")
-  inspect(bool_value(symbol("True")).unwrap_or(false), content="true")
-  match number_symbol_kind(symbol("pi")) {
+  inspect(bool_value(true_()).unwrap_or(false), content="true")
+  match number_symbol_kind(pi()) {
     Some(NumberSymbolKind::Pi) => ()
     _ => fail("expected pi kind")
   }
-  match number_symbol_kind(symbol("I")) {
+  match number_symbol_kind(imag_unit()) {
     Some(NumberSymbolKind::ImaginaryUnit) => ()
     _ => fail("expected I kind")
   }

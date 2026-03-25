@@ -210,12 +210,347 @@ fn form_neg(a : LinearForm) -> LinearForm {
 }
 
 ///|
+fn exact_rational_pow(
+  base : @symnum.BigRational,
+  exp : Int,
+) -> @symnum.BigRational? {
+  if exp == 0 {
+    return Some(@symnum.BigRational::one())
+  }
+  let mut e = exp.abs()
+  let mut acc = @symnum.BigRational::one()
+  let mut current = base
+  while e > 0 {
+    if e % 2 == 1 {
+      acc = acc.mul_r(current)
+    }
+    e = e / 2
+    if e > 0 {
+      current = current.mul_r(current)
+    }
+  }
+  if exp > 0 {
+    Some(acc)
+  } else {
+    try acc.reciprocal() catch {
+      _ => None
+    } noraise {
+      value => Some(value)
+    }
+  }
+}
+
+///|
+fn exact_numeric_value(expr : @symcore.Expr) -> @symnum.BigRational? {
+  match expr {
+    @symcore.Expr::Number(n) => Some(n)
+    @symcore.Expr::Add(args) => {
+      let mut acc = @symnum.BigRational::zero()
+      for arg in args {
+        match exact_numeric_value(arg) {
+          Some(value) => acc = acc.add_r(value)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Mul(args) => {
+      let mut acc = @symnum.BigRational::one()
+      for arg in args {
+        match exact_numeric_value(arg) {
+          Some(value) => acc = acc.mul_r(value)
+          None => return None
+        }
+      }
+      Some(acc)
+    }
+    @symcore.Expr::Pow(base, exp) =>
+      match (exact_numeric_value(base), exact_numeric_value(exp)) {
+        (Some(base_value), Some(exp_value)) if exp_value.is_integral() => {
+          let num = exp_value.numerator()
+          if num.bit_length() > 30 {
+            None
+          } else {
+            exact_rational_pow(base_value, num.to_int())
+          }
+        }
+        _ => None
+      }
+    @symcore.Expr::Float(f) =>
+      if !f.is_finite() {
+        None
+      } else {
+        try f.to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
+            }
+        }
+      }
+    @symcore.Expr::ComplexFloat(z) =>
+      if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
+        None
+      } else {
+        try z.real_part().to_rational() catch {
+          _ => None
+        } noraise {
+          (num, den) =>
+            try @symnum.BigRational::new(num, den) catch {
+              _ => None
+            } noraise {
+              value => Some(value)
+            }
+        }
+      }
+    _ => None
+  }
+}
+
+///|
+fn expr_is_int_value(expr : @symcore.Expr) -> Int? {
+  match exact_numeric_value(expr) {
+    Some(value) if value.is_integral() => {
+      let num = value.numerator()
+      if num.bit_length() > 30 {
+        None
+      } else {
+        Some(num.to_int())
+      }
+    }
+    _ => None
+  }
+}
+
+///|
+fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
+  match @symcore.number_symbol_kind(expr) {
+    Some(@symcore.NumberSymbolKind::Pi) => true
+    _ =>
+      match expr {
+        @symcore.Expr::Add(args)
+        | @symcore.Expr::Mul(args)
+        | @symcore.Expr::Tuple(args)
+        | @symcore.Expr::Function(_, args)
+        | @symcore.Expr::AppliedUndef(_, args) => args.any(expr_contains_pi)
+        @symcore.Expr::Dict(items) =>
+          items.any(fn(item) {
+            let (key, value) = item
+            expr_contains_pi(key) || expr_contains_pi(value)
+          })
+        @symcore.Expr::Pow(base, exp) | @symcore.Expr::Mod(base, exp) =>
+          expr_contains_pi(base) || expr_contains_pi(exp)
+        @symcore.Expr::Relational(_, lhs, rhs) =>
+          expr_contains_pi(lhs) || expr_contains_pi(rhs)
+        @symcore.Expr::Derivative(inner, deriv_args) =>
+          expr_contains_pi(inner) || deriv_args.any(expr_contains_pi)
+        @symcore.Expr::Subs(inner, variable, value) =>
+          expr_contains_pi(inner) ||
+          expr_contains_pi(variable) ||
+          expr_contains_pi(value)
+        @symcore.Expr::Lambda(vars, body) =>
+          expr_contains_pi(vars) || expr_contains_pi(body)
+        _ => false
+      }
+  }
+}
+
+///|
+fn parse_pi_term(expr : @symcore.Expr) -> (@symnum.BigRational, @symcore.Expr)? {
+  match @symcore.number_symbol_kind(expr) {
+    Some(@symcore.NumberSymbolKind::Pi) =>
+      Some((@symnum.BigRational::one(), @symcore.int(0)))
+    _ =>
+      match expr {
+        @symcore.Expr::Mul(args) => {
+          let mut coeff = @symnum.BigRational::one()
+          let rest : Array[@symcore.Expr] = []
+          let mut saw_pi = false
+          for factor in args {
+            match @symcore.number_symbol_kind(factor) {
+              Some(@symcore.NumberSymbolKind::Pi) =>
+                if saw_pi {
+                  return None
+                } else {
+                  saw_pi = true
+                }
+              _ =>
+                match exact_numeric_value(factor) {
+                  Some(value) => coeff = coeff.mul_r(value)
+                  None =>
+                    if expr_contains_pi(factor) {
+                      return None
+                    } else {
+                      rest.push(factor)
+                    }
+                }
+            }
+          }
+          if !saw_pi {
+            None
+          } else if rest.is_empty() {
+            Some((coeff, @symcore.int(0)))
+          } else {
+            Some((coeff, @symcore.mul(rest)))
+          }
+        }
+        _ => None
+      }
+  }
+}
+
+///|
+fn parse_pi_shift(
+  expr : @symcore.Expr,
+) -> (@symnum.BigRational, @symcore.Expr)? {
+  match expr {
+    @symcore.Expr::Add(args) => {
+      let mut coeff = @symnum.BigRational::zero()
+      let rest : Array[@symcore.Expr] = []
+      for term in args {
+        match parse_pi_term(term) {
+          Some((term_coeff, term_rest)) => {
+            coeff = coeff.add_r(term_coeff)
+            if !is_zero_expr(term_rest) {
+              rest.push(term_rest)
+            }
+          }
+          None =>
+            if expr_contains_pi(term) {
+              return None
+            } else {
+              rest.push(term)
+            }
+        }
+      }
+      let remainder = if rest.is_empty() {
+        @symcore.int(0)
+      } else {
+        @symcore.add(rest)
+      }
+      Some((coeff, remainder))
+    }
+    _ =>
+      match parse_pi_term(expr) {
+        Some((coeff, rest)) => Some((coeff, rest))
+        None =>
+          if expr_contains_pi(expr) {
+            None
+          } else {
+            Some((@symnum.BigRational::zero(), expr))
+          }
+      }
+  }
+}
+
+///|
+fn half_turn_rewrite(
+  is_sin : Bool,
+  sign : Int,
+  rest : @symcore.Expr,
+) -> @symcore.Expr {
+  let base = if is_sin {
+    @symcore.function("cos", [rest])
+  } else {
+    @symcore.function("sin", [rest])
+  }
+  let corrected = if is_sin {
+    base
+  } else {
+    expr_neg(base)
+  }
+  if sign >= 0 { corrected } else { expr_neg(corrected) }
+}
+
+///|
+fn simplify_trig_boundary_value(
+  name : String,
+  arg : @symcore.Expr,
+) -> @symcore.Expr {
+  match parse_pi_shift(arg) {
+    Some((coeff, rest)) => {
+      let den = coeff.denominator()
+      let num = coeff.numerator()
+      if den.equal_int(1) {
+        let sign = if num.mod(2N).is_zero() { 1 } else { -1 }
+        if is_zero_expr(rest) {
+          match name {
+            "sin" => @symcore.int(0)
+            "cos" => if sign > 0 { @symcore.int(1) } else { @symcore.int(-1) }
+            _ => @symcore.function(name, [arg])
+          }
+        } else {
+          let base = @symcore.function(name, [rest])
+          if sign > 0 { base } else { expr_neg(base) }
+        }
+      } else if den.equal_int(2) && !num.mod(2N).is_zero() {
+        let half_turns = num.sub(1N).div(2N)
+        let sign = if half_turns.mod(2N).is_zero() { 1 } else { -1 }
+        if is_zero_expr(rest) {
+          match name {
+            "sin" => if sign > 0 { @symcore.int(1) } else { @symcore.int(-1) }
+            "cos" => @symcore.int(0)
+            _ => @symcore.function(name, [arg])
+          }
+        } else {
+          match name {
+            "sin" => half_turn_rewrite(true, sign, rest)
+            "cos" => half_turn_rewrite(false, sign, rest)
+            _ => @symcore.function(name, [arg])
+          }
+        }
+      } else {
+        @symcore.function(name, [arg])
+      }
+    }
+    None =>
+      if is_zero_expr(arg) {
+        match name {
+          "sin" => @symcore.int(0)
+          "cos" => @symcore.int(1)
+          _ => @symcore.function(name, [arg])
+        }
+      } else {
+        @symcore.function(name, [arg])
+      }
+  }
+}
+
+///|
+fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
+  match expr {
+    @symcore.Expr::Add(args) =>
+      @symcore.add(args.map(simplify_boundary_expr))
+    @symcore.Expr::Mul(args) =>
+      @symcore.mul(args.map(simplify_boundary_expr))
+    @symcore.Expr::Pow(base, exp) =>
+      @symcore.pow(
+        simplify_boundary_expr(base),
+        simplify_boundary_expr(exp),
+      )
+    @symcore.Expr::Function(name, args) if args.length() == 1 => {
+      let arg = simplify_boundary_expr(args[0])
+      match name {
+        "sin" | "cos" => simplify_trig_boundary_value(name, arg)
+        _ => @symcore.function(name, [arg])
+      }
+    }
+    @symcore.Expr::Function(name, args) =>
+      @symcore.function(name, args.map(simplify_boundary_expr))
+    _ => expr
+  }
+}
+
+///|
 fn eval_at(
   expr : @symcore.Expr,
   var_name : String,
   value : @symcore.Expr,
 ) -> @symcore.Expr {
-  subst_var(expr, var_name, value)
+  simplify_boundary_expr(subst_var(expr, var_name, value))
 }
 
 ///|
@@ -840,6 +1175,20 @@ fn integrate_expr(
       let merged = expr_mul(coeff, @symcore.mul(rest_factors))
       integrate_expr(merged, x, var_name, a, b)
     }
+    @symcore.Expr::Pow(base, exp) =>
+      match (parse_linear_atom(base, x, var_name), expr_is_int_value(exp)) {
+        (Some(atom), Some(2)) =>
+          match expand_atom_pair(atom, atom, x) {
+            Some(expanded) => integrate_expr(expanded, x, var_name, a, b)
+            None => None
+          }
+        (Some(atom), Some(1)) => Some(integrate_linear_atom(atom, x, var_name, a, b))
+        _ =>
+          match poly_from_expr(expr, x) {
+            Some(poly) => Some(integral_poly(poly, x, var_name, a, b))
+            None => None
+          }
+      }
     _ =>
       match poly_from_expr(expr, x) {
         Some(poly) => Some(integral_poly(poly, x, var_name, a, b))
@@ -900,7 +1249,7 @@ fn FourierSeries::norm_factor(self : FourierSeries) -> @symcore.Expr {
 
 ///|
 fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   let minus_pi = @symcore.mul([@symcore.int(-1), pi])
   let two_pi = @symcore.mul([@symcore.int(2), pi])
   if (self.a == minus_pi && self.b == pi) ||
@@ -1023,7 +1372,7 @@ pub fn FourierSeries::sigma_approximation(
     return @symcore.int(0)
   }
   let mut acc = @symcore.int(0)
-  let pi = @symcore.symbol("pi")
+  let pi = @symcore.pi()
   let mut i = 0
   while i < n {
     let term = self.term(i)

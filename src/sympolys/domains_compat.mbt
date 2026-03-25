@@ -3238,7 +3238,7 @@ fn expr_gaussian_coeffs(
 
 ///|
 fn gaussian_rat_to_expr(value : GaussianRatCompat) -> Expr {
-  let i_sym = symbol("I")
+  let i_sym = @symcore.imag_unit()
   let terms : Array[Expr] = Array::new()
   if !value.re.is_zero() {
     terms.push(@symcore.number(value.re))

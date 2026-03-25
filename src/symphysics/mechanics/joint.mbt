@@ -216,7 +216,7 @@ fn joint_locate_interframe(
       if rotation_axis.is_zero() {
         let dot = base_x.dot(axis_unit)
         if mech_expr_is_zero(dot + int(1)) {
-          aligned.orient_axis(frame, frame.y(), symbol("pi"))
+          aligned.orient_axis(frame, frame.y(), @symcore.pi())
         } else {
           aligned.orient_axis(frame, frame.x(), int(0))
         }

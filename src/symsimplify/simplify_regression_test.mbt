@@ -70,7 +70,7 @@ test "symsimplify dispatcher rational trig regression" {
 ///|
 test "symsimplify exptrigsimp exp trig regression" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
@@ -84,7 +84,7 @@ test "symsimplify exptrigsimp exp trig regression" {
 ///|
 test "symsimplify dispatcher exp trig regression" {
   let x = @symcore.symbol("x")
-  let i = @symcore.symbol("I")
+  let i = @symcore.imag_unit()
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),

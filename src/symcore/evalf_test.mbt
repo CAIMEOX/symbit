@@ -22,7 +22,7 @@ test "evalf converts exact numeric expressions and constants" {
     _ => fail("expected float sqrt")
   }
 
-  let pi_expr = evalf(symbol("pi"), prec=90)
+  let pi_expr = evalf(pi(), prec=90)
   match pi_expr {
     Expr::Float(f) => {
       assert_true(f.is_finite())
@@ -49,7 +49,7 @@ test "evalf numerically evaluates powers and unary functions" {
 
 ///|
 test "evalf produces complex values for I and branch-cut functions" {
-  let imag_unit = evalf(symbol("I"), prec=90)
+  let imag_unit = evalf(imag_unit(), prec=90)
   match imag_unit {
     Expr::ComplexFloat(z) => {
       assert_true(@symnum.is_zero(z.to_mpc().real))
@@ -79,7 +79,7 @@ test "evalf produces complex values for I and branch-cut functions" {
 
 ///|
 test "evalf handles complex transcendental functions" {
-  let z = add([int(1), symbol("I")])
+  let z = add([int(1), imag_unit()])
   let gamma_z = evalf(function("gamma", [z]), prec=100)
   match gamma_z {
     Expr::ComplexFloat(value) => assert_true(value.is_finite())
@@ -87,7 +87,7 @@ test "evalf handles complex transcendental functions" {
   }
 
   let abs_expr = evalf(
-    function("Abs", [add([int(1), mul([int(2), symbol("I")])])]),
+    function("Abs", [add([int(1), mul([int(2), imag_unit()])])]),
     prec=100,
   )
   match abs_expr {
@@ -95,7 +95,7 @@ test "evalf handles complex transcendental functions" {
     _ => fail("expected real abs")
   }
 
-  let sin_i = evalf(function("sin", [symbol("I")]), prec=100)
+  let sin_i = evalf(function("sin", [imag_unit()]), prec=100)
   match sin_i {
     Expr::ComplexFloat(value) => {
       assert_true(@symnum.is_zero(value.to_mpc().real))
