@@ -70,29 +70,36 @@ fn gate_sequence_exists(
 fn gate_min_qubits(expr : Expr) -> Int {
   match expr {
     Expr::Pow(base, _) => gate_min_qubits(base)
-    Expr::Function("Dagger", args) if args.length() == 1 =>
-      gate_min_qubits(args[0])
-    Expr::Function("QFT", args)
-    | Expr::Function("IQFT", args)
-    | Expr::Function("OracleGate", args)
-    | Expr::Function("WGate", args)
-    | Expr::Function("CMod", args) if args.length() >= 1 =>
-      match quantum_integer_value(args[0]) {
-        Some(value) if value > 0 => value
-        _ => 1
-      }
     _ =>
-      match gate_support(expr) {
-        Some(support) if !support.is_empty() => {
-          let mut max_index = support[0]
-          for item in support {
-            if item > max_index {
-              max_index = item
-            }
-          }
-          max_index + 1
+      if quantum_expr_has_name(expr, "Dagger") {
+        match quantum_expr_args(expr) {
+          Some([inner]) => gate_min_qubits(inner)
+          _ => 1
         }
-        _ => 1
+      } else if quantum_expr_has_any_name(expr, [
+          "QFT", "IQFT", "OracleGate", "WGate", "CMod",
+        ]) {
+        match quantum_expr_args(expr) {
+          Some(args) if args.length() >= 1 =>
+            match quantum_integer_value(args[0]) {
+              Some(value) if value > 0 => value
+              _ => 1
+            }
+          _ => 1
+        }
+      } else {
+        match gate_support(expr) {
+          Some(support) if !support.is_empty() => {
+            let mut max_index = support[0]
+            for item in support {
+              if item > max_index {
+                max_index = item
+              }
+            }
+            max_index + 1
+          }
+          _ => 1
+        }
       }
   }
 }

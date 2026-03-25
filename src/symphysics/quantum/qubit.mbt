@@ -242,35 +242,42 @@ pub fn QubitExpr::flip(
 
 ///|
 pub fn qubit_from_expr(expr : Expr) -> QubitExpr? {
-  match expr {
-    Expr::Function(name, args) if name == "Qubit" || name == "QubitBra" => {
-      let bits : Array[Int] = []
-      for arg in args {
-        match arg {
-          Expr::Number(n) if n.is_integral() =>
-            bits.push(n.numerator().to_int())
-          _ => return None
-        }
-      }
-      Some(QubitExpr::{ bits, is_bra: name == "QubitBra", int_form: false })
-    }
-    Expr::Function(name, args) if (name == "IntQubit" || name == "IntQubitBra") &&
-      args.length() == 1 =>
-      match args[0] {
-        Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
-          let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try? int_to_minimal_bits(
-            n.numerator().to_int(),
-          )
-          match bits_result {
-            Ok(bits) =>
-              Some(QubitExpr::{
-                bits,
-                is_bra: name == "IntQubitBra",
-                int_form: true,
-              })
-            Err(_) => None
+  match quantum_expr_name(expr) {
+    Some(name) if name == "Qubit" || name == "QubitBra" =>
+      match quantum_expr_args(expr) {
+        Some(args) => {
+          let bits : Array[Int] = []
+          for arg in args {
+            match arg {
+              Expr::Number(n) if n.is_integral() =>
+                bits.push(n.numerator().to_int())
+              _ => return None
+            }
           }
+          Some(QubitExpr::{ bits, is_bra: name == "QubitBra", int_form: false })
         }
+        None => None
+      }
+    Some(name) if name == "IntQubit" || name == "IntQubitBra" =>
+      match quantum_expr_args(expr) {
+        Some([arg]) =>
+          match arg {
+            Expr::Number(n) if n.is_integral() && n.numerator().to_int() >= 0 => {
+              let bits_result : Result[Array[Int], @symphysics.PhysicsError] = try? int_to_minimal_bits(
+                n.numerator().to_int(),
+              )
+              match bits_result {
+                Ok(bits) =>
+                  Some(QubitExpr::{
+                    bits,
+                    is_bra: name == "IntQubitBra",
+                    int_form: true,
+                  })
+                Err(_) => None
+              }
+            }
+            _ => None
+          }
         _ => None
       }
     _ => None

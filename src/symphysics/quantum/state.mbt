@@ -210,33 +210,37 @@ pub fn StateExpr::repr(self : StateExpr) -> String {
 
 ///|
 pub fn state_from_expr(expr : Expr) -> StateExpr? {
-  match expr {
-    Expr::Function(name, args) =>
-      match name {
-        "Ket" => Some(ket(args))
-        "Bra" => Some(bra(args))
-        "TimeDepKet" if args.is_empty() =>
-          Some(time_dep_ket([], time=default_time_expr()))
-        "TimeDepKet" if args.length() >= 1 => {
-          let label : Array[Expr] = []
-          for idx in 0..<(args.length() - 1) {
-            label.push(args[idx])
+  match quantum_expr_name(expr) {
+    Some(name) =>
+      match quantum_expr_args(expr) {
+        Some(args) =>
+          match name {
+            "Ket" => Some(ket(args))
+            "Bra" => Some(bra(args))
+            "TimeDepKet" if args.is_empty() =>
+              Some(time_dep_ket([], time=default_time_expr()))
+            "TimeDepKet" if args.length() >= 1 => {
+              let label : Array[Expr] = []
+              for idx in 0..<(args.length() - 1) {
+                label.push(args[idx])
+              }
+              Some(time_dep_ket(label, time=args[args.length() - 1]))
+            }
+            "TimeDepBra" if args.is_empty() =>
+              Some(time_dep_bra([], time=default_time_expr()))
+            "TimeDepBra" if args.length() >= 1 => {
+              let label : Array[Expr] = []
+              for idx in 0..<(args.length() - 1) {
+                label.push(args[idx])
+              }
+              Some(time_dep_bra(label, time=args[args.length() - 1]))
+            }
+            "OrthogonalKet" => Some(orthogonal_ket(args))
+            "OrthogonalBra" => Some(orthogonal_bra(args))
+            _ => None
           }
-          Some(time_dep_ket(label, time=args[args.length() - 1]))
-        }
-        "TimeDepBra" if args.is_empty() =>
-          Some(time_dep_bra([], time=default_time_expr()))
-        "TimeDepBra" if args.length() >= 1 => {
-          let label : Array[Expr] = []
-          for idx in 0..<(args.length() - 1) {
-            label.push(args[idx])
-          }
-          Some(time_dep_bra(label, time=args[args.length() - 1]))
-        }
-        "OrthogonalKet" => Some(orthogonal_ket(args))
-        "OrthogonalBra" => Some(orthogonal_bra(args))
-        _ => None
+        None => None
       }
-    _ => None
+    None => None
   }
 }

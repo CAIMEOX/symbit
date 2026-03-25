@@ -72,7 +72,7 @@ test "physics.quantum.circuitutils: symbolic indices and random helpers" {
   ])
   let symbolic = convert_to_symbolic_indices(circuit)
   assert_eq(circuit_factor_strings(symbolic.circuit), [
-    "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate(Tuple(i1), XGate(i0))",
+    "XGate(i0)", "YGate(i1)", "HadamardGate(i0)", "CGate((i1,), XGate(i0))",
   ])
   assert_eq(circuit_map_strings(symbolic.qubit_map), ["i0=2", "i1=5"])
   assert_eq(symbolic.next_index, 2)

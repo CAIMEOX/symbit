@@ -197,18 +197,6 @@ fn symbolic_index_expr(
         }
       }
     }
-    Expr::Function(name, args) => {
-      let out : Array[Expr] = []
-      let mut cursor = next_index
-      for arg in args {
-        let (rewritten, next_cursor) = symbolic_index_expr(
-          arg, qubit_map, inverse_map, cursor,
-        )
-        out.push(rewritten)
-        cursor = next_cursor
-      }
-      (@symcore.raw_function(name, out), cursor)
-    }
     Expr::Mul(args) => {
       let out : Array[Expr] = []
       let mut cursor = next_index
@@ -242,7 +230,37 @@ fn symbolic_index_expr(
       )
       (@symcore.raw_pow(next_base, next_exp), after_exp)
     }
-    _ => (expr, next_index)
+    Expr::Tuple(items) => {
+      let out : Array[Expr] = []
+      let mut cursor = next_index
+      for item in items {
+        let (rewritten, next_cursor) = symbolic_index_expr(
+          item, qubit_map, inverse_map, cursor,
+        )
+        out.push(rewritten)
+        cursor = next_cursor
+      }
+      (@symcore.tuple_expr(out), cursor)
+    }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) => {
+          let out : Array[Expr] = []
+          let mut cursor = next_index
+          for arg in args {
+            let (rewritten, next_cursor) = symbolic_index_expr(
+              arg, qubit_map, inverse_map, cursor,
+            )
+            out.push(rewritten)
+            cursor = next_cursor
+          }
+          match @symcore.raw_apply(head, out) {
+            Some(rewritten) => (rewritten, cursor)
+            None => (expr, cursor)
+          }
+        }
+        None => (expr, next_index)
+      }
   }
 }
 
@@ -274,11 +292,6 @@ fn real_index_expr(expr : Expr, qubit_map : Map[String, Int]) -> Expr {
         Some(value) => int(value)
         None => expr
       }
-    Expr::Function(name, args) =>
-      @symcore.raw_function(
-        name,
-        args.map(arg => real_index_expr(arg, qubit_map)),
-      )
     Expr::Mul(args) =>
       @symcore.raw_mul(args.map(arg => real_index_expr(arg, qubit_map)))
     Expr::Add(args) =>
@@ -288,7 +301,21 @@ fn real_index_expr(expr : Expr, qubit_map : Map[String, Int]) -> Expr {
         real_index_expr(base, qubit_map),
         real_index_expr(exp, qubit_map),
       )
-    _ => expr
+    Expr::Tuple(items) =>
+      @symcore.tuple_expr(items.map(item => real_index_expr(item, qubit_map)))
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match
+            @symcore.raw_apply(
+              head,
+              args.map(arg => real_index_expr(arg, qubit_map)),
+            ) {
+            Some(rewritten) => rewritten
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 

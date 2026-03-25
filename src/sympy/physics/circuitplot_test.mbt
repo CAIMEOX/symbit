@@ -12,7 +12,7 @@ test "physics.quantum.circuitplot: labels and gate constructors" {
   inspect(@symprint.to_string(q_gate(0)), content="Q(0)")
 
   let cq_gate = create_cgate("Q")
-  inspect(@symprint.to_string(cq_gate([1], 0)), content="CGate(Tuple(1), Q(0))")
+  inspect(@symprint.to_string(cq_gate([1], 0)), content="CGate((1,), Q(0))")
 
   assert_eq(labeller(2), ["q_1", "q_0"])
   assert_eq(labeller(3, symbol="j"), ["j_2", "j_1", "j_0"])

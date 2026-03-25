@@ -33,8 +33,11 @@ fn circuitplot_expr_arg_count(expr : Expr) -> Int {
     Expr::Add(args) => args.length()
     Expr::Mul(args) => args.length()
     Expr::Pow(_, _) => 2
-    Expr::Function(_, args) => args.length()
-    _ => 0
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => args.length()
+        None => 0
+      }
   }
 }
 
@@ -48,12 +51,15 @@ fn circuitplot_integral_arg(expr : Expr) -> Int? {
 
 ///|
 fn circuitplot_is_measurement(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function("Mz", _) => true
-    Expr::Function("Mx", _) => true
-    Expr::Function("CGate", args) if args.length() == 2 =>
-      circuitplot_is_measurement(args[1])
-    _ => false
+  if quantum_expr_has_any_name(expr, ["Mz", "Mx"]) {
+    true
+  } else if quantum_expr_has_name(expr, "CGate") {
+    match quantum_expr_args(expr) {
+      Some([_, gate]) => circuitplot_is_measurement(gate)
+      _ => false
+    }
+  } else {
+    false
   }
 }
 
@@ -62,28 +68,34 @@ fn circuitplot_targets(expr : Expr) -> Array[Int]? {
   match gate_from_expr(expr) {
     Some(gate) => Some(gate.args.copy())
     None =>
-      match expr {
-        Expr::Function("Mz", args) if args.length() == 1 =>
-          match circuitplot_integral_arg(args[0]) {
-            Some(target) => Some([target])
-            None => None
-          }
-        Expr::Function("Mx", args) if args.length() == 1 =>
-          match circuitplot_integral_arg(args[0]) {
-            Some(target) => Some([target])
-            None => None
-          }
-        Expr::Function("CGate", args) if args.length() == 2 =>
-          match (gate_tuple_ints(args[0]), circuitplot_targets(args[1])) {
-            (Some(controls), Some(targets)) => Some(controls + targets)
-            _ => None
-          }
-        Expr::Function(_, args) if args.length() == 1 =>
-          match circuitplot_integral_arg(args[0]) {
-            Some(target) => Some([target])
-            None => None
-          }
-        _ => None
+      if quantum_expr_has_any_name(expr, ["Mz", "Mx"]) {
+        match quantum_expr_args(expr) {
+          Some([arg]) =>
+            match circuitplot_integral_arg(arg) {
+              Some(target) => Some([target])
+              None => None
+            }
+          _ => None
+        }
+      } else if quantum_expr_has_name(expr, "CGate") {
+        match quantum_expr_args(expr) {
+          Some([controls, gate]) =>
+            match (gate_tuple_ints(controls), circuitplot_targets(gate)) {
+              (Some(control_items), Some(targets)) =>
+                Some(control_items + targets)
+              _ => None
+            }
+          _ => None
+        }
+      } else {
+        match @symcore.application_args(expr) {
+          Some([arg]) =>
+            match circuitplot_integral_arg(arg) {
+              Some(target) => Some([target])
+              None => None
+            }
+          _ => None
+        }
       }
   }
 }

@@ -136,9 +136,13 @@ pub fn WGateExpr::as_expr(self : WGateExpr) -> Expr {
 
 ///|
 fn oracle_gate_from_expr(expr : Expr) -> OracleGateExpr? {
-  match expr {
-    Expr::Function("OracleGate", args) if args.length() == 2 =>
-      match (quantum_integer_value(args[0]), grover_marked_values(args[1])) {
+  if !quantum_expr_has_name(expr, "OracleGate") {
+    return None
+  }
+  match quantum_expr_args(expr) {
+    Some([nqubits_expr, marked_expr]) =>
+      match
+        (quantum_integer_value(nqubits_expr), grover_marked_values(marked_expr)) {
         (Some(nqubits), Some(marked)) =>
           Some(OracleGateExpr::{ nqubits, marked })
         _ => None
@@ -149,9 +153,12 @@ fn oracle_gate_from_expr(expr : Expr) -> OracleGateExpr? {
 
 ///|
 fn w_gate_from_expr(expr : Expr) -> WGateExpr? {
-  match expr {
-    Expr::Function("WGate", args) if args.length() == 1 =>
-      match quantum_integer_value(args[0]) {
+  if !quantum_expr_has_name(expr, "WGate") {
+    return None
+  }
+  match quantum_expr_args(expr) {
+    Some([nqubits_expr]) =>
+      match quantum_integer_value(nqubits_expr) {
         Some(nqubits) => Some(WGateExpr::{ nqubits, })
         None => None
       }

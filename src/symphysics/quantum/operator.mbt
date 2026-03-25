@@ -172,18 +172,26 @@ pub fn outer_product(ket_expr : Expr, bra_expr : Expr) -> Expr {
 
 ///|
 pub fn operator_from_expr(expr : Expr) -> OperatorExpr? {
-  match expr {
-    Expr::Function(name, args) =>
-      match name {
-        "Operator" => Some(operator(args))
-        "HermitianOperator" => Some(hermitian_operator(args))
-        "UnitaryOperator" => Some(unitary_operator(args))
-        "IdentityOperator" => {
-          let dimension = if args.is_empty() { @symcore.oo() } else { args[0] }
-          Some(identity_operator(dimension~))
-        }
-        _ => None
+  match quantum_expr_name(expr) {
+    Some(name) =>
+      match quantum_expr_args(expr) {
+        Some(args) =>
+          match name {
+            "Operator" => Some(operator(args))
+            "HermitianOperator" => Some(hermitian_operator(args))
+            "UnitaryOperator" => Some(unitary_operator(args))
+            "IdentityOperator" => {
+              let dimension = if args.is_empty() {
+                @symcore.oo()
+              } else {
+                args[0]
+              }
+              Some(identity_operator(dimension~))
+            }
+            _ => None
+          }
+        None => None
       }
-    _ => None
+    None => None
   }
 }
