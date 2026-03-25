@@ -213,6 +213,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       } else {
         Some([expr, geo_zero(), geo_zero()])
       }
+    Expr::AppliedUndef(_, _) => None
     Expr::Dict(_) => None
     Expr::Add(args) => {
       let mut out = [geo_zero(), geo_zero(), geo_zero()]

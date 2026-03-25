@@ -84,6 +84,24 @@ fn make_function(
 }
 
 ///|
+fn make_application(
+  callee : Expr,
+  args : Array[Expr],
+  options : ParseOptions,
+) -> Expr raise ParseError {
+  match callee {
+    @symcore.Expr::UndefinedFunction(name) =>
+      @symcore.applied_undefined_function(name, args)
+    @symcore.Expr::Symbol(name) => make_function(name, args, options)
+    _ =>
+      raise ParseError::UnsupportedConstruct(
+        span=span(0, 0),
+        "call lowering only accepts a function head",
+      )
+  }
+}
+
+///|
 fn options_with_evaluate(
   options : ParseOptions,
   evaluate : Bool,
@@ -537,15 +555,16 @@ pub fn lower_ast_in(
         options,
       )
     }
-    Ast::Call(span~, callee, args) =>
+    Ast::Call(span~, callee, args) => {
+      let lowered_args = args.map(arg => lower_ast_in(arg, options, context))
       match callee {
         Ast::Symbol(span~, name) => {
           ignore(span)
-          make_function(
+          let lowered_callee = lower_symbol_name(
+            context,
             lookup_callable_target_name(context, name),
-            args.map(arg => lower_ast_in(arg, options, context)),
-            options,
           )
+          make_application(lowered_callee, lowered_args, options)
         }
         _ =>
           raise ParseError::UnsupportedConstruct(
@@ -553,6 +572,7 @@ pub fn lower_ast_in(
             "call lowering only accepts a simple function name",
           )
       }
+    }
     Ast::Tuple(span~, items) => {
       ignore(span)
       make_function(

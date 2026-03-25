@@ -82,6 +82,7 @@ fn free_symbols(expr : Expr) -> Array[String] {
     @symcore.ExprForm::Add(args)
     | @symcore.ExprForm::Mul(args)
     | @symcore.ExprForm::Tuple(args)
+    | @symcore.ExprForm::AppliedUndef(_, args)
     | @symcore.ExprForm::Applied(_, args) => {
       let out : Array[String] = []
       for arg in args {
@@ -204,6 +205,12 @@ fn print_expr_prec(
       sanitize_name(@symcore.number_symbol_name(kind), language)
     @symcore.ExprForm::Symbol(name) => sanitize_name(name, language)
     @symcore.ExprForm::UndefinedFunction(name) => sanitize_name(name, language)
+    @symcore.ExprForm::AppliedUndef(name, args) => {
+      let rendered = args
+        .map(arg => print_expr_prec(arg, language, 5))
+        .join(", ")
+      "\{sanitize_name(name, language)}(\{rendered})"
+    }
     @symcore.ExprForm::Boolean(true) => "true"
     @symcore.ExprForm::Boolean(false) => "false"
     @symcore.ExprForm::Add(args) => {

@@ -7,18 +7,19 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::NumberSymbol(_) => 3
     Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 4
     Expr::UndefinedFunction(_) => 5
-    Expr::Boolean(_) => 6
-    Expr::Tuple(_) => 7
-    Expr::Dict(_) => 8
-    Expr::Relational(_, _, _) => 9
-    Expr::Derivative(_, _) => 10
-    Expr::Subs(_, _, _) => 11
-    Expr::Lambda(_, _) => 12
-    Expr::Function(_, _) => 13
-    Expr::Add(_) => 14
-    Expr::Number(_) => 15
-    Expr::Float(_) => 16
-    Expr::ComplexFloat(_) => 17
+    Expr::AppliedUndef(_, _) => 6
+    Expr::Boolean(_) => 7
+    Expr::Tuple(_) => 8
+    Expr::Dict(_) => 9
+    Expr::Relational(_, _, _) => 10
+    Expr::Derivative(_, _) => 11
+    Expr::Subs(_, _, _) => 12
+    Expr::Lambda(_, _) => 13
+    Expr::Function(_, _) => 14
+    Expr::Add(_) => 15
+    Expr::Number(_) => 16
+    Expr::Float(_) => 17
+    Expr::ComplexFloat(_) => 18
   }
 }
 
@@ -233,6 +234,18 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
       }
+    Expr::AppliedUndef(name_a, args_a) =>
+      match b {
+        Expr::AppliedUndef(name_b, args_b) => {
+          let name_cmp = name_a.compare(name_b)
+          if name_cmp != 0 {
+            name_cmp
+          } else {
+            compare_arrays(args_a, args_b)
+          }
+        }
+        _ => 0
+      }
     Expr::Pow(base_a, exp_a) =>
       match b {
         Expr::Pow(base_b, exp_b) => {
@@ -364,6 +377,14 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
     Expr::Dummy(name, _) => sym_name.compare(dummy_display_name(name))
     Expr::Wild(name) => sym_name.compare(wild_display_name(name))
     Expr::UndefinedFunction(name) => sym_name.compare(name)
+    Expr::AppliedUndef(name, args) => {
+      let name_cmp = sym_name.compare(name)
+      if name_cmp != 0 {
+        name_cmp
+      } else {
+        Int::compare(0, args.length())
+      }
+    }
     Expr::Pow(base, _) => compare_symbol_base(sym_name, base)
     _ => compare_expr(Expr::Symbol(sym_name), expr)
   }
@@ -471,6 +492,12 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     }
     Expr::Wild(name) => hasher.combine_string(name)
     Expr::UndefinedFunction(name) => hasher.combine_string(name)
+    Expr::AppliedUndef(name, args) => {
+      hasher.combine_string(name)
+      for child in args {
+        child.hash_combine(hasher)
+      }
+    }
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)
       exp.hash_combine(hasher)

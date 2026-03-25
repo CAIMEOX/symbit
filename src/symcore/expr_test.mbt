@@ -129,13 +129,16 @@ test "derivative free symbols remove dummy variables but keep order symbols" {
 ///|
 test "undefined function heads are distinct from applied functions" {
   let f = undefined_function("f")
-  let fx = function("f", [symbol("x")])
+  let fx = applied_undefined_function("f", [symbol("x")])
+  let sinx = function("sin", [symbol("x")])
   match expr_form(f) {
     ExprForm::UndefinedFunction(name) => inspect(name, content="f")
     _ => fail("expected undefined function head")
   }
   inspect(args(f).length(), content="0")
   inspect(args(fx).length(), content="1")
+  inspect(head_name(fx), content="f")
+  inspect(head_name(sinx), content="sin")
   inspect(free_symbols(f).length(), content="0")
 }
 

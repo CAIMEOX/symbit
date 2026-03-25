@@ -214,6 +214,18 @@ test "symparse context overrides implicit multiplication heuristic" {
 }
 
 ///|
+test "symparse callable context preserves undefined-function applications structurally" {
+  let expr = parse_expr_in("f(x)", default_parse_options(), local_context())
+  match @symcore.undefined_application_parts(expr) {
+    Some((name, [arg])) => {
+      inspect(name, content="f")
+      inspect(@symprint.to_string(arg), content="x")
+    }
+    _ => fail("expected undefined function application")
+  }
+}
+
+///|
 test "symparse local bindings resolve symbols and override builtins" {
   inspect(parse_repr_in_local_context("a + b"), content="(+ sym:b sym:z)")
   inspect(parse_repr_in_local_context("n + b"), content="(+ sym:b 2)")

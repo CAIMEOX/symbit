@@ -164,6 +164,12 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     | Expr::Dummy(_, _)
     | Expr::Wild(_)
     | Expr::UndefinedFunction(_) => @symcore.int(0)
+    Expr::AppliedUndef(_, args) =>
+      if args.any(arg => expr_depends_on(arg, wrt)) {
+        derivative_expr(expr, [wrt])
+      } else {
+        @symcore.int(0)
+      }
     Expr::Add(args) => diff_add(args, wrt)
     Expr::Mul(args) => diff_mul(args, wrt)
     Expr::Pow(base, exp) => diff_pow(base, exp, wrt)

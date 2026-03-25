@@ -127,6 +127,12 @@ test "sympy ref: expr_to_sympy undefined function head" {
 }
 
 ///|
+test "sympy ref: expr_to_sympy applied undefined function" {
+  let expr = @symcore.applied_undefined_function("f", [@symcore.symbol("x")])
+  inspect(py_str_obj(expr_to_sympy(expr)), content="f(x)")
+}
+
+///|
 test "sympy ref: expr_to_sympy dict" {
   let expr = @symcore.dict_expr([
     (@symcore.symbol("x"), @symcore.symbol("y")),

@@ -205,6 +205,11 @@ fn query_replace_expr(
     | @symcore.Expr::Dummy(_, _)
     | @symcore.Expr::Wild(_)
     | @symcore.Expr::UndefinedFunction(_) => expr
+    @symcore.Expr::AppliedUndef(name, args) =>
+      @symcore.applied_undefined_function(
+        name,
+        args.map(arg => query_replace_expr(arg, target, replacement)),
+      )
     @symcore.Expr::Add(args) =>
       eval_arith(
         @symcore.add(

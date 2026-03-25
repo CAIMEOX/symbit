@@ -9,6 +9,7 @@ pub enum Expr {
   Dummy(String, Int)
   Wild(String)
   UndefinedFunction(String)
+  AppliedUndef(String, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
@@ -35,6 +36,8 @@ impl Show for Expr with to_string(self) {
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name) => wild_display_name(name)
     Expr::UndefinedFunction(name) => name
+    Expr::AppliedUndef(name, args) =>
+      name + "(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
     Expr::Mul(args) =>
@@ -185,6 +188,11 @@ pub fn wild(name : String) -> Expr {
 ///|
 pub fn undefined_function(name : String) -> Expr {
   Expr::UndefinedFunction(name)
+}
+
+///|
+pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
+  Expr::AppliedUndef(name, args.map(child => child))
 }
 
 ///|

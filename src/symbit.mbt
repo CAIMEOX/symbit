@@ -59,6 +59,12 @@ pub fn undefined_function(name : String) -> Expr {
 }
 
 ///|
+/// Apply an undefined function head to arguments while preserving first-class head structure.
+pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
+  @symcore.applied_undefined_function(name, args)
+}
+
+///|
 /// Coerce a symbolic name through the core `sympify` pipeline.
 pub fn sympify_name(name : String) -> Expr {
   @symcore.sympify_name(name)

@@ -450,6 +450,12 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
     @symcore.Expr::Dummy(_, _)
     | @symcore.Expr::Wild(_)
     | @symcore.Expr::UndefinedFunction(_) => Some([expr])
+    @symcore.Expr::AppliedUndef(_, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
     @symcore.Expr::Add(args) => {
       let acc : Array[Expr] = [expr_zero()]
       for arg in args {

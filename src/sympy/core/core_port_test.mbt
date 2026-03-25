@@ -13,7 +13,9 @@ test "symcore parity dummy wild and undefined-function heads" {
   inspect(core_expr_sstr(@symcore.wild("x")), content="x_")
   inspect(core_expr_sstr(@symcore.undefined_function("f")), content="f")
   inspect(
-    core_expr_sstr(@symcore.function("f", [@symcore.symbol("x")])),
+    core_expr_sstr(
+      @symcore.applied_undefined_function("f", [@symcore.symbol("x")]),
+    ),
     content="f(x)",
   )
 }

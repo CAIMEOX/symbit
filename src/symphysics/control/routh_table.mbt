@@ -57,6 +57,8 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.ExprForm::Symbol(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
+    @symcore.ExprForm::AppliedUndef(name, args) =>
+      @symcore.applied_undefined_function(name, args.map(control_normalize))
     @symcore.ExprForm::Add(args) => @symcore.add(args.map(control_normalize))
     @symcore.ExprForm::Mul(args) => @symcore.mul(args.map(control_normalize))
     @symcore.ExprForm::Pow(base, exp_expr) => {

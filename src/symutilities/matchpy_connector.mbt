@@ -123,6 +123,13 @@ pub fn get_srepr(expr : Expr) -> String {
         | @symcore.ExprForm::Symbol(_)
         | @symcore.ExprForm::UndefinedFunction(_)
         | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
+        @symcore.ExprForm::AppliedUndef(name, args) =>
+          if args.is_empty() {
+            name
+          } else {
+            let rendered = args.map(get_srepr).join(",")
+            "\{name}(\{rendered})"
+          }
         @symcore.ExprForm::Add(args) =>
           "Add(" + args.map(get_srepr).join(", ") + ")"
         @symcore.ExprForm::Mul(args) =>

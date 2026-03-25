@@ -85,6 +85,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
     Expr::Boolean(_) => None
     Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::UndefinedFunction(_) => None
+    Expr::AppliedUndef(_, _) => None
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -110,6 +111,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
     Expr::Boolean(_) => None
     Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::UndefinedFunction(_) => None
+    Expr::AppliedUndef(_, _) => None
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -692,6 +694,8 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::Boolean(_) => expr
     Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::UndefinedFunction(_) => expr
+    Expr::AppliedUndef(name, args) =>
+      applied_undefined_function(name, args.map(arg => evalf_impl(arg, prec)))
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))

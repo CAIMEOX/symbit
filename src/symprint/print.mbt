@@ -45,7 +45,8 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Subs(inner, variable, value) =>
       wrap_call("Subs", [inner, variable, value])
     @symcore.ExprForm::Lambda(vars, body) => wrap_call("Lambda", [vars, body])
-    @symcore.ExprForm::Applied(name, args) => wrap_call(name, args)
+    @symcore.ExprForm::AppliedUndef(name, args)
+    | @symcore.ExprForm::Applied(name, args) => wrap_call(name, args)
   }
 }
 
@@ -158,7 +159,8 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       "Subs(\{format_expr(inner, 0)}, \{format_expr(variable, 0)}, \{format_expr(value, 0)})"
     @symcore.ExprForm::Lambda(vars, body) =>
       "Lambda(\{format_expr(vars, 0)}, \{format_expr(body, 0)})"
-    @symcore.ExprForm::Applied(name, args) => {
+    @symcore.ExprForm::AppliedUndef(name, args)
+    | @symcore.ExprForm::Applied(name, args) => {
       let rendered = args.map(child => format_expr(child, prec)).join(", ")
       "\{name}(\{rendered})"
     }

@@ -14,6 +14,8 @@ pub fn add(Array[Expr]) -> Expr
 
 pub fn applied_parts(Expr) -> (String, Array[Expr])?
 
+pub fn applied_undefined_function(String, Array[Expr]) -> Expr
+
 pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Array[T]]
 
 pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
@@ -190,6 +192,8 @@ pub fn tuple_expr(Array[Expr]) -> Expr
 
 pub fn tuple_items(Expr) -> Array[Expr]?
 
+pub fn undefined_application_parts(Expr) -> (String, Array[Expr])?
+
 pub fn undefined_function(String) -> Expr
 
 pub fn wild(String) -> Expr
@@ -237,6 +241,7 @@ pub enum Expr {
   Dummy(String, Int)
   Wild(String)
   UndefinedFunction(String)
+  AppliedUndef(String, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
@@ -264,6 +269,7 @@ pub enum ExprForm {
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
   UndefinedFunction(String)
+  AppliedUndef(String, Array[Expr])
   Boolean(Bool)
   Add(Array[Expr])
   Mul(Array[Expr])

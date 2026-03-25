@@ -30,6 +30,7 @@ pub enum ExprForm {
   NumberSymbol(NumberSymbolKind)
   Symbol(String)
   UndefinedFunction(String)
+  AppliedUndef(String, Array[Expr])
   Boolean(Bool)
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -235,6 +236,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Dummy(name, _) => ExprForm::Symbol(dummy_display_name(name))
     Expr::Wild(name) => ExprForm::Symbol(wild_display_name(name))
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
+    Expr::AppliedUndef(name, args) => ExprForm::AppliedUndef(name, args)
     Expr::Symbol("True") => ExprForm::Boolean(true)
     Expr::Symbol("False") => ExprForm::Boolean(false)
     Expr::Symbol(name) =>
@@ -351,7 +353,8 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::Symbol(_)
     | ExprForm::UndefinedFunction(_)
     | ExprForm::Boolean(_) => true
-    ExprForm::Applied(_, args) => args.is_empty()
+    ExprForm::AppliedUndef(_, args) | ExprForm::Applied(_, args) =>
+      args.is_empty()
     _ => false
   }
 }
@@ -385,7 +388,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Derivative(_, _) => "Derivative"
     ExprForm::Subs(_, _, _) => "Subs"
     ExprForm::Lambda(_, _) => "Lambda"
-    ExprForm::Applied(name, _) => name
+    ExprForm::AppliedUndef(name, _) | ExprForm::Applied(name, _) => name
   }
 }
 
@@ -417,6 +420,14 @@ pub fn dummy_parts(expr : Expr) -> (String, Int)? {
 pub fn wild_name(expr : Expr) -> String? {
   match expr {
     Expr::Wild(name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+pub fn undefined_application_parts(expr : Expr) -> (String, Array[Expr])? {
+  match expr {
+    Expr::AppliedUndef(name, args) => Some((name, args))
     _ => None
   }
 }
@@ -487,7 +498,8 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
       Some(("Subs", [inner, variable, value]))
     ExprForm::Lambda(vars, body) => Some(("Lambda", [vars, body]))
     ExprForm::Mod(lhs, rhs) => Some(("Mod", [lhs, rhs]))
-    ExprForm::Applied(name, args) => Some((name, args))
+    ExprForm::AppliedUndef(name, args) | ExprForm::Applied(name, args) =>
+      Some((name, args))
     _ => None
   }
 }
@@ -505,6 +517,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     ExprForm::Add(items)
     | ExprForm::Mul(items)
     | ExprForm::Tuple(items)
+    | ExprForm::AppliedUndef(_, items)
     | ExprForm::Applied(_, items) => items.copy()
     ExprForm::Dict(items) => {
       let out : Array[Expr] = []
@@ -590,6 +603,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     ExprForm::Add(items)
     | ExprForm::Mul(items)
     | ExprForm::Tuple(items)
+    | ExprForm::AppliedUndef(_, items)
     | ExprForm::Applied(_, items) =>
       for item in items {
         free_symbol_map(item, out)
