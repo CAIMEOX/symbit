@@ -901,9 +901,15 @@ pub fn SparseMatrix::solve(
   let numeric_prec = {
     let lhs_prec = expr_numeric_precision(dense.data)
     let rhs_prec = expr_numeric_precision(rhs.data)
-    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+    if lhs_prec > rhs_prec {
+      lhs_prec
+    } else {
+      rhs_prec
+    }
   }
-  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+  if (
+      matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)
+    ) &&
     matrix_all_numeric(dense.data, numeric_prec) &&
     matrix_all_numeric(rhs.data, numeric_prec) {
     return dense.solve(rhs)
@@ -943,9 +949,15 @@ pub fn SparseMatrix::lower_triangular_solve(
   let numeric_prec = {
     let lhs_prec = expr_numeric_precision(dense.data)
     let rhs_prec = expr_numeric_precision(rhs.data)
-    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+    if lhs_prec > rhs_prec {
+      lhs_prec
+    } else {
+      rhs_prec
+    }
   }
-  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+  if (
+      matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)
+    ) &&
     matrix_all_numeric(dense.data, numeric_prec) &&
     matrix_all_numeric(rhs.data, numeric_prec) {
     return dense.lower_triangular_solve(rhs)
@@ -999,9 +1011,15 @@ pub fn SparseMatrix::upper_triangular_solve(
   let numeric_prec = {
     let lhs_prec = expr_numeric_precision(dense.data)
     let rhs_prec = expr_numeric_precision(rhs.data)
-    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+    if lhs_prec > rhs_prec {
+      lhs_prec
+    } else {
+      rhs_prec
+    }
   }
-  if (matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)) &&
+  if (
+      matrix_has_floating_leaf(dense.data) || matrix_has_floating_leaf(rhs.data)
+    ) &&
     matrix_all_numeric(dense.data, numeric_prec) &&
     matrix_all_numeric(rhs.data, numeric_prec) {
     return dense.upper_triangular_solve(rhs)

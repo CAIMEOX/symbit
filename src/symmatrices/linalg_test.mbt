@@ -9,7 +9,7 @@ fn vecs_to_string(values : Array[Array[Expr]]) -> String {
 
 ///|
 fn expr_symbolically_equal(lhs : Expr, rhs : Expr) -> Bool {
-  @symsimplify.simplify(lhs + (@symcore.int(-1) * rhs)) == @symcore.int(0)
+  @symsimplify.simplify(lhs + @symcore.int(-1) * rhs) == @symcore.int(0)
 }
 
 ///|
@@ -33,8 +33,8 @@ fn exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
     _ => @symnum.BigRational::zero()
   }
   @symcore.float(
-    @symcore.Float::from_exact(rat, prec=prec) catch {
-      _ => @symcore.Float::from_int(0, prec=prec)
+    @symcore.Float::from_exact(rat, prec~) catch {
+      _ => @symcore.Float::from_int(0, prec~)
     },
   )
 }
@@ -54,7 +54,7 @@ fn exact_complex_float_expr(
     _ => @symnum.BigRational::zero()
   }
   @symcore.complex_float(
-    @symcore.ComplexFloat::from_exact_parts(real, imag, prec=prec),
+    @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
 
@@ -154,7 +154,10 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
       rref_rhs,
       matrix([
         [@symcore.int(-1) * @symcore.symbol("r1") + @symcore.symbol("r2")],
-        [@symcore.int(-1) * (@symcore.int(-2) * @symcore.symbol("r1") + @symcore.symbol("r2"))],
+        [
+          @symcore.int(-1) *
+          (@symcore.int(-2) * @symcore.symbol("r1") + @symcore.symbol("r2")),
+        ],
       ]),
     ),
   )

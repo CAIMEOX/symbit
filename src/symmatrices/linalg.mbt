@@ -91,10 +91,11 @@ fn matrix_rref_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) {
 ///|
 pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {
   let numeric_prec = expr_numeric_precision(self.data)
-  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
-    let data = clone_expr_rows(self.data).map(row => row.map(cell => {
-      @symcore.evalf(cell, prec=numeric_prec)
-    }))
+  if matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec) {
+    let data = clone_expr_rows(self.data).map(row => {
+      row.map(cell => @symcore.evalf(cell, prec=numeric_prec))
+    })
     let pivots : Array[Int] = []
     let mut row = 0
     let mut col = 0
@@ -102,7 +103,8 @@ pub fn Matrix::rref(self : Matrix) -> (Matrix, Array[Int]) {
       let mut pivot_row = row
       let mut pivot_measure = expr_numeric_abs(data[row][col], numeric_prec)
       for candidate in (row + 1)..<self.rows {
-        match (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
+        match
+          (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
           (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
             pivot_row = candidate
             pivot_measure = Some(measure)
@@ -203,7 +205,8 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
     return expr_one()
   }
   let numeric_prec = expr_numeric_precision(self.data)
-  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
+  if matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec) {
     let data = clone_expr_rows(self.evalf(prec=numeric_prec).data)
     let mut sign = expr_one()
     let mut col = 0
@@ -211,7 +214,8 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
       let mut pivot_row = col
       let mut pivot_measure = expr_numeric_abs(data[col][col], numeric_prec)
       for candidate in (col + 1)..<self.rows {
-        match (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
+        match
+          (expr_numeric_abs(data[candidate][col], numeric_prec), pivot_measure) {
           (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
             pivot_row = candidate
             pivot_measure = Some(measure)
@@ -344,14 +348,16 @@ pub fn Matrix::inv(self : Matrix) -> Matrix raise MatrixError {
   }
   let n = self.rows
   let numeric_prec = expr_numeric_precision(self.data)
-  if matrix_has_floating_leaf(self.data) && matrix_all_numeric(self.data, numeric_prec) {
+  if matrix_has_floating_leaf(self.data) &&
+    matrix_all_numeric(self.data, numeric_prec) {
     let left = clone_expr_rows(self.evalf(prec=numeric_prec).data)
     let right = clone_expr_rows(eye(n).evalf(prec=numeric_prec).data)
     for col in 0..<n {
       let mut pivot_row = col
       let mut pivot_measure = expr_numeric_abs(left[col][col], numeric_prec)
       for candidate in (col + 1)..<n {
-        match (expr_numeric_abs(left[candidate][col], numeric_prec), pivot_measure) {
+        match
+          (expr_numeric_abs(left[candidate][col], numeric_prec), pivot_measure) {
           (Some(measure), Some(best)) if @symnum.mpf_cmp(measure, best) > 0 => {
             pivot_row = candidate
             pivot_measure = Some(measure)
@@ -585,9 +591,15 @@ pub fn Matrix::lower_triangular_solve(
   let numeric_prec = {
     let lhs_prec = expr_numeric_precision(self.data)
     let rhs_prec = expr_numeric_precision(rhs.data)
-    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+    if lhs_prec > rhs_prec {
+      lhs_prec
+    } else {
+      rhs_prec
+    }
   }
-  let numeric_mode = (matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)) &&
+  let numeric_mode = (
+      matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)
+    ) &&
     matrix_all_numeric(self.data, numeric_prec) &&
     matrix_all_numeric(rhs.data, numeric_prec)
   let out = zeros(self.rows, cols=Some(rhs.cols))
@@ -629,9 +641,15 @@ pub fn Matrix::upper_triangular_solve(
   let numeric_prec = {
     let lhs_prec = expr_numeric_precision(self.data)
     let rhs_prec = expr_numeric_precision(rhs.data)
-    if lhs_prec > rhs_prec { lhs_prec } else { rhs_prec }
+    if lhs_prec > rhs_prec {
+      lhs_prec
+    } else {
+      rhs_prec
+    }
   }
-  let numeric_mode = (matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)) &&
+  let numeric_mode = (
+      matrix_has_floating_leaf(self.data) || matrix_has_floating_leaf(rhs.data)
+    ) &&
     matrix_all_numeric(self.data, numeric_prec) &&
     matrix_all_numeric(rhs.data, numeric_prec)
   let out = zeros(self.rows, cols=Some(rhs.cols))
@@ -835,11 +853,13 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
     r[j][j] = norm
     let qj : Array[Expr] = []
     for k in 0..<self.rows {
-      qj.push(if numeric_mode {
-        expr_numeric_div(v[k], norm, numeric_prec)
-      } else {
-        expr_div(v[k], norm)
-      })
+      qj.push(
+        if numeric_mode {
+          expr_numeric_div(v[k], norm, numeric_prec)
+        } else {
+          expr_div(v[k], norm)
+        },
+      )
     }
     qcols.push(qj)
   }

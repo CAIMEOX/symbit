@@ -3,8 +3,13 @@ fn expr_numeric_prec(expr : Expr) -> Int {
   match expr {
     Expr::Float(f) => f.precision()
     Expr::ComplexFloat(z) => z.precision()
-    Expr::Number(_) | Expr::Symbol("I") | Expr::Symbol("pi") | Expr::Symbol("Pi")
-    | Expr::Symbol("E") | Expr::Symbol("EulerGamma") | Expr::Symbol("GoldenRatio")
+    Expr::Number(_)
+    | Expr::Symbol("I")
+    | Expr::Symbol("pi")
+    | Expr::Symbol("Pi")
+    | Expr::Symbol("E")
+    | Expr::Symbol("EulerGamma")
+    | Expr::Symbol("GoldenRatio")
     | Expr::Symbol("Catalan") => 80
     Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
       let mut best = 0
@@ -19,7 +24,11 @@ fn expr_numeric_prec(expr : Expr) -> Int {
     Expr::Pow(base, exp) => {
       let pb = expr_numeric_prec(base)
       let pe = expr_numeric_prec(exp)
-      if pb > pe { pb } else { pe }
+      if pb > pe {
+        pb
+      } else {
+        pe
+      }
     }
     _ => 0
   }
@@ -60,21 +69,22 @@ fn expr_numeric_precision(rows : Array[Array[Expr]]) -> Int {
       }
     }
   }
-  if best > 0 { best } else { 80 }
+  if best > 0 {
+    best
+  } else {
+    80
+  }
 }
 
 ///|
-fn expr_to_numeric_complex(
-  expr : Expr,
-  prec : Int,
-) -> @symcore.ComplexFloat? {
-  match @symcore.evalf(expr_simplify(expr), prec=prec) {
+fn expr_to_numeric_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
+  match @symcore.evalf(expr_simplify(expr), prec~) {
     Expr::Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
           @symnum.BigRational::zero(),
-          prec=prec,
+          prec~,
         ),
       )
     Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
@@ -107,7 +117,7 @@ fn expr_numeric_zero(expr : Expr, prec : Int) -> Bool {
       let tol = @symnum.from_man_exp(
         1N,
         tol_exp,
-        prec=prec,
+        prec~,
         rnd=@symnum.round_nearest,
       )
       @symnum.mpf_cmp(value, tol) <= 0
@@ -118,41 +128,45 @@ fn expr_numeric_zero(expr : Expr, prec : Int) -> Bool {
 
 ///|
 fn expr_numeric_add(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
-  match (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
+  match
+    (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
     (Some(l), Some(r)) => expr_from_numeric_complex(l + r)
-    _ => @symcore.evalf(@symcore.add([lhs, rhs]), prec=prec)
+    _ => @symcore.evalf(@symcore.add([lhs, rhs]), prec~)
   }
 }
 
 ///|
 fn expr_numeric_sub(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
-  match (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
+  match
+    (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
     (Some(l), Some(r)) => expr_from_numeric_complex(l + -r)
     _ =>
       @symcore.evalf(
         @symcore.add([lhs, @symcore.mul([@symcore.int(-1), rhs])]),
-        prec=prec,
+        prec~,
       )
   }
 }
 
 ///|
 fn expr_numeric_mul(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
-  match (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
+  match
+    (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
     (Some(l), Some(r)) => expr_from_numeric_complex(l * r)
-    _ => @symcore.evalf(@symcore.mul([lhs, rhs]), prec=prec)
+    _ => @symcore.evalf(@symcore.mul([lhs, rhs]), prec~)
   }
 }
 
 ///|
 fn expr_numeric_div(lhs : Expr, rhs : Expr, prec : Int) -> Expr {
-  match (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
+  match
+    (expr_to_numeric_complex(lhs, prec), expr_to_numeric_complex(rhs, prec)) {
     (Some(l), Some(r)) if !expr_numeric_zero(expr_from_numeric_complex(r), prec) =>
       expr_from_numeric_complex(l * r.reciprocal())
     _ =>
       @symcore.evalf(
         @symcore.mul([lhs, @symcore.pow(rhs, @symcore.int(-1))]),
-        prec=prec,
+        prec~,
       )
   }
 }
@@ -163,15 +177,11 @@ fn expr_numeric_sqrt(expr : Expr, prec : Int) -> Expr {
     Some(value) =>
       expr_from_numeric_complex(
         @symcore.ComplexFloat::from_mpc(
-          @symnum.mpc_sqrt(
-            value.to_mpc(),
-            prec,
-            @symnum.round_nearest,
-          ),
-          prec=prec,
+          @symnum.mpc_sqrt(value.to_mpc(), prec, @symnum.round_nearest),
+          prec~,
         ),
       )
-    None => @symcore.evalf(@symcore.function("sqrt", [expr]), prec=prec)
+    None => @symcore.evalf(@symcore.function("sqrt", [expr]), prec~)
   }
 }
 
@@ -193,7 +203,7 @@ pub fn Matrix::evalf(self : Matrix, prec? : Int = 53) -> Matrix {
   for row in self.data {
     let converted : Array[Expr] = []
     for value in row {
-      converted.push(@symcore.evalf(value, prec=prec))
+      converted.push(@symcore.evalf(value, prec~))
     }
     out.push(converted)
   }

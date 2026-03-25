@@ -28,7 +28,7 @@ fn eigenvects_text(items : Array[EigenVectData]) -> String {
 
 ///|
 fn eigen_expr_equal(lhs : Expr, rhs : Expr) -> Bool {
-  @symsimplify.simplify(lhs + (@symcore.int(-1) * rhs)) == @symcore.int(0)
+  @symsimplify.simplify(lhs + @symcore.int(-1) * rhs) == @symcore.int(0)
 }
 
 ///|
@@ -56,7 +56,7 @@ test "matrices charpoly and eigenvals" {
     eigen_expr_equal(
       a.charpoly(),
       (@symcore.symbol("lambda") ^ @symcore.int(2)) +
-      (@symcore.int(-5) * @symcore.symbol("lambda")) +
+      @symcore.int(-5) * @symcore.symbol("lambda") +
       @symcore.int(-2),
     ),
   )
@@ -67,7 +67,10 @@ test "matrices charpoly and eigenvals" {
     eigen_expr_equal(
       eigenvals[0].0,
       @symcore.rational_from_ints(1, 2) *
-      ((@symcore.int(-1) * @symcore.function("sqrt", [@symcore.int(33)])) + @symcore.int(5)),
+      (
+        @symcore.int(-1) * @symcore.function("sqrt", [@symcore.int(33)]) +
+        @symcore.int(5)
+      ),
     ),
   )
   assert_true(
@@ -208,13 +211,18 @@ test "matrices exact eigen path supports general non-companion algebraic 3x3" {
   ])
   let eigenvals = algebraic.eigenvals()
   assert_eq(eigenvals.length(), 3)
-  assert_true(eigenvals[0].1 == 1 && eigen_expr_equal(eigenvals[0].0, @symcore.int(1)))
+  assert_true(
+    eigenvals[0].1 == 1 && eigen_expr_equal(eigenvals[0].0, @symcore.int(1)),
+  )
   assert_true(
     eigenvals[1].1 == 1 &&
     eigen_expr_equal(
       eigenvals[1].0,
       @symcore.rational_from_ints(1, 2) *
-      ((@symcore.int(-1) * (@symcore.int(8) ^ @symcore.rational_from_ints(1, 2))) + @symcore.int(2)),
+      (
+        @symcore.int(-1) * (@symcore.int(8) ^ @symcore.rational_from_ints(1, 2)) +
+        @symcore.int(2)
+      ),
     ),
   )
   assert_true(
