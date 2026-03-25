@@ -3,6 +3,7 @@
 /// Stage 0-3 `integrate` implementation.
 
 ///|
+/// Rational-function integration in one variable.
 pub fn ratint(expr : Expr, var_name : String) -> Expr? {
   match is_univariate_rational(expr, var_name) {
     Some((num, den)) =>

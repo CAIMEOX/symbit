@@ -302,6 +302,11 @@ fn quad_legendre_eval(n : Int, x : Double) -> Double {
 }
 
 ///|
+/// Gauss-Legendre nodes and weights on `[-1, 1]`.
+///
+/// The result is numeric, rounded to `n_digits` significant digits, and uses
+/// the symmetric Jacobi-matrix construction just as SymPy's quadrature helpers
+/// do.
 pub fn gauss_legendre(
   n : Int,
   n_digits? : Int = 15,
@@ -312,6 +317,9 @@ pub fn gauss_legendre(
 }
 
 ///|
+/// Gauss-Jacobi nodes and weights on `[-1, 1]` with parameters `alpha`, `beta`.
+///
+/// Both parameters must satisfy `alpha > -1` and `beta > -1`.
 pub fn gauss_jacobi(
   n : Int,
   alpha : Expr,
@@ -329,6 +337,7 @@ pub fn gauss_jacobi(
 }
 
 ///|
+/// Gauss-Chebyshev quadrature of the first kind.
 pub fn gauss_chebyshev_t(
   n : Int,
   n_digits? : Int = 15,
@@ -338,6 +347,7 @@ pub fn gauss_chebyshev_t(
 }
 
 ///|
+/// Gauss-Chebyshev quadrature of the second kind.
 pub fn gauss_chebyshev_u(
   n : Int,
   n_digits? : Int = 15,
@@ -347,6 +357,8 @@ pub fn gauss_chebyshev_u(
 }
 
 ///|
+/// Gauss-Laguerre nodes and weights on `[0, +oo)` for the standard Laguerre
+/// weight.
 pub fn gauss_laguerre(
   n : Int,
   n_digits? : Int = 15,
@@ -357,6 +369,7 @@ pub fn gauss_laguerre(
 }
 
 ///|
+/// Generalized Gauss-Laguerre quadrature with parameter `alpha > -1`.
 pub fn gauss_gen_laguerre(
   n : Int,
   alpha : Expr,
@@ -372,6 +385,7 @@ pub fn gauss_gen_laguerre(
 }
 
 ///|
+/// Gauss-Hermite nodes and weights on `(-oo, +oo)`.
 pub fn gauss_hermite(
   n : Int,
   n_digits? : Int = 15,
@@ -382,6 +396,9 @@ pub fn gauss_hermite(
 }
 
 ///|
+/// Gauss-Lobatto nodes and weights including the endpoints `-1` and `1`.
+///
+/// The order must be at least `2`.
 pub fn gauss_lobatto(
   n : Int,
   n_digits? : Int = 15,

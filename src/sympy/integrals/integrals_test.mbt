@@ -1607,9 +1607,121 @@ test "symintegrals Laplace stage 5 shift and derivative rules evaluate" {
   )
   inspect(
     @symprint.to_string(
+      doit(
+        laplace_transform(
+          @symspec.dirac_delta(x * @symcore.rational_from_ints(1, 42)),
+          x,
+          s,
+        ),
+      ),
+    ),
+    content="42",
+  )
+  let delta_square_eval = doit(
+    laplace_transform(
+      @symspec.dirac_delta((x ^ @symcore.int(2)) - @symcore.int(1)),
+      x,
+      s,
+    ),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      delta_square_eval,
+      @symcore.rational_from_ints(1, 2) * @symelem.exp(@symcore.int(-1) * s),
+    ),
+    0,
+  )
+  let delta_quad_eval = doit(
+    laplace_transform(@symspec.dirac_delta(x * (@symcore.int(1) - x)), x, s),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      delta_quad_eval,
+      @symcore.int(1) - @symelem.exp(@symcore.int(-1) * s),
+    ),
+    0,
+  )
+  inspect(
+    @symprint.to_string(
       doit(laplace_transform(@symspec.heaviside(x - @symcore.int(2)), x, s)),
     ),
     content="s**-1*exp((-2*s))",
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      doit(
+        laplace_transform(
+          @symspec.singularity_function(x, a, @symcore.int(-1)),
+          x,
+          s,
+        ),
+      ),
+      @symelem.exp(@symcore.int(-1) * a * s),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      doit(
+        laplace_transform(
+          @symspec.singularity_function(x, a, @symcore.int(0)),
+          x,
+          s,
+        ),
+      ),
+      @symelem.exp(@symcore.int(-1) * a * s) * (s ^ @symcore.int(-1)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      doit(
+        laplace_transform(
+          @symspec.singularity_function(x, a, @symcore.int(1)),
+          x,
+          s,
+        ),
+      ),
+      @symelem.exp(@symcore.int(-1) * a * s) * (s ^ @symcore.int(-2)),
+    ),
+    0,
+  )
+  assert_true(
+    @symprint.to_string(
+      laplace_transform_eval(@symspec.singularity_function(x, a, y), x, s),
+    ).contains("LaplaceTransform(SingularityFunction(x, a, y), x, s)"),
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      doit(
+        laplace_transform(
+          @symspec.dirac_delta(
+            @symcore.int(2) * x - @symcore.int(2) * @symelem.exp(a),
+          ),
+          x,
+          s,
+        ),
+      ),
+      @symcore.rational_from_ints(1, 2) *
+      @symelem.exp(@symcore.int(-1) * s * @symelem.exp(a)),
+    ),
+    0,
+  )
+  assert_eq(
+    @symcore.compare_expr(
+      doit(
+        laplace_transform(
+          @symspec.dirac_delta(
+            @symcore.int(-2) * x + @symcore.int(2) * @symelem.exp(a),
+          ),
+          x,
+          s,
+        ),
+      ),
+      @symcore.rational_from_ints(1, 2) *
+      @symelem.exp(@symcore.int(-1) * s * @symelem.exp(a)),
+    ),
+    0,
   )
   inspect(
     @symprint.to_string(

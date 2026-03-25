@@ -8,6 +8,11 @@ type LaplaceInfo = (Expr, Expr, Expr)
 type MellinInfo = (Expr, Expr, Expr, Expr)
 
 ///|
+/// Apply the forward Laplace rule table and return only the transformed value.
+///
+/// This is the internal `.doit()` worker behind `LaplaceTransform`. It drops
+/// the convergence plane and condition metadata and returns `None` when the
+/// current rule set cannot evaluate the expression.
 pub fn do_laplace_doit(expr : Expr, t : Expr, s : Expr) -> Expr? {
   match symbol_name(t) {
     Some(t_name) =>
@@ -20,6 +25,13 @@ pub fn do_laplace_doit(expr : Expr, t : Expr, s : Expr) -> Expr? {
 }
 
 ///|
+/// Evaluate a forward Laplace transform with optional ROC/condition metadata.
+///
+/// When the rule engine succeeds, the result matches SymPy's
+/// `laplace_transform(..., noconds=...)` convention:
+/// - `noconds=true` returns only the transformed expression
+/// - `noconds=false` returns `(value, plane, condition)`
+/// If no rule applies, the unevaluated `LaplaceTransform` object is returned.
 pub fn laplace_transform_result(
   expr : Expr,
   t : Expr,
@@ -42,6 +54,11 @@ pub fn laplace_transform_result(
 }
 
 ///|
+/// Collect polynomial structure recursively before Laplace processing.
+///
+/// This mirrors SymPy's helper that rewrites nested arithmetic into a form
+/// where polynomial coefficients in the transform variable are easier to
+/// recognize.
 pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
   match symbol_name(t) {
     Some(t_name) => laplace_deep_collect(expr, t_name)
@@ -50,6 +67,10 @@ pub fn _laplace_deep_collect(expr : Expr, t : Expr) -> Expr {
 }
 
 ///|
+/// Rewrite transform heads according to a function-name correspondence map.
+///
+/// This is the MoonBit equivalent of SymPy's `laplace_correspondence`, used
+/// when moving between named functions and their transform-domain aliases.
 pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr {
   if fdict.is_empty() {
     expr
@@ -59,6 +80,10 @@ pub fn laplace_correspondence(expr : Expr, fdict : Map[String, String]) -> Expr 
 }
 
 ///|
+/// Substitute initial conditions into Laplace-domain derivatives.
+///
+/// `fdict` maps function names to the values of successive derivatives at the
+/// origin, following the same role as SymPy's `laplace_initial_conds`.
 pub fn laplace_initial_conds(
   expr : Expr,
   t : Expr,
@@ -836,49 +861,122 @@ fn laplace_delta_term(
   t_name : String,
   s : Expr,
 ) -> LaplaceInfo? {
-  let mut delta_at : Expr? = None
+  let mut delta_roots : Array[(Expr, Expr)]? = None
   let rest : Array[Expr] = []
   for factor in factors {
     match factor {
       @symcore.Expr::Function("DiracDelta", [arg]) =>
-        match linear_coeffs(arg, t_name) {
-          Some((coeff, offset)) =>
-            if delta_at is None &&
-              (expr_is_one(coeff) || expr_is_minus_one(coeff)) {
-              delta_at = Some(
-                if expr_is_one(coeff) {
-                  expr_mul(expr_neg_one(), offset)
-                } else {
-                  offset
-                },
-              )
-            } else {
-              return None
-            }
-          None => return None
+        match laplace_delta_roots(arg, t_name) {
+          Some(parsed) if delta_roots is None => delta_roots = Some(parsed)
+          _ => return None
         }
       _ => rest.push(factor)
     }
   }
-  match delta_at {
-    Some(at) =>
-      if expr_is_negative(at) {
+  match delta_roots {
+    Some(entries) => {
+      let terms : Array[Expr] = []
+      let mut cond = true_expr()
+      for entry in entries {
+        let root = entry.0
+        let scale = entry.1
+        if expr_is_negative(root) {
+          continue
+        }
+        let term = expr_div(
+          expr_mul(
+            subst_symbol(factors_expr(rest), t_name, root),
+            @symelem.exp(expr_mul(expr_neg_one(), expr_mul(root, s))),
+          ),
+          scale,
+        )
+        terms.push(term)
+        cond = and_expr(cond, nonnegative_condition(root))
+      }
+      if terms.is_empty() {
         Some((expr_zero(), neg_oo_expr(), true_expr()))
       } else {
         Some(
           (
             expr_simplify(
-              expr_mul(
-                subst_symbol(factors_expr(rest), t_name, at),
-                @symelem.exp(expr_mul(expr_neg_one(), expr_mul(at, s))),
-              ),
+              if terms.length() == 1 {
+                terms[0]
+              } else {
+                @symcore.add(terms)
+              },
             ),
             neg_oo_expr(),
-            nonnegative_condition(at),
+            cond,
           ),
         )
       }
+    }
     None => None
+  }
+}
+
+///|
+fn abs_rational_expr(value : @symnum.BigRational) -> Expr {
+  if value.compare(@symnum.BigRational::zero()) < 0 {
+    expr_from_num(value.neg_r())
+  } else {
+    expr_from_num(value)
+  }
+}
+
+///|
+fn laplace_delta_roots(arg : Expr, t_name : String) -> Array[(Expr, Expr)]? {
+  match linear_coeffs(arg, t_name) {
+    Some((coeff, offset)) if !expr_is_zero(coeff) => {
+      let scale = match expr_num_value(expr_simplify(coeff)) {
+        Some(value) => abs_rational_expr(value)
+        None =>
+          if expr_is_one(coeff) || expr_is_minus_one(coeff) {
+            expr_one()
+          } else {
+            coeff
+          }
+      }
+      Some([(expr_div(expr_mul(expr_neg_one(), offset), coeff), scale)])
+    }
+    _ =>
+      match poly_coeffs_upto2(expr_simplify(arg), t_name) {
+        Some(coeffs) if !expr_is_zero(coeffs[2]) => {
+          let disc = expr_simplify(
+            expr_sub(
+              expr_pow(coeffs[1], expr_int(2)),
+              expr_mul(expr_int(4), expr_mul(coeffs[2], coeffs[0])),
+            ),
+          )
+          let sqrt_disc = preferred_positive_sqrt(disc)
+          let denom = expr_mul(expr_int(2), coeffs[2])
+          let roots : Array[(Expr, Expr)] = []
+          let deriv = @symcalculus.diff(arg, @symcore.symbol(t_name))
+          for
+            root in [
+              expr_div(
+                expr_sub(expr_mul(expr_neg_one(), coeffs[1]), sqrt_disc),
+                denom,
+              ),
+              expr_div(
+                expr_add(expr_mul(expr_neg_one(), coeffs[1]), sqrt_disc),
+                denom,
+              ),
+            ] {
+            let scale_expr = expr_simplify(subst_symbol(deriv, t_name, root))
+            let scale = match expr_num_value(scale_expr) {
+              Some(value) if value.compare(@symnum.BigRational::zero()) != 0 =>
+                expr_from_num(value)
+              _ => scale_expr
+            }
+            if roots.all(fn(item) { !expr_eq(item.0, root) }) {
+              roots.push((expr_simplify(root), scale))
+            }
+          }
+          Some(roots)
+        }
+        _ => None
+      }
   }
 }
 
@@ -1158,6 +1256,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       }
     @symcore.Expr::Function("Heaviside", [arg]) =>
       laplace_numeric_heaviside_base_term(arg, t_name, s)
+    @symcore.Expr::Function("SingularityFunction", _) =>
+      laplace_singularity_base_term(expr, t_name, s)
     @symcore.Expr::Function("erf", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
@@ -1519,6 +1619,51 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       } else {
         None
       }
+  }
+}
+
+///|
+fn laplace_singularity_base_term(
+  expr : Expr,
+  t_name : String,
+  s : Expr,
+) -> LaplaceInfo? {
+  match expr {
+    @symcore.Expr::Function(
+      "SingularityFunction",
+      [@symcore.Expr::Symbol(name), offset, order]
+    ) if name == t_name && !expr_depends_on(offset, t_name) =>
+      match expr_is_int_value(order) {
+        Some(-1) =>
+          Some(
+            (
+              expr_simplify(
+                @symelem.exp(expr_mul(expr_neg_one(), expr_mul(offset, s))),
+              ),
+              expr_zero(),
+              true_expr(),
+            ),
+          )
+        Some(k) if k >= 0 => {
+          let shifted = @symelem.exp(
+            expr_mul(expr_neg_one(), expr_mul(offset, s)),
+          )
+          Some(
+            (
+              expr_simplify(
+                expr_mul(
+                  factorial_expr(expr_int(k)),
+                  expr_div(shifted, expr_pow(s, expr_int(k + 1))),
+                ),
+              ),
+              expr_zero(),
+              true_expr(),
+            ),
+          )
+        }
+        _ => None
+      }
+    _ => None
   }
 }
 
@@ -2643,6 +2788,11 @@ fn laplace_hyperbolic_term(
 }
 
 ///|
+/// Apply the inverse Laplace rule table and return only the time-domain value.
+///
+/// This drives `.doit()` for `InverseLaplaceTransform`. Delay/object semantics
+/// and `Heaviside` factors are handled here; `None` means the expression stays
+/// unevaluated.
 pub fn do_inverse_laplace_doit(expr : Expr, s : Expr, t : Expr) -> Expr? {
   match symbol_name(s) {
     Some(s_name) => inverse_laplace_doit(expr_simplify(expr), s_name, t)
@@ -5743,6 +5893,7 @@ fn inverse_laplace_two_linear_factors(
 }
 
 ///|
+/// Evaluate a forward Fourier transform if a closed form is available.
 pub fn do_fourier_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => fourier_doit(expr_simplify(expr), x_name, k)
@@ -5845,6 +5996,7 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 }
 
 ///|
+/// Evaluate an inverse Fourier transform if a closed form is available.
 pub fn do_inverse_fourier_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_fourier_doit(expr_simplify(expr), k_name, x)
@@ -6392,6 +6544,7 @@ fn parse_scaled_symbol(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+/// Evaluate a forward sine transform if a closed form is available.
 pub fn do_sine_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => sine_doit(expr_simplify(expr), x_name, k)
@@ -6547,6 +6700,7 @@ fn sine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
 }
 
 ///|
+/// Evaluate an inverse sine transform if a closed form is available.
 pub fn do_inverse_sine_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_sine_doit(expr_simplify(expr), k_name, x)
@@ -6652,6 +6806,7 @@ fn inverse_sine_gaussian_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
 }
 
 ///|
+/// Evaluate a forward cosine transform if a closed form is available.
 pub fn do_cosine_doit(expr : Expr, x : Expr, k : Expr) -> Expr? {
   match symbol_name(x) {
     Some(x_name) => cosine_doit(expr_simplify(expr), x_name, k)
@@ -6886,6 +7041,7 @@ fn parse_sqrt_linear(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+/// Evaluate an inverse cosine transform if a closed form is available.
 pub fn do_inverse_cosine_doit(expr : Expr, k : Expr, x : Expr) -> Expr? {
   match symbol_name(k) {
     Some(k_name) => inverse_cosine_doit(expr_simplify(expr), k_name, x)
@@ -7058,6 +7214,7 @@ fn inverse_cosine_gaussian_term(
 }
 
 ///|
+/// Evaluate a forward Hankel transform of order `nu`.
 pub fn do_hankel_doit(expr : Expr, r : Expr, k : Expr, nu : Expr) -> Expr? {
   match symbol_name(r) {
     Some(r_name) => hankel_doit(expr_simplify(expr), r_name, k, nu)
@@ -7212,6 +7369,7 @@ fn hankel_base_term(expr : Expr, r_name : String, k : Expr, nu : Expr) -> Expr? 
 }
 
 ///|
+/// Evaluate an inverse Hankel transform of order `nu`.
 pub fn do_inverse_hankel_doit(
   expr : Expr,
   k : Expr,
@@ -7241,6 +7399,10 @@ fn inverse_hankel_doit(
 }
 
 ///|
+/// Apply the forward Mellin rule table and return only the transformed value.
+///
+/// Strip and condition metadata are available through
+/// `mellin_transform_result`.
 pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
   match (symbol_name(x), symbol_name(s)) {
     (Some(x_name), Some(s_name)) =>
@@ -7255,6 +7417,7 @@ pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
 }
 
 ///|
+/// Apply the inverse Mellin rule table and return only the recovered value.
 pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
   match (symbol_name(s), symbol_name(x)) {
     (Some(s_name), Some(_)) =>
@@ -7264,6 +7427,10 @@ pub fn do_inverse_mellin_doit(_expr : Expr, s : Expr, x : Expr) -> Expr? {
 }
 
 ///|
+/// Evaluate a Mellin transform with optional strip/condition metadata.
+///
+/// When `noconds=false`, this returns `(value, (left, right), condition)` in
+/// the same style as SymPy's `mellin_transform`.
 pub fn mellin_transform_result(
   expr : Expr,
   x : Expr,
@@ -12386,14 +12553,33 @@ fn min_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn nonnegative_condition(expr : Expr) -> Expr {
-  match expr_num_value(expr_simplify(expr)) {
+  let simplified = expr_simplify(expr)
+  if expr_is_structurally_nonnegative(simplified) {
+    return true_expr()
+  }
+  match expr_num_value(simplified) {
     Some(value) =>
       if value.compare(@symnum.BigRational::zero()) >= 0 {
         true_expr()
       } else {
         false_expr()
       }
-    None => @symcore.function("Ge", [expr, expr_zero()])
+    None => @symcore.function("Ge", [simplified, expr_zero()])
+  }
+}
+
+///|
+fn expr_is_structurally_nonnegative(expr : Expr) -> Bool {
+  match expr {
+    @symcore.Expr::Function("exp", [_]) => true
+    @symcore.Expr::Function("sqrt", [_]) => true
+    @symcore.Expr::Function("Abs", [_]) => true
+    @symcore.Expr::Pow(_, exp) =>
+      match expr_is_int_value(exp) {
+        Some(value) => value % 2 == 0
+        None => false
+      }
+    _ => false
   }
 }
 

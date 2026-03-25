@@ -40,6 +40,7 @@ fn collect_components(
 }
 
 ///|
+/// Extract the component functions used by the heuristic integrator.
 pub fn components(expr : Expr, var_name : String) -> Array[Expr] {
   let out : Array[Expr] = []
   collect_components(expr_simplify(expr), var_name, out)
@@ -47,6 +48,9 @@ pub fn components(expr : Expr, var_name : String) -> Array[Expr] {
 }
 
 ///|
+/// Heuristic single-variable antiderivative search.
+///
+/// Returns `None` when the heuristic path cannot certify an antiderivative.
 pub fn heurisch(expr : Expr, var_name : String) -> Expr? {
   match manual_integrate(expr, var_name) {
     Some(res) => Some(res)
@@ -59,6 +63,8 @@ pub fn heurisch(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+/// Total wrapper around `heurisch` that falls back to the input expression when
+/// no heuristic antiderivative is available.
 pub fn heurisch_wrapper(expr : Expr, var_name : String) -> Expr {
   heurisch(expr, var_name).unwrap_or(
     integral(expr, limits=[integral_limit([@symcore.symbol(var_name)])]),

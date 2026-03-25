@@ -40,6 +40,8 @@ fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
+/// Split a product into its `DiracDelta(...)` factor and the remaining
+/// multiplicative part, if such a factor exists.
 pub fn change_mul(node : Expr, var_name : String) -> (Expr?, Expr?) {
   match extract_dirac_factor(node, var_name) {
     Some((arg, rest)) =>
@@ -61,6 +63,10 @@ fn delta_root_and_scale(arg : Expr, var_name : String) -> (Expr, Expr)? {
 }
 
 ///|
+/// Integrate products containing `DiracDelta` over a single variable.
+///
+/// For bounded integrals this enforces the interval test; for unbounded use it
+/// returns the pulled-back value with the usual Heaviside gating.
 pub fn deltaintegrate(
   expr : Expr,
   var_name : String,

@@ -5,6 +5,7 @@
 /// commonly returned from SymPy through the Meijer G machinery.
 
 ///|
+/// Meijer-G based fallback integrator for special-function antiderivatives.
 pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
   let target = expr_simplify(expr)
   match target {

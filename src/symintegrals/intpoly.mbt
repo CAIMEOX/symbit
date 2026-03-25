@@ -327,6 +327,10 @@ fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
 }
 
 ///|
+/// Integrate a polynomial exactly along a line segment in the plane.
+///
+/// The segment is parameterized affinely and the Jacobian factor is included,
+/// so this is the line-integral analogue of SymPy's `intpoly` helpers.
 pub fn segment_integrate(
   seg : @symgeometry.Segment,
   expr : Expr,
@@ -341,6 +345,10 @@ pub fn segment_integrate(
 }
 
 ///|
+/// Integrate a planar polynomial exactly over a polygonal region.
+///
+/// This currently covers the 2D `Polygon` path using Green-style primitive
+/// accumulation and orientation normalization.
 pub fn polytope_integrate(
   poly : @symgeometry.Polygon,
   expr : Expr,
@@ -353,6 +361,7 @@ pub fn polytope_integrate(
 }
 
 ///|
+/// Exact polygon integral for several polynomials at once.
 pub fn polytope_integrate_many(
   poly : @symgeometry.Polygon,
   exprs : Array[Expr],
@@ -366,6 +375,9 @@ pub fn polytope_integrate_many(
 }
 
 ///|
+/// Compute all planar monomial moments up to total degree `max_degree`.
+///
+/// The returned map is keyed by monomials in the requested variables.
 pub fn polytope_integrate_upto(
   poly : @symgeometry.Polygon,
   max_degree : Int,

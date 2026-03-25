@@ -4,6 +4,8 @@
 /// elementwise semantics with explicit matrix helpers.
 
 ///|
+/// Apply the Laplace transform elementwise to a matrix and immediately
+/// evaluate each entry.
 pub fn laplace_transform_matrix(
   mat : @symmatrices.Matrix,
   t : Expr,
@@ -13,6 +15,12 @@ pub fn laplace_transform_matrix(
 }
 
 ///|
+/// Compute the matrix-valued Laplace transform together with a shared region of
+/// convergence and condition.
+///
+/// The matrix entries are transformed independently and their individual ROC /
+/// condition metadata are aggregated with `Max` / logical `And`, matching the
+/// modern SymPy matrix-transform convention.
 pub fn laplace_transform_matrix_result(
   mat : @symmatrices.Matrix,
   t : Expr,
@@ -34,6 +42,8 @@ pub fn laplace_transform_matrix_result(
 }
 
 ///|
+/// Apply the inverse Laplace transform elementwise to a matrix and evaluate
+/// each entry.
 pub fn inverse_laplace_transform_matrix(
   mat : @symmatrices.Matrix,
   s : Expr,

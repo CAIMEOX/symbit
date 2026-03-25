@@ -2887,6 +2887,39 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
       "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
     ),
   )
+  let delta_scaled_eval = laplace_transform_eval(
+    @symspec.dirac_delta(x * @symcore.rational_from_ints(1, 42)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_scaled_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x')/42), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+  let delta_quadratic_eval = laplace_transform_eval(
+    @symspec.dirac_delta((x ^ @symcore.int(2)) - @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_quadratic_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x')**2 - 1), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+  let delta_product_eval = laplace_transform_eval(
+    @symspec.dirac_delta(x * (@symcore.int(1) - x)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_product_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.laplace_transform(sympy.DiracDelta(sympy.Symbol('x')*(1 - sympy.Symbol('x'))), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
 
   let heaviside_eval = laplace_transform_eval(
     @symspec.heaviside(x - @symcore.int(2)),
@@ -2897,6 +2930,76 @@ test "symintegrals parity Laplace shift, delta, derivative, and inverse-delay ru
     integrals_eval_str("sympy.sstr(" + py_expr(heaviside_eval) + ")"),
     integrals_eval_str(
       "sympy.sstr(sympy.laplace_transform(sympy.Heaviside(sympy.Symbol('x') - 2), sympy.Symbol('x'), sympy.Symbol('s')))",
+    ),
+  )
+  let singularity_delta_eval = laplace_transform_eval(
+    @symspec.singularity_function(x, a, @symcore.int(-1)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(singularity_delta_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s')), 0, True))",
+    ),
+  )
+  let singularity_zero_eval = laplace_transform_eval(
+    @symspec.singularity_function(x, a, @symcore.int(0)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(singularity_zero_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.Symbol('s'), 0, True))",
+    ),
+  )
+  let singularity_linear_eval = laplace_transform_eval(
+    @symspec.singularity_function(x, a, @symcore.int(1)),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(singularity_linear_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.exp(-sympy.Symbol('a')*sympy.Symbol('s'))/sympy.Symbol('s')**2, 0, True))",
+    ),
+  )
+  let singularity_symbolic_eval = laplace_transform_eval(
+    @symspec.singularity_function(x, a, y),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(singularity_symbolic_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.LaplaceTransform(sympy.SingularityFunction(sympy.Symbol('x'), sympy.Symbol('a'), sympy.Symbol('y')), sympy.Symbol('x'), sympy.Symbol('s')), -sympy.oo, True))",
+    ),
+  )
+  let delta_exp_pos_eval = laplace_transform_eval(
+    @symspec.dirac_delta(
+      @symcore.int(2) * x - @symcore.int(2) * @symelem.exp(a),
+    ),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_exp_pos_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.exp(-sympy.Symbol('s')*sympy.exp(sympy.Symbol('a')))/2, -sympy.oo, True))",
+    ),
+  )
+  let delta_exp_neg_eval = laplace_transform_eval(
+    @symspec.dirac_delta(
+      @symcore.int(-2) * x + @symcore.int(2) * @symelem.exp(a),
+    ),
+    x,
+    s,
+  )
+  assert_eq(
+    integrals_eval_str("sympy.sstr(" + py_expr(delta_exp_neg_eval) + ")"),
+    integrals_eval_str(
+      "sympy.sstr(sympy.Tuple(sympy.exp(-sympy.Symbol('s')*sympy.exp(sympy.Symbol('a')))/2, -sympy.oo, True))",
     ),
   )
 

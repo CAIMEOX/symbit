@@ -15,6 +15,7 @@ fn trig_linear_arg(expr : Expr, var_name : String) -> (String, Expr, Expr)? {
 }
 
 ///|
+/// Trigonometric-pattern integrator for one variable.
 pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
   match trig_linear_arg(expr, var_name) {
     Some(("sin", a, b)) =>

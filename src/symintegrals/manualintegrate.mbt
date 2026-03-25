@@ -136,6 +136,11 @@ fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
 }
 
 ///|
+/// Rule-based single-variable antiderivative.
+///
+/// This mirrors the practical core of SymPy's `manualintegrate`: it returns
+/// `None` when no elementary/manual rule applies instead of constructing an
+/// unevaluated `Integral`.
 pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
   let simplified = expr_simplify(expr)
   if !expr_depends_on(simplified, var_name) {
