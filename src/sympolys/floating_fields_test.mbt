@@ -1,15 +1,16 @@
+///|
 test "CC evalf_expr returns complex float expressions" {
-  let half = match (try? @symcore.rational_from_ints(1, 2) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let half = match
+    (
+      try? @symcore.rational_from_ints(1, 2) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("half")
   }
-  let three_quarters = match (try? @symcore.rational_from_ints(3, 4) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let three_quarters = match
+    (
+      try? @symcore.rational_from_ints(3, 4) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("three_quarters")
   }
@@ -17,10 +18,10 @@ test "CC evalf_expr returns complex float expressions" {
     half,
     @symcore.mul([three_quarters, @symcore.symbol("I")]),
   ])
-  let evaled = match (try? Domain::CC.evalf_expr(expr, prec=Some(110)) : Result[
-    @symcore.Expr,
-    PolyError,
-  ]) {
+  let evaled = match
+    (
+      try? Domain::CC.evalf_expr(expr, prec=Some(110)) :
+      Result[@symcore.Expr, PolyError]) {
     Ok(value) => value
     Err(_) => fail("cc evalf")
   }
@@ -34,14 +35,15 @@ test "CC evalf_expr returns complex float expressions" {
 ///|
 test "RealField object carries precision and evaluates to float leaves" {
   let rr = RealField::new(precision=85)
-  let expr = match (try? @symcore.rational_from_ints(1, 3) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let expr = match
+    (
+      try? @symcore.rational_from_ints(1, 3) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("third")
   }
-  let evaled = match (try? rr.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
+  let evaled = match
+    (try? rr.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
     Ok(value) => value
     Err(_) => fail("rr evalf")
   }
@@ -61,17 +63,17 @@ test "RealField object carries precision and evaluates to float leaves" {
 ///|
 test "ComplexField object evaluates gaussian rationals to complex float expressions" {
   let cc = ComplexField::new(precision=95)
-  let quarter = match (try? @symcore.rational_from_ints(1, 4) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let quarter = match
+    (
+      try? @symcore.rational_from_ints(1, 4) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("quarter")
   }
-  let minus_half = match (try? @symcore.rational_from_ints(-1, 2) : Result[
-    @symcore.Expr,
-    @symnum.RationalError,
-  ]) {
+  let minus_half = match
+    (
+      try? @symcore.rational_from_ints(-1, 2) :
+      Result[@symcore.Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) => fail("minus_half")
   }
@@ -79,7 +81,8 @@ test "ComplexField object evaluates gaussian rationals to complex float expressi
     quarter,
     @symcore.mul([minus_half, @symcore.symbol("I")]),
   ])
-  let evaled = match (try? cc.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
+  let evaled = match
+    (try? cc.evalf_expr(expr) : Result[@symcore.Expr, PolyError]) {
     Ok(value) => value
     Err(_) => fail("cc field evalf")
   }
@@ -98,17 +101,26 @@ test "ComplexField object evaluates gaussian rationals to complex float expressi
 ///|
 test "floating field objects expose native coercion and arithmetic" {
   let rr = RealField::new(precision=80)
-  let third = rr.from_exact(@symnum.BigRational::from_ints(1, 3) catch { _ => fail("third") })
+  let third = rr.from_exact(
+    @symnum.BigRational::from_ints(1, 3) catch {
+      _ => fail("third")
+    },
+  )
   let sum = rr.add(third, third) catch { _ => fail("rr add") }
   match sum {
-    @symcore.Expr::Float(f) => assert_true(f.format(dps=12).has_prefix("0.666666666"))
+    @symcore.Expr::Float(f) =>
+      assert_true(f.format(dps=12).has_prefix("0.666666666"))
     _ => fail("expected float sum")
   }
 
   let cc = ComplexField::new(precision=90)
   let z = cc.from_exact_parts(
-    @symnum.BigRational::from_ints(1, 2) catch { _ => fail("real") },
-    @symnum.BigRational::from_ints(3, 4) catch { _ => fail("imag") },
+    @symnum.BigRational::from_ints(1, 2) catch {
+      _ => fail("real")
+    },
+    @symnum.BigRational::from_ints(3, 4) catch {
+      _ => fail("imag")
+    },
   )
   let conj = cc.conjugate(z) catch { _ => fail("conjugate") }
   match conj {

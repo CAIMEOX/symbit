@@ -121,7 +121,10 @@ pub fn ComplexField::from_exact_parts(
   real : @symnum.BigRational,
   imag : @symnum.BigRational,
 ) -> Expr {
-  complex_float_expr_from_gaussian(GaussianRatCompat::{ re: real, im: imag }, self.precision)
+  complex_float_expr_from_gaussian(
+    GaussianRatCompat::{ re: real, im: imag },
+    self.precision,
+  )
 }
 
 ///|
@@ -141,8 +144,16 @@ pub fn ComplexField::from_complex_float(
 ) -> Expr {
   @symcore.complex_float(
     @symcore.ComplexFloat::from_parts(
-      @symnum.mpf_pos(value.to_mpc().real, self.precision, @symnum.round_nearest),
-      @symnum.mpf_pos(value.to_mpc().imag, self.precision, @symnum.round_nearest),
+      @symnum.mpf_pos(
+        value.to_mpc().real,
+        self.precision,
+        @symnum.round_nearest,
+      ),
+      @symnum.mpf_pos(
+        value.to_mpc().imag,
+        self.precision,
+        @symnum.round_nearest,
+      ),
       prec=self.precision,
     ),
   )
@@ -172,23 +183,28 @@ pub fn ComplexField::coerce_complex(
 ) -> @symcore.ComplexFloat raise PolyError {
   match self.evalf_expr(expr) {
     Expr::ComplexFloat(z) => z
-    Expr::Float(f) => @symcore.ComplexFloat::from_real(
-      @symcore.Float::from_mpf(
-        @symnum.mpf_pos(f.to_mpf(), self.precision, @symnum.round_nearest),
+    Expr::Float(f) =>
+      @symcore.ComplexFloat::from_real(
+        @symcore.Float::from_mpf(
+          @symnum.mpf_pos(f.to_mpf(), self.precision, @symnum.round_nearest),
+          prec=self.precision,
+        ),
+      )
+    Expr::Number(n) =>
+      @symcore.ComplexFloat::from_exact_parts(
+        n,
+        @symnum.BigRational::zero(),
         prec=self.precision,
-      ),
-    )
-    Expr::Number(n) => @symcore.ComplexFloat::from_exact_parts(
-      n,
-      @symnum.BigRational::zero(),
-      prec=self.precision,
-    )
+      )
     _ => raise PolyError::DomainMismatch
   }
 }
 
 ///|
-pub fn RealField::from_expr(self : RealField, expr : Expr) -> Expr raise PolyError {
+pub fn RealField::from_expr(
+  self : RealField,
+  expr : Expr,
+) -> Expr raise PolyError {
   self.evalf_expr(expr)
 }
 
@@ -201,12 +217,20 @@ pub fn ComplexField::from_expr(
 }
 
 ///|
-pub fn RealField::add(self : RealField, left : Expr, right : Expr) -> Expr raise PolyError {
+pub fn RealField::add(
+  self : RealField,
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   self.from_float(self.coerce_float(left) + self.coerce_float(right))
 }
 
 ///|
-pub fn RealField::mul(self : RealField, left : Expr, right : Expr) -> Expr raise PolyError {
+pub fn RealField::mul(
+  self : RealField,
+  left : Expr,
+  right : Expr,
+) -> Expr raise PolyError {
   self.from_float(self.coerce_float(left) * self.coerce_float(right))
 }
 
@@ -230,7 +254,9 @@ pub fn ComplexField::add(
   left : Expr,
   right : Expr,
 ) -> Expr raise PolyError {
-  self.from_complex_float(self.coerce_complex(left) + self.coerce_complex(right))
+  self.from_complex_float(
+    self.coerce_complex(left) + self.coerce_complex(right),
+  )
 }
 
 ///|
@@ -239,16 +265,24 @@ pub fn ComplexField::mul(
   left : Expr,
   right : Expr,
 ) -> Expr raise PolyError {
-  self.from_complex_float(self.coerce_complex(left) * self.coerce_complex(right))
+  self.from_complex_float(
+    self.coerce_complex(left) * self.coerce_complex(right),
+  )
 }
 
 ///|
-pub fn ComplexField::neg(self : ComplexField, expr : Expr) -> Expr raise PolyError {
+pub fn ComplexField::neg(
+  self : ComplexField,
+  expr : Expr,
+) -> Expr raise PolyError {
   self.from_expr(@symcore.mul([@symcore.int(-1), expr]))
 }
 
 ///|
-pub fn ComplexField::inv(self : ComplexField, expr : Expr) -> Expr raise PolyError {
+pub fn ComplexField::inv(
+  self : ComplexField,
+  expr : Expr,
+) -> Expr raise PolyError {
   self.from_complex_float(
     self.coerce_complex(expr).reciprocal() catch {
       _ => raise PolyError::DivisionByZero
@@ -283,7 +317,10 @@ pub fn RealField::one(self : RealField) -> Expr {
 
 ///|
 pub fn ComplexField::zero(self : ComplexField) -> Expr {
-  self.from_exact_parts(@symnum.BigRational::zero(), @symnum.BigRational::zero())
+  self.from_exact_parts(
+    @symnum.BigRational::zero(),
+    @symnum.BigRational::zero(),
+  )
 }
 
 ///|

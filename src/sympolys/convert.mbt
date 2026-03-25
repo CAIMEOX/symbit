@@ -349,13 +349,15 @@ fn expr_coeff_rational_value(expr : Expr) -> @symnum.BigRational? {
       if !z.is_finite() || !@symnum.is_zero(z.to_mpc().imag) {
         None
       } else {
-        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z.real_part().to_rational()
+        let pair_res : Result[(BigInt, BigInt), @symnum.MpfError] = try? z
+          .real_part()
+          .to_rational()
         match pair_res {
           Ok((num, den)) =>
-            match (try? @symnum.BigRational::new(num, den) : Result[
-              @symnum.BigRational,
-              @symnum.RationalError,
-            ]) {
+            match
+              (
+                try? @symnum.BigRational::new(num, den) :
+                Result[@symnum.BigRational, @symnum.RationalError]) {
               Ok(value) => Some(value)
               Err(_) => None
             }
@@ -373,7 +375,10 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
       if !z.is_finite() {
         None
       } else {
-        let pair_res : Result[((BigInt, BigInt), (BigInt, BigInt)), @symnum.MpfError] = try? z.to_rational_parts()
+        let pair_res : Result[
+          ((BigInt, BigInt), (BigInt, BigInt)),
+          @symnum.MpfError,
+        ] = try? z.to_rational_parts()
         match pair_res {
           Ok((re_pair, im_pair)) => {
             let real_res : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
@@ -389,7 +394,11 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
                 match domain {
                   Domain::CC => Some(FieldElem::CC(real, imag))
                   Domain::RR if imag.is_zero() =>
-                    Some(ensure_coeff_domain(real, domain) catch { _ => return None })
+                    Some(
+                      ensure_coeff_domain(real, domain) catch {
+                        _ => return None
+                      },
+                    )
                   _ => None
                 }
               _ => None
@@ -400,7 +409,8 @@ fn expr_coeff_field_elem_value(expr : Expr, domain : Domain) -> FieldElem? {
       }
     _ =>
       match expr_coeff_rational_value(expr) {
-        Some(value) => Some(ensure_coeff_domain(value, domain) catch { _ => return None })
+        Some(value) =>
+          Some(ensure_coeff_domain(value, domain) catch { _ => return None })
         None => None
       }
   }

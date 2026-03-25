@@ -96,7 +96,9 @@ test "matrices wb: _linsolve uses numeric complex solve path for float coefficie
   )
   let two_thirds = @symcore.float(
     @symcore.Float::from_exact(
-      @symnum.BigRational::from_ints(2, 3) catch { _ => fail("two_thirds") },
+      @symnum.BigRational::from_ints(2, 3) catch {
+        _ => fail("two_thirds")
+      },
       prec=90,
     ) catch {
       _ => fail("two_thirds")

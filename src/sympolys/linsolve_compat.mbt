@@ -91,8 +91,13 @@ fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
   match expr {
     Expr::Float(f) => f.precision()
     Expr::ComplexFloat(z) => z.precision()
-    Expr::Number(_) | Expr::Symbol("I") | Expr::Symbol("pi") | Expr::Symbol("Pi")
-    | Expr::Symbol("E") | Expr::Symbol("EulerGamma") | Expr::Symbol("GoldenRatio")
+    Expr::Number(_)
+    | Expr::Symbol("I")
+    | Expr::Symbol("pi")
+    | Expr::Symbol("Pi")
+    | Expr::Symbol("E")
+    | Expr::Symbol("EulerGamma")
+    | Expr::Symbol("GoldenRatio")
     | Expr::Symbol("Catalan") => 80
     Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
       let mut best = 0
@@ -107,7 +112,11 @@ fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
     Expr::Pow(base, exp) => {
       let pb = linsolve_numeric_prec_expr(base)
       let pe = linsolve_numeric_prec_expr(exp)
-      if pb > pe { pb } else { pe }
+      if pb > pe {
+        pb
+      } else {
+        pe
+      }
     }
     _ => 0
   }
@@ -115,13 +124,13 @@ fn linsolve_numeric_prec_expr(expr : Expr) -> Int {
 
 ///|
 fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
-  match @symcore.evalf(expr, prec=prec) {
+  match @symcore.evalf(expr, prec~) {
     Expr::Number(n) =>
       Some(
         @symcore.ComplexFloat::from_exact_parts(
           n,
           @symnum.BigRational::zero(),
-          prec=prec,
+          prec~,
         ),
       )
     Expr::Float(f) => Some(@symcore.ComplexFloat::from_real(f))
@@ -142,12 +151,7 @@ fn linsolve_complex_to_expr(value : @symcore.ComplexFloat) -> Expr {
 ///|
 fn linsolve_complex_zero(value : @symcore.ComplexFloat, prec : Int) -> Bool {
   let tol_exp = if prec / 2 > 4 { -(prec / 2) } else { -4 }
-  let tol = @symnum.from_man_exp(
-    1N,
-    tol_exp,
-    prec=prec,
-    rnd=@symnum.round_nearest,
-  )
+  let tol = @symnum.from_man_exp(1N, tol_exp, prec~, rnd=@symnum.round_nearest)
   let abs = @symnum.mpc_abs(value.to_mpc(), prec, @symnum.round_nearest)
   @symnum.mpf_cmp(abs, tol) <= 0
 }
@@ -165,7 +169,8 @@ fn numeric_expr_linsolve(
   eqs_rhs : Array[Expr],
   syms : Array[String],
 ) -> NumericExprLinsolveResult {
-  if eqs_coeffs.length() != eqs_rhs.length() || eqs_coeffs.length() < syms.length() {
+  if eqs_coeffs.length() != eqs_rhs.length() ||
+    eqs_coeffs.length() < syms.length() {
     return NumericExprLinsolveResult::Unsupported
   }
   let mut has_floating = false
