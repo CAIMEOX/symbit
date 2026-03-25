@@ -197,3 +197,11 @@ test "xreplace performs exact structural replacement" {
     content="(call f 2)",
   )
 }
+
+///|
+test "mod is a first-class structured core node" {
+  let expr = mod_expr(add([symbol("x"), int(1)]), int(3))
+  inspect(head_name(expr), content="Mod")
+  json_inspect(args(expr).map(@symprint.to_string), content=["x + 1", "3"])
+  inspect(@symprint.debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
+}

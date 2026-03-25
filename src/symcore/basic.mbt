@@ -34,6 +34,7 @@ pub enum ExprForm {
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Mod(Expr, Expr)
   Tuple(Array[Expr])
   Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
@@ -244,6 +245,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Add(args) => ExprForm::Add(args)
     Expr::Mul(args) => ExprForm::Mul(args)
     Expr::Pow(base, exp) => ExprForm::Pow(base, exp)
+    Expr::Mod(lhs, rhs) => ExprForm::Mod(lhs, rhs)
     Expr::Tuple(args) => ExprForm::Tuple(args)
     Expr::Dict(items) => ExprForm::Dict(items)
     Expr::Relational(op, lhs, rhs) => ExprForm::Relational(op, lhs, rhs)
@@ -264,6 +266,7 @@ pub fn expr_form(expr : Expr) -> ExprForm {
       ExprForm::Relational(RelOp::Gt, lhs, rhs)
     Expr::Function("Ge", [lhs, rhs]) =>
       ExprForm::Relational(RelOp::Ge, lhs, rhs)
+    Expr::Function("Mod", [lhs, rhs]) => ExprForm::Mod(lhs, rhs)
     Expr::Function("Derivative", [inner, wrt]) =>
       ExprForm::Derivative(inner, [wrt, int(1)])
     Expr::Function("Derivative", [inner, wrt, order]) =>
@@ -367,6 +370,7 @@ pub fn head_name(expr : Expr) -> String {
     ExprForm::Add(_) => "Add"
     ExprForm::Mul(_) => "Mul"
     ExprForm::Pow(_, _) => "Pow"
+    ExprForm::Mod(_, _) => "Mod"
     ExprForm::Tuple(_) => "Tuple"
     ExprForm::Dict(_) => "Dict"
     ExprForm::Relational(op, _, _) =>
@@ -482,6 +486,7 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
     ExprForm::Subs(inner, variable, value) =>
       Some(("Subs", [inner, variable, value]))
     ExprForm::Lambda(vars, body) => Some(("Lambda", [vars, body]))
+    ExprForm::Mod(lhs, rhs) => Some(("Mod", [lhs, rhs]))
     ExprForm::Applied(name, args) => Some((name, args))
     _ => None
   }
@@ -510,6 +515,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
       out
     }
     ExprForm::Pow(base, exp) => [base, exp]
+    ExprForm::Mod(lhs, rhs) => [lhs, rhs]
     ExprForm::Relational(_, lhs, rhs) => [lhs, rhs]
     ExprForm::Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
@@ -597,6 +603,10 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
     ExprForm::Pow(base, exp) => {
       free_symbol_map(base, out)
       free_symbol_map(exp, out)
+    }
+    ExprForm::Mod(lhs, rhs) => {
+      free_symbol_map(lhs, out)
+      free_symbol_map(rhs, out)
     }
     ExprForm::Relational(_, lhs, rhs) => {
       free_symbol_map(lhs, out)

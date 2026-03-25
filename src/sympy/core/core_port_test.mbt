@@ -81,3 +81,16 @@ test "symcore parity xreplace exact structural replacement" {
   )
   inspect(core_xreplace_sstr(expr, x, @symcore.int(2)), content="y + f(2) + 2")
 }
+
+///|
+test "symcore parity Mod is a first-class core node" {
+  inspect(
+    core_expr_sstr(
+      @symcore.mod_expr(
+        @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
+        @symcore.int(3),
+      ),
+    ),
+    content="Mod(x + 1, 3)",
+  )
+}

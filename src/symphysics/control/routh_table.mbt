@@ -71,6 +71,8 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
         _ => @symcore.pow(base_norm, exp_norm)
       }
     }
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      @symcore.mod_expr(control_normalize(lhs), control_normalize(rhs))
     @symcore.ExprForm::Tuple(args) =>
       @symcore.tuple_expr(args.map(control_normalize))
     @symcore.ExprForm::Dict(items) => {

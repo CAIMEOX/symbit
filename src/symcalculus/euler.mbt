@@ -167,6 +167,12 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
     Expr::Add(args) => diff_add(args, wrt)
     Expr::Mul(args) => diff_mul(args, wrt)
     Expr::Pow(base, exp) => diff_pow(base, exp, wrt)
+    Expr::Mod(_, _) =>
+      if expr_depends_on(expr, wrt) {
+        derivative_expr(expr, [wrt])
+      } else {
+        @symcore.int(0)
+      }
     Expr::Tuple(_)
     | Expr::Dict(_)
     | Expr::Relational(_, _, _)

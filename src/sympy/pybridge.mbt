@@ -35,6 +35,11 @@ fn expr_to_sympy_cached(
         OracleArg::PyObj(exp_obj),
       ])
     }
+    @symcore.Expr::Mod(lhs, rhs) =>
+      sympy_call_obj("sympy.Mod", [
+        OracleArg::PyObj(expr_to_sympy_cached(lhs, dummy_cache, wild_cache)),
+        OracleArg::PyObj(expr_to_sympy_cached(rhs, dummy_cache, wild_cache)),
+      ])
     @symcore.Expr::Tuple(args) => {
       let packed : Array[OracleArg] = []
       for arg in args {

@@ -263,6 +263,7 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Add(_) => t == "Add" || t == "Expr"
     Expr::Mul(_) => t == "Mul" || t == "Expr"
     Expr::Pow(_, _) => t == "Pow" || t == "Expr"
+    Expr::Mod(_, _) => t == "Mod" || t == "Expr"
     Expr::Tuple(_) => t == "Tuple" || t == "Expr"
     Expr::Dict(_) => t == "Dict" || t == "Expr"
     Expr::Relational(_, _, _) => t == "Relational" || t == "Expr"

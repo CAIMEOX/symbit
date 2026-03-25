@@ -3,21 +3,22 @@ fn variant_rank(expr : Expr) -> Int {
   match expr {
     Expr::Pow(_, _) => 0
     Expr::Mul(_) => 1
-    Expr::NumberSymbol(_) => 2
-    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 3
-    Expr::UndefinedFunction(_) => 4
-    Expr::Boolean(_) => 5
-    Expr::Tuple(_) => 6
-    Expr::Dict(_) => 7
-    Expr::Relational(_, _, _) => 8
-    Expr::Derivative(_, _) => 9
-    Expr::Subs(_, _, _) => 10
-    Expr::Lambda(_, _) => 11
-    Expr::Function(_, _) => 12
-    Expr::Add(_) => 13
-    Expr::Number(_) => 14
-    Expr::Float(_) => 15
-    Expr::ComplexFloat(_) => 16
+    Expr::Mod(_, _) => 2
+    Expr::NumberSymbol(_) => 3
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => 4
+    Expr::UndefinedFunction(_) => 5
+    Expr::Boolean(_) => 6
+    Expr::Tuple(_) => 7
+    Expr::Dict(_) => 8
+    Expr::Relational(_, _, _) => 9
+    Expr::Derivative(_, _) => 10
+    Expr::Subs(_, _, _) => 11
+    Expr::Lambda(_, _) => 12
+    Expr::Function(_, _) => 13
+    Expr::Add(_) => 14
+    Expr::Number(_) => 15
+    Expr::Float(_) => 16
+    Expr::ComplexFloat(_) => 17
   }
 }
 
@@ -244,6 +245,18 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         }
         _ => 0
       }
+    Expr::Mod(lhs_a, rhs_a) =>
+      match b {
+        Expr::Mod(lhs_b, rhs_b) => {
+          let lhs_cmp = compare_expr(lhs_a, lhs_b)
+          if lhs_cmp != 0 {
+            lhs_cmp
+          } else {
+            compare_expr(rhs_a, rhs_b)
+          }
+        }
+        _ => 0
+      }
     Expr::Mul(xs) =>
       match b {
         Expr::Mul(ys) => compare_arrays(xs, ys)
@@ -461,6 +474,10 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     Expr::Pow(base, exp) => {
       base.hash_combine(hasher)
       exp.hash_combine(hasher)
+    }
+    Expr::Mod(lhs, rhs) => {
+      lhs.hash_combine(hasher)
+      rhs.hash_combine(hasher)
     }
     Expr::Mul(args) | Expr::Add(args) | Expr::Tuple(args) =>
       for child in args {

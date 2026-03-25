@@ -12,6 +12,7 @@ pub enum Expr {
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Mod(Expr, Expr)
   Tuple(Array[Expr])
   Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
@@ -40,6 +41,8 @@ impl Show for Expr with to_string(self) {
       "(" + args.map(child => child.to_string()).join(" * ") + ")"
     Expr::Pow(base, exp) =>
       "(" + base.to_string() + " ** " + exp.to_string() + ")"
+    Expr::Mod(lhs, rhs) =>
+      "Mod(" + lhs.to_string() + ", " + rhs.to_string() + ")"
     Expr::Tuple(args) =>
       "Tuple(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Dict(items) => {
@@ -779,6 +782,11 @@ pub fn pow(base : Expr, exp : Expr) -> Expr {
 }
 
 ///|
+pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
+  Expr::Mod(lhs, rhs)
+}
+
+///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
     ("True", []) => true_()
@@ -790,6 +798,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("Le", [lhs, rhs]) => le(lhs, rhs)
     ("Gt", [lhs, rhs]) => gt(lhs, rhs)
     ("Ge", [lhs, rhs]) => ge(lhs, rhs)
+    ("Mod", [lhs, rhs]) => mod_expr(lhs, rhs)
     ("Derivative", [expr, wrt]) => derivative(expr, wrt)
     ("Derivative", [expr, wrt, order]) => derivative(expr, wrt, order~)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
@@ -825,6 +834,11 @@ pub fn raw_pow(base : Expr, exp : Expr) -> Expr {
 }
 
 ///|
+pub fn raw_mod_expr(lhs : Expr, rhs : Expr) -> Expr {
+  Expr::Mod(lhs, rhs)
+}
+
+///|
 pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
   Expr::Dict(items.map(item => item))
 }
@@ -841,6 +855,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
     ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
     ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
+    ("Mod", [lhs, rhs]) => Expr::Mod(lhs, rhs)
     ("Derivative", [expr, wrt]) => Expr::Derivative(expr, [wrt, int(1)])
     ("Derivative", [expr, wrt, order]) => Expr::Derivative(expr, [wrt, order])
     ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)

@@ -5,6 +5,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     | Expr::Mul(args)
     | Expr::Tuple(args)
     | Expr::Function(_, args) => args[:]
+    Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
       let out : Array[Expr] = []
       for item in items {
@@ -34,6 +35,7 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Add(args) => add(args.map(f))
     Expr::Mul(args) => mul(args.map(f))
     Expr::Pow(base, exp) => pow(f(base), f(exp))
+    Expr::Mod(lhs, rhs) => mod_expr(f(lhs), f(rhs))
     Expr::Tuple(args) => tuple_expr(args.map(f))
     Expr::Dict(items) => {
       let out : Array[(Expr, Expr)] = []

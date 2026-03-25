@@ -143,6 +143,8 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
       args.all(quantum_is_scalar_like)
     @symcore.ExprForm::Pow(base, exp) =>
       quantum_is_scalar_like(base) && quantum_is_scalar_like(exp)
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      quantum_is_scalar_like(lhs) && quantum_is_scalar_like(rhs)
     @symcore.ExprForm::Tuple(args) => args.all(quantum_is_scalar_like)
     @symcore.ExprForm::Dict(_) => false
     @symcore.ExprForm::Relational(_, lhs, rhs) =>

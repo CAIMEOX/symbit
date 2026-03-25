@@ -85,6 +85,16 @@ test "pretty printers render dict containers" {
 }
 
 ///|
+test "pretty printers render Mod as a structured core node" {
+  let expr = @symcore.mod_expr(
+    @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
+    @symcore.int(3),
+  )
+  inspect(to_string(expr), content="Mod(x + 1, 3)")
+  inspect(debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
+}
+
+///|
 test "arbitarary polys" {
   let gen = @symcore.arbitrary_polys()
   let exprs = gen.samples(size=5, seed=42)

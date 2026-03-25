@@ -356,6 +356,8 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       }
       @symcore.dict_expr(out)
     }
+    @symcore.Expr::Mod(lhs, rhs) =>
+      @symcore.mod_expr(eval_arith(lhs), eval_arith(rhs))
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq => @symcore.eq(eval_arith(lhs), eval_arith(rhs))

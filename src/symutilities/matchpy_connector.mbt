@@ -129,6 +129,8 @@ pub fn get_srepr(expr : Expr) -> String {
           "Mul(" + args.map(get_srepr).join(", ") + ")"
         @symcore.ExprForm::Pow(base, exp) =>
           "Pow(" + get_srepr(base) + ", " + get_srepr(exp) + ")"
+        @symcore.ExprForm::Mod(lhs, rhs) =>
+          "Mod(" + get_srepr(lhs) + ", " + get_srepr(rhs) + ")"
         @symcore.ExprForm::Tuple(args) =>
           "Tuple(" + args.map(get_srepr).join(", ") + ")"
         @symcore.ExprForm::Dict(items) => {

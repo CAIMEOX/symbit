@@ -1216,6 +1216,11 @@ fn expr_replace_symbol(
     Expr::Pow(base, exp) =>
       expr_replace_symbol(base, old_name, new_name) ^
       expr_replace_symbol(exp, old_name, new_name)
+    Expr::Mod(lhs, rhs) =>
+      @symcore.mod_expr(
+        expr_replace_symbol(lhs, old_name, new_name),
+        expr_replace_symbol(rhs, old_name, new_name),
+      )
     Expr::Tuple(args) =>
       @symcore.tuple_expr(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
@@ -1601,6 +1606,9 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     | Expr::Tuple(args)
     | Expr::Function(_, args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
+    Expr::Mod(lhs, rhs) =>
+      expr_has_forbidden_symbol(lhs, allow_i) ||
+      expr_has_forbidden_symbol(rhs, allow_i)
     Expr::Dict(items) =>
       items.any(item => {
         let (key, value) = item
@@ -1745,6 +1753,7 @@ fn expr_in_polynomial_domain(
     Expr::Pow(inner, exp) =>
       expr_is_nonnegative_integer(exp) &&
       expr_in_polynomial_domain(base, gens, inner)
+    Expr::Mod(_, _) => false
     Expr::Tuple(_)
     | Expr::Dict(_)
     | Expr::Relational(_, _, _)
@@ -1777,6 +1786,7 @@ fn expr_in_fraction_domain(
       args.all(item => expr_in_fraction_domain(base, gens, item))
     Expr::Pow(inner, exp) =>
       expr_is_integer(exp) && expr_in_fraction_domain(base, gens, inner)
+    Expr::Mod(_, _) => false
     Expr::Tuple(_)
     | Expr::Dict(_)
     | Expr::Relational(_, _, _)
@@ -2292,6 +2302,9 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     | Expr::Tuple(args)
     | Expr::Function(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
+    Expr::Mod(lhs, rhs) =>
+      expr_depends_on_symbols(lhs, symbols) ||
+      expr_depends_on_symbols(rhs, symbols)
     Expr::Dict(items) =>
       items.any(item => {
         let (key, value) = item
@@ -2392,6 +2405,13 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
         }
       } else {
         None
+      }
+    Expr::Mod(lhs, rhs) =>
+      if expr_depends_on_symbols(lhs, symbols) ||
+        expr_depends_on_symbols(rhs, symbols) {
+        None
+      } else {
+        Some(expr)
       }
     Expr::Tuple(_)
     | Expr::Dict(_)

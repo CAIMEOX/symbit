@@ -108,6 +108,8 @@ pub fn lt(Expr, Expr) -> Expr
 
 pub fn map_children(Expr, (Expr) -> Expr) -> Expr
 
+pub fn mod_expr(Expr, Expr) -> Expr
+
 pub fn mul(Array[Expr]) -> Expr
 
 pub fn nan_expr() -> Expr
@@ -139,6 +141,8 @@ pub fn raw_dict_expr(Array[(Expr, Expr)]) -> Expr
 pub fn raw_dummy(String, Int) -> Expr
 
 pub fn raw_function(String, Array[Expr]) -> Expr
+
+pub fn raw_mod_expr(Expr, Expr) -> Expr
 
 pub fn raw_mul(Array[Expr]) -> Expr
 
@@ -236,6 +240,7 @@ pub enum Expr {
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Mod(Expr, Expr)
   Tuple(Array[Expr])
   Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)
@@ -263,6 +268,7 @@ pub enum ExprForm {
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
+  Mod(Expr, Expr)
   Tuple(Array[Expr])
   Dict(Array[(Expr, Expr)])
   Relational(RelOp, Expr, Expr)

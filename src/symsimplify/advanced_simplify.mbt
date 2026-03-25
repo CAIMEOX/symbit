@@ -762,6 +762,8 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     }
     Expr::Pow(base, Expr::Number(e)) =>
       e.is_integral() && is_rational_form(base, k_name)
+    Expr::Mod(lhs, rhs) =>
+      is_rational_form(lhs, k_name) && is_rational_form(rhs, k_name)
     Expr::Pow(_, _) => false
     Expr::Tuple(_)
     | Expr::Dict(_)

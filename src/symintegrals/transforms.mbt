@@ -479,6 +479,12 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
           }
         _ => if expr_depends_on(expr, var_name) { None } else { Some([expr]) }
       }
+    @symcore.Expr::Mod(_, _) =>
+      if expr_depends_on(expr, var_name) {
+        None
+      } else {
+        Some([expr])
+      }
     @symcore.Expr::Function(_, _)
     | @symcore.Expr::Derivative(_, _)
     | @symcore.Expr::Subs(_, _, _) =>

@@ -711,6 +711,8 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         None => pow(eval_base, eval_exp)
       }
     }
+    Expr::Mod(lhs, rhs) =>
+      mod_expr(evalf_impl(lhs, prec), evalf_impl(rhs, prec))
     Expr::Tuple(args) => tuple_expr(args.map(arg => evalf_impl(arg, prec)))
     Expr::Dict(items) => {
       let out : Array[(Expr, Expr)] = []

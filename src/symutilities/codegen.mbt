@@ -106,6 +106,8 @@ fn free_symbols(expr : Expr) -> Array[String] {
     }
     @symcore.ExprForm::Pow(base, exp) =>
       sort_unique_symbols(free_symbols(base) + free_symbols(exp))
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
     @symcore.ExprForm::Relational(_, lhs, rhs) =>
       sort_unique_symbols(free_symbols(lhs) + free_symbols(rhs))
     @symcore.ExprForm::Derivative(inner, deriv_args) => {
@@ -225,6 +227,21 @@ fn print_expr_prec(
           ", " +
           print_expr_prec(exp, language, 0) +
           ")"
+      }
+      parenthesize_if_needed(text, 2, parent_prec)
+    }
+    @symcore.ExprForm::Mod(lhs, rhs) => {
+      let text = match language {
+        TargetLanguage::Julia | TargetLanguage::Octave =>
+          "mod(" +
+          print_expr_prec(lhs, language, 0) +
+          ", " +
+          print_expr_prec(rhs, language, 0) +
+          ")"
+        _ =>
+          print_expr_prec(lhs, language, 2) +
+          " % " +
+          print_expr_prec(rhs, language, 2)
       }
       parenthesize_if_needed(text, 2, parent_prec)
     }

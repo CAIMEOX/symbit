@@ -272,6 +272,11 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
         _ => @symcore.pow(sbase, sexp)
       }
     }
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      @symcore.mod_expr(
+        wavefunction_simplify_expr(lhs),
+        wavefunction_simplify_expr(rhs),
+      )
     @symcore.ExprForm::Applied("sqrt", args) if args.length() == 1 => {
       let inner = wavefunction_simplify_expr(args[0])
       match inner {
@@ -738,6 +743,11 @@ fn quantum_replace_exact(
         quantum_replace_exact(base, needle, replacement),
         quantum_replace_exact(exp, needle, replacement),
       )
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      @symcore.raw_mod_expr(
+        quantum_replace_exact(lhs, needle, replacement),
+        quantum_replace_exact(rhs, needle, replacement),
+      )
     @symcore.ExprForm::Tuple(args) =>
       @symcore.tuple_expr(
         args.map(arg => quantum_replace_exact(arg, needle, replacement)),
@@ -835,6 +845,13 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
         @symcore.raw_pow(
           wavefunction_eval_derivatives(base),
           wavefunction_eval_derivatives(exp),
+        ),
+      )
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      wavefunction_simplify_expr(
+        @symcore.raw_mod_expr(
+          wavefunction_eval_derivatives(lhs),
+          wavefunction_eval_derivatives(rhs),
         ),
       )
     @symcore.ExprForm::Derivative(inner, deriv_args) =>

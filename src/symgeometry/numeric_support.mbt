@@ -29,6 +29,7 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
       }
     Expr::Dummy(_, _) | Expr::Wild(_) | Expr::UndefinedFunction(_) => None
     Expr::Dict(_) => None
+    Expr::Mod(_, _) => None
     Expr::NumberSymbol(kind) =>
       match kind {
         @symcore.NumberSymbolKind::Pi => Some(@math.PI)

@@ -704,6 +704,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
             _ => None
           }
       }
+    Expr::Mod(_, _) => None
     Expr::Function(name, args) => {
       if args.length() != 1 {
         return None

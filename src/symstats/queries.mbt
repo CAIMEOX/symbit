@@ -217,6 +217,11 @@ fn query_replace_expr(
           args.map(arg => query_replace_expr(arg, target, replacement)),
         ),
       )
+    @symcore.Expr::Mod(lhs, rhs) =>
+      @symcore.mod_expr(
+        query_replace_expr(lhs, target, replacement),
+        query_replace_expr(rhs, target, replacement),
+      )
     @symcore.Expr::Pow(base, exp) =>
       eval_arith(
         @symcore.pow(

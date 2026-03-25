@@ -224,6 +224,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       }
       Some(out)
     }
+    Expr::Mod(_, _) => None
     Expr::Mul(args) => {
       let mut out = [geo_one(), geo_zero(), geo_zero()]
       for arg in args {

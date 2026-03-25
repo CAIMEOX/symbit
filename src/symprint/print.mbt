@@ -14,6 +14,7 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Mul(args) => wrap_variadic("*", args)
     @symcore.ExprForm::Pow(base, exp) =>
       "(^ \{debug_repr(base)} \{debug_repr(exp)})"
+    @symcore.ExprForm::Mod(lhs, rhs) => wrap_call("Mod", [lhs, rhs])
     @symcore.ExprForm::Tuple(args) => wrap_call("Tuple", args)
     @symcore.ExprForm::Dict(items) => {
       let args : Array[Expr] = []
@@ -115,6 +116,8 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       }
       "\{wrapped_base}**\{wrapped_exp}"
     }
+    @symcore.ExprForm::Mod(lhs, rhs) =>
+      "Mod(\{format_expr(lhs, 0)}, \{format_expr(rhs, 0)})"
     @symcore.ExprForm::Tuple(args) => {
       let rendered = args.map(child => format_expr(child, 0)).join(", ")
       "(\{rendered})"
@@ -174,6 +177,7 @@ fn precedence(expr : Expr) -> Int {
     @symcore.ExprForm::Add(_) => 2
     @symcore.ExprForm::Mul(_) => 3
     @symcore.ExprForm::Pow(_, _) => 4
+    @symcore.ExprForm::Mod(_, _) => 4
     _ => 5
   }
 }
