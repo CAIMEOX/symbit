@@ -64,6 +64,76 @@ fn Parser::expect_kind(
 }
 
 ///|
+fn greek_name(name : String) -> Bool {
+  match name {
+    "alpha"
+    | "beta"
+    | "gamma"
+    | "delta"
+    | "epsilon"
+    | "zeta"
+    | "eta"
+    | "theta"
+    | "iota"
+    | "kappa"
+    | "mu"
+    | "nu"
+    | "xi"
+    | "omicron"
+    | "pi"
+    | "rho"
+    | "sigma"
+    | "tau"
+    | "upsilon"
+    | "phi"
+    | "chi"
+    | "psi"
+    | "omega" => true
+    _ => false
+  }
+}
+
+///|
+pub fn default_split_symbol_predicate(name : String) -> Bool {
+  if name.length() <= 1 || name.contains("_") || greek_name(name) {
+    return false
+  }
+  let mut has_letter = false
+  for ch in name {
+    if !(ch.is_ascii_alphabetic() || ch.is_ascii_digit()) {
+      return false
+    }
+    if ch.is_ascii_alphabetic() {
+      has_letter = true
+    }
+  }
+  has_letter
+}
+
+///|
+fn split_symbol_predicate(options : ParseOptions) -> ((String) -> Bool)? {
+  let mut saw_default = false
+  let mut custom : ((String) -> Bool)? = None
+  for transformation in options.transformations {
+    match transformation {
+      Transformation::SplitSymbolsCustom(predicate) => custom = Some(predicate)
+      Transformation::SplitSymbols
+      | Transformation::ImplicitMultiplicationApplication => saw_default = true
+      _ => ()
+    }
+  }
+  match custom {
+    Some(predicate) => Some(predicate)
+    None =>
+      if saw_default {
+        Some(default_split_symbol_predicate)
+      } else {
+        None
+      }
+  }
+}
+
+///|
 fn binary_info(
   kind : TokenKind,
   options : ParseOptions,
@@ -74,7 +144,7 @@ fn binary_info(
     TokenKind::Star => Some((BinaryOp::Mul, 20, false))
     TokenKind::Slash => Some((BinaryOp::Div, 20, false))
     TokenKind::Pow => Some((BinaryOp::Pow, 40, true))
-    TokenKind::Caret if options.caret_as_power =>
+    TokenKind::Caret if option_has_convert_xor(options) =>
       Some((BinaryOp::Pow, 40, true))
     _ => None
   }
@@ -83,7 +153,8 @@ fn binary_info(
 ///|
 fn compare_op(kind : TokenKind, options : ParseOptions) -> CompareOp? {
   match kind {
-    TokenKind::Eq if options.convert_equals_signs => Some(CompareOp::Eq)
+    TokenKind::Eq if option_has_convert_equals_signs(options) =>
+      Some(CompareOp::Eq)
     TokenKind::EqEq => Some(CompareOp::EqEq)
     TokenKind::Ne => Some(CompareOp::Ne)
     TokenKind::Lt => Some(CompareOp::Lt)
@@ -181,6 +252,23 @@ fn context_has_global_binding(context : ParseContext, name : String) -> Bool {
 }
 
 ///|
+fn name_is_bound_or_reserved(
+  name : String,
+  options : ParseOptions,
+  context : ParseContext,
+) -> Bool {
+  context_has_binding(context, name) ||
+  context_has_callable_name(context, name) ||
+  context_has_global_binding(context, name) ||
+  context_has_global_callable_name(context, name) ||
+  is_builtin_callable_name(name) ||
+  (
+    option_has_auto_symbol(options) &&
+    (name == "True" || name == "False" || name == "None")
+  )
+}
+
+///|
 fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
   match ast {
     Ast::Symbol(span~, name) => {
@@ -199,6 +287,64 @@ fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
     }
     _ => false
   }
+}
+
+///|
+fn split_identifier_parts(
+  name : String,
+  source_span : Span,
+  options : ParseOptions,
+  context : ParseContext,
+) -> Array[Ast]? {
+  if name_is_bound_or_reserved(name, options, context) {
+    return None
+  }
+  let predicate = match split_symbol_predicate(options) {
+    Some(predicate) => predicate
+    None => return None
+  }
+  if !predicate(name) {
+    return None
+  }
+  let parts : Array[Ast] = []
+  let chars = name.to_array()
+  let mut i = 0
+  while i < chars.length() {
+    let ch = chars[i]
+    if ch.is_ascii_digit() {
+      let digits = StringBuilder::new()
+      digits.write_char(ch)
+      i += 1
+      while i < chars.length() && chars[i].is_ascii_digit() {
+        digits.write_char(chars[i])
+        i += 1
+      }
+      parts.push(Ast::Number(span=source_span, digits.to_string()))
+    } else {
+      parts.push(Ast::Symbol(span=source_span, ch.to_string()))
+      i += 1
+    }
+  }
+  if parts.length() <= 1 {
+    None
+  } else {
+    Some(parts)
+  }
+}
+
+///|
+fn fold_mul_ast(parts : Array[Ast]) -> Ast {
+  let mut out = parts[0]
+  for i in 1..<parts.length() {
+    let rhs = parts[i]
+    out = Ast::Binary(
+      span=span_merge(ast_span(out), ast_span(rhs)),
+      BinaryOp::Mul,
+      out,
+      rhs,
+    )
+  }
+  out
 }
 
 ///|
@@ -259,7 +405,7 @@ fn Parser::should_parse_explicit_call(self : Parser, callee : Ast) -> Bool {
   if !token_tag_eq(self.peek().kind, TokenKind::LParen) {
     return false
   }
-  if !self.options.implicit_multiplication {
+  if !option_has_implicit_multiplication(self.options) {
     return true
   }
   ast_is_known_callable(callee, self.context) ||
@@ -299,7 +445,7 @@ fn Parser::should_parse_implicit_application(
   self : Parser,
   callee : Ast,
 ) -> Bool {
-  self.options.implicit_application &&
+  option_has_implicit_application(self.options) &&
   ast_is_known_callable(callee, self.context) &&
   token_can_start_primary(self.peek().kind)
 }
@@ -309,7 +455,7 @@ fn Parser::should_parse_implicit_multiplication(
   self : Parser,
   min_prec : Int,
 ) -> Bool {
-  self.options.implicit_multiplication &&
+  option_has_implicit_multiplication(self.options) &&
   20 >= min_prec &&
   token_can_start_primary(self.peek().kind)
 }
@@ -322,11 +468,11 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
       let args = self.parse_call_args()
       let end_span = self.tokens[self.index - 1].span
       expr = Ast::Call(span=span_merge(ast_span(expr), end_span), expr, args)
-    } else if self.options.factorial_notation &&
+    } else if option_has_factorial(self.options) &&
       self.match_kind(TokenKind::BangBang) is Some(tok) {
       let callee = Ast::Symbol(span=tok.span, "factorial2")
       expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
-    } else if self.options.factorial_notation &&
+    } else if option_has_factorial(self.options) &&
       self.match_kind(TokenKind::Bang) is Some(tok) {
       let callee = Ast::Symbol(span=tok.span, "factorial")
       expr = Ast::Call(span=span_merge(ast_span(expr), tok.span), callee, [expr])
@@ -346,7 +492,8 @@ fn Parser::parse_postfix(self : Parser, base : Ast) -> Ast raise ParseError {
 fn Parser::match_power_token(self : Parser) -> Token? {
   match self.peek().kind {
     TokenKind::Pow => Some(self.advance())
-    TokenKind::Caret if self.options.caret_as_power => Some(self.advance())
+    TokenKind::Caret if option_has_convert_xor(self.options) =>
+      Some(self.advance())
     _ => None
   }
 }
@@ -373,6 +520,81 @@ fn Parser::parse_function_exponentiation(
         base,
         exponent,
       )
+  }
+}
+
+///|
+fn Parser::parse_lambda(
+  self : Parser,
+  start_tok : Token,
+) -> Ast raise ParseError {
+  let args : Array[String] = []
+  if self.match_kind(TokenKind::Colon) is None {
+    while true {
+      match self.peek().kind {
+        TokenKind::Ident(name) => {
+          ignore(self.advance())
+          args.push(name)
+        }
+        TokenKind::Star | TokenKind::Pow =>
+          raise ParseError::UnsupportedConstruct(
+            span=self.peek().span,
+            "starred arguments in lambda not supported",
+          )
+        _ => raise unexpected_token(self.peek(), "lambda parameter")
+      }
+      if self.match_kind(TokenKind::Comma) is Some(_) {
+        if token_tag_eq(self.peek().kind, TokenKind::Colon) {
+          break
+        }
+      } else {
+        break
+      }
+    }
+    ignore(self.expect_kind(TokenKind::Colon, "`:`"))
+  }
+  let body = self.parse_compare()
+  Ast::Lambda(span=span_merge(start_tok.span, ast_span(body)), args, body)
+}
+
+///|
+fn Parser::parse_split_identifier(
+  self : Parser,
+  parts : Array[Ast],
+) -> Ast raise ParseError {
+  let effective = parts.map(x => x)
+  if token_tag_eq(self.peek().kind, TokenKind::LParen) &&
+    ast_is_known_callable(effective[effective.length() - 1], self.context) {
+    let args = self.parse_call_args()
+    let end_span = self.tokens[self.index - 1].span
+    let last = effective[effective.length() - 1]
+    effective[effective.length() - 1] = Ast::Call(
+      span=span_merge(ast_span(last), end_span),
+      last,
+      args,
+    )
+  }
+  fold_mul_ast(effective)
+}
+
+///|
+fn Parser::parse_identifier(
+  self : Parser,
+  tok : Token,
+  name : String,
+) -> Ast raise ParseError {
+  match split_identifier_parts(name, tok.span, self.options, self.context) {
+    Some(parts) => self.parse_split_identifier(parts)
+    None => {
+      let base = Ast::Symbol(span=tok.span, name)
+      if option_has_function_exponentiation(self.options) &&
+        ast_is_known_callable(base, self.context) &&
+        self.match_power_token() is Some(_) {
+        self.parse_function_exponentiation(base)
+      } else {
+        self.parse_postfix(base)
+      }
+    }
   }
 }
 
@@ -406,16 +628,14 @@ fn Parser::parse_prefix(self : Parser) -> Ast raise ParseError {
       ignore(self.advance())
       self.parse_postfix(Ast::Number(span=tok.span, text))
     }
+    TokenKind::Ident(name) if option_has_lambda(self.options) &&
+      name == "lambda" => {
+      let start = self.advance()
+      self.parse_lambda(start)
+    }
     TokenKind::Ident(name) => {
       ignore(self.advance())
-      let base = Ast::Symbol(span=tok.span, name)
-      if self.options.function_exponentiation &&
-        ast_is_known_callable(base, self.context) &&
-        self.match_power_token() is Some(_) {
-        self.parse_function_exponentiation(base)
-      } else {
-        self.parse_postfix(base)
-      }
+      self.parse_identifier(tok, name)
     }
     TokenKind::LParen => {
       let start = self.advance()

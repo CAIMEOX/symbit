@@ -14,6 +14,7 @@ pub enum TokenKind {
   LParen
   RParen
   Comma
+  Colon
   Eq
   EqEq
   Ne
@@ -52,6 +53,7 @@ pub fn token_kind_name(kind : TokenKind) -> String {
     TokenKind::LParen => "`(`"
     TokenKind::RParen => "`)`"
     TokenKind::Comma => "`,`"
+    TokenKind::Colon => "`:`"
     TokenKind::Eq => "`=`"
     TokenKind::EqEq => "`==`"
     TokenKind::Ne => "`!=`"

@@ -2,7 +2,7 @@
 /// Parse a source string into a `symcore.Expr` using the default parser
 /// options.
 pub fn parse_expr(src : String) -> Expr raise ParseError {
-  lower_ast(parse_ast(src))
+  parse_expr_with(src, default_parse_options())
 }
 
 ///|
@@ -21,4 +21,23 @@ pub fn parse_expr_in(
   context : ParseContext,
 ) -> Expr raise ParseError {
   lower_ast_in(parse_ast_in(src, options, context), options, context)
+}
+
+///|
+pub fn parse_expr_with_transformations(
+  src : String,
+  transformations : Array[Transformation],
+  evaluate? : Bool = true,
+) -> Expr raise ParseError {
+  parse_expr_with(src, parse_options(transformations~, evaluate~))
+}
+
+///|
+pub fn parse_expr_in_with_transformations(
+  src : String,
+  transformations : Array[Transformation],
+  context : ParseContext,
+  evaluate? : Bool = true,
+) -> Expr raise ParseError {
+  parse_expr_in(src, parse_options(transformations~, evaluate~), context)
 }

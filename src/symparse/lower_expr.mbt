@@ -75,13 +75,12 @@ fn make_function(
         @symcore.raw_function(name, args)
       }
     _ =>
-      match (
-        if options.evaluate {
+      match
+        (if options.evaluate {
           @symcore.apply(@symcore.Expr::FunctionHead(name), args)
         } else {
           @symcore.raw_apply(@symcore.Expr::FunctionHead(name), args)
-        }
-      ) {
+        }) {
         Some(expr) => expr
         None =>
           if options.evaluate {
@@ -120,13 +119,8 @@ fn options_with_evaluate(
   evaluate : Bool,
 ) -> ParseOptions {
   ParseOptions::{
-    caret_as_power: options.caret_as_power,
     evaluate,
-    implicit_multiplication: options.implicit_multiplication,
-    implicit_application: options.implicit_application,
-    function_exponentiation: options.function_exponentiation,
-    factorial_notation: options.factorial_notation,
-    convert_equals_signs: options.convert_equals_signs,
+    transformations: options.transformations.map(x => x),
   }
 }
 
@@ -149,17 +143,30 @@ fn lookup_effective_binding(context : ParseContext, name : String) -> Expr? {
 }
 
 ///|
-fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
+fn lower_symbol_name(
+  context : ParseContext,
+  name : String,
+  options : ParseOptions,
+) -> Expr raise ParseError {
   match lookup_effective_binding(context, name) {
     Some(bound) => bound
     None =>
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
         @symcore.Expr::UndefinedFunction(name)
+      } else if name == "True" {
+        @symcore.Expr::Boolean(true)
+      } else if name == "False" {
+        @symcore.Expr::Boolean(false)
       } else if is_builtin_callable_name(name) {
         @symcore.Expr::FunctionHead(name)
-      } else {
+      } else if option_has_auto_symbol(options) {
         Expr::Symbol(name)
+      } else {
+        raise ParseError::UnsupportedConstruct(
+          span=span(0, 0),
+          "unknown identifier: " + name,
+        )
       }
   }
 }
@@ -180,10 +187,10 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
       if context_has_callable_name(context, name) {
         match coerce_callable_target(bound) {
           Some(target) => target
-          None => lower_symbol_name(context, name)
+          None => bound
         }
       } else {
-        lower_symbol_name(context, name)
+        bound
       }
     None =>
       match lookup_global_binding(context, name) {
@@ -191,14 +198,19 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
           if context_has_global_callable_name(context, name) {
             match coerce_callable_target(bound) {
               Some(target) => target
-              None => lower_symbol_name(context, name)
+              None => bound
             }
           } else {
-            lower_symbol_name(context, name)
+            bound
           }
-        None => lower_symbol_name(context, name)
+        None =>
+          if is_builtin_callable_name(name) {
+            @symcore.Expr::FunctionHead(name)
+          } else {
+            @symcore.Expr::UndefinedFunction(name)
+          }
       }
-}
+  }
 }
 
 ///|
@@ -477,7 +489,12 @@ fn scale_rational_by_pow10(
 fn number_from_literal(
   text : String,
   source_span : Span,
+  options : ParseOptions,
 ) -> Expr raise ParseError {
+  let has_repeated = text.contains("[")
+  if has_repeated && !option_has_repeated_decimals(options) {
+    raise ParseError::InvalidNumber(span=source_span, text)
+  }
   let value = match split_exponent_literal(text) {
     Some((mantissa_text, exponent_text)) => {
       let exponent = @strconv.parse_int(exponent_text, base=10) catch {
@@ -497,6 +514,17 @@ fn number_from_literal(
         @symnum.BigRational::from_bigint(BigInt::from_string(text))
       }
   }
+  let decimal_like = text.contains(".") ||
+    split_exponent_literal(text) is Some(_)
+  if has_repeated || (decimal_like && option_has_rationalize(options)) {
+    return @symcore.Expr::Number(value)
+  }
+  if decimal_like {
+    let float_value = @symcore.float_from_str(text, prec=53) catch {
+      _ => raise ParseError::InvalidNumber(span=source_span, text)
+    }
+    return @symcore.Expr::Float(float_value)
+  }
   @symcore.Expr::Number(value)
 }
 
@@ -507,10 +535,10 @@ pub fn lower_ast_in(
   context : ParseContext,
 ) -> Expr raise ParseError {
   match ast {
-    Ast::Number(span~, text) => number_from_literal(text, span)
+    Ast::Number(span~, text) => number_from_literal(text, span, options)
     Ast::Symbol(span~, name) => {
       ignore(span)
-      lower_symbol_name(context, name)
+      lower_symbol_name(context, name, options)
     }
     Ast::Unary(span~, UnaryOp::Plus, operand) => {
       ignore(span)
@@ -565,13 +593,25 @@ pub fn lower_ast_in(
     Ast::Binary(span~, BinaryOp::Div, lhs, rhs) => {
       ignore(span)
       if options.evaluate {
-        make_mul(
-          [
-            lower_ast_in(lhs, options, context),
-            make_pow(lower_ast_in(rhs, options, context), int(-1), options),
-          ],
-          options,
-        )
+        let lowered_lhs = lower_ast_in(lhs, options, context)
+        let lowered_rhs = lower_ast_in(rhs, options, context)
+        match (lowered_lhs, lowered_rhs) {
+          (Expr::Number(lhs_num), Expr::Number(rhs_num)) => {
+            let value = lhs_num.div_r(rhs_num) catch {
+              _ =>
+                raise ParseError::UnsupportedConstruct(
+                  span~,
+                  "division by zero",
+                )
+            }
+            @symcore.Expr::Number(value)
+          }
+          _ =>
+            make_mul(
+              [lowered_lhs, make_pow(lowered_rhs, int(-1), options)],
+              options,
+            )
+        }
       } else {
         raw_mul_or_identity(lower_raw_mul_factors(ast, options, context))
       }
@@ -585,19 +625,16 @@ pub fn lower_ast_in(
       )
     }
     Ast::Call(span~, callee, args) => {
+      ignore(span)
       let lowered_args = args.map(arg => lower_ast_in(arg, options, context))
-      match callee {
+      let lowered_callee = match callee {
         Ast::Symbol(span~, name) => {
           ignore(span)
-          let lowered_callee = lookup_callable_target(context, name)
-          make_application(lowered_callee, lowered_args, options)
+          lookup_callable_target(context, name)
         }
-        _ =>
-          raise ParseError::UnsupportedConstruct(
-            span~,
-            "call lowering only accepts a simple function name",
-          )
+        _ => lower_ast_in(callee, options, context)
       }
+      make_application(lowered_callee, lowered_args, options)
     }
     Ast::Tuple(span~, items) => {
       ignore(span)
@@ -609,6 +646,16 @@ pub fn lower_ast_in(
     }
     Ast::Compare(span~, exprs, ops) =>
       lower_compare_chain(span, exprs, ops, options, context)
+    Ast::Lambda(span~, names, body) => {
+      ignore(span)
+      let vars = names.map(name => Expr::Symbol(name))
+      let vars_expr = if vars.length() == 1 {
+        vars[0]
+      } else {
+        @symcore.Expr::Tuple(vars)
+      }
+      @symcore.Expr::Lambda(vars_expr, lower_ast_in(body, options, context))
+    }
   }
 }
 

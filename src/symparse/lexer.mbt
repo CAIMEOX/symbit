@@ -139,6 +139,7 @@ pub fn lex(src : String) -> Array[Token] raise ParseError {
       '(' => (TokenKind::LParen, index + 1)
       ')' => (TokenKind::RParen, index + 1)
       ',' => (TokenKind::Comma, index + 1)
+      ':' => (TokenKind::Colon, index + 1)
       '^' => (TokenKind::Caret, index + 1)
       '!' =>
         match char_at(src, index + 1) {

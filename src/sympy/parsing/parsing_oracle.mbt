@@ -53,11 +53,15 @@ fn python_string_literal(value : String) -> String {
 }
 
 ///|
-fn full_transformations() -> String {
+fn standard_transformations_text() -> String {
+  "sympy.parsing.sympy_parser.standard_transformations"
+}
+
+///|
+fn relaxed_transformations_text() -> String {
   "sympy.parsing.sympy_parser.standard_transformations + " +
   "(sympy.parsing.sympy_parser.convert_xor, " +
   "sympy.parsing.sympy_parser.implicit_multiplication_application, " +
-  "sympy.parsing.sympy_parser.factorial_notation, " +
   "sympy.parsing.sympy_parser.convert_equals_signs)"
 }
 
@@ -144,7 +148,7 @@ fn dict_literal(
 }
 
 ///|
-fn parse_expr_sstr_with(
+pub fn parse_expr_sstr_with(
   src : String,
   transformations : String,
   local_dict_literal : String,
@@ -179,12 +183,32 @@ fn parse_expr_sstr_with(
 
 ///|
 pub fn parse_expr_sstr(src : String, evaluate? : Bool = true) -> String raise {
-  parse_expr_sstr_with(src, full_transformations(), "{}", "{}", evaluate)
+  parse_expr_sstr_with(
+    src,
+    standard_transformations_text(),
+    "{}",
+    "{}",
+    evaluate,
+  )
+}
+
+///|
+pub fn parse_expr_sstr_relaxed(
+  src : String,
+  evaluate? : Bool = true,
+) -> String raise {
+  parse_expr_sstr_with(
+    src,
+    relaxed_transformations_text(),
+    "{}",
+    "{}",
+    evaluate,
+  )
 }
 
 ///|
 pub fn parse_expr_equiv(lhs_src : String, rhs_src : String) -> String raise {
-  let transforms = full_transformations()
+  let transforms = standard_transformations_text()
   parsing_eval_str(
     "sympy.sstr(sympy.simplify(" +
     "sympy.parsing.sympy_parser.parse_expr(" +
@@ -200,6 +224,49 @@ pub fn parse_expr_equiv(lhs_src : String, rhs_src : String) -> String raise {
 }
 
 ///|
+pub fn parse_expr_equiv_relaxed(
+  lhs_src : String,
+  rhs_src : String,
+) -> String raise {
+  let transforms = relaxed_transformations_text()
+  parsing_eval_str(
+    "sympy.sstr(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ")))",
+  )
+}
+
+///|
+pub fn parse_expr_equiv_relaxed_near_zero(
+  lhs_src : String,
+  rhs_src : String,
+  tolerance? : String = "1e-12",
+) -> String raise {
+  let transforms = relaxed_transformations_text()
+  parsing_eval_str(
+    "sympy.sstr(sympy.Abs(sympy.N(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ")), 50)) < sympy.Float(" +
+    python_string_literal(tolerance) +
+    "))",
+  )
+}
+
+///|
 pub fn parse_expr_equiv_in(
   lhs_src : String,
   rhs_src : String,
@@ -210,7 +277,51 @@ pub fn parse_expr_equiv_in(
   global_binding_names? : Array[String] = [],
   global_binding_exprs? : Array[String] = [],
 ) -> String raise {
-  let transforms = full_transformations()
+  let transforms = standard_transformations_text()
+  let local_dict_literal = dict_literal(
+    callable_names, binding_names, binding_exprs,
+  )
+  let global_dict_literal = dict_literal(
+    global_callable_names, global_binding_names, global_binding_exprs,
+  )
+  parsing_eval_str(
+    "sympy.sstr(sympy.simplify(" +
+    "sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(lhs_src) +
+    ", transformations=" +
+    transforms +
+    ", local_dict=" +
+    local_dict_literal +
+    ", global_dict=" +
+    "dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")" +
+    ") - sympy.parsing.sympy_parser.parse_expr(" +
+    python_string_literal(rhs_src) +
+    ", transformations=" +
+    transforms +
+    ", local_dict=" +
+    local_dict_literal +
+    ", global_dict=" +
+    "dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")" +
+    ")))",
+  )
+}
+
+///|
+pub fn parse_expr_equiv_in_relaxed(
+  lhs_src : String,
+  rhs_src : String,
+  callable_names : Array[String],
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
+) -> String raise {
+  let transforms = relaxed_transformations_text()
   let local_dict_literal = dict_literal(
     callable_names, binding_names, binding_exprs,
   )
@@ -256,11 +367,74 @@ pub fn parse_expr_sstr_in(
 ) -> String raise {
   parse_expr_sstr_with(
     src,
-    full_transformations(),
+    standard_transformations_text(),
     dict_literal(callable_names, binding_names, binding_exprs),
     dict_literal(
       global_callable_names, global_binding_names, global_binding_exprs,
     ),
     evaluate,
+  )
+}
+
+///|
+pub fn parse_expr_sstr_in_relaxed(
+  src : String,
+  callable_names : Array[String],
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
+  evaluate? : Bool = true,
+) -> String raise {
+  parse_expr_sstr_with(
+    src,
+    relaxed_transformations_text(),
+    dict_literal(callable_names, binding_names, binding_exprs),
+    dict_literal(
+      global_callable_names, global_binding_names, global_binding_exprs,
+    ),
+    evaluate,
+  )
+}
+
+///|
+pub fn parse_expr_split_custom_sstr(
+  src : String,
+  excluded_names : Array[String],
+) -> String raise {
+  let rendered_excluded = excluded_names.map(python_string_literal).join(", ")
+  let transforms = "sympy.parsing.sympy_parser.standard_transformations + " +
+    "(sympy.parsing.sympy_parser.split_symbols_custom(" +
+    "(lambda symbol: symbol not in [" +
+    rendered_excluded +
+    "] and sympy.parsing.sympy_parser._token_splittable(symbol))" +
+    "), sympy.parsing.sympy_parser.implicit_multiplication)"
+  parse_expr_sstr_with(src, transforms, "{}", "{}", true)
+}
+
+///|
+pub fn ast_parse_expr_sstr(
+  src : String,
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+) -> String raise {
+  let entries : Array[String] = []
+  for i in 0..<binding_names.length() {
+    entries.push(
+      python_string_literal(binding_names[i]) +
+      ": sympy.sympify(" +
+      python_string_literal(binding_exprs[i]) +
+      ")",
+    )
+  }
+  parsing_eval_str(
+    "sympy.sstr(__import__(" +
+    python_string_literal("sympy.parsing.ast_parser") +
+    ", fromlist=['parse_expr']).parse_expr(" +
+    python_string_literal(src) +
+    ", {" +
+    entries.join(", ") +
+    "}))",
   )
 }

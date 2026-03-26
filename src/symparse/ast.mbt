@@ -25,6 +25,24 @@ pub enum CompareOp {
 } derive(Eq, Show)
 
 ///|
+pub(all) enum Transformation {
+  LambdaNotation
+  AutoSymbol
+  RepeatedDecimals
+  AutoNumber
+  FactorialNotation
+  SplitSymbols
+  SplitSymbolsCustom((String) -> Bool)
+  ImplicitMultiplication
+  ImplicitApplication
+  FunctionExponentiation
+  ConvertXor
+  ConvertEqualsSigns
+  Rationalize
+  ImplicitMultiplicationApplication
+}
+
+///|
 pub enum Ast {
   Number(span~ : Span, String)
   Symbol(span~ : Span, String)
@@ -33,6 +51,7 @@ pub enum Ast {
   Call(span~ : Span, Ast, Array[Ast])
   Tuple(span~ : Span, Array[Ast])
   Compare(span~ : Span, Array[Ast], Array[CompareOp])
+  Lambda(span~ : Span, Array[String], Ast)
 }
 
 ///|
@@ -45,19 +64,15 @@ pub fn ast_span(ast : Ast) -> Span {
     Ast::Call(span~, _, _) => span
     Ast::Tuple(span~, _) => span
     Ast::Compare(span~, _, _) => span
+    Ast::Lambda(span~, _, _) => span
   }
 }
 
 ///|
 pub struct ParseOptions {
-  caret_as_power : Bool
   evaluate : Bool
-  implicit_multiplication : Bool
-  implicit_application : Bool
-  function_exponentiation : Bool
-  factorial_notation : Bool
-  convert_equals_signs : Bool
-} derive(Eq, Show)
+  transformations : Array[Transformation]
+}
 
 ///|
 pub struct ParseContext {
@@ -69,15 +84,7 @@ pub struct ParseContext {
 
 ///|
 pub fn default_parse_options() -> ParseOptions {
-  ParseOptions::{
-    caret_as_power: true,
-    evaluate: true,
-    implicit_multiplication: true,
-    implicit_application: true,
-    function_exponentiation: true,
-    factorial_notation: true,
-    convert_equals_signs: true,
-  }
+  ParseOptions::{ evaluate: true, transformations: standard_transformations() }
 }
 
 ///|
@@ -107,21 +114,119 @@ pub fn parse_context(
 
 ///|
 pub fn parse_options(
-  caret_as_power? : Bool = true,
+  transformations? : Array[Transformation] = standard_transformations(),
   evaluate? : Bool = true,
-  implicit_multiplication? : Bool = true,
-  implicit_application? : Bool = true,
-  function_exponentiation? : Bool = true,
-  factorial_notation? : Bool = true,
-  convert_equals_signs? : Bool = true,
 ) -> ParseOptions {
-  ParseOptions::{
-    caret_as_power,
-    evaluate,
-    implicit_multiplication,
-    implicit_application,
-    function_exponentiation,
-    factorial_notation,
-    convert_equals_signs,
+  ParseOptions::{ evaluate, transformations: transformations.map(x => x) }
+}
+
+///|
+pub fn standard_transformations() -> Array[Transformation] {
+  [
+    Transformation::LambdaNotation,
+    Transformation::AutoSymbol,
+    Transformation::RepeatedDecimals,
+    Transformation::AutoNumber,
+    Transformation::FactorialNotation,
+  ]
+}
+
+///|
+pub fn relaxed_transformations() -> Array[Transformation] {
+  [
+    ..standard_transformations(),
+    Transformation::ConvertXor,
+    Transformation::ImplicitMultiplicationApplication,
+    Transformation::ConvertEqualsSigns,
+  ]
+}
+
+///|
+fn option_has(options : ParseOptions, target : Transformation) -> Bool {
+  for transformation in options.transformations {
+    match (transformation, target) {
+      (Transformation::LambdaNotation, Transformation::LambdaNotation)
+      | (Transformation::AutoSymbol, Transformation::AutoSymbol)
+      | (Transformation::RepeatedDecimals, Transformation::RepeatedDecimals)
+      | (Transformation::AutoNumber, Transformation::AutoNumber)
+      | (Transformation::FactorialNotation, Transformation::FactorialNotation)
+      | (Transformation::SplitSymbols, Transformation::SplitSymbols)
+      | (
+        Transformation::ImplicitMultiplication,
+        Transformation::ImplicitMultiplication,
+      )
+      | (
+        Transformation::ImplicitApplication,
+        Transformation::ImplicitApplication,
+      )
+      | (
+        Transformation::FunctionExponentiation,
+        Transformation::FunctionExponentiation,
+      )
+      | (Transformation::ConvertXor, Transformation::ConvertXor)
+      | (Transformation::ConvertEqualsSigns, Transformation::ConvertEqualsSigns)
+      | (Transformation::Rationalize, Transformation::Rationalize)
+      | (
+        Transformation::ImplicitMultiplicationApplication,
+        Transformation::ImplicitMultiplicationApplication,
+      ) => return true
+      (Transformation::SplitSymbolsCustom(_), Transformation::SplitSymbols) =>
+        return true
+      _ => ()
+    }
   }
+  false
+}
+
+///|
+fn option_has_lambda(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::LambdaNotation)
+}
+
+///|
+fn option_has_auto_symbol(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::AutoSymbol)
+}
+
+///|
+fn option_has_repeated_decimals(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::RepeatedDecimals)
+}
+
+///|
+fn option_has_factorial(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::FactorialNotation)
+}
+
+///|
+fn option_has_implicit_multiplication(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::ImplicitMultiplication) ||
+  option_has(options, Transformation::ImplicitMultiplicationApplication)
+}
+
+///|
+fn option_has_implicit_application(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::ImplicitApplication) ||
+  option_has(options, Transformation::ImplicitMultiplicationApplication)
+}
+
+///|
+fn option_has_function_exponentiation(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::FunctionExponentiation) ||
+  option_has(options, Transformation::ImplicitMultiplicationApplication)
+}
+
+///|
+fn option_has_convert_xor(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::ConvertXor)
+}
+
+///|
+fn option_has_convert_equals_signs(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::ConvertEqualsSigns)
+}
+
+///|
+fn option_has_rationalize(options : ParseOptions) -> Bool {
+  option_has(options, Transformation::Rationalize)
 }
