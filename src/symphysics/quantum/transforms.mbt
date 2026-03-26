@@ -8,9 +8,10 @@
 
 ///|
 fn tensor_product_args(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function("TensorProduct", args) => Some(args)
-    _ => None
+  if quantum_expr_has_name(expr, "TensorProduct") {
+    quantum_expr_args(expr)
+  } else {
+    None
   }
 }
 
@@ -50,24 +51,32 @@ pub fn quantum_transform_state_pair(
           Some([inner_product(lhs, rhs, evaluate=false)])
         _ if quantum_is_ket_expr(lhs) && quantum_is_bra_expr(rhs) =>
           Some([outer_product(lhs, rhs)])
-        (Expr::Function("OuterProduct", args), _) if args.length() == 2 &&
-          quantum_is_ket_expr(args[0]) &&
-          quantum_is_bra_expr(args[1]) &&
+        _ if @symcore.application_has_name(lhs, "OuterProduct", arity=2) &&
           quantum_is_ket_expr(rhs) =>
-          Some([inner_product(args[1], rhs, evaluate=false), args[0]])
-        (_, Expr::Function("OuterProduct", args)) if args.length() == 2 &&
-          quantum_is_bra_expr(lhs) &&
-          quantum_is_ket_expr(args[0]) &&
-          quantum_is_bra_expr(args[1]) =>
-          Some([inner_product(lhs, args[0], evaluate=false), args[1]])
-        (
-          Expr::Function("OuterProduct", lhs_args),
-          Expr::Function("OuterProduct", rhs_args),
-        ) if lhs_args.length() == 2 && rhs_args.length() == 2 =>
-          Some([
-            inner_product(lhs_args[1], rhs_args[0], evaluate=false),
-            outer_product(lhs_args[0], rhs_args[1]),
-          ])
+          match quantum_expr_args(lhs) {
+            Some([ket_arg, bra_arg]) if quantum_is_ket_expr(ket_arg) &&
+              quantum_is_bra_expr(bra_arg) =>
+              Some([inner_product(bra_arg, rhs, evaluate=false), ket_arg])
+            _ => None
+          }
+        _ if @symcore.application_has_name(rhs, "OuterProduct", arity=2) &&
+          quantum_is_bra_expr(lhs) =>
+          match quantum_expr_args(rhs) {
+            Some([ket_arg, bra_arg]) if quantum_is_ket_expr(ket_arg) &&
+              quantum_is_bra_expr(bra_arg) =>
+              Some([inner_product(lhs, ket_arg, evaluate=false), bra_arg])
+            _ => None
+          }
+        _ if @symcore.application_has_name(lhs, "OuterProduct", arity=2) &&
+          @symcore.application_has_name(rhs, "OuterProduct", arity=2) =>
+          match (quantum_expr_args(lhs), quantum_expr_args(rhs)) {
+            (Some([lhs_ket, lhs_bra]), Some([rhs_ket, rhs_bra])) =>
+              Some([
+                inner_product(lhs_bra, rhs_ket, evaluate=false),
+                outer_product(lhs_ket, rhs_bra),
+              ])
+            _ => None
+          }
         _ =>
           match (tensor_product_args(lhs), tensor_product_args(rhs)) {
             (Some(lhs_items), Some(rhs_items)) if lhs_items.length() ==
@@ -202,11 +211,12 @@ pub fn quantum_canonical_pow(
   match quantum_integer_value(exp) {
     Some(0) => int(1)
     Some(1) => base
-    Some(power) if base is Expr::Function("FermionOp", _) && power < 0 =>
+    Some(power) if quantum_expr_has_name(base, "FermionOp") && power < 0 =>
       raise @symphysics.PhysicsError::ValueError(
         "Negative powers of fermion operators are undefined",
       )
-    Some(power) if base is Expr::Function("FermionOp", _) && power > 1 => int(0)
+    Some(power) if quantum_expr_has_name(base, "FermionOp") && power > 1 =>
+      int(0)
     Some(power) =>
       match gate_pow_simplify(base, power) {
         Some(simplified) if simplified != @symcore.raw_pow(base, exp) =>

@@ -60,51 +60,55 @@ fn sho_xp_prefactor() -> Expr {
 pub fn sho_rewrite_as_xp(expr : Expr) -> Expr {
   let xp_scale = sho_xp_prefactor()
   let x_term = sho_mass * sho_omega * x_op()
-  let px_term = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * px_op()
+  let px_term = @symcore.Expr::NumberSymbol(
+      @symcore.NumberSymbolKind::ImaginaryUnit,
+    ) *
+    px_op()
   let px_sq = @symcore.raw_pow(px_op(), int(2))
   let x_sq = @symcore.raw_pow(sho_mass * sho_omega * x_op(), int(2))
-  match expr {
-    Expr::Function("RaisingOp", _) => xp_scale * (x_term - px_term)
-    Expr::Function("LoweringOp", _) => xp_scale * (x_term + px_term)
-    Expr::Function("NumberOp", _) =>
-      (px_sq + x_sq) *
-      @symcore.raw_pow(int(2) * sho_mass * hbar * sho_omega, int(-1)) -
-      sho_half()
-    Expr::Function("Hamiltonian", _) =>
-      (px_sq + x_sq) * @symcore.raw_pow(int(2) * sho_mass, int(-1))
-    _ => expr
+  if quantum_expr_has_name(expr, "RaisingOp") {
+    xp_scale * (x_term - px_term)
+  } else if quantum_expr_has_name(expr, "LoweringOp") {
+    xp_scale * (x_term + px_term)
+  } else if quantum_expr_has_name(expr, "NumberOp") {
+    (px_sq + x_sq) *
+    @symcore.raw_pow(int(2) * sho_mass * hbar * sho_omega, int(-1)) -
+    sho_half()
+  } else if quantum_expr_has_name(expr, "Hamiltonian") {
+    (px_sq + x_sq) * @symcore.raw_pow(int(2) * sho_mass, int(-1))
+  } else {
+    expr
   }
 }
 
 ///|
 pub fn sho_rewrite_as_a(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("NumberOp", _) =>
-      @symcore.raw_mul([raising_op(), lowering_op()])
-    Expr::Function("Hamiltonian", _) =>
-      hbar *
-      sho_omega *
-      (@symcore.raw_mul([raising_op(), lowering_op()]) + sho_half())
-    _ => expr
+  if quantum_expr_has_name(expr, "NumberOp") {
+    @symcore.raw_mul([raising_op(), lowering_op()])
+  } else if quantum_expr_has_name(expr, "Hamiltonian") {
+    hbar *
+    sho_omega *
+    (@symcore.raw_mul([raising_op(), lowering_op()]) + sho_half())
+  } else {
+    expr
   }
 }
 
 ///|
 pub fn sho_rewrite_as_h(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("NumberOp", _) =>
-      sho_hamiltonian() * @symcore.raw_pow(hbar * sho_omega, int(-1)) -
-      sho_half()
-    _ => expr
+  if quantum_expr_has_name(expr, "NumberOp") {
+    sho_hamiltonian() * @symcore.raw_pow(hbar * sho_omega, int(-1)) - sho_half()
+  } else {
+    expr
   }
 }
 
 ///|
 pub fn sho_rewrite_as_n(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("Hamiltonian", _) =>
-      hbar * sho_omega * (number_op() + sho_half())
-    _ => expr
+  if quantum_expr_has_name(expr, "Hamiltonian") {
+    hbar * sho_omega * (number_op() + sho_half())
+  } else {
+    expr
   }
 }
 
@@ -115,32 +119,24 @@ fn sho_is_zero_state(n : Expr) -> Bool {
 
 ///|
 pub fn sho_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
-  match (op_expr, ket_expr) {
-    (Expr::Function("RaisingOp", _), Expr::Function("SHOKet", args)) if args.length() ==
-      1 => {
-      let n = args[0]
-      Some(@symcore.raw_function("sqrt", [n + int(1)]) * sho_ket(n + int(1)))
-    }
-    (Expr::Function("LoweringOp", _), Expr::Function("SHOKet", args)) if args.length() ==
-      1 => {
-      let n = args[0]
-      if sho_is_zero_state(n) {
-        Some(int(0))
+  match quantum_expr_args(ket_expr) {
+    Some([n]) if quantum_expr_has_name(ket_expr, "SHOKet") =>
+      if quantum_expr_has_name(op_expr, "RaisingOp") {
+        Some(@symcore.raw_function("sqrt", [n + int(1)]) * sho_ket(n + int(1)))
+      } else if quantum_expr_has_name(op_expr, "LoweringOp") {
+        if sho_is_zero_state(n) {
+          Some(int(0))
+        } else {
+          Some(@symcore.raw_function("sqrt", [n]) * sho_ket(n - int(1)))
+        }
+      } else if quantum_expr_has_name(op_expr, "NumberOp") {
+        Some(n * ket_expr)
+      } else if quantum_expr_has_name(op_expr, "Hamiltonian") {
+        let half = sho_half()
+        Some(hbar * sho_omega * (n + half) * ket_expr)
       } else {
-        Some(@symcore.raw_function("sqrt", [n]) * sho_ket(n - int(1)))
+        None
       }
-    }
-    (Expr::Function("NumberOp", _), Expr::Function("SHOKet", args)) if args.length() ==
-      1 => {
-      let n = args[0]
-      Some(n * ket_expr)
-    }
-    (Expr::Function("Hamiltonian", _), Expr::Function("SHOKet", args)) if args.length() ==
-      1 => {
-      let n = args[0]
-      let half = sho_half()
-      Some(hbar * sho_omega * (n + half) * ket_expr)
-    }
     _ => None
   }
 }
@@ -174,34 +170,34 @@ fn sho_number_basis_matrix(
     )
   }
   let rows = sho_zero_matrix(ndim)
-  match expr {
-    Expr::Function("RaisingOp", _) => {
+  match quantum_expr_args(expr) {
+    _ if quantum_expr_has_name(expr, "RaisingOp") => {
       for i in 0..<(ndim - 1) {
         rows[i + 1][i] = @symcore.raw_function("sqrt", [int(i + 1)])
       }
       @symphysics.explicit_matrix_from_rows(rows)
     }
-    Expr::Function("LoweringOp", _) => {
+    _ if quantum_expr_has_name(expr, "LoweringOp") => {
       for i in 0..<(ndim - 1) {
         rows[i][i + 1] = @symcore.raw_function("sqrt", [int(i + 1)])
       }
       @symphysics.explicit_matrix_from_rows(rows)
     }
-    Expr::Function("NumberOp", _) => {
+    _ if quantum_expr_has_name(expr, "NumberOp") => {
       for i in 0..<ndim {
         rows[i][i] = int(i)
       }
       @symphysics.explicit_matrix_from_rows(rows)
     }
-    Expr::Function("Hamiltonian", _) => {
+    _ if quantum_expr_has_name(expr, "Hamiltonian") => {
       let half = sho_half()
       for i in 0..<ndim {
         rows[i][i] = hbar * sho_omega * (int(i) + half)
       }
       @symphysics.explicit_matrix_from_rows(rows)
     }
-    Expr::Function("SHOKet", args) if args.length() == 1 =>
-      match sho_n_value(args[0]) {
+    Some([n_expr]) if quantum_expr_has_name(expr, "SHOKet") =>
+      match sho_n_value(n_expr) {
         Some(n) => {
           guard n < ndim else {
             raise @symphysics.PhysicsError::IndexError(
@@ -219,8 +215,8 @@ fn sho_number_basis_matrix(
             "SHOKet representation needs a concrete nonnegative integer index",
           )
       }
-    Expr::Function("SHOBra", args) if args.length() == 1 =>
-      match sho_n_value(args[0]) {
+    Some([n_expr]) if quantum_expr_has_name(expr, "SHOBra") =>
+      match sho_n_value(n_expr) {
         Some(n) => {
           guard n < ndim else {
             raise @symphysics.PhysicsError::IndexError(
@@ -251,25 +247,20 @@ pub fn sho_represent(
 ) -> MatrixScalarValue? raise @symphysics.PhysicsError {
   let is_number_basis = match basis {
     None => true
-    Some(basis_expr) =>
-      match basis_expr {
-        Expr::Function("NumberOp", _) => true
-        _ => false
-      }
+    Some(basis_expr) => quantum_expr_has_name(basis_expr, "NumberOp")
   }
   if !is_number_basis {
     return None
   }
-  match expr {
-    Expr::Function(name, _) if name == "RaisingOp" ||
-      name == "LoweringOp" ||
-      name == "NumberOp" ||
-      name == "Hamiltonian" ||
-      name == "SHOKet" ||
-      name == "SHOBra" => {
-      let matrix = sho_number_basis_matrix(expr, ndim)
-      Some(MatrixScalarValue::Matrix(matrix))
-    }
-    _ => None
+  if quantum_expr_has_name(expr, "RaisingOp") ||
+    quantum_expr_has_name(expr, "LoweringOp") ||
+    quantum_expr_has_name(expr, "NumberOp") ||
+    quantum_expr_has_name(expr, "Hamiltonian") ||
+    quantum_expr_has_name(expr, "SHOKet") ||
+    quantum_expr_has_name(expr, "SHOBra") {
+    let matrix = sho_number_basis_matrix(expr, ndim)
+    Some(MatrixScalarValue::Matrix(matrix))
+  } else {
+    None
   }
 }

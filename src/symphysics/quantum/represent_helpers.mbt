@@ -16,17 +16,24 @@
 
 ///|
 fn represent_default_basis_state(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("XKet", _)
-    | Expr::Function("XBra", _)
-    | Expr::Function("XOp", _) => Some(x_ket())
-    Expr::Function("PxKet", _)
-    | Expr::Function("PxBra", _)
-    | Expr::Function("PxOp", _) => Some(px_ket())
-    Expr::Function("PositionKet3D", _) | Expr::Function("PositionBra3D", _) =>
-      Some(position_ket_3d())
-    Expr::Function("JzKet", args) | Expr::Function("JzBra", args) if args.length() ==
-      2 => Some(jz_ket(args[0], Expr::Symbol("m")).as_expr())
+  if quantum_expr_has_name(expr, "XKet") ||
+    quantum_expr_has_name(expr, "XBra") ||
+    quantum_expr_has_name(expr, "XOp") {
+    return Some(x_ket())
+  }
+  if quantum_expr_has_name(expr, "PxKet") ||
+    quantum_expr_has_name(expr, "PxBra") ||
+    quantum_expr_has_name(expr, "PxOp") {
+    return Some(px_ket())
+  }
+  if quantum_expr_has_name(expr, "PositionKet3D") ||
+    quantum_expr_has_name(expr, "PositionBra3D") {
+    return Some(position_ket_3d())
+  }
+  match quantum_expr_args(expr) {
+    Some([j, _]) if quantum_expr_has_name(expr, "JzKet") ||
+      quantum_expr_has_name(expr, "JzBra") =>
+      Some(jz_ket(j, Expr::Symbol("m")).as_expr())
     _ =>
       match state_from_expr(expr) {
         Some(state) =>
@@ -34,7 +41,9 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
             StateFlavor::Ket | StateFlavor::Bra =>
               Some(ket([Expr::Symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
-              Some(time_dep_ket([Expr::Symbol("psi")], time=Expr::Symbol("t")).as_expr())
+              Some(
+                time_dep_ket([Expr::Symbol("psi")], time=Expr::Symbol("t")).as_expr(),
+              )
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
               Some(orthogonal_ket([Expr::Symbol("n")]).as_expr())
           }
@@ -58,69 +67,67 @@ fn represent_index_symbol(label : Expr, index : Int, fallback : String) -> Expr 
 
 ///|
 fn represent_enumerate_with_index(state_expr : Expr, index : Int) -> Expr? {
-  match state_expr {
-    Expr::Function("Ket", args) =>
+  match quantum_expr_args(state_expr) {
+    Some(args) if quantum_expr_has_name(state_expr, "Ket") =>
       Some(
         ket(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
       )
-    Expr::Function("Bra", args) =>
+    Some(args) if quantum_expr_has_name(state_expr, "Bra") =>
       Some(
         bra(args.map(arg => represent_index_symbol(arg, index, "psi"))).as_expr(),
       )
-    Expr::Function("TimeDepKet", args) if args.length() >= 1 => {
+    Some(args) if quantum_expr_has_name(state_expr, "TimeDepKet") &&
+      args.length() >= 1 => {
       let labels : Array[Expr] = []
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
       Some(time_dep_ket(labels, time=args[args.length() - 1]).as_expr())
     }
-    Expr::Function("TimeDepBra", args) if args.length() >= 1 => {
+    Some(args) if quantum_expr_has_name(state_expr, "TimeDepBra") &&
+      args.length() >= 1 => {
       let labels : Array[Expr] = []
       for i in 0..<(args.length() - 1) {
         labels.push(represent_index_symbol(args[i], index, "psi"))
       }
       Some(time_dep_bra(labels, time=args[args.length() - 1]).as_expr())
     }
-    Expr::Function("OrthogonalKet", args) =>
+    Some(args) if quantum_expr_has_name(state_expr, "OrthogonalKet") =>
       Some(
         orthogonal_ket(args.map(arg => represent_index_symbol(arg, index, "n"))).as_expr(),
       )
-    Expr::Function("OrthogonalBra", args) =>
+    Some(args) if quantum_expr_has_name(state_expr, "OrthogonalBra") =>
       Some(
         orthogonal_bra(args.map(arg => represent_index_symbol(arg, index, "n"))).as_expr(),
       )
-    Expr::Function("XKet", args) if args.length() == 1 =>
-      Some(x_ket(position=represent_index_symbol(args[0], index, "x")))
-    Expr::Function("XBra", args) if args.length() == 1 =>
-      Some(x_bra(position=represent_index_symbol(args[0], index, "x")))
-    Expr::Function("PxKet", args) if args.length() == 1 =>
-      Some(px_ket(momentum=represent_index_symbol(args[0], index, "px")))
-    Expr::Function("PxBra", args) if args.length() == 1 =>
-      Some(px_bra(momentum=represent_index_symbol(args[0], index, "px")))
-    Expr::Function("PositionKet3D", args) if args.length() == 3 =>
+    Some([position]) if quantum_expr_has_name(state_expr, "XKet") =>
+      Some(x_ket(position=represent_index_symbol(position, index, "x")))
+    Some([position]) if quantum_expr_has_name(state_expr, "XBra") =>
+      Some(x_bra(position=represent_index_symbol(position, index, "x")))
+    Some([momentum]) if quantum_expr_has_name(state_expr, "PxKet") =>
+      Some(px_ket(momentum=represent_index_symbol(momentum, index, "px")))
+    Some([momentum]) if quantum_expr_has_name(state_expr, "PxBra") =>
+      Some(px_bra(momentum=represent_index_symbol(momentum, index, "px")))
+    Some([x, y, z]) if quantum_expr_has_name(state_expr, "PositionKet3D") =>
       Some(
         position_ket_3d(
-          x=represent_index_symbol(args[0], index, "x"),
-          y=represent_index_symbol(args[1], index, "y"),
-          z=represent_index_symbol(args[2], index, "z"),
+          x=represent_index_symbol(x, index, "x"),
+          y=represent_index_symbol(y, index, "y"),
+          z=represent_index_symbol(z, index, "z"),
         ),
       )
-    Expr::Function("PositionBra3D", args) if args.length() == 3 =>
+    Some([x, y, z]) if quantum_expr_has_name(state_expr, "PositionBra3D") =>
       Some(
         position_bra_3d(
-          x=represent_index_symbol(args[0], index, "x"),
-          y=represent_index_symbol(args[1], index, "y"),
-          z=represent_index_symbol(args[2], index, "z"),
+          x=represent_index_symbol(x, index, "x"),
+          y=represent_index_symbol(y, index, "y"),
+          z=represent_index_symbol(z, index, "z"),
         ),
       )
-    Expr::Function("JzKet", args) if args.length() == 2 =>
-      Some(
-        jz_ket(args[0], represent_index_symbol(args[1], index, "m")).as_expr(),
-      )
-    Expr::Function("JzBra", args) if args.length() == 2 =>
-      Some(
-        jz_bra(args[0], represent_index_symbol(args[1], index, "m")).as_expr(),
-      )
+    Some([j, m]) if quantum_expr_has_name(state_expr, "JzKet") =>
+      Some(jz_ket(j, represent_index_symbol(m, index, "m")).as_expr())
+    Some([j, m]) if quantum_expr_has_name(state_expr, "JzBra") =>
+      Some(jz_bra(j, represent_index_symbol(m, index, "m")).as_expr())
     _ => None
   }
 }
