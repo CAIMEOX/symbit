@@ -122,12 +122,19 @@ fn laplace_deep_collect(expr : Expr, t_name : String) -> Expr {
         laplace_deep_collect(base, t_name),
         laplace_deep_collect(exp, t_name),
       )
-    @symcore.Expr::Function(name, args) =>
-      @symcore.raw_function(
-        name,
-        args.map(fn(arg) { laplace_deep_collect(arg, t_name) }),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match
+            @symcore.raw_apply(
+              head,
+              args.map(fn(arg) { laplace_deep_collect(arg, t_name) }),
+            ) {
+            Some(value) => value
+            None => expr
+          }
+        None => expr
+      }
   }
   match poly_coeffs_general(rebuilt, t_name) {
     Some(coeffs) => polynomial_from_coeffs(coeffs, t_name)
@@ -140,71 +147,97 @@ fn laplace_correspondence_walk(
   expr : Expr,
   fdict : Map[String, String],
 ) -> Expr {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match (@symcore.function_head_name(head), args) {
+        (Some("LaplaceTransform"), [source_expr, source_t, source_s]) =>
+          match @symcore.application_parts(source_expr) {
+            Some((source_head, [arg])) =>
+              match @symcore.function_head_name(source_head) {
+                Some(source_name) =>
+                  if @symcore.compare_expr(arg, source_t) == 0 {
+                    match fdict.get(source_name) {
+                      Some(target_name) =>
+                        return @symcore.raw_function(target_name, [
+                          laplace_correspondence_walk(source_s, fdict),
+                        ])
+                      None =>
+                        return @symcore.raw_function("LaplaceTransform", [
+                          laplace_correspondence_walk(source_expr, fdict),
+                          laplace_correspondence_walk(source_t, fdict),
+                          laplace_correspondence_walk(source_s, fdict),
+                        ])
+                    }
+                  } else {
+                    return @symcore.raw_function("LaplaceTransform", [
+                      laplace_correspondence_walk(source_expr, fdict),
+                      laplace_correspondence_walk(source_t, fdict),
+                      laplace_correspondence_walk(source_s, fdict),
+                    ])
+                  }
+                None =>
+                  return @symcore.raw_function("LaplaceTransform", [
+                    laplace_correspondence_walk(source_expr, fdict),
+                    laplace_correspondence_walk(source_t, fdict),
+                    laplace_correspondence_walk(source_s, fdict),
+                  ])
+              }
+            _ =>
+              return @symcore.raw_function("LaplaceTransform", [
+                laplace_correspondence_walk(source_expr, fdict),
+                laplace_correspondence_walk(source_t, fdict),
+                laplace_correspondence_walk(source_s, fdict),
+              ])
+          }
+        (Some("InverseLaplaceTransform"), [target_expr, source_s, source_t])
+        | (Some("InverseLaplaceTransform"), [target_expr, source_s, source_t, _]
+        ) =>
+          match @symcore.application_parts(target_expr) {
+            Some((target_head, [arg])) =>
+              match @symcore.function_head_name(target_head) {
+                Some(target_name) =>
+                  if @symcore.compare_expr(arg, source_s) == 0 {
+                    match find_inverse_laplace_source(target_name, fdict) {
+                      Some(source_name) =>
+                        return @symcore.raw_function(source_name, [
+                          laplace_correspondence_walk(source_t, fdict),
+                        ])
+                      None =>
+                        return @symcore.raw_function(
+                          "InverseLaplaceTransform",
+                          [
+                            laplace_correspondence_walk(target_expr, fdict),
+                            laplace_correspondence_walk(source_s, fdict),
+                            laplace_correspondence_walk(source_t, fdict),
+                          ],
+                        )
+                    }
+                  } else {
+                    return @symcore.raw_function("InverseLaplaceTransform", [
+                      laplace_correspondence_walk(target_expr, fdict),
+                      laplace_correspondence_walk(source_s, fdict),
+                      laplace_correspondence_walk(source_t, fdict),
+                    ])
+                  }
+                None =>
+                  return @symcore.raw_function("InverseLaplaceTransform", [
+                    laplace_correspondence_walk(target_expr, fdict),
+                    laplace_correspondence_walk(source_s, fdict),
+                    laplace_correspondence_walk(source_t, fdict),
+                  ])
+              }
+            _ =>
+              return @symcore.raw_function("InverseLaplaceTransform", [
+                laplace_correspondence_walk(target_expr, fdict),
+                laplace_correspondence_walk(source_s, fdict),
+                laplace_correspondence_walk(source_t, fdict),
+              ])
+          }
+        _ => ()
+      }
+    None => ()
+  }
   match expr {
-    @symcore.Expr::Function(
-      "LaplaceTransform",
-      [@symcore.Expr::Function(source_name, [arg]), source_t, source_s]
-    ) =>
-      if @symcore.compare_expr(arg, source_t) == 0 {
-        match fdict.get(source_name) {
-          Some(target_name) =>
-            @symcore.raw_function(target_name, [
-              laplace_correspondence_walk(source_s, fdict),
-            ])
-          None =>
-            @symcore.raw_function("LaplaceTransform", [
-              laplace_correspondence_walk(
-                @symcore.raw_function(source_name, [arg]),
-                fdict,
-              ),
-              laplace_correspondence_walk(source_t, fdict),
-              laplace_correspondence_walk(source_s, fdict),
-            ])
-        }
-      } else {
-        @symcore.raw_function("LaplaceTransform", [
-          laplace_correspondence_walk(
-            @symcore.raw_function(source_name, [arg]),
-            fdict,
-          ),
-          laplace_correspondence_walk(source_t, fdict),
-          laplace_correspondence_walk(source_s, fdict),
-        ])
-      }
-    @symcore.Expr::Function(
-      "InverseLaplaceTransform",
-      [@symcore.Expr::Function(target_name, [arg]), source_s, source_t]
-    )
-    | @symcore.Expr::Function(
-      "InverseLaplaceTransform",
-      [@symcore.Expr::Function(target_name, [arg]), source_s, source_t, _]
-    ) =>
-      if @symcore.compare_expr(arg, source_s) == 0 {
-        match find_inverse_laplace_source(target_name, fdict) {
-          Some(source_name) =>
-            @symcore.raw_function(source_name, [
-              laplace_correspondence_walk(source_t, fdict),
-            ])
-          None =>
-            @symcore.raw_function("InverseLaplaceTransform", [
-              laplace_correspondence_walk(
-                @symcore.raw_function(target_name, [arg]),
-                fdict,
-              ),
-              laplace_correspondence_walk(source_s, fdict),
-              laplace_correspondence_walk(source_t, fdict),
-            ])
-        }
-      } else {
-        @symcore.raw_function("InverseLaplaceTransform", [
-          laplace_correspondence_walk(
-            @symcore.raw_function(target_name, [arg]),
-            fdict,
-          ),
-          laplace_correspondence_walk(source_s, fdict),
-          laplace_correspondence_walk(source_t, fdict),
-        ])
-      }
     @symcore.Expr::Add(args) =>
       @symcore.raw_add(
         args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
@@ -218,12 +251,19 @@ fn laplace_correspondence_walk(
         laplace_correspondence_walk(base, fdict),
         laplace_correspondence_walk(exp, fdict),
       )
-    @symcore.Expr::Function(name, args) =>
-      @symcore.raw_function(
-        name,
-        args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match
+            @symcore.raw_apply(
+              head,
+              args.map(fn(arg) { laplace_correspondence_walk(arg, fdict) }),
+            ) {
+            Some(value) => value
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 
@@ -263,12 +303,21 @@ fn laplace_initial_conds_walk(
             laplace_initial_conds_walk(base, t_name, fdict),
             laplace_initial_conds_walk(exp, t_name, fdict),
           )
-        @symcore.Expr::Function(name, args) =>
-          @symcore.raw_function(
-            name,
-            args.map(fn(arg) { laplace_initial_conds_walk(arg, t_name, fdict) }),
-          )
-        _ => expr
+        _ =>
+          match @symcore.application_parts(expr) {
+            Some((head, args)) =>
+              match
+                @symcore.raw_apply(
+                  head,
+                  args.map(fn(arg) {
+                    laplace_initial_conds_walk(arg, t_name, fdict)
+                  }),
+                ) {
+                Some(value) => value
+                None => expr
+              }
+            None => expr
+          }
       }
   }
 }
@@ -295,12 +344,25 @@ fn initial_condition_order(
   func_name : String,
   t_name : String,
 ) -> Int? {
-  match expr {
-    @symcore.Expr::Function(func, [arg]) =>
-      if func == func_name && expr_is_zero(arg) {
-        Some(0)
-      } else {
-        None
+  match @symcore.application_parts(expr) {
+    Some((head, [arg])) =>
+      match @symcore.function_head_name(head) {
+        Some(func) if func == func_name && expr_is_zero(arg) => Some(0)
+        _ =>
+          if @symcore.derivative_parts(expr) != None {
+            derivative_at_zero_order(expr, func_name)
+          } else {
+            match @symcore.subs_parts(expr) {
+              Some((inner, sub_var, value)) =>
+                if @symcore.compare_expr(sub_var, @symcore.symbol(t_name)) == 0 &&
+                  expr_is_zero(value) {
+                  derivative_ic_order(inner, func_name, t_name)
+                } else {
+                  None
+                }
+              None => None
+            }
+          }
       }
     _ =>
       if @symcore.derivative_parts(expr) != None {
@@ -322,12 +384,36 @@ fn initial_condition_order(
 
 ///|
 fn derivative_at_zero_order(expr : Expr, func_name : String) -> Int? {
-  match expr {
-    @symcore.Expr::Function(func, [arg]) =>
-      if func == func_name && expr_is_zero(arg) {
-        Some(0)
-      } else {
-        None
+  match @symcore.application_parts(expr) {
+    Some((head, [arg])) =>
+      match @symcore.function_head_name(head) {
+        Some(func) if func == func_name && expr_is_zero(arg) => Some(0)
+        _ =>
+          match @symcore.derivative_parts(expr) {
+            Some((inner, [wrt])) =>
+              if expr_is_zero(wrt) {
+                match derivative_at_zero_order(inner, func_name) {
+                  Some(order) => Some(order + 1)
+                  None => None
+                }
+              } else {
+                None
+              }
+            Some((inner, [wrt, order])) =>
+              if expr_is_zero(wrt) {
+                match
+                  (
+                    derivative_at_zero_order(inner, func_name),
+                    expr_is_int_value(order),
+                  ) {
+                  (Some(base_order), Some(n)) if n >= 1 => Some(base_order + n)
+                  _ => None
+                }
+              } else {
+                None
+              }
+            _ => None
+          }
       }
     _ =>
       match @symcore.derivative_parts(expr) {
