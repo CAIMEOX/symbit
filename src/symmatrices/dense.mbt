@@ -76,7 +76,7 @@ pub fn zeros(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
   }
   let out : Array[Array[Expr]] = []
   for _ in 0..<rows {
-    out.push(Array::make(cols, expr_zero()))
+    out.push(Array::make(cols, @symcore.int(0)))
   }
   { rows, cols, data: out }
 }
@@ -92,7 +92,7 @@ pub fn ones(rows : Int, cols? : Int? = None) -> Matrix raise MatrixError {
   }
   let out : Array[Array[Expr]] = []
   for _ in 0..<rows {
-    out.push(Array::make(cols, expr_one()))
+    out.push(Array::make(cols, @symcore.int(1)))
   }
   { rows, cols, data: out }
 }
@@ -102,7 +102,7 @@ pub fn eye(n : Int) -> Matrix raise MatrixError {
   let out = zeros(n, cols=Some(n))
   let data = clone_expr_rows(out.data)
   for i in 0..<n {
-    data[i][i] = expr_one()
+    data[i][i] = @symcore.int(1)
   }
   { rows: n, cols: n, data }
 }
@@ -505,7 +505,7 @@ pub impl Mul for Matrix with mul(self, other) {
   for i in 0..<self.rows {
     let row : Array[Expr] = []
     for j in 0..<other.cols {
-      let mut acc = expr_zero()
+      let mut acc = @symcore.int(0)
       for k in 0..<self.cols {
         acc = expr_add(acc, expr_mul(self.data[i][k], other.data[k][j]))
       }
@@ -529,7 +529,7 @@ pub fn Matrix::trace(self : Matrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
   }
-  let mut acc = expr_zero()
+  let mut acc = @symcore.int(0)
   for i in 0..<self.rows {
     acc = expr_add(acc, self.data[i][i])
   }

@@ -26,7 +26,7 @@ pub fn differential_operators(
 ) -> (DifferentialOperatorAlgebra, DifferentialOperator) {
   ignore(require_symbol_name(symbol_var))
   let algebra = DifferentialOperatorAlgebra::{ symbol_var, generator }
-  (algebra, differential_operator([holo_zero(), holo_one()], algebra))
+  (algebra, differential_operator([int(0), int(1)], algebra))
 }
 
 ///|
@@ -80,7 +80,7 @@ fn differential_add(
   b : DifferentialOperator,
 ) -> DifferentialOperator {
   if !differential_same_parent(a, b) {
-    return differential_operator([holo_zero()], a.parent)
+    return differential_operator([int(0)], a.parent)
   }
   let len = if a.coeffs.length() > b.coeffs.length() {
     a.coeffs.length()
@@ -100,12 +100,12 @@ fn differential_mul(
   b : DifferentialOperator,
 ) -> DifferentialOperator {
   if !differential_same_parent(a, b) {
-    return differential_operator([holo_zero()], a.parent)
+    return differential_operator([int(0)], a.parent)
   }
   let max_order = a.order() + b.order()
   let out : Array[Expr] = Array::new()
   for _ in 0..<=max_order {
-    out.push(holo_zero())
+    out.push(int(0))
   }
   let x = a.parent.symbol_var
   for i in 0..<a.coeffs.length() {
@@ -139,14 +139,14 @@ pub fn DifferentialOperator::pow(
   exp : Int,
 ) -> DifferentialOperator {
   if exp < 0 {
-    return differential_operator([holo_one()], self.parent)
+    return differential_operator([int(1)], self.parent)
   }
   if exp == 0 {
-    return differential_operator([holo_one()], self.parent)
+    return differential_operator([int(1)], self.parent)
   }
   let mut e = exp
   let mut base = self
-  let mut result = differential_operator([holo_one()], self.parent)
+  let mut result = differential_operator([int(1)], self.parent)
   while e > 0 {
     if e % 2 == 1 {
       result = differential_mul(result, base)

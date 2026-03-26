@@ -132,7 +132,7 @@ fn linear_param_ok(kind : LinearKind, value : Expr) -> Bool raise GeometryError 
       }
     LinearKind::Segment => {
       let lower = geo_expr_sign(value)
-      let upper = geo_expr_sign(geo_one() - value)
+      let upper = geo_expr_sign(int(1) - value)
       match (lower, upper) {
         (Some(ls), Some(us)) => ls >= 0 && us >= 0
         _ =>
@@ -661,7 +661,7 @@ pub fn Ray::plot_interval(
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   let _ = self
-  [parameter, geo_zero(), geo_int(10)]
+  [parameter, int(0), geo_int(10)]
 }
 
 ///|
@@ -831,7 +831,7 @@ pub fn Segment::plot_interval(
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   let _ = self
-  [parameter, geo_zero(), geo_one()]
+  [parameter, int(0), int(1)]
 }
 
 ///|
@@ -933,7 +933,7 @@ pub fn Segment::distance(
   let diff = geo_sub_coords(target.coords_, self.p1_.coords_)
   let denom = geo_norm_sq(direction)
   let t = geo_div(geo_dot(diff, direction), denom)
-  match (geo_expr_sign(t), geo_expr_sign(geo_one() - t)) {
+  match (geo_expr_sign(t), geo_expr_sign(int(1) - t)) {
     (Some(ls), Some(us)) if ls >= 0 && us >= 0 => {
       let proj = linear_point_at(GeometryEntity::Segment(self), t)
       target.distance(proj)

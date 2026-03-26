@@ -67,9 +67,9 @@ fn plane_basis_vectors(plane_obj : Plane) -> (Array[Expr], Array[Expr]) {
   let y = plane_obj.normal_[1]
   let z = plane_obj.normal_[2]
   let basis1 = if geo_expr_is_zero(x) && geo_expr_is_zero(y) {
-    [geo_one(), geo_zero(), geo_zero()]
+    [int(1), int(0), int(0)]
   } else {
-    [geo_zero() - y, x, geo_zero()]
+    [int(0) - y, x, int(0)]
   }
   let basis2 = geo_cross3([x, y, z], basis1)
   (basis1, basis2)
@@ -413,9 +413,9 @@ pub fn Plane::perpendicular_plane(
   if items.length() == 1 {
     let dir = if geo_expr_is_zero(self.normal_[0]) &&
       geo_expr_is_zero(self.normal_[1]) {
-      [geo_zero(), geo_one(), geo_zero()]
+      [int(0), int(1), int(0)]
     } else {
-      [geo_zero(), geo_zero(), geo_one()]
+      [int(0), int(0), int(1)]
     }
     items.push(point(geo_add_coords(items[0].coords_, dir), dim=3))
   }
@@ -426,9 +426,9 @@ pub fn Plane::perpendicular_plane(
   let p3 = if along_normal.contains(p2) {
     let mut axis_point = if geo_expr_is_zero(self.normal_[0]) &&
       geo_expr_is_zero(self.normal_[1]) {
-      point3d(geo_zero(), geo_one(), geo_zero())
+      point3d(int(0), int(1), int(0))
     } else {
-      point3d(geo_zero(), geo_zero(), geo_one())
+      point3d(int(0), int(0), int(1))
     }
     if candidate_line.contains(axis_point) {
       axis_point = axis_point.mul(geo_int(2))
@@ -491,7 +491,7 @@ pub fn Plane::parameter_value(
     None => {
       let delta = geo_sub_coords(target.coords_, self.point_.coords_)
       if geo_all_zero(delta) {
-        out.set(u, geo_zero())
+        out.set(u, int(0))
         return out
       }
       let (basis1, basis2) = plane_basis_vectors(self)
@@ -603,10 +603,10 @@ fn plane_intersection_plane(
     lhs.normal_[vars.0] * c2 - rhs.normal_[vars.0] * c1,
     det,
   )
-  let point_coords = [geo_zero(), geo_zero(), geo_zero()]
+  let point_coords = [int(0), int(0), int(0)]
   point_coords[vars.0] = coord_a
   point_coords[vars.1] = coord_b
-  point_coords[fixed_idx] = geo_zero()
+  point_coords[fixed_idx] = int(0)
   let pt = point(point_coords, dim=3)
   let next_pt = point(geo_add_coords(pt.coords_, direction), dim=3)
   [GeometryEntity::Line(line(pt, next_pt))]

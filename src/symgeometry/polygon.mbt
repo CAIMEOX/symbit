@@ -61,7 +61,7 @@ pub fn regular_polygon(
   center : Point,
   radius : Expr,
   n : Int,
-  rotation? : Expr = geo_zero(),
+  rotation? : Expr = int(0),
 ) -> RegularPolygon raise GeometryError {
   if n < 3 {
     raise GeometryError::ValueError(
@@ -93,7 +93,7 @@ pub fn triangle(
 
 ///|
 fn polygon_area_expr(vertices : Array[Point]) -> Expr {
-  let mut area = geo_zero()
+  let mut area = int(0)
   for i in 0..<vertices.length() {
     let p = vertices[i]
     let q = vertices[(i + 1) % vertices.length()]
@@ -106,7 +106,7 @@ fn polygon_area_expr(vertices : Array[Point]) -> Expr {
 
 ///|
 fn polygon_perimeter_expr(vertices : Array[Point]) -> Expr raise GeometryError {
-  let mut acc = geo_zero()
+  let mut acc = int(0)
   for i in 0..<vertices.length() {
     acc = geo_simplify(
       acc + vertices[i].distance(vertices[(i + 1) % vertices.length()]),
@@ -139,8 +139,8 @@ fn polygon_centroid_point(vertices : Array[Point]) -> Point raise GeometryError 
         )
     }
   }
-  let mut cx = geo_zero()
-  let mut cy = geo_zero()
+  let mut cx = int(0)
+  let mut cy = int(0)
   for i in 0..<vertices.length() {
     let p = vertices[i]
     let q = vertices[(i + 1) % vertices.length()]
@@ -495,7 +495,7 @@ fn polygon_distance_to_polygon(
   if !lhs_poly.intersection(geometry_polygon(rhs_poly)).is_empty() ||
     lhs_poly.contains_point(rhs_vertices[0]) ||
     rhs_poly.contains_point(lhs_vertices[0]) {
-    return geo_zero()
+    return int(0)
   }
   let mut best : Expr? = None
   for pt in lhs_vertices {
@@ -526,7 +526,7 @@ fn polygon_distance_to_polygon(
   }
   match best {
     Some(value) => value
-    None => geo_zero()
+    None => int(0)
   }
 }
 
@@ -613,7 +613,7 @@ pub fn Polygon::plot_interval(
   _self : Polygon,
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
-  [parameter, geo_zero(), geo_one()]
+  [parameter, int(0), int(1)]
 }
 
 ///|
@@ -624,7 +624,7 @@ pub fn Polygon::arbitrary_point(
   let perimeter = self.perimeter()
   let x_cases : Array[Expr] = []
   let y_cases : Array[Expr] = []
-  let mut start = geo_zero()
+  let mut start = int(0)
   let sides = self.sides()
   for side in sides {
     let side_len = side.length()
@@ -635,7 +635,7 @@ pub fn Polygon::arbitrary_point(
     let dy = side.p2().coords_[1] - side.p1().coords_[1]
     let px = geo_simplify(side.p1().coords_[0] + u * dx)
     let py = geo_simplify(side.p1().coords_[1] + u * dy)
-    let cond = if geo_expr_eq(end_, geo_one()) {
+    let cond = if geo_expr_eq(end_, int(1)) {
       @symcore.function("And", [
         @symcore.raw_function("LessThan", [start, parameter]),
         @symcore.raw_function("LessThan", [parameter, end_]),
@@ -671,7 +671,7 @@ pub fn Polygon::parameter_value(
   let point_obj = other.with_dim(2)
   let perimeter = self.perimeter()
   let out : Map[Expr, Expr] = {}
-  let mut start = geo_zero()
+  let mut start = int(0)
   let sides = self.sides()
   for side in sides {
     if side.contains(point_obj) {
@@ -702,7 +702,7 @@ pub fn Polygon::distance(
   match other {
     GeometryEntity::Point(point_obj) =>
       if self.contains_point(point_obj) {
-        geo_zero()
+        int(0)
       } else {
         let mut best : Expr? = None
         let sides = self.sides()
@@ -719,7 +719,7 @@ pub fn Polygon::distance(
         }
         match best {
           Some(value) => value
-          None => geo_zero()
+          None => int(0)
         }
       }
     GeometryEntity::Polygon(poly_obj) =>
@@ -788,7 +788,9 @@ fn regular_polygon_vertices_of(
   let out : Array[Point] = []
   for i in 0..<poly.n_ {
     let angle = geo_simplify(
-      poly.rotation_ + geo_div(geo_int(2 * i), geo_int(poly.n_)) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      poly.rotation_ +
+      geo_div(geo_int(2 * i), geo_int(poly.n_)) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
     )
     out.push(
       point2d(
@@ -862,7 +864,10 @@ pub fn RegularPolygon::area(self : RegularPolygon) -> Expr {
     geo_int(self.n_) *
     self.radius_ *
     self.radius_ *
-    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+    @symelem.sin(
+      geo_div(geo_int(2), geo_int(self.n_)) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    ),
     geo_int(2),
   )
 }
@@ -872,7 +877,12 @@ pub fn RegularPolygon::length(self : RegularPolygon) -> Expr {
   geo_simplify(
     geo_int(2) *
     self.radius_ *
-    @symelem.sin(geo_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), geo_int(self.n_))),
+    @symelem.sin(
+      geo_div(
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        geo_int(self.n_),
+      ),
+    ),
   )
 }
 
@@ -884,7 +894,13 @@ pub fn RegularPolygon::perimeter(self : RegularPolygon) -> Expr {
 ///|
 pub fn RegularPolygon::apothem(self : RegularPolygon) -> Expr {
   geo_simplify(
-    self.radius_ * @symelem.cos(geo_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), geo_int(self.n_))),
+    self.radius_ *
+    @symelem.cos(
+      geo_div(
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        geo_int(self.n_),
+      ),
+    ),
   )
 }
 
@@ -1012,7 +1028,7 @@ pub fn RegularPolygon::translate(
 pub fn RegularPolygon::scale(
   self : RegularPolygon,
   x : Expr,
-  y? : Expr = geo_one(),
+  y? : Expr = int(1),
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   if geo_expr_eq(x, y) {
@@ -1389,10 +1405,10 @@ pub fn Triangle::excenters(
     sides[0],
     point2d(
       geo_simplify(
-        geo_div((geo_zero() - a) * x0 + b * x1 + c * x2, geo_zero() - a + b + c),
+        geo_div((int(0) - a) * x0 + b * x1 + c * x2, int(0) - a + b + c),
       ),
       geo_simplify(
-        geo_div((geo_zero() - a) * y0 + b * y1 + c * y2, geo_zero() - a + b + c),
+        geo_div((int(0) - a) * y0 + b * y1 + c * y2, int(0) - a + b + c),
       ),
     ),
   )

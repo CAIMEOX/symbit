@@ -1212,7 +1212,12 @@ fn expr_replace_symbol(
         name,
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
-    Expr::Symbol(name) => if name == old_name { Expr::Symbol(new_name) } else { expr }
+    Expr::Symbol(name) =>
+      if name == old_name {
+        Expr::Symbol(new_name)
+      } else {
+        expr
+      }
     Expr::Add(args) =>
       @symcore.add(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
@@ -1249,32 +1254,38 @@ fn expr_replace_symbol(
     Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ne,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Lt,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(@symcore.RelOp::Le, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Gt,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ge,
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
@@ -2357,11 +2368,6 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
 }
 
 ///|
-fn expr_zero() -> Expr {
-  int(0)
-}
-
-///|
 fn domain_expr_is_zero(expr : Expr) -> Bool {
   match expr_rational_value(expr) {
     Some(n) => n.is_zero()
@@ -2408,7 +2414,7 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
       }
     Expr::Symbol(name) =>
       if symbols.contains(name) {
-        Some(expr_zero())
+        Some(int(0))
       } else {
         Some(expr)
       }
@@ -3256,7 +3262,9 @@ fn expr_gaussian_coeffs(
 
 ///|
 fn gaussian_rat_to_expr(value : GaussianRatCompat) -> Expr {
-  let i_sym = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let i_sym = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::ImaginaryUnit,
+  )
   let terms : Array[Expr] = Array::new()
   if !value.re.is_zero() {
     terms.push(@symcore.Expr::Number(value.re))

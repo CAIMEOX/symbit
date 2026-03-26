@@ -33,9 +33,7 @@ pub fn dyadic_basis(
   right : ReferenceFrame,
   right_axis : Int,
 ) -> Dyadic {
-  dyadic_normalize([
-    (one_expr(), left.index_, left_axis, right.index_, right_axis),
-  ])
+  dyadic_normalize([(int(1), left.index_, left_axis, right.index_, right_axis)])
 }
 
 ///|
@@ -87,7 +85,7 @@ pub fn Dyadic::scale(self : Dyadic, scalar : Expr) -> Dyadic {
 
 ///|
 pub fn Dyadic::neg(self : Dyadic) -> Dyadic {
-  self.scale(neg_one_expr())
+  self.scale(int(-1))
 }
 
 ///|
@@ -187,9 +185,9 @@ pub fn Dyadic::to_matrix(
   let right_frame = frame2.unwrap_or(frame1)
   let expressed = self.express(frame1, frame2=Some(right_frame))
   let rows : Array[Array[Expr]] = [
-    [zero_expr(), zero_expr(), zero_expr()],
-    [zero_expr(), zero_expr(), zero_expr()],
-    [zero_expr(), zero_expr(), zero_expr()],
+    [int(0), int(0), int(0)],
+    [int(0), int(0), int(0)],
+    [int(0), int(0), int(0)],
   ]
   for item in expressed.args {
     if item.1 == frame1.index_ && item.3 == right_frame.index_ {

@@ -462,12 +462,12 @@ fn half_turn_rewrite(
   } else {
     @symcore.function("sin", [rest])
   }
-  let corrected = if is_sin {
-    base
+  let corrected = if is_sin { base } else { expr_neg(base) }
+  if sign >= 0 {
+    corrected
   } else {
-    expr_neg(base)
+    expr_neg(corrected)
   }
-  if sign >= 0 { corrected } else { expr_neg(corrected) }
 }
 
 ///|
@@ -489,7 +489,11 @@ fn simplify_trig_boundary_value(
           }
         } else {
           let base = @symcore.function(name, [rest])
-          if sign > 0 { base } else { expr_neg(base) }
+          if sign > 0 {
+            base
+          } else {
+            expr_neg(base)
+          }
         }
       } else if den.equal_int(2) && !num.mod(2N).is_zero() {
         let half_turns = num.sub(1N).div(2N)
@@ -527,15 +531,10 @@ fn simplify_trig_boundary_value(
 ///|
 fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Add(args) =>
-      @symcore.add(args.map(simplify_boundary_expr))
-    @symcore.Expr::Mul(args) =>
-      @symcore.mul(args.map(simplify_boundary_expr))
+    @symcore.Expr::Add(args) => @symcore.add(args.map(simplify_boundary_expr))
+    @symcore.Expr::Mul(args) => @symcore.mul(args.map(simplify_boundary_expr))
     @symcore.Expr::Pow(base, exp) =>
-      @symcore.pow(
-        simplify_boundary_expr(base),
-        simplify_boundary_expr(exp),
-      )
+      @symcore.pow(simplify_boundary_expr(base), simplify_boundary_expr(exp))
     _ =>
       match (@symcore.application_name(expr), @symcore.application_args(expr)) {
         (Some(name), Some([arg])) => {
@@ -543,7 +542,8 @@ fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
           match name {
             "sin" | "cos" => simplify_trig_boundary_value(name, lowered)
             _ =>
-              match @symcore.apply(@symcore.Expr::FunctionHead(name), [lowered]) {
+              match
+                @symcore.apply(@symcore.Expr::FunctionHead(name), [lowered]) {
                 Some(applied) => applied
                 None => expr
               }
@@ -1201,7 +1201,8 @@ fn integrate_expr(
             Some(expanded) => integrate_expr(expanded, x, var_name, a, b)
             None => None
           }
-        (Some(atom), Some(1)) => Some(integrate_linear_atom(atom, x, var_name, a, b))
+        (Some(atom), Some(1)) =>
+          Some(integrate_linear_atom(atom, x, var_name, a, b))
         _ =>
           match poly_from_expr(expr, x) {
             Some(poly) => Some(integral_poly(poly, x, var_name, a, b))

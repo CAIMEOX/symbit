@@ -49,11 +49,7 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
           indep.push(arg)
         }
       }
-      let coeff = if indep.is_empty() {
-        one_expr()
-      } else {
-        @symcore.mul(indep)
-      }
+      let coeff = if indep.is_empty() { int(1) } else { @symcore.mul(indep) }
       if dep.length() == 1 {
         return simplify_expr(coeff * integrate_scalar(dep[0], wrt))
       }
@@ -103,7 +99,7 @@ pub fn divergence(
   frame : ReferenceFrame,
 ) -> Expr raise VectorError {
   if vect.is_zero() {
-    return zero_expr()
+    return int(0)
   }
   let comps = vect.express(frame, variables=true).components_in(frame)
   let x = coordinate_symbol(frame, 0)
@@ -159,7 +155,7 @@ pub fn scalar_potential(
   frame : ReferenceFrame,
 ) -> Expr raise VectorError {
   if field.is_zero() {
-    return zero_expr()
+    return int(0)
   }
   let comps = field.express(frame, variables=true).components_in(frame)
   let x = coordinate_symbol(frame, 0)

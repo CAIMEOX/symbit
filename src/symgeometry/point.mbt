@@ -59,7 +59,7 @@ pub fn point(
   }
   let out : Array[Expr] = []
   for i in 0..<actual_dim {
-    let value = if i < coords.length() { coords[i] } else { geo_zero() }
+    let value = if i < coords.length() { coords[i] } else { int(0) }
     out.push(geo_simplify(value))
   }
   Point::{ coords_: out }
@@ -256,7 +256,7 @@ pub fn Point::mul(self : Point, factor : Expr) -> Point {
 
 ///|
 pub fn Point::truediv(self : Point, divisor : Expr) -> Point {
-  self.mul(geo_div(geo_one(), divisor))
+  self.mul(geo_div(int(1), divisor))
 }
 
 ///|
@@ -278,16 +278,16 @@ pub fn Point::orthogonal_direction(self : Point) -> Point raise GeometryError {
   let dim = self.ambient_dimension()
   if geo_expr_is_zero(self.coords_[0]) {
     let coords = geo_zero_coords(dim)
-    coords[0] = geo_one()
+    coords[0] = int(1)
     return point(coords, dim~)
   }
   if geo_expr_is_zero(self.coords_[1]) {
     let coords = geo_zero_coords(dim)
-    coords[1] = geo_one()
+    coords[1] = int(1)
     return point(coords, dim~)
   }
   let coords = geo_zero_coords(dim)
-  coords[0] = geo_zero() - self.coords_[1]
+  coords[0] = int(0) - self.coords_[1]
   coords[1] = self.coords_[0]
   point(coords, dim~)
 }
@@ -312,7 +312,7 @@ pub fn Point::taxicab_distance(
   let normalized = geo_normalize_dim([self, other])
   let lhs = normalized[0]
   let rhs = normalized[1]
-  let mut acc = geo_zero()
+  let mut acc = int(0)
   for i in 0..<lhs.coords_.length() {
     acc = geo_simplify(acc + @symelem.abs(lhs.coords_[i] - rhs.coords_[i]))
   }
@@ -330,7 +330,7 @@ pub fn Point::canberra_distance(
   if lhs.is_zero() && rhs.is_zero() {
     raise GeometryError::ValueError("Cannot project to the zero vector.")
   }
-  let mut acc = geo_zero()
+  let mut acc = int(0)
   for i in 0..<lhs.coords_.length() {
     let numer = @symelem.abs(lhs.coords_[i] - rhs.coords_[i])
     let denom = geo_simplify(

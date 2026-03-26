@@ -11,7 +11,7 @@ fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) 
   let pivots : Array[Int] = []
   let mut row = 0
   let mut col = 0
-  let mut prev = expr_one()
+  let mut prev = @symcore.int(1)
   while row < matrix.rows && col < matrix.cols {
     let mut pivot_row = row
     while pivot_row < matrix.rows && expr_is_zero(data[pivot_row][col]) {
@@ -30,7 +30,7 @@ fn matrix_echelon_internal(matrix : Matrix) -> (Array[Array[Expr]], Array[Int]) 
       if expr_is_zero(factor) {
         continue
       }
-      data[i][col] = expr_zero()
+      data[i][col] = @symcore.int(0)
       for j in (col + 1)..<matrix.cols {
         let numer = expr_sub(
           expr_mul(pivot, data[i][j]),
@@ -202,13 +202,13 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
     )
   }
   if self.rows == 0 {
-    return expr_one()
+    return @symcore.int(1)
   }
   let numeric_prec = expr_numeric_precision(self.data)
   if matrix_has_floating_leaf(self.data) &&
     matrix_all_numeric(self.data, numeric_prec) {
     let data = clone_expr_rows(self.evalf(prec=numeric_prec).data)
-    let mut sign = expr_one()
+    let mut sign = @symcore.int(1)
     let mut col = 0
     while col < self.rows {
       let mut pivot_row = col
@@ -228,11 +228,11 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
         }
       }
       if expr_numeric_zero(data[pivot_row][col], numeric_prec) {
-        return expr_zero()
+        return @symcore.int(0)
       }
       if pivot_row != col {
         swap_dense_rows(data, pivot_row, col)
-        sign = expr_numeric_mul(sign, expr_neg(expr_one()), numeric_prec)
+        sign = expr_numeric_mul(sign, expr_neg(@symcore.int(1)), numeric_prec)
       }
       let pivot = data[col][col]
       for row in (col + 1)..<self.rows {
@@ -257,15 +257,15 @@ pub fn Matrix::det(self : Matrix) -> Expr raise MatrixError {
     return det
   }
   let data = clone_expr_rows(self.data)
-  let mut sign = expr_one()
-  let mut prev = expr_one()
+  let mut sign = @symcore.int(1)
+  let mut prev = @symcore.int(1)
   for k in 0..<(self.rows - 1) {
     let mut pivot_row = k
     while pivot_row < self.rows && expr_is_zero(data[pivot_row][k]) {
       pivot_row += 1
     }
     if pivot_row == self.rows {
-      return expr_zero()
+      return @symcore.int(0)
     }
     if pivot_row != k {
       swap_dense_rows(data, pivot_row, k)
@@ -311,9 +311,9 @@ pub fn Matrix::cofactor(
   col : Int,
 ) -> Expr raise MatrixError {
   let sign = if (row + col) % 2 == 0 {
-    expr_one()
+    @symcore.int(1)
   } else {
-    expr_neg(expr_one())
+    expr_neg(@symcore.int(1))
   }
   expr_mul(sign, self.minor(row, col))
 }
@@ -522,8 +522,8 @@ pub fn Matrix::nullspace(self : Matrix) -> Array[Array[Expr]] {
   }
   let basis : Array[Array[Expr]] = []
   for free_col in free_cols {
-    let vec = Array::make(self.cols, expr_zero())
-    vec[free_col] = expr_one()
+    let vec = Array::make(self.cols, @symcore.int(0))
+    vec[free_col] = @symcore.int(1)
     for i in 0..<pivots.length() {
       let pivot_col = pivots[i]
       vec[pivot_col] = expr_neg(rref.data[i][free_col])
@@ -741,7 +741,7 @@ pub fn Matrix::ldl(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   let l = clone_expr_rows(l0.data)
   let d = clone_expr_rows(d0.data)
   for i in 0..<n {
-    l[i][i] = expr_one()
+    l[i][i] = @symcore.int(1)
   }
   let numeric_prec = expr_numeric_precision(self.data)
   let numeric_mode = matrix_has_floating_leaf(self.data) &&
@@ -803,12 +803,12 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
   let numeric_mode = matrix_has_floating_leaf(self.data) &&
     matrix_all_numeric(self.data, numeric_prec)
   let qcols : Array[Array[Expr]] = []
-  let r = Array::make(self.cols, Array::make(self.cols, expr_zero()))
+  let r = Array::make(self.cols, Array::make(self.cols, @symcore.int(0)))
   for j in 0..<self.cols {
     let v = self.col(j)
     for i in 0..<j {
       let qi = qcols[i]
-      let mut dot = expr_zero()
+      let mut dot = @symcore.int(0)
       for k in 0..<self.rows {
         dot = if numeric_mode {
           expr_numeric_add(
@@ -833,7 +833,7 @@ pub fn Matrix::qr(self : Matrix) -> (Matrix, Matrix) raise MatrixError {
         }
       }
     }
-    let mut norm_sq = expr_zero()
+    let mut norm_sq = @symcore.int(0)
     for k in 0..<self.rows {
       norm_sq = if numeric_mode {
         expr_numeric_add(

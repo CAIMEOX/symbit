@@ -256,7 +256,7 @@ pub fn Curve::length(self : Curve) -> Expr {
   }
   @symcore.function("Integral", [
     @symelem.sqrt(
-      integrand_terms.fold(init=geo_zero(), fn(acc, item) {
+      integrand_terms.fold(init=int(0), fn(acc, item) {
         geo_simplify(acc + item)
       }),
     ),

@@ -42,8 +42,13 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 ///|
 fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
   expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) ||
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) ||
-  expr == @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
+  expr ==
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) ||
+  expr ==
+  @symcore.mul([
+    @symcore.int(-1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+  ])
 }
 
 ///|

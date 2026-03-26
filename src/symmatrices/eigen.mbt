@@ -25,7 +25,7 @@ fn matrix_from_columns(
   }
   let rows = columns[0].length()
   let data = Array::makei(rows, fn(_) {
-    Array::make(columns.length(), expr_zero())
+    Array::make(columns.length(), @symcore.int(0))
   })
   for j in 0..<columns.length() {
     if columns[j].length() != rows {
@@ -63,7 +63,7 @@ fn solve_singular_particular(
 ) -> Array[Expr] raise MatrixError {
   let rhs_matrix = vector_matrix_from_array(rhs)
   let (reduced_lhs, reduced_rhs) = lhs.rref_rhs(rhs_matrix)
-  let solution = Array::make(lhs.cols, expr_zero())
+  let solution = Array::make(lhs.cols, @symcore.int(0))
   for i in 0..<reduced_lhs.rows {
     let mut pivot : Int? = None
     for j in 0..<reduced_lhs.cols {
@@ -230,7 +230,7 @@ fn polynomial_mul(lhs : Map[Int, Expr], rhs : Map[Int, Expr]) -> Map[Int, Expr] 
 fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
   if expr_eq(expr, indeterminate) {
     let out : Map[Int, Expr] = {}
-    out[1] = expr_one()
+    out[1] = @symcore.int(1)
     return Some(out)
   }
   match expr {
@@ -245,7 +245,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
       Some(acc)
     }
     @symcore.Expr::Mul(args) => {
-      let mut acc = polynomial_const(expr_one())
+      let mut acc = polynomial_const(@symcore.int(1))
       for arg in args {
         match polynomial_terms(arg, indeterminate) {
           Some(poly) => acc = polynomial_mul(acc, poly)
@@ -261,7 +261,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
         Some(poly) => poly
         None => return None
       }
-      let mut acc = polynomial_const(expr_one())
+      let mut acc = polynomial_const(@symcore.int(1))
       for _ in 0..<power {
         acc = polynomial_mul(acc, base_poly)
       }
@@ -274,7 +274,7 @@ fn polynomial_terms(expr : Expr, indeterminate : Expr) -> Map[Int, Expr]? {
 ///|
 fn polynomial_to_expr(poly : Map[Int, Expr], indeterminate : Expr) -> Expr {
   if poly.is_empty() {
-    return expr_zero()
+    return @symcore.int(0)
   }
   let mut max_degree = 0
   for degree, _ in poly {
@@ -282,7 +282,7 @@ fn polynomial_to_expr(poly : Map[Int, Expr], indeterminate : Expr) -> Expr {
       max_degree = degree
     }
   }
-  let mut out = expr_zero()
+  let mut out = @symcore.int(0)
   for degree in 0..<=max_degree {
     let actual_degree = max_degree - degree
     match poly.get(actual_degree) {
@@ -290,14 +290,14 @@ fn polynomial_to_expr(poly : Map[Int, Expr], indeterminate : Expr) -> Expr {
         let term = match actual_degree {
           0 => coeff
           1 =>
-            if expr_eq(coeff, expr_one()) {
+            if expr_eq(coeff, @symcore.int(1)) {
               indeterminate
             } else {
               expr_mul(coeff, indeterminate)
             }
           _ => {
             let power = @symcore.pow(indeterminate, @symcore.int(actual_degree))
-            if expr_eq(coeff, expr_one()) {
+            if expr_eq(coeff, @symcore.int(1)) {
               power
             } else {
               expr_mul(coeff, power)
@@ -477,7 +477,10 @@ pub fn Matrix::charpoly_expr(
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
   }
-  let shifted = matrix_add_diag_scalar(self.scalar_mul(expr_neg(expr_one())), x)
+  let shifted = matrix_add_diag_scalar(
+    self.scalar_mul(expr_neg(@symcore.int(1))),
+    x,
+  )
   normalize_charpoly_expr(@symsimplify.numer_expand(shifted.det()), x)
 }
 

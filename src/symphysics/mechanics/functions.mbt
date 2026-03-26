@@ -31,7 +31,7 @@ pub fn kinetic_energy(
   frame : @symvector.ReferenceFrame,
   bodies : Array[BodyLike],
 ) -> Expr raise @symvector.VectorError {
-  let mut out = mech_zero_expr()
+  let mut out = int(0)
   for body in bodies {
     out = mech_simplify_expr(out + mech_bodylike_kinetic_energy(body, frame))
   }
@@ -40,7 +40,7 @@ pub fn kinetic_energy(
 
 ///|
 pub fn potential_energy(bodies : Array[BodyLike]) -> Expr {
-  let mut out = mech_zero_expr()
+  let mut out = int(0)
   for body in bodies {
     out = mech_simplify_expr(out + mech_bodylike_potential_energy(body))
   }
@@ -55,7 +55,7 @@ pub fn center_of_mass(
   if bodies.is_empty() {
     return @symvector.vector_zero()
   }
-  let mut total_mass = mech_zero_expr()
+  let mut total_mass = int(0)
   let mut acc = @symvector.vector_zero()
   for body in bodies {
     let mass = mech_bodylike_mass(body)

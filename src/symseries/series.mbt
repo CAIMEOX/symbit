@@ -187,7 +187,7 @@ fn poly_mul_trunc(a : Array[Expr], b : Array[Expr], n : Int) -> Array[Expr] {
   }
   let out : Array[Expr] = Array::new()
   for _ in 0..<n {
-    out.push(zero_expr())
+    out.push(@symcore.int(0))
   }
   for i in 0..<a.length() {
     for j in 0..<b.length() {
@@ -204,10 +204,10 @@ fn poly_mul_trunc(a : Array[Expr], b : Array[Expr], n : Int) -> Array[Expr] {
 ///|
 fn poly_pow_trunc(base : Array[Expr], exp : Int, n : Int) -> Array[Expr] {
   if exp == 0 {
-    return [one_expr()]
+    return [@symcore.int(1)]
   }
   let mut e = exp
-  let mut result : Array[Expr] = [one_expr()]
+  let mut result : Array[Expr] = [@symcore.int(1)]
   let mut b = base
   while e > 0 {
     if e % 2 == 1 {
@@ -398,8 +398,8 @@ fn const_log(expr : Expr) -> Expr {
 
 ///|
 fn series_exp_zero(u : Array[Expr], n : Int) -> Array[Expr] {
-  let mut out : Array[Expr] = [one_expr()]
-  let mut term : Array[Expr] = [one_expr()]
+  let mut out : Array[Expr] = [@symcore.int(1)]
+  let mut term : Array[Expr] = [@symcore.int(1)]
   let mut k = 1
   while k < n {
     term = poly_mul_trunc(term, u, n)
@@ -424,7 +424,9 @@ fn series_sin_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(sign), denom))
+    let coeff = @symcore.Expr::Number(
+      safe_rational(BigInt::from_int(sign), denom),
+    )
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     sign = -sign
@@ -437,7 +439,7 @@ fn series_sin_zero(u : Array[Expr], n : Int) -> Array[Expr] {
 fn series_cos_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
   let mut out : Array[Expr] = []
-  let mut term : Array[Expr] = [one_expr()]
+  let mut term : Array[Expr] = [@symcore.int(1)]
   let mut k = 0
   let mut sign = 1
   while true {
@@ -446,7 +448,9 @@ fn series_cos_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(sign), denom))
+    let coeff = @symcore.Expr::Number(
+      safe_rational(BigInt::from_int(sign), denom),
+    )
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     sign = -sign
@@ -479,7 +483,7 @@ fn series_sinh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
 fn series_cosh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   let u2 = poly_mul_trunc(u, u, n)
   let mut out : Array[Expr] = []
-  let mut term : Array[Expr] = [one_expr()]
+  let mut term : Array[Expr] = [@symcore.int(1)]
   let mut k = 0
   while true {
     let power = 2 * k
@@ -526,8 +530,8 @@ fn series_pow_general(
     None => return None
   }
   let scaled = poly_scale(rest, c0_inv)
-  let mut out : Array[Expr] = [one_expr()]
-  let mut term : Array[Expr] = [one_expr()]
+  let mut out : Array[Expr] = [@symcore.int(1)]
+  let mut term : Array[Expr] = [@symcore.int(1)]
   let mut k = 1
   while k < n {
     term = poly_mul_trunc(term, scaled, n)
@@ -562,11 +566,11 @@ fn series_atan_zero(u : Array[Expr], n : Int) -> Array[Expr] {
 ///|
 fn split_const(poly : Array[Expr]) -> (Expr, Array[Expr]) {
   if poly.is_empty() {
-    return (zero_expr(), [])
+    return (@symcore.int(0), [])
   }
   let c0 = poly[0]
   let rest = poly.copy()
-  rest[0] = zero_expr()
+  rest[0] = @symcore.int(0)
   (c0, rest)
 }
 
@@ -643,7 +647,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) =>
       if expr == x {
-        Some(([zero_expr(), one_expr()], false))
+        Some(([@symcore.int(0), @symcore.int(1)], false))
       } else {
         Some(([expr], false))
       }
@@ -655,7 +659,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
     | Expr::Subs(_, _, _)
     | Expr::Lambda(_, _) => None
     Expr::Add(args) => {
-      let mut acc : Array[Expr] = [zero_expr()]
+      let mut acc : Array[Expr] = [@symcore.int(0)]
       let mut inf = false
       for arg in args {
         match series_poly(arg, x, n) {
@@ -669,7 +673,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
       Some((poly_truncate(acc, n), inf))
     }
     Expr::Mul(args) => {
-      let mut acc : Array[Expr] = [one_expr()]
+      let mut acc : Array[Expr] = [@symcore.int(1)]
       let mut inf = false
       for arg in args {
         match series_poly(arg, x, n) {
@@ -696,7 +700,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
           match series_poly(base, x, n) {
             Some((poly, _)) => {
               let pow_poly = poly_pow_trunc(poly, -e, n)
-              match poly_series_div([one_expr()], pow_poly, n) {
+              match poly_series_div([@symcore.int(1)], pow_poly, n) {
                 Some(div) => Some((div, true))
                 None => None
               }
@@ -816,7 +820,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
                           let tanh_c0 = const_tanh(c0)
                           let num_poly = poly_add([tanh_c0], tanh_rest)
                           let den_poly = poly_add(
-                            [one_expr()],
+                            [@symcore.int(1)],
                             poly_scale(tanh_rest, tanh_c0),
                           )
                           match poly_series_div(num_poly, den_poly, n) {

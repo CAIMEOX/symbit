@@ -139,14 +139,14 @@ fn ellipse_normal_lines_numeric(
         let next_pt = if x_rel.abs() <= tol {
           point2d(
             boundary.coords_[0],
-            geo_simplify(boundary.coords_[1] + geo_one()),
+            geo_simplify(boundary.coords_[1] + int(1)),
           ) catch {
             _ => return None
           }
         } else {
           let slope = a * a * y_rel / (b * b * x_rel)
           point2d(
-            geo_simplify(boundary.coords_[0] + geo_one()),
+            geo_simplify(boundary.coords_[0] + int(1)),
             geo_simplify(
               boundary.coords_[1] +
               geo_decimal_expr_from_double(slope, rounded_digits),
@@ -171,12 +171,12 @@ fn ellipse_normal_axis_lines(
   let out : Array[Line] = []
   if geo_expr_is_zero(pt.coords_[0] - center.coords_[0]) {
     out.push(
-      line(center, point2d(center.coords_[0], center.coords_[1] + geo_one())),
+      line(center, point2d(center.coords_[0], center.coords_[1] + int(1))),
     )
   }
   if geo_expr_is_zero(pt.coords_[1] - center.coords_[1]) {
     out.push(
-      line(center, point2d(center.coords_[0] + geo_one(), center.coords_[1])),
+      line(center, point2d(center.coords_[0] + int(1), center.coords_[1])),
     )
   }
   out

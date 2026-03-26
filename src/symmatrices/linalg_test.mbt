@@ -146,17 +146,26 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
     [@symcore.int(1), @symcore.int(1)],
     [@symcore.int(2), @symcore.int(1)],
   ])
-  let vars = matrix([[@symcore.Expr::Symbol("r1")], [@symcore.Expr::Symbol("r2")]])
+  let vars = matrix([
+    [@symcore.Expr::Symbol("r1")],
+    [@symcore.Expr::Symbol("r2")],
+  ])
   let (rref_lhs, rref_rhs) = coeff.rref_rhs(vars)
   inspect(rref_lhs.to_string(), content="Matrix([[1, 0], [0, 1]])")
   assert_true(
     matrix_symbolically_equal(
       rref_rhs,
       matrix([
-        [@symcore.int(-1) * @symcore.Expr::Symbol("r1") + @symcore.Expr::Symbol("r2")],
+        [
+          @symcore.int(-1) * @symcore.Expr::Symbol("r1") +
+          @symcore.Expr::Symbol("r2"),
+        ],
         [
           @symcore.int(-1) *
-          (@symcore.int(-2) * @symcore.Expr::Symbol("r1") + @symcore.Expr::Symbol("r2")),
+          (
+            @symcore.int(-2) * @symcore.Expr::Symbol("r1") +
+            @symcore.Expr::Symbol("r2")
+          ),
         ],
       ]),
     ),

@@ -85,21 +85,6 @@ let vector_point_registry : Array[Point] = []
 let vector_point_states : Array[PointState] = []
 
 ///|
-fn zero_expr() -> Expr {
-  int(0)
-}
-
-///|
-fn one_expr() -> Expr {
-  int(1)
-}
-
-///|
-fn neg_one_expr() -> Expr {
-  int(-1)
-}
-
-///|
 fn int_expr(value : Int) -> Expr {
   int(value)
 }
@@ -126,7 +111,7 @@ fn expr_is_zero(expr : Expr) -> Bool {
 
 ///|
 fn expr_neg(expr : Expr) -> Expr {
-  neg_one_expr() * expr
+  int(-1) * expr
 }
 
 ///|
@@ -145,15 +130,15 @@ fn clone_expr_array(items : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn zero_components() -> Array[Expr] {
-  [zero_expr(), zero_expr(), zero_expr()]
+  [int(0), int(0), int(0)]
 }
 
 ///|
 fn basis_components(axis : Int) -> Array[Expr] {
   match axis {
-    0 => [one_expr(), zero_expr(), zero_expr()]
-    1 => [zero_expr(), one_expr(), zero_expr()]
-    _ => [zero_expr(), zero_expr(), one_expr()]
+    0 => [int(1), int(0), int(0)]
+    1 => [int(0), int(1), int(0)]
+    _ => [int(0), int(0), int(1)]
   }
 }
 
@@ -239,21 +224,21 @@ fn rotation_matrix(axis : Int, angle : Expr) -> @symphysics.ExplicitMatrix {
   match axis {
     0 =>
       matrix_from_rows([
-        [one_expr(), zero_expr(), zero_expr()],
-        [zero_expr(), c, expr_neg(s)],
-        [zero_expr(), s, c],
+        [int(1), int(0), int(0)],
+        [int(0), c, expr_neg(s)],
+        [int(0), s, c],
       ])
     1 =>
       matrix_from_rows([
-        [c, zero_expr(), s],
-        [zero_expr(), one_expr(), zero_expr()],
-        [expr_neg(s), zero_expr(), c],
+        [c, int(0), s],
+        [int(0), int(1), int(0)],
+        [expr_neg(s), int(0), c],
       ])
     _ =>
       matrix_from_rows([
-        [c, expr_neg(s), zero_expr()],
-        [s, c, zero_expr()],
-        [zero_expr(), zero_expr(), one_expr()],
+        [c, expr_neg(s), int(0)],
+        [s, c, int(0)],
+        [int(0), int(0), int(1)],
       ])
   }
 }
@@ -268,7 +253,7 @@ fn rotation_matrix_about_axis(
   let u2 = axis[2]
   let c = @symelem.cos(angle)
   let s = @symelem.sin(angle)
-  let omc = one_expr() - c
+  let omc = int(1) - c
   matrix_from_rows([
     [c + u0 * u0 * omc, u0 * u1 * omc - u2 * s, u0 * u2 * omc + u1 * s],
     [u1 * u0 * omc + u2 * s, c + u1 * u1 * omc, u1 * u2 * omc - u0 * s],

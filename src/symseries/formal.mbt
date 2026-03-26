@@ -258,7 +258,7 @@ pub fn FormalPowerSeries::coeff(
         back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
         @symcore.subst(term, back)
       } else {
-        zero_expr()
+        @symcore.int(0)
       }
     None => fps_derivative_term(self.expr, self.x, self.x0, n)
   }
@@ -285,7 +285,7 @@ pub fn FormalPowerSeries::slice(
       back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
       let mut i = start
       while i < stop {
-        let coeff = if i < poly.length() { poly[i] } else { zero_expr() }
+        let coeff = if i < poly.length() { poly[i] } else { @symcore.int(0) }
         let term = if i == 0 {
           coeff
         } else {
@@ -425,7 +425,7 @@ pub fn FormalPowerSeries::as_leading_term(
         }
         k += 1
       }
-      zero_expr()
+      @symcore.int(0)
     }
     None => {
       let poly = fps_strip_order_expr(self.polynomial(n~))

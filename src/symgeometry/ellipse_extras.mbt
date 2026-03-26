@@ -40,7 +40,7 @@ fn ellipse_second_moment_tuple(
   let i_yy = geo_simplify(
     geo_div(geo_pi() * (hradius ^ geo_int(3)) * vradius, geo_int(4)),
   )
-  let i_xy = geo_zero()
+  let i_xy = int(0)
   match point {
     None => (i_xx, i_yy, i_xy)
     Some(point_obj) => {
@@ -120,8 +120,8 @@ pub fn Ellipse::random_point(
     None => geo_random_source
   }
   let u = geo_random_symmetric_rational(rng)
-  let denom = geo_simplify(geo_one() + (u ^ geo_int(2)))
-  let c = geo_simplify(geo_div(geo_one() - (u ^ geo_int(2)), denom))
+  let denom = geo_simplify(int(1) + (u ^ geo_int(2)))
+  let c = geo_simplify(geo_div(int(1) - (u ^ geo_int(2)), denom))
   let s = geo_simplify(geo_div(geo_int(2) * u, denom))
   point2d(
     geo_simplify(self.center_.coords_[0] + self.hradius_ * c),
@@ -139,7 +139,7 @@ pub fn Ellipse::reflect(
     let center = reflect_point_across_line_2d(self.center_, line_obj)
     return geometry_ellipse(Ellipse::{
       center_: center,
-      hradius_: geo_simplify(geo_zero() - self.hradius_),
+      hradius_: geo_simplify(int(0) - self.hradius_),
       vradius_: self.vradius_,
     })
   }
@@ -211,7 +211,7 @@ pub fn Circle::reflect(
 ) -> Circle raise GeometryError {
   Circle::{
     center_: reflect_point_across_line_2d(self.center_, line_obj),
-    radius_: geo_simplify(geo_zero() - self.radius_),
+    radius_: geo_simplify(int(0) - self.radius_),
   }
 }
 

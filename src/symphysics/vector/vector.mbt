@@ -89,7 +89,7 @@ pub fn Vector::scale(self : Vector, scalar : Expr) -> Vector {
 
 ///|
 pub fn Vector::neg(self : Vector) -> Vector {
-  self.scale(neg_one_expr())
+  self.scale(int(-1))
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn Vector::express(
 ///|
 pub fn Vector::dot(self : Vector, other : Vector) -> Expr raise VectorError {
   if self.is_zero() || other.is_zero() {
-    return zero_expr()
+    return int(0)
   }
   let anchor = frame_registry_get(self.args[0].0)
   let lhs = self.components_in(anchor)
@@ -213,7 +213,7 @@ pub fn Vector::normalize(self : Vector) -> Vector raise VectorError {
   if expr_is_zero(norm_sq) {
     raise VectorError::ValueError("cannot normalize zero vector")
   }
-  self.express(anchor).scale(@symelem.sqrt(norm_sq) ^ neg_one_expr())
+  self.express(anchor).scale(@symelem.sqrt(norm_sq) ^ int(-1))
 }
 
 ///|

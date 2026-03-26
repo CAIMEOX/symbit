@@ -60,7 +60,7 @@ fn factorial_rat(n : Int) -> @symnum.BigRational {
 ///|
 fn rising_factorial_expr(n : Expr, k : Int) -> Expr {
   if k <= 0 {
-    return holo_one()
+    return int(1)
   }
   let terms : Array[Expr] = Array::new()
   for i in 1..<=k {
@@ -537,7 +537,10 @@ pub fn expr_to_holonomic(
                       let dy = if b == int(0) {
                         @symcore.Expr::Number(a)
                       } else {
-                        expr_mul(@symcore.Expr::Number(a), @symcore.function("cos", [b]))
+                        expr_mul(
+                          @symcore.Expr::Number(a),
+                          @symcore.function("cos", [b]),
+                        )
                       }
                       [y, dy]
                     } else {
@@ -546,29 +549,29 @@ pub fn expr_to_holonomic(
                     holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
                   }
                   "cos" => {
-                let a2 = a.mul_r(a)
-                let op = differential_operator(
-                  [@symcore.Expr::Number(a2), int(0), int(1)],
-                  dx.parent,
-                )
-                let y0 = if x0 == int(0) {
-                  let y = if b == int(0) {
-                    int(1)
-                  } else {
-                    @symcore.function("cos", [b])
-                  }
-                  let dy = if b == int(0) {
-                    int(0)
-                  } else {
-                    expr_mul(
-                      @symcore.Expr::Number(a.neg_r()),
-                      @symcore.function("sin", [b]),
+                    let a2 = a.mul_r(a)
+                    let op = differential_operator(
+                      [@symcore.Expr::Number(a2), int(0), int(1)],
+                      dx.parent,
                     )
-                  }
-                  [y, dy]
-                } else {
-                  []
-                }
+                    let y0 = if x0 == int(0) {
+                      let y = if b == int(0) {
+                        int(1)
+                      } else {
+                        @symcore.function("cos", [b])
+                      }
+                      let dy = if b == int(0) {
+                        int(0)
+                      } else {
+                        expr_mul(
+                          @symcore.Expr::Number(a.neg_r()),
+                          @symcore.function("sin", [b]),
+                        )
+                      }
+                      [y, dy]
+                    } else {
+                      []
+                    }
                     holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
                   }
                   _ => fallback_from_expr(expr, x, x0)

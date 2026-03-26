@@ -276,7 +276,7 @@ fn solve_linear_expr_numeric(
   }
   let sol : Array[@symcore.Expr] = Array::new()
   for _ in 0..<n {
-    sol.push(zero_expr())
+    sol.push(@symcore.int(0))
   }
   let mut r = n - 1
   while true {
@@ -486,7 +486,7 @@ fn solve_linear_expr(
   }
   let sol : Array[@symcore.Expr] = Array::new()
   for _ in 0..<n {
-    sol.push(zero_expr())
+    sol.push(@symcore.int(0))
   }
   let mut r = n - 1
   while true {
@@ -520,7 +520,7 @@ fn pade_from_expr_coeffs(
     for i in 0..<=m {
       p.push(coeffs[i])
     }
-    return Some((p, [one_expr()]))
+    return Some((p, [@symcore.int(1)]))
   }
   let mat : Array[Array[@symcore.Expr]] = Array::new()
   let rhs : Array[@symcore.Expr] = Array::new()
@@ -536,13 +536,13 @@ fn pade_from_expr_coeffs(
     Some(v) => v
     None => return None
   }
-  let q : Array[@symcore.Expr] = [one_expr()]
+  let q : Array[@symcore.Expr] = [@symcore.int(1)]
   for v in q_tail {
     q.push(v)
   }
   let p : Array[@symcore.Expr] = Array::new()
   for k in 0..<=m {
-    let mut acc = zero_expr()
+    let mut acc = @symcore.int(0)
     let max_j = if k < n { k } else { n }
     for j in 0..<=max_j {
       let qj = q[j]
@@ -584,7 +584,12 @@ fn pade_expr_best(
     let dm = m + (n - dn)
     match pade_from_expr_coeffs(coeffs, dm, dn) {
       Some(v) => v
-      None => if dn == 0 { ([coeffs[0]], [one_expr()]) } else { solve(dn - 1) }
+      None =>
+        if dn == 0 {
+          ([coeffs[0]], [@symcore.int(1)])
+        } else {
+          solve(dn - 1)
+        }
     }
   }
   solve(n)
@@ -658,7 +663,7 @@ pub fn pade_approximant(
         if i < poly.length() {
           out.push(poly[i])
         } else {
-          out.push(zero_expr())
+          out.push(@symcore.int(0))
         }
       }
       out
@@ -688,7 +693,7 @@ pub fn pade_approximant(
       )
     }
   }
-  let approx_work = if den_expr == one_expr() {
+  let approx_work = if den_expr == @symcore.int(1) {
     num_expr
   } else {
     @symcore.mul([num_expr, @symcore.pow(den_expr, @symcore.int(-1))])
@@ -713,10 +718,10 @@ pub fn approximants(
   for v in coeffs {
     l.push(v)
   }
-  let mut p1 : Array[@symcore.Expr] = [one_expr()]
-  let mut q1 : Array[@symcore.Expr] = [zero_expr()]
-  let mut p2 : Array[@symcore.Expr] = [zero_expr()]
-  let mut q2 : Array[@symcore.Expr] = [one_expr()]
+  let mut p1 : Array[@symcore.Expr] = [@symcore.int(1)]
+  let mut q1 : Array[@symcore.Expr] = [@symcore.int(0)]
+  let mut p2 : Array[@symcore.Expr] = [@symcore.int(0)]
+  let mut q2 : Array[@symcore.Expr] = [@symcore.int(1)]
   let out : Array[@symcore.Expr] = Array::new()
   while !l.is_empty() {
     let mut b = 0
@@ -734,7 +739,7 @@ pub fn approximants(
     mseq.push(inv_lb)
     let mut k = b + 1
     while k < l.length() {
-      let mut s = zero_expr()
+      let mut s = @symcore.int(0)
       let mut j = b
       while j < k {
         let idx = b - j - 1
@@ -748,7 +753,7 @@ pub fn approximants(
     }
     l = mseq
     let a = l[0]
-    l[0] = zero_expr()
+    l[0] = @symcore.int(0)
     let p_len = if p2.length() > b + p1.length() {
       p2.length()
     } else {
@@ -762,10 +767,10 @@ pub fn approximants(
     let p : Array[@symcore.Expr] = Array::new()
     let q : Array[@symcore.Expr] = Array::new()
     for _ in 0..<p_len {
-      p.push(zero_expr())
+      p.push(@symcore.int(0))
     }
     for _ in 0..<q_len {
-      q.push(zero_expr())
+      q.push(@symcore.int(0))
     }
     for i in 0..<p2.length() {
       p[i] = expr_mul(a, p2[i])

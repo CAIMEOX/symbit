@@ -2,16 +2,6 @@
 /// Polynomial helpers for series expansion.
 
 ///|
-fn zero_expr() -> @symcore.Expr {
-  @symcore.int(0)
-}
-
-///|
-fn one_expr() -> @symcore.Expr {
-  @symcore.int(1)
-}
-
-///|
 fn expr_exact_value(expr : @symcore.Expr) -> @symnum.BigRational? {
   match expr {
     @symcore.Expr::Number(n) => Some(n)
@@ -109,7 +99,7 @@ fn expr_add(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 ///|
 fn expr_mul(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
   if is_zero_expr(a) || is_zero_expr(b) {
-    zero_expr()
+    @symcore.int(0)
   } else if is_one_expr(a) {
     b
   } else if is_one_expr(b) {
@@ -151,7 +141,7 @@ fn poly_coeff(poly : Array[@symcore.Expr], idx : Int) -> @symcore.Expr {
   if idx < poly.length() {
     poly[idx]
   } else {
-    zero_expr()
+    @symcore.int(0)
   }
 }
 
@@ -192,7 +182,7 @@ fn poly_mul(
   let out_len = a.length() + b.length() - 1
   let out : Array[@symcore.Expr] = Array::new()
   for _ in 0..<out_len {
-    out.push(zero_expr())
+    out.push(@symcore.int(0))
   }
   for i in 0..<a.length() {
     for j in 0..<b.length() {
@@ -218,9 +208,9 @@ fn poly_scale(
 ///|
 fn poly_pow(base : Array[@symcore.Expr], exp : Int) -> Array[@symcore.Expr] {
   if exp <= 0 {
-    return [one_expr()]
+    return [@symcore.int(1)]
   }
-  let mut result : Array[@symcore.Expr] = [one_expr()]
+  let mut result : Array[@symcore.Expr] = [@symcore.int(1)]
   let mut b = base
   let mut e = exp
   while e > 0 {
@@ -259,12 +249,12 @@ fn poly_from_expr(
     @symcore.Expr::Number(_) | @symcore.Expr::Float(_) => Some([expr])
     @symcore.Expr::Symbol(_) =>
       if expr == x {
-        Some([zero_expr(), one_expr()])
+        Some([@symcore.int(0), @symcore.int(1)])
       } else {
         Some([expr])
       }
     @symcore.Expr::Add(args) => {
-      let mut acc : Array[@symcore.Expr] = [zero_expr()]
+      let mut acc : Array[@symcore.Expr] = [@symcore.int(0)]
       for arg in args {
         match poly_from_expr(arg, x) {
           Some(poly) => acc = poly_add(acc, poly)
@@ -274,7 +264,7 @@ fn poly_from_expr(
       Some(acc)
     }
     @symcore.Expr::Mul(args) => {
-      let mut acc : Array[@symcore.Expr] = [one_expr()]
+      let mut acc : Array[@symcore.Expr] = [@symcore.int(1)]
       for arg in args {
         match poly_from_expr(arg, x) {
           Some(poly) => acc = poly_mul(acc, poly)

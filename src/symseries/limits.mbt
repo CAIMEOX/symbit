@@ -72,7 +72,9 @@ pub fn limit(
               }
               let pole_order = ord_den - ord_num
               if dir == "+-" && pole_order % 2 == 1 {
-                return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)
+                return @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ComplexInfinity,
+                )
               }
               let side_sign = if dir == "-" && pole_order % 2 == 1 {
                 -1
@@ -85,12 +87,22 @@ pub fn limit(
                 Some(s) => {
                   let final_sign = s * side_sign
                   if final_sign < 0 {
-                    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
+                    @symcore.mul([
+                      @symcore.int(-1),
+                      @symcore.Expr::NumberSymbol(
+                        @symcore.NumberSymbolKind::Infinity,
+                      ),
+                    ])
                   } else {
-                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+                    @symcore.Expr::NumberSymbol(
+                      @symcore.NumberSymbolKind::Infinity,
+                    )
                   }
                 }
-                None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+                None =>
+                  @symcore.Expr::NumberSymbol(
+                    @symcore.NumberSymbolKind::Infinity,
+                  )
               }
             }
             _ => ()
@@ -162,10 +174,16 @@ pub fn limit(
         expr_mul(lead_num, @symcore.pow(lead_den, @symcore.int(-1))),
       )
       match sign {
-        Some(1) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-        Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
+        Some(1) =>
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        Some(-1) =>
+          @symcore.mul([
+            @symcore.int(-1),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+          ])
         Some(0) => @symcore.int(0)
-        Some(_) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        Some(_) =>
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       }
     }
@@ -175,7 +193,7 @@ pub fn limit(
 
 ///|
 fn poly_eval(poly : Array[@symcore.Expr], x0 : @symcore.Expr) -> @symcore.Expr {
-  let mut acc = zero_expr()
+  let mut acc = @symcore.int(0)
   let mut i = poly.length()
   while i > 0 {
     i -= 1

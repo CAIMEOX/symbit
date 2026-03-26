@@ -16,7 +16,7 @@ fn vector_dot(lhs : Matrix, rhs : Matrix) -> Expr raise MatrixError {
   if left.rows != right.rows {
     raise MatrixError::ShapeError("vector dimensions must agree")
   }
-  let mut acc = expr_zero()
+  let mut acc = @symcore.int(0)
   for i in 0..<left.rows {
     acc = expr_add(acc, expr_mul(left.data[i][0], right.data[i][0]))
   }
@@ -57,7 +57,7 @@ pub fn jordan_cell(eigenval : Expr, n : Int) -> Matrix raise MatrixError {
   for i in 0..<n {
     data[i][i] = eigenval
     if i + 1 < n {
-      data[i][i + 1] = expr_one()
+      data[i][i + 1] = @symcore.int(1)
     }
   }
   { rows: n, cols: n, data }
@@ -68,9 +68,9 @@ pub fn rot_axis1(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [expr_one(), expr_zero(), expr_zero()],
-    [expr_zero(), c, s],
-    [expr_zero(), expr_neg(s), c],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+    [@symcore.int(0), c, s],
+    [@symcore.int(0), expr_neg(s), c],
   ])
 }
 
@@ -79,9 +79,9 @@ pub fn rot_axis2(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [c, expr_zero(), expr_neg(s)],
-    [expr_zero(), expr_one(), expr_zero()],
-    [s, expr_zero(), c],
+    [c, @symcore.int(0), expr_neg(s)],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+    [s, @symcore.int(0), c],
   ])
 }
 
@@ -90,9 +90,9 @@ pub fn rot_axis3(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [c, s, expr_zero()],
-    [expr_neg(s), c, expr_zero()],
-    [expr_zero(), expr_zero(), expr_one()],
+    [c, s, @symcore.int(0)],
+    [expr_neg(s), c, @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
   ])
 }
 
@@ -101,9 +101,9 @@ pub fn rot_ccw_axis1(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [expr_one(), expr_zero(), expr_zero()],
-    [expr_zero(), c, expr_neg(s)],
-    [expr_zero(), s, c],
+    [@symcore.int(1), @symcore.int(0), @symcore.int(0)],
+    [@symcore.int(0), c, expr_neg(s)],
+    [@symcore.int(0), s, c],
   ])
 }
 
@@ -112,9 +112,9 @@ pub fn rot_ccw_axis2(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [c, expr_zero(), s],
-    [expr_zero(), expr_one(), expr_zero()],
-    [expr_neg(s), expr_zero(), c],
+    [c, @symcore.int(0), s],
+    [@symcore.int(0), @symcore.int(1), @symcore.int(0)],
+    [expr_neg(s), @symcore.int(0), c],
   ])
 }
 
@@ -123,9 +123,9 @@ pub fn rot_ccw_axis3(theta : Expr) -> Matrix raise MatrixError {
   let c = trig_function("cos", theta)
   let s = trig_function("sin", theta)
   matrix([
-    [c, expr_neg(s), expr_zero()],
-    [s, c, expr_zero()],
-    [expr_zero(), expr_zero(), expr_one()],
+    [c, expr_neg(s), @symcore.int(0)],
+    [s, c, @symcore.int(0)],
+    [@symcore.int(0), @symcore.int(0), @symcore.int(1)],
   ])
 }
 
@@ -150,7 +150,7 @@ pub fn gram_schmidt(
       let norm = expr_simplify(
         @symcore.function("sqrt", [vector_dot(current, current)]),
       )
-      current = vector_scale(current, expr_div(expr_one(), norm))
+      current = vector_scale(current, expr_div(@symcore.int(1), norm))
     }
     basis.push(current)
   }

@@ -99,7 +99,9 @@ fn fe_to_expr_const(c : FieldElem) -> Expr {
   match c {
     FieldElem::QQ(r) => @symcore.Expr::Number(r)
     FieldElem::CC(a, b) => {
-      let i_sym = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+      let i_sym = @symcore.Expr::NumberSymbol(
+        @symcore.NumberSymbolKind::ImaginaryUnit,
+      )
       let imag = if b.is_zero() {
         @symcore.Expr::Number(@symnum.BigRational::zero())
       } else {
@@ -113,7 +115,8 @@ fn fe_to_expr_const(c : FieldElem) -> Expr {
         @symcore.Expr::Number(a) + imag
       }
     }
-    FieldElem::GFp(_, v) => @symcore.Expr::Number(@symnum.BigRational::from_int(v))
+    FieldElem::GFp(_, v) =>
+      @symcore.Expr::Number(@symnum.BigRational::from_int(v))
     FieldElem::GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
     FieldElem::AlgExt(base, coeffs, minpoly, gen) =>
       fe_algext_to_expr(base, coeffs, minpoly, gen)

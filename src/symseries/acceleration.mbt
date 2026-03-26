@@ -61,7 +61,7 @@ pub fn richardson(
     fail("richardson requires non-negative n and m")
   }
   let name = symbol_name(k)
-  let mut acc = zero_expr()
+  let mut acc = @symcore.int(0)
   let mut j = 0
   while j <= m {
     let k_val = n + j

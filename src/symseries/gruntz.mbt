@@ -11,7 +11,8 @@ fn is_pos_oo(expr : @symcore.Expr) -> Bool {
 
 ///|
 fn is_neg_oo(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
+  expr ==
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
 }
 
 ///|
@@ -64,7 +65,9 @@ fn leading_rational_near_zero(
       let pole_order = ord_den - ord_num
       if dir == "+-" && pole_order % 2 == 1 {
         return Some(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+          @symcore.Expr::NumberSymbol(
+            @symcore.NumberSymbolKind::ComplexInfinity,
+          ),
         )
       }
       let side_sign = if dir == "-" && pole_order % 2 == 1 { -1 } else { 1 }
@@ -73,7 +76,8 @@ fn leading_rational_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          None =>
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         },
       )
     }
@@ -106,7 +110,9 @@ fn leading_series_near_zero(
       }
       if dir == "+-" && total_order % 2 != 0 {
         return Some(
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+          @symcore.Expr::NumberSymbol(
+            @symcore.NumberSymbolKind::ComplexInfinity,
+          ),
         )
       }
       let side_sign = if dir == "-" && total_order % 2 != 0 { -1 } else { 1 }
@@ -115,7 +121,8 @@ fn leading_series_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          None =>
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         },
       )
     }
@@ -178,7 +185,12 @@ fn eval_elementary_from_leading(
         Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
       } else {
         match arg_lead {
-          @symcore.Expr::Number(n) if n.is_zero() => Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity))
+          @symcore.Expr::Number(n) if n.is_zero() =>
+            Some(
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::NegativeInfinity,
+              ),
+            )
           @symcore.Expr::Number(_) => Some(const_log(arg_lead))
           _ => None
         }

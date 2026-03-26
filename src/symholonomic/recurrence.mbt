@@ -26,7 +26,7 @@ pub fn recurrence_operators(
 ) -> (RecurrenceOperatorAlgebra, RecurrenceOperator) {
   ignore(require_symbol_name(symbol_var))
   let algebra = RecurrenceOperatorAlgebra::{ symbol_var, generator }
-  (algebra, recurrence_operator([holo_zero(), holo_one()], algebra))
+  (algebra, recurrence_operator([int(0), int(1)], algebra))
 }
 
 ///|
@@ -80,7 +80,7 @@ fn recurrence_add(
   b : RecurrenceOperator,
 ) -> RecurrenceOperator {
   if !recurrence_same_parent(a, b) {
-    return recurrence_operator([holo_zero()], a.parent)
+    return recurrence_operator([int(0)], a.parent)
   }
   let len = if a.coeffs.length() > b.coeffs.length() {
     a.coeffs.length()
@@ -100,12 +100,12 @@ fn recurrence_mul(
   b : RecurrenceOperator,
 ) -> RecurrenceOperator {
   if !recurrence_same_parent(a, b) {
-    return recurrence_operator([holo_zero()], a.parent)
+    return recurrence_operator([int(0)], a.parent)
   }
   let out_len = a.coeffs.length() + b.coeffs.length() - 1
   let out : Array[Expr] = Array::new()
   for _ in 0..<out_len {
-    out.push(holo_zero())
+    out.push(int(0))
   }
   let n = a.parent.symbol_var
   for i in 0..<a.coeffs.length() {
@@ -130,14 +130,14 @@ pub fn RecurrenceOperator::pow(
   exp : Int,
 ) -> RecurrenceOperator {
   if exp < 0 {
-    return recurrence_operator([holo_one()], self.parent)
+    return recurrence_operator([int(1)], self.parent)
   }
   if exp == 0 {
-    return recurrence_operator([holo_one()], self.parent)
+    return recurrence_operator([int(1)], self.parent)
   }
   let mut e = exp
   let mut base = self
-  let mut result = recurrence_operator([holo_one()], self.parent)
+  let mut result = recurrence_operator([int(1)], self.parent)
   while e > 0 {
     if e % 2 == 1 {
       result = recurrence_mul(result, base)

@@ -1,14 +1,4 @@
 ///|
-fn geo_zero() -> Expr {
-  int(0)
-}
-
-///|
-fn geo_one() -> Expr {
-  int(1)
-}
-
-///|
 fn geo_pi() -> Expr {
   @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
@@ -21,11 +11,6 @@ fn geo_two_pi() -> Expr {
 ///|
 fn geo_half_pi() -> Expr {
   geo_div(geo_pi(), geo_int(2))
-}
-
-///|
-fn geo_neg_one() -> Expr {
-  int(-1)
 }
 
 ///|
@@ -98,12 +83,12 @@ fn geo_expr_eq(lhs : Expr, rhs : Expr) -> Bool {
 
 ///|
 fn geo_div(lhs : Expr, rhs : Expr) -> Expr {
-  geo_simplify(lhs * (rhs ^ geo_neg_one()))
+  geo_simplify(lhs * (rhs ^ int(-1)))
 }
 
 ///|
 fn geo_expr_is_zero(expr : Expr) -> Bool {
-  geo_expr_eq(expr, geo_zero())
+  geo_expr_eq(expr, int(0))
 }
 
 ///|
@@ -170,7 +155,7 @@ fn geo_poly_deg2_add(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn geo_poly_deg2_mul(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr]? {
-  let out = [geo_zero(), geo_zero(), geo_zero()]
+  let out = [int(0), int(0), int(0)]
   for i in 0..<3 {
     for j in 0..<3 {
       if i + j > 2 {
@@ -187,7 +172,7 @@ fn geo_poly_deg2_mul(lhs : Array[Expr], rhs : Array[Expr]) -> Array[Expr]? {
 
 ///|
 fn geo_poly_deg2_pow(coeffs : Array[Expr], exp : Int) -> Array[Expr]? {
-  let mut out = [geo_one(), geo_zero(), geo_zero()]
+  let mut out = [int(1), int(0), int(0)]
   for _ in 0..<exp {
     match geo_poly_deg2_mul(out, coeffs) {
       Some(next) => out = next
@@ -203,21 +188,21 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
     Expr::Number(_)
     | Expr::Float(_)
     | Expr::ComplexFloat(_)
-    | Expr::NumberSymbol(_) => Some([expr, geo_zero(), geo_zero()])
+    | Expr::NumberSymbol(_) => Some([expr, int(0), int(0)])
     Expr::Symbol(_)
     | Expr::Dummy(_, _)
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) =>
       if @symcore.compare_expr(expr, wrt) == 0 {
-        Some([geo_zero(), geo_one(), geo_zero()])
+        Some([int(0), int(1), int(0)])
       } else {
-        Some([expr, geo_zero(), geo_zero()])
+        Some([expr, int(0), int(0)])
       }
     Expr::AppliedUndef(_, _) => None
     Expr::Dict(_) => None
     Expr::Add(args) => {
-      let mut out = [geo_zero(), geo_zero(), geo_zero()]
+      let mut out = [int(0), int(0), int(0)]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
           Some(coeffs) => out = geo_poly_deg2_add(out, coeffs)
@@ -228,7 +213,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
     }
     Expr::Mod(_, _) => None
     Expr::Mul(args) => {
-      let mut out = [geo_one(), geo_zero(), geo_zero()]
+      let mut out = [int(1), int(0), int(0)]
       for arg in args {
         match geo_poly_deg2_coeffs(arg, wrt) {
           Some(coeffs) =>
@@ -243,7 +228,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
     }
     Expr::Pow(base, exp) =>
       if !geo_expr_depends_on(expr, wrt) {
-        Some([expr, geo_zero(), geo_zero()])
+        Some([expr, int(0), int(0)])
       } else {
         match geo_expr_int_value(exp) {
           Some(k) if k >= 0 && k <= 2 =>
@@ -258,7 +243,7 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       if geo_expr_depends_on(expr, wrt) {
         None
       } else {
-        Some([expr, geo_zero(), geo_zero()])
+        Some([expr, int(0), int(0)])
       }
     Expr::Boolean(_)
     | Expr::Tuple(_)
@@ -277,17 +262,17 @@ fn geo_solve_univar_deg2(expr : Expr, wrt : Expr) -> Array[Expr]? {
 
 ///|
 fn geo_normalized_atan2(y : Expr, x : Expr) -> Expr {
-  if geo_expr_is_zero(y) && geo_expr_eq(x, geo_one()) {
-    return geo_zero()
+  if geo_expr_is_zero(y) && geo_expr_eq(x, int(1)) {
+    return int(0)
   }
-  if geo_expr_eq(y, geo_one()) && geo_expr_is_zero(x) {
+  if geo_expr_eq(y, int(1)) && geo_expr_is_zero(x) {
     return geo_half_pi()
   }
-  if geo_expr_is_zero(y) && geo_expr_eq(x, geo_neg_one()) {
+  if geo_expr_is_zero(y) && geo_expr_eq(x, int(-1)) {
     return geo_pi()
   }
-  if geo_expr_eq(y, geo_neg_one()) && geo_expr_is_zero(x) {
-    return geo_zero() - geo_half_pi()
+  if geo_expr_eq(y, int(-1)) && geo_expr_is_zero(x) {
+    return int(0) - geo_half_pi()
   }
   geo_simplify(@symelem.atan2(y, x))
 }
@@ -330,7 +315,7 @@ fn geo_render_tuple(items : Array[Expr]) -> String {
 fn geo_zero_coords(dim : Int) -> Array[Expr] {
   let out : Array[Expr] = []
   for _ in 0..<dim {
-    out.push(geo_zero())
+    out.push(int(0))
   }
   out
 }
@@ -381,7 +366,7 @@ fn geo_scale_coords_axis(
 
 ///|
 fn geo_dot(lhs : Array[Expr], rhs : Array[Expr]) -> Expr {
-  let mut acc = geo_zero()
+  let mut acc = int(0)
   for i in 0..<lhs.length() {
     acc = geo_simplify(acc + lhs[i] * rhs[i])
   }
@@ -398,7 +383,7 @@ fn geo_perp2(coords : Array[Expr]) -> Array[Expr] raise GeometryError {
   if coords.length() != 2 {
     raise GeometryError::ValueError("perp2 is only defined for planar vectors")
   }
-  [geo_simplify(geo_zero() - coords[1]), coords[0]]
+  [geo_simplify(int(0) - coords[1]), coords[0]]
 }
 
 ///|

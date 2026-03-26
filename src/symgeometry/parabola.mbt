@@ -52,7 +52,7 @@ pub fn Parabola::directrix(self : Parabola) -> Line {
 
 ///|
 pub fn Parabola::eccentricity(_self : Parabola) -> Expr {
-  geo_one()
+  int(1)
 }
 
 ///|

@@ -69,18 +69,8 @@ pub enum BodyLike {
 } derive(Eq)
 
 ///|
-fn mech_zero_expr() -> Expr {
-  int(0)
-}
-
-///|
-fn mech_one_expr() -> Expr {
-  int(1)
-}
-
-///|
 fn mech_half_expr() -> Expr {
-  mech_simplify_expr(mech_one_expr() * (int(2) ^ int(-1)))
+  mech_simplify_expr(int(1) * (int(2) ^ int(-1)))
 }
 
 ///|
@@ -90,7 +80,7 @@ fn mech_simplify_expr(expr : Expr) -> Expr {
 
 ///|
 fn mech_expr_is_zero(expr : Expr) -> Bool {
-  mech_simplify_expr(expr) == mech_zero_expr()
+  mech_simplify_expr(expr) == int(0)
 }
 
 ///|
@@ -170,20 +160,20 @@ fn mech_eval_special_trig(expr : Expr) -> Expr {
   match expr {
     Expr::Function("sin", args) if args.length() == 1 => {
       let arg = mech_eval_special_trig(args[0])
-      if @symcore.compare_expr(arg, mech_zero_expr()) == 0 {
-        mech_zero_expr()
+      if @symcore.compare_expr(arg, int(0)) == 0 {
+        int(0)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
-        mech_one_expr()
+        int(1)
       } else {
         @symcore.raw_function("sin", [arg])
       }
     }
     Expr::Function("cos", args) if args.length() == 1 => {
       let arg = mech_eval_special_trig(args[0])
-      if @symcore.compare_expr(arg, mech_zero_expr()) == 0 {
-        mech_one_expr()
+      if @symcore.compare_expr(arg, int(0)) == 0 {
+        int(1)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
-        mech_zero_expr()
+        int(0)
       } else {
         @symcore.raw_function("cos", [arg])
       }

@@ -35,7 +35,10 @@ test "Poly::from_expr_defaults infers RR from float coefficients" {
     Ok(value) => value
     Err(_) => fail("float")
   }
-  let expr = @symcore.add([@symcore.Expr::Symbol("x"), @symcore.Expr::Float(half)])
+  let expr = @symcore.add([
+    @symcore.Expr::Symbol("x"),
+    @symcore.Expr::Float(half),
+  ])
   let poly_res : Result[Poly, PolyError] = try? Poly::from_expr_defaults(expr)
   let poly = match poly_res {
     Ok(value) => value

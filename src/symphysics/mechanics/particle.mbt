@@ -9,12 +9,7 @@ pub fn particle(
 ) -> Particle raise @symvector.VectorError {
   let p = point.unwrap_or(@symvector.point(name + "_masscenter"))
   let m = mass.unwrap_or(Expr::Symbol(name + "_mass"))
-  Particle::{
-    name_: name,
-    point_: p,
-    mass_: m,
-    potential_energy_: mech_zero_expr(),
-  }
+  Particle::{ name_: name, point_: p, mass_: m, potential_energy_: int(0) }
 }
 
 ///|

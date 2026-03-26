@@ -45,18 +45,13 @@ fn mechanics_two_expr() -> Expr {
 }
 
 ///|
-fn mechanics_neg_one_expr() -> Expr {
-  int(-1)
-}
-
-///|
 fn mechanics_is_zero(expr : Expr) -> Bool {
   mech_expr_is_zero(expr)
 }
 
 ///|
 fn mechanics_is_negative_one(expr : Expr) -> Bool {
-  @symcore.compare_expr(expr, mechanics_neg_one_expr()) == 0
+  @symcore.compare_expr(expr, int(-1)) == 0
 }
 
 ///|
@@ -224,9 +219,7 @@ fn mechanics_directional_atan(
     }
     _ => {
       let ratio = @symsimplify.trigsimp(
-        @symsimplify.simplify(
-          numerator * (denominator ^ mechanics_neg_one_expr()),
-        ),
+        @symsimplify.simplify(numerator * (denominator ^ int(-1))),
         max_passes=8,
       )
       match ratio {
@@ -516,12 +509,8 @@ pub fn WrappingCone::geodesic_length(
   let pos2 = point_2.pos_from(self.apex_)
   let z1 = pos1.dot(self.axis_)
   let z2 = pos2.dot(self.axis_)
-  let s1 = mech_simplify_expr(
-    z1 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
-  )
-  let s2 = mech_simplify_expr(
-    z2 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
-  )
+  let s1 = mech_simplify_expr(z1 * (@symelem.cos(self.alpha_) ^ int(-1)))
+  let s2 = mech_simplify_expr(z2 * (@symelem.cos(self.alpha_) ^ int(-1)))
   let n1 = (pos1 - self.axis_.scale(z1)).normalize()
   let n2 = (pos2 - self.axis_.scale(z2)).normalize()
   let cross = n1.cross(n2)
@@ -562,12 +551,8 @@ pub fn WrappingCone::geodesic_end_vectors(
 
   let z1 = pos1.dot(self.axis_)
   let z2 = pos2.dot(self.axis_)
-  let s1 = mech_simplify_expr(
-    z1 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
-  )
-  let s2 = mech_simplify_expr(
-    z2 * (@symelem.cos(self.alpha_) ^ mechanics_neg_one_expr()),
-  )
+  let s1 = mech_simplify_expr(z1 * (@symelem.cos(self.alpha_) ^ int(-1)))
+  let s2 = mech_simplify_expr(z2 * (@symelem.cos(self.alpha_) ^ int(-1)))
   let l = self.geodesic_length(point_1, point_2)
   let n1 = (pos1 - self.axis_.scale(z1)).normalize()
   let n2 = (pos2 - self.axis_.scale(z2)).normalize()
@@ -583,27 +568,14 @@ pub fn WrappingCone::geodesic_end_vectors(
   let c2 = self.axis_.cross(n2)
 
   let v1 = g1.scale(
-      mech_simplify_expr(
-        (s2 * @symelem.cos(delta_u) - s1) * (l ^ mechanics_neg_one_expr()),
-      ),
+      mech_simplify_expr((s2 * @symelem.cos(delta_u) - s1) * (l ^ int(-1))),
     ) +
-    c1.scale(
-      mech_simplify_expr(
-        s2 * @symelem.sin(delta_u) * (l ^ mechanics_neg_one_expr()),
-      ),
-    )
+    c1.scale(mech_simplify_expr(s2 * @symelem.sin(delta_u) * (l ^ int(-1))))
   let v2 = g2.scale(
-      mech_simplify_expr(
-        (s1 * @symelem.cos(delta_u) - s2) * (l ^ mechanics_neg_one_expr()),
-      ),
+      mech_simplify_expr((s1 * @symelem.cos(delta_u) - s2) * (l ^ int(-1))),
     ) +
     c2.scale(
-      mech_simplify_expr(
-        mechanics_neg_one_expr() *
-        s1 *
-        @symelem.sin(delta_u) *
-        (l ^ mechanics_neg_one_expr()),
-      ),
+      mech_simplify_expr(int(-1) * s1 * @symelem.sin(delta_u) * (l ^ int(-1))),
     )
   (v1, v2)
 }

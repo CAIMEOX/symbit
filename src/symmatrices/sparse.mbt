@@ -85,7 +85,7 @@ fn clone_sparse_row_maps(rows : Array[Map[Int, Expr]]) -> Array[Map[Int, Expr]] 
 fn sparse_row_get(row : Map[Int, Expr], col : Int) -> Expr {
   match row.get(col) {
     Some(value) => value
-    None => expr_zero()
+    None => @symcore.int(0)
   }
 }
 
@@ -143,7 +143,7 @@ fn sparse_row_scale(row : Map[Int, Expr], scalar : Expr) -> Unit {
 
 ///|
 fn sparse_row_to_dense(row : Map[Int, Expr], cols : Int) -> Array[Expr] {
-  let out = Array::make(cols, expr_zero())
+  let out = Array::make(cols, @symcore.int(0))
   for col, value in row {
     out[col] = value
   }
@@ -199,7 +199,7 @@ fn sparse_rref_internal(
     }
     let pivot = sparse_row_get(rows[row], col)
     sparse_row_scale(rows[row], pivot)
-    sparse_row_set(rows[row], col, expr_one())
+    sparse_row_set(rows[row], col, @symcore.int(1))
     for i in 0..<matrix.rows {
       if i == row {
         continue
@@ -216,7 +216,7 @@ fn sparse_rref_internal(
         )
         sparse_row_set(rows[i], active_col, updated)
       }
-      sparse_row_set(rows[i], col, expr_zero())
+      sparse_row_set(rows[i], col, @symcore.int(0))
     }
     pivots.push(col)
     row += 1
@@ -233,7 +233,7 @@ fn sparse_echelon_internal(
   let pivots : Array[Int] = []
   let mut row = 0
   let mut col = 0
-  let mut prev = expr_one()
+  let mut prev = @symcore.int(1)
   while row < matrix.rows && col < matrix.cols {
     let mut pivot_row = row
     while pivot_row < matrix.rows &&
@@ -253,7 +253,7 @@ fn sparse_echelon_internal(
       if expr_is_zero(factor) {
         continue
       }
-      sparse_row_set(rows[i], col, expr_zero())
+      sparse_row_set(rows[i], col, @symcore.int(0))
       let active_cols = sparse_row_active_cols(rows[i], rows[row], col + 1)
       for active_col in active_cols {
         let numer = expr_sub(
@@ -351,7 +351,7 @@ pub fn SparseMatrix::getitem(
   let c = normalize_index(col, self.cols)
   match self.entries.get((r, c)) {
     Some(value) => value
-    None => expr_zero()
+    None => @symcore.int(0)
   }
 }
 
@@ -377,7 +377,7 @@ pub fn SparseMatrix::setitem(
 pub fn SparseMatrix::to_dense(self : SparseMatrix) -> Matrix {
   let data : Array[Array[Expr]] = Array::new()
   for _ in 0..<self.rows {
-    data.push(Array::make(self.cols, expr_zero()))
+    data.push(Array::make(self.cols, @symcore.int(0)))
   }
   for key, value in self.entries {
     data[key.0][key.1] = value
@@ -688,7 +688,7 @@ pub fn SparseMatrix::trace(self : SparseMatrix) -> Expr raise MatrixError {
   if self.rows != self.cols {
     raise MatrixError::NonSquareMatrixError("trace requires a square matrix")
   }
-  let mut acc = expr_zero()
+  let mut acc = @symcore.int(0)
   for i in 0..<self.rows {
     match self.entries.get((i, i)) {
       Some(value) => acc = expr_add(acc, value)
@@ -711,16 +711,16 @@ pub fn SparseMatrix::det(self : SparseMatrix) -> Expr raise MatrixError {
     )
   }
   if self.rows == 0 {
-    return expr_one()
+    return @symcore.int(1)
   }
   if self.is_diagonal() || self.is_upper() || self.is_lower() {
-    let mut acc = expr_one()
+    let mut acc = @symcore.int(1)
     for i in 0..<self.rows {
       acc = expr_mul(
         acc,
         match self.entries.get((i, i)) {
           Some(value) => value
-          None => expr_zero()
+          None => @symcore.int(0)
         },
       )
     }
@@ -775,7 +775,7 @@ pub fn SparseMatrix::columnspace(self : SparseMatrix) -> Array[Array[Expr]] {
       col.push(
         match self.entries.get((i, pivot)) {
           Some(value) => value
-          None => expr_zero()
+          None => @symcore.int(0)
         },
       )
     }
@@ -799,8 +799,8 @@ pub fn SparseMatrix::nullspace(self : SparseMatrix) -> Array[Array[Expr]] {
   }
   let basis : Array[Array[Expr]] = []
   for free_col in free_cols {
-    let vec = Array::make(self.cols, expr_zero())
-    vec[free_col] = expr_one()
+    let vec = Array::make(self.cols, @symcore.int(0))
+    vec[free_col] = @symcore.int(1)
     for i in 0..<pivots.length() {
       let pivot_col = pivots[i]
       vec[pivot_col] = expr_neg(rref.data[i][free_col])
@@ -856,7 +856,7 @@ pub fn SparseMatrix::lu(
         )
         sparse_row_set(u_rows[i], active_col, updated)
       }
-      sparse_row_set(u_rows[i], k, expr_zero())
+      sparse_row_set(u_rows[i], k, @symcore.int(0))
     }
   }
   ({ rows: n, cols: n, data: l }, sparse_row_maps_to_dense(u_rows, n), swaps)
@@ -966,7 +966,7 @@ pub fn SparseMatrix::lower_triangular_solve(
   let out = zeros(self.rows, cols=Some(rhs.cols))
   let data = clone_expr_rows(out.data)
   for i in 0..<self.rows {
-    let mut diag = expr_zero()
+    let mut diag = @symcore.int(0)
     for item in row_entries[i] {
       let (col, value) = item
       if col == i {
@@ -1029,7 +1029,7 @@ pub fn SparseMatrix::upper_triangular_solve(
   let data = clone_expr_rows(out.data)
   for offset in 0..<self.rows {
     let i = self.rows - 1 - offset
-    let mut diag = expr_zero()
+    let mut diag = @symcore.int(0)
     for item in row_entries[i] {
       let (col, value) = item
       if col == i {
@@ -1108,7 +1108,7 @@ pub fn SparseMatrix::ldl(
   let l = clone_expr_rows(l0.data)
   let d = clone_expr_rows(d0.data)
   for i in 0..<n {
-    l[i][i] = expr_one()
+    l[i][i] = @symcore.int(1)
   }
   for j in 0..<n {
     let mut diag = self.getitem(j, j)
@@ -1144,7 +1144,7 @@ pub fn SparseMatrix::qr(
     return dense.qr()
   }
   let qcols : Array[Array[Expr]] = []
-  let r = Array::make(self.cols, Array::make(self.cols, expr_zero()))
+  let r = Array::make(self.cols, Array::make(self.cols, @symcore.int(0)))
   for j in 0..<self.cols {
     let v : Array[Expr] = []
     for i in 0..<self.rows {
@@ -1152,7 +1152,7 @@ pub fn SparseMatrix::qr(
     }
     for i in 0..<j {
       let qi = qcols[i]
-      let mut dot = expr_zero()
+      let mut dot = @symcore.int(0)
       for k in 0..<self.rows {
         dot = expr_add(dot, expr_mul(qi[k], v[k]))
       }
@@ -1161,7 +1161,7 @@ pub fn SparseMatrix::qr(
         v[k] = expr_sub(v[k], expr_mul(dot, qi[k]))
       }
     }
-    let mut norm_sq = expr_zero()
+    let mut norm_sq = @symcore.int(0)
     for k in 0..<self.rows {
       norm_sq = expr_add(norm_sq, expr_mul(v[k], v[k]))
     }

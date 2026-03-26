@@ -2,16 +2,6 @@
 pub type Expr = @symcore.Expr
 
 ///|
-fn expr_zero() -> Expr {
-  @symcore.int(0)
-}
-
-///|
-fn expr_one() -> Expr {
-  @symcore.int(1)
-}
-
-///|
 fn expr_simplify(expr : Expr) -> Expr {
   @symsimplify.simplify(expr)
 }
@@ -43,7 +33,7 @@ fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_is_zero(expr : Expr) -> Bool {
-  expr_simplify(expr) == expr_zero()
+  expr_simplify(expr) == @symcore.int(0)
 }
 
 ///|

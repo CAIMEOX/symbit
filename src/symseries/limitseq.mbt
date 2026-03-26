@@ -79,11 +79,21 @@ pub fn limit_seq(
   let (num_expr, den_expr) = split_num_den(expr)
   let num_poly = match poly_from_expr(num_expr, n) {
     Some(v) => v
-    None => return limit(expr, n, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+    None =>
+      return limit(
+        expr,
+        n,
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      )
   }
   let den_poly = match poly_from_expr(den_expr, n) {
     Some(v) => v
-    None => return limit(expr, n, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+    None =>
+      return limit(
+        expr,
+        n,
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      )
   }
   let num_deg = if num_poly.is_empty() { -1 } else { num_poly.length() - 1 }
   let den_deg = if den_poly.is_empty() { -1 } else { den_poly.length() - 1 }
@@ -104,7 +114,11 @@ pub fn limit_seq(
   )
   match sign {
     Some(1) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-    Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
+    Some(-1) =>
+      @symcore.mul([
+        @symcore.int(-1),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      ])
     Some(0) => @symcore.int(0)
     Some(_) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
     None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)

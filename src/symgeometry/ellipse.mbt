@@ -37,12 +37,12 @@ fn quadratic_roots(a : Expr, b : Expr, c : Expr) -> Array[Expr] {
     if geo_expr_is_zero(b) {
       return out
     }
-    out.push(geo_div(geo_zero() - c, b))
+    out.push(geo_div(int(0) - c, b))
     return out
   }
   let disc = geo_simplify(b * b - geo_int(4) * a * c)
   let two_a = geo_simplify(geo_int(2) * a)
-  let neg_b = geo_zero() - b
+  let neg_b = int(0) - b
   if geo_expr_is_zero(disc) {
     out.push(geo_div(neg_b, two_a))
     return out
@@ -120,11 +120,11 @@ fn ellipse_tangent_lines_from_point(
   let pt = pt.with_dim(2)
   let u = ellipse_unit_coords(center, hradius, vradius, pt)
   let d2 = geo_simplify(u[0] * u[0] + u[1] * u[1])
-  match geo_expr_sign(d2 - geo_one()) {
+  match geo_expr_sign(d2 - int(1)) {
     Some(sign) if sign < 0 => []
     Some(0) => [tangent_line_at_boundary_point(center, hradius, vradius, pt)]
     Some(_) => {
-      let scale = geo_div(@symelem.sqrt(d2 - geo_one()), d2)
+      let scale = geo_div(@symelem.sqrt(d2 - int(1)), d2)
       let base = [geo_div(u[0], d2), geo_div(u[1], d2)]
       let perp = geo_perp2(u)
       let q1 = [
@@ -320,7 +320,11 @@ pub fn Ellipse::repr(self : Ellipse) -> String {
 
 ///|
 pub fn Ellipse::area(self : Ellipse) -> Expr {
-  geo_simplify(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.hradius_ * self.vradius_)
+  geo_simplify(
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    self.hradius_ *
+    self.vradius_,
+  )
 }
 
 ///|
@@ -376,17 +380,17 @@ pub fn Ellipse::focus_distance(self : Ellipse) -> Expr {
 
 ///|
 pub fn Ellipse::periapsis(self : Ellipse) -> Expr {
-  geo_simplify(self.major() * (geo_one() - self.eccentricity()))
+  geo_simplify(self.major() * (int(1) - self.eccentricity()))
 }
 
 ///|
 pub fn Ellipse::apoapsis(self : Ellipse) -> Expr {
-  geo_simplify(self.major() * (geo_one() + self.eccentricity()))
+  geo_simplify(self.major() * (int(1) + self.eccentricity()))
 }
 
 ///|
 pub fn Ellipse::semilatus_rectum(self : Ellipse) -> Expr {
-  geo_simplify(self.major() * (geo_one() - (self.eccentricity() ^ geo_int(2))))
+  geo_simplify(self.major() * (int(1) - (self.eccentricity() ^ geo_int(2))))
 }
 
 ///|
@@ -418,16 +422,16 @@ pub fn Ellipse::equation(
     Some(slope) => {
       let l = (slope * dy + dx) ^ geo_int(2)
       let big_l = (dy - slope * dx) ^ geo_int(2)
-      let h = geo_one() + slope * slope
+      let h = int(1) + slope * slope
       let b = geo_simplify(h * (self.major() ^ geo_int(2)))
       let a = geo_simplify(h * (self.minor() ^ geo_int(2)))
-      geo_simplify(geo_div(l, b) + geo_div(big_l, a) - geo_one())
+      geo_simplify(geo_div(l, b) + geo_div(big_l, a) - int(1))
     }
     None =>
       geo_simplify(
         geo_div(dx ^ geo_int(2), self.hradius_ ^ geo_int(2)) +
         geo_div(dy ^ geo_int(2), self.vradius_ ^ geo_int(2)) -
-        geo_one(),
+        int(1),
       )
   }
 }
@@ -493,7 +497,7 @@ pub fn Ellipse::plot_interval(
   _self : Ellipse,
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
-  [parameter, geo_zero() - geo_pi(), geo_pi()]
+  [parameter, int(0) - geo_pi(), geo_pi()]
 }
 
 ///|
@@ -574,7 +578,7 @@ pub fn Ellipse::translate(
 pub fn Ellipse::scale(
   self : Ellipse,
   x : Expr,
-  y? : Expr = geo_one(),
+  y? : Expr = int(1),
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   let factors = [x, y]
@@ -597,10 +601,10 @@ pub fn Ellipse::rotate(
   let half_pi = geo_div(pi, geo_int(2))
   if geo_expr_is_zero(angle) ||
     geo_expr_eq(angle, pi) ||
-    geo_expr_eq(angle, geo_zero() - pi) {
+    geo_expr_eq(angle, int(0) - pi) {
     return ellipse(center, self.hradius_, self.vradius_)
   }
-  if geo_expr_eq(angle, half_pi) || geo_expr_eq(angle, geo_zero() - half_pi) {
+  if geo_expr_eq(angle, half_pi) || geo_expr_eq(angle, int(0) - half_pi) {
     return ellipse(center, self.vradius_, self.hradius_)
   }
   raise GeometryError::ValueError(
@@ -633,7 +637,7 @@ pub fn Ellipse::intersection(
       let v2 = self.vradius_ ^ geo_int(2)
       let qa = geo_div(dx * dx, h2) + geo_div(dy * dy, v2)
       let qb = geo_int(2) * (geo_div(x0 * dx, h2) + geo_div(y0 * dy, v2))
-      let qc = geo_div(x0 * x0, h2) + geo_div(y0 * y0, v2) - geo_one()
+      let qc = geo_div(x0 * x0, h2) + geo_div(y0 * y0, v2) - int(1)
       conic_points_from_linear_entity(other, qa, qb, qc)
     }
     GeometryEntity::Circle(_) => []
@@ -733,12 +737,20 @@ pub fn Circle::repr(self : Circle) -> String {
 
 ///|
 pub fn Circle::area(self : Circle) -> Expr {
-  geo_simplify(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.radius_ * self.radius_)
+  geo_simplify(
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    self.radius_ *
+    self.radius_,
+  )
 }
 
 ///|
 pub fn Circle::circumference(self : Circle) -> Expr {
-  geo_simplify(geo_int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.radius_)
+  geo_simplify(
+    geo_int(2) *
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    self.radius_,
+  )
 }
 
 ///|
@@ -760,7 +772,7 @@ pub fn Circle::plot_interval(
   _self : Circle,
   parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
-  [parameter, geo_zero() - geo_pi(), geo_pi()]
+  [parameter, int(0) - geo_pi(), geo_pi()]
 }
 
 ///|
@@ -860,7 +872,7 @@ pub fn Circle::translate(
 pub fn Circle::scale(
   self : Circle,
   x : Expr,
-  y? : Expr = geo_one(),
+  y? : Expr = int(1),
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   let center = self.center_.scale([x, y], pt~)
@@ -916,7 +928,7 @@ fn circle_circle_intersection(
     return [geometry_point(point2d(x2, y2))]
   }
   let h = @symelem.sqrt(h2)
-  let rx = geo_div(geo_zero() - dy * h, d)
+  let rx = geo_div(int(0) - dy * h, d)
   let ry = geo_div(dx * h, d)
   [
     geometry_point(point2d(x2 + rx, y2 + ry)),

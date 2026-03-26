@@ -1,19 +1,4 @@
 ///|
-fn holo_zero() -> Expr {
-  int(0)
-}
-
-///|
-fn holo_one() -> Expr {
-  int(1)
-}
-
-///|
-fn holo_neg_one() -> Expr {
-  int(-1)
-}
-
-///|
 fn expr_is_zero(expr : Expr) -> Bool {
   match expr {
     Expr::Number(n) => n.is_zero()
@@ -43,7 +28,7 @@ fn expr_add(a : Expr, b : Expr) -> Expr {
 ///|
 fn expr_mul(a : Expr, b : Expr) -> Expr {
   if expr_is_zero(a) || expr_is_zero(b) {
-    holo_zero()
+    int(0)
   } else if expr_is_one(a) {
     b
   } else if expr_is_one(b) {
@@ -55,7 +40,7 @@ fn expr_mul(a : Expr, b : Expr) -> Expr {
 
 ///|
 fn expr_neg(a : Expr) -> Expr {
-  expr_mul(holo_neg_one(), a)
+  expr_mul(int(-1), a)
 }
 
 ///|
@@ -93,7 +78,7 @@ fn trim_coeffs(coeffs : Array[Expr]) -> Array[Expr] {
     end -= 1
   }
   if end == 0 {
-    return [holo_zero()]
+    return [int(0)]
   }
   let out : Array[Expr] = Array::new()
   for i in 0..<end {
@@ -107,7 +92,7 @@ fn coeff_at(coeffs : Array[Expr], idx : Int) -> Expr {
   if idx < coeffs.length() {
     coeffs[idx]
   } else {
-    holo_zero()
+    int(0)
   }
 }
 

@@ -54,7 +54,7 @@ pub fn rigid_body(
     mass_: m,
     inertia_: inertia_value,
     central_inertia_: central,
-    potential_energy_: mech_zero_expr(),
+    potential_energy_: int(0),
   }
 }
 

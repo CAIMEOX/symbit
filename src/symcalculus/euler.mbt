@@ -317,7 +317,11 @@ pub fn euler_equations(
         eq = @symcore.add([eq, signed])
       }
     }
-    let eq_expr = @symcore.Expr::Relational(@symcore.RelOp::Eq, eq, @symcore.int(0))
+    let eq_expr = @symcore.Expr::Relational(
+      @symcore.RelOp::Eq,
+      eq,
+      @symcore.int(0),
+    )
     eqns.push(eq_expr)
   }
   eqns

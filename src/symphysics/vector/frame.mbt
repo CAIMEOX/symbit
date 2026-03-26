@@ -266,11 +266,11 @@ fn orientation_from_spec(
       if expr_is_zero(norm_sq) {
         raise VectorError::ValueError("axis vector must be nonzero")
       }
-      let unit = if expr_eq(norm_sq, one_expr()) {
+      let unit = if expr_eq(norm_sq, int(1)) {
         comps
       } else {
         let norm = @symelem.sqrt(norm_sq)
-        components_scale(norm ^ neg_one_expr(), comps)
+        components_scale(norm ^ int(-1), comps)
       }
       let parent_dcm_child = rotation_matrix_about_axis(unit, angle)
       let ang_vel = axis_in_parent

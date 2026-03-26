@@ -19,7 +19,7 @@ fn motion_integral_symbolic(expr : Expr, lower : Expr, upper : Expr) -> Expr {
 fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
   let half = rational_expr(1, 2)
   if expr_is_zero(expr) {
-    return zero_expr()
+    return int(0)
   }
   if !expr_depends_on(expr, dynamicsymbols_t) {
     return simplify_expr(expr * (upper - lower))
@@ -45,11 +45,7 @@ fn motion_integral_scalar(expr : Expr, lower : Expr, upper : Expr) -> Expr {
       if dep.is_empty() {
         simplify_expr(expr * (upper - lower))
       } else if dep.length() == 1 {
-        let coeff = if indep.is_empty() {
-          one_expr()
-        } else {
-          @symcore.mul(indep)
-        }
+        let coeff = if indep.is_empty() { int(1) } else { @symcore.mul(indep) }
         simplify_expr(coeff * motion_integral_scalar(dep[0], lower, upper))
       } else {
         motion_integral_symbolic(expr, lower, upper)
@@ -158,7 +154,7 @@ pub fn kinematic_equations(
     let w2 = speeds[1]
     let w3 = speeds[2]
     if expr_is_zero(w1) && expr_is_zero(w2) && expr_is_zero(w3) {
-      return [zero_expr(), zero_expr(), zero_expr()]
+      return [int(0), int(0), int(0)]
     }
     let q1 = coords[0]
     let q2 = coords[1]
@@ -172,8 +168,8 @@ pub fn kinematic_equations(
     let c1 = @symelem.cos(q1)
     let c2 = @symelem.cos(q2)
     let c3 = @symelem.cos(q3)
-    let inv_c2 = c2 ^ neg_one_expr()
-    let inv_s2 = s2 ^ neg_one_expr()
+    let inv_c2 = c2 ^ int(-1)
+    let inv_s2 = s2 ^ int(-1)
     let mw1 = expr_neg(w1)
     let mw2 = expr_neg(w2)
     let out = match rot_kind {
@@ -365,8 +361,8 @@ pub fn get_motion_params(
   acceleration? : Vector? = None,
   velocity? : Vector? = None,
   position? : Vector? = None,
-  timevalue1? : Expr = zero_expr(),
-  timevalue2? : Expr = zero_expr(),
+  timevalue1? : Expr = int(0),
+  timevalue2? : Expr = int(0),
 ) -> (Vector, Vector, Vector) raise VectorError {
   let zero = vector_zero()
   match acceleration {
