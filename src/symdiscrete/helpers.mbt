@@ -76,9 +76,7 @@ fn expr_has_symbol(expr : Expr) -> Bool {
       args.any(child => expr_has_symbol(child))
     @symcore.Expr::Pow(base, exp) =>
       expr_has_symbol(base) || expr_has_symbol(exp)
-    @symcore.Expr::Function(_, args) =>
-      args.any(child => expr_has_symbol(child))
-    _ => false
+    _ => @symcore.args(expr).any(child => expr_has_symbol(child))
   }
 }
 
@@ -131,9 +129,15 @@ fn expand_mul(expr : Expr) -> Expr {
     @symcore.Expr::Add(args) => @symcore.add(args.map(expand_mul))
     @symcore.Expr::Pow(base, exp) =>
       @symcore.pow(expand_mul(base), expand_mul(exp))
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(expand_mul))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(head, args.map(expand_mul)) {
+            Some(next) => next
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 

@@ -36,8 +36,7 @@ fn expr_depends_on(expr : Expr, name : String) -> Bool {
       args.any(child => expr_depends_on(child, name))
     Expr::Pow(base, exp) =>
       expr_depends_on(base, name) || expr_depends_on(exp, name)
-    Expr::Function(_, args) => args.any(child => expr_depends_on(child, name))
-    _ => false
+    _ => @symcore.args(expr).any(child => expr_depends_on(child, name))
   }
 }
 
@@ -806,8 +805,8 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
       }
     }
     Set::ProductSet(items) =>
-      match elem {
-        Expr::Function(name, args) if name == "Tuple" => {
+      match @symcore.tuple_items(elem) {
+        Some(args) => {
           if args.length() != items.length() {
             return SetBool::False
           }
@@ -820,7 +819,7 @@ pub fn contains(set : Set, elem : Expr) -> SetBool {
           }
           acc
         }
-        _ => SetBool::False
+        None => SetBool::False
       }
     Set::Naturals
     | Set::Naturals0

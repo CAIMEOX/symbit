@@ -38,12 +38,10 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(arg => expr_depends_on(arg, wrt))
+    Expr::Add(args) | Expr::Mul(args) => args.any(arg => expr_depends_on(arg, wrt))
     Expr::Pow(base, exp) =>
       expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
-    Expr::Function(_, args) => args.any(arg => expr_depends_on(arg, wrt))
-    _ => false
+    _ => @symcore.args(expr).any(arg => expr_depends_on(arg, wrt))
   }
 }
 
@@ -196,29 +194,27 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
       } else {
         @symcore.int(0)
       }
-    Expr::Function(name, args) =>
-      if name == "Derivative" {
-        if expr_is_symbol(wrt) {
-          derivative_expr(expr, [wrt])
-        } else {
-          @symcore.int(0)
-        }
-      } else {
-        diff_function(name, args, wrt)
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.function_head_name(head) {
+            Some(name) => diff_function(name, args, wrt)
+            None => @symcore.int(0)
+          }
+        None => @symcore.int(0)
       }
   }
 }
 
 ///|
 fn max_derivative_order(expr : Expr, target : Expr) -> Int {
-  match expr {
-    Expr::Function(name, args) if name == "Derivative" && args.length() >= 2 => {
-      let head = args[0]
+  match @symcore.derivative_parts(expr) {
+    Some((head, deriv_args)) => {
       if @symcore.compare_expr(head, target) == 0 {
-        args.length() - 1
+        deriv_args.length() / 2
       } else {
         let mut max = 0
-        for arg in args {
+        for arg in @symcore.args(expr) {
           let m = max_derivative_order(arg, target)
           if m > max {
             max = m
@@ -227,38 +223,41 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
         max
       }
     }
-    Expr::Add(args) | Expr::Mul(args) => {
-      let mut max = 0
-      for arg in args {
-        let m = max_derivative_order(arg, target)
-        if m > max {
-          max = m
+    None =>
+      match expr {
+        Expr::Add(args) | Expr::Mul(args) => {
+          let mut max = 0
+          for arg in args {
+            let m = max_derivative_order(arg, target)
+            if m > max {
+              max = m
+            }
+          }
+          max
+        }
+        Expr::Pow(base, exp) => {
+          let m1 = max_derivative_order(base, target)
+          let m2 = max_derivative_order(exp, target)
+          if m1 > m2 {
+            m1
+          } else {
+            m2
+          }
+        }
+        _ => {
+          let mut max = 0
+          for arg in @symcore.args(expr) {
+            let m = max_derivative_order(arg, target)
+            if m > max {
+              max = m
+            }
+          }
+          max
         }
       }
-      max
-    }
-    Expr::Pow(base, exp) => {
-      let m1 = max_derivative_order(base, target)
-      let m2 = max_derivative_order(exp, target)
-      if m1 > m2 {
-        m1
-      } else {
-        m2
-      }
-    }
-    Expr::Function(_, args) => {
-      let mut max = 0
-      for arg in args {
-        let m = max_derivative_order(arg, target)
-        if m > max {
-          max = m
-        }
-      }
-      max
-    }
-    _ => 0
   }
 }
+
 
 ///|
 fn combinations_with_replacement(

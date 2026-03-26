@@ -125,8 +125,8 @@ fn pauli_half() -> Expr {
 
 ///|
 pub fn pauli_from_expr(expr : Expr) -> PauliExpr? {
-  match expr {
-    Expr::Function(name, args) =>
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(args)) =>
       match pauli_kind_from_name(name) {
         Some(kind) =>
           match args.length() {
@@ -189,8 +189,8 @@ pub fn SigmaZState::dual(self : SigmaZState) -> SigmaZState {
 
 ///|
 pub fn sigma_z_state_from_expr(expr : Expr) -> SigmaZState? {
-  match expr {
-    Expr::Function(name, args) if (name == "SigmaZKet" || name == "SigmaZBra") &&
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(args)) if (name == "SigmaZKet" || name == "SigmaZBra") &&
       args.length() == 1 =>
       match args[0] {
         Expr::Number(n) if n.is_integral() => {
@@ -390,8 +390,12 @@ pub fn qsimplify_pauli(expr : Expr) -> Expr {
     Expr::Add(args) => quantum_add_from_args_preserve(args.map(qsimplify_pauli))
     Expr::Pow(base, exp) =>
       @symcore.raw_pow(qsimplify_pauli(base), qsimplify_pauli(exp))
-    Expr::Function(name, args) if name == "exp" =>
-      @symcore.raw_function(name, args.map(qsimplify_pauli))
+    _ if @symcore.application_has_name(expr, "exp") =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(head, args.map(qsimplify_pauli)).unwrap_or(expr)
+        None => expr
+      }
     Expr::Mul(args) => {
       let factors = args.map(qsimplify_pauli)
       let scalars : Array[Expr] = []

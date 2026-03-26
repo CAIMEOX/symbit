@@ -60,7 +60,10 @@ pub fn cm_depends_on(expr : Expr, var_name : String) -> Bool {
       args.any(arg => cm_depends_on(arg, var_name))
     Expr::Pow(base, exp) =>
       cm_depends_on(base, var_name) || cm_depends_on(exp, var_name)
-    Expr::Function(_, args) => args.any(arg => cm_depends_on(arg, var_name))
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
+        cm_depends_on(arg, var_name)
+      })
     _ => false
   }
 }
@@ -77,8 +80,8 @@ pub fn cm_collect_symbols(expr : Expr, names : Map[String, Bool]) -> Unit {
       cm_collect_symbols(base, names)
       cm_collect_symbols(exp, names)
     }
-    Expr::Function(_, args) =>
-      for arg in args {
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      for arg in @symcore.application_args(expr).unwrap_or([]) {
         cm_collect_symbols(arg, names)
       }
     _ => ()
@@ -162,30 +165,30 @@ pub fn cm_expr_eval(expr : Expr, env : Map[String, Double]) -> Double? {
           Some(cm_double_pow(base_value, n.numerator().to_int()))
         _ => None
       }
-    Expr::Function("sqrt", args) if args.length() == 1 =>
-      match cm_expr_eval(args[0], env) {
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
+      match cm_expr_eval(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(value.sqrt())
         None => None
       }
-    Expr::Function("sin", args) if args.length() == 1 =>
-      match cm_expr_eval(args[0], env) {
+    _ if @symcore.application_has_name(expr, "sin", arity=1) =>
+      match cm_expr_eval(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(@math.sin(value))
         None => None
       }
-    Expr::Function("cos", args) if args.length() == 1 =>
-      match cm_expr_eval(args[0], env) {
+    _ if @symcore.application_has_name(expr, "cos", arity=1) =>
+      match cm_expr_eval(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(@math.cos(value))
         None => None
       }
-    Expr::Function("atan", args) if args.length() == 1 =>
-      match cm_expr_eval(args[0], env) {
+    _ if @symcore.application_has_name(expr, "atan", arity=1) =>
+      match cm_expr_eval(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(@math.atan(value))
         None => None
       }
-    Expr::Function("SingularityFunction", args) if args.length() == 3 =>
-      match (args[0], args[2]) {
+    _ if @symcore.application_has_name(expr, "SingularityFunction", arity=3) =>
+      match (@symcore.application_args(expr).unwrap_or([])[0], @symcore.application_args(expr).unwrap_or([])[2]) {
         (Expr::Symbol(name), Expr::Number(n)) if n.is_integral() =>
-          match (env.get(name), cm_expr_eval(args[1], env)) {
+          match (env.get(name), cm_expr_eval(@symcore.application_args(expr).unwrap_or([])[1], env)) {
             (Some(at), Some(start)) => {
               let order = n.numerator().to_int()
               let diff = at - start
@@ -207,9 +210,9 @@ pub fn cm_expr_eval(expr : Expr, env : Map[String, Double]) -> Double? {
                 Some(0.0)
               }
             }
-            _ => None
-          }
-        _ => None
+          _ => None
+      }
+    _ => None
       }
     _ => None
   }
@@ -294,17 +297,20 @@ pub fn cm_integrate(expr : Expr, var_name : String) -> Expr {
             return coeff *
               (cm_symbol(var_name) ^ cm_int_expr(2)) *
               cm_rat_expr(1, 2)
-          Expr::Function("SingularityFunction", sf_args) if sf_args.length() ==
-            3 &&
-            sf_args[0] == cm_symbol(var_name) =>
-            match sf_args[2] {
+          _ if @symcore.application_has_name(dep_item, "SingularityFunction", arity=3) &&
+            @symcore.application_args(dep_item).unwrap_or([])[0] == cm_symbol(var_name) =>
+            match @symcore.application_args(dep_item).unwrap_or([])[2] {
               Expr::Number(n) if n.is_integral() => {
                 let (scale, next_order) = cm_integrated_singularity(
                   n.numerator().to_int(),
                 )
                 return coeff *
                   scale *
-                  cm_singularity(cm_symbol(var_name), sf_args[1], next_order)
+                  cm_singularity(
+                    cm_symbol(var_name),
+                    @symcore.application_args(dep_item).unwrap_or([])[1],
+                    next_order,
+                  )
               }
               _ => ()
             }
@@ -413,21 +419,28 @@ pub fn cm_eval_at(expr : Expr, var_name : String, at : Expr) -> Expr {
         cm_eval_at(base, var_name, at),
         cm_eval_at(exp, var_name, at),
       )
-    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
-      args[0] == cm_symbol(var_name) =>
-      match args[2] {
+    _ if @symcore.application_has_name(expr, "SingularityFunction", arity=3) &&
+      @symcore.application_args(expr).unwrap_or([])[0] == cm_symbol(var_name) =>
+      match @symcore.application_args(expr).unwrap_or([])[2] {
         Expr::Number(n) if n.is_integral() =>
-          cm_eval_singularity_exact(at, args[1], n.numerator().to_int())
+          cm_eval_singularity_exact(
+            at,
+            @symcore.application_args(expr).unwrap_or([])[1],
+            n.numerator().to_int(),
+          )
         _ =>
           @symcore.function("SingularityFunction", [
             at,
-            cm_eval_at(args[1], var_name, at),
-            cm_eval_at(args[2], var_name, at),
+            cm_eval_at(@symcore.application_args(expr).unwrap_or([])[1], var_name, at),
+            cm_eval_at(@symcore.application_args(expr).unwrap_or([])[2], var_name, at),
           ])
       }
-    Expr::Function(name, args) =>
-      @symcore.function(name, args.map(arg => cm_eval_at(arg, var_name, at)))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(head, args.map(arg => cm_eval_at(arg, var_name, at))).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 
@@ -444,24 +457,31 @@ pub fn cm_left_limit_at(expr : Expr, var_name : String, at : Expr) -> Expr {
         cm_left_limit_at(base, var_name, at),
         cm_left_limit_at(exp, var_name, at),
       )
-    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
-      args[0] == cm_symbol(var_name) =>
-      match args[2] {
+    _ if @symcore.application_has_name(expr, "SingularityFunction", arity=3) &&
+      @symcore.application_args(expr).unwrap_or([])[0] == cm_symbol(var_name) =>
+      match @symcore.application_args(expr).unwrap_or([])[2] {
         Expr::Number(n) if n.is_integral() =>
-          cm_eval_singularity_left_limit(at, args[1], n.numerator().to_int())
+          cm_eval_singularity_left_limit(
+            at,
+            @symcore.application_args(expr).unwrap_or([])[1],
+            n.numerator().to_int(),
+          )
         _ =>
           @symcore.function("SingularityFunction", [
             at,
-            cm_left_limit_at(args[1], var_name, at),
-            cm_left_limit_at(args[2], var_name, at),
+            cm_left_limit_at(@symcore.application_args(expr).unwrap_or([])[1], var_name, at),
+            cm_left_limit_at(@symcore.application_args(expr).unwrap_or([])[2], var_name, at),
           ])
       }
-    Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => cm_left_limit_at(arg, var_name, at)),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(
+            head,
+            args.map(arg => cm_left_limit_at(arg, var_name, at)),
+          ).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 
@@ -478,24 +498,31 @@ pub fn cm_right_limit_at(expr : Expr, var_name : String, at : Expr) -> Expr {
         cm_right_limit_at(base, var_name, at),
         cm_right_limit_at(exp, var_name, at),
       )
-    Expr::Function("SingularityFunction", args) if args.length() == 3 &&
-      args[0] == cm_symbol(var_name) =>
-      match args[2] {
+    _ if @symcore.application_has_name(expr, "SingularityFunction", arity=3) &&
+      @symcore.application_args(expr).unwrap_or([])[0] == cm_symbol(var_name) =>
+      match @symcore.application_args(expr).unwrap_or([])[2] {
         Expr::Number(n) if n.is_integral() =>
-          cm_eval_singularity_right_limit(at, args[1], n.numerator().to_int())
+          cm_eval_singularity_right_limit(
+            at,
+            @symcore.application_args(expr).unwrap_or([])[1],
+            n.numerator().to_int(),
+          )
         _ =>
           @symcore.function("SingularityFunction", [
             at,
-            cm_right_limit_at(args[1], var_name, at),
-            cm_right_limit_at(args[2], var_name, at),
+            cm_right_limit_at(@symcore.application_args(expr).unwrap_or([])[1], var_name, at),
+            cm_right_limit_at(@symcore.application_args(expr).unwrap_or([])[2], var_name, at),
           ])
       }
-    Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => cm_right_limit_at(arg, var_name, at)),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(
+            head,
+            args.map(arg => cm_right_limit_at(arg, var_name, at)),
+          ).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 

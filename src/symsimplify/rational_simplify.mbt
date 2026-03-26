@@ -312,13 +312,13 @@ fn factors_from_counts(
 
 ///|
 fn rewrite_sqrtdenest(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sqrt" =>
+  match unary_application_arg(expr, "sqrt") {
+    Some(arg) =>
       match try_denest_quadratic_surds(arg) {
         Some(denested) => denested
         None => expr
       }
-    _ => expr
+    None => expr
   }
 }
 
@@ -388,18 +388,17 @@ fn parse_two_sqrt_term(term : Expr) -> @symnum.BigRational? {
 
 ///|
 fn radical_radicand_as_rational(expr : Expr) -> @symnum.BigRational? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sqrt" =>
-      match exact_numeric_value(arg) {
-        Some(value) => Some(value)
-        None => None
-      }
-    Expr::Pow(base, exp) =>
-      match (exact_numeric_value(base), exact_numeric_value(exp)) {
-        (Some(b), Some(e)) if is_half(e) => Some(b)
+  match unary_application_arg(expr, "sqrt") {
+    Some(arg) => exact_numeric_value(arg)
+    None =>
+      match expr {
+        Expr::Pow(base, exp) =>
+          match (exact_numeric_value(base), exact_numeric_value(exp)) {
+            (Some(b), Some(e)) if is_half(e) => Some(b)
+            _ => None
+          }
         _ => None
       }
-    _ => None
   }
 }
 
@@ -529,19 +528,25 @@ fn parse_coeff_times_named_unary(
     }
   }
   match expr {
-    Expr::Function(name, [inner]) if matches_target(name) =>
-      Some((int(1), inner))
+    _ =>
+      match named_unary_application(expr) {
+        Some((name, inner)) if matches_target(name) => Some((int(1), inner))
+        _ =>
+          match expr {
     Expr::Mul(args) => {
       let mut seen = false
       let mut inner_expr = int(0)
       let coeff_factors : Array[Expr] = Array::new()
       for arg in args {
         match arg {
-          Expr::Function(name, [inner]) if matches_target(name) && !seen => {
-            seen = true
-            inner_expr = inner
-          }
-          _ => coeff_factors.push(arg)
+          _ =>
+            match named_unary_application(arg) {
+              Some((name, inner)) if matches_target(name) && !seen => {
+                seen = true
+                inner_expr = inner
+              }
+              _ => coeff_factors.push(arg)
+            }
         }
       }
       if seen {
@@ -550,7 +555,9 @@ fn parse_coeff_times_named_unary(
         None
       }
     }
-    _ => None
+            _ => None
+          }
+      }
   }
 }
 
@@ -561,9 +568,12 @@ fn expand_mul_expr(expr : Expr) -> Expr {
     Expr::Mul(args) => expand_mul_sequence(args.map(f => expand_mul_expr(f)))
     Expr::Pow(base, exp) =>
       @symcore.pow(expand_mul_expr(base), expand_mul_expr(exp))
-    Expr::Function(name, args) =>
-      @symcore.function(name, args.map(a => expand_mul_expr(a)))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(head, args.map(a => expand_mul_expr(a))).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 
@@ -596,36 +606,41 @@ fn expand_mul_sequence(factors : Array[Expr]) -> Expr {
 
 ///|
 fn parse_coeff_sqrt_int(expr : Expr) -> (Expr, Int)? {
-  match expr {
-    Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" =>
+  match unary_application_arg(expr, "sqrt") {
+    Some(Expr::Number(n)) =>
       if n.is_integral() && n.numerator().to_int() > 0 {
         Some((int(1), n.numerator().to_int()))
       } else {
         None
       }
-    Expr::Mul(args) => {
-      let mut found = false
-      let mut rad = 0
-      let coeff_factors : Array[Expr] = Array::new()
-      for arg in args {
-        match arg {
-          Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" && !found =>
-            if n.is_integral() && n.numerator().to_int() > 0 {
-              found = true
-              rad = n.numerator().to_int()
-            } else {
-              return None
+    Some(_) => None
+    None =>
+      match expr {
+        Expr::Mul(args) => {
+          let mut found = false
+          let mut rad = 0
+          let coeff_factors : Array[Expr] = Array::new()
+          for arg in args {
+            match unary_application_arg(arg, "sqrt") {
+              Some(Expr::Number(n)) if !found =>
+                if n.is_integral() && n.numerator().to_int() > 0 {
+                  found = true
+                  rad = n.numerator().to_int()
+                } else {
+                  return None
+                }
+              Some(_) if !found => return None
+              _ => coeff_factors.push(arg)
             }
-          _ => coeff_factors.push(arg)
+          }
+          if found {
+            Some((@symcore.mul(coeff_factors), rad))
+          } else {
+            None
+          }
         }
+        _ => None
       }
-      if found {
-        Some((@symcore.mul(coeff_factors), rad))
-      } else {
-        None
-      }
-    }
-    _ => None
   }
 }
 
@@ -669,7 +684,7 @@ fn parse_signed_radical(expr : Expr) -> (Int, Expr)? {
 ///|
 fn is_radical(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(name, [_]) => name == "sqrt"
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) => true
     Expr::Pow(_, Expr::Number(exp)) => is_half(exp)
     _ => false
   }
@@ -678,14 +693,20 @@ fn is_radical(expr : Expr) -> Bool {
 ///|
 fn radical_square(expr : Expr) -> Expr? {
   match expr {
-    Expr::Function(name, [arg]) if name == "sqrt" => Some(arg)
+    _ =>
+      match unary_application_arg(expr, "sqrt") {
+        Some(arg) => Some(arg)
+        None =>
+          match expr {
     Expr::Pow(base, Expr::Number(exp)) =>
       if is_half(exp) {
         Some(base)
       } else {
         None
       }
-    _ => None
+            _ => None
+          }
+      }
   }
 }
 

@@ -34,8 +34,10 @@ fn quantum_kdelta(a : Expr, b : Expr) -> Expr {
 
 ///|
 fn quantum_cg_args(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function("CG", args) if args.length() == 6 => Some(args)
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "CG", arity=6) => Some(
+      args,
+    )
     _ => None
   }
 }
@@ -594,8 +596,8 @@ fn quantum_eq9_cross_term(
 
 ///|
 fn quantum_parse_sum_871_1(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("Sum", [body, limit]) =>
+  match @symcore.application_args(expr) {
+    Some([body, limit]) if @symcore.application_has_name(expr, "Sum", arity=2) =>
       match (quantum_cg_args(body), quantum_tuple3(limit)) {
         (Some(args), Some((alpha, lower, upper))) => {
           let a = args[0]
@@ -628,8 +630,8 @@ fn quantum_parse_sum_871_1(expr : Expr) -> Expr? {
 
 ///|
 fn quantum_parse_sum_871_2(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("Sum", [body, limit]) =>
+  match @symcore.application_args(expr) {
+    Some([body, limit]) if @symcore.application_has_name(expr, "Sum", arity=2) =>
       match quantum_tuple3(limit) {
         Some((alpha, lower, upper)) =>
           match body {
@@ -684,8 +686,8 @@ fn quantum_parse_sum_871_2(expr : Expr) -> Expr? {
 
 ///|
 fn quantum_parse_sum_872_4(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("Sum", [body, limit1, limit2]) =>
+  match @symcore.application_args(expr) {
+    Some([body, limit1, limit2]) if @symcore.application_has_name(expr, "Sum", arity=3) =>
       match (quantum_tuple3(limit1), quantum_tuple3(limit2)) {
         (Some((alpha, lower_a, upper_a)), Some((beta, lower_b, upper_b))) =>
           match body {
@@ -1101,7 +1103,7 @@ pub fn cg_simp(expr : Expr) -> Expr {
     Expr::Add(args) => quantum_cg_simp_add(@symcore.add(args.map(cg_simp)))
     Expr::Mul(args) => @symcore.mul(args.map(cg_simp))
     Expr::Pow(base, exp) => @symcore.pow(cg_simp(base), cg_simp(exp))
-    Expr::Function("Sum", _) => quantum_cg_simp_sum(expr)
+    _ if @symcore.application_has_name(expr, "Sum") => quantum_cg_simp_sum(expr)
     _ => expr
   }
 }

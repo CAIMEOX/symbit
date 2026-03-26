@@ -22,8 +22,10 @@ fn hilbert_expr_repr(expr : Expr) -> String {
       "Rational(\{n.numerator().to_string()}, \{n.denominator().to_string()})"
     Expr::Symbol(name) if name == "oo" => "oo"
     Expr::Symbol(name) => "Symbol('\{name}')"
-    Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
+    _ if @symcore.application_has_name(expr, "Interval", arity=2) => {
+      let args = @symcore.application_args(expr).unwrap()
       "Interval(\{hilbert_expr_repr(args[0])}, \{hilbert_expr_repr(args[1])})"
+    }
     _ => @symprint.to_string(expr)
   }
 }
@@ -58,13 +60,12 @@ pub fn complex_space(
 pub fn l2_space(
   interval_expr : Expr,
 ) -> HilbertSpace raise @symphysics.PhysicsError {
-  match interval_expr {
-    Expr::Function(name, args) if name == "Interval" && args.length() == 2 =>
-      HilbertSpace::L2(interval_expr)
-    _ =>
-      raise @symphysics.PhysicsError::ValueError(
-        "L2 expects Interval(start, stop)",
-      )
+  if @symcore.application_has_name(interval_expr, "Interval", arity=2) {
+    HilbertSpace::L2(interval_expr)
+  } else {
+    raise @symphysics.PhysicsError::ValueError(
+      "L2 expects Interval(start, stop)",
+    )
   }
 }
 

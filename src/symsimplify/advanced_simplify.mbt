@@ -334,37 +334,57 @@ fn rewrite_bottom_up_advanced(expr : Expr, rule : (Expr) -> Expr) -> Expr {
 fn rewrite_powdenest(expr : Expr) -> Expr {
   match expr {
     Expr::Pow(Expr::Pow(base, a), b) => @symcore.pow(base, @symcore.mul([a, b]))
-    Expr::Function(name, [Expr::Function(inner, [x])]) =>
-      if name == "exp" && inner == "log" {
-        x
-      } else {
-        expr
+    _ =>
+      match named_unary_application(expr) {
+        Some((name, inner_expr)) =>
+          match named_unary_application(inner_expr) {
+            Some((inner, x)) if name == "exp" && inner == "log" => x
+            _ =>
+              match inner_expr {
+                Expr::Mul(args) if args.length() == 2 => {
+                  let mut log_arg : Expr? = None
+                  let mut other : Expr? = None
+                  for arg in args {
+                    match named_unary_application(arg) {
+                      Some((inner, x)) if name == "exp" && inner == "log" =>
+                        if log_arg is None {
+                          log_arg = Some(x)
+                        } else {
+                          return expr
+                        }
+                      _ =>
+                        if other is None {
+                          other = Some(arg)
+                        } else {
+                          return expr
+                        }
+                    }
+                  }
+                  match (log_arg, other) {
+                    (Some(x), Some(a)) => @symcore.pow(x, a)
+                    _ => expr
+                  }
+                }
+                _ => expr
+              }
+          }
+        None => expr
       }
-    Expr::Function(name, [Expr::Mul([a, Expr::Function(inner, [x])])]) =>
-      if name == "exp" && inner == "log" {
-        @symcore.pow(x, a)
-      } else {
-        expr
-      }
-    Expr::Function(name, [Expr::Mul([Expr::Function(inner, [x]), a])]) =>
-      if name == "exp" && inner == "log" {
-        @symcore.pow(x, a)
-      } else {
-        expr
-      }
-    _ => expr
   }
 }
 
 ///|
 fn rewrite_exptrigsimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Function(name, [Expr::Function(inner, [x])]) =>
-      if name == "exp" && inner == "log" {
-        x
-      } else {
-        expr
-      }
+    _ =>
+      match named_unary_application(expr) {
+        Some((name, inner_expr)) =>
+          match named_unary_application(inner_expr) {
+            Some((inner, x)) if name == "exp" && inner == "log" => x
+            _ => expr
+          }
+        None =>
+          match expr {
     Expr::Add([a, b]) =>
       match parse_exp_i_pair(a, b) {
         Some((x, sign)) =>
@@ -386,7 +406,9 @@ fn rewrite_exptrigsimp(expr : Expr) -> Expr {
             None => expr
           }
       }
-    _ => expr
+            _ => expr
+          }
+      }
   }
 }
 
@@ -412,8 +434,8 @@ fn parse_exp_i_pair(a : Expr, b : Expr) -> (Expr, Int)? {
 
 ///|
 fn exp_i_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [Expr::Mul([a, b])]) =>
+  match named_unary_application(expr) {
+    Some((name, Expr::Mul([a, b]))) =>
       if name == "exp" && a == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(b)
       } else if name == "exp" && b == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
@@ -427,8 +449,8 @@ fn exp_i_arg(expr : Expr) -> Expr? {
 
 ///|
 fn exp_minus_i_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [Expr::Mul(args)]) if name == "exp" =>
+  match named_unary_application(expr) {
+    Some((name, Expr::Mul(args))) if name == "exp" =>
       if args.length() == 3 && args[0] == int(-1) && args[1] == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(args[2])
       } else if args.length() == 3 &&
@@ -469,35 +491,64 @@ fn parse_cos_i_sin_pair(a : Expr, b : Expr) -> (Expr, Int)? {
 
 ///|
 fn cos_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [x]) if name == "cos" => Some(x)
-    _ => None
-  }
+  unary_application_arg(expr, "cos")
 }
 
 ///|
 fn i_sin_arg(expr : Expr) -> (Expr, Int)? {
   match expr {
-    Expr::Mul([i, Expr::Function(name, [x])]) =>
-      if i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) && name == "sin" {
-        Some((x, 1))
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut saw_i = false
+      let mut sin_arg : Expr? = None
+      for arg in args {
+        if arg == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
+          saw_i = true
+        } else {
+          match unary_application_arg(arg, "sin") {
+            Some(x) => sin_arg = Some(x)
+            None => return None
+          }
+        }
+      }
+      if saw_i {
+        match sin_arg {
+          Some(x) => Some((x, 1))
+          None => None
+        }
       } else {
         None
       }
-    Expr::Mul([Expr::Function(name, [x]), i]) =>
-      if i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) && name == "sin" {
-        Some((x, 1))
+    }
+    Expr::Mul(args) if args.length() == 3 => {
+      let mut sign = 1
+      let mut saw_i = false
+      let mut sin_arg : Expr? = None
+      for arg in args {
+        match arg {
+          Expr::Number(c) =>
+            if c.compare(@symnum.BigRational::from_int(-1)) == 0 {
+              sign = -1
+            } else {
+              return None
+            }
+          _ if arg == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) =>
+            saw_i = true
+          _ =>
+            match unary_application_arg(arg, "sin") {
+              Some(x) => sin_arg = Some(x)
+              None => return None
+            }
+        }
+      }
+      if saw_i {
+        match sin_arg {
+          Some(x) => Some((x, sign))
+          None => None
+        }
       } else {
         None
       }
-    Expr::Mul([Expr::Number(c), i, Expr::Function(name, [x])]) =>
-      if c.compare(@symnum.BigRational::from_int(-1)) == 0 &&
-        i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) &&
-        name == "sin" {
-        Some((x, -1))
-      } else {
-        None
-      }
+    }
     _ => None
   }
 }
@@ -505,20 +556,26 @@ fn i_sin_arg(expr : Expr) -> (Expr, Int)? {
 ///|
 fn rewrite_gammasimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Function(name, [Expr::Add([x, Expr::Number(n)])]) =>
-      if name == "gamma" && n.is_one() {
+    _ =>
+      match named_unary_application(expr) {
+        Some((name, Expr::Add([x, Expr::Number(n)]))) =>
+          if name == "gamma" && n.is_one() {
         @symcore.mul([x, @symcore.function("gamma", [x])])
       } else {
         expr
       }
-    Expr::Function(name, [Expr::Number(n)]) if name == "gamma" =>
-      if n.is_integral() && n.numerator().to_int() > 0 {
+        Some((name, Expr::Number(n))) if name == "gamma" =>
+          if n.is_integral() && n.numerator().to_int() > 0 {
         @symcore.function("factorial", [int(n.numerator().to_int() - 1)])
       } else {
         expr
       }
-    Expr::Mul(args) => simplify_gamma_ratio_mul(args)
-    _ => expr
+        _ =>
+          match expr {
+            Expr::Mul(args) => simplify_gamma_ratio_mul(args)
+            _ => expr
+          }
+      }
   }
 }
 
@@ -588,16 +645,13 @@ fn simplify_gamma_ratio_mul(args : Array[Expr]) -> Expr {
 
 ///|
 fn gamma_numerator_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "gamma" => Some(arg)
-    _ => None
-  }
+  unary_application_arg(expr, "gamma")
 }
 
 ///|
 fn gamma_denominator_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), Expr::Number(exp)) =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, Expr::Number(exp))) =>
       if name == "gamma" && exp.is_integral() && exp.numerator().to_int() == -1 {
         Some(arg)
       } else {
@@ -694,16 +748,16 @@ fn rewrite_logcombine(expr : Expr) -> Expr {
 ///|
 fn parse_coeff_log(term : Expr) -> (@symnum.BigRational, Expr)? {
   match term {
-    Expr::Function(name, [arg]) if name == "log" =>
+    _ if unary_application_arg(term, "log") is Some(arg) =>
       Some((@symnum.BigRational::one(), arg))
-    Expr::Mul([Expr::Number(c), Expr::Function(name, [arg])]) =>
-      if name == "log" {
+    Expr::Mul([Expr::Number(c), log_expr]) =>
+      if unary_application_arg(log_expr, "log") is Some(arg) {
         Some((c, arg))
       } else {
         None
       }
-    Expr::Mul([Expr::Function(name, [arg]), Expr::Number(c)]) =>
-      if name == "log" {
+    Expr::Mul([log_expr, Expr::Number(c)]) =>
+      if unary_application_arg(log_expr, "log") is Some(arg) {
         Some((c, arg))
       } else {
         None
@@ -779,16 +833,17 @@ fn is_rational_form(expr : Expr, k_name : String) -> Bool {
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
-    | Expr::Lambda(_, _)
-    | Expr::Function(_, _) => false
+    | Expr::Lambda(_, _) => false
+    _ if @symcore.application_parts(expr) is Some(_) => false
+    _ => false
   }
 }
 
 ///|
 fn contains_function(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(_, _)
-    | Expr::Derivative(_, _)
+    _ if @symcore.application_parts(expr) is Some(_) => true
+    Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
     | Expr::Lambda(_, _) => true
     _ => {

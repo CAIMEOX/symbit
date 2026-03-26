@@ -1309,11 +1309,18 @@ fn expr_replace_symbol(
         expr_replace_symbol(vars, old_name, new_name),
         expr_replace_symbol(body, old_name, new_name),
       )
-    Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
-      )
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(
+            head,
+            args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+          ) {
+            Some(next) => next
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 
@@ -1627,8 +1634,7 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     Expr::Symbol(name) => if allow_i { name != "I" } else { true }
     Expr::Add(args)
     | Expr::Mul(args)
-    | Expr::Tuple(args)
-    | Expr::Function(_, args) =>
+    | Expr::Tuple(args) =>
       args.any(item => expr_has_forbidden_symbol(item, allow_i))
     Expr::Mod(lhs, rhs) =>
       expr_has_forbidden_symbol(lhs, allow_i) ||
@@ -1655,6 +1661,7 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     Expr::Pow(base, exp) =>
       expr_has_forbidden_symbol(base, allow_i) ||
       expr_has_forbidden_symbol(exp, allow_i)
+    _ => @symcore.args(expr).any(item => expr_has_forbidden_symbol(item, allow_i))
   }
 }
 
@@ -1664,8 +1671,7 @@ fn expr_has_nonzero_complex_float(expr : Expr) -> Bool {
     Expr::ComplexFloat(z) => !@symnum.is_zero(z.to_mpc().imag)
     Expr::Add(args)
     | Expr::Mul(args)
-    | Expr::Tuple(args)
-    | Expr::Function(_, args) => args.any(expr_has_nonzero_complex_float)
+    | Expr::Tuple(args) => args.any(expr_has_nonzero_complex_float)
     Expr::Relational(_, lhs, rhs) =>
       expr_has_nonzero_complex_float(lhs) || expr_has_nonzero_complex_float(rhs)
     Expr::Derivative(inner, deriv_args) =>
@@ -1787,8 +1793,8 @@ fn expr_in_polynomial_domain(
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
-    | Expr::Lambda(_, _)
-    | Expr::Function(_, _) => false
+    | Expr::Lambda(_, _) => false
+    _ => false
   }
 }
 
@@ -1824,8 +1830,8 @@ fn expr_in_fraction_domain(
     | Expr::Relational(_, _, _)
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
-    | Expr::Lambda(_, _)
-    | Expr::Function(_, _) => false
+    | Expr::Lambda(_, _) => false
+    _ => false
   }
 }
 
@@ -2336,8 +2342,7 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args)
     | Expr::Mul(args)
-    | Expr::Tuple(args)
-    | Expr::Function(_, args) =>
+    | Expr::Tuple(args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
     Expr::Mod(lhs, rhs) =>
       expr_depends_on_symbols(lhs, symbols) ||
@@ -2364,6 +2369,7 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     Expr::Pow(base, exp) =>
       expr_depends_on_symbols(base, symbols) ||
       expr_depends_on_symbols(exp, symbols)
+    _ => @symcore.args(expr).any(item => expr_depends_on_symbols(item, symbols))
   }
 }
 
@@ -2460,8 +2466,10 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
     | Expr::Derivative(_, _)
     | Expr::Subs(_, _, _)
     | Expr::Lambda(_, _) => None
-    Expr::Function(_, args) =>
-      if args.any(arg => expr_depends_on_symbols(arg, symbols)) {
+    _ =>
+      if @symcore.application_parts(expr) == None {
+        None
+      } else if @symcore.args(expr).any(arg => expr_depends_on_symbols(arg, symbols)) {
         None
       } else {
         Some(expr)

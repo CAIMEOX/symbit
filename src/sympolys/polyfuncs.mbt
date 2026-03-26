@@ -434,11 +434,10 @@ fn collect_symbols_expr_pf(expr : Expr, seen : Map[String, Bool]) -> Unit {
       collect_symbols_expr_pf(base, seen)
       collect_symbols_expr_pf(exp, seen)
     }
-    Expr::Function(_, args) =>
-      for child in args {
+    _ =>
+      for child in @symcore.args(expr) {
         collect_symbols_expr_pf(child, seen)
       }
-    _ => ()
   }
 }
 

@@ -122,22 +122,25 @@ fn sing_collect(expr : Expr, sym : Expr, out : Array[Expr]) -> Unit {
       sing_collect(base, sym, out)
       sing_collect(exp, sym, out)
     }
-    Expr::Function(name, args) => {
-      if name == "log" && args.length() >= 1 {
-        match sing_solve_linear(args[0], sym) {
-          Some(sol) => if !sing_contains_expr(out, sol) { out.push(sol) }
-          None => ()
-        }
-      }
-      for arg in args {
-        sing_collect(arg, sym, out)
-      }
-    }
     Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         sing_collect(arg, sym, out)
       }
-    _ => ()
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some(args)) => {
+          if name == "log" && args.length() >= 1 {
+            match sing_solve_linear(args[0], sym) {
+              Some(sol) => if !sing_contains_expr(out, sol) { out.push(sol) }
+              None => ()
+            }
+          }
+          for arg in args {
+            sing_collect(arg, sym, out)
+          }
+        }
+        _ => ()
+      }
   }
 }
 

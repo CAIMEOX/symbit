@@ -596,10 +596,7 @@ fn push_exclusive_pairs(out : Array[Query], atoms : Array[Query]) -> Unit {
 
 ///|
 fn is_matrix_symbol_expr(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function(name, args) => name == "MatrixSymbol" && args.length() == 3
-    _ => false
-  }
+  @symcore.application_has_name(expr, "MatrixSymbol", arity=3)
 }
 
 ///|

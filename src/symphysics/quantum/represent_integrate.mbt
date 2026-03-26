@@ -12,12 +12,13 @@
 fn represent_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
     Expr::Symbol(sym) => sym == name
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(arg => represent_expr_contains_symbol(arg, name))
     Expr::Pow(base, exp) =>
       represent_expr_contains_symbol(base, name) ||
       represent_expr_contains_symbol(exp, name)
-    _ => false
+    _ =>
+      @symcore.args(expr).any(arg => represent_expr_contains_symbol(arg, name))
   }
 }
 
@@ -85,8 +86,8 @@ fn represent_integrate_coord_once(
   match expr {
     Expr::Mul(args) => {
       for idx in 0..<args.length() {
-        match args[idx] {
-          Expr::Function("DiracDelta", delta_args) if delta_args.length() == 1 =>
+        match @symcore.application_args(args[idx]) {
+          Some(delta_args) if @symcore.application_has_name(args[idx], "DiracDelta", arity=1) =>
             match represent_delta_replacement(coord_name, delta_args[0]) {
               Some(replacement) => {
                 let rebuilt : Array[Expr] = []
@@ -140,13 +141,13 @@ fn represent_integrate_coord(expr : Expr, coord_name : String) -> Expr {
 
 ///|
 fn represent_state_coordinates(state_expr : Expr) -> Array[String] {
-  match state_expr {
-    Expr::Function("XKet", [Expr::Symbol(name)])
-    | Expr::Function("XBra", [Expr::Symbol(name)])
-    | Expr::Function("PxKet", [Expr::Symbol(name)])
-    | Expr::Function("PxBra", [Expr::Symbol(name)]) => [name]
-    Expr::Function("PositionKet3D", args)
-    | Expr::Function("PositionBra3D", args) => {
+  match (@symcore.application_name(state_expr), @symcore.application_args(state_expr)) {
+    (Some("XKet"), Some([Expr::Symbol(name)]))
+    | (Some("XBra"), Some([Expr::Symbol(name)]))
+    | (Some("PxKet"), Some([Expr::Symbol(name)]))
+    | (Some("PxBra"), Some([Expr::Symbol(name)])) => [name]
+    (Some("PositionKet3D"), Some(args))
+    | (Some("PositionBra3D"), Some(args)) => {
       let out : Array[String] = []
       for arg in args {
         match arg {

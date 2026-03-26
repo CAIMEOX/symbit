@@ -176,8 +176,11 @@ fn quantum_inverse_base(expr : Expr) -> Expr? {
         Some(-1) => Some(base)
         _ => None
       }
-    Expr::Function("Dagger", args) if args.length() == 1 &&
-      quantum_is_unitary_like_operator(args[0]) => Some(args[0])
+    _ if quantum_expr_has_name(expr, "Dagger") =>
+      match quantum_expr_args(expr) {
+        Some([arg]) if quantum_is_unitary_like_operator(arg) => Some(arg)
+        _ => None
+      }
     _ => None
   }
 }

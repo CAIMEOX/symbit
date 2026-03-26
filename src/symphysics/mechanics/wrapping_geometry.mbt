@@ -171,8 +171,8 @@ fn mechanics_try_numeric(expr : Expr) -> @symnum.BigRational? {
         }
         _ => None
       }
-    Expr::Function("sqrt", args) if args.length() == 1 =>
-      match mechanics_try_numeric(args[0]) {
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
+      match mechanics_try_numeric(@symcore.application_args(expr).unwrap_or([])[0]) {
         Some(value) => mechanics_rational_exact_sqrt(value)
         None => None
       }
@@ -223,12 +223,14 @@ fn mechanics_directional_atan(
         max_passes=8,
       )
       match ratio {
-        Expr::Function("tan", args) if args.length() == 1 => args[0]
+        _ if @symcore.application_has_name(ratio, "tan", arity=1) =>
+          @symcore.application_args(ratio).unwrap_or([])[0]
         Expr::Mul(args) if args.length() == 2 &&
           mechanics_is_negative_one(args[0]) =>
           match args[1] {
-            Expr::Function("tan", inner) if inner.length() == 1 =>
-              mechanics_two_expr() * mechanics_pi_expr() - inner[0]
+            _ if @symcore.application_has_name(args[1], "tan", arity=1) =>
+              mechanics_two_expr() * mechanics_pi_expr() -
+              @symcore.application_args(args[1]).unwrap_or([])[0]
             _ =>
               raise @symphysics.PhysicsError::ValueError(
                 "unsupported symbolic directional atan ratio",

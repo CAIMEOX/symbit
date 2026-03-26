@@ -54,14 +54,17 @@ pub struct BodePlot {
 ///|
 fn control_expr_has_delay(expr : @symcore.Expr, variable_name : String) -> Bool {
   match expr {
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
-      match expr {
-        @symcore.Expr::Function("exp", [arg]) =>
-          control_expr_depends_on_symbol(arg, variable_name)
-        _ => args.any(arg => control_expr_has_delay(arg, variable_name))
-      }
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
+      args.any(arg => control_expr_has_delay(arg, variable_name))
+    _ if @symcore.application_has_name(expr, "exp", arity=1) =>
+      control_expr_depends_on_symbol(
+        @symcore.application_args(expr).unwrap_or([])[0],
+        variable_name,
+      )
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
+        control_expr_has_delay(arg, variable_name)
+      })
     @symcore.Expr::Pow(base, exp) =>
       control_expr_has_delay(base, variable_name) ||
       control_expr_has_delay(exp, variable_name)
@@ -193,9 +196,12 @@ fn control_conjugate_i(expr : @symcore.Expr) -> @symcore.Expr {
           control_normalize(
             @symcore.pow(control_conjugate_i(base), control_conjugate_i(exp)),
           )
-        @symcore.Expr::Function(name, args) =>
-          @symcore.function(name, args.map(control_conjugate_i))
-        _ => expr
+        _ =>
+          match @symcore.application_parts(expr) {
+            Some((head, args)) =>
+              @symcore.raw_apply(head, args.map(control_conjugate_i)).unwrap_or(expr)
+            None => expr
+          }
       }
   }
 }

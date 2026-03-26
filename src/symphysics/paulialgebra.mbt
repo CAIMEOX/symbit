@@ -81,18 +81,16 @@ fn pauli_power_atom(expr : Expr) -> (Int, String)? {
 
 ///|
 fn ncsymbol_expr_name(expr : Expr) -> String? {
-  match expr {
-    Expr::Function("NCSymbol", [Expr::Symbol(name)]) => Some(name)
+  match @symcore.application_args(expr) {
+    Some([Expr::Symbol(name)]) if @symcore.application_has_name(expr, "NCSymbol", arity=1) =>
+      Some(name)
     _ => None
   }
 }
 
 ///|
 fn is_tensor_product(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function("TensorProduct", _) => true
-    _ => false
-  }
+  @symcore.application_has_name(expr, "TensorProduct")
 }
 
 ///|
@@ -113,15 +111,14 @@ fn expr_has_ordered_factor(expr : Expr) -> Bool {
     }
     Expr::Pow(base, exp) =>
       expr_has_ordered_factor(base) || expr_has_ordered_factor(exp)
-    Expr::Function(_, parts) => {
-      for part in parts {
+    _ => {
+      for part in @symcore.args(expr) {
         if expr_has_ordered_factor(part) {
           return true
         }
       }
       false
     }
-    _ => false
   }
 }
 
@@ -260,8 +257,8 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
           )
       }
     Expr::Add(parts) => @symcore.add(parts.map(evaluate_pauli_product))
-    Expr::Function("TensorProduct", parts) =>
-      tensor_product(parts.map(evaluate_pauli_product))
+    _ if @symcore.application_has_name(arg, "TensorProduct") =>
+      tensor_product(@symcore.application_args(arg).unwrap().map(evaluate_pauli_product))
     Expr::Mul(parts) => {
       let scalars : Array[Expr] = Array::new()
       let ordered : Array[Expr] = Array::new()
@@ -298,9 +295,15 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
             }
           None =>
             match part {
-              Expr::Function("TensorProduct", inner) => {
+              _ if @symcore.application_has_name(part, "TensorProduct") => {
                 flush_current()
-                ordered.push(tensor_product(inner.map(evaluate_pauli_product)))
+                ordered.push(
+                  tensor_product(
+                    @symcore.application_args(part).unwrap().map(
+                      evaluate_pauli_product,
+                    ),
+                  ),
+                )
               }
               _ =>
                 match ncsymbol_expr_name(part) {

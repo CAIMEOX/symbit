@@ -3,8 +3,8 @@
 
 ///|
 fn expr_str(expr : Expr) -> String {
-  match expr {
-    Expr::Function(name, args) if name == "Tuple" =>
+  match @symcore.tuple_items(expr) {
+    Some(args) =>
       if args.is_empty() {
         "()"
       } else if args.length() == 1 {
@@ -13,7 +13,7 @@ fn expr_str(expr : Expr) -> String {
         let rendered = args.map(expr_str).join(", ")
         "(\{rendered})"
       }
-    _ => @symprint.to_string(expr)
+    None => @symprint.to_string(expr)
   }
 }
 

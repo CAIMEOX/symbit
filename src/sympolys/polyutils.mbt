@@ -366,11 +366,10 @@ fn collect_symbols_local(expr : Expr, seen : Map[String, Bool]) -> Unit {
       collect_symbols_local(base, seen)
       collect_symbols_local(exp, seen)
     }
-    Expr::Function(_, args) =>
-      for child in args {
+    _ =>
+      for child in @symcore.args(expr) {
         collect_symbols_local(child, seen)
       }
-    _ => ()
   }
 }
 

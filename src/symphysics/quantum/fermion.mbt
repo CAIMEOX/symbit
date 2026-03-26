@@ -66,9 +66,9 @@ pub fn fermion_fock_bra(n : Expr) -> Expr raise @symphysics.PhysicsError {
 
 ///|
 pub fn fermion_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
-  match (op_expr, ket_expr) {
-    (Expr::Function("FermionOp", oargs), Expr::Function("FermionFockKet", kargs)
-    ) if oargs.length() == 2 && kargs.length() == 1 => {
+  match (@symcore.application_args(op_expr), @symcore.application_args(ket_expr)) {
+    (Some(oargs), Some(kargs)) if @symcore.application_has_name(op_expr, "FermionOp", arity=2) &&
+      @symcore.application_has_name(ket_expr, "FermionFockKet", arity=1) => {
       let is_ann = oargs[1] != int(0)
       let n = kargs[0]
       if is_ann {

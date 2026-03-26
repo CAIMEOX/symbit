@@ -196,7 +196,8 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
       continue
     }
     match kept[idx] {
-      Expr::Function("sqrt", args) if args.length() == 1 => {
+      _ if @symcore.application_has_name(kept[idx], "sqrt", arity=1) => {
+        let args = @symcore.application_args(kept[idx]).unwrap()
         let mut paired = false
         for jdx in (idx + 1)..<kept.length() {
           if used[jdx] {
@@ -213,8 +214,11 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
           simplified.push(kept[idx])
         }
       }
-      Expr::Pow(Expr::Function("sqrt", args), Expr::Number(n)) =>
-        if args.length() == 1 && n.is_integral() && n.numerator().to_int() == 2 {
+      Expr::Pow(base, Expr::Number(n)) =>
+        if @symcore.application_has_name(base, "sqrt", arity=1) &&
+          n.is_integral() &&
+          n.numerator().to_int() == 2 {
+          let args = @symcore.application_args(base).unwrap()
           simplified.push(args[0])
         } else {
           simplified.push(kept[idx])
@@ -263,17 +267,18 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           } else {
             @symcore.pow(sbase, sexp)
           }
-        (Expr::Function("sqrt", args), Expr::Number(e)) =>
-          if args.length() == 1 &&
-            e.is_integral() &&
-            e.numerator().to_int() == 2 {
-            args[0]
-          } else {
-            @symcore.pow(sbase, sexp)
-          }
         (Expr::Number(b), Expr::Number(e)) =>
           if e.is_integral() && e.numerator().to_int() >= 0 {
             @symcore.Expr::Number(wavefunction_numeric_pow(b, e.numerator().to_int()))
+          } else {
+            @symcore.pow(sbase, sexp)
+          }
+        (base, Expr::Number(e)) =>
+          if @symcore.application_has_name(base, "sqrt", arity=1) &&
+            e.is_integral() &&
+            e.numerator().to_int() == 2 {
+            let args = @symcore.application_args(base).unwrap()
+            args[0]
           } else {
             @symcore.pow(sbase, sexp)
           }
@@ -417,20 +422,18 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
 fn wavefunction_expr_contains_symbol(expr : Expr, name : String) -> Bool {
   match expr {
     Expr::Symbol(sym) => sym == name
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
-      args.any(arg => wavefunction_expr_contains_symbol(arg, name))
     Expr::Pow(base, exp) =>
       wavefunction_expr_contains_symbol(base, name) ||
       wavefunction_expr_contains_symbol(exp, name)
-    _ => false
+    _ => @symcore.args(expr).any(arg => wavefunction_expr_contains_symbol(arg, name))
   }
 }
 
 ///|
 fn wavefunction_realify_conjugates(expr : Expr) -> Expr {
   match expr {
-    Expr::Function("conjugate", args) if args.length() == 1 =>
-      wavefunction_realify_conjugates(args[0])
+    _ if @symcore.application_has_name(expr, "conjugate", arity=1) =>
+      wavefunction_realify_conjugates(@symcore.application_args(expr).unwrap()[0])
     Expr::Add(args) =>
       @symcore.raw_add(args.map(wavefunction_realify_conjugates))
     Expr::Mul(args) =>
@@ -440,9 +443,15 @@ fn wavefunction_realify_conjugates(expr : Expr) -> Expr {
         wavefunction_realify_conjugates(base),
         wavefunction_realify_conjugates(exp),
       )
-    Expr::Function(name, args) =>
-      @symcore.raw_function(name, args.map(wavefunction_realify_conjugates))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(
+            head,
+            args.map(wavefunction_realify_conjugates),
+          ).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 
@@ -497,9 +506,14 @@ fn wavefunction_expand_expr(expr : Expr) -> Expr {
         wavefunction_expand_expr(base),
         wavefunction_expand_expr(exp),
       )
-    Expr::Function(name, args) =>
-      @symcore.raw_function(name, args.map(wavefunction_expand_expr))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(head, args.map(wavefunction_expand_expr)).unwrap_or(
+            expr,
+          )
+        None => expr
+      }
   }
 }
 
@@ -667,8 +681,9 @@ pub fn WavefunctionExpr::normalize(self : WavefunctionExpr) -> WavefunctionExpr 
 
 ///|
 pub fn wavefunction_from_expr(expr : Expr) -> WavefunctionExpr? {
-  match expr {
-    Expr::Function("Wavefunction", args) if args.length() >= 2 => {
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "Wavefunction") &&
+      args.length() >= 2 => {
       let coords : Array[Expr] = []
       for idx in 1..<args.length() {
         coords.push(args[idx])
@@ -704,18 +719,15 @@ pub fn DifferentialOperatorExpr::as_expr(
 pub fn DifferentialOperatorExpr::variables(
   self : DifferentialOperatorExpr,
 ) -> Array[Expr] {
-  match self.function_expr {
-    Expr::Function(_, args) => args
-    _ => []
-  }
+  @symcore.application_args(self.function_expr).unwrap_or([])
 }
 
 ///|
 pub fn differential_operator_from_expr(
   expr : Expr,
 ) -> DifferentialOperatorExpr? {
-  match expr {
-    Expr::Function("DifferentialOperator", args) if args.length() == 2 =>
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "DifferentialOperator", arity=2) =>
       Some(differential_operator(args[0], args[1]))
     _ => None
   }

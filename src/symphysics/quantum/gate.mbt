@@ -134,8 +134,8 @@ pub fn cphase(control : Int, target : Int) -> Expr {
 
 ///|
 pub fn cgate_decompose(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("CGate", args) if args.length() == 2 =>
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "CGate", arity=2) =>
       match (gate_tuple_ints(args[0]), gate_from_expr(args[1])) {
         (Some(controls), Some(gate)) if controls.length() == 1 &&
           gate.args.length() == 1 =>
@@ -179,9 +179,10 @@ pub fn swap_gate_decompose(expr : Expr) -> Expr {
 
 ///|
 pub fn gate_decompose(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("CGate", _) => cgate_decompose(expr)
-    _ => swap_gate_decompose(expr)
+  if @symcore.application_has_name(expr, "CGate") {
+    cgate_decompose(expr)
+  } else {
+    swap_gate_decompose(expr)
   }
 }
 
@@ -222,10 +223,11 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
     }
   }
 
-  match expr {
-    Expr::Function("ImmutableDenseMatrix", args) if args.length() == 1 =>
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "ImmutableDenseMatrix", arity=1) =>
       parse_rows(args[0])
-    Expr::Function("Matrix", args) if args.length() == 1 => parse_rows(args[0])
+    Some(args) if @symcore.application_has_name(expr, "Matrix", arity=1) =>
+      parse_rows(args[0])
     _ => None
   }
 }
@@ -268,8 +270,8 @@ pub fn u_gate_single(
 
 ///|
 fn ugate_from_expr(expr : Expr) -> (Array[Int], @symphysics.ExplicitMatrix)? {
-  match expr {
-    Expr::Function("UGate", args) if args.length() == 2 => {
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "UGate", arity=2) => {
       let targets = match args[0] {
         Expr::Number(n) if n.is_integral() => Some([n.numerator().to_int()])
         _ => gate_tuple_ints(args[0])
@@ -366,8 +368,8 @@ pub fn GateExpr::target_matrix(
 
 ///|
 pub fn gate_from_expr(expr : Expr) -> GateExpr? {
-  match expr {
-    Expr::Function(name, args) => {
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(args)) => {
       let ints : Array[Int] = []
       for arg in args {
         match arg {
@@ -471,8 +473,8 @@ fn gate_support(expr : Expr) -> Array[Int]? {
       match gate_from_expr(expr) {
         Some(gate) => Some(gate.args.copy())
         None =>
-          match expr {
-            Expr::Function("CGate", args) if args.length() == 2 =>
+          match @symcore.application_args(expr) {
+            Some(args) if @symcore.application_has_name(expr, "CGate", arity=2) =>
               match gate_tuple_ints(args[0]) {
                 Some(controls) =>
                   match gate_support(args[1]) {
@@ -549,8 +551,8 @@ pub fn gate_apply_to_qubit_expr(
           match gate_from_expr(gate_expr) {
             Some(gate) => gate_apply_concrete(gate, q, qubit_expr)
             None =>
-              match gate_expr {
-                Expr::Function("CGate", args) if args.length() == 2 =>
+              match @symcore.application_args(gate_expr) {
+                Some(args) if @symcore.application_has_name(gate_expr, "CGate", arity=2) =>
                   match gate_tuple_ints(args[0]) {
                     Some(controls) => {
                       for control in controls {
@@ -617,17 +619,17 @@ pub fn GateExpr::represent_zbasis(
 fn gate_is_identity_expr(expr : Expr) -> Bool {
   match expr {
     Expr::Number(n) if n.is_integral() && n.numerator().to_int() == 1 => true
-    Expr::Function("IdentityGate", _) => true
+    _ if @symcore.application_has_name(expr, "IdentityGate") => true
     _ => false
   }
 }
 
 ///|
 fn gate_is_involution(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function("CGate", args) if args.length() == 2 =>
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some("CGate"), Some(args)) if args.length() == 2 =>
       gate_is_involution(args[1])
-    Expr::Function(name, _) =>
+    (Some(name), Some(_)) =>
       [
         "IdentityGate", "HadamardGate", "XGate", "YGate", "ZGate", "SwapGate", "CNotGate",
       ].contains(name)
@@ -795,8 +797,8 @@ pub fn gate_pow_simplify(gate_expr : Expr, exp : Int) -> Expr? {
         _ => None
       }
     None =>
-      match gate_expr {
-        Expr::Function("CGate", args) if args.length() == 2 =>
+      match @symcore.application_args(gate_expr) {
+        Some(args) if @symcore.application_has_name(gate_expr, "CGate", arity=2) =>
           match gate_tuple_ints(args[0]) {
             Some(controls) =>
               match gate_pow_simplify(args[1], exp) {

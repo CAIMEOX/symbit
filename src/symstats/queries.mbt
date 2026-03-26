@@ -296,11 +296,15 @@ fn query_replace_expr(
         query_replace_expr(vars, target, replacement),
         query_replace_expr(body, target, replacement),
       )
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => query_replace_expr(arg, target, replacement)),
-      )
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          @symcore.raw_apply(
+            head,
+            args.map(arg => query_replace_expr(arg, target, replacement)),
+          ).unwrap_or(expr)
+        None => expr
+      }
   }
 }
 
@@ -1515,8 +1519,8 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
       match expr {
         @symcore.Expr::Symbol(name) if name == rv.name =>
           Some(@symcore.Expr::Symbol(rv.name))
-        @symcore.Expr::Function(name, args) if name == rv.name &&
-          args.length() == 1 => process_mean_at(rv, args[0])
+        _ if @symcore.application_has_name(expr, rv.name, arity=1) =>
+          process_mean_at(rv, @symcore.application_args(expr).unwrap()[0])
         _ => None
       }
     RVKind::Binomial(..)
@@ -1551,10 +1555,10 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
                   None => Some(@symcore.Expr::Symbol(rv.name))
                 }
             }
-          @symcore.Expr::Function(fname, args) if fname == rv.name &&
-            args.length() == 1 =>
+          _ if @symcore.application_has_name(expr, rv.name, arity=1) =>
             match kind {
-              SymbolicKind::Process(_) => process_mean_at(rv, args[0])
+              SymbolicKind::Process(_) =>
+                process_mean_at(rv, @symcore.application_args(expr).unwrap()[0])
               _ => None
             }
           _ => None
@@ -1809,9 +1813,11 @@ pub fn variance(
 ) -> @symcore.Expr {
   if rvs.length() == 1 {
     match expr {
-      @symcore.Expr::Function(name, args) if name == rvs[0].name &&
-        args.length() == 1 =>
-        match process_variance_at(rvs[0], args[0]) {
+      _ if @symcore.application_has_name(expr, rvs[0].name, arity=1) =>
+        match process_variance_at(
+          rvs[0],
+          @symcore.application_args(expr).unwrap()[0],
+        ) {
           Some(v) => return v
           None => ()
         }
@@ -1938,8 +1944,8 @@ fn symbolic_opaque_density(
 
 ///|
 fn symbolic_matrix_ensemble_from_expr(spec : @symcore.Expr) -> RandomVar? {
-  match spec {
-    @symcore.Expr::Function(name, args) if args.length() == 1 =>
+  match (@symcore.application_name(spec), @symcore.application_args(spec)) {
+    (Some(name), Some(args)) if args.length() == 1 =>
       match matrix_tag_from_name(name) {
         MatrixTag::GaussianUnitaryEnsemble
         | MatrixTag::GaussianOrthogonalEnsemble
@@ -2688,12 +2694,12 @@ fn query_extract_rel_to_process_value(
   match event {
     Event::Rel(op~, lhs~, rhs~) =>
       match lhs {
-        @symcore.Expr::Function(name, args) if name == rv_name &&
-          args.length() == 1 => Some((op, args[0], rhs))
+        _ if @symcore.application_has_name(lhs, rv_name, arity=1) =>
+          Some((op, @symcore.application_args(lhs).unwrap()[0], rhs))
         _ =>
           match rhs {
-            @symcore.Expr::Function(name, args) if name == rv_name &&
-              args.length() == 1 => Some((invert_relop(op), args[0], lhs))
+            _ if @symcore.application_has_name(rhs, rv_name, arity=1) =>
+              Some((invert_relop(op), @symcore.application_args(rhs).unwrap()[0], lhs))
             _ => None
           }
       }

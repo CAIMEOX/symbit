@@ -93,12 +93,12 @@ fn intpoly_is_polynomial(expr : Expr, names : Array[String]) -> Bool {
 
 ///|
 fn intpoly_has_unevaluated_integral(expr : Expr) -> Bool {
-  match expr {
-    @symcore.Expr::Function("Integral", _) => true
-    _ =>
-      @symcore.children(expr).any(fn(child) {
-        intpoly_has_unevaluated_integral(child)
-      })
+  if @symcore.application_has_name(expr, "Integral") {
+    true
+  } else {
+    @symcore.children(expr).any(fn(child) {
+      intpoly_has_unevaluated_integral(child)
+    })
   }
 }
 

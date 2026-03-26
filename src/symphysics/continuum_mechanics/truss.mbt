@@ -127,12 +127,18 @@ fn rename_symbol(
         rename_symbol(base, old_name, new_name),
         rename_symbol(exp, old_name, new_name),
       )
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => rename_symbol(arg, old_name, new_name)),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(
+            head,
+            args.map(arg => rename_symbol(arg, old_name, new_name)),
+          ) {
+            Some(next) => next
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 

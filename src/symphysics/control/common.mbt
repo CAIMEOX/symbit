@@ -44,10 +44,12 @@ fn control_rational_to_double(value : @symnum.BigRational) -> Double? {
 fn control_expr_depends_on_symbol(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
     @symcore.Expr::Symbol(sym) => sym == name
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
       args.any(arg => control_expr_depends_on_symbol(arg, name))
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
+        control_expr_depends_on_symbol(arg, name)
+      })
     @symcore.Expr::Pow(base, exp) =>
       control_expr_depends_on_symbol(base, name) ||
       control_expr_depends_on_symbol(exp, name)
@@ -62,10 +64,12 @@ fn control_collect_symbols(
 ) -> Unit {
   match expr {
     @symcore.Expr::Symbol(name) => seen[name] = true
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) =>
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) =>
       for arg in args {
+        control_collect_symbols(arg, seen)
+      }
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      for arg in @symcore.application_args(expr).unwrap_or([]) {
         control_collect_symbols(arg, seen)
       }
     @symcore.Expr::Pow(base, exp) => {
@@ -267,12 +271,13 @@ fn control_expr_complex_double(
         Some(value) => Some((value, 0.0))
         None => None
       }
-    @symcore.Expr::Symbol(name) =>
-      match name {
-        "I" => Some((0.0, 1.0))
-        "pi" => Some((@math.PI, 0.0))
-        _ => env.get(name)
+    @symcore.Expr::NumberSymbol(kind) =>
+      match kind {
+        @symcore.NumberSymbolKind::ImaginaryUnit => Some((0.0, 1.0))
+        @symcore.NumberSymbolKind::Pi => Some((@math.PI, 0.0))
+        _ => None
       }
+    @symcore.Expr::Symbol(name) => env.get(name)
     @symcore.Expr::Add(args) => {
       let mut acc = (0.0, 0.0)
       for arg in args {
@@ -308,23 +313,23 @@ fn control_expr_complex_double(
           }
         _ => None
       }
-    @symcore.Expr::Function("sqrt", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(control_complex_sqrt(value))
         None => None
       }
-    @symcore.Expr::Function("exp", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "exp", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some(control_complex_exp(value))
         None => None
       }
-    @symcore.Expr::Function("log", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "log", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => control_complex_log(value)
         None => None
       }
-    @symcore.Expr::Function("sin", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "sin", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => {
           let iz = (-value.1, value.0)
           let minus_iz = (value.1, -value.0)
@@ -336,8 +341,8 @@ fn control_expr_complex_double(
         }
         None => None
       }
-    @symcore.Expr::Function("cos", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "cos", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => {
           let iz = (-value.1, value.0)
           let minus_iz = (value.1, -value.0)
@@ -349,27 +354,27 @@ fn control_expr_complex_double(
         }
         None => None
       }
-    @symcore.Expr::Function("Abs", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "Abs", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some((control_complex_abs(value), 0.0))
         None => None
       }
-    @symcore.Expr::Function("arg", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "arg", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) => Some((control_complex_arg(value), 0.0))
         None => None
       }
-    @symcore.Expr::Function("atan", args) if args.length() == 1 =>
-      match control_expr_complex_double(args[0], env) {
+    _ if @symcore.application_has_name(expr, "atan", arity=1) =>
+      match control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env) {
         Some(value) if value.1.abs() <= 1.0e-12 =>
           Some((@math.atan(value.0), 0.0))
         _ => None
       }
-    @symcore.Expr::Function("atan2", args) if args.length() == 2 =>
+    _ if @symcore.application_has_name(expr, "atan2", arity=2) =>
       match
         (
-          control_expr_complex_double(args[0], env),
-          control_expr_complex_double(args[1], env),
+          control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[0], env),
+          control_expr_complex_double(@symcore.application_args(expr).unwrap_or([])[1], env),
         ) {
         (Some(y), Some(x)) if y.1.abs() <= 1.0e-12 && x.1.abs() <= 1.0e-12 =>
           Some((@math.atan2(y.0, x.0), 0.0))

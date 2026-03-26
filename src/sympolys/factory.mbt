@@ -82,11 +82,10 @@ fn collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
       collect_symbols(base, seen)
       collect_symbols(exp, seen)
     }
-    Expr::Function(_, args) =>
-      for child in args {
+    _ =>
+      for child in @symcore.args(expr) {
         collect_symbols(child, seen)
       }
-    _ => ()
   }
 }
 
@@ -111,8 +110,7 @@ fn has_complex_float_coeff(expr : Expr) -> Bool {
       args.any(child => has_complex_float_coeff(child))
     Expr::Pow(base, exp) =>
       has_complex_float_coeff(base) || has_complex_float_coeff(exp)
-    Expr::Function(_, args) => args.any(child => has_complex_float_coeff(child))
-    _ => false
+    _ => @symcore.args(expr).any(child => has_complex_float_coeff(child))
   }
 }
 
@@ -123,8 +121,7 @@ fn has_float_coeff(expr : Expr) -> Bool {
     Expr::Add(args) | Expr::Mul(args) =>
       args.any(child => has_float_coeff(child))
     Expr::Pow(base, exp) => has_float_coeff(base) || has_float_coeff(exp)
-    Expr::Function(_, args) => args.any(child => has_float_coeff(child))
-    _ => false
+    _ => @symcore.args(expr).any(child => has_float_coeff(child))
   }
 }
 
@@ -248,7 +245,6 @@ fn has_fractional_coeff(expr : Expr) -> Bool {
       args.any(child => has_fractional_coeff(child))
     Expr::Pow(base, exp) =>
       has_fractional_coeff(base) || has_fractional_coeff(exp)
-    Expr::Function(_, args) => args.any(child => has_fractional_coeff(child))
-    _ => false
+    _ => @symcore.args(expr).any(child => has_fractional_coeff(child))
   }
 }

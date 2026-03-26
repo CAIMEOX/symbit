@@ -28,7 +28,8 @@ pub fn operators_to_state(operator_expr : Expr) -> Expr? {
     Some(state) => Some(state)
     None =>
       match operator_expr {
-        Expr::Function("Operator", _) => Some(quantum_default_ket())
+        _ if @symcore.application_has_name(operator_expr, "Operator") =>
+          Some(quantum_default_ket())
         Expr::Symbol(name) if name == "Jx" =>
           Some(jx_ket(operatorset_half(), operatorset_half()).as_expr())
         Expr::Symbol(name) if name == "Jy" =>
@@ -78,13 +79,17 @@ pub fn state_to_operators(state_expr : Expr) -> Array[Expr]? {
     Some(ops) => Some(ops)
     None =>
       match state_expr {
-        Expr::Function("Ket", _) | Expr::Function("Bra", _) =>
+        _ if @symcore.application_has_name(state_expr, "Ket") ||
+          @symcore.application_has_name(state_expr, "Bra") =>
           Some([quantum_default_operator()])
-        Expr::Function("JxKet", _) | Expr::Function("JxBra", _) =>
+        _ if @symcore.application_has_name(state_expr, "JxKet") ||
+          @symcore.application_has_name(state_expr, "JxBra") =>
           Some([j2(), jx()])
-        Expr::Function("JyKet", _) | Expr::Function("JyBra", _) =>
+        _ if @symcore.application_has_name(state_expr, "JyKet") ||
+          @symcore.application_has_name(state_expr, "JyBra") =>
           Some([j2(), jy()])
-        Expr::Function("JzKet", _) | Expr::Function("JzBra", _) =>
+        _ if @symcore.application_has_name(state_expr, "JzKet") ||
+          @symcore.application_has_name(state_expr, "JzBra") =>
           Some([j2(), jz()])
         _ => None
       }

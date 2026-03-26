@@ -315,10 +315,8 @@ fn quantum_expand_pow_commutator(
 
 ///|
 pub fn commutator_expand(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("Commutator", args) if args.length() == 2 => {
-      let lhs = args[0]
-      let rhs = args[1]
+  match @symcore.application_args(expr) {
+    Some([lhs, rhs]) if quantum_expr_has_name(expr, "Commutator") => {
       match lhs {
         Expr::Add(lhs_args) =>
           quantum_add_from_args_preserve(

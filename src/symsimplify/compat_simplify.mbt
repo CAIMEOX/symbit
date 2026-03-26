@@ -103,8 +103,8 @@ fn rewrite_besselsimp(expr : Expr) -> Expr {
 
 ///|
 fn compat_rewrite_bessel_atom(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [nu, z]) => {
+  match named_binary_application(expr) {
+    Some((name, nu, z)) => {
       if compat_is_zero_number(z) && (name == "besselj" || name == "besseli") {
         if !compat_is_nonnegative_integer_expr(nu) {
           return expr
@@ -233,8 +233,8 @@ fn compat_collect_bessel_terms_rec(
   name : String,
   out : Array[CompatBesselTermInfo],
 ) -> Unit {
-  match expr {
-    Expr::Function(fn_name, [order, arg]) if fn_name == name => {
+  match named_binary_application(expr) {
+    Some((fn_name, order, arg)) if fn_name == name => {
       let (norm, shift) = split_expr_integer_shift(order)
       out.push(CompatBesselTermInfo::{ term: expr, order, arg, norm, shift })
     }
@@ -272,11 +272,14 @@ fn compat_replace_exact(expr : Expr, target : Expr, replacement : Expr) -> Expr 
 
 ///|
 fn rewrite_kroneckersimp(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
+  match named_binary_application(expr) {
+    Some((name, a, b)) if name == "KroneckerDelta" =>
       compat_simplify_delta(a, b)
-    Expr::Mul(args) => compat_simplify_delta_mul(args)
-    _ => expr
+    _ =>
+      match expr {
+        Expr::Mul(args) => compat_simplify_delta_mul(args)
+        _ => expr
+      }
   }
 }
 
@@ -286,13 +289,16 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
   let others : Array[Expr] = Array::new()
   let pending : Array[(Expr, Expr)] = Array::new()
   for arg in args {
-    match arg {
-      Expr::Function(name, [a, b]) if name == "KroneckerDelta" =>
+    match named_binary_application(arg) {
+      Some((name, a, b)) if name == "KroneckerDelta" =>
         match compat_simplify_delta(a, b) {
           Expr::Number(n) if n.is_zero() => return int(0)
           Expr::Number(n) if n.is_one() => ()
-          Expr::Function(_, [lhs, rhs]) => pending.push((lhs, rhs))
-          other => others.push(other)
+          delta_expr =>
+            match named_binary_application(delta_expr) {
+              Some((_, lhs, rhs)) => pending.push((lhs, rhs))
+              None => others.push(delta_expr)
+            }
         }
       _ => others.push(arg)
     }
@@ -309,14 +315,17 @@ fn compat_simplify_delta_mul(args : Array[Expr]) -> Expr {
       match compat_simplify_delta(lhs, rhs) {
         Expr::Number(n) if n.is_zero() => return int(0)
         Expr::Number(n) if n.is_one() => changed = true
-        Expr::Function(_, [a, b]) =>
-          match compat_try_bind_delta(env, a, b) {
-            CompatDeltaBind::Conflict => return int(0)
-            CompatDeltaBind::Bound => changed = true
-            CompatDeltaBind::Keep =>
-              next_active.push(compat_canonical_delta_pair(a, b))
+        delta_expr =>
+          match named_binary_application(delta_expr) {
+            Some((_, a, b)) =>
+              match compat_try_bind_delta(env, a, b) {
+                CompatDeltaBind::Conflict => return int(0)
+                CompatDeltaBind::Bound => changed = true
+                CompatDeltaBind::Keep =>
+                  next_active.push(compat_canonical_delta_pair(a, b))
+              }
+            None => ()
           }
-        _ => ()
       }
     }
     for i in 0..<next_active.length() {
@@ -513,7 +522,7 @@ fn rewrite_nsimplify_exact(
 ) -> Expr {
   let _ = rational
   let basic = match expr {
-    Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" =>
+    _ if unary_application_arg(expr, "sqrt") is Some(Expr::Number(n)) =>
       match compat_exact_rational_nth_root(n, 2) {
         Some(root) => @symcore.Expr::Number(root)
         None => expr
@@ -523,8 +532,11 @@ fn rewrite_nsimplify_exact(
         Some(value) => @symcore.Expr::Number(value)
         None => expr
       }
-    Expr::Function(name, [_]) if compat_is_special_trig_name(name) => tr4(expr)
-    _ => expr
+    _ =>
+      match named_unary_application(expr) {
+        Some((name, _)) if compat_is_special_trig_name(name) => tr4(expr)
+        _ => expr
+      }
   }
   if constants.is_empty() {
     basic
@@ -689,7 +701,7 @@ fn compat_linear_sqrt5_term(
 ) -> (@symnum.BigRational, @symnum.BigRational)? {
   match expr {
     Expr::Number(n) => Some((n, @symnum.BigRational::zero()))
-    Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" &&
+    _ if unary_application_arg(expr, "sqrt") is Some(Expr::Number(n)) &&
       n == @symnum.BigRational::from_int(5) =>
       Some((@symnum.BigRational::zero(), @symnum.BigRational::one()))
     Expr::Mul(args) => {
@@ -698,7 +710,7 @@ fn compat_linear_sqrt5_term(
       for arg in args {
         match arg {
           Expr::Number(n) => coeff = coeff.mul_r(n)
-          Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" &&
+          _ if unary_application_arg(arg, "sqrt") is Some(Expr::Number(n)) &&
             n == @symnum.BigRational::from_int(5) => has_sqrt5 = true
           _ => return None
         }

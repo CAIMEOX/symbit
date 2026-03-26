@@ -46,13 +46,13 @@ pub fn BosonOpExpr::dagger(self : BosonOpExpr) -> BosonOpExpr {
 
 ///|
 fn boson_secondquant_operator(expr : Expr) -> (Expr, Bool)? {
-  match expr {
-    Expr::Function("BosonOp", args) if args.length() == 2 =>
-      Some((args[0], args[1] != int(0)))
-    Expr::Function("AnnihilateBoson", args) if args.length() == 1 =>
-      Some((args[0], true))
-    Expr::Function("CreateBoson", args) if args.length() == 1 =>
-      Some((args[0], false))
+  match @symcore.application_args(expr) {
+    Some([name, flag]) if @symcore.application_has_name(expr, "BosonOp", arity=2) =>
+      Some((name, flag != int(0)))
+    Some([name]) if @symcore.application_has_name(expr, "AnnihilateBoson", arity=1) =>
+      Some((name, true))
+    Some([name]) if @symcore.application_has_name(expr, "CreateBoson", arity=1) =>
+      Some((name, false))
     _ => None
   }
 }
@@ -63,9 +63,9 @@ fn boson_secondquant_tuple_state(
   ket? : Bool = true,
 ) -> Array[Expr]? {
   let expected = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
-  match expr {
-    Expr::Function(name, args) if name == expected && args.length() == 1 =>
-      @symcore.tuple_items(args[0])
+  match @symcore.application_args(expr) {
+    Some([arg]) if @symcore.application_has_name(expr, expected, arity=1) =>
+      @symcore.tuple_items(arg)
     _ => None
   }
 }
@@ -139,10 +139,13 @@ pub fn boson_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
       }
     _ => ()
   }
-  match (op_expr, ket_expr) {
-    (Expr::Function("BosonOp", oargs), Expr::Function("BosonFockKet", kargs)) if oargs.length() ==
-      2 &&
-      kargs.length() == 1 => {
+  match
+    (
+      @symcore.application_args(op_expr),
+      @symcore.application_args(ket_expr),
+    ) {
+    (Some(oargs), Some(kargs)) if @symcore.application_has_name(op_expr, "BosonOp", arity=2) &&
+      @symcore.application_has_name(ket_expr, "BosonFockKet", arity=1) => {
       let is_ann = oargs[1] != int(0)
       let n = kargs[0]
       if is_ann {
@@ -154,8 +157,8 @@ pub fn boson_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
         )
       }
     }
-    (Expr::Function("BosonOp", oargs), Expr::Function("BosonCoherentKet", kargs)
-    ) if oargs.length() == 2 && kargs.length() == 1 => {
+    (Some(oargs), Some(kargs)) if @symcore.application_has_name(op_expr, "BosonOp", arity=2) &&
+      @symcore.application_has_name(ket_expr, "BosonCoherentKet", arity=1) => {
       let is_ann = oargs[1] != int(0)
       if is_ann {
         Some(kargs[0] * ket_expr)
@@ -169,9 +172,9 @@ pub fn boson_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
 
 ///|
 pub fn boson_apply_operator_to_bra(bra_expr : Expr, op_expr : Expr) -> Expr? {
-  match (bra_expr, op_expr) {
-    (Expr::Function("BosonCoherentBra", bargs), Expr::Function("BosonOp", oargs)
-    ) if bargs.length() == 1 && oargs.length() == 2 => {
+  match (@symcore.application_args(bra_expr), @symcore.application_args(op_expr)) {
+    (Some(bargs), Some(oargs)) if @symcore.application_has_name(bra_expr, "BosonCoherentBra", arity=1) &&
+      @symcore.application_has_name(op_expr, "BosonOp", arity=2) => {
       let is_ann = oargs[1] != int(0)
       if !is_ann {
         Some(bargs[0] * bra_expr)

@@ -45,12 +45,10 @@ fn util_depends_on(expr : Expr, sym : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) =>
-      args.any(arg => util_depends_on(arg, sym))
+    Expr::Add(args) | Expr::Mul(args) => args.any(arg => util_depends_on(arg, sym))
     Expr::Pow(base, exp) =>
       util_depends_on(base, sym) || util_depends_on(exp, sym)
-    Expr::Function(_, args) => args.any(arg => util_depends_on(arg, sym))
-    _ => false
+    _ => @symcore.args(expr).any(arg => util_depends_on(arg, sym))
   }
 }
 
@@ -102,9 +100,9 @@ pub fn periodicity(expr : Expr, sym : Expr) -> Expr? {
   if !util_depends_on(expr, sym) {
     return Some(@symcore.int(0))
   }
-  match expr {
-    Expr::Function(name, args) if args.length() >= 1 => {
-      let k_opt = util_extract_linear_coeff(args[0], sym)
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some([arg, ..])) => {
+      let k_opt = util_extract_linear_coeff(arg, sym)
       match k_opt {
         Some(k) => {
           if k.is_zero() {

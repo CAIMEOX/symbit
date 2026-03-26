@@ -227,10 +227,10 @@ fn fixpoint_fu(expr : Expr, f : (Expr) -> Expr, max_passes? : Int = 8) -> Expr {
 
 ///|
 fn rewrite_tr1(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sec" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "sec" =>
       @symcore.pow(@symcore.function("cos", [arg]), int(-1))
-    Expr::Function(name, [arg]) if name == "csc" =>
+    Some((name, arg)) if name == "csc" =>
       @symcore.pow(@symcore.function("sin", [arg]), int(-1))
     _ => expr
   }
@@ -238,13 +238,13 @@ fn rewrite_tr1(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr2(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "tan" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "tan" =>
       @symcore.mul([
         @symcore.function("sin", [arg]),
         @symcore.pow(@symcore.function("cos", [arg]), int(-1)),
       ])
-    Expr::Function(name, [arg]) if name == "cot" =>
+    Some((name, arg)) if name == "cot" =>
       @symcore.mul([
         @symcore.function("cos", [arg]),
         @symcore.pow(@symcore.function("sin", [arg]), int(-1)),
@@ -331,8 +331,8 @@ fn rewrite_tr2i(expr : Expr, half? : Bool = false) -> Expr {
 
 ///|
 fn rewrite_tr3(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if is_trig_name(name) =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if is_trig_name(name) =>
       match extract_minus(arg) {
         Some(positive) =>
           if trig_is_odd(name) {
@@ -348,8 +348,8 @@ fn rewrite_tr3(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr4(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if is_trig_name(name) =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if is_trig_name(name) =>
       match parse_pi_fraction(arg) {
         Some((p, q)) =>
           match special_trig_value(name, p, q) {
@@ -371,8 +371,8 @@ fn rewrite_tr56(
   pow? : Bool = false,
   plus? : Bool = false,
 ) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == src =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) if name == src =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
           if pow && !is_power_of_two(e) {
@@ -418,8 +418,8 @@ fn rewrite_tr56(
 
 ///|
 fn rewrite_tr7(expr : Expr) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" &&
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) if name == "cos" &&
       parse_int(exp_expr) == Some(2) =>
       @symcore.mul([
         half_const(),
@@ -532,8 +532,8 @@ fn rewrite_tr9(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr10(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sin" || name == "cos" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "sin" || name == "cos" =>
       match arg {
         Expr::Add(args) if args.length() >= 2 => expand_trig_sum(name, args)
         _ => expr
@@ -595,8 +595,8 @@ fn rewrite_tr10i(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr11(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sin" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "sin" =>
       match extract_mul_coeff(arg, 2) {
         Some(inner) =>
           @symcore.mul([
@@ -606,7 +606,7 @@ fn rewrite_tr11(expr : Expr) -> Expr {
           ])
         None => expr
       }
-    Expr::Function(name, [arg]) if name == "cos" =>
+    Some((name, arg)) if name == "cos" =>
       match extract_mul_coeff(arg, 2) {
         Some(inner) =>
           @symcore.add([
@@ -621,8 +621,8 @@ fn rewrite_tr11(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr12(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) if name == "tan" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "tan" =>
       match arg {
         Expr::Add(args) if args.length() >= 2 => expand_tan_sum(args)
         _ => expr
@@ -658,9 +658,9 @@ fn rewrite_tr13(expr : Expr) -> Expr {
       let cots : Array[Expr] = Array::new()
       let others : Array[Expr] = Array::new()
       for arg in args {
-        match arg {
-          Expr::Function(name, [a]) if name == "tan" => tans.push(a)
-          Expr::Function(name, [a]) if name == "cot" => cots.push(a)
+        match named_unary_application(arg) {
+          Some((name, a)) if name == "tan" => tans.push(a)
+          Some((name, a)) if name == "cot" => cots.push(a)
           _ => others.push(arg)
         }
       }
@@ -792,8 +792,8 @@ fn rewrite_tr14(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr15(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "sin" =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) if name == "sin" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -832,8 +832,8 @@ fn rewrite_tr15(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
 
 ///|
 fn rewrite_tr16(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) if name == "cos" =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 => {
           let pe = -e
@@ -872,8 +872,8 @@ fn rewrite_tr16(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
 
 ///|
 fn rewrite_tr111(expr : Expr) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) =>
       match parse_int(exp_expr) {
         Some(e) if e < 0 =>
           match name {
@@ -890,9 +890,8 @@ fn rewrite_tr111(expr : Expr) -> Expr {
 
 ///|
 fn rewrite_tr22(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "tan" ||
-      name == "cot" =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, exp_expr)) if name == "tan" || name == "cot" =>
       match parse_int(exp_expr) {
         Some(e) if e >= 2 && e <= max => {
           if pow && !is_power_of_two(e) {
@@ -922,9 +921,8 @@ fn rewrite_tr22(expr : Expr, max? : Int = 4, pow? : Bool = false) -> Expr {
 
 ///|
 fn rewrite_trpower(expr : Expr) -> Expr {
-  match expr {
-    Expr::Pow(Expr::Function(name, [x]), exp_expr) if name == "sin" ||
-      name == "cos" =>
+  match pow_named_unary_application(expr) {
+    Some((name, x, exp_expr)) if name == "sin" || name == "cos" =>
       match parse_int(exp_expr) {
         Some(n) if n > 1 => trpower_expand(name, x, n)
         _ => expr
@@ -1008,14 +1006,17 @@ fn rewrite_trmorrie(expr : Expr) -> Expr {
 
 ///|
 fn parse_morrie_factor(expr : Expr) -> MorrieFactor? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "cos" => make_morrie_factor(arg, 1)
-    Expr::Pow(Expr::Function(name, [arg]), exp_expr) if name == "cos" =>
-      match parse_int(exp_expr) {
-        Some(e) if e > 0 => make_morrie_factor(arg, e)
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "cos" => make_morrie_factor(arg, 1)
+    _ =>
+      match pow_named_unary_application(expr) {
+        Some((name, arg, exp_expr)) if name == "cos" =>
+          match parse_int(exp_expr) {
+            Some(e) if e > 0 => make_morrie_factor(arg, e)
+            _ => None
+          }
         _ => None
       }
-    _ => None
   }
 }
 
@@ -1544,16 +1545,19 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
       let mut has_trig = false
       let mut sign = 0
       for arg in args {
-        match arg {
-          Expr::Function(name, [inner]) if name == "sin" || name == "cos" => {
+        match named_unary_application(arg) {
+          Some((name, inner)) if name == "sin" || name == "cos" => {
             trig_name = name
             trig_arg = inner
             has_trig = true
           }
-          Expr::Number(n) if n.is_one() => sign = 1
-          Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
-            sign = -1
-          _ => ()
+          _ =>
+            match arg {
+              Expr::Number(n) if n.is_one() => sign = 1
+              Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+                sign = -1
+              _ => ()
+            }
         }
       }
       if has_trig && sign != 0 {
@@ -1568,35 +1572,40 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
 
 ///|
 fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sin" =>
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "sin" =>
       Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, 1))
-    Expr::Function(name, [arg]) if name == "cos" =>
+    Some((name, arg)) if name == "cos" =>
       Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, 1))
-    Expr::Pow(base, exp_expr) =>
-      match parse_int(exp_expr) {
-        Some(e) =>
-          match base {
-            Expr::Function(name, [arg]) if name == "sin" =>
-              Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, e))
-            Expr::Function(name, [arg]) if name == "cos" =>
-              Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
-            _ =>
-              match parse_one_plus_cos(base) {
-                Some(arg) =>
-                  Some(
-                    Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, e),
-                  )
-                None => None
-              }
-          }
-        None => None
-      }
     _ =>
-      match parse_one_plus_cos(expr) {
-        Some(arg) =>
-          Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, 1))
-        None => None
+      match pow_named_unary_application(expr) {
+        Some((name, arg, exp_expr)) =>
+          match parse_int(exp_expr) {
+            Some(e) =>
+              match name {
+                "sin" => Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, e))
+                "cos" => Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
+                _ =>
+                  match parse_one_plus_cos(@symcore.pow(@symcore.function(name, [arg]), exp_expr)) {
+                    Some(inner) =>
+                      Some(
+                        Tr2iFactor::OnePlusCos(
+                          @symprint.debug_repr(inner),
+                          inner,
+                          e,
+                        ),
+                      )
+                    None => None
+                  }
+              }
+            None => None
+          }
+        _ =>
+          match parse_one_plus_cos(expr) {
+            Some(arg) =>
+              Some(Tr2iFactor::OnePlusCos(@symprint.debug_repr(arg), arg, 1))
+            None => None
+          }
       }
   }
 }
@@ -1611,7 +1620,7 @@ fn parse_one_plus_cos(expr : Expr) -> Expr? {
       for item in args {
         match item {
           Expr::Number(n) if n.is_one() => has_one = true
-          Expr::Function(name, [x]) if name == "cos" => {
+          _ if unary_application_arg(item, "cos") is Some(x) => {
             has_cos = true
             arg = x
           }
@@ -1816,19 +1825,15 @@ fn special_cos(p : Int, q : Int) -> Expr? {
 
 ///|
 fn as_sin_or_cos(expr : Expr) -> (String, Expr)? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "sin" || name == "cos" =>
-      Some((name, arg))
+  match named_unary_application(expr) {
+    Some((name, arg)) if name == "sin" || name == "cos" => Some((name, arg))
     _ => None
   }
 }
 
 ///|
 fn as_tan(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "tan" => Some(arg)
-    _ => None
-  }
+  unary_application_arg(expr, "tan")
 }
 
 ///|
@@ -1848,9 +1853,9 @@ fn trig_is_odd(name : String) -> Bool {
 
 ///|
 fn is_sin_or_cos(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function(name, [_]) => name == "sin" || name == "cos"
-    _ => false
+  match named_unary_application(expr) {
+    Some((name, _)) => name == "sin" || name == "cos"
+    None => false
   }
 }
 

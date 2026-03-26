@@ -71,8 +71,8 @@ fn encode_wildcard(
 
 ///|
 fn decode_wildcard(expr : Expr) -> (WildcardKind, String, Expr?)? {
-  match expr {
-    Expr::Function(name, args) => {
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(args)) => {
       let kind = match name {
         "__symutil_wild_dot" => Some(WildcardKind::Dot)
         "__symutil_wild_plus" => Some(WildcardKind::Plus)

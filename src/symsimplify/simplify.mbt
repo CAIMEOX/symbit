@@ -597,7 +597,7 @@ fn expr_has_hypergeometric(expr : Expr) -> Bool {
 ///|
 fn expr_has_radicals(expr : Expr) -> Bool {
   match expr {
-    Expr::Function(name, [_]) if name == "sqrt" => true
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) => true
     Expr::Pow(_, Expr::Number(exp)) if is_half(exp) => true
     _ => {
       for child in @symcore.children(expr) {
@@ -655,15 +655,18 @@ fn expr_has_distributable_mul(expr : Expr) -> Bool {
 ///|
 fn expr_contains_function(expr : Expr, predicate : (String) -> Bool) -> Bool {
   match expr {
-    Expr::Function(name, _) if predicate(name) => true
-    _ => {
-      for child in @symcore.children(expr) {
-        if expr_contains_function(child, predicate) {
-          return true
+    _ =>
+      match @symcore.application_name(expr) {
+        Some(name) if predicate(name) => true
+        _ => {
+          for child in @symcore.children(expr) {
+            if expr_contains_function(child, predicate) {
+              return true
+            }
+          }
+          false
         }
       }
-      false
-    }
   }
 }
 
@@ -981,8 +984,8 @@ fn eval_numeric_pow(
 
 ///|
 fn function_identities(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [arg]) =>
+  match named_unary_application(expr) {
+    Some((name, arg)) =>
       match exact_numeric_value(arg) {
         Some(numeric) =>
           match name {
@@ -1074,8 +1077,8 @@ fn trig_pythagorean(expr : Expr) -> Expr {
 
 ///|
 fn trig_square_arg(term : Expr, name : String) -> Expr? {
-  match term {
-    Expr::Pow(Expr::Function(func, [arg]), Expr::Number(exp)) =>
+  match pow_named_unary_application(term) {
+    Some((func, arg, Expr::Number(exp))) =>
       if func == name && exp.compare(@symnum.BigRational::from_int(2)) == 0 {
         Some(arg)
       } else {

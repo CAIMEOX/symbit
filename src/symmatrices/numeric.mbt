@@ -14,7 +14,7 @@ fn expr_numeric_prec(expr : Expr) -> Int {
         Expr::Float(f) => f.precision()
         Expr::ComplexFloat(z) => z.precision()
         Expr::Number(_) => 80
-        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
+        Expr::Add(args) | Expr::Mul(args) => {
           let mut best = 0
           for arg in args {
             let p = expr_numeric_prec(arg)
@@ -33,7 +33,16 @@ fn expr_numeric_prec(expr : Expr) -> Int {
             pe
           }
         }
-        _ => 0
+        _ => {
+          let mut best = 0
+          for arg in @symcore.args(expr) {
+            let p = expr_numeric_prec(arg)
+            if p > best {
+              best = p
+            }
+          }
+          best
+        }
       }
   }
 }
@@ -42,11 +51,11 @@ fn expr_numeric_prec(expr : Expr) -> Int {
 fn expr_has_floating_leaf(expr : Expr) -> Bool {
   match expr {
     Expr::Float(_) | Expr::ComplexFloat(_) => true
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(expr_has_floating_leaf)
     Expr::Pow(base, exp) =>
       expr_has_floating_leaf(base) || expr_has_floating_leaf(exp)
-    _ => false
+    _ => @symcore.args(expr).any(expr_has_floating_leaf)
   }
 }
 

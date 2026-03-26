@@ -1,11 +1,10 @@
 ///|
 /// Symbolic integration rules for `SingularityFunction`.
 pub fn singularityintegrate(expr : Expr, var_name : String) -> Expr? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Function(
-      "SingularityFunction",
-      [@symcore.Expr::Symbol(name), a, n]
-    ) if name == var_name =>
+  let expr = expr_simplify(expr)
+  match @symcore.application_args(expr) {
+    Some([@symcore.Expr::Symbol(name), a, n]) if name == var_name &&
+      @symcore.application_has_name(expr, "SingularityFunction", arity=3) =>
       match expr_is_int_value(n) {
         Some(k) if k >= 0 =>
           Some(

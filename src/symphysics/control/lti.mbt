@@ -136,9 +136,15 @@ fn control_expand_expr(expr : Expr) -> Expr {
       control_expand_pow(base, n.numerator().to_int())
     Expr::Pow(base, exp) =>
       @symcore.pow(control_expand_expr(base), control_expand_expr(exp))
-    Expr::Function(name, args) =>
-      @symcore.function(name, args.map(control_expand_expr))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(head, args.map(control_expand_expr)) {
+            Some(next) => next
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 

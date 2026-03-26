@@ -905,8 +905,8 @@ fn analyze_hyper(
   let rest_args : Array[@symcore.Expr] = Array::new()
   for factor in factors {
     match factor {
-      @symcore.Expr::Function(namef, args) if namef == "binomial" &&
-        args.length() == 2 => {
+      _ if @symcore.application_has_name(factor, "binomial", arity=2) => {
+        let args = @symcore.application_args(factor).unwrap()
         let n = args[0]
         let k = args[1]
         if k == sym && binom is None {

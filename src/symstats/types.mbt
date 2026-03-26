@@ -374,8 +374,6 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
       )
     @symcore.Expr::Lambda(vars, body) =>
       @symcore.lambda_expr(eval_arith(vars), eval_arith(body))
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(item => eval_arith(item)))
     @symcore.Expr::Add(args) => {
       let out = args.map(item => eval_arith(item))
       let mut all_num = true
@@ -424,6 +422,15 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
         _ => @symcore.pow(b, e)
       }
     }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(head, args.map(item => eval_arith(item))) {
+            Some(next) => next
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 

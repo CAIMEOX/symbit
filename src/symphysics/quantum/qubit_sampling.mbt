@@ -106,22 +106,22 @@ fn expr_complex_double(expr : Expr) -> (Double, Double)? {
           }
         _ => None
       }
-    Expr::Function("sqrt", args) if args.length() == 1 =>
-      match expr_complex_double(args[0]) {
+    _ if @symcore.application_has_name(expr, "sqrt", arity=1) =>
+      match expr_complex_double(@symcore.application_args(expr).unwrap()[0]) {
         Some(value) if value.1 == 0.0 && value.0 >= 0.0 =>
           Some((value.0.sqrt(), 0.0))
         _ => None
       }
-    Expr::Function("exp", args) if args.length() == 1 =>
-      match expr_complex_double(args[0]) {
+    _ if @symcore.application_has_name(expr, "exp", arity=1) =>
+      match expr_complex_double(@symcore.application_args(expr).unwrap()[0]) {
         Some(value) => {
           let factor = @math.exp(value.0)
           Some((factor * @math.cos(value.1), factor * @math.sin(value.1)))
         }
         None => None
       }
-    Expr::Function("conjugate", args) if args.length() == 1 =>
-      match expr_complex_double(args[0]) {
+    _ if @symcore.application_has_name(expr, "conjugate", arity=1) =>
+      match expr_complex_double(@symcore.application_args(expr).unwrap()[0]) {
         Some(value) => Some((value.0, -value.1))
         None => None
       }

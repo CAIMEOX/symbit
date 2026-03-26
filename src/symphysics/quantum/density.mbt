@@ -214,8 +214,8 @@ pub fn DensityExpr::trace(
 
 ///|
 pub fn density_from_expr(expr : Expr) -> DensityExpr? {
-  match expr {
-    Expr::Function("Density", args) => {
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "Density") => {
       let terms : Array[DensityTerm] = []
       for arg in args {
         match density_term_from_expr(arg) {
@@ -235,9 +235,19 @@ fn density_infer_nqubits_expr(expr : Expr) -> Int {
     Some(q) => q.nqubits()
     None =>
       match expr {
-        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
+        Expr::Add(args) | Expr::Mul(args) => {
           let mut inferred = 0
           for arg in args {
+            let next = density_infer_nqubits_expr(arg)
+            if next > inferred {
+              inferred = next
+            }
+          }
+          inferred
+        }
+        _ if @symcore.application_parts(expr) is Some(_) => {
+          let mut inferred = 0
+          for arg in @symcore.application_args(expr).unwrap_or([]) {
             let next = density_infer_nqubits_expr(arg)
             if next > inferred {
               inferred = next
@@ -265,8 +275,17 @@ fn density_infer_spin_j_expr(expr : Expr) -> Expr? {
     Some(state) => Some(state.j)
     None =>
       match expr {
-        Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) => {
+        Expr::Add(args) | Expr::Mul(args) => {
           for arg in args {
+            match density_infer_spin_j_expr(arg) {
+              Some(value) => return Some(value)
+              None => ()
+            }
+          }
+          None
+        }
+        _ if @symcore.application_parts(expr) is Some(_) => {
+          for arg in @symcore.application_args(expr).unwrap_or([]) {
             match density_infer_spin_j_expr(arg) {
               Some(value) => return Some(value)
               None => ()

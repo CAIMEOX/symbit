@@ -345,7 +345,7 @@ fn expand_dynamicsymbol_token(token : String) -> Array[String] {
 fn collect_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         collect_symbol_names(arg, seen)
       }
@@ -353,7 +353,10 @@ fn collect_symbol_names(expr : Expr, seen : Map[String, Bool]) -> Unit {
       collect_symbol_names(base, seen)
       collect_symbol_names(exp, seen)
     }
-    _ => ()
+    _ =>
+      for arg in @symcore.args(expr) {
+        collect_symbol_names(arg, seen)
+      }
   }
 }
 

@@ -74,28 +74,22 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
         (Some(lhs), Some(rhs)) => Some(@math.pow(lhs, rhs))
         _ => None
       }
-    Expr::Function(name, args) =>
-      if args.length() != 1 {
-        None
-      } else {
-        match (name, geo_expr_real_double(args[0])) {
-          ("sqrt", Some(value)) => Some(@math.pow(value, 0.5))
-          ("abs", Some(value)) => Some(value.abs())
-          ("sin", Some(value)) => Some(@math.sin(value))
-          ("cos", Some(value)) => Some(@math.cos(value))
-          ("tan", Some(value)) => Some(@math.tan(value))
-          ("asin", Some(value)) => Some(@math.asin(value))
-          ("acos", Some(value)) => Some(@math.acos(value))
-          ("atan", Some(value)) => Some(@math.atan(value))
-          _ => None
-        }
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some([arg])) =>
+          match (name, geo_expr_real_double(arg)) {
+            ("sqrt", Some(value)) => Some(@math.pow(value, 0.5))
+            ("abs", Some(value)) => Some(value.abs())
+            ("sin", Some(value)) => Some(@math.sin(value))
+            ("cos", Some(value)) => Some(@math.cos(value))
+            ("tan", Some(value)) => Some(@math.tan(value))
+            ("asin", Some(value)) => Some(@math.asin(value))
+            ("acos", Some(value)) => Some(@math.acos(value))
+            ("atan", Some(value)) => Some(@math.atan(value))
+            _ => None
+          }
+        _ => None
       }
-    Expr::Boolean(_)
-    | Expr::Tuple(_)
-    | Expr::Relational(_, _, _)
-    | Expr::Derivative(_, _)
-    | Expr::Subs(_, _, _)
-    | Expr::Lambda(_, _) => None
   }
 }
 

@@ -7,11 +7,11 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(fn(arg) { expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
-    _ => false
+    _ => @symcore.args(expr).any(fn(arg) { expr_depends_on(arg, wrt) })
   }
 }
 
@@ -67,11 +67,11 @@ fn integrate_scalar(expr : Expr, wrt : Expr) -> Expr raise VectorError {
         None =>
           raise VectorError::ValueError("unsupported power antiderivative")
       }
-    Expr::Function("sin", args) if args.length() == 1 &&
-      @symcore.compare_expr(args[0], wrt) == 0 =>
+    _ if @symcore.application_has_name(expr, "sin", arity=1) &&
+      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) == 0 =>
       simplify_expr(expr_neg(@symelem.cos(wrt)))
-    Expr::Function("cos", args) if args.length() == 1 &&
-      @symcore.compare_expr(args[0], wrt) == 0 =>
+    _ if @symcore.application_has_name(expr, "cos", arity=1) &&
+      @symcore.compare_expr(@symcore.application_args(expr).unwrap()[0], wrt) == 0 =>
       simplify_expr(@symelem.sin(wrt))
     _ => raise VectorError::ValueError("unsupported antiderivative")
   }

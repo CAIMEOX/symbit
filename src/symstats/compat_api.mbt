@@ -1816,9 +1816,9 @@ pub fn characteristic_function(
 
 ///|
 fn resolve_process_time(expr : @symcore.Expr, rv : RandomVar) -> @symcore.Expr? {
-  match expr {
-    @symcore.Expr::Function(name, args) if name == rv.name && args.length() == 1 =>
-      Some(args[0])
+  match @symcore.application_args(expr) {
+    Some([arg]) if @symcore.application_has_name(expr, rv.name, arity=1) =>
+      Some(arg)
     _ => None
   }
 }

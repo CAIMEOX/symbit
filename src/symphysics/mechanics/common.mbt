@@ -94,8 +94,12 @@ fn mech_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(fn(arg) { mech_expr_depends_on(arg, wrt) })
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
+        mech_expr_depends_on(arg, wrt)
+      })
     Expr::Pow(base, exp) =>
       mech_expr_depends_on(base, wrt) || mech_expr_depends_on(exp, wrt)
     _ => false
@@ -112,8 +116,8 @@ fn mech_builtin_function(name : String) -> Bool {
 
 ///|
 fn mech_is_dynamicsymbol(expr : Expr) -> Bool {
-  match expr {
-    Expr::Function(name, args) if args.length() == 1 &&
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(args)) if args.length() == 1 &&
       @symcore.compare_expr(args[0], @symvector.dynamicsymbols_t) == 0 =>
       !mech_builtin_function(name)
     _ =>
@@ -137,16 +141,24 @@ fn mech_expr_key(expr : Expr) -> String {
 ///|
 fn mech_rewrite_tan(expr : Expr) -> Expr {
   match expr {
-    Expr::Function("tan", args) if args.length() == 1 =>
-      @symelem.sin(mech_rewrite_tan(args[0])) *
-      (@symelem.cos(mech_rewrite_tan(args[0])) ^ int(-1))
+    _ if @symcore.application_has_name(expr, "tan", arity=1) => {
+      let arg = @symcore.application_args(expr).unwrap_or([])[0]
+      @symelem.sin(mech_rewrite_tan(arg)) *
+      (@symelem.cos(mech_rewrite_tan(arg)) ^ int(-1))
+    }
     Expr::Add(args) => @symcore.add(args.map(mech_rewrite_tan))
     Expr::Mul(args) => @symcore.mul(args.map(mech_rewrite_tan))
     Expr::Pow(base, exp) =>
       @symcore.pow(mech_rewrite_tan(base), mech_rewrite_tan(exp))
-    Expr::Function(name, args) =>
-      @symcore.raw_function(name, args.map(mech_rewrite_tan))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(head, args.map(mech_rewrite_tan)) {
+            Some(value) => value
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 
@@ -158,8 +170,8 @@ fn mech_pi_half() -> Expr {
 ///|
 fn mech_eval_special_trig(expr : Expr) -> Expr {
   match expr {
-    Expr::Function("sin", args) if args.length() == 1 => {
-      let arg = mech_eval_special_trig(args[0])
+    _ if @symcore.application_has_name(expr, "sin", arity=1) => {
+      let arg = mech_eval_special_trig(@symcore.application_args(expr).unwrap_or([])[0])
       if @symcore.compare_expr(arg, int(0)) == 0 {
         int(0)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
@@ -168,8 +180,8 @@ fn mech_eval_special_trig(expr : Expr) -> Expr {
         @symcore.raw_function("sin", [arg])
       }
     }
-    Expr::Function("cos", args) if args.length() == 1 => {
-      let arg = mech_eval_special_trig(args[0])
+    _ if @symcore.application_has_name(expr, "cos", arity=1) => {
+      let arg = mech_eval_special_trig(@symcore.application_args(expr).unwrap_or([])[0])
       if @symcore.compare_expr(arg, int(0)) == 0 {
         int(1)
       } else if @symcore.compare_expr(arg, mech_pi_half()) == 0 {
@@ -182,9 +194,15 @@ fn mech_eval_special_trig(expr : Expr) -> Expr {
     Expr::Mul(args) => @symcore.mul(args.map(mech_eval_special_trig))
     Expr::Pow(base, exp) =>
       @symcore.pow(mech_eval_special_trig(base), mech_eval_special_trig(exp))
-    Expr::Function(name, args) =>
-      @symcore.raw_function(name, args.map(mech_eval_special_trig))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.raw_apply(head, args.map(mech_eval_special_trig)) {
+            Some(value) => value
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 
@@ -217,18 +235,25 @@ fn mech_apply_subs_exact(
         mech_apply_subs_exact(base, subs, ignore_derivative_children~),
         mech_apply_subs_exact(exp, subs, ignore_derivative_children~),
       )
-    Expr::Function(name, args) =>
-      if ignore_derivative_children && name == "Derivative" {
-        expr
-      } else {
-        @symcore.raw_function(
-          name,
-          args.map(arg => {
-            mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
-          }),
-        )
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          if ignore_derivative_children &&
+            @symcore.application_has_name(expr, "Derivative") {
+            expr
+          } else {
+            match @symcore.raw_apply(
+              head,
+              args.map(arg => {
+                mech_apply_subs_exact(arg, subs, ignore_derivative_children~)
+              }),
+            ) {
+              Some(value) => value
+              None => expr
+            }
+          }
+        None => expr
       }
-    _ => expr
   }
 }
 
@@ -238,8 +263,12 @@ fn mech_find_dynamicsymbols_go(expr : Expr, seen : Map[String, Expr]) -> Unit {
     seen.set(mech_expr_key(expr), expr)
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
+        mech_find_dynamicsymbols_go(arg, seen)
+      }
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      for arg in @symcore.application_args(expr).unwrap_or([]) {
         mech_find_dynamicsymbols_go(arg, seen)
       }
     Expr::Pow(base, exp) => {

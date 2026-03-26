@@ -29,9 +29,9 @@ pub fn piab_bra(n : Expr) -> Expr {
 
 ///|
 pub fn piab_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
-  match (op_expr, ket_expr) {
-    (Expr::Function("PIABHamiltonian", _), Expr::Function("PIABKet", args)) if args.length() ==
-      1 => {
+  match @symcore.application_args(ket_expr) {
+    Some(args) if @symcore.application_has_name(op_expr, "PIABHamiltonian") &&
+      @symcore.application_has_name(ket_expr, "PIABKet", arity=1) => {
       let n = args[0]
       let coeff = (n ^ int(2)) *
         (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^ int(2)) *
@@ -45,9 +45,9 @@ pub fn piab_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
 
 ///|
 pub fn piab_represent(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function("PIABKet", args) | Expr::Function("PIABBra", args) if args.length() ==
-      1 => {
+  match @symcore.application_args(expr) {
+    Some(args) if (@symcore.application_has_name(expr, "PIABKet", arity=1) ||
+      @symcore.application_has_name(expr, "PIABBra", arity=1)) => {
       let x = Expr::Symbol("x")
       let prefactor = @symcore.raw_function("sqrt", [
         int(2) * @symcore.raw_pow(piab_l, int(-1)),

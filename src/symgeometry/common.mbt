@@ -110,7 +110,7 @@ fn geo_expr_sign(expr : Expr) -> Int? {
 fn geo_collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
   match expr {
     Expr::Symbol(name) => seen.set(name, true)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         geo_collect_symbols(arg, seen)
       }
@@ -118,7 +118,10 @@ fn geo_collect_symbols(expr : Expr, seen : Map[String, Bool]) -> Unit {
       geo_collect_symbols(base, seen)
       geo_collect_symbols(exp, seen)
     }
-    _ => ()
+    _ =>
+      for arg in @symcore.args(expr) {
+        geo_collect_symbols(arg, seen)
+      }
   }
 }
 
@@ -128,11 +131,11 @@ fn geo_expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       args.any(fn(arg) { geo_expr_depends_on(arg, wrt) })
     Expr::Pow(base, exp) =>
       geo_expr_depends_on(base, wrt) || geo_expr_depends_on(exp, wrt)
-    _ => false
+    _ => @symcore.args(expr).any(fn(arg) { geo_expr_depends_on(arg, wrt) })
   }
 }
 
@@ -200,6 +203,12 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
         Some([expr, int(0), int(0)])
       }
     Expr::AppliedUndef(_, _) => None
+    Expr::Derivative(_, _) | Expr::Subs(_, _, _) =>
+      if geo_expr_depends_on(expr, wrt) {
+        None
+      } else {
+        Some([expr, int(0), int(0)])
+      }
     Expr::Dict(_) => None
     Expr::Add(args) => {
       let mut out = [int(0), int(0), int(0)]
@@ -239,16 +248,20 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
           _ => None
         }
       }
-    Expr::Function(_, _) | Expr::Derivative(_, _) | Expr::Subs(_, _, _) =>
-      if geo_expr_depends_on(expr, wrt) {
-        None
-      } else {
-        Some([expr, int(0), int(0)])
-      }
     Expr::Boolean(_)
     | Expr::Tuple(_)
     | Expr::Relational(_, _, _)
     | Expr::Lambda(_, _) => None
+    _ =>
+      if @symcore.application_parts(expr) != None {
+        if geo_expr_depends_on(expr, wrt) {
+          None
+        } else {
+          Some([expr, int(0), int(0)])
+        }
+      } else {
+        None
+      }
   }
 }
 

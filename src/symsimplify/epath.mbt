@@ -275,7 +275,8 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Derivative(_, _) => t == "Derivative" || t == "Expr"
     Expr::Subs(_, _, _) => t == "Subs" || t == "Expr"
     Expr::Lambda(_, _) => t == "Lambda" || t == "Expr"
-    Expr::Function(_, _) => t == "Function" || t == "Expr"
+    _ if @symcore.application_parts(expr) is Some(_) => t == "Function" || t == "Expr"
+    _ => false
   }
 }
 
@@ -300,10 +301,7 @@ fn has_attr(expr : Expr, a : String) -> Bool {
         _ => false
       }
     "is_Function" =>
-      match expr {
-        Expr::Function(_, _) => true
-        _ => false
-      }
+      @symcore.application_parts(expr) is Some(_)
     _ => false
   }
 }
@@ -325,8 +323,7 @@ fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
     Expr::Add(args)
     | Expr::Mul(args)
-    | Expr::Tuple(args)
-    | Expr::Function(_, args) => args.map(x => x)
+    | Expr::Tuple(args) => args.map(x => x)
     Expr::Pow(a, b) => [a, b]
     Expr::Relational(_, lhs, rhs) => [lhs, rhs]
     Expr::Derivative(inner, deriv_args) => {
@@ -338,7 +335,11 @@ fn ordered_children(expr : Expr) -> Array[Expr] {
     }
     Expr::Subs(inner, variable, value) => [inner, variable, value]
     Expr::Lambda(vars, body) => [vars, body]
-    _ => []
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => args.map(x => x)
+        None => []
+      }
   }
 }
 
@@ -347,6 +348,12 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
   match expr {
     Expr::Add(_) => @symcore.raw_add(args)
     Expr::Mul(_) => @symcore.raw_mul(args)
+    Expr::Pow(_, _) =>
+      if args.length() == 2 {
+        @symcore.raw_pow(args[0], args[1])
+      } else {
+        expr
+      }
     Expr::Tuple(_) => @symcore.Expr::Tuple(args)
     Expr::Relational(op, _, _) =>
       if args.length() == 2 {
@@ -379,14 +386,11 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
       } else {
         expr
       }
-    Expr::Function(name, _) => @symcore.raw_function(name, args)
-    Expr::Pow(_, _) =>
-      if args.length() == 2 {
-        @symcore.raw_pow(args[0], args[1])
-      } else {
-        expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, _)) => @symcore.raw_apply(head, args).unwrap_or(expr)
+        None => expr
       }
-    _ => expr
   }
 }
 

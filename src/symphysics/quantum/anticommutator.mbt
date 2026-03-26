@@ -57,8 +57,13 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
           }
         _ => ()
       }
-      match (nlhs, nrhs) {
-        (Expr::Function("FermionOp", largs), Expr::Function("FermionOp", rargs)) =>
+      match (
+        @symcore.application_name(nlhs),
+        @symcore.application_args(nlhs),
+        @symcore.application_name(nrhs),
+        @symcore.application_args(nrhs),
+      ) {
+        (Some("FermionOp"), Some(largs), Some("FermionOp"), Some(rargs)) =>
           if largs.length() == 2 &&
             rargs.length() == 2 &&
             largs[0] == rargs[0] &&
@@ -66,9 +71,9 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
             rargs[1] != int(0) {
             return int(1)
           }
-        (Expr::Function("FermionOp", _), Expr::Function("BosonOp", _)) =>
+        (Some("FermionOp"), Some(_), Some("BosonOp"), Some(_)) =>
           return int(2) * nlhs * nrhs
-        (Expr::Function("BosonOp", _), Expr::Function("FermionOp", _)) =>
+        (Some("BosonOp"), Some(_), Some("FermionOp"), Some(_)) =>
           return int(2) * nlhs * nrhs
         _ => ()
       }
@@ -98,11 +103,11 @@ pub fn anticommutator(lhs : Expr, rhs : Expr, evaluate? : Bool = true) -> Expr {
 
 ///|
 pub fn anticommutator_doit(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function("AntiCommutator", args) if args.length() == 2 =>
+  match @symcore.application_args(expr) {
+    Some([lhs, rhs]) if @symcore.application_has_name(expr, "AntiCommutator", arity=2) =>
       quantum_add_from_args_preserve([
-        quantum_mul_from_args_preserve([args[0], args[1]]),
-        quantum_mul_from_args_preserve([args[1], args[0]]),
+        quantum_mul_from_args_preserve([lhs, rhs]),
+        quantum_mul_from_args_preserve([rhs, lhs]),
       ])
     _ => expr
   }

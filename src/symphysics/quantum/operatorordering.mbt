@@ -27,15 +27,15 @@ fn quantum_expand_powers(factors : Array[Expr]) -> Array[Expr] {
 
 ///|
 fn quantum_op_sort_key(expr : Expr) -> (Int, String) {
-  match expr {
-    Expr::Function("BosonOp", args) | Expr::Function("FermionOp", args) if args.length() ==
-      2 => {
+  match @symcore.application_args(expr) {
+    Some(args) if (@symcore.application_has_name(expr, "BosonOp", arity=2) ||
+      @symcore.application_has_name(expr, "FermionOp", arity=2)) => {
       let annihilation_rank = if args[1] == int(0) { 0 } else { 1 }
       (annihilation_rank, @symprint.to_string(args[0]))
     }
-    Expr::Function("CreateBoson", args) if args.length() == 1 =>
+    Some(args) if @symcore.application_has_name(expr, "CreateBoson", arity=1) =>
       (0, @symprint.to_string(args[0]))
-    Expr::Function("AnnihilateBoson", args) if args.length() == 1 =>
+    Some(args) if @symcore.application_has_name(expr, "AnnihilateBoson", arity=1) =>
       (1, @symprint.to_string(args[0]))
     _ => (2, @symprint.to_string(expr))
   }
@@ -43,8 +43,8 @@ fn quantum_op_sort_key(expr : Expr) -> (Int, String) {
 
 ///|
 fn quantum_same_species(lhs : Expr, rhs : Expr) -> Bool {
-  match (lhs, rhs) {
-    (Expr::Function(name1, _), Expr::Function(name2, _)) => name1 == name2
+  match (@symcore.application_name(lhs), @symcore.application_name(rhs)) {
+    (Some(name1), Some(name2)) => name1 == name2
     _ => false
   }
 }
@@ -70,9 +70,9 @@ fn quantum_operatorordering_pair(
     return None
   }
   let same_species = quantum_same_species(current, next)
-  let same_name = match (current, next) {
-    (Expr::Function(_, cargs), Expr::Function(_, nargs)) if cargs.length() >= 1 &&
-      nargs.length() >= 1 => cargs[0] == nargs[0]
+  let same_name = match (@symcore.application_args(current), @symcore.application_args(next)) {
+    (Some(cargs), Some(nargs)) if cargs.length() >= 1 && nargs.length() >= 1 =>
+      cargs[0] == nargs[0]
     _ => false
   }
   if quantum_expr_has_any_name(current, [

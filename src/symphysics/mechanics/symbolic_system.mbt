@@ -97,7 +97,7 @@ fn symbolic_system_collect_free_symbols(
 ) -> Unit {
   match expr {
     Expr::Symbol(_) => seen.set(mech_expr_key(expr), expr)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         symbolic_system_collect_free_symbols(arg, seen)
       }
@@ -105,7 +105,10 @@ fn symbolic_system_collect_free_symbols(
       symbolic_system_collect_free_symbols(base, seen)
       symbolic_system_collect_free_symbols(exp, seen)
     }
-    _ => ()
+    _ =>
+      for arg in @symcore.args(expr) {
+        symbolic_system_collect_free_symbols(arg, seen)
+      }
   }
 }
 

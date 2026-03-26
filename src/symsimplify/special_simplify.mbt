@@ -39,9 +39,12 @@ fn rewrite_bottom_up_special(expr : Expr, rule : (Expr) -> Expr) -> Expr {
 ///|
 fn rewrite_combsimp(expr : Expr) -> Expr {
   match expr {
-    Expr::Function(name, args) => rewrite_combinatorial_call(name, args, expr)
     Expr::Mul(args) => reduce_factorial_ratios(args)
-    _ => expr
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some(args)) => rewrite_combinatorial_call(name, args, expr)
+        _ => expr
+      }
   }
 }
 
@@ -144,16 +147,13 @@ fn strip_factor_pair(args : Array[Expr], idx_a : Int, idx_b : Int) -> Expr {
 
 ///|
 fn factorial_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Function(name, [arg]) if name == "factorial" => Some(arg)
-    _ => None
-  }
+  unary_application_arg(expr, "factorial")
 }
 
 ///|
 fn inverse_factorial_arg(expr : Expr) -> Expr? {
-  match expr {
-    Expr::Pow(Expr::Function(name, [arg]), Expr::Number(exp)) =>
+  match pow_named_unary_application(expr) {
+    Some((name, arg, Expr::Number(exp))) =>
       if name == "factorial" &&
         exp.is_integral() &&
         exp.numerator().to_int() == -1 {
@@ -167,8 +167,8 @@ fn inverse_factorial_arg(expr : Expr) -> Expr? {
 
 ///|
 fn rewrite_hyperexpand(expr : Expr) -> Expr {
-  match expr {
-    Expr::Function(name, [a_params, b_params, z]) if name == "hyper" =>
+  match @symcore.application_args(expr) {
+    Some([a_params, b_params, z]) if @symcore.application_has_name(expr, "hyper", arity=3) =>
       match (parse_tuple(a_params), parse_tuple(b_params)) {
         (Some(a), Some(b)) =>
           match (a.length(), b.length()) {
@@ -189,10 +189,7 @@ fn rewrite_hyperexpand(expr : Expr) -> Expr {
 
 ///|
 fn parse_tuple(expr : Expr) -> Array[Expr]? {
-  match expr {
-    Expr::Function(name, args) if name == "Tuple" => Some(args.map(x => x))
-    _ => None
-  }
+  @symcore.tuple_items(expr)
 }
 
 ///|

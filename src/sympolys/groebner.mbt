@@ -269,10 +269,9 @@ fn collect_symbols_expr(expr : Expr, seen : Map[String, Bool]) -> Unit {
       collect_symbols_expr(base, seen)
       collect_symbols_expr(exp, seen)
     }
-    Expr::Function(_, args) =>
-      for child in args {
+    _ =>
+      for child in @symcore.args(expr) {
         collect_symbols_expr(child, seen)
       }
-    _ => ()
   }
 }
