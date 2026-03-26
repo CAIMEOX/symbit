@@ -248,7 +248,7 @@ fn sq_wicks_sequence(
 fn sq_collect_symbol_counts(expr : Expr, counts : Map[String, Int]) -> Unit {
   match expr {
     Expr::Symbol(name) => counts.set(name, counts.get(name).unwrap_or(0) + 1)
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         sq_collect_symbol_counts(arg, counts)
       }
@@ -256,7 +256,14 @@ fn sq_collect_symbol_counts(expr : Expr, counts : Map[String, Int]) -> Unit {
       sq_collect_symbol_counts(base, counts)
       sq_collect_symbol_counts(exp, counts)
     }
-    _ => ()
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) =>
+          for arg in args {
+            sq_collect_symbol_counts(arg, counts)
+          }
+        None => ()
+      }
   }
 }
 
@@ -350,7 +357,7 @@ fn sq_collect_symbols_by_group(
           _ => if !general.contains(name) { general.push(name) }
         }
       }
-    Expr::Add(args) | Expr::Mul(args) | Expr::Function(_, args) =>
+    Expr::Add(args) | Expr::Mul(args) =>
       for arg in args {
         sq_collect_symbols_by_group(arg, above, below, general)
       }
@@ -358,7 +365,14 @@ fn sq_collect_symbols_by_group(
       sq_collect_symbols_by_group(base, above, below, general)
       sq_collect_symbols_by_group(exp, above, below, general)
     }
-    _ => ()
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) =>
+          for arg in args {
+            sq_collect_symbols_by_group(arg, above, below, general)
+          }
+        None => ()
+      }
   }
 }
 

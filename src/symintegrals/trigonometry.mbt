@@ -4,8 +4,9 @@
 
 ///|
 fn trig_linear_arg(expr : Expr, var_name : String) -> (String, Expr, Expr)? {
-  match expr_simplify(expr) {
-    @symcore.Expr::Function(name, [arg]) =>
+  let simplified = expr_simplify(expr)
+  match (@symcore.application_name(simplified), @symcore.application_args(simplified)) {
+    (Some(name), Some([arg])) =>
       match linear_coeffs(arg, var_name) {
         Some((a, b)) if !expr_is_zero(a) => Some((name, a, b))
         _ => None

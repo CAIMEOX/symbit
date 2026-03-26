@@ -8,23 +8,22 @@
 /// Meijer-G based fallback integrator for special-function antiderivatives.
 pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
   let target = expr_simplify(expr)
-  match target {
-    @symcore.Expr::Function("exp", [inner]) =>
-      match extract_erf_scale(inner, var_name) {
-        Some(scale) =>
-          Some(
-            expr_mul(
-              expr_div(sqrt_pi(), expr_int(2)),
-              @symspec.erf(expr_mul(scale, @symcore.symbol(var_name))),
-            ),
-          )
-        None => None
-      }
-    _ =>
-      match sincos_division(target, var_name) {
-        Some(res) => Some(res)
-        None => None
-      }
+  if @symcore.application_has_name(target, "exp", arity=1) {
+    match extract_erf_scale(@symcore.application_args(target).unwrap()[0], var_name) {
+      Some(scale) =>
+        Some(
+          expr_mul(
+            expr_div(sqrt_pi(), expr_int(2)),
+            @symspec.erf(expr_mul(scale, @symcore.symbol(var_name))),
+          ),
+        )
+      None => None
+    }
+  } else {
+    match sincos_division(target, var_name) {
+      Some(res) => Some(res)
+      None => None
+    }
   }
 }
 
@@ -39,8 +38,9 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
       } else if numerator.length() != 1 {
         None
       } else {
-        match numerator[0] {
-          @symcore.Expr::Function("sin", [arg]) =>
+        match
+          (@symcore.application_name(numerator[0]), @symcore.application_args(numerator[0])) {
+          (Some("sin"), Some([arg])) =>
             match linear_coeffs(arg, var_name) {
               Some(pair) => {
                 let a = pair.0
@@ -53,7 +53,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
               }
               None => None
             }
-          @symcore.Expr::Function("cos", [arg]) =>
+          (Some("cos"), Some([arg])) =>
             match linear_coeffs(arg, var_name) {
               Some(pair) => {
                 let a = pair.0
