@@ -159,12 +159,6 @@ pub fn expr_from_big_rational(@symnum.BigRational) -> @symcore.Expr
 
 pub fn expr_from_int(Int) -> @symcore.Expr
 
-pub fn expr_one() -> @symcore.Expr
-
-pub fn expr_two() -> @symcore.Expr
-
-pub fn expr_zero() -> @symcore.Expr
-
 pub fn f_distribution(String, params? : Array[@symcore.Expr]) -> RandomVar
 
 pub fn factorial_moment(@symcore.Expr, Int, rvs? : Array[RandomVar]) -> @symcore.Expr

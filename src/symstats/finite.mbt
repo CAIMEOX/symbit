@@ -120,7 +120,7 @@ pub fn finite_pmf(rv : RandomVar, value : @symcore.Expr) -> @symcore.Expr? {
           return Some(expr_from_big_rational(p))
         }
       }
-      Some(expr_zero())
+      Some(@symcore.int(0))
     }
   }
 }

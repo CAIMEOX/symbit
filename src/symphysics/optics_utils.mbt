@@ -9,18 +9,8 @@ pub enum OpticsMediumArg {
 } derive(Eq)
 
 ///|
-fn oo_expr() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-}
-
-///|
-fn neg_oo_expr() -> Expr {
-  int(-1) * oo_expr()
-}
-
-///|
 fn is_infinite_expr(expr : Expr) -> Bool {
-  expr == oo_expr() || expr == neg_oo_expr()
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) || expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
 }
 
 ///|
@@ -264,7 +254,7 @@ pub fn mirror_formula(
   match (focal_length, u, v) {
     (None, Some(uv), Some(vv)) =>
       if is_infinite_expr(uv) && is_infinite_expr(vv) {
-        oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else if is_infinite_expr(uv) {
         vv
       } else if is_infinite_expr(vv) {
@@ -274,7 +264,7 @@ pub fn mirror_formula(
       }
     (Some(ff), None, Some(vv)) =>
       if is_infinite_expr(vv) && is_infinite_expr(ff) {
-        oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else if is_infinite_expr(vv) {
         ff
       } else if is_infinite_expr(ff) {
@@ -284,7 +274,7 @@ pub fn mirror_formula(
       }
     (Some(ff), Some(uv), None) =>
       if is_infinite_expr(uv) && is_infinite_expr(ff) {
-        oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else if is_infinite_expr(uv) {
         ff
       } else if is_infinite_expr(ff) {
@@ -311,7 +301,7 @@ pub fn lens_formula(
   match (focal_length, u, v) {
     (None, Some(uv), Some(vv)) =>
       if is_infinite_expr(uv) && is_infinite_expr(vv) {
-        oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else if is_infinite_expr(uv) {
         vv
       } else if is_infinite_expr(vv) {
@@ -321,7 +311,7 @@ pub fn lens_formula(
       }
     (Some(ff), None, Some(vv)) =>
       if is_infinite_expr(vv) && is_infinite_expr(ff) {
-        neg_oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
       } else if is_infinite_expr(vv) {
         int(-1) * ff
       } else if is_infinite_expr(ff) {
@@ -331,7 +321,7 @@ pub fn lens_formula(
       }
     (Some(ff), Some(uv), None) =>
       if is_infinite_expr(uv) && is_infinite_expr(ff) {
-        oo_expr()
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else if is_infinite_expr(uv) {
         ff
       } else if is_infinite_expr(ff) {

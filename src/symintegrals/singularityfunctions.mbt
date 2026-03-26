@@ -13,7 +13,7 @@ pub fn singularityintegrate(expr : Expr, var_name : String) -> Expr? {
             @symspec.singularity_function(
               @symcore.Expr::Symbol(var_name),
               a,
-              expr_int(k + 1),
+              @symcore.int(k + 1),
             ),
           )
         Some(-1) =>
@@ -21,7 +21,7 @@ pub fn singularityintegrate(expr : Expr, var_name : String) -> Expr? {
             @symspec.singularity_function(
               @symcore.Expr::Symbol(var_name),
               a,
-              expr_zero(),
+              @symcore.int(0),
             ),
           )
         Some(k) =>
@@ -29,7 +29,7 @@ pub fn singularityintegrate(expr : Expr, var_name : String) -> Expr? {
             @symspec.singularity_function(
               @symcore.Expr::Symbol(var_name),
               a,
-              expr_int(k + 1),
+              @symcore.int(k + 1),
             ),
           )
         _ => None

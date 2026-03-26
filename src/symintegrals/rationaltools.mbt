@@ -34,10 +34,10 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               let c = dc[0]
               let p = nc[1]
               let q = nc[0]
-              let lead = expr_div(p, expr_mul(expr_int(2), a))
+              let lead = expr_div(p, expr_mul(@symcore.int(2), a))
               let remainder = expr_sub(q, expr_mul(lead, b))
               let log_part = if expr_is_zero(p) {
-                expr_zero()
+                @symcore.int(0)
               } else {
                 lead * @symelem.log(den)
               }
@@ -48,8 +48,8 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               if expr_eq(
                   den,
                   expr_add(
-                    expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2)),
-                    expr_one(),
+                    expr_pow(@symcore.Expr::Symbol(var_name), @symcore.int(2)),
+                    @symcore.int(1),
                   ),
                 ) &&
                 expr_is_zero(p) &&
@@ -58,12 +58,12 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               }
               match expr_num_value(disc) {
                 Some(delta) if delta.compare(@symnum.BigRational::zero()) < 0 => {
-                  let pos = expr_neg_one() * disc
+                  let pos = @symcore.int(-1) * disc
                   let root = expr_exact_sqrt(pos)
                   let arg = expr_div(
                     expr_add(
                       expr_mul(
-                        expr_int(2),
+                        @symcore.int(2),
                         expr_mul(a, @symcore.Expr::Symbol(var_name)),
                       ),
                       b,
@@ -73,7 +73,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                   return Some(
                     log_part +
                     expr_div(
-                      expr_mul(expr_int(2), remainder) * @symelem.atan(arg),
+                      expr_mul(@symcore.int(2), remainder) * @symelem.atan(arg),
                       root,
                     ),
                   )
@@ -83,7 +83,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                   let arg = expr_div(
                     expr_add(
                       expr_mul(
-                        expr_int(2),
+                        @symcore.int(2),
                         expr_mul(a, @symcore.Expr::Symbol(var_name)),
                       ),
                       b,
@@ -93,7 +93,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                   return Some(
                     log_part -
                     expr_div(
-                      expr_mul(expr_int(2), remainder) *
+                      expr_mul(@symcore.int(2), remainder) *
                       @symcore.raw_function("atanh", [arg]),
                       root,
                     ),

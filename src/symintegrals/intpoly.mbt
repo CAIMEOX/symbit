@@ -160,12 +160,12 @@ fn intpoly_polygon_signed_integral(
   let vars = [x_name, y_name]
   let t_name = intpoly_fresh_parameter(primitive_x, vars)
   let t = @symcore.Expr::Symbol(t_name)
-  let zero = expr_zero()
-  let one = expr_one()
+  let zero = @symcore.int(0)
+  let one = @symcore.int(1)
   let sides = poly.sides() catch {
     _ => raise IntegralError::ValueError("failed to derive polygon sides")
   }
-  let mut total = expr_zero()
+  let mut total = @symcore.int(0)
   for side in sides {
     let p0 = side.p1()
     let p1 = side.p2()
@@ -195,7 +195,7 @@ fn intpoly_normalize_orientation(
 ) -> Expr {
   match expr_num_value(poly.area()) {
     Some(area) if area.compare(@symnum.BigRational::zero()) < 0 =>
-      expr_mul(expr_int(-1), value)
+      expr_mul(@symcore.int(-1), value)
     _ => value
   }
 }
@@ -225,17 +225,17 @@ fn intpoly_primitive_x(
     match expr_simplify(term) {
       @symcore.Expr::Symbol(name) =>
         if name == x_name {
-          Some((expr_one(), 1))
+          Some((@symcore.int(1), 1))
         } else {
           Some((term, 0))
         }
       @symcore.Expr::Pow(@symcore.Expr::Symbol(name), exp) if name == x_name =>
         match expr_is_int_value(exp) {
-          Some(power) if power >= 0 => Some((expr_one(), power))
+          Some(power) if power >= 0 => Some((@symcore.int(1), power))
           _ => None
         }
       @symcore.Expr::Mul(args) => {
-        let mut coeff = expr_one()
+        let mut coeff = @symcore.int(1)
         let mut power = 0
         for arg in args {
           match expr_simplify(arg) {
@@ -279,7 +279,7 @@ fn intpoly_primitive_x(
           expr_simplify(
             expr_mul(
               coeff,
-              expr_div(expr_pow(x, expr_int(power + 1)), expr_int(power + 1)),
+              expr_div(expr_pow(x, @symcore.int(power + 1)), @symcore.int(power + 1)),
             ),
           ),
         )
@@ -321,8 +321,8 @@ fn intpoly_primitive_x(
 
 ///|
 fn intpoly_monomial(x : Expr, y : Expr, dx : Int, dy : Int) -> Expr {
-  let lhs = if dx == 0 { expr_one() } else { expr_pow(x, expr_int(dx)) }
-  let rhs = if dy == 0 { expr_one() } else { expr_pow(y, expr_int(dy)) }
+  let lhs = if dx == 0 { @symcore.int(1) } else { expr_pow(x, @symcore.int(dx)) }
+  let rhs = if dy == 0 { @symcore.int(1) } else { expr_pow(y, @symcore.int(dy)) }
   expr_mul(lhs, rhs)
 }
 
@@ -341,7 +341,7 @@ pub fn segment_integrate(
   let t = @symcore.Expr::Symbol(t_name)
   let transformed = intpoly_segment_integrand(expr, seg, x_name, y_name, t_name)
   let weighted = expr_mul(transformed, intpoly_segment_length(seg))
-  integrate(weighted, limits=[integral_limit([t, expr_zero(), expr_one()])])
+  integrate(weighted, limits=[integral_limit([t, @symcore.int(0), @symcore.int(1)])])
 }
 
 ///|

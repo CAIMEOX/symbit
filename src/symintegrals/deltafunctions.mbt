@@ -8,7 +8,7 @@ fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
     simplified if @symcore.application_has_name(simplified, "DiracDelta", arity=1) => {
       let arg = @symcore.application_args(simplified).unwrap()[0]
       if expr_depends_on(arg, var_name) {
-        Some((arg, expr_one()))
+        Some((arg, @symcore.int(1)))
       } else {
         None
       }
@@ -30,7 +30,7 @@ fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
             (
               inner,
               if rest.is_empty() {
-                expr_one()
+                @symcore.int(1)
               } else {
                 expr_simplify(@symcore.mul(rest))
               },
@@ -61,7 +61,7 @@ pub fn change_mul(node : Expr, var_name : String) -> (Expr?, Expr?) {
 fn delta_root_and_scale(arg : Expr, var_name : String) -> (Expr, Expr)? {
   match linear_coeffs(arg, var_name) {
     Some((a, b)) if !expr_is_zero(a) =>
-      Some((expr_div(expr_neg_one() * b, a), @symelem.abs(a)))
+      Some((expr_div(@symcore.int(-1) * b, a), @symelem.abs(a)))
     _ => None
   }
 }
@@ -92,7 +92,7 @@ pub fn deltaintegrate(
                   if rv.compare(lv) >= 0 && rv.compare(hv) <= 0 {
                     Some(value)
                   } else {
-                    Some(expr_zero())
+                    Some(@symcore.int(0))
                   }
                 _ =>
                   Some(

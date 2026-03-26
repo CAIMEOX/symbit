@@ -3,7 +3,7 @@
 
 ///|
 fn sum_stride_expr(values : Array[Expr], start : Int, step : Int) -> Expr {
-  let mut acc = expr_zero()
+  let mut acc = @symcore.int(0)
   let mut i = start
   while i < values.length() {
     acc = expr_add2(acc, values[i])
@@ -48,7 +48,7 @@ pub fn convolution_fft(
     return []
   }
   let m = a.length() + b.length() - 1
-  let out : Array[Expr] = Array::make(m, expr_zero())
+  let out : Array[Expr] = Array::make(m, @symcore.int(0))
   for i in 0..<a.length() {
     for j in 0..<b.length() {
       let prod = expand_mul(expr_mul2(a[i], b[j]))
@@ -75,10 +75,10 @@ pub fn convolution_fwht(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
     bb.push(v)
   }
   for _ in aa.length()..<n2 {
-    aa.push(expr_zero())
+    aa.push(@symcore.int(0))
   }
   for _ in bb.length()..<n2 {
-    bb.push(expr_zero())
+    bb.push(@symcore.int(0))
   }
   let fa = fwht(aa)
   let fb = fwht(bb)
@@ -105,12 +105,12 @@ pub fn convolution_subset(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
     bb.push(v)
   }
   for _ in aa.length()..<n2 {
-    aa.push(expr_zero())
+    aa.push(@symcore.int(0))
   }
   for _ in bb.length()..<n2 {
-    bb.push(expr_zero())
+    bb.push(@symcore.int(0))
   }
-  let c : Array[Expr] = Array::make(n2, expr_zero())
+  let c : Array[Expr] = Array::make(n2, @symcore.int(0))
   for mask in 0..<n2 {
     let mut smask = mask
     while smask > 0 {
@@ -144,10 +144,10 @@ pub fn covering_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
     bb.push(v)
   }
   for _ in aa.length()..<n2 {
-    aa.push(expr_zero())
+    aa.push(@symcore.int(0))
   }
   for _ in bb.length()..<n2 {
-    bb.push(expr_zero())
+    bb.push(@symcore.int(0))
   }
   let ta = mobius_transform(aa)
   let tb = mobius_transform(bb)
@@ -174,10 +174,10 @@ pub fn intersecting_product(a : Array[Expr], b : Array[Expr]) -> Array[Expr] {
     bb.push(v)
   }
   for _ in aa.length()..<n2 {
-    aa.push(expr_zero())
+    aa.push(@symcore.int(0))
   }
   for _ in bb.length()..<n2 {
-    bb.push(expr_zero())
+    bb.push(@symcore.int(0))
   }
   let ta = mobius_transform(aa, subset=false)
   let tb = mobius_transform(bb, subset=false)
@@ -222,7 +222,7 @@ pub fn convolution_ntt(
   let inv = number_theoretic_transform_int(fc, prime, true)
   let out : Array[Expr] = Array::new()
   for i in 0..<m {
-    out.push(expr_int(inv[i]))
+    out.push(@symcore.int(inv[i]))
   }
   out
 }
@@ -278,7 +278,7 @@ pub fn convolution(
       }
       let out : Array[Expr] = Array::new()
       for i in 0..<cycle {
-        out.push(expr_int(sum_stride_int(ints, i, cycle, p)))
+        out.push(@symcore.int(sum_stride_int(ints, i, cycle, p)))
       }
       return out
     }

@@ -142,7 +142,7 @@ pub fn line_integrate(
     }
   }
   let mut transformed = field
-  let mut speed_sq = expr_zero()
+  let mut speed_sq = @symcore.int(0)
   for i in 0..<functions.length() {
     let name = match vars[i] {
       @symcore.Expr::Symbol(var_name) => var_name

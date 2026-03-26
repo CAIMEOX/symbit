@@ -13,7 +13,7 @@ pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
       Some(scale) =>
         Some(
           expr_mul(
-            expr_div(sqrt_pi(), expr_int(2)),
+            expr_div(sqrt_pi(), @symcore.int(2)),
             @symspec.erf(expr_mul(scale, @symcore.Expr::Symbol(var_name))),
           ),
         )
@@ -81,7 +81,7 @@ fn extract_erf_scale(inner : Expr, var_name : String) -> Expr? {
       } else {
         let quad = expr_simplify(coeffs[2])
         if expr_is_negative(quad) {
-          Some(expr_sqrt_positive(expr_mul(expr_int(-1), quad)))
+          Some(expr_sqrt_positive(expr_mul(@symcore.int(-1), quad)))
         } else {
           None
         }
@@ -95,7 +95,7 @@ fn extract_division(expr : Expr) -> (Array[Expr], Expr?) {
   let simplified = expr_simplify(expr)
   match simplified {
     @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
-      ([expr_one()], Some(base))
+      ([@symcore.int(1)], Some(base))
     @symcore.Expr::Mul(args) => {
       let numerator : Array[Expr] = []
       let denominator : Array[Expr] = []

@@ -4,27 +4,6 @@ pub type Expr = @symcore.Expr
 ///|
 pub type LimitSpec = (String, Expr?, Expr?)
 
-///|
-fn expr_zero() -> Expr {
-  @symcore.int(0)
-}
-
-///|
-fn expr_one() -> Expr {
-  @symcore.int(1)
-}
-
-///|
-fn expr_neg_one() -> Expr {
-  @symcore.int(-1)
-}
-
-///|
-fn expr_int(value : Int) -> Expr {
-  @symcore.int(value)
-}
-
-///|
 fn expr_from_num(value : @symnum.BigRational) -> Expr {
   @symcore.Expr::Number(value)
 }
@@ -36,7 +15,7 @@ fn expr_rat(num : Int, den : Int) -> Expr {
       try? @symcore.rational_from_ints(num, den) :
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
-    Err(_) => @symcore.function("Rational", [expr_int(num), expr_int(den)])
+    Err(_) => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
@@ -129,7 +108,7 @@ fn expr_mul(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn expr_div(lhs : Expr, rhs : Expr) -> Expr {
-  expr_simplify(lhs * (rhs ^ expr_int(-1)))
+  expr_simplify(lhs * (rhs ^ @symcore.int(-1)))
 }
 
 ///|
@@ -139,7 +118,7 @@ fn expr_pow(base : Expr, exp : Expr) -> Expr {
 
 ///|
 fn expr_eq(lhs : Expr, rhs : Expr) -> Bool {
-  expr_simplify(lhs - rhs) == expr_zero()
+  expr_simplify(lhs - rhs) == @symcore.int(0)
 }
 
 ///|
@@ -239,7 +218,7 @@ fn expr_exact_sqrt(expr : Expr) -> Expr {
   match expr_num_value(expr) {
     Some(n) if n.is_integral() =>
       match int_sqrt_if_square(n.numerator().to_int()) {
-        Some(root) => expr_int(root)
+        Some(root) => @symcore.int(root)
         None => @symelem.sqrt(expr)
       }
     _ => @symelem.sqrt(expr)
@@ -249,14 +228,14 @@ fn expr_exact_sqrt(expr : Expr) -> Expr {
 ///|
 fn expr_sqrt_positive(expr : Expr) -> Expr {
   match expr_simplify(expr) {
-    @symcore.Expr::Pow(base, exp) if expr_eq(exp, expr_int(2)) &&
+    @symcore.Expr::Pow(base, exp) if expr_eq(exp, @symcore.int(2)) &&
       @symcore.application_has_name(base, "exp", arity=1) =>
       match @symcore.application_args(base) {
         Some([arg]) => @symelem.exp(arg)
         _ => @symelem.sqrt(expr)
       }
     @symcore.Expr::Mul(args) => {
-      let mut numeric = expr_one()
+      let mut numeric = @symcore.int(1)
       let mut exp_square : Expr? = None
       let rest : Array[Expr] = []
       for arg in args {
@@ -264,7 +243,7 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
           _ if expr_num_value(arg) is Some(_) =>
             numeric = expr_mul(numeric, arg)
           @symcore.Expr::Pow(base, exp) =>
-            if expr_eq(exp, expr_int(2)) &&
+            if expr_eq(exp, @symcore.int(2)) &&
               exp_square is None &&
               @symcore.application_has_name(base, "exp", arity=1) {
               match @symcore.application_args(base) {
@@ -291,7 +270,7 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
 ///|
 fn piecewise_expr(
   cases : Array[(Expr, Expr)],
-  default? : Expr = expr_zero(),
+  default? : Expr = @symcore.int(0),
 ) -> Expr {
   let args : Array[Expr] = []
   for item in cases {
@@ -364,15 +343,15 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
     @symcore.Expr::Number(_)
     | @symcore.Expr::Float(_)
     | @symcore.Expr::ComplexFloat(_) =>
-      Some([expr_simplify(expr), expr_zero(), expr_zero()])
+      Some([expr_simplify(expr), @symcore.int(0), @symcore.int(0)])
     @symcore.Expr::Symbol(name) =>
       if name == var_name {
-        Some([expr_zero(), expr_one(), expr_zero()])
+        Some([@symcore.int(0), @symcore.int(1), @symcore.int(0)])
       } else {
-        Some([expr, expr_zero(), expr_zero()])
+        Some([expr, @symcore.int(0), @symcore.int(0)])
       }
     @symcore.Expr::Add(args) => {
-      let coeffs = [expr_zero(), expr_zero(), expr_zero()]
+      let coeffs = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
       for arg in args {
         match poly_coeffs_upto2(arg, var_name) {
           Some(c) => {
@@ -386,11 +365,11 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
       Some(coeffs)
     }
     @symcore.Expr::Mul(args) => {
-      let coeffs = [expr_one(), expr_zero(), expr_zero()]
+      let coeffs = [@symcore.int(1), @symcore.int(0), @symcore.int(0)]
       for arg in args {
         match poly_coeffs_upto2(arg, var_name) {
           Some(c) => {
-            let next = [expr_zero(), expr_zero(), expr_zero()]
+            let next = [@symcore.int(0), @symcore.int(0), @symcore.int(0)]
             for i in 0..<3 {
               for j in 0..<3 {
                 if i + j > 2 {
@@ -413,7 +392,7 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
     }
     @symcore.Expr::Pow(base, exp) =>
       match expr_is_int_value(exp) {
-        Some(0) => Some([expr_one(), expr_zero(), expr_zero()])
+        Some(0) => Some([@symcore.int(1), @symcore.int(0), @symcore.int(0)])
         Some(1) => poly_coeffs_upto2(base, var_name)
         Some(2) =>
           match poly_coeffs_upto2(base, var_name) {
@@ -423,10 +402,10 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
               } else {
                 Some([
                   expr_mul(c[0], c[0]),
-                  expr_mul(expr_int(2), expr_mul(c[0], c[1])),
+                  expr_mul(@symcore.int(2), expr_mul(c[0], c[1])),
                   expr_add(
                     expr_mul(c[1], c[1]),
-                    expr_mul(expr_int(2), expr_mul(c[0], c[2])),
+                    expr_mul(@symcore.int(2), expr_mul(c[0], c[2])),
                   ),
                 ])
               }
@@ -436,14 +415,14 @@ fn poly_coeffs_upto2(expr : Expr, var_name : String) -> Array[Expr]? {
           if expr_depends_on(expr, var_name) {
             None
           } else {
-            Some([expr, expr_zero(), expr_zero()])
+            Some([expr, @symcore.int(0), @symcore.int(0)])
           }
       }
     _ =>
       if expr_depends_on(expr, var_name) {
         None
       } else {
-        Some([expr, expr_zero(), expr_zero()])
+        Some([expr, @symcore.int(0), @symcore.int(0)])
       }
   }
 }
@@ -470,12 +449,12 @@ fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
         }
       }
       let num = if num_parts.is_empty() {
-        expr_one()
+        @symcore.int(1)
       } else {
         expr_simplify(@symcore.mul(num_parts))
       }
       let den = if den_parts.is_empty() {
-        expr_one()
+        @symcore.int(1)
       } else {
         expr_simplify(@symcore.mul(den_parts))
       }
@@ -488,7 +467,7 @@ fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
     }
     @symcore.Expr::Pow(base, exp) if expr_is_minus_one(exp) =>
       if poly_coeffs_upto2(base, var_name) is Some(_) {
-        Some((expr_one(), base))
+        Some((@symcore.int(1), base))
       } else {
         None
       }
@@ -498,7 +477,7 @@ fn is_univariate_rational(expr : Expr, var_name : String) -> (Expr, Expr)? {
 
 ///|
 fn quadratic_discriminant(a : Expr, b : Expr, c : Expr) -> Expr {
-  expr_sub(expr_mul(b, b), expr_mul(expr_int(4), expr_mul(a, c)))
+  expr_sub(expr_mul(b, b), expr_mul(@symcore.int(4), expr_mul(a, c)))
 }
 
 ///|

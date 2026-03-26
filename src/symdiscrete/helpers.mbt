@@ -7,30 +7,9 @@ pub type BigRational = @symnum.BigRational
 ///|
 pub type BigInt = @bigint.BigInt
 
-///|
-fn expr_zero() -> Expr {
-  @symcore.int(0)
-}
-
-///|
-fn expr_one() -> Expr {
-  @symcore.int(1)
-}
-
-///|
-fn expr_neg_one() -> Expr {
-  @symcore.int(-1)
-}
-
-///|
-fn expr_int(n : Int) -> Expr {
-  @symcore.int(n)
-}
-
-///|
 fn expr_rational(num : Int, den : Int) -> Expr {
   if den == 1 {
-    return expr_int(num)
+    return @symcore.int(num)
   }
   match
     (
@@ -38,7 +17,7 @@ fn expr_rational(num : Int, den : Int) -> Expr {
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
     Err(_) =>
-      @symcore.mul([expr_int(num), @symcore.pow(expr_int(den), expr_neg_one())])
+      @symcore.mul([@symcore.int(num), @symcore.pow(@symcore.int(den), @symcore.int(-1))])
   }
 }
 
@@ -54,7 +33,7 @@ fn expr_mul2(a : Expr, b : Expr) -> Expr {
 
 ///|
 fn expr_neg(a : Expr) -> Expr {
-  expr_mul2(expr_neg_one(), a)
+  expr_mul2(@symcore.int(-1), a)
 }
 
 ///|
@@ -161,9 +140,9 @@ fn expand_mul(expr : Expr) -> Expr {
 ///|
 fn expand_mul_args(args : Array[Expr]) -> Expr {
   if args.is_empty() {
-    return expr_one()
+    return @symcore.int(1)
   }
-  let mut terms : Array[Expr] = [expr_one()]
+  let mut terms : Array[Expr] = [@symcore.int(1)]
   for arg in args {
     let expanded = expand_mul(arg)
     match expanded {

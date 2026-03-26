@@ -5,36 +5,21 @@
 /// - leading order from local Laurent data
 
 ///|
-fn oo_expr() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-}
-
-///|
-fn neg_oo_expr() -> @symcore.Expr {
-  @symcore.mul([@symcore.int(-1), oo_expr()])
-}
-
-///|
-fn zoo_expr() -> @symcore.Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)
-}
-
-///|
 fn is_pos_oo(expr : @symcore.Expr) -> Bool {
-  expr == oo_expr()
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|
 fn is_neg_oo(expr : @symcore.Expr) -> Bool {
-  expr == neg_oo_expr()
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
 }
 
 ///|
 fn infinity_from_sign(sign : Int) -> @symcore.Expr {
   if sign < 0 {
-    neg_oo_expr()
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)
   } else {
-    oo_expr()
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
   }
 }
 
@@ -78,7 +63,9 @@ fn leading_rational_near_zero(
       }
       let pole_order = ord_den - ord_num
       if dir == "+-" && pole_order % 2 == 1 {
-        return Some(zoo_expr())
+        return Some(
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+        )
       }
       let side_sign = if dir == "-" && pole_order % 2 == 1 { -1 } else { 1 }
       let sign = sign_of_expr(lead_coeff)
@@ -86,7 +73,7 @@ fn leading_rational_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None => oo_expr()
+          None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         },
       )
     }
@@ -118,7 +105,9 @@ fn leading_series_near_zero(
         return Some(poly[idx])
       }
       if dir == "+-" && total_order % 2 != 0 {
-        return Some(zoo_expr())
+        return Some(
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+        )
       }
       let side_sign = if dir == "-" && total_order % 2 != 0 { -1 } else { 1 }
       let sign = sign_of_expr(poly[idx])
@@ -126,7 +115,7 @@ fn leading_series_near_zero(
         match sign {
           Some(0) => @symcore.int(0)
           Some(s) => infinity_from_sign(s * side_sign)
-          None => oo_expr()
+          None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         },
       )
     }
@@ -178,7 +167,7 @@ fn eval_elementary_from_leading(
   match name {
     "exp" =>
       if is_pos_oo(arg_lead) {
-        Some(oo_expr())
+        Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
       } else if is_neg_oo(arg_lead) {
         Some(@symcore.int(0))
       } else {
@@ -186,10 +175,10 @@ fn eval_elementary_from_leading(
       }
     "log" =>
       if is_pos_oo(arg_lead) {
-        Some(oo_expr())
+        Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
       } else {
         match arg_lead {
-          @symcore.Expr::Number(n) if n.is_zero() => Some(neg_oo_expr())
+          @symcore.Expr::Number(n) if n.is_zero() => Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity))
           @symcore.Expr::Number(_) => Some(const_log(arg_lead))
           _ => None
         }
@@ -320,7 +309,8 @@ fn dominant_exp_add(
   if is_neg_oo(diff_lim) {
     return Some(gruntz_near_zero(args[1], t, dir))
   }
-  if diff_lim == zoo_expr() {
+  if diff_lim ==
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) {
     return None
   }
   let dom_lim = gruntz_near_zero(@symcore.function("exp", [left.arg]), t, dir)
@@ -341,7 +331,7 @@ fn dominant_exp_add(
       match sign {
         Some(0) => @symcore.int(0)
         Some(s) => infinity_from_sign(s)
-        None => oo_expr()
+        None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       },
     )
   }

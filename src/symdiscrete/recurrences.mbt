@@ -8,7 +8,7 @@ pub fn linrec(
   n : Int,
 ) -> Expr raise DiscreteError {
   if coeffs.is_empty() {
-    return expr_zero()
+    return @symcore.int(0)
   }
   if n < 0 {
     raise DiscreteError::ValueError("n must be non-negative")
@@ -22,13 +22,13 @@ pub fn linrec(
     b.push(v)
   }
   for _ in b.length()..<k {
-    b.push(expr_zero())
+    b.push(@symcore.int(0))
   }
   if n < k {
     return b[n]
   }
   let coeffs_n = linrec_coeffs(coeffs, n)
-  let mut acc = expr_zero()
+  let mut acc = @symcore.int(0)
   for i in 0..<k {
     acc = expr_add2(acc, expr_mul2(coeffs_n[i], b[i]))
   }
@@ -44,7 +44,7 @@ pub fn linrec_coeffs(c : Array[Expr], n : Int) -> Array[Expr] {
     c : Array[Expr],
   ) -> Array[Expr] {
     let wlen = 2 * u.length() - 1 + offset
-    let w : Array[Expr] = Array::make(wlen, expr_zero())
+    let w : Array[Expr] = Array::make(wlen, @symcore.int(0))
     for i in 0..<u.length() {
       for j in 0..<u.length() {
         let idx = offset + i + j
@@ -73,7 +73,7 @@ pub fn linrec_coeffs(c : Array[Expr], n : Int) -> Array[Expr] {
     if n < k {
       let out : Array[Expr] = Array::new()
       for i in 0..<k {
-        out.push(if i == n { expr_one() } else { expr_zero() })
+        out.push(if i == n { @symcore.int(1) } else { @symcore.int(0) })
       }
       out
     } else {

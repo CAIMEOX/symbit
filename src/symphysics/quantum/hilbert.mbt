@@ -14,11 +14,6 @@ pub enum HilbertSpace {
 } derive(Eq)
 
 ///|
-fn oo_expr() -> Expr {
-  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
-}
-
-///|
 fn hilbert_expr_repr(expr : Expr) -> String {
   match expr {
     Expr::Number(n) if n.is_integral() =>
@@ -192,13 +187,13 @@ pub fn HilbertSpace::dimension(
         "Abstract HilbertSpace has no fixed dimension",
       )
     HilbertSpace::Complex(dimension) => dimension
-    HilbertSpace::L2(_) | HilbertSpace::Fock => oo_expr()
+    HilbertSpace::L2(_) | HilbertSpace::Fock => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
     HilbertSpace::TensorProduct(args) => {
       let mut out = int(1)
       for arg in args {
         let dim = arg.dimension()
-        if dim == oo_expr() {
-          return oo_expr()
+        if dim == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
+          return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         }
         out = out * dim
       }
@@ -208,8 +203,8 @@ pub fn HilbertSpace::dimension(
       let mut out = int(0)
       for arg in args {
         let dim = arg.dimension()
-        if dim == oo_expr() {
-          return oo_expr()
+        if dim == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
+          return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
         }
         out = out + dim
       }
@@ -217,8 +212,8 @@ pub fn HilbertSpace::dimension(
     }
     HilbertSpace::TensorPower(base, exp) => {
       let dim = base.dimension()
-      if dim == oo_expr() {
-        oo_expr()
+      if dim == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       } else {
         dim ^ exp
       }

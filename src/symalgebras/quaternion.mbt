@@ -30,45 +30,29 @@ pub impl Show for QuaternionError with output(self, logger : &Logger) -> Unit {
   }
 }
 
-///|
-fn expr_zero() -> Expr {
-  @symcore.int(0)
-}
-
-///|
-fn expr_one() -> Expr {
-  @symcore.int(1)
-}
-
-///|
-fn expr_int(n : Int) -> Expr {
-  @symcore.int(n)
-}
-
-///|
 fn expr_rational(num : Int, den : Int) -> Expr {
   match
     (
       try? @symcore.rational_from_ints(num, den) :
       Result[Expr, @symnum.RationalError]) {
     Ok(value) => value
-    Err(_) => @symcore.function("Rational", [expr_int(num), expr_int(den)])
+    Err(_) => @symcore.function("Rational", [@symcore.int(num), @symcore.int(den)])
   }
 }
 
 ///|
 fn expr_pow(base : Expr, exp : Int) -> Expr {
-  base ^ expr_int(exp)
+  base ^ @symcore.int(exp)
 }
 
 ///|
 fn expr_neg(x : Expr) -> Expr {
-  expr_int(-1) * x
+  @symcore.int(-1) * x
 }
 
 ///|
 fn expr_div(a : Expr, b : Expr) -> Expr {
-  a * (b ^ expr_int(-1))
+  a * (b ^ @symcore.int(-1))
 }
 
 ///|
@@ -417,7 +401,7 @@ pub fn Quaternion::div(
 
 ///|
 pub fn Quaternion::div_scalar(self : Quaternion, other : Expr) -> Quaternion {
-  self.mul_scalar(expr_div(expr_one(), other))
+  self.mul_scalar(expr_div(@symcore.int(1), other))
 }
 
 ///|
@@ -472,7 +456,7 @@ fn quat_is_zero_numeric(q : Quaternion) -> Bool? {
 
 ///|
 pub fn Quaternion::normalize(self : Quaternion) -> Quaternion {
-  self.mul_scalar(expr_div(expr_one(), self.norm()))
+  self.mul_scalar(expr_div(@symcore.int(1), self.norm()))
 }
 
 ///|
@@ -483,7 +467,7 @@ pub fn Quaternion::inverse(
     Some(true) => raise QuaternionError::ZeroNorm
     _ => ()
   }
-  self.conjugate().mul_scalar(expr_div(expr_one(), expr_pow(self.norm(), 2)))
+  self.conjugate().mul_scalar(expr_div(@symcore.int(1), expr_pow(self.norm(), 2)))
 }
 
 ///|
@@ -501,10 +485,10 @@ pub fn Quaternion::pow(
     return q
   }
   let mut res = quat_unchecked(
-    expr_one(),
-    expr_zero(),
-    expr_zero(),
-    expr_zero(),
+    @symcore.int(1),
+    @symcore.int(0),
+    @symcore.int(0),
+    @symcore.int(0),
     true,
     None,
   )
@@ -529,9 +513,9 @@ pub fn Quaternion::exp(self : Quaternion) -> Quaternion {
     Some(true) =>
       quat_unchecked(
         ev,
-        expr_zero(),
-        expr_zero(),
-        expr_zero(),
+        @symcore.int(0),
+        @symcore.int(0),
+        @symcore.int(0),
         self.real_field,
         None,
       )
@@ -562,9 +546,9 @@ pub fn Quaternion::log(self : Quaternion) -> Quaternion raise QuaternionError {
     Some(true) =>
       quat_unchecked(
         a,
-        expr_zero(),
-        expr_zero(),
-        expr_zero(),
+        @symcore.int(0),
+        @symcore.int(0),
+        @symcore.int(0),
         self.real_field,
         None,
       )
@@ -588,8 +572,8 @@ pub fn Quaternion::pow_cos_sin(
   p : Int,
 ) -> Quaternion raise QuaternionError {
   let (axis, angle) = self.to_axis_angle()
-  let q2 = Quaternion::from_axis_angle(axis, expr_int(p) * angle)
-  q2.mul_scalar(self.norm() ^ expr_int(p))
+  let q2 = Quaternion::from_axis_angle(axis, @symcore.int(p) * angle)
+  q2.mul_scalar(self.norm() ^ @symcore.int(p))
 }
 
 ///|
@@ -630,7 +614,7 @@ pub fn Quaternion::from_elements(
 ) -> Quaternion raise QuaternionError {
   let n = elements.length()
   if n == 3 {
-    Quaternion::new(expr_zero(), elements[0], elements[1], elements[2])
+    Quaternion::new(@symcore.int(0), elements[0], elements[1], elements[2])
   } else if n == 4 {
     Quaternion::new(elements[0], elements[1], elements[2], elements[3])
   } else {
@@ -737,9 +721,9 @@ pub fn Quaternion::from_euler(
   let k = lower[2]
   let e = (axis : Char) => {
     match axis {
-      'x' => (expr_one(), expr_zero(), expr_zero())
-      'y' => (expr_zero(), expr_one(), expr_zero())
-      _ => (expr_zero(), expr_zero(), expr_one())
+      'x' => (@symcore.int(1), @symcore.int(0), @symcore.int(0))
+      'y' => (@symcore.int(0), @symcore.int(1), @symcore.int(0))
+      _ => (@symcore.int(0), @symcore.int(0), @symcore.int(1))
     }
   }
   let qi = Quaternion::from_axis_angle(e(i), angles[0])
@@ -795,7 +779,7 @@ pub fn Quaternion::to_euler(
   let mut a = elems[0]
   let mut b = elems[i]
   let mut c = elems[j]
-  let mut d = elems[k] * expr_int(sign)
+  let mut d = elems[k] * @symcore.int(sign)
   if !symmetric {
     let aa = a - c
     let bb = b + d
@@ -806,7 +790,7 @@ pub fn Quaternion::to_euler(
     c = cc
     d = dd
   }
-  let mut angles1 : Expr = expr_zero()
+  let mut angles1 : Expr = @symcore.int(0)
   if avoid_square_root {
     if symmetric {
       let n2 = expr_pow(self.norm(), 2)
@@ -817,7 +801,7 @@ pub fn Quaternion::to_euler(
         ),
       )
     } else {
-      let n2 = expr_int(2) * expr_pow(self.norm(), 2)
+      let n2 = @symcore.int(2) * expr_pow(self.norm(), 2)
       angles1 = expr_asin(
         expr_div(
           expr_pow(c, 2) + expr_pow(d, 2) - expr_pow(a, 2) - expr_pow(b, 2),
@@ -826,7 +810,7 @@ pub fn Quaternion::to_euler(
       )
     }
   } else {
-    angles1 = expr_int(2) *
+    angles1 = @symcore.int(2) *
       expr_atan2(
         expr_sqrt(expr_pow(c, 2) + expr_pow(d, 2)),
         expr_sqrt(expr_pow(a, 2) + expr_pow(b, 2)),
@@ -842,8 +826,8 @@ pub fn Quaternion::to_euler(
   if expr_is_zero(a) == Some(true) && expr_is_zero(b) == Some(true) {
     case = 2
   }
-  let mut angles0 : Expr = expr_zero()
-  let mut angles2 : Expr = expr_zero()
+  let mut angles0 : Expr = @symcore.int(0)
+  let mut angles2 : Expr = @symcore.int(0)
   if case == 0 {
     if angle_addition {
       angles0 = expr_atan2(b, a) + expr_atan2(d, c)
@@ -854,21 +838,21 @@ pub fn Quaternion::to_euler(
     }
   } else if case == 1 {
     if extrinsic {
-      angles0 = expr_zero()
-      angles2 = expr_int(2) * expr_atan2(b, a)
+      angles0 = @symcore.int(0)
+      angles2 = @symcore.int(2) * expr_atan2(b, a)
     } else {
-      angles0 = expr_int(2) * expr_atan2(b, a)
-      angles2 = expr_zero()
+      angles0 = @symcore.int(2) * expr_atan2(b, a)
+      angles2 = @symcore.int(0)
     }
   } else if extrinsic {
-    angles0 = expr_zero()
-    angles2 = expr_int(-2) * expr_atan2(d, c)
+    angles0 = @symcore.int(0)
+    angles2 = @symcore.int(-2) * expr_atan2(d, c)
   } else {
-    angles0 = expr_int(2) * expr_atan2(d, c)
-    angles2 = expr_zero()
+    angles0 = @symcore.int(2) * expr_atan2(d, c)
+    angles2 = @symcore.int(0)
   }
   if !symmetric {
-    angles0 = angles0 * expr_int(sign)
+    angles0 = angles0 * @symcore.int(sign)
   }
   if extrinsic {
     (angles2, angles1, angles0)
@@ -891,10 +875,10 @@ pub fn Quaternion::to_axis_angle(
     _ => ()
   }
   q = q.normalize()
-  let angle = expr_int(2) * expr_acos(q.a)
-  let s = expr_sqrt(expr_one() - q.a * q.a)
+  let angle = @symcore.int(2) * expr_acos(q.a)
+  let s = expr_sqrt(@symcore.int(1) - q.a * q.a)
   match vector_is_zero_numeric(q.b, q.c, q.d) {
-    Some(true) => ((expr_zero(), expr_zero(), expr_zero()), expr_zero())
+    Some(true) => ((@symcore.int(0), @symcore.int(0), @symcore.int(0)), @symcore.int(0))
     _ => ((expr_div(q.b, s), expr_div(q.c, s), expr_div(q.d, s)), angle)
   }
 }
@@ -909,7 +893,7 @@ pub fn Quaternion::rotate_point(
       Quaternion::from_axis_angle(axis, angle)
     RotationArg::Quat(q) => q.normalize()
   }
-  let p = quat_unchecked(expr_zero(), pin.0, pin.1, pin.2, true, None)
+  let p = quat_unchecked(@symcore.int(0), pin.0, pin.1, pin.2, true, None)
   let out = q.mul(p).mul(q.conjugate())
   (out.b, out.c, out.d)
 }
@@ -920,7 +904,7 @@ pub fn Quaternion::to_rotation_matrix(
   v? : (Expr, Expr, Expr),
   homogeneous? : Bool = true,
 ) -> Matrix {
-  let s = self.norm() ^ expr_int(-2)
+  let s = self.norm() ^ @symcore.int(-2)
   let (m00, m11, m22) = if homogeneous {
     (
       s *
@@ -932,27 +916,27 @@ pub fn Quaternion::to_rotation_matrix(
     )
   } else {
     (
-      expr_one() - expr_int(2) * s * (self.c * self.c + self.d * self.d),
-      expr_one() - expr_int(2) * s * (self.b * self.b + self.d * self.d),
-      expr_one() - expr_int(2) * s * (self.b * self.b + self.c * self.c),
+      @symcore.int(1) - @symcore.int(2) * s * (self.c * self.c + self.d * self.d),
+      @symcore.int(1) - @symcore.int(2) * s * (self.b * self.b + self.d * self.d),
+      @symcore.int(1) - @symcore.int(2) * s * (self.b * self.b + self.c * self.c),
     )
   }
-  let m01 = expr_int(2) * s * (self.b * self.c - self.d * self.a)
-  let m02 = expr_int(2) * s * (self.b * self.d + self.c * self.a)
-  let m10 = expr_int(2) * s * (self.b * self.c + self.d * self.a)
-  let m12 = expr_int(2) * s * (self.c * self.d - self.b * self.a)
-  let m20 = expr_int(2) * s * (self.b * self.d - self.c * self.a)
-  let m21 = expr_int(2) * s * (self.c * self.d + self.b * self.a)
+  let m01 = @symcore.int(2) * s * (self.b * self.c - self.d * self.a)
+  let m02 = @symcore.int(2) * s * (self.b * self.d + self.c * self.a)
+  let m10 = @symcore.int(2) * s * (self.b * self.c + self.d * self.a)
+  let m12 = @symcore.int(2) * s * (self.c * self.d - self.b * self.a)
+  let m20 = @symcore.int(2) * s * (self.b * self.d - self.c * self.a)
+  let m21 = @symcore.int(2) * s * (self.c * self.d + self.b * self.a)
   match v {
     None => [[m00, m01, m02], [m10, m11, m12], [m20, m21, m22]]
     Some((x, y, z)) => {
       let m03 = x - x * m00 - y * m01 - z * m02
       let m13 = y - x * m10 - y * m11 - z * m12
       let m23 = z - x * m20 - y * m21 - z * m22
-      let m30 = expr_zero()
-      let m31 = expr_zero()
-      let m32 = expr_zero()
-      let m33 = expr_one()
+      let m30 = @symcore.int(0)
+      let m31 = @symcore.int(0)
+      let m32 = @symcore.int(0)
+      let m33 = @symcore.int(1)
       [
         [m00, m01, m02, m03],
         [m10, m11, m12, m13],
@@ -975,10 +959,10 @@ pub fn Quaternion::from_rotation_matrix(
   }
   let det = matrix_det3(m)
   let absq = det ^ expr_rational(1, 3)
-  let a = expr_div(expr_sqrt(absq + m[0][0] + m[1][1] + m[2][2]), expr_int(2))
-  let b = expr_div(expr_sqrt(absq + m[0][0] - m[1][1] - m[2][2]), expr_int(2))
-  let c = expr_div(expr_sqrt(absq - m[0][0] + m[1][1] - m[2][2]), expr_int(2))
-  let d = expr_div(expr_sqrt(absq - m[0][0] - m[1][1] + m[2][2]), expr_int(2))
+  let a = expr_div(expr_sqrt(absq + m[0][0] + m[1][1] + m[2][2]), @symcore.int(2))
+  let b = expr_div(expr_sqrt(absq + m[0][0] - m[1][1] - m[2][2]), @symcore.int(2))
+  let c = expr_div(expr_sqrt(absq - m[0][0] + m[1][1] - m[2][2]), @symcore.int(2))
+  let d = expr_div(expr_sqrt(absq - m[0][0] - m[1][1] + m[2][2]), @symcore.int(2))
   let b1 = b * expr_sign(m[2][1] - m[1][2])
   let c1 = c * expr_sign(m[0][2] - m[2][0])
   let d1 = d * expr_sign(m[1][0] - m[0][1])
@@ -992,13 +976,13 @@ pub fn Quaternion::scalar_part(self : Quaternion) -> Expr {
 
 ///|
 pub fn Quaternion::vector_part(self : Quaternion) -> Quaternion {
-  quat_unchecked(expr_zero(), self.b, self.c, self.d, self.real_field, None)
+  quat_unchecked(@symcore.int(0), self.b, self.c, self.d, self.real_field, None)
 }
 
 ///|
 pub fn Quaternion::axis(self : Quaternion) -> Quaternion {
   let axis = self.vector_part().normalize()
-  quat_unchecked(expr_zero(), axis.b, axis.c, axis.d, self.real_field, None)
+  quat_unchecked(@symcore.int(0), axis.b, axis.c, axis.d, self.real_field, None)
 }
 
 ///|
@@ -1013,7 +997,7 @@ pub fn Quaternion::is_zero_quaternion(self : Quaternion) -> Bool? {
 
 ///|
 pub fn Quaternion::angle(self : Quaternion) -> Expr {
-  expr_int(2) * expr_atan2(self.vector_part().norm(), self.scalar_part())
+  @symcore.int(2) * expr_atan2(self.vector_part().norm(), self.scalar_part())
 }
 
 ///|

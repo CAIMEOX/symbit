@@ -414,8 +414,8 @@ pub fn gauss_lobatto(
   }
   let (inner_nodes, _) = gauss_jacobi(
     n - 2,
-    expr_one(),
-    expr_one(),
+    @symcore.int(1),
+    @symcore.int(1),
     n_digits=15,
   )
   let nodes : Array[Double] = [quad_round_sig(-1.0, n_digits)]

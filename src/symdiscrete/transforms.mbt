@@ -43,41 +43,41 @@ fn bit_reverse(x0 : Int, bits : Int) -> Int {
 ///|
 fn cos_sin_table(n : Int, k : Int) -> (Expr, Expr) {
   if n <= 0 {
-    return (expr_one(), expr_zero())
+    return (@symcore.int(1), @symcore.int(0))
   }
   let mut idx = k % n
   if idx < 0 {
     idx = idx + n
   }
   if n == 1 {
-    return (expr_one(), expr_zero())
+    return (@symcore.int(1), @symcore.int(0))
   }
   if n == 2 {
     return match idx {
-      0 => (expr_one(), expr_zero())
-      _ => (expr_neg_one(), expr_zero())
+      0 => (@symcore.int(1), @symcore.int(0))
+      _ => (@symcore.int(-1), @symcore.int(0))
     }
   }
   if n == 4 {
     return match idx {
-      0 => (expr_one(), expr_zero())
-      1 => (expr_zero(), expr_one())
-      2 => (expr_neg_one(), expr_zero())
-      _ => (expr_zero(), expr_neg_one())
+      0 => (@symcore.int(1), @symcore.int(0))
+      1 => (@symcore.int(0), @symcore.int(1))
+      2 => (@symcore.int(-1), @symcore.int(0))
+      _ => (@symcore.int(0), @symcore.int(-1))
     }
   }
   if n == 8 {
-    let sqrt2 = expr_sqrt(expr_int(2))
+    let sqrt2 = expr_sqrt(@symcore.int(2))
     let half = expr_rational(1, 2)
     let s2 = expr_mul2(sqrt2, half)
     return match idx {
-      0 => (expr_one(), expr_zero())
+      0 => (@symcore.int(1), @symcore.int(0))
       1 => (s2, s2)
-      2 => (expr_zero(), expr_one())
+      2 => (@symcore.int(0), @symcore.int(1))
       3 => (expr_neg(s2), s2)
-      4 => (expr_neg_one(), expr_zero())
+      4 => (@symcore.int(-1), @symcore.int(0))
       5 => (expr_neg(s2), expr_neg(s2))
-      6 => (expr_zero(), expr_neg_one())
+      6 => (@symcore.int(0), @symcore.int(-1))
       _ => (s2, expr_neg(s2))
     }
   }
@@ -116,7 +116,7 @@ fn fourier_transform(
   }
   let (n2, bits) = next_pow2(a.length())
   for _ in a.length()..<n2 {
-    a.push(expr_zero())
+    a.push(@symcore.int(0))
   }
   for i in 1..<n2 {
     let j = bit_reverse(i, bits)
@@ -301,7 +301,7 @@ fn number_theoretic_transform(
     values.push(x)
   }
   let out = number_theoretic_transform_int(values, prime, inverse)
-  out.map(expr_int)
+  out.map(@symcore.int)
 }
 
 ///|
@@ -329,7 +329,7 @@ fn walsh_hadamard_transform(seq : Array[Expr], inverse : Bool) -> Array[Expr] {
   }
   let (n2, _) = next_pow2(a.length())
   for _ in a.length()..<n2 {
-    a.push(expr_zero())
+    a.push(@symcore.int(0))
   }
   let mut h = 2
   while h <= n2 {
@@ -379,17 +379,17 @@ fn mobius_transform_core(
   }
   let (n2, _) = next_pow2(a.length())
   for _ in a.length()..<n2 {
-    a.push(expr_zero())
+    a.push(@symcore.int(0))
   }
   let mut i = 1
   while i < n2 {
     for j in 0..<n2 {
       if subset {
         if (j & i) != 0 {
-          a[j] = expr_add2(a[j], expr_mul2(expr_int(sgn), a[j ^ i]))
+          a[j] = expr_add2(a[j], expr_mul2(@symcore.int(sgn), a[j ^ i]))
         }
       } else if (j & i) == 0 {
-        a[j] = expr_add2(a[j], expr_mul2(expr_int(sgn), a[j ^ i]))
+        a[j] = expr_add2(a[j], expr_mul2(@symcore.int(sgn), a[j ^ i]))
       }
     }
     i = i * 2

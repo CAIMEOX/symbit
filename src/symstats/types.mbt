@@ -262,21 +262,6 @@ pub fn covariance_expr(a : @symcore.Expr, b : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-pub fn expr_zero() -> @symcore.Expr {
-  @symcore.int(0)
-}
-
-///|
-pub fn expr_one() -> @symcore.Expr {
-  @symcore.int(1)
-}
-
-///|
-pub fn expr_two() -> @symcore.Expr {
-  @symcore.int(2)
-}
-
-///|
 pub fn expr_from_big_rational(n : @symnum.BigRational) -> @symcore.Expr {
   @symcore.Expr::Number(n)
 }

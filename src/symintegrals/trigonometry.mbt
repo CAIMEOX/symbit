@@ -22,7 +22,7 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
     Some(("sin", a, b)) =>
       Some(
         expr_div(
-          expr_neg_one() *
+          @symcore.int(-1) *
           @symelem.cos(expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b)),
           a,
         ),
@@ -37,7 +37,7 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
     Some(("tan", a, b)) =>
       Some(
         expr_div(
-          expr_neg_one() *
+          @symcore.int(-1) *
           @symelem.log(
             @symelem.cos(expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b)),
           ),
@@ -87,7 +87,7 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
       )
     _ =>
       match expr_simplify(expr) {
-        @symcore.Expr::Pow(base, exp) if expr_eq(exp, expr_int(2)) =>
+        @symcore.Expr::Pow(base, exp) if expr_eq(exp, @symcore.int(2)) =>
           match trig_linear_arg(base, var_name) {
             Some(("sec", a, b)) =>
               Some(
@@ -101,7 +101,7 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
             Some(("csc", a, b)) =>
               Some(
                 expr_div(
-                  expr_neg_one() *
+                  @symcore.int(-1) *
                   @symelem.cot(
                     expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
                   ),
@@ -113,8 +113,8 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               Some(
                 @symcore.Expr::Symbol(var_name) * expr_rat(1, 2) -
                 expr_div(
-                  @symelem.sin(expr_mul(expr_int(2), arg)),
-                  expr_mul(expr_int(4), a),
+                  @symelem.sin(expr_mul(@symcore.int(2), arg)),
+                  expr_mul(@symcore.int(4), a),
                 ),
               )
             }
@@ -123,8 +123,8 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               Some(
                 @symcore.Expr::Symbol(var_name) * expr_rat(1, 2) +
                 expr_div(
-                  @symelem.sin(expr_mul(expr_int(2), arg)),
-                  expr_mul(expr_int(4), a),
+                  @symelem.sin(expr_mul(@symcore.int(2), arg)),
+                  expr_mul(@symcore.int(4), a),
                 ),
               )
             }
@@ -140,8 +140,8 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               let arg = expr_add(expr_mul(a1, @symcore.Expr::Symbol(var_name)), b1)
               Some(
                 expr_div(
-                  expr_pow(@symelem.sin(arg), expr_int(2)),
-                  expr_mul(expr_int(2), a1),
+                  expr_pow(@symelem.sin(arg), @symcore.int(2)),
+                  expr_mul(@symcore.int(2), a1),
                 ),
               )
             }
@@ -150,8 +150,8 @@ pub fn trigintegrate(expr : Expr, var_name : String) -> Expr? {
               let arg = expr_add(expr_mul(a1, @symcore.Expr::Symbol(var_name)), b1)
               Some(
                 expr_div(
-                  expr_pow(@symelem.sin(arg), expr_int(2)),
-                  expr_mul(expr_int(2), a1),
+                  expr_pow(@symelem.sin(arg), @symcore.int(2)),
+                  expr_mul(@symcore.int(2), a1),
                 ),
               )
             }
