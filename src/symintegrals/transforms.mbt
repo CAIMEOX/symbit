@@ -893,30 +893,20 @@ fn laplace_symbolic_power_times_term(
   let power = symbolic_power.unwrap()
   match laplace_base_term(rest[0], t_name, shifted_s) {
     Some((value, plane, cond)) =>
-      match value {
-        @symcore.Expr::Function("LaplaceTransform", _) =>
-          Some(
-            (
-              expr_mul(
-                expr_pow(expr_neg_one(), power),
-                @symcore.raw_function("Derivative", [value, s, power]),
-              ),
-              plane,
-              cond,
+      if @symcore.application_has_name(value, "LaplaceTransform") ||
+        @symcore.derivative_parts(value) != None {
+        Some(
+          (
+            expr_mul(
+              expr_pow(expr_neg_one(), power),
+              @symcore.raw_function("Derivative", [value, s, power]),
             ),
-          )
-        _ if @symcore.derivative_parts(value) != None =>
-          Some(
-            (
-              expr_mul(
-                expr_pow(expr_neg_one(), power),
-                @symcore.raw_function("Derivative", [value, s, power]),
-              ),
-              plane,
-              cond,
-            ),
-          )
-        _ => None
+            plane,
+            cond,
+          ),
+        )
+      } else {
+        None
       }
     None => None
   }
@@ -971,32 +961,33 @@ fn laplace_generic_power_derivative(
   if order <= 0 {
     return Some(value)
   }
-  match value {
-    @symcore.Expr::Function("LaplaceTransform", _) => {
-      let deriv = if order == 1 {
-        @symcore.raw_function("Derivative", [value, s])
-      } else {
-        @symcore.raw_function("Derivative", [value, s, expr_int(order)])
-      }
-      if order % 2 == 0 {
-        Some(deriv)
-      } else {
-        Some(expr_mul(expr_neg_one(), deriv))
-      }
+  if @symcore.application_has_name(value, "LaplaceTransform") {
+    let deriv = if order == 1 {
+      @symcore.raw_function("Derivative", [value, s])
+    } else {
+      @symcore.raw_function("Derivative", [value, s, expr_int(order)])
     }
-    _ if @symcore.derivative_parts(value) != None => {
-      let deriv = if order == 1 {
-        @symcore.raw_function("Derivative", [value, s])
-      } else {
-        @symcore.raw_function("Derivative", [value, s, expr_int(order)])
-      }
-      if order % 2 == 0 {
-        Some(deriv)
-      } else {
-        Some(expr_mul(expr_neg_one(), deriv))
-      }
+    if order % 2 == 0 {
+      Some(deriv)
+    } else {
+      Some(expr_mul(expr_neg_one(), deriv))
     }
-    _ => None
+  } else {
+    match value {
+      _ if @symcore.derivative_parts(value) != None => {
+        let deriv = if order == 1 {
+          @symcore.raw_function("Derivative", [value, s])
+        } else {
+          @symcore.raw_function("Derivative", [value, s, expr_int(order)])
+        }
+        if order % 2 == 0 {
+          Some(deriv)
+        } else {
+          Some(expr_mul(expr_neg_one(), deriv))
+        }
+      }
+      _ => None
+    }
   }
 }
 
@@ -3156,23 +3147,26 @@ fn inverse_laplace_transform_object_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
-  match expr {
-    @symcore.Expr::Function("LaplaceTransform", [inner, source_t, source_s]) => {
-      let s_sym = @symcore.symbol(s_name)
-      if expr_eq(source_s, s_sym) {
-        match symbol_name(source_t) {
-          Some(source_name) =>
-            Some(
-              expr_simplify(
-                subst_symbol(inner, source_name, t) * @symspec.heaviside(t),
-              ),
-            )
-          None => Some(expr_simplify(inner * @symspec.heaviside(t)))
+  match @symcore.application_parts(expr) {
+    Some((head, [inner, source_t, source_s])) =>
+      if @symcore.function_head_name(head) == Some("LaplaceTransform") {
+        let s_sym = @symcore.symbol(s_name)
+        if expr_eq(source_s, s_sym) {
+          match symbol_name(source_t) {
+            Some(source_name) =>
+              Some(
+                expr_simplify(
+                  subst_symbol(inner, source_name, t) * @symspec.heaviside(t),
+                ),
+              )
+            None => Some(expr_simplify(inner * @symspec.heaviside(t)))
+          }
+        } else {
+          Some(expr_simplify(expr * @symspec.dirac_delta(t)))
         }
       } else {
-        Some(expr_simplify(expr * @symspec.dirac_delta(t)))
+        None
       }
-    }
     _ => None
   }
 }
