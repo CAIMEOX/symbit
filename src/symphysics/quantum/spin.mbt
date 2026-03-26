@@ -531,102 +531,144 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     }
   }
 
-  match expr {
-    Expr::Function("JxKet", args) if args.length() == 2 =>
-      Some(jx_ket(args[0], args[1]))
-    Expr::Function("JxBra", args) if args.length() == 2 =>
-      Some(jx_bra(args[0], args[1]))
-    Expr::Function("JyKet", args) if args.length() == 2 =>
-      Some(jy_ket(args[0], args[1]))
-    Expr::Function("JyBra", args) if args.length() == 2 =>
-      Some(jy_bra(args[0], args[1]))
-    Expr::Function("JzKet", args) if args.length() == 2 =>
-      Some(jz_ket(args[0], args[1]))
-    Expr::Function("JzBra", args) if args.length() == 2 =>
-      Some(jz_bra(args[0], args[1]))
-    Expr::Function("JxKetCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jx_ket_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jx_ket_coupled(args[0], args[1], jn))
-          }
-        None => None
+  match quantum_expr_name(expr) {
+    Some("JxKet") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jx_ket(j, m))
+        _ => None
       }
-    Expr::Function("JxBraCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jx_bra_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jx_bra_coupled(args[0], args[1], jn))
-          }
-        None => None
+    Some("JxBra") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jx_bra(j, m))
+        _ => None
       }
-    Expr::Function("JyKetCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jy_ket_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jy_ket_coupled(args[0], args[1], jn))
-          }
-        None => None
+    Some("JyKet") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jy_ket(j, m))
+        _ => None
       }
-    Expr::Function("JyBraCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jy_bra_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jy_bra_coupled(args[0], args[1], jn))
-          }
-        None => None
+    Some("JyBra") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jy_bra(j, m))
+        _ => None
       }
-    Expr::Function("JzKetCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jz_ket_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jz_ket_coupled(args[0], args[1], jn))
-          }
-        None => None
+    Some("JzKet") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jz_ket(j, m))
+        _ => None
       }
-    Expr::Function("JzBraCoupled", args) if args.length() >= 3 =>
-      match parse_tuple_items(args[2]) {
-        Some(jn) =>
-          if args.length() >= 4 {
-            match parse_coupling_items(args[3]) {
-              Some(coupling) =>
-                Some(jz_bra_coupled(args[0], args[1], jn, coupling~))
-              None => None
-            }
-          } else {
-            Some(jz_bra_coupled(args[0], args[1], jn))
+    Some("JzBra") =>
+      match quantum_expr_args(expr) {
+        Some([j, m]) => Some(jz_bra(j, m))
+        _ => None
+      }
+    Some("JxKetCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jx_ket_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jx_ket_coupled(args[0], args[1], jn))
+              }
+            None => None
           }
-        None => None
+        _ => None
+      }
+    Some("JxBraCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jx_bra_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jx_bra_coupled(args[0], args[1], jn))
+              }
+            None => None
+          }
+        _ => None
+      }
+    Some("JyKetCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jy_ket_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jy_ket_coupled(args[0], args[1], jn))
+              }
+            None => None
+          }
+        _ => None
+      }
+    Some("JyBraCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jy_bra_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jy_bra_coupled(args[0], args[1], jn))
+              }
+            None => None
+          }
+        _ => None
+      }
+    Some("JzKetCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jz_ket_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jz_ket_coupled(args[0], args[1], jn))
+              }
+            None => None
+          }
+        _ => None
+      }
+    Some("JzBraCoupled") =>
+      match quantum_expr_args(expr) {
+        Some(args) if args.length() >= 3 =>
+          match parse_tuple_items(args[2]) {
+            Some(jn) =>
+              if args.length() >= 4 {
+                match parse_coupling_items(args[3]) {
+                  Some(coupling) =>
+                    Some(jz_bra_coupled(args[0], args[1], jn, coupling~))
+                  None => None
+                }
+              } else {
+                Some(jz_bra_coupled(args[0], args[1], jn))
+              }
+            None => None
+          }
+        _ => None
       }
     _ => None
   }
@@ -644,18 +686,19 @@ pub fn jz_state_from_expr(expr : Expr) -> JzState? {
 
 ///|
 pub fn rotation_from_expr(expr : Expr) -> RotationExpr? {
-  match expr {
-    Expr::Function("Rotation", args) if args.length() == 3 =>
-      Some(rotation(args[0], args[1], args[2]))
+  match quantum_expr_args(expr) {
+    Some([a, b, c]) if quantum_expr_has_name(expr, "Rotation") =>
+      Some(rotation(a, b, c))
     _ => None
   }
 }
 
 ///|
 pub fn wigner_d_from_expr(expr : Expr) -> WignerDExpr? {
-  match expr {
-    Expr::Function("WignerD", args) if args.length() == 6 =>
-      Some(rotation_D(args[0], args[1], args[2], args[3], args[4], args[5]))
+  match quantum_expr_args(expr) {
+    Some([j, m, mp, alpha, beta, gamma]) if quantum_expr_has_name(
+        expr, "WignerD",
+      ) => Some(rotation_D(j, m, mp, alpha, beta, gamma))
     _ => None
   }
 }
@@ -826,23 +869,36 @@ fn spin_rewrite_states_in_expr(
               spin_rewrite_states_in_expr(arg, target_basis, evaluate)
             }),
           )
-        Expr::Function("Sum", args) if !args.is_empty() => {
-          let rebuilt : Array[Expr] = [
-            spin_rewrite_states_in_expr(args[0], target_basis, evaluate),
-          ]
-          for idx in 1..<args.length() {
-            rebuilt.push(args[idx])
+        _ =>
+          if quantum_expr_has_name(expr, "Sum") {
+            match quantum_expr_args(expr) {
+              Some(args) if !args.is_empty() => {
+                let rebuilt : Array[Expr] = [
+                  spin_rewrite_states_in_expr(args[0], target_basis, evaluate),
+                ]
+                for idx in 1..<args.length() {
+                  rebuilt.push(args[idx])
+                }
+                @symcore.function("Sum", rebuilt)
+              }
+              _ => expr
+            }
+          } else {
+            match @symcore.application_parts(expr) {
+              Some((head, args)) =>
+                match
+                  @symcore.raw_apply(
+                    head,
+                    args.map(arg => {
+                      spin_rewrite_states_in_expr(arg, target_basis, evaluate)
+                    }),
+                  ) {
+                  Some(rewritten) => rewritten
+                  None => expr
+                }
+              None => expr
+            }
           }
-          @symcore.function("Sum", rebuilt)
-        }
-        Expr::Function(name, args) =>
-          @symcore.raw_function(
-            name,
-            args.map(arg => {
-              spin_rewrite_states_in_expr(arg, target_basis, evaluate)
-            }),
-          )
-        _ => expr
       }
   }
 }
@@ -1049,8 +1105,7 @@ fn spin_map_tensor_products(
   f : (Expr) -> Expr raise @symphysics.PhysicsError,
 ) -> Expr raise @symphysics.PhysicsError {
   match expr {
-    Expr::Function("TensorProduct", args) =>
-      f(@symcore.raw_function("TensorProduct", args))
+    _ if quantum_expr_has_name(expr, "TensorProduct") => f(expr)
     Expr::Add(args) => {
       let mapped : Array[Expr] = []
       for arg in args {
@@ -1065,14 +1120,20 @@ fn spin_map_tensor_products(
       }
       quantum_mul_from_args_preserve(mapped)
     }
-    Expr::Function(name, args) => {
-      let mapped : Array[Expr] = []
-      for arg in args {
-        mapped.push(spin_map_tensor_products(arg, f))
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) => {
+          let mapped : Array[Expr] = []
+          for arg in args {
+            mapped.push(spin_map_tensor_products(arg, f))
+          }
+          match @symcore.raw_apply(head, mapped) {
+            Some(rewritten) => rewritten
+            None => expr
+          }
+        }
+        None => expr
       }
-      @symcore.raw_function(name, mapped)
-    }
-    _ => expr
   }
 }
 
@@ -1099,14 +1160,20 @@ fn spin_map_states(
           }
           quantum_mul_from_args_preserve(mapped)
         }
-        Expr::Function(name, args) => {
-          let mapped : Array[Expr] = []
-          for arg in args {
-            mapped.push(spin_map_states(arg, f))
+        _ =>
+          match @symcore.application_parts(expr) {
+            Some((head, args)) => {
+              let mapped : Array[Expr] = []
+              for arg in args {
+                mapped.push(spin_map_states(arg, f))
+              }
+              match @symcore.raw_apply(head, mapped) {
+                Some(rewritten) => rewritten
+                None => expr
+              }
+            }
+            None => expr
           }
-          @symcore.raw_function(name, mapped)
-        }
-        _ => expr
       }
   }
 }
@@ -1116,8 +1183,9 @@ fn spin_couple_tensor_product(
   expr : Expr,
   orders? : Array[SpinCoupleOrder]? = None,
 ) -> Expr raise @symphysics.PhysicsError {
-  match expr {
-    Expr::Function("TensorProduct", args) if !args.is_empty() => {
+  match quantum_expr_args(expr) {
+    Some(args) if quantum_expr_has_name(expr, "TensorProduct") &&
+      !args.is_empty() => {
       let states = args.map(arg => spin_state_from_expr(arg))
       guard states.all(item => item is Some(_)) else { return expr }
       let items = states.map(item => item.unwrap())
