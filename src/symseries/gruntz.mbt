@@ -137,13 +137,14 @@ fn leading_series_near_zero(
 ///|
 fn strip_order_terms(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, _) if name == "O" => @symcore.int(0)
+    _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
     @symcore.Expr::Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
-        match arg {
-          @symcore.Expr::Function(name, _) if name == "O" => ()
-          _ => kept.push(arg)
+        if @symcore.application_has_name(arg, "O") {
+          ()
+        } else {
+          kept.push(arg)
         }
       }
       if kept.is_empty() {
@@ -217,36 +218,38 @@ priv struct ExpTerm {
 
 ///|
 fn parse_exp_term(term : @symcore.Expr) -> ExpTerm? {
-  match term {
-    @symcore.Expr::Function(name, args) if name == "exp" && args.length() == 1 =>
-      Some(ExpTerm::{ coeff: @symcore.int(1), arg: args[0] })
-    @symcore.Expr::Mul(args) => {
-      let mut exp_arg : @symcore.Expr? = None
-      let rest : Array[@symcore.Expr] = Array::new()
-      for factor in args {
-        match factor {
-          @symcore.Expr::Function(name, fargs) if name == "exp" &&
-            fargs.length() == 1 =>
-            match exp_arg {
-              Some(_) => return None
-              None => exp_arg = Some(fargs[0])
+  match @symcore.application_args(term) {
+    Some([arg]) if @symcore.application_has_name(term, "exp") =>
+      Some(ExpTerm::{ coeff: @symcore.int(1), arg })
+    _ =>
+      match term {
+        @symcore.Expr::Mul(args) => {
+          let mut exp_arg : @symcore.Expr? = None
+          let rest : Array[@symcore.Expr] = Array::new()
+          for factor in args {
+            match @symcore.application_args(factor) {
+              Some([farg]) if @symcore.application_has_name(factor, "exp") =>
+                match exp_arg {
+                  Some(_) => return None
+                  None => exp_arg = Some(farg)
+                }
+              _ => rest.push(factor)
             }
-          _ => rest.push(factor)
-        }
-      }
-      match exp_arg {
-        Some(arg) => {
-          let coeff = if rest.is_empty() {
-            @symcore.int(1)
-          } else {
-            @symcore.mul(rest)
           }
-          Some(ExpTerm::{ coeff, arg })
+          match exp_arg {
+            Some(arg) => {
+              let coeff = if rest.is_empty() {
+                @symcore.int(1)
+              } else {
+                @symcore.mul(rest)
+              }
+              Some(ExpTerm::{ coeff, arg })
+            }
+            None => None
+          }
         }
-        None => None
+        _ => None
       }
-    }
-    _ => None
   }
 }
 
@@ -362,22 +365,23 @@ fn gruntz_near_zero(
     Some(v) => return v
     None => ()
   }
-  match expr {
-    @symcore.Expr::Function(_, _) => ()
-    _ => {
-      match leading_rational_near_zero(expr, t, dir) {
-        Some(v) => return v
-        None => ()
-      }
-      match leading_series_near_zero(expr, t, dir) {
-        Some(v) => return v
-        None => ()
-      }
+  if @symcore.application_parts(expr) == None {
+    match leading_rational_near_zero(expr, t, dir) {
+      Some(v) => return v
+      None => ()
+    }
+    match leading_series_near_zero(expr, t, dir) {
+      Some(v) => return v
+      None => ()
     }
   }
-  match expr {
-    @symcore.Expr::Function(name, args) if args.length() == 1 => {
-      let arg_lead = gruntz_near_zero(args[0], t, dir)
+  match @symcore.application_args(expr) {
+    Some([arg]) => {
+      let name = match @symcore.application_name(expr) {
+        Some(name) => name
+        None => return expr
+      }
+      let arg_lead = gruntz_near_zero(arg, t, dir)
       match eval_elementary_from_leading(name, arg_lead) {
         Some(v) => v
         None => {

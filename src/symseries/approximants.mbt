@@ -4,13 +4,14 @@
 ///|
 fn strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, _) if name == "O" => @symcore.int(0)
+    _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
     @symcore.Expr::Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
-        match arg {
-          @symcore.Expr::Function(name, _) if name == "O" => ()
-          _ => kept.push(arg)
+        if @symcore.application_has_name(arg, "O") {
+          ()
+        } else {
+          kept.push(arg)
         }
       }
       if kept.is_empty() {
@@ -135,17 +136,20 @@ fn approx_numeric_prec_expr(expr : @symcore.Expr) -> Int {
             pe
           }
         }
-        @symcore.Expr::Function(_, args) => {
-          let mut best = 0
-          for arg in args {
-            let p = approx_numeric_prec_expr(arg)
-            if p > best {
-              best = p
+        _ =>
+          match @symcore.application_args(expr) {
+            Some(args) => {
+              let mut best = 0
+              for arg in args {
+                let p = approx_numeric_prec_expr(arg)
+                if p > best {
+                  best = p
+                }
+              }
+              best
             }
+            None => 0
           }
-          best
-        }
-        _ => 0
       }
   }
 }

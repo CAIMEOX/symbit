@@ -60,8 +60,8 @@ fn extract_delta(
   expr : @symcore.Expr,
   name : String,
 ) -> (@symcore.Expr, @symcore.Expr)? {
-  match expr {
-    @symcore.Expr::Function("KroneckerDelta", args) if args.length() == 2 =>
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "KroneckerDelta", arity=2) =>
       match (args[0], args[1]) {
         (@symcore.Expr::Symbol(sym), other) if sym == name =>
           Some((other, @symcore.int(1)))
@@ -69,46 +69,52 @@ fn extract_delta(
           Some((other, @symcore.int(1)))
         _ => None
       }
-    @symcore.Expr::Mul(args) => {
-      let mut delta_arg : @symcore.Expr? = None
-      let rest_args : Array[@symcore.Expr] = Array::new()
-      for arg in args {
-        match arg {
-          @symcore.Expr::Function("KroneckerDelta", dargs) if dargs.length() ==
-            2 =>
-            match (dargs[0], dargs[1]) {
-              (@symcore.Expr::Symbol(sym), other) if sym == name =>
-                if delta_arg is None {
-                  delta_arg = Some(other)
+    _ =>
+      match expr {
+        @symcore.Expr::Mul(args) => {
+          let mut delta_arg : @symcore.Expr? = None
+          let rest_args : Array[@symcore.Expr] = Array::new()
+          for arg in args {
+            match @symcore.application_args(arg) {
+              Some(dargs) =>
+                if @symcore.application_has_name(arg, "KroneckerDelta", arity=2) {
+                  match (dargs[0], dargs[1]) {
+                    (@symcore.Expr::Symbol(sym), other) if sym == name =>
+                      if delta_arg is None {
+                        delta_arg = Some(other)
+                      } else {
+                        return None
+                      }
+                    (other, @symcore.Expr::Symbol(sym)) if sym == name =>
+                      if delta_arg is None {
+                        delta_arg = Some(other)
+                      } else {
+                        return None
+                      }
+                    _ => rest_args.push(arg)
+                  }
                 } else {
-                  return None
-                }
-              (other, @symcore.Expr::Symbol(sym)) if sym == name =>
-                if delta_arg is None {
-                  delta_arg = Some(other)
-                } else {
-                  return None
+                  rest_args.push(arg)
                 }
               _ => rest_args.push(arg)
             }
-          _ => rest_args.push(arg)
-        }
-      }
-      match delta_arg {
-        Some(d) => {
-          let rest = if rest_args.is_empty() {
-            @symcore.int(1)
-          } else if rest_args.length() == 1 {
-            rest_args[0]
-          } else {
-            @symcore.mul(rest_args)
           }
-          Some((d, rest))
+          match delta_arg {
+            Some(d) => {
+              let rest = if rest_args.is_empty() {
+                @symcore.int(1)
+              } else if rest_args.length() == 1 {
+                rest_args[0]
+              } else {
+                @symcore.mul(rest_args)
+              }
+              Some((d, rest))
+            }
+            None => None
+          }
         }
-        None => None
+        _ => None
       }
-    }
-    _ => None
   }
 }
 

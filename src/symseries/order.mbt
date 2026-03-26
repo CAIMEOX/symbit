@@ -38,16 +38,13 @@ fn normalize_order_arg(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 pub fn is_order(expr : @symcore.Expr) -> Bool {
-  match expr {
-    @symcore.Expr::Function(name, _) => name == "O"
-    _ => false
-  }
+  @symcore.application_has_name(expr, "O")
 }
 
 ///|
 pub fn order_arg(expr : @symcore.Expr) -> @symcore.Expr? {
-  match expr {
-    @symcore.Expr::Function(name, args) if name == "O" =>
+  match @symcore.application_args(expr) {
+    Some(args) if @symcore.application_has_name(expr, "O") =>
       if args.is_empty() {
         None
       } else {
@@ -60,7 +57,7 @@ pub fn order_arg(expr : @symcore.Expr) -> @symcore.Expr? {
 ///|
 pub fn big_o(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, _) if name == "O" => expr
+    _ if @symcore.application_has_name(expr, "O") => expr
     _ => {
       let norm = normalize_order_arg(expr)
       match norm {

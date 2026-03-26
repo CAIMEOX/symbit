@@ -111,11 +111,14 @@ fn collect_symbol_names(expr : @symcore.Expr, acc : Map[String, Bool]) -> Unit {
       collect_symbol_names(base, acc)
       collect_symbol_names(exp, acc)
     }
-    @symcore.Expr::Function(_, args) =>
-      for arg in args {
-        collect_symbol_names(arg, acc)
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) =>
+          for arg in args {
+            collect_symbol_names(arg, acc)
+          }
+        None => ()
       }
-    _ => ()
   }
 }
 
@@ -133,14 +136,17 @@ fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
     }
     @symcore.Expr::Pow(base, exp) =>
       contains_symbol(base, name) || contains_symbol(exp, name)
-    @symcore.Expr::Function(_, args) => {
-      for arg in args {
-        if contains_symbol(arg, name) {
-          return true
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => {
+          for arg in args {
+            if contains_symbol(arg, name) {
+              return true
+            }
+          }
+          false
         }
+        None => false
       }
-      false
-    }
-    _ => false
   }
 }

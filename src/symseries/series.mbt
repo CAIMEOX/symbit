@@ -600,12 +600,19 @@ fn replace_expr(expr : Expr, target : Expr, replacement : Expr) -> Expr {
         replace_expr(base, target, replacement),
         replace_expr(exp, target, replacement),
       )
-    Expr::Function(name, args) =>
-      @symcore.function(
-        name,
-        args.map(child => replace_expr(child, target, replacement)),
-      )
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match
+            @symcore.raw_apply(
+              head,
+              args.map(child => replace_expr(child, target, replacement)),
+            ) {
+            Some(value) => value
+            None => expr
+          }
+        None => expr
+      }
   }
 }
 
@@ -707,161 +714,170 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
           }
       }
     Expr::Mod(_, _) => None
-    Expr::Function(name, args) => {
-      if args.length() != 1 {
-        return None
-      }
-      let arg = args[0]
-      match name {
-        "exp" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              let exp_rest = series_exp_zero(rest, n)
-              let scaled = poly_scale(exp_rest, const_exp(c0))
-              Some((scaled, true))
-            }
-            None => None
-          }
-        "sin" | "cos" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              let sin_rest = series_sin_zero(rest, n)
-              let cos_rest = series_cos_zero(rest, n)
-              let sin_c0 = const_sin(c0)
-              let cos_c0 = const_cos(c0)
-              let sin_poly = poly_add(
-                poly_scale(cos_rest, sin_c0),
-                poly_scale(sin_rest, cos_c0),
-              )
-              let cos_poly = poly_add(
-                poly_scale(cos_rest, cos_c0),
-                poly_scale(sin_rest, expr_neg(sin_c0)),
-              )
-              if name == "sin" {
-                Some((poly_truncate(sin_poly, n), true))
-              } else {
-                Some((poly_truncate(cos_poly, n), true))
-              }
-            }
-            None => None
-          }
-        "sinh" | "cosh" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              let sinh_rest = series_sinh_zero(rest, n)
-              let cosh_rest = series_cosh_zero(rest, n)
-              let sinh_c0 = const_sinh(c0)
-              let cosh_c0 = const_cosh(c0)
-              let sinh_poly = poly_add(
-                poly_scale(cosh_rest, sinh_c0),
-                poly_scale(sinh_rest, cosh_c0),
-              )
-              let cosh_poly = poly_add(
-                poly_scale(cosh_rest, cosh_c0),
-                poly_scale(sinh_rest, sinh_c0),
-              )
-              if name == "sinh" {
-                Some((poly_truncate(sinh_poly, n), true))
-              } else {
-                Some((poly_truncate(cosh_poly, n), true))
-              }
-            }
-            None => None
-          }
-        "tan" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              let sin_rest = series_sin_zero(rest, n)
-              let cos_rest = series_cos_zero(rest, n)
-              let tan_c0 = const_tan(c0)
-              let num_poly = poly_add(poly_scale(cos_rest, tan_c0), sin_rest)
-              let den_poly = poly_add(
-                cos_rest,
-                poly_scale(sin_rest, expr_neg(tan_c0)),
-              )
-              match poly_series_div(num_poly, den_poly, n) {
-                Some(div) => {
-                  let simplified = div.map(coeff => {
-                    simplify_tan_coeff(coeff, tan_c0)
-                  })
-                  Some((simplified, true))
-                }
-                None => None
-              }
-            }
-            None => None
-          }
-        "tanh" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              let sinh_rest = series_sinh_zero(rest, n)
-              let cosh_rest = series_cosh_zero(rest, n)
-              match poly_series_div(sinh_rest, cosh_rest, n) {
-                Some(tanh_rest) => {
-                  let tanh_c0 = const_tanh(c0)
-                  let num_poly = poly_add([tanh_c0], tanh_rest)
-                  let den_poly = poly_add(
-                    [one_expr()],
-                    poly_scale(tanh_rest, tanh_c0),
-                  )
-                  match poly_series_div(num_poly, den_poly, n) {
-                    Some(div) => {
-                      let simplified = div.map(coeff => {
-                        simplify_tan_coeff(coeff, tanh_c0)
-                      })
-                      Some((poly_truncate(simplified, n), true))
+    _ =>
+      match @symcore.application_args(expr) {
+        Some([arg]) =>
+          match @symcore.application_name(expr) {
+            Some(name) =>
+              match name {
+                "exp" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      let exp_rest = series_exp_zero(rest, n)
+                      let scaled = poly_scale(exp_rest, const_exp(c0))
+                      Some((scaled, true))
                     }
                     None => None
                   }
+                "sin" | "cos" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      let sin_rest = series_sin_zero(rest, n)
+                      let cos_rest = series_cos_zero(rest, n)
+                      let sin_c0 = const_sin(c0)
+                      let cos_c0 = const_cos(c0)
+                      let sin_poly = poly_add(
+                        poly_scale(cos_rest, sin_c0),
+                        poly_scale(sin_rest, cos_c0),
+                      )
+                      let cos_poly = poly_add(
+                        poly_scale(cos_rest, cos_c0),
+                        poly_scale(sin_rest, expr_neg(sin_c0)),
+                      )
+                      if name == "sin" {
+                        Some((poly_truncate(sin_poly, n), true))
+                      } else {
+                        Some((poly_truncate(cos_poly, n), true))
+                      }
+                    }
+                    None => None
+                  }
+                "sinh" | "cosh" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      let sinh_rest = series_sinh_zero(rest, n)
+                      let cosh_rest = series_cosh_zero(rest, n)
+                      let sinh_c0 = const_sinh(c0)
+                      let cosh_c0 = const_cosh(c0)
+                      let sinh_poly = poly_add(
+                        poly_scale(cosh_rest, sinh_c0),
+                        poly_scale(sinh_rest, cosh_c0),
+                      )
+                      let cosh_poly = poly_add(
+                        poly_scale(cosh_rest, cosh_c0),
+                        poly_scale(sinh_rest, sinh_c0),
+                      )
+                      if name == "sinh" {
+                        Some((poly_truncate(sinh_poly, n), true))
+                      } else {
+                        Some((poly_truncate(cosh_poly, n), true))
+                      }
+                    }
+                    None => None
+                  }
+                "tan" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      let sin_rest = series_sin_zero(rest, n)
+                      let cos_rest = series_cos_zero(rest, n)
+                      let tan_c0 = const_tan(c0)
+                      let num_poly = poly_add(
+                        poly_scale(cos_rest, tan_c0),
+                        sin_rest,
+                      )
+                      let den_poly = poly_add(
+                        cos_rest,
+                        poly_scale(sin_rest, expr_neg(tan_c0)),
+                      )
+                      match poly_series_div(num_poly, den_poly, n) {
+                        Some(div) => {
+                          let simplified = div.map(coeff => {
+                            simplify_tan_coeff(coeff, tan_c0)
+                          })
+                          Some((simplified, true))
+                        }
+                        None => None
+                      }
+                    }
+                    None => None
+                  }
+                "tanh" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      let sinh_rest = series_sinh_zero(rest, n)
+                      let cosh_rest = series_cosh_zero(rest, n)
+                      match poly_series_div(sinh_rest, cosh_rest, n) {
+                        Some(tanh_rest) => {
+                          let tanh_c0 = const_tanh(c0)
+                          let num_poly = poly_add([tanh_c0], tanh_rest)
+                          let den_poly = poly_add(
+                            [one_expr()],
+                            poly_scale(tanh_rest, tanh_c0),
+                          )
+                          match poly_series_div(num_poly, den_poly, n) {
+                            Some(div) => {
+                              let simplified = div.map(coeff => {
+                                simplify_tan_coeff(coeff, tanh_c0)
+                              })
+                              Some((poly_truncate(simplified, n), true))
+                            }
+                            None => None
+                          }
+                        }
+                        None => None
+                      }
+                    }
+                    None => None
+                  }
+                "log" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      match expr_inv(c0) {
+                        Some(inv) => {
+                          let v = poly_scale(rest, inv)
+                          let log1p = series_log_one_plus(v, n)
+                          let out = poly_add([const_log(c0)], log1p)
+                          Some((poly_truncate(out, n), true))
+                        }
+                        None => None
+                      }
+                    }
+                    None => None
+                  }
+                "atan" =>
+                  match series_poly(arg, x, n) {
+                    Some((poly, _)) => {
+                      let (c0, rest) = split_const(poly)
+                      if is_zero_expr(c0) {
+                        Some((series_atan_zero(rest, n), true))
+                      } else {
+                        None
+                      }
+                    }
+                    None => None
+                  }
+                "sqrt" => {
+                  let half = @symcore.number(
+                    @symnum.BigRational::new(
+                      BigInt::from_int(1),
+                      BigInt::from_int(2),
+                    ) catch {
+                      _ => @symnum.BigRational::zero()
+                    },
+                  )
+                  series_poly(@symcore.pow(arg, half), x, n)
                 }
-                None => None
+                _ => None
               }
-            }
             None => None
           }
-        "log" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              match expr_inv(c0) {
-                Some(inv) => {
-                  let v = poly_scale(rest, inv)
-                  let log1p = series_log_one_plus(v, n)
-                  let out = poly_add([const_log(c0)], log1p)
-                  Some((poly_truncate(out, n), true))
-                }
-                None => None
-              }
-            }
-            None => None
-          }
-        "atan" =>
-          match series_poly(arg, x, n) {
-            Some((poly, _)) => {
-              let (c0, rest) = split_const(poly)
-              if is_zero_expr(c0) {
-                Some((series_atan_zero(rest, n), true))
-              } else {
-                None
-              }
-            }
-            None => None
-          }
-        "sqrt" => {
-          let half = @symcore.number(
-            @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(2)) catch {
-              _ => @symnum.BigRational::zero()
-            },
-          )
-          series_poly(@symcore.pow(arg, half), x, n)
-        }
         _ => None
       }
-    }
   }
 }

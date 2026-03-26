@@ -5,9 +5,7 @@
 fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
   match expr {
     @symcore.Expr::Symbol(n) => n == name
-    @symcore.Expr::Add(args)
-    | @symcore.Expr::Mul(args)
-    | @symcore.Expr::Function(_, args) => {
+    @symcore.Expr::Add(args) | @symcore.Expr::Mul(args) => {
       for child in args {
         if contains_symbol(child, name) {
           return true
@@ -17,7 +15,18 @@ fn contains_symbol(expr : @symcore.Expr, name : String) -> Bool {
     }
     @symcore.Expr::Pow(base, exp) =>
       contains_symbol(base, name) || contains_symbol(exp, name)
-    _ => false
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => {
+          for child in args {
+            if contains_symbol(child, name) {
+              return true
+            }
+          }
+          false
+        }
+        None => false
+      }
   }
 }
 

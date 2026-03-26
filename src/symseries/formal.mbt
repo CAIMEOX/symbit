@@ -29,9 +29,11 @@ fn fps_depends_on(expr : @symcore.Expr, name : String) -> Bool {
       args.any(child => fps_depends_on(child, name))
     @symcore.Expr::Pow(base, exp) =>
       fps_depends_on(base, name) || fps_depends_on(exp, name)
-    @symcore.Expr::Function(_, args) =>
-      args.any(child => fps_depends_on(child, name))
-    _ => false
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => args.any(child => fps_depends_on(child, name))
+        None => false
+      }
   }
 }
 
@@ -92,13 +94,14 @@ fn poly_expr_with_shift(
 ///|
 fn fps_strip_order_expr(expr : @symcore.Expr) -> @symcore.Expr {
   match expr {
-    @symcore.Expr::Function(name, _) if name == "O" => @symcore.int(0)
+    _ if @symcore.application_has_name(expr, "O") => @symcore.int(0)
     @symcore.Expr::Add(args) => {
       let kept : Array[@symcore.Expr] = Array::new()
       for arg in args {
-        match arg {
-          @symcore.Expr::Function(name, _) if name == "O" => ()
-          _ => kept.push(arg)
+        if @symcore.application_has_name(arg, "O") {
+          ()
+        } else {
+          kept.push(arg)
         }
       }
       if kept.is_empty() {
