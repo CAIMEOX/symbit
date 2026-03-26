@@ -24,8 +24,11 @@ fn depends_on(expr : Expr, x : Expr) -> Bool {
   match expr {
     Expr::Add(args) | Expr::Mul(args) => args.any(arg => depends_on(arg, x))
     Expr::Pow(base, exp) => depends_on(base, x) || depends_on(exp, x)
-    Expr::Function(_, args) => args.any(arg => depends_on(arg, x))
-    _ => false
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => args.any(arg => depends_on(arg, x))
+        None => false
+      }
   }
 }
 
@@ -422,14 +425,17 @@ fn integrate_expr(expr : Expr, x : Expr) -> Expr {
         }
         _ => @symcore.function("Integral", [expr, x])
       }
-    Expr::Function(name, args) if args.length() == 1 && args[0] == x =>
-      match name {
-        "exp" => @symcore.function("exp", [x])
-        "sin" => expr_neg(@symcore.function("cos", [x]))
-        "cos" => @symcore.function("sin", [x])
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some(args)) if args.length() == 1 && args[0] == x =>
+          match name {
+            "exp" => @symcore.function("exp", [x])
+            "sin" => expr_neg(@symcore.function("cos", [x]))
+            "cos" => @symcore.function("sin", [x])
+            _ => @symcore.function("Integral", [expr, x])
+          }
         _ => @symcore.function("Integral", [expr, x])
       }
-    _ => @symcore.function("Integral", [expr, x])
   }
 }
 
@@ -489,55 +495,57 @@ pub fn expr_to_holonomic(
     return holonomic_function(dx, x, x0~, y0=[expr], expr_hint=Some(expr))
   }
   match expr {
-    Expr::Function(name, args) if args.length() == 1 =>
-      match split_linear_in_x(args[0], x) {
-        Some((a, b)) =>
-          if a.is_zero() {
-            fallback_from_expr(expr, x, x0)
-          } else {
-            let (alg, dx) = differential_operators(symbol_var=x)
-            ignore(alg)
-            match name {
-              "exp" => {
-                let op = differential_operator(
-                  [@symcore.number(a.neg_r()), int(1)],
-                  dx.parent,
-                )
-                let y0 = if x0 == int(0) {
-                  if b == int(0) {
-                    [int(1)]
-                  } else {
-                    [@symcore.function("exp", [b])]
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some(args)) if args.length() == 1 =>
+          match split_linear_in_x(args[0], x) {
+            Some((a, b)) =>
+              if a.is_zero() {
+                fallback_from_expr(expr, x, x0)
+              } else {
+                let (alg, dx) = differential_operators(symbol_var=x)
+                ignore(alg)
+                match name {
+                  "exp" => {
+                    let op = differential_operator(
+                      [@symcore.number(a.neg_r()), int(1)],
+                      dx.parent,
+                    )
+                    let y0 = if x0 == int(0) {
+                      if b == int(0) {
+                        [int(1)]
+                      } else {
+                        [@symcore.function("exp", [b])]
+                      }
+                    } else {
+                      []
+                    }
+                    holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
                   }
-                } else {
-                  []
-                }
-                holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
-              }
-              "sin" => {
-                let a2 = a.mul_r(a)
-                let op = differential_operator(
-                  [@symcore.number(a2), int(0), int(1)],
-                  dx.parent,
-                )
-                let y0 = if x0 == int(0) {
-                  let y = if b == int(0) {
-                    int(0)
-                  } else {
-                    @symcore.function("sin", [b])
+                  "sin" => {
+                    let a2 = a.mul_r(a)
+                    let op = differential_operator(
+                      [@symcore.number(a2), int(0), int(1)],
+                      dx.parent,
+                    )
+                    let y0 = if x0 == int(0) {
+                      let y = if b == int(0) {
+                        int(0)
+                      } else {
+                        @symcore.function("sin", [b])
+                      }
+                      let dy = if b == int(0) {
+                        @symcore.number(a)
+                      } else {
+                        expr_mul(@symcore.number(a), @symcore.function("cos", [b]))
+                      }
+                      [y, dy]
+                    } else {
+                      []
+                    }
+                    holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
                   }
-                  let dy = if b == int(0) {
-                    @symcore.number(a)
-                  } else {
-                    expr_mul(@symcore.number(a), @symcore.function("cos", [b]))
-                  }
-                  [y, dy]
-                } else {
-                  []
-                }
-                holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
-              }
-              "cos" => {
+                  "cos" => {
                 let a2 = a.mul_r(a)
                 let op = differential_operator(
                   [@symcore.number(a2), int(0), int(1)],
@@ -561,14 +569,15 @@ pub fn expr_to_holonomic(
                 } else {
                   []
                 }
-                holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
+                    holonomic_function(op, x, x0~, y0~, expr_hint=Some(expr))
+                  }
+                  _ => fallback_from_expr(expr, x, x0)
+                }
               }
-              _ => fallback_from_expr(expr, x, x0)
-            }
+            None => fallback_from_expr(expr, x, x0)
           }
-        None => fallback_from_expr(expr, x, x0)
+        _ => fallback_from_expr(expr, x, x0)
       }
-    _ => fallback_from_expr(expr, x, x0)
   }
 }
 

@@ -290,13 +290,17 @@ fn match_expr(
             Some(next) => match_expr(pe, ee, next)
             None => None
           }
-        (Expr::Function(pname, pargs), Expr::Function(ename, eargs)) =>
-          if pname == ename {
-            match_expr_list(pargs, eargs, 0, 0, bindings)
-          } else {
-            None
+        _ =>
+          match
+            (@symcore.application_parts(pattern), @symcore.application_parts(expr)) {
+            (Some((phead, pargs)), Some((ehead, eargs))) =>
+              if phead == ehead {
+                match_expr_list(pargs, eargs, 0, 0, bindings)
+              } else {
+                None
+              }
+            _ => None
           }
-        _ => None
       }
   }
 }
@@ -423,9 +427,15 @@ fn substitute_expr(expr : Expr, bindings : Map[String, WildBinding]) -> Expr {
             substitute_expr(base, bindings),
             substitute_expr(exp, bindings),
           )
-        Expr::Function(name, args) =>
-          @symcore.function(name, substitute_expr_list(args, bindings))
-        _ => expr
+        _ =>
+          match @symcore.application_parts(expr) {
+            Some((head, args)) =>
+              match @symcore.raw_apply(head, substitute_expr_list(args, bindings)) {
+                Some(applied) => applied
+                None => expr
+              }
+            None => expr
+          }
       }
   }
 }
@@ -496,21 +506,31 @@ fn replace_once(
             }
           }
         }
-        Expr::Function(name, args) => {
-          let rebuilt : Array[Expr] = []
-          for arg in args {
-            let (next, changed, info) = replace_once(arg, rules)
-            rebuilt.push(next)
-            if changed {
-              for i in rebuilt.length()..<args.length() {
-                rebuilt.push(args[i])
+        _ =>
+          match @symcore.application_parts(expr) {
+            Some((head, args)) => {
+              let rebuilt : Array[Expr] = []
+              for arg in args {
+                let (next, changed, info) = replace_once(arg, rules)
+                rebuilt.push(next)
+                if changed {
+                  for i in rebuilt.length()..<args.length() {
+                    rebuilt.push(args[i])
+                  }
+                  return (
+                    match @symcore.raw_apply(head, rebuilt) {
+                      Some(applied) => applied
+                      None => expr
+                    },
+                    true,
+                    info,
+                  )
+                }
               }
-              return (@symcore.function(name, rebuilt), true, info)
+              (expr, false, None)
             }
+            None => (expr, false, None)
           }
-          (expr, false, None)
-        }
-        _ => (expr, false, None)
       }
   }
 }
