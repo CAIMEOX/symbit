@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}
 
 ///|
 /// Core SISO LTI object model aligned with the high-value surface of
@@ -536,7 +536,7 @@ pub fn TransferFunction::from_rational_expression(
           "from_rational_expression needs the complex variable when it cannot be inferred",
         )
       }
-      symbol(names[0])
+      Expr::Symbol(names[0])
     }
   }
   let variable_name = control_var_name(resolved_variable)
@@ -668,7 +668,7 @@ pub fn TransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.oo()
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
   } else {
     control_normalize(num0 * @symcore.pow(den0, int(-1)))
   }
@@ -1110,7 +1110,7 @@ pub fn DiscreteTransferFunction::dc_gain(
         "dc_gain is indeterminate for this transfer function",
       )
     }
-    @symcore.oo()
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
   } else {
     control_normalize(num1 * (den1 ^ int(-1)))
   }
@@ -1206,11 +1206,11 @@ pub impl Neg for DiscreteTransferFunction with neg(self) {
 
 ///|
 pub fn pid_controller(
-  kp? : Expr = symbol("kp"),
-  ki? : Expr = symbol("ki"),
-  kd? : Expr = symbol("kd"),
+  kp? : Expr = Expr::Symbol("kp"),
+  ki? : Expr = Expr::Symbol("ki"),
+  kd? : Expr = Expr::Symbol("kd"),
   tf? : Expr = int(0),
-  variable? : Expr = symbol("s"),
+  variable? : Expr = Expr::Symbol("s"),
 ) -> PIDController raise ControlError {
   guard variable is Expr::Symbol(_) else {
     raise ControlError::TypeError("control variable should be a symbol")

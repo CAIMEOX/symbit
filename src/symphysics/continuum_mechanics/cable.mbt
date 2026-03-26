@@ -87,7 +87,7 @@ fn cable_segment_length(
 
 ///|
 fn cable_pi() -> @symcore.Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|
@@ -403,14 +403,14 @@ pub fn Cable::solve(
     let right_dx = self.right_support_[0] - x0
     let coeffs = cm_linear_solve(
       [
-        @symcore.symbol("A") * (left_dx ^ @symcore.int(2)) +
-        @symcore.symbol("c") -
+        @symcore.Expr::Symbol("A") * (left_dx ^ @symcore.int(2)) +
+        @symcore.Expr::Symbol("c") -
         self.left_support_[1],
-        @symcore.symbol("A") * (right_dx ^ @symcore.int(2)) +
-        @symcore.symbol("c") -
+        @symcore.Expr::Symbol("A") * (right_dx ^ @symcore.int(2)) +
+        @symcore.Expr::Symbol("c") -
         self.right_support_[1],
       ],
-      [@symcore.symbol("A"), @symcore.symbol("c")],
+      [@symcore.Expr::Symbol("A"), @symcore.Expr::Symbol("c")],
     ).unwrap_or({})
     let a_coeff = coeffs.get("A").unwrap_or(@symcore.int(0))
     let c_coeff = coeffs.get("c").unwrap_or(@symcore.int(0))
@@ -423,7 +423,7 @@ pub fn Cable::solve(
       cm_rat_expr(1, 2) *
       (right_dy ^ @symcore.int(-1)),
     )
-    let x = @symcore.symbol("X")
+    let x = @symcore.Expr::Symbol("X")
     let slope = cm_simplify(@symcore.int(2) * a_coeff * x)
     let tension_expr = cm_simplify(
       h * @symelem.sqrt(@symcore.int(1) + (slope ^ @symcore.int(2))),

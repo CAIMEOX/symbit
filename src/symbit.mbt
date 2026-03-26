@@ -35,33 +35,9 @@ pub type CseResult = @symsimplify.CseResult
 pub type EPath = @symsimplify.EPath
 
 ///|
-/// Create a symbolic variable by name.
-pub fn symbol(name : String) -> Expr {
-  @symcore.symbol(name)
-}
-
-///|
 /// Create a fresh dummy symbol with identity distinct from its printed name.
 pub fn dummy(name? : String = "Dummy") -> Expr {
   @symcore.dummy(name~)
-}
-
-///|
-/// Create a wildcard symbol for pattern-style matching.
-pub fn wild(name : String) -> Expr {
-  @symcore.wild(name)
-}
-
-///|
-/// Create a first-class named function head for builtins like `sin` or `exp`.
-pub fn function_head(name : String) -> Expr {
-  @symcore.function_head(name)
-}
-
-///|
-/// Create an undefined function head object.
-pub fn undefined_function(name : String) -> Expr {
-  @symcore.undefined_function(name)
 }
 
 ///|
@@ -111,18 +87,6 @@ pub fn integer(value : Int) -> Expr {
 /// Create an exact rational expression `num/den`.
 pub fn rational(num : Int, den : Int) -> Expr raise @symnum.RationalError {
   @symcore.rational_from_ints(num, den)
-}
-
-///|
-/// Embed a core arbitrary-precision floating literal as an expression.
-pub fn float(value : Float) -> Expr {
-  @symcore.float(value)
-}
-
-///|
-/// Embed a core arbitrary-precision complex floating literal as an expression.
-pub fn complex_float(value : ComplexFloat) -> Expr {
-  @symcore.complex_float(value)
 }
 
 ///|

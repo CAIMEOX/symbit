@@ -50,7 +50,7 @@ fn sign_of_expr(expr : @symcore.Expr) -> Int? {
 ///|
 pub fn difference_delta(
   expr : @symcore.Expr,
-  n? : @symcore.Expr = @symcore.symbol("n"),
+  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
   step? : Int = 1,
 ) -> @symcore.Expr raise {
   let var_name = match n {
@@ -67,7 +67,7 @@ pub fn difference_delta(
 ///|
 pub fn limit_seq(
   expr : @symcore.Expr,
-  n? : @symcore.Expr = @symcore.symbol("n"),
+  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
 ) -> @symcore.Expr raise {
   let var_name = match n {
     @symcore.Expr::Symbol(name) => name
@@ -79,11 +79,11 @@ pub fn limit_seq(
   let (num_expr, den_expr) = split_num_den(expr)
   let num_poly = match poly_from_expr(num_expr, n) {
     Some(v) => v
-    None => return limit(expr, n, @symcore.oo())
+    None => return limit(expr, n, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   }
   let den_poly = match poly_from_expr(den_expr, n) {
     Some(v) => v
-    None => return limit(expr, n, @symcore.oo())
+    None => return limit(expr, n, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   }
   let num_deg = if num_poly.is_empty() { -1 } else { num_poly.length() - 1 }
   let den_deg = if den_poly.is_empty() { -1 } else { den_poly.length() - 1 }
@@ -103,10 +103,10 @@ pub fn limit_seq(
     expr_mul(lead_num, @symcore.pow(lead_den, @symcore.int(-1))),
   )
   match sign {
-    Some(1) => @symcore.oo()
-    Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.oo()])
+    Some(1) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
     Some(0) => @symcore.int(0)
-    Some(_) => @symcore.oo()
-    None => @symcore.oo()
+    Some(_) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
   }
 }

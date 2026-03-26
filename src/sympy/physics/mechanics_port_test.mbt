@@ -15,12 +15,12 @@ fn mechanics_assert_summary(
 ///|
 test "physics.mechanics parity inertia and particles" {
   let n = @symvector.reference_frame("ON")
-  let ixx = @symcore.symbol("ixx")
-  let iyy = @symcore.symbol("iyy")
-  let izz = @symcore.symbol("izz")
-  let ixy = @symcore.symbol("ixy")
-  let iyz = @symcore.symbol("iyz")
-  let izx = @symcore.symbol("izx")
+  let ixx = @symcore.Expr::Symbol("ixx")
+  let iyy = @symcore.Expr::Symbol("iyy")
+  let izz = @symcore.Expr::Symbol("izz")
+  let ixy = @symcore.Expr::Symbol("ixy")
+  let iyz = @symcore.Expr::Symbol("iyz")
+  let izx = @symcore.Expr::Symbol("izx")
   mechanics_assert_summary(
     @symvector.vsprint_dyadic(inertia(n, ixx, iyy, izz, ixy~, iyz~, izx~)),
     mechanics_summary(
@@ -30,9 +30,9 @@ test "physics.mechanics parity inertia and particles" {
   )
 
   let o = @symvector.point("OO")
-  let p = o.locatenew("OP", n.y().scale(@symcore.symbol("r")))
-  p.set_vel(n, n.x().scale(@symcore.symbol("v")))
-  let part = particle("P", point=Some(p), mass=Some(@symcore.symbol("m")))
+  let p = o.locatenew("OP", n.y().scale(@symcore.Expr::Symbol("r")))
+  p.set_vel(n, n.x().scale(@symcore.Expr::Symbol("v")))
+  let part = particle("P", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
   mechanics_assert_summary(
     @symvector.vsprint(part.linear_momentum(n)),
     mechanics_summary(
@@ -53,14 +53,14 @@ test "physics.mechanics parity inertia and particles" {
 test "physics.mechanics parity rigidbody wrappers and body loads" {
   let n = @symvector.reference_frame("RN")
   let p = @symvector.point("RP")
-  p.set_vel(n, n.x().scale(@symcore.symbol("v")))
+  p.set_vel(n, n.x().scale(@symcore.Expr::Symbol("v")))
   let b = @symvector.reference_frame("Rb")
-  b.set_ang_vel(n, b.x().scale(@symcore.symbol("omega")))
+  b.set_ang_vel(n, b.x().scale(@symcore.Expr::Symbol("omega")))
   let rb = rigid_body(
     "RB",
     masscenter=Some(p),
     frame=Some(b),
-    mass=Some(@symcore.symbol("m")),
+    mass=Some(@symcore.Expr::Symbol("m")),
     inertia=Some(inertia_tuple(@symvector.outer(b.x(), b.x()), p)),
   )
   assert_true(

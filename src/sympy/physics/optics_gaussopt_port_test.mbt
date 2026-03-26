@@ -44,22 +44,22 @@ fn gaussopt_symbols() -> (
   @symcore.Expr,
 ) {
   (
-    @symcore.symbol("d"),
-    @symcore.symbol("f"),
-    @symcore.symbol("h"),
-    @symcore.symbol("angle"),
-    @symcore.symbol("n1"),
-    @symcore.symbol("n2"),
-    @symcore.symbol("R"),
-    @symcore.symbol("a"),
-    @symcore.symbol("b"),
-    @symcore.symbol("s_in"),
-    @symcore.symbol("z_r_in"),
-    @symcore.symbol("l"),
-    @symcore.symbol("w_i"),
-    @symcore.symbol("w_o"),
-    @symcore.symbol("z"),
-    @symcore.symbol("wavelen"),
+    @symcore.Expr::Symbol("d"),
+    @symcore.Expr::Symbol("f"),
+    @symcore.Expr::Symbol("h"),
+    @symcore.Expr::Symbol("angle"),
+    @symcore.Expr::Symbol("n1"),
+    @symcore.Expr::Symbol("n2"),
+    @symcore.Expr::Symbol("R"),
+    @symcore.Expr::Symbol("a"),
+    @symcore.Expr::Symbol("b"),
+    @symcore.Expr::Symbol("s_in"),
+    @symcore.Expr::Symbol("z_r_in"),
+    @symcore.Expr::Symbol("l"),
+    @symcore.Expr::Symbol("w_i"),
+    @symcore.Expr::Symbol("w_o"),
+    @symcore.Expr::Symbol("z"),
+    @symcore.Expr::Symbol("wavelen"),
   )
 }
 
@@ -111,7 +111,7 @@ test "physics.optics.gaussopt: matrix parity" {
 ///|
 test "physics.optics.gaussopt: beam property parity" {
   let (_, _, _, _, _, _, _, _, _, _, _, _, _, _, z, wavelen) = gaussopt_symbols()
-  let w0 = @symcore.symbol("w_0")
+  let w0 = @symcore.Expr::Symbol("w_0")
   let beam = beam_parameter(wavelen, z, w=Some(w0))
   gaussopt_port_assert_expr_equal(
     beam.q(),
@@ -181,12 +181,12 @@ test "physics.optics.gaussopt: beam transform parity" {
 test "physics.optics.gaussopt: utility parity" {
   let (_, f, _, _, _, _, _, a, b, s_in, z_r_in, l, w_i, w_o, _, wavelen) = gaussopt_symbols()
   gaussopt_port_assert_expr_equal(
-    waist2rayleigh(@symcore.symbol("w"), wavelen),
+    waist2rayleigh(@symcore.Expr::Symbol("w"), wavelen),
     optics_gaussopt_eval("waist2rayleigh(w, wavelen)"),
     "waist2rayleigh parity",
   )
   gaussopt_port_assert_expr_equal(
-    rayleigh2waist(@symcore.symbol("z_r"), wavelen),
+    rayleigh2waist(@symcore.Expr::Symbol("z_r"), wavelen),
     optics_gaussopt_eval("rayleigh2waist(z_r, wavelen)"),
     "rayleigh2waist parity",
   )

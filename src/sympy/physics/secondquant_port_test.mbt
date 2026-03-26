@@ -32,8 +32,8 @@ fn sq_assert_matrix_oracle_equal(
 
 ///|
 test "physics.secondquant: boson parity" {
-  let n = @symcore.symbol("n")
-  let m = @symcore.symbol("m")
+  let n = @symcore.Expr::Symbol("n")
+  let m = @symcore.Expr::Symbol("m")
   let b0 = boson_annihilator(@symcore.int(0))
   let bd0 = boson_creator(@symcore.int(0))
   let b1d = boson_creator(@symcore.int(1))
@@ -88,8 +88,8 @@ test "physics.secondquant: boson parity" {
     secondquant_eval_str(
       @symprint.to_string(
         secondquant_inner_product(
-          boson_bra([@symcore.symbol("i"), @symcore.symbol("j")]),
-          boson_ket([@symcore.symbol("k"), @symcore.symbol("l")]),
+          boson_bra([@symcore.Expr::Symbol("i"), @symcore.Expr::Symbol("j")]),
+          boson_ket([@symcore.Expr::Symbol("k"), @symcore.Expr::Symbol("l")]),
         ),
       ),
     ),

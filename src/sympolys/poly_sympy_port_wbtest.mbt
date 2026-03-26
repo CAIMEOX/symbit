@@ -1,7 +1,7 @@
 ///|
 test "from_expr_defaults infers gens and QQ domain" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
   inspect(poly.gens, content="[\"x\", \"y\"]")
@@ -14,7 +14,7 @@ test "from_expr_defaults infers gens and QQ domain" {
 
 ///|
 test "resolve_domain modulus and gaussian" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let d1 = resolve_domain(
     domain=None,
     modulus=Some(5),
@@ -72,7 +72,7 @@ test "resolve_domain gf extension builds default modulus poly" {
 
 ///|
 test "resolve_domain builds algebraic extension" {
-  let expr = @symcore.symbol("alpha")
+  let expr = @symcore.Expr::Symbol("alpha")
   let d = resolve_domain(
     domain=Some(Domain::QQ),
     modulus=None,
@@ -97,7 +97,7 @@ test "resolve_domain builds algebraic extension" {
 ///|
 test "integer polynomial division matches sympy" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = builder.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
   )
@@ -110,8 +110,8 @@ test "integer polynomial division matches sympy" {
 ///|
 test "total_degree and per-variable degree" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly = builder.from_expr(
     (x ^ @symcore.int(2)) * (y ^ @symcore.int(3)) + y,
   )

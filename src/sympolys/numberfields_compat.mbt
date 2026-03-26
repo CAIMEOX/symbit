@@ -26,25 +26,25 @@ pub fn minimal_polynomial(
     Some(q) => {
       // Match SymPy's primitive-content convention for rationals:
       // minpoly(a/b) = b*x - a.
-      let x = symbol(gen)
+      let x = Expr::Symbol(gen)
       let a = q.numerator()
       let b = q.denominator()
-      let bx = @symcore.number(@symnum.BigRational::from_bigint(b)) * x
-      let a_expr = @symcore.number(@symnum.BigRational::from_bigint(a))
+      let bx = @symcore.Expr::Number(@symnum.BigRational::from_bigint(b)) * x
+      let a_expr = @symcore.Expr::Number(@symnum.BigRational::from_bigint(a))
       PolyBuilder::new([gen], Domain::QQ).from_expr(bx - a_expr)
     }
     None =>
       match parse_affine_radical(expr) {
         Some(aff) => {
-          let x = symbol(gen)
+          let x = Expr::Symbol(gen)
           let shift_expr = if aff.shift.is_zero() {
             x
           } else {
-            x - @symcore.number(aff.shift)
+            x - @symcore.Expr::Number(aff.shift)
           }
           let lhs = shift_expr ^ int(aff.atom.n)
           let scale_pow = rat_pow_nonnegative(aff.scale, aff.atom.n)
-          let rhs = @symcore.number(scale_pow.mul_r(aff.atom.rad))
+          let rhs = @symcore.Expr::Number(scale_pow.mul_r(aff.atom.rad))
           let raw = PolyBuilder::new([gen], Domain::QQ).from_expr(lhs - rhs)
           normalize_minpoly_qq(raw)
         }
@@ -109,14 +109,14 @@ fn mq_relation_to_poly(
   degree : Int,
   gen : String,
 ) -> Poly raise PolyError {
-  let x = symbol(gen)
+  let x = Expr::Symbol(gen)
   let terms : Array[Expr] = [x ^ int(degree)]
   for i in 0..<coeffs.length() {
     let c = coeffs[i]
     if c.is_zero() {
       continue
     }
-    let coeff_expr = @symcore.number(c.neg_r())
+    let coeff_expr = @symcore.Expr::Number(c.neg_r())
     let term = if i == 0 {
       coeff_expr
     } else if i == 1 {

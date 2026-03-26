@@ -1,6 +1,6 @@
 ///|
 test "geometry.point parity repr and distance" {
-  let p = point2d(@symcore.symbol("x"), @symcore.int(2))
+  let p = point2d(@symcore.Expr::Symbol("x"), @symcore.int(2))
   let q = point2d(@symcore.int(1), @symcore.int(5))
   assert_eq(p.repr(), geometry_eval_repr("Point2D(x, 2)"))
   assert_true(
@@ -18,7 +18,7 @@ test "geometry.point parity translate rotate scale" {
     p.translate([@symcore.int(-1), @symcore.int(3)]).repr(),
     geometry_eval_repr("Point2D(2, 1).translate(-1, 3)"),
   )
-  let rotated = p.rotate(@symcore.pi())
+  let rotated = p.rotate(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi))
   assert_true(
     geometry_expr_equal(
       @symprint.to_string(rotated.x()),

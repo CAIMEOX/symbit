@@ -1,2 +1,2 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}

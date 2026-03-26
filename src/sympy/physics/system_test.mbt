@@ -26,12 +26,12 @@ test "physics.mechanics system core" {
     bob.as_bodylike(),
     child_interframe=Some(joint_interframe_frame(bob_frame)),
     child_point=Some(
-      joint_attachment_offset(bob_frame.y().scale(@symcore.symbol("l")).neg()),
+      joint_attachment_offset(bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg()),
     ),
     joint_axis=Some(cart.frame().z()),
   )
   sys.add_joints([slider.as_joint(), pin.as_joint()])
-  sys.apply_uniform_gravity(n.y().scale(@symcore.symbol("g")).neg())
+  sys.apply_uniform_gravity(n.y().scale(@symcore.Expr::Symbol("g")).neg())
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
@@ -58,9 +58,9 @@ test "physics.mechanics system core" {
 ///|
 test "physics.mechanics system backend equations" {
   let wall = rigid_body("wall")
-  let bob = particle("bob", mass=Some(@symcore.symbol("m")))
+  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
   bob.set_potential_energy(
-    @symcore.symbol("k") *
+    @symcore.Expr::Symbol("k") *
     (@symvector.dynamicsymbol("q") ^ @symcore.int(2)) *
     @symcore.rational_from_ints(1, 2),
   )
@@ -84,7 +84,7 @@ test "physics.mechanics system backend equations" {
       sys
       .x()
       .scale(
-        @symcore.symbol("b") *
+        @symcore.Expr::Symbol("b") *
         @symcalculus.diff(
           @symvector.dynamicsymbol("q"),
           @symvector.dynamicsymbols_t,
@@ -116,7 +116,7 @@ test "physics.mechanics system validation semantics" {
   let origin = @symvector.point("SVO")
   origin.set_vel(n, @symvector.vector_zero())
   let wall = rigid_body("wall", masscenter=Some(origin), frame=Some(n))
-  let bob = particle("bob", mass=Some(@symcore.symbol("m")))
+  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
   let q = @symvector.dynamicsymbol("q")
   let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
 

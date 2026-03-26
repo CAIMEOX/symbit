@@ -1,6 +1,6 @@
 ///|
 test "geometry.util helpers" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_eq(@symprint.to_string(find("x", x + @symcore.int(1))), "x")
   let c = centroid([
     point2d(@symcore.int(0), @symcore.int(0)),

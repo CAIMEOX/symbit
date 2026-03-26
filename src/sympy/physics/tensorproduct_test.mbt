@@ -1,8 +1,8 @@
 ///|
 test "physics.quantum.tensorproduct: symbolic and matrix subset" {
-  let a = operator([@symcore.symbol("A")]).as_expr()
-  let b = operator([@symcore.symbol("B")]).as_expr()
-  let c = operator([@symcore.symbol("C")]).as_expr()
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let b = operator([@symcore.Expr::Symbol("B")]).as_expr()
+  let c = operator([@symcore.Expr::Symbol("C")]).as_expr()
   inspect(
     @symquant.tensor_product([a, b]).to_string(),
     content="Operator(A)xOperator(B)",
@@ -16,7 +16,7 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
     content="Dagger(A)xDagger(B)",
   )
   quantum_test_assert_expr_equal(
-    @symquant.tensor_product([@symcore.symbol("x") * a, @symcore.int(2) * b]).as_expr(),
+    @symquant.tensor_product([@symcore.Expr::Symbol("x") * a, @symcore.int(2) * b]).as_expr(),
     "2*x*TensorProduct(Operator(A), Operator(B))",
     "tensorproduct scalar normalization",
   )
@@ -25,8 +25,8 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
     "TensorProduct(Operator(A), Operator(B)) + TensorProduct(Operator(A), Operator(C)) + TensorProduct(Operator(B), Operator(B)) + TensorProduct(Operator(B), Operator(C))",
     "tensorproduct additive expansion",
   )
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   quantum_test_assert_expr_equal(
     tensor_product_simp(
       @symcore.raw_mul([
@@ -34,7 +34,7 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
           @symquant.tensor_product([a, b]).as_expr(),
           @symcore.int(2),
         ),
-        @symquant.tensor_product([c, operator([@symcore.symbol("D")]).as_expr()]).as_expr(),
+        @symquant.tensor_product([c, operator([@symcore.Expr::Symbol("D")]).as_expr()]).as_expr(),
         x,
       ]),
     ),
@@ -63,9 +63,9 @@ test "physics.quantum.tensorproduct: symbolic and matrix subset" {
 
 ///|
 test "physics.quantum.tensorproduct: density and trace interplay" {
-  let a = operator([@symcore.symbol("A")]).as_expr()
-  let b = operator([@symcore.symbol("B")]).as_expr()
-  let c = operator([@symcore.symbol("C")]).as_expr()
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let b = operator([@symcore.Expr::Symbol("B")]).as_expr()
+  let c = operator([@symcore.Expr::Symbol("C")]).as_expr()
   let tp = @symquant.tensor_product([a, b, c]).as_expr()
   let rho = density([(tp, @symcore.int(1))])
 

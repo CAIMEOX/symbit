@@ -611,7 +611,7 @@ pub fn Polygon::encloses(
 ///|
 pub fn Polygon::plot_interval(
   _self : Polygon,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero(), geo_one()]
 }
@@ -619,7 +619,7 @@ pub fn Polygon::plot_interval(
 ///|
 pub fn Polygon::arbitrary_point(
   self : Polygon,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
   let perimeter = self.perimeter()
   let x_cases : Array[Expr] = []
@@ -653,9 +653,9 @@ pub fn Polygon::arbitrary_point(
     start = end_
   }
   x_cases.push(self.vertices_[0].coords_[0])
-  x_cases.push(@symcore.true_())
+  x_cases.push(@symcore.Expr::Boolean(true))
   y_cases.push(self.vertices_[0].coords_[1])
-  y_cases.push(@symcore.true_())
+  y_cases.push(@symcore.Expr::Boolean(true))
   point2d(
     @symcore.raw_function("Piecewise", x_cases),
     @symcore.raw_function("Piecewise", y_cases),
@@ -788,7 +788,7 @@ fn regular_polygon_vertices_of(
   let out : Array[Point] = []
   for i in 0..<poly.n_ {
     let angle = geo_simplify(
-      poly.rotation_ + geo_div(geo_int(2 * i), geo_int(poly.n_)) * @symcore.pi(),
+      poly.rotation_ + geo_div(geo_int(2 * i), geo_int(poly.n_)) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
     )
     out.push(
       point2d(
@@ -862,7 +862,7 @@ pub fn RegularPolygon::area(self : RegularPolygon) -> Expr {
     geo_int(self.n_) *
     self.radius_ *
     self.radius_ *
-    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * @symcore.pi()),
+    @symelem.sin(geo_div(geo_int(2), geo_int(self.n_)) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
     geo_int(2),
   )
 }
@@ -872,7 +872,7 @@ pub fn RegularPolygon::length(self : RegularPolygon) -> Expr {
   geo_simplify(
     geo_int(2) *
     self.radius_ *
-    @symelem.sin(geo_div(@symcore.pi(), geo_int(self.n_))),
+    @symelem.sin(geo_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), geo_int(self.n_))),
   )
 }
 
@@ -884,7 +884,7 @@ pub fn RegularPolygon::perimeter(self : RegularPolygon) -> Expr {
 ///|
 pub fn RegularPolygon::apothem(self : RegularPolygon) -> Expr {
   geo_simplify(
-    self.radius_ * @symelem.cos(geo_div(@symcore.pi(), geo_int(self.n_))),
+    self.radius_ * @symelem.cos(geo_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), geo_int(self.n_))),
   )
 }
 

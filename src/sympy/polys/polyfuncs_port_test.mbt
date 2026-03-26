@@ -204,7 +204,7 @@ test "polyfuncs: rational_interpolate parity (degnum=2, y)" {
 
 ///|
 test "polyfuncs: symmetrize parity constants and simple cases" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let zero = @symcore.int(0)
   let one = @symcore.int(1)
   let res0 = @sympolys.symmetrize(zero, gens=["x", "y", "z"])
@@ -245,7 +245,7 @@ test "polyfuncs: symmetrize parity constants and simple cases" {
 
 ///|
 test "polyfuncs: symmetrize formal mapping u0/u1/u2" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = x + @symcore.int(1)
   let res = @sympolys.symmetrize(expr, gens=["x", "y", "z"], formal=true, symbols=[
     "u0", "u1", "u2",
@@ -261,8 +261,8 @@ test "polyfuncs: symmetrize formal mapping u0/u1/u2" {
 
 ///|
 test "polyfuncs: symmetrize parity higher-degree in 3 vars" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = x ^ @symcore.int(2)
   let res = @sympolys.symmetrize(expr, gens=["x", "y", "z"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
@@ -283,7 +283,7 @@ test "polyfuncs: symmetrize parity higher-degree in 3 vars" {
 
 ///|
 test "polyfuncs: horner parity small cases" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let cases = [
     @symcore.int(0),
     @symcore.int(1),
@@ -302,8 +302,8 @@ test "polyfuncs: horner parity small cases" {
 
 ///|
 test "polyfuncs: symmetrize parity x^2 + y^2" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = (x ^ @symcore.int(2)) + (y ^ @symcore.int(2))
   let res = @sympolys.symmetrize(expr, gens=["x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
@@ -313,8 +313,8 @@ test "polyfuncs: symmetrize parity x^2 + y^2" {
 
 ///|
 test "polyfuncs: symmetrize parity x^2 - y^2" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = (x ^ @symcore.int(2)) - (y ^ @symcore.int(2))
   let res = @sympolys.symmetrize(expr, gens=["x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
@@ -324,8 +324,8 @@ test "polyfuncs: symmetrize parity x^2 - y^2" {
 
 ///|
 test "polyfuncs: symmetrize parity mixed coefficients" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = (x ^ @symcore.int(3)) +
     (y ^ @symcore.int(2)) +
     @symcore.int(2) * (x ^ @symcore.int(2)) +
@@ -338,8 +338,8 @@ test "polyfuncs: symmetrize parity mixed coefficients" {
 
 ///|
 test "polyfuncs: symmetrize parity formal mapping" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = x + y
   let res = @sympolys.symmetrize(expr, gens=["x", "y"], formal=true, symbols=[
     "u0", "u1",
@@ -355,9 +355,9 @@ test "polyfuncs: symmetrize parity formal mapping" {
 
 ///|
 test "polyfuncs: symmetrize parity x^2 + y^2 + z^2" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = (x ^ @symcore.int(2)) +
     (y ^ @symcore.int(2)) +
     (z ^ @symcore.int(2))
@@ -369,9 +369,9 @@ test "polyfuncs: symmetrize parity x^2 + y^2 + z^2" {
 
 ///|
 test "polyfuncs: symmetrize parity mixed ordering gens" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = x + y + z
   let res = @sympolys.symmetrize(expr, gens=["z", "x", "y"])
   let ours = symmetrize_to_string(res, false).trim().to_string()
@@ -381,9 +381,9 @@ test "polyfuncs: symmetrize parity mixed ordering gens" {
 
 ///|
 test "polyfuncs: symmetrize parity mixed ordering formal" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = (x ^ @symcore.int(2)) + y + z
   let res = @sympolys.symmetrize(expr, gens=["y", "z", "x"], formal=true, symbols=[
     "t1", "t2", "t3",
@@ -399,8 +399,8 @@ test "polyfuncs: symmetrize parity mixed ordering formal" {
 
 ///|
 test "polyfuncs: symmetrize parity list cases" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let list1 = [@symcore.int(1), @symcore.int(2), @symcore.int(3)]
   let res1 = @sympolys.symmetrize_list(list1, gens=["x", "y"])
   let ours1 = symmetrize_list_to_string(res1, false).trim().to_string()
@@ -421,7 +421,7 @@ test "polyfuncs: symmetrize parity list cases" {
 
 ///|
 test "polyfuncs: horner parity univariate" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.int(9) * (x ^ @symcore.int(4)) +
     @symcore.int(8) * (x ^ @symcore.int(3)) +
     @symcore.int(7) * (x ^ @symcore.int(2)) +
@@ -434,8 +434,8 @@ test "polyfuncs: horner parity univariate" {
 
 ///|
 test "polyfuncs: horner parity multivariate wrt=y" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.int(4) * (x ^ @symcore.int(2)) * (y ^ @symcore.int(2)) +
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
@@ -449,8 +449,8 @@ test "polyfuncs: horner parity multivariate wrt=y" {
 
 ///|
 test "polyfuncs: horner parity multivariate wrt default" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.int(4) * (x ^ @symcore.int(2)) * (y ^ @symcore.int(2)) +
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
@@ -462,8 +462,8 @@ test "polyfuncs: horner parity multivariate wrt default" {
 
 ///|
 test "polyfuncs: horner parity multivariate wrt" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.int(4) * (x ^ @symcore.int(2)) * (y ^ @symcore.int(2)) +
     @symcore.int(2) * (x ^ @symcore.int(2)) * y +
     @symcore.int(2) * x * (y ^ @symcore.int(2)) +
@@ -479,7 +479,7 @@ test "polyfuncs: horner parity multivariate wrt" {
 
 ///|
 test "polyfuncs: viete parity quadratic" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(3)
   let ours = viete_to_string(@sympolys.viete(expr, roots=["r1", "r2"], gen="x"))
     .trim()
@@ -490,7 +490,7 @@ test "polyfuncs: viete parity quadratic" {
 
 ///|
 test "polyfuncs: viete parity cubic" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = (x ^ @symcore.int(3)) +
     @symcore.int(2) * (x ^ @symcore.int(2)) +
     @symcore.int(3) * x +
@@ -506,8 +506,8 @@ test "polyfuncs: viete parity cubic" {
 
 ///|
 test "polyfuncs: viete error cases" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let r0 : Result[Array[(@symcore.Expr, @symcore.Expr)], _] = try? @sympolys.viete(
     @symcore.int(1),
     roots=["r1"],

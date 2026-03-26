@@ -7,12 +7,12 @@
 
 ///|
 fn quantum_default_ket() -> Expr {
-  ket([symbol("psi")]).as_expr()
+  ket([Expr::Symbol("psi")]).as_expr()
 }
 
 ///|
 fn quantum_default_operator() -> Expr {
-  operator([symbol("O")]).as_expr()
+  operator([Expr::Symbol("O")]).as_expr()
 }
 
 ///|

@@ -16,9 +16,9 @@ fn jointsmethod_matrix_entry_summary(
 
 ///|
 test "physics.mechanics parity jointsmethod simple pendulum" {
-  let m = @symcore.symbol("m")
-  let l = @symcore.symbol("l")
-  let g = @symcore.symbol("g")
+  let m = @symcore.Expr::Symbol("m")
+  let l = @symcore.Expr::Symbol("l")
+  let g = @symcore.Expr::Symbol("g")
   let q = @symvector.dynamicsymbol("q")
   let ceiling = body("PC")
   let bob = body("Pb", mass=Some(m))

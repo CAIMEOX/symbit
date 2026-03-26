@@ -85,7 +85,7 @@ pub fn symbolic_rv_data(
 
 ///|
 pub fn random_symbol(rv : RandomVar) -> @symcore.Expr {
-  @symcore.symbol(rv.name)
+  @symcore.Expr::Symbol(rv.name)
 }
 
 ///|
@@ -227,7 +227,7 @@ pub fn or_event(items : Array[Event]) -> Event {
 ///|
 pub fn event_to_expr(event : Event) -> @symcore.Expr {
   match event {
-    Event::Bool(v) => @symcore.symbol(if v { "True" } else { "False" })
+    Event::Bool(v) => @symcore.Expr::Symbol(if v { "True" } else { "False" })
     Event::Rel(op~, lhs~, rhs~) =>
       @symcore.function(relop_to_name(op), [lhs, rhs])
     Event::Not(inner) => @symcore.function("Not", [event_to_expr(inner)])
@@ -246,7 +246,7 @@ pub fn probability_expr(event : Event) -> @symcore.Expr {
 ///|
 pub fn expectation_expr(expr : @symcore.Expr, rv : RandomVar?) -> @symcore.Expr {
   match rv {
-    Some(v) => @symcore.function("Expectation", [expr, @symcore.symbol(v.name)])
+    Some(v) => @symcore.function("Expectation", [expr, @symcore.Expr::Symbol(v.name)])
     None => @symcore.function("Expectation", [expr])
   }
 }
@@ -278,7 +278,7 @@ pub fn expr_two() -> @symcore.Expr {
 
 ///|
 pub fn expr_from_big_rational(n : @symnum.BigRational) -> @symcore.Expr {
-  @symcore.number(n)
+  @symcore.Expr::Number(n)
 }
 
 ///|
@@ -353,25 +353,25 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
         args.map(item => eval_arith(item)),
       )
     @symcore.Expr::Tuple(args) =>
-      @symcore.tuple_expr(args.map(item => eval_arith(item)))
+      @symcore.Expr::Tuple(args.map(item => eval_arith(item)))
     @symcore.Expr::Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((eval_arith(key), eval_arith(value)))
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.Expr::Mod(lhs, rhs) =>
       @symcore.mod_expr(eval_arith(lhs), eval_arith(rhs))
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
-        @symcore.RelOp::Eq => @symcore.eq(eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Ne => @symcore.ne(eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Lt => @symcore.lt(eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Le => @symcore.le(eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Gt => @symcore.gt(eval_arith(lhs), eval_arith(rhs))
-        @symcore.RelOp::Ge => @symcore.ge(eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Eq => @symcore.Expr::Relational(@symcore.RelOp::Eq, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Ne => @symcore.Expr::Relational(@symcore.RelOp::Ne, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Lt => @symcore.Expr::Relational(@symcore.RelOp::Lt, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Le => @symcore.Expr::Relational(@symcore.RelOp::Le, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Gt => @symcore.Expr::Relational(@symcore.RelOp::Gt, eval_arith(lhs), eval_arith(rhs))
+        @symcore.RelOp::Ge => @symcore.Expr::Relational(@symcore.RelOp::Ge, eval_arith(lhs), eval_arith(rhs))
       }
     @symcore.Expr::Derivative(inner, deriv_args) => {
       let out : Array[@symcore.Expr] = []
@@ -402,7 +402,7 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
         }
       }
       if all_num {
-        @symcore.number(sum)
+        @symcore.Expr::Number(sum)
       } else {
         @symcore.add(out)
       }
@@ -418,7 +418,7 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
         }
       }
       if all_num {
-        @symcore.number(prod)
+        @symcore.Expr::Number(prod)
       } else {
         @symcore.mul(out)
       }
@@ -430,7 +430,7 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
         (@symcore.Expr::Number(nb), @symcore.Expr::Number(ne)) =>
           if ne.is_integral() {
             match pow_int(nb, ne.numerator().to_int()) {
-              Some(value) => @symcore.number(value)
+              Some(value) => @symcore.Expr::Number(value)
               None => @symcore.pow(b, e)
             }
           } else {

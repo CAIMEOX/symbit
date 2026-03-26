@@ -1,8 +1,8 @@
 ///|
 test "physics.mechanics jointsmethod: simple pendulum lagrange backend" {
-  let m = @symcore.symbol("m")
-  let l = @symcore.symbol("l")
-  let g = @symcore.symbol("g")
+  let m = @symcore.Expr::Symbol("m")
+  let l = @symcore.Expr::Symbol("l")
+  let g = @symcore.Expr::Symbol("g")
   let q = @symvector.dynamicsymbol("q")
   let ceiling = body("C")
   let bob = body("b", mass=Some(m))

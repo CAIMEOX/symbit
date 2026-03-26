@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}
 
 ///|
 fn exact_numeric_value(expr : Expr) -> @symnum.BigRational? {

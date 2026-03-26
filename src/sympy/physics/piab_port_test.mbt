@@ -5,7 +5,7 @@ test "physics.quantum.piab: parity" {
     quantum_eval_str(
       @symprint.to_string(
         qapply(
-          @symcore.raw_mul([piab_hamiltonian(), piab_ket(@symcore.symbol("n"))]),
+          @symcore.raw_mul([piab_hamiltonian(), piab_ket(@symcore.Expr::Symbol("n"))]),
         ),
       ),
     ),
@@ -13,13 +13,13 @@ test "physics.quantum.piab: parity" {
   )
   quantum_test_assert_expr_equal(
     inner_product(
-      piab_bra(@symcore.symbol("i")),
-      piab_ket(@symcore.symbol("j")),
+      piab_bra(@symcore.Expr::Symbol("i")),
+      piab_ket(@symcore.Expr::Symbol("j")),
     ),
     quantum_doit_str("PIABBra(i)*PIABKet(j)"),
     "PIAB inner product parity",
   )
-  match represent(piab_ket(@symcore.symbol("n"))) {
+  match represent(piab_ket(@symcore.Expr::Symbol("n"))) {
     MatrixScalarValue::Scalar(expr) =>
       quantum_test_assert_expr_equal(
         expr,

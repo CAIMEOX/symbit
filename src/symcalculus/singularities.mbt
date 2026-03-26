@@ -1,6 +1,6 @@
 ///|
 fn sing_set_empty() -> Expr {
-  @symcore.symbol("EmptySet")
+  @symcore.Expr::Symbol("EmptySet")
 }
 
 ///|
@@ -83,7 +83,7 @@ fn sing_solve_linear(expr : Expr, sym : Expr) -> Expr? {
       } else {
         let neg_const = sing_rat_neg(constant)
         match sing_rat_div(neg_const, coeff) {
-          Some(sol) => Some(@symcore.number(sol))
+          Some(sol) => Some(@symcore.Expr::Number(sol))
           None => None
         }
       }

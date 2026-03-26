@@ -12,7 +12,7 @@ pub fn find(x : String, equation : Expr) -> Expr raise GeometryError {
   if matches.is_empty() {
     raise GeometryError::ValueError("could not find " + x)
   }
-  symbol(matches[0])
+  Expr::Symbol(matches[0])
 }
 
 ///|

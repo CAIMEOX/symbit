@@ -48,7 +48,7 @@ pub fn min(args : Array[Expr]) -> Expr {
     }
   }
   if all_num {
-    return @symcore.number(best.unwrap())
+    return @symcore.Expr::Number(best.unwrap())
   }
   @symcore.function("Min", args)
 }
@@ -74,7 +74,7 @@ pub fn max(args : Array[Expr]) -> Expr {
     }
   }
   if all_num {
-    return @symcore.number(best.unwrap())
+    return @symcore.Expr::Number(best.unwrap())
   }
   @symcore.function("Max", args)
 }

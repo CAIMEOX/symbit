@@ -54,8 +54,8 @@ test "geometry.plane parallel perpendicular and parameter helpers" {
     GeometryEntity::Point(pt) => assert_eq(pt.repr(), "Point3D(1, 1, 1)")
     _ => fail("expected projected point")
   }
-  let u = @symcore.symbol("u")
-  let v = @symcore.symbol("v")
+  let u = @symcore.Expr::Symbol("u")
+  let v = @symcore.Expr::Symbol("v")
   let uv_point = pl.arbitrary_point(
     u=Some(@symcore.int(1)),
     v=Some(@symcore.int(2)),

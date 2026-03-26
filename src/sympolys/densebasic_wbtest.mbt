@@ -110,7 +110,7 @@ test "densebasic wb: dpp conversion helper branches" {
 ///|
 test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
   let wrong_poly = Poly::from_expr(
-    @symcore.symbol("z") + @symcore.int(1),
+    @symcore.Expr::Symbol("z") + @symcore.int(1),
     ["z"],
     Domain::QQ,
   )
@@ -122,8 +122,8 @@ test "densebasic wb: inject/eject, terms, pairwise apply, slice/random edges" {
   )
   assert_true(bad_inject is Err(PolyError::DomainMismatch))
 
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let xy_poly = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(
     x + y + @symcore.int(1),
   )
@@ -472,7 +472,7 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
     Domain::GFExt(5, 2, [1, 0, 1]),
   )
   assert_eq(gfext_keep.length(), 1)
-  let a_alg = @symcore.symbol("a")
+  let a_alg = @symcore.Expr::Symbol("a")
   let minpoly_alg = PolyBuilder::new(["a"], Domain::QQ).from_expr(
     (a_alg ^ @symcore.int(2)) + @symcore.int(1),
   )
@@ -664,10 +664,10 @@ test "densebasic wb: residual branch sweep (ground/convert/rat/inflate/dpp)" {
 
   let dpp_merge : Map[Monomial, Poly] = Map::new()
   let px = PolyBuilder::new(["x"], Domain::QQ).from_expr(
-    @symcore.symbol("x") + @symcore.int(1),
+    @symcore.Expr::Symbol("x") + @symcore.int(1),
   )
   let py = PolyBuilder::new(["x"], Domain::QQ).from_expr(
-    @symcore.symbol("x") + @symcore.int(2),
+    @symcore.Expr::Symbol("x") + @symcore.int(2),
   )
   dpp_merge.set(Monomial::{ exps: [2, 1] }, px)
   dpp_merge.set(Monomial::{ exps: [2, 0] }, py)

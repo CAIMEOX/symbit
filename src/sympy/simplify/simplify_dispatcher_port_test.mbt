@@ -5,8 +5,8 @@ fn assert_dispatcher_parity(expr : @symcore.Expr) -> Unit raise {
 
 ///|
 test "symsimplify dispatcher parity on expanded rational cancellation" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let denom = @symcore.add([@symcore.int(2), @symcore.mul([@symcore.int(2), x])])
   let expr1 = @symcore.mul([
@@ -32,8 +32,8 @@ test "symsimplify dispatcher parity on expanded rational cancellation" {
 
 ///|
 test "symsimplify dispatcher parity on nested gamma and rational sums" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let expr1 = @symcore.add([
     @symcore.mul([@symcore.int(-1), x]),

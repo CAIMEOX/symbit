@@ -55,8 +55,8 @@ test "matrices charpoly and eigenvals" {
   assert_true(
     eigen_expr_equal(
       a.charpoly(),
-      (@symcore.symbol("lambda") ^ @symcore.int(2)) +
-      @symcore.int(-5) * @symcore.symbol("lambda") +
+      (@symcore.Expr::Symbol("lambda") ^ @symcore.int(2)) +
+      @symcore.int(-5) * @symcore.Expr::Symbol("lambda") +
       @symcore.int(-2),
     ),
   )

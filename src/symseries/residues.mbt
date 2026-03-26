@@ -8,7 +8,7 @@ fn local_series_poly(
   var_name : String,
   x0 : @symcore.Expr,
 ) -> Array[@symcore.Expr]? {
-  let t = @symcore.symbol("__res_t")
+  let t = @symcore.Expr::Symbol("__res_t")
   let env : Map[String, @symcore.Expr] = {}
   env[var_name] = @symcore.add([x0, t])
   let shifted = @symcore.subst(expr, env)
@@ -41,9 +41,9 @@ fn drop_terms(poly : Array[@symcore.Expr], k : Int) -> Array[@symcore.Expr] {
 
 ///|
 fn is_infinite_expr(expr : @symcore.Expr) -> Bool {
-  expr == @symcore.oo() ||
-  expr == @symcore.zoo() ||
-  expr == @symcore.mul([@symcore.int(-1), @symcore.oo()])
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) ||
+  expr == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity) ||
+  expr == @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
 }
 
 ///|
@@ -54,7 +54,7 @@ fn factorial_rational_expr(n : Int) -> @symcore.Expr {
     fact = fact.mul(BigInt::from_int(i))
     i = i + 1
   }
-  @symcore.number(safe_rational(BigInt::from_int(1), fact))
+  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), fact))
 }
 
 ///|

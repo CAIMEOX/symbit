@@ -341,8 +341,8 @@ fn try_denest_quadratic_surds(arg : Expr) -> Expr? {
       }
       Some(
         @symcore.add([
-          @symcore.function("sqrt", [@symcore.number(m)]),
-          @symcore.function("sqrt", [@symcore.number(n)]),
+          @symcore.function("sqrt", [@symcore.Expr::Number(m)]),
+          @symcore.function("sqrt", [@symcore.Expr::Number(n)]),
         ]),
       )
     }

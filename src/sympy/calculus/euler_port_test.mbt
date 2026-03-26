@@ -10,7 +10,7 @@ fn euler_expr_rat(num : Int, den : Int) -> Expr raise {
 
 ///|
 fn euler_expr_symbol(name : String) -> Expr {
-  @symcore.symbol(name)
+  @symcore.Expr::Symbol(name)
 }
 
 ///|

@@ -84,7 +84,7 @@ fn expr_inv(expr : @symcore.Expr) -> @symcore.Expr? {
         try n.reciprocal() catch {
           _ => None
         } noraise {
-          v => Some(@symcore.number(v))
+          v => Some(@symcore.Expr::Number(v))
         }
       }
     _ => Some(@symcore.pow(expr, @symcore.int(-1)))

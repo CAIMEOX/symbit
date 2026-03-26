@@ -21,7 +21,7 @@ pub fn recurrence_operator(
 
 ///|
 pub fn recurrence_operators(
-  symbol_var? : Expr = symbol("n"),
+  symbol_var? : Expr = Expr::Symbol("n"),
   generator? : String = "Sn",
 ) -> (RecurrenceOperatorAlgebra, RecurrenceOperator) {
   ignore(require_symbol_name(symbol_var))

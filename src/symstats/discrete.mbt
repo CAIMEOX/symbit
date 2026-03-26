@@ -40,20 +40,12 @@ fn discrete_one_minus(x : @symcore.Expr) -> @symcore.Expr {
 }
 
 ///|
-fn discrete_tuple_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
-  @symcore.function("Tuple", items)
-}
-
 ///|
 fn discrete_tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
-  discrete_tuple_expr(rows.map(row => discrete_tuple_expr(row)))
+  @symcore.Expr::Tuple(rows.map(row => @symcore.Expr::Tuple(row)))
 }
 
 ///|
-fn discrete_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
-  @symcore.tuple_items(expr)
-}
-
 ///|
 fn binomial_bigint(n : Int, k : Int) -> BigInt {
   if k < 0 || k > n {
@@ -79,7 +71,7 @@ fn discrete_extract_rel_to_var(
   event : Event,
   var_name : String,
 ) -> (RelOp, @symcore.Expr)? {
-  let x = @symcore.symbol(var_name)
+  let x = @symcore.Expr::Symbol(var_name)
   match event {
     Event::Rel(op~, lhs~, rhs~) =>
       if @symcore.compare_expr(lhs, x) == 0 {
@@ -317,35 +309,35 @@ fn symbolic_discrete_joint_box_cdf(
   params : Array[@symcore.Expr],
   k : @symcore.Expr,
 ) -> @symcore.Expr? {
-  match discrete_tuple_items(k) {
+  match @symcore.tuple_items(k) {
     Some(bounds) if !bounds.is_empty() => {
       let indices : Array[@symcore.Expr] = Array::new()
       let uppers : Array[@symcore.Expr] = Array::new()
       let guard_terms : Array[@symcore.Expr] = Array::new()
       for i in 0..<bounds.length() {
-        indices.push(@symcore.symbol("_k\{i + 1}"))
+        indices.push(@symcore.Expr::Symbol("_k\{i + 1}"))
         uppers.push(@symcore.function("floor", [bounds[i]]))
         guard_terms.push(@symcore.function("Ge", [bounds[i], @symcore.int(0)]))
       }
       let cond = if guard_terms.is_empty() {
-        @symcore.true_()
+        @symcore.Expr::Boolean(true)
       } else {
         @symcore.function("And", guard_terms)
       }
-      let point = discrete_tuple_expr(indices)
+      let point = @symcore.Expr::Tuple(indices)
       match symbolic_discrete_pmf_for(name, params, point) {
         Some(pmf) => {
           let mut sum_expr = pmf
           for i in 0..<indices.length() {
             sum_expr = @symcore.function("Sum", [
               sum_expr,
-              discrete_tuple_expr([indices[i], @symcore.int(0), uppers[i]]),
+              @symcore.Expr::Tuple([indices[i], @symcore.int(0), uppers[i]]),
             ])
           }
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([sum_expr, cond]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
+              @symcore.Expr::Tuple([sum_expr, cond]),
+              @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
             ]),
           )
         }
@@ -362,7 +354,7 @@ fn symbolic_discrete_cdf_formula(
   params : Array[@symcore.Expr],
   k : @symcore.Expr,
 ) -> @symcore.Expr? {
-  let kk = @symcore.symbol("_k")
+  let kk = @symcore.Expr::Symbol("_k")
   let fk = @symcore.function("floor", [k])
   match discrete_tag_from_name(name) {
     DiscreteTag::BetaBinomial if params.length() == 3 =>
@@ -371,14 +363,14 @@ fn symbolic_discrete_cdf_formula(
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(0)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([
+                  @symcore.Expr::Tuple([
                     kk,
                     @symcore.int(0),
                     @symcore.function("Min", [n, fk]),
@@ -386,7 +378,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(1), @symcore.Expr::Boolean(true)]),
             ]),
           )
         }
@@ -405,14 +397,14 @@ fn symbolic_discrete_cdf_formula(
           let high = @symcore.function("Min", [draws, succ])
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [fk, low]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([
+                  @symcore.Expr::Tuple([
                     kk,
                     low,
                     @symcore.function("Min", [high, fk]),
@@ -420,7 +412,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, high]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(1), @symcore.Expr::Boolean(true)]),
             ]),
           )
         }
@@ -432,14 +424,14 @@ fn symbolic_discrete_cdf_formula(
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([
+                  @symcore.Expr::Tuple([
                     kk,
                     @symcore.int(1),
                     @symcore.function("Min", [n, fk]),
@@ -447,7 +439,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(1), @symcore.Expr::Boolean(true)]),
             ]),
           )
         }
@@ -459,14 +451,14 @@ fn symbolic_discrete_cdf_formula(
           let n = params[0]
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([
+                  @symcore.Expr::Tuple([
                     kk,
                     @symcore.int(1),
                     @symcore.function("Min", [n, fk]),
@@ -474,7 +466,7 @@ fn symbolic_discrete_cdf_formula(
                 ]),
                 @symcore.function("Le", [k, n]),
               ]),
-              discrete_tuple_expr([@symcore.int(1), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(1), @symcore.Expr::Boolean(true)]),
             ]),
           )
         }
@@ -485,16 +477,16 @@ fn symbolic_discrete_cdf_formula(
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(0)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([kk, @symcore.int(0), fk]),
+                  @symcore.Expr::Tuple([kk, @symcore.int(0), fk]),
                 ]),
-                @symcore.true_(),
+                @symcore.Expr::Boolean(true),
               ]),
             ]),
           )
@@ -505,16 +497,16 @@ fn symbolic_discrete_cdf_formula(
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([kk, @symcore.int(1), fk]),
+                  @symcore.Expr::Tuple([kk, @symcore.int(1), fk]),
                 ]),
-                @symcore.true_(),
+                @symcore.Expr::Boolean(true),
               ]),
             ]),
           )
@@ -526,10 +518,10 @@ fn symbolic_discrete_cdf_formula(
           Some(
             @symcore.function("Sum", [
               pmf,
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 kk,
                 eval_arith(
-                  @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+                  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
                 ),
                 fk,
               ]),
@@ -542,16 +534,16 @@ fn symbolic_discrete_cdf_formula(
         Some(pmf) =>
           Some(
             @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.int(0),
                 @symcore.function("Lt", [k, @symcore.int(1)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 @symcore.function("Sum", [
                   pmf,
-                  discrete_tuple_expr([kk, @symcore.int(1), fk]),
+                  @symcore.Expr::Tuple([kk, @symcore.int(1), fk]),
                 ]),
-                @symcore.true_(),
+                @symcore.Expr::Boolean(true),
               ]),
             ]),
           )
@@ -586,7 +578,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
           if tag == DiscreteTag::Hermite && params.length() == 2 {
             let a1 = params[0]
             let a2 = params[1]
-            let jj = @symcore.symbol("_j")
+            let jj = @symcore.Expr::Symbol("_j")
             let summand = eval_arith(
               @symcore.mul([
                 @symcore.pow(
@@ -618,7 +610,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
             )
             let sum_expr = @symcore.function("Sum", [
               summand,
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 jj,
                 @symcore.int(0),
                 @symcore.function("floor", [
@@ -646,11 +638,11 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
             let kk = params[0]
             return Some(
               @symcore.function("Piecewise", [
-                discrete_tuple_expr([
+                @symcore.Expr::Tuple([
                   eval_arith(@symcore.pow(kk, @symcore.int(-1))),
                   @symcore.function("Eq", [k, @symcore.int(1)]),
                 ]),
-                discrete_tuple_expr([
+                @symcore.Expr::Tuple([
                   eval_arith(
                     @symcore.pow(
                       eval_arith(
@@ -667,7 +659,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                     @symcore.function("Le", [k, kk]),
                   ]),
                 ]),
-                discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
+                @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
               ]),
             )
           }
@@ -687,11 +679,11 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
               ]),
             )
             let rho = @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 eval_arith(@symcore.pow(kk, @symcore.int(-1))),
                 @symcore.function("Eq", [k, @symcore.int(1)]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 eval_arith(
                   @symcore.pow(
                     eval_arith(
@@ -708,10 +700,10 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   @symcore.function("Le", [k, kk]),
                 ]),
               ]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
             ])
             let tau = @symcore.function("Piecewise", [
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 eval_arith(
                   @symcore.mul([
                     r,
@@ -738,7 +730,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   ]),
                 ]),
               ]),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 eval_arith(
                   @symcore.mul([
                     r,
@@ -759,12 +751,12 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                   ]),
                 ]),
               ]),
-              discrete_tuple_expr([@symcore.int(0), @symcore.true_()]),
+              @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
             ])
-            let ii = @symcore.symbol("_i")
+            let ii = @symcore.Expr::Symbol("_i")
             let harmonic = @symcore.function("Sum", [
               @symcore.pow(ii, @symcore.int(-1)),
-              discrete_tuple_expr([
+              @symcore.Expr::Tuple([
                 ii,
                 @symcore.int(1),
                 eval_arith(
@@ -813,7 +805,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
             )
           }
           if tag == DiscreteTag::Multinomial && params.length() >= 2 {
-            match discrete_tuple_items(k) {
+            match @symcore.tuple_items(k) {
               Some(ks) if ks.length() == params.length() - 1 => {
                 let n = params[0]
                 let body_terms : Array[@symcore.Expr] = [
@@ -839,13 +831,13 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
                 let body = eval_arith(@symcore.mul(body_terms))
                 return Some(
                   @symcore.function("Piecewise", [
-                    discrete_tuple_expr([
+                    @symcore.Expr::Tuple([
                       body,
                       @symcore.function("Eq", [sum_k, n]),
                     ]),
-                    discrete_tuple_expr([
+                    @symcore.Expr::Tuple([
                       @symcore.int(0),
-                      @symcore.true_(),
+                      @symcore.Expr::Boolean(true),
                     ]),
                   ]),
                 )
@@ -854,7 +846,7 @@ pub fn discrete_pmf(rv : RandomVar, k : @symcore.Expr) -> @symcore.Expr? {
             }
           }
           if tag == DiscreteTag::NegativeMultinomial && params.length() >= 2 {
-            match discrete_tuple_items(k) {
+            match @symcore.tuple_items(k) {
               Some(ks) if ks.length() == params.length() - 1 => {
                 let k0 = params[0]
                 let sum_k = if ks.is_empty() {
@@ -1035,7 +1027,7 @@ fn symbolic_discrete_mean_by_sum(
   name : String,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
-  let kk = @symcore.symbol("_k")
+  let kk = @symcore.Expr::Symbol("_k")
   match discrete_tag_from_name(name) {
     DiscreteTag::IdealSoliton if params.length() == 1 =>
       match symbolic_discrete_pmf_for(name, params, kk) {
@@ -1044,7 +1036,7 @@ fn symbolic_discrete_mean_by_sum(
             eval_arith(
               @symcore.function("Sum", [
                 eval_arith(@symcore.mul([kk, pmf])),
-                discrete_tuple_expr([kk, @symcore.int(1), params[0]]),
+                @symcore.Expr::Tuple([kk, @symcore.int(1), params[0]]),
               ]),
             ),
           )
@@ -1057,7 +1049,7 @@ fn symbolic_discrete_mean_by_sum(
             eval_arith(
               @symcore.function("Sum", [
                 eval_arith(@symcore.mul([kk, pmf])),
-                discrete_tuple_expr([kk, @symcore.int(1), params[0]]),
+                @symcore.Expr::Tuple([kk, @symcore.int(1), params[0]]),
               ]),
             ),
           )
@@ -1072,14 +1064,14 @@ fn symbolic_discrete_variance_by_sum(
   name : String,
   params : Array[@symcore.Expr],
 ) -> @symcore.Expr? {
-  let kk = @symcore.symbol("_k")
+  let kk = @symcore.Expr::Symbol("_k")
   let bounds = match discrete_tag_from_name(name) {
     DiscreteTag::IdealSoliton if params.length() == 1 =>
       Some((@symcore.int(1), params[0]))
     DiscreteTag::RobustSoliton if params.length() == 3 =>
       Some((@symcore.int(1), params[0]))
     DiscreteTag::YuleSimon if params.length() == 1 =>
-      Some((@symcore.int(1), @symcore.oo()))
+      Some((@symcore.int(1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)))
     _ => None
   }
   match bounds {
@@ -1104,7 +1096,7 @@ fn symbolic_discrete_variance_by_sum(
                     pmf,
                   ]),
                 ),
-                discrete_tuple_expr([kk, lower, upper]),
+                @symcore.Expr::Tuple([kk, lower, upper]),
               ]),
             ),
           )
@@ -1149,7 +1141,7 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                       for i in 1..<params.length() {
                         means.push(eval_arith(@symcore.mul([n, params[i]])))
                       }
-                      Some(discrete_tuple_expr(means))
+                      Some(@symcore.Expr::Tuple(means))
                     }
                     DiscreteTag::NegativeMultinomial if params.length() >= 2 => {
                       let k0 = params[0]
@@ -1175,7 +1167,7 @@ pub fn discrete_mean(rv : RandomVar) -> @symcore.Expr? {
                           ]),
                         )
                       })
-                      Some(discrete_tuple_expr(means))
+                      Some(@symcore.Expr::Tuple(means))
                     }
                     DiscreteTag::BetaBinomial if params.length() == 3 =>
                       Some(

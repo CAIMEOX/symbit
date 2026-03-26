@@ -1,39 +1,39 @@
 ///|
 test "add flattens and folds constants" {
-  let expr = add([int(1), symbol("x"), add([int(2), symbol("y")])])
+  let expr = add([int(1), Expr::Symbol("x"), add([int(2), Expr::Symbol("y")])])
   inspect(@symprint.debug_repr(expr), content="(+ sym:x sym:y 3)")
 }
 
 ///|
 test "mul flattens and handles identities" {
-  let expr = mul([symbol("x"), int(1), mul([symbol("y"), int(2)])])
+  let expr = mul([Expr::Symbol("x"), int(1), mul([Expr::Symbol("y"), int(2)])])
   inspect(@symprint.debug_repr(expr), content="(* 2 sym:x sym:y)")
-  let zeroed = mul([symbol("x"), int(0), symbol("y")])
+  let zeroed = mul([Expr::Symbol("x"), int(0), Expr::Symbol("y")])
   inspect(@symprint.debug_repr(zeroed), content="0")
 }
 
 ///|
 test "pow normalizes trivial exponents" {
-  inspect(@symprint.debug_repr(pow(symbol("x"), int(1))), content="sym:x")
-  inspect(@symprint.debug_repr(pow(symbol("x"), int(0))), content="1")
+  inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(1))), content="sym:x")
+  inspect(@symprint.debug_repr(pow(Expr::Symbol("x"), int(0))), content="1")
   inspect(@symprint.debug_repr(pow(int(0), int(0))), content="1")
 }
 
 ///|
 test "subst replaces symbols" {
   let env : Map[String, Expr] = { "x": int(2) }
-  let expr = add([symbol("x"), symbol("y")])
+  let expr = add([Expr::Symbol("x"), Expr::Symbol("y")])
   let replaced = subst(expr, env)
   inspect(@symprint.debug_repr(replaced), content="(+ sym:y 2)")
 }
 
 ///|
 test "basic helpers expose structured heads" {
-  let rel = le(symbol("x"), int(2))
-  let tup = tuple_expr([symbol("x"), int(2)])
+  let rel = Expr::Relational(RelOp::Le, Expr::Symbol("x"), int(2))
+  let tup = Expr::Tuple([Expr::Symbol("x"), int(2)])
   let deriv = derivative(
-    function("f", [symbol("x")]),
-    symbol("x"),
+    function("f", [Expr::Symbol("x")]),
+    Expr::Symbol("x"),
     order=int(2),
   )
   inspect(@symprint.debug_repr(rel), content="(call Le sym:x 2)")
@@ -42,16 +42,16 @@ test "basic helpers expose structured heads" {
     @symprint.debug_repr(deriv),
     content="(call Derivative (call f sym:x) sym:x 2)",
   )
-  inspect(is_true(bool_expr(true)), content="true")
-  inspect(is_false(bool_expr(false)), content="true")
+  inspect(is_true(Expr::Boolean(true)), content="true")
+  inspect(is_false(Expr::Boolean(false)), content="true")
 }
 
 ///|
 test "free_symbols respects bound variables" {
-  let x = symbol("x")
-  let y = symbol("y")
-  let z = symbol("z")
-  let lam = lambda_expr(tuple_expr([x, y]), add([x, z]))
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  let lam = lambda_expr(Expr::Tuple([x, y]), add([x, z]))
   let deriv = derivative(function("f", [x, y]), x, order=y)
   json_inspect(free_symbols(lam).map(@symprint.to_string), content=["z"])
   json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["y"])
@@ -61,13 +61,13 @@ test "free_symbols respects bound variables" {
 
 ///|
 test "plain symbol names no longer coerce to core singletons" {
-  inspect(@symprint.debug_repr(symbol("pi")), content="sym:pi")
-  inspect(@symprint.debug_repr(symbol("True")), content="sym:True")
-  match number_symbol_kind(symbol("pi")) {
+  inspect(@symprint.debug_repr(Expr::Symbol("pi")), content="sym:pi")
+  inspect(@symprint.debug_repr(Expr::Symbol("True")), content="sym:True")
+  match number_symbol_kind(Expr::Symbol("pi")) {
     Some(_) => fail("plain symbol pi should not be a number symbol")
     None => ()
   }
-  match bool_value(symbol("True")) {
+  match bool_value(Expr::Symbol("True")) {
     Some(_) => fail("plain symbol True should not be a boolean atom")
     None => ()
   }
@@ -75,9 +75,9 @@ test "plain symbol names no longer coerce to core singletons" {
 
 ///|
 test "number symbols are structured constants" {
-  let pi_expr = pi()
-  let imag = imag_unit()
-  let inf = oo()
+  let pi_expr = Expr::NumberSymbol(NumberSymbolKind::Pi)
+  let imag = Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)
+  let inf = Expr::NumberSymbol(NumberSymbolKind::Infinity)
   match expr_form(pi_expr) {
     ExprForm::NumberSymbol(NumberSymbolKind::Pi) => ()
     _ => fail("expected pi number symbol")
@@ -91,7 +91,7 @@ test "number symbols are structured constants" {
     _ => fail("expected oo number symbol")
   }
   json_inspect(
-    free_symbols(add([pi_expr, imag, symbol("x")])).map(@symprint.to_string),
+    free_symbols(add([pi_expr, imag, Expr::Symbol("x")])).map(@symprint.to_string),
     content=["x"],
   )
   inspect(@symprint.to_string(mul([int(-1), inf])), content="-oo")
@@ -101,7 +101,7 @@ test "number symbols are structured constants" {
 test "dummy and wild are distinct structured symbols" {
   let d1 = dummy(name="x")
   let d2 = dummy(name="x")
-  let w = wild("x")
+  let w = Expr::Wild("x")
   assert_false(d1 == d2)
   inspect(@symprint.to_string(d1), content="_x")
   inspect(@symprint.to_string(w), content="x_")
@@ -125,13 +125,13 @@ test "dummy and wild are distinct structured symbols" {
 
 ///|
 test "boolean and number symbol helper accessors stay structured" {
-  inspect(bool_value(true_()).unwrap_or(false), content="true")
-  inspect(bool_value(true_()).unwrap_or(false), content="true")
-  match number_symbol_kind(pi()) {
+  inspect(bool_value(Expr::Boolean(true)).unwrap_or(false), content="true")
+  inspect(bool_value(Expr::Boolean(true)).unwrap_or(false), content="true")
+  match number_symbol_kind(Expr::NumberSymbol(NumberSymbolKind::Pi)) {
     Some(NumberSymbolKind::Pi) => ()
     _ => fail("expected pi kind")
   }
-  match number_symbol_kind(imag_unit()) {
+  match number_symbol_kind(Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)) {
     Some(NumberSymbolKind::ImaginaryUnit) => ()
     _ => fail("expected I kind")
   }
@@ -143,10 +143,10 @@ test "free_symbols tracks dummy identity and bound dummy removal" {
   let d2 = dummy(name="x")
   let expr = add([d1, d2])
   inspect(free_symbols(expr).length(), content="2")
-  let lam = lambda_expr(tuple_expr([d1]), add([d1, d2, symbol("y")]))
+  let lam = lambda_expr(Expr::Tuple([d1]), add([d1, d2, Expr::Symbol("y")]))
   let free = free_symbols(lam)
   inspect(free.length(), content="2")
-  assert_true(free.contains(symbol("y")))
+  assert_true(free.contains(Expr::Symbol("y")))
   assert_true(free.contains(d2))
   assert_false(free.contains(d1))
 }
@@ -154,7 +154,7 @@ test "free_symbols tracks dummy identity and bound dummy removal" {
 ///|
 test "derivative free symbols remove dummy variables but keep order symbols" {
   let d = dummy(name="x")
-  let order = symbol("n")
+  let order = Expr::Symbol("n")
   let expr = derivative(function("f", [d, order]), d, order~)
   let free = free_symbols(expr)
   inspect(free.length(), content="1")
@@ -164,10 +164,10 @@ test "derivative free symbols remove dummy variables but keep order symbols" {
 
 ///|
 test "undefined function heads are distinct from applied functions" {
-  let f = undefined_function("f")
-  let sin_head = function_head("sin")
-  let fx = applied_undefined_function("f", [symbol("x")])
-  let sinx = function("sin", [symbol("x")])
+  let f = Expr::UndefinedFunction("f")
+  let sin_head = Expr::FunctionHead("sin")
+  let fx = applied_undefined_function("f", [Expr::Symbol("x")])
+  let sinx = function("sin", [Expr::Symbol("x")])
   match expr_form(f) {
     ExprForm::UndefinedFunction(name) => inspect(name, content="f")
     _ => fail("expected undefined function head")
@@ -188,9 +188,9 @@ test "undefined function heads are distinct from applied functions" {
 
 ///|
 test "formal application helpers roundtrip named and undefined heads" {
-  let x = symbol("x")
-  let sin_head = function_head("sin")
-  let f_head = undefined_function("f")
+  let x = Expr::Symbol("x")
+  let sin_head = Expr::FunctionHead("sin")
+  let f_head = Expr::UndefinedFunction("f")
   match apply(sin_head, [x]) {
     Some(expr) => {
       inspect(@symprint.to_string(expr), content="sin(x)")
@@ -218,7 +218,7 @@ test "formal application helpers roundtrip named and undefined heads" {
 
 ///|
 test "dict is a first-class container node" {
-  let d = dict_expr([(symbol("x"), symbol("y")), (int(1), symbol("z"))])
+  let d = Expr::Dict([(Expr::Symbol("x"), Expr::Symbol("y")), (int(1), Expr::Symbol("z"))])
   match expr_form(d) {
     ExprForm::Dict(items) => inspect(items.length(), content="2")
     _ => fail("expected dict form")
@@ -237,14 +237,14 @@ test "dict is a first-class container node" {
 ///|
 test "sympify lifts typed tuple and dict inputs" {
   let expr = sympify_tuple([
-    sympify_int_input(1),
-    sympify_symbol_input("x"),
-    sympify_bool_input(true),
+    SympifyInput::FromInt(1),
+    SympifyInput::SymbolName("x"),
+    SympifyInput::FromBool(true),
   ])
   inspect(@symprint.to_string(expr), content="(1, x, True)")
   let dict_value = sympify_dict([
-    (sympify_symbol_input("x"), sympify_int_input(2)),
-    (sympify_symbol_input("y"), sympify_expr_input(undefined_function("f"))),
+    (SympifyInput::SymbolName("x"), SympifyInput::FromInt(2)),
+    (SympifyInput::SymbolName("y"), SympifyInput::FromExpr(Expr::UndefinedFunction("f"))),
   ])
   inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
 }
@@ -252,9 +252,9 @@ test "sympify lifts typed tuple and dict inputs" {
 ///|
 test "atoms collects unique atomic leaves in canonical order" {
   let expr = add([
-    function("f", [symbol("x")]),
-    mul([int(2), symbol("x")]),
-    tuple_expr([symbol("y"), int(1)]),
+    function("f", [Expr::Symbol("x")]),
+    mul([int(2), Expr::Symbol("x")]),
+    Expr::Tuple([Expr::Symbol("y"), int(1)]),
   ])
   json_inspect(atoms(expr).map(@symprint.to_string), content=[
     "x", "y", "1", "2",
@@ -263,7 +263,7 @@ test "atoms collects unique atomic leaves in canonical order" {
 
 ///|
 test "preorder and postorder traversal stay structural" {
-  let x = symbol("x")
+  let x = Expr::Symbol("x")
   let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
   json_inspect(preorder(expr).map(@symprint.to_string), content=[
     "Mod(x, 2) + Derivative(f(x), x, 1)", "Mod(x, 2)", "x", "2", "Derivative(f(x), x, 1)",
@@ -277,11 +277,11 @@ test "preorder and postorder traversal stay structural" {
 
 ///|
 test "xreplace performs exact structural replacement" {
-  let x = symbol("x")
-  let y = symbol("y")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
   let fx = function("f", [x])
   let expr = add([fx, x, y])
-  let replaced = xreplace(expr, [(x, int(2)), (fx, symbol("z"))])
+  let replaced = xreplace(expr, [(x, int(2)), (fx, Expr::Symbol("z"))])
   inspect(@symprint.debug_repr(replaced), content="(+ sym:y sym:z 2)")
   inspect(
     @symprint.debug_repr(xreplace(function("f", [x]), [(x, int(2))])),
@@ -292,11 +292,20 @@ test "xreplace performs exact structural replacement" {
 ///|
 test "evalf keeps undefined applications exact and evaluates Mod numerically" {
   inspect(
-    @symprint.to_string(evalf(applied_undefined_function("f", [pi()]))),
+    @symprint.to_string(
+      evalf(
+        applied_undefined_function(
+          "f",
+          [Expr::NumberSymbol(NumberSymbolKind::Pi)],
+        ),
+      ),
+    ),
     content="f(pi)",
   )
   inspect(
-    @symprint.to_string(evalf(mod_expr(pi(), int(2)))).has_prefix(
+    @symprint.to_string(
+      evalf(mod_expr(Expr::NumberSymbol(NumberSymbolKind::Pi), int(2))),
+    ).has_prefix(
       "1.14159265358979",
     ),
     content="true",
@@ -306,12 +315,12 @@ test "evalf keeps undefined applications exact and evaluates Mod numerically" {
 ///|
 test "compare_expr follows function symbol and mod ordering" {
   let exprs : Array[Expr] = [
-    symbol("x"),
-    pi(),
-    applied_undefined_function("f", [symbol("x")]),
-    undefined_function("f"),
+    Expr::Symbol("x"),
+    Expr::NumberSymbol(NumberSymbolKind::Pi),
+    applied_undefined_function("f", [Expr::Symbol("x")]),
+    Expr::UndefinedFunction("f"),
     dummy(name="x"),
-    mod_expr(symbol("x"), int(2)),
+    mod_expr(Expr::Symbol("x"), int(2)),
   ]
   sort_exprs_in_place(exprs)
   json_inspect(exprs.map(@symprint.to_string), content=[
@@ -321,7 +330,7 @@ test "compare_expr follows function symbol and mod ordering" {
 
 ///|
 test "mod is a first-class structured core node" {
-  let expr = mod_expr(add([symbol("x"), int(1)]), int(3))
+  let expr = mod_expr(add([Expr::Symbol("x"), int(1)]), int(3))
   inspect(head_name(expr), content="Mod")
   json_inspect(args(expr).map(@symprint.to_string), content=["x + 1", "3"])
   inspect(@symprint.debug_repr(expr), content="(call Mod (+ sym:x 1) 3)")
@@ -329,9 +338,9 @@ test "mod is a first-class structured core node" {
 
 ///|
 test "subst respects lambda bound variables" {
-  let x = symbol("x")
-  let y = symbol("y")
-  let z = symbol("z")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
   let expr = lambda_expr(x, add([x, y]))
   let env : Map[String, Expr] = { "x": int(2), "y": int(3) }
   inspect(@symprint.to_string(subst(expr, env)), content="Lambda(x, x + 3)")
@@ -349,9 +358,9 @@ test "subst respects lambda bound variables" {
 
 ///|
 test "subst respects Subs bound variables" {
-  let x = symbol("x")
-  let y = symbol("y")
-  let z = symbol("z")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
   let expr = subs_expr(add([x, y]), x, z)
   let env : Map[String, Expr] = { "x": int(2), "y": int(3), "z": int(4) }
   inspect(@symprint.to_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
@@ -359,9 +368,9 @@ test "subst respects Subs bound variables" {
 
 ///|
 test "subst respects derivative binding and capture rules" {
-  let x = symbol("x")
-  let y = symbol("y")
-  let z = symbol("z")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
   let fx = function("f", [x])
   let simple = derivative(fx, x)
   let with_free = derivative(add([fx, y]), x)
@@ -389,21 +398,29 @@ test "subst respects derivative binding and capture rules" {
 
 ///|
 test "numeric singleton predicates stay aligned with structured core atoms" {
-  assert_true(is_number_symbol(pi()))
-  assert_true(is_number_symbol(imag_unit()))
-  assert_true(is_number_symbol(oo()))
-  assert_true(is_number_symbol(nan_expr()))
-  assert_true(is_infinite(oo()))
-  assert_true(is_infinite(neg_oo()))
-  assert_true(is_infinite(zoo()))
-  assert_false(is_infinite(pi()))
-  assert_true(is_nan(nan_expr()))
-  assert_false(is_nan(pi()))
+  assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::Pi)))
+  assert_true(
+    is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)),
+  )
+  assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::Infinity)))
+  assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::NaN)))
+  assert_true(is_infinite(Expr::NumberSymbol(NumberSymbolKind::Infinity)))
+  assert_true(
+    is_infinite(Expr::NumberSymbol(NumberSymbolKind::NegativeInfinity)),
+  )
+  assert_true(
+    is_infinite(Expr::NumberSymbol(NumberSymbolKind::ComplexInfinity)),
+  )
+  assert_false(is_infinite(Expr::NumberSymbol(NumberSymbolKind::Pi)))
+  assert_true(is_nan(Expr::NumberSymbol(NumberSymbolKind::NaN)))
+  assert_false(is_nan(Expr::NumberSymbol(NumberSymbolKind::Pi)))
   assert_true(is_zero(int(0)))
-  assert_true(is_zero(float(Float::from_int(0))))
+  assert_true(is_zero(Expr::Float(Float::from_int(0))))
   assert_true(is_one(int(1)))
-  assert_true(is_one(float(Float::from_int(1))))
-  assert_true(is_finite_number_atom(pi()))
-  assert_false(is_finite_number_atom(oo()))
-  assert_false(is_finite_number_atom(nan_expr()))
+  assert_true(is_one(Expr::Float(Float::from_int(1))))
+  assert_true(is_finite_number_atom(Expr::NumberSymbol(NumberSymbolKind::Pi)))
+  assert_false(
+    is_finite_number_atom(Expr::NumberSymbol(NumberSymbolKind::Infinity)),
+  )
+  assert_false(is_finite_number_atom(Expr::NumberSymbol(NumberSymbolKind::NaN)))
 }

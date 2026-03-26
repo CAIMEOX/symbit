@@ -31,7 +31,7 @@ using @sympolys {
 
 ///|
 fn expr_sym(name : String) -> @symcore.Expr {
-  @symcore.symbol(name)
+  @symcore.Expr::Symbol(name)
 }
 
 ///|

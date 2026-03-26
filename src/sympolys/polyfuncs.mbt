@@ -30,7 +30,7 @@ pub fn interpolate(
       }
       let (xj, _) = points[j]
       denom = denom.mul_r(xi.add_r(xj.neg_r()))
-      let term_expr = symbol(gen) - @symcore.number(xj)
+      let term_expr = Expr::Symbol(gen) - @symcore.Expr::Number(xj)
       let term = builder.from_expr(term_expr)
       basis = basis.mul(term)
     }
@@ -145,7 +145,7 @@ pub fn symmetrize(
   if n == 0 {
     return SymmetrizeResult::{
       sym: expr,
-      rem: @symcore.number(@symnum.BigRational::zero()),
+      rem: @symcore.Expr::Number(@symnum.BigRational::zero()),
       mapping: [],
     }
   }
@@ -168,7 +168,7 @@ pub fn symmetrize(
   }
   for i in 0..<limit {
     let sym_name = sym_names[i]
-    let sym_var = symbol(sym_name)
+    let sym_var = Expr::Symbol(sym_name)
     let elem_expr = elem_polys[i].to_expr()
     mapping.push((sym_var, elem_expr))
     env.set(sym_name, elem_expr)
@@ -576,7 +576,7 @@ fn symmetrize_poly(
 ///|
 fn horner_poly(poly : Poly, gens : Array[String]) -> Expr raise PolyError {
   if poly.is_zero() {
-    return @symcore.number(@symnum.BigRational::zero())
+    return @symcore.Expr::Number(@symnum.BigRational::zero())
   }
   if gens.length() <= 1 {
     if gens.length() == 0 {
@@ -584,7 +584,7 @@ fn horner_poly(poly : Poly, gens : Array[String]) -> Expr raise PolyError {
     }
     let deg = poly.degree(0)
     let coeff_polys = univar_coeff_polys(poly, [])
-    let sym = symbol(gens[0])
+    let sym = Expr::Symbol(gens[0])
     let mut form = coeff_polys[deg].to_expr()
     let mut d = deg - 1
     while d >= 0 {
@@ -600,7 +600,7 @@ fn horner_poly(poly : Poly, gens : Array[String]) -> Expr raise PolyError {
   }
   let deg = poly.degree(0)
   let coeff_polys = univar_coeff_polys(poly, rest_gens)
-  let sym = symbol(gens[0])
+  let sym = Expr::Symbol(gens[0])
   let mut form = horner_poly(coeff_polys[deg], rest_gens)
   let mut d = deg - 1
   while d >= 0 {
@@ -652,7 +652,7 @@ fn elementary_sym_expr(roots : Array[String], k : Int) -> Expr {
   let terms : Array[Expr] = Array::new()
   build_sym_expr_terms(terms, roots, k, 0, [])
   if terms.is_empty() {
-    @symcore.number(@symnum.BigRational::zero())
+    @symcore.Expr::Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -671,10 +671,10 @@ fn build_sym_expr_terms(
   if chosen.length() == k {
     let factors : Array[Expr] = Array::new()
     for name in chosen {
-      factors.push(symbol(name))
+      factors.push(Expr::Symbol(name))
     }
     let term = if factors.is_empty() {
-      @symcore.number(@symnum.BigRational::one())
+      @symcore.Expr::Number(@symnum.BigRational::one())
     } else if factors.length() == 1 {
       factors[0]
     } else {

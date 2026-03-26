@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}
 
 ///|
 /// Shared symbolic helpers for `physics.continuum_mechanics` ports.
@@ -18,7 +18,7 @@ pub fn cm_rat_expr(num : Int, den : Int) -> Expr {
 
 ///|
 pub fn cm_symbol(name : String) -> Expr {
-  symbol(name)
+  Expr::Symbol(name)
 }
 
 ///|

@@ -46,7 +46,7 @@ fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
           } else {
             let exp_int = num.to_int()
             if exp_int >= 0 {
-              @symcore.number(rational_pow(nb, exp_int))
+              @symcore.Expr::Number(rational_pow(nb, exp_int))
             } else {
               @symcore.pow(b, e)
             }

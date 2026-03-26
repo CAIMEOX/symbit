@@ -21,7 +21,7 @@ pub fn integral(expr : Expr, limits? : Array[Expr] = []) -> Expr {
 /// `integral_limit([x])` corresponds to an indefinite limit, while
 /// `integral_limit([x, a, b])` represents integration over `[a, b]`.
 pub fn integral_limit(items : Array[Expr]) -> Expr {
-  tuple_expr(items)
+  Expr::Tuple(items)
 }
 
 ///|
@@ -44,7 +44,7 @@ fn inverse_laplace_transform_with_none(expr : Expr, s : Expr, t : Expr) -> Expr 
     expr,
     s,
     t,
-    @symcore.symbol("_None"),
+    @symcore.Expr::Symbol("_None"),
   ])
 }
 
@@ -206,7 +206,7 @@ pub fn integrate(expr : Expr, limits? : Array[Expr] = []) -> Expr {
             match meijerg_integrate(expr, name) {
               Some(res) => expr_simplify(res)
               None =>
-                integral(expr, limits=[tuple_expr([@symcore.symbol(name)])])
+                integral(expr, limits=[Expr::Tuple([@symcore.Expr::Symbol(name)])])
             }
         }
       None => integral(expr)
@@ -295,7 +295,7 @@ pub fn inverse_laplace_transform_eval(
   if noconds {
     value
   } else {
-    tuple_expr([value, @symcore.true_()])
+    Expr::Tuple([value, @symcore.Expr::Boolean(true)])
   }
 }
 

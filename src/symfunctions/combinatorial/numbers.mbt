@@ -163,7 +163,7 @@ pub fn harmonic(n : Expr) -> Expr {
         @symcore.function("harmonic", [n])
       } else {
         match harmonic_rational(ni) {
-          Some(value) => @symcore.number(value)
+          Some(value) => @symcore.Expr::Number(value)
           None => @symcore.function("harmonic", [n])
         }
       }
@@ -178,7 +178,7 @@ pub fn bernoulli(n : Expr) -> Expr {
     Some(bi) => {
       let ni = bi.to_int()
       match bernoulli_small(ni) {
-        Some(v) => @symcore.number(v)
+        Some(v) => @symcore.Expr::Number(v)
         None => @symcore.function("bernoulli", [n])
       }
     }

@@ -1,7 +1,7 @@
 ///|
 test "polyroots wb: arity and degree guard errors" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let b2 = PolyBuilder::new(["x", "y"], Domain::QQ)
   let p2 = b2.from_expr(x + y)
@@ -41,7 +41,7 @@ test "polyroots wb: arity and degree guard errors" {
 
 ///|
 test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
 
   // Degree-3 polynomial with a linear and an irreducible quadratic factor.
@@ -61,7 +61,7 @@ test "polyroots wb: cubic/quartic mixed-factor quadratic branch" {
 
 ///|
 test "polyroots wb: roots_for_factor and zero-root handling" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
 
   let const_poly = b.from_expr(@symcore.int(7))

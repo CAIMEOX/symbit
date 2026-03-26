@@ -8,7 +8,7 @@ fn ag_norm(expr : @symcore.Expr) -> String raise {
 
 ///|
 test "agca: ideal sum/product/contains basics" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let builder = PolyBuilder::new(["x"], Domain::QQ)
 
   let i = @sympolys.ideal([
@@ -30,8 +30,8 @@ test "agca: ideal sum/product/contains basics" {
 
 ///|
 test "agca: ring homomorphism applies substitutions" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let source = PolyBuilder::new(["x"], Domain::QQ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),
   )
@@ -49,8 +49,8 @@ test "agca: ring homomorphism applies substitutions" {
 
 ///|
 test "agca: groebner membership handles linear combinations and multivariate ideals" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let qx = PolyBuilder::new(["x"], Domain::QQ)
   let i1 = @sympolys.ideal([
@@ -73,8 +73,8 @@ test "agca: groebner membership handles linear combinations and multivariate ide
 
 ///|
 test "agca: intersection, union, powers, and whole-ring predicates" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
 
   let i = @sympolys.ideal([builder.from_expr(x), builder.from_expr(y)])

@@ -18,7 +18,7 @@ fn control_py(parts : Array[String]) -> String {
 
 ///|
 test "physics.control.control_plots: pole-zero parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(
     (s ^ @symcore.int(2)) + @symcore.int(1),
     (s ^ @symcore.int(2)) + s + @symcore.int(2),
@@ -54,7 +54,7 @@ test "physics.control.control_plots: pole-zero parity" {
 
 ///|
 test "physics.control.control_plots: response parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let step = step_response_numerical_data(
@@ -136,7 +136,7 @@ test "physics.control.control_plots: response parity" {
 
 ///|
 test "physics.control.control_plots: bode parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let mag = bode_magnitude_numerical_data(
@@ -196,7 +196,7 @@ test "physics.control.control_plots: bode parity" {
 
 ///|
 test "physics.control.control_plots: expr parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let nyquist = nyquist_plot_expr(tf)

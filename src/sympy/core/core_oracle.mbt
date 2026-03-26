@@ -164,7 +164,7 @@ pub fn core_subst_symbol_sstr(
 ) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))
-  globals.set("old", @sympy.expr_to_sympy(@symcore.symbol(symbol_name)))
+  globals.set("old", @sympy.expr_to_sympy(@symcore.Expr::Symbol(symbol_name)))
   globals.set("new", @sympy.expr_to_sympy(new_expr))
   py_str_obj(core_eval_with_globals("sympy.sstr(expr.subs(old, new))", globals))
 }

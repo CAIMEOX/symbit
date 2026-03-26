@@ -15,7 +15,7 @@ fn setbool_str_adv(val : SetBool) -> String {
 
 ///|
 test "symsets conditionset parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let base = integers()
   let cs_true = condition_set(x, @symlogic.bool_true(), base~)
   assert_eq(to_string(cs_true), sympy_set_str_adv(cs_true))
@@ -39,7 +39,7 @@ test "symsets conditionset parity" {
 
 ///|
 test "symsets imageset parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let base = integers()
   let img_id = image_set(x, x, base~)
   assert_eq(to_string(img_id), sympy_set_str_adv(img_id))

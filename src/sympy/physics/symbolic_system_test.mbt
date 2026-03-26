@@ -17,9 +17,9 @@ fn symbolic_system_fixture() -> (
   let u = @symvector.dynamicsymbol("u")
   let v = @symvector.dynamicsymbol("v")
   let lam = @symvector.dynamicsymbol("lambda")
-  let m = @symcore.symbol("m")
-  let l = @symcore.symbol("l")
-  let g = @symcore.symbol("g")
+  let m = @symcore.Expr::Symbol("m")
+  let l = @symcore.Expr::Symbol("l")
+  let g = @symcore.Expr::Symbol("g")
   let inv_m = m ^ @symcore.int(-1)
   let dyn_implicit_mat = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(1), @symcore.int(0), @symcore.int(-1) * x * inv_m],
@@ -91,7 +91,7 @@ fn symbolic_system_fixture() -> (
     comb_implicit_mat,
     comb_implicit_rhs,
     kin_explicit_rhs,
-    [(@symcore.symbol("PE"), m * g * (l + y))],
+    [(@symcore.Expr::Symbol("PE"), m * g * (l + y))],
     [pa.as_bodylike()],
     loads,
   )

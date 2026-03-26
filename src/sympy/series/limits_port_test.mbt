@@ -11,7 +11,7 @@ fn normalize_limit_str(s : String) -> String raise {
 
 ///|
 test "symseries limit finite point" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let ours = limit(expr, x, @symcore.int(0))
   let sympy = limit_str(expr, "x", @symcore.int(0))
@@ -20,30 +20,30 @@ test "symseries limit finite point" {
 
 ///|
 test "symseries limit infinity rational" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let num = @symcore.add([
     @symcore.mul([@symcore.int(2), @symcore.pow(x, @symcore.int(2))]),
     @symcore.int(1),
   ])
   let den = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let expr = @symcore.mul([num, @symcore.pow(den, @symcore.int(-1))])
-  let ours = limit(expr, x, @symcore.oo())
-  let sympy = limit_str(expr, "x", @symcore.oo())
+  let ours = limit(expr, x, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+  let sympy = limit_str(expr, "x", @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
 ///|
 test "symseries limit infinity zero" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.mul([@symcore.int(1), @symcore.pow(x, @symcore.int(-1))])
-  let ours = limit(expr, x, @symcore.oo())
-  let sympy = limit_str(expr, "x", @symcore.oo())
+  let ours = limit(expr, x, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+  let sympy = limit_str(expr, "x", @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   assert_eq(normalize_limit_expr(ours), normalize_limit_str(sympy))
 }
 
 ///|
 test "symseries Limit struct doit" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([@symcore.pow(x, @symcore.int(2)), @symcore.int(1)])
   let lim = Limit::{ expr, variable: x, point: @symcore.int(0), dir: "+" }
   let ours = lim.doit()
@@ -53,7 +53,7 @@ test "symseries Limit struct doit" {
 
 ///|
 test "symseries limit direction parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let denom = @symcore.add([x, @symcore.int(-1)])
   let expr = @symcore.pow(denom, @symcore.int(-1))
   let ours = limit(expr, x, @symcore.int(1), dir="-")
@@ -63,7 +63,7 @@ test "symseries limit direction parity" {
 
 ///|
 test "symseries limit higher-order pole parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
 
   let even_pole = @symcore.pow(x, @symcore.int(-2))
   let even_left = limit(even_pole, x, @symcore.int(0), dir="-")

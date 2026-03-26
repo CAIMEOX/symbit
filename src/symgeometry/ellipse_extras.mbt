@@ -86,8 +86,8 @@ fn ellipse_section_modulus_tuple(
 ///|
 pub fn Ellipse::evolute(
   self : Ellipse,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
 ) -> Expr raise {
   let two_thirds = @symcore.rational_from_ints(2, 3)
   let first = (self.hradius_ * (x - self.center_.coords_[0])) ^ two_thirds
@@ -247,8 +247,8 @@ pub fn Circle::section_modulus(
 ///|
 pub fn Circle::evolute(
   self : Circle,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
 ) -> Expr raise {
   Ellipse::{
     center_: self.center_,

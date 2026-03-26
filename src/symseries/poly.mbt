@@ -62,20 +62,20 @@ fn expr_preserve_numeric_like(
 ) -> @symcore.Expr {
   match source {
     @symcore.Expr::Float(f) =>
-      @symcore.float(
+      @symcore.Expr::Float(
         @symcore.Float::from_exact(exact, prec=f.precision()) catch {
           _ => @symcore.Float::from_mpf(@symnum.fnan, prec=f.precision())
         },
       )
     @symcore.Expr::ComplexFloat(z) =>
-      @symcore.complex_float(
+      @symcore.Expr::ComplexFloat(
         @symcore.ComplexFloat::from_exact_parts(
           exact,
           @symnum.BigRational::zero(),
           prec=z.precision(),
         ),
       )
-    _ => @symcore.number(exact)
+    _ => @symcore.Expr::Number(exact)
   }
 }
 

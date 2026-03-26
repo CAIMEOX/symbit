@@ -14,7 +14,7 @@ pub fn meijerg_integrate(expr : Expr, var_name : String) -> Expr? {
         Some(
           expr_mul(
             expr_div(sqrt_pi(), expr_int(2)),
-            @symspec.erf(expr_mul(scale, @symcore.symbol(var_name))),
+            @symspec.erf(expr_mul(scale, @symcore.Expr::Symbol(var_name))),
           ),
         )
       None => None
@@ -46,7 +46,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(@symspec.si(expr_mul(a, @symcore.symbol(var_name))))
+                  Some(@symspec.si(expr_mul(a, @symcore.Expr::Symbol(var_name))))
                 } else {
                   None
                 }
@@ -59,7 +59,7 @@ fn sincos_division(expr : Expr, var_name : String) -> Expr? {
                 let a = pair.0
                 let b = pair.1
                 if expr_is_zero(b) && !expr_is_zero(a) {
-                  Some(@symspec.ci(expr_mul(a, @symcore.symbol(var_name))))
+                  Some(@symspec.ci(expr_mul(a, @symcore.Expr::Symbol(var_name))))
                 } else {
                   None
                 }

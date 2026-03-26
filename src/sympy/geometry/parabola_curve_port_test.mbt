@@ -35,14 +35,14 @@ test "geometry.parabola parity repr vertex equation and intersection" {
 
 ///|
 test "geometry.curve parity repr arbitrary point and rotation" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let c = curve(
     [@symcore.int(2) * s, s ^ @symcore.int(2)],
     s,
     @symcore.int(0),
     @symcore.int(2),
   )
-  let ap = c.arbitrary_point(parameter=@symcore.symbol("z"))
+  let ap = c.arbitrary_point(parameter=@symcore.Expr::Symbol("z"))
   assert_true(
     geometry_expr_equal(
       @symprint.to_string(ap.x()),
@@ -56,9 +56,9 @@ test "geometry.curve parity repr arbitrary point and rotation" {
     ),
   )
   let rotated = c.rotate(
-    @symcore.pi() * (@symcore.int(2) ^ @symcore.int(-1)),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * (@symcore.int(2) ^ @symcore.int(-1)),
   )
-  let rot_pt = rotated.arbitrary_point(parameter=@symcore.symbol("z"))
+  let rot_pt = rotated.arbitrary_point(parameter=@symcore.Expr::Symbol("z"))
   assert_true(
     geometry_expr_equal(
       @symprint.to_string(rot_pt.x()),
@@ -75,7 +75,7 @@ test "geometry.curve parity repr arbitrary point and rotation" {
 
 ///|
 test "geometry.curve parity parameter helpers" {
-  let t = @symcore.symbol("t")
+  let t = @symcore.Expr::Symbol("t")
   let c = curve(
     [@symcore.int(2) * t, t ^ @symcore.int(2)],
     t,
@@ -90,9 +90,9 @@ test "geometry.curve parity parameter helpers" {
 
 ///|
 test "geometry.curve parity free symbol helpers" {
-  let t = @symcore.symbol("t")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
+  let t = @symcore.Expr::Symbol("t")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
   let c = curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
   assert_eq(
     expr_set_summary(c.free_symbols()),

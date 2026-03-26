@@ -19,7 +19,7 @@ test "matrices parity charpoly eigenvals and diagonalize" {
     [@symcore.int(1), @symcore.int(2)],
     [@symcore.int(3), @symcore.int(4)],
   ])
-  let lam = @symcore.symbol("lam")
+  let lam = @symcore.Expr::Symbol("lam")
   assert_eq(
     "0",
     py_list_text(

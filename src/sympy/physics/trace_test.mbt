@@ -1,11 +1,11 @@
 ///|
 test "physics.quantum.trace: scalar, symbolic, and matrix trace" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let a_op = @symcore.symbol("A")
-  let b_op = @symcore.symbol("B")
-  let c_op = @symcore.symbol("C")
-  let d_op = @symcore.symbol("D")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let a_op = @symcore.Expr::Symbol("A")
+  let b_op = @symcore.Expr::Symbol("B")
+  let c_op = @symcore.Expr::Symbol("C")
+  let d_op = @symcore.Expr::Symbol("D")
 
   quantum_test_assert_string_equal(
     @symprint.to_string(tr(a + b)),

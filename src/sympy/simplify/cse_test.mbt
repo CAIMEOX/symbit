@@ -1,7 +1,7 @@
 ///|
 test "symsimplify cse reconstruction preserves semantics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let xy = @symcore.mul([x, y])
   let exprs = [
     @symcore.add([xy, @symcore.function("sin", [xy])]),

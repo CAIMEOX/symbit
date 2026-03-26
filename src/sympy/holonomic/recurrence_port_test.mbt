@@ -15,7 +15,7 @@ fn recurrence_srepr_local(op : RecurrenceOperator) -> String raise {
 
 ///|
 test "holonomic recurrence: shift commutation parity" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let (r, sn) = recurrence_operators(symbol_var=n)
   let n_op = recurrence_operator([n], r)
   let n2_op = recurrence_operator([@symcore.pow(n, @symcore.int(2))], r)
@@ -32,7 +32,7 @@ test "holonomic recurrence: shift commutation parity" {
 
 ///|
 test "holonomic recurrence: multiplication and power parity" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let (r, sn) = recurrence_operators(symbol_var=n)
   let n2 = @symcore.pow(n, @symcore.int(2))
   let p = (sn.pow(3) * recurrence_operator([n2], r) +
@@ -43,7 +43,7 @@ test "holonomic recurrence: multiplication and power parity" {
 
 ///|
 test "holonomic recurrence: pow parity on scalar operator" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let (r, _) = recurrence_operators(symbol_var=n)
   let rr = recurrence_operator(
     [@symcore.pow(n, @symcore.int(2)), @symcore.int(0), @symcore.int(0)],

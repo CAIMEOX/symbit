@@ -36,7 +36,7 @@ fn mechanics_eq_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn mechanics_pi_expr() -> Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|

@@ -35,7 +35,7 @@ fn expr_neg_one() -> Expr {
 
 ///|
 fn expr_oo() -> Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|
@@ -45,12 +45,12 @@ fn expr_neg_oo() -> Expr {
 
 ///|
 fn expr_nan() -> Expr {
-  @symcore.nan_expr()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)
 }
 
 ///|
 fn expr_finite(n : BigRational) -> Expr {
-  @symcore.number(n)
+  @symcore.Expr::Number(n)
 }
 
 ///|

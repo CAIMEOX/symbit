@@ -36,7 +36,7 @@ fn pauli_symbol_name(index : Int, label : String) -> String {
 
 ///|
 fn pauli_symbol_expr(index : Int, label : String) -> Expr {
-  symbol(pauli_symbol_name(index, label))
+  Expr::Symbol(pauli_symbol_name(index, label))
 }
 
 ///|
@@ -216,7 +216,7 @@ pub fn tensor_product(factors : Array[Expr]) -> Expr {
 
 ///|
 pub fn ncsymbol(name : String) -> Expr {
-  @symcore.function("NCSymbol", [symbol(name)])
+  @symcore.function("NCSymbol", [Expr::Symbol(name)])
 }
 
 ///|
@@ -307,7 +307,7 @@ pub fn evaluate_pauli_product(arg : Expr) -> Expr {
                   Some(_) => {
                     flush_current()
                     match ncsymbol_expr_name(part) {
-                      Some(name) => ordered.push(symbol(name))
+                      Some(name) => ordered.push(Expr::Symbol(name))
                       None => ()
                     }
                   }

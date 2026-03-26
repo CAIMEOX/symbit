@@ -35,13 +35,13 @@ pub fn Vector::angle_between(
     self.dot(other) * ((lhs_mag * rhs_mag) ^ neg_one_expr()),
   )
   if expr_is_zero(cosine) {
-    return simplify_expr(@symcore.pi() * rational_expr(1, 2))
+    return simplify_expr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * rational_expr(1, 2))
   }
   if expr_eq(cosine, one_expr()) {
     return zero_expr()
   }
   if expr_eq(cosine, neg_one_expr()) {
-    return @symcore.pi()
+    return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   }
   simplify_expr(@symelem.acos(cosine))
 }

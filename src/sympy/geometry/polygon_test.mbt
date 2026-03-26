@@ -52,7 +52,7 @@ test "geometry.regular polygon and triangle centers" {
     expr_map_summary(
       geometry_regular_polygon(rp).parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     "{t: 0}",
@@ -92,7 +92,7 @@ test "geometry.polygon enclosure parameter and bisector helpers" {
     expr_map_summary(
       sq.parameter_value(
         point2d(@symcore.rational_from_ints(1, 2), @symcore.int(1)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     "{t: 3/8}",

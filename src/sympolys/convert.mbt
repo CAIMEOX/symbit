@@ -16,12 +16,12 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
       if exp == 0 {
         continue
       }
-      let sym = symbol(self.gens[i])
+      let sym = Expr::Symbol(self.gens[i])
       let factor = if exp == 1 { sym } else { sym ^ int(exp) }
       factors.push(factor)
     }
     let term_expr = if factors.is_empty() {
-      @symcore.number(@symnum.BigRational::one())
+      @symcore.Expr::Number(@symnum.BigRational::one())
     } else if factors.length() == 1 {
       factors[0]
     } else {
@@ -30,7 +30,7 @@ pub fn Poly::to_expr_with_order(self : Poly, order : TermOrder) -> Expr {
     expr_terms.push(term_expr)
   }
   if expr_terms.is_empty() {
-    @symcore.number(@symnum.BigRational::zero())
+    @symcore.Expr::Number(@symnum.BigRational::zero())
   } else if expr_terms.length() == 1 {
     expr_terms[0]
   } else {
@@ -97,23 +97,23 @@ pub fn Poly::lt(self : Poly, order? : TermOrder) -> (Monomial, FieldElem)? {
 ///|
 fn fe_to_expr_const(c : FieldElem) -> Expr {
   match c {
-    FieldElem::QQ(r) => @symcore.number(r)
+    FieldElem::QQ(r) => @symcore.Expr::Number(r)
     FieldElem::CC(a, b) => {
-      let i_sym = @symcore.imag_unit()
+      let i_sym = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
       let imag = if b.is_zero() {
-        @symcore.number(@symnum.BigRational::zero())
+        @symcore.Expr::Number(@symnum.BigRational::zero())
       } else {
-        @symcore.number(b) * i_sym
+        @symcore.Expr::Number(b) * i_sym
       }
       if a.is_zero() {
         imag
       } else if b.is_zero() {
-        @symcore.number(a)
+        @symcore.Expr::Number(a)
       } else {
-        @symcore.number(a) + imag
+        @symcore.Expr::Number(a) + imag
       }
     }
-    FieldElem::GFp(_, v) => @symcore.number(@symnum.BigRational::from_int(v))
+    FieldElem::GFp(_, v) => @symcore.Expr::Number(@symnum.BigRational::from_int(v))
     FieldElem::GFExt(p, coeffs, mod_poly) => fe_ext_to_expr(p, coeffs, mod_poly)
     FieldElem::AlgExt(base, coeffs, minpoly, gen) =>
       fe_algext_to_expr(base, coeffs, minpoly, gen)
@@ -122,14 +122,14 @@ fn fe_to_expr_const(c : FieldElem) -> Expr {
 
 ///|
 fn fe_ext_to_expr(p : Int, coeffs : Array[Int], mod_poly : Array[Int]) -> Expr {
-  let alpha = symbol(fe_ext_symbol_name(p, mod_poly))
+  let alpha = Expr::Symbol(fe_ext_symbol_name(p, mod_poly))
   let terms : Array[Expr] = Array::new()
   for i in 0..<coeffs.length() {
     let c = coeffs[i] % p
     if c == 0 {
       continue
     }
-    let coeff_expr = @symcore.number(@symnum.BigRational::from_int(c))
+    let coeff_expr = @symcore.Expr::Number(@symnum.BigRational::from_int(c))
     let term = if i == 0 {
       coeff_expr
     } else if i == 1 {
@@ -149,7 +149,7 @@ fn fe_ext_to_expr(p : Int, coeffs : Array[Int], mod_poly : Array[Int]) -> Expr {
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.number(@symnum.BigRational::zero())
+    @symcore.Expr::Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {
@@ -179,7 +179,7 @@ fn fe_algext_to_expr(
   minpoly : Poly,
   gen : String,
 ) -> Expr {
-  let alpha = symbol(gen)
+  let alpha = Expr::Symbol(gen)
   let terms : Array[Expr] = Array::new()
   for i in 0..<coeffs.length() {
     let c = coeffs[i]
@@ -200,7 +200,7 @@ fn fe_algext_to_expr(
     terms.push(term)
   }
   if terms.is_empty() {
-    @symcore.number(@symnum.BigRational::zero())
+    @symcore.Expr::Number(@symnum.BigRational::zero())
   } else if terms.length() == 1 {
     terms[0]
   } else {

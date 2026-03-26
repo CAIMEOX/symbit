@@ -6,7 +6,7 @@ fn integrals_exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.float(value)
+  @symcore.Expr::Float(value)
 }
 
 ///|
@@ -23,7 +23,7 @@ fn integrals_exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.complex_float(
+  @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
@@ -38,8 +38,8 @@ fn integrals_contains_float_leaf(expr : Expr) -> Bool {
 
 ///|
 test "symintegrals laplace transform accepts rationalizable float rates" {
-  let t = @symcore.symbol("t")
-  let s = @symcore.symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let s = @symcore.Expr::Symbol("s")
   let half = integrals_exact_float_expr(1, 2, prec=90)
   let expr = @symelem.exp(@symcore.mul([@symcore.int(-1), half, t]))
   let out = laplace_transform_eval(expr, t, s, noconds=true)
@@ -48,7 +48,7 @@ test "symintegrals laplace transform accepts rationalizable float rates" {
 
 ///|
 test "symintegrals manual integration keeps float scalar terms" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let half = integrals_exact_float_expr(1, 2, prec=90)
   let expr = @symcore.add([@symcore.pow(x, @symcore.int(2)), half])
   let out = manualintegrate(expr, x)
@@ -65,7 +65,7 @@ test "symintegrals quadrature evaluates symbolic parameters via evalf" {
 
 ///|
 test "symintegrals manual integration handles complex-float exponential powers" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exponent = integrals_exact_complex_float_expr(1, 1, 1, 1, prec=100)
   let expr = @symcore.pow(@symelem.exp(x), exponent)
   let out = manualintegrate(expr, x)
@@ -74,8 +74,8 @@ test "symintegrals manual integration handles complex-float exponential powers" 
 
 ///|
 test "symintegrals laplace transform handles complex-float decay rates" {
-  let t = @symcore.symbol("t")
-  let s = @symcore.symbol("s")
+  let t = @symcore.Expr::Symbol("t")
+  let s = @symcore.Expr::Symbol("s")
   let rate = integrals_exact_complex_float_expr(1, 2, 1, 3, prec=100)
   let expr = @symelem.exp(@symcore.mul([@symcore.int(-1), rate, t]))
   let out = laplace_transform_eval(expr, t, s, noconds=true)

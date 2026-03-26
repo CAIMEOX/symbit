@@ -1,10 +1,10 @@
 ///|
 test "physics.quantum.commutator: constructor, expansion, and doit" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let a_op = @symcore.symbol("A")
-  let b_op = @symcore.symbol("B")
-  let c_op = @symcore.symbol("C")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let a_op = @symcore.Expr::Symbol("A")
+  let b_op = @symcore.Expr::Symbol("B")
+  let c_op = @symcore.Expr::Symbol("C")
 
   quantum_test_assert_string_equal(
     @symprint.to_string(commutator(a, a_op)),
@@ -49,9 +49,9 @@ test "physics.quantum.commutator: constructor, expansion, and doit" {
 
 ///|
 test "physics.quantum.anticommutator: constructor and doit" {
-  let a = @symcore.symbol("a")
-  let a_op = @symcore.symbol("A")
-  let b_op = @symcore.symbol("B")
+  let a = @symcore.Expr::Symbol("a")
+  let a_op = @symcore.Expr::Symbol("A")
+  let b_op = @symcore.Expr::Symbol("B")
 
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.to_string(anticommutator(a, b_op))),

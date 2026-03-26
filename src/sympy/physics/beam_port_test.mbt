@@ -1,10 +1,10 @@
 ///|
 test "physics.continuum_mechanics.beam: oracle parity" {
-  let e = @symcore.exp1()
-  let i = @symcore.imag_unit()
-  let a = @symcore.symbol("A")
-  let r1 = @symcore.symbol("R1")
-  let r2 = @symcore.symbol("R2")
+  let e = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Exp1)
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+  let a = @symcore.Expr::Symbol("A")
+  let r1 = @symcore.Expr::Symbol("R1")
+  let r2 = @symcore.Expr::Symbol("R2")
   let b = beam(@symcore.int(30), e, i, area=a)
   b.set_bc_deflection([
     (@symcore.int(10), @symcore.int(0)),

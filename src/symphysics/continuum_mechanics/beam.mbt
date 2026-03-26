@@ -38,8 +38,8 @@ pub fn beam(
   length : @symcore.Expr,
   elastic_modulus : @symcore.Expr,
   second_moment : @symcore.Expr,
-  area? : @symcore.Expr = @symcore.symbol("A"),
-  variable? : @symcore.Expr = @symcore.symbol("x"),
+  area? : @symcore.Expr = @symcore.Expr::Symbol("A"),
+  variable? : @symcore.Expr = @symcore.Expr::Symbol("x"),
   base_char? : String = "C",
 ) -> Beam raise BeamError {
   guard variable is @symcore.Expr::Symbol(_) else {
@@ -73,7 +73,7 @@ fn beam_var_name(beam : Beam) -> String {
 
 ///|
 fn beam_support_symbol(loc : @symcore.Expr, prefix : String) -> @symcore.Expr {
-  @symcore.symbol(prefix + @symprint.to_string(loc))
+  @symcore.Expr::Symbol(prefix + @symprint.to_string(loc))
 }
 
 ///|
@@ -478,8 +478,8 @@ pub fn Beam::solve_for_reaction_loads(
   let all_reactions = beam_unique_exprs(
     reactions + self.applied_support_symbols_,
   )
-  let c3 = @symcore.symbol("C3")
-  let c4 = @symcore.symbol("C4")
+  let c3 = @symcore.Expr::Symbol("C3")
+  let c4 = @symcore.Expr::Symbol("C4")
   let var_name = beam_var_name(self)
   let shear_curve = cm_right_limit_at(
     self.shear_force(),

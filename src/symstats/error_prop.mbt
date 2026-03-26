@@ -118,7 +118,7 @@ pub fn variance_prop(
         let coeff_expr = expr_from_big_rational(coeff)
         let var_expr = match variances.get(name) {
           Some(v) => v
-          None => @symcore.function("Variance", [@symcore.symbol(name)])
+          None => @symcore.function("Variance", [@symcore.Expr::Symbol(name)])
         }
         terms.push(
           eval_arith(

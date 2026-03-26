@@ -74,12 +74,12 @@ fn expr_sqrt(a : Expr) -> Expr {
 
 ///|
 fn expr_i() -> Expr {
-  @symcore.imag_unit()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
 }
 
 ///|
 fn expr_pi() -> Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|

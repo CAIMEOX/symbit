@@ -1,7 +1,7 @@
 ///|
 test "from_expr to_expr roundtrip" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.int(2) * (x ^ @symcore.int(2)) + y
   let poly = PolyBuilder::new(["x", "y"], Domain::ZZ).from_expr(expr)
   inspect(poly, content="2*x**2 + y")
@@ -9,7 +9,7 @@ test "from_expr to_expr roundtrip" {
 
 ///|
 test "polynomial multiplication and degree" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = PolyBuilder::new(["x"], Domain::ZZ).from_expr(x + @symcore.int(1))
   let prod = p.mul(p)
   inspect(prod, content="x**2 + 2*x + 1")
@@ -18,7 +18,7 @@ test "polynomial multiplication and degree" {
 
 ///|
 test "reject non-integer exponent" {
-  let expr = @symcore.symbol("x") ^ @symcore.rational_from_ints(1, 2)
+  let expr = @symcore.Expr::Symbol("x") ^ @symcore.rational_from_ints(1, 2)
   let status : Result[Poly, PolyError] = try? PolyBuilder::new(
     ["x"],
     Domain::ZZ,
@@ -39,7 +39,7 @@ test "reject rational coefficient in ZZ domain" {
 ///|
 test "gcd univariate over QQ" {
   let builder = PolyBuilder::new(["x"], Domain::QQ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = builder.from_expr((x ^ @symcore.int(3)) + @symcore.int(-1) * x)
   let q = builder.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let g = p.gcd_univar(q)
@@ -49,8 +49,8 @@ test "gcd univariate over QQ" {
 ///|
 test "term order grlex sorts by total degree" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ).order(TermOrder::Grlex)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly = builder.from_expr((x ^ @symcore.int(2)) + y)
   inspect(poly, content="x**2 + y")
 }
@@ -58,7 +58,7 @@ test "term order grlex sorts by total degree" {
 ///|
 test "resultant over QQ univariate" {
   let builder = PolyBuilder::new(["x"], Domain::QQ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = builder.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let q = builder.from_expr(x - @symcore.int(1))
   let res = p.resultant(q, 0)
@@ -68,7 +68,7 @@ test "resultant over QQ univariate" {
 ///|
 test "GF(p) arithmetic in factors" {
   let builder = PolyBuilder::new(["x"], Domain::GF(5))
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = builder.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   inspect(poly, content="x**2 + 1")
   let factors = poly.factor()
@@ -79,7 +79,7 @@ test "GF(p) arithmetic in factors" {
 ///|
 test "square-free factorization over ZZ" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = builder.from_expr(
     ((x - @symcore.int(1)) ^ @symcore.int(2)) * (x + @symcore.int(2)),
   )
@@ -91,8 +91,8 @@ test "square-free factorization over ZZ" {
 ///|
 test "multivariate division lex order" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let f = builder.from_expr(
     (x ^ @symcore.int(2)) * y + x * (y ^ @symcore.int(2)),
   )
@@ -105,8 +105,8 @@ test "multivariate division lex order" {
 ///|
 test "groebner basis simple lex" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let f1 = builder.from_expr(x * y - @symcore.int(1))
   let f2 = builder.from_expr(x - @symcore.int(1))
   let basis = Poly::groebner([f1, f2], order=TermOrder::Lex)
@@ -125,7 +125,7 @@ test "array push/pop mutates" {
 ///|
 test "hensel+CRT factor over ZZ" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = builder.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let factors = poly.factor()
   let parts = factors.map(pair => pair.0.to_string())
@@ -153,8 +153,8 @@ test "modular reconstruction with two primes" {
 ///|
 test "dense multivariate conversions" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly = builder.from_expr(
     x + @symcore.int(2) * y + @symcore.int(3) * x * y,
   )
@@ -167,8 +167,8 @@ test "dense multivariate conversions" {
 ///|
 test "leading data helpers" {
   let builder = PolyBuilder::new(["x", "y"], Domain::QQ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly = builder.from_expr(
     @symcore.int(3) * (x ^ @symcore.int(2)) * y +
     @symcore.int(5) * (y ^ @symcore.int(2)),
@@ -190,7 +190,7 @@ test "leading data helpers" {
 ///|
 test "factor_list separates content" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = builder.from_expr(
     @symcore.int(6) * (x ^ @symcore.int(2)) - @symcore.int(6),
   )
@@ -205,7 +205,7 @@ test "factor_list separates content" {
 ///|
 test "sqf_list and sqf_part" {
   let builder = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = builder.from_expr(
     ((x - @symcore.int(1)) ^ @symcore.int(2)) *
     ((x + @symcore.int(2)) ^ @symcore.int(3)),

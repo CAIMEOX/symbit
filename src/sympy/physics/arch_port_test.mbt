@@ -28,7 +28,7 @@ test "physics.continuum_mechanics.arch: oracle parity" {
     @symcore.int(8),
     crown_y=Some(@symcore.int(5)),
   )
-  let t = @symcore.symbol("t")
+  let t = @symcore.Expr::Symbol("t")
   b.apply_load(0, "C", @symcore.int(3), t, end=Some(@symcore.int(5)))
   b.solve()
   let near_eight = @symcore.rational_from_ints(7_999_999, 1_000_000)

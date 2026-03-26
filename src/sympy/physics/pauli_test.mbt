@@ -7,7 +7,7 @@ test "physics.quantum.pauli: local operators, states, and simplification" {
   let sm = sigma_minus()
   inspect(sx.to_string(), content="SigmaX()")
   inspect(
-    sigma_x(name=Some(@symcore.symbol("a"))).repr(),
+    sigma_x(name=Some(@symcore.Expr::Symbol("a"))).repr(),
     content="SigmaX(Symbol('a'))",
   )
   inspect(sigma_z_ket(0).dual().to_string(), content="<0|")

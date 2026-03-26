@@ -39,10 +39,6 @@ pub enum BosonicBasisSet {
 } derive(Eq)
 
 ///|
-fn sq_tuple_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("Tuple", items)
-}
-
 ///|
 fn sq_tuple_string(items : Array[Expr]) -> String {
   let rendered = items.map(@symprint.to_string).join(", ")
@@ -60,12 +56,12 @@ fn sq_fock_state_repr(items : Array[Expr]) -> String {
 
 ///|
 fn sq_boson_ket_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateBosonKet", [sq_tuple_expr(items)])
+  @symcore.raw_function("FockStateBosonKet", [Expr::Tuple(items)])
 }
 
 ///|
 fn sq_boson_bra_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateBosonBra", [sq_tuple_expr(items)])
+  @symcore.raw_function("FockStateBosonBra", [Expr::Tuple(items)])
 }
 
 ///|
@@ -182,7 +178,7 @@ pub fn BosonState::down(
 
 ///|
 pub fn BosonState::as_expr(self : BosonState) -> Expr {
-  @symcore.raw_function("FockState", [sq_tuple_expr(self.occupations)])
+  @symcore.raw_function("FockState", [Expr::Tuple(self.occupations)])
 }
 
 ///|

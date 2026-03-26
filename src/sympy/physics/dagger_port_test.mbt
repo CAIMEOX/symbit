@@ -1,7 +1,7 @@
 ///|
 test "physics.quantum.dagger: parity" {
   inspect(physics_eval_str("Dagger(x, evaluate=False)"), content="Dagger(x)")
-  let i = @symcore.imag_unit()
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   let matrix = @symphysics.explicit_matrix_from_rows([
     [@symcore.int(1), i],
     [@symcore.int(2), @symcore.int(-1) * i],

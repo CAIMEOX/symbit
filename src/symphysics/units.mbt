@@ -10,7 +10,7 @@ pub struct Dimension {
 
 ///|
 pub fn dimension(name : String, symbol? : String? = None) -> Dimension {
-  Dimension::{ name: @symcore.symbol(name), symbol }
+  Dimension::{ name: @symcore.Expr::Symbol(name), symbol }
 }
 
 ///|
@@ -61,7 +61,7 @@ pub fn quantity(
 
 ///|
 pub fn Quantity::symbol_expr(self : Quantity) -> Expr {
-  symbol(self.name)
+  Expr::Symbol(self.name)
 }
 
 ///|
@@ -110,7 +110,7 @@ fn int_pow(base : Int, exp : Int) -> BigInt {
 ///|
 fn prefix_scale_factor_expr(base : Int, exponent : Int) -> Expr {
   if exponent >= 0 {
-    @symcore.number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
+    @symcore.Expr::Number(@symnum.BigRational::from_bigint(int_pow(base, exponent)))
   } else {
     rational_expr_bigint(BigInt::from_int(1), int_pow(base, -exponent))
   }

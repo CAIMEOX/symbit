@@ -6,7 +6,7 @@ fn fezz_wb(n : Int) -> FieldElem {
 ///|
 test "errors: exact division failures are explicit" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
   let exact_res : Result[Poly, PolyError] = try? p.div_exact_univar(q)
@@ -48,7 +48,7 @@ test "errors: empty monomial and root-isolation inputs are typed" {
 
 ///|
 test "errors: normalize_mod on AlgExt reduces in base domain" {
-  let alpha = @symcore.symbol("alpha")
+  let alpha = @symcore.Expr::Symbol("alpha")
   let rel = (alpha ^ @symcore.int(2)) + @symcore.int(1)
   let d = Domain::AlgExt(Domain::QQ, ["alpha"], [rel])
   let value = @symnum.BigRational::new(BigInt::from_int(3), BigInt::from_int(2))

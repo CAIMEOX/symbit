@@ -67,7 +67,7 @@ pub struct Dyadic {
 }
 
 ///|
-pub let dynamicsymbols_t : Expr = symbol("t")
+pub let dynamicsymbols_t : Expr = Expr::Symbol("t")
 
 ///|
 let vector_frame_registry : Array[ReferenceFrame] = []
@@ -295,7 +295,7 @@ fn coordinate_symbol_name(frame : ReferenceFrame, axis : Int) -> String {
 
 ///|
 fn coordinate_symbol(frame : ReferenceFrame, axis : Int) -> CoordinateSym {
-  symbol(coordinate_symbol_name(frame, axis))
+  Expr::Symbol(coordinate_symbol_name(frame, axis))
 }
 
 ///|

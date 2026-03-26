@@ -69,7 +69,7 @@ test "geometry.ellipse tangency bounds and parameter values" {
     expr_map_summary(
       e.parameter_value(
         point2d(@symcore.int(2), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     "{t: 0}",
@@ -118,7 +118,7 @@ test "geometry.circle tangency bounds and parameter values" {
     expr_map_summary(
       c.parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     "{t: 0}",
@@ -180,7 +180,7 @@ test "geometry.ellipse higher helpers" {
 test "geometry.ellipse auxiliary director evolute reflect and random" {
   let c = point2d(@symcore.int(1), @symcore.int(2))
   let ellipse_obj = match
-    ellipse(c, @symcore.symbol("a"), @symcore.symbol("b")) {
+    ellipse(c, @symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")) {
     GeometryEntity::Ellipse(value) => value
     _ => fail("expected symbolic ellipse")
   }

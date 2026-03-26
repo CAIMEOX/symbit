@@ -139,8 +139,8 @@ test "physics.vector kinematics helpers" {
     "[[KVA.x, KVN.z, 0], [0, 0, KVN.x]]",
   )
 
-  let sx = @symcore.symbol("sx")
-  let sy = @symcore.symbol("sy")
+  let sx = @symcore.Expr::Symbol("sx")
+  let sy = @symcore.Expr::Symbol("sy")
   let motion = get_motion_params(
     n,
     velocity=Some(n.x().scale(sx) + n.y().scale(sy)),

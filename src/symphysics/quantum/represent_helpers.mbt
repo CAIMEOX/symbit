@@ -26,17 +26,17 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
     Expr::Function("PositionKet3D", _) | Expr::Function("PositionBra3D", _) =>
       Some(position_ket_3d())
     Expr::Function("JzKet", args) | Expr::Function("JzBra", args) if args.length() ==
-      2 => Some(jz_ket(args[0], symbol("m")).as_expr())
+      2 => Some(jz_ket(args[0], Expr::Symbol("m")).as_expr())
     _ =>
       match state_from_expr(expr) {
         Some(state) =>
           match state.flavor {
             StateFlavor::Ket | StateFlavor::Bra =>
-              Some(ket([symbol("psi")]).as_expr())
+              Some(ket([Expr::Symbol("psi")]).as_expr())
             StateFlavor::TimeDepKet | StateFlavor::TimeDepBra =>
-              Some(time_dep_ket([symbol("psi")], time=symbol("t")).as_expr())
+              Some(time_dep_ket([Expr::Symbol("psi")], time=Expr::Symbol("t")).as_expr())
             StateFlavor::OrthogonalKet | StateFlavor::OrthogonalBra =>
-              Some(orthogonal_ket([symbol("n")]).as_expr())
+              Some(orthogonal_ket([Expr::Symbol("n")]).as_expr())
           }
         None =>
           if quantum_is_operator_expr(expr) {
@@ -51,8 +51,8 @@ fn represent_default_basis_state(expr : Expr) -> Expr? {
 ///|
 fn represent_index_symbol(label : Expr, index : Int, fallback : String) -> Expr {
   match label {
-    Expr::Symbol(name) => symbol("\{name}_\{index.to_string()}")
-    _ => symbol("\{fallback}_\{index.to_string()}")
+    Expr::Symbol(name) => Expr::Symbol("\{name}_\{index.to_string()}")
+    _ => Expr::Symbol("\{fallback}_\{index.to_string()}")
   }
 }
 

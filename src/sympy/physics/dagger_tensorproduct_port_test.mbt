@@ -1,12 +1,12 @@
 ///|
 test "physics.quantum.dagger and tensorproduct: parity" {
   assert_eq(
-    @symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)),
+    @symprint.to_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
     "Dagger(x)",
   )
 
   let mat = @symphysics.explicit_matrix_from_rows([
-    [@symcore.imag_unit(), @symcore.symbol("x") * @symcore.imag_unit()],
+    [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.Expr::Symbol("x") * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)],
     [@symcore.int(2), @symcore.int(4)],
   ])
   quantum_test_assert_matrix_expr_equal(

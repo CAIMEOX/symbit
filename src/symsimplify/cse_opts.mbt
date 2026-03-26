@@ -69,7 +69,7 @@ fn split_sign(expr : Expr) -> (Int, Expr) {
   match expr {
     Expr::Number(n) =>
       if n.compare(@symnum.BigRational::zero()) < 0 {
-        (-1, @symcore.number(n.neg_r()))
+        (-1, @symcore.Expr::Number(n.neg_r()))
       } else {
         (1, expr)
       }
@@ -80,7 +80,7 @@ fn split_sign(expr : Expr) -> (Int, Expr) {
         match arg {
           Expr::Number(n) if n.compare(@symnum.BigRational::zero()) < 0 => {
             sign = -sign
-            factors.push(@symcore.number(n.neg_r()))
+            factors.push(@symcore.Expr::Number(n.neg_r()))
           }
           _ => factors.push(arg)
         }

@@ -12,10 +12,10 @@ fn quantum_scalar_repr(
 
 ///|
 test "physics.quantum.cartesian: local qapply, overlaps, and basis representation" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let px = @symcore.symbol("px")
-  let py = @symcore.symbol("py")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let px = @symcore.Expr::Symbol("px")
+  let py = @symcore.Expr::Symbol("py")
   let ket_x = x_ket(position=x)
   let ket_px = px_ket(momentum=px)
 
@@ -45,7 +45,7 @@ test "physics.quantum.cartesian: local qapply, overlaps, and basis representatio
     "<px|x>",
   )
 
-  let pos3 = position_ket_3d(x~, y=@symcore.symbol("y"), z=@symcore.symbol("z"))
+  let pos3 = position_ket_3d(x~, y=@symcore.Expr::Symbol("y"), z=@symcore.Expr::Symbol("z"))
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([x_op(), pos3])),
     "x*PositionKet3D(x, y, z)",

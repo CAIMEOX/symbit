@@ -4,7 +4,7 @@ test "physics.quantum.qapply: parity extensions" {
   let one = qubit("1").as_expr()
   let zero_bra = qubit_bra("0").as_expr()
   let half = @symcore.rational_from_ints(1, 2)
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
 
   quantum_test_assert_string_equal(
     quantum_qapply_str(

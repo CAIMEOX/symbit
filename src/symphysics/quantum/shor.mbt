@@ -278,7 +278,7 @@ pub fn shor(n : Int) -> Expr raise @symphysics.PhysicsError {
     }
     let factors = shor_factor_pair(a, r, n)
     if factors.0 > 1 && factors.0 < n && factors.1 > 1 && factors.1 < n {
-      return @symcore.tuple_expr([int(factors.0), int(factors.1)])
+      return @symcore.Expr::Tuple([int(factors.0), int(factors.1)])
     }
   }
   raise @symphysics.PhysicsError::ValueError(

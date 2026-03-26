@@ -347,16 +347,16 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
   match expr {
     Expr::Add(_) => @symcore.raw_add(args)
     Expr::Mul(_) => @symcore.raw_mul(args)
-    Expr::Tuple(_) => @symcore.tuple_expr(args)
+    Expr::Tuple(_) => @symcore.Expr::Tuple(args)
     Expr::Relational(op, _, _) =>
       if args.length() == 2 {
         match op {
-          @symcore.RelOp::Eq => @symcore.eq(args[0], args[1])
-          @symcore.RelOp::Ne => @symcore.ne(args[0], args[1])
-          @symcore.RelOp::Lt => @symcore.lt(args[0], args[1])
-          @symcore.RelOp::Le => @symcore.le(args[0], args[1])
-          @symcore.RelOp::Gt => @symcore.gt(args[0], args[1])
-          @symcore.RelOp::Ge => @symcore.ge(args[0], args[1])
+          @symcore.RelOp::Eq => @symcore.Expr::Relational(@symcore.RelOp::Eq, args[0], args[1])
+          @symcore.RelOp::Ne => @symcore.Expr::Relational(@symcore.RelOp::Ne, args[0], args[1])
+          @symcore.RelOp::Lt => @symcore.Expr::Relational(@symcore.RelOp::Lt, args[0], args[1])
+          @symcore.RelOp::Le => @symcore.Expr::Relational(@symcore.RelOp::Le, args[0], args[1])
+          @symcore.RelOp::Gt => @symcore.Expr::Relational(@symcore.RelOp::Gt, args[0], args[1])
+          @symcore.RelOp::Ge => @symcore.Expr::Relational(@symcore.RelOp::Ge, args[0], args[1])
         }
       } else {
         expr

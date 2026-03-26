@@ -47,7 +47,7 @@ pub fn dom_eigenvects_to_sympy(
   }
   for item in algebraic_eigenvects {
     let gen = if item.1.gens.is_empty() { "lambda" } else { item.1.gens[0] }
-    result.push((symbol(gen), item.2, item.3.to_Matrix()))
+    result.push((Expr::Symbol(gen), item.2, item.3.to_Matrix()))
   }
   result
 }

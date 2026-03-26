@@ -36,7 +36,7 @@ pub fn column(
   length : @symcore.Expr,
   elastic_modulus : @symcore.Expr,
   area : @symcore.Expr,
-  variable? : @symcore.Expr = @symcore.symbol("x"),
+  variable? : @symcore.Expr = @symcore.Expr::Symbol("x"),
   base_char? : String = "C",
 ) -> Column raise ColumnError {
   guard variable is @symcore.Expr::Symbol(_) else {
@@ -71,12 +71,12 @@ fn column_var_name(column : Column) -> String {
 
 ///|
 fn column_support_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.symbol("R_" + @symprint.to_string(loc))
+  @symcore.Expr::Symbol("R_" + @symprint.to_string(loc))
 }
 
 ///|
 fn column_hinge_symbol(loc : @symcore.Expr) -> @symcore.Expr {
-  @symcore.symbol("u_" + @symprint.to_string(loc))
+  @symcore.Expr::Symbol("u_" + @symprint.to_string(loc))
 }
 
 ///|
@@ -284,8 +284,8 @@ pub fn Column::solve_for_reaction_loads(
 ) -> Unit raise ColumnError {
   let qx = self.load_
   let x_name = column_var_name(self)
-  let c_n = @symcore.symbol("C_N")
-  let c_u = @symcore.symbol("C_u")
+  let c_n = @symcore.Expr::Symbol("C_N")
+  let c_u = @symcore.Expr::Symbol("C_u")
   let applied_supports = beam_unique_exprs(reactions + self.applied_supports_)
   let axial_force = @symcore.int(-1) * cm_integrate(qx, x_name) + c_n
   let extension = @symcore.int(-1) *
@@ -355,7 +355,7 @@ pub fn Column::axial_force(self : Column) -> @symcore.Expr {
   }
   let c_n = self.integration_constants_
     .get("C_N")
-    .unwrap_or(@symcore.symbol("C_N"))
+    .unwrap_or(@symcore.Expr::Symbol("C_N"))
   @symcore.int(-1) * cm_integrate(load_expr, column_var_name(self)) + c_n
 }
 
@@ -368,10 +368,10 @@ pub fn Column::extension(self : Column) -> @symcore.Expr {
   }
   let c_n = self.integration_constants_
     .get("C_N")
-    .unwrap_or(@symcore.symbol("C_N"))
+    .unwrap_or(@symcore.Expr::Symbol("C_N"))
   let c_u = self.integration_constants_
     .get("C_u")
-    .unwrap_or(@symcore.symbol("C_u"))
+    .unwrap_or(@symcore.Expr::Symbol("C_u"))
   @symcore.int(-1) *
   cm_integrate(
     cm_integrate(load_expr, column_var_name(self)),

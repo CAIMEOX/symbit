@@ -1,6 +1,6 @@
 ///|
 test "holonomic sequence: repr parity" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let (r, _) = recurrence_operators(symbol_var=n)
   let rec = recurrence_operator(
     [@symcore.int(-1), @symcore.add([n, @symcore.int(1)])],
@@ -13,7 +13,7 @@ test "holonomic sequence: repr parity" {
 
 ///|
 test "holonomic sequence: equality semantics" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let (r, _) = recurrence_operators(symbol_var=n)
   let rec = recurrence_operator([@symcore.int(1), n], r)
   let s1 = holonomic_sequence(rec, u0=[@symcore.int(2), @symcore.int(3)])

@@ -12,7 +12,7 @@ fn cov_brat(num : Int, den : Int) -> @symnum.BigRational {
 
 ///|
 fn cov_expr_rat(num : Int, den : Int) -> @symcore.Expr {
-  @symcore.number(cov_brat(num, den))
+  @symcore.Expr::Number(cov_brat(num, den))
 }
 
 ///|
@@ -105,7 +105,7 @@ fn cov_fe_pow(base : FieldElem, exp : Int) -> FieldElem raise {
 
 ///|
 test "coverage: core helpers and leading-term API" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(1),
@@ -209,7 +209,7 @@ test "coverage: galoistools scalar helpers" {
 
 ///|
 test "coverage: qq_utils clear_denominators" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let poly = b.from_expr(cov_expr_rat(1, 2) * x + cov_expr_rat(1, 3))
   let lifted = @sympolys.clear_denominators(poly)
@@ -248,8 +248,8 @@ test "coverage: lll_reduce transform reconstructs reduced basis" {
 
 ///|
 test "coverage: groebner_expr parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let exprs = [x * y - @symcore.int(1), y - @symcore.int(1)]
   let ours_basis = @sympolys.groebner_expr(
     exprs,
@@ -264,8 +264,8 @@ test "coverage: groebner_expr parity" {
 
 ///|
 test "coverage: resultant_poly multivariate output parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let b = PolyBuilder::new(["x", "y"], Domain::QQ)
   let f = b.from_expr(x + y)
   let g = b.from_expr((x ^ @symcore.int(2)) + @symcore.int(1))
@@ -286,7 +286,7 @@ test "coverage: resultant_poly multivariate output parity" {
 
 ///|
 test "coverage: subresultants PG aliases" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
@@ -357,7 +357,7 @@ test "coverage: monomial and field-element helper APIs" {
 
 ///|
 test "coverage: core neg/sub APIs" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let p = b.from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(2) * x + @symcore.int(3),
@@ -373,7 +373,7 @@ test "coverage: core neg/sub APIs" {
 
 ///|
 test "coverage: content/primitive/pseudo_div_univar_int APIs" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr(
     @symcore.int(6) * (x ^ @symcore.int(2)) +
@@ -399,7 +399,7 @@ test "coverage: content/primitive/pseudo_div_univar_int APIs" {
 
 ///|
 test "coverage: algebraic-extension public helpers" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let raw = b.from_expr(
     @symcore.int(2) * (x ^ @symcore.int(2)) + @symcore.int(1),

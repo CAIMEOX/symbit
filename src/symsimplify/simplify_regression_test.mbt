@@ -1,7 +1,7 @@
 ///|
 fn rational_trig_fixture() -> @symcore.Expr {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   @symcore.mul([
     @symcore.add([x, @symcore.pow(x, @symcore.int(2))]),
     @symcore.pow(
@@ -32,13 +32,13 @@ fn simplify_exact_float_expr(
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.float(value)
+  @symcore.Expr::Float(value)
 }
 
 ///|
 test "symsimplify trigsimp after factoring regression" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let factored = @symcore.mul([
     x,
     @symcore.add([
@@ -69,8 +69,8 @@ test "symsimplify dispatcher rational trig regression" {
 
 ///|
 test "symsimplify exptrigsimp exp trig regression" {
-  let x = @symcore.symbol("x")
-  let i = @symcore.imag_unit()
+  let x = @symcore.Expr::Symbol("x")
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
@@ -83,8 +83,8 @@ test "symsimplify exptrigsimp exp trig regression" {
 
 ///|
 test "symsimplify dispatcher exp trig regression" {
-  let x = @symcore.symbol("x")
-  let i = @symcore.imag_unit()
+  let x = @symcore.Expr::Symbol("x")
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   let exp_trig = @symcore.add([
     @symcore.function("exp", [@symcore.mul([i, x])]),
     @symcore.function("exp", [@symcore.mul([@symcore.int(-1), i, x])]),
@@ -97,8 +97,8 @@ test "symsimplify dispatcher exp trig regression" {
 
 ///|
 test "symsimplify simplifies expanded rational cancellation regression" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let denom = @symcore.add([@symcore.int(2), @symcore.mul([@symcore.int(2), x])])
   let expr = @symcore.mul([
     @symcore.add([
@@ -128,8 +128,8 @@ test "symsimplify simplifies expanded rational cancellation regression" {
 
 ///|
 test "symsimplify simplifies nested gamma and rational sums regression" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let nested = @symcore.add([
     @symcore.mul([@symcore.int(-1), x]),

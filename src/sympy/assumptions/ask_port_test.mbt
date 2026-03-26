@@ -80,7 +80,7 @@ fn assert_unary_keys_parity(
 
 ///|
 test "symassume ask: implication chain parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(q_nonzero(x), assumptions=q_positive(x))
   assert_ask_parity(q_nonnegative(x), assumptions=q_positive(x))
   assert_ask_parity(q_integer(x), assumptions=q_even(x))
@@ -102,7 +102,7 @@ test "symassume ask: numeric parity" {
 
 ///|
 test "symassume ask: logical combinations parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(
     not_q(q_zero(x)),
     assumptions=and_q([q_real(x), q_nonzero(x)]),
@@ -119,7 +119,7 @@ test "symassume ask: logical combinations parity" {
 
 ///|
 test "symassume ask: inconsistent assumptions parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(q_integer(x), assumptions=and_q([q_even(x), q_odd(x)]))
 }
 
@@ -129,8 +129,8 @@ test "symassume ask: env parity" {
     ("x", symbol_facts(is_positive=Tri::True)),
     ("n", symbol_facts(is_integer=Tri::True, is_nonnegative=Tri::True)),
   ])
-  let x = @symcore.symbol("x")
-  let n = @symcore.symbol("n")
+  let x = @symcore.Expr::Symbol("x")
+  let n = @symcore.Expr::Symbol("n")
   assert_ask_parity(q_positive(x), env~)
   assert_ask_parity(q_nonzero(x), env~)
   assert_ask_parity(q_integer(n), env~)
@@ -139,7 +139,7 @@ test "symassume ask: env parity" {
 
 ///|
 test "symassume ask: eq substitution parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let eq_two = q_eq(x, @symcore.int(2))
   assert_ask_parity(q_integer(x), assumptions=eq_two)
   assert_ask_parity(q_rational(x), assumptions=eq_two)
@@ -153,7 +153,7 @@ test "symassume ask: eq substitution parity" {
 
 ///|
 test "symassume ask: relation chain parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(q_ge(@symcore.int(5), @symcore.int(5)))
   assert_ask_parity(q_le(@symcore.int(5), @symcore.int(5)))
   assert_ask_parity(q_gt(@symcore.int(5), @symcore.int(5)))
@@ -164,7 +164,7 @@ test "symassume ask: relation chain parity" {
 
 ///|
 test "symassume ask: global assumptions parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_global_parity(q_nonzero(x), [q_positive(x)])
   assert_ask_global_parity(q_nonnegative(x), [q_positive(x)])
   assert_ask_global_parity(q_integer(x), [or_q([q_even(x), q_odd(x)])])
@@ -172,7 +172,7 @@ test "symassume ask: global assumptions parity" {
 
 ///|
 test "symassume ask: infinity predicate parity" {
-  let oo = @symcore.oo()
+  let oo = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
   assert_ask_parity(q_infinite(oo))
   assert_ask_parity(q_finite(oo))
   assert_ask_parity(q_extended_real(oo))
@@ -219,7 +219,7 @@ test "symassume ask: unary predicate surface parity (numeric)" {
 
 ///|
 test "symassume ask: symbolic implication surface parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(q_real(x), assumptions=q_positive(x))
   assert_ask_parity(q_complex(x), assumptions=q_positive(x))
   assert_ask_parity(q_nonzero(x), assumptions=q_positive(x))
@@ -233,8 +233,8 @@ test "symassume ask: symbolic implication surface parity" {
 
 ///|
 test "symassume ask: structural propagation parity" {
-  let x = @symcore.symbol("x")
-  let i = @symcore.imag_unit()
+  let x = @symcore.Expr::Symbol("x")
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   assert_ask_parity(
     q_complex(@symcore.add([x, @symcore.int(1)])),
     assumptions=q_real(x),
@@ -291,13 +291,13 @@ test "symassume ask: named constants parity" {
     PredicateKey::Commutative,
   ]
   for c in ["I", "oo", "-oo", "zoo", "pi", "E"] {
-    assert_unary_keys_parity(keys, @symcore.symbol(c))
+    assert_unary_keys_parity(keys, @symcore.Expr::Symbol(c))
   }
 }
 
 ///|
 test "symassume ask: matrix and tensor implication parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   assert_ask_parity(q_upper_triangular(x), assumptions=q_diagonal(x))
   assert_ask_parity(q_lower_triangular(x), assumptions=q_diagonal(x))
   assert_ask_parity(q_triangular(x), assumptions=q_diagonal(x))
@@ -325,7 +325,7 @@ test "symassume ask: matrix and tensor implication parity" {
 
 ///|
 test "symassume ask: relation symbolic implication parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let z0 = @symcore.int(0)
   assert_ask_parity(q_eq(x, z0), assumptions=q_zero(x))
   assert_ask_parity(q_ne(x, z0), assumptions=q_nonzero(x))
@@ -345,7 +345,7 @@ test "symassume ask: relation symbolic implication parity" {
 
 ///|
 test "symassume ask: relation nonzero-constant parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let m1 = @symcore.int(-1)
   let p1 = @symcore.int(1)
   let z0 = @symcore.int(0)
@@ -383,7 +383,7 @@ test "symassume ask: relation nonzero-constant parity" {
 
 ///|
 test "symassume ask: relation linear form parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let plus1 = @symcore.add([x, @symcore.int(1)])
   let minus1 = @symcore.add([x, @symcore.int(-1)])
   let z0 = @symcore.int(0)
@@ -405,8 +405,8 @@ test "symassume ask: relation linear form parity" {
 
 ///|
 test "symassume ask: matrix positive_definite fine parity" {
-  let x = @symcore.symbol("x")
-  let n = @symcore.symbol("n")
+  let x = @symcore.Expr::Symbol("x")
+  let n = @symcore.Expr::Symbol("n")
   let m = @symcore.function("MatrixSymbol", [x, n, n])
   assert_ask_parity(q_hermitian(m), assumptions=q_positive_definite(m))
   assert_ask_parity(q_antihermitian(m), assumptions=q_positive_definite(m))

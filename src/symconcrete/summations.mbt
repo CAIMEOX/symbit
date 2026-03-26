@@ -505,14 +505,14 @@ fn piecewise_expr3(
   cond : @symcore.Expr,
   default : @symcore.Expr,
 ) -> @symcore.Expr {
-  let pair1 = @symcore.tuple_expr([expr, cond])
-  let pair2 = @symcore.tuple_expr([default, @symcore.true_()])
+  let pair1 = @symcore.Expr::Tuple([expr, cond])
+  let pair2 = @symcore.Expr::Tuple([default, @symcore.Expr::Boolean(true)])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 
 ///|
 fn rel_lt(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.lt(left, right)
+  @symcore.Expr::Relational(@symcore.RelOp::Lt, left, right)
 }
 
 ///|
@@ -535,7 +535,7 @@ fn sum_zeta(
   let s = -p
   if lower == @symcore.int(1) {
     if s == 1 {
-      return Some(@symcore.oo())
+      return Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
     }
     return Some(@symspec.zeta(@symcore.int(s)))
   }
@@ -679,7 +679,7 @@ fn shift_expr(
   shift : Int,
 ) -> @symcore.Expr {
   let env : Map[String, @symcore.Expr] = {}
-  let sym = @symcore.symbol(name)
+  let sym = @symcore.Expr::Symbol(name)
   env[name] = expr_add(sym, @symcore.int(shift))
   @symcore.subst(expr, env)
 }
@@ -1151,7 +1151,7 @@ fn linear_coeffs(expr : @symcore.Expr, name : String) -> (Int, Int)? {
       let mut seen_var = false
       for arg in args {
         if contains_symbol(arg, name) {
-          if arg == @symcore.symbol(name) && !seen_var {
+          if arg == @symcore.Expr::Symbol(name) && !seen_var {
             seen_var = true
           } else {
             return None

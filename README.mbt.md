@@ -13,8 +13,8 @@ The fastest way to start is to build expressions with `symbol`, `integer`, `rati
 ```mbt check
 ///|
 test "quickstart expression construction and simplification" {
-  let x = symbol("x")
-  let y = symbol("y")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
 
   let expr = add([integer(1), mul([x, pow(y, integer(2))])])
   inspect(debug_repr(expr), content="(+ (* sym:x (^ sym:y 2)) 1)")
@@ -45,13 +45,16 @@ Symbit separates general simplification from targeted simplification. `simplify`
 ```mbt check
 ///|
 test "targeted simplification keeps intent explicit" {
-  let x = symbol("x")
+  let x = Expr::Symbol("x")
   let sin_x = @symcore.function("sin", [x])
   let cos_x = @symcore.function("cos", [x])
   let trig = add([pow(sin_x, integer(2)), pow(cos_x, integer(2))])
   inspect(to_string(trigsimp(trig)), content="1")
 
-  let frac_expr = mul([add([x, integer(1)]), pow(symbol("y"), integer(-1))])
+  let frac_expr = mul([
+    add([x, integer(1)]),
+    pow(Expr::Symbol("y"), integer(-1)),
+  ])
   let (num, den) = fraction(frac_expr)
   inspect(to_string(num), content="x + 1")
   inspect(to_string(den), content="y")
@@ -67,7 +70,7 @@ The project also exposes the lower-level pieces that are useful when you need to
 ```mbt check
 ///|
 test "cse extracts and reconstructs shared structure" {
-  let x = symbol("x")
+  let x = Expr::Symbol("x")
   let shared = @symcore.function("sin", [x])
   let exprs = [mul([shared, shared]), add([shared, shared])]
 
@@ -92,7 +95,7 @@ For code that wants precise control over trigonometric normalization, the root p
 ```mbt check
 ///|
 test "fu-style helpers are available from the root package" {
-  let x = symbol("x")
+  let x = Expr::Symbol("x")
   let sin_x = @symcore.function("sin", [x])
   let cos_x = @symcore.function("cos", [x])
   let tan_x = @symcore.function("tan", [x])

@@ -59,9 +59,9 @@ test "physics.quantum.spin: parity" {
 
 ///|
 test "physics.quantum.spin: rotation parity" {
-  let alpha = @symcore.symbol("alpha")
-  let beta = @symcore.symbol("beta")
-  let gamma = @symcore.symbol("gamma")
+  let alpha = @symcore.Expr::Symbol("alpha")
+  let beta = @symcore.Expr::Symbol("beta")
+  let gamma = @symcore.Expr::Symbol("gamma")
 
   quantum_test_assert_string_equal(
     quantum_eval_str(
@@ -78,8 +78,8 @@ test "physics.quantum.spin: rotation parity" {
   quantum_test_assert_matrix_expr_equal(
     represent_matrix(
       rotation(
-        @symcore.pi(),
-        @symcore.pi() * quantum_test_frac(1, 2),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * quantum_test_frac(1, 2),
         @symcore.int(0),
       ).as_expr(),
       spin_j=@symcore.int(1),
@@ -162,18 +162,18 @@ test "physics.quantum.spin: coupled Jz parity" {
   let zero = @symcore.int(0)
   let one = @symcore.int(1)
   let minus_half = quantum_test_frac(-1, 2)
-  let j = @symcore.symbol("j")
-  let m = @symcore.symbol("m")
-  let j1v = @symcore.symbol("j1")
-  let j2v = @symcore.symbol("j2")
-  let j3v = @symcore.symbol("j3")
-  let j4v = @symcore.symbol("j4")
-  let m1 = @symcore.symbol("m1")
-  let m2 = @symcore.symbol("m2")
-  let m3 = @symcore.symbol("m3")
-  let m4 = @symcore.symbol("m4")
-  let j13 = @symcore.symbol("j13")
-  let j24 = @symcore.symbol("j24")
+  let j = @symcore.Expr::Symbol("j")
+  let m = @symcore.Expr::Symbol("m")
+  let j1v = @symcore.Expr::Symbol("j1")
+  let j2v = @symcore.Expr::Symbol("j2")
+  let j3v = @symcore.Expr::Symbol("j3")
+  let j4v = @symcore.Expr::Symbol("j4")
+  let m1 = @symcore.Expr::Symbol("m1")
+  let m2 = @symcore.Expr::Symbol("m2")
+  let m3 = @symcore.Expr::Symbol("m3")
+  let m4 = @symcore.Expr::Symbol("m4")
+  let j13 = @symcore.Expr::Symbol("j13")
+  let j24 = @symcore.Expr::Symbol("j24")
 
   quantum_test_assert_string_equal(
     quantum_qapply_str(

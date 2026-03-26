@@ -21,7 +21,7 @@ pub fn differential_operator(
 
 ///|
 pub fn differential_operators(
-  symbol_var? : Expr = symbol("x"),
+  symbol_var? : Expr = Expr::Symbol("x"),
   generator? : String = "Dx",
 ) -> (DifferentialOperatorAlgebra, DifferentialOperator) {
   ignore(require_symbol_name(symbol_var))
@@ -123,7 +123,7 @@ fn differential_mul(
         if expr_is_zero(diff_b) {
           continue
         }
-        let c = @symcore.number(binom_int(i, r))
+        let c = @symcore.Expr::Number(binom_int(i, r))
         let term = expr_mul(ai, expr_mul(c, diff_b))
         let power = i - r + j
         out[power] = expr_add(out[power], term)

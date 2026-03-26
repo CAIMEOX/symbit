@@ -26,7 +26,7 @@ test "geometry.parabola vertex axis and line intersection" {
 
 ///|
 test "geometry.curve arbitrary point transforms and length shell" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let c = curve(
     [@symcore.int(2) * s, s ^ @symcore.int(2)],
     s,
@@ -48,8 +48,8 @@ test "geometry.curve arbitrary point transforms and length shell" {
 
 ///|
 test "geometry.curve parameter helpers" {
-  let t = @symcore.symbol("t")
-  let z = @symcore.symbol("z")
+  let t = @symcore.Expr::Symbol("t")
+  let z = @symcore.Expr::Symbol("z")
   let c = curve(
     [@symcore.int(2) * t, t ^ @symcore.int(2)],
     t,
@@ -70,9 +70,9 @@ test "geometry.curve parameter helpers" {
 
 ///|
 test "geometry.curve free symbol helpers" {
-  let t = @symcore.symbol("t")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
+  let t = @symcore.Expr::Symbol("t")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
   let c = curve([t + a, t ^ @symcore.int(2)], t, b, @symcore.int(2))
   assert_eq(expr_set_summary(c.free_symbols()), "{a, b}")
 }

@@ -1,10 +1,10 @@
 ///|
 test "physics.quantum.trace: parity" {
-  let a = @symcore.symbol("a")
-  let a_op = @symcore.symbol("A")
-  let b_op = @symcore.symbol("B")
-  let c_op = @symcore.symbol("C")
-  let d_op = @symcore.symbol("D")
+  let a = @symcore.Expr::Symbol("a")
+  let a_op = @symcore.Expr::Symbol("A")
+  let b_op = @symcore.Expr::Symbol("B")
+  let c_op = @symcore.Expr::Symbol("C")
+  let d_op = @symcore.Expr::Symbol("D")
 
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.to_string(tr(@symcore.raw_mul([a, a_op])))),

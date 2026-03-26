@@ -5,7 +5,7 @@ fn sing_expr_int(n : Int) -> Expr {
 
 ///|
 fn sing_expr_symbol(name : String) -> Expr {
-  @symcore.symbol(name)
+  @symcore.Expr::Symbol(name)
 }
 
 ///|

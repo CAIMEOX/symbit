@@ -30,13 +30,9 @@ fn symbolic_query_expr(
 }
 
 ///|
-fn tuple_expr(items : Array[@symcore.Expr]) -> @symcore.Expr {
-  @symcore.function("Tuple", items)
-}
-
 ///|
 fn tuple_matrix(rows : Array[Array[@symcore.Expr]]) -> @symcore.Expr {
-  tuple_expr(rows.map(row => tuple_expr(row)))
+  @symcore.Expr::Tuple(rows.map(row => @symcore.Expr::Tuple(row)))
 }
 
 ///|
@@ -46,11 +42,11 @@ fn scale_tuple_matrix(
 ) -> @symcore.Expr {
   match @symcore.tuple_items(mat) {
     Some(rows) =>
-      tuple_expr(
+      @symcore.Expr::Tuple(
         rows.map(row => {
           match @symcore.tuple_items(row) {
             Some(cols) =>
-              tuple_expr(
+              @symcore.Expr::Tuple(
                 cols.map(col => eval_arith(@symcore.mul([scale, col]))),
               )
             None => eval_arith(@symcore.mul([scale, row]))
@@ -72,14 +68,14 @@ fn symbolic_joint_mean(
       let means = params.map(a => {
         eval_arith(@symcore.mul([a, @symcore.pow(total, @symcore.int(-1))]))
       })
-      Some(tuple_expr(means))
+      Some(@symcore.Expr::Tuple(means))
     }
     JointTag::MultivariateT if params.length() == 3 => Some(params[0])
     JointTag::MultivariateLaplace if params.length() >= 2 => Some(params[0])
     JointTag::MultivariateNormal if params.length() >= 1 => Some(params[0])
     JointTag::NormalGamma if params.length() == 4 =>
       Some(
-        tuple_expr([
+        @symcore.Expr::Tuple([
           params[0],
           eval_arith(
             @symcore.mul([params[2], @symcore.pow(params[3], @symcore.int(-1))]),
@@ -174,13 +170,9 @@ fn symbolic_joint_variance(
 }
 
 ///|
-fn query_tuple_items(expr : @symcore.Expr) -> Array[@symcore.Expr]? {
-  @symcore.tuple_items(expr)
-}
-
 ///|
 fn query_tuple2(expr : @symcore.Expr) -> (@symcore.Expr, @symcore.Expr)? {
-  match query_tuple_items(expr) {
+  match @symcore.tuple_items(expr) {
     Some(items) if items.length() == 2 => Some((items[0], items[1]))
     _ => None
   }
@@ -236,7 +228,7 @@ fn query_replace_expr(
         ),
       )
     @symcore.Expr::Tuple(args) =>
-      @symcore.tuple_expr(
+      @symcore.Expr::Tuple(
         args.map(arg => query_replace_expr(arg, target, replacement)),
       )
     @symcore.Expr::Dict(items) => {
@@ -250,37 +242,37 @@ fn query_replace_expr(
           ),
         )
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
         @symcore.RelOp::Ne =>
-          @symcore.ne(
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
         @symcore.RelOp::Lt =>
-          @symcore.lt(
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
         @symcore.RelOp::Le =>
-          @symcore.le(
+          @symcore.Expr::Relational(@symcore.RelOp::Le, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
         @symcore.RelOp::Gt =>
-          @symcore.gt(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
         @symcore.RelOp::Ge =>
-          @symcore.ge(
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
             query_replace_expr(lhs, target, replacement),
             query_replace_expr(rhs, target, replacement),
           )
@@ -316,9 +308,9 @@ fn query_replace_expr(
 fn query_matrix2x2(
   expr : @symcore.Expr,
 ) -> (@symcore.Expr, @symcore.Expr, @symcore.Expr, @symcore.Expr)? {
-  match query_tuple_items(expr) {
+  match @symcore.tuple_items(expr) {
     Some(rows) if rows.length() == 2 =>
-      match (query_tuple_items(rows[0]), query_tuple_items(rows[1])) {
+      match (@symcore.tuple_items(rows[0]), @symcore.tuple_items(rows[1])) {
         (Some(r0), Some(r1)) if r0.length() == 2 && r1.length() == 2 =>
           Some((r0[0], r0[1], r1[0], r1[1]))
         _ => None
@@ -370,11 +362,11 @@ fn query_lambda_apply(
 fn query_tuple_pairs(
   expr : @symcore.Expr,
 ) -> Array[(@symcore.Expr, @symcore.Expr)]? {
-  match query_tuple_items(expr) {
+  match @symcore.tuple_items(expr) {
     Some(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = Array::new()
       for item in items {
-        match query_tuple_items(item) {
+        match @symcore.tuple_items(item) {
           Some(pair) if pair.length() == 2 => out.push((pair[0], pair[1]))
           _ => return None
         }
@@ -519,7 +511,7 @@ fn symbolic_special_variance(
       | MatrixTag::CircularOrthogonalEnsemble
       | MatrixTag::CircularSymplecticEnsemble
     ) if params.length() == 1 => {
-      let x = @symcore.symbol(rv_name)
+      let x = @symcore.Expr::Symbol(rv_name)
       let mean = @symcore.function("ZeroMatrix", [params[0], params[0]])
       Some(
         @symcore.function("Expectation", [
@@ -542,7 +534,7 @@ fn symbolic_special_variance(
         @symcore.function("Expectation", [
           eval_arith(
             @symcore.pow(
-              query_expr_sub(@symcore.symbol(rv_name), params[1]),
+              query_expr_sub(@symcore.Expr::Symbol(rv_name), params[1]),
               @symcore.int(2),
             ),
           ),
@@ -559,9 +551,9 @@ fn symbolic_continuous_handmade_mean(
   if params.length() < 1 {
     return None
   }
-  let x = @symcore.symbol("_x")
+  let x = @symcore.Expr::Symbol("_x")
   let neg_oo = eval_arith(
-    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
   )
   match query_lambda_apply(params[0], [x]) {
     Some(pdf) =>
@@ -569,7 +561,7 @@ fn symbolic_continuous_handmade_mean(
         eval_arith(
           @symcore.function("Integral", [
             eval_arith(@symcore.mul([x, pdf])),
-            tuple_expr([x, neg_oo, @symcore.oo()]),
+            @symcore.Expr::Tuple([x, neg_oo, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
           ]),
         ),
       )
@@ -584,9 +576,9 @@ fn symbolic_continuous_handmade_variance(
   if params.length() < 1 {
     return None
   }
-  let x = @symcore.symbol("_x")
+  let x = @symcore.Expr::Symbol("_x")
   let neg_oo = eval_arith(
-    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
   )
   match
     (
@@ -606,7 +598,7 @@ fn symbolic_continuous_handmade_variance(
                 pdf,
               ]),
             ),
-            tuple_expr([x, neg_oo, @symcore.oo()]),
+            @symcore.Expr::Tuple([x, neg_oo, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
           ]),
         ),
       )
@@ -621,9 +613,9 @@ fn symbolic_discrete_handmade_mean(
   if params.length() < 1 {
     return None
   }
-  let k = @symcore.symbol("_k")
+  let k = @symcore.Expr::Symbol("_k")
   let neg_oo = eval_arith(
-    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
   )
   match query_lambda_apply(params[0], [k]) {
     Some(pmf) =>
@@ -631,7 +623,7 @@ fn symbolic_discrete_handmade_mean(
         eval_arith(
           @symcore.function("Sum", [
             eval_arith(@symcore.mul([k, pmf])),
-            tuple_expr([k, neg_oo, @symcore.oo()]),
+            @symcore.Expr::Tuple([k, neg_oo, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
           ]),
         ),
       )
@@ -646,9 +638,9 @@ fn symbolic_discrete_handmade_variance(
   if params.length() < 1 {
     return None
   }
-  let k = @symcore.symbol("_k")
+  let k = @symcore.Expr::Symbol("_k")
   let neg_oo = eval_arith(
-    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
   )
   match
     (
@@ -668,7 +660,7 @@ fn symbolic_discrete_handmade_variance(
                 pmf,
               ]),
             ),
-            tuple_expr([k, neg_oo, @symcore.oo()]),
+            @symcore.Expr::Tuple([k, neg_oo, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
           ]),
         ),
       )
@@ -684,7 +676,7 @@ fn symbolic_joint_integral_bounds(
   let lowers = symbolic_joint_cdf_lowers(name, vars)
   let uppers : Array[@symcore.Expr] = Array::new()
   for _ in 0..<vars.length() {
-    uppers.push(@symcore.oo())
+    uppers.push(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   }
   (lowers, uppers)
 }
@@ -701,7 +693,7 @@ fn symbolic_joint_nested_integral(
     expr = eval_arith(
       @symcore.function("Integral", [
         expr,
-        tuple_expr([vars[i], lowers[i], uppers[i]]),
+        @symcore.Expr::Tuple([vars[i], lowers[i], uppers[i]]),
       ]),
     )
   }
@@ -729,7 +721,7 @@ fn symbolic_joint_mean_via_integral(
               ),
             )
           }
-          Some(tuple_expr(means))
+          Some(@symcore.Expr::Tuple(means))
         }
         None => None
       }
@@ -751,7 +743,7 @@ fn symbolic_joint_variance_via_integral(
       match
         (
           symbolic_joint_integrand(name, params, vars),
-          query_tuple_items(mean_expr),
+          @symcore.tuple_items(mean_expr),
         ) {
         (Some(dens), Some(means)) if means.length() == vars.length() => {
           let (lowers, uppers) = symbolic_joint_integral_bounds(name, vars)
@@ -802,7 +794,7 @@ fn symbolic_multivariate_ewens_nested_sum(
     expr = eval_arith(
       @symcore.function("Sum", [
         expr,
-        tuple_expr([vars[i], @symcore.int(0), @symcore.int(n / (i + 1))]),
+        @symcore.Expr::Tuple([vars[i], @symcore.int(0), @symcore.int(n / (i + 1))]),
       ]),
     )
   }
@@ -817,9 +809,9 @@ fn symbolic_multivariate_ewens_mean(
     Some(n) => {
       let vars : Array[@symcore.Expr] = Array::new()
       for i in 0..<n {
-        vars.push(@symcore.symbol("_k\{i + 1}"))
+        vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
       }
-      match symbolic_multivariate_ewens_density(params, tuple_expr(vars)) {
+      match symbolic_multivariate_ewens_density(params, @symcore.Expr::Tuple(vars)) {
         Some(pmf) => {
           let means : Array[@symcore.Expr] = Array::new()
           for v in vars {
@@ -831,7 +823,7 @@ fn symbolic_multivariate_ewens_mean(
               ),
             )
           }
-          Some(tuple_expr(means))
+          Some(@symcore.Expr::Tuple(means))
         }
         None => None
       }
@@ -850,13 +842,13 @@ fn symbolic_multivariate_ewens_variance(
       symbolic_multivariate_ewens_mean(params),
     ) {
     (Some(n), Some(mean_expr)) =>
-      match query_tuple_items(mean_expr) {
+      match @symcore.tuple_items(mean_expr) {
         Some(means) if means.length() == n => {
           let vars : Array[@symcore.Expr] = Array::new()
           for i in 0..<n {
-            vars.push(@symcore.symbol("_k\{i + 1}"))
+            vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
           }
-          match symbolic_multivariate_ewens_density(params, tuple_expr(vars)) {
+          match symbolic_multivariate_ewens_density(params, @symcore.Expr::Tuple(vars)) {
             Some(pmf) => {
               let rows : Array[Array[@symcore.Expr]] = Array::new()
               for i in 0..<n {
@@ -893,7 +885,7 @@ fn symbolic_multivariate_ewens_density(
   if params.length() != 2 {
     return None
   }
-  match query_tuple_items(x) {
+  match @symcore.tuple_items(x) {
     Some(xs) if !xs.is_empty() => {
       let n = params[0]
       let theta = params[1]
@@ -936,8 +928,8 @@ fn symbolic_multivariate_ewens_density(
       )
       Some(
         @symcore.function("Piecewise", [
-          tuple_expr([body, @symcore.function("Eq", [cond_sum, n])]),
-          tuple_expr([@symcore.int(0), @symcore.true_()]),
+          @symcore.Expr::Tuple([body, @symcore.function("Eq", [cond_sum, n])]),
+          @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
         ]),
       )
     }
@@ -955,15 +947,15 @@ fn symbolic_generalized_multivariate_log_gamma_density(
 ) -> @symcore.Expr? {
   match
     (
-      query_tuple_items(lamda_expr),
-      query_tuple_items(mu_expr),
-      query_tuple_items(x),
+      @symcore.tuple_items(lamda_expr),
+      @symcore.tuple_items(mu_expr),
+      @symcore.tuple_items(x),
     ) {
     (Some(lamdas), Some(mus), Some(xs)) if lamdas.length() == mus.length() &&
       mus.length() == xs.length() &&
       xs.length() > 1 => {
       let k = lamdas.length()
-      let n_var = @symcore.symbol("_k")
+      let n_var = @symcore.Expr::Symbol("_k")
       let v_plus_n = eval_arith(@symcore.add([v, n_var]))
       let one_minus_delta = eval_arith(
         @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), delta])]),
@@ -1031,7 +1023,7 @@ fn symbolic_generalized_multivariate_log_gamma_density(
       )
       let sum_expr = @symcore.function("Sum", [
         summand,
-        tuple_expr([n_var, @symcore.int(0), @symcore.oo()]),
+        @symcore.Expr::Tuple([n_var, @symcore.int(0), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
       ])
       Some(eval_arith(@symcore.mul([@symcore.pow(delta, v), sum_expr])))
     }
@@ -1055,7 +1047,7 @@ fn symbolic_joint_gmlg_density(
         x,
       )
     JointTag::GeneralizedMultivariateLogGammaOmega if params.length() == 4 =>
-      match query_tuple_items(params[2]) {
+      match @symcore.tuple_items(params[2]) {
         Some(lamdas) if lamdas.length() > 1 => {
           let delta = match query_matrix2x2(params[0]) {
             Some((a00, a01, a10, a11)) if lamdas.length() == 2 =>
@@ -1089,7 +1081,7 @@ fn symbolic_joint_density(
 ) -> @symcore.Expr? {
   match joint_tag_from_name(name) {
     JointTag::JointRV if params.length() >= 1 =>
-      match query_tuple_items(x) {
+      match @symcore.tuple_items(x) {
         Some(xs) => query_lambda_apply(params[0], xs)
         None => query_lambda_apply(params[0], [x])
       }
@@ -1099,7 +1091,7 @@ fn symbolic_joint_density(
     | JointTag::GeneralizedMultivariateLogGammaOmega =>
       symbolic_joint_gmlg_density(name, params, x)
     JointTag::Dirichlet | JointTag::MultivariateBeta if params.length() >= 2 =>
-      match query_tuple_items(x) {
+      match @symcore.tuple_items(x) {
         Some(xs) if xs.length() == params.length() => {
           let alpha_sum = eval_arith(@symcore.add(params))
           let denom = query_product_expr(
@@ -1148,7 +1140,7 @@ fn symbolic_joint_density(
             @symcore.mul([
               @symcore.function("sqrt", [
                 eval_arith(
-                  @symcore.mul([@symcore.int(2), @symcore.pi()]),
+                  @symcore.mul([@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)]),
                 ),
               ]),
               @symcore.function("gamma", [alpha]),
@@ -1211,7 +1203,7 @@ fn symbolic_joint_density(
           let norm = eval_arith(
             @symcore.mul([
               @symcore.int(2),
-              @symcore.pi(),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
               @symcore.function("sqrt", [det]),
             ]),
           )
@@ -1277,7 +1269,7 @@ fn symbolic_joint_density(
           )
           let denom = eval_arith(
             @symcore.mul([
-              @symcore.pi(),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
               @symcore.function("sqrt", [det]),
             ]),
           )
@@ -1342,7 +1334,7 @@ fn symbolic_joint_density(
                   @symcore.mul([
                     @symcore.function("gamma", [nu_half]),
                     nu,
-                    @symcore.pi(),
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                     @symcore.function("sqrt", [det]),
                   ]),
                 ),
@@ -1522,7 +1514,7 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
     RVKind::StochasticProcess(_) =>
       match expr {
         @symcore.Expr::Symbol(name) if name == rv.name =>
-          Some(@symcore.symbol(rv.name))
+          Some(@symcore.Expr::Symbol(rv.name))
         @symcore.Expr::Function(name, args) if name == rv.name &&
           args.length() == 1 => process_mean_at(rv, args[0])
         _ => None
@@ -1531,13 +1523,13 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
     | RVKind::Poisson(..)
     | RVKind::Geometric(..)
     | RVKind::NegativeBinomial(..) =>
-      if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
+      if @symcore.compare_expr(expr, @symcore.Expr::Symbol(rv.name)) == 0 {
         discrete_mean(rv)
       } else {
         None
       }
     RVKind::Normal(..) | RVKind::Exponential(..) | RVKind::Gamma(..) =>
-      if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
+      if @symcore.compare_expr(expr, @symcore.Expr::Symbol(rv.name)) == 0 {
         continuous_mean(rv)
       } else {
         None
@@ -1551,12 +1543,12 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
               SymbolicKind::Discrete(DiscreteTag::FiniteDistributionHandmade) =>
                 match symbolic_finite_handmade_mean(params) {
                   Some(v) => Some(v)
-                  None => Some(@symcore.symbol(rv.name))
+                  None => Some(@symcore.Expr::Symbol(rv.name))
                 }
               _ =>
                 match symbolic_opaque_mean(name, params) {
                   Some(v) => Some(v)
-                  None => Some(@symcore.symbol(rv.name))
+                  None => Some(@symcore.Expr::Symbol(rv.name))
                 }
             }
           @symcore.Expr::Function(fname, args) if fname == rv.name &&
@@ -1567,7 +1559,7 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
             }
           _ => None
         }
-      } else if @symcore.compare_expr(expr, @symcore.symbol(rv.name)) == 0 {
+      } else if @symcore.compare_expr(expr, @symcore.Expr::Symbol(rv.name)) == 0 {
         match kind {
           SymbolicKind::Joint(_) =>
             match symbolic_joint_mean(name, params) {
@@ -1577,7 +1569,7 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
                   symbolic_query_expr(
                     name,
                     "Mean",
-                    @symcore.symbol(rv.name),
+                    @symcore.Expr::Symbol(rv.name),
                     params,
                   ),
                 )
@@ -1594,7 +1586,7 @@ fn expectation_of_rv(rv : RandomVar, expr : @symcore.Expr) -> @symcore.Expr? {
                       symbolic_query_expr(
                         name,
                         "Mean",
-                        @symcore.symbol(rv.name),
+                        @symcore.Expr::Symbol(rv.name),
                         params,
                       ),
                     )
@@ -1639,7 +1631,7 @@ fn expectation_eval_independent(
     | @symcore.Expr::ComplexFloat(_) => Some(expr)
     @symcore.Expr::Symbol(name) =>
       match map.get(name) {
-        Some(rv) => expectation_of_rv(rv, @symcore.symbol(name))
+        Some(rv) => expectation_of_rv(rv, @symcore.Expr::Symbol(name))
         None => Some(expr)
       }
     @symcore.Expr::Add(items) => {
@@ -1711,7 +1703,7 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
   match rv.kind {
     RVKind::Finite(_) => finite_variance(rv)
     RVKind::StochasticProcess(_) =>
-      Some(variance_expr(@symcore.symbol(rv.name)))
+      Some(variance_expr(@symcore.Expr::Symbol(rv.name)))
     RVKind::Binomial(..)
     | RVKind::Poisson(..)
     | RVKind::Geometric(..)
@@ -1725,12 +1717,12 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
           SymbolicKind::Discrete(DiscreteTag::FiniteDistributionHandmade) =>
             match symbolic_finite_handmade_variance(params) {
               Some(v) => Some(v)
-              None => Some(variance_expr(@symcore.symbol(rv.name)))
+              None => Some(variance_expr(@symcore.Expr::Symbol(rv.name)))
             }
           _ =>
             match symbolic_special_variance(name, params, rv.name) {
               Some(v) => Some(v)
-              None => Some(variance_expr(@symcore.symbol(rv.name)))
+              None => Some(variance_expr(@symcore.Expr::Symbol(rv.name)))
             }
         }
       }
@@ -1743,7 +1735,7 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
                 symbolic_query_expr(
                   name,
                   "Variance",
-                  @symcore.symbol(rv.name),
+                  @symcore.Expr::Symbol(rv.name),
                   params,
                 ),
               )
@@ -1760,7 +1752,7 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
                     symbolic_query_expr(
                       name,
                       "Variance",
-                      @symcore.symbol(rv.name),
+                      @symcore.Expr::Symbol(rv.name),
                       params,
                     ),
                   )
@@ -1777,7 +1769,7 @@ fn variance_of_rv(rv : RandomVar) -> @symcore.Expr? {
         let renamed = rename_random_var(item, rv.name)
         match
           (
-            expectation_of_rv(renamed, @symcore.symbol(rv.name)),
+            expectation_of_rv(renamed, @symcore.Expr::Symbol(rv.name)),
             variance_of_rv(renamed),
           ) {
           (Some(m), Some(v)) => {
@@ -1825,7 +1817,7 @@ pub fn variance(
         }
       _ => ()
     }
-    if @symcore.compare_expr(expr, @symcore.symbol(rvs[0].name)) == 0 {
+    if @symcore.compare_expr(expr, @symcore.Expr::Symbol(rvs[0].name)) == 0 {
       match variance_of_rv(rvs[0]) {
         Some(v) => return v
         None => ()
@@ -1888,7 +1880,7 @@ fn symbolic_opaque_density(
     SymbolicKind::Matrix(MatrixTag::JointEigenDistribution) =>
       match symbolic_matrix_derived_distribution(name, params) {
         Some(lam) =>
-          match query_tuple_items(x) {
+          match @symcore.tuple_items(x) {
             Some(xs) => query_lambda_apply(lam, xs)
             None => query_lambda_apply(lam, [x])
           }
@@ -1919,11 +1911,11 @@ fn symbolic_opaque_density(
           for pair in pairs {
             let (value, prob) = pair
             piecewise_args.push(
-              tuple_expr([prob, @symcore.function("Eq", [x, value])]),
+              @symcore.Expr::Tuple([prob, @symcore.function("Eq", [x, value])]),
             )
           }
           piecewise_args.push(
-            tuple_expr([@symcore.int(0), @symcore.true_()]),
+            @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
           )
           Some(@symcore.function("Piecewise", piecewise_args))
         }
@@ -2002,8 +1994,8 @@ fn symbolic_process_density(
       }
       Some(
         @symcore.function("Piecewise", [
-          tuple_expr([p, @symcore.function("Eq", [x, success])]),
-          tuple_expr([
+          @symcore.Expr::Tuple([p, @symcore.function("Eq", [x, success])]),
+          @symcore.Expr::Tuple([
             eval_arith(
               @symcore.add([
                 @symcore.int(1),
@@ -2012,14 +2004,14 @@ fn symbolic_process_density(
             ),
             @symcore.function("Eq", [x, failure]),
           ]),
-          tuple_expr([@symcore.int(0), @symcore.true_()]),
+          @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
         ]),
       )
     }
     ProcessTag::GammaProcess if params.length() >= 2 => {
       let lamda = params[0]
       let gamma = params[1]
-      let t = @symcore.symbol("t")
+      let t = @symcore.Expr::Symbol("t")
       let shape = eval_arith(@symcore.mul([gamma, t]))
       let body = eval_arith(
         @symcore.mul([
@@ -2033,8 +2025,8 @@ fn symbolic_process_density(
       )
       Some(
         @symcore.function("Piecewise", [
-          tuple_expr([body, @symcore.function("Ge", [x, @symcore.int(0)])]),
-          tuple_expr([@symcore.int(0), @symcore.true_()]),
+          @symcore.Expr::Tuple([body, @symcore.function("Ge", [x, @symcore.int(0)])]),
+          @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)]),
         ]),
       )
     }
@@ -2065,41 +2057,41 @@ fn symbolic_process_cdf(
         @symcore.int(0)
       }
       let between_value = @symcore.function("Piecewise", [
-        tuple_expr([p, @symcore.function("Lt", [success, failure])]),
-        tuple_expr([one_minus_p, @symcore.true_()]),
+        @symcore.Expr::Tuple([p, @symcore.function("Lt", [success, failure])]),
+        @symcore.Expr::Tuple([one_minus_p, @symcore.Expr::Boolean(true)]),
       ])
       Some(
         @symcore.function("Piecewise", [
-          tuple_expr([
+          @symcore.Expr::Tuple([
             @symcore.int(0),
             @symcore.function("Lt", [
               x,
               @symcore.function("Min", [success, failure]),
             ]),
           ]),
-          tuple_expr([
+          @symcore.Expr::Tuple([
             between_value,
             @symcore.function("Lt", [
               x,
               @symcore.function("Max", [success, failure]),
             ]),
           ]),
-          tuple_expr([@symcore.int(1), @symcore.true_()]),
+          @symcore.Expr::Tuple([@symcore.int(1), @symcore.Expr::Boolean(true)]),
         ]),
       )
     }
     ProcessTag::GammaProcess if params.length() >= 2 => {
       let lamda = params[0]
       let gamma = params[1]
-      let t = @symcore.symbol("t")
+      let t = @symcore.Expr::Symbol("t")
       let shape = eval_arith(@symcore.mul([gamma, t]))
       Some(
         @symcore.function("Piecewise", [
-          tuple_expr([
+          @symcore.Expr::Tuple([
             @symcore.int(0),
             @symcore.function("Lt", [x, @symcore.int(0)]),
           ]),
-          tuple_expr([
+          @symcore.Expr::Tuple([
             eval_arith(
               @symcore.mul([
                 @symcore.function("lowergamma", [
@@ -2112,7 +2104,7 @@ fn symbolic_process_cdf(
                 ),
               ]),
             ),
-            @symcore.true_(),
+            @symcore.Expr::Boolean(true),
           ]),
         ]),
       )
@@ -2129,17 +2121,17 @@ fn symbolic_matrix_cdf(
 ) -> @symcore.Expr? {
   let kind = symbolic_kind_from_name(name)
   let rv = random_var("_M", RVKind::Symbolic(kind~, params~))
-  let dummy = @symcore.symbol("_x")
+  let dummy = @symcore.Expr::Symbol("_x")
   match matrix_density(rv, dummy) {
     Some(pdf) =>
       Some(
         eval_arith(
           @symcore.function("Integral", [
             pdf,
-            tuple_expr([
+            @symcore.Expr::Tuple([
               dummy,
               eval_arith(
-                @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+                @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
               ),
               x,
             ]),
@@ -2190,11 +2182,11 @@ fn symbolic_joint_integration_vars(
     JointTag::GeneralizedMultivariateLogGamma
     | JointTag::GeneralizedMultivariateLogGammaOmega =>
       if params.length() == 4 {
-        match query_tuple_items(params[2]) {
+        match @symcore.tuple_items(params[2]) {
           Some(lamdas) if !lamdas.is_empty() => {
             let vars : Array[@symcore.Expr] = Array::new()
             for i in 0..<lamdas.length() {
-              vars.push(@symcore.symbol("_y\{i + 1}"))
+              vars.push(@symcore.Expr::Symbol("_y\{i + 1}"))
             }
             Some(vars)
           }
@@ -2208,7 +2200,7 @@ fn symbolic_joint_integration_vars(
         Some(n) if n > 0 => {
           let vars : Array[@symcore.Expr] = Array::new()
           for i in 0..<n {
-            vars.push(@symcore.symbol("_k\{i + 1}"))
+            vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
           }
           Some(vars)
         }
@@ -2217,35 +2209,35 @@ fn symbolic_joint_integration_vars(
     JointTag::Dirichlet | JointTag::MultivariateBeta if params.length() >= 2 => {
       let vars : Array[@symcore.Expr] = Array::new()
       for i in 0..<params.length() {
-        vars.push(@symcore.symbol("_x\{i + 1}"))
+        vars.push(@symcore.Expr::Symbol("_x\{i + 1}"))
       }
       Some(vars)
     }
     JointTag::MultivariateNormal | JointTag::MultivariateLaplace if params.length() >=
       1 =>
-      match query_tuple_items(params[0]) {
+      match @symcore.tuple_items(params[0]) {
         Some(mu) if !mu.is_empty() => {
           let vars : Array[@symcore.Expr] = Array::new()
           for i in 0..<mu.length() {
-            vars.push(@symcore.symbol("_x\{i + 1}"))
+            vars.push(@symcore.Expr::Symbol("_x\{i + 1}"))
           }
           Some(vars)
         }
         _ => None
       }
     JointTag::MultivariateT if params.length() == 3 =>
-      match query_tuple_items(params[0]) {
+      match @symcore.tuple_items(params[0]) {
         Some(mu) if !mu.is_empty() => {
           let vars : Array[@symcore.Expr] = Array::new()
           for i in 0..<mu.length() {
-            vars.push(@symcore.symbol("_x\{i + 1}"))
+            vars.push(@symcore.Expr::Symbol("_x\{i + 1}"))
           }
           Some(vars)
         }
         _ => None
       }
     JointTag::NormalGamma if params.length() == 4 =>
-      Some([@symcore.symbol("_x"), @symcore.symbol("_tau")])
+      Some([@symcore.Expr::Symbol("_x"), @symcore.Expr::Symbol("_tau")])
     _ => None
   }
 }
@@ -2265,14 +2257,14 @@ fn symbolic_joint_integrand(
       }
     JointTag::GeneralizedMultivariateLogGamma
     | JointTag::GeneralizedMultivariateLogGammaOmega =>
-      symbolic_joint_gmlg_density(name, params, tuple_expr(vars))
+      symbolic_joint_gmlg_density(name, params, @symcore.Expr::Tuple(vars))
     JointTag::Dirichlet
     | JointTag::MultivariateBeta
     | JointTag::MultivariateNormal
     | JointTag::MultivariateLaplace
     | JointTag::MultivariateT
     | JointTag::NormalGamma =>
-      symbolic_joint_density(name, params, tuple_expr(vars))
+      symbolic_joint_density(name, params, @symcore.Expr::Tuple(vars))
     _ => None
   }
 }
@@ -2283,7 +2275,7 @@ fn symbolic_joint_cdf_lowers(
   vars : Array[@symcore.Expr],
 ) -> Array[@symcore.Expr] {
   let neg_oo = eval_arith(
-    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
   )
   match joint_tag_from_name(name) {
     JointTag::Dirichlet | JointTag::MultivariateBeta => {
@@ -2327,7 +2319,7 @@ fn symbolic_joint_box_integral(
         Some(integrand) => {
           let args : Array[@symcore.Expr] = [integrand]
           for i in 0..<vars.length() {
-            args.push(tuple_expr([vars[i], lowers[i], uppers[i]]))
+            args.push(@symcore.Expr::Tuple([vars[i], lowers[i], uppers[i]]))
           }
           Some(eval_arith(@symcore.function("Integral", args)))
         }
@@ -2345,7 +2337,7 @@ fn symbolic_joint_cdf(
 ) -> @symcore.Expr? {
   match symbolic_joint_integration_vars(name, params) {
     Some(vars) =>
-      match query_tuple_items(x) {
+      match @symcore.tuple_items(x) {
         Some(bounds) if bounds.length() == vars.length() => {
           let lowers = symbolic_joint_cdf_lowers(name, vars)
           symbolic_joint_box_integral(name, params, lowers, bounds)
@@ -2364,11 +2356,11 @@ fn symbolic_joint_survival(
 ) -> @symcore.Expr? {
   match symbolic_joint_integration_vars(name, params) {
     Some(vars) =>
-      match query_tuple_items(x) {
+      match @symcore.tuple_items(x) {
         Some(bounds) if bounds.length() == vars.length() => {
           let uppers : Array[@symcore.Expr] = Array::new()
           for _ in 0..<vars.length() {
-            uppers.push(@symcore.oo())
+            uppers.push(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
           }
           symbolic_joint_box_integral(name, params, bounds, uppers)
         }
@@ -2387,7 +2379,7 @@ fn symbolic_joint_interval_probability(
 ) -> @symcore.Expr? {
   match symbolic_joint_integration_vars(name, params) {
     Some(vars) =>
-      match (query_tuple_items(lower), query_tuple_items(upper)) {
+      match (@symcore.tuple_items(lower), @symcore.tuple_items(upper)) {
         (Some(low), Some(up)) if low.length() == vars.length() &&
           up.length() == vars.length() =>
           symbolic_joint_box_integral(name, params, low, up)
@@ -2511,9 +2503,9 @@ fn symbolic_opaque_cdf(
       | ContinuousTag::ContinuousDistributionHandmade
     ) =>
       if params.length() >= 1 {
-        let dummy = @symcore.symbol("_x")
+        let dummy = @symcore.Expr::Symbol("_x")
         let neg_oo = eval_arith(
-          @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+          @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
         )
         match query_lambda_apply(params[0], [dummy]) {
           Some(pdf) =>
@@ -2521,7 +2513,7 @@ fn symbolic_opaque_cdf(
               eval_arith(
                 @symcore.function("Integral", [
                   pdf,
-                  tuple_expr([dummy, neg_oo, x]),
+                  @symcore.Expr::Tuple([dummy, neg_oo, x]),
                 ]),
               ),
             )
@@ -2535,9 +2527,9 @@ fn symbolic_opaque_cdf(
       | DiscreteTag::DiscreteDistributionHandmade
     ) =>
       if params.length() >= 1 {
-        let dummy = @symcore.symbol("_k")
+        let dummy = @symcore.Expr::Symbol("_k")
         let neg_oo = eval_arith(
-          @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+          @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
         )
         let upper = @symcore.function("floor", [x])
         match query_lambda_apply(params[0], [dummy]) {
@@ -2546,7 +2538,7 @@ fn symbolic_opaque_cdf(
               eval_arith(
                 @symcore.function("Sum", [
                   pmf,
-                  tuple_expr([dummy, neg_oo, upper]),
+                  @symcore.Expr::Tuple([dummy, neg_oo, upper]),
                 ]),
               ),
             )
@@ -2565,11 +2557,11 @@ fn symbolic_opaque_cdf(
           for pair in sorted_pairs {
             let (value, prob) = pair
             piecewise_args.push(
-              tuple_expr([acc, @symcore.function("Lt", [x, value])]),
+              @symcore.Expr::Tuple([acc, @symcore.function("Lt", [x, value])]),
             )
             acc = eval_arith(@symcore.add([acc, prob]))
           }
-          piecewise_args.push(tuple_expr([acc, @symcore.true_()]))
+          piecewise_args.push(@symcore.Expr::Tuple([acc, @symcore.Expr::Boolean(true)]))
           Some(@symcore.function("Piecewise", piecewise_args))
         }
         None => None
@@ -2583,7 +2575,7 @@ fn symbolic_opaque_cdf(
       match
         (
           symbolic_matrix_derived_distribution(name, params),
-          query_tuple_items(x),
+          @symcore.tuple_items(x),
         ) {
         (Some(lam), Some(bounds)) =>
           match query_lambda_tuple_signature(lam) {
@@ -2604,7 +2596,7 @@ fn symbolic_opaque_cdf(
                 _ => {
                   let xs : Array[@symcore.Expr] = Array::new()
                   let neg_oo = eval_arith(
-                    @symcore.mul([@symcore.int(-1), @symcore.oo()]),
+                    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)]),
                   )
                   for _ in 0..<vars.length() {
                     xs.push(neg_oo)
@@ -2627,7 +2619,7 @@ fn symbolic_opaque_cdf(
                 eval_arith(
                   @symcore.function("Integral", [
                     body,
-                    tuple_expr([vars[0], @symcore.int(0), x]),
+                    @symcore.Expr::Tuple([vars[0], @symcore.int(0), x]),
                   ]),
                 ),
               )
@@ -2636,20 +2628,20 @@ fn symbolic_opaque_cdf(
         None => None
       }
     SymbolicKind::Joint(JointTag::MultivariateEwens) =>
-      match (symbolic_multivariate_ewens_arity(params), query_tuple_items(x)) {
+      match (symbolic_multivariate_ewens_arity(params), @symcore.tuple_items(x)) {
         (Some(n), Some(bounds)) if bounds.length() == n => {
           let vars : Array[@symcore.Expr] = Array::new()
           for i in 0..<n {
-            vars.push(@symcore.symbol("_k\{i + 1}"))
+            vars.push(@symcore.Expr::Symbol("_k\{i + 1}"))
           }
-          match symbolic_multivariate_ewens_density(params, tuple_expr(vars)) {
+          match symbolic_multivariate_ewens_density(params, @symcore.Expr::Tuple(vars)) {
             Some(pmf) => {
               let mut expr = pmf
               for i in 0..<n {
                 expr = eval_arith(
                   @symcore.function("Sum", [
                     expr,
-                    tuple_expr([
+                    @symcore.Expr::Tuple([
                       vars[i],
                       @symcore.int(0),
                       @symcore.function("floor", [bounds[i]]),
@@ -3242,7 +3234,7 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
                 match symbolic_opaque_density(name, params, x) {
                   Some(v) => v
                   None =>
-                    @symcore.function("density", [@symcore.symbol(rv.name), x])
+                    @symcore.function("density", [@symcore.Expr::Symbol(rv.name), x])
                 }
               } else {
                 match kind {
@@ -3260,7 +3252,7 @@ pub fn density(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
                 }
               }
             }
-            _ => @symcore.function("density", [@symcore.symbol(rv.name), x])
+            _ => @symcore.function("density", [@symcore.Expr::Symbol(rv.name), x])
           }
       }
   }
@@ -3321,7 +3313,7 @@ pub fn cdf(rv : RandomVar, x : @symcore.Expr) -> @symcore.Expr {
                 }
               }
             }
-            _ => @symcore.function("cdf", [@symcore.symbol(rv.name), x])
+            _ => @symcore.function("cdf", [@symcore.Expr::Symbol(rv.name), x])
           }
       }
   }
@@ -3334,6 +3326,6 @@ pub fn std(expr : @symcore.Expr, rvs? : Array[RandomVar] = []) -> @symcore.Expr 
 
 ///|
 pub fn moment(rv : RandomVar, n : Int) -> @symcore.Expr {
-  let x = @symcore.symbol(rv.name)
+  let x = @symcore.Expr::Symbol(rv.name)
   expectation(@symcore.pow(x, @symcore.int(n)), rvs=[rv])
 }

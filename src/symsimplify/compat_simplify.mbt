@@ -515,12 +515,12 @@ fn rewrite_nsimplify_exact(
   let basic = match expr {
     Expr::Function(name, [Expr::Number(n)]) if name == "sqrt" =>
       match compat_exact_rational_nth_root(n, 2) {
-        Some(root) => @symcore.number(root)
+        Some(root) => @symcore.Expr::Number(root)
         None => expr
       }
     Expr::Pow(Expr::Number(base), Expr::Number(exp)) =>
       match compat_exact_numeric_pow(base, exp) {
-        Some(value) => @symcore.number(value)
+        Some(value) => @symcore.Expr::Number(value)
         None => expr
       }
     Expr::Function(name, [_]) if compat_is_special_trig_name(name) => tr4(expr)
@@ -640,7 +640,7 @@ fn compat_rewrite_named_constants(expr : Expr, constants : Array[Expr]) -> Expr 
   }
   match compat_match_linear_sqrt5(expr) {
     Some((a, b)) if !b.is_zero() => {
-      let golden = @symcore.golden_ratio()
+      let golden = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio)
       let constant_part = a.add_r(b.neg_r())
       let golden_part = b.mul_r(@symnum.BigRational::from_int(2))
       compat_make_linear_expr(constant_part, golden_part, golden)
@@ -724,11 +724,11 @@ fn compat_make_linear_expr(
     if coeff.is_one() {
       out.push(base)
     } else {
-      out.push(@symcore.mul([@symcore.number(coeff), base]))
+      out.push(@symcore.mul([@symcore.Expr::Number(coeff), base]))
     }
   }
   if !constant.is_zero() {
-    out.push(@symcore.number(constant))
+    out.push(@symcore.Expr::Number(constant))
   }
   @symcore.add(out)
 }
@@ -750,7 +750,7 @@ fn compat_sqrt_two() -> Expr {
 
 ///|
 fn compat_sqrt_pi() -> Expr {
-  @symcore.function("sqrt", [@symcore.pi()])
+  @symcore.function("sqrt", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])
 }
 
 ///|

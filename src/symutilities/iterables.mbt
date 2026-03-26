@@ -704,5 +704,5 @@ pub fn NumberedSymbols::next(self : NumberedSymbols) -> Expr {
     name = self.prefix + index.to_string()
   }
   self.next_index.val = index + 1
-  symbol(name)
+  Expr::Symbol(name)
 }

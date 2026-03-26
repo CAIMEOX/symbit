@@ -149,13 +149,13 @@ pub fn finite_probability(rv : RandomVar, event : Event) -> @symcore.Expr? {
 ///|
 pub fn finite_expectation(
   rv : RandomVar,
-  expr? : @symcore.Expr = @symcore.symbol("_"),
+  expr? : @symcore.Expr = @symcore.Expr::Symbol("_"),
 ) -> @symcore.Expr? {
   match finite_atoms(rv) {
     None => None
     Some(items) => {
-      let base_expr = if expr == @symcore.symbol("_") {
-        @symcore.symbol(rv.name)
+      let base_expr = if expr == @symcore.Expr::Symbol("_") {
+        @symcore.Expr::Symbol(rv.name)
       } else {
         expr
       }

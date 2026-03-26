@@ -22,12 +22,12 @@ fn sq_delta(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn sq_dummy_above() -> Expr {
-  symbol("_a")
+  Expr::Symbol("_a")
 }
 
 ///|
 fn sq_dummy_below() -> Expr {
-  symbol("_i")
+  Expr::Symbol("_i")
 }
 
 ///|
@@ -399,7 +399,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "a_\{idx}"
     }
-    env.set(above[idx], symbol(name))
+    env.set(above[idx], Expr::Symbol(name))
   }
   for idx in 0..<below.length() {
     let name = if new_indices && idx < below_letters.length() {
@@ -407,7 +407,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "i_\{idx}"
     }
-    env.set(below[idx], symbol(name))
+    env.set(below[idx], Expr::Symbol(name))
   }
   for idx in 0..<general.length() {
     let name = if new_indices && idx < general_letters.length() {
@@ -415,7 +415,7 @@ fn sq_term_normalization_env(
     } else {
       "_" + "p_\{idx}"
     }
-    env.set(general[idx], symbol(name))
+    env.set(general[idx], Expr::Symbol(name))
   }
   env
 }
@@ -548,9 +548,9 @@ pub fn permutation_operator(lhs : Expr, rhs : Expr) -> Expr {
 fn sq_swap_indices(expr : Expr, lhs : String, rhs : String) -> Expr {
   let tmp = "__perm_tmp__"
   sq_subst_one(
-    sq_subst_one(sq_subst_one(expr, lhs, symbol(tmp)), rhs, symbol(lhs)),
+    sq_subst_one(sq_subst_one(expr, lhs, Expr::Symbol(tmp)), rhs, Expr::Symbol(lhs)),
     tmp,
-    symbol(rhs),
+    Expr::Symbol(rhs),
   )
 }
 

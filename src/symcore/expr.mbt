@@ -1,5 +1,5 @@
 ///|
-pub enum Expr {
+pub(all) enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
@@ -117,22 +117,6 @@ pub impl BitXOr for Expr with lxor(self, other) {
   pow(self, other)
 }
 
-///|
-pub fn number(value : @symnum.BigRational) -> Expr {
-  Expr::Number(value)
-}
-
-///|
-pub fn float(value : Float) -> Expr {
-  Expr::Float(value)
-}
-
-///|
-pub fn complex_float(value : ComplexFloat) -> Expr {
-  Expr::ComplexFloat(value)
-}
-
-///|
 pub fn int(value : Int) -> Expr {
   Expr::Number(@symnum.BigRational::from_int(value))
 }
@@ -145,12 +129,6 @@ pub fn rational_from_ints(
   Expr::Number(@symnum.BigRational::from_ints(num, den))
 }
 
-///|
-pub fn raw_symbol(name : String) -> Expr {
-  Expr::Symbol(name)
-}
-
-///|
 let dummy_id_counter_ref : Ref[Int] = { val: 0 }
 
 ///|
@@ -160,34 +138,8 @@ fn next_dummy_id() -> Int {
   id
 }
 
-///|
-pub fn symbol(name : String) -> Expr {
-  Expr::Symbol(name)
-}
-
-///|
-pub fn raw_dummy(name : String, id : Int) -> Expr {
-  Expr::Dummy(name, id)
-}
-
-///|
 pub fn dummy(name? : String = "Dummy") -> Expr {
   Expr::Dummy(name, next_dummy_id())
-}
-
-///|
-pub fn wild(name : String) -> Expr {
-  Expr::Wild(name)
-}
-
-///|
-pub fn function_head(name : String) -> Expr {
-  Expr::FunctionHead(name)
-}
-
-///|
-pub fn undefined_function(name : String) -> Expr {
-  Expr::UndefinedFunction(name)
 }
 
 ///|
@@ -819,15 +771,15 @@ pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
-    ("True", []) => true_()
-    ("False", []) => false_()
-    ("Tuple", _) => tuple_expr(args)
-    ("Eq", [lhs, rhs]) => eq(lhs, rhs)
-    ("Ne", [lhs, rhs]) => ne(lhs, rhs)
-    ("Lt", [lhs, rhs]) => lt(lhs, rhs)
-    ("Le", [lhs, rhs]) => le(lhs, rhs)
-    ("Gt", [lhs, rhs]) => gt(lhs, rhs)
-    ("Ge", [lhs, rhs]) => ge(lhs, rhs)
+    ("True", []) => Expr::Boolean(true)
+    ("False", []) => Expr::Boolean(false)
+    ("Tuple", _) => Expr::Tuple(args)
+    ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
+    ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
+    ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)
+    ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
+    ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
+    ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
     ("Mod", [lhs, rhs]) => mod_expr(lhs, rhs)
     ("Derivative", [expr, wrt]) => derivative(expr, wrt)
     ("Derivative", [expr, wrt, order]) => derivative(expr, wrt, order~)
@@ -841,7 +793,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
           _ => return Expr::Function(name, args.map(child => child))
         }
       }
-      dict_expr(entries)
+      Expr::Dict(entries)
     }
     _ => Expr::Function(name, args.map(child => child))
   }
@@ -876,8 +828,8 @@ pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
 ///|
 pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
   match (name, args) {
-    ("True", []) => true_()
-    ("False", []) => false_()
+    ("True", []) => Expr::Boolean(true)
+    ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args.map(child => child))
     ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
     ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
@@ -907,7 +859,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
 ///|
 pub fn arbitrary_polys() -> @qc.Gen[Expr] {
   let available_symbols = ["x", "y", "z", "w", "a", "b", "c"]
-  let var_gen = @qc.one_of_array(available_symbols).fmap(symbol)
+  let var_gen = @qc.one_of_array(available_symbols).fmap(x => Expr::Symbol(x))
   letrec f = (size : Int) => {
     match size.abs() {
       n if n <= 0 => var_gen
@@ -955,8 +907,8 @@ test "arbitrary array use gen" {
 
 ///|
 test "symbolized" {
-  let x = symbol("x")
-  let y = symbol("y")
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
   let expr = x + (y ^ int(10))
   inspect(expr, content="(x + (y ** 10))")
 }

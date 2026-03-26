@@ -11,7 +11,7 @@ fn to_rational(expr : @symcore.Expr) -> @symnum.BigRational? {
 
 ///|
 fn from_rational(r : @symnum.BigRational) -> @symcore.Expr {
-  @symcore.number(r)
+  @symcore.Expr::Number(r)
 }
 
 ///|
@@ -42,8 +42,8 @@ pub fn find_simple_recurrence_vector(
 ///|
 pub fn find_simple_recurrence(
   seq : Array[@symcore.Expr],
-  a? : @symcore.Expr = @symcore.symbol("a"),
-  n? : @symcore.Expr = @symcore.symbol("n"),
+  a? : @symcore.Expr = @symcore.Expr::Symbol("a"),
+  n? : @symcore.Expr = @symcore.Expr::Symbol("n"),
 ) -> @symcore.Expr? {
   let coeffs = find_simple_recurrence_vector(seq)
   if coeffs.length() <= 1 {
@@ -80,7 +80,7 @@ pub fn find_simple_recurrence_vector_expr(
 pub fn rinterp(
   data : Array[@symcore.Expr],
   degnum : Int,
-  x? : @symcore.Expr = @symcore.symbol("x"),
+  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
 ) -> @symcore.Expr? {
   if data.is_empty() {
     return None
@@ -156,7 +156,7 @@ pub fn rinterp(
 ///|
 pub fn guess_generating_function_rational(
   seq : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.symbol("x"),
+  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
 ) -> @symcore.Expr? {
   if seq.length() < 2 {
     return None
@@ -208,7 +208,7 @@ pub fn guess_generating_function_rational(
 ///|
 pub fn guess_generating_function(
   seq : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.symbol("x"),
+  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
 ) -> @symcore.Expr? {
   guess_generating_function_rational(seq, x~)
 }
@@ -227,9 +227,9 @@ pub fn guess(
   let gf = guess_generating_function_rational(seq)
   if all {
     match (rec, gf) {
-      (Some(r), Some(g)) => Some(@symcore.tuple_expr([r, g]))
-      (Some(r), None) => Some(@symcore.tuple_expr([r]))
-      (None, Some(g)) => Some(@symcore.tuple_expr([g]))
+      (Some(r), Some(g)) => Some(@symcore.Expr::Tuple([r, g]))
+      (Some(r), None) => Some(@symcore.Expr::Tuple([r]))
+      (None, Some(g)) => Some(@symcore.Expr::Tuple([g]))
       _ => None
     }
   } else if evaluate {
@@ -389,7 +389,7 @@ fn poly_from_rational(
     if coeff.is_zero() {
       continue
     }
-    let base = @symcore.number(coeff)
+    let base = @symcore.Expr::Number(coeff)
     let term = if i == 0 {
       base
     } else {

@@ -7,13 +7,13 @@
 /// `sqrt(2/L) * sin(n*pi*x/L)`.
 
 ///|
-pub let piab_m : Expr = symbol("m")
+pub let piab_m : Expr = Expr::Symbol("m")
 
 ///|
-pub let piab_l : Expr = symbol("L")
+pub let piab_l : Expr = Expr::Symbol("L")
 
 ///|
-pub fn piab_hamiltonian(label? : Expr = symbol("H")) -> Expr {
+pub fn piab_hamiltonian(label? : Expr = Expr::Symbol("H")) -> Expr {
   @symcore.raw_function("PIABHamiltonian", [label])
 }
 
@@ -34,7 +34,7 @@ pub fn piab_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
       1 => {
       let n = args[0]
       let coeff = (n ^ int(2)) *
-        (@symcore.pi() ^ int(2)) *
+        (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^ int(2)) *
         (hbar ^ int(2)) *
         @symcore.raw_pow(int(2) * piab_m * (piab_l ^ int(2)), int(-1))
       Some(coeff * ket_expr)
@@ -48,14 +48,14 @@ pub fn piab_represent(expr : Expr) -> Expr? {
   match expr {
     Expr::Function("PIABKet", args) | Expr::Function("PIABBra", args) if args.length() ==
       1 => {
-      let x = symbol("x")
+      let x = Expr::Symbol("x")
       let prefactor = @symcore.raw_function("sqrt", [
         int(2) * @symcore.raw_pow(piab_l, int(-1)),
       ])
       Some(
         prefactor *
         @symcore.raw_function("sin", [
-          args[0] * @symcore.pi() * x * @symcore.raw_pow(piab_l, int(-1)),
+          args[0] * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * x * @symcore.raw_pow(piab_l, int(-1)),
         ]),
       )
     }

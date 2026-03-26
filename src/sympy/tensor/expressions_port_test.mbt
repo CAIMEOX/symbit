@@ -1,6 +1,6 @@
 ///|
 test "array expression strings" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let a = array_symbol("A", shape=[n, n])
   let b = array_symbol("B")
   let elem = array_element(a, [@symcore.int(1), @symcore.int(2)])

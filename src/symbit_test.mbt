@@ -1,6 +1,9 @@
 ///|
 test "prelude constructors round trip through printers" {
-  let expr = add([integer(1), mul([symbol("x"), pow(symbol("y"), integer(2))])])
+  let expr = add([
+    integer(1),
+    mul([Expr::Symbol("x"), pow(Expr::Symbol("y"), integer(2))]),
+  ])
   inspect(debug_repr(expr), content="(+ (* sym:x (^ sym:y 2)) 1)")
   inspect(to_string(expr), content="x*y**2 + 1")
 }

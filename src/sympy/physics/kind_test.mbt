@@ -1,9 +1,9 @@
 ///|
 test "physics.quantum.kind: local kinds" {
-  let x = @symcore.symbol("x")
-  let a = operator([@symcore.symbol("A")]).as_expr()
-  let b = bra([@symcore.symbol("k")]).as_expr()
-  let k = ket([@symcore.symbol("k")]).as_expr()
+  let x = @symcore.Expr::Symbol("x")
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let b = bra([@symcore.Expr::Symbol("k")]).as_expr()
+  let k = ket([@symcore.Expr::Symbol("k")]).as_expr()
 
   assert_true(quantum_kind(k) == QuantumKind::QKet)
   assert_true(quantum_kind(b) == QuantumKind::QBra)
@@ -15,7 +15,7 @@ test "physics.quantum.kind: local kinds" {
   assert_true(quantum_kind(dagger(k)) == QuantumKind::QBra)
   assert_true(
     quantum_kind(
-      commutator(a, operator([@symcore.symbol("B")]).as_expr(), evaluate=false),
+      commutator(a, operator([@symcore.Expr::Symbol("B")]).as_expr(), evaluate=false),
     ) ==
     QuantumKind::QOperator,
   )

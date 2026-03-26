@@ -403,7 +403,7 @@ fn SatBuilder::apply_direct_atom_truth(
 pub fn env_to_query(env : AssumeEnv) -> Query {
   let facts : Array[Query] = Array::new()
   for name, sf in env {
-    let x = symbol(name)
+    let x = Expr::Symbol(name)
     push_fact_literal(facts, q_zero(x), sf.is_zero)
     push_fact_literal(facts, q_nonzero(x), sf.is_nonzero)
     push_fact_literal(facts, q_integer(x), sf.is_integer)

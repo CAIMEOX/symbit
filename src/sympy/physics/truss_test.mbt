@@ -129,7 +129,7 @@ test "physics.continuum_mechanics.truss: node/member/load/support workflow" {
   let bc = "BC"
   let ac = "AC"
   let cd = "CD"
-  let p = @symcore.symbol("P")
+  let p = @symcore.Expr::Symbol("P")
   let quarter = @symcore.rational_from_ints(1, 4)
   let half = @symcore.rational_from_ints(1, 2)
 

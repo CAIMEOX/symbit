@@ -1,7 +1,7 @@
 ///|
 test "ops: gcd_list/lcm_list parity over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let f = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let g = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(4))
   let h = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(9))
@@ -24,7 +24,7 @@ test "ops: gcd_list/lcm_list parity over ZZ" {
 ///|
 test "ops: discriminant parity over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let f = b.from_expr(
     (x ^ @symcore.int(3)) - @symcore.int(2) * x + @symcore.int(1),
   )
@@ -36,7 +36,7 @@ test "ops: discriminant parity over ZZ" {
 
 ///|
 test "ops: resultant_expr parity with gens/domain (univariate)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let f = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
   let g = (x ^ @symcore.int(2)) + @symcore.int(1)
   let res = @sympolys.resultant_expr(f, g, "x", gens=["x"], domain=Domain::ZZ)
@@ -49,7 +49,7 @@ test "ops: resultant_expr parity with gens/domain (univariate)" {
 
 ///|
 test "ops: resultant_expr parity for multivar with univariate support" {
-  let y = @symcore.symbol("y")
+  let y = @symcore.Expr::Symbol("y")
   let f = (y ^ @symcore.int(2)) - @symcore.int(2)
   let g = y - @symcore.int(1)
   let res = @sympolys.resultant_expr(
@@ -68,8 +68,8 @@ test "ops: resultant_expr parity for multivar with univariate support" {
 
 ///|
 test "ops: resultant_expr parity for non-constant multivar elimination" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let f = x * y + @symcore.int(1)
   let g = x + y
   let res = @sympolys.resultant_expr(

@@ -1,12 +1,12 @@
 ///|
 test "physics.optics.waves: parity" {
-  let amp = @symcore.symbol("A")
-  let phi = @symcore.symbol("phi")
-  let freq = @symcore.symbol("f")
-  let amp1 = @symcore.symbol("A1")
-  let amp2 = @symcore.symbol("A2")
-  let phi1 = @symcore.symbol("phi1")
-  let phi2 = @symcore.symbol("phi2")
+  let amp = @symcore.Expr::Symbol("A")
+  let phi = @symcore.Expr::Symbol("phi")
+  let freq = @symcore.Expr::Symbol("f")
+  let amp1 = @symcore.Expr::Symbol("A1")
+  let amp2 = @symcore.Expr::Symbol("A2")
+  let phi1 = @symcore.Expr::Symbol("phi1")
+  let phi2 = @symcore.Expr::Symbol("phi2")
   let wave = t_wave(amp, frequency=Some(freq), phase=phi)
   let sum_wave = t_wave(amp1, frequency=Some(freq), phase=phi1).superpose(
     t_wave(amp2, frequency=Some(freq), phase=phi2),

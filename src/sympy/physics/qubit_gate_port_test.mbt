@@ -172,10 +172,10 @@ test "physics.quantum.qubit/gate: controlled parity" {
 
 ///|
 test "physics.quantum.gate: ugate parity" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let c = @symcore.symbol("c")
-  let d = @symcore.symbol("d")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let d = @symcore.Expr::Symbol("d")
   let umat = @symphysics.explicit_matrix_from_rows([[a, b], [c, d]])
   let u0 = u_gate_single(0, umat)
   let u1 = u_gate_single(1, umat)
@@ -227,10 +227,10 @@ test "physics.quantum.gate: ugate parity" {
     "controlled UGate qapply parity",
   )
 
-  let v = @symcore.symbol("v")
-  let w = @symcore.symbol("w")
-  let f = @symcore.symbol("f")
-  let g = @symcore.symbol("g")
+  let v = @symcore.Expr::Symbol("v")
+  let w = @symcore.Expr::Symbol("w")
+  let f = @symcore.Expr::Symbol("f")
+  let g = @symcore.Expr::Symbol("g")
   let uadd = u_gate_single(
     0,
     @symphysics.explicit_matrix_from_rows([[v, w], [f, g]]),

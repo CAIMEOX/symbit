@@ -320,7 +320,7 @@ pub fn Ellipse::repr(self : Ellipse) -> String {
 
 ///|
 pub fn Ellipse::area(self : Ellipse) -> Expr {
-  geo_simplify(@symcore.pi() * self.hradius_ * self.vradius_)
+  geo_simplify(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.hradius_ * self.vradius_)
 }
 
 ///|
@@ -408,8 +408,8 @@ pub fn Ellipse::foci(self : Ellipse) -> Array[Point] raise GeometryError {
 ///|
 pub fn Ellipse::equation(
   self : Ellipse,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
   _slope? : Expr? = None,
 ) -> Expr {
   let dx = x - self.center_.coords_[0]
@@ -435,7 +435,7 @@ pub fn Ellipse::equation(
 ///|
 pub fn Ellipse::arbitrary_point(
   self : Ellipse,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
   point2d(
     geo_simplify(
@@ -491,7 +491,7 @@ pub fn Ellipse::bounds(self : Ellipse) -> (Point, Point) raise GeometryError {
 ///|
 pub fn Ellipse::plot_interval(
   _self : Ellipse,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero() - geo_pi(), geo_pi()]
 }
@@ -593,7 +593,7 @@ pub fn Ellipse::rotate(
   pt? : Point? = None,
 ) -> GeometryEntity raise GeometryError {
   let center = self.center_.rotate(angle, pt~)
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let half_pi = geo_div(pi, geo_int(2))
   if geo_expr_is_zero(angle) ||
     geo_expr_eq(angle, pi) ||
@@ -733,12 +733,12 @@ pub fn Circle::repr(self : Circle) -> String {
 
 ///|
 pub fn Circle::area(self : Circle) -> Expr {
-  geo_simplify(@symcore.pi() * self.radius_ * self.radius_)
+  geo_simplify(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.radius_ * self.radius_)
 }
 
 ///|
 pub fn Circle::circumference(self : Circle) -> Expr {
-  geo_simplify(geo_int(2) * @symcore.pi() * self.radius_)
+  geo_simplify(geo_int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * self.radius_)
 }
 
 ///|
@@ -758,7 +758,7 @@ pub fn Circle::bounds(self : Circle) -> (Point, Point) raise GeometryError {
 ///|
 pub fn Circle::plot_interval(
   _self : Circle,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   [parameter, geo_zero() - geo_pi(), geo_pi()]
 }
@@ -783,8 +783,8 @@ pub fn Circle::parameter_value(
 ///|
 pub fn Circle::equation(
   self : Circle,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
 ) -> Expr {
   geo_simplify(
     ((x - self.center_.coords_[0]) ^ geo_int(2)) +
@@ -796,7 +796,7 @@ pub fn Circle::equation(
 ///|
 pub fn Circle::arbitrary_point(
   self : Circle,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
   point2d(
     geo_simplify(

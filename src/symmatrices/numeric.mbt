@@ -100,9 +100,9 @@ fn expr_to_numeric_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
 ///|
 fn expr_from_numeric_complex(value : @symcore.ComplexFloat) -> Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.float(value.real_part())
+    @symcore.Expr::Float(value.real_part())
   } else {
-    @symcore.complex_float(value)
+    @symcore.Expr::ComplexFloat(value)
   }
 }
 

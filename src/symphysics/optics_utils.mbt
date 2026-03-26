@@ -10,7 +10,7 @@ pub enum OpticsMediumArg {
 
 ///|
 fn oo_expr() -> Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|

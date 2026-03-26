@@ -29,12 +29,12 @@ fn control_assert_matrix_expr_equal(
 
 ///|
 test "physics.control.routh_table: parity" {
-  let z = @symcore.symbol("z")
-  let b0 = @symcore.symbol("b0")
-  let b1 = @symcore.symbol("b1")
-  let b2 = @symcore.symbol("b2")
-  let b3 = @symcore.symbol("b3")
-  let b4 = @symcore.symbol("b4")
+  let z = @symcore.Expr::Symbol("z")
+  let b0 = @symcore.Expr::Symbol("b0")
+  let b1 = @symcore.Expr::Symbol("b1")
+  let b2 = @symcore.Expr::Symbol("b2")
+  let b3 = @symcore.Expr::Symbol("b3")
+  let b4 = @symcore.Expr::Symbol("b4")
   let p1 = b4 * (z ^ @symcore.int(4)) +
     b3 * (z ^ @symcore.int(3)) +
     b2 * (z ^ @symcore.int(2)) +

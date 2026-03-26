@@ -1,6 +1,6 @@
 ///|
 test "rootoftools: rootof parity (degree 5)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let poly = b.from_expr((x ^ @symcore.int(5)) - x + @symcore.int(1))
   let ours = @sympolys.rootof(poly, 0).to_string()

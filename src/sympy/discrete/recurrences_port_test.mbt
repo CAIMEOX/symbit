@@ -59,9 +59,9 @@ test "discrete linrec parity" {
   let b4 = b[:4].to_array()
   let res2 = linrec(a5, b4, 80)
   assert_oracle(try? linrec_equiv(a5, b4, 80, res2))
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let res3 = linrec(
     [x, y, z],
     [@symcore.int(1), @symcore.int(1), @symcore.int(1)],

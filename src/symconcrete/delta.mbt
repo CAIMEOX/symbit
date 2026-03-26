@@ -197,8 +197,8 @@ fn eval_delta_product(
 
 ///|
 fn piecewise_expr(expr : @symcore.Expr, cond : @symcore.Expr) -> @symcore.Expr {
-  let pair1 = @symcore.tuple_expr([expr, cond])
-  let pair2 = @symcore.tuple_expr([@symcore.int(0), @symcore.true_()])
+  let pair1 = @symcore.Expr::Tuple([expr, cond])
+  let pair2 = @symcore.Expr::Tuple([@symcore.int(0), @symcore.Expr::Boolean(true)])
   @symcore.function("Piecewise", [pair1, pair2])
 }
 
@@ -226,12 +226,12 @@ fn symbolic_singleton_cond(
 
 ///|
 fn rel_le(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.le(left, right)
+  @symcore.Expr::Relational(@symcore.RelOp::Le, left, right)
 }
 
 ///|
 fn rel_eq(left : @symcore.Expr, right : @symcore.Expr) -> @symcore.Expr {
-  @symcore.eq(left, right)
+  @symcore.Expr::Relational(@symcore.RelOp::Eq, left, right)
 }
 
 ///|

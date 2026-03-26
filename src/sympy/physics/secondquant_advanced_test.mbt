@@ -11,10 +11,10 @@ fn sq_adv_assert_expr_oracle(
 
 ///|
 test "physics.secondquant: fermion constructors and operator application" {
-  let p = @symcore.symbol("p")
-  let q = @symcore.symbol("q")
-  let a = @symcore.symbol("a")
-  let i = @symcore.symbol("i")
+  let p = @symcore.Expr::Symbol("p")
+  let q = @symcore.Expr::Symbol("q")
+  let a = @symcore.Expr::Symbol("a")
+  let i = @symcore.Expr::Symbol("i")
 
   inspect(fermion_annihilator(p).to_string(), content="f(p)")
   inspect(fermion_creator(q).to_string(), content="f+(q)")
@@ -83,16 +83,16 @@ test "physics.secondquant: fermion constructors and operator application" {
 
 ///|
 test "physics.secondquant: tensors and antisymmetry" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let i = @symcore.symbol("i")
-  let j = @symcore.symbol("j")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let i = @symcore.Expr::Symbol("i")
+  let j = @symcore.Expr::Symbol("j")
   inspect(
-    @symprint.to_string(tensor_symbol(@symcore.symbol("T"))),
+    @symprint.to_string(tensor_symbol(@symcore.Expr::Symbol("T"))),
     content="TensorSymbol(T)",
   )
   sq_adv_assert_expr_oracle(
-    anti_symmetric_tensor(@symcore.symbol("v"), [b, a], [j, i]),
+    anti_symmetric_tensor(@symcore.Expr::Symbol("v"), [b, a], [j, i]),
     "AntiSymmetricTensor(v, (b, a), (j, i))",
     "antisymmetric tensor canonicalization",
   )
@@ -100,12 +100,12 @@ test "physics.secondquant: tensors and antisymmetry" {
 
 ///|
 test "physics.secondquant: normal ordering, contraction, deltas, and permutations" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let i = @symcore.symbol("i")
-  let j = @symcore.symbol("j")
-  let p = @symcore.symbol("p")
-  let q = @symcore.symbol("q")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let i = @symcore.Expr::Symbol("i")
+  let j = @symcore.Expr::Symbol("j")
+  let p = @symcore.Expr::Symbol("p")
+  let q = @symcore.Expr::Symbol("q")
 
   sq_adv_assert_expr_oracle(
     no(@symcore.raw_mul([f(q), fd(p)])),
@@ -141,7 +141,7 @@ test "physics.secondquant: normal ordering, contraction, deltas, and permutation
     secondquant_wicks(
       @symcore.raw_mul([
         fd(p),
-        @symcore.raw_add([f(q), f(@symcore.symbol("r"))]),
+        @symcore.raw_add([f(q), f(@symcore.Expr::Symbol("r"))]),
       ]),
     ),
     "wicks(Fd(p)*(F(q) + F(r)))",

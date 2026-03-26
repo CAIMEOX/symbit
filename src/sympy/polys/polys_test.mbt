@@ -1,6 +1,6 @@
 ///|
 test "sympy polys oracle: gcd/resultant/div" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let p = (x ^ @symcore.int(2)) - @symcore.int(1)
   let q = x - @symcore.int(1)
   let g = gcd(p, q)
@@ -13,8 +13,8 @@ test "sympy polys oracle: gcd/resultant/div" {
 
 ///|
 test "sympy polys oracle: groebner/factor/sqf" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let f1 = x * y - @symcore.int(1)
   let f2 = x - @symcore.int(1) * y
   let basis = groebner([f1, f2], order="lex")

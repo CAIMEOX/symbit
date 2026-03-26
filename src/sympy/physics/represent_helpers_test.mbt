@@ -20,7 +20,7 @@ test "physics.quantum.represent helpers: basis discovery and symbolic fallbacks"
   )
 
   let states = enumerate_states(
-    x_ket(position=@symcore.symbol("foo")),
+    x_ket(position=@symcore.Expr::Symbol("foo")),
     start_index=1,
     count=3,
   )
@@ -48,7 +48,7 @@ test "physics.quantum.represent helpers: basis discovery and symbolic fallbacks"
   )
   quantum_test_assert_string_equal(
     @symprint.to_string(
-      match represent(ket([@symcore.symbol("k")]).as_expr()) {
+      match represent(ket([@symcore.Expr::Symbol("k")]).as_expr()) {
         MatrixScalarValue::Scalar(value) => value
         MatrixScalarValue::Matrix(_) =>
           fail("expected scalar symbolic represent")

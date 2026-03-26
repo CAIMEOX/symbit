@@ -1212,7 +1212,7 @@ fn expr_replace_symbol(
         name,
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
-    Expr::Symbol(name) => if name == old_name { symbol(new_name) } else { expr }
+    Expr::Symbol(name) => if name == old_name { Expr::Symbol(new_name) } else { expr }
     Expr::Add(args) =>
       @symcore.add(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
@@ -1230,7 +1230,7 @@ fn expr_replace_symbol(
         expr_replace_symbol(rhs, old_name, new_name),
       )
     Expr::Tuple(args) =>
-      @symcore.tuple_expr(
+      @symcore.Expr::Tuple(
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
       )
     Expr::Dict(items) => {
@@ -1244,37 +1244,37 @@ fn expr_replace_symbol(
           ),
         )
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     Expr::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Ne =>
-          @symcore.ne(
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Lt =>
-          @symcore.lt(
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Le =>
-          @symcore.le(
+          @symcore.Expr::Relational(@symcore.RelOp::Le, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Gt =>
-          @symcore.gt(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
         @symcore.RelOp::Ge =>
-          @symcore.ge(
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
             expr_replace_symbol(lhs, old_name, new_name),
             expr_replace_symbol(rhs, old_name, new_name),
           )
@@ -1389,7 +1389,7 @@ pub fn domain_alg_field_from_poly(
 ///|
 fn cyclotomic_poly_domain(n : Int, gen : String) -> Poly raise PolyError {
   guard n > 0 else { raise PolyError::BadExponent }
-  let x = symbol(gen)
+  let x = Expr::Symbol(gen)
   let mut poly = Poly::from_expr((x ^ int(n)) - int(1), [gen], Domain::QQ)
   for d in 1..<n {
     if n % d == 0 {
@@ -3154,12 +3154,12 @@ fn domain_rational_exsqrt(value : @symnum.BigRational) -> @symnum.BigRational? {
 
 ///|
 fn expr_from_bigint(n : BigInt) -> Expr {
-  @symcore.number(@symnum.BigRational::from_bigint(n))
+  @symcore.Expr::Number(@symnum.BigRational::from_bigint(n))
 }
 
 ///|
 fn expr_from_rational(n : @symnum.BigRational) -> Expr {
-  @symcore.number(n)
+  @symcore.Expr::Number(n)
 }
 
 ///|
@@ -3256,13 +3256,13 @@ fn expr_gaussian_coeffs(
 
 ///|
 fn gaussian_rat_to_expr(value : GaussianRatCompat) -> Expr {
-  let i_sym = @symcore.imag_unit()
+  let i_sym = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   let terms : Array[Expr] = Array::new()
   if !value.re.is_zero() {
-    terms.push(@symcore.number(value.re))
+    terms.push(@symcore.Expr::Number(value.re))
   }
   if !value.im.is_zero() {
-    let imag_coeff = @symcore.number(value.im)
+    let imag_coeff = @symcore.Expr::Number(value.im)
     terms.push(
       if value.im.is_one() {
         i_sym
@@ -3794,7 +3794,7 @@ fn expr_strip_leading_minus(expr : Expr) -> Expr? {
             n.compare(@symnum.BigRational::from_int(-1)) == 0 => removed = true
           Expr::Number(n) if !removed &&
             n.compare(@symnum.BigRational::zero()) < 0 => {
-            updated.push(@symcore.number(n.neg_r()))
+            updated.push(@symcore.Expr::Number(n.neg_r()))
             removed = true
           }
           _ => updated.push(arg)
@@ -3807,7 +3807,7 @@ fn expr_strip_leading_minus(expr : Expr) -> Expr? {
       }
     }
     Expr::Number(n) if n.compare(@symnum.BigRational::zero()) < 0 =>
-      Some(@symcore.number(n.neg_r()))
+      Some(@symcore.Expr::Number(n.neg_r()))
     _ => None
   }
 }
@@ -3815,9 +3815,9 @@ fn expr_strip_leading_minus(expr : Expr) -> Expr? {
 ///|
 fn sqrt_of_nonnegative_rational(value : @symnum.BigRational) -> Expr {
   if value.is_zero() || value.is_one() {
-    @symcore.number(value)
+    @symcore.Expr::Number(value)
   } else {
-    @symcore.function("sqrt", [@symcore.number(value)])
+    @symcore.function("sqrt", [@symcore.Expr::Number(value)])
   }
 }
 
@@ -3972,7 +3972,7 @@ fn domain_scalar_gcd_expr(
       }
       let num = @symnum.gcd_bigint(lhs.numerator(), rhs.numerator())
       let den = domain_bigint_lcm(lhs.denominator(), rhs.denominator())
-      @symcore.number(poly_rational_from_bigints(num, den))
+      @symcore.Expr::Number(poly_rational_from_bigints(num, den))
     }
     Domain::ZZ_I => {
       let lhs = gaussian_int_from_expr(domain, left)
@@ -4053,7 +4053,7 @@ fn domain_scalar_lcm_expr(
       } else {
         let num = domain_bigint_lcm(lhs.numerator(), rhs.numerator())
         let den = @symnum.gcd_bigint(lhs.denominator(), rhs.denominator())
-        @symcore.number(poly_rational_from_bigints(num, den))
+        @symcore.Expr::Number(poly_rational_from_bigints(num, den))
       }
     }
     Domain::ZZ_I => {
@@ -4325,7 +4325,7 @@ pub fn domain_abs_expr(domain : Domain, expr : Expr) -> Expr raise PolyError {
         Some(v) =>
           if v < 0 {
             match expr {
-              Expr::Number(n) => @symcore.number(n.neg_r())
+              Expr::Number(n) => @symcore.Expr::Number(n.neg_r())
               _ => @symcore.function("Abs", [expr])
             }
           } else {
@@ -5197,7 +5197,7 @@ fn domain_field_elem_to_expr(domain : Domain, elem : FieldElem) -> Expr {
   match (domain, elem) {
     (Domain::GF(p), FieldElem::GFp(_, value)) => {
       let symm = if value > p / 2 { value - p } else { value }
-      @symcore.number(@symnum.BigRational::from_int(symm))
+      @symcore.Expr::Number(@symnum.BigRational::from_int(symm))
     }
     _ => fe_to_expr_const(elem)
   }

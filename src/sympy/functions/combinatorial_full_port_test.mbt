@@ -1,7 +1,7 @@
 ///|
 test "combinatorial full parity (wrappers)" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   check_expr("factorial", factorial(x), "factorial(x)")
   check_expr("factorial2", factorial2(x), "factorial2(x)")
   check_expr("subfactorial", subfactorial(x), "subfactorial(x)")

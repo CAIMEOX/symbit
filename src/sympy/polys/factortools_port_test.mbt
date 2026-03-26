@@ -17,7 +17,7 @@ fn expect_factor_list_same(poly : Poly, modulus : Int?) -> Unit raise {
 ///|
 test "factortools: x^5 - x over ZZ" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(x * ((x ^ @symcore.int(4)) - @symcore.int(1)))
   expect_factor_list_same(poly, None)
 }
@@ -25,7 +25,7 @@ test "factortools: x^5 - x over ZZ" {
 ///|
 test "factortools: x^6 + x^3 + 1 over GF(2)" {
   let b = PolyBuilder::new(["x"], Domain::GF(2))
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     (x ^ @symcore.int(6)) + (x ^ @symcore.int(3)) + @symcore.int(1),
   )
@@ -35,7 +35,7 @@ test "factortools: x^6 + x^3 + 1 over GF(2)" {
 ///|
 test "factortools: sqf_list compares with SymPy" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     ((x - @symcore.int(2)) ^ @symcore.int(2)) *
     ((x + @symcore.int(3)) ^ @symcore.int(3)),
@@ -50,7 +50,7 @@ test "factortools: sqf_list compares with SymPy" {
 ///|
 test "factortools: QQ content factors (1/2)*(x^2-1)" {
   let b = PolyBuilder::new(["x"], Domain::QQ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr(
     expr_rat(1, 2) * ((x ^ @symcore.int(2)) - @symcore.int(1)),
   )
@@ -60,7 +60,7 @@ test "factortools: QQ content factors (1/2)*(x^2-1)" {
 ///|
 test "factortools: extension argument no longer rejected" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let poly = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
   let factors = poly.factor(extension=["sqrt(2)"])
   let ours = sort_factor_repr(factor_list_to_string("1", factors))

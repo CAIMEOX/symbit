@@ -21,15 +21,15 @@ test "small branches: core/domain paths" {
   let frac_coeff = ensure_coeff_domain(half, Domain::Frac(Domain::QQ))
   assert_eq(frac_coeff.to_string(), "1/2")
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [
     (a ^ @symcore.int(2)) + @symcore.int(1),
   ])
   let alg_coeff = ensure_coeff_domain(half, alg_domain)
   assert_true(alg_coeff is FieldElem::AlgExt(_, _, _, _))
 
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let px = PolyBuilder::new(["x"], Domain::QQ).from_expr(x + @symcore.int(1))
   let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
   let mul_mismatch_len : Result[Poly, PolyError] = try? px.mul(pxy)
@@ -91,8 +91,8 @@ test "small branches: domain_utils normalize_mod paths" {
 
 ///|
 test "small branches: dense conversion guard branches" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let pxy = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
 
   let non_uni : Result[Array[FieldElem], PolyError] = try? to_dense(pxy)

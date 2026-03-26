@@ -25,7 +25,7 @@ fn rootof_list(expr : @symcore.Expr, deg : Int) -> String raise {
 
 ///|
 test "polyroots: linear/quadratic parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::QQ)
   let f = b.from_expr(@symcore.int(2) * x + @symcore.int(1))
   let ours_lin = roots_repr(@sympolys.roots_linear(f))
@@ -41,7 +41,7 @@ test "polyroots: linear/quadratic parity" {
 
 ///|
 test "polyroots: cubic/quartic parity (factorable)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr((x - @symcore.int(1)) ^ @symcore.int(3))
   let ours_cubic = roots_repr(@sympolys.roots_cubic(f))
@@ -55,7 +55,7 @@ test "polyroots: cubic/quartic parity (factorable)" {
 
 ///|
 test "polyroots: cubic/quartic parity (rootof fallback)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(2))
   let ours_cubic = roots_repr(@sympolys.roots_cubic(f))
@@ -69,7 +69,7 @@ test "polyroots: cubic/quartic parity (rootof fallback)" {
 
 ///|
 test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr((x ^ @symcore.int(5)) - @symcore.int(2))
   let ours = roots_repr(@sympolys.roots(f))
@@ -79,7 +79,7 @@ test "polyroots: generic roots handles degree > 4 via CRootOf fallback" {
 
 ///|
 test "polyroots: generic roots keeps multiplicities" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let f = b.from_expr(
     ((x - @symcore.int(1)) ^ @symcore.int(2)) *

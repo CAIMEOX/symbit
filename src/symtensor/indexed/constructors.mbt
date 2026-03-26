@@ -48,7 +48,7 @@ pub fn index_idx(item : Idx) -> Index {
 
 ///|
 pub fn idx_expr(item : Idx) -> @symcore.Expr {
-  @symcore.symbol(item.name)
+  @symcore.Expr::Symbol(item.name)
 }
 
 ///|

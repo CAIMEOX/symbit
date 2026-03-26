@@ -10,10 +10,10 @@ pub(all) struct PiecewiseCase {
 ///|
 fn cond_to_expr(cond : @symlogic.BoolExpr) -> Expr {
   match cond {
-    @symlogic.BoolExpr::True => @symcore.true_()
-    @symlogic.BoolExpr::False => @symcore.false_()
-    @symlogic.BoolExpr::Symbol(name) => symbol(name)
-    _ => symbol(@symlogic.to_string(cond))
+    @symlogic.BoolExpr::True => @symcore.Expr::Boolean(true)
+    @symlogic.BoolExpr::False => @symcore.Expr::Boolean(false)
+    @symlogic.BoolExpr::Symbol(name) => Expr::Symbol(name)
+    _ => Expr::Symbol(@symlogic.to_string(cond))
   }
 }
 
@@ -39,8 +39,8 @@ pub fn piecewise(
     args.push(cond_to_expr(c.cond))
   }
   args.push(default)
-  args.push(@symcore.true_())
-  if args.length() == 2 && args[1] == @symcore.true_() {
+  args.push(@symcore.Expr::Boolean(true))
+  if args.length() == 2 && args[1] == @symcore.Expr::Boolean(true) {
     return args[0]
   }
   @symcore.function("Piecewise", args)

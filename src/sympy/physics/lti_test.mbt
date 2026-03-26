@@ -7,7 +7,7 @@ fn control_test_rat(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 test "physics.control.lti: transfer function surface" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let expr = @symcore.int(2) +
     @symcore.int(3) *
     s *
@@ -46,7 +46,7 @@ test "physics.control.lti: transfer function surface" {
 
 ///|
 test "physics.control.lti: series parallel and feedback" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let g_tf = transfer_function(s + @symcore.int(1), s + @symcore.int(2), s)
   let h_tf = transfer_function(@symcore.int(1), s + @symcore.int(4), s)
   let g = g_tf.as_system()
@@ -79,8 +79,8 @@ test "physics.control.lti: series parallel and feedback" {
 
 ///|
 test "physics.control.lti: discrete transforms and stability" {
-  let s = @symcore.symbol("s")
-  let z = @symcore.symbol("z")
+  let s = @symcore.Expr::Symbol("s")
+  let z = @symcore.Expr::Symbol("z")
   let t = control_test_rat(1, 10)
   let cont = transfer_function(@symcore.int(1), s + @symcore.int(1), s)
 
@@ -109,12 +109,12 @@ test "physics.control.lti: discrete transforms and stability" {
 
 ///|
 test "physics.control.lti: pid and create_transfer_function" {
-  let s = @symcore.symbol("s")
-  let z = @symcore.symbol("z")
-  let kp = @symcore.symbol("kp")
-  let ki = @symcore.symbol("ki")
-  let kd = @symcore.symbol("kd")
-  let tfilt = @symcore.symbol("tf")
+  let s = @symcore.Expr::Symbol("s")
+  let z = @symcore.Expr::Symbol("z")
+  let kp = @symcore.Expr::Symbol("kp")
+  let ki = @symcore.Expr::Symbol("ki")
+  let kd = @symcore.Expr::Symbol("kd")
+  let tfilt = @symcore.Expr::Symbol("tf")
   let pid = pid_controller(kp~, ki~, kd~, tf=tfilt, variable=s)
   let pid_doit = pid.doit()
   let pid_expected = transfer_function(

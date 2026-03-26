@@ -8,28 +8,28 @@
 /// representations in the number basis.
 
 ///|
-pub let sho_omega : Expr = symbol("omega")
+pub let sho_omega : Expr = Expr::Symbol("omega")
 
 ///|
-pub let sho_mass : Expr = symbol("m")
+pub let sho_mass : Expr = Expr::Symbol("m")
 
 ///|
-pub fn raising_op(label? : Expr = symbol("a")) -> Expr {
+pub fn raising_op(label? : Expr = Expr::Symbol("a")) -> Expr {
   @symcore.raw_function("RaisingOp", [label])
 }
 
 ///|
-pub fn lowering_op(label? : Expr = symbol("a")) -> Expr {
+pub fn lowering_op(label? : Expr = Expr::Symbol("a")) -> Expr {
   @symcore.raw_function("LoweringOp", [label])
 }
 
 ///|
-pub fn number_op(label? : Expr = symbol("N")) -> Expr {
+pub fn number_op(label? : Expr = Expr::Symbol("N")) -> Expr {
   @symcore.raw_function("NumberOp", [label])
 }
 
 ///|
-pub fn sho_hamiltonian(label? : Expr = symbol("H")) -> Expr {
+pub fn sho_hamiltonian(label? : Expr = Expr::Symbol("H")) -> Expr {
   @symcore.raw_function("Hamiltonian", [label])
 }
 
@@ -60,7 +60,7 @@ fn sho_xp_prefactor() -> Expr {
 pub fn sho_rewrite_as_xp(expr : Expr) -> Expr {
   let xp_scale = sho_xp_prefactor()
   let x_term = sho_mass * sho_omega * x_op()
-  let px_term = @symcore.imag_unit() * px_op()
+  let px_term = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * px_op()
   let px_sq = @symcore.raw_pow(px_op(), int(2))
   let x_sq = @symcore.raw_pow(sho_mass * sho_omega * x_op(), int(2))
   match expr {

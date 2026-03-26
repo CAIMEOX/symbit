@@ -1,6 +1,6 @@
 ///|
 test "diff tan and gamma" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let tanx = @symcore.function("tan", [x])
   let gammax = @symcore.function("gamma", [x])
   let dt = diff(tanx, x)

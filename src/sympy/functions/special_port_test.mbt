@@ -10,7 +10,7 @@ test "special gamma/erf basics" {
 
 ///|
 test "special zeta wrapper" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let z = zeta(x)
   assert_eq(@symprint.to_string(z), "zeta(x)")
   assert_oracle(try? expr_str_eq(@symprint.to_string(z), "zeta(x)"))

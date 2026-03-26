@@ -6,10 +6,10 @@ test "physics.optics.utils: parity" {
   let three_halves = test_rational_expr(3, 2)
   let theta = test_pi_expr() * test_rational_expr(1, 6)
   let small_angle = test_rational_expr(1, 10)
-  let f = @symcore.symbol("f")
-  let u = @symcore.symbol("u")
-  let n = @symcore.symbol("N")
-  let c = @symcore.symbol("c")
+  let f = @symcore.Expr::Symbol("f")
+  let u = @symcore.Expr::Symbol("u")
+  let n = @symcore.Expr::Symbol("N")
+  let c = @symcore.Expr::Symbol("c")
 
   optics_assert_expr_equal(
     refraction_angle(

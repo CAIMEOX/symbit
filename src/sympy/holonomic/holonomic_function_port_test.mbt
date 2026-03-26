@@ -1,6 +1,6 @@
 ///|
 test "holonomic function: expr_to_holonomic parity for elementary forms" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
   let hf_sin = expr_to_holonomic(@symcore.function("sin", [x]), x~)
   let hf_cos = expr_to_holonomic(@symcore.function("cos", [x]), x~)
@@ -11,7 +11,7 @@ test "holonomic function: expr_to_holonomic parity for elementary forms" {
 
 ///|
 test "holonomic function: closure ops and calculus on expr hints" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
   let hf_sin = expr_to_holonomic(@symcore.function("sin", [x]), x~)
   let add_expr = @symprint.to_string((hf_exp + hf_sin).to_expr())
@@ -32,7 +32,7 @@ test "holonomic function: closure ops and calculus on expr hints" {
 
 ///|
 test "holonomic function: sequence conversion for constant-coefficient ode" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let seq_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~).to_sequence()
   assert_eq(seq_exp.length(), 1)
   let oracle_exp = sequence_str(["-1", "n + 1"], u0=["1"])
@@ -55,7 +55,7 @@ test "holonomic function: sequence conversion for constant-coefficient ode" {
 
 ///|
 test "holonomic function: series and evalf pipeline" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let hf_exp = expr_to_holonomic(@symcore.function("exp", [x]), x~)
   let series_expr = @symprint.to_string(hf_exp.series(n=6))
   assert_true(

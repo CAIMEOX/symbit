@@ -23,7 +23,7 @@ pub struct OperatorExpr {
 
 ///|
 fn default_operator_label() -> Array[Expr] {
-  [symbol("O")]
+  [Expr::Symbol("O")]
 }
 
 ///|
@@ -84,7 +84,7 @@ pub fn unitary_operator(
 
 ///|
 pub fn identity_operator(
-  dimension? : Expr = @symcore.oo(),
+  dimension? : Expr = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
   quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space~)
@@ -182,7 +182,7 @@ pub fn operator_from_expr(expr : Expr) -> OperatorExpr? {
             "UnitaryOperator" => Some(unitary_operator(args))
             "IdentityOperator" => {
               let dimension = if args.is_empty() {
-                @symcore.oo()
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
               } else {
                 args[0]
               }

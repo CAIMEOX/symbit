@@ -76,7 +76,7 @@ fn boson_secondquant_state_expr(
   ket? : Bool = true,
 ) -> Expr {
   let class_name = if ket { "FockStateBosonKet" } else { "FockStateBosonBra" }
-  @symcore.raw_function(class_name, [@symcore.tuple_expr(items)])
+  @symcore.raw_function(class_name, [@symcore.Expr::Tuple(items)])
 }
 
 ///|

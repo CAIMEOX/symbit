@@ -65,7 +65,7 @@ test "elementary Min/Max numeric" {
 
 ///|
 test "piecewise basic simplification" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let cases : Array[PiecewiseCase] = [
     { expr: @symcore.int(1), cond: @symlogic.bool_true() },
     { expr: x, cond: @symlogic.bool_symbol("c") },

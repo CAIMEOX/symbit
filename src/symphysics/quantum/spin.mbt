@@ -8,7 +8,7 @@
 
 ///|
 fn spin_op_symbol(name : String) -> Expr {
-  symbol(name)
+  Expr::Symbol(name)
 }
 
 ///|
@@ -27,7 +27,7 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
   if num == 0 {
     int(0)
   } else {
-    @symcore.pi() * spin_exact_rational(num, den)
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * spin_exact_rational(num, den)
   }
 }
 
@@ -370,11 +370,11 @@ pub fn JzState::as_expr(self : JzState) -> Expr {
     )
   }
   let coupling_args = self.coupling.map(c => {
-    @symcore.tuple_expr([int(c.left_index), int(c.right_index), c.j])
+    @symcore.Expr::Tuple([int(c.left_index), int(c.right_index), c.j])
   })
-  let args : Array[Expr] = [self.j, self.m, @symcore.tuple_expr(self.jn)]
+  let args : Array[Expr] = [self.j, self.m, @symcore.Expr::Tuple(self.jn)]
   if !coupling_args.is_empty() {
-    args.push(@symcore.tuple_expr(coupling_args))
+    args.push(@symcore.Expr::Tuple(coupling_args))
   }
   @symcore.raw_function(
     spin_coupled_state_expr_name(self.basis_name, self.is_bra),
@@ -505,12 +505,8 @@ pub fn m_values(j : Expr) -> (Int, Array[Expr]) raise @symphysics.PhysicsError {
 
 ///|
 fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
-  fn parse_tuple_items(expr : Expr) -> Array[Expr]? {
-    @symcore.tuple_items(expr)
-  }
-
   fn parse_coupling_items(expr : Expr) -> Array[SpinCoupling]? {
-    match parse_tuple_items(expr) {
+    match @symcore.tuple_items(expr) {
       Some(items) => {
         let couplings : Array[SpinCoupling] = []
         for item in items {
@@ -565,7 +561,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JxKetCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -583,7 +579,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JxBraCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -601,7 +597,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JyKetCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -619,7 +615,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JyBraCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -637,7 +633,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JzKetCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -655,7 +651,7 @@ fn spin_state_from_expr_impl(expr : Expr) -> JzState? {
     Some("JzBraCoupled") =>
       match quantum_expr_args(expr) {
         Some(args) if args.length() >= 3 =>
-          match parse_tuple_items(args[2]) {
+          match @symcore.tuple_items(args[2]) {
             Some(jn) =>
               if args.length() >= 4 {
                 match parse_coupling_items(args[3]) {
@@ -770,7 +766,7 @@ fn spin_basis_transform_coeff(
 
 ///|
 fn spin_sum_expr(body : Expr, sym : Expr, lower : Expr, upper : Expr) -> Expr {
-  @symcore.function("Sum", [body, @symcore.tuple_expr([sym, lower, upper])])
+  @symcore.function("Sum", [body, @symcore.Expr::Tuple([sym, lower, upper])])
 }
 
 ///|
@@ -801,7 +797,7 @@ fn spin_rewrite_single_state(
         return state_expr
       }
       if !evaluate || !spin_numeric_args([state.j]) {
-        let mi = symbol("mi")
+        let mi = Expr::Symbol("mi")
         let (alpha, beta, gamma) = spin_basis_angles(
           state.basis_name,
           target_basis,
@@ -1259,7 +1255,7 @@ fn spin_couple_tensor_product(
         quantum_add_from_args_preserve(terms)
       } else {
         let total_m = spin_sum_all(items.map(s => s.m))
-        let total_j = symbol("j")
+        let total_j = Expr::Symbol("j")
         let current_j = items.map(s => s.j)
         let coeffs : Array[Expr] = []
         let sum_specs : Array[Expr] = []
@@ -1283,7 +1279,7 @@ fn spin_couple_tensor_product(
           let j3 = if step + 1 == resolved.length() {
             total_j
           } else {
-            symbol(coupling_symbol_name(merged))
+            Expr::Symbol(coupling_symbol_name(merged))
           }
           coeffs.push(cg(j1, m1, j2, m2, j3, m3).as_expr())
           couplings.push(SpinCoupling::{
@@ -1291,7 +1287,7 @@ fn spin_couple_tensor_product(
             right_index: scheme[step].right_index,
             j: j3,
           })
-          sum_specs.push(@symcore.tuple_expr([j3, m3, j1 + j2]))
+          sum_specs.push(@symcore.Expr::Tuple([j3, m3, j1 + j2]))
           current_j[merged[0] - 1] = j3
         }
         let coupled_state = spin_state_make(
@@ -1422,7 +1418,7 @@ fn spin_uncouple_state_expr(
   } else {
     let mvars : Array[Expr] = []
     for idx in 0..<j_values.length() {
-      mvars.push(symbol("m\{idx + 1}"))
+      mvars.push(Expr::Symbol("m\{idx + 1}"))
     }
     let resolved = spin_resolve_couplings(
       j_values.length(),
@@ -1458,7 +1454,7 @@ fn spin_uncouple_state_expr(
     let sum_specs : Array[Expr] = []
     for idx in 0..<j_values.length() {
       sum_specs.push(
-        @symcore.tuple_expr([mvars[idx], int(-1) * j_values[idx], j_values[idx]]),
+        @symcore.Expr::Tuple([mvars[idx], int(-1) * j_values[idx], j_values[idx]]),
       )
     }
     let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]
@@ -1603,7 +1599,7 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
               Some(
                 spin_exact_rational(1, 2) *
                 int(-1) *
-                @symcore.imag_unit() *
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
                 (
                   spin_apply_operator_to_ket(jplus(), ket_expr).unwrap_or(
                     int(0),
@@ -1708,7 +1704,7 @@ fn spin_op_matrix_element(
         "Jy" =>
           spin_exact_rational(1, 2) *
           int(-1) *
-          @symcore.imag_unit() *
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
           (
             spin_op_matrix_element(jplus(), j, m, mp) -
             spin_op_matrix_element(jminus(), j, m, mp)

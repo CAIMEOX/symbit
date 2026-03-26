@@ -5,7 +5,7 @@ test "physics.quantum.qapply: tensor, density, power, dagger, and sum" {
   let zero_bra = qubit_bra("0").as_expr()
   let one_bra = qubit_bra("1").as_expr()
   let half = @symcore.rational_from_ints(1, 2)
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
 
   let tensor_mul = @symcore.raw_mul([
     @symquant.tensor_product([x_gate(0).as_expr(), identity_gate(0).as_expr()]).as_expr(),

@@ -104,10 +104,10 @@ test "symassume symbolic parity basic algebra" {
     ("r", symbol_facts(is_real=Tri::True)),
     ("nz", symbol_facts(is_nonzero=Tri::True, is_real=Tri::True)),
   ])
-  let x = @symcore.symbol("x")
-  let p = @symcore.symbol("p")
-  let n = @symcore.symbol("n")
-  let nz = @symcore.symbol("nz")
+  let x = @symcore.Expr::Symbol("x")
+  let p = @symcore.Expr::Symbol("p")
+  let n = @symcore.Expr::Symbol("n")
+  let nz = @symcore.Expr::Symbol("nz")
 
   assert_all_predicates(x, env, "x")
   assert_all_predicates(@symcore.add([x, @symcore.int(1)]), env, "x_plus_1")
@@ -124,10 +124,10 @@ test "symassume symbolic parity elementary functions" {
     ("r", symbol_facts(is_real=Tri::True)),
     ("nz", symbol_facts(is_nonzero=Tri::True, is_real=Tri::True)),
   ])
-  let p = @symcore.symbol("p")
-  let n = @symcore.symbol("n")
-  let r = @symcore.symbol("r")
-  let nz = @symcore.symbol("nz")
+  let p = @symcore.Expr::Symbol("p")
+  let n = @symcore.Expr::Symbol("n")
+  let r = @symcore.Expr::Symbol("r")
+  let nz = @symcore.Expr::Symbol("nz")
 
   assert_all_predicates(@symcore.function("exp", [r]), env, "exp_r")
   assert_all_predicates(@symcore.function("log", [p]), env, "log_p")

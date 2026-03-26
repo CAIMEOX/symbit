@@ -1,8 +1,8 @@
 ///|
 test "physics.quantum.represent: integrate_result collapses cartesian unities" {
-  let x = @symcore.symbol("x")
-  let x1 = @symcore.symbol("x_1")
-  let x2 = @symcore.symbol("x_2")
+  let x = @symcore.Expr::Symbol("x")
+  let x1 = @symcore.Expr::Symbol("x_1")
+  let x2 = @symcore.Expr::Symbol("x_2")
   let original = @symcore.raw_mul([x_op(), x_ket()])
   let result = x *
     @symcore.raw_function("DiracDelta", [x - x1]) *

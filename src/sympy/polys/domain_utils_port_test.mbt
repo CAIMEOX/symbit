@@ -33,7 +33,7 @@ test "domain_utils: normalize_mod leaves QQ/ZZ unchanged" {
 
 ///|
 test "domain_utils: GF/QQ/ZZ coercions align with SymPy" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = expr_rat_du(3, 2) * x + expr_rat_du(1, 3)
   let gf_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(expr)
   let gf_ours = sympy_normalize(gf_poly.to_string()).trim().to_string()

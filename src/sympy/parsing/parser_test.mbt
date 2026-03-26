@@ -15,9 +15,9 @@ fn parse_repr_with(
 ///|
 fn local_context() -> ParseContext {
   parse_context(callable_names=["f", "sin"], bindings={
-    "a": @symcore.symbol("z"),
+    "a": @symcore.Expr::Symbol("z"),
     "n": @symcore.int(2),
-    "sin": @symcore.symbol("g"),
+    "sin": @symcore.Expr::Symbol("g"),
   })
 }
 
@@ -29,9 +29,9 @@ fn parse_repr_in_local_context(src : String) -> String raise {
 ///|
 fn global_context() -> ParseContext {
   parse_context(global_callable_names=["f", "sin"], global_bindings={
-    "a": @symcore.symbol("t"),
-    "f": @symcore.symbol("g"),
-    "sin": @symcore.symbol("g"),
+    "a": @symcore.Expr::Symbol("t"),
+    "f": @symcore.Expr::Symbol("g"),
+    "sin": @symcore.Expr::Symbol("g"),
   })
 }
 
@@ -102,9 +102,9 @@ fn structured_callable_context() -> ParseContext {
   parse_context(
     callable_names=["f", "sin", "g"],
     bindings={
-      "f": @symcore.undefined_function("g"),
-      "sin": @symcore.function_head("cos"),
-      "g": @symcore.function_head("exp"),
+      "f": @symcore.Expr::UndefinedFunction("g"),
+      "sin": @symcore.Expr::FunctionHead("cos"),
+      "g": @symcore.Expr::FunctionHead("exp"),
     },
   )
 }
@@ -259,7 +259,7 @@ test "symparse local bindings resolve symbols and override builtins" {
   inspect(parse_repr_in_local_context("a + b"), content="(+ sym:b sym:z)")
   inspect(parse_repr_in_local_context("n + b"), content="(+ sym:b 2)")
   inspect(parse_repr_in_local_context("sin x"), content="(call g sym:x)")
-  let symbol_override = parse_context(bindings={ "sin": @symcore.symbol("z") })
+  let symbol_override = parse_context(bindings={ "sin": @symcore.Expr::Symbol("z") })
   inspect(
     parse_repr_with("sin x", default_parse_options(), symbol_override),
     content="(* sym:x sym:z)",
@@ -289,9 +289,9 @@ test "symparse global bindings participate in name resolution" {
 ///|
 test "symparse local names shadow global names" {
   let context = parse_context(
-    bindings={ "a": @symcore.symbol("z"), "sin": @symcore.symbol("w") },
+    bindings={ "a": @symcore.Expr::Symbol("z"), "sin": @symcore.Expr::Symbol("w") },
     global_callable_names=["sin"],
-    global_bindings={ "a": @symcore.symbol("t"), "sin": @symcore.symbol("g") },
+    global_bindings={ "a": @symcore.Expr::Symbol("t"), "sin": @symcore.Expr::Symbol("g") },
   )
   inspect(
     parse_repr_with("a + b", default_parse_options(), context),

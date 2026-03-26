@@ -10,9 +10,9 @@ fn medium_port_assert_expr_equal(
 
 ///|
 test "physics.optics.medium: parity" {
-  let epsilon = @symcore.symbol("epsilon")
-  let mu = @symcore.symbol("mu")
-  let n = @symcore.symbol("n")
+  let epsilon = @symcore.Expr::Symbol("epsilon")
+  let mu = @symcore.Expr::Symbol("mu")
+  let n = @symcore.Expr::Symbol("n")
 
   let vacuum = medium("m1")
   medium_port_assert_expr_equal(

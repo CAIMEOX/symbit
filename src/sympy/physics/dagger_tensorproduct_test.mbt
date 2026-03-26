@@ -1,18 +1,18 @@
 ///|
 test "physics.quantum.dagger: symbolic and matrix behaviors" {
   assert_eq(
-    @symprint.to_string(dagger(@symcore.symbol("x"), evaluate=false)),
+    @symprint.to_string(dagger(@symcore.Expr::Symbol("x"), evaluate=false)),
     "Dagger(x)",
   )
   assert_eq(
     @symprint.to_string(
-      dagger(@symcore.raw_mul([@symcore.symbol("a"), @symcore.symbol("b")])),
+      dagger(@symcore.raw_mul([@symcore.Expr::Symbol("a"), @symcore.Expr::Symbol("b")])),
     ),
     "conjugate(b)*conjugate(a)",
   )
 
   let mat = @symphysics.explicit_matrix_from_rows([
-    [@symcore.imag_unit(), @symcore.int(2) * @symcore.imag_unit()],
+    [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)],
     [@symcore.int(0), @symcore.int(1)],
   ])
   quantum_test_assert_matrix_expr_equal(
@@ -27,8 +27,8 @@ test "physics.quantum.dagger: symbolic and matrix behaviors" {
 ///|
 test "physics.quantum.tensorproduct: symbolic wrapper and matrix behavior" {
   let tp = @symquant.tensor_product([
-    @symcore.symbol("a") + @symcore.symbol("b"),
-    @symcore.symbol("c"),
+    @symcore.Expr::Symbol("a") + @symcore.Expr::Symbol("b"),
+    @symcore.Expr::Symbol("c"),
   ])
   assert_eq(tp.to_string(), "(a + b)xc")
   assert_eq(

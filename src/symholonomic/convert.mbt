@@ -1,7 +1,7 @@
 ///|
 pub fn from_hyper(
   expr : Expr,
-  x? : Expr = symbol("x"),
+  x? : Expr = Expr::Symbol("x"),
   x0? : Expr = int(0),
 ) -> HolonomicFunction {
   expr_to_holonomic(expr, x~, x0~)
@@ -10,7 +10,7 @@ pub fn from_hyper(
 ///|
 pub fn from_meijerg(
   expr : Expr,
-  x? : Expr = symbol("x"),
+  x? : Expr = Expr::Symbol("x"),
   x0? : Expr = int(0),
 ) -> HolonomicFunction {
   expr_to_holonomic(expr, x~, x0~)

@@ -1,7 +1,7 @@
 ///|
 test "factor_modular: hensel/crt parity with linear + quadratic factors" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let x2 = x ^ @symcore.int(2)
   let quad1 = x2 + @symcore.int(1)
   let quad2 = x2 + @symcore.int(2)
@@ -16,7 +16,7 @@ test "factor_modular: hensel/crt parity with linear + quadratic factors" {
 ///|
 test "factor_modular: hensel/crt parity with mixed factors" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let x2 = x ^ @symcore.int(2)
   let quad1 = x2 + @symcore.int(3) * x + @symcore.int(2)
   let quad2 = x2 + @symcore.int(2)
@@ -31,7 +31,7 @@ test "factor_modular: hensel/crt parity with mixed factors" {
 ///|
 test "factor_modular: zassenhaus parity (no linear factors)" {
   let b = PolyBuilder::new(["x"], Domain::ZZ)
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let x2 = x ^ @symcore.int(2)
   let poly = b.from_expr((x2 - @symcore.int(1)) * (x2 - @symcore.int(4)))
   let (content, factors) = poly.factor_list()

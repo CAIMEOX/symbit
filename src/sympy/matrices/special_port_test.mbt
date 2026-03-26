@@ -28,8 +28,8 @@ fn normalize_matrix_text(text : String) -> String {
 
 ///|
 test "matrices parity jordan and rotation helpers" {
-  let lam = @symcore.symbol("lam")
-  let theta = @symcore.symbol("theta")
+  let lam = @symcore.Expr::Symbol("lam")
+  let theta = @symcore.Expr::Symbol("theta")
   let local_jordan = jordan_cell(lam, 3)
   let local_rot = rot_axis3(theta)
   assert_eq(
@@ -46,8 +46,8 @@ test "matrices parity jordan and rotation helpers" {
 
 ///|
 test "matrices parity hessian and wronskian" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let f = (x ^ @symcore.int(2)) + x * y + (y ^ @symcore.int(2))
   assert_eq(
     local_matrix_list_text2(hessian(f, [x, y])),

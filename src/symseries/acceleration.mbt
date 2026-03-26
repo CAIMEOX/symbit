@@ -47,7 +47,7 @@ fn rational_coeff(sign : Int, num : BigInt, den : BigInt) -> @symcore.Expr {
     n = n.neg()
   }
   let coeff = safe_rational(n, den)
-  @symcore.number(coeff)
+  @symcore.Expr::Number(coeff)
 }
 
 ///|

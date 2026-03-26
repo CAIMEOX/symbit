@@ -32,7 +32,7 @@ fn exact_float_expr(num : Int, den : Int, prec? : Int = 90) -> Expr {
   let rat = @symnum.BigRational::from_ints(num, den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.float(
+  @symcore.Expr::Float(
     @symcore.Float::from_exact(rat, prec~) catch {
       _ => @symcore.Float::from_int(0, prec~)
     },
@@ -53,7 +53,7 @@ fn exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.complex_float(
+  @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
@@ -146,17 +146,17 @@ test "matrices triangular solves rref rhs cholesky and ldl" {
     [@symcore.int(1), @symcore.int(1)],
     [@symcore.int(2), @symcore.int(1)],
   ])
-  let vars = matrix([[@symcore.symbol("r1")], [@symcore.symbol("r2")]])
+  let vars = matrix([[@symcore.Expr::Symbol("r1")], [@symcore.Expr::Symbol("r2")]])
   let (rref_lhs, rref_rhs) = coeff.rref_rhs(vars)
   inspect(rref_lhs.to_string(), content="Matrix([[1, 0], [0, 1]])")
   assert_true(
     matrix_symbolically_equal(
       rref_rhs,
       matrix([
-        [@symcore.int(-1) * @symcore.symbol("r1") + @symcore.symbol("r2")],
+        [@symcore.int(-1) * @symcore.Expr::Symbol("r1") + @symcore.Expr::Symbol("r2")],
         [
           @symcore.int(-1) *
-          (@symcore.int(-2) * @symcore.symbol("r1") + @symcore.symbol("r2")),
+          (@symcore.int(-2) * @symcore.Expr::Symbol("r1") + @symcore.Expr::Symbol("r2")),
         ],
       ]),
     ),

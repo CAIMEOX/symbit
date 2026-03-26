@@ -870,7 +870,7 @@ pub fn SeriesElem::asinh(self : SeriesElem) -> SeriesElem raise PolyError {
 
 ///|
 pub fn SeriesElem::to_expr(self : SeriesElem) -> Expr {
-  let x = symbol(self.ring.sym)
+  let x = Expr::Symbol(self.ring.sym)
   let terms : Array[Expr] = Array::new()
   for i in 0..<self.coeffs.length() {
     let c = self.coeffs[i]

@@ -55,7 +55,7 @@ test "convert wb: fe_ext_to_expr handles empty/sparse/mixed terms" {
 
 ///|
 test "convert wb: fe_algext_to_expr and AlgExt constant rendering" {
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
     (a ^ @symcore.int(2)) + @symcore.int(1),
   )

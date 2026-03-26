@@ -1,7 +1,7 @@
 ///|
 test "alg_ext wb: validation error branches are typed" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let minpoly = PolyBuilder::new(["x"], Domain::QQ).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),

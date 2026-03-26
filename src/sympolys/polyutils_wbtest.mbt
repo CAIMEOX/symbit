@@ -113,8 +113,8 @@ test "polyutils wb: nested gens and factor tie ordering" {
 
 ///|
 test "polyutils wb: symbol collection and inferred gens" {
-  let x = @symcore.symbol("x1")
-  let y = @symcore.symbol("y2")
+  let x = @symcore.Expr::Symbol("x1")
+  let y = @symcore.Expr::Symbol("y2")
   let composite = @symcore.add([
     x * (y ^ @symcore.int(2)),
     @symcore.function("f", [x]),

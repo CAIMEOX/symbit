@@ -47,18 +47,14 @@ fn sq_sign_expr(sign : Int, expr : Expr) -> Expr {
 }
 
 ///|
-fn sq_fermion_tuple_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("Tuple", items)
-}
-
 ///|
 fn sq_fermion_ket_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateFermionKet", [sq_fermion_tuple_expr(items)])
+  @symcore.raw_function("FockStateFermionKet", [Expr::Tuple(items)])
 }
 
 ///|
 fn sq_fermion_bra_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("FockStateFermionBra", [sq_fermion_tuple_expr(items)])
+  @symcore.raw_function("FockStateFermionBra", [Expr::Tuple(items)])
 }
 
 ///|
@@ -362,7 +358,7 @@ pub fn FermionState::len(self : FermionState) -> Int {
 
 ///|
 pub fn FermionState::as_expr(self : FermionState) -> Expr {
-  @symcore.raw_function("FockState", [sq_fermion_tuple_expr(self.orbitals)])
+  @symcore.raw_function("FockState", [Expr::Tuple(self.orbitals)])
 }
 
 ///|

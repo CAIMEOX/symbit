@@ -31,7 +31,7 @@ fn split_list_items(list_str : String) -> Array[String] {
 
 ///|
 test "symseries pade approximant parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let denom = @symcore.add([
     @symcore.int(1),
     @symcore.mul([@symcore.int(-1), x]),
@@ -46,7 +46,7 @@ test "symseries pade approximant parity" {
 
 ///|
 test "symseries approximants list parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let coeffs_expr : Array[@symcore.Expr] = [
     @symcore.int(1),
     @symcore.int(1),
@@ -70,7 +70,7 @@ test "symseries approximants list parity" {
 
 ///|
 test "symseries pade approximant nonzero center parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let denom = @symcore.add([
     @symcore.int(1),
     @symcore.mul([@symcore.int(-1), x]),

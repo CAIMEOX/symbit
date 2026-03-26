@@ -459,7 +459,7 @@ pub fn fourier_truncate_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
     OracleArg::PyObj(expr_obj),
     OracleArg::PyObj(limits_obj),
@@ -493,7 +493,7 @@ pub fn fourier_term_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
     OracleArg::PyObj(expr_obj),
     OracleArg::PyObj(limits_obj),
@@ -527,7 +527,7 @@ pub fn fourier_sigma_str(
   n : Int,
 ) -> String raise {
   let expr_obj = expr_to_sympy(expr)
-  let limits_obj = py_tuple_from_exprs([@symcore.symbol(var_name), a, b])
+  let limits_obj = py_tuple_from_exprs([@symcore.Expr::Symbol(var_name), a, b])
   let series_enum = sympy_call_must("sympy.fourier_series", [
     OracleArg::PyObj(expr_obj),
     OracleArg::PyObj(limits_obj),

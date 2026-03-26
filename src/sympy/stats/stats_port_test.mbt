@@ -58,13 +58,13 @@ fn oracle_variance_unary(rv_name : String, rv_decl : String) -> String {
 
 ///|
 test "stage1 wrappers smoke" {
-  let x = @symcore.symbol("X")
+  let x = @symcore.Expr::Symbol("X")
   let e = eq(x, @symcore.int(1))
   inspect(expr_str(probability(e)), content="Probability(Eq(X, 1))")
   inspect(expr_str(expectation(x)), content="Expectation(X)")
   inspect(expr_str(variance(x)), content="Variance(X)")
   inspect(
-    expr_str(covariance(x, @symcore.symbol("Y"))),
+    expr_str(covariance(x, @symcore.Expr::Symbol("Y"))),
     content="Covariance(X, Y)",
   )
 }
@@ -72,11 +72,11 @@ test "stage1 wrappers smoke" {
 ///|
 test "stage2 finite die parity" {
   let x = die("X", sides=6)
-  let event = eq(@symcore.symbol("X"), @symcore.int(3))
+  let event = eq(@symcore.Expr::Symbol("X"), @symcore.int(3))
   let ours = probability(event, rv=x)
   let oracle = oracle_prob_unary("X", "Die('X', 6)", event)
   assert_true(expr_equiv(ours, oracle))
-  let event2 = le(@symcore.symbol("X"), @symcore.int(2))
+  let event2 = le(@symcore.Expr::Symbol("X"), @symcore.int(2))
   let ours2 = probability(event2, rv=x)
   let oracle2 = oracle_prob_unary("X", "Die('X', 6)", event2)
   assert_true(expr_equiv(ours2, oracle2))
@@ -86,7 +86,7 @@ test "stage2 finite die parity" {
 test "stage2 finite bernoulli mean variance parity" {
   let p = @symnum.BigRational::new(BigInt::from_int(1), BigInt::from_int(3))
   let x = bernoulli("X", p)
-  let sx = @symcore.symbol("X")
+  let sx = @symcore.Expr::Symbol("X")
   let ours_e = expectation(sx, rvs=[x])
   let oracle_e = oracle_expect_unary("X", "Bernoulli('X', Rational(1, 3))", sx)
   assert_true(expr_equiv(ours_e, oracle_e))
@@ -102,19 +102,19 @@ test "stage2 discrete uniform expectation" {
     @symcore.int(3),
     @symcore.int(5),
   ])
-  let ours = expectation(@symcore.symbol("X"), rvs=[x])
+  let ours = expectation(@symcore.Expr::Symbol("X"), rvs=[x])
   let oracle = oracle_expect_unary(
     "X",
     "DiscreteUniform('X', [1, 3, 5])",
-    @symcore.symbol("X"),
+    @symcore.Expr::Symbol("X"),
   )
   assert_true(expr_equiv(ours, oracle))
 }
 
 ///|
 test "stage3 symbolic wrappers keep canonical form" {
-  let x = @symcore.symbol("X")
-  let y = @symcore.symbol("Y")
+  let x = @symcore.Expr::Symbol("X")
+  let y = @symcore.Expr::Symbol("Y")
   let event = and_event([ge(x, @symcore.int(0)), le(x, @symcore.int(2))])
   inspect(
     expr_str(probability(event)),
@@ -131,7 +131,7 @@ test "stage4 binomial parity" {
   let n = @symcore.int(5)
   let p = @symcore.rational_from_ints(1, 3)
   let x = binomial("X", n, p)
-  let sx = @symcore.symbol("X")
+  let sx = @symcore.Expr::Symbol("X")
   let ours_mean = expectation(sx, rvs=[x])
   let oracle_mean = oracle_expect_unary(
     "X", "Binomial('X', 5, Rational(1, 3))", sx,
@@ -154,12 +154,12 @@ test "stage4 binomial parity" {
 test "stage4 geometric and negbin parity" {
   let p = @symcore.rational_from_ints(1, 2)
   let g = geometric("G", p)
-  let event = le(@symcore.symbol("G"), @symcore.int(3))
+  let event = le(@symcore.Expr::Symbol("G"), @symcore.int(3))
   let ours = probability(event, rv=g)
   let oracle = oracle_prob_unary("G", "Geometric('G', Rational(1, 2))", event)
   assert_true(expr_equiv(ours, oracle))
   let nb = negative_binomial("K", @symcore.int(3), p)
-  let event2 = eq(@symcore.symbol("K"), @symcore.int(2))
+  let event2 = eq(@symcore.Expr::Symbol("K"), @symcore.int(2))
   let ours2 = probability(event2, rv=nb)
   let oracle2 = oracle_prob_unary(
     "K", "NegativeBinomial('K', 3, Rational(1, 2))", event2,
@@ -170,19 +170,19 @@ test "stage4 geometric and negbin parity" {
 ///|
 test "stage5 normal and exponential parity" {
   let n01 = normal("X", @symcore.int(0), @symcore.int(1))
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let ours_pdf = density(n01, x)
   let oracle_pdf = stats_eval_str(
     "(lambda X, x: density(X)(x))(Normal('X', 0, 1), x)",
   )
   assert_true(expr_equiv(ours_pdf, oracle_pdf))
-  let event = le(@symcore.symbol("X"), @symcore.int(0))
+  let event = le(@symcore.Expr::Symbol("X"), @symcore.int(0))
   let ours_p = probability(event, rv=n01)
   let oracle_p = oracle_prob_unary("X", "Normal('X', 0, 1)", event)
   assert_true(expr_equiv(ours_p, oracle_p))
 
   let e = exponential("Y", @symcore.int(2))
-  let y = @symcore.symbol("y")
+  let y = @symcore.Expr::Symbol("y")
   let ours_cdf = cdf(e, y)
   let oracle_cdf = stats_eval_str(
     "(lambda Y, y: cdf(Y)(y))(Exponential('Y', 2), y)",
@@ -193,7 +193,7 @@ test "stage5 normal and exponential parity" {
 ///|
 test "stage5 gamma mean variance parity" {
   let g = gamma_dist("G", @symcore.int(3), @symcore.int(2))
-  let sg = @symcore.symbol("G")
+  let sg = @symcore.Expr::Symbol("G")
   let ours_e = expectation(sg, rvs=[g])
   let oracle_e = oracle_expect_unary("G", "Gamma('G', 3, 2)", sg)
   assert_true(expr_equiv(ours_e, oracle_e))
@@ -208,15 +208,15 @@ test "stage6 joint independent parity" {
   let y = die("Y", sides=6)
   let j = joint_independent("J", [x, y])
   let event = and_event([
-    eq(@symcore.symbol("X"), @symcore.int(1)),
-    eq(@symcore.symbol("Y"), @symcore.int(1)),
+    eq(@symcore.Expr::Symbol("X"), @symcore.int(1)),
+    eq(@symcore.Expr::Symbol("Y"), @symcore.int(1)),
   ])
   let ours = probability(event, rv=j)
   let oracle = stats_eval_str(
     "(lambda X, Y: P(Eq(X, 1) & Eq(Y, 1)))(Die('X', 6), Die('Y', 6))",
   )
   assert_true(expr_equiv(ours, oracle))
-  let cov = covariance(@symcore.symbol("X"), @symcore.symbol("Y"), rvs=[x, y])
+  let cov = covariance(@symcore.Expr::Symbol("X"), @symcore.Expr::Symbol("Y"), rvs=[x, y])
   inspect(expr_str(cov), content="0")
 }
 
@@ -226,24 +226,24 @@ test "stage7 compound and variance_prop" {
   let d = die("A", sides=6)
   let b = bernoulli("B", half)
   let z = compound_rv("Z", [(half, d), (half, b)])
-  let sz = @symcore.symbol("Z")
+  let sz = @symcore.Expr::Symbol("Z")
   let mean_z = expectation(sz, rvs=[z])
   assert_true(stats_expr_equiv(expr_str(mean_z), "2"))
   let var_z = variance(sz, rvs=[z])
   assert_true(stats_expr_equiv(expr_str(var_z), "23/6"))
 
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([
     @symcore.mul([@symcore.int(2), x]),
     @symcore.mul([@symcore.int(3), y]),
   ])
   let vars : Map[String, @symcore.Expr] = {
-    "x": @symcore.symbol("Vx"),
-    "y": @symcore.symbol("Vy"),
+    "x": @symcore.Expr::Symbol("Vx"),
+    "y": @symcore.Expr::Symbol("Vy"),
   }
   let covs : Map[String, @symcore.Expr] = {}
-  covs[cov_key("x", "y")] = @symcore.symbol("Cxy")
+  covs[cov_key("x", "y")] = @symcore.Expr::Symbol("Cxy")
   let propagated = variance_prop(expr, vars, covariances=covs)
   assert_eq(expr_str(propagated), "4*Vx + 9*Vy + 12*Cxy")
 }
@@ -251,7 +251,7 @@ test "stage7 compound and variance_prop" {
 ///|
 test "stage8 process and matrix starter parity" {
   let n = poisson_process("N", @symcore.int(1))
-  let t = @symcore.symbol("t")
+  let t = @symcore.Expr::Symbol("t")
   let ours = process_mean_at(n, t)
   match ours {
     Some(v) => {
@@ -273,8 +273,8 @@ test "stage8 process and matrix starter parity" {
     None => fail("missing process variance")
   }
 
-  let wrv = wishart_rv("S", @symcore.int(4), @symcore.symbol("Sigma"))
-  let dens = matrix_density(wrv, @symcore.symbol("X"))
+  let wrv = wishart_rv("S", @symcore.int(4), @symcore.Expr::Symbol("Sigma"))
+  let dens = matrix_density(wrv, @symcore.Expr::Symbol("X"))
   match dens {
     Some(v) => inspect(expr_str(v), content="WishartDensity(X, 4, Sigma)")
     None => fail("missing wishart density")

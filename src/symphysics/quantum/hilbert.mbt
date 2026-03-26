@@ -15,7 +15,7 @@ pub enum HilbertSpace {
 
 ///|
 fn oo_expr() -> Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|

@@ -72,7 +72,7 @@ pub fn limit(
               }
               let pole_order = ord_den - ord_num
               if dir == "+-" && pole_order % 2 == 1 {
-                return @symcore.zoo()
+                return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)
               }
               let side_sign = if dir == "-" && pole_order % 2 == 1 {
                 -1
@@ -85,12 +85,12 @@ pub fn limit(
                 Some(s) => {
                   let final_sign = s * side_sign
                   if final_sign < 0 {
-                    @symcore.mul([@symcore.int(-1), @symcore.oo()])
+                    @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
                   } else {
-                    @symcore.oo()
+                    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
                   }
                 }
-                None => @symcore.oo()
+                None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
               }
             }
             _ => ()
@@ -99,7 +99,7 @@ pub fn limit(
         _ => ()
       }
       // Fallback to series expansion at x0
-      let t = @symcore.symbol("__limit_t")
+      let t = @symcore.Expr::Symbol("__limit_t")
       let env : Map[String, @symcore.Expr] = {}
       env[var_name] = @symcore.add([x0, t])
       let shifted = @symcore.subst(expr, env)
@@ -119,7 +119,7 @@ pub fn limit(
             } else if total_order > 0 {
               @symcore.int(0)
             } else {
-              @symcore.oo()
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
             }
           }
         }
@@ -162,11 +162,11 @@ pub fn limit(
         expr_mul(lead_num, @symcore.pow(lead_den, @symcore.int(-1))),
       )
       match sign {
-        Some(1) => @symcore.oo()
-        Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.oo()])
+        Some(1) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        Some(-1) => @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
         Some(0) => @symcore.int(0)
-        Some(_) => @symcore.oo()
-        None => @symcore.oo()
+        Some(_) => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        None => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
       }
     }
     _ => gruntz(expr, x, x0, dir~)

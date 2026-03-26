@@ -102,7 +102,7 @@ test "geometry.regular polygon and triangle parity" {
     expr_map_summary(
       geometry_regular_polygon(rp).parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     geometry_eval_str(
@@ -127,7 +127,7 @@ test "geometry.polygon parity enclosure and parameter helpers" {
     expr_map_summary(
       sq.parameter_value(
         point2d(@symcore.rational_from_ints(1, 2), @symcore.int(1)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     geometry_eval_str(

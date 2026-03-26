@@ -45,7 +45,7 @@ pub fn laplace_transform_result(
           if noconds {
             value
           } else {
-            tuple_expr([value, plane, cond])
+            Expr::Tuple([value, plane, cond])
           }
         None => @symcore.raw_function("LaplaceTransform", [expr, t, s])
       }
@@ -354,7 +354,7 @@ fn initial_condition_order(
           } else {
             match @symcore.subs_parts(expr) {
               Some((inner, sub_var, value)) =>
-                if @symcore.compare_expr(sub_var, @symcore.symbol(t_name)) == 0 &&
+                if @symcore.compare_expr(sub_var, @symcore.Expr::Symbol(t_name)) == 0 &&
                   expr_is_zero(value) {
                   derivative_ic_order(inner, func_name, t_name)
                 } else {
@@ -370,7 +370,7 @@ fn initial_condition_order(
       } else {
         match @symcore.subs_parts(expr) {
           Some((inner, sub_var, value)) =>
-            if @symcore.compare_expr(sub_var, @symcore.symbol(t_name)) == 0 &&
+            if @symcore.compare_expr(sub_var, @symcore.Expr::Symbol(t_name)) == 0 &&
               expr_is_zero(value) {
               derivative_ic_order(inner, func_name, t_name)
             } else {
@@ -452,7 +452,7 @@ fn derivative_ic_order(
 ) -> Int? {
   match @symcore.derivative_parts(expr) {
     Some((inner, [wrt])) =>
-      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+      if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
         match derivative_chain_order(inner, func_name, t_name) {
           Some(order) => Some(order + 1)
           None => None
@@ -461,7 +461,7 @@ fn derivative_ic_order(
         None
       }
     Some((inner, [wrt, order])) =>
-      if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+      if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
         match
           (
             derivative_chain_order(inner, func_name, t_name),
@@ -486,7 +486,7 @@ fn derivative_chain_order(
   match expr {
     @symcore.Expr::Function(func, [arg]) =>
       if func == func_name &&
-        @symcore.compare_expr(arg, @symcore.symbol(t_name)) == 0 {
+        @symcore.compare_expr(arg, @symcore.Expr::Symbol(t_name)) == 0 {
         Some(0)
       } else {
         None
@@ -494,7 +494,7 @@ fn derivative_chain_order(
     _ =>
       match @symcore.derivative_parts(expr) {
         Some((inner, [wrt])) =>
-          if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+          if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
             match derivative_chain_order(inner, func_name, t_name) {
               Some(order) => Some(order + 1)
               None => None
@@ -503,7 +503,7 @@ fn derivative_chain_order(
             None
           }
         Some((inner, [wrt, order])) =>
-          if @symcore.compare_expr(wrt, @symcore.symbol(t_name)) == 0 {
+          if @symcore.compare_expr(wrt, @symcore.Expr::Symbol(t_name)) == 0 {
             match
               (
                 derivative_chain_order(inner, func_name, t_name),
@@ -664,7 +664,7 @@ fn polynomial_from_coeffs(coeffs : Array[Expr], var_name : String) -> Expr {
     return expr_zero()
   }
   let terms : Array[Expr] = []
-  let poly_var = @symcore.symbol(var_name)
+  let poly_var = @symcore.Expr::Symbol(var_name)
   for i in 0..<coeffs.length() {
     let coeff = coeffs[i]
     if expr_is_zero(coeff) {
@@ -1087,7 +1087,7 @@ fn laplace_delta_roots(arg : Expr, t_name : String) -> Array[(Expr, Expr)]? {
           let sqrt_disc = preferred_positive_sqrt(disc)
           let denom = expr_mul(expr_int(2), coeffs[2])
           let roots : Array[(Expr, Expr)] = []
-          let deriv = @symcalculus.diff(arg, @symcore.symbol(t_name))
+          let deriv = @symcalculus.diff(arg, @symcore.Expr::Symbol(t_name))
           for
             root in [
               expr_div(
@@ -1184,24 +1184,24 @@ fn laplace_heaviside_shifted_rest(
   } else {
     "_laplace_u"
   }
-  let shift_var = @symcore.symbol(shift_name)
+  let shift_var = @symcore.Expr::Symbol(shift_name)
   let shifted = subst_symbol(rest_expr, t_name, expr_add(shift_var, bound))
   match laplace_info_doit(expr_simplify(shifted), shift_name, s) {
     Some((value, plane, cond)) => {
       let restored_value = subst_symbol(
         value,
         shift_name,
-        @symcore.symbol(t_name),
+        @symcore.Expr::Symbol(t_name),
       )
       let restored_plane = subst_symbol(
         plane,
         shift_name,
-        @symcore.symbol(t_name),
+        @symcore.Expr::Symbol(t_name),
       )
       let restored_cond = subst_symbol(
         cond,
         shift_name,
-        @symcore.symbol(t_name),
+        @symcore.Expr::Symbol(t_name),
       )
       Some(
         (
@@ -1328,7 +1328,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     a,
                     @symelem.coth(
                       expr_div(
-                        expr_mul(@symcore.pi(), s),
+                        expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s),
                         expr_mul(expr_int(2), a),
                       ),
                     ),
@@ -1474,7 +1474,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                 expr_mul(
                   expr_mul(
                     expr_rat(-2, 1),
-                    expr_pow(@symcore.pi(), expr_int(-1)),
+                    expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(-1)),
                   ),
                   expr_div(
                     @symelem.asinh(expr_div(s, a)),
@@ -1518,9 +1518,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       if name == t_name {
         let phase = expr_div(
           expr_pow(s, expr_int(2)),
-          expr_mul(expr_int(2), @symcore.pi()),
+          expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
         )
-        let arg = expr_div(s, @symcore.pi())
+        let arg = expr_div(s, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi))
         Some(
           (
             expr_div(
@@ -1533,7 +1533,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                   expr_mul(
                     expr_div(expr_sqrt_two(), expr_int(2)),
                     @symelem.sin(
-                      expr_add(phase, expr_div(@symcore.pi(), expr_int(4))),
+                      expr_add(phase, expr_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(4))),
                     ),
                   ),
                   expr_mul(
@@ -1555,9 +1555,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       if name == t_name {
         let phase = expr_div(
           expr_pow(s, expr_int(2)),
-          expr_mul(expr_int(2), @symcore.pi()),
+          expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
         )
-        let arg = expr_div(s, @symcore.pi())
+        let arg = expr_div(s, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi))
         Some(
           (
             expr_div(
@@ -1571,7 +1571,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                   expr_mul(
                     expr_div(expr_sqrt_two(), expr_int(2)),
                     @symelem.cos(
-                      expr_add(phase, expr_div(@symcore.pi(), expr_int(4))),
+                      expr_add(phase, expr_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(4))),
                     ),
                   ),
                 ),
@@ -1692,7 +1692,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                     expr_mul(
                       s,
                       @symelem.exp_polar(
-                        expr_mul(@symcore.imag_unit(), @symcore.pi()),
+                        expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
                       ),
                     ),
                     expr_one(),
@@ -1730,9 +1730,9 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
                           expr_div(
                             @symcore.raw_function("LaplaceTransform", [
                               @symcore.raw_function(name, [
-                                @symcore.symbol(t_name),
+                                @symcore.Expr::Symbol(t_name),
                               ]),
-                              @symcore.symbol(t_name),
+                              @symcore.Expr::Symbol(t_name),
                               expr_div(s, coeff),
                             ]),
                             coeff,
@@ -1923,7 +1923,7 @@ fn gaussian_laplace_condition(scale : Expr) -> Expr {
   } else {
     @symcore.function("Le", [
       @symelem.abs(@symelem.arg(scale)),
-      expr_div(@symcore.pi(), expr_int(2)),
+      expr_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2)),
     ])
   }
 }
@@ -2207,7 +2207,7 @@ fn generic_laplace_object(
   s : Expr,
 ) -> LaplaceInfo {
   (
-    @symcore.raw_function("LaplaceTransform", [expr, @symcore.symbol(t_name), s]),
+    @symcore.raw_function("LaplaceTransform", [expr, @symcore.Expr::Symbol(t_name), s]),
     neg_oo_expr(),
     true_expr(),
   )
@@ -2230,7 +2230,7 @@ fn piecewise_to_heaviside_expr(args : Array[Expr], t_name : String) -> Expr? {
   if args.length() < 2 {
     return None
   }
-  let t = @symcore.symbol(t_name)
+  let t = @symcore.Expr::Symbol(t_name)
   let mut default = expr_zero()
   let mut has_default = false
   let terms : Array[Expr] = []
@@ -2425,13 +2425,13 @@ fn laplace_generic_trig_power_term(
           match linear_coeffs(arg, t_name) {
             Some((a, b)) if expr_is_constant(a, t_name) &&
               expr_is_constant(b, t_name) => {
-              let ia2 = expr_mul(expr_mul(expr_int(2), @symcore.imag_unit()), a)
+              let ia2 = expr_mul(expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), a)
               let value = expr_sub(
                 expr_mul(
                   expr_rat(1, 2),
                   @symcore.raw_function("LaplaceTransform", [
                     other,
-                    @symcore.symbol(t_name),
+                    @symcore.Expr::Symbol(t_name),
                     s,
                   ]),
                 ),
@@ -2440,11 +2440,11 @@ fn laplace_generic_trig_power_term(
                     expr_rat(1, 4),
                     expr_mul(
                       @symelem.exp(
-                        expr_mul(expr_mul(expr_int(2), @symcore.imag_unit()), b),
+                        expr_mul(expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), b),
                       ),
                       @symcore.raw_function("LaplaceTransform", [
                         other,
-                        @symcore.symbol(t_name),
+                        @symcore.Expr::Symbol(t_name),
                         expr_sub(s, ia2),
                       ]),
                     ),
@@ -2454,13 +2454,13 @@ fn laplace_generic_trig_power_term(
                     expr_mul(
                       @symelem.exp(
                         expr_mul(
-                          expr_mul(expr_int(-2), @symcore.imag_unit()),
+                          expr_mul(expr_int(-2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)),
                           b,
                         ),
                       ),
                       @symcore.raw_function("LaplaceTransform", [
                         other,
-                        @symcore.symbol(t_name),
+                        @symcore.Expr::Symbol(t_name),
                         expr_add(s, ia2),
                       ]),
                     ),
@@ -2490,7 +2490,7 @@ fn laplace_generic_trig_term(
   let transform = fn(shifted_s : Expr) {
     @symcore.raw_function("LaplaceTransform", [
       other,
-      @symcore.symbol(t_name),
+      @symcore.Expr::Symbol(t_name),
       shifted_s,
     ])
   }
@@ -2540,11 +2540,11 @@ fn laplace_generic_trig_term(
     @symcore.Expr::Function("sin", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if expr_is_zero(b) => {
-          let ia = expr_mul(@symcore.imag_unit(), a)
+          let ia = expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), a)
           Some(
             (
               expr_mul(
-                expr_div(@symcore.imag_unit(), expr_int(2)),
+                expr_div(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), expr_int(2)),
                 expr_sub(transform(expr_add(s, ia)), transform(expr_sub(s, ia))),
               ),
               max_expr(
@@ -2563,7 +2563,7 @@ fn laplace_generic_trig_term(
     @symcore.Expr::Function("cos", [arg]) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) if expr_is_zero(b) => {
-          let ia = expr_mul(@symcore.imag_unit(), a)
+          let ia = expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), a)
           Some(
             (
               expr_mul(
@@ -2599,7 +2599,7 @@ fn laplace_log_term(inner : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             expr_div(
               expr_sub(
                 @symelem.log(coeff),
-                expr_add(@symelem.log(s), @symcore.euler_gamma()),
+                expr_add(@symelem.log(s), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)),
               ),
               s,
             ),
@@ -2663,10 +2663,10 @@ fn laplace_log_squared_term(
           expr_div(
             expr_add(
               expr_pow(
-                expr_add(@symelem.log(s), @symcore.euler_gamma()),
+                expr_add(@symelem.log(s), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)),
                 expr_int(2),
               ),
-              expr_mul(expr_pow(@symcore.pi(), expr_int(2)), expr_rat(1, 6)),
+              expr_mul(expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2)), expr_rat(1, 6)),
             ),
             s,
           ),
@@ -2791,7 +2791,7 @@ fn laplace_derivative_term(
     _ => return None
   }
   let base = args[0]
-  let t_sym = @symcore.symbol(t_name)
+  let t_sym = @symcore.Expr::Symbol(t_name)
   let (base_value, plane, cond) = match
     laplace_info_doit(expr_simplify(base), t_name, s) {
     Some(info) => info
@@ -3119,7 +3119,7 @@ fn inverse_laplace_time_diff_term(
     return None
   }
   let reduced = expr_simplify(expr_mul(coeff, factors_expr(rest)))
-  let power_factor = @symcore.symbol(s_name) ^ expr_int(order)
+  let power_factor = @symcore.Expr::Symbol(s_name) ^ expr_int(order)
   match reduced {
     @symcore.Expr::Add(terms) => {
       let mapped : Array[Expr] = []
@@ -3150,7 +3150,7 @@ fn inverse_laplace_transform_object_term(
   match @symcore.application_parts(expr) {
     Some((head, [inner, source_t, source_s])) =>
       if @symcore.function_head_name(head) == Some("LaplaceTransform") {
-        let s_sym = @symcore.symbol(s_name)
+        let s_sym = @symcore.Expr::Symbol(s_name)
         if expr_eq(source_s, s_sym) {
           match symbol_name(source_t) {
             Some(source_name) =>
@@ -3195,7 +3195,7 @@ fn make_inverse_laplace_object(expr : Expr, s_name : String, t : Expr) -> Expr {
     coeff *
     @symcore.raw_function("InverseLaplaceTransform", [
       core,
-      @symcore.symbol(s_name),
+      @symcore.Expr::Symbol(s_name),
       t,
     ]),
   )
@@ -3208,7 +3208,7 @@ fn inverse_laplace_ci_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     Some(v) => v
     None => return None
   }
-  if !expr_eq(den, @symcore.symbol(s_name)) {
+  if !expr_eq(den, @symcore.Expr::Symbol(s_name)) {
     return None
   }
   let numerator = factors_expr(num)
@@ -3240,7 +3240,7 @@ fn inverse_laplace_e1_term(expr : Expr, s_name : String, t : Expr) -> Expr? {
     Some(v) => v
     None => return None
   }
-  if !expr_eq(den, @symcore.symbol(s_name)) {
+  if !expr_eq(den, @symcore.Expr::Symbol(s_name)) {
     return None
   }
   let numerator = factors_expr(num)
@@ -3257,7 +3257,7 @@ fn inverse_laplace_expint2_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
-  let s_sym = @symcore.symbol(s_name)
+  let s_sym = @symcore.Expr::Symbol(s_name)
   let target = expr_div(
     expr_sub(s_sym, @symelem.log(expr_add(s_sym, expr_one()))),
     expr_pow(s_sym, expr_int(2)),
@@ -3283,11 +3283,11 @@ fn inverse_laplace_log_plain_term(
   s_name : String,
   t : Expr,
 ) -> Expr? {
-  let s_sym = @symcore.symbol(s_name)
+  let s_sym = @symcore.Expr::Symbol(s_name)
   let target = expr_div(
     expr_mul(
       expr_neg_one(),
-      expr_add(@symelem.log(s_sym), @symcore.euler_gamma()),
+      expr_add(@symelem.log(s_sym), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)),
     ),
     s_sym,
   )
@@ -3309,7 +3309,7 @@ fn inverse_laplace_log_one_plus_linear_term(
     Some(v) => v
     None => return None
   }
-  if !expr_eq(den, @symcore.symbol(s_name)) {
+  if !expr_eq(den, @symcore.Expr::Symbol(s_name)) {
     return None
   }
   let (coeff, factors) = split_mul(factors_expr(num), s_name)
@@ -3567,8 +3567,8 @@ fn inverse_laplace_generic_function_term(
   match linear_coeffs(arg, s_name) {
     Some((coeff, offset)) if expr_is_one(coeff) => {
       let base = @symcore.raw_function("InverseLaplaceTransform", [
-        @symcore.raw_function(name, [@symcore.symbol(s_name)]),
-        @symcore.symbol(s_name),
+        @symcore.raw_function(name, [@symcore.Expr::Symbol(s_name)]),
+        @symcore.Expr::Symbol(s_name),
         t,
       ])
       if expr_is_zero(offset) {
@@ -5211,7 +5211,7 @@ fn parse_scaled_inverse_symbol(expr : Expr, var_name : String) -> Expr? {
     Some(v) => v
     None => return None
   }
-  if !expr_eq(den, @symcore.symbol(var_name)) {
+  if !expr_eq(den, @symcore.Expr::Symbol(var_name)) {
     return None
   }
   let numerator = factors_expr(num)
@@ -6102,11 +6102,11 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
             expr_div(
               @symelem.sin(
                 expr_div(
-                  expr_mul(expr_int(2), expr_mul(@symcore.pi(), k)),
+                  expr_mul(expr_int(2), expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), k)),
                   scale,
                 ),
               ),
-              expr_mul(@symcore.pi(), k),
+              expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), k),
             ),
           )
         None => None
@@ -6122,7 +6122,7 @@ fn fourier_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                 expr_mul(
                   expr_int(4),
                   expr_mul(
-                    expr_pow(@symcore.pi(), expr_int(2)),
+                    expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2)),
                     expr_pow(k, expr_int(2)),
                   ),
                 ),
@@ -6368,12 +6368,12 @@ fn fourier_triangle_term(
           expr_mul(
             c1,
             expr_pow(
-              @symelem.sin(expr_div(expr_mul(@symcore.pi(), k), c1)),
+              @symelem.sin(expr_div(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), k), c1)),
               expr_int(2),
             ),
           ),
           expr_mul(
-            expr_pow(@symcore.pi(), expr_int(2)),
+            expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2)),
             expr_pow(k, expr_int(2)),
           ),
         ),
@@ -6388,14 +6388,14 @@ fn fourier_linear_shift(a : Expr, k : Expr) -> Expr {
     a,
     expr_mul(
       expr_int(2),
-      expr_mul(expr_mul(@symcore.pi(), @symcore.imag_unit()), k),
+      expr_mul(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), k),
     ),
   )
 }
 
 ///|
 fn fourier_linear_shift_coeff() -> Expr {
-  expr_mul(expr_int(2), expr_mul(@symcore.pi(), @symcore.imag_unit()))
+  expr_mul(expr_int(2), expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)))
 }
 
 ///|
@@ -6482,7 +6482,7 @@ fn parse_inverse_fourier_abs_decay_rate(
         !expr_is_zero(coeffs[2]) {
         let quad_base = expr_mul(
           expr_int(4),
-          expr_pow(@symcore.pi(), expr_int(2)),
+          expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2)),
         )
         let scale = expr_simplify(expr_div(coeffs[2], quad_base))
         if expr_depends_on(scale, k_name) || expr_is_zero(scale) {
@@ -6527,7 +6527,7 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
   }
   match linear_coeffs(den, k_name) {
     Some((coeff, offset)) =>
-      if !expr_eq(coeff, @symcore.pi()) || !expr_is_zero(offset) {
+      if !expr_eq(coeff, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) || !expr_is_zero(offset) {
         return None
       }
     _ => return None
@@ -6537,7 +6537,7 @@ fn parse_inverse_fourier_box_scale(expr : Expr, k_name : String) -> Expr? {
       match linear_coeffs(arg, k_name) {
         Some((coeff, offset)) if expr_is_zero(offset) =>
           Some(
-            expr_simplify(expr_div(expr_mul(expr_int(2), @symcore.pi()), coeff)),
+            expr_simplify(expr_div(expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), coeff)),
           )
         _ => None
       }
@@ -6584,7 +6584,7 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
           Some(coeffs) =>
             if expr_is_zero(coeffs[0]) &&
               expr_is_zero(coeffs[1]) &&
-              expr_eq(coeffs[2], expr_pow(@symcore.pi(), expr_int(2))) {
+              expr_eq(coeffs[2], expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2))) {
               den_ok = true
             } else {
               return None
@@ -6597,7 +6597,7 @@ fn parse_inverse_fourier_triangle_scale(expr : Expr, k_name : String) -> Expr? {
         ) =>
         match linear_coeffs(arg, k_name) {
           Some((freq, offset)) if expr_is_zero(offset) =>
-            if expr_eq(expr_simplify(expr_mul(coeff, freq)), @symcore.pi()) {
+            if expr_eq(expr_simplify(expr_mul(coeff, freq)), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)) {
               scale = Some(coeff)
             } else {
               return None
@@ -6796,7 +6796,7 @@ fn sine_log_over_x_term(
           expr_mul(expr_neg_one(), expr_mul(expr_sqrt_two(), sqrt_pi())),
           expr_add(
             @symelem.log(expr_pow(k, expr_int(2))),
-            expr_mul(expr_int(2), @symcore.euler_gamma()),
+            expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::EulerGamma)),
           ),
         ),
         expr_int(4),
@@ -6876,7 +6876,7 @@ fn inverse_sine_exp_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
           let mut k_seen = false
           let mut const_coeff = expr_one()
           for item in coeff {
-            if expr_eq(item, @symcore.symbol(k_name)) {
+            if expr_eq(item, @symcore.Expr::Symbol(k_name)) {
               k_seen = true
             } else {
               const_coeff = expr_mul(const_coeff, item)
@@ -6912,7 +6912,7 @@ fn inverse_sine_gaussian_term(expr : Expr, k_name : String, x : Expr) -> Expr? {
   let mut k_seen = false
   let mut exp_scale : Expr? = None
   for factor in factors {
-    if expr_eq(factor, @symcore.symbol(k_name)) {
+    if expr_eq(factor, @symcore.Expr::Symbol(k_name)) {
       k_seen = true
     } else {
       match factor {
@@ -7079,7 +7079,7 @@ fn cosine_base_term(expr : Expr, x_name : String, k : Expr) -> Expr? {
                           expr_mul(
                             expr_div(
                               expr_sub(
-                                @symcore.pi(),
+                                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                                 expr_mul(
                                   expr_int(2),
                                   @symspec.si(expr_mul(a, k)),
@@ -7249,7 +7249,7 @@ fn inverse_cosine_meijerg_term(expr : Expr, k_name : String, x : Expr) -> Expr? 
     Some(a_sq) => {
       let expected = expr_div(
         expr_sqrt_two(),
-        expr_mul(expr_int(2), @symcore.pi()),
+        expr_mul(expr_int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
       )
       if expr_eq(coeff, expected) {
         Some(expr_pow(expr_add(x, expr_sqrt_positive(a_sq)), expr_int(-1)))
@@ -7554,10 +7554,10 @@ pub fn do_mellin_doit(_expr : Expr, x : Expr, s : Expr) -> Expr? {
   match (symbol_name(x), symbol_name(s)) {
     (Some(x_name), Some(s_name)) =>
       match
-        mellin_info_doit(expr_simplify(_expr), x_name, @symcore.symbol(s_name)) {
+        mellin_info_doit(expr_simplify(_expr), x_name, @symcore.Expr::Symbol(s_name)) {
         Some(info) => Some(info.0)
         None =>
-          mellin_doit(expr_simplify(_expr), x_name, @symcore.symbol(s_name))
+          mellin_doit(expr_simplify(_expr), x_name, @symcore.Expr::Symbol(s_name))
       }
     _ => None
   }
@@ -7587,12 +7587,12 @@ pub fn mellin_transform_result(
   match (symbol_name(x), symbol_name(s)) {
     (Some(x_name), Some(s_name)) =>
       match
-        mellin_info_doit(expr_simplify(expr), x_name, @symcore.symbol(s_name)) {
+        mellin_info_doit(expr_simplify(expr), x_name, @symcore.Expr::Symbol(s_name)) {
         Some((value, lower, upper, cond)) =>
           if noconds {
             value
           } else {
-            tuple_expr([value, tuple_expr([lower, upper]), cond])
+            Expr::Tuple([value, Expr::Tuple([lower, upper]), cond])
           }
         None => @symcore.raw_function("MellinTransform", [expr, x, s])
       }
@@ -7668,8 +7668,8 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
         Some(
           (
             expr_simplify(@symcore.add(values)),
-            lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.oo())),
-            upper.unwrap_or(@symcore.oo()),
+            lower.unwrap_or(expr_mul(expr_neg_one(), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))),
+            upper.unwrap_or(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
             cond,
           ),
         )
@@ -7698,7 +7698,7 @@ fn mellin_info_doit(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
 
 ///|
 fn generic_mellin_object(expr : Expr, x_name : String, s : Expr) -> Expr {
-  @symcore.raw_function("MellinTransform", [expr, @symcore.symbol(x_name), s])
+  @symcore.raw_function("MellinTransform", [expr, @symcore.Expr::Symbol(x_name), s])
 }
 
 ///|
@@ -7782,7 +7782,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                     expr_neg_one(),
                     expr_mul(
                       @symelem.cos(
-                        expr_mul(@symcore.pi(), expr_sub(half_order, s)),
+                        expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_sub(half_order, s)),
                       ),
                       expr_mul(
                         @symspec.gamma(expr_sub(s, half_order)),
@@ -7790,7 +7790,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                       ),
                     ),
                   ),
-                  @symcore.pi(),
+                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                 ),
               ),
               max_expr(
@@ -7830,7 +7830,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
                 ),
                 expr_div(@symelem.re(order), expr_int(2)),
               ),
-              @symcore.oo(),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
               true_expr(),
             ),
           )
@@ -7843,7 +7843,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
           (
             expr_div(@symspec.gamma(s), s),
             expr_zero(),
-            @symcore.oo(),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
             true_expr(),
           ),
         )
@@ -7856,7 +7856,7 @@ fn mellin_special_info(expr : Expr, x_name : String, s : Expr) -> MellinInfo? {
           (
             expr_div(@symspec.gamma(s), expr_sub(expr_add(n, s), expr_one())),
             max_expr(expr_sub(expr_one(), n), expr_zero()),
-            @symcore.oo(),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
             true_expr(),
           ),
         )
@@ -7950,15 +7950,15 @@ fn mellin_difference_quotient_info(
           expr_simplify(
             expr_div(
               expr_mul(
-                @symcore.pi(),
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                 expr_mul(
                   expr_pow(scale, expr_add(expr_sub(power, expr_one()), s)),
-                  @symelem.sin(expr_mul(@symcore.pi(), power)),
+                  @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), power)),
                 ),
               ),
               expr_mul(
-                @symelem.sin(expr_mul(@symcore.pi(), s)),
-                @symelem.sin(expr_mul(@symcore.pi(), expr_add(power, s))),
+                @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s)),
+                @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_add(power, s))),
               ),
             ),
           ),
@@ -8045,14 +8045,14 @@ fn mellin_abs_one_minus_power_info(
                   expr_int(2),
                   expr_mul(
                     @symelem.sin(
-                      expr_div(expr_mul(@symcore.pi(), rho), expr_int(2)),
+                      expr_div(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), rho), expr_int(2)),
                     ),
                     expr_mul(
                       @symspec.gamma(expr_sub(expr_one(), rho)),
                       expr_mul(
                         @symelem.cos(
                           expr_mul(
-                            @symcore.pi(),
+                            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                             expr_sub(s, expr_div(rho, expr_int(2))),
                           ),
                         ),
@@ -8064,7 +8064,7 @@ fn mellin_abs_one_minus_power_info(
                     ),
                   ),
                 ),
-                @symcore.pi(),
+                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
               ),
               expr_zero(),
               @symelem.re(rho),
@@ -8089,8 +8089,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.pi(),
-              expr_mul(s, @symelem.sin(expr_mul(@symcore.pi(), s))),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s))),
             ),
             expr_int(-1),
             expr_zero(),
@@ -8101,8 +8101,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.pi(),
-              expr_mul(s, @symelem.sin(expr_mul(@symcore.pi(), s))),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+              expr_mul(s, @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s))),
             ),
             expr_zero(),
             expr_one(),
@@ -8113,8 +8113,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.pi(),
-              expr_mul(s, @symelem.tan(expr_mul(@symcore.pi(), s))),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s))),
             ),
             expr_int(-1),
             expr_zero(),
@@ -8125,8 +8125,8 @@ fn mellin_log_special_info(
         Some(
           (
             expr_div(
-              @symcore.pi(),
-              expr_mul(s, @symelem.tan(expr_mul(@symcore.pi(), s))),
+              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+              expr_mul(s, @symelem.tan(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s))),
             ),
             expr_zero(),
             expr_one(),
@@ -8331,12 +8331,12 @@ fn mellin_mul_info(
     (None, Some((bound, is_le))) => {
       let value = mellin_heaviside_term(pow, bound, is_le, s)
       if is_le {
-        Some((value, expr_mul(expr_neg_one(), pow), @symcore.oo(), true_expr()))
+        Some((value, expr_mul(expr_neg_one(), pow), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity), true_expr()))
       } else {
         Some(
           (
             value,
-            expr_mul(expr_neg_one(), @symcore.oo()),
+            expr_mul(expr_neg_one(), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
             expr_mul(expr_neg_one(), pow),
             true_expr(),
           ),
@@ -8396,7 +8396,7 @@ fn mellin_beta_heaviside_info(
               @symspec.gamma(expr_add(beta, s)),
             ),
             expr_zero(),
-            @symcore.oo(),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
             @symcore.function("Gt", [@symelem.re(beta), expr_zero()]),
           ),
         )
@@ -8474,7 +8474,7 @@ fn mellin_log_heaviside_info(
         expr_mul(factorial_expr(expr_int(n)), expr_pow(s, expr_int(-(n + 1)))),
       )
       if is_le {
-        Some((value, expr_zero(), @symcore.oo(), true_expr()))
+        Some((value, expr_zero(), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity), true_expr()))
       } else {
         Some((value, neg_oo_expr(), expr_zero(), true_expr()))
       }
@@ -8655,7 +8655,7 @@ fn mellin_trig_bessel_info(
                         expr_pow(expr_int(4), s),
                         expr_mul(
                           @symelem.sin(
-                            expr_mul(@symcore.pi(), expr_sub(half_order, s)),
+                            expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_sub(half_order, s)),
                           ),
                           expr_mul(
                             @symspec.gamma(
@@ -8727,7 +8727,7 @@ fn mellin_trig_bessel_info(
                         expr_pow(expr_int(4), s),
                         expr_mul(
                           @symelem.cos(
-                            expr_mul(@symcore.pi(), expr_sub(half_order, s)),
+                            expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_sub(half_order, s)),
                           ),
                           expr_mul(
                             @symspec.gamma(expr_sub(s, half_order)),
@@ -9033,7 +9033,7 @@ fn mellin_besselj_bessely_product_info(
                 expr_mul(
                   expr_neg_one(),
                   expr_mul(
-                    @symelem.cos(expr_mul(@symcore.pi(), s)),
+                    @symelem.cos(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s)),
                     expr_mul(
                       @symspec.gamma(s),
                       expr_mul(
@@ -9044,7 +9044,7 @@ fn mellin_besselj_bessely_product_info(
                   ),
                 ),
                 expr_mul(
-                  expr_mul(@symcore.pi(), sqrt_pi()),
+                  expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), sqrt_pi()),
                   @symspec.gamma(expr_add(expr_sub(order_j, s), expr_one())),
                 ),
               ),
@@ -9072,7 +9072,7 @@ fn mellin_besselj_bessely_product_info(
                     expr_pow(expr_int(4), s),
                     expr_mul(
                       @symelem.cos(
-                        expr_mul(@symcore.pi(), expr_add(half_diff, s)),
+                        expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_add(half_diff, s)),
                       ),
                       expr_mul(
                         @symspec.gamma(
@@ -9087,7 +9087,7 @@ fn mellin_besselj_bessely_product_info(
                   ),
                 ),
                 expr_mul(
-                  @symcore.pi(),
+                  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
                   expr_mul(
                     @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_diff)),
                     @symspec.gamma(expr_add(expr_sub(expr_one(), s), half_sum)),
@@ -9257,7 +9257,7 @@ fn mellin_exp_info(
         (
           mellin_exp_formula(pow, coef, degree, s),
           expr_mul(expr_neg_one(), pow),
-          @symcore.oo(),
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
           true_expr(),
         ),
       )
@@ -9268,7 +9268,7 @@ fn mellin_exp_info(
     Some(
       (
         mellin_exp_formula(pow, coef, degree, s),
-        expr_mul(expr_neg_one(), @symcore.oo()),
+        expr_mul(expr_neg_one(), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
         expr_mul(expr_neg_one(), pow),
         true_expr(),
       ),
@@ -9382,7 +9382,7 @@ fn mellin_exp_formula(pow : Expr, coef : Expr, degree : Int, s : Expr) -> Expr {
   if degree == 1 {
     if expr_is_positive(expr_simplify(coef)) {
       let phase = expr_mul(
-        expr_mul(expr_mul(expr_neg_one(), @symcore.imag_unit()), @symcore.pi()),
+        expr_mul(expr_mul(expr_neg_one(), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
         shifted,
       )
       let gamma_factor = expr_pow(coef, expr_mul(expr_neg_one(), shifted))
@@ -9441,7 +9441,7 @@ fn expr_is_constant(expr : Expr, symbol_name : String) -> Bool {
 
 ///|
 fn inverse_mellin_doit(expr : Expr, s_name : String, x : Expr) -> Expr? {
-  let s_sym = @symcore.symbol(s_name)
+  let s_sym = @symcore.Expr::Symbol(s_name)
   match expr {
     @symcore.Expr::Add(terms) =>
       transform_add(terms, s_name, fn(term) {
@@ -9630,17 +9630,17 @@ fn inverse_mellin_special_term(expr : Expr, s_sym : Expr, x : Expr) -> Expr? {
     return Some(@symspec.ci(@symelem.sqrt(x)))
   }
   let sec_formula = expr_div(
-    @symcore.pi(),
-    @symelem.cos(expr_mul(@symcore.pi(), s_sym)),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    @symelem.cos(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s_sym)),
   )
   if expr_eq(expr_simplify(expr), expr_simplify(sec_formula)) {
     return Some(expr_div(@symelem.sqrt(x), expr_add(x, expr_one())))
   }
   let log_quadratic_formula = expr_div(
-    @symcore.pi(),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
     expr_mul(
       s_sym,
-      @symelem.sin(expr_div(expr_mul(@symcore.pi(), s_sym), expr_int(2))),
+      @symelem.sin(expr_div(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), s_sym), expr_int(2))),
     ),
   )
   if expr_eq(expr_simplify(expr), expr_simplify(log_quadratic_formula)) {
@@ -9738,7 +9738,7 @@ fn inverse_mellin_difference_quotient_term(
       expr_mul(
         expr_pow(scale, expr_add(expr_sub(s_sym, expr_one()), power)),
         expr_mul(
-          @symelem.sin(expr_mul(@symcore.pi(), power)),
+          @symelem.sin(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), power)),
           expr_mul(
             @symspec.gamma(s_sym),
             expr_mul(
@@ -9751,7 +9751,7 @@ fn inverse_mellin_difference_quotient_term(
           ),
         ),
       ),
-      @symcore.pi(),
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
     ),
   )
   if !expr_same_simplified(expr, expected) {
@@ -10143,7 +10143,7 @@ fn inverse_mellin_piecewise_log_term(
   s_sym : Expr,
   x : Expr,
 ) -> Expr? {
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let one = expr_one()
   let sin_pi_formula = expr_div(
     pi,
@@ -10530,13 +10530,13 @@ fn inverse_mellin_trig_bessely_term(
     expr_mul(
       expr_mul(
         expr_neg_one(),
-        expr_pow(@symelem.sqrt(@symcore.pi()), expr_int(-1)),
+        expr_pow(@symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), expr_int(-1)),
       ),
       expr_mul(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.sin(
-            expr_mul(@symcore.pi(), expr_sub(expr_mul(order, half), s_sym)),
+            expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_sub(expr_mul(order, half), s_sym)),
           ),
           expr_mul(
             @symspec.gamma(expr_sub(half, expr_mul(expr_int(2), s_sym))),
@@ -10589,13 +10589,13 @@ fn inverse_mellin_trig_bessely_term(
     expr_mul(
       expr_mul(
         expr_neg_one(),
-        expr_pow(@symelem.sqrt(@symcore.pi()), expr_int(-1)),
+        expr_pow(@symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), expr_int(-1)),
       ),
       expr_mul(
         expr_pow(expr_int(4), s_sym),
         expr_mul(
           @symelem.cos(
-            expr_mul(@symcore.pi(), expr_sub(expr_mul(order, half), s_sym)),
+            expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_sub(expr_mul(order, half), s_sym)),
           ),
           expr_mul(
             @symspec.gamma(expr_sub(s_sym, expr_mul(order, half))),
@@ -10961,7 +10961,7 @@ fn inverse_mellin_besselj_bessely_product_term(
       expr_mul(
         expr_neg_one(),
         expr_mul(
-          expr_pow(@symcore.pi(), expr_int(-1)),
+          expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(-1)),
           expr_div(expr_one(), sqrt_pi()),
         ),
       ),
@@ -10988,7 +10988,7 @@ fn inverse_mellin_besselj_bessely_product_term(
     !expr_same_simplified(s_scale, expr_pow(expr_int(4), s_sym)) ||
     !expr_same_simplified(
       coeff,
-      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(-1))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(-1))),
     ) ||
     trig_coeff != 1 {
     return None
@@ -11581,7 +11581,7 @@ fn inverse_mellin_bessely_single_term(
   if gamma_args.length() != 2 ||
     !expr_same_simplified(
       coeff,
-      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(-1))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(-1))),
     ) {
     return None
   }
@@ -11638,7 +11638,7 @@ fn parse_gamma_like_linear_arg(expr : Expr, var_name : String) -> (Expr, Expr)? 
 
 ///|
 fn divide_by_pi_if_common(expr : Expr) -> Expr? {
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   match expr_simplify(expr) {
     expr if expr_same_simplified(expr, pi) => Some(expr_one())
     @symcore.Expr::Mul(args) => {
@@ -12500,7 +12500,7 @@ fn fourier_gaussian_exponent(
     expr_div(expr_pow(linear, expr_int(2)), expr_mul(expr_int(4), scale)),
   )
   let imag_coeff = expr_div(
-    expr_mul(expr_mul(@symcore.pi(), @symcore.imag_unit()), linear),
+    expr_mul(expr_mul(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), linear),
     scale,
   )
   let linear_term = expr_mul(
@@ -12513,7 +12513,7 @@ fn fourier_gaussian_exponent(
   )
   let quad_term = expr_mul(
     expr_div(
-      expr_mul(expr_neg_one(), expr_pow(@symcore.pi(), expr_int(2))),
+      expr_mul(expr_neg_one(), expr_pow(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), expr_int(2))),
       scale,
     ),
     expr_pow(var_expr, expr_int(2)),
@@ -12527,7 +12527,7 @@ fn extract_explicit_negative_factor(expr : Expr) -> Expr? {
   match expr_num_value(simplified) {
     Some(value) =>
       if value.compare(@symnum.BigRational::zero()) < 0 {
-        Some(@symcore.number(value.neg()))
+        Some(@symcore.Expr::Number(value.neg()))
       } else {
         None
       }
@@ -12541,7 +12541,7 @@ fn extract_explicit_negative_factor(expr : Expr) -> Expr? {
               Some(value) =>
                 if value.compare(@symnum.BigRational::zero()) < 0 {
                   sign = -sign
-                  positive_factors.push(@symcore.number(value.neg()))
+                  positive_factors.push(@symcore.Expr::Number(value.neg()))
                 } else {
                   positive_factors.push(arg)
                 }
@@ -12586,7 +12586,7 @@ fn factorial_expr(n : Expr) -> Expr {
 
 ///|
 fn sqrt_pi() -> Expr {
-  @symelem.sqrt(@symcore.pi())
+  @symelem.sqrt(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi))
 }
 
 ///|
@@ -12604,12 +12604,12 @@ fn expr_sqrt_two() -> Expr {
 
 ///|
 fn true_expr() -> Expr {
-  @symcore.true_()
+  @symcore.Expr::Boolean(true)
 }
 
 ///|
 fn false_expr() -> Expr {
-  @symcore.false_()
+  @symcore.Expr::Boolean(false)
 }
 
 ///|
@@ -12936,19 +12936,15 @@ fn parse_square_scaled_var(expr : Expr, var_name : String) -> Expr? {
 }
 
 ///|
-fn tuple_items(expr : Expr) -> Array[Expr]? {
-  @symcore.tuple_items(expr)
-}
-
 ///|
 fn parse_cosine_linear_meijerg(expr : Expr, k_name : String) -> Expr? {
   match expr {
     @symcore.Expr::Function("meijerg", [a, b, z]) =>
       match
-        (tuple_items(a), tuple_items(b), parse_square_scaled_var(z, k_name)) {
+        (@symcore.tuple_items(a), @symcore.tuple_items(b), parse_square_scaled_var(z, k_name)) {
         (Some([a1, a2]), Some([b1, b2]), Some(scale)) =>
           match
-            (tuple_items(a1), tuple_items(a2), tuple_items(b1), tuple_items(b2)) {
+            (@symcore.tuple_items(a1), @symcore.tuple_items(a2), @symcore.tuple_items(b1), @symcore.tuple_items(b2)) {
             (Some(a1s), Some(a2s), Some(b1s), Some(b2s)) =>
               if a1s.length() == 2 &&
                 expr_eq(a1s[0], expr_rat(1, 2)) &&
@@ -12977,10 +12973,10 @@ fn parse_cosine_sqrt_meijerg(expr : Expr, k_name : String) -> Expr? {
   match expr {
     @symcore.Expr::Function("meijerg", [a, b, z]) =>
       match
-        (tuple_items(a), tuple_items(b), parse_square_scaled_var(z, k_name)) {
+        (@symcore.tuple_items(a), @symcore.tuple_items(b), parse_square_scaled_var(z, k_name)) {
         (Some([a1, a2]), Some([b1, b2]), Some(scale)) =>
           match
-            (tuple_items(a1), tuple_items(a2), tuple_items(b1), tuple_items(b2)) {
+            (@symcore.tuple_items(a1), @symcore.tuple_items(a2), @symcore.tuple_items(b1), @symcore.tuple_items(b2)) {
             (Some(a1s), Some(a2s), Some(b1s), Some(b2s)) =>
               if a1s.length() == 1 &&
                 expr_eq(a1s[0], expr_rat(1, 2)) &&
@@ -13207,7 +13203,7 @@ fn inverse_hankel_exp_term(
                             exp2,
                             expr_int(-2),
                           ) &&
-                          expr_eq(base2, @symcore.symbol(k_name)) =>
+                          expr_eq(base2, @symcore.Expr::Symbol(k_name)) =>
                           k_sq_inv = true
                         _ => a_sq = Some(part)
                       }
@@ -13339,10 +13335,10 @@ fn expr_is_positive(expr : Expr) -> Bool {
 
 ///|
 fn neg_oo_expr() -> Expr {
-  @symcore.mul([@symcore.int(-1), @symcore.oo()])
+  @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)])
 }
 
 ///|
 fn oo_expr() -> Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }

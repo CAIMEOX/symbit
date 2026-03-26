@@ -6,7 +6,7 @@
 
 ///|
 fn oo_expr() -> @symcore.Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|
@@ -16,7 +16,7 @@ fn neg_oo_expr() -> @symcore.Expr {
 
 ///|
 fn zoo_expr() -> @symcore.Expr {
-  @symcore.zoo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)
 }
 
 ///|
@@ -464,7 +464,7 @@ pub fn gruntz(
   if !contains_symbol(expr, var_name) {
     return expr
   }
-  let t = @symcore.symbol("__gruntz_t")
+  let t = @symcore.Expr::Symbol("__gruntz_t")
   if is_pos_oo(x0) {
     let transformed = infinity_to_t(expr, var_name, false, t)
     return gruntz_near_zero(transformed, t, "+")

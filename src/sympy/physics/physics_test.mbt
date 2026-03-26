@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}
 
 ///|
 fn physics_matrix_expr_equal(
@@ -24,7 +24,7 @@ fn physics_matrix_expr_equal(
 
 ///|
 test "physics: Pauli and Dirac matrices satisfy core identities" {
-  let i = @symcore.imag_unit()
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
   let sigma1 = @symphysics.msigma(1)
   let sigma2 = @symphysics.msigma(2)
   let sigma3 = @symphysics.msigma(3)
@@ -60,8 +60,8 @@ test "physics: Pauli and Dirac matrices satisfy core identities" {
 
 ///|
 test "physics: simple wavefunction and energy behaviors" {
-  let x = symbol("x")
-  let alpha = symbol("alpha")
+  let x = Expr::Symbol("x")
+  let alpha = Expr::Symbol("alpha")
   let psi0 = @symphysics.psi_n(int(0), x, int(1), int(1))
   physics_assert_expr_equal(
     psi0, "exp(-x**2/(2*hbar))/(hbar**(1/4)*pi**(1/4))", "psi_n ground state",
@@ -77,18 +77,18 @@ test "physics: simple wavefunction and energy behaviors" {
   )
 
   let err : Result[Expr, PhysicsError] = try? @symphysics.energy(
-    symbol("n"),
-    symbol("m"),
-    symbol("r"),
+    Expr::Symbol("n"),
+    Expr::Symbol("m"),
+    Expr::Symbol("r"),
   )
   assert_true(err is Err(_))
 }
 
 ///|
 test "physics: hydrogen formulas and quantum-number guards" {
-  let r = symbol("r")
-  let phi = symbol("phi")
-  let theta = symbol("theta")
+  let r = Expr::Symbol("r")
+  let phi = Expr::Symbol("phi")
+  let theta = Expr::Symbol("theta")
 
   physics_assert_expr_equal(
     @symphysics.hydrogen_e_nl(int(1)),
@@ -268,12 +268,12 @@ test "physics: real gaunt examples and zeros" {
 
 ///|
 test "physics: rotational harmonic examples" {
-  let theta = symbol("theta")
-  let phi = symbol("phi")
+  let theta = Expr::Symbol("theta")
+  let phi = Expr::Symbol("phi")
   let half = physics_frac(1, 2)
-  let alpha = symbol("alpha")
-  let beta = symbol("beta")
-  let gamma = symbol("gamma")
+  let alpha = Expr::Symbol("alpha")
+  let beta = Expr::Symbol("beta")
+  let gamma = Expr::Symbol("gamma")
 
   physics_assert_expr_equal(
     @symphysics.dot_rot_grad_ynm(int(3), int(2), int(2), int(0), theta, phi),

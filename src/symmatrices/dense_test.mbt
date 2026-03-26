@@ -5,7 +5,7 @@ fn mtxt(m : Matrix) -> String {
 
 ///|
 test "matrices dense constructors and indexing" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let m = matrix([[x, @symcore.int(2)], [@symcore.int(3), @symcore.int(4)]])
   assert_eq(m.shape(), (2, 2))
   inspect(@symprint.to_string(m.getitem(0, 0)), content="x")

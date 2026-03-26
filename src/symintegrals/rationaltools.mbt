@@ -22,7 +22,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                 expr_div(
                   c *
                   @symelem.log(
-                    expr_add(expr_mul(a, @symcore.symbol(var_name)), b),
+                    expr_add(expr_mul(a, @symcore.Expr::Symbol(var_name)), b),
                   ),
                   a,
                 ),
@@ -48,13 +48,13 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
               if expr_eq(
                   den,
                   expr_add(
-                    expr_pow(@symcore.symbol(var_name), expr_int(2)),
+                    expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2)),
                     expr_one(),
                   ),
                 ) &&
                 expr_is_zero(p) &&
                 expr_is_one(q) {
-                return Some(@symelem.atan(@symcore.symbol(var_name)))
+                return Some(@symelem.atan(@symcore.Expr::Symbol(var_name)))
               }
               match expr_num_value(disc) {
                 Some(delta) if delta.compare(@symnum.BigRational::zero()) < 0 => {
@@ -64,7 +64,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                     expr_add(
                       expr_mul(
                         expr_int(2),
-                        expr_mul(a, @symcore.symbol(var_name)),
+                        expr_mul(a, @symcore.Expr::Symbol(var_name)),
                       ),
                       b,
                     ),
@@ -84,7 +84,7 @@ pub fn ratint(expr : Expr, var_name : String) -> Expr? {
                     expr_add(
                       expr_mul(
                         expr_int(2),
-                        expr_mul(a, @symcore.symbol(var_name)),
+                        expr_mul(a, @symcore.Expr::Symbol(var_name)),
                       ),
                       b,
                     ),

@@ -136,8 +136,8 @@ test "physics.vector parity kinematics helpers" {
       "u1,u2,u3=dynamicsymbols('pu1 pu2 pu3'); N=ReferenceFrame('PVN'); A=ReferenceFrame('PVA'); partial_velocity([u1*A.x + u2*N.z, u3*N.x], [u1, u2, u3], N)",
     ),
   )
-  let sx = @symcore.symbol("psx")
-  let sy = @symcore.symbol("psy")
+  let sx = @symcore.Expr::Symbol("psx")
+  let sy = @symcore.Expr::Symbol("psy")
   let motion = get_motion_params(
     n,
     velocity=Some(n.x().scale(sx) + n.y().scale(sy)),

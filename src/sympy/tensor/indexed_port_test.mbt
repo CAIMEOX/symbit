@@ -1,6 +1,6 @@
 ///|
 test "indexed basic construction" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let i = idx("i", upper=n)
   let j = idx("j")
   let base = indexed_base("A", shape=[n, @symcore.int(3)])

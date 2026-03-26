@@ -738,25 +738,25 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
         _ => mod_expr(lhs_eval, rhs_eval)
       }
     }
-    Expr::Tuple(args) => tuple_expr(args.map(arg => evalf_impl(arg, prec)))
+    Expr::Tuple(args) => Expr::Tuple(args.map(arg => evalf_impl(arg, prec)))
     Expr::Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((evalf_impl(key, prec), evalf_impl(value, prec)))
       }
-      dict_expr(out)
+      Expr::Dict(out)
     }
     Expr::Relational(op, lhs, rhs) => {
       let lhs_eval = evalf_impl(lhs, prec)
       let rhs_eval = evalf_impl(rhs, prec)
       match op {
-        RelOp::Eq => eq(lhs_eval, rhs_eval)
-        RelOp::Ne => ne(lhs_eval, rhs_eval)
-        RelOp::Lt => lt(lhs_eval, rhs_eval)
-        RelOp::Le => le(lhs_eval, rhs_eval)
-        RelOp::Gt => gt(lhs_eval, rhs_eval)
-        RelOp::Ge => ge(lhs_eval, rhs_eval)
+        RelOp::Eq => Expr::Relational(RelOp::Eq, lhs_eval, rhs_eval)
+        RelOp::Ne => Expr::Relational(RelOp::Ne, lhs_eval, rhs_eval)
+        RelOp::Lt => Expr::Relational(RelOp::Lt, lhs_eval, rhs_eval)
+        RelOp::Le => Expr::Relational(RelOp::Le, lhs_eval, rhs_eval)
+        RelOp::Gt => Expr::Relational(RelOp::Gt, lhs_eval, rhs_eval)
+        RelOp::Ge => Expr::Relational(RelOp::Ge, lhs_eval, rhs_eval)
       }
     }
     Expr::Derivative(inner, deriv_args) => {

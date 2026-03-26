@@ -1,8 +1,8 @@
 ///|
 test "physics.quantum.piab: local Hamiltonian, overlaps, and wavefunction" {
-  let n = @symcore.symbol("n")
-  let i = @symcore.symbol("i")
-  let j = @symcore.symbol("j")
+  let n = @symcore.Expr::Symbol("n")
+  let i = @symcore.Expr::Symbol("i")
+  let j = @symcore.Expr::Symbol("j")
 
   quantum_test_assert_expr_equal(
     qapply(@symcore.raw_mul([piab_hamiltonian(), piab_ket(n)])),

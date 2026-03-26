@@ -1,14 +1,14 @@
 ///|
 test "physics.quantum.cg_simp: sum parity" {
-  let x = @symcore.symbol("x")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let c = @symcore.symbol("c")
-  let cp = @symcore.symbol("cp")
-  let alpha = @symcore.symbol("alpha")
-  let beta = @symcore.symbol("beta")
-  let gamma = @symcore.symbol("gamma")
-  let gammap = @symcore.symbol("gammap")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let cp = @symcore.Expr::Symbol("cp")
+  let alpha = @symcore.Expr::Symbol("alpha")
+  let beta = @symcore.Expr::Symbol("beta")
+  let gamma = @symcore.Expr::Symbol("gamma")
+  let gammap = @symcore.Expr::Symbol("gammap")
 
   let eq1 = x *
     quantum_sum1(
@@ -56,8 +56,8 @@ test "physics.quantum.cg_simp: sum parity" {
 ///|
 test "physics.quantum.cg_simp: square-sum parity" {
   let half = quantum_test_frac(1, 2)
-  let alpha = @symcore.symbol("alpha")
-  let beta = @symcore.symbol("beta")
+  let alpha = @symcore.Expr::Symbol("alpha")
+  let beta = @symcore.Expr::Symbol("beta")
 
   let expr = quantum_sum2(
     cg(half, alpha, half, beta, @symcore.int(1), alpha + beta).as_expr() ^
@@ -78,7 +78,7 @@ test "physics.quantum.cg_simp: square-sum parity" {
 
 ///|
 test "physics.quantum.cg_simp: additive parity" {
-  let j = @symcore.symbol("j")
+  let j = @symcore.Expr::Symbol("j")
   let half = quantum_test_frac(1, 2)
 
   let eq1 = @symcore.add([
@@ -140,8 +140,8 @@ test "physics.quantum.cg_simp: additive parity" {
 ///|
 test "physics.quantum.cg_simp: additive eq9 square parity" {
   let half = quantum_test_frac(1, 2)
-  let m1 = @symcore.symbol("m1")
-  let m2 = @symcore.symbol("m2")
+  let m1 = @symcore.Expr::Symbol("m1")
+  let m2 = @symcore.Expr::Symbol("m2")
 
   let a = cg(
       half,
@@ -207,10 +207,10 @@ test "physics.quantum.cg_simp: additive eq9 square parity" {
 ///|
 test "physics.quantum.cg_simp: additive eq9 cross parity" {
   let half = quantum_test_frac(1, 2)
-  let m1 = @symcore.symbol("m1")
-  let m1p = @symcore.symbol("m1p")
-  let m2 = @symcore.symbol("m2")
-  let m2p = @symcore.symbol("m2p")
+  let m1 = @symcore.Expr::Symbol("m1")
+  let m1p = @symcore.Expr::Symbol("m1p")
+  let m2 = @symcore.Expr::Symbol("m2")
+  let m2p = @symcore.Expr::Symbol("m2p")
 
   let numeric = @symcore.add([
     @symcore.mul([

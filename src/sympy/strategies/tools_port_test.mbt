@@ -1,12 +1,12 @@
 ///|
 ///\
 test "tools subs" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let c = @symcore.symbol("c")
-  let d = @symcore.symbol("d")
-  let e = @symcore.symbol("e")
-  let f = @symcore.symbol("f")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let c = @symcore.Expr::Symbol("c")
+  let d = @symcore.Expr::Symbol("d")
+  let e = @symcore.Expr::Symbol("e")
+  let f = @symcore.Expr::Symbol("f")
   let mapping : Map[@symcore.Expr, @symcore.Expr] = Map::new()
   mapping[a] = d
   mapping[d] = a

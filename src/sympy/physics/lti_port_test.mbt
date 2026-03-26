@@ -1,6 +1,6 @@
 ///|
 test "physics.control.lti: transfer function parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let expr = @symcore.int(2) +
     @symcore.int(3) *
     s *
@@ -31,7 +31,7 @@ test "physics.control.lti: transfer function parity" {
   )
 
   let eval_frequency = simplified.eval_frequency(
-    @symcore.imag_unit() + @symcore.int(1),
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) + @symcore.int(1),
   )
   assert_true(
     control_expr_eq(
@@ -55,7 +55,7 @@ test "physics.control.lti: transfer function parity" {
 
 ///|
 test "physics.control.lti: interconnection parity" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let g = transfer_function(s + @symcore.int(1), s + @symcore.int(2), s).as_system()
   let h = transfer_function(@symcore.int(1), s + @symcore.int(4), s).as_system()
 
@@ -87,8 +87,8 @@ test "physics.control.lti: interconnection parity" {
 
 ///|
 test "physics.control.lti: discretization parity" {
-  let s = @symcore.symbol("s")
-  let z = @symcore.symbol("z")
+  let s = @symcore.Expr::Symbol("s")
+  let z = @symcore.Expr::Symbol("z")
   let t = @symcore.rational_from_ints(1, 10)
   let cont = transfer_function(@symcore.int(1), s + @symcore.int(1), s)
 

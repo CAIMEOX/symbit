@@ -1,5 +1,5 @@
 ///|
-using @symcore {type Expr, int, symbol}
+using @symcore {type Expr, int}
 
 ///|
 /// Series expansion entry point (limited to polynomial/rational, x0=0).
@@ -90,7 +90,7 @@ fn series_rational(expr : Expr, x : Expr, n : Int) -> (Expr, Bool)? {
 ///|
 pub fn series(
   expr : Expr,
-  x? : Expr = symbol("x"),
+  x? : Expr = Expr::Symbol("x"),
   x0? : Expr = int(0),
   n? : Int = 6,
   dir? : String = "+",
@@ -102,7 +102,7 @@ pub fn series(
     Expr::Symbol(name) => name
     _ => fail("series variable must be a Symbol")
   }
-  let t = symbol("__series_t")
+  let t = Expr::Symbol("__series_t")
   let env : Map[String, Expr] = {}
   let forward_shift = if dir == "-" {
     @symcore.add([x0, expr_neg(t)])
@@ -249,7 +249,7 @@ fn rational_expr(num : Int, den : Int) -> Expr {
 ///|
 fn inv_factorial_expr(n : Int) -> Expr {
   let den = factorial_bigint(n)
-  @symcore.number(safe_rational(BigInt::from_int(1), den))
+  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), den))
 }
 
 ///|
@@ -404,7 +404,7 @@ fn series_exp_zero(u : Array[Expr], n : Int) -> Array[Expr] {
   while k < n {
     term = poly_mul_trunc(term, u, n)
     let denom = factorial_bigint(k)
-    let coeff = @symcore.number(safe_rational(BigInt::from_int(1), denom))
+    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(1), denom))
     out = poly_add(out, poly_scale(term, coeff))
     k = k + 1
   }
@@ -424,7 +424,7 @@ fn series_sin_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.number(safe_rational(BigInt::from_int(sign), denom))
+    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(sign), denom))
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     sign = -sign
@@ -446,7 +446,7 @@ fn series_cos_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.number(safe_rational(BigInt::from_int(sign), denom))
+    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(sign), denom))
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     sign = -sign
@@ -467,7 +467,7 @@ fn series_sinh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.number(safe_rational(BigInt::from_int(1), denom))
+    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(1), denom))
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     k = k + 1
@@ -487,7 +487,7 @@ fn series_cosh_zero(u : Array[Expr], n : Int) -> Array[Expr] {
       break
     }
     let denom = factorial_bigint(power)
-    let coeff = @symcore.number(safe_rational(BigInt::from_int(1), denom))
+    let coeff = @symcore.Expr::Number(safe_rational(BigInt::from_int(1), denom))
     out = poly_add(out, poly_scale(term, coeff))
     term = poly_mul_trunc(term, u2, n)
     k = k + 1
@@ -531,7 +531,7 @@ fn series_pow_general(
   let mut k = 1
   while k < n {
     term = poly_mul_trunc(term, scaled, n)
-    let coeff = @symcore.number(binomial_coeff(alpha, k))
+    let coeff = @symcore.Expr::Number(binomial_coeff(alpha, k))
     out = poly_add(out, poly_scale(term, coeff))
     k = k + 1
   }
@@ -618,7 +618,7 @@ fn replace_expr(expr : Expr, target : Expr, replacement : Expr) -> Expr {
 
 ///|
 fn simplify_tan_coeff(expr : Expr, tan_c0 : Expr) -> Expr {
-  let sym = symbol("__tan_c0")
+  let sym = Expr::Symbol("__tan_c0")
   let replaced = replace_expr(expr, tan_c0, sym)
   match poly_from_expr(replaced, sym) {
     Some(poly) => {
@@ -863,7 +863,7 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
                     None => None
                   }
                 "sqrt" => {
-                  let half = @symcore.number(
+                  let half = @symcore.Expr::Number(
                     @symnum.BigRational::new(
                       BigInt::from_int(1),
                       BigInt::from_int(2),

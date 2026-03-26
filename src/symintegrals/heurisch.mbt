@@ -29,13 +29,16 @@ fn collect_components(
       collect_components(exp, var_name, out)
       push_unique_component(out, expr)
     }
-    @symcore.Expr::Function(_, args) => {
-      for arg in args {
-        collect_components(arg, var_name, out)
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => {
+          for arg in args {
+            collect_components(arg, var_name, out)
+          }
+          push_unique_component(out, expr)
+        }
+        None => push_unique_component(out, expr)
       }
-      push_unique_component(out, expr)
-    }
-    _ => push_unique_component(out, expr)
   }
 }
 
@@ -67,6 +70,6 @@ pub fn heurisch(expr : Expr, var_name : String) -> Expr? {
 /// no heuristic antiderivative is available.
 pub fn heurisch_wrapper(expr : Expr, var_name : String) -> Expr {
   heurisch(expr, var_name).unwrap_or(
-    integral(expr, limits=[integral_limit([@symcore.symbol(var_name)])]),
+    integral(expr, limits=[integral_limit([@symcore.Expr::Symbol(var_name)])]),
   )
 }

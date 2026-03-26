@@ -21,17 +21,17 @@ test "physics.mechanics actuator core" {
   p_b.set_pos(p_a, n.x().scale(q))
   let pathway = linear_pathway(p_a, p_b).as_pathway()
 
-  let spring = linear_spring(@symcore.symbol("k"), pathway)
+  let spring = linear_spring(@symcore.Expr::Symbol("k"), pathway)
   inspect(@symprint.to_string(spring.force()), content="-1*k*sqrt((q(t)**2))")
 
-  let damper = linear_damper(@symcore.symbol("c"), pathway)
+  let damper = linear_damper(@symcore.Expr::Symbol("c"), pathway)
   inspect(
     @symprint.to_string(damper.force()),
     content="-1*c*Derivative(sqrt((q(t)**2)), t)",
   )
 
   let torque = torque_actuator(
-    @symcore.symbol("T"),
+    @symcore.Expr::Symbol("T"),
     n.z(),
     n,
     reaction_frame=Some(@symvector.reference_frame("AT")),

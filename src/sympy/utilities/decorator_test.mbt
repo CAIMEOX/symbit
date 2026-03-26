@@ -4,7 +4,7 @@ test "decorator threaded and xthreaded behavior" {
   let threaded_square = threaded(square)
   let xthreaded_square = xthreaded(square)
   let expr = threadable_scalar(
-    @symcore.add([@symcore.symbol("x"), @symcore.symbol("y")]),
+    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]),
   )
   inspect(
     @symprint.to_string(

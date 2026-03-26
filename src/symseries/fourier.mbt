@@ -44,9 +44,11 @@ fn depends_on(expr : @symcore.Expr, name : String) -> Bool {
       args.any(child => depends_on(child, name))
     @symcore.Expr::Pow(base, exp) =>
       depends_on(base, name) || depends_on(exp, name)
-    @symcore.Expr::Function(_, args) =>
-      args.any(child => depends_on(child, name))
-    _ => false
+    _ =>
+      match @symcore.application_args(expr) {
+        Some(args) => args.any(child => depends_on(child, name))
+        None => false
+      }
   }
 }
 
@@ -165,8 +167,8 @@ fn parse_linear_atom(
   x : @symcore.Expr,
   var_name : String,
 ) -> LinearAtom? {
-  match expr {
-    @symcore.Expr::Function(name, args) if args.length() == 1 => {
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some([arg])) => {
       let kind = match name {
         "sin" => Some(AtomKind::Sin)
         "cos" => Some(AtomKind::Cos)
@@ -177,7 +179,7 @@ fn parse_linear_atom(
       }
       match kind {
         Some(k) =>
-          match parse_linear_form(args[0], x, var_name) {
+          match parse_linear_form(arg, x, var_name) {
             Some(form) => Some(LinearAtom::{ kind: k, form })
             None => None
           }
@@ -334,7 +336,6 @@ fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
         @symcore.Expr::Add(args)
         | @symcore.Expr::Mul(args)
         | @symcore.Expr::Tuple(args)
-        | @symcore.Expr::Function(_, args)
         | @symcore.Expr::AppliedUndef(_, args) => args.any(expr_contains_pi)
         @symcore.Expr::Dict(items) =>
           items.any(fn(item) {
@@ -353,7 +354,11 @@ fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
           expr_contains_pi(value)
         @symcore.Expr::Lambda(vars, body) =>
           expr_contains_pi(vars) || expr_contains_pi(body)
-        _ => false
+        _ =>
+          match @symcore.application_args(expr) {
+            Some(args) => args.any(expr_contains_pi)
+            None => false
+          }
       }
   }
 }
@@ -531,16 +536,30 @@ fn simplify_boundary_expr(expr : @symcore.Expr) -> @symcore.Expr {
         simplify_boundary_expr(base),
         simplify_boundary_expr(exp),
       )
-    @symcore.Expr::Function(name, args) if args.length() == 1 => {
-      let arg = simplify_boundary_expr(args[0])
-      match name {
-        "sin" | "cos" => simplify_trig_boundary_value(name, arg)
-        _ => @symcore.function(name, [arg])
+    _ =>
+      match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+        (Some(name), Some([arg])) => {
+          let lowered = simplify_boundary_expr(arg)
+          match name {
+            "sin" | "cos" => simplify_trig_boundary_value(name, lowered)
+            _ =>
+              match @symcore.apply(@symcore.Expr::FunctionHead(name), [lowered]) {
+                Some(applied) => applied
+                None => expr
+              }
+          }
+        }
+        (Some(name), Some(args)) =>
+          match
+            @symcore.apply(
+              @symcore.Expr::FunctionHead(name),
+              args.map(simplify_boundary_expr),
+            ) {
+            Some(applied) => applied
+            None => expr
+          }
+        _ => expr
       }
-    }
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(simplify_boundary_expr))
-    _ => expr
   }
 }
 
@@ -1249,7 +1268,7 @@ fn FourierSeries::norm_factor(self : FourierSeries) -> @symcore.Expr {
 
 ///|
 fn FourierSeries::omega(self : FourierSeries, n : Int) -> @symcore.Expr {
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let minus_pi = @symcore.mul([@symcore.int(-1), pi])
   let two_pi = @symcore.mul([@symcore.int(2), pi])
   if (self.a == minus_pi && self.b == pi) ||
@@ -1372,7 +1391,7 @@ pub fn FourierSeries::sigma_approximation(
     return @symcore.int(0)
   }
   let mut acc = @symcore.int(0)
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let mut i = 0
   while i < n {
     let term = self.term(i)

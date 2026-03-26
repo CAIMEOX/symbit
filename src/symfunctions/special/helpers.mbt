@@ -19,7 +19,7 @@ fn int_value(expr : Expr) -> BigInt? {
 
 ///|
 fn expr_from_bigint(n : BigInt) -> Expr {
-  @symcore.number(@symnum.BigRational::from_bigint(n))
+  @symcore.Expr::Number(@symnum.BigRational::from_bigint(n))
 }
 
 ///|

@@ -4,8 +4,8 @@
 ///|
 pub fn hyper(a : Array[Expr], b : Array[Expr], z : Expr) -> Expr {
   let args : Array[Expr] = Array::new()
-  args.push(@symcore.tuple_expr(a))
-  args.push(@symcore.tuple_expr(b))
+  args.push(@symcore.Expr::Tuple(a))
+  args.push(@symcore.Expr::Tuple(b))
   args.push(z)
   @symcore.function("hyper", args)
 }
@@ -19,8 +19,8 @@ pub fn meijerg(
   z : Expr,
 ) -> Expr {
   let args : Array[Expr] = Array::new()
-  let a = @symcore.tuple_expr([@symcore.tuple_expr(a1), @symcore.tuple_expr(a2)])
-  let b = @symcore.tuple_expr([@symcore.tuple_expr(b1), @symcore.tuple_expr(b2)])
+  let a = @symcore.Expr::Tuple([@symcore.Expr::Tuple(a1), @symcore.Expr::Tuple(a2)])
+  let b = @symcore.Expr::Tuple([@symcore.Expr::Tuple(b1), @symcore.Expr::Tuple(b2)])
   args.push(a)
   args.push(b)
   args.push(z)

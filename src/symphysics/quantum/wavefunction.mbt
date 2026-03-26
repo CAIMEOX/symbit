@@ -25,7 +25,7 @@ fn wavefunction_coord_var(coord : Expr) -> Expr {
 fn wavefunction_coord_limit(coord : Expr) -> (Expr, Expr) {
   match @symcore.tuple_items(coord) {
     Some(args) if args.length() == 3 => (args[1], args[2])
-    _ => (@symcore.neg_oo(), @symcore.oo())
+    _ => (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   }
 }
 
@@ -273,7 +273,7 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           }
         (Expr::Number(b), Expr::Number(e)) =>
           if e.is_integral() && e.numerator().to_int() >= 0 {
-            @symcore.number(wavefunction_numeric_pow(b, e.numerator().to_int()))
+            @symcore.Expr::Number(wavefunction_numeric_pow(b, e.numerator().to_int()))
           } else {
             @symcore.pow(sbase, sexp)
           }
@@ -294,7 +294,7 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
       }
     }
     @symcore.ExprForm::Tuple(args) =>
-      @symcore.tuple_expr(args.map(wavefunction_simplify_expr))
+      @symcore.Expr::Tuple(args.map(wavefunction_simplify_expr))
     @symcore.ExprForm::Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
@@ -303,37 +303,37 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
           (wavefunction_simplify_expr(key), wavefunction_simplify_expr(value)),
         )
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
         @symcore.RelOp::Ne =>
-          @symcore.ne(
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
         @symcore.RelOp::Lt =>
-          @symcore.lt(
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
         @symcore.RelOp::Le =>
-          @symcore.le(
+          @symcore.Expr::Relational(@symcore.RelOp::Le, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
         @symcore.RelOp::Gt =>
-          @symcore.gt(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
         @symcore.RelOp::Ge =>
-          @symcore.ge(
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
             wavefunction_simplify_expr(lhs),
             wavefunction_simplify_expr(rhs),
           )
@@ -407,7 +407,7 @@ pub fn WavefunctionExpr::norm_expr(self : WavefunctionExpr) -> Expr {
     let (lower, upper) = wavefunction_coord_limit(coord)
     integrand = @symcore.raw_function("Integral", [
       integrand,
-      @symcore.tuple_expr([coord_var, lower, upper]),
+      @symcore.Expr::Tuple([coord_var, lower, upper]),
     ])
   }
   @symcore.raw_function("sqrt", [integrand])
@@ -508,7 +508,7 @@ fn wavefunction_is_infinite_bound(expr : Expr) -> Bool {
   match expr {
     Expr::Symbol(name) => name == "oo" || name == "-oo"
     Expr::Mul(args) if args.length() == 2 =>
-      args[0] == int(-1) && args[1] == @symcore.oo()
+      args[0] == int(-1) && args[1] == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
     _ => false
   }
 }
@@ -577,7 +577,7 @@ fn wavefunction_integrate_poly_term(
   }
   if wavefunction_is_infinite_bound(lower) ||
     wavefunction_is_infinite_bound(upper) {
-    return Some(@symcore.oo())
+    return Some(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   }
   let next_power = power + 1
   let numerator = @symcore.raw_pow(upper, int(next_power)) -
@@ -637,7 +637,7 @@ fn wavefunction_norm_sq_of(wf : WavefunctionExpr) -> Expr? {
 ///|
 pub fn WavefunctionExpr::norm(self : WavefunctionExpr) -> Expr {
   match wavefunction_norm_sq_of(self) {
-    Some(value) if value == @symcore.oo() => value
+    Some(value) if value == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) => value
     Some(value) =>
       wavefunction_simplify_expr(@symcore.raw_function("sqrt", [value]))
     None => self.norm_expr()
@@ -765,7 +765,7 @@ fn quantum_replace_exact(
         quantum_replace_exact(rhs, needle, replacement),
       )
     @symcore.ExprForm::Tuple(args) =>
-      @symcore.tuple_expr(
+      @symcore.Expr::Tuple(
         args.map(arg => quantum_replace_exact(arg, needle, replacement)),
       )
     @symcore.ExprForm::Dict(items) => {
@@ -779,37 +779,37 @@ fn quantum_replace_exact(
           ),
         )
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
         @symcore.RelOp::Ne =>
-          @symcore.ne(
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
         @symcore.RelOp::Lt =>
-          @symcore.lt(
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
         @symcore.RelOp::Le =>
-          @symcore.le(
+          @symcore.Expr::Relational(@symcore.RelOp::Le, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
         @symcore.RelOp::Gt =>
-          @symcore.gt(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
         @symcore.RelOp::Ge =>
-          @symcore.ge(
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
             quantum_replace_exact(lhs, needle, replacement),
             quantum_replace_exact(rhs, needle, replacement),
           )
@@ -904,7 +904,7 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
         @symcore.raw_derivative(wavefunction_eval_derivatives(inner), [])
       }
     @symcore.ExprForm::Tuple(args) =>
-      @symcore.tuple_expr(args.map(wavefunction_eval_derivatives))
+      @symcore.Expr::Tuple(args.map(wavefunction_eval_derivatives))
     @symcore.ExprForm::Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
@@ -916,37 +916,37 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
           ),
         )
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
         @symcore.RelOp::Ne =>
-          @symcore.ne(
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
         @symcore.RelOp::Lt =>
-          @symcore.lt(
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
         @symcore.RelOp::Le =>
-          @symcore.le(
+          @symcore.Expr::Relational(@symcore.RelOp::Le, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
         @symcore.RelOp::Gt =>
-          @symcore.gt(
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )
         @symcore.RelOp::Ge =>
-          @symcore.ge(
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
             wavefunction_eval_derivatives(lhs),
             wavefunction_eval_derivatives(rhs),
           )

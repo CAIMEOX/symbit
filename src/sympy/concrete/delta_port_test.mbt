@@ -1,6 +1,6 @@
 ///|
 test "symconcrete deltasummation basic" {
-  let i = @symcore.symbol("i")
+  let i = @symcore.Expr::Symbol("i")
   let delta = @symcore.function("KroneckerDelta", [i, @symcore.int(2)])
   let limits = [limit_range(i, @symcore.int(0), @symcore.int(3))]
   let ours = deltasummation(delta, limits)
@@ -10,7 +10,7 @@ test "symconcrete deltasummation basic" {
 
 ///|
 test "symconcrete deltasummation with factor" {
-  let i = @symcore.symbol("i")
+  let i = @symcore.Expr::Symbol("i")
   let delta = @symcore.function("KroneckerDelta", [i, @symcore.int(2)])
   let expr = @symcore.mul([delta, @symcore.add([i, @symcore.int(5)])])
   let limits = [limit_range(i, @symcore.int(0), @symcore.int(3))]
@@ -21,7 +21,7 @@ test "symconcrete deltasummation with factor" {
 
 ///|
 test "symconcrete deltaproduct range" {
-  let i = @symcore.symbol("i")
+  let i = @symcore.Expr::Symbol("i")
   let delta = @symcore.function("KroneckerDelta", [i, @symcore.int(2)])
   let limits = [limit_range(i, @symcore.int(0), @symcore.int(3))]
   let ours = deltaproduct(delta, limits)
@@ -31,7 +31,7 @@ test "symconcrete deltaproduct range" {
 
 ///|
 test "symconcrete deltaproduct singleton" {
-  let i = @symcore.symbol("i")
+  let i = @symcore.Expr::Symbol("i")
   let delta = @symcore.function("KroneckerDelta", [i, @symcore.int(2)])
   let expr = @symcore.mul([delta, @symcore.add([i, @symcore.int(1)])])
   let limits = [limit_range(i, @symcore.int(2), @symcore.int(2))]
@@ -42,10 +42,10 @@ test "symconcrete deltaproduct singleton" {
 
 ///|
 test "symconcrete deltasummation symbolic bounds piecewise" {
-  let i = @symcore.symbol("i")
-  let k = @symcore.symbol("k")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
+  let i = @symcore.Expr::Symbol("i")
+  let k = @symcore.Expr::Symbol("k")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
   let delta = @symcore.function("KroneckerDelta", [i, k])
   let expr = @symcore.mul([delta, @symcore.add([i, @symcore.int(1)])])
   let limits = [limit_range(i, a, b)]
@@ -57,10 +57,10 @@ test "symconcrete deltasummation symbolic bounds piecewise" {
 
 ///|
 test "symconcrete deltaproduct symbolic bounds piecewise" {
-  let i = @symcore.symbol("i")
-  let k = @symcore.symbol("k")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
+  let i = @symcore.Expr::Symbol("i")
+  let k = @symcore.Expr::Symbol("k")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
   let delta = @symcore.function("KroneckerDelta", [i, k])
   let expr = @symcore.mul([delta, @symcore.add([i, @symcore.int(1)])])
   let limits = [limit_range(i, a, b)]

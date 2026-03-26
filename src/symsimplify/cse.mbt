@@ -56,7 +56,7 @@ pub fn cse(exprs : Array[Expr], min_nodes? : Int = 2) -> CseResult {
       continue
     }
     let sym_name = "x\{idx}"
-    let sym_expr = symbol(sym_name)
+    let sym_expr = Expr::Symbol(sym_name)
     let rhs = candidate.expr
     let next_reduced : Array[Expr] = Array::new()
     for expr in reduced {

@@ -188,12 +188,12 @@ fn symbolic_index_expr(
     Expr::Number(n) if n.is_integral() => {
       let value = n.numerator().to_int()
       match inverse_map.get(value) {
-        Some(name) => (symbol(name), next_index)
+        Some(name) => (Expr::Symbol(name), next_index)
         None => {
           let (name, next_value) = next_symbolic_index(qubit_map, next_index)
           qubit_map.set(name, value)
           inverse_map.set(value, name)
-          (symbol(name), next_value)
+          (Expr::Symbol(name), next_value)
         }
       }
     }
@@ -240,7 +240,7 @@ fn symbolic_index_expr(
         out.push(rewritten)
         cursor = next_cursor
       }
-      (@symcore.tuple_expr(out), cursor)
+      (@symcore.Expr::Tuple(out), cursor)
     }
     _ =>
       match @symcore.application_parts(expr) {
@@ -302,7 +302,7 @@ fn real_index_expr(expr : Expr, qubit_map : Map[String, Int]) -> Expr {
         real_index_expr(exp, qubit_map),
       )
     Expr::Tuple(items) =>
-      @symcore.tuple_expr(items.map(item => real_index_expr(item, qubit_map)))
+      @symcore.Expr::Tuple(items.map(item => real_index_expr(item, qubit_map)))
     _ =>
       match @symcore.application_parts(expr) {
         Some((head, args)) =>

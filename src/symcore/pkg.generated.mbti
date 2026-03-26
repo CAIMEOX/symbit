@@ -34,27 +34,19 @@ pub fn args(Expr) -> Array[Expr]
 
 pub fn atoms(Expr) -> Array[Expr]
 
-pub fn bool_expr(Bool) -> Expr
-
 pub fn bool_value(Expr) -> Bool?
 
 pub fn canonical_derivative_args(ArrayView[Expr]) -> Array[Expr]
 
-pub fn catalan() -> Expr
-
 pub fn children(Expr) -> ArrayView[Expr]
 
 pub fn compare_expr(Expr, Expr) -> Int
-
-pub fn complex_float(ComplexFloat) -> Expr
 
 pub fn complex_float_from_exact_parts(@symnum.BigRational, @symnum.BigRational, prec? : Int) -> ComplexFloat
 
 pub fn derivative(Expr, Expr, order? : Expr) -> Expr
 
 pub fn derivative_parts(Expr) -> (Expr, Array[Expr])?
-
-pub fn dict_expr(Array[(Expr, Expr)]) -> Expr
 
 pub fn dict_items(Expr) -> Array[(Expr, Expr)]?
 
@@ -64,19 +56,9 @@ pub fn dummy_display_name(String) -> String
 
 pub fn dummy_parts(Expr) -> (String, Int)?
 
-pub fn eq(Expr, Expr) -> Expr
-
-pub fn euler_gamma() -> Expr
-
 pub fn evalf(Expr, prec? : Int) -> Expr
 
-pub fn exp1() -> Expr
-
 pub fn expr_form(Expr) -> ExprForm
-
-pub fn false_() -> Expr
-
-pub fn float(Float) -> Expr
 
 pub fn float_from_double(Double, prec? : Int, rnd? : @mpf.RoundMode) -> Float
 
@@ -88,21 +70,11 @@ pub fn free_symbols(Expr) -> Array[Expr]
 
 pub fn function(String, Array[Expr]) -> Expr
 
-pub fn function_head(String) -> Expr
-
 pub fn function_head_name(Expr) -> String?
-
-pub fn ge(Expr, Expr) -> Expr
-
-pub fn golden_ratio() -> Expr
-
-pub fn gt(Expr, Expr) -> Expr
 
 pub fn has(Expr, Expr) -> Bool
 
 pub fn head_name(Expr) -> String
-
-pub fn imag_unit() -> Expr
 
 pub fn int(Int) -> Expr
 
@@ -136,35 +108,17 @@ pub fn lambda_expr(Expr, Expr) -> Expr
 
 pub fn lambda_parts(Expr) -> (Expr, Expr)?
 
-pub fn le(Expr, Expr) -> Expr
-
-pub fn lt(Expr, Expr) -> Expr
-
 pub fn map_children(Expr, (Expr) -> Expr) -> Expr
 
 pub fn mod_expr(Expr, Expr) -> Expr
 
 pub fn mul(Array[Expr]) -> Expr
 
-pub fn nan_expr() -> Expr
-
-pub fn ne(Expr, Expr) -> Expr
-
-pub fn neg_oo() -> Expr
-
-pub fn number(@symnum.BigRational) -> Expr
-
-pub fn number_symbol(NumberSymbolKind) -> Expr
-
 pub fn number_symbol_kind(Expr) -> NumberSymbolKind?
 
 pub fn number_symbol_kind_from_name(String) -> NumberSymbolKind?
 
 pub fn number_symbol_name(NumberSymbolKind) -> String
-
-pub fn oo() -> Expr
-
-pub fn pi() -> Expr
 
 pub fn postorder(Expr) -> Array[Expr]
 
@@ -182,8 +136,6 @@ pub fn raw_derivative(Expr, ArrayView[Expr]) -> Expr
 
 pub fn raw_dict_expr(Array[(Expr, Expr)]) -> Expr
 
-pub fn raw_dummy(String, Int) -> Expr
-
 pub fn raw_function(String, Array[Expr]) -> Expr
 
 pub fn raw_mod_expr(Expr, Expr) -> Expr
@@ -191,8 +143,6 @@ pub fn raw_mod_expr(Expr, Expr) -> Expr
 pub fn raw_mul(Array[Expr]) -> Expr
 
 pub fn raw_pow(Expr, Expr) -> Expr
-
-pub fn raw_symbol(String) -> Expr
 
 pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 
@@ -204,49 +154,23 @@ pub fn subs_parts(Expr) -> (Expr, Expr, Expr)?
 
 pub fn subst(Expr, Map[String, Expr]) -> Expr
 
-pub fn symbol(String) -> Expr
-
 pub fn sympify(SympifyInput) -> Expr
-
-pub fn sympify_bool_input(Bool) -> SympifyInput
-
-pub fn sympify_complex_float_input(ComplexFloat) -> SympifyInput
 
 pub fn sympify_dict(Array[(SympifyInput, SympifyInput)]) -> Expr
 
-pub fn sympify_expr_input(Expr) -> SympifyInput
-
-pub fn sympify_float_input(Float) -> SympifyInput
-
-pub fn sympify_int_input(Int) -> SympifyInput
-
 pub fn sympify_name(String) -> Expr
 
-pub fn sympify_rational_input(@symnum.BigRational) -> SympifyInput
-
-pub fn sympify_symbol_input(String) -> SympifyInput
-
 pub fn sympify_tuple(Array[SympifyInput]) -> Expr
-
-pub fn true_() -> Expr
-
-pub fn tuple_expr(Array[Expr]) -> Expr
 
 pub fn tuple_items(Expr) -> Array[Expr]?
 
 pub fn undefined_application_parts(Expr) -> (String, Array[Expr])?
-
-pub fn undefined_function(String) -> Expr
-
-pub fn wild(String) -> Expr
 
 pub fn wild_display_name(String) -> String
 
 pub fn wild_name(Expr) -> String?
 
 pub fn xreplace(Expr, Array[(Expr, Expr)]) -> Expr
-
-pub fn zoo() -> Expr
 
 // Errors
 
@@ -273,7 +197,7 @@ pub impl Mul for ComplexFloat
 pub impl Neg for ComplexFloat
 pub impl Show for ComplexFloat
 
-pub enum Expr {
+pub(all) enum Expr {
   Number(@symnum.BigRational)
   Float(Float)
   ComplexFloat(ComplexFloat)
@@ -353,7 +277,7 @@ pub impl Mul for Float
 pub impl Neg for Float
 pub impl Show for Float
 
-pub enum NumberSymbolKind {
+pub(all) enum NumberSymbolKind {
   ImaginaryUnit
   Pi
   Exp1
@@ -366,7 +290,7 @@ pub enum NumberSymbolKind {
   NaN
 }
 
-pub enum RelOp {
+pub(all) enum RelOp {
   Eq
   Ne
   Lt
@@ -375,7 +299,7 @@ pub enum RelOp {
   Ge
 }
 
-pub enum SympifyInput {
+pub(all) enum SympifyInput {
   FromExpr(Expr)
   FromBool(Bool)
   FromInt(Int)

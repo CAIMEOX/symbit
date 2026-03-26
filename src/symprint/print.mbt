@@ -24,7 +24,7 @@ pub fn debug_repr(expr : Expr) -> String {
       let args : Array[Expr] = []
       for item in items {
         let (key, value) = item
-        args.push(@symcore.tuple_expr([key, value]))
+        args.push(@symcore.Expr::Tuple([key, value]))
       }
       wrap_call("Dict", args)
     }

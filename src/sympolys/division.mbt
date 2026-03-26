@@ -632,7 +632,7 @@ fn coeffs_make_monic(coeffs : Array[Poly]) -> Array[Poly] raise PolyError {
       match inv_rat {
         Some(r) => {
           let scalar_poly = Poly::from_expr(
-            @symcore.number(r),
+            @symcore.Expr::Number(r),
             lc.gens,
             lc.domain,
           )

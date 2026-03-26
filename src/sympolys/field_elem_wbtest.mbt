@@ -9,7 +9,7 @@ test "field_elem: expect_rational projects constant extensions" {
   let gf_const = FieldElem::GFExt(5, [7], [1, 0, 1])
   inspect(fe_expect_rational(gf_const), content="7")
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
     (a ^ @symcore.int(2)) + @symcore.int(1),
   )
@@ -30,7 +30,7 @@ test "field_elem: expect_rational rejects non-constant extensions" {
   )
   assert_true(gf_res is Err(PolyError::DomainMismatch))
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = PolyBuilder::new(["a"], Domain::QQ).from_expr(
     (a ^ @symcore.int(2)) + @symcore.int(1),
   )
@@ -105,7 +105,7 @@ test "field_elem wb: helper branches and domain mismatches" {
   )
   assert_true(gfext_add_bad is Err(PolyError::DomainMismatch))
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),
@@ -151,7 +151,7 @@ test "field_elem wb: inverses and conversion guard paths" {
   )
   assert_true(inv_gfext_zero is Err(PolyError::DivisionByZero))
 
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let minpoly = fe_wb_minpoly("x", x ^ @symcore.int(2), Domain::QQ)
   let inv_alg_nonfield : Result[Array[FieldElem], PolyError] = try? fe_alg_poly_inv(
     [
@@ -181,7 +181,7 @@ test "field_elem wb: inverses and conversion guard paths" {
   let bad_loader_base : Result[(Poly, String), PolyError] = try? load_algext_minpoly(
     Domain::ZZ,
     ["a"],
-    [@symcore.symbol("a") + @symcore.int(1)],
+    [@symcore.Expr::Symbol("a") + @symcore.int(1)],
   )
   assert_true(bad_loader_base is Err(PolyError::DomainNotField))
 
@@ -195,7 +195,7 @@ test "field_elem wb: inverses and conversion guard paths" {
 
 ///|
 test "field_elem wb: algebraic helpers and string formatting branches" {
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),
@@ -278,7 +278,7 @@ test "field_elem wb: remaining branch sweep" {
   let gpow = fe_pow(FieldElem::GFp(5, 3), 4)
   inspect(gpow, content="1")
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let minpoly = fe_wb_minpoly(
     "a",
     (a ^ @symcore.int(2)) + @symcore.int(1),

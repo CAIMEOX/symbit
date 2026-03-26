@@ -1,6 +1,6 @@
 ///|
 test "symseries gruntz parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.mul([
     @symcore.function("sin", [x]),
     @symcore.pow(x, @symcore.int(-1)),
@@ -12,19 +12,19 @@ test "symseries gruntz parity" {
 
 ///|
 test "symseries gruntz growth parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
 
   let exp_pos = @symcore.function("exp", [x])
-  let ours_exp_pos = gruntz(exp_pos, x, @symcore.oo())
-  let sympy_exp_pos = gruntz_str(exp_pos, "x", @symcore.oo())
+  let ours_exp_pos = gruntz(exp_pos, x, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+  let sympy_exp_pos = gruntz_str(exp_pos, "x", @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   assert_eq(
     normalize_series_expr(ours_exp_pos),
     normalize_series_str(sympy_exp_pos),
   )
 
   let exp_neg = @symcore.function("exp", [@symcore.mul([@symcore.int(-1), x])])
-  let ours_exp_neg = gruntz(exp_neg, x, @symcore.oo())
-  let sympy_exp_neg = gruntz_str(exp_neg, "x", @symcore.oo())
+  let ours_exp_neg = gruntz(exp_neg, x, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
+  let sympy_exp_neg = gruntz_str(exp_neg, "x", @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))
   assert_eq(
     normalize_series_expr(ours_exp_neg),
     normalize_series_str(sympy_exp_neg),
@@ -38,7 +38,7 @@ test "symseries gruntz growth parity" {
 
 ///|
 test "symseries residue parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.pow(x, @symcore.int(-1))
   let ours = residue(expr, x, @symcore.int(0))
   let sympy = residue_str(expr, "x", @symcore.int(0))
@@ -47,7 +47,7 @@ test "symseries residue parity" {
 
 ///|
 test "symseries residue parity higher-order poles" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr1 = @symcore.pow(x, @symcore.int(-2))
   let ours1 = residue(expr1, x, @symcore.int(0))
   let sympy1 = residue_str(expr1, "x", @symcore.int(0))
@@ -64,7 +64,7 @@ test "symseries residue parity higher-order poles" {
 
 ///|
 test "symseries acceleration parity" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let denom = @symcore.add([k, @symcore.int(1)])
   let expr = @symcore.pow(denom, @symcore.int(-1))
   let ours_r = richardson(expr, k, 1, 2)

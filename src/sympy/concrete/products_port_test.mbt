@@ -1,6 +1,6 @@
 ///|
 test "symconcrete product finite integer" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = product(k, limits~)
   let ours_str = @symprint.to_string(ours)
@@ -9,8 +9,8 @@ test "symconcrete product finite integer" {
 
 ///|
 test "symconcrete product constant term" {
-  let k = @symcore.symbol("k")
-  let y = @symcore.symbol("y")
+  let k = @symcore.Expr::Symbol("k")
+  let y = @symcore.Expr::Symbol("y")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = product(y, limits~)
   let ours_str = @symprint.to_string(ours)
@@ -19,7 +19,7 @@ test "symconcrete product constant term" {
 
 ///|
 test "symconcrete Product reverse_order parity" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let prod = Product::{
     expr: k,
     limits: [limit_range(k, @symcore.int(1), @symcore.int(3))],
@@ -32,8 +32,8 @@ test "symconcrete Product reverse_order parity" {
 
 ///|
 test "symconcrete product ratio telescoping" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.mul([
     @symcore.add([k, @symcore.int(1)]),
     @symcore.pow(k, @symcore.int(-1)),
@@ -47,9 +47,9 @@ test "symconcrete product ratio telescoping" {
 
 ///|
 test "symconcrete product geometric symbolic" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
-  let r = @symcore.symbol("r")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
+  let r = @symcore.Expr::Symbol("r")
   let expr = @symcore.pow(r, k)
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = product(expr, limits~)
@@ -60,8 +60,8 @@ test "symconcrete product geometric symbolic" {
 
 ///|
 test "symconcrete product factorial" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let limits = [limit_range(k, @symcore.int(1), n)]
   let ours = product(k, limits~)
   let ours_str = @symprint.to_string(ours)
@@ -71,9 +71,9 @@ test "symconcrete product factorial" {
 
 ///|
 test "symconcrete product rising_factorial" {
-  let k = @symcore.symbol("k")
-  let a = @symcore.symbol("a")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let a = @symcore.Expr::Symbol("a")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.add([k, a])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = product(expr, limits~)
@@ -84,10 +84,10 @@ test "symconcrete product rising_factorial" {
 
 ///|
 test "symconcrete product linear ratio" {
-  let k = @symcore.symbol("k")
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.mul([
     @symcore.add([k, a]),
     @symcore.pow(@symcore.add([k, b]), @symcore.int(-1)),

@@ -28,12 +28,12 @@ fn test_rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn test_pi_expr() -> @symcore.Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|
 fn test_oo_expr() -> @symcore.Expr {
-  @symcore.oo()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
 }
 
 ///|
@@ -43,11 +43,11 @@ test "physics.optics.utils: scalar formulas" {
   let six_fifths = test_rational_expr(6, 5)
   let three_halves = test_rational_expr(3, 2)
   let theta = test_pi_expr() * test_rational_expr(1, 6)
-  let f = @symcore.symbol("f")
-  let u = @symcore.symbol("u")
-  let v = @symcore.symbol("v")
-  let n = @symcore.symbol("N")
-  let c = @symcore.symbol("c")
+  let f = @symcore.Expr::Symbol("f")
+  let u = @symcore.Expr::Symbol("u")
+  let v = @symcore.Expr::Symbol("v")
+  let n = @symcore.Expr::Symbol("N")
+  let c = @symcore.Expr::Symbol("c")
 
   optics_assert_expr_equal(
     refraction_angle(

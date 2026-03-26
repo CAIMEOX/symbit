@@ -1,6 +1,6 @@
 ///|
 test "subresultants_qq_zz: res parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr(
     (x ^ @symcore.int(3)) - @symcore.int(7) * x + @symcore.int(7),
@@ -19,7 +19,7 @@ test "subresultants_qq_zz: res parity" {
 
 ///|
 test "subresultants_qq_zz: res parity (extra)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(2))
   let q = b.from_expr(x - @symcore.int(1))
@@ -30,7 +30,7 @@ test "subresultants_qq_zz: res parity (extra)" {
 
 ///|
 test "subresultants_qq_zz: subresultants_rem parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
@@ -41,7 +41,7 @@ test "subresultants_qq_zz: subresultants_rem parity" {
 
 ///|
 test "subresultants_qq_zz: subresultants_rem parity (extra)" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(2)) - @symcore.int(1))
@@ -52,7 +52,7 @@ test "subresultants_qq_zz: subresultants_rem parity (extra)" {
 
 ///|
 test "subresultants_qq_zz: euclid_q/sturm_q parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(4)) - @symcore.int(1))
   let q = b.from_expr((x ^ @symcore.int(3)) - @symcore.int(1))
@@ -66,7 +66,7 @@ test "subresultants_qq_zz: euclid_q/sturm_q parity" {
 
 ///|
 test "subresultants_qq_zz: rem_z/quo_z parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let b = PolyBuilder::new(["x"], Domain::ZZ)
   let p = b.from_expr((x ^ @symcore.int(5)) + @symcore.int(1))
   let q = b.from_expr(x + @symcore.int(1))
@@ -80,8 +80,8 @@ test "subresultants_qq_zz: rem_z/quo_z parity" {
 
 ///|
 test "subresultants_qq_zz: error and QQ domain branches" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   // ensure_univar_pair -> NotUnivariate
   let b2 = PolyBuilder::new(["x", "y"], Domain::ZZ)

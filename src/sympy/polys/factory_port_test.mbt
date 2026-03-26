@@ -5,8 +5,8 @@ fn factory_sympy_norm(s : String) -> String raise {
 
 ///|
 test "factory: from_expr_defaults infers gens/domain QQ" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = x * y + @symcore.rational_from_ints(1, 2)
   let poly = Poly::from_expr_defaults(expr)
   inspect(poly.gens, content="[\"x\", \"y\"]")
@@ -21,7 +21,7 @@ test "factory: from_expr_defaults infers gens/domain QQ" {
 
 ///|
 test "factory: modulus selects GF domain" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = x + @symcore.int(1)
   let poly = Poly::from_expr_defaults(expr, modulus=5)
   match poly.domain {
@@ -35,7 +35,7 @@ test "factory: modulus selects GF domain" {
 
 ///|
 test "factory: gaussian flag upgrades to CC" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = (x ^ @symcore.int(2)) + @symcore.int(1)
   let poly = Poly::from_expr_defaults(expr, gaussian=true)
   match poly.domain {
@@ -46,8 +46,8 @@ test "factory: gaussian flag upgrades to CC" {
 
 ///|
 test "factory: explicit gens order preserved" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = x + y
   let poly = Poly::from_expr_defaults(expr, gens=["y", "x"])
   inspect(poly.gens, content="[\"y\", \"x\"]")

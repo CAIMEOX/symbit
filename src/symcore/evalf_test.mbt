@@ -1,13 +1,13 @@
 ///|
 test "expr float constructor participates in add and mul folding" {
   let quarter = Float::from_str("0.25", prec=90) catch { _ => fail("float") }
-  let sum_expr = add([int(1), float(quarter)])
+  let sum_expr = add([int(1), Expr::Float(quarter)])
   match sum_expr {
     Expr::Float(f) => assert_eq(f.to_rational(), (5N, 4N))
     _ => fail("expected float sum")
   }
 
-  let prod_expr = mul([rational_from_ints(3, 2), float(quarter)])
+  let prod_expr = mul([rational_from_ints(3, 2), Expr::Float(quarter)])
   match prod_expr {
     Expr::Float(f) => assert_eq(f.to_rational(), (3N, 8N))
     _ => fail("expected float product")
@@ -22,7 +22,7 @@ test "evalf converts exact numeric expressions and constants" {
     _ => fail("expected float sqrt")
   }
 
-  let pi_expr = evalf(pi(), prec=90)
+  let pi_expr = evalf(Expr::NumberSymbol(NumberSymbolKind::Pi), prec=90)
   match pi_expr {
     Expr::Float(f) => {
       assert_true(f.is_finite())
@@ -49,7 +49,10 @@ test "evalf numerically evaluates powers and unary functions" {
 
 ///|
 test "evalf produces complex values for I and branch-cut functions" {
-  let imag_unit = evalf(imag_unit(), prec=90)
+  let imag_unit = evalf(
+    Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit),
+    prec=90,
+  )
   match imag_unit {
     Expr::ComplexFloat(z) => {
       assert_true(@symnum.is_zero(z.to_mpc().real))
@@ -79,7 +82,7 @@ test "evalf produces complex values for I and branch-cut functions" {
 
 ///|
 test "evalf handles complex transcendental functions" {
-  let z = add([int(1), imag_unit()])
+  let z = add([int(1), Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)])
   let gamma_z = evalf(function("gamma", [z]), prec=100)
   match gamma_z {
     Expr::ComplexFloat(value) => assert_true(value.is_finite())
@@ -87,7 +90,15 @@ test "evalf handles complex transcendental functions" {
   }
 
   let abs_expr = evalf(
-    function("Abs", [add([int(1), mul([int(2), imag_unit()])])]),
+    function(
+      "Abs",
+      [
+        add([
+          int(1),
+          mul([int(2), Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)]),
+        ]),
+      ],
+    ),
     prec=100,
   )
   match abs_expr {
@@ -95,7 +106,10 @@ test "evalf handles complex transcendental functions" {
     _ => fail("expected real abs")
   }
 
-  let sin_i = evalf(function("sin", [imag_unit()]), prec=100)
+  let sin_i = evalf(
+    function("sin", [Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)]),
+    prec=100,
+  )
   match sin_i {
     Expr::ComplexFloat(value) => {
       assert_true(@symnum.is_zero(value.to_mpc().real))

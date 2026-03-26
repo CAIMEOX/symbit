@@ -1,7 +1,7 @@
 ///|
 test "physics.quantum.wavefunction: parity" {
-  let n = @symcore.symbol("n")
-  let x = @symcore.symbol("x")
+  let n = @symcore.Expr::Symbol("n")
+  let x = @symcore.Expr::Symbol("x")
   let wf = @symquant.wavefunction(x ^ @symcore.int(2), [x])
   let f_of_x = @symcore.raw_function("f", [x])
   let dop = differential_operator(
@@ -77,8 +77,8 @@ test "physics.quantum.wavefunction: parity" {
 
 ///|
 test "physics.quantum.wavefunction: norm parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let finite = @symquant.wavefunction(
     (x ^ @symcore.int(2)) * y + (y ^ @symcore.int(2)) * x,
     [

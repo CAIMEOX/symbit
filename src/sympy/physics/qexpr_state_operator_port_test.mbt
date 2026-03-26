@@ -13,9 +13,9 @@ test "physics.quantum.qexpr/state/operator: parity" {
     "QExpr srepr",
   )
 
-  let k = ket([@symcore.symbol("k")])
-  let b = bra([@symcore.symbol("b")])
-  let t = time_dep_ket([@symcore.int(0)], time=@symcore.symbol("t"))
+  let k = ket([@symcore.Expr::Symbol("k")])
+  let b = bra([@symcore.Expr::Symbol("b")])
+  let t = time_dep_ket([@symcore.int(0)], time=@symcore.Expr::Symbol("t"))
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.to_string(k.as_expr())),
     "|k>",
@@ -32,9 +32,9 @@ test "physics.quantum.qexpr/state/operator: parity" {
     "TimeDepKet str",
   )
 
-  let a = operator([@symcore.symbol("A")])
-  let h = hermitian_operator([@symcore.symbol("Hh")])
-  let u = unitary_operator([@symcore.symbol("Uu")])
+  let a = operator([@symcore.Expr::Symbol("A")])
+  let h = hermitian_operator([@symcore.Expr::Symbol("Hh")])
+  let u = unitary_operator([@symcore.Expr::Symbol("Uu")])
   let id = identity_operator(dimension=@symcore.int(3))
   quantum_test_assert_string_equal(
     quantum_eval_str(@symprint.to_string(a.as_expr())),
@@ -94,10 +94,10 @@ test "physics.quantum.operator/state: default constructors parity" {
 
 ///|
 test "physics.quantum.operator/state: outer product parity" {
-  let k1 = ket([@symcore.symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.symbol("b1")]).as_expr()
-  let b2 = bra([@symcore.symbol("b2")]).as_expr()
+  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
+  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
+  let b1 = bra([@symcore.Expr::Symbol("b1")]).as_expr()
+  let b2 = bra([@symcore.Expr::Symbol("b2")]).as_expr()
 
   quantum_test_assert_expr_equal(
     outer_product(@symcore.int(2) * k1, b1),
@@ -131,8 +131,8 @@ test "physics.quantum.operator/state: outer product parity" {
 
 ///|
 test "physics.quantum.operator/state: operator simplification parity" {
-  let a = operator([@symcore.symbol("A")]).as_expr()
-  let u = unitary_operator([@symcore.symbol("U")]).as_expr()
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let u = unitary_operator([@symcore.Expr::Symbol("U")]).as_expr()
   let id3 = identity_operator(dimension=@symcore.int(3)).as_expr()
 
   quantum_test_assert_expr_equal(

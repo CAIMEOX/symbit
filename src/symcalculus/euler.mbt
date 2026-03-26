@@ -98,8 +98,8 @@ fn diff_pow(base : Expr, exp : Expr, wrt : Expr) -> Expr {
     Some(n) => {
       let one = @symnum.BigRational::one()
       let n_minus_one = n.add_r(one.neg_r())
-      let coeff = @symcore.number(n)
-      let pow_expr = @symcore.pow(base, @symcore.number(n_minus_one))
+      let coeff = @symcore.Expr::Number(n)
+      let pow_expr = @symcore.pow(base, @symcore.Expr::Number(n_minus_one))
       @symcore.mul([coeff, pow_expr, dbase])
     }
     None =>
@@ -317,7 +317,7 @@ pub fn euler_equations(
         eq = @symcore.add([eq, signed])
       }
     }
-    let eq_expr = @symcore.eq(eq, @symcore.int(0))
+    let eq_expr = @symcore.Expr::Relational(@symcore.RelOp::Eq, eq, @symcore.int(0))
     eqns.push(eq_expr)
   }
   eqns

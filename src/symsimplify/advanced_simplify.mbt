@@ -56,15 +56,15 @@ pub fn collect_const(expr : Expr) -> Expr {
         let rest = pair.1
         let new_coeff = coeff.div_r(g) catch { _ => return expr }
         let scaled_term = if rest == int(1) {
-          @symcore.number(new_coeff)
+          @symcore.Expr::Number(new_coeff)
         } else if new_coeff.is_one() {
           rest
         } else {
-          @symcore.mul([@symcore.number(new_coeff), rest])
+          @symcore.mul([@symcore.Expr::Number(new_coeff), rest])
         }
         scaled.push(scaled_term)
       }
-      @symcore.mul([@symcore.number(g), @symcore.add(scaled)])
+      @symcore.mul([@symcore.Expr::Number(g), @symcore.add(scaled)])
     }
     _ => expr
   }
@@ -109,8 +109,8 @@ pub fn posify(expr : Expr) -> (Expr, Map[String, Expr]) {
   let restore : Map[String, Expr] = {}
   for name, _ in symbols {
     let new_name = "_\{name}"
-    env[name] = symbol(new_name)
-    restore[new_name] = symbol(name)
+    env[name] = Expr::Symbol(new_name)
+    restore[new_name] = Expr::Symbol(name)
   }
   (@symcore.subst(expr, env), restore)
 }
@@ -153,8 +153,8 @@ fn split_fraction_simple(expr : Expr) -> (Expr, Expr) {
         (expr, int(1))
       } else {
         (
-          @symcore.number(@symnum.BigRational::from_bigint(n.numerator())),
-          @symcore.number(@symnum.BigRational::from_bigint(n.denominator())),
+          @symcore.Expr::Number(@symnum.BigRational::from_bigint(n.numerator())),
+          @symcore.Expr::Number(@symnum.BigRational::from_bigint(n.denominator())),
         )
       }
     Expr::Pow(base, Expr::Number(exp)) =>
@@ -371,16 +371,16 @@ fn rewrite_exptrigsimp(expr : Expr) -> Expr {
           if sign == 1 {
             @symcore.mul([int(2), @symcore.function("cos", [x])])
           } else {
-            @symcore.mul([int(2), @symcore.imag_unit(), @symcore.function("sin", [x])])
+            @symcore.mul([int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.function("sin", [x])])
           }
         None =>
           match parse_cos_i_sin_pair(a, b) {
             Some((x, sign)) =>
               if sign == 1 {
-                @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])])
+                @symcore.function("exp", [@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x])])
               } else {
                 @symcore.function("exp", [
-                  @symcore.mul([int(-1), @symcore.imag_unit(), x]),
+                  @symcore.mul([int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x]),
                 ])
               }
             None => expr
@@ -414,9 +414,9 @@ fn parse_exp_i_pair(a : Expr, b : Expr) -> (Expr, Int)? {
 fn exp_i_arg(expr : Expr) -> Expr? {
   match expr {
     Expr::Function(name, [Expr::Mul([a, b])]) =>
-      if name == "exp" && a == @symcore.imag_unit() {
+      if name == "exp" && a == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(b)
-      } else if name == "exp" && b == @symcore.imag_unit() {
+      } else if name == "exp" && b == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(a)
       } else {
         None
@@ -429,11 +429,11 @@ fn exp_i_arg(expr : Expr) -> Expr? {
 fn exp_minus_i_arg(expr : Expr) -> Expr? {
   match expr {
     Expr::Function(name, [Expr::Mul(args)]) if name == "exp" =>
-      if args.length() == 3 && args[0] == int(-1) && args[1] == @symcore.imag_unit() {
+      if args.length() == 3 && args[0] == int(-1) && args[1] == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(args[2])
       } else if args.length() == 3 &&
         args[0] == int(-1) &&
-        args[2] == @symcore.imag_unit() {
+        args[2] == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) {
         Some(args[1])
       } else {
         None
@@ -479,20 +479,20 @@ fn cos_arg(expr : Expr) -> Expr? {
 fn i_sin_arg(expr : Expr) -> (Expr, Int)? {
   match expr {
     Expr::Mul([i, Expr::Function(name, [x])]) =>
-      if i == @symcore.imag_unit() && name == "sin" {
+      if i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
     Expr::Mul([Expr::Function(name, [x]), i]) =>
-      if i == @symcore.imag_unit() && name == "sin" {
+      if i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) && name == "sin" {
         Some((x, 1))
       } else {
         None
       }
     Expr::Mul([Expr::Number(c), i, Expr::Function(name, [x])]) =>
       if c.compare(@symnum.BigRational::from_int(-1)) == 0 &&
-        i == @symcore.imag_unit() &&
+        i == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) &&
         name == "sin" {
         Some((x, -1))
       } else {
@@ -671,7 +671,7 @@ fn rewrite_logcombine(expr : Expr) -> Expr {
       for arg in args {
         match parse_coeff_log(arg) {
           Some((coeff, base)) =>
-            log_pows.push(@symcore.pow(base, @symcore.number(coeff)))
+            log_pows.push(@symcore.pow(base, @symcore.Expr::Number(coeff)))
           None => others.push(arg)
         }
       }

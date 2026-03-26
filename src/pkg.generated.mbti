@@ -29,8 +29,6 @@ pub fn collect_sqrt(@symcore.Expr) -> @symcore.Expr
 
 pub fn combsimp(@symcore.Expr) -> @symcore.Expr
 
-pub fn complex_float(@symcore.ComplexFloat) -> @symcore.Expr
-
 pub fn cse(Array[@symcore.Expr]) -> @symsimplify.CseResult
 
 pub fn cse_reconstruct(@symsimplify.CseResult) -> Array[@symcore.Expr]
@@ -55,15 +53,11 @@ pub fn exptrigsimp(@symcore.Expr) -> @symcore.Expr
 
 pub fn eye(Int) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 
-pub fn float(@symcore.Float) -> @symcore.Expr
-
 pub fn fraction(@symcore.Expr) -> (@symcore.Expr, @symcore.Expr)
 
 pub fn fraction_expand(@symcore.Expr) -> @symcore.Expr
 
 pub fn fu(@symcore.Expr) -> @symcore.Expr
-
-pub fn function_head(String) -> @symcore.Expr
 
 pub fn futrig(@symcore.Expr) -> @symcore.Expr
 
@@ -131,8 +125,6 @@ pub fn sub_post(@symcore.Expr) -> @symcore.Expr
 
 pub fn sub_pre(@symcore.Expr) -> @symcore.Expr
 
-pub fn symbol(String) -> @symcore.Expr
-
 pub fn sympify(@symcore.SympifyInput) -> @symcore.Expr
 
 pub fn sympify_dict(Array[(@symcore.SympifyInput, @symcore.SympifyInput)]) -> @symcore.Expr
@@ -192,10 +184,6 @@ pub fn trigsimp(@symcore.Expr) -> @symcore.Expr
 pub fn trmorrie(@symcore.Expr) -> @symcore.Expr
 
 pub fn trpower(@symcore.Expr) -> @symcore.Expr
-
-pub fn undefined_function(String) -> @symcore.Expr
-
-pub fn wild(String) -> @symcore.Expr
 
 pub fn zeros(Int, cols? : Int?) -> @symmatrices.Matrix raise @symmatrices.MatrixError
 

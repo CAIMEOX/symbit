@@ -28,7 +28,7 @@ fn represent_linear_term_expr(base : Expr, coeff : @symnum.BigRational) -> Expr 
   } else if coeff.neg_r().is_one() {
     int(-1) * base
   } else {
-    @symcore.number(coeff) * base
+    @symcore.Expr::Number(coeff) * base
   }
 }
 
@@ -39,7 +39,7 @@ fn represent_linear_sum_expr(
 ) -> Expr {
   let args : Array[Expr] = []
   if !const_coeff.is_zero() {
-    args.push(@symcore.number(const_coeff))
+    args.push(@symcore.Expr::Number(const_coeff))
   }
   for term in terms {
     if !term.1.is_zero() {

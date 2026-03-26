@@ -372,7 +372,7 @@ fn eigen_pack_values(values : Array[Expr]) -> Array[EigenValueMult] {
 fn matrix_charpoly_roots(matrix : Matrix) -> Array[Expr] raise MatrixError {
   let lam_name = "_lambda"
   let poly = @sympolys.Poly::from_expr_defaults(
-    matrix.charpoly_expr(x=@symcore.symbol(lam_name)),
+    matrix.charpoly_expr(x=@symcore.Expr::Symbol(lam_name)),
     gens=[lam_name],
   ) catch {
     _ =>
@@ -472,7 +472,7 @@ fn matrix_exact_eigenvects(
 ///|
 pub fn Matrix::charpoly_expr(
   self : Matrix,
-  x? : Expr = @symcore.symbol("lambda"),
+  x? : Expr = @symcore.Expr::Symbol("lambda"),
 ) -> Expr raise MatrixError {
   if !self.is_square() {
     raise MatrixError::NonSquareMatrixError("charpoly requires a square matrix")
@@ -484,7 +484,7 @@ pub fn Matrix::charpoly_expr(
 ///|
 pub fn Matrix::charpoly(
   self : Matrix,
-  x? : Expr = @symcore.symbol("lambda"),
+  x? : Expr = @symcore.Expr::Symbol("lambda"),
 ) -> Expr raise MatrixError {
   self.charpoly_expr(x~)
 }

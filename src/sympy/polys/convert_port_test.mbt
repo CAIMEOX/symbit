@@ -1,6 +1,6 @@
 ///|
 test "convert: to_expr roundtrip over ZZ" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = (x ^ @symcore.int(3)) + @symcore.int(2) * x + @symcore.int(1)
   let poly = PolyBuilder::new(["x"], Domain::ZZ).from_expr(expr)
   let ours = poly.to_string()
@@ -9,8 +9,8 @@ test "convert: to_expr roundtrip over ZZ" {
 
 ///|
 test "convert: to_expr roundtrip over QQ with ordering" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.rational_from_ints(1, 2) * (x ^ @symcore.int(2)) +
     @symcore.rational_from_ints(3, 4) * y +
     @symcore.int(1)
@@ -23,7 +23,7 @@ test "convert: to_expr roundtrip over QQ with ordering" {
 
 ///|
 test "convert: to_string matches SymPy poly_expr over GF" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.rational_from_ints(3, 2) * x +
     @symcore.rational_from_ints(1, 3)
   let poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(expr)
@@ -37,8 +37,8 @@ test "convert: to_string matches SymPy poly_expr over GF" {
 
 ///|
 test "convert: explicit order and leading helpers cover option branches" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly = PolyBuilder::new(["x", "y"], Domain::QQ)
     .order(TermOrder::Grlex)
     .from_expr((x ^ @symcore.int(2)) + y + @symcore.int(1))
@@ -64,8 +64,8 @@ test "convert: explicit order and leading helpers cover option branches" {
 
 ///|
 test "convert: parse_expr failure branches are typed" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let bad_gen : Result[Poly, PolyError] = try? Poly::from_expr(
     y,

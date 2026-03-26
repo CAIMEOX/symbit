@@ -101,8 +101,8 @@ pub fn Parabola::p_parameter(self : Parabola) -> Expr raise GeometryError {
 ///|
 pub fn Parabola::equation(
   self : Parabola,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
 ) -> Expr {
   let (a, b, c) = line_coeffs_2d(self.directrix_)
   geo_simplify(

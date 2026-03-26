@@ -1,12 +1,12 @@
 ///|
 test "physics.quantum.transforms: local canonicalization" {
-  let k1 = ket([@symcore.symbol("k1")]).as_expr()
-  let k2 = ket([@symcore.symbol("k2")]).as_expr()
-  let b1 = bra([@symcore.symbol("k1")]).as_expr()
-  let b2 = bra([@symcore.symbol("k2")]).as_expr()
-  let a = operator([@symcore.symbol("A")]).as_expr()
-  let b = operator([@symcore.symbol("B")]).as_expr()
-  let c = operator([@symcore.symbol("C")]).as_expr()
+  let k1 = ket([@symcore.Expr::Symbol("k1")]).as_expr()
+  let k2 = ket([@symcore.Expr::Symbol("k2")]).as_expr()
+  let b1 = bra([@symcore.Expr::Symbol("k1")]).as_expr()
+  let b2 = bra([@symcore.Expr::Symbol("k2")]).as_expr()
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
+  let b = operator([@symcore.Expr::Symbol("B")]).as_expr()
+  let c = operator([@symcore.Expr::Symbol("C")]).as_expr()
 
   quantum_test_assert_expr_equal(
     quantum_canonical_mul(@symcore.raw_mul([b1, k1])),
@@ -69,7 +69,7 @@ test "physics.quantum.transforms: local canonicalization" {
   )
   quantum_test_assert_expr_equal(
     quantum_canonical_pow(
-      fermion_op(@symcore.symbol("c")).as_expr(),
+      fermion_op(@symcore.Expr::Symbol("c")).as_expr(),
       @symcore.int(2),
     ),
     "0",

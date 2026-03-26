@@ -21,9 +21,9 @@ fn promote_basic2(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 test "traverse sall" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.sall(zero_symbols)
   let result = rl(expr)
@@ -32,9 +32,9 @@ test "traverse sall" {
 
 ///|
 test "traverse top_down" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.top_down(zero_symbols)
   let result = rl(expr)
@@ -43,9 +43,9 @@ test "traverse top_down" {
 
 ///|
 test "traverse bottom_up" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = basic([x, y, basic([x, z])])
   let rl = @strategies_traverse.bottom_up(zero_symbols)
   let result = rl(expr)
@@ -54,8 +54,8 @@ test "traverse bottom_up" {
 
 ///|
 test "traverse top_down_once" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = basic([x, y, basic([@symcore.int(3), @symcore.int(4)])])
   let rl = @strategies_traverse.top_down_once(promote_basic2)
   let result = rl(expr)
@@ -64,8 +64,8 @@ test "traverse top_down_once" {
 
 ///|
 test "traverse bottom_up_once" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = basic([@symcore.int(1), @symcore.int(2), basic([x, y])])
   let rl = @strategies_traverse.bottom_up_once(promote_basic2)
   let result = rl(expr)
@@ -74,8 +74,8 @@ test "traverse bottom_up_once" {
 
 ///|
 test "traverse expr_fns" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([x, @symcore.pow(y, @symcore.int(3))])
   let e = @strategies_traverse.bottom_up(
     v => v + @symcore.int(1),

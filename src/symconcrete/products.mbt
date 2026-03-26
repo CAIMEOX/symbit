@@ -378,7 +378,7 @@ fn linear_product(
   lower : @symcore.Expr,
   upper : @symcore.Expr,
 ) -> @symcore.Expr? {
-  let sym = @symcore.symbol(name)
+  let sym = @symcore.Expr::Symbol(name)
   let n = expr_add(expr_sub(upper, lower), @symcore.int(1))
   match split_linear_ratio(expr, name) {
     Some((num_c, den_c, coeff)) => {
@@ -409,7 +409,7 @@ fn linear_product(
 
 ///|
 fn linear_shift(expr : @symcore.Expr, name : String) -> @symcore.Expr? {
-  let sym = @symcore.symbol(name)
+  let sym = @symcore.Expr::Symbol(name)
   match expr {
     @symcore.Expr::Symbol(sym_name) if sym_name == name => Some(@symcore.int(0))
     @symcore.Expr::Add(args) => {

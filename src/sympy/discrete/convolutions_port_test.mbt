@@ -96,39 +96,39 @@ test "discrete convolution functions parity" {
       p,
     ),
   )
-  let u = @symcore.symbol("u")
-  let v = @symcore.symbol("v")
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let u = @symcore.Expr::Symbol("u")
+  let v = @symcore.Expr::Symbol("v")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let ours_fwht = convolution_fwht([u, v], [x, y])
   assert_oracle_named(
     "convolution_fwht",
     try? convolution_fwht_equiv([u, v], [x, y], ours_fwht),
   )
-  let ours_subset = convolution_subset([u, v, x], [y, @symcore.symbol("z")])
+  let ours_subset = convolution_subset([u, v, x], [y, @symcore.Expr::Symbol("z")])
   assert_oracle_named(
     "convolution_subset",
     try? convolution_subset_equiv(
       [u, v, x],
-      [y, @symcore.symbol("z")],
+      [y, @symcore.Expr::Symbol("z")],
       ours_subset,
     ),
   )
-  let ours_cover = covering_product([u, v, x], [y, @symcore.symbol("z")])
+  let ours_cover = covering_product([u, v, x], [y, @symcore.Expr::Symbol("z")])
   assert_oracle_named(
     "covering_product",
     try? covering_product_equiv(
       [u, v, x],
-      [y, @symcore.symbol("z")],
+      [y, @symcore.Expr::Symbol("z")],
       ours_cover,
     ),
   )
-  let ours_inter = intersecting_product([u, v, x], [y, @symcore.symbol("z")])
+  let ours_inter = intersecting_product([u, v, x], [y, @symcore.Expr::Symbol("z")])
   assert_oracle_named(
     "intersecting_product",
     try? intersecting_product_equiv(
       [u, v, x],
-      [y, @symcore.symbol("z")],
+      [y, @symcore.Expr::Symbol("z")],
       ours_inter,
     ),
   )

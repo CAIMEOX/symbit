@@ -22,8 +22,8 @@ fn check_expr(
 
 ///|
 test "elementary full parity (core)" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   check_expr("sqrt", sqrt(x), "sqrt(x)")
   check_expr("root", root(x, y), "root(x, y)")
   check_expr("real_root", real_root(x, y), "real_root(x, y)")

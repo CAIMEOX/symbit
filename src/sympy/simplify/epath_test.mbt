@@ -1,8 +1,8 @@
 ///|
 test "symsimplify epath select/apply basics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = @symcore.add([
     x,
     @symcore.function("sin", [@symcore.add([x, @symcore.int(1)])]),

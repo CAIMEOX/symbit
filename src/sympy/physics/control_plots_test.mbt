@@ -1,6 +1,6 @@
 ///|
 test "physics.control.control_plots: pole-zero numerical data" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(
     (s ^ @symcore.int(2)) + @symcore.int(1),
     (s ^ @symcore.int(2)) + s + @symcore.int(2),
@@ -26,7 +26,7 @@ test "physics.control.control_plots: pole-zero numerical data" {
 
 ///|
 test "physics.control.control_plots: time responses" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let step = step_response_numerical_data(
@@ -75,7 +75,7 @@ test "physics.control.control_plots: time responses" {
 
 ///|
 test "physics.control.control_plots: bode and parametric helpers" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let mag = bode_magnitude_numerical_data(
@@ -106,7 +106,7 @@ test "physics.control.control_plots: bode and parametric helpers" {
 
 ///|
 test "physics.control.control_plots: plot records" {
-  let s = @symcore.symbol("s")
+  let s = @symcore.Expr::Symbol("s")
   let tf = transfer_function(@symcore.int(1), s + @symcore.int(1), s).as_system()
 
   let bode = bode_plot(tf, initial_exp=-1.0, final_exp=1.0, n=5)

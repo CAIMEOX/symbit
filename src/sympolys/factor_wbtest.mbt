@@ -15,8 +15,8 @@ test "factor wb: extension and univariate guard branches" {
   assert_true(is_one(one))
   assert_true(!is_one(two))
 
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let non_uni = PolyBuilder::new(["x", "y"], Domain::QQ).from_expr(x + y)
 
   let deriv_bad : Result[Poly, PolyError] = try? deriv_univar(non_uni)
@@ -115,7 +115,7 @@ test "factor wb: determinant/resultant helper branches" {
 
 ///|
 test "factor wb: GF splitting and seed helpers" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let gf_poly = fw_univar(
     (x ^ @symcore.int(2)) + @symcore.int(1),
     Domain::GF(5),
@@ -151,7 +151,7 @@ test "factor wb: GF splitting and seed helpers" {
   )
   assert_true(c0.is_zero())
 
-  let y = @symcore.symbol("y")
+  let y = @symcore.Expr::Symbol("y")
   let non_uni = PolyBuilder::new(["x", "y"], Domain::GF(5)).from_expr(x + y)
   let bad_gf_seeded : Result[Array[Poly], PolyError] = try? factor_gf_seeded(
     non_uni, 11,
@@ -171,9 +171,9 @@ test "factor wb: GF splitting and seed helpers" {
 
 ///|
 test "factor wb: algext conversion and factoring helper branches" {
-  let a = @symcore.symbol("a")
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let a = @symcore.Expr::Symbol("a")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let rel = (a ^ @symcore.int(2)) + @symcore.int(1)
   let alg_domain = Domain::AlgExt(Domain::QQ, ["a"], [rel])
   let (minpoly, _) = load_algext_minpoly(Domain::QQ, ["a"], [rel])
@@ -231,9 +231,9 @@ test "factor wb: algext conversion and factoring helper branches" {
 
 ///|
 test "factor wb: high-gap branch sweep" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let a = @symcore.symbol("a")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let a = @symcore.Expr::Symbol("a")
 
   let pth_nonuni : Result[Poly, PolyError] = try? pth_root_univar_gf(
     PolyBuilder::new(["x", "y"], Domain::GF(3)).from_expr(x + y),
@@ -378,8 +378,8 @@ test "factor wb: high-gap branch sweep" {
 
 ///|
 test "factor wb: residual reachable branch sweep" {
-  let x = @symcore.symbol("x")
-  let a = @symcore.symbol("a")
+  let x = @symcore.Expr::Symbol("x")
+  let a = @symcore.Expr::Symbol("a")
 
   let gf5_poly = PolyBuilder::new(["x"], Domain::GF(5)).from_expr(
     (x ^ @symcore.int(2)) + @symcore.int(1),

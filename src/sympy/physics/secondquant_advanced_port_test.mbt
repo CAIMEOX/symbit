@@ -11,13 +11,13 @@ fn sq_adv_assert_port(
 
 ///|
 test "physics.secondquant: advanced parity" {
-  let a = @symcore.symbol("a")
-  let b = @symcore.symbol("b")
-  let i = @symcore.symbol("i")
-  let j = @symcore.symbol("j")
-  let p = @symcore.symbol("p")
-  let q = @symcore.symbol("q")
-  let r = @symcore.symbol("r")
+  let a = @symcore.Expr::Symbol("a")
+  let b = @symcore.Expr::Symbol("b")
+  let i = @symcore.Expr::Symbol("i")
+  let j = @symcore.Expr::Symbol("j")
+  let p = @symcore.Expr::Symbol("p")
+  let q = @symcore.Expr::Symbol("q")
+  let r = @symcore.Expr::Symbol("r")
 
   sq_adv_assert_port(fket([p, q]), "FKet([p, q])", "fermion ket parity")
   sq_adv_assert_port(fbra([p, q]), "FBra([p, q])", "fermion bra parity")
@@ -60,7 +60,7 @@ test "physics.secondquant: advanced parity" {
     "contraction below parity",
   )
   sq_adv_assert_port(
-    anti_symmetric_tensor(@symcore.symbol("v"), [b, a], [j, i]),
+    anti_symmetric_tensor(@symcore.Expr::Symbol("v"), [b, a], [j, i]),
     "AntiSymmetricTensor(v, (b, a), (j, i))",
     "antisymmetric tensor parity",
   )

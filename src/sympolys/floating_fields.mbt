@@ -12,7 +12,7 @@ fn field_float_expr_from_exact(
   value : @symnum.BigRational,
   precision : Int,
 ) -> Expr {
-  @symcore.float(
+  @symcore.Expr::Float(
     @symcore.Float::from_exact(value, prec=precision) catch {
       _ => @symcore.Float::from_mpf(@symnum.fnan, prec=precision)
     },
@@ -27,7 +27,7 @@ fn complex_float_expr_from_gaussian(
   if value.im.is_zero() {
     field_float_expr_from_exact(value.re, precision)
   } else {
-    @symcore.complex_float(
+    @symcore.Expr::ComplexFloat(
       @symcore.ComplexFloat::from_exact_parts(
         value.re,
         value.im,
@@ -129,7 +129,7 @@ pub fn ComplexField::from_exact_parts(
 
 ///|
 pub fn RealField::from_float(self : RealField, value : @symcore.Float) -> Expr {
-  @symcore.float(
+  @symcore.Expr::Float(
     @symcore.Float::from_mpf(
       @symnum.mpf_pos(value.to_mpf(), self.precision, @symnum.round_nearest),
       prec=self.precision,
@@ -142,7 +142,7 @@ pub fn ComplexField::from_complex_float(
   self : ComplexField,
   value : @symcore.ComplexFloat,
 ) -> Expr {
-  @symcore.complex_float(
+  @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_parts(
       @symnum.mpf_pos(
         value.to_mpc().real,

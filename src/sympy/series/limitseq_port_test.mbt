@@ -1,6 +1,6 @@
 ///|
 test "symseries limit_seq parity" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let num = @symcore.add([
     @symcore.mul([@symcore.int(5), @symcore.pow(n, @symcore.int(3))]),
     @symcore.mul([@symcore.int(3), @symcore.pow(n, @symcore.int(2))]),
@@ -19,7 +19,7 @@ test "symseries limit_seq parity" {
 
 ///|
 test "symseries difference_delta parity" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.pow(n, @symcore.int(2))
   let ours = difference_delta(expr, n~, step=2)
   let sympy = difference_delta_str(expr, "n", step=2)

@@ -57,7 +57,7 @@ test "physics.quantum.sho1d: local ladder algebra and number-basis matrices" {
 
 ///|
 test "physics.quantum.sho1d: symbolic rewrites and symbolic ladder action" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   assert_true(
     sho_rewrite_as_a(number_op()) ==
     @symcore.raw_mul([raising_op(), lowering_op()]),
@@ -85,9 +85,9 @@ test "physics.quantum.sho1d: symbolic rewrites and symbolic ladder action" {
 
 ///|
 test "physics.quantum.sho1d: qapply with sum_doit" {
-  let p = @symcore.symbol("p")
-  let q = @symcore.symbol("q")
-  let n = @symcore.symbol("n")
+  let p = @symcore.Expr::Symbol("p")
+  let q = @symcore.Expr::Symbol("q")
+  let n = @symcore.Expr::Symbol("n")
   let wf_n = @symcore.raw_function("wf", [n])
 
   quantum_test_assert_expr_equal(
@@ -98,7 +98,7 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
           @symcore.raw_function("Tuple", [
             p,
             @symcore.int(0),
-            @symcore.oo(),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
           ]),
         ]),
         sho_ket(q),
@@ -117,7 +117,7 @@ test "physics.quantum.sho1d: qapply with sum_doit" {
           @symcore.raw_function("Tuple", [
             n,
             @symcore.int(0),
-            @symcore.oo(),
+            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
           ]),
         ]),
       ]),

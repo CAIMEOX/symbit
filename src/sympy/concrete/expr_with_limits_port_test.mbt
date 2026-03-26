@@ -1,6 +1,6 @@
 ///|
 test "symconcrete ExprWithLimits to_expr Sum" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let limits = [limit_range(x, @symcore.int(1), @symcore.int(3))]
   let ewl = ExprWithLimits::{ expr: x, limits }
   let expr = ewl.to_expr("Sum")
@@ -11,8 +11,8 @@ test "symconcrete ExprWithLimits to_expr Sum" {
 
 ///|
 test "symconcrete ExprWithLimits free_symbols" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([x, y])
   let limits = [limit_range(x, @symcore.int(0), @symcore.int(2))]
   let ewl = ExprWithLimits::{ expr, limits }
@@ -22,7 +22,7 @@ test "symconcrete ExprWithLimits free_symbols" {
 
 ///|
 test "symconcrete ExprWithLimits finite limits check" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let finite = ExprWithLimits::{
     expr: x,
     limits: [limit_range(x, @symcore.int(1), @symcore.int(2))],

@@ -15,7 +15,7 @@ fn differential_srepr_local(op : DifferentialOperator) -> String raise {
 
 ///|
 test "holonomic differential: weyl commutation parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let (r, dx) = differential_operators(symbol_var=x)
   let x_op = differential_operator([x], r)
   let left1 = dx * x_op
@@ -32,7 +32,7 @@ test "holonomic differential: weyl commutation parity" {
 
 ///|
 test "holonomic differential: polynomial operator multiplication parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let (r, dx) = differential_operators(symbol_var=x)
   let x_op = differential_operator([x], r)
   let one = differential_operator([@symcore.int(1)], r)
@@ -48,7 +48,7 @@ test "holonomic differential: polynomial operator multiplication parity" {
 
 ///|
 test "holonomic differential: pow parity on first-order op" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let (r, _) = differential_operators(symbol_var=x)
   let op = differential_operator([@symcore.int(1), x], r)
   for m in 0..<6 {

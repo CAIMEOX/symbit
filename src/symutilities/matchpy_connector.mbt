@@ -61,7 +61,7 @@ fn encode_wildcard(
   variable_name : String,
   optional : Expr?,
 ) -> Expr {
-  let args : Array[Expr] = [symbol(variable_name)]
+  let args : Array[Expr] = [Expr::Symbol(variable_name)]
   match optional {
     Some(value) => args.push(value)
     None => ()

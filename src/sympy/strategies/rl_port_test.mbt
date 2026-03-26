@@ -64,7 +64,7 @@ test "rl rm_id" {
 
 ///|
 test "rl glom" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = raw_add([
     x,
     raw_mul([@symcore.int(-1), x]),
@@ -122,8 +122,8 @@ test "rl distribute custom" {
 
 ///|
 test "rl distribute add/mul" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = raw_mul([@symcore.int(2), raw_add([x, y])])
   let rl = @strategies_rl.distribute(
     @strategies_util.ExprOp::Mul,

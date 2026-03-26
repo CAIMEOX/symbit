@@ -26,12 +26,12 @@ pub struct StateExpr {
 
 ///|
 fn default_state_label() -> Array[Expr] {
-  [symbol("psi")]
+  [Expr::Symbol("psi")]
 }
 
 ///|
 fn default_time_expr() -> Expr {
-  symbol("t")
+  Expr::Symbol("t")
 }
 
 ///|

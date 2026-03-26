@@ -41,7 +41,7 @@ test "physics.continuum_mechanics.arch: init and force queries" {
     crown_y=Some(@symcore.int(5)),
   )
   let expected_shape = @symcore.int(5) +
-    ((@symcore.symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
+    ((@symcore.Expr::Symbol("x") - @symcore.int(5)) ^ @symcore.int(2)) *
     @symcore.rational_from_ints(-1, 5)
   assert_true(cm_numeric_expr_eq(a.get_shape_eqn(), expected_shape))
   assert_true(
@@ -128,7 +128,7 @@ test "physics.continuum_mechanics.arch: reaction forces and internal forces" {
   assert_true(arch_is_close(b.reaction_force()["R_B_x"], 0.0))
   assert_true(arch_is_close(b.reaction_force()["R_B_y"], 5.25))
 
-  let t = @symcore.symbol("t")
+  let t = @symcore.Expr::Symbol("t")
   let c = arch(
     (@symcore.int(0), @symcore.int(0)),
     (@symcore.int(16), @symcore.int(0)),

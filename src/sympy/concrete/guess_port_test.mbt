@@ -37,7 +37,7 @@ test "symconcrete find_simple_recurrence expr" {
 ///|
 test "symconcrete rinterp polynomial" {
   let data = [@symcore.int(1), @symcore.int(3), @symcore.int(5)]
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = match rinterp(data, 2, x~) {
     Some(v) => v
     None => fail("rinterp failed")
@@ -49,8 +49,8 @@ test "symconcrete rinterp polynomial" {
 
 ///|
 test "symconcrete rinterp symbolic fallback" {
-  let a = @symcore.symbol("a")
-  let x = @symcore.symbol("x")
+  let a = @symcore.Expr::Symbol("a")
+  let x = @symcore.Expr::Symbol("x")
   let data = [
     a,
     @symcore.add([a, @symcore.int(1)]),
@@ -75,7 +75,7 @@ test "symconcrete guess_generating_function_rational geometric" {
     @symcore.int(16),
     @symcore.int(32),
   ]
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = match guess_generating_function_rational(data, x~) {
     Some(v) => v
     None => fail("guess_generating_function_rational failed")

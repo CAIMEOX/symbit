@@ -1,8 +1,8 @@
 ///|
 test "polyutils: dict_from_expr parity (basic)" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let c = @symcore.int(17)
   let ours_c = @sympolys.dict_from_expr(c, gens=["x"])
   let oracle_c = dict_from_expr(c, gens=["x"])

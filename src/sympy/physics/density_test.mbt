@@ -20,7 +20,7 @@ test "physics.quantum.density: local semantics" {
     "density get_prob",
   )
 
-  let a = operator([@symcore.symbol("A")]).as_expr()
+  let a = operator([@symcore.Expr::Symbol("A")]).as_expr()
   quantum_test_assert_expr_equal(
     rho.apply_op(a).as_expr(),
     "Density(Tuple(Operator(A)*Ket(0), Rational(1, 2)), Tuple(Operator(A)*Ket(1), Rational(1, 2)))",

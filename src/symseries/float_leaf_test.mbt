@@ -10,7 +10,7 @@ fn series_exact_float_expr(
   let value = @symcore.Float::from_exact(rat, prec~) catch {
     _ => @symcore.Float::from_int(0, prec~)
   }
-  @symcore.float(value)
+  @symcore.Expr::Float(value)
 }
 
 ///|
@@ -27,7 +27,7 @@ fn series_exact_complex_float_expr(
   let imag = @symnum.BigRational::from_ints(imag_num, imag_den) catch {
     _ => @symnum.BigRational::zero()
   }
-  @symcore.complex_float(
+  @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_exact_parts(real, imag, prec~),
   )
 }
@@ -70,7 +70,7 @@ fn series_eval_finite(
 
 ///|
 test "symseries series keeps float leaves in polynomial expansions" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let half = series_exact_float_expr(1, 2, prec=80)
   let out = series(@symcore.add([x, half]), x~, n=5)
   assert_true(series_contains_float_leaf(out))
@@ -78,7 +78,7 @@ test "symseries series keeps float leaves in polynomial expansions" {
 
 ///|
 test "symseries fps handles float geometric coefficients" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let half = series_exact_float_expr(1, 2, prec=80)
   let expr = @symcore.pow(
     @symcore.add([@symcore.int(1), @symcore.mul([@symcore.int(-1), half, x])]),
@@ -96,7 +96,7 @@ test "symseries fps handles float geometric coefficients" {
 
 ///|
 test "symseries series numerically expands constant complex shifts" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let shift = series_exact_complex_float_expr(0, 1, 1, 1, prec=100)
   let out = series(
     @symcore.function("sin", [@symcore.add([shift, x])]),
@@ -109,7 +109,7 @@ test "symseries series numerically expands constant complex shifts" {
 
 ///|
 test "symseries pade approximant handles complex float rates" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let rate = series_exact_complex_float_expr(1, 1, 1, 1, prec=100)
   let expr = @symcore.function("exp", [@symcore.mul([rate, x])])
   let approx = pade_approximant(expr, x, m=1, n=1)
@@ -125,7 +125,7 @@ test "symseries pade approximant handles complex float rates" {
 
 ///|
 test "symseries sequence coeff evaluates numeric transcendental forms to complex float" {
-  let n = @symcore.symbol("n")
+  let n = @symcore.Expr::Symbol("n")
   let rate = series_exact_complex_float_expr(1, 1, 1, 1, prec=100)
   let seq = sequence(
     @symcore.function("exp", [@symcore.mul([rate, n])]),

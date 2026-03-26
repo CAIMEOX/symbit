@@ -18,7 +18,7 @@ test "polyfuncs: rational_interpolate reports bad degree early" {
 
 ///|
 test "polyfuncs: viete errors are typed" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let const_res : Result[Array[(@symcore.Expr, @symcore.Expr)], PolyError] = try? viete(
     @symcore.int(5),
     roots=[],

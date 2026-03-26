@@ -1055,8 +1055,8 @@ test "densebasic: dmp_exclude/include parity" {
 ///|
 test "densebasic: dmp_inject/dmp_eject roundtrip" {
   let b = PolyBuilder::new(["x", "y"], Domain::ZZ)
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let poly1 = b.from_expr(@symcore.int(1))
   let poly2 = b.from_expr(
     @symcore.int(2) * x + @symcore.int(3) * y + @symcore.int(4),

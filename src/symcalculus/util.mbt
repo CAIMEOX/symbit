@@ -93,7 +93,7 @@ fn util_mul_scalar(expr : Expr, k : BigRational) -> Expr {
   if k.is_one() {
     expr
   } else {
-    @symcore.mul([@symcore.number(k), expr])
+    @symcore.mul([@symcore.Expr::Number(k), expr])
   }
 }
 
@@ -112,7 +112,7 @@ pub fn periodicity(expr : Expr, sym : Expr) -> Expr? {
           }
           let abs_k = util_rat_abs(k)
           let inv = util_rat_div(util_rat_one(), abs_k)
-          let pi = @symcore.pi()
+          let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
           let base = match name {
             "sin" | "cos" => @symcore.mul([@symcore.int(2), pi])
             "tan" => pi

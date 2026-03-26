@@ -1,7 +1,7 @@
 ///|
 test "physics.quantum.wavefunction: local orthogonal and differential semantics" {
-  let n = @symcore.symbol("n")
-  let x = @symcore.symbol("x")
+  let n = @symcore.Expr::Symbol("n")
+  let x = @symcore.Expr::Symbol("x")
   let f_of_x = @symcore.raw_function("f", [x])
 
   let ok = orthogonal_ket([n])
@@ -70,8 +70,8 @@ test "physics.quantum.wavefunction: local orthogonal and differential semantics"
 
 ///|
 test "physics.quantum.wavefunction: norm and normalization helpers" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let finite = @symquant.wavefunction(
     (x ^ @symcore.int(2)) * y + (y ^ @symcore.int(2)) * x,
     [
@@ -106,18 +106,18 @@ test "physics.quantum.wavefunction: norm and normalization helpers" {
 
 ///|
 test "physics.quantum.wavefunction: floating interval bounds are treated numerically" {
-  let x = @symcore.symbol("x")
-  let lower = @symcore.float(
+  let x = @symcore.Expr::Symbol("x")
+  let lower = @symcore.Expr::Float(
     @symcore.Float::from_str("0.5", prec=80) catch {
       _ => fail("lower bound")
     },
   )
-  let upper = @symcore.float(
+  let upper = @symcore.Expr::Float(
     @symcore.Float::from_str("1.5", prec=80) catch {
       _ => fail("upper bound")
     },
   )
-  let wf = @symquant.wavefunction(x, [@symcore.tuple_expr([x, lower, upper])])
+  let wf = @symquant.wavefunction(x, [@symcore.Expr::Tuple([x, lower, upper])])
   inspect(@symprint.to_string(wf.call([@symcore.int(1)])), content="1")
   inspect(@symprint.to_string(wf.call([@symcore.int(2)])), content="0")
 }

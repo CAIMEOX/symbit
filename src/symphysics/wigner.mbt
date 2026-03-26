@@ -3,12 +3,12 @@
 
 ///|
 fn wigner_expr_from_bigint(value : BigInt) -> Expr {
-  @symcore.number(@symnum.BigRational::from_bigint(value))
+  @symcore.Expr::Number(@symnum.BigRational::from_bigint(value))
 }
 
 ///|
 fn wigner_rational_expr(num : BigInt, den : BigInt) -> Expr raise PhysicsError {
-  @symcore.number(
+  @symcore.Expr::Number(
     @symnum.BigRational::new(num, den) catch {
       _ =>
         raise PhysicsError::ValueError(

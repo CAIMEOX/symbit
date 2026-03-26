@@ -12,10 +12,10 @@ fn quantum_port_scalar_repr(
 
 ///|
 test "physics.quantum.cartesian: parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let px = @symcore.symbol("px")
-  let py = @symcore.symbol("py")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let px = @symcore.Expr::Symbol("px")
+  let py = @symcore.Expr::Symbol("py")
 
   quantum_test_assert_string_equal(
     quantum_qapply_str("XOp()*XKet(x)"),

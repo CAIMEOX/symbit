@@ -30,7 +30,7 @@ fn integrate_poly_times_exp(
 ) -> Expr? {
   match (poly_coeffs_upto2(poly_expr, var_name), linear_coeffs(arg, var_name)) {
     (Some(pc), Some((a, b))) if !expr_is_zero(a) && expr_is_zero(pc[2]) => {
-      let x = @symcore.symbol(var_name)
+      let x = @symcore.Expr::Symbol(var_name)
       let alpha = expr_add(expr_mul(a, x), b)
       let c1 = expr_div(pc[1], a)
       let c0 = expr_div(expr_sub(pc[0], expr_div(pc[1], a)), a)
@@ -49,7 +49,7 @@ fn integrate_poly_times_trig(
 ) -> Expr? {
   match (poly_coeffs_upto2(poly_expr, var_name), linear_coeffs(arg, var_name)) {
     (Some(pc), Some((a, b))) if !expr_is_zero(a) && expr_is_zero(pc[2]) => {
-      let x = @symcore.symbol(var_name)
+      let x = @symcore.Expr::Symbol(var_name)
       let alpha = expr_add(expr_mul(a, x), b)
       let m = pc[1]
       let n = pc[0]
@@ -77,10 +77,10 @@ fn reciprocal_sqrt_quadratic(inner : Expr, var_name : String) -> Expr? {
     Some(coeffs) if expr_is_one(coeffs[0]) &&
       expr_is_zero(coeffs[1]) &&
       expr_is_minus_one(coeffs[2]) =>
-      Some(@symelem.asin(@symcore.symbol(var_name)))
+      Some(@symelem.asin(@symcore.Expr::Symbol(var_name)))
     Some(coeffs) if expr_is_one(coeffs[0]) &&
       expr_is_zero(coeffs[1]) &&
-      expr_is_one(coeffs[2]) => Some(@symelem.asinh(@symcore.symbol(var_name)))
+      expr_is_one(coeffs[2]) => Some(@symelem.asinh(@symcore.Expr::Symbol(var_name)))
     _ => None
   }
 }
@@ -113,24 +113,24 @@ fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
   }
   if expr_eq(
       base,
-      expr_add(expr_pow(@symcore.symbol(var_name), expr_int(2)), expr_one()),
+      expr_add(expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2)), expr_one()),
     ) &&
     expr_eq(exp, expr_neg_one()) {
-    return Some(@symelem.atan(@symcore.symbol(var_name)))
+    return Some(@symelem.atan(@symcore.Expr::Symbol(var_name)))
   }
   if expr_eq(
       base,
-      expr_sub(expr_one(), expr_pow(@symcore.symbol(var_name), expr_int(2))),
+      expr_sub(expr_one(), expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2))),
     ) &&
     expr_eq(exp, expr_rat(-1, 2)) {
-    return Some(@symelem.asin(@symcore.symbol(var_name)))
+    return Some(@symelem.asin(@symcore.Expr::Symbol(var_name)))
   }
   if expr_eq(
       base,
-      expr_add(expr_pow(@symcore.symbol(var_name), expr_int(2)), expr_one()),
+      expr_add(expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2)), expr_one()),
     ) &&
     expr_eq(exp, expr_rat(-1, 2)) {
-    return Some(@symelem.asinh(@symcore.symbol(var_name)))
+    return Some(@symelem.asinh(@symcore.Expr::Symbol(var_name)))
   }
   None
 }
@@ -144,7 +144,7 @@ fn fallback_pow_integrate(base : Expr, exp : Expr, var_name : String) -> Expr? {
 pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
   let simplified = expr_simplify(expr)
   if !expr_depends_on(simplified, var_name) {
-    return Some(simplified * @symcore.symbol(var_name))
+    return Some(simplified * @symcore.Expr::Symbol(var_name))
   }
   match singularityintegrate(simplified, var_name) {
     Some(res) => return Some(expr_simplify(res))
@@ -234,7 +234,7 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
       }
     }
     @symcore.Expr::Symbol(name) if name == var_name =>
-      Some(expr_rat(1, 2) * expr_pow(@symcore.symbol(var_name), expr_int(2)))
+      Some(expr_rat(1, 2) * expr_pow(@symcore.Expr::Symbol(var_name), expr_int(2)))
     @symcore.Expr::Pow(base, exp) => {
       let pow_res = match (@symcore.application_name(base), @symcore.application_args(base)) {
         (Some("sqrt"), Some([inner])) if expr_eq(exp, expr_neg_one()) =>
@@ -265,8 +265,8 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
           }
         (Some("log"), Some([@symcore.Expr::Symbol(name)])) if name == var_name =>
           Some(
-            @symcore.symbol(var_name) * @symelem.log(@symcore.symbol(var_name)) -
-            @symcore.symbol(var_name),
+            @symcore.Expr::Symbol(var_name) * @symelem.log(@symcore.Expr::Symbol(var_name)) -
+            @symcore.Expr::Symbol(var_name),
           )
         (Some("Piecewise"), Some(args)) => {
           let out_cases : Array[(Expr, Expr)] = []
@@ -274,7 +274,7 @@ pub fn manual_integrate(expr : Expr, var_name : String) -> Expr? {
           while i + 1 < args.length() {
             let branch = args[i]
             let cond = args[i + 1]
-            if cond == @symcore.true_() {
+            if cond == @symcore.Expr::Boolean(true) {
               match manual_integrate(branch, var_name) {
                 Some(item) => return Some(piecewise_expr(out_cases, default=item))
                 None => return None

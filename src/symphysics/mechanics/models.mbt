@@ -13,7 +13,7 @@ fn model_dynamicsymbol(prefix : String, index : Int) -> Expr {
 
 ///|
 fn model_symbol(prefix : String, index : Int) -> Expr {
-  symbol(prefix + index.to_string())
+  Expr::Symbol(prefix + index.to_string())
 }
 
 ///|
@@ -78,7 +78,7 @@ pub fn multi_mass_spring_damper(
   sys.add_actuators(actuators)
   sys.add_loads(loads)
   if apply_gravity {
-    sys.apply_uniform_gravity(n_frame.y().scale(symbol("g")).neg())
+    sys.apply_uniform_gravity(n_frame.y().scale(Expr::Symbol("g")).neg())
   }
   sys.validate_system()
   sys
@@ -160,7 +160,7 @@ pub fn n_link_pendulum_on_cart(
   }
 
   sys.add_bodies(bodies)
-  sys.apply_uniform_gravity(i_frame.y().scale(symbol("g")).neg())
+  sys.apply_uniform_gravity(i_frame.y().scale(Expr::Symbol("g")).neg())
   if cart_force {
     sys.add_loads([
       force_load(

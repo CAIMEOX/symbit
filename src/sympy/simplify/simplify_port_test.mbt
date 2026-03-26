@@ -10,8 +10,8 @@ fn assert_srepr_parity(
 
 ///|
 test "symsimplify simplify parity basic" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let exprs = [
     @symcore.add([x, x]),
     @symcore.add([x, @symcore.mul([@symcore.int(2), x])]),
@@ -31,9 +31,9 @@ test "symsimplify simplify parity basic" {
 
 ///|
 test "symsimplify simplify parity composite heuristics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let i = @symcore.imag_unit()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
 
   let rational_trig = @symcore.mul([
     @symcore.add([x, @symcore.pow(x, @symcore.int(2))]),
@@ -66,7 +66,7 @@ test "symsimplify simplify parity composite heuristics" {
 
 ///|
 test "symsimplify simplify parity special heuristics" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.add([
       @symcore.function("log", [x]),
@@ -93,8 +93,8 @@ test "symsimplify simplify parity special heuristics" {
 
 ///|
 test "symsimplify powsimp parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let exprs = [
     @symcore.mul([x, x, y]),
     @symcore.mul([
@@ -112,7 +112,7 @@ test "symsimplify powsimp parity" {
 
 ///|
 test "symsimplify trigsimp parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
@@ -124,7 +124,7 @@ test "symsimplify trigsimp parity" {
 
 ///|
 test "symsimplify signsimp parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([@symcore.mul([@symcore.int(-1), x]), x])
   let ours = signsimp(expr)
   let oracle = signsimp_srepr(expr)
@@ -133,7 +133,7 @@ test "symsimplify signsimp parity" {
 
 ///|
 test "symsimplify radsimp parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exprs = [@symcore.pow(@symcore.function("sqrt", [x]), @symcore.int(-1))]
   for expr in exprs {
     let ours = radsimp(expr)
@@ -143,8 +143,8 @@ test "symsimplify radsimp parity" {
 
 ///|
 test "symsimplify ratsimp parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let exprs = [
     @symcore.add([
       @symcore.pow(x, @symcore.int(-1)),
@@ -210,7 +210,7 @@ test "symsimplify combsimp parity" {
 
 ///|
 test "symsimplify hyperexpand parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.function("hyper", [
       @symcore.function("Tuple", []),
@@ -231,7 +231,7 @@ test "symsimplify hyperexpand parity" {
 
 ///|
 test "symsimplify powdenest parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)),
     @symcore.function("exp", [
@@ -246,17 +246,17 @@ test "symsimplify powdenest parity" {
 
 ///|
 test "symsimplify exptrigsimp parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let exprs = [
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])]),
+      @symcore.function("exp", [@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.imag_unit(), x]),
+        @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x]),
       ]),
     ]),
     @symcore.add([
       @symcore.function("cos", [x]),
-      @symcore.mul([@symcore.imag_unit(), @symcore.function("sin", [x])]),
+      @symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.function("sin", [x])]),
     ]),
   ]
   for expr in exprs {
@@ -267,7 +267,7 @@ test "symsimplify exptrigsimp parity" {
 
 ///|
 test "symsimplify gammasimp/logcombine parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr1 = @symcore.function("gamma", [@symcore.add([x, @symcore.int(1)])])
   let ours1 = gammasimp(expr1)
   assert_true(gammasimp_equivalent(expr1, ours1))
@@ -282,9 +282,9 @@ test "symsimplify gammasimp/logcombine parity" {
 
 ///|
 test "symsimplify separatevars/hyper parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let k = @symcore.symbol("k")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let k = @symcore.Expr::Symbol("k")
 
   let sep_expr = @symcore.pow(@symcore.mul([x, y]), @symcore.int(2))
   let ours_sep = separatevars(sep_expr)
@@ -304,7 +304,7 @@ test "symsimplify separatevars/hyper parity" {
 
 ///|
 test "symsimplify fu parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
@@ -315,7 +315,7 @@ test "symsimplify fu parity" {
 
 ///|
 test "symsimplify compat simplify parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
 
   let kd_expr = @symcore.add([
     @symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]),
@@ -346,12 +346,12 @@ test "symsimplify compat simplify parity" {
 
 ///|
 test "symsimplify compat simplify advanced parity" {
-  let a = @symcore.symbol("a")
-  let golden = @symcore.golden_ratio()
-  let i = @symcore.symbol("i")
-  let pi = @symcore.pi()
-  let x = @symcore.symbol("x")
-  let z = @symcore.symbol("z")
+  let a = @symcore.Expr::Symbol("a")
+  let golden = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio)
+  let i = @symcore.Expr::Symbol("i")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
+  let x = @symcore.Expr::Symbol("x")
+  let z = @symcore.Expr::Symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
   let minus_half = @symcore.rational_from_ints(-1, 2)
 
@@ -417,8 +417,8 @@ test "symsimplify compat simplify advanced parity" {
 
 ///|
 test "symsimplify cse_opts parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([y, @symcore.mul([@symcore.int(-1), x])])
 
   let pre = sub_pre(expr)
@@ -430,8 +430,8 @@ test "symsimplify cse_opts parity" {
 
 ///|
 test "symsimplify radsimp extras parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
 
   let s_expr = @symcore.add([
     @symcore.mul([@symcore.int(2), @symcore.function("sqrt", [x])]),
@@ -465,9 +465,9 @@ test "symsimplify radsimp extras parity" {
 
 ///|
 test "symsimplify fu rules parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let pi = @symcore.pi()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
   let pi6 = @symcore.mul([@symcore.rational_from_ints(1, 6), pi])
 
   assert_true(

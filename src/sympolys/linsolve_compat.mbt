@@ -146,9 +146,9 @@ fn linsolve_expr_to_complex(expr : Expr, prec : Int) -> @symcore.ComplexFloat? {
 ///|
 fn linsolve_complex_to_expr(value : @symcore.ComplexFloat) -> Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.float(value.real_part())
+    @symcore.Expr::Float(value.real_part())
   } else {
-    @symcore.complex_float(value)
+    @symcore.Expr::ComplexFloat(value)
   }
 }
 
@@ -550,7 +550,7 @@ pub fn _linsolve(
 
   let basis_rows = nullspace.to_dense().to_list()
   for i in 0..<nonpivots.length() {
-    let free_sym = symbol(syms[nonpivots[i]])
+    let free_sym = Expr::Symbol(syms[nonpivots[i]])
     let row = basis_rows[i]
     for j in 0..<nsyms {
       if !fe_is_zero(row[j]) {
@@ -671,7 +671,7 @@ pub fn linear_solve(
   let params = free_vars.map(i => "t\{i}")
   let free_exprs : Map[Int, Expr] = {}
   for i in 0..<free_vars.length() {
-    free_exprs[free_vars[i]] = symbol(params[i])
+    free_exprs[free_vars[i]] = Expr::Symbol(params[i])
   }
   let exprs : Array[Expr] = Array::make(n, int(0))
   for j in 0..<n {

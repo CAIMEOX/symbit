@@ -58,7 +58,7 @@ test "geometry.ellipse parity tangency and parameter helpers" {
     expr_map_summary(
       e.parameter_value(
         point2d(@symcore.int(2), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     geometry_eval_str(
@@ -104,7 +104,7 @@ test "geometry.circle parity tangency and parameter helpers" {
     expr_map_summary(
       c.parameter_value(
         point2d(@symcore.int(1), @symcore.int(0)),
-        @symcore.symbol("t"),
+        @symcore.Expr::Symbol("t"),
       ),
     ),
     geometry_eval_str(
@@ -198,8 +198,8 @@ test "geometry.ellipse parity formula helpers" {
   let symbolic = match
     ellipse(
       point2d(@symcore.int(1), @symcore.int(2)),
-      @symcore.symbol("a"),
-      @symcore.symbol("b"),
+      @symcore.Expr::Symbol("a"),
+      @symcore.Expr::Symbol("b"),
     ) {
     GeometryEntity::Ellipse(value) => value
     _ => fail("expected symbolic ellipse")

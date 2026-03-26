@@ -122,7 +122,7 @@ pub fn Ideal::intersect(self : Ideal, other : Ideal) -> Ideal raise PolyError {
     ext_gens.push(g)
   }
   let builder = PolyBuilder::new(ext_gens, self.ring_domain())
-  let t = symbol(aux)
+  let t = Expr::Symbol(aux)
   let one = int(1)
   let elim_gens : Array[Poly] = Array::new()
   for f in self.gens {

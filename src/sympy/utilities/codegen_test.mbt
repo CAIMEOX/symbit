@@ -3,9 +3,9 @@
 
 ///|
 test "codegen c surface" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let result = codegen([("test", (x + y) * z)], "C89", "file")
   inspect(
     result,
@@ -15,8 +15,8 @@ test "codegen c surface" {
 
 ///|
 test "codegen julia and rust surface" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.function("sin", [x]) + y
   let julia = codegen([("f", expr)], "julia", "file")
   let rust = codegen([("f", expr)], "rust", "file")
@@ -28,8 +28,8 @@ test "codegen julia and rust surface" {
 
 ///|
 test "make_routine respects explicit argument order" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let routine = make_routine(
     "f",
     [routine_result("f_result", x + y)],
@@ -40,8 +40,8 @@ test "make_routine respects explicit argument order" {
 
 ///|
 test "codegen prints Float literals and rejects complex literals on C targets" {
-  let x = @symcore.symbol("x")
-  let half = @symcore.float(
+  let x = @symcore.Expr::Symbol("x")
+  let half = @symcore.Expr::Float(
     @symcore.Float::from_str("0.5", prec=80) catch {
       _ => fail("float literal")
     },
@@ -49,7 +49,7 @@ test "codegen prints Float literals and rejects complex literals on C targets" {
   let c_out = codegen([("f", x + half)], "C89", "file")
   assert_true(c_out[0].1.contains("0.5"))
 
-  let nonreal = @symcore.complex_float(
+  let nonreal = @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_real(
       @symcore.Float::from_int(1),
       imag=@symcore.Float::from_int(1),

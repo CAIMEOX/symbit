@@ -1,6 +1,6 @@
 ///|
 test "symseries O basic normalization" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let zero = big_o(@symcore.int(0))
   assert_eq(@symprint.debug_repr(zero), "0")
   let o1 = big_o(@symcore.int(5))

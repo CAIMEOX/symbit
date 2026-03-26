@@ -118,7 +118,7 @@ fn expr_sign(x : Expr) -> Expr {
 
 ///|
 fn expr_pi() -> Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|
@@ -309,7 +309,7 @@ fn split_sign(expr : Expr) -> (Bool, Expr) {
   match expr {
     @symcore.Expr::Number(n) =>
       if n.compare(@symnum.BigRational::zero()) < 0 {
-        (true, @symcore.number(n.neg_r()))
+        (true, @symcore.Expr::Number(n.neg_r()))
       } else {
         (false, expr)
       }

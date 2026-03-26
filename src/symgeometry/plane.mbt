@@ -130,9 +130,9 @@ fn plane_basis_coeffs(plane_obj : Plane, target : Point) -> (Expr, Expr)? {
 ///|
 pub fn Plane::equation(
   self : Plane,
-  x? : Expr = symbol("x"),
-  y? : Expr = symbol("y"),
-  z? : Expr = symbol("z"),
+  x? : Expr = Expr::Symbol("x"),
+  y? : Expr = Expr::Symbol("y"),
+  z? : Expr = Expr::Symbol("z"),
 ) -> Expr {
   geo_simplify(
     self.normal_[0] * (x - self.point_.coords_[0]) +
@@ -152,14 +152,14 @@ pub fn Plane::arbitrary_point(
     Some(vsym) => {
       let usym = match u {
         Some(value) => value
-        None => symbol("u")
+        None => Expr::Symbol("u")
       }
       plane_point_with_basis(self.point_, basis1, basis2, usym, vsym)
     }
     None => {
       let tsym = match u {
         Some(value) => value
-        None => symbol("t")
+        None => Expr::Symbol("t")
       }
       let norm1 = geo_norm(basis1)
       let norm2 = geo_norm(basis2)

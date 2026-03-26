@@ -25,12 +25,12 @@ pub struct Arch {
 
 ///|
 fn arch_var() -> Expr {
-  symbol("x")
+  Expr::Symbol("x")
 }
 
 ///|
 fn arch_pi() -> Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|

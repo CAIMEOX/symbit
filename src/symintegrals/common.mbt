@@ -26,7 +26,7 @@ fn expr_int(value : Int) -> Expr {
 
 ///|
 fn expr_from_num(value : @symnum.BigRational) -> Expr {
-  @symcore.number(value)
+  @symcore.Expr::Number(value)
 }
 
 ///|
@@ -288,10 +288,6 @@ fn expr_sqrt_positive(expr : Expr) -> Expr {
 }
 
 ///|
-fn tuple_expr(items : Array[Expr]) -> Expr {
-  @symcore.raw_function("Tuple", items)
-}
-
 ///|
 fn piecewise_expr(
   cases : Array[(Expr, Expr)],
@@ -303,7 +299,7 @@ fn piecewise_expr(
     args.push(item.1)
   }
   args.push(default)
-  args.push(@symcore.true_())
+  args.push(@symcore.Expr::Boolean(true))
   @symcore.raw_function("Piecewise", args)
 }
 

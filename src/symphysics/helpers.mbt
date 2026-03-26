@@ -1,11 +1,11 @@
 ///|
 fn pi_expr() -> Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|
 fn i_expr() -> Expr {
-  @symcore.imag_unit()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
 }
 
 ///|
@@ -25,11 +25,11 @@ fn rational_expr_bigint(num : BigInt, den : BigInt) -> Expr {
     (
       try? @symnum.BigRational::new(num, den) :
       Result[@symnum.BigRational, @symnum.RationalError]) {
-    Ok(value) => @symcore.number(value)
+    Ok(value) => @symcore.Expr::Number(value)
     Err(_) =>
       @symcore.function("Rational", [
-        @symcore.number(@symnum.BigRational::from_bigint(num)),
-        @symcore.number(@symnum.BigRational::from_bigint(den)),
+        @symcore.Expr::Number(@symnum.BigRational::from_bigint(num)),
+        @symcore.Expr::Number(@symnum.BigRational::from_bigint(den)),
       ])
   }
 }

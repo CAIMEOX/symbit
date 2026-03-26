@@ -34,52 +34,52 @@ fn make_function(
   match (name, args) {
     ("Tuple", _) =>
       if options.evaluate {
-        @symcore.tuple_expr(args)
+        @symcore.Expr::Tuple(args)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Eq", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.eq(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Ne", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.ne(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Ne, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Lt", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.lt(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Lt, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Le", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.le(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Le, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Gt", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.gt(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Gt, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     ("Ge", [lhs, rhs]) =>
       if options.evaluate {
-        @symcore.ge(lhs, rhs)
+        @symcore.Expr::Relational(@symcore.RelOp::Ge, lhs, rhs)
       } else {
         @symcore.raw_function(name, args)
       }
     _ =>
       match (
         if options.evaluate {
-          @symcore.apply(@symcore.function_head(name), args)
+          @symcore.apply(@symcore.Expr::FunctionHead(name), args)
         } else {
-          @symcore.raw_apply(@symcore.function_head(name), args)
+          @symcore.raw_apply(@symcore.Expr::FunctionHead(name), args)
         }
       ) {
         Some(expr) => expr
@@ -155,11 +155,11 @@ fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
     None =>
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
-        @symcore.undefined_function(name)
+        @symcore.Expr::UndefinedFunction(name)
       } else if is_builtin_callable_name(name) {
-        @symcore.function_head(name)
+        @symcore.Expr::FunctionHead(name)
       } else {
-        symbol(name)
+        Expr::Symbol(name)
       }
   }
 }
@@ -168,7 +168,7 @@ fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
 fn coerce_callable_target(bound : Expr) -> Expr? {
   match bound {
     Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => Some(bound)
-    Expr::Symbol(target_name) => Some(@symcore.function_head(target_name))
+    Expr::Symbol(target_name) => Some(@symcore.Expr::FunctionHead(target_name))
     _ => None
   }
 }
@@ -314,25 +314,25 @@ fn lower_compare_pair(
   let rhs_eval = lower_ast_in(rhs_ast, eval_options, context)
   if op is CompareOp::EqEq {
     if options.evaluate {
-      return @symcore.bool_expr(lhs_eval == rhs_eval)
+      return @symcore.Expr::Boolean(lhs_eval == rhs_eval)
     } else {
       return make_function("Eq", [lhs, rhs], options)
     }
   }
   if op is CompareOp::Ne {
     if options.evaluate {
-      return @symcore.bool_expr(lhs_eval != rhs_eval)
+      return @symcore.Expr::Boolean(lhs_eval != rhs_eval)
     } else {
       return make_function("Ne", [lhs, rhs], options)
     }
   }
   if op is CompareOp::Eq {
     if lhs_eval == rhs_eval {
-      return @symcore.bool_expr(true)
+      return @symcore.Expr::Boolean(true)
     }
     match (lhs_eval, rhs_eval) {
       (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return @symcore.bool_expr(compare_numeric(op, lhs_num, rhs_num))
+        return @symcore.Expr::Boolean(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
     return make_function("Eq", [lhs, rhs], options)
@@ -340,7 +340,7 @@ fn lower_compare_pair(
   if options.evaluate {
     match (lhs_eval, rhs_eval) {
       (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
-        return @symcore.bool_expr(compare_numeric(op, lhs_num, rhs_num))
+        return @symcore.Expr::Boolean(compare_numeric(op, lhs_num, rhs_num))
       _ => ()
     }
   }
@@ -497,7 +497,7 @@ fn number_from_literal(
         @symnum.BigRational::from_bigint(BigInt::from_string(text))
       }
   }
-  @symcore.number(value)
+  @symcore.Expr::Number(value)
 }
 
 ///|

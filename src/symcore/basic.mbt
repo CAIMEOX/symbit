@@ -1,5 +1,5 @@
 ///|
-pub enum NumberSymbolKind {
+pub(all) enum NumberSymbolKind {
   ImaginaryUnit
   Pi
   Exp1
@@ -13,7 +13,7 @@ pub enum NumberSymbolKind {
 }
 
 ///|
-pub enum RelOp {
+pub(all) enum RelOp {
   Eq
   Ne
   Lt
@@ -99,121 +99,6 @@ pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
   }
 }
 
-///|
-pub fn number_symbol(kind : NumberSymbolKind) -> Expr {
-  Expr::NumberSymbol(kind)
-}
-
-///|
-pub fn imag_unit() -> Expr {
-  number_symbol(NumberSymbolKind::ImaginaryUnit)
-}
-
-///|
-pub fn pi() -> Expr {
-  number_symbol(NumberSymbolKind::Pi)
-}
-
-///|
-pub fn exp1() -> Expr {
-  number_symbol(NumberSymbolKind::Exp1)
-}
-
-///|
-pub fn euler_gamma() -> Expr {
-  number_symbol(NumberSymbolKind::EulerGamma)
-}
-
-///|
-pub fn golden_ratio() -> Expr {
-  number_symbol(NumberSymbolKind::GoldenRatio)
-}
-
-///|
-pub fn catalan() -> Expr {
-  number_symbol(NumberSymbolKind::Catalan)
-}
-
-///|
-pub fn oo() -> Expr {
-  number_symbol(NumberSymbolKind::Infinity)
-}
-
-///|
-pub fn neg_oo() -> Expr {
-  number_symbol(NumberSymbolKind::NegativeInfinity)
-}
-
-///|
-pub fn zoo() -> Expr {
-  number_symbol(NumberSymbolKind::ComplexInfinity)
-}
-
-///|
-pub fn nan_expr() -> Expr {
-  number_symbol(NumberSymbolKind::NaN)
-}
-
-///|
-pub fn true_() -> Expr {
-  Expr::Boolean(true)
-}
-
-///|
-pub fn false_() -> Expr {
-  Expr::Boolean(false)
-}
-
-///|
-pub fn bool_expr(value : Bool) -> Expr {
-  if value {
-    true_()
-  } else {
-    false_()
-  }
-}
-
-///|
-pub fn tuple_expr(items : Array[Expr]) -> Expr {
-  Expr::Tuple(items.map(item => item))
-}
-
-///|
-pub fn dict_expr(items : Array[(Expr, Expr)]) -> Expr {
-  Expr::Dict(items.map(item => item))
-}
-
-///|
-pub fn eq(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Eq, lhs, rhs)
-}
-
-///|
-pub fn ne(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Ne, lhs, rhs)
-}
-
-///|
-pub fn lt(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Lt, lhs, rhs)
-}
-
-///|
-pub fn le(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Le, lhs, rhs)
-}
-
-///|
-pub fn gt(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Gt, lhs, rhs)
-}
-
-///|
-pub fn ge(lhs : Expr, rhs : Expr) -> Expr {
-  Expr::Relational(RelOp::Ge, lhs, rhs)
-}
-
-///|
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
   Expr::Derivative(expr, [wrt, order])
 }
@@ -631,7 +516,7 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
       let args : Array[Expr] = []
       for item in items {
         let (key, value) = item
-        args.push(tuple_expr([key, value]))
+        args.push(Expr::Tuple([key, value]))
       }
       Some(("Dict", args))
     }
@@ -666,8 +551,8 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
 ///|
 pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
   match expr_form(expr) {
-    ExprForm::AppliedUndef(name, args) => Some((undefined_function(name), args))
-    ExprForm::Applied(name, args) => Some((function_head(name), args))
+    ExprForm::AppliedUndef(name, args) => Some((Expr::UndefinedFunction(name), args))
+    ExprForm::Applied(name, args) => Some((Expr::FunctionHead(name), args))
     _ => None
   }
 }
@@ -727,7 +612,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
       let out : Array[Expr] = []
       for item in items {
         let (key, value) = item
-        out.push(tuple_expr([key, value]))
+        out.push(Expr::Tuple([key, value]))
       }
       out
     }

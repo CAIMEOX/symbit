@@ -33,7 +33,7 @@ fn poly_from_rationals(
 ) -> @symcore.Expr {
   let expr_coeffs : Array[@symcore.Expr] = Array::new()
   for c in coeffs {
-    expr_coeffs.push(@symcore.number(c))
+    expr_coeffs.push(@symcore.Expr::Number(c))
   }
   poly_to_expr(expr_coeffs, x, expr_coeffs.length())
 }
@@ -177,9 +177,9 @@ fn approx_expr_to_complex(
 ///|
 fn approx_complex_to_expr(value : @symcore.ComplexFloat) -> @symcore.Expr {
   if @symnum.is_zero(value.to_mpc().imag) {
-    @symcore.float(value.real_part())
+    @symcore.Expr::Float(value.real_part())
   } else {
-    @symcore.complex_float(value)
+    @symcore.Expr::ComplexFloat(value)
   }
 }
 
@@ -593,7 +593,7 @@ fn pade_expr_best(
 ///|
 fn pade_inv_factorial_expr(n : Int) -> @symcore.Expr {
   let den = factorial_bigint(n)
-  @symcore.number(safe_rational(BigInt::from_int(1), den))
+  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), den))
 }
 
 ///|
@@ -636,7 +636,7 @@ pub fn pade_approximant(
     @symcore.Expr::Number(n0v) => n0v.is_zero()
     _ => false
   }
-  let work_x = if around_zero { x } else { @symcore.symbol("__pade_t") }
+  let work_x = if around_zero { x } else { @symcore.Expr::Symbol("__pade_t") }
   let work_expr = if around_zero {
     expr
   } else {
@@ -705,7 +705,7 @@ pub fn pade_approximant(
 ///|
 pub fn approximants(
   coeffs : Array[@symcore.Expr],
-  x? : @symcore.Expr = @symcore.symbol("x"),
+  x? : @symcore.Expr = @symcore.Expr::Symbol("x"),
   simplify? : Bool = false,
 ) -> Array[@symcore.Expr] raise {
   let _ = simplify

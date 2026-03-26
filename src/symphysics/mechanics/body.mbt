@@ -12,17 +12,17 @@ pub fn body(
 ) -> Body raise @symvector.VectorError {
   let fr = frame.unwrap_or(@symvector.reference_frame(name + "_frame"))
   let mc = masscenter.unwrap_or(@symvector.point(name + "_masscenter"))
-  let m = mass.unwrap_or(symbol(name + "_mass"))
+  let m = mass.unwrap_or(Expr::Symbol(name + "_mass"))
   mc.set_vel(fr, @symvector.vector_zero())
   let default_inertia = Inertia::from_inertia_scalars(
     mc,
     fr,
-    symbol(name + "_ixx"),
-    symbol(name + "_iyy"),
-    symbol(name + "_izz"),
-    ixy=symbol(name + "_ixy"),
-    iyz=symbol(name + "_iyz"),
-    izx=symbol(name + "_izx"),
+    Expr::Symbol(name + "_ixx"),
+    Expr::Symbol(name + "_iyy"),
+    Expr::Symbol(name + "_izz"),
+    ixy=Expr::Symbol(name + "_ixy"),
+    iyz=Expr::Symbol(name + "_iyz"),
+    izx=Expr::Symbol(name + "_izx"),
   )
   let is_rb = match central_inertia {
     Some(_) => true

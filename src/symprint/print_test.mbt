@@ -1,13 +1,13 @@
 ///|
 test "debug repr uses s-expression order" {
-  let expr = @symcore.symbol("b") * (@symcore.symbol("a") + @symcore.int(1))
+  let expr = @symcore.Expr::Symbol("b") * (@symcore.Expr::Symbol("a") + @symcore.int(1))
   inspect(debug_repr(expr), content="(* sym:b (+ sym:a 1))")
 }
 
 ///|
 test "pretty to_string respects precedence" {
-  let expr = (@symcore.symbol("x") + @symcore.int(1)) ^
-    (@symcore.symbol("y") * @symcore.int(2))
+  let expr = (@symcore.Expr::Symbol("x") + @symcore.int(1)) ^
+    (@symcore.Expr::Symbol("y") * @symcore.int(2))
   inspect(to_string(expr), content="(x + 1)**(2*y)")
 }
 
@@ -21,7 +21,7 @@ test "pretty to_string prints Float leaves" {
     Ok(value) => value
     Err(_) => fail("float")
   }
-  inspect(to_string(@symcore.float(exact)), content="0.125")
+  inspect(to_string(@symcore.Expr::Float(exact)), content="0.125")
 }
 
 ///|
@@ -31,17 +31,17 @@ test "pretty to_string wraps complex float leaves inside products" {
     @symnum.BigRational::from_int(2),
     prec=80,
   )
-  let expr = @symcore.mul([@symcore.complex_float(value), @symcore.symbol("x")])
+  let expr = @symcore.mul([@symcore.Expr::ComplexFloat(value), @symcore.Expr::Symbol("x")])
   inspect(to_string(expr), content="(1.0 + 2.0*I)*x")
 }
 
 ///|
 test "pretty printers understand relational tuple and lambda wrappers" {
-  let rel = @symcore.le(@symcore.symbol("x"), @symcore.int(2))
-  let tup = @symcore.tuple_expr([@symcore.symbol("x"), @symcore.int(2)])
+  let rel = @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.Expr::Symbol("x"), @symcore.int(2))
+  let tup = @symcore.Expr::Tuple([@symcore.Expr::Symbol("x"), @symcore.int(2)])
   let lam = @symcore.lambda_expr(
     tup,
-    @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
+    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
   )
   inspect(debug_repr(rel), content="(call Le sym:x 2)")
   inspect(to_string(rel), content="x <= 2")
@@ -51,15 +51,15 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 
 ///|
 test "pretty printers understand number symbols" {
-  inspect(debug_repr(@symcore.pi()), content="const:pi")
-  inspect(to_string(@symcore.imag_unit()), content="I")
-  inspect(to_string(@symcore.oo()), content="oo")
+  inspect(debug_repr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), content="const:pi")
+  inspect(to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), content="I")
+  inspect(to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)), content="oo")
 }
 
 ///|
 test "pretty printers render dummy and wild names like SymPy" {
   let d = @symcore.dummy(name="x")
-  let w = @symcore.wild("x")
+  let w = @symcore.Expr::Wild("x")
   inspect(to_string(d), content="_x")
   assert_true(debug_repr(d).has_prefix("dummy:_x#"))
   inspect(to_string(w), content="x_")
@@ -68,8 +68,8 @@ test "pretty printers render dummy and wild names like SymPy" {
 
 ///|
 test "pretty printers distinguish undefined function heads" {
-  let f = @symcore.undefined_function("f")
-  let sin_head = @symcore.function_head("sin")
+  let f = @symcore.Expr::UndefinedFunction("f")
+  let sin_head = @symcore.Expr::FunctionHead("sin")
   inspect(to_string(f), content="f")
   inspect(debug_repr(f), content="ufunc:f")
   inspect(to_string(sin_head), content="sin")
@@ -78,9 +78,9 @@ test "pretty printers distinguish undefined function heads" {
 
 ///|
 test "pretty printers render dict containers" {
-  let expr = @symcore.dict_expr([
-    (@symcore.symbol("x"), @symcore.symbol("y")),
-    (@symcore.int(1), @symcore.symbol("z")),
+  let expr = @symcore.Expr::Dict([
+    (@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")),
+    (@symcore.int(1), @symcore.Expr::Symbol("z")),
   ])
   inspect(
     debug_repr(expr),
@@ -92,7 +92,7 @@ test "pretty printers render dict containers" {
 ///|
 test "pretty printers render Mod as a structured core node" {
   let expr = @symcore.mod_expr(
-    @symcore.add([@symcore.symbol("x"), @symcore.int(1)]),
+    @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
     @symcore.int(3),
   )
   inspect(to_string(expr), content="Mod(x + 1, 3)")

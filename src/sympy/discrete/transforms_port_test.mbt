@@ -29,7 +29,7 @@ test "discrete fft/ifft parity" {
     @symcore.int(4),
   ]
   assert_oracle(try? ifft_equiv(seq4, ifft(seq4, dps=15), dps=15))
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let seq_sym = [
     x,
     @symcore.mul([@symcore.int(2), x]),
@@ -102,8 +102,8 @@ test "discrete fwht/ifwht parity" {
     rat(9, 4),
   ]
   assert_oracle(try? ifwht_equiv(seq2, ifwht(seq2)))
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let seq3 = [
     x,
     y,
@@ -116,10 +116,10 @@ test "discrete fwht/ifwht parity" {
 
 ///|
 test "discrete mobius parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let w = @symcore.symbol("w")
-  let z = @symcore.symbol("z")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let w = @symcore.Expr::Symbol("w")
+  let z = @symcore.Expr::Symbol("z")
   let seq1 = [x, y]
   assert_oracle(try? mobius_transform_equiv(seq1, mobius_transform(seq1)))
   let seq2 = [w, x, y, z]

@@ -48,7 +48,7 @@ fn series_poly_shift(
     @symcore.Expr::Symbol(name) => name
     _ => fail("fps variable must be a Symbol")
   }
-  let t = @symcore.symbol("__fps_t")
+  let t = @symcore.Expr::Symbol("__fps_t")
   let env : Map[String, @symcore.Expr] = {}
   env[var_name] = @symcore.add([x0, t])
   let shifted = @symcore.subst(expr, env)
@@ -63,7 +63,7 @@ fn poly_expr_with_shift(
   n : Int,
   with_order : Bool,
 ) -> @symcore.Expr {
-  let t = @symcore.symbol("__fps_t")
+  let t = @symcore.Expr::Symbol("__fps_t")
   let poly_expr = poly_to_expr(poly, t, n)
   let back : Map[String, @symcore.Expr] = {}
   let shift_expr = @symcore.add([x, expr_neg(x0)])
@@ -124,7 +124,7 @@ fn fps_factorial_expr(n : Int) -> @symcore.Expr {
     fact = fact.mul(BigInt::from_int(i))
     i = i + 1
   }
-  @symcore.number(safe_rational(BigInt::from_int(1), fact))
+  @symcore.Expr::Number(safe_rational(BigInt::from_int(1), fact))
 }
 
 ///|
@@ -248,7 +248,7 @@ pub fn FormalPowerSeries::coeff(
   match series_poly_shift(self.expr, self.x, self.x0, need) {
     Some((poly, _)) =>
       if n < poly.length() {
-        let t = @symcore.symbol("__fps_t")
+        let t = @symcore.Expr::Symbol("__fps_t")
         let term = if n == 0 {
           poly[n]
         } else {
@@ -280,7 +280,7 @@ pub fn FormalPowerSeries::slice(
   match series_poly_shift(self.expr, self.x, self.x0, stop) {
     Some((poly, _)) => {
       let out : Array[@symcore.Expr] = Array::new()
-      let t = @symcore.symbol("__fps_t")
+      let t = @symcore.Expr::Symbol("__fps_t")
       let back : Map[String, @symcore.Expr] = {}
       back["__fps_t"] = @symcore.add([self.x, expr_neg(self.x0)])
       let mut i = start
@@ -413,7 +413,7 @@ pub fn FormalPowerSeries::as_leading_term(
       let mut k = 0
       while k < poly.length() {
         if !is_zero_expr(poly[k]) {
-          let t = @symcore.symbol("__fps_t")
+          let t = @symcore.Expr::Symbol("__fps_t")
           let term = if k == 0 {
             poly[k]
           } else {

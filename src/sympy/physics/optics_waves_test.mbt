@@ -9,9 +9,9 @@ fn waves_assert_expr_equal(
 
 ///|
 test "physics.optics.waves: twave properties and rewrites" {
-  let amp = @symcore.symbol("A")
-  let phi = @symcore.symbol("phi")
-  let freq = @symcore.symbol("f")
+  let amp = @symcore.Expr::Symbol("A")
+  let phi = @symcore.Expr::Symbol("phi")
+  let freq = @symcore.Expr::Symbol("f")
   let wave = t_wave(amp, frequency=Some(freq), phase=phi)
 
   assert_eq(wave.to_string(), "TWave(A, f, phi, 1/f, n)")
@@ -19,7 +19,7 @@ test "physics.optics.waves: twave properties and rewrites" {
   assert_true(wave.frequency == freq)
   assert_true(wave.phase == phi)
   assert_true(wave.time_period == (freq ^ @symcore.int(-1)))
-  assert_true(wave.refractive_index_expr() == @symcore.symbol("n"))
+  assert_true(wave.refractive_index_expr() == @symcore.Expr::Symbol("n"))
   assert_true(@symprint.to_string(wave.rewrite_as_cos()).contains("cos("))
   assert_true(@symprint.to_string(wave.rewrite_as_sin()).contains("sin("))
   assert_true(@symprint.to_string(wave.rewrite_as_exp()).contains("exp("))
@@ -27,11 +27,11 @@ test "physics.optics.waves: twave properties and rewrites" {
 
 ///|
 test "physics.optics.waves: superposition and scaling" {
-  let amp1 = @symcore.symbol("A1")
-  let amp2 = @symcore.symbol("A2")
-  let phi1 = @symcore.symbol("phi1")
-  let phi2 = @symcore.symbol("phi2")
-  let freq = @symcore.symbol("f")
+  let amp1 = @symcore.Expr::Symbol("A1")
+  let amp2 = @symcore.Expr::Symbol("A2")
+  let phi1 = @symcore.Expr::Symbol("phi1")
+  let phi2 = @symcore.Expr::Symbol("phi2")
+  let freq = @symcore.Expr::Symbol("f")
   let w1 = t_wave(amp1, frequency=Some(freq), phase=phi1)
   let w2 = t_wave(amp2, frequency=Some(freq), phase=phi2)
   let summed = w1.superpose(w2)

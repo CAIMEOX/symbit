@@ -8,9 +8,9 @@ test "physics.mechanics linearizer core semantics" {
   let x = @symvector.dynamicsymbol("x")
   let v = @symvector.dynamicsymbol("v")
   let f = @symvector.dynamicsymbol("F")
-  let k = @symcore.symbol("k")
-  let c = @symcore.symbol("c")
-  let m = @symcore.symbol("m")
+  let k = @symcore.Expr::Symbol("k")
+  let c = @symcore.Expr::Symbol("c")
+  let m = @symcore.Expr::Symbol("m")
   let lin = linearizer(
     [x, v],
     [v, (@symcore.int(-1) * (k * x + c * v) + f) * (m ^ @symcore.int(-1))],
@@ -45,19 +45,19 @@ test "physics.mechanics lagrange solve_multipliers parity-friendly semantics" {
     n.x().scale(@symcalculus.diff(x, @symvector.dynamicsymbols_t)) +
     n.y().scale(@symcalculus.diff(y, @symvector.dynamicsymbols_t)),
   )
-  let pa = particle("MLPa", point=Some(p), mass=Some(@symcore.symbol("m")))
-  pa.set_potential_energy(@symcore.symbol("g") * @symcore.symbol("m") * y)
+  let pa = particle("MLPa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
+  pa.set_potential_energy(@symcore.Expr::Symbol("g") * @symcore.Expr::Symbol("m") * y)
   let lagr = lagrangian(n, [pa.as_bodylike()])
   let lm = lagranges_method(
     lagr,
     [x, y],
     bodies=[pa.as_bodylike()],
     frame=Some(n),
-    hol_coneqs=[x * x + y * y - (@symcore.symbol("l") ^ @symcore.int(2))],
+    hol_coneqs=[x * x + y * y - (@symcore.Expr::Symbol("l") ^ @symcore.int(2))],
   )
   ignore(lm.form_lagranges_equations())
   let lambdas = lm.solve_multipliers(op_point=[
-    (x, @symcore.symbol("l")),
+    (x, @symcore.Expr::Symbol("l")),
     (y, @symcore.int(0)),
     (@symcalculus.diff(x, @symvector.dynamicsymbols_t), @symcore.int(0)),
     (@symcalculus.diff(y, @symvector.dynamicsymbols_t), @symcore.int(0)),

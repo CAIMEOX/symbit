@@ -451,7 +451,7 @@ fn exact_square_root(term : Expr) -> Expr? {
       }
     Expr::Number(n) =>
       match rational_sqrt(n) {
-        Some(root) => Some(@symcore.number(root))
+        Some(root) => Some(@symcore.Expr::Number(root))
         None => None
       }
     _ => None
@@ -469,7 +469,7 @@ fn exact_negative_square_root(term : Expr) -> Expr? {
       }
     Expr::Number(n) =>
       if n.compare(@symnum.BigRational::zero()) < 0 {
-        exact_square_root(@symcore.number(n.neg_r()))
+        exact_square_root(@symcore.Expr::Number(n.neg_r()))
       } else {
         None
       }
@@ -814,11 +814,11 @@ fn add_like_terms(expr : Expr) -> Expr {
         } else if acc.coeff.compare(minus_one) == 0 {
           out.push(@symcore.mul([int(-1), acc.base]))
         } else {
-          out.push(@symcore.mul([@symcore.number(acc.coeff), acc.base]))
+          out.push(@symcore.mul([@symcore.Expr::Number(acc.coeff), acc.base]))
         }
       }
       if !const_term.is_zero() {
-        out.push(@symcore.number(const_term))
+        out.push(@symcore.Expr::Number(const_term))
       }
       @symcore.add(out)
     }
@@ -905,11 +905,11 @@ fn mul_like_bases(expr : Expr) -> Expr {
         if acc.exp.is_one() {
           factors.push(acc.base)
         } else {
-          factors.push(@symcore.pow(acc.base, @symcore.number(acc.exp)))
+          factors.push(@symcore.pow(acc.base, @symcore.Expr::Number(acc.exp)))
         }
       }
       if factors.is_empty() || !const_factor.is_one() {
-        factors.push(@symcore.number(const_factor))
+        factors.push(@symcore.Expr::Number(const_factor))
       }
       @symcore.mul(factors)
     }
@@ -922,14 +922,14 @@ fn pow_denest(expr : Expr) -> Expr {
   match expr {
     Expr::Pow(Expr::Pow(base, inner_exp), outer_exp) =>
       match (exact_numeric_value(inner_exp), exact_numeric_value(outer_exp)) {
-        (Some(a), Some(b)) => @symcore.pow(base, @symcore.number(a.mul_r(b)))
+        (Some(a), Some(b)) => @symcore.pow(base, @symcore.Expr::Number(a.mul_r(b)))
         _ => expr
       }
     Expr::Pow(base, exp) =>
       match (exact_numeric_value(base), exact_numeric_value(exp)) {
         (Some(base_value), Some(exp_value)) =>
           match eval_numeric_pow(base_value, exp_value) {
-            Some(v) => numeric_result_like(expr, @symcore.number(v))
+            Some(v) => numeric_result_like(expr, @symcore.Expr::Number(v))
             None =>
               match float_source_precision(expr) {
                 Some(prec) => {
@@ -995,9 +995,9 @@ fn function_identities(expr : Expr) -> Expr {
             "sqrt" if numeric.is_one() => numeric_result_like(arg, int(1))
             "Abs" | "abs" =>
               if numeric.compare(@symnum.BigRational::zero()) < 0 {
-                numeric_result_like(arg, @symcore.number(numeric.neg_r()))
+                numeric_result_like(arg, @symcore.Expr::Number(numeric.neg_r()))
               } else {
-                numeric_result_like(arg, @symcore.number(numeric))
+                numeric_result_like(arg, @symcore.Expr::Number(numeric))
               }
             _ =>
               match (name, arg) {

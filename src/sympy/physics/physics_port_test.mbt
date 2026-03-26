@@ -42,7 +42,7 @@ fn physics_assert_matrix_equiv(
 
 ///|
 fn physics_dirac_c() -> @symcore.Expr {
-  @symcore.number(
+  @symcore.Expr::Number(
     @symnum.BigRational::new(
       @bigint.BigInt::from_string("137035999037"),
       @bigint.BigInt::from_int(1000000000),
@@ -104,10 +104,10 @@ test "physics: matrices parity for Pauli, Dirac, PAT, and DFT" {
 
 ///|
 test "physics: qho, sho, and pring parity" {
-  let x = @symcore.symbol("x")
-  let m = @symcore.symbol("m")
-  let omega = @symcore.symbol("omega")
-  let alpha = @symcore.symbol("alpha")
+  let x = @symcore.Expr::Symbol("x")
+  let m = @symcore.Expr::Symbol("m")
+  let omega = @symcore.Expr::Symbol("omega")
+  let alpha = @symcore.Expr::Symbol("alpha")
   for n in 0..<4 {
     physics_assert_expr_equal(
       @symphysics.psi_n(@symcore.int(n), x, m, omega),
@@ -116,8 +116,8 @@ test "physics: qho, sho, and pring parity" {
     )
   }
   physics_assert_expr_equal(
-    @symphysics.e_n(@symcore.symbol("n"), omega),
-    e_n(@symcore.symbol("n"), omega),
+    @symphysics.e_n(@symcore.Expr::Symbol("n"), omega),
+    e_n(@symcore.Expr::Symbol("n"), omega),
     "E_n",
   )
   physics_assert_expr_equal(
@@ -126,8 +126,8 @@ test "physics: qho, sho, and pring parity" {
     "coherent_state",
   )
 
-  let r = @symcore.symbol("r")
-  let nu = @symcore.symbol("nu")
+  let r = @symcore.Expr::Symbol("r")
+  let nu = @symcore.Expr::Symbol("nu")
   physics_assert_expr_equal(
     @symphysics.r_nl(@symcore.int(0), @symcore.int(0), nu, r),
     r_nl(@symcore.int(0), @symcore.int(0), nu, r),
@@ -135,11 +135,11 @@ test "physics: qho, sho, and pring parity" {
   )
   physics_assert_expr_equal(
     @symphysics.e_nl(
-      @symcore.symbol("n"),
-      @symcore.symbol("l"),
-      @symcore.symbol("hw"),
+      @symcore.Expr::Symbol("n"),
+      @symcore.Expr::Symbol("l"),
+      @symcore.Expr::Symbol("hw"),
     ),
-    e_nl(@symcore.symbol("n"), @symcore.symbol("l"), @symcore.symbol("hw")),
+    e_nl(@symcore.Expr::Symbol("n"), @symcore.Expr::Symbol("l"), @symcore.Expr::Symbol("hw")),
     "E_nl",
   )
 
@@ -157,10 +157,10 @@ test "physics: qho, sho, and pring parity" {
 
 ///|
 test "physics: hydrogen parity" {
-  let r = @symcore.symbol("r")
-  let zsym = @symcore.symbol("Z")
-  let phi = @symcore.symbol("phi")
-  let theta = @symcore.symbol("theta")
+  let r = @symcore.Expr::Symbol("r")
+  let zsym = @symcore.Expr::Symbol("Z")
+  let phi = @symcore.Expr::Symbol("phi")
+  let theta = @symcore.Expr::Symbol("theta")
 
   physics_assert_expr_equal(
     @symphysics.hydrogen_r_nl(@symcore.int(1), @symcore.int(0), r, z=zsym),
@@ -209,8 +209,8 @@ test "physics: hydrogen parity" {
     "hydrogen.Psi_nlm(2,1,1)",
   )
   physics_assert_expr_equal(
-    @symphysics.hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
-    hydrogen_e_nl(@symcore.symbol("n"), z=zsym),
+    @symphysics.hydrogen_e_nl(@symcore.Expr::Symbol("n"), z=zsym),
+    hydrogen_e_nl(@symcore.Expr::Symbol("n"), z=zsym),
     "hydrogen.E_nl",
   )
   let c = physics_dirac_c()
@@ -523,12 +523,12 @@ test "physics: real gaunt parity" {
 
 ///|
 test "physics: rotational harmonic parity" {
-  let theta = @symcore.symbol("theta")
-  let phi = @symcore.symbol("phi")
+  let theta = @symcore.Expr::Symbol("theta")
+  let phi = @symcore.Expr::Symbol("phi")
   let half = physics_frac(1, 2)
-  let alpha = @symcore.symbol("alpha")
-  let beta = @symcore.symbol("beta")
-  let gamma = @symcore.symbol("gamma")
+  let alpha = @symcore.Expr::Symbol("alpha")
+  let beta = @symcore.Expr::Symbol("beta")
+  let gamma = @symcore.Expr::Symbol("gamma")
 
   physics_assert_expr_equal(
     @symphysics.dot_rot_grad_ynm(
@@ -575,8 +575,8 @@ test "physics: rotational harmonic parity" {
     "wigner_d_small(1/2,beta)",
   )
   physics_assert_matrix_equiv(
-    @symphysics.wigner_d_small(half, @symcore.pi() * physics_frac(1, 2)),
-    wigner_d_small(half, @symcore.pi() * physics_frac(1, 2)),
+    @symphysics.wigner_d_small(half, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * physics_frac(1, 2)),
+    wigner_d_small(half, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * physics_frac(1, 2)),
     "wigner_d_small(1/2,pi/2)",
   )
   physics_assert_matrix_equiv(

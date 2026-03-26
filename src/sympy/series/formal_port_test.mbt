@@ -11,7 +11,7 @@ fn normalize_fps_str(s : String) -> String raise {
 
 ///|
 test "symseries fps truncate parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let denom = @symcore.add([
     @symcore.int(1),
     @symcore.mul([@symcore.int(-1), x]),
@@ -30,7 +30,7 @@ test "symseries fps truncate parity" {
 
 ///|
 test "symseries fps coeff parity" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.function("log", [@symcore.add([@symcore.int(1), x])])
   let res = fps(expr, x~)
   match res {
@@ -45,8 +45,8 @@ test "symseries fps coeff parity" {
 
 ///|
 test "symseries fps multivar truncate parity" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.function("exp", [@symcore.add([x, y])])
   let res = fps(expr, x~)
   match res {
@@ -61,8 +61,8 @@ test "symseries fps multivar truncate parity" {
 
 ///|
 test "symseries fps_multivariate coeff basic" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.function("exp", [@symcore.add([x, y])])
   let fpsm = fps_multivariate(expr, [x, y], x0s=[
     @symcore.int(0),
@@ -92,8 +92,8 @@ test "symseries fps_multivariate coeff basic" {
 
 ///|
 test "symseries fps_multivariate coeff nonzero centers" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([
     @symcore.mul([x, y]),
     @symcore.pow(x, @symcore.int(2)),

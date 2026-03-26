@@ -249,7 +249,7 @@ test "densearith wb: internal helper branches" {
   )
   assert_true(!ok_not_div && q_not_div.to_string() == "0")
 
-  let a = @symcore.symbol("a")
+  let a = @symcore.Expr::Symbol("a")
   let default_domain = Domain::AlgExt(Domain::ZZ, ["a"], [
     (a ^ @symcore.int(2)) + @symcore.int(1),
   ])

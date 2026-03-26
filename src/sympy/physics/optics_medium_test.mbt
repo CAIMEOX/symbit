@@ -23,8 +23,8 @@ test "physics.optics.medium: vacuum and symbolic media" {
   )
   medium_assert_expr_equal(vacuum.refractive_index(), "1", "vacuum n")
 
-  let epsilon = @symcore.symbol("epsilon")
-  let mu = @symcore.symbol("mu")
+  let epsilon = @symcore.Expr::Symbol("epsilon")
+  let mu = @symcore.Expr::Symbol("mu")
   let symbolic = medium("m2", permittivity=Some(epsilon), permeability=Some(mu))
   medium_assert_expr_equal(
     symbolic.intrinsic_impedance(),
@@ -45,8 +45,8 @@ test "physics.optics.medium: vacuum and symbolic media" {
 
 ///|
 test "physics.optics.medium: derived parameterizations and guards" {
-  let mu = @symcore.symbol("mu")
-  let n = @symcore.symbol("n")
+  let mu = @symcore.Expr::Symbol("mu")
+  let n = @symcore.Expr::Symbol("n")
 
   let by_n = medium("m6", permeability=Some(mu), n=Some(n))
   medium_assert_expr_equal(

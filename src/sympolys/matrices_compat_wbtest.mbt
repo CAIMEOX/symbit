@@ -1,7 +1,7 @@
 ///|
 test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let eqs = [
     @symcore.function("Eq", [x + y, @symcore.int(1)]),
     @symcore.int(2) * (x + @symcore.int(1)) + @symcore.int(3) * y,
@@ -23,8 +23,8 @@ test "matrices wb: _linear_eq_to_dict produces sparse linear rows" {
 
 ///|
 test "matrices wb: _linear_eq_to_dict rejects nonlinear terms" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let nonlinear : Result[
     (Array[Map[String, @symcore.Expr]], Array[@symcore.Expr]),
     PolyError,
@@ -34,8 +34,8 @@ test "matrices wb: _linear_eq_to_dict rejects nonlinear terms" {
 
 ///|
 test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let unique = [
     @symcore.function("Eq", [x + y, @symcore.int(1)]),
     @symcore.function("Eq", [x - y, @symcore.int(2)]),
@@ -85,16 +85,16 @@ test "matrices wb: _linsolve handles unique, under, and inconsistent systems" {
 
 ///|
 test "matrices wb: _linsolve uses numeric complex solve path for float coefficients" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let coeff = @symcore.complex_float(
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let coeff = @symcore.Expr::ComplexFloat(
     @symcore.ComplexFloat::from_exact_parts(
       @symnum.BigRational::from_int(1),
       @symnum.BigRational::from_int(1),
       prec=90,
     ),
   )
-  let two_thirds = @symcore.float(
+  let two_thirds = @symcore.Expr::Float(
     @symcore.Float::from_exact(
       @symnum.BigRational::from_ints(2, 3) catch {
         _ => fail("two_thirds")
@@ -136,7 +136,7 @@ test "matrices wb: DomainMatrix infers CC from complex float entries" {
     prec=90,
   )
   let dm_res : Result[DomainMatrix, PolyError] = try? DomainMatrix::from_Matrix(
-    [[@symcore.complex_float(z), @symcore.int(0)]],
+    [[@symcore.Expr::ComplexFloat(z), @symcore.int(0)]],
     fmt="dense",
     field=true,
   )

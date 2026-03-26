@@ -17,7 +17,7 @@ pub fn t_wave(
   frequency? : Expr? = None,
   phase? : Expr = int(0),
   time_period? : Expr? = None,
-  n? : Expr = symbol("n"),
+  n? : Expr = Expr::Symbol("n"),
 ) -> TWave raise PhysicsError {
   match (frequency, time_period) {
     (None, None) =>
@@ -200,8 +200,8 @@ pub fn TWave::sub(self : TWave, other : TWave) -> TWave raise PhysicsError {
 pub fn TWave::rewrite_as_sin(self : TWave) -> Expr {
   self.amplitude *
   @symelem.sin(
-    self.wavenumber() * symbol("x") -
-    self.angular_velocity() * symbol("t") +
+    self.wavenumber() * Expr::Symbol("x") -
+    self.angular_velocity() * Expr::Symbol("t") +
     self.phase +
     pi_expr() * rational_expr(1, 2),
   )
@@ -211,8 +211,8 @@ pub fn TWave::rewrite_as_sin(self : TWave) -> Expr {
 pub fn TWave::rewrite_as_cos(self : TWave) -> Expr {
   self.amplitude *
   @symelem.cos(
-    self.wavenumber() * symbol("x") -
-    self.angular_velocity() * symbol("t") +
+    self.wavenumber() * Expr::Symbol("x") -
+    self.angular_velocity() * Expr::Symbol("t") +
     self.phase,
   )
 }
@@ -223,8 +223,8 @@ pub fn TWave::rewrite_as_exp(self : TWave) -> Expr {
   @symelem.exp(
     i_expr() *
     (
-      self.wavenumber() * symbol("x") -
-      self.angular_velocity() * symbol("t") +
+      self.wavenumber() * Expr::Symbol("x") -
+      self.angular_velocity() * Expr::Symbol("t") +
       self.phase
     ),
   )
@@ -233,10 +233,10 @@ pub fn TWave::rewrite_as_exp(self : TWave) -> Expr {
 ///|
 pub fn TWave::rewrite_as_pde(self : TWave) -> Expr {
   ignore(self)
-  let mu = symbol("mu")
-  let epsilon = symbol("epsilon")
-  let x = symbol("x")
-  let t = symbol("t")
+  let mu = Expr::Symbol("mu")
+  let epsilon = Expr::Symbol("epsilon")
+  let x = Expr::Symbol("x")
+  let t = Expr::Symbol("t")
   let e = @symcore.raw_function("E", [x, t])
   @symcore.raw_add([
     @symcore.raw_derivative(e, [x, int(2)]),

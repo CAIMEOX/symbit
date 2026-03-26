@@ -58,7 +58,7 @@ pub fn expr_new_raw(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr {
     ExprOp::Symbol =>
       match args.length() {
         1 => args[0]
-        _ => @symcore.symbol("")
+        _ => @symcore.Expr::Symbol("")
       }
     ExprOp::Add => @symcore.raw_add(args)
     ExprOp::Mul => @symcore.raw_mul(args)
@@ -86,7 +86,7 @@ pub fn expr_new_eval(op : ExprOp, args : Array[@symcore.Expr]) -> @symcore.Expr 
     ExprOp::Symbol =>
       match args.length() {
         1 => args[0]
-        _ => @symcore.symbol("")
+        _ => @symcore.Expr::Symbol("")
       }
     ExprOp::Add => @symcore.add(args)
     ExprOp::Mul => @symcore.mul(args)

@@ -11,7 +11,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
       let out : Array[Expr] = []
       for item in items {
         let (key, value) = item
-        out.push(tuple_expr([key, value]))
+        out.push(Expr::Tuple([key, value]))
       }
       out[:]
     }
@@ -24,9 +24,9 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
         let wrt = deriv_args[i * 2]
         let order_idx = i * 2 + 1
         if order_idx < deriv_args.length() {
-          out.push(tuple_expr([wrt, deriv_args[order_idx]]))
+          out.push(Expr::Tuple([wrt, deriv_args[order_idx]]))
         } else {
-          out.push(tuple_expr([wrt, int(1)]))
+          out.push(Expr::Tuple([wrt, int(1)]))
         }
       }
       out[:]
@@ -67,23 +67,23 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Mul(args) => mul(args.map(f))
     Expr::Pow(base, exp) => pow(f(base), f(exp))
     Expr::Mod(lhs, rhs) => mod_expr(f(lhs), f(rhs))
-    Expr::Tuple(args) => tuple_expr(args.map(f))
+    Expr::Tuple(args) => Expr::Tuple(args.map(f))
     Expr::Dict(items) => {
       let out : Array[(Expr, Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((f(key), f(value)))
       }
-      dict_expr(out)
+      Expr::Dict(out)
     }
     Expr::Relational(op, lhs, rhs) =>
       match op {
-        RelOp::Eq => eq(f(lhs), f(rhs))
-        RelOp::Ne => ne(f(lhs), f(rhs))
-        RelOp::Lt => lt(f(lhs), f(rhs))
-        RelOp::Le => le(f(lhs), f(rhs))
-        RelOp::Gt => gt(f(lhs), f(rhs))
-        RelOp::Ge => ge(f(lhs), f(rhs))
+        RelOp::Eq => Expr::Relational(RelOp::Eq, f(lhs), f(rhs))
+        RelOp::Ne => Expr::Relational(RelOp::Ne, f(lhs), f(rhs))
+        RelOp::Lt => Expr::Relational(RelOp::Lt, f(lhs), f(rhs))
+        RelOp::Le => Expr::Relational(RelOp::Le, f(lhs), f(rhs))
+        RelOp::Gt => Expr::Relational(RelOp::Gt, f(lhs), f(rhs))
+        RelOp::Ge => Expr::Relational(RelOp::Ge, f(lhs), f(rhs))
       }
     Expr::Derivative(inner, deriv_args) => {
       let out : Array[Expr] = []
@@ -97,7 +97,7 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Lambda(vars, body) => lambda_expr(f(vars), f(body))
     Expr::AppliedUndef(name, args) =>
       applied_undefined_function(name, args.map(f))
-    Expr::FunctionHead(name) => function_head(name)
+    Expr::FunctionHead(name) => Expr::FunctionHead(name)
     Expr::Function(name, args) => function(name, args.map(f))
     _ => expr
   }
@@ -153,7 +153,7 @@ fn rename_lambda_bound_vars(
           for item in items {
             out.push(rename_lambda_bound_vars(item, env, rename_env))
           }
-          tuple_expr(out)
+          Expr::Tuple(out)
         }
         None => bound
       }
@@ -278,7 +278,7 @@ fn subst_derivative(
   let mut out = rebuilt
   for key in outer_keys {
     match outer_env.get(key) {
-      Some(value) => out = subs_expr(out, symbol(key), subst(value, env))
+      Some(value) => out = subs_expr(out, Expr::Symbol(key), subst(value, env))
       None => ()
     }
   }

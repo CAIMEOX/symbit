@@ -69,7 +69,7 @@ fn rational_expr(num : Int, den : Int) -> @symcore.Expr {
 
 ///|
 fn pi_expr() -> @symcore.Expr {
-  @symcore.pi()
+  @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 }
 
 ///|
@@ -114,7 +114,7 @@ fn rename_symbol(
   match expr {
     @symcore.Expr::Symbol(name) =>
       if name == old_name {
-        @symcore.symbol(new_name)
+        @symcore.Expr::Symbol(new_name)
       } else {
         expr
       }
@@ -722,22 +722,22 @@ pub fn Truss::apply_support(
       None =>
         if kind == "pinned" {
           self.apply_load([
-            (location, @symcore.symbol(reaction_x_name(location)), int_expr(0)),
-            (location, @symcore.symbol(reaction_y_name(location)), int_expr(90)),
+            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
+            (location, @symcore.Expr::Symbol(reaction_y_name(location)), int_expr(90)),
           ])
         } else {
           self.apply_load([
-            (location, @symcore.symbol(reaction_y_name(location)), int_expr(90)),
+            (location, @symcore.Expr::Symbol(reaction_y_name(location)), int_expr(90)),
           ])
         }
       Some(existing) =>
         if existing == "pinned" && kind == "roller" {
           self.remove_load([
-            (location, @symcore.symbol(reaction_x_name(location)), int_expr(0)),
+            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
           ])
         } else if existing == "roller" && kind == "pinned" {
           self.apply_load([
-            (location, @symcore.symbol(reaction_x_name(location)), int_expr(0)),
+            (location, @symcore.Expr::Symbol(reaction_x_name(location)), int_expr(0)),
           ])
         }
     }
@@ -763,12 +763,12 @@ pub fn Truss::remove_support(
     }
     if kind == "pinned" {
       self.remove_load([
-        (label, @symcore.symbol(reaction_x_name(label)), int_expr(0)),
-        (label, @symcore.symbol(reaction_y_name(label)), int_expr(90)),
+        (label, @symcore.Expr::Symbol(reaction_x_name(label)), int_expr(0)),
+        (label, @symcore.Expr::Symbol(reaction_y_name(label)), int_expr(90)),
       ])
     } else {
       self.remove_load([
-        (label, @symcore.symbol(reaction_y_name(label)), int_expr(90)),
+        (label, @symcore.Expr::Symbol(reaction_y_name(label)), int_expr(90)),
       ])
     }
     ignore(self.supports_.remove(label))

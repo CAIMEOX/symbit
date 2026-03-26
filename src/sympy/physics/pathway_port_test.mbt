@@ -24,7 +24,7 @@ test "physics.mechanics parity pathways" {
   let p_a = @symvector.point("QpA")
   let p_b = @symvector.point("QpB")
   let q = @symvector.dynamicsymbol("q")
-  let f = @symcore.symbol("F")
+  let f = @symcore.Expr::Symbol("F")
   p_b.set_pos(p_a, n.x().scale(q))
   let linear = linear_pathway(p_a, p_b)
   let linear_length_oracle = mechanics_summary(

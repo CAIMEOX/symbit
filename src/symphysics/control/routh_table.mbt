@@ -70,7 +70,7 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
       match (base_norm, exp_norm) {
         (@symcore.Expr::Number(base_value), @symcore.Expr::Number(exp_value)) if exp_value.is_integral() =>
           match rational_pow(base_value, exp_value.numerator().to_int()) {
-            Some(value) => @symcore.number(value)
+            Some(value) => @symcore.Expr::Number(value)
             None => @symcore.pow(base_norm, exp_norm)
           }
         _ => @symcore.pow(base_norm, exp_norm)
@@ -79,29 +79,29 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.ExprForm::Mod(lhs, rhs) =>
       @symcore.mod_expr(control_normalize(lhs), control_normalize(rhs))
     @symcore.ExprForm::Tuple(args) =>
-      @symcore.tuple_expr(args.map(control_normalize))
+      @symcore.Expr::Tuple(args.map(control_normalize))
     @symcore.ExprForm::Dict(items) => {
       let out : Array[(@symcore.Expr, @symcore.Expr)] = []
       for item in items {
         let (key, value) = item
         out.push((control_normalize(key), control_normalize(value)))
       }
-      @symcore.dict_expr(out)
+      @symcore.Expr::Dict(out)
     }
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.eq(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Eq, control_normalize(lhs), control_normalize(rhs))
         @symcore.RelOp::Ne =>
-          @symcore.ne(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Ne, control_normalize(lhs), control_normalize(rhs))
         @symcore.RelOp::Lt =>
-          @symcore.lt(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Lt, control_normalize(lhs), control_normalize(rhs))
         @symcore.RelOp::Le =>
-          @symcore.le(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Le, control_normalize(lhs), control_normalize(rhs))
         @symcore.RelOp::Gt =>
-          @symcore.gt(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Gt, control_normalize(lhs), control_normalize(rhs))
         @symcore.RelOp::Ge =>
-          @symcore.ge(control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(@symcore.RelOp::Ge, control_normalize(lhs), control_normalize(rhs))
       }
     @symcore.ExprForm::Derivative(inner, deriv_args) => {
       let args : Array[@symcore.Expr] = [control_normalize(inner)]
@@ -351,7 +351,7 @@ fn build_auxiliary_polynomial(
   variable : String,
 ) -> @symcore.Expr {
   let aux_row = poly_degree - aux_poly_degree
-  let variable_expr = @symcore.symbol(variable)
+  let variable_expr = @symcore.Expr::Symbol(variable)
   let terms : Array[@symcore.Expr] = Array::new()
   let mut exp = aux_poly_degree
   let mut col = 0

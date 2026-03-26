@@ -38,7 +38,7 @@ fn lagrange_qddots(coords : Array[Expr]) -> Array[Expr] {
 fn lagrange_lambda_symbols(count : Int) -> Array[Expr] {
   let out : Array[Expr] = []
   for i in 0..<count {
-    out.push(symbol("lam" + (i + 1).to_string()))
+    out.push(Expr::Symbol("lam" + (i + 1).to_string()))
   }
   out
 }

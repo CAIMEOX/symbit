@@ -75,7 +75,7 @@ pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
   }
   for item in seen {
     if parameter_name != Some(item.0) {
-      out.push(symbol(item.0))
+      out.push(Expr::Symbol(item.0))
     }
   }
   let n = out.length()
@@ -94,7 +94,7 @@ pub fn Curve::free_symbols(self : Curve) -> Array[Expr] {
 ///|
 pub fn Curve::plot_interval(
   self : Curve,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   [parameter, self.start_, self.end_]
 }
@@ -102,10 +102,10 @@ pub fn Curve::plot_interval(
 ///|
 pub fn Curve::arbitrary_point(
   self : Curve,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
   let env : Map[String, Expr] = {}
-  let actual = if @symcore.compare_expr(parameter, symbol("t")) == 0 {
+  let actual = if @symcore.compare_expr(parameter, Expr::Symbol("t")) == 0 {
     self.parameter_
   } else {
     parameter

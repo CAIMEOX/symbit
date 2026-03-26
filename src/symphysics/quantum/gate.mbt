@@ -102,7 +102,7 @@ pub fn cnot_gate(control : Int, target : Int) -> GateExpr {
 
 ///|
 fn gate_tuple_expr(items : Array[Int]) -> Expr {
-  @symcore.tuple_expr(items.map(@symcore.int))
+  @symcore.Expr::Tuple(items.map(@symcore.int))
 }
 
 ///|
@@ -195,9 +195,9 @@ fn gate_matrix_expr(
     for col in 0..<matrix.width() {
       items.push(matrix.get(row, col))
     }
-    rows.push(@symcore.tuple_expr(items))
+    rows.push(@symcore.Expr::Tuple(items))
   }
-  @symcore.raw_function("ImmutableDenseMatrix", [@symcore.tuple_expr(rows)])
+  @symcore.raw_function("ImmutableDenseMatrix", [@symcore.Expr::Tuple(rows)])
 }
 
 ///|
@@ -313,7 +313,7 @@ fn sqrt2_over_2() -> Expr {
 ///|
 fn gate_phase_t() -> Expr {
   let quarter = gate_exact_rational(1, 4)
-  @symcore.raw_function("exp", [@symcore.imag_unit() * @symcore.pi() * quarter])
+  @symcore.raw_function("exp", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * quarter])
 }
 
 ///|
@@ -330,7 +330,7 @@ pub fn GateExpr::target_matrix(
     GateKind::X =>
       @symphysics.explicit_matrix_from_rows([[int(0), int(1)], [int(1), int(0)]])
     GateKind::Y => {
-      let i = @symcore.imag_unit()
+      let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
       @symphysics.explicit_matrix_from_rows([[int(0), int(-1) * i], [i, int(0)]])
     }
     GateKind::Z =>
@@ -339,7 +339,7 @@ pub fn GateExpr::target_matrix(
         [int(0), int(-1)],
       ])
     GateKind::Phase => {
-      let i = @symcore.imag_unit()
+      let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
       @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), i]])
     }
     GateKind::T =>

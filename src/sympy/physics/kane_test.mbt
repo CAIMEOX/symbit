@@ -19,7 +19,7 @@ test "physics.mechanics kane: spring mass damper" {
   let n = @symvector.reference_frame("KN")
   let p = @symvector.point("KP")
   p.set_vel(n, n.x().scale(u))
-  let pa = particle("KPa", point=Some(p), mass=Some(@symcore.symbol("m")))
+  let pa = particle("KPa", point=Some(p), mass=Some(@symcore.Expr::Symbol("m")))
   let km = kanes_method(n, [q], [u], [
     @symcalculus.diff(q, @symvector.dynamicsymbols_t) - u,
   ])
@@ -31,7 +31,7 @@ test "physics.mechanics kane: spring mass damper" {
         .x()
         .scale(
           @symcore.int(-1) *
-          (@symcore.symbol("k") * q + @symcore.symbol("c") * u),
+          (@symcore.Expr::Symbol("k") * q + @symcore.Expr::Symbol("c") * u),
         ),
       ),
     ]),

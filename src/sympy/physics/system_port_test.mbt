@@ -16,12 +16,12 @@ test "physics.mechanics parity system assembly" {
     bob.as_bodylike(),
     child_interframe=Some(joint_interframe_frame(bob_frame)),
     child_point=Some(
-      joint_attachment_offset(bob_frame.y().scale(@symcore.symbol("l")).neg()),
+      joint_attachment_offset(bob_frame.y().scale(@symcore.Expr::Symbol("l")).neg()),
     ),
     joint_axis=Some(cart.frame().z()),
   )
   sys.add_joints([slider.as_joint(), pin.as_joint()])
-  sys.apply_uniform_gravity(n.y().scale(@symcore.symbol("g")).neg())
+  sys.apply_uniform_gravity(n.y().scale(@symcore.Expr::Symbol("g")).neg())
   sys.add_loads([
     force_load(cart.masscenter(), n.x().scale(@symvector.dynamicsymbol("F"))),
   ])
@@ -87,9 +87,9 @@ test "physics.mechanics parity system form_eoms lagrange" {
   let q = @symvector.dynamicsymbol("q")
   let qd = @symcalculus.diff(q, @symvector.dynamicsymbols_t)
   let wall = rigid_body("wall")
-  let bob = particle("bob", mass=Some(@symcore.symbol("m")))
+  let bob = particle("bob", mass=Some(@symcore.Expr::Symbol("m")))
   bob.set_potential_energy(
-    @symcore.symbol("k") *
+    @symcore.Expr::Symbol("k") *
     (q ^ @symcore.int(2)) *
     @symcore.rational_from_ints(1, 2),
   )
@@ -103,7 +103,7 @@ test "physics.mechanics parity system form_eoms lagrange" {
   )
   sys.add_joints([joint.as_joint()])
   sys.add_loads([
-    force_load(bob.point(), sys.x().scale(@symcore.symbol("b") * qd)),
+    force_load(bob.point(), sys.x().scale(@symcore.Expr::Symbol("b") * qd)),
   ])
   ignore(sys.form_eoms(use_lagrange=true))
 

@@ -56,7 +56,7 @@ fn rewrite_combinatorial_call(
       match exact_numeric_value(arg) {
         Some(value) =>
           match to_nonnegative_int(value) {
-            Some(k) => @symcore.number(int_factorial_rational(k))
+            Some(k) => @symcore.Expr::Number(int_factorial_rational(k))
             None => original
           }
         None => original
@@ -65,7 +65,7 @@ fn rewrite_combinatorial_call(
       match exact_numeric_value(arg) {
         Some(value) =>
           match to_positive_int(value) {
-            Some(k) => @symcore.number(int_factorial_rational(k - 1))
+            Some(k) => @symcore.Expr::Number(int_factorial_rational(k - 1))
             None => original
           }
         None => original
@@ -88,11 +88,11 @@ fn rewrite_combinatorial_call(
           } else if ki == 0 || ki == ni {
             int(1)
           } else if ki == 1 {
-            @symcore.number(
+            @symcore.Expr::Number(
               exact_numeric_value(n_expr).unwrap_or(@symnum.BigRational::zero()),
             )
           } else {
-            @symcore.number(int_binomial_rational(ni, ki))
+            @symcore.Expr::Number(int_binomial_rational(ni, ki))
           }
         (None, Some(0)) => int(1)
         (None, Some(1)) => n_expr

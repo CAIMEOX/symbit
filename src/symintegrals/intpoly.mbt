@@ -9,7 +9,7 @@
 
 ///|
 fn intpoly_default_vars() -> Array[Expr] {
-  [@symcore.symbol("x"), @symcore.symbol("y")]
+  [@symcore.Expr::Symbol("x"), @symcore.Expr::Symbol("y")]
 }
 
 ///|
@@ -135,7 +135,7 @@ fn intpoly_segment_integrand(
   let y1 = p1.y() catch {
     _ => raise IntegralError::ValueError("segment must be planar")
   }
-  let t = @symcore.symbol(t_name)
+  let t = @symcore.Expr::Symbol(t_name)
   let x_t = expr_add(x0, expr_mul(expr_sub(x1, x0), t))
   let y_t = expr_add(y0, expr_mul(expr_sub(y1, y0), t))
   subst_symbol(subst_symbol(expr, x_name, x_t), y_name, y_t)
@@ -159,7 +159,7 @@ fn intpoly_polygon_signed_integral(
 ) -> Expr raise IntegralError {
   let vars = [x_name, y_name]
   let t_name = intpoly_fresh_parameter(primitive_x, vars)
-  let t = @symcore.symbol(t_name)
+  let t = @symcore.Expr::Symbol(t_name)
   let zero = expr_zero()
   let one = expr_one()
   let sides = poly.sides() catch {
@@ -219,7 +219,7 @@ fn intpoly_primitive_x(
   expr : Expr,
   x_name : String,
 ) -> Expr raise IntegralError {
-  let x = @symcore.symbol(x_name)
+  let x = @symcore.Expr::Symbol(x_name)
 
   fn split_polynomial_x_term(term : Expr) -> (Expr, Int)? {
     match expr_simplify(term) {
@@ -338,7 +338,7 @@ pub fn segment_integrate(
 ) -> Expr raise IntegralError {
   let (x_name, y_name) = intpoly_validate_planar_polynomial(expr, vars)
   let t_name = intpoly_fresh_parameter(expr, [x_name, y_name])
-  let t = @symcore.symbol(t_name)
+  let t = @symcore.Expr::Symbol(t_name)
   let transformed = intpoly_segment_integrand(expr, seg, x_name, y_name, t_name)
   let weighted = expr_mul(transformed, intpoly_segment_length(seg))
   integrate(weighted, limits=[integral_limit([t, expr_zero(), expr_one()])])
@@ -387,8 +387,8 @@ pub fn polytope_integrate_upto(
     raise IntegralError::ValueError("max_degree must be non-negative")
   }
   let (x_name, y_name) = intpoly_var_names(vars)
-  let x = @symcore.symbol(x_name)
-  let y = @symcore.symbol(y_name)
+  let x = @symcore.Expr::Symbol(x_name)
+  let y = @symcore.Expr::Symbol(y_name)
   let out : Map[Expr, Expr] = {}
   for degree in 0..<=max_degree {
     for dx in 0..<=degree {

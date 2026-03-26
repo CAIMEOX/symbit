@@ -1,7 +1,7 @@
 ///|
 test "symsimplify basic algebra rules" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   inspect(
     @symprint.debug_repr(simplify(@symcore.add([x, x]))),
     content="(* 2 sym:x)",
@@ -20,7 +20,7 @@ test "symsimplify basic algebra rules" {
 
 ///|
 test "symsimplify function identities" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let trig = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
@@ -38,9 +38,9 @@ test "symsimplify function identities" {
 
 ///|
 test "symsimplify dispatcher handles composite heuristics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let i = @symcore.imag_unit()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
 
   let numerator = @symcore.add([x, @symcore.pow(x, @symcore.int(2))])
   let denominator = @symcore.add([
@@ -71,7 +71,7 @@ test "symsimplify dispatcher handles composite heuristics" {
 
 ///|
 test "symsimplify dispatcher handles special heuristics" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
 
   let logs = @symcore.add([
     @symcore.function("log", [x]),
@@ -97,7 +97,7 @@ test "symsimplify dispatcher handles special heuristics" {
 
 ///|
 test "symsimplify numeric power denest" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let expr = @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3))
   inspect(@symprint.debug_repr(simplify(expr)), content="(^ sym:x 6)")
   let num = @symcore.pow(@symcore.int(2), @symcore.int(3))
@@ -106,8 +106,8 @@ test "symsimplify numeric power denest" {
 
 ///|
 test "symsimplify fraction numer denom collect basics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.mul([
     @symcore.int(2),
     @symcore.pow(x, @symcore.int(-1)),
@@ -134,17 +134,17 @@ test "symsimplify fraction numer denom collect basics" {
 
 ///|
 test "symsimplify advanced rewrites basics" {
-  let x = @symcore.symbol("x")
-  let k = @symcore.symbol("k")
+  let x = @symcore.Expr::Symbol("x")
+  let k = @symcore.Expr::Symbol("k")
   let pd = powdenest(
     @symcore.pow(@symcore.pow(x, @symcore.int(2)), @symcore.int(3)),
   )
   inspect(@symprint.debug_repr(pd), content="(^ sym:x 6)")
   let ee = exptrigsimp(
     @symcore.add([
-      @symcore.function("exp", [@symcore.mul([@symcore.imag_unit(), x])]),
+      @symcore.function("exp", [@symcore.mul([@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x])]),
       @symcore.function("exp", [
-        @symcore.mul([@symcore.int(-1), @symcore.imag_unit(), x]),
+        @symcore.mul([@symcore.int(-1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), x]),
       ]),
     ]),
   )
@@ -164,7 +164,7 @@ test "symsimplify advanced rewrites basics" {
 
 ///|
 test "symsimplify compat api basics" {
-  let x = @symcore.symbol("x")
+  let x = @symcore.Expr::Symbol("x")
   let k0 = kroneckersimp(
     @symcore.function("KroneckerDelta", [@symcore.int(2), @symcore.int(3)]),
   )
@@ -223,14 +223,14 @@ test "symsimplify compat api basics" {
 
 ///|
 test "symsimplify compat api advanced cases" {
-  let a = @symcore.symbol("a")
-  let i = @symcore.symbol("i")
-  let j = @symcore.symbol("j")
-  let x = @symcore.symbol("x")
-  let z = @symcore.symbol("z")
+  let a = @symcore.Expr::Symbol("a")
+  let i = @symcore.Expr::Symbol("i")
+  let j = @symcore.Expr::Symbol("j")
+  let x = @symcore.Expr::Symbol("x")
+  let z = @symcore.Expr::Symbol("z")
   let half = @symcore.rational_from_ints(1, 2)
   let minus_half = @symcore.rational_from_ints(-1, 2)
-  let pi = @symcore.pi()
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 
   let kd_cancel = kroneckersimp(
     @symcore.add([
@@ -319,7 +319,7 @@ test "symsimplify compat api advanced cases" {
   )
   assert_true(trig_ns == @symcore.int(3))
 
-  let golden = @symcore.golden_ratio()
+  let golden = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::GoldenRatio)
   let golden_ns = nsimplify(
     @symcore.add([
       @symcore.function("sqrt", [@symcore.int(5)]),
@@ -335,8 +335,8 @@ test "symsimplify compat api advanced cases" {
 
 ///|
 test "symsimplify traversal/cse_opts basics" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
   let expr = @symcore.add([y, @symcore.mul([@symcore.int(-1), x])])
   ignore(sub_post(sub_pre(expr)))
 
@@ -347,9 +347,9 @@ test "symsimplify traversal/cse_opts basics" {
 
 ///|
 test "symsimplify fu rules smoke" {
-  let x = @symcore.symbol("x")
-  let y = @symcore.symbol("y")
-  let pi = @symcore.pi()
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let pi = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)
 
   inspect(
     @symprint.debug_repr(tr1(@symcore.function("sec", [x]))),

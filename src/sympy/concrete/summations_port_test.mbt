@@ -1,6 +1,6 @@
 ///|
 test "symconcrete summation finite integer" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = summation(k, limits~)
   let ours_str = @symprint.to_string(ours)
@@ -9,8 +9,8 @@ test "symconcrete summation finite integer" {
 
 ///|
 test "symconcrete summation constant term" {
-  let k = @symcore.symbol("k")
-  let y = @symcore.symbol("y")
+  let k = @symcore.Expr::Symbol("k")
+  let y = @symcore.Expr::Symbol("y")
   let limits = [limit_range(k, @symcore.int(1), @symcore.int(3))]
   let ours = summation(y, limits~)
   let ours_str = @symprint.to_string(ours)
@@ -19,7 +19,7 @@ test "symconcrete summation constant term" {
 
 ///|
 test "symconcrete Sum reverse_order parity" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let sum = Sum::{
     expr: k,
     limits: [limit_range(k, @symcore.int(0), @symcore.int(3))],
@@ -32,7 +32,7 @@ test "symconcrete Sum reverse_order parity" {
 
 ///|
 test "symconcrete Sum change_index shift" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let sum = Sum::{
     expr: k,
     limits: [limit_range(k, @symcore.int(0), @symcore.int(3))],
@@ -45,8 +45,8 @@ test "symconcrete Sum change_index shift" {
 
 ///|
 test "symconcrete summation polynomial symbolic" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.pow(k, @symcore.int(2))
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)
@@ -57,9 +57,9 @@ test "symconcrete summation polynomial symbolic" {
 
 ///|
 test "symconcrete summation geometric symbolic" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
-  let r = @symcore.symbol("r")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
+  let r = @symcore.Expr::Symbol("r")
   let expr = @symcore.pow(r, k)
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)
@@ -70,8 +70,8 @@ test "symconcrete summation geometric symbolic" {
 
 ///|
 test "symconcrete summation telescoping symbolic" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let kp1 = @symcore.add([k, @symcore.int(1)])
   let expr = @symcore.add([
     @symcore.pow(kp1, @symcore.int(2)),
@@ -86,8 +86,8 @@ test "symconcrete summation telescoping symbolic" {
 
 ///|
 test "symconcrete summation binomial hyper" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcomb.binomial(n, k)
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)
@@ -98,9 +98,9 @@ test "symconcrete summation binomial hyper" {
 
 ///|
 test "symconcrete summation binomial weighted" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
-  let a = @symcore.symbol("a")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
+  let a = @symcore.Expr::Symbol("a")
   let expr = @symcore.mul([@symcomb.binomial(n, k), @symcore.pow(a, k)])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)
@@ -111,9 +111,9 @@ test "symconcrete summation binomial weighted" {
 
 ///|
 test "symconcrete summation binomial k weighted" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
-  let a = @symcore.symbol("a")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
+  let a = @symcore.Expr::Symbol("a")
   let expr = @symcore.mul([k, @symcomb.binomial(n, k), @symcore.pow(a, k)])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)
@@ -124,8 +124,8 @@ test "symconcrete summation binomial k weighted" {
 
 ///|
 test "symconcrete summation harmonic finite" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
   let expr = @symcore.pow(k, @symcore.int(-1))
   let limits = [limit_range(k, @symcore.int(1), n)]
   let ours = summation(expr, limits~)
@@ -136,9 +136,9 @@ test "symconcrete summation harmonic finite" {
 
 ///|
 test "symconcrete summation zeta infinite" {
-  let k = @symcore.symbol("k")
+  let k = @symcore.Expr::Symbol("k")
   let expr = @symcore.pow(k, @symcore.int(-2))
-  let limits = [limit_range(k, @symcore.int(1), @symcore.oo())]
+  let limits = [limit_range(k, @symcore.int(1), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))]
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "zeta(2)"
@@ -147,10 +147,10 @@ test "symconcrete summation zeta infinite" {
 
 ///|
 test "symconcrete summation geometric infinite piecewise" {
-  let k = @symcore.symbol("k")
-  let r = @symcore.symbol("r")
+  let k = @symcore.Expr::Symbol("k")
+  let r = @symcore.Expr::Symbol("r")
   let expr = @symcore.pow(r, k)
-  let limits = [limit_range(k, @symcore.int(0), @symcore.oo())]
+  let limits = [limit_range(k, @symcore.int(0), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity))]
   let ours = summation(expr, limits~)
   let ours_str = @symprint.to_string(ours)
   let expected = "Piecewise(Tuple(1/(1 - r), Lt(Abs(r), 1)), Tuple(Sum(r**k, (k, 0, oo)), True))"
@@ -159,9 +159,9 @@ test "symconcrete summation geometric infinite piecewise" {
 
 ///|
 test "symconcrete summation weighted geometric" {
-  let k = @symcore.symbol("k")
-  let n = @symcore.symbol("n")
-  let r = @symcore.symbol("r")
+  let k = @symcore.Expr::Symbol("k")
+  let n = @symcore.Expr::Symbol("n")
+  let r = @symcore.Expr::Symbol("r")
   let expr = @symcore.mul([k, @symcore.pow(r, k)])
   let limits = [limit_range(k, @symcore.int(0), n)]
   let ours = summation(expr, limits~)

@@ -456,7 +456,7 @@ pub fn Line::repr(self : Line) -> String raise GeometryError {
 ///|
 pub fn Line::arbitrary_point(
   self : Line,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Point raise GeometryError {
   linear_point_at(GeometryEntity::Line(self), parameter)
 }
@@ -464,7 +464,7 @@ pub fn Line::arbitrary_point(
 ///|
 pub fn Line::plot_interval(
   self : Line,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   let _ = self
   [parameter, geo_int(-5), geo_int(5)]
@@ -658,7 +658,7 @@ pub fn Ray::repr(self : Ray) -> String raise GeometryError {
 ///|
 pub fn Ray::plot_interval(
   self : Ray,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   let _ = self
   [parameter, geo_zero(), geo_int(10)]
@@ -828,7 +828,7 @@ pub fn Segment::midpoint(self : Segment) -> Point raise GeometryError {
 ///|
 pub fn Segment::plot_interval(
   self : Segment,
-  parameter? : Expr = symbol("t"),
+  parameter? : Expr = Expr::Symbol("t"),
 ) -> Array[Expr] {
   let _ = self
   [parameter, geo_zero(), geo_one()]
