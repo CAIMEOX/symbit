@@ -75,10 +75,20 @@ fn make_function(
         @symcore.raw_function(name, args)
       }
     _ =>
-      if options.evaluate {
-        @symcore.function(name, args)
-      } else {
-        @symcore.raw_function(name, args)
+      match (
+        if options.evaluate {
+          @symcore.apply(@symcore.function_head(name), args)
+        } else {
+          @symcore.raw_apply(@symcore.function_head(name), args)
+        }
+      ) {
+        Some(expr) => expr
+        None =>
+          if options.evaluate {
+            @symcore.function(name, args)
+          } else {
+            @symcore.raw_function(name, args)
+          }
       }
   }
 }
@@ -155,26 +165,40 @@ fn lower_symbol_name(context : ParseContext, name : String) -> Expr {
 }
 
 ///|
-fn lookup_callable_target_name(context : ParseContext, name : String) -> String {
+fn coerce_callable_target(bound : Expr) -> Expr? {
+  match bound {
+    Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => Some(bound)
+    Expr::Symbol(target_name) => Some(@symcore.function_head(target_name))
+    _ => None
+  }
+}
+
+///|
+fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
   match lookup_binding(context, name) {
-    Some(Expr::Symbol(target_name)) =>
+    Some(bound) =>
       if context_has_callable_name(context, name) {
-        target_name
+        match coerce_callable_target(bound) {
+          Some(target) => target
+          None => lower_symbol_name(context, name)
+        }
       } else {
-        name
+        lower_symbol_name(context, name)
       }
-    Some(_) => name
     None =>
       match lookup_global_binding(context, name) {
-        Some(Expr::Symbol(target_name)) =>
+        Some(bound) =>
           if context_has_global_callable_name(context, name) {
-            target_name
+            match coerce_callable_target(bound) {
+              Some(target) => target
+              None => lower_symbol_name(context, name)
+            }
           } else {
-            name
+            lower_symbol_name(context, name)
           }
-        Some(_) | None => name
+        None => lower_symbol_name(context, name)
       }
-  }
+}
 }
 
 ///|
@@ -565,10 +589,7 @@ pub fn lower_ast_in(
       match callee {
         Ast::Symbol(span~, name) => {
           ignore(span)
-          let lowered_callee = lower_symbol_name(
-            context,
-            lookup_callable_target_name(context, name),
-          )
+          let lowered_callee = lookup_callable_target(context, name)
           make_application(lowered_callee, lowered_args, options)
         }
         _ =>

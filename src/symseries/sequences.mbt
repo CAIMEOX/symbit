@@ -55,9 +55,15 @@ fn eval_numeric(expr : @symcore.Expr) -> @symcore.Expr {
         _ => @symcore.pow(b, e)
       }
     }
-    @symcore.Expr::Function(name, args) =>
-      @symcore.function(name, args.map(eval_numeric))
-    _ => expr
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.apply(head, args.map(eval_numeric)) {
+            Some(applied) => applied
+            None => expr
+          }
+        None => expr
+      }
   }
   let numeric = @symcore.evalf(rebuilt, prec=80)
   match numeric {

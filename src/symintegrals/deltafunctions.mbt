@@ -5,17 +5,21 @@
 ///|
 fn extract_dirac_factor(expr : Expr, var_name : String) -> (Expr, Expr)? {
   match expr_simplify(expr) {
-    @symcore.Expr::Function("DiracDelta", [arg]) if expr_depends_on(
-        arg, var_name,
-      ) => Some((arg, expr_one()))
+    simplified if @symcore.application_has_name(simplified, "DiracDelta", arity=1) => {
+      let arg = @symcore.application_args(simplified).unwrap()[0]
+      if expr_depends_on(arg, var_name) {
+        Some((arg, expr_one()))
+      } else {
+        None
+      }
+    }
     @symcore.Expr::Mul(args) => {
       let rest : Array[Expr] = []
       let mut delta_arg : Expr? = None
       for arg in args {
-        match arg {
-          @symcore.Expr::Function("DiracDelta", [inner]) if expr_depends_on(
-              inner, var_name,
-            ) &&
+        match @symcore.application_args(arg) {
+          Some([inner]) if @symcore.application_has_name(arg, "DiracDelta") &&
+            expr_depends_on(inner, var_name) &&
             delta_arg is None => delta_arg = Some(inner)
           _ => rest.push(arg)
         }

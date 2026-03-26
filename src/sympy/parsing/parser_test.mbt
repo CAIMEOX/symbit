@@ -98,6 +98,18 @@ test "symparse evaluate false preserves raw operators" {
 }
 
 ///|
+fn structured_callable_context() -> ParseContext {
+  parse_context(
+    callable_names=["f", "sin", "g"],
+    bindings={
+      "f": @symcore.undefined_function("g"),
+      "sin": @symcore.function_head("cos"),
+      "g": @symcore.function_head("exp"),
+    },
+  )
+}
+
+///|
 test "symparse lexer exposes typed tokens" {
   let tokens = lex("f(x!!, 2e-3 != y)")
   json_inspect(tokens.map(tok => token_kind_name(tok.kind)), content=[
@@ -224,6 +236,22 @@ test "symparse callable context preserves undefined-function applications struct
     }
     _ => fail("expected undefined function application")
   }
+}
+
+///|
+test "symparse callable bindings accept structured function heads" {
+  inspect(
+    parse_repr_with("f(x)", default_parse_options(), structured_callable_context()),
+    content="(call g sym:x)",
+  )
+  inspect(
+    parse_repr_with("sin(x)", default_parse_options(), structured_callable_context()),
+    content="(call cos sym:x)",
+  )
+  inspect(
+    parse_repr_with("g(x)", default_parse_options(), structured_callable_context()),
+    content="(call exp sym:x)",
+  )
 }
 
 ///|
