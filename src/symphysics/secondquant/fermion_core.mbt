@@ -318,11 +318,14 @@ fn sq_apply_fermion_operator_to_state(
     Some(parts) => parts
     None => return None
   }
-  match state_expr {
-    Expr::Function(name, args) if (ket && name == "FockStateFermionKet") ||
-      (!ket && name == "FockStateFermionBra") => {
-      guard args.length() == 1 else { return None }
-      match @symcore.tuple_items(args[0]) {
+  let state_name = if ket {
+    "FockStateFermionKet"
+  } else {
+    "FockStateFermionBra"
+  }
+  match @symquant.quantum_expr_args(state_expr) {
+    Some([payload]) if @symquant.quantum_expr_has_name(state_expr, state_name) =>
+      match @symcore.tuple_items(payload) {
         Some(items) =>
           match index {
             Expr::Number(_) =>
@@ -340,7 +343,6 @@ fn sq_apply_fermion_operator_to_state(
           }
         None => None
       }
-    }
     _ => None
   }
 }

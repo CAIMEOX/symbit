@@ -293,8 +293,9 @@ pub fn evaluate_deltas(expr : Expr) -> Expr {
       }
       let mut out = sq_raw_mul(args)
       for arg in args {
-        match arg {
-          Expr::Function("KroneckerDelta", dargs) if dargs.length() == 2 =>
+        match @symquant.quantum_expr_args(arg) {
+          Some(dargs) if @symquant.quantum_expr_has_name(arg, "KroneckerDelta") &&
+            dargs.length() == 2 =>
             match (dargs[0], dargs[1]) {
               (Expr::Symbol(lhs), Expr::Symbol(rhs)) => {
                 let preferred = sq_preferred_index(dargs[0], dargs[1])
