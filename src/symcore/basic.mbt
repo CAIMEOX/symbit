@@ -167,6 +167,24 @@ pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
 }
 
 ///|
+fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
+  let args = args.map(normalize_legacy_expr)
+  match (name, args) {
+    ("Dict", items) => {
+      let entries : Array[(Expr, Expr)] = []
+      for item in items {
+        match tuple_items(item) {
+          Some([key, value]) => entries.push((key, value))
+          _ => return Expr::Apply(Expr::FunctionHead("Dict"), items)
+        }
+      }
+      Expr::Dict(entries)
+    }
+    _ => function(name, args)
+  }
+}
+
+///|
 pub fn expr_form(expr : Expr) -> ExprForm {
   match expr {
     Expr::Number(n) => ExprForm::Number(n)
@@ -191,39 +209,8 @@ pub fn expr_form(expr : Expr) -> ExprForm {
       ExprForm::Derivative(inner, canonical_derivative_args(deriv_args))
     Expr::Subs(inner, variable, value) => ExprForm::Subs(inner, variable, value)
     Expr::Lambda(vars, body) => ExprForm::Lambda(vars, body)
-    Expr::Function("Tuple", args) => ExprForm::Tuple(args)
-    Expr::Function("Eq", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Eq, lhs, rhs)
-    Expr::Function("Ne", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Ne, lhs, rhs)
-    Expr::Function("Lt", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Lt, lhs, rhs)
-    Expr::Function("Le", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Le, lhs, rhs)
-    Expr::Function("Gt", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Gt, lhs, rhs)
-    Expr::Function("Ge", [lhs, rhs]) =>
-      ExprForm::Relational(RelOp::Ge, lhs, rhs)
-    Expr::Function("Mod", [lhs, rhs]) => ExprForm::Mod(lhs, rhs)
-    Expr::Function("Derivative", [inner, wrt]) =>
-      ExprForm::Derivative(inner, [wrt, int(1)])
-    Expr::Function("Derivative", [inner, wrt, order]) =>
-      ExprForm::Derivative(inner, [wrt, order])
-    Expr::Function("Subs", [inner, variable, value]) =>
-      ExprForm::Subs(inner, variable, value)
-    Expr::Function("Lambda", [vars, body]) => ExprForm::Lambda(vars, body)
-    Expr::Function("Dict", args) => {
-      let items : Array[(Expr, Expr)] = []
-      for arg in args {
-        match expr_form(arg) {
-          ExprForm::Tuple([key, value]) => items.push((key, value))
-          _ => return ExprForm::Apply(Expr::FunctionHead("Dict"), args)
-        }
-      }
-      ExprForm::Dict(items)
-    }
     Expr::Function(name, args) =>
-      ExprForm::Apply(Expr::FunctionHead(name), args)
+      expr_form(normalize_legacy_function(name, args))
   }
 }
 
@@ -272,48 +259,7 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         None => Expr::Apply(head, args)
       }
     }
-    Expr::Function(_, _) =>
-      match expr_form(expr) {
-        ExprForm::Tuple(args) => Expr::Tuple(args.map(normalize_legacy_expr))
-        ExprForm::Dict(items) => {
-          let out : Array[(Expr, Expr)] = []
-          for item in items {
-            let (key, value) = item
-            out.push((normalize_legacy_expr(key), normalize_legacy_expr(value)))
-          }
-          Expr::Dict(out)
-        }
-        ExprForm::Relational(op, lhs, rhs) =>
-          Expr::Relational(
-            op,
-            normalize_legacy_expr(lhs),
-            normalize_legacy_expr(rhs),
-          )
-        ExprForm::Derivative(inner, deriv_args) =>
-          Expr::Derivative(
-            normalize_legacy_expr(inner),
-            deriv_args.map(normalize_legacy_expr),
-          )
-        ExprForm::Subs(inner, variable, value) =>
-          Expr::Subs(
-            normalize_legacy_expr(inner),
-            normalize_legacy_expr(variable),
-            normalize_legacy_expr(value),
-          )
-        ExprForm::Lambda(vars, body) =>
-          Expr::Lambda(normalize_legacy_expr(vars), normalize_legacy_expr(body))
-        ExprForm::Mod(lhs, rhs) =>
-          Expr::Mod(normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
-        ExprForm::Apply(head, args) => {
-          let head = normalize_legacy_expr(head)
-          let args = args.map(normalize_legacy_expr)
-          match raw_apply(head, args) {
-            Some(applied) => applied
-            None => Expr::Apply(head, args)
-          }
-        }
-        _ => expr
-      }
+    Expr::Function(name, args) => normalize_legacy_function(name, args)
     _ => expr
   }
 }
