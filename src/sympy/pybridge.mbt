@@ -13,6 +13,7 @@ fn expr_to_sympy_cached(
   dummy_cache : Map[Int, @py.PyObject],
   wild_cache : Map[String, @py.PyObject],
 ) -> @py.PyObject raise {
+  let expr = @symcore.normalize_legacy_expr(expr)
   match expr {
     @symcore.Expr::Number(n) => sympy_number_obj(n)
     @symcore.Expr::Float(value) => sympy_float_obj(value)
@@ -105,11 +106,7 @@ fn expr_to_sympy_cached(
         OracleArg::PyObj(expr_to_sympy_cached(body, dummy_cache, wild_cache)),
       ])
     @symcore.Expr::Function(_, _) =>
-      expr_to_sympy_cached(
-        @symcore.normalize_legacy_expr(expr),
-        dummy_cache,
-        wild_cache,
-      )
+      fail("legacy-function-should-be-normalized")
   }
 }
 
@@ -288,6 +285,7 @@ fn sympy_undefined_function_obj(name : String) -> @py.PyObject raise {
   sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
 }
 
+///|
 fn sympy_apply_obj(
   head : @symcore.Expr,
   args : Array[@symcore.Expr],

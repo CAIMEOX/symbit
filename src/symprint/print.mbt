@@ -70,15 +70,6 @@ pub fn debug_repr(expr : Expr) -> String {
         Some(name) => wrap_call(name, args)
         None => wrap_apply(head, args)
       }
-    _ =>
-      match @symcore.application_parts(expr) {
-        Some((head, args)) =>
-          match @symcore.function_head_name(head) {
-            Some(name) => wrap_call(name, args)
-            None => wrap_apply(head, args)
-          }
-        None => "(invalid-expr)"
-      }
   }
 }
 
@@ -221,21 +212,6 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       let rendered = args.map(child => format_expr(child, prec)).join(", ")
       "\{format_expr(head, prec)}(\{rendered})"
     }
-    _ =>
-      match @symcore.application_parts(expr) {
-        Some((head, args)) =>
-          match @symcore.function_head_name(head) {
-            Some(name) => {
-              let rendered = args.map(child => format_expr(child, prec)).join(", ")
-              "\{name}(\{rendered})"
-            }
-            None => {
-              let rendered = args.map(child => format_expr(child, prec)).join(", ")
-              "\{format_expr(head, prec)}(\{rendered})"
-            }
-          }
-        None => "<?>"
-      }
   }
   if prec < parent_prec {
     "(\{body})"

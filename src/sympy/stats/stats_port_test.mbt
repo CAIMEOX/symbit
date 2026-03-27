@@ -216,7 +216,9 @@ test "stage6 joint independent parity" {
     "(lambda X, Y: P(Eq(X, 1) & Eq(Y, 1)))(Die('X', 6), Die('Y', 6))",
   )
   assert_true(expr_equiv(ours, oracle))
-  let cov = covariance(@symcore.Expr::Symbol("X"), @symcore.Expr::Symbol("Y"), rvs=[x, y])
+  let cov = covariance(@symcore.Expr::Symbol("X"), @symcore.Expr::Symbol("Y"), rvs=[
+    x, y,
+  ])
   inspect(expr_str(cov), content="0")
 }
 

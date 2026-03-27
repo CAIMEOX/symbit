@@ -169,9 +169,10 @@ test "derivative free symbols remove dummy variables but keep order symbols" {
 test "args follow SymPy-style derivative and lambda shapes" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
-  json_inspect(args(derivative(function("f", [x]), x)).map(@symprint.to_string), content=[
-    "f(x)", "(x, 1)",
-  ])
+  json_inspect(
+    args(derivative(function("f", [x]), x)).map(@symprint.to_string),
+    content=["f(x)", "(x, 1)"],
+  )
   json_inspect(args(lambda_expr(x, add([x, y]))).map(@symprint.to_string), content=[
     "(x,)", "x + y",
   ])

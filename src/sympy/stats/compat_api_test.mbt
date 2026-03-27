@@ -45,6 +45,18 @@ fn replace_expr_local(
   if expr == target {
     return replacement
   }
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match
+        @symcore.raw_apply(
+          replace_expr_local(head, target, replacement),
+          args.map(arg => replace_expr_local(arg, target, replacement)),
+        ) {
+        Some(rebuilt) => return rebuilt
+        None => ()
+      }
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Add(args) =>
       eval_arith(
@@ -90,32 +102,38 @@ fn replace_expr_local(
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
         @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ne, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ne,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
         @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Lt, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Lt,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
         @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(@symcore.RelOp::Le, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
         @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Gt, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Gt,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
         @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, 
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ge,
             replace_expr_local(lhs, target, replacement),
             replace_expr_local(rhs, target, replacement),
           )
@@ -135,16 +153,6 @@ fn replace_expr_local(
       @symcore.lambda_expr(
         replace_expr_local(vars, target, replacement),
         replace_expr_local(body, target, replacement),
-      )
-    @symcore.ExprForm::AppliedUndef(name, args) =>
-      @symcore.applied_undefined_function(
-        name,
-        args.map(arg => replace_expr_local(arg, target, replacement)),
-      )
-    @symcore.ExprForm::Applied(name, args) =>
-      @symcore.function(
-        name,
-        args.map(arg => replace_expr_local(arg, target, replacement)),
       )
     _ => expr
   }
@@ -232,7 +240,9 @@ fn assert_mgf_not_placeholder(
   head : String,
   t : @symcore.Expr,
 ) -> Unit raise {
-  let ours = moment_generating_function(@symcore.Expr::Symbol(rv.name), t, rvs=[rv])
+  let ours = moment_generating_function(@symcore.Expr::Symbol(rv.name), t, rvs=[
+    rv,
+  ])
   match (rv_symbolic_name(rv), rv_symbolic_ctor(rv)) {
     (Some(name), Some(ctor)) if mgf_oracle_supported(name) => {
       let query = "(lambda R, t: moment_generating_function(R)(t))(\{ctor}, \{@symprint.to_string(t)})"
@@ -1424,7 +1434,9 @@ test "compat non-fallback symbolic families" {
     }
     None => fail("missing discrete markov transition")
   }
-  let cmcx = continuous_markov_chain("CMCX", params=[@symcore.Expr::Symbol("Qmat")])
+  let cmcx = continuous_markov_chain("CMCX", params=[
+    @symcore.Expr::Symbol("Qmat"),
+  ])
   match process_transition_probability(cmcx, i, j, t0, t1) {
     Some(v) => {
       let vs = @symprint.to_string(v)
@@ -1471,11 +1483,15 @@ test "compat non-fallback symbolic families" {
     "StochasticProcessCDFAt(tau, x)",
   )
   assert_eq(
-    @symprint.to_string(probability(eq(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp)),
+    @symprint.to_string(
+      probability(eq(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp),
+    ),
     "DiscreteTimeStochasticProcessProbabilityAt(tau, x)",
   )
   assert_eq(
-    @symprint.to_string(probability(le(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp)),
+    @symprint.to_string(
+      probability(le(dtspx, @symcore.Expr::Symbol("x")), rv=dtsp),
+    ),
     "DiscreteTimeStochasticProcessCDFAt(tau, x)",
   )
 
@@ -1620,23 +1636,33 @@ test "compat non-fallback symbolic families" {
   let coe_abs = circular_orthogonal_ensemble("COEABS", params=[@symcore.int(2)])
   let cse_abs = circular_symplectic_ensemble("CSEABS", params=[@symcore.int(2)])
   assert_eq(
-    @symprint.to_string(expectation(@symcore.Expr::Symbol("GEABS"), rvs=[gauss_abs])),
+    @symprint.to_string(
+      expectation(@symcore.Expr::Symbol("GEABS"), rvs=[gauss_abs]),
+    ),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.to_string(expectation(@symcore.Expr::Symbol("CEABS"), rvs=[circ_abs])),
+    @symprint.to_string(
+      expectation(@symcore.Expr::Symbol("CEABS"), rvs=[circ_abs]),
+    ),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.to_string(expectation(@symcore.Expr::Symbol("CUEABS"), rvs=[cue_abs])),
+    @symprint.to_string(
+      expectation(@symcore.Expr::Symbol("CUEABS"), rvs=[cue_abs]),
+    ),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.to_string(expectation(@symcore.Expr::Symbol("COEABS"), rvs=[coe_abs])),
+    @symprint.to_string(
+      expectation(@symcore.Expr::Symbol("COEABS"), rvs=[coe_abs]),
+    ),
     "ZeroMatrix(2, 2)",
   )
   assert_eq(
-    @symprint.to_string(expectation(@symcore.Expr::Symbol("CSEABS"), rvs=[cse_abs])),
+    @symprint.to_string(
+      expectation(@symcore.Expr::Symbol("CSEABS"), rvs=[cse_abs]),
+    ),
     "ZeroMatrix(2, 2)",
   )
   let ge_var = @symprint.to_string(
@@ -2764,17 +2790,23 @@ test "compat variance coverage for residual families" {
   assert_variance_not_placeholder(ys, "YuleSimon")
 
   let goe = gaussian_orthogonal_ensemble("GOEv", params=[@symcore.int(2)])
-  let goe_v = @symprint.to_string(variance(@symcore.Expr::Symbol("GOEv"), rvs=[goe]))
+  let goe_v = @symprint.to_string(
+    variance(@symcore.Expr::Symbol("GOEv"), rvs=[goe]),
+  )
   assert_true(goe_v.contains("Expectation("))
   assert_true(goe_v != "Variance(GOEv)")
 
   let gue = gaussian_unitary_ensemble("GUEv", params=[@symcore.int(2)])
-  let gue_v = @symprint.to_string(variance(@symcore.Expr::Symbol("GUEv"), rvs=[gue]))
+  let gue_v = @symprint.to_string(
+    variance(@symcore.Expr::Symbol("GUEv"), rvs=[gue]),
+  )
   assert_true(gue_v.contains("Expectation("))
   assert_true(gue_v != "Variance(GUEv)")
 
   let gse = gaussian_symplectic_ensemble("GSEv", params=[@symcore.int(2)])
-  let gse_v = @symprint.to_string(variance(@symcore.Expr::Symbol("GSEv"), rvs=[gse]))
+  let gse_v = @symprint.to_string(
+    variance(@symcore.Expr::Symbol("GSEv"), rvs=[gse]),
+  )
   assert_true(gse_v.contains("Expectation("))
   assert_true(gse_v != "Variance(GSEv)")
 
@@ -2796,7 +2828,9 @@ test "compat variance coverage for residual families" {
     @symcore.Expr::Symbol("V"),
   ])
   assert_variance_not_placeholder(mst, "MatrixStudentT")
-  let mst_v = @symprint.to_string(variance(@symcore.Expr::Symbol("MSTv"), rvs=[mst]))
+  let mst_v = @symprint.to_string(
+    variance(@symcore.Expr::Symbol("MSTv"), rvs=[mst]),
+  )
   assert_true(mst_v.contains("Expectation("))
   assert_true(mst_v != "Variance(MSTv)")
 }

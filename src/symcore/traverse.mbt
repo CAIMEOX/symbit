@@ -1,7 +1,7 @@
 ///|
 pub fn children(expr : Expr) -> ArrayView[Expr] {
+  let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Function(_, _) => children(normalize_legacy_expr(expr))
     Expr::Add(args)
     | Expr::Mul(args)
     | Expr::Tuple(args)
@@ -33,6 +33,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     }
     Expr::Subs(inner, variable, value) => [inner, variable, value][:]
     Expr::Lambda(vars, body) => [vars, body][:]
+    Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => [][:]
   }
 }
@@ -62,8 +63,8 @@ pub fn postorder(expr : Expr) -> Array[Expr] {
 
 ///|
 pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
+  let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Function(_, _) => map_children(normalize_legacy_expr(expr), f)
     Expr::Add(args) => add(args.map(f))
     Expr::Mul(args) => mul(args.map(f))
     Expr::Pow(base, exp) => pow(f(base), f(exp))
@@ -102,6 +103,7 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
         None => Expr::Apply(head, args.map(f))
       }
     Expr::FunctionHead(name) => Expr::FunctionHead(name)
+    Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => expr
   }
 }
@@ -290,6 +292,7 @@ fn subst_derivative(
 
 ///|
 pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
+  let expr = normalize_legacy_expr(expr)
   match expr {
     Expr::Symbol(name) =>
       match env.get(name) {
@@ -329,6 +332,7 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
       remove_bound_names_from_env(variable, restricted)
       subs_expr(subst(inner, restricted), variable, subst(value, env))
     }
+    Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => map_children(expr, child => subst(child, env))
   }
 }

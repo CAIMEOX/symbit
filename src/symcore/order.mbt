@@ -9,19 +9,19 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::NumberSymbol(_) => 5
     Expr::Symbol(_) => 6
     Expr::Apply(_, _) => 7
-    Expr::Function(_, _) => 8
-    Expr::Mod(_, _) => 9
-    Expr::Boolean(_) => 10
-    Expr::Tuple(_) => 11
-    Expr::Dict(_) => 12
-    Expr::Relational(_, _, _) => 13
-    Expr::Derivative(_, _) => 14
-    Expr::Subs(_, _, _) => 15
-    Expr::Lambda(_, _) => 16
-    Expr::Add(_) => 17
-    Expr::Number(_) => 18
-    Expr::Float(_) => 19
-    Expr::ComplexFloat(_) => 20
+    Expr::Mod(_, _) => 8
+    Expr::Boolean(_) => 9
+    Expr::Tuple(_) => 10
+    Expr::Dict(_) => 11
+    Expr::Relational(_, _, _) => 12
+    Expr::Derivative(_, _) => 13
+    Expr::Subs(_, _, _) => 14
+    Expr::Lambda(_, _) => 15
+    Expr::Add(_) => 16
+    Expr::Number(_) => 17
+    Expr::Float(_) => 18
+    Expr::ComplexFloat(_) => 19
+    Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
@@ -90,14 +90,8 @@ fn compare_complex_float(a : ComplexFloat, b : ComplexFloat) -> Int {
 
 ///|
 pub fn compare_expr(a : Expr, b : Expr) -> Int {
-  match a {
-    Expr::Function(_, _) => return compare_expr(normalize_legacy_expr(a), b)
-    _ => ()
-  }
-  match b {
-    Expr::Function(_, _) => return compare_expr(a, normalize_legacy_expr(b))
-    _ => ()
-  }
+  let a = normalize_legacy_expr(a)
+  let b = normalize_legacy_expr(b)
   match (a, b) {
     (Expr::Pow(base_a, _), Expr::Symbol(sb)) => {
       let base_cmp = compare_expr(base_a, Expr::Symbol(sb))
@@ -370,18 +364,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         }
         _ => 0
       }
-    Expr::Function(name_a, args_a) =>
-      match b {
-        Expr::Function(name_b, args_b) => {
-          let name_cmp = name_a.compare(name_b)
-          if name_cmp != 0 {
-            name_cmp
-          } else {
-            compare_arrays(args_a, args_b)
-          }
-        }
-        _ => 0
-      }
+    Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
@@ -499,15 +482,9 @@ pub impl Hash for Expr with hash(self) -> Int {
 
 ///|
 pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
-  match self {
-    Expr::Function(_, _) => {
-      normalize_legacy_expr(self).hash_combine(hasher)
-      return
-    }
-    _ => ()
-  }
-  hasher.combine_int(variant_rank(self))
-  match self {
+  let expr = normalize_legacy_expr(self)
+  hasher.combine_int(variant_rank(expr))
+  match expr {
     Expr::Number(n) => n.hash_combine(hasher)
     Expr::Float(f) => {
       hasher.combine_int(f.precision())
@@ -571,6 +548,6 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       vars.hash_combine(hasher)
       body.hash_combine(hasher)
     }
-    Expr::Function(_, _) => ()
+    Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }

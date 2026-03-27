@@ -216,7 +216,6 @@ pub(all) enum Expr {
   Wild(String)
   FunctionHead(String)
   UndefinedFunction(String)
-  AppliedUndef(String, Array[Expr])
   Apply(Expr, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -248,7 +247,6 @@ pub enum ExprForm {
   Wild(String)
   FunctionHead(String)
   UndefinedFunction(String)
-  AppliedUndef(String, Array[Expr])
   Apply(Expr, Array[Expr])
   Boolean(Bool)
   Add(Array[Expr])
@@ -261,7 +259,6 @@ pub enum ExprForm {
   Derivative(Expr, Array[Expr])
   Subs(Expr, Expr, Expr)
   Lambda(Expr, Expr)
-  Applied(String, Array[Expr])
 }
 
 pub struct Float {

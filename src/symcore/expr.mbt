@@ -169,7 +169,8 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
 ///|
 pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
-    Expr::UndefinedFunction(name) => Some(applied_undefined_function(name, args))
+    Expr::UndefinedFunction(name) =>
+      Some(applied_undefined_function(name, args))
     Expr::FunctionHead(name) =>
       Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
     Expr::Symbol(name) =>

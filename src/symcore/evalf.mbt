@@ -132,7 +132,8 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
           let eval_args : Array[Expr] = []
           for arg in args {
             match expr_to_evalf_complex(arg, prec) {
-              Some(value) => eval_args.push(expr_from_mpc_evalf(value.to_mpc(), prec))
+              Some(value) =>
+                eval_args.push(expr_from_mpc_evalf(value.to_mpc(), prec))
               None => return None
             }
           }
@@ -200,12 +201,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
       }
       let value = match evalf_integer_exponent(exp, prec) {
         Some(n) =>
-          @symnum.mpc_pow_int(
-            base_z.to_mpc(),
-            n,
-            prec,
-            @symnum.round_nearest,
-          )
+          @symnum.mpc_pow_int(base_z.to_mpc(), n, prec, @symnum.round_nearest)
         None =>
           @symnum.mpc_pow(
             base_z.to_mpc(),
@@ -223,7 +219,9 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
         Expr::Float(value) => Some(ComplexFloat::from_real(value))
         Expr::ComplexFloat(value) => Some(value)
         Expr::Number(value) =>
-          Some(complex_from_exact_evalf(value, @symnum.BigRational::zero(), prec))
+          Some(
+            complex_from_exact_evalf(value, @symnum.BigRational::zero(), prec),
+          )
         _ => None
       }
     Expr::Symbol(name) =>
@@ -791,8 +789,8 @@ fn evalf_nary_function(name : String, args : Array[Expr], prec : Int) -> Expr? {
 
 ///|
 fn evalf_impl(expr : Expr, prec : Int) -> Expr {
+  let expr = normalize_legacy_expr(expr)
   match expr {
-    Expr::Function(_, _) => evalf_impl(normalize_legacy_expr(expr), prec)
     Expr::Number(n) => Expr::Float(float_from_exact_evalf(n, prec))
     Expr::Float(f) => Expr::Float(promote_float_evalf(f, prec))
     Expr::ComplexFloat(z) => Expr::ComplexFloat(promote_complex_evalf(z, prec))
@@ -909,11 +907,13 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       )
     Expr::Lambda(vars, body) =>
       lambda_expr(evalf_impl(vars, prec), evalf_impl(body, prec))
+    Expr::Function(_, _) => abort("legacy function should be normalized")
   }
 }
 
 ///|
 fn evalf_numeric_constant_expr(expr : Expr, prec : Int) -> Expr? {
+  let expr = normalize_legacy_expr(expr)
   match expr {
     Expr::Number(_)
     | Expr::Float(_)
@@ -928,6 +928,7 @@ fn evalf_numeric_constant_expr(expr : Expr, prec : Int) -> Expr? {
         Some(value) => Some(expr_from_mpc_evalf(value.to_mpc(), prec))
         None => None
       }
+    Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => None
   }
 }
