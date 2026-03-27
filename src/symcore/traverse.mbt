@@ -1,12 +1,12 @@
 ///|
 pub fn children(expr : Expr) -> ArrayView[Expr] {
   match expr {
+    Expr::Function(_, _) => children(normalize_legacy_expr(expr))
     Expr::Add(args)
     | Expr::Mul(args)
     | Expr::Tuple(args)
     | Expr::AppliedUndef(_, args)
-    | Expr::Apply(_, args)
-    | Expr::Function(_, args) => args[:]
+    | Expr::Apply(_, args) => args[:]
     Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
       let out : Array[Expr] = []
@@ -64,6 +64,7 @@ pub fn postorder(expr : Expr) -> Array[Expr] {
 ///|
 pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
   match expr {
+    Expr::Function(_, _) => map_children(normalize_legacy_expr(expr), f)
     Expr::Add(args) => add(args.map(f))
     Expr::Mul(args) => mul(args.map(f))
     Expr::Pow(base, exp) => pow(f(base), f(exp))
@@ -104,7 +105,6 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
         None => Expr::Apply(head, args.map(f))
       }
     Expr::FunctionHead(name) => Expr::FunctionHead(name)
-    Expr::Function(name, args) => function(name, args.map(f))
     _ => expr
   }
 }

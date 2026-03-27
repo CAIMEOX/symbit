@@ -42,7 +42,10 @@ impl Show for Expr with to_string(self) {
     Expr::AppliedUndef(name, args) =>
       name + "(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Apply(head, args) =>
-      head.to_string() + "(" + args.map(child => child.to_string()).join(", ") + ")"
+      head.to_string() +
+      "(" +
+      args.map(child => child.to_string()).join(", ") +
+      ")"
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
     Expr::Mul(args) =>
@@ -120,6 +123,7 @@ pub impl BitXOr for Expr with lxor(self, other) {
   pow(self, other)
 }
 
+///|
 pub fn int(value : Int) -> Expr {
   Expr::Number(@symnum.BigRational::from_int(value))
 }
@@ -132,6 +136,7 @@ pub fn rational_from_ints(
   Expr::Number(@symnum.BigRational::from_ints(num, den))
 }
 
+///|
 let dummy_id_counter_ref : Ref[Int] = { val: 0 }
 
 ///|
@@ -141,6 +146,7 @@ fn next_dummy_id() -> Int {
   id
 }
 
+///|
 pub fn dummy(name? : String = "Dummy") -> Expr {
   Expr::Dummy(name, next_dummy_id())
 }

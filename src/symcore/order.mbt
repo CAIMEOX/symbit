@@ -91,6 +91,14 @@ fn compare_complex_float(a : ComplexFloat, b : ComplexFloat) -> Int {
 
 ///|
 pub fn compare_expr(a : Expr, b : Expr) -> Int {
+  match a {
+    Expr::Function(_, _) => return compare_expr(normalize_legacy_expr(a), b)
+    _ => ()
+  }
+  match b {
+    Expr::Function(_, _) => return compare_expr(a, normalize_legacy_expr(b))
+    _ => ()
+  }
   match (a, b) {
     (Expr::Pow(base_a, _), Expr::Symbol(sb)) => {
       let base_cmp = compare_expr(base_a, Expr::Symbol(sb))
@@ -512,6 +520,13 @@ pub impl Hash for Expr with hash(self) -> Int {
 
 ///|
 pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
+  match self {
+    Expr::Function(_, _) => {
+      normalize_legacy_expr(self).hash_combine(hasher)
+      return
+    }
+    _ => ()
+  }
   hasher.combine_int(variant_rank(self))
   match self {
     Expr::Number(n) => n.hash_combine(hasher)
@@ -583,11 +598,6 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
       vars.hash_combine(hasher)
       body.hash_combine(hasher)
     }
-    Expr::Function(name, args) => {
-      hasher.combine_string(name)
-      for child in args {
-        child.hash_combine(hasher)
-      }
-    }
+    Expr::Function(_, _) => ()
   }
 }

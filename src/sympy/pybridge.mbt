@@ -106,8 +106,12 @@ fn expr_to_sympy_cached(
         OracleArg::PyObj(expr_to_sympy_cached(vars, dummy_cache, wild_cache)),
         OracleArg::PyObj(expr_to_sympy_cached(body, dummy_cache, wild_cache)),
       ])
-    @symcore.Expr::Function(name, args) =>
-      sympy_function_obj(name, args, dummy_cache, wild_cache)
+    @symcore.Expr::Function(_, _) =>
+      expr_to_sympy_cached(
+        @symcore.normalize_legacy_expr(expr),
+        dummy_cache,
+        wild_cache,
+      )
   }
 }
 
@@ -352,56 +356,6 @@ fn call_callable(
   match res {
     Some(obj) => objenum_to_obj(obj)
     None => fail("sympy-callable-none")
-  }
-}
-
-///|
-fn sympy_attr_callable(name : String) -> @py.PyCallable? {
-  let sympy = try? ensure_sympy_module()
-  match sympy {
-    Ok(mod) =>
-      match mod.get_attr(name, print_err=false) {
-        Some(PyCallable(callable)) => Some(callable)
-        Some(PyClass(obj)) => {
-          let callable_res = try? @py.PyCallable::create(obj)
-          match callable_res {
-            Ok(callable) => Some(callable)
-            Err(_) => None
-          }
-        }
-        Some(other) => {
-          let callable_res = try? @py.PyCallable::create(objenum_to_obj(other))
-          match callable_res {
-            Ok(callable) => Some(callable)
-            Err(_) => None
-          }
-        }
-        None => None
-      }
-    Err(_) => None
-  }
-}
-
-///|
-fn sympy_function_obj(
-  name : String,
-  args : Array[@symcore.Expr],
-  dummy_cache : Map[Int, @py.PyObject],
-  wild_cache : Map[String, @py.PyObject],
-) -> @py.PyObject raise {
-  let arg_objs : Array[@py.PyObject] = Array::new()
-  for arg in args {
-    arg_objs.push(expr_to_sympy_cached(arg, dummy_cache, wild_cache))
-  }
-  match sympy_attr_callable(name) {
-    Some(callable) => call_callable(callable, arg_objs)
-    None => {
-      let fn_obj = sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
-      let fn_callable = @py.PyCallable::create(fn_obj) catch {
-        _ => fail("sympy-function-callable")
-      }
-      call_callable(fn_callable, arg_objs)
-    }
   }
 }
 

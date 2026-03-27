@@ -100,6 +100,7 @@ pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
   }
 }
 
+///|
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
   Expr::Derivative(expr, [wrt, order])
 }
@@ -230,6 +231,32 @@ pub fn expr_form(expr : Expr) -> ExprForm {
       ExprForm::Dict(items)
     }
     Expr::Function(name, args) => ExprForm::Applied(name, args)
+  }
+}
+
+///|
+pub fn normalize_legacy_expr(expr : Expr) -> Expr {
+  match expr {
+    Expr::Function(_, _) =>
+      match expr_form(expr) {
+        ExprForm::Tuple(args) => Expr::Tuple(args.map(child => child))
+        ExprForm::Dict(items) => Expr::Dict(items.map(item => item))
+        ExprForm::Relational(op, lhs, rhs) => Expr::Relational(op, lhs, rhs)
+        ExprForm::Derivative(inner, deriv_args) =>
+          Expr::Derivative(inner, deriv_args.map(arg => arg))
+        ExprForm::Subs(inner, variable, value) =>
+          Expr::Subs(inner, variable, value)
+        ExprForm::Lambda(vars, body) => Expr::Lambda(vars, body)
+        ExprForm::Mod(lhs, rhs) => Expr::Mod(lhs, rhs)
+        ExprForm::AppliedUndef(name, args) =>
+          Expr::AppliedUndef(name, args.map(child => child))
+        ExprForm::Applied(name, args) =>
+          Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
+        ExprForm::Apply(head, args) =>
+          Expr::Apply(head, args.map(child => child))
+        _ => expr
+      }
+    _ => expr
   }
 }
 
@@ -386,8 +413,7 @@ pub fn is_atomic(expr : Expr) -> Bool {
     | ExprForm::Boolean(_) => true
     ExprForm::AppliedUndef(_, args)
     | ExprForm::Applied(_, args)
-    | ExprForm::Apply(_, args) =>
-      args.is_empty()
+    | ExprForm::Apply(_, args) => args.is_empty()
     _ => false
   }
 }
@@ -574,7 +600,8 @@ pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
     _ => ()
   }
   match expr_form(expr) {
-    ExprForm::AppliedUndef(name, args) => Some((Expr::UndefinedFunction(name), args))
+    ExprForm::AppliedUndef(name, args) =>
+      Some((Expr::UndefinedFunction(name), args))
     ExprForm::Applied(name, args) => Some((Expr::FunctionHead(name), args))
     ExprForm::Apply(head, args) => Some((head, args))
     _ => None

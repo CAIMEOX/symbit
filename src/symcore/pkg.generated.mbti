@@ -118,6 +118,8 @@ pub fn mod_expr(Expr, Expr) -> Expr
 
 pub fn mul(Array[Expr]) -> Expr
 
+pub fn normalize_legacy_expr(Expr) -> Expr
+
 pub fn number_symbol_kind(Expr) -> NumberSymbolKind?
 
 pub fn number_symbol_kind_from_name(String) -> NumberSymbolKind?

@@ -682,6 +682,7 @@ fn evalf_nary_function(name : String, args : Array[Expr], prec : Int) -> Expr? {
 ///|
 fn evalf_impl(expr : Expr, prec : Int) -> Expr {
   match expr {
+    Expr::Function(_, _) => evalf_impl(normalize_legacy_expr(expr), prec)
     Expr::Number(n) => Expr::Float(float_from_exact_evalf(n, prec))
     Expr::Float(f) => Expr::Float(promote_float_evalf(f, prec))
     Expr::ComplexFloat(z) => Expr::ComplexFloat(promote_complex_evalf(z, prec))
@@ -795,13 +796,6 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       )
     Expr::Lambda(vars, body) =>
       lambda_expr(evalf_impl(vars, prec), evalf_impl(body, prec))
-    Expr::Function(name, args) => {
-      let eval_args = args.map(arg => evalf_impl(arg, prec))
-      match evalf_nary_function(name, eval_args, prec) {
-        Some(value) => value
-        None => function(name, eval_args)
-      }
-    }
   }
 }
 
