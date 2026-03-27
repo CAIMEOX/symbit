@@ -150,31 +150,33 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 
 ///|
 pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
-  Expr::Apply(Expr::UndefinedFunction(name), args.map(child => child))
+  Expr::Apply(Expr::UndefinedFunction(name), args.map(normalize_legacy_expr))
 }
 
 ///|
 pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
+  let head = normalize_legacy_expr(head)
+  let args = args.map(normalize_legacy_expr)
   match head {
     Expr::UndefinedFunction(name) =>
-      Some(Expr::Apply(Expr::UndefinedFunction(name), args.map(child => child)))
+      Some(Expr::Apply(Expr::UndefinedFunction(name), args))
     Expr::FunctionHead(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
-    Expr::Symbol(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
+      Some(Expr::Apply(Expr::FunctionHead(name), args))
+    Expr::Symbol(name) => Some(Expr::Apply(Expr::FunctionHead(name), args))
     _ => None
   }
 }
 
 ///|
 pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
+  let head = normalize_legacy_expr(head)
+  let args = args.map(normalize_legacy_expr)
   match head {
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
     Expr::FunctionHead(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
-    Expr::Symbol(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
+      Some(Expr::Apply(Expr::FunctionHead(name), args))
+    Expr::Symbol(name) => Some(Expr::Apply(Expr::FunctionHead(name), args))
     _ => None
   }
 }
@@ -780,6 +782,7 @@ pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
+  let args = args.map(normalize_legacy_expr)
   match (name, args) {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
@@ -800,12 +803,12 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Function(name, args.map(child => child))
+          _ => return Expr::Function(name, args)
         }
       }
       Expr::Dict(entries)
     }
-    _ => Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
+    _ => Expr::Apply(Expr::FunctionHead(name), args)
   }
 }
 
@@ -837,10 +840,11 @@ pub fn raw_dict_expr(items : Array[(Expr, Expr)]) -> Expr {
 
 ///|
 pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
+  let args = args.map(normalize_legacy_expr)
   match (name, args) {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
-    ("Tuple", _) => Expr::Tuple(args.map(child => child))
+    ("Tuple", _) => Expr::Tuple(args)
     ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
     ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
     ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)
@@ -857,12 +861,12 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Function(name, args.map(child => child))
+          _ => return Expr::Function(name, args)
         }
       }
       Expr::Dict(entries)
     }
-    _ => Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
+    _ => Expr::Apply(Expr::FunctionHead(name), args)
   }
 }
 

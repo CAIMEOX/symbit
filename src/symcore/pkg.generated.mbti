@@ -154,6 +154,8 @@ pub fn rebuild_application(Expr, Array[Expr]) -> Expr?
 
 pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 
+pub fn replace(Expr, (Expr) -> Bool, (Expr) -> Expr) -> Expr
+
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
 
 pub fn subs_expr(Expr, Expr, Expr) -> Expr

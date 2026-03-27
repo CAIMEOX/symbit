@@ -301,6 +301,28 @@ test "legacy function storage normalizes to canonical core semantics" {
 }
 
 ///|
+test "application constructors canonicalize legacy children eagerly" {
+  let x = Expr::Symbol("x")
+  let legacy_derivative = Expr::Function("Derivative", [x, x])
+  match function("sin", [legacy_derivative]) {
+    Expr::Apply(Expr::FunctionHead("sin"), [Expr::Derivative(_, [_, one])]) =>
+      inspect(@symprint.to_string(one), content="1")
+    _ => fail("expected canonical named application child")
+  }
+  match apply(Expr::FunctionHead("sin"), [legacy_derivative]) {
+    Some(
+      Expr::Apply(Expr::FunctionHead("sin"), [Expr::Derivative(_, [_, one])])
+    ) => inspect(@symprint.to_string(one), content="1")
+    _ => fail("expected apply() to canonicalize legacy child")
+  }
+  match applied_undefined_function("f", [legacy_derivative]) {
+    Expr::Apply(Expr::UndefinedFunction("f"), [Expr::Derivative(_, [_, one])]) =>
+      inspect(@symprint.to_string(one), content="1")
+    _ => fail("expected undefined application child normalization")
+  }
+}
+
+///|
 test "dict is a first-class container node" {
   let d = Expr::Dict([
     (Expr::Symbol("x"), Expr::Symbol("y")),

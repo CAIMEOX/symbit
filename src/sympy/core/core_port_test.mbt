@@ -98,6 +98,27 @@ test "symcore parity formal application helpers" {
 }
 
 ///|
+test "symcore parity application constructors canonicalize legacy children" {
+  let x = @symcore.Expr::Symbol("x")
+  let legacy_derivative = @symcore.Expr::Function("Derivative", [x, x])
+  inspect(
+    core_expr_sstr(@symcore.function("sin", [legacy_derivative])),
+    content="sin(Derivative(x, x))",
+  )
+  match
+    @symcore.apply(@symcore.Expr::FunctionHead("sin"), [legacy_derivative]) {
+    Some(expr) => inspect(core_expr_sstr(expr), content="sin(Derivative(x, x))")
+    None => fail("expected apply result")
+  }
+  inspect(
+    core_expr_sstr(
+      @symcore.applied_undefined_function("f", [legacy_derivative]),
+    ),
+    content="f(Derivative(x, x))",
+  )
+}
+
+///|
 test "symcore parity args for derivative and lambda follow SymPy shapes" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
