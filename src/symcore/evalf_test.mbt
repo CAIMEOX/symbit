@@ -90,15 +90,12 @@ test "evalf handles complex transcendental functions" {
   }
 
   let abs_expr = evalf(
-    function(
-      "Abs",
-      [
-        add([
-          int(1),
-          mul([int(2), Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)]),
-        ]),
-      ],
-    ),
+    function("Abs", [
+      add([
+        int(1),
+        mul([int(2), Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)]),
+      ]),
+    ]),
     prec=100,
   )
   match abs_expr {

@@ -91,7 +91,9 @@ test "number symbols are structured constants" {
     _ => fail("expected oo number symbol")
   }
   json_inspect(
-    free_symbols(add([pi_expr, imag, Expr::Symbol("x")])).map(@symprint.to_string),
+    free_symbols(add([pi_expr, imag, Expr::Symbol("x")])).map(
+      @symprint.to_string,
+    ),
     content=["x"],
   )
   inspect(@symprint.to_string(mul([int(-1), inf])), content="-oo")
@@ -131,7 +133,8 @@ test "boolean and number symbol helper accessors stay structured" {
     Some(NumberSymbolKind::Pi) => ()
     _ => fail("expected pi kind")
   }
-  match number_symbol_kind(Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)) {
+  match
+    number_symbol_kind(Expr::NumberSymbol(NumberSymbolKind::ImaginaryUnit)) {
     Some(NumberSymbolKind::ImaginaryUnit) => ()
     _ => fail("expected I kind")
   }
@@ -221,12 +224,49 @@ test "formal application helpers roundtrip named and undefined heads" {
     None => fail("expected undefined head application")
   }
   assert_false(apply(int(1), [x]) is Some(_))
-  inspect(@symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))), content="Tuple")
+  inspect(
+    @symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))),
+    content="Tuple",
+  )
+}
+
+///|
+test "legacy function storage normalizes to canonical core semantics" {
+  let x = Expr::Symbol("x")
+  let legacy_named = Expr::Function("sin", [x])
+  let canonical_named = function("sin", [x])
+  inspect(@symprint.to_string(legacy_named), content="sin(x)")
+  inspect(application_name(legacy_named).unwrap_or(""), content="sin")
+  json_inspect(children(legacy_named).map(@symprint.to_string), content=["x"])
+  inspect(compare_expr(legacy_named, canonical_named), content="0")
+  inspect(
+    legacy_named.hash().to_string(),
+    content=canonical_named.hash().to_string(),
+  )
+  inspect(
+    @symprint.to_string(
+      evalf(Expr::Function("sin", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
+    ),
+    content=@symprint.to_string(
+      evalf(function("sin", [Expr::NumberSymbol(NumberSymbolKind::Pi)])),
+    ),
+  )
+  let legacy_derivative = Expr::Function("Derivative", [function("f", [x]), x])
+  json_inspect(children(legacy_derivative).map(@symprint.to_string), content=[
+    "f(x)", "(x, 1)",
+  ])
+  inspect(
+    @symprint.to_string(xreplace(legacy_derivative, [(x, int(2))])),
+    content="Derivative(f(2), 2, 1)",
+  )
 }
 
 ///|
 test "dict is a first-class container node" {
-  let d = Expr::Dict([(Expr::Symbol("x"), Expr::Symbol("y")), (int(1), Expr::Symbol("z"))])
+  let d = Expr::Dict([
+    (Expr::Symbol("x"), Expr::Symbol("y")),
+    (int(1), Expr::Symbol("z")),
+  ])
   match expr_form(d) {
     ExprForm::Dict(items) => inspect(items.length(), content="2")
     _ => fail("expected dict form")
@@ -252,7 +292,10 @@ test "sympify lifts typed tuple and dict inputs" {
   inspect(@symprint.to_string(expr), content="(1, x, True)")
   let dict_value = sympify_dict([
     (SympifyInput::SymbolName("x"), SympifyInput::FromInt(2)),
-    (SympifyInput::SymbolName("y"), SympifyInput::FromExpr(Expr::UndefinedFunction("f"))),
+    (
+      SympifyInput::SymbolName("y"),
+      SympifyInput::FromExpr(Expr::UndefinedFunction("f")),
+    ),
   ])
   inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
 }
@@ -302,10 +345,9 @@ test "evalf keeps undefined applications exact and evaluates Mod numerically" {
   inspect(
     @symprint.to_string(
       evalf(
-        applied_undefined_function(
-          "f",
-          [Expr::NumberSymbol(NumberSymbolKind::Pi)],
-        ),
+        applied_undefined_function("f", [
+          Expr::NumberSymbol(NumberSymbolKind::Pi),
+        ]),
       ),
     ),
     content="f(pi)",
@@ -313,9 +355,7 @@ test "evalf keeps undefined applications exact and evaluates Mod numerically" {
   inspect(
     @symprint.to_string(
       evalf(mod_expr(Expr::NumberSymbol(NumberSymbolKind::Pi), int(2))),
-    ).has_prefix(
-      "1.14159265358979",
-    ),
+    ).has_prefix("1.14159265358979"),
     content="true",
   )
 }

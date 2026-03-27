@@ -268,6 +268,14 @@ test "symparse callable context and structured bindings" {
     parse_repr_with("a + b", default_parse_options(), global_context()),
     content="(+ sym:b sym:t)",
   )
+  match parse_expr_with("sin(x)", parse_options(evaluate=false)) {
+    @symcore.Expr::Apply(@symcore.Expr::FunctionHead("sin"), [@symcore.Expr::Symbol("x")]) =>
+      ()
+    _ =>
+      fail(
+        "evaluate=false should preserve ordinary applications as first-class Apply",
+      )
+  }
 }
 
 ///|
@@ -287,6 +295,15 @@ test "ast parser compatibility entrypoint" {
   inspect(
     @symprint.to_string(ast_parse_expr("lambda x, y: x + y")),
     content="Lambda((x, y), x + y)",
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr(
+        "f(x)",
+        local_bindings={ "f": @symcore.Expr::FunctionHead("cos") },
+      ),
+    ),
+    content="cos(x)",
   )
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>

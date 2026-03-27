@@ -140,17 +140,23 @@ fn dict_literal(
   binding_names : Array[String],
   binding_exprs : Array[String],
 ) -> String {
+  let binding_value_text = fn(expr : String) -> String {
+    if expr.has_prefix("sympy.") {
+      expr
+    } else {
+      "sympy.sympify(" + python_string_literal(expr) + ")"
+    }
+  }
   let entries : Array[String] = []
   for i in 0..<binding_names.length() {
     let name = python_string_literal(binding_names[i])
-    let expr = python_string_literal(binding_exprs[i])
-    entries.push(name + ": sympy.sympify(" + expr + ")")
+    entries.push(name + ": " + binding_value_text(binding_exprs[i]))
   }
   for name in callable_names {
     let rendered_name = python_string_literal(name)
     let function_name = match
       binding_lookup(binding_names, binding_exprs, name) {
-      Some(expr) => "str(sympy.sympify(" + python_string_literal(expr) + "))"
+      Some(expr) => "str(" + binding_value_text(expr) + ")"
       None => rendered_name
     }
     entries.push(rendered_name + ": sympy.Function(" + function_name + ")")
@@ -430,13 +436,19 @@ pub fn ast_parse_expr_sstr(
   binding_names? : Array[String] = [],
   binding_exprs? : Array[String] = [],
 ) -> String raise {
+  let binding_value_text = fn(expr : String) -> String {
+    if expr.has_prefix("sympy.") {
+      expr
+    } else {
+      "sympy.sympify(" + python_string_literal(expr) + ")"
+    }
+  }
   let entries : Array[String] = []
   for i in 0..<binding_names.length() {
     entries.push(
       python_string_literal(binding_names[i]) +
-      ": sympy.sympify(" +
-      python_string_literal(binding_exprs[i]) +
-      ")",
+      ": " +
+      binding_value_text(binding_exprs[i]),
     )
   }
   let locals_text = "{" + entries.join(", ") + "}"

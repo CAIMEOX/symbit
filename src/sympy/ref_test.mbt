@@ -63,7 +63,8 @@ test "sympy ref: symbols get" {
 
 ///|
 test "sympy ref: expr_to_sympy add/mul" {
-  let expr = @symcore.int(2) * @symcore.Expr::Symbol("x") + @symcore.Expr::Symbol("y")
+  let expr = @symcore.int(2) * @symcore.Expr::Symbol("x") +
+    @symcore.Expr::Symbol("y")
   let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="2*x + y")
 }
@@ -118,7 +119,9 @@ test "sympy ref: expr_to_sympy undefined function head" {
   let f_callable = @py.PyCallable::create(f_obj) catch {
     _ => fail("expected undefined function head to be callable")
   }
-  let args = @sympy.py_tuple_from_objects([expr_to_sympy(@symcore.Expr::Symbol("x"))])
+  let args = @sympy.py_tuple_from_objects([
+    expr_to_sympy(@symcore.Expr::Symbol("x")),
+  ])
   guard @sympy.py_call_object(f_callable, args, print_err=true) is Some(applied) else {
     fail("expected undefined function head to apply")
   }
@@ -132,8 +135,11 @@ test "sympy ref: expr_to_sympy named function head" {
   let sin_callable = @py.PyCallable::create(sin_obj) catch {
     _ => fail("expected named function head to be callable")
   }
-  let args = @sympy.py_tuple_from_objects([expr_to_sympy(@symcore.Expr::Symbol("x"))])
-  guard @sympy.py_call_object(sin_callable, args, print_err=true) is Some(applied) else {
+  let args = @sympy.py_tuple_from_objects([
+    expr_to_sympy(@symcore.Expr::Symbol("x")),
+  ])
+  guard @sympy.py_call_object(sin_callable, args, print_err=true)
+    is Some(applied) else {
     fail("expected named function head to apply")
   }
   inspect(py_str_obj(objenum_to_obj(applied)), content="sin(x)")
@@ -141,7 +147,9 @@ test "sympy ref: expr_to_sympy named function head" {
 
 ///|
 test "sympy ref: expr_to_sympy applied undefined function" {
-  let expr = @symcore.applied_undefined_function("f", [@symcore.Expr::Symbol("x")])
+  let expr = @symcore.applied_undefined_function("f", [
+    @symcore.Expr::Symbol("x"),
+  ])
   inspect(py_str_obj(expr_to_sympy(expr)), content="f(x)")
 }
 

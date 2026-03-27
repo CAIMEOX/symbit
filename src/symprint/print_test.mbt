@@ -1,6 +1,7 @@
 ///|
 test "debug repr uses s-expression order" {
-  let expr = @symcore.Expr::Symbol("b") * (@symcore.Expr::Symbol("a") + @symcore.int(1))
+  let expr = @symcore.Expr::Symbol("b") *
+    (@symcore.Expr::Symbol("a") + @symcore.int(1))
   inspect(debug_repr(expr), content="(* sym:b (+ sym:a 1))")
 }
 
@@ -31,13 +32,20 @@ test "pretty to_string wraps complex float leaves inside products" {
     @symnum.BigRational::from_int(2),
     prec=80,
   )
-  let expr = @symcore.mul([@symcore.Expr::ComplexFloat(value), @symcore.Expr::Symbol("x")])
+  let expr = @symcore.mul([
+    @symcore.Expr::ComplexFloat(value),
+    @symcore.Expr::Symbol("x"),
+  ])
   inspect(to_string(expr), content="(1.0 + 2.0*I)*x")
 }
 
 ///|
 test "pretty printers understand relational tuple and lambda wrappers" {
-  let rel = @symcore.Expr::Relational(@symcore.RelOp::Le, @symcore.Expr::Symbol("x"), @symcore.int(2))
+  let rel = @symcore.Expr::Relational(
+    @symcore.RelOp::Le,
+    @symcore.Expr::Symbol("x"),
+    @symcore.int(2),
+  )
   let tup = @symcore.Expr::Tuple([@symcore.Expr::Symbol("x"), @symcore.int(2)])
   let lam = @symcore.lambda_expr(
     tup,
@@ -51,9 +59,20 @@ test "pretty printers understand relational tuple and lambda wrappers" {
 
 ///|
 test "pretty printers understand number symbols" {
-  inspect(debug_repr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), content="const:pi")
-  inspect(to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), content="I")
-  inspect(to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)), content="oo")
+  inspect(
+    debug_repr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+    content="const:pi",
+  )
+  inspect(
+    to_string(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+    ),
+    content="I",
+  )
+  inspect(
+    to_string(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)),
+    content="oo",
+  )
 }
 
 ///|

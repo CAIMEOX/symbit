@@ -69,6 +69,25 @@ pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn core_func_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(core_eval_with_globals("sympy.sstr(expr.func)", globals))
+}
+
+///|
+pub fn core_args_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  py_str_obj(
+    core_eval_with_globals(
+      "tuple(sympy.sstr(v) for v in expr.args)",
+      globals,
+    ),
+  )
+}
+
+///|
 pub fn core_attr_bool(expr : @symcore.Expr, attr : String) -> Bool raise {
   let expr_obj = @sympy.expr_to_sympy(expr)
   if attr == "is_nan" {

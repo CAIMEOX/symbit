@@ -35,6 +35,8 @@ test "symcore parity formal application helpers" {
     Some(expr) => {
       inspect(core_expr_sstr(expr), content="sin(x)")
       inspect(core_expr_sstr(@symcore.func(expr).unwrap_or(@symcore.int(0))), content="sin")
+      inspect(core_func_sstr(expr), content="sin")
+      inspect(core_args_sstr(expr), content="('x',)")
     }
     None => fail("expected named application")
   }
