@@ -16,7 +16,23 @@ pub fn ask_predicate(
 }
 
 ///|
+fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => Some((name, args))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_zero(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => tri_of_bool(n.is_zero())
     @symcore.ExprForm::Float(f) => tri_of_bool(@symnum.is_zero(f.to_mpf()))
@@ -43,19 +59,18 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_zero("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_zero("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_zero(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_zero(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_nonzero(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => tri_of_bool(!n.is_zero())
     @symcore.ExprForm::Float(f) => tri_of_bool(!@symnum.is_zero(f.to_mpf()))
@@ -83,19 +98,18 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_nonzero("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_nonzero("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_nonzero(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_nonzero(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_integer(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => tri_of_bool(n.is_integral())
     @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
@@ -120,19 +134,18 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_integer("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_integer("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_integer(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_integer(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_rational(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_) => Tri::True
     @symcore.ExprForm::Float(_) | @symcore.ExprForm::ComplexFloat(_) =>
@@ -157,19 +170,18 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_rational("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_rational("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_rational(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_rational(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_real(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_) | @symcore.ExprForm::Float(_) => Tri::True
     @symcore.ExprForm::ComplexFloat(z) =>
@@ -193,19 +205,18 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_real("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_real("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_real(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_real(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_positive(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) =>
       tri_of_bool(n.compare(@symnum.BigRational::zero()) > 0)
@@ -236,19 +247,18 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_positive("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_positive("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_positive(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_positive(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 
 ///|
 pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return function_is_nonnegative(name, args, env)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) =>
       tri_of_bool(n.compare(@symnum.BigRational::zero()) >= 0)
@@ -280,14 +290,9 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_nonnegative("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_nonnegative("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) => function_is_nonnegative(name, args, env)
-        None => Tri::Unknown
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      function_is_nonnegative(name, args, env)
+    @symcore.ExprForm::Apply(_, _)
+    | @symcore.ExprForm::AppliedUndef(_, _)
+    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
   }
 }
 

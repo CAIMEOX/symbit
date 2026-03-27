@@ -1,5 +1,21 @@
 ///|
+fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => Some((name, args))
+        None => None
+      }
+    None => None
+  }
+}
+
+///|
 pub fn debug_repr(expr : Expr) -> String {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => return wrap_call(name, args)
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => n.to_string()
     @symcore.ExprForm::Float(f) => f.to_string()
@@ -98,6 +114,14 @@ pub fn to_string(expr : Expr) -> String {
 
 ///|
 fn format_expr(expr : Expr, parent_prec : Int) -> String {
+  match ordinary_application_name_args(expr) {
+    Some((name, args)) => {
+      let rendered = args.map(child => format_expr(child, 5)).join(", ")
+      let body = "\{name}(\{rendered})"
+      return if 5 < parent_prec { "(\{body})" } else { body }
+    }
+    None => ()
+  }
   let prec = precedence(expr)
   let body = match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => n.to_string()
