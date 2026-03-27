@@ -252,10 +252,7 @@ test "symparse parity callable context" {
       parse_expr_with("sin(x)", parse_options(evaluate=false)),
     ),
     content=parse_expr_sstr_with(
-      "sin(x)",
-      "sympy.parsing.sympy_parser.standard_transformations",
-      "{}",
-      "{}",
+      "sin(x)", "sympy.parsing.sympy_parser.standard_transformations", "{}", "{}",
       false,
     ),
   )
@@ -320,17 +317,32 @@ test "symparse parity split symbols custom and ast parser" {
     content=ast_parse_expr_sstr("lambda x, y: x + y"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("sin")),
+    content=ast_parse_expr_sstr("sin"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("sin(x)")),
+    content=ast_parse_expr_sstr("sin(x)"),
+  )
+  inspect(
     @symprint.to_string(
-      ast_parse_expr(
-        "f(x)",
-        local_bindings={ "f": @symcore.Expr::FunctionHead("cos") },
-      ),
+      ast_parse_expr("f(x)", local_bindings={
+        "f": @symcore.Expr::FunctionHead("cos"),
+      }),
     ),
-    content=ast_parse_expr_sstr(
-      "f(x)",
-      binding_names=["f"],
-      binding_exprs=["sympy.cos"],
+    content=ast_parse_expr_sstr("f(x)", binding_names=["f"], binding_exprs=[
+      "sympy.cos",
+    ]),
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("f(x)", local_bindings={
+        "f": @symcore.Expr::UndefinedFunction("g"),
+      }),
     ),
+    content=ast_parse_expr_sstr("f(x)", binding_names=["f"], binding_exprs=[
+      "sympy.Function('g')",
+    ]),
   )
 }
 

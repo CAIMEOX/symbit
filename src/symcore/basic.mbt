@@ -230,19 +230,88 @@ pub fn expr_form(expr : Expr) -> ExprForm {
 ///|
 pub fn normalize_legacy_expr(expr : Expr) -> Expr {
   match expr {
+    Expr::Add(args) => Expr::Add(args.map(normalize_legacy_expr))
+    Expr::Mul(args) => Expr::Mul(args.map(normalize_legacy_expr))
+    Expr::Pow(base, exp) =>
+      Expr::Pow(normalize_legacy_expr(base), normalize_legacy_expr(exp))
+    Expr::Mod(lhs, rhs) =>
+      Expr::Mod(normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
+    Expr::Tuple(args) => Expr::Tuple(args.map(normalize_legacy_expr))
+    Expr::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push((normalize_legacy_expr(key), normalize_legacy_expr(value)))
+      }
+      Expr::Dict(out)
+    }
+    Expr::Relational(op, lhs, rhs) =>
+      Expr::Relational(
+        op,
+        normalize_legacy_expr(lhs),
+        normalize_legacy_expr(rhs),
+      )
+    Expr::Derivative(inner, deriv_args) =>
+      Expr::Derivative(
+        normalize_legacy_expr(inner),
+        deriv_args.map(normalize_legacy_expr),
+      )
+    Expr::Subs(inner, variable, value) =>
+      Expr::Subs(
+        normalize_legacy_expr(inner),
+        normalize_legacy_expr(variable),
+        normalize_legacy_expr(value),
+      )
+    Expr::Lambda(vars, body) =>
+      Expr::Lambda(normalize_legacy_expr(vars), normalize_legacy_expr(body))
+    Expr::Apply(head, args) => {
+      let head = normalize_legacy_expr(head)
+      let args = args.map(normalize_legacy_expr)
+      match raw_apply(head, args) {
+        Some(applied) => applied
+        None => Expr::Apply(head, args)
+      }
+    }
     Expr::Function(_, _) =>
       match expr_form(expr) {
-        ExprForm::Tuple(args) => Expr::Tuple(args.map(child => child))
-        ExprForm::Dict(items) => Expr::Dict(items.map(item => item))
-        ExprForm::Relational(op, lhs, rhs) => Expr::Relational(op, lhs, rhs)
+        ExprForm::Tuple(args) => Expr::Tuple(args.map(normalize_legacy_expr))
+        ExprForm::Dict(items) => {
+          let out : Array[(Expr, Expr)] = []
+          for item in items {
+            let (key, value) = item
+            out.push((normalize_legacy_expr(key), normalize_legacy_expr(value)))
+          }
+          Expr::Dict(out)
+        }
+        ExprForm::Relational(op, lhs, rhs) =>
+          Expr::Relational(
+            op,
+            normalize_legacy_expr(lhs),
+            normalize_legacy_expr(rhs),
+          )
         ExprForm::Derivative(inner, deriv_args) =>
-          Expr::Derivative(inner, deriv_args.map(arg => arg))
+          Expr::Derivative(
+            normalize_legacy_expr(inner),
+            deriv_args.map(normalize_legacy_expr),
+          )
         ExprForm::Subs(inner, variable, value) =>
-          Expr::Subs(inner, variable, value)
-        ExprForm::Lambda(vars, body) => Expr::Lambda(vars, body)
-        ExprForm::Mod(lhs, rhs) => Expr::Mod(lhs, rhs)
-        ExprForm::Apply(head, args) =>
-          Expr::Apply(head, args.map(child => child))
+          Expr::Subs(
+            normalize_legacy_expr(inner),
+            normalize_legacy_expr(variable),
+            normalize_legacy_expr(value),
+          )
+        ExprForm::Lambda(vars, body) =>
+          Expr::Lambda(normalize_legacy_expr(vars), normalize_legacy_expr(body))
+        ExprForm::Mod(lhs, rhs) =>
+          Expr::Mod(normalize_legacy_expr(lhs), normalize_legacy_expr(rhs))
+        ExprForm::Apply(head, args) => {
+          let head = normalize_legacy_expr(head)
+          let args = args.map(normalize_legacy_expr)
+          match raw_apply(head, args) {
+            Some(applied) => applied
+            None => Expr::Apply(head, args)
+          }
+        }
         _ => expr
       }
     _ => expr
@@ -447,6 +516,7 @@ pub fn head_name(expr : Expr) -> String {
 
 ///|
 pub fn tuple_items(expr : Expr) -> Array[Expr]? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Tuple(items) => Some(items)
     _ => None
@@ -455,6 +525,7 @@ pub fn tuple_items(expr : Expr) -> Array[Expr]? {
 
 ///|
 pub fn dict_items(expr : Expr) -> Array[(Expr, Expr)]? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Dict(items) => Some(items)
     _ => None
@@ -504,6 +575,7 @@ pub fn is_function_head(expr : Expr) -> Bool {
 
 ///|
 pub fn relational_parts(expr : Expr) -> (RelOp, Expr, Expr)? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Relational(op, lhs, rhs) => Some((op, lhs, rhs))
     _ => None
@@ -512,6 +584,7 @@ pub fn relational_parts(expr : Expr) -> (RelOp, Expr, Expr)? {
 
 ///|
 pub fn derivative_parts(expr : Expr) -> (Expr, Array[Expr])? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Derivative(inner, deriv_args) => Some((inner, deriv_args))
     _ => None
@@ -520,6 +593,7 @@ pub fn derivative_parts(expr : Expr) -> (Expr, Array[Expr])? {
 
 ///|
 pub fn subs_parts(expr : Expr) -> (Expr, Expr, Expr)? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Subs(inner, variable, value) => Some((inner, variable, value))
     _ => None
@@ -528,6 +602,7 @@ pub fn subs_parts(expr : Expr) -> (Expr, Expr, Expr)? {
 
 ///|
 pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Lambda(vars, body) => Some((vars, body))
     _ => None
@@ -536,6 +611,7 @@ pub fn lambda_parts(expr : Expr) -> (Expr, Expr)? {
 
 ///|
 pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Tuple(items) => Some(("Tuple", items))
     ExprForm::Dict(items) => {
@@ -579,14 +655,12 @@ pub fn applied_parts(expr : Expr) -> (String, Array[Expr])? {
 
 ///|
 pub fn application_parts(expr : Expr) -> (Expr, Array[Expr])? {
+  let expr = normalize_legacy_expr(expr)
   match expr {
     Expr::Apply(head, args) => return Some((head, args.map(child => child)))
     _ => ()
   }
-  match expr_form(expr) {
-    ExprForm::Apply(head, args) => Some((head, args))
-    _ => None
-  }
+  None
 }
 
 ///|
@@ -596,6 +670,7 @@ pub fn is_application(expr : Expr) -> Bool {
 
 ///|
 pub fn func(expr : Expr) -> Expr? {
+  let expr = normalize_legacy_expr(expr)
   match application_parts(expr) {
     Some((head, _)) => Some(head)
     None =>
@@ -670,6 +745,7 @@ pub fn application_has_name(
 
 ///|
 pub fn args(expr : Expr) -> Array[Expr] {
+  let expr = normalize_legacy_expr(expr)
   match expr_form(expr) {
     ExprForm::Number(_)
     | ExprForm::Float(_)

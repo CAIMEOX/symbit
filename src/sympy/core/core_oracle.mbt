@@ -80,10 +80,7 @@ pub fn core_args_sstr(expr : @symcore.Expr) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))
   py_str_obj(
-    core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in expr.args)",
-      globals,
-    ),
+    core_eval_with_globals("tuple(sympy.sstr(v) for v in expr.args)", globals),
   )
 }
 
@@ -99,7 +96,9 @@ pub fn core_attr_bool(expr : @symcore.Expr, attr : String) -> Bool raise {
   if attr == "is_one" {
     let globals = @py.PyDict::new()
     globals.set("expr", expr_obj)
-    return py_str_obj(core_eval_with_globals("expr == sympy.Integer(1)", globals)) ==
+    return py_str_obj(
+        core_eval_with_globals("expr == sympy.Integer(1)", globals),
+      ) ==
       "True"
   }
   match expr_obj.get_attr(attr, print_err=true) {
@@ -217,8 +216,7 @@ pub fn core_preorder_sstr(expr : @symcore.Expr) -> String raise {
   globals.set("expr", @sympy.expr_to_sympy(expr))
   py_str_obj(
     core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in sympy.preorder_traversal(expr))",
-      globals,
+      "tuple(sympy.sstr(v) for v in sympy.preorder_traversal(expr))", globals,
     ),
   )
 }
@@ -229,8 +227,7 @@ pub fn core_postorder_sstr(expr : @symcore.Expr) -> String raise {
   globals.set("expr", @sympy.expr_to_sympy(expr))
   py_str_obj(
     core_eval_with_globals(
-      "tuple(sympy.sstr(v) for v in sympy.postorder_traversal(expr))",
-      globals,
+      "tuple(sympy.sstr(v) for v in sympy.postorder_traversal(expr))", globals,
     ),
   )
 }

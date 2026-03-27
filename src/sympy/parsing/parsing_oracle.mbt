@@ -459,7 +459,7 @@ pub fn ast_parse_expr_sstr(
       None => fail("expected lambda body")
     }
     let params_text = trimmed[7:colon_idx].trim().to_string()
-    let body_text = trimmed[(colon_idx + 1):].trim().to_string()
+    let body_text = trimmed[colon_idx + 1:].trim().to_string()
     let params : Array[String] = []
     for param in params_text.split(",") {
       params.push(param.trim().to_string())
@@ -469,8 +469,8 @@ pub fn ast_parse_expr_sstr(
     } else {
       "sympy.Tuple(" +
       params
-        .map(param => "sympy.Symbol(" + python_string_literal(param) + ")")
-        .join(", ") +
+      .map(param => "sympy.Symbol(" + python_string_literal(param) + ")")
+      .join(", ") +
       ")"
     }
     return parsing_eval_str(

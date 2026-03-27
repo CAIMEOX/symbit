@@ -14,17 +14,45 @@ fn local_args_sstr(expr : @symcore.Expr) -> String raise {
 ///|
 test "symcore parity plain symbol names stay plain symbols" {
   inspect(core_expr_srepr(@symcore.Expr::Symbol("pi")), content="Symbol('pi')")
-  inspect(core_expr_srepr(@symcore.Expr::Symbol("True")), content="Symbol('True')")
-  inspect(core_expr_srepr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), content="pi")
+  inspect(
+    core_expr_srepr(@symcore.Expr::Symbol("True")),
+    content="Symbol('True')",
+  )
+  inspect(
+    core_expr_srepr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+    content="pi",
+  )
   inspect(core_expr_srepr(@symcore.Expr::Boolean(true)), content="True")
 }
 
+///|
 test "symcore parity number symbols render as SymPy core singletons" {
-  inspect(core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)), content="pi")
-  inspect(core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)), content="I")
-  inspect(core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)), content="oo")
-  inspect(core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)), content="zoo")
-  inspect(core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)), content="nan")
+  inspect(
+    core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+    content="pi",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+    ),
+    content="I",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+    content="oo",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+    ),
+    content="zoo",
+  )
+  inspect(
+    core_expr_sstr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)),
+    content="nan",
+  )
 }
 
 ///|
@@ -47,7 +75,10 @@ test "symcore parity formal application helpers" {
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
     Some(expr) => {
       inspect(core_expr_sstr(expr), content="sin(x)")
-      inspect(core_expr_sstr(@symcore.func(expr).unwrap_or(@symcore.int(0))), content="sin")
+      inspect(
+        core_expr_sstr(@symcore.func(expr).unwrap_or(@symcore.int(0))),
+        content="sin",
+      )
       inspect(core_func_sstr(expr), content="sin")
       inspect(core_args_sstr(expr), content="('x',)")
     }
@@ -83,7 +114,9 @@ test "symcore parity args for derivative and lambda follow SymPy shapes" {
 ///|
 test "symcore parity dict and tuple containers" {
   inspect(
-    core_expr_sstr(@symcore.Expr::Tuple([@symcore.Expr::Symbol("x"), @symcore.int(2)])),
+    core_expr_sstr(
+      @symcore.Expr::Tuple([@symcore.Expr::Symbol("x"), @symcore.int(2)]),
+    ),
     content="(x, 2)",
   )
   inspect(
@@ -111,7 +144,10 @@ test "symcore parity sympify typed inputs" {
   inspect(
     core_expr_sstr(
       @symcore.sympify_dict([
-        (@symcore.SympifyInput::SymbolName("x"), @symcore.SympifyInput::FromInt(2)),
+        (
+          @symcore.SympifyInput::SymbolName("x"),
+          @symcore.SympifyInput::FromInt(2),
+        ),
       ]),
     ),
     content="{x: 2}",
@@ -252,37 +288,107 @@ test "symcore parity default sort order around functions symbols and mod" {
 test "symcore parity evalf for mod relationals and undefined applications" {
   let x = @symcore.Expr::Symbol("x")
   inspect(
-    core_evalf_sstr(@symcore.mod_expr(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), @symcore.int(2))),
+    core_evalf_sstr(
+      @symcore.mod_expr(
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        @symcore.int(2),
+      ),
+    ),
     content="1.14159265358979",
   )
   inspect(
-    core_evalf_sstr(@symcore.Expr::Relational(@symcore.RelOp::Eq, @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), x)),
+    core_evalf_sstr(
+      @symcore.Expr::Relational(
+        @symcore.RelOp::Eq,
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+        x,
+      ),
+    ),
     content="Eq(3.14159265358979, x)",
   )
   inspect(
-    core_evalf_sstr(@symcore.applied_undefined_function("f", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)])),
+    core_evalf_sstr(
+      @symcore.applied_undefined_function("f", [
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      ]),
+    ),
     content="f(pi)",
   )
 }
 
 ///|
 test "symcore parity numeric singleton predicates" {
-  assert_true(@symcore.is_number_symbol(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)))
-  assert_true(@symcore.is_number_symbol(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)))
-  assert_true(@symcore.is_infinite(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)))
-  assert_true(@symcore.is_infinite(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity)))
-  assert_true(@symcore.is_infinite(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity)))
-  assert_false(@symcore.is_infinite(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)))
-  assert_true(@symcore.is_nan(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)))
-  assert_false(@symcore.is_nan(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)))
+  assert_true(
+    @symcore.is_number_symbol(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    ),
+  )
+  assert_true(
+    @symcore.is_number_symbol(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+  )
+  assert_true(
+    @symcore.is_infinite(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+  )
+  assert_true(
+    @symcore.is_infinite(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NegativeInfinity),
+    ),
+  )
+  assert_true(
+    @symcore.is_infinite(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ComplexInfinity),
+    ),
+  )
+  assert_false(
+    @symcore.is_infinite(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    ),
+  )
+  assert_true(
+    @symcore.is_nan(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)),
+  )
+  assert_false(
+    @symcore.is_nan(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
+  )
   assert_true(@symcore.is_zero(@symcore.int(0)))
   assert_true(@symcore.is_one(@symcore.int(1)))
-  assert_true(@symcore.is_finite_number_atom(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)))
-  assert_false(@symcore.is_finite_number_atom(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)))
-  assert_false(@symcore.is_finite_number_atom(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN)))
-  assert_true(core_attr_bool(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity), "is_infinite"))
-  assert_true(core_attr_bool(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN), "is_nan"))
-  assert_false(core_attr_bool(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi), "is_infinite"))
+  assert_true(
+    @symcore.is_finite_number_atom(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+    ),
+  )
+  assert_false(
+    @symcore.is_finite_number_atom(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+    ),
+  )
+  assert_false(
+    @symcore.is_finite_number_atom(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+    ),
+  )
+  assert_true(
+    core_attr_bool(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+      "is_infinite",
+    ),
+  )
+  assert_true(
+    core_attr_bool(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN),
+      "is_nan",
+    ),
+  )
+  assert_false(
+    core_attr_bool(
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi),
+      "is_infinite",
+    ),
+  )
   assert_true(core_attr_bool(@symcore.int(0), "is_zero"))
   assert_true(core_attr_bool(@symcore.int(1), "is_one"))
 }

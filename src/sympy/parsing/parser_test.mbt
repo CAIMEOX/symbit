@@ -148,7 +148,10 @@ test "symparse standard parser matches sympy defaults" {
   inspect(parse_repr("f"), content="sym:f")
   inspect(parse_repr("f(x)"), content="(call f sym:x)")
   match parse_expr("sin(x)") {
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead("sin"), [@symcore.Expr::Symbol("x")]) => ()
+    @symcore.Expr::Apply(
+      @symcore.Expr::FunctionHead("sin"),
+      [@symcore.Expr::Symbol("x")]
+    ) => ()
     _ => fail("expected first-class named application from parser")
   }
   inspect(parse_repr("x!"), content="(call factorial sym:x)")
@@ -269,8 +272,10 @@ test "symparse callable context and structured bindings" {
     content="(+ sym:b sym:t)",
   )
   match parse_expr_with("sin(x)", parse_options(evaluate=false)) {
-    @symcore.Expr::Apply(@symcore.Expr::FunctionHead("sin"), [@symcore.Expr::Symbol("x")]) =>
-      ()
+    @symcore.Expr::Apply(
+      @symcore.Expr::FunctionHead("sin"),
+      [@symcore.Expr::Symbol("x")]
+    ) => ()
     _ =>
       fail(
         "evaluate=false should preserve ordinary applications as first-class Apply",
@@ -280,6 +285,9 @@ test "symparse callable context and structured bindings" {
 
 ///|
 test "ast parser compatibility entrypoint" {
+  inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
+  inspect(@symprint.to_string(ast_parse_expr("f")), content="f")
+  inspect(@symprint.to_string(ast_parse_expr("sin(x)")), content="sin(x)")
   inspect(@symprint.to_string(ast_parse_expr("1/2")), content="1/2")
   inspect(@symprint.to_string(ast_parse_expr("x + 1")), content="x + 1")
   inspect(
@@ -298,17 +306,23 @@ test "ast parser compatibility entrypoint" {
   )
   inspect(
     @symprint.to_string(
-      ast_parse_expr(
-        "f(x)",
-        local_bindings={ "f": @symcore.Expr::FunctionHead("cos") },
-      ),
+      ast_parse_expr("f(x)", local_bindings={
+        "f": @symcore.Expr::FunctionHead("cos"),
+      }),
     ),
     content="cos(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("f(x)", local_bindings={
+        "f": @symcore.Expr::UndefinedFunction("g"),
+      }),
+    ),
+    content="g(x)",
   )
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
       inspect(@symprint.to_string(body), content="x + 1")
-    _ =>
-      fail("expected ast parser lambda to lower to first-class Lambda node")
+    _ => fail("expected ast parser lambda to lower to first-class Lambda node")
   }
 }

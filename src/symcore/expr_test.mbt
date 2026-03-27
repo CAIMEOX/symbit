@@ -276,6 +276,28 @@ test "legacy function storage normalizes to canonical core semantics" {
     @symprint.to_string(xreplace(legacy_derivative, [(x, int(2))])),
     content="Derivative(f(2), 2, 1)",
   )
+  let nested_legacy = Expr::Add([
+    Expr::Function("sin", [Expr::Function("Tuple", [x, int(1)])]),
+    Expr::Function("Derivative", [function("f", [x]), x]),
+  ])
+  match normalize_legacy_expr(nested_legacy) {
+    Expr::Add([lhs, rhs]) => {
+      match application_parts(lhs) {
+        Some(
+          (Expr::FunctionHead("sin"), [Expr::Tuple([Expr::Symbol("x"), one])])
+        ) => inspect(@symprint.to_string(one), content="1")
+        _ => fail("expected recursively normalized named application")
+      }
+      match derivative_parts(rhs) {
+        Some((inner, [Expr::Symbol("x"), one])) => {
+          inspect(@symprint.to_string(inner), content="f(x)")
+          inspect(@symprint.to_string(one), content="1")
+        }
+        _ => fail("expected recursively normalized derivative")
+      }
+    }
+    _ => fail("expected recursively normalized Add")
+  }
 }
 
 ///|
