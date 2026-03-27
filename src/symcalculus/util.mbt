@@ -45,7 +45,8 @@ fn util_depends_on(expr : Expr, sym : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) => args.any(arg => util_depends_on(arg, sym))
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.any(arg => util_depends_on(arg, sym))
     Expr::Pow(base, exp) =>
       util_depends_on(base, sym) || util_depends_on(exp, sym)
     _ => @symcore.args(expr).any(arg => util_depends_on(arg, sym))
@@ -56,12 +57,27 @@ fn util_depends_on(expr : Expr, sym : Expr) -> Bool {
 fn util_extract_linear_coeff(expr : Expr, sym : Expr) -> BigRational? {
   match expr {
     Expr::Symbol(_) if util_expr_is_symbol(expr, sym) => Some(util_rat_one())
-    Expr::Mul(args) if args.length() == 2 =>
-      match (args[0], args[1]) {
-        (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(args[1], sym) =>
-          Some(c)
-        _ => None
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut coeff : BigRational? = None
+      let mut saw_sym = false
+      for arg in args {
+        match arg {
+          Expr::Number(c) =>
+            if coeff is None {
+              coeff = Some(c)
+            } else {
+              return None
+            }
+          Expr::Symbol(_) if util_expr_is_symbol(arg, sym) => saw_sym = true
+          _ => return None
+        }
       }
+      if saw_sym {
+        coeff
+      } else {
+        None
+      }
+    }
     Expr::Add(args) => {
       let mut coeff = util_rat_zero()
       for arg in args {
@@ -69,14 +85,31 @@ fn util_extract_linear_coeff(expr : Expr, sym : Expr) -> BigRational? {
           Expr::Number(_) => ()
           Expr::Symbol(_) if util_expr_is_symbol(arg, sym) =>
             coeff = util_rat_add(coeff, util_rat_one())
-          Expr::Mul(margs) if margs.length() == 2 =>
-            match (margs[0], margs[1]) {
-              (Expr::Number(c), Expr::Symbol(_)) if util_expr_is_symbol(
-                  margs[1],
-                  sym,
-                ) => coeff = util_rat_add(coeff, c)
-              _ => return None
+          Expr::Mul(margs) if margs.length() == 2 => {
+            let mut linear_coeff : BigRational? = None
+            let mut saw_sym = false
+            for marg in margs {
+              match marg {
+                Expr::Number(c) =>
+                  if linear_coeff is None {
+                    linear_coeff = Some(c)
+                  } else {
+                    return None
+                  }
+                Expr::Symbol(_) if util_expr_is_symbol(marg, sym) =>
+                  saw_sym = true
+                _ => return None
+              }
             }
+            if saw_sym {
+              match linear_coeff {
+                Some(c) => coeff = util_rat_add(coeff, c)
+                None => return None
+              }
+            } else {
+              return None
+            }
+          }
           _ => return None
         }
       }

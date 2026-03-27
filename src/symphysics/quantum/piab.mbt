@@ -46,8 +46,8 @@ pub fn piab_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
 ///|
 pub fn piab_represent(expr : Expr) -> Expr? {
   match @symcore.application_args(expr) {
-    Some(args) if (@symcore.application_has_name(expr, "PIABKet", arity=1) ||
-      @symcore.application_has_name(expr, "PIABBra", arity=1)) => {
+    Some(args) if @symcore.application_has_name(expr, "PIABKet", arity=1) ||
+      @symcore.application_has_name(expr, "PIABBra", arity=1) => {
       let x = Expr::Symbol("x")
       let prefactor = @symcore.raw_function("sqrt", [
         int(2) * @symcore.raw_pow(piab_l, int(-1)),
@@ -55,7 +55,10 @@ pub fn piab_represent(expr : Expr) -> Expr? {
       Some(
         prefactor *
         @symcore.raw_function("sin", [
-          args[0] * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * x * @symcore.raw_pow(piab_l, int(-1)),
+          args[0] *
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+          x *
+          @symcore.raw_pow(piab_l, int(-1)),
         ]),
       )
     }

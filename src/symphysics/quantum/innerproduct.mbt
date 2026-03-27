@@ -141,12 +141,13 @@ pub fn inner_product(
   if !evaluate {
     return @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
   }
-  match (
-    @symcore.application_name(bra_expr),
-    @symcore.application_args(bra_expr),
-    @symcore.application_name(ket_expr),
-    @symcore.application_args(ket_expr),
-  ) {
+  match
+    (
+      @symcore.application_name(bra_expr),
+      @symcore.application_args(bra_expr),
+      @symcore.application_name(ket_expr),
+      @symcore.application_args(ket_expr),
+    ) {
     (Some("OrthogonalBra"), Some(bargs), Some("OrthogonalKet"), Some(kargs)) =>
       if bargs.length() != kargs.length() {
         int(0)
@@ -209,7 +210,12 @@ pub fn inner_product(
       } else {
         @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
-    (Some("BosonCoherentBra"), Some(bargs), Some("BosonCoherentKet"), Some(kargs)) => {
+    (
+      Some("BosonCoherentBra"),
+      Some(bargs),
+      Some("BosonCoherentKet"),
+      Some(kargs),
+    ) =>
       if bargs.length() == 1 && kargs.length() == 1 {
         let bra_alpha = bargs[0]
         let ket_alpha = kargs[0]
@@ -231,7 +237,6 @@ pub fn inner_product(
       } else {
         @symcore.raw_function("InnerProduct", [bra_expr, ket_expr])
       }
-    }
     (Some("PIABBra"), Some(bargs), Some("PIABKet"), Some(kargs)) if bargs.length() ==
       1 &&
       kargs.length() == 1 =>
@@ -263,8 +268,11 @@ pub fn inner_product(
 ///|
 pub fn inner_product_doit(expr : Expr) -> Expr {
   match @symcore.application_args(expr) {
-    Some([lhs, rhs]) if @symcore.application_has_name(expr, "InnerProduct", arity=2) =>
-      inner_product(lhs, rhs)
+    Some([lhs, rhs]) if @symcore.application_has_name(
+        expr,
+        "InnerProduct",
+        arity=2,
+      ) => inner_product(lhs, rhs)
     _ => expr
   }
 }

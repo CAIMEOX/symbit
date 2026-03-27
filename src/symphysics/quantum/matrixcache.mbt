@@ -58,14 +58,27 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   cache.cache_matrix(
     "Y",
     cached_matrix([
-      [int(0), int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)],
-      [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), int(0)],
+      [
+        int(0),
+        int(-1) *
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+      ],
+      [
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+        int(0),
+      ],
     ]),
   )
   cache.cache_matrix("Z", cached_matrix([[int(1), int(0)], [int(0), int(-1)]]))
   cache.cache_matrix(
     "S",
-    cached_matrix([[int(1), int(0)], [int(0), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)]]),
+    cached_matrix([
+      [int(1), int(0)],
+      [
+        int(0),
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+      ],
+    ]),
   )
   cache.cache_matrix(
     "T",
@@ -74,7 +87,9 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
       [
         int(0),
         @symcore.raw_function("exp", [
-          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * quarter,
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+          quarter,
         ]),
       ],
     ]),
@@ -103,8 +118,15 @@ pub fn matrix_cache(dtype? : String = "complex") -> MatrixCache {
   cache.cache_matrix(
     "ZY",
     cached_matrix([
-      [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), int(0)],
-      [int(0), int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)],
+      [
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+        int(0),
+      ],
+      [
+        int(0),
+        int(-1) *
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+      ],
     ]),
   )
   cache

@@ -91,17 +91,41 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     @symcore.ExprForm::Relational(op, lhs, rhs) =>
       match op {
         @symcore.RelOp::Eq =>
-          @symcore.Expr::Relational(@symcore.RelOp::Eq, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Eq,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
         @symcore.RelOp::Ne =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ne, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ne,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
         @symcore.RelOp::Lt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Lt, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Lt,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
         @symcore.RelOp::Le =>
-          @symcore.Expr::Relational(@symcore.RelOp::Le, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Le,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
         @symcore.RelOp::Gt =>
-          @symcore.Expr::Relational(@symcore.RelOp::Gt, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Gt,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
         @symcore.RelOp::Ge =>
-          @symcore.Expr::Relational(@symcore.RelOp::Ge, control_normalize(lhs), control_normalize(rhs))
+          @symcore.Expr::Relational(
+            @symcore.RelOp::Ge,
+            control_normalize(lhs),
+            control_normalize(rhs),
+          )
       }
     @symcore.ExprForm::Derivative(inner, deriv_args) => {
       let args : Array[@symcore.Expr] = [control_normalize(inner)]

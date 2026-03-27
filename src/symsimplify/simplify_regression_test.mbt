@@ -152,6 +152,12 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
   ])
   inspect(@symprint.debug_repr(simplify(gamma_ratio)), content="sym:x")
 
+  let gamma_ratio_swapped = @symcore.mul([
+    @symcore.function("gamma", [@symcore.add([@symcore.int(1), x])]),
+    @symcore.pow(@symcore.function("gamma", [x]), @symcore.int(-1)),
+  ])
+  inspect(@symprint.debug_repr(simplify(gamma_ratio_swapped)), content="sym:x")
+
   let trig_gamma = @symcore.add([
     @symcore.pow(@symcore.function("sin", [x]), @symcore.int(2)),
     @symcore.pow(@symcore.function("cos", [x]), @symcore.int(2)),
@@ -180,6 +186,28 @@ test "symsimplify simplifies nested gamma and rational sums regression" {
     @symcore.mul([@symcore.int(-1), @symcore.function("log", [@symcore.int(2)])]),
   ])
   inspect(@symprint.debug_repr(simplify(log_ratio)), content="(call log sym:x)")
+}
+
+///|
+test "symsimplify handles order-insensitive tan products" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let tan_xy = @symcore.mul([
+    @symcore.function("tan", [x]),
+    @symcore.function("tan", [y]),
+  ])
+  let denom = @symcore.add([
+    @symcore.int(1),
+    @symcore.mul([@symcore.int(-1), tan_xy]),
+  ])
+  let expr = @symcore.mul([
+    @symcore.add([@symcore.function("tan", [x]), @symcore.function("tan", [y])]),
+    @symcore.pow(denom, @symcore.int(-1)),
+  ])
+  inspect(
+    @symprint.debug_repr(tr12i(expr)),
+    content="(call tan (+ sym:x sym:y))",
+  )
 }
 
 ///|

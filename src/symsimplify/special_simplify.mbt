@@ -168,7 +168,11 @@ fn inverse_factorial_arg(expr : Expr) -> Expr? {
 ///|
 fn rewrite_hyperexpand(expr : Expr) -> Expr {
   match @symcore.application_args(expr) {
-    Some([a_params, b_params, z]) if @symcore.application_has_name(expr, "hyper", arity=3) =>
+    Some([a_params, b_params, z]) if @symcore.application_has_name(
+        expr,
+        "hyper",
+        arity=3,
+      ) =>
       match (parse_tuple(a_params), parse_tuple(b_params)) {
         (Some(a), Some(b)) =>
           match (a.length(), b.length()) {

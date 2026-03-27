@@ -84,7 +84,22 @@ fn control_expr_is_one(expr : Expr) -> Bool {
 ///|
 fn control_negated_factor(expr : Expr) -> Expr? {
   match control_normalize(expr) {
-    Expr::Mul(args) if args.length() == 2 && args[0] == int(-1) => Some(args[1])
+    Expr::Mul(args) if args.length() >= 2 => {
+      let rest : Array[Expr] = []
+      let mut saw_neg_one = false
+      for arg in args {
+        if arg == int(-1) && !saw_neg_one {
+          saw_neg_one = true
+        } else {
+          rest.push(arg)
+        }
+      }
+      if saw_neg_one {
+        Some(@symcore.mul(rest))
+      } else {
+        None
+      }
+    }
     _ => None
   }
 }

@@ -479,7 +479,9 @@ fn rewrite_tr9(expr : Expr) -> Expr {
           if t1 == "cos" && t2 == "cos" {
             if coeff_eq(c1, c2) {
               @symcore.mul([
-                @symcore.Expr::Number(c1.mul_r(@symnum.BigRational::from_int(2))),
+                @symcore.Expr::Number(
+                  c1.mul_r(@symnum.BigRational::from_int(2)),
+                ),
                 @symcore.function("cos", [
                   @symcore.mul([half_const(), @symcore.add([x1, x2])]),
                 ]),
@@ -489,7 +491,9 @@ fn rewrite_tr9(expr : Expr) -> Expr {
               ])
             } else {
               @symcore.mul([
-                @symcore.Expr::Number(c1.mul_r(@symnum.BigRational::from_int(-2))),
+                @symcore.Expr::Number(
+                  c1.mul_r(@symnum.BigRational::from_int(-2)),
+                ),
                 @symcore.function("sin", [
                   @symcore.mul([half_const(), @symcore.add([x1, x2])]),
                 ]),
@@ -501,7 +505,9 @@ fn rewrite_tr9(expr : Expr) -> Expr {
           } else if t1 == "sin" && t2 == "sin" {
             if coeff_eq(c1, c2) {
               @symcore.mul([
-                @symcore.Expr::Number(c1.mul_r(@symnum.BigRational::from_int(2))),
+                @symcore.Expr::Number(
+                  c1.mul_r(@symnum.BigRational::from_int(2)),
+                ),
                 @symcore.function("sin", [
                   @symcore.mul([half_const(), @symcore.add([x1, x2])]),
                 ]),
@@ -511,7 +517,9 @@ fn rewrite_tr9(expr : Expr) -> Expr {
               ])
             } else {
               @symcore.mul([
-                @symcore.Expr::Number(c1.mul_r(@symnum.BigRational::from_int(2))),
+                @symcore.Expr::Number(
+                  c1.mul_r(@symnum.BigRational::from_int(2)),
+                ),
                 @symcore.function("cos", [
                   @symcore.mul([half_const(), @symcore.add([x1, x2])]),
                 ]),
@@ -1470,23 +1478,25 @@ fn parse_tan_den(expr : Expr) -> (Int, Expr, Expr)? {
 
 ///|
 fn parse_neg_tan_mul(expr : Expr) -> (Expr, Expr)? {
-  match expr {
-    Expr::Mul([Expr::Number(n), m]) if n.compare(
-        @symnum.BigRational::from_int(-1),
-      ) ==
-      0 => parse_pos_tan_mul(m)
+  let (coeff, factors) = split_numeric_coeff(expr)
+  if coeff.compare(@symnum.BigRational::from_int(-1)) != 0 ||
+    factors.length() != 2 {
+    return None
+  }
+  match (as_tan(factors[0]), as_tan(factors[1])) {
+    (Some(x), Some(y)) => Some((x, y))
     _ => None
   }
 }
 
 ///|
 fn parse_pos_tan_mul(expr : Expr) -> (Expr, Expr)? {
-  match expr {
-    Expr::Mul([a, b]) =>
-      match (as_tan(a), as_tan(b)) {
-        (Some(x), Some(y)) => Some((x, y))
-        _ => None
-      }
+  let (coeff, factors) = split_numeric_coeff(expr)
+  if coeff.compare(@symnum.BigRational::one()) != 0 || factors.length() != 2 {
+    return None
+  }
+  match (as_tan(factors[0]), as_tan(factors[1])) {
+    (Some(x), Some(y)) => Some((x, y))
     _ => None
   }
 }
@@ -1554,8 +1564,8 @@ fn parse_trig_pm_one(expr : Expr) -> (String, Expr, Int)? {
           _ =>
             match arg {
               Expr::Number(n) if n.is_one() => sign = 1
-              Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) == 0 =>
-                sign = -1
+              Expr::Number(n) if n.compare(@symnum.BigRational::from_int(-1)) ==
+                0 => sign = -1
               _ => ()
             }
         }
@@ -1583,10 +1593,15 @@ fn parse_tr2i_factor(expr : Expr) -> Tr2iFactor? {
           match parse_int(exp_expr) {
             Some(e) =>
               match name {
-                "sin" => Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, e))
-                "cos" => Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
+                "sin" =>
+                  Some(Tr2iFactor::Sin(@symprint.debug_repr(arg), arg, e))
+                "cos" =>
+                  Some(Tr2iFactor::Cos(@symprint.debug_repr(arg), arg, e))
                 _ =>
-                  match parse_one_plus_cos(@symcore.pow(@symcore.function(name, [arg]), exp_expr)) {
+                  match
+                    parse_one_plus_cos(
+                      @symcore.pow(@symcore.function(name, [arg]), exp_expr),
+                    ) {
                     Some(inner) =>
                       Some(
                         Tr2iFactor::OnePlusCos(
@@ -1908,7 +1923,9 @@ fn extract_minus(expr : Expr) -> Expr? {
         if abs_coeff.is_one() {
           Some(@symcore.mul(rest))
         } else {
-          Some(@symcore.mul([@symcore.Expr::Number(abs_coeff), @symcore.mul(rest)]))
+          Some(
+            @symcore.mul([@symcore.Expr::Number(abs_coeff), @symcore.mul(rest)]),
+          )
         }
       } else {
         None
@@ -1936,12 +1953,11 @@ fn neg_expr(expr : Expr) -> Expr {
 
 ///|
 fn neg_term(expr : Expr) -> Expr {
-  match expr {
-    Expr::Mul([Expr::Number(n), rest]) if n.compare(
-        @symnum.BigRational::from_int(-1),
-      ) ==
-      0 => rest
-    _ => neg_expr(expr)
+  let (coeff, factors) = split_numeric_coeff(expr)
+  if coeff.compare(@symnum.BigRational::from_int(-1)) == 0 {
+    @symcore.mul(factors)
+  } else {
+    neg_expr(expr)
   }
 }
 

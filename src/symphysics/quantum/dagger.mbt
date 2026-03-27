@@ -91,7 +91,8 @@ pub fn dagger(expr : Expr, evaluate? : Bool = true) -> Expr {
           }
           @symcore.raw_function("Wavefunction", out)
         }
-        (Some("Operator"), Some([arg])) => @symcore.raw_function("Dagger", [arg])
+        (Some("Operator"), Some([arg])) =>
+          @symcore.raw_function("Dagger", [arg])
         (Some(name), Some(_)) if name == "SigmaX" ||
           name == "SigmaY" ||
           name == "SigmaZ" => expr

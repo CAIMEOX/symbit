@@ -50,19 +50,25 @@ fn quantum_make_anticommutator(lhs : Expr, rhs : Expr) -> Expr {
             | (PauliKind::Plus, PauliKind::Minus) => return int(1)
             (PauliKind::Minus, PauliKind::Y)
             | (PauliKind::Y, PauliKind::Minus) =>
-              return int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+              return int(-1) *
+                @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                )
             (PauliKind::Plus, PauliKind::Y) | (PauliKind::Y, PauliKind::Plus) =>
-              return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+              return @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              )
             _ => ()
           }
         _ => ()
       }
-      match (
-        @symcore.application_name(nlhs),
-        @symcore.application_args(nlhs),
-        @symcore.application_name(nrhs),
-        @symcore.application_args(nrhs),
-      ) {
+      match
+        (
+          @symcore.application_name(nlhs),
+          @symcore.application_args(nlhs),
+          @symcore.application_name(nrhs),
+          @symcore.application_args(nrhs),
+        ) {
         (Some("FermionOp"), Some(largs), Some("FermionOp"), Some(rargs)) =>
           if largs.length() == 2 &&
             rargs.length() == 2 &&
@@ -104,7 +110,11 @@ pub fn anticommutator(lhs : Expr, rhs : Expr, evaluate? : Bool = true) -> Expr {
 ///|
 pub fn anticommutator_doit(expr : Expr) -> Expr {
   match @symcore.application_args(expr) {
-    Some([lhs, rhs]) if @symcore.application_has_name(expr, "AntiCommutator", arity=2) =>
+    Some([lhs, rhs]) if @symcore.application_has_name(
+        expr,
+        "AntiCommutator",
+        arity=2,
+      ) =>
       quantum_add_from_args_preserve([
         quantum_mul_from_args_preserve([lhs, rhs]),
         quantum_mul_from_args_preserve([rhs, lhs]),

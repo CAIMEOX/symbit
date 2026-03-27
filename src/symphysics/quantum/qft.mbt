@@ -82,9 +82,10 @@ pub fn FourierExpr::inverse(self : FourierExpr) -> FourierExpr {
 fn fourier_from_expr(expr : Expr) -> FourierExpr? {
   match (@symcore.application_name(expr), @symcore.application_args(expr)) {
     (Some(name), Some([start_expr, finish_expr])) =>
-      match (quantum_integer_value(start_expr), quantum_integer_value(finish_expr)) {
+      match
+        (quantum_integer_value(start_expr), quantum_integer_value(finish_expr)) {
         (Some(start), Some(finish)) if start < finish &&
-            (name == "QFT" || name == "IQFT") =>
+          (name == "QFT" || name == "IQFT") =>
           Some(FourierExpr::{ inverse: name == "IQFT", start, finish })
         _ => None
       }
@@ -95,8 +96,13 @@ fn fourier_from_expr(expr : Expr) -> FourierExpr? {
 ///|
 fn rk_from_expr(expr : Expr) -> RkExpr? {
   match @symcore.application_args(expr) {
-    Some([target_expr, k_expr]) if @symcore.application_has_name(expr, "RkGate", arity=2) =>
-      match (quantum_integer_value(target_expr), quantum_integer_value(k_expr)) {
+    Some([target_expr, k_expr]) if @symcore.application_has_name(
+        expr,
+        "RkGate",
+        arity=2,
+      ) =>
+      match
+        (quantum_integer_value(target_expr), quantum_integer_value(k_expr)) {
         (Some(target), Some(k)) => Some(RkExpr::{ target, k })
         _ => None
       }

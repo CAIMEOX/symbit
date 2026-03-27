@@ -39,18 +39,24 @@ fn simple_endpoint(expr : Expr) -> SimpleEndpoint {
     | Expr::Symbol("oo") => SimpleEndpoint::PosInf
     Expr::NumberSymbol(@symcore.NumberSymbolKind::NaN) | Expr::Symbol("nan") =>
       SimpleEndpoint::Nan
-    Expr::Mul(args) if args.length() == 2 =>
-      match (args[0], args[1]) {
-        (
-          Expr::Number(n),
-          Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
-        )
-        | (Expr::Number(n), Expr::Symbol("oo")) if n.compare(
-            BigRational::from_int(-1),
-          ) ==
-          0 => SimpleEndpoint::NegInf
-        _ => SimpleEndpoint::Other(expr)
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut saw_neg_one = false
+      let mut saw_pos_inf = false
+      for arg in args {
+        match arg {
+          Expr::Number(n) if n.compare(BigRational::from_int(-1)) == 0 =>
+            saw_neg_one = true
+          Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          | Expr::Symbol("oo") => saw_pos_inf = true
+          _ => return SimpleEndpoint::Other(expr)
+        }
       }
+      if saw_neg_one && saw_pos_inf {
+        SimpleEndpoint::NegInf
+      } else {
+        SimpleEndpoint::Other(expr)
+      }
+    }
     _ => SimpleEndpoint::Other(expr)
   }
 }

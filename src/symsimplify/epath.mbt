@@ -258,7 +258,9 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Dummy(_, _) => t == "Dummy" || t == "Symbol" || t == "Expr"
     Expr::Wild(_) => t == "Wild" || t == "Symbol" || t == "Expr"
     Expr::FunctionHead(_) =>
-      t == "FunctionHead" || t == "UndefinedFunction" || t == "Function" ||
+      t == "FunctionHead" ||
+      t == "UndefinedFunction" ||
+      t == "Function" ||
       t == "Expr"
     Expr::UndefinedFunction(_) =>
       t == "UndefinedFunction" || t == "Function" || t == "Expr"
@@ -275,7 +277,8 @@ fn has_type(expr : Expr, t : String) -> Bool {
     Expr::Derivative(_, _) => t == "Derivative" || t == "Expr"
     Expr::Subs(_, _, _) => t == "Subs" || t == "Expr"
     Expr::Lambda(_, _) => t == "Lambda" || t == "Expr"
-    _ if @symcore.application_parts(expr) is Some(_) => t == "Function" || t == "Expr"
+    _ if @symcore.application_parts(expr) is Some(_) =>
+      t == "Function" || t == "Expr"
     _ => false
   }
 }
@@ -300,8 +303,7 @@ fn has_attr(expr : Expr, a : String) -> Bool {
         Expr::Pow(_, _) => true
         _ => false
       }
-    "is_Function" =>
-      @symcore.application_parts(expr) is Some(_)
+    "is_Function" => @symcore.application_parts(expr) is Some(_)
     _ => false
   }
 }
@@ -321,9 +323,7 @@ fn epath_is_atom(expr : Expr) -> Bool {
 ///|
 fn ordered_children(expr : Expr) -> Array[Expr] {
   match expr {
-    Expr::Add(args)
-    | Expr::Mul(args)
-    | Expr::Tuple(args) => args.map(x => x)
+    Expr::Add(args) | Expr::Mul(args) | Expr::Tuple(args) => args.map(x => x)
     Expr::Pow(a, b) => [a, b]
     Expr::Relational(_, lhs, rhs) => [lhs, rhs]
     Expr::Derivative(inner, deriv_args) => {
@@ -358,12 +358,18 @@ fn rebuild_expr(expr : Expr, args : Array[Expr]) -> Expr {
     Expr::Relational(op, _, _) =>
       if args.length() == 2 {
         match op {
-          @symcore.RelOp::Eq => @symcore.Expr::Relational(@symcore.RelOp::Eq, args[0], args[1])
-          @symcore.RelOp::Ne => @symcore.Expr::Relational(@symcore.RelOp::Ne, args[0], args[1])
-          @symcore.RelOp::Lt => @symcore.Expr::Relational(@symcore.RelOp::Lt, args[0], args[1])
-          @symcore.RelOp::Le => @symcore.Expr::Relational(@symcore.RelOp::Le, args[0], args[1])
-          @symcore.RelOp::Gt => @symcore.Expr::Relational(@symcore.RelOp::Gt, args[0], args[1])
-          @symcore.RelOp::Ge => @symcore.Expr::Relational(@symcore.RelOp::Ge, args[0], args[1])
+          @symcore.RelOp::Eq =>
+            @symcore.Expr::Relational(@symcore.RelOp::Eq, args[0], args[1])
+          @symcore.RelOp::Ne =>
+            @symcore.Expr::Relational(@symcore.RelOp::Ne, args[0], args[1])
+          @symcore.RelOp::Lt =>
+            @symcore.Expr::Relational(@symcore.RelOp::Lt, args[0], args[1])
+          @symcore.RelOp::Le =>
+            @symcore.Expr::Relational(@symcore.RelOp::Le, args[0], args[1])
+          @symcore.RelOp::Gt =>
+            @symcore.Expr::Relational(@symcore.RelOp::Gt, args[0], args[1])
+          @symcore.RelOp::Ge =>
+            @symcore.Expr::Relational(@symcore.RelOp::Ge, args[0], args[1])
         }
       } else {
         expr

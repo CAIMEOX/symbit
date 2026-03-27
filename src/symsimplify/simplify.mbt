@@ -461,12 +461,25 @@ fn exact_square_root(term : Expr) -> Expr? {
 ///|
 fn exact_negative_square_root(term : Expr) -> Expr? {
   match term {
-    Expr::Mul([Expr::Number(c), square]) =>
-      if c.compare(@symnum.BigRational::from_int(-1)) == 0 {
-        exact_square_root(square)
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut saw_neg_one = false
+      let mut square : Expr? = None
+      for arg in args {
+        match arg {
+          Expr::Number(c) if c.compare(@symnum.BigRational::from_int(-1)) == 0 =>
+            saw_neg_one = true
+          _ => if square is None { square = Some(arg) } else { return None }
+        }
+      }
+      if saw_neg_one {
+        match square {
+          Some(value) => exact_square_root(value)
+          None => None
+        }
       } else {
         None
       }
+    }
     Expr::Number(n) =>
       if n.compare(@symnum.BigRational::zero()) < 0 {
         exact_square_root(@symcore.Expr::Number(n.neg_r()))
@@ -925,7 +938,8 @@ fn pow_denest(expr : Expr) -> Expr {
   match expr {
     Expr::Pow(Expr::Pow(base, inner_exp), outer_exp) =>
       match (exact_numeric_value(inner_exp), exact_numeric_value(outer_exp)) {
-        (Some(a), Some(b)) => @symcore.pow(base, @symcore.Expr::Number(a.mul_r(b)))
+        (Some(a), Some(b)) =>
+          @symcore.pow(base, @symcore.Expr::Number(a.mul_r(b)))
         _ => expr
       }
     Expr::Pow(base, exp) =>

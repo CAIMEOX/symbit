@@ -125,7 +125,11 @@ pub fn CModExpr::as_expr(self : CModExpr) -> Expr {
 ///|
 fn cmod_from_expr(expr : Expr) -> CModExpr? {
   match @symcore.application_args(expr) {
-    Some([t_expr, a_expr, modulus_expr]) if @symcore.application_has_name(expr, "CMod", arity=3) =>
+    Some([t_expr, a_expr, modulus_expr]) if @symcore.application_has_name(
+        expr,
+        "CMod",
+        arity=3,
+      ) =>
       match
         (
           quantum_integer_value(t_expr),

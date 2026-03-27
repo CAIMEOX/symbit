@@ -188,13 +188,17 @@ pub fn HilbertSpace::dimension(
         "Abstract HilbertSpace has no fixed dimension",
       )
     HilbertSpace::Complex(dimension) => dimension
-    HilbertSpace::L2(_) | HilbertSpace::Fock => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+    HilbertSpace::L2(_) | HilbertSpace::Fock =>
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
     HilbertSpace::TensorProduct(args) => {
       let mut out = int(1)
       for arg in args {
         let dim = arg.dimension()
-        if dim == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
-          return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        if dim ==
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
+          return @symcore.Expr::NumberSymbol(
+            @symcore.NumberSymbolKind::Infinity,
+          )
         }
         out = out * dim
       }
@@ -204,8 +208,11 @@ pub fn HilbertSpace::dimension(
       let mut out = int(0)
       for arg in args {
         let dim = arg.dimension()
-        if dim == @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
-          return @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+        if dim ==
+          @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity) {
+          return @symcore.Expr::NumberSymbol(
+            @symcore.NumberSymbolKind::Infinity,
+          )
         }
         out = out + dim
       }

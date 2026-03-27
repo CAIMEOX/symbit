@@ -376,12 +376,25 @@ fn parse_numeric_term(term : Expr) -> @symnum.BigRational? {
 ///|
 fn parse_two_sqrt_term(term : Expr) -> @symnum.BigRational? {
   match term {
-    Expr::Mul([Expr::Number(c), r]) =>
-      if c.compare(@symnum.BigRational::from_int(2)) == 0 {
-        radical_radicand_as_rational(r)
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut saw_two = false
+      let mut radical : Expr? = None
+      for arg in args {
+        match arg {
+          Expr::Number(c) if c.compare(@symnum.BigRational::from_int(2)) == 0 =>
+            saw_two = true
+          _ => if radical is None { radical = Some(arg) } else { return None }
+        }
+      }
+      if saw_two {
+        match radical {
+          Some(r) => radical_radicand_as_rational(r)
+          None => None
+        }
       } else {
         None
       }
+    }
     _ => None
   }
 }
@@ -533,28 +546,28 @@ fn parse_coeff_times_named_unary(
         Some((name, inner)) if matches_target(name) => Some((int(1), inner))
         _ =>
           match expr {
-    Expr::Mul(args) => {
-      let mut seen = false
-      let mut inner_expr = int(0)
-      let coeff_factors : Array[Expr] = Array::new()
-      for arg in args {
-        match arg {
-          _ =>
-            match named_unary_application(arg) {
-              Some((name, inner)) if matches_target(name) && !seen => {
-                seen = true
-                inner_expr = inner
+            Expr::Mul(args) => {
+              let mut seen = false
+              let mut inner_expr = int(0)
+              let coeff_factors : Array[Expr] = Array::new()
+              for arg in args {
+                match arg {
+                  _ =>
+                    match named_unary_application(arg) {
+                      Some((name, inner)) if matches_target(name) && !seen => {
+                        seen = true
+                        inner_expr = inner
+                      }
+                      _ => coeff_factors.push(arg)
+                    }
+                }
               }
-              _ => coeff_factors.push(arg)
+              if seen {
+                Some((@symcore.mul(coeff_factors), inner_expr))
+              } else {
+                None
+              }
             }
-        }
-      }
-      if seen {
-        Some((@symcore.mul(coeff_factors), inner_expr))
-      } else {
-        None
-      }
-    }
             _ => None
           }
       }
@@ -571,7 +584,9 @@ fn expand_mul_expr(expr : Expr) -> Expr {
     _ =>
       match @symcore.application_parts(expr) {
         Some((head, args)) =>
-          @symcore.raw_apply(head, args.map(a => expand_mul_expr(a))).unwrap_or(expr)
+          @symcore.raw_apply(head, args.map(a => expand_mul_expr(a))).unwrap_or(
+            expr,
+          )
         None => expr
       }
   }
@@ -669,14 +684,22 @@ fn parse_signed_radical(expr : Expr) -> (Int, Expr)? {
     return Some((1, expr))
   }
   match expr {
-    Expr::Mul([Expr::Number(c), r]) =>
-      if c.compare(@symnum.BigRational::from_int(-1)) == 0 && is_radical(r) {
-        Some((-1, r))
-      } else if c.is_one() && is_radical(r) {
-        Some((1, r))
-      } else {
-        None
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut coeff : @symnum.BigRational? = None
+      let mut radical : Expr? = None
+      for arg in args {
+        match arg {
+          Expr::Number(c) => coeff = Some(c)
+          _ => if radical is None { radical = Some(arg) } else { return None }
+        }
       }
+      match (coeff, radical) {
+        (Some(c), Some(r)) if is_radical(r) &&
+          c.compare(@symnum.BigRational::from_int(-1)) == 0 => Some((-1, r))
+        (Some(c), Some(r)) if is_radical(r) && c.is_one() => Some((1, r))
+        _ => None
+      }
+    }
     _ => None
   }
 }
@@ -698,12 +721,12 @@ fn radical_square(expr : Expr) -> Expr? {
         Some(arg) => Some(arg)
         None =>
           match expr {
-    Expr::Pow(base, Expr::Number(exp)) =>
-      if is_half(exp) {
-        Some(base)
-      } else {
-        None
-      }
+            Expr::Pow(base, Expr::Number(exp)) =>
+              if is_half(exp) {
+                Some(base)
+              } else {
+                None
+              }
             _ => None
           }
       }

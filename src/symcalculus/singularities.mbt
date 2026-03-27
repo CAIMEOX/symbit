@@ -43,12 +43,30 @@ fn sing_linear_coeff_const(
   match expr {
     Expr::Symbol(_) if sing_expr_is_symbol(expr, sym) =>
       Some((BigRational::one(), BigRational::zero()))
-    Expr::Mul(args) if args.length() == 2 =>
-      match (args[0], args[1]) {
-        (Expr::Number(c), Expr::Symbol(_)) if sing_expr_is_symbol(args[1], sym) =>
-          Some((c, BigRational::zero()))
-        _ => None
+    Expr::Mul(args) if args.length() == 2 => {
+      let mut coeff : BigRational? = None
+      let mut saw_sym = false
+      for arg in args {
+        match arg {
+          Expr::Number(c) =>
+            if coeff is None {
+              coeff = Some(c)
+            } else {
+              return None
+            }
+          Expr::Symbol(_) if sing_expr_is_symbol(arg, sym) => saw_sym = true
+          _ => return None
+        }
       }
+      if saw_sym {
+        match coeff {
+          Some(c) => Some((c, BigRational::zero()))
+          None => None
+        }
+      } else {
+        None
+      }
+    }
     Expr::Add(args) => {
       let mut coeff = BigRational::zero()
       let mut constant = BigRational::zero()
@@ -57,14 +75,31 @@ fn sing_linear_coeff_const(
           Expr::Number(n) => constant = sing_rat_add(constant, n)
           Expr::Symbol(_) if sing_expr_is_symbol(arg, sym) =>
             coeff = sing_rat_add(coeff, BigRational::one())
-          Expr::Mul(margs) if margs.length() == 2 =>
-            match (margs[0], margs[1]) {
-              (Expr::Number(c), Expr::Symbol(_)) if sing_expr_is_symbol(
-                  margs[1],
-                  sym,
-                ) => coeff = sing_rat_add(coeff, c)
-              _ => return None
+          Expr::Mul(margs) if margs.length() == 2 => {
+            let mut linear_coeff : BigRational? = None
+            let mut saw_sym = false
+            for marg in margs {
+              match marg {
+                Expr::Number(c) =>
+                  if linear_coeff is None {
+                    linear_coeff = Some(c)
+                  } else {
+                    return None
+                  }
+                Expr::Symbol(_) if sing_expr_is_symbol(marg, sym) =>
+                  saw_sym = true
+                _ => return None
+              }
             }
+            if saw_sym {
+              match linear_coeff {
+                Some(c) => coeff = sing_rat_add(coeff, c)
+                None => return None
+              }
+            } else {
+              return None
+            }
+          }
           _ => return None
         }
       }

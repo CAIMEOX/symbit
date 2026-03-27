@@ -224,8 +224,11 @@ fn gate_matrix_from_expr(expr : Expr) -> @symphysics.ExplicitMatrix? {
   }
 
   match @symcore.application_args(expr) {
-    Some(args) if @symcore.application_has_name(expr, "ImmutableDenseMatrix", arity=1) =>
-      parse_rows(args[0])
+    Some(args) if @symcore.application_has_name(
+        expr,
+        "ImmutableDenseMatrix",
+        arity=1,
+      ) => parse_rows(args[0])
     Some(args) if @symcore.application_has_name(expr, "Matrix", arity=1) =>
       parse_rows(args[0])
     _ => None
@@ -315,7 +318,11 @@ fn sqrt2_over_2() -> Expr {
 ///|
 fn gate_phase_t() -> Expr {
   let quarter = gate_exact_rational(1, 4)
-  @symcore.raw_function("exp", [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * quarter])
+  @symcore.raw_function("exp", [
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    quarter,
+  ])
 }
 
 ///|
@@ -332,7 +339,9 @@ pub fn GateExpr::target_matrix(
     GateKind::X =>
       @symphysics.explicit_matrix_from_rows([[int(0), int(1)], [int(1), int(0)]])
     GateKind::Y => {
-      let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+      let i = @symcore.Expr::NumberSymbol(
+        @symcore.NumberSymbolKind::ImaginaryUnit,
+      )
       @symphysics.explicit_matrix_from_rows([[int(0), int(-1) * i], [i, int(0)]])
     }
     GateKind::Z =>
@@ -341,7 +350,9 @@ pub fn GateExpr::target_matrix(
         [int(0), int(-1)],
       ])
     GateKind::Phase => {
-      let i = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+      let i = @symcore.Expr::NumberSymbol(
+        @symcore.NumberSymbolKind::ImaginaryUnit,
+      )
       @symphysics.explicit_matrix_from_rows([[int(1), int(0)], [int(0), i]])
     }
     GateKind::T =>
@@ -552,7 +563,11 @@ pub fn gate_apply_to_qubit_expr(
             Some(gate) => gate_apply_concrete(gate, q, qubit_expr)
             None =>
               match @symcore.application_args(gate_expr) {
-                Some(args) if @symcore.application_has_name(gate_expr, "CGate", arity=2) =>
+                Some(args) if @symcore.application_has_name(
+                    gate_expr,
+                    "CGate",
+                    arity=2,
+                  ) =>
                   match gate_tuple_ints(args[0]) {
                     Some(controls) => {
                       for control in controls {

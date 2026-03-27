@@ -87,7 +87,11 @@ fn represent_integrate_coord_once(
     Expr::Mul(args) => {
       for idx in 0..<args.length() {
         match @symcore.application_args(args[idx]) {
-          Some(delta_args) if @symcore.application_has_name(args[idx], "DiracDelta", arity=1) =>
+          Some(delta_args) if @symcore.application_has_name(
+              args[idx],
+              "DiracDelta",
+              arity=1,
+            ) =>
             match represent_delta_replacement(coord_name, delta_args[0]) {
               Some(replacement) => {
                 let rebuilt : Array[Expr] = []
@@ -141,13 +145,16 @@ fn represent_integrate_coord(expr : Expr, coord_name : String) -> Expr {
 
 ///|
 fn represent_state_coordinates(state_expr : Expr) -> Array[String] {
-  match (@symcore.application_name(state_expr), @symcore.application_args(state_expr)) {
+  match
+    (
+      @symcore.application_name(state_expr),
+      @symcore.application_args(state_expr),
+    ) {
     (Some("XKet"), Some([Expr::Symbol(name)]))
     | (Some("XBra"), Some([Expr::Symbol(name)]))
     | (Some("PxKet"), Some([Expr::Symbol(name)]))
     | (Some("PxBra"), Some([Expr::Symbol(name)])) => [name]
-    (Some("PositionKet3D"), Some(args))
-    | (Some("PositionBra3D"), Some(args)) => {
+    (Some("PositionKet3D"), Some(args)) | (Some("PositionBra3D"), Some(args)) => {
       let out : Array[String] = []
       for arg in args {
         match arg {

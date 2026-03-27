@@ -35,9 +35,8 @@ fn quantum_kdelta(a : Expr, b : Expr) -> Expr {
 ///|
 fn quantum_cg_args(expr : Expr) -> Array[Expr]? {
   match @symcore.application_args(expr) {
-    Some(args) if @symcore.application_has_name(expr, "CG", arity=6) => Some(
-      args,
-    )
+    Some(args) if @symcore.application_has_name(expr, "CG", arity=6) =>
+      Some(args)
     _ => None
   }
 }
@@ -420,8 +419,8 @@ fn quantum_parse_eq9_cross_add_term(
   match quantum_split_integer_coeff(expr) {
     Some((coeff, core)) =>
       match core {
-        Expr::Mul([lhs, rhs]) =>
-          match (quantum_cg_args(lhs), quantum_cg_args(rhs)) {
+        Expr::Mul(args) if args.length() == 2 =>
+          match (quantum_cg_args(args[0]), quantum_cg_args(args[1])) {
             (Some(a1), Some(a2)) =>
               match
                 (
@@ -687,7 +686,11 @@ fn quantum_parse_sum_871_2(expr : Expr) -> Expr? {
 ///|
 fn quantum_parse_sum_872_4(expr : Expr) -> Expr? {
   match @symcore.application_args(expr) {
-    Some([body, limit1, limit2]) if @symcore.application_has_name(expr, "Sum", arity=3) =>
+    Some([body, limit1, limit2]) if @symcore.application_has_name(
+        expr,
+        "Sum",
+        arity=3,
+      ) =>
       match (quantum_tuple3(limit1), quantum_tuple3(limit2)) {
         (Some((alpha, lower_a, upper_a)), Some((beta, lower_b, upper_b))) =>
           match body {
@@ -711,8 +714,8 @@ fn quantum_parse_sum_872_4(expr : Expr) -> Expr? {
                 }
                 None => None
               }
-            Expr::Mul([lhs, rhs]) =>
-              match (quantum_cg_args(lhs), quantum_cg_args(rhs)) {
+            Expr::Mul(args) if args.length() == 2 =>
+              match (quantum_cg_args(args[0]), quantum_cg_args(args[1])) {
                 (Some(args1), Some(args2)) => {
                   let a = args1[0]
                   let b = args1[2]

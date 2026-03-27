@@ -221,11 +221,15 @@ pub fn pauli_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
         PauliKind::Y =>
           Some(
             if state.n == 0 {
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               SigmaZState::{ n: 1, is_bra: false }.as_expr()
             } else {
               int(-1) *
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               SigmaZState::{ n: 0, is_bra: false }.as_expr()
             },
           )
@@ -264,8 +268,19 @@ pub fn represent_pauli_operator(
           ])
         PauliKind::Y =>
           @symphysics.explicit_matrix_from_rows([
-            [int(0), int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)],
-            [@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), int(0)],
+            [
+              int(0),
+              int(-1) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ),
+            ],
+            [
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ),
+              int(0),
+            ],
           ])
         PauliKind::Z =>
           @symphysics.explicit_matrix_from_rows([
@@ -336,17 +351,26 @@ fn pauli_product_pair(lhs : PauliExpr, rhs : PauliExpr) -> Expr {
     | (PauliKind::Y, PauliKind::Y)
     | (PauliKind::Z, PauliKind::Z) => int(1)
     (PauliKind::X, PauliKind::Y) =>
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_z(name=lhs.name).as_expr()
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_z(name=lhs.name).as_expr()
     (PauliKind::Y, PauliKind::X) =>
-      int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_z(name=lhs.name).as_expr()
+      int(-1) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_z(name=lhs.name).as_expr()
     (PauliKind::X, PauliKind::Z) =>
-      int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_y(name=lhs.name).as_expr()
+      int(-1) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_y(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::X) =>
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_y(name=lhs.name).as_expr()
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_y(name=lhs.name).as_expr()
     (PauliKind::Y, PauliKind::Z) =>
-      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_x(name=lhs.name).as_expr()
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_x(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::Y) =>
-      int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * sigma_x(name=lhs.name).as_expr()
+      int(-1) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+      sigma_x(name=lhs.name).as_expr()
     (PauliKind::Z, PauliKind::Minus) =>
       int(-1) * sigma_minus(name=lhs.name).as_expr()
     (PauliKind::Minus, PauliKind::Z) => sigma_minus(name=lhs.name).as_expr()

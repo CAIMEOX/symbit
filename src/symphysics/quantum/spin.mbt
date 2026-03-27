@@ -27,7 +27,8 @@ fn spin_pi_multiple(num : Int, den : Int) -> Expr {
   if num == 0 {
     int(0)
   } else {
-    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * spin_exact_rational(num, den)
+    @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) *
+    spin_exact_rational(num, den)
   }
 }
 
@@ -1454,7 +1455,11 @@ fn spin_uncouple_state_expr(
     let sum_specs : Array[Expr] = []
     for idx in 0..<j_values.length() {
       sum_specs.push(
-        @symcore.Expr::Tuple([mvars[idx], int(-1) * j_values[idx], j_values[idx]]),
+        @symcore.Expr::Tuple([
+          mvars[idx],
+          int(-1) * j_values[idx],
+          j_values[idx],
+        ]),
       )
     }
     let sum_args : Array[Expr] = [quantum_mul_from_args_preserve(factors)]
@@ -1599,7 +1604,9 @@ pub fn spin_apply_operator_to_ket(op_expr : Expr, ket_expr : Expr) -> Expr? {
               Some(
                 spin_exact_rational(1, 2) *
                 int(-1) *
-                @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+                @symcore.Expr::NumberSymbol(
+                  @symcore.NumberSymbolKind::ImaginaryUnit,
+                ) *
                 (
                   spin_apply_operator_to_ket(jplus(), ket_expr).unwrap_or(
                     int(0),

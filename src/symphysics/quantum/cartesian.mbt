@@ -24,7 +24,9 @@ fn cartesian_delta(lhs : Expr, rhs : Expr) -> Expr {
 
 ///|
 fn cartesian_plane_wave(phase : Expr) -> Expr {
-  let norm = @symcore.raw_function("sqrt", [int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * hbar])
+  let norm = @symcore.raw_function("sqrt", [
+    int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) * hbar,
+  ])
   @symcore.raw_function("exp", [phase]) * @symcore.raw_pow(norm, int(-1))
 }
 
@@ -196,7 +198,9 @@ pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
       (Some(bargs), Some(kargs)) if bargs.length() == 1 && kargs.length() == 1 =>
         return Some(
           cartesian_plane_wave(
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+            @symcore.Expr::NumberSymbol(
+              @symcore.NumberSymbolKind::ImaginaryUnit,
+            ) *
             bargs[0] *
             kargs[0] *
             @symcore.raw_pow(hbar, int(-1)),
@@ -212,7 +216,9 @@ pub fn cartesian_inner_product(bra_expr : Expr, ket_expr : Expr) -> Expr? {
         return Some(
           cartesian_plane_wave(
             int(-1) *
-            @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+            @symcore.Expr::NumberSymbol(
+              @symcore.NumberSymbolKind::ImaginaryUnit,
+            ) *
             kargs[0] *
             bargs[0] *
             @symcore.raw_pow(hbar, int(-1)),
@@ -270,7 +276,9 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
           if basis_name == "px" {
             cartesian_plane_wave(
               int(-1) *
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               args[0] *
               coord *
               @symcore.raw_pow(hbar, int(-1)),
@@ -288,7 +296,9 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         return Some(
           if basis_name == "px" {
             cartesian_plane_wave(
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               args[0] *
               coord *
               @symcore.raw_pow(hbar, int(-1)),
@@ -306,7 +316,9 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
         return Some(
           if basis_name == "x" {
             cartesian_plane_wave(
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               coord *
               args[0] *
               @symcore.raw_pow(hbar, int(-1)),
@@ -325,7 +337,9 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
           if basis_name == "x" {
             cartesian_plane_wave(
               int(-1) *
-              @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+              @symcore.Expr::NumberSymbol(
+                @symcore.NumberSymbolKind::ImaginaryUnit,
+              ) *
               coord *
               args[0] *
               @symcore.raw_pow(hbar, int(-1)),
@@ -353,7 +367,10 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       if basis_name == "px" {
         let px1 = cartesian_symbol("px", idx=1)
         let px2 = cartesian_symbol("px", idx=2)
-        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * hbar * cartesian_delta(px1, px2) * px1
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+        hbar *
+        cartesian_delta(px1, px2) *
+        px1
       } else {
         coord
       },
@@ -364,7 +381,11 @@ pub fn cartesian_represent(expr : Expr, basis? : Expr? = None) -> Expr? {
       if basis_name == "x" || basis_name == "default" {
         let x1 = cartesian_symbol("x", idx=1)
         let x2 = cartesian_symbol("x", idx=2)
-        int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * hbar * cartesian_delta(x1, x2) * x1
+        int(-1) *
+        @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) *
+        hbar *
+        cartesian_delta(x1, x2) *
+        x1
       } else {
         coord
       },

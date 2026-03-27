@@ -38,7 +38,8 @@ fn expr_depends_on(expr : Expr, wrt : Expr) -> Bool {
     return true
   }
   match expr {
-    Expr::Add(args) | Expr::Mul(args) => args.any(arg => expr_depends_on(arg, wrt))
+    Expr::Add(args) | Expr::Mul(args) =>
+      args.any(arg => expr_depends_on(arg, wrt))
     Expr::Pow(base, exp) =>
       expr_depends_on(base, wrt) || expr_depends_on(exp, wrt)
     _ => @symcore.args(expr).any(arg => expr_depends_on(arg, wrt))
@@ -209,7 +210,7 @@ pub fn diff(expr : Expr, wrt : Expr) -> Expr {
 ///|
 fn max_derivative_order(expr : Expr, target : Expr) -> Int {
   match @symcore.derivative_parts(expr) {
-    Some((head, deriv_args)) => {
+    Some((head, deriv_args)) =>
       if @symcore.compare_expr(head, target) == 0 {
         deriv_args.length() / 2
       } else {
@@ -222,7 +223,6 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
         }
         max
       }
-    }
     None =>
       match expr {
         Expr::Add(args) | Expr::Mul(args) => {
@@ -257,7 +257,6 @@ fn max_derivative_order(expr : Expr, target : Expr) -> Int {
       }
   }
 }
-
 
 ///|
 fn combinations_with_replacement(

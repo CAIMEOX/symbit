@@ -62,9 +62,9 @@ fn control_expr_has_delay(expr : @symcore.Expr, variable_name : String) -> Bool 
         variable_name,
       )
     _ if @symcore.application_parts(expr) is Some(_) =>
-      @symcore.application_args(expr).unwrap_or([]).any(fn(arg) {
-        control_expr_has_delay(arg, variable_name)
-      })
+      @symcore.application_args(expr)
+      .unwrap_or([])
+      .any(fn(arg) { control_expr_has_delay(arg, variable_name) })
     @symcore.Expr::Pow(base, exp) =>
       control_expr_has_delay(base, variable_name) ||
       control_expr_has_delay(exp, variable_name)
@@ -185,7 +185,8 @@ fn control_frequency_value(
 fn control_conjugate_i(expr : @symcore.Expr) -> @symcore.Expr {
   match @symcore.number_symbol_kind(expr) {
     Some(@symcore.NumberSymbolKind::ImaginaryUnit) =>
-      @symcore.int(-1) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
+      @symcore.int(-1) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit)
     _ =>
       match expr {
         @symcore.Expr::Add(args) =>
@@ -199,7 +200,9 @@ fn control_conjugate_i(expr : @symcore.Expr) -> @symcore.Expr {
         _ =>
           match @symcore.application_parts(expr) {
             Some((head, args)) =>
-              @symcore.raw_apply(head, args.map(control_conjugate_i)).unwrap_or(expr)
+              @symcore.raw_apply(head, args.map(control_conjugate_i)).unwrap_or(
+                expr,
+              )
             None => expr
           }
       }
@@ -635,7 +638,10 @@ pub fn nyquist_plot_expr(
   let tf = control_as_continuous_tf(system)
   let w = @symcore.Expr::Symbol("w")
   let env : Map[String, @symcore.Expr] = {}
-  env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * w
+  env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(
+      @symcore.NumberSymbolKind::ImaginaryUnit,
+    ) *
+    w
   let value = control_normalize(@symcore.subst(tf.to_expr(), env))
   let conj_value = control_conjugate_i(value)
   let real = control_normalize(
@@ -643,7 +649,11 @@ pub fn nyquist_plot_expr(
   )
   let imag = control_normalize(
     (value - conj_value) *
-    @symcore.pow(@symcore.int(2) * @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit), @symcore.int(-1)),
+    @symcore.pow(
+      @symcore.int(2) *
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit),
+      @symcore.int(-1),
+    ),
   )
   (real, imag, w)
 }
@@ -655,7 +665,10 @@ pub fn nichols_plot_expr(
   let tf = control_as_continuous_tf(system)
   let w = @symcore.Expr::Symbol("w")
   let env : Map[String, @symcore.Expr] = {}
-  env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::ImaginaryUnit) * w
+  env[control_var_name(tf.var_)] = @symcore.Expr::NumberSymbol(
+      @symcore.NumberSymbolKind::ImaginaryUnit,
+    ) *
+    w
   let value = control_normalize(@symcore.subst(tf.to_expr(), env))
   let conj_value = control_conjugate_i(value)
   let mag_sq = control_normalize(value * conj_value)
@@ -671,7 +684,10 @@ pub fn nichols_plot_expr(
     (@symelem.log(@symcore.int(10)) ^ @symcore.int(-1))
   let phase = @symcore.int(180) *
     @symelem.arg(value) *
-    (@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^ @symcore.int(-1))
+    (
+      @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi) ^
+      @symcore.int(-1)
+    )
   (magnitude, phase, w)
 }
 

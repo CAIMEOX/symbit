@@ -84,7 +84,9 @@ pub fn unitary_operator(
 
 ///|
 pub fn identity_operator(
-  dimension? : Expr = @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity),
+  dimension? : Expr = @symcore.Expr::NumberSymbol(
+    @symcore.NumberSymbolKind::Infinity,
+  ),
   hilbert_space? : HilbertSpace = hilbert_space(),
 ) -> OperatorExpr {
   quantum_operator([dimension], flavor=OperatorFlavor::Identity, hilbert_space~)
