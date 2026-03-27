@@ -380,6 +380,49 @@ test "xreplace performs exact structural replacement" {
 }
 
 ///|
+test "replace performs preorder structural rewrites on canonical applications" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let expr = add([function("sin", [x]), function("sin", [y])])
+  let rewritten = replace(
+    expr,
+    fn(node : Expr) -> Bool { application_has_name(node, "sin", arity=1) },
+    fn(node : Expr) -> Expr {
+      match application_args(node) {
+        Some([arg]) => function("cos", [arg])
+        _ => node
+      }
+    },
+  )
+  inspect(@symprint.to_string(rewritten), content="cos(x) + cos(y)")
+  inspect(
+    @symprint.to_string(
+      replace(
+        add([x, function("sin", [x])]),
+        fn(node : Expr) -> Bool { node == x },
+        fn(_node : Expr) -> Expr { add([x, int(1)]) },
+      ),
+    ),
+    content="x + sin((x + 1)) + 1",
+  )
+  inspect(
+    @symprint.to_string(
+      replace(
+        Expr::Function("sin", [x]),
+        fn(node : Expr) -> Bool { application_has_name(node, "sin", arity=1) },
+        fn(node : Expr) -> Expr {
+          match application_args(node) {
+            Some([arg]) => function("cos", [arg])
+            _ => node
+          }
+        },
+      ),
+    ),
+    content="cos(x)",
+  )
+}
+
+///|
 test "evalf keeps undefined applications exact and evaluates Mod numerically" {
   inspect(
     @symprint.to_string(

@@ -338,6 +338,19 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
 }
 
 ///|
+pub fn replace(
+  expr : Expr,
+  query : (Expr) -> Bool,
+  value : (Expr) -> Expr,
+) -> Expr {
+  let expr = normalize_legacy_expr(expr)
+  if query(expr) {
+    return value(expr)
+  }
+  map_children(expr, child => replace(child, query, value))
+}
+
+///|
 pub fn xreplace(expr : Expr, rules : Array[(Expr, Expr)]) -> Expr {
   for rule in rules {
     let (old_expr, new_expr) = rule

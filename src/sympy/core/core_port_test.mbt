@@ -181,6 +181,33 @@ test "symcore parity xreplace exact structural replacement" {
 }
 
 ///|
+test "symcore parity replace rewrites named applications preorder" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let expr = @symcore.add([
+    @symcore.function("sin", [x]),
+    @symcore.function("sin", [y]),
+  ])
+  inspect(
+    core_expr_sstr(
+      @symcore.replace(
+        expr,
+        fn(node : @symcore.Expr) -> Bool {
+          @symcore.application_has_name(node, "sin", arity=1)
+        },
+        fn(node : @symcore.Expr) -> @symcore.Expr {
+          match @symcore.application_args(node) {
+            Some([arg]) => @symcore.function("cos", [arg])
+            _ => node
+          }
+        },
+      ),
+    ),
+    content=core_replace_sin_with_cos_sstr(expr),
+  )
+}
+
+///|
 test "symcore parity Mod is a first-class core node" {
   inspect(
     core_expr_sstr(

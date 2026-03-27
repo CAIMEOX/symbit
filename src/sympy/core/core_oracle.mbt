@@ -175,6 +175,15 @@ pub fn core_xreplace_sstr(
 }
 
 ///|
+pub fn core_replace_sin_with_cos_sstr(expr : @symcore.Expr) -> String raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  let code = "sympy.sstr(expr.replace(lambda e: e.func == sympy.sin, " +
+    "lambda e: sympy.cos(*e.args)))"
+  py_str_obj(core_eval_with_globals(code, globals))
+}
+
+///|
 pub fn core_subst_symbol_sstr(
   expr : @symcore.Expr,
   symbol_name : String,
