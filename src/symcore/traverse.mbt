@@ -8,8 +8,25 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     | Expr::Apply(_, args) => args[:]
     Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
+      let sorted = items.copy()
+      sorted.sort_by((lhs, rhs) => {
+        let (lhs_key, lhs_value) = lhs
+        let (rhs_key, rhs_value) = rhs
+        let key_cmp = if is_number_atom(lhs_key) && !is_number_atom(rhs_key) {
+          -1
+        } else if !is_number_atom(lhs_key) && is_number_atom(rhs_key) {
+          1
+        } else {
+          compare_expr(lhs_key, rhs_key)
+        }
+        if key_cmp != 0 {
+          key_cmp
+        } else {
+          compare_expr(lhs_value, rhs_value)
+        }
+      })
       let out : Array[Expr] = []
-      for item in items {
+      for item in sorted {
         let (key, value) = item
         out.push(Expr::Tuple([key, value]))
       }
@@ -31,8 +48,26 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
       }
       out[:]
     }
-    Expr::Subs(inner, variable, value) => [inner, variable, value][:]
-    Expr::Lambda(vars, body) => [vars, body][:]
+    Expr::Subs(inner, variable, value) =>
+      [
+        inner,
+        match variable {
+          Expr::Tuple(_) => variable
+          _ => Expr::Tuple([variable])
+        },
+        match value {
+          Expr::Tuple(_) => value
+          _ => Expr::Tuple([value])
+        },
+      ][:]
+    Expr::Lambda(vars, body) =>
+      [
+        match vars {
+          Expr::Tuple(_) => vars
+          _ => Expr::Tuple([vars])
+        },
+        body,
+      ][:]
     Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => [][:]
   }

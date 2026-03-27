@@ -72,7 +72,11 @@ pub fn core_expr_srepr(expr : @symcore.Expr) -> String raise {
 pub fn core_func_sstr(expr : @symcore.Expr) -> String raise {
   let globals = @py.PyDict::new()
   globals.set("expr", @sympy.expr_to_sympy(expr))
-  py_str_obj(core_eval_with_globals("sympy.sstr(expr.func)", globals))
+  py_str_obj(
+    core_eval_with_globals(
+      "getattr(expr.func, '__name__', sympy.sstr(expr.func))", globals,
+    ),
+  )
 }
 
 ///|

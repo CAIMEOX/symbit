@@ -12,6 +12,24 @@ fn local_args_sstr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+fn local_preorder_sstr(expr : @symcore.Expr) -> String raise {
+  let items : Array[String] = []
+  for item in @symcore.preorder(expr) {
+    items.push("'" + core_expr_sstr(item) + "'")
+  }
+  "(" + items.join(", ") + ")"
+}
+
+///|
+fn local_postorder_sstr(expr : @symcore.Expr) -> String raise {
+  let items : Array[String] = []
+  for item in @symcore.postorder(expr) {
+    items.push("'" + core_expr_sstr(item) + "'")
+  }
+  "(" + items.join(", ") + ")"
+}
+
+///|
 test "symcore parity plain symbol names stay plain symbols" {
   inspect(core_expr_srepr(@symcore.Expr::Symbol("pi")), content="Symbol('pi')")
   inspect(
@@ -129,6 +147,38 @@ test "symcore parity args for derivative and lambda follow SymPy shapes" {
   inspect(
     local_args_sstr(@symcore.lambda_expr(x, @symcore.add([x, y]))),
     content=core_args_sstr(@symcore.lambda_expr(x, @symcore.add([x, y]))),
+  )
+}
+
+///|
+test "symcore parity func and args for containers relationals and Subs" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(core_func_sstr(@symcore.Expr::Tuple([x, y])), content="Tuple")
+  inspect(core_func_sstr(@symcore.Expr::Dict([(x, y)])), content="Dict")
+  inspect(
+    core_func_sstr(@symcore.Expr::Relational(@symcore.RelOp::Eq, x, y)),
+    content="Equality",
+  )
+  inspect(
+    core_func_sstr(@symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1))),
+    content="Subs",
+  )
+  inspect(
+    local_args_sstr(@symcore.Expr::Dict([(x, y), (@symcore.int(1), x)])),
+    content=core_args_sstr(@symcore.Expr::Dict([(x, y), (@symcore.int(1), x)])),
+  )
+  inspect(
+    local_args_sstr(@symcore.Expr::Relational(@symcore.RelOp::Eq, x, y)),
+    content=core_args_sstr(@symcore.Expr::Relational(@symcore.RelOp::Eq, x, y)),
+  )
+  inspect(
+    local_args_sstr(
+      @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
+    ),
+    content=core_args_sstr(
+      @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
+    ),
   )
 }
 
@@ -476,4 +526,16 @@ test "symcore parity preorder and postorder traversals" {
     core_postorder_sstr(expr),
     content="('x', 'f(x)', 'x', '1', '(x, 1)', 'Derivative(f(x), x)', 'x', '2', 'Mod(x, 2)', 'Mod(x, 2) + Derivative(f(x), x)')",
   )
+}
+
+///|
+test "symcore parity traversal wraps lambda and Subs binders canonically" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let expr = @symcore.Expr::Tuple([
+    @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
+    @symcore.lambda_expr(x, @symcore.add([x, y])),
+  ])
+  inspect(local_preorder_sstr(expr), content=core_preorder_sstr(expr))
+  inspect(local_postorder_sstr(expr), content=core_postorder_sstr(expr))
 }

@@ -708,8 +708,25 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::Tuple(items)
     | ExprForm::Apply(_, items) => items.copy()
     ExprForm::Dict(items) => {
+      let sorted = items.copy()
+      sorted.sort_by((lhs, rhs) => {
+        let (lhs_key, lhs_value) = lhs
+        let (rhs_key, rhs_value) = rhs
+        let key_cmp = if is_number_atom(lhs_key) && !is_number_atom(rhs_key) {
+          -1
+        } else if !is_number_atom(lhs_key) && is_number_atom(rhs_key) {
+          1
+        } else {
+          compare_expr(lhs_key, rhs_key)
+        }
+        if key_cmp != 0 {
+          key_cmp
+        } else {
+          compare_expr(lhs_value, rhs_value)
+        }
+      })
       let out : Array[Expr] = []
-      for item in items {
+      for item in sorted {
         let (key, value) = item
         out.push(Expr::Tuple([key, value]))
       }
@@ -727,7 +744,18 @@ pub fn args(expr : Expr) -> Array[Expr] {
       }
       out
     }
-    ExprForm::Subs(inner, variable, value) => [inner, variable, value]
+    ExprForm::Subs(inner, variable, value) =>
+      [
+        inner,
+        match variable {
+          Expr::Tuple(_) => variable
+          _ => Expr::Tuple([variable])
+        },
+        match value {
+          Expr::Tuple(_) => value
+          _ => Expr::Tuple([value])
+        },
+      ]
     ExprForm::Lambda(vars, body) =>
       [
         match vars {

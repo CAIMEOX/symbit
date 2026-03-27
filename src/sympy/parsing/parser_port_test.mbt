@@ -347,6 +347,32 @@ test "symparse parity split symbols custom and ast parser" {
 }
 
 ///|
+test "symparse parity lambda notation and relaxed evaluate false applications" {
+  inspect(
+    @symprint.to_string(parse_expr("lambda x: x + 1")),
+    content=parse_expr_sstr("lambda x: x + 1"),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with(
+        "sin x",
+        parse_options(transformations=relaxed_transformations(), evaluate=false),
+      ),
+    ),
+    content=parse_expr_sstr_relaxed("sin x", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with(
+        "sin**2 x",
+        parse_options(transformations=relaxed_transformations(), evaluate=false),
+      ),
+    ),
+    content=parse_expr_sstr_relaxed("sin**2 x", evaluate=false),
+  )
+}
+
+///|
 test "symparse parity relation truthiness string forms" {
   inspect(
     @symprint.to_string(parse_expr("1 < 2 <= 3")),

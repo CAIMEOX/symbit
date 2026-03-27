@@ -284,6 +284,32 @@ test "symparse callable context and structured bindings" {
 }
 
 ///|
+test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
+  inspect(
+    @symprint.to_string(parse_expr("lambda x: x + 1")),
+    content="Lambda(x, x + 1)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with(
+        "sin x",
+        parse_options(transformations=relaxed_transformations(), evaluate=false),
+      ),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with(
+        "sin**2 x",
+        parse_options(transformations=relaxed_transformations(), evaluate=false),
+      ),
+    ),
+    content="sin(x)**2",
+  )
+}
+
+///|
 test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
   inspect(@symprint.to_string(ast_parse_expr("f")), content="f")

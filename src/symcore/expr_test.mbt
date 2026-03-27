@@ -183,6 +183,46 @@ test "args follow SymPy-style derivative and lambda shapes" {
 }
 
 ///|
+test "func and args expose canonical heads for containers and binders" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  inspect(
+    @symprint.to_string(func(Expr::Tuple([x, y])).unwrap_or(int(0))),
+    content="Tuple",
+  )
+  inspect(
+    @symprint.to_string(func(Expr::Dict([(x, y)])).unwrap_or(int(0))),
+    content="Dict",
+  )
+  inspect(
+    @symprint.to_string(
+      func(Expr::Relational(RelOp::Eq, x, y)).unwrap_or(int(0)),
+    ),
+    content="Eq",
+  )
+  inspect(
+    @symprint.to_string(
+      func(subs_expr(add([x, y]), x, int(1))).unwrap_or(int(0)),
+    ),
+    content="Subs",
+  )
+  let dict_args = args(Expr::Dict([(x, y), (int(1), x)])).map(
+    @symprint.to_string,
+  )
+  inspect(dict_args.length(), content="2")
+  assert_true(dict_args.contains("(1, x)"))
+  assert_true(dict_args.contains("(x, y)"))
+  json_inspect(
+    args(Expr::Relational(RelOp::Eq, x, y)).map(@symprint.to_string),
+    content=["x", "y"],
+  )
+  json_inspect(
+    args(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
+    content=["x + y", "(x,)", "(1,)"],
+  )
+}
+
+///|
 test "undefined function heads are distinct from applied functions" {
   let f = Expr::UndefinedFunction("f")
   let sin_head = Expr::FunctionHead("sin")
@@ -384,6 +424,19 @@ test "preorder and postorder traversal stay structural" {
   json_inspect(postorder(expr).map(@symprint.to_string), content=[
     "x", "2", "Mod(x, 2)", "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x, 1)",
     "Mod(x, 2) + Derivative(f(x), x, 1)",
+  ])
+}
+
+///|
+test "children wrap Subs and Lambda binders like SymPy args" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  json_inspect(
+    children(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
+    content=["x + y", "(x,)", "(1,)"],
+  )
+  json_inspect(children(lambda_expr(x, add([x, y]))).map(@symprint.to_string), content=[
+    "(x,)", "x + y",
   ])
 }
 
