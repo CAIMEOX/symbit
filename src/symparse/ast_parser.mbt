@@ -1,6 +1,10 @@
 ///|
 fn ast_parser_transformations() -> Array[Transformation] {
-  [Transformation::AutoSymbol, Transformation::AutoNumber]
+  [
+    Transformation::LambdaNotation,
+    Transformation::AutoSymbol,
+    Transformation::AutoNumber,
+  ]
 }
 
 ///|

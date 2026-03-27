@@ -32,7 +32,10 @@ test "symcore parity dummy wild and undefined-function heads" {
 test "symcore parity formal application helpers" {
   let x = @symcore.Expr::Symbol("x")
   match @symcore.apply(@symcore.Expr::FunctionHead("sin"), [x]) {
-    Some(expr) => inspect(core_expr_sstr(expr), content="sin(x)")
+    Some(expr) => {
+      inspect(core_expr_sstr(expr), content="sin(x)")
+      inspect(core_expr_sstr(@symcore.func(expr).unwrap_or(@symcore.int(0))), content="sin")
+    }
     None => fail("expected named application")
   }
   match @symcore.apply(@symcore.Expr::UndefinedFunction("f"), [x]) {

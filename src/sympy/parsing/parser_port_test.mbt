@@ -299,6 +299,14 @@ test "symparse parity split symbols custom and ast parser" {
       "2",
     ]),
   )
+  inspect(
+    @symprint.to_string(ast_parse_expr("lambda x: x + 1")),
+    content=ast_parse_expr_sstr("lambda x: x + 1"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("lambda x, y: x + y")),
+    content=ast_parse_expr_sstr("lambda x, y: x + y"),
+  )
 }
 
 ///|

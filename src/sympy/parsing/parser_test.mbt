@@ -147,6 +147,10 @@ test "symparse standard parser matches sympy defaults" {
   inspect(parse_repr("sin"), content="fhead:sin")
   inspect(parse_repr("f"), content="sym:f")
   inspect(parse_repr("f(x)"), content="(call f sym:x)")
+  match parse_expr("sin(x)") {
+    @symcore.Expr::Apply(@symcore.Expr::FunctionHead("sin"), [@symcore.Expr::Symbol("x")]) => ()
+    _ => fail("expected first-class named application from parser")
+  }
   inspect(parse_repr("x!"), content="(call factorial sym:x)")
   let dec = parse_expr("0.1")
   guard @symcore.expr_form(dec) is @symcore.ExprForm::Float(_) else {
@@ -276,10 +280,18 @@ test "ast parser compatibility entrypoint" {
     ),
     content="y + 2",
   )
-  let lambda_result : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
-    "lambda x: x + 1",
+  inspect(
+    @symprint.to_string(ast_parse_expr("lambda x: x + 1")),
+    content="Lambda(x, x + 1)",
   )
-  guard lambda_result is Err(_) else {
-    fail("expected ast parser lambda to stay unsupported")
+  inspect(
+    @symprint.to_string(ast_parse_expr("lambda x, y: x + y")),
+    content="Lambda((x, y), x + y)",
+  )
+  match ast_parse_expr("lambda x: x + 1") {
+    @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
+      inspect(@symprint.to_string(body), content="x + 1")
+    _ =>
+      fail("expected ast parser lambda to lower to first-class Lambda node")
   }
 }

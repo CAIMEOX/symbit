@@ -124,6 +124,17 @@ fn binding_lookup(
 }
 
 ///|
+fn find_char_index(value : String, target : Char) -> Int? {
+  let chars = value.to_array()
+  for i in 0..<chars.length() {
+    if chars[i] == target {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
 fn dict_literal(
   callable_names : Array[String],
   binding_names : Array[String],
@@ -428,13 +439,47 @@ pub fn ast_parse_expr_sstr(
       ")",
     )
   }
+  let locals_text = "{" + entries.join(", ") + "}"
+  let trimmed = src.trim().to_string()
+  if trimmed.has_prefix("lambda ") {
+    let colon_idx = match find_char_index(trimmed, ':') {
+      Some(idx) => idx
+      None => fail("expected lambda body")
+    }
+    let params_text = trimmed[7:colon_idx].trim().to_string()
+    let body_text = trimmed[(colon_idx + 1):].trim().to_string()
+    let params : Array[String] = []
+    for param in params_text.split(",") {
+      params.push(param.trim().to_string())
+    }
+    let params_python = if params.length() == 1 {
+      "sympy.Symbol(" + python_string_literal(params[0]) + ")"
+    } else {
+      "sympy.Tuple(" +
+      params
+        .map(param => "sympy.Symbol(" + python_string_literal(param) + ")")
+        .join(", ") +
+      ")"
+    }
+    return parsing_eval_str(
+      "sympy.sstr(sympy.Lambda(" +
+      params_python +
+      ", __import__(" +
+      python_string_literal("sympy.parsing.ast_parser") +
+      ", fromlist=['parse_expr']).parse_expr(" +
+      python_string_literal(body_text) +
+      ", " +
+      locals_text +
+      ")))",
+    )
+  }
   parsing_eval_str(
     "sympy.sstr(__import__(" +
     python_string_literal("sympy.parsing.ast_parser") +
     ", fromlist=['parse_expr']).parse_expr(" +
     python_string_literal(src) +
-    ", {" +
-    entries.join(", ") +
-    "}))",
+    ", " +
+    locals_text +
+    "))",
   )
 }

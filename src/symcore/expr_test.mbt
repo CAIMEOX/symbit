@@ -193,10 +193,17 @@ test "formal application helpers roundtrip named and undefined heads" {
   let f_head = Expr::UndefinedFunction("f")
   match apply(sin_head, [x]) {
     Some(expr) => {
+      guard expr is Expr::Apply(Expr::FunctionHead("sin"), [Expr::Symbol("x")]) else {
+        fail("expected first-class named application storage")
+      }
       inspect(@symprint.to_string(expr), content="sin(x)")
       inspect(application_name(expr).unwrap_or(""), content="sin")
       inspect(application_args(expr).unwrap_or([]).length(), content="1")
       assert_true(application_has_name(expr, "sin", arity=1))
+      match func(expr) {
+        Some(head) => inspect(@symprint.to_string(head), content="sin")
+        None => fail("expected application func")
+      }
     }
     None => fail("expected named head application")
   }
@@ -214,6 +221,7 @@ test "formal application helpers roundtrip named and undefined heads" {
     None => fail("expected undefined head application")
   }
   assert_false(apply(int(1), [x]) is Some(_))
+  inspect(@symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))), content="Tuple")
 }
 
 ///|
