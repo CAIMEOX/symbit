@@ -95,6 +95,15 @@ fn free_symbols(expr : Expr) -> Array[String] {
       }
       sort_unique_symbols(out)
     }
+    @symcore.ExprForm::Apply(head, args) => {
+      let out = free_symbols(head)
+      for arg in args {
+        for name in free_symbols(arg) {
+          out.push(name)
+        }
+      }
+      sort_unique_symbols(out)
+    }
     @symcore.ExprForm::Dict(items) => {
       let out : Array[String] = []
       for item in items {
@@ -219,6 +228,11 @@ fn print_expr_prec(
         .join(", ")
       "\{sanitize_name(name, language)}(\{rendered})"
     }
+    @symcore.ExprForm::Apply(head, args) =>
+      print_expr_prec(head, language, 5) +
+      "(" +
+      args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
+      ")"
     @symcore.ExprForm::Boolean(true) => "true"
     @symcore.ExprForm::Boolean(false) => "false"
     @symcore.ExprForm::Add(args) => {

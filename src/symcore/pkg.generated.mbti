@@ -68,6 +68,8 @@ pub fn float_from_str(String, prec? : Int, rnd? : @mpf.RoundMode) -> Float raise
 
 pub fn free_symbols(Expr) -> Array[Expr]
 
+pub fn func(Expr) -> Expr?
+
 pub fn function(String, Array[Expr]) -> Expr
 
 pub fn function_head_name(Expr) -> String?
@@ -77,6 +79,8 @@ pub fn has(Expr, Expr) -> Bool
 pub fn head_name(Expr) -> String
 
 pub fn int(Int) -> Expr
+
+pub fn is_application(Expr) -> Bool
 
 pub fn is_atomic(Expr) -> Bool
 
@@ -144,6 +148,8 @@ pub fn raw_mul(Array[Expr]) -> Expr
 
 pub fn raw_pow(Expr, Expr) -> Expr
 
+pub fn rebuild_application(Expr, Array[Expr]) -> Expr?
+
 pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
@@ -209,6 +215,7 @@ pub(all) enum Expr {
   FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
+  Apply(Expr, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
@@ -240,6 +247,7 @@ pub enum ExprForm {
   FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
+  Apply(Expr, Array[Expr])
   Boolean(Bool)
   Add(Array[Expr])
   Mul(Array[Expr])

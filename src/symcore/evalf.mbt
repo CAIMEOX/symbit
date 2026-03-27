@@ -87,6 +87,7 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
     Expr::AppliedUndef(_, _) => None
+    Expr::Apply(_, _) => None
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -114,6 +115,7 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
     Expr::AppliedUndef(_, _) => None
+    Expr::Apply(_, _) => None
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -698,6 +700,25 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::FunctionHead(_) => expr
     Expr::UndefinedFunction(_) => expr
     Expr::AppliedUndef(_, _) => expr
+    Expr::Apply(head, args) => {
+      let eval_args = args.map(arg => evalf_impl(arg, prec))
+      match head {
+        Expr::FunctionHead(name) =>
+          match evalf_nary_function(name, eval_args, prec) {
+            Some(value) => value
+            None =>
+              match raw_apply(head, eval_args) {
+                Some(applied) => applied
+                None => Expr::Apply(head, eval_args)
+              }
+          }
+        _ =>
+          match raw_apply(head, eval_args) {
+            Some(applied) => applied
+            None => Expr::Apply(head, eval_args)
+          }
+      }
+    }
     Expr::Symbol(name) =>
       if name == "I" {
         Expr::ComplexFloat(complex_imag_unit(prec))

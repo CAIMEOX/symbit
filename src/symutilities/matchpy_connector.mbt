@@ -133,6 +133,21 @@ pub fn get_srepr(expr : Expr) -> String {
             let rendered = args.map(get_srepr).join(",")
             "\{name}(\{rendered})"
           }
+        @symcore.ExprForm::Apply(head, args) =>
+          match @symcore.function_head_name(head) {
+            Some(name) =>
+              if args.is_empty() {
+                name
+              } else {
+                let rendered = args.map(get_srepr).join(",")
+                "\{name}(\{rendered})"
+              }
+            None =>
+              "Apply(" +
+              get_srepr(head) +
+              (if args.is_empty() { "" } else { ", " + args.map(get_srepr).join(", ") }) +
+              ")"
+          }
         @symcore.ExprForm::Add(args) =>
           "Add(" + args.map(get_srepr).join(", ") + ")"
         @symcore.ExprForm::Mul(args) =>

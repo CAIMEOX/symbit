@@ -51,6 +51,11 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Lambda(vars, body) => wrap_call("Lambda", [vars, body])
     @symcore.ExprForm::AppliedUndef(name, args)
     | @symcore.ExprForm::Applied(name, args) => wrap_call(name, args)
+    @symcore.ExprForm::Apply(head, args) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => wrap_call(name, args)
+        None => wrap_apply(head, args)
+      }
   }
 }
 
@@ -73,6 +78,17 @@ fn wrap_variadic(head : String, args : Array[Expr]) -> String {
     let rendered = args.map(debug_repr).join(" ")
     "(\{head} \{rendered})"
   }
+}
+
+///|
+fn wrap_apply(head : Expr, args : Array[Expr]) -> String {
+  let rendered_args = args.map(debug_repr)
+  let suffix = if rendered_args.is_empty() {
+    ""
+  } else {
+    " " + rendered_args.join(" ")
+  }
+  "(apply \{debug_repr(head)}\{suffix})"
 }
 
 ///|
@@ -174,6 +190,10 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     | @symcore.ExprForm::Applied(name, args) => {
       let rendered = args.map(child => format_expr(child, prec)).join(", ")
       "\{name}(\{rendered})"
+    }
+    @symcore.ExprForm::Apply(head, args) => {
+      let rendered = args.map(child => format_expr(child, prec)).join(", ")
+      "\{format_expr(head, prec)}(\{rendered})"
     }
   }
   if prec < parent_prec {

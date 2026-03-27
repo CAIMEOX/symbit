@@ -5,6 +5,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     | Expr::Mul(args)
     | Expr::Tuple(args)
     | Expr::AppliedUndef(_, args)
+    | Expr::Apply(_, args)
     | Expr::Function(_, args) => args[:]
     Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
@@ -97,6 +98,11 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Lambda(vars, body) => lambda_expr(f(vars), f(body))
     Expr::AppliedUndef(name, args) =>
       applied_undefined_function(name, args.map(f))
+    Expr::Apply(head, args) =>
+      match raw_apply(head, args.map(f)) {
+        Some(applied) => applied
+        None => Expr::Apply(head, args.map(f))
+      }
     Expr::FunctionHead(name) => Expr::FunctionHead(name)
     Expr::Function(name, args) => function(name, args.map(f))
     _ => expr
@@ -303,6 +309,11 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::Boolean(_) => expr
     Expr::AppliedUndef(name, args) =>
       applied_undefined_function(name, args.map(arg => subst(arg, env)))
+    Expr::Apply(head, args) =>
+      match raw_apply(head, args.map(arg => subst(arg, env))) {
+        Some(applied) => applied
+        None => Expr::Apply(head, args.map(arg => subst(arg, env)))
+      }
     Expr::Derivative(inner, deriv_args) =>
       subst_derivative(inner, deriv_args, env)
     Expr::Lambda(vars, body) => {

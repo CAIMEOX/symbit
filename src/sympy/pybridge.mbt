@@ -25,6 +25,8 @@ fn expr_to_sympy_cached(
     @symcore.Expr::UndefinedFunction(name) => sympy_undefined_function_obj(name)
     @symcore.Expr::AppliedUndef(name, args) =>
       sympy_applied_undefined_function_obj(name, args, dummy_cache, wild_cache)
+    @symcore.Expr::Apply(head, args) =>
+      sympy_apply_obj(head, args, dummy_cache, wild_cache)
     @symcore.Expr::Boolean(value) => sympy_bool_obj(value)
     @symcore.Expr::Add(args) =>
       sympy_nary_obj("sympy.Add", args, "0", dummy_cache, wild_cache)
@@ -298,6 +300,24 @@ fn sympy_applied_undefined_function_obj(
   let head_obj = sympy_undefined_function_obj(name)
   let callable = @py.PyCallable::create(head_obj) catch {
     _ => fail("sympy-undefined-function-callable")
+  }
+  call_callable(callable, arg_objs)
+}
+
+///|
+fn sympy_apply_obj(
+  head : @symcore.Expr,
+  args : Array[@symcore.Expr],
+  dummy_cache : Map[Int, @py.PyObject],
+  wild_cache : Map[String, @py.PyObject],
+) -> @py.PyObject raise {
+  let arg_objs : Array[@py.PyObject] = Array::new()
+  for arg in args {
+    arg_objs.push(expr_to_sympy_cached(arg, dummy_cache, wild_cache))
+  }
+  let head_obj = expr_to_sympy_cached(head, dummy_cache, wild_cache)
+  let callable = @py.PyCallable::create(head_obj) catch {
+    _ => fail("sympy-apply-callable")
   }
   call_callable(callable, arg_objs)
 }

@@ -11,6 +11,7 @@ pub(all) enum Expr {
   FunctionHead(String)
   UndefinedFunction(String)
   AppliedUndef(String, Array[Expr])
+  Apply(Expr, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
   Pow(Expr, Expr)
@@ -40,6 +41,8 @@ impl Show for Expr with to_string(self) {
     Expr::UndefinedFunction(name) => name
     Expr::AppliedUndef(name, args) =>
       name + "(" + args.map(child => child.to_string()).join(", ") + ")"
+    Expr::Apply(head, args) =>
+      head.to_string() + "(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Add(args) =>
       "(" + args.map(child => child.to_string()).join(" + ") + ")"
     Expr::Mul(args) =>
@@ -152,8 +155,10 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
     Expr::UndefinedFunction(name) =>
       Some(Expr::AppliedUndef(name, args.map(child => child)))
-    Expr::FunctionHead(name) => Some(raw_function(name, args))
-    Expr::Symbol(name) => Some(raw_function(name, args))
+    Expr::FunctionHead(name) =>
+      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
+    Expr::Symbol(name) =>
+      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
     _ => None
   }
 }
@@ -163,8 +168,10 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
-    Expr::FunctionHead(name) => Some(function(name, args))
-    Expr::Symbol(name) => Some(function(name, args))
+    Expr::FunctionHead(name) =>
+      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
+    Expr::Symbol(name) =>
+      Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
     _ => None
   }
 }
@@ -795,7 +802,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
       }
       Expr::Dict(entries)
     }
-    _ => Expr::Function(name, args.map(child => child))
+    _ => Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
   }
 }
 
@@ -852,7 +859,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
       }
       Expr::Dict(entries)
     }
-    _ => Expr::Function(name, args.map(child => child))
+    _ => Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
   }
 }
 

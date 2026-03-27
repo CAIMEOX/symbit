@@ -235,6 +235,21 @@ fn wavefunction_simplify_mul(args : Array[Expr]) -> Expr {
 
 ///|
 fn wavefunction_simplify_expr(expr : Expr) -> Expr {
+  match expr {
+    Expr::Apply(head, args) =>
+      match @symcore.function_head_name(head) {
+        Some("sqrt") if args.length() == 1 => {
+          let inner = wavefunction_simplify_expr(args[0])
+          match inner {
+            Expr::Number(n) if n.is_zero() => return int(0)
+            Expr::Number(n) if n.is_one() => return int(1)
+            _ => return Expr::Apply(head, [inner])
+          }
+        }
+        _ => return Expr::Apply(head, args.map(wavefunction_simplify_expr))
+      }
+    _ => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -304,6 +319,7 @@ fn wavefunction_simplify_expr(expr : Expr) -> Expr {
         _ => @symcore.raw_function("sqrt", [inner])
       }
     }
+    @symcore.ExprForm::Apply(head, args) => Expr::Apply(head, args)
     @symcore.ExprForm::Tuple(args) =>
       @symcore.Expr::Tuple(args.map(wavefunction_simplify_expr))
     @symcore.ExprForm::Dict(items) => {
@@ -766,6 +782,14 @@ fn quantum_replace_exact(
   if expr == needle {
     return replacement
   }
+  match expr {
+    Expr::Apply(head, args) =>
+      return Expr::Apply(
+        head,
+        args.map(arg => quantum_replace_exact(arg, needle, replacement)),
+      )
+    _ => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -876,6 +900,7 @@ fn quantum_replace_exact(
         quantum_replace_exact(vars, needle, replacement),
         quantum_replace_exact(body, needle, replacement),
       )
+    @symcore.ExprForm::Apply(head, args) => Expr::Apply(head, args)
     @symcore.ExprForm::Applied(name, args) =>
       @symcore.raw_function(
         name,
@@ -886,6 +911,11 @@ fn quantum_replace_exact(
 
 ///|
 fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
+  match expr {
+    Expr::Apply(head, args) =>
+      return Expr::Apply(head, args.map(wavefunction_eval_derivatives))
+    _ => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -1010,6 +1040,7 @@ fn wavefunction_eval_derivatives(expr : Expr) -> Expr {
         wavefunction_eval_derivatives(vars),
         wavefunction_eval_derivatives(body),
       )
+    @symcore.ExprForm::Apply(head, args) => Expr::Apply(head, args)
     @symcore.ExprForm::Applied(name, args) =>
       @symcore.raw_function(name, args.map(wavefunction_eval_derivatives))
   }
