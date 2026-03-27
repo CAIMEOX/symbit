@@ -115,25 +115,8 @@ pub fn get_srepr(expr : Expr) -> String {
         WildcardKind::Plus | WildcardKind::Star => "*" + variable_name
       }
     None =>
-      match @symcore.expr_form(expr) {
-        @symcore.ExprForm::Number(_)
-        | @symcore.ExprForm::Float(_)
-        | @symcore.ExprForm::ComplexFloat(_)
-        | @symcore.ExprForm::NumberSymbol(_)
-        | @symcore.ExprForm::Symbol(_)
-        | @symcore.ExprForm::Dummy(_, _)
-        | @symcore.ExprForm::Wild(_)
-        | @symcore.ExprForm::FunctionHead(_)
-        | @symcore.ExprForm::UndefinedFunction(_)
-        | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
-        @symcore.ExprForm::AppliedUndef(name, args) =>
-          if args.is_empty() {
-            name
-          } else {
-            let rendered = args.map(get_srepr).join(",")
-            "\{name}(\{rendered})"
-          }
-        @symcore.ExprForm::Apply(head, args) =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
           match @symcore.function_head_name(head) {
             Some(name) =>
               if args.is_empty() {
@@ -148,6 +131,18 @@ pub fn get_srepr(expr : Expr) -> String {
               (if args.is_empty() { "" } else { ", " + args.map(get_srepr).join(", ") }) +
               ")"
           }
+        None =>
+          match @symcore.expr_form(expr) {
+        @symcore.ExprForm::Number(_)
+        | @symcore.ExprForm::Float(_)
+        | @symcore.ExprForm::ComplexFloat(_)
+        | @symcore.ExprForm::NumberSymbol(_)
+        | @symcore.ExprForm::Symbol(_)
+        | @symcore.ExprForm::Dummy(_, _)
+        | @symcore.ExprForm::Wild(_)
+        | @symcore.ExprForm::FunctionHead(_)
+        | @symcore.ExprForm::UndefinedFunction(_)
+        | @symcore.ExprForm::Boolean(_) => @symprint.to_string(expr)
         @symcore.ExprForm::Add(args) =>
           "Add(" + args.map(get_srepr).join(", ") + ")"
         @symcore.ExprForm::Mul(args) =>
@@ -192,8 +187,8 @@ pub fn get_srepr(expr : Expr) -> String {
           ")"
         @symcore.ExprForm::Lambda(vars, body) =>
           "Lambda(" + get_srepr(vars) + ", " + get_srepr(body) + ")"
-        @symcore.ExprForm::Applied(name, args) =>
-          name + "(" + args.map(get_srepr).join(", ") + ")"
+        _ => "<invalid>"
+      }
       }
   }
 }

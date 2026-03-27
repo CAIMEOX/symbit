@@ -536,14 +536,13 @@ fn derivative_chain_order(
   func_name : String,
   t_name : String,
 ) -> Int? {
+  if @symcore.application_has_name(expr, func_name, arity=1) {
+    let arg = @symcore.application_args(expr).unwrap()[0]
+    if @symcore.compare_expr(arg, @symcore.Expr::Symbol(t_name)) == 0 {
+      return Some(0)
+    }
+  }
   match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Applied(func, [arg]) =>
-      if func == func_name &&
-        @symcore.compare_expr(arg, @symcore.Expr::Symbol(t_name)) == 0 {
-        Some(0)
-      } else {
-        None
-      }
     _ =>
       match @symcore.derivative_parts(expr) {
         Some((inner, [wrt])) =>
@@ -1301,12 +1300,12 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
       } else {
         None
       }
-    @symcore.ExprForm::Applied("exp", [inner]) =>
-      laplace_gaussian_base_term(inner, t_name, s)
-    @symcore.ExprForm::Applied("log", [inner]) =>
-      laplace_log_term(inner, t_name, s)
-    @symcore.ExprForm::Applied("Piecewise", args) =>
-      match laplace_piecewise_term(args, t_name, s) {
+    _ if @symcore.application_has_name(expr, "exp", arity=1) =>
+      laplace_gaussian_base_term(@symcore.application_args(expr).unwrap()[0], t_name, s)
+    _ if @symcore.application_has_name(expr, "log", arity=1) =>
+      laplace_log_term(@symcore.application_args(expr).unwrap()[0], t_name, s)
+    _ if @symcore.application_has_name(expr, "Piecewise") =>
+      match laplace_piecewise_term(@symcore.application_args(expr).unwrap(), t_name, s) {
         Some(info) => Some(info)
         None => None
       }
@@ -1363,8 +1362,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         }
       }
-    @symcore.ExprForm::Applied("sin", [arg]) =>
-      match linear_coeffs(arg, t_name) {
+    _ if @symcore.application_has_name(expr, "sin", arity=1) =>
+      match linear_coeffs(@symcore.application_args(expr).unwrap()[0], t_name) {
         Some(pair) => {
           let a = pair.0
           let b = pair.1
@@ -1379,7 +1378,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
-    @symcore.ExprForm::Applied("Abs", [inner]) if unary_application_arg(inner, "sin") is Some(arg) =>
+    _ if unary_application_arg(expr, "Abs") is Some(inner) &&
+      unary_application_arg(inner, "sin") is Some(arg) =>
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
           if expr_is_zero(a) || !expr_is_zero(b) {
@@ -1406,8 +1406,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("cos", [arg]) =>
-      match linear_coeffs(arg, t_name) {
+    _ if @symcore.application_has_name(expr, "cos", arity=1) =>
+      match linear_coeffs(@symcore.application_args(expr).unwrap()[0], t_name) {
         Some(pair) => {
           let a = pair.0
           let b = pair.1
@@ -1422,8 +1422,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
-    @symcore.ExprForm::Applied("sinh", [arg]) =>
-      match linear_coeffs(arg, t_name) {
+    _ if @symcore.application_has_name(expr, "sinh", arity=1) =>
+      match linear_coeffs(@symcore.application_args(expr).unwrap()[0], t_name) {
         Some(pair) => {
           let a = pair.0
           let b = pair.1
@@ -1438,8 +1438,8 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
-    @symcore.ExprForm::Applied("cosh", [arg]) =>
-      match linear_coeffs(arg, t_name) {
+    _ if @symcore.application_has_name(expr, "cosh", arity=1) =>
+      match linear_coeffs(@symcore.application_args(expr).unwrap()[0], t_name) {
         Some(pair) => {
           let a = pair.0
           let b = pair.1
@@ -1454,12 +1454,12 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
         }
         None => None
       }
-    @symcore.ExprForm::Applied("Heaviside", [arg]) =>
-      laplace_numeric_heaviside_base_term(arg, t_name, s)
-    @symcore.ExprForm::Applied("SingularityFunction", _) =>
+    _ if @symcore.application_has_name(expr, "Heaviside", arity=1) =>
+      laplace_numeric_heaviside_base_term(@symcore.application_args(expr).unwrap()[0], t_name, s)
+    _ if @symcore.application_has_name(expr, "SingularityFunction") =>
       laplace_singularity_base_term(expr, t_name, s)
-    @symcore.ExprForm::Applied("erf", [arg]) =>
-      match linear_coeffs(arg, t_name) {
+    _ if @symcore.application_has_name(expr, "erf", arity=1) =>
+      match linear_coeffs(@symcore.application_args(expr).unwrap()[0], t_name) {
         Some((a, b)) =>
           if expr_is_zero(a) || !expr_is_zero(b) {
             None
@@ -1485,7 +1485,10 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("besselj", [order, arg]) =>
+    _ if @symcore.application_has_name(expr, "besselj", arity=2) => {
+      let args = @symcore.application_args(expr).unwrap()
+      let order = args[0]
+      let arg = args[1]
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
           if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
@@ -1506,7 +1509,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("besseli", [order, arg]) =>
+    }
+    _ if @symcore.application_has_name(expr, "besseli", arity=2) => {
+      let args = @symcore.application_args(expr).unwrap()
+      let order = args[0]
+      let arg = args[1]
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
           if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
@@ -1527,7 +1534,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("bessely", [order, arg]) =>
+    }
+    _ if @symcore.application_has_name(expr, "bessely", arity=2) => {
+      let args = @symcore.application_args(expr).unwrap()
+      let order = args[0]
+      let arg = args[1]
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
           if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
@@ -1557,7 +1568,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("besselk", [order, arg]) =>
+    }
+    _ if @symcore.application_has_name(expr, "besselk", arity=2) => {
+      let args = @symcore.application_args(expr).unwrap()
+      let order = args[0]
+      let arg = args[1]
       match linear_coeffs(arg, t_name) {
         Some((a, b)) =>
           if !expr_is_zero(order) || expr_is_zero(a) || !expr_is_zero(b) {
@@ -1578,8 +1593,10 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
           }
         None => None
       }
-    @symcore.ExprForm::Applied("fresnels", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    }
+    _ if @symcore.application_has_name(expr, "fresnels", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name => {
         let phase = expr_div(
           expr_pow(s, @symcore.int(2)),
           expr_mul(@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
@@ -1612,11 +1629,12 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             true_expr(),
           ),
         )
-      } else {
-        None
+        }
+        _ => None
       }
-    @symcore.ExprForm::Applied("fresnelc", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "fresnelc", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name => {
         let phase = expr_div(
           expr_pow(s, @symcore.int(2)),
           expr_mul(@symcore.int(2), @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
@@ -1646,11 +1664,12 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             true_expr(),
           ),
         )
-      } else {
-        None
+        }
+        _ => None
       }
-    @symcore.ExprForm::Applied("Ci", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "Ci", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name =>
         Some(
           (
             expr_mul(
@@ -1664,11 +1683,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             true_expr(),
           ),
         )
-      } else {
-        None
+        _ => None
       }
-    @symcore.ExprForm::Applied("Si", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "Si", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name =>
         Some(
           (
             expr_div(@symelem.atan(expr_pow(s, @symcore.int(-1))), s),
@@ -1676,11 +1695,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             true_expr(),
           ),
         )
-      } else {
-        None
+        _ => None
       }
-    @symcore.ExprForm::Applied("Shi", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "Shi", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name =>
         Some(
           (
             expr_div(@symelem.acoth(s), s),
@@ -1688,11 +1707,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             @symcore.function("Gt", [expr_pow(s, @symcore.int(2)), @symcore.int(1)]),
           ),
         )
-      } else {
-        None
+        _ => None
       }
-    @symcore.ExprForm::Applied("Chi", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "Chi", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name =>
         Some(
           (
             expr_div(
@@ -1711,11 +1730,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             @symcore.function("Gt", [expr_pow(s, @symcore.int(2)), @symcore.int(1)]),
           ),
         )
-      } else {
-        None
+        _ => None
       }
-    @symcore.ExprForm::Applied("E1", [@symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "E1", arity=1) =>
+      match @symcore.application_args(expr).unwrap() {
+        [@symcore.Expr::Symbol(name)] if name == t_name =>
         Some(
           (
             expr_div(@symelem.log(expr_add(s, @symcore.int(1))), s),
@@ -1723,11 +1742,11 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
             true_expr(),
           ),
         )
-      } else {
-        None
+        _ => None
       }
-    @symcore.ExprForm::Applied("expint", [n, @symcore.Expr::Symbol(name)]) =>
-      if name == t_name {
+    _ if @symcore.application_has_name(expr, "expint", arity=2) =>
+      match @symcore.application_args(expr).unwrap() {
+        [n, @symcore.Expr::Symbol(name)] if name == t_name =>
         match expr_is_int_value(n) {
           Some(1) =>
             Some(
@@ -1770,8 +1789,7 @@ fn laplace_base_term(expr : Expr, t_name : String, s : Expr) -> LaplaceInfo? {
               None
             }
         }
-      } else {
-        None
+        _ => None
       }
     _ =>
       match @symcore.derivative_parts(expr) {

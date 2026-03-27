@@ -59,9 +59,7 @@ pub fn is_zero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_zero("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_zero("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -98,9 +96,7 @@ pub fn is_nonzero(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_nonzero("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_nonzero("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -134,9 +130,7 @@ pub fn is_integer(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_integer("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_integer("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -170,9 +164,7 @@ pub fn is_rational(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_rational("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_rational("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -205,9 +197,7 @@ pub fn is_real(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_real("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_real("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -247,9 +237,7 @@ pub fn is_positive(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_positive("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_positive("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 
@@ -290,9 +278,7 @@ pub fn is_nonnegative(expr : Expr, env? : AssumeEnv = {}) -> Tri {
       function_is_nonnegative("Subs", @symcore.args(expr), env)
     @symcore.ExprForm::Lambda(_, _) =>
       function_is_nonnegative("Lambda", @symcore.args(expr), env)
-    @symcore.ExprForm::Apply(_, _)
-    | @symcore.ExprForm::AppliedUndef(_, _)
-    | @symcore.ExprForm::Applied(_, _) => Tri::Unknown
+    _ => Tri::Unknown
   }
 }
 

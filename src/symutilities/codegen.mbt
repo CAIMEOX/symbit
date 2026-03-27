@@ -71,6 +71,18 @@ fn string_upper(value : String) -> String {
 
 ///|
 fn free_symbols(expr : Expr) -> Array[String] {
+  match @symcore.application_parts(expr) {
+    Some((head, call_args)) => {
+      let out = free_symbols(head)
+      for arg in call_args {
+        for name in free_symbols(arg) {
+          out.push(name)
+        }
+      }
+      return sort_unique_symbols(out)
+    }
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -82,21 +94,8 @@ fn free_symbols(expr : Expr) -> Array[String] {
     @symcore.ExprForm::Wild(name) => [@symcore.wild_display_name(name)]
     @symcore.ExprForm::FunctionHead(_) => []
     @symcore.ExprForm::UndefinedFunction(_) => []
-    @symcore.ExprForm::Add(args)
-    | @symcore.ExprForm::Mul(args)
-    | @symcore.ExprForm::Tuple(args)
-    | @symcore.ExprForm::AppliedUndef(_, args)
-    | @symcore.ExprForm::Applied(_, args) => {
+    @symcore.ExprForm::Add(args) | @symcore.ExprForm::Mul(args) | @symcore.ExprForm::Tuple(args) => {
       let out : Array[String] = []
-      for arg in args {
-        for name in free_symbols(arg) {
-          out.push(name)
-        }
-      }
-      sort_unique_symbols(out)
-    }
-    @symcore.ExprForm::Apply(head, args) => {
-      let out = free_symbols(head)
       for arg in args {
         for name in free_symbols(arg) {
           out.push(name)
@@ -138,6 +137,7 @@ fn free_symbols(expr : Expr) -> Array[String] {
       )
     @symcore.ExprForm::Lambda(vars, body) =>
       sort_unique_symbols(free_symbols(vars) + free_symbols(body))
+    _ => []
   }
 }
 
@@ -208,6 +208,23 @@ fn print_expr_prec(
   language : TargetLanguage,
   parent_prec : Int,
 ) -> String raise UtilitiesError {
+  match @symcore.application_parts(expr) {
+    Some((head, call_args)) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => {
+          let rendered = call_args
+            .map(arg => print_expr_prec(arg, language, 5))
+            .join(", ")
+          return "\{sanitize_name(name, language)}(\{rendered})"
+        }
+        None =>
+          return print_expr_prec(head, language, 5) +
+          "(" +
+          call_args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
+          ")"
+      }
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => expr_number_to_code(n)
     @symcore.ExprForm::Float(value) => expr_float_to_code(value)
@@ -222,17 +239,6 @@ fn print_expr_prec(
       sanitize_name(@symcore.wild_display_name(name), language)
     @symcore.ExprForm::FunctionHead(name) => sanitize_name(name, language)
     @symcore.ExprForm::UndefinedFunction(name) => sanitize_name(name, language)
-    @symcore.ExprForm::AppliedUndef(name, args) => {
-      let rendered = args
-        .map(arg => print_expr_prec(arg, language, 5))
-        .join(", ")
-      "\{sanitize_name(name, language)}(\{rendered})"
-    }
-    @symcore.ExprForm::Apply(head, args) =>
-      print_expr_prec(head, language, 5) +
-      "(" +
-      args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
-      ")"
     @symcore.ExprForm::Boolean(true) => "true"
     @symcore.ExprForm::Boolean(false) => "false"
     @symcore.ExprForm::Add(args) => {
@@ -286,11 +292,7 @@ fn print_expr_prec(
     @symcore.ExprForm::Derivative(_, _) => print_derivative_expr(expr)
     @symcore.ExprForm::Subs(_, _, _) | @symcore.ExprForm::Lambda(_, _) =>
       print_lambda_like_expr(expr)
-    @symcore.ExprForm::Applied(name, args) =>
-      print_function_name(name, language) +
-      "(" +
-      args.map(arg => print_expr_prec(arg, language, 0)).join(", ") +
-      ")"
+    _ => print_lambda_like_expr(expr)
   }
 }
 
@@ -319,37 +321,6 @@ fn expr_number_to_code(n : @symnum.BigRational) -> String {
   }
 }
 
-///|
-fn print_function_name(
-  name : String,
-  language : TargetLanguage,
-) -> String raise UtilitiesError {
-  match (language, name) {
-    (_, "Abs") => "abs"
-    (_, "abs") => "abs"
-    (_, "sin") => "sin"
-    (_, "cos") => "cos"
-    (_, "tan") => "tan"
-    (_, "asin") => "asin"
-    (_, "acos") => "acos"
-    (_, "atan") => "atan"
-    (_, "exp") => "exp"
-    (_, "log") => "log"
-    (_, "sqrt") => "sqrt"
-    (_, "sinh") => "sinh"
-    (_, "cosh") => "cosh"
-    (_, "tanh") => "tanh"
-    (_, "asinh") => "asinh"
-    (_, "acosh") => "acosh"
-    (_, "atanh") => "atanh"
-    _ =>
-      raise UtilitiesError::Unsupported(
-        "codegen does not support function " + name,
-      )
-  }
-}
-
-///|
 fn parenthesize_if_needed(
   text : String,
   child_prec : Int,

@@ -64,6 +64,23 @@ fn eval_double(
   expr : Expr,
   env : Map[String, Double],
 ) -> Double raise UtilitiesError {
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(call_args)) => {
+      let vals = call_args.map(arg => eval_double(arg, env))
+      return match eval_builtin_function(name, vals) {
+        Some(value) => value
+        None =>
+          match implemented_registry.val.get(name) {
+            Some(imp) => imp(vals)
+            None =>
+              raise UtilitiesError::Unsupported(
+                "lambdify does not yet support function " + name,
+              )
+          }
+      }
+    }
+    _ => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(n) => expr_number_to_double(n)
     @symcore.ExprForm::Float(value) =>
@@ -110,20 +127,6 @@ fn eval_double(
     }
     @symcore.ExprForm::Pow(base, exp) =>
       @math.pow(eval_double(base, env), eval_double(exp, env))
-    @symcore.ExprForm::Applied(name, args) => {
-      let vals = args.map(arg => eval_double(arg, env))
-      match eval_builtin_function(name, vals) {
-        Some(value) => value
-        None =>
-          match implemented_registry.val.get(name) {
-            Some(imp) => imp(vals)
-            None =>
-              raise UtilitiesError::Unsupported(
-                "lambdify does not yet support function " + name,
-              )
-          }
-      }
-    }
     _ =>
       raise UtilitiesError::Unsupported(
         "lambdify does not yet support expression " + @symprint.to_string(expr),
@@ -138,6 +141,18 @@ pub fn lambdify(args : Array[String], expr : Expr) -> LambdaFn {
 
 ///|
 fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
+  match (@symcore.application_name(expr), @symcore.application_args(expr)) {
+    (Some(name), Some(call_args)) => {
+      let current_prec = 3
+      let text = name + "(" + call_args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
+      return if current_prec < parent_prec {
+        "(" + text + ")"
+      } else {
+        text
+      }
+    }
+    _ => ()
+  }
   let current_prec = match @symcore.expr_form(expr) {
     @symcore.ExprForm::Add(_) => 0
     @symcore.ExprForm::Mul(_) => 1
@@ -186,8 +201,6 @@ fn lambdastr_prec(expr : Expr, parent_prec : Int) -> String {
       }
       lambdastr_prec(lhs, 0) + " " + symbol + " " + lambdastr_prec(rhs, 0)
     }
-    @symcore.ExprForm::Applied(name, args) =>
-      name + "(" + args.map(arg => lambdastr_prec(arg, 0)).join(", ") + ")"
     _ => @symprint.to_string(expr)
   }
   if current_prec < parent_prec {

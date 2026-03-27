@@ -49,6 +49,20 @@ fn rational_pow(value : @symnum.BigRational, exp : Int) -> @symnum.BigRational? 
 
 ///|
 fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) => {
+      let normalized_args = args.map(control_normalize)
+      let folded = match @symcore.raw_apply(head, normalized_args) {
+        Some(applied) => applied
+        None => expr
+      }
+      return @symsimplify.ratsimp(
+        @symsimplify.simplify(folded, max_passes=4),
+        max_passes=4,
+      )
+    }
+    None => ()
+  }
   let folded = match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -60,15 +74,6 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.ExprForm::FunctionHead(_)
     | @symcore.ExprForm::UndefinedFunction(_)
     | @symcore.ExprForm::Boolean(_) => expr
-    @symcore.ExprForm::AppliedUndef(name, args) =>
-      @symcore.applied_undefined_function(name, args.map(control_normalize))
-    @symcore.ExprForm::Apply(head, args) => {
-      let normalized_args = args.map(control_normalize)
-      match @symcore.raw_apply(head, normalized_args) {
-        Some(applied) => applied
-        None => @symcore.Expr::Apply(head, normalized_args)
-      }
-    }
     @symcore.ExprForm::Add(args) => @symcore.add(args.map(control_normalize))
     @symcore.ExprForm::Mul(args) => @symcore.mul(args.map(control_normalize))
     @symcore.ExprForm::Pow(base, exp_expr) => {
@@ -149,8 +154,7 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
       )
     @symcore.ExprForm::Lambda(vars, body) =>
       @symcore.lambda_expr(control_normalize(vars), control_normalize(body))
-    @symcore.ExprForm::Applied(name, args) =>
-      @symcore.function(name, args.map(control_normalize))
+    _ => expr
   }
   @symsimplify.ratsimp(
     @symsimplify.simplify(folded, max_passes=4),
@@ -160,12 +164,15 @@ fn control_normalize(expr : @symcore.Expr) -> @symcore.Expr {
 
 ///|
 fn expr_depends_on(expr : @symcore.Expr, variable : String) -> Bool {
+  match @symcore.application_args(expr) {
+    Some(call_args) => return call_args.any(arg => expr_depends_on(arg, variable))
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Symbol(name) => name == variable
     @symcore.ExprForm::Add(args)
     | @symcore.ExprForm::Mul(args)
-    | @symcore.ExprForm::Tuple(args)
-    | @symcore.ExprForm::Applied(_, args) =>
+    | @symcore.ExprForm::Tuple(args) =>
       args.any(arg => expr_depends_on(arg, variable))
     @symcore.ExprForm::Pow(base, exp) =>
       expr_depends_on(base, variable) || expr_depends_on(exp, variable)

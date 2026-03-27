@@ -216,6 +216,14 @@ fn control_rational_parts(
   expr : Expr,
   variable_name : String,
 ) -> (Expr, Expr) raise ControlError {
+  if @symcore.application_has_name(expr, "exp", arity=1) &&
+    control_expr_depends_on_symbol(expr, variable_name) {
+    let args = @symcore.application_args(expr).unwrap()
+    match control_negated_factor(args[0]) {
+      Some(inner) => return (int(1), @symcore.function("exp", [inner]))
+      None => ()
+    }
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -255,17 +263,6 @@ fn control_rational_parts(
             n.numerator().to_int(),
           )
         _ => (expr, int(1))
-      }
-    @symcore.ExprForm::Applied(name, args) =>
-      if name == "exp" &&
-        args.length() == 1 &&
-        control_expr_depends_on_symbol(expr, variable_name) {
-        match control_negated_factor(args[0]) {
-          Some(inner) => (int(1), @symcore.function("exp", [inner]))
-          None => (expr, int(1))
-        }
-      } else {
-        (expr, int(1))
       }
     _ => (expr, int(1))
   }

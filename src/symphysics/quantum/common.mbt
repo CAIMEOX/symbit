@@ -131,6 +131,15 @@ fn quantum_is_unitary_like_operator(expr : Expr) -> Bool {
 
 ///|
 fn quantum_is_scalar_like(expr : Expr) -> Bool {
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
+      return match @symcore.function_head_name(head) {
+        Some(name) =>
+          !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
+        None => false
+      }
+    None => ()
+  }
   match @symcore.expr_form(expr) {
     @symcore.ExprForm::Number(_)
     | @symcore.ExprForm::Float(_)
@@ -162,15 +171,7 @@ fn quantum_is_scalar_like(expr : Expr) -> Bool {
       quantum_is_scalar_like(value)
     @symcore.ExprForm::Lambda(vars, body) =>
       quantum_is_scalar_like(vars) && quantum_is_scalar_like(body)
-    @symcore.ExprForm::Apply(head, args) =>
-      match @symcore.function_head_name(head) {
-        Some(name) =>
-          !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
-        None => false
-      }
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) =>
-      !quantum_reserved_operator_name(name) && args.all(quantum_is_scalar_like)
+    _ => false
   }
 }
 

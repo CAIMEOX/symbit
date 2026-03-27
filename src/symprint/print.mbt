@@ -65,12 +65,19 @@ pub fn debug_repr(expr : Expr) -> String {
     @symcore.ExprForm::Subs(inner, variable, value) =>
       wrap_call("Subs", [inner, variable, value])
     @symcore.ExprForm::Lambda(vars, body) => wrap_call("Lambda", [vars, body])
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) => wrap_call(name, args)
     @symcore.ExprForm::Apply(head, args) =>
       match @symcore.function_head_name(head) {
         Some(name) => wrap_call(name, args)
         None => wrap_apply(head, args)
+      }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.function_head_name(head) {
+            Some(name) => wrap_call(name, args)
+            None => wrap_apply(head, args)
+          }
+        None => "(invalid-expr)"
       }
   }
 }
@@ -210,15 +217,25 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
       "Subs(\{format_expr(inner, 0)}, \{format_expr(variable, 0)}, \{format_expr(value, 0)})"
     @symcore.ExprForm::Lambda(vars, body) =>
       "Lambda(\{format_expr(vars, 0)}, \{format_expr(body, 0)})"
-    @symcore.ExprForm::AppliedUndef(name, args)
-    | @symcore.ExprForm::Applied(name, args) => {
-      let rendered = args.map(child => format_expr(child, prec)).join(", ")
-      "\{name}(\{rendered})"
-    }
     @symcore.ExprForm::Apply(head, args) => {
       let rendered = args.map(child => format_expr(child, prec)).join(", ")
       "\{format_expr(head, prec)}(\{rendered})"
     }
+    _ =>
+      match @symcore.application_parts(expr) {
+        Some((head, args)) =>
+          match @symcore.function_head_name(head) {
+            Some(name) => {
+              let rendered = args.map(child => format_expr(child, prec)).join(", ")
+              "\{name}(\{rendered})"
+            }
+            None => {
+              let rendered = args.map(child => format_expr(child, prec)).join(", ")
+              "\{format_expr(head, prec)}(\{rendered})"
+            }
+          }
+        None => "<?>"
+      }
   }
   if prec < parent_prec {
     "(\{body})"
