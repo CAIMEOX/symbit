@@ -75,19 +75,20 @@ fn make_function(
         @symcore.raw_function(name, args)
       }
     _ =>
-      match
-        (if options.evaluate {
-          @symcore.apply(@symcore.Expr::FunctionHead(name), args)
-        } else {
-          @symcore.raw_apply(@symcore.Expr::FunctionHead(name), args)
-        }) {
-        Some(expr) => expr
-        None =>
-          if options.evaluate {
-            @symcore.function(name, args)
-          } else {
-            @symcore.raw_function(name, args)
-          }
+      if options.evaluate {
+        @symcore.apply(@symcore.Expr::FunctionHead(name), args).unwrap_or(
+          @symcore.Expr::Apply(
+            @symcore.Expr::FunctionHead(name),
+            args.map(child => child),
+          ),
+        )
+      } else {
+        @symcore.raw_apply(@symcore.Expr::FunctionHead(name), args).unwrap_or(
+          @symcore.Expr::Apply(
+            @symcore.Expr::FunctionHead(name),
+            args.map(child => child),
+          ),
+        )
       }
   }
 }
