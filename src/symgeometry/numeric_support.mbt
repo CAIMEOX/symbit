@@ -27,7 +27,6 @@ fn geo_expr_real_double(expr : Expr) -> Double? {
       } else {
         None
       }
-    Expr::AppliedUndef(_, _) => None
     Expr::Dummy(_, _)
     | Expr::Wild(_)
     | Expr::FunctionHead(_)

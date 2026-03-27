@@ -1,4 +1,17 @@
 ///|
+fn local_args_sstr(expr : @symcore.Expr) -> String raise {
+  let items : Array[String] = []
+  for arg in @symcore.args(expr) {
+    items.push("'" + core_expr_sstr(arg) + "'")
+  }
+  if items.length() == 1 {
+    "(" + items[0] + ",)"
+  } else {
+    "(" + items.join(", ") + ")"
+  }
+}
+
+///|
 test "symcore parity plain symbol names stay plain symbols" {
   inspect(core_expr_srepr(@symcore.Expr::Symbol("pi")), content="Symbol('pi')")
   inspect(core_expr_srepr(@symcore.Expr::Symbol("True")), content="Symbol('True')")
@@ -51,6 +64,20 @@ test "symcore parity formal application helpers" {
       }
     None => fail("expected undefined application")
   }
+}
+
+///|
+test "symcore parity args for derivative and lambda follow SymPy shapes" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    local_args_sstr(@symcore.derivative(@symcore.function("f", [x]), x)),
+    content=core_args_sstr(@symcore.derivative(@symcore.function("f", [x]), x)),
+  )
+  inspect(
+    local_args_sstr(@symcore.lambda_expr(x, @symcore.add([x, y]))),
+    content=core_args_sstr(@symcore.lambda_expr(x, @symcore.add([x, y]))),
+  )
 }
 
 ///|

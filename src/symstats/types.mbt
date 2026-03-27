@@ -332,10 +332,9 @@ pub fn eval_arith(expr : @symcore.Expr) -> @symcore.Expr {
     | @symcore.Expr::Wild(_)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => expr
-    @symcore.Expr::AppliedUndef(name, args) =>
-      @symcore.applied_undefined_function(
-        name,
-        args.map(item => eval_arith(item)),
+    @symcore.Expr::Apply(head, args) =>
+      @symcore.raw_apply(head, args.map(item => eval_arith(item))).unwrap_or(
+        @symcore.Expr::Apply(head, args.map(item => eval_arith(item))),
       )
     @symcore.Expr::Tuple(args) =>
       @symcore.Expr::Tuple(args.map(item => eval_arith(item)))

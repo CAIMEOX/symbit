@@ -8,21 +8,20 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::Dummy(_, _) | Expr::Wild(_) => 4
     Expr::NumberSymbol(_) => 5
     Expr::Symbol(_) => 6
-    Expr::AppliedUndef(_, _) => 7
-    Expr::Apply(_, _) => 8
-    Expr::Function(_, _) => 9
-    Expr::Mod(_, _) => 10
-    Expr::Boolean(_) => 11
-    Expr::Tuple(_) => 12
-    Expr::Dict(_) => 13
-    Expr::Relational(_, _, _) => 14
-    Expr::Derivative(_, _) => 15
-    Expr::Subs(_, _, _) => 16
-    Expr::Lambda(_, _) => 17
-    Expr::Add(_) => 18
-    Expr::Number(_) => 19
-    Expr::Float(_) => 20
-    Expr::ComplexFloat(_) => 21
+    Expr::Apply(_, _) => 7
+    Expr::Function(_, _) => 8
+    Expr::Mod(_, _) => 9
+    Expr::Boolean(_) => 10
+    Expr::Tuple(_) => 11
+    Expr::Dict(_) => 12
+    Expr::Relational(_, _, _) => 13
+    Expr::Derivative(_, _) => 14
+    Expr::Subs(_, _, _) => 15
+    Expr::Lambda(_, _) => 16
+    Expr::Add(_) => 17
+    Expr::Number(_) => 18
+    Expr::Float(_) => 19
+    Expr::ComplexFloat(_) => 20
   }
 }
 
@@ -257,18 +256,6 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
         Expr::UndefinedFunction(name_b) => name_a.compare(name_b)
         _ => 0
       }
-    Expr::AppliedUndef(name_a, args_a) =>
-      match b {
-        Expr::AppliedUndef(name_b, args_b) => {
-          let name_cmp = name_a.compare(name_b)
-          if name_cmp != 0 {
-            name_cmp
-          } else {
-            compare_arrays(args_a, args_b)
-          }
-        }
-        _ => 0
-      }
     Expr::Apply(head_a, args_a) =>
       match b {
         Expr::Apply(head_b, args_b) => {
@@ -413,14 +400,6 @@ fn compare_symbol_base(sym_name : String, expr : Expr) -> Int {
     Expr::Wild(name) => sym_name.compare(wild_display_name(name))
     Expr::FunctionHead(name) => sym_name.compare(name)
     Expr::UndefinedFunction(name) => sym_name.compare(name)
-    Expr::AppliedUndef(name, args) => {
-      let name_cmp = sym_name.compare(name)
-      if name_cmp != 0 {
-        name_cmp
-      } else {
-        Int::compare(0, args.length())
-      }
-    }
     Expr::Apply(head, args) =>
       match head {
         Expr::FunctionHead(name) | Expr::UndefinedFunction(name) => {
@@ -548,12 +527,6 @@ pub impl Hash for Expr with hash_combine(self, hasher : Hasher) -> Unit {
     Expr::Wild(name) => hasher.combine_string(name)
     Expr::FunctionHead(name) => hasher.combine_string(name)
     Expr::UndefinedFunction(name) => hasher.combine_string(name)
-    Expr::AppliedUndef(name, args) => {
-      hasher.combine_string(name)
-      for child in args {
-        child.hash_combine(hasher)
-      }
-    }
     Expr::Apply(head, args) => {
       head.hash_combine(hasher)
       for child in args {

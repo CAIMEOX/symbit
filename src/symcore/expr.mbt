@@ -10,7 +10,6 @@ pub(all) enum Expr {
   Wild(String)
   FunctionHead(String)
   UndefinedFunction(String)
-  AppliedUndef(String, Array[Expr])
   Apply(Expr, Array[Expr])
   Add(Array[Expr])
   Mul(Array[Expr])
@@ -39,8 +38,6 @@ impl Show for Expr with to_string(self) {
     Expr::Wild(name) => wild_display_name(name)
     Expr::FunctionHead(name) => name
     Expr::UndefinedFunction(name) => name
-    Expr::AppliedUndef(name, args) =>
-      name + "(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Apply(head, args) =>
       head.to_string() +
       "(" +
@@ -153,14 +150,14 @@ pub fn dummy(name? : String = "Dummy") -> Expr {
 
 ///|
 pub fn applied_undefined_function(name : String, args : Array[Expr]) -> Expr {
-  Expr::AppliedUndef(name, args.map(child => child))
+  Expr::Apply(Expr::UndefinedFunction(name), args.map(child => child))
 }
 
 ///|
 pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
     Expr::UndefinedFunction(name) =>
-      Some(Expr::AppliedUndef(name, args.map(child => child)))
+      Some(Expr::Apply(Expr::UndefinedFunction(name), args.map(child => child)))
     Expr::FunctionHead(name) =>
       Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
     Expr::Symbol(name) =>
@@ -172,8 +169,7 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
 ///|
 pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
   match head {
-    Expr::UndefinedFunction(name) =>
-      Some(applied_undefined_function(name, args))
+    Expr::UndefinedFunction(name) => Some(applied_undefined_function(name, args))
     Expr::FunctionHead(name) =>
       Some(Expr::Apply(Expr::FunctionHead(name), args.map(child => child)))
     Expr::Symbol(name) =>

@@ -590,7 +590,7 @@ fn poly_coeffs_general(expr : Expr, var_name : String) -> Array[Expr]? {
     | @symcore.Expr::Wild(_)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => Some([expr])
-    @symcore.Expr::AppliedUndef(_, _) =>
+    @symcore.Expr::Apply(_, _) =>
       if expr_depends_on(expr, var_name) {
         None
       } else {

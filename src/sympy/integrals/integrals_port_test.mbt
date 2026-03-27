@@ -145,7 +145,49 @@ fn py_expr(expr : Expr) -> String {
       "sympy.DiracDelta(" + py_expr(arg) + ", " + py_expr(order) + ")"
     @symcore.Expr::UndefinedFunction(name) =>
       "sympy.Function(" + python_string_literal(name) + ")"
-    @symcore.Expr::AppliedUndef(name, args) => py_function_call(name, args)
+    @symcore.Expr::Apply(head, [inner, var_s, var_t]) =>
+      match @symcore.function_head_name(head) {
+        Some("InverseLaplaceTransform") =>
+          "sympy.InverseLaplaceTransform(" +
+          py_expr(inner) +
+          ", " +
+          py_expr(var_s) +
+          ", " +
+          py_expr(var_t) +
+          ", 0)"
+        Some(name) => py_function_call(name, [inner, var_s, var_t])
+        None =>
+          py_expr(head) +
+          "(" +
+          [inner, var_s, var_t].map(py_expr).join(", ") +
+          ")"
+      }
+    @symcore.Expr::Apply(
+      head,
+      [inner, var_s, var_t, @symcore.Expr::Symbol("_None")],
+    ) =>
+      match @symcore.function_head_name(head) {
+        Some("InverseLaplaceTransform") =>
+          "sympy.InverseLaplaceTransform(" +
+          py_expr(inner) +
+          ", " +
+          py_expr(var_s) +
+          ", " +
+          py_expr(var_t) +
+          ", None)"
+        Some(name) =>
+          py_function_call(name, [inner, var_s, var_t, @symcore.Expr::Symbol("_None")])
+        None =>
+          py_expr(head) +
+          "(" +
+          [inner, var_s, var_t, @symcore.Expr::Symbol("_None")].map(py_expr).join(", ") +
+          ")"
+      }
+    @symcore.Expr::Apply(head, args) =>
+      match @symcore.function_head_name(head) {
+        Some(name) => py_function_call(name, args)
+        None => py_expr(head) + "(" + args.map(py_expr).join(", ") + ")"
+      }
     @symcore.Expr::Function(name, args) => py_function_call(name, args)
     _ =>
       match @symcore.tuple_items(expr) {

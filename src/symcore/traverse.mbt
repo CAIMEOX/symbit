@@ -5,7 +5,6 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     Expr::Add(args)
     | Expr::Mul(args)
     | Expr::Tuple(args)
-    | Expr::AppliedUndef(_, args)
     | Expr::Apply(_, args) => args[:]
     Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
@@ -97,8 +96,6 @@ pub fn map_children(expr : Expr, f : (Expr) -> Expr) -> Expr {
     Expr::Subs(inner, variable, value) =>
       subs_expr(f(inner), f(variable), f(value))
     Expr::Lambda(vars, body) => lambda_expr(f(vars), f(body))
-    Expr::AppliedUndef(name, args) =>
-      applied_undefined_function(name, args.map(f))
     Expr::Apply(head, args) =>
       match raw_apply(head, args.map(f)) {
         Some(applied) => applied
@@ -307,8 +304,6 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_)
     | Expr::Boolean(_) => expr
-    Expr::AppliedUndef(name, args) =>
-      applied_undefined_function(name, args.map(arg => subst(arg, env)))
     Expr::Apply(head, args) =>
       match raw_apply(head, args.map(arg => subst(arg, env))) {
         Some(applied) => applied

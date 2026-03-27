@@ -202,7 +202,6 @@ fn geo_poly_deg2_coeffs(expr : Expr, wrt : Expr) -> Array[Expr]? {
       } else {
         Some([expr, int(0), int(0)])
       }
-    Expr::AppliedUndef(_, _) => None
     Expr::Derivative(_, _) | Expr::Subs(_, _, _) =>
       if geo_expr_depends_on(expr, wrt) {
         None

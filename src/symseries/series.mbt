@@ -651,7 +651,6 @@ fn series_poly(expr : Expr, x : Expr, n : Int) -> (Array[Expr], Bool)? {
       } else {
         Some(([expr], false))
       }
-    Expr::AppliedUndef(_, _) => None
     Expr::Tuple(_)
     | Expr::Dict(_)
     | Expr::Relational(_, _, _)

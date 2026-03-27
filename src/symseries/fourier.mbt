@@ -336,7 +336,7 @@ fn expr_contains_pi(expr : @symcore.Expr) -> Bool {
         @symcore.Expr::Add(args)
         | @symcore.Expr::Mul(args)
         | @symcore.Expr::Tuple(args)
-        | @symcore.Expr::AppliedUndef(_, args) => args.any(expr_contains_pi)
+        | @symcore.Expr::Apply(_, args) => args.any(expr_contains_pi)
         @symcore.Expr::Dict(items) =>
           items.any(fn(item) {
             let (key, value) = item

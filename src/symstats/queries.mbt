@@ -198,10 +198,15 @@ fn query_replace_expr(
     | @symcore.Expr::Wild(_)
     | @symcore.Expr::FunctionHead(_)
     | @symcore.Expr::UndefinedFunction(_) => expr
-    @symcore.Expr::AppliedUndef(name, args) =>
-      @symcore.applied_undefined_function(
-        name,
+    @symcore.Expr::Apply(head, args) =>
+      @symcore.raw_apply(
+        head,
         args.map(arg => query_replace_expr(arg, target, replacement)),
+      ).unwrap_or(
+        @symcore.Expr::Apply(
+          head,
+          args.map(arg => query_replace_expr(arg, target, replacement)),
+        ),
       )
     @symcore.Expr::Add(args) =>
       eval_arith(

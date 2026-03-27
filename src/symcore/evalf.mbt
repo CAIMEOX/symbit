@@ -86,8 +86,20 @@ fn expr_to_evalf_float(expr : Expr, prec : Int) -> Float? {
     Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
-    Expr::AppliedUndef(_, _) => None
-    Expr::Apply(_, _) => None
+    Expr::Apply(_, _)
+    | Expr::Add(_)
+    | Expr::Mul(_)
+    | Expr::Pow(_, _)
+    | Expr::Mod(_, _) =>
+      match expr_to_evalf_complex(expr, prec) {
+        Some(value) =>
+          if @symnum.is_zero(value.to_mpc().imag) {
+            Some(promote_float_evalf(value.real_part(), prec))
+          } else {
+            None
+          }
+        None => None
+      }
     Expr::Symbol(name) => evalf_symbol_constant(name, prec)
     _ => None
   }
@@ -114,8 +126,106 @@ fn expr_to_evalf_complex(expr : Expr, prec : Int) -> ComplexFloat? {
     Expr::Dummy(_, _) | Expr::Wild(_) => None
     Expr::FunctionHead(_) => None
     Expr::UndefinedFunction(_) => None
-    Expr::AppliedUndef(_, _) => None
-    Expr::Apply(_, _) => None
+    Expr::Apply(head, args) =>
+      match head {
+        Expr::FunctionHead(name) => {
+          let eval_args : Array[Expr] = []
+          for arg in args {
+            match expr_to_evalf_complex(arg, prec) {
+              Some(value) => eval_args.push(expr_from_mpc_evalf(value.to_mpc(), prec))
+              None => return None
+            }
+          }
+          match evalf_nary_function(name, eval_args, prec) {
+            Some(value) => expr_to_evalf_complex(value, prec)
+            None => None
+          }
+        }
+        _ => None
+      }
+    Expr::Add(args) => {
+      let mut acc = ComplexFloat::from_exact_parts(
+        @symnum.BigRational::zero(),
+        @symnum.BigRational::zero(),
+        prec~,
+      )
+      for arg in args {
+        let value = match expr_to_evalf_complex(arg, prec) {
+          Some(z) => z
+          None => return None
+        }
+        acc = ComplexFloat::from_mpc(
+          @symnum.mpc_add(
+            acc.to_mpc(),
+            value.to_mpc(),
+            prec,
+            @symnum.round_nearest,
+          ),
+          prec~,
+        )
+      }
+      Some(acc)
+    }
+    Expr::Mul(args) => {
+      let mut acc = ComplexFloat::from_exact_parts(
+        @symnum.BigRational::one(),
+        @symnum.BigRational::zero(),
+        prec~,
+      )
+      for arg in args {
+        let value = match expr_to_evalf_complex(arg, prec) {
+          Some(z) => z
+          None => return None
+        }
+        acc = ComplexFloat::from_mpc(
+          @symnum.mpc_mul(
+            acc.to_mpc(),
+            value.to_mpc(),
+            prec,
+            @symnum.round_nearest,
+          ),
+          prec~,
+        )
+      }
+      Some(acc)
+    }
+    Expr::Pow(base, exp) => {
+      let base_z = match expr_to_evalf_complex(base, prec) {
+        Some(value) => value
+        None => return None
+      }
+      let exp_z = match expr_to_evalf_complex(exp, prec) {
+        Some(value) => value
+        None => return None
+      }
+      let value = match evalf_integer_exponent(exp, prec) {
+        Some(n) =>
+          @symnum.mpc_pow_int(
+            base_z.to_mpc(),
+            n,
+            prec,
+            @symnum.round_nearest,
+          )
+        None =>
+          @symnum.mpc_pow(
+            base_z.to_mpc(),
+            exp_z.to_mpc(),
+            prec,
+            @symnum.round_nearest,
+          ) catch {
+            _ => return None
+          }
+      }
+      Some(ComplexFloat::from_mpc(value, prec~))
+    }
+    Expr::Mod(lhs, rhs) =>
+      match evalf_impl(Expr::Mod(lhs, rhs), prec) {
+        Expr::Float(value) => Some(ComplexFloat::from_real(value))
+        Expr::ComplexFloat(value) => Some(value)
+        Expr::Number(value) =>
+          Some(complex_from_exact_evalf(value, @symnum.BigRational::zero(), prec))
+        _ => None
+      }
     Expr::Symbol(name) =>
       if name == "I" {
         Some(complex_imag_unit(prec))
@@ -700,8 +810,11 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
     Expr::Dummy(_, _) | Expr::Wild(_) => expr
     Expr::FunctionHead(_) => expr
     Expr::UndefinedFunction(_) => expr
-    Expr::AppliedUndef(_, _) => expr
     Expr::Apply(head, args) => {
+      match head {
+        Expr::UndefinedFunction(_) => return expr
+        _ => ()
+      }
       let eval_args = args.map(arg => evalf_impl(arg, prec))
       match head {
         Expr::FunctionHead(name) =>
@@ -800,8 +913,41 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
 }
 
 ///|
+fn evalf_numeric_constant_expr(expr : Expr, prec : Int) -> Expr? {
+  match expr {
+    Expr::Number(_)
+    | Expr::Float(_)
+    | Expr::ComplexFloat(_)
+    | Expr::NumberSymbol(_) => Some(evalf_impl(expr, prec))
+    Expr::Add(_)
+    | Expr::Mul(_)
+    | Expr::Pow(_, _)
+    | Expr::Mod(_, _)
+    | Expr::Apply(_, _) =>
+      match expr_to_evalf_complex(expr, prec) {
+        Some(value) => Some(expr_from_mpc_evalf(value.to_mpc(), prec))
+        None => None
+      }
+    _ => None
+  }
+}
+
+///|
 /// Evaluate exact numeric leaves and common transcendental constants/functions
 /// into `Expr::Float` or `Expr::ComplexFloat` at the requested precision.
 pub fn evalf(expr : Expr, prec? : Int = 53) -> Expr {
-  evalf_impl(expr, evalf_default_prec(prec))
+  let resolved_prec = evalf_default_prec(prec)
+  let mut current = expr
+  for _ in 0..<4 {
+    let next = evalf_impl(current, resolved_prec)
+    if compare_expr(current, next) == 0 {
+      current = next
+      break
+    }
+    current = next
+  }
+  match evalf_numeric_constant_expr(current, resolved_prec) {
+    Some(value) => value
+    None => current
+  }
 }

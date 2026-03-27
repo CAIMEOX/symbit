@@ -1207,10 +1207,15 @@ fn expr_replace_symbol(
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => expr
-    Expr::AppliedUndef(name, args) =>
-      @symcore.applied_undefined_function(
-        name,
+    Expr::Apply(head, args) =>
+      @symcore.raw_apply(
+        head,
         args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+      ).unwrap_or(
+        @symcore.Expr::Apply(
+          head,
+          args.map(arg => expr_replace_symbol(arg, old_name, new_name)),
+        ),
       )
     Expr::Symbol(name) =>
       if name == old_name {
@@ -1616,7 +1621,7 @@ fn expr_has_forbidden_symbol(expr : Expr, allow_i : Bool) -> Bool {
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => true
-    Expr::AppliedUndef(_, args) =>
+    Expr::Apply(_, args) =>
       args.any(arg => expr_has_forbidden_symbol(arg, allow_i))
     Expr::NumberSymbol(kind) =>
       match kind {
@@ -1780,7 +1785,6 @@ fn expr_in_polynomial_domain(
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => false
-    Expr::AppliedUndef(_, _) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_polynomial_domain(base, gens, item))
@@ -1818,7 +1822,6 @@ fn expr_in_fraction_domain(
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => false
-    Expr::AppliedUndef(_, _) => false
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args) | Expr::Mul(args) =>
       args.all(item => expr_in_fraction_domain(base, gens, item))
@@ -2337,7 +2340,7 @@ fn expr_depends_on_symbols(expr : Expr, symbols : Array[String]) -> Bool {
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => false
-    Expr::AppliedUndef(_, args) =>
+    Expr::Apply(_, args) =>
       args.any(item => expr_depends_on_symbols(item, symbols))
     Expr::Symbol(name) => symbols.contains(name)
     Expr::Add(args)
@@ -2412,7 +2415,7 @@ fn expr_constant_term(expr : Expr, symbols : Array[String]) -> Expr? {
     | Expr::Wild(_)
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_) => Some(expr)
-    Expr::AppliedUndef(_, args) =>
+    Expr::Apply(_, args) =>
       if args.any(item => expr_depends_on_symbols(item, symbols)) {
         None
       } else {

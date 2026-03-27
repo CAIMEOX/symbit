@@ -180,7 +180,6 @@ pub fn expr_form(expr : Expr) -> ExprForm {
     Expr::Wild(name) => ExprForm::Wild(name)
     Expr::FunctionHead(name) => ExprForm::FunctionHead(name)
     Expr::UndefinedFunction(name) => ExprForm::UndefinedFunction(name)
-    Expr::AppliedUndef(name, args) => ExprForm::AppliedUndef(name, args)
     Expr::Apply(head, args) =>
       match head {
         Expr::UndefinedFunction(name) => ExprForm::AppliedUndef(name, args)
@@ -249,7 +248,7 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         ExprForm::Lambda(vars, body) => Expr::Lambda(vars, body)
         ExprForm::Mod(lhs, rhs) => Expr::Mod(lhs, rhs)
         ExprForm::AppliedUndef(name, args) =>
-          Expr::AppliedUndef(name, args.map(child => child))
+          Expr::Apply(Expr::UndefinedFunction(name), args.map(child => child))
         ExprForm::Applied(name, args) =>
           Expr::Apply(Expr::FunctionHead(name), args.map(child => child))
         ExprForm::Apply(head, args) =>
@@ -493,8 +492,8 @@ pub fn wild_name(expr : Expr) -> String? {
 
 ///|
 pub fn undefined_application_parts(expr : Expr) -> (String, Array[Expr])? {
-  match expr {
-    Expr::AppliedUndef(name, args) => Some((name, args))
+  match application_parts(expr) {
+    Some((Expr::UndefinedFunction(name), args)) => Some((name, args))
     _ => None
   }
 }
@@ -719,13 +718,21 @@ pub fn args(expr : Expr) -> Array[Expr] {
     ExprForm::Relational(_, lhs, rhs) => [lhs, rhs]
     ExprForm::Derivative(inner, deriv_args) => {
       let out : Array[Expr] = [inner]
-      for arg in deriv_args {
-        out.push(arg)
+      let mut i = 0
+      while i + 1 < deriv_args.length() {
+        out.push(Expr::Tuple([deriv_args[i], deriv_args[i + 1]]))
+        i += 2
       }
       out
     }
     ExprForm::Subs(inner, variable, value) => [inner, variable, value]
-    ExprForm::Lambda(vars, body) => [vars, body]
+    ExprForm::Lambda(vars, body) => [
+      match vars {
+        Expr::Tuple(_) => vars
+        _ => Expr::Tuple([vars])
+      },
+      body,
+    ]
   }
 }
 
