@@ -766,6 +766,39 @@ test "symcore parity evalf on Subs and Lambda" {
 }
 
 ///|
+test "symcore parity multi-Subs args and derivative xreplace" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  inspect(
+    local_args_sstr(
+      @symcore.subs_expr(
+        @symcore.add([x, y]),
+        @symcore.Expr::Tuple([x, y]),
+        @symcore.Expr::Tuple([y, z]),
+      ),
+    ),
+    content="('x + y', '(x, y)', '(y, z)')",
+  )
+  inspect(
+    core_xreplace_sstr(
+      @symcore.derivative(@symcore.add([@symcore.function("sin", [x]), y]), x),
+      y,
+      z,
+    ),
+    content="Derivative(z + sin(x), x)",
+  )
+  inspect(
+    core_xreplace_sstr(
+      @symcore.derivative(@symcore.add([@symcore.function("sin", [x]), y]), x),
+      x,
+      z,
+    ),
+    content="Derivative(y + sin(z), z)",
+  )
+}
+
+///|
 test "symcore parity default sort order across binders and containers" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

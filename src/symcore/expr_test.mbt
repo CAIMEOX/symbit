@@ -513,6 +513,12 @@ test "children wrap Subs and Lambda binders like SymPy args" {
     children(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
     content=["x + y", "(x,)", "(1,)"],
   )
+  json_inspect(
+    args(subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, int(1)]))).map(
+      @symprint.to_string,
+    ),
+    content=["x + y", "(x, y)", "(y, 1)"],
+  )
   json_inspect(children(lambda_expr(x, add([x, y]))).map(@symprint.to_string), content=[
     "(x,)", "x + y",
   ])
@@ -529,6 +535,24 @@ test "xreplace performs exact structural replacement" {
   inspect(
     @symprint.debug_repr(xreplace(function("f", [x]), [(x, int(2))])),
     content="(call f 2)",
+  )
+  inspect(
+    @symprint.to_string(
+      xreplace(
+        derivative(add([function("sin", [x]), y]), x),
+        [(y, Expr::Symbol("z"))],
+      ),
+    ),
+    content="Derivative(z + sin(x), x, 1)",
+  )
+  inspect(
+    @symprint.to_string(
+      xreplace(
+        derivative(add([function("sin", [x]), y]), x),
+        [(x, Expr::Symbol("z"))],
+      ),
+    ),
+    content="Derivative(y + sin(z), z, 1)",
   )
 }
 
