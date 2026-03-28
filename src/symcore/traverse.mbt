@@ -240,6 +240,22 @@ fn expr_mentions_any_symbol_name(expr : Expr, names : Array[String]) -> Bool {
 }
 
 ///|
+fn callable_subst_head(head : Expr, env : Map[String, Expr]) -> Expr {
+  match head {
+    Expr::FunctionHead(name) | Expr::UndefinedFunction(name) =>
+      match env.get(name) {
+        Some(value) =>
+          match normalize_legacy_expr(value) {
+            Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => value
+            _ => head
+          }
+        None => head
+      }
+    _ => head
+  }
+}
+
+///|
 fn subst_derivative(
   inner : Expr,
   deriv_args : Array[Expr],
@@ -342,11 +358,14 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::FunctionHead(_)
     | Expr::UndefinedFunction(_)
     | Expr::Boolean(_) => expr
-    Expr::Apply(head, args) =>
-      match raw_apply(head, args.map(arg => subst(arg, env))) {
+    Expr::Apply(head, args) => {
+      let rewritten_head = callable_subst_head(head, env)
+      let rewritten_args = args.map(arg => subst(arg, env))
+      match raw_apply(rewritten_head, rewritten_args) {
         Some(applied) => applied
-        None => Expr::Apply(head, args.map(arg => subst(arg, env)))
+        None => Expr::Apply(rewritten_head, rewritten_args)
       }
+    }
     Expr::Derivative(inner, deriv_args) =>
       subst_derivative(inner, deriv_args, env)
     Expr::Lambda(vars, body) => {

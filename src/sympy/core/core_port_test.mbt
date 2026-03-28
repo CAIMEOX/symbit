@@ -785,3 +785,47 @@ test "symcore parity default sort order across binders and containers" {
     content="('sin', 'f', 'f(x)', 'sin(x)', 'Derivative(sin(x), x)', '{x: y}', 'Eq(x, y)', 'Lambda(x, x + y)', 'Subs(x + y, x, 1)', '(x, y)')",
   )
 }
+
+///|
+test "symcore parity subst rewrites callable heads but not non-callables" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.function("sin", [x]),
+        { "sin": @symcore.Expr::FunctionHead("cos") },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("sin"),
+      @symcore.Expr::FunctionHead("cos"),
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.applied_undefined_function("f", [x]),
+        { "f": @symcore.Expr::UndefinedFunction("g") },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.Expr::UndefinedFunction("f"),
+      @symcore.Expr::UndefinedFunction("g"),
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.applied_undefined_function("f", [x]),
+        { "f": @symcore.Expr::Symbol("z") },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.Expr::UndefinedFunction("f"),
+      @symcore.Expr::Symbol("z"),
+    ),
+  )
+}

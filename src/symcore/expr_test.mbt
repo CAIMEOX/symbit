@@ -680,6 +680,19 @@ test "subst respects derivative binding and capture rules" {
 }
 
 ///|
+test "subst rewrites callable heads only when replacement stays callable" {
+  let x = Expr::Symbol("x")
+  let sinx = function("sin", [x])
+  let fx = applied_undefined_function("f", [x])
+  let sin_env : Map[String, Expr] = { "sin": Expr::FunctionHead("cos") }
+  inspect(@symprint.to_string(subst(sinx, sin_env)), content="cos(x)")
+  let f_env : Map[String, Expr] = { "f": Expr::UndefinedFunction("g") }
+  inspect(@symprint.to_string(subst(fx, f_env)), content="g(x)")
+  let non_callable_env : Map[String, Expr] = { "f": Expr::Symbol("z") }
+  inspect(@symprint.to_string(subst(fx, non_callable_env)), content="f(x)")
+}
+
+///|
 test "numeric singleton predicates stay aligned with structured core atoms" {
   assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::Pi)))
   assert_true(
