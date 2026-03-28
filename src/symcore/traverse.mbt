@@ -382,9 +382,26 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
       lambda_expr(renamed_vars, subst(renamed_body, restricted))
     }
     Expr::Subs(inner, variable, value) => {
+      let rename_env : Map[String, Expr] = {}
+      let renamed_variable = rename_lambda_bound_vars(variable, env, rename_env)
       let restricted = clone_subst_env(env)
       remove_bound_names_from_env(variable, restricted)
-      subs_expr(subst(inner, restricted), variable, subst(value, env))
+      remove_bound_names_from_env(renamed_variable, restricted)
+      let renamed_inner = if rename_env.is_empty() {
+        inner
+      } else {
+        subst(inner, rename_env)
+      }
+      let renamed_value = if rename_env.is_empty() {
+        value
+      } else {
+        subst(value, rename_env)
+      }
+      subs_expr(
+        subst(renamed_inner, restricted),
+        renamed_variable,
+        subst(renamed_value, restricted),
+      )
     }
     Expr::Function(_, _) => abort("legacy function should be normalized")
     _ => map_children(expr, child => subst(child, env))

@@ -176,7 +176,8 @@ fn lower_symbol_name(
 fn coerce_callable_target(bound : Expr) -> Expr? {
   match bound {
     Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => Some(bound)
-    Expr::Symbol(target_name) => Some(@symcore.Expr::FunctionHead(target_name))
+    Expr::Symbol(target_name) =>
+      Some(@symcore.Expr::UndefinedFunction(target_name))
     _ => None
   }
 }

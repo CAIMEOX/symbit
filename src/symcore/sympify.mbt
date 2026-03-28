@@ -30,7 +30,7 @@ pub fn sympify(input : SympifyInput) -> Expr {
     SympifyInput::FromComplexFloat(value) => Expr::ComplexFloat(value)
     SympifyInput::NumberSymbol(kind) => Expr::NumberSymbol(kind)
     SympifyInput::SymbolName(name) => Expr::Symbol(name)
-    SympifyInput::DummyName(name) => dummy(name=name)
+    SympifyInput::DummyName(name) => dummy(name~)
     SympifyInput::WildName(name) => Expr::Wild(name)
     SympifyInput::FunctionHeadName(name) => Expr::FunctionHead(name)
     SympifyInput::UndefinedFunctionName(name) => Expr::UndefinedFunction(name)

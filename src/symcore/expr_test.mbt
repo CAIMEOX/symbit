@@ -318,6 +318,8 @@ test "formal application helpers roundtrip named and undefined heads" {
       }
     None => fail("expected undefined head application")
   }
+  assert_false(apply(Expr::Symbol("g"), [x]) is Some(_))
+  assert_false(raw_apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(apply(int(1), [x]) is Some(_))
   inspect(
     @symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))),
@@ -444,10 +446,9 @@ test "sympify lifts typed tuple and dict inputs" {
   inspect(
     @symprint.to_string(
       sympify(
-        SympifyInput::Application(
-          SympifyInput::FunctionHeadName("sin"),
-          [SympifyInput::SymbolName("x")],
-        ),
+        SympifyInput::Application(SympifyInput::FunctionHeadName("sin"), [
+          SympifyInput::SymbolName("x"),
+        ]),
       ),
     ),
     content="sin(x)",
@@ -455,15 +456,16 @@ test "sympify lifts typed tuple and dict inputs" {
   inspect(
     @symprint.to_string(
       sympify(
-        SympifyInput::Application(
-          SympifyInput::UndefinedFunctionName("f"),
-          [SympifyInput::DummyName("x"), SympifyInput::WildName("y")],
-        ),
+        SympifyInput::Application(SympifyInput::UndefinedFunctionName("f"), [
+          SympifyInput::DummyName("x"),
+          SympifyInput::WildName("y"),
+        ]),
       ),
     ),
     content="f(_x, y_)",
   )
-  match sympify(SympifyInput::FromExpr(Expr::Function("sin", [Expr::Symbol("x")]))) {
+  match
+    sympify(SympifyInput::FromExpr(Expr::Function("sin", [Expr::Symbol("x")]))) {
     Expr::Apply(Expr::FunctionHead("sin"), [Expr::Symbol("x")]) => ()
     _ => fail("expected sympify FromExpr to canonicalize named application")
   }
@@ -496,8 +498,8 @@ test "preorder and postorder traversal stay structural" {
   let x = Expr::Symbol("x")
   let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
   json_inspect(preorder(expr).map(@symprint.to_string), content=[
-    "Derivative(f(x), x, 1) + Mod(x, 2)", "Derivative(f(x), x, 1)", "f(x)", "x", "(x, 1)",
-    "x", "1", "Mod(x, 2)", "x", "2",
+    "Derivative(f(x), x, 1) + Mod(x, 2)", "Derivative(f(x), x, 1)", "f(x)", "x",
+    "(x, 1)", "x", "1", "Mod(x, 2)", "x", "2",
   ])
   json_inspect(postorder(expr).map(@symprint.to_string), content=[
     "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x, 1)", "x", "2", "Mod(x, 2)",
@@ -538,19 +540,17 @@ test "xreplace performs exact structural replacement" {
   )
   inspect(
     @symprint.to_string(
-      xreplace(
-        derivative(add([function("sin", [x]), y]), x),
-        [(y, Expr::Symbol("z"))],
-      ),
+      xreplace(derivative(add([function("sin", [x]), y]), x), [
+        (y, Expr::Symbol("z")),
+      ]),
     ),
     content="Derivative(z + sin(x), x, 1)",
   )
   inspect(
     @symprint.to_string(
-      xreplace(
-        derivative(add([function("sin", [x]), y]), x),
-        [(x, Expr::Symbol("z"))],
-      ),
+      xreplace(derivative(add([function("sin", [x]), y]), x), [
+        (x, Expr::Symbol("z")),
+      ]),
     ),
     content="Derivative(y + sin(z), z, 1)",
   )
@@ -661,6 +661,15 @@ test "subst respects lambda bound variables" {
     @symprint.to_string(subst(expr, capture_env)),
     content="Lambda(y, y + y)",
   )
+  let tuple_expr = lambda_expr(Expr::Tuple([x, y]), add([x, y]))
+  inspect(
+    @symprint.to_string(subst(tuple_expr, { "y": z })),
+    content="Lambda((x, z), x + z)",
+  )
+  inspect(
+    @symprint.to_string(subst(tuple_expr, { "x": z })),
+    content="Lambda((z, y), y + z)",
+  )
 }
 
 ///|
@@ -668,9 +677,19 @@ test "subst respects Subs bound variables" {
   let x = Expr::Symbol("x")
   let y = Expr::Symbol("y")
   let z = Expr::Symbol("z")
+  let w = Expr::Symbol("w")
   let expr = subs_expr(add([x, y]), x, z)
   let env : Map[String, Expr] = { "x": int(2), "y": int(3), "z": int(4) }
   inspect(@symprint.to_string(subst(expr, env)), content="Subs(x + 3, x, 4)")
+  let multi = subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, z]))
+  inspect(
+    @symprint.to_string(subst(multi, { "y": w })),
+    content="Subs(w + x, (x, w), (w, z))",
+  )
+  inspect(
+    @symprint.to_string(subst(multi, { "x": w })),
+    content="Subs(w + y, (w, y), (y, z))",
+  )
 }
 
 ///|
@@ -700,6 +719,20 @@ test "subst respects derivative binding and capture rules" {
   inspect(
     @symprint.to_string(subst(with_free, capture_env)),
     content="Subs(Derivative(y + f(x), x, 1), y, x)",
+  )
+  let mixed = Expr::Derivative(add([function("sin", [x]), y]), [
+    x,
+    int(1),
+    y,
+    int(1),
+  ])
+  inspect(
+    @symprint.to_string(subst(mixed, { "y": z })),
+    content="Derivative(z + sin(x), x, 1, z, 1)",
+  )
+  inspect(
+    @symprint.to_string(subst(mixed, { "x": z })),
+    content="Derivative(y + sin(z), z, 1, y, 1)",
   )
 }
 

@@ -190,7 +190,9 @@ test "symcore parity func and args for containers relationals and Subs" {
     content=core_func_sstr(@symcore.Expr::Relational(@symcore.RelOp::Eq, x, y)),
   )
   inspect(
-    local_func_name(@symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1))),
+    local_func_name(
+      @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
+    ),
     content=core_func_sstr(
       @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
     ),
@@ -225,34 +227,16 @@ test "symcore parity func and args for containers relationals and Subs" {
 
 ///|
 test "symcore parity func for atomic core nodes" {
-  inspect(
-    local_func_name(@symcore.int(2)),
-    content="Integer",
-  )
-  inspect(
-    local_func_name(@symcore.rational_from_ints(1, 2)),
-    content="Half",
-  )
+  inspect(local_func_name(@symcore.int(2)), content="Integer")
+  inspect(local_func_name(@symcore.rational_from_ints(1, 2)), content="Half")
   inspect(
     local_func_name(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)),
     content="Pi",
   )
-  inspect(
-    local_func_name(@symcore.Expr::Symbol("x")),
-    content="Symbol",
-  )
-  inspect(
-    local_func_name(@symcore.dummy(name="x")),
-    content="Dummy",
-  )
-  inspect(
-    local_func_name(@symcore.Expr::Wild("x")),
-    content="Wild",
-  )
-  inspect(
-    local_func_name(@symcore.Expr::Boolean(true)),
-    content="BooleanTrue",
-  )
+  inspect(local_func_name(@symcore.Expr::Symbol("x")), content="Symbol")
+  inspect(local_func_name(@symcore.dummy(name="x")), content="Dummy")
+  inspect(local_func_name(@symcore.Expr::Wild("x")), content="Wild")
+  inspect(local_func_name(@symcore.Expr::Boolean(true)), content="BooleanTrue")
 }
 
 ///|
@@ -639,10 +623,7 @@ test "symcore parity free_symbols through apply lambda and Subs" {
   let z = @symcore.Expr::Symbol("z")
   inspect(
     core_free_symbols_sstr(
-      @symcore.applied_undefined_function(
-        "f",
-        [@symcore.add([x, y])],
-      ),
+      @symcore.applied_undefined_function("f", [@symcore.add([x, y])]),
     ),
     content="('x', 'y')",
   )
@@ -650,22 +631,13 @@ test "symcore parity free_symbols through apply lambda and Subs" {
     core_free_symbols_sstr(
       @symcore.lambda_expr(
         x,
-        @symcore.add([
-          @symcore.applied_undefined_function("f", [x]),
-          y,
-        ]),
+        @symcore.add([@symcore.applied_undefined_function("f", [x]), y]),
       ),
     ),
     content="('y',)",
   )
   inspect(
-    core_free_symbols_sstr(
-      @symcore.subs_expr(
-        @symcore.add([x, y]),
-        x,
-        z,
-      ),
-    ),
+    core_free_symbols_sstr(@symcore.subs_expr(@symcore.add([x, y]), x, z)),
     content="('y', 'z')",
   )
 }
@@ -680,27 +652,15 @@ test "symcore parity xreplace through apply and binders" {
     content="sin(y)",
   )
   inspect(
-    core_xreplace_sstr(
-      @symcore.lambda_expr(x, @symcore.add([x, y])),
-      x,
-      z,
-    ),
+    core_xreplace_sstr(@symcore.lambda_expr(x, @symcore.add([x, y])), x, z),
     content="Lambda(z, y + z)",
   )
   inspect(
-    core_xreplace_sstr(
-      @symcore.lambda_expr(x, @symcore.add([x, y])),
-      y,
-      z,
-    ),
+    core_xreplace_sstr(@symcore.lambda_expr(x, @symcore.add([x, y])), y, z),
     content="Lambda(x, x + z)",
   )
   inspect(
-    core_xreplace_sstr(
-      @symcore.subs_expr(@symcore.add([x, y]), x, z),
-      z,
-      y,
-    ),
+    core_xreplace_sstr(@symcore.subs_expr(@symcore.add([x, y]), x, z), z, y),
     content="Subs(x + y, x, y)",
   )
 }
@@ -824,10 +784,9 @@ test "symcore parity subst rewrites callable heads but not non-callables" {
   let x = @symcore.Expr::Symbol("x")
   inspect(
     core_expr_sstr(
-      @symcore.subst(
-        @symcore.function("sin", [x]),
-        { "sin": @symcore.Expr::FunctionHead("cos") },
-      ),
+      @symcore.subst(@symcore.function("sin", [x]), {
+        "sin": @symcore.Expr::FunctionHead("cos"),
+      }),
     ),
     content=core_subst_expr_sstr(
       @symcore.function("sin", [x]),
@@ -837,10 +796,9 @@ test "symcore parity subst rewrites callable heads but not non-callables" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.subst(
-        @symcore.applied_undefined_function("f", [x]),
-        { "f": @symcore.Expr::UndefinedFunction("g") },
-      ),
+      @symcore.subst(@symcore.applied_undefined_function("f", [x]), {
+        "f": @symcore.Expr::UndefinedFunction("g"),
+      }),
     ),
     content=core_subst_expr_sstr(
       @symcore.applied_undefined_function("f", [x]),
@@ -850,15 +808,109 @@ test "symcore parity subst rewrites callable heads but not non-callables" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.subst(
-        @symcore.applied_undefined_function("f", [x]),
-        { "f": @symcore.Expr::Symbol("z") },
-      ),
+      @symcore.subst(@symcore.applied_undefined_function("f", [x]), {
+        "f": @symcore.Expr::Symbol("z"),
+      }),
     ),
     content=core_subst_expr_sstr(
       @symcore.applied_undefined_function("f", [x]),
       @symcore.Expr::UndefinedFunction("f"),
       @symcore.Expr::Symbol("z"),
     ),
+  )
+}
+
+///|
+test "symcore parity tuple binders rename safely under substitution" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  let w = @symcore.Expr::Symbol("w")
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+        { "y": z },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+      y,
+      z,
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+        { "x": z },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+      x,
+      z,
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.subs_expr(
+          @symcore.add([x, y]),
+          @symcore.Expr::Tuple([x, y]),
+          @symcore.Expr::Tuple([y, z]),
+        ),
+        { "y": w },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.subs_expr(
+        @symcore.add([x, y]),
+        @symcore.Expr::Tuple([x, y]),
+        @symcore.Expr::Tuple([y, z]),
+      ),
+      y,
+      w,
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(
+        @symcore.subs_expr(
+          @symcore.add([x, y]),
+          @symcore.Expr::Tuple([x, y]),
+          @symcore.Expr::Tuple([y, z]),
+        ),
+        { "x": w },
+      ),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.subs_expr(
+        @symcore.add([x, y]),
+        @symcore.Expr::Tuple([x, y]),
+        @symcore.Expr::Tuple([y, z]),
+      ),
+      x,
+      w,
+    ),
+  )
+}
+
+///|
+test "symcore parity multi-variable derivative substitution stays canonical" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  let expr = @symcore.Expr::Derivative(
+    @symcore.add([@symcore.function("sin", [x]), y]),
+    [x, @symcore.int(1), y, @symcore.int(1)],
+  )
+  inspect(
+    core_expr_sstr(@symcore.subst(expr, { "y": z })),
+    content=core_subst_expr_sstr(expr, y, z),
+  )
+  inspect(
+    core_expr_sstr(@symcore.subst(expr, { "x": z })),
+    content=core_subst_expr_sstr(expr, x, z),
   )
 }

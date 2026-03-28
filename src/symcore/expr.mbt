@@ -162,7 +162,6 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
       Some(Expr::Apply(Expr::UndefinedFunction(name), args))
     Expr::FunctionHead(name) =>
       Some(Expr::Apply(Expr::FunctionHead(name), args))
-    Expr::Symbol(name) => Some(Expr::Apply(Expr::FunctionHead(name), args))
     _ => None
   }
 }
@@ -176,7 +175,6 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
       Some(applied_undefined_function(name, args))
     Expr::FunctionHead(name) =>
       Some(Expr::Apply(Expr::FunctionHead(name), args))
-    Expr::Symbol(name) => Some(Expr::Apply(Expr::FunctionHead(name), args))
     _ => None
   }
 }
