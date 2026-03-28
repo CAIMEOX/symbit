@@ -463,6 +463,20 @@ test "sympify lifts typed tuple and dict inputs" {
     ),
     content="f(_x, y_)",
   )
+  match sympify(SympifyInput::FromExpr(Expr::Function("sin", [Expr::Symbol("x")]))) {
+    Expr::Apply(Expr::FunctionHead("sin"), [Expr::Symbol("x")]) => ()
+    _ => fail("expected sympify FromExpr to canonicalize named application")
+  }
+  match
+    sympify(
+      SympifyInput::FromExpr(
+        Expr::Function("Derivative", [Expr::Symbol("x"), Expr::Symbol("x")]),
+      ),
+    ) {
+    Expr::Derivative(Expr::Symbol("x"), [Expr::Symbol("x"), one]) =>
+      inspect(@symprint.to_string(one), content="1")
+    _ => fail("expected sympify FromExpr to canonicalize derivative")
+  }
 }
 
 ///|

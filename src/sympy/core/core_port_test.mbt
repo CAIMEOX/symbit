@@ -321,6 +321,29 @@ test "symcore parity sympify typed inputs" {
     ),
     content="f(_x, y_)",
   )
+  inspect(
+    core_expr_sstr(
+      @symcore.sympify(
+        @symcore.SympifyInput::FromExpr(
+          @symcore.Expr::Function("sin", [@symcore.Expr::Symbol("x")]),
+        ),
+      ),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.sympify(
+        @symcore.SympifyInput::FromExpr(
+          @symcore.Expr::Function("Derivative", [
+            @symcore.Expr::Symbol("x"),
+            @symcore.Expr::Symbol("x"),
+          ]),
+        ),
+      ),
+    ),
+    content="Derivative(x, x)",
+  )
 }
 
 ///|

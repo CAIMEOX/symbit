@@ -22,7 +22,7 @@ pub(all) enum SympifyInput {
 /// Convert a typed value into a core symbolic expression.
 pub fn sympify(input : SympifyInput) -> Expr {
   match input {
-    SympifyInput::FromExpr(expr) => expr
+    SympifyInput::FromExpr(expr) => normalize_legacy_expr(expr)
     SympifyInput::FromBool(value) => Expr::Boolean(value)
     SympifyInput::FromInt(value) => int(value)
     SympifyInput::FromRational(value) => Expr::Number(value)
