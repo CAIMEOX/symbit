@@ -7,7 +7,13 @@ pub(all) enum SympifyInput {
   FromRational(@symnum.BigRational)
   FromFloat(Float)
   FromComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
   SymbolName(String)
+  DummyName(String)
+  WildName(String)
+  FunctionHeadName(String)
+  UndefinedFunctionName(String)
+  Application(SympifyInput, Array[SympifyInput])
   Tuple(Array[SympifyInput])
   Dict(Array[(SympifyInput, SympifyInput)])
 }
@@ -22,7 +28,20 @@ pub fn sympify(input : SympifyInput) -> Expr {
     SympifyInput::FromRational(value) => Expr::Number(value)
     SympifyInput::FromFloat(value) => Expr::Float(value)
     SympifyInput::FromComplexFloat(value) => Expr::ComplexFloat(value)
+    SympifyInput::NumberSymbol(kind) => Expr::NumberSymbol(kind)
     SympifyInput::SymbolName(name) => Expr::Symbol(name)
+    SympifyInput::DummyName(name) => dummy(name=name)
+    SympifyInput::WildName(name) => Expr::Wild(name)
+    SympifyInput::FunctionHeadName(name) => Expr::FunctionHead(name)
+    SympifyInput::UndefinedFunctionName(name) => Expr::UndefinedFunction(name)
+    SympifyInput::Application(head, args) => {
+      let head_expr = sympify(head)
+      let arg_exprs = args.map(sympify)
+      match apply(head_expr, arg_exprs) {
+        Some(expr) => expr
+        None => Expr::Apply(head_expr, arg_exprs)
+      }
+    }
     SympifyInput::Tuple(items) => Expr::Tuple(items.map(sympify))
     SympifyInput::Dict(items) => {
       let out : Array[(Expr, Expr)] = []

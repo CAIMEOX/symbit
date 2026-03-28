@@ -115,3 +115,29 @@ test "evalf handles complex transcendental functions" {
     _ => fail("expected complex sin(I)")
   }
 }
+
+///|
+test "evalf evaluates Subs and preserves Lambda structure" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let subs_pi = evalf(
+    subs_expr(
+      add([Expr::NumberSymbol(NumberSymbolKind::Pi), y]),
+      y,
+      Expr::NumberSymbol(NumberSymbolKind::Pi),
+    ),
+    prec=100,
+  )
+  match subs_pi {
+    Expr::Float(f) => assert_true(f.format(dps=12).has_prefix("6.283185307"))
+    _ => fail("expected float 2*pi")
+  }
+
+  let lambda_pi = evalf(
+    lambda_expr(x, add([x, Expr::NumberSymbol(NumberSymbolKind::Pi)])),
+    prec=100,
+  )
+  let rendered = @symprint.to_string(lambda_pi)
+  assert_true(rendered.has_prefix("Lambda("))
+  assert_true(rendered.contains("3.141592653"))
+}

@@ -900,15 +900,44 @@ fn evalf_impl(expr : Expr, prec : Int) -> Expr {
       Expr::Derivative(evalf_impl(inner, prec), out)
     }
     Expr::Subs(inner, variable, value) =>
-      subs_expr(
-        evalf_impl(inner, prec),
-        evalf_impl(variable, prec),
-        evalf_impl(value, prec),
-      )
+      match subs_eval_env(variable, value) {
+        Some(env) => evalf_impl(subst(inner, env), prec)
+        None =>
+          subs_expr(
+            evalf_impl(inner, prec),
+            evalf_impl(variable, prec),
+            evalf_impl(value, prec),
+          )
+      }
     Expr::Lambda(vars, body) =>
       lambda_expr(evalf_impl(vars, prec), evalf_impl(body, prec))
     Expr::Function(_, _) => abort("legacy function should be normalized")
   }
+}
+
+///|
+fn subs_eval_items(expr : Expr) -> Array[Expr] {
+  match tuple_items(expr) {
+    Some(items) => items
+    None => [expr]
+  }
+}
+
+///|
+fn subs_eval_env(variable : Expr, value : Expr) -> Map[String, Expr]? {
+  let vars = subs_eval_items(variable)
+  let vals = subs_eval_items(value)
+  if vars.length() != vals.length() {
+    return None
+  }
+  let env : Map[String, Expr] = {}
+  for i in 0..<vars.length() {
+    match vars[i] {
+      Expr::Symbol(name) => env.set(name, vals[i])
+      _ => return None
+    }
+  }
+  Some(env)
 }
 
 ///|

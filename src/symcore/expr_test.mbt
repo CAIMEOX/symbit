@@ -198,7 +198,7 @@ test "func and args expose canonical heads for containers and binders" {
     @symprint.to_string(
       func(Expr::Relational(RelOp::Eq, x, y)).unwrap_or(int(0)),
     ),
-    content="Eq",
+    content="Equality",
   )
   inspect(
     @symprint.to_string(
@@ -219,6 +219,44 @@ test "func and args expose canonical heads for containers and binders" {
   json_inspect(
     args(subs_expr(add([x, y]), x, int(1))).map(@symprint.to_string),
     content=["x + y", "(x,)", "(1,)"],
+  )
+}
+
+///|
+test "func exposes canonical heads for atomic core nodes" {
+  inspect(
+    @symprint.to_string(func(int(2)).unwrap_or(int(0))),
+    content="Integer",
+  )
+  inspect(
+    @symprint.to_string(func(rational_from_ints(1, 2)).unwrap_or(int(0))),
+    content="Half",
+  )
+  inspect(
+    @symprint.to_string(
+      func(Expr::NumberSymbol(NumberSymbolKind::Pi)).unwrap_or(int(0)),
+    ),
+    content="Pi",
+  )
+  inspect(
+    @symprint.to_string(func(Expr::Symbol("x")).unwrap_or(int(0))),
+    content="Symbol",
+  )
+  inspect(
+    @symprint.to_string(func(dummy(name="x")).unwrap_or(int(0))),
+    content="Dummy",
+  )
+  inspect(
+    @symprint.to_string(func(Expr::Wild("x")).unwrap_or(int(0))),
+    content="Wild",
+  )
+  inspect(
+    @symprint.to_string(func(Expr::Boolean(true)).unwrap_or(int(0))),
+    content="BooleanTrue",
+  )
+  inspect(
+    @symprint.to_string(func(Expr::Boolean(false)).unwrap_or(int(0))),
+    content="BooleanFalse",
   )
 }
 
@@ -338,6 +376,10 @@ test "legacy function storage normalizes to canonical core semantics" {
     }
     _ => fail("expected recursively normalized Add")
   }
+  match function("Dict", [x]) {
+    Expr::Apply(Expr::FunctionHead("Dict"), [Expr::Symbol("x")]) => ()
+    _ => fail("expected malformed Dict to canonicalize as Apply")
+  }
 }
 
 ///|
@@ -399,6 +441,28 @@ test "sympify lifts typed tuple and dict inputs" {
     ),
   ])
   inspect(@symprint.to_string(dict_value), content="{x: 2, y: f}")
+  inspect(
+    @symprint.to_string(
+      sympify(
+        SympifyInput::Application(
+          SympifyInput::FunctionHeadName("sin"),
+          [SympifyInput::SymbolName("x")],
+        ),
+      ),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      sympify(
+        SympifyInput::Application(
+          SympifyInput::UndefinedFunctionName("f"),
+          [SympifyInput::DummyName("x"), SympifyInput::WildName("y")],
+        ),
+      ),
+    ),
+    content="f(_x, y_)",
+  )
 }
 
 ///|

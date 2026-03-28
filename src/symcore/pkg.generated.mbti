@@ -315,7 +315,13 @@ pub(all) enum SympifyInput {
   FromRational(@symnum.BigRational)
   FromFloat(Float)
   FromComplexFloat(ComplexFloat)
+  NumberSymbol(NumberSymbolKind)
   SymbolName(String)
+  DummyName(String)
+  WildName(String)
+  FunctionHeadName(String)
+  UndefinedFunctionName(String)
+  Application(SympifyInput, Array[SympifyInput])
   Tuple(Array[SympifyInput])
   Dict(Array[(SympifyInput, SympifyInput)])
 }

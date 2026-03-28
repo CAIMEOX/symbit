@@ -803,7 +803,7 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Function(name, args)
+          _ => return Expr::Apply(Expr::FunctionHead(name), args)
         }
       }
       Expr::Dict(entries)
@@ -861,7 +861,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
       for item in items {
         match tuple_items(item) {
           Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Function(name, args)
+          _ => return Expr::Apply(Expr::FunctionHead(name), args)
         }
       }
       Expr::Dict(entries)

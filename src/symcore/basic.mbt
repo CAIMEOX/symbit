@@ -512,6 +512,63 @@ pub fn function_head_name(expr : Expr) -> String? {
 }
 
 ///|
+fn exact_number_func_name(value : @symnum.BigRational) -> String {
+  let half = @symnum.BigRational::from_ints(1, 2) catch {
+    _ => abort("invalid half rational")
+  }
+  if value.is_zero() {
+    "Zero"
+  } else if value.is_one() {
+    "One"
+  } else if value.compare(@symnum.BigRational::from_int(-1)) == 0 {
+    "NegativeOne"
+  } else if value.compare(half) == 0 {
+    "Half"
+  } else if value.is_integral() {
+    "Integer"
+  } else {
+    "Rational"
+  }
+}
+
+///|
+fn number_symbol_func_name(kind : NumberSymbolKind) -> String {
+  match kind {
+    NumberSymbolKind::ImaginaryUnit => "ImaginaryUnit"
+    NumberSymbolKind::Pi => "Pi"
+    NumberSymbolKind::Exp1 => "Exp1"
+    NumberSymbolKind::EulerGamma => "EulerGamma"
+    NumberSymbolKind::GoldenRatio => "GoldenRatio"
+    NumberSymbolKind::Catalan => "Catalan"
+    NumberSymbolKind::Infinity => "Infinity"
+    NumberSymbolKind::NegativeInfinity => "NegativeInfinity"
+    NumberSymbolKind::ComplexInfinity => "ComplexInfinity"
+    NumberSymbolKind::NaN => "NaN"
+  }
+}
+
+///|
+fn relational_func_name(op : RelOp) -> String {
+  match op {
+    RelOp::Eq => "Equality"
+    RelOp::Ne => "Unequality"
+    RelOp::Lt => "StrictLessThan"
+    RelOp::Le => "LessThan"
+    RelOp::Gt => "StrictGreaterThan"
+    RelOp::Ge => "GreaterThan"
+  }
+}
+
+///|
+fn boolean_func_name(value : Bool) -> String {
+  if value {
+    "BooleanTrue"
+  } else {
+    "BooleanFalse"
+  }
+}
+
+///|
 pub fn is_function_head(expr : Expr) -> Bool {
   match function_head_name(expr) {
     Some(_) => true
@@ -621,6 +678,18 @@ pub fn func(expr : Expr) -> Expr? {
     Some((head, _)) => Some(head)
     None =>
       match expr_form(expr) {
+        ExprForm::Number(value) =>
+          Some(Expr::FunctionHead(exact_number_func_name(value)))
+        ExprForm::Float(_) => Some(Expr::FunctionHead("Float"))
+        ExprForm::ComplexFloat(_) => Some(Expr::FunctionHead("ComplexFloat"))
+        ExprForm::NumberSymbol(kind) =>
+          Some(Expr::FunctionHead(number_symbol_func_name(kind)))
+        ExprForm::Symbol(_) => Some(Expr::FunctionHead("Symbol"))
+        ExprForm::Dummy(_, _) => Some(Expr::FunctionHead("Dummy"))
+        ExprForm::Wild(_) => Some(Expr::FunctionHead("Wild"))
+        ExprForm::Boolean(value) =>
+          Some(Expr::FunctionHead(boolean_func_name(value)))
+        ExprForm::FunctionHead(_) | ExprForm::UndefinedFunction(_) => None
         ExprForm::Add(_) => Some(Expr::FunctionHead("Add"))
         ExprForm::Mul(_) => Some(Expr::FunctionHead("Mul"))
         ExprForm::Pow(_, _) => Some(Expr::FunctionHead("Pow"))
@@ -628,22 +697,11 @@ pub fn func(expr : Expr) -> Expr? {
         ExprForm::Tuple(_) => Some(Expr::FunctionHead("Tuple"))
         ExprForm::Dict(_) => Some(Expr::FunctionHead("Dict"))
         ExprForm::Relational(op, _, _) =>
-          Some(
-            Expr::FunctionHead(
-              match op {
-                RelOp::Eq => "Eq"
-                RelOp::Ne => "Ne"
-                RelOp::Lt => "Lt"
-                RelOp::Le => "Le"
-                RelOp::Gt => "Gt"
-                RelOp::Ge => "Ge"
-              },
-            ),
-          )
+          Some(Expr::FunctionHead(relational_func_name(op)))
         ExprForm::Derivative(_, _) => Some(Expr::FunctionHead("Derivative"))
         ExprForm::Subs(_, _, _) => Some(Expr::FunctionHead("Subs"))
         ExprForm::Lambda(_, _) => Some(Expr::FunctionHead("Lambda"))
-        _ => None
+        ExprForm::Apply(_, _) => None
       }
   }
 }
