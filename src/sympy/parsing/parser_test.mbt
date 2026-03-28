@@ -281,6 +281,16 @@ test "symparse callable context and structured bindings" {
     parse_repr_with("a + b", default_parse_options(), global_context()),
     content="(+ sym:b sym:t)",
   )
+  let symbol_bound_call : Result[@symcore.Expr, ParseError] = try? parse_expr_in(
+    "f(x)",
+    default_parse_options(),
+    parse_context(bindings={ "f": @symcore.Expr::Symbol("g") }),
+  )
+  guard symbol_bound_call
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: 'Symbol' object is not callable" else {
+    fail("expected plain symbol binding call to stay non-callable")
+  }
   match parse_expr_with("sin(x)", parse_options(evaluate=false)) {
     @symcore.Expr::Apply(
       @symcore.Expr::FunctionHead("sin"),
@@ -377,7 +387,7 @@ test "ast parser compatibility entrypoint" {
     local_bindings={ "f": @symcore.Expr::Symbol("g") },
   )
   guard ast_symbol_call is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "call lowering only accepts a function head" else {
+    detail == "TypeError: 'Symbol' object is not callable" else {
     fail("expected ast parser symbol binding call to stay non-callable")
   }
   match ast_parse_expr("lambda x: x + 1") {

@@ -168,10 +168,65 @@ fn remove_bound_names_from_env(bound : Expr, env : Map[String, Expr]) -> Unit {
 }
 
 ///|
-fn rename_lambda_bound_vars(
+fn bound_symbol_names(bound : Expr) -> Array[String] {
+  let out : Array[String] = []
+  letrec collect = (expr : Expr) => {
+    match expr {
+      Expr::Symbol(name) => if !out.contains(name) { out.push(name) }
+      _ =>
+        match tuple_items(expr) {
+          Some(items) =>
+            for item in items {
+              collect(item)
+            }
+          None => ()
+        }
+    }
+  }
+  collect(bound)
+  out
+}
+
+///|
+fn replacement_conflicts_with_bound_names(
+  value : Expr,
+  current_name : String,
+  original_names : Array[String],
+  rename_env : Map[String, Expr],
+) -> Bool {
+  match value {
+    Expr::Symbol(new_name) => {
+      if new_name != current_name && original_names.contains(new_name) {
+        return true
+      }
+      for _, existing in rename_env {
+        match existing {
+          Expr::Symbol(existing_name) if existing_name == new_name =>
+            return true
+          _ => ()
+        }
+      }
+      false
+    }
+    Expr::Dummy(_, id) => {
+      for _, existing in rename_env {
+        match existing {
+          Expr::Dummy(_, existing_id) if existing_id == id => return true
+          _ => ()
+        }
+      }
+      false
+    }
+    _ => true
+  }
+}
+
+///|
+fn rename_bound_vars(
   bound : Expr,
   env : Map[String, Expr],
   rename_env : Map[String, Expr],
+  original_names : Array[String],
 ) -> Expr {
   match bound {
     Expr::Symbol(name) =>
@@ -179,6 +234,11 @@ fn rename_lambda_bound_vars(
         Some(value) =>
           match value {
             Expr::Symbol(_) | Expr::Dummy(_, _) => {
+              if replacement_conflicts_with_bound_names(
+                  value, name, original_names, rename_env,
+                ) {
+                return bound
+              }
               rename_env.set(name, value)
               value
             }
@@ -191,7 +251,7 @@ fn rename_lambda_bound_vars(
         Some(items) => {
           let out : Array[Expr] = []
           for item in items {
-            out.push(rename_lambda_bound_vars(item, env, rename_env))
+            out.push(rename_bound_vars(item, env, rename_env, original_names))
           }
           Expr::Tuple(out)
         }
@@ -370,7 +430,12 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
       subst_derivative(inner, deriv_args, env)
     Expr::Lambda(vars, body) => {
       let rename_env : Map[String, Expr] = {}
-      let renamed_vars = rename_lambda_bound_vars(vars, env, rename_env)
+      let renamed_vars = rename_bound_vars(
+        vars,
+        env,
+        rename_env,
+        bound_symbol_names(vars),
+      )
       let restricted = clone_subst_env(env)
       remove_bound_names_from_env(vars, restricted)
       remove_bound_names_from_env(renamed_vars, restricted)
@@ -383,7 +448,12 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     }
     Expr::Subs(inner, variable, value) => {
       let rename_env : Map[String, Expr] = {}
-      let renamed_variable = rename_lambda_bound_vars(variable, env, rename_env)
+      let renamed_variable = rename_bound_vars(
+        variable,
+        env,
+        rename_env,
+        bound_symbol_names(variable),
+      )
       let restricted = clone_subst_env(env)
       remove_bound_names_from_env(variable, restricted)
       remove_bound_names_from_env(renamed_variable, restricted)

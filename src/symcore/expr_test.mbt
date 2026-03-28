@@ -670,6 +670,14 @@ test "subst respects lambda bound variables" {
     @symprint.to_string(subst(tuple_expr, { "x": z })),
     content="Lambda((z, y), y + z)",
   )
+  inspect(
+    @symprint.to_string(subst(tuple_expr, { "y": x })),
+    content="Lambda((x, y), x + y)",
+  )
+  inspect(
+    @symprint.to_string(subst(tuple_expr, { "x": y })),
+    content="Lambda((x, y), x + y)",
+  )
 }
 
 ///|
@@ -689,6 +697,14 @@ test "subst respects Subs bound variables" {
   inspect(
     @symprint.to_string(subst(multi, { "x": w })),
     content="Subs(w + y, (w, y), (y, z))",
+  )
+  inspect(
+    @symprint.to_string(subst(multi, { "y": x })),
+    content="Subs(x + y, (x, y), (y, z))",
+  )
+  inspect(
+    @symprint.to_string(subst(multi, { "x": y })),
+    content="Subs(x + y, (x, y), (y, z))",
   )
 }
 

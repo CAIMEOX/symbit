@@ -109,7 +109,11 @@ fn make_application(
     None =>
       raise ParseError::UnsupportedConstruct(
         span=span(0, 0),
-        "call lowering only accepts a function head",
+        match @symcore.func(callee) {
+          Some(@symcore.Expr::FunctionHead(name)) =>
+            "TypeError: '\{name}' object is not callable"
+          _ => "TypeError: object is not callable"
+        },
       )
   }
 }

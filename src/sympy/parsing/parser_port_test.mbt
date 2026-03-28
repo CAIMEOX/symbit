@@ -62,6 +62,22 @@ fn assert_sympy_parse_string_relaxed(src : String) -> Unit raise {
 }
 
 ///|
+fn ast_parse_error_detail(
+  src : String,
+  local_bindings : Map[String, @symcore.Expr],
+) -> String {
+  let result : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
+    src,
+    local_bindings~,
+  )
+  match result {
+    Err(ParseError::UnsupportedConstruct(span=_, detail)) => detail
+    Err(_) => "unexpected-parse-error"
+    Ok(_) => "unexpected-success"
+  }
+}
+
+///|
 fn assert_sympy_parse_matches_in(
   src : String,
   callable_names : Array[String],
@@ -218,6 +234,23 @@ test "symparse parity callable context" {
     binding_names=["sin"],
     binding_exprs=["g"],
   )
+  inspect(
+    try
+      parse_expr_in(
+        "f(x)",
+        default_parse_options(),
+        parse_context(bindings={ "f": @symcore.Expr::Symbol("g") }),
+      )
+    catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("f(x)", [], binding_names=["f"], binding_exprs=[
+      "g",
+    ]),
+  )
   assert_sympy_parse_matches_in_relaxed("sin x", [], binding_names=["sin"], binding_exprs=[
     "z",
   ])
@@ -362,6 +395,12 @@ test "symparse parity split symbols custom and ast parser" {
     ),
     content=ast_parse_expr_sstr("f(x)", binding_names=["f"], binding_exprs=[
       "sympy.Function('g')",
+    ]),
+  )
+  inspect(
+    ast_parse_error_detail("f(x)", { "f": @symcore.Expr::Symbol("g") }),
+    content=ast_parse_expr_error_sstr("f(x)", binding_names=["f"], binding_exprs=[
+      "g",
     ]),
   )
 }

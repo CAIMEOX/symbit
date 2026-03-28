@@ -110,6 +110,56 @@ pub fn parsing_eval_str(expr : String) -> String raise {
 }
 
 ///|
+fn parsing_exec_result_str(script : String) -> String raise {
+  let state = py_gil_ensure()
+  let res = try {
+    let builtins = match @py.pyimport("builtins") {
+      Some(mod) => mod
+      None => fail("py-builtins-missing")
+    }
+    let exec_obj = match builtins.get_attr("exec", print_err=true) {
+      Some(obj) => obj
+      None => fail("py-exec-missing")
+    }
+    let eval_obj = match builtins.get_attr("eval", print_err=true) {
+      Some(obj) => obj
+      None => fail("py-eval-missing")
+    }
+    let exec_callable = py_callable_from_enum(exec_obj)
+    let eval_callable = py_callable_from_enum(eval_obj)
+    let globals = @py.PyDict::new()
+    globals.set("__builtins__", builtins.obj())
+    let sympy_mod = match @py.pyimport("sympy") {
+      Some(mod) => mod.obj()
+      None => fail("py-sympy-missing")
+    }
+    globals.set("sympy", sympy_mod)
+    let exec_args = @sympy.py_pack_args([
+      @sympy.OracleArg::Str(script),
+      @sympy.OracleArg::PyObj(globals.obj()),
+      @sympy.OracleArg::PyObj(globals.obj()),
+    ])
+    ignore(py_call_object(exec_callable, exec_args, print_err=true))
+    let eval_args = @sympy.py_pack_args([
+      @sympy.OracleArg::Str("__result__"),
+      @sympy.OracleArg::PyObj(globals.obj()),
+      @sympy.OracleArg::PyObj(globals.obj()),
+    ])
+    match py_call_object(eval_callable, eval_args, print_err=true) {
+      Some(obj) => py_str_obj(objenum_to_obj(obj))
+      None => fail("py-eval-result-none")
+    }
+  } catch {
+    err => {
+      py_gil_release(state)
+      raise err
+    }
+  }
+  py_gil_release(state)
+  res
+}
+
+///|
 fn binding_lookup(
   binding_names : Array[String],
   binding_exprs : Array[String],
@@ -195,6 +245,45 @@ pub fn parse_expr_sstr_with(
     ", evaluate=" +
     evaluate_text +
     "))",
+  )
+}
+
+///|
+pub fn parse_expr_error_sstr_with(
+  src : String,
+  transformations : String,
+  local_dict_literal : String,
+  global_dict_literal : String,
+  evaluate : Bool,
+) -> String raise {
+  let evaluate_text = if evaluate { "True" } else { "False" }
+  let local_dict_clause = if local_dict_literal == "{}" {
+    ""
+  } else {
+    ", local_dict=" + local_dict_literal
+  }
+  let global_dict_clause = if global_dict_literal == "{}" {
+    ""
+  } else {
+    ", global_dict=dict(sympy.__dict__, __builtins__=__builtins__, **" +
+    global_dict_literal +
+    ")"
+  }
+  parsing_exec_result_str(
+    "from sympy.parsing.sympy_parser import parse_expr\n" +
+    "try:\n" +
+    "    parse_expr(" +
+    python_string_literal(src) +
+    ", transformations=" +
+    transformations +
+    local_dict_clause +
+    global_dict_clause +
+    ", evaluate=" +
+    evaluate_text +
+    ")\n" +
+    "    __result__ = 'OK'\n" +
+    "except Exception as e:\n" +
+    "    __result__ = type(e).__name__ + ': ' + str(e)\n",
   )
 }
 
@@ -394,6 +483,28 @@ pub fn parse_expr_sstr_in(
 }
 
 ///|
+pub fn parse_expr_error_sstr_in(
+  src : String,
+  callable_names : Array[String],
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+  global_callable_names? : Array[String] = [],
+  global_binding_names? : Array[String] = [],
+  global_binding_exprs? : Array[String] = [],
+  evaluate? : Bool = true,
+) -> String raise {
+  parse_expr_error_sstr_with(
+    src,
+    standard_transformations_text(),
+    dict_literal(callable_names, binding_names, binding_exprs),
+    dict_literal(
+      global_callable_names, global_binding_names, global_binding_exprs,
+    ),
+    evaluate,
+  )
+}
+
+///|
 pub fn parse_expr_sstr_in_relaxed(
   src : String,
   callable_names : Array[String],
@@ -493,5 +604,41 @@ pub fn ast_parse_expr_sstr(
     ", " +
     locals_text +
     "))",
+  )
+}
+
+///|
+pub fn ast_parse_expr_error_sstr(
+  src : String,
+  binding_names? : Array[String] = [],
+  binding_exprs? : Array[String] = [],
+) -> String raise {
+  let binding_value_text = fn(expr : String) -> String {
+    if expr.has_prefix("sympy.") {
+      expr
+    } else {
+      "sympy.sympify(" + python_string_literal(expr) + ")"
+    }
+  }
+  let entries : Array[String] = []
+  for i in 0..<binding_names.length() {
+    entries.push(
+      python_string_literal(binding_names[i]) +
+      ": " +
+      binding_value_text(binding_exprs[i]),
+    )
+  }
+  let locals_text = "{" + entries.join(", ") + "}"
+  parsing_exec_result_str(
+    "from sympy.parsing.ast_parser import parse_expr\n" +
+    "try:\n" +
+    "    parse_expr(" +
+    python_string_literal(src) +
+    ", " +
+    locals_text +
+    ")\n" +
+    "    __result__ = 'OK'\n" +
+    "except Exception as e:\n" +
+    "    __result__ = type(e).__name__ + ': ' + str(e)\n",
   )
 }
