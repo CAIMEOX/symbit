@@ -332,6 +332,22 @@ test "ast parser compatibility entrypoint" {
   )
   inspect(
     @symprint.to_string(
+      ast_parse_expr("f", local_bindings={
+        "f": @symcore.Expr::FunctionHead("cos"),
+      }),
+    ),
+    content="cos",
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("f", local_bindings={
+        "f": @symcore.Expr::UndefinedFunction("g"),
+      }),
+    ),
+    content="g",
+  )
+  inspect(
+    @symprint.to_string(
       ast_parse_expr("f(x)", local_bindings={
         "f": @symcore.Expr::FunctionHead("cos"),
       }),

@@ -321,6 +321,26 @@ test "symparse parity split symbols custom and ast parser" {
     content=ast_parse_expr_sstr("sin"),
   )
   inspect(
+    @symprint.to_string(
+      ast_parse_expr("f", local_bindings={
+        "f": @symcore.Expr::FunctionHead("cos"),
+      }),
+    ),
+    content=ast_parse_expr_sstr("f", binding_names=["f"], binding_exprs=[
+      "sympy.cos",
+    ]),
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("f", local_bindings={
+        "f": @symcore.Expr::UndefinedFunction("g"),
+      }),
+    ),
+    content=ast_parse_expr_sstr("f", binding_names=["f"], binding_exprs=[
+      "sympy.Function('g')",
+    ]),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("sin(x)")),
     content=ast_parse_expr_sstr("sin(x)"),
   )
