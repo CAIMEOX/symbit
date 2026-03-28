@@ -42,6 +42,17 @@ fn local_func_name(expr : @symcore.Expr) -> String {
 }
 
 ///|
+fn local_sorted_sstr(exprs : Array[@symcore.Expr]) -> String raise {
+  let items = exprs.copy()
+  items.sort_by(@symcore.compare_expr)
+  let out : Array[String] = []
+  for expr in items {
+    out.push("'" + core_expr_sstr(expr) + "'")
+  }
+  "(" + out.join(", ") + ")"
+}
+
+///|
 test "symcore parity plain symbol names stay plain symbols" {
   inspect(core_expr_srepr(@symcore.Expr::Symbol("pi")), content="Symbol('pi')")
   inspect(
@@ -728,5 +739,26 @@ test "symcore parity evalf on Subs and Lambda" {
       ),
     ),
     content="Lambda(x, x + 3.14159265358979)",
+  )
+}
+
+///|
+test "symcore parity default sort order across binders and containers" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    local_sorted_sstr([
+      @symcore.Expr::Tuple([x, y]),
+      @symcore.Expr::Dict([(x, y)]),
+      @symcore.Expr::Relational(@symcore.RelOp::Eq, x, y),
+      @symcore.lambda_expr(x, @symcore.add([x, y])),
+      @symcore.subs_expr(@symcore.add([x, y]), x, @symcore.int(1)),
+      @symcore.derivative(@symcore.function("sin", [x]), x),
+      @symcore.function("sin", [x]),
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.Expr::UndefinedFunction("f"),
+      @symcore.Expr::FunctionHead("sin"),
+    ]),
+    content="('sin', 'f', 'f(x)', 'sin(x)', 'Derivative(sin(x), x)', '{x: y}', 'Eq(x, y)', 'Lambda(x, x + y)', 'Subs(x + y, x, 1)', '(x, y)')",
   )
 }

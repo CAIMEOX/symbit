@@ -9,14 +9,14 @@ fn variant_rank(expr : Expr) -> Int {
     Expr::NumberSymbol(_) => 5
     Expr::Symbol(_) => 6
     Expr::Apply(_, _) => 7
-    Expr::Mod(_, _) => 8
-    Expr::Boolean(_) => 9
-    Expr::Tuple(_) => 10
-    Expr::Dict(_) => 11
-    Expr::Relational(_, _, _) => 12
-    Expr::Derivative(_, _) => 13
-    Expr::Subs(_, _, _) => 14
-    Expr::Lambda(_, _) => 15
+    Expr::Derivative(_, _) => 8
+    Expr::Dict(_) => 9
+    Expr::Relational(_, _, _) => 10
+    Expr::Lambda(_, _) => 11
+    Expr::Subs(_, _, _) => 12
+    Expr::Tuple(_) => 13
+    Expr::Mod(_, _) => 14
+    Expr::Boolean(_) => 15
     Expr::Add(_) => 16
     Expr::Number(_) => 17
     Expr::Float(_) => 18
@@ -85,6 +85,15 @@ fn compare_complex_float(a : ComplexFloat, b : ComplexFloat) -> Int {
         }
       }
     }
+  }
+}
+
+///|
+fn compare_apply_heads(head_a : Expr, head_b : Expr) -> Int {
+  match (head_a, head_b) {
+    (Expr::UndefinedFunction(_), Expr::FunctionHead(_)) => -1
+    (Expr::FunctionHead(_), Expr::UndefinedFunction(_)) => 1
+    _ => compare_expr(head_a, head_b)
   }
 }
 
@@ -253,7 +262,7 @@ pub fn compare_expr(a : Expr, b : Expr) -> Int {
     Expr::Apply(head_a, args_a) =>
       match b {
         Expr::Apply(head_b, args_b) => {
-          let head_cmp = compare_expr(head_a, head_b)
+          let head_cmp = compare_apply_heads(head_a, head_b)
           if head_cmp != 0 {
             head_cmp
           } else {
