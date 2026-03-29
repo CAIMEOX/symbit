@@ -401,6 +401,7 @@ test "symcore parity subst respects lambda and Subs binders" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
   let z = @symcore.Expr::Symbol("z")
+  let w = @symcore.Expr::Symbol("w")
   inspect(
     core_subst_symbol_sstr(
       @symcore.lambda_expr(x, @symcore.add([x, y])),
@@ -440,6 +441,19 @@ test "symcore parity subst respects lambda and Subs binders" {
       @symcore.int(4),
     ),
     content="Subs(x + y, x, 4)",
+  )
+  let multi = @symcore.subs_expr(
+    @symcore.add([x, y]),
+    @symcore.Expr::Tuple([x, y]),
+    @symcore.Expr::Tuple([y, z]),
+  )
+  inspect(
+    core_subst_symbol_sstr(multi, "x", w),
+    content="Subs(w + y, (w, y), (y, z))",
+  )
+  inspect(
+    core_subst_symbol_sstr(multi, "y", w),
+    content="Subs(w + x, (x, w), (w, z))",
   )
 }
 

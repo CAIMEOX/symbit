@@ -447,12 +447,15 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
       lambda_expr(renamed_vars, subst(renamed_body, restricted))
     }
     Expr::Subs(inner, variable, value) => {
+      let protected_names = bound_symbol_names(variable)
+      for name in expr_symbol_names(subs_expr(inner, variable, value)) {
+        if !protected_names.contains(name) {
+          protected_names.push(name)
+        }
+      }
       let rename_env : Map[String, Expr] = {}
       let renamed_variable = rename_bound_vars(
-        variable,
-        env,
-        rename_env,
-        bound_symbol_names(variable),
+        variable, env, rename_env, protected_names,
       )
       let restricted = clone_subst_env(env)
       remove_bound_names_from_env(variable, restricted)
