@@ -284,31 +284,61 @@ fn expr_mentions_any_symbol_name(expr : Expr, names : Array[String]) -> Bool {
 }
 
 ///|
-fn lambda_apply_env(vars : Expr, args : Array[Expr]) -> Map[String, Expr]? {
+fn lambda_match_signature(
+  param : Expr,
+  arg : Expr,
+  rules : Array[(Expr, Expr)],
+) -> Bool {
+  match normalize_legacy_expr(param) {
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => {
+      rules.push((param, arg))
+      true
+    }
+    Expr::Tuple(items) =>
+      match tuple_items(arg) {
+        Some(arg_items) => {
+          if items.length() != arg_items.length() {
+            return false
+          }
+          for i = 0; i < items.length(); i = i + 1 {
+            if !lambda_match_signature(items[i], arg_items[i], rules) {
+              return false
+            }
+          }
+          true
+        }
+        None => false
+      }
+    _ => false
+  }
+}
+
+///|
+pub fn apply_lambda_expr(vars : Expr, body : Expr, args : Array[Expr]) -> Expr? {
+  let vars = normalize_legacy_expr(vars)
+  let body = normalize_legacy_expr(body)
+  let args = args.map(normalize_legacy_expr)
+  let rules : Array[(Expr, Expr)] = []
   match vars {
-    Expr::Symbol(name) =>
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) =>
       if args.length() == 1 {
-        let env : Map[String, Expr] = {}
-        env.set(name, args[0])
-        Some(env)
+        rules.push((vars, args[0]))
       } else {
-        None
+        return None
       }
     Expr::Tuple(items) => {
       if items.length() != args.length() {
         return None
       }
-      let env : Map[String, Expr] = {}
       for i = 0; i < items.length(); i = i + 1 {
-        match items[i] {
-          Expr::Symbol(name) => env.set(name, args[i])
-          _ => return None
+        if !lambda_match_signature(items[i], args[i], rules) {
+          return None
         }
       }
-      Some(env)
     }
-    _ => None
+    _ => return None
   }
+  Some(xreplace(body, rules))
 }
 
 ///|
@@ -325,8 +355,8 @@ fn callable_subst_apply(
             Expr::FunctionHead(_) | Expr::UndefinedFunction(_) =>
               raw_apply(value, args)
             Expr::Lambda(vars, body) =>
-              match lambda_apply_env(vars, args) {
-                Some(lambda_env) => Some(subst(body, lambda_env))
+              match apply_lambda_expr(vars, body, args) {
+                Some(result) => Some(result)
                 None => None
               }
             _ => None

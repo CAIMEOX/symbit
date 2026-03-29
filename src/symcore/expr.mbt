@@ -165,6 +165,7 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
   match head {
+    Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(Expr::Apply(Expr::UndefinedFunction(name), args))
     Expr::FunctionHead(name) =>
@@ -178,6 +179,7 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
   let head = normalize_legacy_expr(head)
   let args = args.map(normalize_legacy_expr)
   match head {
+    Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
     Expr::FunctionHead(name) =>

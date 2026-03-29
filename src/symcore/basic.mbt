@@ -180,8 +180,97 @@ pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
 }
 
 ///|
+fn lambda_signature_items(vars : Expr) -> Array[Expr] {
+  match normalize_legacy_expr(vars) {
+    Expr::Tuple(items) => items
+    other => [other]
+  }
+}
+
+///|
+fn is_lambda_signature_atom(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => true
+    _ => false
+  }
+}
+
+///|
+fn lambda_identity_expr() -> Expr {
+  let x = dummy(name="x")
+  Expr::Lambda(x, x)
+}
+
+///|
+pub fn lambda_arity(vars : Expr) -> Int? {
+  let items = lambda_signature_items(vars)
+  for item in items {
+    match normalize_legacy_expr(item) {
+      Expr::Tuple(_) | Expr::Symbol(_) | Expr::Dummy(_, _) | Expr::Wild(_) => ()
+      _ => return None
+    }
+  }
+  Some(items.length())
+}
+
+///|
+pub fn lambda_signature_error(vars : Expr) -> String? {
+  let seen : Array[Expr] = []
+  letrec check = (expr : Expr) => {
+    let normalized = normalize_legacy_expr(expr)
+    if is_lambda_signature_atom(normalized) {
+      if seen.contains(normalized) {
+        return Some("Duplicate symbol " + normalized.to_string())
+      }
+      seen.push(normalized)
+      return None
+    }
+    match normalized {
+      Expr::Tuple(items) => {
+        for item in items {
+          match check(item) {
+            Some(err) => return Some(err)
+            None => ()
+          }
+        }
+        None
+      }
+      _ => Some(
+        "Lambda signature should be only tuples and symbols, not " +
+        normalized.to_string(),
+      )
+    }
+  }
+  let top_level = lambda_signature_items(vars)
+  for item in top_level {
+    match check(item) {
+      Some(err) => return Some(err)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
 pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
-  Expr::Lambda(vars, body)
+  let vars = normalize_legacy_expr(vars)
+  let body = normalize_legacy_expr(body)
+  match lambda_signature_error(vars) {
+    Some(_) => Expr::Apply(Expr::FunctionHead("Lambda"), [vars, body])
+    None => {
+      let items = lambda_signature_items(vars)
+      if items.length() == 1 && items[0] == body {
+        lambda_identity_expr()
+      } else {
+        Expr::Lambda(vars, body)
+      }
+    }
+  }
+}
+
+///|
+pub fn expr_display(expr : Expr) -> String {
+  expr.to_string()
 }
 
 ///|

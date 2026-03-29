@@ -825,6 +825,40 @@ test "subst beta-reduces callable heads to lambda replacements" {
 }
 
 ///|
+test "lambda canonicalizes identity forms and applies canonically" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  inspect(@symprint.to_string(lambda_expr(x, x)), content="Lambda(_x, _x)")
+  inspect(
+    @symprint.to_string(lambda_expr(Expr::Tuple([x]), x)),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    @symprint.to_string(
+      apply(lambda_expr(x, x), [y]).unwrap_or(int(0)),
+    ),
+    content="y",
+  )
+  inspect(
+    @symprint.to_string(
+      apply(lambda_expr(Expr::Tuple([x, y]), add([x, y])), [int(1), int(2)])
+        .unwrap_or(int(0)),
+    ),
+    content="3",
+  )
+  inspect(
+    @symprint.to_string(
+      apply(
+        lambda_expr(Expr::Tuple([Expr::Tuple([x, y]), z]), add([x, y, z])),
+        [Expr::Tuple([int(1), int(2)]), int(3)],
+      ).unwrap_or(int(0)),
+    ),
+    content="6",
+  )
+}
+
+///|
 test "numeric singleton predicates stay aligned with structured core atoms" {
   assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::Pi)))
   assert_true(

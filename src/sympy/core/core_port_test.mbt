@@ -945,6 +945,48 @@ test "symcore parity subst beta-reduces callable heads to lambda" {
 }
 
 ///|
+test "symcore parity lambda identity and application stay canonical" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
+  inspect(
+    core_expr_sstr(@symcore.lambda_expr(x, x)),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    core_expr_sstr(@symcore.lambda_expr(@symcore.Expr::Tuple([x]), x)),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(@symcore.lambda_expr(x, x), [y]).unwrap_or(@symcore.int(0)),
+    ),
+    content="y",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+        [@symcore.int(1), @symcore.int(2)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="3",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.lambda_expr(
+          @symcore.Expr::Tuple([@symcore.Expr::Tuple([x, y]), z]),
+          @symcore.add([x, y, z]),
+        ),
+        [@symcore.Expr::Tuple([@symcore.int(1), @symcore.int(2)]), @symcore.int(3)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="6",
+  )
+}
+
+///|
 test "symcore parity tuple binders rename safely under substitution" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")

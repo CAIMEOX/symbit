@@ -26,6 +26,8 @@ pub fn applied_undefined_function(String, Array[Expr]) -> Expr
 
 pub fn apply(Expr, Array[Expr]) -> Expr?
 
+pub fn apply_lambda_expr(Expr, Expr, Array[Expr]) -> Expr?
+
 pub fn[T] arbitrary_array_use_gen(Int, @quickcheck.Gen[T]) -> @quickcheck.Gen[Array[T]]
 
 pub fn arbitrary_polys() -> @quickcheck.Gen[Expr]
@@ -57,6 +59,8 @@ pub fn dummy_display_name(String) -> String
 pub fn dummy_parts(Expr) -> (String, Int)?
 
 pub fn evalf(Expr, prec? : Int) -> Expr
+
+pub fn expr_display(Expr) -> String
 
 pub fn expr_form(Expr) -> ExprForm
 
@@ -108,9 +112,13 @@ pub fn is_true(Expr) -> Bool
 
 pub fn is_zero(Expr) -> Bool
 
+pub fn lambda_arity(Expr) -> Int?
+
 pub fn lambda_expr(Expr, Expr) -> Expr
 
 pub fn lambda_parts(Expr) -> (Expr, Expr)?
+
+pub fn lambda_signature_error(Expr) -> String?
 
 pub fn map_children(Expr, (Expr) -> Expr) -> Expr
 
@@ -157,6 +165,10 @@ pub fn relational_parts(Expr) -> (RelOp, Expr, Expr)?
 pub fn replace(Expr, (Expr) -> Bool, (Expr) -> Expr) -> Expr
 
 pub fn sort_exprs_in_place(Array[Expr]) -> Unit
+
+pub fn sorted_dict_entries(Array[(Expr, Expr)]) -> Array[(Expr, Expr)]
+
+pub fn standalone_function_head_display_name(String) -> String
 
 pub fn subs_expr(Expr, Expr, Expr) -> Expr
 
