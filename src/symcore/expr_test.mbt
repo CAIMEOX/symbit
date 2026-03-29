@@ -437,6 +437,14 @@ test "legacy function storage normalizes to canonical core semantics" {
     }
     _ => fail("expected invalid legacy Lambda to canonicalize as Apply")
   }
+  inspect(
+    @symprint.to_string(normalize_legacy_expr(Expr::Lambda(x, x))),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    @symprint.to_string(normalize_legacy_expr(Expr::Derivative(x, [x]))),
+    content="Derivative(x, x)",
+  )
 }
 
 ///|

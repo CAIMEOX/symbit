@@ -220,6 +220,16 @@ test "symcore parity application constructors canonicalize legacy children" {
     ),
     content="f(Derivative(x, x))",
   )
+  inspect(
+    core_expr_sstr(@symcore.normalize_legacy_expr(@symcore.Expr::Lambda(x, x))),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.normalize_legacy_expr(@symcore.Expr::Derivative(x, [x])),
+    ),
+    content="Derivative(x, x)",
+  )
 }
 
 ///|

@@ -379,9 +379,9 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         normalize_legacy_expr(rhs),
       )
     Expr::Derivative(inner, deriv_args) =>
-      Expr::Derivative(
+      raw_derivative(
         normalize_legacy_expr(inner),
-        deriv_args.map(normalize_legacy_expr),
+        deriv_args.map(normalize_legacy_expr)[:],
       )
     Expr::Subs(inner, variable, value) =>
       Expr::Subs(
@@ -390,7 +390,7 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         normalize_legacy_expr(value),
       )
     Expr::Lambda(vars, body) =>
-      Expr::Lambda(normalize_legacy_expr(vars), normalize_legacy_expr(body))
+      lambda_expr(normalize_legacy_expr(vars), normalize_legacy_expr(body))
     Expr::Apply(head, args) => {
       let head = normalize_legacy_expr(head)
       let args = args.map(normalize_legacy_expr)
