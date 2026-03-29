@@ -164,6 +164,17 @@ pub fn core_atoms_sstr(expr : @symcore.Expr) -> String raise {
 }
 
 ///|
+pub fn core_has_bool(
+  expr : @symcore.Expr,
+  needle : @symcore.Expr,
+) -> Bool raise {
+  let globals = @py.PyDict::new()
+  globals.set("expr", @sympy.expr_to_sympy(expr))
+  globals.set("needle", @sympy.expr_to_sympy(needle))
+  py_str_obj(core_eval_with_globals("expr.has(needle)", globals)) == "True"
+}
+
+///|
 pub fn core_xreplace_sstr(
   expr : @symcore.Expr,
   old_expr : @symcore.Expr,

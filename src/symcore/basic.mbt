@@ -921,7 +921,7 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       let pair_count = deriv_args.length() / 2
       for i in 0..<pair_count {
         let wrt = deriv_args[i * 2]
-        remove_bound_symbol(out, wrt)
+        free_symbol_map(wrt, out)
         let order_idx = i * 2 + 1
         if order_idx < deriv_args.length() {
           free_symbol_map(deriv_args[order_idx], out)
@@ -963,6 +963,20 @@ pub fn free_symbols(expr : Expr) -> Array[Expr] {
 pub fn has(expr : Expr, needle : Expr) -> Bool {
   if expr == needle {
     return true
+  }
+  match application_parts(expr) {
+    Some((head, app_args)) => {
+      if has(head, needle) {
+        return true
+      }
+      for child in app_args {
+        if has(child, needle) {
+          return true
+        }
+      }
+      return false
+    }
+    None => ()
   }
   for child in args(expr) {
     if has(child, needle) {

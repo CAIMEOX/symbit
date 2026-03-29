@@ -334,13 +334,40 @@ test "symcore parity sympify typed inputs" {
 test "symcore parity free_symbols and atoms helpers" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
-  let expr = @symcore.add([
-    @symcore.function("f", [x]),
-    @symcore.mul([@symcore.int(2), x]),
+  let expr = @symcore.Expr::Tuple([
+    @symcore.add([
+      @symcore.function("f", [x]),
+      @symcore.mul([@symcore.int(2), x]),
+    ]),
     @symcore.Expr::Tuple([y, @symcore.int(1)]),
   ])
   inspect(core_free_symbols_sstr(expr), content="('x', 'y')")
   inspect(core_atoms_sstr(expr), content="('1', '2', 'x', 'y')")
+}
+
+///|
+test "symcore parity has sees callable heads in applications" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(
+    @symcore.has(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("sin"),
+    ),
+    content=core_has_bool(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("sin"),
+    ).to_string(),
+  )
+  inspect(
+    @symcore.has(
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.Expr::UndefinedFunction("f"),
+    ),
+    content=core_has_bool(
+      @symcore.applied_undefined_function("f", [x]),
+      @symcore.Expr::UndefinedFunction("f"),
+    ).to_string(),
+  )
 }
 
 ///|
@@ -627,6 +654,22 @@ test "symcore parity free_symbols for wild undefined applications and dict" {
   inspect(
     core_free_symbols_sstr(@symcore.Expr::Dict([(x, y), (@symcore.int(1), z)])),
     content="('x', 'y', 'z')",
+  )
+}
+
+///|
+test "symcore parity derivative free_symbols are not bound" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    core_free_symbols_sstr(
+      @symcore.derivative(
+        @symcore.add([@symcore.function("sin", [x]), y]),
+        x,
+        order=y,
+      ),
+    ),
+    content="('x', 'y')",
   )
 }
 

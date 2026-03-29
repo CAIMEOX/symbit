@@ -54,9 +54,18 @@ test "free_symbols respects bound variables" {
   let lam = lambda_expr(Expr::Tuple([x, y]), add([x, z]))
   let deriv = derivative(function("f", [x, y]), x, order=y)
   json_inspect(free_symbols(lam).map(@symprint.to_string), content=["z"])
-  json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["y"])
+  json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["x", "y"])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
+}
+
+///|
+test "has sees callable heads in canonical applications" {
+  let x = Expr::Symbol("x")
+  assert_true(has(function("sin", [x]), Expr::FunctionHead("sin")))
+  assert_true(
+    has(applied_undefined_function("f", [x]), Expr::UndefinedFunction("f")),
+  )
 }
 
 ///|
@@ -155,14 +164,14 @@ test "free_symbols tracks dummy identity and bound dummy removal" {
 }
 
 ///|
-test "derivative free symbols remove dummy variables but keep order symbols" {
+test "derivative free symbols keep wrt symbols and order symbols" {
   let d = dummy(name="x")
   let order = Expr::Symbol("n")
   let expr = derivative(function("f", [d, order]), d, order~)
   let free = free_symbols(expr)
-  inspect(free.length(), content="1")
+  inspect(free.length(), content="2")
   assert_true(free.contains(order))
-  assert_false(free.contains(d))
+  assert_true(free.contains(d))
 }
 
 ///|
