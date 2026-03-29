@@ -2,6 +2,10 @@
 test "add flattens and folds constants" {
   let expr = add([int(1), Expr::Symbol("x"), add([int(2), Expr::Symbol("y")])])
   inspect(@symprint.debug_repr(expr), content="(+ sym:x sym:y 3)")
+  inspect(
+    @symprint.to_string(add([Expr::Symbol("x"), Expr::Symbol("x")])),
+    content="2*x",
+  )
 }
 
 ///|
@@ -40,7 +44,7 @@ test "basic helpers expose structured heads" {
   inspect(@symprint.debug_repr(tup), content="(call Tuple sym:x 2)")
   inspect(
     @symprint.debug_repr(deriv),
-    content="(call Derivative (call f sym:x) sym:x 2)",
+    content="(call Derivative (call f sym:x) (call Tuple sym:x 2))",
   )
   inspect(is_true(Expr::Boolean(true)), content="true")
   inspect(is_false(Expr::Boolean(false)), content="true")
@@ -197,11 +201,11 @@ test "func and args expose canonical heads for containers and binders" {
   let y = Expr::Symbol("y")
   inspect(
     @symprint.to_string(func(Expr::Tuple([x, y])).unwrap_or(int(0))),
-    content="Tuple",
+    content="<class 'sympy.core.containers.Tuple'>",
   )
   inspect(
     @symprint.to_string(func(Expr::Dict([(x, y)])).unwrap_or(int(0))),
-    content="Dict",
+    content="<class 'sympy.core.containers.Dict'>",
   )
   inspect(
     @symprint.to_string(
@@ -213,7 +217,7 @@ test "func and args expose canonical heads for containers and binders" {
     @symprint.to_string(
       func(subs_expr(add([x, y]), x, int(1))).unwrap_or(int(0)),
     ),
-    content="Subs",
+    content="<class 'sympy.core.function.Subs'>",
   )
   let dict_args = args(Expr::Dict([(x, y), (int(1), x)])).map(
     @symprint.to_string,
@@ -332,7 +336,7 @@ test "formal application helpers roundtrip named and undefined heads" {
   assert_false(apply(int(1), [x]) is Some(_))
   inspect(
     @symprint.to_string(func(Expr::Tuple([x])).unwrap_or(int(0))),
-    content="Tuple",
+    content="<class 'sympy.core.containers.Tuple'>",
   )
 }
 
@@ -363,7 +367,7 @@ test "legacy function storage normalizes to canonical core semantics" {
   ])
   inspect(
     @symprint.to_string(xreplace(legacy_derivative, [(x, int(2))])),
-    content="Derivative(f(2), 2, 1)",
+    content="Derivative(f(2), 2)",
   )
   let nested_legacy = Expr::Add([
     Expr::Function("sin", [Expr::Function("Tuple", [x, int(1)])]),
@@ -413,6 +417,24 @@ test "application constructors canonicalize legacy children eagerly" {
       inspect(@symprint.to_string(one), content="1")
     _ => fail("expected undefined application child normalization")
   }
+}
+
+///|
+test "function constructors follow SymPy core semantics" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  inspect(@symprint.to_string(function("Eq", [x, x])), content="True")
+  inspect(@symprint.to_string(function("Ne", [x, x])), content="False")
+  inspect(@symprint.to_string(function("Lt", [int(1), int(2)])), content="True")
+  inspect(@symprint.to_string(function("Ge", [int(1), int(2)])), content="False")
+  inspect(
+    @symprint.to_string(function("Derivative", [function("sin", [x]), x, int(2)])),
+    content="Derivative(sin(x), (x, 2))",
+  )
+  inspect(
+    @symprint.to_string(function("Derivative", [function("sin", [x]), x, y])),
+    content="Derivative(sin(x), x, y)",
+  )
 }
 
 ///|
@@ -507,12 +529,12 @@ test "preorder and postorder traversal stay structural" {
   let x = Expr::Symbol("x")
   let expr = add([derivative(function("f", [x]), x), mod_expr(x, int(2))])
   json_inspect(preorder(expr).map(@symprint.to_string), content=[
-    "Derivative(f(x), x, 1) + Mod(x, 2)", "Derivative(f(x), x, 1)", "f(x)", "x",
-    "(x, 1)", "x", "1", "Mod(x, 2)", "x", "2",
+    "Derivative(f(x), x) + Mod(x, 2)", "Derivative(f(x), x)", "f(x)", "x", "(x, 1)",
+    "x", "1", "Mod(x, 2)", "x", "2",
   ])
   json_inspect(postorder(expr).map(@symprint.to_string), content=[
-    "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x, 1)", "x", "2", "Mod(x, 2)",
-    "Derivative(f(x), x, 1) + Mod(x, 2)",
+    "x", "f(x)", "x", "1", "(x, 1)", "Derivative(f(x), x)", "x", "2", "Mod(x, 2)",
+    "Derivative(f(x), x) + Mod(x, 2)",
   ])
 }
 
@@ -553,7 +575,7 @@ test "xreplace performs exact structural replacement" {
         (y, Expr::Symbol("z")),
       ]),
     ),
-    content="Derivative(z + sin(x), x, 1)",
+    content="Derivative(z + sin(x), x)",
   )
   inspect(
     @symprint.to_string(
@@ -561,7 +583,7 @@ test "xreplace performs exact structural replacement" {
         (x, Expr::Symbol("z")),
       ]),
     ),
-    content="Derivative(y + sin(z), z, 1)",
+    content="Derivative(y + sin(z), z)",
   )
 }
 
@@ -668,7 +690,7 @@ test "subst respects lambda bound variables" {
   let capture_env : Map[String, Expr] = { "x": y }
   inspect(
     @symprint.to_string(subst(expr, capture_env)),
-    content="Lambda(y, y + y)",
+    content="Lambda(y, 2*y)",
   )
   let tuple_expr = lambda_expr(Expr::Tuple([x, y]), add([x, y]))
   inspect(
@@ -728,22 +750,22 @@ test "subst respects derivative binding and capture rules" {
   let rename_env : Map[String, Expr] = { "x": z }
   inspect(
     @symprint.to_string(subst(simple, rename_env)),
-    content="Derivative(f(z), z, 1)",
+    content="Derivative(f(z), z)",
   )
   let invalid_env : Map[String, Expr] = { "x": int(2) }
   inspect(
     @symprint.to_string(subst(with_free, invalid_env)),
-    content="Subs(Derivative(y + f(x), x, 1), x, 2)",
+    content="Subs(Derivative(y + f(x), x), x, 2)",
   )
   let safe_inner_env : Map[String, Expr] = { "y": int(3) }
   inspect(
     @symprint.to_string(subst(with_free, safe_inner_env)),
-    content="Derivative(f(x) + 3, x, 1)",
+    content="Derivative(f(x) + 3, x)",
   )
   let capture_env : Map[String, Expr] = { "y": x }
   inspect(
     @symprint.to_string(subst(with_free, capture_env)),
-    content="Subs(Derivative(y + f(x), x, 1), y, x)",
+    content="Subs(Derivative(y + f(x), x), y, x)",
   )
   let mixed = Expr::Derivative(add([function("sin", [x]), y]), [
     x,
@@ -753,11 +775,11 @@ test "subst respects derivative binding and capture rules" {
   ])
   inspect(
     @symprint.to_string(subst(mixed, { "y": z })),
-    content="Derivative(z + sin(x), x, 1, z, 1)",
+    content="Derivative(z + sin(x), x, z)",
   )
   inspect(
     @symprint.to_string(subst(mixed, { "x": z })),
-    content="Derivative(y + sin(z), z, 1, y, 1)",
+    content="Derivative(y + sin(z), z, y)",
   )
 }
 

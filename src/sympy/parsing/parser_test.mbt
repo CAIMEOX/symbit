@@ -456,3 +456,77 @@ test "ast parser compatibility entrypoint" {
     _ => fail("expected ast parser lambda to lower to first-class Lambda node")
   }
 }
+
+///|
+test "symparse explicit core constructor calls stay canonical" {
+  inspect(
+    @symprint.to_string(parse_expr("Eq")),
+    content="<class 'sympy.core.relational.Equality'>",
+  )
+  inspect(@symprint.to_string(parse_expr("Tuple(x, 1)")), content="(x, 1)")
+  inspect(@symprint.to_string(parse_expr("Eq(x, y)")), content="Eq(x, y)")
+  inspect(@symprint.to_string(parse_expr("Eq(x, x)")), content="True")
+  inspect(@symprint.to_string(parse_expr("Ne(x, x)")), content="False")
+  inspect(@symprint.to_string(parse_expr("Lt(1 + 1, 3)")), content="True")
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
+    content="Derivative(sin(x), x)",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, 2)")),
+    content="Derivative(sin(x), (x, 2))",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
+    content="Subs(x + y, x, z)",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(x, x + 1)")),
+    content="Lambda(x, x + 1)",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x, y), x + y)")),
+    content="Lambda((x, y), x + y)",
+  )
+  inspect(@symprint.to_string(parse_expr("Mod(x, 2)")), content="Mod(x, 2)")
+  inspect(
+    @symprint.to_string(parse_expr("Dict((x, y), (1, z))")),
+    content="{1: z, x: y}",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Eq(x + x, 2*x)", parse_options(evaluate=false)),
+    ),
+    content="True",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Ne(x, x)", parse_options(evaluate=false)),
+    ),
+    content="False",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lt(1 + 1, 3)", parse_options(evaluate=false)),
+    ),
+    content="True",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),
+    ),
+    content="(x + 1, y)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Derivative(sin(x), x, 2)", parse_options(evaluate=false)),
+    ),
+    content="Derivative(sin(x), (x, 2))",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lambda(x, x + 1)", parse_options(evaluate=false)),
+    ),
+    content="Lambda(x, x + 1)",
+  )
+}

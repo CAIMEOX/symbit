@@ -585,3 +585,104 @@ test "symparse parity relation truthiness string forms" {
     content=parse_expr_sstr("x < y < z", evaluate=false),
   )
 }
+
+///|
+test "symparse parity explicit core constructor calls stay canonical" {
+  inspect(@symprint.to_string(parse_expr("Eq")), content=parse_expr_sstr("Eq"))
+  inspect(
+    @symprint.to_string(parse_expr("Tuple(x, 1)")),
+    content=parse_expr_sstr("Tuple(x, 1)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Eq(x, y)")),
+    content=parse_expr_sstr("Eq(x, y)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Eq(x, x)")),
+    content=parse_expr_sstr("Eq(x, x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Ne(x, x)")),
+    content=parse_expr_sstr("Ne(x, x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lt(1 + 1, 3)")),
+    content=parse_expr_sstr("Lt(1 + 1, 3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
+    content=parse_expr_sstr("Derivative(sin(x), x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, 2)")),
+    content=parse_expr_sstr("Derivative(sin(x), x, 2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
+    content=parse_expr_sstr("Subs(x + y, x, z)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(x, x + 1)")),
+    content=parse_expr_sstr("Lambda(x, x + 1)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x, y), x + y)")),
+    content=parse_expr_sstr("Lambda((x, y), x + y)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Mod(x, 2)")),
+    content=parse_expr_sstr("Mod(x, 2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Dict((x, y), (1, z))")),
+    content=parse_expr_sstr("Dict((x, y), (1, z))"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Eq(x, y)")),
+    content=ast_parse_expr_sstr("Eq(x, y)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(sin(x), x)")),
+    content=ast_parse_expr_sstr("Derivative(sin(x), x)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Lambda(x, x + 1)")),
+    content=ast_parse_expr_sstr("Lambda(x, x + 1)"),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Eq(x + x, 2*x)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Eq(x + x, 2*x)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Ne(x, x)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Ne(x, x)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lt(1 + 1, 3)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Lt(1 + 1, 3)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Tuple(x + 1, y)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Derivative(sin(x), x, 2)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Derivative(sin(x), x, 2)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lambda(x, x + 1)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Lambda(x, x + 1)", evaluate=false),
+  )
+}

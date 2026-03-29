@@ -8,23 +8,7 @@ pub fn children(expr : Expr) -> ArrayView[Expr] {
     | Expr::Apply(_, args) => args[:]
     Expr::Mod(lhs, rhs) => [lhs, rhs][:]
     Expr::Dict(items) => {
-      let sorted = items.copy()
-      sorted.sort_by((lhs, rhs) => {
-        let (lhs_key, lhs_value) = lhs
-        let (rhs_key, rhs_value) = rhs
-        let key_cmp = if is_number_atom(lhs_key) && !is_number_atom(rhs_key) {
-          -1
-        } else if !is_number_atom(lhs_key) && is_number_atom(rhs_key) {
-          1
-        } else {
-          compare_expr(lhs_key, rhs_key)
-        }
-        if key_cmp != 0 {
-          key_cmp
-        } else {
-          compare_expr(lhs_value, rhs_value)
-        }
-      })
+      let sorted = sorted_dict_entries(items)
       let out : Array[Expr] = []
       for item in sorted {
         let (key, value) = item

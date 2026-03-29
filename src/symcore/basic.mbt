@@ -99,6 +99,24 @@ pub fn number_symbol_kind_from_name(name : String) -> NumberSymbolKind? {
 }
 
 ///|
+pub fn standalone_function_head_display_name(name : String) -> String {
+  match name {
+    "Eq" => "<class 'sympy.core.relational.Equality'>"
+    "Ne" => "<class 'sympy.core.relational.Unequality'>"
+    "Lt" => "<class 'sympy.core.relational.StrictLessThan'>"
+    "Le" => "<class 'sympy.core.relational.LessThan'>"
+    "Gt" => "<class 'sympy.core.relational.StrictGreaterThan'>"
+    "Ge" => "<class 'sympy.core.relational.GreaterThan'>"
+    "Tuple" => "<class 'sympy.core.containers.Tuple'>"
+    "Dict" => "<class 'sympy.core.containers.Dict'>"
+    "Derivative" => "<class 'sympy.core.function.Derivative'>"
+    "Lambda" => "<class 'sympy.core.function.Lambda'>"
+    "Subs" => "<class 'sympy.core.function.Subs'>"
+    _ => name
+  }
+}
+
+///|
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
   Expr::Derivative(expr, [wrt, order])
 }
@@ -167,21 +185,30 @@ pub fn lambda_expr(vars : Expr, body : Expr) -> Expr {
 }
 
 ///|
-fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
-  let args = args.map(normalize_legacy_expr)
-  match (name, args) {
-    ("Dict", items) => {
-      let entries : Array[(Expr, Expr)] = []
-      for item in items {
-        match tuple_items(item) {
-          Some([key, value]) => entries.push((key, value))
-          _ => return Expr::Apply(Expr::FunctionHead("Dict"), items)
-        }
-      }
-      Expr::Dict(entries)
+pub fn sorted_dict_entries(items : Array[(Expr, Expr)]) -> Array[(Expr, Expr)] {
+  let sorted = items.copy()
+  sorted.sort_by((lhs, rhs) => {
+    let (lhs_key, lhs_value) = lhs
+    let (rhs_key, rhs_value) = rhs
+    let key_cmp = if is_number_atom(lhs_key) && !is_number_atom(rhs_key) {
+      -1
+    } else if !is_number_atom(lhs_key) && is_number_atom(rhs_key) {
+      1
+    } else {
+      compare_expr(lhs_key, rhs_key)
     }
-    _ => function(name, args)
-  }
+    if key_cmp != 0 {
+      key_cmp
+    } else {
+      compare_expr(lhs_value, rhs_value)
+    }
+  })
+  sorted
+}
+
+///|
+fn normalize_legacy_function(name : String, args : Array[Expr]) -> Expr {
+  function(name, args.map(normalize_legacy_expr))
 }
 
 ///|
@@ -766,23 +793,7 @@ pub fn args(expr : Expr) -> Array[Expr] {
     | ExprForm::Tuple(items)
     | ExprForm::Apply(_, items) => items.copy()
     ExprForm::Dict(items) => {
-      let sorted = items.copy()
-      sorted.sort_by((lhs, rhs) => {
-        let (lhs_key, lhs_value) = lhs
-        let (rhs_key, rhs_value) = rhs
-        let key_cmp = if is_number_atom(lhs_key) && !is_number_atom(rhs_key) {
-          -1
-        } else if !is_number_atom(lhs_key) && is_number_atom(rhs_key) {
-          1
-        } else {
-          compare_expr(lhs_key, rhs_key)
-        }
-        if key_cmp != 0 {
-          key_cmp
-        } else {
-          compare_expr(lhs_value, rhs_value)
-        }
-      })
+      let sorted = sorted_dict_entries(items)
       let out : Array[Expr] = []
       for item in sorted {
         let (key, value) = item

@@ -160,6 +160,34 @@ test "symcore parity application constructors canonicalize legacy children" {
 }
 
 ///|
+test "symcore parity function constructors follow SymPy core semantics" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(core_expr_sstr(@symcore.function("Eq", [x, x])), content="True")
+  inspect(core_expr_sstr(@symcore.function("Ne", [x, x])), content="False")
+  inspect(
+    core_expr_sstr(@symcore.function("Lt", [@symcore.int(1), @symcore.int(2)])),
+    content="True",
+  )
+  inspect(
+    core_expr_sstr(@symcore.function("Ge", [@symcore.int(1), @symcore.int(2)])),
+    content="False",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Derivative", [@symcore.function("sin", [x]), x, @symcore.int(2)]),
+    ),
+    content="Derivative(sin(x), (x, 2))",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Derivative", [@symcore.function("sin", [x]), x, y]),
+    ),
+    content="Derivative(sin(x), x, y)",
+  )
+}
+
+///|
 test "symcore parity args for derivative and lambda follow SymPy shapes" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
@@ -256,6 +284,12 @@ test "symcore parity dict and tuple containers" {
     ),
     content="{1: z, x: y}",
   )
+}
+
+///|
+test "symcore parity add combines repeated identical terms" {
+  let x = @symcore.Expr::Symbol("x")
+  inspect(core_expr_sstr(@symcore.add([x, x])), content="2*x")
 }
 
 ///|

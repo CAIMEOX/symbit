@@ -26,71 +26,74 @@ fn make_pow(base : Expr, exp : Expr, options : ParseOptions) -> Expr {
 }
 
 ///|
+fn canonicalize_constructor_expr(expr : Expr) -> Expr {
+  match expr {
+    Expr::Add(args) => @symcore.add(args.map(canonicalize_constructor_expr))
+    Expr::Mul(args) => @symcore.mul(args.map(canonicalize_constructor_expr))
+    Expr::Pow(base, exp) =>
+      @symcore.pow(
+        canonicalize_constructor_expr(base),
+        canonicalize_constructor_expr(exp),
+      )
+    Expr::Mod(lhs, rhs) =>
+      @symcore.mod_expr(
+        canonicalize_constructor_expr(lhs),
+        canonicalize_constructor_expr(rhs),
+      )
+    Expr::Tuple(args) => Expr::Tuple(args.map(canonicalize_constructor_expr))
+    Expr::Dict(items) => {
+      let out : Array[(Expr, Expr)] = []
+      for item in items {
+        let (key, value) = item
+        out.push(
+          (
+            canonicalize_constructor_expr(key),
+            canonicalize_constructor_expr(value),
+          ),
+        )
+      }
+      Expr::Dict(out)
+    }
+    Expr::Relational(op, lhs, rhs) =>
+      Expr::Relational(
+        op,
+        canonicalize_constructor_expr(lhs),
+        canonicalize_constructor_expr(rhs),
+      )
+    Expr::Derivative(inner, deriv_args) =>
+      @symcore.raw_derivative(
+        canonicalize_constructor_expr(inner),
+        deriv_args.map(canonicalize_constructor_expr),
+      )
+    Expr::Subs(inner, variable, value) =>
+      @symcore.subs_expr(
+        canonicalize_constructor_expr(inner),
+        canonicalize_constructor_expr(variable),
+        canonicalize_constructor_expr(value),
+      )
+    Expr::Lambda(vars, body) =>
+      @symcore.lambda_expr(
+        canonicalize_constructor_expr(vars),
+        canonicalize_constructor_expr(body),
+      )
+    Expr::Apply(head, args) => {
+      let head = canonicalize_constructor_expr(head)
+      let args = args.map(canonicalize_constructor_expr)
+      @symcore.apply(head, args).unwrap_or(Expr::Apply(head, args))
+    }
+    Expr::Function(_, _) => @symcore.normalize_legacy_expr(expr)
+    _ => expr
+  }
+}
+
+///|
 fn make_function(
   name : String,
   args : Array[Expr],
-  options : ParseOptions,
+  _options : ParseOptions,
 ) -> Expr {
-  match (name, args) {
-    ("Tuple", _) =>
-      if options.evaluate {
-        @symcore.Expr::Tuple(args)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Eq", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Eq, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Ne", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Ne, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Lt", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Lt, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Le", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Le, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Gt", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Gt, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    ("Ge", [lhs, rhs]) =>
-      if options.evaluate {
-        @symcore.Expr::Relational(@symcore.RelOp::Ge, lhs, rhs)
-      } else {
-        @symcore.raw_function(name, args)
-      }
-    _ =>
-      if options.evaluate {
-        @symcore.apply(@symcore.Expr::FunctionHead(name), args).unwrap_or(
-          @symcore.Expr::Apply(
-            @symcore.Expr::FunctionHead(name),
-            args.map(child => child),
-          ),
-        )
-      } else {
-        @symcore.raw_apply(@symcore.Expr::FunctionHead(name), args).unwrap_or(
-          @symcore.Expr::Apply(
-            @symcore.Expr::FunctionHead(name),
-            args.map(child => child),
-          ),
-        )
-      }
-  }
+  let canonical_args = args.map(canonicalize_constructor_expr)
+  @symcore.function(name, canonical_args)
 }
 
 ///|
@@ -231,6 +234,8 @@ fn make_application(
     }
   }
   match callee {
+    @symcore.Expr::FunctionHead(name) if is_builtin_core_head_name(name) =>
+      return make_function(name, args, options)
     @symcore.Expr::FunctionHead(name) if is_builtin_callable_name(name) =>
       return apply_builtin(name)
     _ => ()
@@ -299,7 +304,7 @@ fn lower_symbol_name(
         @symcore.Expr::Boolean(true)
       } else if name == "False" {
         @symcore.Expr::Boolean(false)
-      } else if is_builtin_callable_name(name) {
+      } else if is_builtin_head_name(name) {
         @symcore.Expr::FunctionHead(name)
       } else if option_has_auto_symbol(options) {
         Expr::Symbol(name)
@@ -346,7 +351,7 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
             bound
           }
         None =>
-          if is_builtin_callable_name(name) {
+          if is_builtin_head_name(name) {
             @symcore.Expr::FunctionHead(name)
           } else {
             @symcore.Expr::UndefinedFunction(name)
@@ -466,19 +471,21 @@ fn lower_compare_pair(
   let eval_options = options_with_evaluate(options, true)
   let lhs_eval = lower_ast_in(lhs_ast, eval_options, context)
   let rhs_eval = lower_ast_in(rhs_ast, eval_options, context)
-  if op is CompareOp::EqEq {
-    if options.evaluate {
-      return @symcore.Expr::Boolean(lhs_eval == rhs_eval)
-    } else {
-      return make_function("Eq", [lhs, rhs], options)
+  if !options.evaluate {
+    return match op {
+      CompareOp::Lt => @symcore.raw_function("Lt", [lhs, rhs])
+      CompareOp::Le => @symcore.raw_function("Le", [lhs, rhs])
+      CompareOp::Gt => @symcore.raw_function("Gt", [lhs, rhs])
+      CompareOp::Ge => @symcore.raw_function("Ge", [lhs, rhs])
+      CompareOp::Eq | CompareOp::EqEq => @symcore.raw_function("Eq", [lhs, rhs])
+      CompareOp::Ne => @symcore.raw_function("Ne", [lhs, rhs])
     }
   }
+  if op is CompareOp::EqEq {
+    return @symcore.Expr::Boolean(lhs_eval == rhs_eval)
+  }
   if op is CompareOp::Ne {
-    if options.evaluate {
-      return @symcore.Expr::Boolean(lhs_eval != rhs_eval)
-    } else {
-      return make_function("Ne", [lhs, rhs], options)
-    }
+    return @symcore.Expr::Boolean(lhs_eval != rhs_eval)
   }
   if op is CompareOp::Eq {
     if lhs_eval == rhs_eval {

@@ -11,6 +11,22 @@ fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
 }
 
 ///|
+fn derivative_call_args(inner : Expr, deriv_args : Array[Expr]) -> Array[Expr] {
+  let out : Array[Expr] = [inner]
+  let pair_count = deriv_args.length() / 2
+  for i in 0..<pair_count {
+    let wrt = deriv_args[i * 2]
+    let order = deriv_args[i * 2 + 1]
+    match order {
+      @symcore.Expr::Number(n) if n == @symnum.BigRational::one() =>
+        out.push(wrt)
+      _ => out.push(@symcore.Expr::Tuple([wrt, order]))
+    }
+  }
+  out
+}
+
+///|
 pub fn debug_repr(expr : Expr) -> String {
   match ordinary_application_name_args(expr) {
     Some((name, args)) => return wrap_call(name, args)
@@ -55,13 +71,8 @@ pub fn debug_repr(expr : Expr) -> String {
       }
       wrap_call(name, [lhs, rhs])
     }
-    @symcore.ExprForm::Derivative(inner, deriv_args) => {
-      let call_args : Array[Expr] = [inner]
-      for arg in deriv_args {
-        call_args.push(arg)
-      }
-      wrap_call("Derivative", call_args)
-    }
+    @symcore.ExprForm::Derivative(inner, deriv_args) =>
+      wrap_call("Derivative", derivative_call_args(inner, deriv_args))
     @symcore.ExprForm::Subs(inner, variable, value) =>
       wrap_call("Subs", [inner, variable, value])
     @symcore.ExprForm::Lambda(vars, body) => wrap_call("Lambda", [vars, body])
@@ -134,7 +145,8 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     @symcore.ExprForm::Symbol(name) => name
     @symcore.ExprForm::Dummy(name, _) => @symcore.dummy_display_name(name)
     @symcore.ExprForm::Wild(name) => @symcore.wild_display_name(name)
-    @symcore.ExprForm::FunctionHead(name) => name
+    @symcore.ExprForm::FunctionHead(name) =>
+      @symcore.standalone_function_head_display_name(name)
     @symcore.ExprForm::UndefinedFunction(name) => name
     @symcore.ExprForm::Boolean(true) => "True"
     @symcore.ExprForm::Boolean(false) => "False"
@@ -174,7 +186,7 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
     }
     @symcore.ExprForm::Dict(items) => {
       let rendered : Array[String] = []
-      for item in items {
+      for item in @symcore.sorted_dict_entries(items) {
         let (key, value) = item
         rendered.push("\{format_expr(key, 0)}: \{format_expr(value, 0)}")
       }
@@ -197,11 +209,9 @@ fn format_expr(expr : Expr, parent_prec : Int) -> String {
           "\{format_expr(lhs, prec)} >= \{format_expr(rhs, prec)}"
       }
     @symcore.ExprForm::Derivative(inner, deriv_args) => {
-      let call_args : Array[Expr] = [inner]
-      for arg in deriv_args {
-        call_args.push(arg)
-      }
-      let rendered = call_args.map(child => format_expr(child, 0)).join(", ")
+      let rendered = derivative_call_args(inner, deriv_args)
+        .map(child => format_expr(child, 0))
+        .join(", ")
       "Derivative(\{rendered})"
     }
     @symcore.ExprForm::Subs(inner, variable, value) =>

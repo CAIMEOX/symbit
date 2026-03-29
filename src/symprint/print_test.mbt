@@ -105,7 +105,7 @@ test "pretty printers render dict containers" {
     debug_repr(expr),
     content="(call Dict (call Tuple sym:x sym:y) (call Tuple 1 sym:z))",
   )
-  inspect(to_string(expr), content="{x: y, 1: z}")
+  inspect(to_string(expr), content="{1: z, x: y}")
 }
 
 ///|

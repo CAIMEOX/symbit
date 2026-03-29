@@ -222,6 +222,30 @@ fn is_builtin_callable_name(name : String) -> Bool {
 }
 
 ///|
+fn is_builtin_core_head_name(name : String) -> Bool {
+  match name {
+    "Tuple"
+    | "Dict"
+    | "Eq"
+    | "Ne"
+    | "Lt"
+    | "Le"
+    | "Gt"
+    | "Ge"
+    | "Lambda"
+    | "Derivative"
+    | "Subs"
+    | "Mod" => true
+    _ => false
+  }
+}
+
+///|
+pub fn is_builtin_head_name(name : String) -> Bool {
+  is_builtin_callable_name(name) || is_builtin_core_head_name(name)
+}
+
+///|
 fn context_has_callable_name(context : ParseContext, name : String) -> Bool {
   for callable_name in context.callable_names {
     if callable_name == name {
@@ -264,7 +288,7 @@ fn name_is_bound_or_reserved(
   context_has_callable_name(context, name) ||
   context_has_global_binding(context, name) ||
   context_has_global_callable_name(context, name) ||
-  is_builtin_callable_name(name) ||
+  is_builtin_head_name(name) ||
   (
     option_has_auto_symbol(options) &&
     (name == "True" || name == "False" || name == "None")
@@ -285,7 +309,7 @@ fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
       } else if context_has_global_callable_name(context, name) {
         true
       } else {
-        is_builtin_callable_name(name)
+        is_builtin_head_name(name)
       }
     }
     _ => false

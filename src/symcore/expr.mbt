@@ -36,7 +36,7 @@ impl Show for Expr with to_string(self) {
     Expr::Symbol(s) => s
     Expr::Dummy(name, _) => dummy_display_name(name)
     Expr::Wild(name) => wild_display_name(name)
-    Expr::FunctionHead(name) => name
+    Expr::FunctionHead(name) => standalone_function_head_display_name(name)
     Expr::UndefinedFunction(name) => name
     Expr::Apply(head, args) =>
       head.to_string() +
@@ -55,7 +55,7 @@ impl Show for Expr with to_string(self) {
       "Tuple(" + args.map(child => child.to_string()).join(", ") + ")"
     Expr::Dict(items) => {
       let rendered : Array[String] = []
-      for item in items {
+      for item in sorted_dict_entries(items) {
         let (key, value) = item
         rendered.push(key.to_string() + ": " + value.to_string())
       }
@@ -75,8 +75,15 @@ impl Show for Expr with to_string(self) {
     Expr::Derivative(inner, deriv_args) => {
       let deriv_args = canonical_derivative_args(deriv_args)
       let args : Array[String] = [inner.to_string()]
-      for arg in deriv_args {
-        args.push(arg.to_string())
+      let pair_count = deriv_args.length() / 2
+      for i in 0..<pair_count {
+        let wrt = deriv_args[i * 2]
+        let order = deriv_args[i * 2 + 1]
+        match order {
+          Expr::Number(n) if n == @symnum.BigRational::one() =>
+            args.push(wrt.to_string())
+          _ => args.push(Expr::Tuple([wrt, order]).to_string())
+        }
       }
       "Derivative(" + args.join(", ") + ")"
     }
@@ -431,6 +438,26 @@ pub fn add(args : Array[Expr]) -> Expr {
     }
   }
   sort_exprs_in_place(flat)
+  let merged : Array[Expr] = []
+  let mut idx = 0
+  while idx < flat.length() {
+    let term = flat[idx]
+    let mut count = 1
+    while idx + count < flat.length() &&
+          compare_expr(flat[idx + count], term) == 0 {
+      count += 1
+    }
+    if count == 1 {
+      merged.push(term)
+    } else {
+      merged.push(mul([int(count), term]))
+    }
+    idx += count
+  }
+  flat.clear()
+  for term in merged {
+    flat.push(term)
+  }
   match complex_sum {
     Some(value) =>
       if !(@symnum.is_zero(value.to_mpc().real) &&
@@ -779,21 +806,60 @@ pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
 }
 
 ///|
+fn constructor_relational(op : RelOp, lhs : Expr, rhs : Expr) -> Expr {
+  match op {
+    RelOp::Eq => if lhs == rhs { Expr::Boolean(true) } else { Expr::Relational(op, lhs, rhs) }
+    RelOp::Ne => if lhs == rhs { Expr::Boolean(false) } else { Expr::Relational(op, lhs, rhs) }
+    RelOp::Lt =>
+      match (lhs, rhs) {
+        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
+          Expr::Boolean(lhs_num.compare(rhs_num) < 0)
+        _ => Expr::Relational(op, lhs, rhs)
+      }
+    RelOp::Le =>
+      match (lhs, rhs) {
+        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
+          Expr::Boolean(lhs_num.compare(rhs_num) <= 0)
+        _ => Expr::Relational(op, lhs, rhs)
+      }
+    RelOp::Gt =>
+      match (lhs, rhs) {
+        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
+          Expr::Boolean(lhs_num.compare(rhs_num) > 0)
+        _ => Expr::Relational(op, lhs, rhs)
+      }
+    RelOp::Ge =>
+      match (lhs, rhs) {
+        (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
+          Expr::Boolean(lhs_num.compare(rhs_num) >= 0)
+        _ => Expr::Relational(op, lhs, rhs)
+      }
+  }
+}
+
+///|
+fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
+  if args.length() < 2 {
+    return Expr::Apply(Expr::FunctionHead(name), args)
+  }
+  raw_derivative(args[0], args[1:])
+}
+
+///|
 pub fn function(name : String, args : Array[Expr]) -> Expr {
   let args = args.map(normalize_legacy_expr)
   match (name, args) {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args)
-    ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
-    ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
-    ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)
-    ("Le", [lhs, rhs]) => Expr::Relational(RelOp::Le, lhs, rhs)
-    ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
-    ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
+    ("Eq", [lhs, rhs]) => constructor_relational(RelOp::Eq, lhs, rhs)
+    ("Ne", [lhs, rhs]) => constructor_relational(RelOp::Ne, lhs, rhs)
+    ("Lt", [lhs, rhs]) => constructor_relational(RelOp::Lt, lhs, rhs)
+    ("Le", [lhs, rhs]) => constructor_relational(RelOp::Le, lhs, rhs)
+    ("Gt", [lhs, rhs]) => constructor_relational(RelOp::Gt, lhs, rhs)
+    ("Ge", [lhs, rhs]) => constructor_relational(RelOp::Ge, lhs, rhs)
     ("Mod", [lhs, rhs]) => mod_expr(lhs, rhs)
-    ("Derivative", [expr, wrt]) => derivative(expr, wrt)
-    ("Derivative", [expr, wrt, order]) => derivative(expr, wrt, order~)
+    ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
     ("Dict", items) => {
@@ -850,8 +916,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Gt", [lhs, rhs]) => Expr::Relational(RelOp::Gt, lhs, rhs)
     ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
     ("Mod", [lhs, rhs]) => Expr::Mod(lhs, rhs)
-    ("Derivative", [expr, wrt]) => Expr::Derivative(expr, [wrt, int(1)])
-    ("Derivative", [expr, wrt, order]) => Expr::Derivative(expr, [wrt, order])
+    ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
     ("Lambda", [vars, body]) => Expr::Lambda(vars, body)
     ("Dict", items) => {

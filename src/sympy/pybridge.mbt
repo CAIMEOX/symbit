@@ -106,7 +106,11 @@ fn expr_to_sympy_cached(
         OracleArg::PyObj(expr_to_sympy_cached(body, dummy_cache, wild_cache)),
       ])
     @symcore.Expr::Function(_, _) =>
-      fail("legacy-function-should-be-normalized")
+      expr_to_sympy_cached(
+        @symcore.normalize_legacy_expr(expr),
+        dummy_cache,
+        wild_cache,
+      )
   }
 }
 
