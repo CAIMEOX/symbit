@@ -336,6 +336,31 @@ test "symparse callable context and structured bindings" {
     ),
     content="h*x",
   )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={
+          "f": @symcore.lambda_expr(
+            @symcore.Expr::Symbol("x"),
+            @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
+          ),
+        }),
+      ),
+    ),
+    content="x + 1",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "f": @symcore.Expr::IdentityFunction }),
+      ),
+    ),
+    content="x",
+  )
 }
 
 ///|
@@ -401,7 +426,10 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     content="binomial(x, y)",
   )
   inspect(
-    parse_expr_equiv(@symprint.to_string(parse_expr("Integer(2)")), "Integer(2)"),
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Integer(2)")),
+      "Integer(2)",
+    ),
     content="0",
   )
   inspect(
@@ -444,7 +472,10 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     content="0",
   )
   inspect(
-    parse_expr_equiv(@symprint.to_string(parse_expr("Float(2.5)")), "Float(2.5)"),
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2.5)")),
+      "Float(2.5)",
+    ),
     content="0",
   )
   inspect(
@@ -495,17 +526,20 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
   }
   guard (try? parse_expr("Integer()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+    detail ==
+    "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected Integer constructor arity error")
   }
   guard (try? parse_expr("Rational()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
+    detail ==
+    "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
     fail("expected Rational constructor arity error")
   }
   guard (try? parse_expr("Float()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
+    detail ==
+    "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
     fail("expected Float constructor arity error")
   }
   guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
@@ -519,7 +553,10 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
 test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
   inspect(@symprint.to_string(ast_parse_expr("pi")), content="pi")
-  inspect(@symprint.to_string(ast_parse_expr("GoldenRatio")), content="GoldenRatio")
+  inspect(
+    @symprint.to_string(ast_parse_expr("GoldenRatio")),
+    content="GoldenRatio",
+  )
   inspect(@symprint.to_string(ast_parse_expr("NaN")), content="NaN")
   inspect(
     @symprint.to_string(
@@ -564,6 +601,10 @@ test "ast parser compatibility entrypoint" {
   inspect(
     @symprint.to_string(ast_parse_expr("Derivative(x)")),
     content="Derivative(x, x)",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
+    content="sin(x)",
   )
   inspect(
     parse_expr_equiv(
@@ -614,7 +655,8 @@ test "ast parser compatibility entrypoint" {
   }
   guard (try? ast_parse_expr("Integer()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+    detail ==
+    "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
     fail("expected ast parser Integer constructor arity error")
   }
   inspect(
@@ -665,12 +707,28 @@ test "ast parser compatibility entrypoint" {
     "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
     fail("expected ast parser Eq() constructor arity error")
   }
+  let ast_derivative_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
+    "Derivative(sin(x), (1, 2))",
+  )
+  guard ast_derivative_error
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: \nCan't calculate derivative wrt 1." else {
+    fail("expected ast parser invalid derivative variable error")
+  }
   let ast_dict_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
     "Dict(x)",
   )
   guard ast_dict_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: object of type 'Symbol' has no len()" else {
     fail("expected ast parser Dict(x) constructor type error")
+  }
+  let ast_subs_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
+    "Subs(x + y, (x, y), z)",
+  )
+  guard ast_subs_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "ValueError: Number of point values must be the same as the number of variables." else {
+    fail("expected ast parser Subs variable/value arity error")
   }
   inspect(
     parse_expr_equiv(
@@ -686,7 +744,10 @@ test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(ast_parse_expr("Max()")), content="-oo")
   inspect(@symprint.to_string(ast_parse_expr("Min(x)")), content="x")
-  inspect(@symprint.to_string(ast_parse_expr("lambda x: x")), content="Lambda(_x, _x)")
+  inspect(
+    @symprint.to_string(ast_parse_expr("lambda x: x")),
+    content="Lambda(_x, _x)",
+  )
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
       inspect(@symprint.to_string(body), content="x + 1")
@@ -718,8 +779,7 @@ test "symparse local bindings shadow builtin heads like SymPy" {
     ),
     content="f(x)",
   )
-  guard (try?
-    parse_expr_in(
+  guard (try? parse_expr_in(
       "Integral(x)",
       default_parse_options(),
       parse_context(bindings={ "Integral": @symcore.Expr::Symbol("g") }),
@@ -730,10 +790,9 @@ test "symparse local bindings shadow builtin heads like SymPy" {
   }
   inspect(
     @symprint.to_string(
-      ast_parse_expr(
-        "DiracDelta(x)",
-        local_bindings={ "DiracDelta": @symcore.Expr::UndefinedFunction("f") },
-      ),
+      ast_parse_expr("DiracDelta(x)", local_bindings={
+        "DiracDelta": @symcore.Expr::UndefinedFunction("f"),
+      }),
     ),
     content="f(x)",
   )
@@ -750,7 +809,10 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("Eq(x, x)")), content="True")
   inspect(@symprint.to_string(parse_expr("Ne(x, x)")), content="False")
   inspect(@symprint.to_string(parse_expr("Lt(1 + 1, 3)")), content="True")
-  inspect(@symprint.to_string(parse_expr("Derivative(x)")), content="Derivative(x, x)")
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(x)")),
+    content="Derivative(x, x)",
+  )
   inspect(@symprint.to_string(parse_expr("Derivative(2)")), content="0")
   inspect(
     @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
@@ -759,6 +821,18 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(
     @symprint.to_string(parse_expr("Derivative(sin(x), x, 2)")),
     content="Derivative(sin(x), (x, 2))",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), (x, 0))")),
+    content="sin(x)",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, 0)")),
+    content="sin(x)",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, y, 2)")),
+    content="Derivative(sin(x), x, (y, 2))",
   )
   inspect(
     @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
@@ -772,12 +846,18 @@ test "symparse explicit core constructor calls stay canonical" {
     @symprint.to_string(parse_expr("Lambda((x, y), x + y)")),
     content="Lambda((x, y), x + y)",
   )
-  inspect(@symprint.to_string(parse_expr("Lambda(x, x)")), content="Lambda(_x, _x)")
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(x, x)")),
+    content="Lambda(_x, _x)",
+  )
   inspect(
     @symprint.to_string(parse_expr("Lambda((x,), x)")),
     content="Lambda(_x, _x)",
   )
-  inspect(@symprint.to_string(parse_expr("lambda x: x")), content="Lambda(_x, _x)")
+  inspect(
+    @symprint.to_string(parse_expr("lambda x: x")),
+    content="Lambda(_x, _x)",
+  )
   inspect(@symprint.to_string(parse_expr("Lambda(x, x)(y)")), content="y")
   inspect(
     @symprint.to_string(parse_expr("Lambda((x, y), x + y)(1, 2)")),
@@ -839,6 +919,12 @@ test "symparse explicit core constructor calls stay canonical" {
     "TypeError: Subs.__new__() missing 2 required positional arguments: 'variables' and 'point'" else {
     fail("expected Subs(x) constructor arity error")
   }
+  guard (try? parse_expr("Subs(x + y, (x, y), z)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "ValueError: Number of point values must be the same as the number of variables." else {
+    fail("expected Subs variable/value arity error")
+  }
   guard (try? parse_expr("Dict(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: object of type 'Symbol' has no len()" else {
@@ -849,6 +935,16 @@ test "symparse explicit core constructor calls stay canonical" {
     detail ==
     "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})" else {
     fail("expected Dict((x, y, z)) constructor shape error")
+  }
+  guard (try? parse_expr("Derivative(sin(x), (1, 2))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: \nCan't calculate derivative wrt 1." else {
+    fail("expected invalid derivative variable error")
+  }
+  guard (try? parse_expr("Derivative(sin(x), (x, -1))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "ValueError: order of differentiation must be nonnegative" else {
+    fail("expected negative derivative order error")
   }
   guard (try? parse_expr("Lambda()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
@@ -863,7 +959,8 @@ test "symparse explicit core constructor calls stay canonical" {
   }
   guard (try? parse_expr("Lambda((x, 1), x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "BadSignatureError: Lambda signature should be only tuples and symbols, not 1" else {
+    detail ==
+    "BadSignatureError: Lambda signature should be only tuples and symbols, not 1" else {
     fail("expected invalid lambda signature error")
   }
   guard (try? parse_expr("lambda x, x: x"))
@@ -873,7 +970,8 @@ test "symparse explicit core constructor calls stay canonical" {
   }
   guard (try? parse_expr("Lambda(x, x)()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
-    detail == "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (0 given)" else {
+    detail ==
+    "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (0 given)" else {
     fail("expected lambda call arity error")
   }
   inspect(

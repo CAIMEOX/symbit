@@ -150,7 +150,9 @@ fn numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
       let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
       match exact {
         Ok((num, den)) => {
-          let rational : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(num, den)
+          let rational : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(
+            num, den,
+          )
           match rational {
             Ok(value) => Some(value)
             Err(_) => None
@@ -192,15 +194,20 @@ fn constructor_rational(args : Array[Expr]) -> Expr {
         None => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
     [lhs, rhs] =>
-      match (numeric_expr_to_exact_rational(lhs), numeric_expr_to_exact_rational(rhs)) {
-        (Some(lhs_value), Some(rhs_value)) =>
-          {
-            let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(rhs_value)
-            match exact {
-              Ok(value) => Expr::Number(value)
-              Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
-            }
+      match
+        (
+          numeric_expr_to_exact_rational(lhs),
+          numeric_expr_to_exact_rational(rhs),
+        ) {
+        (Some(lhs_value), Some(rhs_value)) => {
+          let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(
+            rhs_value,
+          )
+          match exact {
+            Ok(value) => Expr::Number(value)
+            Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
           }
+        }
         _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
       }
     _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
@@ -214,7 +221,10 @@ fn constructor_float(args : Array[Expr]) -> Expr {
     [arg] =>
       match numeric_expr_to_exact_rational(arg) {
         Some(value) => {
-          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(value, prec=53)
+          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
+            value,
+            prec=53,
+          )
           match approx {
             Ok(value) => Expr::Float(value)
             Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
@@ -222,11 +232,15 @@ fn constructor_float(args : Array[Expr]) -> Expr {
         }
         None => Expr::Apply(Expr::FunctionHead("Float"), args)
       }
-    [arg, Expr::Number(prec)] if prec.is_integral() && prec.numerator().compare(0N) > 0 =>
+    [arg, Expr::Number(prec)] if prec.is_integral() &&
+      prec.numerator().compare(0N) > 0 =>
       match numeric_expr_to_exact_rational(arg) {
         Some(value) => {
           let bits = @symnum.dps_to_prec(prec.numerator().to_int())
-          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(value, prec=bits)
+          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(
+            value,
+            prec=bits,
+          )
           match approx {
             Ok(value) => Expr::Float(value)
             Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
@@ -918,8 +932,18 @@ pub fn mod_expr(lhs : Expr, rhs : Expr) -> Expr {
 ///|
 fn constructor_relational(op : RelOp, lhs : Expr, rhs : Expr) -> Expr {
   match op {
-    RelOp::Eq => if lhs == rhs { Expr::Boolean(true) } else { Expr::Relational(op, lhs, rhs) }
-    RelOp::Ne => if lhs == rhs { Expr::Boolean(false) } else { Expr::Relational(op, lhs, rhs) }
+    RelOp::Eq =>
+      if lhs == rhs {
+        Expr::Boolean(true)
+      } else {
+        Expr::Relational(op, lhs, rhs)
+      }
+    RelOp::Ne =>
+      if lhs == rhs {
+        Expr::Boolean(false)
+      } else {
+        Expr::Relational(op, lhs, rhs)
+      }
     RelOp::Lt =>
       match (lhs, rhs) {
         (Expr::Number(lhs_num), Expr::Number(rhs_num)) =>
@@ -952,7 +976,7 @@ fn constructor_derivative(name : String, args : Array[Expr]) -> Expr {
   if args.length() < 2 {
     return Expr::Apply(Expr::FunctionHead(name), args)
   }
-  raw_derivative(args[0], args[1:])
+  derivative_constructor_expr(args[0], args[1:])
 }
 
 ///|
@@ -1033,7 +1057,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Ge", [lhs, rhs]) => Expr::Relational(RelOp::Ge, lhs, rhs)
     ("Mod", [lhs, rhs]) => Expr::Mod(lhs, rhs)
     ("Derivative", _) => constructor_derivative(name, args)
-    ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
+    ("Subs", [expr, variable, value]) => subs_expr(expr, variable, value)
     ("Lambda", [vars, body]) => lambda_expr(vars, body)
     ("Dict", items) => {
       let entries : Array[(Expr, Expr)] = []

@@ -74,11 +74,7 @@ fn parse_error_detail(src : String) -> String {
 ///|
 fn parse_error_oracle(src : String) -> String raise {
   parse_expr_error_sstr_with(
-    src,
-    "sympy.parsing.sympy_parser.standard_transformations",
-    "{}",
-    "{}",
-    true,
+    src, "sympy.parsing.sympy_parser.standard_transformations", "{}", "{}", true,
   )
 }
 
@@ -318,12 +314,9 @@ test "symparse parity callable context" {
         parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
       ),
     ),
-    content=parse_expr_sstr_in_relaxed(
-      "pi x",
-      [],
-      binding_names=["pi"],
-      binding_exprs=["sympy.Function('f')"],
-    ),
+    content=parse_expr_sstr_in_relaxed("pi x", [], binding_names=["pi"], binding_exprs=[
+      "sympy.Function('f')",
+    ]),
   )
   inspect(
     @symprint.to_string(
@@ -333,18 +326,41 @@ test "symparse parity callable context" {
         parse_context(bindings={ "f": @symcore.Expr::FunctionHead("cos") }),
       ),
     ),
-    content=parse_expr_sstr_in_relaxed(
-      "f x",
-      [],
-      binding_names=["f"],
-      binding_exprs=["sympy.cos"],
-    ),
+    content=parse_expr_sstr_in_relaxed("f x", [], binding_names=["f"], binding_exprs=[
+      "sympy.cos",
+    ]),
   )
-  assert_sympy_parse_matches_in_relaxed(
-    "g x",
-    [],
-    binding_names=["g"],
-    binding_exprs=["h"],
+  assert_sympy_parse_matches_in_relaxed("g x", [], binding_names=["g"], binding_exprs=[
+    "h",
+  ])
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={
+          "f": @symcore.lambda_expr(
+            @symcore.Expr::Symbol("x"),
+            @symcore.add([@symcore.Expr::Symbol("x"), @symcore.int(1)]),
+          ),
+        }),
+      ),
+    ),
+    content=parse_expr_sstr_in_relaxed("f x", [], binding_names=["f"], binding_exprs=[
+      "sympy.Lambda(sympy.Symbol('x'), sympy.Symbol('x') + 1)",
+    ]),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "f": @symcore.Expr::IdentityFunction }),
+      ),
+    ),
+    content=parse_expr_sstr_in_relaxed("f x", [], binding_names=["f"], binding_exprs=[
+      "sympy.S.IdentityFunction",
+    ]),
   )
 }
 
@@ -411,6 +427,10 @@ test "symparse parity split symbols custom and ast parser" {
     content=ast_parse_expr_sstr("Derivative(x)"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
+    content=ast_parse_expr_sstr("Derivative(sin(x), (x, 0))"),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("sin")),
     content=ast_parse_expr_sstr("sin"),
   )
@@ -472,6 +492,14 @@ test "symparse parity split symbols custom and ast parser" {
     ast_parse_error_detail("Dict(x)", {}),
     content=ast_parse_expr_error_sstr("Dict(x)"),
   )
+  inspect(
+    ast_parse_error_detail("Subs(x + y, (x, y), z)", {}),
+    content=ast_parse_expr_error_sstr("Subs(x + y, (x, y), z)"),
+  )
+  inspect(
+    ast_parse_error_detail("Derivative(sin(x), (1, 2))", {}),
+    content=ast_parse_expr_error_sstr("Derivative(sin(x), (1, 2))"),
+  )
 }
 
 ///|
@@ -510,27 +538,23 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
         parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
       ),
     ),
-    content=parse_expr_sstr_in(
-      "pi(x)",
-      [],
-      binding_names=["pi"],
-      binding_exprs=["sympy.Function('f')"],
-    ),
+    content=parse_expr_sstr_in("pi(x)", [], binding_names=["pi"], binding_exprs=[
+      "sympy.Function('f')",
+    ]),
   )
   inspect(
     @symprint.to_string(
       parse_expr_in(
         "Integral(x)",
         default_parse_options(),
-        parse_context(bindings={ "Integral": @symcore.Expr::UndefinedFunction("f") }),
+        parse_context(bindings={
+          "Integral": @symcore.Expr::UndefinedFunction("f"),
+        }),
       ),
     ),
-    content=parse_expr_sstr_in(
-      "Integral(x)",
-      [],
-      binding_names=["Integral"],
-      binding_exprs=["sympy.Function('f')"],
-    ),
+    content=parse_expr_sstr_in("Integral(x)", [], binding_names=["Integral"], binding_exprs=[
+      "sympy.Function('f')",
+    ]),
   )
   inspect(
     try
@@ -554,16 +578,13 @@ test "symparse parity builtin bindings shadow builtin heads like SymPy" {
   )
   inspect(
     @symprint.to_string(
-      ast_parse_expr(
-        "DiracDelta(x)",
-        local_bindings={ "DiracDelta": @symcore.Expr::UndefinedFunction("f") },
-      ),
+      ast_parse_expr("DiracDelta(x)", local_bindings={
+        "DiracDelta": @symcore.Expr::UndefinedFunction("f"),
+      }),
     ),
-    content=ast_parse_expr_sstr(
-      "DiracDelta(x)",
-      binding_names=["DiracDelta"],
-      binding_exprs=["sympy.Function('f')"],
-    ),
+    content=ast_parse_expr_sstr("DiracDelta(x)", binding_names=["DiracDelta"], binding_exprs=[
+      "sympy.Function('f')",
+    ]),
   )
 }
 
@@ -596,7 +617,10 @@ test "symparse parity builtin callable semantics" {
   )
   inspect(@symprint.to_string(parse_expr("oo")), content=parse_expr_sstr("oo"))
   inspect(@symprint.to_string(parse_expr("Pi")), content=parse_expr_sstr("Pi"))
-  inspect(@symprint.to_string(parse_expr("NaN")), content=parse_expr_sstr("NaN"))
+  inspect(
+    @symprint.to_string(parse_expr("NaN")),
+    content=parse_expr_sstr("NaN"),
+  )
   inspect(
     parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
     content="0",
@@ -709,7 +733,9 @@ test "symparse parity builtin callable semantics" {
         parse_context(bindings={ "pi": @symcore.Expr::Symbol("x") }),
       ),
     ),
-    content=parse_expr_sstr_in("pi", [], binding_names=["pi"], binding_exprs=["x"]),
+    content=parse_expr_sstr_in("pi", [], binding_names=["pi"], binding_exprs=[
+      "x",
+    ]),
   )
   inspect(
     try parse_expr("sin(x, y)") catch {
@@ -797,12 +823,18 @@ test "symparse parity builtin callable semantics" {
     @symprint.to_string(ast_parse_expr("Symbol")),
     content=ast_parse_expr_sstr("Symbol"),
   )
-  inspect(@symprint.to_string(ast_parse_expr("pi")), content=ast_parse_expr_sstr("pi"))
+  inspect(
+    @symprint.to_string(ast_parse_expr("pi")),
+    content=ast_parse_expr_sstr("pi"),
+  )
   inspect(
     @symprint.to_string(ast_parse_expr("GoldenRatio")),
     content=ast_parse_expr_sstr("GoldenRatio"),
   )
-  inspect(@symprint.to_string(ast_parse_expr("NaN")), content=ast_parse_expr_sstr("NaN"))
+  inspect(
+    @symprint.to_string(ast_parse_expr("NaN")),
+    content=ast_parse_expr_sstr("NaN"),
+  )
   inspect(
     @symprint.to_string(
       ast_parse_expr("pi", local_bindings={ "pi": @symcore.Expr::Symbol("x") }),
@@ -961,6 +993,18 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=parse_expr_sstr("Derivative(sin(x), x, 2)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), (x, 0))")),
+    content=parse_expr_sstr("Derivative(sin(x), (x, 0))"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, 0)")),
+    content=parse_expr_sstr("Derivative(sin(x), x, 0)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(sin(x), x, y, 2)")),
+    content=parse_expr_sstr("Derivative(sin(x), x, y, 2)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Subs(x + y, x, z)")),
     content=parse_expr_sstr("Subs(x + y, x, z)"),
   )
@@ -1015,6 +1059,10 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(
     @symprint.to_string(ast_parse_expr("Derivative(x)")),
     content=ast_parse_expr_sstr("Derivative(x)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(sin(x), (x, 0))")),
+    content=ast_parse_expr_sstr("Derivative(sin(x), (x, 0))"),
   )
   inspect(
     @symprint.to_string(ast_parse_expr("Lambda(x, x + 1)")),
@@ -1076,12 +1124,27 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(parse_error_detail("Eq(x)"), content=parse_error_oracle("Eq(x)"))
   inspect(parse_error_detail("Mod(x)"), content=parse_error_oracle("Mod(x)"))
   inspect(parse_error_detail("Subs(x)"), content=parse_error_oracle("Subs(x)"))
+  inspect(
+    parse_error_detail("Subs(x + y, (x, y), z)"),
+    content=parse_error_oracle("Subs(x + y, (x, y), z)"),
+  )
+  inspect(
+    parse_error_detail("Derivative(sin(x), (1, 2))"),
+    content=parse_error_oracle("Derivative(sin(x), (1, 2))"),
+  )
+  inspect(
+    parse_error_detail("Derivative(sin(x), (x, -1))"),
+    content=parse_error_oracle("Derivative(sin(x), (x, -1))"),
+  )
   inspect(parse_error_detail("Dict(x)"), content=parse_error_oracle("Dict(x)"))
   inspect(
     parse_error_detail("Dict((x, y, z))"),
     content=parse_error_oracle("Dict((x, y, z))"),
   )
-  inspect(parse_error_detail("Lambda()"), content=parse_error_oracle("Lambda()"))
+  inspect(
+    parse_error_detail("Lambda()"),
+    content=parse_error_oracle("Lambda()"),
+  )
   inspect(
     parse_error_detail("Lambda((x, x), x)"),
     content=parse_error_oracle("Lambda((x, x), x)"),

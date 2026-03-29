@@ -157,7 +157,10 @@ fn make_function(
       }
     }
   }
-  let relation_constructor_error = fn(name : String, given : Int) -> Expr raise ParseError {
+  let relation_constructor_error = fn(
+    name : String,
+    given : Int,
+  ) -> Expr raise ParseError {
     let class_name = match name {
       "Eq" => "Equality"
       "Ne" => "Unequality"
@@ -172,8 +175,12 @@ fn make_function(
     }
   }
   match (name, canonical_args) {
-    ("Eq", [_, _]) | ("Ne", [_, _]) | ("Lt", [_, _]) | ("Le", [_, _])
-    | ("Gt", [_, _]) | ("Ge", [_, _]) => @symcore.function(name, canonical_args)
+    ("Eq", [_, _])
+    | ("Ne", [_, _])
+    | ("Lt", [_, _])
+    | ("Le", [_, _])
+    | ("Gt", [_, _])
+    | ("Ge", [_, _]) => @symcore.function(name, canonical_args)
     ("Eq", _) | ("Ne", _) | ("Lt", _) | ("Le", _) | ("Gt", _) | ("Ge", _) =>
       relation_constructor_error(name, canonical_args.length())
     ("Dict", items) => {
@@ -197,12 +204,24 @@ fn make_function(
       if args.length() < 2 {
         missing_constructor_error(
           "Lambda",
-          if args.length() == 0 { ["signature", "expr"] } else { ["expr"] },
+          if args.length() == 0 {
+            ["signature", "expr"]
+          } else {
+            ["expr"]
+          },
         )
       } else {
         too_many_constructor_error("Lambda", 2, args.length())
       }
-    ("Subs", [_, _, _]) => @symcore.function(name, canonical_args)
+    ("Subs", [_, variable, value]) =>
+      match @symcore.subs_signature_error(variable, value) {
+        Some(err) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "ValueError: " + err,
+          )
+        None => @symcore.function(name, canonical_args)
+      }
     ("Subs", args) =>
       if args.length() < 3 {
         missing_constructor_error(
@@ -230,7 +249,19 @@ fn make_function(
           )
       }
     }
-    ("Derivative", _) => @symcore.function(name, canonical_args)
+    ("Derivative", args) =>
+      match @symcore.derivative_signature_error(args[1:]) {
+        Some(err) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            if err.has_prefix("Can't calculate derivative wrt ") {
+              "ValueError: \n" + err
+            } else {
+              "ValueError: " + err
+            },
+          )
+        None => @symcore.function(name, canonical_args)
+      }
     _ => @symcore.function(name, canonical_args)
   }
 }
@@ -517,7 +548,7 @@ fn lower_symbol_name(
 ) -> Expr raise ParseError {
   match lookup_effective_binding(context, name) {
     Some(bound) => bound
-    None => {
+    None =>
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
         @symcore.Expr::UndefinedFunction(name)
@@ -541,7 +572,6 @@ fn lower_symbol_name(
             }
         }
       }
-    }
   }
 }
 
@@ -1043,10 +1073,11 @@ pub fn lower_ast_in(
       match @symcore.lambda_signature_error(vars_expr) {
         Some(err) =>
           raise ParseError::UnsupportedConstruct(
-            span=span,
+            span~,
             "BadSignatureError: " + err,
           )
-        None => @symcore.lambda_expr(vars_expr, lower_ast_in(body, options, context))
+        None =>
+          @symcore.lambda_expr(vars_expr, lower_ast_in(body, options, context))
       }
     }
   }

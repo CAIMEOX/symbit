@@ -112,7 +112,8 @@ pub fn standalone_function_head_display_name(name : String) -> String {
     "Dict" => "<class 'sympy.core.containers.Dict'>"
     "Derivative" => "<class 'sympy.core.function.Derivative'>"
     "Lambda" => "<class 'sympy.core.function.Lambda'>"
-    "IdentityFunction" => "<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>"
+    "IdentityFunction" =>
+      "<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>"
     "Subs" => "<class 'sympy.core.function.Subs'>"
     "Zero" => "<class 'sympy.core.numbers.Zero'>"
     "One" => "<class 'sympy.core.numbers.One'>"
@@ -143,6 +144,22 @@ pub fn standalone_function_head_display_name(name : String) -> String {
 ///|
 pub fn derivative(expr : Expr, wrt : Expr, order? : Expr = int(1)) -> Expr {
   Expr::Derivative(expr, [wrt, order])
+}
+
+///|
+fn derivative_order_is_zero(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Number(n) => n.is_integral() && n.is_zero()
+    _ => false
+  }
+}
+
+///|
+fn derivative_order_is_negative_integer(expr : Expr) -> Bool {
+  match normalize_legacy_expr(expr) {
+    Expr::Number(n) => n.is_integral() && n.numerator().compare(0N) < 0
+    _ => false
+  }
 }
 
 ///|
@@ -199,8 +216,108 @@ pub fn raw_derivative(expr : Expr, deriv_args : ArrayView[Expr]) -> Expr {
 }
 
 ///|
+fn derivative_constructor_pairs(
+  deriv_args : ArrayView[Expr],
+) -> Array[(Expr, Expr)] {
+  let out : Array[(Expr, Expr)] = []
+  let mut i = 0
+  while i < deriv_args.length() {
+    let current = normalize_legacy_expr(deriv_args[i])
+    match current {
+      Expr::Tuple([wrt, order]) => {
+        out.push((wrt, order))
+        i += 1
+      }
+      _ =>
+        if i + 1 < deriv_args.length() &&
+          is_explicit_derivative_order(normalize_legacy_expr(deriv_args[i + 1])) {
+          out.push((current, normalize_legacy_expr(deriv_args[i + 1])))
+          i += 2
+        } else {
+          out.push((current, int(1)))
+          i += 1
+        }
+    }
+  }
+  out
+}
+
+///|
+pub fn derivative_signature_error(deriv_args : ArrayView[Expr]) -> String? {
+  for pair in derivative_constructor_pairs(deriv_args) {
+    let (wrt, order) = pair
+    if is_number_atom(wrt) || bool_value(wrt) is Some(_) {
+      return Some("Can't calculate derivative wrt " + expr_display(wrt) + ".")
+    }
+    if derivative_order_is_negative_integer(order) {
+      return Some("order of differentiation must be nonnegative")
+    }
+  }
+  None
+}
+
+///|
+pub fn derivative_constructor_expr(
+  expr : Expr,
+  deriv_args : ArrayView[Expr],
+) -> Expr {
+  let expr = normalize_legacy_expr(expr)
+  match derivative_signature_error(deriv_args) {
+    Some(_) => {
+      let legacy_args : Array[Expr] = [expr]
+      for arg in deriv_args {
+        legacy_args.push(normalize_legacy_expr(arg))
+      }
+      Expr::Apply(Expr::FunctionHead("Derivative"), legacy_args)
+    }
+    None => {
+      let out : Array[Expr] = []
+      for pair in derivative_constructor_pairs(deriv_args) {
+        let (wrt, order) = pair
+        if derivative_order_is_zero(order) {
+          ()
+        } else {
+          out.push(wrt)
+          out.push(order)
+        }
+      }
+      if out.is_empty() {
+        expr
+      } else {
+        Expr::Derivative(expr, out)
+      }
+    }
+  }
+}
+
+///|
+fn subs_items(expr : Expr) -> Array[Expr] {
+  match normalize_legacy_expr(expr) {
+    Expr::Tuple(items) => items
+    other => [other]
+  }
+}
+
+///|
+pub fn subs_signature_error(variable : Expr, value : Expr) -> String? {
+  let variables = subs_items(variable)
+  let values = subs_items(value)
+  if variables.length() != values.length() {
+    Some("Number of point values must be the same as the number of variables.")
+  } else {
+    None
+  }
+}
+
+///|
 pub fn subs_expr(expr : Expr, variable : Expr, value : Expr) -> Expr {
-  Expr::Subs(expr, variable, value)
+  let expr = normalize_legacy_expr(expr)
+  let variable = normalize_legacy_expr(variable)
+  let value = normalize_legacy_expr(value)
+  match subs_signature_error(variable, value) {
+    Some(_) => Expr::Apply(Expr::FunctionHead("Subs"), [expr, variable, value])
+    None => Expr::Subs(expr, variable, value)
+  }
 }
 
 ///|
@@ -258,10 +375,11 @@ pub fn lambda_signature_error(vars : Expr) -> String? {
         }
         None
       }
-      _ => Some(
-        "Lambda signature should be only tuples and symbols, not " +
-        normalized.to_string(),
-      )
+      _ =>
+        Some(
+          "Lambda signature should be only tuples and symbols, not " +
+          normalized.to_string(),
+        )
     }
   }
   let top_level = lambda_signature_items(vars)
@@ -384,7 +502,7 @@ pub fn normalize_legacy_expr(expr : Expr) -> Expr {
         deriv_args.map(normalize_legacy_expr)[:],
       )
     Expr::Subs(inner, variable, value) =>
-      Expr::Subs(
+      subs_expr(
         normalize_legacy_expr(inner),
         normalize_legacy_expr(variable),
         normalize_legacy_expr(value),
@@ -829,7 +947,8 @@ pub fn func(expr : Expr) -> Expr? {
         ExprForm::Symbol(_) => Some(Expr::FunctionHead("Symbol"))
         ExprForm::Dummy(_, _) => Some(Expr::FunctionHead("Dummy"))
         ExprForm::Wild(_) => Some(Expr::FunctionHead("Wild"))
-        ExprForm::IdentityFunction => Some(Expr::FunctionHead("IdentityFunction"))
+        ExprForm::IdentityFunction =>
+          Some(Expr::FunctionHead("IdentityFunction"))
         ExprForm::Boolean(value) =>
           Some(Expr::FunctionHead(boolean_func_name(value)))
         ExprForm::FunctionHead(_) | ExprForm::UndefinedFunction(_) => None

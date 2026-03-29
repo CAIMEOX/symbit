@@ -138,64 +138,58 @@ test "symcore parity formal application helpers" {
   }
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Integer"),
-        [@symcore.rational_from_ints(5, 2)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Integer"), [
+        @symcore.rational_from_ints(5, 2),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="2",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Integer"),
-        [@symcore.rational_from_ints(-2, 3)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Integer"), [
+        @symcore.rational_from_ints(-2, 3),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="0",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Rational"),
-        [@symcore.int(2), @symcore.int(3)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Rational"), [
+        @symcore.int(2),
+        @symcore.int(3),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="2/3",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Rational"),
-        [@symcore.Expr::Float(@symcore.Float::from_double(2.5))],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Rational"), [
+        @symcore.Expr::Float(@symcore.Float::from_double(2.5)),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="5/2",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Float"),
-        [@symcore.int(2)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Float"), [@symcore.int(2)]).unwrap_or(
+        @symcore.int(0),
+      ),
     ),
     content="2.00000000000000",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Float"),
-        [@symcore.rational_from_ints(2, 3)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Float"), [
+        @symcore.rational_from_ints(2, 3),
+      ]).unwrap_or(@symcore.int(0)),
     ),
     content="0.666666666666667",
   )
   inspect(
     core_expr_sstr(
-      @symcore.apply(
-        @symcore.Expr::FunctionHead("Tuple"),
-        [x, @symcore.int(1)],
-      ).unwrap_or(@symcore.int(0)),
+      @symcore.apply(@symcore.Expr::FunctionHead("Tuple"), [x, @symcore.int(1)]).unwrap_or(
+        @symcore.int(0),
+      ),
     ),
     content="(x, 1)",
   )
@@ -248,7 +242,11 @@ test "symcore parity function constructors follow SymPy core semantics" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.function("Derivative", [@symcore.function("sin", [x]), x, @symcore.int(2)]),
+      @symcore.function("Derivative", [
+        @symcore.function("sin", [x]),
+        x,
+        @symcore.int(2),
+      ]),
     ),
     content="Derivative(sin(x), (x, 2))",
   )
@@ -257,6 +255,26 @@ test "symcore parity function constructors follow SymPy core semantics" {
       @symcore.function("Derivative", [@symcore.function("sin", [x]), x, y]),
     ),
     content="Derivative(sin(x), x, y)",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Derivative", [
+        @symcore.function("sin", [x]),
+        @symcore.Expr::Tuple([x, @symcore.int(0)]),
+      ]),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.function("Derivative", [
+        @symcore.function("sin", [x]),
+        x,
+        y,
+        @symcore.int(2),
+      ]),
+    ),
+    content="Derivative(sin(x), x, (y, 2))",
   )
 }
 
@@ -334,13 +352,17 @@ test "symcore parity displayed func heads for atomic core nodes" {
   )
   inspect(
     core_expr_sstr(
-      @symcore.func(@symcore.rational_from_ints(1, 2)).unwrap_or(@symcore.int(0)),
+      @symcore.func(@symcore.rational_from_ints(1, 2)).unwrap_or(
+        @symcore.int(0),
+      ),
     ),
     content="<class 'sympy.core.numbers.Half'>",
   )
   inspect(
     core_expr_sstr(
-      @symcore.func(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)).unwrap_or(@symcore.int(0)),
+      @symcore.func(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)).unwrap_or(
+        @symcore.int(0),
+      ),
     ),
     content="<class 'sympy.core.numbers.Pi'>",
   )
@@ -358,6 +380,7 @@ test "symcore parity displayed func heads for atomic core nodes" {
   )
 }
 
+///|
 test "symcore parity func for atomic core nodes" {
   inspect(local_func_name(@symcore.int(2)), content="Integer")
   inspect(local_func_name(@symcore.rational_from_ints(1, 2)), content="Half")
@@ -1061,10 +1084,7 @@ test "symcore parity lambda identity and application stay canonical" {
   let y = @symcore.Expr::Symbol("y")
   let z = @symcore.Expr::Symbol("z")
   let id = @symcore.lambda_expr(x, x)
-  inspect(
-    core_expr_sstr(id),
-    content="Lambda(_x, _x)",
-  )
+  inspect(core_expr_sstr(id), content="Lambda(_x, _x)")
   inspect(
     core_expr_sstr(@symcore.lambda_expr(@symcore.Expr::Tuple([x]), x)),
     content="Lambda(_x, _x)",
@@ -1073,11 +1093,12 @@ test "symcore parity lambda identity and application stay canonical" {
   inspect(core_args_sstr(id), content="()")
   inspect(@symcore.has(id, x), content="false")
   inspect(core_xreplace_sstr(id, x, y), content="Lambda(_x, _x)")
-  inspect(core_expr_sstr(@symcore.subst(id, { "x": y })), content="Lambda(_x, _x)")
   inspect(
-    core_expr_sstr(
-      @symcore.apply(id, [y]).unwrap_or(@symcore.int(0)),
-    ),
+    core_expr_sstr(@symcore.subst(id, { "x": y })),
+    content="Lambda(_x, _x)",
+  )
+  inspect(
+    core_expr_sstr(@symcore.apply(id, [y]).unwrap_or(@symcore.int(0))),
     content="y",
   )
   inspect(
@@ -1096,7 +1117,10 @@ test "symcore parity lambda identity and application stay canonical" {
           @symcore.Expr::Tuple([@symcore.Expr::Tuple([x, y]), z]),
           @symcore.add([x, y, z]),
         ),
-        [@symcore.Expr::Tuple([@symcore.int(1), @symcore.int(2)]), @symcore.int(3)],
+        [
+          @symcore.Expr::Tuple([@symcore.int(1), @symcore.int(2)]),
+          @symcore.int(3),
+        ],
       ).unwrap_or(@symcore.int(0)),
     ),
     content="6",

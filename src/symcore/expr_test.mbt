@@ -57,10 +57,16 @@ test "free_symbols respects bound variables" {
   let z = Expr::Symbol("z")
   let lam = lambda_expr(Expr::Tuple([x, y]), add([x, z]))
   let deriv = derivative(function("f", [x, y]), x, order=y)
-  let subs_multi = subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, z]))
+  let subs_multi = subs_expr(
+    add([x, y]),
+    Expr::Tuple([x, y]),
+    Expr::Tuple([y, z]),
+  )
   json_inspect(free_symbols(lam).map(@symprint.to_string), content=["z"])
   json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["x", "y"])
-  json_inspect(free_symbols(subs_multi).map(@symprint.to_string), content=["y", "z"])
+  json_inspect(free_symbols(subs_multi).map(@symprint.to_string), content=[
+    "y", "z",
+  ])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
 }
@@ -345,7 +351,8 @@ test "formal application helpers roundtrip named and undefined heads" {
     Some(Expr::Number(n)) => inspect(n.to_string(), content="2/3")
     _ => fail("expected Rational constructor semantics through apply")
   }
-  match apply(Expr::FunctionHead("Rational"), [Expr::Float(Float::from_double(2.5))]) {
+  match
+    apply(Expr::FunctionHead("Rational"), [Expr::Float(Float::from_double(2.5))]) {
     Some(Expr::Number(n)) => inspect(n.to_string(), content="5/2")
     _ => fail("expected Rational(float) constructor semantics through apply")
   }
@@ -355,7 +362,10 @@ test "formal application helpers roundtrip named and undefined heads" {
   }
   match apply(Expr::FunctionHead("Float"), [int(2), int(20)]) {
     Some(Expr::Float(value)) =>
-      inspect(value.precision().to_string(), content=@symnum.dps_to_prec(20).to_string())
+      inspect(
+        value.precision().to_string(),
+        content=@symnum.dps_to_prec(20).to_string(),
+      )
     _ => fail("expected Float precision constructor semantics through apply")
   }
   match apply(Expr::FunctionHead("Tuple"), [x, int(1)]) {
@@ -427,11 +437,14 @@ test "legacy function storage normalizes to canonical core semantics" {
     Expr::Apply(Expr::FunctionHead("Dict"), [Expr::Symbol("x")]) => ()
     _ => fail("expected malformed Dict to canonicalize as Apply")
   }
-  match normalize_legacy_expr(Expr::Function("Lambda", [
-    Expr::Tuple([x, int(2)]),
-    add([x, int(1)]),
-  ])) {
-    Expr::Apply(Expr::FunctionHead("Lambda"), [Expr::Tuple([Expr::Symbol("x"), two]), body]) => {
+  match
+    normalize_legacy_expr(
+      Expr::Function("Lambda", [Expr::Tuple([x, int(2)]), add([x, int(1)])]),
+    ) {
+    Expr::Apply(
+      Expr::FunctionHead("Lambda"),
+      [Expr::Tuple([Expr::Symbol("x"), two]), body]
+    ) => {
       inspect(@symprint.to_string(two), content="2")
       inspect(@symprint.to_string(body), content="x + 1")
     }
@@ -476,15 +489,59 @@ test "function constructors follow SymPy core semantics" {
   inspect(@symprint.to_string(function("Eq", [x, x])), content="True")
   inspect(@symprint.to_string(function("Ne", [x, x])), content="False")
   inspect(@symprint.to_string(function("Lt", [int(1), int(2)])), content="True")
-  inspect(@symprint.to_string(function("Ge", [int(1), int(2)])), content="False")
   inspect(
-    @symprint.to_string(function("Derivative", [function("sin", [x]), x, int(2)])),
+    @symprint.to_string(function("Ge", [int(1), int(2)])),
+    content="False",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Derivative", [function("sin", [x]), x, int(2)]),
+    ),
     content="Derivative(sin(x), (x, 2))",
   )
   inspect(
     @symprint.to_string(function("Derivative", [function("sin", [x]), x, y])),
     content="Derivative(sin(x), x, y)",
   )
+  inspect(
+    @symprint.to_string(
+      function("Derivative", [function("sin", [x]), Expr::Tuple([x, int(0)])]),
+    ),
+    content="sin(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Derivative", [function("sin", [x]), x, y, int(2)]),
+    ),
+    content="Derivative(sin(x), x, (y, 2))",
+  )
+  inspect(
+    @symprint.to_string(
+      function("Subs", [add([x, y]), Expr::Tuple([x, y]), Expr::Symbol("z")]),
+    ),
+    content="Subs(x + y, (x, y), z)",
+  )
+}
+
+///|
+test "invalid Subs signatures stay as canonical applications" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  let z = Expr::Symbol("z")
+  inspect(
+    @symprint.to_string(subs_expr(add([x, y]), Expr::Tuple([x, y]), z)),
+    content="Subs(x + y, (x, y), z)",
+  )
+  inspect(
+    @symprint.to_string(
+      normalize_legacy_expr(Expr::Subs(add([x, y]), Expr::Tuple([x, y]), z)),
+    ),
+    content="Subs(x + y, (x, y), z)",
+  )
+  match subs_expr(add([x, y]), Expr::Tuple([x, y]), z) {
+    Expr::Apply(Expr::FunctionHead("Subs"), _) => ()
+    _ => fail("expected invalid Subs signature to remain an application")
+  }
 }
 
 ///|
@@ -893,16 +950,12 @@ test "lambda canonicalizes identity forms and applies canonically" {
   inspect(has(id, x), content="false")
   inspect(@symprint.to_string(xreplace(id, [(x, y)])), content="Lambda(_x, _x)")
   inspect(@symprint.to_string(subst(id, { "x": y })), content="Lambda(_x, _x)")
+  inspect(@symprint.to_string(apply(id, [y]).unwrap_or(int(0))), content="y")
   inspect(
     @symprint.to_string(
-      apply(id, [y]).unwrap_or(int(0)),
-    ),
-    content="y",
-  )
-  inspect(
-    @symprint.to_string(
-      apply(lambda_expr(Expr::Tuple([x, y]), add([x, y])), [int(1), int(2)])
-        .unwrap_or(int(0)),
+      apply(lambda_expr(Expr::Tuple([x, y]), add([x, y])), [int(1), int(2)]).unwrap_or(
+        int(0),
+      ),
     ),
     content="3",
   )
