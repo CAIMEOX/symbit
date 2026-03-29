@@ -364,6 +364,41 @@ fn make_application(
               "TypeError: beta takes at least 1 argument (\{given} given)",
             )
         }
+      "Integer" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: Integer.__new__() missing 1 required positional argument: 'i'",
+            )
+          1 => apply_named(name, args)
+          given => exact_arity_error(name, 1, given)
+        }
+      "Rational" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: Rational.__new__() missing 1 required positional argument: 'p'",
+            )
+          1 | 2 => apply_named(name, args)
+          given => exact_arity_error(name, 2, given)
+        }
+      "Float" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: Float.__new__() missing 1 required positional argument: 'num'",
+            )
+          1 | 2 => apply_named(name, args)
+          3 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "ValueError: Both decimal and binary precision supplied. Supply only one.",
+            )
+          given => exact_arity_error(name, 2, given)
+        }
       _ =>
         if args.length() == 1 {
           apply_named(name, args)

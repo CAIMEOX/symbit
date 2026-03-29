@@ -143,6 +143,102 @@ pub fn rational_from_ints(
 }
 
 ///|
+fn numeric_expr_to_exact_rational(expr : Expr) -> @symnum.BigRational? {
+  match normalize_legacy_expr(expr) {
+    Expr::Number(value) => Some(value)
+    Expr::Float(value) => {
+      let exact : Result[(BigInt, BigInt), @symnum.MpfError] = try? value.to_rational()
+      match exact {
+        Ok((num, den)) => {
+          let rational : Result[@symnum.BigRational, @symnum.RationalError] = try? @symnum.BigRational::new(num, den)
+          match rational {
+            Ok(value) => Some(value)
+            Err(_) => None
+          }
+        }
+        Err(_) => None
+      }
+    }
+    Expr::Boolean(true) => Some(@symnum.BigRational::one())
+    Expr::Boolean(false) => Some(@symnum.BigRational::zero())
+    _ => None
+  }
+}
+
+///|
+fn trunc_exact_rational(value : @symnum.BigRational) -> Expr {
+  let truncated = value.numerator().div(value.denominator())
+  Expr::Number(@symnum.BigRational::from_bigint(truncated))
+}
+
+///|
+fn constructor_integer(args : Array[Expr]) -> Expr {
+  match args {
+    [arg] =>
+      match numeric_expr_to_exact_rational(arg) {
+        Some(value) => trunc_exact_rational(value)
+        None => Expr::Apply(Expr::FunctionHead("Integer"), args)
+      }
+    _ => Expr::Apply(Expr::FunctionHead("Integer"), args)
+  }
+}
+
+///|
+fn constructor_rational(args : Array[Expr]) -> Expr {
+  match args {
+    [arg] =>
+      match numeric_expr_to_exact_rational(arg) {
+        Some(value) => Expr::Number(value)
+        None => Expr::Apply(Expr::FunctionHead("Rational"), args)
+      }
+    [lhs, rhs] =>
+      match (numeric_expr_to_exact_rational(lhs), numeric_expr_to_exact_rational(rhs)) {
+        (Some(lhs_value), Some(rhs_value)) =>
+          {
+            let exact : Result[@symnum.BigRational, @symnum.RationalError] = try? lhs_value.div_r(rhs_value)
+            match exact {
+              Ok(value) => Expr::Number(value)
+              Err(_) => Expr::Apply(Expr::FunctionHead("Rational"), args)
+            }
+          }
+        _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
+      }
+    _ => Expr::Apply(Expr::FunctionHead("Rational"), args)
+  }
+}
+
+///|
+fn constructor_float(args : Array[Expr]) -> Expr {
+  match args {
+    [Expr::Float(value)] => Expr::Float(value)
+    [arg] =>
+      match numeric_expr_to_exact_rational(arg) {
+        Some(value) => {
+          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(value, prec=53)
+          match approx {
+            Ok(value) => Expr::Float(value)
+            Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
+          }
+        }
+        None => Expr::Apply(Expr::FunctionHead("Float"), args)
+      }
+    [arg, Expr::Number(prec)] if prec.is_integral() && prec.numerator().compare(0N) > 0 =>
+      match numeric_expr_to_exact_rational(arg) {
+        Some(value) => {
+          let bits = @symnum.dps_to_prec(prec.numerator().to_int())
+          let approx : Result[Float, @symnum.MpfError] = try? Float::from_exact(value, prec=bits)
+          match approx {
+            Ok(value) => Expr::Float(value)
+            Err(_) => Expr::Apply(Expr::FunctionHead("Float"), args)
+          }
+        }
+        None => Expr::Apply(Expr::FunctionHead("Float"), args)
+      }
+    _ => Expr::Apply(Expr::FunctionHead("Float"), args)
+  }
+}
+
+///|
 let dummy_id_counter_ref : Ref[Int] = { val: 0 }
 
 ///|
@@ -176,8 +272,7 @@ pub fn raw_apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(Expr::Apply(Expr::UndefinedFunction(name), args))
-    Expr::FunctionHead(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args))
+    Expr::FunctionHead(name) => Some(raw_function(name, args))
     _ => None
   }
 }
@@ -196,8 +291,7 @@ pub fn apply(head : Expr, args : Array[Expr]) -> Expr? {
     Expr::Lambda(vars, body) => apply_lambda_expr(vars, body, args)
     Expr::UndefinedFunction(name) =>
       Some(applied_undefined_function(name, args))
-    Expr::FunctionHead(name) =>
-      Some(Expr::Apply(Expr::FunctionHead(name), args))
+    Expr::FunctionHead(name) => Some(function(name, args))
     _ => None
   }
 }
@@ -868,6 +962,9 @@ pub fn function(name : String, args : Array[Expr]) -> Expr {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args)
+    ("Integer", _) => constructor_integer(args)
+    ("Rational", _) => constructor_rational(args)
+    ("Float", _) => constructor_float(args)
     ("Eq", [lhs, rhs]) => constructor_relational(RelOp::Eq, lhs, rhs)
     ("Ne", [lhs, rhs]) => constructor_relational(RelOp::Ne, lhs, rhs)
     ("Lt", [lhs, rhs]) => constructor_relational(RelOp::Lt, lhs, rhs)
@@ -925,6 +1022,9 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("True", []) => Expr::Boolean(true)
     ("False", []) => Expr::Boolean(false)
     ("Tuple", _) => Expr::Tuple(args)
+    ("Integer", _) => constructor_integer(args)
+    ("Rational", _) => constructor_rational(args)
+    ("Float", _) => constructor_float(args)
     ("Eq", [lhs, rhs]) => Expr::Relational(RelOp::Eq, lhs, rhs)
     ("Ne", [lhs, rhs]) => Expr::Relational(RelOp::Ne, lhs, rhs)
     ("Lt", [lhs, rhs]) => Expr::Relational(RelOp::Lt, lhs, rhs)

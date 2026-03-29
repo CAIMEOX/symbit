@@ -136,6 +136,69 @@ test "symcore parity formal application helpers" {
       }
     None => fail("expected undefined application")
   }
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Integer"),
+        [@symcore.rational_from_ints(5, 2)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="2",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Integer"),
+        [@symcore.rational_from_ints(-2, 3)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="0",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Rational"),
+        [@symcore.int(2), @symcore.int(3)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="2/3",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Rational"),
+        [@symcore.Expr::Float(@symcore.Float::from_double(2.5))],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="5/2",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Float"),
+        [@symcore.int(2)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="2.00000000000000",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Float"),
+        [@symcore.rational_from_ints(2, 3)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="0.666666666666667",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.apply(
+        @symcore.Expr::FunctionHead("Tuple"),
+        [x, @symcore.int(1)],
+      ).unwrap_or(@symcore.int(0)),
+    ),
+    content="(x, 1)",
+  )
 }
 
 ///|

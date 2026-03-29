@@ -370,6 +370,67 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     @symprint.to_string(parse_expr("binomial(x, y)")),
     content="binomial(x, y)",
   )
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("Integer(2)")), "Integer(2)"),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Integer(2/3)")),
+      "Integer(2/3)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Integer(-2/3)")),
+      "Integer(-2/3)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Rational(2)")),
+      "Rational(2)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Rational(2, 3)")),
+      "Rational(2, 3)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Rational(0.2)")),
+      "Rational(0.2)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("Float(2)")), "Float(2)"),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("Float(2.5)")), "Float(2.5)"),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2, 20)")),
+      "Float(2, 20)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2/3)")),
+      "Float(2/3)",
+    ),
+    content="0",
+  )
   inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
   guard (try? parse_expr("pi(x)"))
@@ -401,6 +462,21 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: beta takes at least 1 argument (0 given)" else {
     fail("expected beta arity error")
+  }
+  guard (try? parse_expr("Integer()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+    fail("expected Integer constructor arity error")
+  }
+  guard (try? parse_expr("Rational()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Rational.__new__() missing 1 required positional argument: 'p'" else {
+    fail("expected Rational constructor arity error")
+  }
+  guard (try? parse_expr("Float()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Float.__new__() missing 1 required positional argument: 'num'" else {
+    fail("expected Float constructor arity error")
   }
   guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
@@ -459,10 +535,57 @@ test "ast parser compatibility entrypoint" {
     @symprint.to_string(ast_parse_expr("Derivative(x)")),
     content="Derivative(x, x)",
   )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Integer(2)")),
+      "Integer(2)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Integer(2/3)")),
+      "Integer(2/3)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
+      "Rational(2, 3)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Rational(0.2)")),
+      "Rational(0.2)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Float(2.5)")),
+      "Float(2.5)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Float(2, 20)")),
+      "Float(2, 20)",
+    ),
+    content="0",
+  )
   guard (try? ast_parse_expr("pi(x)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: 'Pi' object is not callable" else {
     fail("expected ast parser number symbol callable error")
+  }
+  guard (try? ast_parse_expr("Integer()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Integer.__new__() missing 1 required positional argument: 'i'" else {
+    fail("expected ast parser Integer constructor arity error")
   }
   inspect(
     @symprint.to_string(

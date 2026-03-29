@@ -331,6 +331,36 @@ test "formal application helpers roundtrip named and undefined heads" {
       }
     None => fail("expected undefined head application")
   }
+  match apply(Expr::FunctionHead("Integer"), [rational_from_ints(5, 2)]) {
+    Some(Expr::Number(n)) => inspect(n.to_string(), content="2")
+    _ => fail("expected Integer constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("Integer"), [rational_from_ints(-2, 3)]) {
+    Some(Expr::Number(n)) => inspect(n.to_string(), content="0")
+    _ => fail("expected Integer truncation through apply")
+  }
+  match apply(Expr::FunctionHead("Rational"), [int(2), int(3)]) {
+    Some(Expr::Number(n)) => inspect(n.to_string(), content="2/3")
+    _ => fail("expected Rational constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("Rational"), [Expr::Float(Float::from_double(2.5))]) {
+    Some(Expr::Number(n)) => inspect(n.to_string(), content="5/2")
+    _ => fail("expected Rational(float) constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("Float"), [int(2)]) {
+    Some(Expr::Float(_)) => ()
+    _ => fail("expected Float constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("Float"), [int(2), int(20)]) {
+    Some(Expr::Float(value)) =>
+      inspect(value.precision().to_string(), content=@symnum.dps_to_prec(20).to_string())
+    _ => fail("expected Float precision constructor semantics through apply")
+  }
+  match apply(Expr::FunctionHead("Tuple"), [x, int(1)]) {
+    Some(Expr::Tuple([Expr::Symbol("x"), Expr::Number(n)])) =>
+      inspect(n.to_string(), content="1")
+    _ => fail("expected Tuple constructor semantics through apply")
+  }
   assert_false(apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(raw_apply(Expr::Symbol("g"), [x]) is Some(_))
   assert_false(apply(int(1), [x]) is Some(_))

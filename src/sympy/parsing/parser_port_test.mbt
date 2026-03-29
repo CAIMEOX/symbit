@@ -533,6 +533,55 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("binomial(x, y)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Integer(2)")),
+    content=parse_expr_sstr("Integer(2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer(2/3)")),
+    content=parse_expr_sstr("Integer(2/3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer(-2/3)")),
+    content=parse_expr_sstr("Integer(-2/3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(2)")),
+    content=parse_expr_sstr("Rational(2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(2, 3)")),
+    content=parse_expr_sstr("Rational(2, 3)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Rational(0.2)")),
+    content=parse_expr_sstr("Rational(0.2)"),
+  )
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("Float(2)")), "Float(2)"),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2.5)")),
+      "Float(2.5)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2, 20)")),
+      "Float(2, 20)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(parse_expr("Float(2/3)")),
+      "Float(2/3)",
+    ),
+    content="0",
+  )
+  inspect(
     @symprint.to_string(parse_expr("beta(x)")),
     content=parse_expr_sstr("beta(x)"),
   )
@@ -585,6 +634,33 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=parse_expr_error_sstr_in("beta()", []),
+  )
+  inspect(
+    try parse_expr("Integer()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("Integer()", []),
+  )
+  inspect(
+    try parse_expr("Rational()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("Rational()", []),
+  )
+  inspect(
+    try parse_expr("Float()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("Float()", []),
   )
   inspect(
     try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
@@ -647,6 +723,36 @@ test "symparse parity builtin callable semantics" {
     content=ast_parse_expr_sstr("beta(x)"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Integer(2)")),
+    content=ast_parse_expr_sstr("Integer(2)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer(2/3)")),
+    content=ast_parse_expr_sstr("Integer(2/3)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(2, 3)")),
+    content=ast_parse_expr_sstr("Rational(2, 3)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Rational(0.2)")),
+    content=ast_parse_expr_sstr("Rational(0.2)"),
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Float(2.5)")),
+      "Float(2.5)",
+    ),
+    content="0",
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("Float(2, 20)")),
+      "Float(2, 20)",
+    ),
+    content="0",
+  )
+  inspect(
     try ast_parse_expr("pi(x)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -654,6 +760,15 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=ast_parse_expr_error_sstr("pi(x)"),
+  )
+  inspect(
+    try ast_parse_expr("Integer()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=ast_parse_expr_error_sstr("Integer()"),
   )
 }
 
