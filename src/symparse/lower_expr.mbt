@@ -91,9 +91,110 @@ fn make_function(
   name : String,
   args : Array[Expr],
   _options : ParseOptions,
-) -> Expr {
+) -> Expr raise ParseError {
   let canonical_args = args.map(canonicalize_constructor_expr)
-  @symcore.function(name, canonical_args)
+  let missing_constructor_error = fn(
+    class_name : String,
+    missing_names : Array[String],
+  ) -> Expr raise ParseError {
+    let missing_count = missing_names.length()
+    let missing_text = if missing_count == 1 {
+      "'" + missing_names[0] + "'"
+    } else {
+      missing_names.map(name => "'" + name + "'").join(" and ")
+    }
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: \{class_name}.__new__() missing \{missing_count} required positional argument" +
+      (if missing_count == 1 { "" } else { "s" }) +
+      ": " +
+      missing_text,
+    )
+  }
+  let too_many_constructor_error = fn(
+    class_name : String,
+    arity : Int,
+    given : Int,
+  ) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: \{class_name}.__new__() takes \{arity + 1} positional arguments but \{given + 1} were given",
+    )
+  }
+  let exact_arity_error = fn(
+    name : String,
+    expected : Int,
+    given : Int,
+  ) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: \{name} takes exactly \{expected} argument" +
+      (if expected == 1 { "" } else { "s" }) +
+      " (\{given} given)",
+    )
+  }
+  let relation_constructor_error = fn(name : String, given : Int) -> Expr raise ParseError {
+    let class_name = match name {
+      "Eq" => "Equality"
+      "Ne" => "Unequality"
+      _ => "_Inequality"
+    }
+    if given == 0 {
+      missing_constructor_error(class_name, ["lhs", "rhs"])
+    } else if given == 1 {
+      missing_constructor_error(class_name, ["rhs"])
+    } else {
+      too_many_constructor_error(class_name, 2, given)
+    }
+  }
+  match (name, canonical_args) {
+    ("Eq", [_, _]) | ("Ne", [_, _]) | ("Lt", [_, _]) | ("Le", [_, _])
+    | ("Gt", [_, _]) | ("Ge", [_, _]) => @symcore.function(name, canonical_args)
+    ("Eq", _) | ("Ne", _) | ("Lt", _) | ("Le", _) | ("Gt", _) | ("Ge", _) =>
+      relation_constructor_error(name, canonical_args.length())
+    ("Mod", [_, _]) => @symcore.function(name, canonical_args)
+    ("Mod", _) => exact_arity_error(name, 2, canonical_args.length())
+    ("Lambda", [_, _]) => @symcore.function(name, canonical_args)
+    ("Lambda", args) =>
+      if args.length() < 2 {
+        missing_constructor_error(
+          "Lambda",
+          if args.length() == 0 { ["signature", "expr"] } else { ["expr"] },
+        )
+      } else {
+        too_many_constructor_error("Lambda", 2, args.length())
+      }
+    ("Subs", [_, _, _]) => @symcore.function(name, canonical_args)
+    ("Subs", args) =>
+      if args.length() < 3 {
+        missing_constructor_error(
+          "Subs",
+          match args.length() {
+            0 => ["expr", "variables", "point"]
+            1 => ["variables", "point"]
+            _ => ["point"]
+          },
+        )
+      } else {
+        too_many_constructor_error("Subs", 3, args.length())
+      }
+    ("Derivative", []) => missing_constructor_error("Derivative", ["expr"])
+    ("Derivative", [expr]) => {
+      let free = @symcore.free_symbols(expr)
+      match free {
+        [] => @symcore.int(0)
+        [wrt] => @symcore.function(name, [expr, wrt])
+        _ =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "ValueError: \nSince there is more than one variable in the expression, the\n" +
+            "variable(s) of differentiation must be supplied to differentiate the expression",
+          )
+      }
+    }
+    ("Derivative", _) => @symcore.function(name, canonical_args)
+    _ => @symcore.function(name, canonical_args)
+  }
 }
 
 ///|

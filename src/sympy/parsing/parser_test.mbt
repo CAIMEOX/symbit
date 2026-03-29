@@ -397,6 +397,10 @@ test "ast parser compatibility entrypoint" {
     content="Lambda((x, y), x + y)",
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(x)")),
+    content="Derivative(x, x)",
+  )
+  inspect(
     @symprint.to_string(
       ast_parse_expr("f", local_bindings={
         "f": @symcore.Expr::FunctionHead("cos"),
@@ -436,6 +440,14 @@ test "ast parser compatibility entrypoint" {
     detail == "TypeError: 'Symbol' object is not callable" else {
     fail("expected ast parser symbol binding call to stay non-callable")
   }
+  let ast_eq_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
+    "Eq()",
+  )
+  guard ast_eq_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
+    fail("expected ast parser Eq() constructor arity error")
+  }
   inspect(
     parse_expr_equiv(
       @symprint.to_string(ast_parse_expr("log(x, y)")),
@@ -468,6 +480,8 @@ test "symparse explicit core constructor calls stay canonical" {
   inspect(@symprint.to_string(parse_expr("Eq(x, x)")), content="True")
   inspect(@symprint.to_string(parse_expr("Ne(x, x)")), content="False")
   inspect(@symprint.to_string(parse_expr("Lt(1 + 1, 3)")), content="True")
+  inspect(@symprint.to_string(parse_expr("Derivative(x)")), content="Derivative(x, x)")
+  inspect(@symprint.to_string(parse_expr("Derivative(2)")), content="0")
   inspect(
     @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
     content="Derivative(sin(x), x)",
@@ -511,6 +525,41 @@ test "symparse explicit core constructor calls stay canonical" {
     ),
     content="True",
   )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Derivative(x)", parse_options(evaluate=false)),
+    ),
+    content="Derivative(x, x)",
+  )
+  guard (try? parse_expr("Eq()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
+    fail("expected Eq() constructor arity error")
+  }
+  guard (try? parse_expr("Eq(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Equality.__new__() missing 1 required positional argument: 'rhs'" else {
+    fail("expected Eq(x) constructor arity error")
+  }
+  guard (try? parse_expr("Mod(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: Mod takes exactly 2 arguments (1 given)" else {
+    fail("expected Mod(x) constructor arity error")
+  }
+  guard (try? parse_expr("Subs(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Subs.__new__() missing 2 required positional arguments: 'variables' and 'point'" else {
+    fail("expected Subs(x) constructor arity error")
+  }
+  guard (try? parse_expr("Lambda()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Lambda.__new__() missing 2 required positional arguments: 'signature' and 'expr'" else {
+    fail("expected Lambda() constructor arity error")
+  }
   inspect(
     @symprint.to_string(
       parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),

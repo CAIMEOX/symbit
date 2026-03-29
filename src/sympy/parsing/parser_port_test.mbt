@@ -62,6 +62,27 @@ fn assert_sympy_parse_string_relaxed(src : String) -> Unit raise {
 }
 
 ///|
+fn parse_error_detail(src : String) -> String {
+  let result : Result[@symcore.Expr, ParseError] = try? parse_expr(src)
+  match result {
+    Err(ParseError::UnsupportedConstruct(span=_, detail)) => detail
+    Err(_) => "unexpected-parse-error"
+    Ok(_) => "unexpected-success"
+  }
+}
+
+///|
+fn parse_error_oracle(src : String) -> String raise {
+  parse_expr_error_sstr_with(
+    src,
+    "sympy.parsing.sympy_parser.standard_transformations",
+    "{}",
+    "{}",
+    true,
+  )
+}
+
+///|
 fn ast_parse_error_detail(
   src : String,
   local_bindings : Map[String, @symcore.Expr],
@@ -350,6 +371,10 @@ test "symparse parity split symbols custom and ast parser" {
     content=ast_parse_expr_sstr("lambda x, y: x + y"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(x)")),
+    content=ast_parse_expr_sstr("Derivative(x)"),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("sin")),
     content=ast_parse_expr_sstr("sin"),
   )
@@ -402,6 +427,10 @@ test "symparse parity split symbols custom and ast parser" {
     content=ast_parse_expr_error_sstr("f(x)", binding_names=["f"], binding_exprs=[
       "g",
     ]),
+  )
+  inspect(
+    ast_parse_error_detail("Eq()", {}),
+    content=ast_parse_expr_error_sstr("Eq()"),
   )
 }
 
@@ -610,6 +639,14 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=parse_expr_sstr("Lt(1 + 1, 3)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Derivative(x)")),
+    content=parse_expr_sstr("Derivative(x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Derivative(2)")),
+    content=parse_expr_sstr("Derivative(2)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Derivative(sin(x), x)")),
     content=parse_expr_sstr("Derivative(sin(x), x)"),
   )
@@ -646,6 +683,10 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=ast_parse_expr_sstr("Derivative(sin(x), x)"),
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Derivative(x)")),
+    content=ast_parse_expr_sstr("Derivative(x)"),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("Lambda(x, x + 1)")),
     content=ast_parse_expr_sstr("Lambda(x, x + 1)"),
   )
@@ -669,6 +710,12 @@ test "symparse parity explicit core constructor calls stay canonical" {
   )
   inspect(
     @symprint.to_string(
+      parse_expr_with("Derivative(x)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Derivative(x)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(
       parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),
     ),
     content=parse_expr_sstr("Tuple(x + 1, y)", evaluate=false),
@@ -685,4 +732,9 @@ test "symparse parity explicit core constructor calls stay canonical" {
     ),
     content=parse_expr_sstr("Lambda(x, x + 1)", evaluate=false),
   )
+  inspect(parse_error_detail("Eq()"), content=parse_error_oracle("Eq()"))
+  inspect(parse_error_detail("Eq(x)"), content=parse_error_oracle("Eq(x)"))
+  inspect(parse_error_detail("Mod(x)"), content=parse_error_oracle("Mod(x)"))
+  inspect(parse_error_detail("Subs(x)"), content=parse_error_oracle("Subs(x)"))
+  inspect(parse_error_detail("Lambda()"), content=parse_error_oracle("Lambda()"))
 }
