@@ -432,6 +432,73 @@ test "symparse parity lambda notation and relaxed evaluate false applications" {
 }
 
 ///|
+test "symparse parity builtin callable semantics" {
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("log(x, y)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("log(x, y)", evaluate=false),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Max()")),
+    content=parse_expr_sstr("Max()"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Min()")),
+    content=parse_expr_sstr("Min()"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Max(x)")),
+    content=parse_expr_sstr("Max(x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Min(x)")),
+    content=parse_expr_sstr("Min(x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("sqrt(x, y)")),
+    content=parse_expr_sstr("sqrt(x, y)"),
+  )
+  inspect(
+    try parse_expr("sin(x, y)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("sin(x, y)", []),
+  )
+  inspect(
+    try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("sqrt(x, y)", [], evaluate=false),
+  )
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("log(x, y)")),
+      "log(x, y)",
+    ),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Max()")),
+    content=ast_parse_expr_sstr("Max()"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Min(x)")),
+    content=ast_parse_expr_sstr("Min(x)"),
+  )
+}
+
+///|
 test "symparse parity relation truthiness string forms" {
   inspect(
     @symprint.to_string(parse_expr("1 < 2 <= 3")),

@@ -99,6 +99,121 @@ fn make_application(
   args : Array[Expr],
   options : ParseOptions,
 ) -> Expr raise ParseError {
+  let apply_named = fn(name : String, args : Array[Expr]) -> Expr {
+    if options.evaluate {
+      @symcore.function(name, args)
+    } else {
+      @symcore.raw_function(name, args)
+    }
+  }
+  let exact_arity_error = fn(
+    name : String,
+    expected : Int,
+    given : Int,
+  ) -> Expr raise ParseError {
+    raise ParseError::UnsupportedConstruct(
+      span=span(0, 0),
+      "TypeError: \{name} takes exactly \{expected} argument" +
+      (if expected == 1 { "" } else { "s" }) +
+      " (\{given} given)",
+    )
+  }
+  let apply_builtin = fn(name : String) -> Expr raise ParseError {
+    match name {
+      "log" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: log takes at least 1 argument (0 given)",
+            )
+          1 => apply_named(name, args)
+          2 =>
+            if options.evaluate {
+              make_mul(
+                [
+                  @symcore.function("log", [args[0]]),
+                  make_pow(
+                    @symcore.function("log", [args[1]]),
+                    int(-1),
+                    options,
+                  ),
+                ],
+                options,
+              )
+            } else {
+              apply_named(name, args)
+            }
+          given =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: log takes at least 1 argument (\{given} given)",
+            )
+        }
+      "sqrt" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: sqrt() missing 1 required positional argument: 'arg'",
+            )
+          1 => apply_named(name, args)
+          2 =>
+            if options.evaluate {
+              apply_named(name, [args[0]])
+            } else {
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "TypeError: sqrt() got multiple values for argument 'evaluate'",
+              )
+            }
+          given =>
+            if options.evaluate {
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "TypeError: sqrt() takes from 1 to 2 positional arguments but \{given} were given",
+              )
+            } else {
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "TypeError: sqrt() got multiple values for argument 'evaluate'",
+              )
+            }
+        }
+      "Min" =>
+        match args.length() {
+          0 => @symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Infinity)
+          1 => args[0]
+          _ => apply_named(name, args)
+        }
+      "Max" =>
+        match args.length() {
+          0 =>
+            @symcore.Expr::NumberSymbol(
+              @symcore.NumberSymbolKind::NegativeInfinity,
+            )
+          1 => args[0]
+          _ => apply_named(name, args)
+        }
+      "besselj" | "bessely" | "besseli" | "besselk" =>
+        if args.length() == 2 {
+          apply_named(name, args)
+        } else {
+          exact_arity_error(name, 2, args.length())
+        }
+      _ =>
+        if args.length() == 1 {
+          apply_named(name, args)
+        } else {
+          exact_arity_error(name, 1, args.length())
+        }
+    }
+  }
+  match callee {
+    @symcore.Expr::FunctionHead(name) if is_builtin_callable_name(name) =>
+      return apply_builtin(name)
+    _ => ()
+  }
   let lowered = if options.evaluate {
     @symcore.apply(callee, args)
   } else {

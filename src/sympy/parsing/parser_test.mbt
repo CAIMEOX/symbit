@@ -330,6 +330,35 @@ test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
 }
 
 ///|
+test "symparse builtin callable semantics follow SymPy parser behavior" {
+  inspect(
+    parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
+    content="0",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("log(x, y)", parse_options(evaluate=false)),
+    ),
+    content="log(x, y)",
+  )
+  inspect(@symprint.to_string(parse_expr("Max()")), content="-oo")
+  inspect(@symprint.to_string(parse_expr("Min()")), content="oo")
+  inspect(@symprint.to_string(parse_expr("Max(x)")), content="x")
+  inspect(@symprint.to_string(parse_expr("Min(x)")), content="x")
+  inspect(@symprint.to_string(parse_expr("sqrt(x, y)")), content="sqrt(x)")
+  guard (try? parse_expr("sin(x, y)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: sin takes exactly 1 argument (2 given)" else {
+    fail("expected unary builtin arity error")
+  }
+  guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: sqrt() got multiple values for argument 'evaluate'" else {
+    fail("expected sqrt evaluate=False callable error")
+  }
+}
+
+///|
 test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
   inspect(@symprint.to_string(ast_parse_expr("f")), content="f")
@@ -390,6 +419,15 @@ test "ast parser compatibility entrypoint" {
     detail == "TypeError: 'Symbol' object is not callable" else {
     fail("expected ast parser symbol binding call to stay non-callable")
   }
+  inspect(
+    parse_expr_equiv(
+      @symprint.to_string(ast_parse_expr("log(x, y)")),
+      "log(x, y)",
+    ),
+    content="0",
+  )
+  inspect(@symprint.to_string(ast_parse_expr("Max()")), content="-oo")
+  inspect(@symprint.to_string(ast_parse_expr("Min(x)")), content="x")
   match ast_parse_expr("lambda x: x + 1") {
     @symcore.Expr::Lambda(@symcore.Expr::Symbol("x"), body) =>
       inspect(@symprint.to_string(body), content="x + 1")
