@@ -509,6 +509,21 @@ test "symparse explicit core constructor calls stay canonical" {
     @symprint.to_string(parse_expr("Lambda((x, y), x + y)")),
     content="Lambda((x, y), x + y)",
   )
+  inspect(@symprint.to_string(parse_expr("Lambda(x, x)")), content="Lambda(_x, _x)")
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x,), x)")),
+    content="Lambda(_x, _x)",
+  )
+  inspect(@symprint.to_string(parse_expr("lambda x: x")), content="Lambda(_x, _x)")
+  inspect(@symprint.to_string(parse_expr("Lambda(x, x)(y)")), content="y")
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x, y), x + y)(1, 2)")),
+    content="3",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)")),
+    content="6",
+  )
   inspect(@symprint.to_string(parse_expr("Mod(x, 2)")), content="Mod(x, 2)")
   inspect(
     @symprint.to_string(parse_expr("Dict((x, y), (1, z))")),
@@ -578,6 +593,26 @@ test "symparse explicit core constructor calls stay canonical" {
     "TypeError: Lambda.__new__() missing 2 required positional arguments: 'signature' and 'expr'" else {
     fail("expected Lambda() constructor arity error")
   }
+  guard (try? parse_expr("Lambda((x, x), x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "BadSignatureError: Duplicate symbol x" else {
+    fail("expected duplicate lambda signature error")
+  }
+  guard (try? parse_expr("Lambda((x, 1), x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "BadSignatureError: Lambda signature should be only tuples and symbols, not 1" else {
+    fail("expected invalid lambda signature error")
+  }
+  guard (try? parse_expr("lambda x, x: x"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "BadSignatureError: Duplicate symbol x" else {
+    fail("expected duplicate lambda-notation signature error")
+  }
+  guard (try? parse_expr("Lambda(x, x)()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "BadArgumentsError: Lambda(_x, _x) takes exactly 1 argument (0 given)" else {
+    fail("expected lambda call arity error")
+  }
   inspect(
     @symprint.to_string(
       parse_expr_with("Tuple(x + 1, y)", parse_options(evaluate=false)),
@@ -595,5 +630,11 @@ test "symparse explicit core constructor calls stay canonical" {
       parse_expr_with("Lambda(x, x + 1)", parse_options(evaluate=false)),
     ),
     content="Lambda(x, x + 1)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lambda(x, x)(y)", parse_options(evaluate=false)),
+    ),
+    content="y",
   )
 }

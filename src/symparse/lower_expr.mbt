@@ -184,7 +184,15 @@ fn make_function(
     }
     ("Mod", [_, _]) => @symcore.function(name, canonical_args)
     ("Mod", _) => exact_arity_error(name, 2, canonical_args.length())
-    ("Lambda", [_, _]) => @symcore.function(name, canonical_args)
+    ("Lambda", [vars, _]) =>
+      match @symcore.lambda_signature_error(vars) {
+        Some(err) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            "BadSignatureError: " + err,
+          )
+        None => @symcore.function(name, canonical_args)
+      }
     ("Lambda", args) =>
       if args.length() < 2 {
         missing_constructor_error(
@@ -379,14 +387,38 @@ fn make_application(
   match lowered {
     Some(expr) => expr
     None =>
-      raise ParseError::UnsupportedConstruct(
-        span=span(0, 0),
-        match @symcore.func(callee) {
-          Some(@symcore.Expr::FunctionHead(name)) =>
-            "TypeError: '\{name}' object is not callable"
-          _ => "TypeError: object is not callable"
-        },
-      )
+      match callee {
+        @symcore.Expr::Lambda(vars, _) =>
+          match @symcore.lambda_arity(vars) {
+            Some(expected) =>
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "BadArgumentsError: " +
+                @symcore.expr_display(callee) +
+                " takes exactly " +
+                expected.to_string() +
+                " argument" +
+                (if expected == 1 { "" } else { "s" }) +
+                " (" +
+                args.length().to_string() +
+                " given)",
+              )
+            None =>
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "TypeError: object is not callable",
+              )
+          }
+        _ =>
+          raise ParseError::UnsupportedConstruct(
+            span=span(0, 0),
+            match @symcore.func(callee) {
+              Some(@symcore.Expr::FunctionHead(name)) =>
+                "TypeError: '\{name}' object is not callable"
+              _ => "TypeError: object is not callable"
+            },
+          )
+      }
   }
 }
 
@@ -934,7 +966,14 @@ pub fn lower_ast_in(
       } else {
         @symcore.Expr::Tuple(vars)
       }
-      @symcore.Expr::Lambda(vars_expr, lower_ast_in(body, options, context))
+      match @symcore.lambda_signature_error(vars_expr) {
+        Some(err) =>
+          raise ParseError::UnsupportedConstruct(
+            span=span,
+            "BadSignatureError: " + err,
+          )
+        None => @symcore.lambda_expr(vars_expr, lower_ast_in(body, options, context))
+      }
     }
   }
 }

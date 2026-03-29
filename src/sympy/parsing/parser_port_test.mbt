@@ -671,6 +671,30 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=parse_expr_sstr("Lambda((x, y), x + y)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("Lambda(x, x)")),
+    content=parse_expr_sstr("Lambda(x, x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x,), x)")),
+    content=parse_expr_sstr("Lambda((x,), x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("lambda x: x")),
+    content=parse_expr_sstr("lambda x: x"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(x, x)(y)")),
+    content=parse_expr_sstr("Lambda(x, x)(y)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda((x, y), x + y)(1, 2)")),
+    content=parse_expr_sstr("Lambda((x, y), x + y)(1, 2)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Lambda(((x, y), z), x + y + z)((1, 2), 3)")),
+    content=parse_expr_sstr("Lambda(((x, y), z), x + y + z)((1, 2), 3)"),
+  )
+  inspect(
     @symprint.to_string(parse_expr("Mod(x, 2)")),
     content=parse_expr_sstr("Mod(x, 2)"),
   )
@@ -693,6 +717,10 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(
     @symprint.to_string(ast_parse_expr("Lambda(x, x + 1)")),
     content=ast_parse_expr_sstr("Lambda(x, x + 1)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Lambda(x, x)")),
+    content=ast_parse_expr_sstr("Lambda(x, x)"),
   )
   inspect(
     @symprint.to_string(
@@ -736,6 +764,12 @@ test "symparse parity explicit core constructor calls stay canonical" {
     ),
     content=parse_expr_sstr("Lambda(x, x + 1)", evaluate=false),
   )
+  inspect(
+    @symprint.to_string(
+      parse_expr_with("Lambda(x, x)(y)", parse_options(evaluate=false)),
+    ),
+    content=parse_expr_sstr("Lambda(x, x)(y)", evaluate=false),
+  )
   inspect(parse_error_detail("Eq()"), content=parse_error_oracle("Eq()"))
   inspect(parse_error_detail("Eq(x)"), content=parse_error_oracle("Eq(x)"))
   inspect(parse_error_detail("Mod(x)"), content=parse_error_oracle("Mod(x)"))
@@ -746,4 +780,20 @@ test "symparse parity explicit core constructor calls stay canonical" {
     content=parse_error_oracle("Dict((x, y, z))"),
   )
   inspect(parse_error_detail("Lambda()"), content=parse_error_oracle("Lambda()"))
+  inspect(
+    parse_error_detail("Lambda((x, x), x)"),
+    content=parse_error_oracle("Lambda((x, x), x)"),
+  )
+  inspect(
+    parse_error_detail("Lambda((x, 1), x)"),
+    content=parse_error_oracle("Lambda((x, 1), x)"),
+  )
+  inspect(
+    parse_error_detail("lambda x, x: x"),
+    content=parse_error_oracle("lambda x, x: x"),
+  )
+  inspect(
+    parse_error_detail("Lambda(x, x)()"),
+    content=parse_error_oracle("Lambda(x, x)()"),
+  )
 }
