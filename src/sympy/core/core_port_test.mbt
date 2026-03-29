@@ -462,6 +462,7 @@ test "symcore parity sympify typed inputs" {
 test "symcore parity free_symbols and atoms helpers" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
+  let z = @symcore.Expr::Symbol("z")
   let expr = @symcore.Expr::Tuple([
     @symcore.add([
       @symcore.function("f", [x]),
@@ -471,6 +472,12 @@ test "symcore parity free_symbols and atoms helpers" {
   ])
   inspect(core_free_symbols_sstr(expr), content="('x', 'y')")
   inspect(core_atoms_sstr(expr), content="('1', '2', 'x', 'y')")
+  let subs_multi = @symcore.subs_expr(
+    @symcore.add([x, y]),
+    @symcore.Expr::Tuple([x, y]),
+    @symcore.Expr::Tuple([y, z]),
+  )
+  inspect(core_free_symbols_sstr(subs_multi), content="('y', 'z')")
 }
 
 ///|

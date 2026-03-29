@@ -1058,9 +1058,13 @@ fn free_symbol_map(expr : Expr, out : Map[String, Expr]) -> Unit {
       }
     }
     ExprForm::Subs(inner, variable, value) => {
-      free_symbol_map(inner, out)
+      let inner_symbols : Map[String, Expr] = {}
+      free_symbol_map(inner, inner_symbols)
+      remove_bound_symbol(inner_symbols, variable)
+      for key, value0 in inner_symbols {
+        out.set(key, value0)
+      }
       free_symbol_map(value, out)
-      remove_bound_symbol(out, variable)
     }
     ExprForm::Lambda(vars, body) => {
       free_symbol_map(body, out)

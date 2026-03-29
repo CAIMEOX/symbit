@@ -57,8 +57,10 @@ test "free_symbols respects bound variables" {
   let z = Expr::Symbol("z")
   let lam = lambda_expr(Expr::Tuple([x, y]), add([x, z]))
   let deriv = derivative(function("f", [x, y]), x, order=y)
+  let subs_multi = subs_expr(add([x, y]), Expr::Tuple([x, y]), Expr::Tuple([y, z]))
   json_inspect(free_symbols(lam).map(@symprint.to_string), content=["z"])
   json_inspect(free_symbols(deriv).map(@symprint.to_string), content=["x", "y"])
+  json_inspect(free_symbols(subs_multi).map(@symprint.to_string), content=["y", "z"])
   inspect(has(lam, z), content="true")
   inspect(has(lam, y), content="true")
 }
