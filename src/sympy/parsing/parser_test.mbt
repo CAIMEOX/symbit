@@ -665,6 +665,51 @@ test "ast parser compatibility entrypoint" {
 }
 
 ///|
+test "symparse local bindings shadow builtin heads like SymPy" {
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi(x)",
+        default_parse_options(),
+        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+      ),
+    ),
+    content="f(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "Integral(x)",
+        default_parse_options(),
+        parse_context(bindings={
+          "Integral": @symcore.Expr::UndefinedFunction("f"),
+        }),
+      ),
+    ),
+    content="f(x)",
+  )
+  guard (try?
+    parse_expr_in(
+      "Integral(x)",
+      default_parse_options(),
+      parse_context(bindings={ "Integral": @symcore.Expr::Symbol("g") }),
+    ))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: 'Symbol' object is not callable" else {
+    fail("expected non-callable builtin binding shadow error")
+  }
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr(
+        "DiracDelta(x)",
+        local_bindings={ "DiracDelta": @symcore.Expr::UndefinedFunction("f") },
+      ),
+    ),
+    content="f(x)",
+  )
+}
+
+///|
 test "symparse explicit core constructor calls stay canonical" {
   inspect(
     @symprint.to_string(parse_expr("Eq")),

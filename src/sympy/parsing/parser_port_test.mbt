@@ -465,6 +465,73 @@ test "symparse parity lambda notation and relaxed evaluate false applications" {
 }
 
 ///|
+test "symparse parity builtin bindings shadow builtin heads like SymPy" {
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi(x)",
+        default_parse_options(),
+        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+      ),
+    ),
+    content=parse_expr_sstr_in(
+      "pi(x)",
+      [],
+      binding_names=["pi"],
+      binding_exprs=["sympy.Function('f')"],
+    ),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "Integral(x)",
+        default_parse_options(),
+        parse_context(bindings={ "Integral": @symcore.Expr::UndefinedFunction("f") }),
+      ),
+    ),
+    content=parse_expr_sstr_in(
+      "Integral(x)",
+      [],
+      binding_names=["Integral"],
+      binding_exprs=["sympy.Function('f')"],
+    ),
+  )
+  inspect(
+    try
+      parse_expr_in(
+        "Integral(x)",
+        default_parse_options(),
+        parse_context(bindings={ "Integral": @symcore.Expr::Symbol("g") }),
+      )
+    catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in(
+      "Integral(x)",
+      [],
+      binding_names=["Integral"],
+      binding_exprs=["g"],
+    ),
+  )
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr(
+        "DiracDelta(x)",
+        local_bindings={ "DiracDelta": @symcore.Expr::UndefinedFunction("f") },
+      ),
+    ),
+    content=ast_parse_expr_sstr(
+      "DiracDelta(x)",
+      binding_names=["DiracDelta"],
+      binding_exprs=["sympy.Function('f')"],
+    ),
+  )
+}
+
+///|
 test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(parse_expr("Integral")),
