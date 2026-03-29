@@ -266,7 +266,9 @@ fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
       ignore(span)
       if context_has_binding(context, name) {
         match lookup_binding(context, name) {
-          Some(bound) => binding_is_callable(bound) || context_has_callable_name(context, name)
+          Some(bound) =>
+            binding_is_callable(bound) ||
+            context_has_callable_name(context, name)
           None => context_has_callable_name(context, name)
         }
       } else if context_has_callable_name(context, name) {
