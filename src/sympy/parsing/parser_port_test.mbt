@@ -467,6 +467,34 @@ test "symparse parity lambda notation and relaxed evaluate false applications" {
 ///|
 test "symparse parity builtin callable semantics" {
   inspect(
+    @symprint.to_string(parse_expr("Integral")),
+    content=parse_expr_sstr("Integral"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("DiracDelta")),
+    content=parse_expr_sstr("DiracDelta"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Piecewise")),
+    content=parse_expr_sstr("Piecewise"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Integer")),
+    content=parse_expr_sstr("Integer"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Symbol")),
+    content=parse_expr_sstr("Symbol"),
+  )
+  inspect(@symprint.to_string(parse_expr("pi")), content=parse_expr_sstr("pi"))
+  inspect(
+    @symprint.to_string(parse_expr("EulerGamma")),
+    content=parse_expr_sstr("EulerGamma"),
+  )
+  inspect(@symprint.to_string(parse_expr("oo")), content=parse_expr_sstr("oo"))
+  inspect(@symprint.to_string(parse_expr("Pi")), content=parse_expr_sstr("Pi"))
+  inspect(@symprint.to_string(parse_expr("NaN")), content=parse_expr_sstr("NaN"))
+  inspect(
     parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
     content="0",
   )
@@ -513,6 +541,25 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("beta(x, y)"),
   )
   inspect(
+    try parse_expr("pi(x)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("pi(x)", []),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi",
+        default_parse_options(),
+        parse_context(bindings={ "pi": @symcore.Expr::Symbol("x") }),
+      ),
+    ),
+    content=parse_expr_sstr_in("pi", [], binding_names=["pi"], binding_exprs=["x"]),
+  )
+  inspect(
     try parse_expr("sin(x, y)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -556,6 +603,34 @@ test "symparse parity builtin callable semantics" {
     content="0",
   )
   inspect(
+    @symprint.to_string(ast_parse_expr("Integral")),
+    content=ast_parse_expr_sstr("Integral"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("DiracDelta")),
+    content=ast_parse_expr_sstr("DiracDelta"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer")),
+    content=ast_parse_expr_sstr("Integer"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Symbol")),
+    content=ast_parse_expr_sstr("Symbol"),
+  )
+  inspect(@symprint.to_string(ast_parse_expr("pi")), content=ast_parse_expr_sstr("pi"))
+  inspect(
+    @symprint.to_string(ast_parse_expr("GoldenRatio")),
+    content=ast_parse_expr_sstr("GoldenRatio"),
+  )
+  inspect(@symprint.to_string(ast_parse_expr("NaN")), content=ast_parse_expr_sstr("NaN"))
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("pi", local_bindings={ "pi": @symcore.Expr::Symbol("x") }),
+    ),
+    content=ast_parse_expr_sstr("pi", binding_names=["pi"], binding_exprs=["x"]),
+  )
+  inspect(
     @symprint.to_string(ast_parse_expr("Max()")),
     content=ast_parse_expr_sstr("Max()"),
   )
@@ -570,6 +645,15 @@ test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(ast_parse_expr("beta(x)")),
     content=ast_parse_expr_sstr("beta(x)"),
+  )
+  inspect(
+    try ast_parse_expr("pi(x)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=ast_parse_expr_error_sstr("pi(x)"),
   )
 }
 

@@ -225,6 +225,7 @@ pub(all) enum Expr {
   ComplexFloat(ComplexFloat)
   NumberSymbol(NumberSymbolKind)
   Boolean(Bool)
+  IdentityFunction
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
@@ -259,6 +260,7 @@ pub enum ExprForm {
   Symbol(String)
   Dummy(String, Int)
   Wild(String)
+  IdentityFunction
   FunctionHead(String)
   UndefinedFunction(String)
   Apply(Expr, Array[Expr])

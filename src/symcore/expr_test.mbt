@@ -211,7 +211,7 @@ test "func and args expose canonical heads for containers and binders" {
     @symprint.to_string(
       func(Expr::Relational(RelOp::Eq, x, y)).unwrap_or(int(0)),
     ),
-    content="Equality",
+    content="<class 'sympy.core.relational.Equality'>",
   )
   inspect(
     @symprint.to_string(
@@ -239,37 +239,37 @@ test "func and args expose canonical heads for containers and binders" {
 test "func exposes canonical heads for atomic core nodes" {
   inspect(
     @symprint.to_string(func(int(2)).unwrap_or(int(0))),
-    content="Integer",
+    content="<class 'sympy.core.numbers.Integer'>",
   )
   inspect(
     @symprint.to_string(func(rational_from_ints(1, 2)).unwrap_or(int(0))),
-    content="Half",
+    content="<class 'sympy.core.numbers.Half'>",
   )
   inspect(
     @symprint.to_string(
       func(Expr::NumberSymbol(NumberSymbolKind::Pi)).unwrap_or(int(0)),
     ),
-    content="Pi",
+    content="<class 'sympy.core.numbers.Pi'>",
   )
   inspect(
     @symprint.to_string(func(Expr::Symbol("x")).unwrap_or(int(0))),
-    content="Symbol",
+    content="<class 'sympy.core.symbol.Symbol'>",
   )
   inspect(
     @symprint.to_string(func(dummy(name="x")).unwrap_or(int(0))),
-    content="Dummy",
+    content="<class 'sympy.core.symbol.Dummy'>",
   )
   inspect(
     @symprint.to_string(func(Expr::Wild("x")).unwrap_or(int(0))),
-    content="Wild",
+    content="<class 'sympy.core.symbol.Wild'>",
   )
   inspect(
     @symprint.to_string(func(Expr::Boolean(true)).unwrap_or(int(0))),
-    content="BooleanTrue",
+    content="<class 'sympy.logic.boolalg.BooleanTrue'>",
   )
   inspect(
     @symprint.to_string(func(Expr::Boolean(false)).unwrap_or(int(0))),
-    content="BooleanFalse",
+    content="<class 'sympy.logic.boolalg.BooleanFalse'>",
   )
 }
 

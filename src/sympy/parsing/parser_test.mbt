@@ -145,6 +145,11 @@ test "symparse lexer exposes typed tokens" {
 ///|
 test "symparse standard parser matches sympy defaults" {
   inspect(parse_repr("sin"), content="fhead:sin")
+  inspect(parse_repr("pi"), content="const:pi")
+  inspect(parse_repr("EulerGamma"), content="const:EulerGamma")
+  inspect(parse_repr("oo"), content="const:oo")
+  inspect(parse_repr("Pi"), content="sym:Pi")
+  inspect(parse_repr("NaN"), content="sym:NaN")
   inspect(parse_repr("f"), content="sym:f")
   inspect(parse_repr("f(x)"), content="(call f sym:x)")
   match parse_expr("sin(x)") {
@@ -332,6 +337,20 @@ test "symparse parser parity-critical lambda and relaxed evaluate false paths" {
 ///|
 test "symparse builtin callable semantics follow SymPy parser behavior" {
   inspect(
+    @symprint.to_string(parse_expr("Integral")),
+    content="<class 'sympy.integrals.integrals.Integral'>",
+  )
+  inspect(@symprint.to_string(parse_expr("DiracDelta")), content="DiracDelta")
+  inspect(@symprint.to_string(parse_expr("Piecewise")), content="Piecewise")
+  inspect(
+    @symprint.to_string(parse_expr("Integer")),
+    content="<class 'sympy.core.numbers.Integer'>",
+  )
+  inspect(
+    @symprint.to_string(parse_expr("Symbol")),
+    content="<class 'sympy.core.symbol.Symbol'>",
+  )
+  inspect(
     parse_expr_equiv(@symprint.to_string(parse_expr("log(x, y)")), "log(x, y)"),
     content="0",
   )
@@ -353,6 +372,21 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
   )
   inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
+  guard (try? parse_expr("pi(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: 'Pi' object is not callable" else {
+    fail("expected number symbol callable error")
+  }
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi",
+        default_parse_options(),
+        parse_context(bindings={ "pi": @symcore.Expr::Symbol("x") }),
+      ),
+    ),
+    content="x",
+  )
   guard (try? parse_expr("sin(x, y)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: sin takes exactly 1 argument (2 given)" else {
@@ -378,6 +412,31 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
 ///|
 test "ast parser compatibility entrypoint" {
   inspect(@symprint.to_string(ast_parse_expr("sin")), content="sin")
+  inspect(@symprint.to_string(ast_parse_expr("pi")), content="pi")
+  inspect(@symprint.to_string(ast_parse_expr("GoldenRatio")), content="GoldenRatio")
+  inspect(@symprint.to_string(ast_parse_expr("NaN")), content="NaN")
+  inspect(
+    @symprint.to_string(
+      ast_parse_expr("pi", local_bindings={ "pi": @symcore.Expr::Symbol("x") }),
+    ),
+    content="x",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integral")),
+    content="<class 'sympy.integrals.integrals.Integral'>",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("DiracDelta")),
+    content="DiracDelta",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Integer")),
+    content="<class 'sympy.core.numbers.Integer'>",
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("Symbol")),
+    content="<class 'sympy.core.symbol.Symbol'>",
+  )
   inspect(@symprint.to_string(ast_parse_expr("f")), content="f")
   inspect(@symprint.to_string(ast_parse_expr("sin(x)")), content="sin(x)")
   inspect(@symprint.to_string(ast_parse_expr("1/2")), content="1/2")
@@ -400,6 +459,11 @@ test "ast parser compatibility entrypoint" {
     @symprint.to_string(ast_parse_expr("Derivative(x)")),
     content="Derivative(x, x)",
   )
+  guard (try? ast_parse_expr("pi(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: 'Pi' object is not callable" else {
+    fail("expected ast parser number symbol callable error")
+  }
   inspect(
     @symprint.to_string(
       ast_parse_expr("f", local_bindings={

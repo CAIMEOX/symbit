@@ -177,51 +177,6 @@ fn token_can_start_primary(kind : TokenKind) -> Bool {
 }
 
 ///|
-fn is_builtin_callable_name(name : String) -> Bool {
-  match name {
-    "sin"
-    | "cos"
-    | "tan"
-    | "cot"
-    | "sec"
-    | "csc"
-    | "asin"
-    | "acos"
-    | "atan"
-    | "atan2"
-    | "sinh"
-    | "cosh"
-    | "tanh"
-    | "asinh"
-    | "acosh"
-    | "atanh"
-    | "exp"
-    | "log"
-    | "sqrt"
-    | "Abs"
-    | "factorial"
-    | "factorial2"
-    | "binomial"
-    | "beta"
-    | "gamma"
-    | "erf"
-    | "erfc"
-    | "Ei"
-    | "Si"
-    | "Ci"
-    | "Shi"
-    | "Chi"
-    | "besselj"
-    | "bessely"
-    | "besseli"
-    | "besselk"
-    | "Min"
-    | "Max" => true
-    _ => false
-  }
-}
-
-///|
 fn is_builtin_core_head_name(name : String) -> Bool {
   match name {
     "Tuple"

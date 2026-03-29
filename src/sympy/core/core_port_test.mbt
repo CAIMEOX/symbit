@@ -254,6 +254,37 @@ test "symcore parity func and args for containers relationals and Subs" {
 }
 
 ///|
+test "symcore parity displayed func heads for atomic core nodes" {
+  inspect(
+    core_expr_sstr(@symcore.func(@symcore.int(2)).unwrap_or(@symcore.int(0))),
+    content="<class 'sympy.core.numbers.Integer'>",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.func(@symcore.rational_from_ints(1, 2)).unwrap_or(@symcore.int(0)),
+    ),
+    content="<class 'sympy.core.numbers.Half'>",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.func(@symcore.Expr::NumberSymbol(@symcore.NumberSymbolKind::Pi)).unwrap_or(@symcore.int(0)),
+    ),
+    content="<class 'sympy.core.numbers.Pi'>",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.func(@symcore.Expr::Boolean(true)).unwrap_or(@symcore.int(0)),
+    ),
+    content="<class 'sympy.logic.boolalg.BooleanTrue'>",
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.func(@symcore.Expr::Symbol("x")).unwrap_or(@symcore.int(0)),
+    ),
+    content="<class 'sympy.core.symbol.Symbol'>",
+  )
+}
+
 test "symcore parity func for atomic core nodes" {
   inspect(local_func_name(@symcore.int(2)), content="Integer")
   inspect(local_func_name(@symcore.rational_from_ints(1, 2)), content="Half")

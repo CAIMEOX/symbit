@@ -459,6 +459,22 @@ fn lookup_effective_binding(context : ParseContext, name : String) -> Expr? {
 }
 
 ///|
+fn builtin_number_symbol_kind(name : String) -> @symcore.NumberSymbolKind? {
+  match name {
+    "I" => Some(@symcore.NumberSymbolKind::ImaginaryUnit)
+    "pi" => Some(@symcore.NumberSymbolKind::Pi)
+    "E" => Some(@symcore.NumberSymbolKind::Exp1)
+    "EulerGamma" => Some(@symcore.NumberSymbolKind::EulerGamma)
+    "GoldenRatio" => Some(@symcore.NumberSymbolKind::GoldenRatio)
+    "Catalan" => Some(@symcore.NumberSymbolKind::Catalan)
+    "oo" => Some(@symcore.NumberSymbolKind::Infinity)
+    "zoo" => Some(@symcore.NumberSymbolKind::ComplexInfinity)
+    "nan" => Some(@symcore.NumberSymbolKind::NaN)
+    _ => None
+  }
+}
+
+///|
 fn lower_symbol_name(
   context : ParseContext,
   name : String,
@@ -466,7 +482,7 @@ fn lower_symbol_name(
 ) -> Expr raise ParseError {
   match lookup_effective_binding(context, name) {
     Some(bound) => bound
-    None =>
+    None => {
       if context_has_callable_name(context, name) ||
         context_has_global_callable_name(context, name) {
         @symcore.Expr::UndefinedFunction(name)
@@ -474,16 +490,23 @@ fn lower_symbol_name(
         @symcore.Expr::Boolean(true)
       } else if name == "False" {
         @symcore.Expr::Boolean(false)
-      } else if is_builtin_head_name(name) {
-        @symcore.Expr::FunctionHead(name)
-      } else if option_has_auto_symbol(options) {
-        Expr::Symbol(name)
       } else {
-        raise ParseError::UnsupportedConstruct(
-          span=span(0, 0),
-          "unknown identifier: " + name,
-        )
+        match builtin_number_symbol_kind(name) {
+          Some(kind) => @symcore.Expr::NumberSymbol(kind)
+          None =>
+            if is_builtin_head_name(name) {
+              @symcore.Expr::FunctionHead(name)
+            } else if option_has_auto_symbol(options) {
+              Expr::Symbol(name)
+            } else {
+              raise ParseError::UnsupportedConstruct(
+                span=span(0, 0),
+                "unknown identifier: " + name,
+              )
+            }
+        }
       }
+    }
   }
 }
 
@@ -521,10 +544,19 @@ fn lookup_callable_target(context : ParseContext, name : String) -> Expr {
             bound
           }
         None =>
-          if is_builtin_head_name(name) {
-            @symcore.Expr::FunctionHead(name)
-          } else {
+          if context_has_callable_name(context, name) ||
+            context_has_global_callable_name(context, name) {
             @symcore.Expr::UndefinedFunction(name)
+          } else {
+            match builtin_number_symbol_kind(name) {
+              Some(kind) => @symcore.Expr::NumberSymbol(kind)
+              None =>
+                if is_builtin_head_name(name) {
+                  @symcore.Expr::FunctionHead(name)
+                } else {
+                  @symcore.Expr::UndefinedFunction(name)
+                }
+            }
           }
       }
   }

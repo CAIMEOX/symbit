@@ -114,7 +114,29 @@ pub fn standalone_function_head_display_name(name : String) -> String {
     "Lambda" => "<class 'sympy.core.function.Lambda'>"
     "IdentityFunction" => "<class 'sympy.functions.elementary.miscellaneous.IdentityFunction'>"
     "Subs" => "<class 'sympy.core.function.Subs'>"
-    _ => name
+    "Zero" => "<class 'sympy.core.numbers.Zero'>"
+    "One" => "<class 'sympy.core.numbers.One'>"
+    "NegativeOne" => "<class 'sympy.core.numbers.NegativeOne'>"
+    "Half" => "<class 'sympy.core.numbers.Half'>"
+    "Integer" => "<class 'sympy.core.numbers.Integer'>"
+    "Rational" => "<class 'sympy.core.numbers.Rational'>"
+    "Pi" => "<class 'sympy.core.numbers.Pi'>"
+    "Exp1" => "<class 'sympy.core.numbers.Exp1'>"
+    "ImaginaryUnit" => "<class 'sympy.core.numbers.ImaginaryUnit'>"
+    "Infinity" => "<class 'sympy.core.numbers.Infinity'>"
+    "NegativeInfinity" => "<class 'sympy.core.numbers.NegativeInfinity'>"
+    "ComplexInfinity" => "<class 'sympy.core.numbers.ComplexInfinity'>"
+    "NaN" => "<class 'sympy.core.numbers.NaN'>"
+    "BooleanTrue" => "<class 'sympy.logic.boolalg.BooleanTrue'>"
+    "BooleanFalse" => "<class 'sympy.logic.boolalg.BooleanFalse'>"
+    "Symbol" => "<class 'sympy.core.symbol.Symbol'>"
+    "Dummy" => "<class 'sympy.core.symbol.Dummy'>"
+    "Wild" => "<class 'sympy.core.symbol.Wild'>"
+    _ =>
+      match builtin_head_display_override(name) {
+        Some(display) => display
+        None => name
+      }
   }
 }
 

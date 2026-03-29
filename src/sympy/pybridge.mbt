@@ -261,16 +261,66 @@ fn sympy_symbol_obj(name : String) -> @py.PyObject raise {
 }
 
 ///|
-fn sympy_function_head_obj(name : String) -> @py.PyObject raise {
-  match sympy_constant_obj(name) {
+fn sympy_canonical_head_expr(name : String) -> String? {
+  match name {
+    "Zero" => Some("sympy.Integer(0).func")
+    "One" => Some("sympy.Integer(1).func")
+    "NegativeOne" => Some("sympy.Integer(-1).func")
+    "Half" => Some("sympy.Rational(1, 2).func")
+    "Pi" => Some("sympy.pi.func")
+    "Exp1" => Some("sympy.E.func")
+    "ImaginaryUnit" => Some("sympy.I.func")
+    "Infinity" => Some("sympy.oo.func")
+    "NegativeInfinity" => Some("(-sympy.oo).func")
+    "ComplexInfinity" => Some("sympy.zoo.func")
+    "NaN" => Some("sympy.nan.func")
+    "BooleanTrue" => Some("sympy.S.true.func")
+    "BooleanFalse" => Some("sympy.S.false.func")
+    _ => None
+  }
+}
+
+///|
+fn sympy_eval_obj(code : String) -> @py.PyObject raise {
+  let builtins = match @py.pyimport("builtins") {
+    Some(mod) => mod
+    None => fail("py-builtins-missing")
+  }
+  let eval_obj = match builtins.get_attr("eval", print_err=true) {
     Some(obj) => obj
-    None => {
-      let sympy = ensure_sympy_module()
-      match sympy.get_attr(name, print_err=false) {
-        Some(obj) => objenum_to_obj(obj)
-        None => sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
+    None => fail("py-eval-missing")
+  }
+  let globals = @py.PyDict::new()
+  globals.set("__builtins__", builtins.obj())
+  globals.set("sympy", ensure_sympy_module().obj())
+  let args = py_pack_args([
+    OracleArg::Str(code),
+    OracleArg::PyObj(globals.obj()),
+  ])
+  let callable = @py.PyCallable::create(objenum_to_obj(eval_obj)) catch {
+    _ => fail("py-eval-callable")
+  }
+  match py_call_object(callable, args) {
+    Some(obj) => objenum_to_obj(obj)
+    None => fail("py-eval-none")
+  }
+}
+
+///|
+fn sympy_function_head_obj(name : String) -> @py.PyObject raise {
+  match sympy_canonical_head_expr(name) {
+    Some(code) => sympy_eval_obj(code)
+    None =>
+      match sympy_constant_obj(name) {
+        Some(obj) => obj
+        None => {
+          let sympy = ensure_sympy_module()
+          match sympy.get_attr(name, print_err=false) {
+            Some(obj) => objenum_to_obj(obj)
+            None => sympy_call_obj("sympy.Function", [OracleArg::Str(name)])
+          }
+        }
       }
-    }
   }
 }
 
