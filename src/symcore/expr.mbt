@@ -1034,7 +1034,7 @@ pub fn raw_function(name : String, args : Array[Expr]) -> Expr {
     ("Mod", [lhs, rhs]) => Expr::Mod(lhs, rhs)
     ("Derivative", _) => constructor_derivative(name, args)
     ("Subs", [expr, variable, value]) => Expr::Subs(expr, variable, value)
-    ("Lambda", [vars, body]) => Expr::Lambda(vars, body)
+    ("Lambda", [vars, body]) => lambda_expr(vars, body)
     ("Dict", items) => {
       let entries : Array[(Expr, Expr)] = []
       for item in items {

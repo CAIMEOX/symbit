@@ -427,6 +427,16 @@ test "legacy function storage normalizes to canonical core semantics" {
     Expr::Apply(Expr::FunctionHead("Dict"), [Expr::Symbol("x")]) => ()
     _ => fail("expected malformed Dict to canonicalize as Apply")
   }
+  match normalize_legacy_expr(Expr::Function("Lambda", [
+    Expr::Tuple([x, int(2)]),
+    add([x, int(1)]),
+  ])) {
+    Expr::Apply(Expr::FunctionHead("Lambda"), [Expr::Tuple([Expr::Symbol("x"), two]), body]) => {
+      inspect(@symprint.to_string(two), content="2")
+      inspect(@symprint.to_string(body), content="x + 1")
+    }
+    _ => fail("expected invalid legacy Lambda to canonicalize as Apply")
+  }
 }
 
 ///|

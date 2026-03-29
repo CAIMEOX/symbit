@@ -1,13 +1,13 @@
 ///|
 fn ordinary_application_name_args(expr : Expr) -> (String, Array[Expr])? {
-  match @symcore.expr_form(expr) {
-    @symcore.ExprForm::Apply(head, args) =>
+  match @symcore.application_parts(expr) {
+    Some((head, args)) =>
       match head {
         @symcore.Expr::FunctionHead(name)
         | @symcore.Expr::UndefinedFunction(name) => Some((name, args))
         _ => None
       }
-    _ => None
+    None => None
   }
 }
 

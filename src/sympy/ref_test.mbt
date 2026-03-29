@@ -87,7 +87,7 @@ test "sympy ref: expr_to_sympy rational" {
 test "sympy ref: expr_to_sympy float" {
   let expr = ref_exact_float_expr(1, 2)
   let obj = expr_to_sympy(expr)
-  inspect(py_str_obj(obj), content="0.500000000000000")
+  inspect(py_str_obj(obj), content="0.50000000000000000000000000")
 }
 
 ///|
@@ -102,6 +102,12 @@ test "sympy ref: expr_to_sympy function call" {
   let expr = @symcore.function("sin", [@symcore.Expr::Symbol("x")])
   let obj = expr_to_sympy(expr)
   inspect(py_str_obj(obj), content="sin(x)")
+}
+
+///|
+test "sympy ref: expr_to_sympy normalizes legacy function inputs" {
+  let expr = @symcore.Expr::Function("sin", [@symcore.Expr::Symbol("x")])
+  inspect(py_str_obj(expr_to_sympy(expr)), content="sin(x)")
 }
 
 ///|
