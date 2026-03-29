@@ -252,15 +252,32 @@ fn name_is_bound_or_reserved(
 
 ///|
 fn ast_is_known_callable(ast : Ast, context : ParseContext) -> Bool {
+  let binding_is_callable = fn(bound : Expr) -> Bool {
+    match @symcore.normalize_legacy_expr(bound) {
+      Expr::FunctionHead(_)
+      | Expr::UndefinedFunction(_)
+      | Expr::Lambda(_, _)
+      | Expr::IdentityFunction => true
+      _ => false
+    }
+  }
   match ast {
     Ast::Symbol(span~, name) => {
       ignore(span)
       if context_has_binding(context, name) {
-        context_has_callable_name(context, name)
+        match lookup_binding(context, name) {
+          Some(bound) => binding_is_callable(bound) || context_has_callable_name(context, name)
+          None => context_has_callable_name(context, name)
+        }
       } else if context_has_callable_name(context, name) {
         true
       } else if context_has_global_binding(context, name) {
-        context_has_global_callable_name(context, name)
+        match lookup_global_binding(context, name) {
+          Some(bound) =>
+            binding_is_callable(bound) ||
+            context_has_global_callable_name(context, name)
+          None => context_has_global_callable_name(context, name)
+        }
       } else if context_has_global_callable_name(context, name) {
         true
       } else {

@@ -310,6 +310,42 @@ test "symparse parity callable context" {
       false,
     ),
   )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+      ),
+    ),
+    content=parse_expr_sstr_in_relaxed(
+      "pi x",
+      [],
+      binding_names=["pi"],
+      binding_exprs=["sympy.Function('f')"],
+    ),
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "f": @symcore.Expr::FunctionHead("cos") }),
+      ),
+    ),
+    content=parse_expr_sstr_in_relaxed(
+      "f x",
+      [],
+      binding_names=["f"],
+      binding_exprs=["sympy.cos"],
+    ),
+  )
+  assert_sympy_parse_matches_in_relaxed(
+    "g x",
+    [],
+    binding_names=["g"],
+    binding_exprs=["h"],
+  )
 }
 
 ///|

@@ -306,6 +306,36 @@ test "symparse callable context and structured bindings" {
         "evaluate=false should preserve ordinary applications as first-class Apply",
       )
   }
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "pi x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "pi": @symcore.Expr::UndefinedFunction("f") }),
+      ),
+    ),
+    content="f(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "f x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "f": @symcore.Expr::FunctionHead("cos") }),
+      ),
+    ),
+    content="cos(x)",
+  )
+  inspect(
+    @symprint.to_string(
+      parse_expr_in(
+        "g x",
+        parse_options(transformations=relaxed_transformations()),
+        parse_context(bindings={ "g": @symcore.Expr::Symbol("h") }),
+      ),
+    ),
+    content="h*x",
+  )
 }
 
 ///|
