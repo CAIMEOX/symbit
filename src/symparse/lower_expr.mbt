@@ -133,6 +133,30 @@ fn make_function(
       " (\{given} given)",
     )
   }
+  let dict_item_error = fn(item : Expr) -> Expr raise ParseError {
+    match @symcore.tuple_items(item) {
+      Some([_, _]) => @symcore.function(name, canonical_args)
+      Some(_) =>
+        raise ParseError::UnsupportedConstruct(
+          span=span(0, 0),
+          "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})",
+        )
+      None => {
+        let type_name = match @symcore.func(item) {
+          Some(head) =>
+            match @symcore.function_head_name(head) {
+              Some(name) => name
+              None => @symcore.head_name(head)
+            }
+          None => @symcore.head_name(item)
+        }
+        raise ParseError::UnsupportedConstruct(
+          span=span(0, 0),
+          "TypeError: object of type '\{type_name}' has no len()",
+        )
+      }
+    }
+  }
   let relation_constructor_error = fn(name : String, given : Int) -> Expr raise ParseError {
     let class_name = match name {
       "Eq" => "Equality"
@@ -152,6 +176,12 @@ fn make_function(
     | ("Gt", [_, _]) | ("Ge", [_, _]) => @symcore.function(name, canonical_args)
     ("Eq", _) | ("Ne", _) | ("Lt", _) | ("Le", _) | ("Gt", _) | ("Ge", _) =>
       relation_constructor_error(name, canonical_args.length())
+    ("Dict", items) => {
+      for item in items {
+        ignore(dict_item_error(item))
+      }
+      @symcore.function(name, canonical_args)
+    }
     ("Mod", [_, _]) => @symcore.function(name, canonical_args)
     ("Mod", _) => exact_arity_error(name, 2, canonical_args.length())
     ("Lambda", [_, _]) => @symcore.function(name, canonical_args)

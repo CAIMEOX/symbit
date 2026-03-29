@@ -432,6 +432,10 @@ test "symparse parity split symbols custom and ast parser" {
     ast_parse_error_detail("Eq()", {}),
     content=ast_parse_expr_error_sstr("Eq()"),
   )
+  inspect(
+    ast_parse_error_detail("Dict(x)", {}),
+    content=ast_parse_expr_error_sstr("Dict(x)"),
+  )
 }
 
 ///|
@@ -736,5 +740,10 @@ test "symparse parity explicit core constructor calls stay canonical" {
   inspect(parse_error_detail("Eq(x)"), content=parse_error_oracle("Eq(x)"))
   inspect(parse_error_detail("Mod(x)"), content=parse_error_oracle("Mod(x)"))
   inspect(parse_error_detail("Subs(x)"), content=parse_error_oracle("Subs(x)"))
+  inspect(parse_error_detail("Dict(x)"), content=parse_error_oracle("Dict(x)"))
+  inspect(
+    parse_error_detail("Dict((x, y, z))"),
+    content=parse_error_oracle("Dict((x, y, z))"),
+  )
   inspect(parse_error_detail("Lambda()"), content=parse_error_oracle("Lambda()"))
 }

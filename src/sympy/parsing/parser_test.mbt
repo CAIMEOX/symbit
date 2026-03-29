@@ -448,6 +448,13 @@ test "ast parser compatibility entrypoint" {
     "TypeError: Equality.__new__() missing 2 required positional arguments: 'lhs' and 'rhs'" else {
     fail("expected ast parser Eq() constructor arity error")
   }
+  let ast_dict_error : Result[@symcore.Expr, ParseError] = try? ast_parse_expr(
+    "Dict(x)",
+  )
+  guard ast_dict_error is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: object of type 'Symbol' has no len()" else {
+    fail("expected ast parser Dict(x) constructor type error")
+  }
   inspect(
     parse_expr_equiv(
       @symprint.to_string(ast_parse_expr("log(x, y)")),
@@ -553,6 +560,17 @@ test "symparse explicit core constructor calls stay canonical" {
     detail ==
     "TypeError: Subs.__new__() missing 2 required positional arguments: 'variables' and 'point'" else {
     fail("expected Subs(x) constructor arity error")
+  }
+  guard (try? parse_expr("Dict(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: object of type 'Symbol' has no len()" else {
+    fail("expected Dict(x) constructor type error")
+  }
+  guard (try? parse_expr("Dict((x, y, z))"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail ==
+    "TypeError: Pass Dict args as Dict((k1, v1), ...) or Dict({k1: v1, ...})" else {
+    fail("expected Dict((x, y, z)) constructor shape error")
   }
   guard (try? parse_expr("Lambda()"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
