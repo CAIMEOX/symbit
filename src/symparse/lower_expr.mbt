@@ -201,6 +201,27 @@ fn make_application(
         } else {
           exact_arity_error(name, 2, args.length())
         }
+      "atan2" | "binomial" =>
+        if args.length() == 2 {
+          apply_named(name, args)
+        } else {
+          exact_arity_error(name, 2, args.length())
+        }
+      "beta" =>
+        match args.length() {
+          0 =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: beta takes at least 1 argument (0 given)",
+            )
+          1 => apply_named(name, [args[0], args[0]])
+          2 => apply_named(name, args)
+          given =>
+            raise ParseError::UnsupportedConstruct(
+              span=span(0, 0),
+              "TypeError: beta takes at least 1 argument (\{given} given)",
+            )
+        }
       _ =>
         if args.length() == 1 {
           apply_named(name, args)

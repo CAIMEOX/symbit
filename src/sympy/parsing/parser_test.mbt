@@ -346,10 +346,27 @@ test "symparse builtin callable semantics follow SymPy parser behavior" {
   inspect(@symprint.to_string(parse_expr("Max(x)")), content="x")
   inspect(@symprint.to_string(parse_expr("Min(x)")), content="x")
   inspect(@symprint.to_string(parse_expr("sqrt(x, y)")), content="sqrt(x)")
+  inspect(@symprint.to_string(parse_expr("atan2(x, y)")), content="atan2(x, y)")
+  inspect(
+    @symprint.to_string(parse_expr("binomial(x, y)")),
+    content="binomial(x, y)",
+  )
+  inspect(@symprint.to_string(parse_expr("beta(x)")), content="beta(x, x)")
+  inspect(@symprint.to_string(parse_expr("beta(x, y)")), content="beta(x, y)")
   guard (try? parse_expr("sin(x, y)"))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
     detail == "TypeError: sin takes exactly 1 argument (2 given)" else {
     fail("expected unary builtin arity error")
+  }
+  guard (try? parse_expr("atan2(x)"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: atan2 takes exactly 2 arguments (1 given)" else {
+    fail("expected atan2 arity error")
+  }
+  guard (try? parse_expr("beta()"))
+    is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
+    detail == "TypeError: beta takes at least 1 argument (0 given)" else {
+    fail("expected beta arity error")
   }
   guard (try? parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)))
     is Err(ParseError::UnsupportedConstruct(span=_, detail)) &&
@@ -426,6 +443,11 @@ test "ast parser compatibility entrypoint" {
     ),
     content="0",
   )
+  inspect(
+    @symprint.to_string(ast_parse_expr("atan2(x, y)")),
+    content="atan2(x, y)",
+  )
+  inspect(@symprint.to_string(ast_parse_expr("beta(x)")), content="beta(x, x)")
   inspect(@symprint.to_string(ast_parse_expr("Max()")), content="-oo")
   inspect(@symprint.to_string(ast_parse_expr("Min(x)")), content="x")
   match ast_parse_expr("lambda x: x + 1") {

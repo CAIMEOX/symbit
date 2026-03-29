@@ -464,6 +464,22 @@ test "symparse parity builtin callable semantics" {
     content=parse_expr_sstr("sqrt(x, y)"),
   )
   inspect(
+    @symprint.to_string(parse_expr("atan2(x, y)")),
+    content=parse_expr_sstr("atan2(x, y)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("binomial(x, y)")),
+    content=parse_expr_sstr("binomial(x, y)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("beta(x)")),
+    content=parse_expr_sstr("beta(x)"),
+  )
+  inspect(
+    @symprint.to_string(parse_expr("beta(x, y)")),
+    content=parse_expr_sstr("beta(x, y)"),
+  )
+  inspect(
     try parse_expr("sin(x, y)") catch {
       ParseError::UnsupportedConstruct(span=_, detail) => detail
       _ => "unexpected-parse-error"
@@ -471,6 +487,24 @@ test "symparse parity builtin callable semantics" {
       _ => "unexpected-success"
     },
     content=parse_expr_error_sstr_in("sin(x, y)", []),
+  )
+  inspect(
+    try parse_expr("atan2(x)") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("atan2(x)", []),
+  )
+  inspect(
+    try parse_expr("beta()") catch {
+      ParseError::UnsupportedConstruct(span=_, detail) => detail
+      _ => "unexpected-parse-error"
+    } noraise {
+      _ => "unexpected-success"
+    },
+    content=parse_expr_error_sstr_in("beta()", []),
   )
   inspect(
     try parse_expr_with("sqrt(x, y)", parse_options(evaluate=false)) catch {
@@ -495,6 +529,14 @@ test "symparse parity builtin callable semantics" {
   inspect(
     @symprint.to_string(ast_parse_expr("Min(x)")),
     content=ast_parse_expr_sstr("Min(x)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("atan2(x, y)")),
+    content=ast_parse_expr_sstr("atan2(x, y)"),
+  )
+  inspect(
+    @symprint.to_string(ast_parse_expr("beta(x)")),
+    content=ast_parse_expr_sstr("beta(x)"),
   )
 }
 
