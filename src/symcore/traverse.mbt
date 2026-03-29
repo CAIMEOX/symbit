@@ -300,18 +300,56 @@ fn expr_mentions_any_symbol_name(expr : Expr, names : Array[String]) -> Bool {
 }
 
 ///|
-fn callable_subst_head(head : Expr, env : Map[String, Expr]) -> Expr {
+fn lambda_apply_env(vars : Expr, args : Array[Expr]) -> Map[String, Expr]? {
+  match vars {
+    Expr::Symbol(name) =>
+      if args.length() == 1 {
+        let env : Map[String, Expr] = {}
+        env.set(name, args[0])
+        Some(env)
+      } else {
+        None
+      }
+    Expr::Tuple(items) => {
+      if items.length() != args.length() {
+        return None
+      }
+      let env : Map[String, Expr] = {}
+      for i = 0; i < items.length(); i = i + 1 {
+        match items[i] {
+          Expr::Symbol(name) => env.set(name, args[i])
+          _ => return None
+        }
+      }
+      Some(env)
+    }
+    _ => None
+  }
+}
+
+///|
+fn callable_subst_apply(
+  head : Expr,
+  args : Array[Expr],
+  env : Map[String, Expr],
+) -> Expr? {
   match head {
     Expr::FunctionHead(name) | Expr::UndefinedFunction(name) =>
       match env.get(name) {
         Some(value) =>
           match normalize_legacy_expr(value) {
-            Expr::FunctionHead(_) | Expr::UndefinedFunction(_) => value
-            _ => head
+            Expr::FunctionHead(_) | Expr::UndefinedFunction(_) =>
+              raw_apply(value, args)
+            Expr::Lambda(vars, body) =>
+              match lambda_apply_env(vars, args) {
+                Some(lambda_env) => Some(subst(body, lambda_env))
+                None => None
+              }
+            _ => None
           }
-        None => head
+        None => None
       }
-    _ => head
+    _ => None
   }
 }
 
@@ -419,11 +457,14 @@ pub fn subst(expr : Expr, env : Map[String, Expr]) -> Expr {
     | Expr::UndefinedFunction(_)
     | Expr::Boolean(_) => expr
     Expr::Apply(head, args) => {
-      let rewritten_head = callable_subst_head(head, env)
       let rewritten_args = args.map(arg => subst(arg, env))
-      match raw_apply(rewritten_head, rewritten_args) {
+      match callable_subst_apply(head, rewritten_args, env) {
         Some(applied) => applied
-        None => Expr::Apply(rewritten_head, rewritten_args)
+        None =>
+          match raw_apply(head, rewritten_args) {
+            Some(applied) => applied
+            None => Expr::Apply(head, rewritten_args)
+          }
       }
     }
     Expr::Derivative(inner, deriv_args) =>

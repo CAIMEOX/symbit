@@ -775,6 +775,34 @@ test "subst rewrites callable heads only when replacement stays callable" {
 }
 
 ///|
+test "subst beta-reduces callable heads to lambda replacements" {
+  let x = Expr::Symbol("x")
+  let y = Expr::Symbol("y")
+  inspect(
+    @symprint.to_string(
+      subst(function("sin", [x]), { "sin": lambda_expr(x, add([x, int(1)])) }),
+    ),
+    content="x + 1",
+  )
+  inspect(
+    @symprint.to_string(
+      subst(applied_undefined_function("f", [x, y]), {
+        "f": lambda_expr(Expr::Tuple([x, y]), add([x, y])),
+      }),
+    ),
+    content="x + y",
+  )
+  inspect(
+    @symprint.to_string(
+      subst(function("sin", [x]), {
+        "sin": lambda_expr(Expr::Tuple([x, y]), add([x, y])),
+      }),
+    ),
+    content="sin(x)",
+  )
+}
+
+///|
 test "numeric singleton predicates stay aligned with structured core atoms" {
   assert_true(is_number_symbol(Expr::NumberSymbol(NumberSymbolKind::Pi)))
   assert_true(

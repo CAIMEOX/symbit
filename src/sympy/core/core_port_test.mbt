@@ -878,6 +878,39 @@ test "symcore parity subst rewrites callable heads but not non-callables" {
 }
 
 ///|
+test "symcore parity subst beta-reduces callable heads to lambda" {
+  let x = @symcore.Expr::Symbol("x")
+  let y = @symcore.Expr::Symbol("y")
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(@symcore.function("sin", [x]), {
+        "sin": @symcore.lambda_expr(x, @symcore.add([x, @symcore.int(1)])),
+      }),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.function("sin", [x]),
+      @symcore.Expr::FunctionHead("sin"),
+      @symcore.lambda_expr(x, @symcore.add([x, @symcore.int(1)])),
+    ),
+  )
+  inspect(
+    core_expr_sstr(
+      @symcore.subst(@symcore.applied_undefined_function("f", [x, y]), {
+        "f": @symcore.lambda_expr(
+          @symcore.Expr::Tuple([x, y]),
+          @symcore.add([x, y]),
+        ),
+      }),
+    ),
+    content=core_subst_expr_sstr(
+      @symcore.applied_undefined_function("f", [x, y]),
+      @symcore.Expr::UndefinedFunction("f"),
+      @symcore.lambda_expr(@symcore.Expr::Tuple([x, y]), @symcore.add([x, y])),
+    ),
+  )
+}
+
+///|
 test "symcore parity tuple binders rename safely under substitution" {
   let x = @symcore.Expr::Symbol("x")
   let y = @symcore.Expr::Symbol("y")
